@@ -1,0 +1,174 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/plhandler.sgml,v 1.1 2003/10/22 22:28:10 tgl Exp $
+-->
+
+ <chapter id="plhandler">
+   <title>Writing A Procedural Language Handler</title>
+
+   <indexterm zone="plhandler">
+    <primary>procedural language</primary>
+    <secondary>handler for</secondary>
+   </indexterm>
+
+   <para>
+    All calls to functions that are written in a language other than
+    the current <quote>version 1</quote> interface for compiled
+    languages (this includes functions in user-defined procedural languages,
+    functions written in SQL, and functions using the version 0 compiled
+    language interface), go through a <firstterm>call handler</firstterm>
+    function for the specific language.  It is the responsibility of
+    the call handler to execute the function in a meaningful way, such
+    as by interpreting the supplied source text.  This chapter outlines
+    how a new procedural language's call handler can be written.
+   </para>
+
+   <para>
+    The call handler for a procedural language is a
+    <quote>normal</quote> function that must be written in a compiled
+    language such as C, using the version-1 interface, and registered
+    with <productname>PostgreSQL</productname> as taking no arguments
+    and returning the type <type>language_handler</type>.  This
+    special pseudotype identifies the function as a call handler and
+    prevents it from being called directly in SQL commands.
+   </para>
+
+   <para>
+    The call handler is called in the same way as any other function:
+    It receives a pointer to a
+    <structname>FunctionCallInfoData</structname> <type>struct</> containing
+    argument values and information about the called function, and it
+    is expected to return a <type>Datum</type> result (and possibly
+    set the <structfield>isnull</structfield> field of the
+    <structname>FunctionCallInfoData</structname> structure, if it wishes
+    to return an SQL null result).  The difference between a call
+    handler and an ordinary callee function is that the
+    <structfield>flinfo-&gt;fn_oid</structfield> field of the
+    <structname>FunctionCallInfoData</structname> structure will contain
+    the OID of the actual function to be called, not of the call
+    handler itself.  The call handler must use this field to determine
+    which function to execute.  Also, the passed argument list has
+    been set up according to the declaration of the target function,
+    not of the call handler.
+   </para>
+
+   <para>
+    It's up to the call handler to fetch the entry of the function from the
+    system table
+    <classname>pg_proc</classname> and to analyze the argument
+    and return types of the called function. The <literal>AS</> clause from the
+    <command>CREATE FUNCTION</command> of the function will be found
+    in the <literal>prosrc</literal> column of the
+    <classname>pg_proc</classname> row. This may be the source
+    text in the procedural language itself (like for PL/Tcl), a
+    path name to a file, or anything else that tells the call handler
+    what to do in detail.
+   </para>
+
+   <para>
+    Often, the same function is called many times per SQL statement.
+    A call handler can avoid repeated lookups of information about the
+    called function by using the
+    <structfield>flinfo-&gt;fn_extra</structfield> field.  This will
+    initially be <symbol>NULL</>, but can be set by the call handler to point at
+    information about the called function.  On subsequent calls, if
+    <structfield>flinfo-&gt;fn_extra</structfield> is already non-<symbol>NULL</>
+    then it can be used and the information lookup step skipped.  The
+    call handler must make sure that
+    <structfield>flinfo-&gt;fn_extra</structfield> is made to point at
+    memory that will live at least until the end of the current query,
+    since an <structname>FmgrInfo</structname> data structure could be
+    kept that long.  One way to do this is to allocate the extra data
+    in the memory context specified by
+    <structfield>flinfo-&gt;fn_mcxt</structfield>; such data will
+    normally have the same lifespan as the
+    <structname>FmgrInfo</structname> itself.  But the handler could
+    also choose to use a longer-lived memory context so that it can cache
+    function definition information across queries.
+   </para>
+
+   <para>
+    When a procedural-language function is invoked as a trigger, no arguments
+    are passed in the usual way, but the
+    <structname>FunctionCallInfoData</structname>'s
+    <structfield>context</structfield> field points at a
+    <structname>TriggerData</structname> structure, rather than being <symbol>NULL</>
+    as it is in a plain function call.  A language handler should
+    provide mechanisms for procedural-language functions to get at the trigger
+    information.
+   </para>
+
+   <para>
+    This is a template for a procedural-language handler written in C:
+<programlisting>
+#include "postgres.h"
+#include "executor/spi.h"
+#include "commands/trigger.h"
+#include "fmgr.h"
+#include "access/heapam.h"
+#include "utils/syscache.h"
+#include "catalog/pg_proc.h"
+#include "catalog/pg_type.h"
+
+PG_FUNCTION_INFO_V1(plsample_call_handler);
+
+Datum
+plsample_call_handler(PG_FUNCTION_ARGS)
+{
+    Datum          retval;
+
+    if (CALLED_AS_TRIGGER(fcinfo))
+    {
+        /*
+         * Called as a trigger procedure
+         */
+        TriggerData    *trigdata = (TriggerData *) fcinfo->context;
+
+        retval = ...
+    }
+    else
+    {
+        /*
+         * Called as a function
+         */
+
+        retval = ...
+    }
+
+    return retval;
+}
+</programlisting>
+    Only a few thousand lines of code have to be added instead of the
+    dots to complete the call handler.
+   </para>
+
+   <para>
+    After having compiled the handler function into a loadable module
+    (see <xref linkend="dfunc">), the following commands then
+    register the sample procedural language:
+<programlisting>
+CREATE FUNCTION plsample_call_handler() RETURNS language_handler
+    AS '<replaceable>filename</replaceable>'
+    LANGUAGE C;
+CREATE LANGUAGE plsample
+    HANDLER plsample_call_handler;
+</programlisting>
+   </para>
+
+ </chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode:sgml
+sgml-omittag:nil
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+sgml-parent-document:nil
+sgml-default-dtd-file:"./reference.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:("/usr/lib/sgml/catalog")
+sgml-local-ecat-files:nil
+End:
+-->

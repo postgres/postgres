@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xplang.sgml,v 1.24 2003/09/20 20:12:05 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xplang.sgml,v 1.25 2003/10/22 22:28:10 tgl Exp $
 -->
 
  <chapter id="xplang">
@@ -28,7 +28,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/xplang.sgml,v 1.24 2003/09/20 20:12:05 tgl 
 
   <para>
    Writing a handler for a new procedural language is described in
-   <xref linkend="xfunc-plhandler">.  Several procedural languages are
+   <xref linkend="plhandler">.  Several procedural languages are
    available in the standard <productname>PostgreSQL</productname>
    distribution, which can serve as examples.
   </para>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.57 2003/10/17 18:57:01 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.58 2003/10/22 22:28:10 tgl Exp $
 -->
 
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook V3.1//EN" [
@@ -203,16 +203,16 @@ $Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.57 2003/10/17 18:57:01 tg
   </partintro>
 
   &extend;
-  &indexcost;
   &rules;
   &trigger;
-  &spi;
 
   &xplang;
   &plsql;
   &pltcl;
   &plperl;
   &plpython;
+
+  &spi;
 
  </part>
 
@@ -231,13 +231,15 @@ $Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.57 2003/10/17 18:57:01 tg
   &arch-dev;
   &catalogs;
   &protocol;
-  &page;
-  &geqo;
-  &gist;
-  &bki;
   &sources;
-  &compiler;
   &nls;
+  &plhandler;
+  &geqo;
+  &indexcost;
+  &gist;
+  &page;
+  &bki;
+  &compiler;
 
  </part>
 

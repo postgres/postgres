@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/trigger.sgml,v 1.30 2003/08/31 17:32:20 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/trigger.sgml,v 1.31 2003/10/22 22:28:10 tgl Exp $
 -->
 
  <chapter id="triggers">
@@ -10,49 +10,44 @@ $Header: /cvsroot/pgsql/doc/src/sgml/trigger.sgml,v 1.30 2003/08/31 17:32:20 pet
   </indexterm>
 
   <para>
-   This chapter describes how to write trigger functions.  In
-   particular, it describes the C-language interface for trigger
-   functions.  The trigger interfaces in most procedural languages
-   work analogously.  (Trigger functions cannot be written in SQL.)
-  </para>
-
-  <para>
-   A trigger function can execute before or after a
-   <command>INSERT</command>, <command>UPDATE</command>, or
-   <command>DELETE</command>, either once per modified row, or once
-   per <acronym>SQL</acronym> statement.
+   This chapter describes how to write trigger functions.  Trigger
+   functions can be written in C or in some of the available procedural
+   languages.  It is not currently possible to write a SQL-language
+   trigger function.
   </para>
 
   <sect1 id="trigger-definition">
-   <title>Trigger Definition</title>
+   <title>Overview of Trigger Behavior</title>
 
    <para>
-    If a trigger event occurs, the trigger manager is called by the
-    executor.  It sets up an information structure of type
-    <structname>TriggerData</> (described below) and calls the trigger
-    function to handle the event.
+    A trigger can be defined to execute before or after an
+    <command>INSERT</command>, <command>UPDATE</command>, or
+    <command>DELETE</command> operation, either once per modified row,
+    or once per <acronym>SQL</acronym> statement.
+    If a trigger event occurs, the trigger's function is called
+    at the appropriate time to handle the event.
    </para>
 
    <para>
     The trigger function must be defined before the trigger itself can be
     created.  The trigger function must be declared as a 
     function taking no arguments and returning type <literal>trigger</>.
-    (The trigger function receives its input through a <structname>TriggerData</>
-    structure, not in the form of ordinary function arguments.)
-    If the function is written in C, it must use the <quote>version 1</>
-    function manager interface.
+    (The trigger function receives its input through a specially-passed
+    <structname>TriggerData</> structure, not in the form of ordinary function
+    arguments.)
    </para>
 
    <para>
-    The syntax for creating triggers is described in
+    Once a suitable trigger function has been created, the trigger is
+    established with
     <xref linkend="sql-createtrigger" endterm="sql-createtrigger-title">.
+    The same trigger function can be used for multiple triggers.
    </para>
 
    <para>
-    Trigger functions return a value of type <structname>HeapTuple</>,
-    which represents a table row, to the calling executor.  The return
-    value is ignored for triggers fired after an operation, but a
-    triggers fired before an operation has the following choices:
+    Trigger functions return a table row (a value of type
+    <structname>HeapTuple</>) to the calling executor.
+    A trigger fired before an operation has the following choices:
 
     <itemizedlist>
      <listitem>
@@ -75,13 +70,19 @@ $Header: /cvsroot/pgsql/doc/src/sgml/trigger.sgml,v 1.30 2003/08/31 17:32:20 pet
     </itemizedlist>
 
     A before trigger that does not intend to cause either of these
-    behaviors must be careful to return the same row that was passed
-    in as the new row (see below).
+    behaviors must be careful to return as its result the same row that was
+    passed in.
+   </para>
+
+   <para>
+    The return
+    value is ignored for triggers fired after an operation, and so
+    they may as well return <symbol>NULL</>.
    </para>
 
    <para>
     If more than one trigger is defined for the same event on the same
-    relation, the triggers will be fired in alphabetical order by
+    relation, the triggers will be fired in alphabetical order by trigger
     name.  In the case of before triggers, the possibly-modified row
     returned by each trigger becomes the input to the next trigger.
     If any before trigger returns a <symbol>NULL</> pointer, the
@@ -89,7 +90,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/trigger.sgml,v 1.30 2003/08/31 17:32:20 pet
    </para>
 
    <para>
-    If a trigger function executes SQL commands (using SPI) then these
+    If a trigger function executes SQL commands then these
     commands may fire triggers again. This is known as cascading
     triggers.  There is no direct limitation on the number of cascade
     levels.  It is possible for cascades to cause a recursive invocation
@@ -120,10 +121,57 @@ $Header: /cvsroot/pgsql/doc/src/sgml/trigger.sgml,v 1.30 2003/08/31 17:32:20 pet
 
   </sect1>
 
-  <sect1 id="trigger-manager">
-   <title>Interaction with the Trigger Manager</title>
+  <sect1 id="trigger-datachanges">
+   <title>Visibility of Data Changes</title>
 
-   <indexterm zone="trigger-manager">
+   <para>
+    If you execute SQL commands in your trigger function, and these
+    commands access the table that the trigger is for, then
+    you need to be aware of the data visibility rules, because they determine
+    whether these SQL commands will see the data change that the trigger
+    is fired for.  Briefly:
+
+    <itemizedlist>
+     <listitem>
+      <para>
+       The data change (insertion, update, or deletion) causing the trigger
+       to fire is naturally
+       <emphasis>not</emphasis> visible to SQL commands executed in a
+       before trigger, because it hasn't happened yet.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       However, SQL commands executed in a before trigger
+       <emphasis>will</emphasis> see the effects of data changes
+       for rows previously processed in the same outer command.  This
+       requires caution, since the ordering of these change events
+       is not in general predictable; a SQL command that affects
+       multiple rows may visit the rows in any order.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       When an after trigger is fired, all data changes made by the outer
+       command are already complete, and are visible to executed SQL commands.
+      </para>
+     </listitem>
+    </itemizedlist>
+   </para>
+
+   <para>
+    Further information about data visibility rules can be found in
+    <xref linkend="spi-visibility">.  The example in <xref
+    linkend="trigger-example"> contains a demonstration of these rules.
+   </para>
+  </sect1>
+
+  <sect1 id="trigger-interface">
+   <title>Writing Trigger Functions in C</title>
+
+   <indexterm zone="trigger-interface">
     <primary>trigger</primary>
     <secondary>in C</secondary>
    </indexterm>
@@ -132,7 +180,14 @@ $Header: /cvsroot/pgsql/doc/src/sgml/trigger.sgml,v 1.30 2003/08/31 17:32:20 pet
     This section describes the low-level details of the interface to a
     trigger function.  This information is only needed when writing a
     trigger function in C.  If you are using a higher-level
-    language then these details are handled for you.
+    language then these details are handled for you.  The documentation
+    of each procedural language explains how to write a trigger in that
+    language.
+   </para>
+
+   <para>
+    Trigger functions must use the <quote>version 1</> function manager
+    interface.
    </para>
 
    <para>
@@ -342,49 +397,12 @@ typedef struct Trigger
      </varlistentry>
     </variablelist>
    </para>
-  </sect1>
-
-  <sect1 id="trigger-datachanges">
-   <title>Visibility of Data Changes</title>
 
    <para>
-    If you are using the SPI interface to execute SQL commands in your
-    trigger functions written in C (or you are using a different
-    language and execute SQL commands in some way, which internally
-    goes through SPI as well), be sure to read <xref
-    linkend="spi-visibility"> so that you know which data is visible
-    at which point during the execution of a trigger.  For triggers,
-    the most important consequences of the data visibility rules are:
-
-    <itemizedlist>
-     <listitem>
-      <para>
-       The row being inserted (<structfield>tg_trigtuple</>) is
-       <emphasis>not</emphasis> visible to SQL commands executed in a
-       before trigger.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       The row being inserted (<structfield>tg_trigtuple</>)
-       <emphasis>is</emphasis> visible to SQL commands executed in an
-       after trigger (because it was just inserted).
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       A just-inserted row is visible to all SQL commands executed
-       within any trigger that is fired later in the execution of the
-       outer command (e.g., for the next row).
-      </para>
-     </listitem>
-    </itemizedlist>
-   </para>
-
-   <para>
-    The next section contains a demonstration of these rules applied.
+    A trigger function must return either <symbol>NULL</> or a
+    <structname>HeapTuple</> pointer.  Be careful to return either
+    <structfield>tg_trigtuple</> or <structfield>tg_newtuple</>,
+    as appropriate, if you don't want to modify the row being operated on.
    </para>
   </sect1>
 
@@ -393,6 +411,11 @@ typedef struct Trigger
 
    <para>
     Here is a very simple example of a trigger function written in C.
+    (Examples of triggers written in procedural languages may be found
+    in the documentation of the procedural languages.)
+   </para>
+
+   <para>
     The function <function>trigf</> reports the number of rows in the
     table <literal>ttest</> and skips the actual operation if the
     command attempts to insert a null value into the column

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/spi.sgml,v 1.27 2003/08/31 17:32:20 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/spi.sgml,v 1.28 2003/10/22 22:28:10 tgl Exp $
 -->
 
 <chapter id="spi">
@@ -11,18 +11,28 @@ $Header: /cvsroot/pgsql/doc/src/sgml/spi.sgml,v 1.27 2003/08/31 17:32:20 petere 
 
  <para>
   The <firstterm>Server Programming Interface</firstterm>
-  (<acronym>SPI</acronym>) gives users the ability to run
-  <acronym>SQL</acronym> commands inside user-defined
-  <acronym>C</acronym> functions.  <acronym>SPI</acronym> is a set of
+  (<acronym>SPI</acronym>) gives writers of user-defined
+  <acronym>C</acronym> functions the ability to run
+  <acronym>SQL</acronym> commands inside their functions.
+  <acronym>SPI</acronym> is a set of
   interface functions to simplify access to the parser, planner,
   optimizer, and executor. <acronym>SPI</acronym> also does some
   memory management.
  </para>
 
+ <note>
+  <para>
+   The available procedural languages provide various means to
+   execute SQL commands from procedures.  Some of these are based on or
+   modelled after SPI, so this documentation might be of use for users
+   of those languages as well.
+  </para>
+ </note>
+
  <para>
   To avoid misunderstanding we'll use the term <quote>function</quote>
   when we speak of <acronym>SPI</acronym> interface functions and
-  <quote>procedure</quote> for user-defined C-functions, which may be
+  <quote>procedure</quote> for a user-defined C-function that is
   using <acronym>SPI</acronym>.
  </para>
 
@@ -49,15 +59,6 @@ $Header: /cvsroot/pgsql/doc/src/sgml/spi.sgml,v 1.27 2003/08/31 17:32:20 petere 
   Source code files that use SPI must include the header file
   <filename>executor/spi.h</filename>.
  </para>
-
- <note>
-  <para>
-   The available procedural languages provide different means to
-   execute SQL commands from procedures.  Some of these are modelled
-   after SPI, so this documentation might be of use for those users as
-   well.
-  </para>
- </note>
 
 
 <sect1 id="spi-interface">
