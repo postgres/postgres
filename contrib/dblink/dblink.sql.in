@@ -29,10 +29,12 @@ CREATE OR REPLACE FUNCTION dblink_close (text) RETURNS text
   AS 'MODULE_PATHNAME','dblink_close' LANGUAGE 'c'
   WITH (isstrict);
 
--- Note: if this is a first time install of dblink, the following DROP
--- FUNCTION line is expected to fail.
--- Comment out the following 4 lines if the DEPRECATED functions are used.
-DROP FUNCTION dblink (text,text);
+-- Note: if this is not a first time install of dblink, uncomment the
+-- following DROP which prepares the database for the new, non-deprecated
+-- version.
+--DROP FUNCTION dblink (text,text);
+
+-- Comment out the following 3 lines if the DEPRECATED functions are used.
 CREATE OR REPLACE FUNCTION dblink (text,text) RETURNS setof record
   AS 'MODULE_PATHNAME','dblink_record' LANGUAGE 'c'
   WITH (isstrict);
@@ -69,3 +71,19 @@ CREATE OR REPLACE FUNCTION dblink_build_sql_update (text, int2vector, int2, _tex
 
 CREATE OR REPLACE FUNCTION dblink_current_query () RETURNS text
   AS 'MODULE_PATHNAME','dblink_current_query' LANGUAGE 'c';
+
+GRANT EXECUTE ON FUNCTION dblink_connect (text) TO PUBLIC;
+GRANT EXECUTE ON FUNCTION dblink_disconnect () TO PUBLIC;
+GRANT EXECUTE ON FUNCTION dblink_open (text,text) TO PUBLIC;
+GRANT EXECUTE ON FUNCTION dblink_fetch (text,int) TO PUBLIC;
+GRANT EXECUTE ON FUNCTION dblink_close (text) TO PUBLIC;
+GRANT EXECUTE ON FUNCTION dblink (text,text) TO PUBLIC;
+GRANT EXECUTE ON FUNCTION dblink (text) TO PUBLIC;
+GRANT EXECUTE ON FUNCTION dblink_exec (text,text) TO PUBLIC;
+GRANT EXECUTE ON FUNCTION dblink_exec (text) TO PUBLIC;
+GRANT EXECUTE ON FUNCTION dblink_get_pkey (text) TO PUBLIC;
+GRANT EXECUTE ON FUNCTION dblink_build_sql_insert (text, int2vector, int2, _text, _text) TO PUBLIC;
+GRANT EXECUTE ON FUNCTION dblink_build_sql_delete (text, int2vector, int2, _text) TO PUBLIC;
+GRANT EXECUTE ON FUNCTION dblink_build_sql_update (text, int2vector, int2, _text, _text) TO PUBLIC;
+GRANT EXECUTE ON FUNCTION dblink_current_query () TO PUBLIC;
+
