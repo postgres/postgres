@@ -314,6 +314,15 @@ The runtime path is /usr/local/pgsql (other paths are possible).
       </Para>
 
       <Para>
+       Some of the queries in the "timestamp" test will fail if you run
+       the test on the day of a daylight-savings time changeover, or the
+       day before or after one.  These queries assume that the intervals
+       between midnight yesterday, midnight today and midnight tomorrow are
+       exactly twenty-four hours ... which is wrong if daylight-savings time
+       went into or out of effect meanwhile.
+      </Para>
+
+      <Para>
   There appear to be some systems which do not accept the recommended syntax
   for explicitly setting the local time zone rules; you may need to use
   a different PGTZ setting on such machines.
