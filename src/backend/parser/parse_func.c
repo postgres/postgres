@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.35 1998/12/15 12:46:14 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.36 1998/12/23 14:38:40 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -225,7 +225,7 @@ agg_select_candidate(Oid typeid, CandidateList candidates)
 			}
 		}
 		/* otherwise, don't bother keeping this one around... */
-		else
+		else if (last_candidate != NULL)
 		{
 			last_candidate->next = NULL;
 		}
@@ -399,8 +399,8 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 				}
 				else
 				{
-					elog(ERROR,"Unable to select an aggregate function for type '%s'",
-						 typeidTypeName(basetype));
+					elog(ERROR,"Unable to select an aggregate function %s(%s)",
+						 funcname, typeidTypeName(basetype));
 				}
 			}
 
