@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: analyze.c,v 1.100 1999/02/21 03:48:59 scrappy Exp $
+ *  $Id: analyze.c,v 1.101 1999/02/23 07:44:44 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -240,12 +240,12 @@ transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt)
 	qry->commandType = CMD_DELETE;
 
 	/* set up a range table */
-	makeRangeTable(pstate, stmt->relname, NULL);
+	makeRangeTable(pstate, stmt->relname, NULL, NULL);
 
 	qry->uniqueFlag = NULL;
 
 	/* fix where clause */
-	qry->qual = transformWhereClause(pstate, stmt->whereClause);
+	qry->qual = transformWhereClause(pstate, stmt->whereClause, NULL);
 	qry->hasSubLinks = pstate->p_hasSubLinks;
 
 	qry->rtable = pstate->p_rtable;
@@ -272,7 +272,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	pstate->p_is_insert = true;
 
 	/* set up a range table */
-	makeRangeTable(pstate, stmt->relname, stmt->fromClause);
+	makeRangeTable(pstate, stmt->relname, stmt->fromClause, NULL);
 
 	qry->uniqueFlag = stmt->unique;
 
@@ -360,7 +360,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	}
 
 	/* fix where clause */
-	qry->qual = transformWhereClause(pstate, stmt->whereClause);
+	qry->qual = transformWhereClause(pstate, stmt->whereClause, NULL);
 
 	/*
 	 * The havingQual has a similar meaning as "qual" in the where
@@ -368,7 +368,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	 * with some additional traversals done in
 	 * .../optimizer/plan/planner.c
 	 */
-	qry->havingQual = transformWhereClause(pstate, stmt->havingClause);
+	qry->havingQual = transformWhereClause(pstate, stmt->havingClause, NULL);
 
 	qry->hasSubLinks = pstate->p_hasSubLinks;
 
@@ -553,6 +553,10 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 					CreateSeqStmt *sequence;
 
 					sname = makeTableName(stmt->relname, column->colname, "seq", NULL);
+					if (sname == NULL)
+						elog(ERROR, "CREATE TABLE/SERIAL implicit sequence name must be less than %d characters"
+							 "\n\tSum of lengths of '%s' and '%s' must be less than %d",
+							 NAMEDATALEN, stmt->relname, column->colname, (NAMEDATALEN-5));
 
 					constraint = makeNode(Constraint);
 					constraint->contype = CONSTR_DEFAULT;
@@ -581,6 +585,10 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 						constraint = makeNode(Constraint);
 						constraint->contype = CONSTR_UNIQUE;
 						constraint->name = makeTableName(stmt->relname, column->colname, "key", NULL);
+						if (constraint->name == NULL)
+							elog(ERROR, "CREATE TABLE/SERIAL implicit index name must be less than %d characters"
+								 "\n\tSum of lengths of '%s' and '%s' must be less than %d",
+								 NAMEDATALEN, stmt->relname, column->colname, (NAMEDATALEN-5));
 						column->constraints = lappend(column->constraints, constraint);
 					}
 
@@ -602,6 +610,16 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 						constraint = lfirst(clist);
 						switch (constraint->contype)
 						{
+							case CONSTR_NULL:
+								/* We should mark this explicitly,
+								 * so we can tell if NULL and NOT NULL are both specified
+								 */
+								if (column->is_not_null)
+									elog(ERROR, "CREATE TABLE/(NOT) NULL conflicting declaration"
+										 " for %s.%s", stmt->relname, column->colname);
+								column->is_not_null = FALSE;
+								break;
+
 							case CONSTR_NOTNULL:
 								if (column->is_not_null)
 									elog(ERROR, "CREATE TABLE/NOT NULL already specified"
@@ -619,6 +637,10 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 							case CONSTR_PRIMARY:
 								if (constraint->name == NULL)
 									constraint->name = makeTableName(stmt->relname, "pkey", NULL);
+								if (constraint->name == NULL)
+									elog(ERROR, "CREATE TABLE/PRIMARY KEY implicit index name must be less than %d characters"
+										 "\n\tLength of '%s' must be less than %d",
+										 NAMEDATALEN, stmt->relname, (NAMEDATALEN-6));
 								if (constraint->keys == NIL)
 									constraint->keys = lappend(constraint->keys, column);
 								dlist = lappend(dlist, constraint);
@@ -627,6 +649,10 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 							case CONSTR_UNIQUE:
 								if (constraint->name == NULL)
 									constraint->name = makeTableName(stmt->relname, column->colname, "key", NULL);
+								if (constraint->name == NULL)
+									elog(ERROR, "CREATE TABLE/UNIQUE implicit index name must be less than %d characters"
+										 "\n\tLength of '%s' must be less than %d",
+										 NAMEDATALEN, stmt->relname, (NAMEDATALEN-5));
 								if (constraint->keys == NIL)
 									constraint->keys = lappend(constraint->keys, column);
 								dlist = lappend(dlist, constraint);
@@ -636,6 +662,10 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 								constraints = lappend(constraints, constraint);
 								if (constraint->name == NULL)
 									constraint->name = makeTableName(stmt->relname, column->colname, NULL);
+								if (constraint->name == NULL)
+									elog(ERROR, "CREATE TABLE/CHECK implicit constraint name must be less than %d characters"
+										 "\n\tSum of lengths of '%s' and '%s' must be less than %d",
+										 NAMEDATALEN, stmt->relname, column->colname, (NAMEDATALEN-1));
 								break;
 
 							default:
@@ -654,6 +684,10 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 					case CONSTR_PRIMARY:
 						if (constraint->name == NULL)
 							constraint->name = makeTableName(stmt->relname, "pkey", NULL);
+						if (constraint->name == NULL)
+							elog(ERROR, "CREATE TABLE/PRIMARY KEY implicit index name must be less than %d characters"
+								 "\n\tLength of '%s' must be less than %d",
+								 NAMEDATALEN, stmt->relname, (NAMEDATALEN-5));
 						dlist = lappend(dlist, constraint);
 						break;
 
@@ -695,7 +729,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
  *
  * Note that this code does not currently look for all possible redundant cases
  *	and either ignore or stop with warning. The create might fail later when
- *	names for indices turn out to be redundant, or a user might have specified
+ *	names for indices turn out to be duplicated, or a user might have specified
  *	extra useless indices which might hurt performance. - thomas 1997-12-08
  */
 	while (dlist != NIL)
@@ -728,6 +762,10 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 
 			have_pkey = TRUE;
 			index->idxname = makeTableName(stmt->relname, "pkey", NULL);
+			if (index->idxname == NULL)
+				elog(ERROR, "CREATE TABLE/PRIMARY KEY implicit index name must be less than %d characters"
+					 "\n\tLength of '%s' must be less than %d",
+					 NAMEDATALEN, stmt->relname, (NAMEDATALEN-5));
 		}
 		else
 			index->idxname = NULL;
@@ -803,7 +841,7 @@ transformIndexStmt(ParseState *pstate, IndexStmt *stmt)
 	qry->commandType = CMD_UTILITY;
 
 	/* take care of the where clause */
-	stmt->whereClause = transformWhereClause(pstate, stmt->whereClause);
+	stmt->whereClause = transformWhereClause(pstate, stmt->whereClause, NULL);
 	qry->hasSubLinks = pstate->p_hasSubLinks;
 
 	stmt->rangetable = pstate->p_rtable;
@@ -827,7 +865,7 @@ transformExtendStmt(ParseState *pstate, ExtendStmt *stmt)
 	qry->commandType = CMD_UTILITY;
 
 	/* take care of the where clause */
-	stmt->whereClause = transformWhereClause(pstate, stmt->whereClause);
+	stmt->whereClause = transformWhereClause(pstate, stmt->whereClause, NULL);
 	qry->hasSubLinks = pstate->p_hasSubLinks;
 
 	stmt->rangetable = pstate->p_rtable;
@@ -902,7 +940,7 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt)
 	}
 
 	/* take care of the where clause */
-	stmt->whereClause = transformWhereClause(pstate, stmt->whereClause);
+	stmt->whereClause = transformWhereClause(pstate, stmt->whereClause, NULL);
 	qry->hasSubLinks = pstate->p_hasSubLinks;
 
 	qry->utilityStmt = (Node *) stmt;
@@ -919,11 +957,12 @@ static Query *
 transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 {
 	Query	   *qry = makeNode(Query);
+	Node	   *qual;
 
 	qry->commandType = CMD_SELECT;
 
 	/* set up a range table */
-	makeRangeTable(pstate, NULL, stmt->fromClause);
+	makeRangeTable(pstate, NULL, stmt->fromClause, &qual);
 
 	qry->uniqueFlag = stmt->unique;
 
@@ -933,14 +972,14 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 
 	qry->targetList = transformTargetList(pstate, stmt->targetList);
 
-	qry->qual = transformWhereClause(pstate, stmt->whereClause);
+	qry->qual = transformWhereClause(pstate, stmt->whereClause, qual);
 
 	/*
 	 * The havingQual has a similar meaning as "qual" in the where
 	 * statement. So we can easily use the code from the "where clause"
 	 * with some additional traversals done in optimizer/plan/planner.c
 	 */
-	qry->havingQual = transformWhereClause(pstate, stmt->havingClause);
+	qry->havingQual = transformWhereClause(pstate, stmt->havingClause, NULL);
 
 	qry->hasSubLinks = pstate->p_hasSubLinks;
 
@@ -1006,11 +1045,11 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 	 * the FROM clause is non-standard SQL syntax. We used to be able to
 	 * do this with REPLACE in POSTQUEL so we keep the feature.
 	 */
-	makeRangeTable(pstate, stmt->relname, stmt->fromClause);
+	makeRangeTable(pstate, stmt->relname, stmt->fromClause, NULL);
 
 	qry->targetList = transformTargetList(pstate, stmt->targetList);
 
-	qry->qual = transformWhereClause(pstate, stmt->whereClause);
+	qry->qual = transformWhereClause(pstate, stmt->whereClause, NULL);
 	qry->hasSubLinks = pstate->p_hasSubLinks;
 
 	qry->rtable = pstate->p_rtable;
