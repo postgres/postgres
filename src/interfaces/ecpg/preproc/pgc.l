@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.107 2003/05/01 17:16:57 meskes Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.108 2003/05/19 07:19:57 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -905,7 +905,7 @@ cppline			{space}*#(.*\\{space})+.*
 
 <xskip>{other}		{ /* ignore */ }
 
-<xcond>{identifier}{space}*";" {
+<xcond>{identifier}{space}* {
 						if ( preproc_tos >= MAX_NESTED_IF-1 ) {
 							mmerror(PARSE_ERROR, ET_FATAL, "Too many nested 'EXEC SQL IFDEF' conditions");
 						}
