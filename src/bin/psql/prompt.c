@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/prompt.c,v 1.23 2003/03/20 06:43:35 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/prompt.c,v 1.24 2003/03/20 15:39:53 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "prompt.h"
@@ -171,7 +171,7 @@ get_prompt(promptStatus_t status)
 				case '7':
 				case '8':
 				case '9':
-					*buf = parse_char(&p);
+					*buf = parse_char((char **)&p);
 						break;
 
 				case 'R':
