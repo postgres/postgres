@@ -276,14 +276,21 @@ PostgreSQL:
                           listens for incoming connections on.  The
                           default for this is port 5432.
 
-       --with-defaults    Use default responses to several queries during
-                          configuration.
-
        --with-tcl         Enables programs requiring Tcl/Tk and X11,
                           including pgtclsh and libpgtcl.
 
        --with-perl        Enables the perl interface.  Note that this
                           requires an installed version of postgreSQL.
+
+       --with-includes=DIRS
+                          Include DIRS in list of directories searched
+                          for header files.  (Typical use will need
+                          --with-includes=/usr/local/include)
+
+       --with-libraries=DIRS
+                          Include DIRS in list of directories searched
+                          for archive libraries.  (Typical use will need
+                          --with-libraries=/usr/local/lib)
 
      As an example, here is the configure script I use on a Sparc
      Solaris 2.5 system with /opt/postgres being the install base.

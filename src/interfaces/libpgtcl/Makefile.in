@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile.in,v 1.5 1998/03/23 06:03:04 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile.in,v 1.6 1998/04/05 20:28:23 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -31,12 +31,14 @@ endif
 install-shlib-dep :=
 shlib             := 
 
+LIBPQ			= -L $(SRCDIR)/interfaces/libpq -lpq
+
 ifeq ($(PORTNAME), linux)
   ifdef LINUX_ELF
     install-shlib-dep	:= install-shlib
     shlib		:= libpgtcl.so.1
     CFLAGS		+= $(CFLAGS_SL)
-    LDFLAGS_SL		= -shared -L$(SRCDIR)/interfaces/libpq -lpq
+    LDFLAGS_SL		= -shared
   endif
 endif
 
@@ -52,14 +54,14 @@ endif
 ifeq ($(PORTNAME), i386_solaris)
   install-shlib-dep	:= install-shlib
   shlib			:= libpgtcl.so.1
-  LDFLAGS_SL		= -G -z text -L$(SRCDIR)/interfaces/libpq -lpq
+  LDFLAGS_SL		= -G -z text
   CFLAGS		+= $(CFLAGS_SL)
 endif
 
 ifeq ($(PORTNAME), univel)
   install-shlib-dep	:= install-shlib
   shlib			:= libpgtcl.so.1
-  LDFLAGS_SL		= -G -z text -L$(SRCDIR)/interfaces/libpq -lpq
+  LDFLAGS_SL		= -G -z text
   CFLAGS		+= $(CFLAGS_SL)
 endif
 
@@ -77,7 +79,7 @@ endif
 	$(RANLIB) libpgtcl.a
 
 $(shlib): $(OBJS)
-	$(LD) $(LDFLAGS_SL) -o $@ $(OBJS) 
+	$(LD) $(LDFLAGS_SL) -o $@ $(OBJS) $(LIBPQ)
 	ln -sf $@ libpgtcl.so
 
 .PHONY: beforeinstall-headers install-headers

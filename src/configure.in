@@ -141,62 +141,47 @@ CC=`grep '^CC:' $TEMPLATE | awk -F: '{print $2}'`
 LIBS=`grep '^LIBS:' $TEMPLATE | awk -F: '{print $2}'`
 
 
-dnl We now need to check for additional directories (include
-dnl and library directories.
-echo "**************************************************************"
-echo "We now need to know if your compiler needs to search any
-echo "additional directories for include or library files.  If
-echo "you don't know the answers to these questions, then just
-echo "hit enter and we will try and figure it out.  If things
-echo "don't compile because of missing libraries or include
-echo "files, then you probably need to enter something here.
-echo "enter 'none' or new directories to override default"
-echo ""
-$ECHO_N "Additional directories to search for include files { $SRCH_INC }: $ECHO_C"
-if test "X$with_defaults" = "Xyes"
-then
-	a=$SRCH_INC
-	echo ""
-else
-	read a
-fi
-if test "$a." = "none." 
-then
-	SRCH_INC=
-	CPPFLAGS=
-else
-	if test "$a." = "."
-	then
-		a=$SRCH_INC
-	fi
-	CPPFLAGS=`echo "$a" | sed 's@  *@ @g; s@^\([[^ ]]\)@-I\1@; s@ \([[^ ]]\)@ -I\1@g'`
+AC_ARG_WITH(includes,
+    [  --with-includes=DIR    site header files for tk/tcl, etc in DIR],
+    [
+	case "$withval" in
+	"" | y | ye | yes | n | no)
+	    AC_MSG_ERROR([*** You must supply an argument to the --with-includes option.])
+	  ;;
+	esac
+	INCLUDE_DIRS="$withval"
+    ])
 
+if test "$INCLUDE_DIRS"; then
+	for dir in $INCLUDE_DIRS; do
+	    if test -d "$dir"; then
+		PGSQL_CPPFLAGS="$PGSQL_CPPFLAGS -I$dir"
+	    else
+		AC_MSG_WARN([*** Include directory $dir does not exist.])
+	    fi
+	done
 fi
-export CPPFLAGS
-echo "- setting CPPFLAGS=$CPPFLAGS"
 
-$ECHO_N "Additional directories to search for library files { $SRCH_LIB }: $ECHO_C"
-if test "X$with_defaults" = "Xyes"
-then
-	a=$SRCH_LIB
-	echo ""
-else
-	read a
-fi
-if test "$a." = "none."
-then
-	SRCH_LIB=
-	LDFLAGS=
-else
-	if test "$a." = "."
-	then
-		a=$SRCH_LIB
-	fi
-	LDFLAGS=`echo "$a" | sed 's@  *@ @g; s@^\([[^ ]]\)@-L\1@; s@ \([[^ ]]\)@ -L\1@g'`
+AC_ARG_WITH(libraries,
+    [  --with-libraries=DIR   site library directories for tk/tcl, etc in DIR],
+    [
+	case "$withval" in
+	"" | y | ye | yes | n | no)
+	    AC_MSG_ERROR([*** You must supply an argument to the --with-libraries option.])
+	  ;;
+	esac
+	LIBRARY_DIRS="$withval"
+    ])
 
+if test "$LIBRARY_DIRS"; then
+	for dir in $withval; do
+	    if test -d "$dir"; then
+		PGSQL_LDFLAGS="$PGSQL_LDFLAGS -L$dir"
+	    else
+		AC_MSG_WARN([*** Library directory $dir does not exist.])
+	    fi
+	done
 fi
-export LDFLAGS
-echo "- setting LDFLAGS=$LDFLAGS"
 
 dnl We have read the default value of USE_LOCALE from the template 
 dnl file.  We have a further option of using 
@@ -242,6 +227,27 @@ AC_ARG_WITH(
    USE_TCL=true; AC_MSG_RESULT(enabled),
    USE_TCL=false; AC_MSG_RESULT(disabled)
 )
+
+dnl Add tcl/tk candidate directories to CPPFLAGS
+if test "$USE_TCL"; then
+	header_dirs="/usr/include $INCLUDE_DIRS"
+	tcl_dirs="tcl8.0 tcl80 tcl7.6 tcl76"
+	tk_dirs="tk8.0 tk4.2"
+	for dir in $header_dirs; do
+	    for tcl_dir in $tcl_dirs; do
+		if test -d "$dir/$tcl_dir"; then
+		    PGSQL_CPPFLAGS="$PGSQL_CPPFLAGS -I$dir/$tcl_dir"
+		fi
+	    done
+	done
+	for dir in $header_dirs; do
+	    for tk_dir in $tk_dirs; do
+		if test -d "$dir/$tk_dir"; then
+		    PGSQL_CPPFLAGS="$PGSQL_CPPFLAGS -I$dir/$tk_dir"
+		fi
+	    done
+	done
+fi
 export USE_TCL
 USE_X=$USE_TCL
 
@@ -253,6 +259,15 @@ AC_ARG_WITH(
    USE_PERL=true; AC_MSG_RESULT(enabled),
    USE_PERL=false; AC_MSG_RESULT(disabled)
 )
+
+dnl Verify that postgres is already installed
+dnl per instructions for perl interface installation
+if test "$USE_PERL" = "true"; then
+	if test ! -x $prefix/bin/postgres; then
+	    AC_MSG_WARN(perl support disabled; postgres not previously installed)
+	    USE_PERL=
+	fi
+fi
 export USE_PERL
 
 dnl Unless we specify the command line options
@@ -276,6 +291,13 @@ else
         AC_PROG_CC
 fi
 
+CPPFLAGS="$CPPFLAGS $PGSQL_CPPFLAGS"
+export CPPFLAGS
+echo "- setting CPPFLAGS=$CPPFLAGS"
+
+LDFLAGS="$LDFLAGS $PGSQL_LDFLAGS"
+export LDFLAGS
+echo "- setting LDFLAGS=$LDFLAGS"
 
 AC_CONFIG_HEADER(include/config.h)
 
@@ -577,17 +599,21 @@ fi
 fi
 
 dnl Check for Tcl archive
-if test "$USE_TCL" = "true"
-then
-TCL_LIB=
-AC_CHECK_LIB(tcl, main, TCL_LIB=tcl)
-if test -z "$TCL_LIB"; then
-AC_MSG_WARN(tcl support disabled; Tcl library missing)
-USE_TCL=
-else
-TCL_LIB=-l$TCL_LIB
-fi
-AC_SUBST(TCL_LIB)
+if test "$USE_TCL" = "true"; then
+	TCL_LIB=
+	tcl_libs="tcl8.0 tcl80 tcl7.6 tcl76 tcl"
+	for tcl_lib in $tcl_libs; do
+	    if test -z "$TCL_LIB"; then
+		AC_CHECK_LIB($tcl_lib, main, TCL_LIB=$tcl_lib)
+	    fi
+	done
+	if test -z "$TCL_LIB"; then
+	    AC_MSG_WARN(tcl support disabled; Tcl library missing)
+	    USE_TCL=
+	else
+	    TCL_LIB=-l$TCL_LIB
+	fi
+	AC_SUBST(TCL_LIB)
 fi
 
 dnl Check for location of Tk support (only if Tcl used)
