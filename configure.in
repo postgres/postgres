@@ -649,7 +649,6 @@ fi
 ## Libraries
 ##
 
-AC_CHECK_LIB(sfio,     main)
 PGAC_CHECK_READLINE
 AC_SEARCH_LIBS(using_history, history, [AC_DEFINE(HAVE_HISTORY_FUNCTIONS)])
 
