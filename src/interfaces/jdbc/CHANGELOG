@@ -1,3 +1,39 @@
+Thu Jan 18 17:30:00 GMT 2001 peter@retep.org.uk
+        - Added new error message into errors.properties "postgresql.notsensitive"
+          This is used by jdbc2.ResultSet when a method is called that should
+          fetch the current value of a row from the database refreshRow() for
+          example.
+        - These methods no longer throw the not implemented but the new noupdate
+          error. This is in preparation for the Updateable ResultSet support
+          which will overide these methods by extending the existing class to
+          implement that functionality, but needed to show something other than
+          notimplemented:
+            moveToCurrentRow()
+            moveToInsertRow()
+            rowDeleted()
+            rowInserted()
+            all update*() methods, except those that took the column as a String
+            as they were already implemented to convert the String to an int.
+        - getFetchDirection() and setFetchDirection() now throws
+          "postgresql.notimp" as we only support one direction.
+          The CursorResultSet will overide this when its implemented.
+        - Created a new class under jdbc2 UpdateableResultSet which extends
+          ResultSet and overides the relevent update methods.
+          This allows us to implement them easily at a later date.
+        - In jdbc2.Connection, the following methods are now implemented:
+            createStatement(type,concurrency);
+            getTypeMap();
+            setTypeMap(Map);
+        - The JDBC2 type mapping scheme almost complete, just needs SQLInput &
+          SQLOutput to be implemented.
+        - Removed some Statement methods that somehow appeared in Connection.
+        - In jdbc2.Statement()
+            getResultSetConcurrency()
+            getResultSetType()
+            setResultSetConcurrency()
+            setResultSetType()
+        - Finally removed the old 6.5.x driver.
+
 Thu Jan 18 12:24:00 GMT 2001 peter@retep.org.uk
         - These methods in org.postgresql.jdbc2.ResultSet are now implemented:
             getBigDecimal(int) ie: without a scale (why did this get missed?)

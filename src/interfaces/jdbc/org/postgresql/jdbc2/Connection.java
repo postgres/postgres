@@ -17,7 +17,7 @@ import org.postgresql.largeobject.*;
 import org.postgresql.util.*;
 
 /**
- * $Id: Connection.java,v 1.4 2000/10/09 16:48:18 momjian Exp $
+ * $Id: Connection.java,v 1.5 2001/01/18 17:37:14 peter Exp $
  *
  * A Connection represents a session with a specific database.  Within the
  * context of a Connection, SQL statements are executed and results are
@@ -34,11 +34,13 @@ import org.postgresql.util.*;
  *
  * @see java.sql.Connection
  */
-public class Connection extends org.postgresql.Connection implements java.sql.Connection 
+public class Connection extends org.postgresql.Connection implements java.sql.Connection
 {
   // This is a cache of the DatabaseMetaData instance for this connection
   protected DatabaseMetaData metadata;
-  
+
+  protected java.util.Map typemap;
+
   /**
    * SQL statements without parameters are normally executed using
    * Statement objects.  If the same SQL statement is executed many
@@ -49,9 +51,30 @@ public class Connection extends org.postgresql.Connection implements java.sql.Co
    */
   public java.sql.Statement createStatement() throws SQLException
   {
-    return new Statement(this);
+    // The spec says default of TYPE_FORWARD_ONLY but everyone is used to
+    // using TYPE_SCROLL_INSENSITIVE
+    return createStatement(java.sql.ResultSet.TYPE_SCROLL_INSENSITIVE,java.sql.ResultSet.CONCUR_READ_ONLY);
   }
-  
+
+  /**
+   * SQL statements without parameters are normally executed using
+   * Statement objects.  If the same SQL statement is executed many
+   * times, it is more efficient to use a PreparedStatement
+   *
+   * @param resultSetType to use
+   * @param resultSetCuncurrency to use
+   * @return a new Statement object
+   * @exception SQLException passed through from the constructor
+   */
+  public java.sql.Statement createStatement(int resultSetType,int resultSetConcurrency) throws SQLException
+  {
+    Statement s = new Statement(this);
+    s.setResultSetType(resultSetType);
+    s.setResultSetConcurrency(resultSetConcurrency);
+    return s;
+  }
+
+
   /**
    * A SQL statement with or without IN parameters can be pre-compiled
    * and stored in a PreparedStatement object.  This object can then
@@ -72,9 +95,17 @@ public class Connection extends org.postgresql.Connection implements java.sql.Co
    */
   public java.sql.PreparedStatement prepareStatement(String sql) throws SQLException
   {
-    return new PreparedStatement(this, sql);
+    return prepareStatement(sql,java.sql.ResultSet.TYPE_SCROLL_INSENSITIVE,java.sql.ResultSet.CONCUR_READ_ONLY);
   }
-  
+
+  public java.sql.PreparedStatement prepareStatement(String sql,int resultSetType,int resultSetConcurrency) throws SQLException
+  {
+    PreparedStatement s = new PreparedStatement(this,sql);
+    s.setResultSetType(resultSetType);
+    s.setResultSetConcurrency(resultSetConcurrency);
+    return s;
+  }
+
   /**
    * A SQL stored procedure call statement is handled by creating a
    * CallableStatement for it.  The CallableStatement provides methods
@@ -96,10 +127,19 @@ public class Connection extends org.postgresql.Connection implements java.sql.Co
    */
   public java.sql.CallableStatement prepareCall(String sql) throws SQLException
   {
-    throw new PSQLException("postgresql.con.call");
-    //		return new CallableStatement(this, sql);
+    return prepareCall(sql,java.sql.ResultSet.TYPE_SCROLL_INSENSITIVE,java.sql.ResultSet.CONCUR_READ_ONLY);
   }
-  
+
+  public java.sql.CallableStatement prepareCall(String sql,int resultSetType,int resultSetConcurrency) throws SQLException
+  {
+    throw new PSQLException("postgresql.con.call");
+    //CallableStatement s = new CallableStatement(this,sql);
+    //s.setResultSetType(resultSetType);
+    //s.setResultSetConcurrency(resultSetConcurrency);
+    //return s;
+  }
+
+
   /**
    * A driver may convert the JDBC sql grammar into its system's
    * native SQL grammar prior to sending it; nativeSQL returns the
@@ -114,7 +154,7 @@ public class Connection extends org.postgresql.Connection implements java.sql.Co
   {
     return sql;
   }
-  
+
   /**
    * If a connection is in auto-commit mode, than all its SQL
    * statements will be executed and committed as individual
@@ -143,10 +183,10 @@ public class Connection extends org.postgresql.Connection implements java.sql.Co
       ExecSQL("begin");
     this.autoCommit = autoCommit;
   }
-  
+
   /**
    * gets the current auto-commit state
-   * 
+   *
    * @return Current state of the auto-commit mode
    * @exception SQLException (why?)
    * @see setAutoCommit
@@ -155,7 +195,7 @@ public class Connection extends org.postgresql.Connection implements java.sql.Co
   {
     return this.autoCommit;
   }
-  
+
   /**
    * The method commit() makes all changes made since the previous
    * commit/rollback permanent and releases any database locks currently
@@ -175,11 +215,11 @@ public class Connection extends org.postgresql.Connection implements java.sql.Co
     ExecSQL("begin");
     autoCommit = false;
   }
-  
+
   /**
    * The method rollback() drops all changes made since the previous
    * commit/rollback and releases any database locks currently held by
-   * the Connection. 
+   * the Connection.
    *
    * @exception SQLException if a database access error occurs
    * @see commit
@@ -193,7 +233,7 @@ public class Connection extends org.postgresql.Connection implements java.sql.Co
     ExecSQL("begin");
     autoCommit = false;
   }
-  
+
   /**
    * In some cases, it is desirable to immediately release a Connection's
    * database and JDBC resources instead of waiting for them to be
@@ -216,7 +256,7 @@ public class Connection extends org.postgresql.Connection implements java.sql.Co
 	  pg_stream = null;
       }
   }
-    
+
   /**
    * Tests to see if a Connection is closed
    *
@@ -227,7 +267,7 @@ public class Connection extends org.postgresql.Connection implements java.sql.Co
   {
     return (pg_stream == null);
   }
-  
+
   /**
    * A connection's database is able to provide information describing
    * its tables, its supported SQL grammar, its stored procedures, the
@@ -243,7 +283,7 @@ public class Connection extends org.postgresql.Connection implements java.sql.Co
       metadata = new DatabaseMetaData(this);
     return metadata;
   }
-  
+
   /**
    * You can put a connection in read-only mode as a hunt to enable
    * database optimizations
@@ -258,7 +298,7 @@ public class Connection extends org.postgresql.Connection implements java.sql.Co
   {
     this.readOnly = readOnly;
   }
-  
+
   /**
    * Tests to see if the connection is in Read Only Mode.  Note that
    * we cannot really put the database in read only mode, but we pretend
@@ -271,7 +311,7 @@ public class Connection extends org.postgresql.Connection implements java.sql.Co
   {
     return readOnly;
   }
-  
+
   /**
    * A sub-space of this Connection's database may be selected by
    * setting a catalog name.  If the driver does not support catalogs,
@@ -283,7 +323,7 @@ public class Connection extends org.postgresql.Connection implements java.sql.Co
   {
     // No-op
   }
-  
+
   /**
    * Return the connections current catalog name, or null if no
    * catalog name is set, or we dont support catalogs.
@@ -295,10 +335,10 @@ public class Connection extends org.postgresql.Connection implements java.sql.Co
   {
     return null;
   }
-  
+
   /**
    * You can call this method to try to change the transaction
-   * isolation level using one of the TRANSACTION_* values.  
+   * isolation level using one of the TRANSACTION_* values.
    *
    * <B>Note:</B> setTransactionIsolation cannot be called while
    * in the middle of a transaction
@@ -318,7 +358,7 @@ public class Connection extends org.postgresql.Connection implements java.sql.Co
       case java.sql.Connection.TRANSACTION_READ_COMMITTED:
         ExecSQL(q + " READ COMMITTED");
 	return;
-      
+
       case java.sql.Connection.TRANSACTION_SERIALIZABLE:
         ExecSQL(q + " SERIALIZABLE");
 	return;
@@ -327,27 +367,27 @@ public class Connection extends org.postgresql.Connection implements java.sql.Co
         throw new PSQLException("postgresql.con.isolevel",new Integer(level));
     }
   }
-  
+
   /**
    * Get this Connection's current transaction isolation mode.
-   * 
+   *
    * @return the current TRANSACTION_* mode value
    * @exception SQLException if a database access error occurs
    */
   public int getTransactionIsolation() throws SQLException
   {
       ExecSQL("show xactisolevel");
-      
+
       SQLWarning w = getWarnings();
       if (w != null) {
 	  if (w.getMessage().indexOf("READ COMMITTED") != -1) return java.sql.Connection.TRANSACTION_READ_COMMITTED; else
 	      if (w.getMessage().indexOf("READ UNCOMMITTED") != -1) return java.sql.Connection.TRANSACTION_READ_UNCOMMITTED; else
 		  if (w.getMessage().indexOf("REPEATABLE READ") != -1) return java.sql.Connection.TRANSACTION_REPEATABLE_READ; else
-		      if (w.getMessage().indexOf("SERIALIZABLE") != -1) return java.sql.Connection.TRANSACTION_SERIALIZABLE; 
+		      if (w.getMessage().indexOf("SERIALIZABLE") != -1) return java.sql.Connection.TRANSACTION_SERIALIZABLE;
       }
       return java.sql.Connection.TRANSACTION_READ_COMMITTED;
   }
-    
+
   /**
    * The first warning reported by calls on this Connection is
    * returned.
@@ -362,7 +402,7 @@ public class Connection extends org.postgresql.Connection implements java.sql.Co
   {
     return firstWarning;
   }
-  
+
   /**
    * After this call, getWarnings returns null until a new warning
    * is reported for this connection.
@@ -373,68 +413,61 @@ public class Connection extends org.postgresql.Connection implements java.sql.Co
   {
     firstWarning = null;
   }
-    
+
     /**
      * This overides the method in org.postgresql.Connection and returns a
      * ResultSet.
      */
-    protected java.sql.ResultSet getResultSet(org.postgresql.Connection conn, Field[] fields, Vector tuples, String status, int updateCount, int insertOID) throws SQLException
+    protected java.sql.ResultSet getResultSet(org.postgresql.Connection conn, java.sql.Statement stat,Field[] fields, Vector tuples, String status, int updateCount, int insertOID) throws SQLException
     {
-	return new org.postgresql.jdbc2.ResultSet((org.postgresql.jdbc2.Connection)conn,fields,tuples,status,updateCount,insertOID);
+      // In 7.1 we now test concurrency to see which class to return. If we are not working with a
+      // Statement then default to a normal ResultSet object.
+      if(stat!=null) {
+        if(stat.getResultSetConcurrency()==java.sql.ResultSet.CONCUR_UPDATABLE)
+          return new org.postgresql.jdbc2.UpdateableResultSet((org.postgresql.jdbc2.Connection)conn,fields,tuples,status,updateCount,insertOID);
+      }
+
+      return new org.postgresql.jdbc2.ResultSet((org.postgresql.jdbc2.Connection)conn,fields,tuples,status,updateCount,insertOID);
     }
-    
+
     // *****************
     // JDBC 2 extensions
     // *****************
-    
-    public java.sql.Statement createStatement(int resultSetType,int resultSetConcurrency) throws SQLException
-    {
-	// normal create followed by 2 sets?
-	throw org.postgresql.Driver.notImplemented();
-    }
-    
-    public java.sql.PreparedStatement prepareStatement(String sql,int resultSetType,int resultSetConcurrency) throws SQLException
-    {
-	// normal prepare followed by 2 sets?
-	throw org.postgresql.Driver.notImplemented();
-    }
-    
-    public java.sql.CallableStatement prepareCall(String sql,int resultSetType,int resultSetConcurrency) throws SQLException
-    {
-	// normal prepare followed by 2 sets?
-	throw org.postgresql.Driver.notImplemented();
-    }
-    
-    public int getResultSetConcurrency() throws SQLException
-    {
-	throw org.postgresql.Driver.notImplemented();
-    }
-    
-    public int getResultSetType() throws SQLException
-    {
-	throw org.postgresql.Driver.notImplemented();
-    }
-    
+
     public java.util.Map getTypeMap() throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+      // new in 7.1
+      return typemap;
     }
-    
-    public void setResultSetConcurrency(int value) throws SQLException
-    {
-	throw org.postgresql.Driver.notImplemented();
-    }
-    
-    public void setResultSetType(int type) throws SQLException
-    {
-	throw org.postgresql.Driver.notImplemented();
-    }
-    
+
+
     public void setTypeMap(java.util.Map map) throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+      // new in 7.1
+      typemap=map;
     }
-    
+
+    /**
+     * This overides the standard internal getObject method so that we can
+     * check the jdbc2 type map first
+     *
+     * @return PGobject for this type, and set to value
+     * @exception SQLException if value is not correct for this type
+     * @see org.postgresql.util.Serialize
+     */
+    public Object getObject(String type,String value) throws SQLException
+    {
+      if(typemap!=null) {
+        SQLData d = (SQLData) typemap.get(type);
+        if(d!=null) {
+          // Handle the type (requires SQLInput & SQLOutput classes to be implemented)
+          throw org.postgresql.Driver.notImplemented();
+        }
+      }
+
+      // Default to the original method
+      return super.getObject(type,value);
+    }
 }
 
 // ***********************************************************************

@@ -27,5 +27,6 @@
   <file path="CHANGELOG" />
   <file path="Implementation" />
   <file path="README" />
+  <file path="org/postgresql/jdbc2/UpdateableResultSet.java" />
 </project>
 

@@ -59,6 +59,8 @@ import org.postgresql.util.*;
  */
 public class ResultSet extends org.postgresql.ResultSet implements java.sql.ResultSet
 {
+  protected org.postgresql.jdbc2.Statement statement;
+
   /**
    * Create a new ResultSet - Note that we create ResultSets to
    * represent the results of everything.
@@ -1086,7 +1088,8 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 
     public void insertRow() throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+      // only sub-classes implement CONCUR_UPDATEABLE
+      notUpdateable();
     }
 
     public boolean isAfterLast() throws SQLException
@@ -1120,12 +1123,14 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 
     public void moveToCurrentRow() throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+      // only sub-classes implement CONCUR_UPDATEABLE
+      notUpdateable();
     }
 
     public void moveToInsertRow() throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+      // only sub-classes implement CONCUR_UPDATEABLE
+      notUpdateable();
     }
 
     public boolean previous() throws SQLException
@@ -1138,7 +1143,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 
     public void refreshRow() throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+      throw new PSQLException("postgresql.notsensitive");
     }
 
     // Peter: Implemented in 7.0
@@ -1150,40 +1155,49 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 
     public boolean rowDeleted() throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+      // only sub-classes implement CONCUR_UPDATEABLE
+      notUpdateable();
+      return false; // javac complains about not returning a value!
     }
 
     public boolean rowInserted() throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+      // only sub-classes implement CONCUR_UPDATEABLE
+      notUpdateable();
+      return false; // javac complains about not returning a value!
     }
 
     public boolean rowUpdated() throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+      // only sub-classes implement CONCUR_UPDATEABLE
+      notUpdateable();
+      return false; // javac complains about not returning a value!
     }
 
     public void setFetchDirection(int direction) throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+      // In 7.1, the backend doesn't yet support this
+      throw new PSQLException("postgresql.psqlnotimp");
     }
 
     public void setFetchSize(int rows) throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+      // Sub-classes should implement this as part of their cursor support
+      throw org.postgresql.Driver.notImplemented();
     }
 
-    public void setKeysetSize(int keys) throws SQLException
-    {
-	throw org.postgresql.Driver.notImplemented();
-    }
+    //public void setKeysetSize(int keys) throws SQLException
+    //{
+    //throw org.postgresql.Driver.notImplemented();
+    //}
 
     public void updateAsciiStream(int columnIndex,
 				  java.io.InputStream x,
 				  int length
 				  ) throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+      // only sub-classes implement CONCUR_UPDATEABLE
+      notUpdateable();
     }
 
     public void updateAsciiStream(String columnName,
@@ -1191,21 +1205,22 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 				  int length
 				  ) throws SQLException
     {
-	updateAsciiStream(findColumn(columnName),x,length);
+      updateAsciiStream(findColumn(columnName),x,length);
     }
 
     public void updateBigDecimal(int columnIndex,
 				  java.math.BigDecimal x
 				  ) throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+      // only sub-classes implement CONCUR_UPDATEABLE
+      notUpdateable();
     }
 
     public void updateBigDecimal(String columnName,
 				  java.math.BigDecimal x
 				  ) throws SQLException
     {
-	updateBigDecimal(findColumn(columnName),x);
+      updateBigDecimal(findColumn(columnName),x);
     }
 
     public void updateBinaryStream(int columnIndex,
@@ -1213,7 +1228,8 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 				  int length
 				  ) throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+      // only sub-classes implement CONCUR_UPDATEABLE
+      notUpdateable();
     }
 
     public void updateBinaryStream(String columnName,
@@ -1226,7 +1242,8 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 
     public void updateBoolean(int columnIndex,boolean x) throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+      // only sub-classes implement CONCUR_UPDATEABLE
+      notUpdateable();
     }
 
     public void updateBoolean(String columnName,boolean x) throws SQLException
@@ -1236,7 +1253,8 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 
     public void updateByte(int columnIndex,byte x) throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+      // only sub-classes implement CONCUR_UPDATEABLE
+      notUpdateable();
     }
 
     public void updateByte(String columnName,byte x) throws SQLException
@@ -1251,7 +1269,8 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 
     public void updateBytes(int columnIndex,byte[] x) throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+      // only sub-classes implement CONCUR_UPDATEABLE
+      notUpdateable();
     }
 
     public void updateCharacterStream(int columnIndex,
@@ -1259,7 +1278,8 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 				      int length
 				      ) throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+      // only sub-classes implement CONCUR_UPDATEABLE
+      notUpdateable();
     }
 
     public void updateCharacterStream(String columnName,
@@ -1272,7 +1292,8 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 
     public void updateDate(int columnIndex,java.sql.Date x) throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+      // only sub-classes implement CONCUR_UPDATEABLE
+      notUpdateable();
     }
 
     public void updateDate(String columnName,java.sql.Date x) throws SQLException
@@ -1282,7 +1303,8 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 
     public void updateDouble(int columnIndex,double x) throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+      // only sub-classes implement CONCUR_UPDATEABLE
+      notUpdateable();
     }
 
     public void updateDouble(String columnName,double x) throws SQLException
@@ -1292,7 +1314,8 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 
     public void updateFloat(int columnIndex,float x) throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+      // only sub-classes implement CONCUR_UPDATEABLE
+      notUpdateable();
     }
 
     public void updateFloat(String columnName,float x) throws SQLException
@@ -1302,7 +1325,8 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 
     public void updateInt(int columnIndex,int x) throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+      // only sub-classes implement CONCUR_UPDATEABLE
+      notUpdateable();
     }
 
     public void updateInt(String columnName,int x) throws SQLException
@@ -1312,7 +1336,8 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 
     public void updateLong(int columnIndex,long x) throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+      // only sub-classes implement CONCUR_UPDATEABLE
+      notUpdateable();
     }
 
     public void updateLong(String columnName,long x) throws SQLException
@@ -1322,7 +1347,8 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 
     public void updateNull(int columnIndex) throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+      // only sub-classes implement CONCUR_UPDATEABLE
+      notUpdateable();
     }
 
     public void updateNull(String columnName) throws SQLException
@@ -1332,7 +1358,8 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 
     public void updateObject(int columnIndex,Object x) throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+      // only sub-classes implement CONCUR_UPDATEABLE
+      notUpdateable();
     }
 
     public void updateObject(String columnName,Object x) throws SQLException
@@ -1342,7 +1369,8 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 
     public void updateObject(int columnIndex,Object x,int scale) throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+      // only sub-classes implement CONCUR_UPDATEABLE
+      notUpdateable();
     }
 
     public void updateObject(String columnName,Object x,int scale) throws SQLException
@@ -1352,12 +1380,14 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 
     public void updateRow() throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+      // only sub-classes implement CONCUR_UPDATEABLE
+      notUpdateable();
     }
 
     public void updateShort(int columnIndex,short x) throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+      // only sub-classes implement CONCUR_UPDATEABLE
+      notUpdateable();
     }
 
     public void updateShort(String columnName,short x) throws SQLException
@@ -1367,7 +1397,8 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 
     public void updateString(int columnIndex,String x) throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+      // only sub-classes implement CONCUR_UPDATEABLE
+      notUpdateable();
     }
 
     public void updateString(String columnName,String x) throws SQLException
@@ -1377,7 +1408,8 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 
     public void updateTime(int columnIndex,Time x) throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+      // only sub-classes implement CONCUR_UPDATEABLE
+      notUpdateable();
     }
 
     public void updateTime(String columnName,Time x) throws SQLException
@@ -1387,7 +1419,8 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 
     public void updateTimestamp(int columnIndex,Timestamp x) throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+      // only sub-classes implement CONCUR_UPDATEABLE
+      notUpdateable();
     }
 
     public void updateTimestamp(String columnName,Timestamp x) throws SQLException
@@ -1406,7 +1439,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
      * It's used currently by getStatement() but may also with the new core
      * package.
      */
-    public void setStatement(org.postgresql.Statement statement) {
+    public void setStatement(org.postgresql.jdbc2.Statement statement) {
       this.statement=statement;
     }
 

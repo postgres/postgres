@@ -10,7 +10,7 @@ import org.postgresql.largeobject.*;
 import org.postgresql.util.*;
 
 /**
- * $Id: Connection.java,v 1.12 2001/01/18 14:50:14 peter Exp $
+ * $Id: Connection.java,v 1.13 2001/01/18 17:37:12 peter Exp $
  *
  * This abstract class is used by org.postgresql.Driver to open either the JDBC1 or
  * JDBC2 versions of the Connection class.
@@ -397,6 +397,23 @@ public abstract class Connection
      */
     public java.sql.ResultSet ExecSQL(String sql) throws SQLException
     {
+      return ExecSQL(sql,null);
+    }
+
+    /**
+     * Send a query to the backend.  Returns one of the ResultSet
+     * objects.
+     *
+     * <B>Note:</B> there does not seem to be any method currently
+     * in existance to return the update count.
+     *
+     * @param sql the SQL statement to be executed
+     * @param stat The Statement associated with this query (may be null)
+     * @return a ResultSet holding the results
+     * @exception SQLException if a database error occurs
+     */
+    public java.sql.ResultSet ExecSQL(String sql,java.sql.Statement stat) throws SQLException
+    {
 	// added Oct 7 1998 to give us thread safety.
 	synchronized(pg_stream) {
  	    // Deallocate all resources in the stream associated
@@ -541,7 +558,7 @@ public abstract class Connection
 	    if (final_error != null)
 		throw final_error;
 
-	    return getResultSet(this, fields, tuples, recv_status, update_count, insert_oid);
+	    return getResultSet(this, stat, fields, tuples, recv_status, update_count, insert_oid);
 	}
     }
 
@@ -852,7 +869,7 @@ public abstract class Connection
      * This returns a resultset. It must be overridden, so that the correct
      * version (from jdbc1 or jdbc2) are returned.
      */
-    protected abstract java.sql.ResultSet getResultSet(org.postgresql.Connection conn, Field[] fields, Vector tuples, String status, int updateCount,int insertOID) throws SQLException;
+    protected abstract java.sql.ResultSet getResultSet(org.postgresql.Connection conn,java.sql.Statement stat, Field[] fields, Vector tuples, String status, int updateCount,int insertOID) throws SQLException;
 
     public abstract void close() throws SQLException;
 
