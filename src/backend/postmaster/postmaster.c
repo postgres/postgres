@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.115 1999/07/19 02:27:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.116 1999/09/21 20:58:19 momjian Exp $
  *
  * NOTES
  *
@@ -58,7 +58,9 @@
 #ifdef HAVE_LIMITS_H
 #include <limits.h>
 #else
+#ifdef HAVE_VALUES_H
 #include <values.h>
+#endif
 #endif
 
 #ifdef HAVE_SYS_SELECT_H

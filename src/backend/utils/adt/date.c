@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.37 1999/07/17 20:17:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.38 1999/09/21 20:58:25 momjian Exp $
  *
  * NOTES
  *	 This code is actually (almost) unused.
@@ -34,6 +34,13 @@
 #endif
 #ifdef HAVE_LIMITS_H
 #include <limits.h>
+#ifndef MAXINT
+#define MAXINT		  INT_MAX
+#endif
+#else
+#ifdef HAVE_VALUES_H
+#include <values.h>
+#endif
 #endif
 
 #include "access/xact.h"

@@ -9,13 +9,15 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/_deadcode/Attic/xfunc.c,v 1.9 1999/07/17 20:17:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/_deadcode/Attic/xfunc.c,v 1.10 1999/09/21 20:58:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <math.h>
 
+#ifdef HAVE_VALUES_H
 #include <values.h>
+#endif
 
 #include "postgres.h"
 

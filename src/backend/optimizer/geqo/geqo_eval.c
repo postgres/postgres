@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_eval.c,v 1.43 1999/08/16 02:17:48 tgl Exp $
+ * $Id: geqo_eval.c,v 1.44 1999/09/21 20:58:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,9 @@
 #ifdef HAVE_LIMITS_H
 #include <limits.h>
 #else
+#ifdef HAVE_VALUES_H
 #include <values.h>
+#endif
 #endif
 
 #include "optimizer/cost.h"
