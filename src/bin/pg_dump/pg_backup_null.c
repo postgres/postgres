@@ -17,7 +17,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_null.c,v 1.5 2001/03/22 04:00:13 momjian Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_null.c,v 1.6 2001/03/24 23:11:14 tgl Exp $
  *
  * Modifications - 09-Jul-2000 - pjw@rhyme.com.au
  *
@@ -98,7 +98,7 @@ _EndData(ArchiveHandle *AH, TocEntry *te)
 static void
 _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt)
 {
-	if (*te->dataDumper)
+	if (te->dataDumper)
 	{
 		AH->currToc = te;
 		(*te->dataDumper) ((Archive *) AH, te->oid, te->dataDumperArg);
