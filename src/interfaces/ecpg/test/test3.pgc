@@ -74,7 +74,7 @@ exec sql end declare section;
 	exec sql close cur;
 
 	/* and now the same query with prepare */
-	exec sql prepare MM from :query;
+	exec sql prepare MM from "select name, born, age, married, children from meskes where name = ?";
 	exec sql declare prep cursor for MM;
 
 	strcpy(msg, "open");

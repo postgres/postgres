@@ -574,6 +574,10 @@ Fri Mai  7 07:11:38 CEST 1999
 
 	- Synced preproc.y with gram.y.
 	- Fixed small bug in parser.
+
+Thu Mai 13 13:51:26 CEST 1999
+
+	- Synced preproc.y with gram.y.
 	- Set library version to 3.0.0
 	- Set ecpg version to 2.6.0
 

@@ -683,7 +683,7 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
                 DAY_P, DECIMAL, DECLARE, DEFAULT, DELETE, DESC, DISTINCT, DOUBLE, DROP,
                 ELSE, END_TRANS, EXCEPT, EXECUTE, EXISTS, EXTRACT,
                 FALSE_P, FETCH, FLOAT, FOR, FOREIGN, FROM, FULL,
-                GRANT, GROUP, HAVING, HOUR_P,
+                GLOBAL, GRANT, GROUP, HAVING, HOUR_P,
                 IN, INNER_P, INSENSITIVE, INSERT, INTERSECT, INTERVAL, INTO, IS,
                 ISOLATION, JOIN, KEY, LANGUAGE, LEADING, LEFT, LEVEL, LIKE, LOCAL,
                 MATCH, MINUTE_P, MONTH_P, NAMES,
@@ -702,7 +702,7 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 %token  TRIGGER
 
 /* Keywords (in SQL92 non-reserved words) */
-%token  TYPE_P
+%token  COMMITTED, SERIALIZABLE, TYPE_P
 
 /* Keywords for Postgres support (not in SQL92 reserved words)
  *
@@ -710,16 +710,20 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
  * when some sort of pg_privileges relation is introduced.
  * - Todd A. Brandys 1998-01-01?
  */
-%token  ABORT_TRANS, AFTER, AGGREGATE, ANALYZE, BACKWARD, BEFORE, BINARY,
+%token  ABORT_TRANS, ACCESS, AFTER, AGGREGATE, ANALYZE,
+		BACKWARD, BEFORE, BINARY,
 		CACHE, CLUSTER, COPY, CREATEDB, CREATEUSER, CYCLE,
-                DATABASE, DELIMITERS, DO, EACH, ENCODING, EXPLAIN, EXTEND,
+                DATABASE, DELIMITERS, DO,
+		EACH, ENCODING, EXCLUSIVE, EXPLAIN, EXTEND,
                 FORWARD, FUNCTION, HANDLER,
                 INCREMENT, INDEX, INHERITS, INSTEAD, ISNULL,
-                LANCOMPILER, LIMIT, LISTEN, UNLISTEN, LOAD, LOCATION, LOCK_P, MAXVALUE, MINVALUE, MOVE,
+                LANCOMPILER, LIMIT, LISTEN, UNLISTEN, LOAD, LOCATION, LOCK_P,
+		MAXVALUE, MINVALUE, MODE, MOVE,
                 NEW,  NOCREATEDB, NOCREATEUSER, NONE, NOTHING, NOTIFY, NOTNULL,
 		OFFSET, OIDS, OPERATOR, PASSWORD, PROCEDURAL,
                 RENAME, RESET, RETURNS, ROW, RULE,
-                SERIAL, SEQUENCE, SETOF, SHOW, START, STATEMENT, STDIN, STDOUT, TRUSTED,
+                SERIAL, SEQUENCE, SETOF, SHARE, SHOW, START, STATEMENT, STDIN, STDOUT,
+		TRUSTED,
                 UNLISTEN, UNTIL, VACUUM, VALID, VERBOSE, VERSION
 
 /* Special keywords, not in the query language - see the "lex" file */
@@ -776,7 +780,7 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 %type  <str> 	opt_decimal Character character opt_varying opt_charset
 %type  <str>	opt_collate Datetime datetime opt_timezone opt_interval
 %type  <str>	numeric a_expr_or_null row_expr row_descriptor row_list
-%type  <str>	SelectStmt SubSelect result OptTemp
+%type  <str>	SelectStmt SubSelect result OptTemp OptTempType OptTempScope
 %type  <str>	opt_table opt_union opt_unique sort_clause sortby_list
 %type  <str>	sortby OptUseOp opt_inh_star relation_name_list name_list
 %type  <str>	group_clause having_clause from_clause c_list 
@@ -812,10 +816,11 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 %type  <str>	GrantStmt privileges operation_commalist operation
 %type  <str>	cursor_clause opt_cursor opt_readonly opt_of opt_lmode
 %type  <str>	case_expr when_clause_list case_default case_arg when_clause
-%type  <str>    select_clause opt_select_limit select_limit_value,
+%type  <str>    select_clause opt_select_limit select_limit_value
 %type  <str>    select_offset_value table_list using_expr join_expr
 %type  <str>	using_list from_expr table_expr join_clause join_type
 %type  <str>	join_qual update_list join_clause join_clause_with_union
+%type  <str>	opt_level opt_lock lock_type
 
 %type  <str>	ECPGWhenever ECPGConnect connection_target ECPGOpen opt_using
 %type  <str>	indicator ECPGExecute ecpg_expr dotext ECPGPrepare
@@ -1126,25 +1131,9 @@ VariableSetStmt:  SET ColId TO var_value
 				{
 					$$ = cat2_str(make1_str("set time zone"), $4);
 				}
-		| SET TRANSACTION ISOLATION LEVEL READ ColId
+		| SET TRANSACTION ISOLATION LEVEL opt_level
 				{
-					if (strcasecmp($6, "COMMITTED"))
-					{
-                                                sprintf(errortext, "syntax error at or near \"%s\"", $6);
-						yyerror(errortext);
-					}
-
-					$$ = cat2_str(make1_str("set transaction isolation level read"), $6);
-				}
-		| SET TRANSACTION ISOLATION LEVEL ColId
-				{
-					if (strcasecmp($5, "SERIALIZABLE"))
-					{
-                                                sprintf(errortext, "syntax error at or near \"%s\"", $5);
-                                                yyerror(errortext);
-					}
-
-					$$ = cat2_str(make1_str("set transaction isolation level read"), $5);
+					$$ = cat2_str(make1_str("set transaction isolation level"), $5);
 				}
 		| SET NAMES encoding
                                 {
@@ -1155,6 +1144,11 @@ VariableSetStmt:  SET ColId TO var_value
 #endif
                                 }
                 ;
+
+opt_level:  READ COMMITTED      { $$ = make1_str("read committed"); }
+               | SERIALIZABLE   { $$ = make1_str("serializable"); }
+               ;
+
 
 var_value:  Sconst			{ $$ = $1; }
 		| DEFAULT			{ $$ = make1_str("default"); }
@@ -1300,10 +1294,23 @@ CreateStmt:  CREATE OptTemp TABLE relation_name '(' OptTableElementList ')'
 				}
 		;
 
-OptTemp:	  TEMP		{ $$ = make1_str("temp"); }
+OptTemp:  OptTempType                           { $$ = $1; }
+                | OptTempScope OptTempType	{ $$ = cat2_str($1,$2); }
+                ;
+
+OptTempType:	  TEMP		{ $$ = make1_str("temp"); }
 		| TEMPORARY	{ $$ = make1_str("temporary"); }
 		| /* EMPTY */	{ $$ = make1_str(""); }
 		;
+
+OptTempScope:  GLOBAL
+               {
+                    yyerror("GLOBAL TEMPORARY TABLE is not currently supported");
+                    $$ = make1_str("global");
+               }
+             | LOCAL { $$ = make1_str("local"); }
+             ;
+
 
 OptTableElementList:  OptTableElementList ',' OptTableElement
 				{
@@ -2674,84 +2681,25 @@ DeleteStmt:  DELETE FROM relation_name
 				}
 		;
 
-LockStmt:  LOCK_P opt_table relation_name
+LockStmt:  LOCK_P opt_table relation_name opt_lock
 				{
-					$$ = cat3_str(make1_str("lock"), $2, $3);
-				}
-		|       LOCK_P opt_table relation_name IN opt_lmode ROW IDENT IDENT
-				{
-					if (strcasecmp($8, "MODE"))
-					{
-                                                sprintf(errortext, "syntax error at or near \"%s\"", $8);
-						yyerror(errortext);
-					}
-					if ($5 != NULL)
-                                        {
-                                                if (strcasecmp($5, "SHARE"))
-						{
-                                                        sprintf(errortext, "syntax error at or near \"%s\"", $5);
-	                                                yyerror(errortext);
-						}
-                                                if (strcasecmp($7, "EXCLUSIVE"))
-						{
-							sprintf(errortext, "syntax error at or near \"%s\"", $7);
-	                                                yyerror(errortext);
-						}
-					}
-                                        else
-                                        {
-                                                if (strcasecmp($7, "SHARE") && strcasecmp($7, "EXCLUSIVE"))
-						{
-                                               		sprintf(errortext, "syntax error at or near \"%s\"", $7);
-	                                                yyerror(errortext);
-						}
-                                        }
-
-					$$=cat4_str(cat5_str(make1_str("lock"), $2, $3, make1_str("in"), $5), make1_str("row"), $7, $8);
-				}
-		|       LOCK_P opt_table relation_name IN IDENT IDENT IDENT
-				{
-					if (strcasecmp($7, "MODE"))
-					{
-                                                sprintf(errortext, "syntax error at or near \"%s\"", $7);
-                                                yyerror(errortext);
-					}                                
-                                        if (strcasecmp($5, "ACCESS"))
-					{
-                                                sprintf(errortext, "syntax error at or near \"%s\"", $5);
-                                                yyerror(errortext);
-					}
-                                        if (strcasecmp($6, "SHARE") && strcasecmp($6, "EXCLUSIVE"))
-					{
-                                                sprintf(errortext, "syntax error at or near \"%s\"", $6);
-                                                yyerror(errortext);
-					}
-
-					$$=cat3_str(cat5_str(make1_str("lock"), $2, $3, make1_str("in"), $5), $6, $7);
-				}
-		|       LOCK_P opt_table relation_name IN IDENT IDENT
-				{
-					if (strcasecmp($6, "MODE"))
-					{
-                                                sprintf(errortext, "syntax error at or near \"%s\"", $6);
-						yyerror(errortext);
-					}
-                                        if (strcasecmp($5, "SHARE") && strcasecmp($5, "EXCLUSIVE"))
-					{
-                                                sprintf(errortext, "syntax error at or near \"%s\"", $5);
-                                                yyerror(errortext);
-					}
-
-					$$=cat2_str(cat5_str(make1_str("lock"), $2, $3, make1_str("in"), $5), $6);
+					$$ = cat4_str(make1_str("lock"), $2, $3, $4);
 				}
 		;
 
-opt_lmode:      IDENT           { $$ = $1; }
-                | /*EMPTY*/     { $$ = make1_str(""); }
+opt_lock:  lock_type MODE               { $$ = cat2_str($1, make1_str("mode")); }
+                | /*EMPTY*/             { $$ = make1_str("");}
                 ;
 
+lock_type:  SHARE ROW EXCLUSIVE 	{ $$ = make1_str("share row exclusive"); }
+                | ROW opt_lmode         { $$ = cat2_str(make1_str("row"), $2);}
+                | ACCESS opt_lmode      { $$ = cat2_str(make1_str("access"), $2);}
+                | opt_lmode             { $$ = $1; }
+                ;
 
-
+opt_lmode:      SHARE                           { $$ = make1_str("share"); }
+                | EXCLUSIVE                     { $$ = make1_str("exclusive"); }
+                ;
 
 /*****************************************************************************
  *
@@ -3397,9 +3345,6 @@ opt_decimal:  '(' Iconst ',' Iconst ')'
 
 /* SQL92 character data types
  * The following implements CHAR() and VARCHAR().
- * We do it here instead of the 'Generic' production
- * because we don't want to allow arrays of VARCHAR().
- * I haven't thought about whether that will work or not.
  *								- ay 6/95
  */
 Character:  character '(' Iconst ')'
@@ -4427,12 +4372,14 @@ TypeId:  ColId
 ColId:  ident					{ $$ = $1; }
 		| datetime			{ $$ = $1; }
 		| ABSOLUTE			{ $$ = make1_str("absolute"); }
+		| ACCESS			{ $$ = make1_str("access"); }
 		| ACTION			{ $$ = make1_str("action"); }
 		| AFTER				{ $$ = make1_str("after"); }
 		| AGGREGATE			{ $$ = make1_str("aggregate"); }
 		| BACKWARD			{ $$ = make1_str("backward"); }
 		| BEFORE			{ $$ = make1_str("before"); }
 		| CACHE				{ $$ = make1_str("cache"); }
+		| COMMITTED			{ $$ = make1_str("committed"); }
 		| CREATEDB			{ $$ = make1_str("createdb"); }
 		| CREATEUSER			{ $$ = make1_str("createuser"); }
 		| CYCLE				{ $$ = make1_str("cycle"); }
@@ -4441,6 +4388,7 @@ ColId:  ident					{ $$ = $1; }
 		| DOUBLE			{ $$ = make1_str("double"); }
 		| EACH				{ $$ = make1_str("each"); }
 		| ENCODING			{ $$ = make1_str("encoding"); }
+		| EXCLUSIVE			{ $$ = make1_str("exclusive"); }
 		| FORWARD			{ $$ = make1_str("forward"); }
 		| FUNCTION			{ $$ = make1_str("function"); }
 		| HANDLER			{ $$ = make1_str("handler"); }
@@ -4457,6 +4405,7 @@ ColId:  ident					{ $$ = $1; }
 		| MATCH				{ $$ = make1_str("match"); }
 		| MAXVALUE			{ $$ = make1_str("maxvalue"); }
 		| MINVALUE			{ $$ = make1_str("minvalue"); }
+		| MODE				{ $$ = make1_str("mode"); }
 		| NEXT				{ $$ = make1_str("next"); }
 		| NOCREATEDB			{ $$ = make1_str("nocreatedb"); }
 		| NOCREATEUSER			{ $$ = make1_str("nocreateuser"); }
@@ -4481,6 +4430,8 @@ ColId:  ident					{ $$ = $1; }
 		| SCROLL			{ $$ = make1_str("scroll"); }
 		| SEQUENCE                      { $$ = make1_str("sequence"); }
 		| SERIAL			{ $$ = make1_str("serial"); }
+		| SERIALIZABLE			{ $$ = make1_str("serializable"); }
+		| SHARE				{ $$ = make1_str("share"); }
 		| START				{ $$ = make1_str("start"); }
 		| STATEMENT			{ $$ = make1_str("statement"); }
 		| STDIN                         { $$ = make1_str("stdin"); }
