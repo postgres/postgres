@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.285 2004/08/18 03:03:32 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.286 2004/08/18 15:48:36 momjian Exp $
 -->
 
 <appendix id="release">
@@ -29,11 +29,11 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.285 2004/08/18 03:03:32 tgl Exp
        <para>
         This is the first PostgreSQL release to natively run on Microsoft
         Windows as a server. It can run as a Windows service. This release
-	supports NT-based Windows releases like NT4, Win2k, XP, Win2003.
+	supports NT-based Windows releases like Win2000, XP, Win2003.
         Older releases like Windows 95, 98, and ME are not supported because
 	these operating systems do not have the infrastructure to
 	support PostgreSQL.  A separate installer project has been created 
-        to ease installation on Windows (except NT4): 
+        to ease installation on Windows: 
         <ulink url="http://pgfoundry.org/projects/pginstaller">
 	http://pgfoundry.org/projects/pginstaller</ulink>.
        </para>
