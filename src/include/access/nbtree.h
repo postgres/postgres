@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nbtree.h,v 1.11 1997/03/24 08:04:51 vadim Exp $
+ * $Id: nbtree.h,v 1.12 1997/04/16 01:21:59 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -84,17 +84,36 @@ typedef BTScanOpaqueData	*BTScanOpaque;
  *  tuples.  Note that we do not use the OID as part of a composite
  *  key; the OID only serves as a unique identifier for a given index
  *  tuple (logical position within a page).
+ *
+ *  New comments: 
+ *  actually, we must guarantee that all tuples in A LEVEL
+ *  are unique, not in ALL INDEX. So, we can use bti_itup->t_tid
+ *  as unique identifier for a given index tuple (logical position 
+ *  within a level).	- vadim 04/09/97
  */
 
 typedef struct BTItemData {
+#ifndef BTREE_VERSION_1
     Oid				bti_oid;
     int32			bti_dummy;	/* padding to make bti_itup
 						 * align at 8-byte boundary
 						 */
+#endif
     IndexTupleData		bti_itup;
 } BTItemData;
 
 typedef BTItemData	*BTItem;
+
+#ifdef BTREE_VERSION_1
+#define BTItemSame(i1, i2)    ( i1->bti_itup.t_tid.ip_blkid.bi_hi == \
+				i2->bti_itup.t_tid.ip_blkid.bi_hi && \
+				i1->bti_itup.t_tid.ip_blkid.bi_lo == \
+				i2->bti_itup.t_tid.ip_blkid.bi_lo && \
+				i1->bti_itup.t_tid.ip_posid == \
+				i2->bti_itup.t_tid.ip_posid )
+#else
+#define BTItemSame(i1, i2)    ( i1->bti_oid == i2->bti_oid )
+#endif
 
 /*
  *  BTStackData -- As we descend a tree, we push the (key, pointer)
@@ -206,7 +225,7 @@ extern void _bt_relbuf(Relation rel, Buffer buf, int access);
 extern void _bt_wrtbuf(Relation rel, Buffer buf);
 extern void _bt_wrtnorelbuf(Relation rel, Buffer buf);
 extern void _bt_pageinit(Page page, Size size);
-extern void _bt_metaproot(Relation rel, BlockNumber rootbknum);
+extern void _bt_metaproot(Relation rel, BlockNumber rootbknum, int level);
 extern Buffer _bt_getstackbuf(Relation rel, BTStack stack, int access);
 extern void _bt_setpagelock(Relation rel, BlockNumber blkno, int access);
 extern void _bt_unsetpagelock(Relation rel, BlockNumber blkno, int access);
