@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/filelist.sgml,v 1.23 2002/09/25 21:16:10 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/filelist.sgml,v 1.24 2002/10/16 22:06:33 petere Exp $ -->
 
 <!entity history    SYSTEM "history.sgml">
 <!entity info       SYSTEM "info.sgml">
@@ -49,7 +49,6 @@
 <!entity maintenance   SYSTEM "maintenance.sgml">
 <!entity manage-ag     SYSTEM "manage-ag.sgml">
 <!entity monitoring    SYSTEM "monitoring.sgml">
-<!entity recovery      SYSTEM "recovery.sgml">
 <!entity regress       SYSTEM "regress.sgml">
 <!entity release       SYSTEM "release.sgml">
 <!entity runtime       SYSTEM "runtime.sgml">

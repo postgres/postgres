@@ -1,12 +1,20 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/diskusage.sgml,v 1.5 2002/09/21 18:32:52 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/diskusage.sgml,v 1.6 2002/10/16 22:06:33 petere Exp $
 -->
 
 <chapter id="diskusage">
  <title>Monitoring Disk Usage</title>
 
+ <para>
+  This chapter discusses how to monitor the disk usage of a PostgreSQL
+  database system.  In the current release, the database administrator
+  does not have much control over the on-disk storage layout, so this
+  chapter is mostly informative and can give you some ideas how to
+  manage the disk usage with operating system tools.
+ </para>
+
  <sect1 id="disk-usage">
-  <title>Monitoring Disk Usage</Title>
+  <title>Determining Disk Usage</Title>
 
   <indexterm zone="disk-usage">
    <primary>disk usage</primary>
@@ -95,6 +103,40 @@ play-# ORDER BY relpages DESC;
    <filename>README.oid2name</> for examples. It includes a script
    shows disk usage for each database.
   </para>
+ </sect1>
+
+ <sect1 id="disk-full">
+  <title>Disk Full Failure</title>
+
+  <para>
+   The most important disk monitoring task of a database administrator
+   is to make sure the disk doesn't grow full.  A filled data disk may
+   result in subsequent corruption of database indexes, but not of the
+   fundamental data tables. If the WAL files are on the same disk (as
+   is the case for a default configuration) then a filled disk during
+   database initialization may result in corrupted or incomplete WAL
+   files. This failure condition is detected and the database server
+   will refuse to start up.
+  </para>
+
+  <para>
+   If you cannot free up additional space on the disk by deleting
+   other things you can move some of the database files to other file
+   systems and create a symlink from the original location.  But
+   note that <application>pg_dump</> cannot save the location layout
+   information of such a setup; a restore would put everything back in
+   one place.  To avoid running out of disk space, you can place the
+   WAL files or individual databases in other locations while creating
+   them.  See the <application>initdb</> documentation and <xref
+   linkend="manage-ag-alternate-locs"> for more information.
+  </para>
+
+  <tip>
+   <para>
+    Some file systems perform badly when they are almost full, so do
+    not wait until the disk is full to take action.
+   </para>
+  </tip>
  </sect1>
 </chapter>
 
