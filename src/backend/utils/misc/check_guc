@@ -1,0 +1,72 @@
+#!/bin/sh
+
+## currently, this script makes a lot of assumptions:
+## 1) location of guc.c and postgresql.conf.sample relative to script
+##       For postgresql.conf.sample
+## 2) the valid config settings may be preceded by a '#', but NOT '# '
+## 3) the valid config settings will be followed immediately by  ' =' 
+##    (at least one space preceding the '='
+##       For guc.c
+## 4) the options have PGC_ on the same line as the option
+## 5) the options have '{ ' on the same line as the option
+
+##  Problems
+## 1) Don't know what to do with TRANSACTION ISOLATION LEVEL
+
+## if an option is valid but shows up in only one file (guc.h or 
+## postgresql.conf.sample, it should be listed here so that it 
+## can be ignored
+INTENTIONALLY_NOT_INCLUDED="pre_auth_delay lc_messages lc_monetary \
+lc_time lc_numeric fixbtree"
+
+#self_path stolen from pg_ctl
+self_path=`echo "$0" | sed 's,/[^/]*$,,'`       # (dirname command is not portable)
+PATH_TO_GUC="$self_path"
+
+### What options are listed in postgresql.conf.sample, but don't appear 
+### in guc.h?
+
+# grab everything that looks like a setting and convert it to lower case
+SETTINGS=`grep ' =' $PATH_TO_GUC/postgresql.conf.sample | grep -v '^# ' | \
+          sed -e 's/^#//' | awk '{print $1}'`
+SETTINGS=`echo "$SETTINGS" | tr 'A-Z' 'a-z'`
+
+for i in $SETTINGS ; do 
+  hidden=0
+  ## it sure would be nice to replace this with an sql "not in" statement
+  for hidethis in $INTENTIONALLY_NOT_INCLUDED ; do
+    if [ "$i" = "$hidethis" ] ; then 
+      hidden=1
+    fi
+  done
+  if [ "0" = "$hidden" ] ; then
+    grep -i $i $PATH_TO_GUC/guc.c > /dev/null; 
+    if [ ! $? = 0 ] ; then 
+      echo "$i seems to be missing from guc.c"; 
+    fi; 
+  fi
+done
+
+### What options are listed in guc.h, but don't appear 
+### in postgresql.conf.sample?
+
+# grab everything that looks like a setting and convert it to lower case
+
+SETTINGS=`grep '{ .*PGC_' $PATH_TO_GUC/guc.c | awk '{print $2}' | \
+          sed -e 's/"//g' -e 's/,//'`
+SETTINGS=`echo "$SETTINGS" | tr 'A-Z' 'a-z'`
+
+for i in $SETTINGS ; do
+  hidden=0
+  for hidethis in $INTENTIONALLY_NOT_INCLUDED ; do
+    if [ "$i" = "$hidethis" ] ; then
+      hidden=1
+    fi
+  done
+  if [ "0" = "$hidden" ] ; then
+    grep -i $i $PATH_TO_GUC/postgresql.conf.sample > /dev/null;
+    if [ ! $? = 0 ] ; then
+      echo "$i seems to be missing from postgresql.conf.sample";
+    fi
+  fi
+done
