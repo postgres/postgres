@@ -121,3 +121,4 @@
 <!entity pgDumpall         system "pg_dumpall.sgml">
 <!entity pgUpgrade          system "pg_upgrade.sgml">
 <!entity psqlRef            system "psql-ref.sgml">
+<!entity vacuumdb           system "vacuumdb.sgml">

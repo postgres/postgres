@@ -101,6 +101,7 @@ This is reference information for the
 &pgDump;
 &pgDumpall;
 &psqlRef;
+&vacuumdb;
 
 </chapter>
 
