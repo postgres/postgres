@@ -79,7 +79,7 @@ static void
 pgxml_pfree(void *ptr)
 {
 /*	elog(DEBUG1,"Free in CMC %x",CurrentMemoryContext); */
-	return pfree(ptr);
+	pfree(ptr);
 }
 
 static char *
@@ -322,7 +322,7 @@ xpath_nodeset(PG_FUNCTION_ARGS)
 								 toptag, septag, NULL);
 
 	/* xmlCleanupParser(); done by result_to_text routine */
-	pfree((void *) xpath);
+	pfree(xpath);
 
 	if (xpres == NULL)
 		PG_RETURN_NULL();
@@ -358,7 +358,7 @@ xpath_list(PG_FUNCTION_ARGS)
 								 NULL, NULL, plainsep);
 
 	/* xmlCleanupParser(); done by result_to_text routine */
-	pfree((void *) xpath);
+	pfree(xpath);
 
 	if (xpres == NULL)
 		PG_RETURN_NULL();
@@ -399,7 +399,7 @@ xpath_string(PG_FUNCTION_ARGS)
 								 NULL, NULL, NULL);
 
 	xmlCleanupParser();
-	pfree((void *) xpath);
+	pfree(xpath);
 
 	if (xpres == NULL)
 		PG_RETURN_NULL();
@@ -429,7 +429,7 @@ xpath_number(PG_FUNCTION_ARGS)
 	xpath = pgxml_texttoxmlchar(xpathsupp);
 
 	res = pgxml_xpath(PG_GETARG_TEXT_P(0), xpath);
-	pfree((void *) xpath);
+	pfree(xpath);
 
 	if (res == NULL)
 	{
@@ -469,7 +469,7 @@ xpath_bool(PG_FUNCTION_ARGS)
 	xpath = pgxml_texttoxmlchar(xpathsupp);
 
 	res = pgxml_xpath(PG_GETARG_TEXT_P(0), xpath);
-	pfree((void *) xpath);
+	pfree(xpath);
 
 	if (res == NULL)
 	{

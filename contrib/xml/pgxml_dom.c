@@ -47,7 +47,7 @@ pgxml_repalloc(void *ptr, size_t size)
 static void
 pgxml_pfree(void *ptr)
 {
-	return pfree(ptr);
+	pfree(ptr);
 }
 
 static char *
@@ -216,7 +216,7 @@ pgxml_xpath(PG_FUNCTION_ARGS)
 	{
 		elog(WARNING, "XPath syntax error");
 		xmlFreeDoc(doctree);
-		pfree((void *) xpath);
+		pfree(xpath);
 		xmlCleanupParser();
 		PG_RETURN_NULL();
 	}
@@ -228,7 +228,7 @@ pgxml_xpath(PG_FUNCTION_ARGS)
 	if (res == NULL)
 	{
 		xmlFreeDoc(doctree);
-		pfree((void *) xpath);
+		pfree(xpath);
 		xmlCleanupParser();
 		PG_RETURN_NULL();		/* seems appropriate */
 	}
@@ -258,7 +258,7 @@ pgxml_xpath(PG_FUNCTION_ARGS)
 
 	/* Free various storage */
 	xmlFreeDoc(doctree);
-	pfree((void *) xpath);
+	pfree(xpath);
 	xmlFree(xpresstr);
 	xmlCleanupParser();
 	PG_RETURN_TEXT_P(xpres);
