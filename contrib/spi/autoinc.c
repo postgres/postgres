@@ -1,9 +1,9 @@
 
 #include "executor/spi.h"		/* this is what you need to work with SPI */
 #include "commands/trigger.h"	/* -"- and triggers */
+#include "commands/sequence.h"	/* for nextval() */
 
 extern Datum autoinc(PG_FUNCTION_ARGS);
-extern int4 nextval(struct varlena * seqin);
 
 Datum
 autoinc(PG_FUNCTION_ARGS)
@@ -53,7 +53,7 @@ autoinc(PG_FUNCTION_ARGS)
 
 	for (i = 0; i < nargs;)
 	{
-		struct varlena *seqname;
+		text	   *seqname;
 		int			attnum = SPI_fnumber(tupdesc, args[i]);
 		int32		val;
 
@@ -74,9 +74,11 @@ autoinc(PG_FUNCTION_ARGS)
 		i++;
 		chattrs[chnattrs] = attnum;
 		seqname = textin(args[i]);
-		newvals[chnattrs] = Int32GetDatum(nextval(seqname));
+		newvals[chnattrs] = DirectFunctionCall1(nextval,
+												PointerGetDatum(seqname));
 		if (DatumGetInt32(newvals[chnattrs]) == 0)
-			newvals[chnattrs] = Int32GetDatum(nextval(seqname));
+			newvals[chnattrs] = DirectFunctionCall1(nextval,
+													PointerGetDatum(seqname));
 		pfree(seqname);
 		chnattrs++;
 		i++;

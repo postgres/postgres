@@ -6,6 +6,8 @@
  *-------------------------------------------------------------------------
  */
 
+#include <ctype.h>
+
 #include "postgres.h"
 
 #include "access/heapam.h"
@@ -54,6 +56,7 @@ typedef SeqTableData *SeqTable;
 
 static SeqTable seqtab = NULL;
 
+static char *get_seq_name(text *seqin);
 static SeqTable init_sequence(char *caller, char *name);
 static Form_pg_sequence read_info(char *caller, SeqTable elm, Buffer *buf);
 static void init_params(CreateSeqStmt *seq, Form_pg_sequence new);
@@ -181,29 +184,37 @@ DefineSequence(CreateSeqStmt *seq)
 }
 
 
-int4
-nextval(struct varlena * seqin)
+Datum
+nextval(PG_FUNCTION_ARGS)
 {
-	char	   *seqname = textout(seqin);
+	text	   *seqin = PG_GETARG_TEXT_P(0);
+	char	   *seqname = get_seq_name(seqin);
 	SeqTable	elm;
 	Buffer		buf;
 	Form_pg_sequence seq;
-	int4		incby,
+	int32		incby,
 				maxv,
 				minv,
 				cache;
-	int4		result,
+	int32		result,
 				next,
 				rescnt = 0;
 
+#ifndef NO_SECURITY
+	if (pg_aclcheck(seqname, getpgusername(), ACL_WR) != ACLCHECK_OK)
+		elog(ERROR, "%s.nextval: you don't have permissions to set sequence %s",
+			 seqname, seqname);
+#endif
+
 	/* open and AccessShareLock sequence */
 	elm = init_sequence("nextval", seqname);
+
 	pfree(seqname);
 
 	if (elm->last != elm->cached)		/* some numbers were cached */
 	{
 		elm->last += elm->increment;
-		return elm->last;
+		PG_RETURN_INT32(elm->last);
 	}
 
 	seq = read_info("nextval", elm, &buf);		/* lock page' buffer and
@@ -225,8 +236,9 @@ nextval(struct varlena * seqin)
 		 * Check MAXVALUE for ascending sequences and MINVALUE for
 		 * descending sequences
 		 */
-		if (incby > 0)			/* ascending sequence */
+		if (incby > 0)
 		{
+			/* ascending sequence */
 			if ((maxv >= 0 && next > maxv - incby) ||
 				(maxv < 0 && next + incby > maxv))
 			{
@@ -241,8 +253,8 @@ nextval(struct varlena * seqin)
 				next += incby;
 		}
 		else
-/* descending sequence */
 		{
+			/* descending sequence */
 			if ((minv < 0 && next < minv - incby) ||
 				(minv >= 0 && next + incby < minv))
 			{
@@ -274,35 +286,43 @@ nextval(struct varlena * seqin)
 	if (WriteBuffer(buf) == STATUS_ERROR)
 		elog(ERROR, "%s.nextval: WriteBuffer failed", elm->name);
 
-	return result;
-
+	PG_RETURN_INT32(result);
 }
 
-
-int4
-currval(struct varlena * seqin)
+Datum
+currval(PG_FUNCTION_ARGS)
 {
-	char	   *seqname = textout(seqin);
+	text	   *seqin = PG_GETARG_TEXT_P(0);
+	char	   *seqname = get_seq_name(seqin);
 	SeqTable	elm;
-	int4		result;
+	int32		result;
+
+#ifndef NO_SECURITY
+	if (pg_aclcheck(seqname, getpgusername(), ACL_RD) != ACLCHECK_OK)
+		elog(ERROR, "%s.currval: you don't have permissions to read sequence %s",
+			 seqname, seqname);
+#endif
 
 	/* open and AccessShareLock sequence */
 	elm = init_sequence("currval", seqname);
-	pfree(seqname);
 
 	if (elm->increment == 0)	/* nextval/read_info were not called */
-		elog(ERROR, "%s.currval is not yet defined in this session", elm->name);
+		elog(ERROR, "%s.currval is not yet defined in this session",
+			 seqname);
 
 	result = elm->last;
 
-	return result;
+	pfree(seqname);
 
+	PG_RETURN_INT32(result);
 }
 
-int4
-setval(struct varlena * seqin, int4 next)
+Datum
+setval(PG_FUNCTION_ARGS)
 {
-	char	   *seqname = textout(seqin);
+	text	   *seqin = PG_GETARG_TEXT_P(0);
+	int32		next = PG_GETARG_INT32(1);
+	char	   *seqname = get_seq_name(seqin);
 	SeqTable	elm;
 	Buffer		buf;
 	Form_pg_sequence seq;
@@ -341,9 +361,49 @@ setval(struct varlena * seqin, int4 next)
 	LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 
 	if (WriteBuffer(buf) == STATUS_ERROR)
-		elog(ERROR, "%s.settval: WriteBuffer failed", seqname);
+		elog(ERROR, "%s.setval: WriteBuffer failed", seqname);
 
-	return next;
+	pfree(seqname);
+
+	PG_RETURN_INT32(next);
+}
+
+/*
+ * Given a 'text' parameter to a sequence function, extract the actual
+ * sequence name.  We downcase the name if it's not double-quoted.
+ *
+ * This is a kluge, really --- should be able to write nextval(seqrel).
+ */
+static char *
+get_seq_name(text *seqin)
+{
+	char	   *rawname = textout(seqin);
+	int			rawlen = strlen(rawname);
+	char	   *seqname;
+
+	if (rawlen >= 2 &&
+		rawname[0] == '\"' && rawname[rawlen - 1] == '\"')
+	{
+		/* strip off quotes, keep case */
+		rawname[rawlen - 1] = '\0';
+		seqname = pstrdup(rawname + 1);
+		pfree(rawname);
+	}
+	else
+	{
+		seqname = rawname;
+		/*
+		 * It's important that this match the identifier downcasing code
+		 * used by backend/parser/scan.l.
+		 */
+		for (; *rawname; rawname++)
+		{
+			if (isascii((unsigned char) *rawname) &&
+				isupper(*rawname))
+				*rawname = tolower(*rawname);
+		}
+	}
+	return seqname;
 }
 
 static Form_pg_sequence

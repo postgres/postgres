@@ -9,10 +9,11 @@
 #ifndef SEQUENCE_H
 #define SEQUENCE_H
 
+#include "fmgr.h"
 #include "nodes/parsenodes.h"
 
 /*
- * Columns of a sequnece relation
+ * Columns of a sequence relation
  */
 
 #define SEQ_COL_NAME			1
@@ -27,10 +28,11 @@
 #define SEQ_COL_FIRSTCOL		SEQ_COL_NAME
 #define SEQ_COL_LASTCOL			SEQ_COL_CALLED
 
+extern Datum nextval(PG_FUNCTION_ARGS);
+extern Datum currval(PG_FUNCTION_ARGS);
+extern Datum setval(PG_FUNCTION_ARGS);
+
 extern void DefineSequence(CreateSeqStmt *stmt);
-extern int4 nextval(struct varlena * seqname);
-extern int4 currval(struct varlena * seqname);
-extern int4 setval(struct varlena * seqname, int4 next);
 extern void CloseSequences(void);
 
 #endif	 /* SEQUENCE_H */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.82 2000/06/03 04:41:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.83 2000/06/11 20:08:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -709,56 +709,14 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 	}
 
 	/*
-	 * Sequence handling.
+	 * Special checks to disallow sequence functions with side-effects
+	 * in WHERE clauses.  This is pretty much of a hack; why disallow these
+	 * when we have no way to check for side-effects of user-defined fns?
 	 */
-	if (funcid == F_NEXTVAL ||
-		funcid == F_CURRVAL ||
-		funcid == F_SETVAL)
-	{
-		Const	   *seq;
-		char	   *seqrel;
-		text	   *seqname;
-		int32		aclcheck_result = -1;
-
-		Assert(nargs == ((funcid == F_SETVAL) ? 2 : 1));
-		seq = (Const *) lfirst(fargs);
-		if (!IsA((Node *) seq, Const))
-			elog(ERROR, "Only constant sequence names are acceptable for function '%s'", funcname);
-
-		seqrel = textout((text *) DatumGetPointer(seq->constvalue));
-		/* Do we have nextval('"Aa"')? */
-		if (strlen(seqrel) >= 2 &&
-			seqrel[0] == '\"' && seqrel[strlen(seqrel) - 1] == '\"')
-		{
-			/* strip off quotes, keep case */
-			seqrel = pstrdup(seqrel + 1);
-			seqrel[strlen(seqrel) - 1] = '\0';
-			pfree(DatumGetPointer(seq->constvalue));
-			seq->constvalue = (Datum) textin(seqrel);
-		}
-		else
-		{
-			pfree(seqrel);
-			seqname = lower((text *) DatumGetPointer(seq->constvalue));
-			pfree(DatumGetPointer(seq->constvalue));
-			seq->constvalue = PointerGetDatum(seqname);
-			seqrel = textout(seqname);
-		}
-
-		if ((aclcheck_result = pg_aclcheck(seqrel, GetPgUserName(),
-					   (((funcid == F_NEXTVAL) || (funcid == F_SETVAL)) ?
-						ACL_WR : ACL_RD)))
-			!= ACLCHECK_OK)
-			elog(ERROR, "%s.%s: %s",
-			  seqrel, funcname, aclcheck_error_strings[aclcheck_result]);
-
-		pfree(seqrel);
-
-		if (funcid == F_NEXTVAL && pstate->p_in_where_clause)
-			elog(ERROR, "Sequence function nextval is not allowed in WHERE clauses");
-		if (funcid == F_SETVAL && pstate->p_in_where_clause)
-			elog(ERROR, "Sequence function setval is not allowed in WHERE clauses");
-	}
+	if (funcid == F_NEXTVAL && pstate->p_in_where_clause)
+		elog(ERROR, "Sequence function nextval is not allowed in WHERE clauses");
+	if (funcid == F_SETVAL && pstate->p_in_where_clause)
+		elog(ERROR, "Sequence function setval is not allowed in WHERE clauses");
 
 	expr = makeNode(Expr);
 	expr->typeOid = rettype;
