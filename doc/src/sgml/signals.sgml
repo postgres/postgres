@@ -1,0 +1,190 @@
+<chapter id="signals">
+<DocInfo>
+<AuthorGroup>
+<Author>
+<FirstName>Massimo</FirstName>
+<Surname>Dal Zotto</Surname>
+</Author>
+</AuthorGroup>
+<Date>Transcribed 1998-10-16</Date>
+</DocInfo>
+
+<title><productname>Postgres</productname> Signals</title>
+
+<Para>
+<Note>
+<Para>
+Contributed by <ULink url="mailto:dz@cs.unitn.it">Massimo Dal Zotto</ULink>
+</Para>
+</Note>
+
+<para>
+<productname>Postgres</productname> uses the following signals for
+ communication between the postmaster and backends:
+
+<para>
+<table tocentry="1">
+<title><productname>Postgres</productname> Signals</title>
+<titleabbrev>Signals</titleabbrev>
+
+<tgroup cols="2">
+<thead>
+<row>
+<entry>
+Signal
+<entry>
+<application>postmaster</application> Action
+<entry>
+Server Action
+
+<tbody>
+<row>
+<entry>
+SIGHUP
+<entry>
+kill(*,sighup)
+<entry>
+read_pg_options
+
+<row>
+<entry>
+SIGINT
+<entry>
+die
+<entry>
+cancel query
+
+<row>
+<entry>
+SIGQUIT
+<entry>
+kill(*,sigterm)
+<entry>
+handle_warn
+
+<row>
+<entry>
+SIGTERM
+<entry>
+kill(*,sigterm), kill(*,9), die
+<entry>
+die
+
+<row>
+<entry>
+SIGPIPE
+<entry>
+ignored
+<entry>
+die
+
+<row>
+<entry>
+SIGUSR1
+<entry>
+kill(*,sigusr1), die
+<entry>
+quickdie
+
+<row>
+<entry>
+SIGUSR2
+<entry>
+kill(*,sigusr2)
+<entry>
+async notify (SI flush)
+
+<row>
+<entry>
+SIGCHLD
+<entry>
+reaper
+<entry>
+ignored (alive test)
+
+<row>
+<entry>
+SIGTTIN
+<entry>
+ignored
+<entry>
+
+<row>
+<entry>
+SIGTTOU
+<entry>
+ignored
+<entry>
+
+<row>
+<entry>
+SIGCONT
+<entry>
+dumpstatus
+<entry>
+
+<row>
+<entry>
+SIGFPE
+<entry>
+<entry>
+FloatExceptionHandler
+
+</tbody>
+</tgroup>
+</table>
+
+<note>
+<para>
+<quote>kill(*,signal)</quote> means sending a signal to all backends.
+</note>
+
+<para>
+The main changes to the old signal handling are the use of SIGQUIT instead
+of SIGHUP to handle warns, SIGHUP to re-read the pg_options file and the
+redirection to all active backends of SIGHUP, SIGTERM, SIGUSR1 and SIGUSR2
+sent to the postmaster.
+In this way these signals sent to the postmaster can be sent
+automatically to all the backends without need to know their pids.
+To shut down postgres one needs only to send a SIGTERM to postmaster
+and it will stop automatically all the backends.
+
+<para>
+The SIGUSR2 signal is also used to prevent SI cache table overflow
+which happens when some backend doesn't process SI cache for a long period.
+When a backend detects the SI table full at 70% it simply sends a signal
+to the postmaster which will wake up all idle backends and make them flush
+the cache.
+
+<para>
+The typical use of signals by programmers could be the following:
+
+<programlisting>
+# stop postgres
+kill -TERM $postmaster_pid
+</programlisting>
+
+<programlisting>
+# kill all the backends
+kill -QUIT $postmaster_pid
+</programlisting>
+
+<programlisting>
+# kill only the postmaster
+kill -INT $postmaster_pid
+</programlisting>
+
+<programlisting>
+# change pg_options
+cat new_pg_options > $DATA_DIR/pg_options
+kill -HUP $postmaster_pid
+</programlisting>
+
+<programlisting>
+# change pg_options only for a backend
+cat new_pg_options > $DATA_DIR/pg_options
+kill -HUP $backend_pid
+cat old_pg_options > $DATA_DIR/pg_options
+</programlisting>
+
+</chapter>
