@@ -213,7 +213,7 @@ x|y            |z
 (2 rows)
 
 QUERY: CREATE TABLE PRIMARY_TBL (i int PRIMARY KEY, t text);
-NOTICE:  CREATE TABLE/PRIMARY KEY will create implicit index primary_tbl_pkey for table primary_tbl
+NOTICE:  CREATE TABLE/PRIMARY KEY will create implicit index 'primary_tbl_pkey' for table 'primary_tbl'
 QUERY: INSERT INTO PRIMARY_TBL VALUES (1, 'one');
 QUERY: INSERT INTO PRIMARY_TBL VALUES (2, 'two');
 QUERY: INSERT INTO PRIMARY_TBL VALUES (1, 'three');
@@ -234,7 +234,7 @@ four|i|t
 QUERY: DROP TABLE PRIMARY_TBL;
 QUERY: CREATE TABLE PRIMARY_TBL (i int, t text,
 	PRIMARY KEY(i,t));
-NOTICE:  CREATE TABLE/PRIMARY KEY will create implicit index primary_tbl_pkey for table primary_tbl
+NOTICE:  CREATE TABLE/PRIMARY KEY will create implicit index 'primary_tbl_pkey' for table 'primary_tbl'
 QUERY: INSERT INTO PRIMARY_TBL VALUES (1, 'one');
 QUERY: INSERT INTO PRIMARY_TBL VALUES (2, 'two');
 QUERY: INSERT INTO PRIMARY_TBL VALUES (1, 'three');
@@ -254,7 +254,7 @@ three|i|t
 
 QUERY: DROP TABLE PRIMARY_TBL;
 QUERY: CREATE TABLE UNIQUE_TBL (i int UNIQUE, t text);
-NOTICE:  CREATE TABLE/UNIQUE will create implicit index unique_tbl_i_key for table unique_tbl
+NOTICE:  CREATE TABLE/UNIQUE will create implicit index 'unique_tbl_i_key' for table 'unique_tbl'
 QUERY: INSERT INTO UNIQUE_TBL VALUES (1, 'one');
 QUERY: INSERT INTO UNIQUE_TBL VALUES (2, 'two');
 QUERY: INSERT INTO UNIQUE_TBL VALUES (1, 'three');
@@ -277,7 +277,7 @@ five|i|t
 QUERY: DROP TABLE UNIQUE_TBL;
 QUERY: CREATE TABLE UNIQUE_TBL (i int, t text,
 	UNIQUE(i,t));
-NOTICE:  CREATE TABLE/UNIQUE will create implicit index unique_tbl_i_key for table unique_tbl
+NOTICE:  CREATE TABLE/UNIQUE will create implicit index 'unique_tbl_i_key' for table 'unique_tbl'
 QUERY: INSERT INTO UNIQUE_TBL VALUES (1, 'one');
 QUERY: INSERT INTO UNIQUE_TBL VALUES (2, 'two');
 QUERY: INSERT INTO UNIQUE_TBL VALUES (1, 'three');
