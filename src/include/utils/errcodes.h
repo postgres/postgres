@@ -11,7 +11,7 @@
  *
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/utils/errcodes.h,v 1.13 2004/07/27 05:11:35 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/errcodes.h,v 1.14 2004/07/31 07:39:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -325,6 +325,10 @@
 /* Class F0 - Configuration File Error (PostgreSQL-specific error class) */
 #define ERRCODE_CONFIG_FILE_ERROR			MAKE_SQLSTATE('F','0', '0','0','0')
 #define ERRCODE_LOCK_FILE_EXISTS			MAKE_SQLSTATE('F','0', '0','0','1')
+
+/* Class P0 - PL/pgSQL Error (PostgreSQL-specific error class) */
+#define ERRCODE_PLPGSQL_ERROR				MAKE_SQLSTATE('P','0', '0','0','0')
+#define ERRCODE_RAISE_EXCEPTION				MAKE_SQLSTATE('P','0', '0','0','1')
 
 /* Class XX - Internal Error (PostgreSQL-specific error class) */
 /* (this is for "can't-happen" conditions and software bugs) */

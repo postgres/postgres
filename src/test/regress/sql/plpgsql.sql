@@ -1608,3 +1608,36 @@ SELECT perform_test_func();
 SELECT * FROM perform_test;
 
 drop table perform_test;
+
+--
+-- Test error trapping
+--
+
+create function trap_zero_divide(int) returns int as $$
+declare x int;
+declare sx smallint;
+begin
+	begin	-- start a subtransaction
+		raise notice 'should see this';
+		x := 100 / $1;
+		raise notice 'should see this only if % <> 0', $1;
+		sx := $1;
+		raise notice 'should see this only if % fits in smallint', $1;
+		if $1 < 0 then
+			raise exception '% is less than zero', $1;
+		end if;
+	exception
+		when division_by_zero then
+			raise notice 'caught division_by_zero';
+			x := -1;
+		when NUMERIC_VALUE_OUT_OF_RANGE then
+			raise notice 'caught numeric_value_out_of_range';
+			x := -2;
+	end;
+	return x;
+end$$ language plpgsql;
+
+select trap_zero_divide(50);
+select trap_zero_divide(0);
+select trap_zero_divide(100000);
+select trap_zero_divide(-100);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.173 2004/07/28 14:23:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.174 2004/07/31 07:39:18 tgl Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -1589,7 +1589,8 @@ CleanupTransaction(void)
 	 * State should still be TRANS_ABORT from AbortTransaction().
 	 */
 	if (s->state != TRANS_ABORT)
-		elog(FATAL, "CleanupTransaction and not in abort state");
+		elog(FATAL, "CleanupTransaction: unexpected state %s",
+			 TransStateAsString(s->state));
 
 	/*
 	 * do abort cleanup processing
@@ -1773,7 +1774,7 @@ CommitTransactionCommand(void)
 
 			/*
 			 * We were just issued a SAVEPOINT inside a transaction block.
-			 * Start a subtransaction.  (BeginTransactionBlock already
+			 * Start a subtransaction.  (DefineSavepoint already
 			 * did PushTransaction, so as to have someplace to put the
 			 * SUBBEGIN state.)
 			 */
@@ -1853,6 +1854,7 @@ CleanupAbortedSubTransactions(bool returnName)
 	AssertState(PointerIsValid(s->parent));
 	Assert(s->parent->blockState == TBLOCK_SUBINPROGRESS ||
 		   s->parent->blockState == TBLOCK_INPROGRESS ||
+		   s->parent->blockState == TBLOCK_STARTED ||
 		   s->parent->blockState == TBLOCK_SUBABORT_PENDING);
 
 	/*
@@ -1878,7 +1880,8 @@ CleanupAbortedSubTransactions(bool returnName)
 	}
 
 	AssertState(s->blockState == TBLOCK_SUBINPROGRESS ||
-				s->blockState == TBLOCK_INPROGRESS);
+				s->blockState == TBLOCK_INPROGRESS ||
+				s->blockState == TBLOCK_STARTED);
 
 	return name;
 }
@@ -2468,7 +2471,7 @@ DefineSavepoint(char *name)
 		case TBLOCK_SUBABORT_PENDING:
 		case TBLOCK_SUBENDABORT_RELEASE:
 		case TBLOCK_SUBEND:
-			elog(FATAL, "BeginTransactionBlock: unexpected state %s",
+			elog(FATAL, "DefineSavepoint: unexpected state %s",
 				 BlockStateAsString(s->blockState));
 			break;
 	}
@@ -2657,20 +2660,126 @@ RollbackToSavepoint(List *options)
 }
 
 /*
- * RollbackAndReleaseSavepoint
+ * BeginInternalSubTransaction
+ *		This is the same as DefineSavepoint except it allows TBLOCK_STARTED
+ *		state, and therefore it can safely be used in a function that might
+ *		be called when not inside a BEGIN block.  Also, we automatically
+ *		cycle through CommitTransactionCommand/StartTransactionCommand
+ *		instead of expecting the caller to do it.
  *
- * Executes a ROLLBACK TO command, immediately followed by a RELEASE
- * of the same savepoint.
+ * Optionally, name can be NULL to create an unnamed savepoint.
  */
 void
-RollbackAndReleaseSavepoint(List *options)
+BeginInternalSubTransaction(char *name)
 {
-	TransactionState s;
+	TransactionState	s = CurrentTransactionState;
 
-	RollbackToSavepoint(options);
-	s = CurrentTransactionState;
-	Assert(s->blockState == TBLOCK_SUBENDABORT);
+	switch (s->blockState)
+	{
+		case TBLOCK_STARTED:
+		case TBLOCK_INPROGRESS:
+		case TBLOCK_SUBINPROGRESS:
+			/* Normal subtransaction start */
+			PushTransaction();
+			s = CurrentTransactionState;	/* changed by push */
+			/*
+			 * Note that we are allocating the savepoint name in the
+			 * parent transaction's CurTransactionContext, since we
+			 * don't yet have a transaction context for the new guy.
+			 */
+			if (name)
+				s->name = MemoryContextStrdup(CurTransactionContext, name);
+			s->blockState = TBLOCK_SUBBEGIN;
+			break;
+
+			/* These cases are invalid.  Reject them altogether. */
+		case TBLOCK_DEFAULT:
+		case TBLOCK_BEGIN:
+		case TBLOCK_SUBBEGIN:
+		case TBLOCK_ABORT:
+		case TBLOCK_SUBABORT:
+		case TBLOCK_ENDABORT:
+		case TBLOCK_END:
+		case TBLOCK_SUBENDABORT_ALL:
+		case TBLOCK_SUBENDABORT:
+		case TBLOCK_SUBABORT_PENDING:
+		case TBLOCK_SUBENDABORT_RELEASE:
+		case TBLOCK_SUBEND:
+			elog(FATAL, "BeginInternalSubTransaction: unexpected state %s",
+				 BlockStateAsString(s->blockState));
+			break;
+	}
+
+	CommitTransactionCommand();
+	StartTransactionCommand();
+}
+
+/*
+ * ReleaseCurrentSubTransaction
+ *
+ * RELEASE (ie, commit) the innermost subtransaction, regardless of its
+ * savepoint name (if any).
+ * NB: do NOT use CommitTransactionCommand/StartTransactionCommand with this.
+ */
+void
+ReleaseCurrentSubTransaction(void)
+{
+	TransactionState s = CurrentTransactionState;
+
+	if (s->blockState != TBLOCK_SUBINPROGRESS)
+		elog(ERROR, "ReleaseCurrentSubTransaction: unexpected state %s",
+			 BlockStateAsString(s->blockState));
+	MemoryContextSwitchTo(CurTransactionContext);
+	CommitTransactionToLevel(GetCurrentTransactionNestLevel());
+}
+
+/*
+ * RollbackAndReleaseCurrentSubTransaction
+ *
+ * ROLLBACK and RELEASE (ie, abort) the innermost subtransaction, regardless
+ * of its savepoint name (if any).
+ * NB: do NOT use CommitTransactionCommand/StartTransactionCommand with this.
+ */
+void
+RollbackAndReleaseCurrentSubTransaction(void)
+{
+	TransactionState s = CurrentTransactionState;
+
+	switch (s->blockState)
+	{
+		/* Must be in a subtransaction */
+		case TBLOCK_SUBABORT:
+		case TBLOCK_SUBINPROGRESS:
+			break;
+
+			/* these cases are invalid. */
+		case TBLOCK_DEFAULT:
+		case TBLOCK_STARTED:
+		case TBLOCK_ABORT:
+		case TBLOCK_INPROGRESS:
+		case TBLOCK_BEGIN:
+		case TBLOCK_END:
+		case TBLOCK_ENDABORT:
+		case TBLOCK_SUBEND:
+		case TBLOCK_SUBENDABORT_ALL:
+		case TBLOCK_SUBENDABORT:
+		case TBLOCK_SUBABORT_PENDING:
+		case TBLOCK_SUBENDABORT_RELEASE:
+		case TBLOCK_SUBBEGIN:
+			elog(FATAL, "RollbackAndReleaseCurrentSubTransaction: unexpected state %s",
+				 BlockStateAsString(s->blockState));
+			break;
+	}
+
+	/*
+	 * Abort the current subtransaction, if needed.
+	 */
+	if (s->blockState == TBLOCK_SUBINPROGRESS)
+		AbortSubTransaction();
 	s->blockState = TBLOCK_SUBENDABORT_RELEASE;
+
+	/* And clean it up, too */
+	CleanupAbortedSubTransactions(false);
 }
 
 /*
@@ -2748,7 +2857,7 @@ AbortOutOfAnyTransaction(void)
  * Commit everything from the current transaction level
  * up to the specified level (inclusive).
  */
-void
+static void
 CommitTransactionToLevel(int level)
 {
 	TransactionState s = CurrentTransactionState;

@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.108 2004/07/31 00:45:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.109 2004/07/31 07:39:20 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -55,6 +55,16 @@
 
 
 static const char *const raise_skip_msg = "RAISE";
+
+typedef struct {
+	const char *label;
+	int			sqlerrstate;
+} ExceptionLabelMap;
+
+static const ExceptionLabelMap exception_label_map[] = {
+#include "plerrcodes.h"
+	{ NULL, 0 }
+};
 
 /*
  * All plpgsql function executions within a single transaction share
@@ -784,6 +794,32 @@ copy_rec(PLpgSQL_rec * rec)
 }
 
 
+static bool
+exception_matches_label(ErrorData *edata, const char *label)
+{
+	int			i;
+
+	/*
+	 * OTHERS matches everything *except* query-canceled;
+	 * if you're foolish enough, you can match that explicitly.
+	 */
+	if (pg_strcasecmp(label, "OTHERS") == 0)
+	{
+		if (edata->sqlerrcode == ERRCODE_QUERY_CANCELED)
+			return false;
+		else
+			return true;
+	}
+	for (i = 0; exception_label_map[i].label != NULL; i++)
+	{
+		if (pg_strcasecmp(label, exception_label_map[i].label) == 0)
+			return (edata->sqlerrcode == exception_label_map[i].sqlerrstate);
+	}
+	/* Should we raise an error if label is unrecognized?? */
+	return false;
+}
+
+
 /* ----------
  * exec_stmt_block			Execute a block of statements
  * ----------
@@ -791,7 +827,7 @@ copy_rec(PLpgSQL_rec * rec)
 static int
 exec_stmt_block(PLpgSQL_execstate * estate, PLpgSQL_stmt_block * block)
 {
-	int			rc;
+	volatile int rc = -1;
 	int			i;
 	int			n;
 
@@ -859,13 +895,86 @@ exec_stmt_block(PLpgSQL_execstate * estate, PLpgSQL_stmt_block * block)
 				elog(ERROR, "unrecognized dtype: %d",
 					 estate->datums[n]->dtype);
 		}
-
 	}
 
-	/*
-	 * Execute the statements in the block's body
-	 */
-	rc = exec_stmts(estate, block->body);
+	if (block->exceptions)
+	{
+		/*
+		 * Execute the statements in the block's body inside a sub-transaction
+		 */
+		MemoryContext	oldcontext = CurrentMemoryContext;
+		volatile bool	caught = false;
+
+		/*
+		 * Start a subtransaction, and re-connect to SPI within it
+		 */
+		SPI_push();
+		BeginInternalSubTransaction(NULL);
+		/* Want to run statements inside function's memory context */
+		MemoryContextSwitchTo(oldcontext);
+		if (SPI_connect() != SPI_OK_CONNECT)
+			elog(ERROR, "SPI_connect failed");
+
+		PG_TRY();
+		{
+			rc = exec_stmts(estate, block->body);
+		}
+		PG_CATCH();
+		{
+			ErrorData *edata;
+			PLpgSQL_exceptions *exceptions;
+			int			j;
+
+			/* Save error info */
+			MemoryContextSwitchTo(oldcontext);
+			edata = CopyErrorData();
+			FlushErrorState();
+
+			/* Abort the inner transaction (and inner SPI connection) */
+			RollbackAndReleaseCurrentSubTransaction();
+			MemoryContextSwitchTo(oldcontext);
+
+			SPI_pop();
+
+			/* Look for a matching exception handler */
+			exceptions = block->exceptions;
+			for (j = 0; j < exceptions->exceptions_used; j++)
+			{
+				PLpgSQL_exception *exception = exceptions->exceptions[j];
+
+				if (exception_matches_label(edata, exception->label))
+				{
+					rc = exec_stmts(estate, exception->action);
+					break;
+				}
+			}
+
+			/* If no match found, re-throw the error */
+			if (j >= exceptions->exceptions_used)
+				ReThrowError(edata);
+			else
+				FreeErrorData(edata);
+			caught = true;
+		}
+		PG_END_TRY();
+
+		/* Commit the inner transaction, return to outer xact context */
+		if (!caught)
+		{
+			if (SPI_finish() != SPI_OK_FINISH)
+				elog(ERROR, "SPI_finish failed");
+			ReleaseCurrentSubTransaction();
+			MemoryContextSwitchTo(oldcontext);
+			SPI_pop();
+		}
+	}
+	else
+	{
+		/*
+		 * Just execute the statements in the block's body
+		 */
+		rc = exec_stmts(estate, block->body);
+	}
 
 	/*
 	 * Handle the return code.
@@ -909,7 +1018,7 @@ exec_stmts(PLpgSQL_execstate * estate, PLpgSQL_stmts * stmts)
 
 	for (i = 0; i < stmts->stmts_used; i++)
 	{
-		rc = exec_stmt(estate, (PLpgSQL_stmt *) (stmts->stmts[i]));
+		rc = exec_stmt(estate, stmts->stmts[i]);
 		if (rc != PLPGSQL_RC_OK)
 			return rc;
 	}
@@ -1852,7 +1961,8 @@ exec_stmt_raise(PLpgSQL_execstate * estate, PLpgSQL_stmt_raise * stmt)
 	estate->err_text = raise_skip_msg;	/* suppress traceback of raise */
 
 	ereport(stmt->elog_level,
-			(errmsg_internal("%s", plpgsql_dstring_get(&ds))));
+			((stmt->elog_level >= ERROR) ? errcode(ERRCODE_RAISE_EXCEPTION) : 0,
+			 errmsg_internal("%s", plpgsql_dstring_get(&ds))));
 
 	estate->err_text = NULL;	/* un-suppress... */
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xact.h,v 1.67 2004/07/27 05:11:24 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/xact.h,v 1.68 2004/07/31 07:39:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -107,7 +107,9 @@ extern void UserAbortTransactionBlock(void);
 extern void ReleaseSavepoint(List *options);
 extern void DefineSavepoint(char *name);
 extern void RollbackToSavepoint(List *options);
-extern void RollbackAndReleaseSavepoint(List *options);
+extern void BeginInternalSubTransaction(char *name);
+extern void ReleaseCurrentSubTransaction(void);
+extern void RollbackAndReleaseCurrentSubTransaction(void);
 extern bool IsSubTransaction(void);
 extern bool IsTransactionBlock(void);
 extern bool IsTransactionOrTransactionBlock(void);

@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.32 2004/02/21 00:34:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.33 2004/07/31 07:39:20 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -584,6 +584,17 @@ dump_stmt(PLpgSQL_stmt * stmt)
 }
 
 static void
+dump_stmts(PLpgSQL_stmts * stmts)
+{
+	int			i;
+
+	dump_indent += 2;
+	for (i = 0; i < stmts->stmts_used; i++)
+		dump_stmt(stmts->stmts[i]);
+	dump_indent -= 2;
+}
+
+static void
 dump_block(PLpgSQL_stmt_block * block)
 {
 	int			i;
@@ -597,10 +608,19 @@ dump_block(PLpgSQL_stmt_block * block)
 	dump_ind();
 	printf("BLOCK <<%s>>\n", name);
 
-	dump_indent += 2;
-	for (i = 0; i < block->body->stmts_used; i++)
-		dump_stmt((PLpgSQL_stmt *) (block->body->stmts[i]));
-	dump_indent -= 2;
+	dump_stmts(block->body);
+
+	if (block->exceptions)
+	{
+		for (i = 0; i < block->exceptions->exceptions_used; i++)
+		{
+			PLpgSQL_exception *exc = block->exceptions->exceptions[i];
+
+			dump_ind();
+			printf("    EXCEPTION WHEN %s THEN\n", exc->label);
+			dump_stmts(exc->action);
+		}
+	}
 
 	dump_ind();
 	printf("    END -- %s\n", name);
@@ -618,25 +638,17 @@ dump_assign(PLpgSQL_stmt_assign * stmt)
 static void
 dump_if(PLpgSQL_stmt_if * stmt)
 {
-	int			i;
-
 	dump_ind();
 	printf("IF ");
 	dump_expr(stmt->cond);
 	printf(" THEN\n");
 
-	dump_indent += 2;
-	for (i = 0; i < stmt->true_body->stmts_used; i++)
-		dump_stmt((PLpgSQL_stmt *) (stmt->true_body->stmts[i]));
-	dump_indent -= 2;
+	dump_stmts(stmt->true_body);
 
 	dump_ind();
 	printf("    ELSE\n");
 
-	dump_indent += 2;
-	for (i = 0; i < stmt->false_body->stmts_used; i++)
-		dump_stmt((PLpgSQL_stmt *) (stmt->false_body->stmts[i]));
-	dump_indent -= 2;
+	dump_stmts(stmt->false_body);
 
 	dump_ind();
 	printf("    ENDIF\n");
@@ -645,15 +657,10 @@ dump_if(PLpgSQL_stmt_if * stmt)
 static void
 dump_loop(PLpgSQL_stmt_loop * stmt)
 {
-	int			i;
-
 	dump_ind();
 	printf("LOOP\n");
 
-	dump_indent += 2;
-	for (i = 0; i < stmt->body->stmts_used; i++)
-		dump_stmt((PLpgSQL_stmt *) (stmt->body->stmts[i]));
-	dump_indent -= 2;
+	dump_stmts(stmt->body);
 
 	dump_ind();
 	printf("    ENDLOOP\n");
@@ -662,17 +669,12 @@ dump_loop(PLpgSQL_stmt_loop * stmt)
 static void
 dump_while(PLpgSQL_stmt_while * stmt)
 {
-	int			i;
-
 	dump_ind();
 	printf("WHILE ");
 	dump_expr(stmt->cond);
 	printf("\n");
 
-	dump_indent += 2;
-	for (i = 0; i < stmt->body->stmts_used; i++)
-		dump_stmt((PLpgSQL_stmt *) (stmt->body->stmts[i]));
-	dump_indent -= 2;
+	dump_stmts(stmt->body);
 
 	dump_ind();
 	printf("    ENDWHILE\n");
@@ -681,8 +683,6 @@ dump_while(PLpgSQL_stmt_while * stmt)
 static void
 dump_fori(PLpgSQL_stmt_fori * stmt)
 {
-	int			i;
-
 	dump_ind();
 	printf("FORI %s %s\n", stmt->var->refname, (stmt->reverse) ? "REVERSE" : "NORMAL");
 
@@ -695,10 +695,9 @@ dump_fori(PLpgSQL_stmt_fori * stmt)
 	printf("    upper = ");
 	dump_expr(stmt->upper);
 	printf("\n");
-
-	for (i = 0; i < stmt->body->stmts_used; i++)
-		dump_stmt((PLpgSQL_stmt *) (stmt->body->stmts[i]));
 	dump_indent -= 2;
+
+	dump_stmts(stmt->body);
 
 	dump_ind();
 	printf("    ENDFORI\n");
@@ -707,17 +706,12 @@ dump_fori(PLpgSQL_stmt_fori * stmt)
 static void
 dump_fors(PLpgSQL_stmt_fors * stmt)
 {
-	int			i;
-
 	dump_ind();
 	printf("FORS %s ", (stmt->rec != NULL) ? stmt->rec->refname : stmt->row->refname);
 	dump_expr(stmt->query);
 	printf("\n");
 
-	dump_indent += 2;
-	for (i = 0; i < stmt->body->stmts_used; i++)
-		dump_stmt((PLpgSQL_stmt *) (stmt->body->stmts[i]));
-	dump_indent -= 2;
+	dump_stmts(stmt->body);
 
 	dump_ind();
 	printf("    ENDFORS\n");
@@ -891,17 +885,12 @@ dump_dynexecute(PLpgSQL_stmt_dynexecute * stmt)
 static void
 dump_dynfors(PLpgSQL_stmt_dynfors * stmt)
 {
-	int			i;
-
 	dump_ind();
 	printf("FORS %s EXECUTE ", (stmt->rec != NULL) ? stmt->rec->refname : stmt->row->refname);
 	dump_expr(stmt->query);
 	printf("\n");
 
-	dump_indent += 2;
-	for (i = 0; i < stmt->body->stmts_used; i++)
-		dump_stmt((PLpgSQL_stmt *) (stmt->body->stmts[i]));
-	dump_indent -= 2;
+	dump_stmts(stmt->body);
 
 	dump_ind();
 	printf("    ENDFORS\n");
@@ -1051,4 +1040,5 @@ plpgsql_dumptree(PLpgSQL_function * func)
 	printf("%3d:", func->action->lineno);
 	dump_block(func->action);
 	printf("\nEnd of execution tree of function %s\n\n", func->fn_name);
+	fflush(stdout);
 }

@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.47 2004/06/06 00:41:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.48 2004/07/31 07:39:20 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -308,18 +308,34 @@ typedef struct PLpgSQL_ns
 
 
 typedef struct
-{								/* List of execution nodes		*/
-	int			stmts_alloc;
-	int			stmts_used;
-	struct PLpgSQL_stmt **stmts;
-}	PLpgSQL_stmts;
-
-
-typedef struct
 {								/* Generic execution node		*/
 	int			cmd_type;
 	int			lineno;
 }	PLpgSQL_stmt;
+
+
+typedef struct
+{								/* List of execution nodes		*/
+	int			stmts_alloc;	/* XXX this oughta just be a List ... */
+	int			stmts_used;
+	PLpgSQL_stmt **stmts;
+}	PLpgSQL_stmts;
+
+
+typedef struct
+{								/* One EXCEPTION ... WHEN clause */
+	int			lineno;
+	char	   *label;
+	PLpgSQL_stmts *action;
+}	PLpgSQL_exception;
+
+
+typedef struct
+{								/* List of WHEN clauses			*/
+	int			exceptions_alloc;	/* XXX this oughta just be a List ... */
+	int			exceptions_used;
+	PLpgSQL_exception **exceptions;
+}	PLpgSQL_exceptions;
 
 
 typedef struct
@@ -328,6 +344,7 @@ typedef struct
 	int			lineno;
 	char	   *label;
 	PLpgSQL_stmts *body;
+	PLpgSQL_exceptions *exceptions;
 	int			n_initvars;
 	int		   *initvarnos;
 }	PLpgSQL_stmt_block;

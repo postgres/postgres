@@ -4,7 +4,7 @@
  *						  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.57 2004/07/04 02:49:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.58 2004/07/31 07:39:20 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -96,6 +96,8 @@ static	void check_assignable(PLpgSQL_datum *datum);
 		PLpgSQL_stmt			*stmt;
 		PLpgSQL_stmts			*stmts;
 		PLpgSQL_stmt_block		*program;
+		PLpgSQL_exception		*exception;
+		PLpgSQL_exceptions		*exceptions;
 		PLpgSQL_nsitem			*nsitem;
 }
 
@@ -130,6 +132,9 @@ static	void check_assignable(PLpgSQL_datum *datum);
 %type <stmt>	stmt_for stmt_select stmt_perform
 %type <stmt>	stmt_dynexecute stmt_getdiag
 %type <stmt>	stmt_open stmt_fetch stmt_close
+
+%type <exceptions>	exception_sect proc_exceptions
+%type <exception>	proc_exception
 
 %type <intlist>	raise_params
 %type <ival>	raise_level raise_param
@@ -240,7 +245,7 @@ opt_semi		:
 				| ';'
 				;
 
-pl_block		: decl_sect K_BEGIN lno proc_sect K_END
+pl_block		: decl_sect K_BEGIN lno proc_sect exception_sect K_END
 					{
 						PLpgSQL_stmt_block *new;
 
@@ -253,6 +258,7 @@ pl_block		: decl_sect K_BEGIN lno proc_sect K_END
 						new->n_initvars = $1.n_initvars;
 						new->initvarnos = $1.initvarnos;
 						new->body		= $4;
+						new->exceptions	= $5;
 
 						plpgsql_ns_pop();
 
@@ -588,7 +594,7 @@ proc_stmts		: proc_stmts proc_stmt
 									$1->stmts_alloc *= 2;
 									$1->stmts = realloc($1->stmts, sizeof(PLpgSQL_stmt *) * $1->stmts_alloc);
 								}
-								$1->stmts[$1->stmts_used++] = (struct PLpgSQL_stmt *)$2;
+								$1->stmts[$1->stmts_used++] = $2;
 
 								$$ = $1;
 						}
@@ -602,7 +608,7 @@ proc_stmts		: proc_stmts proc_stmt
 								new->stmts_alloc = 64;
 								new->stmts_used  = 1;
 								new->stmts = malloc(sizeof(PLpgSQL_stmt *) * new->stmts_alloc);
-								new->stmts[0] = (struct PLpgSQL_stmt *)$1;
+								new->stmts[0] = $1;
 
 								$$ = new;
 
@@ -832,7 +838,7 @@ stmt_else		:
 						new->stmts_alloc = 64;
 						new->stmts_used	 = 1;
 						new->stmts = malloc(sizeof(PLpgSQL_stmt *) * new->stmts_alloc);
-						new->stmts[0] = (struct PLpgSQL_stmt *)new_if;
+						new->stmts[0] = (PLpgSQL_stmt *) new_if;
 
 						$$ = new;
 						
@@ -1522,6 +1528,54 @@ execsql_start	: T_WORD
 					{ $$ = strdup(yytext); }
 				| T_ERROR
 					{ $$ = strdup(yytext); }
+				;
+
+exception_sect	:
+					{ $$ = NULL; }
+				| K_EXCEPTION proc_exceptions
+					{ $$ = $2; }
+				;
+
+proc_exceptions	: proc_exceptions proc_exception
+						{
+								if ($1->exceptions_used == $1->exceptions_alloc)
+								{
+									$1->exceptions_alloc *= 2;
+									$1->exceptions = realloc($1->exceptions, sizeof(PLpgSQL_exception *) * $1->exceptions_alloc);
+								}
+								$1->exceptions[$1->exceptions_used++] = $2;
+
+								$$ = $1;
+						}
+				| proc_exception
+						{
+								PLpgSQL_exceptions	*new;
+
+								new = malloc(sizeof(PLpgSQL_exceptions));
+								memset(new, 0, sizeof(PLpgSQL_exceptions));
+
+								new->exceptions_alloc = 64;
+								new->exceptions_used  = 1;
+								new->exceptions = malloc(sizeof(PLpgSQL_exception *) * new->exceptions_alloc);
+								new->exceptions[0] = $1;
+
+								$$ = new;
+						}
+				;
+
+proc_exception	: K_WHEN lno opt_lblname K_THEN proc_sect
+					{
+						PLpgSQL_exception *new;
+
+						new = malloc(sizeof(PLpgSQL_exception));
+						memset(new, 0, sizeof(PLpgSQL_exception));
+
+						new->lineno   = $2;
+						new->label	  = $3;
+						new->action	  = $5;
+
+						$$ = new;
+					}
 				;
 
 expr_until_semi :

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.41 2004/07/11 23:26:51 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.42 2004/07/31 07:39:17 tgl Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -1796,6 +1796,101 @@ END LOOP;
      rather than the simple syntax error one might expect to get.
     </para>
     </note>
+   </sect2>
+
+   <sect2 id="plpgsql-error-trapping">
+    <title>Trapping Errors</title>
+
+    <para>
+     By default, any error occurring in a <application>PL/pgSQL</>
+     function aborts execution of the function, and indeed of the
+     surrounding transaction as well.  You can trap errors and recover
+     from them by using a <command>BEGIN</> block with an
+     <literal>EXCEPTION</> clause.  The syntax is an extension of the
+     normal syntax for a <command>BEGIN</> block:
+
+<synopsis>
+<optional> &lt;&lt;<replaceable>label</replaceable>&gt;&gt; </optional>
+<optional> DECLARE
+    <replaceable>declarations</replaceable> </optional>
+BEGIN
+    <replaceable>statements</replaceable>
+EXCEPTION
+    WHEN <replaceable>condition</replaceable> THEN
+        <replaceable>handler_statements</replaceable>
+    <optional> WHEN <replaceable>condition</replaceable> THEN
+                   <replaceable>handler_statements</replaceable>
+    ...
+    </optional>
+END;
+</synopsis>
+    </para>
+
+    <para>
+     If no error occurs, this form of block simply executes all the
+     <replaceable>statements</replaceable>, and then control passes
+     to the next statement after <literal>END</>.  But if an error
+     occurs within the <replaceable>statements</replaceable>, further
+     processing of the <replaceable>statements</replaceable> is
+     abandoned, and control passes to the <literal>EXCEPTION</> list.
+     The list is searched for the first <replaceable>condition</replaceable>
+     matching the error that occurred.  If a match is found, the
+     corresponding <replaceable>handler_statements</replaceable> are
+     executed, and then control passes to the next statement after
+     <literal>END</>.  If no match is found, the error propagates out
+     as though the <literal>EXCEPTION</> clause were not there at all:
+     the error can be caught by an enclosing block with
+     <literal>EXCEPTION</>, or if there is none it aborts processing
+     of the function.  The special condition name <literal>OTHERS</>
+     matches every error type except <literal>QUERY_CANCELED</>.
+     (It is possible, but usually not a good idea, to trap
+     <literal>QUERY_CANCELED</> by name.)
+    </para>
+
+    <para>
+     If a new error occurs within the selected
+     <replaceable>handler_statements</replaceable>, it cannot be caught
+     by this <literal>EXCEPTION</> clause, but is propagated out.
+     A surrounding <literal>EXCEPTION</> clause could catch it.
+    </para>
+
+    <para>
+     When an error is caught by an <literal>EXCEPTION</> clause,
+     the local variables of the <application>PL/pgSQL</> function
+     remain as they were when the error occurred, but all changes
+     to persistent database state within the block are rolled back.
+     As an example, consider this fragment:
+
+<programlisting>
+    INSERT INTO mytab(firstname, lastname) VALUES('Tom', 'Jones');
+    BEGIN
+        UPDATE mytab SET firstname = 'Joe' WHERE lastname = 'Jones';
+        x := x + 1;
+        y := x / 0;
+    EXCEPTION
+        WHEN division_by_zero THEN
+            RAISE NOTICE 'caught division_by_zero';
+            RETURN x;
+    END;
+</programlisting>
+
+     When control reaches the assignment to <literal>y</>, it will
+     fail with a <literal>division_by_zero</> error.  This will be caught by
+     the <literal>EXCEPTION</> clause.  The value returned in the
+     <command>RETURN</> statement will be the incremented value of
+     <literal>x</>, but the effects of the <command>UPDATE</> command will
+     have been rolled back.  The <command>INSERT</> command is not rolled
+     back, however, so the end result is that the database contains
+     <literal>Tom Jones</> not <literal>Joe Jones</>.
+    </para>
+
+    <tip>
+     <para>
+      A block containing an <literal>EXCEPTION</> clause is significantly
+      more expensive to enter and exit than a block without one.  Therefore,
+      don't use <literal>EXCEPTION</> without need.
+     </para>
+    </tip>
   </sect2>
   </sect1>
 
@@ -2120,11 +2215,11 @@ RAISE <replaceable class="parameter">level</replaceable> '<replaceable class="pa
 </synopsis>
 
     Possible levels are <literal>DEBUG</literal>,
-    <literal>LOG</literal>,
+    <literal>LOG</literal>, <literal>INFO</literal>,
     <literal>NOTICE</literal>, <literal>WARNING</literal>,
     and <literal>EXCEPTION</literal>.
-    <literal>EXCEPTION</literal> raises an error and aborts the current
-    transaction; the other levels only generate messages of different
+    <literal>EXCEPTION</literal> raises an error (which normally aborts the
+    current transaction); the other levels only generate messages of different
     priority levels.
     Whether messages of a particular priority are reported to the client,
     written to the server log, or both is controlled by the
@@ -2164,28 +2259,11 @@ RAISE EXCEPTION 'Nonexistent ID --> %', user_id;
    </para>
 
     <para>
-     <productname>PostgreSQL</productname> does not have a very smart
-     exception handling model. Whenever the parser, planner/optimizer
-     or executor decide that a statement cannot be processed any longer,
-     the whole transaction gets aborted and the system jumps back
-     into the main loop to get the next command from the client application.
-    </para>
-
-    <para>
-     It is possible to hook into the error mechanism to notice that this
-     happens. But currently it is impossible to tell what really
-     caused the abort (data type format error, floating-point
-     error, parse error, etc.). And it is possible that the database server
-     is in an inconsistent state at this point so returning to the upper
-     executor or issuing more commands might corrupt the whole database.
-    </para>
-
-    <para>
-     Thus, the only thing <application>PL/pgSQL</application>
-     currently does when it encounters an abort during execution of a
-     function or trigger procedure is to add some fields to the message
-     telling in which function and where (line number and type of statement)
-     the error happened.  The error always stops execution of the function.
+     <command>RAISE EXCEPTION</command> presently always generates
+     the same SQLSTATE code, <literal>P0001</>, no matter what message
+     it is invoked with.  It is possible to trap this exception with
+     <literal>EXCEPTION ... WHEN RAISE_EXCEPTION THEN ...</> but there
+     is no way to tell one <command>RAISE</> from another.
     </para>
  </sect1>
 
