@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.70 2005/03/15 02:30:33 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.71 2005/03/17 00:22:24 neilc Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -223,6 +223,15 @@ initdb --locale=sv_SE
     impact. It slows character handling and prevents ordinary indexes
     from being used by <literal>LIKE</>. For this reason use locales
     only if you actually need them.
+   </para>
+
+   <para>
+    As a workaround to allow <productname>PostgreSQL</> to use indexes
+    with <literal>LIKE</> clauses under a non-C locale, several custom
+    operator classes exist. These allow the creation of an index that
+    performs a strict character-by-character comparison, ignoring
+    locale comparison rules. Refer to <xref linkend="indexes-opclass">
+    for more information.
    </para>
   </sect2>
 
