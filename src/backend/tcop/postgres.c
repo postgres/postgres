@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.192 2000/11/29 20:59:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.193 2000/11/30 01:27:19 vadim Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1409,7 +1409,9 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 						elog(ERROR, "-c %s requires argument", optarg);
 				}
 
-				SetConfigOption(name, value, PGC_BACKEND);
+				/* all options are allowed if not under postmaster */
+				SetConfigOption(name, value, 
+					(IsUnderPostmaster) ? PGC_BACKEND : PGC_POSTMASTER);
 				free(name);
 				if (value)
 					free(value);
@@ -1629,7 +1631,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.192 $ $Date: 2000/11/29 20:59:52 $\n");
+		puts("$Revision: 1.193 $ $Date: 2000/11/30 01:27:19 $\n");
 	}
 
 	/*
