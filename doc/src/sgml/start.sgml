@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/start.sgml,v 1.30 2003/06/24 23:26:46 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/start.sgml,v 1.31 2003/08/10 01:20:34 tgl Exp $
 -->
 
  <chapter id="tutorial-start">
@@ -397,7 +397,7 @@ mydb=#
     command shell. (For more internal commands, type
     <literal>\?</literal> at the <command>psql</command> prompt.)  The
     full capabilities of <command>psql</command> are documented in
-    <xref linkend="reference">.  If <productname>PostgreSQL</> is
+    <xref linkend="app-psql">.  If <productname>PostgreSQL</> is
     installed correctly you can also type <literal>man psql</literal>
     at the operating system shell prompt to see the documentation.  In
     this tutorial we will not use these features explicitly, but you

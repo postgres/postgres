@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/user-manag.sgml,v 1.20 2003/03/25 16:15:38 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/user-manag.sgml,v 1.21 2003/08/10 01:20:34 tgl Exp $
 -->
 
 <chapter id="user-manag">
@@ -203,8 +203,9 @@ ALTER GROUP <replaceable>name</replaceable> DROP USER <replaceable>uname1</repla
    <literal>CREATE</>, <literal>TEMPORARY</>, <literal>EXECUTE</>,
    <literal>USAGE</>, and <literal>ALL PRIVILEGES</>. For more
    information on the different types of privileges support by
-   <productname>PostgreSQL</productname>, refer to the
-   <command>GRANT</command> page in <xref linkend="reference">. The right to modify or
+   <productname>PostgreSQL</productname>, see the
+   <xref linkend="sql-grant" endterm="sql-grant-title"> reference page.
+   The right to modify or
    destroy an object is always the privilege of the owner only. To
    assign privileges, the <command>GRANT</command> command is
    used. So, if <literal>joe</literal> is an existing user, and

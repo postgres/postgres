@@ -1,8 +1,8 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/sql.sgml,v 1.30 2003/03/27 16:51:26 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/sql.sgml,v 1.31 2003/08/10 01:20:34 tgl Exp $
 -->
 
- <chapter id="sql">
+ <chapter id="sql-intro">
   <title>SQL</title>
 
   <abstract>

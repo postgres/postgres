@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.71 2003/08/09 22:50:22 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.72 2003/08/10 01:20:34 tgl Exp $
 -->
 
  <sect1 id="xfunc">
@@ -2185,7 +2185,7 @@ CREATE FUNCTION test(smallint, double precision) RETURNS ...
 </programlisting>
     it is not immediately clear which function would be called with
     some trivial input like <literal>test(1, 1.5)</literal>.  The
-    currently implemented resolution rules are described in the
+    currently implemented resolution rules are described in
     <xref linkend="typeconv">, but it is unwise to design a system that subtly
     relies on this behavior.
    </para>

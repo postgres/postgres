@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/dml.sgml,v 1.4 2003/03/25 16:15:35 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/dml.sgml,v 1.5 2003/08/10 01:20:34 tgl Exp $ -->
 
 <chapter id="dml">
  <title>Data Manipulation</title>
@@ -88,9 +88,9 @@ INSERT INTO products DEFAULT VALUES;
   <tip>
    <para>
     To do <quote>bulk loads</quote>, that is, inserting a lot of data,
-    take a look at the <command>COPY</command> command (see
-    <xref linkend="reference">).  It is not as flexible as the
-    <command>INSERT</command> command, but more efficient.
+    take a look at the <xref linkend="sql-copy"
+    endterm="sql-copy-title"> command.  It is not as flexible as the
+    <command>INSERT</command> command, but is more efficient.
    </para>
   </tip>
  </sect1>

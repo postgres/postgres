@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.165 2003/08/09 22:50:21 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.166 2003/08/10 01:20:34 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -7268,7 +7268,7 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
    linkend="functions-aggregate-table"> shows the built-in aggregate
    functions.  The special syntax considerations for aggregate
    functions are explained in <xref linkend="syntax-aggregates">.
-   Consult <xref linkend="tutorial"> for additional introductory
+   Consult <xref linkend="tutorial-agg"> for additional introductory
    information.
   </para>
 

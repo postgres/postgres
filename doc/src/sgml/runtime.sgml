@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.198 2003/07/31 18:36:17 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.199 2003/08/10 01:20:34 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -2425,7 +2425,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
         behavior you can set this variable to off, but in the long run
         you are encouraged to change your applications to use the
         <literal>ONLY</literal> key word to exclude subtables. See
-        <xref linkend="sql"> for more information about inheritance.
+        <xref linkend="ddl-inherit"> for more information about inheritance.
        </para>
       </listitem>
      </varlistentry>

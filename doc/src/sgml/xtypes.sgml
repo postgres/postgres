@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xtypes.sgml,v 1.18 2003/07/27 17:10:06 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xtypes.sgml,v 1.19 2003/08/10 01:20:34 tgl Exp $
 -->
 
  <sect1 id="xtypes">
@@ -168,8 +168,8 @@ CREATE TYPE complex (
  </para>
 
  <para>
-  For further details see the description of the <command>CREATE
-  TYPE</command> command in <xref linkend="reference">.
+  For further details see the description of the
+  <xref linkend="sql-createtype" endterm="sql-createtype-title"> command.
  </para>
 </sect1>
 
