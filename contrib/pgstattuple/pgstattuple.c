@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/contrib/pgstattuple/pgstattuple.c,v 1.9 2002/09/04 20:31:08 momjian Exp $
+ * $Header: /cvsroot/pgsql/contrib/pgstattuple/pgstattuple.c,v 1.9.2.1 2004/10/13 22:22:20 tgl Exp $
  *
  * Copyright (c) 2001,2002	Tatsuo Ishii
  *
@@ -103,6 +103,9 @@ pgstattuple(PG_FUNCTION_ARGS)
 	/* scan the relation */
 	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
+		uint16		sv_infomask;
+
+		sv_infomask = tuple->t_data->t_infomask;
 		if (HeapTupleSatisfiesNow(tuple->t_data))
 		{
 			tuple_len += tuple->t_len;
@@ -113,6 +116,8 @@ pgstattuple(PG_FUNCTION_ARGS)
 			dead_tuple_len += tuple->t_len;
 			dead_tuple_count++;
 		}
+		if (sv_infomask != tuple->t_data->t_infomask)
+			SetBufferCommitInfoNeedsSave(scan->rs_cbuf);
 
 		/*
 		 * To avoid physically reading the table twice, try to do the

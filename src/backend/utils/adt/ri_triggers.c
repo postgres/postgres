@@ -17,7 +17,7 @@
  *
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.43.2.4 2003/10/31 03:57:41 wieck Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.43.2.5 2004/10/13 22:22:22 tgl Exp $
  *
  * ----------
  */
@@ -241,6 +241,9 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 	 * We should not even consider checking the row if it is no longer
 	 * valid since it was either deleted (doesn't matter) or updated (in
 	 * which case it'll be checked with its final values).
+	 *
+	 * Note: we need not SetBufferCommitInfoNeedsSave() here since the
+	 * new tuple's commit state can't possibly change.
 	 */
 	if (new_row)
 	{
