@@ -13,7 +13,7 @@
 #include "print.h"
 
 #define DEFAULT_FIELD_SEP "|"
-#define DEFAULT_EDITOR	"/bin/vi"
+#define DEFAULT_EDITOR	"vi"
 
 #define DEFAULT_PROMPT1 "%/%R%# "
 #define DEFAULT_PROMPT2 "%/%R%# "

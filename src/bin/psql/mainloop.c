@@ -29,6 +29,8 @@ int
 MainLoop(PsqlSettings *pset, FILE *source)
 {
 	PQExpBuffer query_buf;		/* buffer for query being accumulated */
+    PQExpBuffer previous_buf;   /* if there isn't anything in the new buffer
+                                   yet, use this one for \e, etc. */
 	char	   *line;			/* current line of input */
 	int			len;			/* length of the line */
 	int			successResult = EXIT_SUCCESS;
@@ -63,7 +65,8 @@ MainLoop(PsqlSettings *pset, FILE *source)
 
 
 	query_buf = createPQExpBuffer();
-	if (!query_buf)
+    previous_buf = createPQExpBuffer();
+	if (!query_buf || !previous_buf)
 	{
 		perror("createPQExpBuffer");
 		exit(EXIT_FAILURE);
@@ -80,21 +83,21 @@ MainLoop(PsqlSettings *pset, FILE *source)
 	{
 		if (slashCmdStatus == CMD_NEWEDIT)
 		{
-
 			/*
 			 * just returned from editing the line? then just copy to the
 			 * input buffer
 			 */
-			line = strdup(query_buf->data);
+			line = xstrdup(query_buf->data);
 			resetPQExpBuffer(query_buf);
-			/* reset parsing state since we are rescanning whole query */
+			/* reset parsing state since we are rescanning whole line */
 			xcomment = false;
 			in_quote = 0;
 			paren_level = 0;
+            slashCmdStatus = CMD_UNKNOWN;
 		}
 		else
 		{
-
+            fflush(stdout);
 			/*
 			 * otherwise, set interactive prompt if necessary and get
 			 * another line
@@ -169,8 +172,6 @@ MainLoop(PsqlSettings *pset, FILE *source)
 		if (!pset->cur_cmd_interactive && GetVariableBool(pset->vars, "echo"))
 			puts(line);
 
-
-		slashCmdStatus = CMD_UNKNOWN;
 
 		len = strlen(line);
 		query_start = 0;
@@ -275,11 +276,13 @@ MainLoop(PsqlSettings *pset, FILE *source)
 			/* semicolon? then send query */
 			else if (line[i] == ';' && !was_bslash)
 			{
+                /* delete the old query buffer from last time around */
+                if (slashCmdStatus == CMD_SEND)
+
 				line[i] = '\0';
 				/* is there anything else on the line? */
 				if (line[query_start + strspn(line + query_start, " \t")] != '\0')
 				{
-
 					/*
 					 * insert a cosmetic newline, if this is not the first
 					 * line in the buffer
@@ -292,8 +295,11 @@ MainLoop(PsqlSettings *pset, FILE *source)
 
 				/* execute query */
 				success = SendQuery(pset, query_buf->data);
+                slashCmdStatus = success ? CMD_SEND : CMD_ERROR;
 
-				resetPQExpBuffer(query_buf);
+                resetPQExpBuffer(previous_buf);
+                appendPQExpBufferStr(previous_buf, query_buf->data);
+                resetPQExpBuffer(query_buf);
 				query_start = i + thislen;
 			}
 
@@ -316,7 +322,6 @@ MainLoop(PsqlSettings *pset, FILE *source)
 				/* is there anything else on the line? */
 				if (line[query_start + strspn(line + query_start, " \t")] != '\0')
 				{
-
 					/*
 					 * insert a cosmetic newline, if this is not the first
 					 * line in the buffer
@@ -327,17 +332,27 @@ MainLoop(PsqlSettings *pset, FILE *source)
 					appendPQExpBufferStr(query_buf, line + query_start);
 				}
 
-				/* handle backslash command */
-
-				slashCmdStatus = HandleSlashCmds(pset, &line[i], query_buf, &end_of_cmd);
+                /* handle backslash command */
+                slashCmdStatus = HandleSlashCmds(pset, &line[i], 
+                                                 query_buf->len>0 ? query_buf : previous_buf,
+                                                 &end_of_cmd);
 
 				success = slashCmdStatus != CMD_ERROR;
+
+                if ((slashCmdStatus == CMD_SEND || slashCmdStatus == CMD_NEWEDIT) &&
+                    query_buf->len == 0) {
+                    /* copy previous buffer to current for for handling */
+                    appendPQExpBufferStr(query_buf, previous_buf->data);
+                }
 
 				if (slashCmdStatus == CMD_SEND)
 				{
 					success = SendQuery(pset, query_buf->data);
-					resetPQExpBuffer(query_buf);
 					query_start = i + thislen;
+
+                    resetPQExpBuffer(previous_buf);
+                    appendPQExpBufferStr(previous_buf, query_buf->data);
+                    resetPQExpBuffer(query_buf);
 				}
 
 				/* is there anything left after the backslash command? */
@@ -356,13 +371,6 @@ MainLoop(PsqlSettings *pset, FILE *source)
 				break;
 
 		} /* for (line) */
-
-
-		if (!success && die_on_error && !pset->cur_cmd_interactive)
-		{
-			successResult = EXIT_USER;
-			break;
-		}
 
 
 		if (slashCmdStatus == CMD_TERMINATE)
@@ -387,7 +395,17 @@ MainLoop(PsqlSettings *pset, FILE *source)
 		if (query_buf->data[0] != '\0' && GetVariableBool(pset->vars, "singleline"))
 		{
 			success = SendQuery(pset, query_buf->data);
-			resetPQExpBuffer(query_buf);
+            slashCmdStatus = success ? CMD_SEND : CMD_ERROR;
+            resetPQExpBuffer(previous_buf);
+            appendPQExpBufferStr(previous_buf, query_buf->data);
+            resetPQExpBuffer(query_buf);
+		}
+
+
+		if (!success && die_on_error && !pset->cur_cmd_interactive)
+		{
+			successResult = EXIT_USER;
+			break;
 		}
 
 
@@ -397,9 +415,10 @@ MainLoop(PsqlSettings *pset, FILE *source)
 			successResult = EXIT_BADCONN;
 			break;
 		}
-	}							/* while */
+	} /* while !EOF */
 
 	destroyPQExpBuffer(query_buf);
+	destroyPQExpBuffer(previous_buf);
 
 	pset->cur_cmd_source = prev_cmd_source;
 	pset->cur_cmd_interactive = prev_cmd_interactive;

@@ -32,11 +32,7 @@ gets_interactive(const char *prompt)
 
 #ifdef USE_READLINE
 	if (useReadline)
-	{
 		s = readline(prompt);
-		fputc('\r', stdout);
-		fflush(stdout);
-	}
 	else
 	{
 #endif

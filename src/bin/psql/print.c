@@ -18,7 +18,7 @@
 #include <libpq-fe.h>
 #include <postgres_ext.h>		/* for Oid type */
 
-#define DEFAULT_PAGER "/bin/more"
+#define DEFAULT_PAGER "more"
 
 
 
@@ -324,6 +324,11 @@ print_aligned_vertical(const char *title, const char * const * headers,
 				hwidth = 0,
 				dwidth = 0;
 	char	   *divider;
+
+    if (cells[0] == NULL) {
+        puts("(No rows)\n");
+        return;
+    }
 
 	/* count columns and find longest header */
 	for (ptr = headers; *ptr; ptr++)

@@ -433,7 +433,6 @@ SendQuery(PsqlSettings *pset, const char *query)
 		fgets(buf, 3, stdin);
 		if (buf[0] == 'x')
 			return false;
-		fflush(stdin);
 	}
 
 	cancelConn = pset->db;
@@ -479,7 +478,6 @@ SendQuery(PsqlSettings *pset, const char *query)
 				{
 					success = true;
 					printQuery(results, &pset->popt, pset->queryFout);
-					fflush(pset->queryFout);
 				}
 				break;
 			case PGRES_EMPTY_QUERY:
@@ -488,10 +486,8 @@ SendQuery(PsqlSettings *pset, const char *query)
 			case PGRES_COMMAND_OK:
 				success = true;
                 pset->lastOid = PQoidValue(results);
-                if (!GetVariableBool(pset->vars, "quiet")) {
+                if (!GetVariableBool(pset->vars, "quiet"))
                     fprintf(pset->queryFout, "%s\n", PQcmdStatus(results));
-                    fflush(pset->queryFout);
-                }
 				break;
 
 			case PGRES_COPY_OUT:
@@ -515,9 +511,10 @@ SendQuery(PsqlSettings *pset, const char *query)
 			case PGRES_BAD_RESPONSE:
 				success = false;
 				fputs(PQerrorMessage(pset->db), pset->queryFout);
-                fflush(pset->queryFout);
 				break;
 		}
+
+        fflush(pset->queryFout);
 
 		if (PQstatus(pset->db) == CONNECTION_BAD)
 		{
@@ -541,6 +538,7 @@ SendQuery(PsqlSettings *pset, const char *query)
 			fprintf(pset->queryFout, "Asynchronous NOTIFY '%s' from backend with pid '%d' received.\n",
 					notify->relname, notify->be_pid);
 			free(notify);
+            fflush(pset->queryFout);
 		}
 
 		if (results)

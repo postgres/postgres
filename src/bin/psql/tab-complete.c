@@ -203,7 +203,7 @@ char ** psql_completion(char *text, int start, int end)
 
     (void)end; /* not used */
 
-    rl_filename_quoting_desired = 1;
+    rl_completion_append_character = ' ';
 
     /* Clear a few things. */
     completion_charp = NULL;
@@ -501,6 +501,11 @@ char ** psql_completion(char *text, int start, int end)
       	COMPLETE_WITH_QUERY(Query_for_list_of_tables);
 
 
+/* ... FROM ... */
+    else if (strcasecmp(prev_wd, "FROM") == 0 )
+        COMPLETE_WITH_QUERY(Query_for_list_of_tables);
+
+
 /* Backslash commands */
     else if (strcmp(prev_wd, "\\connect")==0 || strcmp(prev_wd, "\\c")==0)
         COMPLETE_WITH_QUERY(Query_for_list_of_databases);
@@ -510,7 +515,7 @@ char ** psql_completion(char *text, int start, int end)
         COMPLETE_WITH_LIST(sql_commands);
     else if (strcmp(prev_wd, "\\pset")==0) {
         char * my_list[] = { "format", "border", "expanded", "null", "fieldsep",
-                             "tuples_only", "title", "tableattr", "pager" };
+                             "tuples_only", "title", "tableattr", "pager", NULL };
         COMPLETE_WITH_LIST(my_list);
     }
     else if( strcmp(prev_wd, "\\e")==0 || strcmp(prev_wd, "\\edit")==0 ||
@@ -541,8 +546,8 @@ char ** psql_completion(char *text, int start, int end)
        of default list. If we were to just return NULL, readline automatically
        attempts filename completion, and that's usually no good. */
     if (matches == NULL) {
-        char * my_list[] = { "", "", NULL };
-        COMPLETE_WITH_LIST(my_list);
+        COMPLETE_WITH_CONST("");
+        rl_completion_append_character = '\0';
     }
 	
 

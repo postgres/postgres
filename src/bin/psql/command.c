@@ -624,7 +624,7 @@ exec_command(const char *cmd,
 
 		if (!options[0])
 		{
-			fprintf(stderr, "Usage \\%s <filename>\n", cmd);
+			fprintf(stderr, "Usage: \\%s <filename>\n", cmd);
 			success = false;
 		}
 		else
