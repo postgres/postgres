@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/sql.sgml,v 1.22 2001/09/23 03:39:01 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/sql.sgml,v 1.23 2001/10/20 02:55:38 momjian Exp $
 -->
 
  <chapter id="sql">
@@ -864,7 +864,7 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="PARAMETER">expression</replac
     [ { UNION | INTERSECT | EXCEPT [ ALL ] } <replaceable class="PARAMETER">select</replaceable> ]
     [ ORDER BY <replaceable class="PARAMETER">expression</replaceable> [ ASC | DESC | USING <replaceable class="PARAMETER">operator</replaceable> ] [, ...] ]
     [ FOR UPDATE [ OF <replaceable class="PARAMETER">class_name</replaceable> [, ...] ] ]
-    [ LIMIT [ <replaceable class="PARAMETER">start</replaceable> , ] { <replaceable class="PARAMETER">count</replaceable> | ALL } ]
+    [ LIMIT { <replaceable class="PARAMETER">count</replaceable> | ALL } ]
     [ OFFSET <replaceable class="PARAMETER">start</replaceable> ]
      </synopsis>
     </para>
