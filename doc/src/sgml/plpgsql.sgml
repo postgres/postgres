@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/plpgsql.sgml,v 1.21 2003/08/31 17:32:19 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/plpgsql.sgml,v 1.22 2003/09/03 22:17:07 petere Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -1668,6 +1668,11 @@ FOR i IN REVERSE 10..1 LOOP
     -- some expressions here
 END LOOP;
 </programlisting>
+       </para>
+
+       <para>
+        If the lower bound is greater than the upper bound, the loop body is not
+        executed at all, but no error is raised.
        </para>
      </sect3>
    </sect2>
