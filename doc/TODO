@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Jun 19 12:36:06 EDT 2002
+Last updated:		Thu Jun 20 12:46:20 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -268,7 +268,7 @@ Clients
 
 * JDBC
 	o Comprehensive test suite. This may be available already.
-	o Updateable resultSet (must be done in backend code)
+	o -Updateable resultSet
 	o JDBC-standard BLOB support
 	o Error Codes (pending backend implementation)
 	o Support both 'make' and 'ant'
