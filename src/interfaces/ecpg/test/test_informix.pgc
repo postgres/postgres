@@ -17,7 +17,17 @@ int main()
 
 	rsetnull(CDECIMALTYPE, (char *)&j);
 	$insert into test (i, j) values (7, :j);
+	$commit;
+	
+	$insert into test (i, j) values (7, 2);
+	printf("%ld: %s\n", sqlca.sqlcode, sqlca.sqlerrm.sqlerrmc);
+	if (sqlca.sqlcode != 0) $rollback;
+
 	$insert into test (i, j) values (:i, 1);
+
+	$select i from test where j=(select j from test);
+	printf("%ld: %s\n", sqlca.sqlcode, sqlca.sqlerrm.sqlerrmc);
+	if (sqlca.sqlcode != 0) $rollback;
 
 	$declare c cursor for select * from test where i <= :i;
 	openit();

@@ -47,6 +47,8 @@
 #define ECPG_PGSQL			-400
 #define ECPG_TRANS			-401
 #define ECPG_CONNECT			-402
+#define ECPG_DUPLICATE_KEY		-403
+#define ECPG_SUBSELECT_NOT_ONE		-404
 
 /* backend WARNINGs, starting at 600 */
 #define ECPG_WARNING_UNRECOGNIZED	   -600

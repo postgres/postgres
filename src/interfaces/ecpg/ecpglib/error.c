@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/error.c,v 1.2 2003/06/15 04:07:58 momjian Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/error.c,v 1.3 2003/07/15 12:38:38 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -10,10 +10,6 @@
 #include "ecpglib.h"
 #include "extern.h"
 #include "sqlca.h"
-
-/* This should hold the back-end error message from 
- * the last back-end operation. */
-static char *ECPGerr;
 
 void
 ECPGraise(int line, int code, const char *str)
@@ -142,6 +138,11 @@ ECPGraise(int line, int code, const char *str)
 					slen--;
 				snprintf(sqlca->sqlerrm.sqlerrmc, sizeof(sqlca->sqlerrm.sqlerrmc),
 						 "'%.*s' in line %d.", slen, str, line);
+				if (strncmp(str, "ERROR:  Cannot insert a duplicate key", strlen("ERROR:  Cannot insert a duplicate key")) == 0)
+						sqlca->sqlcode = ECPG_DUPLICATE_KEY;
+				else if (strncmp(str, "ERROR:  More than one tuple returned by a subselect", strlen("ERROR:  More than one tuple returned by a subselect")) == 0)
+						sqlca->sqlcode = ECPG_SUBSELECT_NOT_ONE;
+				
 				break;
 			}
 
@@ -168,29 +169,6 @@ ECPGraise(int line, int code, const char *str)
 	ECPGfree_auto_mem();
 }
 
-/* Set the error message string from the backend */
-void
-set_backend_err(const char *err, int lineno)
-{
-	if (ECPGerr)
-		ECPGfree(ECPGerr);
-
-	if (!err)
-	{
-		ECPGerr = NULL;
-		return;
-	}
-
-	ECPGerr = ECPGstrdup(err, lineno);
-}
-
-/* Retrieve the error message from the backend. */
-char *
-ECPGerrmsg(void)
-{
-	return ECPGerr;
-}
-	
 /* print out an error message */
 void
 sqlprint(void)

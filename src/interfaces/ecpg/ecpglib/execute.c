@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.18 2003/07/08 12:11:29 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.19 2003/07/15 12:38:38 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -1131,7 +1131,6 @@ ECPGexecute(struct statement * stmt)
 		errmsg = PQerrorMessage(stmt->connection->connection);
 		ECPGlog("ECPGexecute line %d: error: %s", stmt->lineno, errmsg);
 		ECPGraise(stmt->lineno, ECPG_PGSQL, errmsg);
-		set_backend_err(errmsg, stmt->lineno);
 	}
 	else
 
@@ -1144,7 +1143,6 @@ ECPGexecute(struct statement * stmt)
 		struct sqlca_t *sqlca = ECPGget_sqlca();
 
 		errmsg = PQresultErrorMessage(results);
-		set_backend_err(errmsg, stmt->lineno);
 		
 		var = stmt->outlist;
 		switch (PQresultStatus(results))
