@@ -1,7 +1,7 @@
 --
 -- destroy.source
 --
--- $Header: /cvsroot/pgsql/src/test/regress/sql/Attic/destroy.sql,v 1.6 1998/04/26 04:12:05 momjian Exp $
+-- $Header: /cvsroot/pgsql/src/test/regress/sql/drop.sql,v 1.1 1999/12/10 17:31:30 momjian Exp $
 --
 
 --
