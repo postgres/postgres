@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.11 1996/11/13 20:49:07 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.12 1996/11/25 03:03:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,10 +69,8 @@ parser(char *str, Oid *typev, int nargs)
     init_io();
     
     /* Set things up to read from the string, if there is one */
-    if (strlen(str) != 0) {
-	parseString = (char *) palloc(strlen(str) + 1);
-	memmove(parseString,str,strlen(str)+1);
-    }
+    parseString = (char *) palloc(strlen(str) + 1);
+    memmove(parseString,str,strlen(str)+1);
     
     parser_init(typev, nargs);
     yyresult = yyparse();
