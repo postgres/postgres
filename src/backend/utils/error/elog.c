@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.72 2000/12/03 20:45:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.73 2000/12/06 17:25:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,6 +33,7 @@
 #include "commands/copy.h"
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
+#include "miscadmin.h"
 #include "storage/proc.h"
 #include "tcop/tcopprot.h"
 #include "utils/memutils.h"
