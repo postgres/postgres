@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.9 1997/05/06 07:16:21 thomas Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.10 1997/06/10 13:01:32 momjian Exp $
  *
  * NOTES
  *    This should be moved to a more appropriate place.  It is here
@@ -257,11 +257,11 @@ lo_import(text *filename)
     /*
      * open the file to be read in
      */
-    strncpy(fnamebuf, VARDATA(filename), VARSIZE(filename));
-    fnamebuf[VARSIZE(filename)] = '\0';
+    strncpy(fnamebuf, VARDATA(filename), VARSIZE(filename) - VARHDRSZ);
+    fnamebuf[VARSIZE(filename) - VARHDRSZ] = '\0';
     fd = open(fnamebuf, O_RDONLY, 0666);
     if (fd < 0)  {   /* error */
-	elog(WARN, "lo_import: can't open unix file\"%s\"\n", 
+	elog(WARN, "be_lo_import: can't open unix file\"%s\"\n", 
              fnamebuf);
     }
 
@@ -325,8 +325,8 @@ lo_export(Oid lobjId, text *filename)
      * open the file to be written to
      */
     oumask = umask((mode_t) 0);
-    strncpy(fnamebuf, VARDATA(filename), VARSIZE(filename));
-    fnamebuf[VARSIZE(filename)] = '\0';
+    strncpy(fnamebuf, VARDATA(filename), VARSIZE(filename) - VARHDRSZ);
+    fnamebuf[VARSIZE(filename) - VARHDRSZ] = '\0';
     fd = open(fnamebuf, O_CREAT|O_WRONLY, 0666);
     (void) umask(oumask);
     if (fd < 0)  {   /* error */
