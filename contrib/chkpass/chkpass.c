@@ -4,7 +4,7 @@
  * darcy@druid.net
  * http://www.druid.net/darcy/
  *
- * $Id: chkpass.c,v 1.7 2001/12/19 18:49:24 petere Exp $
+ * $Id: chkpass.c,v 1.8 2002/08/29 12:18:20 darcy Exp $
  * best viewed with tabs set to 4
  */
 
@@ -150,7 +150,7 @@ chkpass_rout(PG_FUNCTION_ARGS)
 		memcpy(result->vl_dat, password->password, strlen(password->password));
 	}
 
-	PG_RETURN_CSTRING(result);
+	PG_RETURN_TEXT_P(result);
 }
 
 
