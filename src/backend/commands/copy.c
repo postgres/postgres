@@ -7,18 +7,18 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.124 2000/11/16 22:30:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.125 2000/12/02 20:49:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
+#include "postgres.h"
 
 #include <unistd.h>
 #include <sys/stat.h>
 
-#include "postgres.h"
-
 #include "access/genam.h"
 #include "access/heapam.h"
+#include "access/printtup.h"
 #include "catalog/catname.h"
 #include "catalog/index.h"
 #include "catalog/pg_index.h"
@@ -47,13 +47,11 @@
 /* non-export function prototypes */
 static void CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim, char *null_print);
 static void CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim, char *null_print);
-static Oid	GetOutputFunction(Oid type);
 static Oid	GetInputFunction(Oid type);
 static Oid	GetTypeElement(Oid type);
 static bool IsTypeByVal(Oid type);
 static void CopyReadNewline(FILE *fp, int *newline);
 static char *CopyReadAttribute(FILE *fp, bool *isnull, char *delim, int *newline, char *null_print);
-
 static void CopyAttributeOut(FILE *fp, char *string, char *delim);
 static int	CountTuples(Relation relation);
 
@@ -61,7 +59,7 @@ static int	CountTuples(Relation relation);
  * Static communication variables ... pretty grotty, but COPY has
  * never been reentrant...
  */
-int			lineno = 0;			/* used by elog() -- dz */
+int			lineno = 0;			/* exported for use by elog() -- dz */
 static bool fe_eof;
 
 /*
@@ -344,7 +342,11 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 		{
 			mode_t		oumask; /* Pre-existing umask value */
 
-			if (*filename != '/')
+			/*
+			 * Prevent write to relative path ... too easy to shoot oneself
+			 * in the foot by overwriting a database file ...
+			 */
+			if (filename[0] != '/')
 				elog(ERROR, "Relative path not allowed for server side"
 					 " COPY command.");
 
@@ -382,27 +384,22 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 }
 
 
-
+/*
+ * Copy from relation TO file.
+ */
 static void
 CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim, char *null_print)
 {
 	HeapTuple	tuple;
+	TupleDesc	tupDesc;
 	HeapScanDesc scandesc;
-
-	int32		attr_count,
+	int			attr_count,
 				i;
-
-#ifdef	_DROP_COLUMN_HACK__
-	bool	   *valid;
-
-#endif	 /* _DROP_COLUMN_HACK__ */
 	Form_pg_attribute *attr;
 	FmgrInfo   *out_functions;
-	Oid			out_func_oid;
 	Oid		   *elements;
+	bool	   *isvarlena;
 	int32	   *typmod;
-	Datum		value;
-	bool		isnull;			/* The attribute we are copying is null */
 	char	   *nulls;
 
 	/*
@@ -413,47 +410,39 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim, char *null_p
 	 * <nulls> is meaningful only if we are doing a binary copy.
 	 */
 	char	   *string;
-	int32		ntuples;
-	TupleDesc	tupDesc;
 
 	scandesc = heap_beginscan(rel, 0, QuerySnapshot, 0, NULL);
 
+	tupDesc = rel->rd_att;
 	attr_count = rel->rd_att->natts;
 	attr = rel->rd_att->attrs;
-	tupDesc = rel->rd_att;
+
+	/* For binary copy we really only need isvarlena, but compute it all... */
+	out_functions = (FmgrInfo *) palloc(attr_count * sizeof(FmgrInfo));
+	elements = (Oid *) palloc(attr_count * sizeof(Oid));
+	isvarlena = (bool *) palloc(attr_count * sizeof(bool));
+	typmod = (int32 *) palloc(attr_count * sizeof(int32));
+	for (i = 0; i < attr_count; i++)
+	{
+		Oid			out_func_oid;
+
+		if (!getTypeOutputInfo(attr[i]->atttypid,
+							   &out_func_oid, &elements[i], &isvarlena[i]))
+			elog(ERROR, "COPY: couldn't lookup info for type %u",
+				 attr[i]->atttypid);
+		fmgr_info(out_func_oid, &out_functions[i]);
+		typmod[i] = attr[i]->atttypmod;
+	}
 
 	if (!binary)
 	{
-		out_functions = (FmgrInfo *) palloc(attr_count * sizeof(FmgrInfo));
-		elements = (Oid *) palloc(attr_count * sizeof(Oid));
-		typmod = (int32 *) palloc(attr_count * sizeof(int32));
-#ifdef	_DROP_COLUMN_HACK__
-		valid = (bool *) palloc(attr_count * sizeof(bool));
-#endif	 /* _DROP_COLUMN_HACK__ */
-		for (i = 0; i < attr_count; i++)
-		{
-#ifdef	_DROP_COLUMN_HACK__
-			if (COLUMN_IS_DROPPED(attr[i]))
-			{
-				valid[i] = false;
-				continue;
-			}
-			else
-				valid[i] = true;
-#endif	 /* _DROP_COLUMN_HACK__ */
-			out_func_oid = (Oid) GetOutputFunction(attr[i]->atttypid);
-			fmgr_info(out_func_oid, &out_functions[i]);
-			elements[i] = GetTypeElement(attr[i]->atttypid);
-			typmod[i] = attr[i]->atttypmod;
-		}
 		nulls = NULL;			/* meaningless, but compiler doesn't know
 								 * that */
 	}
 	else
 	{
-		elements = NULL;
-		typmod = NULL;
-		out_functions = NULL;
+		int32		ntuples;
+
 		nulls = (char *) palloc(attr_count);
 		for (i = 0; i < attr_count; i++)
 			nulls[i] = ' ';
@@ -480,18 +469,31 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim, char *null_p
 
 		for (i = 0; i < attr_count; i++)
 		{
-			value = heap_getattr(tuple, i + 1, tupDesc, &isnull);
-			if (!binary)
+			Datum		origvalue,
+						value;
+			bool		isnull;
+
+			origvalue = heap_getattr(tuple, i + 1, tupDesc, &isnull);
+
+			if (isnull)
 			{
-#ifdef	_DROP_COLUMN_HACK__
-				if (!valid[i])
-				{
-					if (i == attr_count - 1)
-						CopySendChar('\n', fp);
-					continue;
-				}
-#endif	 /* _DROP_COLUMN_HACK__ */
-				if (!isnull)
+				if (!binary)
+					CopySendString(null_print, fp);	/* null indicator */
+				else
+					nulls[i] = 'n';
+			}
+			else
+			{
+				/*
+				 * If we have a toasted datum, forcibly detoast it to avoid
+				 * memory leakage inside the type's output routine.
+				 */
+				if (isvarlena[i])
+					value = PointerGetDatum(PG_DETOAST_DATUM(origvalue));
+				else
+					value = origvalue;
+
+				if (!binary)
 				{
 					string = DatumGetCString(FunctionCall3(&out_functions[i],
 												value,
@@ -500,9 +502,14 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim, char *null_p
 					CopyAttributeOut(fp, string, delim);
 					pfree(string);
 				}
-				else
-					CopySendString(null_print, fp);		/* null indicator */
 
+				/* Clean up detoasted copy, if any */
+				if (value != origvalue)
+					pfree(DatumGetPointer(value));
+			}
+
+			if (!binary)
+			{
 				if (i == attr_count - 1)
 					CopySendChar('\n', fp);
 				else
@@ -514,16 +521,6 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim, char *null_p
 					 */
 					CopySendChar(delim[0], fp);
 				}
-			}
-			else
-			{
-
-				/*
-				 * only interesting thing heap_getattr tells us in this
-				 * case is if we have a null attribute or not.
-				 */
-				if (isnull)
-					nulls[i] = 'n';
 			}
 		}
 
@@ -561,16 +558,19 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim, char *null_p
 	}
 
 	heap_endscan(scandesc);
+
+	pfree(out_functions);
+	pfree(elements);
+	pfree(isvarlena);
+	pfree(typmod);
 	if (binary)
 		pfree(nulls);
-	else
-	{
-		pfree(out_functions);
-		pfree(elements);
-		pfree(typmod);
-	}
 }
 
+
+/*
+ * Copy FROM file to relation.
+ */
 static void
 CopyFrom(Relation rel, bool binary, bool oids, FILE *fp,
 		 char *delim, char *null_print)
@@ -635,10 +635,6 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp,
 		typmod = (int32 *) palloc(attr_count * sizeof(int32));
 		for (i = 0; i < attr_count; i++)
 		{
-#ifdef	_DROP_COLUMN_HACK__
-			if (COLUMN_IS_DROPPED(attr[i]))
-				continue;
-#endif	 /* _DROP_COLUMN_HACK__ */
 			in_func_oid = (Oid) GetInputFunction(attr[i]->atttypid);
 			fmgr_info(in_func_oid, &in_functions[i]);
 			elements[i] = GetTypeElement(attr[i]->atttypid);
@@ -662,13 +658,6 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp,
 	for (i = 0; i < attr_count; i++)
 	{
 		nulls[i] = ' ';
-#ifdef	_DROP_COLUMN_HACK__
-		if (COLUMN_IS_DROPPED(attr[i]))
-		{
-			byval[i] = 'n';
-			continue;
-		}
-#endif	 /* _DROP_COLUMN_HACK__ */
 		byval[i] = IsTypeByVal(attr[i]->atttypid);
 	}
 
@@ -704,14 +693,6 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp,
 			}
 			for (i = 0; i < attr_count && !done; i++)
 			{
-#ifdef	_DROP_COLUMN_HACK__
-				if (COLUMN_IS_DROPPED(attr[i]))
-				{
-					values[i] = PointerGetDatum(NULL);
-					nulls[i] = 'n';
-					continue;
-				}
-#endif	 /* _DROP_COLUMN_HACK__ */
 				string = CopyReadAttribute(fp, &isnull, delim, &newline, null_print);
 				if (isnull)
 				{
@@ -888,22 +869,6 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp,
 	ExecCloseIndices(resultRelInfo);
 }
 
-
-static Oid
-GetOutputFunction(Oid type)
-{
-	HeapTuple	typeTuple;
-	Oid			result;
-
-	typeTuple = SearchSysCache(TYPEOID,
-							   ObjectIdGetDatum(type),
-							   0, 0, 0);
-	if (!HeapTupleIsValid(typeTuple))
-		elog(ERROR, "GetOutputFunction: Cache lookup of type %u failed", type);
-	result = ((Form_pg_type) GETSTRUCT(typeTuple))->typoutput;
-	ReleaseSysCache(typeTuple);
-	return result;
-}
 
 static Oid
 GetInputFunction(Oid type)
