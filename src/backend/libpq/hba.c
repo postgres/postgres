@@ -5,7 +5,7 @@
  *	  wherein you authenticate a user by seeing what IP address the system
  *	  says he comes from and possibly using ident).
  *
- *	$Id: hba.c,v 1.47 1999/07/17 20:17:02 momjian Exp $
+ *	$Id: hba.c,v 1.48 1999/09/27 03:12:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -146,9 +146,7 @@ read_hba_entry2(FILE *file, UserAuth *userauth_p, char *auth_arg,
 
 
 static void
-process_hba_record(FILE *file, SockAddr *raddr, const char *user,
-				   const char *database, bool *matches_p, bool *error_p,
-				   UserAuth *userauth_p, char *auth_arg)
+process_hba_record(FILE *file, hbaPort *port, bool *matches_p, bool *error_p)
 {
 /*---------------------------------------------------------------------------
   Process the non-comment record in the config file that is next on the file.
@@ -182,16 +180,16 @@ process_hba_record(FILE *file, SockAddr *raddr, const char *user,
 
 		/* Read the rest of the line. */
 
-		read_hba_entry2(file, userauth_p, auth_arg, error_p);
+		read_hba_entry2(file, &port->auth_method, port->auth_arg, error_p);
 
 		/*
 		 * For now, disallow methods that need AF_INET sockets to work.
 		 */
 
 		if (!*error_p &&
-			(*userauth_p == uaIdent ||
-			 *userauth_p == uaKrb4 ||
-			 *userauth_p == uaKrb5))
+			(port->auth_method == uaIdent ||
+			 port->auth_method == uaKrb4 ||
+			 port->auth_method == uaKrb5))
 			*error_p = true;
 
 		if (*error_p)
@@ -202,15 +200,33 @@ process_hba_record(FILE *file, SockAddr *raddr, const char *user,
 		 * sort of connection, ignore it.
 		 */
 
-		if ((strcmp(db, database) != 0 && strcmp(db, "all") != 0 &&
-		 (strcmp(db, "sameuser") != 0 || strcmp(database, user) != 0)) ||
-			raddr->sa.sa_family != AF_UNIX)
+		if ((strcmp(db, port->database) != 0 && strcmp(db, "all") != 0 &&
+		 (strcmp(db, "sameuser") != 0 || strcmp(port->database, port->user) != 0)) ||
+		        port->raddr.sa.sa_family != AF_UNIX)
 			return;
 	}
-	else if (strcmp(buf, "host") == 0)
+	else if (strcmp(buf, "host") == 0 || strcmp(buf, "hostssl") == 0)
 	{
 		struct in_addr file_ip_addr,
 					mask;
+		bool discard = 0; /* Discard this entry */
+
+#ifdef USE_SSL
+		/* If SSL, then check that we are on SSL */
+		if (strcmp(buf, "hostssl") == 0) {
+		  if (!port->ssl) 
+		    discard = 1; 
+		  
+		  /* Placeholder to require specific SSL level, perhaps? */
+		  /* Or a client certificate */
+
+		  /* Since we were on SSL, proceed as with normal 'host' mode */
+		}
+#else
+		/* If not SSL, we don't support this */
+		if (strcmp(buf,"hostssl") == 0) 
+		  goto syntax;
+#endif
 
 		/* Get the database. */
 
@@ -252,20 +268,27 @@ process_hba_record(FILE *file, SockAddr *raddr, const char *user,
 		 * info from it.
 		 */
 
-		read_hba_entry2(file, userauth_p, auth_arg, error_p);
+		read_hba_entry2(file, &port->auth_method, port->auth_arg, error_p);
 
 		if (*error_p)
 			goto syntax;
+
+		/*
+		 * If told to discard earlier. Moved down here so we don't get
+		 * "out of sync" with the file.
+		 */
+		if (discard)
+		  return;
 
 		/*
 		 * If this record isn't for our database, or this is the wrong
 		 * sort of connection, ignore it.
 		 */
 
-		if ((strcmp(db, database) != 0 && strcmp(db, "all") != 0 &&
-		 (strcmp(db, "sameuser") != 0 || strcmp(database, user) != 0)) ||
-			raddr->sa.sa_family != AF_INET ||
-			((file_ip_addr.s_addr ^ raddr->in.sin_addr.s_addr) & mask.s_addr) != 0x0000)
+		if ((strcmp(db, port->database) != 0 && strcmp(db, "all") != 0 &&
+		 (strcmp(db, "sameuser") != 0 || strcmp(port->database, port->user) != 0)) ||
+		        port->raddr.sa.sa_family != AF_INET ||
+			((file_ip_addr.s_addr ^ port->raddr.in.sin_addr.s_addr) & mask.s_addr) != 0x0000)
 			return;
 	}
 	else
@@ -291,9 +314,7 @@ syntax:
 
 
 static void
-process_open_config_file(FILE *file, SockAddr *raddr, const char *user,
-						 const char *database, bool *hba_ok_p,
-						 UserAuth *userauth_p, char *auth_arg)
+process_open_config_file(FILE *file, hbaPort *port, bool *hba_ok_p)
 {
 /*---------------------------------------------------------------------------
   This function does the same thing as find_hba_entry, only with
@@ -316,8 +337,7 @@ process_open_config_file(FILE *file, SockAddr *raddr, const char *user,
 			if (c == '#')
 				read_through_eol(file);
 			else
-				process_hba_record(file, raddr, user, database,
-							 &found_entry, &error, userauth_p, auth_arg);
+				process_hba_record(file, port, &found_entry, &error);
 		}
 	}
 
@@ -326,7 +346,7 @@ process_open_config_file(FILE *file, SockAddr *raddr, const char *user,
 		/* If no matching entry was found, synthesize 'reject' entry. */
 
 		if (!found_entry)
-			*userauth_p = uaReject;
+		        port->auth_method = uaReject;
 
 		*hba_ok_p = true;
 	}
@@ -335,8 +355,7 @@ process_open_config_file(FILE *file, SockAddr *raddr, const char *user,
 
 
 static void
-find_hba_entry(SockAddr *raddr, const char *user, const char *database,
-			   bool *hba_ok_p, UserAuth *userauth_p, char *auth_arg)
+find_hba_entry(hbaPort *port, bool *hba_ok_p)
 {
 /*
  * Read the config file and find an entry that allows connection from
@@ -412,8 +431,7 @@ find_hba_entry(SockAddr *raddr, const char *user, const char *database,
 		}
 		else
 		{
-			process_open_config_file(file, raddr, user, database, hba_ok_p,
-									 userauth_p, auth_arg);
+			process_open_config_file(file, port, hba_ok_p);
 			FreeFile(file);
 		}
 		pfree(conf_file);
@@ -1057,8 +1075,7 @@ GetCharSetByHost(char *TableName, int host, const char *DataDir)
 #endif
 
 int
-hba_getauthmethod(SockAddr *raddr, char *user, char *database,
-				  char *auth_arg, UserAuth *auth_method)
+hba_getauthmethod(hbaPort *port)
 {
 /*---------------------------------------------------------------------------
   Determine what authentication method should be used when accessing database
@@ -1070,7 +1087,7 @@ hba_getauthmethod(SockAddr *raddr, char *user, char *database,
 ----------------------------------------------------------------------------*/
 	bool		hba_ok = false;
 
-	find_hba_entry(raddr, user, database, &hba_ok, auth_method, auth_arg);
+	find_hba_entry(port, &hba_ok);
 
 	return hba_ok ? STATUS_OK : STATUS_ERROR;
 }

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.116 1999/09/21 20:58:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.117 1999/09/27 03:13:05 momjian Exp $
  *
  * NOTES
  *
@@ -183,6 +183,10 @@ static int	ServerSock_UNIX = INVALID_SOCK;		/* stream socket server */
 
 #endif
 
+#ifdef USE_SSL
+static SSL_CTX  *SSL_context = NULL;                    /* Global SSL context */
+#endif
+
 /*
  * Set by the -o option
  */
@@ -200,6 +204,8 @@ static int	SendStop = false;
 
 static bool NetServer = false;	/* if not zero, postmaster listen for
 								 * non-local connections */
+static bool SecureNetServer = false; /* if not zero, postmaster listens for only SSL
+                                      * non-local connections */
 
 
 /*
@@ -233,6 +239,7 @@ extern int	optind,
  */
 static void pmdaemonize(void);
 static Port *ConnCreate(int serverFd);
+static void ConnFree(Port *port);
 static void reset_shared(unsigned short port);
 static void pmdie(SIGNAL_ARGS);
 static void reaper(SIGNAL_ARGS);
@@ -250,6 +257,9 @@ static long PostmasterRandom(void);
 static void RandomSalt(char *salt);
 static void SignalChildren(SIGNAL_ARGS);
 static int	CountChildren(void);
+#ifdef USE_SSL
+static void InitSSL(void);
+#endif
 
 #ifdef CYR_RECODE
 void		GetCharSetByHost(char *, int, char *);
@@ -393,7 +403,7 @@ PostmasterMain(int argc, char *argv[])
 	DataDir = getenv("PGDATA"); /* default value */
 
 	opterr = 0;
-	while ((opt = getopt(nonblank_argc, argv, "A:a:B:b:D:dim:MN:no:p:Ss")) != EOF)
+	while ((opt = getopt(nonblank_argc, argv, "A:a:B:b:D:i::dm:MN:no:p:Ss")) != EOF)
 	{
 		switch (opt)
 		{
@@ -456,6 +466,10 @@ PostmasterMain(int argc, char *argv[])
 				break;
 			case 'i':
 				NetServer = true;
+#ifdef USE_SSL
+				if (optarg && !strcasecmp(optarg,"s")) 
+				  SecureNetServer = true;
+#endif
 				break;
 			case 'm':
 				/* Multiplexed backends no longer supported. */
@@ -557,16 +571,21 @@ PostmasterMain(int argc, char *argv[])
 		exit(1);
 	}
 
+#ifdef USE_SSL
+	InitSSL();
+#endif
+
 	if (NetServer)
 	{
-		status = StreamServerPort(hostName, PostPortName, &ServerSock_INET);
-		if (status != STATUS_OK)
-		{
-			fprintf(stderr, "%s: cannot create INET stream port\n",
-					progname);
-			exit(1);
-		}
+	  status = StreamServerPort(hostName, PostPortName, &ServerSock_INET);
+	  if (status != STATUS_OK)
+	    {
+	      fprintf(stderr, "%s: cannot create INET stream port\n",
+		      progname);
+	      exit(1);
+	    }
 	}
+
 #ifndef __CYGWIN32__
 	status = StreamServerPort(NULL, PostPortName, &ServerSock_UNIX);
 	if (status != STATUS_OK)
@@ -655,6 +674,9 @@ usage(const char *progname)
 	fprintf(stderr, "\t-b backend\tuse a specific backend server executable\n");
 	fprintf(stderr, "\t-d [1|2|3]\tset debugging level\n");
 	fprintf(stderr, "\t-i \t\tlisten on TCP/IP sockets as well as Unix domain socket\n");
+#ifdef USE_SSL
+	fprintf(stderr," \t-is\t\tlisten on TCP/IP sockets as above, but only SSL connections\n");
+#endif
 	fprintf(stderr, "\t-N nprocs\tset max number of backends (1..%d, default %d)\n",
 			MAXBACKENDS, DEF_MAXBACKENDS);
 	fprintf(stderr, "\t-n \t\tdon't reinitialize shared memory after abnormal exit\n");
@@ -690,6 +712,9 @@ ServerLoop(void)
 		Port	   *port;
 		fd_set		rmask,
 					wmask;
+#ifdef USE_SSL
+		int no_select = 0;
+#endif
 
 #ifdef HAVE_SIGPROCMASK
 		sigprocmask(SIG_SETMASK, &oldsigmask, 0);
@@ -699,6 +724,18 @@ ServerLoop(void)
 
 		memmove((char *) &rmask, (char *) &readmask, sizeof(fd_set));
 		memmove((char *) &wmask, (char *) &writemask, sizeof(fd_set));
+
+#ifdef USE_SSL
+		for (curr = DLGetHead(PortList); curr; curr = DLGetSucc(curr))
+		  if (((Port *)DLE_VAL(curr))->ssl &&
+		      SSL_pending(((Port *)DLE_VAL(curr))->ssl) > 0) {
+		    no_select = 1;
+		    break;
+		  }
+		if (no_select) 
+		  FD_ZERO(&rmask); /* So we don't accept() anything below */
+		else
+#endif
 		if (select(nSockets, &rmask, &wmask, (fd_set *) NULL,
 				   (struct timeval *) NULL) < 0)
 		{
@@ -743,18 +780,20 @@ ServerLoop(void)
 #ifndef __CYGWIN32__
 		if (ServerSock_UNIX != INVALID_SOCK &&
 			FD_ISSET(ServerSock_UNIX, &rmask) &&
-			(port = ConnCreate(ServerSock_UNIX)) != NULL)
-			PacketReceiveSetup(&port->pktInfo,
+   		        (port = ConnCreate(ServerSock_UNIX)) != NULL) {
+		        PacketReceiveSetup(&port->pktInfo,
 							   readStartupPacket,
 							   (void *) port);
+		}
 #endif
 
 		if (ServerSock_INET != INVALID_SOCK &&
-			FD_ISSET(ServerSock_INET, &rmask) &&
-			(port = ConnCreate(ServerSock_INET)) != NULL)
+		    FD_ISSET(ServerSock_INET, &rmask) &&
+		    (port = ConnCreate(ServerSock_INET)) != NULL) {
 			PacketReceiveSetup(&port->pktInfo,
 							   readStartupPacket,
 							   (void *) port);
+		}
 
 		/* Build up new masks for select(). */
 
@@ -767,14 +806,26 @@ ServerLoop(void)
 			Port	   *port = (Port *) DLE_VAL(curr);
 			int			status = STATUS_OK;
 			Dlelem	   *next;
+			int        readyread = 0;
 
-			if (FD_ISSET(port->sock, &rmask))
+#ifdef USE_SSL
+			if (port->ssl) {
+			  if (SSL_pending(port->ssl) ||
+			      FD_ISSET(port->sock, &rmask))
+			    readyread = 1;
+			}
+			else
+#endif
+			  if (FD_ISSET(port->sock, &rmask))
+			readyread = 1;
+
+			if (readyread)
 			{
 				if (DebugLvl > 1)
 					fprintf(stderr, "%s: ServerLoop:\t\thandling reading %d\n",
 							progname, port->sock);
 
-				if (PacketReceiveFragment(&port->pktInfo, port->sock) != STATUS_OK)
+				if (PacketReceiveFragment(port) != STATUS_OK)
 					status = STATUS_ERROR;
 			}
 
@@ -784,7 +835,7 @@ ServerLoop(void)
 					fprintf(stderr, "%s: ServerLoop:\t\thandling writing %d\n",
 							progname, port->sock);
 
-				if (PacketSendFragment(&port->pktInfo, port->sock) != STATUS_OK)
+				if (PacketSendFragment(port) != STATUS_OK)
 					status = STATUS_ERROR;
 			}
 
@@ -827,7 +878,7 @@ ServerLoop(void)
 			{
 				StreamClose(port->sock);
 				DLRemove(curr);
-				free(port);
+				ConnFree(port);
 				DLFreeElem(curr);
 			}
 			else
@@ -896,7 +947,7 @@ readStartupPacket(void *arg, PacketLen len, void *pkt)
 
 	port = (Port *) arg;
 	si = (StartupPacket *) pkt;
-
+	
 	/*
 	 * The first field is either a protocol version number or a special
 	 * request code.
@@ -907,7 +958,44 @@ readStartupPacket(void *arg, PacketLen len, void *pkt)
 	if (port->proto == CANCEL_REQUEST_CODE)
 		return processCancelRequest(port, len, pkt);
 
+	if (port->proto == NEGOTIATE_SSL_CODE) {
+	  char SSLok;
+	  
+#ifdef USE_SSL
+	  SSLok = 'S'; /* Support for SSL */
+#else
+	  SSLok = 'N'; /* No support for SSL */
+#endif
+	  if (send(port->sock, &SSLok, 1, 0) != 1) {
+	    perror("Failed to send SSL negotiation response");
+	    return STATUS_ERROR; /* Close connection */
+	  }
+	  
+#ifdef USE_SSL
+	  if (!(port->ssl = SSL_new(SSL_context)) ||
+	      !SSL_set_fd(port->ssl, port->sock) ||
+	      SSL_accept(port->ssl) <= 0)
+	  {
+	    fprintf(stderr,"Failed to initialize SSL connection: %s, errno: %d (%s)\n",
+		    ERR_reason_error_string(ERR_get_error()), errno, strerror(errno));
+	    return STATUS_ERROR;
+	  }
+#endif
+	  /* ready for the normal startup packet */
+	  PacketReceiveSetup(&port->pktInfo,
+			     readStartupPacket,
+			     (void *)port);
+	  return STATUS_OK; /* Do not close connection */
+	} 
+
 	/* Could add additional special packet types here */
+
+	/* Any SSL negotiation must have taken place here, so drop the connection
+	 * ASAP if we require SSL */
+	if (SecureNetServer && !port->ssl) {
+	  PacketSendError(&port->pktInfo, "Backend requires secure connection.");
+	  return STATUS_OK;
+	}
 
 	/* Check we can handle the protocol the frontend is using. */
 
@@ -951,7 +1039,6 @@ readStartupPacket(void *arg, PacketLen len, void *pkt)
 
 	return STATUS_OK;			/* don't close the connection yet */
 }
-
 
 /*
  * The client has sent a cancel request packet, not a normal
@@ -1037,6 +1124,20 @@ ConnCreate(int serverFd)
 	}
 
 	return port;
+}
+
+/*
+ * ConnFree -- cree a local connection data structure
+ */
+void
+ConnFree(Port *conn) 
+{
+#ifdef USE_SSL
+        if (conn->ssl) {
+	     SSL_free(conn->ssl);
+	}
+#endif
+	free(conn);
 }
 
 /*
@@ -1502,7 +1603,7 @@ DoBackend(Port *port)
 	sigprocmask(SIG_SETMASK, &oldsigmask, 0);
 
 	/* Close the postmaster sockets */
-	if (NetServer)
+	if (NetServer) 
 		StreamClose(ServerSock_INET);
 #ifndef __CYGWIN32__
 	StreamClose(ServerSock_UNIX);
@@ -1728,4 +1829,34 @@ CountChildren(void)
 			cnt++;
 	}
 	return cnt;
+}
+
+
+/*
+ * Initialize SSL library and structures
+ */
+static void InitSSL(void) {
+  char fnbuf[2048];
+  
+  SSL_load_error_strings();
+  SSL_library_init();
+  SSL_context = SSL_CTX_new(SSLv23_method());
+  if (!SSL_context) {
+    fprintf(stderr, "Failed to create SSL context: %s\n",ERR_reason_error_string(ERR_get_error()));
+    exit(1);
+  }
+  snprintf(fnbuf,sizeof(fnbuf),"%s/server.crt", DataDir);
+  if (!SSL_CTX_use_certificate_file(SSL_context, fnbuf, SSL_FILETYPE_PEM)) {
+    fprintf(stderr, "Failed to load server certificate (%s): %s\n",fnbuf,ERR_reason_error_string(ERR_get_error()));
+    exit(1);
+  }
+  snprintf(fnbuf,sizeof(fnbuf),"%s/server.key", DataDir);
+  if (!SSL_CTX_use_PrivateKey_file(SSL_context, fnbuf, SSL_FILETYPE_PEM)) {
+    fprintf(stderr, "Failed to load private key file (%s): %s\n",fnbuf,ERR_reason_error_string(ERR_get_error()));
+    exit(1);
+  }
+  if (!SSL_CTX_check_private_key(SSL_context)) {
+    fprintf(stderr, "Check of private key failed: %s\n",ERR_reason_error_string(ERR_get_error()));
+    exit(1);
+  }
 }

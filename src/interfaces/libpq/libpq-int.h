@@ -11,7 +11,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-int.h,v 1.11 1999/08/31 01:37:37 tgl Exp $
+ * $Id: libpq-int.h,v 1.12 1999/09/27 03:13:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,6 +27,11 @@
 /* include stuff found in fe only */
 #include "pqexpbuffer.h"
 
+
+#ifdef USE_SSL
+#include "openssl/ssl.h"
+#include "openssl/err.h"
+#endif
 
 /* libpq supports this version of the frontend/backend protocol.
  *
@@ -214,6 +219,10 @@ struct pg_conn
 	/* Status for asynchronous result construction */
 	PGresult   *result;			/* result being constructed */
 	PGresAttValue *curTuple;	/* tuple currently being read */
+
+#ifdef USE_SSL
+        SSL *ssl;
+#endif
 
 	/* Buffer for current error message */
 	PQExpBufferData	errorMessage;	/* expansible string */

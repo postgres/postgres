@@ -79,6 +79,18 @@
 #
 #   krb5:   Kerberos V5 authentication is used.
 
+# Record type "hostssl"
+# ---------------------
+#
+# This record identifies the authentication to use when connecting to a
+# particular database via TCP/IP sockets over SSL. Note that normal
+# "host" records are also matched - "hostssl" records can be used to
+# require a SSL connection.
+# This keyword is only available if the server is compiled with SSL support
+# enabled.
+#
+# The format of this record is identical to that of "host".
+
 # Record type "local"
 # ------------------
 # 

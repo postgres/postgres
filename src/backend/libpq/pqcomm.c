@@ -28,7 +28,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqcomm.c,v 1.83 1999/09/08 22:57:12 tgl Exp $
+ *	$Id: pqcomm.c,v 1.84 1999/09/27 03:12:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -436,8 +436,16 @@ pq_recvbuf(void)
 	/* Can fill buffer from PqRecvLength and upwards */
 	for (;;)
 	{
-		int			r = recv(MyProcPort->sock, PqRecvBuffer + PqRecvLength,
-							 PQ_BUFFER_SIZE - PqRecvLength, 0);
+		int			r;
+		
+#ifdef USE_SSL
+		if (MyProcPort->ssl)
+		  r = SSL_read(MyProcPort->ssl, PqRecvBuffer + PqRecvLength,
+			       PQ_BUFFER_SIZE - PqRecvLength);
+		else
+#endif
+		  r = recv(MyProcPort->sock, PqRecvBuffer + PqRecvLength,
+			   PQ_BUFFER_SIZE - PqRecvLength, 0);
 
 		if (r < 0)
 		{
@@ -604,7 +612,13 @@ pq_flush(void)
 
 	while (bufptr < bufend)
 	{
-		int			r = send(MyProcPort->sock, bufptr, bufend - bufptr, 0);
+		int			r;
+#ifdef USE_SSL
+		if (MyProcPort->ssl)
+		  r = SSL_write(MyProcPort->ssl, bufptr, bufend - bufptr);
+		else
+#endif
+		  r = send(MyProcPort->sock, bufptr, bufend - bufptr, 0);
 
 		if (r <= 0)
 		{
