@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/execAmi.c,v 1.1.1.1 1996/07/09 06:21:24 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/execAmi.c,v 1.2 1996/10/31 10:11:21 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,6 +27,9 @@
  *
  */
 #include <stdio.h>	/* for sprintf() */
+
+#include "postgres.h"
+
 #include "executor/executor.h"
 #include "storage/smgr.h"
 #include "executor/nodeSeqscan.h"

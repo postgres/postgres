@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.7 1996/10/26 04:13:11 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.8 1996/10/31 10:11:28 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,8 @@
  *	instead of doing needless copying.  -cim 5/31/91
  *
  */
+#include "postgres.h"
+
 #include "nodes/primnodes.h"
 #include "nodes/relation.h"
 

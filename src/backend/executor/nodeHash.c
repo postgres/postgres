@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/nodeHash.c,v 1.5 1996/10/26 04:13:31 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/nodeHash.c,v 1.6 1996/10/31 10:12:00 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,8 @@
 #include <stdio.h>	/* for sprintf() */
 #include <math.h>
 #include <sys/file.h>
+#include "postgres.h"
+
 
 #include "storage/fd.h"		/* for SEEK_ */
 #include "storage/ipc.h"

@@ -7,10 +7,12 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/nodeSort.c,v 1.2 1996/07/30 07:45:35 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/nodeSort.c,v 1.3 1996/10/31 10:12:22 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
+#include "postgres.h"
+
 #include "executor/executor.h"
 #include "executor/nodeSort.h"
 #include "utils/palloc.h"

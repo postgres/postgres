@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.2 1996/08/26 06:30:33 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.3 1996/10/31 10:11:43 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,6 +39,8 @@
  *	executor support stuff that doesn't really go anyplace else.
  *	
  */
+
+#include "postgres.h"
 
 #include "executor/executor.h"
 #include "access/itup.h"

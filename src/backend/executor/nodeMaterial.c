@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/nodeMaterial.c,v 1.2 1996/07/30 07:45:31 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/nodeMaterial.c,v 1.3 1996/10/31 10:12:09 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,8 @@
  *     	ExecEndMaterial		- shutdown node and subnodes
  *
  */
+#include "postgres.h"
+
 
 #include "executor/executor.h"
 #include "executor/nodeMaterial.h"

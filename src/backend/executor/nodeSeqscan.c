@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.1.1.1 1996/07/09 06:21:27 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.2 1996/10/31 10:12:20 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,8 @@
  *   	ExecRestrPos		restores scan position
  *
  */
+#include "postgres.h"
+
 #include "executor/executor.h"
 #include "executor/nodeSeqscan.h"
 #include "parser/parsetree.h"

@@ -7,10 +7,13 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/execJunk.c,v 1.1.1.1 1996/07/09 06:21:24 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/execJunk.c,v 1.2 1996/10/31 10:11:23 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
+
+#include "postgres.h"
+
 #include "utils/palloc.h"
 #include "executor/executor.h"
 #include "nodes/relation.h"

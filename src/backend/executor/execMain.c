@@ -26,10 +26,12 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.6 1996/10/26 04:13:05 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.7 1996/10/31 10:11:24 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
+#include "postgres.h"
+
 #include "executor/executor.h"
 #include "executor/nodeIndexscan.h"
 #include "utils/builtins.h"

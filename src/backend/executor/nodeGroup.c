@@ -13,10 +13,12 @@
  *    columns. (ie. tuples from the same group are consecutive)
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.1.1.1 1996/07/09 06:21:26 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.2 1996/10/31 10:11:59 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
+#include "postgres.h"
+
 #include "access/heapam.h"
 #include "catalog/catalog.h"
 #include "executor/executor.h"

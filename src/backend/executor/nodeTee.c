@@ -15,12 +15,14 @@
  *	ExecEndTee
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/Attic/nodeTee.c,v 1.1.1.1 1996/07/09 06:21:27 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/Attic/nodeTee.c,v 1.2 1996/10/31 10:12:24 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include <sys/file.h>
+#include "postgres.h"
+
 #include "utils/palloc.h"
 #include "utils/relcache.h" 
 #include "storage/bufmgr.h"  /* for IncrBufferRefCount */

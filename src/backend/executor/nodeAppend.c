@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.2 1996/10/26 04:13:26 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.3 1996/10/31 10:11:54 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,6 +52,8 @@
  *                            |       |        |        |
  *                          person employee student student-emp
  */
+#include "postgres.h"
+
 
 #include "executor/executor.h"
 #include "executor/nodeAppend.h"

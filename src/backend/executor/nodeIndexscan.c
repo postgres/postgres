@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.2 1996/10/30 06:08:10 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.3 1996/10/31 10:12:05 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,6 +28,8 @@
  *	collected and merged with the genam stuff.
  *
  */
+#include "postgres.h"
+
 #include "executor/executor.h"
 #include "executor/nodeIndexscan.h"
 

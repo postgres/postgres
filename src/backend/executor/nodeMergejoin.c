@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.1.1.1 1996/07/09 06:21:27 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.2 1996/10/31 10:12:11 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,6 +75,8 @@
  *		  problem described above -cim 4/23/91
  *
  */
+#include "postgres.h"
+
 #include "executor/executor.h"
 #include "executor/nodeMergejoin.h"
 #include "utils/lsyscache.h"

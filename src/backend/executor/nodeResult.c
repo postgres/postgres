@@ -27,10 +27,12 @@
  *		   SeqScan (emp.all)
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/nodeResult.c,v 1.1.1.1 1996/07/09 06:21:27 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/nodeResult.c,v 1.2 1996/10/31 10:12:18 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
+#include "postgres.h"
+
 
 #include "executor/executor.h"
 #include "executor/nodeResult.h"

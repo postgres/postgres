@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.1.1.1 1996/07/09 06:21:25 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.2 1996/10/31 10:11:38 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -116,6 +116,8 @@
  *	and the TupleTableSlot node in execnodes.h.
  *
  */
+#include "postgres.h"
+
 
 #include "executor/executor.h"
 #undef ExecStoreTuple
