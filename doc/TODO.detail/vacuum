@@ -1403,7 +1403,7 @@ From owner-pgsql-hackers@hub.org Sat Jan 22 02:31:03 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id DAA06743
 	for <pgman@candle.pha.pa.us>; Sat, 22 Jan 2000 03:31:02 -0500 (EST)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.6 $) with ESMTP id DAA07529 for <pgman@candle.pha.pa.us>; Sat, 22 Jan 2000 03:25:13 -0500 (EST)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.7 $) with ESMTP id DAA07529 for <pgman@candle.pha.pa.us>; Sat, 22 Jan 2000 03:25:13 -0500 (EST)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.3/8.9.3) with SMTP id DAA31900;
 	Sat, 22 Jan 2000 03:19:53 -0500 (EST)
@@ -1475,7 +1475,7 @@ From tgl@sss.pgh.pa.us Sat Jan 22 10:31:02 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id LAA20882
 	for <pgman@candle.pha.pa.us>; Sat, 22 Jan 2000 11:31:00 -0500 (EST)
-Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.6 $) with ESMTP id LAA26612 for <pgman@candle.pha.pa.us>; Sat, 22 Jan 2000 11:12:44 -0500 (EST)
+Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.7 $) with ESMTP id LAA26612 for <pgman@candle.pha.pa.us>; Sat, 22 Jan 2000 11:12:44 -0500 (EST)
 Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
 	by sss2.sss.pgh.pa.us (8.9.3/8.9.3) with ESMTP id LAA20569;
 	Sat, 22 Jan 2000 11:11:26 -0500 (EST)
@@ -1867,4 +1867,260 @@ Http://www.rhyme.com.au          |                /           \|
                                  |    --________--
 PGP key available upon request,  |  /
 and from pgp5.ai.mit.edu:11371   |/
+
+From pgsql-hackers-owner+M29308@postgresql.org Mon Sep 23 09:47:54 2002
+Return-path: <pgsql-hackers-owner+M29308@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g8NDlqd00289
+	for <pgman@candle.pha.pa.us>; Mon, 23 Sep 2002 09:47:53 -0400 (EDT)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP
+	id 7CA64476497; Mon, 23 Sep 2002 09:43:28 -0400 (EDT)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id EDA70475BC3; Mon, 23 Sep 2002 09:43:20 -0400 (EDT)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP id 85264476479
+	for <pgsql-hackers@postgresql.org>; Mon, 23 Sep 2002 09:43:15 -0400 (EDT)
+Received: from www.pspl.co.in (www.pspl.co.in [202.54.11.65])
+	by postgresql.org (Postfix) with ESMTP id C7899476477
+	for <pgsql-hackers@postgresql.org>; Mon, 23 Sep 2002 09:43:12 -0400 (EDT)
+Received: (from root@localhost)
+	by www.pspl.co.in (8.11.6/8.11.6) id g8NDiQ030526
+	for <pgsql-hackers@postgresql.org>; Mon, 23 Sep 2002 19:14:26 +0530
+Received: from daithan (daithan.intranet.pspl.co.in [192.168.7.161])
+	by www.pspl.co.in (8.11.6/8.11.0) with ESMTP id g8NDiQ330521;
+	Mon, 23 Sep 2002 19:14:26 +0530
+From: "Shridhar Daithankar" <shridhar_daithankar@persistent.co.in>
+To: pgsql-hackers@postgresql.org, pgsql-general@postgresql.org
+Date: Mon, 23 Sep 2002 19:13:44 +0530
+MIME-Version: 1.0
+Subject: [HACKERS] Postgresql Automatic vacuum
+Reply-To: shridhar_daithankar@persistent.co.in
+Message-ID: <3D8F67E8.7500.4E0E180@localhost>
+X-Mailer: Pegasus Mail for Windows (v4.02)
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7BIT
+Content-Description: Mail message body
+X-Virus-Scanned: by AMaViS new-20020517
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by AMaViS new-20020517
+Status: OR
+
+Hello All,
+
+I have written a small daemon that can automatically vacuum PostgreSQL 
+database, depending upon activity per table.
+
+It sits on top of postgres statistics collector. The postgres installation 
+should have per row statistics collection enabled.
+
+Features are,
+
+* Vacuuming based on activity on the table
+* Per table vacuum. So only heavily updated tables are vacuumed.
+* multiple databases supported
+* Performs 'vacuum analyze' only, so it will not block the database
+
+
+The project location is 
+http://gborg.postgresql.org/project/pgavd/projdisplay.php
+
+Let me know for bugs/improvements and comments.. 
+
+I am sure real world postgres installations has some sort of scripts doing 
+similar thing. This is an attempt to provide a generic interface to periodic 
+vacuum.
+
+
+Bye
+ Shridhar
+
+--
+The Abrams' Principle:	The shortest distance between two points is off the 
+wall.
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 3: if posting/reading through Usenet, please send an appropriate
+subscribe-nomail command to majordomo@postgresql.org so that your
+message can get through to the mailing list cleanly
+
+From pgsql-hackers-owner+M29344@postgresql.org Tue Sep 24 02:42:36 2002
+Return-path: <pgsql-hackers-owner+M29344@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g8O6gYg19416
+	for <pgman@candle.pha.pa.us>; Tue, 24 Sep 2002 02:42:35 -0400 (EDT)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP
+	id 128704762AF; Tue, 24 Sep 2002 02:42:36 -0400 (EDT)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id DE80C4760F5; Tue, 24 Sep 2002 02:42:32 -0400 (EDT)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP id 40A8A475DBC
+	for <pgsql-hackers@postgresql.org>; Tue, 24 Sep 2002 02:42:25 -0400 (EDT)
+Received: from relay.icomedias.com (relay.icomedias.com [62.99.232.66])
+	by postgresql.org (Postfix) with ESMTP id 7ECC8475DAD
+	for <pgsql-hackers@postgresql.org>; Tue, 24 Sep 2002 02:42:23 -0400 (EDT)
+Received: from loki ([10.192.17.128])
+	by relay.icomedias.com (8.12.5/8.12.5) with ESMTP id g8O6g8BX014226;
+	Tue, 24 Sep 2002 08:42:09 +0200
+Content-Type: text/plain;
+  charset="iso-8859-1"
+From: Mario Weilguni <mweilguni@sime.com>
+To: shridhar_daithankar@persistent.co.in, matthew@zeut.net
+Subject: Re: [HACKERS] Postgresql Automatic vacuum
+Date: Tue, 24 Sep 2002 08:42:06 +0200
+User-Agent: KMail/1.4.3
+cc: pgsql-hackers@postgresql.org
+References: <3D8F67E8.7500.4E0E180@localhost> <3D9050B2.9782.86E55C0@localhost>
+In-Reply-To: <3D9050B2.9782.86E55C0@localhost>
+MIME-Version: 1.0
+Message-ID: <200209240842.06459.mweilguni@sime.com>
+avpresult: 0, ok, ok
+X-Scanned-By: MIMEDefang 2.16 (www . roaringpenguin . com / mimedefang)
+X-Virus-Scanned: by AMaViS new-20020517
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by AMaViS new-20020517
+Content-Transfer-Encoding: 8bit
+X-MIME-Autoconverted: from quoted-printable to 8bit by candle.pha.pa.us id g8O6gYg19416
+Status: OR
+
+Am Dienstag, 24. September 2002 08:16 schrieb Shridhar Daithankar:
+>
+> > I will play with it more and give you some more feedback.
+>
+> Awaiting that.
+>
+
+IMO there are still several problems with that approach, namely:
+* every database will get "polluted" with the autovacuum table, which is undesired 
+* the biggest problem is the ~/.pgavrc file. I think it should work like other postgres utils do, e.g. supporting -U, -d, ....
+* it's not possible to use without activly administration the config file. it should be able to work without
+  adminstrator assistance.
+
+When this is a daemon, why not store the data in memory? Even with several thousands of tables the memory footprint would
+ still be small. And it should be possible to use for all databases without modifying a config file.
+
+Two weeks ago I began writing a similar daemon, but had no time yet to finish it. I've tried to avoid using fixed numbers (namely "vacuum table
+after 1000 updates") and tried to make my own heuristic based on the statistics data and the size of the table. The reason is, for a large table 1000 entries might be 
+a small percentage and vacuum is not necessary, while for small tables 10 updates might be sufficient.
+
+Best regards,
+	Mario Weilguni
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: you can get off all lists at once with the unregister command
+    (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
+From pgsql-hackers-owner+M29345@postgresql.org Tue Sep 24 03:02:50 2002
+Return-path: <pgsql-hackers-owner+M29345@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g8O72lg21051
+	for <pgman@candle.pha.pa.us>; Tue, 24 Sep 2002 03:02:48 -0400 (EDT)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP
+	id 9B3EA4762F6; Tue, 24 Sep 2002 03:02:48 -0400 (EDT)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id 902EA476020; Tue, 24 Sep 2002 03:02:45 -0400 (EDT)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP id 98689475DAD
+	for <pgsql-hackers@postgresql.org>; Tue, 24 Sep 2002 03:02:18 -0400 (EDT)
+Received: from www.pspl.co.in (www.pspl.co.in [202.54.11.65])
+	by postgresql.org (Postfix) with ESMTP id 47B8647592C
+	for <pgsql-hackers@postgresql.org>; Tue, 24 Sep 2002 03:02:16 -0400 (EDT)
+Received: (from root@localhost)
+	by www.pspl.co.in (8.11.6/8.11.6) id g8O73QQ16318
+	for <pgsql-hackers@postgresql.org>; Tue, 24 Sep 2002 12:33:26 +0530
+Received: from daithan (daithan.intranet.pspl.co.in [192.168.7.161])
+	by www.pspl.co.in (8.11.6/8.11.0) with ESMTP id g8O73Q316313
+	for <pgsql-hackers@postgresql.org>; Tue, 24 Sep 2002 12:33:26 +0530
+From: "Shridhar Daithankar" <shridhar_daithankar@persistent.co.in>
+To: pgsql-hackers@postgresql.org
+Date: Tue, 24 Sep 2002 12:32:43 +0530
+MIME-Version: 1.0
+Subject: Re: [HACKERS] Postgresql Automatic vacuum
+Reply-To: shridhar_daithankar@persistent.co.in
+Message-ID: <3D905B6B.1635.898382A@localhost>
+References: <3D9050B2.9782.86E55C0@localhost>
+In-Reply-To: <200209240842.06459.mweilguni@sime.com>
+X-Mailer: Pegasus Mail for Windows (v4.02)
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7BIT
+Content-Description: Mail message body
+X-Virus-Scanned: by AMaViS new-20020517
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by AMaViS new-20020517
+Status: OR
+
+On 24 Sep 2002 at 8:42, Mario Weilguni wrote:
+
+> Am Dienstag, 24. September 2002 08:16 schrieb Shridhar Daithankar:
+> IMO there are still several problems with that approach, namely:
+> * every database will get "polluted" with the autovacuum table, which is undesired 
+
+I agree. But that was the best alternative I could see. explanation 
+follows..Besides I didn't want to touch PG meta data..
+
+> * the biggest problem is the ~/.pgavrc file. I think it should work like other postgres utils do, e.g. supporting -U, -d, ....
+
+Shouldn't be a problem. The config stuff is working and I can add that. I would 
+rather term it a minor issue. On personal preference, I would just fire it 
+without any arguments. It's not a thing that you change daily. Configure it in 
+config file and done..
+
+> * it's not possible to use without activly administration the config file. it should be able to work without
+>   adminstrator assistance.
+
+Well. I would call that tuning. Each admin can tune it. Yes it's an effort but 
+certainly not an active administration.
+ 
+> When this is a daemon, why not store the data in memory? Even with several thousands of tables the memory footprint would
+>  still be small. And it should be possible to use for all databases without modifying a config file.
+
+Well. When postgresql has ability to deal with arbitrary number of rows, it 
+seemed redundant to me to duplicate all those functionality. Why write lists 
+and arrays again and again? Let postgresql do it.
+
+
+> Two weeks ago I began writing a similar daemon, but had no time yet to finish it. I've tried to avoid using fixed numbers (namely "vacuum table
+> after 1000 updates") and tried to make my own heuristic based on the statistics data and the size of the table. The reason is, for a large table 1000 entries might be 
+> a small percentage and vacuum is not necessary, while for small tables 10 updates might be sufficient.
+
+Well, that fixed number is not really fixed but admin tunable, that too per 
+database. These are just defaults. Tune it to suit your needs.
+
+The objective of whole exercise is to get rid of periodic vacuum as this app. 
+shifts threshold to activity rather than time.
+
+Besides a table should be vacuumed when it starts affecting performance. On an 
+installation if a table a 1M rows and change 1K rows affects performance, there 
+will be a similar performance hit for a 100K rows table for 1K rows update. 
+Because overhead involved would be almost same.(Not disk space. pgavd does not 
+target vacuum full but tuple size should matter).
+
+At least me thinks so..
+
+I plan to implement per table threshold in addition to per database thresholds. 
+But right now, it seems like overhead to me. Besides there is an item in TODO, 
+to shift unit of work from rows to blocks affected. I guess that takes care of 
+some of your points..
+Bye
+ Shridhar
+
+--
+Jones' Second Law:	The man who smiles when things go wrong has thought of 
+someone	to blame it on.
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: Have you checked our extensive FAQ?
+
+http://www.postgresql.org/users-lounge/docs/faq.html
 
