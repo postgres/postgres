@@ -10,7 +10,8 @@
 # Caution: you may need to use GNU awk.
 AWK=${AWK:-awk}
 
-TMP="/tmp/$$"
+TMP="${TMPDIR:-/tmp}/make_oidjoins_check.$$"
+trap "rm -rf $TMP" 0 1 2 3 15
 
 # Create a temporary directory with the proper permissions so no one can
 # intercept our temporary files and cause a security breach.
@@ -22,8 +23,6 @@ then	echo "Can't create temporary directory $TMP." 1>&2
 fi
 umask "$OMASK"
 unset OMASK
-
-trap "rm -rf $TMP" 0 1 2 3 15
 
 INPUTFILE="$TMP/a"
 DUPSFILE="$TMP/b"

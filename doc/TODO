@@ -250,12 +250,17 @@ Indexes
   order. Another method would be to sort heap ctids matching the index
   before accessing the heap rows.
 
-* Use bitmaps to combine existing indexes [performance]
+* Allow the creation of bitmap indexes which can be quickly combined
+  with other bitmap indexes
 
-  Bitmap indexes allow single indexed columns to be combined to
-  dynamically create a composite index to match a specific query. Each
-  index is a bitmap, and the bitmaps are AND'ed or OR'ed to be combined.
+  Bitmap indexes index single columns and can be combined with other bitmap
+  indexes to dynamically create a composite index to match a specific query.
+  Each index is a bitmap, and the bitmaps are bitwise AND'ed or OR'ed to be
+  combined.
 
+* Allow non-bitmap indexes to be combined
+
+  Do loUse bitmaps to combine non-bitmap indexes
 * Allow use of indexes to search for NULLs
 
   One solution is to create a partial index on an IS NULL expression.
