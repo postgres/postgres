@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.125 2004/02/25 19:41:23 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.126 2004/03/30 15:53:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -93,7 +93,7 @@ static datetkn datetktbl[] = {
 	{"acsst", DTZ, POS(42)},	/* Cent. Australia */
 	{"acst", DTZ, NEG(16)},		/* Atlantic/Porto Acre Summer Time */
 	{"act", TZ, NEG(20)},		/* Atlantic/Porto Acre Time */
-	{DA_D, ADBC, AD},			/* "ad" for years >= 0 */
+	{DA_D, ADBC, AD},			/* "ad" for years > 0 */
 	{"adt", DTZ, NEG(12)},		/* Atlantic Daylight Time */
 	{"aesst", DTZ, POS(44)},	/* E. Australia */
 	{"aest", TZ, POS(40)},		/* Australia Eastern Std Time */
@@ -139,7 +139,7 @@ static datetkn datetktbl[] = {
 	{"azot", TZ, NEG(4)},		/* Azores Time */
 	{"azst", DTZ, POS(20)},		/* Azerbaijan Summer Time */
 	{"azt", TZ, POS(16)},		/* Azerbaijan Time */
-	{DB_C, ADBC, BC},			/* "bc" for years < 0 */
+	{DB_C, ADBC, BC},			/* "bc" for years <= 0 */
 	{"bdst", TZ, POS(8)},		/* British Double Summer Time */
 	{"bdt", TZ, POS(24)},		/* Dacca */
 	{"bnt", TZ, POS(32)},		/* Brunei Darussalam Time */

@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.72 2004/01/07 18:56:28 neilc Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.73 2004/03/30 15:53:18 momjian Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2003, PostgreSQL Global Development Group
@@ -169,7 +169,7 @@ static char *months_full[] = {
  * AC / DC
  * ----------
  */
-#define YEAR_ABS(_y)	(_y < 0 ? -(_y -1) : _y)
+#define YEAR_ABS(_y)	(_y <= 0 ? -(_y -1) : _y)
 #define BC_STR_ORIG " BC"
 
 #define A_D_STR		"A.D."
@@ -2119,7 +2119,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 		case DCH_B_C:
 			if (flag == TO_CHAR)
 			{
-				strcpy(inout, (tm->tm_year < 0 ? B_C_STR : A_D_STR));
+				strcpy(inout, (tm->tm_year <= 0 ? B_C_STR : A_D_STR));
 				return 3;
 
 			}
@@ -2134,7 +2134,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 		case DCH_BC:
 			if (flag == TO_CHAR)
 			{
-				strcpy(inout, (tm->tm_year < 0 ? BC_STR : AD_STR));
+				strcpy(inout, (tm->tm_year <= 0 ? BC_STR : AD_STR));
 				return 1;
 
 			}
@@ -2149,7 +2149,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 		case DCH_b_c:
 			if (flag == TO_CHAR)
 			{
-				strcpy(inout, (tm->tm_year < 0 ? b_c_STR : a_d_STR));
+				strcpy(inout, (tm->tm_year <= 0 ? b_c_STR : a_d_STR));
 				return 3;
 
 			}
@@ -2164,7 +2164,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 		case DCH_bc:
 			if (flag == TO_CHAR)
 			{
-				strcpy(inout, (tm->tm_year < 0 ? bc_STR : ad_STR));
+				strcpy(inout, (tm->tm_year <= 0 ? bc_STR : ad_STR));
 				return 1;
 
 			}

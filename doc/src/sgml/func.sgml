@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.195 2004/03/19 19:13:26 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.196 2004/03/30 15:53:18 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -5216,8 +5216,7 @@ SELECT EXTRACT(SECOND FROM TIME '17:12:28.5');
       <term><literal>week</literal></term>
       <listitem>
        <para>
-        The number of
-        the week of the year that the day is in.  By definition
+        The number of the week of the year that the day is in.  By definition
         (<acronym>ISO</acronym> 8601), the first week of a year
         contains January 4 of that year.  (The <acronym>ISO</acronym>-8601
         week starts on Monday.)  In other words, the first Thursday of
@@ -5235,7 +5234,8 @@ SELECT EXTRACT(WEEK FROM TIMESTAMP '2001-02-16 20:38:40');
       <term><literal>year</literal></term>
       <listitem>
        <para>
-        The year field
+        The year field.  Keep in mind there is no <literal>0 AD</>, so subtracting 
+        <literal>BC</> years from <literal>AD</> years should be done with care.
        </para>
 
 <screen>
