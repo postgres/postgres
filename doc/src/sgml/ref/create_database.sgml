@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_database.sgml,v 1.42 2004/10/22 14:12:41 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_database.sgml,v 1.43 2004/10/29 03:17:22 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -113,9 +113,11 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
       <term><replaceable class="parameter">tablespace</replaceable></term>
       <listitem>
        <para>
-        Specifies the default tablespace for the new database.
-        If not specified, the same tablespace that is default for
-        the template database is used.  See
+        The name of the tablespace that will be associated with the
+        new database, or <literal>DEFAULT</literal> to use the
+        template database's tablespace. This
+        tablespace will be the default tablespace used for objects
+        created in this database. See
         <xref linkend="sql-createtablespace" endterm="sql-createtablespace-title">
         for more information.
        </para>
