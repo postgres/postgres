@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.65 1998/06/15 19:28:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.66 1998/07/12 04:37:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -652,6 +652,8 @@ vc_scanheap(VRelStats *vacrelstats, Relation onerel,
 	vpc = (VPageDescr) palloc(sizeof(VPageDescrData) + MaxOffsetNumber * sizeof(OffsetNumber));
 	vpc->vpd_nusd = 0;
 
+	elog(MESSAGE_LEVEL, "--Relation %s--", relname);
+	
 	for (blkno = 0; blkno < nblocks; blkno++)
 	{
 		buf = ReadBuffer(onerel, blkno);
@@ -906,9 +908,8 @@ vc_scanheap(VRelStats *vacrelstats, Relation onerel,
 
 	getrusage(RUSAGE_SELF, &ru1);
 
-	elog(MESSAGE_LEVEL, "Rel %s: Pages %u: Changed %u, Reapped %u, Empty %u, New %u; \
+	elog(MESSAGE_LEVEL, "Pages %u: Changed %u, Reapped %u, Empty %u, New %u; \
 Tup %u: Vac %u, Crash %u, UnUsed %u, MinLen %u, MaxLen %u; Re-using: Free/Avail. Space %u/%u; EndEmpty/Avail. Pages %u/%u. Elapsed %u/%u sec.",
-		 relname,
 		 nblocks, nchpg, Vvpl->vpl_npages, nempg, nnepg,
 		 ntups, nvac, ncrash, nunused, min_tlen, max_tlen,
 		 frsize, frsusf, nemend, Fvpl->vpl_npages,
