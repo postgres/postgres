@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_coerce.h,v 1.33 2001/09/30 06:46:58 inoue Exp $
+ * $Id: parse_coerce.h,v 1.34 2001/10/03 19:18:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,45 +32,6 @@ typedef enum CATEGORY
 	USER_TYPE,
 	MIXED_TYPE
 } CATEGORY;
-
-
-/* IS_BUILTIN_TYPE()
- * Check for types which are in the core distribution.
- * The built-in types can have more explicit support for type coersion, etc,
- *	since we know apriori how they should behave.
- * - thomas 1998-05-13
- */
-#define IS_BUILTIN_TYPE(t) \
-		  (((t) == OIDOID) \
-		|| ((t) == BOOLOID) \
-		|| ((t) == BPCHAROID) \
-		|| ((t) == VARCHAROID) \
-		|| ((t) == TEXTOID) \
-		|| ((t) == INT4OID) \
-		|| ((t) == INT8OID) \
-		|| ((t) == FLOAT8OID) \
-		|| ((t) == NUMERICOID) \
-		|| ((t) == TIMESTAMPOID) \
-		|| ((t) == INTERVALOID) \
-		|| ((t) == ABSTIMEOID) \
-		|| ((t) == RELTIMEOID) \
-		|| ((t) == DATEOID) \
-		|| ((t) == TIMEOID) \
-		|| ((t) == TIMETZOID) \
-		|| ((t) == CHAROID) \
-		|| ((t) == NAMEOID) \
-		|| ((t) == CASHOID) \
-		|| ((t) == POINTOID) \
-		|| ((t) == LSEGOID) \
-		|| ((t) == LINEOID) \
-		|| ((t) == BOXOID) \
-		|| ((t) == PATHOID) \
-		|| ((t) == POLYGONOID) \
-		|| ((t) == CIRCLEOID) \
-		|| ((t) == INETOID) \
-		|| ((t) == CIDROID) \
-		|| ((t) == BITOID) \
-		|| ((t) == VARBITOID) )
 
 
 /* IS_BINARY_COMPATIBLE()
@@ -103,28 +64,6 @@ typedef enum CATEGORY
 		|| ((a) == CIDROID && (b) == INETOID) \
 		|| ((a) == BITOID && (b) == VARBITOID) \
 		|| ((a) == VARBITOID && (b) == BITOID))
-
-/* IS_HIGHER_TYPE()
- * These types are the most general in each of the type categories.
- */
-#define IS_HIGHER_TYPE(t) \
-		  (((t) == TEXTOID) \
-		|| ((t) == FLOAT8OID) \
-		|| ((t) == INTERVALOID) \
-		|| ((t) == TIMESTAMPOID) \
-		|| ((t) == POLYGONOID) \
-		|| ((t) == INETOID) )
-
-/* IS_HIGHEST_TYPE()
- * These types are the most general in each of the type categories.
- * Since interval and timestamp overload so many functions, let's
- *	give timestamp the preference.
- * Since text is a generic string type let's leave it out too.
- */
-#define IS_HIGHEST_TYPE(t) \
-		  (((t) == FLOAT8OID) \
-		|| ((t) == TIMESTAMPOID) \
-		|| ((t) == INTERVALOID))
 
 
 extern bool IsPreferredType(CATEGORY category, Oid type);
