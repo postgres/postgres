@@ -2,7 +2,7 @@
 #
 # Makefile for the pltcl shared object
 #
-# $Header: /cvsroot/pgsql/src/pl/tcl/Makefile,v 1.24 2000/10/20 21:04:17 petere Exp $
+# $Header: /cvsroot/pgsql/src/pl/tcl/Makefile,v 1.25 2000/11/03 20:27:40 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -87,10 +87,6 @@ ifdef EXPSUFF
 INFILES+= $(DLOBJS:.o=$(EXPSUFF))
 endif
 
-# Prevent removal of pltcl.o, being an intermediate file.  This would
-# not be wrong in general, but for some reason the next make run will
-# not realize this and rebuild it.
-.SECONDARY: pltcl.o
 
 # Provide dummy targets for the case where we can't build the shared library.
 
@@ -119,4 +115,4 @@ Makefile.tcldefs: mkMakefile.tcldefs.sh
 	$(SHELL) $< '$(TCL_CONFIG_SH)' '$@'
 
 clean distclean maintainer-clean:
-	rm -f $(INFILES) *.o Makefile.tcldefs
+	rm -f $(INFILES) pltcl.o Makefile.tcldefs
