@@ -27,6 +27,7 @@ void		reset_cfg(void);
 typedef struct
 {
 	uint16		len;
+	uint16		nvariant;
 	union
 	{
 		uint16		pos;

@@ -183,15 +183,15 @@ lexize(PG_FUNCTION_ARGS)
 {
 	text	   *in = PG_GETARG_TEXT_P(1);
 	DictInfo   *dict;
-	char	  **res,
-			  **ptr;
+	TSLexeme	  *res,
+			  *ptr;
 	Datum	   *da;
 	ArrayType  *a;
 
 	SET_FUNCOID();
 	dict = finddict(PG_GETARG_OID(0));
 
-	ptr = res = (char **) DatumGetPointer(
+	ptr = res = (TSLexeme *) DatumGetPointer(
 									  FunctionCall3(&(dict->lexize_info),
 									   PointerGetDatum(dict->dictionary),
 											PointerGetDatum(VARDATA(in)),
@@ -207,13 +207,13 @@ lexize(PG_FUNCTION_ARGS)
 			PG_RETURN_NULL();
 	}
 
-	while (*ptr)
+	while (ptr->lexeme)
 		ptr++;
 	da = (Datum *) palloc(sizeof(Datum) * (ptr - res + 1));
 	ptr = res;
-	while (*ptr)
+	while (ptr->lexeme)
 	{
-		da[ptr - res] = PointerGetDatum(char2text(*ptr));
+		da[ptr - res] = PointerGetDatum(char2text(ptr->lexeme));
 		ptr++;
 	}
 
@@ -227,10 +227,10 @@ lexize(PG_FUNCTION_ARGS)
 		);
 
 	ptr = res;
-	while (*ptr)
+	while (ptr->lexeme)
 	{
 		pfree(DatumGetPointer(da[ptr - res]));
-		pfree(*ptr);
+		pfree(ptr->lexeme);
 		ptr++;
 	}
 	pfree(res);

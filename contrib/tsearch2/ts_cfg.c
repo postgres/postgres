@@ -321,10 +321,10 @@ parsetext_v2(TSCfgInfo * cfg, PRSTEXT * prs, char *buf, int4 buflen)
 		for (i = 0; i < cfg->map[type].len; i++)
 		{
 			DictInfo   *dict = finddict(DatumGetObjectId(cfg->map[type].dict_id[i]));
-			char	  **norms,
-					  **ptr;
+			TSLexeme	  *norms,
+					  *ptr;
 
-			norms = ptr = (char **) DatumGetPointer(
+			norms = ptr = (TSLexeme *) DatumGetPointer(
 													FunctionCall3(
 													&(dict->lexize_info),
 									   PointerGetDatum(dict->dictionary),
@@ -337,7 +337,7 @@ parsetext_v2(TSCfgInfo * cfg, PRSTEXT * prs, char *buf, int4 buflen)
 
 			prs->pos++;			/* set pos */
 
-			while (*ptr)
+			while (ptr->lexeme)
 			{
 				if (prs->curwords == prs->lenwords)
 				{
@@ -345,8 +345,9 @@ parsetext_v2(TSCfgInfo * cfg, PRSTEXT * prs, char *buf, int4 buflen)
 					prs->words = (TSWORD *) repalloc((void *) prs->words, prs->lenwords * sizeof(TSWORD));
 				}
 
-				prs->words[prs->curwords].len = strlen(*ptr);
-				prs->words[prs->curwords].word = *ptr;
+				prs->words[prs->curwords].len = strlen(ptr->lexeme);
+				prs->words[prs->curwords].word = ptr->lexeme;
+				prs->words[prs->curwords].nvariant = ptr->nvariant;
 				prs->words[prs->curwords].alen = 0;
 				prs->words[prs->curwords].pos.pos = LIMITPOS(prs->pos);
 				ptr++;
@@ -458,10 +459,10 @@ hlparsetext(TSCfgInfo * cfg, HLPRSTEXT * prs, QUERYTYPE * query, char *buf, int4
 		for (i = 0; i < cfg->map[type].len; i++)
 		{
 			DictInfo   *dict = finddict(DatumGetObjectId(cfg->map[type].dict_id[i]));
-			char	  **norms,
-					  **ptr;
+			TSLexeme	  *norms,
+					  *ptr;
 
-			norms = ptr = (char **) DatumGetPointer(
+			norms = ptr = (TSLexeme *) DatumGetPointer(
 													FunctionCall3(
 													&(dict->lexize_info),
 									   PointerGetDatum(dict->dictionary),
@@ -472,10 +473,10 @@ hlparsetext(TSCfgInfo * cfg, HLPRSTEXT * prs, QUERYTYPE * query, char *buf, int4
 			if (!norms)			/* dictionary doesn't know this lexem */
 				continue;
 
-			while (*ptr)
+			while (ptr->lexeme)
 			{
-				hlfinditem(prs, query, *ptr, strlen(*ptr));
-				pfree(*ptr);
+				hlfinditem(prs, query, ptr->lexeme, strlen(ptr->lexeme));
+				pfree(ptr->lexeme);
 				ptr++;
 			}
 			pfree(norms);

@@ -38,4 +38,27 @@ typedef struct
 
 void		parse_cfgdict(text *in, Map ** m);
 
+/* return struct for any lexize function */
+typedef struct {
+	/* number of variant of split word , for example
+		Word 'fotballklubber' (norwegian) has two varian to split:
+		( fotball, klubb ) and ( fot, ball, klubb ). So, dictionary
+		should return:
+		nvariant	lexeme
+		1		fotball
+		1		klubb
+		2		fot
+		2		ball
+		2		klubb
+
+	*/
+	uint16	nvariant;
+
+	/* currently unused */
+	uint16	flags;
+
+	/* C-string */
+	char	*lexeme;
+} TSLexeme;
+
 #endif

@@ -54,16 +54,16 @@ dex_lexize(PG_FUNCTION_ARGS)
 	DictExample *d = (DictExample *) PG_GETARG_POINTER(0);
 	char	   *in = (char *) PG_GETARG_POINTER(1);
 	char	   *txt = pnstrdup(in, PG_GETARG_INT32(2));
-	char	  **res = palloc(sizeof(char *) * 2);
+	TSLexeme   *res = palloc(sizeof(TSLexeme) * 2);
+
+	memset(res,0,sizeof(TSLexeme) * 2);
 
 	if (*txt == '\0' || searchstoplist(&(d->stoplist), txt))
 	{
 		pfree(txt);
-		res[0] = NULL;
 	}
 	else
-		res[0] = txt;
-	res[1] = NULL;
+		res[0].lexeme = txt;
 
 	PG_RETURN_POINTER(res);
 }

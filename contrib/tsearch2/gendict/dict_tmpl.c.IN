@@ -52,15 +52,15 @@ dlexize_CFG_MODNAME(PG_FUNCTION_ARGS) {
 HASINIT 	DictExample *d = (DictExample*)PG_GETARG_POINTER(0);
 	char       *in = (char*)PG_GETARG_POINTER(1);
 	char *txt = pnstrdup(in, PG_GETARG_INT32(2));
-	char	**res=palloc(sizeof(char*)*2);
+	TSLexeme	*res=palloc(sizeof(TSLexeme*)*2);
 
-	/* Your INIT dictionary code */
+	/* Your LEXIZE dictionary code */
 HASINIT 	if ( *txt=='\0' || searchstoplist(&(d->stoplist),txt) ) {
 HASINIT 		pfree(txt);
-HASINIT 		res[0]=NULL;
+HASINIT 		res[0].lexeme=NULL;
 HASINIT 	} else 
-		res[0]=txt;
-	res[1]=NULL;
+		res[0].lexeme=txt;
+	res[1].lexeme=NULL;
 
 	PG_RETURN_POINTER(res);
 }

@@ -159,14 +159,13 @@ spell_lexize(PG_FUNCTION_ARGS)
 	DictISpell *d = (DictISpell *) PG_GETARG_POINTER(0);
 	char	   *in = (char *) PG_GETARG_POINTER(1);
 	char	   *txt;
-	char	  **res;
-	char	  **ptr,
-			  **cptr;
+	TSLexeme	  *res;
+	TSLexeme	  *ptr,
+			  *cptr;
 
 	if (!PG_GETARG_INT32(2))
 		PG_RETURN_POINTER(NULL);
 
-	res = palloc(sizeof(char *) * 2);
 	txt = pnstrdup(in, PG_GETARG_INT32(2));
 	res = NINormalizeWord(&(d->obj), txt);
 	pfree(txt);
@@ -175,22 +174,22 @@ spell_lexize(PG_FUNCTION_ARGS)
 		PG_RETURN_POINTER(NULL);
 
 	ptr = cptr = res;
-	while (*ptr)
+	while (ptr->lexeme)
 	{
-		if (searchstoplist(&(d->stoplist), *ptr))
+		if (searchstoplist(&(d->stoplist), ptr->lexeme))
 		{
-			pfree(*ptr);
-			*ptr = NULL;
+			pfree(ptr->lexeme);
+			ptr->lexeme = NULL;
 			ptr++;
 		}
 		else
 		{
-			*cptr = *ptr;
+			memcpy(cptr, ptr, sizeof(TSLexeme));
 			cptr++;
 			ptr++;
 		}
 	}
-	*cptr = NULL;
+	cptr->lexeme = NULL;
 
 	PG_RETURN_POINTER(res);
 }

@@ -265,6 +265,7 @@ pushval_morph(QPRS_STATE * state, int typeval, char *strval, int lenval, int2 we
 {
 	int4		count = 0;
 	PRSTEXT		prs;
+	uint32		variant, pos, cntvar=0, cntpos=0, cnt=0;
 
 	prs.lenwords = 32;
 	prs.curwords = 0;
@@ -273,17 +274,39 @@ pushval_morph(QPRS_STATE * state, int typeval, char *strval, int lenval, int2 we
 
 	parsetext_v2(findcfg(state->cfg_id), &prs, strval, lenval);
 
-	for (count = 0; count < prs.curwords; count++)
-	{
-		pushval_asis(state, VAL, prs.words[count].word, prs.words[count].len, weight);
-		pfree(prs.words[count].word);
-		if (count)
-			pushquery(state, OPR, (int4) '&', 0, 0, 0);
-	}
-	pfree(prs.words);
+	if ( prs.curwords>0 ) {
 
-	/* XXX */
-	if (prs.curwords == 0)
+		while (count < prs.curwords) {
+			pos = prs.words[count].pos.pos;
+			cntvar=0;
+			while(count < prs.curwords && pos==prs.words[count].pos.pos) {
+				variant = prs.words[count].nvariant;
+
+				cnt=0;
+				while(count < prs.curwords && pos==prs.words[count].pos.pos && variant==prs.words[count].nvariant)	{
+					
+					pushval_asis(state, VAL, prs.words[count].word, prs.words[count].len, weight);
+					pfree(prs.words[count].word);
+					if ( cnt ) 
+						pushquery(state, OPR, (int4) '&', 0, 0, 0);
+					cnt++;
+					count++;
+				}
+
+				if ( cntvar ) 
+					pushquery(state, OPR, (int4) '|', 0, 0, 0);
+				cntvar++;
+			}
+
+			if (cntpos) 
+				pushquery(state, OPR, (int4) '&', 0, 0, 0);
+		
+			cntpos++;
+		}
+
+		pfree(prs.words);
+
+	} else
 		pushval_asis(state, VALSTOP, NULL, 0, 0);
 }
 

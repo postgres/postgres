@@ -3,10 +3,11 @@
 
 #include <sys/types.h>
 #include "regex/regex.h"
-#include "regis.h"
 #include "c.h"
 
-
+#include "regis.h"
+#include "dict.h"
+ 
 struct SPNode;
 
 
@@ -116,7 +117,7 @@ typedef struct
 
 }	IspellDict;
 
-char	  **NINormalizeWord(IspellDict * Conf, char *word);
+TSLexeme	  *NINormalizeWord(IspellDict * Conf, char *word);
 int			NIImportAffixes(IspellDict * Conf, const char *filename);
 int			NIImportDictionary(IspellDict * Conf, const char *filename);
 

@@ -1119,17 +1119,32 @@ SplitToVariants(IspellDict * Conf, SPNode * snode, SplitVar * orig, char *word, 
 	return var;
 }
 
-char	  **
+TSLexeme *
 NINormalizeWord(IspellDict * Conf, char *word)
 {
 	char	  **res = NormalizeSubWord(Conf, word, 0);
+	TSLexeme *lcur=NULL, *lres=NULL;
+	u_int16_t NVariant=1;
+
+	if (res) {
+		char **ptr = res;
+		lcur = lres = (TSLexeme*)palloc( MAX_NORM * sizeof(TSLexeme) );
+		while(*ptr) {
+			lcur->lexeme=*ptr;
+			lcur->flags=0;
+			lcur->nvariant = NVariant++;
+			lcur++;
+			ptr++;
+		}
+		lcur->lexeme=NULL;
+		pfree(res);
+	}
 
 	if (Conf->compoundcontrol != '\t')
 	{
 		int			wordlen = strlen(word);
 		SplitVar   *ptr,
 				   *var = SplitToVariants(Conf, NULL, NULL, word, wordlen, 0, -1);
-		char	  **cur = res;
 		int			i;
 
 		while (var)
@@ -1140,30 +1155,31 @@ NINormalizeWord(IspellDict * Conf, char *word)
 
 				if (subres)
 				{
-					char	  **ptr = subres;
+					char	  **subptr = subres;
 
-					if (cur)
-					{
-						while (*cur)
-							cur++;
-					}
-					else
-						res = cur = (char **) palloc(MAX_NORM * sizeof(char *));
+					if ( !lcur )
+						lcur = lres = (TSLexeme*)palloc( MAX_NORM * sizeof(TSLexeme) );
+		
+					while(*subptr) {
+						for(i=0;i<var->nstem-1;i++) {
+							lcur->lexeme=(subptr==subres) ? var->stem[ i ] : pstrdup(var->stem[ i ]);
+							lcur->flags=0;
+							lcur->nvariant = NVariant;
+							lcur++;
+						}
 
-					for (i = 0; i < var->nstem - 1; i++)
-					{
-						*cur = var->stem[i];
-						cur++;
-					}
-					while (*ptr)
-					{
-						*cur = *ptr;
-						cur++;
-						ptr++;
-					}
-					*cur = NULL;
+						lcur->lexeme=*subptr;
+						lcur->flags=0;
+						lcur->nvariant = NVariant;
+						lcur++;
+						subptr++;
+						NVariant++;
+					}	
+
+					lcur->lexeme=NULL;
 					pfree(subres);
 					var->stem[0] = NULL;
+					pfree( var->stem[ var->nstem-1 ] );	
 				}
 			}
 
@@ -1175,7 +1191,7 @@ NINormalizeWord(IspellDict * Conf, char *word)
 			var = ptr;
 		}
 	}
-	return res;
+	return lres;
 }
 
 
