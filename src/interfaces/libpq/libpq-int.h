@@ -11,7 +11,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-int.h,v 1.3 1998/09/03 02:10:53 momjian Exp $
+ * $Id: libpq-int.h,v 1.4 1998/10/01 01:40:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,7 +78,7 @@
 		char	   *value;		/* actual value */
 	} PGresAttValue;
 
- struct pg_result
+	struct pg_result
 	{
 		int			ntups;
 		int			numAttributes;
@@ -91,7 +91,15 @@
 												 * last insert query */
 		int			binary;		/* binary tuple values if binary == 1,
 								 * otherwise ASCII */
+		/* NOTE: conn is kept here only for the temporary convenience of
+		 * applications that rely on it being here.  It will go away in a
+		 * future release, because relying on it is a bad idea --- what if
+		 * the PGresult has outlived the PGconn?  About the only thing it was
+		 * really good for was fetching the errorMessage, and we stash that
+		 * here now anyway.
+		 */
 		PGconn		*conn;		/* connection we did the query on */
+		char		*errMsg;	/* error message, or NULL if no error */
 	};
 
 /* PGAsyncStatusType defines the state of the query-execution state machine */
@@ -174,12 +182,8 @@
 		PGresult		*result;	/* result being constructed */
 		PGresAttValue	*curTuple;	/* tuple currently being read */
 
-		/* Message space.  Placed last for code-size reasons.
-		 * errorMessage is the message last returned to the application.
-		 * When asyncStatus=READY, asyncErrorMessage is the pending message
-		 * that will be put in errorMessage by PQgetResult. */
+		/* Message space.  Placed last for code-size reasons. */
 		char		errorMessage[ERROR_MSG_LENGTH];
-		char		asyncErrorMessage[ERROR_MSG_LENGTH];
 	};
 
 /* ----------------
@@ -197,6 +201,7 @@ extern int	pqPacketSend(PGconn *conn, const char *buf, size_t len);
 
 /* === in fe-exec.c === */
 
+extern void pqSetResultError(PGresult *res, const char *msg);
 extern void pqClearAsyncResult(PGconn *conn);
 
 /* === in fe-misc.c === */

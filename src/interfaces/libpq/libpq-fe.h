@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.43 1998/09/18 16:46:06 momjian Exp $
+ * $Id: libpq-fe.h,v 1.44 1998/10/01 01:40:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,6 +67,8 @@ extern		"C"
 /* PGnotify represents the occurrence of a NOTIFY message.
  * Ideally this would be an opaque typedef, but it's so simple that it's
  * unlikely to change.
+ * NOTE: in Postgres 6.4 and later, the be_pid is the notifying backend's,
+ * whereas in earlier versions it was always your own backend's PID.
  */
 	typedef struct pgNotify
 	{
@@ -78,7 +80,7 @@ extern		"C"
 /* PQnoticeProcessor is the function type for the notice-message callback.
  */
 
-typedef void (*PQnoticeProcessor) (void * arg, const char * message);
+	typedef void (*PQnoticeProcessor) (void * arg, const char * message);
 
 /* Print options for PQprint() */
   
@@ -219,15 +221,16 @@ typedef void (*PQnoticeProcessor) (void * arg, const char * message);
 	 * use
 	 */
 	extern PGresult *PQfn(PGconn *conn,
-									  int fnid,
-									  int *result_buf,
-									  int *result_len,
-									  int result_is_int,
-									  PQArgBlock *args,
-									  int nargs);
+						  int fnid,
+						  int *result_buf,
+						  int *result_len,
+						  int result_is_int,
+						  PQArgBlock *args,
+						  int nargs);
 
 	/* Accessor functions for PGresult objects */
 	extern ExecStatusType PQresultStatus(PGresult *res);
+	extern const char *PQresultErrorMessage(PGresult *res);
 	extern int	PQntuples(PGresult *res);
 	extern int	PQnfields(PGresult *res);
 	extern int	PQbinaryTuples(PGresult *res);
@@ -246,35 +249,39 @@ typedef void (*PQnoticeProcessor) (void * arg, const char * message);
 	/* Delete a PGresult */
 	extern void PQclear(PGresult *res);
 
-	/* Make an empty PGresult with given status (some apps find this useful) */
+	/* Make an empty PGresult with given status (some apps find this useful).
+	 * If conn is not NULL and status indicates an error, the conn's
+	 * errorMessage is copied.
+	 */
 	extern PGresult * PQmakeEmptyPGresult(PGconn *conn, ExecStatusType status);
 
 /* === in fe-print.c === */
 
-	extern void PQprint(FILE *fout,		/* output stream */
-									PGresult *res,
-									PQprintOpt *ps);	/* option structure */
+	extern void PQprint(FILE *fout,			/* output stream */
+						PGresult *res,
+						PQprintOpt *ps);	/* option structure */
 
 	/*
 	 * PQdisplayTuples() is a better version of PQprintTuples(), but both
 	 * are obsoleted by PQprint().
 	 */
 	extern void PQdisplayTuples(PGresult *res,
-											FILE *fp,	/* where to send the
-														 * output */
-											int fillAlign,		/* pad the fields with
-																 * spaces */
-											const char *fieldSep,		/* field separator */
-											int printHeader,	/* display headers? */
-											int quiet);
+								FILE *fp,			/* where to send the
+													 * output */
+								int fillAlign,		/* pad the fields with
+													 * spaces */
+								const char *fieldSep,	/* field separator */
+								int printHeader,	/* display headers? */
+								int quiet);
+
 	extern void PQprintTuples(PGresult *res,
-										  FILE *fout,	/* output stream */
-										  int printAttName,		/* print attribute names
-																 * or not */
-										  int terseOutput,		/* delimiter bars or
-																 * not? */
-										  int width);	/* width of column, if
-														 * 0, use variable width */
+							  FILE *fout,			/* output stream */
+							  int printAttName,		/* print attribute names
+													 * or not */
+							  int terseOutput,		/* delimiter bars or
+													 * not? */
+							  int width);			/* width of column, if
+													 * 0, use variable width */
 
 #ifdef MULTIBYTE
 	extern int	PQmblen(unsigned char *s);

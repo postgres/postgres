@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.68 1998/09/10 15:18:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.69 1998/10/01 01:40:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,7 +50,7 @@ const char *const pgresStatus[] = {
 
 
 static void freeTuple(PGresAttValue *tuple, int numAttributes);
-static void addTuple(PGresult *res, PGresAttValue *tup);
+static int	addTuple(PGresult *res, PGresAttValue *tup);
 static void parseInput(PGconn *conn);
 static int	getRowDescriptions(PGconn *conn);
 static int	getAnotherTuple(PGconn *conn, int binary);
@@ -60,7 +60,9 @@ static int	getNotice(PGconn *conn);
 
 /*
  * PQmakeEmptyPGresult
- *	 returns a newly allocated, initialized PGresult with given status
+ *	 returns a newly allocated, initialized PGresult with given status.
+ *	 If conn is not NULL and status indicates an error, the conn's
+ *	 errorMessage is copied.
  *
  * Note this is exported --- you wouldn't think an application would need
  * to build its own PGresults, but this has proven useful in both libpgtcl
@@ -74,7 +76,7 @@ PQmakeEmptyPGresult(PGconn *conn, ExecStatusType status)
 
 	result = (PGresult *) malloc(sizeof(PGresult));
 
-	result->conn = conn;
+	result->conn = conn;		/* should go away eventually */
 	result->ntups = 0;
 	result->numAttributes = 0;
 	result->attDescs = NULL;
@@ -83,13 +85,45 @@ PQmakeEmptyPGresult(PGconn *conn, ExecStatusType status)
 	result->resultStatus = status;
 	result->cmdStatus[0] = '\0';
 	result->binary = 0;
+	result->errMsg = NULL;
+	if (conn)					/* consider copying conn's errorMessage */
+	{
+		switch (status)
+		{
+			case PGRES_EMPTY_QUERY:
+			case PGRES_COMMAND_OK:
+			case PGRES_TUPLES_OK:
+			case PGRES_COPY_OUT:
+			case PGRES_COPY_IN:
+				/* non-error cases */
+				break;
+			default:
+				pqSetResultError(result, conn->errorMessage);
+				break;
+		}
+	}
 	return result;
+}
+
+/*
+ * pqSetResultError -
+ *		assign a new error message to a PGresult
+ */
+void
+pqSetResultError(PGresult *res, const char *msg)
+{
+	if (!res)
+		return;
+	if (res->errMsg)
+		free(res->errMsg);
+	res->errMsg = NULL;
+	if (msg && *msg)
+		res->errMsg = strdup(msg);
 }
 
 /*
  * PQclear -
  *	  free's the memory associated with a PGresult
- *
  */
 void
 PQclear(PGresult *res)
@@ -117,6 +151,10 @@ PQclear(PGresult *res)
 		}
 		free(res->attDescs);
 	}
+
+	/* free the error text */
+	if (res->errMsg)
+		free(res->errMsg);
 
 	/* free the structure itself */
 	free(res);
@@ -164,27 +202,35 @@ pqClearAsyncResult(PGconn *conn)
 /*
  * addTuple
  *	  add a row to the PGresult structure, growing it if necessary
+ *	  Returns TRUE if OK, FALSE if not enough memory to add the row
  */
-static void
+static int
 addTuple(PGresult *res, PGresAttValue *tup)
 {
 	if (res->ntups >= res->tupArrSize)
 	{
-		/* grow the array */
-		res->tupArrSize += TUPARR_GROW_BY;
-
 		/*
-		 * we can use realloc because shallow copying of the structure is
+		 * Try to grow the array.
+		 *
+		 * We can use realloc because shallow copying of the structure is
 		 * okay.  Note that the first time through, res->tuples is NULL.
-		 * realloc is supposed to do the right thing in that case. Also
-		 * note that the positions beyond res->ntups are garbage, not
+		 * realloc is supposed to do the right thing in that case. Also,
+		 * on failure realloc is supposed to return NULL without damaging
+		 * the existing allocation.
+		 * Note that the positions beyond res->ntups are garbage, not
 		 * necessarily NULL.
 		 */
-		res->tuples = (PGresAttValue **)
-			realloc(res->tuples, res->tupArrSize * sizeof(PGresAttValue *));
+		int newSize = res->tupArrSize + TUPARR_GROW_BY;
+		PGresAttValue ** newTuples = (PGresAttValue **)
+			realloc(res->tuples, newSize * sizeof(PGresAttValue *));
+		if (! newTuples)
+			return FALSE;		/* realloc failed */
+		res->tupArrSize = newSize;
+		res->tuples = newTuples;
 	}
 	res->tuples[res->ntups] = tup;
 	res->ntups++;
+	return TRUE;
 }
 
 
@@ -235,7 +281,6 @@ PQsendQuery(PGconn *conn, const char *query)
 	/* initialize async result-accumulation state */
 	conn->result = NULL;
 	conn->curTuple = NULL;
-	conn->asyncErrorMessage[0] = '\0';
 
 	/* send the query to the backend; */
 	/* the frontend-backend protocol uses 'Q' to designate queries */
@@ -270,10 +315,8 @@ PQconsumeInput(PGconn *conn)
 	 * application wants to get rid of a read-select condition. Note that
 	 * we will NOT block waiting for more input.
 	 */
-	if (pqReadData(conn) < 0) {
-		strcpy(conn->asyncErrorMessage, conn->errorMessage);
+	if (pqReadData(conn) < 0)
 		return 0;
-	}
 	/* Parsing of the data waits till later. */
 	return 1;
 }
@@ -360,16 +403,13 @@ parseInput(PGconn *conn)
 					conn->asyncStatus = PGASYNC_READY;
 					break;
 				case 'E':		/* error return */
-					if (pqGets(conn->asyncErrorMessage, ERROR_MSG_LENGTH, conn))
+					if (pqGets(conn->errorMessage, ERROR_MSG_LENGTH, conn))
 						return;
 					/* delete any partially constructed result */
 					pqClearAsyncResult(conn);
-
-					/*
-					 * we leave result NULL while setting
-					 * asyncStatus=READY; this signals an error condition
-					 * to PQgetResult.
-					 */
+					/* and build an error result holding the error message */
+					conn->result = PQmakeEmptyPGresult(conn,
+													   PGRES_FATAL_ERROR);
 					conn->asyncStatus = PGASYNC_READY;
 					break;
 				case 'Z':		/* backend is ready for new query */
@@ -470,15 +510,18 @@ parseInput(PGconn *conn)
 					conn->asyncStatus = PGASYNC_COPY_OUT;
 					break;
 				default:
-					sprintf(conn->asyncErrorMessage,
+					sprintf(conn->errorMessage,
 					"unknown protocol character '%c' read from backend.  "
 					"(The protocol character is the first character the "
-							"backend sends in response to a query it receives).\n",
+					"backend sends in response to a query it receives).\n",
 							id);
 					/* Discard the unexpected message; good idea?? */
 					conn->inStart = conn->inEnd;
 					/* delete any partially constructed result */
 					pqClearAsyncResult(conn);
+					/* and build an error result holding the error message */
+					conn->result = PQmakeEmptyPGresult(conn,
+													   PGRES_FATAL_ERROR);
 					conn->asyncStatus = PGASYNC_READY;
 					return;
 			}					/* switch on protocol character */
@@ -565,7 +608,7 @@ getRowDescriptions(PGconn *conn)
 /*
  * parseInput subroutine to read a 'B' or 'D' (row data) message.
  * We add another tuple to the existing PGresult structure.
- * Returns: 0 if completed message, EOF if not enough data yet.
+ * Returns: 0 if completed message, EOF if error or not enough data yet.
  *
  * Note that if we run out of data, we have to suspend and reprocess
  * the message after more data is received.  We keep a partially constructed
@@ -593,6 +636,8 @@ getAnotherTuple(PGconn *conn, int binary)
 	{
 		conn->curTuple = (PGresAttValue *)
 			malloc(nfields * sizeof(PGresAttValue));
+		if (conn->curTuple == NULL)
+			goto outOfMemory;
 		MemSet((char *) conn->curTuple, 0, nfields * sizeof(PGresAttValue));
 	}
 	tup = conn->curTuple;
@@ -601,9 +646,11 @@ getAnotherTuple(PGconn *conn, int binary)
 	nbytes = (nfields + BYTELEN - 1) / BYTELEN;
 	if (nbytes >= MAX_FIELDS)
 	{
-		sprintf(conn->asyncErrorMessage,
-				"getAnotherTuple() -- null-values bitmap is too large\n");
+		/* Replace partially constructed result with an error result */
 		pqClearAsyncResult(conn);
+		sprintf(conn->errorMessage,
+				"getAnotherTuple() -- null-values bitmap is too large\n");
+		conn->result = PQmakeEmptyPGresult(conn, PGRES_FATAL_ERROR);
 		conn->asyncStatus = PGASYNC_READY;
 		/* Discard the broken message */
 		conn->inStart = conn->inEnd;
@@ -624,7 +671,11 @@ getAnotherTuple(PGconn *conn, int binary)
 		{
 			/* if the field value is absent, make it a null string */
 			if (tup[i].value == NULL)
+			{
 				tup[i].value = strdup("");
+				if (tup[i].value == NULL)
+					goto outOfMemory;
+			}
 			tup[i].len = NULL_LEN;
 		}
 		else
@@ -637,7 +688,11 @@ getAnotherTuple(PGconn *conn, int binary)
 			if (vlen < 0)
 				vlen = 0;
 			if (tup[i].value == NULL)
+			{
 				tup[i].value = (char *) malloc(vlen + 1);
+				if (tup[i].value == NULL)
+					goto outOfMemory;
+			}
 			tup[i].len = vlen;
 			/* read in the value */
 			if (vlen > 0)
@@ -659,10 +714,28 @@ getAnotherTuple(PGconn *conn, int binary)
 	}
 
 	/* Success!  Store the completed tuple in the result */
-	addTuple(conn->result, tup);
+	if (! addTuple(conn->result, tup))
+	{
+		/* Oops, not enough memory to add the tuple to conn->result,
+		 * so must free it ourselves...
+		 */
+		freeTuple(tup, nfields);
+		goto outOfMemory;
+	}
 	/* and reset for a new message */
 	conn->curTuple = NULL;
 	return 0;
+
+outOfMemory:
+	/* Replace partially constructed result with an error result */
+	pqClearAsyncResult(conn);
+	sprintf(conn->errorMessage,
+			"getAnotherTuple() -- out of memory for result\n");
+	conn->result = PQmakeEmptyPGresult(conn, PGRES_FATAL_ERROR);
+	conn->asyncStatus = PGASYNC_READY;
+	/* Discard the failed message --- good idea? */
+	conn->inStart = conn->inEnd;
+	return EOF;
 }
 
 
@@ -725,19 +798,26 @@ PQgetResult(PGconn *conn)
 			res = NULL;			/* query is complete */
 			break;
 		case PGASYNC_READY:
-
 			/*
-			 * conn->result is the PGresult to return, or possibly NULL
-			 * indicating an error. conn->asyncErrorMessage holds the
-			 * errorMessage to return. (We keep it stashed there so that
-			 * other user calls can't overwrite it prematurely.)
+			 * conn->result is the PGresult to return.  If it is NULL
+			 * (which probably shouldn't happen) we assume there is
+			 * an appropriate error message in conn->errorMessage.
 			 */
 			res = conn->result;
-			conn->result = NULL;/* handing over ownership to caller */
+			conn->result = NULL;		/* handing over ownership to caller */
 			conn->curTuple = NULL;		/* just in case */
 			if (!res)
+			{
 				res = PQmakeEmptyPGresult(conn, PGRES_FATAL_ERROR);
-			strcpy(conn->errorMessage, conn->asyncErrorMessage);
+			}
+			else
+			{
+				/* Make sure PQerrorMessage agrees with result; it could be
+				 * that we have done other operations that changed
+				 * errorMessage since the result's error message was saved.
+				 */
+				strcpy(conn->errorMessage, PQresultErrorMessage(res));
+			}
 			/* Set the state back to BUSY, allowing parsing to proceed. */
 			conn->asyncStatus = PGASYNC_BUSY;
 			break;
@@ -763,11 +843,12 @@ PQgetResult(PGconn *conn)
  * PQexec
  *	  send a query to the backend and package up the result in a PGresult
  *
- * if the query failed, return NULL, conn->errorMessage is set to
- * a relevant message
- * if query is successful, a new PGresult is returned
- * the user is responsible for freeing that structure when done with it
- *
+ * If the query was not even sent, return NULL; conn->errorMessage is set to
+ * a relevant message.
+ * If the query was sent, a new PGresult is returned (which could indicate
+ * either success or failure).
+ * The user is responsible for freeing the PGresult via PQclear()
+ * when done with it.
  */
 
 PGresult   *
@@ -1310,6 +1391,14 @@ PQresultStatus(PGresult *res)
 	if (!res)
 		return PGRES_NONFATAL_ERROR;
 	return res->resultStatus;
+}
+
+const char *
+PQresultErrorMessage(PGresult *res)
+{
+	if (!res || !res->errMsg)
+		return "";
+	return res->errMsg;
 }
 
 int
