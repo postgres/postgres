@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/shmem.c,v 1.76 2003/12/21 04:30:10 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/shmem.c,v 1.77 2003/12/30 00:03:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -281,7 +281,7 @@ ShmemInitHash(const char *name, /* table string name for shmem index */
 	 */
 	infoP->dsize = infoP->max_dsize = hash_select_dirsize(max_size);
 	infoP->alloc = ShmemAlloc;
-	hash_flags |= HASH_SHARED_MEM | HASH_DIRSIZE;
+	hash_flags |= HASH_SHARED_MEM | HASH_ALLOC | HASH_DIRSIZE;
 
 	/* look it up in the shmem index */
 	location = ShmemInitStruct(name,
