@@ -2724,3 +2724,281 @@ GPG: 1024D/3E1D0C1C: CA12 09E0 E8D5 8870 5839  932A 614D 4C34 3E1D 0C1C
 TIP 2: you can get off all lists at once with the unregister command
     (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
 
+From thhal@mailblocks.com Fri Feb 20 01:50:11 2004
+Return-path: <thhal@mailblocks.com>
+Received: from mail.gbg.bostream.net (mail.gbg.bostream.net [81.26.226.10])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i1K6o8k22023
+	for <pgman@candle.pha.pa.us>; Fri, 20 Feb 2004 01:50:09 -0500 (EST)
+Received: from thhalhome3 (1-1-2-48a.rny.sth.bostream.se [82.182.133.12])
+	by mail.gbg.bostream.net (8.12.10/8.12.10) with SMTP id i1K6gPKS024169
+	for <pgman@candle.pha.pa.us>; Fri, 20 Feb 2004 07:42:25 +0100
+Message-ID: <006e01c3f77d$ce1f8250$6401a8c0@ad.eoncompany.com>
+From: "Thomas Hallgren" <thhal@mailblocks.com>
+To: "Bruce Momjian" <pgman@candle.pha.pa.us>
+References: <200402121441.i1CEfgD14886@candle.pha.pa.us>
+Subject: Re: TODO list for PostgreSQL and Pl/Java
+Date: Fri, 20 Feb 2004 07:50:19 +0100
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+	boundary="----=_NextPart_000_006B_01C3F786.2FAF6CD0"
+X-Priority: 3
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook Express 6.00.2800.1158
+X-MimeOLE: Produced By Microsoft MimeOLE V6.00.2800.1165
+X-Spam-Checker-Version: SpamAssassin 2.61 (1.212.2.1-2003-12-09-exp) on 
+	candle.pha.pa.us
+X-Spam-Status: No, hits=-4.8 required=5.0 tests=BAYES_00,HTML_MESSAGE 
+	autolearn=ham version=2.61
+Status: OR
+
+This is a multi-part message in MIME format.
+
+------=_NextPart_000_006B_01C3F786.2FAF6CD0
+Content-Type: text/plain;
+	charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+
+Fair enough if several implementations are being worked on. However, the =
+discussion threads that the new link points to are all more than 2 years =
+old. Perhaps you could add the following to your [java] page?
+=20
+a.. pljava revisited Thomas Hallgren=20
+  a.. Re: pljava revisited Andrew Dunstan=20
+    a.. Re: pljava revisited Andrew Rawnsley=20
+      a.. Re: pljava revisited Thomas Hallgren=20
+      b.. Re: pljava revisited Andrew Dunstan=20
+      c.. Re: pljava revisited Andrew Rawnsley=20
+      d.. Re: pljava revisited Tom Lane=20
+      e.. Re: pljava revisited Thomas Hallgren=20
+      f.. Re: pljava revisited Peter Eisentraut=20
+      g.. Re: pljava revisited Bruce Momjian=20
+      h.. Re: pljava revisited ow=20
+      i.. Re: pljava revisited Jan Wieck=20
+      j.. Re: pljava revisited Robert Treat=20
+  b.. Re: pljava revisited Peter Eisentraut=20
+    a.. Re: pljava revisited Andrew Dunstan=20
+      a.. Re: pljava revisited Peter Eisentraut=20
+      b.. Re: pljava revisited Thomas Hallgren=20
+I would like to commence some discussion regarding the old proposals =
+(using an external JVM) and my implementation. I wrote a long rationale =
+explaining my choice of architecture here =
+http://gborg.postgresql.org/project/pljava/genpage.php?jni_rationale but =
+so far I have received no comments on it. I'll make a new post on this =
+topic on the hackers list.
+
+Regards,
+
+Thomas Hallgren
+
+----- Original Message -----=20
+From: "Bruce Momjian" <pgman@candle.pha.pa.us>
+To: "Thomas Hallgren" <thhal@mailblocks.com>
+Sent: Thursday, February 12, 2004 15:41
+Subject: Re: TODO list for PostgreSQL and Pl/Java
+
+
+> Thomas Hallgren wrote:
+> > Hi Bruce,
+> > As I was browsing the TODO list for PostgreSQL I found that the item =
+"Allow Java server-side programming" in the "COMMANDS/SERVER SIDE =
+LANGUAGE" is referring to the pljava project at sourceforge. To my =
+knowledge, that project has been dead for little over a year now. =
+Needless to say, I'm eager to claim this item with my project at =
+http://gborg.postgresql.org/project/pljava
+>=20
+> Thanks, I removed the URL.  I am not ready to add one since a few are
+> being worked on, I think.
+>=20
+> --=20
+>   Bruce Momjian                        |  http://candle.pha.pa.us
+>   pgman@candle.pha.pa.us               |  (610) 359-1001
+>   +  If your life is a hard drive,     |  13 Roberts Road
+>   +  Christ can be your backup.        |  Newtown Square, Pennsylvania =
+19073
+> 
+------=_NextPart_000_006B_01C3F786.2FAF6CD0
+Content-Type: text/html;
+	charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML><HEAD>
+<META http-equiv=3DContent-Type content=3D"text/html; =
+charset=3Diso-8859-1">
+<META content=3D"MSHTML 6.00.2800.1400" name=3DGENERATOR>
+<STYLE></STYLE>
+</HEAD>
+<BODY>
+<DIV><FONT face=3DArial size=3D2>Fair enough if several implementations =
+are being=20
+worked on. However, the discussion threads that the new link points to =
+are all=20
+more than 2 years old. </FONT><FONT face=3DArial size=3D2>Perhaps you =
+could add the=20
+following to your [java] page?</FONT></DIV>
+<DIV><FONT face=3DArial size=3D2></FONT>&nbsp;
+<LI><STRONG><A=20
+href=3D"http://archives.postgresql.org/pgsql-hackers/2003-12/msg00310.php=
+"=20
+name=3D00310>pljava revisited</A></STRONG> Thomas Hallgren=20
+<UL>
+  <LI><STRONG><A=20
+  =
+href=3D"http://archives.postgresql.org/pgsql-hackers/2003-12/msg00314.php=
+"=20
+  name=3D00314>Re: pljava revisited</A></STRONG> Andrew Dunstan=20
+  <UL>
+    <LI><STRONG><A=20
+    =
+href=3D"http://archives.postgresql.org/pgsql-hackers/2003-12/msg00316.php=
+"=20
+    name=3D00316>Re: pljava revisited</A></STRONG> Andrew Rawnsley=20
+    <UL>
+      <LI><STRONG><A=20
+      =
+href=3D"http://archives.postgresql.org/pgsql-hackers/2003-12/msg00317.php=
+"=20
+      name=3D00317>Re: pljava revisited</A></STRONG> Thomas Hallgren=20
+      <LI><STRONG><A=20
+      =
+href=3D"http://archives.postgresql.org/pgsql-hackers/2003-12/msg00318.php=
+"=20
+      name=3D00318>Re: pljava revisited</A></STRONG> Andrew Dunstan=20
+      <LI><STRONG><A=20
+      =
+href=3D"http://archives.postgresql.org/pgsql-hackers/2003-12/msg00319.php=
+"=20
+      name=3D00319>Re: pljava revisited</A></STRONG> Andrew Rawnsley=20
+      <LI><STRONG><A=20
+      =
+href=3D"http://archives.postgresql.org/pgsql-hackers/2003-12/msg00321.php=
+"=20
+      name=3D00321>Re: pljava revisited</A></STRONG> Tom Lane=20
+      <LI><STRONG><A=20
+      =
+href=3D"http://archives.postgresql.org/pgsql-hackers/2003-12/msg00325.php=
+"=20
+      name=3D00325>Re: pljava revisited</A></STRONG> Thomas Hallgren=20
+      <LI><STRONG><A=20
+      =
+href=3D"http://archives.postgresql.org/pgsql-hackers/2003-12/msg00353.php=
+"=20
+      name=3D00353>Re: pljava revisited</A></STRONG> Peter Eisentraut=20
+      <LI><STRONG><A=20
+      =
+href=3D"http://archives.postgresql.org/pgsql-hackers/2003-12/msg00372.php=
+"=20
+      name=3D00372>Re: pljava revisited</A></STRONG> Bruce Momjian=20
+      <LI><STRONG><A=20
+      =
+href=3D"http://archives.postgresql.org/pgsql-hackers/2003-12/msg00323.php=
+"=20
+      name=3D00323>Re: pljava revisited</A></STRONG> ow=20
+      <LI><STRONG><A=20
+      =
+href=3D"http://archives.postgresql.org/pgsql-hackers/2003-12/msg00320.php=
+"=20
+      name=3D00320>Re: pljava revisited</A></STRONG> Jan Wieck=20
+      <LI><STRONG><A=20
+      =
+href=3D"http://archives.postgresql.org/pgsql-hackers/2003-12/msg00322.php=
+"=20
+      name=3D00322>Re: pljava revisited</A></STRONG> Robert Treat =
+</LI></UL></LI></UL>
+  <LI><STRONG><A=20
+  =
+href=3D"http://archives.postgresql.org/pgsql-hackers/2003-12/msg00354.php=
+"=20
+  name=3D00354>Re: pljava revisited</A></STRONG> Peter Eisentraut=20
+  <UL>
+    <LI><STRONG><A=20
+    =
+href=3D"http://archives.postgresql.org/pgsql-hackers/2003-12/msg00357.php=
+"=20
+    name=3D00357>Re: pljava revisited</A></STRONG> Andrew Dunstan=20
+    <UL>
+      <LI><STRONG><A=20
+      =
+href=3D"http://archives.postgresql.org/pgsql-hackers/2003-12/msg00358.php=
+"=20
+      name=3D00358>Re: pljava revisited</A></STRONG> Peter Eisentraut=20
+      <LI><STRONG><A=20
+      =
+href=3D"http://archives.postgresql.org/pgsql-hackers/2003-12/msg00369.php=
+"=20
+      name=3D00369>Re: pljava revisited</A></STRONG> Thomas Hallgren=20
+  </LI></UL></LI></UL></LI></UL></LI></DIV>
+<DIV><FONT face=3DArial size=3D2>
+<DIV><FONT face=3DArial size=3D2>I would like to commence some =
+discussion regarding=20
+the old proposals (using an external JVM) and my implementation. I wrote =
+a long=20
+rationale explaining my choice of architecture here </FONT><A=20
+href=3D"http://gborg.postgresql.org/project/pljava/genpage.php?jni_ration=
+ale"><FONT=20
+face=3DArial=20
+size=3D2>http://gborg.postgresql.org/project/pljava/genpage.php?jni_ratio=
+nale</FONT></A><FONT=20
+face=3DArial size=3D2>&nbsp;but so far I have received no comments on =
+it. I'll make=20
+a new post on this topic on the hackers list.</FONT></DIV>
+<DIV><FONT face=3DArial size=3D2></FONT>&nbsp;</DIV></FONT><FONT =
+face=3DArial=20
+size=3D2></FONT></DIV>
+<DIV><FONT face=3DArial size=3D2>Regards,</FONT></DIV>
+<DIV><FONT face=3DArial size=3D2></FONT>&nbsp;</DIV>
+<DIV><FONT face=3DArial size=3D2>Thomas Hallgren</FONT></DIV>
+<DIV><FONT face=3DArial size=3D2></FONT>&nbsp;</DIV>
+<DIV><FONT face=3DArial size=3D2>----- Original Message ----- </FONT>
+<DIV><FONT face=3DArial size=3D2>From: "Bruce Momjian" &lt;</FONT><A=20
+href=3D"mailto:pgman@candle.pha.pa.us"><FONT face=3DArial=20
+size=3D2>pgman@candle.pha.pa.us</FONT></A><FONT face=3DArial=20
+size=3D2>&gt;</FONT></DIV>
+<DIV><FONT face=3DArial size=3D2>To: "Thomas Hallgren" &lt;</FONT><A=20
+href=3D"mailto:thhal@mailblocks.com"><FONT face=3DArial=20
+size=3D2>thhal@mailblocks.com</FONT></A><FONT face=3DArial =
+size=3D2>&gt;</FONT></DIV>
+<DIV><FONT face=3DArial size=3D2>Sent: Thursday, February 12, 2004=20
+15:41</FONT></DIV>
+<DIV><FONT face=3DArial size=3D2>Subject: Re: TODO list for PostgreSQL =
+and=20
+Pl/Java</FONT></DIV></DIV>
+<DIV><FONT face=3DArial><BR><FONT size=3D2></FONT></FONT></DIV><FONT =
+face=3DArial=20
+size=3D2>&gt; Thomas Hallgren wrote:<BR>&gt; &gt; Hi Bruce,<BR>&gt; &gt; =
+As I was=20
+browsing the TODO list for PostgreSQL I found that the item "Allow Java=20
+server-side programming" in the "COMMANDS/SERVER SIDE LANGUAGE" is =
+referring to=20
+the pljava project at sourceforge. To my knowledge, that project has =
+been dead=20
+for little over a year now. Needless to say, I'm eager to claim this =
+item with=20
+my project at </FONT><A =
+href=3D"http://gborg.postgresql.org/project/pljava"><FONT=20
+face=3DArial =
+size=3D2>http://gborg.postgresql.org/project/pljava</FONT></A><BR><FONT=20
+face=3DArial size=3D2>&gt; <BR>&gt; Thanks, I removed the URL.&nbsp; I =
+am not ready=20
+to add one since a few are<BR>&gt; being worked on, I think.<BR>&gt; =
+<BR>&gt; --=20
+<BR>&gt; &nbsp; Bruce=20
+Momjian&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
+
+|&nbsp; </FONT><A href=3D"http://candle.pha.pa.us"><FONT face=3DArial=20
+size=3D2>http://candle.pha.pa.us</FONT></A><BR><FONT face=3DArial =
+size=3D2>&gt; &nbsp;=20
+</FONT><A href=3D"mailto:pgman@candle.pha.pa.us"><FONT face=3DArial=20
+size=3D2>pgman@candle.pha.pa.us</FONT></A><FONT face=3DArial=20
+size=3D2>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbs=
+p;&nbsp;&nbsp;&nbsp;=20
+|&nbsp; (610) 359-1001<BR>&gt; &nbsp; +&nbsp; If your life is a hard=20
+drive,&nbsp;&nbsp;&nbsp;&nbsp; |&nbsp; 13 Roberts Road<BR>&gt; &nbsp; =
++&nbsp;=20
+Christ can be your backup.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
+|&nbsp;=20
+Newtown Square, Pennsylvania 19073<BR>&gt; </FONT></BODY></HTML>
+
+------=_NextPart_000_006B_01C3F786.2FAF6CD0--
+
