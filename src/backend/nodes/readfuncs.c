@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.25 1998/02/13 03:27:47 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.26 1998/02/21 16:58:26 momjian Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -947,7 +947,7 @@ _readConst()
 
 	token = lsptok(NULL, &length);		/* get :constlen */
 	token = lsptok(NULL, &length);		/* now read it */
-	local_node->constlen = strtoul(token,NULL,10);
+	local_node->constlen = strtol(token,NULL,10);
 
 	token = lsptok(NULL, &length);		/* get :constisnull */
 	token = lsptok(NULL, &length);		/* now read it */

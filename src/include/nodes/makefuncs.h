@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: makefuncs.h,v 1.9 1998/02/10 16:04:24 momjian Exp $
+ * $Id: makefuncs.h,v 1.10 1998/02/21 16:58:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +39,7 @@ extern Resdom * makeResdom(AttrNumber resno,
 		   int resjunk);
 
 extern Const * makeConst(Oid consttype,
-		  Size constlen,
+		  int constlen,
 		  Datum constvalue,
 		  bool constisnull,
 		  bool constbyval,

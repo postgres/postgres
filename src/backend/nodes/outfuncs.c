@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.30 1998/02/13 03:27:45 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.31 1998/02/21 16:58:24 momjian Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -629,7 +629,7 @@ _outResdom(StringInfo str, Resdom *node)
 	char		buf[500];
 
 	appendStringInfo(str, "RESDOM");
-	sprintf(buf, " :resno %hd ", node->resno);
+	sprintf(buf, " :resno %d ", node->resno);
 	appendStringInfo(str, buf);
 	sprintf(buf, " :restype %u ", node->restype);
 	appendStringInfo(str, buf);
@@ -724,7 +724,7 @@ _outVar(StringInfo str, Var *node)
 	appendStringInfo(str, "VAR");
 	sprintf(buf, " :varno %d ", node->varno);
 	appendStringInfo(str, buf);
-	sprintf(buf, " :varattno %hd ", node->varattno);
+	sprintf(buf, " :varattno %d ", node->varattno);
 	appendStringInfo(str, buf);
 	sprintf(buf, " :vartype %u ", node->vartype);
 	appendStringInfo(str, buf);
@@ -749,7 +749,7 @@ _outConst(StringInfo str, Const *node)
 	appendStringInfo(str, "CONST");
 	sprintf(buf, " :consttype %u ", node->consttype);
 	appendStringInfo(str, buf);
-	sprintf(buf, " :constlen %hd ", node->constlen);
+	sprintf(buf, " :constlen %d ", node->constlen);
 	appendStringInfo(str, buf);
 	appendStringInfo(str, " :constisnull ");
 	appendStringInfo(str, node->constisnull ? "true" : "false");
@@ -931,7 +931,7 @@ _outParam(StringInfo str, Param *node)
 	appendStringInfo(str, "PARAM");
 	sprintf(buf, " :paramkind %d ", node->paramkind);
 	appendStringInfo(str, buf);
-	sprintf(buf, " :paramid %hd ", node->paramid);
+	sprintf(buf, " :paramid %d ", node->paramid);
 	appendStringInfo(str, buf);
 	appendStringInfo(str, " :paramname ");
 	appendStringInfo(str, node->paramname);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/makefuncs.c,v 1.7 1998/02/10 16:03:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/makefuncs.c,v 1.8 1998/02/21 16:58:22 momjian Exp $
  *
  * NOTES
  *	  Creator functions in POSTGRES 4.2 are generated automatically. Most of
@@ -102,7 +102,7 @@ makeResdom(AttrNumber resno,
  */
 Const	   *
 makeConst(Oid consttype,
-		  Size constlen,
+		  int constlen,
 		  Datum constvalue,
 		  bool constisnull,
 		  bool constbyval,

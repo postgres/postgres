@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.19 1998/02/13 03:45:29 vadim Exp $
+ * $Id: primnodes.h,v 1.20 1998/02/21 16:58:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -181,7 +181,7 @@ typedef struct Const
 {
 	NodeTag		type;
 	Oid			consttype;
-	Size		constlen;
+	int			constlen;
 	Datum		constvalue;
 	bool		constisnull;
 	bool		constbyval;
