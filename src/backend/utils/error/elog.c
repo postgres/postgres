@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.133 2004/04/11 00:54:45 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.134 2004/04/16 12:59:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -447,6 +447,10 @@ errfinish(int dummy,...)
 
 			if (in_fatal_exit)
 				ereport(PANIC, (errmsg("fatal error during fatal exit, giving up")));
+
+			/* not safe to longjump */
+			if (!Warn_restart_ready || proc_exit_inprogress)
+				proc_exit(proc_exit_inprogress || !IsUnderPostmaster);
 
 			/* We will exit the backend by simulating a client EOF */
 			in_fatal_exit = true;
