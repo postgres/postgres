@@ -8,24 +8,22 @@ subdir = contrib/xml
 top_builddir = ../..
 include $(top_builddir)/src/Makefile.global
 
-override CFLAGS+= $(CFLAGS_SL)
+override CFLAGS+= $(CFLAGS_SL) -g
 
 
 #
 # DLOBJS is the dynamically-loaded object files.  The "funcs" queries
 # include CREATE FUNCTIONs that load routines from these files.
 #
-DLOBJS= pgxml$(DLSUFFIX)
+DLOBJS= pgxml_dom$(DLSUFFIX)
 
 
-QUERIES= pgxml.sql
+QUERIES= pgxml_dom.sql
 
 all: $(DLOBJS) $(QUERIES)
 
-# Requires the expat library
-
 %.so: %.o
-	$(CC) -shared -lexpat -o $@ $<
+	$(CC) -shared -lxml2 -o $@ $<
 
 
 %.sql: %.source
@@ -41,3 +39,7 @@ all: $(DLOBJS) $(QUERIES)
 
 clean:
 	rm -f $(DLOBJS) $(QUERIES)
+
+
+
+

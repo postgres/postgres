@@ -1,18 +1,35 @@
-This package contains a couple of simple routines for hooking the
-expat XML parser up to PostgreSQL. This is a work-in-progress and all
-very basic at the moment (see the file TODO for some outline of what
-remains to be done).
+This package contains some simple routines for manipulating XML
+documents stored in PostgreSQL. This is a work-in-progress and
+somewhat basic at the moment (see the file TODO for some outline of
+what remains to be done).
 
-At present, two functions are defined, one which checks
-well-formedness, and the other which performs very simple XPath-type
-queries.
+At present, two modules (based on different XML handling libraries)
+are provided.
 
 Prerequisite:
 
+pgxml.c:
 expat parser 1.95.0 or newer (http://expat.sourceforge.net)
 
-I used a shared library version -I'm sure you could use a static
-library if you wished though. I had no problems compiling from source.
+or
+
+pgxml_dom.c:
+libxml2 (http://xmlsoft.org)
+
+The libxml2 version provides more complete XPath functionality, and
+seems like a good way to go. I've left the old versions in there for
+comparison.
+
+Compiling and loading:
+----------------------
+
+The Makefile only builds the libxml2 version.
+
+To compile, just type make.
+
+Then you can use psql to load the two function definitions: 
+\i pgxml_dom.sql
+
 
 Function documentation and usage:
 ---------------------------------
@@ -22,10 +39,21 @@ pgxml_parse(text) returns bool
 well-formed or not. It returns NULL if the parser couldn't be
 created for any reason.
 
+pgxml_xpath (XQuery functions) - differs between the versions:
+
+pgxml.c (expat version) has:
+
 pgxml_xpath(text doc, text xpath, int n) returns text
   parses doc and returns the cdata of the nth occurence of
-the "XPath" listed. See below for details on the syntax.
+the "simple path" entry. 
 
+However, the remainder of this document will cover the pgxml_dom.c version.
+
+pgxml_xpath(text doc, text xpath, text toptag, text septag) returns text
+  evaluates xpath on doc, and returns the result wrapped in
+<toptag>...</toptag> and each result node wrapped in
+<septag></septag>. toptag and septag may be empty strings, in which
+case the respective tag will be omitted.
 
 Example:
 
@@ -49,30 +77,42 @@ descriptions, in case anyone is wondering):
 one can type:
 
 select docid, 
-pgxml_xpath(document,'/site/name',1) as sitename,
-pgxml_xpath(document,'/site/location',1) as location
+pgxml_xpath(document,'//site/name/text()','','') as sitename,
+pgxml_xpath(document,'//site/location/text()','','') as location
  from docstore;
  
 and get as output:
 
- docid |          sitename           |  location  
--------+-----------------------------+------------
-     1 | Church Farm, Ashton Keynes  | SU04209424
-     2 | Glebe Farm, Long Itchington | SP41506500
-(2 rows)
+ docid |               sitename               |  location  
+-------+--------------------------------------+------------
+     1 | Church Farm, Ashton Keynes           | SU04209424
+     2 | Glebe Farm, Long Itchington          | SP41506500
+     3 | The Bungalow, Thames Lane, Cricklade | SU10229362
+(3 rows)
 
+or, to illustrate the use of the extra tags:
 
-"XPath" syntax supported
-------------------------
+select docid as id,
+pgxml_xpath(document,'//find/type/text()','set','findtype') 
+from docstore;
 
-At present it only supports paths of the form:
-'tag1/tag2' or '/tag1/tag2'
+ id |                               pgxml_xpath                               
+----+-------------------------------------------------------------------------
+  1 | <set></set>
+  2 | <set><findtype>Urn</findtype></set>
+  3 | <set><findtype>Pottery</findtype><findtype>Animal bone</findtype></set>
+(3 rows)
 
-The first case will find any <tag2> within a <tag1>, the second will
-find any <tag2> within a <tag1> at the top level of the document.
+Which produces a new, well-formed document. Note that document 1 had
+no matching instances, so the set returned contains no
+elements. document 2 has 1 matching element and document 3 has 2.
 
-The real XPath is much more complex (see TODO file).
+This is just scratching the surface because XPath allows all sorts of
+operations.
 
+Note: I've only implemented the return of nodeset and string values so
+far. This covers (I think) many types of queries, however.
 
-John Gray <jgray@azuli.co.uk>  26 July 2001
+John Gray <jgray@azuli.co.uk>  16 August 2001
+
 
