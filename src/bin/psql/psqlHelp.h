@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: psqlHelp.h,v 1.17 1997/06/02 14:12:28 momjian Exp $
+ * $Id: psqlHelp.h,v 1.18 1997/06/03 06:19:11 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -166,7 +166,7 @@ static struct _helpStruct QL_HELP[] = {
       "select [distinct on <attr>] <expr1> [as <attr1>], ... <exprN> [as <attrN>]\n\t[into table <class_name>] [from <from_list>]\n\t[where <qual>]\n\t[order by <attr1>\n\t\t[using <op1>],..<attrN> [[using <opN>] | ASC | DESC]];" },
   { "set",
       "set run-time environment",
-      "set DateStyle {ISO | SQL | Postgres | European | US | NonEuropean}\nset GEQO = {ON[=#] | OFF}\nset R_PLANS {ON | OFF}"},
+      "set DateStyle to {ISO | SQL | Postgres | European | US | NonEuropean}\nset GEQO to {ON[=#] | OFF}\nset R_PLANS to {ON | OFF}"},
   { "show",
       "show current run-time environment",
       "show {DateStyle | GEQO | R_PLANS}"},
