@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.42 1999/04/05 22:25:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.43 1999/05/17 06:38:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -711,15 +711,26 @@ mdtruncate(Relation reln, int nblocks)
 	MdfdVec    *v;
 
 #ifndef LET_OS_MANAGE_FILESIZE
-	int			curnblk;
+	int			curnblk,
+					i,
+					oldsegno,
+					newsegno;
+	char		fname[NAMEDATALEN];
+	char		tname[NAMEDATALEN + 10];
 
 	curnblk = mdnblocks(reln);
-	if (curnblk / RELSEG_SIZE > 0)
-	{
-		elog(NOTICE, "Can't truncate multi-segments relation %s",
-			 reln->rd_rel->relname.data);
-		return curnblk;
-	}
+	oldsegno = curnblk / RELSEG_SIZE;
+	newsegno = nblocks / RELSEG_SIZE;
+
+	StrNCpy(fname, RelationGetRelationName(reln)->data, NAMEDATALEN);
+
+	if (newsegno < oldsegno) {
+		for (i = (newsegno + 1);; i++) {
+			sprintf(tname, "%s.%d", fname, i);
+			if (FileNameUnlink(tname) < 0)
+				break;
+		}
+        }
 #endif
 
 	fd = RelationGetFile(reln);
