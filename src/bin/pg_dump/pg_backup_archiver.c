@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.33 2001/09/21 21:58:30 petere Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.34 2001/10/23 21:26:44 tgl Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -162,8 +162,19 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 
 	AH->ropt = ropt;
 
+	/*
+	 * Check for nonsensical option combinations.
+	 *
+	 * NB: create+dropSchema is useless because if you're creating the DB,
+	 * there's no need to drop individual items in it.  Moreover, if we
+	 * tried to do that then we'd issue the drops in the database initially
+	 * connected to, not the one we will create, which is very bad...
+	 */
 	if (ropt->create && ropt->noReconnect)
 		die_horribly(AH, modulename, "-C and -R are incompatible options\n");
+
+	if (ropt->create && ropt->dropSchema)
+		die_horribly(AH, modulename, "-C and -c are incompatible options\n");
 
 	/*
 	 * If we're using a DB connection, then connect it.
