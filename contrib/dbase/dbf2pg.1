@@ -8,8 +8,8 @@ dbf2sql \- Insert xBase\-style .dbf\-files into a PostgreSQL\-table
 Options:
 .br
 [-v[v]] [-f] [-u | -l] [-c | -D] [-d database] [-t table]
-[-h host] [-s oldname=newname[,oldname=newname]]
-[-s start] [-e end] [-W] [-U username] [-B transaction_size]
+[-h host] [-s oldname=[newname][,oldname=[newname]]]
+[-b start] [-e end] [-W] [-U username] [-B transaction_size]
 [-F charset_from [-T charset_to]]
 
 .SH DESCRIPTION
@@ -78,7 +78,7 @@ the
 .IR -f
 operator has taken effect!
 .TP
-.I "-s start"
+.I "-b start"
 Specify the first record-number in the xBase-file we will insert.
 .TP
 .I "-e end"

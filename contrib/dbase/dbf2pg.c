@@ -194,7 +194,7 @@ usage(void)
 	printf("dbf2pg\n"
 		   "usage: dbf2pg [-u | -l] [-h hostname] [-W] [-U username]\n"
 		   "              [-B transaction_size] [-F charset_from [-T charset_to]]\n"
-		   "              [-s oldname=newname[,oldname=newname[...]]] [-d dbase]\n"
+		   "              [-s oldname=[newname][,oldname=[newname][...]]] [-d dbase]\n"
 		   "              [-t table] [-c | -D] [-f] [-v[v]] dbf-file\n");
 }
 
@@ -359,6 +359,7 @@ do_inserts(PGconn *conn, char *table, dbhead * dbh)
 	field	   *fields;
 	int			i,
 				h,
+				j,
 				result;
 	char	   *query,
 			   *foo;
@@ -442,12 +443,19 @@ do_inserts(PGconn *conn, char *table, dbhead * dbh)
 		if (result == DBF_VALID)
 		{
 			query[0] = '\0';
+			j = 0; /* counter for fields in the output */
 			for (h = 0; h < dbh->db_nfields; h++)
 			{
-				if (!strlen(fields[h].db_name))
+				if (!strlen(fields[h].db_name)) /* When the new fieldname is empty, the field is skipped */
+				{
 					continue;
+				}
+				else
+				{
+					j++;
+				}
 
-				if (h != 0)		/* not for the first field! */
+				if (j > 1)		/* not for the first field! */
 					strcat(query, "\t");		/* COPY statement field
 												 * separator */
 

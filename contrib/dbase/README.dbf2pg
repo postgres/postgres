@@ -12,7 +12,7 @@ SYNOPSIS
        "dbf2pg [options] dbf-file"
        Options:
        [-v[v]] [-f] [-u | -l] [-c | -D] [-d database] [-t  table]
-       [-h   host]   [-s  oldname=newname[,oldname=newname]]  [-s
+       [-h   host]   [-s  oldname=[newname][,oldname=[newname]]]  [-b
        start] [-e end] [-W] [-U username]  [-B	transaction_size]
        [-F charset_from [-T charset_to]]
 
@@ -70,15 +70,19 @@ DESCRIPTION
 dbf2sql(1L)					      dbf2sql(1L)
 
 
-       -s oldname=newname[,oldname=newname]
+       -s oldname=[newname][,oldname=[newname]]
 	      Change the name of a field from oldname to newname.
 	      This  is	mainly	used to avoid using reserved SQL-
-	      keywords. Example:
-	      -s SELECT=SEL,COMMIT=doit
+	      keywords.  When the new fieldname is empty, the field
+	      is skipped in both the CREATE-clause and the
+	      INSERT-clauses, in common words: it will not be present
+	      in the SQL-table.
+		  Example:
+	      -s SELECT=SEL,remark=,COMMIT=doit
 	      This is done  before  the  -f  operator  has  taken
 	      effect!
 
-       -s start
+       -b start
 	      Specify  the  first record-number in the xBase-file
 	      we will insert.
 
