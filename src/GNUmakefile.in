@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.12 1997/04/15 18:17:43 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.13 1997/05/14 03:32:16 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -30,6 +30,7 @@ all:
 	  false ;\
         else true;\
 	fi
+	$(MAKE) -C lextest all
 	$(MAKE) -C utils all
 	$(MAKE) -C backend all
 	$(MAKE) -C libpq all
