@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon May  7 20:13:53 EDT 2001
+Last updated:		Mon May  7 20:18:42 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -54,6 +54,7 @@ ADMIN
 * Allow international error message support and add error codes [elog]
 * Remove unused files during database vacuum or postmaster startup
 * Add table name mapping for numeric file names
+* Allow better control over user privileges [privileges]
 
 TYPES
 
@@ -140,7 +141,7 @@ COMMANDS
 * Add BETWEEN ASYMMETRIC/SYMMETRIC
 * Add SET or BEGIN timeout parameter to cancel query if waiting too long
 * Change LIMIT val,val to offset,limit to match MySQL
-
+* Allow Pl/PgSQL's RAISE function to take expressions
 
 CLIENTS
 
