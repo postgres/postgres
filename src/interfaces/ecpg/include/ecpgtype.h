@@ -53,6 +53,7 @@ enum ECPGttype
 	ECPGt_union,
 	ECPGt_descriptor,		/* sql descriptor, no C variable */
 	ECPGt_char_variable,
+	ECPGt_const,			/* a constant is needed sometimes */
 	ECPGt_EOIT,			/* End of insert types. */
 	ECPGt_EORT,			/* End of result types. */
 	ECPGt_NO_INDICATOR		/* no indicator */

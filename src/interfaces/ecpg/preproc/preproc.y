@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.234 2003/06/19 09:52:11 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.235 2003/06/20 12:00:59 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -475,7 +475,7 @@ adjust_informix(struct arguments *list)
 %type  <str>	ECPGGetDescriptorHeader ECPGColLabel single_var_declaration
 %type  <str>	reserved_keyword unreserved_keyword ecpg_interval opt_ecpg_using
 %type  <str>	col_name_keyword func_name_keyword precision opt_scale
-%type  <str>	ECPGTypeName using_list ECPGColLabelCommon 
+%type  <str>	ECPGTypeName using_list ECPGColLabelCommon UsingConst
 %type  <str>	inf_val_list inf_col_list using_descriptor into_descriptor 
 %type  <str>	ecpg_into_using
 
@@ -5196,7 +5196,19 @@ ecpg_into: INTO into_list		{ $$ = EMPTY; }
 		| into_descriptor	{ $$ = $1; }
 		;
 		
-using_list: civar | civar ',' using_list;
+using_list: UsingConst | UsingConst ',' using_list;
+
+UsingConst: AllConst
+		{
+			if ($1[1] != '?') /* found a constant */
+			{
+				char *length = mm_alloc(sizeof("INT_MAX")+1);
+
+				sprintf(length, "%d", strlen($1));
+				add_variable(&argsinsert, new_variable($1, ECPGmake_simple_type(ECPGt_const, length), 0), &no_indicator);
+			}
+		}
+		;
 
 /*
  * As long as the prepare statement is not supported by the backend, we will

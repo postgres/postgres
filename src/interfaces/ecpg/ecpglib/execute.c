@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.10 2003/06/15 04:07:58 momjian Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.11 2003/06/20 12:00:59 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -775,6 +775,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 					*malloced_p = true;
 				}
 				break;
+			case ECPGt_const:
 			case ECPGt_char_variable:
 				{
 					int			slen = strlen((char *) var->value);
@@ -1214,7 +1215,7 @@ ECPGexecute(struct statement * stmt)
 	{
 		ECPGlog("ECPGexecute line %d: ASYNC NOTIFY of '%s' from backend pid '%d' received\n",
 				stmt->lineno, notify->relname, notify->be_pid);
-		PQfreemem(notify); 
+		PQfreemem(notify);
 	}
 
 	return status;

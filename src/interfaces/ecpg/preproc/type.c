@@ -169,6 +169,9 @@ get_type(enum ECPGttype type)
 										 * quoted */
 			return ("ECPGt_char_variable");
 			break;
+		case ECPGt_const:		/* constant string quoted */
+			return ("ECPGt_const");
+			break;
 		case ECPGt_numeric:
 			return ("ECPGt_numeric");
 			break;
@@ -380,6 +383,14 @@ ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype type,
 				 */
 				sprintf(variable, "&(%s%s)", prefix ? prefix : "", name);
 				sprintf(offset, "sizeof(Date)");
+				break;
+			case ECPGt_const:
+
+				/*
+				 * just dump the const as string 
+				 */
+				sprintf(variable, "\"%s\"", name);
+				sprintf(offset, "strlen(\"%s\")", name);
 				break;
 			default:
 

@@ -1501,6 +1501,10 @@ Thu Jun 19 10:08:26 CEST 2003
 
 	- Added missing rdayofweek function for Informix compatibility.
 	- Fixed fetch into char pointer.
+	
+Fri Jun 20 13:23:07 CEST 2003
+
+	- Enabled constants in using clause.
 	- Set ecpg version to 3.0.0
 	- Set ecpg library to 4.0.0
 	- Set pgtypes library to 1.0.0
