@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1998-2005, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/bin/pg_config/Makefile,v 1.13 2005/01/01 20:44:21 tgl Exp $
+# $PostgreSQL: pgsql/src/bin/pg_config/Makefile,v 1.14 2005/01/20 22:54:57 neilc Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -24,7 +24,7 @@ pg_config: $(OBJS)
 
 install: all installdirs
 	$(INSTALL_SCRIPT) pg_config$(X) $(DESTDIR)$(bindir)/pg_config$(X)
-  
+
 installdirs:
 	$(mkinstalldirs) $(DESTDIR)$(bindir)
 
