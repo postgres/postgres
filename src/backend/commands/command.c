@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.68 2000/02/04 18:49:31 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.69 2000/02/15 18:15:12 tgl Exp $
  *
  * NOTES
  *	  The PortalExecutorHeapMemory crap needs to be eliminated
@@ -699,7 +699,7 @@ AlterTableAddConstraint(const char *relationName,
 		case T_FkConstraint:
 			{
 				FkConstraint *fkconstraint=(FkConstraint *)newConstraint;
-				Relation rel, classrel;
+				Relation rel;
 				HeapScanDesc scan;
 				HeapTuple tuple;
 				Trigger trig;
