@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.26 1998/09/01 04:32:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.27 1998/09/18 04:43:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -211,7 +211,7 @@ regprocout(RegProcedure proid)
  *		int8typeout			- converts int8 type oids to "typname" list
  */
 text *
-oid8types(Oid **oidArray)
+oid8types(Oid (*oidArray)[])
 {
 	HeapTuple	typetup;
 	text	   *result;
