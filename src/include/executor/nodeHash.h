@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeHash.h,v 1.15 2000/01/26 05:58:05 momjian Exp $
+ * $Id: nodeHash.h,v 1.16 2000/04/18 05:43:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +15,9 @@
 #define NODEHASH_H
 
 #include "nodes/plannodes.h"
+
+/* NTUP_PER_BUCKET is exported because planner wants to see it */
+#define NTUP_PER_BUCKET			10
 
 extern TupleTableSlot *ExecHash(Hash *node);
 extern bool ExecInitHash(Hash *node, EState *estate, Plan *parent);

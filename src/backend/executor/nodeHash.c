@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- *	$Id: nodeHash.c,v 1.44 2000/01/26 05:56:22 momjian Exp $
+ *	$Id: nodeHash.c,v 1.45 2000/04/18 05:43:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -221,7 +221,6 @@ ExecEndHash(Hash *node)
  *		create a hashtable in shared memory for hashjoin.
  * ----------------------------------------------------------------
  */
-#define NTUP_PER_BUCKET			10
 #define FUDGE_FAC				2.0
 
 HashJoinTable

@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.57 2000/04/12 17:15:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.58 2000/04/18 05:43:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,6 +51,7 @@
 
 #include <math.h>
 
+#include "executor/nodeHash.h"
 #include "miscadmin.h"
 #include "nodes/plannodes.h"
 #include "optimizer/clauses.h"
@@ -604,12 +605,17 @@ cost_hashjoin(Path *path,
 	run_cost += cpu_operator_cost * outer_path->parent->rows;
 
 	/*
-	 * the number of tuple comparisons needed is the number of outer
-	 * tuples times the typical hash bucket size, which we estimate
-	 * conservatively as the inner disbursion times the inner tuple count.
+	 * The number of tuple comparisons needed is the number of outer
+	 * tuples times the typical hash bucket size.  nodeHash.c tries for
+	 * average bucket loading of NTUP_PER_BUCKET, but that goal will
+	 * be reached only if data values are uniformly distributed among
+	 * the buckets.  To be conservative, we scale up the target bucket
+	 * size by the number of inner rows times inner disbursion, giving
+	 * an estimate of the typical number of duplicates of each value.
+	 * We then charge one cpu_operator_cost per tuple comparison.
 	 */
 	run_cost += cpu_operator_cost * outer_path->parent->rows *
-		ceil(inner_path->parent->rows * innerdisbursion);
+		NTUP_PER_BUCKET * ceil(inner_path->parent->rows * innerdisbursion);
 
 	/*
 	 * Estimate the number of tuples that get through the hashing filter
