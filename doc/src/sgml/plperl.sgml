@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.32 2004/11/21 21:17:01 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.33 2004/12/11 20:03:37 petere Exp $
 -->
 
  <chapter id="plperl">
@@ -315,8 +315,14 @@ $$  LANGUAGE plperl;
   <title>Global Values in PL/Perl</title>
 
   <para>
-   You can use the global hash <varname>%_SHARED</varname> to store
-   data between function calls.  For example:
+    You can use the global hash <varname>%_SHARED</varname> to store
+    data, including code references, between function calls for the
+    lifetime of the current session, which is bounded from below by
+    the lifetime of the current transaction.
+  </para>
+
+  <para>
+    Here is a simple example for shared data:
 <programlisting>
 CREATE OR REPLACE FUNCTION set_var(name text, val text) RETURNS text AS $$
     if ($_SHARED{$_[0]} = $_[1]) {
@@ -333,6 +339,34 @@ $$ LANGUAGE plperl;
 SELECT set_var('sample', 'Hello, PL/Perl!  How's tricks?');
 SELECT get_var('sample');
 </programlisting>
+  </para>
+
+  <para>
+   Here is a slightly more complicated example using a code reference:
+
+<programlisting>
+CREATE OR REPLACE FUNCTION myfuncs() RETURNS void AS $$
+    $_SHARED{myquote} = sub {
+        my $arg = shift;
+        $arg =~ s/(['\\])/\\$1/g;
+        return "'$arg'";
+    };
+$$ LANGUAGE plperl;
+
+SELECT myfuncs(); /* initializes the function */
+
+/* Set up a function that uses the quote function */
+
+CREATE OR REPLACE FUNCTION use_quote(TEXT) RETURNS text AS $$
+    my $text_to_quote = shift;
+    my $qfunc = $_SHARED{myquote};
+    return &$qfunc($text_to_quote);
+$$ LANGUAGE plperl;
+</programlisting>
+
+   (You could have replaced the above with the one-liner
+   <literal>return $_SHARED{myquote}->($_[0]);</literal>
+   at the expense of readability.)
   </para>
  </sect1>
 
