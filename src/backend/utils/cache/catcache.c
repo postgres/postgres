@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.66 2000/06/17 04:56:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.67 2000/06/19 03:54:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,7 +104,7 @@ GetCCHashFunc(Oid keytype)
 		case INT4OID:
 			return hashint4;
 		case TEXTOID:
-			return hashtext;
+			return hashvarlena;
 		case REGPROCOID:
 		case OIDOID:
 			return hashoid;

@@ -130,17 +130,6 @@
       <literal>bigbox_ops</literal>.
      </para>
     </listitem>
-
-    <listitem>
-     <para>
-      The <literal>int24_ops</literal>
-      operator class is useful for constructing indices on int2 data, and
-      doing comparisons against int4 data in query qualifications.
-      Similarly, <literal>int42_ops</literal>
-      support indices on int4 data that is to be compared against int2 data
-      in queries.
-     </para>
-    </listitem>
    </itemizedlist>
   </para>
 

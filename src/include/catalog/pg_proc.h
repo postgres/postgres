@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.140 2000/06/17 23:41:51 tgl Exp $
+ * $Id: pg_proc.h,v 1.141 2000/06/19 03:54:45 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -736,10 +736,6 @@ DATA(insert OID = 351 (  btint4cmp		   PGUID 12 f t t t 2 f 23 "23 23" 100 0 0 1
 DESCR("btree less-equal-greater");
 DATA(insert OID = 842 (  btint8cmp		   PGUID 12 f t t t 2 f 23 "20 20" 100 0 0 100  btint8cmp - ));
 DESCR("btree less-equal-greater");
-DATA(insert OID = 352 (  btint42cmp		   PGUID 12 f t t t 2 f 23 "23 21" 100 0 0 100  btint42cmp - ));
-DESCR("btree less-equal-greater");
-DATA(insert OID = 353 (  btint24cmp		   PGUID 12 f t t t 2 f 23 "21 23" 100 0 0 100  btint24cmp - ));
-DESCR("btree less-equal-greater");
 DATA(insert OID = 354 (  btfloat4cmp	   PGUID 12 f t t t 2 f 23 "700 700" 100 0 0 100	btfloat4cmp - ));
 DESCR("btree less-equal-greater");
 DATA(insert OID = 355 (  btfloat8cmp	   PGUID 12 f t t t 2 f 23 "701 701" 100 0 0 100	btfloat8cmp - ));
@@ -832,8 +828,8 @@ DATA(insert OID = 454 (  hashchar		   PGUID 12 f t t t 1 f 23 "18" 100 0 0 100  
 DESCR("hash");
 DATA(insert OID = 455 (  hashname		   PGUID 12 f t t t 1 f 23 "19" 100 0 0 100  hashname - ));
 DESCR("hash");
-DATA(insert OID = 456 (  hashtext		   PGUID 12 f t t t 1 f 23 "25" 100 0 0 100  hashtext - ));
-DESCR("hash");
+DATA(insert OID = 456 (  hashvarlena	   PGUID 12 f t t t 1 f 23 "0" 100 0 0 100  hashvarlena - ));
+DESCR("hash any varlena type");
 DATA(insert OID = 457 (  hashoidvector	   PGUID 12 f t t t 1 f 23 "30" 100 0 0 100  hashoidvector - ));
 DESCR("hash");
 DATA(insert OID = 458 (  text_larger	   PGUID 11 f t t t 2 f 25 "25 25" 100 0 0 100  text_larger - ));
@@ -1332,9 +1328,7 @@ DATA(insert OID = 1078 (  bpcharcmp		   PGUID 11 f t t t 2 f 23 "1042 1042" 100 
 DESCR("less-equal-greater");
 DATA(insert OID = 1079 (  varcharcmp	   PGUID 11 f t t t 2 f 23 "1043 1043" 100 0 0 100  varcharcmp - ));
 DESCR("less-equal-greater");
-DATA(insert OID = 1080 (  hashbpchar	   PGUID 11 f t t t 1 f 23 "1042" 100 0 0 100  hashbpchar - ));
-DESCR("hash");
-DATA(insert OID = 1081 (  hashvarchar	   PGUID 11 f t t t 1 f 23 "1043" 100 0 0 100  hashvarchar - ));
+DATA(insert OID = 1080 (  hashbpchar	   PGUID 12 f t t t 1 f 23 "1042" 100 0 0 100  hashbpchar - ));
 DESCR("hash");
 
 DATA(insert OID = 1084 (  date_in		   PGUID 12 f t f t 1 f 1082 "0" 100 0 0 100	date_in - ));
@@ -2311,6 +2305,12 @@ DATA(insert OID =  1692 (  boolge			   PGUID 12 f t t t 2 f 16 "16 16" 100 0 0 1
 DESCR("greater-than-or-equal");
 DATA(insert OID = 1693 (  btboolcmp			   PGUID 12 f t t t 2 f 23 "16 16" 100 0 0 100  btboolcmp - ));
 DESCR("btree less-equal-greater");
+
+DATA(insert OID = 1696 (  timetz_hash		   PGUID 12 f t t t 1 f 23 "1266" 100 0 0 100  timetz_hash - ));
+DESCR("hash");
+DATA(insert OID = 1697 (  interval_hash		   PGUID 12 f t t t 1 f 23 "1186" 100 0 0 100  interval_hash - ));
+DESCR("hash");
+
 
 /* OID's 1700 - 1799 NUMERIC data type */
 DATA(insert OID = 1701 ( numeric_in				PGUID 12 f t t t 3 f 1700 "0 26 23" 100 0 0 100  numeric_in - ));

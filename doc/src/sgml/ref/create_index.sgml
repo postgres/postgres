@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_index.sgml,v 1.13 2000/05/02 20:02:03 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_index.sgml,v 1.14 2000/06/19 03:54:15 tgl Exp $
 Postgres documentation
 -->
 
@@ -310,17 +310,6 @@ ERROR: Cannot create index: 'index_name' already exists.
       floating-point coordinates.  If the field on which your rectangles lie
       is about 20,000 units square or larger, you should use
       <literal>bigbox_ops</literal>.
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      The <literal>int24_ops</literal>
-      operator class is useful for constructing indices on int2 data, and
-      doing comparisons against int4 data in query qualifications.
-      Similarly, <literal>int42_ops</literal>
-      support indices on int4 data that is to be compared against int2 data
-      in queries.
      </para>
     </listitem>
    </itemizedlist>

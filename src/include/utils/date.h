@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: date.h,v 1.4 2000/06/09 01:11:15 tgl Exp $
+ * $Id: date.h,v 1.5 2000/06/19 03:54:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -95,6 +95,7 @@ extern Datum timetz_le(PG_FUNCTION_ARGS);
 extern Datum timetz_gt(PG_FUNCTION_ARGS);
 extern Datum timetz_ge(PG_FUNCTION_ARGS);
 extern Datum timetz_cmp(PG_FUNCTION_ARGS);
+extern Datum timetz_hash(PG_FUNCTION_ARGS);
 extern Datum overlaps_timetz(PG_FUNCTION_ARGS);
 extern Datum timetz_larger(PG_FUNCTION_ARGS);
 extern Datum timetz_smaller(PG_FUNCTION_ARGS);

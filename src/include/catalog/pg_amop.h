@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_amop.h,v 1.33 2000/04/12 17:16:28 momjian Exp $
+ * $Id: pg_amop.h,v 1.34 2000/06/19 03:54:45 tgl Exp $
  *
  * NOTES
  *	 the genbki.sh script reads this file and generates .bki
@@ -33,10 +33,11 @@
  */
 CATALOG(pg_amop)
 {
-	Oid			amopid;
-	Oid			amopclaid;
-	Oid			amopopr;
-	int2		amopstrategy;
+	Oid			amopid;			/* an index access method */
+	Oid			amopclaid;		/* an index opclass */
+	Oid			amopopr;		/* the operator OID to use */
+	int2		amopstrategy;	/* one of the strategy numbers defined
+								 * by the AM */
 } FormData_pg_amop;
 
 /* ----------------
@@ -102,16 +103,21 @@ DATA(insert OID = 0 (  402 434 489 8 ));
 
 /*
  *	rtree circle_ops (supports circles)
+ *
+ * XXX Diked out 2000-06-18 by tgl.  Since we have no rtree support functions
+ * (union, intersection, size) for circles, we can't actually build rtree
+ * indexes on circles.  These can be put back in someday if anyone ever
+ * writes such functions.
  */
 
-DATA(insert OID = 0 (  402 714 1506 1 ));
-DATA(insert OID = 0 (  402 714 1507 2 ));
-DATA(insert OID = 0 (  402 714 1513 3 ));
-DATA(insert OID = 0 (  402 714 1508 4 ));
-DATA(insert OID = 0 (  402 714 1509 5 ));
-DATA(insert OID = 0 (  402 714 1512 6 ));
-DATA(insert OID = 0 (  402 714 1511 7 ));
-DATA(insert OID = 0 (  402 714 1510 8 ));
+/* DATA(insert OID = 0 (  402 714 1506 1 )); */
+/* DATA(insert OID = 0 (  402 714 1507 2 )); */
+/* DATA(insert OID = 0 (  402 714 1513 3 )); */
+/* DATA(insert OID = 0 (  402 714 1508 4 )); */
+/* DATA(insert OID = 0 (  402 714 1509 5 )); */
+/* DATA(insert OID = 0 (  402 714 1512 6 )); */
+/* DATA(insert OID = 0 (  402 714 1511 7 )); */
+/* DATA(insert OID = 0 (  402 714 1510 8 )); */
 
 /*
  *	nbtree int2_ops
@@ -132,26 +138,6 @@ DATA(insert OID = 0 (  403 423 673 2 ));
 DATA(insert OID = 0 (  403 423 670 3 ));
 DATA(insert OID = 0 (  403 423 675 4 ));
 DATA(insert OID = 0 (  403 423 674 5 ));
-
-/*
- *	nbtree int24_ops
- */
-
-DATA(insert OID = 0 (  403 424 534 1 ));
-DATA(insert OID = 0 (  403 424 540 2 ));
-DATA(insert OID = 0 (  403 424 532 3 ));
-DATA(insert OID = 0 (  403 424 542 4 ));
-DATA(insert OID = 0 (  403 424 536 5 ));
-
-/*
- *	nbtree int42_ops
- */
-
-DATA(insert OID = 0 (  403 425 535 1 ));
-DATA(insert OID = 0 (  403 425 541 2 ));
-DATA(insert OID = 0 (  403 425 533 3 ));
-DATA(insert OID = 0 (  403 425 543 4 ));
-DATA(insert OID = 0 (  403 425 537 5 ));
 
 /*
  *	nbtree int4_ops

@@ -8,13 +8,14 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.65 2000/06/15 03:32:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.66 2000/06/19 03:54:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
+#include "access/hash.h"
 #include "catalog/pg_type.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
@@ -797,94 +798,19 @@ varcharcmp(char *arg1, char *arg2)
 		return (int32) (cmp);
 }
 
-/*****************************************************************************
- * Hash functions (modified from hashtext in access/hash/hashfunc.c)
- *****************************************************************************/
-
-uint32
-hashbpchar(struct varlena * key)
+/*
+ * bpchar needs a specialized hash function because we want to ignore
+ * trailing blanks in comparisons.  (varchar can use plain hashvarlena.)
+ */
+Datum
+hashbpchar(PG_FUNCTION_ARGS)
 {
-	int			keylen;
+	BpChar	   *key = PG_GETARG_BPCHAR_P(0);
 	char	   *keydata;
-	uint32		n;
-	int			loop;
+	int			keylen;
 
 	keydata = VARDATA(key);
 	keylen = bcTruelen((char *) key);
 
-#define HASHC	n = *keydata++ + 65599 * n
-
-	n = 0;
-	if (keylen > 0)
-	{
-		loop = (keylen + 8 - 1) >> 3;
-
-		switch (keylen & (8 - 1))
-		{
-			case 0:
-				do
-				{				/* All fall throughs */
-					HASHC;
-			case 7:
-					HASHC;
-			case 6:
-					HASHC;
-			case 5:
-					HASHC;
-			case 4:
-					HASHC;
-			case 3:
-					HASHC;
-			case 2:
-					HASHC;
-			case 1:
-					HASHC;
-				} while (--loop);
-		}
-	}
-	return n;
-}
-
-uint32
-hashvarchar(struct varlena * key)
-{
-	int			keylen;
-	char	   *keydata;
-	uint32		n;
-	int			loop;
-
-	keydata = VARDATA(key);
-	keylen = VARSIZE(key) - VARHDRSZ;
-
-#define HASHC	n = *keydata++ + 65599 * n
-
-	n = 0;
-	if (keylen > 0)
-	{
-		loop = (keylen + 8 - 1) >> 3;
-
-		switch (keylen & (8 - 1))
-		{
-			case 0:
-				do
-				{				/* All fall throughs */
-					HASHC;
-			case 7:
-					HASHC;
-			case 6:
-					HASHC;
-			case 5:
-					HASHC;
-			case 4:
-					HASHC;
-			case 3:
-					HASHC;
-			case 2:
-					HASHC;
-			case 1:
-					HASHC;
-				} while (--loop);
-		}
-	}
-	return n;
+	return hash_any(keydata, keylen);
 }

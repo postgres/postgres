@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashfunc.c,v 1.26 2000/06/05 07:28:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashfunc.c,v 1.27 2000/06/19 03:54:17 tgl Exp $
  *
  * NOTES
  *	  These functions are stored in pg_amproc.	For each operator class
@@ -21,10 +21,17 @@
 
 #include "access/hash.h"
 
+
+Datum
+hashchar(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_UINT32(~ ((uint32) PG_GETARG_CHAR(0)));
+}
+
 Datum
 hashint2(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_UINT32((uint32) ~ PG_GETARG_INT16(0));
+	PG_RETURN_UINT32(~ ((uint32) PG_GETARG_INT16(0)));
 }
 
 Datum
@@ -37,116 +44,37 @@ Datum
 hashint8(PG_FUNCTION_ARGS)
 {
 	/* we just use the low 32 bits... */
-	PG_RETURN_UINT32(~((uint32) PG_GETARG_INT64(0)));
+	PG_RETURN_UINT32(~ ((uint32) PG_GETARG_INT64(0)));
 }
 
-/* Hash function from Chris Torek. */
+Datum
+hashoid(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_UINT32(~ ((uint32) PG_GETARG_OID(0)));
+}
+
 Datum
 hashfloat4(PG_FUNCTION_ARGS)
 {
 	float4		key = PG_GETARG_FLOAT4(0);
-	char	   *kp = (char *) &key;
-	int			len = sizeof(key);
-	int			loop;
-	uint32		h;
 
-#define HASH4a	 h = (h << 5) - h + *kp++;
-#define HASH4b	 h = (h << 5) + h + *kp++;
-#define HASH4 HASH4b
-
-	h = 0;
-	/*
-	 * This is a tad silly, given that we expect len = 4, but a smart
-	 * compiler should be able to eliminate the redundant code...
-	 */
-	loop = (len + 8 - 1) >> 3;
-
-	switch (len & (8 - 1))
-	{
-		case 0:
-			do
-			{					/* All fall throughs */
-				HASH4;
-		case 7:
-				HASH4;
-		case 6:
-				HASH4;
-		case 5:
-				HASH4;
-		case 4:
-				HASH4;
-		case 3:
-				HASH4;
-		case 2:
-				HASH4;
-		case 1:
-				HASH4;
-			} while (--loop);
-	}
-	PG_RETURN_UINT32(h);
+	return hash_any((char *) &key, sizeof(key));
 }
 
 Datum
 hashfloat8(PG_FUNCTION_ARGS)
 {
 	float8		key = PG_GETARG_FLOAT8(0);
-	char	   *kp = (char *) &key;
-	int			len = sizeof(key);
-	int			loop;
-	uint32		h;
 
-#define HASH4a	 h = (h << 5) - h + *kp++;
-#define HASH4b	 h = (h << 5) + h + *kp++;
-#define HASH4 HASH4b
-
-	h = 0;
-	/*
-	 * This is a tad silly, given that we expect len = 8, but a smart
-	 * compiler should be able to eliminate the redundant code...
-	 */
-	loop = (len + 8 - 1) >> 3;
-
-	switch (len & (8 - 1))
-	{
-		case 0:
-			do
-			{					/* All fall throughs */
-				HASH4;
-		case 7:
-				HASH4;
-		case 6:
-				HASH4;
-		case 5:
-				HASH4;
-		case 4:
-				HASH4;
-		case 3:
-				HASH4;
-		case 2:
-				HASH4;
-		case 1:
-				HASH4;
-			} while (--loop);
-	}
-	PG_RETURN_UINT32(h);
-}
-
-Datum
-hashoid(PG_FUNCTION_ARGS)
-{
-	PG_RETURN_UINT32(~(uint32) PG_GETARG_OID(0));
+	return hash_any((char *) &key, sizeof(key));
 }
 
 Datum
 hashoidvector(PG_FUNCTION_ARGS)
 {
 	Oid		   *key = (Oid *) PG_GETARG_POINTER(0);
-	int			i;
-	uint32		result = 0;
 
-	for (i = INDEX_MAX_KEYS; --i >= 0;)
-		result = (result << 1) ^ (~(uint32) key[i]);
-	PG_RETURN_UINT32(result);
+	return hash_any((char *) key, INDEX_MAX_KEYS * sizeof(Oid));
 }
 
 /*
@@ -158,68 +86,52 @@ Datum
 hashint2vector(PG_FUNCTION_ARGS)
 {
 	int16	   *key = (int16 *) PG_GETARG_POINTER(0);
-	int			i;
-	uint32		result = 0;
 
-	for (i = INDEX_MAX_KEYS; --i >= 0;)
-		result = (result << 1) ^ (~(uint32) key[i]);
-	PG_RETURN_UINT32(result);
-}
-
-
-#define PRIME1			37
-#define PRIME2			1048583
-
-Datum
-hashchar(PG_FUNCTION_ARGS)
-{
-	uint32		h;
-
-	/* Convert char to integer */
-	h = (PG_GETARG_CHAR(0) - ' ');
-	h %= PRIME2;
-
-	PG_RETURN_UINT32(h);
+	return hash_any((char *) key, INDEX_MAX_KEYS * sizeof(int16));
 }
 
 Datum
 hashname(PG_FUNCTION_ARGS)
 {
 	char	   *key = NameStr(* PG_GETARG_NAME(0));
-	int			len = NAMEDATALEN;
-	uint32		h;
 
-	h = 0;
-	/* Convert string to integer */
-	while (len--)
-		h = h * PRIME1 ^ (*key++ - ' ');
-	h %= PRIME2;
-
-	PG_RETURN_UINT32(h);
+	return hash_any((char *) key, NAMEDATALEN);
 }
 
 /*
+ * hashvarlena() can be used for any varlena datatype in which there are
+ * no non-significant bits, ie, distinct bitpatterns never compare as equal.
+ */
+Datum
+hashvarlena(PG_FUNCTION_ARGS)
+{
+	struct varlena *key = PG_GETARG_VARLENA_P(0);
+
+	return hash_any(VARDATA(key), VARSIZE(key) - VARHDRSZ);
+}
+
+
+/*
+ * hash_any --- compute a hash function for any specified chunk of memory
+ *
+ * This can be used as the underlying hash function for any pass-by-reference
+ * data type in which there are no non-significant bits.
+ *
  * (Comment from the original db3 hashing code: )
  *
  * "This is INCREDIBLY ugly, but fast.  We break the string up into 8 byte
  * units.  On the first time through the loop we get the 'leftover bytes'
- * (strlen % 8).  On every other iteration, we perform 8 HASHC's so we handle
+ * (strlen % 8).  On every later iteration, we perform 8 HASHC's so we handle
  * all 8 bytes.  Essentially, this saves us 7 cmp & branch instructions.  If
  * this routine is heavily used enough, it's worth the ugly coding.
  *
  * "OZ's original sdbm hash"
  */
 Datum
-hashtext(PG_FUNCTION_ARGS)
+hash_any(char *keydata, int keylen)
 {
-	text	   *key = PG_GETARG_TEXT_P(0);
-	int			keylen;
-	char	   *keydata;
 	uint32		n;
 	int			loop;
-
-	keydata = VARDATA(key);
-	keylen = VARSIZE(key) - VARHDRSZ;
 
 #define HASHC	n = *keydata++ + 65599 * n
 
@@ -251,5 +163,8 @@ hashtext(PG_FUNCTION_ARGS)
 				} while (--loop);
 		}
 	}
+
+#undef HASHC
+
 	PG_RETURN_UINT32(n);
 }

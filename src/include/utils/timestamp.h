@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: timestamp.h,v 1.7 2000/06/15 00:52:26 momjian Exp $
+ * $Id: timestamp.h,v 1.8 2000/06/19 03:54:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -151,6 +151,7 @@ extern Datum interval_ge(PG_FUNCTION_ARGS);
 extern Datum interval_gt(PG_FUNCTION_ARGS);
 extern Datum interval_finite(PG_FUNCTION_ARGS);
 extern Datum interval_cmp(PG_FUNCTION_ARGS);
+extern Datum interval_hash(PG_FUNCTION_ARGS);
 extern Datum interval_smaller(PG_FUNCTION_ARGS);
 extern Datum interval_larger(PG_FUNCTION_ARGS);
 

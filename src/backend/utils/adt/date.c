@@ -8,23 +8,27 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.47 2000/06/15 04:10:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.48 2000/06/19 03:54:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <limits.h>
-#include <time.h>
 
 #include "postgres.h"
+
+#include <limits.h>
+#include <time.h>
 #ifdef HAVE_FLOAT_H
 #include <float.h>
 #endif
+
+#include "access/hash.h"
 #include "miscadmin.h"
 #include "utils/date.h"
 #include "utils/nabstime.h"
 
-static int
-	date2tm(DateADT dateVal, int *tzp, struct tm * tm, double *fsec, char **tzn);
+
+static int date2tm(DateADT dateVal, int *tzp, struct tm * tm,
+				   double *fsec, char **tzn);
 
 
 /*****************************************************************************
@@ -760,6 +764,22 @@ timetz_cmp(PG_FUNCTION_ARGS)
 										 TimeTzADTPGetDatum(time2))))
 		PG_RETURN_INT32(1);
 	PG_RETURN_INT32(0);
+}
+
+/*
+ * timetz, being an unusual size, needs a specialized hash function.
+ */
+Datum
+timetz_hash(PG_FUNCTION_ARGS)
+{
+	TimeTzADT   *key = PG_GETARG_TIMETZADT_P(0);
+
+	/*
+	 * Specify hash length as sizeof(double) + sizeof(int4), not as
+	 * sizeof(TimeTzADT), so that any garbage pad bytes in the structure
+	 * won't be included in the hash!
+	 */
+	return hash_any((char *) key, sizeof(double) + sizeof(int4));
 }
 
 Datum

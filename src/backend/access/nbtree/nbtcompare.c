@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtcompare.c,v 1.37 2000/06/15 03:31:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtcompare.c,v 1.38 2000/06/19 03:54:22 tgl Exp $
  *
  * NOTES
  *
@@ -72,34 +72,6 @@ btint8cmp(PG_FUNCTION_ARGS)
 {
 	int64		a = PG_GETARG_INT64(0);
 	int64		b = PG_GETARG_INT64(1);
-
-	if (a > b)
-		PG_RETURN_INT32(1);
-	else if (a == b)
-		PG_RETURN_INT32(0);
-	else
-		PG_RETURN_INT32(-1);
-}
-
-Datum
-btint24cmp(PG_FUNCTION_ARGS)
-{
-	int16		a = PG_GETARG_INT16(0);
-	int32		b = PG_GETARG_INT32(1);
-
-	if (a > b)
-		PG_RETURN_INT32(1);
-	else if (a == b)
-		PG_RETURN_INT32(0);
-	else
-		PG_RETURN_INT32(-1);
-}
-
-Datum
-btint42cmp(PG_FUNCTION_ARGS)
-{
-	int32		a = PG_GETARG_INT32(0);
-	int16		b = PG_GETARG_INT16(1);
 
 	if (a > b)
 		PG_RETURN_INT32(1);

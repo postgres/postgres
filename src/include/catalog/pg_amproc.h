@@ -1,16 +1,16 @@
 /*-------------------------------------------------------------------------
  *
  * pg_amproc.h
- *	  definition of the system "amproc" relation (pg_amproce)
+ *	  definition of the system "amproc" relation (pg_amproc)
  *	  along with the relation's initial contents.  The amproc
- *	  catalog is used to store procedures used by indexed access
+ *	  catalog is used to store procedures used by index access
  *	  methods that aren't associated with operators.
  *
  *
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_amproc.h,v 1.22 2000/03/14 23:06:43 thomas Exp $
+ * $Id: pg_amproc.h,v 1.23 2000/06/19 03:54:45 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -35,10 +35,10 @@
  */
 CATALOG(pg_amproc)
 {
-	Oid			amid;
-	Oid			amopclaid;
-	Oid			amproc;
-	int2		amprocnum;
+	Oid			amid;			/* the access method this proc is for */
+	Oid			amopclaid;		/* the opclass this proc is for */
+	Oid			amproc;			/* OID of the proc */
+	int2		amprocnum;		/* support procedure index */
 } FormData_pg_amproc;
 
 /* ----------------
@@ -78,8 +78,6 @@ DATA(insert OID = 0 (402  434  199 3));
 /* btree */
 DATA(insert OID = 0 (403  421  350 1));
 DATA(insert OID = 0 (403  423  355 1));
-DATA(insert OID = 0 (403  424  353 1));
-DATA(insert OID = 0 (403  425  352 1));
 DATA(insert OID = 0 (403  426  351 1));
 DATA(insert OID = 0 (403  427  356 1));
 DATA(insert OID = 0 (403  428  354 1));
@@ -114,13 +112,17 @@ DATA(insert OID = 0 (405  428  451 1));
 DATA(insert OID = 0 (405  429  454 1));
 DATA(insert OID = 0 (405  431  456 1));
 DATA(insert OID = 0 (405  435  457 1));
+DATA(insert OID = 0 (405  652  456 1));
+DATA(insert OID = 0 (405  754  949 1));
+DATA(insert OID = 0 (405  810  456 1));
+DATA(insert OID = 0 (405  935  456 1));
 DATA(insert OID = 0 (405 1076 1080 1));
-DATA(insert OID = 0 (405 1077 1081 1));
+DATA(insert OID = 0 (405 1077  456 1));
 DATA(insert OID = 0 (405 1114  450 1));
 DATA(insert OID = 0 (405 1115  452 1));
 DATA(insert OID = 0 (405 1181  455 1));
 DATA(insert OID = 0 (405 1312  452 1));
-DATA(insert OID = 0 (405 1313  452 1));
-DATA(insert OID = 0 (405 1399  452 1));
+DATA(insert OID = 0 (405 1313 1697 1));
+DATA(insert OID = 0 (405 1399 1696 1));
 
 #endif	 /* PG_AMPROC_H */

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hash.h,v 1.33 2000/06/13 07:35:17 tgl Exp $
+ * $Id: hash.h,v 1.34 2000/06/19 03:54:35 tgl Exp $
  *
  * NOTES
  *		modeled after Margo Seltzer's hash implementation for unix.
@@ -264,17 +264,18 @@ extern Datum hashdelete(PG_FUNCTION_ARGS);
  * NOTE: some of these are also used by catcache operations, without
  * any direct connection to hash indexes.
  */
+extern Datum hashchar(PG_FUNCTION_ARGS);
 extern Datum hashint2(PG_FUNCTION_ARGS);
 extern Datum hashint4(PG_FUNCTION_ARGS);
 extern Datum hashint8(PG_FUNCTION_ARGS);
+extern Datum hashoid(PG_FUNCTION_ARGS);
 extern Datum hashfloat4(PG_FUNCTION_ARGS);
 extern Datum hashfloat8(PG_FUNCTION_ARGS);
-extern Datum hashoid(PG_FUNCTION_ARGS);
 extern Datum hashoidvector(PG_FUNCTION_ARGS);
 extern Datum hashint2vector(PG_FUNCTION_ARGS);
-extern Datum hashchar(PG_FUNCTION_ARGS);
-extern Datum hashtext(PG_FUNCTION_ARGS);
 extern Datum hashname(PG_FUNCTION_ARGS);
+extern Datum hashvarlena(PG_FUNCTION_ARGS);
+extern Datum hash_any(char *keydata, int keylen);
 
 
 /* private routines */

@@ -36,6 +36,8 @@ WHERE (p1.prolang = 0 OR p1.prorettype = 0 OR
 	AND p1.proname != 'update_pg_pwd';
 
 -- Look for conflicting proc definitions (same names and input datatypes).
+-- (This test should be dead code now that we have the unique index
+-- pg_proc_proname_narg_type_index, but I'll leave it in anyway.)
 
 SELECT p1.oid, p1.proname, p2.oid, p2.proname
 FROM pg_proc AS p1, pg_proc AS p2
@@ -56,7 +58,8 @@ WHERE p1.oid != p2.oid AND
     p1.prosrc = p2.prosrc AND
     (p1.prolang = 11 OR p1.prolang = 12) AND
     (p2.prolang = 11 OR p2.prolang = 12) AND
-    (p1.proisinh != p2.proisinh OR
+    (p1.prolang != p2.prolang OR
+     p1.proisinh != p2.proisinh OR
      p1.proistrusted != p2.proistrusted OR
      p1.proiscachable != p2.proiscachable OR
      p1.pronargs != p2.pronargs OR
@@ -432,6 +435,18 @@ WHERE p1.aggfinalfn = p2.oid AND
      p1.aggtranstype1 != p2.proargtypes[0] OR
      p1.aggtranstype2 != p2.proargtypes[1]);
 
+-- **************** pg_opclass ****************
+
+-- There should not be multiple entries in pg_opclass with the same
+-- nonzero opcdeftype value, because there can be only one default opclass
+-- for a datatype.  (But multiple entries with zero opcdeftype are OK.)
+
+SELECT p1.oid, p2.oid
+FROM pg_opclass AS p1, pg_opclass AS p2
+WHERE p1.oid != p2.oid AND
+    p1.opcdeftype = p2.opcdeftype AND
+    p1.opcdeftype != 0;
+
 -- **************** pg_amop ****************
 
 -- Look for illegal values in pg_amop fields
@@ -467,12 +482,15 @@ WHERE p1.amstrategies != (SELECT count(*) FROM pg_amop AS p3
               AND EXISTS (SELECT * FROM pg_amop AS p3
                           WHERE p3.amopid = p1.oid AND p3.amopclaid = p2.oid);
 
--- Check that amopopr points at a reasonable-looking operator
+-- Check that amopopr points at a reasonable-looking operator, ie a binary
+-- operator yielding boolean.
+-- NOTE: for 7.1, add restriction that operator inputs are of same type.
+-- We used to have opclasses like "int24_ops" but these were broken.
 
 SELECT p1.oid, p2.oid, p2.oprname
 FROM pg_amop AS p1, pg_operator AS p2
 WHERE p1.amopopr = p2.oid AND
-    (p2.oprkind != 'b' OR p2.oprresult != 16);
+    (p2.oprkind != 'b' OR p2.oprresult != 16 OR p2.oprleft != p2.oprright);
 
 -- If opclass is for a specific type, operator inputs should be of that type
 
@@ -529,3 +547,35 @@ WHERE p1.oid != p3.oid AND
     p1.amid = p3.amid AND p1.amprocnum = p3.amprocnum AND
     p1.amproc = p2.oid AND p3.amproc = p4.oid AND
     (p2.proretset OR p4.proretset OR p2.pronargs != p4.pronargs);
+
+-- Cross-check that each opclass that has any entries for a given AM
+-- has all the entries that any other opclass does.  This catches cases
+-- where an opclass has pg_amop but not pg_amproc entries or vice versa.
+-- (The above tests for missing pg_amop or pg_amproc entries are redundant
+-- with this, but I'll leave them in place anyway.)
+
+-- All the strategy index numbers used for each AM
+CREATE TEMP TABLE amopstrategies AS
+    SELECT DISTINCT amopid, amopstrategy FROM pg_amop;
+
+-- All the support proc numbers used for each AM
+CREATE TEMP TABLE amprocnums AS
+    SELECT DISTINCT amid, amprocnum FROM pg_amproc;
+
+-- All the opclasses that claim to have support for each AM in either table.
+-- UNION implies DISTINCT, so we do not need DISTINCT in the sub-selects.
+CREATE TEMP TABLE amopclassids AS
+    SELECT amid, amopclaid FROM pg_amproc UNION
+    SELECT amopid, amopclaid FROM pg_amop;
+
+-- Look for AMs that are missing one or more strategy operators
+SELECT * FROM amopclassids c, amopstrategies s
+WHERE c.amid = s.amopid AND NOT EXISTS
+      (SELECT 1 FROM pg_amop a WHERE a.amopid = c.amid AND
+       a.amopclaid = c.amopclaid AND a.amopstrategy = s.amopstrategy);
+
+-- Look for AMs that are missing one or more support procs
+SELECT * FROM amopclassids c, amprocnums p
+WHERE c.amid = p.amid AND NOT EXISTS
+      (SELECT 1 FROM pg_amproc a WHERE a.amid = c.amid AND
+       a.amopclaid = c.amopclaid AND a.amprocnum = p.amprocnum);
