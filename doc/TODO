@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Aug 14 14:38:48 EDT 2002
+Last updated:		Thu Aug 15 13:46:30 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -43,12 +43,11 @@ Reporting
 Permissions
 ===========
 
-* Improve control over user privileges, including table creation and
-  lock use [privileges] (Karel, others)
+* -Improve control over user privileges, including table creation
 * -Allow user/group names to be specified directly in pg_hba.conf (Bruce)
-* Add PGPASSWORDFILE environment variable or ~/.pgpass to store
+* -Add PGPASSWORDFILE environment variable or ~/.pgpass to store
   user/host/password combinations
-* Remove PGPASSWORD because it is insecure on some OS's
+* Remove PGPASSWORD because it is insecure on some OS's, in 7.4
 * Make single-user local access permissions the default by limiting
   permissions on the socket file (Peter E)
 * -Allow permissions for functions (Peter E)
@@ -291,7 +290,7 @@ Clients
 	o Use cursors implicitly to avoid large results (see setCursorName())
         o -Add support for CallableStatements
 	o Add LISTEN/NOTIFY support to the JDBC driver (Barry)
-	o Compile under jdk 1.4
+	o -Compile under jdk 1.4
 
 * ECPG
 	o Implement set descriptor, using descriptor
