@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.67 2002/11/15 00:47:22 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.68 2002/11/15 03:07:52 momjian Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -141,9 +141,13 @@ typedef struct
 
 pgsql_thing_t words_after_create[] = {
 	{"AGGREGATE", "SELECT DISTINCT proname FROM pg_catalog.pg_proc WHERE proisagg AND substr(proname,1,%d)='%s'"},
+	{"CAST", NULL},				/* Casts have complex structures for namees, so skip it */
+	{"CONVERSION", "SELECT conname FROM pg_catalog.pg_conversion WHERE substr(conname,1,%d)='%s'"},
 	{"DATABASE", Query_for_list_of_databases},
+	{"DOMAIN", "SELECT typname FROM pg_catalog.pg_type WHERE typtype = 'd' AND substr(typname,1,%d)='%s'"},
 	{"FUNCTION", "SELECT DISTINCT proname FROM pg_catalog.pg_proc WHERE substr(proname,1,%d)='%s'"},
 	{"GROUP", "SELECT groname FROM pg_catalog.pg_group WHERE substr(groname,1,%d)='%s'"},
+	{"LANGUAGE", "SELECT lanname FROM pg_catalog.pg_language WHERE substr(lanname,1,%d)='%s'"},
 	{"INDEX", Query_for_list_of_indexes},
 	{"OPERATOR", NULL},			/* Querying for this is probably not such
 								 * a good idea. */
@@ -196,11 +200,11 @@ psql_completion(char *text, int start, int end)
 			   *prev4_wd;
 
 	static char *sql_commands[] = {
-		"ABORT", "ALTER", "ANALYZE", "BEGIN", "CLOSE", "CLUSTER", "COMMENT", "COMMIT", "COPY",
-		"CREATE", "DECLARE", "DELETE", "DROP", "EXPLAIN", "FETCH", "GRANT",
-		"INSERT", "LISTEN", "LOAD", "LOCK", "MOVE", "NOTIFY", "REINDEX", "RESET",
-		"REVOKE", "ROLLBACK", "SELECT", "SET", "SHOW", "TRUNCATE", "UNLISTEN", "UPDATE",
-		"VACUUM", NULL
+		"ABORT", "ALTER", "ANALYZE", "BEGIN", "CHECKPOINT", "CLOSE", "CLUSTER", "COMMENT",
+		"COMMIT", "COPY", "CREATE", "DEALLOCATE", "DECLARE", "DELETE", "DROP", "EXECUTE",
+		"EXPLAIN", "FETCH", "GRANT", "INSERT", "LISTEN", "LOAD", "LOCK", "MOVE", "NOTIFY",
+		"PREPARE", "REINDEX", "RESET", "REVOKE", "ROLLBACK", "SELECT", "SET", "SHOW",
+		"TRUNCATE", "UNLISTEN", "UPDATE", "VACUUM", NULL
 	};
 
 	static char *pgsql_variables[] = {
@@ -220,70 +224,111 @@ psql_completion(char *text, int start, int end)
 		 * the rest should match USERSET entries in
 		 * backend/utils/misc/guc.c
 		 */
-		"enable_seqscan",
-		"enable_indexscan",
-		"enable_tidscan",
-		"enable_sort",
-		"enable_nestloop",
-		"enable_mergejoin",
-		"enable_hashjoin",
-		"geqo",
-		"fsync",
-		"log_min_messages",
-		"client_min_messages",
-		"debug_assertions",
-		"log_statement",
-		"log_duration",
-		"debug_print_parse",
-		"debug_print_rewritten",
-		"debug_print_plan",
-		"debug_pretty_print",
-		"log_parser_stats",
-		"log_planner_stats",
-		"log_executor_stats",
-		"log_statement_stats",
-		"trace_notify",
-		"explain_pretty_print",
-		"sql_inheritance",
 		"australian_timezones",
-		"password_encryption",
-		"transform_null_equals",
+		"authentication_timeout",
 		"autocommit",
-
-		"default_statistics_target",
-		"geqo_threshold",
-		"geqo_pool_size",
-		"geqo_effort",
-		"geqo_generations",
-		"geqo_random_seed",
-		"sort_mem",
-		"vacuum_mem",
-		"max_expr_depth",
+		"checkpoint_segments",
+		"checkpoint_timeout",
+		"client_min_messages",
 		"commit_delay",
 		"commit_siblings",
-		"extra_float_digits",
-
-		"effective_cache_size",
-		"random_page_cost",
-		"cpu_tuple_cost",
 		"cpu_index_tuple_cost",
 		"cpu_operator_cost",
-		"geqo_selection_bias",
-
+		"cpu_tuple_cost",
+		"db_user_namespace",
+		"deadlock_timeout",
+		"debug_pretty_print",
+		"debug_print_parse",
+		"debug_print_plan",
+		"debug_print_rewritten",
+		"default_statistics_target",
 		"default_transaction_isolation",
-		"search_path",
-		"statement_timeout",
+		"dynamic_library_path",
+		"effective_cache_size",
+		"enable_hashjoin",
+		"enable_indexscan",
+		"enable_mergejoin",
+		"enable_nestloop",
+		"enable_seqscan",
+		"enable_sort",
+		"enable_tidscan",
+		"explain_pretty_print",
+		"extra_float_digits",
+		"fixbtree",
+		"fsync",
+		"geqo",
+		"geqo_effort",
+		"geqo_generations",
+		"geqo_pool_size",
+		"geqo_random_seed",
+		"geqo_selection_bias",
+		"geqo_threshold",
+		"log_hostname",
+		"krb_server_keyfile",
+		"lc_messages",
+		"lc_monetary",
+		"lc_numeric",
+		"lc_timeC",
+		"log_connections",
+		"log_duration",
 		"log_min_error_statement",
+		"log_pid",
+		"log_statement",
+		"log_timestamp",
+		"max_connections",
+		"max_expr_depth",
+		"max_files_per_process",
+		"max_fsm_pages",
+		"max_fsm_relations",
+		"max_locks_per_transaction",
+		"password_encryption",
+		"port",
+		"pre_auth_delay",
+		"random_page_cost",
+		"search_path",
+		"log_min_messages",
+		"shared_buffers",
+		"log_executor_stats",
+		"log_parser_stats",
+		"log_planner_stats",
+		"log_source_port",
+		"log_statement_stats",
+		"silent_mode",
+		"sort_mem",
+		"sql_inheritance",
+		"ssl",
+		"statement_timeout",
+		"stats_block_level",
+		"stats_command_string",
+		"stats_reset_on_server_start",
+		"stats_row_level",
+		"stats_start_collector",
+		"superuser_reserved_connections",
+		"syslog",
+		"syslog_facility",
+		"syslog_ident",
+		"tcpip_socket",
+		"trace_notify",
+		"transform_null_equals",
+		"unix_socket_directory",
+		"unix_socket_group",
+		"unix_socket_permissions",
+		"vacuum_mem",
+		"virtual_hostt",
+		"wal_buffers",
+		"wal_debug",
+		"wal_sync_method",
 		NULL
 	};
 
 	static char *backslash_commands[] = {
-		"\\connect", "\\copy", "\\d", "\\da", "\\dd", "\\df", "\\di",
-		"\\dl", "\\do", "\\dp", "\\ds", "\\dS", "\\dt", "\\dT", "\\dv",
-		"\\e", "\\echo",
-		"\\encoding", "\\g", "\\h", "\\i", "\\l",
+		"\\a", "\\connect", "\\C", "\\cd", "\\copy", "\\copyright", 
+		"\\d", "\\da", "\\dd", "\\dD", "\\df", "\\di", "\\dl", "\\do",
+		"\\dp", "\\ds", "\\dS", "\\dt", "\\dT", "\\dv","\\du",
+		"\\e", "\\echo", "\\encoding",
+		"\\f", "\\g", "\\h", "\\help", "\\H", "\\i", "\\l",
 		"\\lo_import", "\\lo_export", "\\lo_list", "\\lo_unlink",
-		"\\o", "\\p", "\\pset", "\\q", "\\qecho", "\\r", "\\set", "\\t",
+		"\\o", "\\p", "\\pset", "\\q", "\\qecho", "\\r", "\\set", "\\t", "\\T",
 		"\\timing", "\\unset", "\\x", "\\w", "\\z", "\\!", NULL
 	};
 
@@ -323,13 +368,31 @@ psql_completion(char *text, int start, int end)
 		matches = completion_matches(text, create_command_generator);
 
 /* ALTER */
-	/* complete with what you can alter (TABLE, GROUP, USER) */
+	/* complete with what you can alter (TABLE, GROUP, USER, ...) */
 	else if (strcasecmp(prev_wd, "ALTER") == 0)
 	{
-		char	   *list_ALTER[] = {"GROUP", "SCHEMA", "TABLE", "USER", NULL};
+		char	   *list_ALTER[] = {"DATABASE", "GROUP", "SCHEMA", "TABLE", "TRIGGER", "USER", NULL};
 
 		COMPLETE_WITH_LIST(list_ALTER);
 	}
+
+	/* ALTER DATABASE <name> */
+	else if (strcasecmp(prev3_wd, "ALTER") == 0 && strcasecmp(prev2_wd, "DATABASE") == 0)
+	{
+		char	   *list_ALTERDATABASE[] = {"RESET", "SET", NULL};
+
+		COMPLETE_WITH_LIST(list_ALTERDATABASE);
+	}
+	/* ALTER TRIGGER <name>, add ON */
+	else if (strcasecmp(prev3_wd, "ALTER") == 0 && strcasecmp(prev2_wd, "TRIGGER") == 0)
+		COMPLETE_WITH_CONST("ON");
+
+	/*
+	 * If we have ALTER TRIGGER <sth> ON, then add the correct tablename
+	 */
+	else if (strcasecmp(prev4_wd, "ALTER") == 0 && strcasecmp(prev3_wd, "TRIGGER") == 0
+	  && strcasecmp(prev_wd, "ON") == 0)
+		COMPLETE_WITH_QUERY(Query_for_list_of_tables);
 
 	/*
 	 * If we detect ALTER TABLE <name>, suggest either ADD, ALTER, or
@@ -970,7 +1033,9 @@ static char *
 complete_from_list(char *text, int state)
 {
 	static int	string_length,
-				list_index;
+				list_index,
+				matches;
+	static bool	casesensitive;
 	char	   *item;
 
 	/* need to have a list */
@@ -983,11 +1048,35 @@ complete_from_list(char *text, int state)
 	{
 		list_index = 0;
 		string_length = strlen(text);
+		casesensitive = true;
+		matches = 0;
 	}
 
 	while ((item = completion_charpp[list_index++]))
-		if (strncasecmp(text, item, string_length) == 0)
+	{
+		/* First pass is case sensitive */
+		if (casesensitive && strncmp(text, item, string_length) == 0)
+		{
+			matches++;
 			return xstrdup(item);
+		}
+
+		/* Second pass is case insensitive, don't bother counting matches */
+		if (!casesensitive && strncasecmp(text, item, string_length) == 0)
+			return xstrdup(item);
+	}
+
+	/*
+	 * No matches found. If we're not case insensitive already, lets switch
+	 * to being case insensitive and try again
+	 */
+	if (casesensitive && matches == 0)
+	{
+		casesensitive = false;
+		list_index = 0;
+		state++;
+		return (complete_from_list(text, state));
+	}
 
 	/* If no more matches, return null. */
 	return NULL;
