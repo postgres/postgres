@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/regress.sgml,v 1.19 2001/09/09 23:52:12 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/regress.sgml,v 1.20 2001/09/11 02:24:52 ishii Exp $ -->
 
  <chapter id="regress">
   <title id="regress-title">Regression Tests</title>
@@ -67,7 +67,9 @@
     For example,
 <screen>
 <prompt>root# </prompt><userinput>chmod -R a+w src/test/regress</userinput>
+<prompt>root# </prompt><userinput>chmod -R a+w contrib/spi</userinput>
 <prompt>root# </prompt><userinput>su - joeuser</userinput>
+<prompt>joeuser$ </prompt><userinput>cd &lt;build top-level directory&gt;</userinput>
 <prompt>joeuser$ </prompt><userinput>gmake check</userinput>
 </screen>
     (The only possible <quote>security risk</quote> here is that other
