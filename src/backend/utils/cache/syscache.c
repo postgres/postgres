@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.38 1999/11/01 02:29:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.39 1999/11/16 04:13:59 momjian Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -472,7 +472,7 @@ SearchSysCacheTuple(int cacheId,/* cache selection code */
 		char *nontemp_relname;
 
 		if ((nontemp_relname =
-			 get_temp_rel_by_name(DatumGetPointer(key1))) != NULL)
+			 get_temp_rel_by_username(DatumGetPointer(key1))) != NULL)
 			key1 = PointerGetDatum(nontemp_relname);
 	}
 	

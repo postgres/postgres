@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rel.h,v 1.29 1999/11/07 23:08:33 momjian Exp $
+ * $Id: rel.h,v 1.30 1999/11/16 04:14:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,6 @@
 #include "catalog/pg_class.h"
 #include "rewrite/prs2lock.h"
 #include "storage/fd.h"
-
 
 /*
  * LockRelId and LockInfo really belong to lmgr.h, but it's more convenient
@@ -176,7 +175,26 @@ typedef Relation *RelationPtr;
  *
  *	  Returns a Relation Name
  */
-#define RelationGetRelationName(relation) (NameStr((relation)->rd_rel->relname))
+/* added to prevent circular dependency.  bjm 1999/11/15 */
+char 	   *get_temp_rel_by_physicalname(char *relname);
+#define RelationGetRelationName(relation) \
+(\
+	(strncmp(RelationGetPhysicalRelationName(relation), \
+	 "pg_temp.", strlen("pg_temp.")) != 0) \
+	? \
+		RelationGetPhysicalRelationName(relation) \
+	: \
+		get_temp_rel_by_physicalname( \
+			RelationGetPhysicalRelationName(relation)) \
+)
+
+
+/*
+ * RelationGetPhysicalRelationName
+ *
+ *	  Returns a Relation Name
+ */
+#define RelationGetPhysicalRelationName(relation) (NameStr((relation)->rd_rel->relname))
 
 /*
  * RelationGetNumberOfAttributes

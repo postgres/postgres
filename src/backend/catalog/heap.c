@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.107 1999/11/07 23:08:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.108 1999/11/16 04:13:55 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -290,7 +290,7 @@ heap_create(char *relname,
 	 * ----------------
 	 */
 	MemSet((char *) rel->rd_rel, 0, sizeof *rel->rd_rel);
-	strcpy(RelationGetRelationName(rel), relname);
+	strcpy(RelationGetPhysicalRelationName(rel), relname);
 	rel->rd_rel->relkind = RELKIND_UNCATALOGED;
 	rel->rd_rel->relnatts = natts;
 	if (tupDesc->constr)
@@ -798,7 +798,7 @@ heap_create_with_catalog(char *relname,
 
 	/* temp tables can mask non-temp tables */
 	if ((!istemp && RelnameFindRelid(relname)) ||
-		(istemp && get_temp_rel_by_name(relname) != NULL))
+		(istemp && get_temp_rel_by_username(relname) != NULL))
 		elog(ERROR, "Relation '%s' already exists", relname);
 
 	/* save user relation name because heap_create changes it */
@@ -810,7 +810,7 @@ heap_create_with_catalog(char *relname,
 	}
 
 	/* ----------------
-	 *	get_temp_rel_by_name() couldn't check the simultaneous
+	 *	get_temp_rel_by_username() couldn't check the simultaneous
 	 *	creation. Uniqueness will be really checked by unique
 	 *	indexes of system tables but we couldn't check it here.
 	 *	We have to pospone to create the disk file for this
@@ -1448,7 +1448,7 @@ heap_destroy_with_catalog(char *relname)
 {
 	Relation	rel;
 	Oid			rid;
-	bool		istemp = (get_temp_rel_by_name(relname) != NULL);
+	bool		istemp = (get_temp_rel_by_username(relname) != NULL);
 
 	/* ----------------
 	 *	Open and lock the relation.
@@ -1518,9 +1518,6 @@ heap_destroy_with_catalog(char *relname)
 
 	DeleteComments(RelationGetRelid(rel));
 
-	if (istemp)
-		remove_temp_relation(rid);
-
 	/* ----------------
 	 *	delete type tuple.	here we want to see the effects
 	 *	of the deletions we just did, so we use setheapoverride().
@@ -1565,6 +1562,9 @@ heap_destroy_with_catalog(char *relname)
 	 * ----------------
 	 */
 	RelationForgetRelation(rid);
+
+	if (istemp)
+		remove_temp_relation(rid);
 }
 
 /*

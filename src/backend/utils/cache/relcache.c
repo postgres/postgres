@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.76 1999/11/07 23:08:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.77 1999/11/16 04:13:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -962,7 +962,7 @@ formrdesc(char *relationName,
 	relation->rd_rel = (Form_pg_class)
 		palloc((Size) (sizeof(*relation->rd_rel)));
 	MemSet(relation->rd_rel, 0, sizeof(FormData_pg_class));
-	strcpy(RelationGetRelationName(relation), relationName);
+	strcpy(RelationGetPhysicalRelationName(relation), relationName);
 
 	/* ----------------
 	   initialize attribute tuple form
@@ -1177,7 +1177,7 @@ RelationNameGetRelation(char *relationName)
 	 *	we only index temp rels by their real names.
 	 * ----------------
 	 */
-	temprelname = get_temp_rel_by_name(relationName);
+	temprelname = get_temp_rel_by_username(relationName);
 	if (temprelname)
 		relationName = temprelname;
 
