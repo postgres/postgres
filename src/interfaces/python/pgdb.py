@@ -170,7 +170,7 @@ class pgdbCursor:
 		self.__source = src
 		self.description = None
 		self.rowcount = -1
-		self.arraysize = 5
+		self.arraysize = 1
 
 	def close(self):
 		self.__source.close()
