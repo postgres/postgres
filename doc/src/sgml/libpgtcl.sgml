@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpgtcl.sgml,v 1.38 2003/09/29 18:18:35 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpgtcl.sgml,v 1.39 2003/10/31 00:18:55 tgl Exp $
 -->
 
 <chapter id="pgtcl">
@@ -1217,7 +1217,7 @@ pg_lo_creat <parameter>conn</parameter> <parameter>mode</parameter>
     <term><parameter>conn</parameter></term>
     <listitem>
      <para>
-      The handle of a database connection in which to create the large
+      The handle of a connection to the database in which to create the large
       object.
      </para>
     </listitem>
@@ -1284,8 +1284,8 @@ pg_lo_open <parameter>conn</parameter> <parameter>loid</parameter> <parameter>mo
 
     <listitem>
      <para>
-      The handle of a database connection in which the large object to
-      be opened exists.
+      The handle of a connection to the database in which the large object
+      exists.
      </para>
     </listitem>
    </varlistentry>
@@ -1354,7 +1354,7 @@ pg_lo_close <parameter>conn</parameter> <parameter>descriptor</parameter>
     <term><parameter>conn</parameter></term>
     <listitem>
      <para>
-      The handle of a database connection in which the large object
+      The handle of a connection to the database in which the large object
       exists.
      </para>
     </listitem>
@@ -1417,7 +1417,7 @@ pg_lo_read <parameter>conn</parameter> <parameter>descriptor</parameter> <parame
     <term><parameter>conn</parameter></term>
     <listitem>
      <para>
-      The handle of a database connection in which the large object
+      The handle of a connection to the database in which the large object
       exists.
      </para>
     </listitem>
@@ -1458,7 +1458,9 @@ pg_lo_read <parameter>conn</parameter> <parameter>descriptor</parameter> <parame
   <title>Return Value</title>
 
   <para>
-   None
+   The number of bytes actually read is returned; this could be less than
+   the number requested if the end of the large object is reached first.
+   In event of an error, the return value is negative.
   </para>
  </refsect1>
 </refentry>
@@ -1499,7 +1501,7 @@ pg_lo_write <parameter>conn</parameter> <parameter>descriptor</parameter> <param
     <term><parameter>conn</parameter></term>
     <listitem>
      <para>
-      The handle of a database connection in which the large object
+      The handle of a connection to the database in which the large object
       exists.
      </para>
     </listitem>
@@ -1519,7 +1521,8 @@ pg_lo_write <parameter>conn</parameter> <parameter>descriptor</parameter> <param
     <term><parameter>buf</parameter></term>
     <listitem>
      <para>
-      The string to write to the large object (not a variable name).
+      The string to write to the large object (not a variable name,
+      but the value itself).
      </para>
     </listitem>
    </varlistentry>
@@ -1528,7 +1531,8 @@ pg_lo_write <parameter>conn</parameter> <parameter>descriptor</parameter> <param
     <term><parameter>len</parameter></term>
     <listitem>
      <para>
-      The maximum number of bytes to write.
+      The maximum number of bytes to write.  The number written will
+      be the smaller of this value and the length of the string.
      </para>
     </listitem>
    </varlistentry>
@@ -1539,7 +1543,9 @@ pg_lo_write <parameter>conn</parameter> <parameter>descriptor</parameter> <param
   <title>Return Value</title>
 
   <para>
-   None
+   The number of bytes actually written is returned; this will ordinarily
+   be the same as the number requested.
+   In event of an error, the return value is negative.
   </para>
  </refsect1>
 </refentry>
@@ -1580,7 +1586,7 @@ pg_lo_lseek <parameter>conn</parameter> <parameter>descriptor</parameter> <param
     <term><parameter>conn</parameter></term>
     <listitem>
      <para>
-      The handle of a database connection in which the large object
+      The handle of a connection to the database in which the large object
       exists.
      </para>
     </listitem>
@@ -1664,7 +1670,7 @@ pg_lo_tell <parameter>conn</parameter> <parameter>descriptor</parameter>
 
     <listitem>
      <para>
-      The handle of a database connection in which the large object
+      The handle of a connection to the database in which the large object
       exists.
      </para>
     </listitem>
@@ -1727,7 +1733,7 @@ pg_lo_unlink <parameter>conn</parameter> <parameter>loid</parameter>
     <term><parameter>conn</parameter></term>
     <listitem>
      <para>
-      The handle of a database connection in which the large object
+      The handle of a connection to the database in which the large object
       exists.
      </para>
     </listitem>
@@ -1788,7 +1794,7 @@ pg_lo_import <parameter>conn</parameter> <parameter>filename</parameter>
     <term><parameter>conn</parameter></term>
     <listitem>
      <para>
-      The handle of a database connection in which to create the large
+      The handle of a connection to the database in which to create the large
       object.
      </para>
     </listitem>
@@ -1858,7 +1864,7 @@ pg_lo_export <parameter>conn</parameter> <parameter>loid</parameter> <parameter>
     <term><parameter>conn</parameter></term>
     <listitem>
      <para>
-      The handle of a database connection in which the large object
+      The handle of a connection to the database in which the large object
       exists.
      </para>
     </listitem>

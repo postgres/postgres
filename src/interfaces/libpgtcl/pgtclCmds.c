@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.73 2003/08/04 02:40:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.74 2003/10/31 00:18:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1215,17 +1215,21 @@ Pg_lo_read(ClientData cData, Tcl_Interp *interp, int objc,
 	buf = ckalloc(len + 1);
 
 	nbytes = lo_read(conn, fd, buf, len);
-	bufObj = Tcl_NewStringObj(buf, nbytes);
 
-	if (Tcl_ObjSetVar2(interp, bufVar, NULL, bufObj,
-					   TCL_LEAVE_ERR_MSG | TCL_PARSE_PART1) == NULL)
-		rc = TCL_ERROR;
-	else
+	if (nbytes >= 0)
+	{
+		bufObj = Tcl_NewByteArrayObj(buf, nbytes);
+
+		if (Tcl_ObjSetVar2(interp, bufVar, NULL, bufObj,
+						   TCL_LEAVE_ERR_MSG | TCL_PARSE_PART1) == NULL)
+			rc = TCL_ERROR;
+	}
+
+	if (rc == TCL_OK)
 		Tcl_SetObjResult(interp, Tcl_NewIntObj(nbytes));
 
 	ckfree(buf);
 	return rc;
-
 }
 
 #else
@@ -1265,7 +1269,9 @@ Pg_lo_read(ClientData cData, Tcl_Interp *interp, int argc, CONST84 char *argv[])
 
 	nbytes = lo_read(conn, fd, buf, len);
 
-	Tcl_SetVar(interp, bufVar, buf, TCL_LEAVE_ERR_MSG);
+	if (nbytes >= 0)
+		Tcl_SetVar(interp, bufVar, buf, TCL_LEAVE_ERR_MSG);
+
 	sprintf(interp->result, "%d", nbytes);
 	ckfree(buf);
 	return TCL_OK;
@@ -1307,7 +1313,7 @@ Pg_lo_write(ClientData cData, Tcl_Interp *interp, int objc,
 	if (Tcl_GetIntFromObj(interp, objv[2], &fd) != TCL_OK)
 		return TCL_ERROR;
 
-	buf = Tcl_GetStringFromObj(objv[3], &nbytes);
+	buf = Tcl_GetByteArrayFromObj(objv[3], &nbytes);
 
 	if (Tcl_GetIntFromObj(interp, objv[4], &len) != TCL_OK)
 		return TCL_ERROR;
