@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.10 1998/01/09 05:48:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.11 1998/01/21 04:24:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,12 +29,12 @@
 #include "commands/creatinh.h"
 #include "access/heapam.h"
 
-static void
-ApplyRetrieveRule(Query *parsetree, RewriteRule *rule,
+static void ApplyRetrieveRule(Query *parsetree, RewriteRule *rule,
 				  int rt_index, int relation_level, int *modified);
-static List *
-fireRules(Query *parsetree, int rt_index, CmdType event,
+static List *fireRules(Query *parsetree, int rt_index, CmdType event,
 		  bool *instead_flag, List *locks, List **qual_products);
+static void QueryRewriteSubLink(Node *node);
+static List	   *QueryRewriteOne(Query *parsetree);
 static List *deepRewriteQuery(Query *parsetree);
 
 /*
@@ -77,11 +77,11 @@ gatherRewriteMeta(Query *parsetree,
 		OffsetVarNodes((Node *) info->rule_action->targetList, rt_length);
 		OffsetVarNodes(info->rule_qual, rt_length);
 		ChangeVarNodes((Node *) info->rule_action->qual,
-					   PRS2_CURRENT_VARNO + rt_length, rt_index);
+					   PRS2_CURRENT_VARNO + rt_length, rt_index, 0);
 		ChangeVarNodes((Node *) info->rule_action->targetList,
-					   PRS2_CURRENT_VARNO + rt_length, rt_index);
+					   PRS2_CURRENT_VARNO + rt_length, rt_index, 0);
 		ChangeVarNodes(info->rule_qual,
-					   PRS2_CURRENT_VARNO + rt_length, rt_index);
+					   PRS2_CURRENT_VARNO + rt_length, rt_index, 0);
 
 		/*
 		 * bug here about replace CURRENT  -- sort of replace current is
@@ -292,10 +292,10 @@ ApplyRetrieveRule(Query *parsetree,
 	OffsetVarNodes((Node *) rule_action->targetList, rt_length);
 	OffsetVarNodes(rule_qual, rt_length);
 	ChangeVarNodes(rule_action->qual,
-				   PRS2_CURRENT_VARNO + rt_length, rt_index);
+				   PRS2_CURRENT_VARNO + rt_length, rt_index, 0);
 	ChangeVarNodes((Node *) rule_action->targetList,
-				   PRS2_CURRENT_VARNO + rt_length, rt_index);
-	ChangeVarNodes(rule_qual, PRS2_CURRENT_VARNO + rt_length, rt_index);
+				   PRS2_CURRENT_VARNO + rt_length, rt_index, 0);
+	ChangeVarNodes(rule_qual, PRS2_CURRENT_VARNO + rt_length, rt_index, 0);
 	if (relation_level)
 	{
 		HandleViewRule(parsetree, rtable, rule_action->targetList, rt_index,
@@ -402,7 +402,7 @@ CopyAndAddQual(Query *parsetree,
 		rtable = append(rtable, listCopy(rule_action->rtable));
 		new_tree->rtable = rtable;
 		OffsetVarNodes(new_qual, rt_length);
-		ChangeVarNodes(new_qual, PRS2_CURRENT_VARNO + rt_length, rt_index);
+		ChangeVarNodes(new_qual, PRS2_CURRENT_VARNO + rt_length, rt_index, 0);
 	}
 	/* XXX -- where current doesn't work for instead nothing.... yet */
 	AddNotQual(new_tree, new_qual);
@@ -627,6 +627,82 @@ static int	numQueryRewriteInvoked = 0;
  */
 List	   *
 QueryRewrite(Query *parsetree)
+{
+
+	QueryRewriteSubLink(parsetree->qual);
+	return QueryRewriteOne(parsetree);
+}
+
+/*
+ *	QueryRewriteSubLink
+ *
+ *	This rewrites the SubLink subqueries first, doing the lowest ones first.
+ *	We already have code in the main rewrite loops to process correlated
+ *	variables from upper queries that exist in subqueries.
+ */
+static void
+QueryRewriteSubLink(Node *node)
+{
+	if (node == NULL)
+		return;
+
+	switch (nodeTag(node))
+	{
+		case T_TargetEntry:
+			break;
+		case T_Aggreg:
+			break;
+		case T_Expr:
+			{
+				Expr	   *expr = (Expr *) node;
+
+				QueryRewriteSubLink((Node *)expr->args);
+			}
+			break;
+		case T_Var:
+			break;
+		case T_List:
+			{
+				List	   *l;
+
+				foreach(l, (List *) node)
+					QueryRewriteSubLink(lfirst(l));
+			}
+			break;
+		case T_SubLink:
+			{
+				SubLink		   *sublink = (SubLink *) node;
+				Query		   *query = (Query *)sublink->subselect;
+				List		   *ret;
+
+				/*
+				 *	Nest down first.  We do this so if a rewrite adds a
+				 *	SubLink we don't process it as part of this loop.
+				 */
+				QueryRewriteSubLink((Node *)query->qual);
+
+				ret = QueryRewriteOne(query);
+				if (!ret)
+					sublink->subselect = NULL;
+				else if (lnext(ret) == NIL)
+					sublink->subselect = lfirst(ret);
+				else
+					elog(ERROR,"Don't know how to process subquery that rewrites to multiple queries.");
+			}
+			break;
+		default:
+			/* ignore the others */
+			break;
+	}
+	return;
+}
+
+/*
+ * QueryOneRewrite -
+ *	  rewrite one query
+ */
+static List	   *
+QueryRewriteOne(Query *parsetree)
 {
 	numQueryRewriteInvoked = 0;
 

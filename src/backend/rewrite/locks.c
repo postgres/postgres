@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/Attic/locks.c,v 1.7 1998/01/15 19:00:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/Attic/locks.c,v 1.8 1998/01/21 04:24:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,8 @@
  * otherwise, we return false
  */
 static bool
-nodeThisLockWasTriggered(Node *node, int varno, AttrNumber attnum)
+nodeThisLockWasTriggered(Node *node, int varno, AttrNumber attnum,
+			int sublevels_up)
 {
 	if (node == NULL)
 		return FALSE;
@@ -46,24 +47,24 @@ nodeThisLockWasTriggered(Node *node, int varno, AttrNumber attnum)
 			{
 				Expr	   *expr = (Expr *) node;
 
-				return
-					nodeThisLockWasTriggered((Node *) expr->args, varno, attnum);
+				return nodeThisLockWasTriggered((Node *) expr->args, varno,
+						attnum, sublevels_up);
 			}
 			break;
 		case T_TargetEntry:
 			{
 				TargetEntry *tle = (TargetEntry *) node;
 
-				return
-					nodeThisLockWasTriggered(tle->expr, varno, attnum);
+				return nodeThisLockWasTriggered(tle->expr, varno, attnum,
+									sublevels_up);
 			}
 			break;
 		case T_Aggreg:
 			{
 				Aggreg *agg = (Aggreg *) node;
 
-				return
-					nodeThisLockWasTriggered(agg->target, varno, attnum);
+				return nodeThisLockWasTriggered(agg->target, varno, attnum,
+								sublevels_up);
 			}
 			break;
 		case T_List:
@@ -72,10 +73,20 @@ nodeThisLockWasTriggered(Node *node, int varno, AttrNumber attnum)
 
 				foreach(l, (List *) node)
 				{
-					if (nodeThisLockWasTriggered(lfirst(l), varno, attnum))
+					if (nodeThisLockWasTriggered(lfirst(l), varno, attnum,
+								sublevels_up))
 						return TRUE;
 				}
 				return FALSE;
+			}
+			break;
+		case T_SubLink:
+			{
+				SubLink		   *sublink = (SubLink *) node;
+				Query		   *query = (Query *)sublink->subselect;
+
+				return nodeThisLockWasTriggered(query->qual, varno, attnum,
+									sublevels_up + 1);
 			}
 			break;
 		default:
@@ -96,10 +107,10 @@ thisLockWasTriggered(int varno,
 					 Query *parsetree)
 {
 	
-	if (nodeThisLockWasTriggered(parsetree->qual, varno, attnum))
+	if (nodeThisLockWasTriggered(parsetree->qual, varno, attnum, 0))
 		return true;
 
-	if (nodeThisLockWasTriggered((Node *) parsetree->targetList, varno, attnum))
+	if (nodeThisLockWasTriggered((Node *) parsetree->targetList, varno, attnum, 0))
 		return true;
 
 	return false;
