@@ -742,12 +742,14 @@ main(int argc, char **argv)
 			case 'U':
 				username = (char *) strdup(optarg);
 				break;
+#ifdef HAVE_ICONV_H
 			case 'F':
 				charset_from = (char *) strdup(optarg);
 				break;
 			case 'T':
 				charset_to = (char *) strdup(optarg);
 				break;
+#endif
 			case ':':
 				usage();
 				printf("missing argument!\n");
@@ -806,8 +808,10 @@ main(int argc, char **argv)
 			free(username);
 		if (password)
 			free(password);
+#ifdef HAVE_ICONV_H
 		if (charset_from)
 			iconv_close(iconv_d);
+#endif
 		exit(1);
 	}
 
@@ -846,8 +850,10 @@ main(int argc, char **argv)
 			free(username);
 		if (password)
 			free(password);
+#ifdef HAVE_ICONV_H
 		if (charset_from)
 			iconv_close(iconv_d);
+#endif
 		exit(1);
 	}
 
@@ -864,8 +870,10 @@ main(int argc, char **argv)
 				free(username);
 			if (password)
 				free(password);
+#ifdef HAVE_ICONV_H
 			if (charset_from)
 				iconv_close(iconv_d);
+#endif
 			exit(1);
 		}
 		if (del)
@@ -880,8 +888,10 @@ main(int argc, char **argv)
 					free(username);
 				if (password)
 					free(password);
+#ifdef HAVE_ICONV_H
 				if (charset_from)
 					iconv_close(iconv_d);
+#endif
 				exit(1);
 			}
 			if (verbose > 1)
@@ -903,8 +913,10 @@ main(int argc, char **argv)
 				free(username);
 			if (password)
 				free(password);
+#ifdef HAVE_ICONV_H
 			if (charset_from)
 				iconv_close(iconv_d);
+#endif
 			exit(1);
 		}
 		if (verbose > 1)
@@ -933,7 +945,9 @@ main(int argc, char **argv)
 		free(username);
 	if (password)
 		free(password);
+#ifdef HAVE_ICONV_H
 	if (charset_from)
 		iconv_close(iconv_d);
+#endif
 	exit(0);
 }
