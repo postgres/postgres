@@ -9,14 +9,23 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/lib/dllist.c,v 1.13 1999/05/31 23:48:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/lib/dllist.c,v 1.14 1999/06/03 01:28:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include <postgres.h>
-
 #include <lib/dllist.h>
+
+/* When this file is compiled for inclusion in libpq,
+ * it can't use assert checking.  Probably this fix ought to be
+ * in c.h or somewhere like that...
+ */
+#ifdef FRONTEND
+#undef Assert
+#define Assert(condition)
+#endif
+
 
 Dllist *
 DLNewList(void)
