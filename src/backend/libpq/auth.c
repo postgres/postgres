@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.68 2001/09/26 19:54:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.69 2001/10/18 22:44:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,7 @@ static void sendAuthRequest(Port *port, AuthRequest areq);
 static int	checkPassword(Port *port, char *user, char *password);
 static int	old_be_recvauth(Port *port);
 static int	map_old_to_new(Port *port, UserAuth old, int status);
-static void auth_failed(Port *port);
+static void auth_failed(Port *port, int status);
 static int	recv_and_check_password_packet(Port *port);
 static int	recv_and_check_passwordv0(Port *port);
 
@@ -341,17 +341,23 @@ recv_and_check_passwordv0(Port *port)
 			   *password,
 			   *cp,
 			   *start;
+	int			status;
 
-	pq_getint(&len, 4);
+	if (pq_getint(&len, 4) == EOF)
+		return STATUS_EOF;
 	len -= 4;
 	buf = palloc(len);
-	pq_getbytes(buf, len);
+	if (pq_getbytes(buf, len) == EOF)
+	{
+		pfree(buf);
+		return STATUS_EOF;
+	}
 
 	pp = (PasswordPacketV0 *) buf;
 
 	/*
 	 * The packet is supposed to comprise the user name and the password
-	 * as C strings.  Be careful the check that this is the case.
+	 * as C strings.  Be careful to check that this is the case.
 	 */
 	user = password = NULL;
 
@@ -379,13 +385,10 @@ recv_and_check_passwordv0(Port *port)
 				 "pg_password_recvauth: badly formed password packet.\n");
 		fputs(PQerrormsg, stderr);
 		pqdebug("%s", PQerrormsg);
-
-		pfree(buf);
-		auth_failed(port);
+		status = STATUS_ERROR;
 	}
 	else
 	{
-		int			status;
 		UserAuth	saved;
 
 		/* Check the password. */
@@ -395,15 +398,16 @@ recv_and_check_passwordv0(Port *port)
 
 		status = checkPassword(port, user, password);
 
-		pfree(buf);
 		port->auth_method = saved;
 
 		/* Adjust the result if necessary. */
 		if (map_old_to_new(port, uaPassword, status) != STATUS_OK)
-			auth_failed(port);
+			status = STATUS_ERROR;
 	}
 
-	return STATUS_OK;
+	pfree(buf);
+
+	return status;
 }
 
 
@@ -420,9 +424,22 @@ recv_and_check_passwordv0(Port *port)
  * postmaster log, which we hope is only readable by good guys.
  */
 static void
-auth_failed(Port *port)
+auth_failed(Port *port, int status)
 {
 	const char *authmethod = "Unknown auth method:";
+
+	/*
+	 * If we failed due to EOF from client, just quit; there's no point
+	 * in trying to send a message to the client, and not much point in
+	 * logging the failure in the postmaster log.  (Logging the failure
+	 * might be desirable, were it not for the fact that libpq closes the
+	 * connection unceremoniously if challenged for a password when it
+	 * hasn't got one to send.  We'll get a useless log entry for
+	 * every psql connection under password auth, even if it's perfectly
+	 * successful, if we log STATUS_EOF events.)
+	 */
+	if (status == STATUS_EOF)
+		proc_exit(0);
 
 	switch (port->auth_method)
 	{
@@ -455,6 +472,7 @@ auth_failed(Port *port)
 
 	elog(FATAL, "%s authentication failed for user \"%s\"",
 		 authmethod, port->user);
+	/* doesn't return */
 }
 
 
@@ -477,10 +495,11 @@ ClientAuthentication(Port *port)
 		elog(FATAL, "Missing or erroneous pg_hba.conf file, see postmaster log for details");
 
 	/* Handle old style authentication. */
-	else if (PG_PROTOCOL_MAJOR(port->proto) == 0)
+	if (PG_PROTOCOL_MAJOR(port->proto) == 0)
 	{
-		if (old_be_recvauth(port) != STATUS_OK)
-			auth_failed(port);
+		status = old_be_recvauth(port);
+		if (status != STATUS_OK)
+			auth_failed(port, status);
 		return;
 	}
 
@@ -505,9 +524,8 @@ ClientAuthentication(Port *port)
 			elog(FATAL,
 				 "No pg_hba.conf entry for host %s, user %s, database %s",
 				 hostinfo, port->user, port->database);
-			return;
+			break;
 		}
-		break;
 
 		case uaKrb4:
 			sendAuthRequest(port, AUTH_REQ_KRB4);
@@ -533,11 +551,8 @@ ClientAuthentication(Port *port)
 			{
 				int on = 1;
 				if (setsockopt(port->sock, 0, LOCAL_CREDS, &on, sizeof(on)) < 0)
-				{
 					elog(FATAL,
 						 "pg_local_sendauth: can't do setsockopt: %s\n", strerror(errno));
-					return;
-				}
 			}
 #endif
 			if (port->raddr.sa.sa_family ==	AF_UNIX)
@@ -551,15 +566,16 @@ ClientAuthentication(Port *port)
 			status = recv_and_check_password_packet(port);
 			break;
 
-                case uaCrypt:
-                        sendAuthRequest(port, AUTH_REQ_CRYPT);
-                        status = recv_and_check_password_packet(port);
-                        break;  
+		case uaCrypt:
+			sendAuthRequest(port, AUTH_REQ_CRYPT);
+			status = recv_and_check_password_packet(port);
+			break;  
                                  
-                case uaPassword:
-                        sendAuthRequest(port, AUTH_REQ_PASSWORD);
-                        status = recv_and_check_password_packet(port);
-                        break;
+		case uaPassword:
+			sendAuthRequest(port, AUTH_REQ_PASSWORD);
+			status = recv_and_check_password_packet(port);
+			break;
+
 #ifdef USE_PAM
 		case uaPAM:
 			pam_port_cludge = port;
@@ -575,7 +591,7 @@ ClientAuthentication(Port *port)
 	if (status == STATUS_OK)
 		sendAuthRequest(port, AUTH_REQ_OK);
 	else
-		auth_failed(port);
+		auth_failed(port, status);
 }
 
 
@@ -654,7 +670,7 @@ pam_passwd_conv_proc (int num_msg, const struct pam_message **msg, struct pam_re
 
 	        initStringInfo(&buf);
 	        pq_getstr(&buf);
-	        if (DebugLvl)
+	        if (DebugLvl > 5)
 			fprintf(stderr, "received PAM packet with len=%d, pw=%s\n",
 				len, buf.data);
 
@@ -786,9 +802,8 @@ CheckPAMAuth(Port *port, char *user, char *password)
 	}
 }
 
-
-
 #endif /* USE_PAM */
+
 
 /*
  * Called when we have received the password packet.
@@ -801,11 +816,16 @@ recv_and_check_password_packet(Port *port)
 	int			result;
 
 	if (pq_eof() == EOF || pq_getint(&len, 4) == EOF)
-		return STATUS_ERROR;	/* client didn't want to send password */
-	initStringInfo(&buf);
-	pq_getstr(&buf);		/* receive password */
+		return STATUS_EOF;		/* client didn't want to send password */
 
-	if (DebugLvl)
+	initStringInfo(&buf);
+	if (pq_getstr(&buf) == EOF)	/* receive password */
+	{
+		pfree(buf.data);
+		return STATUS_EOF;
+	}
+
+	if (DebugLvl > 5)			/* this is probably a BAD idea... */
 		fprintf(stderr, "received password packet with len=%d, pw=%s\n",
 				len, buf.data);
 
@@ -861,7 +881,7 @@ old_be_recvauth(Port *port)
 		default:
 			fprintf(stderr, "Invalid startup message type: %u\n", msgtype);
 
-			return STATUS_OK;
+			return STATUS_ERROR;
 	}
 
 	return status;
@@ -914,4 +934,3 @@ map_old_to_new(Port *port, UserAuth old, int status)
 
 	return status;
 }
-
