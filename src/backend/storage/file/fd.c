@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *    $Id: fd.c,v 1.12 1996/12/28 22:44:14 momjian Exp $
+ *    $Id: fd.c,v 1.13 1997/01/13 01:25:29 scrappy Exp $
  *
  * NOTES:
  *
@@ -52,21 +52,6 @@
 #include "utils/palloc.h"
 #include "storage/fd.h"
 
-#if defined(NEED_NOFILE_KLUDGE)
-/*
- * the SunOS 4 NOFILE is a lie, because the default limit is *not* the
- * maximum number of file descriptors you can have open.
- *
- * we have to either use this number (the default dtablesize) or
- * explicitly call setrlimit(RLIMIT_NOFILE, NOFILE).
- *
- * this braindamage apparently also affects solaris 2.X as well
- */
-#include <sys/user.h>
-#undef NOFILE
-#define NOFILE NOFILE_IN_U
-#endif /* NEED_NOFILE_KLUDGE */
-
 /*
  * Problem: Postgres does a system(ld...) to do dynamic loading.  This
  * will open several extra files in addition to those used by
@@ -81,23 +66,21 @@
  * equivalent, the OS must still open several files to perform the
  * dynamic loading.  Keep this here.)
  */
+#ifndef RESERVE_FOR_LD
 #define RESERVE_FOR_LD  10
+#endif 
 
 /*
- * If we are using weird storage managers, we may need to keep real
- * file descriptors open so that the jukebox server doesn't think we
- * have gone away (and no longer care about a platter or file that
- * we've been using).  This might be an actual file descriptor for a
- * local jukebox interface that uses paths, or a socket connection for
- * a network jukebox server.  Since we can't be opening and closing
- * these descriptors at whim, we must make allowances for them.
+ * We need to ensure that we have at least some file descriptors
+ * available to postgreSQL after we've reserved the ones for LD,
+ * so we set that value here.
+ *
+ * I think 10 is an apropriate value so that's what it'll be
+ * for now.
  */
-#ifdef HP_JUKEBOX
-#define RESERVE_FOR_JB  25
-#define MAXFILES        ((NOFILE - RESERVE_FOR_LD) - RESERVE_FOR_JB)
-#else /* HP_JUKEBOX */
-#define MAXFILES        (NOFILE - RESERVE_FOR_LD)
-#endif /* HP_JUKEBOX */
+#ifndef FD_MINFREE
+#define FD_MINFREE 10
+#endif
 
 /* Debugging.... */
 
@@ -197,6 +180,7 @@ static void FreeVfd(File file);
 static int FileAccess(File file);
 static File fileNameOpenFile(FileName fileName, int fileFlags, int fileMode);
 static char *filepath(char *filename);
+static long pg_nofile(void);
 
 int
 pg_fsync(int fd)
@@ -205,6 +189,30 @@ pg_fsync(int fd)
     return fsyncOff ? 0 : fsync(fd);
 }
 #define fsync pg_fsync
+
+long
+pg_nofile(void)
+{
+        static long no_files = 0;
+
+        if (no_files == 0) {
+#if defined(MISSING_SYSCONF)
+		no_files = (long)NOFILE;
+#else
+                no_files = sysconf(_SC_OPEN_MAX);
+		if (no_files == -1) {
+        		elog(DEBUG,"pg_nofile: Unable to get _SC_OPEN_MAX using sysconf() using (%d)", NOFILE);
+			no_files = (long)NOFILE;
+		}
+#endif /* MISSING_SYSCONF */
+        }
+
+	if ((no_files - RESERVE_FOR_LD) < FD_MINFREE)
+		elog(FATAL,"pg_nofile: insufficient File Descriptors in postmaster to start backend (%ld).\n"
+			   "                   O/S allows %ld, Postmaster reserves %d, We need %d (MIN) after that.",
+			 no_files - RESERVE_FOR_LD, no_files, RESERVE_FOR_LD, FD_MINFREE);
+        return no_files - RESERVE_FOR_LD;
+}
 
 #if defined(FDDEBUG)
 static void
@@ -374,7 +382,7 @@ AssertLruRoom()
     DO_DB(printf("DEBUG:        AssertLruRoom (FreeFd = %d)\n",
                  FreeFd));
     
-    if (FreeFd <= 0 || nfile >= MAXFILES) {
+    if (FreeFd <= 0 || nfile >= pg_nofile()) {
         /* We supposedly are using more vfds than we want to be.  First
            assert that there is at least one used vfd in the ring. 
            */
@@ -550,7 +558,7 @@ fileNameOpenFile(FileName fileName,
     file = AllocateVfd();
     vfdP = &VfdCache[file];
     
-    if (nfile >= MAXFILES || (FreeFd == 0 && osRanOut)) {
+    if (nfile >= pg_nofile() || (FreeFd == 0 && osRanOut)) {
         AssertLruRoom();
     }
     
@@ -858,7 +866,7 @@ AllocateFile()
     }
     close(fd);
     ++allocatedFiles;
-    fdleft = MAXFILES - allocatedFiles;
+    fdleft = pg_nofile() - allocatedFiles;
     if (fdleft < 6) {
         elog(DEBUG,"warning: few usable file descriptors left (%d)", fdleft);
     }
