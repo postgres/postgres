@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/hash/dynahash.c,v 1.56 2004/10/25 00:46:43 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/hash/dynahash.c,v 1.57 2004/11/21 22:57:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -662,7 +662,7 @@ hash_search(HTAB *hashp,
 			/* caller is expected to fill the data field on return */
 
 			/* Check if it is time to split the segment */
-			if (++hctl->nentries / (long) (hctl->max_bucket + 1) > hctl->ffactor)
+			if (++hctl->nentries / (long) (hctl->max_bucket + 1) >= hctl->ffactor)
 			{
 				/*
 				 * NOTE: failure to expand table is not a fatal error, it
