@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.94 2004/01/07 18:43:36 neilc Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.95 2004/03/14 23:41:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -307,7 +307,7 @@ typedef enum CoercionForm
 	COERCE_EXPLICIT_CALL,		/* display as a function call */
 	COERCE_EXPLICIT_CAST,		/* display as an explicit cast */
 	COERCE_IMPLICIT_CAST,		/* implicit cast, so hide it */
-	COERCE_DONTCARE				/* special case for pathkeys */
+	COERCE_DONTCARE				/* special case for planner */
 } CoercionForm;
 
 /*

@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.216 2004/03/11 01:47:35 ishii Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.217 2004/03/14 23:41:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -231,7 +231,7 @@ _equalFuncExpr(FuncExpr *a, FuncExpr *b)
 	COMPARE_SCALAR_FIELD(funcretset);
 
 	/*
-	 * Special-case COERCE_DONTCARE, so that pathkeys can build coercion
+	 * Special-case COERCE_DONTCARE, so that planner can build coercion
 	 * nodes that are equal() to both explicit and implicit coercions.
 	 */
 	if (a->funcformat != b->funcformat &&
@@ -372,7 +372,7 @@ _equalRelabelType(RelabelType *a, RelabelType *b)
 	COMPARE_SCALAR_FIELD(resulttypmod);
 
 	/*
-	 * Special-case COERCE_DONTCARE, so that pathkeys can build coercion
+	 * Special-case COERCE_DONTCARE, so that planner can build coercion
 	 * nodes that are equal() to both explicit and implicit coercions.
 	 */
 	if (a->relabelformat != b->relabelformat &&
@@ -472,7 +472,7 @@ _equalCoerceToDomain(CoerceToDomain *a, CoerceToDomain *b)
 	COMPARE_SCALAR_FIELD(resulttypmod);
 
 	/*
-	 * Special-case COERCE_DONTCARE, so that pathkeys can build coercion
+	 * Special-case COERCE_DONTCARE, so that planner can build coercion
 	 * nodes that are equal() to both explicit and implicit coercions.
 	 */
 	if (a->coercionformat != b->coercionformat &&

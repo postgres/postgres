@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.198 2004/02/25 19:41:23 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.199 2004/03/14 23:41:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2687,6 +2687,12 @@ RelationGetIndexExpressions(Relation relation)
 
 	result = (List *) eval_const_expressions((Node *) result);
 
+	/*
+	 * Also mark any coercion format fields as "don't care", so that the
+	 * planner can match to both explicit and implicit coercions.
+	 */
+	set_coercionform_dontcare((Node *) result);
+
 	/* May as well fix opfuncids too */
 	fix_opfuncids((Node *) result);
 
@@ -2754,6 +2760,12 @@ RelationGetIndexPredicate(Relation relation)
 	result = (List *) canonicalize_qual((Expr *) result);
 
 	result = (List *) eval_const_expressions((Node *) result);
+
+	/*
+	 * Also mark any coercion format fields as "don't care", so that the
+	 * planner can match to both explicit and implicit coercions.
+	 */
+	set_coercionform_dontcare((Node *) result);
 
 	/* Also convert to implicit-AND format */
 	result = make_ands_implicit((Expr *) result);

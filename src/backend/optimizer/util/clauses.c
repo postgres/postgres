@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.163 2004/01/28 00:05:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.164 2004/03/14 23:41:27 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -60,6 +60,7 @@ static bool contain_subplans_walker(Node *node, void *context);
 static bool contain_mutable_functions_walker(Node *node, void *context);
 static bool contain_volatile_functions_walker(Node *node, void *context);
 static bool contain_nonstrict_functions_walker(Node *node, void *context);
+static bool set_coercionform_dontcare_walker(Node *node, void *context);
 static Node *eval_const_expressions_mutator(Node *node, List *active_fns);
 static List *simplify_or_arguments(List *args,
 								   bool *haveNull, bool *forceTrue);
@@ -1002,6 +1003,39 @@ CommuteClause(OpExpr *clause)
 	lsecond(clause->args) = temp;
 }
 
+/*
+ * set_coercionform_dontcare: set all CoercionForm fields to COERCE_DONTCARE
+ *
+ * This is used to make index expressions and index predicates more easily
+ * comparable to clauses of queries.  CoercionForm is not semantically
+ * significant (for cases where it does matter, the significant info is
+ * coded into the coercion function arguments) so we can ignore it during
+ * comparisons.  Thus, for example, an index on "foo::int4" can match an
+ * implicit coercion to int4.
+ *
+ * Caution: the passed expression tree is modified in-place.
+ */
+void
+set_coercionform_dontcare(Node *node)
+{
+	(void) set_coercionform_dontcare_walker(node, NULL);
+}
+
+static bool
+set_coercionform_dontcare_walker(Node *node, void *context)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, FuncExpr))
+		((FuncExpr *) node)->funcformat = COERCE_DONTCARE;
+	if (IsA(node, RelabelType))
+		((RelabelType *) node)->relabelformat = COERCE_DONTCARE;
+	if (IsA(node, CoerceToDomain))
+		((CoerceToDomain *) node)->coercionformat = COERCE_DONTCARE;
+	return expression_tree_walker(node, set_coercionform_dontcare_walker,
+								  context);
+}
+
 
 /*--------------------
  * eval_const_expressions
@@ -1766,7 +1800,7 @@ evaluate_function(Oid funcid, Oid result_type, List *args,
 	newexpr->funcid = funcid;
 	newexpr->funcresulttype = result_type;
 	newexpr->funcretset = false;
-	newexpr->funcformat = COERCE_EXPLICIT_CALL; /* doesn't matter */
+	newexpr->funcformat = COERCE_DONTCARE;		/* doesn't matter */
 	newexpr->args = args;
 
 	return evaluate_expr((Expr *) newexpr, result_type);
