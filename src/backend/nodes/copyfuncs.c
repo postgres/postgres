@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.35 1998/01/20 22:10:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.36 1998/01/21 23:42:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -803,7 +803,7 @@ _copyConst(Const *from)
 				 */
 				int			length;
 
-				length = *((int *) from->constvalue);
+				length = VARSIZE(from->constvalue);
 				newnode->constvalue = PointerGetDatum(palloc(length));
 				memmove((char *) newnode->constvalue,
 						(char *) from->constvalue, length);
