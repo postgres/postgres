@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufmgr.h,v 1.57 2001/11/10 23:51:14 tgl Exp $
+ * $Id: bufmgr.h,v 1.58 2002/04/15 23:47:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,13 +43,6 @@ extern long *LocalRefCount;
 #define BUFFER_LOCK_UNLOCK		0
 #define BUFFER_LOCK_SHARE		1
 #define BUFFER_LOCK_EXCLUSIVE	2
-
-
-/**********************************************************************
-
-  the rest is function defns in the bufmgr that are externally callable
-
- **********************************************************************/
 
 /*
  * These routines are beaten on quite heavily, hence the macroization.
@@ -149,7 +142,6 @@ extern long *LocalRefCount;
 	: \
 		BufferBlockPointers[(buffer) - 1] \
 )
-
 
 /*
  * prototypes for functions in bufmgr.c

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.122 2002/03/06 06:10:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.123 2002/04/15 23:47:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1026,7 +1026,7 @@ BufmgrCommit(void)
 BlockNumber
 BufferGetBlockNumber(Buffer buffer)
 {
-	Assert(BufferIsValid(buffer));
+	Assert(BufferIsPinned(buffer));
 
 	if (BufferIsLocal(buffer))
 		return LocalBufferDescriptors[-buffer - 1].tag.blockNum;

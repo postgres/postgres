@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: buf.h,v 1.12 2001/11/05 17:46:35 momjian Exp $
+ * $Id: buf.h,v 1.13 2002/04/15 23:47:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,13 +35,5 @@ typedef int Buffer;
  *		True iff the buffer is local (not visible to other servers).
  */
 #define BufferIsLocal(buffer)	((buffer) < 0)
-
-/*
- * If NO_BUFFERISVALID is defined, all error checking using BufferIsValid()
- * are suppressed.	Decision-making using BufferIsValid is not affected.
- * This should be set only if one is sure there will be no errors.
- * - plai 9/10/90
- */
-#undef NO_BUFFERISVALID
 
 #endif   /* BUF_H */
