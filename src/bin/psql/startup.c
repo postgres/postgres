@@ -158,8 +158,9 @@ main(int argc, char **argv)
 
 	if (PQstatus(settings.db) == CONNECTION_BAD)
 	{
-		fprintf(stderr, "%s: connection to database '%s' failed - %s",
-                settings.progname, PQdb(settings.db), PQerrorMessage(settings.db));
+		fprintf(stderr, "%s: connection to database '%s' failed.\n%s",
+                settings.progname, PQdb(settings.db),
+				PQerrorMessage(settings.db));
 		PQfinish(settings.db);
 		exit(EXIT_BADCONN);
 	}
