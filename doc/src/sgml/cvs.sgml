@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/cvs.sgml,v 1.24 2002/10/20 20:58:02 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/cvs.sgml,v 1.25 2003/06/11 15:28:55 tgl Exp $
 CVS code repository
 Thomas Lockhart
 -->
@@ -67,10 +67,14 @@ Thomas Lockhart
      Do an initial login to the <productname>CVS</productname> server:
 
      <programlisting>
-$ cvs -d :pserver:anoncvs@anoncvs.postgresql.org:/projects/cvsroot login
+cvs -d :pserver:anoncvs@anoncvs.postgresql.org:/projects/cvsroot login
      </programlisting>
 
-     You will be prompted for a password; just press <literal>ENTER</literal>.
+     You will be prompted for a password; you can enter anything except
+     an empty string.
+    </para>
+
+    <para>
      You should only need to do this once, since the password will be
      saved in <literal>.cvspass</literal> in your home directory.
     </para>
@@ -83,7 +87,7 @@ $ cvs -d :pserver:anoncvs@anoncvs.postgresql.org:/projects/cvsroot login
 cvs -z3 -d :pserver:anoncvs@anoncvs.postgresql.org:/projects/cvsroot co -P pgsql
      </programlisting>
 
-     which installs the <productname>PostgreSQL</productname> sources into a
+     This installs the <productname>PostgreSQL</productname> sources into a
      subdirectory <filename>pgsql</filename>
      of the directory you are currently in.
 
