@@ -23,4 +23,4 @@ test_init: test_init.c
 	$(ECPG) $? 
 
 clean:
-	rm -f test1 test2 test3 test4 perftest *.c log dyntest dyntest2
+	rm -f test1 test2 test3 test4 perftest *.c log dyntest dyntest2 test_notice test_code100
