@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.100 2001/09/16 04:12:35 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.101 2001/09/16 04:18:57 momjian Exp $
 -->
 
  <appendix id="release">
@@ -25,7 +25,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.100 2001/09/16 04:12:35 mo
    -->
 
    <para>
-	TO BE FILLED IN.
+	TO BE FILLED IN.  SEE /HISTORY.
    </para>
 
    <para>
@@ -34,11 +34,11 @@ $Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.100 2001/09/16 04:12:35 mo
     <variablelist>
      <varlistentry>
       <term>
-	TO BE FILLED IN
+	TO BE FILLED IN.  SEE /HISTORY.
       </term>
       <listitem>
        <para>
-TO BE FILLED IN
+TO BE FILLED IN.  SEE /HISTORY.
        </para>
       </listitem>
      </varlistentry>
@@ -59,7 +59,7 @@ TO BE FILLED IN
 
     <para>
      <programlisting>
-TO BE FILLED IN
+TO BE FILLED IN.  SEE /HISTORY.
      </programlisting>
     </para>
    </sect2>
