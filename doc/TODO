@@ -5,7 +5,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Tue Jul 20 15:37:35 EDT 2004
+Last updated:		Tue Jul 20 15:52:00 EDT 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web site, http://www.PostgreSQL.org.
 
@@ -82,6 +82,7 @@ Data Types
 * Allow substring/replace() to get/set bit values
 * Add GUC variable to allow output of interval values in ISO8601 format
 * Support composite types as table columns
+* Fix data types where equality comparison isn't intuitive, e.g. box
 
 
 * ARRAYS
