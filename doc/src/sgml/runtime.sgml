@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.299 2004/12/26 23:06:56 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.300 2005/01/04 00:05:44 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -144,9 +144,10 @@ postgres$ <userinput>initdb -D /usr/local/pgsql/data</userinput>
    that can be found in <xref linkend="locale">.  The sort order used
    within a particular database cluster is set by
    <command>initdb</command> and cannot be changed later, short of
-   dumping all data, rerunning <command>initdb</command>, and
-   reloading the data. So it's important to make this choice correctly
-   the first time.
+   dumping all data, rerunning <command>initdb</command>, and reloading
+   the data. There is also a performance impact for using locales
+   other than <literal>C</> or <literal>POSIX</>. Therefore, it is
+   important to make this choice correctly the first time.
   </para>
  </sect1>
 

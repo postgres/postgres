@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.47 2004/12/27 22:30:10 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.48 2005/01/04 00:05:44 momjian Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -189,16 +189,23 @@ initdb --locale=sv_SE
   </sect2>
 
   <sect2>
-   <title>Benefits</>
+   <title>Behavior</>
 
    <para>
-    Locale support influences in particular the following features:
+    Locale support influences the following features:
 
     <itemizedlist>
      <listitem>
       <para>
        Sort order in queries using <literal>ORDER BY</>
        <indexterm><primary>ORDER BY</><secondary>and locales</></indexterm>
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       The ability to use indexes with <literal>LIKE</> clauses
+       <indexterm><primary>LIKE</><secondary>and locales</></indexterm>
       </para>
      </listitem>
 
@@ -211,9 +218,11 @@ initdb --locale=sv_SE
    </para>
 
    <para>
-    The only severe drawback of using the locale support in
-    <productname>PostgreSQL</> is its speed.  So use locales only if
-    you actually need them.
+    The drawback of using locales other than <literal>C</> or
+    <literal>POSIX</> in <productname>PostgreSQL</> is its performance
+    impact. It slows character handling and prevents ordinary indexes
+    from being used by <literal>LIKE</>. For this reason use locales
+    only if you actually need them.
    </para>
   </sect2>
 

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/initdb.sgml,v 1.32 2004/08/01 06:19:18 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/initdb.sgml,v 1.33 2005/01/04 00:05:45 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -54,21 +54,22 @@ PostgreSQL documentation
   </para>
 
   <para>
-   <command>initdb</command> initializes the database cluster's
-   default locale and character set encoding.  Some locale categories
-   are fixed for the lifetime of the cluster, so it is important to
-   make the right choice when running <command>initdb</command>.
-   Other locale categories can be changed later when the server is
-   started.  <command>initdb</command> will write those locale
-   settings into the <filename>postgresql.conf</filename>
-   configuration file so they are the default, but they can be changed
-   by editing that file.  To set the locale that
-   <command>initdb</command> uses, see the description of the
-   <option>--locale</option> option.  The character set encoding can
+   <command>initdb</command> initializes the database cluster's default
+   locale and character set encoding. Some locale categories are fixed
+   for the lifetime of the cluster. There is also a performance impact
+   in using locales other than <literal>C</> or <literal>POSIX</>.
+   Therefore it is important to make the right choice when running
+   <command>initdb</command>. Other locale categories can be changed
+   later when the server is started. <command>initdb</command> will
+   write those locale settings into the
+   <filename>postgresql.conf</filename> configuration file so they are
+   the default, but they can be changed by editing that file. To set the
+   locale that <command>initdb</command> uses, see the description of
+   the <option>--locale</option> option. The character set encoding can
    be set separately for each database as it is created.
    <command>initdb</command> determines the encoding for the
    <literal>template1</literal> database, which will serve as the
-   default for all other databases.  To alter the default encoding use
+   default for all other databases. To alter the default encoding use
    the <option>--encoding</option> option.
   </para>
 
