@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.17 1999/02/10 03:52:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.18 1999/02/10 17:14:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -606,11 +606,11 @@ hash_inner_and_outer(RelOptInfo * joinrel,
 											 innerrel->size,
 											 outerrel->width,
 											 innerrel->width,
-										 (Path *) outerrel->cheapestpath,
-										 (Path *) innerrel->cheapestpath,
+										 	(Path *) outerrel->cheapestpath,
+										 	(Path *) innerrel->cheapestpath,
 											 hash_pathkeys,
 											 xhashinfo->hashop,
-									 ((JoinMethod *) xhashinfo)->clauses,
+									 	((JoinMethod *) xhashinfo)->clauses,
 											 outerkeys,
 											 innerkeys);
 			hjoin_list = lappend(hjoin_list, temp_node);

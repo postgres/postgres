@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.41 1999/02/10 03:52:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.42 1999/02/10 17:14:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -870,8 +870,8 @@ make_noname(List *tlist,
 
 	/* Create a new target list for the noname, with keys set. */
 	noname_tlist = set_noname_tlist_operators(new_unsorted_tlist(tlist),
-										  pathkeys,
-										  operators);
+											  pathkeys,
+											  operators);
 	switch (nonametype)
 	{
 		case NONAME_SORT:
@@ -879,9 +879,9 @@ make_noname(List *tlist,
 										   NIL,
 										   _NONAME_RELATION_ID_,
 										   (Plan *) make_sort(noname_tlist,
-													  _NONAME_RELATION_ID_,
-															  plan_node,
-														  length(pathkeys)));
+											_NONAME_RELATION_ID_,
+											plan_node,
+											length(pathkeys)));
 			break;
 
 		case NONAME_MATERIAL:
@@ -889,9 +889,9 @@ make_noname(List *tlist,
 										   NIL,
 										   _NONAME_RELATION_ID_,
 									   (Plan *) make_material(noname_tlist,
-													  _NONAME_RELATION_ID_,
-															  plan_node,
-														  length(pathkeys)));
+											_NONAME_RELATION_ID_,
+											plan_node,
+											length(pathkeys)));
 			break;
 
 		default:

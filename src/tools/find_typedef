@@ -5,8 +5,7 @@
 # For this program to work, you must have compiled all binaries with 
 # debugging symbols.
 #
-# This is run on BSD/OS 3.0, so you may need to make changes for your
-# version of nm.
+# This is run on BSD/OS 4.0, so you may need to make changes.
 # 
 # Ignore the nm errors about a file not being a binary file.
 #
@@ -18,10 +17,12 @@ then	echo "Usage:  $0 postgres_binary_directory" 1>&2
 	exit 1
 fi
 
-nm -a "$1"/* |
-grep LSYM |
+objdump --stabs "$1"/* |
+grep "LSYM" |
+awk '{print $7}' |
 grep ':t' |
-sed 's/^.*LSYM \([^:]*\):.*$/\1/' |
-grep -v ' ' | # some typedefs have spaces, revove them
-sort | 
+sed 's/^\([^:]*\).*$/\1/' |
+grep -v ' ' | # some typedefs have spaces, remove them
+sort |
 uniq
+
