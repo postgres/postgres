@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.93 2003/01/06 03:18:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.94 2003/03/15 16:18:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1248,7 +1248,7 @@ ident_unix(int sock, char *ident_user)
 
 	return true;
 
-#elsif defined(SO_PEERCRED)
+#elif defined(SO_PEERCRED)
 	/* Linux style: use getsockopt(SO_PEERCRED) */
 	struct ucred peercred;
 	ACCEPT_TYPE_ARG3 so_len = sizeof(peercred);
