@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.235 2002/05/28 22:15:42 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.236 2002/06/13 02:04:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2212,8 +2212,16 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 		qry->isBinary = FALSE;
 	}
 
+	/*
+	 * Any column names from CREATE TABLE AS need to be attached to both the
+	 * top level and the leftmost subquery.  We do not do this earlier
+	 * because we do *not* want the targetnames list to be affected.
+	 */
 	if (intoColNames)
+	{
 		applyColumnNames(qry->targetList, intoColNames);
+		applyColumnNames(leftmostQuery->targetList, intoColNames);
+	}
 
 	/*
 	 * As a first step towards supporting sort clauses that are
