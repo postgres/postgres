@@ -1,0 +1,68 @@
+
+
+   			      findoidjoins
+
+This program scans the a database, and prints oid fields, and the tables
+they join to.  PostgreSQL version 6.3.2 crashes with aggregates on
+views, so I have removed the view pg_user from the list of relations to
+examine.
+
+Run on am empty database, it returns the system join relationships:
+
+---------------------------------------------------------------------------
+
+Join pg_aggregate.aggfinaltype => pg_proc.oid
+Join pg_aggregate.aggfinaltype => pg_type.oid
+Join pg_aggregate.aggowner => pg_proc.oid
+Join pg_aggregate.aggbasetype => pg_proc.oid
+Join pg_aggregate.aggbasetype => pg_type.oid
+Join pg_aggregate.aggtranstype1 => pg_proc.oid
+Join pg_aggregate.aggtranstype1 => pg_type.oid
+Join pg_aggregate.aggtranstype2 => pg_type.oid
+Join pg_am.amowner => pg_proc.oid
+Join pg_amop.amopid => pg_am.oid
+Join pg_amop.amopopr => pg_operator.oid
+Join pg_amop.amopclaid => pg_opclass.oid
+Join pg_amproc.amproc => pg_operator.oid
+Join pg_amproc.amproc => pg_proc.oid
+Join pg_amproc.amopclaid => pg_opclass.oid
+Join pg_amproc.amopclaid => pg_operator.oid
+Join pg_amproc.amopclaid => pg_proc.oid
+Join pg_amproc.amid => pg_am.oid
+Join pg_attribute.attrelid => pg_class.oid
+Join pg_attribute.atttypid => pg_type.oid
+Join pg_class.relam => pg_am.oid
+Join pg_class.reltype => pg_type.oid
+Join pg_class.relowner => pg_proc.oid
+Join pg_description.objoid => pg_proc.oid
+Join pg_description.objoid => pg_type.oid
+Join pg_index.indexrelid => pg_class.oid
+Join pg_index.indrelid => pg_class.oid
+Join pg_index.indproc => pg_proc.oid
+Join pg_opclass.opcdeftype => pg_type.oid
+Join pg_operator.oprcom => pg_operator.oid
+Join pg_operator.oprrsortop => pg_operator.oid
+Join pg_operator.oprlsortop => pg_operator.oid
+Join pg_operator.oprnegate => pg_operator.oid
+Join pg_operator.oprresult => pg_type.oid
+Join pg_operator.oprright => pg_type.oid
+Join pg_operator.oprleft => pg_type.oid
+Join pg_operator.oprowner => pg_proc.oid
+Join pg_parg.partype => pg_type.oid
+Join pg_parg.parproid => pg_operator.oid
+Join pg_parg.parproid => pg_proc.oid
+Join pg_proc.prolang => pg_language.oid
+Join pg_proc.prorettype => pg_type.oid
+Join pg_proc.proowner => pg_proc.oid
+Join pg_rewrite.ev_class => pg_class.oid
+Join pg_statistic.starelid => pg_class.oid
+Join pg_type.typrelid => pg_class.oid
+Join pg_type.typowner => pg_proc.oid
+Join pg_type.typelem => pg_operator.oid
+Join pg_type.typelem => pg_proc.oid
+Join pg_type.typelem => pg_type.oid
+
+
+---------------------------------------------------------------------------
+
+Bruce Momjian (root@candle.pha.pa.us)

@@ -22,6 +22,11 @@ useful if you are running the query engine on a system with a different
 architecture than the database server.  If you pass a NULL pointer, the
 column is skipped, and you can use libpq to handle it as you wish.
 
+There are two functions, get_result() and set_result, that allow you to
+handle multiple result sets at the same time.
+
+There is a reset_fetch() that starts the fetch back at the beginning.
+
 There is a demo program called pginsert that demonstrates how the
 library can be used.
 

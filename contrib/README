@@ -18,6 +18,11 @@ earthdistance -
 	Operator for computing earth distance for two points
 	by Hal Snyder <hal@vailsys.com>
 
+findoidjoins -
+	Finds the joins used by oid columns by examining the actual
+	values in the oid columns and row oids.
+	by Bruce Momjian <root@candle.pha.pa.us>
+
 fulltextindex -
 	Full text indexing using triggers
 	by Maarten Boekhold <maartenb@dutepp0.et.tudelft.nl>

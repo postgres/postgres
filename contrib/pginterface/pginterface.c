@@ -22,6 +22,9 @@ static PGresult *res = NULL;
 
 static int	on_error_state = ON_ERROR_STOP;
 
+static in_result_block = false;
+static was_get_unset_result = false;
+
 /* LOCAL VARIABLES */
 static int	tuple;
 
@@ -64,9 +67,10 @@ disconnectdb()
 PGresult   *
 doquery(char *query)
 {
-	if (res != NULL)
+	if (res != NULL && in_result_block == false && was_get_unset_result == false)
 		PQclear(res);
 
+	was_get_unset_result = false;
 	res = PQexec(conn, query);
 
 	if (on_error_state == ON_ERROR_STOP &&
@@ -187,3 +191,69 @@ on_error_continue()
 {
 	on_error_state = ON_ERROR_CONTINUE;
 }
+
+
+/*
+**
+**		get_result
+**
+*/
+PGresult   *get_result()
+{
+	was_get_unset_result = true;
+	/* we have to store the fetch location somewhere */
+	memcpy(&res->cmdStatus[CMDSTATUS_LEN-sizeof(tuple)],&tuple, sizeof(tuple));
+	return res;
+}
+	
+/*
+**
+**		set_result
+**
+*/
+void        set_result(PGresult *newres)
+{
+	if (newres == NULL)
+		halt("set_result called with null result pointer\n");
+
+	if (res != NULL && was_get_unset_result == false)
+		if (in_result_block == false)
+			PQclear(res);
+		else
+			memcpy(&res->cmdStatus[CMDSTATUS_LEN-sizeof(tuple)], &tuple, sizeof(tuple));
+		
+	in_result_block = true;
+	was_get_unset_result = false;
+	memcpy(&tuple, &newres->cmdStatus[CMDSTATUS_LEN-sizeof(tuple)], sizeof(tuple));
+	res = newres;
+}
+
+
+/*
+**
+**		unset_result
+**
+*/
+void       unset_result(PGresult *oldres)
+{
+	if (oldres == NULL)
+		halt("unset_result called with null result pointer\n");
+
+	if (in_result_block == false)
+		halt("Unset of result without being set.\n");
+
+	was_get_unset_result = true;
+	memcpy(&oldres->cmdStatus[CMDSTATUS_LEN-sizeof(tuple)], &tuple, sizeof(tuple));
+	in_result_block = false;
+}
+
+/*
+**
+**		reset_fetch
+**
+*/
+void        reset_fetch()
+{
+	tuple = 0;
+}
+
