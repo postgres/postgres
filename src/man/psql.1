@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/psql.1,v 1.7 1997/04/10 11:58:59 scrappy Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/psql.1,v 1.8 1997/05/21 03:12:23 momjian Exp $
 .TH PSQL UNIX 1/20/96 PostgreSQL PostgreSQL
 .SH NAME
 psql \(em run the interactive query front-end
@@ -258,7 +258,7 @@ You should anyway.
 Toggle field alignment when printing out table elements.
 .IP "\eC \fIcaption\fR"
 Set the HTML3.0 table caption.
-.IP "\econnect \fIdbname\fR"
+.IP "\econnect \fIdbname\fR \fIusername\fR"
 Establish a connection to a new database. The previous connection is closed.
 .IP "\ecopy \fItable\fR {FROM | TO} \fIfilename\fR"
 Perform a frontend copy.  This is an operation that runs a SQL COPY command,

@@ -12,25 +12,27 @@ then
 else
 	BS='\\'			# System V
 fi
-psql -l -A -q -t| tr '|' ' ' | grep -v '^template1 ' | \
-while read DATABASE USERID USER
-do
-	echo "${BS}connect template1"
-	echo "create database $DATABASE;"
-	echo "${BS}connect $DATABASE"
-	pg_dump "$@" $DATABASE
-done
-echo "${BS}connect template1"
-echo "copy pg_user from stdin;"
 #
 # Dump everyone but the postgres user
 # initdb creates him
 #
+# get the postgres user id
+#
 POSTGRES_SUPER_USER_ID="`psql -A -q -t template1 <<END
-select datdba 
+select datdba
 from pg_database
 where datname = 'template1';
 END`"
+echo "${BS}connect template1"
+#
+# delete all users in case they run this twice
+#
+echo "delete from pg_user"
+echo "where usesysid <> $POSTGRES_SUPER_USER_ID;"
+#
+# load all the non-postgres users
+#
+echo "copy pg_user from stdin;"
 psql -q template1 <<END
 select pg_user.* into table tmp_pg_user
 from pg_user
@@ -39,3 +41,18 @@ copy tmp_pg_user to stdout;
 drop table tmp_pg_user;
 END
 echo "${BS}."
+psql -l -A -q -t| tr '|' ' ' | grep -v '^template1 ' | \
+while read DATABASE PGUSERID DATAPATH
+do
+	POSTGRES_USER="`psql -A -q -t template1 <<END
+select usename
+from pg_user
+where usesysid = $PGUSERID;
+END`"
+
+	echo "${BS}connect template1 $POSTGRES_USER"
+	echo "create database $DATABASE;"
+	echo "${BS}connect $DATABASE $POSTGRES_USER"
+	pg_dump "$@" $DATABASE
+done
+# done

@@ -7,11 +7,12 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.59 1997/04/10 11:54:29 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.60 1997/05/21 03:12:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <signal.h>
 #include <errno.h>
@@ -155,7 +156,7 @@ slashUsage(PsqlSettings * ps)
     fprintf(stderr, " \\?           -- help\n");
     fprintf(stderr, " \\a           -- toggle field-alignment (currenty %s)\n", on(ps->opt.align));
     fprintf(stderr, " \\C [<captn>] -- set html3 caption (currently '%s')\n", ps->opt.caption ? ps->opt.caption : "");
-    fprintf(stderr, " \\connect <dbname>  -- connect to new database (currently '%s')\n", PQdb(ps->db));
+    fprintf(stderr, " \\connect <dbname> <user> -- connect to new database (currently '%s')\n", PQdb(ps->db));
     fprintf(stderr, " \\copy table {from | to} <fname>\n");
     fprintf(stderr, " \\d [<table>] -- list tables in database or columns in <table>, * for all\n");
     fprintf(stderr, " \\e [<fname>] -- edit the current query buffer or <fname>, \\E execute too\n");
@@ -825,19 +826,36 @@ do_copy(const char *args, PsqlSettings * settings)
 
 
 static void
-do_connect(const char *new_dbname, PsqlSettings * settings)
+do_connect(const char *new_dbname,
+		const char *new_user,
+		PsqlSettings * settings)
 {
 
     char           *dbname = PQdb(settings->db);
     if (!new_dbname)
 	fprintf(stderr, "\\connect must be followed by a database name\n");
     else {
-	PGconn         *olddb = settings->db;
+	PGconn          *olddb = settings->db;
+	char		*userenv;
 
 	printf("closing connection to database: %s\n", dbname);
+	if (new_user != NULL) {
+		/*
+		   PQsetdb() does not allow us to specify the user,
+		   so we have to do it via PGUSER
+		*/
+	    userenv = malloc(strlen("PGUSER=") + strlen(new_user) + 1);
+	    sprintf(userenv,"PGUSER=%s",new_user);
+	    putenv(userenv);
+	    free(userenv);
+	}
 	settings->db = PQsetdb(PQhost(olddb), PQport(olddb),
 			       NULL, NULL, new_dbname);
-	printf("connecting to new database: %s\n", new_dbname);
+	if (!new_user)
+	    printf("connecting to new database: %s\n", new_dbname);
+	else
+	    printf("connecting to new database: %s as user: %s\n",
+							new_dbname,new_user);
 	if (PQstatus(settings->db) == CONNECTION_BAD) {
 	    fprintf(stderr, "%s\n", PQerrorMessage(settings->db));
 	    printf("reconnecting to %s\n", dbname);
@@ -1037,12 +1055,19 @@ HandleSlashCmds(PsqlSettings * settings,
      * assuming it's not a one-character command.  If it's a one-character
      * command, this is meaningless.
      */
+    char           *optarg3;
+    /*
+     * Pointer inside the second <cmd> string to the argument of the slash command
+     * assuming it's not a one-character command.  If it's a one-character
+     * command, this is meaningless.
+     */
     char           *cmd;
     /*
      * String: value of the slash command, less the slash and with escape
      * sequences decoded.
      */
     int             blank_loc;
+    int             blank_loc2;
     /* Offset within <cmd> of first blank */
 
     cmd = malloc(strlen(line));	/* unescaping better not make string grow. */
@@ -1064,12 +1089,20 @@ HandleSlashCmds(PsqlSettings * settings,
 	optarg = NULL;
 
     blank_loc = strcspn(cmd, " \t");
-    if (blank_loc == 0)
+    if (blank_loc == 0) {
 	optarg2 = NULL;
-    else
+	optarg3 = NULL;
+    } else {
 	optarg2 = cmd + blank_loc + strspn(cmd + blank_loc, " \t");
-
-
+    	blank_loc2 = strcspn(optarg2, " \t");
+    	if (blank_loc2 == 0 || *(optarg2 + blank_loc2) == '\0')
+	    optarg3 = NULL;
+	else {
+	    optarg3 = optarg2 + blank_loc2 + strspn(optarg2 + blank_loc2, " \t");
+	    *(optarg2 + blank_loc2) = '\0';
+	}
+    }
+		
     switch (cmd[0]) {
     case 'a':			/* toggles to align fields on output */
 	toggle(settings, &settings->opt.align, "field alignment");
@@ -1092,9 +1125,9 @@ HandleSlashCmds(PsqlSettings * settings,
 	    if (strncmp(cmd, "copy ", strlen("copy ")) == 0)
 		do_copy(optarg2, settings);
 	    else if (strncmp(cmd, "connect ", strlen("connect ")) == 0)
-		do_connect(optarg2, settings);
+		do_connect(optarg2, optarg3, settings);
 	    else
-		do_connect(optarg, settings);
+		do_connect(optarg, optarg2,  settings);
 	}
 	break;
     case 'd':			/* \d describe tables or columns in a table */
