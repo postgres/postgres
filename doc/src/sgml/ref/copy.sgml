@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/copy.sgml,v 1.21 2001/05/27 09:59:27 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/copy.sgml,v 1.22 2001/08/10 23:09:30 tgl Exp $
 Postgres documentation
 -->
 
@@ -65,7 +65,7 @@ COPY [ BINARY ] <replaceable class="parameter">table</replaceable> [ WITH OIDS ]
       <term>WITH OIDS</term>
       <listitem>
        <para>
-	Specifies copying the internal unique object id (OID) for each row.
+	Specifies copying the internal object id (OID) for each row.
        </para>
       </listitem>
      </varlistentry>
@@ -181,12 +181,12 @@ ERROR: <replaceable>reason</replaceable>
   </para>
 
   <para>
-   <command>COPY</command> instructs
+   <command>COPY</command> with a filename instructs
    the <productname>Postgres</productname> backend
-   to directly read from or write to a file. If a file name is specified,
-   the file must be accessible to the backend and the name must be specified
+   to directly read from or write to a file.
+   The file must be accessible to the backend and the name must be specified
    from the viewpoint of the backend.
-   If <filename>stdin</filename> or <filename>stdout</filename> is
+   When <filename>stdin</filename> or <filename>stdout</filename> is
    specified, data flows through the client frontend to  the backend.
     
     <tip>
@@ -209,6 +209,11 @@ ERROR: <replaceable>reason</replaceable>
    <title>
     Notes
    </title>
+   <para>
+   <command>COPY</command> can only be used with plain tables, not with
+   views.
+   </para>
+
    <para>
     The BINARY keyword will force all data to be
     stored/read as binary format rather than as text.  It is
@@ -318,6 +323,8 @@ ERROR: <replaceable>reason</replaceable>
    </para>
    <para>
     The OID is emitted as the first column if WITH OIDS is specified.
+    (An error is raised if WITH OIDS is specified for a table that does not
+    have OIDs.)
    </para>
    <para>
     If <command>COPY TO</command> is sending its output to standard
@@ -525,7 +532,7 @@ If OIDs are included in the dump, the OID field immediately follows the
 field-count word.  It is a normal field except that it's not included
 in the field-count.  In particular it has a typlen --- this will allow
 handling of 4-byte vs 8-byte OIDs without too much pain, and will allow
-OIDs to be shown as NULL if we someday allow OIDs to be optional.
+OIDs to be shown as NULL if that ever proves desirable.
     </para>
    </refsect3>
 
