@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.79 2003/02/16 02:30:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.80 2003/03/02 20:45:47 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1388,11 +1388,12 @@ exec_stmt_fors(PLpgSQL_execstate * estate, PLpgSQL_stmt_fors * stmt)
 			if (rc != PLPGSQL_RC_OK)
 			{
 				/*
-				 * We're aborting the loop, so cleanup and set FOUND
+				 * We're aborting the loop, so cleanup and set FOUND.
+				 * (This code should match the code after the loop.)
 				 */
-				exec_set_found(estate, found);
 				SPI_freetuptable(tuptab);
 				SPI_cursor_close(portal);
+				exec_set_found(estate, found);
 
 				if (rc == PLPGSQL_RC_EXIT)
 				{
@@ -1428,6 +1429,11 @@ exec_stmt_fors(PLpgSQL_execstate * estate, PLpgSQL_stmt_fors * stmt)
 		n = SPI_processed;
 		tuptab = SPI_tuptable;
 	}
+
+	/*
+	 * Release last group of tuples
+	 */
+	SPI_freetuptable(tuptab);
 
 	/*
 	 * Close the implicit cursor
@@ -2381,7 +2387,7 @@ exec_stmt_dynfors(PLpgSQL_execstate * estate, PLpgSQL_stmt_dynfors * stmt)
 	if (n == 0)
 		exec_move_row(estate, rec, row, NULL, tuptab->tupdesc);
 	else
-		found = true;
+		found = true;			/* processed at least one tuple */
 
 	/*
 	 * Now do the loop
@@ -2400,14 +2406,15 @@ exec_stmt_dynfors(PLpgSQL_execstate * estate, PLpgSQL_stmt_dynfors * stmt)
 			 */
 			rc = exec_stmts(estate, stmt->body);
 
-			/*
-			 * We're aborting the loop, so cleanup and set FOUND
-			 */
 			if (rc != PLPGSQL_RC_OK)
 			{
-				exec_set_found(estate, found);
+				/*
+				 * We're aborting the loop, so cleanup and set FOUND.
+				 * (This code should match the code after the loop.)
+				 */
 				SPI_freetuptable(tuptab);
 				SPI_cursor_close(portal);
+				exec_set_found(estate, found);
 
 				if (rc == PLPGSQL_RC_EXIT)
 				{
@@ -2445,7 +2452,12 @@ exec_stmt_dynfors(PLpgSQL_execstate * estate, PLpgSQL_stmt_dynfors * stmt)
 	}
 
 	/*
-	 * Close the cursor
+	 * Release last group of tuples
+	 */
+	SPI_freetuptable(tuptab);
+
+	/*
+	 * Close the implicit cursor
 	 */
 	SPI_cursor_close(portal);
 
@@ -2754,24 +2766,15 @@ exec_stmt_fetch(PLpgSQL_execstate * estate, PLpgSQL_stmt_fetch * stmt)
 	pfree(curname);
 
 	/* ----------
-	 * Initialize the global found variable to false
-	 * ----------
-	 */
-	exec_set_found(estate, false);
-
-	/* ----------
 	 * Determine if we fetch into a record or a row
 	 * ----------
 	 */
 	if (stmt->rec != NULL)
 		rec = (PLpgSQL_rec *) (estate->datums[stmt->rec->recno]);
+	else if (stmt->row != NULL)
+		row = (PLpgSQL_row *) (estate->datums[stmt->row->rowno]);
 	else
-	{
-		if (stmt->row != NULL)
-			row = (PLpgSQL_row *) (estate->datums[stmt->row->rowno]);
-		else
-			elog(ERROR, "unsupported target in exec_stmt_select()");
-	}
+		elog(ERROR, "unsupported target in exec_stmt_fetch()");
 
 	/* ----------
 	 * Fetch 1 tuple from the cursor
@@ -2782,22 +2785,19 @@ exec_stmt_fetch(PLpgSQL_execstate * estate, PLpgSQL_stmt_fetch * stmt)
 	n = SPI_processed;
 
 	/* ----------
-	 * If the FETCH didn't return a row, set the target
-	 * to NULL and return with FOUND = false.
+	 * Set the target and the global FOUND variable appropriately.
 	 * ----------
 	 */
 	if (n == 0)
 	{
 		exec_move_row(estate, rec, row, NULL, tuptab->tupdesc);
-		return PLPGSQL_RC_OK;
+		exec_set_found(estate, false);
 	}
-
-	/* ----------
-	 * Put the result into the target and set found to true
-	 * ----------
-	 */
-	exec_move_row(estate, rec, row, tuptab->vals[0], tuptab->tupdesc);
-	exec_set_found(estate, true);
+	else
+	{
+		exec_move_row(estate, rec, row, tuptab->vals[0], tuptab->tupdesc);
+		exec_set_found(estate, true);
+	}
 
 	SPI_freetuptable(tuptab);
 
