@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.86 2002/05/19 10:08:25 petere Exp $
+ * $Id: pg_dump.h,v 1.87 2002/05/28 22:26:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,10 +70,11 @@ typedef struct _aggInfo
 {
 	char	   *oid;
 	char	   *aggname;
-	char	   *aggbasetype;
+	char	   *aggbasetype;	/* OID */
 	NamespaceInfo *aggnamespace;	/* link to containing namespace */
 	char	   *usename;
 	char	   *aggacl;
+	char	   *fmtbasetype;	/* formatted type name */
 } AggInfo;
 
 typedef struct _oprInfo

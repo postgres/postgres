@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.46 2002/05/10 22:36:26 tgl Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.47 2002/05/28 22:26:56 tgl Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -2097,17 +2097,23 @@ _reconnectAsOwner(ArchiveHandle *AH, const char *dbname, TocEntry *te)
 static void
 _selectOutputSchema(ArchiveHandle *AH, const char *schemaName)
 {
+	PQExpBuffer qry;
+
 	if (!schemaName || *schemaName == '\0' ||
 		strcmp(AH->currSchema, schemaName) == 0)
 		return;					/* no need to do anything */
 
+	qry = createPQExpBuffer();
+
+	appendPQExpBuffer(qry, "SET search_path = %s",
+					  fmtId(schemaName, false));
+	if (strcmp(schemaName, "pg_catalog") != 0)
+		appendPQExpBuffer(qry, ", pg_catalog");
+
 	if (RestoringToDB(AH))
 	{
-		PQExpBuffer qry = createPQExpBuffer();
 		PGresult   *res;
 
-		appendPQExpBuffer(qry, "SET search_path = %s;",
-						  fmtId(schemaName, false));
 		res = PQexec(AH->connection, qry->data);
 
 		if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
@@ -2115,15 +2121,15 @@ _selectOutputSchema(ArchiveHandle *AH, const char *schemaName)
 						 schemaName, PQerrorMessage(AH->connection));
 
 		PQclear(res);
-		destroyPQExpBuffer(qry);
 	}
 	else
-		ahprintf(AH, "SET search_path = %s;\n\n",
-				 fmtId(schemaName, false));
+		ahprintf(AH, "%s;\n\n", qry->data);
 
 	if (AH->currSchema)
 		free(AH->currSchema);
 	AH->currSchema = strdup(schemaName);
+
+	destroyPQExpBuffer(qry);
 }
 
 
