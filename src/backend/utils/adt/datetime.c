@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.2 1997/04/02 18:33:22 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.3 1997/04/04 08:55:29 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +15,9 @@
 #include <string.h>
 
 #include "postgres.h"
+#ifdef HAVE_FLOAT_H
+#include <float.h>
+#endif
 #include "miscadmin.h"
 #include "utils/builtins.h"
 #include "utils/nabstime.h"
