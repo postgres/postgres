@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.214 2004/12/14 10:24:27 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.215 2004/12/16 11:23:16 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1518,8 +1518,8 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
        <row>
         <entry><systemitem class="osname">Debian GNU/Linux</></entry>
         <entry><systemitem>PowerPC</></entry>
-        <entry>7.4</entry>
-        <entry>No&egrave;l K&ouml;the (<email>noel@debian.org</email>), 2003-10-25</entry>
+        <entry>8.0.0</entry>
+        <entry>No&egrave;l K&ouml;the (<email>noel@debian.org</email>), 2004-12-15</entry>
         <entry></entry>
        </row>
        <row>
