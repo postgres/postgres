@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/problems.sgml,v 2.19 2004/08/24 00:06:50 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/problems.sgml,v 2.20 2005/01/30 21:31:48 tgl Exp $
 -->
 
 <sect1 id="bug-reporting">
@@ -309,6 +309,13 @@ $PostgreSQL: pgsql/doc/src/sgml/problems.sgml,v 2.19 2004/08/24 00:06:50 neilc E
    <email>pgsql-bugs@postgresql.org</email> mailing list.
   </para>
 
+  <para>
+   If your bug report has security implications and you'd prefer that it
+   not become immediately visible in public archives, don't send it to
+   <literal>pgsql-bugs</literal>.  Security issues can be
+   reported privately to <email>security@postgresql.org</email>.
+  </para>
+
   <para> 
    Do not send bug reports to any of the user mailing lists, such as
    <email>pgsql-sql@postgresql.org</email> or
@@ -324,8 +331,8 @@ $PostgreSQL: pgsql/doc/src/sgml/problems.sgml,v 2.19 2004/08/24 00:06:50 neilc E
    This list is for discussing the
    development of <productname>PostgreSQL</productname>, and it would be nice
    if we could keep the bug reports separate. We might choose to take up a
-   discussion
-   about your bug report on <literal>pgsql-hackers</literal>, if the problem needs more review.
+   discussion about your bug report on <literal>pgsql-hackers</literal>,
+   if the problem needs more review.
   </para>
 
   <para>
