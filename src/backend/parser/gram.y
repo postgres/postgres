@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.78 1997/12/06 22:56:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.79 1997/12/16 15:50:54 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -212,9 +212,9 @@ Oid	param_type(int t); /* used in parse_expr.c */
 %type <str>		ColId, ColLabel
 
 %type <node>	TableConstraint
-%type <list>	constraint_expr
-%type <list>	default_expr
-%type <list>	ColQualList
+%type <list>	constraint_list, constraint_expr
+%type <list>	default_list, default_expr
+%type <list>	ColQualList, ColQualifier
 %type <node>	ColConstraint, ColConstraintElem
 %type <list>	key_actions, key_action
 %type <str>		key_match, key_reference
@@ -247,7 +247,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
 		IN, INNER_P, INSERT, INTERVAL, INTO, IS,
 		JOIN, KEY, LANGUAGE, LEADING, LEFT, LIKE, LOCAL,
 		MATCH, MINUTE_P, MONTH_P,
-		NATIONAL, NATURAL, NCHAR, NO, NOT, NOTIFY, NOTNULL, NULL_P, NUMERIC,
+		NATIONAL, NATURAL, NCHAR, NO, NOT, NOTIFY, NULL_P, NUMERIC,
 		ON, OPTION, OR, ORDER, OUTER_P,
 		PARTIAL, POSITION, PRECISION, PRIMARY, PRIVILEGES, PROCEDURE, PUBLIC,
 		REFERENCES, REVOKE, RIGHT, ROLLBACK,
@@ -270,7 +270,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
 		FORWARD, FUNCTION, HANDLER,
 		INDEX, INHERITS, INSTEAD, ISNULL,
 		LANCOMPILER, LISTEN, LOAD, LOCATION, MERGE, MOVE,
-		NEW, NONE, NOTHING, OIDS, OPERATOR, PROCEDURAL,
+		NEW, NONE, NOTHING, NOTNULL, OIDS, OPERATOR, PROCEDURAL,
 		RECIPE, RENAME, REPLACE, RESET, RETRIEVE, RETURNS, RULE,
 		SEQUENCE, SETOF, SHOW, STDIN, STDOUT, TRUSTED, 
 		VACUUM, VERBOSE, VERSION
@@ -284,7 +284,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
  *
  *                                    Todd A. Brandys
  */
-%token  USER, PASSWORD, CREATEDB, NOCREATEDB, CREATEUSER, NOCREATEUSER, VALID, UNTIL
+%token	USER, PASSWORD, CREATEDB, NOCREATEDB, CREATEUSER, NOCREATEUSER, VALID, UNTIL
 
 /* Special keywords, not in the query language - see the "lex" file */
 %token <str>	IDENT, SCONST, Op
@@ -379,27 +379,24 @@ stmt :	  AddAttrStmt
 
 /*****************************************************************************
  *
- * Create a new postresql DBMS user
+ * Create a new Postgres DBMS user
  *
  *
  *****************************************************************************/
 
-CreateUserStmt:   CREATE USER Id
-                      user_passwd_clause
-                      user_createdb_clause
-                      user_createuser_clause
-                      user_group_clause
-                      user_valid_clause
-              { CreateUserStmt *n = makeNode(CreateUserStmt);
-                n->user = $3;
-                n->password = $4;
-                n->createdb = $5;
-                n->createuser = $6;
-                  n->groupElts = $7;
-                n->validUntil = $8;
-                $$ = (Node *)n;
-              }
-      ;
+CreateUserStmt:  CREATE USER Id user_passwd_clause user_createdb_clause
+			user_createuser_clause user_group_clause user_valid_clause
+				{
+					CreateUserStmt *n = makeNode(CreateUserStmt);
+					n->user = $3;
+					n->password = $4;
+					n->createdb = $5;
+					n->createuser = $6;
+					n->groupElts = $7;
+					n->validUntil = $8;
+					$$ = (Node *)n;
+				}
+		;
 
 /*****************************************************************************
  *
@@ -408,22 +405,19 @@ CreateUserStmt:   CREATE USER Id
  *
  *****************************************************************************/
 
-AlterUserStmt:   ALTER USER Id
-                      user_passwd_clause
-                      user_createdb_clause
-                      user_createuser_clause
-                      user_group_clause
-                      user_valid_clause
-              { AlterUserStmt *n = makeNode(AlterUserStmt);
-                n->user = $3;
-                n->password = $4;
-                n->createdb = $5;
-                n->createuser = $6;
-                  n->groupElts = $7;
-                n->validUntil = $8;
-                $$ = (Node *)n;
-              }
-      ;
+AlterUserStmt:  ALTER USER Id user_passwd_clause user_createdb_clause
+			user_createuser_clause user_group_clause user_valid_clause
+				{
+					AlterUserStmt *n = makeNode(AlterUserStmt);
+					n->user = $3;
+					n->password = $4;
+					n->createdb = $5;
+					n->createuser = $6;
+					n->groupElts = $7;
+					n->validUntil = $8;
+					$$ = (Node *)n;
+				}
+		;
 
 /*****************************************************************************
  *
@@ -433,49 +427,64 @@ AlterUserStmt:   ALTER USER Id
  *****************************************************************************/
 
 DropUserStmt:  DROP USER Id
-              { DropUserStmt *n = makeNode(DropUserStmt);
-                n->user = $3;
-                  $$ = (Node *)n;
-              }
-      ;
+				{
+					DropUserStmt *n = makeNode(DropUserStmt);
+					n->user = $3;
+					$$ = (Node *)n;
+				}
+		;
 
-user_passwd_clause:  WITH PASSWORD Id         { $$ = $3; }
-                      | /*EMPTY*/             { $$ = NULL; }
-                      ;
+user_passwd_clause:  WITH PASSWORD Id			{ $$ = $3; }
+			| /*EMPTY*/							{ $$ = NULL; }
+		;
 
-user_createdb_clause:  CREATEDB               { bool*  b;
-                                        $$ = (b = (bool*)palloc(sizeof(bool)));
-                                        *b = true;
-                                      }
-                      | NOCREATEDB    { bool*  b;
-                                        $$ = (b = (bool*)palloc(sizeof(bool)));
-                                        *b = false;
-                                      }
-                      | /*EMPTY*/     { $$ = NULL; }
-                      ;
+user_createdb_clause:  CREATEDB
+				{
+					bool*  b;
+					$$ = (b = (bool*)palloc(sizeof(bool)));
+					*b = true;
+				}
+			| NOCREATEDB
+				{
+					bool*  b;
+					$$ = (b = (bool*)palloc(sizeof(bool)));
+					*b = false;
+				}
+			| /*EMPTY*/							{ $$ = NULL; }
+		;
 
-user_createuser_clause:  CREATEUSER   { bool*  b;
-                                        $$ = (b = (bool*)palloc(sizeof(bool)));
-                                        *b = true;
-                                      }
-                      | NOCREATEUSER  { bool*  b;
-                                        $$ = (b = (bool*)palloc(sizeof(bool)));
-                                        *b = false;
-                                      }
-                      | /*EMPTY*/     { $$ = NULL; }
-                      ;
+user_createuser_clause:  CREATEUSER
+				{
+					bool*  b;
+					$$ = (b = (bool*)palloc(sizeof(bool)));
+					*b = true;
+				}
+			| NOCREATEUSER
+				{
+					bool*  b;
+					$$ = (b = (bool*)palloc(sizeof(bool)));
+					*b = false;
+				}
+			| /*EMPTY*/							{ $$ = NULL; }
+		;
 
-user_group_list:  user_group_list ','  Id { $$ = lcons((void*)makeString($3), $1); }
-                      | Id            { $$ = makeList((void*)makeString($1), NULL); }
-                      ;
+user_group_list:  user_group_list ',' Id
+				{
+					$$ = lcons((void*)makeString($3), $1);
+				}
+			| Id
+				{
+					$$ = lcons((void*)makeString($1), NIL);
+				}
+		;
 
-user_group_clause:  IN GROUP user_group_list  { $$ = $3; }
-                      | /*EMPTY*/             { $$ = NULL; }
-                      ;
+user_group_clause:  IN GROUP user_group_list	{ $$ = $3; }
+			| /*EMPTY*/							{ $$ = NULL; }
+		;
 
-user_valid_clause:  VALID UNTIL SCONST        { $$ = $3; }
-                      | /*EMPTY*/             { $$ = NULL; }
-                      ;
+user_valid_clause:  VALID UNTIL SCONST			{ $$ = $3; }
+			| /*EMPTY*/							{ $$ = NULL; }
+		;
 
 /*****************************************************************************
  *
@@ -645,14 +654,14 @@ opt_binary:  BINARY								{ $$ = TRUE; }
 		;
 
 opt_with_copy:	WITH OIDS						{ $$ = TRUE; }
-		| /* EMPTY */							{ $$ = FALSE; }
+		| /*EMPTY*/								{ $$ = FALSE; }
 		;
 
 /*
  * the default copy delimiter is tab but the user can configure it
  */
-copy_delimiter:  USING DELIMITERS Sconst { $$ = $3;}
-		| /* EMPTY */  { $$ = "\t"; }
+copy_delimiter:  USING DELIMITERS Sconst		{ $$ = $3; }
+		| /*EMPTY*/								{ $$ = "\t"; }
 		;
 
 
@@ -685,7 +694,7 @@ OptTableElement:  columnDef						{ $$ = $1; }
 			| TableConstraint					{ $$ = $1; }
 		;
 
-columnDef:  ColId Typename ColQualList
+columnDef:  ColId Typename ColQualifier
 				{
 					ColumnDef *n = makeNode(ColumnDef);
 					n->colname = $1;
@@ -697,20 +706,12 @@ columnDef:  ColId Typename ColQualList
 				}
 		;
 
-/* ColQualList decodes column-specific qualifiers.
- * Seem to need to specify the explicit combinations
- *  to eliminate reduce/reduce conflicts.
- * I think this is because there are no explicit delimiters
- *  (like commas) between clauses.
- * - thomas 1997-12-03
- */
-ColQualList:  ColConstraint ColConstraint ColConstraint ColConstraint
-				{ $$ = lappend(lappend(lappend(lcons($1, NIL), $2), $3), $4); }
-			| ColConstraint ColConstraint ColConstraint
-				{ $$ = lappend(lappend(lcons($1, NIL), $2), $3); }
-			| ColConstraint ColConstraint		{ $$ = lappend(lcons($1, NIL), $2); }
-			| ColConstraint						{ $$ = lcons($1, NIL); }
+ColQualifier:  ColQualList						{ $$ = $1; }
 			| /*EMPTY*/							{ $$ = NULL; }
+		;
+
+ColQualList:  ColQualList ColConstraint			{ $$ = lappend($1,$2); }
+			| ColConstraint						{ $$ = lcons($1, NIL); }
 		;
 
 ColConstraint:
@@ -751,15 +752,6 @@ ColConstraintElem:  CHECK '(' constraint_expr ')'
 					n->keys = NULL;
 					$$ = (Node *)n;
 				}
-			| NOTNULL
-				{
-					Constraint *n = makeNode(Constraint);
-					n->contype = CONSTR_NOTNULL;
-					n->name = NULL;
-					n->def = NULL;
-					n->keys = NULL;
-					$$ = (Node *)n;
-				}
 			| UNIQUE
 				{
 					Constraint *n = makeNode(Constraint);
@@ -782,6 +774,17 @@ ColConstraintElem:  CHECK '(' constraint_expr ')'
 				{
 					elog(NOTICE,"CREATE TABLE/FOREIGN KEY clause ignored; not yet implemented",NULL);
 					$$ = NULL;
+				}
+		;
+
+default_list:  default_list ',' default_expr
+				{
+					$$ = lappend($1,makeString(","));
+					$$ = nconc($$, $3);
+				}
+			| default_expr
+				{
+					$$ = $1;
 				}
 		;
 
@@ -823,15 +826,15 @@ default_expr:  AexprConst
 				}
 			| '(' default_expr ')'
 				{	$$ = lappend( lcons( makeString( "("), $2), makeString( ")")); }
-			| name '(' default_expr ')'
-				{
-					$$ = makeList( makeString($1), makeString("("), -1);
-					$$ = nconc( $$, $3);
-					$$ = lappend( $$, makeString(")"));
-				}
 			| name '(' ')'
 				{
 					$$ = makeList( makeString($1), makeString("("), -1);
+					$$ = lappend( $$, makeString(")"));
+				}
+			| name '(' default_list ')'
+				{
+					$$ = makeList( makeString($1), makeString("("), -1);
+					$$ = nconc( $$, $3);
 					$$ = lappend( $$, makeString(")"));
 				}
 			| default_expr Op default_expr
@@ -911,6 +914,17 @@ ConstraintElem:  CHECK '(' constraint_expr ')'
 				{	elog(NOTICE,"CREATE TABLE/FOREIGN KEY clause ignored; not yet implemented",NULL); }
 		;
 
+constraint_list:  constraint_list ',' constraint_expr
+				{
+					$$ = lappend($1,makeString(","));
+					$$ = nconc($$, $3);
+				}
+			| constraint_expr
+				{
+					$$ = $1;
+				}
+		;
+
 constraint_expr:  AexprConst
 				{	$$ = makeConstantList((A_Const *) $1); }
 			| NULL_P
@@ -953,7 +967,12 @@ constraint_expr:  AexprConst
 				}
 			| '(' constraint_expr ')'
 				{	$$ = lappend( lcons( makeString( "("), $2), makeString( ")")); }
-			| name '(' constraint_expr ')'
+			| name '(' ')'
+				{
+					$$ = makeList( makeString($1), makeString("("), -1);
+					$$ = lappend( $$, makeString(")"));
+				}
+			| name '(' constraint_list ')'
 				{
 					$$ = makeList( makeString($1), makeString("("), -1);
 					$$ = nconc( $$, $3);
@@ -1313,11 +1332,11 @@ opt_direction:	FORWARD							{ $$ = FORWARD; }
 fetch_how_many:  Iconst
 			   { $$ = $1;
 				 if ($1 <= 0) elog(WARN,"Please specify nonnegative count for fetch",NULL); }
-		| ALL							{ $$ = 0; /* 0 means fetch all tuples*/}
+		| ALL							{ $$ = 0; /* 0 means fetch all tuples*/ }
 		| /*EMPTY*/						{ $$ = 1; /*default*/ }
 		;
 
-opt_portal_name:  IN name				{ $$ = $2;}
+opt_portal_name:  IN name				{ $$ = $2; }
 		| /*EMPTY*/						{ $$ = NULL; }
 		;
 
@@ -1485,9 +1504,9 @@ index_elem:  attr_name opt_type opt_class
 				}
 		;
 
-opt_type:  ':' Typename							{ $$ = $2;}
-		| FOR Typename							{ $$ = $2;}
-		| /*EMPTY*/								{ $$ = NULL;}
+opt_type:  ':' Typename							{ $$ = $2; }
+		| FOR Typename							{ $$ = $2; }
+		| /*EMPTY*/								{ $$ = NULL; }
 		;
 
 /* opt_class "WITH class" conflicts with preceeding opt_type
@@ -1569,7 +1588,7 @@ ProcedureStmt:	CREATE FUNCTION def_name def_args
 				};
 
 opt_with:  WITH definition						{ $$ = $2; }
-		| /* EMPTY */							{ $$ = NIL; }
+		| /*EMPTY*/							{ $$ = NIL; }
 		;
 
 def_args:  '(' def_name_list ')'				{ $$ = $2; }
@@ -1768,7 +1787,7 @@ event:	SELECT							{ $$ = CMD_SELECT; }
 		 ;
 
 opt_instead:  INSTEAD					{ $$ = TRUE; }
-		| /* EMPTY */					{ $$ = FALSE; }
+		| /*EMPTY*/					{ $$ = FALSE; }
 		;
 
 
@@ -2002,11 +2021,11 @@ VacuumStmt:  VACUUM opt_verbose opt_analyze
 		;
 
 opt_verbose:  VERBOSE							{ $$ = TRUE; }
-		| /* EMPTY */							{ $$ = FALSE; }
+		| /*EMPTY*/								{ $$ = FALSE; }
 		;
 
 opt_analyze:  ANALYZE							{ $$ = TRUE; }
-		| /* EMPTY */							{ $$ = FALSE; }
+		| /*EMPTY*/								{ $$ = FALSE; }
 		;
 
 opt_va_list:  '(' va_list ')'
@@ -2749,7 +2768,7 @@ opt_interval:  datetime							{ $$ = lcons($1, NIL); }
 		| DAY_P TO SECOND_P						{ $$ = NIL; }
 		| HOUR_P TO MINUTE_P					{ $$ = NIL; }
 		| HOUR_P TO SECOND_P					{ $$ = NIL; }
-		| /* EMPTY */							{ $$ = NIL; }
+		| /*EMPTY*/								{ $$ = NIL; }
 		;
 
 
@@ -2760,7 +2779,7 @@ opt_interval:  datetime							{ $$ = lcons($1, NIL); }
  *****************************************************************************/
 
 a_expr_or_null:  a_expr
-				{ $$ = $1;}
+				{ $$ = $1; }
 		| NULL_P
 				{
 					A_Const *n = makeNode(A_Const);
@@ -2865,6 +2884,13 @@ a_expr:  attr opt_indirection
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = $1;
 					n->args = NIL;
+					$$ = (Node *)n;
+				}
+		| name '(' expr_list ')'
+				{
+					FuncCall *n = makeNode(FuncCall);
+					n->funcname = $1;
+					n->args = $3;
 					$$ = (Node *)n;
 				}
 		| CURRENT_DATE
@@ -3015,13 +3041,6 @@ a_expr:  attr opt_indirection
 				{
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = "btrim";
-					n->args = $3;
-					$$ = (Node *)n;
-				}
-		| name '(' expr_list ')'
-				{
-					FuncCall *n = makeNode(FuncCall);
-					n->funcname = $1;
 					n->args = $3;
 					$$ = (Node *)n;
 				}
@@ -3202,6 +3221,13 @@ position_expr:  attr opt_indirection
 					n->args = NIL;
 					$$ = (Node *)n;
 				}
+		| name '(' expr_list ')'
+				{
+					FuncCall *n = makeNode(FuncCall);
+					n->funcname = $1;
+					n->args = $3;
+					$$ = (Node *)n;
+				}
 		| POSITION '(' position_list ')'
 				{
 					FuncCall *n = makeNode(FuncCall);
@@ -3242,13 +3268,6 @@ position_expr:  attr opt_indirection
 				{
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = "btrim";
-					n->args = $3;
-					$$ = (Node *)n;
-				}
-		| name '(' expr_list ')'
-				{
-					FuncCall *n = makeNode(FuncCall);
-					n->funcname = $1;
 					n->args = $3;
 					$$ = (Node *)n;
 				}
