@@ -19,8 +19,10 @@
 #define min(a,b)		((a) <= (b) ? (a) : (b))
 #define abs(a)			((a) <	(0) ? (-a) : (a))
 
-extern void set_parse_buffer(char *str);
 extern int	cube_yyparse();
+extern void cube_yyerror(const char *message);
+extern void cube_scanner_init(const char *str);
+extern void cube_scanner_finish(void);
 
 /*
 ** Input/Output routines
@@ -52,10 +54,19 @@ NDBOX	   *g_cube_binary_union(NDBOX * r1, NDBOX * r2, int *sizep);
 bool	   *g_cube_same(NDBOX * b1, NDBOX * b2, bool *result);
 
 /*
+** B-tree support functions
+*/
+bool		cube_eq(NDBOX * a, NDBOX * b);
+bool		cube_ne(NDBOX * a, NDBOX * b);
+bool		cube_lt(NDBOX * a, NDBOX * b);
+bool		cube_gt(NDBOX * a, NDBOX * b);
+bool		cube_le(NDBOX * a, NDBOX * b);
+bool		cube_ge(NDBOX * a, NDBOX * b);
+int32		cube_cmp(NDBOX * a, NDBOX * b);
+
+/*
 ** R-tree support functions
 */
-bool		cube_same(NDBOX * a, NDBOX * b);
-bool		cube_different(NDBOX * a, NDBOX * b);
 bool		cube_contains(NDBOX * a, NDBOX * b);
 bool		cube_contained(NDBOX * a, NDBOX * b);
 bool		cube_overlap(NDBOX * a, NDBOX * b);
@@ -99,10 +110,12 @@ cube_in(char *str)
 {
 	void	   *result;
 
-	set_parse_buffer(str);
+	cube_scanner_init(str);
 
 	if (cube_yyparse(&result) != 0)
-		return NULL;
+		cube_yyerror("bogus input");
+
+	cube_scanner_finish();
 
 	return ((NDBOX *) result);
 }
@@ -438,7 +451,7 @@ g_cube_picksplit(bytea *entryvec,
 bool *
 g_cube_same(NDBOX * b1, NDBOX * b2, bool *result)
 {
-	if (cube_same(b1, b2))
+	if (cube_eq(b1, b2))
 		*result = TRUE;
 	else
 		*result = FALSE;
@@ -480,7 +493,7 @@ g_cube_leaf_consistent(NDBOX * key,
 			retval = (bool) cube_right(key, query);
 			break;
 		case RTSameStrategyNumber:
-			retval = (bool) cube_same(key, query);
+			retval = (bool) cube_eq(key, query);
 			break;
 		case RTContainsStrategyNumber:
 			retval = (bool) cube_contains(key, query);
@@ -754,14 +767,11 @@ cube_right(NDBOX * a, NDBOX * b)
 
 /* make up a metric in which one box will be 'lower' than the other
    -- this can be useful for sorting and to determine uniqueness */
-bool
-cube_lt(NDBOX * a, NDBOX * b)
+int32
+cube_cmp(NDBOX * a, NDBOX * b)
 {
 	int			i;
 	int			dim;
-
-	if ((a == NULL) || (b == NULL))
-		return (FALSE);
 
 	dim = min(a->dim, b->dim);
 
@@ -770,19 +780,19 @@ cube_lt(NDBOX * a, NDBOX * b)
 	{
 		if (min(a->x[i], a->x[a->dim + i]) >
 			min(b->x[i], b->x[b->dim + i]))
-			return (FALSE);
+			return 1;
 		if (min(a->x[i], a->x[a->dim + i]) <
 			min(b->x[i], b->x[b->dim + i]))
-			return (TRUE);
+			return -1;
 	}
 	for (i = 0; i < dim; i++)
 	{
 		if (max(a->x[i], a->x[a->dim + i]) >
 			max(b->x[i], b->x[b->dim + i]))
-			return (FALSE);
+			return 1;
 		if (max(a->x[i], a->x[a->dim + i]) <
 			max(b->x[i], b->x[b->dim + i]))
-			return (TRUE);
+			return -1;
 	}
 
 	/* compare extra dimensions to zero */
@@ -791,186 +801,87 @@ cube_lt(NDBOX * a, NDBOX * b)
 		for (i = dim; i < a->dim; i++)
 		{
 			if (min(a->x[i], a->x[a->dim + i]) > 0)
-				return (FALSE);
+				return 1;
 			if (min(a->x[i], a->x[a->dim + i]) < 0)
-				return (TRUE);
+				return -1;
 		}
 		for (i = dim; i < a->dim; i++)
 		{
 			if (max(a->x[i], a->x[a->dim + i]) > 0)
-				return (FALSE);
+				return 1;
 			if (max(a->x[i], a->x[a->dim + i]) < 0)
-				return (TRUE);
+				return -1;
 		}
 
 		/*
 		 * if all common dimensions are equal, the cube with more
 		 * dimensions wins
 		 */
-		return (FALSE);
+		return 1;
 	}
 	if (a->dim < b->dim)
 	{
 		for (i = dim; i < b->dim; i++)
 		{
 			if (min(b->x[i], b->x[b->dim + i]) > 0)
-				return (TRUE);
+				return -1;
 			if (min(b->x[i], b->x[b->dim + i]) < 0)
-				return (FALSE);
+				return 1;
 		}
 		for (i = dim; i < b->dim; i++)
 		{
 			if (max(b->x[i], b->x[b->dim + i]) > 0)
-				return (TRUE);
+				return -1;
 			if (max(b->x[i], b->x[b->dim + i]) < 0)
-				return (FALSE);
+				return 1;
 		}
 
 		/*
 		 * if all common dimensions are equal, the cube with more
 		 * dimensions wins
 		 */
-		return (TRUE);
+		return -1;
 	}
 
-	return (FALSE);
+	/* They're really equal */
+	return 0;
 }
 
+
+bool
+cube_eq(NDBOX * a, NDBOX * b)
+{
+	return (cube_cmp(a, b) == 0);
+}
+
+bool
+cube_ne(NDBOX * a, NDBOX * b)
+{
+	return (cube_cmp(a, b) != 0);
+}
+
+bool
+cube_lt(NDBOX * a, NDBOX * b)
+{
+	return (cube_cmp(a, b) < 0);
+}
 
 bool
 cube_gt(NDBOX * a, NDBOX * b)
 {
-	int			i;
-	int			dim;
-
-	if ((a == NULL) || (b == NULL))
-		return (FALSE);
-
-	dim = min(a->dim, b->dim);
-
-	/* compare the common dimensions */
-	for (i = 0; i < dim; i++)
-	{
-		if (min(a->x[i], a->x[a->dim + i]) <
-			min(b->x[i], b->x[b->dim + i]))
-			return (FALSE);
-		if (min(a->x[i], a->x[a->dim + i]) >
-			min(b->x[i], b->x[b->dim + i]))
-			return (TRUE);
-	}
-	for (i = 0; i < dim; i++)
-	{
-		if (max(a->x[i], a->x[a->dim + i]) <
-			max(b->x[i], b->x[b->dim + i]))
-			return (FALSE);
-		if (max(a->x[i], a->x[a->dim + i]) >
-			max(b->x[i], b->x[b->dim + i]))
-			return (TRUE);
-	}
-
-
-	/* compare extra dimensions to zero */
-	if (a->dim > b->dim)
-	{
-		for (i = dim; i < a->dim; i++)
-		{
-			if (min(a->x[i], a->x[a->dim + i]) < 0)
-				return (FALSE);
-			if (min(a->x[i], a->x[a->dim + i]) > 0)
-				return (TRUE);
-		}
-		for (i = dim; i < a->dim; i++)
-		{
-			if (max(a->x[i], a->x[a->dim + i]) < 0)
-				return (FALSE);
-			if (max(a->x[i], a->x[a->dim + i]) > 0)
-				return (TRUE);
-		}
-
-		/*
-		 * if all common dimensions are equal, the cube with more
-		 * dimensions wins
-		 */
-		return (TRUE);
-	}
-	if (a->dim < b->dim)
-	{
-		for (i = dim; i < b->dim; i++)
-		{
-			if (min(b->x[i], b->x[b->dim + i]) < 0)
-				return (TRUE);
-			if (min(b->x[i], b->x[b->dim + i]) > 0)
-				return (FALSE);
-		}
-		for (i = dim; i < b->dim; i++)
-		{
-			if (max(b->x[i], b->x[b->dim + i]) < 0)
-				return (TRUE);
-			if (max(b->x[i], b->x[b->dim + i]) > 0)
-				return (FALSE);
-		}
-
-		/*
-		 * if all common dimensions are equal, the cube with more
-		 * dimensions wins
-		 */
-		return (FALSE);
-	}
-
-	return (FALSE);
+	return (cube_cmp(a, b) > 0);
 }
 
-
-/* Equal */
 bool
-cube_same(NDBOX * a, NDBOX * b)
+cube_le(NDBOX * a, NDBOX * b)
 {
-	int			i;
-
-	if ((a == NULL) || (b == NULL))
-		return (FALSE);
-
-	/* swap the box pointers if necessary */
-	if (a->dim < b->dim)
-	{
-		NDBOX	   *tmp = b;
-
-		b = a;
-		a = tmp;
-	}
-
-	for (i = 0; i < b->dim; i++)
-	{
-		if (min(a->x[i], a->x[a->dim + i]) !=
-			min(b->x[i], b->x[b->dim + i]))
-			return (FALSE);
-		if (max(a->x[i], a->x[a->dim + i]) !=
-			max(b->x[i], b->x[b->dim + i]))
-			return (FALSE);
-	}
-
-	/*
-	 * all dimensions of (b) are compared to those of (a); instead of
-	 * those in (a) absent in (b), compare (a) to zero Since both LL and
-	 * UR coordinates are compared to zero, we can just check them all
-	 * without worrying about which is which.
-	 */
-	for (i = b->dim; i < a->dim; i++)
-	{
-		if (a->x[i] != 0)
-			return (FALSE);
-		if (a->x[i + a->dim] != 0)
-			return (FALSE);
-	}
-
-	return (TRUE);
+	return (cube_cmp(a, b) <= 0);
 }
 
-/* Different */
 bool
-cube_different(NDBOX * a, NDBOX * b)
+cube_ge(NDBOX * a, NDBOX * b)
 {
-	return (!cube_same(a, b));
+	return (cube_cmp(a, b) >= 0);
 }
 
 

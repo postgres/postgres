@@ -257,53 +257,54 @@ SELECT '[(0,0,0,0),(1,0,0,0)]'::cube AS cube;
 
 -- invalid input: parse errors
 SELECT ''::cube AS cube;
-ERROR:  can't parse an empty string
+ERROR:  bad cube representation
+DETAIL:  syntax error at end of input
 SELECT 'ABC'::cube AS cube;
 ERROR:  bad cube representation
-DETAIL:  syntax error at or before position 1, character ('A', \101), input: 'ABC'
+DETAIL:  syntax error at or near "A"
 SELECT '()'::cube AS cube;
 ERROR:  bad cube representation
-DETAIL:  syntax error at or before position 2, character (')', \051), input: '()'
+DETAIL:  syntax error at or near ")"
 SELECT '[]'::cube AS cube;
 ERROR:  bad cube representation
-DETAIL:  syntax error at or before position 2, character (']', \135), input: '[]'
+DETAIL:  syntax error at or near "]"
 SELECT '[()]'::cube AS cube;
 ERROR:  bad cube representation
-DETAIL:  syntax error at or before position 3, character (')', \051), input: '[()]'
+DETAIL:  syntax error at or near ")"
 SELECT '[(1)]'::cube AS cube;
 ERROR:  bad cube representation
-DETAIL:  syntax error at or before position 5, character (']', \135), input: '[(1)]'
+DETAIL:  syntax error at or near "]"
 SELECT '[(1),]'::cube AS cube;
 ERROR:  bad cube representation
-DETAIL:  syntax error at or before position 6, character (']', \135), input: '[(1),]'
+DETAIL:  syntax error at or near "]"
 SELECT '[(1),2]'::cube AS cube;
 ERROR:  bad cube representation
-DETAIL:  syntax error at or before position 7, character (']', \135), input: '[(1),2]'
+DETAIL:  syntax error at or near "2"
 SELECT '[(1),(2),(3)]'::cube AS cube;
 ERROR:  bad cube representation
-DETAIL:  syntax error at or before position 9, character (',', \054), input: '[(1),(2),(3)]'
+DETAIL:  syntax error at or near ","
 SELECT '1,'::cube AS cube;
 ERROR:  bad cube representation
-DETAIL:  syntax error at or before position 2, character (',', \054), input: '1,'
+DETAIL:  syntax error at end of input
 SELECT '1,2,'::cube AS cube;
 ERROR:  bad cube representation
-DETAIL:  syntax error at or before position 4, character (',', \054), input: '1,2,'
+DETAIL:  syntax error at end of input
 SELECT '1,,2'::cube AS cube;
 ERROR:  bad cube representation
-DETAIL:  syntax error at or before position 3, character (',', \054), input: '1,,2'
+DETAIL:  syntax error at or near ","
 SELECT '(1,)'::cube AS cube;
 ERROR:  bad cube representation
-DETAIL:  syntax error at or before position 4, character (')', \051), input: '(1,)'
+DETAIL:  syntax error at or near ")"
 SELECT '(1,2,)'::cube AS cube;
 ERROR:  bad cube representation
-DETAIL:  syntax error at or before position 6, character (')', \051), input: '(1,2,)'
+DETAIL:  syntax error at or near ")"
 SELECT '(1,,2)'::cube AS cube;
 ERROR:  bad cube representation
-DETAIL:  syntax error at or before position 4, character (',', \054), input: '(1,,2)'
+DETAIL:  syntax error at or near ","
 -- invalid input: semantic errors and trailing garbage
 SELECT '[(1),(2)],'::cube AS cube; -- 0
 ERROR:  bad cube representation
-DETAIL:  garbage at or before char 9, (',', \054)
+DETAIL:  syntax error at or near ","
 SELECT '[(1,2,3),(2,3)]'::cube AS cube; -- 1
 ERROR:  bad cube representation
 DETAIL:  different point dimensions in (1,2,3) and (2,3)
@@ -312,7 +313,7 @@ ERROR:  bad cube representation
 DETAIL:  different point dimensions in (1,2) and (1,2,3)
 SELECT '(1),(2),'::cube AS cube; -- 2
 ERROR:  bad cube representation
-DETAIL:  garbage at or before char 7, (',', \054)
+DETAIL:  syntax error at or near ","
 SELECT '(1,2,3),(2,3)'::cube AS cube; -- 3
 ERROR:  bad cube representation
 DETAIL:  different point dimensions in (1,2,3) and (2,3)
@@ -321,25 +322,25 @@ ERROR:  bad cube representation
 DETAIL:  different point dimensions in (1,2) and (1,2,3)
 SELECT '(1,2,3)ab'::cube AS cube; -- 4
 ERROR:  bad cube representation
-DETAIL:  garbage at or before char 8, ('b', \142)
+DETAIL:  syntax error at or near "a"
 SELECT '(1,2,3)a'::cube AS cube; -- 5
 ERROR:  bad cube representation
-DETAIL:  garbage at or before char 8, ('end of input', \000)
+DETAIL:  syntax error at or near "a"
 SELECT '(1,2)('::cube AS cube; -- 5
 ERROR:  bad cube representation
-DETAIL:  garbage at or before char 6, ('end of input', \000)
+DETAIL:  syntax error at or near "("
 SELECT '1,2ab'::cube AS cube; -- 6
 ERROR:  bad cube representation
-DETAIL:  garbage at or before char 4, ('b', \142)
+DETAIL:  syntax error at or near "a"
 SELECT '1 e7'::cube AS cube; -- 6
 ERROR:  bad cube representation
-DETAIL:  garbage at or before char 3, ('7', \067)
+DETAIL:  syntax error at or near "e"
 SELECT '1,2a'::cube AS cube; -- 7
 ERROR:  bad cube representation
-DETAIL:  garbage at or before char 4, ('end of input', \000)
+DETAIL:  syntax error at or near "a"
 SELECT '1..2'::cube AS cube; -- 7
 ERROR:  bad cube representation
-DETAIL:  garbage at or before char 4, ('end of input', \000)
+DETAIL:  syntax error at or near ".2"
 --
 -- Testing building cubes from float8 values
 --
@@ -435,7 +436,7 @@ SELECT '24, 33.20'::cube    != '24, 33.21'::cube AS bool;
 SELECT '(2,0),(3,1)'::cube  =  '(2,0,0,0,0),(3,1,0,0,0)'::cube AS bool;
  bool 
 ------
- t
+ f
 (1 row)
 
 SELECT '(2,0),(3,1)'::cube  =  '(2,0,0,0,0),(3,1,0,0,1)'::cube AS bool;

@@ -9,7 +9,6 @@
 #include "postgres.h"
 
 #include "cubedata.h"
-#include "buffer.h"
 
 #undef yylex                 /* falure to redefine yylex will result in a call to  the */
 #define yylex cube_yylex     /* wrong scanner when running inside the postgres backend  */
@@ -17,7 +16,10 @@
 extern int yylex();           /* defined as cube_yylex in cubescan.c */
 extern int errno;
 
-int cube_yyerror( char *msg );
+static char *scanbuf;
+static int	scanbuflen;
+
+void cube_yyerror(const char *message);
 int cube_yyparse(void *result);
 
 static int delim_count(char *s, char delim);
@@ -37,25 +39,9 @@ box:
           O_BRACKET paren_list COMMA paren_list C_BRACKET {
 
 	    int dim;
-	    int c = parse_buffer_curr_char();
-	    int pos = parse_buffer_pos();
-
-	    /* We can't let the parser recognize more than one valid expression:
-	       the job is done and memory is allocated. */
-	    if ( c != '\0' ) {
-	      /* Not at EOF */
-	      reset_parse_buffer();     
-          ereport(ERROR,
-                  (errcode(ERRCODE_SYNTAX_ERROR),
-                   errmsg("bad cube representation"),
-                   errdetail("garbage at or before char %d, ('%c', \\%03o)",
-                             pos, c, c)));
-	      YYERROR;
-	    }
 	    
 	    dim = delim_count($2, ',') + 1;
 	    if ( (delim_count($4, ',') + 1) != dim ) {
-	      reset_parse_buffer();     
           ereport(ERROR,
                   (errcode(ERRCODE_SYNTAX_ERROR),
                    errmsg("bad cube representation"),
@@ -64,7 +50,6 @@ box:
 	      YYABORT;
 	    }
 	    if (dim > CUBE_MAX_DIM) {
-              reset_parse_buffer();
               ereport(ERROR,
                       (errcode(ERRCODE_SYNTAX_ERROR),
                        errmsg("bad cube representation"),
@@ -79,23 +64,10 @@ box:
       |
           paren_list COMMA paren_list {
 	    int dim;
-	    int c = parse_buffer_curr_char();
-	    int pos = parse_buffer_pos();
-
-	    if ( c != '\0' ) {  /* Not at EOF */
-	      reset_parse_buffer();     
-          ereport(ERROR,
-                  (errcode(ERRCODE_SYNTAX_ERROR),
-                   errmsg("bad cube representation"),
-                   errdetail("garbage at or before char %d, ('%c', \\%03o)",
-                             pos, c, c)));
-	      YYABORT;
-	    }
 
 	    dim = delim_count($1, ',') + 1;
 	    
 	    if ( (delim_count($3, ',') + 1) != dim ) {
-	      reset_parse_buffer();     
           ereport(ERROR,
                   (errcode(ERRCODE_SYNTAX_ERROR),
                    errmsg("bad cube representation"),
@@ -104,7 +76,6 @@ box:
 	      YYABORT;
 	    }
 	    if (dim > CUBE_MAX_DIM) {
-              reset_parse_buffer();
               ereport(ERROR,
                       (errcode(ERRCODE_SYNTAX_ERROR),
                        errmsg("bad cube representation"),
@@ -119,33 +90,9 @@ box:
 
           paren_list {
             int dim;
-	    int c = parse_buffer_curr_char();
-	    int pos = parse_buffer_pos();
-
-	    if ( c != '\0') {  /* Not at EOF */
-	      reset_parse_buffer();     
-          ereport(ERROR,
-                  (errcode(ERRCODE_SYNTAX_ERROR),
-                   errmsg("bad cube representation"),
-                   errdetail("garbage at or before char %d, ('%c', \\%03o)",
-                             pos, c, c)));
-	      YYABORT;
-	    }
-
-	    if ( yychar != YYEOF) {
-	      /* There's still a lookahead token to be parsed */
-	      reset_parse_buffer();     
-          ereport(ERROR,
-                  (errcode(ERRCODE_SYNTAX_ERROR),
-                   errmsg("bad cube representation"),
-                   errdetail("garbage at or before char %d, ('end of input', \\%03o)",
-                             pos, c)));
-	      YYABORT;
-	    }
 
             dim = delim_count($1, ',') + 1;
 	    if (dim > CUBE_MAX_DIM) {
-              reset_parse_buffer();
               ereport(ERROR,
                       (errcode(ERRCODE_SYNTAX_ERROR),
                        errmsg("bad cube representation"),
@@ -161,33 +108,9 @@ box:
 
           list {
             int dim;
-	    int c = parse_buffer_curr_char();
-	    int pos = parse_buffer_pos();
-
-	    if ( c != '\0') {  /* Not at EOF */
-	      reset_parse_buffer();
-          ereport(ERROR,
-                  (errcode(ERRCODE_SYNTAX_ERROR),
-                   errmsg("bad cube representation"),
-                   errdetail("garbage at or before char %d, ('%c', \\%03o)",
-                             pos, c, c)));
-	      YYABORT;
-	    }
-
-	    if ( yychar != YYEOF) {
-	      /* There's still a lookahead token to be parsed */
-	      reset_parse_buffer();
-          ereport(ERROR,
-                  (errcode(ERRCODE_SYNTAX_ERROR),
-                   errmsg("bad cube representation"),
-                   errdetail("garbage at or before char %d, ('end of input', \\%03o)",
-                             pos, c)));
-	      YYABORT;
-	    }
 
             dim = delim_count($1, ',') + 1;
 	    if (dim > CUBE_MAX_DIM) {
-              reset_parse_buffer();
               ereport(ERROR,
                       (errcode(ERRCODE_SYNTAX_ERROR),
                        errmsg("bad cube representation"),
@@ -207,8 +130,9 @@ paren_list:
 
 list:
           FLOAT {
-             $$ = palloc(strlen(parse_buffer()) + 1);
-	     strcpy($$, $1);
+			 /* alloc enough space to be sure whole list will fit */
+             $$ = palloc(scanbuflen + 1);
+			 strcpy($$, $1);
 	  }
       | 
 	  list COMMA FLOAT {
@@ -219,39 +143,6 @@ list:
       ;
 
 %%
-
-
-int cube_yyerror ( char *msg ) {
-  char *buf = (char *) palloc(256);
-  int position;
-
-  yyclearin;
-
-  if ( !strcmp(msg, "parse error, expecting `$'") ) {
-    msg = "expecting end of input";
-  }
-
-  position = parse_buffer_pos() > parse_buffer_size() ? parse_buffer_pos() - 1 : parse_buffer_pos();
-
-  snprintf(
-	  buf, 
-	  256,
-	  "%s at or before position %d, character ('%c', \\%03o), input: '%s'", 
-	  msg,
-	  position,
-	  parse_buffer()[position - 1],
-	  parse_buffer()[position - 1],
-	  parse_buffer()
-	  );
-
-  reset_parse_buffer();     
-  ereport(ERROR,
-          (errcode(ERRCODE_SYNTAX_ERROR),
-           errmsg("bad cube representation"),
-           errdetail("%s", buf)));
-
-  return 0;
-}
 
 static int
 delim_count(char *s, char delim)

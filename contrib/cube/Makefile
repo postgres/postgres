@@ -1,11 +1,11 @@
-# $Header: /cvsroot/pgsql/contrib/cube/Makefile,v 1.9 2003/05/14 03:27:21 tgl Exp $
+# $Header: /cvsroot/pgsql/contrib/cube/Makefile,v 1.10 2003/09/14 01:52:25 tgl Exp $
 
 subdir = contrib/cube
 top_builddir = ../..
 include $(top_builddir)/src/Makefile.global
 
 MODULE_big = cube
-OBJS= cube.o cubeparse.o buffer.o
+OBJS= cube.o cubeparse.o
 
 DATA_built = cube.sql
 DOCS = README.cube
@@ -28,7 +28,7 @@ endif
 
 cubescan.c: cubescan.l
 ifdef FLEX
-	$(FLEX) $(FLEXFLAGS) -Pcube_yy -o'$@' $<
+	$(FLEX) $(FLEXFLAGS) -o'$@' $<
 else
 	@$(missing) flex $< $@
 endif

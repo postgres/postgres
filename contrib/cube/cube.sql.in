@@ -70,6 +70,20 @@ COMMENT ON FUNCTION cube_right(cube, cube) IS 'is right of (NOT IMPLEMENTED)';
 
 -- Comparison methods
 
+CREATE OR REPLACE FUNCTION cube_eq(cube, cube)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C' IMMUTABLE STRICT;
+
+COMMENT ON FUNCTION cube_eq(cube, cube) IS 'same as';
+
+CREATE OR REPLACE FUNCTION cube_ne(cube, cube)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C' IMMUTABLE STRICT;
+
+COMMENT ON FUNCTION cube_ne(cube, cube) IS 'different';
+
 CREATE OR REPLACE FUNCTION cube_lt(cube, cube)
 RETURNS bool
 AS 'MODULE_PATHNAME'
@@ -83,6 +97,27 @@ AS 'MODULE_PATHNAME'
 LANGUAGE 'C' IMMUTABLE STRICT;
 
 COMMENT ON FUNCTION cube_gt(cube, cube) IS 'greater than';
+
+CREATE OR REPLACE FUNCTION cube_le(cube, cube)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C' IMMUTABLE STRICT;
+
+COMMENT ON FUNCTION cube_le(cube, cube) IS 'lower than or equal to';
+
+CREATE OR REPLACE FUNCTION cube_ge(cube, cube)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C' IMMUTABLE STRICT;
+
+COMMENT ON FUNCTION cube_ge(cube, cube) IS 'greater than or equal to';
+
+CREATE OR REPLACE FUNCTION cube_cmp(cube, cube)
+RETURNS int4
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C' IMMUTABLE STRICT;
+
+COMMENT ON FUNCTION cube_cmp(cube, cube) IS 'btree comparison function';
 
 CREATE OR REPLACE FUNCTION cube_contains(cube, cube)
 RETURNS bool
@@ -104,20 +139,6 @@ AS 'MODULE_PATHNAME'
 LANGUAGE 'C' IMMUTABLE STRICT;
 
 COMMENT ON FUNCTION cube_overlap(cube, cube) IS 'overlaps';
-
-CREATE OR REPLACE FUNCTION cube_same(cube, cube)
-RETURNS bool
-AS 'MODULE_PATHNAME'
-LANGUAGE 'C' IMMUTABLE STRICT;
-
-COMMENT ON FUNCTION cube_same(cube, cube) IS 'same as';
-
-CREATE OR REPLACE FUNCTION cube_different(cube, cube)
-RETURNS bool
-AS 'MODULE_PATHNAME'
-LANGUAGE 'C' IMMUTABLE STRICT;
-
-COMMENT ON FUNCTION cube_different(cube, cube) IS 'different';
 
 -- support routines for indexing
 
@@ -199,13 +220,25 @@ LANGUAGE 'C' IMMUTABLE STRICT;
 
 CREATE OPERATOR < (
 	LEFTARG = cube, RIGHTARG = cube, PROCEDURE = cube_lt,
-	COMMUTATOR = '>',
+	COMMUTATOR = '>', NEGATOR = '>=',
 	RESTRICT = scalarltsel, JOIN = scalarltjoinsel
 );
 
 CREATE OPERATOR > (
 	LEFTARG = cube, RIGHTARG = cube, PROCEDURE = cube_gt,
-	COMMUTATOR = '<',
+	COMMUTATOR = '<', NEGATOR = '<=',
+	RESTRICT = scalargtsel, JOIN = scalargtjoinsel
+);
+
+CREATE OPERATOR <= (
+	LEFTARG = cube, RIGHTARG = cube, PROCEDURE = cube_le,
+	COMMUTATOR = '>=', NEGATOR = '>',
+	RESTRICT = scalarltsel, JOIN = scalarltjoinsel
+);
+
+CREATE OPERATOR >= (
+	LEFTARG = cube, RIGHTARG = cube, PROCEDURE = cube_ge,
+	COMMUTATOR = '<=', NEGATOR = '<',
 	RESTRICT = scalargtsel, JOIN = scalargtjoinsel
 );
 
@@ -240,14 +273,14 @@ CREATE OPERATOR >> (
 );
 
 CREATE OPERATOR = (
-	LEFTARG = cube, RIGHTARG = cube, PROCEDURE = cube_same,
+	LEFTARG = cube, RIGHTARG = cube, PROCEDURE = cube_eq,
 	COMMUTATOR = '=', NEGATOR = '<>',
 	RESTRICT = eqsel, JOIN = eqjoinsel,
-	SORT1 = '<', SORT2 = '<'
+	MERGES
 );
 
 CREATE OPERATOR <> (
-	LEFTARG = cube, RIGHTARG = cube, PROCEDURE = cube_different,
+	LEFTARG = cube, RIGHTARG = cube, PROCEDURE = cube_ne,
 	COMMUTATOR = '<>', NEGATOR = '=',
 	RESTRICT = neqsel, JOIN = neqjoinsel
 );
@@ -302,7 +335,16 @@ AS 'MODULE_PATHNAME'
 LANGUAGE 'C';
 
 
--- Create the operator class for indexing
+-- Create the operator classes for indexing
+
+CREATE OPERATOR CLASS cube_ops
+    DEFAULT FOR TYPE cube USING btree AS
+        OPERATOR        1       < ,
+        OPERATOR        2       <= ,
+        OPERATOR        3       = ,
+        OPERATOR        4       >= ,
+        OPERATOR        5       > ,
+        FUNCTION        1       cube_cmp(cube, cube);
 
 CREATE OPERATOR CLASS gist_cube_ops
     DEFAULT FOR TYPE cube USING gist AS

@@ -9,11 +9,6 @@ Makefile		building instructions for the shared library
 
 README.cube		the file you are now reading
 
-buffer.c		globals and buffer access utilities shared between 
-			the parser (cubeparse.y) and the scanner (cubescan.l)
-
-buffer.h		function prototypes for buffer.c
-
 cube.c			the implementation of this data type in c
 
 cube.sql.in		SQL code needed to register this type with postgres
