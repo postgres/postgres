@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.62 2002/10/18 18:26:22 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.63 2002/10/24 21:19:15 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -618,7 +618,7 @@ ORDER BY <replaceable class="PARAMETER">expression</replaceable> [ ASC | DESC | 
    <para>
     The ordinal number refers to the ordinal (left-to-right) position
     of the result column. This feature makes it possible to define an ordering
-    on the basis of a column that does not have a proper name.
+    on the basis of a column that does not have a unique name.
     This is never absolutely necessary because it is always possible
     to assign a name to a result column using the AS clause, e.g.:
     <programlisting>
@@ -661,6 +661,12 @@ SELECT name FROM distributors ORDER BY code;
    The null value sorts higher than any other value in a domain. In other
    words, with ascending sort order nulls sort at the end and with
    descending sort order nulls sort at the beginning.
+   </para>
+
+   <para>
+    Data of character types is sorted according to the locale-specific
+    collation order that was established when the database cluster
+    was initialized.
    </para>
 
   </refsect2>
