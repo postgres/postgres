@@ -39,9 +39,10 @@
 	other users.  MVCC uses the natural multi-version nature of PostgreSQL
 	to allow readers to continue reading consistent data during writer
 	activity.  Writers continue to use the compact pg_log transaction
-	system.  This is all preformed without having to allocate a lock for
+	system.  This is all performed without having to allocate a lock for
 	every row like traditional database systems.  So, basically, we no
-	longer have table-level locking, we have something better than row-level
+	longer are restricted by simple table-level locking;
+	we have something better than row-level
 	locking.
        </para>
       </listitem>
@@ -134,59 +135,61 @@
     </para>
 
     <para>
-
-     Because readers in 6.5 don't lock data, regardless of transaction
-     isolation level, data read by one transaction can be overwritten by
-     another. In the other words, if a row is returned by
-     <command>SELECT</command> it doesn't mean that this row really exists
-     at the time it is returned (i.e. sometime after the statement or
-     transaction began) nor that the row is protected from deletion or
-     updation by concurrent transactions before the current transaction does
-     a commit or rollback.
-
+     The new Multi-Version Concurrency Control (MVCC) features can
+     give somewhat different behaviors in multi-user
+     environments. <emphasis>Read and understand the following section 
+      to ensure that your existing applications will give you the
+      behavior you need.</emphasis>
     </para>
 
-    <para>
+    <sect3>
+     <title>Multi-Version Concurrency Control</title>
 
-     To ensure the actual existance of a row and protect it against
-     concurrent updates one must use <command>SELECT FOR UPDATE</command> or
-     an appropriate <command>LOCK TABLE</command> statement. This should be
-     taken into account when porting applications from previous releases of
-     <productname>Postgres</productname> and other environments.
+     <para>
+      Because readers in 6.5 don't lock data, regardless of transaction
+      isolation level, data read by one transaction can be overwritten by
+      another. In the other words, if a row is returned by
+      <command>SELECT</command> it doesn't mean that this row really exists
+      at the time it is returned (i.e. sometime after the statement or
+      transaction began) nor that the row is protected from deletion or
+      updation by concurrent transactions before the current transaction does
+      a commit or rollback.
+     </para>
 
-    </para>
+     <para>
+      To ensure the actual existance of a row and protect it against
+      concurrent updates one must use <command>SELECT FOR UPDATE</command> or
+      an appropriate <command>LOCK TABLE</command> statement. This should be
+      taken into account when porting applications from previous releases of
+      <productname>Postgres</productname> and other environments.
+     </para>
 
-    <para>
+     <para>
+      Keep above in mind if you are using contrib/refint.* triggers for
+      referential integrity. Additional technics are required now. One way is
+      to use <command>LOCK parent_table IN SHARE ROW EXCLUSIVE MODE</command>
+      command if a transaction is going to update/delete a primary key and
+      use <command>LOCK parent_table IN SHARE MODE</command> command if a
+      transaction is going to update/insert a foreign key.
 
-     Keep above in mind if you are using contrib/refint.* triggers for
-     referential integrity. Additional technics are required now. One way is
-     to use <command>LOCK parent_table IN SHARE ROW EXCLUSIVE MODE</command>
-     command if a transaction is going to update/delete a primary key and
-     use <command>LOCK parent_table IN SHARE MODE</command> command if a
-     transaction is going to update/insert a foreign key.
+      <note>
+       <para>
+	Note that if you run a transaction in SERIALIZABLE mode then you must
+	execute the <command>LOCK</command> commands above before execution of any
+	DML statement
+	(<command>SELECT/INSERT/DELETE/UPDATE/FETCH/COPY_TO</command>) in the
+	transaction.
+       </para>
+      </note>
+     </para>
 
-        <note>
-        <para>
-
-     Note that if you run a transaction in SERIALIZABLE mode then you must
-     execute <command>LOCK</command> commands above before execution of any
-     DML statement
-     (<command>SELECT/INSERT/DELETE/UPDATE/FETCH/COPY_TO</command>) in the
-     transaction.
-
-        </para>
-        </note>
-
-        <para>
-
-     These inconveniences will disappear when the ability to read durty
-     (uncommitted) data, regardless of isolation level, and true referential
-     integrity will be implemented.
-
-        </para>
-
-    </para>
-
+     <para>
+      These inconveniences will disappear in the future
+      when the ability to read dirty
+      (uncommitted) data (regardless of isolation level) and true referential
+      integrity will be implemented.
+     </para>
+    </sect3>
     </sect2>
 
    <sect2>
@@ -2541,22 +2544,55 @@ Initial release.
 </para>
 </sect1>
 
-<sect1>
-<title>Timing Results</title>
+  <sect1>
+   <title>Timing Results</title>
 
-<para>
-These timing results are from running the regression test with the commands
+   <para>
+    These timing results are from running the regression test with the commands
 
-<programlisting>
+    <programlisting>
 % cd src/test/regress
 % make all
 % time make runtest
-</programlisting>
-</para>
-<para>
-  Timing under Linux 2.0.27 seems to have a roughly 5% variation from run
-  to run, presumably due to the scheduling vagaries of multitasking systems.
-</para>
+    </programlisting>
+   </para>
+   <para>
+    Timing under Linux 2.0.27 seems to have a roughly 5% variation from run
+    to run, presumably due to the scheduling vagaries of multitasking systems.
+   </para>
+
+   <sect2>
+    <title>v6.5</title>
+
+    <para>
+     As has been the case for previous releases, timing between
+     releases is not directly comparable since new regression tests
+     have been added. In general, v6.5 is faster than previous
+     releases.
+    </para>
+
+    <para>
+     Timing with <function>fsync()</function> disabled:
+
+     <programlisting>
+  Time   System
+  02:00  Dual Pentium Pro 180, 224MB, UW-SCSI, Linux 2.0.36, gcc 2.7.2.3 -O2 -m486
+     </programlisting>
+    </para>
+
+    <para>
+     Timing with <function>fsync()</function> enabled:
+
+     <programlisting>
+  Time   System
+  04:21  Dual Pentium Pro 180, 224MB, UW-SCSI, Linux 2.0.36, gcc 2.7.2.3 -O2 -m486
+     </programlisting>
+
+     For the linux system above, using UW-SCSI disks rather than (older) IDE
+     disks leads to a 50% improvement in speed on the regression test.
+    </para>
+   </sect2>
+
 <sect2>
 <title>v6.4beta</title>
 
