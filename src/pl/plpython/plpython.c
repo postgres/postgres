@@ -1,5 +1,6 @@
-/*                                               -*- C -*-
- *
+/* $Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.2 2001/05/12 01:30:30 petere Exp $ */
+
+/*
  * plpython.c - python as a procedural language for PostgreSQL
  *
  * IDENTIFICATION
@@ -32,6 +33,8 @@
  * MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  **********************************************************************/
+
+#include "postgres.h"
 
 /* system stuff
  */

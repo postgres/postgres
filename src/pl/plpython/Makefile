@@ -1,69 +1,60 @@
+# $Header: /cvsroot/pgsql/src/pl/plpython/Makefile,v 1.4 2001/05/12 01:30:30 petere Exp $
 
-# cflags.  pick your favorite
+subdir = src/pl/plpython
+top_builddir = ../../..
+include $(top_builddir)/src/Makefile.global
+
+# These things ought to go into $(top_srcdir)/config/python.m4 sometime.
+
+PYTHON_VERSION := $(shell $(PYTHON) -c  'import sys; print sys.version[:3]')
+PYTHON_INCLUDE := $(shell $(PYTHON) -c 'import sys; print sys.prefix')/include/python$(PYTHON_VERSION)
+
+override CPPFLAGS := -I$(srcdir) -I$(PYTHON_INCLUDE) $(CPPFLAGS)
+
+PYTHON_LIB := $(shell $(PYTHON) -c 'import sys; print sys.exec_prefix')/lib/python$(PYTHON_VERSION)
+
+NAME = plpython
+SO_MAJOR_VERSION = 0
+SO_MINOR_VERSION = 0
+OBJS = plpython.o
+
+# This static version might work on most ELF systems...
+SHLIB_LINK += $(PYTHON_LIB)/config/libpython$(PYTHON_VERSION).a
+# ...otherwise you need a shared version, but you need to build that yourself.
+#SHLIB_LINK += -lpython$(PYTHON_VERSION)
+
+# Python uses this.  Should become a configure check.
+SHLIB_LINK += -lpthread
+
+# Python 2 seems to want libdb.
+#SHLIB_LINK += -ldb2
+
+
+# Hopefully you won't need this utter crap.  But if you can't patch
+# the appropriate dynloader file, try this.  You may have to add other
+# modules.
 #
-CC=gcc
-CFLAGS=-g -O0 -Wall -Wmissing-declarations -fPIC
+#DLDIR=$(PYTHON_LIB)/lib-dynload
+#DLHACK=$(DLDIR)/arraymodule.so $(DLDIR)/timemodule.so $(DLDIR)/cmathmodule.so $(DLDIR)/errnomodule.so $(DLDIR)/mathmodule.so $(DLDIR)/md5module.so $(DLDIR)/operator.so $(DLDIR)/shamodule.so
+#SHLIB_LINK += $(DLDIR)
 
-# build info for python, alter as needed
-#
+include $(top_srcdir)/src/Makefile.shlib
 
-# python headers
-#
-#INCPYTHON=/usr/include/python1.5
-INCPYTHON=/usr/include/python2.0
 
-# python shared library
-#
-#LIBPYTHON=python1.5
-LIBPYTHON=python2.0
+all: all-lib
 
-# if python is someplace odd
-#
-LIBPYTHONPATH=/usr/lib
+install: all installdirs
+	$(INSTALL_SHLIB) $(shlib) $(DESTDIR)$(libdir)/plpython$(DLSUFFIX)
 
-# python 2 seems to want libdb
-# various db libs are still messed on my system
-#
-#LIBPYTHONEXTRA=/usr/lib/libdb2.so.2.7.7
-#LIBPYTHONEXTRA=-ldb2
+installdirs:
+	$(mkinstalldirs) $(DESTDIR)$(libdir)
 
-LDPYTHON=-L$(LIBPYTHONPATH) -l$(LIBPYTHON) $(LIBPYTHONEXTRA)
+uninstall:
+	rm -f $(DESTDIR)$(libdir)/plpython$(DLSUFFIX)
 
-# build info for postgres
-#
+clean distclean maintainer-clean: clean-lib
+	rm -f $(OBJS)
+	@rm -f error.diff feature.diff error.output feature.output test.log
 
-# postgres headers.  the installed include directory doesn't work for me
-#
-#INCPOSTGRES=/usr/include/postgres
-INCPOSTGRES=/home/andrew/builds/postgresql/src/include
-
-# hopefully you won't need this utter crap...
-# but if you can't patch the appropriate dynloader file, try this.  you
-# may have to add other modules.
-#
-#DLDIR=/usr/lib/python1.5/lib-dynload
-#DLHACK=$(DLDIR)/arraymodule.so $(DLDIR)/timemodule.so $(DLDIR)/cmathmodule.so $(DLDIR)/errnomodule.so $(DLDIR)/mathmodule.so $(DLDIR)/md5module.so $(DLDIR)/operator.so
-# $(DLDIR)/shamodule.so
-
-# shouldn't need to alter anything below here
-#
-INCLUDES=-I$(INCPYTHON) -I$(INCPOSTGRES) -I./
-
-# dynamic linker flags.  
-#
-#LDFLAGS=--shared -Wl,-Bshareable -Wl,-E -Wl,-soname,$@
-LDFLAGS=--shared -Wl,-E -Wl,-soname,$@
-
-.PHONY: clean
-
-all: plpython.so 
-
-plpython.o: plpython.c plpython.h
-	$(CC) $(CFLAGS) $(INCLUDES) -c -o $@ $<
-
-plpython.so: plpython.o
-	$(CC) $(LDFLAGS) -o $@ $^ $(LDPYTHON) $(DLHACK) -ldl -lpthread -lm
-
-clean:
-	rm -f plpython.so *.o
-
+installcheck:
+	PATH=$(bindir):$$PATH $(SHELL) $(srcdir)/test.sh

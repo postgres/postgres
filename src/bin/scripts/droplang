@@ -7,7 +7,7 @@
 # Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/scripts/Attic/droplang,v 1.14 2001/05/09 22:08:19 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/scripts/Attic/droplang,v 1.15 2001/05/12 01:30:30 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -177,9 +177,13 @@ case "$langname" in
 		lancomp="PL/Perl"
 		handler="plperl_call_handler"
                 ;;
+	plpython)
+		lancomp="PL/Python"
+		handler="plpython_call_handler"
+                ;;
 	*)
 		echo "$CMDNAME: unsupported language '$langname'" 1>&2
-		echo "Supported languages are 'plpgsql', 'pltcl', 'pltclu', and 'plperl'." 1>&2
+		echo "Supported languages are 'plpgsql', 'pltcl', 'pltclu', 'plperl', and 'plpython'." 1>&2
 		exit 1
                 ;;
 esac

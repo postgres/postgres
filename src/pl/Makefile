@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/pl/Makefile,v 1.19 2001/05/10 03:00:11 momjian Exp $
+# $Header: /cvsroot/pgsql/src/pl/Makefile,v 1.20 2001/05/12 01:30:30 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -22,12 +22,12 @@ ifeq ($(with_perl), yes)
 DIRS += plperl
 endif
 
+# Doesn't build portably yet.
 #ifeq ($(with_python), yes)
 #DIRS += plpython
 #endif
 
 all install installdirs uninstall depend distprep:
-	@echo "PL/Python disabled until merged into our Makefile system, bjm 2001-05-09"
 	@for dir in $(DIRS); do $(MAKE) -C $$dir $@ || exit; done
 
 clean distclean maintainer-clean:
