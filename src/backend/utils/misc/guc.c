@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.195 2004/04/01 21:28:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.196 2004/04/05 02:48:09 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -2571,8 +2571,7 @@ set_config_option(const char *name, const char *value,
 {
 	struct config_generic *record;
 	int			elevel;
-	bool		makeDefault;
-	bool		changeVal_orig;
+	bool		makeDefault, changeValOrig = changeVal;
 
 	if (context == PGC_SIGHUP || source == PGC_S_DEFAULT)
 		elevel = DEBUG2;
@@ -2694,7 +2693,6 @@ set_config_option(const char *name, const char *value,
 	 * to set the reset/session values even if we can't set the variable
 	 * itself.
 	 */
-	changeVal_orig = changeVal;			/* we might have to reverse this later */
 	if (record->source > source)
 	{
 		if (changeVal && !makeDefault)
@@ -2703,11 +2701,15 @@ set_config_option(const char *name, const char *value,
 				 name);
 			return true;
 		}
-		changeVal = false;			/* we won't change the variable itself */
+		changeVal = false;			/* this might be reset in USERLIMIT */
 	}
 
 	/*
-	 * Evaluate value and set variable
+	 * Evaluate value and set variable.
+	 * USERLIMIT checks two things:  1) is the user making a change
+	 * that is blocked by an administrator setting.  2) is the administrator
+	 * changing a setting and doing a SIGHUP that requires us to override
+	 * a user setting.
 	 */
 	switch (record->vartype)
 	{
@@ -2726,26 +2728,30 @@ set_config_option(const char *name, const char *value,
 										name)));
 						return false;
 					}
-					/* Limit non-superuser changes */
 					if (record->context == PGC_USERLIMIT &&
-						source > PGC_S_UNPRIVILEGED &&
-						newval < conf->reset_val &&
-						!superuser())
+						IsUnderPostmaster && !superuser())
 					{
-						ereport(elevel,
-								(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-						 errmsg("permission denied to set parameter \"%s\"",
-								name),
-								 errhint("Must be superuser to change this value to false.")));
-						return false;
+						if (newval < conf->reset_val)
+						{
+							/* Limit non-superuser changes */
+							if (source > PGC_S_UNPRIVILEGED)
+							{
+								ereport(elevel,
+										(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+								 errmsg("permission denied to set parameter \"%s\"",
+										name),
+										 errhint("Must be superuser to change this value to false.")));
+								return false;
+							}
+						}
+						if (newval > *conf->variable)
+						{
+							/* Allow change if admin should override */
+							if (source < PGC_S_UNPRIVILEGED &&
+								record->source > PGC_S_UNPRIVILEGED)
+								changeVal = changeValOrig;
+						}
 					}
-					/* Honor change to config file with SIGHUP */
-					if (record->context == PGC_USERLIMIT &&
-						source < PGC_S_UNPRIVILEGED &&
-						record->reset_source > PGC_S_UNPRIVILEGED &&
-						newval > conf->reset_val &&
-						!superuser())
-						changeVal = changeVal_orig;
 				}
 				else
 				{
@@ -2822,27 +2828,35 @@ set_config_option(const char *name, const char *value,
 								   newval, name, conf->min, conf->max)));
 						return false;
 					}
-					/* Limit non-superuser changes */
 					if (record->context == PGC_USERLIMIT &&
-						source > PGC_S_UNPRIVILEGED &&
-						conf->reset_val != 0 &&
-						(newval > conf->reset_val || newval == 0) &&
-						!superuser())
+						IsUnderPostmaster && !superuser())
 					{
-						ereport(elevel,
-								(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-						 errmsg("permission denied to set parameter \"%s\"",
-								name),
-								 errhint("Must be superuser to increase this value or set it to zero.")));
-						return false;
+						/* handle log_min_duration_statement, -1=disable */
+						if ((newval != -1 && conf->reset_val != -1 &&
+							 newval > conf->reset_val) || /* increase duration */
+						 	(newval == -1 && conf->reset_val != -1)) /* turn off */
+						{
+							/* Limit non-superuser changes */
+							if (source > PGC_S_UNPRIVILEGED)
+							{
+								ereport(elevel,
+										(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+								 errmsg("permission denied to set parameter \"%s\"",
+										name),
+										 errhint("Must be superuser to increase this value or turn it off.")));
+								return false;
+							}
+						}
+						/* Allow change if admin should override */
+						if ((newval != -1 && *conf->variable != -1 &&
+							 newval < *conf->variable) || /* decrease duration */
+							(newval != -1 && *conf->variable == -1)) /* turn on */
+						{
+							if (source < PGC_S_UNPRIVILEGED &&
+								record->source > PGC_S_UNPRIVILEGED)
+								changeVal = changeValOrig;
+						}
 					}
-					/* Honor change to config file with SIGHUP */
-					if (record->context == PGC_USERLIMIT &&
-						source < PGC_S_UNPRIVILEGED &&
-						record->reset_source > PGC_S_UNPRIVILEGED &&
-						newval < conf->reset_val && newval != 0 &&
-						!superuser())
-						changeVal = changeVal_orig;
 				}
 				else
 				{
@@ -2919,26 +2933,25 @@ set_config_option(const char *name, const char *value,
 								   newval, name, conf->min, conf->max)));
 						return false;
 					}
-					/* Limit non-superuser changes */
 					if (record->context == PGC_USERLIMIT &&
-						source > PGC_S_UNPRIVILEGED &&
-						newval > conf->reset_val &&
-						!superuser())
+						IsUnderPostmaster && !superuser())
+					/* No REAL PGC_USERLIMIT */
 					{
-						ereport(elevel,
-								(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-						 errmsg("permission denied to set parameter \"%s\"",
-								name),
-								 errhint("Must be superuser to increase this value.")));
-						return false;
+						/* Limit non-superuser changes */
+						if (source > PGC_S_UNPRIVILEGED)
+						{
+							ereport(elevel,
+									(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+							 errmsg("permission denied to set parameter \"%s\"",
+									name),
+									 errhint("Must be superuser to increase this value or turn it off.")));
+							return false;
+						}
+						/* Allow change if admin should override */
+						if (source < PGC_S_UNPRIVILEGED &&
+							record->source > PGC_S_UNPRIVILEGED)
+							changeVal = false;
 					}
-					/* Honor change to config file with SIGHUP */
-					if (record->context == PGC_USERLIMIT &&
-						source < PGC_S_UNPRIVILEGED &&
-						record->reset_source > PGC_S_UNPRIVILEGED &&
-						newval < conf->reset_val &&
-						!superuser())
-						changeVal = changeVal_orig;
 				}
 				else
 				{
@@ -3009,34 +3022,38 @@ set_config_option(const char *name, const char *value,
 					}
 
 					if (record->context == PGC_USERLIMIT &&
-						*conf->variable)
+						IsUnderPostmaster && !superuser())
 					{
 						int			old_int_value,
 									new_int_value;
 
 						/* all USERLIMIT strings are message levels */
-						assign_msglvl(&old_int_value, conf->reset_val,
-									  true, source);
 						assign_msglvl(&new_int_value, newval,
 									  true, source);
-						/* Limit non-superuser changes */
-						if (source > PGC_S_UNPRIVILEGED &&
-							new_int_value > old_int_value &&
-							!superuser())
+						assign_msglvl(&old_int_value, conf->reset_val,
+									  true, source);
+						if (new_int_value > old_int_value)
 						{
-							ereport(elevel,
-								(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+							/* Limit non-superuser changes */
+							if (source > PGC_S_UNPRIVILEGED)
+							{
+								ereport(elevel,
+										(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 								 errmsg("permission denied to set parameter \"%s\"",
 										name),
-								 errhint("Must be superuser to increase this value.")));
-							return false;
+										 errhint("Must be superuser to increase this value.")));
+								return false;
+							}
 						}
-						/* Honor change to config file with SIGHUP */
-						if (source < PGC_S_UNPRIVILEGED &&
-							record->reset_source > PGC_S_UNPRIVILEGED &&
-							newval < conf->reset_val &&
-							!superuser())
-							changeVal = changeVal_orig;
+							/* Allow change if admin should override */
+						assign_msglvl(&old_int_value, *conf->variable,
+									  true, source);
+						if (new_int_value < old_int_value)
+						{
+							if (source < PGC_S_UNPRIVILEGED &&
+								record->source > PGC_S_UNPRIVILEGED)
+								changeVal = changeValOrig;
+						}
 					}
 				}
 				else if (conf->reset_val)
