@@ -34,7 +34,6 @@
 #superuser_reserved_connections = 2
 
 #port = 5432 
-#hostname_lookup = false
 
 #unix_socket_directory = ''
 #unix_socket_group = ''
@@ -121,6 +120,7 @@
 #silent_mode = false
 
 #log_connections = false
+#log_hostname = false
 #log_source_port = false
 #log_pid = false
 #log_statement = false

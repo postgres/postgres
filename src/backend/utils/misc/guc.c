@@ -5,7 +5,7 @@
  * command, configuration file, and command line options.
  * See src/backend/utils/misc/README for more information.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.104 2002/11/15 01:40:19 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.105 2002/11/15 01:57:27 momjian Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -476,7 +476,7 @@ static struct config_bool
 #endif
 
 	{
-		{"hostname_lookup", PGC_SIGHUP}, &HostnameLookup,
+		{"log_hostname", PGC_SIGHUP}, &log_hostname,
 		false, NULL, NULL
 	},
 	{

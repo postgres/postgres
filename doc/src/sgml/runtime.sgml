@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.153 2002/11/15 01:40:15 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.154 2002/11/15 01:57:25 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -995,7 +995,7 @@ env PGOPTIONS='-c geqo=off' psql
      </varlistentry>
 
      <varlistentry>
-      <term><varname>HOSTNAME_LOOKUP</varname> (<type>boolean</type>)</term>
+      <term><varname>LOG_HOSTNAME</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
         By default, connection logs only show the IP address of the

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tcopprot.h,v 1.52 2002/11/15 01:40:20 momjian Exp $
+ * $Id: tcopprot.h,v 1.53 2002/11/15 01:57:28 momjian Exp $
  *
  * OLD COMMENTS
  *	  This file was created so that other c files could get the two
@@ -30,7 +30,7 @@ extern DLLIMPORT sigjmp_buf Warn_restart;
 extern bool Warn_restart_ready;
 extern bool InError;
 extern CommandDest whereToSendOutput;
-extern bool HostnameLookup;
+extern bool log_hostname;
 extern bool LogSourcePort;
 extern DLLIMPORT char* debug_query_string;
 
