@@ -1,0 +1,7 @@
+LDFLAGS+= -Wl,-Bexport
+
+%.so: %.o
+	$(LD) -G -Bdynamic -o $@ $<
+
+INSTALL= /usr/ucb/install
+

@@ -4,7 +4,7 @@
  *	  this file contains the interface to version.c.
  *	  Also some parameters.
  *
- * $Header: /cvsroot/pgsql/src/include/Attic/version.h.in,v 1.2 1998/06/09 22:59:04 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/include/Attic/version.h.in,v 1.3 1998/07/19 04:16:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,6 @@ void SetPgVersion(const char *path, char **reason_p);
 
 #define PG_VERFILE		"PG_VERSION"
 
-#define PG_VERSION_STR  "PostgreSQL " ## PG_RELEASE ## "." ## PG_VERSION ## "." ## PG_SUBVERSION ## " on @host@, compiled by @CC@ @CC_VERSION@"
+#define PG_VERSION_STR  "PostgreSQL " PG_RELEASE "." PG_VERSION "." PG_SUBVERSION " on @host@, compiled by @CC@ @CC_VERSION@"
 
 #endif

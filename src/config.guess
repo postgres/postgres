@@ -450,6 +450,9 @@ EOF
     i?86:DYNIX/ptx:4*:*)
 	echo i386-sequent-sysv4
 	exit 0 ;;
+    i[34]86:UnixWare:*:*)
+	echo ${UNAME_MACHINE}-unixware-sysv${UNAME_RELEASE}
+	exit 0 ;;
     i?86:*:4.*:* | i?86:SYSTEM_V:4.*:*)
 	if grep Novell /usr/include/link.h >/dev/null 2>/dev/null; then
 		echo ${UNAME_MACHINE}-univel-sysv${UNAME_RELEASE}
