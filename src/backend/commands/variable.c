@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.56 2001/11/21 05:55:18 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.57 2001/12/09 04:37:50 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -395,9 +395,9 @@ parse_timezone(List *args)
 				Interval   *interval;
 
 				interval = DatumGetIntervalP(DirectFunctionCall3(interval_in,
-										 CStringGetDatum(p->val.val.str),
-											ObjectIdGetDatum(InvalidOid),
-													 Int32GetDatum(-1)));
+																 CStringGetDatum(p->val.val.str),
+																 ObjectIdGetDatum(InvalidOid),
+																 Int32GetDatum(type->typmod)));
 				if (interval->month != 0)
 					elog(ERROR, "SET TIME ZONE illegal INTERVAL; month not allowed");
 				CTimeZone = interval->time;
