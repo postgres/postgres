@@ -1,7 +1,7 @@
 #
 # PostgreSQL top level makefile
 #
-# $Header: /cvsroot/pgsql/GNUmakefile.in,v 1.9 2000/07/19 16:29:41 petere Exp $
+# $Header: /cvsroot/pgsql/GNUmakefile.in,v 1.10 2000/08/20 15:55:15 petere Exp $
 #
 
 subdir =
@@ -59,6 +59,8 @@ distdir	:= postgresql-$(VERSION)
 dummy	:= =install=
 garbage := =*  "#"*  ."#"*  *~*  *.orig  *.rej  core  postgresql-*
 
+GZIP	:= gzip
+BZIP2	:= bzip2
 
 dist: $(distdir).tar.gz
 ifeq ($(split-dist), yes)
@@ -84,27 +86,29 @@ $(distdir).test.tar: distdir
 	$(TAR) cf $@ $(distdir)/src/test
 
 %.gz: %
-	gzip -f --best $<
-	@text="$@ is ready for distribution." ; \
-	 frame=`echo "$$text" | sed -e 's/./=/g'` ; \
-	 echo "$$frame" ; echo "$$text" ; echo "$$frame"
+	$(GZIP) -f --best $<
 
-distdir: distprep
-	-rm -rf $(distdir)* $(install)
+%.bz2: %
+	$(BZIP2) -f $<
+
+distdir:
+	-rm -rf $(distdir)* $(dummy)
 	for x in `cd $(top_srcdir) && find . -name CVS -prune -o -print`; do \
-	  file=`expr $$x : '\./\(.*\)'`; \
+	  file=`expr X$$x : 'X\./\(.*\)'`; \
 	  if test -d "$(top_srcdir)/$$file" ; then \
 	    mkdir "$(distdir)/$$file" && chmod 777 "$(distdir)/$$file";	\
 	  else \
-	    ln "$(top_srcdir)/$$file" "$(distdir)/$$file"; \
+	    ln "$(top_srcdir)/$$file" "$(distdir)/$$file" >/dev/null 2>&1 \
+	      || cp "$(top_srcdir)/$$file" "$(distdir)/$$file"; \
 	  fi || exit; \
 	done
+	$(MAKE) -C $(distdir) distprep
 	$(MAKE) -C $(distdir) distclean
 
-distcheck: dist
+distcheck: $(distdir).tar.gz
 	-rm -rf $(dummy)
 	mkdir $(dummy)
-	gunzip -c $(distdir).tar.gz | $(TAR) xf -
+	gzip -d -c $< | $(TAR) xf -
 	install_prefix=`cd $(dummy) && pwd`; \
 	cd $(distdir) \
 	&& ./configure --prefix="$$install_prefix"
