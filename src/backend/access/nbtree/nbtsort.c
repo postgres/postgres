@@ -56,7 +56,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsort.c,v 1.85 2004/07/21 22:31:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsort.c,v 1.86 2004/08/15 23:44:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -322,16 +322,15 @@ _bt_blwritepage(BTWriteState *wstate, Page page, BlockNumber blkno)
 			wstate->btws_zeropage = (Page) palloc0(BLCKSZ);
 		smgrwrite(wstate->index->rd_smgr, wstate->btws_pages_written++,
 				  (char *) wstate->btws_zeropage,
-				  !wstate->btws_use_wal);
+				  true);
 	}
 
 	/*
-	 * Now write the page.  If not using WAL, say isTemp = true, to suppress
-	 * duplicate fsync.  If we are using WAL, it surely isn't a temp index,
-	 * so !use_wal is a sufficient condition.
+	 * Now write the page.  We say isTemp = true even if it's not a
+	 * temp index, because there's no need for smgr to schedule an fsync
+	 * for this write; we'll do it ourselves before ending the build.
 	 */
-	smgrwrite(wstate->index->rd_smgr, blkno, (char *) page,
-			  !wstate->btws_use_wal);
+	smgrwrite(wstate->index->rd_smgr, blkno, (char *) page, true);
 
 	if (blkno == wstate->btws_pages_written)
 		wstate->btws_pages_written++;
@@ -802,9 +801,20 @@ _bt_load(BTWriteState *wstate, BTSpool *btspool, BTSpool *btspool2)
 	_bt_uppershutdown(wstate, state);
 
 	/*
-	 * If we weren't using WAL, and the index isn't temp, we must fsync it
-	 * down to disk before it's safe to commit the transaction.
+	 * If the index isn't temp, we must fsync it down to disk before it's
+	 * safe to commit the transaction.  (For a temp index we don't care
+	 * since the index will be uninteresting after a crash anyway.)
+	 *
+	 * It's obvious that we must do this when not WAL-logging the build.
+	 * It's less obvious that we have to do it even if we did WAL-log the
+	 * index pages.  The reason is that since we're building outside
+	 * shared buffers, a CHECKPOINT occurring during the build has no way
+	 * to flush the previously written data to disk (indeed it won't know
+	 * the index even exists).  A crash later on would replay WAL from the
+	 * checkpoint, therefore it wouldn't replay our earlier WAL entries.
+	 * If we do not fsync those pages here, they might still not be on disk
+	 * when the crash occurs.
 	 */
-	if (!wstate->btws_use_wal && !wstate->index->rd_istemp)
+	if (!wstate->index->rd_istemp)
 		smgrimmedsync(wstate->index->rd_smgr);
 }

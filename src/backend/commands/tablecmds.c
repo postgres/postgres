@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.125 2004/08/13 04:50:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.126 2004/08/15 23:44:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -5479,18 +5479,29 @@ copy_relation_data(Relation rel, SMgrRelation dst)
 		}
 
 		/*
-		 * Now write the page.  If not using WAL, say isTemp = true, to
-		 * suppress duplicate fsync.  If we are using WAL, it surely isn't a
-		 * temp rel, so !use_wal is a sufficient condition.
+		 * Now write the page.  We say isTemp = true even if it's not a
+		 * temp rel, because there's no need for smgr to schedule an fsync
+		 * for this write; we'll do it ourselves below.
 		 */
-		smgrwrite(dst, blkno, buf, !use_wal);
+		smgrwrite(dst, blkno, buf, true);
 	}
 
 	/*
-	 * If we weren't using WAL, and the rel isn't temp, we must fsync it
-	 * down to disk before it's safe to commit the transaction.
+	 * If the rel isn't temp, we must fsync it down to disk before it's
+	 * safe to commit the transaction.  (For a temp rel we don't care
+	 * since the rel will be uninteresting after a crash anyway.)
+	 *
+	 * It's obvious that we must do this when not WAL-logging the copy.
+	 * It's less obvious that we have to do it even if we did WAL-log the
+	 * copied pages.  The reason is that since we're copying outside
+	 * shared buffers, a CHECKPOINT occurring during the copy has no way
+	 * to flush the previously written data to disk (indeed it won't know
+	 * the new rel even exists).  A crash later on would replay WAL from the
+	 * checkpoint, therefore it wouldn't replay our earlier WAL entries.
+	 * If we do not fsync those pages here, they might still not be on disk
+	 * when the crash occurs.
 	 */
-	if (!use_wal && !rel->rd_istemp)
+	if (!rel->rd_istemp)
 		smgrimmedsync(dst);
 }
 

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.77 2004/07/17 03:28:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.78 2004/08/15 23:44:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -621,14 +621,15 @@ smgrtruncate(SMgrRelation reln, BlockNumber nblocks, bool isTemp)
  *
  *		Synchronously force all of the specified relation down to disk.
  *
- *		This is really only useful for non-WAL-logged index building:
- *		instead of incrementally WAL-logging the index build steps,
- *		we can just write completed index pages to disk with smgrwrite
+ *		This is useful for building completely new relations (eg, new
+ *		indexes).  Instead of incrementally WAL-logging the index build
+ *		steps, we can just write completed index pages to disk with smgrwrite
  *		or smgrextend, and then fsync the completed index file before
  *		committing the transaction.  (This is sufficient for purposes of
  *		crash recovery, since it effectively duplicates forcing a checkpoint
- *		for the completed index.  But it is *not* workable if one wishes
- *		to use the WAL log for PITR or replication purposes.)
+ *		for the completed index.  But it is *not* sufficient if one wishes
+ *		to use the WAL log for PITR or replication purposes: in that case
+ *		we have to make WAL entries as well.)
  *
  *		The preceding writes should specify isTemp = true to avoid
  *		duplicative fsyncs.
