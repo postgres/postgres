@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.sh,v 1.37 2003/11/29 19:52:04 pgsql Exp $
+#    $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.sh,v 1.38 2004/01/10 02:55:14 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -299,7 +299,11 @@ if [ "$op" = "stop" -o "$op" = "restart" -o "$op" = "reload" ];then
 	if [ "$op" = "reload" ];then
 	    $silence_echo echo "postmaster successfully signaled"
 	else
-	    $silence_echo echo "postmaster successfully shut down"
+	    if [ "$wait" = yes ];then
+		$silence_echo echo "postmaster successfully shut down"
+	    else
+		$silence_echo echo "postmaster shutting down"
+	    fi
 	fi
 
     else # ! -f $PIDFILE
@@ -399,8 +403,10 @@ if [ "$op" = "start" -o "$op" = "restart" ];then
 	    fi
 	done
 	$silence_echo echo "done"
+	$silence_echo echo "postmaster successfully started"
+    else
+	$silence_echo echo "postmaster starting"
     fi
-    $silence_echo echo "postmaster successfully started"
 fi # start or restart
 
 exit 0
