@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.28 2000/02/15 20:49:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.29 2000/03/02 04:08:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,8 @@
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
+#include "optimizer/cost.h"
+#include "optimizer/planmain.h"
 #include "optimizer/planner.h"
 #include "optimizer/subselect.h"
 #include "parser/parse_expr.h"
@@ -123,6 +125,7 @@ static Node *
 make_subplan(SubLink *slink)
 {
 	SubPlan    *node = makeNode(SubPlan);
+	Query	   *subquery = (Query *) (slink->subselect);
 	double		tuple_fraction;
 	Plan	   *plan;
 	List	   *lst;
@@ -151,8 +154,7 @@ make_subplan(SubLink *slink)
 	else
 		tuple_fraction = 0.5;	/* 50% */
 
-	node->plan = plan = union_planner((Query *) slink->subselect,
-									  tuple_fraction);
+	node->plan = plan = union_planner(subquery, tuple_fraction);
 
 	/*
 	 * Assign subPlan, extParam and locParam to plan nodes. At the moment,
@@ -179,7 +181,7 @@ make_subplan(SubLink *slink)
 	PlannerQueryLevel--;
 
 	node->plan_id = PlannerPlanId++;
-	node->rtable = ((Query *) slink->subselect)->rtable;
+	node->rtable = subquery->rtable;
 	node->sublink = slink;
 	slink->subselect = NULL;	/* cool ?! */
 
@@ -287,12 +289,76 @@ make_subplan(SubLink *slink)
 	}
 	else
 	{
-		/* make expression of SUBPLAN type */
 		Expr	   *expr = makeNode(Expr);
 		List	   *args = NIL;
 		List	   *newoper = NIL;
 		int			i = 0;
 
+		/*
+		 * We can't convert subplans of ALL_SUBLINK or ANY_SUBLINK types to
+		 * initPlans, even when they are uncorrelated or undirect correlated,
+		 * because we need to scan the output of the subplan for each outer
+		 * tuple.  However, we have the option to tack a MATERIAL node onto
+		 * the top of an uncorrelated/undirect correlated subplan, which lets
+		 * us do the work of evaluating the subplan only once.  We do this
+		 * if the subplan's top plan node is anything more complicated than
+		 * a sequential or index scan, and we do it even for those plan types
+		 * if the qual appears selective enough to eliminate many tuples.
+		 */
+		if (node->parParam == NIL)
+		{
+			bool		use_material;
+
+			switch (nodeTag(plan))
+			{
+				case T_SeqScan:
+				{
+					Selectivity qualsel;
+
+					qualsel = clauselist_selectivity(subquery, plan->qual, 0);
+					/* Is 10% selectivity a good threshold?? */
+					use_material = qualsel < 0.10;
+					break;
+				}
+				case T_IndexScan:
+				{
+					List	   *indxqual = ((IndexScan *) plan)->indxqualorig;
+					Selectivity qualsel;
+
+					qualsel = clauselist_selectivity(subquery, plan->qual, 0);
+					qualsel *= clauselist_selectivity(subquery, indxqual, 0);
+					/* Note: if index is lossy, we just double-counted the
+					 * index selectivity.  Worth fixing?
+					 */
+					/* Is 10% selectivity a good threshold?? */
+					use_material = qualsel < 0.10;
+					break;
+				}
+				case T_Material:
+				case T_Sort:
+					/* Don't add another Material node if there's one already,
+					 * nor if the top node is a Sort, since Sort materializes
+					 * its output anyway.  (I doubt either case can happen in
+					 * practice for a subplan, but...)
+					 */
+					use_material = false;
+					break;
+				default:
+					use_material = true;
+					break;
+			}
+			if (use_material)
+			{
+				plan = (Plan *) make_noname(plan->targetlist,
+											NIL,
+											plan);
+				node->plan = plan;
+			}
+		}
+
+		/*
+		 * Make expression of SUBPLAN type
+		 */
 		expr->typeOid = BOOLOID; /* bogus, but we don't really care */
 		expr->opType = SUBPLAN_EXPR;
 		expr->oper = (Node *) node;
