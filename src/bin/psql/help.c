@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.54 2002/08/10 19:35:01 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.55 2002/08/27 18:28:29 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "print.h"
@@ -211,17 +211,17 @@ slashUsage(bool pager)
 	fprintf(output, _(" \\cd [DIR]      change the current working directory\n"));
 	fprintf(output, _(" \\copy ...      perform SQL COPY with data stream to the client host\n"));
 	fprintf(output, _(" \\copyright     show PostgreSQL usage and distribution terms\n"));
-	fprintf(output, _(" \\d [NAME]      describe table (or view, index, sequence)\n"));
-	fprintf(output, _(" \\d{t|i|s|v|S} [PATTERN]\n"));
+	fprintf(output, _(" \\d [NAME]      describe table, index, sequence, or view\n"));
+	fprintf(output, _(" \\d{t|i|s|v|S} [PATTERN] (add '+' for more detail)\n"));
 	fprintf(output, _("                list tables/indexes/sequences/views/system tables\n"));
 	fprintf(output, _(" \\da [PATTERN]  list aggregate functions\n"));
 	fprintf(output, _(" \\dd [PATTERN]  show comment for object\n"));
 	fprintf(output, _(" \\dD [PATTERN]  list domains\n"));
-	fprintf(output, _(" \\df [PATTERN]  list functions\n"));
+	fprintf(output, _(" \\df [PATTERN]  list functions (add '+' for more detail)\n"));
 	fprintf(output, _(" \\do [NAME]     list operators\n"));
 	fprintf(output, _(" \\dl            list large objects, same as lo_list\n"));
 	fprintf(output, _(" \\dp [PATTERN]  list table access privileges\n"));
-	fprintf(output, _(" \\dT [PATTERN]  list data types\n"));
+	fprintf(output, _(" \\dT [PATTERN]  list data types (add '+' for more detail)\n"));
 	fprintf(output, _(" \\du [PATTERN]  list users\n"));
 	fprintf(output, _(" \\e [FILE]      edit the query buffer (or file) with external editor\n"));
 	fprintf(output, _(" \\echo [STRING] write string to standard output\n"));

@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/describe.h,v 1.17 2002/08/10 03:56:24 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/describe.h,v 1.18 2002/08/27 18:28:29 momjian Exp $
  */
 #ifndef DESCRIBE_H
 #define DESCRIBE_H
@@ -35,7 +35,7 @@ bool		objectDescription(const char *pattern);
 bool		describeTableDetails(const char *pattern, bool verbose);
 
 /* \l */
-bool		listAllDbs(bool desc);
+bool		listAllDbs(bool verbose);
 
 /* \dt, \di, \ds, \dS, etc. */
 bool		listTables(const char *tabtypes, const char *pattern, bool verbose);

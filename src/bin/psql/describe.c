@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.64 2002/08/24 15:00:46 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.65 2002/08/27 18:28:28 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -293,7 +293,7 @@ describeOperators(const char *pattern)
  * for \l, \list, and -l switch
  */
 bool
-listAllDbs(bool desc)
+listAllDbs(bool verbose)
 {
 	PGresult   *res;
 	PQExpBufferData buf;
@@ -310,7 +310,7 @@ listAllDbs(bool desc)
 			 ",\n       pg_catalog.pg_encoding_to_char(d.encoding) as \"%s\"",
 			 _("Encoding"));
 #endif
-	if (desc)
+	if (verbose)
 		appendPQExpBuffer(&buf,
 			 ",\n       pg_catalog.obj_description(d.oid, 'pg_database') as \"%s\"",
 				 _("Description"));
