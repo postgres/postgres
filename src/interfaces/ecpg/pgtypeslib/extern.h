@@ -29,9 +29,7 @@ union un_fmt_comb
 	char		char_val;
 	unsigned long int luint_val;
 	double		double_val;
-#ifdef HAVE_INT64_TIMESTAMP
 	int64		int64_val;
-#endif
 };
 
 int			pgtypes_fmt_replace(union un_fmt_comb, int, char **, int *);

@@ -88,12 +88,10 @@ pgtypes_fmt_replace(union un_fmt_comb replace_val, int replace_type, char **outp
 						i = snprintf(t, PGTYPES_FMT_NUM_MAX_DIGITS,
 									 "%0.0g", replace_val.double_val);
 						break;
-#ifdef HAVE_INT64
 					case PGTYPES_TYPE_INT64:
 						i = snprintf(t, PGTYPES_FMT_NUM_MAX_DIGITS,
 									 INT64_FORMAT, replace_val.int64_val);
 						break;
-#endif
 					case PGTYPES_TYPE_UINT:
 						i = snprintf(t, PGTYPES_FMT_NUM_MAX_DIGITS,
 									 "%u", replace_val.uint_val);
