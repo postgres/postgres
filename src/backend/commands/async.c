@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.101 2003/10/01 21:30:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.102 2003/10/16 16:50:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -89,10 +89,6 @@
 #include "utils/fmgroids.h"
 #include "utils/ps_status.h"
 #include "utils/syscache.h"
-
-
-/* stuff that we really ought not be touching directly :-( */
-extern TransactionState CurrentTransactionState;
 
 
 /*
@@ -717,7 +713,7 @@ Async_NotifyHandler(SIGNAL_ARGS)
 void
 EnableNotifyInterrupt(void)
 {
-	if (CurrentTransactionState->blockState != TRANS_DEFAULT)
+	if (IsTransactionOrTransactionBlock())
 		return;					/* not really idle */
 
 	/*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.155 2003/09/28 23:26:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.156 2003/10/16 16:50:41 tgl Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -202,7 +202,7 @@ static TransactionStateData CurrentTransactionStateData = {
 								 * perspective */
 };
 
-TransactionState CurrentTransactionState = &CurrentTransactionStateData;
+static TransactionState CurrentTransactionState = &CurrentTransactionStateData;
 
 /*
  *	User-tweakable parameters
@@ -826,26 +826,24 @@ StartTransaction(void)
 {
 	TransactionState s = CurrentTransactionState;
 
-	FreeXactSnapshot();
-	XactIsoLevel = DefaultXactIsoLevel;
-	XactReadOnly = DefaultXactReadOnly;
-
 	/*
-	 * Check the current transaction state.  If the transaction system is
-	 * switched off, or if we're already in a transaction, do nothing.
-	 * We're already in a transaction when the monitor sends a null
-	 * command to the backend to flush the comm channel.  This is a hacky
-	 * fix to a communications problem, and we keep having to deal with it
-	 * here.  We should fix the comm channel code.	mao 080891
+	 * check the current transaction state
 	 */
-	if (s->state == TRANS_INPROGRESS)
-		return;
+	if (s->state != TRANS_DEFAULT)
+		elog(WARNING, "StartTransaction and not in default state");
 
 	/*
 	 * set the current transaction state information appropriately during
 	 * start processing
 	 */
 	s->state = TRANS_START;
+
+	/*
+	 * Make sure we've freed any old snapshot, and reset xact state variables
+	 */
+	FreeXactSnapshot();
+	XactIsoLevel = DefaultXactIsoLevel;
+	XactReadOnly = DefaultXactReadOnly;
 
 	/*
 	 * generate a new transaction id
@@ -1720,6 +1718,24 @@ IsTransactionBlock(void)
 	TransactionState s = CurrentTransactionState;
 
 	if (s->blockState == TBLOCK_DEFAULT)
+		return false;
+
+	return true;
+}
+
+/*
+ * IsTransactionOrTransactionBlock --- are we within either a transaction
+ * or a transaction block?  (The backend is only really "idle" when this
+ * returns false.)
+ *
+ * This should match up with IsTransactionBlock and IsTransactionState.
+ */
+bool
+IsTransactionOrTransactionBlock(void)
+{
+	TransactionState s = CurrentTransactionState;
+
+	if (s->blockState == TBLOCK_DEFAULT && s->state == TRANS_DEFAULT)
 		return false;
 
 	return true;
