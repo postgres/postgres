@@ -1,0 +1,74 @@
+From pgsql-general-owner+M10387@postgresql.org Mon Jun  4 22:02:55 2001
+Return-path: <pgsql-general-owner+M10387@postgresql.org>
+Received: from postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.10.1/8.10.1) with ESMTP id f5522tc28169
+	for <pgman@candle.pha.pa.us>; Mon, 4 Jun 2001 22:02:55 -0400 (EDT)
+Received: from postgresql.org.org (webmail.postgresql.org [216.126.85.28])
+	by postgresql.org (8.11.3/8.11.1) with SMTP id f5520BE14492;
+	Mon, 4 Jun 2001 22:00:11 -0400 (EDT)
+	(envelope-from pgsql-general-owner+M10387@postgresql.org)
+Received: from sss.pgh.pa.us ([192.204.191.242])
+	by postgresql.org (8.11.3/8.11.1) with ESMTP id f551hHE09364
+	for <pgsql-general@postgresql.org>; Mon, 4 Jun 2001 21:43:17 -0400 (EDT)
+	(envelope-from tgl@sss.pgh.pa.us)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.11.3/8.11.3) with ESMTP id f551gwR09928;
+	Mon, 4 Jun 2001 21:42:58 -0400 (EDT)
+To: Rasmus Resen Amossen <spunk@rhk.dk>
+cc: pgsql-general@postgresql.org
+Subject: Re: [GENERAL] Re: Updating views 
+In-Reply-To: <3B1C16EC.8D9FB57B@rhk.dk> 
+References: <20010605001048.A2133@lorien.net> <3B1C16EC.8D9FB57B@rhk.dk>
+Comments: In-reply-to Rasmus Resen Amossen <spunk@rhk.dk>
+	message dated "Tue, 05 Jun 2001 01:17:00 +0200"
+Date: Mon, 04 Jun 2001 21:42:57 -0400
+Message-ID: <9925.991705377@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Precedence: bulk
+Sender: pgsql-general-owner@postgresql.org
+Status: OR
+
+Rasmus Resen Amossen <spunk@rhk.dk> writes:
+> OK, but I can't see how to make a single rule that allows me to update
+> an arbitray set of attributes from an arbitray where-clause.
+
+The reason the system doesn't do that for you is that it's *hard* to
+figure out what to do for an arbitrary where-clause.  An automatic rule
+has no chance of doing the right thing, because the right thing depends
+on what you intend.  For example, if your view has
+	select ... where a>5;
+what do you think ought to happen if someone tries to insert a row
+with a<5?  Is that an error?  A no-op?  Does the row go in anyway,
+you just can't see it in the view?  Does the row go into some other
+table instead?  Is it OK to change the A column at all?  It all depends
+on the semantics of your database design.  So you have to figure out
+what you want and write rules that do it.
+
+The mechanics of the rule are not that painful once you've decided what
+the reverse mapping from inserted/updated data to underlying tables
+ought to be.  One thing that may help is to realize that you don't need
+a separate rule for each combination of set of attributes that might be
+updated.  "new.*" is defined for all columns including the ones that
+didn't change, so you can just do something like
+
+	update ... set f1 = new.f1, f2 = new.f2, ...
+
+without worrying about just which columns the user tried to update.
+Likewise, the where clause in the user's query is not yours to worry
+about; that condition gets added onto the stuff in your rule.
+
+> In other words: I want to make the update of 'exview' transparent to
+> 'extable'.
+
+If it's really transparent, one wonders why you bothered with a view
+at all.  Useful views tend to be nontrivial mappings of the underlying
+data, which is why it's nontrivial to figure out what the reverse
+mapping ought to be.
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 6: Have you searched our list archives?
+
+http://www.postgresql.org/search.mpl
+
