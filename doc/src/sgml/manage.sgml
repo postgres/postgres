@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/manage.sgml,v 1.11 2000/09/29 20:21:34 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/manage.sgml,v 1.12 2000/10/08 19:44:01 momjian Exp $
 -->
 
  <Chapter Id="manage">
@@ -88,7 +88,7 @@ ERROR:  CREATE DATABASE: Permission denied.
    <Para>
     Alternate database locations are created and referenced by an environment variable 
     which gives the absolute path to the intended storage location.  
-    This environment variable must have been defined before the backend was started 
+    This environment variable must have been defined before the postmaster was started 
     and the location it points to must be writable by the postgres administrator account.
     Consult with the site administrator
     regarding preconfigured alternate database locations.  
