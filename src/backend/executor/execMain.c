@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.78 1999/02/21 03:48:36 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.79 1999/02/22 19:40:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -204,16 +204,14 @@ ExecutorRun(QueryDesc *queryDesc, EState *estate, int feature,
 	int				offset = 0;
 	int				count = 0;
 
-	/******************
+	/*
 	 *	sanity checks
-	 ******************
 	 */
 	Assert(queryDesc != NULL);
 
-	/******************
+	/*
 	 *	extract information from the query descriptor
 	 *	and the query feature.
-	 ******************
 	 */
 	operation = queryDesc->operation;
 	plan = queryDesc->plantree;
@@ -222,18 +220,16 @@ ExecutorRun(QueryDesc *queryDesc, EState *estate, int feature,
 	estate->es_processed = 0;
 	estate->es_lastoid = InvalidOid;
 
-	/******************
+	/*
 	 *	FIXME: the dest setup function ought to be handed the tuple desc
 	 *  for the tuples to be output, but I'm not quite sure how to get that
 	 *  info at this point.  For now, passing NULL is OK because no existing
 	 *  dest setup function actually uses the pointer.
-	 ******************
 	 */
 	(*destfunc->setup) (destfunc, (TupleDesc) NULL);
 
-    /******************
+    /*
      *  if given get the offset of the LIMIT clause
-     ******************
      */
     if (limoffset != NULL)
     {
@@ -276,9 +272,8 @@ ExecutorRun(QueryDesc *queryDesc, EState *estate, int feature,
 			elog(ERROR, "limit offset cannot be negative");
 	}
  
-	/******************
+	/*
 	 *  if given get the count of the LIMIT clause
-	 ******************
 	 */
 	if (limcount != NULL)
 	{
@@ -343,9 +338,8 @@ ExecutorRun(QueryDesc *queryDesc, EState *estate, int feature,
 								 destfunc);
 			break;
 
-			/******************
+			/*
 			 *		retrieve next n "backward" tuples
-			 ******************
 			 */
 		case EXEC_BACK:
 			result = ExecutePlan(estate,
@@ -357,10 +351,9 @@ ExecutorRun(QueryDesc *queryDesc, EState *estate, int feature,
 								 destfunc);
 			break;
 
-			/******************
+			/*
 			 *		return one tuple but don't "retrieve" it.
 			 *		(this is used by the rule manager..) -cim 9/14/89
-			 ******************
 			 */
 		case EXEC_RETONE:
 			result = ExecutePlan(estate,
@@ -561,9 +554,8 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 	List		   *targetList;
 	int				len;
 
-	/******************
+	/*
 	 *	get information from query descriptor
-	 ******************
 	 */
 	rangeTable = parseTree->rtable;
 	resultRelation = parseTree->resultRelation;
@@ -572,32 +564,28 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 	ExecCheckPerms(operation, resultRelation, rangeTable, parseTree);
 #endif
 
-	/******************
+	/*
 	 *	initialize the node's execution state
-	 ******************
 	 */
 	estate->es_range_table = rangeTable;
 
-	/******************
+	/*
 	 *	initialize the BaseId counter so node base_id's
 	 *	are assigned correctly.  Someday baseid's will have to
 	 *	be stored someplace other than estate because they
 	 *	should be unique per query planned.
-	 ******************
 	 */
 	estate->es_BaseId = 1;
 
-	/******************
+	/*
 	 *	initialize result relation stuff
-	 ******************
 	 */
 
 	if (resultRelation != 0 && operation != CMD_SELECT)
 	{
-		/******************
+		/*
 		 *	  if we have a result relation, open it and
 		 *	  initialize the result relation info stuff.
-		 ******************
 		 */
 		RelationInfo *resultRelationInfo;
 		Index		resultRelationIndex;
@@ -623,10 +611,9 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 		resultRelationInfo->ri_IndexRelationDescs = NULL;
 		resultRelationInfo->ri_IndexRelationInfo = NULL;
 
-		/******************
+		/*
 		 *	open indices on result relation and save descriptors
 		 *	in the result relation information..
-		 ******************
 		 */
 		if (operation != CMD_DELETE)
 			ExecOpenIndices(resultRelationOid, resultRelationInfo);
@@ -635,9 +622,8 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 	}
 	else
 	{
-		/******************
+		/*
 		 *		if no result relation, then set state appropriately
-		 ******************
 		 */
 		estate->es_result_relation_info = NULL;
 	}
@@ -670,9 +656,8 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 		}
 	}
 
-	/******************
+	/*
 	 *	  initialize the executor "tuple" table.
-	 ******************
 	 */
 	{
 		int			nSlots = ExecCountSlotsNode(plan);
@@ -681,33 +666,30 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 		estate->es_tupleTable = tupleTable;
 	}
 
-	/******************
+	/*
 	 *	   initialize the private state information for
 	 *	   all the nodes in the query tree.  This opens
 	 *	   files, allocates storage and leaves us ready
 	 *	   to start processing tuples..
-	 ******************
 	 */
 	ExecInitNode(plan, estate, NULL);
 
-	/******************
+	/*
 	 *	   get the tuple descriptor describing the type
 	 *	   of tuples to return.. (this is especially important
 	 *	   if we are creating a relation with "retrieve into")
-	 ******************
 	 */
 	tupType = ExecGetTupType(plan);		/* tuple descriptor */
 	targetList = plan->targetlist;
 	len = ExecTargetListLength(targetList);		/* number of attributes */
 
-	/******************
+	/*
 	 *	  now that we have the target list, initialize the junk filter
 	 *	  if this is a REPLACE or a DELETE query.
 	 *	  We also init the junk filter if this is an append query
 	 *	  (there might be some rule lock info there...)
 	 *	  NOTE: in the future we might want to initialize the junk
 	 *	  filter for all queries.
-	 ******************
 	 *		  SELECT added by daveh@insightdist.com  5/20/98 to allow
 	 *		  ORDER/GROUP BY have an identifier missing from the target.
 	 */
@@ -744,9 +726,8 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 			estate->es_junkFilter = NULL;
 	}
 
-	/******************
+	/*
 	 *	initialize the "into" relation
-	 ******************
 	 */
 	intoRelationDesc = (Relation) NULL;
 
@@ -764,9 +745,8 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 			 */
 			if (parseTree->into != NULL)
 			{
-				/******************
+				/*
 				 *	create the "into" relation
-				 ******************
 				 */
 				intoName = parseTree->into;
 
@@ -780,11 +760,10 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 
 				FreeTupleDesc(tupdesc);
 
-				/******************
+				/*
 				 *	XXX rather than having to call setheapoverride(true)
 				 *		and then back to false, we should change the
 				 *		arguments to heap_open() instead..
-				 ******************
 				 */
 				setheapoverride(true);
 
@@ -817,22 +796,19 @@ EndPlan(Plan *plan, EState *estate)
 	RelationInfo *resultRelationInfo;
 	Relation	intoRelationDesc;
 
-	/******************
+	/*
 	 *	get information from state
-	 ******************
 	 */
 	resultRelationInfo = estate->es_result_relation_info;
 	intoRelationDesc = estate->es_into_relation_descriptor;
 
-	/******************
+	/*
 	 *	 shut down the query
-	 ******************
 	 */
 	ExecEndNode(plan, plan);
 
-	/******************
+	/*
 	 *	  destroy the executor "tuple" table.
-	 ******************
 	 */
 	{
 		TupleTable	tupleTable = (TupleTable) estate->es_tupleTable;
@@ -841,9 +817,8 @@ EndPlan(Plan *plan, EState *estate)
 		estate->es_tupleTable = NULL;
 	}
 
-	/******************
+	/*
 	 *	 close the result relations if necessary
-	 ******************
 	 */
 	if (resultRelationInfo != NULL)
 	{
@@ -852,16 +827,14 @@ EndPlan(Plan *plan, EState *estate)
 		resultRelationDesc = resultRelationInfo->ri_RelationDesc;
 		heap_close(resultRelationDesc);
 
-		/******************
+		/*
 		 *	close indices on the result relation
-		 ******************
 		 */
 		ExecCloseIndices(resultRelationInfo);
 	}
 
-	/******************
+	/*
 	 *	 close the "into" relation if necessary
-	 ******************
 	 */
 	if (intoRelationDesc != NULL)
 		heap_close(intoRelationDesc);
@@ -900,31 +873,27 @@ ExecutePlan(EState *estate,
 	int			current_tuple_count;
 	TupleTableSlot *result;
 
-	/******************
+	/*
 	 *	initialize local variables
-	 ******************
 	 */
 	slot = NULL;
 	current_tuple_count = 0;
 	result = NULL;
 
-	/******************
+	/*
 	 *	Set the direction.
-	 ******************
 	 */
 	estate->es_direction = direction;
 
-	/******************
+	/*
 	 *	Loop until we've processed the proper number
 	 *	of tuples from the plan..
-	 ******************
 	 */
 
 	for (;;)
 	{
-		/******************
+		/*
 		 *	Execute the plan and obtain a tuple
-		 ******************
 		 */
 		/* at the top level, the parent of a plan (2nd arg) is itself */
 lnext:;
@@ -937,11 +906,10 @@ lnext:;
 		else
 			slot = ExecProcNode(plan, plan);
 
-		/******************
+		/*
 		 *	if the tuple is null, then we assume
 		 *	there is nothing more to process so
 		 *	we just return null...
-		 ******************
 		 */
 		if (TupIsNull(slot))
 		{
@@ -949,13 +917,12 @@ lnext:;
 			break;
 		}
 
-		/******************
+		/*
 		 *  For now we completely execute the plan and skip
 		 *  result tuples if requested by LIMIT offset.
 		 *  Finally we should try to do it in deeper levels
 		 *  if possible (during index scan)
 		 *  - Jan
-		 ******************
 		 */
 		if (offsetTuples > 0)
 		{
@@ -963,7 +930,7 @@ lnext:;
 			continue;
 		}
 
-		/******************
+		/*
 		 *		if we have a junk filter, then project a new
 		 *		tuple with the junk removed.
 		 *
@@ -971,7 +938,6 @@ lnext:;
 		 *		original tuple.
 		 *
 		 *		Also, extract all the junk information we need.
-		 ******************
 		 */
 		if ((junkfilter = estate->es_junkFilter) != (JunkFilter *) NULL)
 		{
@@ -979,9 +945,8 @@ lnext:;
 			HeapTuple	newTuple;
 			bool		isNull;
 
-			/******************
+			/*
 			 * extract the 'ctid' junk attribute.
-			 ******************
 			 */
 			if (operation == CMD_UPDATE || operation == CMD_DELETE)
 			{
@@ -1063,10 +1028,9 @@ lmark:;
 				}
 			}
 
-			/******************
+			/*
 			 * Finally create a new "clean" tuple with all junk attributes
 			 * removed
-			 ******************
 			 */
 			newTuple = ExecRemoveJunk(junkfilter, slot);
 
@@ -1077,12 +1041,11 @@ lmark:;
 								  true);		/* tuple should be pfreed */
 		}						/* if (junkfilter... */
 
-		/******************
+		/*
 		 *		now that we have a tuple, do the appropriate thing
 		 *		with it.. either return it to the user, add
 		 *		it to a relation someplace, delete it from a
 		 *		relation, or modify some of it's attributes.
-		 ******************
 		 */
 
 		switch (operation)
@@ -1114,21 +1077,19 @@ lmark:;
 				result = NULL;
 				break;
 		}
-		/******************
+		/*
 		 *		check our tuple count.. if we've returned the
 		 *		proper number then return, else loop again and
 		 *		process more tuples..
-		 ******************
 		 */
 		current_tuple_count += 1;
 		if (numberTuples == current_tuple_count)
 			break;
 	}
 
-	/******************
+	/*
 	 *	here, result is either a slot containing a tuple in the case
 	 *	of a RETRIEVE or NULL otherwise.
-	 ******************
 	 */
 	return result;
 }
@@ -1151,16 +1112,14 @@ ExecRetrieve(TupleTableSlot *slot,
 	HeapTuple	tuple;
 	TupleDesc	attrtype;
 
-	/******************
+	/*
 	 *	get the heap tuple out of the tuple table slot
-	 ******************
 	 */
 	tuple = slot->val;
 	attrtype = slot->ttc_tupleDescriptor;
 
-	/******************
+	/*
 	 *	insert the tuple into the "into relation"
-	 ******************
 	 */
 	if (estate->es_into_relation_descriptor != NULL)
 	{
@@ -1168,9 +1127,8 @@ ExecRetrieve(TupleTableSlot *slot,
 		IncrAppended();
 	}
 
-	/******************
+	/*
 	 *	send the tuple to the front end (or the screen)
-	 ******************
 	 */
 	(*destfunc->receiveTuple) (tuple, attrtype, destfunc);
 	IncrRetrieved();
@@ -1197,23 +1155,20 @@ ExecAppend(TupleTableSlot *slot,
 	int			numIndices;
 	Oid			newId;
 
-	/******************
+	/*
 	 *	get the heap tuple out of the tuple table slot
-	 ******************
 	 */
 	tuple = slot->val;
 
-	/******************
+	/*
 	 *	get information on the result relation
-	 ******************
 	 */
 	resultRelationInfo = estate->es_result_relation_info;
 	resultRelationDesc = resultRelationInfo->ri_RelationDesc;
 
-	/******************
+	/*
 	 *	have to add code to preform unique checking here.
 	 *	cim -12/1/89
-	 ******************
 	 */
 
 	/* BEFORE ROW INSERT Triggers */
@@ -1235,9 +1190,8 @@ ExecAppend(TupleTableSlot *slot,
 		}
 	}
 
-	/******************
+	/*
 	 * Check the constraints of a tuple
-	 ******************
 	 */
 
 	if (resultRelationDesc->rd_att->constr)
@@ -1245,21 +1199,19 @@ ExecAppend(TupleTableSlot *slot,
 		ExecConstraints("ExecAppend", resultRelationDesc, tuple, estate);
 	}
 
-	/******************
+	/*
 	 *	insert the tuple
-	 ******************
 	 */
 	newId = heap_insert(resultRelationDesc,		/* relation desc */
 						tuple); /* heap tuple */
 	IncrAppended();
 
-	/******************
+	/*
 	 *	process indices
 	 *
 	 *	Note: heap_insert adds a new tuple to a relation.  As a side
 	 *	effect, the tupleid of the new tuple is placed in the new
 	 *	tuple's t_ctid field.
-	 ******************
 	 */
 	numIndices = resultRelationInfo->ri_NumIndices;
 	if (numIndices > 0)
@@ -1290,9 +1242,8 @@ ExecDelete(TupleTableSlot *slot,
 	ItemPointerData		ctid;
 	int					result;
 
-	/******************
+	/*
 	 *	get the result relation information
-	 ******************
 	 */
 	resultRelationInfo = estate->es_result_relation_info;
 	resultRelationDesc = resultRelationInfo->ri_RelationDesc;
@@ -1346,7 +1297,7 @@ ldelete:;
 	IncrDeleted();
 	(estate->es_processed)++;
 
-	/******************
+	/*
 	 *	Note: Normally one would think that we have to
 	 *		  delete index tuples associated with the
 	 *		  heap tuple now..
@@ -1355,7 +1306,6 @@ ldelete:;
 	 *		  because the vacuum daemon automatically
 	 *		  opens an index scan and deletes index tuples
 	 *		  when it finds deleted heap tuples. -cim 9/27/89
-	 ******************
 	 */
 
 	/* AFTER ROW DELETE Triggers */
@@ -1388,9 +1338,8 @@ ExecReplace(TupleTableSlot *slot,
 	int					result;
 	int					numIndices;
 
-	/******************
+	/*
 	 *	abort the operation if not running transactions
-	 ******************
 	 */
 	if (IsBootstrapProcessingMode())
 	{
@@ -1398,25 +1347,22 @@ ExecReplace(TupleTableSlot *slot,
 		return;
 	}
 
-	/******************
+	/*
 	 *	get the heap tuple out of the tuple table slot
-	 ******************
 	 */
 	tuple = slot->val;
 
-	/******************
+	/*
 	 *	get the result relation information
-	 ******************
 	 */
 	resultRelationInfo = estate->es_result_relation_info;
 	resultRelationDesc = resultRelationInfo->ri_RelationDesc;
 
-	/******************
+	/*
 	 *	have to add code to preform unique checking here.
 	 *	in the event of unique tuples, this becomes a deletion
 	 *	of the original tuple affected by the replace.
 	 *	cim -12/1/89
-	 ******************
 	 */
 
 	/* BEFORE ROW UPDATE Triggers */
@@ -1438,9 +1384,8 @@ ExecReplace(TupleTableSlot *slot,
 		}
 	}
 
-	/******************
+	/*
 	 * Check the constraints of a tuple
-	 ******************
 	 */
 
 	if (resultRelationDesc->rd_att->constr)
@@ -1487,7 +1432,7 @@ lreplace:;
 	IncrReplaced();
 	(estate->es_processed)++;
 
-	/******************
+	/*
 	 *	Note: instead of having to update the old index tuples
 	 *		  associated with the heap tuple, all we do is form
 	 *		  and insert new index tuples..  This is because
@@ -1495,10 +1440,9 @@ lreplace:;
 	 *		  index tuple deletion is done automagically by
 	 *		  the vaccuum deamon.. All we do is insert new
 	 *		  index tuples.  -cim 9/27/89
-	 ******************
 	 */
 
-	/******************
+	/*
 	 *	process indices
 	 *
 	 *	heap_replace updates a tuple in the base relation by invalidating
@@ -1506,7 +1450,6 @@ lreplace:;
 	 *	effect, the tupleid of the new tuple is placed in the new
 	 *	tuple's t_ctid field.  So we now insert index tuples using
 	 *	the new tupleid stored there.
-	 ******************
 	 */
 
 	numIndices = resultRelationInfo->ri_NumIndices;
