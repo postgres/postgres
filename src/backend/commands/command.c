@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.115 2001/01/07 00:05:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.116 2001/01/08 03:14:58 inoue Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -1195,10 +1195,10 @@ AlterTableAddConstraint(char *relationName,
 					pfree(slot);
 
 					heap_endscan(scan);
-					heap_close(rel, NoLock);
 
 					if (!successful)
 					{
+						heap_close(rel, NoLock);
 						elog(ERROR, "AlterTableAddConstraint: rejected due to CHECK constraint %s", name);
 					}
 					/*
@@ -1208,6 +1208,7 @@ AlterTableAddConstraint(char *relationName,
 					 * the table.
 					 */
 					AddRelationRawConstraints(rel, NIL, constlist);
+					heap_close(rel, NoLock);
 					pfree(constlist);
 
 					break;
