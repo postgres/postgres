@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.31 1999/05/25 16:09:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.32 1999/06/06 17:38:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,7 +35,7 @@
 #include "optimizer/planmain.h"
 
 static List *plan_inherit_query(Relids relids, Index rt_index,
-				   RangeTblEntry *rt_entry, Query *parse,
+				   RangeTblEntry *rt_entry, Query *parse, List *tlist,
 				   List **union_rtentriesPtr);
 static RangeTblEntry *new_rangetable_entry(Oid new_relid,
 					 RangeTblEntry *old_entry);
@@ -208,19 +208,33 @@ plan_union_queries(Query *parse)
  *
  *	  Plans the queries for a given parent relation.
  *
- * Returns a list containing a list of plans and a list of rangetable
- * entries to be inserted into an APPEND node.
- * XXX - what exactly does this mean, look for make_append
+ * Inputs:
+ *	parse = parent parse tree
+ *	tlist = target list for inheritance subqueries (not same as parent's!)
+ *	rt_index = rangetable index for current inheritance item
+ *
+ * Returns an APPEND node that forms the result of performing the given
+ * query for each member relation of the inheritance group.
+ *
+ * If grouping, aggregation, or sorting is specified in the parent plan,
+ * the subplans should not do any of those steps --- we must do those
+ * operations just once above the APPEND node.  The given tlist has been
+ * modified appropriately to remove group/aggregate expressions, but the
+ * Query node still has the relevant fields set.  We remove them in the
+ * copies used for subplans (see plan_inherit_query).
+ *
+ * NOTE: this can be invoked recursively if more than one inheritance wildcard
+ * is present.  At each level of recursion, the first wildcard remaining in
+ * the rangetable is expanded.
  */
 Append *
-plan_inherit_queries(Query *parse, Index rt_index)
+plan_inherit_queries(Query *parse, List *tlist, Index rt_index)
 {
-	List	   *union_plans = NIL;
-
 	List	   *rangetable = parse->rtable;
 	RangeTblEntry *rt_entry = rt_fetch(rt_index, rangetable);
 	List	   *inheritrtable = NIL;
-	List	   *union_relids = NIL;
+	List	   *union_relids;
+	List	   *union_plans;
 
 	union_relids = find_all_inheritors(lconsi(rt_entry->relid,
 											  NIL),
@@ -228,12 +242,12 @@ plan_inherit_queries(Query *parse, Index rt_index)
 
 	/*
 	 * Remove the flag for this relation, since we're about to handle it
-	 * (do it before recursing!). XXX destructive parse tree change
+	 * (do it before recursing!). XXX destructive change to parent parse tree
 	 */
-	rt_fetch(rt_index, rangetable)->inh = false;
+	rt_entry->inh = false;
 
 	union_plans = plan_inherit_query(union_relids, rt_index, rt_entry,
-									 parse, &inheritrtable);
+									 parse, tlist, &inheritrtable);
 
 	return (make_append(union_plans,
 						NULL,
@@ -252,11 +266,12 @@ plan_inherit_query(Relids relids,
 				   Index rt_index,
 				   RangeTblEntry *rt_entry,
 				   Query *root,
+				   List *tlist,
 				   List **union_rtentriesPtr)
 {
-	List	   *i;
 	List	   *union_plans = NIL;
 	List	   *union_rtentries = NIL;
+	List	   *i;
 
 	foreach(i, relids)
 	{
@@ -268,19 +283,21 @@ plan_inherit_query(Relids relids,
 												new_rt_entry);
 
 		/*
-		 * reset the uniqueflag and sortclause in parse tree root, so that
-		 * sorting will only be done once after append
+		 * Insert the desired simplified tlist into the subquery
+		 */
+		new_root->targetList = copyObject(tlist);
+
+		/*
+		 * Clear the sorting and grouping qualifications in the subquery,
+		 * so that sorting will only be done once after append
 		 */
 		new_root->uniqueFlag = NULL;
 		new_root->sortClause = NULL;
 		new_root->groupClause = NULL;
 		new_root->havingQual = NULL;
+		new_root->hasAggs = false; /* shouldn't be any left ... */
 
-		if (new_root->hasAggs)
-		{
-			new_root->hasAggs = false;
-			del_agg_tlist_references(new_root->targetList);
-		}
+		/* Fix attribute numbers as necessary */
 		fix_parsetree_attnums(rt_index,
 							  rt_entry->relid,
 							  relid,
@@ -346,7 +363,7 @@ int
 first_inherit_rt_entry(List *rangetable)
 {
 	int			count = 0;
-	List	   *temp = NIL;
+	List	   *temp;
 
 	foreach(temp, rangetable)
 	{
@@ -393,8 +410,8 @@ static Query *
 subst_rangetable(Query *root, Index index, RangeTblEntry *new_entry)
 {
 	Query	   *new_root = copyObject(root);
-	List	   *temp = NIL;
-	int			i = 0;
+	List	   *temp;
+	int			i;
 
 	for (temp = new_root->rtable, i = 1; i < index; temp = lnext(temp), i++)
 		;
@@ -403,6 +420,15 @@ subst_rangetable(Query *root, Index index, RangeTblEntry *new_entry)
 	return new_root;
 }
 
+/*
+ * Adjust varnos for child tables.  This routine makes it possible for
+ * child tables to have different column positions for the "same" attribute
+ * as a parent, which helps ALTER TABLE ADD COLUMN.  Unfortunately this isn't
+ * nearly enough to make it work transparently; there are other places where
+ * things fall down if children and parents don't have the same column numbers
+ * for inherited attributes.  It'd be better to rip this code out and fix
+ * ALTER TABLE...
+ */
 static void
 fix_parsetree_attnums_nodes(Index rt_index,
 							Oid old_relid,
@@ -433,16 +459,11 @@ fix_parsetree_attnums_nodes(Index rt_index,
 		case T_Var:
 			{
 				Var		   *var = (Var *) node;
-				Oid			old_typeid,
-							new_typeid;
-
-				old_typeid = old_relid;
-				new_typeid = new_relid;
 
 				if (var->varno == rt_index && var->varattno != 0)
 				{
-					var->varattno = get_attnum(new_typeid,
-								 get_attname(old_typeid, var->varattno));
+					var->varattno = get_attnum(new_relid,
+								 get_attname(old_relid, var->varattno));
 				}
 			}
 			break;

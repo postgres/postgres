@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.49 1999/05/26 12:55:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.50 1999/06/06 17:38:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,6 @@ static Var *replace_joinvar_refs(Var *var,
 static List *tlist_noname_references(Oid nonameid, List *tlist);
 static bool OperandIsInner(Node *opnd, int inner_relid);
 static List *pull_agg_clause(Node *clause);
-static Node *del_agg_clause(Node *clause);
 static void set_result_tlist_references(Result *resultNode);
 static void replace_vars_with_subplan_refs(Node *clause,
 							   Index subvarno,
@@ -873,94 +872,6 @@ pull_agg_clause(Node *clause)
 	return agg_list;
 }
 
-
-/*
- * del_agg_tlist_references
- *	  Remove the Agg nodes from the target list
- *	  We do this so inheritance only does aggregates in the upper node
- */
-void
-del_agg_tlist_references(List *tlist)
-{
-	List	   *tl;
-
-	foreach(tl, tlist)
-	{
-		TargetEntry *tle = lfirst(tl);
-
-		tle->expr = del_agg_clause(tle->expr);
-	}
-}
-
-static Node *
-del_agg_clause(Node *clause)
-{
-	List	   *t;
-
-	if (clause == NULL)
-		return clause;
-
-	if (IsA(clause, Var))
-		return clause;
-	else if (is_funcclause(clause))
-	{
-
-		/*
-		 * This is a function. Recursively call this routine for its
-		 * arguments...
-		 */
-		foreach(t, ((Expr *) clause)->args)
-			lfirst(t) = del_agg_clause(lfirst(t));
-	}
-	else if (IsA(clause, Aggref))
-	{
-
-		/* here is the real action, to remove the Agg node */
-		return del_agg_clause(((Aggref *) clause)->target);
-
-	}
-	else if (IsA(clause, ArrayRef))
-	{
-		ArrayRef   *aref = (ArrayRef *) clause;
-
-		/*
-		 * This is an arrayref. Recursively call this routine for its
-		 * expression and its index expression...
-		 */
-		foreach(t, aref->refupperindexpr)
-			lfirst(t) = del_agg_clause(lfirst(t));
-		foreach(t, aref->reflowerindexpr)
-			lfirst(t) = del_agg_clause(lfirst(t));
-		aref->refexpr = del_agg_clause(aref->refexpr);
-		aref->refassgnexpr = del_agg_clause(aref->refassgnexpr);
-	}
-	else if (is_opclause(clause))
-	{
-
-		/*
-		 * This is an operator. Recursively call this routine for both its
-		 * left and right operands
-		 */
-		Node	   *left = (Node *) get_leftop((Expr *) clause);
-		Node	   *right = (Node *) get_rightop((Expr *) clause);
-
-		if (left != (Node *) NULL)
-			left = del_agg_clause(left);
-		if (right != (Node *) NULL)
-			right = del_agg_clause(right);
-	}
-	else if (IsA(clause, Param) ||IsA(clause, Const))
-		return clause;
-	else
-	{
-
-		/*
-		 * Ooops! we can not handle that!
-		 */
-		elog(ERROR, "del_agg_clause: Can not handle this tlist!\n");
-	}
-	return NULL;
-}
 
 /*
  * check_having_for_ungrouped_vars takes the havingQual and the list of

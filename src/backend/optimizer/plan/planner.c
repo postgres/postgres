@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.54 1999/05/25 16:09:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.55 1999/06/06 17:38:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -122,14 +122,36 @@ union_planner(Query *parse)
 	}
 	else if ((rt_index = first_inherit_rt_entry(rangetable)) != -1)
 	{
-		if (parse->rowMark != NULL)
-			elog(ERROR, "SELECT FOR UPDATE is not supported for inherit queries");
-		result_plan = (Plan *) plan_inherit_queries(parse, rt_index);
-		/* XXX do we need to do this? bjm 12/19/97 */
+		List	   *sub_tlist;
+
+		/*
+		 * Generate appropriate target list for subplan; may be different
+		 * from tlist if grouping or aggregation is needed.
+		 */
+		sub_tlist = make_subplanTargetList(parse, tlist, &groupColIdx);
+
+		/*
+		 * Recursively plan the subqueries needed for inheritance
+		 */
+		result_plan = (Plan *) plan_inherit_queries(parse, sub_tlist,
+													rt_index);
+
+		/*
+		 * Fix up outer target list.  NOTE: unlike the case for non-inherited
+		 * query, we pass the unfixed tlist to subplans, which do their own
+		 * fixing.  But we still want to fix the outer target list afterwards.
+		 * I *think* this is correct --- doing the fix before recursing is
+		 * definitely wrong, because preprocess_targetlist() will do the
+		 * wrong thing if invoked twice on the same list. Maybe that is a bug?
+		 * tgl 6/6/99
+		 */
 		tlist = preprocess_targetlist(tlist,
 									  parse->commandType,
 									  parse->resultRelation,
 									  parse->rtable);
+
+		if (parse->rowMark != NULL)
+			elog(ERROR, "SELECT FOR UPDATE is not supported for inherit queries");
 	}
 	else
 	{
