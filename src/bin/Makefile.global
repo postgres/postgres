@@ -7,14 +7,14 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/Attic/Makefile.global,v 1.12 1996/11/26 07:37:54 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/bin/Attic/Makefile.global,v 1.13 1997/01/15 05:58:47 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
 LIBPQDIR:= $(SRCDIR)/libpq
 
-LD_ADD+= -L$(SRCDIR)/libpq -lpq
-DPADD+= -L$(SRCDIR)/libpq -lpq
+#LD_ADD+= -L$(SRCDIR)/libpq -lpq
+#DPADD+= -L$(SRCDIR)/libpq -lpq
 
 #
 # And where libpq goes, so goes the authentication stuff...
