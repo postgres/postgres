@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Jul 16 01:00:21 EDT 2001
+Last updated:		Mon Jul 16 01:01:38 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -132,7 +132,6 @@ SYSTEM TABLES
 * -Check all system tables and add unique indexes as needed (Tom)
 * -Remove pg_listener index
 * -Remove unused pg_variable, pg_inheritproc, pg_ipl tables (Bruce)
-* Add pg_depend table to track object dependencies
 
 COMMANDS
 
@@ -217,16 +216,15 @@ REFERENTIAL INTEGRITY
 * Change foreign key constraint for array -> element to mean element
    in array
 
-DEPENDENCY CHECKING / pg_depend
+DEPENDENCY CHECKING - pg_depend
 
-* Auto-destroy sequence on DROP of table with SERIAL, perhaps with a separate
+* Auto-destroy sequence on DROP of table with SERIAL; perhaps a separate
   SERIAL type
 * Prevent column dropping if column is used by foreign key
 * Propagate column or table renaming to foreign key constraints
 * Automatically drop constraints/functions when object is dropped
 * Make constraints clearer in dump file
 * Make foreign keys easier to identify
-
 
 TRANSACTIONS
 
