@@ -548,7 +548,7 @@ methods are specified by the tag [LO].
       pg.error       - invalid previous result, or invalid connection
     Description:
       This method allows to find a field name from its rank number. It can be 
-      useful for displaying a result. The fields are in the same order than the
+      useful for displaying a result. The fields are in the same order as the
       result values.
 
     Syntax: fieldnum(name)
