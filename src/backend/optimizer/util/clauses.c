@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.160 2004/01/05 18:04:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.161 2004/01/10 18:13:53 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -697,10 +697,10 @@ contain_volatile_functions_walker(Node *node, void *context)
  * Returns true if any nonstrict construct is found --- ie, anything that
  * could produce non-NULL output with a NULL input.
  *
- * XXX we do not examine sub-selects to see if they contain uses of
- * nonstrict functions. It's not real clear if that is correct or not...
- * for the current usage it does not matter, since inline_function()
- * rejects cases with sublinks.
+ * The idea here is that the caller has verified that the expression contains
+ * one or more Var or Param nodes (as appropriate for the caller's need), and
+ * now wishes to prove that the expression result will be NULL if any of these
+ * inputs is NULL.  If we return false, then the proof succeeded.
  */
 bool
 contain_nonstrict_functions(Node *clause)
@@ -713,6 +713,11 @@ contain_nonstrict_functions_walker(Node *node, void *context)
 {
 	if (node == NULL)
 		return false;
+	if (IsA(node, Aggref))
+	{
+		/* an aggregate could return non-null with null input */
+		return true;
+	}
 	if (IsA(node, FuncExpr))
 	{
 		FuncExpr   *expr = (FuncExpr *) node;
@@ -745,15 +750,24 @@ contain_nonstrict_functions_walker(Node *node, void *context)
 
 		switch (expr->boolop)
 		{
-			case OR_EXPR:
 			case AND_EXPR:
-				/* OR, AND are inherently non-strict */
+			case OR_EXPR:
+				/* AND, OR are inherently non-strict */
 				return true;
 			default:
 				break;
 		}
 	}
+	if (IsA(node, SubLink))
+	{
+		/* In some cases a sublink might be strict, but in general not */
+		return true;
+	}
+	if (IsA(node, SubPlan))
+		return true;
 	if (IsA(node, CaseExpr))
+		return true;
+	if (IsA(node, CaseWhen))
 		return true;
 	/* NB: ArrayExpr might someday be nonstrict */
 	if (IsA(node, CoalesceExpr))
@@ -764,18 +778,6 @@ contain_nonstrict_functions_walker(Node *node, void *context)
 		return true;
 	if (IsA(node, BooleanTest))
 		return true;
-	if (IsA(node, SubLink))
-	{
-		SubLink    *sublink = (SubLink *) node;
-		List	   *opid;
-
-		foreach(opid, sublink->operOids)
-		{
-			if (!op_strict(lfirsto(opid)))
-				return true;
-		}
-		/* else fall through to check args */
-	}
 	return expression_tree_walker(node, contain_nonstrict_functions_walker,
 								  context);
 }

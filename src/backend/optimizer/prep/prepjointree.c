@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.15 2004/01/10 00:30:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.16 2004/01/10 18:13:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -439,11 +439,13 @@ is_simple_subquery(Query *subquery)
 /*
  * has_nullable_targetlist
  *	  Check a subquery in the range table to see if all the non-junk
- *	  targetlist items are simple variables (and, hence, will correctly
- *	  go to NULL when examined above the point of an outer join).
+ *	  targetlist items are simple variables or strict functions of simple
+ *	  variables (and, hence, will correctly go to NULL when examined above
+ *	  the point of an outer join).
  *
- * A possible future extension is to accept strict functions of simple
- * variables, eg, "x + 1".
+ * NOTE: it would be correct (and useful) to ignore output columns that aren't
+ * actually referenced by the enclosing query ... but we do not have that
+ * information available at this point.
  */
 static bool
 has_nullable_targetlist(Query *subquery)
@@ -458,11 +460,15 @@ has_nullable_targetlist(Query *subquery)
 		if (tle->resdom->resjunk)
 			continue;
 
-		/* Okay if tlist item is a simple Var */
-		if (tle->expr && IsA(tle->expr, Var))
-			continue;
+		/* Must contain a Var of current level */
+		if (!contain_vars_of_level((Node *) tle->expr, 0))
+			return false;
 
-		return false;
+		/* Must not contain any non-strict constructs */
+		if (contain_nonstrict_functions((Node *) tle->expr))
+			return false;
+
+		/* This one's OK, keep scanning */
 	}
 	return true;
 }
