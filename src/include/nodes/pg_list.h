@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_list.h,v 1.40 2003/08/08 21:42:48 momjian Exp $
+ * $Id: pg_list.h,v 1.41 2003/08/22 20:34:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -132,6 +132,9 @@ typedef struct List
  * FastList is an optimization for building large lists.  The conventional
  * way to build a list is repeated lappend() operations, but that is O(N^2)
  * in the number of list items, which gets tedious for large lists.
+ *
+ * Note: there are some hacks in gram.y that rely on the head pointer (the
+ * value-as-list) being the first field.
  */
 typedef struct FastList
 {
@@ -143,6 +146,9 @@ typedef struct FastList
 #define FastListFromList(fl, l)  \
 	( (fl)->head = (l), (fl)->tail = llastnode((fl)->head) )
 #define FastListValue(fl)	( (fl)->head )
+
+#define makeFastList1(fl, x1)  \
+	( (fl)->head = (fl)->tail = makeList1(x1) )
 
 
 /*
