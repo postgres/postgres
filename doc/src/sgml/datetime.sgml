@@ -1,10 +1,196 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.24 2001/12/29 18:35:47 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.25 2002/01/04 17:02:25 thomas Exp $
 Date/time details
 -->
 
  <appendix id="datetime-appendix">
   <title id="datetime-appendix-title">Date/Time Support</title>
+
+  <para>
+   <productname>PostgreSQL</productname> uses an internal heuristic
+   parser for all date/time support. Dates and times are input as
+   strings, and are broken up into distinct fields with a preliminary
+   determination of what kind of information may be in the
+   field. Each field is interpreted and either assigned a numeric
+   value, ignored, or rejected.
+   The parser contains internal lookup tables for all textual fields,
+   including months, days of the week, and time
+   zones.
+  </para>
+
+  <para>
+   This appendix includes information on the content of these
+   lookup tables and describes the steps used by the parser to decode
+   dates and times.
+  </para>
+
+  <sect1>
+   <title>Date/Time Keywords</title>
+
+   <para>
+    <table tocentry="1">
+     <title>Month Abbreviations</title>
+     <tgroup cols="2">
+      <thead>
+       <row>
+	<entry>Month</entry>
+	<entry>Abbreviations</entry>
+       </row>
+      </thead>
+      <tbody>
+       <row>
+	<entry>April</entry>
+	<entry>Apr</entry>
+       </row>
+       <row>
+	<entry>August</entry>
+	<entry>Aug</entry>
+       </row>
+       <row>
+	<entry>December</entry>
+	<entry>Dec</entry>
+       </row>
+       <row>
+	<entry>February</entry>
+	<entry>Feb</entry>
+       </row>
+       <row>
+	<entry>January</entry>
+	<entry>Jan</entry>
+       </row>
+       <row>
+	<entry>July</entry>
+	<entry>Jul</entry>
+       </row>
+       <row>
+	<entry>June</entry>
+	<entry>Jun</entry>
+       </row>
+       <row>
+	<entry>March</entry>
+	<entry>Mar</entry>
+       </row>
+       <row>
+	<entry>November</entry>
+	<entry>Nov</entry>
+       </row>
+       <row>
+	<entry>October</entry>
+	<entry>Oct</entry>
+       </row>
+       <row>
+	<entry>September</entry>
+	<entry>Sep, Sept</entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+
+    <note>
+     <para>
+      The month <literal>May</literal> has no explicit abbreviation, for obvious reasons.
+     </para>
+    </note>
+   </para>
+
+    <para>
+     <table tocentry="1">
+      <title>Day of the Week Abbreviations</title>
+      <tgroup cols="2">
+       <thead>
+	<row>
+	 <entry>Day</entry>
+	 <entry>Abbreviation</entry>
+	</row>
+       </thead>
+       <tbody>
+	<row>
+	 <entry>Sunday</entry>
+	 <entry>Sun</entry>
+	</row>
+	<row>
+	 <entry>Monday</entry>
+	 <entry>Mon</entry>
+	</row>
+	<row>
+	 <entry>Tuesday</entry>
+	 <entry>Tue, Tues</entry>
+	</row>
+	<row>
+	 <entry>Wednesday</entry>
+	 <entry>Wed, Weds</entry>
+	</row>
+	<row>
+	 <entry>Thursday</entry>
+	 <entry>Thu, Thur, Thurs</entry>
+	</row>
+	<row>
+	 <entry>Friday</entry>
+	 <entry>Fri</entry>
+	</row>
+	<row>
+	 <entry>Saturday</entry>
+	 <entry>Sat</entry>
+	</row>
+       </tbody>
+      </tgroup>
+     </table>
+    </para>
+
+   <para>
+    <table tocentry="1">
+     <title><productname>PostgreSQL</productname> Field Modifiers</title>
+     <titleabbrev>Field Modifiers</titleabbrev>
+     <tgroup cols="2">
+      <thead>
+       <row>
+	<entry>Identifier</entry>
+	<entry>Description</entry>
+       </row>
+      </thead>
+      <tbody>
+       <row>
+	<entry>ABSTIME</entry>
+	<entry>Keyword ignored</entry>
+       </row>
+       <row>
+	<entry>AM</entry>
+	<entry>Time is before 12:00</entry>
+       </row>
+       <row>
+	<entry>AT</entry>
+	<entry>Keyword ignored</entry>
+       </row>
+       <row>
+	<entry>JULIAN, JD, J</entry>
+	<entry>Next field is Julian Day</entry>
+       </row>
+       <row>
+	<entry>ON</entry>
+	<entry>Keyword ignored</entry>
+       </row>
+       <row>
+	<entry>PM</entry>
+	<entry>Time is on or after after 12:00</entry>
+       </row>
+       <row>
+	<entry>T</entry>
+	<entry>Next field is time</entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+   </para>
+
+   <para>
+    The keyword <literal>ABSTIME</literal> is ignored for historical
+    reasons; in very old releases of
+    <productname>PostgreSQL</productname> invalid <type>ABSTIME</type>
+    fields were emitted as <quote>Invalid Abstime</quote>. This is no
+    longer the case however and this keyword will likely be dropped in
+    a future release.
+   </para>
+  </sect1>
 
   <sect1 id="timezones">
    <title>Time Zones</title>
@@ -19,6 +205,15 @@ Date/time details
     system interface to provide access to general, cross-timezone
     information. The underlying OS <emphasis>is</emphasis> used to
     provide time zone information for <emphasis>output</emphasis>, however.
+   </para>
+
+   <para>
+    The following table of time zones recognized by
+    <productname>PostgreSQL</productname> is organized by time
+    zone offset from UTC, rather than alphabetically; this is intended
+    to faciliate
+    matching local usage with recognized abreviations for cases where
+    these might differ.
 
     <table tocentry="1">
      <title><productname>PostgreSQL</productname> Recognized Time Zones</title>
@@ -361,6 +556,26 @@ Date/time details
 	<entry>Greenwich Mean Time</entry>
        </row>
        <row>
+	<entry>UT</entry>
+	<entry>+00:00</entry>
+	<entry>Universal Time</entry>
+       </row>
+       <row>
+	<entry>UTC</entry>
+	<entry>+00:00</entry>
+	<entry>Universal Time, Coordinated</entry>
+       </row>
+       <row>
+	<entry>Z</entry>
+	<entry>+00:00</entry>
+	<entry>Same as UTC</entry>
+       </row>
+       <row>
+	<entry>ZULU</entry>
+	<entry>+00:00</entry>
+	<entry>Same as UTC</entry>
+       </row>
+       <row>
 	<entry>WET</entry>
 	<entry>+00:00</entry>
 	<entry>Western Europe</entry>
@@ -603,13 +818,15 @@ Date/time details
      <substeps>
       <step>
        <para>
-	If the token contains a colon (":"), this is a time string.
+	If the numeric token contains a colon (":"), this is a time
+	 string. Include all subsequent digits and colons.
        </para>
       </step>
 
       <step>
        <para>
-	If the token contains a dash ("-"), slash ("/"), or dot ("."),
+	If the numeric token contains a dash ("-"), slash ("/"), or
+	 two or more dots ("."),
 	this is a date string which may have a text month.
        </para>
       </step>
@@ -617,7 +834,8 @@ Date/time details
       <step>
        <para>
 	If the token is numeric only, then it is either a single field
-	or an ISO-8601 concatenated date (e.g. <literal>19990113</literal> for January 13, 1999)
+	or an ISO-8601 concatenated date
+	 (e.g. <literal>19990113</literal> for January 13, 1999)
 	or time (e.g. 141516 for 14:15:16).
        </para>
       </step>
@@ -691,6 +909,13 @@ Date/time details
       
       <step>
        <para>
+	If four or six digits and a year has already been read, then
+	 interpret as a time. 
+       </para>
+      </step>
+
+      <step>
+       <para>
 	If four or more digits, then interpret as a year.
        </para>
       </step>
@@ -732,10 +957,10 @@ Date/time details
 
     <step>
      <para>
-      If BC has been specified, negate the year and offset by one for
+      If BC has been specified, negate the year and add one for
       internal storage
       (there is no year zero in the Gregorian calendar, so numerically
-      1BC becomes year zero).
+      <literal>1BC</literal> becomes year zero).
      </para>
     </step>
 

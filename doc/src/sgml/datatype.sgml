@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.81 2001/12/29 18:35:46 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.82 2002/01/04 17:02:02 thomas Exp $
 -->
 
  <chapter id="datatype">
@@ -1346,29 +1346,35 @@ SELECT b, char_length(b) FROM test2;
 
    <para>
     Time zones, and time-zone conventions, are influenced by
-    political decisions, not just geometry. Time zones around the
+    political decisions, not just earth geometry. Time zones around the
     world became somewhat standardized during the 1900's,
     but continue to be prone to arbitrary changes.
     <productname>PostgreSQL</productname> uses your operating
-    system's underlying features to provide time-zone
+    system's underlying features to provide output time-zone
     support, and these systems usually contain information for only
     the time period 1902 through 2038 (corresponding to the full
     range of conventional Unix system time).
-    <type>timestamp with time zone</type> will use time zone
-    information only within that year range, and assumes that times
-    are in UTC outside that range.
+    <type>timestamp with time zone</type> and <type>time with time
+     zone</type> will use time zone
+    information only within that year range, and assume that times
+    outside that range are in <acronym>UTC</acronym>.
    </para>
 
    <para>
-    To ensure compatibility to earlier versions of
-    <productname>PostgreSQL</productname> 
-    we continue to provide <type>datetime</type>
+    To ensure an upgrade path from versions of
+    <productname>PostgreSQL</productname> earlier than 7.0,
+    we recognize <type>datetime</type>
     (equivalent to <type>timestamp</type>) and
-    <type>timespan</type> (equivalent to <type>interval</type>),
-    however support for these is now restricted to having an
+    <type>timespan</type> (equivalent to <type>interval</type>).
+    These types are
+    now restricted to having an
     implicit translation to <type>timestamp</type> and
-    <type>interval</type>, and these name mappings will be removed in
-    the next version.
+    <type>interval</type>, and 
+    support for these will be removed in the next release of
+    <productname>PostgreSQL</productname> (likely named 7.3).
+   </para>
+
+   <para>
     The types <type>abstime</type>
     and <type>reltime</type> are lower precision types which are used internally.
     You are discouraged from using any of these types in new
@@ -1402,7 +1408,8 @@ SELECT b, char_length(b) FROM test2;
      <acronym>SQL</acronym> standard requires.
      See <xref linkend="datetime-appendix">
      for the exact parsing rules of date/time input and for the
-     recognized time zones. 
+     recognized text fields including months, days of the week, and
+     time zones. 
     </para>
 
     <para>
@@ -1431,7 +1438,7 @@ SELECT b, char_length(b) FROM test2;
     </indexterm>
  
     <para>
-     The following are possible inputs for the <type>date</type> type.
+     The following are some possible inputs for the <type>date</type> type.
 
      <table tocentry="1">
       <title>Date Input</title>
@@ -1480,118 +1487,12 @@ SELECT b, char_length(b) FROM test2;
 	 <entry>Year and day of year</entry>
 	</row>
 	<row>
+	 <entry>J2451187</entry>
+	 <entry>Julian day</entry>
+	</row>
+	<row>
 	 <entry>January 8, 99 BC</entry>
 	 <entry>Year 99 before the Common Era</entry>
-	</row>
-       </tbody>
-      </tgroup>
-     </table>
-    </para>
-
-    <para>
-     <table tocentry="1">
-      <title>Month Abbreviations</title>
-      <tgroup cols="2">
-       <thead>
-	<row>
-	 <entry>Month</entry>
-	 <entry>Abbreviations</entry>
-	</row>
-       </thead>
-       <tbody>
-	<row>
-	 <entry>April</entry>
-	 <entry>Apr</entry>
-	</row>
-	<row>
-	 <entry>August</entry>
-	 <entry>Aug</entry>
-	</row>
-	<row>
-	 <entry>December</entry>
-	 <entry>Dec</entry>
-	</row>
-	<row>
-	 <entry>February</entry>
-	 <entry>Feb</entry>
-	</row>
-	<row>
-	 <entry>January</entry>
-	 <entry>Jan</entry>
-	</row>
-	<row>
-	 <entry>July</entry>
-	 <entry>Jul</entry>
-	</row>
-	<row>
-	 <entry>June</entry>
-	 <entry>Jun</entry>
-	</row>
-	<row>
-	 <entry>March</entry>
-	 <entry>Mar</entry>
-	</row>
-	<row>
-	 <entry>November</entry>
-	 <entry>Nov</entry>
-	</row>
-	<row>
-	 <entry>October</entry>
-	 <entry>Oct</entry>
-	</row>
-	<row>
-	 <entry>September</entry>
-	 <entry>Sep, Sept</entry>
-	</row>
-       </tbody>
-      </tgroup>
-     </table>
-
-     <note>
-      <para>
-       The month <literal>May</literal> has no explicit abbreviation, for obvious reasons.
-      </para>
-     </note>
-    </para>
-
-    <para>
-     <table tocentry="1">
-      <title>Day of the Week Abbreviations</title>
-      <tgroup cols="2">
-       <thead>
-	<row>
-	 <entry>Day</entry>
-	 <entry>Abbreviation</entry>
-	</row>
-       </thead>
-       <tbody>
-	<row>
-	 <entry>Sunday</entry>
-	 <entry>Sun</entry>
-	</row>
-	<row>
-	 <entry>Monday</entry>
-	 <entry>Mon</entry>
-	</row>
-	<row>
-	 <entry>Tuesday</entry>
-	 <entry>Tue, Tues</entry>
-	</row>
-	<row>
-	 <entry>Wednesday</entry>
-	 <entry>Wed, Weds</entry>
-	</row>
-	<row>
-	 <entry>Thursday</entry>
-	 <entry>Thu, Thur, Thurs</entry>
-	</row>
-	<row>
-	 <entry>Friday</entry>
-	 <entry>Fri</entry>
-	</row>
-	<row>
-	 <entry>Saturday</entry>
-	 <entry>Sat</entry>
 	</row>
        </tbody>
       </tgroup>
@@ -1654,14 +1555,6 @@ SELECT b, char_length(b) FROM test2;
 	 <row>
 	  <entry>04:05 PM</entry>
 	  <entry>Same as 16:05; input hour must be <= 12</entry>
-	 </row>
-	 <row>
-	  <entry>z</entry>
-	  <entry>Same as 00:00:00</entry>
-	 </row>
-	 <row>
-	  <entry>zulu</entry>
-	  <entry>Same as 00:00:00</entry>
 	 </row>
 	 <row>
 	  <entry>allballs</entry>
