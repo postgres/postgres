@@ -967,6 +967,8 @@ internal_size(int *a, int len)
 	return size;
 }
 
+#define UNIX_UNIQ(a) a = _int_unique(a)
+
 /* r is sorted and size of r > 1 */
 static ArrayType *
 _int_unique(ArrayType *r)
@@ -975,6 +977,9 @@ _int_unique(ArrayType *r)
 			   *dr,
 			   *data;
 	int			num = ARRNELEMS(r);
+
+	if ( num<2 )
+		return r;
 
 	data = tmp = dr = ARRPTR(r);
 	while (tmp - data < num)
@@ -2445,23 +2450,6 @@ if (ARRNELEMS(a) > 1)						\
 	qsort((void*)ARRPTR(a), ARRNELEMS(a),sizeof(int4),	\
 		(direction) ? compASC : compDESC )
 
-#define UNIX_UNIQ(a) a = resize_intArrayType(a, unix_uniq(ARRPTR(a), ARRNELEMS(a)))
-
-static int32
-unix_uniq(int32 *array, int32 count)
-{
-	register int32 i,
-				k = 0;
-
-	for (i = 1; i < count; i++)
-		if (array[k] != array[i])
-		{
-			k++;
-			if (i > k)
-				array[k] = array[i];
-		}
-	return (k + 1);
-}
 
 Datum
 intset(PG_FUNCTION_ARGS)
