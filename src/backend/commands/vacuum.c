@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.115 1999/07/19 07:07:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.116 1999/08/01 04:54:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,7 +78,7 @@ static void vc_vacpage(Page page, VPageDescr vpd);
 static void vc_vaconeind(VPageList vpl, Relation indrel, int num_tuples, int keep_tuples);
 static void vc_scanoneind(Relation indrel, int num_tuples);
 static void vc_attrstats(Relation onerel, VRelStats *vacrelstats, HeapTuple tuple);
-static void vc_bucketcpy(Form_pg_attribute attr, Datum value, Datum *bucket, int16 *bucket_len);
+static void vc_bucketcpy(Form_pg_attribute attr, Datum value, Datum *bucket, int *bucket_len);
 static void vc_updstats(Oid relid, int num_pages, int num_tuples, bool hasindex, VRelStats *vacrelstats);
 static void vc_delhilowstats(Oid relid, int attcnt, int *attnums);
 static VPageDescr vc_tidreapped(ItemPointer itemptr, VPageList vpl);
@@ -473,9 +473,13 @@ vc_vacone(Oid relid, bool analyze, List *va_cols)
 			{
 				pgopform = (Form_pg_operator) GETSTRUCT(func_operator);
 				fmgr_info(pgopform->oprcode, &(stats->f_cmplt));
+				stats->op_cmplt = oprid(func_operator);
 			}
 			else
+			{
 				stats->f_cmplt.fn_addr = NULL;
+				stats->op_cmplt = InvalidOid;
+			}
 
 			func_operator = oper(">", stats->attr->atttypid, stats->attr->atttypid, true);
 			if (func_operator != NULL)
@@ -2200,8 +2204,8 @@ vc_attrstats(Relation onerel, VRelStats *vacrelstats, HeapTuple tuple)
 			{
 				swapDatum(stats->guess1, stats->guess2);
 				swapInt(stats->guess1_len, stats->guess2_len);
-				stats->guess1_cnt = stats->guess2_hits;
 				swapLong(stats->guess1_hits, stats->guess2_hits);
+				stats->guess1_cnt = stats->guess1_hits;
 			}
 			if (stats->guess1_cnt > stats->best_cnt)
 			{
@@ -2227,7 +2231,7 @@ vc_attrstats(Relation onerel, VRelStats *vacrelstats, HeapTuple tuple)
  *
  */
 static void
-vc_bucketcpy(Form_pg_attribute attr, Datum value, Datum *bucket, int16 *bucket_len)
+vc_bucketcpy(Form_pg_attribute attr, Datum value, Datum *bucket, int *bucket_len)
 {
 	if (attr->attbyval && attr->attlen != -1)
 		*bucket = value;
@@ -2340,13 +2344,14 @@ vc_updstats(Oid relid, int num_pages, int num_tuples, bool hasindex, VRelStats *
 					selratio = 0;
 				else if (VacAttrStatsLtGtValid(stats) && stats->min_cnt + stats->max_cnt == stats->nonnull_cnt)
 				{
+					/* exact result when there are just 1 or 2 values... */
 					double		min_cnt_d = stats->min_cnt,
 								max_cnt_d = stats->max_cnt,
 								null_cnt_d = stats->null_cnt,
-								nonnullcnt_d = stats->nonnull_cnt;		/* prevent overflow */
+								nonnull_cnt_d = stats->nonnull_cnt;		/* prevent overflow */
 
 					selratio = (min_cnt_d * min_cnt_d + max_cnt_d * max_cnt_d + null_cnt_d * null_cnt_d) /
-						(nonnullcnt_d + null_cnt_d) / (nonnullcnt_d + null_cnt_d);
+						(nonnull_cnt_d + null_cnt_d) / (nonnull_cnt_d + null_cnt_d);
 				}
 				else
 				{
@@ -2359,7 +2364,9 @@ vc_updstats(Oid relid, int num_pages, int num_tuples, bool hasindex, VRelStats *
 					 */
 					selratio = (most * most + 0.20 * most * (total - most)) / total / total;
 				}
-				if (selratio > 1.0)
+				if (selratio < 0.0)
+					selratio = 0.0;
+				else if (selratio > 1.0)
 					selratio = 1.0;
 				attp->attdisbursion = selratio;
 
@@ -2375,13 +2382,22 @@ vc_updstats(Oid relid, int num_pages, int num_tuples, bool hasindex, VRelStats *
 				 * doing system relations, especially pg_statistic is a
 				 * problem
 				 */
-				if (VacAttrStatsLtGtValid(stats) && stats->initialized	/* &&
-																		 * !IsSystemRelationName(
-																		 *
-					 pgcform->relname.data) */ )
+				if (VacAttrStatsLtGtValid(stats) && stats->initialized
+					/* && !IsSystemRelationName(pgcform->relname.data)
+					 */ )
 				{
+					float32data nullratio;
+					float32data bestratio;
 					FmgrInfo	out_function;
 					char	   *out_string;
+					double		best_cnt_d = stats->best_cnt,
+								null_cnt_d = stats->null_cnt,
+								nonnull_cnt_d = stats->nonnull_cnt;		/* prevent overflow */
+
+					nullratio = null_cnt_d / (nonnull_cnt_d + null_cnt_d);
+					bestratio = best_cnt_d / (nonnull_cnt_d + null_cnt_d);
+
+					fmgr_info(stats->outfunc, &out_function);
 
 					for (i = 0; i < Natts_pg_statistic; ++i)
 						nulls[i] = ' ';
@@ -2391,26 +2407,34 @@ vc_updstats(Oid relid, int num_pages, int num_tuples, bool hasindex, VRelStats *
 					 * ----------------
 					 */
 					i = 0;
-					values[i++] = (Datum) relid;		/* 1 */
-					values[i++] = (Datum) attp->attnum; /* 2 */
-					values[i++] = (Datum) InvalidOid;	/* 3 */
-					fmgr_info(stats->outfunc, &out_function);
-					out_string = (*fmgr_faddr(&out_function)) (stats->min, stats->attr->atttypid);
-					values[i++] = (Datum) fmgr(F_TEXTIN, out_string);
+					values[i++] = (Datum) relid;		/* starelid */
+					values[i++] = (Datum) attp->attnum; /* staattnum */
+					values[i++] = (Datum) stats->op_cmplt;	/* staop */
+					/* hack: this code knows float4 is pass-by-ref */
+					values[i++] = PointerGetDatum(&nullratio);	/* stanullfrac */
+					values[i++] = PointerGetDatum(&bestratio);	/* stacommonfrac */
+					out_string = (*fmgr_faddr(&out_function)) (stats->best, stats->attr->atttypid, stats->attr->atttypmod);
+					values[i++] = PointerGetDatum(textin(out_string)); /* stacommonval */
 					pfree(out_string);
-					out_string = (char *) (*fmgr_faddr(&out_function)) (stats->max, stats->attr->atttypid);
-					values[i++] = (Datum) fmgr(F_TEXTIN, out_string);
+					out_string = (*fmgr_faddr(&out_function)) (stats->min, stats->attr->atttypid, stats->attr->atttypmod);
+					values[i++] = PointerGetDatum(textin(out_string)); /* staloval */
+					pfree(out_string);
+					out_string = (char *) (*fmgr_faddr(&out_function)) (stats->max, stats->attr->atttypid, stats->attr->atttypmod);
+					values[i++] = PointerGetDatum(textin(out_string)); /* stahival */
 					pfree(out_string);
 
 					stup = heap_formtuple(sd->rd_att, values, nulls);
 
 					/* ----------------
-					 *	insert the tuple in the relation and get the tuple's oid.
+					 *	insert the tuple in the relation.
 					 * ----------------
 					 */
 					heap_insert(sd, stup);
-					pfree(DatumGetPointer(values[3]));
-					pfree(DatumGetPointer(values[4]));
+
+					/* release allocated space */
+					pfree(DatumGetPointer(values[Anum_pg_statistic_stacommonval-1]));
+					pfree(DatumGetPointer(values[Anum_pg_statistic_staloval-1]));
+					pfree(DatumGetPointer(values[Anum_pg_statistic_stahival-1]));
 					pfree(stup);
 				}
 			}

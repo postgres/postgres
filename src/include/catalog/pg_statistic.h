@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_statistic.h,v 1.6 1999/02/13 23:21:15 momjian Exp $
+ * $Id: pg_statistic.h,v 1.7 1999/08/01 04:54:21 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -32,11 +32,32 @@
  */
 CATALOG(pg_statistic)
 {
-	Oid			starelid;
-	int2		staattnum;
-	Oid			staop;
-	text		stalokey;		/* VARIABLE LENGTH FIELD */
-	text		stahikey;		/* VARIABLE LENGTH FIELD */
+	/* These fields form the unique key for the entry: */
+	Oid			starelid;		/* relation containing attribute */
+	int2		staattnum;		/* attribute (column) stats are for */
+	Oid			staop;			/* '<' comparison op used for lo/hi vals */
+	/* Note: the current VACUUM code will never produce more than one entry
+	 * per column, but in theory there could be multiple entries if a datatype
+	 * has more than one useful ordering operator.  Also, the current code
+	 * will not write an entry unless it found at least one non-NULL value
+	 * in the column; so the remaining fields will never be NULL.
+	 */
+
+	/* These fields contain the stats about the column indicated by the key */
+	float4		stanullfrac;	/* the fraction of the entries that are NULL */
+	float4		stacommonfrac;	/* the fraction that are the most common val */
+
+	/* THE REST OF THESE ARE VARIABLE LENGTH FIELDS.
+	 * They cannot be accessed as C struct entries; you have to use the
+	 * full field access machinery (heap_getattr) for them.
+	 *
+	 * All three of these are text representations of data values of the
+	 * column's data type.  To re-create the actual Datum, do
+	 * datatypein(textout(givenvalue)).
+	 */
+	text		stacommonval;	/* most common non-null value in column */
+	text		staloval;		/* smallest non-null value in column */
+	text		stahival;		/* largest non-null value in column */
 } FormData_pg_statistic;
 
 /* ----------------
@@ -50,11 +71,14 @@ typedef FormData_pg_statistic *Form_pg_statistic;
  *		compiler constants for pg_statistic
  * ----------------
  */
-#define Natts_pg_statistic				5
+#define Natts_pg_statistic				8
 #define Anum_pg_statistic_starelid		1
 #define Anum_pg_statistic_staattnum		2
 #define Anum_pg_statistic_staop			3
-#define Anum_pg_statistic_stalokey		4
-#define Anum_pg_statistic_stahikey		5
+#define Anum_pg_statistic_stanullfrac	4
+#define Anum_pg_statistic_stacommonfrac	5
+#define Anum_pg_statistic_stacommonval	6
+#define Anum_pg_statistic_staloval		7
+#define Anum_pg_statistic_stahival		8
 
 #endif	 /* PG_STATISTIC_H */

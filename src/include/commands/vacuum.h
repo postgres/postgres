@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: vacuum.h,v 1.22 1999/07/15 15:21:03 momjian Exp $
+ * $Id: vacuum.h,v 1.23 1999/08/01 04:54:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,22 +67,23 @@ typedef struct
 				guess2,
 				max,
 				min;
-	int16		best_len,
+	int			best_len,
 				guess1_len,
 				guess2_len,
 				max_len,
 				min_len;
-	int32		best_cnt,
+	long		best_cnt,
 				guess1_cnt,
 				guess1_hits,
 				guess2_hits,
 				null_cnt,
-				nonnull_cnt;
-	int32		max_cnt,
+				nonnull_cnt,
+				max_cnt,
 				min_cnt;
 	FmgrInfo	f_cmpeq,
 				f_cmplt,
 				f_cmpgt;
+	Oid			op_cmplt;
 	regproc		outfunc;
 	bool		initialized;
 } VacAttrStats;

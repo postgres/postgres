@@ -6,13 +6,11 @@
  *	  These routines are registered in the operator catalog in the
  *	  "oprrest" and "oprjoin" attributes.
  *
- *	  XXX check all the functions--I suspect them to be 1-based.
- *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.35 1999/07/17 20:17:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.36 1999/08/01 04:54:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +19,10 @@
 
 #include "access/heapam.h"
 #include "catalog/catname.h"
+#include "catalog/pg_operator.h"
 #include "catalog/pg_statistic.h"
+#include "catalog/pg_type.h"
+#include "parser/parse_oper.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
@@ -29,24 +30,35 @@
 /* N is not a valid var/constant or relation id */
 #define NONVALUE(N)		((N) == -1)
 
+/* are we looking at a functional index selectivity request? */
+#define FunctionalSelectivity(nIndKeys,attNum) ((attNum)==InvalidAttrNumber)
+
+/* default selectivity estimate for inequalities such as "A < b" */
+#define DEFAULT_INEQ_SEL  (1.0 / 3.0)
+
+static void getattproperties(Oid relid, AttrNumber attnum,
+							 Oid *typid,
+							 int *typlen,
+							 bool *typbyval,
+							 int32 *typmod);
+static bool getattstatistics(Oid relid, AttrNumber attnum,
+							 Oid typid, int32 typmod,
+							 double *nullfrac,
+							 double *commonfrac,
+							 Datum *commonval,
+							 Datum *loval,
+							 Datum *hival);
+static double getattdisbursion(Oid relid, AttrNumber attnum);
+
+
 /*
- * generalize the test for functional index selectivity request
- */
-#define FunctionalSelectivity(nIndKeys,attNum) (attNum==InvalidAttrNumber)
-
-static float32data getattdisbursion(Oid relid, AttrNumber attnum);
-static void gethilokey(Oid relid, AttrNumber attnum, Oid opid,
-		   char **high, char **low);
-
-
-/*
- *		eqsel			- Selectivity of "=" for any data type.
+ *		eqsel			- Selectivity of "=" for any data types.
  */
 float64
 eqsel(Oid opid,
 	  Oid relid,
 	  AttrNumber attno,
-	  char *value,
+	  Datum value,
 	  int32 flag)
 {
 	float64		result;
@@ -55,18 +67,124 @@ eqsel(Oid opid,
 	if (NONVALUE(attno) || NONVALUE(relid))
 		*result = 0.1;
 	else
-		*result = (float64data) getattdisbursion(relid, (int) attno);
+	{
+		Oid			typid;
+		int			typlen;
+		bool		typbyval;
+		int32		typmod;
+		double		nullfrac;
+		double		commonfrac;
+		Datum		commonval;
+		double		selec;
+
+		/* get info about the attribute */
+		getattproperties(relid, attno,
+						 &typid, &typlen, &typbyval, &typmod);
+
+		if (getattstatistics(relid, attno, typid, typmod,
+							 &nullfrac, &commonfrac, &commonval,
+							 NULL, NULL))
+		{
+			if (flag & SEL_CONSTANT)
+			{
+				/* Is the constant the same as the most common value? */
+				HeapTuple	oprtuple;
+				Oid			ltype,
+							rtype;
+				Operator	func_operator;
+				bool		mostcommon = false;
+
+				/* get left and right datatypes of the operator */
+				oprtuple = get_operator_tuple(opid);
+				if (! HeapTupleIsValid(oprtuple))
+					elog(ERROR, "eqsel: no tuple for operator %u", opid);
+				ltype = ((Form_pg_operator) GETSTRUCT(oprtuple))->oprleft;
+				rtype = ((Form_pg_operator) GETSTRUCT(oprtuple))->oprright;
+
+				/* and find appropriate equality operator (no, it ain't
+				 * necessarily opid itself...)
+				 */
+				func_operator = oper("=", ltype, rtype, true);
+
+				if (func_operator != NULL)
+				{
+					RegProcedure eqproc = ((Form_pg_operator) GETSTRUCT(func_operator))->oprcode;
+					if (flag & SEL_RIGHT) /* given value on the right? */
+						mostcommon = (bool)
+							DatumGetUInt8(fmgr(eqproc, commonval, value));
+					else
+						mostcommon = (bool)
+							DatumGetUInt8(fmgr(eqproc, value, commonval));
+				}
+
+				if (mostcommon)
+				{
+					/* Search is for the most common value.  We know the
+					 * selectivity exactly (or as exactly as VACUUM could
+					 * calculate it, anyway).
+					 */
+					selec = commonfrac;
+				}
+				else
+				{
+					/* Comparison is against a constant that is neither the
+					 * most common value nor null.  Its selectivity cannot
+					 * be more than this:
+					 */
+					selec = 1.0 - commonfrac - nullfrac;
+					if (selec > commonfrac)
+						selec = commonfrac;
+					/* and in fact it's probably less, so apply a fudge
+					 * factor.
+					 */
+					selec *= 0.5;
+				}
+			}
+			else
+			{
+				/* Search is for a value that we do not know a priori,
+				 * but we will assume it is not NULL.  Selectivity
+				 * cannot be more than this:
+				 */
+				selec = 1.0 - nullfrac;
+				if (selec > commonfrac)
+					selec = commonfrac;
+				/* and in fact it's probably less, so apply a fudge
+				 * factor.
+				 */
+				selec *= 0.5;
+			}
+
+			/* result should be in range, but make sure... */
+			if (selec < 0.0)
+				selec = 0.0;
+			else if (selec > 1.0)
+				selec = 1.0;
+
+			if (! typbyval)
+				pfree(DatumGetPointer(commonval));
+		}
+		else
+		{
+			/* No VACUUM ANALYZE stats available, so make a guess using
+			 * the disbursion stat (if we have that, which is unlikely...)
+			 */
+			selec = getattdisbursion(relid, attno);
+		}
+
+		*result = (float64data) selec;
+	}
 	return result;
 }
 
 /*
- *		neqsel			- Selectivity of "!=" for any data type.
+ *		neqsel			- Selectivity of "!=" for any data types.
  */
 float64
 neqsel(Oid opid,
 	   Oid relid,
 	   AttrNumber attno,
-	   char *value,
+	   Datum value,
 	   int32 flag)
 {
 	float64		result;
@@ -77,96 +195,164 @@ neqsel(Oid opid,
 }
 
 /*
- *		intltsel		- Selectivity of "<" for integers.
+ *		intltsel		- Selectivity of "<" (also "<=") for integers.
  *						  Should work for both longs and shorts.
  */
 float64
 intltsel(Oid opid,
 		 Oid relid,
 		 AttrNumber attno,
-		 int32 value,
+		 Datum value,
 		 int32 flag)
 {
 	float64		result;
-	char	   *highchar,
-			   *lowchar;
-	long		val,
-				high,
-				low,
-				top,
-				bottom;
 
 	result = (float64) palloc(sizeof(float64data));
-	if (NONVALUE(attno) || NONVALUE(relid))
-		*result = 1.0 / 3;
+	if (! (flag & SEL_CONSTANT) || NONVALUE(attno) || NONVALUE(relid))
+		*result = DEFAULT_INEQ_SEL;
 	else
 	{
-		/* XXX			val = atol(value); */
-		val = value;
-		gethilokey(relid, (int) attno, opid, &highchar, &lowchar);
-		if (*highchar == 'n' || *lowchar == 'n')
+		HeapTuple	oprtuple;
+		Oid			ltype,
+					rtype;
+		Oid			typid;
+		int			typlen;
+		bool		typbyval;
+		int32		typmod;
+		Datum		hival,
+					loval;
+		long		val,
+					high,
+					low,
+					numerator,
+					denominator;
+
+		/* get left and right datatypes of the operator */
+		oprtuple = get_operator_tuple(opid);
+		if (! HeapTupleIsValid(oprtuple))
+			elog(ERROR, "intltsel: no tuple for operator %u", opid);
+		ltype = ((Form_pg_operator) GETSTRUCT(oprtuple))->oprleft;
+		rtype = ((Form_pg_operator) GETSTRUCT(oprtuple))->oprright;
+
+		/*
+		 * TEMPORARY HACK: this code is currently getting called for
+		 * a bunch of non-integral types.  Give a default estimate if
+		 * either side is not pass-by-val.  Need better solution.
+		 */
+		if (! get_typbyval(ltype) || ! get_typbyval(rtype))
 		{
-			*result = 1.0 / 3.0;
+			*result = DEFAULT_INEQ_SEL;
 			return result;
 		}
-		high = atol(highchar);
-		low = atol(lowchar);
-		if ((flag & SEL_RIGHT && val < low) ||
-			(!(flag & SEL_RIGHT) && val > high))
-		{
-			float32data nvals;
 
-			nvals = getattdisbursion(relid, (int) attno);
-			if (nvals == 0)
-				*result = 1.0 / 3.0;
-			else
-			{
-				*result = 3.0 * (float64data) nvals;
-				if (*result > 1.0)
-					*result = 1;
-			}
+		/* Deduce type of the constant, and convert to uniform "long" format.
+		 * Note that constant might well be a different type than attribute.
+		 * XXX this ought to use a type-specific "convert to double" op.
+		 */
+		typid = (flag & SEL_RIGHT) ? rtype : ltype;
+		switch (get_typlen(typid))
+		{
+			case 1:
+				val = (long) DatumGetUInt8(value);
+				break;
+			case 2:
+				val = (long) DatumGetInt16(value);
+				break;
+			case 4:
+				val = (long) DatumGetInt32(value);
+				break;
+			default:
+				elog(ERROR, "intltsel: unsupported type %u", typid);
+				*result = DEFAULT_INEQ_SEL;
+				return result;
+		}
+
+		/* Now get info about the attribute */
+		getattproperties(relid, attno,
+						 &typid, &typlen, &typbyval, &typmod);
+
+		if (! getattstatistics(relid, attno, typid, typmod,
+							   NULL, NULL, NULL,
+							   &loval, &hival))
+		{
+			*result = DEFAULT_INEQ_SEL;
+			return result;
+		}
+		/*
+		 * Convert loval/hival to common "long int" representation.
+		 */
+		switch (typlen)
+		{
+			case 1:
+				low = (long) DatumGetUInt8(loval);
+				high = (long) DatumGetUInt8(hival);
+				break;
+			case 2:
+				low = (long) DatumGetInt16(loval);
+				high = (long) DatumGetInt16(hival);
+				break;
+			case 4:
+				low = (long) DatumGetInt32(loval);
+				high = (long) DatumGetInt32(hival);
+				break;
+			default:
+				elog(ERROR, "intltsel: unsupported type %u", typid);
+				*result = DEFAULT_INEQ_SEL;
+				return result;
+		}
+		if (val < low || val > high)
+		{
+			/* If given value is outside the statistical range,
+			 * assume we have out-of-date stats and return a default guess.
+			 * We could return a small or large value if we trusted the stats
+			 * more.   XXX change this eventually.
+			 */
+			*result = DEFAULT_INEQ_SEL;
 		}
 		else
 		{
-			bottom = high - low;
-			if (bottom == 0)
-				++bottom;
+			denominator = high - low;
+			if (denominator <= 0)
+				denominator = 1;
 			if (flag & SEL_RIGHT)
-				top = val - low;
+				numerator = val - low;
 			else
-				top = high - val;
-			if (top > bottom)
+				numerator = high - val;
+			if (numerator <= 0)	/* never return a zero estimate! */
+				numerator = 1;
+			if (numerator >= denominator)
 				*result = 1.0;
 			else
-			{
-				if (top == 0)
-					++top;
-				*result = ((1.0 * top) / bottom);
-			}
+				*result = (double) numerator / (double) denominator;
+		}
+		if (! typbyval)
+		{
+			pfree(DatumGetPointer(hival));
+			pfree(DatumGetPointer(loval));
 		}
 	}
 	return result;
 }
 
 /*
- *		intgtsel		- Selectivity of ">" for integers.
+ *		intgtsel		- Selectivity of ">" (also ">=") for integers.
  *						  Should work for both longs and shorts.
  */
 float64
 intgtsel(Oid opid,
 		 Oid relid,
 		 AttrNumber attno,
-		 int32 value,
+		 Datum value,
 		 int32 flag)
 {
 	float64		result;
-	int			notflag;
 
-	if (flag & 0)
-		notflag = flag & ~SEL_RIGHT;
-	else
-		notflag = flag | SEL_RIGHT;
-	result = intltsel(opid, relid, attno, value, (int32) notflag);
+	/* Compute selectivity of "<", then invert --- but only if we
+	 * were able to produce a non-default estimate.
+	 */
+	result = intltsel(opid, relid, attno, value, flag);
+	if (*result != DEFAULT_INEQ_SEL)
+		*result = 1.0 - *result;
 	return result;
 }
 
@@ -181,7 +367,7 @@ eqjoinsel(Oid opid,
 		  AttrNumber attno2)
 {
 	float64		result;
-	float32data num1,
+	float64data num1,
 				num2,
 				max;
 
@@ -191,13 +377,13 @@ eqjoinsel(Oid opid,
 		*result = 0.1;
 	else
 	{
-		num1 = getattdisbursion(relid1, (int) attno1);
-		num2 = getattdisbursion(relid2, (int) attno2);
+		num1 = getattdisbursion(relid1, attno1);
+		num2 = getattdisbursion(relid2, attno2);
 		max = (num1 > num2) ? num1 : num2;
-		if (max == 0)
+		if (max <= 0)
 			*result = 1.0;
 		else
-			*result = (float64data) max;
+			*result = max;
 	}
 	return result;
 }
@@ -220,7 +406,7 @@ neqjoinsel(Oid opid,
 }
 
 /*
- *		intltjoinsel	- Join selectivity of "<"
+ *		intltjoinsel	- Join selectivity of "<" and "<="
  */
 float64
 intltjoinsel(Oid opid,
@@ -232,12 +418,12 @@ intltjoinsel(Oid opid,
 	float64		result;
 
 	result = (float64) palloc(sizeof(float64data));
-	*result = 1.0 / 3.0;
+	*result = DEFAULT_INEQ_SEL;
 	return result;
 }
 
 /*
- *		intgtjoinsel	- Join selectivity of ">"
+ *		intgtjoinsel	- Join selectivity of ">" and ">="
  */
 float64
 intgtjoinsel(Oid opid,
@@ -249,29 +435,188 @@ intgtjoinsel(Oid opid,
 	float64		result;
 
 	result = (float64) palloc(sizeof(float64data));
-	*result = 1.0 / 3.0;
+	*result = DEFAULT_INEQ_SEL;
 	return result;
 }
 
 /*
- *		getattdisbursion		- Retrieves the number of values within an attribute.
- *
- *		Note:
- *				getattdisbursion and gethilokey both currently use keyed
- *				relation scans and amgetattr.  Alternatively,
- *				the relation scan could be non-keyed and the tuple
- *				returned could be cast (struct X *) tuple + tuple->t_hoff.
- *				The first method is good for testing the implementation,
- *				but the second may ultimately be faster?!?	In any case,
- *				using the cast instead of amgetattr would be
- *				more efficient.  However, the cast will not work
- *				for gethilokey which accesses stahikey in struct statistic.
+ * getattproperties
+ *	  Retrieve pg_attribute properties for an attribute,
+ *	  including type OID, type len, type byval flag, typmod.
  */
-static float32data
+static void
+getattproperties(Oid relid, AttrNumber attnum,
+				 Oid *typid, int *typlen, bool *typbyval, int32 *typmod)
+{
+	HeapTuple	atp;
+	Form_pg_attribute att_tup;
+
+	atp = SearchSysCacheTuple(ATTNUM,
+							  ObjectIdGetDatum(relid),
+							  Int16GetDatum(attnum),
+							  0, 0);
+	if (! HeapTupleIsValid(atp))
+		elog(ERROR, "getattproperties: no attribute tuple %u %d",
+			 relid, (int) attnum);
+	att_tup = (Form_pg_attribute) GETSTRUCT(atp);
+
+	*typid = att_tup->atttypid;
+	*typlen = att_tup->attlen;
+	*typbyval = att_tup->attbyval;
+	*typmod = att_tup->atttypmod;
+}
+
+/*
+ * getattstatistics
+ *	  Retrieve the pg_statistic data for an attribute.
+ *	  Returns 'false' if no stats are available.
+ *
+ * Inputs:
+ * 'relid' and 'attnum' are the relation and attribute number.
+ * 'typid' and 'typmod' are the type and typmod of the column,
+ * which the caller must already have looked up.
+ *
+ * Outputs:
+ * The available stats are nullfrac, commonfrac, commonval, loval, hival.
+ * The caller need not retrieve all five --- pass NULL pointers for the
+ * unwanted values.
+ *
+ * commonval, loval, hival are returned as Datums holding the internal
+ * representation of the values.  (Note that these should be pfree'd
+ * after use if the data type is not by-value.)
+ *
+ * XXX currently, this does a linear search of pg_statistic because there
+ * is no index nor syscache for pg_statistic.  FIX THIS!
+ */
+static bool
+getattstatistics(Oid relid, AttrNumber attnum, Oid typid, int32 typmod,
+				 double *nullfrac,
+				 double *commonfrac,
+				 Datum *commonval,
+				 Datum *loval,
+				 Datum *hival)
+{
+	Relation	rel;
+	HeapScanDesc scan;
+	static ScanKeyData key[2] = {
+		{0, Anum_pg_statistic_starelid, F_OIDEQ, {0, 0, F_OIDEQ}},
+		{0, Anum_pg_statistic_staattnum, F_INT2EQ, {0, 0, F_INT2EQ}}
+	};
+	bool		isnull;
+	HeapTuple	tuple;
+	HeapTuple	typeTuple;
+	FmgrInfo	inputproc;
+
+	rel = heap_openr(StatisticRelationName);
+
+	key[0].sk_argument = ObjectIdGetDatum(relid);
+	key[1].sk_argument = Int16GetDatum((int16) attnum);
+
+	scan = heap_beginscan(rel, 0, SnapshotNow, 2, key);
+	tuple = heap_getnext(scan, 0);
+	if (!HeapTupleIsValid(tuple))
+	{
+		/* no such stats entry */
+		heap_endscan(scan);
+		heap_close(rel);
+		return false;
+	}
+
+	/* We assume that there will only be one entry in pg_statistic
+	 * for the given rel/att.  Someday, VACUUM might store more than one...
+	 */
+	if (nullfrac)
+		*nullfrac = ((Form_pg_statistic) GETSTRUCT(tuple))->stanullfrac;
+	if (commonfrac)
+		*commonfrac = ((Form_pg_statistic) GETSTRUCT(tuple))->stacommonfrac;
+
+	/* Get the type input proc for the column datatype */
+	typeTuple = SearchSysCacheTuple(TYPOID,
+									ObjectIdGetDatum(typid),
+									0, 0, 0);
+	if (! HeapTupleIsValid(typeTuple))
+		elog(ERROR, "getattstatistics: Cache lookup failed for type %u",
+			 typid);
+	fmgr_info(((Form_pg_type) GETSTRUCT(typeTuple))->typinput, &inputproc);
+
+	/* Values are variable-length fields, so cannot access as struct fields.
+	 * Must do it the hard way with heap_getattr.
+	 */
+	if (commonval)
+	{
+		text *val = (text *) heap_getattr(tuple,
+										  Anum_pg_statistic_stacommonval,
+										  RelationGetDescr(rel),
+										  &isnull);
+		if (isnull)
+		{
+			elog(DEBUG, "getattstatistics: stacommonval is null");
+			*commonval = PointerGetDatum(NULL);
+		}
+		else
+		{
+			char *strval = textout(val);
+			*commonval = (Datum)
+				(*fmgr_faddr(&inputproc)) (strval, typid, typmod);
+			pfree(strval);
+		}
+	}
+
+	if (loval)
+	{
+		text *val = (text *) heap_getattr(tuple,
+										  Anum_pg_statistic_staloval,
+										  RelationGetDescr(rel),
+										  &isnull);
+		if (isnull)
+		{
+			elog(DEBUG, "getattstatistics: staloval is null");
+			*loval = PointerGetDatum(NULL);
+		}
+		else
+		{
+			char *strval = textout(val);
+			*loval = (Datum)
+				(*fmgr_faddr(&inputproc)) (strval, typid, typmod);
+			pfree(strval);
+		}
+	}
+
+	if (hival)
+	{
+		text *val = (text *) heap_getattr(tuple,
+										  Anum_pg_statistic_stahival,
+										  RelationGetDescr(rel),
+										  &isnull);
+		if (isnull)
+		{
+			elog(DEBUG, "getattstatistics: stahival is null");
+			*hival = PointerGetDatum(NULL);
+		}
+		else
+		{
+			char *strval = textout(val);
+			*hival = (Datum)
+				(*fmgr_faddr(&inputproc)) (strval, typid, typmod);
+			pfree(strval);
+		}
+	}
+
+	heap_endscan(scan);
+	heap_close(rel);
+	return true;
+}
+
+/*
+ * getattdisbursion
+ *	  Retrieve the disbursion statistic for an attribute,
+ *	  or produce an estimate if no info is available.
+ */
+static double
 getattdisbursion(Oid relid, AttrNumber attnum)
 {
 	HeapTuple	atp;
-	float32data nvals;
+	double		disbursion;
 	int32		ntuples;
 
 	atp = SearchSysCacheTuple(ATTNUM,
@@ -280,98 +625,40 @@ getattdisbursion(Oid relid, AttrNumber attnum)
 							  0, 0);
 	if (!HeapTupleIsValid(atp))
 	{
+		/* this should not happen */
 		elog(ERROR, "getattdisbursion: no attribute tuple %u %d",
 			 relid, attnum);
-		return 0;
+		return 0.1;
 	}
-	nvals = ((Form_pg_attribute) GETSTRUCT(atp))->attdisbursion;
-	if (nvals > 0)
-		return nvals;
 
+	disbursion = ((Form_pg_attribute) GETSTRUCT(atp))->attdisbursion;
+	if (disbursion > 0.0)
+		return disbursion;
+
+	/* VACUUM ANALYZE has not stored a disbursion statistic for us.
+	 * Produce an estimate = 1/numtuples.  This may produce
+	 * unreasonably small estimates for large tables, so limit
+	 * the estimate to no less than 0.01.
+	 */
 	atp = SearchSysCacheTuple(RELOID,
 							  ObjectIdGetDatum(relid),
 							  0, 0, 0);
-
-	/*
-	 * XXX -- use number of tuples as number of distinctive values just
-	 * for now, in case number of distinctive values is not cached
-	 */
 	if (!HeapTupleIsValid(atp))
 	{
+		/* this should not happen */
 		elog(ERROR, "getattdisbursion: no relation tuple %u", relid);
-		return 0;
+		return 0.1;
 	}
+
 	ntuples = ((Form_pg_class) GETSTRUCT(atp))->reltuples;
-	/* Look above how nvals is used.	- vadim 04/09/97 */
+
 	if (ntuples > 0)
-		nvals = 1.0 / ntuples;
+		disbursion = 1.0 / (double) ntuples;
 
-	return nvals;
-}
+	if (disbursion < 0.01)
+		disbursion = 0.01;
 
-/*
- *		gethilokey		- Returns a pointer to strings containing
- *						  the high and low keys within an attribute.
- *
- *		Currently returns "0", and "0" in high and low if the statistic
- *		catalog does not contain the proper tuple.	Eventually, the
- *		statistic demon should have the tuple maintained, and it should
- *		elog() if the tuple is missing.
- *
- *		XXX Question: is this worth sticking in the catalog caches,
- *			or will this get invalidated too often?
- */
-static void
-gethilokey(Oid relid,
-		   AttrNumber attnum,
-		   Oid opid,
-		   char **high,
-		   char **low)
-{
-	Relation	rel;
-	HeapScanDesc scan;
-	static ScanKeyData key[3] = {
-		{0, Anum_pg_statistic_starelid, F_OIDEQ, {0, 0, F_OIDEQ}},
-		{0, Anum_pg_statistic_staattnum, F_INT2EQ, {0, 0, F_INT2EQ}},
-		{0, Anum_pg_statistic_staop, F_OIDEQ, {0, 0, F_OIDEQ}}
-	};
-	bool		isnull;
-	HeapTuple	tuple;
-
-	rel = heap_openr(StatisticRelationName);
-
-	key[0].sk_argument = ObjectIdGetDatum(relid);
-	key[1].sk_argument = Int16GetDatum((int16) attnum);
-	key[2].sk_argument = ObjectIdGetDatum(opid);
-	scan = heap_beginscan(rel, 0, SnapshotNow, 3, key);
-	tuple = heap_getnext(scan, 0);
-	if (!HeapTupleIsValid(tuple))
-	{
-		*high = "n";
-		*low = "n";
-
-		/*
-		 * XXX			elog(ERROR, "gethilokey: statistic tuple not
-		 * found");
-		 */
-		return;
-	}
-	*high = textout((struct varlena *)
-					heap_getattr(tuple,
-								 Anum_pg_statistic_stahikey,
-								 RelationGetDescr(rel),
-								 &isnull));
-	if (isnull)
-		elog(DEBUG, "gethilokey: high key is null");
-	*low = textout((struct varlena *)
-				   heap_getattr(tuple,
-								Anum_pg_statistic_stalokey,
-								RelationGetDescr(rel),
-								&isnull));
-	if (isnull)
-		elog(DEBUG, "gethilokey: low key is null");
-	heap_endscan(scan);
-	heap_close(rel);
+	return disbursion;
 }
 
 float64
