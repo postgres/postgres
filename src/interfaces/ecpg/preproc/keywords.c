@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.54 2002/07/21 11:09:41 meskes Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.55 2002/10/21 13:09:31 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,6 +44,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"as", AS},
 	{"asc", ASC},
 	{"assertion", ASSERTION},
+	{"assignment", ASSIGNMENT},
 	{"at", AT},
 	{"authorization", AUTHORIZATION},
 	{"backward", BACKWARD},
@@ -67,6 +68,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"characteristics", CHARACTERISTICS},
 	{"check", CHECK},
 	{"checkpoint", CHECKPOINT},
+	{"class", CLASS},
 	{"close", CLOSE},
 	{"cluster", CLUSTER},
 	{"coalesce", COALESCE},
@@ -77,6 +79,8 @@ static ScanKeyword ScanKeywords[] = {
 	{"committed", COMMITTED},
 	{"constraint", CONSTRAINT},
 	{"constraints", CONSTRAINTS},
+	{"conversion", CONVERSION_P},
+	{"convert", CONVERT},
 	{"copy", COPY},
 	{"create", CREATE},
 	{"createdb", CREATEDB},
@@ -90,6 +94,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"cycle", CYCLE},
 	{"database", DATABASE},
 	{"day", DAY_P},
+	{"deallocate", DEALLOCATE},
 	{"dec", DEC},
 	{"decimal", DECIMAL},
 	{"declare", DECLARE},
@@ -98,6 +103,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"deferred", DEFERRED},
 	{"definer", DEFINER},
 	{"delete", DELETE_P},
+	{"delimiter", DELIMITER},
 	{"delimiters", DELIMITERS},
 	{"desc", DESC},
 	{"distinct", DISTINCT},
@@ -129,6 +135,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"from", FROM},
 	{"full", FULL},
 	{"function", FUNCTION},
+	{"get", GET},
 	{"global", GLOBAL},
 	{"grant", GRANT},
 	{"group", GROUP_P},
@@ -138,7 +145,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"ilike", ILIKE},
 	{"immediate", IMMEDIATE},
 	{"immutable", IMMUTABLE},
-	{"implicit", IMPLICIT},
+	{"implicit", IMPLICIT_P},
 	{"in", IN_P},
 	{"increment", INCREMENT},
 	{"index", INDEX},
@@ -218,6 +225,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"pendant", PENDANT},
 	{"position", POSITION},
 	{"precision", PRECISION},
+	{"prepare", PREPARE},
 	{"primary", PRIMARY},
 	{"prior", PRIOR},
 	{"privileges", PRIVILEGES},
@@ -225,6 +233,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"procedure", PROCEDURE},
 	{"read", READ},
 	{"real", REAL},
+	{"recheck", RECHECK},
 	{"references", REFERENCES},
 	{"reindex", REINDEX},
 	{"relative", RELATIVE},
@@ -251,6 +260,8 @@ static ScanKeyword ScanKeywords[] = {
 	{"setof", SETOF},
 	{"share", SHARE},
 	{"show", SHOW},
+	{"similar", SIMILAR},
+	{"simple", SIMPLE},
 	{"smallint", SMALLINT},
 	{"some", SOME},
 	{"stable", STABLE},
@@ -274,6 +285,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"toast", TOAST},
 	{"trailing", TRAILING},
 	{"transaction", TRANSACTION},
+	{"treat", TREAT},
 	{"trigger", TRIGGER},
 	{"trim", TRIM},
 	{"true", TRUE_P},
@@ -304,6 +316,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"with", WITH},
 	{"without", WITHOUT},
 	{"work", WORK},
+	{"write", WRITE},
 	{"year", YEAR_P},
 	{"zone", ZONE},
 };

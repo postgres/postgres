@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.39 2002/09/04 20:31:46 momjian Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.40 2002/10/21 13:09:31 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -89,7 +89,7 @@ quote_postgres(char *arg, int lineno)
 
 	res[ri++] = '\'';
 	res[ri] = '\0';
-
+	
 	return res;
 }
 

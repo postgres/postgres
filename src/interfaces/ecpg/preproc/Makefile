@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.85 2002/07/27 20:10:05 petere Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.86 2002/10/21 13:09:31 meskes Exp $
 
 subdir = src/interfaces/ecpg/preproc
 top_builddir = ../../../..
@@ -18,7 +18,8 @@ override CFLAGS += -Wno-error
 endif
 
 OBJS=preproc.o pgc.o type.o ecpg.o ecpg_keywords.o output.o\
-    keywords.o c_keywords.o ../lib/typename.o descriptor.o variable.o
+    keywords.o c_keywords.o ../lib/typename.o descriptor.o variable.o \
+    $(SNPRINTF) $(STRDUP)
 
 all: submake-libpgport ecpg
 
