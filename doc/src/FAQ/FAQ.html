@@ -14,7 +14,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Mon Jun 24 21:45:50 EDT 2002</P>
+    <P>Last updated: Mon Jun 24 23:32:16 EDT 2002</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -282,6 +282,7 @@
     subscribe
     end
 </PRE>
+
     Digests are sent out to members of this list whenever the main list
     has received around 30k of messages. 
 
@@ -293,6 +294,7 @@
     subscribe
     end
 </PRE>
+
     There is also a developers discussion mailing list available. To
     subscribe to this list, send email to <A href=
     "mailto:pgsql-hackers-request@PostgreSQL.org">pgsql-hackers-request@PostgreSQL.org</A>
@@ -860,6 +862,7 @@
     Maximum number of columns in a table?    250-1600 depending on column types
     Maximum number of indexes on a table?    unlimited
 </PRE>
+
     Of course, these are not actually unlimited, but limited to
     available disk space and memory/swap space. Performance may suffer
     when these values get unusually large. 
@@ -951,11 +954,24 @@
 </PRE>
 
     <P>When using wild-card operators such as <SMALL>LIKE</SMALL> or
-    <I>~</I>, indexes can only be used if the default C local is used
-during initdb and the beginning of the search
-    is anchored to the start of the string. Therefore, to use indexes,
-    <SMALL>LIKE</SMALL> patterns must not start with <I>%</I>, and
-    <I>~</I>(regular expression) patterns must start with <I>^</I>.</P>
+    <I>~</I>, indexes can only be used in certain circumstances:
+    <UL>
+    <LI>The beginning of the search string must be anchored to the start
+    of the string, i.e.:</LI>
+    <UL>
+    <LI><SMALL>LIKE</SMALL> patterns must not start with <I>%.</I></LI>
+    <LI><I>~</I>(regular expression) patterns must start with
+    <I>^.</I></LI>
+    </UL>
+    <LI>The search string can not start with a character class,
+    e.g. [a-e].</LI>
+    <LI>Case-insensitive searches like <SMALL>ILIKE</SMALL> and
+    <I>~*</I> can not be used.  Instead, use functional
+    indexes, which are described later in this FAQ.</LI>
+    <LI>The default <I>C</I> local must have been used during
+    <i>initdb.</i></LI>
+    </UL>
+    <P>
 
     <H4><A name="4.9">4.9</A>) How do I see how the query optimizer is
     evaluating my query?</H4>
@@ -1010,13 +1026,12 @@ during initdb and the beginning of the search
     SELECT *
     FROM tab
     WHERE lower(col) = 'abc'
-   
 </PRE>
+
     This will not use an standard index. However, if you create a
     functional index, it will be used: 
 <PRE>
     CREATE INDEX tabindex on tab (lower(col));
-   
 </PRE>
 
     <H4><A name="4.13">4.13</A>) In a query, how do I detect if a field
@@ -1066,6 +1081,7 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
         name TEXT 
     );
 </PRE>
+
     is automatically translated into this: 
 <PRE>
     CREATE SEQUENCE person_id_seq;
@@ -1075,6 +1091,7 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     );
     CREATE UNIQUE INDEX person_id_key ON person ( id );
 </PRE>
+
     See the <I>create_sequence</I> manual page for more information
     about sequences. You can also use each row's <I>OID</I> field as a
     unique value. However, if you need to dump and reload the database,
@@ -1093,6 +1110,7 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     new_id = output of "SELECT nextval('person_id_seq')"
     INSERT INTO person (id, name) VALUES (new_id, 'Blaise Pascal');
 </PRE>
+
     You would then also have the new value stored in
     <CODE>new_id</CODE> for use in other queries (e.g., as a foreign
     key to the <CODE>person</CODE> table). Note that the name of the
@@ -1108,6 +1126,7 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     INSERT INTO person (name) VALUES ('Blaise Pascal');
     new_id = output of "SELECT currval('person_id_seq')";
 </PRE>
+
     Finally, you could use the <A href="#4.16"><SMALL>OID</SMALL></A>
     returned from the <SMALL>INSERT</SMALL> statement to look up the
     default value, though this is probably the least portable approach.
@@ -1215,6 +1234,7 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     ulimit -d 262144
     limit datasize 256m
 </PRE>
+
     Depending on your shell, only one of these may succeed, but it will
     set your process data segment limit much higher and perhaps allow
     the query to complete. This command applies to the current process,
@@ -1273,6 +1293,7 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     WHERE EXISTS (SELECT col2 FROM TAB2 WHERE col1 = col2)
 </CODE>
 </PRE>
+
     We hope to fix this limitation in a future release. 
 
     <H4><A name="4.23">4.23</A>) How do I perform an outer join?</H4>
