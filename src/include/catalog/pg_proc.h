@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.103 1999/09/29 21:13:30 wieck Exp $
+ * $Id: pg_proc.h,v 1.104 1999/09/30 14:54:23 wieck Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2111,6 +2111,28 @@ DATA(insert OID = 1642 (  pg_get_userbyid	   PGUID 11 f t f 1 f 19 "23" 100 0 0 
 DESCR("user name by UID (with fallback)");
 DATA(insert OID = 1643 (  pg_get_indexdef	   PGUID 11 f t f 1 f 25 "26" 100 0 0 100  pg_get_indexdef - ));
 DESCR("index description");
+
+/* Generic referential integrity constraint triggers */
+DATA(insert OID = 1644 (  RI_FKey_check_ins	    PGUID 11 f t f 0 f 0 "" 100 0 0 100  RI_FKey_check_ins - ));
+DESCR("referential integrity FOREIGN KEY ... REFERENCES");
+DATA(insert OID = 1645 (  RI_FKey_check_upd	    PGUID 11 f t f 0 f 0 "" 100 0 0 100  RI_FKey_check_upd - ));
+DESCR("referential integrity FOREIGN KEY ... REFERENCES");
+DATA(insert OID = 1646 (  RI_FKey_cascade_del   PGUID 11 f t f 0 f 0 "" 100 0 0 100  RI_FKey_cascade_del - ));
+DESCR("referential integrity ON DELETE CASCADE");
+DATA(insert OID = 1647 (  RI_FKey_cascade_upd   PGUID 11 f t f 0 f 0 "" 100 0 0 100  RI_FKey_cascade_upd - ));
+DESCR("referential integrity ON UPDATE CASCADE");
+DATA(insert OID = 1648 (  RI_FKey_restrict_del  PGUID 11 f t f 0 f 0 "" 100 0 0 100  RI_FKey_restrict_del - ));
+DESCR("referential integrity ON DELETE RESTRICT");
+DATA(insert OID = 1649 (  RI_FKey_restrict_upd	PGUID 11 f t f 0 f 0 "" 100 0 0 100  RI_FKey_restrict_upd - ));
+DESCR("referential integrity ON UPDATE RESTRICT");
+DATA(insert OID = 1650 (  RI_FKey_setnull_del	PGUID 11 f t f 0 f 0 "" 100 0 0 100  RI_FKey_setnull_del - ));
+DESCR("referential integrity ON DELETE SET NULL");
+DATA(insert OID = 1651 (  RI_FKey_setnull_upd	PGUID 11 f t f 0 f 0 "" 100 0 0 100  RI_FKey_setnull_upd - ));
+DESCR("referential integrity ON UPDATE SET NULL");
+DATA(insert OID = 1652 (  RI_FKey_setdefault_del PGUID 11 f t f 0 f 0 "" 100 0 0 100  RI_FKey_setdefault_del - ));
+DESCR("referential integrity ON DELETE SET DEFAULT");
+DATA(insert OID = 1653 (  RI_FKey_setdefault_upd PGUID 11 f t f 0 f 0 "" 100 0 0 100  RI_FKey_setdefault_upd - ));
+DESCR("referential integrity ON UPDATE SET DEFAULT");
 
 /* for mac type support */
 DATA(insert OID = 436 (  macaddr_in			PGUID 11 f t t 1 f 829 "0" 100 0 0 100	macaddr_in - ));

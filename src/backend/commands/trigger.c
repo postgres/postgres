@@ -155,7 +155,8 @@ CreateTrigger(CreateTrigStmt *stmt)
 	if (((Form_pg_proc) GETSTRUCT(tuple))->prorettype != 0)
 		elog(ERROR, "CreateTrigger: function %s() must return OPAQUE",
 			 stmt->funcname);
-	if (((Form_pg_proc) GETSTRUCT(tuple))->prolang != ClanguageId)
+	if (((Form_pg_proc) GETSTRUCT(tuple))->prolang != ClanguageId &&
+		((Form_pg_proc) GETSTRUCT(tuple))->prolang != INTERNALlanguageId)
 	{
 		HeapTuple	langTup;
 
@@ -166,7 +167,7 @@ CreateTrigger(CreateTrigStmt *stmt)
 			elog(ERROR, "CreateTrigger: cache lookup for PL failed");
 
 		if (((Form_pg_language) GETSTRUCT(langTup))->lanispl == false)
-			elog(ERROR, "CreateTrigger: only C and PL functions are supported");
+			elog(ERROR, "CreateTrigger: only builtin, C and PL functions are supported");
 	}
 
 	MemSet(nulls, ' ', Natts_pg_trigger * sizeof(char));

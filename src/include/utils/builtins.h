@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.86 1999/09/29 21:13:31 wieck Exp $
+ * $Id: builtins.h,v 1.87 1999/09/30 14:54:24 wieck Exp $
  *
  * NOTES
  *	  This should normally only be included by fmgr.h.
@@ -30,6 +30,7 @@
 #include "utils/int8.h"
 #include "utils/nabstime.h"
 #include "utils/numeric.h"
+#include "access/heapam.h"		/* for HeapTuple */
 
 /*
  *		Defined in adt/
@@ -600,5 +601,16 @@ float32		numeric_float4(Numeric num);
 Numeric		float8_numeric(float64 val);
 float64		numeric_float8(Numeric num);
 
+/* ri_triggers.c */
+HeapTuple	RI_FKey_check_ins(FmgrInfo *proinfo);
+HeapTuple	RI_FKey_check_upd(FmgrInfo *proinfo);
+HeapTuple	RI_FKey_cascade_del(FmgrInfo *proinfo);
+HeapTuple	RI_FKey_cascade_upd(FmgrInfo *proinfo);
+HeapTuple	RI_FKey_restrict_del(FmgrInfo *proinfo);
+HeapTuple	RI_FKey_restrict_upd(FmgrInfo *proinfo);
+HeapTuple	RI_FKey_setnull_del(FmgrInfo *proinfo);
+HeapTuple	RI_FKey_setnull_upd(FmgrInfo *proinfo);
+HeapTuple	RI_FKey_setdefault_del(FmgrInfo *proinfo);
+HeapTuple	RI_FKey_setdefault_upd(FmgrInfo *proinfo);
 
 #endif	 /* BUILTINS_H */
