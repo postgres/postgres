@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.208 2003/09/20 20:12:05 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.209 2003/09/29 18:15:12 momjian Exp $
 -->
 
 <appendix id="release">
@@ -87,19 +87,17 @@ Object owners can allow grantees to grant the privilege to others (grant option)
    <sect2>
     <title>Changes</title>
 
-    <para>
-<literallayout>
-Repair breakage in timestamp-to-date conversion for dates before 2000
-Prevent rare possibility of server startup failure (Tom)
-Fix bugs in interval-to-time conversion (Tom)
-Add constraint names in a few places in pg_dump (Rod)
-Improve performance of functions with many parameters (Tom)
-Fix to_ascii() buffer overruns (Tom)
-Prevent restore of database comments from throwing an error (Tom)
-Work around buggy strxfrm() present in some Solaris releases (Tom)
-Properly escape jdbc setObject() strings to improve security (Barry)
-</literallayout>
-    </para>
+<itemizedlist>
+<listitem><para>Repair breakage in timestamp-to-date conversion for dates before 2000</para></listitem>
+<listitem><para>Prevent rare possibility of server startup failure (Tom)</para></listitem>
+<listitem><para>Fix bugs in interval-to-time conversion (Tom)</para></listitem>
+<listitem><para>Add constraint names in a few places in pg_dump (Rod)</para></listitem>
+<listitem><para>Improve performance of functions with many parameters (Tom)</para></listitem>
+<listitem><para>Fix to_ascii() buffer overruns (Tom)</para></listitem>
+<listitem><para>Prevent restore of database comments from throwing an error (Tom)</para></listitem>
+<listitem><para>Work around buggy strxfrm() present in some Solaris releases (Tom)</para></listitem>
+<listitem><para>Properly escape jdbc setObject() strings to improve security (Barry)</para></listitem>
+</itemizedlist>
    </sect2>
   </sect1>
 
