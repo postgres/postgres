@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.4 1996/11/08 05:59:15 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.5 1996/11/27 07:25:52 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,6 +36,7 @@ typedef struct f_smgr {
     int		(*smgr_flush)();
     int		(*smgr_blindwrt)();
     int		(*smgr_nblocks)();
+    int		(*smgr_truncate)();
     int		(*smgr_commit)();	/* may be NULL */
     int		(*smgr_abort)();	/* may be NULL */
 } f_smgr;
@@ -49,12 +50,14 @@ static f_smgr smgrsw[] = {
 
     /* magnetic disk */
     { mdinit, NULL, mdcreate, mdunlink, mdextend, mdopen, mdclose,
-      mdread, mdwrite, mdflush, mdblindwrt, mdnblocks, mdcommit, mdabort },
+      mdread, mdwrite, mdflush, mdblindwrt, mdnblocks, mdtruncate, 
+      mdcommit, mdabort },
 
 #ifdef MAIN_MEMORY
     /* main memory */
     { mminit, mmshutdown, mmcreate, mmunlink, mmextend, mmopen, mmclose,
-      mmread, mmwrite, mmflush, mmblindwrt, mmnblocks, mmcommit, mmabort },
+      mmread, mmwrite, mmflush, mmblindwrt, mmnblocks, NULL, 
+      mmcommit, mmabort },
 
 #endif /* MAIN_MEMORY */
 };
@@ -319,6 +322,29 @@ smgrnblocks(int16 which, Relation reln)
 	     NAMEDATALEN, &(reln->rd_rel->relname.data[0]));
 
     return (nblocks);
+}
+
+/*
+ *  smgrtruncate() -- Truncate supplied relation to a specified number
+ *			of blocks
+ *
+ *	Returns the number of blocks on success, aborts the current
+ *	transaction on failure.
+ */
+int
+smgrtruncate(int16 which, Relation reln, int nblocks)
+{
+    int newblks;
+    
+    newblks = nblocks;
+    if (smgrsw[which].smgr_truncate)
+    {
+    	if ((newblks = (*(smgrsw[which].smgr_truncate))(reln, nblocks)) < 0)
+	    elog(WARN, "cannot truncate %.*s to %d blocks",
+		NAMEDATALEN, &(reln->rd_rel->relname.data[0]), nblocks);
+    }
+
+    return (newblks);
 }
 
 /*
