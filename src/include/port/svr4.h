@@ -1,6 +1,4 @@
 #define USE_POSIX_TIME
-#define NO_EMPTY_STMTS
-#define SYSV_DIRENT
 
 #ifndef			BYTE_ORDER
 #ifdef			MIPSEB

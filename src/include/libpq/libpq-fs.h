@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fs.h,v 1.9 2000/01/26 05:58:12 momjian Exp $
+ * $Id: libpq-fs.h,v 1.10 2000/10/28 22:53:15 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,18 +28,6 @@ struct pgdirent
 	char		d_name[MAXNAMLEN + 1];
 };
 
-/*
- * SysV struct dirent doesn't have d_namlen.
- * This counts on d_name being last, which is moderately safe (ha) since
- * it's the variable-length part of the structure.
- */
-#ifdef SYSV_DIRENT
-#define D_NAMLEN(dp) \
-		((dp)->d_reclen - offsetof(struct dirent, d_name[0]))
-#else							/* SYSV_DIRENT */
-#define D_NAMLEN(dp) \
-		((dp)->d_namlen)
-#endif	 /* SYSV_DIRENT */
 
 /* for stat(2) */
 #ifndef S_IRUSR

@@ -5,8 +5,6 @@
 #define DISABLE_COMPLEX_MACRO
 
 #define USE_POSIX_TIME
-#define NO_EMPTY_STMTS
-#define SYSV_DIRENT
 
 #define HAS_TEST_AND_SET
 #define NEED_I386_TAS_ASM
@@ -14,8 +12,6 @@
 #define USE_UNIVEL_CC
 
 typedef unsigned char slock_t;
-
-#define DISABLE_COMPLEX_MACRO
 
 /***************************************************************
  * The following include will get the needed prototype for the

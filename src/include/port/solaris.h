@@ -1,8 +1,6 @@
-/* $Header: /cvsroot/pgsql/src/include/port/solaris.h,v 1.1 2000/10/10 21:22:26 petere Exp $ */
+/* $Header: /cvsroot/pgsql/src/include/port/solaris.h,v 1.2 2000/10/28 22:53:17 petere Exp $ */
 
 #define USE_POSIX_TIME
-#define NO_EMPTY_STMTS
-#define SYSV_DIRENT
 #define HAS_TEST_AND_SET
 typedef unsigned char slock_t;
 

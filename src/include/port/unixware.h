@@ -1,5 +1,4 @@
 #define USE_POSIX_TIME
-#define SYSV_DIRENT
 
 #define HAS_TEST_AND_SET
 #define NEED_I386_TAS_ASM
