@@ -430,6 +430,17 @@ Compile the program.  Type
      change directory back to this directory, type "make clean", then
      recompile again.
 </Para>
+
+<Para>
+     Compiler options, such as optimization and debugging, may 
+     be specified on the command line using the COPT variable.
+     For example, typing
+<ProgramListing>
+     gmake COPT="-g" all >& make.log &
+</ProgramListing>
+     would invoke your compiler's -g option in all steps of the
+     build.  See src/Makefile.global.in for further details.
+</Para>
 </Step>
 
 <Step Performance="required">
