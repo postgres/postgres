@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh,v 1.7 1996/11/08 20:45:57 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh,v 1.8 1997/01/06 00:15:26 scrappy Exp $
 #
 # NOTES
 #    Passes any -D options on to cpp prior to generating the list
@@ -81,7 +81,7 @@ cat > $HFILE <<FuNkYfMgRsTuFf
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: Gen_fmgrtab.sh,v 1.7 1996/11/08 20:45:57 momjian Exp $
+ * $Id: Gen_fmgrtab.sh,v 1.8 1997/01/06 00:15:26 scrappy Exp $
  *
  * NOTES
  *	******************************
@@ -173,7 +173,7 @@ cat > $TABCFILE <<FuNkYfMgRtAbStUfF
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh,v 1.7 1996/11/08 20:45:57 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh,v 1.8 1997/01/06 00:15:26 scrappy Exp $
  *
  * NOTES
  *
@@ -191,16 +191,15 @@ cat > $TABCFILE <<FuNkYfMgRtAbStUfF
  *-------------------------------------------------------------------------
  */
 #ifdef WIN32
-#include <limits.h>
+# include <limits.h>
 #else
-# if defined(BSD44_derived) || \
-     defined(bsdi)
-# include <machine/limits.h>
-# define MAXINT	INT_MAX
+# if defined(USE_LIMITS_H)
+#  include <machine/limits.h>
+#  define MAXINT	INT_MAX
 # else
-# include <values.h>           /* for MAXINT */
-# endif /* bsd descendents */
-#endif /* WIN32 */
+#  include <values.h>
+# endif 
+#endif 
 
 #include <postgres.h>
 #include "utils/fmgrtab.h"
