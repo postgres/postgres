@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.198 2004/04/23 20:32:19 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.199 2004/05/05 09:33:38 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -2262,7 +2262,7 @@ PostgreSQL documentation
      <tbody>
       <row>
        <entry><literal><function>btrim</function>(<parameter>string</parameter>
-        <type>bytea</type> <parameter>bytes</parameter> <type>bytea</type>)</literal></entry>
+        <type>bytea</type>, <parameter>bytes</parameter> <type>bytea</type>)</literal></entry>
        <entry><type>bytea</type></entry>
        <entry>
         Remove the longest string consisting only of bytes
