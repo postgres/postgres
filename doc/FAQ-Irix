@@ -1,18 +1,18 @@
-====================================================
-Frequently Asked Questions (FAQ) for Postgres95
+=====================================================
+Frequently Asked Questions (FAQ) for PostgresSQL V6.0
 IRIX Specific
 TO BE READ IN CONJUNCTION WITH THE NORMAL FAQ
-====================================================
-last updated:           Fri Oct 25 18:40:00 BST 1996
+=====================================================
+last updated:           Wed Jan 29 21:25:00 GMT 1997
 
 current maintainer:     Andrew C.R. Martin (martin@biochem.ucl.ac.uk)
 original author:        Andrew C.R. Martin (martin@biochem.ucl.ac.uk)
 
 
 Changes in this version (* = modified, + = new, - = removed):
--0.*)   Bugs in Postgres95 V1.08
-*1.3)   What are the references in X11_LIB to libsocket and libnsl in
-        src/Makefile.global?
+*1.2)   What changes do I need to make to src/Makefile.global or
+        src/Makefile.custom?
+*1.4)   Are there any other changes I should make?
 
 This file is divided approximately as follows:
 1.*)    Installing Postgres95
@@ -45,15 +45,17 @@ Section 1:      Installing Postgres95
            support).
         b) tcl/tk (if you wish to compile pgtclsh)
 
-1.2)    What changes do I need to make to src/Makefile.global?
+1.2)    What changes do I need to make to src/Makefile.global or
+        src/Makefile.custom?
+
+        The easiest way to do this is to use the customize script in
+        the src directory.
 
         You *must* set the following variables:
                 PORTNAME=       irix5
-                IPCSDIR=        /usr/sbin
 
         You will also need to change the following to match your own
         installation:
-                SRCDIR
                 POSTGRESDIR
 
         If you switch on the USE_TCL option, you will need to set these:
@@ -71,16 +73,13 @@ Section 1:      Installing Postgres95
         src/Makefile.global?
 
         This was a problem in 1.08 (they are Sun Solaris specific). 
-        It is fixed in 1.09.
+        It is fixed in 1.09 and above.
 
 1.4)    Are there any other changes I should make?
 
         If you have installed the GNU install program (ginstall), you
-        should edit src/mk/port/postgres.mk.irix5
-        and change the line:
-                INSTALL=/usr/bin/X11/bsdinst
-        to
-                INSTALL=ginstall
+        should add the following line to src/Makefile.custom:
+                CUSTOM_INSTALL=ginstall
 
         For an explanation as to why this is a good idea, see Question 2.1
 
@@ -118,10 +117,4 @@ Section 3:      Extending Postgres95
         cc -I/usr/local/postgres95/include/ -I/usr/local/postgres95/src/backend 
                 -shared -o funcs.so funcs.c
 
-
-****************************************************************************
-Dr. Andrew C.R. Martin,         University College London & SciTech Software
-EMAIL: martin@biochem.ucl.ac.uk                Tel:(Work) +44(0)171 419 3890
-URL: http://www.biochem.ucl.ac.uk/~martin          (Home) +44(0)1372 275775
-****************************************************************************
 
