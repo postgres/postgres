@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: recipe.h,v 1.7 1999/02/13 23:21:19 momjian Exp $
+ * $Id: recipe.h,v 1.1 1999/02/24 17:29:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

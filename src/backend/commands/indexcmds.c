@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/defind.c,v 1.34 1999/02/13 23:15:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.1 1999/02/24 17:28:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

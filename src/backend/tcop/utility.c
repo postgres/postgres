@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.55 1999/02/13 23:18:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.56 1999/02/24 17:29:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -663,6 +663,7 @@ ProcessUtility(Node *parsetree,
 			}
 			break;
 
+#ifdef NOT_USED
 			/*
 			 * ******************************** Tioga-related statements *******************************
 			 */
@@ -675,6 +676,7 @@ ProcessUtility(Node *parsetree,
 				beginRecipe(stmt);
 			}
 			break;
+#endif
 
 			/*
 			 * ******************************** set variable statements *******************************
