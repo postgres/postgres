@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.42 1998/11/27 19:52:19 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.43 1998/12/13 05:07:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -549,8 +549,8 @@ inv_write(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 				tuplen = inv_wrnew(obj_desc, buf, nbytes - nwritten);
 			else
 				tuplen = inv_wrold(obj_desc, buf, nbytes - nwritten, &tuple, buffer);
+			ReleaseBuffer(buffer);
 		}
-		ReleaseBuffer(buffer);
 
 		/* move pointers past the amount we just wrote */
 		buf += tuplen;
