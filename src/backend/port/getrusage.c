@@ -1,4 +1,4 @@
-/* $Id: getrusage.c,v 1.3 1997/12/19 13:34:27 scrappy Exp $ */
+/* $Id: getrusage.c,v 1.4 1998/02/01 00:02:59 scrappy Exp $ */
 
 #include <math.h>               /* for pow() prototype */
 
@@ -6,11 +6,11 @@
 #include "rusagestub.h"
 #include "port-protos.h"
 
-#ifdef 0 /* this is from univel port ... how does compiler define? */
-         /* same for i386_solaris port ... how does compiler define? */
-         /* same for sco port ... how does compiler define? */
-         /* same for sparc_solaris port ... how does compiler define? */
-         /* same for svr4 port ... how does compiler define? */
+#if 0 /* this is from univel port ... how does compiler define? */
+      /* same for i386_solaris port ... how does compiler define? */
+      /* same for sco port ... how does compiler define? */
+      /* same for sparc_solaris port ... how does compiler define? */
+      /* same for svr4 port ... how does compiler define? */
 int
 getrusage(int who, struct rusage * rusage)
 {
@@ -53,7 +53,7 @@ getrusage(int who, struct rusage * rusage)
 }
 #endif
 
-#ifdef 0 /* this is for hpux port ... how does compiler define? */
+#if 0 /* this is for hpux port ... how does compiler define? */
 getrusage(int who, struct rusage * ru)
 {
     return (syscall(SYS_GETRUSAGE, who, ru));

@@ -220,7 +220,7 @@ int crypt_getloginfo(const char* user, char** passwd, char** valuntil) {
 
 /*-------------------------------------------------------------------------*/
 
-#ifdef 0
+#if 0
 MsgType crypt_salt(const char* user) {
 
   char*     passwd;
