@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.17 1996/11/14 10:25:48 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.18 1996/11/17 19:27:38 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -99,6 +99,12 @@ install-headers: beforeinstall-headers postgres.h c.h \
           $(HEADERDIR)/lib/dllist.h
 	$(INSTALL) $(INSTLOPTS) ../include/utils/geo-decls.h \
           $(HEADERDIR)/utils/geo-decls.h
+	$(INSTALL) $(INSTLOPTS) ../include/utils/elog.h \
+          $(HEADERDIR)/utils/elog.h
+	$(INSTALL) $(INSTLOPTS) ../include/utils/palloc.h \
+          $(HEADERDIR)/utils/palloc.h
+	$(INSTALL) $(INSTLOPTS) ../include/access/attnum.h \
+          $(HEADERDIR)/access/attnum.h
 	$(INSTALL) $(INSTLOPTS) libpq-fe.h $(HEADERDIR)/libpq-fe.h
 ifeq ($(PORTNAME), hpux)
 	$(INSTALL) $(INSTLOPTS) ../backend/port/hpux/fixade.h \
@@ -120,6 +126,8 @@ beforeinstall-headers:
 		then mkdir $(HEADERDIR)/libpq; fi
 	@if [ ! -d $(HEADERDIR)/utils ]; \
 		then mkdir $(HEADERDIR)/utils; fi
+	@if [ ! -d $(HEADERDIR)/access ]; \
+		then mkdir $(HEADERDIR)/access; fi
 
 ifdef LINUX_ELF
 install-shlib-dep := install-shlib
