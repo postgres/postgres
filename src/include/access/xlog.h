@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: xlog.h,v 1.31 2002/06/20 20:29:43 momjian Exp $
+ * $Id: xlog.h,v 1.32 2002/08/04 06:26:38 thomas Exp $
  */
 #ifndef XLOG_H
 #define XLOG_H
@@ -175,6 +175,9 @@ typedef struct XLogRecData
 	struct XLogRecData *next;
 } XLogRecData;
 
+/* XLOG directory name */
+extern char XLogDir[];
+
 extern StartUpID ThisStartUpID; /* current SUI */
 extern bool InRecovery;
 extern XLogRecPtr MyLastRecPtr;
@@ -189,6 +192,7 @@ extern int	XLOG_DEBUG;
 extern char *XLOG_sync_method;
 extern const char XLOG_sync_method_default[];
 
+extern void SetXLogDir(char *path);
 
 extern XLogRecPtr XLogInsert(RmgrId rmid, uint8 info, XLogRecData *rdata);
 extern void XLogFlush(XLogRecPtr RecPtr);

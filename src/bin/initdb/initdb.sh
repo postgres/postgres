@@ -27,7 +27,7 @@
 # Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.163 2002/07/29 22:14:11 tgl Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.164 2002/08/04 06:26:38 thomas Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -252,6 +252,19 @@ do
         -D*)
                 PGDATA=`echo $1 | sed 's/^-D//'`
                 ;;
+# Directory to hold WAL log files.
+        --pgxlog|-X)
+                PGXLOG="$2"
+                defined_pgxlog=yes
+                shift;;
+        --pgxlog=*)
+                PGXLOG=`echo $1 | sed 's/^--pgxlog=//'`
+                defined_pgxlog=yes
+                ;;
+        -X*)
+                PGXLOG=`echo $1 | sed 's/^-X//'`
+                defined_pgxlog=yes
+                ;;
 # The directory where the .bki input files are stored. Normally
 # they are in PREFIX/share and this option should be unnecessary.
         -L)
@@ -341,6 +354,7 @@ if [ "$usage" ]; then
     echo
     echo "Options:"
     echo " [-D, --pgdata] DATADIR       Location for this database cluster"
+    echo " [-X, --pgxlog] XLOGDIR       Location for the cluster transaction logs"
     echo "  -W, --pwprompt              Prompt for a password for the new superuser"
     if [ -n "$MULTIBYTE" ] ; then 
         echo "  -E, --encoding ENCODING     Set default encoding for new databases"
@@ -369,7 +383,7 @@ fi
 if [ "$MULTIBYTE" ]
 then
 	MULTIBYTEID=`$PGPATH/pg_encoding -b $MULTIBYTE`
-        if [ "$?" -ne 0 ]
+	if [ "$?" -ne 0 ]
 	then
               (
                 echo "$CMDNAME: pg_encoding failed"
@@ -401,6 +415,11 @@ then
     exit 1
 fi
 
+if [ -z "$PGXLOG" ]
+then
+    PGXLOG="$PGDATA"/pg_xlog
+fi
+
 
 #-------------------------------------------------------------------------
 # Find the input files
@@ -418,7 +437,7 @@ then
   (
     echo
     echo "initdb variables:"
-    for var in PGDATA datadir PGPATH MULTIBYTE MULTIBYTEID \
+    for var in PGDATA PGXLOG datadir PGPATH MULTIBYTE MULTIBYTEID \
         POSTGRES_SUPERUSERNAME POSTGRES_BKI \
         POSTGRES_DESCR POSTGRESQL_CONF_SAMPLE \
 	PG_HBA_SAMPLE PG_IDENT_SAMPLE ; do
@@ -503,44 +522,61 @@ then
       echo "$CMDNAME: The directory $PGDATA exists but is not empty."
       echo "If you want to create a new database system, either remove or empty"
       echo "the directory $PGDATA or run initdb with"
-      echo "an argument other than $PGDATA."
+      echo "an argument for -D other than $PGDATA."
     ) 1>&2
     exit 1
-else
-    if [ ! -d "$PGDATA" ]; then
-        $ECHO_N "creating directory $PGDATA... "$ECHO_C
-        mkdir -p "$PGDATA" >/dev/null 2>&1 || mkdir "$PGDATA" || exit_nicely
-        made_new_pgdata=yes
-    else
-        $ECHO_N "Fixing permissions on existing directory $PGDATA... "$ECHO_C
-	chmod go-rwx "$PGDATA" || exit_nicely
-    fi
-    echo "ok"
+fi
 
-    if [ ! -d "$PGDATA"/base ]
-	then
-        $ECHO_N "creating directory $PGDATA/base... "$ECHO_C
-        mkdir "$PGDATA"/base || exit_nicely
-	echo "ok"
-    fi
-    if [ ! -d "$PGDATA"/global ]
-    then
-        $ECHO_N "creating directory $PGDATA/global... "$ECHO_C
-        mkdir "$PGDATA"/global || exit_nicely
-	echo "ok"
-    fi
-    if [ ! -d "$PGDATA"/pg_xlog ]
-    then
-        $ECHO_N "creating directory $PGDATA/pg_xlog... "$ECHO_C
-        mkdir "$PGDATA"/pg_xlog || exit_nicely
-	echo "ok"
-    fi
-    if [ ! -d "$PGDATA"/pg_clog ]
-    then
-        $ECHO_N "creating directory $PGDATA/pg_clog... "$ECHO_C
-        mkdir "$PGDATA"/pg_clog || exit_nicely
-	echo "ok"
-    fi
+# find out if transaction log directory is empty
+pgxlog_contents=`ls -A "$PGXLOG" 2>/dev/null`
+if [ x"$pgxlog_contents" != x ]
+then
+    (
+      echo "$CMDNAME: The directory $PGXLOG exists but is not empty."
+      echo "If you want to create a new transaction log, either remove or empty"
+      echo "the directory $PGXLOG or run initdb with"
+      echo "an argument for -X other than $PGXLOG."
+    ) 1>&2
+    exit 1
+fi
+
+if [ ! -d "$PGDATA" ]; then
+    $ECHO_N "creating directory $PGDATA... "$ECHO_C
+    mkdir -p "$PGDATA" >/dev/null 2>&1 || mkdir "$PGDATA" || exit_nicely
+    made_new_pgdata=yes
+else
+    $ECHO_N "Fixing permissions on existing directory $PGDATA... "$ECHO_C
+chmod go-rwx "$PGDATA" || exit_nicely
+fi
+echo "ok"
+
+if [ ! -d "$PGXLOG" ]; then
+    $ECHO_N "creating directory $PGXLOG... "$ECHO_C
+    mkdir -p "$PGXLOG" >/dev/null 2>&1 || mkdir "$PGXLOG" || exit_nicely
+    made_new_pgxlog=yes
+else
+    $ECHO_N "Fixing permissions on existing directory $PGXLOG... "$ECHO_C
+chmod go-rwx "$PGXLOG" || exit_nicely
+fi
+echo "ok"
+
+if [ ! -d "$PGDATA"/base ]
+then
+    $ECHO_N "creating directory $PGDATA/base... "$ECHO_C
+    mkdir "$PGDATA"/base || exit_nicely
+echo "ok"
+fi
+if [ ! -d "$PGDATA"/global ]
+then
+    $ECHO_N "creating directory $PGDATA/global... "$ECHO_C
+    mkdir "$PGDATA"/global || exit_nicely
+echo "ok"
+fi
+if [ ! -d "$PGDATA"/pg_clog ]
+then
+    $ECHO_N "creating directory $PGDATA/pg_clog... "$ECHO_C
+    mkdir "$PGDATA"/pg_clog || exit_nicely
+echo "ok"
 fi
 
 
@@ -549,7 +585,7 @@ fi
 # RUN BKI SCRIPT IN BOOTSTRAP MODE TO CREATE TEMPLATE1
 
 # common backend options
-PGSQL_OPT="-F -D$PGDATA"
+PGSQL_OPT="-F -D$PGDATA -X$PGXLOG"
 
 if [ "$debug" = yes ]
 then
@@ -676,7 +712,6 @@ EOF
     fi
     echo "ok"
 fi
-
 
 $ECHO_N "enabling unlimited row size for system tables... "$ECHO_C
 
@@ -1058,14 +1093,24 @@ echo "ok"
 #
 # FINISHED
 
+postmaster_startup="$PGPATH/postmaster -D $PGDATA"
+if [ x"$defined_pgxlog" != x ]; then
+    postmaster_startup="$postmaster_startup -X $PGXLOG"
+fi
+pg_ctl_startup="$PGPATH/pg_ctl -D $PGDATA"
+if [ x"$defined_pgxlog" != x ]; then
+    pg_ctl_startup="$pg_ctl_startup -X $PGXLOG"
+fi
+pg_ctl_startup="$pg_ctl_startup -l logfile start"
+
 echo
 echo "Success. You can now start the database server using:"
 echo ""
-echo "    $PGPATH/postmaster -D $PGDATA"
+echo "    $postmaster_startup"
 echo "or"
 # (Advertise -l option here, otherwise we have a background
 #  process writing to the terminal.)
-echo "    $PGPATH/pg_ctl -D $PGDATA -l logfile start"
+echo "    $pg_ctl_startup"
 echo
 
 exit 0
