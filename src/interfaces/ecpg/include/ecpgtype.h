@@ -68,7 +68,7 @@ extern		"C"
 		ECPGd_ret_octet,
 		ECPGd_scale,
 		ECPGd_type,
-		ECPGd_EODT,				/* End of descriptor types. */
+		ECPGd_EODT				/* End of descriptor types. */
 	};
 
 #define IS_SIMPLE_TYPE(type) ((type) >= ECPGt_char && (type) <= ECPGt_varchar2)

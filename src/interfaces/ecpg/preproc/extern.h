@@ -16,7 +16,7 @@ extern int	braces_open,
 extern char *descriptor_index;
 extern char *descriptor_name;
 extern char *connection;
-extern char 	*input_filename;;
+extern char 	*input_filename;
 extern char 	*yytext, errortext[128];
 extern int	yylineno, yyleng;
 extern FILE *yyin, *yyout;
