@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.62 2002/09/24 21:26:44 tgl Exp $
+ $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.63 2002/10/14 04:29:23 momjian Exp $
  -->
 
 <chapter id="catalogs">
@@ -23,6 +23,12 @@
    creates the database on disk.)  There are some exceptions for
    especially esoteric operations, such as adding index access methods.
   </para>
+  <para>
+   Most system catalogs are copied from the template database during
+   database creation, and are thereafter database-specific. A few
+   catalogs are physically shared across all databases in an installation;
+   these are marked in the descriptions of the individual catalogs.
+  </para>
 
   <table>
    <title>System Catalogs</title>
@@ -37,7 +43,8 @@
 
     <tbody>
      <row>
-      <entry>pg_aggregate</entry>
+      <entry><link linkend="catalog-pg-aggregate">
+       <database class="table">pg_aggregate</database></link></entry>
       <entry>aggregate functions</entry>
      </row>
 
@@ -57,122 +64,146 @@
      </row>
 
      <row>
-      <entry>pg_attrdef</entry>
+      <entry><link linkend="catalog-pg-attrdef">
+       <database class="table">pg_attrdef</database></link></entry>
       <entry>column default values</entry>
      </row>
 
      <row>
-      <entry>pg_attribute</entry>
+      <entry><link linkend="catalog-pg-attribute">
+       <database class="table">pg_attribute</database></link></entry>
       <entry>table columns (<quote>attributes</quote>, <quote>fields</quote>)</entry>
      </row>
 
      <row>
-      <entry>pg_cast</entry>
+      <entry><link linkend="catalog-pg-cast">
+       <database class="table">pg_cast</database></link></entry>
       <entry>casts (data type conversions)</entry>
      </row>
 
      <row>
-      <entry>pg_class</entry>
+      <entry><link linkend="catalog-pg-class">
+       <database class="table">pg_class</database></link></entry>
       <entry>tables, indexes, sequences (<quote>relations</quote>)</entry>
      </row>
 
      <row>
-      <entry>pg_constraint</entry>
+      <entry><link linkend="catalog-pg-constraint">
+       <database class="table">pg_constraint</database></link></entry>
       <entry>check constraints, unique / primary key constraints, foreign key constraints</entry>
      </row>
 
      <row>
-      <entry>pg_conversion</entry>
+      <entry><link linkend="catalog-pg-conversion">
+       <database class="table">pg_conversion</database></link></entry>
       <entry>encoding conversion information</entry>
      </row>
 
      <row>
-      <entry>pg_database</entry>
+      <entry><link linkend="catalog-pg-database">
+       <database class="table">pg_database</database></link></entry>
       <entry>databases within this database cluster</entry>
      </row>
 
      <row>
-      <entry>pg_depend</entry>
+      <entry><link linkend="catalog-pg-depend">
+       <database class="table">pg_depend</database></link></entry>
       <entry>dependencies between database objects</entry>
      </row>
 
      <row>
-      <entry>pg_description</entry>
+      <entry><link linkend="catalog-pg-description">
+       <database class="table">pg_description</database></link></entry>
       <entry>descriptions or comments on database objects</entry>
      </row>
 
      <row>
-      <entry>pg_group</entry>
+      <entry><link linkend="catalog-pg-group">
+       <database class="table">pg_group</database></link></entry>
       <entry>groups of database users</entry>
      </row>
 
      <row>
-      <entry>pg_index</entry>
+      <entry><link linkend="catalog-pg-index">
+       <database class="table">pg_index</database></link></entry>
       <entry>additional index information</entry>
      </row>
 
      <row>
-      <entry>pg_inherits</entry>
+      <entry><link linkend="catalog-pg-inherits">
+       <database class="table">pg_inherits</database></link></entry>
       <entry>table inheritance hierarchy</entry>
      </row>
 
      <row>
-      <entry>pg_language</entry>
+      <entry><link linkend="catalog-pg-language">
+       <database class="table">pg_language</database></link></entry>
       <entry>languages for writing functions</entry>
      </row>
 
      <row>
-      <entry>pg_largeobject</entry>
+      <entry><link linkend="catalog-pg-largeobject">
+       <database class="table">pg_largeobject</database></link></entry>
       <entry>large objects</entry>
      </row>
 
      <row>
-      <entry>pg_listener</entry>
+      <entry><link linkend="catalog-pg-listener">
+       <database class="table">pg_listener</database></link></entry>
       <entry>asynchronous notification</entry>
      </row>
 
      <row>
-      <entry>pg_namespace</entry>
+      <entry><link linkend="catalog-pg-namespace">
+       <database class="table">pg_namespace</database></link></entry>
       <entry>namespaces (schemas)</entry>
      </row>
 
      <row>
-      <entry>pg_opclass</entry>
+      <entry><link linkend="catalog-pg-opclass">
+       <database class="table">pg_opclass</database></link></entry>
       <entry>index access method operator classes</entry>
      </row>
 
      <row>
-      <entry>pg_operator</entry>
+      <entry><link linkend="catalog-pg-operator">
+       <database class="table">pg_operator</database></link></entry>
       <entry>operators</entry>
      </row>
 
      <row>
-      <entry>pg_proc</entry>
+      <entry><link linkend="catalog-pg-proc">
+       <database class="table">pg_proc</database></link></entry>
       <entry>functions and procedures</entry>
      </row>
 
      <row>
-      <entry>pg_rewrite</entry>
+      <entry><link linkend="catalog-pg-rewrite">
+       <database class="table">pg_rewrite</database></link></entry>
       <entry>query rewriter rules</entry>
      </row>
 
      <row>
-      <entry>pg_shadow</entry>
+      <entry><link linkend="catalog-pg-shadow">
+       <database class="table">pg_shadow</database></link></entry>
       <entry>database users</entry>
      </row>
 
      <row>
-      <entry>pg_statistic</entry>
+      <entry><link linkend="catalog-pg-statistic">
+       <database class="table">pg_statistic</database></link></entry>
       <entry>optimizer statistics</entry>
      </row>
 
      <row>
-      <entry>pg_trigger</entry>
+      <entry><link linkend="catalog-pg-trigger">
+       <database class="table">pg_trigger</database></link></entry>
       <entry>triggers</entry>
      </row>
 
      <row>
-      <entry>pg_type</entry>
+      <entry><link linkend="catalog-pg-type">
+       <database class="table">pg_type</database></link></entry>
       <entry>data types</entry>
      </row>
     </tbody>
