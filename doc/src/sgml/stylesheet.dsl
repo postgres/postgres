@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/stylesheet.dsl,v 1.1 2001/02/13 21:27:05 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/stylesheet.dsl,v 1.2 2001/02/13 22:35:15 petere Exp $ -->
 <!DOCTYPE style-sheet PUBLIC "-//James Clark//DTD DSSSL Style Sheet//EN" [
 
 <!-- must turn on one of these with -i on the jade command line -->
@@ -30,7 +30,6 @@
 (define %html-ext%              ".html")
 (define %link-mailto-url%       (string-append "mailto:" pgsql-docs-list))
 (define %use-id-as-filename%    #t)
-(define %stylesheet%            "stylesheet.css")
 
 ;; Returns the depth of auto TOC that should be made at the nd-level
 (define (toc-depth nd)
