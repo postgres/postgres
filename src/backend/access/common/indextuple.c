@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.13 1997/03/26 02:24:38 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.14 1997/06/12 15:41:52 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -135,6 +135,7 @@ fastgetiattr(IndexTuple tup,
     register char		*bp = NULL;	/* ptr to att in tuple */
     int 			slow;		/* do we have to walk nulls? */
     register int		data_off;	/* tuple data offset */
+    AttributeTupleForm *att = tupleDesc->attrs;
     
     /* ----------------
      *	sanity checks
@@ -162,14 +163,14 @@ fastgetiattr(IndexTuple tup,
 	/* first attribute is always at position zero */
 	
 	if (attnum == 1) {
-	    return(fetchatt(&(tupleDesc->attrs[0]), (char *) tup + data_off));
+	    return(fetchatt(&(att[0]), (char *) tup + data_off));
 	}
 	attnum--;
 	
-	if (tupleDesc->attrs[attnum]->attcacheoff > 0) {
-	    return(fetchatt(&(tupleDesc->attrs[attnum]),
+	if (att[attnum]->attcacheoff > 0) {
+	    return(fetchatt(&(att[attnum]),
 			    (char *) tup + data_off + 
-			    tupleDesc->attrs[attnum]->attcacheoff));
+			    att[attnum]->attcacheoff));
 	}
 	
 	tp = (char *) tup + data_off;
@@ -226,14 +227,14 @@ fastgetiattr(IndexTuple tup,
     /* now check for any non-fixed length attrs before our attribute */
     
     if (!slow) {
-	if (tupleDesc->attrs[attnum]->attcacheoff > 0) {
-	    return(fetchatt(&(tupleDesc->attrs[attnum]), 
-			    tp + tupleDesc->attrs[attnum]->attcacheoff));
+	if (att[attnum]->attcacheoff > 0) {
+	    return(fetchatt(&(att[attnum]), 
+			    tp + att[attnum]->attcacheoff));
 	}else if (!IndexTupleAllFixed(tup)) {
 	    register int j = 0;
 	    
 	    for (j = 0; j < attnum && !slow; j++)
-		if (tupleDesc->attrs[j]->attlen < 1) slow = 1;
+		if (att[j]->attlen < 1) slow = 1;
 	}
     }
     
@@ -251,12 +252,12 @@ fastgetiattr(IndexTuple tup,
 	 * need to set cache for some atts
 	 */
 	
-	tupleDesc->attrs[0]->attcacheoff = 0;
+	att[0]->attcacheoff = 0;
 	
-	while (tupleDesc->attrs[j]->attcacheoff > 0) j++;
+	while (att[j]->attcacheoff > 0) j++;
 	
-	off = tupleDesc->attrs[j-1]->attcacheoff + 
-	      tupleDesc->attrs[j-1]->attlen;
+	off = att[j-1]->attcacheoff + 
+	      att[j-1]->attlen;
 	
 	for (; j < attnum + 1; j++) {
 	    /*
@@ -264,10 +265,10 @@ fastgetiattr(IndexTuple tup,
 	     * word!
 	     */
 	    
-	    switch(tupleDesc->attrs[j]->attlen)
+	    switch(att[j]->attlen)
 		{
 		case -1:
-		    off = (tupleDesc->attrs[j]->attalign=='d')?
+		    off = (att[j]->attalign=='d')?
 			DOUBLEALIGN(off):INTALIGN(off);
 		    break;
 		case sizeof(char):
@@ -279,22 +280,22 @@ fastgetiattr(IndexTuple tup,
 		    off = INTALIGN(off);
 		    break;
 		default:
-		    if (tupleDesc->attrs[j]->attlen > sizeof(int32))
-			off = (tupleDesc->attrs[j]->attalign=='d')?
+		    if (att[j]->attlen > sizeof(int32))
+			off = (att[j]->attalign=='d')?
 			    DOUBLEALIGN(off) : LONGALIGN(off);
 		    else
 			elog(WARN, "fastgetiattr: attribute %d has len %d",
-			     j, tupleDesc->attrs[j]->attlen);
+			     j, att[j]->attlen);
 		    break;
 		    
 		}
 	    
-	    tupleDesc->attrs[j]->attcacheoff = off;
-	    off += tupleDesc->attrs[j]->attlen;
+	    att[j]->attcacheoff = off;
+	    off += att[j]->attlen;
 	}
 	
-	return(fetchatt( &(tupleDesc->attrs[attnum]), 
-			tp + tupleDesc->attrs[attnum]->attcacheoff));
+	return(fetchatt( &(att[attnum]), 
+			tp + att[attnum]->attcacheoff));
     }else {
 	register bool usecache = true;
 	register int off = 0;
@@ -312,16 +313,16 @@ fastgetiattr(IndexTuple tup,
 		}
 	    }
 		
-	    if (usecache && tupleDesc->attrs[i]->attcacheoff > 0) {
-		off = tupleDesc->attrs[i]->attcacheoff;
-		if (tupleDesc->attrs[i]->attlen == -1) 
+	    if (usecache && att[i]->attcacheoff > 0) {
+		off = att[i]->attcacheoff;
+		if (att[i]->attlen == -1) 
 		    usecache = false;
 		else
 		    continue;
 	    }
 		    
-	    if (usecache) tupleDesc->attrs[i]->attcacheoff = off;
-	    switch(tupleDesc->attrs[i]->attlen)
+	    if (usecache) att[i]->attcacheoff = off;
+	    switch(att[i]->attlen)
 		{
 		case sizeof(char):
 		    off++;
@@ -334,24 +335,52 @@ fastgetiattr(IndexTuple tup,
 		    break;
 		case -1:
 		    usecache = false;
-		    off = (tupleDesc->attrs[i]->attalign=='d')?
+		    off = (att[i]->attalign=='d')?
 			DOUBLEALIGN(off):INTALIGN(off);
 		    off += VARSIZE(tp + off);
 		    break;
 		default:
-		    if (tupleDesc->attrs[i]->attlen > sizeof(int32))
-			off = (tupleDesc->attrs[i]->attalign=='d') ?
-			    DOUBLEALIGN(off) + tupleDesc->attrs[i]->attlen :
-			    LONGALIGN(off) + tupleDesc->attrs[i]->attlen;
+		    if (att[i]->attlen > sizeof(int32))
+			off = (att[i]->attalign=='d') ?
+			    DOUBLEALIGN(off) + att[i]->attlen :
+			    LONGALIGN(off) + att[i]->attlen;
 		    else
 			elog(WARN, "fastgetiattr2: attribute %d has len %d",
-			     i, tupleDesc->attrs[i]->attlen);
+			     i, att[i]->attlen);
 		    
 		    break;
 		}
 	}
+	/*
+	 * I don't know why this code was missed here!
+	 * I've got it from heaptuple.c:fastgetattr().
+	 * 	- vadim 06/12/97
+	 */
+	switch (att[attnum]->attlen) {
+	case -1:
+	    off = (att[attnum]->attalign=='d')?
+		DOUBLEALIGN(off) : INTALIGN(off);
+	    break;
+	case sizeof(char):
+	    break;
+	case sizeof(short):
+	    off = SHORTALIGN(off);
+	    break;
+	case sizeof(int32):
+	    off = INTALIGN(off);
+	    break;
+	default:
+	    if (att[attnum]->attlen < sizeof(int32))
+		elog(WARN, "fastgetattr3: attribute %d has len %d",
+		     attnum, att[attnum]->attlen);
+	    if (att[attnum]->attalign == 'd')
+		off = DOUBLEALIGN(off);
+	    else
+		off = LONGALIGN(off);
+	    break;
+	}
 	
-	return(fetchatt(&tupleDesc->attrs[attnum], tp + off));
+	return(fetchatt(&att[attnum], tp + off));
     }
 }
 
