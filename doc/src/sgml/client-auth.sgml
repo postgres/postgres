@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.7 2000/10/16 03:25:16 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.8 2000/10/21 01:08:34 petere Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -76,20 +76,6 @@ hostssl <replaceable>database</replaceable> <replaceable>IP-address</replaceable
        networks. Note that TCP/IP connections are completely disabled
        unless the server is started with the <option>-i</option> or
        the equivalent configuration parameter is set.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term><literal>hostssl</literal></term>
-     <listitem>
-      <para>
-       This record pertains to connection attemps with SSL over
-       TCP/IP. Note that SSL connections are completely disabled
-       unless the server is started with the <option>-i</option>,
-       and also require ordinary TCP/IP connections to be enabled.
-       SSL connections also require SSL support to be enabled in
-       the backend at compile time.
       </para>
      </listitem>
     </varlistentry>
