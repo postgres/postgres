@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Oct 11 12:35:23 EDT 2001
+Last updated:		Thu Oct 11 16:40:28 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -101,6 +101,7 @@ VIEWS
 * Allow NOTIFY in rules involving conditionals
 * -Evaluate INSERT rules at end of query, rather than beginning (Jan)
 * Allow temporary views
+* Move psql backslash information into views
 
 INDEXES
 
