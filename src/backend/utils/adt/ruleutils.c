@@ -3,7 +3,7 @@
  *			  out of its tuple
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.40 2000/02/15 03:37:56 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.41 2000/02/15 08:24:12 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -992,17 +992,21 @@ get_select_query_def(Query *query, deparse_context *context)
 								 quote_identifier(rte->relname),
 								 inherit_marker(rte));
 				if (strcmp(rte->relname, rte->ref->relname) != 0)
-				{
-					List *col;
 					appendStringInfo(buf, " %s",
 									 quote_identifier(rte->ref->relname));
+				if (rte->ref->attrs != NIL)
+				{
+					List *col;
+
 					appendStringInfo(buf, " (");
-					foreach (col, rte->ref->attrs)
+					foreach(col, rte->ref->attrs)
 					{
-						if (col != lfirst(rte->ref->attrs))
+						if (col != rte->ref->attrs)
 							appendStringInfo(buf, ", ");
-						appendStringInfo(buf, "%s", strVal(col));
+						appendStringInfo(buf, "%s",
+										 quote_identifier(strVal(lfirst(col))));
 					}
+					appendStringInfo(buf, ")");
 				}
 			}
 		}
