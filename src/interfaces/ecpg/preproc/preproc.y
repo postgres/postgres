@@ -1247,12 +1247,13 @@ OptInherit:  INHERITS '(' relation_name_list ')'                { $$ = cat_str(3
  * SELECT ... INTO.
  */
 
-CreateAsStmt:  CREATE OptTemp TABLE relation_name OptCreateAs AS SelectStmt
+CreateAsStmt:  CREATE OptTemp TABLE relation_name OptCreateAs AS
+		{ FoundInto = 0; } SelectStmt
 		{
 			if (FoundInto == 1)
 				mmerror(ET_ERROR, "CREATE TABLE/AS SELECT may not specify INTO");
 
-			$$ = cat_str(7, make_str("create"), $2, make_str("table"), $4, $5, make_str("as"), $7); 
+			$$ = cat_str(7, make_str("create"), $2, make_str("table"), $4, $5, make_str("as"), $8); 
 		}
 		;
 
@@ -2042,6 +2043,7 @@ RuleStmt:  CREATE RULE name AS
 		   ON event TO event_object where_clause
 		   DO opt_instead RuleActionList
 				{
+					QueryIsRule=0;
 					$$ = cat_str(10, make_str("create rule"), $3, make_str("as on"), $7, make_str("to"), $9, $10, make_str("do"), $12, $13);
 				}
 		;
@@ -2510,7 +2512,6 @@ select_no_parens:      simple_select
 
 select_clause: simple_select
                         {
-				FoundInto = 0; 
                                 $$ = $1;
 
                         }
@@ -3808,17 +3809,17 @@ ColLabel:  ECPGLabelTypeName			{ $$ = $1; }
 
 SpecialRuleRelation:  OLD
 				{
-					if (QueryIsRule)
-						$$ = make_str("old");
-					else
+					if (!QueryIsRule)
 						mmerror(ET_ERROR, "OLD used in non-rule query");
+
+					$$ = make_str("old");
 				}
 		| NEW
 				{
-					if (QueryIsRule)
-						$$ = make_str("new");
-					else
+					if (!QueryIsRule)
 						mmerror(ET_ERROR, "NEW used in non-rule query");
+
+					$$ = make_str("new");
 				}
 		;
 

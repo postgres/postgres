@@ -1055,5 +1055,9 @@ Wed Jan 31 17:11:04 CET 2001
 Mon Feb 19 08:25:14 CET 2001
 
 	- Synced gram.y and preproc.y.
+
+Mon Feb 26 15:22:04 CET 2001
+
+	- Fixed misplaced variables FoundInto and QueryIsRule.
 	- Set ecpg version to 2.8.0. 
 	- Set library version to 3.2.0.
