@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.86 2002/03/06 06:10:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.87 2002/03/10 12:09:54 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -352,7 +352,7 @@ cppline			{space}*#(.*\\{space})*.*
 
 <xh><<EOF>>		{ mmerror(PARSE_ERROR, ET_ERROR, "Unterminated hexadecimal integer"); }
 
-{xqstart}			{
+<C,SQL>{xqstart}		{
 					state_before = YYSTATE;
 					BEGIN(xq);
 					startlit();
@@ -412,7 +412,7 @@ cppline			{space}*#(.*\\{space})*.*
 					addlit(yytext, yyleng);
 				}
 <xd,xdc><<EOF>> 	 	        { mmerror(PARSE_ERROR, ET_ERROR, "Unterminated quoted identifier"); }
-{xdstart}			{
+<C,SQL>{xdstart}		{
 					state_before = YYSTATE;
 					BEGIN(xdc);
 					startlit();
@@ -789,7 +789,6 @@ cppline			{space}*#(.*\\{space})*.*
 
                                         /* initial definition */
                                         this->old = old;
-                                        /* this->new = mm_strdup(scanstr(literalbuf));*/
                                         this->new = mm_strdup(literalbuf);
 					this->next = defines;
 					defines = this;
@@ -797,11 +796,11 @@ cppline			{space}*#(.*\\{space})*.*
 
 				BEGIN(C);
 			}
-<def>[^";"]		{
+<def>[^;]		{
 				addlit(yytext, yyleng);
 			}
 
-<incl>[^";"]+";" 	{ /* got the include file name */
+<incl>[^;]+";" 	{ /* got the include file name */
 			  struct _yy_buffer *yb;
 			  struct _include_path *ip;
 			  char inc_file[MAXPGPATH];
@@ -870,6 +869,7 @@ cppline			{space}*#(.*\\{space})*.*
 			  else
 			  {
 				struct _yy_buffer *yb = yy_buffer;
+				int i;
 
 				if (yyin != NULL)
 					fclose(yyin);
@@ -878,13 +878,18 @@ cppline			{space}*#(.*\\{space})*.*
 				yy_switch_to_buffer(yy_buffer->buffer);
 
 				yylineno = yy_buffer->lineno;
+				
+				/* We have to output the filename only if we change files here */
+				i = strcmp(input_filename, yy_buffer->filename);
 
 				free(input_filename);
 				input_filename = yy_buffer->filename;
 
 				yy_buffer = yy_buffer->next;
 				free(yb);
-				output_line_number();
+
+				if (i != 0)
+					output_line_number();
 			  }
 			}
 %%
