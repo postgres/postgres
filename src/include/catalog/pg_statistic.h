@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_statistic.h,v 1.24 2004/02/12 23:41:04 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_statistic.h,v 1.25 2004/02/23 23:55:08 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -84,7 +84,7 @@ CATALOG(pg_statistic) BKI_WITHOUT_OIDS
 	 *		kind			integer code identifying kind of data
 	 *		op				OID of associated operator, if needed
 	 *		numbers			float4 array (for statistical values)
-	 *		values			text array (for representations of data values)
+	 *		values			anyarray (for representations of data values)
 	 * The ID and operator fields are never NULL; they are zeroes in an
 	 * unused slot.  The numbers and values fields are NULL in an unused
 	 * slot, and might also be NULL in a used slot if the slot kind has
