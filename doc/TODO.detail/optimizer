@@ -2,7 +2,7 @@ From owner-pgsql-hackers@hub.org Mon Mar 22 18:43:41 1999
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id SAA23978
 	for <maillist@candle.pha.pa.us>; Mon, 22 Mar 1999 18:43:39 -0500 (EST)
-Received: from hub.org (majordom@hub.org [209.47.145.100]) by renoir.op.net (o1/$Revision: 1.6 $) with ESMTP id SAA06472 for <maillist@candle.pha.pa.us>; Mon, 22 Mar 1999 18:36:44 -0500 (EST)
+Received: from hub.org (majordom@hub.org [209.47.145.100]) by renoir.op.net (o1/$Revision: 1.7 $) with ESMTP id SAA06472 for <maillist@candle.pha.pa.us>; Mon, 22 Mar 1999 18:36:44 -0500 (EST)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.2/8.9.1) with SMTP id SAA92604;
 	Mon, 22 Mar 1999 18:34:23 -0500 (EST)
@@ -228,7 +228,7 @@ From owner-pgsql-hackers@hub.org Mon Mar 22 20:31:11 1999
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id UAA00802
 	for <maillist@candle.pha.pa.us>; Mon, 22 Mar 1999 20:31:09 -0500 (EST)
-Received: from hub.org (majordom@hub.org [209.47.145.100]) by renoir.op.net (o1/$Revision: 1.6 $) with ESMTP id UAA13231 for <maillist@candle.pha.pa.us>; Mon, 22 Mar 1999 20:15:20 -0500 (EST)
+Received: from hub.org (majordom@hub.org [209.47.145.100]) by renoir.op.net (o1/$Revision: 1.7 $) with ESMTP id UAA13231 for <maillist@candle.pha.pa.us>; Mon, 22 Mar 1999 20:15:20 -0500 (EST)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.2/8.9.1) with SMTP id UAA01981;
 	Mon, 22 Mar 1999 20:14:04 -0500 (EST)
@@ -335,7 +335,7 @@ From owner-pgsql-hackers@hub.org Mon Mar 22 23:31:00 1999
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id XAA03384
 	for <maillist@candle.pha.pa.us>; Mon, 22 Mar 1999 23:30:58 -0500 (EST)
-Received: from hub.org (majordom@hub.org [209.47.145.100]) by renoir.op.net (o1/$Revision: 1.6 $) with ESMTP id XAA25586 for <maillist@candle.pha.pa.us>; Mon, 22 Mar 1999 23:18:25 -0500 (EST)
+Received: from hub.org (majordom@hub.org [209.47.145.100]) by renoir.op.net (o1/$Revision: 1.7 $) with ESMTP id XAA25586 for <maillist@candle.pha.pa.us>; Mon, 22 Mar 1999 23:18:25 -0500 (EST)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.2/8.9.1) with SMTP id XAA17955;
 	Mon, 22 Mar 1999 23:17:24 -0500 (EST)
@@ -725,7 +725,7 @@ From owner-pgsql-hackers@hub.org Tue Mar 23 12:31:05 1999
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id MAA17491
 	for <maillist@candle.pha.pa.us>; Tue, 23 Mar 1999 12:31:04 -0500 (EST)
-Received: from hub.org (majordom@hub.org [209.47.145.100]) by renoir.op.net (o1/$Revision: 1.6 $) with ESMTP id MAA08839 for <maillist@candle.pha.pa.us>; Tue, 23 Mar 1999 12:08:14 -0500 (EST)
+Received: from hub.org (majordom@hub.org [209.47.145.100]) by renoir.op.net (o1/$Revision: 1.7 $) with ESMTP id MAA08839 for <maillist@candle.pha.pa.us>; Tue, 23 Mar 1999 12:08:14 -0500 (EST)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.2/8.9.1) with SMTP id MAA93649;
 	Tue, 23 Mar 1999 12:04:57 -0500 (EST)
@@ -881,7 +881,7 @@ From tgl@sss.pgh.pa.us Tue Mar 23 12:31:02 1999
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id MAA17484
 	for <maillist@candle.pha.pa.us>; Tue, 23 Mar 1999 12:31:01 -0500 (EST)
-Received: from sss.sss.pgh.pa.us (sss.pgh.pa.us [206.210.65.6]) by renoir.op.net (o1/$Revision: 1.6 $) with ESMTP id MAA09042 for <maillist@candle.pha.pa.us>; Tue, 23 Mar 1999 12:10:55 -0500 (EST)
+Received: from sss.sss.pgh.pa.us (sss.pgh.pa.us [206.210.65.6]) by renoir.op.net (o1/$Revision: 1.7 $) with ESMTP id MAA09042 for <maillist@candle.pha.pa.us>; Tue, 23 Mar 1999 12:10:55 -0500 (EST)
 Received: from sss.sss.pgh.pa.us (localhost [127.0.0.1])
 	by sss.sss.pgh.pa.us (8.9.1/8.9.1) with ESMTP id MAA24474;
 	Tue, 23 Mar 1999 12:09:52 -0500 (EST)
@@ -927,7 +927,7 @@ From owner-pgsql-hackers@hub.org Tue Mar 23 12:31:03 1999
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id MAA17488
 	for <maillist@candle.pha.pa.us>; Tue, 23 Mar 1999 12:31:02 -0500 (EST)
-Received: from hub.org (majordom@hub.org [209.47.145.100]) by renoir.op.net (o1/$Revision: 1.6 $) with ESMTP id MAA09987 for <maillist@candle.pha.pa.us>; Tue, 23 Mar 1999 12:21:34 -0500 (EST)
+Received: from hub.org (majordom@hub.org [209.47.145.100]) by renoir.op.net (o1/$Revision: 1.7 $) with ESMTP id MAA09987 for <maillist@candle.pha.pa.us>; Tue, 23 Mar 1999 12:21:34 -0500 (EST)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.2/8.9.1) with SMTP id MAA95155;
 	Tue, 23 Mar 1999 12:18:33 -0500 (EST)
@@ -983,5 +983,75 @@ some numerical approximation to the data type's sorting order.  It
 doesn't have to be exact.
 
 			regards, tom lane
+
+
+From owner-pgsql-hackers@hub.org Thu Jul  1 20:39:19 1999
+Received: from hub.org (hub.org [209.167.229.1])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id UAA15403
+	for <maillist@candle.pha.pa.us>; Thu, 1 Jul 1999 20:39:18 -0400 (EDT)
+Received: from hub.org (hub.org [209.167.229.1])
+	by hub.org (8.9.3/8.9.3) with ESMTP id UAA45018;
+	Thu, 1 Jul 1999 20:20:27 -0400 (EDT)
+	(envelope-from owner-pgsql-hackers@hub.org)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Thu, 01 Jul 1999 20:15:30 +0000 (EDT)
+Received: (from majordom@localhost)
+	by hub.org (8.9.3/8.9.3) id UAA44474
+	for pgsql-hackers-outgoing; Thu, 1 Jul 1999 20:15:28 -0400 (EDT)
+	(envelope-from owner-pgsql-hackers@postgreSQL.org)
+X-Authentication-Warning: hub.org: majordom set sender to owner-pgsql-hackers@postgreSQL.org using -f
+Received: from sd.tpf.co.jp (sd.tpf.co.jp [210.161.239.34])
+	by hub.org (8.9.3/8.9.3) with ESMTP id UAA44058
+	for <pgsql-hackers@postgreSQL.org>; Thu, 1 Jul 1999 20:12:10 -0400 (EDT)
+	(envelope-from Inoue@tpf.co.jp)
+Received: from cadzone ([126.0.1.40] (may be forged))
+          by sd.tpf.co.jp (2.5 Build 2640 (Berkeley 8.8.6)/8.8.4) with SMTP
+   id JAA00279 for <pgsql-hackers@postgreSQL.org>; Fri, 02 Jul 1999 09:11:58 +0900
+From: "Hiroshi Inoue" <Inoue@tpf.co.jp>
+To: "pgsql-hackers" <pgsql-hackers@postgreSQL.org>
+Subject: [HACKERS] Optimization FAQ ?
+Date: Fri, 2 Jul 1999 09:14:10 +0900
+Message-ID: <000401bec41f$ce81dcc0$2801007e@cadzone.tpf.co.jp>
+MIME-Version: 1.0
+Content-Type: text/plain;
+	charset="iso-2022-jp"
+Content-Transfer-Encoding: 7bit
+X-Priority: 3 (Normal)
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook 8.5, Build 4.71.2173.0
+X-MimeOLE: Produced By Microsoft MimeOLE V4.72.2106.4
+Importance: Normal
+Sender: owner-pgsql-hackers@postgreSQL.org
+Precedence: bulk
+Status: RO
+
+Hello all,
+
+I got the following result.
+It's FAQ ?
+
+drop table int2t;
+create table int2t (id int2 primary key);
+
+explain select * from int2t where id=1;
+  NOTICE:  QUERY PLAN:
+
+  Seq Scan on int2t  (cost=43.00 rows=2 width=2) 
+
+explain select * from int2t where id=1::int2;
+  NOTICE:  QUERY PLAN:
+
+  Index Scan using int2t_pkey on int2t  (cost=2.05 rows=2 width=2) 
+
+explain select * from int2t where id='1';
+  NOTICE:  QUERY PLAN:
+
+  Index Scan using int2t_pkey on int2t  (cost=2.05 rows=2 width=2) 
+
+Right behavior ?
+
+Regards.
+
+Hiroshi Inoue
+Inoue@tpf.co.jp
 
 

@@ -302,7 +302,7 @@ From owner-pgsql-hackers@hub.org Sun Aug 29 03:58:30 1999
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id DAA20206
 	for <maillist@candle.pha.pa.us>; Sun, 29 Aug 1999 03:58:29 -0400 (EDT)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.1 $) with ESMTP id DAA00347 for <maillist@candle.pha.pa.us>; Sun, 29 Aug 1999 03:44:32 -0400 (EDT)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.2 $) with ESMTP id DAA00347 for <maillist@candle.pha.pa.us>; Sun, 29 Aug 1999 03:44:32 -0400 (EDT)
 Received: from hub.org (hub.org [216.126.84.1])
 	by hub.org (8.9.3/8.9.3) with ESMTP id DAA91360;
 	Sun, 29 Aug 1999 03:35:58 -0400 (EDT)
