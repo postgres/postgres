@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.44 2000/07/22 11:18:45 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.45 2000/09/23 22:40:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,8 +46,8 @@ index_formtuple(TupleDesc tupleDescriptor,
 	uint16		tupmask = 0;
 	int			numberOfAttributes = tupleDescriptor->natts;
 #ifdef TOAST_INDEX_HACK
-	Datum		untoasted_value[MaxHeapAttributeNumber];
-	bool		untoasted_free[MaxHeapAttributeNumber];
+	Datum		untoasted_value[INDEX_MAX_KEYS];
+	bool		untoasted_free[INDEX_MAX_KEYS];
 #endif
 
 	if (numberOfAttributes > INDEX_MAX_KEYS)
@@ -79,10 +79,14 @@ index_formtuple(TupleDesc tupleDescriptor,
 		}
 	}
 #endif
-	for (i = 0; i < numberOfAttributes && !hasnull; i++)
+
+	for (i = 0; i < numberOfAttributes; i++)
 	{
 		if (null[i] != ' ')
+		{
 			hasnull = true;
+			break;
+		}
 	}
 
 	if (hasnull)
@@ -122,22 +126,20 @@ index_formtuple(TupleDesc tupleDescriptor,
 	/*
 	 * We do this because DataFill wants to initialize a "tupmask" which
 	 * is used for HeapTuples, but we want an indextuple infomask.	The
-	 * only "relevent" info is the "has variable attributes" field, which
-	 * is in mask position 0x02.  We have already set the null mask above.
+	 * only relevant info is the "has variable attributes" field.
+	 * We have already set the hasnull bit above.
 	 */
 
-	if (tupmask & 0x02)
+	if (tupmask & HEAP_HASVARLENA)
 		infomask |= INDEX_VAR_MASK;
 
 	/*
-	 * Here we make sure that we can actually hold the size.  We also want
-	 * to make sure that size is not aligned oddly.  This actually is a
-	 * rather odd way to make sure the size is not too large overall.
+	 * Here we make sure that the size will fit in the field reserved for
+	 * it in t_info.
 	 */
 
-	if (size & 0xE000)
+	if ((size & INDEX_SIZE_MASK) != size)
 		elog(ERROR, "index_formtuple: data takes %d bytes: too big", size);
-
 
 	infomask |= size;
 
