@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.60 1999/09/24 00:24:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.61 1999/09/26 02:28:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -956,8 +956,8 @@ ExecEvalFunc(Expr *funcClause,
 static Datum
 ExecEvalNot(Expr *notclause, ExprContext *econtext, bool *isNull)
 {
-	Datum		expr_value;
 	Node	   *clause;
+	Datum		expr_value;
 	bool		isDone;
 
 	clause = lfirst(notclause->args);
@@ -995,67 +995,47 @@ ExecEvalOr(Expr *orExpr, ExprContext *econtext, bool *isNull)
 	List	   *clauses;
 	List	   *clause;
 	bool		isDone;
-	bool		IsNull;
-	Datum		const_value = 0;
+	bool		AnyNull;
+	Datum		clause_value;
 
-	IsNull = false;
 	clauses = orExpr->args;
+	AnyNull = false;
 
 	/*
-	 * we use three valued logic functions here... we evaluate each of the
-	 * clauses in turn, as soon as one is true we return that value.  If
-	 * none is true and  none of the clauses evaluate to NULL we return
-	 * the value of the last clause evaluated (which should be false) with
-	 * *isNull set to false else if none is true and at least one clause
-	 * evaluated to NULL we set *isNull flag to true -
+	 * If any of the clauses is TRUE, the OR result is TRUE regardless
+	 * of the states of the rest of the clauses, so we can stop evaluating
+	 * and return TRUE immediately.  If none are TRUE and one or more is
+	 * NULL, we return NULL; otherwise we return FALSE.  This makes sense
+	 * when you interpret NULL as "don't know": if we have a TRUE then the
+	 * OR is TRUE even if we aren't sure about some of the other inputs.
+	 * If all the known inputs are FALSE, but we have one or more "don't
+	 * knows", then we have to report that we "don't know" what the OR's
+	 * result should be --- perhaps one of the "don't knows" would have been
+	 * TRUE if we'd known its value.  Only when all the inputs are known
+	 * to be FALSE can we state confidently that the OR's result is FALSE.
 	 */
 	foreach(clause, clauses)
 	{
-
 		/*
 		 * We don't iterate over sets in the quals, so pass in an isDone
 		 * flag, but ignore it.
 		 */
-		const_value = ExecEvalExpr((Node *) lfirst(clause),
-								   econtext,
-								   isNull,
-								   &isDone);
-
+		clause_value = ExecEvalExpr((Node *) lfirst(clause),
+									econtext,
+									isNull,
+									&isDone);
 		/*
-		 * if the expression evaluates to null, then we remember it in the
-		 * local IsNull flag, if none of the clauses are true then we need
-		 * to set *isNull to true again.
+		 * if we have a non-null true result, then return it.
 		 */
 		if (*isNull)
-		{
-			IsNull = *isNull;
-
-			/*
-			 * Many functions don't (or can't!) check if an argument is
-			 * NULL or NOT_NULL and may return TRUE (1) with *isNull TRUE
-			 * (an_int4_column <> 1: int4ne returns TRUE for NULLs). Not
-			 * having time to fix the function manager I want to fix OR:
-			 * if we had 'x <> 1 OR x isnull' then when x is NULL TRUE was
-			 * returned by the 'x <> 1' clause ... but ExecQualClause says
-			 * that the qualification should *fail* if isnull is TRUE for
-			 * any value returned by ExecEvalExpr. So, force this rule
-			 * here: if isnull is TRUE then the clause failed. Note:
-			 * nullvalue() & nonnullvalue() always sets isnull to FALSE
-			 * for NULLs. - vadim 09/22/97
-			 */
-			const_value = 0;
-		}
-
-		/*
-		 * if we have a true result, then we return it.
-		 */
-		if (DatumGetInt32(const_value) != 0)
-			return const_value;
+			AnyNull = true;		/* remember we got a null */
+		else if (DatumGetInt32(clause_value) != 0)
+			return clause_value;
 	}
 
-	/* IsNull is true if at least one clause evaluated to NULL */
-	*isNull = IsNull;
-	return const_value;
+	/* AnyNull is true if at least one clause evaluated to NULL */
+	*isNull = AnyNull;
+	return (Datum) false;
 }
 
 /* ----------------------------------------------------------------
@@ -1067,49 +1047,43 @@ ExecEvalAnd(Expr *andExpr, ExprContext *econtext, bool *isNull)
 {
 	List	   *clauses;
 	List	   *clause;
-	Datum		const_value = 0;
 	bool		isDone;
-	bool		IsNull;
-
-	IsNull = false;
+	bool		AnyNull;
+	Datum		clause_value;
 
 	clauses = andExpr->args;
+	AnyNull = false;
 
 	/*
-	 * we evaluate each of the clauses in turn, as soon as one is false we
-	 * return that value.  If none are false or NULL then we return the
-	 * value of the last clause evaluated, which should be true.
+	 * If any of the clauses is FALSE, the AND result is FALSE regardless
+	 * of the states of the rest of the clauses, so we can stop evaluating
+	 * and return FALSE immediately.  If none are FALSE and one or more is
+	 * NULL, we return NULL; otherwise we return TRUE.  This makes sense
+	 * when you interpret NULL as "don't know", using the same sort of
+	 * reasoning as for OR, above.
 	 */
 	foreach(clause, clauses)
 	{
-
 		/*
 		 * We don't iterate over sets in the quals, so pass in an isDone
 		 * flag, but ignore it.
 		 */
-		const_value = ExecEvalExpr((Node *) lfirst(clause),
-								   econtext,
-								   isNull,
-								   &isDone);
-
+		clause_value = ExecEvalExpr((Node *) lfirst(clause),
+									econtext,
+									isNull,
+									&isDone);
 		/*
-		 * if the expression evaluates to null, then we remember it in
-		 * IsNull, if none of the clauses after this evaluates to false we
-		 * will have to set *isNull to true again.
+		 * if we have a non-null false result, then return it.
 		 */
 		if (*isNull)
-			IsNull = *isNull;
-
-		/*
-		 * if we have a false result, then we return it, since the
-		 * conjunction must be false.
-		 */
-		if (DatumGetInt32(const_value) == 0)
-			return const_value;
+			AnyNull = true;		/* remember we got a null */
+		else if (DatumGetInt32(clause_value) == 0)
+			return clause_value;
 	}
 
-	*isNull = IsNull;
-	return const_value;
+	/* AnyNull is true if at least one clause evaluated to NULL */
+	*isNull = AnyNull;
+	return (Datum) (! AnyNull);
 }
 
 /* ----------------------------------------------------------------
@@ -1126,7 +1100,7 @@ ExecEvalCase(CaseExpr *caseExpr, ExprContext *econtext, bool *isNull)
 {
 	List	   *clauses;
 	List	   *clause;
-	Datum		const_value = 0;
+	Datum		clause_value;
 	bool		isDone;
 
 	clauses = caseExpr->args;
@@ -1144,37 +1118,35 @@ ExecEvalCase(CaseExpr *caseExpr, ExprContext *econtext, bool *isNull)
 		 * We don't iterate over sets in the quals, so pass in an isDone
 		 * flag, but ignore it.
 		 */
-		const_value = ExecEvalExpr((Node *) wclause->expr,
-								   econtext,
-								   isNull,
-								   &isDone);
+		clause_value = ExecEvalExpr(wclause->expr,
+									econtext,
+									isNull,
+									&isDone);
 
 		/*
 		 * if we have a true test, then we return the result, since the
 		 * case statement is satisfied.  A NULL result from the test is
 		 * not considered true.
 		 */
-		if (DatumGetInt32(const_value) != 0 && ! *isNull)
+		if (DatumGetInt32(clause_value) != 0 && ! *isNull)
 		{
-			const_value = ExecEvalExpr((Node *) wclause->result,
-									   econtext,
-									   isNull,
-									   &isDone);
-			return (Datum) const_value;
+			return ExecEvalExpr(wclause->result,
+								econtext,
+								isNull,
+								&isDone);
 		}
 	}
 
 	if (caseExpr->defresult)
 	{
-		const_value = ExecEvalExpr((Node *) caseExpr->defresult,
-								   econtext,
-								   isNull,
-								   &isDone);
+		return ExecEvalExpr(caseExpr->defresult,
+							econtext,
+							isNull,
+							&isDone);
 	}
-	else
-		*isNull = true;
 
-	return const_value;
+	*isNull = true;
+	return (Datum) 0;
 }
 
 /* ----------------------------------------------------------------
@@ -1357,7 +1329,6 @@ bool
 ExecQual(List *qual, ExprContext *econtext)
 {
 	List	   *clause;
-	bool		result;
 
 	/*
 	 * debugging stuff
@@ -1378,26 +1349,16 @@ ExecQual(List *qual, ExprContext *econtext)
 	 * a "qual" is a list of clauses.  To evaluate the qual, we evaluate
 	 * each of the clauses in the list.
 	 *
-	 * ExecQualClause returns true when we know the qualification *failed* so
-	 * we just pass each clause in qual to it until we know the qual
+	 * ExecQualClause returns true when we know the qualification *failed*
+	 * so we just pass each clause in qual to it until we know the qual
 	 * failed or there are no more clauses.
 	 */
-	result = false;
 
 	foreach(clause, qual)
 	{
-		result = ExecQualClause((Node *) lfirst(clause), econtext);
-		if (result == true)
-			break;
+		if (ExecQualClause((Node *) lfirst(clause), econtext))
+			return false;		/* qual failed, so return false */
 	}
-
-	/*
-	 * if result is true, then it means a clause failed so we return
-	 * false.  if result is false then it means no clause failed so we
-	 * return true.
-	 */
-	if (result == true)
-		return false;
 
 	return true;
 }

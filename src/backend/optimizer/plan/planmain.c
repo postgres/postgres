@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.44 1999/09/13 00:17:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.45 1999/09/26 02:28:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,24 +66,41 @@ query_planner(Query *root,
 	List	   *level_tlist;
 	Plan	   *subplan;
 
-	if (PlannerQueryLevel > 1)
-	{
-		/* should copy be made ? */
-		tlist = (List *) SS_replace_correlation_vars((Node *) tlist);
-		qual = (List *) SS_replace_correlation_vars((Node *) qual);
-	}
-	if (root->hasSubLinks)
-		qual = (List *) SS_process_sublinks((Node *) qual);
+	/*
+	 * Simplify constant expressions in both targetlist and qual.
+	 *
+	 * Note that at this point the qual has not yet been converted to
+	 * implicit-AND form, so we can apply eval_const_expressions directly.
+	 * Also note that we need to do this before SS_process_sublinks,
+	 * because that routine inserts bogus "Const" nodes.
+	 */
+	tlist = (List *) eval_const_expressions((Node *) tlist);
+	qual = (List *) eval_const_expressions((Node *) qual);
 
+	/*
+	 * Canonicalize the qual, and convert it to implicit-AND format.
+	 */
 	qual = canonicalize_qual((Expr *) qual, true);
 #ifdef OPTIMIZER_DEBUG
 	printf("After canonicalize_qual()\n");
 	pprint(qual);
 #endif
 
+	/* Replace uplevel vars with Param nodes */
+	if (PlannerQueryLevel > 1)
+	{
+		tlist = (List *) SS_replace_correlation_vars((Node *) tlist);
+		qual = (List *) SS_replace_correlation_vars((Node *) qual);
+	}
+	/* Expand SubLinks to SubPlans */
+	if (root->hasSubLinks)
+		qual = (List *) SS_process_sublinks((Node *) qual);
+
 	/*
 	 * Pull out any non-variable qualifications so these can be put in the
-	 * topmost result node.
+	 * topmost result node.  (Any *really* non-variable quals will probably
+	 * have been optimized away by eval_const_expressions().  What we're
+	 * looking for here is quals that depend only on outer-level vars...)
 	 */
 	qual = pull_constant_clauses(qual, &constant_qual);
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.51 1999/09/09 02:35:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.52 1999/09/26 02:28:33 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -19,6 +19,9 @@
 #include "postgres.h"
 
 #include "catalog/pg_operator.h"
+#include "catalog/pg_proc.h"
+#include "catalog/pg_type.h"
+#include "executor/executor.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "nodes/plannodes.h"
@@ -26,7 +29,9 @@
 #include "optimizer/internal.h"
 #include "optimizer/tlist.h"
 #include "optimizer/var.h"
+#include "parser/parse_type.h"
 #include "utils/lsyscache.h"
+#include "utils/syscache.h"
 
 
 typedef struct {
@@ -38,6 +43,7 @@ static bool pull_agg_clause_walker(Node *node, List **listptr);
 static bool check_subplans_for_ungrouped_vars_walker(Node *node,
 					check_subplans_for_ungrouped_vars_context *context);
 static int is_single_func(Node *node);
+static Node *eval_const_expressions_mutator (Node *node, void *context);
 
 
 Expr *
@@ -211,7 +217,7 @@ make_orclause(List *orclauses)
 {
 	Expr	   *expr = makeNode(Expr);
 
-	expr->typeOid = InvalidOid; /* assume type checking done */
+	expr->typeOid = BOOLOID;
 	expr->opType = OR_EXPR;
 	expr->oper = NULL;
 	expr->args = orclauses;
@@ -247,7 +253,7 @@ make_notclause(Expr *notclause)
 {
 	Expr	   *expr = makeNode(Expr);
 
-	expr->typeOid = InvalidOid; /* assume type checking done */
+	expr->typeOid = BOOLOID;
 	expr->opType = NOT_EXPR;
 	expr->oper = NULL;
 	expr->args = lcons(notclause, NIL);
@@ -296,7 +302,7 @@ make_andclause(List *andclauses)
 {
 	Expr	   *expr = makeNode(Expr);
 
-	expr->typeOid = InvalidOid; /* assume type checking done */
+	expr->typeOid = BOOLOID;
 	expr->opType = AND_EXPR;
 	expr->oper = NULL;
 	expr->args = andclauses;
@@ -761,6 +767,413 @@ CommuteClause(Expr *clause)
 	lsecond(clause->args) = temp;
 }
 
+
+/*--------------------
+ * eval_const_expressions
+ *
+ * Reduce any recognizably constant subexpressions of the given
+ * expression tree, for example "2 + 2" => "4".  More interestingly,
+ * we can reduce certain boolean expressions even when they contain
+ * non-constant subexpressions: "x OR true" => "true" no matter what
+ * the subexpression x is.  (XXX We assume that no such subexpression
+ * will have important side-effects, which is not necessarily a good
+ * assumption in the presence of user-defined functions; do we need a
+ * pg_proc flag that prevents discarding the execution of a function?)
+ *
+ * We do understand that certain functions may deliver non-constant
+ * results even with constant inputs, "nextval()" being the classic
+ * example.  Functions that are not marked "proiscachable" in pg_proc
+ * will not be pre-evaluated here, although we will reduce their
+ * arguments as far as possible.  Functions that are the arguments
+ * of Iter nodes are also not evaluated.
+ *
+ * We assume that the tree has already been type-checked and contains
+ * only operators and functions that are reasonable to try to execute.
+ *
+ * This routine should be invoked before converting sublinks to subplans
+ * (subselect.c's SS_process_sublinks()).  The converted form contains
+ * bogus "Const" nodes that are actually placeholders where the executor
+ * will insert values from the inner plan, and obviously we mustn't try
+ * to reduce the expression as though these were really constants.
+ * As a safeguard, if we happen to find an already-converted SubPlan node,
+ * we will return it unchanged rather than recursing into it.
+ *--------------------
+ */
+Node *
+eval_const_expressions(Node *node)
+{
+	/* no context or special setup needed, so away we go... */
+	return eval_const_expressions_mutator(node, NULL);
+}
+
+/* note that pg_type.h hardwires size of bool as 1 ... duplicate it */
+#define MAKEBOOLCONST(val,isnull) \
+	((Node *) makeConst(BOOLOID, 1, (Datum) (val), \
+						(isnull), true, false, false))
+
+static Node *
+eval_const_expressions_mutator (Node *node, void *context)
+{
+	if (node == NULL)
+		return NULL;
+	if (IsA(node, Expr))
+	{
+		Expr	   *expr = (Expr *) node;
+		List	   *args;
+		Const	   *const_input;
+		Expr       *newexpr;
+
+		/*
+		 * Reduce constants in the Expr's arguments.  We know args is
+		 * either NIL or a List node, so we can call expression_tree_mutator
+		 * directly rather than recursing to self.
+		 */
+		args = (List *) expression_tree_mutator((Node *) expr->args,
+												eval_const_expressions_mutator,
+												(void *) context);
+
+		switch (expr->opType)
+		{
+			case OP_EXPR:
+			case FUNC_EXPR:
+			{
+				/*
+				 * For an operator or function, we cannot simplify
+				 * unless all the inputs are constants.  (XXX possible
+				 * future improvement: if the op/func is strict and
+				 * at least one input is NULL, we could simplify to NULL.
+				 * But we do not currently have any way to know if the
+				 * op/func is strict or not.  For now, a NULL input is
+				 * treated the same as any other constant node.)
+				 */
+				bool		args_all_const = true;
+				List	   *arg;
+				Oid			funcid;
+				Oid			result_typeid;
+				HeapTuple	func_tuple;
+				Form_pg_proc funcform;
+				Type		resultType;
+				Datum		const_val;
+				bool		const_is_null;
+				bool		isDone;
+
+				foreach(arg, args)
+				{
+					if (! IsA(lfirst(arg), Const))
+					{
+						args_all_const = false;
+						break;
+					}
+				}
+				if (! args_all_const)
+					break;
+				/*
+				 * Get the function procedure's OID and look to see
+				 * whether it is marked proiscachable.
+				 */
+				if (expr->opType == OP_EXPR)
+				{
+					Oper   *oper = (Oper *) expr->oper;
+
+					replace_opid(oper);
+					funcid = oper->opid;
+					result_typeid = oper->opresulttype;
+				}
+				else
+				{
+					Func   *func = (Func *) expr->oper;
+
+					funcid = func->funcid;
+					result_typeid = func->functype;
+				}
+				/* Someday lsyscache.c might provide a function for this */
+				func_tuple = SearchSysCacheTuple(PROOID,
+												 ObjectIdGetDatum(funcid),
+												 0, 0, 0);
+				if (!HeapTupleIsValid(func_tuple))
+					elog(ERROR, "Function OID %u does not exist", funcid);
+				funcform = (Form_pg_proc) GETSTRUCT(func_tuple);
+				if (! funcform->proiscachable)
+					break;
+				/*
+				 * Also check to make sure it doesn't return a set.
+				 *
+				 * XXX would it be better to take the result type from the
+				 * pg_proc tuple, rather than the Oper or Func node?
+				 */
+				if (funcform->proretset)
+					break;
+				/*
+				 * OK, looks like we can simplify this operator/function.
+				 * We use the executor's routine ExecEvalExpr() to avoid
+				 * duplication of code and ensure we get the same result
+				 * as the executor would get.
+				 *
+				 * The only setup needed here is the replace_opid()
+				 * that we already did for the OP_EXPR case.
+				 *
+				 * It is OK to pass econtext = NULL because none of the
+				 * ExecEvalExpr() code used in this situation will use
+				 * econtext.  That might seem fortuitous, but it's not
+				 * so unreasonable --- a constant expression does not
+				 * depend on context, by definition, n'est ce pas?
+				 */
+				const_val = ExecEvalExpr((Node *) expr, NULL,
+										 &const_is_null, &isDone);
+				Assert(isDone);	/* if this isn't set, we blew it... */
+				/*
+				 * Make the constant result node.
+				 */
+				resultType = typeidType(result_typeid);
+				return (Node *) makeConst(result_typeid, typeLen(resultType),
+										  const_val, const_is_null,
+										  typeByVal(resultType),
+										  false, false);
+			}
+			case OR_EXPR:
+			{
+				/*
+				 * OR arguments are handled as follows:
+				 *	non constant: keep
+				 *  FALSE: drop (does not affect result)
+				 *	TRUE: force result to TRUE
+				 *	NULL: keep only one
+				 * We keep one NULL input because ExecEvalOr returns
+				 * NULL when no input is TRUE and at least one is NULL.
+				 */
+				List	   *newargs = NIL;
+				List	   *arg;
+				bool		haveNull = false;
+				bool		forceTrue = false;
+
+                foreach(arg, args)
+				{
+					if (! IsA(lfirst(arg), Const))
+					{
+						newargs = lappend(newargs, lfirst(arg));
+						continue;
+					}
+					const_input = (Const *) lfirst(arg);
+					if (const_input->constisnull)
+						haveNull = true;
+					else if (DatumGetInt32(const_input->constvalue))
+						forceTrue = true;
+					/* otherwise, we can drop the constant-false input */
+				}
+				/*
+				 * We could return TRUE before falling out of the loop,
+				 * but this coding method will be easier to adapt if
+				 * we ever add a notion of non-removable functions.
+				 * We'd need to check all the inputs for non-removability.
+				 */
+				if (forceTrue)
+					return MAKEBOOLCONST(true, false);
+				if (haveNull)
+					newargs = lappend(newargs, MAKEBOOLCONST(false, true));
+				/* If all the inputs are FALSE, result is FALSE */
+				if (newargs == NIL)
+					return MAKEBOOLCONST(false, false);
+				/* If only one nonconst-or-NULL input, it's the result */
+				if (lnext(newargs) == NIL)
+					return (Node *) lfirst(newargs);
+				/* Else we still need an OR node */
+				return (Node *) make_orclause(newargs);
+			}
+			case AND_EXPR:
+			{
+				/*
+				 * AND arguments are handled as follows:
+				 *	non constant: keep
+				 *  TRUE: drop (does not affect result)
+				 *	FALSE: force result to FALSE
+				 *	NULL: keep only one
+				 * We keep one NULL input because ExecEvalAnd returns
+				 * NULL when no input is FALSE and at least one is NULL.
+				 */
+				List	   *newargs = NIL;
+				List	   *arg;
+				bool		haveNull = false;
+				bool		forceFalse = false;
+
+                foreach(arg, args)
+				{
+					if (! IsA(lfirst(arg), Const))
+					{
+						newargs = lappend(newargs, lfirst(arg));
+						continue;
+					}
+					const_input = (Const *) lfirst(arg);
+					if (const_input->constisnull)
+						haveNull = true;
+					else if (! DatumGetInt32(const_input->constvalue))
+						forceFalse = true;
+					/* otherwise, we can drop the constant-true input */
+				}
+				/*
+				 * We could return FALSE before falling out of the loop,
+				 * but this coding method will be easier to adapt if
+				 * we ever add a notion of non-removable functions.
+				 * We'd need to check all the inputs for non-removability.
+				 */
+				if (forceFalse)
+					return MAKEBOOLCONST(false, false);
+				if (haveNull)
+					newargs = lappend(newargs, MAKEBOOLCONST(false, true));
+				/* If all the inputs are TRUE, result is TRUE */
+				if (newargs == NIL)
+					return MAKEBOOLCONST(true, false);
+				/* If only one nonconst-or-NULL input, it's the result */
+				if (lnext(newargs) == NIL)
+					return (Node *) lfirst(newargs);
+				/* Else we still need an AND node */
+				return (Node *) make_andclause(newargs);
+			}
+			case NOT_EXPR:
+				Assert(length(args) == 1);
+				if (! IsA(lfirst(args), Const))
+					break;
+				const_input = (Const *) lfirst(args);
+				/* NOT NULL => NULL */
+				if (const_input->constisnull)
+					return MAKEBOOLCONST(false, true);
+				/* otherwise pretty easy */
+				return MAKEBOOLCONST(! DatumGetInt32(const_input->constvalue),
+									 false);
+			case SUBPLAN_EXPR:
+				/*
+				 * Safety measure per notes at head of this routine:
+				 * return a SubPlan unchanged.  Too late to do anything
+				 * with it.  The arglist simplification above was wasted
+				 * work (the list probably only contains Var nodes anyway).
+				 */
+				return (Node *) expr;
+			default:
+				elog(ERROR, "eval_const_expressions: unexpected opType %d",
+					 (int) expr->opType);
+				break;
+		}
+
+		/*
+		 * If we break out of the above switch on opType, then the
+		 * expression cannot be simplified any further, so build
+		 * and return a replacement Expr node using the
+		 * possibly-simplified arguments and the original oper node.
+		 * Can't use make_clause() here because we want to be sure
+		 * the typeOid field is preserved...
+		 */
+		newexpr = makeNode(Expr);
+        newexpr->typeOid = expr->typeOid;
+        newexpr->opType = expr->opType;
+        newexpr->oper = expr->oper;
+        newexpr->args = args;
+        return (Node *) newexpr;
+	}
+	if (IsA(node, CaseExpr))
+	{
+		/*
+		 * CASE expressions can be simplified if there are constant condition
+		 * clauses:
+		 *	FALSE (or NULL): drop the alternative
+		 *	TRUE: drop all remaining alternatives
+		 * If the first non-FALSE alternative is a constant TRUE, we can
+		 * simplify the entire CASE to that alternative's expression.
+		 * If there are no non-FALSE alternatives, we simplify the entire
+		 * CASE to the default result (ELSE result).
+		 */
+		CaseExpr   *caseexpr = (CaseExpr *) node;
+		CaseExpr   *newcase;
+		List	   *newargs = NIL;
+		Node	   *defresult;
+		Const	   *const_input;
+		List	   *arg;
+
+		foreach(arg, caseexpr->args)
+		{
+			/* Simplify this alternative's condition and result */
+			CaseWhen   *casewhen = (CaseWhen *)
+				expression_tree_mutator((Node *) lfirst(arg),
+										eval_const_expressions_mutator,
+										(void *) context);
+			Assert(IsA(casewhen, CaseWhen));
+			if (casewhen->expr == NULL ||
+				! IsA(casewhen->expr, Const))
+			{
+				newargs = lappend(newargs, casewhen);
+				continue;
+			}
+			const_input = (Const *) casewhen->expr;
+			if (const_input->constisnull ||
+				! DatumGetInt32(const_input->constvalue))
+				continue;		/* drop alternative with FALSE condition */
+			/*
+			 * Found a TRUE condition.  If it's the first (un-dropped)
+			 * alternative, the CASE reduces to just this alternative.
+			 */
+			if (newargs == NIL)
+				return casewhen->result;
+			/*
+			 * Otherwise, add it to the list, and drop all the rest.
+			 */
+			newargs = lappend(newargs, casewhen);
+			break;
+		}
+
+		/* Simplify the default result */
+		defresult = eval_const_expressions_mutator(caseexpr->defresult,
+												   context);
+		/* If no non-FALSE alternatives, CASE reduces to the default result */
+		if (newargs == NIL)
+			return defresult;
+		/* Otherwise we need a new CASE node */
+		newcase = makeNode(CaseExpr);
+		newcase->casetype = caseexpr->casetype;
+		newcase->arg = NULL;
+		newcase->args = newargs;
+		newcase->defresult = defresult;
+		return (Node *) newcase;
+	}
+	if (IsA(node, Iter))
+	{
+		/*
+		 * The argument of an Iter is normally a function call.
+		 * We must not try to eliminate the function, but we
+		 * can try to simplify its arguments.  If, by chance,
+		 * the arg is NOT a function then we go ahead and try to
+		 * simplify it (by falling into expression_tree_mutator).
+		 * Is that the right thing?
+		 */
+		Iter	   *iter = (Iter *) node;
+
+		if (is_funcclause(iter->iterexpr))
+		{
+			Expr   *func = (Expr *) iter->iterexpr;
+			Expr   *newfunc;
+			Iter   *newiter;
+
+			newfunc = makeNode(Expr);
+			newfunc->typeOid = func->typeOid;
+			newfunc->opType = func->opType;
+			newfunc->oper = func->oper;
+			newfunc->args = (List *)
+				expression_tree_mutator((Node *) func->args,
+										eval_const_expressions_mutator,
+										(void *) context);
+			newiter = makeNode(Iter);
+			newiter->iterexpr = (Node *) newfunc;
+			newiter->itertype = iter->itertype;
+			return (Node *) newiter;
+		}
+	}
+	/*
+	 * For any node type not handled above, we recurse using
+	 * expression_tree_mutator, which will copy the node unchanged
+	 * but try to simplify its arguments (if any) using this routine.
+	 * For example: we cannot eliminate an ArrayRef node, but we
+	 * might be able to simplify constant expressions in its subscripts.
+	 */
+	return expression_tree_mutator(node, eval_const_expressions_mutator,
+								   (void *) context);
+}
 
 /*
  * Standard expression-tree walking support

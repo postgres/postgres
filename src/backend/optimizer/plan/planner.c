@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.68 1999/09/18 19:07:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.69 1999/09/26 02:28:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -301,7 +301,28 @@ union_planner(Query *parse)
 	 */
 	if (parse->havingQual)
 	{
-		List	   *ql;
+		/*--------------------
+		 * Require the havingQual to contain at least one aggregate function
+		 * (else it could have been done as a WHERE constraint).  This check
+		 * used to be much stricter, requiring an aggregate in each clause of
+		 * the CNF-ified qual.  However, that's probably overly anal-retentive.
+		 * We now do it first so that we will not complain if there is an
+		 * aggregate but it gets optimized away by eval_const_expressions().
+		 * The agg itself is never const, of course, but consider
+		 *		SELECT ... HAVING xyz OR (COUNT(*) > 1)
+		 * where xyz reduces to constant true in a particular query.
+		 * We probably should not refuse this query.
+		 *--------------------
+		 */
+		if (pull_agg_clause(parse->havingQual) == NIL)
+			elog(ERROR, "SELECT/HAVING requires aggregates to be valid");
+
+		/* Simplify constant expressions in havingQual */
+		parse->havingQual = eval_const_expressions(parse->havingQual);
+
+		/* Convert the havingQual to implicit-AND normal form */
+		parse->havingQual = (Node *)
+			canonicalize_qual((Expr *) parse->havingQual, true);
 
 		/* Replace uplevel Vars with Params */
 		if (PlannerQueryLevel > 1)
@@ -322,20 +343,6 @@ union_planner(Query *parse)
 												  parse->groupClause,
 												  parse->targetList))
 				elog(ERROR, "Sub-SELECT in HAVING clause must use only GROUPed attributes from outer SELECT");
-		}
-
-		/* convert the havingQual to implicit-AND normal form */
-		parse->havingQual = (Node *)
-			canonicalize_qual((Expr *) parse->havingQual, true);
-
-		/*
-		 * Require an aggregate function to appear in each clause of the
-		 * havingQual (else it could have been done as a WHERE constraint).
-		 */
-		foreach(ql, (List *) parse->havingQual)
-		{
-			if (pull_agg_clause(lfirst(ql)) == NIL)
-				elog(ERROR, "SELECT/HAVING requires aggregates to be valid");
 		}
 	}
 
