@@ -174,7 +174,7 @@ if [ "$ans" = "y" ] ; then
    echo "and subsequent ones should be preceeded by -l"
    def="X11"
    readln "X11 library [$def]?" "$def"
-   echo >>Makefile.custom "X11_LIB= $ans"
+   echo >>Makefile.custom "X11_LIB= -l$ans"
 fi
 
 
