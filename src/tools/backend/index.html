@@ -69,10 +69,11 @@ returned to the client.
 There are many other modules that support this basic functionality.
 They can be accessed by clicking on the flowchart.
 <P>
-Another area of interest is the shared memory area, containing
-table data/index blocks, locks, and backend information:
+Another area of interest is the shared memory area, containing table
+data/index blocks, locks, backend information, and lookup tables for
+these structures:
 <UL> 
-<LI>ShmemIndex - lookup of shared memory addresses using structure names
+<LI>ShmemIndex - lookup shared memory addresses using structure names
 <LI><A HREF="../../include/storage/buf_internals.h">Buffer
 Descriptors</A> - control header for buffer cache block
 <LI><A HREF="../../include/storage/buf_internals.h">Buffer Blocks</A> -
@@ -83,10 +84,10 @@ BufferTag</A>)
 <LI><A HREF="../../include/storage/lock.h">LockTable (ctl)</A> - lock table
 structure, specifiying table, lock types, and backends holding or
 waiting on lock
-<LI>LockTable (lock hash) - lookup of LockTable structures using relation
-and database object ids
+<LI>LockTable (lock hash) - lookup of LockTable structures using relation,
+database object ids
 <LI>LockTable (xid hash) - lookup of LockTable structures using
-transaction id
+transaction id, LockTable address
 <LI><A HREF="../../include/storage/proc.h">Proc Header</A> - information
 about each backend, including locks held/waiting,  indexed by process id
 </UL>
