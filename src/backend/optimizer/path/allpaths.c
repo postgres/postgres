@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.67 2000/11/12 00:36:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.68 2000/12/14 22:30:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -162,9 +162,7 @@ set_plain_rel_pathlist(Query *root, RelOptInfo *rel, RangeTblEntry *rte)
 	create_tidscan_paths(root, rel);
 
 	/* Consider index paths for both simple and OR index clauses */
-	create_index_paths(root, rel, indices,
-					   rel->baserestrictinfo,
-					   rel->joininfo);
+	create_index_paths(root, rel, indices);
 
 	/*
 	 * Note: create_or_index_paths depends on create_index_paths to

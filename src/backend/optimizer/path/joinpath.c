@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.59 2000/11/23 03:57:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.60 2000/12/14 22:30:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -152,6 +152,7 @@ sort_inner_and_outer(Query *root,
 					 List *mergeclause_list,
 					 JoinType jointype)
 {
+	List	   *all_pathkeys;
 	List	   *i;
 
 	/*
@@ -159,36 +160,57 @@ sort_inner_and_outer(Query *root,
 	 * generate a differently-sorted result path at essentially the same
 	 * cost.  We have no basis for choosing one over another at this level
 	 * of joining, but some sort orders may be more useful than others for
-	 * higher-level mergejoins.  Generating a path here for *every*
-	 * permutation of mergejoin clauses doesn't seem like a winning
-	 * strategy, however; the cost in planning time is too high.
+	 * higher-level mergejoins, so it's worth considering multiple orderings.
 	 *
-	 * For now, we generate one path for each mergejoin clause, listing that
-	 * clause first and the rest in random order.  This should allow at
+	 * Actually, it's not quite true that every mergeclause ordering will
+	 * generate a different path order, because some of the clauses may be
+	 * redundant.  Therefore, what we do is convert the mergeclause list to
+	 * a list of canonical pathkeys, and then consider different orderings
+	 * of the pathkeys.
+	 *
+	 * Generating a path for *every* permutation of the pathkeys doesn't
+	 * seem like a winning strategy; the cost in planning time is too high.
+	 * For now, we generate one path for each pathkey, listing that pathkey
+	 * first and the rest in random order.  This should allow at
 	 * least a one-clause mergejoin without re-sorting against any other
 	 * possible mergejoin partner path.  But if we've not guessed the
-	 * right ordering of secondary clauses, we may end up evaluating
+	 * right ordering of secondary keys, we may end up evaluating
 	 * clauses as qpquals when they could have been done as mergeclauses.
 	 * We need to figure out a better way.	(Two possible approaches: look
 	 * at all the relevant index relations to suggest plausible sort
 	 * orders, or make just one output path and somehow mark it as having
 	 * a sort-order that can be rearranged freely.)
 	 */
-	foreach(i, mergeclause_list)
+	all_pathkeys = make_pathkeys_for_mergeclauses(root,
+												  mergeclause_list,
+												  outerrel);
+
+	foreach(i, all_pathkeys)
 	{
-		RestrictInfo *restrictinfo = lfirst(i);
-		List	   *curclause_list;
+		List	   *front_pathkey = lfirst(i);
+		List	   *cur_pathkeys;
+		List	   *cur_mergeclauses;
 		List	   *outerkeys;
 		List	   *innerkeys;
 		List	   *merge_pathkeys;
 
-		/* Make a mergeclause list with this guy first. */
-		if (i != mergeclause_list)
-			curclause_list = lcons(restrictinfo,
-								   lremove(restrictinfo,
-										   listCopy(mergeclause_list)));
+		/* Make a pathkey list with this guy first. */
+		if (i != all_pathkeys)
+			cur_pathkeys = lcons(front_pathkey,
+								 lremove(front_pathkey,
+										 listCopy(all_pathkeys)));
 		else
-			curclause_list = mergeclause_list;	/* no work at first one... */
+			cur_pathkeys = all_pathkeys;	/* no work at first one... */
+
+		/*
+		 * Select mergeclause(s) that match this sort ordering.  If we had
+		 * redundant merge clauses then we will get a subset of the original
+		 * clause list.  There had better be some match, however...
+		 */
+		cur_mergeclauses = find_mergeclauses_for_pathkeys(root,
+														  cur_pathkeys,
+														  mergeclause_list);
+		Assert(cur_mergeclauses != NIL);
 
 		/*
 		 * Build sort pathkeys for both sides.
@@ -198,15 +220,13 @@ sort_inner_and_outer(Query *root,
 		 * suppress an explicit sort step, so we needn't do so here.
 		 */
 		outerkeys = make_pathkeys_for_mergeclauses(root,
-												   curclause_list,
+												   cur_mergeclauses,
 												   outerrel);
 		innerkeys = make_pathkeys_for_mergeclauses(root,
-												   curclause_list,
+												   cur_mergeclauses,
 												   innerrel);
 		/* Build pathkeys representing output sort order. */
-		merge_pathkeys = build_join_pathkeys(outerkeys,
-											 joinrel->targetlist,
-											 root->equi_key_list);
+		merge_pathkeys = build_join_pathkeys(root, joinrel, outerkeys);
 
 		/*
 		 * And now we can make the path.  We only consider the cheapest-
@@ -221,7 +241,7 @@ sort_inner_and_outer(Query *root,
 									   innerrel->cheapest_total_path,
 									   restrictlist,
 									   merge_pathkeys,
-									   curclause_list,
+									   cur_mergeclauses,
 									   outerkeys,
 									   innerkeys));
 	}
@@ -301,17 +321,16 @@ match_unsorted_outer(Query *root,
 		List	   *trialsortkeys;
 		Path	   *cheapest_startup_inner;
 		Path	   *cheapest_total_inner;
-		int			num_mergeclauses;
-		int			clausecnt;
+		int			num_sortkeys;
+		int			sortkeycnt;
 
 		/*
 		 * The result will have this sort order (even if it is implemented
 		 * as a nestloop, and even if some of the mergeclauses are
 		 * implemented by qpquals rather than as true mergeclauses):
 		 */
-		merge_pathkeys = build_join_pathkeys(outerpath->pathkeys,
-											 joinrel->targetlist,
-											 root->equi_key_list);
+		merge_pathkeys = build_join_pathkeys(root, joinrel,
+											 outerpath->pathkeys);
 
 		if (nestjoinOK)
 		{
@@ -347,7 +366,8 @@ match_unsorted_outer(Query *root,
 		}
 
 		/* Look for useful mergeclauses (if any) */
-		mergeclauses = find_mergeclauses_for_pathkeys(outerpath->pathkeys,
+		mergeclauses = find_mergeclauses_for_pathkeys(root,
+													  outerpath->pathkeys,
 													  mergeclause_list);
 
 		/* Done with this outer path if no chance for a mergejoin */
@@ -362,7 +382,8 @@ match_unsorted_outer(Query *root,
 		/*
 		 * Generate a mergejoin on the basis of sorting the cheapest
 		 * inner. Since a sort will be needed, only cheapest total cost
-		 * matters.
+		 * matters.  (But create_mergejoin_path will do the right thing
+		 * if innerrel->cheapest_total_path is already correctly sorted.)
 		 */
 		add_path(joinrel, (Path *)
 				 create_mergejoin_path(joinrel,
@@ -376,38 +397,49 @@ match_unsorted_outer(Query *root,
 									   innersortkeys));
 
 		/*
-		 * Look for presorted inner paths that satisfy the mergeclause
+		 * Look for presorted inner paths that satisfy the innersortkey
 		 * list or any truncation thereof.	Here, we consider both cheap
-		 * startup cost and cheap total cost.
+		 * startup cost and cheap total cost.  Ignore
+		 * innerrel->cheapest_total_path, since we already made a path with it.
 		 */
-		trialsortkeys = listCopy(innersortkeys);		/* modifiable copy */
+		num_sortkeys = length(innersortkeys);
+		if (num_sortkeys > 1)
+			trialsortkeys = listCopy(innersortkeys); /* need modifiable copy */
+		else
+			trialsortkeys = innersortkeys; /* won't really truncate */
 		cheapest_startup_inner = NULL;
 		cheapest_total_inner = NULL;
-		num_mergeclauses = length(mergeclauses);
 
-		for (clausecnt = num_mergeclauses; clausecnt > 0; clausecnt--)
+		for (sortkeycnt = num_sortkeys; sortkeycnt > 0; sortkeycnt--)
 		{
 			Path	   *innerpath;
 			List	   *newclauses = NIL;
 
 			/*
-			 * Look for an inner path ordered well enough to merge with
-			 * the first 'clausecnt' mergeclauses.	NB: trialsortkeys list
+			 * Look for an inner path ordered well enough for the first
+			 * 'sortkeycnt' innersortkeys.	NB: trialsortkeys list
 			 * is modified destructively, which is why we made a copy...
 			 */
-			trialsortkeys = ltruncate(clausecnt, trialsortkeys);
+			trialsortkeys = ltruncate(sortkeycnt, trialsortkeys);
 			innerpath = get_cheapest_path_for_pathkeys(innerrel->pathlist,
 													   trialsortkeys,
 													   TOTAL_COST);
 			if (innerpath != NULL &&
+				innerpath != innerrel->cheapest_total_path &&
 				(cheapest_total_inner == NULL ||
 				 compare_path_costs(innerpath, cheapest_total_inner,
 									TOTAL_COST) < 0))
 			{
 				/* Found a cheap (or even-cheaper) sorted path */
-				if (clausecnt < num_mergeclauses)
-					newclauses = ltruncate(clausecnt,
-										   listCopy(mergeclauses));
+				/* Select the right mergeclauses, if we didn't already */
+				if (sortkeycnt < num_sortkeys)
+				{
+					newclauses =
+						find_mergeclauses_for_pathkeys(root,
+													   trialsortkeys,
+													   mergeclauses);
+					Assert(newclauses != NIL);
+				}
 				else
 					newclauses = mergeclauses;
 				add_path(joinrel, (Path *)
@@ -427,6 +459,7 @@ match_unsorted_outer(Query *root,
 													   trialsortkeys,
 													   STARTUP_COST);
 			if (innerpath != NULL &&
+				innerpath != innerrel->cheapest_total_path &&
 				(cheapest_startup_inner == NULL ||
 				 compare_path_costs(innerpath, cheapest_startup_inner,
 									STARTUP_COST) < 0))
@@ -441,9 +474,14 @@ match_unsorted_outer(Query *root,
 					 */
 					if (newclauses == NIL)
 					{
-						if (clausecnt < num_mergeclauses)
-							newclauses = ltruncate(clausecnt,
-												 listCopy(mergeclauses));
+						if (sortkeycnt < num_sortkeys)
+						{
+							newclauses =
+								find_mergeclauses_for_pathkeys(root,
+															   trialsortkeys,
+															   mergeclauses);
+							Assert(newclauses != NIL);
+						}
 						else
 							newclauses = mergeclauses;
 					}
@@ -501,7 +539,8 @@ match_unsorted_inner(Query *root,
 		Path	   *startupouterpath;
 
 		/* Look for useful mergeclauses (if any) */
-		mergeclauses = find_mergeclauses_for_pathkeys(innerpath->pathkeys,
+		mergeclauses = find_mergeclauses_for_pathkeys(root,
+													  innerpath->pathkeys,
 													  mergeclause_list);
 		if (mergeclauses == NIL)
 			continue;
@@ -516,9 +555,7 @@ match_unsorted_inner(Query *root,
 		 * outer. Since a sort will be needed, only cheapest total cost
 		 * matters.
 		 */
-		merge_pathkeys = build_join_pathkeys(outersortkeys,
-											 joinrel->targetlist,
-											 root->equi_key_list);
+		merge_pathkeys = build_join_pathkeys(root, joinrel, outersortkeys);
 		add_path(joinrel, (Path *)
 				 create_mergejoin_path(joinrel,
 									   jointype,
@@ -545,9 +582,8 @@ match_unsorted_inner(Query *root,
 			continue;			/* there won't be a startup-cost path
 								 * either */
 
-		merge_pathkeys = build_join_pathkeys(totalouterpath->pathkeys,
-											 joinrel->targetlist,
-											 root->equi_key_list);
+		merge_pathkeys = build_join_pathkeys(root, joinrel,
+											 totalouterpath->pathkeys);
 		add_path(joinrel, (Path *)
 				 create_mergejoin_path(joinrel,
 									   jointype,
@@ -564,9 +600,8 @@ match_unsorted_inner(Query *root,
 														  STARTUP_COST);
 		if (startupouterpath != NULL && startupouterpath != totalouterpath)
 		{
-			merge_pathkeys = build_join_pathkeys(startupouterpath->pathkeys,
-												 joinrel->targetlist,
-												 root->equi_key_list);
+			merge_pathkeys = build_join_pathkeys(root, joinrel,
+												 startupouterpath->pathkeys);
 			add_path(joinrel, (Path *)
 					 create_mergejoin_path(joinrel,
 										   jointype,
@@ -637,10 +672,9 @@ hash_inner_and_outer(Query *root,
 		RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(i);
 		Expr	   *clause;
 		Var		   *left,
-				   *right,
-				   *inner;
-		List	   *hashclauses;
+				   *right;
 		Selectivity innerdispersion;
+		List	   *hashclauses;
 
 		if (restrictinfo->hashjoinoperator == InvalidOid)
 			continue;			/* not hashjoinable */
@@ -657,26 +691,48 @@ hash_inner_and_outer(Query *root,
 		left = get_leftop(clause);
 		right = get_rightop(clause);
 
-		/* check if clause is usable with these sub-rels, find inner var */
+		/*
+		 * Check if clause is usable with these sub-rels, find inner side,
+		 * estimate dispersion of inner var for costing purposes.
+		 *
+		 * Since we tend to visit the same clauses over and over when
+		 * planning a large query, we cache the dispersion estimates in the
+		 * RestrictInfo node to avoid repeated lookups of statistics.
+		 */
 		if (intMember(left->varno, outerrelids) &&
 			intMember(right->varno, innerrelids))
-			inner = right;
+		{
+			/* righthand side is inner */
+			innerdispersion = restrictinfo->right_dispersion;
+			if (innerdispersion < 0)
+			{
+				/* not cached yet */
+				innerdispersion = estimate_dispersion(root, right);
+				restrictinfo->right_dispersion = innerdispersion;
+			}
+		}
 		else if (intMember(left->varno, innerrelids) &&
 				 intMember(right->varno, outerrelids))
-			inner = left;
+		{
+			/* lefthand side is inner */
+			innerdispersion = restrictinfo->left_dispersion;
+			if (innerdispersion < 0)
+			{
+				/* not cached yet */
+				innerdispersion = estimate_dispersion(root, left);
+				restrictinfo->left_dispersion = innerdispersion;
+			}
+		}
 		else
 			continue;			/* no good for these input relations */
 
 		/* always a one-element list of hash clauses */
 		hashclauses = makeList1(restrictinfo);
 
-		/* estimate dispersion of inner var for costing purposes */
-		innerdispersion = estimate_dispersion(root, inner);
-
 		/*
 		 * We consider both the cheapest-total-cost and
 		 * cheapest-startup-cost outer paths.  There's no need to consider
-		 * any but the cheapest- total-cost inner path, however.
+		 * any but the cheapest-total-cost inner path, however.
 		 */
 		add_path(joinrel, (Path *)
 				 create_hashjoin_path(joinrel,

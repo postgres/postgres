@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: paths.h,v 1.48 2000/09/29 18:21:40 tgl Exp $
+ * $Id: paths.h,v 1.49 2000/12/14 22:30:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,9 +34,7 @@ extern RelOptInfo *make_fromexpr_rel(Query *root, FromExpr *from);
  * indxpath.c
  *	  routines to generate index paths
  */
-extern void create_index_paths(Query *root, RelOptInfo *rel, List *indices,
-				   List *restrictinfo_list,
-				   List *joininfo_list);
+extern void create_index_paths(Query *root, RelOptInfo *rel, List *indices);
 extern Oid indexable_operator(Expr *clause, Oid opclass, Oid relam,
 				   bool indexkey_on_left);
 extern List *extract_or_indexqual_conditions(RelOptInfo *rel,
@@ -97,6 +95,9 @@ extern void generate_implied_equalities(Query *root);
 extern List *canonicalize_pathkeys(Query *root, List *pathkeys);
 extern PathKeysComparison compare_pathkeys(List *keys1, List *keys2);
 extern bool pathkeys_contained_in(List *keys1, List *keys2);
+extern PathKeysComparison compare_noncanonical_pathkeys(List *keys1,
+														List *keys2);
+extern bool noncanonical_pathkeys_contained_in(List *keys1, List *keys2);
 extern Path *get_cheapest_path_for_pathkeys(List *paths, List *pathkeys,
 							   CostSelector cost_criterion);
 extern Path *get_cheapest_fractional_path_for_pathkeys(List *paths,
@@ -105,15 +106,23 @@ extern Path *get_cheapest_fractional_path_for_pathkeys(List *paths,
 extern List *build_index_pathkeys(Query *root, RelOptInfo *rel,
 					 IndexOptInfo *index,
 					 ScanDirection scandir);
-extern List *build_join_pathkeys(List *outer_pathkeys,
-					List *join_rel_tlist,
-					List *equi_key_list);
+extern List *build_join_pathkeys(Query *root,
+								 RelOptInfo *joinrel,
+								 List *outer_pathkeys);
 extern List *make_pathkeys_for_sortclauses(List *sortclauses,
 							  List *tlist);
-extern List *find_mergeclauses_for_pathkeys(List *pathkeys,
-							   List *restrictinfos);
+extern List *find_mergeclauses_for_pathkeys(Query *root,
+											List *pathkeys,
+											List *restrictinfos);
 extern List *make_pathkeys_for_mergeclauses(Query *root,
 											List *mergeclauses,
 											RelOptInfo *rel);
+extern int	pathkeys_useful_for_merging(Query *root,
+										RelOptInfo *rel,
+										List *pathkeys);
+extern int	pathkeys_useful_for_ordering(Query *root, List *pathkeys);
+extern List *truncate_useless_pathkeys(Query *root,
+									   RelOptInfo *rel,
+									   List *pathkeys);
 
 #endif	 /* PATHS_H */

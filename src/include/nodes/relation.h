@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relation.h,v 1.51 2000/12/12 23:33:32 tgl Exp $
+ * $Id: relation.h,v 1.52 2000/12/14 22:30:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -504,8 +504,16 @@ typedef struct RestrictInfo
 	Oid			left_sortop;	/* leftside sortop needed for mergejoin */
 	Oid			right_sortop;	/* rightside sortop needed for mergejoin */
 
+	/* cache space for mergeclause processing; NIL if not yet set */
+	List	   *left_pathkey;	/* canonical pathkey for left side */
+	List	   *right_pathkey;	/* canonical pathkey for right side */
+
 	/* valid if clause is hashjoinable, else InvalidOid: */
 	Oid			hashjoinoperator;		/* copy of clause operator */
+
+	/* cache space for hashclause processing; -1 if not yet set */
+	Selectivity	left_dispersion;	/* dispersion of left side */
+	Selectivity	right_dispersion;	/* dispersion of right side */
 } RestrictInfo;
 
 /*

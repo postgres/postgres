@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.99 2000/11/25 20:33:51 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.100 2000/12/14 22:30:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,11 +87,6 @@ static void indexable_joinclauses(RelOptInfo *rel, IndexOptInfo *index,
 					  List **clausegroups, List **outerrelids);
 static List *index_innerjoin(Query *root, RelOptInfo *rel, IndexOptInfo *index,
 				List *clausegroup_list, List *outerrelids_list);
-static bool useful_for_mergejoin(RelOptInfo *rel, IndexOptInfo *index,
-					 List *joininfo_list);
-static bool useful_for_ordering(Query *root, RelOptInfo *rel,
-					IndexOptInfo *index,
-					ScanDirection scandir);
 static bool match_index_to_operand(int indexkey, Var *operand,
 					   RelOptInfo *rel, IndexOptInfo *index);
 static bool function_index_operand(Expr *funcOpnd, RelOptInfo *rel,
@@ -125,31 +120,31 @@ static Const *string_to_const(const char *str, Oid datatype);
  * attributes are available and fixed during any one scan of the indexpath.
  *
  * An IndexPath is generated and submitted to add_path() for each index
- * this routine deems potentially interesting for the current query
- * (at most one IndexPath per index on the given relation).  An innerjoin
- * path is also generated for each interesting combination of outer join
- * relations.  The innerjoin paths are *not* passed to add_path(), but are
- * appended to the "innerjoin" list of the relation for later consideration
- * in nested-loop joins.
+ * this routine deems potentially interesting for the current query.
+ * An innerjoin path is also generated for each interesting combination of
+ * outer join relations.  The innerjoin paths are *not* passed to add_path(),
+ * but are appended to the "innerjoin" list of the relation for later
+ * consideration in nested-loop joins.
  *
  * 'rel' is the relation for which we want to generate index paths
  * 'indices' is a list of available indexes for 'rel'
- * 'restrictinfo_list' is a list of restrictinfo nodes for 'rel'
- * 'joininfo_list' is a list of joininfo nodes for 'rel'
  */
 void
 create_index_paths(Query *root,
 				   RelOptInfo *rel,
-				   List *indices,
-				   List *restrictinfo_list,
-				   List *joininfo_list)
+				   List *indices)
 {
+	List	   *restrictinfo_list = rel->baserestrictinfo;
+	List	   *joininfo_list = rel->joininfo;
 	List	   *ilist;
 
 	foreach(ilist, indices)
 	{
 		IndexOptInfo *index = (IndexOptInfo *) lfirst(ilist);
 		List	   *restrictclauses;
+		List	   *index_pathkeys;
+		List	   *useful_pathkeys;
+		bool		index_is_ordered;
 		List	   *joinclausegroups;
 		List	   *joinouterrelids;
 
@@ -179,9 +174,7 @@ create_index_paths(Query *root,
 		match_index_orclauses(rel, index, restrictinfo_list);
 
 		/*
-		 * 2. If the keys of this index match any of the available
-		 * non-'or' restriction clauses, then create a path using those
-		 * clauses as indexquals.
+		 * 2. Match the index against non-'or' restriction clauses.
 		 */
 		restrictclauses = group_clauses_by_indexkey(rel,
 													index,
@@ -189,43 +182,50 @@ create_index_paths(Query *root,
 													index->classlist,
 													restrictinfo_list);
 
-		if (restrictclauses != NIL)
-			add_path(rel, (Path *) create_index_path(root, rel, index,
-													 restrictclauses,
-											   NoMovementScanDirection));
+		/*
+		 * 3. Compute pathkeys describing index's ordering, if any,
+		 * then see how many of them are actually useful for this query.
+		 */
+		index_pathkeys = build_index_pathkeys(root, rel, index,
+											  ForwardScanDirection);
+		index_is_ordered = (index_pathkeys != NIL);
+		useful_pathkeys = truncate_useless_pathkeys(root, rel,
+													index_pathkeys);
 
 		/*
-		 * 3. If this index can be used for a mergejoin, then create an
-		 * index path for it even if there were no restriction clauses.
-		 * (If there were, there is no need to make another index path.)
-		 * This will allow the index to be considered as a base for a
-		 * mergejoin in later processing.  Similarly, if the index matches
-		 * the ordering that is needed for the overall query result, make
-		 * an index path for it even if there is no other reason to do so.
+		 * 4. Generate an indexscan path if there are relevant restriction
+		 * clauses OR the index ordering is potentially useful for later
+		 * merging or final output ordering.
 		 */
-		if (restrictclauses == NIL)
-		{
-			if (useful_for_mergejoin(rel, index, joininfo_list) ||
-			 useful_for_ordering(root, rel, index, ForwardScanDirection))
-				add_path(rel, (Path *)
-						 create_index_path(root, rel, index,
-										   restrictclauses,
-										   ForwardScanDirection));
-		}
-
-		/*
-		 * Currently, backwards scan is never considered except for the
-		 * case of matching a query result ordering.  Possibly should
-		 * consider it in other places?
-		 */
-		if (useful_for_ordering(root, rel, index, BackwardScanDirection))
+		if (restrictclauses != NIL || useful_pathkeys != NIL)
 			add_path(rel, (Path *)
 					 create_index_path(root, rel, index,
 									   restrictclauses,
-									   BackwardScanDirection));
+									   useful_pathkeys,
+									   index_is_ordered ?
+									   ForwardScanDirection :
+									   NoMovementScanDirection));
 
 		/*
-		 * 4. Create an innerjoin index path for each combination of other
+		 * 5. If the index is ordered, a backwards scan might be interesting.
+		 * Currently this is only possible for a DESC query result ordering.
+		 */
+		if (index_is_ordered)
+		{
+			index_pathkeys = build_index_pathkeys(root, rel, index,
+												  BackwardScanDirection);
+			useful_pathkeys = truncate_useless_pathkeys(root, rel,
+														index_pathkeys);
+			if (useful_pathkeys != NIL)
+				add_path(rel, (Path *)
+						 create_index_path(root, rel, index,
+										   restrictclauses,
+										   useful_pathkeys,
+										   BackwardScanDirection));
+		}
+
+		/*
+		 * 6. Create an innerjoin index path for each combination of other
 		 * rels used in available join clauses.  These paths will be
 		 * considered as the inner side of nestloop joins against those
 		 * sets of other rels.	indexable_joinclauses() finds sets of
@@ -902,88 +902,6 @@ indexable_operator(Expr *clause, Oid opclass, Oid relam,
 	}
 
 	return InvalidOid;
-}
-
-/*
- * useful_for_mergejoin
- *	  Determine whether the given index can support a mergejoin based
- *	  on any available join clause.
- *
- *	  We look to see whether the first indexkey of the index matches the
- *	  left or right sides of any of the mergejoinable clauses and provides
- *	  the ordering needed for that side.  If so, the index is useful.
- *	  Matching a second or later indexkey is not useful unless there is
- *	  also a mergeclause for the first indexkey, so we need not consider
- *	  secondary indexkeys at this stage.
- *
- * 'rel' is the relation for which 'index' is defined
- * 'joininfo_list' is the list of JoinInfo nodes for 'rel'
- */
-static bool
-useful_for_mergejoin(RelOptInfo *rel,
-					 IndexOptInfo *index,
-					 List *joininfo_list)
-{
-	int		   *indexkeys = index->indexkeys;
-	Oid		   *ordering = index->ordering;
-	List	   *i;
-
-	if (!indexkeys || indexkeys[0] == 0 ||
-		!ordering || ordering[0] == InvalidOid)
-		return false;			/* unordered index is not useful */
-
-	foreach(i, joininfo_list)
-	{
-		JoinInfo   *joininfo = (JoinInfo *) lfirst(i);
-		List	   *j;
-
-		foreach(j, joininfo->jinfo_restrictinfo)
-		{
-			RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(j);
-
-			if (restrictinfo->mergejoinoperator)
-			{
-				if (restrictinfo->left_sortop == ordering[0] &&
-					match_index_to_operand(indexkeys[0],
-										get_leftop(restrictinfo->clause),
-										   rel, index))
-					return true;
-				if (restrictinfo->right_sortop == ordering[0] &&
-					match_index_to_operand(indexkeys[0],
-									   get_rightop(restrictinfo->clause),
-										   rel, index))
-					return true;
-			}
-		}
-	}
-	return false;
-}
-
-/*
- * useful_for_ordering
- *	  Determine whether the given index can produce an ordering matching
- *	  the order that is wanted for the query result.
- *
- * 'rel' is the relation for which 'index' is defined
- * 'scandir' is the contemplated scan direction
- */
-static bool
-useful_for_ordering(Query *root,
-					RelOptInfo *rel,
-					IndexOptInfo *index,
-					ScanDirection scandir)
-{
-	List	   *index_pathkeys;
-
-	if (root->query_pathkeys == NIL)
-		return false;			/* no special ordering requested */
-
-	index_pathkeys = build_index_pathkeys(root, rel, index, scandir);
-
-	if (index_pathkeys == NIL)
-		return false;			/* unordered index */
-
-	return pathkeys_contained_in(root->query_pathkeys, index_pathkeys);
 }
 
 /****************************************************************************

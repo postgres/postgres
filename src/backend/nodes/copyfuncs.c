@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.134 2000/12/12 23:33:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.135 2000/12/14 22:30:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1424,7 +1424,12 @@ _copyRestrictInfo(RestrictInfo *from)
 	newnode->mergejoinoperator = from->mergejoinoperator;
 	newnode->left_sortop = from->left_sortop;
 	newnode->right_sortop = from->right_sortop;
+	/* Do not copy pathkeys, since they'd not be canonical in a copied query */
+	newnode->left_pathkey = NIL;
+	newnode->right_pathkey = NIL;
 	newnode->hashjoinoperator = from->hashjoinoperator;
+	newnode->left_dispersion = from->left_dispersion;
+	newnode->right_dispersion = from->right_dispersion;
 
 	return newnode;
 }

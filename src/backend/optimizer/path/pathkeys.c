@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.27 2000/11/12 00:36:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.28 2000/12/14 22:30:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -195,9 +195,8 @@ generate_implied_equalities(Query *root)
  *	  Given a PathKeyItem, find the equi_key_list subset it is a member of,
  *	  if any.  If so, return a pointer to that sublist, which is the
  *	  canonical representation (for this query) of that PathKeyItem's
- *	  equivalence set.	If it is not found, return a single-element list
- *	  containing the PathKeyItem (when the item has no equivalence peers,
- *	  we just allow it to be a standalone list).
+ *	  equivalence set.	If it is not found, add a singleton "equivalence set"
+ *	  to the equi_key_list and return that --- see compare_pathkeys.
  *
  * Note that this function must not be used until after we have completed
  * scanning the WHERE clause for equijoin operators.
@@ -206,6 +205,7 @@ static List *
 make_canonical_pathkey(Query *root, PathKeyItem *item)
 {
 	List	   *cursetlink;
+	List	   *newset;
 
 	foreach(cursetlink, root->equi_key_list)
 	{
@@ -214,7 +214,9 @@ make_canonical_pathkey(Query *root, PathKeyItem *item)
 		if (member(item, curset))
 			return curset;
 	}
-	return lcons(item, NIL);
+	newset = makeList1(item);
+	root->equi_key_list = lcons(newset, root->equi_key_list);
+	return newset;
 }
 
 /*
@@ -234,6 +236,7 @@ canonicalize_pathkeys(Query *root, List *pathkeys)
 	{
 		List	   *pathkey = (List *) lfirst(i);
 		PathKeyItem *item;
+		List	   *cpathkey;
 
 		/*
 		 * It's sufficient to look at the first entry in the sublist; if
@@ -242,8 +245,15 @@ canonicalize_pathkeys(Query *root, List *pathkeys)
 		 */
 		Assert(pathkey != NIL);
 		item = (PathKeyItem *) lfirst(pathkey);
-		new_pathkeys = lappend(new_pathkeys,
-							   make_canonical_pathkey(root, item));
+		cpathkey = make_canonical_pathkey(root, item);
+		/*
+		 * Eliminate redundant ordering requests --- ORDER BY A,A
+		 * is the same as ORDER BY A.  We want to check this only
+		 * after we have canonicalized the keys, so that equivalent-key
+		 * knowledge is used when deciding if an item is redundant.
+		 */
+		if (!ptrMember(cpathkey, new_pathkeys))
+			new_pathkeys = lappend(new_pathkeys, cpathkey);
 	}
 	return new_pathkeys;
 }
@@ -257,19 +267,9 @@ canonicalize_pathkeys(Query *root, List *pathkeys)
  *	  Compare two pathkeys to see if they are equivalent, and if not whether
  *	  one is "better" than the other.
  *
- *	  A pathkey can be considered better than another if it is a superset:
- *	  it contains all the keys of the other plus more.	For example, either
- *	  ((A) (B)) or ((A B)) is better than ((A)).
- *
- *	  Because we actually only expect to see canonicalized pathkey sublists,
- *	  we don't have to do the full two-way-subset-inclusion test on each
- *	  pair of sublists that is implied by the above statement.	Instead we
- *	  just do an equal().  In the normal case where multi-element sublists
- *	  are pointers into the root's equi_key_list, equal() will be very fast:
- *	  it will recognize pointer equality when the sublists are the same,
- *	  and will fail at the first sublist element when they are not.
- *
- * Yes, this gets called enough to be worth coding it this tensely.
+ *	  This function may only be applied to canonicalized pathkey lists.
+ *	  In the canonical representation, sublists can be checked for equality
+ *	  by simple pointer comparison.
  */
 PathKeysComparison
 compare_pathkeys(List *keys1, List *keys2)
@@ -285,10 +285,70 @@ compare_pathkeys(List *keys1, List *keys2)
 		List	   *subkey2 = lfirst(key2);
 
 		/*
-		 * We will never have two subkeys where one is a subset of the
-		 * other, because of the canonicalization explained above.	Either
-		 * they are equal or they ain't.
+		 * XXX would like to check that we've been given canonicalized input,
+		 * but query root not accessible here...
 		 */
+#ifdef NOT_USED
+		Assert(ptrMember(subkey1, root->equi_key_list));
+		Assert(ptrMember(subkey2, root->equi_key_list));
+#endif
+
+		/*
+		 * We will never have two subkeys where one is a subset of the
+		 * other, because of the canonicalization process.  Either they
+		 * are equal or they ain't.  Furthermore, we only need pointer
+		 * comparison to detect equality.
+		 */
+		if (subkey1 != subkey2)
+			return PATHKEYS_DIFFERENT;	/* no need to keep looking */
+	}
+
+	/*
+	 * If we reached the end of only one list, the other is longer and
+	 * therefore not a subset.	(We assume the additional sublist(s) of
+	 * the other list are not NIL --- no pathkey list should ever have a
+	 * NIL sublist.)
+	 */
+	if (key1 == NIL && key2 == NIL)
+		return PATHKEYS_EQUAL;
+	if (key1 != NIL)
+		return PATHKEYS_BETTER1;/* key1 is longer */
+	return PATHKEYS_BETTER2;	/* key2 is longer */
+}
+
+/*
+ * compare_noncanonical_pathkeys
+ *	  Compare two pathkeys to see if they are equivalent, and if not whether
+ *	  one is "better" than the other.  This is used when we must compare
+ *	  non-canonicalized pathkeys.
+ *
+ *	  A pathkey can be considered better than another if it is a superset:
+ *	  it contains all the keys of the other plus more.	For example, either
+ *	  ((A) (B)) or ((A B)) is better than ((A)).
+ *
+ *	  Currently, the only user of this routine is grouping_planner(),
+ *	  and it will only pass single-element sublists (from
+ *	  make_pathkeys_for_sortclauses).  Therefore we don't have to do the
+ *	  full two-way-subset-inclusion test on each pair of sublists that is
+ *	  implied by the above statement.  Instead we just verify they are
+ *	  singleton lists and then do an equal().  This could be improved if
+ *	  necessary.
+ */
+PathKeysComparison
+compare_noncanonical_pathkeys(List *keys1, List *keys2)
+{
+	List	   *key1,
+			   *key2;
+
+	for (key1 = keys1, key2 = keys2;
+		 key1 != NIL && key2 != NIL;
+		 key1 = lnext(key1), key2 = lnext(key2))
+	{
+		List	   *subkey1 = lfirst(key1);
+		List	   *subkey2 = lfirst(key2);
+
+		Assert(length(subkey1) == 1);
+		Assert(length(subkey2) == 1);
 		if (!equal(subkey1, subkey2))
 			return PATHKEYS_DIFFERENT;	/* no need to keep looking */
 	}
@@ -315,6 +375,24 @@ bool
 pathkeys_contained_in(List *keys1, List *keys2)
 {
 	switch (compare_pathkeys(keys1, keys2))
+	{
+			case PATHKEYS_EQUAL:
+			case PATHKEYS_BETTER2:
+			return true;
+		default:
+			break;
+	}
+	return false;
+}
+
+/*
+ * noncanonical_pathkeys_contained_in
+ *	  The same, when we don't have canonical pathkeys.
+ */
+bool
+noncanonical_pathkeys_contained_in(List *keys1, List *keys2)
+{
+	switch (compare_noncanonical_pathkeys(keys1, keys2))
 	{
 			case PATHKEYS_EQUAL:
 			case PATHKEYS_BETTER2:
@@ -464,6 +542,7 @@ build_index_pathkeys(Query *root,
 		while (*indexkeys != 0 && *ordering != InvalidOid)
 		{
 			Var		   *relvar = find_indexkey_var(root, rel, *indexkeys);
+			List	   *cpathkey;
 
 			sortop = *ordering;
 			if (ScanDirectionIsBackward(scandir))
@@ -475,8 +554,13 @@ build_index_pathkeys(Query *root,
 
 			/* OK, make a sublist for this sort key */
 			item = makePathKeyItem((Node *) relvar, sortop);
-			retval = lappend(retval, make_canonical_pathkey(root, item));
-
+			cpathkey = make_canonical_pathkey(root, item);
+			/*
+			 * Eliminate redundant ordering info; could happen if query
+			 * is such that index keys are equijoined...
+			 */
+			if (!ptrMember(cpathkey, retval))
+				retval = lappend(retval, cpathkey);
 			indexkeys++;
 			ordering++;
 		}
@@ -526,21 +610,20 @@ find_indexkey_var(Query *root, RelOptInfo *rel, AttrNumber varattno)
  *	  outer path (since the join will retain the ordering of the outer path)
  *	  plus any vars of the inner path that are equijoined to the outer vars.
  *
- *	  Per the discussion at the top of this file, equijoined inner vars
+ *	  Per the discussion in backend/optimizer/README, equijoined inner vars
  *	  can be considered path keys of the result, just the same as the outer
  *	  vars they were joined with; furthermore, it doesn't matter what kind
  *	  of join algorithm is actually used.
  *
- * 'outer_pathkeys' is the list of the outer path's path keys
- * 'join_rel_tlist' is the target list of the join relation
- * 'equi_key_list' is the query's list of pathkeyitem equivalence sets
+ * 'joinrel' is the join relation that paths are being formed for
+ * 'outer_pathkeys' is the list of the current outer path's path keys
  *
  * Returns the list of new path keys.
  */
 List *
-build_join_pathkeys(List *outer_pathkeys,
-					List *join_rel_tlist,
-					List *equi_key_list)
+build_join_pathkeys(Query *root,
+					RelOptInfo *joinrel,
+					List *outer_pathkeys)
 {
 
 	/*
@@ -549,9 +632,11 @@ build_join_pathkeys(List *outer_pathkeys,
 	 * a darn thing here!  The inner-rel vars we used to need to add are
 	 * *already* part of the outer pathkey!
 	 *
-	 * I'd remove the routine entirely, but maybe someday we'll need it...
+	 * We do, however, need to truncate the pathkeys list, since it may
+	 * contain pathkeys that were useful for forming this joinrel but are
+	 * uninteresting to higher levels.
 	 */
-	return outer_pathkeys;
+	return truncate_useless_pathkeys(root, joinrel, outer_pathkeys);
 }
 
 /****************************************************************************
@@ -603,6 +688,39 @@ make_pathkeys_for_sortclauses(List *sortclauses,
  ****************************************************************************/
 
 /*
+ * cache_mergeclause_pathkeys
+ *		Make the cached pathkeys valid in a mergeclause restrictinfo.
+ *
+ * RestrictInfo contains fields in which we may cache the result
+ * of looking up the canonical pathkeys for the left and right sides
+ * of the mergeclause.  (Note that in normal cases they will be the
+ * same, but not if the mergeclause appears above an OUTER JOIN.)
+ * This is a worthwhile savings because these routines will be invoked
+ * many times when dealing with a many-relation query.
+ */
+static void
+cache_mergeclause_pathkeys(Query *root, RestrictInfo *restrictinfo)
+{
+	Node	   *key;
+	PathKeyItem *item;
+
+	Assert(restrictinfo->mergejoinoperator != InvalidOid);
+
+	if (restrictinfo->left_pathkey == NIL)
+	{
+		key = (Node *) get_leftop(restrictinfo->clause);
+		item = makePathKeyItem(key, restrictinfo->left_sortop);
+		restrictinfo->left_pathkey = make_canonical_pathkey(root, item);
+	}
+	if (restrictinfo->right_pathkey == NIL)
+	{
+		key = (Node *) get_rightop(restrictinfo->clause);
+		item = makePathKeyItem(key, restrictinfo->right_sortop);
+		restrictinfo->right_pathkey = make_canonical_pathkey(root, item);
+	}
+}
+
+/*
  * find_mergeclauses_for_pathkeys
  *	  This routine attempts to find a set of mergeclauses that can be
  *	  used with a specified ordering for one of the input relations.
@@ -618,11 +736,13 @@ make_pathkeys_for_sortclauses(List *sortclauses,
  *
  * XXX Ideally we ought to be considering context, ie what path orderings
  * are available on the other side of the join, rather than just making
- * an arbitrary choice among the mergeclause orders that will work for
- * this side of the join.
+ * an arbitrary choice among the mergeclauses that will work for this side
+ * of the join.
  */
 List *
-find_mergeclauses_for_pathkeys(List *pathkeys, List *restrictinfos)
+find_mergeclauses_for_pathkeys(Query *root,
+							   List *pathkeys,
+							   List *restrictinfos)
 {
 	List	   *mergeclauses = NIL;
 	List	   *i;
@@ -634,38 +754,28 @@ find_mergeclauses_for_pathkeys(List *pathkeys, List *restrictinfos)
 		List	   *j;
 
 		/*
-		 * We can match any of the keys in this pathkey sublist, since
-		 * they're all equivalent.  And we can match against either left
-		 * or right side of any mergejoin clause we haven't used yet.  For
-		 * the moment we use a dumb "greedy" algorithm with no
-		 * backtracking.  Is it worth being any smarter to make a longer
-		 * list of usable mergeclauses?  Probably not.
+		 * We can match a pathkey against either left or right side of any
+		 * mergejoin clause we haven't used yet.  For the moment we use a
+		 * dumb "greedy" algorithm with no backtracking.  Is it worth being
+		 * any smarter to make a longer list of usable mergeclauses?
+		 * Probably not.
 		 */
-		foreach(j, pathkey)
+		foreach(j, restrictinfos)
 		{
-			PathKeyItem *keyitem = lfirst(j);
-			Node	   *key = keyitem->key;
-			Oid			keyop = keyitem->sortop;
-			List	   *k;
+			RestrictInfo *restrictinfo = lfirst(j);
 
-			foreach(k, restrictinfos)
+			cache_mergeclause_pathkeys(root, restrictinfo);
+			/*
+			 * We can compare canonical pathkey sublists by simple
+			 * pointer equality; see compare_pathkeys.
+			 */
+			if ((pathkey == restrictinfo->left_pathkey ||
+				 pathkey == restrictinfo->right_pathkey) &&
+				!ptrMember(restrictinfo, mergeclauses))
 			{
-				RestrictInfo *restrictinfo = lfirst(k);
-
-				Assert(restrictinfo->mergejoinoperator != InvalidOid);
-
-				if (((keyop == restrictinfo->left_sortop &&
-					  equal(key, get_leftop(restrictinfo->clause))) ||
-					 (keyop == restrictinfo->right_sortop &&
-					  equal(key, get_rightop(restrictinfo->clause)))) &&
-					!member(restrictinfo, mergeclauses))
-				{
-					matched_restrictinfo = restrictinfo;
-					break;
-				}
-			}
-			if (matched_restrictinfo)
+				matched_restrictinfo = restrictinfo;
 				break;
+			}
 		}
 
 		/*
@@ -715,47 +825,170 @@ make_pathkeys_for_mergeclauses(Query *root,
 	{
 		RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(i);
 		Node	   *key;
-		Oid			sortop;
-		PathKeyItem *item;
 		List	   *pathkey;
 
-		Assert(restrictinfo->mergejoinoperator != InvalidOid);
+		cache_mergeclause_pathkeys(root, restrictinfo);
 
-		/*
-		 * Which key and sortop is needed for this relation?
-		 */
 		key = (Node *) get_leftop(restrictinfo->clause);
-		sortop = restrictinfo->left_sortop;
-		if (!IsA(key, Var) ||
-			!intMember(((Var *) key)->varno, rel->relids))
+		if (IsA(key, Var) && intMember(((Var *) key)->varno, rel->relids))
+		{
+			/* Rel is left side of mergeclause */
+			pathkey = restrictinfo->left_pathkey;
+		}
+		else
 		{
 			key = (Node *) get_rightop(restrictinfo->clause);
-			sortop = restrictinfo->right_sortop;
-			if (!IsA(key, Var) ||
-				!intMember(((Var *) key)->varno, rel->relids))
+			if (IsA(key, Var) && intMember(((Var *) key)->varno, rel->relids))
+			{
+				/* Rel is right side of mergeclause */
+				pathkey = restrictinfo->right_pathkey;
+			}
+			else
+			{
 				elog(ERROR, "make_pathkeys_for_mergeclauses: can't identify which side of mergeclause to use");
+				pathkey = NIL;	/* keep compiler quiet */
+			}
 		}
 
 		/*
-		 * Find or create canonical pathkey sublist for this sort item.
+		 * When we are given multiple merge clauses, it's possible that some
+		 * clauses refer to the same vars as earlier clauses.  There's no
+		 * reason for us to specify sort keys like (A,B,A) when (A,B) will
+		 * do --- and adding redundant sort keys makes add_path think that
+		 * this sort order is different from ones that are really the same,
+		 * so don't do it.  Since we now have a canonicalized pathkey,
+		 * a simple ptrMember test is sufficient to detect redundant keys.
 		 */
-		item = makePathKeyItem(key, sortop);
-		pathkey = make_canonical_pathkey(root, item);
-
-		/*
-		 * Most of the time we will get back a canonical pathkey set
-		 * including both the mergeclause's left and right sides (the only
-		 * case where we don't is if the mergeclause appeared in an OUTER
-		 * JOIN, which causes us not to generate an equijoin set from it).
-		 * Therefore, most of the time the item we just made is not part
-		 * of the returned structure, and we can free it.  This check
-		 * saves a useful amount of storage in a big join tree.
-		 */
-		if (item != (PathKeyItem *) lfirst(pathkey))
-			pfree(item);
-
-		pathkeys = lappend(pathkeys, pathkey);
+		if (!ptrMember(pathkey, pathkeys))
+			pathkeys = lappend(pathkeys, pathkey);
 	}
 
 	return pathkeys;
+}
+
+/****************************************************************************
+ *		PATHKEY USEFULNESS CHECKS
+ *
+ * We only want to remember as many of the pathkeys of a path as have some
+ * potential use, either for subsequent mergejoins or for meeting the query's
+ * requested output ordering.  This ensures that add_path() won't consider
+ * a path to have a usefully different ordering unless it really is useful.
+ * These routines check for usefulness of given pathkeys.
+ ****************************************************************************/
+
+/*
+ * pathkeys_useful_for_merging
+ *		Count the number of pathkeys that may be useful for mergejoins
+ *		above the given relation (by looking at its joininfo lists).
+ *
+ * We consider a pathkey potentially useful if it corresponds to the merge
+ * ordering of either side of any joinclause for the rel.  This might be
+ * overoptimistic, since joinclauses that appear in different join lists
+ * might never be usable at the same time, but trying to be exact is likely
+ * to be more trouble than it's worth.
+ */
+int
+pathkeys_useful_for_merging(Query *root, RelOptInfo *rel, List *pathkeys)
+{
+	int			useful = 0;
+	List	   *i;
+
+	foreach(i, pathkeys)
+	{
+		List	   *pathkey = lfirst(i);
+		bool		matched = false;
+		List	   *j;
+
+		foreach(j, rel->joininfo)
+		{
+			JoinInfo   *joininfo = (JoinInfo *) lfirst(j);
+			List	   *k;
+
+			foreach(k, joininfo->jinfo_restrictinfo)
+			{
+				RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(k);
+
+				if (restrictinfo->mergejoinoperator == InvalidOid)
+					continue;
+				cache_mergeclause_pathkeys(root, restrictinfo);
+				/*
+				 * We can compare canonical pathkey sublists by simple
+				 * pointer equality; see compare_pathkeys.
+				 */
+				if (pathkey == restrictinfo->left_pathkey ||
+					pathkey == restrictinfo->right_pathkey)
+				{
+					matched = true;
+					break;
+				}
+			}
+
+			if (matched)
+				break;
+		}
+
+		/*
+		 * If we didn't find a mergeclause, we're done --- any additional
+		 * sort-key positions in the pathkeys are useless.	(But we can
+		 * still mergejoin if we found at least one mergeclause.)
+		 */
+		if (matched)
+			useful++;
+		else
+			break;
+	}
+
+	return useful;
+}
+
+/*
+ * pathkeys_useful_for_ordering
+ *		Count the number of pathkeys that are useful for meeting the
+ *		query's requested output ordering.
+ *
+ * Unlike merge pathkeys, this is an all-or-nothing affair: it does us
+ * no good to order by just the first key(s) of the requested ordering.
+ * So the result is always either 0 or length(root->query_pathkeys).
+ */
+int
+pathkeys_useful_for_ordering(Query *root, List *pathkeys)
+{
+	if (root->query_pathkeys == NIL)
+		return 0;				/* no special ordering requested */
+
+	if (pathkeys == NIL)
+		return 0;				/* unordered path */
+
+	if (pathkeys_contained_in(root->query_pathkeys, pathkeys))
+	{
+		/* It's useful ... or at least the first N keys are */
+		return length(root->query_pathkeys);
+	}
+
+	return 0;					/* path ordering not useful */
+}
+
+/*
+ * truncate_useless_pathkeys
+ *		Shorten the given pathkey list to just the useful pathkeys.
+ */
+List *
+truncate_useless_pathkeys(Query *root,
+						  RelOptInfo *rel,
+						  List *pathkeys)
+{
+	int			nuseful;
+	int			nuseful2;
+
+	nuseful = pathkeys_useful_for_merging(root, rel, pathkeys);
+	nuseful2 = pathkeys_useful_for_ordering(root, pathkeys);
+	if (nuseful2 > nuseful)
+		nuseful = nuseful2;
+	/* Note: not safe to modify input list destructively, but we can avoid
+	 * copying the list if we're not actually going to change it
+	 */
+	if (nuseful == length(pathkeys))
+		return pathkeys;
+	else
+		return ltruncate(nuseful, listCopy(pathkeys));
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.97 2000/12/06 23:55:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.98 2000/12/14 22:30:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -931,13 +931,12 @@ grouping_planner(Query *parse, double tuple_fraction)
 			 * If both GROUP BY and ORDER BY are specified, we will need
 			 * two levels of sort --- and, therefore, certainly need to
 			 * read all the input tuples --- unless ORDER BY is a subset
-			 * of GROUP BY.  (Although we are comparing non-canonicalized
-			 * pathkeys here, it should be OK since they will both contain
-			 * only single-element sublists at this point.	See
-			 * pathkeys.c.)
+			 * of GROUP BY.  (We have not yet canonicalized the pathkeys,
+			 * so must use the slower noncanonical comparison method.)
 			 */
 			if (parse->groupClause && parse->sortClause &&
-				!pathkeys_contained_in(sort_pathkeys, group_pathkeys))
+				!noncanonical_pathkeys_contained_in(sort_pathkeys,
+													group_pathkeys))
 				tuple_fraction = 0.0;
 		}
 		else if (parse->hasAggs)

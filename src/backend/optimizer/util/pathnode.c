@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.68 2000/11/12 00:36:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.69 2000/12/14 22:30:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -161,11 +161,17 @@ set_cheapest(RelOptInfo *parent_rel)
  *	  pathlist any old paths that are dominated by new_path --- that is,
  *	  new_path is both cheaper and at least as well ordered.
  *
+ *	  The pathlist is kept sorted by TOTAL_COST metric, with cheaper paths
+ *	  at the front.  No code depends on that for correctness; it's simply
+ *	  a speed hack within this routine.  Doing it that way makes it more
+ *	  likely that we will reject an inferior path after a few comparisons,
+ *	  rather than many comparisons.
+ *
  *	  NOTE: discarded Path objects are immediately pfree'd to reduce planner
  *	  memory consumption.  We dare not try to free the substructure of a Path,
  *	  since much of it may be shared with other Paths or the query tree itself;
  *	  but just recycling discarded Path nodes is a very useful savings in
- *	  a large join tree.
+ *	  a large join tree.  We can recycle the List nodes of pathlist, too.
  *
  * 'parent_rel' is the relation entry to which the path corresponds.
  * 'new_path' is a potential path for parent_rel.
@@ -177,6 +183,7 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 {
 	bool		accept_new = true;		/* unless we find a superior old
 										 * path */
+	List	   *insert_after = NIL;		/* where to insert new item */
 	List	   *p1_prev = NIL;
 	List	   *p1;
 
@@ -185,7 +192,8 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 	 * possible for more than one old path to be tossed out because
 	 * new_path dominates it.
 	 */
-	foreach(p1, parent_rel->pathlist)
+	p1 = parent_rel->pathlist;			/* cannot use foreach here */
+	while (p1 != NIL)
 	{
 		Path	   *old_path = (Path *) lfirst(p1);
 		bool		remove_old = false; /* unless new proves superior */
@@ -197,13 +205,14 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 		 * If the two paths compare differently for startup and total
 		 * cost, then we want to keep both, and we can skip the (much
 		 * slower) comparison of pathkeys.	If they compare the same,
-		 * proceed with the pathkeys comparison.  Note this test relies on
-		 * the fact that compare_path_costs will only return 0 if both
+		 * proceed with the pathkeys comparison.  Note: this test relies
+		 * on the fact that compare_path_costs will only return 0 if both
 		 * costs are equal (and, therefore, there's no need to call it
 		 * twice in that case).
 		 */
 		if (costcmp == 0 ||
-		 costcmp == compare_path_costs(new_path, old_path, STARTUP_COST))
+			costcmp == compare_path_costs(new_path, old_path,
+										  STARTUP_COST))
 		{
 			switch (compare_pathkeys(new_path->pathkeys, old_path->pathkeys))
 			{
@@ -234,14 +243,24 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 		 */
 		if (remove_old && parent_rel->pruneable)
 		{
+			List   *p1_next = lnext(p1);
+
 			if (p1_prev)
-				lnext(p1_prev) = lnext(p1);
+				lnext(p1_prev) = p1_next;
 			else
-				parent_rel->pathlist = lnext(p1);
+				parent_rel->pathlist = p1_next;
 			pfree(old_path);
+			pfree(p1);			/* this is why we can't use foreach */
+			p1 = p1_next;
 		}
 		else
+		{
+			/* new belongs after this old path if it has cost >= old's */
+			if (costcmp >= 0)
+				insert_after = p1;
 			p1_prev = p1;
+			p1 = lnext(p1);
+		}
 
 		/*
 		 * If we found an old path that dominates new_path, we can quit
@@ -254,12 +273,15 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 
 	if (accept_new)
 	{
-		/* Accept the path */
-		parent_rel->pathlist = lcons(new_path, parent_rel->pathlist);
+		/* Accept the new path: insert it at proper place in pathlist */
+		if (insert_after)
+			lnext(insert_after) = lcons(new_path, lnext(insert_after));
+		else
+			parent_rel->pathlist = lcons(new_path, parent_rel->pathlist);
 	}
 	else
 	{
-		/* Reject and recycle the path */
+		/* Reject and recycle the new path */
 		pfree(new_path);
 	}
 }
@@ -296,9 +318,9 @@ create_seqscan_path(RelOptInfo *rel)
  * 'index' is an index on 'rel'
  * 'restriction_clauses' is a list of RestrictInfo nodes
  *			to be used as index qual conditions in the scan.
+ * 'pathkeys' describes the ordering of the path.
  * 'indexscandir' is ForwardScanDirection or BackwardScanDirection
- *			if the caller expects a specific scan direction,
- *			or NoMovementScanDirection if the caller is willing to accept
+ *			for an ordered index, or NoMovementScanDirection for
  *			an unordered index.
  *
  * Returns the new path node.
@@ -308,6 +330,7 @@ create_index_path(Query *root,
 				  RelOptInfo *rel,
 				  IndexOptInfo *index,
 				  List *restriction_clauses,
+				  List *pathkeys,
 				  ScanDirection indexscandir)
 {
 	IndexPath  *pathnode = makeNode(IndexPath);
@@ -315,25 +338,7 @@ create_index_path(Query *root,
 
 	pathnode->path.pathtype = T_IndexScan;
 	pathnode->path.parent = rel;
-
-	pathnode->path.pathkeys = build_index_pathkeys(root, rel, index,
-												   indexscandir);
-	if (pathnode->path.pathkeys == NIL)
-	{
-		/* No ordering available from index, is that OK? */
-		if (!ScanDirectionIsNoMovement(indexscandir))
-			elog(ERROR, "create_index_path: failed to create ordered index scan");
-	}
-	else
-	{
-
-		/*
-		 * The index is ordered, and build_index_pathkeys defaulted to
-		 * forward scan, so make sure we mark the pathnode properly.
-		 */
-		if (ScanDirectionIsNoMovement(indexscandir))
-			indexscandir = ForwardScanDirection;
-	}
+	pathnode->path.pathkeys = pathkeys;
 
 	indexquals = get_actual_clauses(restriction_clauses);
 	/* expand special operators to indexquals the executor can handle */
