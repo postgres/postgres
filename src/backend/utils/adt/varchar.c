@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.81 2001/07/15 11:07:37 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.82 2001/09/11 05:18:59 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,10 +75,14 @@ bpcharin(PG_FUNCTION_ARGS)
 	int			i;
 #ifdef MULTIBYTE
 	int	charlen;	/* number of charcters in the input string */
+	char	*ermsg;
 #endif
 
 	len = strlen(s);
 #ifdef MULTIBYTE
+	if ((ermsg = pg_verifymbstr(s, len)))
+	    elog(ERROR,"%s",ermsg);
+
 	charlen = pg_mbstrlen(s);
 #endif
 
@@ -405,8 +409,15 @@ varcharin(PG_FUNCTION_ARGS)
 	int32		atttypmod = PG_GETARG_INT32(2);
 	VarChar    *result;
 	size_t		len, maxlen;
+#ifdef MULTIBYTE
+	char	*ermsg;
+#endif
 
 	len = strlen(s);
+#ifdef MULTIBYTE
+	if ((ermsg = pg_verifymbstr(s, len)))
+	    elog(ERROR,"%s",ermsg);
+#endif
 	maxlen = atttypmod - VARHDRSZ;
 
 	if (atttypmod >= (int32) VARHDRSZ && len > maxlen)
