@@ -38,7 +38,7 @@ endif
 ifeq ($(PORTNAME), solaris_sparc)
   install-shlib-dep := install-shlib
   shlib := libecpg.so.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION).$(SO_PATCHLEVEL)
-  LDFLAGS_SL = -G -z text
+  LDFLAGS_SL = -G
   CFLAGS += $(CFLAGS_SL)
 endif
 

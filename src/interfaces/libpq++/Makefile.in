@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile.in,v 1.6 1998/10/12 01:10:07 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile.in,v 1.7 1998/10/12 01:23:27 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -60,7 +60,7 @@ endif
 ifeq ($(PORTNAME), solaris_sparc)
   INSTALL-SHLIB-DEP := install-shlib
   SHLIB := libpq++.so.1
-  LDFLAGS_SL = -G -z text -shared -soname $(SHLIB)
+  LDFLAGS_SL = -G -shared -soname $(SHLIB)
   CFLAGS += $(CFLAGS_SL)
 endif
 

@@ -4,7 +4,7 @@
 #    Makefile for the plpgsql shared object
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/Makefile.in,v 1.7 1998/10/12 01:10:09 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/Makefile.in,v 1.8 1998/10/12 01:23:29 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -55,7 +55,7 @@ ifeq ($(PORTNAME), bsdi)
 endif
 
 ifeq ($(PORTNAME), solaris_sparc)
-  LDFLAGS_SL		:= -G -z text
+  LDFLAGS_SL		:= -G
   CFLAGS		+= $(CFLAGS_SL)
 endif
 
