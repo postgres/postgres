@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.132 2000/04/12 17:16:29 momjian Exp $
+ * $Id: pg_proc.h,v 1.133 2000/04/16 04:41:03 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2435,6 +2435,32 @@ DATA(insert OID = 1778 ( to_timestamp		PGUID 11 f t f 2 f	1184 "25 25" 100 0 0 1
 DESCR("convert text to timestamp");
 DATA(insert OID = 1780 ( to_date			PGUID 11 f t f 2 f	1082 "25 25" 100 0 0 100  to_date - ));
 DESCR("convert text to date");
+
+/* Selectivity estimators for LIKE and related operators */
+DATA(insert OID = 1818 ( regexeqsel			PGUID 11 f t f 5 f 701 "26 26 21 0 23" 100 0 0 100  regexeqsel - ));
+DESCR("restriction selectivity of regex match");
+DATA(insert OID = 1819 ( likesel			PGUID 11 f t f 5 f 701 "26 26 21 0 23" 100 0 0 100  likesel - ));
+DESCR("restriction selectivity of LIKE");
+DATA(insert OID = 1820 ( icregexeqsel		PGUID 11 f t f 5 f 701 "26 26 21 0 23" 100 0 0 100  icregexeqsel - ));
+DESCR("restriction selectivity of case-insensitive regex match");
+DATA(insert OID = 1821 ( regexnesel			PGUID 11 f t f 5 f 701 "26 26 21 0 23" 100 0 0 100  regexnesel - ));
+DESCR("restriction selectivity of regex non-match");
+DATA(insert OID = 1822 ( nlikesel			PGUID 11 f t f 5 f 701 "26 26 21 0 23" 100 0 0 100  nlikesel - ));
+DESCR("restriction selectivity of NOT LIKE");
+DATA(insert OID = 1823 ( icregexnesel		PGUID 11 f t f 5 f 701 "26 26 21 0 23" 100 0 0 100  icregexnesel - ));
+DESCR("restriction selectivity of case-insensitive regex non-match");
+DATA(insert OID = 1824 ( regexeqjoinsel		PGUID 11 f t f 5 f 701 "26 26 21 26 21" 100 0 0 100	regexeqjoinsel - ));
+DESCR("join selectivity of regex match");
+DATA(insert OID = 1825 ( likejoinsel		PGUID 11 f t f 5 f 701 "26 26 21 26 21" 100 0 0 100	likejoinsel - ));
+DESCR("join selectivity of LIKE");
+DATA(insert OID = 1826 ( icregexeqjoinsel	PGUID 11 f t f 5 f 701 "26 26 21 26 21" 100 0 0 100	icregexeqjoinsel - ));
+DESCR("join selectivity of case-insensitive regex match");
+DATA(insert OID = 1827 ( regexnejoinsel		PGUID 11 f t f 5 f 701 "26 26 21 26 21" 100 0 0 100	regexnejoinsel - ));
+DESCR("join selectivity of regex non-match");
+DATA(insert OID = 1828 ( nlikejoinsel		PGUID 11 f t f 5 f 701 "26 26 21 26 21" 100 0 0 100	nlikejoinsel - ));
+DESCR("join selectivity of NOT LIKE");
+DATA(insert OID = 1829 ( icregexnejoinsel	PGUID 11 f t f 5 f 701 "26 26 21 26 21" 100 0 0 100	icregexnejoinsel - ));
+DESCR("join selectivity of case-insensitive regex non-match");
 
 
 /*

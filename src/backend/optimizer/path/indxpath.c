@@ -9,14 +9,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.82 2000/04/12 17:15:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.83 2000/04/16 04:41:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <ctype.h>
-#include <math.h>
-
 #include "postgres.h"
+
+#include <math.h>
 
 #include "access/heapam.h"
 #include "access/nbtree.h"
@@ -24,7 +23,6 @@
 #include "catalog/pg_amop.h"
 #include "catalog/pg_operator.h"
 #include "executor/executor.h"
-#include "mb/pg_wchar.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
@@ -45,11 +43,6 @@
 
 #define is_indexable_operator(clause,opclass,relam,indexkey_on_left) \
 	(indexable_operator(clause,opclass,relam,indexkey_on_left) != InvalidOid)
-
-typedef enum
-{
-	Prefix_None, Prefix_Partial, Prefix_Exact
-} Prefix_Status;
 
 static void match_index_orclauses(RelOptInfo *rel, IndexOptInfo *index,
 					  List *restrictinfo_list);
@@ -92,17 +85,11 @@ static bool function_index_operand(Expr *funcOpnd, RelOptInfo *rel,
 					   IndexOptInfo *index);
 static bool match_special_index_operator(Expr *clause, Oid opclass, Oid relam,
 							 bool indexkey_on_left);
-static Prefix_Status like_fixed_prefix(char *patt, char **prefix);
-static Prefix_Status regex_fixed_prefix(char *patt, bool case_insensitive,
-				   char **prefix);
 static List *prefix_quals(Var *leftop, Oid expr_op,
-			 char *prefix, Prefix_Status pstatus);
-static char *make_greater_string(const char *str, Oid datatype);
+			 char *prefix, Pattern_Prefix_Status pstatus);
 static Oid	find_operator(const char *opname, Oid datatype);
 static Datum string_to_datum(const char *str, Oid datatype);
 static Const *string_to_const(const char *str, Oid datatype);
-static bool string_lessthan(const char *str1, const char *str2,
-				Oid datatype);
 
 
 /*
@@ -1644,6 +1631,7 @@ match_special_index_operator(Expr *clause, Oid opclass, Oid relam,
 	Datum		constvalue;
 	char	   *patt;
 	char	   *prefix;
+	char	   *rest;
 
 	/*
 	 * Currently, all known special operators require the indexkey on the
@@ -1672,7 +1660,8 @@ match_special_index_operator(Expr *clause, Oid opclass, Oid relam,
 		case OID_NAME_LIKE_OP:
 			/* the right-hand const is type text for all of these */
 			patt = textout((text *) DatumGetPointer(constvalue));
-			isIndexable = like_fixed_prefix(patt, &prefix) != Prefix_None;
+			isIndexable = pattern_fixed_prefix(patt, Pattern_Type_Like,
+											   &prefix, &rest) != Pattern_Prefix_None;
 			if (prefix)
 				pfree(prefix);
 			pfree(patt);
@@ -1684,7 +1673,8 @@ match_special_index_operator(Expr *clause, Oid opclass, Oid relam,
 		case OID_NAME_REGEXEQ_OP:
 			/* the right-hand const is type text for all of these */
 			patt = textout((text *) DatumGetPointer(constvalue));
-			isIndexable = regex_fixed_prefix(patt, false, &prefix) != Prefix_None;
+			isIndexable = pattern_fixed_prefix(patt, Pattern_Type_Regex,
+											   &prefix, &rest) != Pattern_Prefix_None;
 			if (prefix)
 				pfree(prefix);
 			pfree(patt);
@@ -1696,7 +1686,8 @@ match_special_index_operator(Expr *clause, Oid opclass, Oid relam,
 		case OID_NAME_ICREGEXEQ_OP:
 			/* the right-hand const is type text for all of these */
 			patt = textout((text *) DatumGetPointer(constvalue));
-			isIndexable = regex_fixed_prefix(patt, true, &prefix) != Prefix_None;
+			isIndexable = pattern_fixed_prefix(patt, Pattern_Type_Regex_IC,
+											   &prefix, &rest) != Pattern_Prefix_None;
 			if (prefix)
 				pfree(prefix);
 			pfree(patt);
@@ -1776,7 +1767,8 @@ expand_indexqual_conditions(List *indexquals)
 		Datum		constvalue;
 		char	   *patt;
 		char	   *prefix;
-		Prefix_Status pstatus;
+		char	   *rest;
+		Pattern_Prefix_Status pstatus;
 
 		switch (expr_op)
 		{
@@ -1794,7 +1786,8 @@ expand_indexqual_conditions(List *indexquals)
 				/* the right-hand const is type text for all of these */
 				constvalue = ((Const *) rightop)->constvalue;
 				patt = textout((text *) DatumGetPointer(constvalue));
-				pstatus = like_fixed_prefix(patt, &prefix);
+				pstatus = pattern_fixed_prefix(patt, Pattern_Type_Like,
+											   &prefix, &rest);
 				resultquals = nconc(resultquals,
 									prefix_quals(leftop, expr_op,
 												 prefix, pstatus));
@@ -1810,7 +1803,8 @@ expand_indexqual_conditions(List *indexquals)
 				/* the right-hand const is type text for all of these */
 				constvalue = ((Const *) rightop)->constvalue;
 				patt = textout((text *) DatumGetPointer(constvalue));
-				pstatus = regex_fixed_prefix(patt, false, &prefix);
+				pstatus = pattern_fixed_prefix(patt, Pattern_Type_Regex,
+											   &prefix, &rest);
 				resultquals = nconc(resultquals,
 									prefix_quals(leftop, expr_op,
 												 prefix, pstatus));
@@ -1826,7 +1820,8 @@ expand_indexqual_conditions(List *indexquals)
 				/* the right-hand const is type text for all of these */
 				constvalue = ((Const *) rightop)->constvalue;
 				patt = textout((text *) DatumGetPointer(constvalue));
-				pstatus = regex_fixed_prefix(patt, true, &prefix);
+				pstatus = pattern_fixed_prefix(patt, Pattern_Type_Regex_IC,
+											   &prefix, &rest);
 				resultquals = nconc(resultquals,
 									prefix_quals(leftop, expr_op,
 												 prefix, pstatus));
@@ -1845,130 +1840,6 @@ expand_indexqual_conditions(List *indexquals)
 }
 
 /*
- * Extract the fixed prefix, if any, for a LIKE pattern.
- * *prefix is set to a palloc'd prefix string,
- * or to NULL if no fixed prefix exists for the pattern.
- * The return value distinguishes no fixed prefix, a partial prefix,
- * or an exact-match-only pattern.
- */
-static Prefix_Status
-like_fixed_prefix(char *patt, char **prefix)
-{
-	char	   *match;
-	int			pos,
-				match_pos;
-
-	*prefix = match = palloc(strlen(patt) + 1);
-	match_pos = 0;
-
-	for (pos = 0; patt[pos]; pos++)
-	{
-		/* % and _ are wildcard characters in LIKE */
-		if (patt[pos] == '%' ||
-			patt[pos] == '_')
-			break;
-		/* Backslash quotes the next character */
-		if (patt[pos] == '\\')
-		{
-			pos++;
-			if (patt[pos] == '\0')
-				break;
-		}
-
-		/*
-		 * NOTE: this code used to think that %% meant a literal %, but
-		 * textlike() itself does not think that, and the SQL92 spec
-		 * doesn't say any such thing either.
-		 */
-		match[match_pos++] = patt[pos];
-	}
-
-	match[match_pos] = '\0';
-
-	/* in LIKE, an empty pattern is an exact match! */
-	if (patt[pos] == '\0')
-		return Prefix_Exact;	/* reached end of pattern, so exact */
-
-	if (match_pos > 0)
-		return Prefix_Partial;
-	return Prefix_None;
-}
-
-/*
- * Extract the fixed prefix, if any, for a regex pattern.
- * *prefix is set to a palloc'd prefix string,
- * or to NULL if no fixed prefix exists for the pattern.
- * The return value distinguishes no fixed prefix, a partial prefix,
- * or an exact-match-only pattern.
- */
-static Prefix_Status
-regex_fixed_prefix(char *patt, bool case_insensitive,
-				   char **prefix)
-{
-	char	   *match;
-	int			pos,
-				match_pos;
-
-	*prefix = NULL;
-
-	/* Pattern must be anchored left */
-	if (patt[0] != '^')
-		return Prefix_None;
-
-	/* Cannot optimize if unquoted | { } is present in pattern */
-	for (pos = 1; patt[pos]; pos++)
-	{
-		if (patt[pos] == '|' ||
-			patt[pos] == '{' ||
-			patt[pos] == '}')
-			return Prefix_None;
-		if (patt[pos] == '\\')
-		{
-			pos++;
-			if (patt[pos] == '\0')
-				break;
-		}
-	}
-
-	/* OK, allocate space for pattern */
-	*prefix = match = palloc(strlen(patt) + 1);
-	match_pos = 0;
-
-	/* note start at pos 1 to skip leading ^ */
-	for (pos = 1; patt[pos]; pos++)
-	{
-		if (patt[pos] == '.' ||
-			patt[pos] == '?' ||
-			patt[pos] == '*' ||
-			patt[pos] == '[' ||
-			patt[pos] == '$' ||
-
-		/*
-		 * XXX I suspect isalpha() is not an adequately locale-sensitive
-		 * test for characters that can vary under case folding?
-		 */
-			(case_insensitive && isalpha(patt[pos])))
-			break;
-		if (patt[pos] == '\\')
-		{
-			pos++;
-			if (patt[pos] == '\0')
-				break;
-		}
-		match[match_pos++] = patt[pos];
-	}
-
-	match[match_pos] = '\0';
-
-	if (patt[pos] == '$' && patt[pos + 1] == '\0')
-		return Prefix_Exact;	/* pattern specifies exact match */
-
-	if (match_pos > 0)
-		return Prefix_Partial;
-	return Prefix_None;
-}
-
-/*
  * Given a fixed prefix that all the "leftop" values must have,
  * generate suitable indexqual condition(s).  expr_op is the original
  * LIKE or regex operator; we use it to deduce the appropriate comparison
@@ -1976,7 +1847,7 @@ regex_fixed_prefix(char *patt, bool case_insensitive,
  */
 static List *
 prefix_quals(Var *leftop, Oid expr_op,
-			 char *prefix, Prefix_Status pstatus)
+			 char *prefix, Pattern_Prefix_Status pstatus)
 {
 	List	   *result;
 	Oid			datatype;
@@ -1986,7 +1857,7 @@ prefix_quals(Var *leftop, Oid expr_op,
 	Expr	   *expr;
 	char	   *greaterstr;
 
-	Assert(pstatus != Prefix_None);
+	Assert(pstatus != Pattern_Prefix_None);
 
 	switch (expr_op)
 	{
@@ -2022,7 +1893,7 @@ prefix_quals(Var *leftop, Oid expr_op,
 	/*
 	 * If we found an exact-match pattern, generate an "=" indexqual.
 	 */
-	if (pstatus == Prefix_Exact)
+	if (pstatus == Pattern_Prefix_Exact)
 	{
 		oproid = find_operator("=", datatype);
 		if (oproid == InvalidOid)
@@ -2065,68 +1936,6 @@ prefix_quals(Var *leftop, Oid expr_op,
 	}
 
 	return result;
-}
-
-/*
- * Try to generate a string greater than the given string or any string it is
- * a prefix of.  If successful, return a palloc'd string; else return NULL.
- *
- * To work correctly in non-ASCII locales with weird collation orders,
- * we cannot simply increment "foo" to "fop" --- we have to check whether
- * we actually produced a string greater than the given one.  If not,
- * increment the righthand byte again and repeat.  If we max out the righthand
- * byte, truncate off the last character and start incrementing the next.
- * For example, if "z" were the last character in the sort order, then we
- * could produce "foo" as a string greater than "fonz".
- *
- * This could be rather slow in the worst case, but in most cases we won't
- * have to try more than one or two strings before succeeding.
- *
- * XXX in a sufficiently weird locale, this might produce incorrect results?
- * For example, in German I believe "ss" is treated specially --- if we are
- * given "foos" and return "foot", will this actually be greater than "fooss"?
- */
-static char *
-make_greater_string(const char *str, Oid datatype)
-{
-	char	   *workstr;
-	int			len;
-
-	/*
-	 * Make a modifiable copy, which will be our return value if
-	 * successful
-	 */
-	workstr = pstrdup((char *) str);
-
-	while ((len = strlen(workstr)) > 0)
-	{
-		unsigned char *lastchar = (unsigned char *) (workstr + len - 1);
-
-		/*
-		 * Try to generate a larger string by incrementing the last byte.
-		 */
-		while (*lastchar < (unsigned char) 255)
-		{
-			(*lastchar)++;
-			if (string_lessthan(str, workstr, datatype))
-				return workstr; /* Success! */
-		}
-
-		/*
-		 * Truncate off the last character, which might be more than 1
-		 * byte in MULTIBYTE case.
-		 */
-#ifdef MULTIBYTE
-		len = pg_mbcliplen((const unsigned char *) workstr, len, len - 1);
-		workstr[len] = '\0';
-#else
-		*lastchar = '\0';
-#endif
-	}
-
-	/* Failed... */
-	pfree(workstr);
-	return NULL;
 }
 
 /*
@@ -2178,46 +1987,4 @@ string_to_const(const char *str, Oid datatype)
 
 	return makeConst(datatype, ((datatype == NAMEOID) ? NAMEDATALEN : -1),
 					 conval, false, false, false, false);
-}
-
-/*
- * Test whether two strings are "<" according to the rules of the given
- * datatype.  We do this the hard way, ie, actually calling the type's
- * "<" operator function, to ensure we get the right result...
- */
-static bool
-string_lessthan(const char *str1, const char *str2, Oid datatype)
-{
-	Datum		datum1 = string_to_datum(str1, datatype);
-	Datum		datum2 = string_to_datum(str2, datatype);
-	bool		result;
-
-	switch (datatype)
-	{
-		case TEXTOID:
-			result = text_lt((text *) datum1, (text *) datum2);
-			break;
-
-		case BPCHAROID:
-			result = bpcharlt((char *) datum1, (char *) datum2);
-			break;
-
-		case VARCHAROID:
-			result = varcharlt((char *) datum1, (char *) datum2);
-			break;
-
-		case NAMEOID:
-			result = namelt((NameData *) datum1, (NameData *) datum2);
-			break;
-
-		default:
-			elog(ERROR, "string_lessthan: unexpected datatype %u", datatype);
-			result = false;
-			break;
-	}
-
-	pfree(DatumGetPointer(datum1));
-	pfree(DatumGetPointer(datum2));
-
-	return result;
 }

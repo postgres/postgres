@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xoper.sgml,v 1.9 2000/03/31 03:27:41 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xoper.sgml,v 1.10 2000/04/16 04:41:01 tgl Exp $
 -->
 
  <Chapter Id="xoper">
@@ -254,9 +254,9 @@ SELECT (a + b) AS c FROM test_complex;
    <para>
     You can frequently get away with using either eqsel or neqsel for
     operators that have very high or very low selectivity, even if they
-    aren't really equality or inequality.  For example, the regular expression
-    matching operators (~, ~*, etc) use eqsel on the assumption that they'll
-    usually only match a small fraction of the entries in a table.
+    aren't really equality or inequality.  For example, the
+    approximate-equality geometric operators use eqsel on the assumption that
+    they'll usually only match a small fraction of the entries in a table.
    </para>
 
    <para>
