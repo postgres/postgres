@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.66 2001/05/08 21:06:43 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.67 2001/05/18 17:49:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -587,12 +587,12 @@ CreateLockFile(const char *filename, bool amPostmaster,
 					fprintf(stderr,
 							"Is another %s (pid %d) running in \"%s\"?\n",
 							(encoded_pid < 0 ? "postgres" : "postmaster"),
-							other_pid, refName);
+							(int) other_pid, refName);
 				else
 					fprintf(stderr,
 							"Is another %s (pid %d) using \"%s\"?\n",
 							(encoded_pid < 0 ? "postgres" : "postmaster"),
-							other_pid, refName);
+							(int) other_pid, refName);
 				return false;
 			}
 		}
