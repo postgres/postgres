@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/sql.l,v 1.6 1997/10/01 18:53:29 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/sql.l,v 1.7 1997/11/03 04:47:08 momjian Exp $
 .TH INTRODUCTION SQL 11/5/95 PostgreSQL PostgreSQL
 .SH "Section 4 \(em SQL Commands (COMMANDS)"
 .SH "General Information"
@@ -132,8 +132,6 @@ A
 is either an attribute of a given class or one of the following:
 .nf
 oid
-tmin
-tmax
 xmin
 xmax
 cmin
@@ -145,19 +143,16 @@ stands for the unique identifier of an instance which is added by
 Postgres to all instances automatically. Oids are not reused and are 32
 bit quantities.
 .PP
-.IR "Tmin, tmax, xmin, cmin, xmax"
+.IR "Xmin, cmin, xmax"
 and
 .IR cmax
-stand respectively for the time that the instance was inserted, the
-time the instance was deleted, the identity of the inserting
+stand respectively for the identity of the inserting
 transaction, the command identifier within the transaction, the
 identity of the deleting transaction and its associated deleting
 command.  For further information on these fields consult [STON87].
 Times are represented internally as instances of the \*(lqabstime\*(rq
-data type.  Transaction identifiers are 32 bit quantities which are
-assigned sequentially starting at 512.  Command identifiers are 16 bit
-objects; hence, it is an error to have more than 65535 SQL commands
-within one transaction.
+data type.  Transaction and command identifiers are 32 bit quantities.
+Transactions are assigned sequentially starting at 512.
 .SH "Columns"
 A
 .IR column
@@ -301,53 +296,17 @@ where
 .IR class_reference
 is of the form
 .nf
-class_name [time_expression] [*]
+class_name [*]
 .fi
 The 
 .IR "from expression"
 defines one or more instance variables to range over the class
 indicated in 
 .IR class_reference .
-Adding a 
-.IR time_expression
-will indicate that a historical class is desired.  One can also request 
+One can also request 
 the instance variable to range over all classes that are beneath the
 indicated class in the inheritance hierarchy by postpending the
 designator \*(lq*\*(rq.
-.SH‚‚ "Time Expressions"
-A
-.IR "time expression"
-is in one of two forms:
-.nf
- ["date"]
- ["date-1", "date-2"]
-.fi
-The first case requires instances that are valid at the indicated
-time.  The second case requires instances that are valid at some time
-within the date range specified.  If no time expression is indicated,
-the default is \*(lqnow\*(rq.
-.PP
-In each case, the date is a character string of the form
-.nf
-"[MON-FRI] MMM DD [HH:MM:SS] YYYY [Timezone]"
-.fi
-where MMM is the month (Jan \- Dec), DD is a legal day number in the
-specified month, HH:MM:SS is an optional time in that day (24-hour
-clock), and YYYY is the year.  If the time of day HH:MM:SS is not
-specified, it defaults to midnight at the start of the specified day.
-As of Version 3.0, times are no longer read and written using
-Greenwich Mean Time; the input and output routines default to the
-local time zone.
-.PP
-For example,
-.nf
-["Jan 1 1990"]
-["Mar 3 00:00:00 1980", "Mar 3 23:59:59 1981"]
-.fi
-are valid time specifications.
-.PP
-Note that this syntax is slightly different than that used by the 
-time-range type.
 .SH "SEE ALSO"
 insert(l),
 delete(l),
