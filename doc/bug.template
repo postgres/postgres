@@ -25,9 +25,9 @@ System Configuration
 ---------------------
   Architecture (example: Intel Pentium)  	:
 
-  Operating System (example: Linux 2.0.26 ELF) 	:
+  Operating System (example: Linux 2.4.18) 	:
 
-  PostgreSQL version (example: PostgreSQL-7.4):   PostgreSQL-7.4
+  PostgreSQL version (example: PostgreSQL-7.4.1):   PostgreSQL-7.4.1
 
   Compiler used (example:  gcc 2.95.2)		:
 
