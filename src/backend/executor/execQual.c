@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.58 1999/07/19 00:26:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.59 1999/09/18 23:26:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -616,8 +616,7 @@ ExecEvalFuncArgs(FunctionCachePtr fcache,
 				 bool *argIsDone)
 {
 	int			i;
-	bool		argIsNull,
-			   *nullVect;
+	bool	   *nullVect;
 	List	   *arg;
 
 	nullVect = fcache->nullVect;
@@ -631,12 +630,10 @@ ExecEvalFuncArgs(FunctionCachePtr fcache,
 		 * as arguments but we make an exception in the case of nested dot
 		 * expressions.  We have to watch out for this case here.
 		 */
-		argV[i] = (Datum)
-			ExecEvalExpr((Node *) lfirst(arg),
-						 econtext,
-						 &argIsNull,
-						 argIsDone);
-
+		argV[i] = ExecEvalExpr((Node *) lfirst(arg),
+							   econtext,
+							   & nullVect[i],
+							   argIsDone);
 
 		if (!(*argIsDone))
 		{
@@ -644,10 +641,6 @@ ExecEvalFuncArgs(FunctionCachePtr fcache,
 			fcache->setArg = (char *) argV[0];
 			fcache->hasSetArg = true;
 		}
-		if (argIsNull)
-			nullVect[i] = true;
-		else
-			nullVect[i] = false;
 		i++;
 	}
 }
@@ -1108,7 +1101,7 @@ ExecEvalAnd(Expr *andExpr, ExprContext *econtext, bool *isNull)
  *		ExecEvalCase
  *
  *		Evaluate a CASE clause. Will have boolean expressions
- *		inside the WHEN clauses, and will have constants
+ *		inside the WHEN clauses, and will have expressions
  *		for results.
  *		- thomas 1998-11-09
  * ----------------------------------------------------------------
@@ -1118,7 +1111,6 @@ ExecEvalCase(CaseExpr *caseExpr, ExprContext *econtext, bool *isNull)
 {
 	List	   *clauses;
 	List	   *clause;
-	CaseWhen   *wclause;
 	Datum		const_value = 0;
 	bool		isDone;
 
@@ -1127,17 +1119,16 @@ ExecEvalCase(CaseExpr *caseExpr, ExprContext *econtext, bool *isNull)
 	/*
 	 * we evaluate each of the WHEN clauses in turn, as soon as one is
 	 * true we return the corresponding result. If none are true then we
-	 * return the value of the default clause, or NULL.
+	 * return the value of the default clause, or NULL if there is none.
 	 */
 	foreach(clause, clauses)
 	{
+		CaseWhen   *wclause = lfirst(clause);
 
 		/*
 		 * We don't iterate over sets in the quals, so pass in an isDone
 		 * flag, but ignore it.
 		 */
-
-		wclause = lfirst(clause);
 		const_value = ExecEvalExpr((Node *) wclause->expr,
 								   econtext,
 								   isNull,
@@ -1145,16 +1136,16 @@ ExecEvalCase(CaseExpr *caseExpr, ExprContext *econtext, bool *isNull)
 
 		/*
 		 * if we have a true test, then we return the result, since the
-		 * case statement is satisfied.
+		 * case statement is satisfied.  A NULL result from the test is
+		 * not considered true.
 		 */
-		if (DatumGetInt32(const_value) != 0)
+		if (DatumGetInt32(const_value) != 0 && ! *isNull)
 		{
 			const_value = ExecEvalExpr((Node *) wclause->result,
 									   econtext,
 									   isNull,
 									   &isDone);
 			return (Datum) const_value;
-
 		}
 	}
 
@@ -1318,7 +1309,7 @@ ExecQualClause(Node *clause, ExprContext *econtext)
 	bool		isNull;
 	bool		isDone;
 
-	/* when there is a null clause, consider the qualification to be true */
+	/* when there is a null clause, consider the qualification to fail */
 	if (clause == NULL)
 		return true;
 
@@ -1326,20 +1317,14 @@ ExecQualClause(Node *clause, ExprContext *econtext)
 	 * pass isDone, but ignore it.	We don't iterate over multiple returns
 	 * in the qualifications.
 	 */
-	expr_value = (Datum)
-		ExecEvalExpr(clause, econtext, &isNull, &isDone);
+	expr_value = ExecEvalExpr(clause, econtext, &isNull, &isDone);
 
 	/*
-	 * this is interesting behaviour here.	When a clause evaluates to
-	 * null, then we consider this as passing the qualification. it seems
-	 * kind of like, if the qual is NULL, then there's no qual..
+	 * remember, we return true when the qualification fails;
+	 * NULL is considered failure.
 	 */
 	if (isNull)
 		return true;
-
-	/*
-	 * remember, we return true when the qualification fails..
-	 */
 	if (DatumGetInt32(expr_value) == 0)
 		return true;
 
