@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.5 1996/11/10 02:59:16 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.6 1996/11/27 07:14:51 vadim Exp $
  *	
  * NOTES
  *	Transaction aborts can now occur two ways:
@@ -753,7 +753,15 @@ StartTransaction()
      *  state to "in progress"
      * ----------------
      */
-    s->state = TRANS_INPROGRESS;      
+    s->state = TRANS_INPROGRESS;
+    
+    /*
+     * Let others to know about current transaction is in progress
+     *       - vadim 11/26/96
+     */
+    if ( MyProc != (PROC*) NULL )
+    	MyProc->xid = s->transactionIdData;
+
 }
 
 /* ---------------
@@ -815,6 +823,13 @@ CommitTransaction()
 	if (IsNormalProcessingMode())
 	    Async_NotifyAtCommit();
     }
+    
+    /*
+     * Let others to know about no transaction in progress
+     *       - vadim 11/26/96
+     */
+    if ( MyProc != (PROC*) NULL )
+    	MyProc->xid = InvalidTransactionId;
 }
 
 /* --------------------------------
@@ -826,6 +841,13 @@ void
 AbortTransaction()
 {
     TransactionState s = CurrentTransactionState;
+    
+    /*
+     * Let others to know about no transaction in progress
+     *       - vadim 11/26/96
+     */
+    if ( MyProc != (PROC*) NULL )
+    	MyProc->xid = InvalidTransactionId;
     
     /* ----------------
      *	check the current transaction state
