@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.16 2001/01/17 22:13:33 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.17 2001/01/18 07:11:36 thomas Exp $
 -->
 
  <chapter id="plsql">
@@ -472,7 +472,7 @@ END IF;
 	database return a value. Thus, the normal way to call a function
 	is to execute a SELECT query or doing an assignment (resulting
 	in a PL/pgSQL internal SELECT). But there are cases where someone
-	isn't interested in the function's result.
+	is not interested in the function's result.
 	<programlisting>
 PERFORM <replaceable>query</replaceable>
 	</programlisting>
