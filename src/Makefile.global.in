@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.124 2001/05/09 19:19:00 momjian Exp $
+# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.125 2001/05/09 19:57:33 momjian Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -111,7 +111,7 @@ with_java	= @with_java@
 with_perl	= @with_perl@
 with_python	= @with_python@
 with_tcl	= @with_tcl@
-with_pltcl_unknown	= @with_pltcl_unknown@
+enable_pltcl_unknown	= @enable_pltcl_unknown@
 with_tk		= @with_tk@
 enable_odbc	= @enable_odbc@
 MULTIBYTE	= @MULTIBYTE@
