@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.32 2000/11/08 17:57:45 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.33 2000/11/10 16:32:09 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1217,12 +1217,12 @@ env PGOPTIONS='-c geqo=off' psql
     limits of the IPC resources then the postmaster will refuse to
     start up and should leave a marginally instructive error message
     about which problem was encountered and what needs to be done
-    about it. The relevant kernel parameters have a relatively
-    consistent nomenclature across systems; <xref
+    about it. The relevant kernel parameters are named
+    consistently across different systems; <xref
     linkend="sysvipc-parameters"> gives an overview. The methods to
     set them, however, vary; suggestions for some platforms are given
-    below. Be aware, however, that you will have to reboot your
-    machine at best, or possibly recompile the kernel, to change these
+    below. Be aware that you will have to reboot your
+    machine at least, possibly even recompile the kernel, to change these
     settings.
    </para>
 
@@ -1255,7 +1255,7 @@ env PGOPTIONS='-c geqo=off' psql
       <row>
        <entry><varname>SHMSEG</></>
        <entry>Maximum number of shared memory segments per process</>
-       <entry>Must be at least 3, but the default is much higher.</>
+       <entry>must be at least 3, but the default is much higher</>
       </row>
 
        <row>
@@ -1267,13 +1267,13 @@ env PGOPTIONS='-c geqo=off' psql
        <row>
         <entry><varname>SEMMNI</></>
         <entry>Maximum number of semaphore identifiers (i.e., sets)</>
-        <entry>&gt;= ceil(max_connections % 16)</>
+        <entry>&gt;= ceil(max_connections / 16)</>
        </row>
 
        <row>
         <entry><varname>SEMMNS</></>
         <entry>Maximum number of semaphores system-wide</>
-        <entry>number of allowed connections, rounded up to multiple of 16</>
+        <entry>max_connections rounded up to multiple of 16, + room for other applications</>
        </row>
 
        <row>
@@ -1337,7 +1337,7 @@ env PGOPTIONS='-c geqo=off' psql
     The parameter <varname>SEMMNI</> determines the limit on the
     number of semaphore sets that can exist on the system at one time.
     Hence this parameter must be at least
-    <literal>ceil(max_connections % 16)</>. Lowering the number of
+    <literal>ceil(max_connections / 16)</>. Lowering the number of
     allowed connections is a temporary workaround for failures, which
     are usually confusingly worded <quote><errorname>No space left on
     device</></>, from the function <function>semget()</>.
@@ -1351,7 +1351,7 @@ env PGOPTIONS='-c geqo=off' psql
     semaphores needs an entry. When a semaphore set is freed it is
     either added to an existing entry that is adjacent to the freed
     block or it is registered under a new map entry. If the map is
-    full, the freed semaphores gets lost (until reboot). Fragmentation
+    full, the freed semaphores get lost (until reboot). Fragmentation
     of the semaphore space could therefore over time lead to less
     available semaphores than there should be.
    </para>
@@ -1363,9 +1363,9 @@ env PGOPTIONS='-c geqo=off' psql
    </para>
 
    <para>
-    Various settings related to <quote>semaphore undo</>, such as
-    <varname>SEMMNU</> and <varname>SEMUME</>, are not of relevance
-    with <productname>Postgres</>.
+    Various other settings related to <quote>semaphore undo</>, such as
+    <varname>SEMMNU</> and <varname>SEMUME</>, are not of concern
+    for <productname>Postgres</>.
    </para>
 
 
@@ -1386,7 +1386,7 @@ env PGOPTIONS='-c geqo=off' psql
 <programlisting>
 /sys/sys/shm.h:69:#define       SHMMAXPGS       1024    /* max hardware pages... */
 </programlisting>
-         The default setting of 1024 is for a maximum of 4 MB of shared
+         The default setting of 1024 provides a maximum of 4 MB of shared
          memory.
         </para>
        </formalpara>
@@ -1457,7 +1457,7 @@ options "SEMMNU=120"
         to be enabled when the kernel is compiled. (They are by
         default.) The maximum size of shared memory is determined by
         the option <varname>SHMMAXPGS</> (in pages). The following
-        shows an example on how to set the various parameters:
+        shows an example of how to set the various parameters:
 <programlisting>
 options         SYSVSHM                                                           
 options         SHMMAXPGS=4096                                                    
