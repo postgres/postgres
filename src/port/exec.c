@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.8 2004/05/18 20:18:59 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.9 2004/05/19 04:36:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,16 +92,10 @@ validate_exec(char *path)
 	 * instead of the underlying file, you lose.
 	 */
 	if (stat(path, &buf) < 0)
-	{
-		fprintf(stderr, "could not stat \"%s\": %m", path);
 		return -1;
-	}
 
 	if ((buf.st_mode & S_IFMT) != S_IFREG)
-	{
-		fprintf(stderr, "\"%s\" is not a regular file", path);
 		return -1;
-	}
 
 	/*
 	 * Ensure that we are using an authorized executable.
@@ -123,8 +117,6 @@ validate_exec(char *path)
 	{
 		is_r = buf.st_mode & S_IRUSR;
 		is_x = buf.st_mode & S_IXUSR;
-		if (!(is_r && is_x))
-			fprintf(stderr, "\"%s\" is not user read/execute", path);
 		return is_x ? (is_r ? 0 : -2) : -1;
 	}
 
@@ -152,8 +144,6 @@ validate_exec(char *path)
 		{
 			is_r = buf.st_mode & S_IRGRP;
 			is_x = buf.st_mode & S_IXGRP;
-			if (!(is_r && is_x))
-				fprintf(stderr, "\"%s\" is not group read/execute", path);
 			return is_x ? (is_r ? 0 : -2) : -1;
 		}
 	}
@@ -161,8 +151,6 @@ validate_exec(char *path)
 	/* Check "other" bits */
 	is_r = buf.st_mode & S_IROTH;
 	is_x = buf.st_mode & S_IXOTH;
-	if (!(is_r && is_x))
-		fprintf(stderr, "\"%s\" is not other read/execute", path);
 	return is_x ? (is_r ? 0 : -2) : -1;
 
 #endif
