@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.24 2003/01/25 23:10:27 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.25 2003/01/27 22:40:56 momjian Exp $
 -->
 
  <chapter id="performance-tips">
@@ -109,8 +109,8 @@ regression=# EXPLAIN SELECT * FROM tenk1;
 SELECT * FROM pg_class WHERE relname = 'tenk1';
 </programlisting>
 
-    you will find out that <classname>tenk1</classname> has 233 disk
-    pages and 10000 rows.  So the cost is estimated at 233 page
+    you will find out that <classname>tenk1</classname> has 333 disk
+    pages and 10000 rows.  So the cost is estimated at 333 page
     reads, defined as costing 1.0 apiece, plus 10000 * <varname>cpu_tuple_cost</varname> which is
     currently 0.01 (try <command>SHOW cpu_tuple_cost</command>).
    </para>
