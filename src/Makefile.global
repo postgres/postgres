@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.15 1996/07/25 20:43:35 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.16 1996/07/29 20:51:41 scrappy Exp $
 #
 # NOTES
 #    This is seen by any Makefiles that include mk/postgres.mk. To
@@ -64,17 +64,17 @@ PORTNAME=	BSD44_derived
 # SRCDIR specifies where the source files are.
 SRCDIR=		/home/staff/scrappy/cvs/postgres95/src
 
+# For convenience, POSTGRESDIR is where DATADIR, BINDIR, and LIBDIR 
+# and other target destinations are rooted.  Of course, each of these is 
+# changable separately.
+POSTGRESDIR=	/home/staff/scrappy/cvs/postgres95
+
 # POSTGRESLOGIN is the login name of the user who gets special
 # privileges within the database.  By default it is "postgres", but
 # you can change it to any existing login name (such as your own 
 # login if you are compiling a private version or don't have root
 # access).
 POSTGRESLOGIN=	postgres
-
-# For convenience, POSTGRESDIR is where DATADIR, BINDIR, and LIBDIR 
-# and other target destinations are rooted.  Of course, each of these is 
-# changable separately.
-POSTGRESDIR=	/home/staff/scrappy/cvs/postgres95
 
 # DATADIR specifies where the postmaster expects to find its database.
 # This may be overridden by command line options or the PGDATA environment
@@ -127,14 +127,14 @@ CFLAGS+= -DNAMEDATALEN=$(NAMEDATALEN) -DOIDNAMELEN=$(OIDNAMELEN)
 # To disable a feature, comment out the entire definition
 # (that is, prepend '#', don't set it to "0" or "no").
 
-# Comment out ENFORCE_ALIGNMENT if you do NOT want unaligned access to
-# multi-byte types to generate a bus error.
-ENFORCE_ALIGNMENT= true
-
 # Comment out CDEBUG to turn off debugging and sanity-checking.
 #
 #	XXX on MIPS, use -g3 if you want to compile with -O
-CDEBUG= -g
+CDEBUG= #-g
+
+# Comment out ENFORCE_ALIGNMENT if you do NOT want unaligned access to
+# multi-byte types to generate a bus error.
+ENFORCE_ALIGNMENT= true
 
 # turn this on if you prefer European style dates instead of American
 # style dates
@@ -170,8 +170,6 @@ ifdef HBA
 HBAFLAGS= -DHBA
 endif
 
-
-
 # If you plan to use Kerberos for authentication...
 #
 # Comment out KRBVERS if you do not use Kerberos.
@@ -179,7 +177,6 @@ endif
 #	XXX Edit the default Kerberos variables below!
 #
 #KRBVERS=	5
-
 
 # Globally pass Kerberos file locations.
 #	these are used in the postmaster and all libpq applications.
