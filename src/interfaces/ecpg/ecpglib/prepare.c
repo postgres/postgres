@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/prepare.c,v 1.5 2003/06/26 11:37:05 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/prepare.c,v 1.6 2003/07/14 10:16:44 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -59,7 +59,9 @@ ECPGprepare(int lineno, char *name, char *variable)
 {
 	struct statement *stmt;
 	struct prepared_statement *this;
+	struct sqlca_t *sqlca = ECPGget_sqlca();
 
+	ECPGinit_sqlca(sqlca);
 	/* check if we already have prepared this statement */
 	for (this = prep_stmts; this != NULL && strcmp(this->name, name) != 0; this = this->next);
 	if (this)

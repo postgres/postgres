@@ -57,7 +57,7 @@ int main()
 	$drop table test;
 	$commit;
 
-	$disconnect;
+	$close database;
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.246 2003/07/09 14:53:18 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.247 2003/07/14 10:16:44 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -567,7 +567,28 @@ stmt:  AlterDatabaseSetStmt		{ output_statement($1, 0, connection); }
 		| AlterUserStmt		{ output_statement($1, 0, connection); }
 		| AnalyzeStmt		{ output_statement($1, 0, connection); }
 		| CheckPointStmt	{ output_statement($1, 0, connection); }
-		| ClosePortalStmt	{ output_statement($1, 0, connection); }
+		| ClosePortalStmt
+		{
+			if (INFORMIX_MODE)
+			{
+				/* Informix also has a CLOSE DATABASE command that
+				   essantially works like a DISCONNECT CURRENT 
+				   as far as I know. */
+				if (strcasecmp($1+strlen("close "), "database") == 0)
+				{
+					if (connection)
+		                                mmerror(PARSE_ERROR, ET_ERROR, "no at option for close database statement.\n");
+								
+					fprintf(yyout, "{ ECPGdisconnect(__LINE__, \"CURRENT\");");
+		                        whenever_action(2);
+		                        free($1);
+				}
+				else
+					output_statement($1, 0, connection);
+			}
+			else
+				output_statement($1, 0, connection);
+		}
 		| ClusterStmt		{ output_statement($1, 0, connection); }
 		| CommentStmt		{ output_statement($1, 0, connection); }
 		| ConstraintsSetStmt	{ output_statement($1, 0, connection); }
@@ -2596,8 +2617,11 @@ prep_type_list: Typename		{ $$ = $1; }
 	| prep_type_list ',' Typename	{ $$ = cat_str(3, $1, make_str(","), $3); }
 	;
 
-ExecuteStmt: EXECUTE name execute_param_clause into_clause
-		{ $$ = cat_str(4, make_str("execute"), $2, $3, $4); }
+ExecuteStmt: EXECUTE name execute_param_clause
+		{ $$ = cat_str(3, make_str("execute"), $2, $3); }
+		| CREATE OptTemp TABLE qualified_name OptCreateAs AS EXECUTE name execute_param_clause
+		{ $$ = cat_str(8, make_str("create"), $2, make_str("table"), $4, $5, make_str("as execute"), $8, $9); }
+		
 		;
 
 execute_param_clause: '(' expr_list ')'	{ $$ = cat_str(3, make_str("("), $2, make_str(")")); }
@@ -2878,23 +2902,12 @@ opt_select_limit:	select_limit	{ $$ = $1; }
 		| /*EMPTY*/					{ $$ = EMPTY; }
 		;
 
-select_limit_value: PosIntConst
-		{
-			if (atoi($1) < 0)
-				mmerror(PARSE_ERROR, ET_ERROR, "LIMIT must not be negative");
-			$$ = $1;
-		}
-		| ALL	{ $$ = make_str("all"); }
-		| PARAM { $$ = make_name(); }
+select_limit_value: a_expr 	{ $$ = $1; }
+		| ALL		{ $$ = make_str("all"); }
+		| PARAM 	{ $$ = make_name(); }
 		;
 
-select_offset_value:	PosIntConst
-		{
-			if (atoi($1) < 0)
-				mmerror(PARSE_ERROR, ET_ERROR, "OFFSET must not be negative");
-			$$ = $1;
-		}
-		| PARAM { $$ = make_name(); }
+select_offset_value: a_expr { $$ = $1; }	
 		;
 
 /*
