@@ -20,7 +20,11 @@ preproc.c preproc.h: preproc.y
 	mv y.tab.h preproc.h
 
 clean:
-	rm -f *.o core a.out ecpg$(X) *~ *.output *.tab.?
+	rm -f *.o core a.out ecpg$(X) *~ *.output
+# And the garbage that might have been left behind by partial build:
+	rm -f y.tab.c y.tab.h lex.yy.c
+# make clean does not remove preproc.c, preproc.h, pgc.c since we want
+# to ship those files in the distribution, for people with inadequate tools.
 
 install: all
 	$(INSTALL) $(INSTL_EXE_OPTS) ecpg$(X) $(DESTDIR)$(BINDIR)
