@@ -26,8 +26,6 @@
 #include <sqlca.h>
 
 /* variables visible to the programs */
-int			no_auto_trans;
-
 static struct sqlca sqlca_init =
 {
 	{'S', 'Q', 'L', 'C', 'A', ' ', ' ', ' '},
@@ -56,7 +54,8 @@ static struct connection
 {
 	char	*name;
 	PGconn	*connection;
-	int	committed;
+	bool	committed;
+	int	no_auto_trans;
 	struct connection *next;
 }		*all_connections = NULL, *actual_connection = NULL;
 
@@ -633,7 +632,7 @@ ECPGexecute(struct statement * stmt)
 
 	/* Now the request is built. */
 
-	if (stmt->connection->committed && !no_auto_trans)
+	if (stmt->connection->committed && !stmt->connection->no_auto_trans)
 	{
 		if ((results = PQexec(stmt->connection->connection, "begin transaction")) == NULL)
 		{
@@ -1144,7 +1143,7 @@ ECPGsetconn(int lineno, const char *connection_name)
 }
 
 bool
-ECPGconnect(int lineno, const char *dbname, const char *user, const char *passwd, const char *connection_name)
+ECPGconnect(int lineno, const char *dbname, const char *user, const char *passwd, const char *connection_name, int no_auto_trans)
 {
 	struct connection *this = (struct connection *) ecpg_alloc(sizeof(struct connection), lineno);
 
@@ -1182,6 +1181,7 @@ ECPGconnect(int lineno, const char *dbname, const char *user, const char *passwd
 	}
 	
 	this->committed = true;
+	this->no_auto_trans = no_auto_trans;
 
 	return true;
 }

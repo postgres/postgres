@@ -1,8 +1,6 @@
 The complete structure definition has to be listed inside the declare
 section of the structure variable for ecpg to be able to understand it.
 
-Variable type bool has to be tested. I never used it so far.
-
 The error message for "no data" in an exec sql insert select from statement
 has to be 100.
 
@@ -13,6 +11,9 @@ it would be nice to be able to use :var[:index] as cvariable
 
 support for dynamic SQL with unknown number of variables with DESCRIPTORS
 
+The line numbering is not exact.
+
 Missing statements:
  - exec sql allocate
+ - exec sql deallocate
  - SQLSTATE

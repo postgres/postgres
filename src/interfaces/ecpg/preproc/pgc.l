@@ -149,12 +149,12 @@ real			[\-]?(((({digit}*\.{digit}+)|({digit}+\.{digit}*))([Ee][-+]?{digit}+)?)|(
 param			\${integer}
 
 comment			("--"|"//").*\n
+ccomment		"//".*\n
 
 space			[ \t\n\f]
 other			.
 
 /* some stuff needed for ecpg */
-ccomment	"//".*\n
 exec    [eE][xX][eE][cC]
 define	[dD][eE][fF][iI][nN][eE]
 include [iI][nN][cC][lL][uU][dD][eE]
@@ -659,6 +659,7 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 			  input_filename = mm_strdup(inc_file);
 			  yy_switch_to_buffer(yy_create_buffer(yyin,YY_BUF_SIZE ));
 			  yylineno = 0;
+			  output_line_number();
 
 			  BEGIN C;
 			}
@@ -682,9 +683,9 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 
 				yy_buffer = yy_buffer->next;
 				free(yb);
+				output_line_number();
 			  }
 			}
-
 %%
 void
 lex_init(void)

@@ -535,5 +535,14 @@ Sat Mar 20 19:57:42 CET 1999
 
 	- Synced preproc.y with gram.y.
 	- Fixed handling of ';' character.
+
+Sun Mar 21 13:05:50 CET 1999
+
+	- Synced preproc.y with gram.y.
+
+Mon Mar 22 19:22:38 CET 1999
+
+	- Fixed incorrect password entry in parser.
+	- Made no_auto_trans available for each connection seperately.
 	- Set library version to 3.0.0
 	- Set ecpg version to 2.6.0

@@ -269,7 +269,6 @@ ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype typ,
 		char	   *variable = (char *) mm_alloc(strlen(name) + ((prefix == NULL) ? 0 : strlen(prefix)) + 4);
 		char	   *offset = (char *) mm_alloc(strlen(name) + strlen("sizeof(struct varchar_)") + 1);
 
-/*		if (varcharsize == 0 || arrsize >= 0)*/
 		/* we have to use the pointer except for arrays with given bounds */
 		if (arrsize > 0)
 			sprintf(variable, "(%s%s)", prefix ? prefix : "", name);

@@ -37,11 +37,19 @@ struct ECPGtype ecpg_query = {ECPGt_char_variable, 0L, {NULL}};
  */
 char * input_filename = NULL;
 
-static void
+void
 output_line_number()
 {
     if (input_filename)
-       fprintf(yyout, "\n#line %d \"%s\"\n", yylineno, input_filename);
+       fprintf(yyout, "\n#line %d \"%s\"\n", yylineno + 1, input_filename);
+}
+
+static void
+output_simple_statement(char *cmd)
+{
+	fputs(cmd, yyout);
+	output_line_number();
+        free(cmd);
 }
 
 /*
@@ -883,10 +891,7 @@ stmt:  AddAttrStmt			{ output_statement($1, 0); }
 		| RevokeStmt		{ output_statement($1, 0); }
                 | OptimizableStmt	{
 						if (strncmp($1, "/* " , sizeof("/* ")-1) == 0)
-						{
-							fputs($1, yyout);
-							free($1);
-						}
+							output_simple_statement($1);
 						else
 							output_statement($1, 1);
 					}
@@ -908,14 +913,12 @@ stmt:  AddAttrStmt			{ output_statement($1, 0); }
 						if (connection)
 							yyerror("no at option for connect statement.\n");
 
-						fprintf(yyout, "no_auto_trans = %d;\n", no_auto_trans);
-						fprintf(yyout, "ECPGconnect(__LINE__, %s);", $1);
+						fprintf(yyout, "ECPGconnect(__LINE__, %s, %d);", $1, no_auto_trans);
 						whenever_action(0);
 						free($1);
 					} 
 		| ECPGCursorStmt	{
-						fputs($1, yyout);
-                                                free($1); 
+						output_simple_statement($1);
 					}
 		| ECPGDeallocate	{
 						if (connection)
@@ -926,8 +929,7 @@ stmt:  AddAttrStmt			{ output_statement($1, 0); }
 						free($1);
 					}
 		| ECPGDeclare		{
-						fputs($1, yyout);
-						free($1);
+						output_simple_statement($1);
 					}
 		| ECPGDisconnect	{
 						if (connection)
@@ -991,23 +993,19 @@ stmt:  AddAttrStmt			{ output_statement($1, 0); }
 						if (connection)
 							yyerror("no at option for typedef statement.\n");
 
-						fputs($1, yyout);
-                                                free($1);
+						output_simple_statement($1);
 					}
 		| ECPGVar		{
 						if (connection)
 							yyerror("no at option for var statement.\n");
 
-						fputs($1, yyout);
-                                                free($1);
+						output_simple_statement($1);
 					}
 		| ECPGWhenever		{
 						if (connection)
 							yyerror("no at option for whenever statement.\n");
 
-						fputs($1, yyout);
-						output_line_number();
-						free($1);
+						output_simple_statement($1);
 					}
 		;
 
@@ -3572,6 +3570,10 @@ a_expr:  attr opt_indirection
 				}
 		| '-' a_expr %prec UMINUS
 				{	$$ = cat2_str(make1_str("-"), $2); }
+		| '%' a_expr
+				{       $$ = cat2_str(make1_str("%"), $2); }
+		| a_expr '%'
+				{       $$ = cat2_str($1, make1_str("%")); }
 		| a_expr '+' a_expr
 				{	$$ = cat3_str($1, make1_str("+"), $3); }
 		| a_expr '-' a_expr
@@ -3663,7 +3665,6 @@ a_expr:  attr opt_indirection
 				{
   		     		        $$ = make1_str("user");
 			     	}
-
 		| EXISTS '(' SubSelect ')'
 				{
 					$$ = make3_str(make1_str("exists("), $3, make1_str(")"));
@@ -3879,6 +3880,10 @@ b_expr:  attr opt_indirection
 				}
 		| '-' b_expr %prec UMINUS
 				{	$$ = cat2_str(make1_str("-"), $2); }
+		| '%' b_expr
+				{       $$ = cat2_str(make1_str("%"), $2); }
+		| b_expr '%'
+				{       $$ = cat2_str($1, make1_str("%")); }
 		| b_expr '+' b_expr
 				{	$$ = cat3_str($1, make1_str("+"), $3); }
 		| b_expr '-' b_expr
@@ -4677,7 +4682,7 @@ ora_user: user_name
 		{
                         $$ = make2_str($1, make1_str(",NULL"));
 	        }
-	| user_name '/' ColId
+	| user_name '/' user_name
 		{
         		$$ = make3_str($1, make1_str(","), $3);
                 }
@@ -5604,6 +5609,10 @@ ecpg_expr:  attr opt_indirection
 				}
 		| '-' ecpg_expr %prec UMINUS
 				{	$$ = cat2_str(make1_str("-"), $2); }
+		| '%' ecpg_expr
+				{       $$ = cat2_str(make1_str("%"), $2); }
+		| a_expr '%'
+				{       $$ = cat2_str($1, make1_str("%")); }
 		| a_expr '+' ecpg_expr
 				{	$$ = cat3_str($1, make1_str("+"), $3); }
 		| a_expr '-' ecpg_expr
@@ -5618,6 +5627,10 @@ ecpg_expr:  attr opt_indirection
 				{	$$ = cat3_str($1, make1_str("<"), $3); }
 		| a_expr '>' ecpg_expr
 				{	$$ = cat3_str($1, make1_str(">"), $3); }
+		| a_expr '=' NULL_P
+				{       $$ = cat2_str($1, make1_str("= NULL")); }
+		| NULL_P '=' a_expr
+				{       $$ = cat2_str(make1_str("= NULL"), $3); }
 		| a_expr '=' ecpg_expr
 				{	$$ = cat3_str($1, make1_str("="), $3); }
 	/*	| ':' ecpg_expr
@@ -5686,6 +5699,10 @@ ecpg_expr:  attr opt_indirection
 				{
 					$$ = make1_str("current_user");
 				}
+		| USER
+				{
+  		     		        $$ = make1_str("user");
+			     	}
 		| EXISTS '(' SubSelect ')'
 				{
 					$$ = make3_str(make1_str("exists("), $3, make1_str(")"));
@@ -5758,11 +5775,11 @@ ecpg_expr:  attr opt_indirection
 				}
 		| a_expr IN '(' in_expr ')'
 				{
-					$$ = make4_str($1, make1_str("in ("), $4, make1_str(")")); 
+					$$ = make4_str($1, make1_str(" in ("), $4, make1_str(")")); 
 				}
 		| a_expr NOT IN '(' not_in_expr ')'
 				{
-					$$ = make4_str($1, make1_str("not in ("), $5, make1_str(")")); 
+					$$ = make4_str($1, make1_str(" not in ("), $5, make1_str(")")); 
 				}
 		| a_expr Op '(' SubSelect ')'
 				{
@@ -5838,7 +5855,7 @@ ecpg_expr:  attr opt_indirection
 				}
 		| a_expr Op ALL '(' SubSelect ')'
 				{
-					$$ = make3_str($1, $2, make3_str(make1_str("all ("), $5, make1_str(")"))); 
+					$$ = cat3_str($1, $2, make3_str(make1_str("all ("), $5, make1_str(")"))); 
 				}
 		| a_expr '+' ALL '(' SubSelect ')'
 				{
@@ -5878,6 +5895,8 @@ ecpg_expr:  attr opt_indirection
 				{	$$ = cat3_str($1, make1_str("or"), $3); }
 		| NOT ecpg_expr
 				{	$$ = cat2_str(make1_str("not"), $2); }
+		| case_expr
+				{       $$ = $1; }
 		| civariableonly
 			        { 	$$ = $1; }
 		;

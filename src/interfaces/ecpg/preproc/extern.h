@@ -23,6 +23,7 @@ extern struct arguments *argsresult;
 
 /* functions */
 
+extern void output_line_number(void);
 extern void lex_init(void);
 extern char *input_filename;
 extern int	yyparse(void);
