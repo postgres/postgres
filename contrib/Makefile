@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/contrib/Makefile,v 1.39 2002/09/05 20:53:45 tgl Exp $
+# $Header: /cvsroot/pgsql/contrib/Makefile,v 1.40 2002/10/21 00:12:46 momjian Exp $
 
 subdir = contrib
 top_builddir = ..
@@ -40,10 +40,6 @@ WANTED_DIRS = \
 		tsearch		\
 		userlock	\
 		vacuumlo
-
-ifeq ($(with_java),yes)
-WANTED_DIRS += retep
-endif
 
 # Missing:
 #		ipc_check	\ (does not have a makefile)

@@ -160,10 +160,6 @@ pgstattuple -
 	A function returns the percentage of "dead" tuples in a table
 	by Tatsuo Ishii <t-ishii@sra.co.jp>
 
-retep -
-	Tools to build retep tools packages
-	by Peter T Mount <peter@retep.org.uk>
-
 rserv -
 	Replication server
 	by Vadim B. Mikheev <vadim4o@email.com>
