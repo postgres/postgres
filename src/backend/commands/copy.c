@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.41 1998/02/10 16:02:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.42 1998/02/13 19:45:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,8 +48,7 @@ static Oid	GetOutputFunction(Oid type);
 static Oid	GetTypeElement(Oid type);
 static Oid	GetInputFunction(Oid type);
 static Oid	IsTypeByVal(Oid type);
-static void
-GetIndexRelations(Oid main_relation_oid,
+static void GetIndexRelations(Oid main_relation_oid,
 				  int *n_indices,
 				  Relation **index_rels);
 

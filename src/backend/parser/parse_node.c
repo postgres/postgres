@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.12 1998/02/10 16:03:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.13 1998/02/13 19:45:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,7 +79,7 @@ make_operand(char *opname,
 			Assert(nodeTag(result) == T_Const);
 			val = (Datum) textout((struct varlena *)
 								  con->constvalue);
-			infunc = typeidRetinfunc(true_typeId);
+			infunc = typeidInfunc(true_typeId);
 			con = makeNode(Const);
 			con->consttype = true_typeId;
 			con->constlen = typeLen(true_type);
@@ -185,10 +185,10 @@ make_op(char *opname, Node *ltree, Node *rtree)
 			CONVERTABLE_TYPE(rtypeId) && nodeTag(rtree) == T_Const &&
 			!((Const *) rtree)->constiscast)
 		{
-			outfunc = typeidRetoutfunc(rtypeId);
-			infunc = typeidRetinfunc(ltypeId);
+			outfunc = typeidOutfunc(rtypeId);
+			infunc = typeidInfunc(ltypeId);
 			outstr = (char *) fmgr(outfunc, ((Const *) rtree)->constvalue);
-			((Const *) rtree)->constvalue = (Datum) fmgr(infunc, outstr);
+			((Const *) rtree)->constvalue = (Datum) fmgr(infunc, outstr, -1);
 			pfree(outstr);
 			((Const *) rtree)->consttype = rtypeId = ltypeId;
 			newtype = typeidType(rtypeId);
@@ -200,10 +200,10 @@ make_op(char *opname, Node *ltree, Node *rtree)
 			CONVERTABLE_TYPE(ltypeId) && nodeTag(ltree) == T_Const &&
 			!((Const *) ltree)->constiscast)
 		{
-			outfunc = typeidRetoutfunc(ltypeId);
-			infunc = typeidRetinfunc(rtypeId);
+			outfunc = typeidOutfunc(ltypeId);
+			infunc = typeidInfunc(rtypeId);
 			outstr = (char *) fmgr(outfunc, ((Const *) ltree)->constvalue);
-			((Const *) ltree)->constvalue = (Datum) fmgr(infunc, outstr);
+			((Const *) ltree)->constvalue = (Datum) fmgr(infunc, outstr, -1);
 			pfree(outstr);
 			((Const *) ltree)->consttype = ltypeId = rtypeId;
 			newtype = typeidType(ltypeId);

@@ -10,7 +10,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: array.h,v 1.9 1998/01/24 22:50:31 momjian Exp $
+ * $Id: array.h,v 1.10 1998/02/13 19:46:22 momjian Exp $
  *
  * NOTES
  *	  XXX the data array should be LONGALIGN'd -- notice that the array
@@ -114,7 +114,7 @@ typedef struct
 /*
  * prototypes for functions defined in arrayfuncs.c
  */
-extern char *array_in(char *string, Oid element_type);
+extern char *array_in(char *string, Oid element_type, int16 typmod);
 extern char *array_out(ArrayType *v, Oid element_type);
 extern char *array_dims(ArrayType *v, bool *isNull);
 extern Datum array_ref(ArrayType *array, int n, int indx[], int reftype,

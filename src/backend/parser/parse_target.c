@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.9 1998/02/10 16:03:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.10 1998/02/13 19:45:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -394,7 +394,7 @@ make_targetlist_expr(ParseState *pstate,
 				lnext(expr) =
 					makeConst(attrtype,
 							  attrlen,
-							  (Datum) fmgr(typeidRetinfunc(attrtype),
+							  (Datum) fmgr(typeidInfunc(attrtype),
 										 val, typeidTypElem(attrtype), -1),
 							  false,
 							  true /* Maybe correct-- 80% chance */ ,

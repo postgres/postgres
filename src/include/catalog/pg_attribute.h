@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_attribute.h,v 1.27 1998/02/10 16:04:03 momjian Exp $
+ * $Id: pg_attribute.h,v 1.28 1998/02/13 19:46:09 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -88,7 +88,8 @@ CATALOG(pg_attribute) BOOTSTRAP
 	int2		atttypmod;
 	/*
 	 * atttypmod records type-specific modifications supplied at table
-     * creation time.
+     * creation time, and passes it to input and output functions as the
+     * third argument.
 	 */
 
 	bool		attbyval;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.5 1998/02/10 16:03:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.6 1998/02/13 19:45:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -148,7 +148,7 @@ stringTypeString(Type tp, char *string, int16 atttypmod)
 
 /* Given a type id, returns the out-conversion function of the type */
 Oid
-typeidRetoutfunc(Oid type_id)
+typeidOutfunc(Oid type_id)
 {
 	HeapTuple	typeTuple;
 	TypeTupleForm type;
@@ -158,7 +158,7 @@ typeidRetoutfunc(Oid type_id)
 									ObjectIdGetDatum(type_id),
 									0, 0, 0);
 	if (!HeapTupleIsValid(typeTuple))
-		elog(ERROR, "typeidRetoutfunc: Invalid type - oid = %u", type_id);
+		elog(ERROR, "typeidOutfunc: Invalid type - oid = %u", type_id);
 
 	type = (TypeTupleForm) GETSTRUCT(typeTuple);
 	outfunc = type->typoutput;
@@ -241,7 +241,7 @@ GetArrayElementType(Oid typearray)
 
 /* Given a type id, returns the in-conversion function of the type */
 Oid
-typeidRetinfunc(Oid type_id)
+typeidInfunc(Oid type_id)
 {
 	HeapTuple	typeTuple;
 	TypeTupleForm type;
@@ -251,7 +251,7 @@ typeidRetinfunc(Oid type_id)
 									ObjectIdGetDatum(type_id),
 									0, 0, 0);
 	if (!HeapTupleIsValid(typeTuple))
-		elog(ERROR, "typeidRetinfunc: Invalid type - oid = %u", type_id);
+		elog(ERROR, "typeidInfunc: Invalid type - oid = %u", type_id);
 
 	type = (TypeTupleForm) GETSTRUCT(typeTuple);
 	infunc = type->typinput;

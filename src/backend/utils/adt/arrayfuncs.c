@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.24 1998/01/15 19:45:01 pgsql Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.25 1998/02/13 19:45:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,11 +43,10 @@
 
 /*-=-=--=-=-=-=-=-=-=-=--=-=-=-=-=-=-=-=--=-=-=-=-=-=-=-=--=-=-=-=-=-=-=-*/
 static int	_ArrayCount(char *str, int dim[], int typdelim);
-static char *
-_ReadArrayStr(char *arrayStr, int nitems, int ndim, int dim[],
+static char *_ReadArrayStr(char *arrayStr, int nitems, int ndim, int dim[],
 			  FmgrInfo *inputproc, Oid typelem, char typdelim,
 			  int typlen, bool typbyval, char typalign,
-			  int *nbytes);
+			  int *nbytes, int16 typmod);
 
 #ifdef LOARRAY
 static char *
@@ -93,7 +92,8 @@ static char *array_seek(char *ptr, int eltsize, int nitems);
  */
 char	   *
 array_in(char *string,			/* input array in external form */
-		 Oid element_type)		/* type OID of an array element */
+		 Oid element_type,		/* type OID of an array element */
+		 int16 typmod)
 {
 	int			typlen;
 	bool		typbyval,
@@ -208,7 +208,7 @@ array_in(char *string,			/* input array in external form */
 		/* array not a large object */
 		dataPtr =
 			(char *) _ReadArrayStr(p, nitems, ndim, dim, &inputproc, typelem,
-								   typdelim, typlen, typbyval, typalign,
+								   typmod, typdelim, typlen, typbyval, typalign,
 								   &nbytes);
 		nbytes += ARR_OVERHEAD(ndim);
 		retval = (ArrayType *) palloc(nbytes);
@@ -369,6 +369,7 @@ _ReadArrayStr(char *arrayStr,
 			  FmgrInfo *inputproc,		/* function used for the
 										 * conversion */
 			  Oid typelem,
+			  int16 typmod,
 			  char typdelim,
 			  int typlen,
 			  bool typbyval,
@@ -460,7 +461,7 @@ _ReadArrayStr(char *arrayStr,
 		*q = '\0';
 		if (i >= nitems)
 			elog(ERROR, "array_in: illformed array constant");
-		values[i] = (*fmgr_faddr(inputproc)) (p, typelem);
+		values[i] = (*fmgr_faddr(inputproc)) (p, typelem, typmod);
 		p = ++q;
 		if (!eoArray)
 
