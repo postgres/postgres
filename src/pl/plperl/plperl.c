@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plperl/plperl.c,v 1.35 2002/09/21 18:39:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plperl/plperl.c,v 1.36 2003/04/20 21:15:34 tgl Exp $
  *
  **********************************************************************/
 
@@ -92,8 +92,6 @@ typedef struct plperl_proc_desc
  * Global data
  **********************************************************************/
 static int	plperl_firstcall = 1;
-static int	plperl_call_level = 0;
-static int	plperl_restart_in_progress = 0;
 static PerlInterpreter *plperl_interp = NULL;
 static HV  *plperl_proc_hash = NULL;
 
@@ -143,6 +141,15 @@ plperl_init_all(void)
 	if (!plperl_firstcall)
 		return;
 
+	/************************************************************
+	 * Free the proc hash table
+	 ************************************************************/
+	if (plperl_proc_hash != NULL)
+	{
+		hv_undef(plperl_proc_hash);
+		SvREFCNT_dec((SV *) plperl_proc_hash);
+		plperl_proc_hash = NULL;
+	}
 
 	/************************************************************
 	 * Destroy the existing Perl interpreter
@@ -152,16 +159,6 @@ plperl_init_all(void)
 		perl_destruct(plperl_interp);
 		perl_free(plperl_interp);
 		plperl_interp = NULL;
-	}
-
-	/************************************************************
-	 * Free the proc hash table
-	 ************************************************************/
-	if (plperl_proc_hash != NULL)
-	{
-		hv_undef(plperl_proc_hash);
-		SvREFCNT_dec((SV *) plperl_proc_hash);
-		plperl_proc_hash = NULL;
 	}
 
 	/************************************************************
@@ -202,15 +199,12 @@ plperl_init_interp(void)
 	perl_parse(plperl_interp, plperl_init_shared_libs, 3, embedding, NULL);
 	perl_run(plperl_interp);
 
-
-
 	/************************************************************
 	 * Initialize the proc and query hash tables
 	 ************************************************************/
 	plperl_proc_hash = newHV();
 
 }
-
 
 
 /**********************************************************************
@@ -229,7 +223,7 @@ plperl_call_handler(PG_FUNCTION_ARGS)
 	Datum		retval;
 
 	/************************************************************
-	 * Initialize interpreters on first call
+	 * Initialize interpreter on first call
 	 ************************************************************/
 	if (plperl_firstcall)
 		plperl_init_all();
@@ -239,10 +233,6 @@ plperl_call_handler(PG_FUNCTION_ARGS)
 	 ************************************************************/
 	if (SPI_connect() != SPI_OK_CONNECT)
 		elog(ERROR, "plperl: cannot connect to SPI manager");
-	/************************************************************
-	 * Keep track about the nesting of Perl-SPI-Perl-... calls
-	 ************************************************************/
-	plperl_call_level++;
 
 	/************************************************************
 	 * Determine if called as function or trigger and
@@ -261,8 +251,6 @@ plperl_call_handler(PG_FUNCTION_ARGS)
 	else
 		retval = plperl_func_handler(fcinfo);
 
-	plperl_call_level--;
-
 	return retval;
 }
 
@@ -272,13 +260,11 @@ plperl_call_handler(PG_FUNCTION_ARGS)
  *		create the anonymous subroutine whose text is in the SV.
  *		Returns the SV containing the RV to the closure.
  **********************************************************************/
-static
-SV *
+static SV *
 plperl_create_sub(char *s, bool trusted)
 {
 	dSP;
-
-	SV		   *subref = NULL;
+	SV		   *subref;
 	int			count;
 
 	ENTER;
@@ -286,9 +272,22 @@ plperl_create_sub(char *s, bool trusted)
 	PUSHMARK(SP);
 	XPUSHs(sv_2mortal(newSVpv(s, 0)));
 	PUTBACK;
+	/*
+	 * G_KEEPERR seems to be needed here, else we don't recognize compile
+	 * errors properly.  Perhaps it's because there's another level of eval
+	 * inside mksafefunc?
+	 */
 	count = perl_call_pv((trusted ? "mksafefunc" : "mkunsafefunc"),
 						 G_SCALAR | G_EVAL | G_KEEPERR);
 	SPAGAIN;
+
+	if (count != 1)
+	{
+		PUTBACK;
+		FREETMPS;
+		LEAVE;
+		elog(ERROR, "plperl: didn't get a return item from mksafefunc");
+	}
 
 	if (SvTRUE(ERRSV))
 	{
@@ -298,9 +297,6 @@ plperl_create_sub(char *s, bool trusted)
 		LEAVE;
 		elog(ERROR, "creation of function failed: %s", SvPV(ERRSV, PL_na));
 	}
-
-	if (count != 1)
-		elog(ERROR, "creation of function failed - no return from mksafefunc");
 
 	/*
 	 * need to make a deep copy of the return. it comes off the stack as a
@@ -324,6 +320,7 @@ plperl_create_sub(char *s, bool trusted)
 	PUTBACK;
 	FREETMPS;
 	LEAVE;
+
 	return subref;
 }
 
@@ -352,21 +349,18 @@ plperl_init_shared_libs(pTHX)
  * plperl_call_perl_func()		- calls a perl function through the RV
  *			stored in the prodesc structure. massages the input parms properly
  **********************************************************************/
-static
-SV *
+static SV *
 plperl_call_perl_func(plperl_proc_desc * desc, FunctionCallInfo fcinfo)
 {
 	dSP;
-
 	SV		   *retval;
 	int			i;
 	int			count;
 
-
 	ENTER;
 	SAVETMPS;
 
-	PUSHMARK(sp);
+	PUSHMARK(SP);
 	for (i = 0; i < desc->nargs; i++)
 	{
 		if (desc->arg_is_rel[i])
@@ -401,7 +395,9 @@ plperl_call_perl_func(plperl_proc_desc * desc, FunctionCallInfo fcinfo)
 		}
 	}
 	PUTBACK;
-	count = perl_call_sv(desc->reference, G_SCALAR | G_EVAL | G_KEEPERR);
+
+	/* Do NOT use G_KEEPERR here */
+	count = perl_call_sv(desc->reference, G_SCALAR | G_EVAL);
 
 	SPAGAIN;
 
@@ -424,15 +420,13 @@ plperl_call_perl_func(plperl_proc_desc * desc, FunctionCallInfo fcinfo)
 
 	retval = newSVsv(POPs);
 
-
 	PUTBACK;
 	FREETMPS;
 	LEAVE;
 
 	return retval;
-
-
 }
+
 
 /**********************************************************************
  * plperl_func_handler()		- Handler for regular function calls
@@ -443,22 +437,9 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 	plperl_proc_desc *prodesc;
 	SV		   *perlret;
 	Datum		retval;
-	sigjmp_buf	save_restart;
 
 	/* Find or compile the function */
 	prodesc = compile_plperl_function(fcinfo->flinfo->fn_oid, false);
-
-	/* Set up error handling */
-	memcpy(&save_restart, &Warn_restart, sizeof(save_restart));
-
-	if (sigsetjmp(Warn_restart, 1) != 0)
-	{
-		memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
-		plperl_restart_in_progress = 1;
-		if (--plperl_call_level == 0)
-			plperl_restart_in_progress = 0;
-		siglongjmp(Warn_restart, 1);
-	}
 
 	/************************************************************
 	 * Call the Perl function
@@ -489,14 +470,6 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 	}
 
 	SvREFCNT_dec(perlret);
-
-	memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
-	if (plperl_restart_in_progress)
-	{
-		if (--plperl_call_level == 0)
-			plperl_restart_in_progress = 0;
-		siglongjmp(Warn_restart, 1);
-	}
 
 	return retval;
 }
@@ -734,7 +707,7 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
  * plperl_build_tuple_argument() - Build a string for a ref to a hash
  *				  from all attributes of a given tuple
  **********************************************************************/
-static SV  *
+static SV *
 plperl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc)
 {
 	int			i;
