@@ -67,6 +67,7 @@ LIB32_OBJS= \
 	"$(INTDIR)\inet_aton.obj" \
 	"$(INTDIR)\crypt.obj" \
 	"$(INTDIR)\path.obj" \
+	"$(INTDIR)\thread.obj" \
 	"$(INTDIR)\dllist.obj" \
 	"$(INTDIR)\md5.obj" \
 	"$(INTDIR)\ip.obj" \
