@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.70 1998/04/07 22:36:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.71 1998/05/06 23:53:27 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -230,7 +230,8 @@ dumpClasses_nodumpData(FILE *fout, const char *classname, const bool oids)
 		sprintf(query, "COPY %s TO stdout;\n", fmtId(classname));
 	}
 	res = PQexec(g_conn, query);
-	if (!res)
+	if (!res ||
+		PQresultStatus(res) == PGRES_FATAL_ERROR)
 	{
 		fprintf(stderr, "SQL query to dump the contents of Table %s "
 				"did not execute.  Explanation from backend: '%s'.\n"

@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclId.c,v 1.9 1998/05/06 23:51:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclId.c,v 1.10 1998/05/06 23:53:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,19 +60,21 @@ int PgInputProc(DRIVER_INPUT_PROTO)
 	return -1;
     }
 
-    if (connid->res_copyStatus == RES_COPY_FIN) {
-	return PgEndCopy(connid, errorCodePtr);
-    }
-
     /* Try to load any newly arrived data */
     errno = 0;
 
     if (pqReadData(conn) < 0) {
-      *errorCodePtr = errno ? errno : EIO;
-      return -1;
+	*errorCodePtr = errno ? errno : EIO;
+	return -1;
     }
 
-    /* Move data from libpq's buffer to tcl's */
+    /* Move data from libpq's buffer to Tcl's.
+     * We want to accept data only in units of whole lines,
+     * not partial lines.  This ensures that we can recognize
+     * the terminator line "\\.\n".  (Otherwise, if it happened
+     * to cross a packet/buffer boundary, we might hand the first
+     * one or two characters off to Tcl, which we shouldn't.)
+     */
 
     conn->inCursor = conn->inStart;
 
@@ -81,19 +83,33 @@ int PgInputProc(DRIVER_INPUT_PROTO)
 	   pqGetc(&c, conn) == 0) {
 	*buf++ = c;
 	--avail;
-	if (c == '\n' && bufSize-avail >= 3) {
-	    if ((bufSize-avail == 3 || buf[-4] == '\n') &&
-		    buf[-3] == '\\' && buf[-2] == '.') {
-		avail += 3;
-		connid->res_copyStatus = RES_COPY_FIN;
-		break;
+	if (c == '\n') {
+	    /* Got a complete line; mark the data removed from libpq */
+	    conn->inStart = conn->inCursor;
+	    /* Is it the endmarker line? */
+	    if (bufSize-avail == 3 && buf[-3] == '\\' && buf[-2] == '.') {
+		/* Yes, change state and return 0 */
+		return PgEndCopy(connid, errorCodePtr);
 	    }
+	    /* No, return the data to Tcl */
+	    /* fprintf(stderr, "returning %d chars\n", bufSize - avail); */
+	    return bufSize - avail;
 	}
     }
-    /* Accept the data permanently */
-    conn->inStart = conn->inCursor;
-    /* fprintf(stderr, "returning %d chars\n", bufSize - avail); */
-    return bufSize - avail;
+
+    /* We don't have a complete line.
+     * We'd prefer to leave it in libpq's buffer until the rest arrives,
+     * but there is a special case: what if the line is longer than the
+     * buffer Tcl is offering us?  In that case we'd better hand over
+     * a partial line, else we'd get into an infinite loop.
+     * Do this in a way that ensures we can't misrecognize a terminator
+     * line later: leave last 3 characters in libpq buffer.
+     */
+    if (avail == 0 && bufSize > 3) {
+	conn->inStart = conn->inCursor - 3;
+	return bufSize - 3;
+    }
+    return 0;
 }
 
 /*
@@ -116,10 +132,13 @@ int PgOutputProc(DRIVER_OUTPUT_PROTO)
     errno = 0;
 
     if (pqPutnchar(buf, bufSize, conn)) {
-      *errorCodePtr = errno ? errno : EIO;
-      return -1;
+	*errorCodePtr = errno ? errno : EIO;
+	return -1;
     }
 
+    /* This assumes Tcl script will write the terminator line
+     * in a single operation; maybe not such a good assumption?
+     */
     if (bufSize >= 3 && strncmp(&buf[bufSize-3], "\\.\n", 3) == 0) {
 	(void) pqFlush(conn);
 	if (PgEndCopy(connid, errorCodePtr) == -1)
