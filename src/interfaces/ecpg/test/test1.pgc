@@ -1,3 +1,5 @@
+
+
 exec sql include sqlca;
 
 exec sql whenever sqlerror do PrintAndStop(msg);
@@ -14,8 +16,6 @@ void warn(void)
 {
 	fprintf(stderr, "Warning: At least one column was truncated\n");
 }
-
-exec sql include sqlca;
 
 /* comment */
 exec sql define AMOUNT 6;
