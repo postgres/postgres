@@ -17,7 +17,7 @@
  *
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.43 2002/10/03 21:06:23 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.43.2.1 2003/03/27 19:25:52 tgl Exp $
  *
  * ----------
  */
@@ -35,7 +35,9 @@
 #include "catalog/pg_operator.h"
 #include "commands/trigger.h"
 #include "executor/spi_priv.h"
+#include "optimizer/planmain.h"
 #include "parser/parse_oper.h"
+#include "rewrite/rewriteHandler.h"
 #include "utils/lsyscache.h"
 #include "miscadmin.h"
 
@@ -2672,10 +2674,8 @@ RI_FKey_setdefault_del(PG_FUNCTION_ARGS)
 				const char *qualsep;
 				Oid			queryoids[RI_MAX_NUMKEYS];
 				Plan	   *spi_plan;
-				AttrDefault *defval;
-				TargetEntry *spi_qptle;
-				int			i,
-							j;
+				int			i;
+				List	   *l;
 
 				/* ----------
 				 * The query string built is
@@ -2712,44 +2712,31 @@ RI_FKey_setdefault_del(PG_FUNCTION_ARGS)
 				 */
 				qplan = SPI_prepare(querystr, qkey.nkeypairs, queryoids);
 
-				/* ----------
-				 * Here now follows very ugly code depending on internals
-				 * of the SPI manager.
+				/*
+				 * Scan the plan's targetlist and replace the NULLs by
+				 * appropriate column defaults, if any (if not, they stay
+				 * NULL).
 				 *
-				 * EVIL EVIL EVIL (but must be - Jan)
-				 *
-				 * We replace the CONST NULL targetlist expressions
-				 * in the generated plan by (any) default values found
-				 * in the tuple constructor.
-				 * ----------
+				 * XXX  This is really ugly; it'd be better to use "UPDATE
+				 * SET foo = DEFAULT", if we had it.
 				 */
 				spi_plan = (Plan *) lfirst(((_SPI_plan *) qplan)->ptlist);
-				if (fk_rel->rd_att->constr != NULL)
-					defval = fk_rel->rd_att->constr->defval;
-				else
-					defval = NULL;
-				for (i = 0; i < qkey.nkeypairs && defval != NULL; i++)
+				foreach(l, spi_plan->targetlist)
 				{
-					/*
-					 * For each key attribute lookup the tuple constructor
-					 * for a corresponding default value
-					 */
-					for (j = 0; j < fk_rel->rd_att->constr->num_defval; j++)
-					{
-						if (defval[j].adnum ==
-							qkey.keypair[i][RI_KEYPAIR_FK_IDX])
-						{
-							/*
-							 * That's the one - push the expression from
-							 * defval.adbin into the plan's targetlist
-							 */
-							spi_qptle = (TargetEntry *)
-								nth(defval[j].adnum - 1,
-									spi_plan->targetlist);
-							spi_qptle->expr = stringToNode(defval[j].adbin);
+					TargetEntry *tle = (TargetEntry *) lfirst(l);
+					Node *dfl;
 
-							break;
-						}
+					/* Ignore any junk columns or Var=Var columns */
+					if (tle->resdom->resjunk)
+						continue;
+					if (IsA(tle->expr, Var))
+						continue;
+
+					dfl = build_column_default(fk_rel, tle->resdom->resno);
+					if (dfl)
+					{
+						fix_opids(dfl);
+						tle->expr = dfl;
 					}
 				}
 			}
@@ -2947,10 +2934,8 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 				const char *qualsep;
 				Oid			queryoids[RI_MAX_NUMKEYS];
 				Plan	   *spi_plan;
-				AttrDefault *defval;
-				TargetEntry *spi_qptle;
-				int			i,
-							j;
+				int			i;
+				List	   *l;
 
 				/* ----------
 				 * The query string built is
@@ -2998,49 +2983,30 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 				qplan = SPI_prepare(querystr, qkey.nkeypairs, queryoids);
 
 				/*
-				 * Now replace the CONST NULL targetlist expressions in
-				 * the generated plan by (any) default values found in the
-				 * tuple constructor.
+				 * Scan the plan's targetlist and replace the NULLs by
+				 * appropriate column defaults, if any (if not, they stay
+				 * NULL).
+				 *
+				 * XXX  This is really ugly; it'd be better to use "UPDATE
+				 * SET foo = DEFAULT", if we had it.
 				 */
 				spi_plan = (Plan *) lfirst(((_SPI_plan *) qplan)->ptlist);
-				if (fk_rel->rd_att->constr != NULL)
-					defval = fk_rel->rd_att->constr->defval;
-				else
-					defval = NULL;
-				for (i = 0; i < qkey.nkeypairs && defval != NULL; i++)
+				foreach(l, spi_plan->targetlist)
 				{
-					/*
-					 * MATCH <unspecified> - only change columns
-					 * corresponding to changed columns in pk_rel's key.
-					 * This conditional must match the one in the loop
-					 * above that built the SET attrn=NULL list.
-					 */
-					if (match_type == RI_MATCH_TYPE_FULL ||
-						!ri_OneKeyEqual(pk_rel, i, old_row,
-									  new_row, &qkey, RI_KEYPAIR_PK_IDX))
-					{
-						/*
-						 * For each key attribute lookup the tuple
-						 * constructor for a corresponding default value
-						 */
-						for (j = 0; j < fk_rel->rd_att->constr->num_defval; j++)
-						{
-							if (defval[j].adnum ==
-								qkey.keypair[i][RI_KEYPAIR_FK_IDX])
-							{
-								/*
-								 * That's the one - push the expression
-								 * from defval.adbin into the plan's
-								 * targetlist
-								 */
-								spi_qptle = (TargetEntry *)
-									nth(defval[j].adnum - 1,
-										spi_plan->targetlist);
-								spi_qptle->expr = stringToNode(defval[j].adbin);
+					TargetEntry *tle = (TargetEntry *) lfirst(l);
+					Node *dfl;
 
-								break;
-							}
-						}
+					/* Ignore any junk columns or Var=Var columns */
+					if (tle->resdom->resjunk)
+						continue;
+					if (IsA(tle->expr, Var))
+						continue;
+
+					dfl = build_column_default(fk_rel, tle->resdom->resno);
+					if (dfl)
+					{
+						fix_opids(dfl);
+						tle->expr = dfl;
 					}
 				}
 			}
