@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.71 2002/04/27 03:45:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.72 2002/04/30 01:26:26 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -706,6 +706,32 @@ get_rel_name(Oid relid)
 	}
 	else
 		return NULL;
+}
+
+/*
+ * get_rel_namespace
+ *
+ *		Returns the pg_namespace OID associated with a given relation.
+ */
+Oid
+get_rel_namespace(Oid relid)
+{
+	HeapTuple	tp;
+
+	tp = SearchSysCache(RELOID,
+						ObjectIdGetDatum(relid),
+						0, 0, 0);
+	if (HeapTupleIsValid(tp))
+	{
+		Form_pg_class reltup = (Form_pg_class) GETSTRUCT(tp);
+		Oid		result;
+
+		result = reltup->relnamespace;
+		ReleaseSysCache(tp);
+		return result;
+	}
+	else
+		return InvalidOid;
 }
 
 /*

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.152 2002/04/27 03:45:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.153 2002/04/30 01:26:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -374,25 +374,49 @@ ProcessUtility(Node *parsetree,
 		case T_RenameStmt:
 			{
 				RenameStmt *stmt = (RenameStmt *) parsetree;
+				Oid		relid;
 
 				CheckOwnership(stmt->relation, true);
+
+				relid = RangeVarGetRelid(stmt->relation, false);
 
 				switch (stmt->renameType)
 				{
 					case RENAME_TABLE:
-						renamerel(RangeVarGetRelid(stmt->relation, false),
-								  stmt->newname);
+					{
+						/*
+						 * RENAME TABLE requires that we (still) hold CREATE
+						 * rights on the containing namespace, as well as
+						 * ownership of the table.  But skip check for
+						 * temp tables.
+						 */
+						Oid			namespaceId = get_rel_namespace(relid);
+
+						if (!isTempNamespace(namespaceId))
+						{
+							AclResult	aclresult;
+
+							aclresult = pg_namespace_aclcheck(namespaceId,
+															  GetUserId(),
+															  ACL_CREATE);
+							if (aclresult != ACLCHECK_OK)
+								aclcheck_error(aclresult,
+											get_namespace_name(namespaceId));
+						}
+
+						renamerel(relid, stmt->newname);
 						break;
+					}
 					case RENAME_COLUMN:
-						renameatt(RangeVarGetRelid(stmt->relation, false),
-							  stmt->oldname,	/* old att name */
-							  stmt->newname,	/* new att name */
-							  interpretInhOption(stmt->relation->inhOpt));	/* recursive? */
+						renameatt(relid,
+								  stmt->oldname,	/* old att name */
+								  stmt->newname,	/* new att name */
+								  interpretInhOption(stmt->relation->inhOpt));	/* recursive? */
 						break;
 					case RENAME_TRIGGER:
-						renametrig(RangeVarGetRelid(stmt->relation, false),
-							  stmt->oldname,	/* old att name */
-							  stmt->newname);	/* new att name */
+						renametrig(relid,
+								   stmt->oldname,	/* old att name */
+								   stmt->newname);	/* new att name */
 						break;
 					case RENAME_RULE:
 						elog(ERROR, "ProcessUtility: Invalid target for RENAME: %d",
@@ -410,6 +434,9 @@ ProcessUtility(Node *parsetree,
 		case T_AlterTableStmt:
 			{
 				AlterTableStmt *stmt = (AlterTableStmt *) parsetree;
+				Oid		relid;
+
+				relid = RangeVarGetRelid(stmt->relation, false);
 
 				/*
 				 * Some or all of these functions are recursive to cover
@@ -422,7 +449,7 @@ ProcessUtility(Node *parsetree,
 						 * Recursively add column to table and,
 						 * if requested, to descendants
 						 */
-						AlterTableAddColumn(RangeVarGetRelid(stmt->relation, false),
+						AlterTableAddColumn(relid,
 											interpretInhOption(stmt->relation->inhOpt),
 											(ColumnDef *) stmt->def);
 						break;
@@ -431,18 +458,18 @@ ProcessUtility(Node *parsetree,
 						 * Recursively alter column default for table and,
 						 * if requested, for descendants
 						 */
-						AlterTableAlterColumnDefault(RangeVarGetRelid(stmt->relation, false),
+						AlterTableAlterColumnDefault(relid,
 													 interpretInhOption(stmt->relation->inhOpt),
 													 stmt->name,
 													 stmt->def);
 						break;
 					case 'N':	/* ALTER COLUMN DROP NOT NULL */
-						AlterTableAlterColumnDropNotNull(RangeVarGetRelid(stmt->relation, false),
+						AlterTableAlterColumnDropNotNull(relid,
 										interpretInhOption(stmt->relation->inhOpt),
 													stmt->name);
 						break;
 					case 'O':	/* ALTER COLUMN SET NOT NULL */
-						AlterTableAlterColumnSetNotNull(RangeVarGetRelid(stmt->relation, false),
+						AlterTableAlterColumnSetNotNull(relid,
 										interpretInhOption(stmt->relation->inhOpt),
 													stmt->name);
 						break;
@@ -452,7 +479,7 @@ ProcessUtility(Node *parsetree,
 						 * Recursively alter column statistics for table and,
 						 * if requested, for descendants
 						 */
-						AlterTableAlterColumnFlags(RangeVarGetRelid(stmt->relation, false),
+						AlterTableAlterColumnFlags(relid,
 												   interpretInhOption(stmt->relation->inhOpt),
 												   stmt->name,
 												   stmt->def,
@@ -464,7 +491,7 @@ ProcessUtility(Node *parsetree,
 						 * Recursively drop column from table and,
 						 * if requested, from descendants
 						 */
-						AlterTableDropColumn(RangeVarGetRelid(stmt->relation, false),
+						AlterTableDropColumn(relid,
 											 interpretInhOption(stmt->relation->inhOpt),
 											 stmt->name,
 											 stmt->behavior);
@@ -474,7 +501,7 @@ ProcessUtility(Node *parsetree,
 						 * Recursively add constraint to table and,
 						 * if requested, to descendants
 						 */
-						AlterTableAddConstraint(RangeVarGetRelid(stmt->relation, false),
+						AlterTableAddConstraint(relid,
 												interpretInhOption(stmt->relation->inhOpt),
 												(List *) stmt->def);
 						break;
@@ -483,21 +510,20 @@ ProcessUtility(Node *parsetree,
 						 * Recursively drop constraint from table and,
 						 * if requested, from descendants
 						 */
-						AlterTableDropConstraint(RangeVarGetRelid(stmt->relation, false),
+						AlterTableDropConstraint(relid,
 												 interpretInhOption(stmt->relation->inhOpt),
 												 stmt->name,
 												 stmt->behavior);
 						break;
 					case 'E':	/* CREATE TOAST TABLE */
-						AlterTableCreateToastTable(RangeVarGetRelid(stmt->relation, false),
-												   false);
+						AlterTableCreateToastTable(relid, false);
 						break;
 					case 'U':	/* ALTER OWNER */
 						/* check that we are the superuser */
 						if (!superuser())
 							elog(ERROR, "ALTER TABLE: permission denied");
 						/* get_usesysid raises an error if no such user */
-						AlterTableOwner(RangeVarGetRelid(stmt->relation, false),
+						AlterTableOwner(relid,
 										get_usesysid(stmt->name));
 						break;
 					default:	/* oops */

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/grant.sgml,v 1.24 2002/04/29 22:28:19 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/grant.sgml,v 1.25 2002/04/30 01:26:25 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -161,6 +161,8 @@ GRANT { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }
       </para>
       <para>
        For schemas, allows new objects to be created within the schema.
+       To rename an existing object, you must own the object <emphasis>and</>
+       have this privilege for the containing schema.
       </para>
      </listitem>
     </varlistentry>
