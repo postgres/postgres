@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.286 2004/08/18 15:48:36 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.287 2004/08/21 03:25:34 momjian Exp $
 -->
 
 <appendix id="release">
@@ -319,6 +319,13 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.286 2004/08/18 15:48:36 momjian
        odd results now causes an ERROR. Also changed behavior with respect
        to whitespace surrounding array elements; trailing whitespace is now
        ignored as well as leading whitespace (which has always been ignored).
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       The 8.1 release will remove the function <literal>to_char(interval)
+       </literal>.
       </para>
      </listitem>
     </itemizedlist>
