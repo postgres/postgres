@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtscan.c,v 1.1.1.1 1996/07/09 06:21:13 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtscan.c,v 1.2 1996/08/15 07:30:22 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -122,15 +122,13 @@ rtrescan(IndexScanDesc s, bool fromEnd, ScanKey key)
     } else {
 	/* initialize opaque data */
 	p = (RTreeScanOpaque) palloc(sizeof(RTreeScanOpaqueData));
-	p->s_internalKey =
-	    (ScanKey) palloc(sizeof(ScanKeyData) * s->numberOfKeys);
 	p->s_stack = p->s_markstk = (RTSTACK *) NULL;
 	p->s_internalNKey = s->numberOfKeys;
 	p->s_flags = 0x0;
-	for (i = 0; i < s->numberOfKeys; i++)
-	    p->s_internalKey[i].sk_argument = s->keyData[i].sk_argument;
 	s->opaque = p;
 	if (s->numberOfKeys > 0) {
+	    p->s_internalKey =
+		(ScanKey) palloc(sizeof(ScanKeyData) * s->numberOfKeys);
 	    
 	    /*
 	     *  Scans on internal pages use different operators than they
@@ -140,6 +138,7 @@ rtrescan(IndexScanDesc s, bool fromEnd, ScanKey key)
 	     */
 	    
 	    for (i = 0; i < s->numberOfKeys; i++) {
+		p->s_internalKey[i].sk_argument = s->keyData[i].sk_argument;
 		internal_proc = RTMapOperator(s->relation,
 					      s->keyData[i].sk_attno,
 					      s->keyData[i].sk_procedure);
