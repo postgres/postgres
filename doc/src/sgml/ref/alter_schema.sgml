@@ -1,12 +1,12 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_schema.sgml,v 1.4 2003/09/12 00:12:47 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_schema.sgml,v 1.5 2003/11/08 11:06:37 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-ALTERSCHEMA">
  <refmeta>
   <refentrytitle id="SQL-ALTERSCHEMA-title">ALTER SCHEMA</refentrytitle>
-  <refmiscinfo>SQL - Schema Statements</refmiscinfo>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
 
  <refnamediv>
