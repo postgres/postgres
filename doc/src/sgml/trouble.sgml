@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/trouble.sgml,v 2.5 2000/03/31 03:27:41 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/trouble.sgml,v 2.6 2000/04/08 23:32:34 tgl Exp $
 -->
 
  <Chapter Id="trouble">
@@ -135,6 +135,18 @@ FATAL 1:  Database testdb does not exist in pg_database
     There's no database by that name under the control of this postmaster.
     Note that if you don't specify a database name, it defaults to your
     Postgres username, which may or may not be the right thing.
+   </para>
+
+   <para>
+    <ProgramListing>
+NOTICE:  Unrecognized variable client_encoding
+    </ProgramListing>
+    This isn't an error; in fact, it's quite harmless.  You'll see this
+    message at startup if you use a client compiled with MULTIBYTE support
+    to connect to a server compiled without it.  (The client is trying
+    to tell the server what character set encoding it wants, but the
+    server has no idea what it's talking about.)  If the message bothers
+    you, use a client compiled with the same options as the server.
    </para>
 
   </sect1>
