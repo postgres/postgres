@@ -1,24 +1,15 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Fri Jun 2 11:32:13 EDT 2000
+   Last updated: Wed Jul 26 13:33:21 EDT 2000
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
    The most recent version of this document can be viewed at
    http://www.PostgreSQL.org/docs/faq-english.html.
    
-   Linux-specific questions are answered in
-   http://www.PostgreSQL.org/docs/faq-linux.html.
-   
-   HPUX-specific questions are answered in
-   http://www.PostgreSQL.org/docs/faq-hpux.html.
-   
-   Solaris-specific questions are answered in
-   http://www.PostgreSQL.org/docs/faq-solaris.html.
-   
-   Irix-specific questions are answered in
-   http://www.PostgreSQL.org/docs/faq-irix.html.
+   Platform-specific questions are answered at
+   http://www.PostgreSQL.org/docs/.
      _________________________________________________________________
    
                              General Questions
@@ -86,7 +77,7 @@
    4.11) What is an R-tree index?
    4.12) What is Genetic Query Optimization?
    4.13) How do I do regular expression searches and case-insensitive
-   regular expression searching?
+   regular expression searches?
    4.14) In a query, how do I detect if a field is NULL?
    4.15) What is the difference between the various character types?
    4.16.1) How do I create a serial/auto-incrementing field?
@@ -127,11 +118,11 @@
    replaces the PostQuel query language with an extended subset of SQL.
    PostgreSQL is free and the complete source is available.
    
-   PostgreSQL development is being performed by a team of Internet
-   developers who all subscribe to the PostgreSQL development mailing
-   list. The current coordinator is Marc G. Fournier
-   (scrappy@PostgreSQL.org). (See below on how to join). This team is now
-   responsible for all development of PostgreSQL.
+   PostgreSQL development is performed by a team of Internet developers
+   who all subscribe to the PostgreSQL development mailing list. The
+   current coordinator is Marc G. Fournier (scrappy@PostgreSQL.org). (See
+   below on how to join). This team is now responsible for all
+   development of PostgreSQL.
    
    The authors of PostgreSQL 1.01 were Andrew Yu and Jolly Chen. Many
    others have contributed to the porting, testing, debugging and
@@ -214,8 +205,8 @@
    
     1.6) Where can I get support?
     
-   There is no official support for PostgreSQL from the University of
-   California, Berkeley. It is maintained through volunteer effort.
+   There is no support for PostgreSQL from the University of California,
+   Berkeley. It is maintained through volunteer effort.
    
    The main mailing list is: pgsql-general@PostgreSQL.org. It is
    available for discussion of matters pertaining to PostgreSQL. To
@@ -414,8 +405,7 @@
    For web integration, PHP is an excellent interface. It is at
    http://www.php.net
    
-   PHP is great for simple stuff, but for more complex cases, many use
-   the perl interface and CGI.pm.
+   For complex cases, many use the perl interface and CGI.pm.
    
    A WWW gateway based on WDB using perl can be downloaded from
    http://www.eol.ists.ca/~dunlop/wdb-p95
@@ -433,15 +423,15 @@
     2.4) What languages are available to communicate with PostgreSQL?
     
    We have:
-     * C(libpq)
-     * C++(libpq++)
-     * Embedded C(ecpg)
-     * Java(jdbc)
-     * Perl(perl5)
-     * ODBC(odbc)
-     * Python(PyGreSQL)
-     * TCL(libpgtcl)
-     * C Easy API(libpgeasy)
+     * C (libpq)
+     * C++ (libpq++)
+     * Embedded C (ecpg)
+     * Java (jdbc)
+     * Perl (perl5)
+     * ODBC (odbc)
+     * Python (PyGreSQL)
+     * TCL (libpgtcl)
+     * C Easy API (libpgeasy)
      * Embedded HTML (PHP from http://www.php.net)
      _________________________________________________________________
    
@@ -632,9 +622,9 @@
    requires more space than the backend's -S parameter allows, then
    temporary files are created to hold the extra data.
    
-   The temp files should be deleted automatically, but might not if a
-   backend crashes during a sort. If you have no backends running at the
-   time, it is safe to delete the pg_tempNNN.NN files.
+   The temporary files should be deleted automatically, but might not if
+   a backend crashes during a sort. If you have no backends running at
+   the time, it is safe to delete the pg_tempNNN.NN files.
      _________________________________________________________________
    
                            Operational Questions
@@ -796,7 +786,7 @@ Maximum number of indexes on a table?    unlimited
    join queries through non-exhaustive search.
    
     4.13) How do I do regular expression searches and case-insensitive regular
-    expression searching?
+    expression searches?
     
    The ~ operator does regular-expression matching, and ~* does
    case-insensitive regular-expression matching. There is no

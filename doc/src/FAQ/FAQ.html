@@ -7,7 +7,7 @@
 Frequently Asked Questions (FAQ) for PostgreSQL
 </H1>
 <P>
-Last updated:		Fri Jun  2 11:32:13 EDT 2000
+Last updated:		Wed Jul 26 13:33:21 EDT 2000
 <P>
 Current maintainer:	Bruce Momjian (<A
 HREF="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR><P>
@@ -16,17 +16,8 @@ The most recent version of this document can be viewed at
 <A HREF="http://www.Postgresql.org/docs/faq-english.html">
 http://www.PostgreSQL.org/docs/faq-english.html</A>.<P>
 
-Linux-specific questions are answered in <A
-HREF="http://www.PostgreSQL.org/docs/faq-linux.html">http://www.PostgreSQL.org/docs/faq-linux.html</A>.<P>
-
-HPUX-specific questions are answered in <A
-HREF="http://www.PostgreSQL.org/docs/faq-hpux.html">http://www.PostgreSQL.org/docs/faq-hpux.html</A>.<P>
-
-Solaris-specific questions are answered in <A
-HREF="http://www.PostgreSQL.org/docs/faq-solaris.html">http://www.PostgreSQL.org/docs/faq-solaris.html</A>.<P>
-
-Irix-specific questions are answered in <A
-HREF="http://www.PostgreSQL.org/docs/faq-irix.html">http://www.PostgreSQL.org/docs/faq-irix.html</A>.<P>
+Platform-specific questions are answered at <A
+HREF="http://www.PostgreSQL.org/docs/">http://www.PostgreSQL.org/docs/</A>.<P>
 
 <HR><P>
 
@@ -115,7 +106,7 @@ evaluating my query?<BR>
 <A HREF="#4.12">4.12</A>) What is Genetic Query Optimization?<BR>
 
 <A HREF="#4.13">4.13</A>) How do I do regular expression searches
-and case-insensitive regular expression searching?<BR>
+and case-insensitive regular expression searches?<BR>
 <A HREF="#4.14">4.14</A>) In a query, how do I detect if a field
 is NULL?<BR>
 <A HREF="#4.15">4.15</A>) What is the difference between the
@@ -169,7 +160,7 @@ powerful data model and rich data types of POSTGRES, it replaces the
 PostQuel query language with an extended subset of SQL.  PostgreSQL is
 free and the complete source is available.<P>
 
-PostgreSQL development is being performed by a team of Internet
+PostgreSQL development is performed by a team of Internet
 developers who all subscribe to the PostgreSQL development mailing list.
 The current coordinator is Marc G. Fournier (<A
 HREF="mailto:scrappy@PostgreSQL.org">scrappy@PostgreSQL.org</A>). (See
@@ -252,13 +243,13 @@ platforms (some of these compiles require gcc):
 
 <H4><A NAME="1.4">1.4</A>) What non-unix ports are available?</H4><P>
 
-It is possible to compile the libpq C library, psql, and other
+It is possible to compile the <I>libpq</I> C library, psql, and other
 interfaces and binaries to run on MS Windows platforms.  In this case,
 the client is running on MS Windows, and communicates via TCP/IP to a
 server running on one of our supported Unix platforms.<P>
 
 A file <I>win31.mak</I> is included in the distribution for making a
-Win32 libpq library and psql.<P>
+Win32 <I>libpq</I> library and psql.<P>
 
 The database server is now working on Windows NT using the Cygnus
 Unix/NT porting library.  See <I>pgsql/doc/FAQ_NT</I> in the distribution.<P>
@@ -272,7 +263,7 @@ For mirror sites, see our main web site.
 
 <H4><A NAME="1.6">1.6</A>) Where can I get support?</H4><P>
 
-There is no official support for PostgreSQL from the  University of
+There is no support for PostgreSQL from the  University of
 California, Berkeley.  It is maintained through volunteer effort.<P>
 
 The main mailing list is: <A
@@ -531,8 +522,7 @@ http://www.phone.net/home/mwm/hotlist/.</A><P>
 For web integration, PHP is an excellent interface.  It is at
 <A HREF="http://www.php.net">http://www.php.net</A><P>
 
-PHP is great for simple stuff, but for more complex cases, many
-use the perl interface and CGI.pm.<P>
+For complex cases, many use the perl interface and CGI.pm.<P>
 
 A WWW gateway based on WDB using perl can be downloaded from <A
 HREF="http://www.eol.ists.ca/~dunlop/wdb-p95">http://www.eol.ists.ca/~dunlop/wdb-p95</A>
@@ -553,15 +543,15 @@ communicate with PostgreSQL?</H4><P>
 
 We have:
 <UL>
-<LI>C(libpq)
-<LI>C++(libpq++)
-<LI>Embedded C(ecpg)
-<LI>Java(jdbc)
-<LI>Perl(perl5)
-<LI>ODBC(odbc)
-<LI>Python(PyGreSQL)
-<LI>TCL(libpgtcl)
-<LI>C Easy API(libpgeasy)
+<LI>C (libpq)
+<LI>C++ (libpq++)
+<LI>Embedded C (ecpg)
+<LI>Java (jdbc)
+<LI>Perl (perl5)
+<LI>ODBC (odbc)
+<LI>Python (PyGreSQL)
+<LI>TCL (libpgtcl)
+<LI>C Easy API (libpgeasy)
 <LI>Embedded HTML (<A HREF="http://www.php.net">PHP from http://www.php.net</A>)
 </UL><P>
 
@@ -783,7 +773,7 @@ example, if a sort needs to be done to satisfy an <SMALL>ORDER BY,</SMALL> and
 the sort requires more space than the backend's <I>-S</I> parameter allows,
 then temporary files are created to hold the extra data.<P>
 
-The temp files should be deleted automatically, but might not if a backend
+The temporary files should be deleted automatically, but might not if a backend
 crashes during a sort.  If you have no backends running at the time,
 it is safe to delete the pg_tempNNN.NN files.<P>
 
@@ -977,7 +967,7 @@ Algorithm (GA). It allows the handling of large join queries through
 non-exhaustive search.<P>
 
 <H4><A NAME="4.13">4.13</A>) How do I do regular expression searches and
-case-insensitive regular expression searching?</H4><P>
+case-insensitive regular expression searches?</H4><P>
 
 The <I>~</I> operator does regular-expression matching, and <I>~*</I>
 does case-insensitive regular-expression matching. There is no
@@ -1231,7 +1221,7 @@ Beware of mixing <I>malloc/free</I> and <I>palloc/pfree.</I>
 functions to PostgreSQL?</H4><P>
 
 
-Send your extensions to the pgsql-hackers mailing list, and they will
+Send your extensions to the <I>pgsql-hackers</I> mailing list, and they will
 eventually end up in the <I>contrib/</I> subdirectory.<P>
 
 
