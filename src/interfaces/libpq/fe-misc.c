@@ -25,7 +25,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.64 2001/11/28 19:40:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.65 2001/12/03 00:28:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -856,18 +856,17 @@ libpq_gettext(const char *msgid)
 /*
  * strerror replacement for windows:
  *
- * We don't know a fix for win9x yet, but this should work for nt4 and win2k.
- * If you can verify this working on win9x or have a solution, let us know, ok?
+ * This works on WIN2000 and newer, but we don't know where to find WinSock
+ * error strings on older Windows flavors.  If you know, clue us in.
  */
 const char *
 winsock_strerror(int eno)
 {
 	static char	err_buf[512];
-#define WSSE_MAXLEN (sizeof(err_buf)-1-13)	/* 13 == " (0x00000000)" */
-	HINSTANCE	netmsgModule;
+#define WSSE_MAXLEN (sizeof(err_buf)-1-13)	/* 13 for " (0x00000000)" */
 	int			length;
 
-	/* First try the "system table", this works on Win2k pro */
+	/* First try the "system table", this works on Win2k and up */
 
 	if (FormatMessage(
 				FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_FROM_SYSTEM,
@@ -879,28 +878,7 @@ winsock_strerror(int eno)
 					  NULL))
 		goto WSSE_GOODEXIT;
 
-	/* That didn't work, let's try the netmsg.dll */
-
-	netmsgModule = LoadLibraryEx("netmsg.dll",
-								 NULL,
-								 LOAD_LIBRARY_AS_DATAFILE);
-
-	if (netmsgModule != NULL)
-	{
-		if (FormatMessage(
-				FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_FROM_HMODULE,
-						  netmsgModule,
-						  eno,
-						  MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-						  err_buf,
-						  WSSE_MAXLEN,
-						  NULL))
-		{
-			FreeLibrary(netmsgModule);
-			goto WSSE_GOODEXIT;
-		}
-		FreeLibrary(netmsgModule);
-	}
+	/* Insert other possible lookup methods here ... */
 
 	/* Everything failed, just tell the user that we don't know the desc */
 
