@@ -138,10 +138,12 @@ CreateTrigger(CreateTrigStmt *stmt)
 								PointerGetDatum(fargtypes),
 								0);
 	if (!HeapTupleIsValid(tuple) ||
-		((Form_pg_proc) GETSTRUCT(tuple))->prorettype != 0 ||
 		((Form_pg_proc) GETSTRUCT(tuple))->pronargs != 0)
-		elog(ERROR, "CreateTrigger: function %s () does not exist", stmt->funcname);
-
+		elog(ERROR, "CreateTrigger: function %s() does not exist",
+			 stmt->funcname);
+	if (((Form_pg_proc) GETSTRUCT(tuple))->prorettype != 0)
+		elog(ERROR, "CreateTrigger: function %s() must return OPAQUE",
+			 stmt->funcname);
 	if (((Form_pg_proc) GETSTRUCT(tuple))->prolang != ClanguageId)
 	{
 		HeapTuple	langTup;
