@@ -1,0 +1,534 @@
+array set Messages {
+
+"Label" "Popiska"
+ 
+"Save schema" "Ulo¾it schéma"
+ 
+"Is unique ?" "Je unikátní?"
+ 
+"Report builder" "Tvorba sestavy"
+ 
+"Criteria" "Kritérium"
+ 
+"FATAL ERROR upgrading PgAccess table" "FATÁLNÍ CHYBA update tabulek PgAccessu"
+ 
+"Save this query as a view" "Ulo¾it tento dotaz jako náhled"
+ 
+"Page header" "Hlavièka stránky"
+ 
+"Query name" "Jméno dotazu"
+ 
+"Please select an object first!" "Prosím nejdøíve vyberte objekt"
+ 
+"Fields :" "Polo¾ka :"
+ 
+"Name" "Jméno"
+ 
+"File name" "Jméno souboru"
+ 
+"Detail record" "Detailní záznam"
+ 
+"Auto-load the last opened database at startup" "Po startu automaticky otevøít naposledy pou¾itou databázi"
+ 
+"Maxvalue" "Maximální hodnota"
+ 
+"Start value" "Poèáteèní hodnota"
+ 
+"Report fields" "Polo¾ky sestavy"
+ 
+"Test form" "Test formuláøe"
+ 
+"Error trying to connect to database '%s' on host %s \n\nPostgreSQL error message:%s" "Chyba pøi pokusu o spojení s databazi '%s' na adrese %s \n\nPostgreSQL chybové hla¹ení:%s"
+ 
+"No field type ?" "®ádný typ polo¾ky?"
+ 
+"User without name?" "Bezejmený u¾ivatel?"
+ 
+"You have to supply a name for this schema!" "Musíte zadat jméno pro toto schéma!"
+ 
+"Last value" "Poslední hodnota"
+ 
+"Preferences" "Nastavení"
+ 
+"View '%s' already exists!\nOverwrite ?" "Náhled '%s' ji¾ existuje!\n Pøepsat?"
+ 
+"You have to select an index!" "Musíte vybrat index!"
+ 
+"Field type" "Typ polo¾ky"
+ 
+"Script name" "Jméno skriptu"
+ 
+"Reload" "Obnovit"
+ 
+"Remove table %s from query?" "Odratranit tabulku %s z dotazu?"
+ 
+"SQL window" "SQL-okno"
+ 
+"Allow user to create other users" "Umo¾nit u¾ivateli vytváøet jiné u¾ivatele"
+ 
+"Delete current record ?" "Smazat aktuální záznam?"
+ 
+"List box" "Posuvny seznam"
+ 
+"Save to query builder" "Ulo¾it do Tvùrce dotazù"
+ 
+"fixed width" "fixní ¹íøka"
+ 
+"Scripts" "Skripty"
+ 
+"Yes" "Ano"
+ 
+"Add label" "Pøidat popisku"
+ 
+"Sequence created!" "Sequence vytvoøena"
+ 
+"Field information" "Informace o polo¾ce"
+ 
+"Design" "Návrh"
+ 
+"Field" "Polo¾ka"
+ 
+"You have to supply an external file name!" "Musíte zadat jméno externího souboru."
+ 
+"Increment" "Pøírustek"
+ 
+"No" "Ne"
+ 
+"Form design" "Návrh formuláøe"
+ 
+"You must supply a return type!" "Musite zadat návratový typ!"
+ 
+"Remove field from result ?" "Odstranit polo¾ku z dotazu?"
+ 
+"There is another object (a %s) with the same name.\nPlease change it!" "Existuje jestì jeden objekt %s se stejným jménem.\nProsím opravte to!"
+ 
+"This query has no commands?" "Tento dotaz nemá instukce?"
+ 
+"Execute query" "Provést dotaz"
+ 
+"field cannot be null" "polo¾ka nemù¾e být nulová"
+ 
+"Help" "Nápovìda"
+ 
+"Rename column" "Pøejmenování sloupce"
+ 
+"Database" "Databáze"
+ 
+"Information" "Informace"
+ 
+"Close" "Zavøít"
+ 
+"Command" "Pøíkaz"
+ 
+"Table" "Tabulka"
+ 
+"verify password" "Potvrzení hesla"
+ 
+"Vacuum" "Vacuum"
+ 
+"Default value" "Implicitní hodnota"
+ 
+"Import" "Import"
+ 
+"Delete index" "Smazat index"
+ 
+"Move up" "Nahoru"
+ 
+"index properties" "Nastavení indexu"
+ 
+"check" "Check"
+ 
+"Create new table" "Vytvoøit novou tabulku"
+ 
+"Visual query designer" "Visuální návrháø dotazù"
+ 
+"Delete all" "Smazat v¹e"
+ 
+"You are going to delete\n\n %s \n\nProceed?" "You are going to delete\n\n %s \n\nProceed?" 
+ 
+"Schema name" "Jméno schématu"
+ 
+"Error executing query" "Chyba pøi provádìní dotazu"
+ 
+"Report name" "Jméno sestavy"
+ 
+"Add field" "Pøidat polo¾ku"
+ 
+"Field name" "Jméno polo¾ky"
+ 
+"FATAL ERROR searching for PgAccess system tables" "FATÁLNÍ CHYBA pøi hledání systémových tabulek PgAccess"
+ 
+"A big number of rows displayed in table view will take a lot of memory!" "Velké mno¾ství zobrazených øádek z tabulky zabere mnoho pamìti!"
+ 
+"Preview" "Preview"
+ 
+"Users" "U¾ivatelé"
+ 
+"Owner" "Vlastník"
+ 
+"Form's window internal name" "Interní jméno formuláøe"
+ 
+"Sort field" "Setøídìní polo¾ek"
+ 
+"New name is the same as the old one!" "Nové jméno je stejné jako staré!"
+ 
+"Warning" "Varování"
+ 
+"Suggestions at" "Pøipomínky na"
+ 
+"Functions" "Funkce"
+ 
+"Schema" "Schéma"
+ 
+"Open" "Otevøít"
+ 
+"size" "velikost"
+ 
+"Delete" "Smazat"
+ 
+"Returns" "Návratový typ"
+ 
+"Define new user" "Definice nového u¾ivatele"
+ 
+"Move down" "Dolù"
+ 
+"Design script" "Návrh skriptu"
+ 
+"Check box" "Ovladaci rámeèek"
+ 
+"FINAL WARNING" "POSLEDNÍ VAROVÁNÍ"
+ 
+"Add table" "Pøidat tabulku"
+ 
+"Table viewer font" "Font prohlí¾eèe tabulek"
+ 
+"The field type is not specified!" "Typ polo¾ky není specifikován!"
+ 
+"Close test form" "Ukonèit test formuláøe"
+ 
+"Export table" "Export tabulky"
+ 
+"Add new index" "Pøidat nový index"
+ 
+"Left" "Nalevo"
+ 
+"Field delimiter" "Oddìlovaè polo¾ek"
+ 
+"Add formula" "Pøídat vzor"
+ 
+"Open database" "Otevøít databazi"
+ 
+"Return" "Návrat"
+ 
+"Changed fonts may appear in the next working session!" "Zmìna fontu se projeví a¾ pøi novém spu¹tìní!"
+ 
+"Error" "Chyba"
+ 
+"Enter a field name" "Vlo¾ jméno polo¾ky"
+ 
+"field name" "jméno polo¾ky"
+ 
+"Forms" "Formuláøe"
+ 
+"Cannot add column" "Nelze pøidat sloupec"
+ 
+"Clean" "Vymazat"
+ 
+"Delete all objects ?" "Smazat v¹echny objekty?"
+ 
+"Preferred language" "Preferovaný jazyk"
+ 
+"Execute SQL" "Spustit SQL "
+ 
+"Sequences" "Sequence"
+ 
+"Button" "Tlaèítko"
+ 
+"Language" "Jazyk"
+ 
+"Query '%s' was not found!" "Dotaz '%s' nelze najít"
+ 
+"Object" "Objekt"
+ 
+"Font fixed" "Fixní"
+ 
+"Table name" "Jméno tabulky"
+ 
+"Export" "Export"
+ 
+"Change user" "Zmìnit u¾ivatele"
+ 
+"You must give object a new name!" "Musíte vlo¾it objekt nováho jména!"
+ 
+"Query" "Dotaz"
+ 
+"User name" "Jméno u¾ivatele"
+ 
+"Font normal" "Normal"
+ 
+"Import table" "Import tabulky"
+ 
+"Toolbar" "Toolbar"
+ 
+"Radio btn" "Radio"
+ 
+"You must supply a name for this function!" "Musíte zadat jméno funkce!"
+ 
+"You have to select index fields!" "Musíte vybrat polo¾ky indexu!"
+ 
+"Constraint" "Omezení"
+ 
+"The script must have a name" "Skript musí mít jméno."
+ 
+"Save" "Ulo¾it"
+ 
+"Exit" "Konec"
+ 
+"Inherits" "Dìdiènost"
+ 
+"Delete field" "Smazat polo¾ku"
+ 
+"About" "O PgAccessu"
+ 
+"Empty field name ?" "Prázdné jméno polo¾ky?"
+ 
+"All report information will be deleted.\n\nProceed ?" "V¹echny informace sestavy budou smazány\n\nSmazat?"
+ 
+"Host" "Host"
+ 
+"vacuuming database %s ..." "reorganizuji databazi %s ..."
+ 
+"Indexes defined" "Definováné indexy"
+ 
+"You must specify field size!" "Musíte specifikovat velikost polo¾ky!"
+ 
+"Schema '%s' already exists!" "Schéma '%s' ji¾ existuje!"
+ 
+"There is another field with the same name: '%s'!\n\nReplace it ?" "Existuje je¹tì jedna polo¾ka se stejným jménem: '%s'!\n\nNahradit?"
+ 
+"Contents" "Obsah"
+ 
+"Views" "Náhledy"
+ 
+"Variable" "Promìnné"
+ 
+"Error executing query\n\n%s\n\nPostgreSQL error message:\n%s\nPostgreSQL status:%s" "Chyba pøi provádìní dotazu\n\n%s\n\nPostgreSQL chybové hlá¹ení:\n%s \n PostgreSQL status :%s"
+ 
+"Filter conditions" "Podmínka filtru"
+ 
+"Error retrieving query definition" "Chyba nahrazení definice dotazu"
+ 
+"Error deleting view" "Chyba mazání náhledu"
+ 
+"New" "Nový"
+ 
+"Tables" "Tabulky"
+ 
+"Create" "Vytvoøit"
+ 
+"Forms need an internal name, only literals, low case" "Formuláø vy¾aduje interní jméno (pouze malá písmena)"
+ 
+"Do you want to save the form into the database?" "Ulo¾it formuláø do databáze?"
+ 
+"Schema '%s' was not found!" "Schéma '%s' nelze najít!"
+ 
+"proportional" "proporcionální"
+ 
+"Function saved!" "Funkce ulo¾ena!"
+ 
+"with OIDs" "s OID"
+ 
+"Table information" "Informace o tabulce"
+ 
+"Error inserting new record" "Chyba vkládání nového záznamu"
+ 
+"Column name '%s' already exists in this table!" "Sloupec se jménem '%s' v tabulce ji¾ existuje!"
+ 
+"File" "Soubor"
+ 
+"Your table has no fields!" "Tabulka nemá polo¾ky!"
+ 
+"Height" "Vý¹ka"
+ 
+"You will always get the latest version at:" "Aktuální verzi naleznete na:"
+ 
+"Form must have a name" "Formuláø musí mít jméno"
+ 
+"Password" "Heslo"
+ 
+"Valid until (date)" "Platný do (abstime)"
+ 
+"Report source" "Zdroj sestavy"
+ 
+"Allow user to create databases" "Dovolit u¾ivateli vytváøet databáze"
+ 
+"Cancel" "Zru¹it"
+ 
+"Is clustered ?" "Je cluster?"
+ 
+"Add new column" "Pøidat nový sloupec"
+ 
+"Show SQL" "Ukázat SQL"
+ 
+"New name" "Nové jméno"
+ 
+"Table '%s' not found!" "Tabulku '%s' nelze najít!"
+ 
+"Form name" "Jméno formuláøe"
+ 
+"Visual designer" "Visuální návrháø"
+ 
+"You choose to delete index\n\n %s \n\nProceed?" "K smazání vybrán index\n\n %s \n\nSmazat?"
+ 
+"Error retrieving from" "Chyba nahrazení z"
+ 
+"Save query definition" "Ulo¾it definici dotazu"
+ 
+"A Tcl/Tk interface to\nPostgreSQL\nby Constantin Teodorescu" "Tcl/TK rozhraní pro\nPostgreSQL\n od Constantin Teodorescu"
+ 
+"Operation completed!" "Operace provedena!"
+ 
+"Max rows displayed in table/query view" "Maximální poèet zobrazených øádek z tabulky/dotazu/náhledu"
+ 
+"Passwords do not match!" "Heslo nelze porovnat!"
+ 
+"Rename" "Pøejmenovat"
+ 
+"Entry" "Vstup"
+ 
+"Error retrieving schema definition" "Chyba nahrazení definice schématu"
+ 
+"This is an action query!\n\nExecute it?" "Toto je proveditelný dotaz!\n\nProvést?"
+ 
+"Error retrieving view definition for" "Chyba nahrazení definice náhledu pro"
+ 
+"options" "nastavení"
+ 
+"Sequence '%s' not found!" "Sequenci '%s' nelze najít"
+ 
+"Text" "Text"
+ 
+"Tcl error executing pg_exec %s\n\n%s" "Tcl-chyba: provedení pg_exec %s\n\n%s"
+ 
+"Width" "©íøka"
+ 
+"You have to supply a name for this query!" "Musíte zadat jméno pro tento dotaz!"
+ 
+"Accessing data. Please wait ..." "Pøistupuji k datùm. Èekejte prosím..."
+ 
+"Report footer" "Záhlaví sestavy"
+ 
+"Parameters" "Parametry"
+ 
+"Queries" "Dotazy"
+ 
+"Query '%s' already exists!" "Dotaz '%s' ji¾ existuje!"
+ 
+"Font bold" "Tuèný"
+ 
+"Query builder" "Tvùrce dotazù"
+ 
+"Error defining view" "Chyba definice náhledu"
+ 
+"Top" "Vrchol"
+ 
+"You must supply a name for your table!" "Musíte zadat jméno pro va¹i tabulku!"
+ 
+"Page footer" "Záhlaví stránky"
+ 
+"Font italic" "Kurzíva"
+ 
+"Field name not entered!" "Jméno polo¾ky není zadané!"
+ 
+"Index name cannot be null!" "Jméno indexu nemù¾e být nulové!"
+ 
+"Sort" "Tøídìní"
+ 
+"Import-Export table" "Import-Export tabulky"
+ 
+"Point" "Bod"
+ 
+"type" "typ"
+ 
+"You should supply a name for this sequence" "Musíte zadat jméno pro tuto sequenci"
+ 
+"Remove link ?" "Odstarnit pojítko?"
+ 
+"You have to supply a table name!" "Musíte zadat jméno tabulky!"
+ 
+"Report header" "Hlavièka sestavy"
+ 
+"Attributes" "Atributy"
+ 
+"Table '%s' already in schema" "Tabulka '%s' ji¾ je ve schématu"
+ 
+"Username" "U¾ivatelské jméno"
+ 
+"Minvalue" "Minimální hodnota"
+ 
+"Sequence name" "Jméno sequence"
+ 
+"Define sequence" "Definice sequence"
+ 
+"Function" "Funkce"
+ 
+"Sorting and filtering not (yet) available from queries!\n\nPlease enter them in the query definition!" "Tøídìní a filtorvání není (je¹tì) dostupné z dotazù!\n\nProsím vlo¾te je do definice dotazu!"
+ 
+"Reports" "Sestavy"
+
+"Columns" "Sloupce"
+ 
+"Indexes" "Indexy"
+
+"Permissions" "Pøístupová práva"
+
+"not null" "Null"
+
+"Cluster index" "Cluster index" 
+
+"index columns" "indexované sloupce"
+
+"Add user" "Pøidání u¾ivatele"
+
+"Change permissions" "Zmìna pøístupových práv"
+
+"select" "select"
+
+"update" "update"
+
+"insert" "insert"
+
+"rule" "rule"
+
+"Identification" "Identifikace"
+
+"Owner ID" "ID vlastníka"
+
+"Has primary key ?" "Má primární klíè?"
+
+"Has rules ?" "Rule?"
+
+"Statistics" "Statistika"
+
+"Number of tuples" "Poèet tuples"
+
+"Number of pages" "Poèet stránek"
+
+"Index name" "Jméno indexu"
+
+"Index fields" "Polo¾ky indexu"
+
+"Table OID" "OID tabulky"
+
+"View system tables" "Zobrazit systémové tabulky"
+
+"Back" "Zpìt"
+
+"primary key" "primární klíè"
+
+"Comments" "Komentáø"
+
+"Print" "Tisk"
+}
+
+

@@ -1,0 +1,535 @@
+array set Messages {
+
+"Label" "Метка"
+ 
+"Save schema" "Сохранение схемы"
+ 
+"Is unique ?" "Является уникальным?"
+ 
+"Report builder" "Построитель отчетов"
+ 
+"Criteria" "Критерий"
+ 
+"FATAL ERROR upgrading PgAccess table" "ФАТАЛЬНАЯ ОШИБКА при обновлении таблицы PgAccess"
+ 
+"Save this query as a view" "Сохранить этот запрос как View"
+ 
+"Page header" "Заголовок страницы"
+ 
+"Query name" "Имя запроса"
+ 
+"Please select an object first!" "Пожалуйста, сначала выберите объект!"
+ 
+"Fields :" "Поля:"
+ 
+"Name" "Имя"
+ 
+"File name" "Имя файла"
+ 
+"Detail record" "Detail Datensatz"
+ 
+"Auto-load the last opened database at startup" "Автозагрузка последней открытой базы данных при запуске"
+ 
+"Maxvalue" "Максимальное значение"
+ 
+"Start value" "Начальное значение"
+ 
+"Report fields" "Поля отчета"
+ 
+"Test form" "Тестирование формы"
+ 
+"Error trying to connect to database '%s' on host %s \n\nPostgreSQL error message:%s" "Ошибка при подключении к базе данных '%s' на машине %s \n\nPostgreSQL вернул сообщение об ошибке: %s"
+ 
+"No field type ?" "Нет типа поля ?"
+ 
+"User without name?" "Пользователь без имени ?"
+ 
+"You have to supply a name for this schema!" "Вы должны дать имя для этой схемы"
+ 
+"Last value" "Последнее значение"
+ 
+"Preferences" "Настройки"
+ 
+"View '%s' already exists!\nOverwrite ?" "View '%s' уже существует.\nПерезаписать ?"
+ 
+"You have to select an index!" "Вы должны выбрать index"
+ 
+"Field type" "Тип поля"
+ 
+"Script name" "Имя скрипта"
+ 
+"Reload" "Перезагрузить"
+ 
+"Remove table %s from query?" "Удалить таблицу %s из запроса ?"
+ 
+"SQL window" "Окно SQL"
+ 
+"Allow user to create other users" "Разрешить пользователю создавать других пользователей"
+ 
+"Delete current record ?" "Удалить текущую запись ?"
+ 
+"List box" "Listbox"
+ 
+"Save to query builder" "Сохранить в построитель запросов"
+ 
+"fixed width" "фиксированная ширина"
+ 
+"Scripts" "Скрипт"
+ 
+"Yes" "Да"
+ 
+"Add label" "Добавить метку"
+ 
+"Sequence created!" "Последовательность создана!"
+ 
+"Field information" "Информация о поле"
+ 
+"Design" "Дизайн"
+ 
+"Field" "Поле"
+ 
+"You have to supply an external file name!" "Вы должны задать имя внешнего файла!"
+ 
+"Increment" "Увеличение"
+ 
+"No" "Нет"
+ 
+"Form design" "Дизайн формы"
+ 
+"You must supply a return type!" "Вы должны указать тип возвращаемого значения!"
+ 
+"Remove field from result ?" "Удалить поле из результатов?"
+ 
+"There is another object (a %s) with the same name.\nPlease change it!" "Уже существует объект (%s) с тем же самым именем.\nПожалуйста измените имя"
+ 
+"This query has no commands?" "В этом запросе нет команд"
+ 
+"Execute query" "Выполнить запрос"
+ 
+"field cannot be null" "Поле не может иметь значение null"
+ 
+"Help" "Помощь"
+ 
+"Rename column" "Переименовать колонку"
+ 
+"Database" "База данных"
+ 
+"Information" "Информация"
+ 
+"Close" "Закрыть"
+ 
+"Command" "Команда"
+ 
+"Table" "Таблица"
+ 
+"verify password" "Passwort bestДtigen"
+ 
+"Vacuum" "Сжать"
+ 
+"Default value" "Значение по умолчанию"
+ 
+"Import" "Импортировать"
+ 
+"Delete index" "Удалить индекс"
+ 
+"Move up" "Переместить вверх"
+ 
+"index properties" "Свойства индекса"
+ 
+"check" "проверка"
+ 
+"Create new table" "Создать новую таблицу"
+ 
+"Visual query designer" "Визуальный дизайнер запросов"
+ 
+"Delete all" "Удалить все"
+ 
+"You are going to delete\n\n %s \n\nProceed?" "Вы хотите удалить\n\n %s \n\n. Продолжить?"
+ 
+"Schema name" "Имя схемы"
+ 
+"Error executing query" "Ошибка при выполнении запроса"
+ 
+"Report name" "Имя отчета"
+ 
+"Add field" "Добавить поле"
+ 
+"Field name" "Имя поля"
+ 
+"FATAL ERROR searching for PgAccess system tables" "ФАТАЛЬНАЯ ОШИБКА при поиске системных таблиц PgAccess"
+ 
+"A big number of rows displayed in table view will take a lot of memory!" "Большое количество отображаемых в таблице строк займет большое количество памяти"
+ 
+"Preview" "Предварительный просмотр"
+ 
+"Users" "Пользователи"
+ 
+"Owner" "Владелец"
+ 
+"Form's window internal name" "Внутреннее имя окна формы"
+ 
+"Sort field" "Сортируемое поле"
+ 
+"New name is the same as the old one!" "Новое имя такое же как и старое!"
+ 
+"Warning" "Предупреждение"
+ 
+"Suggestions at" "Предложения в"
+ 
+"Functions" "Функции"
+ 
+"Schema" "Схема"
+ 
+"Open" "Открыть"
+ 
+"size" "размер"
+ 
+"Delete" "Удалить"
+ 
+"Returns" "Возвращаемые значения"
+ 
+"Define new user" "Определить нового пользователя"
+ 
+"Move down" "Переместить вниз"
+ 
+"Design script" "Проектирование скрипта"
+ 
+"Check box" "Check box"
+ 
+"FINAL WARNING" "ЗАКЛЮЧИТЕЛЬНОЕ ПРЕДУПРЕЖДЕНИЕ"
+ 
+"Add table" "Добавить таблицу"
+ 
+"Table viewer font" "Шрифт для просмотра таблиц"
+ 
+"The field type is not specified!" "Тип поля не указан!"
+ 
+"Close test form" "Закрыть тестовую форму"
+ 
+"Export table" "Экспортировать таблицу"
+ 
+"Add new index" "Добавить таблицу"
+ 
+"Left" "Влево"
+ 
+"Field delimiter" "Разделитель полей"
+ 
+"Add formula" "Добавить формулу"
+ 
+"Open database" "Открыть базу данных"
+ 
+"Return" "Возврат"
+ 
+"Changed fonts may appear in the next working session!" "Измененные шрифты начнут действовать после перезапуска программы!"
+ 
+"Error" "Ошибка"
+ 
+"Enter a field name" "Введите имя поля"
+ 
+"field name" "имя поля"
+ 
+"Forms" "Формы"
+ 
+"Cannot add column" "Не могу добавить колонку"
+ 
+"Clean" "Очистить"
+ 
+"Delete all objects ?" "Удалить все объекты?"
+ 
+"Preferred language" "Предпочитаемый язык"
+ 
+"Execute SQL" "Выполнить SQL"
+ 
+"Sequences" "Последовательности"
+ 
+"Button" "Кнопка"
+ 
+"Language" "Язык"
+ 
+"Query '%s' was not found!" "Запрос '%s' не найден"
+ 
+"Object" "Объект"
+ 
+"Font fixed" "Шрифт с фиксированной шириной"
+ 
+"Table name" "Имя таблицы"
+ 
+"Export" "Экспортировать"
+ 
+"Change user" "Изменить пользователя"
+ 
+"You must give object a new name!" "Вы должны дать объекту новое имя"
+ 
+"Query" "Запрос"
+ 
+"User name" "Имя пользователя"
+ 
+"Font normal" "Нормальный шрифт"
+ 
+"Import table" "Импортировать таблицу"
+ 
+"Toolbar" "Панель инструментов"
+ 
+"Radio btn" "Radio"
+ 
+"You must supply a name for this function!" "Вы должны задать имя для этой функции"
+ 
+"You have to select index fields!" "Вам необходимо выбрать поля для индексирования"
+ 
+"Constraint" "Ограничение"
+ 
+"The script must have a name" "Скрипт должен иметь имя"
+ 
+"Save" "Сохранить"
+ 
+"Exit" "Выход"
+ 
+"Inherits" "Унаследовать"
+ 
+"Delete field" "Удалить поле"
+ 
+"About" "О программе"
+ 
+"Empty field name ?" "Пустое имя поля?"
+ 
+"All report information will be deleted.\n\nProceed ?" Вся информация в
+отчете будет удалена\n\nПродолжить?"
+ 
+"Host" "Машина"
+ 
+"vacuuming database %s ..." "Уплотнение базы данных %s ..."
+ 
+"Indexes defined" "Индексы определены"
+ 
+"You must specify field size!" "Вы должны указать размер поля!"
+ 
+"Schema '%s' already exists!" "Схема '%s' уже существует!"
+ 
+"There is another field with the same name: '%s'!\n\nReplace it ?" "Существует другое поле с таким же именем: '%s'!\n\nЗаменить его?"
+ 
+"Contents" "Содержание"
+ 
+"Views" "Виды (Views)"
+ 
+"Variable" "Переменная"
+ 
+"Error executing query\n\n%s\n\nPostgreSQL error message:\n%s\nPostgreSQL status:%s" "Ошибка выполнения запроса\n\n%s\n\nСообщение об ошибке PostgreSQL:\n%s \n Статус PostgreSQL:%s"
+ 
+"Filter conditions" "Условия отбора"
+ 
+"Error retrieving query definition" "Ошибка получения определения запроса"
+ 
+"Error deleting view" "Ошибка при удалении View"
+ 
+"New" "Новый"
+ 
+"Tables" "Таблицы"
+ 
+"Create" "Создать"
+ 
+"Forms need an internal name, only literals, low case" "Для формы необходимо внутреннее имя (только символы в нижнем регистре)"
+ 
+"Do you want to save the form into the database?" Вы хотите сохранить форму в базе данных?"
+ 
+"Schema '%s' was not found!" "Схема '%s' не найдена!"
+ 
+"proportional" "пропорциональный"
+ 
+"Function saved!" "Функция сохранена"
+ 
+"with OIDs" "с OIDs"
+ 
+"Table information" "Информация о таблице"
+ 
+"Error inserting new record" "Ошибка при добавлении новой записи"
+ 
+"Column name '%s' already exists in this table!" "Колонка '%s' уже существует в этой таблице"
+ 
+"File" "Файл"
+ 
+"Your table has no fields!" "В вашей таблице нет полей!"
+ 
+"Height" "Высота"
+ 
+"You will always get the latest version at:" "Вы всегда найдете последнюю версию по адресу:"
+ 
+"Form must have a name" "У формы должно быть имя"
+ 
+"Password" "Пароль"
+ 
+"Valid until (date)" "Действительно до (Дата)"
+ 
+"Report source" "Исходный текст отчета"
+ 
+"Allow user to create databases" "Разрешить пользователю создавать базы данных"
+ 
+"Cancel" "Отменить"
+ 
+"Is clustered ?" "Разбита на кластеры?"
+ 
+"Add new column" "Добавить новую колонку"
+ 
+"Show SQL" "Показать SQL"
+ 
+"New name" "Новое имя"
+ 
+"Table '%s' not found!" "Таблица '%s' не найдена"
+ 
+"Form name" "Имя формы"
+ 
+"Visual designer" "Visual Designer"
+ 
+"You choose to delete index\n\n %s \n\nProceed?" "Вы хотите удалить индекс\n\n %s \n\n Продолжить?"
+ 
+"Error retrieving from" "Ошибка при получении из..."
+ 
+"Save query definition" "Сохранить определение запроса"
+ 
+"A Tcl/Tk interface to\nPostgreSQL\nby Constantin Teodorescu" "Tcl/TK надстройка к\nPostgreSQL\n автор Constantin Teodorescu"
+ 
+"Operation completed!" "Операция выполнена!"
+ 
+"Max rows displayed in table/query view" "Максимальное количество строк, отображаемое при просмотре таблицы/запроса"
+ 
+"Passwords do not match!" "Пароль неправильный!"
+ 
+"Rename" "Переименовать"
+ 
+"Entry" "Запись"
+ 
+"Error retrieving schema definition" "Ошибка получения определения схемы"
+ 
+"This is an action query!\n\nExecute it?" "Это запрос-действие\n\nВыполнить его?"
+ 
+"Error retrieving view definition for" "Ошибка получения описания для"
+ 
+"options" "Настройки"
+ 
+"Sequence '%s' not found!" "Последовательность '%s' не найдена"
+ 
+"Text" "Текст"
+ 
+"Tcl error executing pg_exec %s\n\n%s" "Ошибка Tcl при выполнении pg_exec %s\n\n%s"
+ 
+"Width" "Ширина"
+ 
+"You have to supply a name for this query!" "Вы должны задать имя для этого запроса!"
+ 
+"Accessing data. Please wait ..." "Доступ к данным. Пожалуйста ждите ..."
+ 
+"Report footer" "Нижняя часть отчета"
+ 
+"Parameters" "Параметры"
+ 
+"Queries" "Запросы"
+ 
+"Query '%s' already exists!" "Запрос '%s' уже существует!"
+ 
+"Font bold" "Жирный шрифт"
+ 
+"Query builder" "Построитель запросов"
+ 
+"Error defining view" "Ошибка определения View"
+ 
+"Top" "Верх"
+ 
+"You must supply a name for your table!" "Вы должны задать имя для вашей таблицы!"
+ 
+"Page footer" "Seitenfuъ"
+ 
+"Font italic" "Шрифт Italic"
+ 
+"Field name not entered!" "Не введено имя поля"
+ 
+"Index name cannot be null!" "Имя индекса не может быть равным null!"
+ 
+"Sort" "Сортировка"
+ 
+"Import-Export table" "Импортировать/Экспортировать таблицу"
+ 
+"Point" "Точка"
+ 
+"type" "тип"
+ 
+"You should supply a name for this sequence" "Вы должны задать имя для последовательности"
+ 
+"Remove link ?" "Удалить ссылку?"
+ 
+"You have to supply a table name!" "Вы должны задать имя таблицы"
+ 
+"Report header" "Заголовок отчета"
+ 
+"Attributes" "Атрибуты"
+ 
+"Table '%s' already in schema" "Таблица '%s' уже существует в схеме"
+ 
+"Username" "Имя пользователя"
+ 
+"Minvalue" "Минимальное значение"
+ 
+"Sequence name" "Имя последовательности"
+ 
+"Define sequence" "Определить последовательность"
+ 
+"Function" "Функция"
+ 
+"Sorting and filtering not (yet) available from queries!\n\nPlease enter them in the query definition!" "Сортировка и отбор (еще) не доступны в запросах!\n\nПожалуйста введите их в определение запроса!"
+ 
+"Reports" "Отчеты"
+
+"Columns" "Колонки"
+ 
+"Indexes" "Индексы"
+
+"Permissions" "Права доступа"
+
+"not null" "не null"
+
+"Cluster index" "Кластерный индекс" 
+
+"index columns" "индексируемые колонки"
+
+"Add user" "Добавить пользователя"
+
+"Change permissions" "Изменить права доступа"
+
+"select" "выбрать"
+
+"update" "обновить"
+
+"insert" "вставить"
+
+"rule" "правило"
+
+"Identification" "Идентификация"
+
+"Owner ID" "ID владельца"
+
+"Has primary key ?" "Имеет первичный ключ?"
+
+"Has rules ?" "имеет правила?"
+
+"Statistics" "Статистика"
+
+"Number of tuples" "Количество кортежей"
+
+"Number of pages" "Количество страниц"
+
+"Index name" "Имя индекса"
+
+"Index fields" "Индексируемые поля"
+
+"Table OID" "OID таблицы"
+
+"View system tables" "Просмотр системных таблиц"
+
+"Back" "Назад"
+
+"primary key" "Первичный ключ"
+
+"Comments" "Комментарии"
+
+"Print" "Печать"
+}
+
+
