@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.133 2000/01/18 00:03:37 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.134 2000/01/18 07:29:58 tgl Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -643,7 +643,8 @@ main(int argc, char **argv)
 				force_quotes = true;
 				break;
             case 'o':
-                fprintf(stderr, "%s: The -o option for dumping oids is deprecated. Please use -O.");
+                fprintf(stderr, "%s: The -o option for dumping oids is deprecated. Please use -O.\n", progname);
+				/* FALLTHRU */
 			case 'O':			/* Dump oids */
 				oids = true;
 				break;
@@ -1632,13 +1633,10 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 
 				resetPQExpBuffer(query);
 				if (name[0] != '$') {
-					appendPQExpBuffer(query, "CONSTRAINT ");
-					appendPQExpBuffer(query, fmtId(name, force_quotes));
-					appendPQExpBufferChar(query, ' ');
+					appendPQExpBuffer(query, "CONSTRAINT %s ",
+									  fmtId(name, force_quotes));
 				}
-				appendPQExpBuffer(query, "CHECK (");
-				appendPQExpBuffer(query, expr);
-				appendPQExpBuffer(query, ")");
+				appendPQExpBuffer(query, "CHECK (%s)", expr);
 				tblinfo[i].check_expr[i2] = strdup(query->data);
 			}
 			PQclear(res2);
@@ -1647,11 +1645,11 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 			tblinfo[i].check_expr = NULL;
 
 	/* Get primary key */
-	if (strcmp(PQgetvalue(res, i, i_relhasindex), "t")==0)
-	{
-	    PGresult * res2;
-	    char str[INDEX_MAX_KEYS * NAMEDATALEN + 3] = "";
-	    int j;
+		if (strcmp(PQgetvalue(res, i, i_relhasindex), "t")==0)
+		{
+			PGresult * res2;
+			char str[INDEX_MAX_KEYS * (NAMEDATALEN*2 + 4) + 1];
+			int j;
 
 			resetPQExpBuffer(query);
 			appendPQExpBuffer(query,
@@ -1661,7 +1659,7 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 		    "  AND i.indexrelid = c.oid AND a.attnum > 0 AND a.attrelid = c.oid "
 		    "ORDER BY a.attnum ",
 		    tblinfo[i].oid);
-	    res2 = PQexec(g_conn, query->data);
+			res2 = PQexec(g_conn, query->data);
 			if (!res2 || PQresultStatus(res2) != PGRES_TUPLES_OK)
 			{
 				fprintf(stderr, "getTables(): SELECT (for PRIMARY KEY) failed.  Explanation from backend: %s",
@@ -1669,25 +1667,26 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 				exit_nicely(g_conn);
 			}
 
-	    for (j = 0; j < PQntuples(res2); j++)
-	    {
-		if (strlen(str)>0)
-		    strcat(str, ", ");
-		strcat(str, fmtId(PQgetvalue(res2, j, 0), force_quotes));
-	    }
+			str[0] = '\0';
+			for (j = 0; j < PQntuples(res2); j++)
+			{
+				if (strlen(str)>0)
+					strcat(str, ", ");
+				strcat(str, fmtId(PQgetvalue(res2, j, 0), force_quotes));
+			}
 
-	    if (strlen(str)>0) {
-		tblinfo[i].primary_key = strdup(str);
-		if (tblinfo[i].primary_key == NULL) {
-		    perror("strdup");
-		    exit(1);
+			if (strlen(str)>0) {
+				tblinfo[i].primary_key = strdup(str);
+				if (tblinfo[i].primary_key == NULL) {
+					perror("strdup");
+					exit(1);
+				}
+			}
+			else
+				tblinfo[i].primary_key = NULL;
 		}
-	    }
-	    else
-		tblinfo[i].primary_key = NULL;
-	}
-	else
-	    tblinfo[i].primary_key = NULL;
+		else
+			tblinfo[i].primary_key = NULL;
 
 		/* Get Triggers */
 		if (tblinfo[i].ntrig > 0)
@@ -1740,7 +1739,6 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 				int			tgnargs = atoi(PQgetvalue(res2, i2, i_tgnargs));
 				const char *tgargs = PQgetvalue(res2, i2, i_tgargs);
 				const char *p;
-				PQExpBuffer	farg = createPQExpBuffer();
 				int			findx;
 
 				for (findx = 0; findx < numFuncs; findx++)
@@ -1763,9 +1761,11 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 				if (dropSchema)
 				{
 					resetPQExpBuffer(query);
-					appendPQExpBuffer(query, "DROP TRIGGER %s ON %s;\n",
-					 fmtId(PQgetvalue(res2, i2, i_tgname), force_quotes),
-							fmtId(tblinfo[i].relname, force_quotes));
+					appendPQExpBuffer(query, "DROP TRIGGER %s ",
+									  fmtId(PQgetvalue(res2, i2, i_tgname),
+											force_quotes));
+					appendPQExpBuffer(query, "ON %s;\n",
+									  fmtId(tblinfo[i].relname, force_quotes));
 					fputs(query->data, fout);
 				}
 #endif
@@ -1800,8 +1800,10 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 					else
 						appendPQExpBuffer(query, " UPDATE");
 				}
-				appendPQExpBuffer(query, " ON %s FOR EACH ROW EXECUTE PROCEDURE %s (",
-					fmtId(tblinfo[i].relname, force_quotes), tgfunc);
+				appendPQExpBuffer(query, " ON %s FOR EACH ROW",
+								  fmtId(tblinfo[i].relname, force_quotes));
+				appendPQExpBuffer(query, " EXECUTE PROCEDURE %s (",
+								  fmtId(tgfunc, force_quotes));
 				for (findx = 0; findx < tgnargs; findx++)
 				{
 					const char	   *s;
@@ -1827,14 +1829,13 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 							break;
 					}
 					p--;
+					appendPQExpBufferChar(query, '\'');
 					for (s = tgargs; s < p;)
 					{
 						if (*s == '\'')
-							appendPQExpBufferChar(farg, '\\');
-						appendPQExpBufferChar(farg, *s++);
+							appendPQExpBufferChar(query, '\\');
+						appendPQExpBufferChar(query, *s++);
 					}
-					appendPQExpBufferChar(query, '\'');
-					appendPQExpBuffer(query, farg->data);
 					appendPQExpBufferChar(query, '\'');
 					appendPQExpBuffer(query, (findx < tgnargs - 1) ? ", " : "");
 					tgargs = p + 4;
@@ -2476,9 +2477,12 @@ dumpOprs(FILE *fout, OprInfo *oprinfo, int numOperators,
 		if (dropSchema)
 		{
 			resetPQExpBuffer(q);
-			appendPQExpBuffer(q, "DROP OPERATOR %s (%s, %s);\n", oprinfo[i].oprname,
-					fmtId(findTypeByOid(tinfo, numTypes, oprinfo[i].oprleft), false),
-					fmtId(findTypeByOid(tinfo, numTypes, oprinfo[i].oprright), false));
+			appendPQExpBuffer(q, "DROP OPERATOR %s (%s", oprinfo[i].oprname,
+					fmtId(findTypeByOid(tinfo, numTypes, oprinfo[i].oprleft),
+						  false));
+			appendPQExpBuffer(q, ", %s);\n",
+					fmtId(findTypeByOid(tinfo, numTypes, oprinfo[i].oprright),
+						  false));
 			fputs(q->data, fout);
 		}
 

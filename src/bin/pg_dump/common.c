@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.37 2000/01/16 03:54:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.38 2000/01/18 07:29:58 tgl Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -39,8 +39,6 @@ static void flagInhAttrs(TableInfo *tbinfo, int numTables,
 			 InhInfo *inhinfo, int numInherits);
 static int	strInArray(const char *pattern, char **arr, int arr_size);
 
-PQExpBuffer id_return;
-
 /*
  * findTypeByOid
  *	  given an oid of a type, return its typename
@@ -65,7 +63,7 @@ findTypeByOid(TypeInfo *tinfo, int numTypes, const char *oid)
 	}
 
 	/* should never get here */
-	fprintf(stderr, "failed sanity check,  type with oid %s was not found\n",
+	fprintf(stderr, "failed sanity check, type with oid %s was not found\n",
 			oid);
 	exit(2);
 }
@@ -90,7 +88,7 @@ findOprByOid(OprInfo *oprinfo, int numOprs, const char *oid)
 	}
 
 	/* should never get here */
-	fprintf(stderr, "failed sanity check,  opr with oid %s was not found\n",
+	fprintf(stderr, "failed sanity check, opr with oid %s was not found\n",
 			oid);
 	exit(2);
 }
@@ -505,27 +503,40 @@ findFuncByName(FuncInfo *finfo, int numFuncs, const char *name)
 const char *
 fmtId(const char *rawid, bool force_quotes)
 {
+	static PQExpBuffer id_return = NULL;
 	const char *cp;
+	
+	if (!force_quotes)
+	{
+		if (! islower(*rawid))
+			force_quotes = true;
+		else
+			for (cp = rawid; *cp; cp++)
+			{
+				if (! (islower(*cp) || isdigit(*cp) || (*cp == '_')))
+				{
+					force_quotes = true;
+					break;
+				}
+			}
+	}
+
+	if (!force_quotes)
+		return rawid;			/* no quoting needed */
 
 	if (id_return)
 		resetPQExpBuffer(id_return);
 	else
 		id_return = createPQExpBuffer();
-	
-	if (!force_quotes)
-		for (cp = rawid; *cp != '\0'; cp++)
-			if (!(islower(*cp) || isdigit(*cp) || (*cp == '_')))
-				break;
 
-	if (force_quotes || (*cp != '\0'))
+	appendPQExpBufferChar(id_return, '\"');
+	for (cp = rawid; *cp; cp++)
 	{
-		appendPQExpBuffer(id_return, "\"");
-		appendPQExpBuffer(id_return, rawid);
-		appendPQExpBuffer(id_return, "\"");
+		if (*cp == '\"')
+			appendPQExpBufferChar(id_return, '\\');
+		appendPQExpBufferChar(id_return, *cp);
 	}
-	else
-		appendPQExpBuffer(id_return, rawid);
+	appendPQExpBufferChar(id_return, '\"');
 
-	cp = id_return->data;
-	return cp;
+	return id_return->data;
 }	/* fmtId() */
