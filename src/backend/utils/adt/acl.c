@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.101 2003/11/29 19:51:57 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.102 2004/04/26 15:06:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -872,6 +872,43 @@ makeaclitem(PG_FUNCTION_ARGS)
 		ACLITEM_SET_GOPTIONS(*aclitem, ACL_NO_RIGHTS);
 
 	PG_RETURN_ACLITEM_P(aclitem);
+}
+
+/* give access to internal data within aclitem
+ */
+Datum 
+aclitem_grantee(PG_FUNCTION_ARGS)
+{
+	AclItem * a = PG_GETARG_ACLITEM_P(0);
+	PG_RETURN_INT32(a->ai_grantee);
+}
+
+Datum
+aclitem_grantor(PG_FUNCTION_ARGS)
+{
+	AclItem * a = PG_GETARG_ACLITEM_P(0);
+	PG_RETURN_INT32(a->ai_grantor);
+}
+
+Datum
+aclitem_idtype(PG_FUNCTION_ARGS)
+{
+	AclItem * a = PG_GETARG_ACLITEM_P(0);
+	PG_RETURN_INT32(ACLITEM_GET_IDTYPE(*a));
+}
+
+Datum
+aclitem_privs(PG_FUNCTION_ARGS)
+{
+	AclItem * a = PG_GETARG_ACLITEM_P(0);
+	PG_RETURN_INT32(ACLITEM_GET_PRIVS(*a));
+}
+
+Datum
+aclitem_goptions(PG_FUNCTION_ARGS)
+{
+	AclItem * a = PG_GETARG_ACLITEM_P(0);
+	PG_RETURN_INT32(ACLITEM_GET_GOPTIONS(*a));
 }
 
 static AclMode
