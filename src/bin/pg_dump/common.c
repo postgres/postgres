@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.27 1998/10/06 22:14:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.27.2.1 1998/12/14 00:14:23 thomas Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -496,20 +496,20 @@ findFuncByName(FuncInfo *finfo, int numFuncs, const char *name)
  *	returns pointer to input string or string surrounded by double quotes
  *
  *  Note that the returned string should be used immediately since it
- *  uses a static buffer to hold the string. Non-reentrant but fast.
+ *  uses a static buffer to hold the string. Non-reentrant but faster?
  */
 const char *
-fmtId(const char *rawid)
+fmtId(const char *rawid, bool force_quotes)
 {
 	const char *cp;
 	static char id[MAXQUERYLEN];
 
-	if (! g_force_quotes)
+	if (! force_quotes)
 		for (cp = rawid; *cp != '\0'; cp++)
 			if (!(islower(*cp) || isdigit(*cp) || (*cp == '_')))
 				break;
 
-	if (g_force_quotes || (*cp != '\0'))
+	if (force_quotes || (*cp != '\0'))
 	{
 		strcpy(id, "\"");
 		strcat(id, rawid);

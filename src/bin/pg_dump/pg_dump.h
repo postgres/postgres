@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.35.2.1 1998/12/05 22:11:08 tgl Exp $
+ * $Id: pg_dump.h,v 1.35.2.2 1998/12/14 00:14:24 thomas Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -226,7 +226,7 @@ extern void dumpIndices(FILE *fout, IndInfo *indinfo, int numIndices,
 			TableInfo *tbinfo, int numTables, const char *tablename);
 
 extern const char *
-			fmtId(const char *identifier);
+			fmtId(const char *identifier, bool force_quotes);
 
 /* largest query string size */
 #define MAXQUERYLEN  5000
