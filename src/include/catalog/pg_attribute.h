@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_attribute.h,v 1.31 1998/03/04 18:41:08 momjian Exp $
+ * $Id: pg_attribute.h,v 1.32 1998/03/07 04:49:57 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -327,8 +327,8 @@ DATA(insert OID = 0 ( 1261 cmax				29 0  4  -6 0 -1 -1 t f i f f));
 { 1249, {"attbyval"},	  16, 0,	1, 10, 0, -1, -1, '\001', '\0', 'c', '\0', '\0' }, \
 { 1249, {"attisset"},	  16, 0,	1, 11, 0, -1, -1, '\001', '\0', 'c', '\0', '\0' }, \
 { 1249, {"attalign"},	  18, 0,	1, 12, 0, -1, -1, '\001', '\0', 'c', '\0', '\0' }, \
-{ 12491, {"attnotnull"},  16, 0,	1, 13, 0, -1, -1, '\001', '\0', 'c', '\0', '\0' }, \
-{ 12491, {"atthasdef"},   16, 0,	1, 14, 0, -1, -1, '\001', '\0', 'c', '\0', '\0' }
+{ 1249, {"attnotnull"},  16, 0,	1, 13, 0, -1, -1, '\001', '\0', 'c', '\0', '\0' }, \
+{ 1249, {"atthasdef"},   16, 0,	1, 14, 0, -1, -1, '\001', '\0', 'c', '\0', '\0' }
 
 DATA(insert OID = 0 ( 1249 attrelid			26 0  4   1 0 -1 -1 t f i f f));
 DATA(insert OID = 0 ( 1249 attname			19 0 NAMEDATALEN  2 0 -1 -1 f f i f f));
