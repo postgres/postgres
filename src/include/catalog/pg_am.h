@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_am.h,v 1.16 2001/01/24 19:43:20 momjian Exp $
+ * $Id: pg_am.h,v 1.17 2001/05/30 19:55:08 tgl Exp $
  *
  * NOTES
  *		the genbki.sh script reads this file and generates .bki
@@ -116,5 +116,6 @@ DESCR("");
 #define HASH_AM_OID 405
 DATA(insert OID = 783 (  gist PGUID 100 7 0 gistgettuple gistinsert gistdelete - - - - gistbeginscan gistrescan gistendscan gistmarkpos gistrestrpos - - gistbuild - - gistcostestimate ));
 DESCR("");
+#define GIST_AM_OID 783
 
 #endif	 /* PG_AM_H */
