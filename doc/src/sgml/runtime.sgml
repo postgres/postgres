@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.287 2004/10/09 23:12:53 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.288 2004/10/15 16:50:29 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -2355,13 +2355,14 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Win32
       <term><varname>log_duration</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
-        Causes the duration of every completed statement to be logged.
-        To use this option, it is recommended that you also enable
-        <varname>log_statement</> and if not using <application>syslog</>
-        log the PID using <varname>log_line_prefix</> so that you
-        can link the statement to the duration using the process
-        ID. The default is off.  Only superusers can turn off this
-        option if it is enabled by the administrator.
+        Causes the duration of every completed statement which satisfies
+        <varname>log_statement</> to be logged.  When using this option, 
+        if you are not using <application>syslog</>, it is recommended 
+        that you log the PID or session ID using <varname>log_line_prefix</> 
+        or log the session ID so that you can link the statement to the 
+        duration using the process ID or session ID. The default is off.  
+        Only superusers can turn off this option if it is enabled by the 
+        administrator.
        </para>
       </listitem>
      </varlistentry>
