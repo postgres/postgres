@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.5 1997/02/07 16:23:39 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.6 1997/04/09 02:20:32 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -291,6 +291,15 @@ getattnvals(Oid relid, AttrNumber attnum)
 	return(0);
     }
     nvals = ((Form_pg_class) GETSTRUCT(atp))->reltuples;
+    /* Look above how nvals is used. 	- vadim 04/09/97 */
+    if ( nvals > 0 )
+    {
+    	double selratio = 1.0 / (double)nvals;
+    	
+    	selratio *= (double)ATTNVALS_SCALE;
+    	nvals = (int) ceil (selratio);
+    }
+    
     return(nvals);
 }
 
