@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue May 18 12:06:03 EDT 2004
+Last updated:		Wed May 19 17:09:53 EDT 2004
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -262,7 +262,7 @@ Clients
 * -Allow pg_dump to dump CREATE CONVERSION (Christopher)
 * Allow fastpast to pass values in portable format
 * Allow libpq to return information about prepared queries
-* Make pg_restore continue after errors, so it acts more like pg_dump scripts
+* -Make pg_restore continue after errors, so it acts more like pg_dump scripts
 * Have psql show more information about sequences
 * Allow pg_dumpall to use non-text output formats
 * Have pg_dump use multi-statement transactions for INSERT dumps
