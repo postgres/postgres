@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.25 1999/05/28 17:03:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.26 1999/05/31 18:28:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,6 +83,8 @@ CreateSharedMemoryAndSemaphores(IPCKey key, int maxBackends)
 	size += MMShmemSize();
 #endif
 	size += 100000;
+	/* might as well round it off to a multiple of a K or so... */
+	size += 1024 - (size % 1024);
 
 	if (DebugLvl > 1)
 	{
