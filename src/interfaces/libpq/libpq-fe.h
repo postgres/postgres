@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.5 1996/07/31 18:40:12 scrappy Exp $
+ * $Id: libpq-fe.h,v 1.5.2.1 1996/08/28 01:13:37 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,7 @@ typedef enum {
 } ExecStatusType;
 
 /* string descriptions of the ExecStatusTypes */
-extern char* pgresStatus[]; 
+extern const char* pgresStatus[]; 
 
 /* 
  * POSTGRES backend dependent Constants. 
@@ -83,6 +83,9 @@ typedef struct pgresAttDesc {
    For binary tuples, the first four bytes of the value is the size,
    and the bytes afterwards are the value.  The binary value is 
    not guaranteed to be null-terminated.  In fact, it can have embedded nulls*/
+
+#define NULL_LEN	(-1)	/* pg_result len for NULL value */
+
 typedef struct pgresAttValue {
   int len; /* length in bytes of the value */
   char *value; /* actual value */
@@ -144,8 +147,8 @@ typedef struct _PQprintOpt PQprintOpt;
 
 /* ===  in fe-connect.c === */
   /* make a new client connection to the backend */
-extern PGconn* PQsetdb(char* pghost, char* pgport, char* pgoptions, 
-		       char* pgtty, char* dbName);
+extern PGconn* PQsetdb(const char* pghost, const char* pgport, const char* pgoptions, 
+		       const char* pgtty, const char* dbName);
   /* close the current connection and free the PGconn data structure */
 extern void PQfinish(PGconn* conn);
   /* close the current connection and restablish a new one with the same 
@@ -163,27 +166,28 @@ extern void PQtrace(PGconn *conn, FILE* debug_port);
 extern void PQuntrace(PGconn *conn);
 
 /* === in fe-exec.c === */
-extern PGresult* PQexec(PGconn* conn, char* query);
+extern PGresult* PQexec(PGconn* conn, const char* query);
 extern int PQgetline(PGconn *conn, char* string, int length);
 extern int PQendcopy(PGconn *conn);
-extern void PQputline(PGconn *conn, char* string);
+extern void PQputline(PGconn *conn, const char* string);
 extern ExecStatusType PQresultStatus(PGresult* res);
 extern int PQntuples(PGresult *res);
 extern int PQnfields(PGresult *res);
 extern char* PQfname(PGresult *res, int field_num);
-extern int PQfnumber(PGresult *res, char* field_name);
+extern int PQfnumber(PGresult *res, const char* field_name);
 extern Oid PQftype(PGresult *res, int field_num);
 extern int2 PQfsize(PGresult *res, int field_num);
 extern char* PQcmdStatus(PGresult *res);
-extern char* PQoidStatus(PGresult *res);
+extern const char* PQoidStatus(PGresult *res);
 extern char* PQgetvalue(PGresult *res, int tup_num, int field_num);
 extern int PQgetlength(PGresult *res, int tup_num, int field_num);
+extern int PQgetisnull(PGresult *res, int tup_num, int field_num);
 extern void PQclear(PGresult* res);
 /* PQdisplayTuples() is a better version of PQprintTuples() */
 extern void PQdisplayTuples(PGresult *res,
 			    FILE *fp,      /* where to send the output */
 			    int fillAlign, /* pad the fields with spaces */
-			    char *fieldSep,  /* field separator */
+			    const char *fieldSep,  /* field separator */
 			    int printHeader, /* display headers? */
 			    int quiet);
 extern void PQprintTuples(PGresult* res, 
@@ -207,7 +211,7 @@ extern PGresult* PQfn(PGconn* conn,
 		      int nargs);
 /* === in fe-auth.c === */
 extern MsgType fe_getauthsvc(char* PQerrormsg);
-extern void fe_setauthsvc(char *name, char* PQerrormsg);
+extern void fe_setauthsvc(const char *name, char* PQerrormsg);
 extern char *fe_getauthname(char* PQerrormsg);
 
 /* === in fe-misc.c === */
@@ -217,8 +221,8 @@ extern char *fe_getauthname(char* PQerrormsg);
 */
 extern int pqGets(char* s, int maxlen, FILE* stream, FILE* debug);
 extern int pqGetnchar(char* s, int maxlen, FILE* stream, FILE* debug);
-extern int pqPutnchar(char* s, int maxlen, FILE* stream, FILE* debug);
-extern int pqPuts(char* s, FILE* stream, FILE* debug );
+extern int pqPutnchar(const char* s, int maxlen, FILE* stream, FILE* debug);
+extern int pqPuts(const char* s, FILE* stream, FILE* debug );
 extern int pqGetc(FILE* stream, FILE *debug);
 /* get a n-byte integer from the stream into result */
 /* returns 0 if successful */
