@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sat Dec 29 00:22:31 EST 2001
+Last updated:		Sat Dec 29 12:18:10 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -57,7 +57,9 @@ ADMIN
   flags unique
 * Allow usernames to be specified directly in pg_hba.conf (Bruce)
 * Add function to return compressed length of TOAST data values (Tom)
-* Change DEBUG tag used in server logs
+* Change DEBUG startup tag to NOTICE;  change NOTICE to output to client
+  only if client exists (Bruce)
+
 
 DATA TYPES
 
@@ -410,7 +412,7 @@ SOURCE CODE
 * HOLDER/HOLDERTAB rename to PROCLOCK/PROCLOCKTAG (Bruce)
 * Remove LockMethodTable.prio field, not used (Bruce)
 * Add version file format stamp to heap and other table types
-* -Make elog(LOG) in WAL its own output type, distinct from DEBUG (Peter E)
+* Make elog(LOG) in WAL its own output type, distinct from DEBUG
 * Rename some /contrib modules from pg* to pg_*
 * Move some things from /contrib into main tree
 * Remove warnings created by -Wcast-align
