@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/bin/pg_dump/dumputils.c,v 1.4 2003/05/30 22:55:15 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/pg_dump/dumputils.c,v 1.5 2003/07/24 15:52:53 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,6 +24,7 @@ static bool parseAclItem(const char *item, const char *type, const char *name,
 						 PQExpBuffer grantee, PQExpBuffer grantor,
 						 PQExpBuffer privs, PQExpBuffer privswgo);
 static void AddAcl(PQExpBuffer aclbuf, const char *keyword);
+#define supports_grant_options(version) ((version) >= 70400)
 
 
 /*
@@ -187,6 +188,7 @@ buildACLCommands(const char *name, const char *type,
 	char	   *aclbuf,
 			   *tok;
 	PQExpBuffer grantee, grantor, privs, privswgo;
+	PQExpBuffer	firstsql, secondsql;
 	bool		found_owner_privs = false;
 
 	if (strlen(acls) == 0)
@@ -196,13 +198,23 @@ buildACLCommands(const char *name, const char *type,
 	grantor = createPQExpBuffer();
 	privs = createPQExpBuffer();
 	privswgo = createPQExpBuffer();
+	/*
+	 * At the end, these two will be pasted together to form the
+	 * result.  But the owner privileges need to go before the other
+	 * ones to keep the dependencies valid.  In recent versions this
+	 * is normally the case, but in old versions they come after the
+	 * PUBLIC privileges and that results in problems if we need to
+	 * run REVOKE on the owner privileges.
+	 */
+	firstsql = createPQExpBuffer();
+	secondsql = createPQExpBuffer();
 
 	/*
 	 * Always start with REVOKE ALL FROM PUBLIC, so that we don't have to
 	 * wire-in knowledge about the default public privileges for different
 	 * kinds of objects.
 	 */
-	appendPQExpBuffer(sql, "REVOKE ALL ON %s %s FROM PUBLIC;\n",
+	appendPQExpBuffer(firstsql, "REVOKE ALL ON %s %s FROM PUBLIC;\n",
 					  type, name);
 
 	/* Make a working copy of acls so we can use strtok */
@@ -234,24 +246,28 @@ buildACLCommands(const char *name, const char *type,
 
 		if (privs->len > 0 || privswgo->len > 0)
 		{
-			if (owner && strcmp(grantee->data, owner) == 0)
+			if (owner
+				&& strcmp(grantee->data, owner) == 0
+				&& strcmp(grantor->data, owner) == 0)
 			{
-				/*
-				 * For the owner, the default privilege level is
-				 * ALL WITH GRANT OPTION.
-				 */
 				found_owner_privs = true;
-				if (strcmp(privswgo->data, "ALL") != 0)
+				/*
+				 * For the owner, the default privilege level is ALL
+				 * WITH GRANT OPTION (only ALL prior to 7.4).
+				 */
+				if (supports_grant_options(remoteVersion)
+					? strcmp(privswgo->data, "ALL") != 0
+					: strcmp(privs->data, "ALL") != 0)
 				{
-					appendPQExpBuffer(sql, "REVOKE ALL ON %s %s FROM %s;\n",
+					appendPQExpBuffer(firstsql, "REVOKE ALL ON %s %s FROM %s;\n",
 									  type, name,
 									  fmtId(grantee->data));
 					if (privs->len > 0)
-						appendPQExpBuffer(sql, "GRANT %s ON %s %s TO %s;\n",
+						appendPQExpBuffer(firstsql, "GRANT %s ON %s %s TO %s;\n",
 										  privs->data, type, name,
 										  fmtId(grantee->data));
 					if (privswgo->len > 0)
-						appendPQExpBuffer(sql, "GRANT %s ON %s %s TO %s WITH GRANT OPTION;\n",
+						appendPQExpBuffer(firstsql, "GRANT %s ON %s %s TO %s WITH GRANT OPTION;\n",
 										  privswgo->data, type, name,
 										  fmtId(grantee->data));
 				}
@@ -261,47 +277,43 @@ buildACLCommands(const char *name, const char *type,
 				/*
 				 * Otherwise can assume we are starting from no privs.
 				 */
+				if (grantor->len > 0
+					&& (!owner || strcmp(owner, grantor->data) != 0))
+					appendPQExpBuffer(secondsql, "SET SESSION AUTHORIZATION %s;\n",
+									  fmtId(grantor->data));
+
 				if (privs->len > 0)
 				{
-					appendPQExpBuffer(sql, "GRANT %s ON %s %s TO ",
+					appendPQExpBuffer(secondsql, "GRANT %s ON %s %s TO ",
 									  privs->data, type, name);
 					if (grantee->len == 0)
-						appendPQExpBuffer(sql, "PUBLIC;\n");
+						appendPQExpBuffer(secondsql, "PUBLIC;\n");
 					else if (strncmp(grantee->data, "group ",
 									 strlen("group ")) == 0)
-						appendPQExpBuffer(sql, "GROUP %s;\n",
+						appendPQExpBuffer(secondsql, "GROUP %s;\n",
 										  fmtId(grantee->data + strlen("group ")));
 					else
-						appendPQExpBuffer(sql, "%s;\n", fmtId(grantee->data));
+						appendPQExpBuffer(secondsql, "%s;\n", fmtId(grantee->data));
 				}
 				if (privswgo->len > 0)
 				{
-					appendPQExpBuffer(sql, "GRANT %s ON %s %s TO ",
+					appendPQExpBuffer(secondsql, "GRANT %s ON %s %s TO ",
 									  privswgo->data, type, name);
 					if (grantee->len == 0)
-						appendPQExpBuffer(sql, "PUBLIC");
+						appendPQExpBuffer(secondsql, "PUBLIC");
 					else if (strncmp(grantee->data, "group ",
 									 strlen("group ")) == 0)
-						appendPQExpBuffer(sql, "GROUP %s",
+						appendPQExpBuffer(secondsql, "GROUP %s",
 										  fmtId(grantee->data + strlen("group ")));
 					else
-						appendPQExpBuffer(sql, "%s", fmtId(grantee->data));
-					appendPQExpBuffer(sql, " WITH GRANT OPTION;\n");
+						appendPQExpBuffer(secondsql, "%s", fmtId(grantee->data));
+					appendPQExpBuffer(secondsql, " WITH GRANT OPTION;\n");
 				}
+
+				if (grantor->len > 0
+					&& (!owner || strcmp(owner, grantor->data) != 0))
+					appendPQExpBuffer(secondsql, "RESET SESSION AUTHORIZATION;\n");
 			}
-		}
-		else
-		{
-			/* No privileges.  Issue explicit REVOKE for safety. */
-			if (grantee->len == 0)
-				; /* Empty left-hand side means "PUBLIC"; already did it */
-			else if (strncmp(grantee->data, "group ", strlen("group ")) == 0)
-				appendPQExpBuffer(sql, "REVOKE ALL ON %s %s FROM GROUP %s;\n",
-								  type, name,
-								  fmtId(grantee->data + strlen("group ")));
-			else
-				appendPQExpBuffer(sql, "REVOKE ALL ON %s %s FROM %s;\n",
-								  type, name, fmtId(grantee->data));
 		}
 	}
 
@@ -311,7 +323,7 @@ buildACLCommands(const char *name, const char *type,
 	 */
 	if (!found_owner_privs && owner)
 	{
-		appendPQExpBuffer(sql, "REVOKE ALL ON %s %s FROM %s;\n",
+		appendPQExpBuffer(firstsql, "REVOKE ALL ON %s %s FROM %s;\n",
 						  type, name, fmtId(owner));
 	}
 
@@ -320,6 +332,10 @@ buildACLCommands(const char *name, const char *type,
 	destroyPQExpBuffer(grantor);
 	destroyPQExpBuffer(privs);
 	destroyPQExpBuffer(privswgo);
+
+	appendPQExpBuffer(sql, "%s%s", firstsql->data, secondsql->data);
+	destroyPQExpBuffer(firstsql);
+	destroyPQExpBuffer(secondsql);
 
 	return true;
 }
