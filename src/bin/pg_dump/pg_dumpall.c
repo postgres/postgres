@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.33 2004/05/14 17:04:47 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.34 2004/05/19 21:21:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -242,6 +242,11 @@ main(int argc, char *argv[])
 	}
 
 	PQfinish(conn);
+
+	printf("--\n");
+	printf("-- PostgreSQL database cluster dump complete\n");
+	printf("--\n\n");
+
 	exit(0);
 }
 
