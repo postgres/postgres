@@ -6,7 +6,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/array_userfuncs.c,v 1.13 2004/08/29 05:06:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/array_userfuncs.c,v 1.14 2004/12/17 20:59:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -165,6 +165,22 @@ array_cat(PG_FUNCTION_ARGS)
 	v1 = PG_GETARG_ARRAYTYPE_P(0);
 	v2 = PG_GETARG_ARRAYTYPE_P(1);
 
+	element_type1 = ARR_ELEMTYPE(v1);
+	element_type2 = ARR_ELEMTYPE(v2);
+
+	/* Check we have matching element types */
+	if (element_type1 != element_type2)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("cannot concatenate incompatible arrays"),
+				 errdetail("Arrays with element types %s and %s are not "
+						   "compatible for concatenation.",
+						   format_type_be(element_type1),
+						   format_type_be(element_type2))));
+
+	/* OK, use it */
+	element_type = element_type1;
+
 	/*----------
 	 * We must have one of the following combinations of inputs:
 	 * 1) one empty array, and one non-empty array
@@ -199,22 +215,6 @@ array_cat(PG_FUNCTION_ARGS)
 				 errdetail("Arrays of %d and %d dimensions are not "
 						   "compatible for concatenation.",
 						   ndims1, ndims2)));
-
-	element_type1 = ARR_ELEMTYPE(v1);
-	element_type2 = ARR_ELEMTYPE(v2);
-
-	/* Check we have matching element types */
-	if (element_type1 != element_type2)
-		ereport(ERROR,
-				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("cannot concatenate incompatible arrays"),
-				 errdetail("Arrays with element types %s and %s are not "
-						   "compatible for concatenation.",
-						   format_type_be(element_type1),
-						   format_type_be(element_type2))));
-
-	/* OK, use it */
-	element_type = element_type1;
 
 	/* get argument array details */
 	lbs1 = ARR_LBOUND(v1);
