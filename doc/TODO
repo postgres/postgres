@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sun Mar  1 17:14:36 EST 1998
+Last updated:		Sat Mar 21 00:26:29 EST 1998
 
 Current maintainer:	Bruce Momjian (maillist@candle.pha.pa.us)
 
@@ -30,7 +30,7 @@ Developers who have claimed items are:
 	* Kurt is "Kurt J. Lidl" <lidl@va.pubnix.com>
  	* Marc is Marc Fournier <scrappy@hub.org>
  	* Martin is Martin S. Utesch <utesch@aut.tu-freiberg.de>
-	* Michael is Michael Meskes <meskes@topsystem.de>
+	* Michael is Michael Meskes <meskes@debian.org>
 	* Oleg is Oleg Bartunov <oleg@sai.msu.su>
 	* Paul is Paul M. Aoki <aoki@CS.Berkeley.EDU>
 	* Patrick is Patrick van Kleef <pvk@pobox.com>
@@ -68,7 +68,6 @@ RELIABILITY
 * Tables that start with xinv confused to be large objects
 * Two and three dimmensional arrays display improperly, missing {}
 * GROUP BY in INSERT INTO table SELECT * FROM table2 fails
-* lo_unlink() crashes server
 * Prevent auto-table reference, like SELECT table.col WHERE col = 3 (?)
 * SELECT * FROM table WHERE int4_column = '1' fails
 * SELECT a[1] FROM test fails, it needs test.a[1]
@@ -77,6 +76,9 @@ RELIABILITY
 * User who can create databases can modify pg_database table
 * optimizer memory exhaustion with many OR's
 * elog() does not free all its memory(Jan)
+* views on subselects fail
+* disallow inherited columns with the same name as new columns
+* recover or force failure when disk space is exhausted
 
 ENHANCEMENTS
 ------------
@@ -86,10 +88,10 @@ ENHANCEMENTS
 * Allow transaction commits with rollback with no-fsync performance
 * More access control over who can create tables and access the database
 * Add full ANSI SQL capabilities
-	* Implement HAVING clause
+	* Implement HAVING clause(Stephan)
 	* add OUTER joins, left and right (Thomas)
 	* make VIEWs updateable where possible
-	* add INTERSECTS, SUBTRACTS
+	* add INTERSECTS, SUBTRACTS(Stephan)
 	* add temporary tables(Bruce)
 	* add sql3 recursive unions
 	* add the concept of dataspaces
@@ -106,9 +108,11 @@ ENHANCEMENTS
 * Large objects
 	* Fix large object mapping scheme, own reltype
 	* not to stuff everything as files in a single directory
+	* Fix large object memory leaks
 * Better interface for adding to pg_group
 * Make MONEY/DECIMAL have a defined precision
-* Add support for tables >2G, or test current version
+* Fix tables >2G, or report error when 2G size reached
+	(fix lseek()/off_t, mdextend()/RELSEG_SIZE)
 * Threaded version of the server or libpq
 * Allow libpq to cancel query requests
 * Add REGEX internationalization
@@ -135,7 +139,6 @@ ENHANCEMENTS
 * Allow psql to print nulls as distinct from ""(?)
 * Allow variable casts with BETWEEN 'today'::asbtime AND 'today'::abstime
 * Allow INSERT INTO ... SELECT ... FROM view to work
-* Allow text, char(), and varchar() overhead to be only 2 bytes, not 4 bytes
 * Make VACUUM on database not lock pg_class
 * Make VACUUM ANALYZE only use a readlock
 * Allow cursors to be DECLAREd/OPENed/CLOSEed outside transactions
@@ -145,6 +148,15 @@ ENHANCEMENTS
 * Allow variable block sizes(Darren)
 * System tables are now more update-able from SQL(Jan)
 * New pg_shadow file, pg_user is now a view of pg_shadow(Jan)
+* Allow flag to control COPY input/output of NULLs
+* Allow CLUSTER on all tables at once, and improve CLUSTER
+* Change all references of Postgres to PostgreSQL, including binary names
+* Add ELOG_TIMESTAMPS to elog()(?)
+* Change LOCK tablename to LOCK TABLE tablename(?)
+* Allow max tuple length to be changed(Darren)
+* Have psql with no database name not connect to username as default(?)
+* Allow subqueries in target list
+* Granting permissions to another user looses permissions for the owner
 
 PERFORMANCE
 -----------
@@ -161,8 +173,14 @@ PERFORMANCE
 * update pg_statistic table to remove operator column
 * make index creation use psort code, because it is now faster(Vadim)
 * remove fork()/exec() of backend and make it just fork()
-* Improve vacuum locking issues
 * Add base table name to \d index
+* Allow char() not to use variable-sized header to reduce disk size
+* Do async I/O to do better read-ahead of data
+* Fix optmizer problem with self-table joins
+* Fix memory exhaustion when using many OR's
+* Use spin locks only on multi-CPU systems, yield CPU instead
+* Get faster regex() code from Henry Spencer <henry@zoo.utoronto.ca>
+	when it is available
 
 DOCUMENTATION
 -------------
@@ -170,9 +188,43 @@ DOCUMENTATION
 * added features used in grammer but not in docs, like :: and CAST
 * update libpq++ and pginterface manual page
 * Add keyword list to documentation, already in /tools
+* Add 'man pgsql' to show all manual page names
+
 
 
 =============================================================================
+
+CHANGES IN THE 6.3p1 PATCH 
+--------------------------
+ecpg cleanup/fixes, now version 1.1(Michael Meskes)
+pg_user cleanup(Bruce)
+large object fix for pg_dump and tclsh(alvin@camberlo.demon.co.uk)
+LIKE fix for multiple adjacent underscores
+fix for redefining builtin functions(Thomas)
+ultrix4 cleanup
+upgrade to pg_access 0.83
+updated CLUSTER manual page
+multi-byte character set support, see doc/README.mb(Tatsuo)
+configure --with-pgport fix
+pg_ident fix
+big-endian fix for backend communications(Tatsuo)
+SUBSTR() and substring() fix(Thomas)
+several jdbc fixes(Peter)
+libpgtcl improvements, see libptcl/README(Randy Kunkee)
+Fix for "Datasize = 0" error(Vadim)
+Prevent \do from wrapping(Bruce)
+Remove duplicate Russian character set entries
+Sunos4 cleanup
+Allow optional TABLE keyword in LOCK and SELECT INTO(Thomas)
+CREATE SEQUENCE options to allow a negative integer(Thomas)
+Add "PASSWORD" as an allowed column identifier(Thomas)
+Add checks for UNION target fields(Bruce)
+Fix Alpha port(Dwayne Bailey)
+Fix for text arrays containing quotes(Doug Gibson)
+Solaris compile fix(Albert Chin-A-Young)
+Better identify tcl and tk libs and includes(Bruce)
+
+
 
 CHANGES IN THE 6.3 RELEASE
 --------------------------

@@ -1,3 +1,42 @@
+PostgreSQL 6.3p1             Sun Mar 22 00:19:35 EST 1998
+-------------------------------------------------------------
+
+A dump/restore is NOT required for those running 6.3.  A 'make clean',
+'make', and 'make install' is all that is required.  You may want to
+re-link your any custom applications that use PostgreSQL libraries.
+
+Changes
+-------
+ecpg cleanup/fixes, now version 1.1(Michael Meskes)
+pg_user cleanup(Bruce)
+large object fix for pg_dump and tclsh(alvin@camberlo.demon.co.uk)
+LIKE fix for multiple adjacent underscores
+fix for redefining builtin functions(Thomas)
+ultrix4 cleanup
+upgrade to pg_access 0.83
+updated CLUSTER manual page
+multi-byte character set support, see doc/README.mb(Tatsuo)
+configure --with-pgport fix
+pg_ident fix
+big-endian fix for backend communications(Tatsuo)
+SUBSTR() and substring() fix(Thomas)
+several jdbc fixes(Peter)
+libpgtcl improvements, see libptcl/README(Randy Kunkee)
+Fix for "Datasize = 0" error(Vadim)
+Prevent \do from wrapping(Bruce)
+Remove duplicate Russian character set entries
+Sunos4 cleanup
+Allow optional TABLE keyword in LOCK and SELECT INTO(Thomas)
+CREATE SEQUENCE options to allow a negative integer(Thomas)
+Add "PASSWORD" as an allowed column identifier(Thomas)
+Add checks for UNION target fields(Bruce)
+Fix Alpha port(Dwayne Bailey)
+Fix for text arrays containing quotes(Doug Gibson)
+Solaris compile fix(Albert Chin-A-Young)
+Better identify tcl and tk libs and includes(Bruce)
+
+
+
 PostgreSQL 6.3               Sun Mar  1 14:57:30 EST 1998
 -------------------------------------------------------------
 
@@ -173,6 +212,7 @@ Expand a few function names formerly truncated to 16 characters(Thomas)
 Remove un-needed malloc() calls and replace with palloc()(Bruce)
 
 
+
 PostgreSQL 6.2.1                 Fri Oct 17 00:01:27 EDT 1997
 -------------------------------------------------------------
 
@@ -193,6 +233,7 @@ Fix avg(cash) computation(Thomas)
 Fix for specifying a column twice in ORDER/GROUP BY(Vadim)
 Documented new libpq function to return affected rows, PQcmdTuples(Bruce)
 Trigger function for inserting user names for INSERT/UPDATE(Brook Milligan)
+
 
 
 PostgreSQL 6.2               Thu Oct 02 12:53:46 EDT 1997
@@ -311,6 +352,7 @@ Files moved to /src/tools directory(Bruce)
 SPI and Trigger programming guides (Vadim & D'Arcy)
 
 
+
 PostgreSQL 6.1.1                 Mon Jul 22 18:04:49 EDT 1997
 -------------------------------------------------------------
 
@@ -335,6 +377,7 @@ major fix for endian handling of communication to server(Thomas, Tatsuo)
 Fix for Solaris assembler and include files(Yoshihiko Ichikawa)
 allow underscores in usernames(Bruce)
 pg_dumpall now returns proper status, portability fix(Bruce)
+
 
 
 PostgreSQL 6.1                   Sun Jun  8 14:41:13 EDT 1997
@@ -437,6 +480,9 @@ more shared library support
 c++ include file cleanup(Bruce)
 warn about buggy flex(Bruce)
 DG-UX, Ultrix, Irix, AIX portability fixes
+
+
+
 PostgreSQL 6.0                   Wed Jan 29 00:19:54 EST 1997
 -------------------------------------------------------------
 
@@ -548,12 +594,14 @@ Restructured port-specific file locations(Bryan, Marc)
 Unused/uninialized variables corrected
 
 
+
 PostgreSQL 1.09                 ???
 -------------------------------------------------------------
 
 Sorry, we stopped keeping track of changes from 1.02 to 1.09.  Some of
 the changes listed in 6.0 were actually included in the 1.02.1 to 1.09
 releases.
+
 
 
 Postgres95 1.02                 Thu Aug  1 18:00:00 EDT 1996
@@ -613,6 +661,8 @@ Contributors (appologies to any missed)
  * Paul "Shag" Walmsley <ccshag@cclabs.missouri.edu>
  * "Alistair G. Crooks" <azcb0@sde.uts.amdahl.com>
 
+
+
 Postgres95 1.01			Fri Feb 23 18:20:36 PST 1996
 -------------------------------------------------------------
 Incompatibilities:
@@ -647,6 +697,8 @@ Bug fixes:
  * changed all uses of getuid to geteuid so that effective uids are used
  * psql now returns non-zero status on errors when using -c
  * applied public patches 1-14
+
+
 
 Postgres95 1.0			Tue Sep  5 11:24:11 PDT 1995
 -------------------------------------------------------------
@@ -690,6 +742,7 @@ Bug fixes:
  *  typographic errors in the user manual have been corrected.
  *  btrees with multiple index never worked, now we tell you they don't
    work when you try to use them
+
 
 
 Postgres95 Beta 0.03		Fri Jul 21 14:49:31 PDT 1995
@@ -800,6 +853,8 @@ New utilities:
 New documentation:
  * the user manual has been revised and libpq documentation added.
 
+
+
 Postgres95 Beta 0.02	(Thu May 25 16:54:46 PDT 1995)
 ------------------------------------------------------
 Incompatible changes:
@@ -835,6 +890,8 @@ The following bugs have been fixed in postgres95-beta-0.02:
  * SELECT DISTINCT INTO TABLE hangs
  * CREATE TYPE doesn't accept 'variable' as the internallength
  * wrong result using more than 1 aggregate in a SELECT
+
+
 
 Postgres95 Beta 0.01	(Mon May 1 19:03:10 PDT 1995)
 ------------------------------------------------------
