@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.373 2002/11/02 18:41:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.373.2.1 2003/02/05 20:16:55 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -3230,7 +3230,7 @@ any_operator:
  *
  *****************************************************************************/
 
-CreateCastStmt: CREATE CAST '(' ConstTypename AS ConstTypename ')'
+CreateCastStmt: CREATE CAST '(' Typename AS Typename ')'
 					WITH FUNCTION function_with_argtypes cast_context
 				{
 					CreateCastStmt *n = makeNode(CreateCastStmt);
@@ -3240,7 +3240,7 @@ CreateCastStmt: CREATE CAST '(' ConstTypename AS ConstTypename ')'
 					n->context = (CoercionContext) $11;
 					$$ = (Node *)n;
 				}
-			| CREATE CAST '(' ConstTypename AS ConstTypename ')'
+			| CREATE CAST '(' Typename AS Typename ')'
 					WITHOUT FUNCTION cast_context
 				{
 					CreateCastStmt *n = makeNode(CreateCastStmt);
@@ -3258,7 +3258,7 @@ cast_context:  AS IMPLICIT_P					{ $$ = COERCION_IMPLICIT; }
 		;
 
 
-DropCastStmt: DROP CAST '(' ConstTypename AS ConstTypename ')' opt_drop_behavior
+DropCastStmt: DROP CAST '(' Typename AS Typename ')' opt_drop_behavior
 				{
 					DropCastStmt *n = makeNode(DropCastStmt);
 					n->sourcetype = $4;
@@ -4849,9 +4849,10 @@ Typename:	SimpleTypename opt_array_bounds
 					$$ = $1;
 					$$->arrayBounds = $2;
 				}
-			| SETOF SimpleTypename
+			| SETOF SimpleTypename opt_array_bounds
 				{
 					$$ = $2;
+					$$->arrayBounds = $3;
 					$$->setof = TRUE;
 				}
 		;
@@ -5074,6 +5075,8 @@ Bit:		BitWithLength
 				}
 		;
 
+/* ConstBit is like Bit except "BIT" defaults to unspecified length */
+/* See notes for ConstCharacter, which addresses same issue for "CHAR" */
 ConstBit:	BitWithLength
 				{
 					$$ = $1;
