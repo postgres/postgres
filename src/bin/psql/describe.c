@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.24 2000/09/07 04:55:27 ishii Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.25 2000/10/24 01:38:38 tgl Exp $
  */
 #include "postgres.h"
 #include "describe.h"
@@ -1020,10 +1020,6 @@ listTables(const char *infotype, const char *name, bool desc)
 			strcat(buf, "'S'");
 		strcat(buf, ")\n");
 
-		/* ignore large-obj indices */
-		if (showIndices)
-			strcat(buf, "  AND (c.relkind != 'i' OR c.relname !~ '^xinx')\n");
-
 		strcat(buf, showSystem ? "  AND c.relname ~ '^pg_'\n" : "  AND c.relname !~ '^pg_'\n");
 		if (name)
 		{
@@ -1049,10 +1045,6 @@ listTables(const char *infotype, const char *name, bool desc)
 		else
 			strcat(buf, "'S'");
 		strcat(buf, ")\n");
-
-		/* ignore large-obj indices */
-		if (showIndices)
-			strcat(buf, "  AND (c.relkind != 'i' OR c.relname !~ '^xinx')\n");
 
 		strcat(buf, showSystem ? "  AND c.relname ~ '^pg_'\n" : "  AND c.relname !~ '^pg_'\n");
 		if (name)

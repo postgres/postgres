@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.54 2000/10/22 05:27:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.55 2000/10/24 01:38:26 tgl Exp $
  *
  * NOTES
  *	  This should be moved to a more appropriate place.  It is here
@@ -32,12 +32,12 @@
  *-------------------------------------------------------------------------
  */
 
+#include "postgres.h"
+
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
-
-#include "postgres.h"
 
 #include "catalog/pg_shadow.h"
 #include "libpq/be-fsstubs.h"
@@ -50,8 +50,7 @@
 
 /*#define FSDB 1*/
 #define MAX_LOBJ_FDS	256
-#define BUFSIZE			1024
-#define FNAME_BUFSIZE	8192
+#define BUFSIZE			8192
 
 /*
  * LO "FD"s are indexes into this array.
@@ -141,9 +140,9 @@ lo_close(PG_FUNCTION_ARGS)
 
 	inv_close(cookies[fd]);
 
-	MemoryContextSwitchTo(currentContext);
-
 	deleteLOfd(fd);
+
+	MemoryContextSwitchTo(currentContext);
 
 	PG_RETURN_INT32(0);
 }
@@ -267,7 +266,7 @@ lo_creat(PG_FUNCTION_ARGS)
 		PG_RETURN_OID(InvalidOid);
 	}
 
-	lobjId = RelationGetRelid(lobjDesc->heap_r);
+	lobjId = lobjDesc->id;
 
 	inv_close(lobjDesc);
 
@@ -310,8 +309,8 @@ lo_unlink(PG_FUNCTION_ARGS)
 	 * any LO-specific data structures at all.	(Again, that's probably
 	 * more than this module ought to be assuming.)
 	 *
-	 * XXX there ought to be some code to clean up any open LOs that
-	 * reference the specified relation... as is, they remain "open".
+	 * XXX there ought to be some code to clean up any open LO FDs that
+	 * reference the specified LO... as is, they remain "open".
 	 */
 	PG_RETURN_INT32(inv_drop(lobjId));
 }
@@ -367,7 +366,7 @@ lo_import(PG_FUNCTION_ARGS)
 	int			nbytes,
 				tmp;
 	char		buf[BUFSIZE];
-	char		fnamebuf[FNAME_BUFSIZE];
+	char		fnamebuf[MAXPGPATH];
 	LargeObjectDesc *lobj;
 	Oid			lobjOid;
 
@@ -382,8 +381,8 @@ lo_import(PG_FUNCTION_ARGS)
 	 * open the file to be read in
 	 */
 	nbytes = VARSIZE(filename) - VARHDRSZ;
-	if (nbytes >= FNAME_BUFSIZE)
-		nbytes = FNAME_BUFSIZE-1;
+	if (nbytes >= MAXPGPATH)
+		nbytes = MAXPGPATH-1;
 	memcpy(fnamebuf, VARDATA(filename), nbytes);
 	fnamebuf[nbytes] = '\0';
 	fd = PathNameOpenFile(fnamebuf, O_RDONLY | PG_BINARY, 0666);
@@ -398,12 +397,7 @@ lo_import(PG_FUNCTION_ARGS)
 	if (lobj == NULL)
 		elog(ERROR, "lo_import: can't create inv object for \"%s\"",
 			 fnamebuf);
-
-	/*
-	 * the oid for the large object is just the oid of the relation
-	 * XInv??? which contains the data.
-	 */
-	lobjOid = RelationGetRelid(lobj->heap_r);
+	lobjOid = lobj->id;
 
 	/*
 	 * read in from the Unix file and write to the inversion file
@@ -411,7 +405,7 @@ lo_import(PG_FUNCTION_ARGS)
 	while ((nbytes = FileRead(fd, buf, BUFSIZE)) > 0)
 	{
 		tmp = inv_write(lobj, buf, nbytes);
-		if (tmp < nbytes)
+		if (tmp != nbytes)
 			elog(ERROR, "lo_import: error while reading \"%s\"",
 				 fnamebuf);
 	}
@@ -435,7 +429,7 @@ lo_export(PG_FUNCTION_ARGS)
 	int			nbytes,
 				tmp;
 	char		buf[BUFSIZE];
-	char		fnamebuf[FNAME_BUFSIZE];
+	char		fnamebuf[MAXPGPATH];
 	LargeObjectDesc *lobj;
 	mode_t		oumask;
 
@@ -461,8 +455,8 @@ lo_export(PG_FUNCTION_ARGS)
 	 * world-writable export files doesn't seem wise.
 	 */
 	nbytes = VARSIZE(filename) - VARHDRSZ;
-	if (nbytes >= FNAME_BUFSIZE)
-		nbytes = FNAME_BUFSIZE-1;
+	if (nbytes >= MAXPGPATH)
+		nbytes = MAXPGPATH-1;
 	memcpy(fnamebuf, VARDATA(filename), nbytes);
 	fnamebuf[nbytes] = '\0';
 	oumask = umask((mode_t) 0022);
@@ -473,12 +467,12 @@ lo_export(PG_FUNCTION_ARGS)
 			 fnamebuf);
 
 	/*
-	 * read in from the Unix file and write to the inversion file
+	 * read in from the inversion file and write to the Unix file
 	 */
 	while ((nbytes = inv_read(lobj, buf, BUFSIZE)) > 0)
 	{
 		tmp = FileWrite(fd, buf, nbytes);
-		if (tmp < nbytes)
+		if (tmp != nbytes)
 			elog(ERROR, "lo_export: error while writing \"%s\"",
 				 fnamebuf);
 	}
@@ -513,7 +507,7 @@ lo_commit(bool isCommit)
 		if (cookies[i] != NULL)
 		{
 			if (isCommit)
-				inv_cleanindex(cookies[i]);
+				inv_close(cookies[i]);
 			cookies[i] = NULL;
 		}
 	}

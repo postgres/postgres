@@ -94,7 +94,7 @@ pglo_export(LODumpMaster *pgLO)
 		 * Query
 		 * ----------
 		 */
-		sprintf(Qbuff, "SELECT x.%s FROM %s x, pg_class c WHERE x.%s = c.oid and c.relkind = 'l'", 
+		sprintf(Qbuff, "SELECT DISTINCT x.\"%s\" FROM \"%s\" x, pg_largeobject l WHERE x.\"%s\" = l.loid",
 			ll->lo_attr, ll->lo_table, ll->lo_attr);
 		
 		/* puts(Qbuff); */
@@ -104,7 +104,8 @@ pglo_export(LODumpMaster *pgLO)
 		if ((tuples = PQntuples(pgLO->res)) == 0) {
 		
 			if (!pgLO->quiet && pgLO->action == ACTION_EXPORT_ATTR)
-				printf("%s: no large objets in '%s'\n", progname, ll->lo_table);	
+				printf("%s: no large objects in '%s'\n",
+					   progname, ll->lo_table);	
 			continue;
 		
 		} else if (check_res(pgLO)) {

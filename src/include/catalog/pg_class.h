@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_class.h,v 1.43 2000/10/22 17:55:49 pjw Exp $
+ * $Id: pg_class.h,v 1.44 2000/10/24 01:38:41 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -174,7 +174,6 @@ DESCR("");
 #define XactLockTableId			376
 
 #define		  RELKIND_INDEX			  'i'		/* secondary index */
-#define		  RELKIND_LOBJECT		  'l'		/* large objects */
 #define		  RELKIND_RELATION		  'r'		/* ordinary cataloged heap */
 #define		  RELKIND_SPECIAL		  's'		/* special (non-heap) */
 #define		  RELKIND_SEQUENCE		  'S'		/* SEQUENCE relation */

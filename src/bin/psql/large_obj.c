@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/large_obj.c,v 1.10 2000/04/12 17:16:22 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/large_obj.c,v 1.11 2000/10/24 01:38:39 tgl Exp $
  */
 #include "postgres.h"
 #include "large_obj.h"
@@ -193,7 +193,7 @@ do_lo_import(const char *filename_arg, const char *comment_arg)
 	/* insert description if given */
 	if (comment_arg)
 	{
-		sprintf(buf, "INSERT INTO pg_description VALUES (%d, '", loid);
+		sprintf(buf, "INSERT INTO pg_description VALUES (%u, '", loid);
 		for (i = 0; i < strlen(comment_arg); i++)
 			if (comment_arg[i] == '\'')
 				strcat(buf, "\\'");
@@ -284,7 +284,7 @@ do_lo_unlink(const char *loid_arg)
 	}
 
 	/* remove the comment as well */
-	sprintf(buf, "DELETE FROM pg_description WHERE objoid = %d", loid);
+	sprintf(buf, "DELETE FROM pg_description WHERE objoid = %u", loid);
 	if (!(res = PSQLexec(buf)))
 	{
 		if (own_transaction)
@@ -328,15 +328,9 @@ do_lo_list(void)
 	printQueryOpt myopt = pset.popt;
 
 	strcpy(buf,
-	"SELECT usename as \"Owner\", substring(relname from 5) as \"ID\",\n"
-		   "  obj_description(pg_class.oid) as \"Description\"\n"
-		   "FROM pg_class, pg_user\n"
-		   "WHERE usesysid = relowner AND relkind = 'l'\n"
-		   "UNION\n"
-	   "SELECT NULL as \"Owner\", substring(relname from 5) as \"ID\",\n"
-		   "  obj_description(pg_class.oid) as \"Description\"\n"
-		   "FROM pg_class\n"
-		   "WHERE not exists (select 1 from pg_user where usesysid = relowner) AND relkind = 'l'\n"
+	"SELECT DISTINCT loid as \"ID\",\n"
+		   "  obj_description(loid) as \"Description\"\n"
+		   "FROM pg_largeobject\n"
 		   "ORDER BY \"ID\"");
 
 	res = PSQLexec(buf);

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: indexing.h,v 1.44 2000/10/22 05:27:20 momjian Exp $
+ * $Id: indexing.h,v 1.45 2000/10/24 01:38:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,6 +31,7 @@
 #define Num_pg_index_indices		2
 #define Num_pg_inherits_indices		1
 #define Num_pg_language_indices		2
+#define Num_pg_largeobject_indices	1
 #define Num_pg_listener_indices		1
 #define Num_pg_opclass_indices		2
 #define Num_pg_operator_indices		2
@@ -62,6 +63,7 @@
 #define InheritsRelidSeqnoIndex		"pg_inherits_relid_seqno_index"
 #define LanguageNameIndex			"pg_language_name_index"
 #define LanguageOidIndex			"pg_language_oid_index"
+#define LargeObjectLOidPNIndex		"pg_largeobject_loid_pn_index"
 #define ListenerPidRelnameIndex		"pg_listener_pid_relname_index"
 #define OpclassDeftypeIndex			"pg_opclass_deftype_index"
 #define OpclassNameIndex			"pg_opclass_name_index"
@@ -92,6 +94,7 @@ extern char *Name_pg_group_indices[];
 extern char *Name_pg_index_indices[];
 extern char *Name_pg_inherits_indices[];
 extern char *Name_pg_language_indices[];
+extern char *Name_pg_largeobject_indices[];
 extern char *Name_pg_listener_indices[];
 extern char *Name_pg_opclass_indices[];
 extern char *Name_pg_operator_indices[];
@@ -191,6 +194,7 @@ DECLARE_UNIQUE_INDEX(pg_index_indexrelid_index on pg_index using btree(indexreli
 DECLARE_UNIQUE_INDEX(pg_inherits_relid_seqno_index on pg_inherits using btree(inhrelid oid_ops, inhseqno int4_ops));
 DECLARE_UNIQUE_INDEX(pg_language_name_index on pg_language using btree(lanname name_ops));
 DECLARE_UNIQUE_INDEX(pg_language_oid_index on pg_language using btree(oid oid_ops));
+DECLARE_UNIQUE_INDEX(pg_largeobject_loid_pn_index on pg_largeobject using btree(loid oid_ops, pageno int4_ops));
 DECLARE_UNIQUE_INDEX(pg_listener_pid_relname_index on pg_listener using btree(listenerpid int4_ops, relname name_ops));
 /* This column needs to allow multiple zero entries, but is in the cache */
 DECLARE_INDEX(pg_opclass_deftype_index on pg_opclass using btree(opcdeftype oid_ops));

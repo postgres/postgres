@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.174 2000/10/22 23:16:55 pjw Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.175 2000/10/24 01:38:32 tgl Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -1104,7 +1104,7 @@ dumpBlobs(Archive *AH, char* junkOid, void *junkVal)
 		fprintf(stderr, "%s saving BLOBs\n", g_comment_start);
 
 	/* Cursor to get all BLOB tables */
-    appendPQExpBuffer(oidQry, "Declare blobOid Cursor for SELECT oid from pg_class where relkind = '%c'", RELKIND_LOBJECT);
+    appendPQExpBuffer(oidQry, "Declare blobOid Cursor for SELECT DISTINCT loid FROM pg_largeobject");
 
 	res = PQexec(g_conn, oidQry->data);
 	if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
@@ -1874,8 +1874,7 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 	 * tables before the child tables when traversing the tblinfo*
 	 *
 	 * we ignore tables that are not type 'r' (ordinary relation) or 'S'
-	 * (sequence) or 'v' (view) --- in particular, Large Object 
-     * relations (type 'l') are ignored.
+	 * (sequence) or 'v' (view).
 	 */
 
 	appendPQExpBuffer(query,
@@ -1886,7 +1885,6 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 					  "where relname !~ '^pg_' "
 					  "and relkind in ('%c', '%c', '%c') "
 					  "order by oid",
-				RELKIND_VIEW,
 				RELKIND_RELATION, RELKIND_SEQUENCE, RELKIND_VIEW);
 
 	res = PQexec(g_conn, query->data);
@@ -2585,7 +2583,7 @@ getIndices(int *numIndices)
 	 * find all the user-defined indices. We do not handle partial
 	 * indices.
 	 *
-	 * Notice we skip indices on inversion objects (relkind 'l')
+	 * Notice we skip indices on system classes
 	 *
 	 * this is a 4-way join !!
 	 */
@@ -2597,8 +2595,8 @@ getIndices(int *numIndices)
 					"from pg_index i, pg_class t1, pg_class t2, pg_am a "
 				   "WHERE t1.oid = i.indexrelid and t2.oid = i.indrelid "
 					  "and t1.relam = a.oid and i.indexrelid > '%u'::oid "
-					  "and t2.relname !~ '^pg_' and t2.relkind != '%c' and not i.indisprimary",
-					  g_last_builtin_oid, RELKIND_LOBJECT);
+					  "and t2.relname !~ '^pg_' and not i.indisprimary",
+					  g_last_builtin_oid);
 
 	res = PQexec(g_conn, query->data);
 	if (!res ||

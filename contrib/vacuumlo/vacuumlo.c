@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/contrib/vacuumlo/vacuumlo.c,v 1.5 2000/06/19 13:54:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/contrib/vacuumlo/vacuumlo.c,v 1.6 2000/10/24 01:38:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,10 +59,9 @@ vacuumlo(char *database, int verbose)
 	 * First we create and populate the lo temp table
 	 */
 	buf[0] = '\0';
-	strcat(buf, "SELECT oid AS lo ");
+	strcat(buf, "SELECT DISTINCT loid AS lo ");
 	strcat(buf, "INTO TEMP TABLE vacuum_l ");
-	strcat(buf, "FROM pg_class ");
-	strcat(buf, "WHERE relkind='l'");
+	strcat(buf, "FROM pg_largeobject ");
 	if (!(res = PQexec(conn, buf)))
 	{
 		fprintf(stderr, "Failed to create temp table.\n");

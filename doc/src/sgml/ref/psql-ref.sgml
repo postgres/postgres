@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.39 2000/10/12 22:16:58 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.40 2000/10/24 01:38:21 tgl Exp $
 Postgres documentation
 -->
 
@@ -706,7 +706,8 @@ lo_import 152801
 	<listitem>
 	<para>
 	Shows a list of all <productname>Postgres</productname> <quote>large
-	objects</quote> currently stored in the database along with their owners.
+	objects</quote> currently stored in the database, along with any
+	comments provided for them.
 	</para>
 	</listitem>
       </varlistentry>

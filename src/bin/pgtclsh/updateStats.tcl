@@ -59,7 +59,7 @@ proc update_attnvals {conn rel} {
 proc updateStats { dbName } {
     # datnames is the list to be result
     set conn [pg_connect $dbName]
-    set res [pg_exec $conn "SELECT relname FROM pg_class WHERE relkind = 'r' and relname !~ '^pg_' and relname !~ '^xinv'"]
+    set res [pg_exec $conn "SELECT relname FROM pg_class WHERE relkind = 'r' and relname !~ '^pg_'"]
     set ntups [pg_result $res -numTuples]
     for {set i 0} {$i < $ntups} {incr i} {
 	set rel [pg_result $res -getTuple $i]
