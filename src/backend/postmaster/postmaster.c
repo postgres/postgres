@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.344 2003/09/11 18:30:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.345 2003/09/12 19:33:59 tgl Exp $
  *
  * NOTES
  *
@@ -753,7 +753,7 @@ PostmasterMain(int argc, char *argv[])
 										  UnixSocketDir,
 										  ListenSocket, MAXLISTEN);
 				if (status != STATUS_OK)
-					ereport(LOG,
+					ereport(FATAL,
 					 (errmsg("could not create listen socket for \"%s\"",
 							 curhost)));
 				if (endptr)
@@ -772,7 +772,7 @@ PostmasterMain(int argc, char *argv[])
 									  UnixSocketDir,
 									  ListenSocket, MAXLISTEN);
 			if (status != STATUS_OK)
-				ereport(LOG,
+				ereport(FATAL,
 					  (errmsg("could not create TCP/IP listen socket")));
 		}
 
