@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plperl/plperl.c,v 1.26 2001/11/05 17:46:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plperl/plperl.c,v 1.27 2002/01/24 16:53:42 tgl Exp $
  *
  **********************************************************************/
 
@@ -488,9 +488,9 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 	if (SPI_finish() != SPI_OK_FINISH)
 		elog(ERROR, "plperl: SPI_finish() failed");
 
-	/* XXX is this the approved way to check for an undef result? */
-	if (perlret == &PL_sv_undef)
+	if (!(perlret && SvOK(perlret)))
 	{
+		/* return NULL if Perl code returned undef */
 		retval = (Datum) 0;
 		fcinfo->isnull = true;
 	}
