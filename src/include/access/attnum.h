@@ -6,14 +6,12 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: attnum.h,v 1.1 1996/08/27 21:50:07 scrappy Exp $
+ * $Id: attnum.h,v 1.2 1996/08/28 01:23:59 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef	ATTNUM_H
 #define ATTNUM_H
-
-#include "c.h"
 
 /*
  * user defined attribute numbers start at 1.	-ay 2/95
