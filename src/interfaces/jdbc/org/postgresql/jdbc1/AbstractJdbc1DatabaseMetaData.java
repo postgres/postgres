@@ -2966,7 +2966,59 @@ public abstract class AbstractJdbc1DatabaseMetaData
 		 *   the PK_NAME field.
 		 */
 
-		if (connection.haveMinimumServerVersion("7.3")) {
+		if (connection.haveMinimumServerVersion("7.4")) {
+			String sql = "SELECT NULL::text AS PKTABLE_CAT, pkn.nspname AS PKTABLE_SCHEMA, pkc.relname AS PKTABLE_NAME, pka.attname AS PKCOLUMN_NAME, "+
+			"NULL::text AS FK_TABLE_CAT, fkn.nspname AS FKTABLE_SCHEMA, fkc.relname AS FKTABLE_NAME, fka.attname AS FKCOLUMN_NAME, "+
+			"pos.n AS KEY_SEQ, "+
+			"CASE con.confupdtype "+
+				" WHEN 'c' THEN " + DatabaseMetaData.importedKeyCascade +
+				" WHEN 'n' THEN " + DatabaseMetaData.importedKeySetNull +
+				" WHEN 'd' THEN " + DatabaseMetaData.importedKeySetDefault +
+				" WHEN 'r' THEN " + DatabaseMetaData.importedKeyRestrict +
+				" WHEN 'a' THEN " + DatabaseMetaData.importedKeyNoAction +
+				" ELSE NULL END AS UPDATE_RULE, "+
+			"CASE con.confdeltype "+
+				" WHEN 'c' THEN " + DatabaseMetaData.importedKeyCascade +
+				" WHEN 'n' THEN " + DatabaseMetaData.importedKeySetNull +
+				" WHEN 'd' THEN " + DatabaseMetaData.importedKeySetDefault +
+				" WHEN 'r' THEN " + DatabaseMetaData.importedKeyRestrict +
+				" WHEN 'a' THEN " + DatabaseMetaData.importedKeyNoAction +
+				" ELSE NULL END AS DELETE_RULE, "+
+			"con.conname AS FK_NAME, pkic.relname AS PK_NAME, "+
+			"CASE "+
+				" WHEN con.condeferrable AND con.condeferred THEN " + DatabaseMetaData.importedKeyInitiallyDeferred +
+				" WHEN con.condeferrable THEN " + DatabaseMetaData.importedKeyInitiallyImmediate +
+				" ELSE " + DatabaseMetaData.importedKeyNotDeferrable+
+				" END AS DEFERRABILITY "+
+			" FROM "+
+			" pg_catalog.pg_namespace pkn, pg_catalog.pg_class pkc, pg_catalog.pg_attribute pka, "+
+			" pg_catalog.pg_namespace fkn, pg_catalog.pg_class fkc, pg_catalog.pg_attribute fka, "+
+			" pg_catalog.pg_constraint con, information_schema._pg_keypositions() pos(n), "+
+			" pg_catalog.pg_depend dep, pg_catalog.pg_class pkic "+
+			" WHERE pkn.oid = pkc.relnamespace AND pkc.oid = pka.attrelid AND pka.attnum = con.confkey[pos.n] AND con.confrelid = pkc.oid "+
+			" AND fkn.oid = fkc.relnamespace AND fkc.oid = fka.attrelid AND fka.attnum = con.conkey[pos.n] AND con.conrelid = fkc.oid "+
+			" AND con.contype = 'f' AND con.oid = dep.objid AND pkic.oid = dep.refobjid AND pkic.relkind = 'i' AND dep.classid = 'pg_constraint'::regclass::oid AND dep.refclassid = 'pg_class'::regclass::oid ";
+			if (primarySchema != null && !"".equals(primarySchema)) {
+				sql += " AND pkn.nspname = '"+escapeQuotes(primarySchema)+"' ";
+			}
+			if (foreignSchema != null && !"".equals(foreignSchema)) {
+				sql += " AND fkn.nspname = '"+escapeQuotes(foreignSchema)+"' ";
+			}
+			if (primaryTable != null && !"".equals(primaryTable)) {
+				sql += " AND pkc.relname = '"+escapeQuotes(primaryTable)+"' ";
+			}
+			if (foreignTable != null && !"".equals(foreignTable)) {
+				sql += " AND fkc.relname = '"+escapeQuotes(foreignTable)+"' ";
+			}
+						
+			if (primaryTable != null) {
+				sql += " ORDER BY fkn.nspname,fkc.relname,pos.n";
+			} else {
+				sql += " ORDER BY pkn.nspname,pkc.relname,pos.n";
+			}
+
+			return connection.createStatement().executeQuery(sql);
+		} else if (connection.haveMinimumServerVersion("7.3")) {
 			select = "SELECT DISTINCT n1.nspname as pnspname,n2.nspname as fnspname, ";
 			from = " FROM pg_catalog.pg_namespace n1 "+
 				" JOIN pg_catalog.pg_class c1 ON (c1.relnamespace = n1.oid) "+

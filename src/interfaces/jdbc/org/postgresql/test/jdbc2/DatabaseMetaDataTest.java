@@ -9,7 +9,7 @@ import java.sql.*;
  *
  * PS: Do you know how difficult it is to type on a train? ;-)
  *
- * $Id: DatabaseMetaDataTest.java,v 1.18 2003/05/29 04:39:48 barry Exp $
+ * $Id: DatabaseMetaDataTest.java,v 1.18.4.1 2003/12/11 19:25:08 davec Exp $
  */
 
 public class DatabaseMetaDataTest extends TestCase
@@ -137,6 +137,77 @@ public class DatabaseMetaDataTest extends TestCase
 			fail(ex.getMessage());
 		}
 	}
+                                                                                                                                                                       
+        public void testForeignKeysToUniqueIndexes()
+        {
+                try
+                {
+                        if (!TestUtil.haveMinimumServerVersion(con,"7.4"))
+                                return;
+                                                                                                                                                                       
+                        Connection con1 = TestUtil.openDB();
+                        TestUtil.createTable( con1, "pkt", "a int not null, b int not null, CONSTRAINT pkt_pk_a PRIMARY KEY (a), CONSTRAINT pkt_un_b UNIQUE (b)");
+                        TestUtil.createTable( con1, "fkt", "c int, d int, CONSTRAINT fkt_fk_c FOREIGN KEY (c) REFERENCES pkt(b)");
+                                                                                                                                                                       
+                        DatabaseMetaData dbmd = con.getMetaData();
+                        ResultSet rs = dbmd.getImportedKeys("","","fkt");
+                        int j = 0;
+                        for (; rs.next(); j++)
+                        {
+                                assertTrue("pkt".equals(rs.getString("PKTABLE_NAME")));
+                                assertTrue("fkt".equals(rs.getString("FKTABLE_NAME")));
+                                assertTrue("pkt_un_b".equals(rs.getString("PK_NAME")));
+                                assertTrue("b".equals(rs.getString("PKCOLUMN_NAME")));
+                        }
+                        assertTrue(j == 1);
+                                                                                                                                                                       
+                        TestUtil.dropTable(con1, "fkt");
+                        TestUtil.dropTable(con1, "pkt");
+                        con1.close();
+                }
+                catch (SQLException ex)
+                {
+                        fail(ex.getMessage());
+                }
+        }
+                                                                                                                                                                       
+        public void testMultiColumnForeignKeys()
+        {
+                try
+                {
+                        Connection con1 = TestUtil.openDB();
+                        TestUtil.createTable( con1, "pkt", "a int not null, b int not null, CONSTRAINT pkt_pk PRIMARY KEY (a,b)");
+                        TestUtil.createTable( con1, "fkt", "c int, d int, CONSTRAINT fkt_fk_pkt FOREIGN KEY (c,d) REFERENCES pkt(b,a)");
+                                                                                                                                                                       
+                        DatabaseMetaData dbmd = con.getMetaData();
+                        ResultSet rs = dbmd.getImportedKeys("","","fkt");
+                        int j = 0;
+                        for (; rs.next(); j++)
+                        {
+                                assertTrue("pkt".equals(rs.getString("PKTABLE_NAME")));
+                                assertTrue("fkt".equals(rs.getString("FKTABLE_NAME")));
+                                assertTrue(j+1 == rs.getInt("KEY_SEQ"));
+                                if (j == 0) {
+                                        assertTrue("b".equals(rs.getString("PKCOLUMN_NAME")));
+                                        assertTrue("c".equals(rs.getString("FKCOLUMN_NAME")));
+                                } else {
+                                        assertTrue("a".equals(rs.getString("PKCOLUMN_NAME")));
+                                        assertTrue("d".equals(rs.getString("FKCOLUMN_NAME")));
+                                }
+                        }
+                        assertTrue(j == 2);
+                                                                                                                                                                       
+                        TestUtil.dropTable(con1, "fkt");
+                        TestUtil.dropTable(con1, "pkt");
+                        con1.close();
+                }
+                catch (SQLException ex)
+                {
+                        fail(ex.getMessage());
+                }
+        }
+                                                                                                                                                                       
+ 
 	public void testForeignKeys()
 	{
 		try
