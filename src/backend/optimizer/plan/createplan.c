@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.156 2003/08/26 22:56:51 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.157 2003/08/27 12:44:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1000,9 +1000,9 @@ create_mergejoin_plan(Query *root,
 						 best_path->jpath.outerjoinpath->parent->relids);
 
 	/* Sort clauses into best execution order */
+	/* NB: do NOT reorder the mergeclauses */
 	joinclauses = order_qual_clauses(root, joinclauses);
 	otherclauses = order_qual_clauses(root, otherclauses);
-	mergeclauses = order_qual_clauses(root, mergeclauses);
 
 	/*
 	 * Create explicit sort nodes for the outer and inner join paths if
