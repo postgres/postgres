@@ -515,6 +515,8 @@ ECPGexecute(struct statement * stmt)
 							return false;
 
 						strcat(mallocedval, tmp);
+						free(tmp);
+						
 						strcat(mallocedval, "'");
 
 						free(newcopy);
@@ -556,6 +558,8 @@ ECPGexecute(struct statement * stmt)
 							return false;
 
 						strcat(mallocedval, tmp);
+						free(tmp);
+						
 						strcat(mallocedval, "'");
 
 						free(newcopy);

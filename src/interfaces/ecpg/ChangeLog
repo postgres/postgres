@@ -726,3 +726,7 @@ Tue Nov 23 07:59:01 CET 1999
 	- Ignore locale setting in ECPGdo.
 	- Set library version to 3.0.7.
 
+Fri Dec  3 16:35:07 CET 1999
+
+	- Fixed memory leak in ecpglib.
+	- Set library version to 3.0.8.

@@ -1,3 +1,5 @@
+#include <locale.h>
+
 exec sql whenever sqlerror sqlprint;
 
 exec sql include sqlca;
@@ -11,6 +13,8 @@ EXEC SQL BEGIN DECLARE SECTION;
 	double f;
 EXEC SQL END DECLARE SECTION;
 	FILE *dbgs;
+
+	setlocale(LC_ALL, "de_DE");
         
 	if ((dbgs = fopen("log", "w")) != NULL)
                 ECPGdebug(1, dbgs);
@@ -21,9 +25,10 @@ EXEC SQL END DECLARE SECTION;
 
  	EXEC SQL BEGIN WORK;
 
-	EXEC SQL CREATE TABLE test (f decimal(8,2), i int, a int[10]);
+/*	EXEC SQL CREATE TABLE test (f decimal(8,2), i int, a int[10]);*/
+	EXEC SQL CREATE TABLE test (f float, i int, a int[10]);
 
-	EXEC SQL INSERT INTO test(f,i,a) VALUES(17000.00,1,'{0,1,2,3,4,5,6,7,8,9}');
+	EXEC SQL INSERT INTO test(f,i,a) VALUES(404.90,1,'{0,1,2,3,4,5,6,7,8,9}');
 
 /*	EXEC SQL INSERT INTO test(f,i,a) VALUES(140787.0,2,:a);*/
 
@@ -31,19 +36,19 @@ EXEC SQL END DECLARE SECTION;
 
 	EXEC SQL BEGIN WORK; 
 
-	EXEC SQL SELECT f::float
-         INTO :f
-         FROM test
-         WHERE i = :i;
-
-	printf("Found f::float=%f\n", f);
-
 	EXEC SQL SELECT f
          INTO :f
          FROM test
          WHERE i = :i;
 
 	printf("Found f=%f\n", f);
+
+	EXEC SQL SELECT i
+	 INTO :i
+	 FROM test
+	 WHERE f = :f;
+
+	printf("Found i=%d\n", i);
 
 	EXEC SQL DROP TABLE test;
 
