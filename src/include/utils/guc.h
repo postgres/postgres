@@ -1,10 +1,14 @@
-/*
+/*--------------------------------------------------------------------
  * guc.h
  *
  * External declarations pertaining to backend/utils/misc/guc.c and
  * backend/utils/misc/guc-file.l
  *
- * $Id: guc.h,v 1.26 2002/11/15 00:47:22 momjian Exp $
+ * Copyright 2000-2003 by PostgreSQL Global Development Group
+ * Written by Peter Eisentraut <peter_e@gmx.net>.
+ *
+ * $Id: guc.h,v 1.27 2003/04/25 19:45:09 tgl Exp $
+ *--------------------------------------------------------------------
  */
 #ifndef GUC_H
 #define GUC_H
@@ -17,32 +21,37 @@
  * Certain options can only be set at certain times. The rules are
  * like this:
  *
+ * INTERNAL options cannot be set by the user at all, but only through
+ * internal processes ("server_version" is an example).  These are GUC
+ * variables only so they can be shown by SHOW, etc.
+ *
  * POSTMASTER options can only be set when the postmaster starts,
  * either from the configuration file or the command line.
  *
  * SIGHUP options can only be set at postmaster startup or by changing
  * the configuration file and sending the HUP signal to the postmaster
  * or a backend process. (Notice that the signal receipt will not be
- * evaluated immediately. The postmaster and the backend block at a
+ * evaluated immediately. The postmaster and the backend check it at a
  * certain point in their main loop. It's safer to wait than to read a
  * file asynchronously.)
  *
  * BACKEND options can only be set at postmaster startup, from the
- * configuration file, or with the PGOPTIONS variable from the client
- * when the connection is initiated.  Furthermore, an already-started
- * backend will ignore changes to such an option in the configuration
- * file.  The idea is that these options are fixed for a given backend
- * once it's started, but they can vary across backends.
+ * configuration file, or by client request in the connection startup
+ * packet (e.g., from libpq's PGOPTIONS variable).  Furthermore, an
+ * already-started backend will ignore changes to such an option in the
+ * configuration file.  The idea is that these options are fixed for a
+ * given backend once it's started, but they can vary across backends.
  *
  * SUSET options can be set at postmaster startup, with the SIGHUP
  * mechanism, or from SQL if you're a superuser. These options cannot
- * be set using the PGOPTIONS mechanism, because there is not check as
- * to who does this.
+ * be set in the connection startup packet, because when it is processed
+ * we don't yet know if the user is a superuser.
  *
  * USERSET options can be set by anyone any time.
  */
 typedef enum
 {
+	PGC_INTERNAL,
 	PGC_POSTMASTER,
 	PGC_SIGHUP,
 	PGC_BACKEND,
@@ -57,7 +66,8 @@ typedef enum
  * override the postmaster command line.)  Tracking the source allows us
  * to process sources in any convenient order without affecting results.
  * Sources <= PGC_S_OVERRIDE will set the default used by RESET, as well
- * as the current value.
+ * as the current value.  Note that source == PGC_S_OVERRIDE should be
+ * used when setting a PGC_INTERNAL option.
  */
 typedef enum
 {
@@ -67,10 +77,34 @@ typedef enum
 	PGC_S_ARGV = 3,				/* postmaster command line */
 	PGC_S_DATABASE = 4,			/* per-database setting */
 	PGC_S_USER = 5,				/* per-user setting */
-	PGC_S_CLIENT = 6,			/* from client (PGOPTIONS) */
+	PGC_S_CLIENT = 6,			/* from client connection request */
 	PGC_S_OVERRIDE = 7,			/* special case to forcibly set default */
 	PGC_S_SESSION = 8			/* SET command */
 } GucSource;
+
+
+/* GUC vars that are actually declared in guc.c, rather than elsewhere */
+extern bool log_statement;
+extern bool log_duration;
+extern bool Debug_print_plan;
+extern bool Debug_print_parse;
+extern bool Debug_print_rewritten;
+extern bool Debug_pretty_print;
+extern bool Explain_pretty_print;
+
+extern bool log_parser_stats;
+extern bool log_planner_stats;
+extern bool log_executor_stats;
+extern bool log_statement_stats;
+extern bool log_btree_build_stats;
+
+extern bool SQL_inheritance;
+extern bool Australian_timezones;
+
+extern int	log_min_error_statement;
+extern int	log_min_messages;
+extern int	client_min_messages;
+
 
 extern void SetConfigOption(const char *name, const char *value,
 				GucContext context, GucSource source);
@@ -80,6 +114,7 @@ extern void ProcessConfigFile(GucContext context);
 extern void InitializeGUCOptions(void);
 extern void ResetAllOptions(void);
 extern void AtEOXact_GUC(bool isCommit);
+extern void BeginReportingGUCOptions(void);
 extern void ParseLongOption(const char *string, char **name, char **value);
 extern bool set_config_option(const char *name, const char *value,
 				  GucContext context, GucSource source,
@@ -99,43 +134,5 @@ extern char *flatten_set_variable_args(const char *name, List *args);
 extern void ProcessGUCArray(ArrayType *array, GucSource source);
 extern ArrayType *GUCArrayAdd(ArrayType *array, const char *name, const char *value);
 extern ArrayType *GUCArrayDelete(ArrayType *array, const char *name);
-
-extern const char *assign_min_error_statement(const char *newval, bool doit,
-						   bool interactive);
-
-extern const char *assign_log_min_messages(const char *newval,
-						   bool doit, bool interactive);
-extern const char *assign_client_min_messages(const char *newval,
-						   bool doit, bool interactive);
-extern bool log_statement;
-extern bool log_duration;
-extern bool Debug_print_plan;
-extern bool Debug_print_parse;
-extern bool Debug_print_rewritten;
-extern bool Debug_pretty_print;
-
-extern bool log_parser_stats;
-extern bool log_planner_stats;
-extern bool log_executor_stats;
-extern bool log_statement_stats;
-extern bool log_btree_build_stats;
-
-extern bool Explain_pretty_print;
-
-extern bool SQL_inheritance;
-extern bool Australian_timezones;
-
-extern int	log_min_error_statement;
-extern char *log_min_error_statement_str;
-extern const char log_min_error_statement_str_default[];
-
-extern int	log_min_messages;
-extern char *log_min_messages_str;
-extern const char log_min_messages_str_default[];
-
-extern int	client_min_messages;
-extern char *client_min_messages_str;
-
-extern const char client_min_messages_str_default[];
 
 #endif   /* GUC_H */

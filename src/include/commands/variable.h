@@ -2,7 +2,7 @@
  * variable.h
  *		Routines for handling specialized SET variables.
  *
- * $Id: variable.h,v 1.19 2002/09/04 20:31:42 momjian Exp $
+ * $Id: variable.h,v 1.20 2003/04/25 19:45:09 tgl Exp $
  *
  */
 #ifndef VARIABLE_H
@@ -22,9 +22,6 @@ extern bool assign_random_seed(double value,
 extern const char *show_random_seed(void);
 extern const char *assign_client_encoding(const char *value,
 					   bool doit, bool interactive);
-extern const char *assign_server_encoding(const char *value,
-					   bool doit, bool interactive);
-extern const char *show_server_encoding(void);
 extern const char *assign_session_authorization(const char *value,
 							 bool doit, bool interactive);
 extern const char *show_session_authorization(void);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.236 2003/04/25 01:24:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.237 2003/04/25 19:45:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -174,8 +174,6 @@ static const struct EnvironmentOptions
 
 static int	connectDBStart(PGconn *conn);
 static int	connectDBComplete(PGconn *conn);
-static bool PQsetenvStart(PGconn *conn);
-static PostgresPollingStatusType PQsetenvPoll(PGconn *conn);
 static PGconn *makeEmptyPGconn(void);
 static void freePGconn(PGconn *conn);
 static void closePGconn(PGconn *conn);
@@ -1207,10 +1205,6 @@ PQconnectPoll(PGconn *conn)
 		case CONNECTION_MADE:
 			break;
 
-		case CONNECTION_SETENV:
-			/* We allow PQsetenvPoll to decide whether to proceed */
-			break;
-
 		default:
 			printfPQExpBuffer(&conn->errorMessage,
 							  libpq_gettext(
@@ -1517,10 +1511,10 @@ keep_going:						/* We will come back to here until there
 				 * message indicates that startup is successful, but we
 				 * might also get an Error message indicating failure.
 				 * (Notice messages indicating nonfatal warnings are also
-				 * allowed by the protocol, as is a BackendKeyData
-				 * message.) Easiest way to handle this is to let
-				 * PQgetResult() read the messages. We just have to fake
-				 * it out about the state of the connection, by setting
+				 * allowed by the protocol, as are ParameterStatus and
+				 * BackendKeyData messages.) Easiest way to handle this is
+				 * to let PQgetResult() read the messages. We just have to
+				 * fake it out about the state of the connection, by setting
 				 * asyncStatus = PGASYNC_BUSY (done above).
 				 */
 
@@ -1554,44 +1548,11 @@ keep_going:						/* We will come back to here until there
 				}
 
 				/*
-				 * Post-connection housekeeping. Prepare to send
-				 * environment variables to server.
+				 * We are open for business!
 				 */
-				if (!PQsetenvStart(conn))
-					goto error_return;
-
-				conn->status = CONNECTION_SETENV;
-
-				goto keep_going;
+				conn->status = CONNECTION_OK;
+				return PGRES_POLLING_OK;
 			}
-
-		case CONNECTION_SETENV:
-
-			/*
-			 * We pretend that the connection is OK for the duration of
-			 * these queries.
-			 */
-			conn->status = CONNECTION_OK;
-
-			switch (PQsetenvPoll(conn))
-			{
-				case PGRES_POLLING_OK:	/* Success */
-					conn->status = CONNECTION_OK;
-					return PGRES_POLLING_OK;
-
-				case PGRES_POLLING_READING:		/* Still going */
-					conn->status = CONNECTION_SETENV;
-					return PGRES_POLLING_READING;
-
-				case PGRES_POLLING_WRITING:		/* Still going */
-					conn->status = CONNECTION_SETENV;
-					return PGRES_POLLING_WRITING;
-
-				default:
-					conn->status = CONNECTION_SETENV;
-					goto error_return;
-			}
-			/* Unreachable */
 
 		default:
 			printfPQExpBuffer(&conn->errorMessage,
@@ -1619,239 +1580,6 @@ error_return:
 
 
 /*
- *		PQsetenvStart
- *
- * Starts the process of passing the values of a standard set of environment
- * variables to the backend.
- */
-static bool
-PQsetenvStart(PGconn *conn)
-{
-	if (conn == NULL ||
-		conn->status == CONNECTION_BAD ||
-		conn->setenv_state != SETENV_STATE_IDLE)
-		return false;
-
-	conn->setenv_state = SETENV_STATE_ENCODINGS_SEND;
-
-	return true;
-}
-
-/*
- *		PQsetenvPoll
- *
- * Polls the process of passing the values of a standard set of environment
- * variables to the backend.
- */
-static PostgresPollingStatusType
-PQsetenvPoll(PGconn *conn)
-{
-	PGresult   *res;
-
-	if (conn == NULL || conn->status == CONNECTION_BAD)
-		return PGRES_POLLING_FAILED;
-
-	/* Check whether there are any data for us */
-	switch (conn->setenv_state)
-	{
-			/* These are reading states */
-		case SETENV_STATE_ENCODINGS_WAIT:
-			{
-				/* Load waiting data */
-				int			n = pqReadData(conn);
-
-				if (n < 0)
-					goto error_return;
-				if (n == 0)
-					return PGRES_POLLING_READING;
-
-				break;
-			}
-
-			/* These are writing states, so we just proceed. */
-		case SETENV_STATE_ENCODINGS_SEND:
-			break;
-
-			/* Should we raise an error if called when not active? */
-		case SETENV_STATE_IDLE:
-			return PGRES_POLLING_OK;
-
-		default:
-			printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext(
-											"invalid setenv state %c, "
-							 "probably indicative of memory corruption\n"
-											),
-							  conn->setenv_state);
-			goto error_return;
-	}
-
-	/* We will loop here until there is nothing left to do in this call. */
-	for (;;)
-	{
-		switch (conn->setenv_state)
-		{
-			case SETENV_STATE_ENCODINGS_SEND:
-				{
-					const char *env = getenv("PGCLIENTENCODING");
-
-					if (!env || *env == '\0')
-					{
-						/*
-						 * PGCLIENTENCODING is not specified, so query
-						 * server for it.  We must use begin/commit in
-						 * case autocommit is off by default.
-						 */
-						if (!PQsendQuery(conn, "begin; select pg_client_encoding(); commit"))
-							goto error_return;
-
-						conn->setenv_state = SETENV_STATE_ENCODINGS_WAIT;
-						return PGRES_POLLING_READING;
-					}
-					else
-					{
-						/* otherwise set client encoding in pg_conn struct */
-						int			encoding = pg_char_to_encoding(env);
-
-						if (encoding < 0)
-						{
-							printfPQExpBuffer(&conn->errorMessage,
-											  libpq_gettext("invalid encoding name in PGCLIENTENCODING: %s\n"),
-											  env);
-							goto error_return;
-						}
-						conn->client_encoding = encoding;
-
-						/* Move on to setting the environment options */
-						conn->setenv_state = SETENV_STATE_IDLE;
-					}
-					break;
-				}
-
-			case SETENV_STATE_ENCODINGS_WAIT:
-				{
-					if (PQisBusy(conn))
-						return PGRES_POLLING_READING;
-
-					res = PQgetResult(conn);
-
-					if (res)
-					{
-						if (PQresultStatus(res) == PGRES_TUPLES_OK)
-						{
-							/* set client encoding in pg_conn struct */
-							char	   *encoding;
-
-							encoding = PQgetvalue(res, 0, 0);
-							if (!encoding)		/* this should not happen */
-								conn->client_encoding = PG_SQL_ASCII;
-							else
-								conn->client_encoding = pg_char_to_encoding(encoding);
-						}
-						else if (PQresultStatus(res) != PGRES_COMMAND_OK)
-						{
-							PQclear(res);
-							goto error_return;
-						}
-						PQclear(res);
-						/* Keep reading until PQgetResult returns NULL */
-					}
-					else
-					{
-						/*
-						 * NULL result indicates that the query is
-						 * finished
-						 */
-						conn->setenv_state = SETENV_STATE_IDLE;
-					}
-					break;
-				}
-
-			case SETENV_STATE_IDLE:
-				return PGRES_POLLING_OK;
-
-			default:
-				printfPQExpBuffer(&conn->errorMessage,
-								  libpq_gettext("invalid state %c, "
-						   "probably indicative of memory corruption\n"),
-								  conn->setenv_state);
-				goto error_return;
-		}
-	}
-
-	/* Unreachable */
-
-error_return:
-	conn->setenv_state = SETENV_STATE_IDLE;
-	return PGRES_POLLING_FAILED;
-}
-
-
-#ifdef NOT_USED
-
-/*
- *		PQsetenv
- *
- * Passes the values of a standard set of environment variables to the
- * backend.
- *
- * Returns true on success, false on failure.
- *
- * This function used to be exported for no particularly good reason.
- * Since it's no longer used by libpq itself, let's try #ifdef'ing it out
- * and see if anyone complains.
- */
-static bool
-PQsetenv(PGconn *conn)
-{
-	PostgresPollingStatusType flag = PGRES_POLLING_WRITING;
-
-	if (!PQsetenvStart(conn))
-		return false;
-
-	for (;;)
-	{
-		/*
-		 * Wait, if necessary.	Note that the initial state (just after
-		 * PQsetenvStart) is to wait for the socket to select for writing.
-		 */
-		switch (flag)
-		{
-			case PGRES_POLLING_OK:
-				return true;	/* success! */
-
-			case PGRES_POLLING_READING:
-				if (pqWait(1, 0, conn))
-				{
-					conn->status = CONNECTION_BAD;
-					return false;
-				}
-				break;
-
-			case PGRES_POLLING_WRITING:
-				if (pqWait(0, 1, conn))
-				{
-					conn->status = CONNECTION_BAD;
-					return false;
-				}
-				break;
-
-			default:
-				/* Just in case we failed to set it in PQsetenvPoll */
-				conn->status = CONNECTION_BAD;
-				return false;
-		}
-
-		/*
-		 * Now try to advance the state machine.
-		 */
-		flag = PQsetenvPoll(conn);
-	}
-}
-#endif   /* NOT_USED */
-
-
-/*
  * makeEmptyPGconn
  *	 - create a PGconn data structure with (as yet) no interesting data
  */
@@ -1869,7 +1597,6 @@ makeEmptyPGconn(void)
 	conn->noticeHook = defaultNoticeProcessor;
 	conn->status = CONNECTION_BAD;
 	conn->asyncStatus = PGASYNC_IDLE;
-	conn->setenv_state = SETENV_STATE_IDLE;
 	conn->notifyList = DLNewList();
 	conn->sock = -1;
 #ifdef USE_SSL

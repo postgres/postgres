@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqcomm.h,v 1.79 2003/04/24 21:16:44 tgl Exp $
+ * $Id: pqcomm.h,v 1.80 2003/04/25 19:45:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,7 +106,7 @@ typedef union SockAddr
 /* The earliest and latest frontend/backend protocol version supported. */
 
 #define PG_PROTOCOL_EARLIEST	PG_PROTOCOL(1,0)
-#define PG_PROTOCOL_LATEST		PG_PROTOCOL(3,103) /* XXX temporary value */
+#define PG_PROTOCOL_LATEST		PG_PROTOCOL(3,104) /* XXX temporary value */
 
 typedef uint32 ProtocolVersion; /* FE/BE protocol version number */
 

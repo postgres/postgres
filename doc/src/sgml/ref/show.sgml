@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/show.sgml,v 1.24 2003/03/25 16:15:44 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/show.sgml,v 1.25 2003/04/25 19:45:08 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -52,12 +52,13 @@ SHOW ALL
  <refsect1 id="R1-SQL-SHOW-1">
   <title>Description</title>
   <para>
-   <command>SHOW</command> will display the current setting of a
-   run-time parameter. These variables can be set using the
+   <command>SHOW</command> will display the current setting of
+   run-time parameters. These variables can be set using the
    <command>SET</command> statement, by editing the
-   <filename>postgresql.conf</filename>, through the
-   <envar>PGOPTIONS</envar> environmental variable, or through a
-   command-line flag when starting the
+   <filename>postgresql.conf</filename> configuration file, through the
+   <envar>PGOPTIONS</envar> environmental variable (when using libpq
+   or a libpq-based application), or through
+   command-line flags when starting the
    <application>postmaster</application>.
   </para>
 
@@ -65,6 +66,64 @@ SHOW ALL
    Even with <varname>autocommit</> set to <literal>off</>, <command>SHOW</>
    does not start a new transaction block. See the
    <varname>autocommit</> section in <xref linkend="runtime-config"> for details.
+  </para>
+
+  <para>
+   Available parameters are documented in
+   <xref linkend="runtime-config"> and on the
+   <xref linkend="SQL-SET" endterm="SQL-SET-title"> reference page.
+   In addition, there are a few parameters that can be shown but not set:
+
+   <variablelist>
+
+    <varlistentry>
+     <term>SERVER_VERSION</term>
+     <listitem>
+      <para>
+       Shows the server's version number.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>SERVER_ENCODING</term>
+     <listitem>
+      <para>
+       Shows the server-side multibyte encoding.  At present, this
+       parameter can be shown but not set, because the encoding is
+       determined at database creation time.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>LC_COLLATE</term>
+     <listitem>
+      <para>
+       Shows the database's locale setting for collation (text ordering).
+       At present, this parameter can be shown but not set, because the
+       setting is determined at <application>initdb</> time.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>LC_CTYPE</term>
+     <listitem>
+      <para>
+       Shows the database's locale setting for character set considerations.
+       At present, this parameter can be shown but not set, because the
+       setting is determined at <application>initdb</> time.
+      </para>
+     </listitem>
+    </varlistentry>
+
+   </variablelist>
+  </para>
+
+  <para>
+   Use <xref linkend="SQL-SET" endterm="SQL-SET-title"> to set the value
+   of settable parameters.
   </para>
  </refsect1>
 
@@ -79,7 +138,7 @@ SHOW ALL
       <listitem>
        <para>
 	Message returned if <replaceable>name</replaceable> does
-	not stand for an existing parameter.
+	not stand for a known parameter.
        </para>
       </listitem>
      </varlistentry>

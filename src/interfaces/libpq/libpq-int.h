@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-int.h,v 1.64 2003/04/24 21:16:44 tgl Exp $
+ * $Id: libpq-int.h,v 1.65 2003/04/25 19:45:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,7 +56,7 @@ typedef int ssize_t;			/* ssize_t doesn't exist in VC (atleast
  * pqcomm.h describe what the backend knows, not what libpq knows.
  */
 
-#define PG_PROTOCOL_LIBPQ	PG_PROTOCOL(3,103) /* XXX temporary value */
+#define PG_PROTOCOL_LIBPQ	PG_PROTOCOL(3,104) /* XXX temporary value */
 
 /*
  * POSTGRES backend dependent Constants.
@@ -194,14 +194,6 @@ typedef enum
 	PGASYNC_COPY_OUT			/* Copy Out data transfer in progress */
 }	PGAsyncStatusType;
 
-/* PGSetenvStatusType defines the state of the PQSetenv state machine */
-typedef enum
-{
-	SETENV_STATE_ENCODINGS_SEND,	/* About to send an "encodings" query */
-	SETENV_STATE_ENCODINGS_WAIT,	/* Waiting for query to complete	  */
-	SETENV_STATE_IDLE
-}	PGSetenvStatusType;
-
 /* large-object-access data ... allocated only if large-object code is used. */
 typedef struct pgLobjfuncs
 {
@@ -292,9 +284,6 @@ struct pg_conn
 	/* Status for asynchronous result construction */
 	PGresult   *result;			/* result being constructed */
 	PGresAttValue *curTuple;	/* tuple currently being read */
-
-	/* Status for sending environment info.  Used during PQSetenv only. */
-	PGSetenvStatusType setenv_state;
 
 #ifdef USE_SSL
 	bool		allow_ssl_try;	/* Allowed to try SSL negotiation */

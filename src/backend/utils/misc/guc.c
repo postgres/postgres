@@ -5,10 +5,13 @@
  * command, configuration file, and command line options.
  * See src/backend/utils/misc/README for more information.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.118 2003/03/28 20:17:13 tgl Exp $
  *
- * Copyright 2000 by PostgreSQL Global Development Group
+ * Copyright 2000-2003 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
+ *
+ * IDENTIFICATION
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.119 2003/04/25 19:45:09 tgl Exp $
+ *
  *--------------------------------------------------------------------
  */
 
@@ -32,6 +35,7 @@
 #include "funcapi.h"
 #include "libpq/auth.h"
 #include "libpq/pqcomm.h"
+#include "libpq/pqformat.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "optimizer/cost.h"
@@ -52,7 +56,12 @@
 #include "pgstat.h"
 
 
-/* XXX these should be in other modules' header files */
+#ifndef PG_KRB_SRVTAB
+#define PG_KRB_SRVTAB ""
+#endif
+
+
+/* XXX these should appear in other modules' header files */
 extern bool Log_connections;
 extern int	PreAuthDelay;
 extern int	AuthenticationTimeout;
@@ -70,8 +79,17 @@ static const char *assign_facility(const char *facility,
 				bool doit, bool interactive);
 #endif
 
+static const char *assign_defaultxactisolevel(const char *newval,
+						   bool doit, bool interactive);
+static const char *assign_log_min_messages(const char *newval,
+						   bool doit, bool interactive);
+static const char *assign_client_min_messages(const char *newval,
+						   bool doit, bool interactive);
+static const char *assign_min_error_statement(const char *newval, bool doit,
+						   bool interactive);
 static const char *assign_msglvl(int *var, const char *newval,
 			  bool doit, bool interactive);
+
 
 /*
  * Debugging options
@@ -85,6 +103,7 @@ bool		Debug_print_plan = false;
 bool		Debug_print_parse = false;
 bool		Debug_print_rewritten = false;
 bool		Debug_pretty_print = false;
+bool		Explain_pretty_print = true;
 
 bool		log_parser_stats = false;
 bool		log_planner_stats = false;
@@ -93,8 +112,6 @@ bool		log_statement_stats = false;		/* this is sort of all
 												 * three above together */
 bool		log_btree_build_stats = false;
 
-bool		Explain_pretty_print = true;
-
 bool		SQL_inheritance = true;
 
 bool		Australian_timezones = false;
@@ -102,39 +119,30 @@ bool		Australian_timezones = false;
 bool		Password_encryption = true;
 
 int			log_min_error_statement = PANIC;
-char	   *log_min_error_statement_str = NULL;
-const char	log_min_error_statement_str_default[] = "panic";
-
 int			log_min_messages = NOTICE;
-char	   *log_min_messages_str = NULL;
-const char	log_min_messages_str_default[] = "notice";
-
 int			client_min_messages = NOTICE;
-char	   *client_min_messages_str = NULL;
-const char	client_min_messages_str_default[] = "notice";
 
-
-#ifndef PG_KRB_SRVTAB
-#define PG_KRB_SRVTAB ""
-#endif
 
 /*
  * These variables are all dummies that don't do anything, except in some
  * cases provide the value for SHOW to display.  The real state is elsewhere
  * and is kept in sync by assign_hooks.
  */
+static char *log_min_error_statement_str;
+static char *log_min_messages_str;
+static char *client_min_messages_str;
 static double phony_random_seed;
 static char *client_encoding_string;
 static char *datestyle_string;
 static char *default_iso_level_string;
+static char *locale_collate;
+static char *locale_ctype;
 static char *regex_flavor_string;
 static char *server_encoding_string;
+static char *server_version_string;
 static char *session_authorization_string;
 static char *timezone_string;
 static char *XactIsoLevel_string;
-
-static const char *assign_defaultxactisolevel(const char *newval,
-						   bool doit, bool interactive);
 
 
 /*
@@ -171,6 +179,7 @@ struct config_generic
 #define GUC_LIST_QUOTE		0x0002		/* double-quote list elements */
 #define GUC_NO_SHOW_ALL		0x0004		/* exclude from SHOW ALL */
 #define GUC_NO_RESET_ALL	0x0008		/* exclude from RESET ALL */
+#define GUC_REPORT			0x0010		/* auto-report changes to client */
 
 /* bit values in status field */
 #define GUC_HAVE_TENTATIVE	0x0001		/* tentative value is defined */
@@ -763,22 +772,24 @@ static struct config_string
 			ConfigureNamesString[] =
 {
 	{
-		{"client_encoding", PGC_USERSET}, &client_encoding_string,
+		{"client_encoding", PGC_USERSET, GUC_REPORT},
+		&client_encoding_string,
 		"SQL_ASCII", assign_client_encoding, NULL
 	},
 
 	{
 		{"client_min_messages", PGC_USERSET}, &client_min_messages_str,
-		client_min_messages_str_default, assign_client_min_messages, NULL
+		"notice", assign_client_min_messages, NULL
 	},
 
 	{
 		{"log_min_error_statement", PGC_USERSET}, &log_min_error_statement_str,
-		log_min_error_statement_str_default, assign_min_error_statement, NULL
+		"panic", assign_min_error_statement, NULL
 	},
 
 	{
-		{"DateStyle", PGC_USERSET, GUC_LIST_INPUT}, &datestyle_string,
+		{"DateStyle", PGC_USERSET, GUC_LIST_INPUT | GUC_REPORT},
+		&datestyle_string,
 		"ISO, US", assign_datestyle, show_datestyle
 	},
 
@@ -798,6 +809,16 @@ static struct config_string
 	},
 
 	/* See main.c about why defaults for LC_foo are not all alike */
+
+	{
+		{"lc_collate", PGC_INTERNAL}, &locale_collate,
+		"C", NULL, NULL
+	},
+
+	{
+		{"lc_ctype", PGC_INTERNAL}, &locale_ctype,
+		"C", NULL, NULL
+	},
 
 	{
 		{"lc_messages", PGC_SUSET}, &locale_messages,
@@ -837,13 +858,20 @@ static struct config_string
 	},
 
 	{
-		{"server_encoding", PGC_USERSET}, &server_encoding_string,
-		"SQL_ASCII", assign_server_encoding, show_server_encoding
+		{"server_encoding", PGC_INTERNAL, GUC_REPORT},
+		&server_encoding_string,
+		"SQL_ASCII", NULL, NULL
+	},
+
+	{
+		{"server_version", PGC_INTERNAL, GUC_REPORT},
+		&server_version_string,
+		PG_VERSION, NULL, NULL
 	},
 
 	{
 		{"log_min_messages", PGC_USERSET}, &log_min_messages_str,
-		log_min_messages_str_default, assign_log_min_messages, NULL
+		"notice", assign_log_min_messages, NULL
 	},
 
 	{
@@ -910,10 +938,13 @@ static int	num_guc_variables;
 
 static bool guc_dirty;			/* TRUE if need to do commit/abort work */
 
+static bool reporting_enabled;	/* TRUE to enable GUC_REPORT */
+
 static char *guc_string_workspace;		/* for avoiding memory leaks */
 
 
 static int	guc_var_compare(const void *a, const void *b);
+static void ReportGUCOption(struct config_generic *record);
 static char *_ShowOption(struct config_generic * record);
 
 
@@ -1182,6 +1213,8 @@ InitializeGUCOptions(void)
 
 	guc_dirty = false;
 
+	reporting_enabled = false;
+
 	guc_string_workspace = NULL;
 
 	/*
@@ -1325,6 +1358,9 @@ ResetAllOptions(void)
 					break;
 				}
 		}
+
+		if (gconf->flags & GUC_REPORT)
+			ReportGUCOption(gconf);
 	}
 }
 
@@ -1351,10 +1387,13 @@ AtEOXact_GUC(bool isCommit)
 	for (i = 0; i < num_guc_variables; i++)
 	{
 		struct config_generic *gconf = guc_variables[i];
+		bool	changed;
 
 		/* Skip if nothing's happened to this var in this transaction */
 		if (gconf->status == 0)
 			continue;
+
+		changed = false;
 
 		switch (gconf->vartype)
 		{
@@ -1375,6 +1414,7 @@ AtEOXact_GUC(bool isCommit)
 													   true, false))
 								elog(LOG, "Failed to commit %s", conf->gen.name);
 						*conf->variable = conf->session_val;
+						changed = true;
 					}
 					conf->gen.source = conf->gen.session_source;
 					conf->gen.status = 0;
@@ -1397,6 +1437,7 @@ AtEOXact_GUC(bool isCommit)
 													   true, false))
 								elog(LOG, "Failed to commit %s", conf->gen.name);
 						*conf->variable = conf->session_val;
+						changed = true;
 					}
 					conf->gen.source = conf->gen.session_source;
 					conf->gen.status = 0;
@@ -1419,6 +1460,7 @@ AtEOXact_GUC(bool isCommit)
 													   true, false))
 								elog(LOG, "Failed to commit %s", conf->gen.name);
 						*conf->variable = conf->session_val;
+						changed = true;
 					}
 					conf->gen.source = conf->gen.session_source;
 					conf->gen.status = 0;
@@ -1460,15 +1502,69 @@ AtEOXact_GUC(bool isCommit)
 						}
 
 						SET_STRING_VARIABLE(conf, str);
+						changed = true;
 					}
 					conf->gen.source = conf->gen.session_source;
 					conf->gen.status = 0;
 					break;
 				}
 		}
+
+		if (changed && (gconf->flags & GUC_REPORT))
+			ReportGUCOption(gconf);
 	}
 
 	guc_dirty = false;
+}
+
+
+/*
+ * Start up automatic reporting of changes to variables marked GUC_REPORT.
+ * This is executed at completion of backend startup.
+ */
+void
+BeginReportingGUCOptions(void)
+{
+	int			i;
+
+	/*
+	 * Don't do anything unless talking to an interactive frontend of
+	 * protocol 3.0 or later.
+	 */
+	if (whereToSendOutput != Remote ||
+		PG_PROTOCOL_MAJOR(FrontendProtocol) < 3)
+		return;
+
+	reporting_enabled = true;
+
+	/* Transmit initial values of interesting variables */
+	for (i = 0; i < num_guc_variables; i++)
+	{
+		struct config_generic *conf = guc_variables[i];
+
+		if (conf->flags & GUC_REPORT)
+			ReportGUCOption(conf);
+	}
+}
+
+/*
+ * ReportGUCOption: if appropriate, transmit option value to frontend
+ */
+static void
+ReportGUCOption(struct config_generic *record)
+{
+	if (reporting_enabled && (record->flags & GUC_REPORT))
+	{
+		char	*val = _ShowOption(record);
+		StringInfoData msgbuf;
+
+		pq_beginmessage(&msgbuf, 'S');
+		pq_sendstring(&msgbuf, record->name);
+		pq_sendstring(&msgbuf, val);
+		pq_endmessage(&msgbuf);
+
+		pfree(val);
+	}
 }
 
 
@@ -1638,6 +1734,16 @@ set_config_option(const char *name, const char *value,
 	 */
 	switch (record->context)
 	{
+		case PGC_INTERNAL:
+			if (context == PGC_SIGHUP)
+				return true;
+			if (context != PGC_INTERNAL)
+			{
+				elog(elevel, "'%s' cannot be changed",
+					 name);
+				return false;
+			}
+			break;
 		case PGC_POSTMASTER:
 			if (context == PGC_SIGHUP)
 				return true;
@@ -2053,6 +2159,9 @@ set_config_option(const char *name, const char *value,
 				break;
 			}
 	}
+
+	if (DoIt && (record->flags & GUC_REPORT))
+			ReportGUCOption(record);
 
 	return true;
 }
@@ -2614,8 +2723,10 @@ show_all_settings(PG_FUNCTION_ARGS)
 		SRF_RETURN_NEXT(funcctx, result);
 	}
 	else
-/* do when there is no more left */
+	{
+		/* do when there is no more left */
 		SRF_RETURN_DONE(funcctx);
+	}
 }
 
 static char *
@@ -2733,52 +2844,6 @@ ParseLongOption(const char *string, char **name, char **value)
 	for (cp = *name; *cp; cp++)
 		if (*cp == '-')
 			*cp = '_';
-}
-
-
-
-#ifdef HAVE_SYSLOG
-
-static const char *
-assign_facility(const char *facility, bool doit, bool interactive)
-{
-	if (strcasecmp(facility, "LOCAL0") == 0)
-		return facility;
-	if (strcasecmp(facility, "LOCAL1") == 0)
-		return facility;
-	if (strcasecmp(facility, "LOCAL2") == 0)
-		return facility;
-	if (strcasecmp(facility, "LOCAL3") == 0)
-		return facility;
-	if (strcasecmp(facility, "LOCAL4") == 0)
-		return facility;
-	if (strcasecmp(facility, "LOCAL5") == 0)
-		return facility;
-	if (strcasecmp(facility, "LOCAL6") == 0)
-		return facility;
-	if (strcasecmp(facility, "LOCAL7") == 0)
-		return facility;
-	return NULL;
-}
-#endif
-
-
-static const char *
-assign_defaultxactisolevel(const char *newval, bool doit, bool interactive)
-{
-	if (strcasecmp(newval, "serializable") == 0)
-	{
-		if (doit)
-			DefaultXactIsoLevel = XACT_SERIALIZABLE;
-	}
-	else if (strcasecmp(newval, "read committed") == 0)
-	{
-		if (doit)
-			DefaultXactIsoLevel = XACT_READ_COMMITTED;
-	}
-	else
-		return NULL;
-	return newval;
 }
 
 
@@ -2993,21 +3058,70 @@ GUCArrayDelete(ArrayType *array, const char *name)
 	return newarray;
 }
 
-const char *
+
+/*
+ * assign_hook subroutines
+ */
+
+#ifdef HAVE_SYSLOG
+
+static const char *
+assign_facility(const char *facility, bool doit, bool interactive)
+{
+	if (strcasecmp(facility, "LOCAL0") == 0)
+		return facility;
+	if (strcasecmp(facility, "LOCAL1") == 0)
+		return facility;
+	if (strcasecmp(facility, "LOCAL2") == 0)
+		return facility;
+	if (strcasecmp(facility, "LOCAL3") == 0)
+		return facility;
+	if (strcasecmp(facility, "LOCAL4") == 0)
+		return facility;
+	if (strcasecmp(facility, "LOCAL5") == 0)
+		return facility;
+	if (strcasecmp(facility, "LOCAL6") == 0)
+		return facility;
+	if (strcasecmp(facility, "LOCAL7") == 0)
+		return facility;
+	return NULL;
+}
+#endif
+
+
+static const char *
+assign_defaultxactisolevel(const char *newval, bool doit, bool interactive)
+{
+	if (strcasecmp(newval, "serializable") == 0)
+	{
+		if (doit)
+			DefaultXactIsoLevel = XACT_SERIALIZABLE;
+	}
+	else if (strcasecmp(newval, "read committed") == 0)
+	{
+		if (doit)
+			DefaultXactIsoLevel = XACT_READ_COMMITTED;
+	}
+	else
+		return NULL;
+	return newval;
+}
+
+static const char *
 assign_log_min_messages(const char *newval,
 						   bool doit, bool interactive)
 {
 	return (assign_msglvl(&log_min_messages, newval, doit, interactive));
 }
 
-const char *
+static const char *
 assign_client_min_messages(const char *newval,
 						   bool doit, bool interactive)
 {
 	return (assign_msglvl(&client_min_messages, newval, doit, interactive));
 }
 
-const char *
+static const char *
 assign_min_error_statement(const char *newval, bool doit, bool interactive)
 {
 	return (assign_msglvl(&log_min_error_statement, newval, doit, interactive));
@@ -3086,5 +3200,6 @@ assign_msglvl(int *var, const char *newval, bool doit, bool interactive)
 		return NULL;			/* fail */
 	return newval;				/* OK */
 }
+
 
 #include "guc-file.c"

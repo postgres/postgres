@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.73 2003/02/01 18:31:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.74 2003/04/25 19:45:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -497,22 +497,6 @@ assign_client_encoding(const char *value, bool doit, bool interactive)
 		return NULL;
 	}
 	return value;
-}
-
-
-const char *
-assign_server_encoding(const char *value, bool doit, bool interactive)
-{
-	if (interactive)
-		elog(ERROR, "SET SERVER_ENCODING is not supported");
-	/* Pretend never to fail in noninteractive case */
-	return value;
-}
-
-const char *
-show_server_encoding(void)
-{
-	return GetDatabaseEncodingName();
 }
 
 

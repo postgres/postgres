@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.113 2003/04/18 01:03:41 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.114 2003/04/25 19:45:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,6 +36,7 @@
 #include "storage/sinval.h"
 #include "storage/spin.h"
 #include "utils/builtins.h"
+#include "utils/guc.h"
 #include "utils/relcache.h"
 #include "miscadmin.h"
 
@@ -2260,6 +2261,12 @@ ReadControlFile(void)
 			 "\twhich is not recognized by setlocale().\n"
 			 "\tIt looks like you need to initdb.",
 			 ControlFile->lc_ctype);
+
+	/* Make the fixed locale settings visible as GUC variables, too */
+	SetConfigOption("lc_collate", ControlFile->lc_collate,
+					PGC_INTERNAL, PGC_S_OVERRIDE);
+	SetConfigOption("lc_ctype", ControlFile->lc_ctype,
+					PGC_INTERNAL, PGC_S_OVERRIDE);
 }
 
 void

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.73 2003/03/25 16:15:44 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.74 2003/04/25 19:45:08 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -52,7 +52,7 @@ SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="PARAMETER">timezone</rep
       <term><replaceable class="PARAMETER">variable</replaceable></term>
       <listitem>
        <para>
-        A settable run-time parameter.
+        Name of a settable run-time parameter.
        </para>
       </listitem>
      </varlistentry>
@@ -79,8 +79,9 @@ SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="PARAMETER">timezone</rep
 
   <para>
    The <command>SET</command> command changes run-time configuration
-   parameters.  Many of the run-time parameters listed in the
-   <xref linkend="runtime-config"> can be changed on-the-fly with <command>SET</command>.
+   parameters.  Many of the run-time parameters listed in
+   <xref linkend="runtime-config"> can be changed on-the-fly with
+   <command>SET</command>.
    (But some require superuser privileges to change, and others cannot
    be changed after server or session start.)  Note that
    <command>SET</command> only affects the value used by the current
@@ -123,7 +124,7 @@ SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="PARAMETER">timezone</rep
      <listitem>
       <para>
        Choose the date/time representation style. Two separate
-       settings are involved: the default date/time output and the
+       settings are involved: the default date/time output format and the
        interpretation of ambiguous input.
       </para>
 
@@ -147,7 +148,7 @@ SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="PARAMETER">timezone</rep
           <para>
            Use Oracle/Ingres-style dates and times. Note that this
            style has nothing to do with SQL (which mandates ISO 8601
-           style), the naming of this option is a historical accident.
+           style); the naming of this option is a historical accident.
           </para>
          </listitem>
         </varlistentry>
@@ -284,17 +285,6 @@ SELECT setseed(<replaceable>value</replaceable>);
     </varlistentry>
 
     <varlistentry>
-     <term>SERVER_ENCODING</term>
-     <listitem>
-      <para>
-       Shows the server-side multibyte encoding.  (At present, this
-       parameter can be shown but not set, because the encoding is
-       determined at <application>initdb</> time.)
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
      <term>TIME ZONE</term>
      <term>TIMEZONE</term>
      <listitem>
@@ -410,7 +400,7 @@ SELECT setseed(<replaceable>value</replaceable>);
     </varlistentry>
      
     <varlistentry>
-     <term><computeroutput>ERROR:  '<replaceable>name</replaceable> is not a
+     <term><computeroutput>ERROR:  '<replaceable>name</replaceable>' is not a
 	 valid option name</computeroutput></term>
      <listitem>
       <para>
@@ -447,7 +437,7 @@ SELECT setseed(<replaceable>value</replaceable>);
   <title>Notes</title>
 
   <para>
-   The function <function>set_config</function> provides the equivalent
+   The function <function>set_config</function> provides equivalent
    capability. See <xref linkend="functions-misc">.
   </para>
  </refsect1>
@@ -517,6 +507,8 @@ SELECT CURRENT_TIMESTAMP AS today;
   <title>See Also</title>
 
   <simpara>
+   <xref linkend="SQL-SHOW" endterm="SQL-SHOW-title">,
+   <xref linkend="SQL-RESET" endterm="SQL-RESET-title">,
    <xref linkend="sql-set-constraints" endterm="sql-set-constraints-title">,
    <xref linkend="sql-set-session-authorization" endterm="sql-set-session-authorization-title">,
    <xref linkend="sql-set-transaction" endterm="sql-set-transaction-title">

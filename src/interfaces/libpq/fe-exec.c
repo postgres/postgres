@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.132 2003/04/25 01:24:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.133 2003/04/25 19:45:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,8 @@
 
 #include "libpq-fe.h"
 #include "libpq-int.h"
+
+#include "mb/pg_wchar.h"
 
 #ifdef WIN32
 #include "win32.h"
@@ -54,6 +56,7 @@ static void handleSendFailure(PGconn *conn);
 static void handleSyncLoss(PGconn *conn, char id, int msgLength);
 static int	getRowDescriptions(PGconn *conn);
 static int	getAnotherTuple(PGconn *conn, int binary);
+static int	getParameterStatus(PGconn *conn);
 static int	getNotify(PGconn *conn);
 
 /* ---------------
@@ -950,6 +953,11 @@ parseInput(PGconn *conn)
 		 *
 		 * However, if the state is IDLE then we got trouble; we need to deal
 		 * with the unexpected message somehow.
+		 *
+		 * ParameterStatus ('S') messages are a special case: in IDLE state
+		 * we must process 'em (this case could happen if a new value was
+		 * adopted from config file due to SIGHUP), but otherwise we hold
+		 * off until BUSY state.
 		 */
 		if (id == 'A')
 		{
@@ -970,6 +978,7 @@ parseInput(PGconn *conn)
 			/*
 			 * Unexpected message in IDLE state; need to recover somehow.
 			 * ERROR messages are displayed using the notice processor;
+			 * ParameterStatus is handled normally;
 			 * anything else is just dropped on the floor after displaying
 			 * a suitable warning notice.  (An ERROR is very possibly the
 			 * backend telling us why it is about to close the connection,
@@ -978,6 +987,11 @@ parseInput(PGconn *conn)
 			if (id == 'E')
 			{
 				if (pqGetErrorNotice(conn, false /* treat as notice */))
+					return;
+			}
+			else if (id == 'S')
+			{
+				if (getParameterStatus(conn))
 					return;
 			}
 			else
@@ -1020,6 +1034,10 @@ parseInput(PGconn *conn)
 						conn->result = PQmakeEmptyPGresult(conn,
 													  PGRES_EMPTY_QUERY);
 					conn->asyncStatus = PGASYNC_READY;
+					break;
+				case 'S':		/* parameter status */
+					if (getParameterStatus(conn))
+						return;
 					break;
 				case 'K':		/* secret key data from the backend */
 
@@ -1672,6 +1690,35 @@ fail:
 }
 
 /*
+ * Attempt to read a ParameterStatus message.
+ * This is possible in several places, so we break it out as a subroutine.
+ * Entry: 'S' message type and length have already been consumed.
+ * Exit: returns 0 if successfully consumed message.
+ *		 returns EOF if not enough data.
+ */
+static int
+getParameterStatus(PGconn *conn)
+{
+	/* Get the parameter name */
+	if (pqGets(&conn->workBuffer, conn))
+		return EOF;
+	/* Is it one we care about? */
+	if (strcmp(conn->workBuffer.data, "client_encoding") == 0)
+	{
+		if (pqGets(&conn->workBuffer, conn))
+			return EOF;
+		conn->client_encoding = pg_char_to_encoding(conn->workBuffer.data);
+	}
+	else
+	{
+		/* Uninteresting parameter, ignore it */
+		if (pqGets(&conn->workBuffer, conn))
+			return EOF;
+	}
+	return 0;
+}
+
+/*
  * Attempt to read a Notify response message.
  * This is possible in several places, so we break it out as a subroutine.
  * Entry: 'A' message type and length have already been consumed.
@@ -2249,6 +2296,10 @@ PQfn(PGconn *conn,
 				if (conn->result)
 					return prepareAsyncResult(conn);
 				return PQmakeEmptyPGresult(conn, status);
+			case 'S':			/* parameter status */
+				if (getParameterStatus(conn))
+					continue;
+				break;
 			default:
 				/* The backend violates the protocol. */
 				printfPQExpBuffer(&conn->errorMessage,

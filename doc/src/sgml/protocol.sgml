@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/protocol.sgml,v 1.30 2003/04/24 21:16:42 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/protocol.sgml,v 1.31 2003/04/25 19:45:08 tgl Exp $ -->
 
 <chapter id="protocol">
  <title>Frontend/Backend Protocol</title>
@@ -328,7 +328,7 @@
     is being started, and the frontend is just an interested bystander.
     It is still possible for the startup attempt
     to fail (ErrorResponse), but in the normal case the backend will send
-    BackendKeyData, some ParameterStatus messages, and finally ReadyForQuery.
+    some ParameterStatus messages, BackendKeyData, and finally ReadyForQuery.
    </para>
 
    <para>
@@ -900,9 +900,9 @@
    <para>
     At present there is a hard-wired set of parameters for which
     ParameterStatus will be generated: they are
-    <literal>version</> (backend version,
-    a pseudo-parameter that cannot change after startup); 
-    <literal>database_encoding</> (also not presently changeable after start);
+    <literal>server_version</> (a pseudo-parameter that cannot change after
+    startup);
+    <literal>server_encoding</> (also not presently changeable after start);
     <literal>client_encoding</>, and
     <literal>DateStyle</>.
     This set might change in the future, or even become configurable.
@@ -3879,6 +3879,13 @@ during COPY OUT.
 deprecated and will eventually be removed.)  Binary COPY is supported.
 The CopyInResponse and CopyOutResponse messages carry a field indicating
 whether the COPY operation is text or binary.
+</para>
+
+<para>
+The backend sends ParameterStatus ('<literal>S</>') messages during connection
+startup for all parameters it considers interesting to the client library.
+Subsequently, a ParameterStatus message is sent whenever the active value
+changes for any of these parameters.
 </para>
 
 <para>
