@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.75 2005/01/04 03:58:16 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.76 2005/01/17 04:30:37 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -287,7 +287,7 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-n <replaceable class="parameter">namespace</replaceable></option></term>
+      <term><option>-n <replaceable class="parameter">schema</replaceable></option></term>
       <term><option>--schema=<replaceable class="parameter">schema</replaceable></option></term>
       <listitem>
        <para>
