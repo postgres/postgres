@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.148 2000/11/17 04:22:52 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.149 2000/11/27 21:12:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2616,7 +2616,7 @@ PQhost(const PGconn *conn)
 {
 	if (!conn)
 		return (char *) NULL;
-	return conn->pghost;
+	return conn->pghost ? conn->pghost : conn->pgunixsocket;
 }
 
 char *
