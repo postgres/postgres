@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execAmi.c,v 1.21 1998/06/15 19:28:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execAmi.c,v 1.22 1998/07/15 22:16:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -367,6 +367,10 @@ ExecReScan(Plan *node, ExprContext *exprCtxt, Plan *parent)
 
 		case T_MergeJoin:
 			ExecReScanMergeJoin((MergeJoin *) node, exprCtxt, parent);
+			break;
+
+		case T_Append:
+			ExecReScanAppend((Append *) node, exprCtxt, parent);
 			break;
 
 /*

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.13 1998/07/15 14:54:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.14 1998/07/15 22:16:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +15,7 @@
  *		ExecInitAppend	- initialize the append node
  *		ExecProcAppend	- retrieve the next tuple from the node
  *		ExecEndAppend	- shut down the append node
+ *		ExecReScanAppend - rescan the append node
  *
  *	 NOTES
  *		Each append node contains a list of one or more subplans which
@@ -34,7 +35,7 @@
  *			  nil	nil		 ...	...    ...
  *								 subplans
  *
- *		Append nodes are currently used to unions, and to support inheritance
+ *		Append nodes are currently used for unions, and to support inheritance
  *		queries, where several relations need to be scanned.
  *		For example, in our standard person/student/employee/student-emp
  *		example, where student and employee inherit from person
@@ -499,4 +500,26 @@ ExecEndAppend(Append *node)
 	 * XXX should free appendstate->as_rtentries  and
 	 * appendstate->as_junkfilter_list here
 	 */
+}
+void
+ExecReScanAppend(Append *node, ExprContext *exprCtxt, Plan *parent)
+{
+	AppendState *appendstate = node->appendstate;
+	int	nplans = length(node->appendplans);
+	int i;
+
+	for (i = 0; i < nplans; i++)
+	{
+		Plan	   *rescanNode;
+
+		appendstate->as_whichplan = i;
+		rescanNode = (Plan *) nth(i, node->appendplans);
+		if (rescanNode->chgParam == NULL)
+		{
+			exec_append_initialize_next(node);
+			ExecReScan((Plan *)rescanNode, exprCtxt, (Plan *) node);
+		}
+	}
+	appendstate->as_whichplan = 0;
+	exec_append_initialize_next(node);
 }
