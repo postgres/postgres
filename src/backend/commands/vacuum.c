@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.221 2002/04/02 01:03:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.222 2002/04/02 05:11:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -557,10 +557,15 @@ vac_update_dbstats(Oid dbid,
 static void
 vac_truncate_clog(TransactionId vacuumXID, TransactionId frozenXID)
 {
+	TransactionId myXID;
 	Relation	relation;
 	HeapScanDesc scan;
 	HeapTuple	tuple;
 	int32		age;
+	bool		vacuumAlreadyWrapped = false;
+	bool		frozenAlreadyWrapped = false;
+
+	myXID = GetCurrentTransactionId();
 
 	relation = heap_openr(DatabaseRelationName, AccessShareLock);
 
@@ -575,28 +580,55 @@ vac_truncate_clog(TransactionId vacuumXID, TransactionId frozenXID)
 		if (!dbform->datallowconn)
 			continue;
 
-		if (TransactionIdIsNormal(dbform->datvacuumxid) &&
-			TransactionIdPrecedes(dbform->datvacuumxid, vacuumXID))
-			vacuumXID = dbform->datvacuumxid;
-		if (TransactionIdIsNormal(dbform->datfrozenxid) &&
-			TransactionIdPrecedes(dbform->datfrozenxid, frozenXID))
-			frozenXID = dbform->datfrozenxid;
+		if (TransactionIdIsNormal(dbform->datvacuumxid))
+		{
+			if (TransactionIdPrecedes(myXID, dbform->datvacuumxid))
+				vacuumAlreadyWrapped = true;
+			else if (TransactionIdPrecedes(dbform->datvacuumxid, vacuumXID))
+				vacuumXID = dbform->datvacuumxid;
+		}
+		if (TransactionIdIsNormal(dbform->datfrozenxid))
+		{
+			if (TransactionIdPrecedes(myXID, dbform->datfrozenxid))
+				frozenAlreadyWrapped = true;
+			else if (TransactionIdPrecedes(dbform->datfrozenxid, frozenXID))
+				frozenXID = dbform->datfrozenxid;
+		}
 	}
 
 	heap_endscan(scan);
 
 	heap_close(relation, AccessShareLock);
 
+	/*
+	 * Do not truncate CLOG if we seem to have suffered wraparound already;
+	 * the computed minimum XID might be bogus.
+	 */
+	if (vacuumAlreadyWrapped)
+	{
+		elog(WARNING, "Some databases have not been vacuumed in over 2 billion transactions."
+			 "\n\tYou may have already suffered transaction-wraparound data loss.");
+		return;
+	}
+
 	/* Truncate CLOG to the oldest vacuumxid */
 	TruncateCLOG(vacuumXID);
 
 	/* Give warning about impending wraparound problems */
-	age = (int32) (GetCurrentTransactionId() - frozenXID);
-	if (age > (int32) ((MaxTransactionId >> 3) * 3))
-		elog(WARNING, "Some databases have not been vacuumed in %d transactions."
-			 "\n\tBetter vacuum them within %d transactions,"
-			 "\n\tor you may have a wraparound failure.",
-			 age, (int32) (MaxTransactionId >> 1) - age);
+	if (frozenAlreadyWrapped)
+	{
+		elog(WARNING, "Some databases have not been vacuumed in over 1 billion transactions."
+			 "\n\tBetter vacuum them soon, or you may have a wraparound failure.");
+	}
+	else
+	{
+		age = (int32) (myXID - frozenXID);
+		if (age > (int32) ((MaxTransactionId >> 3) * 3))
+			elog(WARNING, "Some databases have not been vacuumed in %d transactions."
+				 "\n\tBetter vacuum them within %d transactions,"
+				 "\n\tor you may have a wraparound failure.",
+				 age, (int32) (MaxTransactionId >> 1) - age);
+	}
 }
 
 
