@@ -1,43 +1,57 @@
 --
--- Sanity checks for common errors in making pg_operator table.
+-- Sanity checks for common errors in making operator/procedure system tables:
+-- pg_operator, pg_proc, pg_aggregate, pg_am, pg_amop, pg_amproc, pg_opclass.
+--
 -- None of the SELECTs here should ever find any matching entries,
 -- so the expected output is easy to maintain ;-).
--- A test failure indicates someone messed up an entry in pg_operator.h.
+-- A test failure indicates someone messed up an entry in the system tables.
+--
+-- NB: we assume the oidjoins test will have caught any dangling links,
+-- that is OID or REGPROC fields that are not zero and do not match some
+-- row in the linked-to table.  However, if we want to enforce that a link
+-- field can't be 0, we have to check it here.
 --
 -- NB: run this test earlier than the create_operator test, because
 -- that test creates some bogus operators...
 --
+-- NOTE hardwired assumptions about standard types:
+--                type bool has OID 16
+--                type float8 has OID 701
+--
 
--- Look for bogus data types.
+-- **************** pg_proc ****************
 
-SELECT p1.oid, p1.* FROM pg_operator AS p1
-WHERE p1.oprleft != 0 AND NOT EXISTS(SELECT * FROM pg_type AS t1 WHERE t1.oid = p1.oprleft);
+-- Look for illegal values in pg_proc fields.
 
-SELECT p1.oid, p1.* FROM pg_operator AS p1
-WHERE p1.oprright != 0 AND NOT EXISTS(SELECT * FROM pg_type AS t1 WHERE t1.oid = p1.oprright);
+SELECT p1.oid, p1.proname
+FROM pg_proc as p1
+WHERE p1.prolang = 0 OR p1.prorettype = 0 OR
+    p1.pronargs < 0 OR p1.pronargs > 9;
 
-SELECT p1.oid, p1.* FROM pg_operator AS p1
-WHERE p1.oprresult != 0 AND NOT EXISTS(SELECT * FROM pg_type AS t1 WHERE t1.oid = p1.oprresult);
+-- **************** pg_operator ****************
 
--- Look for dangling links to other operators.
+-- Look for illegal values in pg_operator fields.
 
-SELECT p1.oid, p1.* FROM pg_operator AS p1
-WHERE p1.oprcom != 0 AND NOT
-      EXISTS(SELECT * FROM pg_operator AS p2 WHERE p2.oid = p1.oprcom);
+SELECT p1.oid, p1.oprname
+FROM pg_operator as p1
+WHERE (p1.oprkind != 'b' AND p1.oprkind != 'l' AND p1.oprkind != 'r') OR
+    p1.oprresult = 0 OR p1.oprcode = 0;
 
-SELECT p1.oid, p1.* FROM pg_operator AS p1
-WHERE p1.oprnegate != 0 AND NOT
-      EXISTS(SELECT * FROM pg_operator AS p2 WHERE p2.oid = p1.oprnegate);
+-- Look for missing or unwanted operand types
 
-SELECT p1.oid, p1.* FROM pg_operator AS p1
-WHERE p1.oprlsortop != 0 AND NOT
-      EXISTS(SELECT * FROM pg_operator AS p2 WHERE p2.oid = p1.oprlsortop);
+SELECT p1.oid, p1.oprname
+FROM pg_operator as p1
+WHERE (p1.oprleft = 0 and p1.oprkind != 'l') OR
+    (p1.oprleft != 0 and p1.oprkind = 'l') OR
+    (p1.oprright = 0 and p1.oprkind != 'r') OR
+    (p1.oprright != 0 and p1.oprkind = 'r');
 
-SELECT p1.oid, p1.* FROM pg_operator AS p1
-WHERE p1.oprrsortop != 0 AND NOT
-      EXISTS(SELECT * FROM pg_operator AS p2 WHERE p2.oid = p1.oprrsortop);
+-- Hash operators should be commutative binary ops returning bool.
 
--- FIXME: how can we test for a dangling OPRCODE value?
+SELECT p1.oid, p1.oprname
+FROM pg_operator as p1
+WHERE p1.oprcanhash AND NOT
+    (p1.oprkind = 'b' AND p1.oprresult = 16 AND p1.oprcom != 0);
 
 -- Look for conflicting operator definitions (same names and input datatypes).
 
@@ -69,7 +83,6 @@ WHERE p1.oprcom = p2.oid AND
 -- single-operand operators.
 -- We expect that B will always say that B.oprnegate = A as well; that's not
 -- inherently essential, but it would be inefficient not to mark it so.
--- NOTE hardwired assumption that type bool has OID 16.
 
 SELECT p1.oid, p1.oprcode, p2.oid, p2.oprcode
 FROM pg_operator AS p1, pg_operator AS p2
@@ -114,22 +127,293 @@ WHERE p1.oprrsortop = p2.oid AND
 -- whereas the operators linked to by oprlsortop and oprrsortop have input
 -- datatypes L,L and R,R respectively.
 
-SELECT p1.oid, p1.* FROM pg_operator AS p1
+SELECT p1.oid, p1.oprname FROM pg_operator AS p1
 WHERE p1.oprlsortop != 0 AND
       p1.oprcom = 0;
 
-SELECT p1.oid, p1.* FROM pg_operator AS p1
+SELECT p1.oid, p1.oprname FROM pg_operator AS p1
 WHERE p1.oprlsortop != 0 AND NOT
       EXISTS(SELECT * FROM pg_operator AS p2 WHERE
-	p2.oprname = '<' AND
-	p2.oprleft = p1.oprleft AND
-	p2.oprright = p1.oprright AND
-	p2.oprkind = 'b');
+        p2.oprname = '<' AND
+        p2.oprleft = p1.oprleft AND
+        p2.oprright = p1.oprright AND
+        p2.oprkind = 'b');
 
-SELECT p1.oid, p1.* FROM pg_operator AS p1
+SELECT p1.oid, p1.oprname FROM pg_operator AS p1
 WHERE p1.oprlsortop != 0 AND NOT
       EXISTS(SELECT * FROM pg_operator AS p2 WHERE
-	p2.oprname = '>' AND
-	p2.oprleft = p1.oprleft AND
-	p2.oprright = p1.oprright AND
-	p2.oprkind = 'b');
+        p2.oprname = '>' AND
+        p2.oprleft = p1.oprleft AND
+        p2.oprright = p1.oprright AND
+        p2.oprkind = 'b');
+
+-- Check that each operator defined in pg_operator matches its oprcode entry
+-- in pg_proc.  Easiest to do this separately for each oprkind.
+-- FIXME: want to check that argument/result types match, but how to do that
+-- in the face of binary-compatible types?
+
+SELECT p1.oid, p1.oprname, p2.oid, p2.proname
+FROM pg_operator AS p1, pg_proc AS p2
+WHERE p1.oprcode = p2.oid AND
+    p1.oprkind = 'b' AND
+    (p2.pronargs != 2
+-- diked out until we find a way of marking binary-compatible types
+-- OR
+--     p1.oprresult != p2.prorettype OR
+--     (p1.oprleft != p2.proargtypes[0] AND p2.proargtypes[0] != 0) OR
+--     (p1.oprright != p2.proargtypes[1] AND p2.proargtypes[1] != 0)
+);
+
+-- These two selects can be left as-is because there are no binary-compatible
+-- cases that they trip over, at least in 6.5:
+
+SELECT p1.oid, p1.oprname, p2.oid, p2.proname
+FROM pg_operator AS p1, pg_proc AS p2
+WHERE p1.oprcode = p2.oid AND
+    p1.oprkind = 'l' AND
+    (p2.pronargs != 1 OR
+     p1.oprresult != p2.prorettype OR
+     (p1.oprright != p2.proargtypes[0] AND p2.proargtypes[0] != 0) OR
+     p1.oprleft != 0);
+
+SELECT p1.oid, p1.oprname, p2.oid, p2.proname
+FROM pg_operator AS p1, pg_proc AS p2
+WHERE p1.oprcode = p2.oid AND
+    p1.oprkind = 'r' AND
+    (p2.pronargs != 1 OR
+     p1.oprresult != p2.prorettype OR
+     (p1.oprleft != p2.proargtypes[0] AND p2.proargtypes[0] != 0) OR
+     p1.oprright != 0);
+
+-- If oprrest is set, the operator must return boolean,
+-- and it must link to a proc with the right signature
+-- to be a restriction selectivity estimator.
+-- The proc signature we want is: float8 proc(oid, oid, int2, <any>, int4)
+
+SELECT p1.oid, p1.oprname, p2.oid, p2.proname
+FROM pg_operator AS p1, pg_proc AS p2
+WHERE p1.oprrest = p2.oid AND
+    (p1.oprresult != 16 OR
+     p2.prorettype != 701 OR p2.proretset OR
+     p2.pronargs != 5 OR
+     p2.proargtypes[0] != 26 OR p2.proargtypes[1] != 26 OR
+     p2.proargtypes[2] != 21 OR p2.proargtypes[3] != 0 OR
+     p2.proargtypes[4] != 23);
+
+-- If oprjoin is set, the operator must be a binary boolean op,
+-- and it must link to a proc with the right signature
+-- to be a join selectivity estimator.
+-- The proc signature we want is: float8 proc(oid, oid, int2, oid, int2)
+
+SELECT p1.oid, p1.oprname, p2.oid, p2.proname
+FROM pg_operator AS p1, pg_proc AS p2
+WHERE p1.oprjoin = p2.oid AND
+    (p1.oprkind != 'b' OR p1.oprresult != 16 OR
+     p2.prorettype != 701 OR p2.proretset OR
+     p2.pronargs != 5 OR
+     p2.proargtypes[0] != 26 OR p2.proargtypes[1] != 26 OR
+     p2.proargtypes[2] != 21 OR p2.proargtypes[3] != 26 OR
+     p2.proargtypes[4] != 21);
+
+-- **************** pg_aggregate ****************
+
+-- Look for illegal values in pg_aggregate fields.
+-- aggbasetype can only be 0 if transfn1 is not present (eg, count(*))
+-- or itself takes a wild-card input; we check the latter case below.
+
+SELECT p1.oid, p1.aggname
+FROM pg_aggregate as p1
+WHERE (p1.aggbasetype = 0 AND p1.aggtransfn1 != 0) OR aggfinaltype = 0;
+
+-- Check combinations of transfer functions.
+-- Although either transfn1 or transfn2 can be null,
+-- it makes no sense for both to be.  And if both are defined,
+-- presumably there should be a finalfn to combine their results.
+-- We also check that transtypes are null just when corresponding
+-- transfns are.  Also, if there is no finalfn then the output type
+-- must be the transtype the result will be taken from.
+
+SELECT p1.oid, p1.aggname
+FROM pg_aggregate as p1
+WHERE p1.aggtransfn1 = 0 AND p1.aggtransfn2 = 0;
+
+SELECT p1.oid, p1.aggname
+FROM pg_aggregate as p1
+WHERE p1.aggtransfn1 != 0 AND p1.aggtransfn2 = 0 AND
+    (p1.aggtranstype1 = 0 OR p1.aggtranstype2 != 0 OR
+     (p1.aggfinalfn = 0 AND p1.aggfinaltype != p1.aggtranstype1));
+
+SELECT p1.oid, p1.aggname
+FROM pg_aggregate as p1
+WHERE p1.aggtransfn1 = 0 AND p1.aggtransfn2 != 0 AND
+    (p1.aggtranstype1 != 0 OR p1.aggtranstype2 = 0 OR
+     (p1.aggfinalfn = 0 AND p1.aggfinaltype != p1.aggtranstype2));
+
+SELECT p1.oid, p1.aggname
+FROM pg_aggregate as p1
+WHERE p1.aggtransfn1 != 0 AND p1.aggtransfn2 != 0 AND
+    (p1.aggtranstype1 = 0 OR p1.aggtranstype2 = 0 OR
+     p1.aggfinalfn = 0);
+
+-- Cross-check transfn1 (if present) against its entry in pg_proc.
+-- FIXME: what about binary-compatible types?
+
+SELECT p1.oid, p1.aggname, p2.oid, p2.proname
+FROM pg_aggregate AS p1, pg_proc AS p2
+WHERE p1.aggtransfn1 = p2.oid AND
+    (p2.proretset OR p2.pronargs != 2
+-- diked out until we find a way of marking binary-compatible types
+-- OR
+--     p1.aggtranstype1 != p2.prorettype OR
+--     p1.aggtranstype1 != p2.proargtypes[0] OR
+--     p1.aggbasetype != p2.proargtypes[1]
+);
+
+-- Cross-check transfn2 (if present) against its entry in pg_proc.
+-- FIXME: what about binary-compatible types?
+
+SELECT p1.oid, p1.aggname, p2.oid, p2.proname
+FROM pg_aggregate AS p1, pg_proc AS p2
+WHERE p1.aggtransfn2 = p2.oid AND
+    (p2.proretset OR p1.aggtranstype2 != p2.prorettype OR
+     p2.pronargs != 1 OR
+     p1.aggtranstype2 != p2.proargtypes[0]);
+
+-- Cross-check finalfn (if present) against its entry in pg_proc.
+-- FIXME: what about binary-compatible types?
+
+SELECT p1.oid, p1.aggname, p2.oid, p2.proname
+FROM pg_aggregate AS p1, pg_proc AS p2
+WHERE p1.aggfinalfn = p2.oid AND
+    (p2.proretset OR p1.aggfinaltype != p2.prorettype OR
+     p2.pronargs != 2 OR
+     p1.aggtranstype1 != p2.proargtypes[0] OR
+     p1.aggtranstype2 != p2.proargtypes[1]);
+
+-- **************** pg_amop ****************
+
+-- Look for illegal values in pg_amop fields
+
+SELECT p1.oid
+FROM pg_amop as p1
+WHERE p1.amopid = 0 OR p1.amopclaid = 0 OR p1.amopopr = 0 OR
+    p1.amopstrategy <= 0 OR p1.amopselect = 0 OR p1.amopnpages = 0;
+
+-- Look for duplicate pg_amop entries
+
+SELECT p1.oid, p2.oid
+FROM pg_amop AS p1, pg_amop AS p2
+WHERE p1.oid != p2.oid AND
+    p1.amopid = p2.amopid AND
+    p1.amopclaid = p2.amopclaid AND
+    p1.amopstrategy = p2.amopstrategy;
+
+-- Cross-check amopstrategy index against parent AM
+
+SELECT p1.oid, p2.oid, p2.amname
+FROM pg_amop AS p1, pg_am AS p2
+WHERE p1.amopid = p2.oid AND p1.amopstrategy > p2.amstrategies;
+
+-- Detect missing pg_amop entries: should have as many strategy functions
+-- as AM expects for each opclass, unless there are none at all
+-- (some opclasses only offer support for a limited set of AMs...)
+
+SELECT p1.oid, p1.amname, p2.oid, p2.opcname
+FROM pg_am AS p1, pg_opclass AS p2
+WHERE p1.amstrategies != (SELECT count(*) FROM pg_amop AS p3
+                          WHERE p3.amopid = p1.oid AND p3.amopclaid = p2.oid)
+              AND EXISTS (SELECT * FROM pg_amop AS p3
+                          WHERE p3.amopid = p1.oid AND p3.amopclaid = p2.oid);
+
+-- Check that amopopr points at a reasonable-looking operator
+
+SELECT p1.oid, p2.oid, p2.oprname
+FROM pg_amop AS p1, pg_operator AS p2
+WHERE p1.amopopr = p2.oid AND
+    (p2.oprkind != 'b' OR p2.oprresult != 16);
+
+-- If opclass is for a specific type, operator inputs should be of that type
+
+SELECT p1.oid, p2.oid, p2.oprname, p3.oid, p3.opcname
+FROM pg_amop AS p1, pg_operator AS p2, pg_opclass AS p3
+WHERE p1.amopopr = p2.oid AND p1.amopclaid = p3.oid AND
+    p3.opcdeftype != 0 AND
+    (p3.opcdeftype != p2.oprleft OR p3.opcdeftype != p2.oprright);
+
+-- Check that amopselect points to a proc with the right signature
+-- to be an access-method selectivity estimator.
+-- The proc signature we want is:
+-- float8 proc(oid, oid, int2, <any>, int4, int4, oid)
+
+SELECT p1.oid, p2.oid, p2.proname
+FROM pg_amop AS p1, pg_proc AS p2
+WHERE p1.amopselect = p2.oid AND
+    (p2.prorettype != 701 OR p2.proretset OR
+     p2.pronargs != 7 OR
+     p2.proargtypes[0] != 26 OR p2.proargtypes[1] != 26 OR
+     p2.proargtypes[2] != 21 OR p2.proargtypes[3] != 0 OR
+     p2.proargtypes[4] != 23 OR p2.proargtypes[5] != 23 OR
+     p2.proargtypes[6] != 26);
+
+-- Check that amopnpages points to a proc with the right signature
+-- to be an access-method page-count estimator.
+-- The proc signature we want is:
+-- float8 proc(oid, oid, int2, <any>, int4, int4, oid)
+
+SELECT p1.oid, p2.oid, p2.proname
+FROM pg_amop AS p1, pg_proc AS p2
+WHERE p1.amopnpages = p2.oid AND
+    (p2.prorettype != 701 OR p2.proretset OR
+     p2.pronargs != 7 OR
+     p2.proargtypes[0] != 26 OR p2.proargtypes[1] != 26 OR
+     p2.proargtypes[2] != 21 OR p2.proargtypes[3] != 0 OR
+     p2.proargtypes[4] != 23 OR p2.proargtypes[5] != 23 OR
+     p2.proargtypes[6] != 26);
+
+-- **************** pg_amproc ****************
+
+-- Look for illegal values in pg_amproc fields
+
+SELECT p1.oid
+FROM pg_amproc as p1
+WHERE p1.amid = 0 OR p1.amopclaid = 0 OR p1.amproc = 0 OR
+    p1.amprocnum <= 0;
+
+-- Look for duplicate pg_amproc entries
+
+SELECT p1.oid, p2.oid
+FROM pg_amproc AS p1, pg_amproc AS p2
+WHERE p1.oid != p2.oid AND
+    p1.amid = p2.amid AND
+    p1.amopclaid = p2.amopclaid AND
+    p1.amprocnum = p2.amprocnum;
+
+-- Cross-check amprocnum index against parent AM
+
+SELECT p1.oid, p2.oid, p2.amname
+FROM pg_amproc AS p1, pg_am AS p2
+WHERE p1.amid = p2.oid AND p1.amprocnum > p2.amsupport;
+
+-- Detect missing pg_amproc entries: should have as many support functions
+-- as AM expects for each opclass, unless there are none at all
+-- (some opclasses only offer support for a limited set of AMs...)
+
+SELECT p1.oid, p1.amname, p2.oid, p2.opcname
+FROM pg_am AS p1, pg_opclass AS p2
+WHERE p1.amsupport != (SELECT count(*) FROM pg_amproc AS p3
+                       WHERE p3.amid = p1.oid AND p3.amopclaid = p2.oid)
+           AND EXISTS (SELECT * FROM pg_amproc AS p3
+                       WHERE p3.amid = p1.oid AND p3.amopclaid = p2.oid);
+
+-- Unfortunately, we can't check the amproc link very well because the
+-- signature of the function may be different for different support routines
+-- or different base data types.
+-- We can check that all the referenced instances of the same support
+-- routine number take the same number of parameters, but that's about it...
+
+SELECT p1.oid, p2.oid, p2.proname, p3.oid, p4.oid, p4.proname
+FROM pg_amproc AS p1, pg_proc AS p2, pg_amproc AS p3, pg_proc AS p4
+WHERE p1.oid != p3.oid AND
+    p1.amid = p3.amid AND p1.amprocnum = p3.amprocnum AND
+    p1.amproc = p2.oid AND p3.amproc = p4.oid AND
+    (p2.proretset OR p4.proretset OR p2.pronargs != p4.pronargs);
