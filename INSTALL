@@ -513,12 +513,6 @@ from 6.0 or 1.* release, do the following:
         b) Back up your system.  (You should probably keep the last few
            backups on hand.)  Ideally, no one else should be using the
            system at the time.
-        c) Stop and restart the postmaster.  The software currently
-           suffers from memory leaks.  This means that as more commands
-           are processed, the program will allocate, then forget about,
-           more and more memory.  Eventually your computer will run
-           low on memory and start to swap excessively.  This problem
-           will probably be gone in the next release.
 
       Ideally, the above tasks should be done by a shell script that is
       run nightly or weekly by cron.  Look at the man page for crontab
