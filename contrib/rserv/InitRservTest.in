@@ -1,5 +1,5 @@
 #!/bin/sh
-# InitRservTest
+## InitRservTest
 # erServer demonstration implementation
 # (c) 2000 Vadim Mikheev, PostgreSQL Inc.
 

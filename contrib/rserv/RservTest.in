@@ -1,5 +1,5 @@
 #!/bin/sh
-# pgserv.tcl
+## pgserv.tcl
 # (c) 2000 Thomas Lockhart, PostgreSQL Inc.
 # The next line will reinvoke as wish *DO NOT REMOVE OR ALTER* \
 exec wish "$0" "$@"
