@@ -1192,5 +1192,9 @@ Mon Jan  7 12:18:01 CET 2002
 Tue Jan  8 15:16:37 CET 2002
 
 	- Fixed array pointers, no longer using void *.
+
+Thu Jan 10 11:12:14 CET 2002
+
+	- Include sqlca.h automatically.
 	- Set ecpg version to 2.9.0.
         - Set library version to 3.3.0.
