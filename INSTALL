@@ -63,8 +63,9 @@ PostgreSQL has known problems/bugs on the following platforms:
 PostgreSQL is also known to work on a number of other platforms that the
 authors have not personally tested.
 
-You should have at least 8 MB of memory and at least 30 MB of disk space to
-hold the source, binaries, and user databases.
+You should have at least 8 MB of memory and at least 45 MB of disk space
+to hold the source, binaries, and user databases.  After installation
+you may reduce this to about 3 Mbytes plus space for user databases.
 
 
 To upgrade to PostgreSQL v6.1 do the following:
@@ -78,9 +79,35 @@ To upgrade to PostgreSQL v6.1 do the following:
      If there is a file called INSTALL in this directory then this
      file will contain the latest installation information.
 
+     Please note that a "tested" platform in the list given earlier
+     simply means that someone went to the effort at some point of making
+     sure that a PostgreSQL distribution would compile and run on this
+     platform without modifying the code.  Since the current developers
+     will not have access to all of these platforms, some of them may not
+     compile cleanly and pass the regression tests in the current
+     release due to minor problems.  Any such known problems and their
+     solutions will be posted in ftp://ftp.postgresql.org/pub/INSTALL.
+
   2) Create account postgres if it does not already exist.
 
   3) Log into account postgres.
+
+  3a) Check that you have sufficient disk space.  You will need about
+      17 Mbytes for /usr/src/pgsql, about 2 Mbytes for /usr/local/pgsql
+      (excluding your database) and 1 Mbyte for an empty database.
+      The database will temporarily grow to about 20 Mbytes during the
+      regression tests.  You will also need about 3 Mbytes for the
+      distribution tar file.
+
+      We therefore recommend that during installation and testing you
+      have well over 20 Mbytes free under /usr/local and another 25 Mbytes
+      free on the disk partition containing your database.  Once you
+      delete the source files, tar file and regression database, you
+      will need 2 Mbytes for /usr/local/pgsql, 1 Mbyte for the empty
+      database, plus about five times the space you would require to
+      store your database data in a flat file.
+
+      To check for disk space, use command "df -k".
 
   4) Ftp file ftp://ftp.postgresql.org/pub/postgresql-v6.1.tar.gz from the
      internet.  Store it in your home directory.
@@ -131,6 +158,10 @@ To upgrade to PostgreSQL v6.1 do the following:
      If you wish to preserve object id's (oids), then use the -o
      option when running pg_dumpall.  However, unless you have a
      special reason for doing this, don't do it.
+
+     If the pg_dumpall command seems to take a long time and you think
+     it might have died, then, from another terminal, use "ls -l db.out"
+     several times to see if the size of the file is growing.
 
      Please note that if you are upgrading from a version prior to
      Postgres95 v1.09 then you must back up your database, install
@@ -385,13 +416,13 @@ To upgrade to PostgreSQL v6.1 do the following:
      because of a bug on this platform that causes a timespan of
      "14 secs ago" to be returned as "1 day 23 hours 59 mins 46 secs
      ago".  (If you don't intend to use the timespan data type, then
-     this will not be a problem for you.)  datetime also fails due
+     this would not be a problem for you.)  datetime also fails due
      to similar problems with the timespan data type.  errors fail
      due to a parsing error.  (This bug was introduced within the
      previous week, and is probably in the regression test itself.)
      select_views produces massively different output, but the
-     differences are probably due to the same reasons the other tests
-     failed.
+     differences are due to the timespan bug and minor floating point
+     differences.  (Note:  The timespan bug was fixed before v6.1 came out.)
 
      Conclusion?  If you do see failures, try to understand the nature of
      the differences and then decide if those differences will affect your
@@ -401,6 +432,7 @@ To upgrade to PostgreSQL v6.1 do the following:
      in use successfully for some time now.
 
      After running the tests, type
+        destroydb regression
         cd /usr/src/pgsql/src/test/regress
         gmake clean
 
@@ -510,7 +542,20 @@ To upgrade to PostgreSQL v6.1 do the following:
      This is a WWW document located at
      http://www.postgresql.org/docs/impguide.
 
- 27) Now create, access and manipulate databases as desired.  Write client
+ 27) The Postgres team wants to keep PostgreSQL working on all of the
+     supported platforms.  We therefore ask you to let us know if you did
+     or did not get PostgreSQL to work on you system.  Please send a
+     mail message to pgsql-ports@postgresql.org telling us the following:
+       - The version of PostgreSQL (v6.1, v6.2 beta 970703, etc.).
+       - Your operating system (i.e. RedHat v4.0 Linux v2.0.26).
+       - Your hardware (SPARC, i486, etc.).
+       - Did you compile, install and run the regression tests cleanly?
+         If not, what source code did you change (i.e. patches you
+         applied, changes you made, etc.), what tests failed, etc.
+         It is normal to get many warning when you compile.  You do
+         not need to report these.
+
+ 28) Now create, access and manipulate databases as desired.  Write client
      programs to access the database server.  In other words, ENJOY!
 
 
