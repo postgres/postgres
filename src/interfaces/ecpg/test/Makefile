@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/src/interfaces/ecpg/test/Makefile,v 1.41 2003/09/27 15:32:48 momjian Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/ecpg/test/Makefile,v 1.41.2.1 2003/12/19 23:29:29 momjian Exp $
 
 subdir = src/interfaces/ecpg/test
 top_builddir = ../../../..
@@ -8,7 +8,10 @@ override CPPFLAGS := -I$(srcdir)/../include -I$(libpq_srcdir) $(CPPFLAGS) $(THRE
 
 ECPG = ../preproc/ecpg -I$(srcdir)/../include
 
-TESTS = test1 test2 test3 test4 perftest dyntest dyntest2 test_notice test_code100 test_init testdynalloc num_test dt_test test_informix test_thread
+TESTS = test1 test2 test3 test4 perftest dyntest dyntest2 test_notice test_code100 test_init testdynalloc num_test dt_test test_informix
+ifeq ($(enable_thread_safety), yes)
+TESTS += test_thread
+endif
 
 all: $(TESTS)
 
