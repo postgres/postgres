@@ -1,6 +1,5 @@
 * Version numbers
     configure.in and configure
-    update version and perhaps majorversion in doc/src/sgml/version.sgml
     bump interface version numbers
       o src/interfaces/libpq/libpq.rc
       o src/include/pg_config.h.win32

@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.51 2002/08/05 19:43:30 petere Exp $
+#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.52 2002/10/12 16:34:28 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -52,7 +52,7 @@ vpath %.sgml ./ref
 
 ALLBOOKS = admin developer programmer reference tutorial user
 
-ALLSGML := $(wildcard $(srcdir)/*.sgml $(srcdir)/ref/*.sgml) bookindex.sgml setindex.sgml
+ALLSGML := $(wildcard $(srcdir)/*.sgml $(srcdir)/ref/*.sgml) bookindex.sgml setindex.sgml version.sgml
 
 ifdef DOCBOOKSTYLE
 CATALOG = -c $(DOCBOOKSTYLE)/catalog
@@ -118,6 +118,12 @@ bookindex.sgml: HTML.index
 setindex.sgml: HTML.index
 	$(COLLATEINDEX) -i 'setindex' -x -o $@ $<
 endif
+
+version.sgml: $(top_builddir)/src/Makefile.global
+	{ \
+	  echo "<!entity version \"$(VERSION)\">"; \
+	  echo "<!entity majorversion \"`expr $(VERSION) : '\([0-9][0-9]*\.[0-9][0-9]*\)'`\">"; \
+	} >$@
 
 
 ##
@@ -190,8 +196,8 @@ INSTALL HISTORY regress_README: % : %.html
 	 echo "| and put it in place of the existing '$@' file.";\
 	 echo "|"
 
-INSTALL.html: standalone-install.sgml installation.sgml
-	$(JADE.text) -V nochunks $+ >$@
+INSTALL.html: standalone-install.sgml installation.sgml version.sgml
+	$(JADE.text) -V nochunks standalone-install.sgml installation.sgml >$@
 
 HISTORY.html: release.sgml
 	( echo '<!doctype appendix PUBLIC "-//OASIS//DTD DocBook V3.1//EN">'; \
@@ -233,4 +239,4 @@ clean distclean maintainer-clean:
 # print
 	rm -f *.rtf *.tex-ps *.tex-pdf *.dvi *.aux *.log *.ps *.pdf *.out *.eps *.fot
 # index
-	rm -f HTML.index bookindex.sgml setindex.sgml
+	rm -f HTML.index bookindex.sgml setindex.sgml version.sgml
