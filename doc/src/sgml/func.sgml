@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.169 2003/08/31 17:32:18 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.170 2003/09/08 19:38:02 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -4575,8 +4575,8 @@ substring('foobar' from 'o(.)b')   <lineannotation>o</lineannotation>
       <tbody>
        <row>
         <entry> <literal>+</literal> </entry>
-        <entry><literal>timestamp '2001-09-28 01:00' + interval '23 hours'</literal></entry>
-        <entry><literal>timestamp '2001-09-29 00:00'</literal></entry>
+        <entry><literal>date '2001-09-28' + integer '7'</literal></entry>
+        <entry><literal>date '2001-10-05'</literal></entry>
        </row>
 
        <row>
@@ -4587,14 +4587,56 @@ substring('foobar' from 'o(.)b')   <lineannotation>o</lineannotation>
 
        <row>
         <entry> <literal>+</literal> </entry>
+        <entry><literal>date '2001-09-28' + time '03:00'</literal></entry>
+        <entry><literal>timestamp '2001-09-28 03:00'</literal></entry>
+       </row>
+
+       <row>
+        <entry> <literal>+</literal> </entry>
+        <entry><literal>time '03:00' + date '2001-09-28'</literal></entry>
+        <entry><literal>timestamp '2001-09-28 03:00'</literal></entry>
+       </row>
+
+       <row>
+        <entry> <literal>+</literal> </entry>
+        <entry><literal>interval '1 day' + interval '1 hour'</literal></entry>
+        <entry><literal>interval '1 day 01:00'</literal></entry>
+       </row>
+
+       <row>
+        <entry> <literal>+</literal> </entry>
+        <entry><literal>timestamp '2001-09-28 01:00' + interval '23 hours'</literal></entry>
+        <entry><literal>timestamp '2001-09-29 00:00'</literal></entry>
+       </row>
+
+       <row>
+        <entry> <literal>+</literal> </entry>
         <entry><literal>time '01:00' + interval '3 hours'</literal></entry>
         <entry><literal>time '04:00'</literal></entry>
        </row>
 
        <row>
+        <entry> <literal>+</literal> </entry>
+        <entry><literal>interval '3 hours' + time '01:00'</literal></entry>
+        <entry><literal>time '04:00'</literal></entry>
+       </row>
+
+       <row>
         <entry> <literal>-</literal> </entry>
-        <entry><literal>timestamp '2001-09-28 23:00' - interval '23 hours'</literal></entry>
-        <entry><literal>timestamp '2001-09-28'</literal></entry>
+        <entry><literal>- interval '23 hours'</literal></entry>
+        <entry><literal>interval '-23:00'</literal></entry>
+       </row>
+
+       <row>
+        <entry> <literal>-</literal> </entry>
+        <entry><literal>date '2001-10-01' - date '2001-09-28'</literal></entry>
+        <entry><literal>integer '3'</literal></entry>
+       </row>
+
+       <row>
+        <entry> <literal>-</literal> </entry>
+        <entry><literal>date '2001-10-01' - integer '7'</literal></entry>
+        <entry><literal>date '2001-09-24'</literal></entry>
        </row>
 
        <row>
@@ -4605,26 +4647,56 @@ substring('foobar' from 'o(.)b')   <lineannotation>o</lineannotation>
 
        <row>
         <entry> <literal>-</literal> </entry>
+        <entry><literal>time '05:00' - time '03:00'</literal></entry>
+        <entry><literal>interval '02:00'</literal></entry>
+       </row>
+
+       <row>
+        <entry> <literal>-</literal> </entry>
         <entry><literal>time '05:00' - interval '2 hours'</literal></entry>
         <entry><literal>time '03:00'</literal></entry>
        </row>
 
        <row>
         <entry> <literal>-</literal> </entry>
+        <entry><literal>timestamp '2001-09-28 23:00' - interval '23 hours'</literal></entry>
+        <entry><literal>timestamp '2001-09-28 00:00'</literal></entry>
+       </row>
+
+       <row>
+        <entry> <literal>-</literal> </entry>
+        <entry><literal>interval '1 day' - interval '1 hour'</literal></entry>
+        <entry><literal>interval '23:00'</literal></entry>
+       </row>
+
+       <row>
+        <entry> <literal>-</literal> </entry>
         <entry><literal>interval '2 hours' - time '05:00'</literal></entry>
-        <entry><literal>time '03:00:00'</literal></entry>
+        <entry><literal>time '03:00'</literal></entry>
+       </row>
+
+       <row>
+        <entry> <literal>-</literal> </entry>
+        <entry><literal>timestamp '2001-09-29 03:00' - timestamp '2001-09-27 12:00'</literal></entry>
+        <entry><literal>interval '1 day 15:00'</literal></entry>
        </row>
 
        <row>
         <entry> <literal>*</literal> </entry>
-        <entry><literal>interval '1 hour' * int '3'</literal></entry>
-        <entry><literal>interval '03:00'</literal></entry>
+        <entry><literal>double precision '3.5' * interval '1 hour'</literal></entry>
+        <entry><literal>interval '03:30'</literal></entry>
+       </row>
+
+       <row>
+        <entry> <literal>*</literal> </entry>
+        <entry><literal>interval '1 hour' * double precision '3.5'</literal></entry>
+        <entry><literal>interval '03:30'</literal></entry>
        </row>
 
        <row>
         <entry> <literal>/</literal> </entry>
-        <entry><literal>interval '1 hour' / int '3'</literal></entry>
-        <entry><literal>interval '00:20'</literal></entry>
+        <entry><literal>interval '1 hour' / double precision '1.5'</literal></entry>
+        <entry><literal>interval '00:40'</literal></entry>
        </row>
       </tbody>
      </tgroup>
@@ -4714,7 +4786,7 @@ substring('foobar' from 'o(.)b')   <lineannotation>o</lineannotation>
                                                         linkend="functions-datetime-trunc">
         </entry>
 	<entry><literal>date_trunc('hour', timestamp '2001-02-16 20:38:40')</literal></entry>
-	<entry><literal>2001-02-16 20:00:00+00</literal></entry>
+	<entry><literal>2001-02-16 20:00:00</literal></entry>
        </row>
 
        <row>
@@ -4788,13 +4860,35 @@ substring('foobar' from 'o(.)b')   <lineannotation>o</lineannotation>
 	<entry>Current date and time; see <xref
                                          linkend="functions-datetime-current">
 	</entry>
-	<entry><literal>timeofday()</literal></entry>
-	<entry><literal>Wed Feb 21 17:01:13.000126 2001 EST</literal></entry>
+	<entry></entry>
+	<entry></entry>
        </row>
 
       </tbody>
      </tgroup>
     </table>
+
+   <para>
+    In addition to these functions, the SQL <literal>OVERLAPS</> keyword is
+    supported:
+<synopsis>
+( <replaceable>start1</replaceable>, <replaceable>end1</replaceable> ) OVERLAPS ( <replaceable>start2</replaceable>, <replaceable>end2</replaceable> )
+( <replaceable>start1</replaceable>, <replaceable>length1</replaceable> ) OVERLAPS ( <replaceable>start2</replaceable>, <replaceable>length2</replaceable> )
+</synopsis>
+    This expression yields true when two time periods (defined by their
+    endpoints) overlap, false when they do not overlap.  The endpoints
+    can be specified as pairs of dates, times, or timestamps; or as
+    a date, time, or timestamp followed by an interval.
+   </para>
+
+<screen>
+SELECT (DATE '2001-02-16', DATE '2001-12-21') OVERLAPS
+       (DATE '2001-10-30', DATE '2002-10-30');
+<lineannotation>Result: </lineannotation><computeroutput>true</computeroutput>
+SELECT (DATE '2001-02-16', INTERVAL '100 days') OVERLAPS
+       (DATE '2001-10-30', DATE '2002-10-30');
+<lineannotation>Result: </lineannotation><computeroutput>false</computeroutput>
+</screen>
 
   <sect2 id="functions-datetime-extract">
    <title><function>EXTRACT</function>, <function>date_part</function></title>
@@ -4906,8 +5000,8 @@ SELECT EXTRACT(DOY FROM TIMESTAMP '2001-02-16 20:38:40');
        </para>
 
 <screen>
-SELECT EXTRACT(EPOCH FROM TIMESTAMP '2001-02-16 20:38:40');
-<lineannotation>Result: </lineannotation><computeroutput>982352320</computeroutput>
+SELECT EXTRACT(EPOCH FROM TIMESTAMP WITH TIME ZONE '2001-02-16 20:38:40-08');
+<lineannotation>Result: </lineannotation><computeroutput>982384720</computeroutput>
 
 SELECT EXTRACT(EPOCH FROM INTERVAL '5 days 3 hours');
 <lineannotation>Result: </lineannotation><computeroutput>442800</computeroutput>
@@ -5156,11 +5250,14 @@ SELECT date_part('hour', INTERVAL '4 hours 3 minutes');
 date_trunc('<replaceable>field</replaceable>', <replaceable>source</replaceable>)
 </synopsis>
     <replaceable>source</replaceable> is a value expression of type
-    <type>timestamp</type>.  (Values of type <type>date</type> and
-    <type>time</type> are cast automatically.)
+    <type>timestamp</type> or <type>interval</>.
+    (Values of type <type>date</type> and
+    <type>time</type> are cast automatically, to <type>timestamp</type> or
+    <type>interval</> respectively.)
     <replaceable>field</replaceable> selects to which precision to
-    truncate the time stamp value.  The return value is of type
-    <type>timestamp</type> with all fields that are less than the
+    truncate the input value.  The return value is of type
+    <type>timestamp</type> or <type>interval</>
+    with all fields that are less significant than the
     selected one set to zero (or one, for day and month).
    </para>
 
@@ -5185,10 +5282,10 @@ date_trunc('<replaceable>field</replaceable>', <replaceable>source</replaceable>
     Examples:
 <screen>
 SELECT date_trunc('hour', TIMESTAMP '2001-02-16 20:38:40');
-<lineannotation>Result: </lineannotation><computeroutput>2001-02-16 20:00:00+00</computeroutput>
+<lineannotation>Result: </lineannotation><computeroutput>2001-02-16 20:00:00</computeroutput>
 
 SELECT date_trunc('year', TIMESTAMP '2001-02-16 20:38:40');
-<lineannotation>Result: </lineannotation><computeroutput>2001-01-01 00:00:00+00</computeroutput>
+<lineannotation>Result: </lineannotation><computeroutput>2001-01-01 00:00:00</computeroutput>
 </screen>
    </para>
   </sect2>
