@@ -1,0 +1,69 @@
+--
+-- AES / Rijndael-128 cipher
+--
+-- some standard Rijndael testvalues
+select encode(encrypt(
+decode('00112233445566778899aabbccddeeff', 'hex'),
+decode('000102030405060708090a0b0c0d0e0f', 'hex'),
+'aes-ecb/pad:none'), 'hex');
+              encode              
+----------------------------------
+ 69c4e0d86a7b0430d8cdb78070b4c55a
+(1 row)
+
+select encode(encrypt(
+decode('00112233445566778899aabbccddeeff', 'hex'),
+decode('000102030405060708090a0b0c0d0e0f1011121314151617', 'hex'),
+'aes-ecb/pad:none'), 'hex');
+              encode              
+----------------------------------
+ dda97ca4864cdfe06eaf70a0ec0d7191
+(1 row)
+
+select encode(encrypt(
+decode('00112233445566778899aabbccddeeff', 'hex'),
+decode('000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f', 'hex'),
+'aes-ecb/pad:none'), 'hex');
+              encode              
+----------------------------------
+ 8ea2b7ca516745bfeafc49904b496089
+(1 row)
+
+-- cbc
+select encode(encrypt(
+decode('00112233445566778899aabbccddeeff', 'hex'),
+decode('000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f', 'hex'),
+'aes-cbc/pad:none'), 'hex');
+              encode              
+----------------------------------
+ 8ea2b7ca516745bfeafc49904b496089
+(1 row)
+
+-- key padding
+select encode(encrypt(
+decode('0011223344', 'hex'),
+decode('000102030405', 'hex'),
+'aes-cbc'), 'hex');
+              encode              
+----------------------------------
+ 189a28932213f017b246678dbc28655f
+(1 row)
+
+select encode(encrypt(
+decode('0011223344', 'hex'),
+decode('000102030405060708090a0b0c0d0e0f10111213', 'hex'),
+'aes-cbc'), 'hex');
+              encode              
+----------------------------------
+ 3b02279162d15580e069d3a71407a556
+(1 row)
+
+select encode(encrypt(
+decode('0011223344', 'hex'),
+decode('000102030405060708090a0b0c0d0e0f101112131415161718191a1b', 'hex'),
+'aes-cbc'), 'hex');
+              encode              
+----------------------------------
+ 4facb6a041d53e0a5a73289170901fe7
+(1 row)
+

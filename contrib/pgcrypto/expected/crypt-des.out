@@ -1,0 +1,26 @@
+--
+-- crypt() and gen_salt(): crypt-des
+--
+select crypt('', 'NB');
+     crypt     
+---------------
+ NBPx/38Y48kHg
+(1 row)
+
+select crypt('foox', 'NB');
+     crypt     
+---------------
+ NB53EGGqrrb5E
+(1 row)
+
+create table ctest (data text, res text, salt text);
+insert into ctest values ('password', '', '');
+update ctest set salt = gen_salt('des');
+update ctest set res = crypt(data, salt);
+select res = crypt(data, res) as "worked" from ctest;
+ worked 
+--------
+ t
+(1 row)
+
+drop table ctest;

@@ -1,0 +1,17 @@
+--
+-- init pgcrypto
+--
+\set ECHO none
+-- check for encoding fn's
+select encode('foo', 'hex');
+ encode 
+--------
+ 666f6f
+(1 row)
+
+select decode('666f6f', 'hex');
+ decode 
+--------
+ foo
+(1 row)
+

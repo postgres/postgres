@@ -1,0 +1,26 @@
+--
+-- crypt() and gen_salt(): extended des
+--
+select crypt('', '_J9..j2zz');
+        crypt         
+----------------------
+ _J9..j2zzR/nIRDK3pPc
+(1 row)
+
+select crypt('foox', '_J9..j2zz');
+        crypt         
+----------------------
+ _J9..j2zzAYKMvO2BYRY
+(1 row)
+
+create table ctest (data text, res text, salt text);
+insert into ctest values ('password', '', '');
+update ctest set salt = gen_salt('xdes', 1001);
+update ctest set res = crypt(data, salt);
+select res = crypt(data, res) as "worked" from ctest;
+ worked 
+--------
+ t
+(1 row)
+
+drop table ctest;

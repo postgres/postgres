@@ -1,0 +1,72 @@
+--
+-- HMAC-MD5
+--
+select encode(hmac(
+'Hi There',
+decode('0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b', 'hex'),
+'sha1'), 'hex');
+                  encode                  
+------------------------------------------
+ 675b0b3a1b4ddf4e124872da6c2f632bfed957e9
+(1 row)
+
+-- 2
+select encode(hmac(
+'Jefe',
+'what do ya want for nothing?',
+'sha1'), 'hex');
+                  encode                  
+------------------------------------------
+ 156d4c35468a0339f3fa57a067bf47f814eb7a57
+(1 row)
+
+-- 3
+select encode(hmac(
+decode('dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd', 'hex'),
+decode('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'hex'),
+'sha1'), 'hex');
+                  encode                  
+------------------------------------------
+ d730594d167e35d5956fd8003d0db3d3f46dc7bb
+(1 row)
+
+-- 4
+select encode(hmac(
+decode('cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd', 'hex'),
+decode('0102030405060708090a0b0c0d0e0f10111213141516171819', 'hex'),
+'sha1'), 'hex');
+                  encode                  
+------------------------------------------
+ 4c9007f4026250c6bc8414f9bf50c86c2d7235da
+(1 row)
+
+-- 5
+select encode(hmac(
+'Test With Truncation',
+decode('0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c', 'hex'),
+'sha1'), 'hex');
+                  encode                  
+------------------------------------------
+ 37268b7e21e84da5720c53c4ba03ad1104039fa7
+(1 row)
+
+-- 6
+select encode(hmac(
+'Test Using Larger Than Block-Size Key - Hash Key First',
+decode('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'hex'),
+'sha1'), 'hex');
+                  encode                  
+------------------------------------------
+ aa4ae5e15272d00e95705637ce8a3b55ed402112
+(1 row)
+
+-- 7
+select encode(hmac(
+'Test Using Larger Than Block-Size Key and Larger Than One Block-Size Data',
+decode('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'hex'),
+'sha1'), 'hex');
+                  encode                  
+------------------------------------------
+ e8e99d0f45237d786d6bbaa7965c7808bbff1a91
+(1 row)
+
