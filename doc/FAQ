@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sat Jan 29 23:25:05 EST 2005
+   Last updated: Sat Jan 29 23:44:48 EST 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -481,22 +481,17 @@
    may not be duplicated.
    
    If postmaster is running, start psql in one window, then find the PID
-   of the postgres process used by psql using
-SELECT pg_backend_pid()
-
-   . Use a debugger to attach to the postgres PID. You can set
-   breakpoints in the debugger and issue queries from psql. If you are
-   debugging postgres startup, you can set PGOPTIONS="-W n", then start
-   psql. This will cause startup to delay for n seconds so you can attach
-   to the process with the debugger, set any breakpoints, and continue
-   through the startup sequence.
+   of the postgres process used by psql using SELECT pg_backend_pid().
+   Use a debugger to attach to the postgres PID. You can set breakpoints
+   in the debugger and issue queries from psql. If you are debugging
+   postgres startup, you can set PGOPTIONS="-W n", then start psql. This
+   will cause startup to delay for n seconds so you can attach to the
+   process with the debugger, set any breakpoints, and continue through
+   the startup sequence.
    
-   There are several
-log_*
-
-   server configuration variables that enable printing of process
-   statistics which can be very useful for debugging and performance
-   measurements.
+   There are several log_* server configuration variables that enable
+   printing of process statistics which can be very useful for debugging
+   and performance measurements.
    
    You can also compile with profiling to see what functions are taking
    execution time. The backend profile files will be deposited in the
@@ -725,11 +720,8 @@ log_*
        section 4.10.
      * The default C locale must be used during initdb because it is not
        possible to know the next-greater character in a non-C locale. You
-       can create a special
-text_pattern_ops
-       index for such cases that work only for
-LIKE
-       indexing.
+       can create a special text_pattern_ops index for such cases that
+       work only for LIKE indexing.
        
    In pre-8.0 releases, indexes often can not be used unless the data
    types exactly match the index's column types. This is particularly
@@ -919,7 +911,7 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     4.17) How do I create a column that will default to the current time?
     
    Use CURRENT_TIMESTAMP:
-CREATE TABLE test (x int, modtime timestamp DEFAULT CURRENT_TIMESTAMP );
+    CREATE TABLE test (x int, modtime timestamp DEFAULT CURRENT_TIMESTAMP );
 
     4.18) How do I perform an outer join?
     
