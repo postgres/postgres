@@ -1,70 +1,96 @@
-/* ---
+/*
  *	Thread test program
  *	by Philip Yarra
- *
- *	To run, create this table in the 'test' database:
- *	
- *	CREATE TABLE foo (
- *	    message character(40)
- *	);
- * ---
  */
 
 
 #include <pthread.h>
 
-int main(void);
-void ins1(void);
-void ins2(void);
+void		ins1(void);
+void		ins2(void);
 
-int main(void)
+EXEC SQL BEGIN DECLARE SECTION;
+char	   *dbname;
+EXEC SQL END DECLARE SECTION;
+
+int
+main(int argc, char **argv)
 {
-        pthread_t thread1, thread2;
-        pthread_create(&thread1, NULL, (void *) ins1, NULL);
-        pthread_create(&thread2, NULL, (void *) ins2, NULL);
-        pthread_join(thread1, NULL);
-        pthread_join(thread2, NULL);
-        printf("Program done!\n");
-        return 0;
+	pthread_t	thread1,
+			thread2;
+EXEC SQL BEGIN DECLARE SECTION;
+	int		rows;
+EXEC SQL END DECLARE SECTION;
+
+	if (argc != 2)
+	{
+		fprintf(stderr, "Usage: %s dbname\n", argv[0]);
+		return 1;
+	}
+	dbname = argv[1];
+
+	EXEC SQL CONNECT TO:dbname AS test0;
+
+	/* DROP might fail */
+	EXEC SQL AT test0 DROP TABLE test_thread;
+	EXEC SQL AT test0 COMMIT WORK;
+	EXEC SQL AT test0 CREATE TABLE test_thread(message character(40));
+	EXEC SQL AT test0 COMMIT WORK;
+	EXEC SQL DISCONNECT test0;
+
+	pthread_create(&thread1, NULL, (void *) ins1, NULL);
+	pthread_create(&thread2, NULL, (void *) ins2, NULL);
+	pthread_join(thread1, NULL);
+	pthread_join(thread2, NULL);
+	EXEC SQL CONNECT TO:dbname AS test3;
+	EXEC SQL AT test3 SELECT COUNT(*) INTO :rows FROM test_thread;
+	EXEC SQL AT test3 COMMIT WORK;
+	EXEC SQL DISCONNECT test3;
+
+	if (rows == 10)
+		printf("Success.\n");
+	else
+		printf("Failure.\n");
+	return 0;
 }
 
-void ins1(void)
+void
+ins1(void)
 {
-        int i;
-        EXEC SQL BEGIN DECLARE SECTION;
-        char* cs = "test";
-        char* bar = "one!";
-        EXEC SQL END DECLARE SECTION;
-        EXEC SQL WHENEVER sqlerror sqlprint;
-        EXEC SQL CONNECT TO :cs AS test1;
-        for (i = 0; i < 5; i++)
-        {
-                printf("thread 1 : inserting\n");
-                EXEC SQL AT test1 INSERT INTO foo VALUES(:bar);
-                printf("thread 1 : insert done\n");
-        }
-        EXEC SQL AT test1 COMMIT WORK;
-        EXEC SQL DISCONNECT test1;
-        printf("thread 1 : done!\n");
+	int			i;
+	EXEC SQL WHENEVER sqlerror sqlprint;
+	EXEC SQL CONNECT TO:dbname AS test1;
+
+	for (i = 0; i < 5; i++)
+	{
+		printf("thread 1 : inserting\n");
+		EXEC SQL AT test1 INSERT INTO test_thread VALUES('thread1');
+
+		printf("thread 1 : insert done\n");
+	}
+	EXEC SQL AT test1 COMMIT WORK;
+	EXEC SQL DISCONNECT test1;
+
+	printf("thread 1 : done!\n");
 }
 
 
-void ins2(void)
+void
+ins2(void)
 {
-        int i;
-        EXEC SQL BEGIN DECLARE SECTION;
-        char* cs = "test";
-        char* bar = "two!";
-        EXEC SQL END DECLARE SECTION;
-        EXEC SQL WHENEVER sqlerror sqlprint;
-        EXEC SQL CONNECT TO :cs AS test2;
-        for (i = 0; i < 5; i++)
-        {
-                printf("thread  2: inserting\n");
-                EXEC SQL AT test2 INSERT INTO foo VALUES(:bar);
-                printf("thread  2: insert done\n");
-        }
-        EXEC SQL AT test2 COMMIT WORK;
-        EXEC SQL DISCONNECT test2;
-        printf("thread  2: done!\n");
+	int			i;
+	EXEC SQL WHENEVER sqlerror sqlprint;
+	EXEC SQL CONNECT TO:dbname AS test2;
+
+	for (i = 0; i < 5; i++)
+	{
+		printf("thread  2: inserting\n");
+		EXEC SQL AT test2 INSERT INTO test_thread VALUES('thread2');
+
+		printf("thread  2: insert done\n");
+	}
+	EXEC SQL AT test2 COMMIT WORK;
+	EXEC SQL DISCONNECT test2;
+
+	printf("thread  2: done!\n");
 }
