@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.105 2000/10/05 19:48:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.106 2000/10/10 17:13:30 momjian Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -1389,15 +1389,18 @@ AlterTableAddConstraint(char *relationName,
 				{
 					Ident	   *fk_at = lfirst(list);
 
-					trig.tgargs[count++] = fk_at->name;
+					trig.tgargs[count] = fk_at->name;
+					count+=2;
 				}
+			count = 5;
 			foreach(list, fkconstraint->pk_attrs)
 				{
 					Ident	   *pk_at = lfirst(list);
 
-					trig.tgargs[count++] = pk_at->name;
+					trig.tgargs[count] = pk_at->name;
+					count+=2;
 				}
-			trig.tgnargs = count;
+			trig.tgnargs = count-1;
 
 			scan = heap_beginscan(rel, false, SnapshotNow, 0, NULL);
 			AssertState(scan != NULL);
