@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.17 1998/02/10 04:01:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.18 1998/02/13 03:37:02 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -405,7 +405,21 @@ replace_clause_joinvar_refs(Expr *clause,
 									   leftvar,
 									   rightvar));
 	}
+	else if (is_subplan(clause))
+	{
+		((Expr*) clause)->args =
+		replace_subclause_joinvar_refs(((Expr*) clause)->args,
+										outer_tlist,
+										inner_tlist);
+		((SubPlan*) ((Expr*) clause)->oper)->sublink->oper = 
+		replace_subclause_joinvar_refs(((SubPlan*) ((Expr*) clause)->oper)->sublink->oper,
+										outer_tlist,
+										inner_tlist);
+		return ((List*) clause);
+	}
 	/* shouldn't reach here */
+	elog (ERROR, "replace_clause_joinvar_refs: unsupported clause %d", 
+			nodeTag (clause));
 	return NULL;
 }
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.18 1998/02/10 04:01:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.19 1998/02/13 03:36:57 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,9 @@
 #include "nodes/makefuncs.h"
 
 #include "optimizer/planmain.h"
+#include "optimizer/subselect.h"
 #include "optimizer/internal.h"
+#include "optimizer/prep.h"
 #include "optimizer/paths.h"
 #include "optimizer/clauses.h"
 #include "optimizer/keys.h"
@@ -72,7 +74,18 @@ query_planner(Query *root,
 	List	   *var_only_tlist = NIL;
 	List	   *level_tlist = NIL;
 	Plan	   *subplan = NULL;
-
+	
+	if ( PlannerQueryLevel > 1 )
+	{
+		/* should copy be made ? */
+		tlist = (List *) SS_replace_correlation_vars ((Node*)tlist);
+		qual = (List *) SS_replace_correlation_vars ((Node*)qual);
+	}
+	if (root->hasSubLinks)
+		qual = (List *) SS_process_sublinks ((Node*) qual);
+	
+	qual = cnfify((Expr *) qual, true);
+	
 	/*
 	 * A command without a target list or qualification is an error,
 	 * except for "delete foo".
@@ -145,7 +158,7 @@ query_planner(Query *root,
 					if (constant_qual != NULL)
 					{
 						return ((Plan *) make_result(tlist,
-												  (Node *) constant_qual,
+													 (Node *) constant_qual,
 													 (Plan *) scan));
 					}
 					else

@@ -4,7 +4,7 @@
 #    Makefile for optimizer/plan
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/optimizer/plan/Makefile,v 1.5 1997/12/20 00:24:31 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/optimizer/plan/Makefile,v 1.6 1998/02/13 03:36:51 vadim Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -15,7 +15,7 @@ INCLUDE_OPT = -I../..
 
 CFLAGS+=$(INCLUDE_OPT)
 
-OBJS = createplan.o initsplan.o planmain.o planner.o setrefs.o
+OBJS = createplan.o initsplan.o planmain.o planner.o setrefs.o subselect.o
 
 # not ready yet: predmig.o xfunc.o
 

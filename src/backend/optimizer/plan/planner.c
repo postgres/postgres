@@ -7,11 +7,12 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.21 1998/01/15 18:59:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.22 1998/02/13 03:36:59 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <sys/types.h>
+#include <string.h>
 
 #include "postgres.h"
 
@@ -30,6 +31,7 @@
 #include "optimizer/plancat.h"
 #include "optimizer/prep.h"
 #include "optimizer/planmain.h"
+#include "optimizer/subselect.h"
 #include "optimizer/paths.h"
 #include "optimizer/cost.h"
 
@@ -56,10 +58,32 @@ extern Plan *make_groupPlan(List **tlist, bool tuplePerGroup,
  *
  *****************************************************************************/
 
+Plan*
+planner(Query *parse)
+{
+	Plan	   *result_plan;
+	
+	PlannerQueryLevel = 1;
+	PlannerVarParam = NULL;
+	PlannerParamVar = NULL;
+	PlannerInitPlan = NULL;
+	PlannerPlanId = 0;
+	
+	result_plan = union_planner (parse);
+	
+	Assert (PlannerQueryLevel == 1);
+	if ( PlannerPlanId > 0 )
+	{
+		result_plan->initPlan = PlannerInitPlan;
+		(void) SS_finalize_plan (result_plan);
+	}
+	result_plan->nParamExec = length (PlannerParamVar);
+	
+	return (result_plan);
+}
 
 /*
- * planner--
- *	  Main query optimizer routine.
+ * union_planner--
  *
  *	  Invokes the planner on union queries if there are any left,
  *	  recursing if necessary to get them all, then processes normal plans.
@@ -68,14 +92,13 @@ extern Plan *make_groupPlan(List **tlist, bool tuplePerGroup,
  *
  */
 Plan	   *
-planner(Query *parse)
+union_planner(Query *parse)
 {
 	List	   *tlist = parse->targetList;
 	List	   *rangetable = parse->rtable;
 
 	Plan	   *result_plan = (Plan *) NULL;
 
-	List	   *primary_qual;
 	Index		rt_index;
 	
 
@@ -100,17 +123,25 @@ planner(Query *parse)
 	}
 	else
 	{
+		List  **vpm = NULL;
+		
 		tlist = preprocess_targetlist(tlist,
 									  parse->commandType,
 									  parse->resultRelation,
 									  parse->rtable);
-
-		primary_qual = cnfify((Expr *) parse->qual, true);
-
+		if ( parse->rtable != NULL )
+		{
+			vpm = (List **) palloc (length (parse->rtable) * sizeof (List*));
+			memset (vpm, 0, length (parse->rtable) * sizeof (List*));
+		}
+		PlannerVarParam = lcons (vpm, PlannerVarParam);
 		result_plan = query_planner(parse,
-									  parse->commandType,
-									  tlist,
-									  primary_qual);
+									parse->commandType,
+									tlist,
+									(List*) parse->qual);
+		PlannerVarParam = lnext (PlannerVarParam);
+		if ( vpm != NULL )
+			pfree (vpm);
 	}
 	
 	/*

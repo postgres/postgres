@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.25 1998/02/10 04:01:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.26 1998/02/13 03:36:54 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -685,13 +685,11 @@ fix_indxqual_references(Node *clause, Path *index_path)
 	else if (IsA(clause, Const))
 	{
 		return (clause);
-#ifdef INDEXSCAN_PATCH
 	}
 	else if (IsA(clause, Param))
 	{
 		/* Function parameter used as index scan arg.  DZ - 27-8-1996 */
 		return (clause);
-#endif
 	}
 	else if (is_opclause(clause) &&
 			 is_funcclause((Node *) get_leftop((Expr *) clause)) &&
