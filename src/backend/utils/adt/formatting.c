@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.27 2000/12/15 19:15:09 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.28 2000/12/23 04:05:31 tgl Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2000, PostgreSQL, Inc
@@ -2775,16 +2775,14 @@ to_timestamp(PG_FUNCTION_ARGS)
 #endif	
 	if (tmfc->ssss) 
 	{
-		int x;
-		
-		if (tmfc->ssss > 3600) 
-			tm->tm_sec = x - ((tm->tm_min = (x = tmfc->ssss - 
-				((tm->tm_hour= tmfc->ssss / 3600) * 3600)) / 60) * 60);
-		else if (tmfc->ssss > 60) 
-			tm->tm_sec =  tmfc->ssss - ((tm->tm_min =  tmfc->ssss / 60) * 60);
-		else 
-			tm->tm_sec = tmfc->ssss;
-	} 
+		int		x = tmfc->ssss;
+
+		tm->tm_hour = x / 3600;
+		x %= 3600;
+		tm->tm_min = x / 60;
+		x %= 60;
+		tm->tm_sec = x;
+	}
 
 	if (tmfc->cc)
 		tm->tm_year = (tmfc->cc-1) * 100;
