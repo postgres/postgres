@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heapam.h,v 1.31 1998/03/01 04:46:56 scrappy Exp $
+ * $Id: heapam.h,v 1.32 1998/06/14 01:34:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,7 +88,7 @@ typedef HeapAccessStatisticsData *HeapAccessStatistics;
  *
  * ----------------
  */
-#if !defined(USE_UNIVEL_CC)
+#if !defined(DISABLE_COMPLEX_MACRO)
 
 #define fastgetattr(tup, attnum, tupleDesc, isnull) \
 ( \
@@ -132,7 +132,7 @@ typedef HeapAccessStatisticsData *HeapAccessStatistics;
 	) \
 )
 
-#else /* !defined(USE_UNIVEL_CC) */
+#else /* !defined(DISABLE_COMPLEX_MACRO) */
 
 extern Datum nocachegetattr(HeapTuple tup, int attnum,
 						 TupleDesc att, bool *isnull);

@@ -10,7 +10,10 @@
  * the native UNIXWARE C compiler.
  ***************************************/
 #define USE_UNIVEL_CC
+
 typedef unsigned char slock_t;
+
+#define DISABLE_COMPLEX_MACRO
 
 /***************************************************************
  * strcasecmp() is in c89.a. The following include will get the
