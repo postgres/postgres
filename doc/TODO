@@ -129,7 +129,7 @@ COMMANDS
 * Allow DELETE and UPDATE to use inheritance using tablename*
 * Allow INSERT INTO my_table VALUES (a, b, c, DEFAULT, x, y, z, ...)
 * Allow BINARY option to SELECT, like we do with DECLARE
-* Prevent truncate on table acting as foreign key
+* Prevent truncate on table with a referential integrity trigger
   
 CLIENTS
 
