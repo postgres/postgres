@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/contrib/pg_resetxlog/Attic/pg_resetxlog.c,v 1.15 2002/01/10 23:46:13 momjian Exp $
+ * $Header: /cvsroot/pgsql/contrib/pg_resetxlog/Attic/pg_resetxlog.c,v 1.16 2002/01/11 06:33:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -482,7 +482,7 @@ usage(void)
 			"  -f\t  force update to be done\n"
 			"  -n\t  no update, just show extracted pg_control values (for testing)\n"
 			"  -x XID  set XID in pg_control\n"
-			"  -l log_id offset   set checkpoint location in pg_control\n");
+			"  -l log_id offset   set hex checkpoint location in pg_control\n");
 	exit(1);
 }
 
@@ -523,11 +523,11 @@ main(int argc, char **argv)
 			argn++;
 			if (argn == argc)
 				usage();
-			set_checkpoint.xlogid = strtoul(argv[argn], NULL, 0);
+			set_checkpoint.xlogid = strtoul(argv[argn], NULL, 16);
 			argn++;
 			if (argn == argc)
 				usage();
-			set_checkpoint.xrecoff = strtoul(argv[argn], NULL, 0);
+			set_checkpoint.xrecoff = strtoul(argv[argn], NULL, 16);
 			if (set_checkpoint.xlogid == 0 &&
 				set_checkpoint.xrecoff == 0)
 			{

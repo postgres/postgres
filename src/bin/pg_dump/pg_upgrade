@@ -3,7 +3,9 @@
 # pg_upgrade: update a database without needing a full dump/reload cycle.
 # CAUTION: Read the manual page before trying to use this!
 
-# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_upgrade,v 1.26 2002/01/11 06:08:02 momjian Exp $
+#set -x
+
+# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_upgrade,v 1.27 2002/01/11 06:33:01 momjian Exp $
 #
 # NOTE: we must be sure to update the version-checking code a few dozen lines
 # below for each new PostgreSQL release.
@@ -106,7 +108,7 @@ Install it from pgsql/contrib/pg_resetxlog and continue.;  exiting" 1>&2
 	exit 1
 fi
 
-if ! pg_resetxlog -x | grep -q XID
+if ! pg_resetxlog -x 2>&1 | grep -q XID
 then	echo "Old version of pg_resetxlog found in path.
 Install a newer version from pgsql/contrib/pg_resetxlog.;  exiting" 1>&2
 	exit 1
@@ -261,7 +263,7 @@ fi
 
 # Set checkpoint location of new database
 
-pg_resetxlog -l `echo "$CHKPOINT | tr '/' ' '` data
+pg_resetxlog -l `echo "$CHKPOINT" | tr '/' ' '` data
 if [ "$?" -ne 0 ]
 then	echo "Unable to set new checkpoint location.;  exiting" 1>&2
 	exit 1
@@ -278,7 +280,7 @@ fi
 # Set sequence values for 7.1-version sequences, which were int4.
 
 if [ "$SRC_VERSION" = "7.1" ]
-else	echo "Set int8 sequence values from 7.1..."
+then	echo "Set int8 sequence values from 7.1..."
 
 	psql -d template1 -At -c "SELECT datname FROM pg_database" | 
 	while read DB
@@ -355,10 +357,11 @@ SET relkind = 'S'
 WHERE relname = '$SEQUENCE';
 
 SQL_END
-		if [ $? -ne 0 ]
-		then	echo "There were errors during int4 sequence restore.
-	$0 aborted." 1>&2
-			exit 1
+			if [ $? -ne 0 ]
+			then	echo "There were errors during int4 sequence restore.
+$0 aborted." 1>&2
+				exit 1
+			fi
 		done
 	done
 fi
