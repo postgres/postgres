@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.68 2000/07/07 21:12:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.69 2000/07/29 03:26:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -260,19 +260,20 @@ char_bpchar(PG_FUNCTION_ARGS)
 /* bpchar_name()
  * Converts a bpchar() type to a NameData type.
  */
-NameData   *
-bpchar_name(char *s)
+Datum
+bpchar_name(PG_FUNCTION_ARGS)
 {
-	NameData   *result;
+	BpChar	   *s = PG_GETARG_BPCHAR_P(0);
+	Name		result;
 	int			len;
 
-	if (s == NULL)
-		return NULL;
-
 	len = VARSIZE(s) - VARHDRSZ;
+
+	/* Truncate to max length for a Name */
 	if (len >= NAMEDATALEN)
 		len = NAMEDATALEN-1;
 
+	/* Remove trailing blanks */
 	while (len > 0)
 	{
 		if (*(VARDATA(s) + len - 1) != ' ')
@@ -280,49 +281,36 @@ bpchar_name(char *s)
 		len--;
 	}
 
-#ifdef STRINGDEBUG
-	printf("bpchar- convert string length %d (%d) ->%d\n",
-		   VARSIZE(s) - VARHDRSZ, VARSIZE(s), len);
-#endif
-
 	result = (NameData *) palloc(NAMEDATALEN);
 	memcpy(NameStr(*result), VARDATA(s), len);
 
-	/* now null pad to full length... */
+	/* Now null pad to full length... */
 	while (len < NAMEDATALEN)
 	{
 		*(NameStr(*result) + len) = '\0';
 		len++;
 	}
 
-	return result;
-}	/* bpchar_name() */
+	PG_RETURN_NAME(result);
+}
 
 /* name_bpchar()
  * Converts a NameData type to a bpchar type.
  */
-char *
-name_bpchar(NameData *s)
+Datum
+name_bpchar(PG_FUNCTION_ARGS)
 {
-	char	   *result;
+	Name		s = PG_GETARG_NAME(0);
+	BpChar	   *result;
 	int			len;
 
-	if (s == NULL)
-		return NULL;
-
 	len = strlen(NameStr(*s));
-
-#ifdef STRINGDEBUG
-	printf("bpchar- convert string length %d (%d) ->%d\n",
-		   VARSIZE(s) - VARHDRSZ, VARSIZE(s), len);
-#endif
-
-	result = (char *) palloc(VARHDRSZ + len);
+	result = (BpChar *) palloc(VARHDRSZ + len);
 	memcpy(VARDATA(result), NameStr(*s), len);
 	VARATT_SIZEP(result) = len + VARHDRSZ;
 
-	return result;
-}	/* name_bpchar() */
+	PG_RETURN_BPCHAR_P(result);
+}
 
 
 /*****************************************************************************
@@ -446,13 +434,9 @@ _varchar(PG_FUNCTION_ARGS)
 	return array_map(&locfcinfo, VARCHAROID, VARCHAROID);
 }
 
-
-/*****************************************************************************
- *	Comparison Functions used for bpchar
- *****************************************************************************/
-
+/* "True" length (not counting trailing blanks) of a BpChar */
 static int
-bcTruelen(char *arg)
+bcTruelen(BpChar *arg)
 {
 	char	   *s = VARDATA(arg);
 	int			i;
@@ -467,19 +451,16 @@ bcTruelen(char *arg)
 	return i + 1;
 }
 
-int32
-bpcharlen(char *arg)
+Datum
+bpcharlen(PG_FUNCTION_ARGS)
 {
+	BpChar	   *arg = PG_GETARG_BPCHAR_P(0);
 #ifdef MULTIBYTE
 	unsigned char *s;
 	int			len,
 				l,
 				wl;
 
-#endif
-	if (!PointerIsValid(arg))
-		elog(ERROR, "Bad (null) char() external representation");
-#ifdef MULTIBYTE
 	l = VARSIZE(arg) - VARHDRSZ;
 	len = 0;
 	s = VARDATA(arg);
@@ -490,317 +471,175 @@ bpcharlen(char *arg)
 		s += wl;
 		len++;
 	}
-	return (len);
+	PG_RETURN_INT32(len);
 #else
-	return (VARSIZE(arg) - VARHDRSZ);
+	PG_RETURN_INT32(VARSIZE(arg) - VARHDRSZ);
 #endif
 }
 
-int32
-bpcharoctetlen(char *arg)
+Datum
+bpcharoctetlen(PG_FUNCTION_ARGS)
 {
-	if (!PointerIsValid(arg))
-		elog(ERROR, "Bad (null) char() external representation");
+	BpChar	   *arg = PG_GETARG_BPCHAR_P(0);
 
-	return (VARSIZE(arg) - VARHDRSZ);
+	PG_RETURN_INT32(VARSIZE(arg) - VARHDRSZ);
 }
 
-bool
-bpchareq(char *arg1, char *arg2)
-{
-	int			len1,
-				len2;
-
-	if (arg1 == NULL || arg2 == NULL)
-		return (bool) 0;
-	len1 = bcTruelen(arg1);
-	len2 = bcTruelen(arg2);
-
-	if (len1 != len2)
-		return 0;
-
-	return strncmp(VARDATA(arg1), VARDATA(arg2), len1) == 0;
-}
-
-bool
-bpcharne(char *arg1, char *arg2)
-{
-	int			len1,
-				len2;
-
-	if (arg1 == NULL || arg2 == NULL)
-		return (bool) 0;
-	len1 = bcTruelen(arg1);
-	len2 = bcTruelen(arg2);
-
-	if (len1 != len2)
-		return 1;
-
-	return strncmp(VARDATA(arg1), VARDATA(arg2), len1) != 0;
-}
-
-bool
-bpcharlt(char *arg1, char *arg2)
-{
-	int			len1,
-				len2;
-	int			cmp;
-
-	if (arg1 == NULL || arg2 == NULL)
-		return (bool) 0;
-	len1 = bcTruelen(arg1);
-	len2 = bcTruelen(arg2);
-
-	cmp = varstr_cmp(VARDATA(arg1), len1, VARDATA(arg2), len2);
-	if (cmp == 0)
-		return len1 < len2;
-	else
-		return cmp < 0;
-}
-
-bool
-bpcharle(char *arg1, char *arg2)
-{
-	int			len1,
-				len2;
-	int			cmp;
-
-	if (arg1 == NULL || arg2 == NULL)
-		return (bool) 0;
-	len1 = bcTruelen(arg1);
-	len2 = bcTruelen(arg2);
-
-	cmp = varstr_cmp(VARDATA(arg1), len1, VARDATA(arg2), len2);
-	if (0 == cmp)
-		return (bool) (len1 <= len2 ? 1 : 0);
-	else
-		return (bool) (cmp <= 0);
-}
-
-bool
-bpchargt(char *arg1, char *arg2)
-{
-	int			len1,
-				len2;
-	int			cmp;
-
-	if (arg1 == NULL || arg2 == NULL)
-		return (bool) 0;
-	len1 = bcTruelen(arg1);
-	len2 = bcTruelen(arg2);
-
-	cmp = varstr_cmp(VARDATA(arg1), len1, VARDATA(arg2), len2);
-	if (cmp == 0)
-		return len1 > len2;
-	else
-		return cmp > 0;
-}
-
-bool
-bpcharge(char *arg1, char *arg2)
-{
-	int			len1,
-				len2;
-	int			cmp;
-
-	if (arg1 == NULL || arg2 == NULL)
-		return (bool) 0;
-	len1 = bcTruelen(arg1);
-	len2 = bcTruelen(arg2);
-
-	cmp = varstr_cmp(VARDATA(arg1), len1, VARDATA(arg2), len2);
-	if (0 == cmp)
-		return (bool) (len1 >= len2 ? 1 : 0);
-	else
-		return (bool) (cmp >= 0);
-}
-
-int32
-bpcharcmp(char *arg1, char *arg2)
-{
-	int			len1,
-				len2;
-	int			cmp;
-
-	len1 = bcTruelen(arg1);
-	len2 = bcTruelen(arg2);
-
-	cmp = varstr_cmp(VARDATA(arg1), len1, VARDATA(arg2), len2);
-	if ((0 == cmp) && (len1 != len2))
-		return (int32) (len1 < len2 ? -1 : 1);
-	else
-		return cmp;
-}
 
 /*****************************************************************************
- *	Comparison Functions used for varchar
+ *	Comparison Functions used for bpchar
+ *
+ * Note: btree indexes need these routines not to leak memory; therefore,
+ * be careful to free working copies of toasted datums.  Most places don't
+ * need to be so careful.
  *****************************************************************************/
 
-int32
-varcharlen(char *arg)
+Datum
+bpchareq(PG_FUNCTION_ARGS)
 {
-#ifdef MULTIBYTE
-	unsigned char *s;
-	int			len,
-				l,
-				wl;
-
-#endif
-	if (!PointerIsValid(arg))
-		elog(ERROR, "Bad (null) varchar() external representation");
-
-#ifdef MULTIBYTE
-	len = 0;
-	s = VARDATA(arg);
-	l = VARSIZE(arg) - VARHDRSZ;
-	while (l > 0)
-	{
-		wl = pg_mblen(s);
-		l -= wl;
-		s += wl;
-		len++;
-	}
-	return (len);
-#else
-	return VARSIZE(arg) - VARHDRSZ;
-#endif
-}
-
-int32
-varcharoctetlen(char *arg)
-{
-	if (!PointerIsValid(arg))
-		elog(ERROR, "Bad (null) varchar() external representation");
-	return VARSIZE(arg) - VARHDRSZ;
-}
-
-bool
-varchareq(char *arg1, char *arg2)
-{
+	BpChar	   *arg1 = PG_GETARG_BPCHAR_P(0);
+	BpChar	   *arg2 = PG_GETARG_BPCHAR_P(1);
 	int			len1,
 				len2;
+	bool		result;
 
-	if (arg1 == NULL || arg2 == NULL)
-		return (bool) 0;
-
-	len1 = VARSIZE(arg1) - VARHDRSZ;
-	len2 = VARSIZE(arg2) - VARHDRSZ;
+	len1 = bcTruelen(arg1);
+	len2 = bcTruelen(arg2);
 
 	if (len1 != len2)
-		return 0;
+		result = false;
+	else
+		result = (strncmp(VARDATA(arg1), VARDATA(arg2), len1) == 0);
 
-	return strncmp(VARDATA(arg1), VARDATA(arg2), len1) == 0;
+	PG_FREE_IF_COPY(arg1, 0);
+	PG_FREE_IF_COPY(arg2, 1);
+
+	PG_RETURN_BOOL(result);
 }
 
-bool
-varcharne(char *arg1, char *arg2)
+Datum
+bpcharne(PG_FUNCTION_ARGS)
 {
+	BpChar	   *arg1 = PG_GETARG_BPCHAR_P(0);
+	BpChar	   *arg2 = PG_GETARG_BPCHAR_P(1);
 	int			len1,
 				len2;
+	bool		result;
 
-	if (arg1 == NULL || arg2 == NULL)
-		return (bool) 0;
-	len1 = VARSIZE(arg1) - VARHDRSZ;
-	len2 = VARSIZE(arg2) - VARHDRSZ;
+	len1 = bcTruelen(arg1);
+	len2 = bcTruelen(arg2);
 
 	if (len1 != len2)
-		return 1;
+		result = true;
+	else
+		result = (strncmp(VARDATA(arg1), VARDATA(arg2), len1) != 0);
 
-	return strncmp(VARDATA(arg1), VARDATA(arg2), len1) != 0;
+	PG_FREE_IF_COPY(arg1, 0);
+	PG_FREE_IF_COPY(arg2, 1);
+
+	PG_RETURN_BOOL(result);
 }
 
-bool
-varcharlt(char *arg1, char *arg2)
+Datum
+bpcharlt(PG_FUNCTION_ARGS)
 {
+	BpChar	   *arg1 = PG_GETARG_BPCHAR_P(0);
+	BpChar	   *arg2 = PG_GETARG_BPCHAR_P(1);
 	int			len1,
 				len2;
 	int			cmp;
 
-	if (arg1 == NULL || arg2 == NULL)
-		return (bool) 0;
-	len1 = VARSIZE(arg1) - VARHDRSZ;
-	len2 = VARSIZE(arg2) - VARHDRSZ;
+	len1 = bcTruelen(arg1);
+	len2 = bcTruelen(arg2);
 
 	cmp = varstr_cmp(VARDATA(arg1), len1, VARDATA(arg2), len2);
-	if (cmp == 0)
-		return len1 < len2;
-	else
-		return cmp < 0;
+
+	PG_FREE_IF_COPY(arg1, 0);
+	PG_FREE_IF_COPY(arg2, 1);
+
+	PG_RETURN_BOOL(cmp < 0);
 }
 
-bool
-varcharle(char *arg1, char *arg2)
+Datum
+bpcharle(PG_FUNCTION_ARGS)
 {
+	BpChar	   *arg1 = PG_GETARG_BPCHAR_P(0);
+	BpChar	   *arg2 = PG_GETARG_BPCHAR_P(1);
 	int			len1,
 				len2;
 	int			cmp;
 
-	if (arg1 == NULL || arg2 == NULL)
-		return (bool) 0;
-	len1 = VARSIZE(arg1) - VARHDRSZ;
-	len2 = VARSIZE(arg2) - VARHDRSZ;
+	len1 = bcTruelen(arg1);
+	len2 = bcTruelen(arg2);
 
 	cmp = varstr_cmp(VARDATA(arg1), len1, VARDATA(arg2), len2);
-	if (0 == cmp)
-		return (bool) (len1 <= len2 ? 1 : 0);
-	else
-		return (bool) (cmp <= 0);
+
+	PG_FREE_IF_COPY(arg1, 0);
+	PG_FREE_IF_COPY(arg2, 1);
+
+	PG_RETURN_BOOL(cmp <= 0);
 }
 
-bool
-varchargt(char *arg1, char *arg2)
+Datum
+bpchargt(PG_FUNCTION_ARGS)
 {
+	BpChar	   *arg1 = PG_GETARG_BPCHAR_P(0);
+	BpChar	   *arg2 = PG_GETARG_BPCHAR_P(1);
 	int			len1,
 				len2;
 	int			cmp;
 
-	if (arg1 == NULL || arg2 == NULL)
-		return (bool) 0;
-	len1 = VARSIZE(arg1) - VARHDRSZ;
-	len2 = VARSIZE(arg2) - VARHDRSZ;
+	len1 = bcTruelen(arg1);
+	len2 = bcTruelen(arg2);
 
 	cmp = varstr_cmp(VARDATA(arg1), len1, VARDATA(arg2), len2);
-	if (cmp == 0)
-		return len1 > len2;
-	else
-		return cmp > 0;
+
+	PG_FREE_IF_COPY(arg1, 0);
+	PG_FREE_IF_COPY(arg2, 1);
+
+	PG_RETURN_BOOL(cmp > 0);
 }
 
-bool
-varcharge(char *arg1, char *arg2)
+Datum
+bpcharge(PG_FUNCTION_ARGS)
 {
+	BpChar	   *arg1 = PG_GETARG_BPCHAR_P(0);
+	BpChar	   *arg2 = PG_GETARG_BPCHAR_P(1);
 	int			len1,
 				len2;
 	int			cmp;
 
-	if (arg1 == NULL || arg2 == NULL)
-		return (bool) 0;
-	len1 = VARSIZE(arg1) - VARHDRSZ;
-	len2 = VARSIZE(arg2) - VARHDRSZ;
+	len1 = bcTruelen(arg1);
+	len2 = bcTruelen(arg2);
 
 	cmp = varstr_cmp(VARDATA(arg1), len1, VARDATA(arg2), len2);
-	if (0 == cmp)
-		return (bool) (len1 >= len2 ? 1 : 0);
-	else
-		return (bool) (cmp >= 0);
 
+	PG_FREE_IF_COPY(arg1, 0);
+	PG_FREE_IF_COPY(arg2, 1);
+
+	PG_RETURN_BOOL(cmp >= 0);
 }
 
-int32
-varcharcmp(char *arg1, char *arg2)
+Datum
+bpcharcmp(PG_FUNCTION_ARGS)
 {
+	BpChar	   *arg1 = PG_GETARG_BPCHAR_P(0);
+	BpChar	   *arg2 = PG_GETARG_BPCHAR_P(1);
 	int			len1,
 				len2;
 	int			cmp;
 
-	len1 = VARSIZE(arg1) - VARHDRSZ;
-	len2 = VARSIZE(arg2) - VARHDRSZ;
+	len1 = bcTruelen(arg1);
+	len2 = bcTruelen(arg2);
+
 	cmp = varstr_cmp(VARDATA(arg1), len1, VARDATA(arg2), len2);
-	if ((0 == cmp) && (len1 != len2))
-		return (int32) (len1 < len2 ? -1 : 1);
-	else
-		return (int32) (cmp);
+
+	PG_FREE_IF_COPY(arg1, 0);
+	PG_FREE_IF_COPY(arg2, 1);
+
+	PG_RETURN_INT32(cmp);
 }
+
 
 /*
  * bpchar needs a specialized hash function because we want to ignore
@@ -814,7 +653,201 @@ hashbpchar(PG_FUNCTION_ARGS)
 	int			keylen;
 
 	keydata = VARDATA(key);
-	keylen = bcTruelen((char *) key);
+	keylen = bcTruelen(key);
 
 	return hash_any(keydata, keylen);
+}
+
+
+/*****************************************************************************
+ *	Functions used for varchar
+ *****************************************************************************/
+
+Datum
+varcharlen(PG_FUNCTION_ARGS)
+{
+	VarChar	   *arg = PG_GETARG_VARCHAR_P(0);
+#ifdef MULTIBYTE
+	unsigned char *s;
+	int			len,
+				l,
+				wl;
+
+	len = 0;
+	s = VARDATA(arg);
+	l = VARSIZE(arg) - VARHDRSZ;
+	while (l > 0)
+	{
+		wl = pg_mblen(s);
+		l -= wl;
+		s += wl;
+		len++;
+	}
+	PG_RETURN_INT32(len);
+#else
+	PG_RETURN_INT32(VARSIZE(arg) - VARHDRSZ);
+#endif
+}
+
+Datum
+varcharoctetlen(PG_FUNCTION_ARGS)
+{
+	VarChar	   *arg = PG_GETARG_VARCHAR_P(0);
+
+	PG_RETURN_INT32(VARSIZE(arg) - VARHDRSZ);
+}
+
+
+/*****************************************************************************
+ *	Comparison Functions used for varchar
+ *
+ * Note: btree indexes need these routines not to leak memory; therefore,
+ * be careful to free working copies of toasted datums.  Most places don't
+ * need to be so careful.
+ *****************************************************************************/
+
+Datum
+varchareq(PG_FUNCTION_ARGS)
+{
+	VarChar	   *arg1 = PG_GETARG_VARCHAR_P(0);
+	VarChar	   *arg2 = PG_GETARG_VARCHAR_P(1);
+	int			len1,
+				len2;
+	bool		result;
+
+	len1 = VARSIZE(arg1) - VARHDRSZ;
+	len2 = VARSIZE(arg2) - VARHDRSZ;
+
+	if (len1 != len2)
+		result = false;
+	else
+		result = (strncmp(VARDATA(arg1), VARDATA(arg2), len1) == 0);
+
+	PG_FREE_IF_COPY(arg1, 0);
+	PG_FREE_IF_COPY(arg2, 1);
+
+	PG_RETURN_BOOL(result);
+}
+
+Datum
+varcharne(PG_FUNCTION_ARGS)
+{
+	VarChar	   *arg1 = PG_GETARG_VARCHAR_P(0);
+	VarChar	   *arg2 = PG_GETARG_VARCHAR_P(1);
+	int			len1,
+				len2;
+	bool		result;
+
+	len1 = VARSIZE(arg1) - VARHDRSZ;
+	len2 = VARSIZE(arg2) - VARHDRSZ;
+
+	if (len1 != len2)
+		result = true;
+	else
+		result = (strncmp(VARDATA(arg1), VARDATA(arg2), len1) != 0);
+
+	PG_FREE_IF_COPY(arg1, 0);
+	PG_FREE_IF_COPY(arg2, 1);
+
+	PG_RETURN_BOOL(result);
+}
+
+Datum
+varcharlt(PG_FUNCTION_ARGS)
+{
+	VarChar	   *arg1 = PG_GETARG_VARCHAR_P(0);
+	VarChar	   *arg2 = PG_GETARG_VARCHAR_P(1);
+	int			len1,
+				len2;
+	int			cmp;
+
+	len1 = VARSIZE(arg1) - VARHDRSZ;
+	len2 = VARSIZE(arg2) - VARHDRSZ;
+
+	cmp = varstr_cmp(VARDATA(arg1), len1, VARDATA(arg2), len2);
+
+	PG_FREE_IF_COPY(arg1, 0);
+	PG_FREE_IF_COPY(arg2, 1);
+
+	PG_RETURN_BOOL(cmp < 0);
+}
+
+Datum
+varcharle(PG_FUNCTION_ARGS)
+{
+	VarChar	   *arg1 = PG_GETARG_VARCHAR_P(0);
+	VarChar	   *arg2 = PG_GETARG_VARCHAR_P(1);
+	int			len1,
+				len2;
+	int			cmp;
+
+	len1 = VARSIZE(arg1) - VARHDRSZ;
+	len2 = VARSIZE(arg2) - VARHDRSZ;
+
+	cmp = varstr_cmp(VARDATA(arg1), len1, VARDATA(arg2), len2);
+
+	PG_FREE_IF_COPY(arg1, 0);
+	PG_FREE_IF_COPY(arg2, 1);
+
+	PG_RETURN_BOOL(cmp <= 0);
+}
+
+Datum
+varchargt(PG_FUNCTION_ARGS)
+{
+	VarChar	   *arg1 = PG_GETARG_VARCHAR_P(0);
+	VarChar	   *arg2 = PG_GETARG_VARCHAR_P(1);
+	int			len1,
+				len2;
+	int			cmp;
+
+	len1 = VARSIZE(arg1) - VARHDRSZ;
+	len2 = VARSIZE(arg2) - VARHDRSZ;
+
+	cmp = varstr_cmp(VARDATA(arg1), len1, VARDATA(arg2), len2);
+
+	PG_FREE_IF_COPY(arg1, 0);
+	PG_FREE_IF_COPY(arg2, 1);
+
+	PG_RETURN_BOOL(cmp > 0);
+}
+
+Datum
+varcharge(PG_FUNCTION_ARGS)
+{
+	VarChar	   *arg1 = PG_GETARG_VARCHAR_P(0);
+	VarChar	   *arg2 = PG_GETARG_VARCHAR_P(1);
+	int			len1,
+				len2;
+	int			cmp;
+
+	len1 = VARSIZE(arg1) - VARHDRSZ;
+	len2 = VARSIZE(arg2) - VARHDRSZ;
+
+	cmp = varstr_cmp(VARDATA(arg1), len1, VARDATA(arg2), len2);
+
+	PG_FREE_IF_COPY(arg1, 0);
+	PG_FREE_IF_COPY(arg2, 1);
+
+	PG_RETURN_BOOL(cmp >= 0);
+}
+
+Datum
+varcharcmp(PG_FUNCTION_ARGS)
+{
+	VarChar	   *arg1 = PG_GETARG_VARCHAR_P(0);
+	VarChar	   *arg2 = PG_GETARG_VARCHAR_P(1);
+	int			len1,
+				len2;
+	int			cmp;
+
+	len1 = VARSIZE(arg1) - VARHDRSZ;
+	len2 = VARSIZE(arg2) - VARHDRSZ;
+
+	cmp = varstr_cmp(VARDATA(arg1), len1, VARDATA(arg2), len2);
+
+	PG_FREE_IF_COPY(arg1, 0);
+	PG_FREE_IF_COPY(arg2, 1);
+
+	PG_RETURN_INT32(cmp);
 }

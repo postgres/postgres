@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.19 2000/07/05 23:11:35 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.20 2000/07/29 03:26:41 tgl Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2000, PostgreSQL, Inc
@@ -4066,7 +4066,9 @@ numeric_to_char(PG_FUNCTION_ARGS)
 		x = DatumGetNumeric(DirectFunctionCall2(numeric_round,
 					NumericGetDatum(value),
 					Int32GetDatum(0)));
-		numstr = orgnum = int_to_roman(numeric_int4(x));
+		numstr = orgnum =
+			int_to_roman(DatumGetInt32(DirectFunctionCall1(numeric_int4,
+													NumericGetDatum(x))));
 		pfree(x);
 	}
 	else
@@ -4080,8 +4082,12 @@ numeric_to_char(PG_FUNCTION_ARGS)
 			Numeric		b = DatumGetNumeric(DirectFunctionCall1(int4_numeric,
 							Int32GetDatum(Num.multi)));
 
-			x = numeric_power(a, b);
-			val = numeric_mul(value, x);
+			x = DatumGetNumeric(DirectFunctionCall2(numeric_power,
+													NumericGetDatum(a),
+													NumericGetDatum(b)));
+			val = DatumGetNumeric(DirectFunctionCall2(numeric_mul,
+													  NumericGetDatum(value),
+													  NumericGetDatum(x)));
 			pfree(x);
 			pfree(a);
 			pfree(b);

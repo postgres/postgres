@@ -5,7 +5,7 @@
  *
  *	1998 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.32 2000/07/17 03:05:18 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.33 2000/07/29 03:26:41 tgl Exp $
  *
  * ----------
  */
@@ -351,25 +351,18 @@ numeric(PG_FUNCTION_ARGS)
  * ----------------------------------------------------------------------
  */
 
-
-Numeric
-numeric_abs(Numeric num)
+Datum
+numeric_abs(PG_FUNCTION_ARGS)
 {
+	Numeric		num = PG_GETARG_NUMERIC(0);
 	Numeric		res;
-
-	/* ----------
-	 * Handle NULL
-	 * ----------
-	 */
-	if (num == NULL)
-		return NULL;
 
 	/* ----------
 	 * Handle NaN
 	 * ----------
 	 */
 	if (NUMERIC_IS_NAN(num))
-		return make_result(&const_nan);
+		PG_RETURN_NUMERIC(make_result(&const_nan));
 
 	/* ----------
 	 * Do it the easy way directly on the packed format
@@ -380,28 +373,22 @@ numeric_abs(Numeric num)
 
 	res->n_sign_dscale = NUMERIC_POS | NUMERIC_DSCALE(num);
 
-	return res;
+	PG_RETURN_NUMERIC(res);
 }
 
 
-Numeric
-numeric_uminus(Numeric num)
+Datum
+numeric_uminus(PG_FUNCTION_ARGS)
 {
+	Numeric		num = PG_GETARG_NUMERIC(0);
 	Numeric		res;
-
-	/* ----------
-	 * Handle NULL
-	 * ----------
-	 */
-	if (num == NULL)
-		return NULL;
 
 	/* ----------
 	 * Handle NaN
 	 * ----------
 	 */
 	if (NUMERIC_IS_NAN(num))
-		return make_result(&const_nan);
+		PG_RETURN_NUMERIC(make_result(&const_nan));
 
 	/* ----------
 	 * Do it the easy way directly on the packed format
@@ -425,29 +412,23 @@ numeric_uminus(Numeric num)
 			res->n_sign_dscale = NUMERIC_POS | NUMERIC_DSCALE(num);
 	}
 
-	return res;
+	PG_RETURN_NUMERIC(res);
 }
 
 
-Numeric
-numeric_sign(Numeric num)
+Datum
+numeric_sign(PG_FUNCTION_ARGS)
 {
+	Numeric		num = PG_GETARG_NUMERIC(0);
 	Numeric		res;
 	NumericVar	result;
-
-	/* ----------
-	 * Handle NULL
-	 * ----------
-	 */
-	if (num == NULL)
-		return NULL;
 
 	/* ----------
 	 * Handle NaN
 	 * ----------
 	 */
 	if (NUMERIC_IS_NAN(num))
-		return make_result(&const_nan);
+		PG_RETURN_NUMERIC(make_result(&const_nan));
 
 	init_var(&result);
 
@@ -473,7 +454,7 @@ numeric_sign(Numeric num)
 	res = make_result(&result);
 	free_var(&result);
 
-	return res;
+	PG_RETURN_NUMERIC(res);
 }
 
 
@@ -633,17 +614,15 @@ numeric_trunc(PG_FUNCTION_ARGS)
  *	Return the smallest integer greater than or equal to the argument
  * ----------
  */
-Numeric
-numeric_ceil(Numeric num)
+Datum
+numeric_ceil(PG_FUNCTION_ARGS)
 {
+	Numeric		num = PG_GETARG_NUMERIC(0);
 	Numeric		res;
 	NumericVar	result;
 
-	if (num == NULL)
-		return NULL;
-
 	if (NUMERIC_IS_NAN(num))
-		return make_result(&const_nan);
+		PG_RETURN_NUMERIC(make_result(&const_nan));
 
 	init_var(&result);
 
@@ -655,7 +634,7 @@ numeric_ceil(Numeric num)
 	res = make_result(&result);
 	free_var(&result);
 
-	return res;
+	PG_RETURN_NUMERIC(res);
 }
 
 
@@ -665,17 +644,15 @@ numeric_ceil(Numeric num)
  *	Return the largest integer equal to or less than the argument
  * ----------
  */
-Numeric
-numeric_floor(Numeric num)
+Datum
+numeric_floor(PG_FUNCTION_ARGS)
 {
+	Numeric		num = PG_GETARG_NUMERIC(0);
 	Numeric		res;
 	NumericVar	result;
 
-	if (num == NULL)
-		return NULL;
-
 	if (NUMERIC_IS_NAN(num))
-		return make_result(&const_nan);
+		PG_RETURN_NUMERIC(make_result(&const_nan));
 
 	init_var(&result);
 
@@ -687,7 +664,7 @@ numeric_floor(Numeric num)
 	res = make_result(&result);
 	free_var(&result);
 
-	return res;
+	PG_RETURN_NUMERIC(res);
 }
 
 
@@ -695,203 +672,236 @@ numeric_floor(Numeric num)
  *
  * Comparison functions
  *
+ * Note: btree indexes need these routines not to leak memory; therefore,
+ * be careful to free working copies of toasted datums.  Most places don't
+ * need to be so careful.
  * ----------------------------------------------------------------------
  */
 
 
-int32
-numeric_cmp(Numeric num1, Numeric num2)
+Datum
+numeric_cmp(PG_FUNCTION_ARGS)
 {
+	Numeric		num1 = PG_GETARG_NUMERIC(0);
+	Numeric		num2 = PG_GETARG_NUMERIC(1);
 	int			result;
-	NumericVar	arg1;
-	NumericVar	arg2;
-
-	if (num1 == NULL || num2 == NULL)
-		return (int32) 0;
 
 	if (NUMERIC_IS_NAN(num1) || NUMERIC_IS_NAN(num2))
-		return (int32) 0;
+		result = 0;
+	else
+	{
+		NumericVar	arg1;
+		NumericVar	arg2;
 
-	init_var(&arg1);
-	init_var(&arg2);
+		init_var(&arg1);
+		init_var(&arg2);
 
-	set_var_from_num(num1, &arg1);
-	set_var_from_num(num2, &arg2);
+		set_var_from_num(num1, &arg1);
+		set_var_from_num(num2, &arg2);
 
-	result = cmp_var(&arg1, &arg2);
+		result = cmp_var(&arg1, &arg2);
 
-	free_var(&arg1);
-	free_var(&arg2);
+		free_var(&arg1);
+		free_var(&arg2);
+	}
 
-	return (int32) ((result == 0) ? 0 : ((result < 0) ? -1 : 1));
+	PG_FREE_IF_COPY(num1, 0);
+	PG_FREE_IF_COPY(num2, 1);
+
+	PG_RETURN_INT32(result);
 }
 
 
-bool
-numeric_eq(Numeric num1, Numeric num2)
+Datum
+numeric_eq(PG_FUNCTION_ARGS)
 {
-	int			result;
-	NumericVar	arg1;
-	NumericVar	arg2;
-
-	if (num1 == NULL || num2 == NULL)
-		return FALSE;
+	Numeric		num1 = PG_GETARG_NUMERIC(0);
+	Numeric		num2 = PG_GETARG_NUMERIC(1);
+	bool		result;
 
 	if (NUMERIC_IS_NAN(num1) || NUMERIC_IS_NAN(num2))
-		return FALSE;
+		result = false;
+	else
+	{
+		NumericVar	arg1;
+		NumericVar	arg2;
 
-	init_var(&arg1);
-	init_var(&arg2);
+		init_var(&arg1);
+		init_var(&arg2);
 
-	set_var_from_num(num1, &arg1);
-	set_var_from_num(num2, &arg2);
+		set_var_from_num(num1, &arg1);
+		set_var_from_num(num2, &arg2);
 
-	result = cmp_var(&arg1, &arg2);
+		result = cmp_var(&arg1, &arg2) == 0;
 
-	free_var(&arg1);
-	free_var(&arg2);
+		free_var(&arg1);
+		free_var(&arg2);
+	}
 
-	return (result == 0);
+	PG_FREE_IF_COPY(num1, 0);
+	PG_FREE_IF_COPY(num2, 1);
+
+	PG_RETURN_BOOL(result);
 }
 
-
-bool
-numeric_ne(Numeric num1, Numeric num2)
+Datum
+numeric_ne(PG_FUNCTION_ARGS)
 {
-	int			result;
-	NumericVar	arg1;
-	NumericVar	arg2;
-
-	if (num1 == NULL || num2 == NULL)
-		return FALSE;
+	Numeric		num1 = PG_GETARG_NUMERIC(0);
+	Numeric		num2 = PG_GETARG_NUMERIC(1);
+	bool		result;
 
 	if (NUMERIC_IS_NAN(num1) || NUMERIC_IS_NAN(num2))
-		return FALSE;
+		result = false;
+	else
+	{
+		NumericVar	arg1;
+		NumericVar	arg2;
 
-	init_var(&arg1);
-	init_var(&arg2);
+		init_var(&arg1);
+		init_var(&arg2);
 
-	set_var_from_num(num1, &arg1);
-	set_var_from_num(num2, &arg2);
+		set_var_from_num(num1, &arg1);
+		set_var_from_num(num2, &arg2);
 
-	result = cmp_var(&arg1, &arg2);
+		result = cmp_var(&arg1, &arg2) != 0;
 
-	free_var(&arg1);
-	free_var(&arg2);
+		free_var(&arg1);
+		free_var(&arg2);
+	}
 
-	return (result != 0);
+	PG_FREE_IF_COPY(num1, 0);
+	PG_FREE_IF_COPY(num2, 1);
+
+	PG_RETURN_BOOL(result);
 }
 
-
-bool
-numeric_gt(Numeric num1, Numeric num2)
+Datum
+numeric_gt(PG_FUNCTION_ARGS)
 {
-	int			result;
-	NumericVar	arg1;
-	NumericVar	arg2;
-
-	if (num1 == NULL || num2 == NULL)
-		return FALSE;
+	Numeric		num1 = PG_GETARG_NUMERIC(0);
+	Numeric		num2 = PG_GETARG_NUMERIC(1);
+	bool		result;
 
 	if (NUMERIC_IS_NAN(num1) || NUMERIC_IS_NAN(num2))
-		return FALSE;
+		result = false;
+	else
+	{
+		NumericVar	arg1;
+		NumericVar	arg2;
 
-	init_var(&arg1);
-	init_var(&arg2);
+		init_var(&arg1);
+		init_var(&arg2);
 
-	set_var_from_num(num1, &arg1);
-	set_var_from_num(num2, &arg2);
+		set_var_from_num(num1, &arg1);
+		set_var_from_num(num2, &arg2);
 
-	result = cmp_var(&arg1, &arg2);
+		result = cmp_var(&arg1, &arg2) > 0;
 
-	free_var(&arg1);
-	free_var(&arg2);
+		free_var(&arg1);
+		free_var(&arg2);
+	}
 
-	return (result > 0);
+	PG_FREE_IF_COPY(num1, 0);
+	PG_FREE_IF_COPY(num2, 1);
+
+	PG_RETURN_BOOL(result);
 }
 
-
-bool
-numeric_ge(Numeric num1, Numeric num2)
+Datum
+numeric_ge(PG_FUNCTION_ARGS)
 {
-	int			result;
-	NumericVar	arg1;
-	NumericVar	arg2;
-
-	if (num1 == NULL || num2 == NULL)
-		return FALSE;
+	Numeric		num1 = PG_GETARG_NUMERIC(0);
+	Numeric		num2 = PG_GETARG_NUMERIC(1);
+	bool		result;
 
 	if (NUMERIC_IS_NAN(num1) || NUMERIC_IS_NAN(num2))
-		return FALSE;
+		result = false;
+	else
+	{
+		NumericVar	arg1;
+		NumericVar	arg2;
 
-	init_var(&arg1);
-	init_var(&arg2);
+		init_var(&arg1);
+		init_var(&arg2);
 
-	set_var_from_num(num1, &arg1);
-	set_var_from_num(num2, &arg2);
+		set_var_from_num(num1, &arg1);
+		set_var_from_num(num2, &arg2);
 
-	result = cmp_var(&arg1, &arg2);
+		result = cmp_var(&arg1, &arg2) >= 0;
 
-	free_var(&arg1);
-	free_var(&arg2);
+		free_var(&arg1);
+		free_var(&arg2);
+	}
 
-	return (result >= 0);
+	PG_FREE_IF_COPY(num1, 0);
+	PG_FREE_IF_COPY(num2, 1);
+
+	PG_RETURN_BOOL(result);
 }
 
-
-bool
-numeric_lt(Numeric num1, Numeric num2)
+Datum
+numeric_lt(PG_FUNCTION_ARGS)
 {
-	int			result;
-	NumericVar	arg1;
-	NumericVar	arg2;
-
-	if (num1 == NULL || num2 == NULL)
-		return FALSE;
+	Numeric		num1 = PG_GETARG_NUMERIC(0);
+	Numeric		num2 = PG_GETARG_NUMERIC(1);
+	bool		result;
 
 	if (NUMERIC_IS_NAN(num1) || NUMERIC_IS_NAN(num2))
-		return FALSE;
+		result = false;
+	else
+	{
+		NumericVar	arg1;
+		NumericVar	arg2;
 
-	init_var(&arg1);
-	init_var(&arg2);
+		init_var(&arg1);
+		init_var(&arg2);
 
-	set_var_from_num(num1, &arg1);
-	set_var_from_num(num2, &arg2);
+		set_var_from_num(num1, &arg1);
+		set_var_from_num(num2, &arg2);
 
-	result = cmp_var(&arg1, &arg2);
+		result = cmp_var(&arg1, &arg2) < 0;
 
-	free_var(&arg1);
-	free_var(&arg2);
+		free_var(&arg1);
+		free_var(&arg2);
+	}
 
-	return (result < 0);
+	PG_FREE_IF_COPY(num1, 0);
+	PG_FREE_IF_COPY(num2, 1);
+
+	PG_RETURN_BOOL(result);
 }
 
-
-bool
-numeric_le(Numeric num1, Numeric num2)
+Datum
+numeric_le(PG_FUNCTION_ARGS)
 {
-	int			result;
-	NumericVar	arg1;
-	NumericVar	arg2;
-
-	if (num1 == NULL || num2 == NULL)
-		return FALSE;
+	Numeric		num1 = PG_GETARG_NUMERIC(0);
+	Numeric		num2 = PG_GETARG_NUMERIC(1);
+	bool		result;
 
 	if (NUMERIC_IS_NAN(num1) || NUMERIC_IS_NAN(num2))
-		return FALSE;
+		result = false;
+	else
+	{
+		NumericVar	arg1;
+		NumericVar	arg2;
 
-	init_var(&arg1);
-	init_var(&arg2);
+		init_var(&arg1);
+		init_var(&arg2);
 
-	set_var_from_num(num1, &arg1);
-	set_var_from_num(num2, &arg2);
+		set_var_from_num(num1, &arg1);
+		set_var_from_num(num2, &arg2);
 
-	result = cmp_var(&arg1, &arg2);
+		result = cmp_var(&arg1, &arg2) <= 0;
 
-	free_var(&arg1);
-	free_var(&arg2);
+		free_var(&arg1);
+		free_var(&arg2);
+	}
 
-	return (result <= 0);
+	PG_FREE_IF_COPY(num1, 0);
+	PG_FREE_IF_COPY(num2, 1);
+
+	PG_RETURN_BOOL(result);
 }
 
 
@@ -909,27 +919,22 @@ numeric_le(Numeric num1, Numeric num2)
  *	Add two numerics
  * ----------
  */
-Numeric
-numeric_add(Numeric num1, Numeric num2)
+Datum
+numeric_add(PG_FUNCTION_ARGS)
 {
+	Numeric		num1 = PG_GETARG_NUMERIC(0);
+	Numeric		num2 = PG_GETARG_NUMERIC(1);
 	NumericVar	arg1;
 	NumericVar	arg2;
 	NumericVar	result;
 	Numeric		res;
 
 	/* ----------
-	 * Handle NULL
-	 * ----------
-	 */
-	if (num1 == NULL || num2 == NULL)
-		return NULL;
-
-	/* ----------
 	 * Handle NaN
 	 * ----------
 	 */
 	if (NUMERIC_IS_NAN(num1) || NUMERIC_IS_NAN(num2))
-		return make_result(&const_nan);
+		PG_RETURN_NUMERIC(make_result(&const_nan));
 
 	/* ----------
 	 * Unpack the values, let add_var() compute the result
@@ -951,7 +956,7 @@ numeric_add(Numeric num1, Numeric num2)
 	free_var(&arg2);
 	free_var(&result);
 
-	return res;
+	PG_RETURN_NUMERIC(res);
 }
 
 
@@ -961,27 +966,22 @@ numeric_add(Numeric num1, Numeric num2)
  *	Subtract one numeric from another
  * ----------
  */
-Numeric
-numeric_sub(Numeric num1, Numeric num2)
+Datum
+numeric_sub(PG_FUNCTION_ARGS)
 {
+	Numeric		num1 = PG_GETARG_NUMERIC(0);
+	Numeric		num2 = PG_GETARG_NUMERIC(1);
 	NumericVar	arg1;
 	NumericVar	arg2;
 	NumericVar	result;
 	Numeric		res;
 
 	/* ----------
-	 * Handle NULL
-	 * ----------
-	 */
-	if (num1 == NULL || num2 == NULL)
-		return NULL;
-
-	/* ----------
 	 * Handle NaN
 	 * ----------
 	 */
 	if (NUMERIC_IS_NAN(num1) || NUMERIC_IS_NAN(num2))
-		return make_result(&const_nan);
+		PG_RETURN_NUMERIC(make_result(&const_nan));
 
 	/* ----------
 	 * Unpack the two arguments, let sub_var() compute the
@@ -1002,7 +1002,7 @@ numeric_sub(Numeric num1, Numeric num2)
 	free_var(&arg2);
 	free_var(&result);
 
-	return res;
+	PG_RETURN_NUMERIC(res);
 }
 
 
@@ -1012,27 +1012,22 @@ numeric_sub(Numeric num1, Numeric num2)
  *	Calculate the product of two numerics
  * ----------
  */
-Numeric
-numeric_mul(Numeric num1, Numeric num2)
+Datum
+numeric_mul(PG_FUNCTION_ARGS)
 {
+	Numeric		num1 = PG_GETARG_NUMERIC(0);
+	Numeric		num2 = PG_GETARG_NUMERIC(1);
 	NumericVar	arg1;
 	NumericVar	arg2;
 	NumericVar	result;
 	Numeric		res;
 
 	/* ----------
-	 * Handle NULL
-	 * ----------
-	 */
-	if (num1 == NULL || num2 == NULL)
-		return NULL;
-
-	/* ----------
 	 * Handle NaN
 	 * ----------
 	 */
 	if (NUMERIC_IS_NAN(num1) || NUMERIC_IS_NAN(num2))
-		return make_result(&const_nan);
+		PG_RETURN_NUMERIC(make_result(&const_nan));
 
 	/* ----------
 	 * Unpack the arguments, let mul_var() compute the result
@@ -1063,7 +1058,7 @@ numeric_mul(Numeric num1, Numeric num2)
 	free_var(&arg2);
 	free_var(&result);
 
-	return res;
+	PG_RETURN_NUMERIC(res);
 }
 
 
@@ -1073,9 +1068,11 @@ numeric_mul(Numeric num1, Numeric num2)
  *	Divide one numeric into another
  * ----------
  */
-Numeric
-numeric_div(Numeric num1, Numeric num2)
+Datum
+numeric_div(PG_FUNCTION_ARGS)
 {
+	Numeric		num1 = PG_GETARG_NUMERIC(0);
+	Numeric		num2 = PG_GETARG_NUMERIC(1);
 	NumericVar	arg1;
 	NumericVar	arg2;
 	NumericVar	result;
@@ -1083,18 +1080,11 @@ numeric_div(Numeric num1, Numeric num2)
 	int			res_dscale;
 
 	/* ----------
-	 * Handle NULL
-	 * ----------
-	 */
-	if (num1 == NULL || num2 == NULL)
-		return NULL;
-
-	/* ----------
 	 * Handle NaN
 	 * ----------
 	 */
 	if (NUMERIC_IS_NAN(num1) || NUMERIC_IS_NAN(num2))
-		return make_result(&const_nan);
+		PG_RETURN_NUMERIC(make_result(&const_nan));
 
 	/* ----------
 	 * Unpack the arguments
@@ -1144,7 +1134,7 @@ numeric_div(Numeric num1, Numeric num2)
 	free_var(&arg2);
 	free_var(&result);
 
-	return res;
+	PG_RETURN_NUMERIC(res);
 }
 
 
@@ -1154,19 +1144,18 @@ numeric_div(Numeric num1, Numeric num2)
  *	Calculate the modulo of two numerics
  * ----------
  */
-Numeric
-numeric_mod(Numeric num1, Numeric num2)
+Datum
+numeric_mod(PG_FUNCTION_ARGS)
 {
+	Numeric		num1 = PG_GETARG_NUMERIC(0);
+	Numeric		num2 = PG_GETARG_NUMERIC(1);
 	Numeric		res;
 	NumericVar	arg1;
 	NumericVar	arg2;
 	NumericVar	result;
 
-	if (num1 == NULL || num2 == NULL)
-		return NULL;
-
 	if (NUMERIC_IS_NAN(num1) || NUMERIC_IS_NAN(num2))
-		return make_result(&const_nan);
+		PG_RETURN_NUMERIC(make_result(&const_nan));
 
 	init_var(&arg1);
 	init_var(&arg2);
@@ -1184,7 +1173,7 @@ numeric_mod(Numeric num1, Numeric num2)
 	free_var(&arg2);
 	free_var(&arg1);
 
-	return res;
+	PG_RETURN_NUMERIC(res);
 }
 
 
@@ -1194,25 +1183,19 @@ numeric_mod(Numeric num1, Numeric num2)
  *	Increment a number by one
  * ----------
  */
-Numeric
-numeric_inc(Numeric num)
+Datum
+numeric_inc(PG_FUNCTION_ARGS)
 {
+	Numeric		num = PG_GETARG_NUMERIC(0);
 	NumericVar	arg;
 	Numeric		res;
-
-	/* ----------
-	 * Handle NULL
-	 * ----------
-	 */
-	if (num == NULL)
-		return NULL;
 
 	/* ----------
 	 * Handle NaN
 	 * ----------
 	 */
 	if (NUMERIC_IS_NAN(num))
-		return make_result(&const_nan);
+		PG_RETURN_NUMERIC(make_result(&const_nan));
 
 	/* ----------
 	 * Compute the result and return it
@@ -1227,7 +1210,7 @@ numeric_inc(Numeric num)
 
 	free_var(&arg);
 
-	return res;
+	PG_RETURN_NUMERIC(res);
 }
 
 
@@ -1237,26 +1220,21 @@ numeric_inc(Numeric num)
  *	Return the smaller of two numbers
  * ----------
  */
-Numeric
-numeric_smaller(Numeric num1, Numeric num2)
+Datum
+numeric_smaller(PG_FUNCTION_ARGS)
 {
+	Numeric		num1 = PG_GETARG_NUMERIC(0);
+	Numeric		num2 = PG_GETARG_NUMERIC(1);
 	NumericVar	arg1;
 	NumericVar	arg2;
 	Numeric		res;
-
-	/* ----------
-	 * Handle NULL
-	 * ----------
-	 */
-	if (num1 == NULL || num2 == NULL)
-		return NULL;
 
 	/* ----------
 	 * Handle NaN
 	 * ----------
 	 */
 	if (NUMERIC_IS_NAN(num1) || NUMERIC_IS_NAN(num2))
-		return make_result(&const_nan);
+		PG_RETURN_NUMERIC(make_result(&const_nan));
 
 	/* ----------
 	 * Unpack the values, and decide which is the smaller one
@@ -1276,7 +1254,7 @@ numeric_smaller(Numeric num1, Numeric num2)
 	free_var(&arg1);
 	free_var(&arg2);
 
-	return res;
+	PG_RETURN_NUMERIC(res);
 }
 
 
@@ -1286,26 +1264,21 @@ numeric_smaller(Numeric num1, Numeric num2)
  *	Return the larger of two numbers
  * ----------
  */
-Numeric
-numeric_larger(Numeric num1, Numeric num2)
+Datum
+numeric_larger(PG_FUNCTION_ARGS)
 {
+	Numeric		num1 = PG_GETARG_NUMERIC(0);
+	Numeric		num2 = PG_GETARG_NUMERIC(1);
 	NumericVar	arg1;
 	NumericVar	arg2;
 	Numeric		res;
-
-	/* ----------
-	 * Handle NULL
-	 * ----------
-	 */
-	if (num1 == NULL || num2 == NULL)
-		return NULL;
 
 	/* ----------
 	 * Handle NaN
 	 * ----------
 	 */
 	if (NUMERIC_IS_NAN(num1) || NUMERIC_IS_NAN(num2))
-		return make_result(&const_nan);
+		PG_RETURN_NUMERIC(make_result(&const_nan));
 
 	/* ----------
 	 * Unpack the values, and decide which is the larger one
@@ -1325,7 +1298,7 @@ numeric_larger(Numeric num1, Numeric num2)
 	free_var(&arg1);
 	free_var(&arg2);
 
-	return res;
+	PG_RETURN_NUMERIC(res);
 }
 
 
@@ -1343,27 +1316,21 @@ numeric_larger(Numeric num1, Numeric num2)
  *	Compute the square root of a numeric.
  * ----------
  */
-Numeric
-numeric_sqrt(Numeric num)
+Datum
+numeric_sqrt(PG_FUNCTION_ARGS)
 {
+	Numeric		num = PG_GETARG_NUMERIC(0);
 	Numeric		res;
 	NumericVar	arg;
 	NumericVar	result;
 	int			res_dscale;
 
 	/* ----------
-	 * Handle NULL
-	 * ----------
-	 */
-	if (num == NULL)
-		return NULL;
-
-	/* ----------
 	 * Handle NaN
 	 * ----------
 	 */
 	if (NUMERIC_IS_NAN(num))
-		return make_result(&const_nan);
+		PG_RETURN_NUMERIC(make_result(&const_nan));
 
 	/* ----------
 	 * Unpack the argument, determine the scales like for divide,
@@ -1390,7 +1357,7 @@ numeric_sqrt(Numeric num)
 	free_var(&result);
 	free_var(&arg);
 
-	return res;
+	PG_RETURN_NUMERIC(res);
 }
 
 
@@ -1400,27 +1367,21 @@ numeric_sqrt(Numeric num)
  *	Raise e to the power of x
  * ----------
  */
-Numeric
-numeric_exp(Numeric num)
+Datum
+numeric_exp(PG_FUNCTION_ARGS)
 {
+	Numeric		num = PG_GETARG_NUMERIC(0);
 	Numeric		res;
 	NumericVar	arg;
 	NumericVar	result;
 	int			res_dscale;
 
 	/* ----------
-	 * Handle NULL
-	 * ----------
-	 */
-	if (num == NULL)
-		return NULL;
-
-	/* ----------
 	 * Handle NaN
 	 * ----------
 	 */
 	if (NUMERIC_IS_NAN(num))
-		return make_result(&const_nan);
+		PG_RETURN_NUMERIC(make_result(&const_nan));
 
 	/* ----------
 	 * Same procedure like for sqrt().
@@ -1445,7 +1406,7 @@ numeric_exp(Numeric num)
 	free_var(&result);
 	free_var(&arg);
 
-	return res;
+	PG_RETURN_NUMERIC(res);
 }
 
 
@@ -1455,27 +1416,21 @@ numeric_exp(Numeric num)
  *	Compute the natural logarithm of x
  * ----------
  */
-Numeric
-numeric_ln(Numeric num)
+Datum
+numeric_ln(PG_FUNCTION_ARGS)
 {
+	Numeric		num = PG_GETARG_NUMERIC(0);
 	Numeric		res;
 	NumericVar	arg;
 	NumericVar	result;
 	int			res_dscale;
 
 	/* ----------
-	 * Handle NULL
-	 * ----------
-	 */
-	if (num == NULL)
-		return NULL;
-
-	/* ----------
 	 * Handle NaN
 	 * ----------
 	 */
 	if (NUMERIC_IS_NAN(num))
-		return make_result(&const_nan);
+		PG_RETURN_NUMERIC(make_result(&const_nan));
 
 	/* ----------
 	 * Same procedure like for sqrt()
@@ -1500,7 +1455,7 @@ numeric_ln(Numeric num)
 	free_var(&result);
 	free_var(&arg);
 
-	return res;
+	PG_RETURN_NUMERIC(res);
 }
 
 
@@ -1510,9 +1465,11 @@ numeric_ln(Numeric num)
  *	Compute the logarithm of x in a given base
  * ----------
  */
-Numeric
-numeric_log(Numeric num1, Numeric num2)
+Datum
+numeric_log(PG_FUNCTION_ARGS)
 {
+	Numeric		num1 = PG_GETARG_NUMERIC(0);
+	Numeric		num2 = PG_GETARG_NUMERIC(1);
 	Numeric		res;
 	NumericVar	arg1;
 	NumericVar	arg2;
@@ -1520,18 +1477,11 @@ numeric_log(Numeric num1, Numeric num2)
 	int			res_dscale;
 
 	/* ----------
-	 * Handle NULL
-	 * ----------
-	 */
-	if (num1 == NULL || num2 == NULL)
-		return NULL;
-
-	/* ----------
 	 * Handle NaN
 	 * ----------
 	 */
 	if (NUMERIC_IS_NAN(num1) || NUMERIC_IS_NAN(num2))
-		return make_result(&const_nan);
+		PG_RETURN_NUMERIC(make_result(&const_nan));
 
 	/* ----------
 	 * Initialize things and calculate scales
@@ -1563,7 +1513,7 @@ numeric_log(Numeric num1, Numeric num2)
 	free_var(&arg2);
 	free_var(&arg1);
 
-	return res;
+	PG_RETURN_NUMERIC(res);
 }
 
 
@@ -1573,9 +1523,11 @@ numeric_log(Numeric num1, Numeric num2)
  *	Raise m to the power of x
  * ----------
  */
-Numeric
-numeric_power(Numeric num1, Numeric num2)
+Datum
+numeric_power(PG_FUNCTION_ARGS)
 {
+	Numeric		num1 = PG_GETARG_NUMERIC(0);
+	Numeric		num2 = PG_GETARG_NUMERIC(1);
 	Numeric		res;
 	NumericVar	arg1;
 	NumericVar	arg2;
@@ -1583,18 +1535,11 @@ numeric_power(Numeric num1, Numeric num2)
 	int			res_dscale;
 
 	/* ----------
-	 * Handle NULL
-	 * ----------
-	 */
-	if (num1 == NULL || num2 == NULL)
-		return NULL;
-
-	/* ----------
 	 * Handle NaN
 	 * ----------
 	 */
 	if (NUMERIC_IS_NAN(num1) || NUMERIC_IS_NAN(num2))
-		return make_result(&const_nan);
+		PG_RETURN_NUMERIC(make_result(&const_nan));
 
 	/* ----------
 	 * Initialize things and calculate scales
@@ -1626,7 +1571,7 @@ numeric_power(Numeric num1, Numeric num2)
 	free_var(&arg2);
 	free_var(&arg1);
 
-	return res;
+	PG_RETURN_NUMERIC(res);
 }
 
 
@@ -1660,16 +1605,15 @@ int4_numeric(PG_FUNCTION_ARGS)
 }
 
 
-int32
-numeric_int4(Numeric num)
+Datum
+numeric_int4(PG_FUNCTION_ARGS)
 {
+	Numeric		num = PG_GETARG_NUMERIC(0);
 	NumericVar	x;
 	char	   *str;
 	Datum		result;
 
-	if (num == NULL)
-		return 0;
-
+	/* XXX would it be better to return NULL? */
 	if (NUMERIC_IS_NAN(num))
 		elog(ERROR, "Cannot convert NaN to int4");
 
@@ -1687,7 +1631,7 @@ numeric_int4(Numeric num)
 	result = DirectFunctionCall1(int4in, CStringGetDatum(str));
 	pfree(str);
 
-	return result;
+	PG_RETURN_DATUM(result);
 }
 
 
@@ -1712,16 +1656,15 @@ int8_numeric(PG_FUNCTION_ARGS)
 }
 
 
-int64 *
-numeric_int8(Numeric num)
+Datum
+numeric_int8(PG_FUNCTION_ARGS)
 {
+	Numeric		num = PG_GETARG_NUMERIC(0);
 	NumericVar	x;
 	char	   *str;
 	Datum		result;
 
-	if (num == NULL)
-		return NULL;
-
+	/* XXX would it be better to return NULL? */
 	if (NUMERIC_IS_NAN(num))
 		elog(ERROR, "Cannot convert NaN to int8");
 
@@ -1737,10 +1680,9 @@ numeric_int8(Numeric num)
 	free_var(&x);
 
 	result = DirectFunctionCall1(int8in, CStringGetDatum(str));
-
 	pfree(str);
 
-	return (int64 *) (result);
+	PG_RETURN_DATUM(result);
 }
 
 
@@ -1795,20 +1737,18 @@ numeric_int2(PG_FUNCTION_ARGS)
 }
 
 
-Numeric
-float8_numeric(float64 val)
+Datum
+float8_numeric(PG_FUNCTION_ARGS)
 {
+	float8		val = PG_GETARG_FLOAT8(0);
 	Numeric		res;
 	NumericVar	result;
 	char		buf[DBL_DIG + 100];
 
-	if (val == NULL)
-		return NULL;
+	if (isnan(val))
+		PG_RETURN_NUMERIC(make_result(&const_nan));
 
-	if (isnan(*val))
-		return make_result(&const_nan);
-
-	sprintf(buf, "%.*g", DBL_DIG, *val);
+	sprintf(buf, "%.*g", DBL_DIG, val);
 
 	init_var(&result);
 
@@ -1817,49 +1757,41 @@ float8_numeric(float64 val)
 
 	free_var(&result);
 
-	return res;
+	PG_RETURN_NUMERIC(res);
 }
 
 
-float64
-numeric_float8(Numeric num)
+Datum
+numeric_float8(PG_FUNCTION_ARGS)
 {
+	Numeric		num = PG_GETARG_NUMERIC(0);
 	char	   *tmp;
 	float64		result;
 
-	if (num == NULL)
-		return NULL;
-
 	if (NUMERIC_IS_NAN(num))
-	{
-		result = (float64) palloc(sizeof(float64data));
-		*result = NAN;
-		return result;
-	}
+		PG_RETURN_FLOAT8(NAN);
 
 	tmp = DatumGetCString(DirectFunctionCall1(numeric_out,
 											  NumericGetDatum(num)));
 	result = float8in(tmp);
 	pfree(tmp);
 
-	return result;
+	PG_RETURN_POINTER(result);
 }
 
 
-Numeric
-float4_numeric(float32 val)
+Datum
+float4_numeric(PG_FUNCTION_ARGS)
 {
+	float4		val = PG_GETARG_FLOAT4(0);
 	Numeric		res;
 	NumericVar	result;
 	char		buf[FLT_DIG + 100];
 
-	if (val == NULL)
-		return NULL;
+	if (isnan(val))
+		PG_RETURN_NUMERIC(make_result(&const_nan));
 
-	if (isnan(*val))
-		return make_result(&const_nan);
-
-	sprintf(buf, "%.*g", FLT_DIG, *val);
+	sprintf(buf, "%.*g", FLT_DIG, val);
 
 	init_var(&result);
 
@@ -1868,32 +1800,26 @@ float4_numeric(float32 val)
 
 	free_var(&result);
 
-	return res;
+	PG_RETURN_NUMERIC(res);
 }
 
 
-float32
-numeric_float4(Numeric num)
+Datum
+numeric_float4(PG_FUNCTION_ARGS)
 {
+	Numeric		num = PG_GETARG_NUMERIC(0);
 	char	   *tmp;
 	float32		result;
 
-	if (num == NULL)
-		return NULL;
-
 	if (NUMERIC_IS_NAN(num))
-	{
-		result = (float32) palloc(sizeof(float32data));
-		*result = NAN;
-		return result;
-	}
+		PG_RETURN_FLOAT4(NAN);
 
 	tmp = DatumGetCString(DirectFunctionCall1(numeric_out,
 											  NumericGetDatum(num)));
 	result = float4in(tmp);
 	pfree(tmp);
 
-	return result;
+	PG_RETURN_POINTER(result);
 }
 
 
@@ -1915,7 +1841,7 @@ do_numeric_accum(ArrayType *transarray, Numeric newval)
 {
 	Datum	   *transdatums;
 	int			ndatums;
-	Numeric		N,
+	Datum		N,
 				sumX,
 				sumX2;
 	ArrayType  *result;
@@ -1926,17 +1852,21 @@ do_numeric_accum(ArrayType *transarray, Numeric newval)
 					  &transdatums, &ndatums);
 	if (ndatums != 3)
 		elog(ERROR, "do_numeric_accum: expected 3-element numeric array");
-	N = DatumGetNumeric(transdatums[0]);
-	sumX = DatumGetNumeric(transdatums[1]);
-	sumX2 = DatumGetNumeric(transdatums[2]);
+	N = transdatums[0];
+	sumX = transdatums[1];
+	sumX2 = transdatums[2];
 
-	N = numeric_inc(N);
-	sumX = numeric_add(sumX, newval);
-	sumX2 = numeric_add(sumX2, numeric_mul(newval, newval));
+	N = DirectFunctionCall1(numeric_inc, N);
+	sumX = DirectFunctionCall2(numeric_add, sumX,
+							   NumericGetDatum(newval));
+	sumX2 = DirectFunctionCall2(numeric_add, sumX2,
+								DirectFunctionCall2(numeric_mul,
+													NumericGetDatum(newval),
+													NumericGetDatum(newval)));
 
-	transdatums[0] = NumericGetDatum(N);
-	transdatums[1] = NumericGetDatum(sumX);
-	transdatums[2] = NumericGetDatum(sumX2);
+	transdatums[0] = N;
+	transdatums[1] = sumX;
+	transdatums[2] = sumX2;
 
 	result = construct_array(transdatums, 3,
 							 false, -1, 'i');
@@ -2018,7 +1948,9 @@ numeric_avg(PG_FUNCTION_ARGS)
 	if (N->varlen == NUMERIC_HDRSZ)
 		PG_RETURN_NULL();
 
-	PG_RETURN_NUMERIC(numeric_div(sumX, N));
+	PG_RETURN_DATUM(DirectFunctionCall2(numeric_div,
+										NumericGetDatum(sumX),
+										NumericGetDatum(N)));
 }
 
 Datum
@@ -2172,8 +2104,8 @@ numeric_stddev(PG_FUNCTION_ARGS)
 Datum
 int2_sum(PG_FUNCTION_ARGS)
 {
-	Numeric		oldsum,
-				newval;
+	Numeric		oldsum;
+	Datum		newval;
 
 	if (PG_ARGISNULL(0))
 	{
@@ -2181,9 +2113,8 @@ int2_sum(PG_FUNCTION_ARGS)
 		if (PG_ARGISNULL(1))
 			PG_RETURN_NULL();	/* still no non-null */
 		/* This is the first non-null input. */
-		newval = DatumGetNumeric(DirectFunctionCall1(int2_numeric,
-													 PG_GETARG_DATUM(1)));
-		PG_RETURN_NUMERIC(newval);
+		newval = DirectFunctionCall1(int2_numeric, PG_GETARG_DATUM(1));
+		PG_RETURN_DATUM(newval);
 	}
 
 	oldsum = PG_GETARG_NUMERIC(0);
@@ -2193,17 +2124,17 @@ int2_sum(PG_FUNCTION_ARGS)
 		PG_RETURN_NUMERIC(oldsum);
 
 	/* OK to do the addition. */
-	newval = DatumGetNumeric(DirectFunctionCall1(int2_numeric,
-												 PG_GETARG_DATUM(1)));
+	newval = DirectFunctionCall1(int2_numeric, PG_GETARG_DATUM(1));
 
-	PG_RETURN_NUMERIC(numeric_add(oldsum, newval));
+	PG_RETURN_DATUM(DirectFunctionCall2(numeric_add,
+										NumericGetDatum(oldsum), newval));
 }
 
 Datum
 int4_sum(PG_FUNCTION_ARGS)
 {
-	Numeric		oldsum,
-				newval;
+	Numeric		oldsum;
+	Datum		newval;
 
 	if (PG_ARGISNULL(0))
 	{
@@ -2211,9 +2142,8 @@ int4_sum(PG_FUNCTION_ARGS)
 		if (PG_ARGISNULL(1))
 			PG_RETURN_NULL();	/* still no non-null */
 		/* This is the first non-null input. */
-		newval = DatumGetNumeric(DirectFunctionCall1(int4_numeric,
-													 PG_GETARG_DATUM(1)));
-		PG_RETURN_NUMERIC(newval);
+		newval = DirectFunctionCall1(int4_numeric, PG_GETARG_DATUM(1));
+		PG_RETURN_DATUM(newval);
 	}
 
 	oldsum = PG_GETARG_NUMERIC(0);
@@ -2223,17 +2153,17 @@ int4_sum(PG_FUNCTION_ARGS)
 		PG_RETURN_NUMERIC(oldsum);
 
 	/* OK to do the addition. */
-	newval = DatumGetNumeric(DirectFunctionCall1(int4_numeric,
-												 PG_GETARG_DATUM(1)));
+	newval = DirectFunctionCall1(int4_numeric, PG_GETARG_DATUM(1));
 
-	PG_RETURN_NUMERIC(numeric_add(oldsum, newval));
+	PG_RETURN_DATUM(DirectFunctionCall2(numeric_add,
+										NumericGetDatum(oldsum), newval));
 }
 
 Datum
 int8_sum(PG_FUNCTION_ARGS)
 {
-	Numeric		oldsum,
-				newval;
+	Numeric		oldsum;
+	Datum		newval;
 
 	if (PG_ARGISNULL(0))
 	{
@@ -2241,9 +2171,8 @@ int8_sum(PG_FUNCTION_ARGS)
 		if (PG_ARGISNULL(1))
 			PG_RETURN_NULL();	/* still no non-null */
 		/* This is the first non-null input. */
-		newval = DatumGetNumeric(DirectFunctionCall1(int8_numeric,
-													 PG_GETARG_DATUM(1)));
-		PG_RETURN_NUMERIC(newval);
+		newval = DirectFunctionCall1(int8_numeric, PG_GETARG_DATUM(1));
+		PG_RETURN_DATUM(newval);
 	}
 
 	oldsum = PG_GETARG_NUMERIC(0);
@@ -2253,10 +2182,10 @@ int8_sum(PG_FUNCTION_ARGS)
 		PG_RETURN_NUMERIC(oldsum);
 
 	/* OK to do the addition. */
-	newval = DatumGetNumeric(DirectFunctionCall1(int8_numeric,
-												 PG_GETARG_DATUM(1)));
+	newval = DirectFunctionCall1(int8_numeric, PG_GETARG_DATUM(1));
 
-	PG_RETURN_NUMERIC(numeric_add(oldsum, newval));
+	PG_RETURN_DATUM(DirectFunctionCall2(numeric_add,
+										NumericGetDatum(oldsum), newval));
 }
 
 

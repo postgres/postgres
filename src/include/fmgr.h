@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fmgr.h,v 1.8 2000/07/12 02:37:25 tgl Exp $
+ * $Id: fmgr.h,v 1.9 2000/07/29 03:26:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -185,6 +185,7 @@ extern struct varlena * pg_detoast_datum_copy(struct varlena * datum);
 
 /* Macros for returning results of standard types */
 
+#define PG_RETURN_DATUM(x)   return (x)
 #define PG_RETURN_INT32(x)   return Int32GetDatum(x)
 #define PG_RETURN_UINT32(x)  return UInt32GetDatum(x)
 #define PG_RETURN_INT16(x)   return Int16GetDatum(x)

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.64 2000/07/12 02:37:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.65 2000/07/29 03:26:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,18 +41,17 @@ static int	text_cmp(text *arg1, text *arg2);
  *				The input is scaned twice.
  *				The error checking of input is minimal.
  */
-bytea *
-byteain(char *inputText)
+Datum
+byteain(PG_FUNCTION_ARGS)
 {
+	char	   *inputText = PG_GETARG_CSTRING(0);
 	char	   *tp;
 	char	   *rp;
 	int			byte;
 	bytea	   *result;
 
-	if (inputText == NULL)
-		elog(ERROR, "Bad input string for type bytea");
-
 	for (byte = 0, tp = inputText; *tp != '\0'; byte++)
+	{
 		if (*tp++ == '\\')
 		{
 			if (*tp == '\\')
@@ -62,12 +61,16 @@ byteain(char *inputText)
 					 !isdigit((int) *tp++))
 				elog(ERROR, "Bad input string for type bytea");
 		}
-	tp = inputText;
+	}
+
 	byte += VARHDRSZ;
 	result = (bytea *) palloc(byte);
-	result->vl_len = byte;		/* varlena? */
+	result->vl_len = byte;		/* set varlena length */
+
+	tp = inputText;
 	rp = result->vl_dat;
 	while (*tp != '\0')
+	{
 		if (*tp != '\\' || *++tp == '\\')
 			*rp++ = *tp++;
 		else
@@ -78,7 +81,9 @@ byteain(char *inputText)
 			byte <<= 3;
 			*rp++ = byte + VAL(*tp++);
 		}
-	return result;
+	}
+
+	PG_RETURN_BYTEA_P(result);
 }
 
 /*
@@ -89,9 +94,10 @@ byteain(char *inputText)
  *
  *		NULL vlena should be an error--returning string with NULL for now.
  */
-char *
-byteaout(bytea *vlena)
+Datum
+byteaout(PG_FUNCTION_ARGS)
 {
+	bytea	   *vlena = PG_GETARG_BYTEA_P(0);
 	char	   *result;
 	char	   *vp;
 	char	   *rp;
@@ -99,47 +105,42 @@ byteaout(bytea *vlena)
 	int			i;
 	int			len;
 
-	if (vlena == NULL)
-	{
-		result = (char *) palloc(2);
-		result[0] = '-';
-		result[1] = '\0';
-		return result;
-	}
-	vp = vlena->vl_dat;
 	len = 1;					/* empty string has 1 char */
+	vp = vlena->vl_dat;
 	for (i = vlena->vl_len - VARHDRSZ; i != 0; i--, vp++)
+	{
 		if (*vp == '\\')
 			len += 2;
 		else if (isascii((int) *vp) && isprint((int) *vp))
 			len++;
 		else
-			len += VARHDRSZ;
+			len += 4;
+	}
 	rp = result = (char *) palloc(len);
 	vp = vlena->vl_dat;
-	for (i = vlena->vl_len - VARHDRSZ; i != 0; i--)
+	for (i = vlena->vl_len - VARHDRSZ; i != 0; i--, vp++)
+	{
 		if (*vp == '\\')
 		{
-			vp++;
 			*rp++ = '\\';
 			*rp++ = '\\';
 		}
 		else if (isascii((int) *vp) && isprint((int) *vp))
-			*rp++ = *vp++;
+			*rp++ = *vp;
 		else
 		{
-			val = *vp++;
-			*rp = '\\';
-			rp += 3;
-			*rp-- = DIG(val & 07);
+			val = *vp;
+			rp[0] = '\\';
+			rp[3] = DIG(val & 07);
 			val >>= 3;
-			*rp-- = DIG(val & 07);
+			rp[2] = DIG(val & 07);
 			val >>= 3;
-			*rp = DIG(val & 03);
-			rp += 3;
+			rp[1] = DIG(val & 03);
+			rp += 4;
 		}
+	}
 	*rp = '\0';
-	return result;
+	PG_RETURN_CSTRING(result);
 }
 
 
@@ -663,13 +664,12 @@ text_smaller(PG_FUNCTION_ARGS)
  * get the number of bytes contained in an instance of type 'bytea'
  *-------------------------------------------------------------
  */
-int32
-byteaoctetlen(bytea *v)
+Datum
+byteaoctetlen(PG_FUNCTION_ARGS)
 {
-	if (!PointerIsValid(v))
-		return 0;
+	bytea	   *v = PG_GETARG_BYTEA_P(0);
 
-	return VARSIZE(v) - VARHDRSZ;
+	PG_RETURN_INT32(VARSIZE(v) - VARHDRSZ);
 }
 
 /*-------------------------------------------------------------

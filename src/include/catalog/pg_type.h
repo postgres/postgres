@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.93 2000/07/22 03:34:28 tgl Exp $
+ * $Id: pg_type.h,v 1.94 2000/07/29 03:26:43 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -174,7 +174,7 @@ DATA(insert OID = 16 (	bool	   PGUID  1   1 t b t \054 0   0 boolin boolout bool
 DESCR("boolean, 'true'/'false'");
 #define BOOLOID			16
 
-DATA(insert OID = 17 (	bytea	   PGUID -1  -1 f b t \054 0  0 byteain byteaout byteain byteaout i p _null_ ));
+DATA(insert OID = 17 (	bytea	   PGUID -1  -1 f b t \054 0  0 byteain byteaout byteain byteaout i x _null_ ));
 DESCR("variable-length string, binary values escaped");
 #define BYTEAOID		17
 
@@ -368,10 +368,10 @@ DATA(insert OID = 1034 (  _aclitem	 PGUID -1 -1 f b t \054 0 1033 array_in array
 DATA(insert OID = 1040 (  _macaddr	 PGUID -1 -1 f b t \054 0  829 array_in array_out array_in array_out i x _null_ ));
 DATA(insert OID = 1041 (  _inet    PGUID -1 -1 f b t \054 0  869 array_in array_out array_in array_out i x _null_ ));
 DATA(insert OID = 651  (  _cidr    PGUID -1 -1 f b t \054 0  650 array_in array_out array_in array_out i x _null_ ));
-DATA(insert OID = 1042 ( bpchar		 PGUID -1  -1 f b t \054 0	0 bpcharin bpcharout bpcharin bpcharout i p _null_ ));
+DATA(insert OID = 1042 ( bpchar		 PGUID -1  -1 f b t \054 0	0 bpcharin bpcharout bpcharin bpcharout i x _null_ ));
 DESCR("char(length), blank-padded string, fixed storage length");
 #define BPCHAROID		1042
-DATA(insert OID = 1043 ( varchar	 PGUID -1  -1 f b t \054 0	0 varcharin varcharout varcharin varcharout i p _null_ ));
+DATA(insert OID = 1043 ( varchar	 PGUID -1  -1 f b t \054 0	0 varcharin varcharout varcharin varcharout i x _null_ ));
 DESCR("varchar(length), non-blank-padded string, variable storage length");
 #define VARCHAROID		1043
 
@@ -417,7 +417,7 @@ DESCR("variable-length string, stored compressed");
 #define LZTEXTOID	  1625
 
 /* OIDS 1700 - 1799 */
-DATA(insert OID = 1700 ( numeric	   PGUID -1  -1 f b t \054 0  0 numeric_in numeric_out numeric_in numeric_out i p _null_ ));
+DATA(insert OID = 1700 ( numeric	   PGUID -1  -1 f b t \054 0  0 numeric_in numeric_out numeric_in numeric_out i m _null_ ));
 DESCR("numeric(precision, decimal), arbitrary precision number");
 #define NUMERICOID		1700
 

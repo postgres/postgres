@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.75 2000/07/06 05:48:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.76 2000/07/29 03:26:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -818,7 +818,8 @@ convert_numeric_to_scalar(Datum value, Oid typid)
 		case FLOAT8OID:
 			return (double) DatumGetFloat8(value);
 		case NUMERICOID:
-			return (double) (*numeric_float8((Numeric) DatumGetPointer(value)));
+			return (double) DatumGetFloat8(DirectFunctionCall1(numeric_float8,
+															   value));
 		case OIDOID:
 		case REGPROCOID:
 			/* we can treat OIDs as integers... */
@@ -1825,11 +1826,13 @@ string_lessthan(const char *str1, const char *str2, Oid datatype)
 			break;
 
 		case BPCHAROID:
-			result = bpcharlt((char *) datum1, (char *) datum2);
+			result = DatumGetBool(DirectFunctionCall2(bpcharlt,
+													  datum1, datum2));
 			break;
 
 		case VARCHAROID:
-			result = varcharlt((char *) datum1, (char *) datum2);
+			result = DatumGetBool(DirectFunctionCall2(varcharlt,
+													  datum1, datum2));
 			break;
 
 		case NAMEOID:
