@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile.in,v 1.3 1998/10/07 06:50:37 thomas Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile.in,v 1.4 1998/10/10 17:08:11 thomas Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -111,9 +111,9 @@ examples:
 	$(MAKE) -C examples all
 
 .PHONY: beforeinstall-headers install-headers 
-.PHONY: install beforeinstall-lib install-$(LIBNAME) doc
+.PHONY: install beforeinstall-lib install-$(LIBNAME)
 
-install: install-headers install-$(LIBNAME) $(INSTALL-SHLIB-DEP) doc
+install: install-headers install-$(LIBNAME) $(INSTALL-SHLIB-DEP)
 
 LIBPGXXDIR = $(LIBNAME)
 LIBPGXXHEADERDIR = $(HEADERDIR)/$(LIBPGXXDIR)
@@ -146,10 +146,6 @@ install-shlib: $(SHLIBNAME) beforeinstall-lib
 	$(INSTALL) $(INSTL_SHLIB_OPTS) $(SHLIB) $(LIBDIR)/$(SHLIB)
 	rm -f $(LIBDIR)/libpq++.so
 	$(LN_S) -f $(SHLIB) $(LIBDIR)/libpq++.so
-
-
-doc:
-	$(MAKE) -C man install
 
 clean:
 	rm -f $(LIBNAME).a $(OBJS)
