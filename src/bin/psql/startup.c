@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.50 2001/06/02 18:25:18 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.51 2001/06/30 17:26:12 petere Exp $
  */
 #include "postgres_fe.h"
 
@@ -174,7 +174,7 @@ main(int argc, char *argv[])
 		 * by the name on the command line.
 		 */
 		if (strcmp(options.username, "\001") == 0)
-			username = simple_prompt("Username: ", 100, true);
+			username = simple_prompt("User name: ", 100, true);
 		else
 			username = strdup(options.username);
 	}
