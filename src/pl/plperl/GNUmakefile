@@ -1,25 +1,26 @@
-# $Header: /cvsroot/pgsql/src/pl/plperl/GNUmakefile,v 1.6 2000/11/02 18:40:13 petere Exp $
+# $Header: /cvsroot/pgsql/src/pl/plperl/GNUmakefile,v 1.7 2001/08/26 23:54:41 petere Exp $
 
 subdir = src/pl/plperl
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
-plperl_installdir = $(DESTDIR)$(libdir)
+ifeq ($(allow_nonpic_in_shlib),yes)
+makefile_pl_flags = --force
+endif
 
 
 all: Makefile
-	$(MAKE) -f $< all
+	$(MAKE) -f $< all VPATH=$(VPATH)
 
 Makefile: Makefile.PL
-	plperl_installdir='$(plperl_installdir)' \
-	EXTRA_INCLUDES='$(filter -I%, $(CPPFLAGS))' \
-	$(PERL) $<
+	plperl_installdir='$$(DESTDIR)$(libdir)' \
+	$(PERL) $< $(makefile_pl_flags) INC='-I$(srcdir) $(filter -I%, $(CPPFLAGS))'
 
 install: all installdirs
-	$(MAKE) -f Makefile install
+	$(MAKE) -f Makefile install DESTDIR='$(DESTDIR)'
 
 installdirs:
-	$(mkinstalldirs) $(DESTDIR)$(plperl_installdir)
+	$(mkinstalldirs) $(DESTDIR)$(libdir)
 
 uninstall:
 	rm -f $(DESTDIR)$(libdir)/plperl$(DLSUFFIX)
