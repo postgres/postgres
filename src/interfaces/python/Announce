@@ -1,8 +1,8 @@
 
-Announce: Release of PyGreSQL version 2.3
+Announce: Release of PyGreSQL version 2.4
 ===============================================
 
-PyGreSQL v2.3 has been released.
+PyGreSQL v2.4 has been released.
 It is available at: ftp://ftp.druid.net/pub/distrib/PyGreSQL.tgz.  If
 you are on NetBSD, look in the packages directory under databases.  If
 it isn't there yet, it should be there shortly.  You can also pick up the
@@ -31,6 +31,9 @@ PostgreSQL features from a Python script.
 I wanted to have DB-SIG API support in the next release but there are
 enough fixes and improvements to make one more release before starting
 on that.  The next version will be 3.0 and have the DB-SIG API support.
+Note that I said this for 2.4 but some required changes from others have
+been slow in coming (I'm not complaining, people do have lives) and
+there were enough fixes that I didn't want to keep them from a release.
 
 PyGreSQL 2.3 was developed and tested on a NetBSD 1.3_BETA system.  It
 is based on the PyGres95 code written by Pascal Andre,
@@ -38,6 +41,17 @@ andre@chimay.via.ecp.fr.  I changed the version to 2.0 and updated the
 code for Python 1.5 and PostgreSQL 6.2.1.  While I was at it I upgraded
 the code to use full ANSI style prototypes and changed the order of
 arguments to connect.  Later versions are fixes and enhancements to that.
+
+Important changes from PyGreSQL 2.3 to PyGreSQL 2.4:
+  - Insert returns None if the user doesn't have select permissions
+    on the table.  It can (and does) happen that one has insert but
+    not select permissions on a table.
+  - Added ntuples() method to query object (brit@druid.net)
+  - Corrected a bug related to getresult() and the money type
+  - Corrected a but related to negative money amounts
+  - Allow update based on primary key if munged oid not available and
+    table has a primary key
+  - Add many __doc__ strings. (andre@via.ecp.fr)
 
 Important changes from PyGreSQL 2.2 to PyGreSQL 2.3:
   - connect.host returns "localhost" when connected to Unix socket

@@ -25,7 +25,7 @@ def _quote(d, t):
 			return "'f'"
 
 	if d == "": return "null"
-	return "'%s'" % string.strip(re.sub('\'', '\'\'', "%s" % d))
+	return "'%s'" % string.strip(re.sub("'", "''", "%s" % d))
 
 class DB:
 	"""This class wraps the pg connection type"""
@@ -175,16 +175,30 @@ class DB:
 
 		# reload the dictionary to catch things modified by engine
 		# note that get() changes 'oid' below to oid_table
-		return self.get(cl, a, 'oid')
+		# if no read perms (it can and does happen) return None
+		try: return self.get(cl, a, 'oid')
+		except: return None
 
-	# update always works on the oid which get returns
+	# Update always works on the oid which get returns if available
+	# otherwise use the primary key.  Fail if neither.
 	def update(self, cl, a):
-		q = "SELECT oid FROM %s WHERE oid = %s" % (cl, a['oid_%s' % cl])
+		foid = 'oid_%s' % cl
+		pk = self.pkeys[cl]
+		if a.has_key(foid):
+			where = "oid = %s" % a[foid]
+		elif a.has_key(pk):
+			where = "%s = '%s'" % (pk, a[pk])
+		else:
+			raise error, "Update needs key (%s) or oid as %s" % (pk, foid)
+
+		q = "SELECT oid FROM %s WHERE %s" % (cl, where)
 		if self.debug != None: print self.debug % q
 		res = self.db.query(q).getresult()
+
 		if len(res) < 1:
-			raise error,  "No record in %s where oid = %s (%s)" % \
-						(cl, a['oid_%s' % cl], sys.exc_value)
+			raise error,  "No record in %s where %s (%s)" % \
+						(cl, where, sys.exc_value)
+		else: a[foid] = res[0][0]
 
 		v = []
 		k = 0
@@ -199,7 +213,7 @@ class DB:
 
 		try:
 			q = "UPDATE %s SET %s WHERE oid = %s" % \
-							(cl, string.join(v, ','), a['oid_%s' % cl])
+							(cl, string.join(v, ','), a[foid])
 			if self.debug != None: print self.debug % q
 			self.db.query(q)
 		except:

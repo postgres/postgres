@@ -1,11 +1,11 @@
 
-PyGreSQL - v2.3: PostgreSQL module for Python
+PyGreSQL - v2.4: PostgreSQL module for Python
 ==============================================
 
 0. Copyright notice
 ===================
 
-  PyGreSQL, version 2.3
+  PyGreSQL, version 2.4
   A Python interface for PostgreSQL database.
   Written by D'Arcy J.M. Cain, darcy@druid.net<BR>
   Based heavily on code written by Pascal Andre, andre@chimay.via.ecp.fr.
@@ -129,12 +129,13 @@ style prototypes and changed the order of arguments to connect.
 
 The home sites of the different packages are:
 
-  - Python:     ftp://ftp.python.org:/pub/python
-  - PosgreSQL:  ftp://ftp.PostgreSQL.org/pub/postgresql-6.4.tar.gz
-  - PyGreSQL:   ftp://ftp.druid.net/pub/distrib/pygresql-2.2.tgz
+  - Python:     http://www.python.org/
+  - PosgreSQL:  http://www.PostgreSQL.org/
+  - PyGreSQL:   http://www.druid.net/pygresql/
 
 A Linux RPM can be picked up from ftp://www.eevolute.com/pub/python/.
-
+A NetBSD package thould be in the distribution soon and is available
+at ftp://ftp.druid.net/pub/distrib/pygresql.pkg.tgz.
 
 1.5. Information and support
 ----------------------------
@@ -163,6 +164,10 @@ This module defines three objects: the pgobject that handles the connection
 and all the requests to the database, the pglargeobject that handles
 all the accesses to Postgres large objects and pgqueryobject that handles
 query results.
+
+If you want to see a simple example of the use of some of these functions,
+see http://www.druid.net/rides/ where I have a link at the bottom to the
+actual Python code for the page.
 
 2.1. pg module description
 ----------------------------
@@ -470,6 +475,16 @@ methods are specified by the tag [LO].
       build a function that converts result list strings to their correct
       type, using a hardcoded table definition.  The number returned is the
       field rank in the result values list.
+
+    2.2.1.5 ntuples - return number of tuples in query object
+    ---------------------------------------------------------
+
+    Syntax: ntuples()
+    Parameters: None
+    Return type: integer
+    Description:
+      This method returns the number of tuples found in a query.
+
 
   2.2.2. reset - resets the connection
   ------------------------------------
@@ -847,25 +862,7 @@ The following describes the methods and variables of this class.
    Name of field which is the primary key of the table.
  Description:
    This method returns the primary key of a table.  Note that this raises
-   an exception if the table doesn't have a primary key.  Further, in the
-   currently released implementation of PostgreSQL the 'PRIMARY KEY' syntax
-   doesn't actually fill in the necessary tables to determine primary keys.
-   You can do this yourself with the following query.
-
-	# Set up table and primary_field variables...
-
-     """UPDATE pg_index SET indisprimary = 't'
-                            WHERE pg_index.oid in (SELECT pg_index.oid
-       FROM pg_class, pg_attribute, pg_index
-       WHERE pg_class.oid = pg_attribute.attrelid AND
-           pg_class.oid = pg_index.indrelid AND
-           pg_index.indkey[0] = pg_attribute.attnum AND
-           pg_class.relname = '%(table)s' AND
-           pg_attribute.attname = '%(primary_field)');""" % locals()
-
-   This will be fixed in the upcoming 6.5 release of PostgreSQL or
-   you can download the current sources now.  Downloading current
-   is, as usual, at your own risk.
+   an exception if the table doesn't have a primary key.
 
  3.3. get_databases - get list of databases in the system
  --------------------------------------------------------

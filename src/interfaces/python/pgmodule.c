@@ -21,8 +21,8 @@
  * AUTHOR HAS NO OBLIGATIONS TO PROVIDE MAINTENANCE, SUPPORT, UPDATES,
  * ENHANCEMENTS, OR MODIFICATIONS.
  * 
- * Further modifications copyright 1997 by D'Arcy J.M. Cain (darcy@druid.net)
- * subject to the same terms and conditions as above.
+ * Further modifications copyright 1997, 1998, 1999 by D'Arcy J.M. Cain
+ * (darcy@druid.net) subject to the same terms and conditions as above.
  * 
  */
 
@@ -44,13 +44,21 @@
 #define	CASHOID		790
 
 static PyObject		*PGError;
-static const char	*PyPgVersion = "2.3";
+static const char	*PyPgVersion = "3.0 beta";
 
 /* taken from fileobject.c */
 #define BUF(v) PyString_AS_STRING((PyStringObject *)(v))
 
-#define CHECK_OPEN        1
-#define CHECK_CLOSE       2
+/* default values */
+#define	MODULE_NAME			"pgsql"
+#define	ARRAYSIZE			1
+
+/* flags for object validity checks */
+#define CHECK_OPEN			1
+#define CHECK_CLOSE			2
+#define CHECK_CNX			4
+#define CHECK_RESULT		8
+#define CHECK_DQL			16
 
 #define MAX_BUFFER_SIZE   8192	/* maximum transaction size */
 
@@ -83,7 +91,6 @@ static PyObject	*pg_default_passwd;		/* default password */
 #endif							/* DEFAULT_VARS */
 
 /* --------------------------------------------------------------------- */
-
 /* OBJECTS DECLARATION */
 
 /* pg connection object */
@@ -117,9 +124,9 @@ staticforward PyTypeObject PgQueryType;
 typedef struct
 {
 	PyObject_HEAD
-	pgobject * pgcnx;
-	Oid             lo_oid;
-	int             lo_fd;
+	pgobject       *pgcnx;			/* parent connection object */
+	Oid             lo_oid;			/* large object oid */
+	int             lo_fd;			/* large object fd */
 }               pglargeobject;
 
 staticforward PyTypeObject PglargeType;
@@ -128,14 +135,27 @@ staticforward PyTypeObject PglargeType;
 #endif							/* LARGE_OBJECTS */
 
 /* --------------------------------------------------------------------- */
-
 /* INTERNAL FUNCTIONS */
 
-#ifdef LARGE_OBJECTS
-/* validity check (large object) */
+/* checks connection validity */
 static int
-check_lo(pglargeobject * self, int level)
+check_cnx_obj(pgobject * self)
 {
+	if (!self->valid) {
+		PyErr_SetString(PGError, "connection has been closed");
+		return 0;
+	}
+	return 1;
+}
+
+#ifdef LARGE_OBJECTS
+/* checks large object validity */
+static int
+check_lo_obj(pglargeobject * self, int level)
+{
+	if (!check_cnx_obj(self->pgcnx))
+		return 0;
+
 	if (!self->lo_oid)
 	{
 		PyErr_SetString(PGError, "object is not valid (null oid).");
@@ -166,130 +186,32 @@ check_lo(pglargeobject * self, int level)
 #endif							/* LARGE_OBJECTS */
 
 /* --------------------------------------------------------------------- */
-
-#ifdef LARGE_OBJECTS
 /* PG CONNECTION OBJECT IMPLEMENTATION */
 
-/* pglargeobject initialisation (from pgobject) */
+#ifdef LARGE_OBJECTS
 
-/* creates large object */
-static PyObject  *
-pg_locreate(pgobject * self, PyObject * args)
+/* constructor (internal use only) */
+static pglargeobject *
+pglarge_new(pgobject * pgcnx, Oid oid)
 {
-	int             mode;
-	pglargeobject  *npglo;
-
-	if (!self->cnx)
-	{
-		PyErr_SetString(PyExc_TypeError, "Connection is not valid");
-		return NULL;
-	}
-
-	/* gets arguments */
-	if (!PyArg_ParseTuple(args, "i", &mode))
-	{
-		PyErr_SetString(PyExc_TypeError,
-				"locreate(mode), with mode (integer).");
-		return NULL;
-	}
+	pglargeobject * npglo;
 
 	if ((npglo = PyObject_NEW(pglargeobject, &PglargeType)) == NULL)
-		return NULL;
-
-	npglo->pgcnx = self;
-	Py_XINCREF(self);
+    	return NULL;
+	   
+	Py_XINCREF(pgcnx);
+	npglo->pgcnx = pgcnx;
 	npglo->lo_fd = -1;
-	npglo->lo_oid = lo_creat(self->cnx, mode);
+	npglo->lo_oid = oid;
 
-	/* checks result validity */
-	if (npglo->lo_oid == 0)
-	{
-		PyErr_SetString(PGError, "can't create large object.");
-		Py_XDECREF(npglo);
-		return NULL;
-	}
-
-	return (PyObject *) npglo;
+	return npglo;			
 }
-
-/* init from already known oid */
-static PyObject *
-pg_getlo(pgobject * self, PyObject * args)
-{
-	int             lo_oid;
-	pglargeobject  *npglo;
-
-	/* gets arguments */
-	if (!PyArg_ParseTuple(args, "i", &lo_oid))
-	{
-		PyErr_SetString(PyExc_TypeError, "loopen(oid), with oid (integer).");
-		return NULL;
-	}
-
-	if (!lo_oid)
-	{
-		PyErr_SetString(PyExc_ValueError, "the object oid can't be null.");
-		return NULL;
-	}
-
-	/* creates object */
-	if ((npglo = PyObject_NEW(pglargeobject, &PglargeType)) == NULL)
-		return NULL;
-
-	npglo->pgcnx = self;
-	Py_XINCREF(self);
-	npglo->lo_fd = -1;
-	npglo->lo_oid = lo_oid;
-
-	return (PyObject *) npglo;
-}
-
-/* import unix file */
-static PyObject *
-pg_loimport(pgobject * self, PyObject * args)
-{
-	char           *name;
-	pglargeobject  *npglo;
-
-	if (!self->cnx)
-	{
-		PyErr_SetString(PyExc_TypeError, "Connection is not valid");
-		return NULL;
-	}
-
-	/* gets arguments */
-	if (!PyArg_ParseTuple(args, "s", &name))
-	{
-		PyErr_SetString(PyExc_TypeError, "loimport(name), with name (string).");
-		return NULL;
-	}
-
-	if ((npglo = PyObject_NEW(pglargeobject, &PglargeType)) == NULL)
-		return NULL;
-
-	npglo->pgcnx = self;
-	Py_XINCREF(self);
-	npglo->lo_fd = -1;
-	npglo->lo_oid = lo_import(self->cnx, name);
-
-	/* checks result validity */
-	if (npglo->lo_oid == 0)
-	{
-		PyErr_SetString(PGError, "can't create large object.");
-		Py_XDECREF(npglo);
-		return NULL;
-	}
-
-	return (PyObject *) npglo;
-}
-
-/* pglargeobject methods */
 
 /* destructor */
 static void
 pglarge_dealloc(pglargeobject * self)
 {
-	if (self->lo_fd >= 0 && self->pgcnx->valid == 1)
+	if (self->lo_fd >= 0 && check_cnx_obj(self->pgcnx))
 		lo_close(self->pgcnx->cnx, self->lo_fd);
 
 	Py_XDECREF(self->pgcnx);
@@ -297,13 +219,17 @@ pglarge_dealloc(pglargeobject * self)
 }
 
 /* opens large object */
+static char pglarge_open__doc__[] =
+	"open(mode) -- open access to large object with specified mode " 
+	"(INV_READ, INV_WRITE constants defined by module).";
+
 static PyObject *
 pglarge_open(pglargeobject * self, PyObject * args)
 {
 	int             mode, fd;
 
 	/* check validity */
-	if (!check_lo(self, CHECK_CLOSE))
+	if (!check_lo_obj(self, CHECK_CLOSE))
 		return NULL;
 
 	/* gets arguments */
@@ -327,6 +253,9 @@ pglarge_open(pglargeobject * self, PyObject * args)
 }
 
 /* close large object */
+static char pglarge_close__doc__[] =
+	"close() -- close access to large object data.";
+    
 static PyObject *
 pglarge_close(pglargeobject * self, PyObject * args)
 {
@@ -339,7 +268,7 @@ pglarge_close(pglargeobject * self, PyObject * args)
 	}
 
 	/* checks validity */
-	if (!check_lo(self, CHECK_OPEN))
+	if (!check_lo_obj(self, CHECK_OPEN))
 		return NULL;
 
 	/* closes large object */
@@ -356,6 +285,10 @@ pglarge_close(pglargeobject * self, PyObject * args)
 }
 
 /* reads from large object */
+static char pglarge_read__doc__[] =
+	"read(integer) -- read from large object to sized string. "
+	"Object must be opened in read mode before calling this method.";
+
 static PyObject *
 pglarge_read(pglargeobject * self, PyObject * args)
 {
@@ -363,7 +296,7 @@ pglarge_read(pglargeobject * self, PyObject * args)
 	PyObject       *buffer;
 
 	/* checks validity */
-	if (!check_lo(self, CHECK_OPEN))
+	if (!check_lo_obj(self, CHECK_OPEN))
 		return NULL;
 
 	/* gets arguments */
@@ -395,6 +328,10 @@ pglarge_read(pglargeobject * self, PyObject * args)
 }
 
 /* write to large object */
+static char pglarge_write__doc__[] =
+	"write(string) -- write sized string to large object. "
+	"Object must be opened in read mode before calling this method.";
+    
 static PyObject *
 pglarge_write(pglargeobject * self, PyObject * args)
 {
@@ -402,7 +339,7 @@ pglarge_write(pglargeobject * self, PyObject * args)
 	int             size;
 
 	/* checks validity */
-	if (!check_lo(self, CHECK_OPEN))
+	if (!check_lo_obj(self, CHECK_OPEN))
 		return NULL;
 
 	/* gets arguments */
@@ -427,13 +364,19 @@ pglarge_write(pglargeobject * self, PyObject * args)
 }
 
 /* go to position in large object */
+static char pglarge_seek__doc__[] =
+	"seek(off, whence) -- move to specified position. Object must be opened "
+	"before calling this method. whence can be SEEK_SET, SEEK_CUR or SEEK_END, "
+	"constants defined by module.";
+
 static PyObject *
 pglarge_lseek(pglargeobject * self, PyObject * args)
 {
-	int             ret, offset, whence;
+	/* offset and whence are initialized to keep compiler happy */
+	int             ret, offset = 0, whence = 0;
 
 	/* checks validity */
-	if (!check_lo(self, CHECK_OPEN))
+	if (!check_lo_obj(self, CHECK_OPEN))
 		return NULL;
 
 	/* gets arguments */
@@ -456,6 +399,10 @@ pglarge_lseek(pglargeobject * self, PyObject * args)
 }
 
 /* gets large object size */
+static char pglarge_size__doc__[] =
+	"size() -- return large object size. "
+	"Object must be opened before calling this method.";
+
 static PyObject *
 pglarge_size(pglargeobject * self, PyObject * args)
 {
@@ -470,7 +417,7 @@ pglarge_size(pglargeobject * self, PyObject * args)
 	}
 
 	/* checks validity */
-	if (!check_lo(self, CHECK_OPEN))
+	if (!check_lo_obj(self, CHECK_OPEN))
 		return NULL;
 
 	/* gets current position */
@@ -500,6 +447,10 @@ pglarge_size(pglargeobject * self, PyObject * args)
 }
 
 /* gets large object cursor position */
+static char pglarge_tell__doc__[] =
+	"tell() -- give current position in large object. "
+	"Object must be opened before calling this method.";
+
 static PyObject *
 pglarge_tell(pglargeobject * self, PyObject * args)
 {
@@ -514,7 +465,7 @@ pglarge_tell(pglargeobject * self, PyObject * args)
 	}
 
 	/* checks validity */
-	if (!check_lo(self, CHECK_OPEN))
+	if (!check_lo_obj(self, CHECK_OPEN))
 		return NULL;
 
 	/* gets current position */
@@ -529,13 +480,17 @@ pglarge_tell(pglargeobject * self, PyObject * args)
 }
 
 /* exports large object as unix file */
+static char pglarge_export__doc__[] =
+	"export(string) -- export large object data to specified file. "
+	"Object must be closed when calling this method.";
+
 static PyObject *
 pglarge_export(pglargeobject * self, PyObject * args)
 {
 	char           *name;
 
 	/* checks validity */
-	if (!check_lo(self, CHECK_CLOSE))
+	if (!check_lo_obj(self, CHECK_CLOSE))
 		return NULL;
 
 	/* gets arguments */
@@ -558,6 +513,10 @@ pglarge_export(pglargeobject * self, PyObject * args)
 }
 
 /* deletes a large object */
+static char pglarge_unlink__doc__[] =
+	"unlink() -- destroy large object. "
+	"Object must be closed when calling this method.";
+
 static PyObject *
 pglarge_unlink(pglargeobject * self, PyObject * args)
 {
@@ -570,7 +529,7 @@ pglarge_unlink(pglargeobject * self, PyObject * args)
 	}
 
 	/* checks validity */
-	if (!check_lo(self, CHECK_CLOSE))
+	if (!check_lo_obj(self, CHECK_CLOSE))
 		return NULL;
 
 	/* deletes the object, invalidate it on success */
@@ -587,16 +546,16 @@ pglarge_unlink(pglargeobject * self, PyObject * args)
 
 /* large object methods */
 static struct PyMethodDef pglarge_methods[] = {
-	{"open",	(PyCFunction) pglarge_open, 1},	/* opens large object */
-	{"close",	(PyCFunction) pglarge_close, 1},/* closes large object */
-	{"read",	(PyCFunction) pglarge_read, 1},	/* reads from large object */
-	{"write",	(PyCFunction) pglarge_write, 1},/* writes to large object */
-	{"seek",	(PyCFunction) pglarge_lseek, 1},/* seeks position */
-	{"size",	(PyCFunction) pglarge_size, 1},	/* gives object size */
-	{"tell",	(PyCFunction) pglarge_tell, 1},	/* gives position in lobj */
-	{"export",	(PyCFunction) pglarge_export, 1},/* exports to unix file */
-	{"unlink",	(PyCFunction) pglarge_unlink, 1},/* deletes a large object */
-	{NULL, NULL}								/* sentinel */
+	{"open",	(PyCFunction) pglarge_open, 1, pglarge_open__doc__ },
+	{"close",	(PyCFunction) pglarge_close, 1, pglarge_close__doc__ },
+	{"read",	(PyCFunction) pglarge_read, 1, pglarge_read__doc__ },
+	{"write",	(PyCFunction) pglarge_write, 1, pglarge_write__doc__ },
+	{"seek",	(PyCFunction) pglarge_lseek, 1, pglarge_seek__doc__ },
+	{"size",	(PyCFunction) pglarge_size, 1, pglarge_size__doc__ },
+	{"tell",	(PyCFunction) pglarge_tell, 1, pglarge_tell__doc__ },
+	{"export",	(PyCFunction) pglarge_export, 1, pglarge_export__doc__ },
+	{"unlink",	(PyCFunction) pglarge_unlink, 1, pglarge_unlink__doc__ },
+	{NULL, NULL}
 };
 
 /* get attribute */
@@ -608,7 +567,7 @@ pglarge_getattr(pglargeobject * self, char *name)
 	/* associated pg connection object */
 	if (!strcmp(name, "pgcnx"))
 	{
-		if (check_lo(self, 0))
+		if (check_lo_obj(self, 0))
 		{
 			Py_INCREF(self->pgcnx);
 			return (PyObject *) (self->pgcnx);
@@ -621,7 +580,7 @@ pglarge_getattr(pglargeobject * self, char *name)
 	/* large object oid */
 	if (!strcmp(name, "oid"))
 	{
-		if (check_lo(self, 0))
+		if (check_lo_obj(self, 0))
 			return PyInt_FromLong(self->lo_oid);
 
 		Py_INCREF(Py_None);
@@ -647,8 +606,39 @@ pglarge_getattr(pglargeobject * self, char *name)
 		return list;
 	}
 
+	/* module name */
+	if (!strcmp(name, "__module__"))
+    	return PyString_FromString(MODULE_NAME);
+
+	/* class name */
+	if (!strcmp(name, "__class__"))
+    	return PyString_FromString("pglarge");
+
+	/* seeks name in methods (fallback) */
 	return Py_FindMethod(pglarge_methods, (PyObject *) self, name);
 }
+
+/* prints query object in human readable format */
+static int
+pglarge_print(pglargeobject * self, FILE *fp, int flags)
+{
+	char print_buffer[128];
+
+	if (self->lo_fd >= 0) 
+	{
+    	snprintf(print_buffer, sizeof(print_buffer), 
+	    	 "Opened large object, oid %ld", (long)self->lo_oid);
+		fputs(print_buffer, fp);
+	} 
+	else 
+	{
+    	snprintf(print_buffer, sizeof(print_buffer), 
+	    	"Closed large object, oid %ld", (long)self->lo_oid);
+		fputs(print_buffer, fp);
+	}
+
+	return 0;
+};
 
 /* object type definition */
 staticforward PyTypeObject PglargeType = {
@@ -660,7 +650,7 @@ staticforward PyTypeObject PglargeType = {
 
 	/* methods */
 	(destructor) pglarge_dealloc,	/* tp_dealloc */
-	0,								/* tp_print */
+	(printfunc) pglarge_print,		/* tp_print */
 	(getattrfunc) pglarge_getattr,	/* tp_getattr */
 	0,								/* tp_setattr */
 	0,								/* tp_compare */
@@ -675,10 +665,12 @@ staticforward PyTypeObject PglargeType = {
 
 
 /* --------------------------------------------------------------------- */
+/* PG QUERY OBJECT IMPLEMENTATION */
 
-/* PG CONNECTION OBJECT IMPLEMENTATION */
-
-/* pgobject initialisation (from module) */
+/* connects to a database */
+static char connect__doc__[] =
+	"connect(dbname, host, port, opt, tty) -- connect to a PostgreSQL database "
+	"using specified parameters (optionals, keywords aware).";
 
 static PyObject *
 pgconnect(pgobject *self, PyObject *args, PyObject *dict)
@@ -693,7 +685,11 @@ pgconnect(pgobject *self, PyObject *args, PyObject *dict)
 	pghost = pgopt = pgtty = pgdbname = pguser = pgpasswd = NULL;
 	pgport = -1;
 
-	/* parses standard arguments */
+	/* parses standard arguments
+	 * With the right compiler warnings, this will issue a diagnostic.
+	 * There is really no way around it.  If I don't declare kwlist as
+	 * const char *kwlist[] then it complains when I try to assign all
+	 * those constant strings to it. */
 	if (!PyArg_ParseTupleAndKeywords(args, dict, "|zzlzzzz", kwlist,
 			&pgdbname, &pghost, &pgport, &pgopt, &pgtty, &pguser, &pgpasswd))
 		return NULL;
@@ -759,6 +755,11 @@ pg_dealloc(pgobject * self)
 }
 
 /* close without deleting */
+static char pg_close__doc__[] = 
+	"close() -- close connection. All instances of the connection object and "
+	"derived objects (queries and large objects) can no longer be used after "
+	"this call.";
+
 static PyObject *
 pg_close(pgobject *self, PyObject *args)
 {
@@ -778,7 +779,7 @@ pg_close(pgobject *self, PyObject *args)
 }   
 
 static void
-pg_querydealloc(pgqueryobject * self)
+pgquery_dealloc(pgqueryobject * self)
 {
 	if (self->last_result)
 		PQclear(self->last_result);
@@ -787,6 +788,11 @@ pg_querydealloc(pgqueryobject * self)
 }
 
 /* resets connection */
+static char pg_reset__doc__[] = 
+	"reset() -- reset connection with current parameters. All derived queries "
+	"and large objects derived from this connection will not be usable after "
+	"this call.";
+
 static PyObject *
 pg_reset(pgobject * self, PyObject * args)
 {
@@ -811,6 +817,9 @@ pg_reset(pgobject * self, PyObject * args)
 }
 
 /* get connection socket */
+static char pg_fileno__doc__[] = 
+	"fileno() -- return database connection socket file handle.";
+
 static PyObject *
 pg_fileno(pgobject * self, PyObject * args)
 {
@@ -835,9 +844,30 @@ pg_fileno(pgobject * self, PyObject * args)
 #endif
 }
 
-/* list fields names from query result */
+/* get number of rows */
+static char pgquery_ntuples__doc__[] =
+	"ntuples() -- returns number of tuples returned by query.";
+
 static PyObject *
-pg_listfields(pgqueryobject * self, PyObject * args)
+pgquery_ntuples(pgqueryobject * self, PyObject * args)
+{
+	/* checks args */
+	if (!PyArg_ParseTuple(args, ""))
+	{
+		PyErr_SetString(PyExc_SyntaxError,
+			"method ntuples() takes no parameters.");
+		return NULL;
+	}
+
+	return PyInt_FromLong((long) PQntuples(self->last_result));
+} 
+
+/* list fields names from query result */
+static char pgquery_listfields__doc__[] =
+	"listfields() -- Lists field names from result.";
+
+static PyObject *
+pgquery_listfields(pgqueryobject * self, PyObject * args)
 {
 	int             i, n;
 	char           *name;
@@ -866,8 +896,11 @@ pg_listfields(pgqueryobject * self, PyObject * args)
 }
 
 /* get field name from last result */
+static char pgquery_fieldname__doc__[] =
+	"fieldname() -- returns name of field from result from its position.";
+
 static PyObject *
-pg_fieldname(pgqueryobject * self, PyObject * args)
+pgquery_fieldname(pgqueryobject * self, PyObject * args)
 {
 	int             i;
 	char           *name;
@@ -893,8 +926,11 @@ pg_fieldname(pgqueryobject * self, PyObject * args)
 }
 
 /* gets fields number from name in last result */
+static char pgquery_fieldnum__doc__[] =
+	"fieldnum() -- returns position in query for field from its name.";
+
 static PyObject *
-pg_fieldnum(pgqueryobject * self, PyObject * args)
+pgquery_fieldnum(pgqueryobject * self, PyObject * args)
 {
 	char           *name;
 	int             num;
@@ -917,8 +953,13 @@ pg_fieldnum(pgqueryobject * self, PyObject * args)
 }
 
 /* retrieves last result */
+static char pgquery_getresult__doc__[] =
+	"getresult() -- Gets the result of a query.  The result is returned "
+	"as a list of rows, each one a list of fields in the order returned "
+	"by the server.";
+
 static PyObject *
-pg_getresult(pgqueryobject * self, PyObject * args)
+pgquery_getresult(pgqueryobject * self, PyObject * args)
 {
 	PyObject       *rowtuple, *reslist, *val;
 	int             i, j, m, n, *typ;
@@ -972,6 +1013,7 @@ pg_getresult(pgqueryobject * self, PyObject * args)
 		rowtuple = PyTuple_New(n);
 		for (j = 0; j < n; j++)
 		{
+			int		k;
 			char	*s = PQgetvalue(self->last_result, i, j);
 			char	cashbuf[64];
 
@@ -989,11 +1031,14 @@ pg_getresult(pgqueryobject * self, PyObject * args)
 					if (*s == '$')	/* there's talk of getting rid of it */
 						s++;
 
-					for (i = 0; *s; s++)
-						if (*s != ',')
-							cashbuf[i++] = *s;
+					if ((s[0] == '-' || s[0] == '(') && s[1] == '$')
+						*(++s) = '-';
 
-					cashbuf[i] = 0;
+					for (k = 0; *s; s++)
+						if (*s != ',')
+							cashbuf[k++] = *s;
+
+					cashbuf[k] = 0;
 					val = PyFloat_FromDouble(strtod(cashbuf, NULL));
 					break;
 
@@ -1016,8 +1061,13 @@ pg_getresult(pgqueryobject * self, PyObject * args)
 }
 
 /* retrieves last result as a list of dictionaries*/
+static char pgquery_dictresult__doc__[] =
+	"dictresult() -- Gets the result of a query.  The result is returned "
+	"as a list of rows, each one a dictionary with the field names used "
+	"as the labels.";
+
 static PyObject *
-pg_dictresult(pgqueryobject * self, PyObject * args)
+pgquery_dictresult(pgqueryobject * self, PyObject * args)
 {
 	PyObject       *dict, *reslist, *val;
 	int             i, j, m, n, *typ;
@@ -1037,7 +1087,7 @@ pg_dictresult(pgqueryobject * self, PyObject * args)
 
 	if ((typ = malloc(sizeof(int) * n)) == NULL)
 	{
-		PyErr_SetString(PyExc_SyntaxError, "memory error in getresult().");
+		PyErr_SetString(PyExc_SyntaxError, "memory error in dictresult().");
 		return NULL;
 	}
 
@@ -1089,6 +1139,9 @@ pg_dictresult(pgqueryobject * self, PyObject * args)
 					if (*s == '$')	/* there's talk of getting rid of it */
 						s++;
 
+					if ((s[0] == '-' || s[0] == '(') && s[1] == '$')
+						*(++s) = '-';
+
 					for (k = 0; *s; s++)
 						if (*s != ',')
 							cashbuf[k++] = *s;
@@ -1116,7 +1169,10 @@ pg_dictresult(pgqueryobject * self, PyObject * args)
 	return reslist;
 }
 
-/* getq asynchronous notify */
+/* gets asynchronous notify */
+static char pg_getnotify__doc__[] = 
+	"getnotify() -- get database notify for this connection.";
+
 static PyObject *
 pg_getnotify(pgobject * self, PyObject * args)
 {
@@ -1164,6 +1220,9 @@ pg_getnotify(pgobject * self, PyObject * args)
 }
 
 /* database query */
+static char pg_query__doc__[] =
+	"query() -- creates a new query object for this connection.";
+
 static PyObject *
 pg_query(pgobject * self, PyObject * args)
 {
@@ -1244,6 +1303,9 @@ pg_query(pgobject * self, PyObject * args)
 }
 
 #ifdef DIRECT_ACCESS
+static char pg_putline__doc__[] =
+	"putline() -- sends a line directly to the backend";
+
 /* direct acces function : putline */
 static PyObject *
 pg_putline(pgobject * self, PyObject * args)
@@ -1270,6 +1332,9 @@ pg_putline(pgobject * self, PyObject * args)
 }
 
 /* direct access function : getline */
+static char pg_getline__doc__[] =
+	"getline() -- gets a line directly from the backend.";
+
 static PyObject *
 pg_getline(pgobject * self, PyObject * args)
 {
@@ -1311,6 +1376,9 @@ pg_getline(pgobject * self, PyObject * args)
 }
 
 /* direct access function : end copy */
+static char pg_endcopy__doc__[] =
+	"endcopy() -- synchronizes client and server";
+
 static PyObject *
 pg_endcopy(pgobject * self, PyObject * args)
 {
@@ -1337,7 +1405,7 @@ pg_endcopy(pgobject * self, PyObject * args)
 
 
 static PyObject *
-pg_print(pgqueryobject *self, FILE *fp, int flags)
+pgquery_print(pgqueryobject *self, FILE *fp, int flags)
 {
 	PQprintOpt		op;
 
@@ -1351,6 +1419,10 @@ pg_print(pgqueryobject *self, FILE *fp, int flags)
 }
 
 /* insert table */
+static char pg_inserttable__doc__[] = 
+	"inserttable(string, list) -- insert list in table. The fields in the list "
+	"must be in the same order as in the table.";
+
 static PyObject *
 pg_inserttable(pgobject * self, PyObject * args)
 {
@@ -1492,25 +1564,120 @@ pg_inserttable(pgobject * self, PyObject * args)
 	return Py_None;
 }
 
+/* creates large object */
+static char pg_locreate__doc__[] = 
+	"locreate() -- creates a new large object in the database.";
+
+static PyObject  *
+pg_locreate(pgobject * self, PyObject * args)
+{
+	int             mode;
+	Oid				lo_oid;
+
+	/* checks validity */
+	if (!check_cnx_obj(self))
+    	return NULL;
+
+	/* gets arguments */
+	if (!PyArg_ParseTuple(args, "i", &mode))
+	{
+		PyErr_SetString(PyExc_TypeError,
+				"locreate(mode), with mode (integer).");
+		return NULL;
+	}
+
+	/* creates large object */
+	lo_oid = lo_creat(self->cnx, mode);
+	if (lo_oid == 0) {
+		PyErr_SetString(PGError, "can't create large object.");
+		return NULL;
+    }
+
+	return (PyObject *) pglarge_new(self, lo_oid);
+}
+
+/* init from already known oid */
+static char pg_getlo__doc__[] = 
+	"getlo(long) -- create a large object instance for the specified oid.";
+
+static PyObject *
+pg_getlo(pgobject * self, PyObject * args)
+{
+	int             lo_oid;
+
+	/* checks validity */
+	if (!check_cnx_obj(self))
+    	return NULL;
+
+	/* gets arguments */
+	if (!PyArg_ParseTuple(args, "i", &lo_oid))
+	{
+		PyErr_SetString(PyExc_TypeError, "loopen(oid), with oid (integer).");
+		return NULL;
+	}
+
+	if (!lo_oid)
+	{
+		PyErr_SetString(PyExc_ValueError, "the object oid can't be null.");
+		return NULL;
+	}
+
+	/* creates object */
+	return (PyObject *) pglarge_new(self, lo_oid);
+}
+
+/* import unix file */
+static char pg_loimport__doc__[] = 
+	"loimport(string) -- create a new large object from specified file.";
+
+static PyObject *
+pg_loimport(pgobject * self, PyObject * args)
+{
+	char           *name;
+	Oid				lo_oid;
+
+	/* checks validity */
+	if (!check_cnx_obj(self))
+    	return NULL;
+
+	/* gets arguments */
+	if (!PyArg_ParseTuple(args, "s", &name))
+	{
+		PyErr_SetString(PyExc_TypeError, "loimport(name), with name (string).");
+		return NULL;
+	}
+
+	/* imports file and checks result */
+	lo_oid = lo_import(self->cnx, name);
+	if (lo_oid == 0)
+	{
+		PyErr_SetString(PGError, "can't create large object.");
+		return NULL;
+	}
+
+	return (PyObject *) pglarge_new(self, lo_oid);
+}
+
+
 /* connection object methods */
 static struct PyMethodDef pgobj_methods[] = {
-	{"query",		(PyCFunction) pg_query, 1},			/* query method */
-	{"reset",		(PyCFunction) pg_reset, 1},			/* connection reset */
-	{"close",		(PyCFunction) pg_close, 1},			/* connection close */
-	{"fileno",		(PyCFunction) pg_fileno,1},			/* connection socket */
-	{"getnotify",	(PyCFunction) pg_getnotify, 1},		/* checks for notify */
-	{"inserttable",	(PyCFunction) pg_inserttable, 1},	/* table insert */
+	{"query",		(PyCFunction) pg_query, 1, pg_query__doc__ },
+	{"reset",		(PyCFunction) pg_reset, 1, pg_reset__doc__ },
+	{"close",		(PyCFunction) pg_close, 1, pg_close__doc__ },
+	{"fileno",		(PyCFunction) pg_fileno,1, pg_fileno__doc__ },
+	{"getnotify",	(PyCFunction) pg_getnotify, 1, pg_getnotify__doc__ },
+	{"inserttable",	(PyCFunction) pg_inserttable, 1, pg_inserttable__doc__ },
 
 #ifdef DIRECT_ACCESS
-	{"putline",		(PyCFunction) pg_putline, 1},	/* direct access: putline */
-	{"getline",		(PyCFunction) pg_getline, 1},	/* direct access: getline */
-	{"endcopy",		(PyCFunction) pg_endcopy, 1},	/* direct access: endcopy */
+	{"putline",		(PyCFunction) pg_putline, 1, pg_putline__doc__ },
+	{"getline",		(PyCFunction) pg_getline, 1, pg_getline__doc__ },
+	{"endcopy",		(PyCFunction) pg_endcopy, 1, pg_endcopy__doc__ },
 #endif							/* DIRECT_ACCESS */
 
 #ifdef LARGE_OBJECTS
-	{"locreate",	(PyCFunction) pg_locreate, 1},	/* creates large object */
-	{"getlo",		(PyCFunction) pg_getlo, 1},		/* get lo from oid */
-	{"loimport",	(PyCFunction) pg_loimport, 1},	/* imports lo from file */
+	{"locreate",	(PyCFunction) pg_locreate, 1, pg_locreate__doc__ },
+	{"getlo",		(PyCFunction) pg_getlo, 1, pg_getlo__doc__ },	
+	{"loimport",	(PyCFunction) pg_loimport, 1, pg_loimport__doc__ },
 #endif							/* LARGE_OBJECTS */
 
 	{NULL, NULL}				/* sentinel */
@@ -1613,16 +1780,18 @@ staticforward PyTypeObject PgType = {
 
 /* query object methods */
 static struct PyMethodDef pgquery_methods[] = {
-	{"getresult",	(PyCFunction) pg_getresult, 1},		/* get last result */
-	{"dictresult",	(PyCFunction) pg_dictresult, 1},	/* get result as dict*/
-	{"fieldname",	(PyCFunction) pg_fieldname, 1},		/* get field name */
-	{"fieldnum",	(PyCFunction) pg_fieldnum, 1},		/* get field number */
-	{"listfields",	(PyCFunction) pg_listfields, 1},	/* list fields names */
-	{NULL, NULL}				/* sentinel */
+	{"getresult",	(PyCFunction) pgquery_getresult, 1, pgquery_getresult__doc__},
+	{"dictresult",	(PyCFunction) pgquery_dictresult, 1, pgquery_dictresult__doc__},
+	{"fieldname",	(PyCFunction) pgquery_fieldname, 1, pgquery_fieldname__doc__},
+	{"fieldnum",	(PyCFunction) pgquery_fieldnum, 1, pgquery_fieldnum__doc__},
+	{"listfields",	(PyCFunction) pgquery_listfields, 1, pgquery_listfields__doc__},
+	{"ntuples",		(PyCFunction) pgquery_ntuples, 1, pgquery_ntuples__doc__},
+	{NULL, NULL}
 };
 
+/* gets query object attributes */  
 static PyObject *
-pg_querygetattr(pgqueryobject * self, char *name)
+pgquery_getattr(pgqueryobject * self, char *name)
 {
 	/* list postgreSQL connection fields */
 	return Py_FindMethod(pgquery_methods, (PyObject *) self, name);
@@ -1631,21 +1800,21 @@ pg_querygetattr(pgqueryobject * self, char *name)
 /* query type definition */
 staticforward PyTypeObject PgQueryType = {
 	PyObject_HEAD_INIT(NULL)
-	0,							/* ob_size */
-	"pgqueryobject",			/* tp_name */
-	sizeof(pgqueryobject),		/* tp_basicsize */
-	0,							/* tp_itemsize */
+	0,								/* ob_size */
+	"pgqueryobject",				/* tp_name */
+	sizeof(pgqueryobject),			/* tp_basicsize */
+	0,								/* tp_itemsize */
 	/* methods */
-	(destructor) pg_querydealloc,/* tp_dealloc */
-	(printfunc) pg_print,		/* tp_print */
-	(getattrfunc) pg_querygetattr,/* tp_getattr */
-	0,							/* tp_setattr */
-	0,							/* tp_compare */
-	0,							/* tp_repr */
-	0,							/* tp_as_number */
-	0,							/* tp_as_sequence */
-	0,							/* tp_as_mapping */
-	0,							/* tp_hash */
+	(destructor) pgquery_dealloc,	/* tp_dealloc */
+	(printfunc) pgquery_print,		/* tp_print */
+	(getattrfunc) pgquery_getattr,	/* tp_getattr */
+	0,								/* tp_setattr */
+	0,								/* tp_compare */
+	0,								/* tp_repr */
+	0,								/* tp_as_number */
+	0,								/* tp_as_sequence */
+	0,								/* tp_as_mapping */
+	0,								/* tp_hash */
 };
 
 
@@ -1657,6 +1826,9 @@ staticforward PyTypeObject PgQueryType = {
 #ifdef DEFAULT_VARS
 
 /* gets default host */
+static char getdefhost__doc__[] =
+	"get_defhost() -- return default database host.";
+
 static PyObject       *
 pggetdefhost(PyObject *self, PyObject *args)
 {
@@ -1673,6 +1845,9 @@ pggetdefhost(PyObject *self, PyObject *args)
 }
 
 /* sets default host */
+static char setdefhost__doc__[] =
+	"set_defhost(string) -- set default database host. Return previous value.";
+
 static PyObject       *
 pgsetdefhost(PyObject * self, PyObject *args)
 {
@@ -1702,6 +1877,9 @@ pgsetdefhost(PyObject * self, PyObject *args)
 }
 
 /* gets default base */
+static char getdefbase__doc__[] =
+	"get_defbase() -- return default database name.";
+
 static PyObject       *
 pggetdefbase(PyObject * self, PyObject *args)
 {
@@ -1718,6 +1896,9 @@ pggetdefbase(PyObject * self, PyObject *args)
 }
 
 /* sets default base */
+static char setdefbase__doc__[] =
+	"set_defbase(string) -- set default database name. Return previous value";
+
 static PyObject       *
 pgsetdefbase(PyObject * self, PyObject *args)
 {
@@ -1747,6 +1928,9 @@ pgsetdefbase(PyObject * self, PyObject *args)
 }
 
 /* gets default options */
+static char getdefopt__doc__[] =
+	"get_defopt() -- return default database options.";
+
 static PyObject       *
 pggetdefopt(PyObject * self, PyObject *args)
 {
@@ -1763,6 +1947,9 @@ pggetdefopt(PyObject * self, PyObject *args)
 }
 
 /* sets default opt */
+static char setdefopt__doc__[] =
+	"set_defopt(string) -- set default database options. Return previous value.";
+
 static PyObject       *
 pgsetdefopt(PyObject * self, PyObject *args)
 {
@@ -1792,6 +1979,9 @@ pgsetdefopt(PyObject * self, PyObject *args)
 }
 
 /* gets default tty */
+static char getdeftty__doc__[] =
+	"get_deftty() -- return default database debug terminal.";
+
 static PyObject       *
 pggetdeftty(PyObject * self, PyObject *args)
 {
@@ -1808,6 +1998,10 @@ pggetdeftty(PyObject * self, PyObject *args)
 }
 
 /* sets default tty */
+static char setdeftty__doc__[] =
+	"set_deftty(string) -- set default database debug terminal. "
+	"Return previous value.";
+
 static PyObject       *
 pgsetdeftty(PyObject * self, PyObject *args)
 {
@@ -1837,6 +2031,9 @@ pgsetdeftty(PyObject * self, PyObject *args)
 }
 
 /* gets default username */
+static char getdefuser__doc__[] =
+	"get_defuser() -- return default database username.";
+
 static PyObject       *
 pggetdefuser(PyObject * self, PyObject *args)
 {
@@ -1854,6 +2051,9 @@ pggetdefuser(PyObject * self, PyObject *args)
 }
 
 /* sets default username */
+static char setdefuser__doc__[] =
+	"set_defuser() -- set default database username. Return previous value.";
+
 static PyObject       *
 pgsetdefuser(PyObject * self, PyObject *args)
 {
@@ -1883,6 +2083,9 @@ pgsetdefuser(PyObject * self, PyObject *args)
 }
 
 /* sets default password */
+static char setdefpasswd__doc__[] =
+	"set_defpasswd() -- set default database password.";
+
 static PyObject       *
 pgsetdefpasswd(PyObject * self, PyObject *args)
 {
@@ -1909,10 +2112,14 @@ None).");
 		pg_default_passwd = Py_None;
 	}
 
-	return old;
+	Py_INCREF(Py_None);	
+	return Py_None;
 }
 
 /* gets default port */
+static char getdefport__doc__[] =
+	"get_defport() -- return default database port.";
+
 static PyObject       *
 pggetdefport(PyObject * self, PyObject *args)
 {
@@ -1929,6 +2136,9 @@ pggetdefport(PyObject * self, PyObject *args)
 }
 
 /* sets default port */
+static char setdefport__doc__[] =
+	"set_defport(integer) -- set default database port. Return previous value.";
+
 static PyObject       *
 pgsetdefport(PyObject * self, PyObject *args)
 {
@@ -1962,22 +2172,22 @@ pgsetdefport(PyObject * self, PyObject *args)
 /* List of functions defined in the module */
 
 static struct PyMethodDef pg_methods[] = {
-	{"connect", (PyCFunction) pgconnect, 3},	/* connect to a database */
+	{"connect", (PyCFunction) pgconnect, 3, connect__doc__ },
 
 #ifdef DEFAULT_VARS
-	{"get_defhost",		pggetdefhost, 1},		/* gets default host */
-	{"set_defhost",		pgsetdefhost, 1},		/* sets default host */
-	{"get_defbase",		pggetdefbase, 1},		/* gets default base */
-	{"set_defbase",		pgsetdefbase, 1},		/* sets default base */
-	{"get_defopt",		pggetdefopt, 1},		/* gets default options */
-	{"set_defopt",		pgsetdefopt, 1},		/* sets default options */
-	{"get_deftty",		pggetdeftty, 1},		/* gets default debug tty */
-	{"set_deftty",		pgsetdeftty, 1},		/* sets default debug tty */
-	{"get_defport",		pggetdefport, 1},		/* gets default port */
-	{"set_defport",		pgsetdefport, 1},		/* sets default port */
-	{"get_defuser",		pggetdefuser, 1},		/* gets default user */
-	{"set_defuser",		pgsetdefuser, 1},		/* sets default user */
-	{"set_defpasswd",	pgsetdefpasswd, 1},		/* sets default passwd */
+	{"get_defhost",		pggetdefhost, 1, getdefhost__doc__ },
+	{"set_defhost",		pgsetdefhost, 1, setdefhost__doc__ },
+	{"get_defbase",		pggetdefbase, 1, getdefbase__doc__ },
+	{"set_defbase",		pgsetdefbase, 1, setdefbase__doc__ },
+	{"get_defopt",		pggetdefopt, 1, getdefopt__doc__ },
+	{"set_defopt",		pgsetdefopt, 1, setdefopt__doc__ },
+	{"get_deftty",		pggetdeftty, 1, getdeftty__doc__ },
+	{"set_deftty",		pgsetdeftty, 1, setdeftty__doc__ },
+	{"get_defport",		pggetdefport, 1, getdefport__doc__ },
+	{"set_defport",		pgsetdefport, 1, setdefport__doc__ },
+	{"get_defuser",		pggetdefuser, 1, getdefuser__doc__ },
+	{"set_defuser",		pgsetdefuser, 1, setdefuser__doc__ },
+	{"set_defpasswd",	pgsetdefpasswd, 1, setdefpasswd__doc__ },
 #endif							/* DEFAULT_VARS */
 	{NULL, NULL}				/* sentinel */
 };
