@@ -96,53 +96,54 @@ nine|f1
 
 QUERY: SELECT '' AS fortyfive, r1.*, r2.*
    FROM TIMESPAN_TBL r1, TIMESPAN_TBL r2
-   WHERE r1.f1 > r2.f1;
+   WHERE r1.f1 > r2.f1
+   ORDER BY r1.f1, r2.f1;
 fortyfive|f1                           |f1                           
 ---------+-----------------------------+-----------------------------
-         |@ 5 hours                    |@ 1 min                      
-         |@ 10 days                    |@ 1 min                      
-         |@ 34 years                   |@ 1 min                      
-         |@ 3 mons                     |@ 1 min                      
-         |@ 1 day 2 hours 3 mins 4 secs|@ 1 min                      
-         |@ 6 years                    |@ 1 min                      
-         |@ 5 mons                     |@ 1 min                      
-         |@ 5 mons 12 hours            |@ 1 min                      
-         |@ 10 days                    |@ 5 hours                    
-         |@ 34 years                   |@ 5 hours                    
-         |@ 3 mons                     |@ 5 hours                    
-         |@ 1 day 2 hours 3 mins 4 secs|@ 5 hours                    
-         |@ 6 years                    |@ 5 hours                    
-         |@ 5 mons                     |@ 5 hours                    
-         |@ 5 mons 12 hours            |@ 5 hours                    
-         |@ 34 years                   |@ 10 days                    
-         |@ 3 mons                     |@ 10 days                    
-         |@ 6 years                    |@ 10 days                    
-         |@ 5 mons                     |@ 10 days                    
-         |@ 5 mons 12 hours            |@ 10 days                    
-         |@ 34 years                   |@ 3 mons                     
-         |@ 6 years                    |@ 3 mons                     
-         |@ 5 mons                     |@ 3 mons                     
-         |@ 5 mons 12 hours            |@ 3 mons                     
          |@ 1 min                      |@ 14 secs ago                
          |@ 5 hours                    |@ 14 secs ago                
-         |@ 10 days                    |@ 14 secs ago                
-         |@ 34 years                   |@ 14 secs ago                
-         |@ 3 mons                     |@ 14 secs ago                
+         |@ 5 hours                    |@ 1 min                      
          |@ 1 day 2 hours 3 mins 4 secs|@ 14 secs ago                
-         |@ 6 years                    |@ 14 secs ago                
-         |@ 5 mons                     |@ 14 secs ago                
-         |@ 5 mons 12 hours            |@ 14 secs ago                
+         |@ 1 day 2 hours 3 mins 4 secs|@ 1 min                      
+         |@ 1 day 2 hours 3 mins 4 secs|@ 5 hours                    
+         |@ 10 days                    |@ 14 secs ago                
+         |@ 10 days                    |@ 1 min                      
+         |@ 10 days                    |@ 5 hours                    
          |@ 10 days                    |@ 1 day 2 hours 3 mins 4 secs
-         |@ 34 years                   |@ 1 day 2 hours 3 mins 4 secs
+         |@ 3 mons                     |@ 14 secs ago                
+         |@ 3 mons                     |@ 1 min                      
+         |@ 3 mons                     |@ 5 hours                    
          |@ 3 mons                     |@ 1 day 2 hours 3 mins 4 secs
-         |@ 6 years                    |@ 1 day 2 hours 3 mins 4 secs
+         |@ 3 mons                     |@ 10 days                    
+         |@ 5 mons                     |@ 14 secs ago                
+         |@ 5 mons                     |@ 1 min                      
+         |@ 5 mons                     |@ 5 hours                    
          |@ 5 mons                     |@ 1 day 2 hours 3 mins 4 secs
+         |@ 5 mons                     |@ 10 days                    
+         |@ 5 mons                     |@ 3 mons                     
+         |@ 5 mons 12 hours            |@ 14 secs ago                
+         |@ 5 mons 12 hours            |@ 1 min                      
+         |@ 5 mons 12 hours            |@ 5 hours                    
          |@ 5 mons 12 hours            |@ 1 day 2 hours 3 mins 4 secs
-         |@ 34 years                   |@ 6 years                    
-         |@ 34 years                   |@ 5 mons                     
-         |@ 6 years                    |@ 5 mons                     
+         |@ 5 mons 12 hours            |@ 10 days                    
+         |@ 5 mons 12 hours            |@ 3 mons                     
          |@ 5 mons 12 hours            |@ 5 mons                     
-         |@ 34 years                   |@ 5 mons 12 hours            
+         |@ 6 years                    |@ 14 secs ago                
+         |@ 6 years                    |@ 1 min                      
+         |@ 6 years                    |@ 5 hours                    
+         |@ 6 years                    |@ 1 day 2 hours 3 mins 4 secs
+         |@ 6 years                    |@ 10 days                    
+         |@ 6 years                    |@ 3 mons                     
+         |@ 6 years                    |@ 5 mons                     
          |@ 6 years                    |@ 5 mons 12 hours            
+         |@ 34 years                   |@ 14 secs ago                
+         |@ 34 years                   |@ 1 min                      
+         |@ 34 years                   |@ 5 hours                    
+         |@ 34 years                   |@ 1 day 2 hours 3 mins 4 secs
+         |@ 34 years                   |@ 10 days                    
+         |@ 34 years                   |@ 3 mons                     
+         |@ 34 years                   |@ 5 mons                     
+         |@ 34 years                   |@ 5 mons 12 hours            
+         |@ 34 years                   |@ 6 years                    
 (45 rows)
 

@@ -156,25 +156,26 @@ ff_4|f1|f1
 (4 rows)
 
 QUERY: SELECT '' AS tf_12_ff_4, BOOLTBL1.*, BOOLTBL2.*
-   WHERE BOOLTBL2.f1 = BOOLTBL1.f1 or BOOLTBL1.f1 = 'true'::bool;
+   WHERE BOOLTBL2.f1 = BOOLTBL1.f1 or BOOLTBL1.f1 = 'true'::bool
+   ORDER BY BOOLTBL1.f1, BOOLTBL2.f1;
 tf_12_ff_4|f1|f1
 ----------+--+--
-          |t |f 
-          |t |f 
-          |t |f 
+          |f |f 
+          |f |f 
+          |f |f 
           |f |f 
           |t |f 
           |t |f 
           |t |f 
-          |f |f 
           |t |f 
           |t |f 
           |t |f 
-          |f |f 
           |t |f 
           |t |f 
           |t |f 
-          |f |f 
+          |t |f 
+          |t |f 
+          |t |f 
 (16 rows)
 
 QUERY: DROP TABLE  BOOLTBL1;

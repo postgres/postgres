@@ -1,7 +1,7 @@
 --
 -- boolean.source
 --
--- $Header: /cvsroot/pgsql/src/test/regress/sql/boolean.sql,v 1.2 1997/04/27 04:35:02 scrappy Exp $
+-- $Header: /cvsroot/pgsql/src/test/regress/sql/boolean.sql,v 1.3 1997/05/09 03:26:43 scrappy Exp $
 --
 
 --
@@ -92,7 +92,8 @@ SELECT '' AS ff_4, BOOLTBL1.*, BOOLTBL2.*
 
 
 SELECT '' AS tf_12_ff_4, BOOLTBL1.*, BOOLTBL2.*
-   WHERE BOOLTBL2.f1 = BOOLTBL1.f1 or BOOLTBL1.f1 = 'true'::bool;
+   WHERE BOOLTBL2.f1 = BOOLTBL1.f1 or BOOLTBL1.f1 = 'true'::bool
+   ORDER BY BOOLTBL1.f1, BOOLTBL2.f1;
 
 DROP TABLE  BOOLTBL1;
 

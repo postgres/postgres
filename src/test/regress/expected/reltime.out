@@ -77,23 +77,24 @@ five|f1
 
 QUERY: SELECT '' AS fifteen, r1.*, r2.*
    FROM RELTIME_TBL r1, RELTIME_TBL r2
-   WHERE r1.f1 > r2.f1;
+   WHERE r1.f1 > r2.f1
+   ORDER BY r1.f1, r2.f1;
 fifteen|f1        |f1              
 -------+----------+----------------
-       |@ 5 hours |@ 1 minute      
-       |@ 10 days |@ 1 minute      
-       |@ 34 years|@ 1 minute      
-       |@ 3 months|@ 1 minute      
-       |@ 10 days |@ 5 hours       
-       |@ 34 years|@ 5 hours       
-       |@ 3 months|@ 5 hours       
-       |@ 34 years|@ 10 days       
-       |@ 3 months|@ 10 days       
-       |@ 34 years|@ 3 months      
        |@ 1 minute|@ 14 seconds ago
        |@ 5 hours |@ 14 seconds ago
+       |@ 5 hours |@ 1 minute      
        |@ 10 days |@ 14 seconds ago
-       |@ 34 years|@ 14 seconds ago
+       |@ 10 days |@ 1 minute      
+       |@ 10 days |@ 5 hours       
        |@ 3 months|@ 14 seconds ago
+       |@ 3 months|@ 1 minute      
+       |@ 3 months|@ 5 hours       
+       |@ 3 months|@ 10 days       
+       |@ 34 years|@ 14 seconds ago
+       |@ 34 years|@ 1 minute      
+       |@ 34 years|@ 5 hours       
+       |@ 34 years|@ 10 days       
+       |@ 34 years|@ 3 months      
 (15 rows)
 

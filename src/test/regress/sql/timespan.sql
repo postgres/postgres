@@ -39,5 +39,6 @@ SELECT '' AS nine, TIMESPAN_TBL.*
 
 SELECT '' AS fortyfive, r1.*, r2.*
    FROM TIMESPAN_TBL r1, TIMESPAN_TBL r2
-   WHERE r1.f1 > r2.f1;
+   WHERE r1.f1 > r2.f1
+   ORDER BY r1.f1, r2.f1;
 
