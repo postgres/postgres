@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pgctl-ref.sgml,v 1.2 2000/05/02 20:02:03 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pgctl-ref.sgml,v 1.3 2000/05/23 21:46:57 momjian Exp $
 Postgres documentation
 -->
 
@@ -254,13 +254,7 @@ pg_ctl [-D <replaceable class="parameter">datadir</replaceable>] status
 
    <para>
     <filename>postmaster.opts.default</filename> contains parameters
-    for <application>postmaster</application>. With a
-    default installation, the <option>-S</option> option is enabled.
-    So <command>pg_ctl start</command> implies:
-
-    <programlisting>
-postmaster -S
-    </programlisting>
+    for <application>postmaster</application>.
    </para>
 
    <para>
