@@ -2,6 +2,30 @@
 #include "utils/pg_locale.h"
 #include "btree_utils_var.h"
 
+PG_FUNCTION_INFO_V1(gbt_var_decompress);
+Datum           gbt_var_decompress(PG_FUNCTION_ARGS);
+
+
+Datum
+gbt_var_decompress(PG_FUNCTION_ARGS)
+{
+        GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
+        GBT_VARKEY   *key = (GBT_VARKEY *) DatumGetPointer(PG_DETOAST_DATUM(entry->key));
+
+        if (key != (GBT_VARKEY *) DatumGetPointer(entry->key))
+        {
+                GISTENTRY  *retval = (GISTENTRY *) palloc(sizeof(GISTENTRY));
+
+                gistentryinit(*retval, PointerGetDatum(key),
+                                          entry->rel, entry->page,
+                                          entry->offset, VARSIZE(key), FALSE);
+
+                PG_RETURN_POINTER(retval);
+        }
+
+        PG_RETURN_POINTER(entry);
+}
+
 /* Returns a better readable representaion of variable key ( sets pointer ) */
 
 extern		GBT_VARKEY_R
@@ -265,11 +289,7 @@ gbt_var_compress(GISTENTRY *entry, const gbtree_vinfo * tinfo)
 					  entry->offset, VARSIZE(r), TRUE);
 	}
 	else
-	{
 		retval = entry;
-
-
-	}
 
 	return (retval);
 }
@@ -282,27 +302,20 @@ gbt_var_union(const GistEntryVector *entryvec, int32 *size, const gbtree_vinfo *
 
 	int			i = 0,
 				numranges = entryvec->n;
-	GBT_VARKEY *cur,
-			   *tst = NULL;
+	GBT_VARKEY *cur;
 	Datum		out;
 	GBT_VARKEY_R rk;
 
 	*size = sizeof(GBT_VARKEY);
 
-	tst = (GBT_VARKEY *) DatumGetPointer((entryvec->vector[0].key));
-	cur = (GBT_VARKEY *) DatumGetPointer(PG_DETOAST_DATUM((entryvec->vector[0].key)));
+	cur = (GBT_VARKEY *) DatumGetPointer(entryvec->vector[0].key);
 	rk = gbt_var_key_readable(cur);
 	out = PointerGetDatum(gbt_var_key_copy(&rk, TRUE));
-	if (tst != cur)
-		pfree(cur);
 
 	for (i = 1; i < numranges; i++)
 	{
-		tst = (GBT_VARKEY *) DatumGetPointer((entryvec->vector[i].key));
-		cur = (GBT_VARKEY *) DatumGetPointer(PG_DETOAST_DATUM((entryvec->vector[i].key)));
+		cur = (GBT_VARKEY *) DatumGetPointer(entryvec->vector[i].key);
 		gbt_var_bin_union(&out, cur, tinfo);
-		if (tst != cur)
-			pfree(cur);
 	}
 
 
@@ -328,10 +341,8 @@ extern bool
 gbt_var_same(bool *result, const Datum d1, const Datum d2, const gbtree_vinfo * tinfo)
 {
 
-	GBT_VARKEY *tst1 = (GBT_VARKEY *) DatumGetPointer(d1);
-	GBT_VARKEY *t1 = (GBT_VARKEY *) DatumGetPointer(PG_DETOAST_DATUM(d1));
-	GBT_VARKEY *tst2 = (GBT_VARKEY *) DatumGetPointer(d2);
-	GBT_VARKEY *t2 = (GBT_VARKEY *) DatumGetPointer(PG_DETOAST_DATUM(d2));
+	GBT_VARKEY *t1 = (GBT_VARKEY *) DatumGetPointer(d1);
+	GBT_VARKEY *t2 = (GBT_VARKEY *) DatumGetPointer(d2);
 	GBT_VARKEY_R r1,
 				r2;
 
@@ -346,11 +357,6 @@ gbt_var_same(bool *result, const Datum d1, const Datum d2, const gbtree_vinfo * 
 	else
 		*result = (t1 == NULL && t2 == NULL) ? TRUE : FALSE;
 
-	if (tst1 != t1)
-		pfree(t1);
-	if (tst2 != t2)
-		pfree(t2);
-
 	PG_RETURN_POINTER(result);
 }
 
@@ -360,10 +366,8 @@ extern float *
 gbt_var_penalty(float *res, const GISTENTRY *o, const GISTENTRY *n, const gbtree_vinfo * tinfo)
 {
 
-	GBT_VARKEY *orgt = (GBT_VARKEY *) DatumGetPointer(o->key);
-	GBT_VARKEY *orge = (GBT_VARKEY *) DatumGetPointer(PG_DETOAST_DATUM(o->key));
-	GBT_VARKEY *newt = (GBT_VARKEY *) DatumGetPointer(n->key);
-	GBT_VARKEY *newe = (GBT_VARKEY *) DatumGetPointer(PG_DETOAST_DATUM(n->key));
+	GBT_VARKEY *orge = (GBT_VARKEY *) DatumGetPointer(o->key);
+	GBT_VARKEY *newe = (GBT_VARKEY *) DatumGetPointer(n->key);
 	GBT_VARKEY_R ok,
 				nk;
 	GBT_VARKEY *tmp = NULL;
@@ -436,13 +440,7 @@ gbt_var_penalty(float *res, const GISTENTRY *o, const GISTENTRY *n, const gbtree
 	if (tmp && tmp != newe)
 		pfree(tmp);
 
-	if (newe != newt)
-		pfree(newe);
-
-	if (orge != orgt)
-		pfree(orge);
 	return res;
-
 }
 
 
@@ -466,12 +464,9 @@ gbt_var_picksplit(const GistEntryVector *entryvec, GIST_SPLITVEC *v, const gbtre
 	OffsetNumber i,
 				maxoff = entryvec->n - 1;
 	Vsrt	   *arr;
-	int			pfrcntr = 0,
-				svcntr = 0,
+	int			svcntr = 0,
 				nbytes;
-	char	   *tst,
-			   *cur;
-	char	  **pfr = NULL;
+	char	   *cur;
 	GBT_VARKEY **sv = NULL;
 
 	arr = (Vsrt *) palloc((maxoff + 1) * sizeof(Vsrt));
@@ -483,7 +478,6 @@ gbt_var_picksplit(const GistEntryVector *entryvec, GIST_SPLITVEC *v, const gbtre
 	v->spl_nleft = 0;
 	v->spl_nright = 0;
 
-	pfr = palloc(sizeof(GBT_VARKEY *) * (maxoff + 1));
 	sv = palloc(sizeof(bytea *) * (maxoff + 1));
 
 	/* Sort entries */
@@ -492,13 +486,7 @@ gbt_var_picksplit(const GistEntryVector *entryvec, GIST_SPLITVEC *v, const gbtre
 	{
 		GBT_VARKEY_R ro;
 
-		tst = (char *) DatumGetPointer((entryvec->vector[i].key));
-		cur = (char *) DatumGetPointer(PG_DETOAST_DATUM((entryvec->vector[i].key)));
-		if (tst != cur)
-		{
-			pfr[pfrcntr] = cur;
-			pfrcntr++;
-		}
+		cur = (char *) DatumGetPointer(entryvec->vector[i].key);
 		ro = gbt_var_key_readable((GBT_VARKEY *) cur);
 		if (ro.lower == ro.upper)		/* leaf */
 		{
@@ -537,16 +525,9 @@ gbt_var_picksplit(const GistEntryVector *entryvec, GIST_SPLITVEC *v, const gbtre
 		}
 	}
 
-	/* Free detoasted keys */
-	for (i = 0; i < pfrcntr; i++)
-		pfree(pfr[i]);
-
 	/* Free strxfrm'ed leafs */
 	for (i = 0; i < svcntr; i++)
 		pfree(sv[i]);
-
-	if (pfr)
-		pfree(pfr);
 
 	if (sv)
 		pfree(sv);

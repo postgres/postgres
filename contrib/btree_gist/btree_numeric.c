@@ -97,8 +97,7 @@ gbt_numeric_consistent(PG_FUNCTION_ARGS)
 {
 
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
-	GBT_VARKEY *ktst = (GBT_VARKEY *) DatumGetPointer(entry->key);
-	GBT_VARKEY *key = (GBT_VARKEY *) DatumGetPointer(PG_DETOAST_DATUM(entry->key));
+	GBT_VARKEY *key = (GBT_VARKEY *) DatumGetPointer(entry->key);
 	void	   *qtst = (void *) DatumGetPointer(PG_GETARG_DATUM(1));
 	void	   *query = (void *) DatumGetNumeric(PG_GETARG_DATUM(1));
 	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
@@ -107,8 +106,6 @@ gbt_numeric_consistent(PG_FUNCTION_ARGS)
 
 	retval = gbt_var_consistent(&r, query, &strategy, GIST_LEAF(entry), &tinfo);
 
-	if (ktst != key)
-		pfree(key);
 	if (qtst != query)
 		pfree(query);
 	PG_RETURN_BOOL(retval);

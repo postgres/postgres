@@ -67,7 +67,7 @@ static bytea *
 gbt_bit_xfrm(bytea *leaf)
 {
 	bytea	   *out = leaf;
-	int			s = VARBITBYTES(leaf) + VARHDRSZ;
+	int			s = INTALIGN(VARBITBYTES(leaf) + VARHDRSZ);
 
 	out = palloc(s);
 	VARATT_SIZEP(out) = s;
@@ -126,8 +126,7 @@ Datum
 gbt_bit_consistent(PG_FUNCTION_ARGS)
 {
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
-	GBT_VARKEY *ktst = (GBT_VARKEY *) DatumGetPointer(entry->key);
-	GBT_VARKEY *key = (GBT_VARKEY *) DatumGetPointer(PG_DETOAST_DATUM(entry->key));
+	GBT_VARKEY *key = (GBT_VARKEY *) DatumGetPointer(entry->key);
 	void	   *qtst = (void *) DatumGetPointer(PG_GETARG_DATUM(1));
 	void	   *query = (void *) DatumGetByteaP(PG_GETARG_DATUM(1));
 	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
@@ -144,8 +143,6 @@ gbt_bit_consistent(PG_FUNCTION_ARGS)
 		pfree(q);
 	}
 
-	if (ktst != key)
-		pfree(key);
 	if (qtst != query)
 		pfree(query);
 	PG_RETURN_BOOL(retval);

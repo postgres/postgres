@@ -59,63 +59,8 @@ gbt_textlt(const void *a, const void *b)
 static int32
 gbt_textcmp(const bytea *a, const bytea *b)
 {
-	return strcmp(VARDATA(a), VARDATA(b));
+	return DatumGetInt32(DirectFunctionCall2(bttextcmp, PointerGetDatum(a), PointerGetDatum(b)));
 }
-
-
-/*
- * Converts data of leaf using strxfrm ( locale support )
-*/
-
-static bytea *
-gbt_text_xfrm(bytea *leaf)
-{
-	bytea	   *out = leaf;
-	int32		ilen = VARSIZE(leaf) - VARHDRSZ;
-	int32		olen;
-	char	   *sin;
-	char	   *sou;
-
-	sin = palloc(ilen + 1);
-	memcpy(sin, (void *) VARDATA(leaf), ilen);
-	sin[ilen] = '\0';
-
-	olen = strxfrm(NULL, &sin[0], 0) + 1;
-	sou = palloc(olen);
-	olen = strxfrm(sou, &sin[0], olen);
-	olen += VARHDRSZ;
-	out = palloc(olen + 1);
-	out->vl_len = olen + 1;
-	memcpy((void *) VARDATA(out), sou, olen - VARHDRSZ);
-	((char *) out)[olen] = '\0';
-
-	pfree(sou);
-	pfree(sin);
-
-	return out;
-}
-
-
-static GBT_VARKEY *
-gbt_text_l2n(GBT_VARKEY * leaf)
-{
-
-	GBT_VARKEY *out = leaf;
-	GBT_VARKEY_R r = gbt_var_key_readable(leaf);
-	bytea	   *o;
-
-	o = gbt_text_xfrm(r.lower);
-	r.lower = r.upper = o;
-	out = gbt_var_key_copy(&r, TRUE);
-	pfree(o);
-
-	return out;
-
-}
-
-
-
-
 
 static const gbtree_vinfo tinfo =
 {
@@ -128,7 +73,7 @@ static const gbtree_vinfo tinfo =
 	gbt_textle,
 	gbt_textlt,
 	gbt_textcmp,
-	gbt_text_l2n
+	NULL
 };
 
 
@@ -157,14 +102,13 @@ gbt_bpchar_compress(PG_FUNCTION_ARGS)
 	{
 
 		Datum		d = DirectFunctionCall1(rtrim1, entry->key);
-		GISTENTRY  *trim = palloc(sizeof(GISTENTRY));
+		GISTENTRY  	trim;
 
-		gistentryinit(*trim, d,
+		gistentryinit(trim, d,
 					  entry->rel, entry->page,
 					  entry->offset, VARSIZE(DatumGetPointer(d)), TRUE);
-		retval = gbt_var_compress(trim, &tinfo);
+		retval = gbt_var_compress(&trim, &tinfo);
 
-		pfree(trim);
 		pfree(DatumGetPointer(d));
 	}
 	else
@@ -179,27 +123,15 @@ Datum
 gbt_text_consistent(PG_FUNCTION_ARGS)
 {
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
-	GBT_VARKEY *ktst = (GBT_VARKEY *) DatumGetPointer(entry->key);
-	GBT_VARKEY *key = (GBT_VARKEY *) DatumGetPointer(PG_DETOAST_DATUM(entry->key));
+	GBT_VARKEY *key = (GBT_VARKEY *) DatumGetPointer(entry->key);
 	void	   *qtst = (void *) DatumGetPointer(PG_GETARG_DATUM(1));
 	void	   *query = (void *) DatumGetTextP(PG_GETARG_DATUM(1));
 	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
 	bool		retval = FALSE;
 	GBT_VARKEY_R r = gbt_var_key_readable(key);
 
-	if (GIST_LEAF(entry))
-		retval = gbt_var_consistent(&r, query, &strategy, TRUE, &tinfo);
-	else
-	{
-		bytea	   *q = gbt_text_xfrm((bytea *) query);
+	retval = gbt_var_consistent(&r, query, &strategy, GIST_LEAF(entry), &tinfo);
 
-		retval = gbt_var_consistent(&r, (void *) q, &strategy, FALSE, &tinfo);
-		if (q != query)
-			pfree(q);
-	}
-
-	if (ktst != key)
-		pfree(key);
 	if (qtst != query)
 		pfree(query);
 
@@ -211,8 +143,7 @@ Datum
 gbt_bpchar_consistent(PG_FUNCTION_ARGS)
 {
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
-	GBT_VARKEY *ktst = (GBT_VARKEY *) DatumGetPointer(entry->key);
-	GBT_VARKEY *key = (GBT_VARKEY *) DatumGetPointer(PG_DETOAST_DATUM(entry->key));
+	GBT_VARKEY *key = (GBT_VARKEY *) DatumGetPointer(entry->key);
 	void	   *qtst = (void *) DatumGetPointer(PG_GETARG_DATUM(1));
 	void	   *query = (void *) DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_DATUM(1)));
 	void	   *trim = (void *) DatumGetPointer(DirectFunctionCall1(rtrim1, PointerGetDatum(query)));
@@ -220,21 +151,10 @@ gbt_bpchar_consistent(PG_FUNCTION_ARGS)
 	bool		retval = FALSE;
 	GBT_VARKEY_R r = gbt_var_key_readable(key);
 
-	if (GIST_LEAF(entry))
-		retval = gbt_var_consistent(&r, trim, &strategy, TRUE, &tinfo);
-	else
-	{
-		bytea	   *q = gbt_text_xfrm((bytea *) trim);
-
-		retval = gbt_var_consistent(&r, (void *) q, &strategy, FALSE, &tinfo);
-		if (q != trim)
-			pfree(q);
-	}
+	retval = gbt_var_consistent(&r, trim, &strategy, GIST_LEAF(entry), &tinfo);
 
 	pfree(trim);
 
-	if (ktst != key)
-		pfree(key);
 	if (qtst != query)
 		pfree(query);
 	PG_RETURN_BOOL(retval);

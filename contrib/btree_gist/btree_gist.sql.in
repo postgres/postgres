@@ -107,6 +107,11 @@ RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE 'C';
 
+CREATE FUNCTION gbt_var_decompress(internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
+
 CREATE FUNCTION gbt_oid_penalty(internal,internal,internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
@@ -893,7 +898,7 @@ AS
 	FUNCTION	1	gbt_text_consistent (internal, text, int2),
 	FUNCTION	2	gbt_text_union (bytea, internal),
 	FUNCTION	3	gbt_text_compress (internal),
-	FUNCTION	4	gbt_decompress (internal),
+	FUNCTION	4	gbt_var_decompress (internal),
 	FUNCTION	5	gbt_text_penalty (internal, internal, internal),
 	FUNCTION	6	gbt_text_picksplit (internal, internal),
 	FUNCTION	7	gbt_text_same (internal, internal, internal),
@@ -912,7 +917,7 @@ AS
 	FUNCTION	1	gbt_bpchar_consistent (internal, bpchar , int2),
 	FUNCTION	2	gbt_text_union (bytea, internal),
 	FUNCTION	3	gbt_bpchar_compress (internal),
-	FUNCTION	4	gbt_decompress (internal),
+	FUNCTION	4	gbt_var_decompress (internal),
 	FUNCTION	5	gbt_text_penalty (internal, internal, internal),
 	FUNCTION	6	gbt_text_picksplit (internal, internal),
 	FUNCTION	7	gbt_text_same (internal, internal, internal),
@@ -969,7 +974,7 @@ AS
 	FUNCTION	1	gbt_bytea_consistent (internal, bytea, int2),
 	FUNCTION	2	gbt_bytea_union (bytea, internal),
 	FUNCTION	3	gbt_bytea_compress (internal),
-	FUNCTION	4	gbt_decompress (internal),
+	FUNCTION	4	gbt_var_decompress (internal),
 	FUNCTION	5	gbt_bytea_penalty (internal, internal, internal),
 	FUNCTION	6	gbt_bytea_picksplit (internal, internal),
 	FUNCTION	7	gbt_bytea_same (internal, internal, internal),
@@ -1026,7 +1031,7 @@ AS
 	FUNCTION	1	gbt_numeric_consistent (internal, numeric, int2),
 	FUNCTION	2	gbt_numeric_union (bytea, internal),
 	FUNCTION	3	gbt_numeric_compress (internal),
-	FUNCTION	4	gbt_decompress (internal),
+	FUNCTION	4	gbt_var_decompress (internal),
 	FUNCTION	5	gbt_numeric_penalty (internal, internal, internal),
 	FUNCTION	6	gbt_numeric_picksplit (internal, internal),
 	FUNCTION	7	gbt_numeric_same (internal, internal, internal),
@@ -1081,7 +1086,7 @@ AS
 	FUNCTION	1	gbt_bit_consistent (internal, bit, int2),
 	FUNCTION	2	gbt_bit_union (bytea, internal),
 	FUNCTION	3	gbt_bit_compress (internal),
-	FUNCTION	4	gbt_decompress (internal),
+	FUNCTION	4	gbt_var_decompress (internal),
 	FUNCTION	5	gbt_bit_penalty (internal, internal, internal),
 	FUNCTION	6	gbt_bit_picksplit (internal, internal),
 	FUNCTION	7	gbt_bit_same (internal, internal, internal),
@@ -1100,7 +1105,7 @@ AS
 	FUNCTION	1	gbt_bit_consistent (internal, bit, int2),
 	FUNCTION	2	gbt_bit_union (bytea, internal),
 	FUNCTION	3	gbt_bit_compress (internal),
-	FUNCTION	4	gbt_decompress (internal),
+	FUNCTION	4	gbt_var_decompress (internal),
 	FUNCTION	5	gbt_bit_penalty (internal, internal, internal),
 	FUNCTION	6	gbt_bit_picksplit (internal, internal),
 	FUNCTION	7	gbt_bit_same (internal, internal, internal),
