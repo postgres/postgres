@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/vacuum.l,v 1.8 1998/02/03 19:27:30 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/vacuum.l,v 1.9 1998/03/25 01:54:53 momjian Exp $
 .TH VACUUM SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 vacuum - vacuum a database
@@ -12,7 +12,7 @@ vacuum - vacuum a database
 .SH DESCRIPTION
 .BR Vacuum
 is the Postgres vacuum cleaner.  It opens every class in the database,
-cleans out records from aborted transactions, and updates statistics in the
+cleans out records from rolled back transactions, and updates statistics in the
 system catalogs.  The statistics maintained include the number of
 tuples and number of pages stored in all classes.  Running
 .BR vacuum

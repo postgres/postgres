@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/begin.l,v 1.4 1998/03/23 15:09:23 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/begin.l,v 1.5 1998/03/25 01:54:48 momjian Exp $
 .TH BEGIN SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 begin - begins a transaction
@@ -16,5 +16,5 @@ is committed, Postgres will ensure that all updates are done or none of
 them are done.  Transactions have the standard ACID (atomic,
 consistent, isolatable, and durable) property.
 .SH "SEE ALSO"
-abort(l),
+rollback(l),
 commit(l).

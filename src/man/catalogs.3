@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/catalogs.3,v 1.4 1998/03/06 18:03:02 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/catalogs.3,v 1.5 1998/03/25 01:54:49 momjian Exp $
 .TH "SYSTEM CATALOGS" INTRO 03/13/94 PostgreSQL PostgreSQL
 .SH "Section 7 - System Catalogs"
 .de LS
@@ -72,9 +72,9 @@ heaps and cannot be accessed through normal means (attempting to do so
 causes an error).
 .LS
 	\fBname\fP	\fBshared/local\fP	\fBdescription\fP
-	pg_log	shared	transaction commit/abort log
+	pg_log	shared	transaction commit/rollback log
 	pg_magic	shared	magic constant
-	pg_time	shared	commit/abort times
+	pg_time	shared	commit/rollback times
 	pg_variable	shared	special variable values
 .LE
 .PP
