@@ -28,7 +28,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.222 2001/06/18 23:42:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.223 2001/06/19 23:40:10 momjian Exp $
  *
  * NOTES
  *
@@ -426,14 +426,14 @@ PostmasterMain(int argc, char *argv[])
 #ifndef USE_ASSERT_CHECKING
 				postmaster_error("Assert checking is not compiled in.");
 #else
-				SetConfigOption("debug_assertions", optarg, PGC_POSTMASTER, true);
+				assert_enabled = atoi(optarg);
 #endif
 				break;
 			case 'a':
 				/* Can no longer set authentication method. */
 				break;
 			case 'B':
-				SetConfigOption("shared_buffers", optarg, PGC_POSTMASTER, true);
+				NBuffers = atoi(optarg);
 				break;
 			case 'b':
 				/* Can no longer set the backend executable file to use. */
@@ -447,23 +447,23 @@ PostmasterMain(int argc, char *argv[])
 				 * Turn on debugging for the postmaster and the backend
 				 * servers descended from it.
 				 */
-				SetConfigOption("debug_level", optarg, PGC_POSTMASTER, true);
+				DebugLvl = atoi(optarg);
 				break;
 			case 'F':
-				SetConfigOption("enable_fsync", optarg, PGC_POSTMASTER, true);
+				enableFsync = false;
 				break;
 			case 'h':
-				SetConfigOption("virtual_host", optarg, PGC_POSTMASTER, true);
+				VirtualHost = optarg;
 				break;
 			case 'i':
-				SetConfigOption("tcpip_socket", optarg, PGC_POSTMASTER, true);
+				NetServer = true;
 				break;
 			case 'k':
-				SetConfigOption("unix_socket_directory", optarg, PGC_POSTMASTER, true);
+				UnixSocketDir = optarg;
 				break;
 #ifdef USE_SSL
 			case 'l':
-				SetConfigOption("ssl", optarg, PGC_POSTMASTER, true);
+				EnableSSL = true;
 				break;
 #endif
 			case 'm':
@@ -483,7 +483,11 @@ PostmasterMain(int argc, char *argv[])
 				 * The max number of backends to start. Can't set to less
 				 * than 1 or more than compiled-in limit.
 				 */
-				SetConfigOption("max_connections", optarg, PGC_POSTMASTER, true);
+				MaxBackends = atoi(optarg);
+				if (MaxBackends < 1)
+					MaxBackends = 1;
+				if (MaxBackends > MAXBACKENDS)
+					MaxBackends = MAXBACKENDS;
 				break;
 			case 'n':
 				/* Don't reinit shared mem after abnormal exit */
@@ -500,7 +504,7 @@ PostmasterMain(int argc, char *argv[])
 				strcpy(original_extraoptions, optarg);
 				break;
 			case 'p':
-				SetConfigOption("port", optarg, PGC_POSTMASTER, true);
+				PostPortNumber = atoi(optarg);
 				break;
 			case 'S':
 
@@ -510,7 +514,7 @@ PostmasterMain(int argc, char *argv[])
 				 * it's most badly needed on SysV-derived systems like
 				 * SVR4 and HP-UX.
 				 */
-				SetConfigOption("silent_mode", optarg, PGC_POSTMASTER, true);
+				SilentMode = true;
 				break;
 			case 's':
 

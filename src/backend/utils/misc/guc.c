@@ -4,7 +4,7 @@
  * Support for grand unified configuration scheme, including SET
  * command, configuration file, and command line options.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.40 2001/06/18 23:42:32 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.41 2001/06/19 23:40:10 momjian Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -276,7 +276,7 @@ static struct config_int
 	DEF_PGPORT, 1, 65535, NULL, NULL},
 
 	{"sort_mem", PGC_USERSET, &SortMem,
-	512, 4*BLCKSZ/1024, INT_MAX, NULL, NULL},
+	512, 1, INT_MAX, NULL, NULL},
 
 	{"debug_level", PGC_USERSET, &DebugLvl,
 	0, 0, 16, NULL, NULL},
