@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.56 2000/01/15 02:59:38 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.57 2000/01/23 08:13:34 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -462,7 +462,7 @@ bpcharlen(char *arg)
 	if (!PointerIsValid(arg))
 		elog(ERROR, "Bad (null) char() external representation");
 #ifdef MULTIBYTE
-	l = bcTruelen(arg);
+	l = VARSIZE(arg) - VARHDRSZ;
 	len = 0;
 	s = VARDATA(arg);
 	while (l > 0)
@@ -474,7 +474,7 @@ bpcharlen(char *arg)
 	}
 	return (len);
 #else
-	return bcTruelen(arg);
+	return (VARSIZE(arg) - VARHDRSZ);
 #endif
 }
 
@@ -484,7 +484,7 @@ bpcharoctetlen(char *arg)
 	if (!PointerIsValid(arg))
 		elog(ERROR, "Bad (null) char() external representation");
 
-	return bcTruelen(arg);
+	return (VARSIZE(arg) - VARHDRSZ);
 }
 
 bool
