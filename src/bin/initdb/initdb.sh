@@ -26,7 +26,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.19 1996/11/29 06:24:14 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.20 1996/12/23 08:50:27 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -83,34 +83,34 @@ do
                 echo "updating template1 database only."
                 ;;
         --username=*)
-                POSTGRES_SUPERUSERNAME="`echo $1 | sed s/^--username=//`"
+                POSTGRES_SUPERUSERNAME="`echo $1 | sed 's/^--username=//'`"
                 ;;
         -u)
                 shift
                 POSTGRES_SUPERUSERNAME="$1"
                 ;;
         -u*)
-                POSTGRES_SUPERUSERNAME="`echo $1 | sed s/^-u//`"
+                POSTGRES_SUPERUSERNAME="`echo $1 | sed 's/^-u//'`"
                 ;;
         --pgdata=*)
-                PGDATA="`echo $1 | sed s/^--pgdata=//`"
+                PGDATA="`echo $1 | sed 's/^--pgdata=//'`"
                 ;;
         -r)
                 shift
                 PGDATA="$1"
                 ;;
         -r*)
-                PGDATA="`echo $1 | sed s/^-r//`"
+                PGDATA="`echo $1 | sed 's/^-r//'`"
                 ;;
         --pglib=*)
-                PGLIB="`echo $1 | sed s/^--pglib=//`"
+                PGLIB="`echo $1 | sed 's/^--pglib=//'`"
                 ;;
         -l)
                 shift
                 PGLIB="$1"
                 ;;
         -l*)
-                PGLIB="`echo $1 | sed s/^-l//`"
+                PGLIB="`echo $1 | sed 's/^-l//'`"
                 ;;
 
         *)
@@ -128,7 +128,7 @@ done
 #-------------------------------------------------------------------------
 # Make sure he told us where to find the Postgres files.
 #-------------------------------------------------------------------------
-if [ -z $PGLIB ]; then
+if [ -z "$PGLIB" ]; then
     echo "$CMDNAME does not know where to find the files that make up "
     echo "Postgres (the PGLIB directory).  You must identify the PGLIB "
     echo "directory either with a --pglib invocation option, or by "
@@ -142,7 +142,7 @@ fi
 # Make sure he told us where to build the database system
 #-------------------------------------------------------------------------
 
-if [ -z $PGDATA ]; then
+if [ -z "$PGDATA" ]; then
     echo "$CMDNAME: You must identify the PGDATA directory, where the data"
     echo "for this database system will reside.  Do this with either a"
     echo "--pgdata invocation option or a PGDATA environment variable."
@@ -181,7 +181,7 @@ fi
 # Figure out who the Postgres superuser for the new database system will be.
 #---------------------------------------------------------------------------
 
-if [ -z $POSTGRES_SUPERUSERNAME ]; then 
+if [ -z "$POSTGRES_SUPERUSERNAME" ]; then 
     echo "Can't tell what username to use.  You don't have the USER"
     echo "environment variable set to your username and didn't specify the "
     echo "--username option"
