@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.307 2004/11/10 21:43:50 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.308 2004/11/11 04:11:07 neilc Exp $
 -->
 
 <appendix id="release">
@@ -301,7 +301,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.307 2004/11/10 21:43:50 momjian
        writes to the query's <literal>stdin/stdout</>, rather than
        <application>psql</>'s <literal>stdin/stdout</>. The previous
        behavior can be accessed via new
-       ><option>pstdin</>/<option>pstdout</> parameters.
+       <option>pstdin</>/<option>pstdout</> parameters.
       </para>
      </listitem>
 
@@ -395,7 +395,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.307 2004/11/10 21:43:50 momjian
      <para>
       <type>CIDR</> values now must have their non-masked bits be zero.
       For example, we no longer allow
-      <literal>204.248.199.1/31</literal> as a <type>CIDR>/> value. Such
+      <literal>204.248.199.1/31</literal> as a <type>CIDR</> value. Such
       values should never have been accepted by
       <productname>PostgreSQL</productname> and will now be rejected.
      </para>
@@ -1409,7 +1409,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.307 2004/11/10 21:43:50 momjian
 
     <listitem>
      <para>
-      <function>>to_char>/>/<function>to_date()</> date conversion
+      <function>to_char</>/<function>to_date()</> date conversion
       improvements (Kurt Roeckx, Fabien Coelho)
      </para>
     </listitem>
@@ -1439,7 +1439,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.307 2004/11/10 21:43:50 momjian
     <listitem>
      <para>
       Allow
-      <type>int2</>/<type>int4</>/<type>int8</>/<type>float4</>/<type>float8>/> 
+      <type>int2</>/<type>int4</>/<type>int8</>/<type>float4</>/<type>float8</> 
       input routines to have leading or trailing whitespace
       (Neil)
      </para>
@@ -1464,8 +1464,8 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.307 2004/11/10 21:43:50 momjian
 
     <listitem>
      <para>
-      Fix to_char for <literal>1 BC</> (previously it returned
-      <literal>1 AD</>) (Bruce)
+      Fix <function>to_char</function> for <literal>1 BC</>
+      (previously it returned <literal>1 AD</>) (Bruce)
      </para>
     </listitem>
 
