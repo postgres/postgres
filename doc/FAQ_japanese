@@ -1,6 +1,6 @@
 PostgreSQL(ポストグレス・キュー・エル)についてよくある質問とその解答(FAQ)
 
-原文最終更新日: Fri Jun 4 00:09:16 EDT 2004
+原文最終更新日: Tue Aug 31 23:28:02 EDT 2004
 
 現在の維持管理者: Bruce Momjian (pgman@candle.pha.pa.us)
 Maintainer of Japanese Translation: Jun Kuwamura (juk at PostgreSQL.jp)
@@ -24,7 +24,7 @@ Maintainer of Japanese Translation: Jun Kuwamura (juk at PostgreSQL.jp)
 
         この和訳についてお気づきの点は(juk at PostgreSQL.jp)までメールでお寄せ下さい。
 
-                                                2004年08月22日    桑村 潤
+                                                2004年10月18日    桑村 潤
 ]
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
@@ -233,13 +233,10 @@ SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 クライアント
 
-MS Windows プラットホーム上で走らせるために、libpq C ライブラリ、psql、その他の
-インターフェイス、および、クライアントアプリケーションをコンパイルすることは可
-能です。この場合、クライアントを MS Windows 上で走らせて、TCP/IP 経由でサポート
-されている Unix プラットホーム上で走るサーバと通信します。
-
-Win32 libpq ライブラリと psql を作るために、win32.mak が配布に含まれてます。
-PostgreSQLは ODBC クライアントとも通信できます。
+バージョン8.0になり、PostgreSQL は、Win2000, WinXP, Win2003などのMicrosoft
+Windows NTベースのオペレーティングシステムでネイティブに走るようにりました。パ
+ッケージになったインストーラが、http://pgfoundry.org/projects/pginstallerから入
+手できます。
 
 サーバ
 
@@ -487,26 +484,26 @@ http://www.PostgreSQL.org/bugs/bugs.phpPostgreSQL BugTool (バグツール)のページ
 1.15) PostgreSQLを資金面で援助するにはどうすればよいですか？
 
 PostgreSQLは、我々が始めた 1996年以来、最高クラスの情報基盤を持っています。これ
-はすべて、Marc Fournieさんのおかげで、彼はこの基盤を何年にもわたって創造し管理
-してきました。
+はすべて、Marc Fournieさんのおかげで、彼はこの基盤を創り出し、何年にもわたって
+管理してきました。
 
-質の良い基盤はオープンソース・プロジェクトにとってはとても大切なもので、前進す
-る勢いを失うプロジェクトの分裂を回避します。
+質の良い基盤は、オープンソース・プロジェクトにとってはとても大切なもので、プロ
+ジェクトが前進する勢いを失って分裂するのを回避します。
 
 もちろん、この基盤は安いものではありません。維持し続けるためには毎月あるいは一
-時の経費がかかります。もし、あなたやあなたの会社に、こうした努力のための資金を
-助けるために施すことができるようでしたら、http://store.pgsql.com/shopping/から
-寄付をお願いします。
+時的に経費がかかります。もし、あなたやあなたの会社に、こうした努力のための資金
+の援助を施すことができるようでしたら、http://store.pgsql.com/shopping/から寄付
+をお願いします。
 
-また、Webページには PostgreSQL,Inc とありますが、そこの"義援(contributions)"ア
-イテムは PostgreSQL プロジェクトをサポートするためだけのためで、決して特定の会
-社のための資金のためではありません。もし、手形(check)の方が都合がよければ連絡先
-の住所へお送り下さい。
+また、Webページには PostgreSQL,Inc とありますが、そこの "貢献(contributions)"と
+いう項目は、 PostgreSQL プロジェクトを支援するだけのためで、決して特定の会社の
+ための資金ではありません。もし、小切手(check)の方が都合よければ連絡先の住所へお
+送り下さい。
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
 
-さらに、もし、PostgreSQLでの成功例をお持ちであれば、ぜひ、われわれの事例サイト 
-http://advocacy.postgresql.orgへお送りください。
+さらに、PostgreSQLを使った成功事例をお持ちであれば、ぜひ、われわれの事例紹介サ
+イト http://advocacy.postgresql.orgへお送りください。
 
                          ユーザー・クライアントの質問                          
                                                                                
@@ -639,10 +636,10 @@ Postgresは潜在的なバックエンドプロセス毎に一つのセマフォを必要とします。とりあ
 
 3.5) 他のホストからの接続はどのように制御しますか？
 
-既定値では、PostgreSQL は unix ドメインソケットを使うローカルマシンからの接続し
-か許しません。postgresql.conf の中の tcpip_sockets を有効にし、$PGDATA/
-pg_hba.conf ファイルを適切に直して、ホスト主導型の認証を使わないかぎりは他のマ
-シンからは接続できないでしょう。これによりTCP/IPの接続が可能になります。
+既定値では、PostgreSQL は Unix ドメインソケット、または、TCP/IP接続のローカルマ
+シンからの接続しか許しません。postgresql.conf の中の listen_addresses を修正し
+、かつ、$PGDATA/pg_hba.conf ファイルを適切に直して、ホスト主導型認証を有効にし
+ないかぎりは、他のマシンからは接続できないでしょう。
 
 3.6) より良い性能を得るためには、データベース・エンジンをどのように調整すれば良
 いですか？
@@ -963,6 +960,10 @@ LIKE あるいは ~ のようなワイルドカード演算子は特別な環境でしか使えません：
  ・ ILIKE や ~* のような大文字と小文字を区別しない検索は使えません。そのかわり
     、このFAQの4.12節で説明する関数のインデックスが使えます。
  ・ initdb においては、デフォルトでCロケールが使われなくてはなりません。
+
+8.0より前のリリースでは、インデックスは、データ型がちょうどインデックスのカラム
+の型と一致しなければ、使えないことがしばしばありました。おそらく、int2, int8,
+および numeric 等のカラムのインデックスがそうです。
 
 [訳注：強制的にインデックスを使うには SET enable_seqscan = off を実行します。 ]
 
@@ -1364,7 +1365,7 @@ http://www.csra.co.jp/~mitani/jpug/pgreplicate/ ]
 [訳注：
   日本語版の製作については以下の通りです。
 
-  最終更新日:   2004年08月22日
+  最終更新日:   2004年10月18日
   翻訳者:       桑村 潤 (Jun Kuwamura <juk at PostgreSQL.jp>)
 
   このFAQの和訳の作成にあたり協力をしてくださった方々(敬称は略させていただきます):
@@ -1384,6 +1385,7 @@ http://www.csra.co.jp/~mitani/jpug/pgreplicate/ ]
                 神谷 英孝(Hidetaka KAMIYA <hkamiya at catvmics.ne.jp>)
                 菅原 敦(Atsushi SUGAWARA <asugawar at f3.dion.ne.jp>)
                 稲葉 香理(Kaori Inaba <i-kaori at sra.co.jp>)
+                石井 達夫(Tatsuo Ishii <t-ishii at sra.co.jp>)
 
   をはじめ、ポストグレスに関する話題豊富な日本語ポストグレス・メーリングリスト、
 和訳のきっかけを作ってくれた JF(Linux Japanese FAQ Mailing List)プロジェクト、
