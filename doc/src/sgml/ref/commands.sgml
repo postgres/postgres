@@ -27,6 +27,11 @@
 &declare;
 &delete;
 &dropFunction;
+&listen;
+&load;
+&lock;
+&move;
+&notify;
 &reset;
 &revoke;
 &rollback;

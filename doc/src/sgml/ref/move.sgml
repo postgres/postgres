@@ -1,0 +1,199 @@
+<REFENTRY ID="SQL-MOVE">
+<REFMETA>
+<REFENTRYTITLE>
+MOVE
+</REFENTRYTITLE>
+<REFMISCINFO>SQL - Language Statements</REFMISCINFO>
+</REFMETA>
+<REFNAMEDIV>
+<REFNAME>
+MOVE
+</REFNAME>
+<REFPURPOSE>
+Moves cursor position
+</REFPURPOSE>
+                
+<REFSYNOPSISDIV>
+<REFSYNOPSISDIVINFO>
+<DATE>1998-09-01</DATE>
+</REFSYNOPSISDIVINFO>
+<SYNOPSIS>
+MOVE [ <REPLACEABLE CLASS="PARAMETER">selector</REPLACEABLE> ] { [ <REPLACEABLE CLASS="PARAMETER">#</REPLACEABLE> | ALL ] } IN <REPLACEABLE CLASS="PARAMETER">cursor</REPLACEABLE>
+</SYNOPSIS>
+
+<REFSECT2 ID="R2-SQL-MOVE-1">
+<REFSECT2INFO>
+<DATE>1998-09-01</DATE>
+</REFSECT2INFO>
+<TITLE>
+Inputs
+</TITLE>
+<PARA>
+</PARA>
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+<REPLACEABLE CLASS="PARAMETER">selector</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+
+<variablelist>
+<varlistentry>
+<term>
+FORWARD
+</term>
+<listitem>
+<para>
+Skip next row(s), it is assumed by default
+                       if selector is omitted.
+
+<varlistentry>
+<term>
+BACKWARD
+</term>
+<listitem>
+<para>
+Skip previous row(s).
+
+</variablelist>
+
+<VARLISTENTRY>
+<TERM>
+<REPLACEABLE CLASS="PARAMETER">#</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+         An unsigned integer that specify how many rows to skip.
+
+<VARLISTENTRY>
+<TERM>
+ALL
+</TERM>
+<LISTITEM>
+<PARA>
+Skip all remaining rows.
+
+<VARLISTENTRY>
+<TERM>
+<REPLACEABLE CLASS="PARAMETER">cursor</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+         An open cursor's name.
+
+</VARIABLELIST>
+
+</REFSECT2>
+
+<REFSECT2 ID="R2-SQL-MOVE-2">
+<REFSECT2INFO>
+<DATE>1998-09-01</DATE>
+</REFSECT2INFO>
+<TITLE>
+Outputs
+</TITLE>
+<PARA>
+</PARA>
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+MOVE
+</TERM>
+<LISTITEM>
+<PARA>
+         Message returned if successfully. 
+
+<VARLISTENTRY>
+<TERM>
+NOTICE:  PerformPortalFetch: portal <REPLACEABLE CLASS="PARAMETER">cursor</REPLACEABLE> not found.
+</TERM>
+<LISTITEM>
+<PARA>
+         If cursor is not declared.
+
+</VARIABLELIST>
+
+</REFSECT2>
+</REFSYNOPSISDIV>
+
+<REFSECT1 ID="R1-SQL-MOVE-1">
+<REFSECT1INFO>
+<DATE>1998-04-15</DATE>
+</REFSECT1INFO>
+<TITLE>
+Description
+</TITLE>
+<PARA>
+   MOVE allows a user to move cursor position for specified
+   number of rows. MOVE works like fetch command: it
+   fetches rows, but put them nowhere.
+
+<REFSECT2 ID="R2-SQL-MOVE-3">
+<REFSECT2INFO>
+<DATE>1998-04-15</DATE>
+</REFSECT2INFO>
+<TITLE>
+Notes
+</TITLE>
+<PARA>
+MOVE is a <productname>Postgres</productname> language extension.
+
+<para>
+   Refer to FETCH statements for further description
+     of valid arguments.
+   Refer to DECLARE statements to declare a cursor.
+   Refer to BEGIN WORK, COMMIT WORK, ROLLBACK WORK statements
+     for further information about transactions.
+
+</REFSECT2>
+
+<REFSECT1 ID="R1-SQL-MOVE-2">
+<TITLE>
+Usage
+</TITLE>
+<PARA>
+<ProgramListing>
+   --set up and use a cursor:
+   --
+   BEGIN WORK;
+     DECLARE liahona CURSOR 
+         FOR SELECT * FROM films;
+   
+   --Skip first 5 rows:
+   --
+     MOVE FORWARD 5 IN liahona;
+   
+   --Fetch 6th row in the cursor liahona:
+   --
+     FETCH 1 IN liahona;
+
+     code |title |did| date_prod|kind      |len
+     -----+------+---+----------+----------+------
+     P_303|48 Hrs|103|1982-10-22|Action    | 01:37
+
+   -- close the cursor liahona and commit work:
+   --
+     CLOSE liahona;
+   COMMIT WORK;
+</ProgramListing>
+ 
+</REFSECT1>
+
+<REFSECT1 ID="R1-SQL-MOVE-3">
+<TITLE>
+Compatibility
+</TITLE>
+<PARA>
+</PARA>
+
+<REFSECT2 ID="R2-SQL-MOVE-4">
+<REFSECT2INFO>
+<DATE>1998-09-01</DATE>
+</REFSECT2INFO>
+<TITLE>
+SQL92
+</TITLE>
+<PARA>
+   There is no SQL92 MOVE statement.
+</REFENTRY>

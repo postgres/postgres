@@ -1,0 +1,148 @@
+<REFENTRY ID="SQL-LISTEN">
+<REFMETA>
+<REFENTRYTITLE>
+LISTEN
+</REFENTRYTITLE>
+<REFMISCINFO>SQL - Language Statements</REFMISCINFO>
+</REFMETA>
+<REFNAMEDIV>
+<REFNAME>
+LISTEN
+</REFNAME>
+<REFPURPOSE>
+Listen for notification on a relation
+</REFPURPOSE>
+
+<REFSYNOPSISDIV>
+<REFSYNOPSISDIVINFO>
+<DATE>1998-09-01</DATE>
+</REFSYNOPSISDIVINFO>
+<SYNOPSIS>
+LISTEN <REPLACEABLE CLASS="PARAMETER">classname</REPLACEABLE>
+</SYNOPSIS>
+
+<REFSECT2 ID="R2-SQL-LISTEN-1">
+<REFSECT2INFO>
+<DATE>1998-09-01</DATE>
+</REFSECT2INFO>
+<TITLE>
+Inputs
+</TITLE>
+<PARA>
+</PARA>
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+<REPLACEABLE CLASS="PARAMETER">classname</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+Table object used for notification.
+
+</VARIABLELIST>
+
+</REFSECT2>
+
+<REFSECT2 ID="R2-SQL-LISTEN-2">
+<REFSECT2INFO>
+<DATE>1998-04-15</DATE>
+</REFSECT2INFO>
+<TITLE>
+Outputs
+</TITLE>
+<PARA>
+</PARA>
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+LISTEN
+</TERM>
+<LISTITEM>
+<PARA>
+Message returned upon successful completion of registration.
+
+</VARIABLELIST>
+
+</REFSECT2>
+</REFSYNOPSISDIV>
+
+<REFSECT1 ID="R1-SQL-LISTEN-1">
+<REFSECT1INFO>
+<DATE>1998-04-15</DATE>
+</REFSECT1INFO>
+<TITLE>
+Description
+</TITLE>
+<PARA>
+LISTEN is used to register the current backend as a listener on the relation
+<REPLACEABLE CLASS="PARAMETER">classname</REPLACEABLE>.
+When the command 
+<command>NOTIFY <REPLACEABLE CLASS="PARAMETER">classname</REPLACEABLE></command>
+is called either from within a rule or at the query level, the
+frontend applications corresponding to the listening backends
+are notified.  When the backend process exits, this registration
+is cleared.
+
+<para>
+This event notification is performed through the libpq protocol
+and frontend application interface.  The application program
+must call the routine
+<function>PQnotifies</function>
+in order to find out the name of the class to which a given
+notification corresponds.  If this code is not included in
+the application, the event notification will be queued and
+never be processed.
+
+<REFSECT2 ID="R2-SQL-LISTEN-3">
+<REFSECT2INFO>
+<DATE>1998-04-15</DATE>
+</REFSECT2INFO>
+<TITLE>
+Notes
+</TITLE>
+<para>
+Note that <REPLACEABLE CLASS="PARAMETER">classname</REPLACEABLE>
+needs not to be a valid class name but can be any string valid as a name up to 32
+characters long.
+
+<para>
+A restriction in some previous releases of
+ <productname>Postgres</productname> that a
+<REPLACEABLE CLASS="PARAMETER">classname</REPLACEABLE>
+which does not correspond to an actual table must be enclosed in double-quotes
+is no longer present.
+
+</REFSECT2>
+
+<REFSECT1 ID="R1-SQL-LISTEN-2">
+<TITLE>
+Usage
+</TITLE>
+<PARA>
+<ProgramListing>
+postgres=> listen virtual;
+LISTEN
+postgres=> notify virtual;
+NOTIFY
+ASYNC NOTIFY of 'virtual' from backend pid '11239' received
+</ProgramListing>
+
+</REFSECT1>
+
+<REFSECT1 ID="R1-SQL-LISTEN-3">
+<TITLE>
+Compatibility
+</TITLE>
+<PARA>
+</PARA>
+
+<REFSECT2 ID="R2-SQL-LISTEN-4">
+<REFSECT2INFO>
+<DATE>1998-09-01</DATE>
+</REFSECT2INFO>
+<TITLE>
+SQL92
+</TITLE>
+<PARA>
+   There is no LISTEN statement in <acronym>SQL92</acronym>.
+</REFENTRY>

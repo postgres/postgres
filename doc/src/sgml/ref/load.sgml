@@ -1,0 +1,157 @@
+<REFENTRY ID="SQL-LOAD">
+<REFMETA>
+<REFENTRYTITLE>
+LOAD
+</REFENTRYTITLE>
+<REFMISCINFO>SQL - Language Statements</REFMISCINFO>
+</REFMETA>
+<REFNAMEDIV>
+<REFNAME>
+LOAD
+</REFNAME>
+<REFPURPOSE>
+Dynamically loads an object file
+</REFPURPOSE>
+
+<REFSYNOPSISDIV>
+<REFSYNOPSISDIVINFO>
+<DATE>1998-09-01</DATE>
+</REFSYNOPSISDIVINFO>
+<SYNOPSIS>
+<REPLACEABLE CLASS="PARAMETER">
+</REPLACEABLE>
+LOAD '<REPLACEABLE CLASS="PARAMETER">filename</REPLACEABLE>'
+</SYNOPSIS>
+
+<REFSECT2 ID="R2-SQL-LOAD-1">
+<REFSECT2INFO>
+<DATE>1998-09-01</DATE>
+</REFSECT2INFO>
+<TITLE>
+Inputs
+</TITLE>
+<PARA>
+</PARA>
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+<REPLACEABLE CLASS="PARAMETER">filename</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+Object file for dynamic loading.
+
+</VARIABLELIST>
+
+</REFSECT2>
+
+<REFSECT2 ID="R2-SQL-LOAD-2">
+<REFSECT2INFO>
+<DATE>1998-04-15</DATE>
+</REFSECT2INFO>
+<TITLE>
+Outputs
+</TITLE>
+<PARA>
+</PARA>
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+LOAD
+</TERM>
+<LISTITEM>
+<PARA>
+
+</VARIABLELIST>
+
+</REFSECT2>
+</REFSYNOPSISDIV>
+
+<REFSECT1 ID="R1-SQL-LOAD-1">
+<REFSECT1INFO>
+<DATE>1998-04-15</DATE>
+</REFSECT1INFO>
+<TITLE>
+Description
+</TITLE>
+<PARA>
+Loads an object (or ".o") file into the 
+<productname>Postgres</productname> backend address space.  Once a
+file is loaded, all functions in that file can be accessed.  This
+function is used in support of ADT's.
+
+<para>
+If a file is not loaded using
+<command>LOAD</command>, 
+the file will be loaded automatically the first time the
+function is called by <productname>Postgres</productname>.
+<command>LOAD</command>
+can also be used to reload an object file if it has been edited and
+recompiled.  Only objects created from C language files are supported
+at this time.
+
+<REFSECT2 ID="R2-SQL-LOAD-3">
+<REFSECT2INFO>
+<DATE>1998-04-15</DATE>
+</REFSECT2INFO>
+<TITLE>
+Notes
+</TITLE>
+<PARA>
+Functions in loaded object files should not call functions in other
+object files loaded through the
+<command>LOAD</command>
+command, meaning, for example, that all functions in file A should
+call each other, functions in the standard or math libraries, or in
+Postgres itself.  They should not call functions defined in a different
+loaded file B.  This is because if B is reloaded, the Postgres loader is
+not able to relocate the calls from the functions in A into
+the new address space of B.  If B is not reloaded, however, there will
+not be a problem.
+
+<para>
+Object files must be compiled to contain position independent code.
+For example, 
+on DECstations you must use
+<application>/bin/cc</application>
+with the "-G 0" option when compiling object files to be
+loaded.
+
+<para>
+Note that if you are porting <productname>Postgres</productname>
+ to a new platform, <command>LOAD</command>
+will have to work in order to support ADTs.
+
+</REFSECT2>
+
+<REFSECT1 ID="R1-SQL-LOAD-2">
+<TITLE>
+Usage
+</TITLE>
+<PARA>
+<ProgramListing>
+   --Load the file /usr/postgres/demo/circle.o
+   --
+   LOAD "/usr/postgres/demo/circle.o"
+</ProgramListing>
+        
+</REFSECT1>
+
+<REFSECT1 ID="R1-SQL-LOAD-3">
+<TITLE>
+Compatibility
+</TITLE>
+<PARA>
+</PARA>
+
+<REFSECT2 ID="R2-SQL-LOAD-4">
+<REFSECT2INFO>
+<DATE>1998-04-15</DATE>
+</REFSECT2INFO>
+<TITLE>
+SQL92
+</TITLE>
+<PARA>
+There is no LOAD statement in <acronym>SQL92</acronym>.
+
+</REFENTRY>

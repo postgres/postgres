@@ -1,0 +1,161 @@
+<REFENTRY ID="SQL-NOTIFY">
+<REFMETA>
+<REFENTRYTITLE>
+NOTIFY
+</REFENTRYTITLE>
+<REFMISCINFO>SQL - Language Statements</REFMISCINFO>
+</REFMETA>
+<REFNAMEDIV>
+<REFNAME>
+NOTIFY
+</REFNAME>
+<REFPURPOSE>
+Signals all frontends and backends listening on a class
+</REFPURPOSE>
+
+<REFSYNOPSISDIV>
+<REFSYNOPSISDIVINFO>
+<DATE>1998-09-01</DATE>
+</REFSYNOPSISDIVINFO>
+<SYNOPSIS>
+<REPLACEABLE CLASS="PARAMETER">
+</REPLACEABLE>
+NOTIFY <REPLACEABLE CLASS="PARAMETER">classname</REPLACEABLE>        
+</SYNOPSIS>
+
+<REFSECT2 ID="R2-SQL-NOTIFY-1">
+<REFSECT2INFO>
+<DATE>1998-09-01</DATE>
+</REFSECT2INFO>
+<TITLE>
+Inputs
+</TITLE>
+<PARA>
+</PARA>
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+<REPLACEABLE CLASS="PARAMETER">classname</REPLACEABLE>        
+</TERM>
+<LISTITEM>
+<PARA>
+Table or arbitrary relation class used for notification.
+
+</VARIABLELIST>
+
+</REFSECT2>
+
+<REFSECT2 ID="R2-SQL-NOTIFY-2">
+<REFSECT2INFO>
+<DATE>1998-09-01</DATE>
+</REFSECT2INFO>
+<TITLE>
+Outputs
+</TITLE>
+<PARA>
+</PARA>
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+NOTIFY
+</TERM>
+<LISTITEM>
+<PARA>
+Notification message from backend.
+
+</VARIABLELIST>
+
+</REFSECT2>
+</REFSYNOPSISDIV>
+
+<REFSECT1 ID="R1-SQL-NOTIFY-1">
+<REFSECT1INFO>
+<DATE>1998-09-01</DATE>
+</REFSECT1INFO>
+<TITLE>
+Description
+</TITLE>
+<PARA>
+   NOTIFY is used to awaken all backends and consequently all
+   frontends that have executed <command>LISTEN</command>  on 
+<replaceable class="parameter">classname</replaceable>.
+ This can be used either within an instance-level rule 
+as part of the action body or from a  normal query.
+
+<para>
+ When used from within a normal query, 
+this can be thought of as interprocess communication (IPC).  When
+used from within a rule, this can be thought of as an alerter mechanism.
+<para>
+       Notice that the mere fact that a notify has been
+ executed does not imply anything in particular about the state
+       of  the class (e.g., that it has been updated),
+ nor does the notification protocol transmit any useful information
+ other than the class name.  
+Therefore, all notify does is indicate that some backend wishes its  peers  to
+       examine <replaceable class="parameter">classname</replaceable>
+ in some application-specific way.
+<para>
+       In  fact,  <replaceable class="parameter">classname</replaceable>
+  need  not be the name of an SQL class at all.
+  It is best thought of as a condition name
+       that the application programmer selects.
+<para>
+       This event notification is performed through the libpq protocol
+ and frontend application interface.  The application  program
+  must  call  the routine <function>PQnotifies</function> in order to find out the 
+name of the class to which a given
+       notification corresponds.  
+If this code is not included in the application,  
+the  event  notification  will  be
+       queued and never be processed.
+ 
+<REFSECT2 ID="R2-SQL-NOTIFY-3">
+<REFSECT2INFO>
+<DATE>1998-09-01</DATE>
+</REFSECT2INFO>
+<TITLE>
+Notes
+</TITLE>
+<PARA>
+</PARA>
+
+</REFSECT2>
+
+<REFSECT1 ID="R1-SQL-NOTIFY-2">
+<TITLE>
+Usage
+</TITLE>
+<PARA>
+</PARA>
+<ProgramListing>
+-- Configure and execute a listen/notify sequence
+-- from psql
+postgres=> create table t (i int4);
+postgres=> listen t;
+LISTEN
+postgres=> notify t;
+NOTIFY
+ASYNC NOTIFY of 't' from backend pid '10949' received
+</ProgramListing>
+
+</REFSECT1>
+
+<REFSECT1 ID="R1-SQL-NOTIFY-3">
+<TITLE>
+Compatibility
+</TITLE>
+<PARA>
+</PARA>
+
+<REFSECT2 ID="R2-SQL-NOTIFY-4">
+<REFSECT2INFO>
+<DATE>1998-09-01</DATE>
+</REFSECT2INFO>
+<TITLE>
+SQL92
+</TITLE>
+<PARA>
+There is no NOTIFY statement in <acronym>SQL92</acronym>.
+
+</REFENTRY>
