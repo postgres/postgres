@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.109 1999/05/26 14:50:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.110 1999/05/26 16:06:45 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -112,12 +112,12 @@ FILE	   *g_fout;				/* the script file */
 PGconn	   *g_conn;				/* the database connection */
 
 bool		force_quotes;		/* User wants to suppress double-quotes */
-int			dumpData;			/* dump data using proper insert strings */
-int			attrNames;			/* put attr names into insert strings */
-int			schemaOnly;
-int			dataOnly;
-int			aclsOption;
-bool		drop_schema;
+bool		dumpData;			/* dump data using proper insert strings */
+bool		attrNames;			/* put attr names into insert strings */
+bool		schemaOnly;
+bool		dataOnly;
+bool		aclsOption;
+bool		dropSchema;
 
 char		g_opaque_type[10];	/* name for the opaque type */
 
@@ -233,7 +233,7 @@ dumpClasses_nodumpData(FILE *fout, const char *classname, const bool oids)
 	bool		copydone;
 	char		copybuf[COPYBUFSIZ];
 
-	if (oids)
+	if (oids == true)
 	{
 		fprintf(fout, "COPY %s WITH OIDS FROM stdin;\n",
 				fmtId(classname, force_quotes));
@@ -336,7 +336,7 @@ dumpClasses_dumpData(FILE *fout, const char *classname,
 	for (tuple = 0; tuple < PQntuples(res); tuple++)
 	{
 		fprintf(fout, "INSERT INTO %s ", fmtId(classname, force_quotes));
-		if (attrNames)
+		if (attrNames == true)
 		{
 			sprintf(q, "(");
 			for (field = 0; field < PQnfields(res); field++)
@@ -545,7 +545,7 @@ main(int argc, char **argv)
 	const char *pghost = NULL;
 	const char *pgport = NULL;
 	char	   *tablename = NULL;
-	int			oids = 0;
+	bool		oids = false;
 	TableInfo  *tblinfo;
 	int			numTables;
 	char		connect_string[512] = "";
@@ -556,13 +556,13 @@ main(int argc, char **argv)
 
 	g_verbose = false;
 	force_quotes = true;
-	drop_schema = false;
+	dropSchema = false;
 
 	strcpy(g_comment_start, "-- ");
 	g_comment_end[0] = '\0';
 	strcpy(g_opaque_type, "opaque");
 
-	dataOnly = schemaOnly = dumpData = attrNames = 0;
+	dataOnly = schemaOnly = dumpData = attrNames = false;
 
 	progname = *argv;
 
@@ -571,19 +571,19 @@ main(int argc, char **argv)
 		switch (c)
 		{
 			case 'a':			/* Dump data only */
-				dataOnly = 1;
+				dataOnly = true;
 				break;
 			case 'c':			/* clean (i.e., drop) schema prior to
 								 * create */
-				drop_schema = true;
+				dropSchema = true;
 				break;
 			case 'd':			/* dump data as proper insert strings */
-				dumpData = 1;
+				dumpData = true;
 				break;
 			case 'D':			/* dump data as proper insert strings with
 								 * attr names */
-				dumpData = 1;
-				attrNames = 1;
+				dumpData = true;
+				attrNames = true;
 				break;
 			case 'f':			/* output file name */
 				filename = optarg;
@@ -599,13 +599,13 @@ main(int argc, char **argv)
 				force_quotes = true;
 				break;
 			case 'o':			/* Dump oids */
-				oids = 1;
+				oids = true;
 				break;
 			case 'p':			/* server port */
 				pgport = optarg;
 				break;
 			case 's':			/* dump schema only */
-				schemaOnly = 1;
+				schemaOnly = true;
 				break;
 			case 't':			/* Dump data for this table only */
 				{
@@ -637,7 +637,7 @@ main(int argc, char **argv)
 				g_verbose = true;
 				break;
 			case 'z':			/* Dump ACLs and table ownership info */
-				aclsOption = 1;
+				aclsOption = true;
 				break;
 			case 'u':
 				use_password = 1;
@@ -648,6 +648,14 @@ main(int argc, char **argv)
 		}
 	}
 
+	if (dumpData == true && oids == true)
+	{
+		fprintf(stderr,
+			 "%s: INSERT's can not set oids, so INSERT and OID options can not be used together.\n",
+				progname);
+		exit(2);
+	}
+		
 	/* open the output file */
 	if (filename == NULL)
 		g_fout = stdout;
@@ -714,7 +722,7 @@ main(int argc, char **argv)
 
 	g_last_builtin_oid = findLastBuiltinOid();
 
-	if (oids)
+	if (oids == true)
 		setMaxOid(g_fout);
 	if (!dataOnly)
 	{
@@ -1663,7 +1671,7 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 
 #if 0
 				/* XXX - how to emit this DROP TRIGGER? */
-				if (drop_schema)
+				if (dropSchema)
 				{
 					sprintf(query, "DROP TRIGGER %s ON %s;\n",
 					 fmtId(PQgetvalue(res2, i2, i_tgname), force_quotes),
@@ -2067,7 +2075,7 @@ dumpTypes(FILE *fout, FuncInfo *finfo, int numFuncs,
 
 		becomeUser(fout, tinfo[i].usename);
 
-		if (drop_schema)
+		if (dropSchema)
 		{
 			sprintf(q, "DROP TYPE %s;\n", fmtId(tinfo[i].typname, force_quotes));
 			fputs(q, fout);
@@ -2170,7 +2178,7 @@ dumpProcLangs(FILE *fout, FuncInfo *finfo, int numFuncs,
 		lanname = checkForQuote(PQgetvalue(res, i, i_lanname));
 		lancompiler = checkForQuote(PQgetvalue(res, i, i_lancompiler));
 
-		if (drop_schema)
+		if (dropSchema)
 			fprintf(fout, "DROP PROCEDURAL LANGUAGE '%s';\n", lanname);
 
 		fprintf(fout, "CREATE %sPROCEDURAL LANGUAGE '%s' "
@@ -2288,7 +2296,7 @@ dumpOneFunc(FILE *fout, FuncInfo *finfo, int i,
 		PQclear(res);
 	}
 
-	if (drop_schema)
+	if (dropSchema)
 	{
 		sprintf(q, "DROP FUNCTION %s (", fmtId(finfo[i].proname, force_quotes));
 		for (j = 0; j < finfo[i].nargs; j++)
@@ -2415,7 +2423,7 @@ dumpOprs(FILE *fout, OprInfo *oprinfo, int numOperators,
 
 		becomeUser(fout, oprinfo[i].usename);
 
-		if (drop_schema)
+		if (dropSchema)
 		{
 			sprintf(q, "DROP OPERATOR %s (%s, %s);\n", oprinfo[i].oprname,
 					fmtId(findTypeByOid(tinfo, numTypes, oprinfo[i].oprleft), false),
@@ -2519,7 +2527,7 @@ dumpAggs(FILE *fout, AggInfo *agginfo, int numAggs,
 
 		becomeUser(fout, agginfo[i].usename);
 
-		if (drop_schema)
+		if (dropSchema)
 		{
 			sprintf(q, "DROP AGGREGATE %s %s;\n", agginfo[i].aggname,
 					fmtId(findTypeByOid(tinfo, numTypes, agginfo[i].aggbasetype), false));
@@ -2739,7 +2747,7 @@ dumpTables(FILE *fout, TableInfo *tblinfo, int numTables,
 
 			becomeUser(fout, tblinfo[i].usename);
 
-			if (drop_schema)
+			if (dropSchema)
 			{
 				sprintf(q, "DROP TABLE %s;\n", fmtId(tblinfo[i].relname, force_quotes));
 				fputs(q, fout);
@@ -2979,7 +2987,7 @@ dumpIndices(FILE *fout, IndInfo *indinfo, int numIndices,
 			strcpy(id1, fmtId(indinfo[i].indexrelname, force_quotes));
 			strcpy(id2, fmtId(indinfo[i].indrelname, force_quotes));
 
-			if (drop_schema)
+			if (dropSchema)
 			{
 				sprintf(q, "DROP INDEX %s;\n", id1);
 				fputs(q, fout);
@@ -3245,7 +3253,7 @@ dumpSequence(FILE *fout, TableInfo tbinfo)
 
 	PQclear(res);
 
-	if (drop_schema)
+	if (dropSchema)
 	{
 		sprintf(query, "DROP SEQUENCE %s;\n", fmtId(tbinfo.relname, force_quotes));
 		fputs(query, fout);
