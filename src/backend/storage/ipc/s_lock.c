@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/s_lock.c,v 1.14 1997/06/06 01:37:14 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/s_lock.c,v 1.15 1997/07/29 14:07:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -521,5 +521,45 @@ S_INIT_LOCK(slock_t *lock)
 
 #endif /* NEED_NS32K_TAS_ASM */
 
+#if defined(linux) && defined(PPC)
+
+static int tas_dummy()
+{
+	__asm__("
+tas:			/* r3 points to the location of p */
+	lwarx	5,0,3	/* r5 = *p */
+	cmpwi	5,0	/* r5 == 0 ? */
+	bne	fail	/* if not 0, jump to fail */
+	addi	5,5,1	/* set 1 to r5 */
+        stwcx.  5,0,3	/* try update p atomically */
+        beq	success	/* jump if scceed */
+fail:	li	3,1	/* set 1 to r3 */
+	blr
+success:
+	li 3,0		/* set 0 to r3 */
+        blr
+	");
+}
+ 
+void
+S_LOCK(slock_t *lock)
+{
+    while (tas(lock))
+	;
+}
+
+void
+S_UNLOCK(slock_t *lock)
+{
+    *lock = 0;
+}
+
+void
+S_INIT_LOCK(slock_t *lock)
+{
+    S_UNLOCK(lock);
+}
+
+#endif /* defined(linux) && defined(PPC) */
 
 #endif /* HAS_TEST_AND_SET */

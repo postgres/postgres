@@ -7,11 +7,20 @@
 #  define JMP_BUF
 #  define USE_POSIX_TIME
 #  define USE_POSIX_SIGNALS
-#  if !defined(PPC)
-#    define NEED_I386_TAS_ASM
-#    define HAS_TEST_AND_SET
+#  define NEED_I386_TAS_ASM
+#  define HAS_TEST_AND_SET
+
+#  if defined(PPC)
+     typedef unsigned int slock_t;
+#  else
      typedef unsigned char slock_t;
 #  endif
+
+#  if defined(PPC)
+#    undef NEED_I386_TAS_ASM
+#    undef HAVE_INT_TIMEZONE
+#  endif
+
 #  if defined(sparc)
 #    undef NEED_I386_TAS_ASM
 #  endif

@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.35 1997/04/04 10:42:34 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.36 1997/07/29 14:08:34 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -34,6 +34,7 @@ ifeq ($(PORTNAME), linux)
     install-shlib-dep := install-shlib
     shlib := libpq.so.1
     LDFLAGS_SL = -shared
+    CFLAGS += $(CFLAGS_SL)
   endif
 endif
 ifeq ($(PORTNAME), BSD44_derived)
