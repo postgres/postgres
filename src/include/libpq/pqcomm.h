@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqcomm.h,v 1.8 1997/03/12 21:22:19 scrappy Exp $
+ * $Id: pqcomm.h,v 1.9 1997/03/16 18:50:47 scrappy Exp $
  *
  * NOTES
  *    Some of this should move to libpq.h
@@ -123,6 +123,11 @@ typedef struct Port {
 extern FILE *Pfout, *Pfin;
 extern int PQAsyncNotifyWaiting;
 
+/* in pqcompriv.c */
+int pqGetShort(int *, FILE *);
+int pqGetLong(int *, FILE *);
+int pqPutShort(int, FILE *);
+int pqPutLong(int, FILE *);
 /*
  * prototypes for functions in pqpacket.c
  */
