@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.60 1999/06/10 22:59:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.61 1999/06/13 00:07:43 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -157,7 +157,7 @@ tas(volatile slock_t *lock)
 #endif	 /* sparc */
 
 
-#if defined(__mc68000__)
+#if defined(__mc68000__) && defined(__linux__)
 #define TAS(lock) tas(lock)
 
 static __inline__ int
@@ -173,7 +173,7 @@ tas(volatile slock_t *lock)
 	return rv;
 }
 
-#endif /* defined(__mc68000__) */
+#endif /* defined(__mc68000__) && defined(__linux__) */
 
 
 #if defined(NEED_VAX_TAS_ASM)
