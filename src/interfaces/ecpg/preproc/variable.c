@@ -22,8 +22,8 @@ new_variable(const char *name, struct ECPGtype * type, int brace_level)
 static struct variable *
 find_struct_member(char *name, char *str, struct ECPGstruct_member * members, int brace_level)
 {
-	char	   *next = strchr(++str, '.'),
-				c = '\0';
+	char	   *next = strpbrk(++str, ".-["),
+				*end, c = '\0';
 
 	if (next != NULL)
 	{
@@ -35,7 +35,7 @@ find_struct_member(char *name, char *str, struct ECPGstruct_member * members, in
 	{
 		if (strcmp(members->name, str) == 0)
 		{
-			if (c == '\0')
+			if (next == NULL)
 			{
 				/* found the end */
 				switch (members->type->type)
@@ -52,13 +52,57 @@ find_struct_member(char *name, char *str, struct ECPGstruct_member * members, in
 			else
 			{
 				*next = c;
-				if (c == '-')
+				if (c == '[')
 				{
-					next++;
-					return (find_struct_member(name, next, members->type->u.element->u.members, brace_level));
+					int count;
+
+					/* We don't care about what's inside the array braces
+					 * so just eat up the character */
+					for (count=1, end=next+1; count; end++)
+					{
+						  switch (*end)
+						  {
+							  case '[': count++;
+								    break;
+							  case ']': count--;
+								    break;
+							  default : break;
+						  }
+					}
 				}
-				else
-					return (find_struct_member(name, next, members->type->u.members, brace_level));
+				else end = next;
+			
+				switch (*end)
+				{
+					case '\0':	/* found the end, but this time it has to be an array element */
+							if (members->type->type != ECPGt_array)
+							{
+								snprintf(errortext, sizeof(errortext), "incorrectly formed variable %s", name);
+								mmerror(PARSE_ERROR, ET_FATAL, errortext);
+							}
+							
+							switch (members->type->u.element->type)
+							{
+								case ECPGt_array:
+									return (new_variable(name, ECPGmake_array_type(members->type->u.element->u.element, members->type->u.element->size), brace_level));
+								case ECPGt_struct:
+								case ECPGt_union:
+									return (new_variable(name, ECPGmake_struct_type(members->type->u.element->u.members, members->type->u.element->type, members->type->u.element->struct_sizeof), brace_level));
+								default:
+									return (new_variable(name, ECPGmake_simple_type(members->type->u.element->type, members->type->u.element->size), brace_level));
+							}
+							break;
+					case '-':	return (find_struct_member(name, end, members->type->u.element->u.members, brace_level));
+							break;
+					case '.':	if (members->type->type != ECPGt_array)
+								return (find_struct_member(name, end, members->type->u.element->u.members, brace_level));
+							else
+								return (find_struct_member(name, next, members->type->u.members, brace_level));
+							break;
+					default :	snprintf(errortext, sizeof(errortext), "incorrectly formed variable %s", name);
+							mmerror(PARSE_ERROR, ET_FATAL, errortext);
+							break;
+				}
 			}
 		}
 	}
@@ -155,8 +199,6 @@ find_variable(char *name)
 	struct variable *p;
 	int count;
 
-	printf("MM: find %s\n", name);
-
 	next = strpbrk(name, ".[-");
 	if (next)
 	{
@@ -178,11 +220,21 @@ find_variable(char *name)
 			if (*end == '.') p = find_struct(name, next, end);
 			else
 			{
-				 char c = *next;
+				char c = *next;
 				 
-				 *next = '\0';
-				 p = find_simple(name);
-				 *next = c;
+				*next = '\0';
+				p = find_simple(name);
+				*next = c;
+				switch (p->type->u.element->type)
+				{
+					case ECPGt_array:
+						return (new_variable(name, ECPGmake_array_type(p->type->u.element->u.element, p->type->u.element->size), p->brace_level));
+					case ECPGt_struct:
+					case ECPGt_union:
+						return (new_variable(name, ECPGmake_struct_type(p->type->u.element->u.members, p->type->u.element->type, p->type->u.element->struct_sizeof), p->brace_level));
+					default:
+						return (new_variable(name, ECPGmake_simple_type(p->type->u.element->type, p->type->u.element->size), p->brace_level));
+				}
 			}
 		}
 		else p = find_struct(name, next, next);
@@ -243,21 +295,19 @@ reset_variables(void)
 
 /* Insert a new variable into our request list. */
 void
-add_variable(struct arguments ** list, struct variable * var, char * var_array_element, struct variable * ind, char * ind_array_element)
+add_variable(struct arguments ** list, struct variable * var, struct variable * ind)
 {
 	struct arguments *p = (struct arguments *) mm_alloc(sizeof(struct arguments));
 
 	p->variable = var;
-	p->var_array_element = var_array_element;
 	p->indicator = ind;
-	p->ind_array_element = ind_array_element;
 	p->next = *list;
 	*list = p;
 }
 
 /* Append a new variable to our request list. */
 void
-append_variable(struct arguments ** list, struct variable * var, char * var_array_element, struct variable * ind, char * ind_array_element)
+append_variable(struct arguments ** list, struct variable * var, struct variable * ind)
 {
 	struct arguments *p,
 			   *new = (struct arguments *) mm_alloc(sizeof(struct arguments));
@@ -265,9 +315,7 @@ append_variable(struct arguments ** list, struct variable * var, char * var_arra
 	for (p = *list; p && p->next; p = p->next);
 
 	new->variable = var;
-	new->var_array_element = var_array_element;
 	new->indicator = ind;
-	new->ind_array_element = ind_array_element;
 	new->next = NULL;
 
 	if (p)
@@ -294,8 +342,8 @@ dump_variables(struct arguments * list, int mode)
 	dump_variables(list->next, mode);
 
 	/* Then the current element and its indicator */
-	ECPGdump_a_type(yyout, list->variable->name, list->variable->type, list->var_array_element,
-					list->indicator->name, list->indicator->type, list->ind_array_element,
+	ECPGdump_a_type(yyout, list->variable->name, list->variable->type, 
+					list->indicator->name, list->indicator->type,
 					NULL, NULL, 0, NULL, NULL);
 
 	/* Then release the list element. */

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.224 2003/05/29 12:00:21 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.225 2003/05/29 13:59:26 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -668,10 +668,10 @@ stmt:  AlterDatabaseSetStmt		{ output_statement($1, 0, connection); }
 			{
 				/* merge variables given in prepare statement with those given here */
 				for (p = ptr->argsinsert; p; p = p->next)
-					append_variable(&argsinsert, p->variable, p->var_array_element, p->indicator, p->ind_array_element);
+					append_variable(&argsinsert, p->variable, p->indicator);
 
 				for (p = ptr->argsresult; p; p = p->next)
-					add_variable(&argsresult, p->variable, p->var_array_element, p->indicator, p->ind_array_element);
+					add_variable(&argsresult, p->variable, p->indicator);
 
 				output_statement(mm_strdup(ptr->command), 0, ptr->connection ? mm_strdup(ptr->connection) : NULL);
 			}
@@ -4234,7 +4234,7 @@ ECPGCursorStmt:  DECLARE name cursor_options CURSOR opt_hold FOR ident
 			sprintf(thisquery->name, "ECPGprepared_statement(\"%s\")", $7);
 
 			this->argsinsert = NULL;
-			add_variable(&(this->argsinsert), thisquery, NULL, &no_indicator, NULL);
+			add_variable(&(this->argsinsert), thisquery, &no_indicator);
 
 			cur = this;
 
@@ -5095,7 +5095,7 @@ ECPGExecute : EXECUTE IMMEDIATE execstring
 			thisquery->next = NULL;
 			thisquery->name = $3;
 
-			add_variable(&argsinsert, thisquery, NULL, &no_indicator, NULL);
+			add_variable(&argsinsert, thisquery, &no_indicator);
 
 			$$ = make_str("?");
 		}
@@ -5109,7 +5109,7 @@ ECPGExecute : EXECUTE IMMEDIATE execstring
 			thisquery->name = (char *) mm_alloc(sizeof("ECPGprepared_statement(\"\")") + strlen($2));
 			sprintf(thisquery->name, "ECPGprepared_statement(\"%s\")", $2);
 
-			add_variable(&argsinsert, thisquery, NULL, &no_indicator, NULL);
+			add_variable(&argsinsert, thisquery, &no_indicator);
 		}
 		opt_ecpg_using opt_ecpg_into
 		{
@@ -5150,7 +5150,7 @@ ecpg_into: INTO into_list
 		}
 		| INTO opt_sql SQL_DESCRIPTOR quoted_ident_stringvar
 		{
-			add_variable(&argsresult, descriptor_variable($4,0), NULL, &no_indicator, NULL);
+			add_variable(&argsresult, descriptor_variable($4,0), &no_indicator);
 			$$ = EMPTY;
 		}
 		;
@@ -5970,57 +5970,26 @@ c_args: /*EMPTY*/		{ $$ = EMPTY; }
 		| c_list		{ $$ = $1; }
 		;
 
-coutputvariable: CVARIABLE '[' Iresult ']' indicator '[' Iresult ']' 
-			{ add_variable(&argsresult, find_variable($1), $3, find_variable($5), $7); }
-		| CVARIABLE indicator '[' Iresult ']' 
-			{ add_variable(&argsresult, find_variable($1), NULL, find_variable($2), $4); }
-		| CVARIABLE '[' Iresult ']' indicator 
-			{ add_variable(&argsresult, find_variable($1), $3, find_variable($5), NULL); }
-		| CVARIABLE indicator
-			{ add_variable(&argsresult, find_variable($1), NULL, find_variable($2), NULL); }
-		| CVARIABLE '[' Iresult ']'  
-			{ add_variable(&argsresult, find_variable($1), $3, &no_indicator, NULL); }
+coutputvariable: CVARIABLE indicator
+			{ add_variable(&argsresult, find_variable($1), find_variable($2)); }
 		| CVARIABLE
-			{ add_variable(&argsresult, find_variable($1), NULL, &no_indicator, NULL); }
+			{ add_variable(&argsresult, find_variable($1), &no_indicator); }
 		;
 
 
-civarind: CVARIABLE '[' Iresult ']' indicator '[' Iresult ']' 
-		{
-			add_variable(&argsinsert, find_variable($1), $3, find_variable($5), $7);
-			$$ = create_questionmarks($1, true);
-		}
-		| CVARIABLE indicator '[' Iresult ']' 
-		{
-			add_variable(&argsinsert, find_variable($1), NULL, find_variable($2), $4);
-			$$ = create_questionmarks($1, false);
-		}
-		| CVARIABLE '[' Iresult ']' indicator 
-		{
-			if (find_variable($5)->type->type == ECPGt_array)
-				mmerror(PARSE_ERROR, ET_ERROR, "arrays of indicators are not allowed on input");
-
-			add_variable(&argsinsert, find_variable($1), $3, find_variable($5), NULL);
-			$$ = create_questionmarks($1, true);
-		}
-		| CVARIABLE indicator
+civarind: CVARIABLE indicator
 		{
 			if (find_variable($2)->type->type == ECPGt_array)
 				mmerror(PARSE_ERROR, ET_ERROR, "arrays of indicators are not allowed on input");
 
-			add_variable(&argsinsert, find_variable($1), NULL, find_variable($2), NULL);
+			add_variable(&argsinsert, find_variable($1), find_variable($2));
 			$$ = create_questionmarks($1, false);
 		}
 		;
 
-civar: CVARIABLE '[' Iresult ']' 
+civar: CVARIABLE
 			{
-				add_variable(&argsinsert, find_variable($1), mm_strdup($3), &no_indicator, NULL);
-				$$ = create_questionmarks($1, true);
-			}
-		| CVARIABLE
-			{
-				add_variable(&argsinsert, find_variable($1), NULL, &no_indicator, NULL);
+				add_variable(&argsinsert, find_variable($1), &no_indicator);
 				$$ = create_questionmarks($1, false);
 			}
 		;

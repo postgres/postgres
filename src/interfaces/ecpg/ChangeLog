@@ -1453,6 +1453,11 @@ Tue May 27 16:33:36 CEST 2003
 Thu May 29 13:58:25 CEST 2003
 
 	- ecpg should now be able to parse forward struct definition.
+	
+Thu May 29 15:45:57 CEST 2003
+
+	- Changed parsing of variables to be able to reference one attribute
+	  of the n-th entry in an array of structs.
 	- Set ecpg version to 2.12.0.
 	- Set ecpg library to 3.4.2.
 	- Set pgtypes library to 1.0.0

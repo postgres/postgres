@@ -21,37 +21,37 @@ main()
 	exec sql create table test (text char(5), num decimal(14,7));
 	
 	value1 = PGTYPESnew();
-	PGTYPESnumeric_iton(1407, value1);
-	text = PGTYPESnumeric_ntoa(value1);
+	PGTYPESnumeric_from_int(1407, value1);
+	text = PGTYPESnumeric_to_asc(value1, 0);
 	printf("long = %s\n", text);
 		
-	value1 = PGTYPESnumeric_aton("2369.7", NULL);
-	value2 = PGTYPESnumeric_aton("10.0", NULL);
+	value1 = PGTYPESnumeric_from_asc("2369.7", NULL);
+	value2 = PGTYPESnumeric_from_asc("10.0", NULL);
 	res = PGTYPESnew();
-	decadd(value1, value2, res);
-	text = PGTYPESnumeric_ntoa(res);
+	PGTYPESnumeric_add(value1, value2, res);
+	text = PGTYPESnumeric_to_asc(res, 0);
 	printf("add = %s\n", text);
 	
 	PGTYPESnumeric_sub(res, value2, res);
-	text = PGTYPESnumeric_ntoa(res);
+	text = PGTYPESnumeric_to_asc(res, 0);
 	printf("sub = %s\n", text);
 		
 	PGTYPESnumeric_copy(res, &des);
 	exec sql insert into test (text, num) values ('test', :des);
 	
-	value2 = PGTYPESnumeric_aton("2369.7", NULL);
+	value2 = PGTYPESnumeric_from_asc("2369.7", NULL);
 	PGTYPESnumeric_mul(value1, value2, res);
 
 	exec sql select num into :des from test where text = 'test';
 	
 	PGTYPESnumeric_mul(res, &des, res);
-	text = PGTYPESnumeric_ntoa(res);
+	text = PGTYPESnumeric_to_asc(res, 0);
 	printf("mul = %s\n", text);
 
-	value2 = PGTYPESnumeric_aton("10000", NULL);
+	value2 = PGTYPESnumeric_from_asc("10000", NULL);
 	PGTYPESnumeric_div(res, value2, res);
-	text = PGTYPESnumeric_ntoa(res);
-	PGTYPESnumeric_ntod(res, &d);
+	text = PGTYPESnumeric_to_asc(res, 0);
+	PGTYPESnumeric_to_double(res, &d);
 	printf("div = %s %e\n", text, d);
 
 	exec sql rollback;
