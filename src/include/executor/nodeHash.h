@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeHash.h,v 1.7 1998/01/24 22:49:01 momjian Exp $
+ * $Id: nodeHash.h,v 1.8 1998/02/13 03:43:35 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,5 +35,6 @@ extern HeapTuple ExecScanHashBucket(HashJoinState *hjstate, HashBucket bucket,
 				   HeapTuple curtuple, List *hjclauses,
 				   ExprContext *econtext);
 extern void ExecHashTableReset(HashJoinTable hashtable, int ntuples);
+extern void ExecReScanHash(Hash *node, ExprContext *exprCtxt, Plan *parent);
 
 #endif							/* NODEHASH_H */

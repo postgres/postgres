@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeAgg.h,v 1.6 1997/11/26 01:12:40 momjian Exp $
+ * $Id: nodeAgg.h,v 1.7 1998/02/13 03:43:34 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,5 +21,6 @@ extern TupleTableSlot *ExecAgg(Agg *node);
 extern bool ExecInitAgg(Agg *node, EState *estate, Plan *parent);
 extern int	ExecCountSlotsAgg(Agg *node);
 extern void ExecEndAgg(Agg *node);
+extern void ExecReScanAgg(Agg *node, ExprContext *exprCtxt, Plan *parent);
 
 #endif							/* NODEAGG_H */

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeNestloop.h,v 1.5 1997/11/26 01:12:57 momjian Exp $
+ * $Id: nodeNestloop.h,v 1.6 1998/02/13 03:43:38 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,5 +21,6 @@ extern TupleTableSlot *ExecNestLoop(NestLoop *node, Plan *parent);
 extern bool ExecInitNestLoop(NestLoop *node, EState *estate, Plan *parent);
 extern int	ExecCountSlotsNestLoop(NestLoop *node);
 extern void ExecEndNestLoop(NestLoop *node);
+extern void ExecReScanNestLoop(NestLoop *node, ExprContext *exprCtxt, Plan *parent);
 
 #endif							/* NODENESTLOOP_H */

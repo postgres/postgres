@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: clauses.h,v 1.8 1998/01/24 22:49:39 momjian Exp $
+ * $Id: clauses.h,v 1.9 1998/02/13 03:46:54 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,5 +47,9 @@ extern void get_relattval(Node *clause, int *relid,
 extern void get_rels_atts(Node *clause, int *relid1,
 			  AttrNumber *attno1, int *relid2, AttrNumber *attno2);
 extern void CommuteClause(Node *clause);
+
+#define	is_subplan(clause)	((Node*) clause != NULL && \
+						nodeTag((Node*) clause) == T_Expr && \
+						((Expr *) clause)->opType == SUBPLAN_EXPR)
 
 #endif							/* CLAUSES_H */

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: executor.h,v 1.19 1998/02/10 04:02:19 momjian Exp $
+ * $Id: executor.h,v 1.20 1998/02/13 03:43:33 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -108,6 +108,7 @@ extern void ExecInitOuterTupleSlot(EState *estate, HashJoinState *hashstate);
 
 extern TupleDesc ExecGetTupType(Plan *node);
 extern TupleDesc ExecTypeFromTL(List *targetList);
+extern void SetChangedParamList (Plan *node, List *newchg);
 
 /*
  * prototypes from functions in execTuples.c
