@@ -1,5 +1,4 @@
-  This directory contains the contribution functions or tools with
-PostgreSQL.
+  This directory contains the contribution functions or tools.
 
  - contrib -|
             |- apache_logging -
@@ -11,6 +10,12 @@ PostgreSQL.
             |- datetime -
 	    |   Date & time functions
 	    |   	by Sergio Lenzi <lenzi@bsi.com.br>
+            |- earthdistance -
+	    |   Operator for computing earth distance for two points
+	    |   	by Hal Snyder <hal@vailsys.com>
+            |- fulltextindex -
+	    |   Full text indexing using triggers
+	    |   	by Maarten Boekhold <maartenb@dutepp0.et.tudelft.nl>
             |- int8 -
 	    |   64-bit integer arithmetic for Postgres
 	    |   	by Thomas G. Lockhart <Thomas.Lockhart@jpl.nasa.gov>
@@ -20,9 +25,18 @@ PostgreSQL.
             |- linux -
 	    |   Start postgres back end system
 	    |   	by Thomas Lockhart <lockhart@alumni.caltech.edu>
+            |- lo -
+	    |   Large Object maintenance
+	    |   	by Peter Mount <peter@retep.org.uk> 
             |- miscutil -
 	    |   Postgres assert checking and various utility functions
 	    |   	by Dal Zotto <dz@cs.unitn.it>
+            |- mSQL-interface -
+	    |   mSQL API translation library
+	    |   	by Aldrin Leal <aldrin@americasnet.com>
+            |- noupdate -
+	    |   trigger to prevent updates on single columns
+	    |   	by unknown
             |- pginterface -
 	    |   A crude C/4GL
 	    |   	by Bruce Momjian <root@candle.pha.pa.us>
