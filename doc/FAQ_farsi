@@ -1,1577 +1,816 @@
+PostgreSQL FAQسوالاتي كه اغلب در مورد PostgreSQL‌ پرسيده مي شوند
+تاريخ آخرين اصلاح اين فايل: 28 شهریور 1383 هجری شمسی
+نگهدارنده اصلي فايل (زبان انگليسي)در حال حاضر : Bruce Momjian 
+pgman@candle.pha.pa.us
+نگهدارنده فايل به زبان فارسي: m.taghizadeh@imenafzar.net  محمود تقي‌زاده مهرجردی
 
-    s+w+a+l+a+t+y+ k+h+ a+i+l+b+ d+r+ m+w+r+d+ PostgreSQL p+r+s+y+d+h+ m+y+
-                                   snw+n+d+
-                                       
-   t+a+r+y+x+ aMx+r+y+n+ a+c+l+a+hk a+y+n+ f+a+y+l+: 28 snh+r+&#1740;w+r+
-   1383 h+g+r+&#1740; snm+s+&#1740;
-   
-   n+gfh+d+a+r+n+d+h+ a+c+l+y+ f+a+y+l+ (z+b+a+n+ a+n+gfl+y+s+y+)d+r+
-   hka+l+ hka+ddr+ : Bruce Momjian pgman@candle.pha.pa.us
-   
-   n+gfh+d+a+r+n+d+h+ f+a+y+l+ b+h+ z+b+a+n+ f+a+r+s+y+:
-   m.taghizadeh@imenafzar.net  m+hkm+w+d+ t+q+y+z+a+d+h+
-   m+h+r+g+r+d+&#1740;
-   
-   aMx+r+y+n+ n+s+x+h+ a+y+n+ f+a+y+l+ r+a+ m+y+t+w+a+n+y+d+ a+z+ a+y+n+
-   aMd+r+s+ b+gfy+r+y+d+  http://www.PostgreSQL.org/docs/faqs/FAQ.html
-   
-   s+w+a+l+a+t+y+ k+h+ d+r+ m+w+r+d+ y+k+
-   s+&#1705;w+&#1740;(p+l+t+f+r+m+) x+a+c+ a+s+t+ d+r+ a+y+n+ aMd+r+s+
-   g+w+a+b+ d+a+d+h+ snd+h+ a+n+d+
-   http://www.PostgreSQL.org/docs/index.html
-     _________________________________________________________________
-   
-                          s+w+a+l+a+t+ e+m+w+m+y+
-                                      
-   1.1) PostgreSQL tcy+s+t+ w+ tcgfw+n+h+ b+a+y+d+ aMn+ r+a+ t+l+f+zH
-   k+r+d+?+
-   1.2) q+a+n+w+n+ k+p+y+ r+a+y+t+ (hkq+w+q+ m+e+n+w+y+) d+r+ m+w+r+d+
-   PostgreSQL  b+h+ tch+ c+w+r+t+ a+s+t+?+
-   1.3) PostgreSQL r+w+y+ tch+ n+w+e+ y+w+n+y+k+s+h+a+y+y+ a+g+r+a+ m+y+
-   snw+d+?+
-   1.4) r+w+y+ tch+ m+hky+tjh+a+y+ i+y+r+ y+w+n+y+k+s+y+ m+y+t+w+a+n+
-   aMn+ r+a+ a+g+r+a+ k+r+d+?+
-   1.5) PostgreSQL r+a+ a+z+ k+g+a+ m+y+t+w+a+n+m+ b+gfy+r+m+?+
-   1.6) a+z+ k+g+a+ x+d+m+a+t+ p+snt+y+b+a+n+y+ b+gfy+r+m+?+
-   1.7) aMx+r+y+n+ n+s+x+h+ a+e+l+a+m+ snd+h+ tcy+s+t+?+
-   1.8) tch+ m+s+t+n+d+a+t+ w+ r+a+h+n+m+a+yHy+h+a+y+y+ w+g+w+d+
-   d+a+r+n+d+?+
-   1.9) tcgfw+n+h+ m+y+t+w+a+n+m+ a+z+a+snk+a+l+a+t+ snn+a+x+t+h+ snd+h+
-   w+ y+a+ a+m+k+a+n+a+t+y+ k+h+ d+r+ a+y+n+ p+a+y+gfa+h+ d+a+d+h+
-   w+g+w+d+ n+d+a+r+d+  m+tjl+e+ snw+m+?+
-   1.10) tcgfw+n+h+ m+y+t+w+a+n+m+ z+b+a+n+ SQL r+a+ y+a+d+ b+gfy+r+m+?+
-   1.11) aMy+a+ PostgreSQL m+snk+l+ Y2K d+a+r+d+ y+a+ x+y+r+?+
-   1.12) tcgfw+n+h+ m+y+t+w+a+n+m+ b+h+ t+y+m+ b+r+n+a+m+h+ n+w+y+s+
-   PostgreSQL m+l+hkq+ snw+m+?+
-   1.13) tcgfw+n+h+ m+y+t+w+a+n+m+ y+k+ a+snk+a+l+ r+a+ b+h+ gfr+w+h+
-   b+r+n+a+m+h+ n+w+y+s+ a+e+l+a+m+ k+n+m+?+
-   1.14)  w+dde+y+t+ PostgreSQL d+r+ m+q+a+y+s+h+ b+a+ s+a+y+r+ DBMSh+a+
-   b+h+ tch+ c+w+r+t+ a+s+t+?+
-   1.15) m+n+ tcgfw+n+h+ m+y+t+w+a+n+m+ a+z+ n+zHr+ m+a+l+y+ b+h+
-   PostgreSQL k+m+k+ k+n+m+?+
-   
-   s+w+a+l+a+t+ m+r+b+w+tj b+h+ a+s+t+f+a+d+h+ a+z+ p+a+y+gfa+h+ d+a+d+h+
-                                      
-   2.1) aMy+a+ h+y+tc d+r+a+y+w+r+ ODBC b+r+a+y+ PostgreSQL w+g+w+d+
-   d+a+r+d+?+
-   2.2) tch+ a+b+z+a+r+h+a+y+y+ b+r+a+y+ a+s+t+f+a+d+h+ a+z+ PostgreSQL
-   b+a+ c+f+hka+t+ w+b+ w+g+w+d+ d+a+r+d+?+
-   2.3) aMy+a+ PostgreSQL y+k+ w+a+s+tj k+a+r+b+r+y+ gfr+a+f+y+k+y+
-   d+a+r+d+?+
-   2.4) b+a+ tch+ z+b+a+n+h+a+y+ b+r+n+a+m+h+n+w+y+s+y+ m+y+t+w+a+n+ b+a+
-   PostgreSQL a+r+t+b+a+tj b+r+q+r+a+r+ k+r+d+?+
-   
-                 s+w+a+l+a+t+ m+r+b+w+tj b+h+ r+a+h+b+r+y+
-                                      
-   3.1) tcgfw+n+h+ m+y+t+w+a+n+m+ PostgreSQL r+a+ d+r+ sna+x+h+a+y+
-   i+y+r+ a+z+ /usr/local/pgsql/  n+c+b+ k+n+m+?+
-   3.2) tcr+a+ m+w+q+e+y+ k+h+ m+n+ b+r+n+a+m+h+ postmaster r+a+ a+g+r+a+
-   m+y+ k+n+m+ p+y+a+m+ Bad system call w+ y+a+ core dump m+y+gfy+r+m+?+
-   3.3) tcr+a+ m+w+q+e+y+ k+h+ m+n+ s+e+y+ m+y+k+n+m+ b+r+n+a+m+h+
-   postmaster r+a+ a+g+r+a+ k+n+m+ x+tja+y+ IpcMemoryCreate  m+y+
-   gfy+r+m+?+
-   3.4) tcr+a+ m+w+q+e+y+ k+h+ m+n+ s+e+y+ m+y+k+n+m+ b+r+n+a+m+h+
-   postmaster r+a+ a+g+r+a+ k+n+m+ x+tja+y+  IpcSemaphoreCreate m+y+
-   gfy+r+m+?+
-   3.5) tcgfw+n+h+ m+y+t+w+a+n+m+ a+t+c+a+l+a+t+ s+a+y+r+ m+a+sny+n+h+a+
-   r+a+ k+n+t+r+l+ k+n+m+?+
-   3.6) b+r+a+y+ k+a+r+a+y+y+ b+a+l+a+t+r+ w+ b+h+t+r+ p+a+y+gfa+h+
-   d+a+d+h+ m+n+ tch+ t+n+zHy+m+a+t+y+ r+a+ b+a+y+d+ a+n+g+a+m+ d+h+m+?+
-   3.7) tch+ a+m+k+a+n+a+t+y+ b+r+a+y+ p+y+d+a+ k+r+d+n+ a+snk+a+l+
-   w+g+w+d+ d+a+r+d+?+
-   3.8) tcr+a+ m+w+q+e+y+ k+h+ m+n+ m+y+x+w+a+h+m+ b+h+ p+a+y+gfa+h+
-   d+a+d+h+ w+c+l+ snw+m+ p+y+a+m+ "Sorry, too many clients" m+y+
-   gfy+r+m+?+
-   3.9) d+r+ sna+x+h+  pgsql_tmp  tch+ tcy+z+y+ q+r+a+r+ d+a+r+d+?+
-   3.10) tcr+a+ b+r+a+y+ b+h+ r+w+z+ k+r+d+n+ n+s+x+h+ p+a+y+gfa+h+
-   d+a+d+h+ m+n+ b+a+y+d+ k+l+ d+a+d+h+ h+a+ r+a+ dump w+ m+g+d+d+a+:+
-   restore k+n+m+?+
-   3.11) a+z+ tch+ s+x+t+ a+f+z+a+r+y+ b+a+y+d+ a+s+t+f+a+d+h+ k+n+m+?+
-   
-                        s+w+a+l+a+t+ e+m+l+y+a+t+y+
-                                      
-   4.1) t+f+a+w+t+ b+y+n+ binary cursors w+ Normal cursors tcy+s+t+?+
-   4.2) m+n+ tcgfw+n+h+ m+y+t+w+a+n+m+ f+q+tj r+w+y+ tcn+d+ r+d+y+f+
-   a+w+l+ y+a+ y+k+ r+d+y+f+ t+c+a+d+f+y+ d+r+x+w+a+s+t+ SELECT
-   b+z+n+m+?+
-   4.3) m+n+ tcgfw+n+h+ m+y+t+w+a+n+m+ l+y+s+t+y+ a+z+ g+d+a+w+l+ y+a+
-   s+a+y+r+ tcy+z+h+a+y+y+ k+h+ d+r+ psql w+g+w+d+ d+a+r+d+ r+a+
-   b+b+y+n+m+?+
-   4.4) tcgfw+n+h+ y+k+ s+t+w+n+ g+d+w+l+ r+a+ hkdkf+ m+y+k+n+y+d+?+
-   tcgfw+n+h+ n+w+e+ d+a+d+h+ aMn+ r+a+ e+w+dd k+n+y+m+?+
-   4.5) hkd+a+k+tkr+ a+n+d+a+z+h+ y+k+ r+d+y+f+,+ g+d+w+l+ w+ x+w+d+
-   p+a+y+gfa+h+ d+a+d+h+ tcq+d+r+ a+s+t+?+
-   4.6) tcq+d+r+ f+dda+y+ d+y+s+k+ s+x+t+ b+r+a+y+ dkx+y+r+h+ k+r+d+n+
-   d+a+d+h+h+a+y+ y+k+ f+a+y+l+ m+t+n+y+ m+w+r+d+ n+y+a+z+ a+s+t+?+
-   4.7) tcgfw+n+h+ m+y+t+w+a+n+m+ b+f+h+m+m+ k+h+ tch+ k+a+r+b+r+a+n+,+
-   p+a+y+gfa+h+ d+a+d+h+,+ n+m+a+y+h+ w+ g+d+a+w+l+y+ d+r+ s+y+s+t+m+
-   t+e+r+y+f+ snd+h+ a+s+t+?+
-   4.8) tcr+a+ d+r+x+w+a+s+t+h+a+y+ m+n+ k+n+d+ a+g+r+a+ m+y+snw+n+d+
-   y+a+ tcr+a+ a+z+ n+m+a+y+h+ h+a+ a+s+t+f+a+d+h+ n+m+y+k+n+n+d+?+
-   4.9) tcgfw+n+h+ m+y+t+w+a+n+m+ n+hkw+h+ b+r+r+s+y+ d+r+x+w+a+s+t+ r+a+
-   t+w+s+tj b+h+y+n+h+s+a+z+ d+r+x+w+a+s+t+h+a+ m+sna+h+d+h+ k+n+m+?+
-   4.10) n+m+a+y+h+ R-tree tcy+s+t+?+
-   4.11) b+h+y+n+h+ s+a+z+ t+k+w+y+n+y+ d+r+x+w+a+s+t+ tcy+s+t+?+
-   (Genetic Query Optimizer)
-   4.12) tcgfw+n+h+ a+z+ e+b+a+r+a+t+ m+n+zHm+ b+r+a+y+ g+s+t+g+w+
-   a+s+t+f+a+d+h+ k+n+m+?+ tcgfw+n+h+ g+s+t+g+w+y+y+ a+n+g+a+m+ d+h+m+
-   k+h+ hks+a+s+ b+h+ m+t+n+ n+b+a+snd+?+ tcgfw+n+h+ b+r+a+y+ y+k+
-   g+s+t+g+w+y+ i+y+r+ hks+a+s+ b+h+ m+t+n+ a+z+ n+m+a+y+h+
-   a+s+t+f+a+d+h+ k+n+m+?+
-   4.13) tcgfw+n+h+ m+y+t+w+a+n+m+ d+r+ y+k+ d+r+x+w+a+s+t+ t+snx+y+c+
-   d+h+m+ k+h+ y+k+ f+y+l+d+ NULL a+s+t+?+
-   4.14) t+f+a+w+t+ b+y+n+ gfw+n+h+h+a+y+ m+x+t+l+f+ character tcy+s+t+?+
-   4.15.1) tcgfw+n+h+ m+y+t+w+a+n+m+ y+k+ f+y+l+d+ s+r+y+a+l+ y+a+
-   a+f+z+a+y+sny+ a+y+g+a+d+ k+n+m+?+
-   4.15.2) tcgfw+n+h+ m+y+t+w+a+n+m+ m+q+d+a+r+ y+k+ d+r+g+ s+r+y+a+l+y+
-   r+a+ b+d+a+n+m+?+
-   4.15.3) aM&#1740;a+ t+w+a+b+e+ ()nextval w+ ()currval m+n+g+r+ b+h+
-   a+&#1740;g+a+d+ snr+a+&#1740;tj race b+r+a+&#1740; s+a+&#1740;r+
-   &#1705;a+r+b+r+a+n+ m+&#1740; snw+n+d+?+
-   4.15.4) tcr+a+ a+e+d+a+d+ s+r+&#1740;a+l+&#1740; m+r+b+w+tj b+h+
-   t+r+a+&#1705;n+snh+a+&#1740; abort snd+h+ m+g+d+d+a+:+ a+s+t+f+a+d+h+
-   n+m+&#1740; snw+d+?+ tcr+a+ b+&#1740;n+ a+e+d+a+d+
-   s+r+&#1740;a+l+&#1740; &#1740;&#1705; f+a+c+l+h+ x+a+l+&#1740;
-   a+&#1740;g+a+d+ m+&#1740; snw+d+?+
-   4.16) OID w+ TID tch+ h+s+t+n+d+?+
-   4.17) m+e+n+y+ b+e+ddy+ a+z+ t+r+m+h+a+ w+ k+l+m+a+t+y+ k+h+ d+r+
-   PostgreSQL a+s+t+f+a+d+h+ m+y+snw+d+ tcy+s+t+?+
-   4.18) tcr+a+ m+n+ x+tja+y+ "ERROR: Memory exhausted in AllocSetAlloc"
-   m+y+gfy+r+m+?+
-   4.19) a+z+ k+g+a+ t+snx+y+c+ d+h+m+ k+h+ w+y+r+a+y+sn y+a+ n+s+x+h+
-   PostgreSQLy+y+ k+h+ m+n+ a+s+t+f+a+d+h+ m+y+k+n+m+ tcy+s+t+?+
-   4.20) tcr+a+ d+r+ hk&#1740;n+ a+g+r+a+&#1740; e+m+l+&#1740;a+t+
-   r+w+&#1740; large-objecth+a+ x+tja+&#1740; "invalid large obj
-   descriptor"b+h+ w+g+w+d+ m+&#1740; aM&#1740;d+?+
-   4.21) tcgfw+n+h+ y+k+ s+t+w+n+ a+y+g+a+d+ k+n+m+ k+h+ m+q+d+a+r+
-   z+m+a+n+ g+a+r+y+ r+a+ b+h+ e+n+w+a+n+ m+q+d+a+r+ p+y+snf+r+dd
-   d+a+snt+h+ b+a+snd+?+
-   4.22) tcr+a+ z+y+r+ d+r+x+w+a+s+t+h+a+y+y+ k+h+ a+z+ IN a+s+t+f+a+d+h+
-   m+y+k+n+n+d+ k+n+d+ h+s+t+n+d+?+
-   4.23) tcgfw+n+h+ m+y+t+w+a+n+m+ y+k+ a+l+hka+q+ x+a+r+g+y+ (outer
-   join) a+n+g+a+m+ d+h+m+?+
-   4.24) tcgfw+n+h+ m+y+t+w+a+n+ d+r+x+w+a+s+t+h+a+y+y+ a+z+ tcn+d+
-   p+a+y+gfa+h+ d+a+d+h+ t+w+l+y+d+ k+r+d+?+
-   4.25) tcgfw+n+h+ x+r+w+g+y+ y+k+ t+a+b+e+ m+y+t+w+a+n+d+  tcn+d+
-   r+d+y+f+ y+a+ s+t+w+n+ b+a+snd+?+
-   4.26)  d+r+ t+w+a+b+e+ PL/PgSQL tcr+a+ n+m+y+t+w+a+n+ b+a+
-   a+tjm+y+n+a+n+ g+d+a+w+l+ m+w+q+t+ r+a+ a+y+g+a+d+ y+a+ hkdkf+
-   k+r+d+?+
-   4.27) tch+ gfz+y+n+h+h+a+y+y+ b+r+a+y+ t+k+r+a+r+ (replication)
-   w+g+w+d+ d+a+r+d+?+
-   4.28) tch+ gfz+y+n+h+h+a+y+y+ b+r+a+y+ r+m+z+n+gfa+r+y+ w+g+w+d+
-   d+a+r+d+?+
-   
-                           t+w+s+e+h+ PostgreSQL
-                                      
-   5.1) m+n+ y+k+ t+a+b+e+ n+w+snt+h+a+m+. tcgfw+n+h+ aMn+ r+a+ d+r+ psql
-   a+g+r+a+ k+n+m+?+ tcr+a+ b+a+ a+g+r+a+y+ aMn+ core dump m+y+gfy+r+m+?+
-   5.2) tcgfw+n+h+ m+y+t+w+a+n+m+ d+r+ t+w+l+y+d+ n+w+e+h+a+ w+
-   t+w+a+b+e+ g+d+y+d+ w+ g+a+l+b+ b+r+a+y+ PostgreSQL h+m+k+a+r+y+ w+
-   m+sna+r+k+t+ d+a+snt+h+ b+a+snm+.
-   5.3) tcgfw+n+h+ m+y+t+w+a+n+m+ y+k+ t+a+b+e+ b+h+ z+b+a+n+ C
-   b+n+w+y+s+m+ k+h+ x+r+w+g+y+ aMn+ y+k+ tuple  (tcn+d+ t+a+y+y+)
-   b+a+snd+?+
-   5.4) m+n+ y+k+ f+a+y+l+ m+n+b+e+ r+a+ e+w+dd k+r+d+h+ a+m+ tcr+a+ d+r+
-   e+m+l+y+a+t+ k+a+m+p+y+l+ m+g+d+d+ aMn+ t+i+y+y+r+ d+y+d+h+ n+m+y+
-   snw+d+?+
-     _________________________________________________________________
-   
-                          s+w+a+l+a+t+ e+m+w+m+y+
-                                      
-    1.1) PostgreSQL tcy+s+t+ w+ tcgfw+n+h+ aMn+ r+a+ b+a+y+d+ t+l+f+zH k+r+d+?+
-    
-   PostgreSQL b+h+ c+w+r+t+ Post-Gres-Q-L t+l+f+zH m+y+snw+d+. y+k+
-   f+a+y+l+ c+w+t+y+ d+r+ aMd+r+s+
-   http://www.postfresql.org/postgresql.mp3 b+r+a+y+ k+s+a+n+y+ k+h+
-   m+a+y+l+n+d+ t+l+f+zH c+hky+hk r+a+ b+snn+w+n+d+ w+g+w+d+ d+a+r+d+.
-   
-   PostgreSQL a+z+ r+w+y+ s+y+s+t+m+ m+d+y+r+y+t+ p+a+y+gfa+h+ d+a+d+h+
-   POSTGRES t+w+s+e+h+ d+a+d+h+ snd+h+ a+s+t+ (h+n+w+z+ h+m+ b+e+ddy+
-   m+w+a+q+e+ b+r+a+y+ s+a+d+gfy+ b+h+ aMn+ Postgres gff+t+h+ m+y+snw+d+)
-   k+h+ y+k+ n+m+w+n+h+ t+hkq+y+q+a+t+y+ a+z+ p+a+y+gfa+h+ d+a+d+h+h+a+y+
-   n+s+l+ b+e+d+ a+s+t+. PostgreSQL h+m+a+n+ a+l+gfw+y+ d+a+d+h+ q+w+y+
-   w+ a+n+w+a+e+ d+a+d+h+  r+a+ hkf+zH k+r+d+h+ a+s+t+ w+l+y+ z+b+a+n+
-   PostQuel r+a+ b+a+ y+k+ z+y+r+m+g+m+w+e+h+ p+y+snr+f+t+h+ a+z+ SQL
-   g+a+y+gfz+y+n+ k+r+d+h+ a+s+t+. PostgreSQL m+t+n+ b+a+z+ b+w+d+h+ w+
-   m+t+n+ k+a+m+l+ aMn+ d+r+ d+s+t+r+s+ a+s+t+.
-   
-   PostgreSQL  t+w+s+tj y+k+ t+y+m+ b+r+n+a+m+h+n+w+y+s+ k+h+ h+m+gfy+
-   d+r+ gfr+w+h+ p+s+t+ a+l+k+t+r+w+n+y+k+ b+r+n+a+m+h+n+w+y+s+a+n+
-   PostgreSQL  e+ddw+ h+s+t+n+d+,+ a+n+g+a+m+ m+y+snw+d+. h+m+a+h+n+gf
-   k+n+n+d+h+ a+c+l+y+ d+r+ hka+l+ hka+ddr+ Marc G. Fournier b+h+
-   aMd+r+s+ scrappy@PostgreSQL.org  m+y+b+a+snd+. (b+r+a+y+ d+y+d+n+
-   n+hkw+h+ m+l+hkq+ snd+n+ b+h+ a+y+n+ t+y+m+ q+s+m+t+ 1.6 r+a+
-   b+b+y+n+y+d+). a+y+n+ t+y+m+ d+r+ hka+ddr+ m+s+yHw+l+y+t+ t+m+a+m+
-   m+s+a+yHl+ m+r+b+w+tj b+h+ b+r+n+a+m+h+n+w+y+s+y+ PostgreSQL r+a+ b+r+
-   e+h+d+h+ d+a+r+d+. a+y+n+ y+k+ p+r+w+zjh+ gfr+w+h+y+ a+s+t+ w+ t+hkt+
-   k+n+t+r+l+ h+y+tc snr+k+t+y+ n+y+s+t+. b+r+a+y+ a+tjl+a+e+a+t+
-   b+y+snt+r+ d+r+ m+w+r+d+ a+y+n+ t+y+m+ b+h+ aMd+r+s+
-   http://www.PostgreSQL.org/docs/faqs/FAQ_DEV.html m+r+a+g+e+h+
-   k+n+y+d+.
-   
-   a+w+l+y+n+ n+s+x+h+ PostgreSQL t+w+s+tj Andrew Yu and Jolly Chen b+h+
-   w+g+w+d+ aMm+d+. a+f+r+a+d+ b+s+y+a+r+y+ d+r+ t+w+s+e+h+ w+ r+f+e+
-   a+snk+a+l+ w+ a+n+t+q+a+l+ aMn+ snr+k+t+ k+r+d+h+a+n+d+. m+t+n+
-   a+c+l+y+ Postgres k+h+ PostgreSQL a+z+ r+w+y+ aMn+ n+w+snt+h+ snd+h+
-   a+s+t+,+ t+w+s+tj t+e+d+a+d+ z+y+a+d+y+ d+a+n+sng+w+y+
-   k+a+r+snn+a+s+y+ a+r+snd+w+ d+a+n+sng+w+y+ k+a+r+snn+a+s+y+ w+ t+y+m+
-   b+r+n+a+m+h+n+w+y+s+y+ k+h+ t+hkt+ n+zHr+ p+r+w+f+s+w+r+ Michael
-   Stonebrake d+r+ d+a+n+sngfa+h+ b+r+k+l+y+,+k+a+l+y+f+r+n+y+a+ k+a+r+
-   m+y+k+r+d+h+a+n+d+ n+w+snt+h+ snd+h+ a+s+t+.
-   
-   n+a+m+ a+c+l+y+ n+r+m+ a+f+z+a+r+ d+r+ d+a+n+sngfa+h+ b+r+k+l+y+
-   Postgres b+w+d+. d+r+ s+a+l+ 1995 b+e+d+ a+z+ a+dda+f+h+ snd+n+ SQL
-   n+a+m+ aMn+ b+h+ Postgres95 t+i+y+y+r+ d+a+d+h+ snd+. d+r+ s+a+l+ 1996
-   n+a+m+ aMn+ b+h+ PostgreSQL t+i+y+y+r+ d+a+d+h+ snd+.
-   
-    1.2) q+w+a+n+y+n+ k+p+y+ r+a+y+t+ d+r+ m+w+r+d+ PostgreSQL b+h+ tch+
-    c+w+r+t+ a+s+t+?+
-    
-   PostgreSQL t+hkt+ q+a+n+w+n+ k+p+y+ r+a+y+t+ z+y+r+ q+r+a+r+ d+a+r+d+:
-   
-   PostgreSQL Data Base Management System
-   
-   Portions copyright (c) 1996-2004, PostgreSQL Global Development Group
-   Portions Copyright (c) 1994-6 Regents of the University of California
-   
-   Permission to use, copy, modify, and distribute this software and its
-   documentation for any purpose, without fee, and without a written
-   agreement is hereby granted, provided that the above copyright notice
-   and this paragraph and the following two paragraphs appear in all
-   copies.
-   
-   IN NO EVENT SHALL THE UNIVERSITY OF CALIFORNIA BE LIABLE TO ANY PARTY
-   FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
-   INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND
-   ITS DOCUMENTATION, EVEN IF THE UNIVERSITY OF CALIFORNIA HAS BEEN
-   ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-   
-   THE UNIVERSITY OF CALIFORNIA SPECIFICALLY DISCLAIMS ANY WARRANTIES,
-   INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
-   MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE
-   PROVIDED HEREUNDER IS ON AN "AS IS" BASIS, AND THE UNIVERSITY OF
-   CALIFORNIA HAS NO OBLIGATIONS TO PROVIDE MAINTENANCE, SUPPORT,
-   UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-   
-   q+a+n+w+n+ b+a+l+a+ l+y+s+a+n+s+ BSD k+h+ y+k+ l+y+s+a+n+s+
-   k+l+a+s+y+k+ b+r+a+y+ m+t+n+h+a+y+ b+a+z+ a+s+t+ m+y+b+a+snd+. h+y+tc
-   m+hkd+w+d+y+t+y+ d+r+ m+w+r+d+ n+hkw+h+ a+s+t+f+a+d+h+ a+z+ m+t+n+
-   d+r+ aMn+ d+y+d+h+ n+m+y+snw+d+. m+a+ aMn+ r+a+ d+w+s+t+ d+a+r+y+m+ w+
-   h+y+tc q+c+d+y+ b+r+a+y+ t+i+y+y+r+ aMn+ n+d+a+r+y+m+.
-   
-    1.3) PostgreSQL r+w+y+ tch+ n+w+e+ y+w+n+y+k+s+h+a+y+y+ a+g+r+a+ m+y+
-    snw+d+?+
-    
-   d+r+ hka+l+t+ k+l+y+ PostgreSQL r+w+y+ h+r+ p+l+t+f+r+m+ (s+k+w+y+)
-   s+a+z+gfa+r+ b+a+ y+w+n+y+k+s+ a+g+r+a+ m+y+snw+d+. l+y+s+t+
-   p+l+t+f+r+m+h+a+y+y+ k+h+ t+a+k+n+w+n+ PostgreSQL r+w+y+ aMn+h+a+
-   n+c+b+ w+ t+s+t+ snd+h+ a+s+t+ d+r+q+s+m+t+ d+s+t+w+r+a+l+e+m+l+h+a+y+
-   n+c+b+ aMm+d+h+ a+s+t+.
-   
-    1.4) r+w+y+ tch+ m+hky+tjh+a+y+ i+y+r+ y+w+n+y+k+s+y+ m+y+t+w+a+n+ aMn+
-    r+a+ a+g+r+a+ k+r+d+?+
-    
-   Client
-   
-   m+y+t+w+a+n+ psql, k+t+a+b+x+a+n+h+ libpq w+ s+a+y+r+ w+a+s+tjh+a+ w+
-   b+r+n+a+m+h+h+a+y+ k+a+r+b+r+d+y+ r+a+ tjw+r+y+ k+a+m+p+y+l+ k+r+d+
-   k+h+ r+w+y+ m+hky+tjh+a+y+ w+y+n+d+w+z+ n+y+z+ a+g+r+a+ snw+n+d+. d+r+
-   a+y+n+ hka+l+t+ Client r+w+y+ w+y+n+d+w+z+ a+g+r+a+ m+y+snw+d+ w+ a+z+
-   tjr+b+q+ snb+k+h+ w+ p+r+w+t+k+l+ TCP/IP b+a+ y+k+ s+r+w+r+ k+h+
-   r+w+y+ y+k+ p+l+t+f+r+m+ l+y+n+w+k+s+ d+r+ hka+l+ a+g+r+a+s+t+
-   a+r+t+b+a+tj b+r+q+r+a+r+ m+y+k+n+d+.y+k+ f+a+y+l+ win32.mak
-   h+m+r+a+h+ b+a+ k+d+h+a+y+ PostgreSQL w+g+w+d+ d+a+r+d+ k+h+ b+r+a+y+
-   k+a+m+p+y+l+ k+r+d+n+ k+t+a+b+x+a+n+h+ libpq w+ b+r+n+a+m+h+ psql m+y+
-   b+a+snd+. PostgreSQL h+m+tcn+y+n+ a+m+k+a+n+ a+r+t+b+a+tj b+h+
-   c+w+r+t+ ODBC  r+a+ n+y+z+ d+a+r+d+.
-   
-   Server
-   
-   b+a+ a+s+t+f+a+d+h+ a+z+ Cygwin w+ k+t+a+b+x+a+n+h+ Cygnus m+y+
-   t+w+a+n+ p+a+y+gfa+h+ d+a+d+h+ r+a+ r+w+y+ w+y+n+d+w+z+ NT w+ y+a+
-   Win2K a+g+r+a+ k+r+d+.b+r+a+y+ d+y+d+n+ a+tjl+a+e+a+t+ b+y+snt+r+
-   f+a+y+l+ pgsql/doc/FAQ_MSWIN r+a+ k+h+ b+h+m+r+a+h+ t+w+z+b+e+h+a+y+
-   PostgreSQL aMm+d+h+ a+s+t+ b+b+y+n+y+d+ w+ y+a+ a+y+n+k+h+ b+h+ a+y+n+
-   c+f+hkh+ http://www.PostgreSQL.org/docs/faqs/text/FAQ_MSWIN
-   m+r+a+g+e+h+ k+n+y+d+.
-   
-   d+r+ hka+l+ hka+ddr+ y+k+ e+m+l+y+a+t+ a+n+t+q+a+l+ PostgreSQL b+h+
-   r+w+y+ s+k+w+h+a+y+ Win NT/2000/XP d+r+ g+r+y+a+n+ a+s+t+. b+r+a+y+
-   d+y+d+n+ w+dde+y+t+ a+y+n+ p+r+w+zjh+ b+h+ s+a+y+t+h+a+y+
-   http://momjian.postgresql.org/main/writings/pgsql/win32.htm w+
-   http://techdocs.postgresql.org/guides/Windows m+r+a+g+e+h+ k+n+y+d+.
-   
-   h+m+tcn+y+n+ y+k+ e+m+l+y+a+t+ a+n+t+q+a+l+ b+r+ r+w+y+ Novell Netware
-   6 n+y+z+ d+r+ hka+l+ a+n+g+a+m+ a+s+t+ k+h+ d+r+ s+a+y+t+
-   http://forge.novell.com m+y+t+w+a+n+y+d+ a+tjl+a+e+a+t+ b+y+snt+r+
-   r+a+ b+b+y+n+y+d+.
-   
-    1.5) PostgreSQL r+a+ a+z+ k+g+a+ m+y+t+w+a+n+m+ b+gfy+r+m+?+
-    
-   PostgreSQL r+a+ a+z+ s+a+y+t+ a+c+l+y+ aMn+
-   ftp://ftp.PostgreSQL.org/pub m+y+t+w+a+n+y+d+ b+gfy+r+y+d+. d+r+
-   c+f+hkh+ a+c+l+y+ s+a+y+t+ l+y+s+t+ s+a+y+r+ aMd+r+s+h+a+y+y+ k+h+
-   m+y+t+w+a+n+y+d+ PostgreSQL r+a+ a+z+ aMn+h+a+ b+gfy+r+y+d+ aMm+d+h+
-   a+s+t+.
-   
-    1.6) a+z+ k+g+a+ x+d+m+a+t+ p+snt+y+b+a+n+y+ b+gfy+r+m+?+
-    
-   gfr+w+h+ p+s+t+y+ a+c+l+y+ pgsql-general@PostgreSQL.org m+y+b+a+snd+.
-   a+y+n+ gfr+w+h+ b+r+a+y+ b+hktk d+r+ m+w+r+d+ m+w+ddw+e+a+t+
-   m+x+t+l+f+ d+r+ z+m+y+n+h+ PostgreSQL a+s+t+. b+r+a+y+ e+ddw+ snd+n+
-   d+r+ a+y+n+ gfr+w+h+ p+s+t+y+ y+k+ n+a+m+h+ a+l+k+t+r+w+n+y+k+y+ b+h+
-   aMd+r+s+ gfr+w+h+ b+a+ m+hkt+w+y+a+t+&#1740; k+h+ d+r+ a+d+a+m+h+
-   aMm+d+h+ a+s+t+ a+r+s+a+l+ k+n+y+d+. d+r+ q+s+m+t+ Subject tcy+z+y+
-   n+n+w+y+s+y+d+.
-   
+آخرين نسخه اين فايل را مي‌توانيد از اين آدرس بگيريد  
+http://www.PostgreSQL.org/docs/faqs/FAQ.html
+سوالاتي كه در مورد يك سکوی(پلتفرم) خاص است در اين آدرس جواب داده شده اند  
+http://www.PostgreSQL.org/docs/index.html
+
+
+
+سوالات عمومي
+1.1) PostgreSQL چيست و چگونه بايد آن را تلفظ كرد؟
+1.2) قانون كپي رايت‌ (حقوق معنوي) در مورد PostgreSQL  به چه صورت است؟
+1.3) PostgreSQL‌ روي چه نوع يونيكسهايي اجرا مي‌شود؟
+1.4) روي چه محيطهاي غير يونيكسي مي‌توان آن را اجرا كرد؟
+1.5) PostgreSQL را از كجا مي‌توانم بگيرم؟
+1.6) از كجا خدمات پشتيباني بگيرم؟
+1.7) آخرين نسخه اعلام شده چيست؟
+1.8) چه مستندات و راهنمائيهايي وجود دارند؟
+1.9) چگونه مي‌توانم ازاشكالات شناخته شده و يا امكاناتي كه در اين پايگاه داده 
+وجود ندارد  مطلع شوم؟
+1.10) چگونه مي‌توانم زبان SQL را ياد بگيرم؟
+1.11) آيا PostgreSQL مشكل Y2K‌ دارد يا خير؟
+1.12) چگونه مي‌توانم به تيم برنامه نويس PostgreSQL ملحق شوم؟
+1.13) چگونه مي‌توانم يك اشكال را به گروه برنامه نويس اعلام كنم؟
+1.14)  وضعيت PostgreSQL‌ در مقايسه با ساير DBMSها به چه صورت است؟
+1.15) من چگونه مي‌توانم از نظر مالي به PostgreSQL كمك كنم؟
+
+سوالات مربوط به استفاده از پايگاه داده
+2.1) آيا هيچ درايور ODBC‌ براي PostgreSQL وجود دارد؟
+2.2) چه ابزارهايي براي استفاده از PostgreSQL‌ با صفحات وب وجود دارد؟
+2.3) آيا PostgreSQL‌ يك واسط كاربري گرافيكي دارد؟
+2.4) با چه زبانهاي برنامه‌نويسي مي‌توان با PostgreSQL‌ ارتباط برقرار كرد؟
+
+سوالات مربوط به راهبري
+3.1) چگونه مي‌توانم PostgreSQL‌ را در شاخه‌اي غير از /usr/local/pgsql/  نصب كنم؟
+3.2) چرا موقعي كه من برنامه postmaster‌ را اجرا مي كنم پيام Bad system call‌ و 
+يا core dump ‌مي‌گيرم؟
+3.3) چرا موقعي كه من سعي مي‌كنم برنامه postmaster‌ را اجرا كنم خطاي 
+IpcMemoryCreate  مي‌گيرم؟
+3.4) چرا موقعي كه من سعي مي‌كنم برنامه postmaster‌ را اجرا كنم خطاي  
+IpcSemaphoreCreate مي‌گيرم؟
+3.5) چگونه مي‌توانم اتصالات ساير ماشينها را كنترل كنم؟
+3.6) براي كارايي بالاتر و بهتر پايگاه داده من چه تنظيماتي را بايد انجام دهم؟
+3.7) چه امكاناتي براي پيدا كردن اشكال‌ وجود دارد؟
+3.8) چرا موقعي كه من مي‌خواهم به پايگاه داده وصل شوم پيام "Sorry, too many 
+clients" ‌مي‌گيرم؟
+3.9) در شاخه  pgsql_tmp  چه چيزي قرار دارد؟
+3.10) چرا براي به روز كردن نسخه پايگاه داده من بايد كل داده ها را dump‌ و مجدداً 
+restore كنم؟
+3.11) از چه سخت افزاري بايد استفاده كنم؟
+
+سوالات عملياتي
+4.1) تفاوت بين binary cursors و Normal cursors چيست؟
+4.2) من چگونه مي‌توانم فقط روي چند رديف اول يا يك رديف تصادفي درخواست SELECT‌ 
+بزنم؟
+4.3) من چگونه مي‌توانم ليستي از جداول يا ساير چيزهايي كه در psql‌ وجود دارد را 
+ببينم؟
+4.4) چگونه يك ستون جدول را حذف مي‌كنيد؟ چگونه نوع داده آن را عوض كنيم؟
+4.5) حداكثر اندازه يك رديف،‌ جدول و خود پايگاه داده چقدر است؟
+4.6) چقدر فضاي ديسك سخت براي ذخيره كردن داده‌‌هاي يك فايل متني مورد نياز است؟
+4.7) چگونه مي‌توانم بفهمم كه چه كاربران،‌ پايگاه داده،‌ نمايه و جداولي در سيستم 
+تعريف شده است؟
+4.8) چرا درخواستهاي من كند اجرا مي‌شوند يا چرا از نمايه ها استفاده نمي‌كنند؟
+4.9) چگونه مي‌توانم نحوه بررسي درخواست را توسط بهينه‌ساز درخواستها مشاهده كنم؟
+4.10) نمايه R-tree‌ چيست؟
+4.11) بهينه ساز تكويني درخواست چيست؟ (Genetic Query Optimizer)
+4.12) چگونه از عبارات منظم براي جستجو استفاده كنم؟ چگونه جستجويي انجام دهم كه 
+حساس به متن نباشد؟ چگونه براي يك جستجوي غير حساس به متن از نمايه استفاده كنم؟
+4.13) چگونه مي‌توانم در يك درخواست تشخيص دهم كه يك فيلد NULL‌ است؟
+4.14) تفاوت بين گونه‌هاي مختلف character چيست؟
+4.15.1) چگونه مي‌توانم يك فيلد سريال يا افزايشي ايجاد كنم؟
+4.15.2) چگونه مي‌توانم مقدار يك درج سريالي را بدانم؟
+4.15.3) آیا توابع ()nextval و ()currval منجر به ایجاد شرایط race برای سایر 
+کاربران می شوند؟
+4.15.4) چرا اعداد سریالی مربوط به تراکنشهای abort شده مجدداً استفاده نمی شود؟ 
+چرا بین اعداد سریالی یک فاصله خالی ایجاد می شود؟
+4.16) OID و TID چه هستند؟
+4.17) معني بعضي از ترمها و كلماتي كه در PostgreSQL‌ استفاده مي‌شود چيست؟
+4.18) چرا من خطاي "ERROR: Memory exhausted in AllocSetAlloc" مي‌گيرم؟
+4.19) از كجا تشخيص دهم كه ويرايش يا نسخه PostgreSQLيي كه من استفاده مي‌كنم چيست؟
+4.20) چرا در حین اجرای عملیات روی large-objectها خطای "invalid large obj 
+descriptor"به وجود می آید؟
+4.21) چگونه يك ستون ايجاد كنم كه مقدار زمان جاري را به عنوان مقدار پيش‌فرض داشته 
+باشد؟
+4.22) چرا زير درخواستهايي كه از IN استفاده مي‌كنند كند هستند؟
+4.23) چگونه مي‌توانم يك الحاق خارجي (outer join) انجام دهم؟
+4.24) چگونه مي‌توان درخواستهايي از چند پايگاه داده توليد كرد؟
+4.25) چگونه خروجي يك تابع مي‌تواند  چند رديف يا ستون باشد؟
+4.26)  در توابع PL/PgSQL چرا نمي‌توان با اطمينان جداول موقت را ايجاد يا حذف كرد؟
+4.27) چه گزينه‌هايي براي تكرار (replication) وجود دارد؟
+4.28) چه گزينه‌هايي براي رمزنگاري وجود دارد؟
+
+توسعه PostgreSQL
+5.1) من يك تابع نوشته‌ام. چگونه آن را در psql اجرا كنم؟ چرا با اجراي آن core 
+dump مي‌گيرم؟
+5.2) چگونه مي‌توانم در توليد نوع‌ها و توابع جديد و جالب براي PostgreSQL‌ همكاري 
+و مشاركت داشته باشم.
+5.3) چگونه مي‌توانم يك تابع به زبان C بنويسم كه خروجي آن يك ‌tuple  (چند تايي) 
+باشد؟
+5.4) من يك فايل منبع را عوض كرده ام چرا در عمليات كامپيل مجدد آن تغيير ديده 
+نمي‌شود؟
+
+
+
+
+سوالات عمومي
+1.1) PostgreSQL چيست و چگونه آن را بايد تلفظ كرد؟
+PostgreSQL به صورت Post-Gres-Q-L‌ تلفظ مي‌شود. يك فايل صوتي در آدرس 
+http://www.postfresql.org/postgresql.mp3‌ براي كساني كه مايلند تلفظ صحيح را 
+بشنوند وجود دارد.
+PostgreSQL از روي سيستم مديريت پايگاه داده POSTGRES توسعه داده شده است (هنوز هم 
+بعضي مواقع براي سادگي به آن Postgres گفته مي‌شود) كه يك نمونه تحقيقاتي از پايگاه 
+داده‌هاي نسل بعد است. PostgreSQL همان الگوي داده قوي و انواع داده  را حفظ كرده 
+است ولي زبان PostQuel را با يك زيرمجموعه پيشرفته از SQL جايگزين كرده است. 
+PostgreSQL متن باز بوده و متن كامل آن در دسترس است.
+PostgreSQL  توسط يك تيم برنامه‌نويس كه همگي در گروه پست الكترونيك برنامه‌نويسان 
+PostgreSQL  عضو هستند، انجام مي‌شود. هماهنگ كننده اصلي در حال حاضر Marc G. 
+Fournier‌ به آدرس scrappy@PostgreSQL.org  مي‌باشد. (براي ديدن نحوه ملحق شدن به 
+اين تيم قسمت 1.6 را ببينيد). اين تيم در حاضر مسئوليت تمام مسائل مربوط به 
+برنامه‌نويسي PostgreSQL را بر عهده دارد. اين يك پروژه گروهي است و تحت كنترل هيچ 
+شركتي نيست. براي اطلاعات بيشتر در مورد اين تيم به آدرس 
+http://www.PostgreSQL.org/docs/faqs/FAQ_DEV.html مراجعه كنيد.
+اولين نسخه PostgreSQL‌ توسط Andrew Yu and Jolly Chen به وجود آمد. افراد بسياري 
+در توسعه و رفع اشكال و انتقال آن شركت كرده‌اند. متن اصلي Postgres كه PostgreSQL 
+از روي آن نوشته شده است، توسط تعداد زيادي دانشجوي كارشناسي ارشدو دانشجوي 
+كارشناسي و تيم برنامه‌نويسي كه تحت نظر پروفسور Michael Stonebrake در دانشگاه 
+بركلي،‌كاليفرنيا كار مي‌كرده‌اند نوشته شده است.
+نام اصلي نرم افزار در دانشگاه بركلي Postgres‌ بود. در سال 1995 بعد از اضافه شدن 
+SQL نام آن به Postgres95 تغيير داده شد. در سال 1996 نام آن به PostgreSQL تغيير 
+داده شد.
+1.2) قوانين كپي رايت در مورد PostgreSQL به چه صورت است؟
+PostgreSQL تحت قانون كپي رايت زير قرار دارد:
+PostgreSQL Data Base Management System
+Portions copyright (c) 1996-2004, PostgreSQL Global Development Group Portions 
+Copyright (c) 1994-6 Regents of the University of California
+Permission to use, copy, modify, and distribute this software and its 
+documentation for any purpose, without fee, and without a written agreement is 
+hereby granted, provided that the above copyright notice and this paragraph and 
+the following two paragraphs appear in all copies.
+IN NO EVENT SHALL THE UNIVERSITY OF CALIFORNIA BE LIABLE TO ANY PARTY FOR 
+DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING LOST 
+PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN IF 
+THE UNIVERSITY OF CALIFORNIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+THE UNIVERSITY OF CALIFORNIA SPECIFICALLY DISCLAIMS ANY WARRANTIES, INCLUDING, 
+BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A 
+PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS ON AN "AS IS" BASIS, AND 
+THE UNIVERSITY OF CALIFORNIA HAS NO OBLIGATIONS TO PROVIDE MAINTENANCE, SUPPORT, 
+UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+قانون بالا ليسانس BSD كه يك ليسانس كلاسيك براي متن‌هاي باز است مي‌باشد. هيچ 
+محدوديتي در مورد نحوه استفاده از متن در آن ديده نمي‌شود. ما آن را دوست داريم و 
+هيچ قصدي براي تغيير آن نداريم.
+1.3) PostgreSQL‌ روي چه نوع يونيكسهايي اجرا مي‌شود؟
+در حالت كلي PostgreSQL روي هر پلتفرم (سكوي) سازگار با يونيكس اجرا مي‌شود. ليست 
+پلتفرمهايي كه تاكنون PostgreSQL‌ روي آنها نصب و تست شده است درقسمت دستورالعملهاي 
+نصب آمده است.
+1.4) روي چه محيطهاي غير يونيكسي مي‌توان آن را اجرا كرد؟
+Client
+مي‌توان psql, كتابخانه libpq و ساير واسطها و برنامه‌هاي كاربردي را طوري كامپيل 
+كرد كه روي محيطهاي ويندوز نيز اجرا شوند. در اين حالت Client روي ويندوز اجرا 
+مي‌شود و از طربق شبكه و پروتكل TCP/IP با يك سرور كه روي يك پلتفرم لينوكس در حال 
+اجراست ارتباط برقرار مي‌كند.يك فايل win32.mak همراه با كدهاي PostgreSQL وجود 
+دارد كه براي كامپيل كردن كتابخانه libpq و برنامه psql مي‌باشد. P‌ostgreSQL‌ 
+همچنين امكان ارتباط به صورت ODBC‌  را نيز دارد.
+Server
+با استفاده از Cygwin‌ و كتابخانه Cygnus مي‌توان پايگاه داده را روي ويندوز NT و 
+يا Win2K اجرا كرد.براي ديدن اطلاعات بيشتر فايل pgsql/doc/FAQ_MSWIN ‌را كه بهمراه 
+توزبع‌هاي PostgreSQL آمده است ببينيد و يا اينكه به اين صفحه 
+http://www.PostgreSQL.org/docs/faqs/text/FAQ_MSWIN مراجعه كنيد.
+در حال حاضر يك عمليات انتقال PostgreSQL به روي سكوهاي Win NT/2000/XP در جريان 
+است. براي ديدن وضعيت اين پروژه به سايت‌هاي 
+http://momjian.postgresql.org/main/writings/pgsql/win32.htm و 
+http://techdocs.postgresql.org/guides/Windows مراجعه كنيد. 
+همچنين يك عمليات انتقال بر روي Novell Netware 6 نيز در حال انجام است كه در سايت 
+http://forge.novell.com مي‌توانيد اطلاعات بيشتر را ببينيد.
+1.5) PostgreSQL را از كجا مي‌توانم بگيرم؟
+PostgreSQL‌ را از سايت اصلي آن  ftp://ftp.PostgreSQL.org/pub مي‌توانيد بگيريد. 
+در صفحه اصلي سايت ليست ساير آدرسهايي كه مي‌توانيد PostgreSQL‌ را از آنها بگيريد 
+آمده است.
+1.6) از كجا خدمات پشتيباني بگيرم؟
+گروه پستي اصلي pgsql-general@PostgreSQL.org مي‌باشد. اين گروه براي بحث در مورد 
+موضوعات مختلف در زمينه PostgreSQL است. براي عضو شدن در اين گروه پستي يك نامه 
+الكترونيكي به آدرس گروه با محتوياتی كه در ادامه آمده است ارسال كنيد. در قسمت 
+Subject چيزي ننويسيد.
     subscribe
     end
-
-   aMd+r+s+ gfr+w+h+: pgsql-general-request@PostgreSQL.org
-   
-   h+m+tcn+y+n+ y+k+ gfr+w+h+ p+s+t+y+ h+m+ b+h+ c+w+r+t+ a+r+s+a+l+
-   tck+y+d+h+ p+y+a+m+h+a+ w+g+w+d+ d+a+r+d+. b+r+a+y+ e+ddw+ snd+n+ d+r+
-   a+y+n+ gfr+w+h+ y+k+ n+a+m+h+ b+a+ m+hkt+w+y+a+t+ z+y+r+ b+h+
-   a+&#1740;n+ aMd+r+s+  a+r+s+a+l+ k+n+y+d+.
-   pgsql-general-digest-request@PostgreSQL.org
-   
+آدرس گروه: pgsql-general-request@PostgreSQL.org
+همچنين يك گروه پستي هم به صورت ارسال چكيده پيامها وجود دارد. براي عضو شدن در اين 
+گروه يك نامه با محتويات زير به این آدرس  ارسال كنيد. 
+pgsql-general-digest-request@PostgreSQL.org 
     subscribe
     end
-
-   d+r+ a+y+n+ gfr+w+h+ h+r+ m+w+q+e+ hkg+m+ n+a+m+h+h+a+ b+h+ 30
-   k+y+l+w+b+a+y+t+ r+s+y+d+ b+r+a+y+ t+m+a+m+ a+e+dda+H' a+r+s+a+l+ m+y+
-   snw+d+.
-   
-   gfr+w+h+ p+s+t+y+ b+r+r+s+y+ a+1+snk+a+l+a+t+ h+m+ w+g+w+d+ d+a+r+d+.
-   b+r+a+y+ e+ddw+ snd+n+ d+r+ a+y+n+ gfr+w+h+ y+k+ n+a+m+h+ b+a+
-   m+hkt+w+y+a+t+ z+y+r+ b+h+ pgsql-bugs-request@PostgreSQL.org
-   a+r+s+a+l+ k+n+y+d+.
-   
+در اين گروه هر موقع حجم نامه‌ها به 30 كيلوبايت رسيد براي تمام اعضاء ارسال 
+مي‌شود.
+گروه پستي بررسي اِشكالات هم وجود دارد. براي عضو شدن در اين گروه يك نامه با 
+محتويات زير به pgsql-bugs-request@PostgreSQL.org ارسال كنيد.
     subscribe
     end
-
-   gfr+w+h+ p+s+t+y+ m+x+c+w+c+ t+w+s+e+h+ d+h+n+d+gfa+n+ (b+r+n+a+m+h+
-   n+w+y+s+a+n+) n+y+z+ w+g+w+d+d+a+r+d+. b+r+a+y+ e+ddw+y+t+ d+r+ a+y+n+
-   gfr+w+h+ y+k+ n+a+m+h+ b+h+ aMd+r+s+ z+y+r+ b+a+ m+hkt+w+y+a+t+
-   m+snx+c+ snd+h+ a+r+s+a+l+ k+n+y+d+.
-   pgsql-hackers-request@PostgreSQL.org
-   
+گروه پستي مخصوص توسعه دهندگان (برنامه‌نويسان) نيز وجوددارد. براي عضويت در اين 
+گروه يك نامه به آدرس زير با محتويات مشخص شده ارسال كنيد.  
+pgsql-hackers-request@PostgreSQL.org  
     subscribe
     end
+گروههاي پستي ديگري نيز در زمينه PostgreSQL‌ وجود دارد  كه مي‌توانيد در سايت 
+http://www.postgresql.org ببينيد.
+همچنين يك كانال IRC روي Freenode و EFNet بنام PostgreSQL# وجود دارد. شما 
+مي‌توانيد از فرمان يونيكسي irc -c '#PostgreSQL' "$USER" irc.phoenix.net. يا irc 
+-c '#PostgreSQL' "$USER" irc.freenode.net استفاده كنيد.
+ليست شركتهايي كه از طريق آنها مي‌توانيد خدمات پشتيباني تجاري در زمينه PostgreSQL 
+دريافت كنيد در اين آدرس http://techdocs.postgresql.org/companies.php موجود است.
+1.7) آخرين نسخه اعلام شده چيست؟
+آخرين نسخه PostgreSQL‌  كه وجود دارد 7.4.3 است.
+هدف ما آن است كه هر 6 ماه تا 8 ماه يك نسخه جديد ارائه شود.
+1.8) چه مستندات و راهنمائيهايي وجود دارند؟
+چندين كتابچه و صفحات راهنما و مثالهاي كوچك همراه با متن اصلي PostgreSQL‌ در شاخه 
+doc وجود دارد. براي ديدن صفحات راهنما مي‌توانيد به سايت 
+http://www.PostgreSQL.org/docs  نيز مراجعه نماييد.
+دو كتاب در زمينه PostgreSQL‌  در آدرس‌هاي 
+http://www.PostgreSQL.org/docs/awbook.htm و http://www.commandprompt.com/ppbook 
+وجود دارد. ليستي از كتابهايي كه قابل خريد است در آدرس 
+http://techdocs.PostgreSQL.org/techdocs/bookreviews.php وجود دارد. همچنين ليستي 
+از مقالات فني در مورد PostgreSQL در آدرس http://techdocs.PostgreSQL.org وجود 
+دارد.
+برنامه psql يك دستور d\ دارد كه اطلاعاتي در مورد انواع داده‌هاي قابل تعريف و 
+عملگر‌ها و توابع و ... به ما نشان مي‌دهد. در سايت اصلي ما اطلاعات بيشتري را 
+مي‌توانيد پيدا كنيد.
+1.9) چگونه مي‌توانم ازاشكالات شناخته شده و يا امكاناتي كه در اين پايگاه داده 
+وجود ندارد  مطلع شوم؟
+PostgreSQL يك زير مجموعه پيشرفته از SQL-92 را پشتيباني مي‌كند. در ليست  TODO   
+اِشكالات شناخته شده يا امكاناتي كه وجود ندارد و يا برنامه‌‌هاي آينده آمده است.
+1.10) چگونه مي‌توانم زبان SQL را ياد بگيرم؟
+كتاب PostgreSQL در آدرس SQL http://www.PostgreSQL.org/docs/awbook.html ‌را آموزش 
+مي‌دهد. همچنين يك كتاب در آدرس http://www.commandprompt.com/ppbook وجود دارد. يك 
+راهنماي خيلي خوب هم در سايت‌هاي  
+http://www.intermedia.net/support/sql/sqltut.shtm و 
+http://ourworld.compuserve.com/homepages/graeme_birchall/HTM_COOK.HTM و  
+http://sqlcourse.com در مورد SQL وجود دارد.
+كتاب ديگري كه مي‌توان براي يادگيري SQL از آن استفاده كرد كتاب "SQL را در 21 روز 
+ياد بگيريد،‌ ويرايش دوم" در سايت http://members.tripod.com/er4ebus/sql/index.htm 
+مي‌باشد.
+تعداد زيادي از كاربران كتاب The Practical SQL را ترجيح مي‌دهند. كتاب ديگر The 
+Complete Refrence SQL انتشارات McGraw-Hill مي‌باشد.
+1.11) آيا PostgreSQL مشكل Y2K‌ دارد يا خير؟
+خير،‌PostgreSQL‌ با تاريخ‌هاي قبل و بعد از 2000 مشكلي ندارد.
+1.12) چگونه مي‌توانم به تيم برنامه نويس PostgreSQL ملحق شوم؟
+ابتدا،‌آخرين سورس را دونلود كرده و مستندات مربوط به برنامه‌نويسي PostgreSQL را 
+در سايت مطالعه كنيد. سپس به گروههاي پستي ‌ pgsql-patches و pgsql-hackers  عضو 
+شويد. در مرحله آخر وصله‌هاي با كيفيت بالا را به pgsql-patches ارسال كنيد.
+تعداد زيادي از برنامه‌نويسان وجود دارند كه امتياز انجام تغييرات در cvs‌ را 
+دارند. هر كدام از آنها تعداد زيادي وصله‌‌ با كيفيت بالا به گروه ارسال كرده‌اند 
+كه اعتماد گردانندگان PostgreSQL را به دست آورده‌اند.
+1.13) چگونه مي‌توانم يك اِشكال را به گروه برنامه نويس اعلام كنم؟
+لطفاً صفحه مربوط به اِشكالات PostgreSQL را در سايت 
+http://www.PostgreSQL.org/bugs/bugs.php مشاهده‌ كنيد. در اين سايت نحوه گزارش و 
+ارسال يك اشكال توضيح داده شده است.
+ همچنين براي ديدن نسخه‌هاي جديدتر PostgreSQL و يا وجود يك وصله جديد از سايت 
+ftp://ftp.PostgreSQL.org/pub بازديد كنيد.
+1.14) وضعيت PostgreSQL‌ در مقايسه با ساير DBMSها به چه صورت است؟
+راههاي مختلفي براي اندازه‌گيري و مقايسه نرم‌افزارها وجود دارد كه عبارتند از 
+امكانات، كارايي، قابليت اعتماد، پشتيباني و قيمت
+    امكانات 
+    PostgreSQL بيشتر امكانات موجود در سيستم‌هاي پايگاه داده تجاري بزرگ نظير 
+    transactions, subselets, triggers, views, foreign key referential integrity 
+    و sophisticated locking‌ را دارد. در PostgreSQL‌‌ امكاناتي وجود دارد كه 
+    پايگاههاي داده ديگر آن را ندارند نظير user-defined types‌و Inheritance‌و 
+    rules‌و multi-version concurrency control 
 
-   gfr+w+h+h+a+y+ p+s+t+y+ d+y+gfr+y+ n+y+z+ d+r+ z+m+y+n+h+ PostgreSQL
-   w+g+w+d+ d+a+r+d+  k+h+ m+y+t+w+a+n+y+d+ d+r+ s+a+y+t+
-   http://www.postgresql.org b+b+y+n+y+d+.
-   
-   h+m+tcn+y+n+ y+k+ k+a+n+a+l+ IRC r+w+y+ Freenode w+ EFNet b+n+a+m+
-   PostgreSQL# w+g+w+d+ d+a+r+d+. snm+a+ m+y+t+w+a+n+y+d+ a+z+ f+r+m+a+n+
-   y+w+n+y+k+s+y+ irc -c '#PostgreSQL' "$USER" irc.phoenix.net. y+a+ irc
-   -c '#PostgreSQL' "$USER" irc.freenode.net a+s+t+f+a+d+h+ k+n+y+d+.
-   
-   l+y+s+t+ snr+k+t+h+a+y+y+ k+h+ a+z+ tjr+y+q+ aMn+h+a+ m+y+t+w+a+n+y+d+
-   x+d+m+a+t+ p+snt+y+b+a+n+y+ t+g+a+r+y+ d+r+ z+m+y+n+h+ PostgreSQL
-   d+r+y+a+f+t+ k+n+y+d+ d+r+ a+y+n+ aMd+r+s+
-   http://techdocs.postgresql.org/companies.php m+w+g+w+d+ a+s+t+.
-   
-    1.7) aMx+r+y+n+ n+s+x+h+ a+e+l+a+m+ snd+h+ tcy+s+t+?+
-    
-   aMx+r+y+n+ n+s+x+h+ PostgreSQL  k+h+ w+g+w+d+ d+a+r+d+ 7.4.3 a+s+t+.
-   
-   h+d+f+ m+a+ aMn+ a+s+t+ k+h+ h+r+ 6 m+a+h+ t+a+ 8 m+a+h+ y+k+ n+s+x+h+
-   g+d+y+d+ a+r+a+yHh+ snw+d+.
-   
-    1.8) tch+ m+s+t+n+d+a+t+ w+ r+a+h+n+m+a+yHy+h+a+y+y+ w+g+w+d+ d+a+r+n+d+?+
-    
-   tcn+d+y+n+ k+t+a+b+tch+ w+ c+f+hka+t+ r+a+h+n+m+a+ w+ m+tka+l+h+a+y+
-   k+w+tck+ h+m+r+a+h+ b+a+ m+t+n+ a+c+l+y+ PostgreSQL d+r+ sna+x+h+ doc
-   w+g+w+d+ d+a+r+d+. b+r+a+y+ d+y+d+n+ c+f+hka+t+ r+a+h+n+m+a+ m+y+
-   t+w+a+n+y+d+ b+h+ s+a+y+t+ http://www.PostgreSQL.org/docs  n+y+z+
-   m+r+a+g+e+h+ n+m+a+y+y+d+.
-   
-   d+w+ k+t+a+b+ d+r+ z+m+y+n+h+ PostgreSQL  d+r+ aMd+r+s+h+a+y+
-   http://www.PostgreSQL.org/docs/awbook.htm w+
-   http://www.commandprompt.com/ppbook w+g+w+d+ d+a+r+d+. l+y+s+t+y+ a+z+
-   k+t+a+b+h+a+y+y+ k+h+ q+a+b+l+ x+r+y+d+ a+s+t+ d+r+ aMd+r+s+
-   http://techdocs.PostgreSQL.org/techdocs/bookreviews.php w+g+w+d+
-   d+a+r+d+. h+m+tcn+y+n+ l+y+s+t+y+ a+z+ m+q+a+l+a+t+ f+n+y+ d+r+
-   m+w+r+d+ PostgreSQL d+r+ aMd+r+s+ http://techdocs.PostgreSQL.org
-   w+g+w+d+ d+a+r+d+.
-   
-   b+r+n+a+m+h+ psql y+k+ d+s+t+w+r+ d\ d+a+r+d+ k+h+ a+tjl+a+e+a+t+y+
-   d+r+ m+w+r+d+ a+n+w+a+e+ d+a+d+h+h+a+y+ q+a+b+l+ t+e+r+y+f+ w+
-   e+m+l+gfr+h+a+ w+ t+w+a+b+e+ w+ ... b+h+ m+a+ n+sna+n+ m+y+d+h+d+.
-   d+r+ s+a+y+t+ a+c+l+y+ m+a+ a+tjl+a+e+a+t+ b+y+snt+r+y+ r+a+ m+y+
-   t+w+a+n+y+d+ p+y+d+a+ k+n+y+d+.
-   
-    1.9) tcgfw+n+h+ m+y+t+w+a+n+m+ a+z+a+snk+a+l+a+t+ snn+a+x+t+h+ snd+h+ w+
-    y+a+ a+m+k+a+n+a+t+y+ k+h+ d+r+ a+y+n+ p+a+y+gfa+h+ d+a+d+h+ w+g+w+d+
-    n+d+a+r+d+  m+tjl+e+ snw+m+?+
-    
-   PostgreSQL y+k+ z+y+r+ m+g+m+w+e+h+ p+y+snr+f+t+h+ a+z+ SQL-92 r+a+
-   p+snt+y+b+a+n+y+ m+y+k+n+d+. d+r+ l+y+s+t+  TODO   a+1+snk+a+l+a+t+
-   snn+a+x+t+h+ snd+h+ y+a+ a+m+k+a+n+a+t+y+ k+h+ w+g+w+d+ n+d+a+r+d+ w+
-   y+a+ b+r+n+a+m+h+h+a+y+ aMy+n+d+h+ aMm+d+h+ a+s+t+.
-   
-    1.10) tcgfw+n+h+ m+y+t+w+a+n+m+ z+b+a+n+ SQL r+a+ y+a+d+ b+gfy+r+m+?+
-    
-   k+t+a+b+ PostgreSQL d+r+ aMd+r+s+ SQL
-   http://www.PostgreSQL.org/docs/awbook.html r+a+ aMm+w+z+sn m+y+d+h+d+.
-   h+m+tcn+y+n+ y+k+ k+t+a+b+ d+r+ aMd+r+s+
-   http://www.commandprompt.com/ppbook w+g+w+d+ d+a+r+d+. y+k+
-   r+a+h+n+m+a+y+ x+y+l+y+ x+w+b+ h+m+ d+r+ s+a+y+t+h+a+y+
-   http://www.intermedia.net/support/sql/sqltut.shtm w+
-   http://ourworld.compuserve.com/homepages/graeme_birchall/HTM_COOK.HTM
-   w+  http://sqlcourse.com d+r+ m+w+r+d+ SQL w+g+w+d+ d+a+r+d+.
-   
-   k+t+a+b+ d+y+gfr+y+ k+h+ m+y+t+w+a+n+ b+r+a+y+ y+a+d+gfy+r+y+ SQL a+z+
-   aMn+ a+s+t+f+a+d+h+ k+r+d+ k+t+a+b+ "SQL r+a+ d+r+ 21 r+w+z+ y+a+d+
-   b+gfy+r+y+d+,+ w+y+r+a+y+sn d+w+m+" d+r+ s+a+y+t+
-   http://members.tripod.com/er4ebus/sql/index.htm m+y+b+a+snd+.
-   
-   t+e+d+a+d+ z+y+a+d+y+ a+z+ k+a+r+b+r+a+n+ k+t+a+b+ The Practical SQL
-   r+a+ t+r+g+y+hk m+y+d+h+n+d+. k+t+a+b+ d+y+gfr+ The Complete Refrence
-   SQL a+n+t+sna+r+a+t+ McGraw-Hill m+y+b+a+snd+.
-   
-    1.11) aMy+a+ PostgreSQL m+snk+l+ Y2K d+a+r+d+ y+a+ x+y+r+?+
-    
-   x+y+r+,+PostgreSQL b+a+ t+a+r+y+x+h+a+y+ q+b+l+ w+ b+e+d+ a+z+ 2000
-   m+snk+l+y+ n+d+a+r+d+.
-   
-    1.12) tcgfw+n+h+ m+y+t+w+a+n+m+ b+h+ t+y+m+ b+r+n+a+m+h+ n+w+y+s+
-    PostgreSQL m+l+hkq+ snw+m+?+
-    
-   a+b+t+d+a+,+aMx+r+y+n+ s+w+r+s+ r+a+ d+w+n+l+w+d+ k+r+d+h+ w+
-   m+s+t+n+d+a+t+ m+r+b+w+tj b+h+ b+r+n+a+m+h+n+w+y+s+y+ PostgreSQL r+a+
-   d+r+ s+a+y+t+ m+tja+l+e+h+ k+n+y+d+. s+p+s+ b+h+ gfr+w+h+h+a+y+
-   p+s+t+y+ pgsql-patches w+ pgsql-hackers  e+ddw+ snw+y+d+. d+r+
-   m+r+hkl+h+ aMx+r+ w+c+l+h+h+a+y+ b+a+ k+y+f+y+t+ b+a+l+a+ r+a+ b+h+
-   pgsql-patches a+r+s+a+l+ k+n+y+d+.
-   
-   t+e+d+a+d+ z+y+a+d+y+ a+z+ b+r+n+a+m+h+n+w+y+s+a+n+ w+g+w+d+
-   d+a+r+n+d+ k+h+ a+m+t+y+a+z+ a+n+g+a+m+ t+i+y+y+r+a+t+ d+r+ cvs r+a+
-   d+a+r+n+d+. h+r+ k+d+a+m+ a+z+ aMn+h+a+ t+e+d+a+d+ z+y+a+d+y+ w+c+l+h+
-   b+a+ k+y+f+y+t+ b+a+l+a+ b+h+ gfr+w+h+ a+r+s+a+l+ k+r+d+h+a+n+d+ k+h+
-   a+e+t+m+a+d+ gfr+d+a+n+n+d+gfa+n+ PostgreSQL r+a+ b+h+ d+s+t+
-   aMw+r+d+h+a+n+d+.
-   
-    1.13) tcgfw+n+h+ m+y+t+w+a+n+m+ y+k+ a+1+snk+a+l+ r+a+ b+h+ gfr+w+h+
-    b+r+n+a+m+h+ n+w+y+s+ a+e+l+a+m+ k+n+m+?+
-    
-   l+tjf+a+:+ c+f+hkh+ m+r+b+w+tj b+h+ a+1+snk+a+l+a+t+ PostgreSQL r+a+
-   d+r+ s+a+y+t+ http://www.PostgreSQL.org/bugs/bugs.php m+sna+h+d+h+
-   k+n+y+d+. d+r+ a+y+n+ s+a+y+t+ n+hkw+h+ gfz+a+r+sn w+ a+r+s+a+l+ y+k+
-   a+snk+a+l+ t+w+ddy+hk d+a+d+h+ snd+h+ a+s+t+.
-   
-    h+m+tcn+y+n+ b+r+a+y+ d+y+d+n+ n+s+x+h+h+a+y+ g+d+y+d+t+r+ PostgreSQL
-   w+ y+a+ w+g+w+d+ y+k+ w+c+l+h+ g+d+y+d+ a+z+ s+a+y+t+
-   ftp://ftp.PostgreSQL.org/pub b+a+z+d+y+d+ k+n+y+d+.
-   
-    1.14) w+dde+y+t+ PostgreSQL d+r+ m+q+a+y+s+h+ b+a+ s+a+y+r+ DBMSh+a+ b+h+
-    tch+ c+w+r+t+ a+s+t+?+
-    
-   r+a+h+h+a+y+ m+x+t+l+f+y+ b+r+a+y+ a+n+d+a+z+h+gfy+r+y+ w+
-   m+q+a+y+s+h+ n+r+m+a+f+z+a+r+h+a+ w+g+w+d+ d+a+r+d+ k+h+
-   e+b+a+r+t+n+d+ a+z+ a+m+k+a+n+a+t+,+ k+a+r+a+y+y+,+ q+a+b+l+y+t+
-   a+e+t+m+a+d+,+ p+snt+y+b+a+n+y+ w+ q+y+m+t+
-   
-        a+m+k+a+n+a+t+
-                PostgreSQL b+y+snt+r+ a+m+k+a+n+a+t+ m+w+g+w+d+ d+r+
-                s+y+s+t+m+h+a+y+ p+a+y+gfa+h+ d+a+d+h+ t+g+a+r+y+
-                b+z+r+gf n+zHy+r+ transactions, subselets, triggers,
-                views, foreign key referential integrity w+ sophisticated
-                locking r+a+ d+a+r+d+. d+r+ PostgreSQL a+m+k+a+n+a+t+y+
-                w+g+w+d+ d+a+r+d+ k+h+ p+a+y+gfa+h+h+a+y+ d+a+d+h+
-                d+y+gfr+ aMn+ r+a+ n+d+a+r+n+d+ n+zHy+r+ user-defined
-                typesw+ Inheritancew+ rulesw+ multi-version concurrency
-                control
-                
-          
-          
-          k+a+r+a+y+y+
-          
-                  k+a+r+a+y+y+ PostgreSQL d+r+ hkd+ b+q+y+h+ s+y+s+t+m+
-          h+a+y+ t+g+a+r+y+ w+ m+t+n+ b+a+z+ a+s+t+. d+r+ b+e+ddy+
-          m+w+a+r+d+ s+r+y+e+t+r+ w+ d+r+ b+e+ddy+ m+w+a+r+d+ a+z+
-          aMn+h+a+ k+n+d+t+r+ a+s+t+. d+r+ m+q+a+y+s+h+ b+a+ MySQL
-          b+r+a+y+ k+a+r+b+r+a+n+ b+y+snt+r+ w+ d+r+x+w+a+s+t+h+a+y+
-          p+y+tcy+d+h+ w+ b+a+r+ z+y+a+d+ x+w+a+n+d+n+/n+w+snt+n+
-          s+r+y+e+t+r+ a+s+t+. d+r+ d+r+x+w+a+s+t+h+a+y+ s+a+d+h+ SELECT
-          a+z+ MySQL k+n+d+t+r+ a+s+t+. a+l+b+t+h+ MySQL x+y+l+y+ a+z+
-          a+m+k+a+n+a+t+ PostgreSQL k+h+ d+r+ b+a+l+a+ b+h+ aMn+
-          a+sna+r+h+ snd+ r+a+ n+d+a+r+d+. h+d+f+ a+c+l+y+ m+a+
-          a+m+k+a+n+a+t+ w+ q+a+b+l+y+t+ a+e+t+m+a+d+ b+a+l+a+s+t+ d+r+
-          ddm+n+ aMn+k+h+ t+l+a+sn m+y+k+n+y+m+ t+a+ k+a+r+a+y+y+ aMn+
-          n+y+z+ b+h+b+w+d+ y+a+b+d+. d+r+ aMd+r+s+
-          http://openacs.org/philosophy/why-not-mysql.html y+k+
-          m+q+a+y+s+h+ g+a+l+b+ b+y+n+ MySQL w+ PostgreSQL w+g+w+d+
-          d+a+r+d+. a+z+ tjr+f+ d+y+gfr+ MySQL y+k+ snr+k+t+ a+s+t+ k+h+
-          m+hkc+w+l+ x+w+d+ r+a+ b+h+ c+w+r+t+ m+t+n+ b+a+z+ a+r+a+yHh+
-          m+y+k+n+d+ w+l+y+ b+r+a+y+ n+r+m+a+f+z+a+r+ i+y+r+ m+t+n+
-          b+a+z+ x+w+d+ a+hkt+y+a+g+ b+h+ l+y+s+a+n+s+ t+g+a+r+y+
-          d+a+r+d+ b+r+ x+l+a+f+ PostgreSQL k+h+ y+k+ gfr+w+h+
-          k+a+m+l+a+:+ m+t+n+ b+a+z+ h+s+t+n+d+.
-          
-          
-          
-        q+a+b+l+y+t+ a+tjm+y+n+a+n+
-                m+a+ f+k+r+ m+y+k+n+y+m+ k+h+ y+k+ s+y+s+t+m+
-                p+a+y+gfa+h+ d+a+d+h+a+y+ k+h+ m+tjm+yHn+ n+b+a+snd+
-                a+r+z+sny+ n+d+a+r+d+. m+a+ t+m+a+m+ t+l+a+snm+a+n+ r+a+
-                b+r+a+y+ a+r+a+yHh+ k+d+h+a+y+ p+a+y+d+a+r+y+ k+h+ b+h+
-                x+w+b+y+ t+s+t+ snd+h+ b+a+snn+d+ w+ k+m+t+r+y+n+
-                a+1+snk+a+l+a+t+ r+a+ d+a+snt+h+ b+a+snn+d+ m+y+k+n+y+m+.
-                h+r+ n+s+x+h+ g+d+y+d+y+ k+h+ a+r+a+yHh+ m+y+snw+d+
-                hkd+a+q+l+ y+k+ m+a+h+ r+a+ d+r+ m+r+hkl+h+ t+s+t+ b+t+a+
-                m+y+gfdkr+a+n+d+. m+a+ b+r+ a+y+n+ b+a+w+r+ h+s+t+y+m+
-                k+h+ q+a+b+l+y+t+ a+tjm+y+n+a+n+ PostgreSQL d+r+
-                m+q+a+y+s+h+ b+a+ s+a+y+r+ s+y+s+t+m+h+a+y+ p+a+y+gfa+h+
-                d+a+d+h+ q+a+b+l+ t+w+g+h+ a+s+t+ w+ n+s+x+h+h+a+y+y+
-                k+h+ t+a+k+n+w+n+ a+r+a+yHh+ snd+h+ a+s+t+ n+sna+n+ m+y+
-                d+h+d+ k+h+ m+a+ t+w+a+n+a+y+y+ a+r+a+yHh+ y+k+
-                s+y+s+t+m+ q+w+y+ w+ m+hkk+m+ w+ m+tjm+yHn+ r+a+ k+h+
-                aMm+a+d+h+ b+h+r+h+b+r+d+a+r+y+ a+s+t+ d+a+r+y+m+.
-                
-        p+snt+y+b+a+n+y+
-                gfr+w+h+h+a+y+ p+s+t+y+ m+a+ a+m+k+a+n+ a+r+t+b+a+tj w+
-                t+m+a+s+ b+h+ gfr+w+h+ b+z+r+gfy+ a+z+ b+r+n+a+m+h+
-                n+w+y+s+a+n+ w+ k+a+r+b+r+a+n+ r+a+ m+y+d+h+d+ k+h+ m+y+
-                t+w+a+n+n+d+ d+r+ hkl+ m+snk+l+a+t+ b+h+ d+y+gfr+a+n+
-                k+m+k+ k+n+n+d+. d+s+t+r+s+y+ m+s+t+q+y+m+ b+h+
-                b+r+n+a+m+h+n+w+y+s+a+n+ w+ gfr+w+h+h+a+y+ k+a+r+b+r+a+n+
-                w+ r+a+h+n+m+a+h+a+ w+ k+d+a+c+l+y+ b+a+e+tk m+y+snw+d+
-                k+h+ p+snt+y+b+a+n+y+ PostgreSQL n+s+b+t+ b+h+ s+a+y+r+
-                p+a+y+gfa+h+h+a+y+ d+a+d+h+ b+h+ n+hkw+ b+h+t+r+y+
-                a+n+g+a+m+ snw+d+. h+m+tcn+y+n+ a+m+k+a+n+ a+r+a+yHh+
-                x+d+m+a+t+ p+snt+y+b+a+n+y+ b+h+ c+w+r+t+ t+g+a+r+y+
-                n+y+z+ w+g+w+d+ d+a+r+d+. b+r+a+y+ d+y+d+n+
-                a+tjl+a+e+a+t+ b+y+snt+r+ b+h+ FAQ section 1.6
-                m+r+a+g+e+h+ k+n+y+d+.
-                
-        q+y+m+t+
-                h+m+ b+r+a+y+ a+s+t+f+a+d+h+ t+g+a+r+y+ w+ h+m+ i+y+r+
-                t+g+a+r+y+ h+y+tc h+z+y+n+h+a+y+ n+b+a+y+d+ p+r+d+a+x+t+
-                snw+d+. h+y+tc m+hkd+w+d+y+t+y+ b+r+a+y+ a+n+g+a+m+
-                t+i+y+y+r+a+t+ d+r+ PostgreSQL t+w+s+tj a+s+t+f+a+d+h+
-                k+n+n+d+gfa+n+ w+g+w+d+ n+d+a+r+d+ b+h+ g+z+ m+w+a+r+d+y+
-                k+h+ d+r+ l+y+s+a+n+s+ BSD b+h+ aMn+ a+sna+r+h+ snd+h+
-                a+s+t+.
-                
-    1.15) m+n+ tcgfw+n+h+ m+y+t+w+a+n+m+ a+z+ n+zHr+ m+a+l+y+ b+h+ PostgreSQL
-    k+m+k+ k+n+m+?+
-    
-   PostgreSQL  d+a+r+a+y+ y+k+ s+a+x+t+a+r+ t+snk+y+l+a+t+y+ d+r+g+h+
-   a+w+l+ a+s+t+ k+h+ aMn+ r+a+ m+d+y+w+n+ Marc Fournier a+s+t+ k+h+
-   a+y+n+ s+a+x+t+a+r+ r+a+ a+y+g+a+d+ k+r+d+h+ a+s+t+.
-   
-   k+y+f+y+t+ y+k+ s+a+x+t+a+r+ b+r+a+y+ y+k+ p+r+w+zjh+ m+t+n+ b+a+z+
-   b+s+y+a+r+ a+h+m+y+t+ d+a+r+d+. y+k+ s+a+x+t+a+r+ x+w+b+ m+y+
-   t+w+a+n+d+ m+a+n+e+ a+z+ hkw+a+d+tky+ snw+d+ k+h+ d+r+ hkr+k+t+
-   r+w+b+h+g+l+w+y+ p+r+w+zjh+ x+l+l+y+ w+a+r+d+ m+y+k+n+n+d+.
-   
-   a+l+b+t+h+ a+y+n+ s+a+x+t+a+r+ t+snk+y+l+a+t+y+ a+r+z+a+n+ n+y+s+t+.
-   h+z+y+n+h+h+a+y+ tka+b+t+ m+a+h+a+n+h+ w+ r+w+z+m+r+h+ b+r+a+y+
-   n+gfh+d+a+r+y+ w+ hkf+zH a+y+n+ s+a+x+t+a+r+ m+w+r+d+ n+y+a+z+ a+s+t+.
-   a+gfr+ snm+a+ y+a+ snr+k+t+ snm+a+ m+a+y+l+ a+s+t+ k+h+ a+z+ n+zHr+
-   m+a+l+y+ b+h+ a+y+n+ hkr+k+t+ k+m+k+ k+n+d+ l+tjf+a+:+ b+h+ s+a+y+t+
-   http://store.pgsql.com/shopping m+r+a+g+e+h+ k+r+d+h+ w+ k+m+k+ x+w+d+
-   r+a+ a+h+d+a+ k+n+y+d+.
-   
-   h+r+ tcn+d+ d+r+ c+f+hkh+ a+c+l+y+ e+b+a+r+t+ PostgreSQL,Inc dkk+r+
-   snd+h+ a+s+t+ w+l+y+ m+sna+r+k+t+ e+m+d+t+a+:+ b+r+a+y+
-   p+snt+y+b+a+n+y+ a+z+ p+r+w+zjh+ PostgreSQL m+y+ b+a+snd+ w+ n+h+
-   b+r+a+y+ y+k+ snr+k+t+ m+snx+c+. a+gfr+ t+r+g+y+hk m+y+d+h+y+d+ m+y+
-   t+w+a+n+y+d+ y+k+ tck+ b+h+ aMd+r+s+ m+snx+c+ snd+h+ a+r+s+a+l+
-   k+n+y+d+.
-   
-   a+gfr+ y+k+ a+s+t+f+a+d+h+ m+w+f+q+ a+z+ PostgreSQL s+r+a+i+
-   d+a+r+y+d+ l+tjf+a+:+ aMn+ r+a+ b+h+ s+a+y+t+
-   http://advocacy.postgresql.org gfz+a+r+sn d+h+y+d+.
-     _________________________________________________________________
-   
-   s+w+a+l+a+t+ m+r+b+w+tj b+h+ a+s+t+f+a+d+h+ a+z+ p+a+y+gfa+h+ d+a+d+h+
-                                      
-    2.1) aMy+a+ h+y+tc d+r+a+y+w+r+ ODBC b+r+a+y+ PostgreSQL w+g+w+d+
-    d+a+r+d+?+
-    
-   d+w+ d+r+a+y+w+r+ ODBC b+n+a+m+h+a+y+ psqlODBC w+ OpenLink b+r+a+y+
-   PostgreSQL w+g+w+d+ d+a+r+d+.
-   
-   b+r+a+y+ gfr+f+t+n+ psqlODBC b+h+ s+a+y+t+
-   http://gborg.postgresql.org/project/psqlodbc/projdisplay.php
-   m+r+a+g+e+h+ k+n+y+d+.
-   
-   OpenLlink r+a+ a+z+ a+y+n+ s+a+y+t+ http://www.openlinksw.com m+y+
-   t+w+a+n+y+d+ b+gfy+r+y+d+. a+y+n+ d+r+a+y+w+r+ b+a+ n+r+m+
-   a+f+z+a+r+h+a+y+ m+x+t+l+f+ ODBC k+a+r+ m+y+k+n+d+ b+n+a+b+r+a+y+n+
-   snm+a+ q+a+d+r+ x+w+a+h+y+d+ b+w+d+ b+a+ a+s+t+f+a+d+h+ a+z+ OpenLink
-   r+w+y+ a+k+tkr+ s+k+w+h+a+y+y+ k+h+ n+r+m+a+f+z+a+r+ODBCd+a+r+n+d+
-   b+d+w+n+ m+snk+l+ b+h+ PostgreSQL n+y+z+ m+t+c+l+ snw+y+d+.
-   
-   a+y+n+ m+hkc+w+l+ b+h+ k+s+a+n+y+ k+h+ a+hkt+y+a+g+ b+h+ x+d+m+a+t+
-   p+snt+y+b+a+n+y+ t+g+a+r+y+ d+a+r+n+d+ f+r+w+x+t+h+ m+y+snw+d+. w+l+y+
-   n+s+x+h+ aMz+a+d+ a+y+n+ n+r+m+a+f+z+a+r+ h+m+y+snh+ d+r+ d+r+s+t+r+s+
-   m+y+b+a+snd+. b+r+a+y+ k+s+b+ a+tjl+a+e+a+t+ b+y+snt+r+ s+w+a+l+a+t+
-   x+w+d+ r+a+ b+h+ aMd+r+s+ postgres95@openlink.co.uk a+r+s+a+l+
-   n+m+a+y+y+d+.
-   
-    2.2) tch+ a+b+z+a+r+h+a+y+y+ b+r+a+y+ a+s+t+f+a+d+h+ a+z+ PostgreSQL b+a+
-    c+f+hka+t+ w+b+ w+g+w+d+ d+a+r+d+?+
-    
-   d+r+ s+a+y+t+ http://www.webreview.com b+r+a+y+ a+s+t+f+a+d+h+ a+z+
-   PostgreSQL d+r+ c+f+hka+t+ w+b+ r+a+h+n+m+a+y+y+h+a+y+ x+w+b+y+
-   w+g+w+d+ d+a+r+d+.
-   
-   b+r+a+y+ t+r+k+y+b+ w+ a+s+t+f+a+d+h+ d+r+ c+f+hka+t+ w+b+ z+b+a+n+
-   PHP y+k+ w+a+s+tj b+s+y+a+r+ m+n+a+s+b+ a+s+t+. a+tjl+a+e+a+t+
-   b+y+snt+r+ r+a+g+e+ b+h+ PHPd+r+ s+a+y+t+ http://www.php.net w+g+w+d+
-   d+a+r+d+.
-   
-   m+tka+l+h+a+y+y+ n+y+z+ b+a+ a+s+t+f+a+d+h+ a+z+ Perl w+ CGI.pm w+
-   mod_perl w+g+w+d+ d+a+r+d+.
-   
-    2.3) aMy+a+ PostgreSQL y+k+ w+a+s+tj k+a+r+b+r+y+ gfr+a+f+y+k+y+ d+a+r+d+?+
-    
-   tcn+d+ n+r+m+ a+f+z+a+r+ gfr+a+f+y+k+y+ b+r+a+y+ PostgreSQL w+g+w+d+
-   d+a+r+d+ k+h+ sna+m+l+ pgAccess d+r+s+a+y+t+ http://www.pgaccess.org
-   w+ pgAdmin III d+r+ s+a+y+t+ http://www.pgadmin.org w+ RHDB Admin d+r+
-   s+a+y+t+ http://sources.redhat.com/rhdb w+ Rekall d+r+ s+a+y+t+
-   http://www.thekompany.com/products/rekall  m+y+b+a+snd+. h+m+tcn+y+n+
-   y+k+ phpPgAdmin h+m+ d+r+ s+a+y+t+ http://phppgadmin.sourceforge.net
-   w+g+w+d+ d+a+r+d+ k+h+ y+k+ w+a+s+tj w+b+y+ b+r+a+y+ m+d+y+r+y+t+
-   PostgreSQL m+y+b+a+snd+.
-   
-   b+r+a+y+ d+y+d+n+ a+tjl+a+e+a+t+ b+y+snt+r+ r+a+g+e+ b+h+ n+r+m+
-   a+f+z+a+r+h+a+y+ gfr+a+f+y+k+y+ b+r+a+y+ PostgreSQL b+h+ aMd+r+s+
-   http://techdocs.postgresql.org/guides/GUITools m+r+a+g+e+h+ k+n+y+d+.
-   
-    2.4) b+a+ tch+ z+b+a+n+h+a+y+ b+r+n+a+m+h+n+w+y+s+y+ m+y+t+w+a+n+ b+a+
-    PostgreSQL a+r+t+b+a+tj b+r+q+r+a+r+ k+r+d+?+
-    
-   b+y+snt+r+ z+b+a+n+h+a+y+ b+r+n+a+m+h+n+w+y+s+y+ m+y+t+w+a+n+n+d+ b+a+
-   PostgreSQL a+r+t+b+a+tj b+r+q+r+a+r+ k+n+n+d+. b+h+ h+m+r+a+h+
-   s+w+r+s+ PostgreSQL t+e+d+a+d+y+ a+z+ w+a+s+tjh+a+y+ m+w+r+d+ n+y+a+z+
-   b+r+a+y+ a+r+t+b+a+tj b+a+ p+a+y+gfa+h+ d+a+d+h+ a+z+ tjr+y+q+
-   z+b+a+n+h+a+y+ m+x+t+l+f+ aMm+d+h+ a+s+t+ k+h+ d+r+ z+y+r+ l+y+s+t+
-   aMn+h+a+ r+a+ m+sna+h+d+h+ m+y+k+n+y+d+.
-     * C (libpq)
-     * Embedded C (ecpg)
-     * Java (jdbc)
-     * Python (PyGreSQL)
-     * TCL (libpgtcl)
-       
-   w+a+s+tjh+a+y+ d+y+gfr+ d+r+ s+a+y+t+ http://gborg.postgresql.org d+r+
-                           q+s+m+t+ Drivers/Interfaces w+g+w+d+ d+a+r+d+.
-     _________________________________________________________________
-   
-                        s+w+a+l+a+t+ m+d+y+r+y+t+y+
-                                      
-    3.1) tcgfw+n+h+ m+y+t+w+a+n+m+ PostgreSQL r+a+ d+r+ sna+x+h+a+y+ i+y+r+
-    a+z+ /usr/local/pgsql/  n+c+b+ k+n+m+?+
-    
-   m+w+q+e+ a+g+r+a+y+ d+s+t+w+r+ configure a+z+ gfz+y+n+h+ prefix--
-   a+s+t+f+a+d+h+ k+n+y+d+.
-   
-    3.2) tcr+a+ m+w+q+e+y+ k+h+ m+n+ b+r+n+a+m+h+ postmaster r+a+ a+g+r+a+ m+y+
-    k+n+m+ p+y+a+m+ Bad system call w+ y+a+ core dump m+y+gfy+r+m+?+
-    
-   b+h+ d+l+a+y+l+ m+x+t+l+f+ m+m+k+n+ a+s+t+ a+y+n+ a+t+f+a+q+
-   b+y+f+t+d+. a+m+a+ d+r+ q+d+m+ a+w+l+ snm+a+ m+tjm+yHn+ snw+y+d+ k+h+
-   k+h+ a+m+k+a+n+a+t+ a+dda+f+h+ System V d+r+ k+r+n+l+ snm+a+ n+c+b+
-   snd+h+ b+a+snd+. PostgreSQL b+r+a+y+ a+g+r+a+ snd+n+ n+y+a+z+ b+h+
-   a+s+t+f+a+d+h+ a+z+ a+m+k+a+n+a+t+ hka+f+zHh+ m+snt+r+k+ w+
-   s+m+a+f+w+r+h+a+ d+a+r+d+.
-   
-    3.3) tcr+a+ m+w+q+e+y+ k+h+ m+n+ s+e+y+ m+y+k+n+m+ b+r+n+a+m+h+ postmaster
-    r+a+ a+g+r+a+ k+n+m+ x+tja+y+ IpcMemoryCreate  m+y+gfy+r+m+?+
-    
-   a+hkt+m+a+l+a+:+ q+s+m+t+ a+y+g+a+d+ hka+f+zHh+ m+snt+r+k+ d+r+
-   k+r+n+l+ b+h+ d+r+s+t+y+ t+n+zHy+m+ n+snd+h+ a+s+t+ w+ y+a+ a+y+n+k+h+
-   b+a+y+d+ f+dda+y+ hka+f+zHh+ a+snt+r+a+k+y+ d+r+ k+r+n+l+ r+a+
-   z+y+a+d+ k+r+d+. m+y+z+a+n+ d+q+y+q+ hka+f+zHh+ m+snt+r+k+ m+w+r+d+
-   n+y+a+z+ b+s+t+h+ b+h+ m+e+m+a+r+y+ w+ n+hkw+h+ a+s+t+f+a+d+h+ a+z+
-   b+a+f+r+h+a+ t+w+s+tj b+r+n+a+m+h+ postmaster d+a+r+d+. b+r+a+y+
-   b+y+snt+r+ s+y+s+t+m+h+a+ k+h+ b+a+ t+n+zHy+m+a+t+ p+y+snf+r+dd k+a+r+
-   m+y+k+n+n+d+ m+q+d+a+r+ a+y+n+ hka+f+zHh+ hkd+w+d+ 1 m+gfa+b+a+y+t+
-   a+s+t+. b+r+a+y+ d+y+d+n+ a+tjl+a+e+a+t+ b+y+snt+r+ r+a+g+e+ b+h+
-   hka+f+zHh+ m+snt+r+k+ w+ s+m+a+f+w+r+ b+h+ PostgreSQL Administrator's
-   Guide m+r+a+g+e+h+ k+n+y+d+.
-   
-    3.4) tcr+a+ m+w+q+e+y+ k+h+ m+n+ s+e+y+ m+y+k+n+m+ b+r+n+a+m+h+ postmaster
-    r+a+ a+g+r+a+ k+n+m+ x+tja+y+  IpcSemaphoreCreate m+y+gfy+r+m+?+
-    
-   a+gfr+ p+y+i+a+m+ x+tja+ (pcSemaphoreCreate: semget failed (No space
-   left on device  b+a+snd+ b+h+ a+y+n+ m+e+n+y+ a+s+t+ k+h+ t+e+d+a+d+
-   s+m+a+f+w+r+h+a+y+ t+n+zHy+m+ snd+h+ d+r+ k+r+n+l+ k+a+f+y+ n+y+s+t+.
-   PostgreSQL b+r+a+y+ h+r+ f+r+a+y+n+d+y+ k+h+ d+r+ backend a+g+r+a+
-   m+y+snw+d+ b+h+ y+k+ s+m+a+f+w+r+ n+y+a+z+ d+a+r+d+. y+k+ r+a+h+ hkl+
-   m+w+q+t+ b+r+a+y+ a+y+n+ m+s+yHl+h+ aMn+ a+s+t+ k+h+ postmaster r+a+
-   b+a+ a+e+m+a+l+ m+hkd+w+d+y+t+ r+w+y+ t+e+d+a+d+ f+r+a+y+n+d+h+a+y+y+
-   k+h+ m+y+t+w+a+n+d+ a+y+g+a+d+ k+n+d+ a+g+r+a+ k+n+y+m+. b+r+a+y+
-   a+y+n+k+a+r+ a+z+ gfz+y+n+h+ N- w+ y+k+ e+d+d+ k+m+t+r+ a+z+ 32
-   a+s+t+f+a+d+h+ k+n+y+d+. r+a+h+ hkl+ d+a+yHm+y+ a+y+n+ m+snk+l+ aMn+
-   a+s+t+ k+h+ p+a+r+a+m+t+r+h+a+y+ SEMMNS, SEMMNI k+r+n+l+ r+a+
-   a+f+z+a+y+sn d+h+y+m+.
-   
-   d+r+ z+m+a+n+ d+s+t+r+s+y+ x+y+l+y+ z+y+a+d+ b+h+ p+a+y+gfa+h+
-   d+a+d+h+,+ s+m+a+f+w+r+h+a+y+ n+a+m+e+t+b+r+ m+y+t+w+a+n+n+d+ b+a+e+tk
-   crash k+r+d+n+ s+y+s+t+m+ snw+n+d+.
-   
-   a+gfr+ p+y+i+a+m+ x+tja+ tcy+z+ d+y+gfr+y+ b+a+snd+ a+hkt+m+a+l+a+:+
-   b+h+ d+l+y+l+ aMn+ a+s+t+ k+h+ k+r+n+l+ a+z+ s+m+a+f+w+r+h+a+
-   p+snt+y+b+a+n+y+ n+m+y+k+n+d+. b+r+a+y+ d+y+d+n+ a+tjl+a+e+a+t+
-   b+y+snt+r+ r+a+h+n+m+a+y+ m+d+y+r+y+t+y+ PostgreSQL r+a+ m+tja+l+e+h+
-   k+n+y+d+.
-   
-    3.5) tcgfw+n+h+ m+y+t+w+a+n+m+ a+t+c+a+l+a+t+ s+a+y+r+ m+a+sny+n+h+a+ r+a+
-    k+n+t+r+l+ k+n+m+?+
-    
-   b+h+ c+w+r+t+ p+y+sn f+r+dd f+q+tj a+z+ m+a+sny+n+y+ k+h+ PostgreSQL
-   r+w+y+ aMn+ d+r+ hka+l+ a+g+r+a+s+t+ m+y+t+w+a+n+ b+a+ a+s+t+f+a+d+h+
-   a+z+ s+w+k+t+h+a+y+ y+w+n+y+k+s+y+ b+h+ aMn+ m+t+c+l+ snd+. s+a+y+r+
-   m+a+sny+n+h+a+ q+a+d+r+ n+y+s+t+n+d+ b+h+ PostgreSQL m+t+c+l+ snw+n+d+
-   m+gfr+ aMn+k+h+ gfz+y+n+h+ tcp_sockets d+r+ f+a+y+l+ postgresql.conf
-   f+e+a+l+ snd+h+ w+ h+m+tcn+y+n+ b+a+ a+c+l+a+hk f+a+y+l+
-   PGDATA/ph_hba.conf h+w+y+t+snn+a+s+y+ m+b+t+n+y+ b+r+ m+y+z+b+a+n+
-   n+y+z+ f+e+a+l+ snw+d+. b+a+ a+y+n+ k+a+r+ m+y+t+w+a+n+ a+t+c+a+l+a+t+
-   TCP/IP b+h+ PostgreSQL a+y+g+a+d+ k+r+d+.
-   
-    3.6) b+r+a+y+ k+a+r+a+y+y+ b+a+l+a+t+r+ w+ b+h+t+r+ p+a+y+gfa+h+ d+a+d+h+
-    m+n+ tch+ t+n+zHy+m+a+t+y+ r+a+ b+a+y+d+ a+n+g+a+m+ d+h+m+?+
-    
-   b+h+ tjw+r+ hkt+m+ a+s+t+f+a+d+h+ a+z+ a+n+d+y+s+h+a+ b+a+e+tk
-   b+a+l+a+ r+f+t+n+ s+r+e+t+ p+a+s+x+gfw+y+y+ b+h+ d+r+x+w+a+s+t+h+a+
-   x+w+a+h+d+ snd+. d+s+t+w+r+ EXPLAIN ANALYZE b+h+ snm+a+ a+m+k+a+n+
-   d+y+d+n+ n+hkw+h+ p+r+d+a+z+sn y+k+ d+s+t+w+r+ t+w+s+tj PostgreSQL
-   r+a+ m+y+d+h+d+.
-   
-   a+gfr+ snm+a+ t+e+d+a+d+ z+y+a+d+y+ INSERT d+a+r+y+d+ s+e+y+ k+n+y+d+
-   aMn+h+a+ r+a+ b+a+ q+r+a+r+ d+a+d+n+ d+r+ y+k+ f+a+y+l+ b+a+
-   d+s+t+w+r+ COPY a+g+r+a+ k+n+y+d+. a+y+n+ d+s+t+w+r+ b+h+ m+r+a+t+b+
-   a+z+ INSERT s+r+y+e+t+r+ a+s+t+. hkt+y+a+l+a+m+k+a+n+ s+e+y+ k+n+y+d+
-   a+z+ t+r+a+k+n+snh+a+ a+s+t+f+a+d+h+ n+k+n+y+d+. t+r+a+k+n+snh+a+
-   m+g+m+w+e+h+ d+s+t+w+r+a+t+y+ h+s+t+n+d+ k+h+ b+y+n+d+ BEGIN w+ COMMIT
-   m+y+aMy+n+d+. a+gfr+ y+k+ d+s+t+w+r+ b+h+ c+w+r+t+ e+a+d+y+ a+g+r+a+
-   snw+d+ PostgreSQL x+w+d+ aMn+ d+s+t+w+r+ r+a+ b+h+ c+w+r+t+ y+k+
-   t+r+a+k+n+sn m+s+t+q+l+ n+gfa+h+ k+r+d+h+ w+ a+g+r+a+ m+y+k+n+d+.
-   m+w+q+e+&#1740; k+h+ t+i+y+y+r+a+t+ z+y+a+d+y+ d+r+ p+a+y+gfa+h+
-   d+a+d+h+ a+n+g+a+m+ m+y+snw+d+ a+n+d+y+s+h+a+y+ q+b+l+y+ r+a+ hkdkf+
-   w+ m+g+d+d+a+:+ a+y+g+a+d+ k+n+y+d+.
-   
-   a+s+t+f+a+d+h+ a+z+ gfz+y+n+h+ o -F- d+r+ f+r+m+a+n+ postmaster
-   b+a+e+tk i+y+r+ f+e+a+l+ k+r+d+n+ ()fsync m+y+snw+d+. a+y+n+
-   d+s+t+w+r+ b+e+d+ a+z+ h+r+ t+r+a+k+n+sn a+tjl+a+e+a+t+ r+a+ r+w+y+
-   h+a+r+d+d+y+s+k+ m+n+t+q+l+ m+y+k+n+d+.
-   
-   b+r+a+y+ a+f+z+a+y+sn t+e+d+a+d+ b+a+f+r+h+a+y+ hka+f+zHh+
-   a+snt+r+a+k+y+ a+z+ gfz+y+n+h+ B- b+h+ h+m+r+a+h+ f+r+m+a+n+
-   postmaster a+s+t+f+a+d+h+ k+n+y+d+. t+w+g+h+ k+n+y+d+ k+h+ a+gfr+
-   a+y+n+ e+d+d+ x+y+l+y+ b+z+r+gf b+a+snd+ m+m+k+n+ a+s+t+ postmaster
-   a+c+l+a+:+ a+g+r+a+ n+snw+d+. h+r+ b+a+f+r+ 8 k+y+l+w+ b+a+y+t+
-   hka+f+zHh+ n+y+a+z+ d+a+r+d+ w+ t+e+d+a+d+ b+a+f+r+h+a+ b+h+ tjw+r+
-   p+y+sn f+r+dd 64 a+s+t+.
-   
-   h+m+tcn+y+n+ m+y+t+w+a+n+ b+a+ gfz+y+n+h+ S-  m+y+z+a+n+ hka+f+zHh+
-   a+y+ k+h+ b+r+a+y+ m+r+t+b+s+a+z+y+h+a+y+ m+w+q+t+ t+w+s+tj PostgreSQL
-   a+s+t+f+a+d+h+ m+y+snw+d+ r+a+ a+f+z+a+y+sn d+a+d+. m+q+d+a+r+ p+y+sn
-   f+r+dd 512 k+y+l+w+ b+a+y+t+ a+s+t+.
-   
-   a+s+t+f+a+d+h+ a+z+ d+s+t+w+r+ CLUSTER n+y+z+ b+r+a+y+ b+a+l+a+
-   b+r+d+n+ k+a+r+a+y+y+ m+w+tkr+ a+ s+t+. d+s+t+w+r+ r+a+h+n+m+a+y+
-   CLUSTER a+tjl+a+e+a+t+ b+y+snt+r+y+ d+r+ a+y+n+ z+m+y+n+h+ b+h+ snm+a+
-   m+y+d+h+d+.
-   
-    3.7) tch+ a+m+k+a+n+a+t+y+ b+r+a+y+ p+y+d+a+ k+r+d+n+ a+snk+a+l+ w+g+w+d+
-    d+a+r+d+?+
-    
-   PostgerSQL a+m+k+a+n+a+t+ m+x+t+l+f+y+ b+r+a+y+ gfz+a+r+sn d+a+d+n+
-   w+dde+y+t+ x+w+d+ d+a+r+d+ k+h+ b+r+a+y+ a+snk+a+l+ z+d+a+y+y+ m+y+
-   t+w+a+n+ a+z+ aMn+h+a+ a+s+t+f+a+d+h+ k+r+d+.
-   
-   b+a+ a+s+t+f+a+d+h+ a+z+ gfz+y+n+h+ enable-assert-- t+e+d+a+d+
-   z+y+a+d+y+ ()assert b+r+a+y+ m+w+n+y+t+w+r+ k+r+d+n+ w+ t+w+q+f+
-   b+r+n+a+m+h+ d+r+ c+w+r+t+ b+r+w+z+ x+tja+h+a+y+ n+a+x+w+a+s+t+h+
-   f+e+a+l+ m+y+snw+d+.
-   
-   h+m+ Postmaster w+ h+m+ postgres gfz+y+n+h+h+a+y+ z+y+a+d+y+ b+r+a+y+
-   a+snk+a+l+ z+d+a+y+y+ d+a+r+n+d+. m+w+q+e+y+ k+h+ postmaster r+a+
-   a+g+r+a+ m+y+k+n+y+d+ x+r+w+g+y+ a+s+t+a+n+d+a+r+d+ w+ x+tja+ r+a+
-   s+m+t+ f+a+y+l+ log a+r+s+a+l+ k+n+y+d+.
-   
+  كارايي
+          كارايي PostgreSQL در حد بقيه سيستم‌هاي تجاري و متن باز است. در بعضي 
+  موارد سريعتر و در بعضي موارد از آنها كندتر است. در مقايسه با MySQL براي 
+  كاربران بيشتر و درخواست‌هاي پيچيده و بار زياد خواندن/نوشتن سريعتر است. در 
+  درخواست‌هاي ساده SELECT‌ از MySQL كندتر است. البته MySQL خيلي از امكانات 
+  PostgreSQL كه در بالا به آن اشاره شد را ندارد. هدف اصلي ما امكانات و قابليت 
+  اعتماد بالاست در ضمن آنكه تلاش مي‌كنيم تا كارايي آن نيز بهبود يابد. در آدرس 
+  http://openacs.org/philosophy/why-not-mysql.html يك مقايسه جالب بين MySQL و 
+  PostgreSQL وجود دارد. از طرف ديگر MySQL‌ يك شركت است كه محصول خود را به صورت 
+  متن باز ارائه مي‌كند ولي براي نرم‌افزار غير متن باز خود احتياج به ليسانس تجاري 
+  دارد بر خلاف PostgreSQL كه يك گروه كاملاً متن باز هستند.
+
+    قابليت اطمينان 
+    ما فكر مي‌كنيم كه يك سيستم پايگاه داده‌اي كه مطمئن نباشد ارزشي ندارد. ما 
+    تمام تلاشمان را براي ارائه كدهاي پايداري كه به خوبي تست شده باشند و كمترين 
+    اِشكالات را داشته باشند مي‌كنيم. هر نسخه جديدي كه ارائه مي‌شود حداقل يك ماه 
+    را در مرحله تست بتا مي‌گذراند. ما بر اين باور هستيم كه قابليت اطمينان 
+    PostgreSQL‌ در مقايسه با ساير سيستم‌هاي پايگاه داده قابل توجه است و 
+    نسخه‌هايي كه تاكنون ارائه شده است نشان مي‌دهد كه ما توانايي ارائه يك سيستم 
+    قوي و محكم و مطمئن را كه آماده بهره‌برداري است داريم. 
+    پشتيباني 
+    گروههاي پستي ما امكان ارتباط و تماس به گروه بزرگي از برنامه نويسان و كاربران 
+    را مي‌دهد كه مي‌توانند در حل مشكلات به ديگران كمك كنند. دسترسي مستقيم به 
+    برنامه‌نويسان و گروههاي كاربران و راهنماها و كداصلي باعث مي‌شود كه پشتيباني 
+    PostgreSQL نسبت به ساير پايگاههاي داده به نحو بهتري انجام شود. همچنين امكان 
+    ارائه خدمات پشتيباني به صورت تجاري نيز وجود دارد. براي ديدن اطلاعات بيشتر به 
+    FAQ section 1.6  مراجعه كنيد. 
+    قيمت 
+    هم براي استفاده تجاري و هم غير تجاري هيچ هزينه‌اي نبايد پرداخت شود. هيچ 
+    محدوديتي براي انجام تغييرات در PostgreSQL توسط استفاده كنندگان وجود ندارد به 
+    جز مواردي كه در ليسانس BSD به آن اشاره شده است. 
+1.15) من چگونه مي‌توانم از نظر مالي به PostgreSQL كمك كنم؟
+PostgreSQL  داراي يك ساختار تشكيلاتي درجه اول است كه آن را مديون Marc Fournier‌ 
+است كه اين ساختار را ايجاد كرده است.
+كيفيت يك ساختار براي يك پروژه متن باز بسيار اهميت دارد. يك ساختار خوب مي‌تواند 
+مانع از حوادثي شود كه در حركت روبه‌جلوي پروژه خللي وارد مي‌كنند.
+البته اين ساختار تشكيلاتي ارزان نيست. هزينه‌هاي ثابت ماهانه و روزمره براي 
+نگهداري و حفظ اين ساختار مورد نياز است. اگر شما يا شركت شما مايل است كه از نظر 
+مالي به اين حركت كمك كند لطفاً به سايت http://store.pgsql.com/shopping مراجعه 
+كرده و كمك خود را اهدا كنيد.
+هر چند در صفحه اصلي عبارت PostgreSQL,Inc‌ ذكر شده است ولي مشاركت عمدتاً براي 
+پشتيباني از پروژه PostgreSQL‌ مي باشد و نه براي يك شركت مشخص. اگر ترجيح مي‌دهيد 
+مي‌توانيد يك چك به آدرس مشخص شده ارسال كنيد.
+اگر يك استفاده موفق از PostgreSQL سراغ داريد لطفاً آن را به سايت 
+http://advocacy.postgresql.org گزارش دهيد.
+
+
+
+سوالات مربوط به استفاده از پايگاه داده
+2.1) آيا هيچ درايور ODBC‌ براي PostgreSQL وجود دارد؟
+دو درايور ODBC بنامهاي psqlODBC‌ و OpenLink براي PostgreSQL‌ وجود دارد.
+براي گرفتن psqlODBC به سايت 
+http://gborg.postgresql.org/project/psqlodbc/projdisplay.php مراجعه كنيد.
+OpenLlink را از اين سايت http://www.openlinksw.com مي‌توانيد بگيريد. اين درايور 
+با نرم‌افزارهاي مختلف ODBC كار مي‌كند بنابراين شما قادر خواهيد بود با استفاده از 
+OpenLink روي اكثر سكو‌هايي كه نرم‌افزارODBC‌دارند بدون مشكل به PostgreSQL نيز 
+متصل شويد.
+اين محصول به كساني كه احتياج به خدمات پشتيباني تجاري دارند فروخته مي‌شود. ولي 
+نسخه آزاد اين نرم‌افزار هميشه در درسترس مي‌باشد. براي كسب اطلاعات بيشتر سوالات 
+خود را به آدرس postgres95@openlink.co.uk ‌ارسال نماييد.
+2.2) چه ابزارهايي براي استفاده از PostgreSQL‌ با صفحات وب وجود دارد؟
+در سايت http://www.webreview.com براي استفاده از PostgreSQL‌ در صفحات وب 
+راهنماييهاي خوبي وجود دارد.
+براي تركيب و استفاده در صفحات وب زبان PHP‌ يك واسط بسيار مناسب است. اطلاعات 
+بيشتر راجع به PHP‌در سايت http://www.php.net وجود دارد.
+مثالهايي نيز با استفاده از Perl‌ و CGI.pm و mod_perl وجود دارد.
+2.3) آيا PostgreSQL‌ يك واسط كاربري گرافيكي دارد؟
+چند نرم افزار گرافيكي براي PostgreSQL‌ وجود دارد كه شامل pgAccess درسايت 
+http://www.pgaccess.org و pgAdmin III در سايت http://www.pgadmin.org و RHDB 
+Admin در سايت http://sources.redhat.com/rhdb و Rekall در سايت 
+http://www.thekompany.com/products/rekall  مي‌باشد. همچنين يك phpPgAdmin هم در 
+سايت http://phppgadmin.sourceforge.net وجود دارد كه يك واسط وبي براي مديريت 
+PostgreSQL مي‌باشد.
+براي ديدن اطلاعات بيشتر راجع به نرم‌افزارهاي گرافيكي براي PostgreSQL به آدرس 
+http://techdocs.postgresql.org/guides/GUITools مراجعه كنيد.
+2.4) با چه زبانهاي برنامه‌نويسي مي‌توان با PostgreSQL‌ ارتباط برقرار كرد؟
+بيشتر زبانهاي برنامه‌نويسي مي‌توانند با PostgreSQL‌ ارتباط برقرار كنند. به همراه 
+ سورس PostgreSQL تعدادي از واسطهاي مورد نياز براي ارتباط با پايگاه داده از طريق 
+زبانهاي مختلف آمده است كه در زير ليست آنها را مشاهده مي‌كنيد.
+  C (libpq) 
+  Embedded C (ecpg) 
+  Java (jdbc) 
+  Python (PyGreSQL) 
+  TCL (libpgtcl) 
+واسطهاي ديگر در سايت http://gborg.postgresql.org در قسمت Drivers/Interfaces وجود 
+دارد.
+
+
+
+سوالات مديريتي
+3.1) چگونه مي‌توانم PostgreSQL‌ را در شاخه‌اي غير از /usr/local/pgsql/  نصب كنم؟
+موقع اجراي دستور configure از گزينه prefix-- استفاده كنيد.
+3.2) چرا موقعي كه من برنامه postmaster‌ را اجرا مي كنم پيام Bad system call‌ و 
+يا core dump ‌مي‌گيرم؟
+به دلايل مختلف ممكن است اين اتفاق بيفتد. اما در قدم اول شما مطمئن شويد كه كه 
+امكانات اضافه System V‌ در كرنل شما نصب شده باشد. PostgreSQL براي اجرا شدن نياز 
+به استفاده از امكانات حافظه مشترك و سمافورها دارد.
+3.3) چرا موقعي كه من سعي مي‌كنم برنامه postmaster‌ را اجرا كنم خطاي 
+IpcMemoryCreate  مي‌گيرم؟
+احتمالاً‌ قسمت ايجاد حافظه مشترك در كرنل به درستي تنظيم نشده است و يا اينكه بايد 
+فضاي حافظه اشتراكي در كرنل را زياد كرد. ميزان دقيق حافظه مشترك مورد نياز بسته به 
+معماري و نحوه استفاده از بافرها توسط برنامه postmaster دارد. براي بيشتر سيستم‌ها 
+كه با تنظيمات پيش‌فرض كار مي‌كنند مقدار اين حافظه حدود 1 مگابايت است. براي ديدن 
+اطلاعات بيشتر راجع به حافظه مشترك و سمافور به PostgreSQL Administrator's Guide 
+مراجعه كنيد.
+3.4) چرا موقعي كه من سعي مي‌كنم برنامه postmaster‌ را اجرا كنم خطاي  
+IpcSemaphoreCreate مي‌گيرم؟
+اگر پيغام خطا (‌pcSemaphoreCreate: semget failed (No space left on device  باشد 
+به اين معني است كه تعداد سمافورهاي تنظيم شده در كرنل كافي نيست. PostgreSQL‌ براي 
+هر فرايندي كه در backend اجرا مي‌شود به يك سمافور نياز دارد. يك راه حل موقت براي 
+اين مسئله آن است كه postmaster را با اعمال محدوديت روي تعداد فرايندهايي كه 
+مي‌تواند ايجاد كند اجرا كنيم. براي اينكار از گزينه N- و يك عدد كمتر از 32 
+استفاده كنيد. راه حل دائمي اين مشكل آن است كه پارامترهاي SEMMNS, SEMMNI كرنل را 
+افزايش دهيم.
+در زمان دسترسي خيلي زياد به پايگاه داده، ‌ سمافورهاي نامعتبر مي‌توانند باعث 
+crash‌ كردن سيستم شوند.
+اگر پيغام خطا چيز ديگري باشد احتمالاً به دليل آن است كه كرنل از سمافورها 
+پشتيباني نمي‌كند. براي ديدن اطلاعات بيشتر راهنماي مديريتي PostgreSQL را مطالعه 
+كنيد.
+3.5) چگونه مي‌توانم اتصالات ساير ماشينها را كنترل كنم؟
+به صورت پيش فرض فقط از ماشيني كه PostgreSQL روي آن در حال اجراست مي‌توان با 
+استفاده از سوكت‌هاي يونيكسي به آن متصل شد. ساير ماشين‌ها قادر نيستند به 
+PostgreSQL متصل شوند مگر آنكه گزينه tcp_sockets در فايل postgresql.conf فعال شده 
+و همچنين با اصلاح فايل PGDATA/ph_hba.conf هويت‌شناسي مبتني بر ميزبان نيز فعال 
+شود. با اين كار مي‌توان اتصالات TCP/IP به PostgreSQL‌ ايجاد كرد.
+3.6) براي كارايي بالاتر و بهتر پايگاه داده من چه تنظيماتي را بايد انجام دهم؟
+به طور حتم استفاده از انديس‌ها باعث بالا رفتن سرعت پاسخ‌گويي به درخواست‌ها خواهد 
+شد. دستور EXPLAIN ANALYZE به شما امكان ديدن نحوه پردازش يك دستور توسط PostgreSQL 
+را مي‌دهد.
+اگر شما تعداد زيادي INSERT‌ داريد سعي كنيد آنها را با قرار دادن در يك فايل با 
+دستور COPY‌ اجرا كنيد. اين دستور به مراتب از INSERT سريعتر است. حتي‌الامكان سعي 
+كنيد از تراكنشها استفاده نكنيد. تراكنشها مجموعه دستوراتي هستند كه بيند BEGIN و 
+‍COMMIT مي‌آيند. اگر يك دستور به صورت عادي اجرا شود PostgreSQL خود آن دستور را 
+به صورت يك تراكنش مستقل نگاه كرده و اجرا مي‌كند. موقعی كه تغييرات زيادي در 
+پايگاه داده انجام مي‌شود انديسهاي قبلي را حذف و مجدداً‌ ايجاد كنيد.
+استفاده از گزينه o -F- در فرمان postmaster باعث غير فعال كردن ()fsync مي‌شود. 
+اين دستور بعد از هر تراكنش اطلاعات را روي هاردديسك منتقل مي‌كند.
+براي افزايش تعداد بافرهاي حافظه اشتراكي از گزينه B- به همراه فرمان postmaster 
+استفاده كنيد. توجه كنيد كه اگر اين عدد خيلي بزرگ باشد ممكن است postmaster اصلاً‌ 
+اجرا نشود. هر بافر 8 كيلو بايت حافظه نياز دارد و تعداد بافرها به طور پيش فرض 64 
+است.
+همچنين مي‌توان با گزينه S-  ميزان حافظه‌اي كه براي مرتب‌سازي‌هاي موقت توسط 
+PostgreSQL استفاده مي‌شود را افزايش داد. مقدار پيش فرض 512 كيلو بايت است.
+استفاده از دستور CLUSTER نيز براي بالا بردن كارايي موثر ا ست. دستور راهنماي 
+CLUSTER اطلاعات بيشتري در اين زمينه به شما مي‌دهد.
+3.7) چه امكاناتي براي پيدا كردن اشكال‌ وجود دارد؟
+PostgerSQL‌ امكانات مختلفي براي گزارش دادن وضعيت خود دارد كه براي اشكال زدايي 
+مي‌توان از آنها استفاده كرد.
+با استفاده از گزينه enable-assert-- تعداد زيادي ()assert براي مونيتور كردن و 
+توقف برنامه در صورت بروز خطاهاي ناخواسته فعال مي‌شود.
+هم Postmaster و هم postgres گزينه‌هاي زيادي براي اشكال زدايي دارند. موقعي كه 
+postmaster را اجرا مي‌كنيد خروجي استاندارد و خطا را سمت فايل log ارسال كنيد.
     cd /usr/local/pgsql
     ./bin/postmaster >server.log 2>&1 &
+اين كار يك فايل log در بالاترين شاخه PostgreSQL‌ ايجاد مي‌كند. اين فايل حاوي 
+اطلاعات مفيدي در مورد مسائل و خطاهايي است كه براي سرور اتفاق افتاده است. براي 
+ديدن جزئيات بيشتر مي‌توان از d-  به همراه فرمان postmaster‌ استفاده كرد. گزينه 
+d- همچنين يك عدد مي‌گيرد كه نشان دهنده سطح جزئياتي است كه در Log‌فايل نوشته 
+مي‌شود. با بالابردن اين عدد حجم اطلاعات توليد شده در Logفايل نيز افزايش مي‌يابد.
+اگر postmaster در حال اجرا نباشد، مي‌توانيم postgres را به طور مستقيم از خط 
+فرمان اجرا كرده و  دستورات SQL را به آن بدهيم. اين كار فقط براي اشكال‌يابي توصيه 
+مي‌شود. توجه كنيد كه در اين حالت يك دستور با كاراكتر newline خاتمه پيدا مي‌كند و 
+نه با ;. اگر postmaster را با امكانات اشكال‌يابي كامپيل كرده باشيد مي‌توانيد با 
+استفاده از يك برنامه اشكال‌ياب اجراي برنامه را مونيتور كنيد. 
+اگر postmaster در حال اجرا باشد با دستور psql مي‌توان به postgres متصل شد. با 
+پيدا كردن PID فرايند postgres كه psql به آن متصل شده است مي‌توان آن را مونيتور 
+كرد. براي اينكار بايد يك برنامه اشكال‌ياب را به آن pid متصل كرد. اگر بخواهيم 
+بالا آمدن postgres را مونيتور كنيم كافي است "PGOPTIONS="-W n و psql را اجرا 
+كنيم. اين كار باعث مي‌شود كه postgres با n ثانيه تاخير اجرا شود و در اين فاصله 
+شما مي‌توانيد برنامه اشكال‌ياب را به آن متصل كرده و با قرار دادن يك نقطه توقف  
+روند اجراي آن را مونيتور كنيد.
+postgres گزينه‌هاي s-‌ و A- و t-‌ دارد كه براي پيدا كردن اشكالات بسيار مناسب 
+هستند.
+شما مي‌توانيد postgreSQL را با امكانات profiling كامپيل كنيد. اين كار باعث 
+مي‌شود كه زمان اجراي دقيق هر تابع در برنامه مشخص شود. خروجي‌هاي توليد شده در اين 
+حالت در فايل DLINUX_PROFILE. ريخته مي‌شود.
+3.8) چرا موقعي كه من مي‌خواهم به پايگاه داده وصل شوم پيام "Sorry, too many 
+clients" ‌مي‌گيرم؟
+شما بايد حداكثر تعداد فرايندهاي همزمان postmaster را افزايش دهيد. مقدار پيش فرض 
+32 است. براي افزايش آن مي‌توان از گزينه N- استفاده كرد و يا فايل postgresql.conf 
+را اصلاح نمود
+توجه كنيد كه اگر N- مقداري بيشتر از 32 داشته باشد بايد مقدار B- را نيز افزايش 
+دهيم. اين مقدار بايد حداقل دو برابر مقدار N-‌ باشد. براي اعداد خيلي بالا بايد 
+بعضي از پارامترهاي كرنل را نيز اصلاح كرد. پارامترهايي نظير حداكثر اندازه حافظه 
+اشتراكي SHMMAX ، حداكثر تعداد سمافورها SEMMNI‌ و SEMMNS ، حداكثر تعداد فرايندها 
+NPROC، حداكثر فرايندهاي يك كاربر MAXUPRC و حداكثر فايلهاي باز NFILE و NINODE. 
+يكي از دلايلي كه تعداد اتصالات همزمان postgreSQL محدود است آن است كه نيازهاي 
+PostgreSQL بيش از منابع موجود سيستم نباشد.
+3.9) در شاخه  pgsql_tmp  چه چيزي قرار دارد؟
+دراين شاخه فايلهاي موقتي قرار دارد كه با اجراي درخواستها به وجود آمده است. به 
+عنوان مثال اگر براي اجراي دستور order by نياز به انجام مرتب سازي باشد و در صورتي 
+كه حافظه مشخص شده با گزينه S- براي اينكار كافي نباشد سيستم يك فايل موقت در اين 
+شاخه ايجاد مي‌كند تا عمل مرتب سازي را انجام دهد.
+فايلهاي موقت معمولاً به صورت اتوماتيك پاك مي‌شود اما اگر postgreSQL در حين مرتب 
+سازي crash‌ كند آن فايلها باقي مي‌مانند. با stop و start كردن برنامه postmaster 
+اين فايلها پاك مي‌شوند.
+3.10) چرا براي به روز كردن نسخه پايگاه داده من بايد كل داده ها را dump‌ و مجدداً 
+restore كنم؟
+تيم برنامه نويس postgreSQL در نسخه‌هاي ارائه شده كه فقط minor آنها متفاوت است 
+فقط تغييرات كوچكي اعمال مي‌كنند؛ بنابراين براي به روز كردن از نسخه 7.2‌به 7.2.1 
+نيازي به dump و restore نيست. اما در نسخه‌هايي كه major آنها تغيير مي‌كند غالباً 
+ساختار داخلي جداول و فايلهاي داده تغيير مي‌كند. اين تغييرات معمولاً‌ پيچيده 
+هستند. براي انتقال داده‌هاي موجود در پايگاه داده در اين حالت بايد ‌از dump و 
+restore استفاده كرد.
+در نسخه‌هايي كه ساختار روي ديسك تغييري نمي‌كند مي توان از برنامه pg_upgrade براي 
+به روز كردن پايگاه داده استفاده كرد بدون اينكه نيازي به استفاده از dump و 
+restore  باشد. در يادداشتي كه به همراه هر توزيع مي‌آيد ذكر شده است كه آيا برنامه 
+pg_upgrade براي اين توزيع وجود دارد يا خير.
+3.11) از چه سخت افزاري بايد استفاده كنم؟
 
-   a+y+n+ k+a+r+ y+k+ f+a+y+l+ log d+r+ b+a+l+a+t+r+y+n+ sna+x+h+
-   PostgreSQL a+y+g+a+d+ m+y+k+n+d+. a+y+n+ f+a+y+l+ hka+w+y+
-   a+tjl+a+e+a+t+ m+f+y+d+y+ d+r+ m+w+r+d+ m+s+a+yHl+ w+ x+tja+h+a+y+y+
-   a+s+t+ k+h+ b+r+a+y+ s+r+w+r+ a+t+f+a+q+ a+f+t+a+d+h+ a+s+t+. b+r+a+y+
-   d+y+d+n+ g+z+yHy+a+t+ b+y+snt+r+ m+y+t+w+a+n+ a+z+ d-  b+h+ h+m+r+a+h+
-   f+r+m+a+n+ postmaster a+s+t+f+a+d+h+ k+r+d+. gfz+y+n+h+ d-
-   h+m+tcn+y+n+ y+k+ e+d+d+ m+y+gfy+r+d+ k+h+ n+sna+n+ d+h+n+d+h+ s+tjhk
-   g+z+yHy+a+t+y+ a+s+t+ k+h+ d+r+ Logf+a+y+l+ n+w+snt+h+ m+y+snw+d+.
-   b+a+ b+a+l+a+b+r+d+n+ a+y+n+ e+d+d+ hkg+m+ a+tjl+a+e+a+t+ t+w+l+y+d+
-   snd+h+ d+r+ Logf+a+y+l+ n+y+z+ a+f+z+a+y+sn m+y+y+a+b+d+.
-   
-   a+gfr+ postmaster d+r+ hka+l+ a+g+r+a+ n+b+a+snd+,+ m+y+t+w+a+n+y+m+
-   postgres r+a+ b+h+ tjw+r+ m+s+t+q+y+m+ a+z+ x+tj f+r+m+a+n+ a+g+r+a+
-   k+r+d+h+ w+  d+s+t+w+r+a+t+ SQL r+a+ b+h+ aMn+ b+d+h+y+m+. a+y+n+
-   k+a+r+ f+q+tj b+r+a+y+ a+snk+a+l+y+a+b+y+ t+w+c+y+h+ m+y+snw+d+.
-   t+w+g+h+ k+n+y+d+ k+h+ d+r+ a+y+n+ hka+l+t+ y+k+ d+s+t+w+r+ b+a+
-   k+a+r+a+k+t+r+ newline x+a+t+m+h+ p+y+d+a+ m+y+k+n+d+ w+ n+h+ b+a+ ;.
-   a+gfr+ postmaster r+a+ b+a+ a+m+k+a+n+a+t+ a+snk+a+l+y+a+b+y+
-   k+a+m+p+y+l+ k+r+d+h+ b+a+sny+d+ m+y+t+w+a+n+y+d+ b+a+ a+s+t+f+a+d+h+
-   a+z+ y+k+ b+r+n+a+m+h+ a+snk+a+l+y+a+b+ a+g+r+a+y+ b+r+n+a+m+h+ r+a+
-   m+w+n+y+t+w+r+ k+n+y+d+.
-   
-   a+gfr+ postmaster d+r+ hka+l+ a+g+r+a+ b+a+snd+ b+a+ d+s+t+w+r+ psql
-   m+y+t+w+a+n+ b+h+ postgres m+t+c+l+ snd+. b+a+ p+y+d+a+ k+r+d+n+ PID
-   f+r+a+y+n+d+ postgres k+h+ psql b+h+ aMn+ m+t+c+l+ snd+h+ a+s+t+ m+y+
-   t+w+a+n+ aMn+ r+a+ m+w+n+y+t+w+r+ k+r+d+. b+r+a+y+ a+y+n+k+a+r+
-   b+a+y+d+ y+k+ b+r+n+a+m+h+ a+snk+a+l+y+a+b+ r+a+ b+h+ aMn+ pid
-   m+t+c+l+ k+r+d+. a+gfr+ b+x+w+a+h+y+m+ b+a+l+a+ aMm+d+n+ postgres r+a+
-   m+w+n+y+t+w+r+ k+n+y+m+ k+a+f+y+ a+s+t+ "PGOPTIONS="-W n w+ psql r+a+
-   a+g+r+a+ k+n+y+m+. a+y+n+ k+a+r+ b+a+e+tk m+y+snw+d+ k+h+ postgres
-   b+a+ n tka+n+y+h+ t+a+x+y+r+ a+g+r+a+ snw+d+ w+ d+r+ a+y+n+ f+a+c+l+h+
-   snm+a+ m+y+t+w+a+n+y+d+ b+r+n+a+m+h+ a+snk+a+l+y+a+b+ r+a+ b+h+ aMn+
-   m+t+c+l+ k+r+d+h+ w+ b+a+ q+r+a+r+ d+a+d+n+ y+k+ n+q+tjh+ t+w+q+f+
-   r+w+n+d+ a+g+r+a+y+ aMn+ r+a+ m+w+n+y+t+w+r+ k+n+y+d+.
-   
-   postgres gfz+y+n+h+h+a+y+ s- w+ A- w+ t- d+a+r+d+ k+h+ b+r+a+y+
-   p+y+d+a+ k+r+d+n+ a+snk+a+l+a+t+ b+s+y+a+r+ m+n+a+s+b+ h+s+t+n+d+.
-   
-   snm+a+ m+y+t+w+a+n+y+d+ postgreSQL r+a+ b+a+ a+m+k+a+n+a+t+ profiling
-   k+a+m+p+y+l+ k+n+y+d+. a+y+n+ k+a+r+ b+a+e+tk m+y+snw+d+ k+h+ z+m+a+n+
-   a+g+r+a+y+ d+q+y+q+ h+r+ t+a+b+e+ d+r+ b+r+n+a+m+h+ m+snx+c+ snw+d+.
-   x+r+w+g+y+h+a+y+ t+w+l+y+d+ snd+h+ d+r+ a+y+n+ hka+l+t+ d+r+ f+a+y+l+
-   DLINUX_PROFILE. r+y+x+t+h+ m+y+snw+d+.
-   
-    3.8) tcr+a+ m+w+q+e+y+ k+h+ m+n+ m+y+x+w+a+h+m+ b+h+ p+a+y+gfa+h+ d+a+d+h+
-    w+c+l+ snw+m+ p+y+a+m+ "Sorry, too many clients" m+y+gfy+r+m+?+
-    
-   snm+a+ b+a+y+d+ hkd+a+k+tkr+ t+e+d+a+d+ f+r+a+y+n+d+h+a+y+
-   h+m+z+m+a+n+ postmaster r+a+ a+f+z+a+y+sn d+h+y+d+. m+q+d+a+r+ p+y+sn
-   f+r+dd 32 a+s+t+. b+r+a+y+ a+f+z+a+y+sn aMn+ m+y+t+w+a+n+ a+z+
-   gfz+y+n+h+ N- a+s+t+f+a+d+h+ k+r+d+ w+ y+a+ f+a+y+l+ postgresql.conf
-   r+a+ a+c+l+a+hk n+m+w+d+
-   
-   t+w+g+h+ k+n+y+d+ k+h+ a+gfr+ N- m+q+d+a+r+y+ b+y+snt+r+ a+z+ 32
-   d+a+snt+h+ b+a+snd+ b+a+y+d+ m+q+d+a+r+ B- r+a+ n+y+z+ a+f+z+a+y+sn
-   d+h+y+m+. a+y+n+ m+q+d+a+r+ b+a+y+d+ hkd+a+q+l+ d+w+ b+r+a+b+r+
-   m+q+d+a+r+ N- b+a+snd+. b+r+a+y+ a+e+d+a+d+ x+y+l+y+ b+a+l+a+ b+a+y+d+
-   b+e+ddy+ a+z+ p+a+r+a+m+t+r+h+a+y+ k+r+n+l+ r+a+ n+y+z+ a+c+l+a+hk
-   k+r+d+. p+a+r+a+m+t+r+h+a+y+y+ n+zHy+r+ hkd+a+k+tkr+ a+n+d+a+z+h+
-   hka+f+zHh+ a+snt+r+a+k+y+ SHMMAX ,+ hkd+a+k+tkr+ t+e+d+a+d+
-   s+m+a+f+w+r+h+a+ SEMMNI w+ SEMMNS ,+ hkd+a+k+tkr+ t+e+d+a+d+
-   f+r+a+y+n+d+h+a+ NPROC,+ hkd+a+k+tkr+ f+r+a+y+n+d+h+a+y+ y+k+
-   k+a+r+b+r+ MAXUPRC w+ hkd+a+k+tkr+ f+a+y+l+h+a+y+ b+a+z+ NFILE w+
-   NINODE. y+k+y+ a+z+ d+l+a+y+l+y+ k+h+ t+e+d+a+d+ a+t+c+a+l+a+t+
-   h+m+z+m+a+n+ postgreSQL m+hkd+w+d+ a+s+t+ aMn+ a+s+t+ k+h+
-   n+y+a+z+h+a+y+ PostgreSQL b+y+sn a+z+ m+n+a+b+e+ m+w+g+w+d+ s+y+s+t+m+
-   n+b+a+snd+.
-   
-    3.9) d+r+ sna+x+h+  pgsql_tmp  tch+ tcy+z+y+ q+r+a+r+ d+a+r+d+?+
-    
-   d+r+a+y+n+ sna+x+h+ f+a+y+l+h+a+y+ m+w+q+t+y+ q+r+a+r+ d+a+r+d+ k+h+
-   b+a+ a+g+r+a+y+ d+r+x+w+a+s+t+h+a+ b+h+ w+g+w+d+ aMm+d+h+ a+s+t+. b+h+
-   e+n+w+a+n+ m+tka+l+ a+gfr+ b+r+a+y+ a+g+r+a+y+ d+s+t+w+r+ order by
-   n+y+a+z+ b+h+ a+n+g+a+m+ m+r+t+b+ s+a+z+y+ b+a+snd+ w+ d+r+ c+w+r+t+y+
-   k+h+ hka+f+zHh+ m+snx+c+ snd+h+ b+a+ gfz+y+n+h+ S- b+r+a+y+
-   a+y+n+k+a+r+ k+a+f+y+ n+b+a+snd+ s+y+s+t+m+ y+k+ f+a+y+l+ m+w+q+t+
-   d+r+ a+y+n+ sna+x+h+ a+y+g+a+d+ m+y+k+n+d+ t+a+ e+m+l+ m+r+t+b+
-   s+a+z+y+ r+a+ a+n+g+a+m+ d+h+d+.
-   
-   f+a+y+l+h+a+y+ m+w+q+t+ m+e+m+w+l+a+:+ b+h+ c+w+r+t+ a+t+w+m+a+t+y+k+
-   p+a+k+ m+y+snw+d+ a+m+a+ a+gfr+ postgreSQL d+r+ hky+n+ m+r+t+b+
-   s+a+z+y+ crash k+n+d+ aMn+ f+a+y+l+h+a+ b+a+q+y+ m+y+m+a+n+n+d+. b+a+
-   stop w+ start k+r+d+n+ b+r+n+a+m+h+ postmaster a+y+n+ f+a+y+l+h+a+
-   p+a+k+ m+y+snw+n+d+.
-   
-    3.10) tcr+a+ b+r+a+y+ b+h+ r+w+z+ k+r+d+n+ n+s+x+h+ p+a+y+gfa+h+ d+a+d+h+
-    m+n+ b+a+y+d+ k+l+ d+a+d+h+ h+a+ r+a+ dump w+ m+g+d+d+a+:+ restore k+n+m+?+
-    
-   t+y+m+ b+r+n+a+m+h+ n+w+y+s+ postgreSQL d+r+ n+s+x+h+h+a+y+ a+r+a+yHh+
-   snd+h+ k+h+ f+q+tj minor aMn+h+a+ m+t+f+a+w+t+ a+s+t+ f+q+tj
-   t+i+y+y+r+a+t+ k+w+tck+y+ a+e+m+a+l+ m+y+k+n+n+d+;+ b+n+a+b+r+a+y+n+
-   b+r+a+y+ b+h+ r+w+z+ k+r+d+n+ a+z+ n+s+x+h+ 7.2b+h+ 7.2.1 n+y+a+z+y+
-   b+h+ dump w+ restore n+y+s+t+. a+m+a+ d+r+ n+s+x+h+h+a+y+y+ k+h+ major
-   aMn+h+a+ t+i+y+y+r+ m+y+k+n+d+ i+a+l+b+a+:+ s+a+x+t+a+r+ d+a+x+l+y+
-   g+d+a+w+l+ w+ f+a+y+l+h+a+y+ d+a+d+h+ t+i+y+y+r+ m+y+k+n+d+. a+y+n+
-   t+i+y+y+r+a+t+ m+e+m+w+l+a+:+ p+y+tcy+d+h+ h+s+t+n+d+. b+r+a+y+
-   a+n+t+q+a+l+ d+a+d+h+h+a+y+ m+w+g+w+d+ d+r+ p+a+y+gfa+h+ d+a+d+h+ d+r+
-   a+y+n+ hka+l+t+ b+a+y+d+ a+z+ dump w+ restore a+s+t+f+a+d+h+ k+r+d+.
-   
-   d+r+ n+s+x+h+h+a+y+y+ k+h+ s+a+x+t+a+r+ r+w+y+ d+y+s+k+ t+i+y+y+r+y+
-   n+m+y+k+n+d+ m+y+ t+w+a+n+ a+z+ b+r+n+a+m+h+ pg_upgrade b+r+a+y+ b+h+
-   r+w+z+ k+r+d+n+ p+a+y+gfa+h+ d+a+d+h+ a+s+t+f+a+d+h+ k+r+d+ b+d+w+n+
-   a+y+n+k+h+ n+y+a+z+y+ b+h+ a+s+t+f+a+d+h+ a+z+ dump w+ restore
-   b+a+snd+. d+r+ y+a+d+d+a+snt+y+ k+h+ b+h+ h+m+r+a+h+ h+r+ t+w+z+y+e+
-   m+y+aMy+d+ dkk+r+ snd+h+ a+s+t+ k+h+ aMy+a+ b+r+n+a+m+h+ pg_upgrade
-   b+r+a+y+ a+y+n+ t+w+z+y+e+ w+g+w+d+ d+a+r+d+ y+a+ x+y+r+.
-   
-    3.11) a+z+ tch+ s+x+t+ a+f+z+a+r+y+ b+a+y+d+ a+s+t+f+a+d+h+ k+n+m+?+
-    
-   tcw+n+ a+k+tkr+ s+x+t+a+f+z+a+r+h+a+y+ PC  s+a+z+gfa+r+ h+s+t+n+d+
-   m+r+d+m+ f+k+r+ m+y+k+n+n+d+ k+h+ k+y+f+y+t+ aMn+h+a+ n+y+z+
-   y+k+s+a+n+ a+s+t+. d+r+ hka+l+y+k+h+ a+y+n+tjw+r+ n+y+s+t+.
-   a+s+t+f+a+d+h+ a+z+ h+a+r+d+h+a+y+ SCSI w+ hka+f+zHh+h+a+y+ ECC w+
-   m+a+d+r+b+r+d+h+a+y+ b+a+ k+y+f+y+t+ b+a+l+a+ n+s+b+t+ b+h+ s+x+t+
-   a+f+z+a+r+h+a+y+ a+r+z+a+n+t+r+ n+t+a+y+g+ b+h+t+r+y+ a+z+ n+zHr+
-   k+a+r+a+y+y+ w+ p+a+y+d+a+r+y+ s+y+s+t+m+ b+h+m+r+a+h+ x+w+a+h+d+
-   d+a+snt+. PostgreSQL r+w+y+ b+y+snt+r+ s+x+t+ a+f+z+a+r+h+a+ a+g+r+a+
-   m+y+snw+d+ a+m+a+ a+gfr+ k+a+r+a+y+y+ w+ a+tjm+y+n+a+n+
-   f+a+k+t+w+r+h+a+y+ m+h+m+y+ h+s+t+n+d+ b+a+y+d+ s+x+t+ a+f+z+a+r+
-   m+n+a+s+b+ a+s+t+f+a+d+h+ snw+d+. d+r+ gfr+w+h+h+a+y+ p+s+t+y+ d+r+
-   m+w+r+d+ s+x+t+ a+f+z+a+r+ m+n+a+s+b+  w+ a+n+t+x+a+b+ aMn+ b+hktk
-   snd+h+ a+s+t+.
-     _________________________________________________________________
-   
-                        s+w+a+l+a+t+ e+m+l+y+a+t+y+
-                                      
-    4.1) t+f+a+w+t+ b+y+n+ binary cursors w+ Normal cursors tcy+s+t+?+
-    
-   r+a+h+n+m+a+y+ d+s+t+w+r+ DECLARE r+a+ m+tja+l+e+h+ k+n+y+d+.
-   
-    4.2) m+n+ tcgfw+n+h+ m+y+t+w+a+n+m+ f+q+tj r+w+y+ tcn+d+ r+d+y+f+ a+w+l+
-    y+a+ y+k+ r+d+y+f+ t+c+a+d+f+y+ d+r+x+w+a+s+t+ SELECT b+z+n+m+?+
-    
-   r+a+h+n+m+a+y+ d+s+t+w+r+ FETCH  y+a+ SELECT...LIMIT r+a+
-   b+b+y+n+y+d+.
-   
-   d+r+ w+a+q+e+ k+l+ d+r+x+w+a+s+t+ b+a+y+d+ b+r+r+s+y+ w+
-   a+r+z+y+a+b+y+ snw+d+ hkt+y+ a+gfr+ snm+a+ f+q+tj tcn+d+ r+d+y+f+
-   a+w+l+ r+a+ b+x+w+a+h+y+d+. b+r+a+y+ m+tka+l+ d+r+x+w+a+s+t+ ORDER BY
-   r+a+ d+r+ n+zHr+ b+gfy+r+y+d+. a+gfr+ a+n+d+y+s+ y+a+ n+m+a+y+h+a+y+
-   b+r+a+y+ ORDER BY w+g+w+d+ d+a+snt+h+ b+a+snd+,+postgreSQL m+m+k+n+
-   a+s+t+ b+t+w+a+n+d+ f+q+tj tcn+d+ s+tjr+ a+w+l+ d+r+x+w+a+s+t+y+ r+a+
-   a+r+z+y+a+b+y+ k+n+d+ w+ y+a+ a+y+n+k+h+ k+l+ d+r+x+w+a+s+t+
-   p+r+d+a+z+sn snw+d+ t+a+ t+e+d+a+d+ r+d+y+f+h+a+y+ d+r+x+w+a+s+t+y+
-   t+w+l+y+d+ snw+d+.
-   
-   b+r+a+y+ a+n+t+x+a+b+ y+k+ s+tjr+ t+c+a+d+f+y+ b+h+ r+w+sn z+y+r+
-   e+m+l+ m+y+k+n+y+m+:
-   
+چون اكثر سخت‌افزارهاي PC  سازگار هستند مردم فكر مي‌كنند كه كيفيت آنها نيز يكسان 
+است. در حاليكه اينطور نيست. استفاده از هاردهاي SCSI و حافظه‌هاي ECC و مادربردهاي 
+با كيفيت بالا نسبت به سخت افزارهاي ارزانتر نتايج بهتري از نظر كارايي و پايداري 
+سيستم بهمراه خواهد داشت. PostgreSQL روي بيشتر سخت افزارها اجرا مي‌شود اما اگر 
+كارايي و اطمينان فاكتورهاي مهمي هستند بايد سخت افزار مناسب استفاده شود. در 
+گروههاي پستي در مورد سخت افزار مناسب  و انتخاب آن بحث شده است. 
+
+
+
+سوالات عملياتي
+4.1) تفاوت بين binary cursors و Normal cursors چيست؟
+راهنماي دستور DECLARE‌ را مطالعه كنيد.
+4.2) من چگونه مي‌توانم فقط روي چند رديف اول يا يك رديف تصادفي درخواست SELECT‌ 
+بزنم؟
+راهنماي دستور FETCH  يا SELECT...LIMIT را ببينيد.
+در واقع كل درخواست بايد بررسي و ارزيابي شود حتي اگر شما فقط چند رديف اول را 
+بخواهيد. براي مثال درخواست ORDER BY را در نظر بگيريد. اگر انديس يا نمايه‌اي براي 
+ORDER BY وجود داشته باشد،‌postgreSQL‌ ممكن است بتواند فقط چند سطر اول درخواستي 
+را ارزيابي كند و يا اينكه كل درخواست پردازش شود تا تعداد رديف‌هاي درخواستي توليد 
+شود.
+براي انتخاب يك سطر تصادفي به روش زير عمل مي‌كنيم:
     SELECT col
     FROM tab
     ORDER BY random()
     LIMIT 1;
-
-    4.3) m+n+ tcgfw+n+h+ m+y+t+w+a+n+m+ l+y+s+t+y+ a+z+ g+d+a+w+l+ y+a+
-    s+a+y+r+ tcy+z+h+a+y+y+ k+h+ d+r+ psql w+g+w+d+ d+a+r+d+ r+a+ b+b+y+n+m+?+
-    
-   b+r+a+y+ d+y+d+n+ l+y+s+t+ g+d+a+w+l+ d+s+t+w+r+  dt\ r+a+ d+r+
-   b+r+n+a+m+h+ psql a+s+t+f+a+d+h+ k+n+y+d+. b+r+a+y+ d+y+d+n+ l+y+s+t+
-   k+a+m+l+ f+r+m+a+n+h+a+ ?\ r+a+ a+g+r+a+ k+n+y+d+. r+a+h+ d+y+gfr+
-   x+w+a+n+d+n+ m+t+n+ b+r+n+a+m+h+ psql a+s+t+ k+h+ d+r+ sna+x+h+
-   pgsql/src/bin/psql/describe.c q+r+a+r+ d+a+r+d+. a+y+n+ f+a+y+l+
-   hka+w+y+ f+r+a+m+y+n+ SQLy+y+ a+s+t+ k+h+ x+r+w+g+y+ r+a+ b+r+a+y+
-   d+s+t+w+r+a+t+y+ k+h+ b+a+ \d+r+ psql snr+w+e+ m+y+snw+n+d+ t+w+l+y+d+
-   m+y+k+n+n+d+. r+a+h+ d+y+gfr+ a+g+r+a+y+ psql b+a+ gfz+y+n+h+ E-
-   a+s+t+. a+y+n+k+a+r+ b+a+e+tk m+y+snw+d+ k+h+ psql q+b+l+ a+z+
-   a+g+r+a+ h+r+ d+s+t+w+r+ SQLm+t+n+a+zHr+ aMn+ r+a+ n+sna+n+ d+h+d+.
-   PostgreSQLh+m+tcn+y+n+ y+k+ b+r+n+a+m+h+ SQLi d+a+r+d+ k+h+ m+y+
-   t+w+a+n+ b+a+ a+s+t+f+a+d+h+ a+z+ aMn+  a+tjl+a+e+a+t+ d+a+x+l+y+
-   p+a+y+gfa+h+ d+a+d+h+ r+a+ a+s+t+x+r+a+g+ k+r+d+.
-   
-    4.4) tcgfw+n+h+ y+k+ s+t+w+n+ g+d+w+l+ r+a+ hkdkf+ m+y+k+n+y+d+?+
-    tcgfw+n+h+ n+w+e+ d+a+d+h+ aMn+ r+a+ e+w+dd k+n+y+m+?+
-    
-   hkdkf+ y+k+ s+t+w+n+ d+r+ t+w+z+y+e+ 7.3 b+a+ a+s+t+f+a+d+h+ a+z+
-   d+s+t+w+r+ ALTER TABLE DROP COLUMN a+dda+f+h+ snd+h+ a+s+t+. d+r+
-   n+s+x+h+h+a+y+ q+b+l+y+ b+h+ r+w+sn z+y+r+ e+m+l+ k+n+y+d+:
-   
+4.3) من چگونه مي‌توانم ليستي از جداول يا ساير چيزهايي كه در psql‌ وجود دارد را 
+ببينم؟
+براي ديدن ليست جداول دستور  dt\ را در برنامه psql‌ استفاده كنيد. براي ديدن ليست 
+كامل فرمانها ?\ را اجرا كنيد. راه ديگر خواندن متن برنامه psql‌ است كه در شاخه 
+pgsql/src/bin/psql/describe.c ‌قرار دارد. اين فايل حاوي فرامين SQLيي است كه 
+خروجي را براي  دستوراتي كه با \‌در psql شروع مي‌شوند توليد مي‌كنند. راه ديگر 
+اجراي psql با گزينه E-‌است. اينكار باعث مي‌شود كه psql قبل از اجرا هر دستور 
+SQL‌متناظر آن را نشان دهد. PostgreSQL‌همچنين يك برنامه SQLi دارد كه مي‌توان با 
+استفاده از آن  اطلاعات داخلي پايگاه داده را استخراج كرد.
+4.4) چگونه يك ستون جدول را حذف مي‌كنيد؟ چگونه نوع داده آن را عوض كنيم؟
+حذف يك ستون در توزيع 7.3 با استفاده از دستور ALTER TABLE DROP COLUMN اضافه شده 
+است. در نسخه‌هاي قبلي به روش زير عمل كنيد:
     BEGIN;
     LOCK TABLE old_table;
-    SELECT ...  -- t+m+a+m+ s+t+w+n+h+a+ i+y+r+ a+z+ s+t+w+n+y+ k+h+ m+y+x+w+a+
-h+y+d+ aMn+ r+a+ hkdkf+ k+n+y+d+ r+a+ d+r+ a+y+n+g+a+ b+y+a+w+r+y+d+
+    SELECT ...  -- تمام ستونها غير از ستوني كه مي‌خواهيد آن را حذف كنيد را در اينجا بياوريد
     INTO TABLE new_table
     FROM old_table;
     DROP TABLE old_table;
     ALTER TABLE new_table RENAME TO old_table;
     COMMIT;
-
-   b+r+a+y+ e+w+dd k+r+d+n+ n+w+e+ d+a+d+h+ y+k+ s+t+w+n+ b+h+ r+w+sn
-   z+y+r+ e+m+l+ k+n+y+d+:
-   
+براي عوض كردن نوع داده يك ستون به روش زير عمل كنيد:
     BEGIN;
     ALTER TABLE tab ADD COLUMN new_col new_data_type;
     UPDATE tab SET new_col = CAST(old_col AS new_data_type);
     ALTER TABLE tab DROP COLUMN old_col;
     COMMIT;
-
-    4.5) hkd+a+k+tkr+ a+n+d+a+z+h+ y+k+ r+d+y+f+,+ g+d+w+l+ w+ x+w+d+
-    p+a+y+gfa+h+ d+a+d+h+ tcq+d+r+ a+s+t+?+
-    
-   m+hkd+w+d+y+t+h+a+ e+b+a+r+t+n+d+ a+z+:
-   
-    hkd+a+k+tkr+ a+n+d+a+z+h+ p+a+y+gfa+h+ d+a+d+h+             n+a+m+hkd+w+d+
-(t+a+ 32 t+r+a+b+a+y+t+ w+g+w+d+ d+a+r+d+)
-    hkd+a+k+tkr+ a+n+d+a+z+h+ y+k+ g+d+w+l+               32 t+r+a+b+a+y+t+
-    hkd+a+k+tkr+ a+ n+d+a+z+h+ y+k+ r+d+y+f+              1.6 t+r+a+b+a+y+t+
-    hkd+a+k+tkr+ a+n+d+a+z+h+ y+k+ f+y+l+d+                1 gfy+gfa+ b+a+y+t+
-    hkd+a+k+tkr+ a+n+d+a+z+h+ r+d+y+f+h+a+y+ y+k+ g+d+w+l+  n+a+ m+hkd+w+d+
-    hkd+a+k+tkr+ s+t+w+n+h+a+y+ y+k+ g+d+w+l+   b+s+t+h+ b+h+ n+w+e+ g+d+w+l+ b
-+y+n+ 250 t+a+ 6000
-    hkd+a+k+tkr+ a+n+d+y+s+h+a+y+ y+k+ g+d+w+l+ n+a+ m+hkd+w+d+
-
-   a+l+b+t+h+ d+r+ hka+l+t+ n+a+m+hkd+w+d+ n+y+z+ m+a+ m+hkd+w+d+ b+h+
-   hkg+m+ h+a+r+d+d+y+s+k+ w+ f+dda+y+ hka+f+zHh+ x+w+a+h+y+m+ b+w+d+.
-   d+r+ c+w+r+t+y+ &#1705;h+ m+q+a+d+y+r+ m+snx+c+ snd+h+ b+h+ e+n+w+a+n+
-   n+a+m+hkd+w+d+ b+h+ c+w+r+t+ i+y+r+ m+e+m+w+l+y+ b+z+r+k+ snw+n+d+
-   k+a+r+a+y+y+ s+y+s+t+m+ k+a+h+sn x+w+a+h+d+ y+a+f+t+.
-   
-   b+r+a+y+ dkx+y+r+h+ k+r+d+n+ g+d+a+w+l+ b+a+ a+n+d+a+z+h+ x+y+l+y+
-   b+z+r+gf n+y+a+z+y+ n+y+s+t+ k+h+ s+y+s+t+m+ e+a+m+l+ a+m+k+a+n+
-   a+y+g+a+d+ f+a+y+l+h+a+y+ b+z+r+gf r+a+ d+a+snt+h+ b+a+snd+. b+l+k+h+
-   g+d+a+w+l+ x+y+l+y+ b+z+r+gf b+h+ c+w+r+t+ f+a+y+l+h+a+y+y+ b+h+
-   hkg+m+ y+k+ gfy+gfa+ b+a+y+t+ n+gfa+h+d+a+r+y+ m+y+snw+n+d+.
-   
-   a+gfr+ a+n+d+a+z+h+ b+l+w+k+h+a+y+ d+a+d+h+ r+a+ b+r+a+b+r+ 32
-   k+y+l+w+ b+a+y+t+ q+r+a+r+ d+h+y+m+ hkd+a+k+tkr+ a+n+d+a+z+h+ g+d+w+l+
-   w+ hkd+a+k+tkr+ t+e+d+a+d+ s+t+w+n+h+a+ 4 b+r+a+b+r+ x+w+a+h+d+ snd+.
-   
-    4.6) tcq+d+r+ f+dda+y+ d+y+s+k+ s+x+t+ b+r+a+y+ dkx+y+r+h+ k+r+d+n+
-    d+a+d+h+h+a+y+ y+k+ f+a+y+l+ m+t+n+y+ m+w+r+d+ n+y+a+z+ a+s+t+?+
-    
-   y+k+ p+a+y+gfa+h+ d+a+d+h+ PostgreSQL t+a+ 5 b+r+a+b+r+ f+dda+y+y+
-   r+w+y+ h+a+r+d+d+y+s+k+ b+r+a+y+ n+gfa+h+d+a+r+y+ y+k+ f+a+y+l+
-   m+t+n+y+ n+y+a+z+ d+a+r+d+.
-   
-   b+h+ e+n+w+a+n+ m+tka+l+ y+k+ f+a+y+l+ b+a+ 100000 x+tj r+a+ d+r+
-   n+zHr+ b+gfy+r+y+d+ k+h+ d+r+ h+r+ x+tj y+k+ e+d+d+ c+hky+hk w+ y+k+
-   t+w+ddy+hk m+t+n+y+ aMm+d+h+ a+s+t+. f+r+dd k+n+y+d+ k+h+ r+snt+h+
-   m+t+n+y+ b+h+ tjw+r+ m+t+w+s+tj 20 b+a+y+t+ b+a+snd+. a+n+d+a+z+h+
-   f+a+y+l+ b+r+a+b+r+ 2.8 m+gfa+ b+a+y+t+ x+w+a+h+d+ b+w+d+ w+l+y+
-   PostgreSQL b+r+a+y+ n+gfa+h+d+a+r+y+ a+y+n+ f+a+y+l+ b+h+ 6.4 m+gfa+
-   b+a+y+t+ a+tjl+a+e+a+t+ n+y+a+z+ x+w+a+h+d+ d+a+snt+.
-   
-    32 bytes: a+n+d+a+z+h+ s+r+a+y+n+d+ h+r+ x+tj b+h+ tjw+r+ t+q+r+y+b+y+
-    24 bytes: y+k+ e+d+d+ c+hky+hk w+ y+k+ r+snt+h+ 24 b+a+y+t+y+
-   + 4 bytes: a+sna+r+h+ gfr+ r+w+y+ c+f+hkh+ b+h+ y+k+ tcn+d+t+a+y+y+
+4.5) حداكثر اندازه يك رديف،‌ جدول و خود پايگاه داده چقدر است؟
+محدوديتها عبارتند از:
+    حداكثر اندازه پايگاه داده             نامحدود (تا 32 ترابايت وجود دارد)
+    حداكثر اندازه يك جدول               32 ترابايت
+    حداكثر ا ندازه يك رديف              1.6 ترابايت
+    حداكثر اندازه يك فيلد                1 گيگا بايت
+    حداكثر اندازه رديفهاي يك جدول  نا محدود
+    حداكثر ستونهاي يك جدول 	بسته به نوع جدول بين 250 تا 6000 
+    حداكثر انديسهاي يك جدول	نا محدود
+البته در حالت نامحدود نيز ما محدود به حجم هاردديسك و فضاي حافظه خواهيم بود. در 
+صورتي که مقادير مشخص شده به عنوان نامحدود به صورت غير معمولي بزرك شوند كارايي 
+سيستم كاهش خواهد يافت.
+براي ذخيره كردن جداول با اندازه خيلي بزرگ نيازي نيست كه سيستم عامل امكان ايجاد 
+فايلهاي بزرگ را داشته باشد. بلكه جداول خيلي بزرگ به صورت فايلهايي به حجم يك گيگا 
+بايت نگاهداري مي‌شوند.
+اگر اندازه بلوكهاي داده را برابر 32 كيلو بايت قرار دهيم حداكثر اندازه جدول و 
+حداكثر تعداد ستونها 4 برابر خواهد شد.
+4.6) چقدر فضاي ديسك سخت براي ذخيره كردن داده‌‌هاي يك فايل متني مورد نياز است؟
+يك پايگاه داده PostgreSQL‌ تا 5 برابر فضايي روي هاردديسك براي نگاهداري يك فايل 
+متني نياز دارد.
+به عنوان مثال يك فايل با 100000 خط را در نظر بگيريد كه در هر خط يك عدد صحيح و يك 
+توضيح متني آمده است. فرض كنيد كه رشته متني به طور متوسط 20 بايت باشد. اندازه 
+فايل برابر 2.8 مگا بايت خواهد بود ولي PostgreSQL براي نگاهداري اين فايل به 6.4 
+مگا بايت اطلاعات نياز خواهد داشت.
+    32 bytes: اندازه سرايند هر خط به طور تقريبي
+    24 bytes: يك عدد صحيح و يك رشته 24 بايتي
+   + 4 bytes: اشاره گر روي صفحه به يك چندتايي
    ----------------------------------------
-    60 bytes d+r+ h+r+ r+d+y+f+
+    60 bytes در هر رديف
 
-a+n+d+a+z+h+ c+f+hka+t+ d+a+d+h+ d+r+ PostgreSQL b+r+a+b+r+ b+a+ 8 k+y+l+w+ b+a
-+y+t+ a+s+t+
-   8192 t+e+d+a+d+ b+a+y+t+h+a+ d+r+ h+r+ c+f+hkh+
-   -------------------   =  136 t+e+d+a+d+ r+d+y+f+h+a+ d+r+ y+k+ c+f+hkh+ p+a+
-y+gfa+h+ d+a+d+h+
-     60  t+e+d+a+d+ b+a+y+t+h+a+y+ h+r+ r+d+y+f+
+اندازه صفحات داده در PostgreSQL برابر با 8 كيلو بايت است
+   8192 تعداد بايت‌ها در هر صفحه
+   -------------------   =  136 تعداد رديف‌ها در يك صفحه پايگاه داده
+     60  تعداد بايت‌هاي هر رديف
 
-   100000  t+e+d+a+d+ r+d+y+f+h+a+
-   --------------------  = t+e+d+a+d+c+f+hka+t+ p+a+y+gfa+h+ d+a+d+h+
-      128 t+e+d+a+d+ r+d+y+f+h+a+ d+r+ h+r+ c+f+hkh+
+   100000  تعداد رديفها
+   --------------------  = تعدادصفحات پايگاه داده
+      128 تعداد رديفها در هر صفحه
 
-735 t+e+d+a+d+ c+f+hka+t+ * 8192 t+e+d+a+d+ b+a+y+t+h+a+y+ h+r+ c+f+hkh+  =  6,
-021,120 m+gfa+ b+a+y+t+
-
-   s+r+b+a+r+ a+n+d+y+s+h+a+ y+a+ n+m+a+y+h+h+a+ a+z+ a+y+n+ m+q+d+a+r+
-   k+m+t+r+ a+s+t+ w+l+y+ tcw+n+ sna+m+l+ x+w+d+ d+a+d+h+h+a+ h+m+ h+s+t+
-   m+m+&#1705;n+ a+s+t+ a+n+d+a+z+h+ aMn+h+a+ h+m+ b+z+r+gf snw+d+.
-   
-   NULLh+a+ b+h+ c+w+r+t+ bitmap dkx+y+r+h+ m+y+snw+n+d+ w+ a+z+
-   a+y+n+r+w+ f+dda+y+ b+s+y+a+r+ k+m+y+ r+a+ a+sni+a+l+ m+y+k+n+n+d+.
-   
-    4.7) tcgfw+n+h+ m+y+t+w+a+n+m+ b+f+h+m+m+ k+h+ tch+ k+a+r+b+r+a+n+,+
-    p+a+y+gfa+h+ d+a+d+h+,+ n+m+a+y+h+ w+ g+d+a+w+l+y+ d+r+ s+y+s+t+m+
-    t+e+r+y+f+ snd+h+ a+s+t+?+
-    
-   psql t+e+d+a+d+ z+y+a+d+y+ d+s+t+w+r+ d+a+r+d+ k+h+ b+a+ \ snr+w+e+
-   m+y+snw+n+d+ w+ a+y+n+ a+tjl+a+e+a+t+ r+a+ d+r+ a+x+t+y+a+r+ m+a+
-   q+r+a+r+ m+y+d+h+n+d+. b+r+a+y+ d+y+d+n+ aMn+h+a+ d+s+t+w+r+ ?\  r+a+
-   a+g+r+a+ k+n+y+d+.  h+m+tcn+y+n+ g+d+a+w+l+ s+y+s+t+m+y+ k+h+ n+a+m+
-   aMn+h+a+ b+a+ pg_ snr+w+e+ m+y+snw+d+ n+y+z+ a+y+n+ a+tjl+a+e+a+t+
-   r+a+ d+r+ x+w+d+ d+a+r+n+d+. a+g+r+a+y+ b+r+n+a+m+h+ psql b+a+
-   gfz+y+n+h+ l-  n+y+z+ b+a+e+tk n+sna+n+ d+a+d+n+ l+y+s+t+ t+m+a+m+
-   p+a+y+gfa+h+h+a+y+ d+a+d+h+ m+y+snw+d+.
-   
-   h+m+tcn+y+n+ f+a+y+l+ pgsql/src/tutorial/syscat.source n+y+z+
-   f+r+m+a+n+h+a+y+ SELECT k+h+ b+a+ a+s+t+f+a+d+h+ a+z+ aMn+ m+y+
-   t+w+a+n+ a+tjl+a+e+a+t+ p+a+y+gfa+h+ d+a+d+h+ r+a+ a+s+t+x+r+a+g+
-   k+r+d+ snr+hk d+a+d+h+ a+s+t+.
-   
-    4.8) tcr+a+ d+r+x+w+a+s+t+h+a+y+ m+n+ k+n+d+ a+g+r+a+ m+y+snw+n+d+ y+a+
-    tcr+a+ a+z+ n+m+a+y+h+ h+a+ a+s+t+f+a+d+h+ n+m+y+k+n+n+d+?+
-    
-   b+h+ tjw+r+ m+e+m+w+l+ b+r+a+y+ d+r+x+w+a+s+t+h+a+ a+z+ n+m+a+y+h+h+a+
-   a+s+t+f+a+d+h+ n+m+y+snw+d+. t+n+h+a+ d+r+ c+w+r+t+y+ a+z+ n+m+a+y+h+
-   h+a+ a+s+t+f+a+d+h+ m+y+snw+d+ k+h+ a+n+d+a+z+h+ g+d+w+l+ a+z+ y+k+
-   a+n+d+a+z+h+ hkd+a+q+l+ b+z+r+gft+r+ b+a+snd+ w+ d+r+x+w+a+s+t+ h+m+
-   f+q+tj q+s+m+t+y+ a+z+ r+d+y+f+h+a+y+ g+d+w+l+ r+a+ a+n+t+x+a+b+
-   k+r+d+h+ b+a+snd+. d+l+y+l+ a+y+n+ k+a+r+ aMn+ a+s+t+ k+h+
-   d+s+t+r+s+y+h+a+y+ t+c+a+d+f+y+ b+h+ h+a+r+d+d+y+s+k+ k+h+ b+h+
-   x+a+tjr+ n+m+a+y+h+h+a+ a+y+g+a+d+ m+y+snw+d+ m+m+k+n+ a+s+t+ a+z+
-   x+w+a+n+d+n+ m+s+t+q+y+m+ g+d+w+l+ y+a+ x+w+a+n+d+n+ t+r+t+y+b+y+
-   r+k+w+r+d+h+a+ k+n+d+t+r+ b+a+snd+.
-   
-   b+r+a+y+ t+e+y+y+n+ a+y+n+k+h+ a+z+ n+m+a+y+h+ a+s+t+f+a+d+h+ snw+d+
-   y+a+ x+y+r+,+ PostgreSQL b+a+y+d+ a+tjl+a+e+a+t+ aMm+a+r+y+ r+a+ d+r+
-   m+w+r+d+ y+k+ g+d+w+l+ b+d+a+n+d+. a+y+n+ a+tjl+a+e+a+t+ t+w+s+tj
-   d+s+t+w+r+ ANALYZE w+ VACUUM ANALYZE b+h+ d+s+t+ m+y+aMy+d+. b+a+
-   a+s+t+f+a+d+h+ a+z+ a+y+n+ a+tjl+a+e+a+t+,+ b+h+y+n+h+ s+a+z+ a+z+
-   t+e+d+a+d+ r+d+y+f+h+a+y+ y+k+ g+d+w+l+ a+tjl+a+e+ p+y+d+a+ m+y+k+n+d+
-   w+ b+h+t+r+ m+y+t+w+a+n+d+ t+e+y+y+n+ k+n+d+ k+h+ aMy+a+ a+z+
-   n+m+a+y+h+ a+s+t+f+a+d+h+ snw+d+ y+a+ x+y+r+. a+tjl+a+e+a+t+
-   aMm+a+r+y+ h+m+tcn+y+n+ b+r+a+y+ t+e+y+y+n+ t+r+t+y+b+ a+l+hka+q+ w+
-   r+w+snh+a+y+ a+l+hka+q+ b+h+ c+w+r+t+ b+h+y+n+h+ n+y+z+ k+a+r+b+r+d+
-   d+a+r+d+. g+m+e+ aMw+r+y+ a+tjl+a+e+a+t+ aMm+a+r+y+ b+a+y+d+ b+h+
-   c+w+r+t+ d+w+r+h+a+y+ h+m+z+m+a+n+ b+a+ t+i+y+y+r+ d+a+d+h+h+a+y+
-   g+d+w+l+ a+n+g+a+m+ snw+d+.
-   
-   n+m+a+y+h+h+a+ b+h+ tjw+r+ m+e+m+w+l+ h+m+r+a+h+ b+a+ d+s+t+w+r+ ORDER
-   BY b+h+ k+a+r+ b+r+d+h+ n+m+y+snw+n+d+. b+r+a+y+ y+k+ g+d+w+l+
-   b+z+r+gf y+k+ p+y+m+a+y+sn t+r+t+y+b+y+ h+m+r+a+h+ b+a+ d+s+t+w+r+
-   m+r+t+b+ s+a+z+y+ a+z+ b+h+ k+a+r+ b+r+d+n+ n+m+a+y+h+h+a+
-   s+r+y+e+t+r+ x+w+a+h+d+ b+w+d+.
-   
-   a+m+a+ a+gfr+ h+m+r+a+h+ b+a+ ORDER BY a+z+ LIMIT a+s+t+f+a+d+h+
-   snw+d+ a+i+l+b+ a+z+ n+m+a+y+h+h+a+ a+s+t+f+a+d+h+ m+y+snw+d+ tcw+n+
-   f+q+tj q+s+m+t+y+ a+z+ g+d+w+l+ b+r+gfr+d+a+n+d+h+ m+y+snw+d+. d+r+
-   hkq+y+q+t+ h+r+ tcn+d+ t+w+a+b+e+ ()MIN w+ ()MAX a+z+ n+m+a+y+h+h+a+
-   a+s+t+f+a+d+h+ n+m+y+k+n+n+d+ w+l+y+ m+y+t+w+a+n+y+m+ b+a+
-   a+s+t+f+a+d+h+ a+z+ d+s+t+w+r+ z+y+r+ b+a+ a+s+t+f+a+d+h+ a+z+
-   n+m+a+y+h+h+a+ w+ d+s+t+w+r+ ORDER BY w+ LIMIT ,+ aMn+h+a+ r+a+ b+h+
-   d+s+t+ aMw+r+y+m+.
-   
+735 تعداد صفحات * 8192 تعداد بايت‌هاي هر صفحه  =  6,021,120 مگا بايت
+سربار انديسها يا نمايه‌ها از اين مقدار كمتر است ولي چون شامل خود داده‌ها هم هست 
+ممکن است اندازه آنها هم بزرگ شود.
+NULLها به صورت bitmap ذخيره مي‌شوند و از اينرو فضاي بسيار كمي را اشغال مي‌كنند.
+4.7) چگونه مي‌توانم بفهمم كه چه كاربران،‌ پايگاه داده،‌ نمايه و جداولي در سيستم 
+تعريف شده است؟
+psql تعداد زيادي دستور دارد كه با \ شروع مي‌شوند و اين اطلاعات را در اختيار ما 
+قرار مي‌دهند. براي ديدن آنها دستور ?\  را اجرا كنيد.  همچنين جداول سيستمي كه نام 
+آنها با pg_ ‌شروع مي‌شود نيز اين اطلاعات را در خود دارند. اجراي برنامه psql با 
+گزينه l-  نيز باعث نشان دادن ليست تمام پايگاههاي داده مي‌شود.
+همچنين فايل pgsql/src/tutorial/syscat.source نيز فرمانهاي SELECT كه با استفاده 
+از آن مي‌توان اطلاعات پايگاه داده را استخراج كرد شرح داده است.
+4.8) چرا درخواستهاي من كند اجرا مي‌شوند يا چرا از نمايه ها استفاده نمي‌كنند؟
+به طور معمول براي درخواستها از نمايه‌ها استفاده نمي‌شود. تنها در صورتي از 
+نمايه‌ها استفاده مي‌شود كه اندازه جدول از يك اندازه حداقل بزرگتر باشد و درخواست 
+هم فقط قسمتي از رديف‌هاي جدول را انتخاب كرده باشد. دليل اين كار آن است كه 
+دسترسي‌هاي تصادفي به هاردديسك كه به خاطر نمايه‌ها ايجاد مي‌شود ممكن است از 
+خواندن مستقيم جدول يا خواندن ترتيبي ركوردها كندتر باشد.
+براي تعيين اينكه از نمايه استفاده شود يا خير، PostgreSQL بايد اطلاعات آماري را 
+در مورد يك جدول بداند. اين اطلاعات توسط دستور ANALYZE و VACUUM ANALYZE به دست 
+مي‌آيد. با استفاده از اين اطلاعات،‌ بهينه ساز از تعداد رديف‌هاي يك جدول اطلاع 
+پيدا مي‌كند و بهتر مي‌تواند تعيين كند كه آيا از نمايه استفاده شود يا خير. 
+اطلاعات آماري همچنين براي تعيين ترتيب الحاق و روشهاي الحاق به صورت بهينه نيز 
+كاربرد دارد. جمع آوري اطلاعات آماري بايد به صورت دوره‌اي همزمان با تغيير 
+داده‌هاي جدول انجام شود.
+نمايه‌ها به طور معمول همراه با دستور ORDER BY به كار برده نمي‌شوند. براي يك جدول 
+بزرگ يك پيمايش ترتيبي همراه با دستور مرتب سازي از به كار بردن نمايه‌ها سريعتر 
+خواهد بود.
+اما اگر همراه با ORDER BY‌ از LIMIT استفاده شود اغلب از نمايه‌ها استفاده مي‌شود 
+چون فقط قسمتي از جدول برگردانده مي‌شود. در حقيقت هر چند توابع ()MIN‌ و ()MAX از 
+نمايه‌ها استفاده نمي‌كنند ولي مي‌توانيم با استفاده از دستور زير با استفاده از 
+نمايه‌ها و دستور ORDER BY و LIMIT‌ ، آنها را به دست آوريم.
     SELECT col
     FROM tab
     ORDER BY col [ DESC ]
     LIMIT 1;
-
-   a+gfr+ snm+a+ f+k+r+ m+y+k+n+y+d+ k+h+ b+h+y+n+h+ s+a+z+ s+y+s+t+m+
-   d+r+ a+n+t+x+a+b+ p+y+m+a+y+sn t+r+t+y+b+y+ a+snt+b+a+h+ k+r+d+h+
-   a+s+t+ b+a+ d+s+t+w+r+ 'SET enable_seqscan TO 'off'  m+y+t+w+a+n+y+d+
-   b+b+y+n+y+d+ aMy+a+ a+s+t+f+a+d+h+ a+z+ n+m+a+y+h+h+a+ b+a+e+tk
-   a+f+z+a+y+sn s+r+e+t+ d+r+x+w+a+s+t+h+a+ x+w+a+h+d+ snd+ y+a+ x+y+r+.
-   
-   a+s+t+f+a+d+h+ a+z+ n+m+a+y+h+h+a+ h+n+gfa+m+y+ k+h+ a+z+ e+l+a+yHm+
-   w+y+zjh+ n+zHy+r+ LIKE w+ ~ a+s+t+f+a+d+h+ m+y+k+n+y+d+ f+q+tj d+r+
-   b+e+ddy+ snr+a+y+tj x+a+c+ k+h+ d+r+ a+y+n+g+a+ dkk+r+ snd+h+ a+s+t+
-   m+m+k+n+ a+s+t+:
-     * a+b+t+d+a+y+ r+snt+h+ g+s+t+g+w+ b+a+y+d+ b+h+ tjw+r+ c+r+y+hk
-       m+snx+c+ b+a+snd+ b+r+a+y+ m+tka+l+:
-       
-   - d+s+t+w+r+a+t+ LIKE n+b+a+y+d+ b+a+ e+l+a+m+t+ % snr+w+e+ snw+n+d+
-   
-   - a+l+gfw+h+a+y+ m+n+zHm+y+ k+h+ b+a+ ~ m+y+aMy+d+ hkt+m+a+:+ b+a+y+d+
-   b+a+ e+l+a+m+t+ ^ snr+w+e+ snw+d+
-     * r+snt+h+ g+s+t+g+w+ n+b+a+y+d+ b+a+ y+k+ m+g+m+w+e+h+ a+z+
-       k+a+r+a+k+t+r+h+a+  m+tkl+ [a-e] snr+w+e+ snw+d+
-     * g+s+t+g+w+h+a+y+ i+y+r+hks+a+s+ b+h+ m+t+n+ m+tkl+  ILIKE w+ *~
-       a+z+ n+m+a+y+h+h+a+ a+s+t+f+a+d+h+ n+m+y+k+n+n+d+. d+r+ e+w+dd
-       a+z+ t+w+a+b+e+ n+m+a+y+h+a+y+ k+h+ d+r+ q+s+m+t+ 4.12 t+w+ddy+hk
-       d+a+d+h+ snd+ a+s+t+f+a+d+h+ m+y+k+n+n+d+.
-     * m+q+d+a+r+ p+y+sn f+r+dd locale b+a+y+d+ d+r+ initdb
-       a+s+t+f+a+d+h+ snw+d+.
-       
-    4.9) tcgfw+n+h+ m+y+t+w+a+n+m+ n+hkw+h+ b+r+r+s+y+ d+r+x+w+a+s+t+ r+a+
-    t+w+s+tj b+h+y+n+h+s+a+z+ d+r+x+w+a+s+t+h+a+ m+sna+h+d+h+ k+n+m+?+
-    
-   r+a+h+n+m+a+y+ d+s+t+w+r+ EXPLAIN r+a+ n+gfa+h+ k+n+y+d+.
-   
-    4.10) n+m+a+y+h+ R-tree tcy+s+t+?+
-    
-   a+z+ n+m+a+y+h+ R-Tree  b+r+a+y+ a+n+d+y+s+ k+r+d+n+ d+a+d+h+h+a+y+
-   f+a+c+l+h+a+y+ a+s+t+f+a+d+h+ m+y+snw+d+. y+k+ n+m+a+y+h+ hash n+m+y+
-   t+w+a+n+d+ g+s+t+g+w+h+a+y+ m+hkd+w+d+h+a+y+ r+a+ a+n+g+a+m+ d+h+d+.
-   n+m+a+y+h+ "B-tree" n+y+z+ b+r+a+y+ a+n+g+a+m+ g+s+t+g+w+y+
-   m+hkd+w+d+h+a+y+ d+r+ y+k+ g+h+t+ q+a+b+l+ a+s+t+f+a+d+h+ a+s+t+.
-   a+m+a+ R-Tree m+y+t+w+a+n+d+ d+a+d+h+h+a+y+ tcn+d+ b+e+d+y+ r+a+
-   n+y+z+ p+snt+y+b+a+n+y+ k+n+d+. b+r+a+y+ m+tka+l+ a+gfr+ a+z+
-   n+m+a+y+h+ R-tree b+r+a+y+ gfw+n+h+ Point a+s+t+f+a+d+h+ snw+d+
-   s+r+e+t+ d+r+x+w+a+s+t+h+a+y+y+ n+zHy+r+ "select all points within a
-   bounding rectangle" b+h+ m+r+a+t+b+ a+f+z+a+y+sn m+y+y+a+b+d+.
-   
-   m+q+a+l+h+a+y+ k+h+ tjr+a+hky+ R-tree r+a+ t+w+ddy+hk d+a+d+h+ a+s+t+
-   
-   Guttman, A. "R-trees: A Dynamic Index Structure for Spatial
-   Searching." Proceedings of the 1984 ACM SIGMOD Int'l Conf on Mgmt of
-   Data, 45-57.
-   
-   R-tree m+y+t+w+a+n+d+ tcn+d+ddl+e+y+h+a+ w+ tcn+d+ w+g+h+y+ r+a+
-   p+snt+y+b+a+n+y+ k+n+d+. d+r+ t+yHw+r+y+,+ R-tree m+y+t+w+a+n+d+
-   t+e+d+a+d+  b+e+d+h+a+y+  b+a+l+a+t+r+y+ r+a+ n+y+z+  p+snt+y+b+a+n+y+
-   k+n+d+. d+r+  e+m+l+  t+w+s+e+h+ R-tree n+y+a+z+ b+h+ k+a+r+
-   b+y+snt+r+y+ d+a+r+d+.
-   
-    4.11) b+h+y+n+h+ s+a+z+ t+k+w+y+n+y+ d+r+x+w+a+s+t+ tcy+s+t+?+ (Genetic
-    Query Optimizer)
-    
-   a+s+t+f+a+d+h+ a+z+ GEQO s+r+e+t+ b+h+y+n+h+ s+a+z+y+ d+r+x+w+a+s+t+
-   r+a+ h+n+gfa+m+y+k+h+ t+e+d+a+d+ z+y+a+d+y+ g+d+w+l+ r+a+ b+a+
-   a+s+t+f+a+d+h+ a+z+ a+l+gfw+r+y+t+m+ zjn+t+y+k+ a+l+hka+q+ m+y+
-   k+n+y+m+ a+f+z+a+y+sn m+y+d+h+d+.
-   
-    4.12) tcgfw+n+h+ a+z+ e+b+a+r+a+t+ m+n+zHm+ b+r+a+y+ g+s+t+g+w+
-    a+s+t+f+a+d+h+ k+n+m+?+ tcgfw+n+h+ g+s+t+g+w+y+y+ a+n+g+a+m+ d+h+m+ k+h+
-    hks+a+s+ b+h+ m+t+n+ n+b+a+snd+?+ tcgfw+n+h+ b+r+a+y+ y+k+ g+s+t+g+w+y+
-    i+y+r+ hks+a+s+ b+h+ m+t+n+ a+z+ n+m+a+y+h+ a+s+t+f+a+d+h+ k+n+m+?+
-    
-   b+r+a+y+ g+s+t+g+w+y+ e+b+a+r+t+ m+n+zHm+ a+z+ e+m+l+gfr+ ~
-   a+s+t+f+a+d+h+ m+y+k+n+y+m+. b+r+a+y+ g+s+t+g+w+y+ i+y+r+ hks+a+s+
-   b+h+ m+t+n+ a+z+ e+m+l+gfr+ *~ w+ y+a+ ILIKE a+s+t+f+a+d+h+ m+y+
-   k+n+y+m+.
-   
-   r+w+sn d+y+gfr+ a+n+g+a+m+ g+s+t+g+w+y+ i+y+r+ hks+a+s+ b+h+ m+t+n+
-   d+r+ z+y+r+ n+sna+n+ d+a+d+h+ snd+h+ a+s+t+.
+اگر شما فكر مي‌كنيد كه بهينه ساز سيستم در انتخاب پيمايش ترتيبي اشتباه كرده است 
+با دستور 'SET enable_seqscan TO 'off'  مي‌توانيد ببينيد آيا استفاده از نمايه‌ها 
+باعث افزايش سرعت درخواست‌ها خواهد شد يا خير.
+استفاده از نمايه‌ها هنگامي كه از علائم ويژه نظير LIKE و ~ استفاده مي‌كنيد فقط در 
+بعضي شرايط خاص كه در اينجا ذكر شده است ممكن است:
+  ابتداي رشته جستجو بايد به طور صريح مشخص باشد براي مثال: 
+- دستورات LIKE نبايد با علامت % شروع شوند
+- الگوهاي منظمي كه با ~ مي‌آيد حتماً بايد با علامت ^ شروع شود
+  رشته جستجو نبايد با يك مجموعه از كاراكتر‌ها  مثل [a-e] شروع شود 
+  جستجوهاي غيرحساس به متن مثل  ILIKE‌ و *~ از نمايه‌ها استفاده نمي‌كنند. در عوض 
+  از توابع نمايه‌اي كه در قسمت 4.12 توضيح داده شد استفاده مي‌كنند. 
+  مقدار پيش فرض locale‌ بايد در initdb استفاده شود. 
+4.9) چگونه مي‌توانم نحوه بررسي درخواست را توسط بهينه‌ساز درخواستها مشاهده كنم؟
+راهنماي دستور EXPLAIN را نگاه كنيد.
+4.10) نمايه R-tree‌ چيست؟
+از نمايه R-Tree  براي انديس كردن داده‌هاي فاصله‌اي استفاده مي‌شود. يك نمايه hash 
+نمي‌تواند جستجوهاي محدوده‌اي را انجام دهد. نمايه "B-tree" نيز براي انجام جستجوي 
+محدوده‌اي در يك جهت قابل استفاده است. اما R-Tree مي‌تواند داده‌هاي چند بعدي را 
+نيز پشتيباني كند. براي مثال اگر از نمايه R-tree‌ براي گونه Point استفاده شود 
+سرعت درخواست‌هايي نظير "select all points within a bounding rectangle" به مراتب 
+افزايش مي‌يابد.
+مقاله‌اي كه طراحي R-tree را توضيح داده است 
+Guttman, A. "R-trees: A Dynamic Index Structure for Spatial Searching." 
+Proceedings of the 1984 ACM SIGMOD Int'l Conf on Mgmt of Data, 45-57.
+R-tree‌ مي‌تواند چندضلعيها و چند وجهي را پشتيباني كند. در تئوري، R-tree مي‌تواند 
+تعداد  بعدهاي  بالاتري را نيز  پشتيباني كند. در  عمل  توسعه R-tree‌ نياز به كار 
+بيشتري دارد.
+4.11) بهينه ساز تكويني درخواست چيست؟ (Genetic Query Optimizer)
+استفاده از GEQO سرعت بهينه سازي درخواست را هنگاميكه تعداد زيادي جدول را با 
+استفاده از الگوريتم ژنتيك الحاق مي‌كنيم افزايش مي‌دهد.
+4.12) چگونه از عبارات منظم براي جستجو استفاده كنم؟ چگونه جستجويي انجام دهم كه 
+حساس به متن نباشد؟ چگونه براي يك جستجوي غير حساس به متن از نمايه استفاده كنم؟
+براي جستجوي عبارت منظم از عملگر ~‌ استفاده مي‌كنيم. براي جستجوي غير حساس به متن 
+از عملگر *~ و يا ILIKE‌ استفاده مي‌كنيم.
+روش ديگر انجام جستجوي غير حساس به متن در زير نشان داده شده است.
     SELECT *
     FROM tab
     WHERE lower(col) = 'abc';
-
-   a+y+n+ a+z+ n+m+a+y+h+h+a+y+ a+s+t+a+n+d+a+r+d+ a+s+t+f+a+d+h+ n+m+y+
-   k+n+d+. w+l+y+ snm+a+ m+y+ t+w+a+n+y+d+ b+a+ d+s+t+w+r+ z+y+r+ y+k+
-   n+m+a+y+h+ a+y+g+a+d+ k+n+y+d+ w+ a+z+ aMn+ a+s+t+f+a+d+h+ k+n+y+d+.
+اين از نمايه‌هاي استاندارد استفاده نمي‌كند. ولي شما مي توانيد با دستور زير يك 
+نمايه ايجاد كنيد و از آن استفاده كنيد.
     CREATE INDEX tabindex ON tab (lower(col));
-
-    4.13) tcgfw+n+h+ m+y+t+w+a+n+m+ d+r+ y+k+ d+r+x+w+a+s+t+ t+snx+y+c+ d+h+m+
-    k+h+ y+k+ f+y+l+d+ NULL a+s+t+?+
-    
-   b+a+ a+s+t+f+a+d+h+ a+z+ t+w+a+b+e+ IS NULL w+ IS NOT NULL m+y+
-   t+w+a+n+y+m+ NULL b+w+d+n+ y+k+ f+y+l+d+ r+a+ t+s+t+ k+n+y+m+.
-   
-    4.14) t+f+a+w+t+ b+y+n+ gfw+n+h+h+a+y+ m+x+t+l+f+ character tcy+s+t+?+
-    
+4.13) چگونه مي‌توانم در يك درخواست تشخيص دهم كه يك فيلد NULL‌ است؟
+با استفاده از توابع IS NULL و IS NOT NULL مي‌توانيم NULL بودن يك فيلد را تست 
+كنيم.
+4.14) تفاوت بين گونه‌هاي مختلف character چيست؟
 Type            Internal Name   Notes
 --------------------------------------------------
-VARCHAR(n)      varchar      a+n+d+a+z+h+,+ hkd+a+k+tkr+ tjw+l+ r+a+ n+sna+n+ m
-+y+ d+h+d+ b+d+w+n+ a+dda+f+h+ snd+n+ k+a+r+a+k+t+r+ a+dda+f+h+
-CHAR(n)            bpchar       k+a+r+a+k+t+r+h+a+y+ b+l+a+n+k+ b+r+a+y+ p+r+ s
-nd+n+ tjw+l+ m+snx+c+ snd+h+ a+s+t+f+a+d+h+ m+y+snw+d+
-TEXT                text            hkd+a+k+tkr+ tjw+l+ r+a+ m+snx+c+ n+m+y+k+n
-+d+
-BYTEA               bytea         aMr+a+y+h+a+y+ a+z+ b+a+y+t+ b+a+ tjw+l+ m+t+
-i+y+r+
-"char"               char           y+k+ k+a+r+a+k+t+r+
-
-   n+a+m+ d+a+x+l+y+ gfw+n+h+h+a+ r+a+ d+r+ system catalogue w+ b+e+ddy+
-   a+z+ p+y+i+a+m+h+a+y+ x+tja+ m+y+t+w+a+n+ d+y+d+.
-   
-   tch+a+r+ gfw+n+h+ a+w+l+ h+m+gfy+ a+z+ n+w+e+ varlena h+s+t+n+d+ (4
-   b+a+y+t+ a+w+l+ r+w+y+ d+y+s+k+ tjw+l+ r+a+ m+snx+c+ m+y+k+n+d+ k+h+
-   b+h+ d+n+b+a+l+ aMn+ d+a+d+h+h+a+ q+r+a+r+ d+a+r+n+d+.)
-   b+n+a+b+r+a+y+n+ f+dda+y+ w+a+q+e+y+ a+s+t+f+a+d+h+ snd+h+ r+w+y+
-   d+y+s+k+ a+z+ a+n+d+a+z+h+ t+e+r+y+f+ snd+h+ b+y+snt+r+ a+s+t+. a+m+a+
-   a+y+n+ gfw+n+h+h+a+ r+a+ m+y+t+w+a+n+ f+snr+d+h+ k+r+d+ k+h+
-   a+y+n+k+a+r+ b+a+e+tk m+y+snw+d+ f+dda+y+ k+m+t+r+y+ r+w+y+ d+y+s+k+
-   a+sni+a+l+ k+n+n+d+.
-   
-   b+r+a+y+ dkx+y+r+h+ r+snt+h+h+a+y+ b+a+ tjw+l+ m+t+i+y+r+(VARCHAR(n
-   b+h+t+r+y+n+ a+n+t+x+a+b+ a+s+t+. d+r+ a+y+n+ gfw+n+h+ hkd+a+k+tkr+
-   tjw+l+ r+snt+h+ m+hkd+w+d+ a+s+t+ b+r+ x+l+a+f+ text k+h+ h+y+tc
-   m+hkd+w+d+y+t+y+ r+w+y+ hkd+a+k+tkr+ a+n+d+a+z+h+ r+snt+h+ n+m+y+
-   gfdka+r+d+.(d+r+ a+y+n+ gfw+n+h+ hkd+a+k+tkr+ tjw+l+ y+k+ r+snt+h+
-   y+k+ gfy+gfa+ b+a+y+t+ x+w+a+h+d+ b+w+d+)
-   
-   gfw+n+h+ (CHAR(n  b+r+a+y+ dkx+y+r+h+ d+a+d+h+h+a+y+ b+a+ tjw+l+
-   y+k+s+a+n+ a+s+t+.y+k+ gfw+n+h+y+ (CHAR(n b+a+ k+a+r+a+k+t+r+h+a+y+
-   b+l+a+n+k+ (x+a+l+y+) p+r+ m+y+snw+d+ t+a+ b+h+ tjw+l+ m+snx+c+ snd+h+
-   b+r+s+d+ d+r+ hka+l+y+k+h+ gfw+n+h+ VARCHAR k+a+r+a+k+t+r+h+a+ r+a+
-   b+h+ h+m+a+n+ c+w+r+t+ k+h+ h+s+t+n+d+ dkx+y+r+h+ m+y+k+n+d+. gfw+n+h+
-   BYTEA b+r+a+y+ dkx+y+r+h+ d+a+d+h+h+a+y+ b+a+y+n+r+y+ a+s+t+ b+h+
-   x+c+w+c+ d+a+d+h+h+a+y+ b+a+y+n+r+y+ k+h+ sna+m+l+ b+a+y+t+h+a+y+ NULL
-   h+s+t+n+d+. a+z+ n+zHr+ k+a+r+a+y+y+ t+m+a+m+ a+y+n+ gfw+n+h+h+a+
-   y+k+s+a+n+ h+s+t+n+d+.
-   
-    4.15.1) tcgfw+n+h+ m+y+t+w+a+n+m+ y+k+ f+y+l+d+ s+r+y+a+l+ y+a+
-    a+f+z+a+y+sny+ a+y+g+a+d+ k+n+m+?+
-    
-   PostgreSQL a+z+ d+a+d+h+h+a+y+ s+r+y+a+l+ p+snt+y+b+a+n+y+ m+y+k+n+d+.
-   b+r+a+y+ a+y+g+a+d+ y+k+ f+y+l+d+ s+r+y+a+l+ (b+r+a+y+ d+a+snt+n+ y+k+
-   f+y+l+d+ m+n+hkc+r+ b+h+ f+r+d+ b+r+a+y+ h+r+ r+d+y+f+ )b+h+ r+w+sn
-   z+y+r+ e+m+l+ k+n+y+d+:
-    CREATE TABLE person (
-        id   SERIAL,
-        name TEXT
+VARCHAR(n)      varchar      اندازه، حداكثر طول را نشان مي دهد بدون اضافه شدن كاراكتر اضافه
+CHAR(n)            bpchar       كاراكترهاي بلانك براي پر شدن طول مشخص شده استفاده مي‌شود
+TEXT                text            حداكثر طول را مشخص نمي‌كند
+BYTEA               bytea         آرايه‌اي از بايت با طول متغير
+"char"               char           يك كاراكتر
+نام داخلي گونه‌ها را در system catalogue ‌و بعضي از پيغامهاي خطا مي‌توان ديد.
+چهار گونه اول همگي از نوع varlena هستند (4 بايت اول روي ديسك طول را مشخص مي‌كند 
+كه به دنبال آن داده‌ها قرار دارند.)‌بنابراين فضاي واقعي استفاده شده روي ديسك از 
+اندازه تعريف شده بيشتر است. اما اين گونه‌ها را مي‌توان فشرده كرد كه اينكار باعث 
+مي‌شود فضاي كمتري روي ديسك اشغال كنند.
+براي ذخيره رشته‌هاي با طول متغير(VARCHAR(n‌ بهترين انتخاب است. در اين گونه 
+حداكثر طول رشته محدود است بر خلاف text كه هيچ محدوديتي روي حداكثر اندازه رشته 
+نمي‌گذارد.(در اين گونه حداكثر طول يك رشته يك گيگا بايت خواهد بود)
+گونه (CHAR(n  براي ذخيره داده‌هاي با طول يكسان است.يك گونه‌ي (CHAR(n با 
+كاراكترهاي بلانك (خالي) پر مي‌شود تا به طول مشخص شده برسد در حاليكه گونه VARCHAR 
+كاراكترها را به همان صورت كه هستند ذخيره مي‌كند. گونه BYTEA براي ذخيره داده‌هاي 
+باينري است به خصوص داده‌هاي باينري كه شامل بايت‌هاي NULL هستند. از نظر كارايي 
+تمام اين گونه‌ها يكسان هستند.
+4.15.1) چگونه مي‌توانم يك فيلد سريال يا افزايشي ايجاد كنم؟
+PostgreSQL از داده‌هاي سريال پشتيباني مي‌كند. براي ايجاد يك فيلد سريال (براي 
+داشتن يك فيلد منحصر به فرد براي هر رديف )به روش زير عمل كنيد:
+    CREATE TABLE person ( 
+        id   SERIAL, 
+        name TEXT 
     );
-
-   d+s+t+w+r+ b+a+l+a+ b+h+ tjw+r+ a+t+w+m+a+t+y+&#1705; b+h+ d+s+t+w+r+
-   z+y+r+ t+b+d+y+l+ m+y+snw+d+:
+دستور بالا به طور اتوماتيک به دستور زير تبديل مي‌شود:
     CREATE SEQUENCE person_id_seq;
-    CREATE TABLE person (
+    CREATE TABLE person ( 
         id   INT4 NOT NULL DEFAULT nextval('person_id_seq'),
-        name TEXT
+        name TEXT 
     );
-
-   b+r+a+y+ d+y+d+n+ a+tjl+a+e+a+t+ b+y+snt+r+ b+h+ r+a+h+n+m+a+y+
-   d+s+t+w+r+ create_sequence  m+r+a+g+e+h+ k+n+y+d+. h+m+tcn+y+n+ m+y+
-   t+w+a+n+ a+z+ OIDh+r+ r+d+y+f+ b+h+ e+n+w+a+n+ y+k+ m+q+d+a+r+
-   m+n+hkc+r+ b+h+ f+r+d+ a+s+t+f+a+d+h+ k+r+d+. a+m+a+ d+r+ a+y+n+
-   hka+l+t+ b+r+a+y+ dump k+r+d+n+ w+ reloadk+r+d+n+ p+a+y+gfa+h+
-   d+a+d+h+ b+a+y+d+ d+s+t+w+r+ pg_dumps r+a+ b+a+ gfz+y+n+h+ o- a+g+r+a+
-   k+n+y+d+.
-   
-    4.15.2) tcgfw+n+h+ m+y+t+w+a+n+m+ m+q+d+a+r+ y+k+ d+r+g+ s+r+y+a+l+y+ r+a+
-    b+d+a+n+m+?+
-    
-   y+k+ r+w+sn b+r+a+y+ gfr+f+t+n+ m+q+d+a+r+ b+e+d+y+ y+k+ f+y+l+d+
-   s+r+y+a+l+ a+s+t+f+a+d+h+ a+z+ t+a+b+e+ ()nextval a+s+t+. d+r+ snb+h+
-   k+'+d+y+ k+h+ d+r+ a+d+a+m+h+ aMm+d+h+ a+s+t+ r+w+sn a+n+g+a+m+ a+y+n+
-   k+a+r+ n+sna+n+ d+a+d+h+ snd+h+ a+s+t+:
+براي ديدن اطلاعات بيشتر به راهنماي دستور create_sequence  مراجعه كنيد. همچنين 
+مي‌توان از OID‌هر رديف به عنوان يك مقدار منحصر به فرد استفاده كرد. اما در اين 
+حالت براي dump كردن و reload‌كردن پايگاه داده بايد دستور pg_dumps‌ را با گزينه 
+o-‌ اجرا كنيد.
+4.15.2) چگونه مي‌توانم مقدار يك درج سريالي را بدانم؟
+يك روش براي گرفتن مقدار بعدي يك فيلد سريال استفاده از تابع ()nextval است. در شبه 
+كُدي كه در ادامه آمده است روش انجام اين كار نشان داده شده است:
     new_id = execute("SELECT nextval('person_id_seq')");
     execute("INSERT INTO person (id, name) VALUES (new_id, 'Blaise Pascal')");
-
-   b+a+ a+g+r+a+y+ d+s+t+w+r+ f+w+q+ m+q+d+a+r+ g+d+y+d+ r+a+ d+r+
-   m+t+i+y+r+ new_id n+y+z+ x+w+a+h+y+d+d+a+snt+ k+h+ m+y+t+w+a+n+y+d+
-   aMn+ r+a+ d+r+ b+q+y+h+ d+r+x+w+a+s+t+h+a+ n+y+z+ a+s+t+f+a+d+h+
-   k+n+y+d+. t+w+g+h+ d+a+snt+h+ b+a+sny+d+ k+h+ n+a+m+ SEQUENCEy+y+ k+h+
-   b+h+ tjw+r+ a+t+w+m+a+t+y+k+ a+y+g+a+d+ snd+h+ a+s+t+ b+h+ c+w+r+t+
-   table_serialcolumn_seq x+w+a+h+d+ b+w+d+. k+h+ d+r+ aMn+ table n+a+m+
-   g+d+w+l+ w+ serialcolumn n+a+m+ f+y+l+d+ s+r+y+a+l+ g+d+w+l+ m+y+
-   b+a+snd+.
-   
-   b+r+a+y+ d+y+d+n+ m+q+d+a+r+ n+s+b+t+ d+a+d+h+ snd+h+ b+h+ f+y+l+d+
-   s+r+y+a+l+ n+y+z+ m+y+t+w+a+n+ a+z+ t+a+b+e+ () currval b+h+ c+w+r+t+
-   z+y+r+ a+s+t+f+a+d+h+ k+r+d+.
+با اجراي دستور فوق مقدار جديد را در متغير new_id نيز خواهيدداشت كه مي‌توانيد آن 
+را در بقيه درخواست‌ها نيز استفاده كنيد. توجه داشته باشيد كه نام SEQUENCEيي كه به 
+طور اتوماتيك ايجاد شده است به صورت table_serialcolumn_seq‌ خواهد بود. كه در آن 
+table‌ نام جدول و serialcolumn نام فيلد سريال جدول مي‌باشد.
+براي ديدن مقدار نسبت داده شده به فيلد سريال نيز مي‌توان از تابع () currval به 
+صورت زير استفاده كرد. 
     execute("INSERT INTO person (name) VALUES ('Blaise Pascal')");
     new_id = execute("SELECT currval('person_id_seq')");
+و سرانجام شما مي‌توانيد از مقدار OID كه خروجي دستور INSERT  است براي ديدن مقدار 
+پيش فرض استفاده كنيد. هر چند اين روش در همه پلتفرمها قابل استفاده نيست و ضمن 
+اينكه فيلد oid‌ بعد از عدد 4 ميليارد دوباره صفر مي‌شود. در زبان perl با استفاده 
+از DBI و DBD::Pg مقدار oid‌را مي‌توانيد به اين شكل استخراج كنيد: بعد از اجراي 
+()st->execute$ مقدار oid‌ در متغير  sth->pg_oid_status$ ذخيره خواهد شد.
+4.15.3) آیا توابع ()nextval و ()currval منجر به ایجاد شرایط race برای سایر 
+کاربران می شوند؟
+خیر، استفاده از این توابع شرایط race را به وجود نمی آورد.
+4.15.4) چرا اعداد سریالی مربوط به تراکنشهای abort شده مجدداً استفاده نمی شود؟ 
+چرا بین اعداد سریالی یک فاصله خالی ایجاد می شود؟
+برای بالا بردن امکان اجرای همزمان تراکنشها، اعداد سریالی به محض اجرای تراکنش به 
+آنها تخصیص می یابد در این حالت اگر بعضی از تراکنشها abort شوند بین اعداد سریالی 
+استفاده شده یک فاصله خالی به وجود می آید.
+4.16) OID و TID چه هستند؟
+OID راه حل PostgreSQL برای داشتن یک شناسه منحصر به فرد برای هر ردیف است. هر ردیف 
+جدیدی که ایجاد می شود یک OID منحصر به فرد به آن اختصاص می یابد. تمام OIDهایی که 
+در حین initdb ایجاد می شوند از 16384 کمتر هستند و OIDهایی بعداً تولید می شود از 
+این عدد بزرگتر خواهد بود. نکته مهم آن است که OIDها نه تنها در یک جدول شبیه 
+نیستند بلکه در کل پایگاه داده هیچ دو ردیفی دارای OID یکسان نخواهد بود.
+PostgreSQL از OID در سیستم داخلی خود برای ایجاد ارتباط بین ردیفهای جداول مختلف 
+استفاده می کند. توصیه می شود که یک ستون از نوع OID برای ذخیره این فیلد در جدول 
+ایجاد کنید. ساختن یک نمایه برای این فیلد باعث دسترسی سریعتر به آن خواهد شد.
+تمام پایگاههای داده در PostgreSQL برای گرفتن OID جدید از یک ناحیه مرکزی استفاده 
+می کند. ولی اگر بخواهیم OID را به روش دیگری بگیریم و یا اینکه در حین کپی کردن یک 
+جدول بخواهیم OIDهای اصلی آن تغییر نکند به روش زیر می توانیم عمل کنیم:
 
-   w+ s+r+a+n+g+a+m+ snm+a+ m+y+t+w+a+n+y+d+ a+z+ m+q+d+a+r+ OID k+h+
-   x+r+w+g+y+ d+s+t+w+r+ INSERT  a+s+t+ b+r+a+y+ d+y+d+n+ m+q+d+a+r+
-   p+y+sn f+r+dd a+s+t+f+a+d+h+ k+n+y+d+. h+r+ tcn+d+ a+y+n+ r+w+sn d+r+
-   h+m+h+ p+l+t+f+r+m+h+a+ q+a+b+l+ a+s+t+f+a+d+h+ n+y+s+t+ w+ ddm+n+
-   a+y+n+k+h+ f+y+l+d+ oid b+e+d+ a+z+ e+d+d+ 4 m+y+l+y+a+r+d+
-   d+w+b+a+r+h+ c+f+r+ m+y+snw+d+. d+r+ z+b+a+n+ perl b+a+ a+s+t+f+a+d+h+
-   a+z+ DBI w+ DBD::Pg m+q+d+a+r+ oidr+a+ m+y+t+w+a+n+y+d+ b+h+ a+y+n+
-   snk+l+ a+s+t+x+r+a+g+ k+n+y+d+: b+e+d+ a+z+ a+g+r+a+y+ ()st->execute$
-   m+q+d+a+r+ oid d+r+ m+t+i+y+r+  sth->pg_oid_status$ dkx+y+r+h+
-   x+w+a+h+d+ snd+.
-   
-    4.15.3) aM&#1740;a+ t+w+a+b+e+ ()nextval w+ ()currval m+n+g+r+ b+h+
-    a+&#1740;g+a+d+ snr+a+&#1740;tj race b+r+a+&#1740; s+a+&#1740;r+
-    &#1705;a+r+b+r+a+n+ m+&#1740; snw+n+d+?+
-    
-   x+&#1740;r+,+ a+s+t+f+a+d+h+ a+z+ a+&#1740;n+ t+w+a+b+e+
-   snr+a+&#1740;tj race r+a+ b+h+ w+g+w+d+ n+m+&#1740; aMw+r+d+.
-   
-    4.15.4) tcr+a+ a+e+d+a+d+ s+r+&#1740;a+l+&#1740; m+r+b+w+tj b+h+
-    t+r+a+&#1705;n+snh+a+&#1740; abort snd+h+ m+g+d+d+a+:+ a+s+t+f+a+d+h+
-    n+m+&#1740; snw+d+?+ tcr+a+ b+&#1740;n+ a+e+d+a+d+ s+r+&#1740;a+l+&#1740;
-    &#1740;&#1705; f+a+c+l+h+ x+a+l+&#1740; a+&#1740;g+a+d+ m+&#1740; snw+d+?+
-    
-   b+r+a+&#1740; b+a+l+a+ b+r+d+n+ a+m+&#1705;a+n+ a+g+r+a+&#1740;
-   h+m+z+m+a+n+ t+r+a+&#1705;n+snh+a+,+ a+e+d+a+d+ s+r+&#1740;a+l+&#1740;
-   b+h+ m+hkdd a+g+r+a+&#1740; t+r+a+&#1705;n+sn b+h+ aMn+h+a+
-   t+x+c+&#1740;c+ m+&#1740; &#1740;a+b+d+ d+r+ a+&#1740;n+ hka+l+t+
-   a+gfr+ b+e+dd&#1740; a+z+ t+r+a+&#1705;n+snh+a+ abort snw+n+d+
-   b+&#1740;n+ a+e+d+a+d+ s+r+&#1740;a+l+&#1740; a+s+t+f+a+d+h+ snd+h+
-   &#1740;&#1705; f+a+c+l+h+ x+a+l+&#1740; b+h+ w+g+w+d+ m+&#1740;
-   aM&#1740;d+.
-   
-    4.16) OID w+ TID tch+ h+s+t+n+d+?+
-    
-   OID r+a+h+ hkl+ PostgreSQL b+r+a+&#1740; d+a+snt+n+ &#1740;&#1705;
-   snn+a+s+h+ m+n+hkc+r+ b+h+ f+r+d+ b+r+a+&#1740; h+r+ r+d+&#1740;f+
-   a+s+t+. h+r+ r+d+&#1740;f+ g+d+&#1740;d+&#1740; &#1705;h+
-   a+&#1740;g+a+d+ m+&#1740; snw+d+ &#1740;&#1705; OID m+n+hkc+r+ b+h+
-   f+r+d+ b+h+ aMn+ a+x+t+c+a+c+ m+&#1740; &#1740;a+b+d+. t+m+a+m+
-   OIDh+a+&#1740;&#1740; &#1705;h+ d+r+ hk&#1740;n+ initdb
-   a+&#1740;g+a+d+ m+&#1740; snw+n+d+ a+z+ 16384 &#1705;m+t+r+ h+s+t+n+d+
-   w+ OIDh+a+&#1740;&#1740; b+e+d+a+:+ t+w+l+&#1740;d+ m+&#1740; snw+d+
-   a+z+ a+&#1740;n+ e+d+d+ b+z+r+gft+r+ x+w+a+h+d+ b+w+d+. n+&#1705;t+h+
-   m+h+m+ aMn+ a+s+t+ &#1705;h+ OIDh+a+ n+h+ t+n+h+a+ d+r+ &#1740;&#1705;
-   g+d+w+l+ snb+&#1740;h+ n+&#1740;s+t+n+d+ b+l+&#1705;h+ d+r+ &#1705;l+
-   p+a+&#1740;gfa+h+ d+a+d+h+ h+&#1740;tc d+w+ r+d+&#1740;f+&#1740;
-   d+a+r+a+&#1740; OID &#1740;&#1705;s+a+n+ n+x+w+a+h+d+ b+w+d+.
-   
-   PostgreSQL a+z+ OID d+r+ s+&#1740;s+t+m+ d+a+x+l+&#1740; x+w+d+
-   b+r+a+&#1740; a+&#1740;g+a+d+ a+r+t+b+a+tj b+&#1740;n+
-   r+d+&#1740;f+h+a+&#1740; g+d+a+w+l+ m+x+t+l+f+ a+s+t+f+a+d+h+
-   m+&#1740; &#1705;n+d+. t+w+c+&#1740;h+ m+&#1740; snw+d+ &#1705;h+
-   &#1740;&#1705; s+t+w+n+ a+z+ n+w+e+ OID b+r+a+&#1740; dkx+&#1740;r+h+
-   a+&#1740;n+ f+&#1740;l+d+ d+r+ g+d+w+l+ a+&#1740;g+a+d+
-   &#1705;n+&#1740;d+. s+a+x+t+n+ &#1740;&#1705; n+m+a+&#1740;h+
-   b+r+a+&#1740; a+&#1740;n+ f+&#1740;l+d+ b+a+e+tk d+s+t+r+s+&#1740;
-   s+r+&#1740;e+t+r+ b+h+ aMn+ x+w+a+h+d+ snd+.
-   
-   t+m+a+m+ p+a+&#1740;gfa+h+h+a+&#1740; d+a+d+h+ d+r+ PostgreSQL
-   b+r+a+&#1740; gfr+f+t+n+ OID g+d+&#1740;d+ a+z+ &#1740;&#1705;
-   n+a+hk&#1740;h+ m+r+&#1705;z+&#1740; a+s+t+f+a+d+h+ m+&#1740;
-   &#1705;n+d+. w+l+&#1740; a+gfr+ b+x+w+a+h+&#1740;m+ OID r+a+ b+h+
-   r+w+sn d+&#1740;gfr+&#1740; b+gf&#1740;r+&#1740;m+ w+ &#1740;a+
-   a+&#1740;n+&#1705;h+ d+r+ hk&#1740;n+ &#1705;p+&#1740; &#1705;r+d+n+
-   &#1740;&#1705; g+d+w+l+ b+x+w+a+h+&#1740;m+ OIDh+a+&#1740;
-   a+c+l+&#1740; aMn+ t+i+&#1740;&#1740;r+ n+&#1705;n+d+ b+h+ r+w+sn
-   z+&#1740;r+ m+&#1740; t+w+a+n+&#1740;m+ e+m+l+ &#1705;n+&#1740;m+:
-   
-   
         CREATE TABLE new_table(mycol int);
         SELECT oid AS old_oid, mycol INTO tmp_table FROM old_table;
         COPY tmp_table TO '/tmp/pgtable';
         COPY new_table WITH OIDS FROM '/tmp/pgtable';
         DROP TABLE tmp_table;
-
-   OID &#1740;&#1705; e+d+d+ c+hk&#1740;hk 4 b+a+&#1740;t+&#1740; a+s+t+
-   w+ b+n+a+b+r+a+&#1740;n+ hkd+a+&#1705;tkr+ m+q+d+a+r+ aMn+ 4
-   m+&#1740;l+&#1740;a+r+d+ x+w+a+h+d+ b+w+d+ w+ b+e+d+ a+z+ aMn+
-   m+q+d+a+r+ aMn+ s+r+r+&#1740;z+ x+w+a+h+d+ snd+.  a+l+b+t+h+ t+a+
-   &#1705;n+w+n+ b+r+a+&#1740;  &#1705;s+&#1740;  a+&#1740;n+ a+t+f+a+q+
-   n+&#1740;f+t+a+d+h+ a+s+t+ w+ t+c+m+&#1740;m+ gfr+d+a+n+d+gfa+n+
-   PostgreSQL aMn+ a+s+t+ &#1705;h+ q+b+l+ a+z+ aMn+&#1705;h+ a+&#1740;n+
-   a+t+f+a+q+ r+x+ d+h+d+ a+&#1740;n+ m+sn&#1705;l+ r+a+ b+r+tjr+f+
-   &#1705;n+n+d+.
-   
-   TIDh+a+ b+r+a+&#1740; snn+a+s+a+&#1740;&#1740; m+hkl+
-   f+&#1740;z+&#1740;&#1705;&#1740; &#1740;&#1705; r+d+&#1740;f+ b+r+
-   a+s+a+s+ b+l+w+&#1705; w+ aMf+s+t+ m+&#1740; b+a+snd+. TIDh+a+ b+e+d+
-   a+z+ t+i+&#1740;&#1740;r+ p+&#1740;d+a+ &#1705;r+d+n+ &#1740;&#1705;
-   r+d+&#1740;f+ w+ &#1740;a+  b+a+z+x+w+a+n+&#1740;  aMn+  e+w+dd
-   m+&#1740; snw+n+d+. TIDh+a+ t+w+s+tj n+m+a+&#1740;h+ h+a+
-   a+s+t+f+a+d+h+ m+&#1740; snw+n+d+.
-   
-    4.17) m+e+n+y+ b+e+ddy+ a+z+ t+r+m+h+a+ w+ k+l+m+a+t+y+ k+h+ d+r+
-    PostgreSQL a+s+t+f+a+d+h+ m+y+snw+d+ tcy+s+t+?+
-    
-   l+&#1740;s+t+ b+r+x+&#1740; a+z+ t+r+m+h+a+ w+ &#1705;l+m+a+t+&#1740;
-   &#1705;h+ a+s+t+f+a+d+h+ m+&#1740; snw+n+d+:
-     * table, relation, class :&#1705;l+a+s+,+ r+a+b+tjh+,+ g+d+w+l+
-     * row, record, tuple tcn+d+t+a+&#1740;&#1740;,+ r+&#1705;w+r+d+,+
-       r+d+&#1740;f+
-     * column, field, attribute c+f+t+,+ f+&#1740;l+d+,+ s+t+w+n+
-     * retrieve, select a+n+t+x+a+b+,+ x+w+a+n+d+n+
-     * replace, updateb+h+ r+w+z+ &#1705;r+d+n+,+
-       g+a+&#1740;gfz+&#1740;n+&#1740;
-     * append, insert d+r+g+,+ a+dda+f+h+ &#1705;r+d+n+
-     * OID, serial value m+q+d+a+r+ s+r+&#1740;a+l+
-     * portal, cursor
-     * range variable, table name, table alias
-       
-   &#1740;&#1705; l+&#1740;s+t+ e+m+w+m+&#1740; a+z+ t+r+m+h+a+&#1740;
-   m+w+r+d+ a+s+t+f+a+d+h+ d+r+ p+a+&#1740;gfa+h+ d+a+d+h+ d+r+ aMd+r+s+
-   http://hea-www.harvard.edu/MST/simul/software/docs/pkgs/pgsql/glossary
-   /glossary.htm w+g+w+d+ d+a+r+d+.
-   
-    4.18) tcr+a+ m+n+ x+tja+y+ "ERROR: Memory exhausted in AllocSetAlloc" m+y+
-    gfy+r+m+?+
-    
-   a+&#1740;n+ x+tja+ a+hkt+m+a+l+a+:+ &#1740;a+ b+h+ x+a+tjr+ t+m+a+m+
-   snd+n+ hka+f+zHh+ m+g+a+z+&#1740; s+&#1740;s+t+m+ snm+a+s+t+ w+
-   &#1740;a+ a+&#1740;n+&#1705;h+ &#1705;r+n+l+ b+r+a+&#1740;
-   b+r+n+a+m+h+ h+a+ d+r+ m+w+r+d+ m+&#1740;z+a+n+ a+s+t+f+a+d+h+ a+z+
-   hka+f+zHh+ m+g+a+z+&#1740; m+hkd+w+d+&#1740;t+ a+e+m+a+l+
-   &#1705;r+d+h+ a+s+t+. q+b+l+ a+z+ a+g+r+a+&#1740; b+r+n+a+m+h+
-   a+c+l+&#1740; &#1740;&#1705;&#1740; a+z+ d+s+t+w+r+a+t+ z+&#1740;r+
-   r+a+ a+g+r+a+ &#1705;n+&#1740;d+.
-   
+OID یک عدد صحیح 4 بایتی است و بنابراین حداکثر مقدار آن 4 میلیارد خواهد بود و بعد 
+از آن مقدار آن سرریز خواهد شد.  البته تا کنون برای  کسی  این اتفاق نیفتاده است و 
+تصمیم گرداندگان PostgreSQL آن است که قبل از آنکه این اتفاق رخ دهد این مشکل را 
+برطرف کنند.
+TIDها برای شناسایی محل فیزیکی یک ردیف بر اساس بلوک و آفست می باشد. TIDها بعد از 
+تغییر پیدا کردن یک  ردیف و یا  بازخوانی  آن  عوض  می شوند. TIDها توسط نمایه ها 
+استفاده می شوند.
+4.17) معني بعضي از ترمها و كلماتي كه در PostgreSQL‌ استفاده مي‌شود چيست؟
+لیست برخی از ترمها و کلماتی که استفاده می شوند:
+  table, relation, class :کلاس، رابطه، جدول
+  row, record, tuple چندتایی، رکورد، ردیف
+  column, field, attribute صفت، فیلد، ستون
+  retrieve, select انتخاب، خواندن
+  replace, updateبه روز کردن، جایگزینی 
+  append, insert درج، اضافه کردن
+  OID, serial value مقدار سریال
+  portal, cursor 
+  range variable, table name, table alias 
+یک لیست عمومی از ترمهای مورد استفاده در پایگاه داده در آدرس  
+http://hea-www.harvard.edu/MST/simul/software/docs/pkgs/pgsql/glossary/glossary.htm 
+وجود دارد.
+4.18) چرا من خطاي "ERROR: Memory exhausted in AllocSetAlloc" مي‌گيرم؟
+این خطا احتمالاً یا به خاطر تمام شدن حافظه مجازی سیستم شماست و یا اینکه کرنل 
+برای برنامه ها در مورد میزان استفاده از حافظه مجازی محدودیت اعمال کرده است. قبل 
+از اجرای برنامه اصلی یکی از دستورات زیر را اجرا کنید.
     ulimit -d 262144
     limit datasize 256m
-
-   b+s+t+h+ b+h+ n+w+e+ snl+ &#1740;&#1705;&#1740; a+z+ a+&#1740;n+
-   d+s+t+w+r+a+t+ m+m+&#1705;n+ a+s+t+ b+a+ m+w+f+q+&#1740;t+ a+g+r+a+
-   snw+d+. b+a+ a+g+r+a+&#1740; aMn+ d+s+t+w+r+ m+hkd+w+d+&#1740;t+
-   hka+f+zHh+ m+g+a+z+&#1740; b+r+a+&#1740; b+r+n+a+m+h+ h+a+
-   b+r+d+a+snt+h+ snd+h+ w+ b+a+ a+&#1740;n+ &#1705;a+r+ a+hkt+m+a+l+a+:+
-   d+r+x+w+a+s+t+&#1740; &#1705;h+ q+b+l+a+:+ x+tja+ m+&#1740; d+a+d+h+
-   a+s+t+ a+g+r+a+ x+w+a+h+d+ snd+.
-   
-    4.19) a+z+ k+g+a+ t+snx+y+c+ d+h+m+ k+h+ w+y+r+a+y+sn y+a+ n+s+x+h+
-    PostgreSQLy+y+ k+h+ m+n+ a+s+t+f+a+d+h+ m+y+k+n+m+ tcy+s+t+?+
-    
-   b+a+ a+g+r+a+&#1740; d+s+t+w+r+ ()SELECT version
-   
-    4.20) tcr+a+ hk&#1740;n+ a+g+r+a+&#1740; e+m+l+&#1740;a+t+ r+w+&#1740;
-    large-objecth+a+ x+tja+&#1740; "invalid large obj descriptor"b+h+ w+g+w+d+
-    m+&#1740; aM&#1740;d+?+
-    
-          snm+a+ b+a+&#1740;d+ q+b+l+ a+z+ snr+w+e+ d+s+t+w+r+a+t+&#1740;
-      &#1705;h+ b+a+ large-objecth+a+ &#1705;a+r+ m+&#1740; &#1705;n+n+d+
-                   BEGIN  w+ b+e+d+ a+z+ aMn+h+a+ h+m+ &#1740;&#1705; END
-            b+gfdka+r+&#1740;d+. d+r+ hka+l+ hka+ddr+ PostgreSQL h+n+d+l+
-          large-objecth+a+ r+a+ d+r+ z+m+a+n+ n+h+a+&#1740;&#1740; snd+n+
-                t+r+a+&#1705;n+sn (commitsnd+n+) m+&#1740; b+n+d+d+. b+h+
-       h+m+&#1740;n+ d+l+&#1740;l+ a+w+l+&#1740;n+ t+l+a+sn b+r+a+&#1740;
-           a+n+g+a+m+ h+r+ &#1705;a+r+&#1740; b+a+ h+n+d+l+ m+n+g+r+ b+h+
-              x+tja+&#1740; invalid large obj descriptor x+w+a+h+d+ snd+.
-           b+r+a+&#1740; g+l+w+gf&#1740;r+&#1740; a+z+ a+&#1740;n+ x+tja+
-           hkt+m+a+:+ b+a+&#1740;d+ a+z+ &#1740;&#1705; t+r+a+&#1705;n+sn
-               a+s+t+f+a+d+h+ &#1705;n+&#1740;d+. a+&#1740;n+ &#1705;a+r+
-    h+m+a+n+tjw+r+ &#1705;h+ q+b+l+a+:+ gff+t+h+ snd+ b+a+ a+s+t+f+a+d+h+
-                   a+z+ q+r+a+r+ d+a+d+n+ BEGIN w+ END d+r+ a+b+t+d+a+ w+
-            a+n+t+h+a+&#1740; d+s+t+w+r+a+t+ a+n+g+a+m+ m+&#1740; snw+d+.
-   
-   a+gfr+ a+&#1740;n+ x+tja+ r+a+ d+r+ hk&#1740;n+ a+s+t+f+a+d+h+ a+z+
-   &#1740;&#1705; d+r+a+&#1740;w+r+ ODBC d+r+&#1740;a+f+t+
-   &#1705;r+d+&#1740;d+ a+hkt+m+a+l+a+:+ b+a+&#1740;d+ a+&#1740;n+
-   d+s+t+w+r+ r+a+ a+g+r+a+ &#1705;n+&#1740;d+: set auto-commit off
-   
-    4.21) tcgfw+n+h+ y+k+ s+t+w+n+ a+y+g+a+d+ k+n+m+ k+h+ m+q+d+a+r+ z+m+a+n+
-    g+a+r+y+ r+a+ b+h+ e+n+w+a+n+ m+q+d+a+r+ p+y+snf+r+dd d+a+snt+h+ b+a+snd+?+
-    
-   a+z+ CURRENT_TIMESTAMP  a+s+t+f+a+d+h+ &#1705;n+&#1740;d+ d+r+
-   m+tka+l+ z+&#1740;r+ n+hkw+h+ a+n+g+a+m+ a+&#1740;n+ &#1705;a+r+
-   n+sna+n+ d+a+d+h+ snd+h+ a+s+t+:
-   
+بسته به نوع شل یکی از این دستورات ممکن است با موفقیت اجرا شود. با اجرای آن دستور 
+محدودیت حافظه مجازی برای برنامه ها برداشته شده و با این کار احتمالاً درخواستی که 
+قبلاً خطا می داده است اجرا خواهد شد.
+4.19) از كجا تشخيص دهم كه ويرايش يا نسخه PostgreSQLيي كه من استفاده مي‌كنم چيست؟
+با اجرای دستور ()SELECT version
+4.20) چرا حین اجرای عملیات روی large-objectها خطای "invalid large obj 
+descriptor"به وجود می آید؟
+شما باید قبل از شروع دستوراتی که با large-objectها کار می کنند BEGIN  و بعد از 
+آنها هم یک END بگذارید. در حال حاضر PostgreSQL هندل large-objectها را در زمان 
+نهایی شدن تراکنش (commitشدن) می بندد. به همین دلیل اولین تلاش برای انجام هر کاری 
+با هندل منجر به خطای invalid large obj descriptor خواهد شد. برای جلوگیری از این 
+خطا حتماً باید از یک تراکنش استفاده کنید. این کار همانطور که قبلاً گفته شد با 
+استفاده از قرار دادن BEGIN و END در ابتدا و انتهای دستورات انجام می شود.
+اگر این خطا را در حین استفاده از یک درایور ODBC دریافت کردید احتمالاً باید این 
+دستور را اجرا کنید: set auto-commit off
+4.21) چگونه يك ستون ايجاد كنم كه مقدار زمان جاري را به عنوان مقدار پيش‌فرض داشته 
+باشد؟
+از CURRENT_TIMESTAMP  استفاده کنید در مثال زیر نحوه انجام این کار نشان داده شده 
+است:
 CREATE TABLE test (x int, modtime timestamp DEFAULT CURRENT_TIMESTAMP );
 
-    4.22) tcr+a+ "z+y+r+ d+r+x+w+a+s+t+h+a+y+y+" k+h+ a+z+ IN a+s+t+f+a+d+h+
-    m+y+k+n+n+d+ k+n+d+ h+s+t+n+d+?+
-    
-   d+r+ n+s+x+h+ h+a+&#1740; q+b+l+ a+z+ 7.4 e+m+l+ a+l+hka+q+
-   z+&#1740;r+ d+r+x+w+a+s+t+ w+ d+r+x+w+a+s+t+ a+c+l+&#1740; b+h+
-   a+&#1740;n+ c+w+r+t+ a+n+g+a+m+ m+&#1740; snw+d+ &#1705;h+
-   n+t+a+&#1740;g+ b+h+ d+s+t+ aMm+d+h+ a+z+ z+&#1740;r+ d+r+x+w+a+s+t+
-   b+h+ c+w+r+t+ t+r+t+&#1740;b+&#1740; b+r+a+&#1740; h+r+ r+d+&#1740;f+
-   a+e+m+a+l+ m+&#1740; snw+d+. a+gfr+ z+&#1740;r+d+r+x+w+a+s+t+
-   r+d+&#1740;f+ h+a+&#1740; &#1705;m+&#1740; r+a+ b+h+ e+n+w+a+n+
-   x+r+w+g+&#1740; b+r+gfr+d+a+n+d+ w+ d+r+x+w+a+s+t+
-   b+&#1740;r+w+n+&#1740; r+d+&#1740;f+ h+a+&#1740; z+&#1740;a+d+&#1740;
-   r+a+ sna+m+l+ snw+d+ a+s+t+f+a+d+h+ a+z+ IN b+h+t+r+&#1740;n+ r+w+sn
-   a+s+t+ d+r+ i+&#1740;r+ a+&#1740;n+c+w+r+t+ b+h+t+r+ a+s+t+ a+z+
-   EXISTS a+s+t+f+a+d+h+ snw+d+
-   
+4.22) چرا "زير درخواستهايي" كه از IN استفاده مي‌كنند كند هستند؟
+در نسخه های قبل از 7.4 عمل الحاق زیر درخواست و درخواست اصلی به این صورت انجام می 
+شود که نتایج به دست آمده از زیر درخواست به صورت ترتیبی برای هر ردیف اعمال می 
+شود. اگر زیردرخواست ردیف های کمی را به عنوان خروجی برگرداند و درخواست بیرونی 
+ردیف های زیادی را شامل شود استفاده از IN بهترین روش است در غیر اینصورت بهتر است 
+از EXISTS استفاده شود
     SELECT *
     FROM tab
     WHERE col IN (SELECT subcol FROM subtab);
-
-   b+h+:
-   
+به:
     SELECT *
     FROM tab
     WHERE EXISTS (SELECT subcol FROM subtab WHERE subcol = col);
-
-   b+r+a+&#1740; a+g+r+a+&#1740; s+r+&#1740;e+ a+&#1740;n+ d+r+x+w+a+s+t+
-   b+a+&#1740;d+ b+r+a+&#1740; s+t+w+n+ subcol n+m+a+&#1740;h+
-   a+&#1740;g+a+d+ snd+h+ b+a+snd+.
-   
-   d+r+ n+s+x+h+ h+a+&#1740; b+e+d+ a+z+ 7.4 IN b+r+a+&#1740; a+l+hka+q+
-   a+z+ h+m+a+n+ t+&#1705;n+&#1740;&#1705; p+&#1740;tc&#1740;d+h+
-   m+w+r+d+ a+s+t+f+a+d+h+ d+r+ d+s+t+w+r+a+t+ m+e+m+w+l+&#1740;
-   a+s+t+f+a+d+h+ m+&#1740; &#1705;n+d+ w+ b+n+a+b+r+a+&#1740;n+
-   a+s+t+f+a+d+h+ a+z+ aMn+ n+s+b+t+ b+h+ EXISTS a+r+g+hk&#1740;t+
-   d+a+r+d+.
-   
-    4.23) tcgfw+n+h+ m+y+t+w+a+n+m+ y+k+ a+l+hka+q+ x+a+r+g+y+ (outer join)
-    a+n+g+a+m+ d+h+m+?+
-    
-   b+r+a+&#1740; a+n+g+a+m+ a+l+hka+q+ x+a+r+g+&#1740; b+h+ r+w+sn
-   z+&#1740;r+ e+m+l+ &#1705;n+&#1740;d+:
-   
+برای اجرای سریع این درخواست باید برای ستون subcol نمایه ایجاد شده باشد.
+در نسخه های بعد از 7.4 IN برای الحاق از همان تکنیک پیچیده مورد استفاده در 
+دستورات معمولی استفاده می کند و بنابراین استفاده از آن نسبت به EXISTS ارجحیت 
+دارد.
+4.23) چگونه مي‌توانم يك الحاق خارجي (outer join) انجام دهم؟
+برای انجام الحاق خارجی به روش زیر عمل کنید:
     SELECT *
     FROM t1 LEFT OUTER JOIN t2 ON (t1.col = t2.col);
-
-   &#1740;a+
-   
+یا
     SELECT *
     FROM t1 LEFT OUTER JOIN t2 USING (col);
+درخواستهای بالا t1.col , t2.col را به هم الحاق می کند و همچنین ردیفهای t1 که 
+نظیر آنها در t2 نبوده است را نیز برمی گرداند. اگر از RIGHT استفاده شود نتیجه بر 
+عکس است. یعنی ردیفهای t2 که نظیر آنها در t1 نباشد را نشان می دهد و اگر از FULL 
+استفاده شود نتیجه هم شامل ردیفهای t1 است  و هم شامل ردیفهای t2. استفاده از کلمه 
+OUTER اختیاری است چرا که این کلمه به طور ضمنی در دستورهای LEFT, RIGHT, FULL وجود 
+دارد.
+در نسخه های قبلی پایگاه داده می توانیم الحاق خارجی را به کمک دستورهای UNION, NOT 
+IN شبیه سازی کنیم. این کار در مثال زیر نشان داده شده است:
 
-   d+r+x+w+a+s+t+h+a+&#1740; b+a+l+a+ t1.col , t2.col r+a+ b+h+ h+m+
-   a+l+hka+q+ m+&#1740; &#1705;n+d+ w+ h+m+tcn+&#1740;n+
-   r+d+&#1740;f+h+a+&#1740; t1 &#1705;h+ n+zH&#1740;r+ aMn+h+a+ d+r+ t2
-   n+b+w+d+h+ a+s+t+ r+a+ n+&#1740;z+ b+r+m+&#1740; gfr+d+a+n+d+. a+gfr+
-   a+z+ RIGHT a+s+t+f+a+d+h+ snw+d+ n+t+&#1740;g+h+ b+r+ e+&#1705;s+
-   a+s+t+. &#1740;e+n+&#1740; r+d+&#1740;f+h+a+&#1740; t2 &#1705;h+
-   n+zH&#1740;r+ aMn+h+a+ d+r+ t1 n+b+a+snd+ r+a+ n+sna+n+ m+&#1740;
-   d+h+d+ w+ a+gfr+ a+z+ FULL a+s+t+f+a+d+h+ snw+d+ n+t+&#1740;g+h+ h+m+
-   sna+m+l+ r+d+&#1740;f+h+a+&#1740; t1 a+s+t+  w+ h+m+ sna+m+l+
-   r+d+&#1740;f+h+a+&#1740; t2. a+s+t+f+a+d+h+ a+z+ &#1705;l+m+h+ OUTER
-   a+x+t+&#1740;a+r+&#1740; a+s+t+ tcr+a+ &#1705;h+ a+&#1740;n+
-   &#1705;l+m+h+ b+h+ tjw+r+ ddm+n+&#1740; d+r+ d+s+t+w+r+h+a+&#1740;
-   LEFT, RIGHT, FULL w+g+w+d+ d+a+r+d+.
-   
-   d+r+ n+s+x+h+ h+a+&#1740; q+b+l+&#1740; p+a+&#1740;gfa+h+ d+a+d+h+
-   m+&#1740; t+w+a+n+&#1740;m+ a+l+hka+q+ x+a+r+g+&#1740; r+a+ b+h+
-   &#1705;m+&#1705; d+s+t+w+r+h+a+&#1740; UNION, NOT IN snb+&#1740;h+
-   s+a+z+&#1740; &#1705;n+&#1740;m+. a+&#1740;n+ &#1705;a+r+ d+r+
-   m+tka+l+ z+&#1740;r+ n+sna+n+ d+a+d+h+ snd+h+ a+s+t+:
-   
     SELECT tab1.col1, tab2.col2
     FROM tab1, tab2
     WHERE tab1.col1 = tab2.col1
@@ -1580,125 +819,59 @@ CREATE TABLE test (x int, modtime timestamp DEFAULT CURRENT_TIMESTAMP );
     FROM tab1
     WHERE tab1.col1 NOT IN (SELECT tab2.col1 FROM tab2)
     ORDER BY col1
+4.24) چگونه مي‌توان درخواستهايي از چند پايگاه داده توليد كرد؟
+در حال حاضر این کار امکان پذیر نیست. PostgreSQL فقط امکان درخواست از پایگاه داده 
+ای را می دهد که در حال حاضر به آن متصل باشید و نمی‌توان به طور همزمان از دو 
+پایگاه داده استفاده کرد. البته یک برنامه کاربردی خود می تواند به طور همزمان دو  
+پایگاه داده را مورد استفاده قرار داده و نتایج را با هم ترکیب کند ولی نمی تواند 
+در یک درخواست به هر  دو پایگاه داده رجوع کند.
+4.25) چگونه خروجي يك تابع مي‌تواند  چند رديف يا ستون باشد؟
+در نسخه 7.3 خروجی یک تابع می تواند چند ردیف یا چند ستون باشد. برای دیدن  اطلاعات 
+بیشتر به سایت زیر مراجعه 
+کنید:http://techdocs.postgresql.org/guides/SetReturningFunctions  
+4.26) در توابع PL/PgSQL چرا نمي‌توان با اطمينان جداول موقت را ايجاد يا حذف كرد؟
+PL/PgSQL محتوای توابع را ذخیره (cache) می کند. یک اثر بد جانبی این کار آن است که 
+اگر در تابع از یک جدول موقت استفاده شود و بعداً آن جدول حذف و یک جدول جدید به 
+جای آن ایجاد شود، در فراخوانی مجدد  آن تابع، محتوای ذخیره شده تابع  هنوز به جدول 
+قدیمی اشاره می کند و بنابراین اجرای تابع با اشکال مواجه می شود. راه حل این مشکل 
+آن است که برای جداول موقت از دستور EXECUTE استفاده شود که این کار سبب می شود که 
+درخواست برای هر بار اجرا مجدداً پیمایش و تفسیر شود.
+4.27) چه گزينه‌هايي براي تكرار (replication) وجود دارد؟ 
+There are several master/slave replication options available. These allow only 
+the master to make database changes and the slave can only do database reads. 
+The bottom of http://gborg.PostgreSQL.org/genpage?replication_research lists 
+them. A multi-master replication solution is being worked on at 
+http://gborg.PostgreSQL.org/project/pgreplication/projdisplay.php.
+4.28) چه گزينه‌هايي براي رمزنگاري وجود دارد؟ 
+  contrib/pgcrypto شامل توابع رمزنگاری زیادی است که می توان از آنها در دستورات 
+  SQL استفاده کرد.
+  برای رمز کردن ارتباط بین client و server  پایگاه داده حتماً گزینه SSL را بر 
+  روی پایگاه داده فعال کنیم.
+  در نسخه 7.3 به بعد کلمات عبور کاربران به طور اتوماتیک به صورت رمز شده ذخیره می 
+  شود ولی در نسخه های قبلی باید گزینه PASSWORD_ENCRYPTION را در 
+  فایلpostgresql.conf فعال کنیم. 
+  می توان پایگاههای داده را روی یک فایل سیستم رمزشده نگاهداری کرد
 
-    4.24) tcgfw+n+h+ m+y+t+w+a+n+ d+r+x+w+a+s+t+h+a+y+y+ a+z+ tcn+d+
-    p+a+y+gfa+h+ d+a+d+h+ t+w+l+y+d+ k+r+d+?+
-    
-   d+r+ hka+l+ hka+ddr+ a+&#1740;n+ &#1705;a+r+ a+m+&#1705;a+n+
-   p+dk&#1740;r+ n+&#1740;s+t+. PostgreSQL f+q+tj a+m+&#1705;a+n+
-   d+r+x+w+a+s+t+ a+z+ p+a+&#1740;gfa+h+ d+a+d+h+ a+&#1740; r+a+
-   m+&#1740; d+h+d+ &#1705;h+ d+r+ hka+l+ hka+ddr+ b+h+ aMn+ m+t+c+l+
-   b+a+sn&#1740;d+ w+ n+m+&#1740;t+w+a+n+ b+h+ tjw+r+ h+m+z+m+a+n+ a+z+
-   d+w+ p+a+&#1740;gfa+h+ d+a+d+h+ a+s+t+f+a+d+h+ &#1705;r+d+. a+l+b+t+h+
-   &#1740;&#1705; b+r+n+a+m+h+ &#1705;a+r+b+r+d+&#1740; x+w+d+ m+&#1740;
-   t+w+a+n+d+ b+h+ tjw+r+ h+m+z+m+a+n+ d+w+  p+a+&#1740;gfa+h+ d+a+d+h+
-   r+a+ m+w+r+d+ a+s+t+f+a+d+h+ q+r+a+r+ d+a+d+h+ w+ n+t+a+&#1740;g+ r+a+
-   b+a+ h+m+ t+r+&#1705;&#1740;b+ &#1705;n+d+ w+l+&#1740; n+m+&#1740;
-   t+w+a+n+d+ d+r+ &#1740;&#1705; d+r+x+w+a+s+t+ b+h+ h+r+  d+w+
-   p+a+&#1740;gfa+h+ d+a+d+h+ r+g+w+e+ &#1705;n+d+.
-   
-    4.25) tcgfw+n+h+ x+r+w+g+y+ y+k+ t+a+b+e+ m+y+t+w+a+n+d+  tcn+d+ r+d+y+f+
-    y+a+ s+t+w+n+ b+a+snd+?+
-    
-   d+r+ n+s+x+h+ 7.3 x+r+w+g+&#1740; &#1740;&#1705; t+a+b+e+ m+&#1740;
-   t+w+a+n+d+ tcn+d+ r+d+&#1740;f+ &#1740;a+ tcn+d+ s+t+w+n+ b+a+snd+.
-   b+r+a+&#1740; d+&#1740;d+n+  a+tjl+a+e+a+t+ b+&#1740;snt+r+ b+h+
-   s+a+&#1740;t+ z+&#1740;r+ m+r+a+g+e+h+
-   &#1705;n+&#1740;d+:http://techdocs.postgresql.org/guides/SetReturningF
-   unctions
-   
-    4.26) d+r+ t+w+a+b+e+ PL/PgSQL tcr+a+ n+m+y+t+w+a+n+ b+a+ a+tjm+y+n+a+n+
-    g+d+a+w+l+ m+w+q+t+ r+a+ a+y+g+a+d+ y+a+ hkdkf+ k+r+d+?+
-    
-   PL/PgSQL m+hkt+w+a+&#1740; t+w+a+b+e+ r+a+ dkx+&#1740;r+h+ (cache)
-   m+&#1740; &#1705;n+d+. &#1740;&#1705; a+tkr+ b+d+ g+a+n+b+&#1740;
-   a+&#1740;n+ &#1705;a+r+ aMn+ a+s+t+ &#1705;h+ a+gfr+ d+r+ t+a+b+e+
-   a+z+ &#1740;&#1705; g+d+w+l+ m+w+q+t+ a+s+t+f+a+d+h+ snw+d+ w+
-   b+e+d+a+:+ aMn+ g+d+w+l+ hkdkf+ w+ &#1740;&#1705; g+d+w+l+
-   g+d+&#1740;d+ b+h+ g+a+&#1740; aMn+ a+&#1740;g+a+d+ snw+d+,+ d+r+
-   f+r+a+x+w+a+n+&#1740; m+g+d+d+  aMn+ t+a+b+e+,+ m+hkt+w+a+&#1740;
-   dkx+&#1740;r+h+ snd+h+ t+a+b+e+  h+n+w+z+ b+h+ g+d+w+l+
-   q+d+&#1740;m+&#1740; a+sna+r+h+ m+&#1740; &#1705;n+d+ w+
-   b+n+a+b+r+a+&#1740;n+ a+g+r+a+&#1740; t+a+b+e+ b+a+ a+sn&#1705;a+l+
-   m+w+a+g+h+ m+&#1740; snw+d+. r+a+h+ hkl+ a+&#1740;n+ m+sn&#1705;l+
-   aMn+ a+s+t+ &#1705;h+ b+r+a+&#1740; g+d+a+w+l+ m+w+q+t+ a+z+
-   d+s+t+w+r+ EXECUTE a+s+t+f+a+d+h+ snw+d+ &#1705;h+ a+&#1740;n+
-   &#1705;a+r+ s+b+b+ m+&#1740; snw+d+ &#1705;h+ d+r+x+w+a+s+t+
-   b+r+a+&#1740; h+r+ b+a+r+ a+g+r+a+ m+g+d+d+a+:+ p+&#1740;m+a+&#1740;sn
-   w+ t+f+s+&#1740;r+ snw+d+.
-   
-    4.27) tch+ gfz+y+n+h+h+a+y+y+ b+r+a+y+ t+k+r+a+r+ (replication) w+g+w+d+
-    d+a+r+d+?+
-    
-   There are several master/slave replication options available. These
-   allow only the master to make database changes and the slave can only
-   do database reads. The bottom of
-   http://gborg.PostgreSQL.org/genpage?replication_research lists them. A
-   multi-master replication solution is being worked on at
-   http://gborg.PostgreSQL.org/project/pgreplication/projdisplay.php.
-   
-    4.28) tch+ gfz+y+n+h+h+a+y+y+ b+r+a+y+ r+m+z+n+gfa+r+y+ w+g+w+d+ d+a+r+d+?+
-    
-     * contrib/pgcrypto sna+m+l+ t+w+a+b+e+ r+m+z+n+gfa+r+&#1740;
-       z+&#1740;a+d+&#1740; a+s+t+ &#1705;h+ m+&#1740; t+w+a+n+ a+z+
-       aMn+h+a+ d+r+ d+s+t+w+r+a+t+ SQL a+s+t+f+a+d+h+ &#1705;r+d+.
-     * b+r+a+&#1740; r+m+z+ &#1705;r+d+n+ a+r+t+b+a+tj b+&#1740;n+ client
-       w+ server  p+a+&#1740;gfa+h+ d+a+d+h+ hkt+m+a+:+ gfz+&#1740;n+h+
-       SSL r+a+ b+r+ r+w+&#1740; p+a+&#1740;gfa+h+ d+a+d+h+ f+e+a+l+
-       &#1705;n+&#1740;m+.
-     * d+r+ n+s+x+h+ 7.3 b+h+ b+e+d+ &#1705;l+m+a+t+ e+b+w+r+
-       &#1705;a+r+b+r+a+n+ b+h+ tjw+r+ a+t+w+m+a+t+&#1740;&#1705; b+h+
-       c+w+r+t+ r+m+z+ snd+h+ dkx+&#1740;r+h+ m+&#1740; snw+d+
-       w+l+&#1740; d+r+ n+s+x+h+ h+a+&#1740; q+b+l+&#1740; b+a+&#1740;d+
-       gfz+&#1740;n+h+ PASSWORD_ENCRYPTION r+a+ d+r+
-       f+a+&#1740;l+postgresql.conf f+e+a+l+ &#1705;n+&#1740;m+.
-     * m+&#1740; t+w+a+n+ p+a+&#1740;gfa+h+h+a+&#1740; d+a+d+h+ r+a+
-       r+w+&#1740; &#1740;&#1705; f+a+&#1740;l+ s+&#1740;s+t+m+
-       r+m+z+snd+h+ n+gfa+h+d+a+r+&#1740; &#1705;r+d+
-     _________________________________________________________________
-   
-                            Extending PostgreSQL
-                                      
-    5.1) m+n+ y+k+ t+a+b+e+ n+w+snt+h+a+m+. tcgfw+n+h+ aMn+ r+a+ d+r+ psql
-    a+g+r+a+ k+n+m+?+ tcr+a+ b+a+ a+g+r+a+y+ aMn+ core dump m+y+gfy+r+m+?+
-    
-   d+l+a+&#1740;l+ m+x+t+l+f+&#1740; m+&#1740; t+w+a+n+d+ b+a+e+tk
-   b+r+w+z+ a+&#1740;n+ m+sn&#1705;l+ snw+d+. a+m+a+ q+b+l+ a+z+ h+m+h+,+
-   t+a+b+e+ x+w+d+ r+a+ b+h+ c+w+r+t+ g+d+a+ t+s+t+ &#1705;n+&#1740;d+.
-   
-    5.2) tcgfw+n+h+ m+y+t+w+a+n+m+ d+r+ t+w+l+y+d+ n+w+e+h+a+ w+ t+w+a+b+e+
-    g+d+y+d+ w+ g+a+l+b+ b+r+a+y+ PostgreSQL h+m+k+a+r+y+ w+ m+sna+r+k+t+
-    d+a+snt+h+ b+a+snm+?+
-    
-   &#1705;d+ x+w+d+ r+a+ b+h+ gfr+w+h+ p+s+t+&#1740; pgsql-hackers
-    a+r+s+a+l+ &#1705;n+&#1740;d+.
-   
-    5.3)  tcgfw+n+h+ m+y+t+w+a+n+m+ y+k+ t+a+b+e+ b+h+ z+b+a+n+ C b+n+w+y+s+m+
-    k+h+ x+r+w+g+y+ aMn+ y+k+ tuple  (tcn+d+ t+a+y+y+) b+a+snd+?+
-    
-   d+r+ n+s+x+h+ h+a+&#1740; 7.3 b+h+ b+e+d+ &#1740;&#1705; t+a+b+e+
-   m+&#1740; t+w+a+n+d+ &#1740;&#1705; g+d+w+l+ r+a+ b+h+ e+n+w+a+n+
-   x+r+w+g+&#1740; b+r+gfr+d+a+n+d+. a+&#1740;n+ w+&#1740;zjgf&#1740;
-   d+r+ t+w+a+b+e+&#1740; &#1705;h+ b+h+ z+b+a+n+h+a+&#1740; C w+
-   PL/PgSQL n+w+snt+h+ m+&#1740;snw+n+d+ b+h+ tjw+r+ &#1705;a+m+l+
-   w+g+w+d+ d+a+r+d+. r+a+h+n+m+a+ b+r+n+a+m+h+ n+w+&#1740;s+a+n+ r+a+
-   m+tja+l+e+h+ &#1705;n+&#1740;d+. &#1740;&#1705; m+tka+l+ a+z+ n+hkw+h+
-   b+r+gfr+d+a+n+d+n+ &#1740;&#1705; g+d+w+l+ b+h+ e+n+w+a+n+
-   x+r+w+g+&#1740; d+r+ contrib/tablefunc aMm+d+h+ a+s+t+.
-   
-    5.4) m+n+ y+k+ f+a+y+l+ m+n+b+e+ r+a+ e+w+dd k+r+d+h+ a+m+ tcr+a+ d+r+
-    e+m+l+y+a+t+ k+a+m+p+y+l+ m+g+d+d+ aMn+,+ t+i+y+y+r+ d+y+d+h+ n+m+y+
-    snw+d+?+
-    
-   Makefile b+r+a+&#1740; f+a+&#1740;l+h+a+&#1740; include snd+h+
-   w+a+b+s+t+gf&#1740;h+a+ r+a+ b+h+ d+r+s+t+&#1740; n+sna+n+ n+m+&#1740;
-   d+h+d+. b+r+a+&#1740; a+tjm+&#1740;n+a+n+ a+z+ a+&#1740;n+&#1705;h+
-   f+a+&#1740;l+&#1740; &#1705;h+ e+w+dd &#1705;r+d+h+ a+&#1740;d+
-   hkt+m+a+:+ d+w+b+a+r+h+ &#1705;a+m+p+&#1740;l+ m+&#1740;snw+d+
-   d+s+t+w+r+ make clean r+a+ a+g+r+a+ &#1705;n+&#1740;d+. a+gfr+ a+z+
-   &#1705;a+m+p+&#1740;l+r+ gcc a+s+t+f+a+d+h+ m+&#1740;
-   &#1705;n+&#1740;d+ m+&#1740; t+w+a+n+&#1740;d+ a+z+ gfz+&#1740;n+h+
-   enable-depend-- d+r+ m+w+q+e+ a+g+r+a+&#1740; b+r+n+a+m+h+ configure
-   a+s+t+f+a+d+h+ &#1705;n+&#1740;d+ a+&#1740;n+ gfz+&#1740;n+h+ b+a+e+tk
-   m+&#1740; snw+d+ &#1705;h+ w+a+b+s+t+gf&#1740;h+a+ b+h+ tjw+r+
-   a+t+w+m+a+t+&#1740;&#1705; t+w+l+&#1740;d+ snw+d+.
+
+
+Extending PostgreSQL
+5.1) من يك تابع نوشته‌ام. چگونه آن را در psql اجرا كنم؟ چرا با اجراي آن core 
+dump مي‌گيرم؟
+دلایل مختلفی می تواند باعث بروز این مشکل شود. اما قبل از همه، تابع خود را به 
+صورت جدا تست کنید.
+5.2) چگونه مي‌توانم در توليد نوع‌ها و توابع جديد و جالب براي PostgreSQL‌ همكاري 
+و مشاركت داشته باشم؟
+کد خود را به گروه پستی pgsql-hackers   ارسال کنید.
+5.3)  چگونه مي‌توانم يك تابع به زبان C بنويسم كه خروجي آن يك ‌tuple  (چند تايي) 
+باشد؟
+در نسخه های 7.3 به بعد یک تابع می تواند یک جدول را به عنوان خروجی برگرداند. این 
+ویژگی در توابعی که به زبانهای C و PL/PgSQL نوشته می‌شوند به طور کامل وجود دارد. 
+راهنما برنامه نویسان را مطالعه کنید. یک مثال از نحوه برگرداندن یک جدول به عنوان 
+خروجی در contrib/tablefunc آمده است.
+5.4) من يك فايل منبع را عوض كرده ام چرا در عمليات كامپيل مجدد آن، تغيير ديده 
+نمي‌شود؟
+Makefile برای فایلهای include شده وابستگیها را به درستی نشان نمی دهد. برای 
+اطمینان از اینکه فایلی که عوض کرده اید حتماً دوباره کامپیل می‌شود دستور make 
+clean را اجرا کنید. اگر از کامپیلر gcc استفاده می کنید می توانید از گزینه 
+enable-depend-- در موقع اجرای برنامه configure استفاده کنید این گزینه باعث می 
+شود که وابستگیها به طور اتوماتیک تولید شود.
