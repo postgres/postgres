@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.34 2001/06/08 23:53:48 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.35 2001/10/15 16:40:27 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -161,7 +161,7 @@ NoticeProcessor(void *arg, const char *message)
  * simple_prompt
  *
  * Generalized function especially intended for reading in usernames and
- * password interactively. Reads from stdin.
+ * password interactively. Reads from /dev/tty or stdin/stderr.
  *
  * prompt:		The prompt to print
  * maxlen:		How many characters to accept
@@ -176,39 +176,53 @@ simple_prompt(const char *prompt, int maxlen, bool echo)
 {
 	int			length;
 	char	   *destination;
+	static FILE *termin = NULL, *termout;
 
 #ifdef HAVE_TERMIOS_H
 	struct termios t_orig,
 				t;
-
 #endif
 
 	destination = (char *) malloc(maxlen + 2);
 	if (!destination)
 		return NULL;
-	if (prompt)
-		fputs(gettext(prompt), stderr);
 
 	prompt_state = true;
+
+	/* initialize the streams */
+	if (!termin)
+	{
+		if ((termin = termout = fopen("/dev/tty", "w+")) == NULL)
+		{
+			termin = stdin;
+			termout = stderr;
+		}
+	}
+	
+	if (prompt)
+	{
+		fputs(gettext(prompt), termout);
+		rewind(termout); /* does flush too */
+	}
 
 #ifdef HAVE_TERMIOS_H
 	if (!echo)
 	{
-		tcgetattr(0, &t);
+		tcgetattr(fileno(termin), &t);
 		t_orig = t;
 		t.c_lflag &= ~ECHO;
-		tcsetattr(0, TCSADRAIN, &t);
+		tcsetattr(fileno(termin), TCSADRAIN, &t);
 	}
 #endif
 
-	if (fgets(destination, maxlen, stdin) == NULL)
+	if (fgets(destination, maxlen, termin) == NULL)
 		destination[0] = '\0';
 
 #ifdef HAVE_TERMIOS_H
 	if (!echo)
 	{
-		tcsetattr(0, TCSADRAIN, &t_orig);
-		fputs("\n", stderr);
+		tcsetattr(fileno(termin), TCSADRAIN, &t_orig);
+		fputs("\n", termout);
 	}
 #endif
 
@@ -223,7 +237,7 @@ simple_prompt(const char *prompt, int maxlen, bool echo)
 
 		do
 		{
-			if (fgets(buf, sizeof(buf), stdin) == NULL)
+			if (fgets(buf, sizeof(buf), termin) == NULL)
 				break;
 			buflen = strlen(buf);
 		} while (buflen > 0 && buf[buflen - 1] != '\n');
