@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.79 2003/08/07 21:11:58 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.80 2003/09/29 18:21:33 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -80,6 +80,10 @@ static void showVersion(void);
 static void printSSLInfo(void);
 #endif
 
+#ifdef WIN32
+static void
+			checkWin32Codepage(void);
+#endif
 
 /*
  *
@@ -269,6 +273,9 @@ main(int argc, char *argv[])
 				   pset.progname, PG_VERSION);
 #ifdef USE_SSL
 			printSSLInfo();
+#endif
+#ifdef WIN32
+			checkWin32Codepage();
 #endif
 		}
 
@@ -620,4 +627,28 @@ printSSLInfo(void)
 		   SSL_get_cipher(ssl), sslbits);
 }
 
+#endif
+
+
+
+/*
+ * checkWin32Codepage
+ *
+ * Prints a warning when win32 console codepage differs from Windows codepage
+ */
+#ifdef WIN32
+static void
+checkWin32Codepage(void)
+{
+	unsigned int wincp, concp;
+
+	wincp = GetACP();
+	concp = GetConsoleCP();
+	if (wincp != concp) {
+	  printf("Warning: Console codepage (%u) differs from windows codepage (%u)\n"
+			 "         8-bit characters will not work correctly. See PostgreSQL\n"
+			 "         documentation \"Installation on Windows\" for details.\n\n",
+			 concp, wincp);
+	}
+}
 #endif
