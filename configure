@@ -6045,19 +6045,24 @@ _ACEOF
 
 fi
 
-
-echo "$as_me:$LINENO: checking for main in -lgetopt" >&5
-echo $ECHO_N "checking for main in -lgetopt... $ECHO_C" >&6
-if test "${ac_cv_lib_getopt_main+set}" = set; then
+echo "$as_me:$LINENO: checking for library containing getopt_long" >&5
+echo $ECHO_N "checking for library containing getopt_long... $ECHO_C" >&6
+if test "${ac_cv_search_getopt_long+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lgetopt  $LIBS"
+  ac_func_search_save_LIBS=$LIBS
+ac_cv_search_getopt_long=no
 cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 #include "confdefs.h"
 
-
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char getopt_long ();
 #ifdef F77_DUMMY_MAIN
 #  ifdef __cplusplus
      extern "C"
@@ -6067,7 +6072,7 @@ cat >conftest.$ac_ext <<_ACEOF
 int
 main ()
 {
-main ();
+getopt_long ();
   ;
   return 0;
 }
@@ -6084,23 +6089,67 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_getopt_main=yes
+  ac_cv_search_getopt_long="none required"
 else
   echo "$as_me: failed program was:" >&5
 cat conftest.$ac_ext >&5
-ac_cv_lib_getopt_main=no
 fi
 rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_getopt_main" >&5
-echo "${ECHO_T}$ac_cv_lib_getopt_main" >&6
-if test $ac_cv_lib_getopt_main = yes; then
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_LIBGETOPT 1
-_ACEOF
+if test "$ac_cv_search_getopt_long" = no; then
+  for ac_lib in getopt; do
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+    cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
 
-  LIBS="-lgetopt $LIBS"
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char getopt_long ();
+#ifdef F77_DUMMY_MAIN
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+#endif
+int
+main ()
+{
+getopt_long ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_search_getopt_long="-l$ac_lib"
+break
+else
+  echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+fi
+rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
+  done
+fi
+LIBS=$ac_func_search_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_search_getopt_long" >&5
+echo "${ECHO_T}$ac_cv_search_getopt_long" >&6
+if test "$ac_cv_search_getopt_long" != no; then
+  test "$ac_cv_search_getopt_long" = "none required" || LIBS="$ac_cv_search_getopt_long $LIBS"
 
 fi
 
