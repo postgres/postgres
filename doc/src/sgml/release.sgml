@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.310 2004/11/21 21:17:02 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.311 2004/11/22 00:37:59 tgl Exp $
 -->
 
 <appendix id="release">
@@ -10,7 +10,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.310 2004/11/21 21:17:02 tgl Exp
 
   <note>
    <title>Release date</title>
-   <simpara>2004-??-??, current as of 2004-11-06</simpara>
+   <simpara>2004-??-??, current as of 2004-11-21</simpara>
   </note>
 
   <sect2>
@@ -352,8 +352,8 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.310 2004/11/21 21:17:02 tgl Exp
       <para>
        Syntax checking of array input values has been tightened up
        considerably. Junk that was previously allowed in odd places with
-       odd results now causes an <literal>ERROR. Empty-string element
-       values must now be written as ""</>, rather than writing nothing.
+       odd results now causes an error. Empty-string element values
+       must now be written as <literal>""</>, rather than writing nothing.
        Also changed behavior with respect to whitespace surrounding
        array elements: trailing whitespace is now ignored, for symmetry
        with leading whitespace (which has always been ignored).
@@ -610,7 +610,8 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.310 2004/11/21 21:17:02 tgl Exp
       (Manfred Koizar)
      </para>
      <para>
-      This gives better statistics for asymmetric data distributions.
+      This gives better statistics when the density of valid rows is very
+      different in different regions of a table.
      </para>
     </listitem>
 
@@ -767,10 +768,22 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.310 2004/11/21 21:17:02 tgl Exp
 
     <listitem>
      <para>
+      Some logging-related configuration parameters could formerly be adjusted
+      by ordinary users, but only in the <quote>more verbose</> direction.
+      They are now treated more strictly: only superusers can set them.
+      However, a superuser may use <command>ALTER USER</> to provide per-user
+      settings of these values for non-superusers.  Also, it is now possible
+      for superusers to set values of superuser-only configuration parameters
+      via <literal>PGOPTIONS</>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
       Allow configuration files to be placed outside the data directory (mlw)
      </para>
      <para>
-      By default, configuration files sit in the top server directory.
+      By default, configuration files are kept in the cluster's top directory.
       With this addition, configuration files can be placed outside the
       data directory, easing administration.
      </para>
@@ -1070,7 +1083,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.310 2004/11/21 21:17:02 tgl Exp
       columns (Tom)
      </para>
      <para>
-      This is related to the new capability of adding defaults for new
+      This falls out from the new capability of specifying defaults for new
       columns.
      </para>
     </listitem>
@@ -1141,7 +1154,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.310 2004/11/21 21:17:02 tgl Exp
 
     <listitem>
      <para>
-      Have <command>ALTER TABLE OWNER</> change dependent sequence
+      Make <command>ALTER TABLE OWNER</> change dependent sequence
       ownership too (Alvaro)
      </para>
     </listitem>
@@ -1471,7 +1484,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.310 2004/11/21 21:17:02 tgl Exp
 
     <listitem>
      <para>
-      Fix <function>to_char(year)</> for BC dates (previously it
+      Fix <function>date_part(year)</> for BC dates (previously it
       returned one less than the correct year) (Bruce)
      </para>
     </listitem>
@@ -1831,6 +1844,10 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.310 2004/11/21 21:17:02 tgl Exp
       Use dependency information to improve the reliability of
       <application>pg_dump</> (Tom)
      </para>
+     <para>
+      This should solve the longstanding problems with related objects
+      sometimes being dumped in the wrong order.
+     </para>
     </listitem>
 
     <listitem>
@@ -1937,15 +1954,15 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.310 2004/11/21 21:17:02 tgl Exp
 
     <listitem>
      <para>
-      Many ecpg improvements, including <command>SET DESCRIPTOR</> (Michael)
+      Add <function>PQprepare/PQsendPrepared()</> functions to support
+      preparing statements without necessarily specifying the data types
+      of their parameters (Abhijit Menon-Sen)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Add <function>PQprepare/PQsendPrepared()</> functions to support
-      preparing statements without necessarily specifying the data types
-      of their parameters (Abhijit Menon-Sen)
+      Many ecpg improvements, including <command>SET DESCRIPTOR</> (Michael)
      </para>
     </listitem>
 
