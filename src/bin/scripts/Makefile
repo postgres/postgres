@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/scripts/Makefile,v 1.21 2003/06/18 12:19:11 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/scripts/Makefile,v 1.22 2003/08/08 04:52:21 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -17,22 +17,21 @@ PROGRAMS = createdb createlang createuser dropdb droplang dropuser clusterdb vac
 
 override CPPFLAGS := -I$(top_srcdir)/src/bin/pg_dump -I$(top_srcdir)/src/bin/psql -I$(libpq_srcdir) $(CPPFLAGS)
 
-
 all: submake-libpq submake-backend $(PROGRAMS)
 
 %: %.o
 	$(CC) $(CFLAGS) $^ $(libpq) $(LDFLAGS) $(LIBS) -o $@
 
-createdb: createdb.o common.o dumputils.o sprompt.o $(top_builddir)/src/backend/parser/keywords.o
-createlang: createlang.o common.o sprompt.o print.o mbprint.o
-createuser: createuser.o common.o dumputils.o sprompt.o $(top_builddir)/src/backend/parser/keywords.o
-dropdb: dropdb.o common.o dumputils.o sprompt.o $(top_builddir)/src/backend/parser/keywords.o
-droplang: droplang.o common.o sprompt.o print.o mbprint.o
-dropuser: dropuser.o common.o dumputils.o sprompt.o $(top_builddir)/src/backend/parser/keywords.o
-clusterdb: clusterdb.o common.o dumputils.o sprompt.o $(top_builddir)/src/backend/parser/keywords.o
-vacuumdb: vacuumdb.o common.o sprompt.o
+createdb: createdb.o common.o dumputils.o $(top_builddir)/src/backend/parser/keywords.o
+createlang: createlang.o common.o print.o mbprint.o
+createuser: createuser.o common.o dumputils.o $(top_builddir)/src/backend/parser/keywords.o
+dropdb: dropdb.o common.o dumputils.o $(top_builddir)/src/backend/parser/keywords.o
+droplang: droplang.o common.o print.o mbprint.o
+dropuser: dropuser.o common.o dumputils.o $(top_builddir)/src/backend/parser/keywords.o
+clusterdb: clusterdb.o common.o dumputils.o $(top_builddir)/src/backend/parser/keywords.o
+vacuumdb: vacuumdb.o common.o
 
-dumputils.c sprompt.c : % : $(top_srcdir)/src/bin/pg_dump/%
+dumputils.c: % : $(top_srcdir)/src/bin/pg_dump/%
 	rm -f $@ && $(LN_S) $< .
 
 print.c mbprint.c : % : $(top_srcdir)/src/bin/psql/%
@@ -61,4 +60,4 @@ uninstall:
 
 
 clean distclean maintainer-clean:
-	rm -f $(addsuffix $(X), $(PROGRAMS)) $(addsuffix .o, $(PROGRAMS)) common.o dumputils.o sprompt.o print.o mbprint.o dumputils.c sprompt.c print.c mbprint.c
+	rm -f $(addsuffix $(X), $(PROGRAMS)) $(addsuffix .o, $(PROGRAMS)) common.o dumputils.o print.o mbprint.o dumputils.c print.c mbprint.c

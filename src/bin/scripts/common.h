@@ -17,8 +17,6 @@ typedef void (*help_handler) (const char *);
 
 void		handle_help_version_opts(int argc, char *argv[], const char *fixed_progname, help_handler hlp);
 
-extern char *simple_prompt(const char *prompt, int maxlen, bool echo);
-
 PGconn *connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 		const char *pguser, bool require_password, const char *progname);
 

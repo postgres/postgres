@@ -3,11 +3,8 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/Attic/sprompt.c,v 1.6 2003/08/04 00:43:29 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/port/sprompt.c,v 1.1 2003/08/08 04:52:22 momjian Exp $
  */
-
-
-/* This file is shared by psql and pg_dump. */
 
 
 /*
@@ -22,7 +19,7 @@
  *
  * Returns a malloc()'ed string with the input (w/o trailing newline).
  */
-#include "postgres_fe.h"
+#include "postgres.h"
 
 #ifdef HAVE_TERMIOS_H
 #include <termios.h>

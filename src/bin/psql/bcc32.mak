@@ -65,7 +65,6 @@ CLEAN :
 	-@erase "$(INTDIR)\copy.obj"
 	-@erase "$(INTDIR)\startup.obj"
 	-@erase "$(INTDIR)\prompt.obj"
-	-@erase "$(INTDIR)\sprompt.obj"
 	-@erase "$(INTDIR)\variables.obj"
 	-@erase "$(INTDIR)\large_obj.obj"
 	-@erase "$(INTDIR)\print.obj"
@@ -119,7 +118,6 @@ LINK32_OBJS= \
 	copy.obj \
 	startup.obj \
 	prompt.obj \
-	sprompt.obj \
 	variables.obj \
 	large_obj.obj \
 	print.obj \

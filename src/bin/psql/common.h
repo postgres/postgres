@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/common.h,v 1.27 2003/08/04 23:59:39 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/common.h,v 1.28 2003/08/08 04:52:21 momjian Exp $
  */
 #ifndef COMMON_H
 #define COMMON_H
@@ -24,8 +24,6 @@ __attribute__((format(printf, 1, 2)));
 
 extern void NoticeProcessor(void *arg, const char *message);
 
-extern char *simple_prompt(const char *prompt, int maxlen, bool echo);
-
 extern volatile bool cancel_pressed;
 
 extern void ResetCancelConn(void);
@@ -39,9 +37,6 @@ extern PGresult *PSQLexec(const char *query, bool start_xact);
 extern bool SendQuery(const char *query);
 
 extern bool is_superuser(void);
-
-/* sprompt.h */
-extern char *simple_prompt(const char *prompt, int maxlen, bool echo);
 
 /* Parse a numeric character code from the string pointed at by *buf, e.g.
  * one written as 0x0c (hexadecimal) or 015 (octal); advance *buf to the last

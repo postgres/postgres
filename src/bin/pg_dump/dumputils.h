@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dumputils.h,v 1.7 2003/08/04 02:40:09 momjian Exp $
+ * $Id: dumputils.h,v 1.8 2003/08/08 04:52:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,8 +17,6 @@
 
 #include "pqexpbuffer.h"
 
-
-extern char *simple_prompt(const char *prompt, int maxlen, bool echo);
 
 extern const char *fmtId(const char *identifier);
 extern void appendStringLiteral(PQExpBuffer buf, const char *str,
