@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/bki.sgml,v 1.13 2005/01/05 23:42:03 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/bki.sgml,v 1.14 2005/03/29 19:44:22 tgl Exp $
  -->
 
 <chapter id="bki">
@@ -97,6 +97,7 @@ $PostgreSQL: pgsql/doc/src/sgml/bki.sgml,v 1.13 2005/01/05 23:42:03 tgl Exp $
       <type>oid</type>, <type>tid</type>, <type>xid</type>,
       <type>cid</type>, <type>int2vector</type>, <type>oidvector</type>,
       <type>_int4</type> (array), <type>_text</type> (array),
+      <type>_oid</type> (array), <type>_char</type> (array),
       <type>_aclitem</type> (array).  Although it is possible to create
       tables containing columns of other types, this cannot be done until
       after <structname>pg_type</> has been created and filled with

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.200 2005/03/29 00:16:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.201 2005/03/29 19:44:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -146,6 +146,10 @@ static const struct typinfo TypInfo[] = {
 	{"_int4", INT4ARRAYOID, INT4OID, -1, false, 'i', 'x',
 	F_ARRAY_IN, F_ARRAY_OUT},
 	{"_text", 1009, TEXTOID, -1, false, 'i', 'x',
+	F_ARRAY_IN, F_ARRAY_OUT},
+	{"_oid", 1028, OIDOID, -1, false, 'i', 'x',
+	F_ARRAY_IN, F_ARRAY_OUT},
+	{"_char", 1002, CHAROID, -1, false, 'i', 'x',
 	F_ARRAY_IN, F_ARRAY_OUT},
 	{"_aclitem", 1034, ACLITEMOID, -1, false, 'i', 'x',
 	F_ARRAY_IN, F_ARRAY_OUT}

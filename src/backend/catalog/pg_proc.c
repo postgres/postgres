@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.124 2005/03/29 00:16:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.125 2005/03/29 19:44:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -151,32 +151,36 @@ ProcedureCreate(const char *procedureName,
 	for (i = 0; i < Natts_pg_proc; ++i)
 	{
 		nulls[i] = ' ';
-		values[i] = (Datum) NULL;
+		values[i] = (Datum) 0;
 		replaces[i] = 'r';
 	}
 
-	i = 0;
 	namestrcpy(&procname, procedureName);
-	values[i++] = NameGetDatum(&procname);		/* proname */
-	values[i++] = ObjectIdGetDatum(procNamespace);		/* pronamespace */
-	values[i++] = Int32GetDatum(GetUserId());	/* proowner */
-	values[i++] = ObjectIdGetDatum(languageObjectId);	/* prolang */
-	values[i++] = BoolGetDatum(isAgg);			/* proisagg */
-	values[i++] = BoolGetDatum(security_definer);		/* prosecdef */
-	values[i++] = BoolGetDatum(isStrict);		/* proisstrict */
-	values[i++] = BoolGetDatum(returnsSet);		/* proretset */
-	values[i++] = CharGetDatum(volatility);		/* provolatile */
-	values[i++] = UInt16GetDatum(parameterCount);		/* pronargs */
-	values[i++] = ObjectIdGetDatum(returnType); /* prorettype */
-	values[i++] = PointerGetDatum(proargtypes);	/* proargtypes */
-	values[i++] = namesarray;					/* proargnames */
-	if (namesarray == PointerGetDatum(NULL))
+	values[Anum_pg_proc_proname - 1] = NameGetDatum(&procname);
+	values[Anum_pg_proc_pronamespace - 1] = ObjectIdGetDatum(procNamespace);
+	values[Anum_pg_proc_proowner - 1] = Int32GetDatum(GetUserId());
+	values[Anum_pg_proc_prolang - 1] = ObjectIdGetDatum(languageObjectId);
+	values[Anum_pg_proc_proisagg - 1] = BoolGetDatum(isAgg);
+	values[Anum_pg_proc_prosecdef - 1] = BoolGetDatum(security_definer);
+	values[Anum_pg_proc_proisstrict - 1] = BoolGetDatum(isStrict);
+	values[Anum_pg_proc_proretset - 1] = BoolGetDatum(returnsSet);
+	values[Anum_pg_proc_provolatile - 1] = CharGetDatum(volatility);
+	values[Anum_pg_proc_pronargs - 1] = UInt16GetDatum(parameterCount);
+	values[Anum_pg_proc_prorettype - 1] = ObjectIdGetDatum(returnType);
+	values[Anum_pg_proc_proargtypes - 1] = PointerGetDatum(proargtypes);
+	/* XXX for now, just null out the new columns */
+	nulls[Anum_pg_proc_proallargtypes - 1] = 'n';
+	nulls[Anum_pg_proc_proargmodes - 1] = 'n';
+	if (namesarray != PointerGetDatum(NULL))
+		values[Anum_pg_proc_proargnames - 1] = namesarray;
+	else
 		nulls[Anum_pg_proc_proargnames - 1] = 'n';
-	values[i++] = DirectFunctionCall1(textin,	/* prosrc */
+	values[Anum_pg_proc_prosrc - 1] = DirectFunctionCall1(textin,
 									  CStringGetDatum(prosrc));
-	values[i++] = DirectFunctionCall1(textin,	/* probin */
+	values[Anum_pg_proc_probin - 1] = DirectFunctionCall1(textin,
 									  CStringGetDatum(probin));
-	/* proacl will be handled below */
+	/* start out with empty permissions */
+	nulls[Anum_pg_proc_proacl - 1] = 'n';
 
 	rel = heap_openr(ProcedureRelationName, RowExclusiveLock);
 	tupDesc = RelationGetDescr(rel);
@@ -242,10 +246,6 @@ ProcedureCreate(const char *procedureName,
 	else
 	{
 		/* Creating a new procedure */
-
-		/* start out with empty permissions */
-		nulls[Anum_pg_proc_proacl - 1] = 'n';
-
 		tup = heap_formtuple(tupDesc, values, nulls);
 		simple_heap_insert(rel, tup);
 		is_update = false;

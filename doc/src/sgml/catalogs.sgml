@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.98 2005/03/29 00:16:49 tgl Exp $
+ $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.99 2005/03/29 19:44:22 tgl Exp $
  -->
 
 <chapter id="catalogs">
@@ -2855,7 +2855,39 @@
       <entry><structfield>proargtypes</structfield></entry>
       <entry><type>oidvector</type></entry>
       <entry><literal><link linkend="catalog-pg-type"><structname>pg_type</structname></link>.oid</literal></entry>
-      <entry>An array with the data types of the function arguments</entry>
+      <entry>
+       An array with the data types of the function arguments.  This includes
+       only input arguments (including INOUT arguments), and thus represents
+       the call signature of the function.
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>proallargtypes</structfield></entry>
+      <entry><type>oid[]</type></entry>
+      <entry><literal><link linkend="catalog-pg-type"><structname>pg_type</structname></link>.oid</literal></entry>
+      <entry>
+       An array with the data types of the function arguments.  This includes
+       all arguments (including OUT and INOUT arguments); however, if all the
+       arguments are IN arguments, this field will be null.
+       Note that subscripting is 1-based, whereas for historical reasons
+       <structfield>proargtypes</> is subscripted from 0.
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>proargmodes</structfield></entry>
+      <entry><type>"char"[]</type></entry>
+      <entry></entry>
+      <entry>
+        An array with the modes of the function arguments, encoded as
+        <literal>i</literal> for IN arguments,
+        <literal>o</literal> for OUT arguments,
+        <literal>b</literal> for INOUT arguments.
+        If all the arguments are IN arguments, this field will be null.
+        Note that subscripts correspond to positions of
+        <structfield>proallargtypes</> not <structfield>proargtypes</>.
+      </entry>
      </row>
 
      <row>
@@ -2865,7 +2897,9 @@
       <entry>
         An array with the names of the function arguments.
         Arguments without a name are set to empty strings in the array.
-        If none of the arguments have a name, this field may be null.
+        If none of the arguments have a name, this field will be null.
+        Note that subscripts correspond to positions of
+        <structfield>proallargtypes</> not <structfield>proargtypes</>.
       </entry>
      </row>
 
