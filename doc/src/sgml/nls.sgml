@@ -1,4 +1,6 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/nls.sgml,v 1.5 2002/10/30 05:14:32 momjian Exp $ -->
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/nls.sgml,v 1.6 2003/05/19 21:38:23 tgl Exp $
+-->
 
 <chapter id="nls">
  <docinfo>
@@ -241,20 +243,20 @@ gmake update-po
 
      <listitem>
       <para>
-       If the original is a printf format string, the translation also
-       needs to be.  The translation also needs to have the same
+       If the original is a <function>printf</> format string, the translation
+       also needs to be.  The translation also needs to have the same
        format specifiers in the same order.  Sometimes the natural
        rules of the language make this impossible or at least awkward.
-       In this case you can use this format:
+       In that case you can modify the format specifiers like this:
 <programlisting>
 msgstr "Die Datei %2$s hat %1$u Zeichen."
 </programlisting>
        Then the first placeholder will actually use the second
        argument from the list.  The
        <literal><replaceable>digits</replaceable>$</literal> needs to
-       follow the % and come before any other format manipulators.
+       follow the % immediately, before any other format manipulators.
        (This feature really exists in the <function>printf</function>
-       family of functions.  You may not have heard of it because
+       family of functions.  You may not have heard of it before because
        there is little use for it outside of message
        internationalization.)
       </para>
@@ -279,6 +281,7 @@ msgstr "Die Datei %2$s hat %1$u Zeichen."
        open file %s</literal>) should probably not start with a
        capital letter (if your language distinguishes letter case) or
        end with a period (if your language uses punctuation marks).
+       It may help to read <xref linkend="error-style-guide">.
       </para>
      </listitem>
 
@@ -301,8 +304,11 @@ msgstr "Die Datei %2$s hat %1$u Zeichen."
  <sect1 id="nls-programmer">
   <title>For the Programmer</title>
 
+  <sect2 id="nls-mechanics">
+   <title>Mechanics</title>
+
   <para>
-   This section describes how to support native language support in a
+   This section describes how to implement native language support in a
    program or library that is part of the
    <productname>PostgreSQL</> distribution.
    Currently, it only applies to C programs.
@@ -348,15 +354,15 @@ fprintf(stderr, gettext("panic level %d\n"), lvl);
     </para>
 
     <para>
-     This may tend to add a lot of clutter.  One common shortcut is to
+     This may tend to add a lot of clutter.  One common shortcut is to use
 <programlisting>
-#define _(x) gettext((x))
+#define _(x) gettext(x)
 </programlisting>
      Another solution is feasible if the program does much of its
      communication through one or a few functions, such as
-     <function>elog()</function> in the backend.  Then you make this
+     <function>ereport()</function> in the backend.  Then you make this
      function call <function>gettext</function> internally on all
-     input values.
+     input strings.
     </para>
    </step>
 
@@ -430,19 +436,29 @@ fprintf(stderr, gettext("panic level %d\n"), lvl);
    The build system will automatically take care of building and
    installing the message catalogs.
   </para>
+  </sect2>
+
+  <sect2 id="nls-guidelines">
+   <title>Message-writing guidelines</title>
 
   <para>
-   To ease the translation of messages, here are some guidelines:
+   Here are some guidelines for writing messages that are easily
+   translatable.
 
    <itemizedlist>
     <listitem>
      <para>
-      Do not construct sentences at run-time out of laziness, like
+      Do not construct sentences at run-time, like
 <programlisting>
-printf("Files where %s.\n", flag ? "copied" : "removed");
+printf("Files were %s.\n", flag ? "copied" : "removed");
 </programlisting>
       The word order within the sentence may be different in other
-      languages.
+      languages.  Also, even if you remember to call gettext() on each
+      fragment, the fragments may not translate well separately.  It's
+      better to duplicate a little code so that each message to be
+      translated is a coherent whole.  Only numbers, file names, and
+      such-like run-time variables should be inserted at runtime into
+      a message text.
      </para>
     </listitem>
 
@@ -462,8 +478,8 @@ else
 </programlisting>
       then be disappointed.  Some languages have more than two forms,
       with some peculiar rules.  We may have a solution for this in
-      the future, but for now this is best avoided altogether.  You
-      could write:
+      the future, but for now the matter is best avoided altogether.
+      You could write:
 <programlisting>
 printf("number of copied files: %d", n);
 </programlisting>
@@ -485,6 +501,7 @@ printf("number of copied files: %d", n);
     </listitem>
    </itemizedlist>
   </para>
+  </sect2>
  </sect1>
 
 </chapter>
