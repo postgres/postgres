@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: outfuncs.c,v 1.91 1999/07/24 23:21:07 tgl Exp $
+ *	$Id: outfuncs.c,v 1.92 1999/08/09 06:20:24 momjian Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -445,6 +445,7 @@ _outIndexScan(StringInfo str, IndexScan *node)
 	appendStringInfo(str, " :indxqualorig ");
 	_outNode(str, node->indxqualorig);
 
+	appendStringInfo(str, " :indxorderdir %d ", node->indxorderdir);
 }
 
 /*

@@ -4,7 +4,7 @@
  *
  * Copyright (c) 1994-5, Regents of the University of California
  *
- *	  $Id: explain.c,v 1.43 1999/07/17 20:16:52 momjian Exp $
+ *	  $Id: explain.c,v 1.44 1999/08/09 06:20:21 momjian Exp $
  *
  */
 
@@ -200,6 +200,8 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 	switch (nodeTag(plan))
 	{
 		case T_IndexScan:
+			if (ScanDirectionIsBackward(((IndexScan *)plan)->indxorderdir))
+				appendStringInfo(str, " Backward");
 			appendStringInfo(str, " using ");
 			i = 0;
 			foreach(l, ((IndexScan *) plan)->indxid)

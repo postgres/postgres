@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.45 1999/07/29 02:45:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.46 1999/08/09 06:20:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -435,6 +435,9 @@ _equalIndexScan(IndexScan *a, IndexScan *b)
 		return false;
 
 	if (a->scan.scanrelid != b->scan.scanrelid)
+		return false;
+
+	if (a->indxorderdir != b->indxorderdir)
 		return false;
 
 	if (!equali(a->indxid, b->indxid))

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.67 1999/08/09 01:01:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.68 1999/08/09 06:20:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1024,6 +1024,7 @@ make_indexscan(List *qptlist,
 	node->indxid = indxid;
 	node->indxqual = indxqual;
 	node->indxqualorig = indxqualorig;
+	node->indxorderdir = NoMovementScanDirection;
 	node->scan.scanstate = (CommonScanState *) NULL;
 
 	return node;

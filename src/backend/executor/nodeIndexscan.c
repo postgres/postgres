@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.40 1999/07/16 04:58:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.41 1999/08/09 06:20:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -99,6 +99,13 @@ IndexNext(IndexScan *node)
 	 */
 	estate = node->scan.plan.state;
 	direction = estate->es_direction;
+	if (ScanDirectionIsBackward(node->indxorderdir))
+	{
+		if (ScanDirectionIsForward(direction))
+			direction = BackwardScanDirection;
+		else if (ScanDirectionIsBackward(direction))
+			direction = ForwardScanDirection;
+	}  
 	snapshot = estate->es_snapshot;
 	scanstate = node->scan.scanstate;
 	indexstate = node->indxstate;
@@ -316,6 +323,8 @@ ExecIndexReScan(IndexScan *node, ExprContext *exprCtxt, Plan *parent)
 	indxqual = node->indxqual;
 	numScanKeys = indexstate->iss_NumScanKeys;
 	indexstate->iss_IndexPtr = -1;
+	if (ScanDirectionIsBackward(node->indxorderdir))
+		indexstate->iss_IndexPtr = numIndices;
 
 	/* If this is re-scanning of PlanQual ... */
 	if (estate->es_evTuple != NULL &&
@@ -966,6 +975,8 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 	}
 
 	indexstate->iss_NumIndices = numIndices;
+	if (ScanDirectionIsBackward(node->indxorderdir))
+		indexPtr = numIndices;
 	indexstate->iss_IndexPtr = indexPtr;
 	indexstate->iss_ScanKeys = scanKeys;
 	indexstate->iss_NumScanKeys = numScanKeys;

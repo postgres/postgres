@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.61 1999/07/17 20:17:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.62 1999/08/09 06:20:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +39,7 @@ static List *make_subplanTargetList(Query *parse, List *tlist,
 static Plan *make_groupplan(List *group_tlist, bool tuplePerGroup,
 			   List *groupClause, AttrNumber *grpColIdx,
 			   Plan *subplan);
-static bool need_sortplan(List *sortcls, Plan *plan);
+static ScanDirection get_dir_to_omit_sortplan(List *sortcls, Plan *plan);
 static Plan *make_sortplan(List *tlist, List *sortcls, Plan *plannode);
 
 /*****************************************************************************
@@ -303,8 +303,17 @@ union_planner(Query *parse)
 	}
 	else
 	{
-		if (parse->sortClause && need_sortplan(parse->sortClause, result_plan))
-			return (make_sortplan(tlist, parse->sortClause, result_plan));
+		if (parse->sortClause)
+		{
+			ScanDirection	dir = get_dir_to_omit_sortplan(parse->sortClause, result_plan);
+			if (ScanDirectionIsNoMovement(dir))
+				return (make_sortplan(tlist, parse->sortClause, result_plan));
+			else
+			{ 
+				((IndexScan *)result_plan)->indxorderdir = dir;
+				return ((Plan *) result_plan);
+			}
+		}
 		else
 			return ((Plan *) result_plan);
 	}
@@ -822,7 +831,7 @@ pg_checkretval(Oid rettype, List *queryTreeList)
 
 
 /* ----------
- * Support function for need_sortplan
+ * Support function for get scan direction to omit sortplan
  * ----------
  */
 static TargetEntry *
@@ -845,11 +854,13 @@ get_matching_tle(Plan *plan, Resdom *resdom)
  * Check if a user requested ORDER BY is already satisfied by
  * the choosen index scan.
  *
- * Returns TRUE if sort is required, FALSE if can be omitted.
+ * Returns the direction of Index scan to omit sort,
+ * if sort is required returns NoMovementScanDirection  
+ *
  * ----------
  */
-static bool
-need_sortplan(List *sortcls, Plan *plan)
+static ScanDirection
+get_dir_to_omit_sortplan(List *sortcls, Plan *plan)
 {
 	Relation	indexRel;
 	IndexScan  *indexScan;
@@ -858,13 +869,15 @@ need_sortplan(List *sortcls, Plan *plan)
 	HeapTuple	htup;
 	Form_pg_index index_tup;
 	int			key_no = 0;
+	ScanDirection   dir, nodir = NoMovementScanDirection;
 
+	dir = nodir;
 	/* ----------
 	 * Must be an IndexScan
 	 * ----------
 	 */
 	if (nodeTag(plan) != T_IndexScan)
-		return TRUE;
+		return nodir;
 
 	indexScan = (IndexScan *) plan;
 
@@ -873,16 +886,16 @@ need_sortplan(List *sortcls, Plan *plan)
 	 * ----------
 	 */
 	if (plan->lefttree != NULL)
-		return TRUE;
+		return nodir;
 	if (plan->righttree != NULL)
-		return TRUE;
+		return nodir;
 
 	/* ----------
 	 * Must be a single index scan
 	 * ----------
 	 */
 	if (length(indexScan->indxid) != 1)
-		return TRUE;
+		return nodir;
 
 	/* ----------
 	 * Indices can only have up to 8 attributes. So an ORDER BY using
@@ -890,7 +903,7 @@ need_sortplan(List *sortcls, Plan *plan)
 	 * ----------
 	 */
 	if (length(sortcls) > 8)
-		return TRUE;
+		return nodir;
 
 	/* ----------
 	 * The choosen Index must be a btree
@@ -902,7 +915,7 @@ need_sortplan(List *sortcls, Plan *plan)
 	if (strcmp(nameout(&(indexRel->rd_am->amname)), "btree") != 0)
 	{
 		heap_close(indexRel);
-		return TRUE;
+		return nodir;
 	}
 	heap_close(indexRel);
 
@@ -937,7 +950,7 @@ need_sortplan(List *sortcls, Plan *plan)
 			 * Could this happen?
 			 * ----------
 			 */
-			return TRUE;
+			return nodir;
 		}
 		if (nodeTag(tle->expr) != T_Var)
 		{
@@ -946,7 +959,7 @@ need_sortplan(List *sortcls, Plan *plan)
 			 * cannot be the indexed attribute
 			 * ----------
 			 */
-			return TRUE;
+			return nodir;
 		}
 		var = (Var *) (tle->expr);
 
@@ -957,7 +970,7 @@ need_sortplan(List *sortcls, Plan *plan)
 			 * that of the index
 			 * ----------
 			 */
-			return TRUE;
+			return nodir;
 		}
 
 		if (var->varattno != index_tup->indkey[key_no])
@@ -966,7 +979,7 @@ need_sortplan(List *sortcls, Plan *plan)
 			 * It isn't the indexed attribute.
 			 * ----------
 			 */
-			return TRUE;
+			return nodir;
 		}
 
 		if (oprid(oper("<", resdom->restype, resdom->restype, FALSE)) != sortcl->opoid)
@@ -975,7 +988,19 @@ need_sortplan(List *sortcls, Plan *plan)
 			 * Sort order isn't in ascending order.
 			 * ----------
 			 */
-			return TRUE;
+			if (ScanDirectionIsForward(dir))
+				return nodir;
+			dir = BackwardScanDirection;
+		}
+		else
+		{
+			/* ----------
+			 * Sort order is in ascending order.
+			 * ----------
+			*/
+			if (ScanDirectionIsBackward(dir))
+				return nodir;
+			dir = ForwardScanDirection;
 		}
 
 		key_no++;
@@ -985,5 +1010,5 @@ need_sortplan(List *sortcls, Plan *plan)
 	 * Index matches ORDER BY - sort not required
 	 * ----------
 	 */
-	return FALSE;
+	return dir;
 }
