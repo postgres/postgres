@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-int.h,v 1.87 2004/03/25 21:48:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-int.h,v 1.88 2004/05/31 18:42:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -490,7 +490,7 @@ __attribute__((format_arg(1)));
 #else
 #define SOCK_ERRNO errno
 #define SOCK_STRERROR pqStrerror
-#define SOCK_ERRNO_SET(e) errno=e
+#define SOCK_ERRNO_SET(e) (errno = (e))
 #endif
 
 #endif   /* LIBPQ_INT_H */
