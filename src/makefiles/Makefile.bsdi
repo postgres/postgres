@@ -15,10 +15,10 @@ endif
 ifeq ($(DLSUFFIX), .so)
 CFLAGS_SL = -fpic
 export_dynamic = -export-dynamic
-shlib_symbolic = -Bsymbolic
+shlib_symbolic = -Wl,-Bsymbolic
 else
 CFLAGS_SL =
 endif
 
 %.so: %.o
-	$(LD) -shared -o $@ $<
+	$(CC) -shared -o $@ $<
