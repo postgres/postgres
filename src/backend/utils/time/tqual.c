@@ -16,7 +16,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.57 2002/07/20 04:57:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.58 2002/07/30 16:08:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,6 +83,7 @@ HeapTupleSatisfiesItself(HeapTupleHeader tuple)
 					return false;
 				}
 				tuple->t_infomask |= HEAP_XMIN_COMMITTED;
+				tuple->t_infomask &= ~HEAP_MOVED;
 			}
 		}
 		else if (tuple->t_infomask & HEAP_MOVED_IN)

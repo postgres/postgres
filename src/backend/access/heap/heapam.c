@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.142 2002/07/20 05:16:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.143 2002/07/30 16:08:33 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1123,11 +1123,14 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid)
 			CheckMaxObjectId(HeapTupleGetOid(tup));
 	}
 
+	tup->t_data->t_infomask &= ~(HEAP_XACT_MASK);
 	HeapTupleHeaderSetXmin(tup->t_data, GetCurrentTransactionId());
 	HeapTupleHeaderSetCmin(tup->t_data, cid);
 	HeapTupleHeaderSetXmaxInvalid(tup->t_data);
-	HeapTupleHeaderSetCmax(tup->t_data, FirstCommandId);
-	tup->t_data->t_infomask &= ~(HEAP_XACT_MASK);
+	/*
+	 * Do *not* set Cmax!  This would overwrite Cmin.
+	 */
+	/* HeapTupleHeaderSetCmax(tup->t_data, FirstCommandId); */
 	tup->t_data->t_infomask |= HEAP_XMAX_INVALID;
 	tup->t_tableOid = relation->rd_id;
 
@@ -2147,7 +2150,11 @@ heap_xlog_delete(bool redo, XLogRecPtr lsn, XLogRecord *record)
 
 	if (redo)
 	{
-		htup->t_infomask &= ~(HEAP_XMAX_COMMITTED |
+		/*
+		 * On redo from WAL we cannot rely on a tqual-routine
+		 * to have reset HEAP_MOVED.
+		 */
+		htup->t_infomask &= ~(HEAP_MOVED | HEAP_XMAX_COMMITTED |
 							  HEAP_XMAX_INVALID | HEAP_MARKED_FOR_UPDATE);
 		HeapTupleHeaderSetXmax(htup, record->xl_xid);
 		HeapTupleHeaderSetCmax(htup, FirstCommandId);
@@ -2320,7 +2327,11 @@ heap_xlog_update(bool redo, XLogRecPtr lsn, XLogRecord *record, bool move)
 		}
 		else
 		{
-			htup->t_infomask &= ~(HEAP_XMAX_COMMITTED |
+			/*
+			 * On redo from WAL we cannot rely on a tqual-routine
+			 * to have reset HEAP_MOVED.
+			 */
+			htup->t_infomask &= ~(HEAP_MOVED | HEAP_XMAX_COMMITTED |
 							 HEAP_XMAX_INVALID | HEAP_MARKED_FOR_UPDATE);
 			HeapTupleHeaderSetXmax(htup, record->xl_xid);
 			HeapTupleHeaderSetCmax(htup, FirstCommandId);
