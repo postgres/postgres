@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/lock.sgml,v 1.29 2001/12/08 03:24:37 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/lock.sgml,v 1.30 2002/01/18 01:05:43 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -76,8 +76,7 @@ where <replaceable class="PARAMETER">lockmode</replaceable> is one of:
       <listitem>
        <note>
        <para>
-	 Automatically acquired by <command>SELECT...FOR UPDATE</command>.
-	 While it is a shared lock, may be upgraded later to a ROW EXCLUSIVE lock.
+	 Automatically acquired by <command>SELECT ... FOR UPDATE</command>.
 	</para>
        </note>
 
@@ -175,6 +174,9 @@ where <replaceable class="PARAMETER">lockmode</replaceable> is one of:
 	Conflicts with ROW SHARE, ROW EXCLUSIVE, SHARE UPDATE EXCLUSIVE,
 	SHARE, SHARE ROW EXCLUSIVE,
 	EXCLUSIVE and ACCESS EXCLUSIVE modes.
+	This mode allows only concurrent ACCESS SHARE, i.e., only reads
+	from the table can proceed in parallel with a transaction holding
+	this lock mode.
        </para>
       </listitem>
      </varlistentry>
@@ -225,7 +227,7 @@ LOCK TABLE
        </computeroutput></term>
       <listitem>
        <para>
-	The lock was successfully applied.
+	The lock was successfully acquired.
        </para>
       </listitem>
      </varlistentry>
@@ -310,23 +312,26 @@ ERROR <replaceable class="PARAMETER">name</replaceable>: Table does not exist.
   </para>
 
   <para>
-   For example, an application runs a transaction at READ COMMITTED isolation
-   level and needs to ensure the existence of data in a table for the
-   duration of the
-   transaction. To achieve this you could use SHARE lock mode over the
-   table before querying. This will protect data from concurrent changes 
-   and provide any further read operations over the table with data in their 
-   actual current state, because SHARE lock mode conflicts with any ROW EXCLUSIVE 
-   one acquired by writers, and your
+   For example, suppose an application runs a transaction at READ COMMITTED
+   isolation level and needs to ensure the existence of data in a table for
+   the duration of the
+   transaction. To achieve this you could obtain SHARE lock mode over the
+   table before querying. This will prevent concurrent data changes 
+   and ensure further read operations over the table see data in their 
+   actual current state, because SHARE lock mode conflicts with any ROW
+   EXCLUSIVE lock acquired by writers, and your
    <command>LOCK TABLE <replaceable class="PARAMETER">name</replaceable> IN SHARE MODE</command>
-   statement will wait until any concurrent write operations commit or rollback.
+   statement will wait until any concurrent write operations commit or
+   rollback. Thus, once you obtain the lock, there are no uncommitted
+   writes outstanding.
 
    <note>
     <para>
-     To read data in their real current state when running a transaction
-     at the SERIALIZABLE isolation level you have to execute a LOCK TABLE
-     statement before executing any DML statement, when the transaction defines
-     what concurrent changes will be visible to itself.
+     To read data in their actual current state when running a transaction
+     at the SERIALIZABLE isolation level, you have to execute the LOCK TABLE
+     statement before executing any DML statement.  A serializable
+     transaction's view of data will be frozen when its first DML statement
+     begins.
     </para>
    </note>
   </para>
@@ -341,7 +346,7 @@ ERROR <replaceable class="PARAMETER">name</replaceable>: Table does not exist.
   </para>
   
   <para>
-   To continue with the deadlock (when two transaction wait for one another)
+   To continue with the deadlock (when two transactions wait for one another)
    issue raised above, you should follow two general rules to prevent 
    deadlock conditions:
   </para>
@@ -364,8 +369,8 @@ ERROR <replaceable class="PARAMETER">name</replaceable>: Table does not exist.
    <listitem>
     <para>
      Transactions should acquire two conflicting lock modes only if
-     one of them is self-conflicting (i.e., may be held by one
-     transaction at time only). If multiple lock modes are involved,
+     one of them is self-conflicting (i.e., may be held by only one
+     transaction at a time). If multiple lock modes are involved,
      then transactions should always acquire the  most restrictive mode first.
     </para>
    
@@ -399,19 +404,17 @@ ERROR <replaceable class="PARAMETER">name</replaceable>: Table does not exist.
    </title>
 
    <para>
-    <command>LOCK</command> is a <productname>PostgreSQL</productname>
-    language extension.
+    <literal>LOCK ... IN ACCESS SHARE MODE</> requires <literal>SELECT</>
+    privileges on the target table.  All other forms of <command>LOCK</>
+    require <literal>UPDATE</> and/or <literal>DELETE</> privileges.
    </para>
 
    <para>
-    Except for ACCESS SHARE, ACCESS EXCLUSIVE, and SHARE UPDATE EXCLUSIVE lock
-    modes, the <productname>PostgreSQL</productname> lock modes and the
-    <command>LOCK TABLE</command> syntax are compatible with those
-    present in <productname>Oracle</productname>.
-   </para>
-
-   <para>
-    <command>LOCK</command> works only inside transactions.
+    <command>LOCK</command> is useful only inside a transaction block
+    (<command>BEGIN</>...<command>COMMIT</>), since the lock is dropped
+    as soon as the transaction ends.  A <command>LOCK</> command appearing
+    outside any transaction block forms a self-contained transaction, so the
+    lock will be dropped as soon as it is obtained.
    </para>
 
   </refsect2>
@@ -470,6 +473,13 @@ COMMIT WORK;
     which instead uses <command>SET TRANSACTION</command> to specify
     concurrency levels on transactions.  We support that too; see
     <xref linkend="SQL-SET-TRANSACTION" endterm="SQL-SET-TRANSACTION-TITLE"> for details.
+   </para>
+
+   <para>
+    Except for ACCESS SHARE, ACCESS EXCLUSIVE, and SHARE UPDATE EXCLUSIVE lock
+    modes, the <productname>PostgreSQL</productname> lock modes and the
+    <command>LOCK TABLE</command> syntax are compatible with those
+    present in <productname>Oracle</productname>(TM).
    </para>
   </refsect2>
  </refsect1>
