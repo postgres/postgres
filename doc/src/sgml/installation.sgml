@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.180 2003/11/05 00:10:06 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.181 2003/11/13 18:01:45 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1539,10 +1539,10 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
        <row>
         <entry><systemitem class="osname">IRIX</></entry>
         <entry><systemitem>MIPS</></entry>
-        <entry>7.3</entry>
-        <entry>2002-10-27,
-         Ian Barwick (<email>barwick@gmx.net</email>)</entry>
-        <entry>Irix64 Komma 6.5</entry>
+        <entry>7.4</entry>
+        <entry>2003-11-12,
+         Robert E. Bruccoleri (<email>bruc@stone.congenomics.com</email>)</entry>
+        <entry>6.5.20, <command>cc</command> only</entry>
        </row>
        <row>
         <entry><systemitem class="osname">Linux</></entry>
@@ -1636,10 +1636,10 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
        <row>
         <entry><systemitem class="osname">NetBSD</></entry>
         <entry><systemitem>arm32</></entry>
-        <entry>7.3</entry>
-        <entry>2002-11-19,
+        <entry>7.4</entry>
+        <entry>2003-11-12,
          Patrick Welche (<email>prlw1@newn.cam.ac.uk</email>)</entry>
-        <entry>1.6</entry>
+        <entry>1.6ZE/acorn32</entry>
        </row>
        <row>
         <entry><systemitem class="osname">NetBSD</></entry>
@@ -1664,14 +1664,6 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
         <entry>2003-10-24,
          Peter Eisentraut (<email>peter_e@gmx.net</email>)</entry>
         <entry>3.2</entry>
-       </row>
-       <row>
-        <entry><systemitem class="osname">SCO OpenServer</></entry>
-        <entry><systemitem>x86</></entry>
-        <entry>7.3.1</entry>
-        <entry>2002-12-11, 
-         Shibashish Satpathy (<email>shib@postmark.net</>)</entry>
-        <entry>5.0.4, <command>gcc</>;  see also <filename>doc/FAQ_SCO</filename></entry>
        </row>
        <row>
         <entry><systemitem class="osname">Solaris</></entry>
@@ -1766,7 +1758,7 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
       <entry><systemitem>PlayStation 2</></entry>
       <entry>7.4</entry>
       <entry>2003-11-02,
-       Peter Eisentraut <email>peter_e@gmx.net</email>)</entry>
+       Peter Eisentraut (<email>peter_e@gmx.net</email>)</entry>
       <entry>
        needs new <filename>config.guess</filename>,
        <option>--disable-spinlocks</option>, <literal>#undef
@@ -1837,6 +1829,14 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
       <entry>7.2</entry>
       <entry>2001-11-20, Igor Kovalenko (<email>Igor.Kovalenko@motorola.com</email>)</entry>
       <entry>patches available in archives, but too late for 7.2</entry>
+     </row>
+     <row>
+      <entry><systemitem class="osname">SCO OpenServer</></entry>
+      <entry><systemitem>x86</></entry>
+      <entry>7.3.1</entry>
+      <entry>2002-12-11, 
+       Shibashish Satpathy (<email>shib@postmark.net</>)</entry>
+      <entry>5.0.4, <command>gcc</>;  see also <filename>doc/FAQ_SCO</filename></entry>
      </row>
      <row>
       <entry><systemitem class="osname">SunOS 4</></entry>
