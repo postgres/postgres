@@ -12,8 +12,9 @@
     <H1>Developer's Frequently Asked Questions (FAQ) for
     PostgreSQL</H1>
 
-    <P>Last updated: Fri Jun 9 21:54:54 EDT 2000</P>
+    <P>Last updated: Mon Nov 26 21:36:56 EST 2001</P>
 
+    
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
     </P>
@@ -53,6 +54,8 @@
      <A href="#14">14</A>) Why don't we use threads in the backend?<BR>
      <A href="#15">15</A>) How are RPM's packaged?<BR>
      <A href="#16">16</A>) How are CVS branches handled?<BR>
+     <A href="#17">17</A>) How do I get involved in PostgreSQL
+     development?<BR>
      <BR>
      
     <HR>
@@ -735,6 +738,74 @@ or two, so that we won't have to double-patch the first wave of fixes.
 
     <P>Also, Ian Lance Taylor points out that branches and tags can be
     distiguished by using "cvs status -v".</P>
+
+    <H3><A name="17">17</A>) How go I get involved in PostgreSQL
+    development?</H3>
+    <P>This was written by Lamar Owen:</P>
+<PRE>
+&gt; If someone was interested in joining the development team, where would
+&gt; they...
+&gt; -  Find a description of the open source development process used by the
+&gt; PostgreSQL team.
+
+Read HACKERS for six months (or a full release cycle, whichever is longer).  
+Really.  HACKERS _is_the process.  The process is not well documented (AFAIK 
+-- it may be somewhere that I am not aware of) -- and it changes continually.
+
+&gt; -  Find the development environment (OS, system, compilers, etc)
+&gt; required to develop code.
+
+Developers Corner on the website has links to this information.  The 
+distribution tarball itself includes all the extra tools and documents that 
+go beyond a good Unix-like development environment.  In general, a modern 
+unix with a modern gcc, GNU make or equivalent, autoconf (of a particular 
+version), and good working knowledge of those tools are required.
+
+&gt; -  Find an area or two that needs some support.
+
+The TODO list.
+
+You've made the first step, by finding and subscribing to HACKERS.  Once you 
+find an area to look at in the TODO, and have read the documentation on the 
+internals, etc, then you check out a current CVS,write what you are going to 
+write (keeping your CVS checkout up to date in the process), and make up a 
+patch (as a context diff only) and send to the PATCHES list, prefereably.  
+
+Discussion on the patch typically happens here.  If the patch adds a major 
+feature, it would be a good idea to talk about it first on the HACKERS list, 
+in order to increase the chances of it being accepted, as well as toavoid 
+duplication of effort.  Note that experienced developers with a proven track 
+record usually get the big jobs -- for more than one reason.  Also note that 
+PostgreSQL is highly portable -- nonportable code will likely be dismissed 
+out of  hand. 
+
+Once your contributions get accepted, things move from there. Typically, you 
+would be added as a developer on the list on the website when one of the 
+other developers recommends it.  Membership on the steering committee is by 
+invitation only, by the other steering committee members, from what I have 
+gathered watching froma distance.
+
+I make these statements from having watched the process for over two years.
+
+To see a good example of how one goes about this, search the archives for the 
+name 'Tom Lane' and see what his first post consisted of, and where he took 
+things.  In particular, note that this hasn't been _that_ long ago -- and his 
+bugfixing and general deep knowledge with this codebase is legendary.  Take a 
+few days to read after him.  And pay special attention to both the sheer 
+quantity as well as the painstaking quality of his work.  Both are in high 
+demand.
+
+Hope that helps!
+--
+Lamar Owen
+WGCR Internet Radio
+1 Peter 4:11
+
+---------------------------(end of broadcast)---------------------------
+TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
+
+
+</PRE>
+
   </BODY>
 </HTML>
-
