@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Aug 22 22:46:35 EDT 2002
+Last updated:		Thu Aug 22 23:10:11 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -441,7 +441,8 @@ Write-Ahead Log
 * Find proper defaults for postgresql.conf WAL entries
 * Add checkpoint_min_warning postgresql.conf option to warn about checkpoints
   that are too frequent
-
+* Allow xlog directory location to be specified during initdb, perhaps
+  using symlinks
 
 Optimizer / Executor
 ====================
