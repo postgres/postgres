@@ -80,7 +80,7 @@ print_action(struct when *w)
 static void
 whenever_action(int mode)
 {
-	if (mode == 1 && when_nf.code != W_NOTHING)
+	if ((mode&1) ==  1 && when_nf.code != W_NOTHING)
 	{
 		output_line_number();
 		fprintf(yyout, "\nif (sqlca.sqlcode == ECPG_NOT_FOUND) ");
@@ -98,6 +98,8 @@ whenever_action(int mode)
                 fprintf(yyout, "\nif (sqlca.sqlcode < 0) ");
 		print_action(&when_error);
         }
+	if ((mode&2) == 2)
+		fputc('}', yyout);
 	output_line_number();
 }
 
@@ -525,7 +527,7 @@ output_statement(char * stmt, int mode)
 {
 	int i, j=strlen(stmt);
 
-	fprintf(yyout, "ECPGdo(__LINE__, %s, \"", connection ? connection : "NULL");
+	fprintf(yyout, "{ ECPGdo(__LINE__, %s, \"", connection ? connection : "NULL");
 
 	/* do this char by char as we have to filter '\"' */
 	for (i = 0;i < j; i++)
@@ -538,6 +540,7 @@ output_statement(char * stmt, int mode)
 	fputs("ECPGt_EOIT, ", yyout);
 	dump_variables(argsresult, 1);
 	fputs("ECPGt_EORT);", yyout);
+	mode |= 2;
 	whenever_action(mode);
 	free(stmt);
 	if (connection != NULL)
@@ -854,7 +857,7 @@ prog: statements;
 statements: /* empty */
 	| statements statement
 
-statement: ecpgstart opt_at stmt ';' { connection = NULL; }
+statement: ecpgstart opt_at stmt ';'	{ connection = NULL; }
 	| ecpgstart stmt ';'
 	| ECPGDeclaration
 	| c_thing 			{ fprintf(yyout, "%s", $1); free($1); }
@@ -903,8 +906,8 @@ stmt:  AddAttrStmt			{ output_statement($1, 0); }
 					}
 		| RuleStmt		{ output_statement($1, 0); }
 		| TransactionStmt	{
-						fprintf(yyout, "ECPGtrans(__LINE__, %s, \"%s\");", connection ? connection : "NULL", $1);
-						whenever_action(0);
+						fprintf(yyout, "{ ECPGtrans(__LINE__, %s, \"%s\");", connection ? connection : "NULL", $1);
+						whenever_action(2);
 						free($1);
 					}
 		| ViewStmt		{ output_statement($1, 0); }
@@ -919,8 +922,8 @@ stmt:  AddAttrStmt			{ output_statement($1, 0); }
 						if (connection)
 							yyerror("no at option for connect statement.\n");
 
-						fprintf(yyout, "ECPGconnect(__LINE__, %s, %d);", $1, autocommit);
-						whenever_action(0);
+						fprintf(yyout, "{ ECPGconnect(__LINE__, %s, %d);", $1, autocommit);
+						whenever_action(2);
 						free($1);
 					} 
 		| ECPGCursorStmt	{
@@ -930,8 +933,9 @@ stmt:  AddAttrStmt			{ output_statement($1, 0); }
 						if (connection)
 							yyerror("no at option for connect statement.\n");
 
+						fputc('{', yyout);
 						fputs($1, yyout);
-						whenever_action(0);
+						whenever_action(2);
 						free($1);
 					}
 		| ECPGDeclare		{
@@ -941,16 +945,16 @@ stmt:  AddAttrStmt			{ output_statement($1, 0); }
 						if (connection)
 							yyerror("no at option for disconnect statement.\n");
 
-						fprintf(yyout, "ECPGdisconnect(__LINE__, \"%s\");", $1); 
-						whenever_action(0);
+						fprintf(yyout, "{ ECPGdisconnect(__LINE__, \"%s\");", $1); 
+						whenever_action(2);
 						free($1);
 					} 
 		| ECPGExecute		{
 						output_statement($1, 0);
 					}
 		| ECPGFree		{
-						fprintf(yyout, "ECPGdeallocate(__LINE__, %s, \"%s\");", connection ? connection : "NULL", $1); 
-						whenever_action(0);
+						fprintf(yyout, "{ ECPGdeallocate(__LINE__, %s, \"%s\");", connection ? connection : "NULL", $1); 
+						whenever_action(2);
 						free($1);
 					}
 		| ECPGOpen		{	
@@ -968,36 +972,36 @@ stmt:  AddAttrStmt			{ output_statement($1, 0); }
 							yyerror(errortext);
 						}
                   
-						fprintf(yyout, "ECPGdo(__LINE__, %s, \"%s\",", ptr->connection ? ptr->connection : "NULL", ptr->command);
+						fprintf(yyout, "{ ECPGdo(__LINE__, %s, \"%s\",", ptr->connection ? ptr->connection : "NULL", ptr->command);
 						/* dump variables to C file*/
 						dump_variables(ptr->argsinsert, 0);
 						dump_variables(argsinsert, 0);
 						fputs("ECPGt_EOIT, ", yyout);
 						dump_variables(ptr->argsresult, 0);
 						fputs("ECPGt_EORT);", yyout);
-						whenever_action(0);
+						whenever_action(2);
 						free($1);
 					}
 		| ECPGPrepare		{
 						if (connection)
 							yyerror("no at option for set connection statement.\n");
 
-						fprintf(yyout, "ECPGprepare(__LINE__, %s);", $1); 
-						whenever_action(0);
+						fprintf(yyout, "{ ECPGprepare(__LINE__, %s);", $1); 
+						whenever_action(2);
 						free($1);
 					}
 		| ECPGRelease		{ /* output already done */ }
 		| ECPGSetAutocommit     {
-						fprintf(yyout, "ECPGsetcommit(__LINE__, \"%s\", %s);", $1, connection ? connection : "NULL");
-						whenever_action(0);
+						fprintf(yyout, "{ ECPGsetcommit(__LINE__, \"%s\", %s);", $1, connection ? connection : "NULL");
+						whenever_action(2);
                                        		free($1);
 					}
 		| ECPGSetConnection     {
 						if (connection)
 							yyerror("no at option for set connection statement.\n");
 
-						fprintf(yyout, "ECPGsetconn(__LINE__, %s);", $1);
-						whenever_action(0);
+						fprintf(yyout, "{ ECPGsetconn(__LINE__, %s);", $1);
+						whenever_action(2);
                                        		free($1);
 					}
 		| ECPGTypedef		{

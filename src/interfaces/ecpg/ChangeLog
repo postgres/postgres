@@ -586,5 +586,9 @@ Mon May 17 18:13:30 CEST 1999
 Fri May 21 18:13:44 CEST 1999
 
 	- Synced preproc.y with gram.y.
+
+Sun May 23 11:19:32 CEST 1999
+
+	- Add braces around each statement so that a simple if/else works.
 	- Set library version to 3.0.0
 	- Set ecpg version to 2.6.0
