@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <ecpgtype.h>
 /*
  * This function is used to generate the correct type names.
@@ -7,7 +8,7 @@ ECPGtype_name(enum ECPGttype typ)
 {
 	switch (typ)
 	{
-			case ECPGt_char:return "char";
+		case ECPGt_char:return "char";
 		case ECPGt_unsigned_char:
 			return "unsigned char";
 		case ECPGt_short:
@@ -31,4 +32,5 @@ ECPGtype_name(enum ECPGttype typ)
 		default:
 			abort();
 	}
+	return NULL;
 }
