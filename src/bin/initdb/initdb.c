@@ -43,7 +43,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.18 2003/12/23 21:50:38 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.19 2004/01/26 22:35:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1052,8 +1052,11 @@ set_short_version(char *short_version, char *extrapath)
 		sprintf(path, "%s/%s/PG_VERSION", pg_data, extrapath);
 	}
 	version_file = fopen(path, PG_BINARY_W);
+	if (version_file == NULL)
+		exit_nicely();
 	fprintf(version_file, "%s\n", short_version);
-	fclose(version_file);
+	if (fclose(version_file))
+		exit_nicely();
 }
 
 /*
@@ -1068,7 +1071,8 @@ set_null_conf(void)
 	path = xmalloc(strlen(pg_data) + 17);
 	sprintf(path, "%s/postgresql.conf", pg_data);
 	conf_file = fopen(path, PG_BINARY_W);
-	fclose(conf_file);
+	if (conf_file == NULL || fclose(conf_file))
+		exit_nicely();
 }
 
 /*

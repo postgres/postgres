@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.194 2003/12/28 21:57:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.195 2004/01/26 22:35:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3330,7 +3330,8 @@ write_relcache_init_file(void)
 		MemoryContextSwitchTo(oldcxt);
 	}
 
-	FreeFile(fp);
+	if (FreeFile(fp))
+		elog(FATAL, "could not write init file");
 
 	/*
 	 * Now we have to check whether the data we've so painstakingly

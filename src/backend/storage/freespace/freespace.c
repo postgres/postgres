@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/freespace/freespace.c,v 1.29 2004/01/11 03:49:31 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/freespace/freespace.c,v 1.30 2004/01/26 22:35:32 tgl Exp $
  *
  *
  * NOTES:
@@ -793,7 +793,12 @@ DumpFreeSpaceMap(int code, Datum arg)
 	/* Clean up */
 	LWLockRelease(FreeSpaceLock);
 
-	FreeFile(fp);
+	if (FreeFile(fp))
+	{
+		elog(LOG, "could not write \"%s\": %m", cachefilename);
+		/* Remove busted cache file */
+		unlink(cachefilename);
+	}
 
 	return;
 

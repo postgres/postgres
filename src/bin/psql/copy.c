@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.39 2004/01/25 03:07:22 neilc Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.40 2004/01/26 22:35:32 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "copy.h"
@@ -427,7 +427,13 @@ do_copy(const char *args)
 	PQclear(result);
 
  	if (options->file != NULL)
-		fclose(copystream);
+	{
+		if (fclose(copystream) != 0)
+		{
+			psql_error("%s: %s\n", options->file, strerror(errno));
+			success = false;
+		}
+	}
 	free_copy_options(options);
 	return success;
 }

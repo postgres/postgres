@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.132 2004/01/07 18:56:25 neilc Exp $
+ * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.133 2004/01/26 22:35:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -241,12 +241,11 @@ write_group_file(Relation grel)
 	}
 	heap_endscan(scan);
 
-	fflush(fp);
-	if (ferror(fp))
+	if (FreeFile(fp))
 		ereport(ERROR,
 				(errcode_for_file_access(),
-			  errmsg("could not write to temporary file \"%s\": %m", tempname)));
-	FreeFile(fp);
+				 errmsg("could not write to temporary file \"%s\": %m",
+						tempname)));
 
 	/*
 	 * Rename the temp file to its final name, deleting the old pg_pwd. We
@@ -372,12 +371,11 @@ write_user_file(Relation urel)
 	}
 	heap_endscan(scan);
 
-	fflush(fp);
-	if (ferror(fp))
+	if (FreeFile(fp))
 		ereport(ERROR,
 				(errcode_for_file_access(),
-			  errmsg("could not write to temporary file \"%s\": %m", tempname)));
-	FreeFile(fp);
+				 errmsg("could not write to temporary file \"%s\": %m",
+						tempname)));
 
 	/*
 	 * Rename the temp file to its final name, deleting the old pg_pwd. We

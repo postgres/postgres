@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.132 2004/01/19 19:04:40 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.133 2004/01/26 22:35:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1044,7 +1044,7 @@ XLogWrite(XLogwrtRqst WriteRqst)
 			 */
 			if (openLogFile >= 0)
 			{
-				if (close(openLogFile) != 0)
+				if (close(openLogFile))
 					ereport(PANIC,
 							(errcode_for_file_access(),
 					errmsg("could not close log file %u, segment %u: %m",
@@ -1162,7 +1162,7 @@ XLogWrite(XLogwrtRqst WriteRqst)
 			if (openLogFile >= 0 &&
 			 !XLByteInPrevSeg(LogwrtResult.Write, openLogId, openLogSeg))
 			{
-				if (close(openLogFile) != 0)
+				if (close(openLogFile))
 					ereport(PANIC,
 							(errcode_for_file_access(),
 					errmsg("could not close log file %u, segment %u: %m",
@@ -1427,7 +1427,10 @@ XLogFileInit(uint32 log, uint32 seg,
 				(errcode_for_file_access(),
 				 errmsg("could not fsync file \"%s\": %m", tmppath)));
 
-	close(fd);
+	if (close(fd))
+		ereport(PANIC,
+				(errcode_for_file_access(),
+				 errmsg("could not close file \"%s\": %m", tmppath)));
 
 	/*
 	 * Now move the segment into place with its final name.
@@ -2205,7 +2208,10 @@ WriteControlFile(void)
 				(errcode_for_file_access(),
 				 errmsg("could not fsync control file: %m")));
 
-	close(fd);
+	if (close(fd))
+		ereport(PANIC,
+				(errcode_for_file_access(),
+				 errmsg("could not close control file: %m")));
 }
 
 static void
@@ -2382,7 +2388,10 @@ UpdateControlFile(void)
 				(errcode_for_file_access(),
 				 errmsg("could not fsync control file: %m")));
 
-	close(fd);
+	if (close(fd))
+		ereport(PANIC,
+				(errcode_for_file_access(),
+				 errmsg("could not close control file: %m")));
 }
 
 /*
@@ -2535,7 +2544,11 @@ BootStrapXLOG(void)
 				(errcode_for_file_access(),
 				 errmsg("could not fsync bootstrap transaction log file: %m")));
 
-	close(openLogFile);
+	if (close(openLogFile))
+		ereport(PANIC,
+				(errcode_for_file_access(),
+				 errmsg("could not close bootstrap transaction log file: %m")));
+
 	openLogFile = -1;
 
 	memset(ControlFile, 0, sizeof(ControlFileData));
@@ -3577,7 +3590,7 @@ assign_xlog_sync_method(const char *method, bool doit, GucSource source)
 						   openLogId, openLogSeg)));
 			if (open_sync_bit != new_sync_bit)
 			{
-				if (close(openLogFile) != 0)
+				if (close(openLogFile))
 					ereport(PANIC,
 							(errcode_for_file_access(),
 					errmsg("could not close log file %u, segment %u: %m",
