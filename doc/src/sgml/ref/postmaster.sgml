@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.44 2003/12/14 00:15:03 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.45 2004/02/03 17:34:02 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -541,10 +541,10 @@ PostgreSQL documentation
   <para>
    Named run-time parameters can be set in either of these styles:
 <screen>
-<prompt>$</prompt> <userinput>postmaster -c sort_mem=1234</userinput>
-<prompt>$</prompt> <userinput>postmaster --sort-mem=1234</userinput>
+<prompt>$</prompt> <userinput>postmaster -c work_mem=1234</userinput>
+<prompt>$</prompt> <userinput>postmaster --work-mem=1234</userinput>
 </screen>
-   Either form overrides whatever setting might exist for <varname>sort_mem</>
+   Either form overrides whatever setting might exist for <varname>work_mem</>
    in <filename>postgresql.conf</>.  Notice that underscores in parameter
    names can be written as either underscore or dash on the command line.
   </para>

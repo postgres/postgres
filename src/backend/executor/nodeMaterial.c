@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeMaterial.c,v 1.45 2003/11/29 19:51:48 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeMaterial.c,v 1.46 2004/02/03 17:34:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,7 +62,7 @@ ExecMaterial(MaterialState *node)
 	 */
 	if (tuplestorestate == NULL)
 	{
-		tuplestorestate = tuplestore_begin_heap(true, false, SortMem);
+		tuplestorestate = tuplestore_begin_heap(true, false, work_mem);
 
 		node->tuplestorestate = (void *) tuplestorestate;
 	}

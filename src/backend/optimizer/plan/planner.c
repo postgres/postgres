@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.165 2004/01/18 00:50:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.166 2004/02/03 17:34:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -966,7 +966,7 @@ grouping_planner(Query *parse, double tuple_fraction)
 			{
 				/*
 				 * Use hashed grouping if (a) we think we can fit the
-				 * hashtable into SortMem, *and* (b) the estimated cost is
+				 * hashtable into work_mem, *and* (b) the estimated cost is
 				 * no more than doing it the other way.  While avoiding
 				 * the need for sorted input is usually a win, the fact
 				 * that the output won't be sorted may be a loss; so we
@@ -979,7 +979,7 @@ grouping_planner(Query *parse, double tuple_fraction)
 				 */
 				int			hashentrysize = cheapest_path_width + 64 + numAggs * 100;
 
-				if (hashentrysize * dNumGroups <= SortMem * 1024L)
+				if (hashentrysize * dNumGroups <= work_mem * 1024L)
 				{
 					/*
 					 * Okay, do the cost comparison.  We need to consider

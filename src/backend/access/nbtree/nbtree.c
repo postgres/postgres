@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.109 2004/01/07 18:56:24 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.110 2004/02/03 17:34:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -117,13 +117,14 @@ btbuild(PG_FUNCTION_ARGS)
 
 	if (buildstate.usefast)
 	{
-		buildstate.spool = _bt_spoolinit(index, indexInfo->ii_Unique);
+		buildstate.spool = _bt_spoolinit(index, indexInfo->ii_Unique, false);
 
 		/*
-		 * Different from spool, the uniqueness isn't checked for spool2.
+		 * If building a unique index, put dead tuples in a second spool
+		 * to keep them out of the uniqueness check.
 		 */
 		if (indexInfo->ii_Unique)
-			buildstate.spool2 = _bt_spoolinit(index, false);
+			buildstate.spool2 = _bt_spoolinit(index, false, true);
 	}
 
 	/* do the heap scan */

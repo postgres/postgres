@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.63 2003/11/29 19:52:04 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.64 2004/02/03 17:34:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -282,8 +282,8 @@ PortalCreateHoldStore(Portal portal)
 	/* Create the tuple store, selecting cross-transaction temp files. */
 	oldcxt = MemoryContextSwitchTo(portal->holdContext);
 
-	/* XXX: Should SortMem be used for this? */
-	portal->holdStore = tuplestore_begin_heap(true, true, SortMem);
+	/* XXX: Should maintenance_work_mem be used for the portal size? */
+	portal->holdStore = tuplestore_begin_heap(true, true, work_mem);
 
 	MemoryContextSwitchTo(oldcxt);
 }

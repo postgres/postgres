@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.40 2004/01/11 05:46:58 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.41 2004/02/03 17:34:02 tgl Exp $
 -->
 
  <chapter id="performance-tips">
@@ -684,16 +684,18 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
    </para>
   </sect2>
 
-  <sect2 id="populate-sort-mem">
-   <title>Increase <varname>sort_mem</varname></title>
+  <sect2 id="populate-work-mem">
+   <title>Increase <varname>maintenance_work_mem</varname></title>
 
    <para>
-    Temporarily increasing the <varname>sort_mem</varname>
+    Temporarily increasing the <varname>maintenance_work_mem</varname>
     configuration variable when restoring large amounts of data can
     lead to improved performance. This is because when a B-tree index
     is created from scratch, the existing content of the table needs
-    to be sorted. Allowing the merge sort to use more buffer pages
-    means that fewer merge passes will be required.
+    to be sorted. Allowing the merge sort to use more memory
+    means that fewer merge passes will be required.  A larger setting for
+    <varname>maintenance_work_mem</varname> may also speed up validation
+    of foreign-key constraints.
    </para>
   </sect2>
 

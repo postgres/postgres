@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeIndexscan.c,v 1.90 2004/01/07 18:56:26 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeIndexscan.c,v 1.91 2004/02/03 17:34:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,7 +40,7 @@
  * preferred way to do this is to record already-returned tuples in a hash
  * table (using the TID as unique identifier).  However, in a very large
  * scan this could conceivably run out of memory.  We limit the hash table
- * to no more than SortMem KB; if it grows past that, we fall back to the
+ * to no more than work_mem KB; if it grows past that, we fall back to the
  * pre-7.4 technique: evaluate the prior-scan index quals again for each
  * tuple (which is space-efficient, but slow).
  *
@@ -1002,7 +1002,7 @@ create_duphash(IndexScanState *node)
 	HASHCTL		hash_ctl;
 	long		nbuckets;
 
-	node->iss_MaxHash = (SortMem * 1024L) /
+	node->iss_MaxHash = (work_mem * 1024L) /
 		(MAXALIGN(sizeof(HASHELEMENT)) + MAXALIGN(sizeof(DupHashTabEntry)));
 	MemSet(&hash_ctl, 0, sizeof(hash_ctl));
 	hash_ctl.keysize = SizeOfIptrData;

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.34 2004/01/19 20:12:30 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.35 2004/02/03 17:34:02 tgl Exp $
 -->
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -156,8 +156,8 @@ pg_dump -h <replaceable>host1</> <replaceable>dbname</> | psql -h <replaceable>h
    <tip>
     <para>
     Restore performance can be improved by increasing the
-    configuration parameter <varname>sort_mem</varname> (see <xref
-    linkend="runtime-config-resource-memory">).
+    configuration parameter <varname>maintenance_work_mem</varname>
+    (see <xref linkend="runtime-config-resource-memory">).
     </para>
    </tip>
   </sect2>

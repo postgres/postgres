@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.149 2004/01/30 15:57:04 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.150 2004/02/03 17:34:03 tgl Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to
@@ -207,8 +207,8 @@ extern int	CTimeZone;
 
 extern bool enableFsync;
 extern bool allowSystemTableMods;
-extern DLLIMPORT int SortMem;
-extern int	VacuumMem;
+extern DLLIMPORT int work_mem;
+extern DLLIMPORT int maintenance_work_mem;
 
 /*
  *	A few postmaster startup options are exported here so the

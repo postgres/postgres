@@ -30,15 +30,15 @@
  * heap.  When the run number at the top of the heap changes, we know that
  * no more records of the prior run are left in the heap.
  *
- * The (approximate) amount of memory allowed for any one sort operation
- * is given in kilobytes by the external variable SortMem.	Initially,
+ * The approximate amount of memory allowed for any one sort operation
+ * is specified in kilobytes by the caller (most pass work_mem).  Initially,
  * we absorb tuples and simply store them in an unsorted array as long as
- * we haven't exceeded SortMem.  If we reach the end of the input without
- * exceeding SortMem, we sort the array using qsort() and subsequently return
+ * we haven't exceeded workMem.  If we reach the end of the input without
+ * exceeding workMem, we sort the array using qsort() and subsequently return
  * tuples just by scanning the tuple array sequentially.  If we do exceed
- * SortMem, we construct a heap using Algorithm H and begin to emit tuples
+ * workMem, we construct a heap using Algorithm H and begin to emit tuples
  * into sorted runs in temporary tapes, emitting just enough tuples at each
- * step to get back within the SortMem limit.  Whenever the run number at
+ * step to get back within the workMem limit.  Whenever the run number at
  * the top of the heap changes, we begin a new run with a new output tape
  * (selected per Algorithm D).	After the end of the input is reached,
  * we dump out remaining tuples in memory into a final run (or two),
@@ -49,7 +49,7 @@
  * next tuple from its source tape (if any).  When the heap empties, the merge
  * is complete.  The basic merge algorithm thus needs very little memory ---
  * only M tuples for an M-way merge, and M is at most six in the present code.
- * However, we can still make good use of our full SortMem allocation by
+ * However, we can still make good use of our full workMem allocation by
  * pre-reading additional tuples from each source tape.  Without prereading,
  * our access pattern to the temporary file would be very erratic; on average
  * we'd read one block from each of M source tapes during the same time that
@@ -59,7 +59,7 @@
  * of the temp file, ensuring that things will be even worse when it comes
  * time to read that tape.	A straightforward merge pass thus ends up doing a
  * lot of waiting for disk seeks.  We can improve matters by prereading from
- * each source tape sequentially, loading about SortMem/M bytes from each tape
+ * each source tape sequentially, loading about workMem/M bytes from each tape
  * in turn.  Then we run the merge algorithm, writing but not reading until
  * one of the preloaded tuple series runs out.	Then we switch back to preread
  * mode, fill memory again, and repeat.  This approach helps to localize both
@@ -78,7 +78,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.40 2003/11/29 19:52:04 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.41 2004/02/03 17:34:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -323,7 +323,7 @@ struct Tuplesortstate
  *
  * NOTES about memory consumption calculations:
  *
- * We count space allocated for tuples against the SortMem limit, plus
+ * We count space allocated for tuples against the workMem limit, plus
  * the space used by the variable-size arrays memtuples and memtupindex.
  * Fixed-size space (primarily the LogicalTapeSet I/O buffers) is not
  * counted.
@@ -351,7 +351,7 @@ typedef struct
 } DatumTuple;
 
 
-static Tuplesortstate *tuplesort_begin_common(bool randomAccess);
+static Tuplesortstate *tuplesort_begin_common(int workMem, bool randomAccess);
 static void puttuple_common(Tuplesortstate *state, void *tuple);
 static void inittapes(Tuplesortstate *state);
 static void selectnewtape(Tuplesortstate *state);
@@ -406,10 +406,16 @@ static Tuplesortstate *qsort_tuplesortstate;
  * access was requested, rescan, markpos, and restorepos can also be called.)
  * For Datum sorts, putdatum/getdatum are used instead of puttuple/gettuple.
  * Call tuplesort_end to terminate the operation and release memory/disk space.
+ *
+ * Each variant of tuplesort_begin has a workMem parameter specifying the
+ * maximum number of kilobytes of RAM to use before spilling data to disk.
+ * (The normal value of this parameter is work_mem, but some callers use
+ * other values.)  Each variant also has a randomAccess parameter specifying
+ * whether the caller needs non-sequential access to the sort result.
  */
 
 static Tuplesortstate *
-tuplesort_begin_common(bool randomAccess)
+tuplesort_begin_common(int workMem, bool randomAccess)
 {
 	Tuplesortstate *state;
 
@@ -417,7 +423,7 @@ tuplesort_begin_common(bool randomAccess)
 
 	state->status = TSS_INITIAL;
 	state->randomAccess = randomAccess;
-	state->availMem = SortMem * 1024L;
+	state->availMem = workMem * 1024L;
 	state->tapeset = NULL;
 
 	state->memtupcount = 0;
@@ -442,9 +448,9 @@ Tuplesortstate *
 tuplesort_begin_heap(TupleDesc tupDesc,
 					 int nkeys,
 					 Oid *sortOperators, AttrNumber *attNums,
-					 bool randomAccess)
+					 int workMem, bool randomAccess)
 {
-	Tuplesortstate *state = tuplesort_begin_common(randomAccess);
+	Tuplesortstate *state = tuplesort_begin_common(workMem, randomAccess);
 	int			i;
 
 	AssertArg(nkeys > 0);
@@ -488,9 +494,9 @@ tuplesort_begin_heap(TupleDesc tupDesc,
 Tuplesortstate *
 tuplesort_begin_index(Relation indexRel,
 					  bool enforceUnique,
-					  bool randomAccess)
+					  int workMem, bool randomAccess)
 {
-	Tuplesortstate *state = tuplesort_begin_common(randomAccess);
+	Tuplesortstate *state = tuplesort_begin_common(workMem, randomAccess);
 
 	state->comparetup = comparetup_index;
 	state->copytup = copytup_index;
@@ -508,9 +514,9 @@ tuplesort_begin_index(Relation indexRel,
 Tuplesortstate *
 tuplesort_begin_datum(Oid datumType,
 					  Oid sortOperator,
-					  bool randomAccess)
+					  int workMem, bool randomAccess)
 {
-	Tuplesortstate *state = tuplesort_begin_common(randomAccess);
+	Tuplesortstate *state = tuplesort_begin_common(workMem, randomAccess);
 	RegProcedure sortFunction;
 	int16		typlen;
 	bool		typbyval;
@@ -1077,7 +1083,7 @@ mergeruns(Tuplesortstate *state)
 
 	/*
 	 * If we produced only one initial run (quite likely if the total data
-	 * volume is between 1X and 2X SortMem), we can just use that tape as
+	 * volume is between 1X and 2X workMem), we can just use that tape as
 	 * the finished output, rather than doing a useless merge.
 	 */
 	if (state->currentRun == 1)

@@ -865,7 +865,7 @@ get_crosstab_tuplestore(char *sql,
 	MemoryContext SPIcontext;
 
 	/* initialize our tuplestore */
-	tupstore = tuplestore_begin_heap(true, false, SortMem);
+	tupstore = tuplestore_begin_heap(true, false, work_mem);
 
 	/* Connect to SPI manager */
 	if ((ret = SPI_connect()) < 0)
@@ -1246,7 +1246,7 @@ connectby(char *relname,
 	oldcontext = MemoryContextSwitchTo(per_query_ctx);
 
 	/* initialize our tuplestore */
-	tupstore = tuplestore_begin_heap(true, false, SortMem);
+	tupstore = tuplestore_begin_heap(true, false, work_mem);
 
 	MemoryContextSwitchTo(oldcontext);
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.153 2004/01/07 18:56:26 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.154 2004/02/03 17:34:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1116,7 +1116,7 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 									   0,
 									   false);
 				}
-				tupstore = tuplestore_begin_heap(true, false, SortMem);
+				tupstore = tuplestore_begin_heap(true, false, work_mem);
 				MemoryContextSwitchTo(oldcontext);
 				rsinfo.setResult = tupstore;
 				rsinfo.setDesc = tupdesc;

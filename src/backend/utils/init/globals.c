@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/globals.c,v 1.81 2004/01/28 21:02:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/globals.c,v 1.82 2004/02/03 17:34:03 tgl Exp $
  *
  * NOTES
  *	  Globals used all over the place should be declared here and not
@@ -78,6 +78,6 @@ int			CTimeZone = 0;
 
 bool		enableFsync = true;
 bool		allowSystemTableMods = false;
-int			SortMem = 1024;
-int			VacuumMem = 8192;
+int			work_mem = 1024;
+int			maintenance_work_mem = 16384;
 int			NBuffers = 1000;

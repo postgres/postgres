@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeSort.c,v 1.46 2003/11/29 19:51:48 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeSort.c,v 1.47 2004/02/03 17:34:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 
 #include "executor/execdebug.h"
 #include "executor/nodeSort.h"
+#include "miscadmin.h"
 #include "utils/tuplesort.h"
 
 
@@ -88,6 +89,7 @@ ExecSort(SortState *node)
 											  plannode->numCols,
 											  plannode->sortOperators,
 											  plannode->sortColIdx,
+											  work_mem,
 											  true /* randomAccess */ );
 		node->tuplesortstate = (void *) tuplesortstate;
 

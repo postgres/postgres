@@ -36,7 +36,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplestore.c,v 1.17 2003/11/29 19:52:04 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplestore.c,v 1.18 2004/02/03 17:34:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -219,10 +219,7 @@ tuplestore_begin_common(bool randomAccess, bool interXact, int maxKBytes)
 	state->myfile = NULL;
 
 	state->memtupcount = 0;
-	if (maxKBytes > 0)
-		state->memtupsize = 1024;		/* initial guess */
-	else
-		state->memtupsize = 1;	/* won't really need any space */
+	state->memtupsize = 1024;					/* initial guess */
 	state->memtuples = (void **) palloc(state->memtupsize * sizeof(void *));
 
 	USEMEM(state, GetMemoryChunkSpace(state->memtuples));
@@ -250,7 +247,7 @@ tuplestore_begin_common(bool randomAccess, bool interXact, int maxKBytes)
  * no longer wanted.
  *
  * maxKBytes: how much data to store in memory (any data beyond this
- * amount is paged to disk).
+ * amount is paged to disk).  When in doubt, use work_mem.
  */
 Tuplestorestate *
 tuplestore_begin_heap(bool randomAccess, bool interXact, int maxKBytes)

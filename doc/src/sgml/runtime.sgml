@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.235 2004/01/27 16:51:43 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.236 2004/02/03 17:34:02 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -850,37 +850,41 @@ SET ENABLE_SEQSCAN TO OFF;
      </varlistentry>
 
      <varlistentry>
-      <term><varname>sort_mem</varname> (<type>integer</type>)</term>
+      <term><varname>work_mem</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
-        Specifies the amount of memory to be used by internal sort operations and
-        hash tables before switching to temporary disk files. The value is
+        Specifies the amount of memory to be used by internal sort operations
+        and hash tables before switching to temporary disk files. The value is
         specified in kilobytes, and defaults to 1024 kilobytes (1 MB).
         Note that for a complex query, several sort or hash operations might be
         running in parallel; each one will be allowed to use as much memory
         as this value specifies before it starts to put data into temporary
-        files. Also, several running sessions could be doing
-        sort operations simultaneously.  So the total memory used could be many
-        times the value of <varname>sort_mem</varname>. Sort operations are used
-        by <literal>ORDER BY</>, merge joins, and <command>CREATE INDEX</>.
+        files. Also, several running sessions could be doing such operations
+        concurrently.  So the total memory used could be many
+        times the value of <varname>work_mem</varname>; it is necessary to
+        keep this fact in mind when choosing the value. Sort operations are
+        used for <literal>ORDER BY</>, <literal>DISTINCT</>, and
+        merge joins.
         Hash tables are used in hash joins, hash-based aggregation, and
-        hash-based processing of <literal>IN</> subqueries.  Because 
-        <command>CREATE INDEX</> is used when restoring a database,
-        increasing <varname>sort_mem</varname> before doing a large
-        restore operation can improve performance.
+        hash-based processing of <literal>IN</> subqueries.
        </para>
       </listitem>
      </varlistentry>
      
      <varlistentry>
-      <term><varname>vacuum_mem</varname> (<type>integer</type>)</term>
+      <term><varname>maintenance_work_mem</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
-        Specifies the maximum amount of memory to be used by
-        <command>VACUUM</command> to keep track of to-be-reclaimed
-        rows. The value is specified in kilobytes, and defaults to
-        8192 kB. Larger settings may improve the speed of
-        vacuuming large tables that have many deleted rows.
+        Specifies the maximum amount of memory to be used in maintenance
+        operations, such as <command>VACUUM</command>, <command>CREATE
+        INDEX</>, and <command>ALTER TABLE ADD FOREIGN KEY</>.
+        The value is specified in kilobytes, and defaults to 16384 kilobytes
+        (16 MB).  Since only one of these operations can be executed at 
+        a time by a database session, and an installation normally doesn't
+        have very many of them happening concurrently, it's safe to set this
+        value significantly larger than <varname>work_mem</varname>.  Larger
+        settings may improve performance for vacuuming and for restoring
+        database dumps.
        </para>
       </listitem>
      </varlistentry>
@@ -1412,25 +1416,25 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
         Various tuning parameters for the genetic query optimization
         algorithm.  The recommended one to modify is
-	<varname>geqo_effort</varname>, which can range from 1 to 10 with
-	a default of 5.  Larger values increase the time spent in planning
-	but make it more likely that a good plan will be found.
-	<varname>geqo_effort</varname> doesn't actually do anything directly,
-	it is just used to compute the default values for the other
-	parameters.  If you prefer, you can set the other parameters by hand
-	instead.
-	The pool size is the number of individuals in the genetic population.
-	It must be at least two, and useful values are typically 100 to 1000.
-	If it is set to zero (the default setting) then a suitable default
-	is chosen based on <varname>geqo_effort</varname> and the number of
-	tables in the query.
-	Generations specifies the number of iterations of the algorithm.
-	It must be at least one, and useful values are in the same range
-	as the pool size.
-	If it is set to zero (the default setting) then a suitable default
-	is chosen based on the pool size.
-	The run time of the algorithm is roughly proportional to the sum of
-	pool size and generations.
+        <varname>geqo_effort</varname>, which can range from 1 to 10 with
+        a default of 5.  Larger values increase the time spent in planning
+        but make it more likely that a good plan will be found.
+        <varname>geqo_effort</varname> doesn't actually do anything directly,
+        it is just used to compute the default values for the other
+        parameters.  If you prefer, you can set the other parameters by hand
+        instead.
+        The pool size is the number of individuals in the genetic population.
+        It must be at least two, and useful values are typically 100 to 1000.
+        If it is set to zero (the default setting) then a suitable default
+        is chosen based on <varname>geqo_effort</varname> and the number of
+        tables in the query.
+        Generations specifies the number of iterations of the algorithm.
+        It must be at least one, and useful values are in the same range
+        as the pool size.
+        If it is set to zero (the default setting) then a suitable default
+        is chosen based on the pool size.
+        The run time of the algorithm is roughly proportional to the sum of
+        pool size and generations.
         The selection bias is the selective pressure within the
         population. Values can be from 1.50 to 2.00; the latter is the
         default.
@@ -2840,7 +2844,7 @@ $ <userinput>postmaster -o '-S 1024 -s'</userinput>
        <row>
         <entry><option>-S <replaceable>x</replaceable></option><footnoteref linkend="fn.runtime-config-short">
         </entry>
-        <entry><literal>sort_mem = <replaceable>x</replaceable></></entry>
+        <entry><literal>work_mem = <replaceable>x</replaceable></></entry>
        </row>
 
        <row>
@@ -3230,7 +3234,7 @@ kernel.shmmax = 134217728
        <para>
         In OS X 10.2 and earlier, edit the file
         <filename>/System/Library/StartupItems/SystemTuning/SystemTuning</>
-	and change the values in the following commands:
+        and change the values in the following commands:
 <programlisting>
 sysctl -w kern.sysv.shmmax
 sysctl -w kern.sysv.shmmin
@@ -3239,7 +3243,7 @@ sysctl -w kern.sysv.shmseg
 sysctl -w kern.sysv.shmall
 </programlisting>
         In OS X 10.3, these commands have been moved to <filename>/etc/rc</>
-	and must be edited there.
+        and must be edited there.
        </para>
       </listitem>
      </varlistentry>

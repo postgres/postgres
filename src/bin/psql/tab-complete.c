@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.100 2004/01/25 03:07:22 neilc Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.101 2004/02/03 17:34:03 tgl Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -533,6 +533,7 @@ psql_completion(char *text, int start, int end)
 		"log_planner_stats",
 		"log_statement",
 		"log_statement_stats",
+		"maintenance_work_mem",
 		"max_connections",
 		"max_expr_depth",
 		"max_files_per_process",
@@ -547,7 +548,6 @@ psql_completion(char *text, int start, int end)
 		"shared_buffers",
 		"seed",
 		"server_encoding",
-		"sort_mem",
 		"sql_inheritance",
 		"ssl",
 		"statement_timeout",
@@ -567,10 +567,10 @@ psql_completion(char *text, int start, int end)
 		"unix_socket_directory",
 		"unix_socket_group",
 		"unix_socket_permissions",
-		"vacuum_mem",
 		"wal_buffers",
 		"wal_debug",
 		"wal_sync_method",
+		"work_mem",
 		NULL
 	};
 

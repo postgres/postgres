@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.183 2004/02/02 00:17:21 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.184 2004/02/03 17:34:03 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1030,23 +1030,23 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"sort_mem", PGC_USERSET, RESOURCES_MEM,
-			gettext_noop("Sets the maximum memory to be used for sorts and hash tables."),
-			gettext_noop("Specifies the amount of memory to be used by internal "
-						 "sort operations and hash tables before switching to temporary disk "
-						 "files")
+		{"work_mem", PGC_USERSET, RESOURCES_MEM,
+			gettext_noop("Sets the maximum memory to be used for query workspaces."),
+			gettext_noop("This much memory may be used by each internal "
+						 "sort operation and hash table before switching to "
+						 "temporary disk files.")
 		},
-		&SortMem,
-		1024, 8 * BLCKSZ / 1024, INT_MAX, NULL, NULL
+		&work_mem,
+		1024, 8 * BLCKSZ / 1024, INT_MAX / 1024, NULL, NULL
 	},
 
 	{
-		{"vacuum_mem", PGC_USERSET, RESOURCES_MEM,
-			gettext_noop("Sets the maximum memory used to keep track of to-be-reclaimed rows."),
-			NULL
+		{"maintenance_work_mem", PGC_USERSET, RESOURCES_MEM,
+			gettext_noop("Sets the maximum memory to be used for maintenance operations."),
+			gettext_noop("This includes operations such as VACUUM and CREATE INDEX.")
 		},
-		&VacuumMem,
-		8192, 1024, INT_MAX, NULL, NULL
+		&maintenance_work_mem,
+		16384, 1024, INT_MAX / 1024, NULL, NULL
 	},
 
 	{
@@ -1710,6 +1710,19 @@ static struct config_string ConfigureNamesString[] =
 
 
 /*
+ * To allow continued support of obsolete names for GUC variables, we apply
+ * the following mappings to any unrecognized name.  Note that an old name
+ * should be mapped to a new one only if the new variable has very similar
+ * semantics to the old.
+ */
+static const char * const map_old_guc_names[] = {
+	"sort_mem", "work_mem",
+	"vacuum_mem", "maintenance_work_mem",
+	NULL
+};
+
+
+/*
  * Actual lookup of variables is done through this single, sorted array.
  */
 struct config_generic **guc_variables;
@@ -1723,6 +1736,7 @@ static char *guc_string_workspace;		/* for avoiding memory leaks */
 
 
 static int	guc_var_compare(const void *a, const void *b);
+static int	guc_name_compare(const char *namea, const char *nameb);
 static void ReportGUCOption(struct config_generic * record);
 static char *_ShowOption(struct config_generic * record);
 
@@ -1812,11 +1826,12 @@ find_option(const char *name)
 {
 	const char **key = &name;
 	struct config_generic **res;
+	int			i;
 
 	Assert(name);
 
 	/*
-	 * by equating const char ** with struct config_generic *, we are
+	 * By equating const char ** with struct config_generic *, we are
 	 * assuming the name field is first in config_generic.
 	 */
 	res = (struct config_generic **) bsearch((void *) &key,
@@ -1826,6 +1841,19 @@ find_option(const char *name)
 											 guc_var_compare);
 	if (res)
 		return *res;
+
+	/*
+	 * See if the name is an obsolete name for a variable.  We assume that
+	 * the set of supported old names is short enough that a brute-force
+	 * search is the best way.
+	 */
+	for (i = 0; map_old_guc_names[i] != NULL; i += 2)
+	{
+		if (guc_name_compare(name, map_old_guc_names[i]) == 0)
+			return find_option(map_old_guc_names[i+1]);
+	}
+
+	/* Unknown name */
 	return NULL;
 }
 
@@ -1838,16 +1866,19 @@ guc_var_compare(const void *a, const void *b)
 {
 	struct config_generic *confa = *(struct config_generic **) a;
 	struct config_generic *confb = *(struct config_generic **) b;
-	const char *namea;
-	const char *nameb;
 
+	return guc_name_compare(confa->name, confb->name);
+}
+
+
+static int
+guc_name_compare(const char *namea, const char *nameb)
+{
 	/*
 	 * The temptation to use strcasecmp() here must be resisted, because
 	 * the array ordering has to remain stable across setlocale() calls.
 	 * So, build our own with a simple ASCII-only downcasing.
 	 */
-	namea = confa->name;
-	nameb = confb->name;
 	while (*namea && *nameb)
 	{
 		char		cha = *namea++;

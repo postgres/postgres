@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.75 2003/12/21 01:23:06 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.76 2004/02/03 17:34:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -490,7 +490,7 @@ extern BTItem _bt_formitem(IndexTuple itup);
  */
 typedef struct BTSpool BTSpool; /* opaque type known only within nbtsort.c */
 
-extern BTSpool *_bt_spoolinit(Relation index, bool isunique);
+extern BTSpool *_bt_spoolinit(Relation index, bool isunique, bool isdead);
 extern void _bt_spooldestroy(BTSpool *btspool);
 extern void _bt_spool(BTItem btitem, BTSpool *btspool);
 extern void _bt_leafbuild(BTSpool *btspool, BTSpool *spool2);

@@ -49,7 +49,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.123 2004/01/19 03:52:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.124 2004/02/03 17:34:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -503,18 +503,18 @@ cost_functionscan(Path *path, Query *root, RelOptInfo *baserel)
  *	  Determines and returns the cost of sorting a relation, including
  *	  the cost of reading the input data.
  *
- * If the total volume of data to sort is less than SortMem, we will do
+ * If the total volume of data to sort is less than work_mem, we will do
  * an in-memory sort, which requires no I/O and about t*log2(t) tuple
  * comparisons for t tuples.
  *
- * If the total volume exceeds SortMem, we switch to a tape-style merge
+ * If the total volume exceeds work_mem, we switch to a tape-style merge
  * algorithm.  There will still be about t*log2(t) tuple comparisons in
  * total, but we will also need to write and read each tuple once per
  * merge pass.	We expect about ceil(log6(r)) merge passes where r is the
  * number of initial runs formed (log6 because tuplesort.c uses six-tape
- * merging).  Since the average initial run should be about twice SortMem,
+ * merging).  Since the average initial run should be about twice work_mem,
  * we have
- *		disk traffic = 2 * relsize * ceil(log6(p / (2*SortMem)))
+ *		disk traffic = 2 * relsize * ceil(log6(p / (2*work_mem)))
  *		cpu = comparison_cost * t * log2(t)
  *
  * The disk traffic is assumed to be half sequential and half random
@@ -542,7 +542,7 @@ cost_sort(Path *path, Query *root,
 	Cost		startup_cost = input_cost;
 	Cost		run_cost = 0;
 	double		nbytes = relation_byte_size(tuples, width);
-	long		sortmembytes = SortMem * 1024L;
+	long		work_mem_bytes = work_mem * 1024L;
 
 	if (!enable_sort)
 		startup_cost += disable_cost;
@@ -564,10 +564,10 @@ cost_sort(Path *path, Query *root,
 	startup_cost += 2.0 * cpu_operator_cost * tuples * LOG2(tuples);
 
 	/* disk costs */
-	if (nbytes > sortmembytes)
+	if (nbytes > work_mem_bytes)
 	{
 		double		npages = ceil(nbytes / BLCKSZ);
-		double		nruns = nbytes / (sortmembytes * 2);
+		double		nruns = nbytes / (work_mem_bytes * 2);
 		double		log_runs = ceil(LOG6(nruns));
 		double		npageaccesses;
 
@@ -594,7 +594,7 @@ cost_sort(Path *path, Query *root,
  *	  Determines and returns the cost of materializing a relation, including
  *	  the cost of reading the input data.
  *
- * If the total volume of data to materialize exceeds SortMem, we will need
+ * If the total volume of data to materialize exceeds work_mem, we will need
  * to write it to disk, so the cost is much higher in that case.
  */
 void
@@ -604,10 +604,10 @@ cost_material(Path *path,
 	Cost		startup_cost = input_cost;
 	Cost		run_cost = 0;
 	double		nbytes = relation_byte_size(tuples, width);
-	long		sortmembytes = SortMem * 1024L;
+	long		work_mem_bytes = work_mem * 1024L;
 
 	/* disk costs */
-	if (nbytes > sortmembytes)
+	if (nbytes > work_mem_bytes)
 	{
 		double		npages = ceil(nbytes / BLCKSZ);
 

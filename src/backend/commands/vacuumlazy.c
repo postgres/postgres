@@ -10,11 +10,11 @@
  * relations with finite memory space usage.  To do that, we set upper bounds
  * on the number of tuples and pages we will keep track of at once.
  *
- * We are willing to use at most VacuumMem memory space to keep track of
- * dead tuples.  We initially allocate an array of TIDs of that size.
- * If the array threatens to overflow, we suspend the heap scan phase
- * and perform a pass of index cleanup and page compaction, then resume
- * the heap scan with an empty TID array.
+ * We are willing to use at most maintenance_work_mem memory space to keep
+ * track of dead tuples.  We initially allocate an array of TIDs of that size.
+ * If the array threatens to overflow, we suspend the heap scan phase and
+ * perform a pass of index cleanup and page compaction, then resume the heap
+ * scan with an empty TID array.
  *
  * We can limit the storage for page free space to MaxFSMPages entries,
  * since that's the most the free space map will be willing to remember
@@ -31,7 +31,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.33 2003/11/29 19:51:48 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.34 2004/02/03 17:34:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -908,8 +908,8 @@ lazy_space_alloc(LVRelStats *vacrelstats, BlockNumber relblocks)
 	int			maxtuples;
 	int			maxpages;
 
-	maxtuples = (int) ((VacuumMem * 1024L) / sizeof(ItemPointerData));
-	/* stay sane if small VacuumMem */
+	maxtuples = (int) ((maintenance_work_mem * 1024L) / sizeof(ItemPointerData));
+	/* stay sane if small maintenance_work_mem */
 	if (maxtuples < MAX_TUPLES_PER_PAGE)
 		maxtuples = MAX_TUPLES_PER_PAGE;
 
@@ -942,8 +942,8 @@ lazy_record_dead_tuple(LVRelStats *vacrelstats,
 {
 	/*
 	 * The array shouldn't overflow under normal behavior, but perhaps it
-	 * could if we are given a really small VacuumMem. In that case, just
-	 * forget the last few tuples.
+	 * could if we are given a really small maintenance_work_mem. In that
+	 * case, just forget the last few tuples.
 	 */
 	if (vacrelstats->num_dead_tuples < vacrelstats->max_dead_tuples)
 	{

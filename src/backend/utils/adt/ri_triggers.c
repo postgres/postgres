@@ -17,7 +17,7 @@
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.66 2004/01/07 18:56:28 neilc Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.67 2004/02/03 17:34:03 tgl Exp $
  *
  * ----------
  */
@@ -41,6 +41,7 @@
 #include "utils/lsyscache.h"
 #include "utils/typcache.h"
 #include "utils/acl.h"
+#include "utils/guc.h"
 #include "miscadmin.h"
 
 
@@ -2572,6 +2573,8 @@ RI_Initial_Check(FkConstraint *fkconstraint, Relation rel, Relation pkrel)
 	const char *sep;
 	List		*list;
 	List		*list2;
+	int			old_work_mem;
+	char		workmembuf[32];
 	int			spi_result;
 	void		*qplan;
 
@@ -2665,6 +2668,23 @@ RI_Initial_Check(FkConstraint *fkconstraint, Relation rel, Relation pkrel)
 	snprintf(querystr + strlen(querystr), sizeof(querystr) - strlen(querystr),
 			 ")");
 
+	/*
+	 * Temporarily increase work_mem so that the check query can be executed
+	 * more efficiently.  It seems okay to do this because the query is simple
+	 * enough to not use a multiple of work_mem, and one typically would not
+	 * have many large foreign-key validations happening concurrently.  So
+	 * this seems to meet the criteria for being considered a "maintenance"
+	 * operation, and accordingly we use maintenance_work_mem.
+	 *
+	 * We do the equivalent of "SET LOCAL work_mem" so that transaction abort
+	 * will restore the old value if we lose control due to an error.
+	 */
+	old_work_mem = work_mem;
+	snprintf(workmembuf, sizeof(workmembuf), "%d", maintenance_work_mem);
+	(void) set_config_option("work_mem", workmembuf,
+							 PGC_USERSET, PGC_S_SESSION,
+							 true, true);
+
 	if (SPI_connect() != SPI_OK_CONNECT)
 		elog(ERROR, "SPI_connect failed");
 
@@ -2740,6 +2760,16 @@ RI_Initial_Check(FkConstraint *fkconstraint, Relation rel, Relation pkrel)
 
 	if (SPI_finish() != SPI_OK_FINISH)
 		elog(ERROR, "SPI_finish failed");
+
+	/*
+	 * Restore work_mem for the remainder of the current transaction.
+	 * This is another SET LOCAL, so it won't affect the session value,
+	 * nor any tentative value if there is one.
+	 */
+	snprintf(workmembuf, sizeof(workmembuf), "%d", old_work_mem);
+	(void) set_config_option("work_mem", workmembuf,
+							 PGC_USERSET, PGC_S_SESSION,
+							 true, true);
 
 	return true;
 }

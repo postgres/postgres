@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.193 2004/01/19 21:20:06 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.194 2004/02/03 17:34:02 tgl Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1399,7 +1399,7 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
       not designed for optimum performance. To achieve optimum
       performance, several server parameters must be adjusted, the two
       most common being <varname>shared_buffers</varname> and
-      <varname> sort_mem</varname> mentioned in the documentation.
+      <varname>work_mem</varname>.
       Other parameters mentioned in the documentation also affect
       performance.
      </para>

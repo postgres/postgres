@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/postgres-ref.sgml,v 1.42 2003/11/29 19:51:39 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/postgres-ref.sgml,v 1.43 2004/02/03 17:34:02 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -41,7 +41,7 @@ PostgreSQL documentation
     <arg>-s</arg>
     <arg>-t<group choice="plain"><arg>pa</arg><arg>pl</arg><arg>ex</arg></group></arg>
    </group>
-   <arg>-S <replaceable>sort-mem</replaceable></arg>
+   <arg>-S <replaceable>work-mem</replaceable></arg>
    <arg>-W <replaceable>seconds</replaceable></arg>
    <arg>--<replaceable>name</replaceable>=<replaceable>value</replaceable></arg>
    <arg choice="plain"><replaceable>database</replaceable></arg>
@@ -64,7 +64,7 @@ PostgreSQL documentation
     <arg>-s</arg>
     <arg>-t<group choice="plain"><arg>pa</arg><arg>pl</arg><arg>ex</arg></group></arg>
    </group>
-   <arg>-S <replaceable>sort-mem</replaceable></arg>
+   <arg>-S <replaceable>work-mem</replaceable></arg>
    <arg>-v <replaceable>protocol</replaceable></arg>
    <arg>-W <replaceable>seconds</replaceable></arg>
    <arg>--<replaceable>name</replaceable>=<replaceable>value</replaceable></arg>
@@ -197,16 +197,13 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-S</option> <replaceable class="parameter">sort-mem</replaceable></term>
+      <term><option>-S</option> <replaceable class="parameter">work-mem</replaceable></term>
       <listitem>
        <para>
 	Specifies the amount of memory to be used by internal sorts and hashes
-	before resorting to temporary disk files.  The value is specified in
-	kilobytes, and defaults to 1024.  Note that for a complex query,
-	several sorts and/or hashes might be running in parallel, and each one
-	will be allowed to use as much as
-	<replaceable class="parameter">sort-mem</replaceable> kilobytes
-	before it starts to put data into temporary files.
+	before resorting to temporary disk files.  See the description of the
+	<varname>work_mem</> configuration parameter in <xref
+	linkend="runtime-config-resource-memory">.
        </para>
       </listitem>
      </varlistentry>

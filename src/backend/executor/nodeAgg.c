@@ -45,7 +45,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.117 2003/11/29 19:51:48 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.118 2004/02/03 17:34:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -248,7 +248,7 @@ initialize_aggregates(AggState *aggstate,
 			peraggstate->sortstate =
 				tuplesort_begin_datum(peraggstate->inputType,
 									  peraggstate->sortOperator,
-									  false);
+									  work_mem, false);
 		}
 
 		/*
