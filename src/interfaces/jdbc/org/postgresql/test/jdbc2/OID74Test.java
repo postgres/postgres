@@ -14,7 +14,7 @@ import java.sql.*;
  * User: alexei
  * Date: 17-Dec-2003
  * Time: 11:01:44
- * @version $Id: OID74Test.java,v 1.2.2.2 2003/12/18 04:10:12 davec Exp $
+ * @version $Id: OID74Test.java,v 1.2.2.3 2004/03/29 17:47:47 barry Exp $
  */
 public class OID74Test  extends TestCase
 {
@@ -75,6 +75,7 @@ public class OID74Test  extends TestCase
 		}
 
 		TestUtil.dropTable(c,"temp");
+                c.commit();
 		TestUtil.closeDB(c);
   	}	
 }

@@ -6,7 +6,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/core/Attic/QueryExecutor.java,v 1.27.2.1 2004/02/03 05:43:22 jurka Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/core/Attic/QueryExecutor.java,v 1.27.2.2 2004/03/29 17:47:47 barry Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,7 +82,6 @@ public class QueryExecutor
 
 	private Field[] fields = null;
 	private Vector tuples = new Vector();
-	private boolean binaryCursor = false;
 	private String status = null;
 	private int update_count = 1;
 	private long insert_oid = 0;
@@ -135,14 +134,11 @@ public class QueryExecutor
 						String param = pgStream.ReceiveString(connection.getEncoding());
 						connection.addNotification(new org.postgresql.core.Notification(msg, pid));
 						break;
-					case 'B':	// Binary Data Transfer
-						receiveTupleV3(true);
-						break;
 					case 'C':	// Command Status
 						receiveCommandStatusV3();
 						break;
-					case 'D':	// Text Data Transfer
-						receiveTupleV3(false);
+					case 'D':	// Data Transfer
+						receiveTupleV3();
 						break;
 					case 'E':	// Error Message
 
@@ -205,11 +201,11 @@ public class QueryExecutor
 			//create a new one
 			if (rs != null) 
 			{
-				rs.reInit(fields, tuples, status, update_count, insert_oid, binaryCursor);
+				rs.reInit(fields, tuples, status, update_count, insert_oid);
 			}
 			else 
 			{
-				rs = statement.createResultSet(fields, tuples, status, update_count, insert_oid, binaryCursor);
+				rs = statement.createResultSet(fields, tuples, status, update_count, insert_oid);
 			}
 			return rs;
 		}
@@ -295,11 +291,11 @@ public class QueryExecutor
 			//create a new one
 			if (rs != null) 
 			{
-				rs.reInit(fields, tuples, status, update_count, insert_oid, binaryCursor);
+				rs.reInit(fields, tuples, status, update_count, insert_oid);
 			}
 			else 
 			{
-				rs = statement.createResultSet(fields, tuples, status, update_count, insert_oid, binaryCursor);
+				rs = statement.createResultSet(fields, tuples, status, update_count, insert_oid);
 			}
 			return rs;
 		}
@@ -378,16 +374,12 @@ public class QueryExecutor
 
 	/*
 	 * Receive a tuple from the backend.
-	 *
-	 * @param isBinary set if the tuple should be treated as binary data
 	 */
-	private void receiveTupleV3(boolean isBinary) throws SQLException
+	private void receiveTupleV3() throws SQLException
 	{
 		if (fields == null)
 			throw new PSQLException("postgresql.con.tuple", PSQLState.CONNECTION_FAILURE);
-		Object tuple = pgStream.ReceiveTupleV3(fields.length, isBinary);
-		if (isBinary)
-			binaryCursor = true;
+		Object tuple = pgStream.ReceiveTupleV3(fields.length);
 		if (maxRows == 0 || tuples.size() < maxRows)
 			tuples.addElement(tuple);
 	}
@@ -402,8 +394,11 @@ public class QueryExecutor
 		if (fields == null)
 			throw new PSQLException("postgresql.con.tuple", PSQLState.CONNECTION_FAILURE);
 		Object tuple = pgStream.ReceiveTupleV2(fields.length, isBinary);
-		if (isBinary)
-			binaryCursor = true;
+		if (isBinary) {
+		    for (int i = 0; i < fields.length; i++) {
+                        fields[i].setFormat(Field.BINARY_FORMAT); //Set the field to binary format
+		    }
+		}
 		if (maxRows == 0 || tuples.size() < maxRows)
 			tuples.addElement(tuple);
 	}
@@ -488,6 +483,7 @@ public class QueryExecutor
 			int formatType = pgStream.ReceiveIntegerR(2);
 			//TODO: use the extra values coming back
 			fields[i] = new Field(connection, typeName, typeOid, typeLength, typeModifier);
+                        fields[i].setFormat(formatType);
 		}
 	}
 	/*

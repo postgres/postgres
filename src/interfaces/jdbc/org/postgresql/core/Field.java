@@ -6,7 +6,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/core/Attic/Field.java,v 1.2 2003/05/29 03:21:32 barry Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/core/Attic/Field.java,v 1.2.4.1 2004/03/29 17:47:47 barry Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,10 +19,19 @@ import org.postgresql.core.BaseConnection;
  */
 public class Field
 {
+    //Constants for the two V3 protocol data formats
+    public static final int TEXT_FORMAT = 0;
+    public static final int BINARY_FORMAT = 1;
+
 	private int length;		// Internal Length of this field
 	private int oid;		// OID of the type
 	private int mod;		// type modifier of this field
 	private String name;		// Name of this field
+        private int format = TEXT_FORMAT; // In the V3 protocol each field has a format
+                                        // 0 = text, 1 = binary
+                                        // In the V2 protocol all fields in a
+                                        // binary cursor are binary and all 
+                                        // others are text
 
 	private BaseConnection conn;	// Connection Instantation
 
@@ -87,6 +96,22 @@ public class Field
 	public int getLength()
 	{
 		return length;
+	}
+
+	/*
+	 * @return the format of this Field's data (text=0, binary=1)
+	 */
+	public int getFormat()
+	{
+		return format;
+	}
+
+	/*
+	 * @param format the format of this Field's data (text=0, binary=1)
+	 */
+	public void setFormat(int format)
+	{
+		this.format = format;
 	}
 
 	/*

@@ -353,7 +353,7 @@ public class Array implements java.sql.Array
 				throw org.postgresql.Driver.notImplemented();
 		}
 		BaseStatement stat = (BaseStatement) conn.createStatement();
-		return (ResultSet) stat.createResultSet(fields, rows, "OK", 1, 0, false);
+		return (ResultSet) stat.createResultSet(fields, rows, "OK", 1, 0);
 	}
 
 	public String toString()

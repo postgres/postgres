@@ -21,7 +21,7 @@ public class Jdbc2RefCursorResultSet extends Jdbc2ResultSet
 
         Jdbc2RefCursorResultSet(BaseStatement statement, String refCursorName) throws java.sql.SQLException
         {
-                super(statement, null, null, null, -1, 0L, false);
+                super(statement, null, null, null, -1, 0L);
                 this.refCursorHandle = refCursorName;
         }
 

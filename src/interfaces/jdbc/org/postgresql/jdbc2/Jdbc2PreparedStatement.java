@@ -15,9 +15,9 @@ public class Jdbc2PreparedStatement extends org.postgresql.jdbc2.AbstractJdbc2St
 		super(connection, sql);
 	}
 
-	public BaseResultSet createResultSet (Field[] fields, Vector tuples, String status, int updateCount, long insertOID, boolean binaryCursor) throws SQLException
+	public BaseResultSet createResultSet (Field[] fields, Vector tuples, String status, int updateCount, long insertOID) throws SQLException
 	{
-		return new Jdbc2ResultSet(this, fields, tuples, status, updateCount, insertOID, binaryCursor);
+		return new Jdbc2ResultSet(this, fields, tuples, status, updateCount, insertOID);
 	}
 
  

@@ -6,7 +6,7 @@ import java.util.Vector;
 import org.postgresql.core.Field;
 import org.postgresql.core.BaseStatement;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc3/Attic/Jdbc3ResultSet.java,v 1.5 2003/03/07 18:39:45 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc3/Attic/Jdbc3ResultSet.java,v 1.5.4.1 2004/03/29 17:47:47 barry Exp $
  * This class implements the java.sql.ResultSet interface for JDBC3.
  * However most of the implementation is really done in
  * org.postgresql.jdbc3.AbstractJdbc3ResultSet or one of it's parents
@@ -14,9 +14,9 @@ import org.postgresql.core.BaseStatement;
 public class Jdbc3ResultSet extends org.postgresql.jdbc3.AbstractJdbc3ResultSet implements java.sql.ResultSet
 {
 
-	public Jdbc3ResultSet(BaseStatement statement, Field[] fields, Vector tuples, String status, int updateCount, long insertOID, boolean binaryCursor)
+	public Jdbc3ResultSet(BaseStatement statement, Field[] fields, Vector tuples, String status, int updateCount, long insertOID)
 	{
-		super(statement, fields, tuples, status, updateCount, insertOID, binaryCursor);
+		super(statement, fields, tuples, status, updateCount, insertOID);
 	}
 
 	public java.sql.ResultSetMetaData getMetaData() throws SQLException

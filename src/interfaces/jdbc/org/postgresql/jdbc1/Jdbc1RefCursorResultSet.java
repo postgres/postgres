@@ -22,7 +22,7 @@ public class Jdbc1RefCursorResultSet extends Jdbc1ResultSet
         
         Jdbc1RefCursorResultSet(BaseStatement statement, String refCursorName)
         {
-                super(statement, null, null, null, -1, 0L, false);
+                super(statement, null, null, null, -1, 0L);
                 this.refCursorHandle = refCursorName;
         }
 

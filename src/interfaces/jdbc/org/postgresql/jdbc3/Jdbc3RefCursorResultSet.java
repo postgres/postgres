@@ -24,7 +24,7 @@ public class Jdbc3RefCursorResultSet extends Jdbc3ResultSet implements PGRefCurs
                 super((BaseStatement)statement,
                       (Field[])null,
                       (Vector)null,
-                      (String)null, -1, 0L, false);
+                      (String)null, -1, 0L);
                 this.refCursorHandle = refCursorName;
 	}
 
