@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl
+#!/usr/bin/perl
 #
 # Accepts one argument - DBMS name (pgsql, ...) and initializes
 # global variable $TestDBMS with this name.

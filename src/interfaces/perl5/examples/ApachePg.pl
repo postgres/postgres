@@ -1,6 +1,6 @@
-#!/usr/local/bin/perl
+#!/usr/bin/perl
 
-# $Id: ApachePg.pl,v 1.1 2000/06/01 03:05:24 momjian Exp $
+# $Id: ApachePg.pl,v 1.2 2001/09/04 11:41:04 petere Exp $
 
 # demo script, tested with:
 #  - PostgreSQL-6.4

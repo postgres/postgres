@@ -1,6 +1,6 @@
-#!/usr/local/bin/perl -w
+#!/usr/bin/perl -w
 
-# $Id: test.pl,v 1.13 2000/11/17 00:24:03 tgl Exp $
+# $Id: test.pl,v 1.14 2001/09/04 11:41:04 petere Exp $
 
 # Before `make install' is performed this script should be runnable with
 # `make test'. After `make install' it should work as `perl test.pl'
