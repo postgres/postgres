@@ -31,7 +31,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuumlazy.c,v 1.5 2001/08/26 16:55:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuumlazy.c,v 1.6 2001/09/04 19:12:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -318,14 +318,21 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 					/*
 					 * Tuple is good.  Consider whether to replace its xmin
 					 * value with FrozenTransactionId.
+					 *
+					 * NB: Since we hold only a shared buffer lock here,
+					 * we are assuming that TransactionId read/write
+					 * is atomic.  This is not the only place that makes
+					 * such an assumption.  It'd be possible to avoid the
+					 * assumption by momentarily acquiring exclusive lock,
+					 * but for the moment I see no need to.
 					 */
 					if (TransactionIdIsNormal(tuple.t_data->t_xmin) &&
 						TransactionIdPrecedes(tuple.t_data->t_xmin,
 											  FreezeLimit))
 					{
 						tuple.t_data->t_xmin = FrozenTransactionId;
-						tuple.t_data->t_infomask &= ~HEAP_XMIN_INVALID;
-						tuple.t_data->t_infomask |= HEAP_XMIN_COMMITTED;
+						/* infomask should be okay already */
+						Assert(tuple.t_data->t_infomask & HEAP_XMIN_COMMITTED);
 						pgchanged = true;
 					}
 					break;
