@@ -337,7 +337,7 @@ RETCODE result;
 
     case SQL_MAX_ROW_SIZE: /* ODBC 2.0 */
 		len = 4;
-        value = BLCKSZ;
+        value = MAX_ROW_SIZE;
         break;
 
     case SQL_MAX_ROW_SIZE_INCLUDES_LONG: /* ODBC 2.0 */
@@ -422,7 +422,7 @@ RETCODE result;
         break;
 
     case SQL_OUTER_JOINS: /* ODBC 1.0 */
-		p = "N";
+		p = "Y";
         break;
 
     case SQL_OWNER_TERM: /* ODBC 1.0 */

@@ -40,8 +40,8 @@ typedef UInt4 Oid;
 #define DRIVERNAME             "PostgreSQL ODBC"
 #define DBMS_NAME              "PostgreSQL"
 
-#define DBMS_VERSION           "06.40.0009 PostgreSQL 6.4/6.5"
-#define POSTGRESDRIVERVERSION  "06.40.0009"
+#define DBMS_VERSION           "7.1.0000 PostgreSQL 7.1"
+#define POSTGRESDRIVERVERSION  "7.1.0000"
 
 #ifdef WIN32
 #define DRIVER_FILE_NAME		"PSQLODBC.DLL"
@@ -54,8 +54,9 @@ typedef UInt4 Oid;
 #define BLCKSZ                      4096
 #endif
 
-#define MAX_QUERY_SIZE				(BLCKSZ*2)
-#define MAX_MESSAGE_LEN				MAX_QUERY_SIZE
+#define MAX_ROW_SIZE				0 /* Unlimited rowsize with the Tuple Toaster */
+#define MAX_QUERY_SIZE				0 /* Unlimited query length from v7.0(?) */
+#define MAX_MESSAGE_LEN				(2*BLCKSZ)
 #define MAX_CONNECT_STRING			4096
 #define ERROR_MSG_LENGTH			4096
 #define FETCH_MAX					100		/* default number of rows to cache for declare/fetch */
