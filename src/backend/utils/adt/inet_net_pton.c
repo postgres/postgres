@@ -16,7 +16,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$Id: inet_net_pton.c,v 1.4 1998/10/12 15:56:34 momjian Exp $";
+static const char rcsid[] = "$Id: inet_net_pton.c,v 1.5 1998/10/17 03:59:14 momjian Exp $";
 
 #endif
 
@@ -100,34 +100,32 @@ inet_net_pton_ipv4(const char *src, u_char *dst, size_t size)
 
 	ch = *src++;
 	if (ch == '0' && (src[0] == 'x' || src[0] == 'X')
-		&& isascii(src[1]) && isxdigit(src[1]))
-	{
+	    && isascii(src[1]) && isxdigit(src[1])) {
 		/* Hexadecimal: Eat nybble string. */
 		if (size <= 0)
 			goto emsgsize;
-		tmp = 0;
 		dirty = 0;
-		src++;					/* skip x or X. */
-		while ((ch = *src++) != '\0' &&
-			   isascii(ch) && isxdigit(ch))
-		{
+		src++;	/* skip x or X. */
+		while ((ch = *src++) != '\0' && isascii(ch) && isxdigit(ch)) {
 			if (isupper(ch))
 				ch = tolower(ch);
 			n = strchr(xdigits, ch) - xdigits;
 			assert(n >= 0 && n <= 15);
-			tmp = (tmp << 4) | n;
+			if (dirty == 0)
+				tmp = n;
+			else
+				tmp = (tmp << 4) | n;
 			if (++dirty == 2) {
 				if (size-- <= 0)
 					goto emsgsize;
 				*dst++ = (u_char) tmp;
-				tmp = 0, dirty = 0;
+				dirty = 0;
 			}
 		}
-		if (dirty) {
+		if (dirty) {  /* Odd trailing nybble? */
 			if (size-- <= 0)
 				goto emsgsize;
-			tmp <<= 4;
-			*dst++ = (u_char) tmp;
+			*dst++ = (u_char) (tmp << 4);
 		}
 	}
 	else if (isascii(ch) && isdigit(ch))
