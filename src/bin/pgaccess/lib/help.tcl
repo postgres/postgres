@@ -80,7 +80,7 @@ global PgAcVar
 	set x [expr {($sw - 640)/2}]
 	set y [expr {($sh - 480)/2}] 
 	wm geometry $base 640x480+$x+$y
-	wm maxsize $base 1009 738
+	wm maxsize $base 1280 1024
 	wm minsize $base 1 1
 	wm overrideredirect $base 0
 	wm resizable $base 1 1

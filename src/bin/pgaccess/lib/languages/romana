@@ -48,7 +48,7 @@ array set Messages {
 
 "Last value" "Ultima valoare"
 
-"Preferences" "Preferinþe"
+"Preferences" "Opþiuni"
 
 "View '%s' already exists!\nOverwrite ?" "Vederea '%s' mai exista!\nO suprainscriem ?"
 
@@ -282,7 +282,7 @@ array set Messages {
 
 "Save" "Salveazã"
 
-"Exit" "Terminare"
+"Exit" "Terminã"
 
 "Inherits" "Strãmoºi"
 
@@ -306,7 +306,7 @@ array set Messages {
 
 "There is another field with the same name: '%s'!\n\nReplace it ?" "Mai exista un cimp cu acelasi nume: '%s'!\n\nIl inlocuim cu descrierea noua?"
 
-"Contents" "Conþinut"
+"Contents" "Cuprins"
 
 "Views" "Vederi"
 
@@ -478,7 +478,7 @@ array set Messages {
 
 "primary key" "cheie primarã"
 
-"Back" "Inapoi"
+"Back" "Înapoi"
 
 "Columns" "Coloane"
 

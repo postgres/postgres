@@ -2,7 +2,7 @@
 <html>
 <head>
    <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-   <meta name="GENERATOR" content="Mozilla/4.61 [en] (X11; I; Linux 2.2.12 i586) [Netscape]">
+   <meta name="GENERATOR" content="Mozilla/4.7 [en] (X11; I; Linux 2.2.12-20 i586) [Netscape]">
 </head>
 <body bgcolor="#FEFEDF">
 
@@ -77,7 +77,32 @@ forget to send me a copy in order to include it into the standard distribution.<
 name "namespace" while executing "namespace eval Mainlib</tt>&nbsp; ..."</b>
 <blockquote>That means 100% that you have an older version of Tcl/Tk that
 don't recognize namespaces command. Please upgrade to Tcl/Tk 8.0.x minimum</blockquote>
+<b>9. When saving big forms with a lot of widgets and code inside, a big
+error message appears, PgAccess crashes, cannot recover old form, pga_forms
+table appears to be corrupted.</b>
+<blockquote>Your form source is exceeding 8000 bytes. A PostgreSQL record
+cannot hold more than 8 Kb and pga_forms table is corrupted. Sorry for
+your work :-( , your old form cannot be recovered anymore if you don't
+have a backup (dumped) database. Upgrade to PgAccess 0.98.3 that will prevent
+saving of those big forms. In order to make your form sources smaller,
+define some scripts for your form initialize routines or for other big
+portions of code and call them from the form code with the command <tt>Scripts::execute
+"Your space saving code script name"</tt></blockquote>
 
+<p><br><b>10. I have a dual boot machine with Linux and Windows 9x installed.
+PgAccess works fine from Linux but when trying to connect under Windows
+it says something about wrong access rights to the same database. Tcl/Tk
+version and PostgreSQL server version matches libpgtcl and libpq DLL's.</b>
+<blockquote>Check your Windows TCP/IP configuration. If you configured
+the Windows TCP/IP machine address to by dynamic allocated by the server
+then it got another IP address, different from Linux. If you have host
+based authentication then you have no rights for the database. Change the
+Windows TCP/IP configuration and set up manually the same TCP/IP address
+as from Linux installation or change the pg_hba.conf configuration file
+from the server to allow access to the database from the whole domain not
+from a single IP address.</blockquote>
+
+<br>&nbsp;
 <br>&nbsp;
 <br>&nbsp;
 <br>&nbsp;

@@ -148,18 +148,23 @@ global PgAcVar
 		showError [intlmsg "User without name?"]
 		return
 	}
-	sql_exec noquiet "revoke all on \"$PgAcVar(tblinfo,tablename)\" from $PgAcVar(permission,username)"
+	if {$PgAcVar(permission,username)=="PUBLIC"} {
+		set usrname PUBLIC
+	} else {
+		set usrname "\"$PgAcVar(permission,username)\""
+	}
+	sql_exec noquiet "revoke all on \"$PgAcVar(tblinfo,tablename)\" from $usrname"
 	if {$PgAcVar(permission,select)} {
-		sql_exec noquiet "GRANT SELECT on \"$PgAcVar(tblinfo,tablename)\" to $PgAcVar(permission,username)"
+		sql_exec noquiet "GRANT SELECT on \"$PgAcVar(tblinfo,tablename)\" to $usrname"
 	}
 	if {$PgAcVar(permission,insert)} {
-		sql_exec noquiet "GRANT INSERT on \"$PgAcVar(tblinfo,tablename)\" to $PgAcVar(permission,username)"
+		sql_exec noquiet "GRANT INSERT on \"$PgAcVar(tblinfo,tablename)\" to $usrname"
 	}
 	if {$PgAcVar(permission,update)} {
-		sql_exec noquiet "GRANT UPDATE on \"$PgAcVar(tblinfo,tablename)\" to $PgAcVar(permission,username)"
+		sql_exec noquiet "GRANT UPDATE on \"$PgAcVar(tblinfo,tablename)\" to $usrname"
 	}
 	if {$PgAcVar(permission,rule)} {
-		sql_exec noquiet "GRANT RULE on \"$PgAcVar(tblinfo,tablename)\" to $PgAcVar(permission,username)"
+		sql_exec noquiet "GRANT RULE on \"$PgAcVar(tblinfo,tablename)\" to $usrname"
 	}
 	refreshTableInformation
 }
@@ -939,7 +944,7 @@ global PgAcVar
 		toplevel $base -class Toplevel
 		wm focusmodel $base passive
 		wm geometry $base 650x400
-		wm maxsize $base 1009 738
+		wm maxsize $base 1280 1024
 		wm minsize $base 650 400
 		wm overrideredirect $base 0
 		wm resizable $base 1 1
@@ -1242,7 +1247,7 @@ global PgAcVar
 	toplevel $base -class Toplevel
 	wm focusmodel $base passive
 	wm geometry $base 634x392+78+181
-	wm maxsize $base 1009 738
+	wm maxsize $base 1280 1024
 	wm minsize $base 1 1
 	wm overrideredirect $base 0
 	wm resizable $base 0 0
@@ -1513,7 +1518,7 @@ global PgAcVar
 		-background #c7c3c7 
 	wm focusmodel $base passive
 	wm geometry $base 522x398+152+135
-	wm maxsize $base 1009 738
+	wm maxsize $base 1280 1024
 	wm minsize $base 1 1
 	wm overrideredirect $base 0
 	wm resizable $base 0 0
@@ -1929,7 +1934,7 @@ proc vTclWindow.pgaw:AddIndex {base} {
 	toplevel $base -class Toplevel
 	wm focusmodel $base passive
 	wm geometry $base 334x203+265+266
-	wm maxsize $base 1009 738
+	wm maxsize $base 1280 1024
 	wm minsize $base 1 1
 	wm overrideredirect $base 0
 	wm resizable $base 0 0
@@ -1998,7 +2003,7 @@ proc vTclWindow.pgaw:AddField {base} {
 	toplevel $base -class Toplevel
 	wm focusmodel $base passive
 	wm geometry $base 302x114+195+175
-	wm maxsize $base 1009 738
+	wm maxsize $base 1280 1024
 	wm minsize $base 1 1
 	wm overrideredirect $base 0
 	wm resizable $base 0 0
@@ -2054,7 +2059,7 @@ proc vTclWindow.pgaw:RenameField {base} {
 	toplevel $base -class Toplevel
 	wm focusmodel $base passive
 	wm geometry $base 215x75+258+213
-	wm maxsize $base 1009 738
+	wm maxsize $base 1280 1024
 	wm minsize $base 1 1
 	wm overrideredirect $base 0
 	wm resizable $base 0 0
@@ -2097,7 +2102,7 @@ proc vTclWindow.pgaw:Permissions {base} {
 	toplevel $base -class Toplevel
 	wm focusmodel $base passive
 	wm geometry $base 273x147+256+266
-	wm maxsize $base 1009 738
+	wm maxsize $base 1280 1024
 	wm minsize $base 1 1
 	wm overrideredirect $base 0
 	wm resizable $base 0 0

@@ -57,7 +57,8 @@ global PgAcVar
 		showError [intlmsg "You must supply the function language!"]
 	} else {
 		set funcbody [.pgaw:Function.fs.text1 get 1.0 end]
-		regsub -all "\n" $funcbody " " funcbody
+		# regsub -all "\n" $funcbody " " funcbody
+		regsub -all {'} $funcbody {''} funcbody
 		if {$PgAcVar(function,nametodrop) != ""} {
 			if {! [sql_exec noquiet "drop function $PgAcVar(function,nametodrop)"]} {
 				return

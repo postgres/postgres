@@ -38,12 +38,10 @@ CREATE TABLE "pga_schema" (
 REVOKE ALL on "pga_schema" from PUBLIC;
 GRANT ALL on "pga_schema" to PUBLIC;
 CREATE TABLE "cities" (
-	"id" int4 DEFAULT nextval('"cities_id_seq"') NOT NULL,
+	"id" int4 DEFAULT nextval ( '"cities_id_seq"' ) NOT NULL,
 	"name" character varying(32) NOT NULL,
 	"prefix" character varying(16) NOT NULL);
 REVOKE ALL on "cities" from PUBLIC;
-GRANT UPDATE,DELETE,SELECT,RULE on "cities" to "fane";
-GRANT ALL on "cities" to "liviu";
 CREATE FUNCTION "getcityprefix" (int4 ) RETURNS varchar AS 'select prefix from cities where id = $1 ' LANGUAGE 'SQL';
 COPY "pga_queries" FROM stdin;
 Query that can be saved as view	S	select * from phonebook where continent='usa'    	\N	\N	\N	\N

@@ -222,6 +222,7 @@ global PgAcVar CurrentDB
 	}
 	set PgAcVar(Old_Object_Name) $temp
 	Window show .pgaw:RenameObject
+	wm transient .pgaw:RenameObject .pgaw:Main
 }
 
 
@@ -472,7 +473,7 @@ global PgAcVar
 		-background #efefef -cursor left_ptr
 	wm focusmodel $base passive
 	wm geometry $base 332x390+96+172
-	wm maxsize $base 1009 738
+	wm maxsize $base 1280 1024
 	wm minsize $base 1 1
 	wm overrideredirect $base 0
 	wm resizable $base 0 0
@@ -506,6 +507,8 @@ global PgAcVar
 	menu $base.fm.mndb.01 \
 		-borderwidth 1 -font $PgAcVar(pref,font_normal) \
 		-tearoff 0 
+	$base.fm.mndb.01 add command \
+		-command {Window show .pgaw:NewDatabase ; wm transient .pgaw:NewDatabase .pgaw:Main} -label [intlmsg New]
 	$base.fm.mndb.01 add command \
 		-command {
 Window show .pgaw:OpenDB
@@ -610,7 +613,7 @@ proc vTclWindow.pgaw:ImportExport {base} {
 	toplevel $base -class Toplevel
 	wm focusmodel $base passive
 	wm geometry $base 287x151+259+304
-	wm maxsize $base 1009 738
+	wm maxsize $base 1280 1024
 	wm minsize $base 1 1
 	wm overrideredirect $base 0
 	wm resizable $base 0 0
@@ -674,7 +677,7 @@ proc vTclWindow.pgaw:RenameObject {base} {
 	toplevel $base -class Toplevel
 	wm focusmodel $base passive
 	wm geometry $base 272x105+294+262
-	wm maxsize $base 1009 738
+	wm maxsize $base 1280 1024
 	wm minsize $base 1 1
 	wm overrideredirect $base 0
 	wm resizable $base 0 0
@@ -749,6 +752,36 @@ proc vTclWindow.pgaw:RenameObject {base} {
 	place $base.b2  -x 155 -y 65 -width 80 -anchor nw -bordermode ignore
 }
 
+proc vTclWindow.pgaw:NewDatabase {base} {
+	if {$base == ""} {
+		set base .pgaw:NewDatabase
+	}
+	if {[winfo exists $base]} {
+		wm deiconify $base; return
+	}
+	toplevel $base -class Toplevel
+	wm focusmodel $base passive
+	wm geometry $base 272x105+294+262
+	wm maxsize $base 1280 1024
+	wm minsize $base 1 1
+	wm overrideredirect $base 0
+	wm resizable $base 0 0
+	wm title $base [intlmsg "New"]
+	label $base.l1  -borderwidth 0 -text [intlmsg {Name}]
+	entry $base.e1  -background #fefefe -borderwidth 1 -textvariable PgAcVar(New_Database_Name) 
+	button $base.b1  -borderwidth 1  -command {
+		set retval [sql_exec noquiet "create database $PgAcVar(New_Database_Name)"]
+		if {$retval} {
+			Window destroy .pgaw:NewDatabase
+		}
+	} -text [intlmsg Create]
+	button $base.b2  -borderwidth 1 -command {Window destroy .pgaw:NewDatabase} -text [intlmsg Cancel]
+	place $base.l1  -x 15 -y 28 -anchor nw -bordermode ignore 
+	place $base.e1  -x 100 -y 25 -anchor nw -bordermode ignore 
+	place $base.b1  -x 55 -y 65 -width 80 -anchor nw -bordermode ignore 
+	place $base.b2  -x 155 -y 65 -width 80 -anchor nw -bordermode ignore
+}
+
 
 proc vTclWindow.pgaw:GetParameter {base} {
 	if {$base == ""} {
@@ -764,7 +797,7 @@ proc vTclWindow.pgaw:GetParameter {base} {
 	set x [expr ($sw - 297)/2]
 	set y [expr ($sh - 98)/2]
 	wm geometry $base 297x98+$x+$y
-	wm maxsize $base 1009 738
+	wm maxsize $base 1280 1024
 	wm minsize $base 1 1
 	wm overrideredirect $base 0
 	wm resizable $base 0 0
@@ -811,7 +844,7 @@ proc vTclWindow.pgaw:SQLWindow {base} {
 	toplevel $base -class Toplevel
 	wm focusmodel $base passive
 	wm geometry $base 551x408+192+169
-	wm maxsize $base 1009 738
+	wm maxsize $base 1280 1024
 	wm minsize $base 1 1
 	wm overrideredirect $base 0
 	wm resizable $base 1 1
@@ -863,14 +896,14 @@ proc vTclWindow.pgaw:About {base} {
 	toplevel $base -class Toplevel
 	wm focusmodel $base passive
 	wm geometry $base 471x177+168+243
-	wm maxsize $base 1009 738
+	wm maxsize $base 1280 1024
 	wm minsize $base 1 1
 	wm overrideredirect $base 0
 	wm resizable $base 1 1
 	wm title $base [intlmsg "About"]
 	label $base.l1  -borderwidth 3 -font -Adobe-Helvetica-Bold-R-Normal-*-*-180-*-*-*-*-*  -relief ridge -text PgAccess 
 	label $base.l2  -relief groove  -text [intlmsg "A Tcl/Tk interface to\nPostgreSQL\nby Constantin Teodorescu"]
-	label $base.l3  -borderwidth 0 -relief sunken -text {v 0.98}
+	label $base.l3  -borderwidth 0 -relief sunken -text {v 0.98.5}
 	label $base.l4  -relief groove  -text "[intlmsg {You will always get the latest version at:}]
 http://www.flex.ro/pgaccess
 
@@ -893,7 +926,7 @@ proc vTclWindow.pgaw:OpenDB {base} {
 	toplevel $base -class Toplevel
 	wm focusmodel $base passive
 	wm geometry $base 283x172+119+210
-	wm maxsize $base 1009 738
+	wm maxsize $base 1280 1024
 	wm minsize $base 1 1
 	wm overrideredirect $base 0
 	wm resizable $base 0 0

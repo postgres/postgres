@@ -7,6 +7,8 @@ VACUUM opens every class in the database, cleans out records from rolled back tr
 
 We recommend that active production databases be cleaned nightly, in order to keep statistics relatively current. The VACUUM query may be executed at any time, however. In particular, after copying a large class into Postgres or after deleting a large number of records, it may be a good idea to issue a VACUUM query. This will update the system catalogs with the results of all recent changes, and allow the Postgres query optimizer to make better choices in planning user queries. 
 
+If the server crashes during a VACUUM command, chances are it will leave a lock file hanging around. Attempts to re-run the VACUUM command result in an error message about the creation of a lock file. If you are sure VACUUM is not running, remove the pg_vlock file in your database directory (i.e. PGDATA/base/dbname/pg_vlock). 
+
 " {} "Synopsis" {bold} "
 VACUUM \[ VERBOSE \] \[ ANALYZE \] \[ table \]
 VACUUM \[ VERBOSE \] ANALYZE \[ table \[ (column \[, ...\] ) \] \]

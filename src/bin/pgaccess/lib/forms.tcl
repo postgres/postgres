@@ -419,6 +419,10 @@ global PgAcVar CurrentDB
 		}
 		lappend info [list $PgAcVar(fdobj,$i,class) $PgAcVar(fdobj,$i,name) $PgAcVar(fdobj,$i,coord) $PgAcVar(fdobj,$i,command) $PgAcVar(fdobj,$i,label) $PgAcVar(fdobj,$i,variable) $PgAcVar(fdobj,$i,value) $PgAcVar(fdobj,$i,relief) $PgAcVar(fdobj,$i,fcolor) $PgAcVar(fdobj,$i,bcolor) $PgAcVar(fdobj,$i,borderwidth) $wfont]
 	}
+	if {[string length $info]>8000} {
+		tk_messageBox -title [intlmsg Error] -message [intlmsg "Form too big!\nSource size [string length $info] bytes\nCannot save !"]
+		return 0
+	}
 	sql_exec noquiet "delete from pga_forms where formname='$PgAcVar(fdvar,formtitle)'"
 	regsub -all "'" $info "''" info
 	sql_exec noquiet "insert into pga_forms values ('$PgAcVar(fdvar,formtitle)','$info')"

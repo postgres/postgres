@@ -368,7 +368,7 @@ global PgAcVar
 	toplevel $base -class Toplevel
 	wm focusmodel $base passive
 	wm geometry $base 652x426+96+120
-	wm maxsize $base 1009 738
+	wm maxsize $base 1280 1024
 	wm minsize $base 1 1
 	wm overrideredirect $base 0
 	wm resizable $base 0 0
@@ -562,7 +562,7 @@ proc vTclWindow.pgaw:ReportPreview {base} {
 	toplevel $base -class Toplevel
 	wm focusmodel $base passive
 	wm geometry $base 495x500+230+50
-	wm maxsize $base 1009 738
+	wm maxsize $base 1280 1024
 	wm minsize $base 1 1
 	wm overrideredirect $base 0
 	wm resizable $base 1 1

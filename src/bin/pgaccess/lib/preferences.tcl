@@ -121,11 +121,11 @@ proc vTclWindow.pgaw:Preferences {base} {
 	}
 	toplevel $base -class Toplevel
 	wm focusmodel $base passive
-	wm geometry $base 450x360+100+213
+	wm geometry $base 500x400+100+113
 	wm maxsize $base 1009 738
 	wm minsize $base 1 1
 	wm overrideredirect $base 0
-	wm resizable $base 0 0
+	wm resizable $base 1 1
 	wm deiconify $base
 	wm title $base [intlmsg "Preferences"]
 	bind $base <Key-Escape> "Window destroy .pgaw:Preferences"
@@ -190,7 +190,7 @@ proc vTclWindow.pgaw:Preferences {base} {
 	frame $base.fpl.flb \
 		-height 75 -relief sunken -width 125 
 	listbox $base.fpl.flb.llb \
-		-borderwidth 1 -height 6 -yscrollcommand {.pgaw:Preferences.fpl.flb.vsb set} 
+		-borderwidth 1 -height 3 -yscrollcommand {.pgaw:Preferences.fpl.flb.vsb set} 
 	scrollbar $base.fpl.flb.vsb \
 		-borderwidth 1 -command {.pgaw:Preferences.fpl.flb.llb yview} -orient vert 
 	frame $base.fb \
@@ -254,15 +254,15 @@ tk_messageBox -title [intlmsg Warning] -parent .pgaw:Main -message [intlmsg "Cha
 	pack $base.fal.st \
 		-in .pgaw:Preferences.fal -anchor center -expand 0 -fill x -side top -anchor w
 	pack $base.fpl \
-		-in .pgaw:Preferences -anchor center -expand 0 -fill x -side top 
+		-in .pgaw:Preferences -anchor center -expand 1 -fill both -side top 
 	pack $base.fpl.lt \
 		-in .pgaw:Preferences.fpl -anchor center -expand 0 -fill none -side top 
 	pack $base.fpl.flb \
-		-in .pgaw:Preferences.fpl -anchor center -expand 0 -fill none -side top 
+		-in .pgaw:Preferences.fpl -anchor center -expand 1 -fill y -side top 
 	pack $base.fpl.flb.llb \
-		-in .pgaw:Preferences.fpl.flb -anchor center -expand 0 -fill none -side left 
+		-in .pgaw:Preferences.fpl.flb -anchor center -expand 1 -fill y -side left 
 	pack $base.fpl.flb.vsb \
-		-in .pgaw:Preferences.fpl.flb -anchor center -expand 0 -fill y -side right 
+		-in .pgaw:Preferences.fpl.flb -anchor center -expand 1 -fill y -side right 
 	pack $base.fb \
 		-in .pgaw:Preferences -anchor center -expand 0 -fill none -side bottom 
 	grid $base.fb.btnsave \

@@ -714,7 +714,7 @@ global PgAcVar
 	toplevel $base -class Toplevel
 	wm focusmodel $base passive
 	wm geometry $base 759x530+10+13
-	wm maxsize $base 1009 738
+	wm maxsize $base 1280 1024
 	wm minsize $base 1 1
 	wm overrideredirect $base 0
 	wm resizable $base 1 1

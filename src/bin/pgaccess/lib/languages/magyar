@@ -1,34 +1,34 @@
 array set Messages {
 
-"Label" "Cimke"
+"Label" "Címke"
  
 "Save schema" "Séma mentése"
  
-"Is unique ?" "Egyedi (UNIQUE) ?"
+"Is unique ?" "Egyedi ?"
  
 "Report builder" "Jelentés szerkesztõ"
  
 "Criteria" "Feltételek"
  
-"FATAL ERROR upgrading PgAccess table" "FATÁLIS HIBA keletkezett a PgAccess tábla frissitése közben"
+"FATAL ERROR upgrading PgAccess table" "SÚLYOS HIBA a PgAccess tábla frissítése közben"
  
-"Save this query as a view" "Nézetként (VIEW) akarod elmenteni a lekérdezést?"
+"Save this query as a view" "Lekérdezés mentése nézetként?"
  
-"Page header" "Oldal fejléc"
+"Page header" "Fejléc"
  
 "Query name" "Lekérdezés név"
  
 "Please select an object first!" "Elõször válassz egy objektumot!"
  
-"Fields :" "Mezõk :"
+"Fields :" "Mezõk"
  
 "Name" "Név"
  
 "File name" "Fájl név"
  
-"Detail record" "Részletes bejegyzés"
+"Detail record" "Részletes rekord"
  
-"Auto-load the last opened database at startup" "Az utolsóként használt adatbázis automatikus nyitésa inditáskor"
+"repAuto-load the last opened database at startup" "Az utolsóként használt adatbázis automatikus megnyitása indításkor?"
  
 "Maxvalue" "Maximális érték"
  
@@ -36,41 +36,42 @@ array set Messages {
  
 "Report fields" "Jelentés mezõk"
  
-"Test form" "Teszt kérdõiv (FORM)"
+"Test form" "Teszt ûrlap"
  
-"Error trying to connect to database '%s' on host %s \n\nPostgreSQL error message:%s" "Hiba a(z) '%s' nevû adatbázishoz kapcsolódás közben a(z) '%s' szerveren.\n\nPostgreSQL hibaüzenet:%s"
+"Error trying to connect to database '%s' on host %s \n\nPostgreSQL error message:%s" "Hiba a(z) '%s' adatbázishoz kapcsolódás közben a(z) %s szerveren.\n\nPostgreSQL
+hibaüzenet:%s"
  
-"No field type ?" "Nincs a mezõnek tipusa ?"
+"No field type ?" "Nincs a mezõnek típusa ?"
  
 "User without name?" "Felhasználó név nélkül ?"
  
-"You have to supply a name for this schema!" "Nevet kell adj ennek a sémának !"
+"You have to supply a name for this schema!" "A sémához név megadása szükséges !"
  
 "Last value" "Legutóbbi érték"
  
-"Preferences" "Beállitások"
+"Preferences" "Beállítások"
  
-"View '%s' already exists!\nOverwrite ?" "A(z) '%s' nevû nézet (VIEW) már létezik!\n Felülirás ?"
+"View '%s' already exists!\nOverwrite ?" "A(z) '%s' nézet már létezik!\n Felülírás ?"
  
-"You have to select an index!" "Választanod kell egy indexet!"
+"You have to select an index!" "Választani kell egy indexet!"
  
-"Field type" "Mezõtipus"
+"Field type" "Mezõtípus"
  
 "Script name" "Szkript neve"
  
 "Reload" "Újratölt"
  
-"Remove table %s from query?" "Törölni akarod a(z) '%s' táblát ebbõl a lekérdezésbõl ?"
+"Remove table %s from query?" "%s tábla eltávolítása a lekérdezésbõl ?"
  
 "SQL window" "SQL ablak"
  
-"Allow user to create other users" "Engedély a felhasználónak új felhasználó készitésére"
+"Allow user to create other users" "Engedély másik felhasználó létrehozására"
  
-"Delete current record ?" "Az aktuális bejegyzés törlése ?"
+"Delete current record ?" "Aktuális rekord törlése ?"
  
 "List box" "Lista"
  
-"Save to query builder" "Mentsd a lekérdezés szerkesztõbe"
+"Save to query builder" "Mentés a lekérdezés szerkesztõbe"
  
 "fixed width" "fix szélesség"
  
@@ -78,109 +79,109 @@ array set Messages {
  
 "Yes" "Igen"
  
-"Add label" "Adj hozzá cimkét"
+"Add label" "Címke hozzáadása"
  
-"Sequence created!" "A szekvencia (SEQUENCE) elkészült!"
+"Sequence created!" "A szekvencia elkészült!"
  
 "Field information" "Mezõ információ"
-
+ 
 "Design" "Tervezés"
  
 "Field" "Mezõ"
  
-"You have to supply an external file name!" "Meg kell adj egy külsõ fájlnevet!"
+"You have to supply an external file name!" "Meg kell adni egy külsõ fájlnevet!"
  
-"Increment" "Növelés"
+"Increment" "Növel"
  
 "No" "Nem"
  
-"Form design" "Kérdõiv (FORM) tervezés"
+"Form design" "Ûrlap tervezés"
  
-"You must supply a return type!" "Szükség van visszatérési értékre!"
+"You must supply a return type!" "Meg kell adni visszatérési értéket!"
  
-"Remove field from result ?" "A mezö törlése az eredménybõl ?"
+"Remove field from result ?" "Mezõ eltávolítása az eredménybõl ?"
  
-"There is another object (a %s) with the same name.\nPlease change it!" "Van már ilyen nevû (%s) objektum!\nLégyszives változtasd meg!"
+"There is another object (a %s) with the same name.\nPlease change it!" "Már van egy (%s) nevû objektum. \n Kérlek változtasd meg!"
  
 "This query has no commands?" "Ebben a lekérdezésben nincs parancs?"
  
-"Execute query" "Lekérdezés futtatása"
+"Execute query" "Lekérdezés végrehajtása"
  
 "field cannot be null" "a mezõ nem lehet NULL"
  
 "Help" "Súgó"
  
-"Rename column" "Az oszlop átnevezése"
+"Rename column" "Oszlop átnevezése"
  
 "Database" "Adatbázis"
  
 "Information" "Információ"
  
-"Close" "Zárás"
+"Close" "Bezár"
  
-"Command" "Utasitás"
+"Command" "Parancs"
  
 "Table" "Tábla"
  
-"verify password" "jelszó ellenõrzés"
+"verify password" "jelszó ellenõrzése"
  
 "Vacuum" "Porszivózás (VACUUM)"
  
 "Default value" "Alapérték"
  
-"Import" "Behozatal"
+"Import" "Import"
  
 "Delete index" "Index törlés"
  
-"Move up" "Mozgasd fel"
+"Move up" "Mozgatás fel"
  
 "index properties" "index tulajdonságok"
  
-"check" "ellenõrzi"
+"check" "ellenõrzés"
  
-"Create new table" "Új tábla készités"
+"Create new table" "Új tábla készítése"
  
-"Visual query designer" "Lekérdezés tervezõ"
+"Visual query designer" "Vizuális lekérdezés tervezõ"
  
-"Delete all" "Törölni mindet"
+"Delete all" "Mindent töröl"
  
-"You are going to delete\n\n %s \n\nProceed?" "Le fogod törölni az alábbit:\n\n %s \n\nFolytatod?"
+"You are going to delete\n\n %s \n\nProceed?" "Biztosan törölni akarja %s-t ?"
  
 "Schema name" "Séma neve"
  
-"Error executing query" "Hiba a lekérdezés futtatása közben"
+"Error executing query" "Hiba a lekérdezés végrehajtása közben"
  
 "Report name" "Jelentés neve"
  
-"Add field" "Mezõ hozzáadás"
+"Add field" "Mezõ hozzáadása"
  
 "Field name" "Mezõnév"
  
-"FATAL ERROR searching for PgAccess system tables" "FATÁLIS HIBA a PgAccess rendszertáblák keresésénél"
+"FATAL ERROR searching for PgAccess system tables" "SÚLYOS  HIBA a PgAccess rendszertáblák keresésekor"
  
-"A big number of rows displayed in table view will take a lot of memory!" "A nézetnél (VIEW) kijelzendõ sorok nagy száma miatt sok memória fog lefoglalódni !"
+"A big number of rows displayed in table view will take a lot of memory!" "Sok oszlop mutatása  a táblanézetben sok memóriát igényel!"
  
-"Preview" "Elõzetes nézet"
+"Preview" "Elõnézet"
  
 "Users" "Felhasználók"
  
 "Owner" "Tulajdonos"
  
-"Form's window internal name" "Kérdõiv (FORM) ablakának belsõ használatú neve"
+"Form's window internal name" "Ûrlap ablak belsõ használatú neve"
  
-"Sort field" "Mezõ rendezése"
+"Sort field" "Mezõk rendezése"
  
 "New name is the same as the old one!" "Az új név megegyezik a régivel!"
  
 "Warning" "Figyelem"
  
-"Suggestions at" "Javaslatok itt:"
+"Suggestions at" "Javaslatok"
  
 "Functions" "Függvények"
  
 "Schema" "Séma"
  
-"Open" "Nyit"
+"Open" "Megnyit"
  
 "size" "méret"
  
@@ -190,7 +191,7 @@ array set Messages {
  
 "Define new user" "Új felhasználó definiálása"
  
-"Move down" "Mozgasd le"
+"Move down" "mozgatás le"
  
 "Design script" "Szkript tervezés"
  
@@ -198,37 +199,37 @@ array set Messages {
  
 "FINAL WARNING" "UTOLSÓ FIGYELMEZTETÉS"
  
-"Add table" "Tábla hozzáadás"
+"Add table" "Tábla hozzáadása"
  
-"Table viewer font" "Tábla nézõ betûkészlet"
+"Table viewer font" "Tábla nézõ betûtípusa"
  
-"The field type is not specified!" "A mezõ tipusa nincs megadva!"
+"The field type is not specified!" "A mezõ típusa nincs megadva!"
  
-"Close test form" "Zárd le a teszt kérdõivet (FORM)"
+"Close test form" "Teszt ûrlap bezárása"
  
-"Export table" "Tábla kivitel"
+"Export table" "Tábla export"
  
-"Add new index" "Ûj index hozzáadás"
+"Add new index" "Új index hozzáadása"
  
 "Left" "Bal"
  
 "Field delimiter" "Mezõ határoló"
  
-"Add formula" "Formula hozzáadás"
+"Add formula" "Formula hozzáadása"
  
-"Open database" "Adatbázis megnyitás"
+"Open database" "Adatbázis megnyitása"
  
 "Return" "Visszatérés"
  
-"Changed fonts may appear in the next working session!" "A megváltoztatott betûkészlet a következõ futtatásnál lesz látható!"
+"Changed fonts may appear in the next working session!" "A megáltoztatott betûtípusok csak a következõ futtatáskor látszódnak majd!"
  
 "Error" "Hiba"
  
 "Enter a field name" "Adj meg egy mezõnevet !"
  
-"field name" "Mezõnév"
+"field name" "mezõ név"
  
-"Forms" "Kérdõivek"
+"Forms" "Ûrlapok"
  
 "Cannot add column" "Nem lehet oszlopot hozzáadni"
  
@@ -238,7 +239,7 @@ array set Messages {
  
 "Preferred language" "Választott nyelv"
  
-"Execute SQL" "SQL futtatás"
+"Execute SQL" "SQL futtatása"
  
 "Sequences" "Szekvenciák"
  
@@ -246,65 +247,65 @@ array set Messages {
  
 "Language" "Nyelv"
  
-"Query '%s' was not found!" "A(z) '%s' nevû lekérdezés nem található!"
+"Query '%s' was not found!" "%s lekérdezés nem található!"
  
 "Object" "Objektum"
  
-"Font fixed" "Fix betûkészlet"
+"Font fixed" "Fix betûtípus"
  
-"Table name" "Táblanév"
+"Table name" "Táblanév" 
  
-"Export" "Kivitel"
+"Export" "Export"
  
-"Change user" "Felhasználócsere"
+"Change user" "Felhasználó változtatása"
  
-"You must give object a new name!" "Az objektumnak új nevet kell adjál!"
+"You must give object a new name!" "Új nevet kell adni az objektumnak!"
  
 "Query" "Lekérdezés"
  
 "User name" "Felhasználónév"
  
-"Font normal" "Normális betûkészlet"
+"Font normal" "Normál betûtípus"
  
-"Import table" "Tábla bevitel"
+"Import table" "Tábla import"
  
-"Toolbar" "Eszközpult"
+"Toolbar" "Eszközsor"
  
 "Radio btn" "Rádiógomb"
  
 "You must supply a name for this function!" "Hiányzik a függvény neve!"
  
-"You have to select index fields!" "Az index mezõket kell választanod!"
+"You have to select index fields!" "Index mezõket kell választani!"
  
-"Constraint" "Kényszer (CONSTRAINT)"
+"Constraint" "Kényszer"
  
-"The script must have a name" "Hiányzik a szkript neve"
+"The script must have a name" "A szkriptnek nevet kell adni"
  
 "Save" "Mentés"
  
 "Exit" "Kilépés"
  
-"Inherits" "örökli"
+"Inherits" "Örökli"
  
-"Delete field" "Mezõ törlés"
+"Delete field" "Mezõ törlése"
  
-"About" "A programról"
+"About" "A PgAccess-rõl"
  
-"Empty field name ?" "Nom de champ inexistant ?"
+"Empty field name ?" "Üres mezõnév ?"
  
-"All report information will be deleted.\n\nProceed ?" "Toutes les informations de l'état vont être détruites\n\nContinuer ?"
+"All report information will be deleted.\n\nProceed ?" "Minden jelentés infomáció törölve lesz.\n\nRendben ?"
  
 "Host" "Szerver"
  
-"vacuuming database %s ..." "A(z) %s adatbázis porszivózása ..."
+"vacuuming database %s ..." "%s adatbázis porszivózása ..."
  
-"Indexes defined" "Definiált indexek"
+"Indexes defined" "Indexek definiálva"
  
 "You must specify field size!" "Hiányzik a mezõméret!"
  
-"Schema '%s' already exists!" "A(z) '%s' schéma már létezik!"
+"Schema '%s' already exists!" "'%s' séma már létezik!"
  
-"There is another field with the same name: '%s'!\n\nReplace it ?" "Már van ilyen nevû mezõ: '%s'!\n\nFelülirás ?"
+"There is another field with the same name: '%s'!\n\nReplace it ?" "Már van '%s' nevû mezõ!\n\nCserélhetõ ?"
  
 "Contents" "Tartalom"
  
@@ -312,37 +313,37 @@ array set Messages {
  
 "Variable" "Változó"
  
-"Error executing query\n\n%s\n\nPostgreSQL error message:\n%s\nPostgreSQL status:%s" "Hiba a lekérdezés futtatása közben\n\n%s\n\nPostgreSQL hibaüzenet:\n%s\nPostgreSQL státusz:%s"
+"Error executing query\n\n%s\n\nPostgreSQL error message:\n%s\nPostgreSQL status:%s" "Hiba(z) %s lekérdezés végrehajtásakor\n\nPostgreSQL hibaüzenet:\n%s\nPostgreSQL állapot:%s"
  
 "Filter conditions" "Szûrõfeltételek"
  
-"Error retrieving query definition" "Hiba a lekérdezés definiciójának betöltésénél"
+"Error retrieving query definition" "Hiba a lekérdezés definíció betöltésekor"
  
-"Error deleting view" "Hiba a nézet (VIEW) törlésénél"
+"Error deleting view" "Hiba a nézet törléskor"
  
 "New" "Új"
  
 "Tables" "Táblák"
  
-"Create" "Elkészit"
+"Create" "Létrehoz"
  
-"Forms need an internal name, only literals, low case" "A kérdõiveknek (FORM) kell egy belsõ név, csak kisbetûkkel"
+"Forms need an internal name, only literals, low case" "Az ûrlapoknak kell egy belsõ név, csak kisbetûkbõl állhat!"
  
-"Do you want to save the form into the database?" "El akarod menteni a kérdõivet (FORM) az adatbázisba ?"
-
-"Schema '%s' was not found!" "A(z) '%s' nevû séma nem található!"
+"Do you want to save the form into the database?" "Kívánod lementeni az ûrlapot az adatbázisba?"
  
-"proportional" "megfelelõ"
+"Schema '%s' was not found!" "'%s' séma nem található!"
  
-"Function saved!" "A függvény elmentve!"
+"proportional" "propócionális"
+ 
+"Function saved!" "Függvény elmentve!"
  
 "with OIDs" "OID-ekkel"
  
 "Table information" "Tábla információ"
  
-"Error inserting new record" "Hiba az üj bejegyzés tárolásával"
+"Error inserting new record" "Hiba az új rekord beszúrása közben"
  
-"Column name '%s' already exists in this table!" "A(z) '%s' nevû oszlop már létezik ebben a táblában !"
+"Column name '%s' already exists in this table!" "'%s' nevû oszlop már van ebben a táblában !"
  
 "File" "Fájl"
  
@@ -352,130 +353,130 @@ array set Messages {
  
 "You will always get the latest version at:" "A legfrissebb verzió megszerezhetõ innen:"
  
-"Form must have a name" "Hiányzik a kérdõiv (FORM) neve !"
+"Form must have a name" "Hiányzik az ûrlap neve !"
  
 "Password" "Jelszó"
  
 "Valid until (date)" "Érvényes eddig (dátum)"
  
-"Report source" "A jelentés forrása"
+"Report source" "Jelentés forrása"
  
-"Allow user to create databases" "Engedély a felhasználónak új adatbázis készitésére"
+"Allow user to create databases" "Adatbázis létrehozás engedélyezése a felhasználónak"
  
 "Cancel" "Mégsem"
  
-"Is clustered ?" "CLUSTER-elt ?"
+"Is clustered ?" "Klaszterezett ?"
  
-"Add new column" "Új oszlop hozzáadás"
+"Add new column" "Új oszlop hozzáadása"
  
 "Show SQL" "SQL parancsok"
  
 "New name" "Új név"
  
-"Table '%s' not found!" "A(z) '%s' nevû tábla nem található!"
+"Table '%s' not found!" "'%s' tábla nem található!"
  
-"Form name" "Kérdõiv (FORM) név"
+"Form name" "Ûrlap név"
  
-"Visual designer" "Tervezõ"
+"Visual designer" "Vizuális tervezõ"
  
-"You choose to delete index\n\n %s \n\nProceed?" "Biztos, hogy akarod törölni az alábbi indexet?\n\n %s"
+"You choose to delete index\n\n %s \n\nProceed?" "%s\n\n index törlését választottad?\n\nBiztos vagy benne?"
  
-"Error retrieving from" "Hiba a betöltésnél errõl a helyrõl"
+"Error retrieving from" "Hiba betöltés közben"
  
-"Save query definition" "A lekérdezés elmentése"
+"Save query definition" "Lekérdezés definíció elmentése"
  
-"A Tcl/Tk interface to\nPostgreSQL\nby Constantin Teodorescu" "Egy Tcl/Tk felület a\nPostgreSQL-hez\nKészitette: Constantin Teodorescu"
+"A Tcl/Tk interface to\nPostgreSQL\nby Constantin Teodorescu" "Tcl/Tk felület a\nPostgreSQL-hez.\n Készítette: Constantin Teodorescu"
  
-"Operation completed!" "Beavatkozás végrehajtva!"
+"Operation completed!" "Mûvelet végrehajtva!"
  
-"Max rows displayed in table/query view" "Maximális sorok száma a tábláknál/lekérdezéseknél"
+"Max rows displayed in table/query view" "Maximálisan megjelenített sorok száma a tábla/lekérdezés nézetben"
  
-"Passwords do not match!" "A jelszók nem egyeznek!"
+"Passwords do not match!" "Nem egyeznek a jelszavak!"
  
 "Rename" "Átnevezés"
  
-"Entry" "Bejegyzés"
+"Entry" "Bevitel"
  
-"Error retrieving schema definition" "Hiba a séma-definició betöltése közben"
+"Error retrieving schema definition" "Hiba a séma definíció betöltése közben"
  
-"This is an action query!\n\nExecute it?" "Ez nem lekérdezés, hanem parancs.\nFuttatás ?"
+"This is an action query!\n\nExecute it?" "Ez egy lekérdezés !\nVégrehajtás ?"
  
-"Error retrieving view definition for" "Hiba a nézet (VIEW) betöltése közben "
+"Error retrieving view definition for" "Hiba a nézetdefiníció betöltése közben"
  
-"options" "beállitások"
+"options" "opciók"
  
-"Sequence '%s' not found!" "A(z) '%s' nevû szekvencia nem található!"
+"Sequence '%s' not found!" "'%s' szekvencia nem található"
  
 "Text" "Szöveg"
  
-"Tcl error executing pg_exec %s\n\n%s" "Tcl hiba a pg_exec futtatásánál %s\n\n%s"
+"Tcl error executing pg_exec %s\n\n%s" "Tcl hiba pg_exec futtatásakor %s\n\n%s"
  
 "Width" "Szélesség"
  
-"You have to supply a name for this query!" "Hiányzik a lekérdezés neve!"
+"You have to supply a name for this query!" "Nevet kell adni ehhez a lekérdezéshez!"
  
 "Accessing data. Please wait ..." "Adatelérés. Kis türelmet ..."
  
-"Report footer" "A jelentés alja"
+"Report footer" "Jelentés lábléc"
  
 "Parameters" "Paraméterek"
  
 "Queries" "Lekérdezések"
  
-"Query '%s' already exists!" "A(z) '%s' nevû lekérdezés már létezik!"
+"Query '%s' already exists!" "'%s' lekérdezés már létezik!"
  
-"Font bold" "Vastag betûkészlet"
+"Font bold" "Félkövér betûtípus"
  
 "Query builder" "Lekérdezés szerkesztõ"
  
-"Error defining view" "Hiba a nézet (VIEW) definiálásánál"
+"Error defining view" "Hiba a nézet definícióban"
  
-"Top" "Csúcs"
+"Top" "Teteje"
  
-"You must supply a name for your table!" "Hiányzik a tábla neve!"
+"You must supply a name for your table!" "Nevet kell adni a táblának!"
  
-"Page footer" "A lap alja"
+"Page footer" "Lábléc"
  
-"Font italic" "Dõlt betûkészlet"
+"Font italic" "Dõlt betûtípus"
  
 "Field name not entered!" "A mezõnév hiányzik!"
  
-"Index name cannot be null!" "Az index nem lehet NULL!"
+"Index name cannot be null!" "Az indexnév nem lehet NULL"
  
 "Sort" "Rendezés"
  
-"Import-Export table" "Tábla behozatal/kivitel"
+"Import-Export table" "Tábla import/export"
  
 "Point" "Pont"
  
-"type" "tipus"
+"type" "típus"
  
-"You should supply a name for this sequence" "Hiányzik a szekvencia neve!"
+"You should supply a name for this sequence" "Nevet kell adni ehhez a szekvenciának"
  
-"Remove link ?" "A kapcsolat törlése?"
+"Remove link ?" "Kapcsolat eltávolítása?"
  
-"You have to supply a table name!" "Hiányzik a tábla neve!"
+"You have to supply a table name!" "Meg kell adni táblanevet!"
  
 "Report header" "Jelentés fejléc"
  
 "Attributes" "Attribútumok"
  
-"Table '%s' already in schema" "A(z) '%s' tábla már szerepel a sémában!"
+"Table '%s' already in schema" "'%s' tábla már szerepel a sémában"
  
 "Username" "Felhasználó név"
  
 "Minvalue" "Minimális érték"
  
-"Sequence name" "Szekvencianév"
+"Sequence name" "Szekvencia neve"
  
-"Define sequence" "Szekvencia definiálás"
+"Define sequence" "Szekvencia definiálása"
  
 "Function" "Függvény"
  
-"Sorting and filtering not (yet) available from queries!\n\nPlease enter them in the query definition!" "A rendezés és szûrés (még) nem megoldott a lekérdezéseknél!\n\nHasználd õket a lekérdezés definiciókban!"
+"Sorting and filtering not (yet) available from queries!\n\nPlease enter them in the query definition!" "A rendezés és szûrés (még) nem érhetõ el a lekérdezésbõl!\n\n Használd õket a lekérdezés definicióban!"
  
 "Reports" "Jelentések"
-
+ 
 "Columns" "Oszlopok"
 
 "Indexes" "Indexek"
@@ -484,25 +485,25 @@ array set Messages {
 
 "not null" "nem NULL"
 
-"Cluster index" "Index CLUSTER-elés"
+"Cluster index" "Klaszter index"
 
-"index columns" "indexelt oszlopok"
+"index columns" "oszlopok indexelése"
 
-"Add user" "Felhasználó hozzáadás"
+"Add user" "Felhasználó hozzáadása"
 
 "Change permissions" "Engedélyek megváltoztatása"
 
-"select" "olvasás"
+"select" "kiválaszt"
 
-"update" "frissités"
+"update" "frissíts"
 
-"insert" "tárolás"
+"insert" "beszúr"
 
-"rule" "szabályok"
+"rule" "szabály"
 
-"Identification" "Azonositás"
+"Identification" "Azonosítás"
 
-"Owner ID" "Tulajdonos azonositó"
+"Owner ID" "Tulajdonos azonosító"
 
 "Has primary key ?" "Van elsõdleges kulcsa ?"
 
@@ -518,8 +519,6 @@ array set Messages {
 
 "Index fields" "Index mezõk"
 
-"Table OID" "Tábla OID"
- 
+"Table OID" "Tábla tulajdonos azonosító"
+
 }
-
-
