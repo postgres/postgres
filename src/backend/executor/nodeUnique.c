@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeUnique.c,v 1.14 1998/02/10 16:03:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeUnique.c,v 1.15 1998/02/18 12:40:44 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -208,9 +208,14 @@ ExecUnique(Unique *node)
 				 * use strcmp for comparison
 				 */
 				if (strcmp(val1, val2) == 0)	/* they are equal */
+				{
+					pfree (val1);
+					pfree (val2);
 					continue;
-				else
-					break;
+				}
+				pfree (val1);
+				pfree (val2);
+				break;
 			}
 			else
 /* one is null and the other isn't, they aren't equal */

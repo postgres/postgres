@@ -13,7 +13,7 @@
  *	  columns. (ie. tuples from the same group are consecutive)
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.16 1998/02/10 16:02:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.17 1998/02/18 12:40:43 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,7 @@
 static TupleTableSlot *ExecGroupEveryTuple(Group *node);
 static TupleTableSlot *ExecGroupOneTuple(Group *node);
 static bool
-sameGroup(TupleTableSlot *oldslot, TupleTableSlot *newslot,
+sameGroup(HeapTuple oldslot, HeapTuple newslot,
 		  int numCols, AttrNumber *grpColIdx, TupleDesc tupdesc);
 
 /* ---------------------------------------
@@ -71,8 +71,8 @@ ExecGroupEveryTuple(Group *node)
 	ExprContext *econtext;
 
 	HeapTuple	outerTuple = NULL;
-	TupleTableSlot *outerslot,
-			   *lastslot;
+	HeapTuple	firsttuple;
+	TupleTableSlot *outerslot;
 	ProjectionInfo *projInfo;
 	TupleTableSlot *resultSlot;
 
@@ -90,18 +90,14 @@ ExecGroupEveryTuple(Group *node)
 
 	econtext = grpstate->csstate.cstate.cs_ExprContext;
 
-	if (grpstate->grp_useLastTuple)
+	/* if we haven't returned first tuple of new group yet ... */
+	if (grpstate->grp_useFirstTuple)
 	{
+		grpstate->grp_useFirstTuple = FALSE;
 
-		/*
-		 * we haven't returned last tuple yet because it is not of the
-		 * same group
-		 */
-		grpstate->grp_useLastTuple = FALSE;
-
-		ExecStoreTuple(grpstate->grp_lastSlot->val,
+		ExecStoreTuple(grpstate->grp_firstTuple,
 					   grpstate->csstate.css_ScanTupleSlot,
-					   grpstate->grp_lastSlot->ttc_buffer,
+					   InvalidBuffer,
 					   false);
 	}
 	else
@@ -115,29 +111,28 @@ ExecGroupEveryTuple(Group *node)
 			return NULL;
 		}
 
-		/* ----------------
-		 *	Compare with last tuple and see if this tuple is of
-		 *	the same group.
-		 * ----------------
-		 */
-		lastslot = grpstate->csstate.css_ScanTupleSlot;
-
-		if (lastslot->val != NULL &&
-			(!sameGroup(lastslot, outerslot,
-						node->numCols, node->grpColIdx,
-						ExecGetScanType(&grpstate->csstate))))
+		firsttuple = grpstate->grp_firstTuple;
+		/* this should occur on the first call only */
+		if (firsttuple == NULL)	
 		{
-/*						ExecGetResultType(&grpstate->csstate.cstate)))) {*/
-
-			grpstate->grp_useLastTuple = TRUE;
-
-			/* save it for next time */
-			grpstate->grp_lastSlot = outerslot;
-
+			grpstate->grp_firstTuple = heap_copytuple (outerTuple);
+		}
+		else
+		{
 			/*
-			 * signifies the end of the group
+			 *	Compare with first tuple and see if this tuple is of
+			 *	the same group.
 			 */
-			return NULL;
+			if (!sameGroup(firsttuple, outerslot->val,
+						node->numCols, node->grpColIdx,
+						ExecGetScanType(&grpstate->csstate)))
+			{
+				grpstate->grp_useFirstTuple = TRUE;
+				pfree (firsttuple);
+				grpstate->grp_firstTuple = heap_copytuple (outerTuple);
+				
+				return NULL;	/* signifies the end of the group */
+			}
 		}
 
 		ExecStoreTuple(outerTuple,
@@ -172,8 +167,8 @@ ExecGroupOneTuple(Group *node)
 	ExprContext *econtext;
 
 	HeapTuple	outerTuple = NULL;
-	TupleTableSlot *outerslot,
-			   *lastslot;
+	HeapTuple	firsttuple;
+	TupleTableSlot *outerslot;
 	ProjectionInfo *projInfo;
 	TupleTableSlot *resultSlot;
 
@@ -191,15 +186,9 @@ ExecGroupOneTuple(Group *node)
 
 	econtext = node->grpstate->csstate.cstate.cs_ExprContext;
 
-	if (grpstate->grp_useLastTuple)
-	{
-		grpstate->grp_useLastTuple = FALSE;
-		ExecStoreTuple(grpstate->grp_lastSlot->val,
-					   grpstate->csstate.css_ScanTupleSlot,
-					   grpstate->grp_lastSlot->ttc_buffer,
-					   false);
-	}
-	else
+	firsttuple = grpstate->grp_firstTuple;
+	/* this should occur on the first call only */
+	if (firsttuple == NULL)	
 	{
 		outerslot = ExecProcNode(outerPlan(node), (Plan *) node);
 		if (outerslot)
@@ -209,12 +198,8 @@ ExecGroupOneTuple(Group *node)
 			grpstate->grp_done = TRUE;
 			return NULL;
 		}
-		ExecStoreTuple(outerTuple,
-					   grpstate->csstate.css_ScanTupleSlot,
-					   outerslot->ttc_buffer,
-					   false);
+		grpstate->grp_firstTuple = firsttuple = heap_copytuple (outerTuple);
 	}
-	lastslot = grpstate->csstate.css_ScanTupleSlot;
 
 	/*
 	 * find all tuples that belong to a group
@@ -225,48 +210,20 @@ ExecGroupOneTuple(Group *node)
 		outerTuple = (outerslot) ? outerslot->val : NULL;
 		if (!HeapTupleIsValid(outerTuple))
 		{
-
-			/*
-			 * we have at least one tuple (lastslot) if we reach here
-			 */
 			grpstate->grp_done = TRUE;
-
-			/* return lastslot */
 			break;
 		}
 
 		/* ----------------
-		 *	Compare with last tuple and see if this tuple is of
+		 *	Compare with first tuple and see if this tuple is of
 		 *	the same group.
 		 * ----------------
 		 */
-		if ((!sameGroup(lastslot, outerslot,
+		if ((!sameGroup(firsttuple, outerslot->val,
 						node->numCols, node->grpColIdx,
 						ExecGetScanType(&grpstate->csstate))))
-		{
-/*						ExecGetResultType(&grpstate->csstate.cstate)))) {*/
-
-			grpstate->grp_useLastTuple = TRUE;
-
-			/* save it for next time */
-			grpstate->grp_lastSlot = outerslot;
-
-			/* return lastslot */
 			break;
-		}
-
-		ExecStoreTuple(outerTuple,
-					   grpstate->csstate.css_ScanTupleSlot,
-					   outerslot->ttc_buffer,
-					   false);
-
-		lastslot = grpstate->csstate.css_ScanTupleSlot;
 	}
-
-	ExecStoreTuple(lastslot->val,
-				   grpstate->csstate.css_ScanTupleSlot,
-				   lastslot->ttc_buffer,
-				   false);
 
 	/* ----------------
 	 *	form a projection tuple, store it in the result tuple
@@ -275,8 +232,19 @@ ExecGroupOneTuple(Group *node)
 	 */
 	projInfo = grpstate->csstate.cstate.cs_ProjInfo;
 
-	econtext->ecxt_scantuple = lastslot;
+	ExecStoreTuple(firsttuple,
+				   grpstate->csstate.css_ScanTupleSlot,
+				   InvalidBuffer,
+				   false);
+	econtext->ecxt_scantuple = grpstate->csstate.css_ScanTupleSlot;
 	resultSlot = ExecProject(projInfo, &isDone);
+	
+	/* save outerTuple if we are not done yet */
+	if (!grpstate->grp_done)
+	{
+		pfree (firsttuple);
+		grpstate->grp_firstTuple = heap_copytuple (outerTuple);
+	}
 
 	return resultSlot;
 }
@@ -304,7 +272,7 @@ ExecInitGroup(Group *node, EState *estate, Plan *parent)
 	 */
 	grpstate = makeNode(GroupState);
 	node->grpstate = grpstate;
-	grpstate->grp_useLastTuple = FALSE;
+	grpstate->grp_useFirstTuple = FALSE;
 	grpstate->grp_done = FALSE;
 
 	/*
@@ -370,6 +338,11 @@ ExecEndGroup(Group *node)
 
 	/* clean up tuple table */
 	ExecClearTuple(grpstate->csstate.css_ScanTupleSlot);
+	if (grpstate->grp_firstTuple != NULL)
+	{
+		pfree (grpstate->grp_firstTuple);
+		grpstate->grp_firstTuple = NULL;
+	}
 }
 
 /*****************************************************************************
@@ -380,8 +353,8 @@ ExecEndGroup(Group *node)
  * code swiped from nodeUnique.c
  */
 static bool
-sameGroup(TupleTableSlot *oldslot,
-		  TupleTableSlot *newslot,
+sameGroup(HeapTuple oldtuple,
+		  HeapTuple newtuple,
 		  int numCols,
 		  AttrNumber *grpColIdx,
 		  TupleDesc tupdesc)
@@ -401,12 +374,12 @@ sameGroup(TupleTableSlot *oldslot,
 		att = grpColIdx[i];
 		typoutput = typtoout((Oid) tupdesc->attrs[att - 1]->atttypid);
 
-		attr1 = heap_getattr(oldslot->val,
+		attr1 = heap_getattr(oldtuple,
 							 att,
 							 tupdesc,
 							 &isNull1);
 
-		attr2 = heap_getattr(newslot->val,
+		attr2 = heap_getattr(newtuple,
 							 att,
 							 tupdesc,
 							 &isNull2);
