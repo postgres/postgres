@@ -2,7 +2,7 @@
  * Routines for handling of 'SET var TO', 'SHOW var' and 'RESET var'
  * statements.
  *
- * $Id: variable.c,v 1.7 1997/04/29 04:38:58 vadim Exp $
+ * $Id: variable.c,v 1.8 1997/05/16 07:24:13 thomas Exp $
  *
  */
 
@@ -191,7 +191,7 @@ static bool parse_date(const char *value)
 			}
 		else
 			{
-			elog(WARN, "Bad value for date (%s)", tok);
+			elog(WARN, "Bad value for date style (%s)", tok);
 			}
 		}
 	
@@ -205,9 +205,21 @@ static bool show_date()
 	{
 	char buf[64];
 
-	sprintf( buf, "Date style is %s with%s European conventions",
-	  ((DateStyle == USE_ISO_DATES)? "iso": ((DateStyle == USE_ISO_DATES)? "sql": "postgres")),
-	  ((EuroDates)? "": "out"));
+	strcpy( buf, "DateStyle is ");
+	switch (DateStyle) {
+	case USE_ISO_DATES:
+		strcat( buf, "ISO");
+		break;
+	case USE_SQL_DATES:
+		strcat( buf, "SQL");
+		break;
+	default:
+		strcat( buf, "Postgres");
+		break;
+	};
+	strcat( buf, " with ");
+	strcat( buf, ((EuroDates)? "European": "US (NonEuropean)"));
+	strcat( buf, " conventions");
 
 	elog(NOTICE, buf, NULL);
 
