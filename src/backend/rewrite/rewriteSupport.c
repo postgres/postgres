@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteSupport.c,v 1.1.1.1 1996/07/09 06:21:52 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteSupport.c,v 1.1.1.1.2.1 1996/10/11 03:26:18 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,7 +65,7 @@ RuleIdGetActionInfo(Oid ruleoid, bool *instead_flag, Query **parseTrees)
     rule_evqual_string = heap_getattr(ruletuple, InvalidBuffer, 
 				      Anum_pg_rewrite_ev_qual, 
 				      ruleTupdesc, &action_is_null) ;
-    *instead_flag = (bool) heap_getattr(ruletuple, InvalidBuffer, 
+    *instead_flag = !!heap_getattr(ruletuple, InvalidBuffer, 
 					Anum_pg_rewrite_is_instead, 
 					ruleTupdesc, &instead_is_null) ;
 
