@@ -1,15 +1,15 @@
 # German message translation file for psql
 # Peter Eisentraut <peter_e@gmx.net>, 2001.
 #
-# $Header: /cvsroot/pgsql/src/bin/psql/Attic/de.po,v 1.3 2001/06/11 18:23:33 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/psql/Attic/de.po,v 1.4 2001/08/10 20:58:09 petere Exp $
 #
 # Use these quotes: »%s«
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.2\n"
-"POT-Creation-Date: 2001-06-11 20:14+0200\n"
-"PO-Revision-Date: 2001-06-09 01:34+0200\n"
+"POT-Creation-Date: 2001-08-10 22:41+0200\n"
+"PO-Revision-Date: 2001-08-10 22:59+0200\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <de@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -74,7 +74,7 @@ msgid "Wrote history to %s.\n"
 msgstr "History nach %s geschrieben.\n"
 
 #: command.c:668 command.c:900 command.c:1114 command.c:1160 command.c:1844
-#: common.c:57 copy.c:87 mainloop.c:80 mainloop.c:384
+#: common.c:57 copy.c:87 describe.c:449 mainloop.c:80 mainloop.c:384
 msgid "out of memory\n"
 msgstr "Speicher aufgebraucht\n"
 
@@ -733,15 +733,16 @@ msgstr "\\lo_export: nicht mit einer Datenbank verbunden\n"
 msgid "\\lo_import: not connected to a database\n"
 msgstr "\\lo_import: nicht mit einer Datenbank verbunden\n"
 
-#: large_obj.c:253
+#: large_obj.c:276
 msgid "\\lo_unlink: not connected to a database\n"
 msgstr "\\lo_unlink: nicht mit einer Datenbank verbunden\n"
 
-#: large_obj.c:328
+#: describe.c:57 describe.c:110 describe.c:169 describe.c:221 describe.c:269
+#: describe.c:401 describe.c:530 describe.c:1037 large_obj.c:353
 msgid "Description"
 msgstr "Beschreibung"
 
-#: large_obj.c:336
+#: large_obj.c:361
 msgid "Large objects"
 msgstr "Large Objects"
 
@@ -750,15 +751,15 @@ msgstr "Large Objects"
 msgid "Use \"\\q\" to leave %s.\n"
 msgstr "Verwenden Sie »\\q«, um %s zu verlassen.\n"
 
-#: print.c:367
+#: print.c:370
 msgid "(No rows)\n"
 msgstr "(Keine Zeilen)\n"
 
-#: print.c:1072
+#: print.c:1075
 msgid "(1 row)"
 msgstr "(1 Zeile)"
 
-#: print.c:1074
+#: print.c:1077
 #, c-format
 msgid "(%d rows)"
 msgstr "(%d Zeilen)"
@@ -769,7 +770,7 @@ msgid "%s: out of memory\n"
 msgstr "%s: Speicher aufgebraucht\n"
 
 #: startup.c:177
-msgid "Username: "
+msgid "User name: "
 msgstr "Benutzername: "
 
 #: startup.c:286
@@ -868,3 +869,293 @@ msgid ""
 msgstr ""
 "SSL-Verbindung (Verschlüsslungsmethode: %s, Bits: %i)\n"
 "\n"
+
+#: describe.c:56 describe.c:100 describe.c:158 describe.c:220 describe.c:260
+#: describe.c:401 describe.c:1031
+msgid "Name"
+msgstr "Name"
+
+#: describe.c:56
+msgid "(all types)"
+msgstr "(alle Typen)"
+
+#: describe.c:57
+msgid "Data type"
+msgstr "Datentyp"
+
+#: describe.c:73
+msgid "List of aggregate functions"
+msgstr "Liste der Aggregatfunktionen"
+
+#: describe.c:100
+msgid "Result data type"
+msgstr "Ergebnisdatentyp"
+
+#: describe.c:101
+msgid "Argument data types"
+msgstr "Argumentdatentypen"
+
+#: describe.c:109 describe.c:260 describe.c:1032
+msgid "Owner"
+msgstr "Eigentümer"
+
+#: describe.c:109
+msgid "Language"
+msgstr "Sprache"
+
+#: describe.c:110
+msgid "Source code"
+msgstr "Quelltext"
+
+#: describe.c:135
+msgid "List of functions"
+msgstr "Liste der Funktionen"
+
+#: describe.c:166
+msgid "Internal name"
+msgstr "Interner Name"
+
+#: describe.c:166
+msgid "Size"
+msgstr "Größe"
+
+#: describe.c:193
+msgid "List of data types"
+msgstr "Liste der Datentypen"
+
+#: describe.c:220
+msgid "Left arg type"
+msgstr "Linker Typ"
+
+#: describe.c:220
+msgid "Right arg type"
+msgstr "Rechter Typ"
+
+#: describe.c:221
+msgid "Result type"
+msgstr "Ergebnistyp"
+
+#: describe.c:236
+msgid "List of operators"
+msgstr "Liste der Operatoren"
+
+#: describe.c:264
+msgid "Encoding"
+msgstr "Kodierung"
+
+#: describe.c:279
+msgid "List of databases"
+msgstr "Liste der Datenbanken"
+
+#: describe.c:306
+msgid "Table"
+msgstr "Tabelle"
+
+#: describe.c:306
+msgid "Access privileges"
+msgstr "Zugangsrechte"
+
+#: describe.c:320
+#, c-format
+msgid "Access privileges for database \"%s\""
+msgstr "Zugriffsrechte für Datenbank »%s«"
+
+#: describe.c:401
+msgid "Object"
+msgstr "Objekt"
+
+#: describe.c:402
+msgid "aggregate"
+msgstr "Aggregat"
+
+#: describe.c:402
+msgid "function"
+msgstr "Funktion"
+
+#: describe.c:402
+msgid "operator"
+msgstr "Operator"
+
+#: describe.c:403
+msgid "data type"
+msgstr "Datentyp"
+
+#: describe.c:403 describe.c:1031
+msgid "table"
+msgstr "Tabelle"
+
+#: describe.c:403 describe.c:1031
+msgid "view"
+msgstr "Sicht"
+
+#: describe.c:404 describe.c:1031
+msgid "index"
+msgstr "Index"
+
+#: describe.c:404 describe.c:1031
+msgid "sequence"
+msgstr "Sequenz"
+
+#: describe.c:404
+msgid "rule"
+msgstr "Rule"
+
+#: describe.c:405
+msgid "trigger"
+msgstr "Trigger"
+
+#: describe.c:422
+msgid "Object descriptions"
+msgstr "Objektbeschreibungen"
+
+#: describe.c:503
+#, c-format
+msgid "Did not find any relation named \"%s\".\n"
+msgstr "Keine Relationen namens »%s« gefunden\n"
+
+#: describe.c:517
+msgid "Column"
+msgstr "Spalte"
+
+#: describe.c:518 describe.c:1032
+msgid "Type"
+msgstr "Typ"
+
+#: describe.c:524
+msgid "Modifiers"
+msgstr "Attribute"
+
+#: describe.c:628
+#, c-format
+msgid "Table \"%s\""
+msgstr "Tabelle »%s«"
+
+#: describe.c:631
+#, c-format
+msgid "View \"%s\""
+msgstr "Sicht »%s«"
+
+#: describe.c:634
+#, c-format
+msgid "Sequence \"%s\""
+msgstr "Sequenz »%s«"
+
+#: describe.c:637
+#, c-format
+msgid "Index \"%s\""
+msgstr "Index »%s«"
+
+#: describe.c:640
+#, c-format
+msgid "Special relation \"%s\""
+msgstr "Spezielle Relation »%s«"
+
+#: describe.c:643
+#, c-format
+msgid "TOAST table \"%s\""
+msgstr "TOAST-Tabelle »%s«"
+
+#: describe.c:646
+#, c-format
+msgid "?%c? \"%s\""
+msgstr "?%c? »%s«"
+
+#: describe.c:677
+msgid "unique "
+msgstr "unique "
+
+#: describe.c:682
+msgid " (primary key)"
+msgstr " (Primary Key)"
+
+#: describe.c:686
+msgid " (lossy)"
+msgstr " (lossy)"
+
+#: describe.c:691
+#, c-format
+msgid "Index predicate: %s"
+msgstr "Indexprädikat: %s"
+
+#: describe.c:704
+#, c-format
+msgid "View definition: %s"
+msgstr "Sichtdefinition: %s"
+
+#: describe.c:820
+msgid "Indexes"
+msgstr "Indizies"
+
+#: describe.c:835
+msgid "Primary key"
+msgstr "Primary Key"
+
+#: describe.c:850
+msgid "Unique keys"
+msgstr "Unique Keys"
+
+#: describe.c:865
+msgid "Check constraints"
+msgstr "Check-Constraints"
+
+#: describe.c:868
+#, c-format
+msgid "%s: \"%s\" %s"
+msgstr "%s: »%s« %s"
+
+#: describe.c:871
+#, c-format
+msgid "%*s  \"%s\" %s"
+msgstr "%*s  »%s« %s"
+
+#: describe.c:879
+msgid "Rules"
+msgstr "Rules"
+
+#: describe.c:894
+msgid "Triggers"
+msgstr "Triggers"
+
+#: describe.c:965
+msgid "User name"
+msgstr "Benutzername: "
+
+#: describe.c:965
+msgid "User ID"
+msgstr "Benutzer-ID"
+
+#: describe.c:966
+msgid "superuser, create database"
+msgstr "Superuser, Datenbanken erstellen"
+
+#: describe.c:967
+msgid "superuser"
+msgstr "Superuser"
+
+#: describe.c:967
+msgid "create database"
+msgstr "Datenbanken erstellen"
+
+#: describe.c:968
+msgid "Attributes"
+msgstr "Attribute"
+
+#: describe.c:982
+msgid "List of database users"
+msgstr "Liste der Datenbankbenutzer"
+
+#: describe.c:1032
+msgid "special"
+msgstr "spezial"
+
+#: describe.c:1075
+msgid "No matching relations found.\n"
+msgstr "Keine passenden Relationen gefunden\n"
+
+#: describe.c:1077
+msgid "No relations found.\n"
+msgstr "Keine Relationen gefunden\n"
+
+#: describe.c:1082
+msgid "List of relations"
+msgstr "Liste der Relationen"
