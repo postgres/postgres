@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.60 2001/06/13 22:51:02 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.61 2001/06/15 21:03:07 tgl Exp $ -->
 
 <chapter id="functions">
  <title>Functions and Operators</title>
@@ -3570,7 +3570,7 @@ SELECT NULLIF(value, '(none)') ...
    <title>Miscellaneous Functions</>
 
    <table>
-    <title>Miscellaneous Functions</>
+    <title>Session Information Functions</>
     <tgroup cols="3">
      <thead>
       <row><entry>Name</> <entry>Return Type</> <entry>Description</></row>
@@ -3624,6 +3624,52 @@ SELECT NULLIF(value, '(none)') ...
      of <function>current_user</>.
     </para>
    </note>
+
+   <table>
+    <title>Access Privilege Inquiry Functions</>
+    <tgroup cols="3">
+     <thead>
+      <row><entry>Name</> <entry>Return Type</> <entry>Description</></row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry>has_table_privilege(<parameter>user</parameter>,
+                                  <parameter>table</parameter>,
+                                  <parameter>access</parameter>)
+       </entry>
+       <entry>boolean</>
+       <entry>does user have access to table</>
+      </row>
+      <row>
+       <entry>has_table_privilege(<parameter>table</parameter>,
+                                  <parameter>access</parameter>)
+       </entry>
+       <entry>boolean</>
+       <entry>does current user have access to table</>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+   <indexterm zone="functions-misc">
+    <primary>has_table_privilege</primary>
+   </indexterm>
+
+   <para>
+    <function>has_table_privilege</> determines whether a user
+    can access a table in a particular way.  The user can be
+    specified by name or by usesysid, or if the argument is omitted
+    <function>current_user</> is assumed.  The table can be specified
+    by name or by OID.  (Thus, there are actually six variants of
+    <function>has_table_privilege</>, which can be distinguished by
+    the number and types of their arguments.)  The desired access type
+    is specified by a text string, which must evaluate to one of the
+    values <literal>SELECT</>, <literal>INSERT</>, <literal>UPDATE</>,
+    <literal>DELETE</>, <literal>RULE</>, <literal>REFERENCES</>, or
+    <literal>TRIGGER</>.  (Case of the string is not significant, however.)
+   </para>
+
   </sect1>
 
 
