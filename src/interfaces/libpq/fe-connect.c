@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.45 1997/11/10 15:41:58 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.46 1997/11/14 15:38:31 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -110,8 +110,15 @@ struct EnvironmentOptions
 }			EnvironmentOptions[] =
 
 {
-	{	"PGDATESTYLE", "datestyle" },
-	{	"PGTZ", "timezone" },
+	/* common user-interface settings */
+	{	"PGDATESTYLE",	"datestyle" },
+	{	"PGTZ",			"timezone" },
+
+	/* internal performance-related settings */
+	{	"PGCOSTHEAP",	"cost_heap" },
+	{	"PGCOSTINDEX",	"cost_index" },
+	{	"PGRPLANS",		"r_plans" },
+	{	"PGGEQO",		"geqo" },
 	{	NULL }
 };
 
@@ -660,7 +667,10 @@ PQsetenv(PGconn *conn)
 		{
 			PGresult   *res;
 
-			sprintf(setQuery, "SET %s TO '%.60s'", eo->pgName, val);
+			if (strcasecmp(val, "default") == 0)
+				sprintf(setQuery, "SET %s = %.60s", eo->pgName, val);
+			else
+				sprintf(setQuery, "SET %s = '%.60s'", eo->pgName, val);
 #ifdef CONNECTDEBUG
 printf("Use environment variable %s to send %s\n", eo->envName, setQuery);
 #endif
