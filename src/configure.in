@@ -1120,7 +1120,7 @@ then
 	else
 		AC_MSG_RESULT($TK_CONFIG_SH)
 		AC_SUBST(TK_CONFIG_SH)
-		AC_PATH_PROG(wish, wish)
+		AC_PATH_PROG(WISH, wish)
 	fi
 fi
 
