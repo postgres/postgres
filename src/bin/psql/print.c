@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/print.c,v 1.27 2002/07/15 01:56:25 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/print.c,v 1.28 2002/07/18 04:46:24 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "print.h"
@@ -612,6 +612,7 @@ print_aligned_vertical(const char *title, const char *const * headers,
 
 #ifdef MULTIBYTE
 	free(cell_w);
+	free(head_w);
 #endif
 }
 
