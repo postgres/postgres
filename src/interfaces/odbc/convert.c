@@ -15,6 +15,7 @@
  * Comments:       See "notice.txt" for copyright and license information.
  *
  */
+/* Multibyte support  Eiji Tokuya	2001-03-15	*/
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -25,6 +26,10 @@
 #include <ctype.h>
 
 #include "psqlodbc.h"
+
+#ifdef MULTIBYTE
+#include "multibyte.h"
+#endif
 
 #ifndef WIN32
 #include "iodbc.h"
@@ -690,6 +695,9 @@ int lobj_fd, retval;
     param_number = -1;
 
 	oldstmtlen = strlen(old_statement);
+#ifdef MULTIBYTE
+    multibyte_init();
+#endif
 
     for (opos = 0; opos < oldstmtlen; opos++) {
 
@@ -700,10 +708,18 @@ int lobj_fd, retval;
 		}
 
 		/*	Handle literals (date, time, timestamp) and ODBC scalar functions */
+#ifdef MULTIBYTE
+		else if (multibyte_char_check(old_statement[opos]) == 0 && old_statement[opos] == '{') {
+#else
 		else if (old_statement[opos] == '{') {
+#endif
 			char *esc;
 			char *begin = &old_statement[opos + 1];
+#ifdef MULTIBYTE
+			char *end = multibyte_strchr(begin, '}');
+#else
 			char *end = strchr(begin, '}');
+#endif
 
 			if ( ! end)
 				continue;
@@ -1334,11 +1350,18 @@ char *p;
 		max = strlen(si);
 	else
 		max = used;
+#ifdef MULTIBYTE
+	multibyte_init();
+#endif
 
 	for (i = 0; i < max; i++) {
 		if (si[i] == '\r' && i+1 < strlen(si) && si[i+1] == '\n') 
 			continue;
+#ifdef MULTIBYTE
+		else if (multibyte_char_check(si[i]) == 0 && (si[i] == '\'' || si[i] == '\\'))
+#else
 		else if (si[i] == '\'' || si[i] == '\\')
+#endif
 			p[out++] = '\\';
 
 		p[out++] = si[i];

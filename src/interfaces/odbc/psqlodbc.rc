@@ -52,6 +52,118 @@ END
 // Dialog
 //
 
+#ifdef MULTIBYTE
+DLG_CONFIG DIALOG DISCARDABLE  65, 43, 299, 113
+STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_VISIBLE | WS_CAPTION | 
+    WS_SYSMENU
+CAPTION "PostgreSQL Driver Setup"
+FONT 10, "Terminal"
+BEGIN
+    RTEXT           "&Data Source:",IDC_DSNAMETEXT,3,9,49,8,NOT WS_GROUP
+    EDITTEXT        IDC_DSNAME,59,9,72,12,ES_AUTOHSCROLL | WS_GROUP
+    RTEXT           "Des&cription:",IDC_DESCTEXT,135,10,49,8,NOT WS_GROUP
+    EDITTEXT        IDC_DESC,185,10,110,25,ES_AUTOHSCROLL
+    RTEXT           "Data&base:",IDC_STATIC,15,24,37,8,NOT WS_GROUP
+    EDITTEXT        IDC_DATABASE,59,24,72,12,ES_AUTOHSCROLL
+    RTEXT           "&Server:",IDC_STATIC,23,38,29,8,NOT WS_GROUP
+    EDITTEXT        IDC_SERVER,59,38,72,12,ES_AUTOHSCROLL
+    RTEXT           "&Port:",IDC_STATIC,161,38,21,8
+    EDITTEXT        IDC_PORT,185,38,37,12,ES_AUTOHSCROLL
+    RTEXT           "&User Name:",IDC_STATIC,11,53,41,8
+    EDITTEXT        IDC_USER,59,53,72,12,ES_AUTOHSCROLL
+    RTEXT           "Pass&word:",IDC_STATIC,145,53,37,8
+    EDITTEXT        IDC_PASSWORD,185,53,72,12,ES_PASSWORD | ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "OK",IDOK,27,88,40,14,WS_GROUP
+    PUSHBUTTON      "Cancel",IDCANCEL,81,88,40,14
+    GROUPBOX        "Options (Advanced):",IDC_OPTIONS,141,72,140,35,
+                    BS_CENTER
+    PUSHBUTTON      "Driver",IDC_DRIVER,149,89,50,14
+    PUSHBUTTON      "DataSource",IDC_DATASOURCE,221,88,50,14
+    CTEXT           "Please supply any missing information needed to connect.",
+                    DRV_MSG_LABEL,25,4,238,10
+END
+
+DLG_OPTIONS_DRV DIALOG DISCARDABLE  0, 0, 306, 213
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Advanced Options (Driver)"
+FONT 10, "Terminal"
+BEGIN
+    CONTROL         "Disable Genetic &Optimizer",DRV_OPTIMIZER,"Button",
+                    BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,13,11,116,10
+    CONTROL         "Comm&Log (C:\\psqlodbc.log)",DRV_COMMLOG,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,164,11,120,10
+    CONTROL         "&KSQO (Keyset Query Optimization)",DRV_KSQO,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,13,23,144,10
+    CONTROL         "&ReadOnly (Default)",DRV_READONLY,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,164,24,88,10
+    CONTROL         "Recognize Unique &Indexes",DRV_UNIQUEINDEX,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,13,35,112,10
+    CONTROL         "P&arse Statements",DRV_PARSE,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,164,37,80,10
+    CONTROL         "&Use Declare/Fetch",DRV_USEDECLAREFETCH,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,13,47,84,10
+    CONTROL         "Cancel as FreeStmt (Exp)",DRV_CANCELASFREESTMT,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,164,50,112,10
+    GROUPBOX        "Unknown Sizes",IDC_STATIC,13,63,175,24
+    CONTROL         "Maximum",DRV_UNKNOWN_MAX,"Button",BS_AUTORADIOBUTTON | 
+                    WS_GROUP | WS_TABSTOP,21,71,44,10
+    CONTROL         "Don't Know",DRV_UNKNOWN_DONTKNOW,"Button",
+                    BS_AUTORADIOBUTTON | WS_TABSTOP,72,71,56,10
+    CONTROL         "Longest",DRV_UNKNOWN_LONGEST,"Button",
+                    BS_AUTORADIOBUTTON | WS_TABSTOP,135,71,44,10
+    GROUPBOX        "Data Type Options",IDC_STATIC,13,91,282,23
+    CONTROL         "Text as LongVarChar",DRV_TEXT_LONGVARCHAR,"Button",
+                    BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,15,102,92,10
+    CONTROL         "Unknowns as LongVarChar",DRV_UNKNOWNS_LONGVARCHAR,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,112,102,108,10
+    CONTROL         "Bools as Char",DRV_BOOLS_CHAR,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,225,102,68,10
+    LTEXT           "&Cache Size:",IDC_STATIC,15,120,45,8
+    EDITTEXT        DRV_CACHE_SIZE,61,116,35,12,ES_AUTOHSCROLL
+    LTEXT           "Max &Varchar:",IDC_STATIC,99,120,49,8
+    EDITTEXT        DRV_VARCHAR_SIZE,149,116,35,12,ES_AUTOHSCROLL
+    LTEXT           "Max Lon&gVarChar:",IDC_STATIC,192,120,65,8
+    EDITTEXT        DRV_LONGVARCHAR_SIZE,259,116,35,12,ES_AUTOHSCROLL
+    LTEXT           "SysTable &Prefixes:",IDC_STATIC,23,131,36,20
+    EDITTEXT        DRV_EXTRASYSTABLEPREFIXES,61,137,75,12,ES_AUTOHSCROLL
+    LTEXT           "Connect &Settings:",IDC_STATIC,22,152,35,20
+    EDITTEXT        DRV_CONNSETTINGS,61,153,225,25,ES_MULTILINE | 
+                    ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_WANTRETURN
+    DEFPUSHBUTTON   "OK",IDOK,59,188,50,14,WS_GROUP
+    PUSHBUTTON      "Cancel",IDCANCEL,129,188,50,14
+    PUSHBUTTON      "Defaults",IDDEFAULTS,199,188,50,15
+END
+
+DLG_OPTIONS_DS DIALOG DISCARDABLE  0, 0, 267, 161
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Advanced Options (DataSource)"
+FONT 10, "Terminal"
+BEGIN
+    CONTROL         "&ReadOnly",DS_READONLY,"Button",BS_AUTOCHECKBOX | 
+                    WS_GROUP | WS_TABSTOP,45,13,48,10
+    CONTROL         "Row &Versioning",DS_ROWVERSIONING,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,149,13,72,10
+    CONTROL         "Show System &Tables",DS_SHOWSYSTEMTABLES,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,45,28,88,10
+    GROUPBOX        "Protocol",IDC_STATIC,43,44,180,25
+    CONTROL         "7.X,6.4+",DS_PG64,"Button",BS_AUTORADIOBUTTON | 
+                    WS_GROUP,53,54,47,10
+    CONTROL         "6.3",DS_PG63,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,
+                    131,54,26,10
+    CONTROL         "6.2",DS_PG62,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,
+                    187,54,26,10
+    GROUPBOX        "OID Options",IDC_STATIC,43,74,180,25
+    CONTROL         "Show &Column",DS_SHOWOIDCOLUMN,"Button",BS_AUTOCHECKBOX | 
+                    WS_GROUP | WS_TABSTOP,53,85,59,10
+    CONTROL         "Fake &Index",DS_FAKEOIDINDEX,"Button",BS_AUTOCHECKBOX | 
+                    WS_GROUP | WS_TABSTOP,161,85,55,10
+    LTEXT           "Connect &Settings:",IDC_STATIC,10,105,35,25
+    EDITTEXT        DS_CONNSETTINGS,50,105,200,20,ES_MULTILINE | 
+                    ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_WANTRETURN
+    DEFPUSHBUTTON   "OK",IDOK,71,135,50,14,WS_GROUP
+    PUSHBUTTON      "Cancel",IDCANCEL,146,135,50,14
+END
+#else
 DLG_CONFIG DIALOG DISCARDABLE  65, 43, 292, 116
 STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_VISIBLE | WS_CAPTION | 
     WS_SYSMENU
@@ -162,7 +274,7 @@ BEGIN
     DEFPUSHBUTTON   "OK",IDOK,71,135,50,14,WS_GROUP
     PUSHBUTTON      "Cancel",IDCANCEL,146,135,50,14
 END
-
+#endif
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -170,6 +282,31 @@ END
 //
 
 #ifdef APSTUDIO_INVOKED
+#ifdef MULTIBYTE
+GUIDELINES DESIGNINFO DISCARDABLE 
+BEGIN
+    DLG_CONFIG, DIALOG
+    BEGIN
+        BOTTOMMARGIN, 112
+    END
+
+    DLG_OPTIONS_DRV, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 301
+        TOPMARGIN, 5
+        BOTTOMMARGIN, 206
+    END
+
+    DLG_OPTIONS_DS, DIALOG
+    BEGIN
+        LEFTMARGIN, 5
+        RIGHTMARGIN, 260
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 154
+    END
+END
+#else
 GUIDELINES DESIGNINFO DISCARDABLE 
 BEGIN
     DLG_CONFIG, DIALOG
@@ -194,6 +331,7 @@ BEGIN
         BOTTOMMARGIN, 154
     END
 END
+#endif    // MULTIBYTE
 #endif    // APSTUDIO_INVOKED
 
 
@@ -204,8 +342,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 7,1,0,3
- PRODUCTVERSION 7,1,0,3
+ FILEVERSION 7,1,0,4
+ PRODUCTVERSION 7,1,0,4
  FILEFLAGSMASK 0x3L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -221,16 +359,20 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "Comments", "PostgreSQL ODBC driver\0"
+#ifdef MULTIBYTE
+            VALUE "CompanyName", "Insight Distribution Systems & Sankyo Unyu Service (MULTIBYTE support)\0"
+#else
             VALUE "CompanyName", "Insight Distribution Systems\0"
+#endif
             VALUE "FileDescription", "PostgreSQL Driver\0"
-            VALUE "FileVersion", " 07.01.0003\0"
+            VALUE "FileVersion", " 07.01.0004\0"
             VALUE "InternalName", "psqlodbc\0"
             VALUE "LegalCopyright", "\0"
             VALUE "LegalTrademarks", "ODBC(TM) is a trademark of Microsoft Corporation.  Microsoft® is a registered trademark of Microsoft Corporation. Windows(TM) is a trademark of Microsoft Corporation.\0"
             VALUE "OriginalFilename", "psqlodbc.dll\0"
             VALUE "PrivateBuild", "\0"
             VALUE "ProductName", "Microsoft Open Database Connectivity\0"
-            VALUE "ProductVersion", " 07.01.0003\0"
+            VALUE "ProductVersion", " 07.01.0004\0"
             VALUE "SpecialBuild", "\0"
         END
     END

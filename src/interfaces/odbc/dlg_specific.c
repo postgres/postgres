@@ -15,6 +15,7 @@
  * Comments:        See "notice.txt" for copyright and license information.
  *
  */
+/* Multibyte support	Eiji Tokuya 2001-03-15 */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -33,6 +34,10 @@
 
 #include "dlg_specific.h"
 #include "convert.h"
+
+#ifdef MULTIBYTE
+#include "multibyte.h"
+#endif
 
 #ifndef BOOL
 #define BOOL	int
@@ -507,8 +512,17 @@ char encoded_conn_settings[LARGE_REGISTRY_LEN];
 		ci->show_oid_column,
 		ci->fake_oid_index,
 		ci->show_system_tables);
+
+#ifdef MULTIBYTE
+	check_client_encoding(ci->conn_settings);
+	qlog("          conn_settings='%s',conn_encoding='%s'\n",
+		ci->conn_settings,
+		check_client_encoding(ci->conn_settings));
+#else
 	qlog("          conn_settings='%s'\n",
 		ci->conn_settings);
+#endif
+
 	qlog("          translation_dll='%s',translation_option='%s'\n",
 		ci->translation_dll,
 		ci->translation_option);

@@ -12,6 +12,11 @@
  * Comments:        See "notice.txt" for copyright and license information.
  *
  */
+/* Multibyte support	Eiji Tokuya 2001-03-15 */
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include "environ.h"
 #include "connection.h"
@@ -20,6 +25,11 @@
 #include "qresult.h"
 #include "lobj.h"
 #include "dlg_specific.h"
+
+#ifdef MULTIBYTE
+#include "multibyte.h"
+#endif
+
 #include <stdio.h>
 #include <string.h>
 
@@ -496,9 +506,18 @@ static char *func="CC_connect";
 			globals.text_as_longvarchar, 
 			globals.unknowns_as_longvarchar, 
 			globals.bools_as_char);
+
+#ifdef MULTIBYTE
+		check_client_encoding(globals.conn_settings);
+		qlog("                extra_systable_prefixes='%s', conn_settings='%s' conn_encoding='%s'\n",
+			globals.extra_systable_prefixes,
+			globals.conn_settings,
+			check_client_encoding(globals.conn_settings));
+#else
 		qlog("                extra_systable_prefixes='%s', conn_settings='%s'\n",
 			globals.extra_systable_prefixes, 
 			globals.conn_settings);
+#endif
 
 		if (self->status != CONN_NOT_CONNECTED) {
 			self->errormsg = "Already connected.";

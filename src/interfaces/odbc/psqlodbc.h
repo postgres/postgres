@@ -6,7 +6,7 @@
  *
  * Comments:        See "notice.txt" for copyright and license information.
  *
- * $Id: psqlodbc.h,v 1.38 2001/02/15 05:32:00 inoue Exp $
+ * $Id: psqlodbc.h,v 1.39 2001/03/16 01:17:23 inoue Exp $
  */
 
 #ifndef __PSQLODBC_H__
@@ -41,7 +41,7 @@ typedef UInt4 Oid;
 #define DRIVERNAME             "PostgreSQL ODBC"
 #define DBMS_NAME              "PostgreSQL"
 
-#define POSTGRESDRIVERVERSION  "07.01.0003"
+#define POSTGRESDRIVERVERSION  "07.01.0004"
 
 #ifdef WIN32
 #define DRIVER_FILE_NAME		"PSQLODBC.DLL"
@@ -133,6 +133,7 @@ typedef struct GlobalValues_
 	char				extra_systable_prefixes[MEDIUM_REGISTRY_LEN];
 	char				conn_settings[LARGE_REGISTRY_LEN];
 	char				protocol[SMALL_REGISTRY_LEN];
+
 
 	FILE*				mylogFP;
 	FILE*				qlogFP;	

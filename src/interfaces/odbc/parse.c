@@ -17,6 +17,11 @@
  * Comments:        See "notice.txt" for copyright and license information.
  *
  */
+/* Multibyte support	Eiji Tokuya 2001-03-15 */
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <stdio.h>
 #include <string.h>
@@ -26,6 +31,10 @@
 #include "connection.h"
 #include "qresult.h"
 #include "pgtypes.h"
+
+#ifdef MULTIBYTE
+#include "multibyte.h"
+#endif
 
 #ifndef WIN32
 #ifndef HAVE_STRICMP
@@ -88,7 +97,11 @@ char qc, in_escape = FALSE;
 				if (s[i] == qc && ! in_escape) {
 					break;
 				}
+#ifdef MULTIBYTE
+				if (multibyte_char_check(s[i]) == 0 && s[i] == '\\' && ! in_escape) {
+#else
 				if (s[i] == '\\' && ! in_escape) {
+#endif
 					in_escape = TRUE;
 				}
 				else {
