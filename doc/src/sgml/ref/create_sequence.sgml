@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_sequence.sgml,v 1.21 2001/11/17 22:20:34 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_sequence.sgml,v 1.22 2001/11/28 15:33:48 tgl Exp $
 Postgres documentation
 -->
 
@@ -287,9 +287,20 @@ SELECT * FROM <replaceable>seqname</replaceable>;
    <title>
     Notes
    </title>
+
    <para>
     Use <command>DROP SEQUENCE</command> to remove a sequence.
    </para>
+
+   <para>
+    Sequences are based on <type>bigint</> arithmetic, so the range cannot
+    exceed the range of an eight-byte integer
+    (-9223372036854775808 to 9223372036854775807).  On some older platforms,
+    there may be no compiler support for eight-byte integers, in which case
+    sequences use regular <type>integer</> arithmetic (range
+    -2147483648 to +2147483647).
+   </para>
+
    <para>
     When <replaceable class="parameter">cache</replaceable> is greater than
     one, each backend uses its own cache to store preallocated numbers.
