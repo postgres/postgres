@@ -4,7 +4,7 @@
 #
 # Written by Peter Eisentraut  <peter_e@gmx.net>
 #
-# $Header: /cvsroot/pgsql/src/interfaces/python/Attic/GNUmakefile,v 1.2 2000/08/31 16:12:01 petere Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/python/Attic/GNUmakefile,v 1.3 2000/12/30 00:24:09 petere Exp $
 #
 #-------------------------------------------------------------------
 
@@ -34,8 +34,8 @@ Setup.in: Setup.in.raw
 
 install: all
 	@echo "Installing Python module"
-	@if ! ( $(INSTALL_DATA) pg.py $(python_moduledir) && \
-	    $(MAKE) -f Makefile install ); then \
+	@if ( $(INSTALL_DATA) pg.py $(python_moduledir) && \
+	    $(MAKE) -f Makefile install ); then : ; else \
 		echo "*****" ;\
 		echo "* Skipping the installation of the Python interface module for lack"; \
 		echo "* of permissions. To install it, change to the directory"; \

@@ -12,7 +12,7 @@
 
 
 all check install installdirs installcheck uninstall dep depend clean distclean maintainer-clean:
-	@if ! [ -f GNUmakefile ] ; then \
+	@if [ ! -f GNUmakefile ] ; then \
 	   echo "You need to run the 'configure' program first. See the file"; \
 	   echo "'INSTALL' for installation instructions." ; \
 	   false ; \
