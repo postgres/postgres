@@ -51,6 +51,7 @@ do
 			    line1 !~ "^struct" &&
 			    line1 !~ "^enum" &&
 			    line1 !~ "^typedef" &&
+			    line1 !~ "\"C\"" &&
 			    line1 !~ "=" )
 				print "int	pgindent_func_no_var_fix;";
 			line1 = line2;
