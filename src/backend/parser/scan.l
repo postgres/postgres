@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.46 1999/02/13 23:17:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.47 1999/03/17 20:17:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -145,8 +145,8 @@ identifier		{letter}{letter_or_digit}*
 
 typecast		"::"
 
-self			[,()\[\].;$\:\+\-\*\/\<\>\=\|]
-op_and_self		[\~\!\@\#\%\^\&\|\`\?\$\:\+\-\*\/\<\>\=]
+self			[,()\[\].;$\:\+\-\*\/\%\<\>\=\|]
+op_and_self		[\~\!\@\#\^\&\|\`\?\$\:\+\-\*\/\%\<\>\=]
 operator		{op_and_self}+
 
 xmstop			-

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.60 1999/03/15 22:20:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.61 1999/03/17 20:17:12 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -341,7 +341,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
 %nonassoc	ISNULL
 %nonassoc	IS
 %left		'+' '-'
-%left		'*' '/'
+%left		'*' '/' '%'
 %left		'|'				/* this is the relation union op, not logical or */
 /* Unary Operators */
 %right		':'
@@ -957,6 +957,8 @@ default_expr:  AexprConst
 				{	$$ = nconc( $1, lcons( makeString( "-"), $3)); }
 			| default_expr '/' default_expr
 				{	$$ = nconc( $1, lcons( makeString( "/"), $3)); }
+			| default_expr '%' default_expr
+				{	$$ = nconc( $1, lcons( makeString( "%"), $3)); }
 			| default_expr '*' default_expr
 				{	$$ = nconc( $1, lcons( makeString( "*"), $3)); }
 			| default_expr '=' default_expr
@@ -1103,6 +1105,8 @@ constraint_expr:  AexprConst
 				{	$$ = nconc( $1, lcons( makeString( "-"), $3)); }
 			| constraint_expr '/' constraint_expr
 				{	$$ = nconc( $1, lcons( makeString( "/"), $3)); }
+			| constraint_expr '%' constraint_expr
+				{	$$ = nconc( $1, lcons( makeString( "%"), $3)); }
 			| constraint_expr '*' constraint_expr
 				{	$$ = nconc( $1, lcons( makeString( "*"), $3)); }
 			| constraint_expr '=' constraint_expr
@@ -1999,6 +2003,7 @@ MathOp:	'+'				{ $$ = "+"; }
 		| '-'			{ $$ = "-"; }
 		| '*'			{ $$ = "*"; }
 		| '/'			{ $$ = "/"; }
+		| '%'			{ $$ = "%"; }
 		| '<'			{ $$ = "<"; }
 		| '>'			{ $$ = ">"; }
 		| '='			{ $$ = "="; }
@@ -3657,6 +3662,7 @@ row_op:  Op									{ $$ = $1; }
 		| '-'								{ $$ = "-"; }
 		| '*'								{ $$ = "*"; }
 		| '/'								{ $$ = "/"; }
+		| '%'								{ $$ = "%"; }
 		;
 
 sub_type:  ANY								{ $$ = ANY_SUBLINK; }
@@ -3696,6 +3702,8 @@ a_expr:  attr opt_indirection
 				{	$$ = makeA_Expr(OP, "-", $1, $3); }
 		| a_expr '/' a_expr
 				{	$$ = makeA_Expr(OP, "/", $1, $3); }
+		| a_expr '%' a_expr
+				{	$$ = makeA_Expr(OP, "%", $1, $3); }
 		| a_expr '*' a_expr
 				{	$$ = makeA_Expr(OP, "*", $1, $3); }
 		| a_expr '<' a_expr
@@ -4079,6 +4087,16 @@ a_expr:  attr opt_indirection
 					n->subselect = $4;
 					$$ = (Node *)n;
 				}
+		| a_expr '%' '(' SubSelect ')'
+				{
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = lcons($1, NULL);
+					n->oper = lcons("%",NIL);
+					n->useor = false;
+					n->subLinkType = EXPR_SUBLINK;
+					n->subselect = $4;
+					$$ = (Node *)n;
+				}
 		| a_expr '*' '(' SubSelect ')'
 				{
 					SubLink *n = makeNode(SubLink);
@@ -4154,6 +4172,16 @@ a_expr:  attr opt_indirection
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = lcons($1,NIL);
 					n->oper = lcons("/",NIL);
+					n->useor = false;
+					n->subLinkType = ANY_SUBLINK;
+					n->subselect = $5;
+					$$ = (Node *)n;
+				}
+		| a_expr '%' ANY '(' SubSelect ')'
+				{
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = lcons($1,NIL);
+					n->oper = lcons("%",NIL);
 					n->useor = false;
 					n->subLinkType = ANY_SUBLINK;
 					n->subselect = $5;
@@ -4239,6 +4267,16 @@ a_expr:  attr opt_indirection
 					n->subselect = $5;
 					$$ = (Node *)n;
 				}
+		| a_expr '%' ALL '(' SubSelect ')'
+				{
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = lcons($1, NULL);
+					n->oper = lcons("%",NIL);
+					n->useor = false;
+					n->subLinkType = ALL_SUBLINK;
+					n->subselect = $5;
+					$$ = (Node *)n;
+				}
 		| a_expr '*' ALL '(' SubSelect ')'
 				{
 					SubLink *n = makeNode(SubLink);
@@ -4317,6 +4355,8 @@ b_expr:  attr opt_indirection
 				{	$$ = makeA_Expr(OP, "-", $1, $3); }
 		| b_expr '/' b_expr
 				{	$$ = makeA_Expr(OP, "/", $1, $3); }
+		| b_expr '%' b_expr
+				{	$$ = makeA_Expr(OP, "%", $1, $3); }
 		| b_expr '*' b_expr
 				{	$$ = makeA_Expr(OP, "*", $1, $3); }
 		| ':' b_expr
@@ -4590,6 +4630,8 @@ position_expr:  attr opt_indirection
 				{	$$ = makeA_Expr(OP, "-", $1, $3); }
 		| position_expr '/' position_expr
 				{	$$ = makeA_Expr(OP, "/", $1, $3); }
+		| position_expr '%' position_expr
+				{	$$ = makeA_Expr(OP, "%", $1, $3); }
 		| position_expr '*' position_expr
 				{	$$ = makeA_Expr(OP, "*", $1, $3); }
 		| '|' position_expr
