@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.165 2000/09/12 04:49:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.166 2000/09/19 19:30:03 tgl Exp $
  *
 
  *-------------------------------------------------------------------------
@@ -397,12 +397,6 @@ vacuum_rel(Oid relid, bool analyze, bool is_toastrel)
 	 */
 	onerel = heap_open(relid, AccessExclusiveLock);
 
-	/*
-	 * Remember the relations TOAST relation for later
-	 *
-	 */
-	toast_relid = onerel->rd_rel->reltoastrelid;
-
 #ifndef NO_SECURITY
 	if (!pg_ownercheck(GetUserId(), RelationGetRelationName(onerel),
 					   RELNAME))
@@ -415,6 +409,11 @@ vacuum_rel(Oid relid, bool analyze, bool is_toastrel)
 		return;
 	}
 #endif
+
+	/*
+	 * Remember the relation'ss TOAST relation for later
+	 */
+	toast_relid = onerel->rd_rel->reltoastrelid;
 
 	/*
 	 * Set up statistics-gathering machinery.
@@ -430,7 +429,8 @@ vacuum_rel(Oid relid, bool analyze, bool is_toastrel)
 	reindex = false;
 	vacuum_pages.num_pages = fraged_pages.num_pages = 0;
 	scan_heap(vacrelstats, onerel, &vacuum_pages, &fraged_pages);
-	if (IsIgnoringSystemIndexes() && IsSystemRelationName(RelationGetRelationName(onerel)))
+	if (IsIgnoringSystemIndexes() &&
+		IsSystemRelationName(RelationGetRelationName(onerel)))
 		reindex = true;
 
 	/* Now open indices */
@@ -459,30 +459,54 @@ vacuum_rel(Oid relid, bool analyze, bool is_toastrel)
 		if (vacuum_pages.num_pages > 0)
 		{
 			for (i = 0; i < nindices; i++)
-				vacuum_index(&vacuum_pages, Irel[i], vacrelstats->num_tuples, 0);
+				vacuum_index(&vacuum_pages, Irel[i],
+							 vacrelstats->num_tuples, 0);
 		}
 		else
-		/* just scan indices to update statistic */
 		{
+			/* just scan indices to update statistic */
 			for (i = 0; i < nindices; i++)
 				scan_index(Irel[i], vacrelstats->num_tuples);
 		}
 	}
 
-	if (fraged_pages.num_pages > 0) /* Try to shrink heap */
-		repair_frag(vacrelstats, onerel, &vacuum_pages, &fraged_pages, nindices, Irel);
+	if (fraged_pages.num_pages > 0)
+	{
+		/* Try to shrink heap */
+		repair_frag(vacrelstats, onerel, &vacuum_pages, &fraged_pages,
+					nindices, Irel);
+	}
 	else
 	{
 		if (Irel != (Relation *) NULL)
 			close_indices(nindices, Irel);
-		if (vacuum_pages.num_pages > 0)		/* Clean pages from
-												 * vacuum_pages list */
+		if (vacuum_pages.num_pages > 0)
+		{
+			/* Clean pages from vacuum_pages list */
 			vacuum_heap(vacrelstats, onerel, &vacuum_pages);
+		}
+		else
+		{
+			/*
+			 * Flush dirty pages out to disk.  We must do this even if we
+			 * didn't do anything else, because we want to ensure that all
+			 * tuples have correct on-row commit status on disk (see
+			 * bufmgr.c's comments for FlushRelationBuffers()).
+			 */
+			i = FlushRelationBuffers(onerel, vacrelstats->num_pages);
+			if (i < 0)
+				elog(ERROR, "VACUUM (vacuum_rel): FlushRelationBuffers returned %d",
+					 i);
+		}
 	}
 	if (reindex)
 		activate_indexes_of_a_table(relid, true);
 
-	/* ok - free vacuum_pages list of reaped pages */
+	/*
+	 * ok - free vacuum_pages list of reaped pages
+	 *
+	 * Isn't this a waste of code?  Upcoming commit should free memory, no?
+	 */
 	if (vacuum_pages.num_pages > 0)
 	{
 		vacpage = vacuum_pages.pagedesc;
@@ -498,12 +522,14 @@ vacuum_rel(Oid relid, bool analyze, bool is_toastrel)
 
 	/* update statistics in pg_class */
 	update_relstats(vacrelstats->relid, vacrelstats->num_pages,
-			vacrelstats->num_tuples, vacrelstats->hasindex, vacrelstats);
+					vacrelstats->num_tuples, vacrelstats->hasindex,
+					vacrelstats);
 
-	/* If the relation has a secondary toast one, vacuum that too
+	/*
+	 * If the relation has a secondary toast one, vacuum that too
 	 * while we still hold the lock on the master table. We don't
 	 * need to propagate "analyze" to it, because the toaster
-	 * allways uses hardcoded index access and statistics are
+	 * always uses hardcoded index access and statistics are
 	 * totally unimportant for toast relations
 	 */
 	if (toast_relid != InvalidOid)
@@ -1820,12 +1846,20 @@ failed to add item with len = %u to page %u (free space %u, nusd %u, noff %u)",
 		pfree(Nvacpagelist.pagedesc);
 	}
 
-	/* truncate relation, after flushing any dirty pages out to disk */
+	/*
+	 * Flush dirty pages out to disk.  We do this unconditionally, even if
+	 * we don't need to truncate, because we want to ensure that all tuples
+	 * have correct on-row commit status on disk (see bufmgr.c's comments
+	 * for FlushRelationBuffers()).
+	 */
+	i = FlushRelationBuffers(onerel, blkno);
+	if (i < 0)
+		elog(ERROR, "VACUUM (repair_frag): FlushRelationBuffers returned %d",
+			 i);
+
+	/* truncate relation, if needed */
 	if (blkno < nblocks)
 	{
-		i = FlushRelationBuffers(onerel, blkno);
-		if (i < 0)
-			elog(FATAL, "VACUUM (repair_frag): FlushRelationBuffers returned %d", i);
 		blkno = smgrtruncate(DEFAULT_SMGR, onerel, blkno);
 		Assert(blkno >= 0);
 		vacrelstats->num_pages = blkno; /* set new number of blocks */
@@ -1840,7 +1874,6 @@ failed to add item with len = %u to page %u (free space %u, nusd %u, noff %u)",
 	pfree(vacpage);
 	if (vacrelstats->vtlinks != NULL)
 		pfree(vacrelstats->vtlinks);
-
 }
 
 /*
@@ -1860,7 +1893,7 @@ vacuum_heap(VRelStats *vacrelstats, Relation onerel, VacPageList vacuum_pages)
 
 	nblocks = vacuum_pages->num_pages;
 	nblocks -= vacuum_pages->empty_end_pages;		/* nothing to do with
-														 * them */
+													 * them */
 
 	for (i = 0, vacpage = vacuum_pages->pagedesc; i < nblocks; i++, vacpage++)
 	{
@@ -1873,33 +1906,30 @@ vacuum_heap(VRelStats *vacrelstats, Relation onerel, VacPageList vacuum_pages)
 		}
 	}
 
+	/*
+	 * Flush dirty pages out to disk.  We do this unconditionally, even if
+	 * we don't need to truncate, because we want to ensure that all tuples
+	 * have correct on-row commit status on disk (see bufmgr.c's comments
+	 * for FlushRelationBuffers()).
+	 */
+	Assert(vacrelstats->num_pages >= vacuum_pages->empty_end_pages);
+	nblocks = vacrelstats->num_pages - vacuum_pages->empty_end_pages;
+
+	i = FlushRelationBuffers(onerel, nblocks);
+	if (i < 0)
+		elog(ERROR, "VACUUM (vacuum_heap): FlushRelationBuffers returned %d",
+			 i);
+
 	/* truncate relation if there are some empty end-pages */
 	if (vacuum_pages->empty_end_pages > 0)
 	{
-		Assert(vacrelstats->num_pages >= vacuum_pages->empty_end_pages);
-		nblocks = vacrelstats->num_pages - vacuum_pages->empty_end_pages;
 		elog(MESSAGE_LEVEL, "Rel %s: Pages: %u --> %u.",
 			 RelationGetRelationName(onerel),
 			 vacrelstats->num_pages, nblocks);
-
-		/*
-		 * We have to flush "empty" end-pages (if changed, but who knows
-		 * it) before truncation
-		 *
-		 * XXX is FlushBufferPool() still needed here?
-		 */
-		FlushBufferPool();
-
-		i = FlushRelationBuffers(onerel, nblocks);
-		if (i < 0)
-			elog(FATAL, "VACUUM (vacuum_heap): FlushRelationBuffers returned %d", i);
-
 		nblocks = smgrtruncate(DEFAULT_SMGR, onerel, nblocks);
 		Assert(nblocks >= 0);
-		vacrelstats->num_pages = nblocks;		/* set new number of
-												 * blocks */
+		vacrelstats->num_pages = nblocks; /* set new number of blocks */
 	}
-
 }
 
 /*
