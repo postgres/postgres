@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.38 2000/10/04 15:47:45 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.39 2000/11/10 20:13:25 tgl Exp $
 -->
 
  <chapter id="datatype">
@@ -65,7 +65,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.38 2000/10/04 15:47:45 pe
       <row>
        <entry>cidr</entry>
        <entry></entry>
-       <entry>IP version 4 network or host address</entry>
+       <entry>IP network address</entry>
       </row>
       <row>
        <entry>circle</entry>
@@ -95,7 +95,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.38 2000/10/04 15:47:45 pe
       <row>
        <entry>inet</entry>
        <entry></entry>
-       <entry>IP version 4 network or host address</entry>
+       <entry>IP network or host address</entry>
       </row>
       <row>
        <entry>int2</entry>
@@ -1736,7 +1736,7 @@ January 8 04:05:06 1999 PST
 
    <para>
     <productname>Postgres</> offers data types to store IP and MAC
-    addresses.  It is preferrable to use these types over plain text
+    addresses.  It is preferable to use these types over plain text
     types, because these types offer input error checking and several
     specialized operators and functions.
 
@@ -1755,16 +1755,16 @@ January 8 04:05:06 1999 PST
 
        <row>
 	<entry>cidr</entry>
-	<entry>11 bytes</entry>
+	<entry>12 bytes</entry>
 	<entry>IP networks</entry>
 	<entry>valid IPv4 networks</entry>
        </row>
 
        <row>
 	<entry>inet</entry>
-	<entry>11 bytes</entry>
+	<entry>12 bytes</entry>
 	<entry>IP hosts and networks</entry>
-	<entry>valid IPv4 hosts</entry>
+	<entry>valid IPv4 hosts or networks</entry>
        </row>
 
        <row>
@@ -1784,19 +1784,48 @@ January 8 04:05:06 1999 PST
    </para>
 
 
+   <sect2 id="inet-type">
+    <title><type>inet</type></title>
+
+    <para>
+     The <type>inet</type> type holds an IP host address, and
+     optionally the identity of the subnet it is in, all in one field.
+     The subnet identity is represented by the number of bits in the
+     network part of the address (the "netmask").  If the netmask is 32,
+     then the value does not indicate a subnet, only a single host.
+     Note that if you want to accept networks only, you should use the
+     <type>cidr</type> type rather than <type>inet</type>.
+    </para>
+
+    <para>
+     The input format for this type is <replaceable
+     class="parameter">x.x.x.x/y</replaceable> where <replaceable
+     class="parameter">x.x.x.x</replaceable> is an IP address and
+     <replaceable class="parameter">y</replaceable> is the number of
+     bits in the netmask.  If the <replaceable
+     class="parameter">y</replaceable> part is left off, then the
+     netmask is 32, and the value represents just a single host.
+     On display, the <replaceable class="parameter">/y</replaceable>
+     portion is suppressed if the netmask is 32.
+    </para>
+   </sect2>
+
    <sect2 id="cidr-type">
     <title><type>cidr</></title>
 
     <para>
-     The <type>cidr</type> type holds an IP network.  The format for
+     The <type>cidr</type> type holds an IP network specification.
+     Input and output formats follow Classless Internet Domain Routing
+     conventions.
+     The format for
      specifying classless networks is <replaceable
      class="parameter">x.x.x.x/y</> where <replaceable
      class="parameter">x.x.x.x</> is the network and <replaceable
      class="parameter">y</> is the number of bits in the netmask.  If
      <replaceable class="parameter">y</> omitted, it is calculated
-     using assumptions from the older classfull naming system except
-     that it is extended to include at least all of the octets in the
-     input.
+     using assumptions from the older classful numbering system, except
+     that it will be at least large enough to include all of the octets
+     written in the input.
     </para>
 
     <para>
@@ -1815,6 +1844,10 @@ January 8 04:05:06 1999 PST
 	<row>
 	 <entry>192.168.100.128/25</entry>
 	 <entry>192.168.100.128/25</entry>
+	</row>
+	<row>
+	 <entry>192.168/24</entry>
+	 <entry>192.168.0/24</entry>
 	</row>
 	<row>
 	 <entry>192.168/25</entry>
@@ -1856,30 +1889,19 @@ January 8 04:05:06 1999 PST
       </tgroup>
      </table>
     </para>
-   </sect2>
-
-   <sect2 id="inet-type">
-    <title><type>inet</type></title>
 
     <para>
-     The <type>inet</type> type holds an IP host address, and
-     optionally the identity of the subnet it is in, all in one field.
-     Note that if you want to store networks only, you should use the
-     <type>cidr</type> type.  The <type>inet</type> type is similar to
-     the <type>cidr</type> type except that the bits in the host part
-     can be non-zero.  Functions exist to extract the various elements
-     of the field.
-    </para>
+    The essential difference between <type>inet</type> and <type>cidr</type>
+    data types is that <type>inet</type> accepts values with nonzero bits to
+    the right of the netmask, whereas <type>cidr</type> does not.
 
-    <para>
-     The input format for this type is <replaceable
-     class="parameter">x.x.x.x/y</replaceable> where <replaceable
-     class="parameter">x.x.x.x</replaceable> is an internet host and
-     <replaceable class="parameter">y</replaceable> is the number of
-     bits in the netmask.  If the <replaceable
-     class="parameter">y</replaceable> part is left off, then the
-     netmask is 32 and you are effectively only storing the address of
-     a single host.
+      <tip>
+        <para>
+	If you do not like the output format for <type>inet</type> or
+	<type>cidr</type> values, try the <function>host</>() and
+	<function>text</>() functions.
+	</para>
+      </tip>
     </para>
    </sect2>
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/oper.sgml,v 1.21 2000/10/24 20:13:31 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/oper.sgml,v 1.22 2000/11/10 20:13:25 tgl Exp $
 -->
 
  <Chapter Id="operators">
@@ -756,80 +756,11 @@ logical union
   <sect1 id="net-operators">
    <title>Network Address Type Operators</title>
 
-   <sect2 id="cidr-operators">
-    <title><type>cidr</> Operators</title>
+   <sect2 id="cidr-inet-operators">
+    <title><type>cidr</> and <type>inet</> Operators</title>
 
-    <table tocentry="1" id="cidr-operators-table">
-     <title><type>cidr</> Operators</title>
-     <TGROUP COLS="3">
-      <THEAD>
-       <ROW>
-	<ENTRY>Operator</ENTRY>
-	<ENTRY>Description</ENTRY>
-	<ENTRY>Usage</ENTRY>
-       </ROW>
-      </THEAD>
-      <TBODY>
-       <ROW>
-	<ENTRY> &lt; </ENTRY>
-	<ENTRY>Less than</ENTRY>
-	<ENTRY>'192.168.1.5'::cidr &lt; '192.168.1.6'::cidr</ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> &lt;= </ENTRY>
-	<ENTRY>Less than or equal</ENTRY>
-	<ENTRY>'192.168.1.5'::cidr &lt;= '192.168.1.5'::cidr</ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> = </ENTRY>
-	<ENTRY>Equals</ENTRY>
-	<ENTRY>'192.168.1.5'::cidr = '192.168.1.5'::cidr</ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> &gt;= </ENTRY>
-	<ENTRY>Greater or equal</ENTRY>
-	<ENTRY>'192.168.1.5'::cidr &gt;= '192.168.1.5'::cidr</ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> &gt; </ENTRY>
-	<ENTRY>Greater</ENTRY>
-	<ENTRY>'192.168.1.5'::cidr &gt; '192.168.1.4'::cidr</ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> &lt;&gt; </ENTRY>
-	<ENTRY>Not equal</ENTRY>
-	<ENTRY>'192.168.1.5'::cidr &lt;&gt; '192.168.1.4'::cidr</ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> &lt;&lt; </ENTRY>
-	<ENTRY>is contained within</ENTRY>
-	<ENTRY>'192.168.1.5'::cidr &lt;&lt; '192.168.1/24'::cidr</ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> &lt;&lt;= </ENTRY>
-	<ENTRY>is contained within or equals</ENTRY>
-	<ENTRY>'192.168.1/24'::cidr &lt;&lt;= '192.168.1/24'::cidr</ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> &gt;&gt; </ENTRY>
-	<ENTRY>contains</ENTRY>
-	<ENTRY>'192.168.1/24'::cidr &gt;&gt; '192.168.1.5'::cidr</ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> &gt;&gt;= </ENTRY>
-	<ENTRY>contains or equals</ENTRY>
-	<ENTRY>'192.168.1/24'::cidr &gt;&gt;= '192.168.1/24'::cidr</ENTRY>
-       </ROW>
-      </TBODY>
-     </TGROUP>
-    </TABLE>
-   </sect2>
-
-   <sect2 id="inet-operators">
-   <title><type>inet</> Operators</title>
-   
-    <table tocentry="1" id="inet-operators-table">
-     <title><type>inet</> Operators</title>
+    <table tocentry="1" id="cidr-inet-operators-table">
+     <title><type>cidr</> and <type>inet</> Operators</title>
      <TGROUP COLS="3">
       <THEAD>
        <ROW>
@@ -892,6 +823,16 @@ logical union
       </TBODY>
      </TGROUP>
     </TABLE>
+
+    <para>
+     All of the operators for <type>inet</type> can be applied to
+     <type>cidr</type> values as well.  The operators
+     <literal>&lt;&lt;</> <literal>&lt;&lt;=</>
+     <literal>&gt;&gt;</> <literal>&gt;&gt;=</>
+     test for subnet inclusion: they consider only the network parts
+     of the two addresses, ignoring any host part, and determine whether
+     one network part is identical to or a subnet of the other.
+    </para>
    </sect2>
 
    <sect2 id="macaddr-operators">

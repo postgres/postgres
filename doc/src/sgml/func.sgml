@@ -1480,62 +1480,98 @@ Not defined by this name. Implements the intersection operator '#'
    <para>
     <table tocentry="1" id="cidr-inet-functions">
      <title><type>cidr</> and <type>inet</> Functions</title>
-     <tgroup cols="4">
+     <tgroup cols="5">
       <thead>
        <row>
 	<entry>Function</entry>
 	<entry>Returns</entry>
 	<entry>Description</entry>
 	<entry>Example</entry>
+	<entry>Result</entry>
        </row>
       </thead>
       <tbody>
        <row>
-	<entry>broadcast(cidr)</entry>
-	<entry>text</entry>
-	<entry>construct broadcast address as text</entry>
-	<entry>broadcast('192.168.1.5/24')</entry>
-       </row>
-       <row>
 	<entry>broadcast(inet)</entry>
-	<entry>text</entry>
-	<entry>construct broadcast address as text</entry>
+	<entry>inet</entry>
+	<entry>broadcast address for network</entry>
 	<entry>broadcast('192.168.1.5/24')</entry>
+	<entry>192.168.1.255/24</entry>
        </row>
        <row>
 	<entry>host(inet)</entry>
 	<entry>text</entry>
-	<entry>extract host address as text</entry>
+	<entry>extract IP address as text</entry>
 	<entry>host('192.168.1.5/24')</entry>
-       </row>
-       <row>
-	<entry>masklen(cidr)</entry>
-	<entry>integer</entry>
-	<entry>calculate netmask length</entry>
-	<entry>masklen('192.168.1.5/24')</entry>
+	<entry>192.168.1.5</entry>
        </row>
        <row>
 	<entry>masklen(inet)</entry>
 	<entry>integer</entry>
-	<entry>calculate netmask length</entry>
+	<entry>extract netmask length</entry>
 	<entry>masklen('192.168.1.5/24')</entry>
+	<entry>24</entry>
        </row>
        <row>
 	<entry>netmask(inet)</entry>
-	<entry>text</entry>
-	<entry>construct netmask as text</entry>
+	<entry>inet</entry>
+	<entry>construct netmask for network</entry>
 	<entry>netmask('192.168.1.5/24')</entry>
+	<entry>255.255.255.0</entry>
        </row>
+       <row>
+	<entry>network(inet)</entry>
+	<entry>cidr</entry>
+	<entry>extract network part of address</entry>
+	<entry>network('192.168.1.5/24')</entry>
+	<entry>192.168.1/24</entry>
+       </row>
+       <row>
+	<entry>text(inet)</entry>
+	<entry>text</entry>
+	<entry>extract IP address and masklen as text</entry>
+	<entry>text(inet '192.168.1.5')</entry>
+	<entry>192.168.1.5/32</entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+   </para>
+
+   <para>
+    All of the functions for <type>inet</type> can be applied to
+    <type>cidr</type> values as well.  The <function>host</>() and
+    <function>text</>() functions are primarily intended to offer
+    alternative display formats.
+   </para>
+
+   <para>
+    <table tocentry="1" id="macaddr-functions">
+     <title><type>macaddr</> Functions</title>
+     <tgroup cols="5">
+      <thead>
+       <row>
+	<entry>Function</entry>
+	<entry>Returns</entry>
+	<entry>Description</entry>
+	<entry>Example</entry>
+	<entry>Result</entry>
+       </row>
+      </thead>
+      <tbody>
        <row>
 	<entry>trunc(macaddr)</entry>
 	<entry>macaddr</entry>
 	<entry>set last 3 bytes to zero</entry>
 	<entry>trunc(macaddr '12:34:56:78:90:ab')</entry>
+	<entry>12:34:56:00:00:00</entry>
        </row>
       </tbody>
      </tgroup>
     </table>
+   </para>
 
+   <para>
     The function <function>trunc</>(<type>macaddr</>) returns a MAC
     address with the last 3 bytes set to 0.  This can be used to
     associate the remaining prefix with a manufacturer.  The directory

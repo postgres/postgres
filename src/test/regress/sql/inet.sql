@@ -23,7 +23,7 @@ SELECT '' AS ten, c AS cidr, i AS inet FROM INET_TBL;
 
 -- now test some support functions
 
-SELECT '' AS ten, i AS inet, host(i) FROM INET_TBL;
+SELECT '' AS ten, i AS inet, host(i), text(i) FROM INET_TBL;
 SELECT '' AS ten, c AS cidr, broadcast(c),
   i AS inet, broadcast(i) FROM INET_TBL;
 SELECT '' AS ten, c AS cidr, network(c) AS "network(cidr)",

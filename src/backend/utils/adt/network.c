@@ -3,7 +3,7 @@
  *	is for IP V4 CIDR notation, but prepared for V6: just
  *	add the necessary bits where the comments indicate.
  *
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/network.c,v 1.25 2000/10/27 01:52:15 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/network.c,v 1.26 2000/11/10 20:13:25 tgl Exp $
  *
  *	Jon Postel RIP 16 Oct 1998
  */
@@ -67,12 +67,12 @@ network_in(char *src, int type)
 
 	/*
 	 * Error check: CIDR values must not have any bits set beyond the masklen.
-	 * XXX this code not IPV6 ready.
+	 * XXX this code is not IPV6 ready.
 	 */
 	if (type)
 	{
 		if (! v4addressOK(ip_v4addr(dst), bits))
-			elog(ERROR, "invalid CIDR value '%s': width too small", src);
+			elog(ERROR, "invalid CIDR value '%s': has bits set to right of mask", src);
 	}
 
 	VARATT_SIZEP(dst) = VARHDRSZ
@@ -338,12 +338,10 @@ network_host(PG_FUNCTION_ARGS)
 	char	   *ptr,
 				tmp[sizeof("255.255.255.255/32")];
 
-	if (ip_type(ip))
-		elog(ERROR, "CIDR type has no host part");
-
 	if (ip_family(ip) == AF_INET)
 	{
 		/* It's an IP V4 address: */
+		/* force display of 32 bits, regardless of masklen... */
 		if (inet_net_ntop(AF_INET, &ip_v4addr(ip), 32, tmp, sizeof(tmp)) == NULL)
 			elog(ERROR, "unable to print host (%s)", strerror(errno));
 	}
@@ -351,9 +349,43 @@ network_host(PG_FUNCTION_ARGS)
 		/* Go for an IPV6 address here, before faulting out: */
 		elog(ERROR, "unknown address family (%d)", ip_family(ip));
 
-	/* Suppress /n if present */
+	/* Suppress /n if present (shouldn't happen now) */
 	if ((ptr = strchr(tmp, '/')) != NULL)
 		*ptr = '\0';
+
+	/* Return string as a text datum */
+	len = strlen(tmp);
+	ret = (text *) palloc(len + VARHDRSZ);
+	VARATT_SIZEP(ret) = len + VARHDRSZ;
+	memcpy(VARDATA(ret), tmp, len);
+	PG_RETURN_TEXT_P(ret);
+}
+
+Datum
+network_show(PG_FUNCTION_ARGS)
+{
+	inet	   *ip = PG_GETARG_INET_P(0);
+	text	   *ret;
+	int			len;
+	char		tmp[sizeof("255.255.255.255/32")];
+
+	if (ip_family(ip) == AF_INET)
+	{
+		/* It's an IP V4 address: */
+		/* force display of 32 bits, regardless of masklen... */
+		if (inet_net_ntop(AF_INET, &ip_v4addr(ip), 32, tmp, sizeof(tmp)) == NULL)
+			elog(ERROR, "unable to print host (%s)", strerror(errno));
+	}
+	else
+		/* Go for an IPV6 address here, before faulting out: */
+		elog(ERROR, "unknown address family (%d)", ip_family(ip));
+
+	/* Add /n if not present */
+	if (strchr(tmp, '/') == NULL)
+	{
+		len = strlen(tmp);
+		snprintf(tmp + len, sizeof(tmp) - len, "/%u", ip_bits(ip));
+	}
 
 	/* Return string as a text datum */
 	len = strlen(tmp);
@@ -375,100 +407,100 @@ Datum
 network_broadcast(PG_FUNCTION_ARGS)
 {
 	inet	   *ip = PG_GETARG_INET_P(0);
-	text	   *ret;
-	int			len;
-	char	   *ptr,
-				tmp[sizeof("255.255.255.255/32")];
+	inet	   *dst;
+
+	dst = (inet *) palloc(VARHDRSZ + sizeof(inet_struct));
+	/* make sure any unused bits are zeroed */
+	MemSet(dst, 0, VARHDRSZ + sizeof(inet_struct));
 
 	if (ip_family(ip) == AF_INET)
 	{
 		/* It's an IP V4 address: */
-		int			addr;
 		unsigned long mask = 0xffffffff;
 
-		if (ip_bits(ip) < 32)
-			mask >>= ip_bits(ip);
-		addr = htonl(ntohl(ip_v4addr(ip)) | mask);
+		mask >>= ip_bits(ip);
 
-		if (inet_net_ntop(AF_INET, &addr, 32, tmp, sizeof(tmp)) == NULL)
-			elog(ERROR, "unable to print address (%s)", strerror(errno));
+		ip_v4addr(dst) = htonl(ntohl(ip_v4addr(ip)) | mask);
 	}
 	else
 		/* Go for an IPV6 address here, before faulting out: */
 		elog(ERROR, "unknown address family (%d)", ip_family(ip));
 
-	/* Suppress /n if present */
-	if ((ptr = strchr(tmp, '/')) != NULL)
-		*ptr = '\0';
+	ip_family(dst) = ip_family(ip);
+	ip_bits(dst) = ip_bits(ip);
+	ip_type(dst) = 0;
+	VARATT_SIZEP(dst) = VARHDRSZ
+		+ ((char *) &ip_v4addr(dst) - (char *) VARDATA(dst))
+		+ ip_addrsize(dst);
 
-	/* Return string as a text datum */
-	len = strlen(tmp);
-	ret = (text *) palloc(len + VARHDRSZ);
-	VARATT_SIZEP(ret) = len + VARHDRSZ;
-	memcpy(VARDATA(ret), tmp, len);
-	PG_RETURN_TEXT_P(ret);
+	PG_RETURN_INET_P(dst);
 }
 
 Datum
 network_network(PG_FUNCTION_ARGS)
 {
 	inet	   *ip = PG_GETARG_INET_P(0);
-	text	   *ret;
-	int			len;
-	char		tmp[sizeof("255.255.255.255/32")];
+	inet	   *dst;
+
+	dst = (inet *) palloc(VARHDRSZ + sizeof(inet_struct));
+	/* make sure any unused bits are zeroed */
+	MemSet(dst, 0, VARHDRSZ + sizeof(inet_struct));
 
 	if (ip_family(ip) == AF_INET)
 	{
 		/* It's an IP V4 address: */
-		int			addr = htonl(ntohl(ip_v4addr(ip)) & (0xffffffff << (32 - ip_bits(ip))));
+		unsigned long mask = 0xffffffff;
 
-		if (inet_cidr_ntop(AF_INET, &addr, ip_bits(ip), tmp, sizeof(tmp)) == NULL)
-			elog(ERROR, "unable to print network (%s)", strerror(errno));
+		mask <<= (32 - ip_bits(ip));
+
+		ip_v4addr(dst) = htonl(ntohl(ip_v4addr(ip)) & mask);
 	}
 	else
 		/* Go for an IPV6 address here, before faulting out: */
 		elog(ERROR, "unknown address family (%d)", ip_family(ip));
 
-	/* Return string as a text datum */
-	len = strlen(tmp);
-	ret = (text *) palloc(len + VARHDRSZ);
-	VARATT_SIZEP(ret) = len + VARHDRSZ;
-	memcpy(VARDATA(ret), tmp, len);
-	PG_RETURN_TEXT_P(ret);
+	ip_family(dst) = ip_family(ip);
+	ip_bits(dst) = ip_bits(ip);
+	ip_type(dst) = 1;
+	VARATT_SIZEP(dst) = VARHDRSZ
+		+ ((char *) &ip_v4addr(dst) - (char *) VARDATA(dst))
+		+ ip_addrsize(dst);
+
+	PG_RETURN_INET_P(dst);
 }
 
 Datum
 network_netmask(PG_FUNCTION_ARGS)
 {
 	inet	   *ip = PG_GETARG_INET_P(0);
-	text	   *ret;
-	int			len;
-	char	   *ptr,
-				tmp[sizeof("255.255.255.255/32")];
+	inet	   *dst;
+
+	dst = (inet *) palloc(VARHDRSZ + sizeof(inet_struct));
+	/* make sure any unused bits are zeroed */
+	MemSet(dst, 0, VARHDRSZ + sizeof(inet_struct));
 
 	if (ip_family(ip) == AF_INET)
 	{
 		/* It's an IP V4 address: */
-		int			addr = htonl(ip_bits(ip) ?
-				   (-1 << (32 - ip_bits(ip))) & 0xffffffff : 0x00000000);
+		unsigned long mask = 0xffffffff;
 
-		if (inet_net_ntop(AF_INET, &addr, 32, tmp, sizeof(tmp)) == NULL)
-			elog(ERROR, "unable to print netmask (%s)", strerror(errno));
+		mask <<= (32 - ip_bits(ip));
+
+		ip_v4addr(dst) = htonl(mask);
+
+		ip_bits(dst) = 32;
 	}
 	else
 		/* Go for an IPV6 address here, before faulting out: */
 		elog(ERROR, "unknown address family (%d)", ip_family(ip));
 
-	/* Suppress /n if present */
-	if ((ptr = strchr(tmp, '/')) != NULL)
-		*ptr = '\0';
+	ip_family(dst) = ip_family(ip);
+	ip_type(dst) = 0;
+	VARATT_SIZEP(dst) = VARHDRSZ
+		+ ((char *) &ip_v4addr(dst) - (char *) VARDATA(dst))
+		+ ip_addrsize(dst);
 
-	/* Return string as a text datum */
-	len = strlen(tmp);
-	ret = (text *) palloc(len + VARHDRSZ);
-	VARATT_SIZEP(ret) = len + VARHDRSZ;
-	memcpy(VARDATA(ret), tmp, len);
-	PG_RETURN_TEXT_P(ret);
+	PG_RETURN_INET_P(dst);
 }
 
 /*

@@ -16,7 +16,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$Id: inet_net_ntop.c,v 1.8 1999/07/17 20:17:56 momjian Exp $";
+static const char rcsid[] = "$Id: inet_net_ntop.c,v 1.9 2000/11/10 20:13:25 tgl Exp $";
 
 #endif
 
@@ -56,7 +56,7 @@ inet_cidr_ntop(int af, const void *src, int bits, char *dst, size_t size)
 {
 	switch (af)
 	{
-			case AF_INET:
+		case AF_INET:
 			return (inet_cidr_ntop_ipv4(src, bits, dst, size));
 		default:
 			errno = EAFNOSUPPORT;
@@ -102,15 +102,12 @@ inet_cidr_ntop_ipv4(const u_char *src, int bits, char *dst, size_t size)
 	/* Format whole octets. */
 	for (b = bits / 8; b > 0; b--)
 	{
-		if (size < sizeof "255.")
+		if (size < sizeof ".255")
 			goto emsgsize;
 		t = dst;
-		dst += SPRINTF((dst, "%u", *src++));
-		if (b > 1)
-		{
+		if (dst != odst)
 			*dst++ = '.';
-			*dst = '\0';
-		}
+		dst += SPRINTF((dst, "%u", *src++));
 		size -= (size_t) (dst - t);
 	}
 
@@ -132,6 +129,7 @@ inet_cidr_ntop_ipv4(const u_char *src, int bits, char *dst, size_t size)
 	if (size < sizeof "/32")
 		goto emsgsize;
 	dst += SPRINTF((dst, "/%u", bits));
+
 	return (odst);
 
 emsgsize:
@@ -159,7 +157,7 @@ inet_net_ntop(int af, const void *src, int bits, char *dst, size_t size)
 {
 	switch (af)
 	{
-			case AF_INET:
+		case AF_INET:
 			return (inet_net_ntop_ipv4(src, bits, dst, size));
 		default:
 			errno = EAFNOSUPPORT;
@@ -185,48 +183,34 @@ inet_net_ntop_ipv4(const u_char *src, int bits, char *dst, size_t size)
 {
 	char	   *odst = dst;
 	char	   *t;
-	size_t		len = 4;
-	int			b,
-				tb;
+	int			len = 4;
+	int			b;
 
 	if (bits < 0 || bits > 32)
 	{
 		errno = EINVAL;
 		return (NULL);
 	}
-	if (bits == 0)
-	{
-		if (size < sizeof "0")
-			goto emsgsize;
-		*dst++ = '0';
-		size--;
-		*dst = '\0';
-	}
 
-	/* Format whole octets plus nonzero trailing octets. */
-	tb = (bits == 32) ? 31 : bits;
-	for (b = 0; bits != 0 && (b <= (tb / 8) || (b < len && *src != 0)); b++)
+	/* Always format all four octets, regardless of mask length. */
+	for (b = len; b > 0; b--)
 	{
-		if (size < sizeof "255.")
+		if (size < sizeof ".255")
 			goto emsgsize;
 		t = dst;
-		dst += SPRINTF((dst, "%u", *src++));
-		if (b + 1 <= (tb / 8) || (b + 1 < len && *src != 0))
-		{
+		if (dst != odst)
 			*dst++ = '.';
-			*dst = '\0';
-		}
+		dst += SPRINTF((dst, "%u", *src++));
 		size -= (size_t) (dst - t);
 	}
 
 	/* don't print masklen if 32 bits */
-	if (bits == 32)
-		return odst;
-
-	/* Format CIDR /width. */
-	if (size < sizeof "/32")
-		goto emsgsize;
-	dst += SPRINTF((dst, "/%u", bits));
+	if (bits != 32)
+	{
+		if (size < sizeof "/32")
+			goto emsgsize;
+		dst += SPRINTF((dst, "/%u", bits));
+	}
 
 	return (odst);
 
