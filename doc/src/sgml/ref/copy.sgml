@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.58 2004/11/15 06:32:15 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.59 2004/11/17 02:50:06 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -433,13 +433,13 @@ COPY <replaceable class="parameter">tablename</replaceable> [ ( <replaceable cla
    </para>
 
    <para>
-    It is strongly recommended that applications generating COPY data convert
+    It is strongly recommended that applications generating <command>COPY</command> data convert
     data newlines and carriage returns to the <literal>\n</> and
     <literal>\r</> sequences respectively.  At present it is
     possible to represent a data carriage return by a backslash and carriage
     return, and to represent a data newline by a backslash and newline.  
     However, these representations might not be accepted in future releases.
-    They are also highly vulnerable to corruption if the COPY file is
+    They are also highly vulnerable to corruption if the <command>COPY</command> file is
     transferred across different machines (for example, from Unix to Windows
     or vice versa).
    </para>
@@ -484,15 +484,16 @@ COPY <replaceable class="parameter">tablename</replaceable> [ ( <replaceable cla
 
    <para> 
     In general, the <literal>CSV</> format has no way to distinguish a
-    <literal>NULL</> from an empty string.
-    <productname>PostgreSQL</productname>'s COPY handles this by
-    quoting. A <literal>NULL</> is output as the <literal>NULL</> string 
-    and is not quoted, while a data value matching the <literal>NULL</> string 
-    is quoted. Therefore, using the default settings, a <literal>NULL</> is
-    written as an unquoted empty string, while an empty string is
-    written with double quotes (<literal>""</>). Reading values follows 
-    similar rules. You can use <literal>FORCE NOT NULL</> to prevent <literal>NULL</>
-    input comparisons for specific columns.
+    <literal>NULL</> value from an empty string.
+    <productname>PostgreSQL</>'s <command>COPY</> handles this by
+    quoting. A <literal>NULL</> is output as the <literal>NULL</>
+    string and is not quoted, while a data value matching the
+    <literal>NULL</> string is quoted. Therefore, using the default
+    settings, a <literal>NULL</> is written as an unquoted empty
+    string, while an empty string is written with double quotes
+    (<literal>""</>). Reading values follows similar rules. You can
+    use <literal>FORCE NOT NULL</> to prevent <literal>NULL</> input
+    comparisons for specific columns.
    </para>
 
    <note>
@@ -500,7 +501,12 @@ COPY <replaceable class="parameter">tablename</replaceable> [ ( <replaceable cla
      CSV mode will both recognize and produce CSV files with quoted
      values containing embedded carriage returns and line feeds. Thus
      the files are not strictly one line per table row like text-mode
-     files.
+     files. However, <productname>PostgreSQL</productname> will reject
+     <command>COPY</command> input if any fields contain embedded line
+     end character sequences that do not match the line ending
+     convention used in the CSV file itself. It is generally safer to
+     import data containing embedded line end characters using the
+     text or binary formats rather than CSV.
     </para>
    </note>
 
