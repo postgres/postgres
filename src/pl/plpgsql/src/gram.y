@@ -4,7 +4,7 @@
  *						  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.60 2004/08/16 17:52:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.61 2004/08/20 22:00:14 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1568,7 +1568,7 @@ proc_exceptions	: proc_exceptions proc_exception
 								new = malloc(sizeof(PLpgSQL_exceptions));
 								memset(new, 0, sizeof(PLpgSQL_exceptions));
 
-								new->exceptions_alloc = 64;
+								new->exceptions_alloc = 16;
 								new->exceptions_used  = 1;
 								new->exceptions = malloc(sizeof(PLpgSQL_exception *) * new->exceptions_alloc);
 								new->exceptions[0] = $1;
@@ -1594,32 +1594,17 @@ proc_exception	: K_WHEN lno proc_conditions K_THEN proc_sect
 
 proc_conditions	: proc_conditions K_OR opt_lblname
 						{
-								PLpgSQL_condition	*new;
-								PLpgSQL_condition	*old;
+							PLpgSQL_condition	*old;
 
-								new = malloc(sizeof(PLpgSQL_condition));
-								memset(new, 0, sizeof(PLpgSQL_condition));
+							for (old = $1; old->next != NULL; old = old->next)
+								/* skip */ ;
+							old->next = plpgsql_parse_err_condition($3);
 
-								new->condname = $3;
-								new->next = NULL;
-
-								for (old = $1; old->next != NULL; old = old->next)
-									/* skip */ ;
-								old->next = new;
-
-								$$ = $1;
+							$$ = $1;
 						}
 				| opt_lblname
 						{
-								PLpgSQL_condition	*new;
-
-								new = malloc(sizeof(PLpgSQL_condition));
-								memset(new, 0, sizeof(PLpgSQL_condition));
-
-								new->condname = $1;
-								new->next = NULL;
-
-								$$ = new;
+							$$ = plpgsql_parse_err_condition($1);
 						}
 				;
 

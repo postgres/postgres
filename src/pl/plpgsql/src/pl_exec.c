@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.115 2004/08/13 18:47:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.116 2004/08/20 22:00:14 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -56,15 +56,6 @@
 
 static const char *const raise_skip_msg = "RAISE";
 
-typedef struct {
-	const char *label;
-	int			sqlerrstate;
-} ExceptionLabelMap;
-
-static const ExceptionLabelMap exception_label_map[] = {
-#include "plerrcodes.h"
-	{ NULL, 0 }
-};
 
 /*
  * All plpgsql function executions within a single transaction share
@@ -799,40 +790,24 @@ exception_matches_conditions(ErrorData *edata, PLpgSQL_condition *cond)
 {
 	for (; cond != NULL; cond = cond->next)
 	{
-		const char *condname = cond->condname;
-		int			i;
+		int			sqlerrstate = cond->sqlerrstate;
 
 		/*
 		 * OTHERS matches everything *except* query-canceled;
 		 * if you're foolish enough, you can match that explicitly.
 		 */
-		if (strcmp(condname, "others") == 0)
+		if (sqlerrstate == 0)
 		{
-			if (edata->sqlerrcode == ERRCODE_QUERY_CANCELED)
-				return false;
-			else
+			if (edata->sqlerrcode != ERRCODE_QUERY_CANCELED)
 				return true;
 		}
-		for (i = 0; exception_label_map[i].label != NULL; i++)
-		{
-			if (strcmp(condname, exception_label_map[i].label) == 0)
-			{
-				int labelerrcode = exception_label_map[i].sqlerrstate;
-
-				/* Exact match? */
-				if (edata->sqlerrcode == labelerrcode)
-					return true;
-				/* Category match? */
-				if (ERRCODE_IS_CATEGORY(labelerrcode) &&
-					ERRCODE_TO_CATEGORY(edata->sqlerrcode) == labelerrcode)
-					return true;
-				/*
-				 * You would think we should "break" here, but there are some
-				 * duplicate names in the table, so keep looking.
-				 */
-			}
-		}
-		/* Should we raise an error if condname is unrecognized?? */
+		/* Exact match? */
+		else if (edata->sqlerrcode == sqlerrstate)
+			return true;
+		/* Category match? */
+		else if (ERRCODE_IS_CATEGORY(sqlerrstate) &&
+				 ERRCODE_TO_CATEGORY(edata->sqlerrcode) == sqlerrstate)
+			return true;
 	}
 	return false;
 }
