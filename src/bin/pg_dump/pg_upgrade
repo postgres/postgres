@@ -1,4 +1,8 @@
-:
+#!/bin/sh
+#
+# pg_upgrade: update a database without needing a full dump/reload cycle
+# CAUTION: read the manual page before trying to use this!
+
 trap "rm -f /tmp/$$" 0 1 2 3 15
 
 if [ "$#" -eq 0 ]
@@ -67,6 +71,11 @@ cat $INPUT | awk '	{
 
 psql "template1" <"/tmp/$$"
 
+if [ $? -ne 0 ]
+then	echo "psql failed to execute $INPUT script." 1>&2
+	exit 1
+fi
+
 for DIR in data/base/*
 do
 	BASEDIR="`basename $DIR`"
@@ -86,4 +95,4 @@ done
 mv $OLDDIR/pg_log data
 mv $OLDDIR/pg_variable data
 
-echo "You may removed the $OLDDIR directory with 'rm -r $OLDDIR'."
+echo "You may remove the $OLDDIR directory with 'rm -r $OLDDIR'."
