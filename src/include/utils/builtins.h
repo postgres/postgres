@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.203 2002/10/19 02:08:18 momjian Exp $
+ * $Id: builtins.h,v 1.204 2002/11/02 18:41:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -696,6 +696,6 @@ extern Datum show_all_settings(PG_FUNCTION_ARGS);
 extern Datum pg_lock_status(PG_FUNCTION_ARGS);
 
 /* catalog/pg_conversion.c */
-extern Datum pg_convert3(PG_FUNCTION_ARGS);
+extern Datum pg_convert_using(PG_FUNCTION_ARGS);
 
 #endif   /* BUILTINS_H */

@@ -3,9 +3,11 @@
  * client encoding and server internal encoding.
  * (currently mule internal code (mic) is used)
  * Tatsuo Ishii
- * $Id: mbutils.c,v 1.35 2002/09/04 20:31:31 momjian Exp $
+ *
+ * $Header: /cvsroot/pgsql/src/backend/utils/mb/mbutils.c,v 1.36 2002/11/02 18:41:22 tgl Exp $
  */
 #include "postgres.h"
+
 #include "access/xact.h"
 #include "miscadmin.h"
 #include "mb/pg_wchar.h"
@@ -23,19 +25,18 @@ static pg_enc2name *ClientEncoding = &pg_enc2name_tbl[PG_SQL_ASCII];
 static pg_enc2name *DatabaseEncoding = &pg_enc2name_tbl[PG_SQL_ASCII];
 
 /*
- * Caches for conversion function info. Note that Fcinfo.flinfo is
- * allocated in TopMemoryContext so that it survives outside
+ * Caches for conversion function info. Note that these values are
+ * allocated in TopMemoryContext so that they survive across
  * transactions. See SetClientEncoding() for more details.
  */
-static FmgrInfo *ToServerConvPorc = NULL;
-static FmgrInfo *ToClientConvPorc = NULL;
+static FmgrInfo *ToServerConvProc = NULL;
+static FmgrInfo *ToClientConvProc = NULL;
 
 /* Internal functions */
-static unsigned char *
-			perform_default_encoding_conversion(unsigned char *src, int len, bool is_client_to_server);
+static unsigned char *perform_default_encoding_conversion(unsigned char *src,
+									int len, bool is_client_to_server);
+static int cliplen(const unsigned char *str, int len, int limit);
 
-static int
-			cliplen(const unsigned char *str, int len, int limit);
 
 /*
  * Set the client encoding and save fmgrinfo for the converion
@@ -95,21 +96,21 @@ SetClientEncoding(int encoding, bool doit)
 	{
 		ClientEncoding = &pg_enc2name_tbl[encoding];
 
-		if (ToServerConvPorc != NULL)
+		if (ToServerConvProc != NULL)
 		{
-			if (ToServerConvPorc->fn_extra)
-				pfree(ToServerConvPorc->fn_extra);
-			pfree(ToServerConvPorc);
+			if (ToServerConvProc->fn_extra)
+				pfree(ToServerConvProc->fn_extra);
+			pfree(ToServerConvProc);
 		}
-		ToServerConvPorc = to_server;
+		ToServerConvProc = to_server;
 
-		if (ToClientConvPorc != NULL)
+		if (ToClientConvProc != NULL)
 		{
-			if (ToClientConvPorc->fn_extra)
-				pfree(ToClientConvPorc->fn_extra);
-			pfree(ToClientConvPorc);
+			if (ToClientConvProc->fn_extra)
+				pfree(ToClientConvProc->fn_extra);
+			pfree(ToClientConvProc);
 		}
-		ToClientConvPorc = to_client;
+		ToClientConvProc = to_client;
 	}
 	return 0;
 }
@@ -323,13 +324,13 @@ perform_default_encoding_conversion(unsigned char *src, int len, bool is_client_
 	{
 		src_encoding = ClientEncoding->encoding;
 		dest_encoding = DatabaseEncoding->encoding;
-		flinfo = ToServerConvPorc;
+		flinfo = ToServerConvProc;
 	}
 	else
 	{
 		src_encoding = DatabaseEncoding->encoding;
 		dest_encoding = ClientEncoding->encoding;
-		flinfo = ToClientConvPorc;
+		flinfo = ToClientConvProc;
 	}
 
 	if (flinfo == NULL)

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.106 2002/10/21 22:06:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.107 2002/11/02 18:41:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -122,14 +122,34 @@ createdb(const CreatedbStmt *stmt)
 				 defel->defname);
 	}
 
-	if (downer)
+	if (downer && downer->arg)
 		dbowner = strVal(downer->arg);
-	if (dpath)
+	if (dpath && dpath->arg)
 		dbpath = strVal(dpath->arg);
-	if (dtemplate)
+	if (dtemplate && dtemplate->arg)
 		dbtemplate = strVal(dtemplate->arg);
-	if (dencoding)
-		encoding = intVal(dencoding->arg);
+	if (dencoding && dencoding->arg)
+	{
+		const char *encoding_name;
+
+		if (IsA(dencoding->arg, Integer))
+		{
+			encoding = intVal(dencoding->arg);
+			encoding_name = pg_encoding_to_char(encoding);
+			if (strcmp(encoding_name, "") == 0 ||
+				pg_valid_server_encoding(encoding_name) < 0)
+				elog(ERROR, "%d is not a valid encoding code", encoding);
+		}
+		else if (IsA(dencoding->arg, String))
+		{
+			encoding_name = strVal(dencoding->arg);
+			if (pg_valid_server_encoding(encoding_name) < 0)
+				elog(ERROR, "%s is not a valid encoding name", encoding_name);
+			encoding = pg_char_to_encoding(encoding_name);
+		}
+		else
+			elog(ERROR, "CREATE DATABASE: bogus encoding parameter");
+	}
 
 	/* obtain sysid of proposed owner */
 	if (dbowner)

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.372 2002/11/01 22:52:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.373 2002/11/02 18:41:21 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -53,7 +53,6 @@
 #include "access/htup.h"
 #include "catalog/index.h"
 #include "catalog/namespace.h"
-#include "catalog/pg_conversion.h"
 #include "catalog/pg_type.h"
 #include "nodes/makefuncs.h"
 #include "nodes/params.h"
@@ -63,7 +62,6 @@
 #include "utils/numeric.h"
 #include "utils/datetime.h"
 #include "utils/date.h"
-#include "mb/pg_wchar.h"
 
 extern List *parsetree;			/* final parse result is delivered here */
 
@@ -217,8 +215,8 @@ static void doNegateFloat(Value *v);
 				group_clause TriggerFuncArgs select_limit
 				opt_select_limit opclass_item_list trans_options
 				TableFuncElementList
-				convert_args prep_type_clause prep_type_list
-				execute_param_clause execute_param_list
+				prep_type_clause prep_type_list
+				execute_param_clause
 
 %type <range>	into_clause OptTempTableName
 
@@ -234,7 +232,7 @@ static void doNegateFloat(Value *v);
 %type <jtype>	join_type
 
 %type <list>	extract_list overlay_list position_list
-%type <list>	substr_list trim_list convert_list
+%type <list>	substr_list trim_list
 %type <ival>	opt_interval
 %type <node>	overlay_placing substr_from substr_for
 
@@ -265,7 +263,7 @@ static void doNegateFloat(Value *v);
 %type <node>	def_arg columnElem where_clause insert_column_item
 				a_expr b_expr c_expr r_expr AexprConst
 				in_expr having_clause func_table
-%type <list>	row row_descriptor row_list in_expr_nodes type_list
+%type <list>	row row_descriptor type_list
 %type <node>	case_expr case_arg when_clause case_default
 %type <list>	when_clause_list
 %type <ival>	sub_type
@@ -325,8 +323,8 @@ static void doNegateFloat(Value *v);
 	AGGREGATE ALL ALTER ANALYSE ANALYZE AND ANY AS ASC
 	ASSERTION ASSIGNMENT AT AUTHORIZATION
 
-	BACKWARD BEFORE BEGIN_TRANS BETWEEN BIGINT BINARY BIT BOTH
-	BOOLEAN BY
+	BACKWARD BEFORE BEGIN_TRANS BETWEEN BIGINT BINARY BIT
+	BOOLEAN BOTH BY
 
 	CACHE CALLED CASCADE CASE CAST CHAIN CHAR_P
 	CHARACTER CHARACTERISTICS CHECK CHECKPOINT CLASS CLOSE
@@ -355,6 +353,7 @@ static void doNegateFloat(Value *v);
 	INTERVAL INTO INVOKER IS ISNULL ISOLATION
 
 	JOIN
+
 	KEY
 
 	LANCOMPILER LANGUAGE LEADING LEFT LEVEL LIKE LIMIT
@@ -371,8 +370,7 @@ static void doNegateFloat(Value *v);
 	ORDER OUT_P OUTER_P OVERLAPS OVERLAY OWNER
 
 	PARTIAL PASSWORD PATH_P PENDANT PLACING POSITION
-	PRECISION PREPARE PRIMARY PRIOR PRIVILEGES PROCEDURE
-	PROCEDURAL
+	PRECISION PREPARE PRIMARY PRIOR PRIVILEGES PROCEDURAL PROCEDURE
 
 	READ REAL RECHECK REFERENCES REINDEX RELATIVE RENAME REPLACE
 	RESET RESTRICT RETURNS REVOKE RIGHT ROLLBACK ROW
@@ -3618,27 +3616,15 @@ createdb_opt_item:
 				}
 			| ENCODING opt_equal Sconst
 				{
-					int		encoding;
-
-					if (pg_valid_server_encoding($3) < 0)
-						elog(ERROR, "%s is not a valid encoding name", $3);
-					encoding = pg_char_to_encoding($3);
-
-					$$ = makeDefElem("encoding", (Node *)makeInteger(encoding));
+					$$ = makeDefElem("encoding", (Node *)makeString($3));
 				}
 			| ENCODING opt_equal Iconst
 				{
-					const char *encoding_name;
-
-					encoding_name = pg_encoding_to_char($3);
-					if (!strcmp(encoding_name,"") ||
-					    pg_valid_server_encoding(encoding_name) < 0)
-						elog(ERROR, "%d is not a valid encoding code", $3);
 					$$ = makeDefElem("encoding", (Node *)makeInteger($3));
 				}
 			| ENCODING opt_equal DEFAULT
 				{
-					$$ = makeDefElem("encoding", (Node *)makeInteger(-1));
+					$$ = makeDefElem("encoding", NULL);
 				}
 			| OWNER opt_equal name
 				{
@@ -3932,13 +3918,9 @@ ExecuteStmt: EXECUTE name execute_param_clause into_clause
 				}
 		;
 
-execute_param_clause: '(' execute_param_list ')'	{ $$ = $2; }
+execute_param_clause: '(' expr_list ')'				{ $$ = $2; }
 					| /* EMPTY */					{ $$ = NIL; }
 					;
-
-execute_param_list: a_expr							{ $$ = makeList1($1); }
-				  | execute_param_list ',' a_expr	{ $$ = lappend($1, $3); }
-				  ;
 
 /*****************************************************************************
  *
@@ -5470,14 +5452,9 @@ row:  ROW '(' row_descriptor ')'					{ $$ = $3; }
 			| ROW '(' a_expr ')'					{ $$ = makeList1($3); }
 			| ROW '(' ')'							{ $$ = NULL; }
 			| '(' row_descriptor ')'				{ $$ = $2; }
-;
-
-row_descriptor:
-			row_list ',' a_expr						{ $$ = lappend($1, $3); }
 		;
 
-row_list:	a_expr		  							{ $$ = makeList1($1); }
-			| row_list ',' a_expr					{ $$ = lappend($1, $3); }
+row_descriptor:  expr_list ',' a_expr				{ $$ = lappend($1, $3); }
 		;
 
 sub_type:	ANY										{ $$ = ANY_SUBLINK; }
@@ -6366,7 +6343,21 @@ c_expr:		columnref								{ $$ = (Node *) $1; }
 					n->agg_distinct = FALSE;
 					$$ = (Node *)n;
 				}
-			| CONVERT '(' convert_list ')'
+			| CONVERT '(' a_expr USING any_name ')'
+				{
+					FuncCall *n = makeNode(FuncCall);
+					A_Const *c = makeNode(A_Const);
+
+					c->val.type = T_String;
+					c->val.val.str = NameListToQuotedString($5);
+
+					n->funcname = SystemFuncName("convert_using");
+					n->args = makeList2($3, c);
+					n->agg_star = FALSE;
+					n->agg_distinct = FALSE;
+					$$ = (Node *)n;
+				}
+			| CONVERT '(' expr_list ')'
 				{
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = SystemFuncName("convert");
@@ -6422,7 +6413,6 @@ opt_indirection:
 
 expr_list:	a_expr									{ $$ = makeList1($1); }
 			| expr_list ',' a_expr					{ $$ = lappend($1, $3); }
-			| expr_list USING a_expr				{ $$ = lappend($1, $3); }
 		;
 
 extract_list:
@@ -6540,60 +6530,13 @@ trim_list:	a_expr FROM expr_list					{ $$ = lappend($3, $1); }
 			| expr_list								{ $$ = $1; }
 		;
 
-/* CONVERT() arguments. We accept followings:
- * SQL99 syntax
- * o CONVERT(TEXT string USING conversion_name)
- *
- * Function calls
- * o CONVERT(TEXT string, NAME src_encoding_name, NAME dest_encoding_name)
- * o CONVERT(TEXT string, NAME encoding_name)
- */
-convert_list:
-			a_expr USING any_name
-				{
-					Oid oid = FindConversionByName($3);
-					Const *convoid = makeNode(Const);
-
-					if (!OidIsValid(oid))
-					{
-					    elog(ERROR, "Conversion \"%s\" does not exist",
-						 NameListToString($3));
-					}
-
-					convoid->consttype = OIDOID;
-					convoid->constlen = sizeof(Oid);
-					convoid->constvalue = oid;
-					convoid->constisnull = FALSE;
-					convoid->constbyval = TRUE;
-					convoid->constisset = FALSE;
-					convoid->constiscast = FALSE;
-					$$ = makeList2($1, convoid);
-				}
-			| convert_args
-				{
-				  $$ = $1;
-				}
-			| /*EMPTY*/
-				{ $$ = NIL; }
-		;
-
-convert_args:	a_expr								{ $$ = makeList1($1); }
-			| convert_args ',' a_expr					{ $$ = lappend($1, $3); }
-  		;
-
-
 in_expr:	select_with_parens
 				{
 					SubLink *n = makeNode(SubLink);
 					n->subselect = $1;
 					$$ = (Node *)n;
 				}
-			| '(' in_expr_nodes ')'					{ $$ = (Node *)$2; }
-		;
-
-in_expr_nodes:
-			a_expr									{ $$ = makeList1($1); }
-			| in_expr_nodes ',' a_expr				{ $$ = lappend($1, $3); }
+			| '(' expr_list ')'						{ $$ = (Node *)$2; }
 		;
 
 /* Case clause
@@ -7215,6 +7158,7 @@ col_name_keyword:
 			| CHAR_P
 			| CHARACTER
 			| COALESCE
+			| CONVERT
 			| DEC
 			| DECIMAL
 			| EXISTS

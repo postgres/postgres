@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: namespace.h,v 1.21 2002/09/23 20:43:41 tgl Exp $
+ * $Id: namespace.h,v 1.22 2002/11/02 18:41:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,6 +74,7 @@ extern Oid	LookupExplicitNamespace(const char *nspname);
 extern Oid	QualifiedNameGetCreationNamespace(List *names, char **objname_p);
 extern RangeVar *makeRangeVarFromNameList(List *names);
 extern char *NameListToString(List *names);
+extern char *NameListToQuotedString(List *names);
 
 extern bool isTempNamespace(Oid namespaceId);
 extern bool isOtherTempNamespace(Oid namespaceId);

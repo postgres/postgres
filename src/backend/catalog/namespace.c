@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.37 2002/11/02 02:33:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.38 2002/11/02 18:41:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1186,7 +1186,9 @@ makeRangeVarFromNameList(List *names)
 /*
  * NameListToString
  *		Utility routine to convert a qualified-name list into a string.
- *		Used primarily to form error messages.
+ *
+ * This is used primarily to form error messages, and so we do not quote
+ * the list elements, for the sake of legibility.
  */
 char *
 NameListToString(List *names)
@@ -1201,6 +1203,31 @@ NameListToString(List *names)
 		if (l != names)
 			appendStringInfoChar(&string, '.');
 		appendStringInfo(&string, "%s", strVal(lfirst(l)));
+	}
+
+	return string.data;
+}
+
+/*
+ * NameListToQuotedString
+ *		Utility routine to convert a qualified-name list into a string.
+ *
+ * Same as above except that names will be double-quoted where necessary,
+ * so the string could be re-parsed (eg, by textToQualifiedNameList).
+ */
+char *
+NameListToQuotedString(List *names)
+{
+	StringInfoData string;
+	List	   *l;
+
+	initStringInfo(&string);
+
+	foreach(l, names)
+	{
+		if (l != names)
+			appendStringInfoChar(&string, '.');
+		appendStringInfo(&string, "%s", quote_identifier(strVal(lfirst(l))));
 	}
 
 	return string.data;

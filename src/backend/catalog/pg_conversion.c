@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_conversion.c,v 1.7 2002/11/02 02:33:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_conversion.c,v 1.8 2002/11/02 18:41:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -273,38 +273,44 @@ FindConversion(const char *conname, Oid connamespace)
  * CONVERT <left paren> <character value expression>
  * USING <form-of-use conversion name> <right paren>
  *
- * TEXT convert3(TEXT string, OID conversion_oid);
+ * TEXT convert_using(TEXT string, TEXT conversion_name)
  */
 Datum
-pg_convert3(PG_FUNCTION_ARGS)
+pg_convert_using(PG_FUNCTION_ARGS)
 {
 	text	   *string = PG_GETARG_TEXT_P(0);
-	Oid			convoid = PG_GETARG_OID(1);
+	text	   *conv_name = PG_GETARG_TEXT_P(1);
+	text	   *retval;
+	List	   *parsed_name;
+	Oid			convoid;
 	HeapTuple	tuple;
 	Form_pg_conversion body;
-	text	   *retval;
 	unsigned char *str;
 	unsigned char *result;
 	int			len;
 
-	if (!OidIsValid(convoid))
-		elog(ERROR, "Conversion does not exist");
-
-	/* make sure that source string is null terminated */
+	/* Convert input string to null-terminated form */
 	len = VARSIZE(string) - VARHDRSZ;
 	str = palloc(len + 1);
 	memcpy(str, VARDATA(string), len);
 	*(str + len) = '\0';
+
+	/* Look up the conversion name */
+	parsed_name = textToQualifiedNameList(conv_name, "convert_using");
+	convoid = FindConversionByName(parsed_name);
+	if (!OidIsValid(convoid))
+		elog(ERROR, "conversion %s not found", NameListToString(parsed_name));
 
 	tuple = SearchSysCache(CONOID,
 						   ObjectIdGetDatum(convoid),
 						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "Conversion %u search from syscache failed", convoid);
+	body = (Form_pg_conversion) GETSTRUCT(tuple);
 
+	/* Temporary result area should be more than big enough */
 	result = palloc(len * 4 + 1);
 
-	body = (Form_pg_conversion) GETSTRUCT(tuple);
 	OidFunctionCall5(body->conproc,
 					 Int32GetDatum(body->conforencoding),
 					 Int32GetDatum(body->contoencoding),
@@ -315,7 +321,7 @@ pg_convert3(PG_FUNCTION_ARGS)
 	ReleaseSysCache(tuple);
 
 	/*
-	 * build text data type structre. we cannot use textin() here, since
+	 * build text result structure. we cannot use textin() here, since
 	 * textin assumes that input string encoding is same as database
 	 * encoding.
 	 */
@@ -326,9 +332,6 @@ pg_convert3(PG_FUNCTION_ARGS)
 
 	pfree(result);
 	pfree(str);
-
-	/* free memory if allocated by the toaster */
-	PG_FREE_IF_COPY(string, 0);
 
 	PG_RETURN_TEXT_P(retval);
 }
