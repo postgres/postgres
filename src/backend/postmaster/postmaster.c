@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.41 1997/02/18 17:13:58 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.42 1997/02/19 01:31:19 momjian Exp $
  *
  * NOTES
  *
@@ -244,7 +244,7 @@ PostmasterMain(int argc, char *argv[])
     DataDir = getenv("PGDATA");  /* default value */
     
     opterr = 0;
-    while ((opt = getopt(argc, argv, "a:B:b:D:demM:no:p:Ss")) != EOF) {
+    while ((opt = getopt(argc, argv, "a:B:b:D:dmM:no:p:Ss")) != EOF) {
         switch (opt) {
         case 'a': 
             /* Set the authentication system. */
