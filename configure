@@ -3591,6 +3591,10 @@ rm -f conftest*
 #
 # Pthreads
 #
+# For each platform, we need to know about any special compile and link
+# libraries, and whether the normal C function names are thread-safe.
+#
+NEED_REENTRANT_FUNC_NAMES=no
 if test "$with_threads" = yes; then
 echo "$as_me:$LINENO: checking for ANSI C header files" >&5
 echo $ECHO_N "checking for ANSI C header files... $ECHO_C" >&6
@@ -3902,13 +3906,19 @@ fi
 case $host_os in
 		netbsd*|bsdi*)
 			# these require no special flags or libraries
+			NEED_REENTRANT_FUNC_NAMES=no
 			;;
-		freebsd2*|freebsd3*|freebsd4*) THREAD_CFLAGS="-pthread" ;;
+		freebsd2*|freebsd3*|freebsd4*)
+			THREAD_CFLAGS="-pthread"
+			NEED_REENTRANT_FUNC_NAMES=yes
+			;;
 		freebsd*)
 			THREAD_LIBS="-lc_r"
+			NEED_REENTRANT_FUNC_NAMES=yes
 			;;
 		linux*) THREAD_CFLAGS="-D_REENTRANT -D_THREAD_SAFE -D_POSIX_PTHREAD_SEMANTICS"
 			THREAD_LIBS="-lpthread"
+			NEED_REENTRANT_FUNC_NAMES=yes
 			;;
 		*)
 			# other operating systems might fail because they have pthread.h but need
@@ -12829,8 +12839,14 @@ fi
 #
 # Check for re-entrant versions of certain functions
 #
-# Include special flags if required
+# Include special flags if threads are enabled _and_ if required for
+# threading on this platform.  Some platforms have *_r functions but
+# their natively named funcs are threadsafe, and should be used instead.
 #
+# One trick here is that if the don't call AC_CHECK_FUNCS, the
+# functions are marked "not found", which is perfect.
+#
+if test "$NEED_REENTRANT_FUNC_NAMES" = yes ; then
 _CFLAGS="$CFLAGS"
 _LIB="$LIBS"
 CFLAGS="$CFLAGS $TREAD_CFLAGS"
@@ -12915,7 +12931,7 @@ done
 
 CFLAGS="$_CFLAGS"
 LIB="$_LIBS"
-
+fi
 
 
 # This test makes sure that run tests work at all.  Sometimes a shared

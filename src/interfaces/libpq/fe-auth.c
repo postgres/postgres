@@ -10,7 +10,7 @@
  * exceed INITIAL_EXPBUFFER_SIZE (currently 256 bytes).
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.79 2003/06/08 17:43:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.80 2003/06/14 17:49:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -391,8 +391,10 @@ pg_krb5_sendauth(char *PQerrormsg, int sock,
 	flags = fcntl(sock, F_GETFL);
 	if (flags < 0 || fcntl(sock, F_SETFL, (long) (flags & ~O_NONBLOCK)))
 	{
+		char sebuf[256];
+
 		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-				 libpq_gettext("could not set socket to blocking mode: %s\n"), strerror(errno));
+				 libpq_gettext("could not set socket to blocking mode: %s\n"), pqStrerror(errno, sebuf, sizeof(sebuf)));
 		krb5_free_principal(pg_krb5_context, server);
 		return STATUS_ERROR;
 	}
@@ -436,9 +438,11 @@ pg_krb5_sendauth(char *PQerrormsg, int sock,
 
 	if (fcntl(sock, F_SETFL, (long) flags))
 	{
+		char sebuf[256];
+
 		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 				 libpq_gettext("could not restore non-blocking mode on socket: %s\n"),
-				 strerror(errno));
+				 pqStrerror(errno, sebuf, sizeof(sebuf)));
 		ret = STATUS_ERROR;
 	}
 
@@ -495,8 +499,11 @@ pg_local_sendauth(char *PQerrormsg, PGconn *conn)
 
 	if (sendmsg(conn->sock, &msg, 0) == -1)
 	{
+		char sebuf[256];
+
 		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-				 "pg_local_sendauth: sendmsg: %s\n", strerror(errno));
+			 "pg_local_sendauth: sendmsg: %s\n",
+			 pqStrerror(errno, sebuf, sizeof(sebuf)));
 		return STATUS_ERROR;
 	}
 	return STATUS_OK;
@@ -739,10 +746,13 @@ fe_getauthname(char *PQerrormsg)
 		if (GetUserName(username, &namesize))
 			name = username;
 #else
-		struct passwd *pw = getpwuid(geteuid());
+		char pwdbuf[BUFSIZ];
+		struct passwd pwdstr;
+		struct passwd *pw = NULL;
 
-		if (pw)
-			name = pw->pw_name;
+		if( pqGetpwuid(geteuid(), &pwdstr,
+			       pwdbuf, sizeof(pwdbuf), &pw) == 0 )
+		  name = pw->pw_name;
 #endif
 	}
 

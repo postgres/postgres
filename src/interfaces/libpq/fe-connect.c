@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.247 2003/06/12 08:15:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.248 2003/06/14 17:49:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -713,9 +713,11 @@ connectMakeNonblocking(PGconn *conn)
 {
 	if (FCNTL_NONBLOCK(conn->sock) < 0)
 	{
+		char sebuf[256];
+
 		printfPQExpBuffer(&conn->errorMessage,
 		libpq_gettext("could not set socket to non-blocking mode: %s\n"),
-						  SOCK_STRERROR(SOCK_ERRNO));
+						  SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
 		return 0;
 	}
 
@@ -738,9 +740,11 @@ connectNoDelay(PGconn *conn)
 				   (char *) &on,
 				   sizeof(on)) < 0)
 	{
+		char sebuf[256];
+
 		printfPQExpBuffer(&conn->errorMessage,
 		libpq_gettext("could not set socket to TCP no delay mode: %s\n"),
-						  SOCK_STRERROR(SOCK_ERRNO));
+						  SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
 		return 0;
 	}
 #endif
@@ -759,6 +763,7 @@ connectFailureMessage(PGconn *conn, int errorno)
 {
 	char	hostname[NI_MAXHOST];
 	char	service[NI_MAXHOST];
+	char	sebuf[256];
 
 	getnameinfo((struct sockaddr *)&conn->raddr.addr, conn->raddr.salen,
 		hostname, sizeof(hostname), service, sizeof(service),
@@ -770,7 +775,7 @@ connectFailureMessage(PGconn *conn, int errorno)
 						"\tIs the server running locally and accepting\n"
 						  "\tconnections on Unix domain socket \"%s\"?\n"
 										),
-			SOCK_STRERROR(errorno), service);
+			SOCK_STRERROR(errorno, sebuf, sizeof(sebuf)), service);
 	else
 		printfPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext(
@@ -778,7 +783,7 @@ connectFailureMessage(PGconn *conn, int errorno)
 					 "\tIs the server running on host %s and accepting\n"
 									 "\tTCP/IP connections on port %s?\n"
 										),
-						  SOCK_STRERROR(errorno),
+						  SOCK_STRERROR(errorno, sebuf, sizeof(sebuf)),
 						  conn->pghostaddr
 						  ? conn->pghostaddr
 						  : (conn->pghost
@@ -1001,6 +1006,7 @@ PostgresPollingStatusType
 PQconnectPoll(PGconn *conn)
 {
 	PGresult   *res;
+	char		sebuf[256];
 
 	if (conn == NULL)
 		return PGRES_POLLING_FAILED;
@@ -1094,7 +1100,7 @@ keep_going:						/* We will come back to here until there
 						}
 						printfPQExpBuffer(&conn->errorMessage,
 							  libpq_gettext("could not create socket: %s\n"),
-										  SOCK_STRERROR(SOCK_ERRNO));
+										  SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
 						break;
 					}
 
@@ -1200,7 +1206,7 @@ retry_connect:
 				{
 					printfPQExpBuffer(&conn->errorMessage,
 									  libpq_gettext("could not get socket error status: %s\n"),
-									  SOCK_STRERROR(SOCK_ERRNO));
+									  SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
 					goto error_return;
 				}
 				else if (optval != 0)
@@ -1237,7 +1243,7 @@ retry_connect:
 				{
 					printfPQExpBuffer(&conn->errorMessage,
 						libpq_gettext("could not get client address from socket: %s\n"),
-									  SOCK_STRERROR(SOCK_ERRNO));
+									  SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
 					goto error_return;
 				}
 
@@ -1282,7 +1288,7 @@ retry_connect:
 					{
 						printfPQExpBuffer(&conn->errorMessage,
 										  libpq_gettext("could not send SSL negotiation packet: %s\n"),
-										  SOCK_STRERROR(SOCK_ERRNO));
+										  SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
 						goto error_return;
 					}
 					/* Ok, wait for response */
@@ -1317,7 +1323,7 @@ retry_connect:
 				{
 					printfPQExpBuffer(&conn->errorMessage,
 					libpq_gettext("could not send startup packet: %s\n"),
-									  SOCK_STRERROR(SOCK_ERRNO));
+									  SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
 					free(startpacket);
 					goto error_return;
 				}
@@ -1357,7 +1363,7 @@ retry_ssl_read:
 
 						printfPQExpBuffer(&conn->errorMessage,
 										  libpq_gettext("could not receive server response to SSL negotiation packet: %s\n"),
-										  SOCK_STRERROR(SOCK_ERRNO));
+										  SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
 						goto error_return;
 					}
 					if (nread == 0)
@@ -2037,6 +2043,7 @@ PQrequestCancel(PGconn *conn)
 {
 	int			save_errno = SOCK_ERRNO;
 	int			tmpsock = -1;
+	char		sebuf[256];
 	struct
 	{
 		uint32		packetlen;
@@ -2115,7 +2122,7 @@ retry4:
 	return TRUE;
 
 cancel_errReturn:
-	strcat(conn->errorMessage.data, SOCK_STRERROR(SOCK_ERRNO));
+	strcat(conn->errorMessage.data, SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
 	strcat(conn->errorMessage.data, "\n");
 	conn->errorMessage.len = strlen(conn->errorMessage.data);
 	if (tmpsock >= 0)
@@ -2262,8 +2269,9 @@ parseServiceInfo(PQconninfoOption *options, PQExpBuffer errorMessage)
 							   *val;
 					int			found_keyword;
 
-					key = strtok(line, "=");
-					if (key == NULL)
+					key = line;
+					val = strchr(line, '=');
+					if( val == NULL )
 					{
 						printfPQExpBuffer(errorMessage,
 										  "ERROR: syntax error in service file '%s', line %d\n",
@@ -2272,6 +2280,7 @@ parseServiceInfo(PQconninfoOption *options, PQExpBuffer errorMessage)
 						fclose(f);
 						return 3;
 					}
+					*val++ = '\0';
 
 					/*
 					 *	If not already set, set the database name to the
@@ -2286,8 +2295,6 @@ parseServiceInfo(PQconninfoOption *options, PQExpBuffer errorMessage)
 							break;
 						}
 					}
-
-					val = line + strlen(line) + 1;
 
 					/*
 					 * Set the parameter --- but don't override any

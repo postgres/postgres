@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $Header: /cvsroot/pgsql/configure.in,v 1.262 2003/06/14 14:35:42 momjian Exp $
+dnl $Header: /cvsroot/pgsql/configure.in,v 1.263 2003/06/14 17:49:53 momjian Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -554,18 +554,28 @@ AC_SUBST(ELF_SYS)
 #
 # Pthreads
 #
+# For each platform, we need to know about any special compile and link
+# libraries, and whether the normal C function names are thread-safe.
+#
+NEED_REENTRANT_FUNC_NAMES=no
 if test "$with_threads" = yes; then
 AC_CHECK_HEADER(pthread.h, [], [AC_MSG_ERROR([pthread.h not found, required for --with-threads])])
 case $host_os in
-		netbsd*|bsdi*) 
+		netbsd*|bsdi*)
 			# these require no special flags or libraries
+			NEED_REENTRANT_FUNC_NAMES=no
 			;;
-		freebsd2*|freebsd3*|freebsd4*) THREAD_CFLAGS="-pthread" ;;
+		freebsd2*|freebsd3*|freebsd4*)
+			THREAD_CFLAGS="-pthread"
+			NEED_REENTRANT_FUNC_NAMES=yes
+			;;
 		freebsd*)
 			THREAD_LIBS="-lc_r"
+			NEED_REENTRANT_FUNC_NAMES=yes
 			;;
 		linux*) THREAD_CFLAGS="-D_REENTRANT -D_THREAD_SAFE -D_POSIX_PTHREAD_SEMANTICS"
 			THREAD_LIBS="-lpthread"
+			NEED_REENTRANT_FUNC_NAMES=yes
 			;;
 		*)
 			# other operating systems might fail because they have pthread.h but need
@@ -991,8 +1001,14 @@ AC_FUNC_FSEEKO
 #
 # Check for re-entrant versions of certain functions
 #
-# Include special flags if required
+# Include special flags if threads are enabled _and_ if required for 
+# threading on this platform.  Some platforms have *_r functions but
+# their natively named funcs are threadsafe, and should be used instead.
 #
+# One trick here is that if the don't call AC_CHECK_FUNCS, the
+# functions are marked "not found", which is perfect.
+#
+if test "$NEED_REENTRANT_FUNC_NAMES" = yes ; then
 _CFLAGS="$CFLAGS"
 _LIB="$LIBS"
 CFLAGS="$CFLAGS $TREAD_CFLAGS"
@@ -1000,7 +1016,7 @@ LIBS="$LIBS $THREAD_LIBS"
 AC_CHECK_FUNCS([strerror_r getpwuid_r gethostbyname_r])
 CFLAGS="$_CFLAGS"
 LIB="$_LIBS"
-
+fi
 
 
 # This test makes sure that run tests work at all.  Sometimes a shared

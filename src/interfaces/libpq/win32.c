@@ -271,13 +271,12 @@ struct MessageDLL
  */
 
 const char *
-winsock_strerror(int err)
+winsock_strerror(int err, char *strerrbuf, size_t buflen)
 {
-	static char buf[512];		/* Not threadsafe */
 	unsigned long flags;
 	int			offs,
 				i;
-	int			success = LookupWSErrorMessage(err, buf);
+	int			success = LookupWSErrorMessage(err, strerrbuf);
 
 	for (i = 0; !success && i < DLLS_SIZE; i++)
 	{
@@ -302,20 +301,20 @@ winsock_strerror(int err)
 									 flags,
 									 dlls[i].handle, err,
 							   MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-									 buf, sizeof(buf) - 64,
+									 strerrbuf, buflen - 64,
 									 0
 			);
 	}
 
 	if (!success)
-		sprintf(buf, "Unknown socket error (0x%08X/%lu)", err, err);
+		sprintf(strerrbuf, "Unknown socket error (0x%08X/%lu)", err, err);
 	else
 	{
-		buf[sizeof(buf) - 1] = '\0';
-		offs = strlen(buf);
-		if (offs > sizeof(buf) - 64)
-			offs = sizeof(buf) - 64;
-		sprintf(buf + offs, " (0x%08X/%lu)", err, err);
+		strerrbuf[buflen - 1] = '\0';
+		offs = strlen(strerrbuf);
+		if (offs > buflen - 64)
+			offs = buflen - 64;
+		sprintf(strerrbuf + offs, " (0x%08X/%lu)", err, err);
 	}
-	return buf;
+	return strerrbuf;
 }

@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-int.h,v 1.73 2003/06/12 07:36:51 momjian Exp $
+ * $Id: libpq-int.h,v 1.74 2003/06/14 17:49:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,6 +25,7 @@
 #ifndef WIN32
 #include <sys/time.h>
 #endif
+
 
 #if defined(WIN32) && (!defined(ssize_t))
 typedef int ssize_t;			/* ssize_t doesn't exist in VC (atleast
@@ -448,7 +449,7 @@ __attribute__((format_arg(1)));
 #define SOCK_STRERROR winsock_strerror
 #else
 #define SOCK_ERRNO errno
-#define SOCK_STRERROR strerror
+#define SOCK_STRERROR pqStrerror
 #endif
 
 #endif   /* LIBPQ_INT_H */

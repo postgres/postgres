@@ -37,7 +37,6 @@
 /*
  * support for handling Windows Socket errors
  */
-extern const char *winsock_strerror(int eno);
-
+extern const char *winsock_strerror(int err, char *strerrbuf, size_t buflen);
 
 #endif

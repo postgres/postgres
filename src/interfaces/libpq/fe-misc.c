@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.95 2003/06/12 08:15:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.96 2003/06/14 17:49:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -536,6 +536,7 @@ pqReadData(PGconn *conn)
 {
 	int			someread = 0;
 	int			nread;
+	char sebuf[256];
 
 	if (conn->sock < 0)
 	{
@@ -606,7 +607,7 @@ retry3:
 #endif
 		printfPQExpBuffer(&conn->errorMessage,
 			   libpq_gettext("could not receive data from server: %s\n"),
-						  SOCK_STRERROR(SOCK_ERRNO));
+						  SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
 		return -1;
 	}
 	if (nread > 0)
@@ -686,7 +687,7 @@ retry4:
 #endif
 		printfPQExpBuffer(&conn->errorMessage,
 			   libpq_gettext("could not receive data from server: %s\n"),
-						  SOCK_STRERROR(SOCK_ERRNO));
+						  SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
 		return -1;
 	}
 	if (nread > 0)
@@ -740,6 +741,7 @@ pqSendSome(PGconn *conn, int len)
 	while (len > 0)
 	{
 		int			sent;
+		char sebuf[256];
 
 		sent = pqsecure_write(conn, ptr, len);
 
@@ -787,7 +789,7 @@ pqSendSome(PGconn *conn, int len)
 				default:
 					printfPQExpBuffer(&conn->errorMessage,
 					libpq_gettext("could not send data to server: %s\n"),
-									  SOCK_STRERROR(SOCK_ERRNO));
+									  SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
 					/* We don't assume it's a fatal error... */
 					conn->outCount = 0;
 					return -1;
@@ -963,9 +965,11 @@ pqSocketCheck(PGconn *conn, int forRead, int forWrite, time_t end_time)
 
 	if (result < 0)
 	{
+		char sebuf[256];
+
 		printfPQExpBuffer(&conn->errorMessage,
 		                  libpq_gettext("select() failed: %s\n"),
-		                  SOCK_STRERROR(SOCK_ERRNO));
+		                  SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
 	}
 
 	return result;

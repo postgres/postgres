@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-secure.c,v 1.23 2003/06/08 17:43:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-secure.c,v 1.24 2003/06/14 17:49:54 momjian Exp $
  *
  * NOTES
  *	  The client *requires* a valid server certificate.  Since
@@ -298,14 +298,19 @@ pqsecure_read(PGconn *conn, void *ptr, size_t len)
 				 */
 				goto rloop;
 			case SSL_ERROR_SYSCALL:
+			{
+			    char sebuf[256];
+				
 				if (n == -1)
 					printfPQExpBuffer(&conn->errorMessage,
 								libpq_gettext("SSL SYSCALL error: %s\n"),
-								  SOCK_STRERROR(SOCK_ERRNO));
+								  SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
 				else
 					printfPQExpBuffer(&conn->errorMessage,
 								libpq_gettext("SSL SYSCALL error: EOF detected\n"));
+
 				break;
+			}
 			case SSL_ERROR_SSL:
 				printfPQExpBuffer(&conn->errorMessage,
 					  libpq_gettext("SSL error: %s\n"), SSLerrmessage());
@@ -360,14 +365,18 @@ pqsecure_write(PGconn *conn, const void *ptr, size_t len)
 				n = 0;
 				break;
 			case SSL_ERROR_SYSCALL:
+			{
+			    char sebuf[256];
+
 				if (n == -1)
 					printfPQExpBuffer(&conn->errorMessage,
 								libpq_gettext("SSL SYSCALL error: %s\n"),
-								  SOCK_STRERROR(SOCK_ERRNO));
+								  SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
 				else
 					printfPQExpBuffer(&conn->errorMessage,
 								libpq_gettext("SSL SYSCALL error: EOF detected\n"));
 				break;
+			}
 			case SSL_ERROR_SSL:
 				printfPQExpBuffer(&conn->errorMessage,
 					  libpq_gettext("SSL error: %s\n"), SSLerrmessage());
@@ -418,7 +427,6 @@ verify_cb(int ok, X509_STORE_CTX *ctx)
 #ifdef NOT_USED
 /*
  *	Verify that common name resolves to peer.
- *	This function is not thread-safe due to gethostbyname().
  */
 static int
 verify_peer(PGconn *conn)
@@ -434,9 +442,10 @@ verify_peer(PGconn *conn)
 	len = sizeof(addr);
 	if (getpeername(conn->sock, &addr, &len) == -1)
 	{
+		char sebuf[256];
 		printfPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("error querying socket: %s\n"),
-						  SOCK_STRERROR(SOCK_ERRNO));
+						  SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
 		return -1;
 	}
 
@@ -514,14 +523,16 @@ verify_peer(PGconn *conn)
 static DH  *
 load_dh_file(int keylength)
 {
-	struct passwd *pwd;
+	char pwdbuf[BUFSIZ];
+	struct passwd pwdstr;
+	struct passwd *pwd = NULL;
 	FILE	   *fp;
 	char		fnbuf[2048];
 	DH		   *dh = NULL;
 	int			codes;
 
-	if ((pwd = getpwuid(getuid())) == NULL)
-		return NULL;
+	if( pqGetpwuid(getuid(), &pwdstr, pwdbuf, sizeof(pwdbuf), &pwd) == 0 )
+	  return NULL;
 
 	/* attempt to open file.  It's not an error if it doesn't exist. */
 	snprintf(fnbuf, sizeof fnbuf, "%s/.postgresql/dh%d.pem",
@@ -654,15 +665,19 @@ tmp_dh_cb(SSL *s, int is_export, int keylength)
 static int
 client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 {
-	struct passwd *pwd;
+	char pwdbuf[BUFSIZ];
+	struct passwd pwdstr;
+	struct passwd *pwd = NULL;
 	struct stat buf,
 				buf2;
 	char		fnbuf[2048];
 	FILE	   *fp;
 	PGconn	   *conn = (PGconn *) SSL_get_app_data(ssl);
 	int			(*cb) () = NULL;	/* how to read user password */
+	char sebuf[256];
 
-	if ((pwd = getpwuid(getuid())) == NULL)
+
+	if( pqGetpwuid(getuid(), &pwdstr, pwdbuf, sizeof(pwdbuf), &pwd) == 0 )
 	{
 		printfPQExpBuffer(&conn->errorMessage,
 					  libpq_gettext("could not get user information\n"));
@@ -678,7 +693,7 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
 				  libpq_gettext("could not open certificate (%s): %s\n"),
-						  fnbuf, strerror(errno));
+						  fnbuf, pqStrerror(errno, sebuf, sizeof(sebuf)));
 		return -1;
 	}
 	if (PEM_read_X509(fp, x509, NULL, NULL) == NULL)
@@ -714,7 +729,7 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
 			 libpq_gettext("could not open private key file (%s): %s\n"),
-						  fnbuf, strerror(errno));
+						  fnbuf, pqStrerror(errno, sebuf, sizeof(sebuf)));
 		X509_free(*x509);
 		return -1;
 	}
@@ -758,7 +773,9 @@ static int
 initialize_SSL(PGconn *conn)
 {
 	struct stat buf;
-	struct passwd *pwd;
+	char pwdbuf[BUFSIZ];
+	struct passwd pwdstr;
+	struct passwd *pwd = NULL;
 	char		fnbuf[2048];
 
 	if (!SSL_context)
@@ -775,7 +792,7 @@ initialize_SSL(PGconn *conn)
 		}
 	}
 
-	if ((pwd = getpwuid(getuid())) != NULL)
+	if( pqGetpwuid(getuid(), &pwdstr, pwdbuf, sizeof(pwdbuf), &pwd) == 0 )
 	{
 		snprintf(fnbuf, sizeof fnbuf, "%s/.postgresql/root.crt",
 				 pwd->pw_dir);
@@ -783,10 +800,11 @@ initialize_SSL(PGconn *conn)
 		{
 			return 0;
 #ifdef NOT_USED
+			char sebuf[256];
 			/* CLIENT CERTIFICATES NOT REQUIRED  bjm 2002-09-26 */
 			printfPQExpBuffer(&conn->errorMessage,
 				 libpq_gettext("could not read root certificate list (%s): %s\n"),
-							  fnbuf, strerror(errno));
+							  fnbuf, pqStrerror(errno, sebuf, sizeof(sebuf)));
 			return -1;
 #endif
 		}
@@ -846,16 +864,19 @@ open_client_SSL(PGconn *conn)
 				return PGRES_POLLING_WRITING;
 
 			case SSL_ERROR_SYSCALL:
+			{
+				char sebuf[256];
+				
 				if (r == -1)
 					printfPQExpBuffer(&conn->errorMessage,
 								libpq_gettext("SSL SYSCALL error: %s\n"),
-								  SOCK_STRERROR(SOCK_ERRNO));
+								  SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
 				else
 					printfPQExpBuffer(&conn->errorMessage,
 								libpq_gettext("SSL SYSCALL error: EOF detected\n"));
 				close_SSL(conn);
 				return PGRES_POLLING_FAILED;
-
+			}
 			case SSL_ERROR_SSL:
 				printfPQExpBuffer(&conn->errorMessage,
 					  libpq_gettext("SSL error: %s\n"), SSLerrmessage());
