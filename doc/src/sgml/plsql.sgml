@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.4 2000/05/02 20:01:52 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.5 2000/05/09 18:27:25 momjian Exp $
 -->
 
  <chapter>
@@ -859,7 +859,7 @@ CREATE TABLE emp (
     last_date datetime,
     last_user name);
 
-CREATE FUNCTION emp_stamp () RETURNS OPAQUE AS
+CREATE FUNCTION emp_stamp () RETURNS OPAQUE AS '
     BEGIN
         -- Check that empname and salary are given
         IF NEW.empname ISNULL THEN
