@@ -333,22 +333,23 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 <SQL>{identifier}/{space}*-{number}	{
 					int i;
 					ScanKeyword		*keyword;
+					char lower_text[NAMEDATALEN];
 
 					BEGIN(xm);
-					for(i = 0; yytext[i]; i++)
-						if (isascii((unsigned char)yytext[i]) && isupper(yytext[i]))
-							yytext[i] = tolower(yytext[i]);
+					/* this should leave the last byte set to '\0' */
+					strncpy(lower_text, yytext, NAMEDATALEN-1);
+					for(i = 0; lower_text[i]; i++)
+						if (isascii((unsigned char)lower_text[i]) && isupper(lower_text[i]))
+							lower_text[i] = tolower(lower_text[i]);
 
-					if (i >= NAMEDATALEN)
-						yytext[NAMEDATALEN-1] = '\0';
-
-					keyword = ScanKeywordLookup((char*)yytext);
+printf("yyt= %s, lt = %s\n", yytext, lower_text);
+					keyword = ScanKeywordLookup((char*)lower_text);
 					if (keyword != NULL) {
 						return keyword->value;
 					}
 					else
 					{
-						keyword = ScanECPGKeywordLookup((char*)yytext);
+						keyword = ScanECPGKeywordLookup((char*)lower_text);
 						if (keyword != NULL) {
 							return keyword->value;
 						}
@@ -475,21 +476,22 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 <SQL>{identifier}	{
 					int i;
 					ScanKeyword		*keyword;
+					char lower_text[NAMEDATALEN];
 
-					for(i = 0; yytext[i]; i++)
-						if (isascii((unsigned char)yytext[i]) && isupper(yytext[i]))
-							yytext[i] = tolower(yytext[i]);
+					/* this should leave the last byte set to '\0' */
+					strncpy(lower_text, yytext, NAMEDATALEN-1);
+					for(i = 0; lower_text[i]; i++)
+						if (isascii((unsigned char)lower_text[i]) && isupper(lower_text[i]))
+							lower_text[i] = tolower(lower_text[i]);
 
-					if (i >= NAMEDATALEN)
-						yytext[NAMEDATALEN-1] = '\0';
-
-					keyword = ScanKeywordLookup((char*)yytext);
+printf("yyt= %s, lt = %s\n", yytext, lower_text);
+					keyword = ScanKeywordLookup((char*)lower_text);
 					if (keyword != NULL) {
 						return keyword->value;
 					}
 					else
 					{
-						keyword = ScanECPGKeywordLookup((char*)yytext);
+						keyword = ScanECPGKeywordLookup((char*)lower_text);
 						if (keyword != NULL) {
 							return keyword->value;
 						}

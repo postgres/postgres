@@ -383,3 +383,15 @@ Thu Jan 21 21:29:00 CET 1999
 	- Set library version to 2.6.3
 	- Added 'exec sql whenever sqlwarning'.
 	- Set ecpg version to 2.4.6
+
+Wed Jan 27 12:42:22 CET 1999
+
+	- Fixed bug that caused ecpg to lose 'goto' information.
+	- Set ecpg version to 2.4.7
+
+Fri Jan 29 18:03:52 CET 1999
+
+	- Fixed bug that caused 'enum' to be rejected in pure C code.
+	- Fixed bug that caused function names to be translated to lower case.
+	- Set ecpg version to 2.4.8
+ 

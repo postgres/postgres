@@ -521,7 +521,8 @@ output_statement(char * stmt, int mode)
 /* special embedded SQL token */
 %token		SQL_BREAK SQL_CALL SQL_CONNECT SQL_CONNECTION SQL_CONTINUE
 %token		SQL_DISCONNECT SQL_FOUND SQL_GO SQL_GOTO
-%token		SQL_IDENTIFIED SQL_IMMEDIATE SQL_INDICATOR SQL_OPEN SQL_RELEASE
+%token		SQL_IDENTIFIED SQL_IMMEDIATE SQL_INDICATOR SQL_OPEN 
+%token		SQL_PREPARE SQL_RELEASE
 %token		SQL_SECTION SQL_SEMI SQL_SQLERROR SQL_SQLPRINT SQL_START
 %token		SQL_STOP SQL_WHENEVER SQL_SQLWARNING
 
@@ -812,6 +813,9 @@ stmt:  AddAttrStmt			{ output_statement($1, 0); }
 						fputs($1, yyout);
 						output_line_number();
 						free($1);
+					}
+		| ECPGPrepare		{
+						yyerror("PREPARE is not supported yet.");
 					}
 
 /*
@@ -4671,12 +4675,12 @@ action : SQL_CONTINUE {
 }
        | SQL_GOTO name {
         $<action>$.code = W_GOTO;
-        $<action>$.command = $2;
+        $<action>$.command = strdup($2);
 	$<action>$.str = cat2_str(make1_str("goto "), $2);
 }
        | SQL_GO TO name {
         $<action>$.code = W_GOTO;
-        $<action>$.command = $3;
+        $<action>$.command = strdup($3);
 	$<action>$.str = cat2_str(make1_str("goto "), $3);
 }
        | DO name '(' dotext ')' {
@@ -4695,8 +4699,15 @@ action : SQL_CONTINUE {
 	$<action>$.str = cat2_str(make1_str("call"), mm_strdup($<action>$.command));
 }
 
-/* some other stuff for ecpg */
+/*
+ * As long as the prepare statement in not supported by the backend, we will
+ * try to simulate it here so we get dynamic SQL 
+ */
+ECPGPrepare: SQL_PREPARE name FROM name
+	{
+	}
 
+/* some other stuff for ecpg */
 ecpg_expr:  attr opt_indirection
 				{
 					$$ = cat2_str($1, $2);
@@ -5032,6 +5043,7 @@ c_anything:  IDENT 	{ $$ = $1; }
 	| S_CHAR	{ $$ = make1_str("char"); }
 	| S_CONST	{ $$ = make1_str("const"); }
 	| S_DOUBLE	{ $$ = make1_str("double"); }
+	| S_ENUM	{ $$ = make1_str("enum"); }
 	| S_EXTERN	{ $$ = make1_str("extern"); }
 	| S_FLOAT	{ $$ = make1_str("float"); }
         | S_INT		{ $$ = make1_str("int"); }

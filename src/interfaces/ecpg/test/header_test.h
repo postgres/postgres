@@ -1,9 +1,9 @@
 exec sql include sqlca;
 
-exec sql whenever sqlerror do print_and_stop();
+exec sql whenever sqlerror do PrintAndStop();
 exec sql whenever sqlwarning do warn();
 
-void print_and_stop(void)
+void PrintAndStop(void)
 {
 	sqlprint();
 	exit(-1);
