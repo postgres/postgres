@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.131 2004/11/06 04:29:40 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.132 2004/11/06 05:20:41 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -1539,7 +1539,7 @@ do_shell(const char *command)
 	if (!command)
 	{
 		char	   *sys;
-		const char *shellName = NULL;
+		const char *shellName;
 
 		shellName = getenv("SHELL");
 #ifdef WIN32
