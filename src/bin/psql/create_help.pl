@@ -5,7 +5,7 @@
 #
 # Copyright (c) 2000-2003, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/bin/psql/create_help.pl,v 1.10 2003/11/29 19:52:06 pgsql Exp $
+# $PostgreSQL: pgsql/src/bin/psql/create_help.pl,v 1.11 2004/06/11 03:56:46 momjian Exp $
 #################################################################
 
 #
@@ -109,7 +109,7 @@ foreach $file (sort readdir DIR) {
         $cmddesc =~ s/\"/\\"/g;
 
 	$cmdsynopsis =~ s/<[^>]+>//g;
-	$cmdsynopsis =~ s/\n/\\n/g;
+	$cmdsynopsis =~ s/\r?\n/\\n/g;
         $cmdsynopsis =~ s/\"/\\"/g;
 
 	print OUT "    { \"$cmdname\",\n      N_(\"$cmddesc\"),\n      N_(\"$cmdsynopsis\") },\n\n";
