@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.68 2001/10/28 06:25:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.69 2001/11/12 20:04:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,6 +63,7 @@ static List *generate_setop_tlist(List *colTypes, int flag,
 					 bool hack_constants,
 					 List *input_tlist,
 					 List *refnames_tlist);
+static void merge_tlist_typmods(List *tlist, List *planlist);
 static bool tlist_same_datatypes(List *tlist, List *colTypes, bool junkOK);
 static Node *adjust_inherited_attrs_mutator(Node *node,
 							   adjust_inherited_attrs_context *context);
@@ -204,6 +205,7 @@ generate_union_plan(SetOperationStmt *op, Query *parse,
 					List *refnames_tlist)
 {
 	List	   *planlist;
+	List	   *tlist;
 	Plan	   *plan;
 
 	/*
@@ -218,18 +220,21 @@ generate_union_plan(SetOperationStmt *op, Query *parse,
 											op, refnames_tlist));
 
 	/*
-	 * Append the child results together.
+	 * Generate tlist for Append plan node.
 	 *
 	 * The tlist for an Append plan isn't important as far as the Append is
 	 * concerned, but we must make it look real anyway for the benefit of
 	 * the next plan level up.
 	 */
-	plan = (Plan *)
-		make_append(planlist,
-					false,
-					generate_setop_tlist(op->colTypes, -1, false,
+	tlist = generate_setop_tlist(op->colTypes, -1, false,
 								 ((Plan *) lfirst(planlist))->targetlist,
-										 refnames_tlist));
+								 refnames_tlist);
+	merge_tlist_typmods(tlist, planlist);
+
+	/*
+	 * Append the child results together.
+	 */
+	plan = (Plan *) make_append(planlist, false, tlist);
 
 	/*
 	 * For UNION ALL, we just need the Append plan.  For UNION, need to
@@ -237,10 +242,9 @@ generate_union_plan(SetOperationStmt *op, Query *parse,
 	 */
 	if (!op->all)
 	{
-		List	   *tlist,
-				   *sortList;
+		List	   *sortList;
 
-		tlist = new_unsorted_tlist(plan->targetlist);
+		tlist = new_unsorted_tlist(tlist);
 		sortList = addAllTargetsToSortList(NIL, tlist);
 		plan = make_sortplan(parse, tlist, plan, sortList);
 		plan = (Plan *) make_unique(tlist, plan, copyObject(sortList));
@@ -259,7 +263,8 @@ generate_nonunion_plan(SetOperationStmt *op, Query *parse,
 			   *rplan,
 			   *plan;
 	List	   *tlist,
-			   *sortList;
+			   *sortList,
+			   *planlist;
 	SetOpCmd	cmd;
 
 	/* Recurse on children, ensuring their outputs are marked */
@@ -269,9 +274,10 @@ generate_nonunion_plan(SetOperationStmt *op, Query *parse,
 	rplan = recurse_set_operations(op->rarg, parse,
 								   op->colTypes, false, 1,
 								   refnames_tlist);
+	planlist = makeList2(lplan, rplan);
 
 	/*
-	 * Append the child results together.
+	 * Generate tlist for Append plan node.
 	 *
 	 * The tlist for an Append plan isn't important as far as the Append is
 	 * concerned, but we must make it look real anyway for the benefit of
@@ -279,18 +285,21 @@ generate_nonunion_plan(SetOperationStmt *op, Query *parse,
 	 * flag column is shown as a variable not a constant, else setrefs.c
 	 * will get confused.
 	 */
-	plan = (Plan *)
-		make_append(makeList2(lplan, rplan),
-					false,
-					generate_setop_tlist(op->colTypes, 2, false,
-										 lplan->targetlist,
-										 refnames_tlist));
+	tlist = generate_setop_tlist(op->colTypes, 2, false,
+								 lplan->targetlist,
+								 refnames_tlist);
+	merge_tlist_typmods(tlist, planlist);
+
+	/*
+	 * Append the child results together.
+	 */
+	plan = (Plan *) make_append(planlist, false, tlist);
 
 	/*
 	 * Sort the child results, then add a SetOp plan node to generate the
 	 * correct output.
 	 */
-	tlist = new_unsorted_tlist(plan->targetlist);
+	tlist = new_unsorted_tlist(tlist);
 	sortList = addAllTargetsToSortList(NIL, tlist);
 	plan = make_sortplan(parse, tlist, plan, sortList);
 	switch (op->op)
@@ -332,9 +341,11 @@ recurse_union_children(Node *setOp, Query *parse,
 		{
 			/* Same UNION, so fold children into parent's subplan list */
 			return nconc(recurse_union_children(op->larg, parse,
-											  top_union, refnames_tlist),
+												top_union,
+												refnames_tlist),
 						 recurse_union_children(op->rarg, parse,
-											 top_union, refnames_tlist));
+												top_union,
+												refnames_tlist));
 		}
 	}
 
@@ -380,6 +391,7 @@ generate_setop_tlist(List *colTypes, int flag,
 		Oid			colType = (Oid) lfirsti(i);
 		TargetEntry *inputtle = (TargetEntry *) lfirst(input_tlist);
 		TargetEntry *reftle = (TargetEntry *) lfirst(refnames_tlist);
+		int32		colTypmod;
 
 		Assert(inputtle->resdom->resno == resno);
 		Assert(reftle->resdom->resno == resno);
@@ -399,11 +411,6 @@ generate_setop_tlist(List *colTypes, int flag,
 		 * subquery-scan plans; we don't want phony constants appearing in
 		 * the output tlists of upper-level nodes!
 		 */
-		resdom = makeResdom((AttrNumber) resno++,
-							colType,
-							-1,
-							pstrdup(reftle->resdom->resname),
-							false);
 		if (hack_constants && inputtle->expr && IsA(inputtle->expr, Const))
 			expr = inputtle->expr;
 		else
@@ -412,10 +419,24 @@ generate_setop_tlist(List *colTypes, int flag,
 									inputtle->resdom->restype,
 									inputtle->resdom->restypmod,
 									0);
-		expr = coerce_to_common_type(NULL,
-									 expr,
-									 colType,
-									 "UNION/INTERSECT/EXCEPT");
+		if (inputtle->resdom->restype == colType)
+		{
+			/* no coercion needed, and believe the input typmod */
+			colTypmod = inputtle->resdom->restypmod;
+		}
+		else
+		{
+			expr = coerce_to_common_type(NULL,
+										 expr,
+										 colType,
+										 "UNION/INTERSECT/EXCEPT");
+			colTypmod = -1;
+		}
+		resdom = makeResdom((AttrNumber) resno++,
+							colType,
+							colTypmod,
+							pstrdup(reftle->resdom->resname),
+							false);
 		tlist = lappend(tlist, makeTargetEntry(resdom, expr));
 		input_tlist = lnext(input_tlist);
 		refnames_tlist = lnext(refnames_tlist);
@@ -453,6 +474,47 @@ generate_setop_tlist(List *colTypes, int flag,
 	}
 
 	return tlist;
+}
+
+/*
+ * Merge typmods of a list of set-operation subplans.
+ *
+ * If the inputs all agree on type and typmod of a particular column,
+ * use that typmod; else use -1.  We assume the result tlist has been
+ * initialized with the types and typmods of the first input subplan.
+ */
+static void
+merge_tlist_typmods(List *tlist, List *planlist)
+{
+	List	   *planl;
+
+	foreach(planl, planlist)
+	{
+		Plan   *subplan = (Plan *) lfirst(planl);
+		List   *subtlist = subplan->targetlist;
+		List   *restlist;
+
+		foreach(restlist, tlist)
+		{
+			TargetEntry *restle = (TargetEntry *) lfirst(restlist);
+			TargetEntry *subtle;
+
+			if (restle->resdom->resjunk)
+				continue;
+			Assert(subtlist != NIL);
+			subtle = (TargetEntry *) lfirst(subtlist);
+			while (subtle->resdom->resjunk)
+			{
+				subtlist = lnext(subtlist);
+				Assert(subtlist != NIL);
+				subtle = (TargetEntry *) lfirst(subtlist);
+			}
+			if (restle->resdom->restype != subtle->resdom->restype ||
+				restle->resdom->restypmod != subtle->resdom->restypmod)
+				restle->resdom->restypmod = -1;
+			subtlist = lnext(subtlist);
+		}
+	}
 }
 
 /*
