@@ -1,0 +1,60 @@
+<!--
+
+  build file to build the donated retep tools packages
+
+  $Id: build.xml,v 1.1 2001/01/18 14:50:14 peter Exp $
+
+-->
+
+<project name="retep" default="jar" basedir=".">
+
+  <!-- set global properties for this build -->
+  <property name="src"     value="." />
+  <property name="dest"    value="build" />
+  <property name="package" value="uk/org/retep" />
+  <property name="jars"    value="jars" />
+
+  <!-- Some checks used to build dependent on the environment -->
+  <target name="checks">
+    <available property="jdk1.2+" classname="java.lang.ThreadLocal" />
+    <available property="jdk1.3+" classname="java.lang.StrictMath" />
+    <available property="jdk1.2e+" classname="javax.sql.DataSource" />
+    <available property="xml" classname="org.xml.sax.Parser" />
+  </target>
+
+  <!-- Prepares the build by creating a directory to place the class files -->
+  <target name="prepare">
+    <mkdir dir="${dest}" />
+    <mkdir dir="${jars}" />
+  </target>
+
+  <!-- This target removes any class files from the build directory -->
+  <target name="clean">
+    <delete dir="${dest}" />
+    <delete dir="${jars}" />
+  </target>
+
+  <!-- Builds the XML Tools -->
+  <target name="xml" depends="checks,prepare" if="xml">
+    <javac srcdir="${src}" destdir="${dest}">
+      <include name="${package}/xml/**" />
+    </javac>
+  </target>
+
+  <!-- Builds the various jar files -->
+  <target name="jar" depends="xml">
+    <jar jarfile="${jars}/retepTools.jar" basedir="${dest}">
+      <include name="${package}/xml/parser/**" if="xml" />
+    </jar>
+  </target>
+
+  <target name="install" depends="jar" if="install.directory">
+    <copy todir="${install.directory}" overwrite="true" filtering="off">
+      <fileset dir="${jars}">
+        <include name="**/*.jar" />
+      </fileset>
+    </copy>
+  </target>
+
+</project>
+

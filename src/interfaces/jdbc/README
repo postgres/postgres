@@ -1,33 +1,48 @@
 This is a simple readme describing how to compile and use the jdbc driver.
 
-This file was amended on May 2 2000 to document the changes made in the 7.0
+This file was amended on January 17 2001 to reflect the changes made in the 7.1
 release.
 
 ---------------------------------------------------------------------------
 
 This isn't a guide on how to use JDBC - for that refer to Javasoft's web site:
 
-	http://www.javasoft.com
+	http://www.javasoft.com/
 
 For problems with this driver, then refer to the postgres-interfaces email
 list:
 
-	http://www.postgresql.org
+	http://www.postgresql.org/
+
+The Driver's home page is:
+
+	http://jdbc.postgresql.org/
+or	http://www.retep.org.uk/postgresql/
+
+NB: They are both the same physical directory so both will always be in sync
+(unless the laws of physics break down ;-) )
 
 ---------------------------------------------------------------------------
 
 COMPILING
 
-There are actually two versions of the driver. One for the JDBC1.2 specification, and one for the JDBC2 specification. To compile the driver, you need to select the correct one.
+To compile you will need to have ANT installed. To obtain ant go to
+http://jakarta.apache.org/ant/index.html and download the binary. Being pure
+java it will run on virtually all java platforms. If you have any problems
+please email the INTERFACES list.
 
-If you have JDK1.1.x you need to type: make jdbc1
-
-If you have JDK1.2 or JDK1.3, you need to type: make jdbc2
-
-This will compile the driver, and build a .jar file (Java ARchive) called
+Once you have ANT, cd to the src directory and type "ant". This will compile
+the correct driver for your JVM, and build a .jar file (Java ARchive) called
 postgresql.jar
 
 That jar file will contain the driver for _your_ version of the JDK.
+
+Note: As of 7.1, you build from pgsql/src and not pgsql/src/interfaces/jdbc.
+Well you can, but building from the top will also build some extra utilities
+located under /contrib at the same time. Also later on (either 7.1.1 or 7.2)
+it's intended to have the main configure script to build the driver
+automatically if it finds both a JDK & ANT installed, so this is the first step
+towards that.
 
 REMEMBER: Once you have compiled the driver, it will work on ALL platforms
 that support that version of the API. You don't need to build it for each
@@ -37,11 +52,8 @@ That means you don't have to compile it on every platform. Believe me, I
 still hear from people who ask me "I've compiled it ok under Solaris, but it
 won't compile under Linux" - there's no difference.
 
-PS: When you run make, don't worry if you see more than one or two calls to
-    javac. This is normal, because the driver dynamically loads classes, and
-    the Makefile ensures everything gets compiled.
-
-I advise you don't try running javac outside of make. You may miss something.
+I advise you don't try running javac outside of ANT as it builds some classes
+on the fly.
 
 Possible problems
 
@@ -51,10 +63,13 @@ postgresql/Driver.java:87: interface java.sql.Connection is an interface. It can
     return new Connection (host(), port(), props, database(), url, this);
 
 This is caused by not having the current directory in your CLASSPATH. Under
-Linux/Solaris, unset the CLASSPATH environment variable, and rerun make.
+Linux/Solaris, unset the CLASSPATH environment variable, and rerun ant.
 
 If you are still having problems, I keep a copy of the driver (for different
 versions of the backend) on my web site http://www.retep.org.uk/postgres/
+or http://jdbc.postgresql.org/
+
+More details are in the Implementation file src/interfaces/jdbc/Implementation
 
 ---------------------------------------------------------------------------
 
@@ -66,6 +81,9 @@ this, copy the postgres.jar file into a directory, and add it to the classpath.
 ie: under LINUX/SOLARIS (the example here is my linux box):
 
 	export CLASSPATH=.:/usr/local/lib/postgresql.jar
+
+Please don't be tempted to extract the files from the .jar file. There are a
+lot of files in there, and you may break the Exception handling.
 
 ---------------------------------------------------------------------------
 
@@ -121,6 +139,14 @@ them to the URL. eg:
 
 	jdbc:postgresql:database?user=me
 	jdbc:postgresql:database?user=me&password=mypass
+
+Notes:
+
+1) If you are connecting to localhost or 127.0.0.1 you can leave it out of the
+   URL. ie: jdbc:postgresql://localhost/mydb can be replaced with
+   jdbc:postgresql:mydb
+
+2) The port defaults to 5432 if it's left out.
 
 ---------------------------------------------------------------------------
 

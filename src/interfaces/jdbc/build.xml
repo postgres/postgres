@@ -3,25 +3,26 @@
   build file to allow ant (http://jakarta.apache.org/ant/) to be used
   to build the PostgreSQL JDBC Driver.
 
-  $Id: build.xml,v 1.2 2000/12/20 16:22:48 peter Exp $
+  $Id: build.xml,v 1.3 2001/01/18 14:50:14 peter Exp $
 
 -->
 
 <project name="postgresqlJDBC" default="jar" basedir=".">
-  
+
   <!-- set global properties for this build -->
   <property name="src"     value="." />
+  <property name="jars"    value="jars" />
   <property name="dest"    value="build" />
   <property name="package" value="org/postgresql" />
   <property name="major" value="7" />
   <property name="minor" value="1" />
-  
+
   <!--
     This is a simpler method than utils.CheckVersion
     It defaults to jdbc1, but builds jdbc2 if the java.lang.Byte class is
     in the CLASSPATH (ie JDK1.2 or later), and then enterprise if the
     javax.sql.DataSource class is present.
-    
+
     Important: This must have the following order: jdbc1, jdbc2, enterprise
   -->
   <target name="check_versions">
@@ -29,51 +30,53 @@
     <available property="jdk1.3+" classname="java.lang.StrictMath" />
     <available property="jdk1.2e+" classname="javax.sql.DataSource" />
   </target>
-  
+
   <!--
     This generates Driver.java from Driver.java.in
     It's required for importing the driver version properties
   -->
   <target name="driver" depends="prepare,check_versions">
-    
+
     <!-- determine the edition text -->
     <property name="edition" value="JDBC1" />
     <available property="edition" value="JDBC2" classname="java.lang.ThreadLocal" />
     <available property="edition" value="JDBC2" classname="java.lang.StrictMath" />
     <available property="edition" value="JDBC2 Enterprise" classname="javax.sql.DataSource" />
-    
+
     <!-- determine the connection class -->
     <property name="connectclass" value="org.postgresql.jdbc1.Connection" />
     <available property="connectclass" value="org.postgresql.jdbc2.Connection" classname="java.lang.ThreadLocal" />
-            
+
     <!-- Some defaults -->
     <filter token="MAJORVERSION" value="${major}" />
     <filter token="MINORVERSION" value="${minor}" />
     <filter token="VERSION" value="PostgreSQL ${major}.${minor} ${edition}" />
     <filter token="JDBCCONNECTCLASS" value="${connectclass}" />
-        
+
     <!-- Put a check for the current version here -->
-    
+
     <!-- now copy and filter the file -->
     <copy file="${package}/Driver.java.in"
           tofile="${package}/Driver.java"
           filtering="yes" />
-    
+
     <echo message="Configured build for the ${edition} edition driver." />
-    
+
   </target>
-  
+
   <!-- This target removes any class files from the build directory -->
   <target name="clean">
     <delete dir="${dest}" />
+    <delete dir="${jars}" />
     <delete file="${package}/Driver.java" />
   </target>
-  
+
   <!-- Prepares the build directory -->
   <target name="prepare">
     <mkdir dir="${dest}" />
+    <mkdir dir="${jars}" />
   </target>
-  
+
   <!-- This is the core of the driver. It is common for all three versions -->
   <target name="compile" depends="prepare,check_versions,driver">
     <javac srcdir="${src}" destdir="${dest}">
@@ -87,12 +90,27 @@
     <copy todir="${dest}" overwrite="true" filtering="on">
       <fileset dir="${src}">
         <include name="**/*.properties" />
+        <exclude name="${dest}/**" />
       </fileset>
     </copy>
   </target>
-  
+
+  <!-- This builds the jar file containing the driver -->
   <target name="jar" depends="compile">
-    <jar jarfile="postgresql.jar" basedir="${dest}" includes="org/**" />
+    <jar jarfile="${jars}/postgresql.jar" basedir="${dest}" includes="org/**" />
   </target>
-  
+
+  <!--
+    This installs the jar file. It's called by the build.xml file in the
+    root directory of the source (where configure is). Refer to that file
+    on how to use it.
+  -->
+  <target name="install" depends="jar" if="install.directory">
+    <copy todir="${install.directory}" overwrite="true" filtering="off">
+      <fileset dir="${jars}">
+        <include name="**/*.jar" />
+      </fileset>
+    </copy>
+  </target>
+
 </project>

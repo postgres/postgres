@@ -21,7 +21,7 @@ import org.postgresql.util.*;
  * Statement.  The table rows are retrieved in sequence.  Within a row its
  * column values can be accessed in any order.
  *
- * <P>A ResultSet maintains a cursor pointing to its current row of data.  
+ * <P>A ResultSet maintains a cursor pointing to its current row of data.
  * Initially the cursor is positioned before the first row.  The 'next'
  * method moves the cursor to the next row.
  *
@@ -47,8 +47,8 @@ import org.postgresql.util.*;
  * the programmer to guarentee that they actually refer to the intended
  * columns.
  *
- * <P>A ResultSet is automatically closed by the Statement that generated it 
- * when that Statement is closed, re-executed, or is used to retrieve the 
+ * <P>A ResultSet is automatically closed by the Statement that generated it
+ * when that Statement is closed, re-executed, or is used to retrieve the
  * next result from a sequence of multiple results.
  *
  * <P>The number, types and properties of a ResultSet's columns are provided by
@@ -57,7 +57,7 @@ import org.postgresql.util.*;
  * @see ResultSetMetaData
  * @see java.sql.ResultSet
  */
-public class ResultSet extends org.postgresql.ResultSet implements java.sql.ResultSet 
+public class ResultSet extends org.postgresql.ResultSet implements java.sql.ResultSet
 {
   /**
    * Create a new ResultSet - Note that we create ResultSets to
@@ -74,7 +74,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
   {
       super(conn,fields,tuples,status,updateCount,insertOID);
   }
-  
+
   /**
    * Create a new ResultSet - Note that we create ResultSets to
    * represent the results of everything.
@@ -90,7 +90,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
   {
       super(conn,fields,tuples,status,updateCount,0);
   }
-    
+
   /**
    * A ResultSet is initially positioned before its first row,
    * the first call to next makes the first row the current row;
@@ -111,7 +111,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
     this_row = (byte [][])rows.elementAt(current_row);
     return true;
   }
-  
+
   /**
    * In some cases, it is desirable to immediately release a ResultSet
    * database and JDBC resources instead of waiting for this to happen
@@ -121,7 +121,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
    * <p><B>Note:</B> A ResultSet is automatically closed by the Statement
    * the Statement that generated it when that Statement is closed,
    * re-executed, or is used to retrieve the next result from a sequence
-   * of multiple results.  A ResultSet is also automatically closed 
+   * of multiple results.  A ResultSet is also automatically closed
    * when it is garbage collected.
    *
    * @exception SQLException if a database access error occurs
@@ -131,7 +131,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
     //release resources held (memory for tuples)
     rows.setSize(0);
   }
-  
+
   /**
    * A column may have the value of SQL NULL; wasNull() reports whether
    * the last column read had this special value.  Note that you must
@@ -145,7 +145,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
   {
     return wasNullFlag;
   }
-  
+
   /**
    * Get the value of a column in the current row as a Java String
    *
@@ -176,7 +176,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
         }
     }
   }
-  
+
   /**
    * Get the value of a column in the current row as a Java boolean
    *
@@ -187,7 +187,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
   public boolean getBoolean(int columnIndex) throws SQLException
   {
     String s = getString(columnIndex);
-    
+
     if (s != null)
       {
 	int c = s.charAt(0);
@@ -195,7 +195,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
       }
     return false;		// SQL NULL
   }
-  
+
   /**
    * Get the value of a column in the current row as a Java byte.
    *
@@ -206,7 +206,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
   public byte getByte(int columnIndex) throws SQLException
   {
     String s = getString(columnIndex);
-    
+
     if (s != null)
       {
 	try
@@ -218,7 +218,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
       }
     return 0;		// SQL NULL
   }
-  
+
   /**
    * Get the value of a column in the current row as a Java short.
    *
@@ -229,7 +229,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
   public short getShort(int columnIndex) throws SQLException
   {
     String s = getString(columnIndex);
-    
+
     if (s != null)
       {
 	try
@@ -241,7 +241,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
       }
     return 0;		// SQL NULL
   }
-  
+
   /**
    * Get the value of a column in the current row as a Java int.
    *
@@ -252,7 +252,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
   public int getInt(int columnIndex) throws SQLException
   {
     String s = getString(columnIndex);
-    
+
     if (s != null)
       {
 	try
@@ -264,7 +264,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
       }
     return 0;		// SQL NULL
   }
-  
+
   /**
    * Get the value of a column in the current row as a Java long.
    *
@@ -275,7 +275,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
   public long getLong(int columnIndex) throws SQLException
   {
     String s = getString(columnIndex);
-    
+
     if (s != null)
       {
 	try
@@ -287,7 +287,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
       }
     return 0;		// SQL NULL
   }
-  
+
   /**
    * Get the value of a column in the current row as a Java float.
    *
@@ -298,7 +298,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
   public float getFloat(int columnIndex) throws SQLException
   {
     String s = getString(columnIndex);
-    
+
     if (s != null)
       {
 	try
@@ -310,7 +310,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
       }
     return 0;		// SQL NULL
   }
-  
+
   /**
    * Get the value of a column in the current row as a Java double.
    *
@@ -321,7 +321,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
   public double getDouble(int columnIndex) throws SQLException
   {
     String s = getString(columnIndex);
-    
+
     if (s != null)
       {
 	try
@@ -333,9 +333,9 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
       }
     return 0;		// SQL NULL
   }
-  
+
   /**
-   * Get the value of a column in the current row as a 
+   * Get the value of a column in the current row as a
    * java.math.BigDecimal object
    *
    * @param columnIndex  the first column is 1, the second is 2...
@@ -348,7 +348,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
   {
     String s = getString(columnIndex);
     BigDecimal val;
-    
+
     if (s != null)
       {
 	try
@@ -367,7 +367,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
       }
     return null;		// SQL NULL
   }
-  
+
   /**
    * Get the value of a column in the current row as a Java byte array.
    *
@@ -388,7 +388,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
     if (columnIndex < 1 || columnIndex > fields.length)
       throw new PSQLException("postgresql.res.colrange");
     wasNullFlag = (this_row[columnIndex - 1] == null);
-    
+
     // Handle OID's as BLOBS
     if(!wasNullFlag)
       if( fields[columnIndex - 1].getOID() == 26) {
@@ -398,10 +398,10 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 	lob.close();
 	return buf;
       }
-    
+
     return this_row[columnIndex - 1];
   }
-  
+
   /**
    * Get the value of a column in the current row as a java.sql.Date
    * object
@@ -422,7 +422,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
       throw new PSQLException("postgresql.res.baddate",new Integer(e.getErrorOffset()),s);
     }
   }
-  
+
   /**
    * Get the value of a column in the current row as a java.sql.Time
    * object
@@ -434,7 +434,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
   public Time getTime(int columnIndex) throws SQLException
   {
     String s = getString(columnIndex);
-    
+
     if (s != null)
       {
 	try
@@ -451,9 +451,9 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
       }
     return null;		// SQL NULL
   }
-  
+
   /**
-   * Get the value of a column in the current row as a 
+   * Get the value of a column in the current row as a
    * java.sql.Timestamp object
    *
    * @param columnIndex the first column is 1, the second is 2...
@@ -465,7 +465,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
     String s = getString(columnIndex);
     if(s==null)
 	return null;
-    
+
     // This works, but it's commented out because Michael Stephenson's
     // solution is better still:
     //SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -480,8 +480,8 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 
 // Modification by Jan Thomae
     if (s.length()>27) {
-    df = new SimpleDateFormat("yyyy-MM-dd HH:mm:sszzzzzzzzz");  
-    } else              
+    df = new SimpleDateFormat("yyyy-MM-dd HH:mm:sszzzzzzzzz");
+    } else
 // -------
     if (s.length()>21 && s.indexOf('.') != -1) {
 	df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSzzz");
@@ -494,17 +494,17 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
     } else {
 	df = new SimpleDateFormat("yyyy-MM-dd");
     }
-    
+
     try {
 	return new Timestamp(df.parse(s).getTime());
     } catch(ParseException e) {
 	throw new PSQLException("postgresql.res.badtimestamp",new Integer(e.getErrorOffset()),s);
     }
   }
-  
+
   /**
    * A column value can be retrieved as a stream of ASCII characters
-   * and then read in chunks from the stream.  This method is 
+   * and then read in chunks from the stream.  This method is
    * particular suitable for retrieving large LONGVARCHAR values.
    * The JDBC driver will do any necessary conversion from the
    * database format into ASCII.
@@ -530,7 +530,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
   {
     return getBinaryStream(columnIndex);
   }
-  
+
   /**
    * A column value can also be retrieved as a stream of Unicode
    * characters. We implement this as a binary stream.
@@ -550,7 +550,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
   {
     return getBinaryStream(columnIndex);
   }
-  
+
   /**
    * A column value can also be retrieved as a binary strea.  This
    * method is suitable for retrieving LONGVARBINARY values.
@@ -566,12 +566,12 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
   public InputStream getBinaryStream(int columnIndex) throws SQLException
   {
     byte b[] = getBytes(columnIndex);
-    
+
     if (b != null)
       return new ByteArrayInputStream(b);
     return null;		// SQL NULL
   }
-  
+
   /**
    * The following routines simply convert the columnName into
    * a columnIndex and then call the appropriate routine above.
@@ -584,43 +584,43 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
   {
     return getString(findColumn(columnName));
   }
-  
+
   public boolean getBoolean(String columnName) throws SQLException
   {
     return getBoolean(findColumn(columnName));
   }
-  
+
   public byte getByte(String columnName) throws SQLException
   {
-    
+
     return getByte(findColumn(columnName));
   }
-  
+
   public short getShort(String columnName) throws SQLException
   {
     return getShort(findColumn(columnName));
   }
-  
+
   public int getInt(String columnName) throws SQLException
   {
     return getInt(findColumn(columnName));
   }
-  
+
   public long getLong(String columnName) throws SQLException
   {
     return getLong(findColumn(columnName));
   }
-  
+
   public float getFloat(String columnName) throws SQLException
   {
     return getFloat(findColumn(columnName));
   }
-  
+
   public double getDouble(String columnName) throws SQLException
   {
     return getDouble(findColumn(columnName));
   }
-  
+
     /**
      * @deprecated
      */
@@ -628,32 +628,32 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
   {
     return getBigDecimal(findColumn(columnName), scale);
   }
-  
+
   public byte[] getBytes(String columnName) throws SQLException
   {
     return getBytes(findColumn(columnName));
   }
-  
+
   public java.sql.Date getDate(String columnName) throws SQLException
   {
     return getDate(findColumn(columnName));
   }
-  
+
   public Time getTime(String columnName) throws SQLException
   {
     return getTime(findColumn(columnName));
   }
-  
+
   public Timestamp getTimestamp(String columnName) throws SQLException
   {
     return getTimestamp(findColumn(columnName));
   }
-  
+
   public InputStream getAsciiStream(String columnName) throws SQLException
   {
     return getAsciiStream(findColumn(columnName));
   }
-  
+
     /**
      *
      * ** DEPRECATED IN JDBC 2 **
@@ -664,12 +664,12 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
   {
     return getUnicodeStream(findColumn(columnName));
   }
-  
+
   public InputStream getBinaryStream(String columnName) throws SQLException
   {
     return getBinaryStream(findColumn(columnName));
   }
-  
+
   /**
    * The first warning reported by calls on this ResultSet is
    * returned.  Subsequent ResultSet warnings will be chained
@@ -690,7 +690,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
   {
     return warnings;
   }
-  
+
   /**
    * After this call, getWarnings returns null until a new warning
    * is reported for this ResultSet
@@ -701,7 +701,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
   {
     warnings = null;
   }
-  
+
   /**
    * Get the name of the SQL cursor used by this ResultSet
    *
@@ -724,7 +724,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
   {
     return connection.getCursorName();
   }
-  
+
   /**
    * The numbers, types and properties of a ResultSet's columns are
    * provided by the getMetaData method
@@ -736,7 +736,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
   {
     return new ResultSetMetaData(rows, fields);
   }
-  
+
   /**
    * Get the value of a column in the current row as a Java object
    *
@@ -755,22 +755,22 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
   public Object getObject(int columnIndex) throws SQLException
   {
     Field field;
-    
+
     if (columnIndex < 1 || columnIndex > fields.length)
       throw new PSQLException("postgresql.res.colrange");
-    
+
     wasNullFlag = (this_row[columnIndex - 1] == null);
     if(wasNullFlag)
       return null;
-    
+
     field = fields[columnIndex - 1];
-    
+
     // some fields can be null, mainly from those returned by MetaData methods
     if(field==null) {
       wasNullFlag=true;
       return null;
     }
-    
+
     switch (field.getSQLType())
       {
       case Types.BIT:
@@ -801,7 +801,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 	return connection.getObject(field.getTypeName(), getString(columnIndex));
       }
   }
-  
+
   /**
    * Get the value of a column in the current row as a Java object
    *
@@ -821,7 +821,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
   {
     return getObject(findColumn(columnName));
   }
-  
+
   /**
    * Map a ResultSet column name to a ResultSet column index
    *
@@ -832,35 +832,35 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
   public int findColumn(String columnName) throws SQLException
   {
     int i;
-    
+
     for (i = 0 ; i < fields.length; ++i)
       if (fields[i].name.equalsIgnoreCase(columnName))
 	return (i+1);
     throw new PSQLException ("postgresql.res.colname",columnName);
   }
-    
+
     // ** JDBC 2 Extensions **
-    
+
     public boolean absolute(int index) throws SQLException
     {
 	// index is 1-based, but internally we use 0-based indices
 	int internalIndex;
 
 	if (index==0)
-	    throw new SQLException("Cannot move to index of 0");	
+	    throw new SQLException("Cannot move to index of 0");
 
 	//if index<0, count from the end of the result set, but check
 	//to be sure that it is not beyond the first index
-	if (index<0) 
+	if (index<0)
 	    if (index>=-rows.size())
 		internalIndex=rows.size()+index;
 	    else {
 		beforeFirst();
 		return false;
 	    }
-		
-	//must be the case that index>0, 
-	//find the correct place, assuming that 
+
+	//must be the case that index>0,
+	//find the correct place, assuming that
 	//the index is not too large
 	if (index<=rows.size())
 	    internalIndex = index-1;
@@ -873,29 +873,31 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 	this_row = (byte [][])rows.elementAt(internalIndex);
 	return true;
     }
-    
+
     public void afterLast() throws SQLException
     {
 	if (rows.size() > 0)
 		current_row = rows.size();
     }
-    
+
     public void beforeFirst() throws SQLException
     {
 	if (rows.size() > 0)
 		current_row = -1;
     }
-    
+
     public void cancelRowUpdates() throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+      // only sub-classes implement CONCUR_UPDATEABLE
+      notUpdateable();
     }
-    
+
     public void deleteRow() throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+      // only sub-classes implement CONCUR_UPDATEABLE
+      notUpdateable();
     }
-    
+
     public boolean first() throws SQLException
     {
 	if (rows.size() <= 0)
@@ -904,148 +906,189 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 	this_row = (byte [][])rows.elementAt(current_row);
 	return true;
     }
-    
+
     public Array getArray(String colName) throws SQLException
     {
 	return getArray(findColumn(colName));
     }
-    
+
     public Array getArray(int i) throws SQLException
     {
 	throw org.postgresql.Driver.notImplemented();
     }
-    
+
     public java.math.BigDecimal getBigDecimal(int columnIndex) throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+      try {
+        return new BigDecimal(getDouble(columnIndex));
+      } catch(NumberFormatException nfe) {
+        throw new PSQLException("postgresql.res.badbigdec",nfe.toString());
+      }
     }
-    
+
     public java.math.BigDecimal getBigDecimal(String columnName) throws SQLException
     {
 	return getBigDecimal(findColumn(columnName));
     }
-    
+
     public Blob getBlob(String columnName) throws SQLException
     {
 	return getBlob(findColumn(columnName));
     }
-    
+
     public Blob getBlob(int i) throws SQLException
     {
 	return new org.postgresql.largeobject.PGblob(connection,getInt(i));
     }
-    
+
     public java.io.Reader getCharacterStream(String columnName) throws SQLException
     {
 	return getCharacterStream(findColumn(columnName));
     }
-    
+
     public java.io.Reader getCharacterStream(int i) throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+      // New in 7.1
+      try {
+        String encoding = connection.getEncoding();
+        if(encoding==null)
+          return new InputStreamReader(getBinaryStream(i));
+        return new InputStreamReader(getBinaryStream(i),encoding);
+      } catch (UnsupportedEncodingException unse) {
+        throw new PSQLException("postgresql.res.encoding", unse);
+      }
     }
-    
+
     public Clob getClob(String columnName) throws SQLException
     {
 	return getClob(findColumn(columnName));
     }
-    
+
     public Clob getClob(int i) throws SQLException
     {
 	throw org.postgresql.Driver.notImplemented();
     }
-    
+
     public int getConcurrency() throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+        // New in 7.1 - The standard ResultSet class will now return
+        // CONCUR_READ_ONLY. A sub-class will overide this if the query was
+        // updateable.
+	return CONCUR_READ_ONLY;
     }
-    
+
     public java.sql.Date getDate(int i,java.util.Calendar cal) throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+      // new in 7.1: If I read the specs, this should use cal only if we don't
+      // store the timezone, and if we do, then act just like getDate()?
+      // for now...
+      return getDate(i);
     }
-    
+
     public Time getTime(int i,java.util.Calendar cal) throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+      // new in 7.1: If I read the specs, this should use cal only if we don't
+      // store the timezone, and if we do, then act just like getTime()?
+      // for now...
+      return getTime(i);
     }
-    
+
     public Timestamp getTimestamp(int i,java.util.Calendar cal) throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+      // new in 7.1: If I read the specs, this should use cal only if we don't
+      // store the timezone, and if we do, then act just like getDate()?
+      // for now...
+      return getTimestamp(i);
     }
-    
+
     public java.sql.Date getDate(String c,java.util.Calendar cal) throws SQLException
     {
 	return getDate(findColumn(c),cal);
     }
-    
+
     public Time getTime(String c,java.util.Calendar cal) throws SQLException
     {
 	return getTime(findColumn(c),cal);
     }
-    
+
     public Timestamp getTimestamp(String c,java.util.Calendar cal) throws SQLException
     {
 	return getTimestamp(findColumn(c),cal);
     }
-    
+
     public int getFetchDirection() throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+      // new in 7.1: PostgreSQL normally sends rows first->last
+      return FETCH_FORWARD;
     }
-    
+
     public int getFetchSize() throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+      // new in 7.1: In this implementation we return the entire result set, so
+      // here return the number of rows we have. Sub-classes can return a proper
+      // value
+      return rows.size();
     }
-    
-    public int getKeysetSize() throws SQLException
-    {
-	throw org.postgresql.Driver.notImplemented();
-    }
-    
+
     public Object getObject(String columnName,java.util.Map map) throws SQLException
     {
 	return getObject(findColumn(columnName),map);
     }
-    
+
+    /**
+     * This checks against map for the type of column i, and if found returns
+     * an object based on that mapping. The class must implement the SQLData
+     * interface.
+     */
     public Object getObject(int i,java.util.Map map) throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+      /* In preparation
+      SQLInput s = new PSQLInput(this,i);
+      String t = getTypeName(i);
+      SQLData o = (SQLData) map.get(t);
+      // If the type is not in the map, then pass to the existing code
+      if(o==null)
+        return getObject(i);
+      o.readSQL(s,t);
+      return o;
+      */throw org.postgresql.Driver.notImplemented();
     }
-    
+
     public Ref getRef(String columnName) throws SQLException
     {
 	return getRef(findColumn(columnName));
     }
-    
+
     public Ref getRef(int i) throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+      // new in 7.1: The backend doesn't yet have SQL3 REF types
+      throw new PSQLException("postgresql.psqlnotimp");
     }
-    
+
     public int getRow() throws SQLException
     {
 	return current_row + 1;
     }
-    
+
     // This one needs some thought, as not all ResultSets come from a statement
     public java.sql.Statement getStatement() throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+      return statement;
     }
-    
+
     public int getType() throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+	// New in 7.1. This implementation allows scrolling but is not able to
+        // see any changes. Sub-classes may overide this to return a more
+        // meaningful result.
+        return TYPE_SCROLL_INSENSITIVE;
     }
-    
+
     public void insertRow() throws SQLException
     {
 	throw org.postgresql.Driver.notImplemented();
     }
-    
+
     public boolean isAfterLast() throws SQLException
     {
 	return (current_row >= rows.size()  && rows.size() > 0);
@@ -1074,17 +1117,17 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 	this_row = (byte [][])rows.elementAt(current_row);
 	return true;
     }
-    
+
     public void moveToCurrentRow() throws SQLException
     {
 	throw org.postgresql.Driver.notImplemented();
     }
-    
+
     public void moveToInsertRow() throws SQLException
     {
 	throw org.postgresql.Driver.notImplemented();
     }
-    
+
     public boolean previous() throws SQLException
     {
 	if (--current_row < 0)
@@ -1092,49 +1135,49 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 	this_row = (byte [][])rows.elementAt(current_row);
 	return true;
     }
-    
+
     public void refreshRow() throws SQLException
     {
 	throw org.postgresql.Driver.notImplemented();
     }
-    
+
     // Peter: Implemented in 7.0
     public boolean relative(int rows) throws SQLException
     {
 	//have to add 1 since absolute expects a 1-based index
 	return absolute(current_row+1+rows);
     }
-    
+
     public boolean rowDeleted() throws SQLException
     {
 	throw org.postgresql.Driver.notImplemented();
     }
-    
+
     public boolean rowInserted() throws SQLException
     {
 	throw org.postgresql.Driver.notImplemented();
     }
-    
+
     public boolean rowUpdated() throws SQLException
     {
 	throw org.postgresql.Driver.notImplemented();
     }
-    
+
     public void setFetchDirection(int direction) throws SQLException
     {
 	throw org.postgresql.Driver.notImplemented();
     }
-    
+
     public void setFetchSize(int rows) throws SQLException
     {
 	throw org.postgresql.Driver.notImplemented();
     }
-    
+
     public void setKeysetSize(int keys) throws SQLException
     {
 	throw org.postgresql.Driver.notImplemented();
     }
-    
+
     public void updateAsciiStream(int columnIndex,
 				  java.io.InputStream x,
 				  int length
@@ -1142,7 +1185,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
     {
 	throw org.postgresql.Driver.notImplemented();
     }
-    
+
     public void updateAsciiStream(String columnName,
 				  java.io.InputStream x,
 				  int length
@@ -1150,21 +1193,21 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
     {
 	updateAsciiStream(findColumn(columnName),x,length);
     }
-    
+
     public void updateBigDecimal(int columnIndex,
 				  java.math.BigDecimal x
 				  ) throws SQLException
     {
 	throw org.postgresql.Driver.notImplemented();
     }
-    
+
     public void updateBigDecimal(String columnName,
 				  java.math.BigDecimal x
 				  ) throws SQLException
     {
 	updateBigDecimal(findColumn(columnName),x);
     }
-    
+
     public void updateBinaryStream(int columnIndex,
 				  java.io.InputStream x,
 				  int length
@@ -1172,7 +1215,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
     {
 	throw org.postgresql.Driver.notImplemented();
     }
-    
+
     public void updateBinaryStream(String columnName,
 				  java.io.InputStream x,
 				  int length
@@ -1180,37 +1223,37 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
     {
 	updateBinaryStream(findColumn(columnName),x,length);
     }
-    
+
     public void updateBoolean(int columnIndex,boolean x) throws SQLException
     {
 	throw org.postgresql.Driver.notImplemented();
     }
-    
+
     public void updateBoolean(String columnName,boolean x) throws SQLException
     {
 	updateBoolean(findColumn(columnName),x);
     }
-    
+
     public void updateByte(int columnIndex,byte x) throws SQLException
     {
 	throw org.postgresql.Driver.notImplemented();
     }
-    
+
     public void updateByte(String columnName,byte x) throws SQLException
     {
 	updateByte(findColumn(columnName),x);
     }
-    
+
     public void updateBytes(String columnName,byte[] x) throws SQLException
     {
 	updateBytes(findColumn(columnName),x);
     }
-    
+
     public void updateBytes(int columnIndex,byte[] x) throws SQLException
     {
 	throw org.postgresql.Driver.notImplemented();
     }
-    
+
     public void updateCharacterStream(int columnIndex,
 				      java.io.Reader x,
 				      int length
@@ -1218,7 +1261,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
     {
 	throw org.postgresql.Driver.notImplemented();
     }
-    
+
     public void updateCharacterStream(String columnName,
 				      java.io.Reader x,
 				      int length
@@ -1226,131 +1269,146 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
     {
 	updateCharacterStream(findColumn(columnName),x,length);
     }
-    
+
     public void updateDate(int columnIndex,java.sql.Date x) throws SQLException
     {
 	throw org.postgresql.Driver.notImplemented();
     }
-    
+
     public void updateDate(String columnName,java.sql.Date x) throws SQLException
     {
 	updateDate(findColumn(columnName),x);
     }
-    
+
     public void updateDouble(int columnIndex,double x) throws SQLException
     {
 	throw org.postgresql.Driver.notImplemented();
     }
-    
+
     public void updateDouble(String columnName,double x) throws SQLException
     {
 	updateDouble(findColumn(columnName),x);
     }
-    
+
     public void updateFloat(int columnIndex,float x) throws SQLException
     {
 	throw org.postgresql.Driver.notImplemented();
     }
-    
+
     public void updateFloat(String columnName,float x) throws SQLException
     {
 	updateFloat(findColumn(columnName),x);
     }
-    
+
     public void updateInt(int columnIndex,int x) throws SQLException
     {
 	throw org.postgresql.Driver.notImplemented();
     }
-    
+
     public void updateInt(String columnName,int x) throws SQLException
     {
 	updateInt(findColumn(columnName),x);
     }
-    
+
     public void updateLong(int columnIndex,long x) throws SQLException
     {
 	throw org.postgresql.Driver.notImplemented();
     }
-    
+
     public void updateLong(String columnName,long x) throws SQLException
     {
 	updateLong(findColumn(columnName),x);
     }
-    
+
     public void updateNull(int columnIndex) throws SQLException
     {
 	throw org.postgresql.Driver.notImplemented();
     }
-    
+
     public void updateNull(String columnName) throws SQLException
     {
 	updateNull(findColumn(columnName));
     }
-    
+
     public void updateObject(int columnIndex,Object x) throws SQLException
     {
 	throw org.postgresql.Driver.notImplemented();
     }
-    
+
     public void updateObject(String columnName,Object x) throws SQLException
     {
 	updateObject(findColumn(columnName),x);
     }
-    
+
     public void updateObject(int columnIndex,Object x,int scale) throws SQLException
     {
 	throw org.postgresql.Driver.notImplemented();
     }
-    
+
     public void updateObject(String columnName,Object x,int scale) throws SQLException
     {
 	updateObject(findColumn(columnName),x,scale);
     }
-    
+
     public void updateRow() throws SQLException
     {
 	throw org.postgresql.Driver.notImplemented();
     }
-    
+
     public void updateShort(int columnIndex,short x) throws SQLException
     {
 	throw org.postgresql.Driver.notImplemented();
     }
-    
+
     public void updateShort(String columnName,short x) throws SQLException
     {
 	updateShort(findColumn(columnName),x);
     }
-    
+
     public void updateString(int columnIndex,String x) throws SQLException
     {
 	throw org.postgresql.Driver.notImplemented();
     }
-    
+
     public void updateString(String columnName,String x) throws SQLException
     {
 	updateString(findColumn(columnName),x);
     }
-    
+
     public void updateTime(int columnIndex,Time x) throws SQLException
     {
 	throw org.postgresql.Driver.notImplemented();
     }
-    
+
     public void updateTime(String columnName,Time x) throws SQLException
     {
 	updateTime(findColumn(columnName),x);
     }
-    
+
     public void updateTimestamp(int columnIndex,Timestamp x) throws SQLException
     {
 	throw org.postgresql.Driver.notImplemented();
     }
-    
+
     public void updateTimestamp(String columnName,Timestamp x) throws SQLException
     {
 	updateTimestamp(findColumn(columnName),x);
     }
-    
+
+    // helper method. Throws an SQLException when an update is not possible
+    public void notUpdateable() throws SQLException
+    {
+      throw new PSQLException("postgresql.noupdate");
+    }
+
+    /**
+     * This is called by Statement to register itself with this statement.
+     * It's used currently by getStatement() but may also with the new core
+     * package.
+     */
+    public void setStatement(org.postgresql.Statement statement) {
+      this.statement=statement;
+    }
+
 }
 

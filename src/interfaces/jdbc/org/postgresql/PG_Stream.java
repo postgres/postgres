@@ -6,6 +6,7 @@ import java.net.*;
 import java.util.*;
 import java.sql.*;
 import org.postgresql.*;
+import org.postgresql.core.*;
 import org.postgresql.util.*;
 
 /**
@@ -22,10 +23,10 @@ public class PG_Stream
   private Socket connection;
   private InputStream pg_input;
   private BufferedOutputStream pg_output;
-  
+
     BytePoolDim1 bytePoolDim1 = new BytePoolDim1();
     BytePoolDim2 bytePoolDim2 = new BytePoolDim2();
-    
+
   /**
    * Constructor:  Connect to the PostgreSQL back end and return
    * a stream connection.
@@ -37,16 +38,16 @@ public class PG_Stream
   public PG_Stream(String host, int port) throws IOException
   {
     connection = new Socket(host, port);
-    
+
     // Submitted by Jason Venner <jason@idiom.com> adds a 10x speed
     // improvement on FreeBSD machines (caused by a bug in their TCP Stack)
     connection.setTcpNoDelay(true);
-    
+
     // Buffer sizes submitted by Sverre H Huseby <sverrehu@online.no>
     pg_input = new BufferedInputStream(connection.getInputStream(), 8192);
     pg_output = new BufferedOutputStream(connection.getOutputStream(), 8192);
   }
-  
+
   /**
    * Sends a single character to the back end
    *
@@ -59,11 +60,11 @@ public class PG_Stream
       //byte b[] = new byte[1];
       //b[0] = (byte)val;
       //pg_output.write(b);
-      
+
       // Optimised version by Sverre H. Huseby Aug 22 1999 Applied Sep 13 1999
       pg_output.write((byte)val);
   }
-  
+
   /**
    * Sends an integer to the back end
    *
@@ -74,7 +75,7 @@ public class PG_Stream
   public void SendInteger(int val, int siz) throws IOException
   {
     byte[] buf = bytePoolDim1.allocByte(siz);
-    
+
     while (siz-- > 0)
       {
 	buf[siz] = (byte)(val & 0xff);
@@ -82,7 +83,7 @@ public class PG_Stream
       }
     Send(buf);
   }
-  
+
   /**
    * Sends an integer to the back end in reverse order.
    *
@@ -106,7 +107,7 @@ public class PG_Stream
       }
     Send(buf);
   }
-  
+
   /**
    * Send an array of bytes to the backend
    *
@@ -117,7 +118,7 @@ public class PG_Stream
   {
     pg_output.write(buf);
   }
-  
+
   /**
    * Send an exact array of bytes to the backend - if the length
    * has not been reached, send nulls until it has.
@@ -130,7 +131,7 @@ public class PG_Stream
   {
     Send(buf,0,siz);
   }
-  
+
   /**
    * Send an exact array of bytes to the backend - if the length
    * has not been reached, send nulls until it has.
@@ -143,7 +144,7 @@ public class PG_Stream
   public void Send(byte buf[], int off, int siz) throws IOException
   {
     int i;
-    
+
     pg_output.write(buf, off, ((buf.length-off) < siz ? (buf.length-off) : siz));
     if((buf.length-off) < siz)
       {
@@ -153,7 +154,7 @@ public class PG_Stream
 	  }
       }
   }
-  
+
   /**
    * Sends a packet, prefixed with the packet's length
    * @param buf buffer to send
@@ -164,7 +165,7 @@ public class PG_Stream
     SendInteger(buf.length+4,4);
     Send(buf);
   }
-  
+
   /**
    * Receives a single character from the backend
    *
@@ -174,7 +175,7 @@ public class PG_Stream
   public int ReceiveChar() throws SQLException
   {
     int c = 0;
-    
+
     try
       {
 	c = pg_input.read();
@@ -184,7 +185,7 @@ public class PG_Stream
       }
       return c;
   }
-  
+
   /**
    * Receives an integer from the backend
    *
@@ -195,13 +196,13 @@ public class PG_Stream
   public int ReceiveInteger(int siz) throws SQLException
   {
     int n = 0;
-    
+
     try
       {
 	for (int i = 0 ; i < siz ; i++)
 	  {
 	    int b = pg_input.read();
-	    
+
 	    if (b < 0)
 	      throw new PSQLException("postgresql.stream.eof");
 	    n = n | (b << (8 * i)) ;
@@ -211,7 +212,7 @@ public class PG_Stream
       }
       return n;
   }
-  
+
   /**
    * Receives an integer from the backend
    *
@@ -222,13 +223,13 @@ public class PG_Stream
   public int ReceiveIntegerR(int siz) throws SQLException
   {
     int n = 0;
-    
+
     try
       {
 	for (int i = 0 ; i < siz ; i++)
 	  {
 	    int b = pg_input.read();
-	    
+
 	    if (b < 0)
 	      throw new PSQLException("postgresql.stream.eof");
 	    n = b | (n << 8);
@@ -270,24 +271,24 @@ public class PG_Stream
     byte[] rst = bytePoolDim1.allocByte(maxsiz);
     return ReceiveString(rst, maxsiz, encoding);
   }
-  
+
   /**
    * Receives a null-terminated string from the backend.  Maximum of
    * maxsiz bytes - if we don't see a null, then we assume something
    * has gone wrong.
    *
-   * @param rst byte array to read the String into. rst.length must 
-   *        equal to or greater than maxsize. 
+   * @param rst byte array to read the String into. rst.length must
+   *        equal to or greater than maxsize.
    * @param maxsiz maximum length of string in bytes
    * @param encoding the charset encoding to use.
    * @return string from back end
    * @exception SQLException if an I/O error occurs
    */
-  public String ReceiveString(byte rst[], int maxsiz, String encoding) 
+  public String ReceiveString(byte rst[], int maxsiz, String encoding)
       throws SQLException
   {
     int s = 0;
-    
+
     try
       {
 	while (s < maxsiz)
@@ -318,7 +319,7 @@ public class PG_Stream
       }
       return v;
   }
-  
+
   /**
    * Read a tuple from the back end.  A tuple is a two dimensional
    * array of bytes
@@ -334,10 +335,10 @@ public class PG_Stream
     int i, bim = (nf + 7)/8;
     byte[] bitmask = Receive(bim);
     byte[][] answer = bytePoolDim2.allocByte(nf);
-    
+
     int whichbit = 0x80;
     int whichbyte = 0;
-    
+
     for (i = 0 ; i < nf ; ++i)
       {
 	boolean isNull = ((bitmask[whichbyte] & whichbit) == 0);
@@ -347,21 +348,21 @@ public class PG_Stream
 	    ++whichbyte;
 	    whichbit = 0x80;
 	  }
-	if (isNull) 
+	if (isNull)
 	  answer[i] = null;
 	else
 	  {
 	    int len = ReceiveIntegerR(4);
-	    if (!bin) 
+	    if (!bin)
 	      len -= 4;
-	    if (len < 0) 
+	    if (len < 0)
 	      len = 0;
 	    answer[i] = Receive(len);
 	  }
       }
     return answer;
   }
-  
+
   /**
    * Reads in a given number of bytes from the backend
    *
@@ -375,7 +376,7 @@ public class PG_Stream
     Receive(answer,0,siz);
     return answer;
   }
-  
+
   /**
    * Reads in a given number of bytes from the backend
    *
@@ -387,8 +388,8 @@ public class PG_Stream
   public void Receive(byte[] b,int off,int siz) throws SQLException
   {
     int s = 0;
-    
-    try 
+
+    try
       {
 	while (s < siz)
 	  {
@@ -401,7 +402,7 @@ public class PG_Stream
 	  throw new PSQLException("postgresql.stream.ioerror",e);
       }
   }
-  
+
   /**
    * This flushes any pending output to the backend. It is used primarily
    * by the Fastpath code.
@@ -415,7 +416,7 @@ public class PG_Stream
       throw new PSQLException("postgresql.stream.flush",e);
     }
   }
-  
+
   /**
    * Closes the connection
    *
@@ -430,151 +431,5 @@ public class PG_Stream
     connection.close();
   }
 
-  /**
-   * Deallocate all resources that has been associated with any previous
-   * query.
-   */
-  public void deallocate(){
-      bytePoolDim1.deallocate();
-      bytePoolDim2.deallocate();
-  }
-}
-
-/**
- * A simple and fast object pool implementation that can pool objects 
- * of any type. This implementation is not thread safe, it is up to the users
- * of this class to assure thread safety. 
- */
-class ObjectPool {
-    int cursize = 0;
-    int maxsize = 16;
-    Object arr[] = new Object[maxsize];
-    
-    public void add(Object o){
-	if(cursize >= maxsize){
-	    Object newarr[] = new Object[maxsize*2];
-	    System.arraycopy(arr, 0, newarr, 0, maxsize);
-	    maxsize = maxsize * 2;
-	    arr = newarr;
-	}
-	arr[cursize++] = o;
-    }
-    
-    public Object remove(){
-	return arr[--cursize];
-    }
-    public boolean isEmpty(){
-	return cursize == 0;
-    }
-    public int size(){
-	return cursize;
-    }
-    public void addAll(ObjectPool pool){
-	int srcsize = pool.size();
-	if(srcsize == 0)
-	    return;
-	int totalsize = srcsize + cursize;
-	if(totalsize > maxsize){
-	    Object newarr[] = new Object[totalsize*2];
-	    System.arraycopy(arr, 0, newarr, 0, cursize);
-	    maxsize = maxsize = totalsize * 2;
-	    arr = newarr;
-	}
-	System.arraycopy(pool.arr, 0, arr, cursize, srcsize);
-	cursize = totalsize;
-    }
-    public void clear(){
-	    cursize = 0;
-    }
-}
-
-/**
- * A simple and efficient class to pool one dimensional byte arrays
- * of different sizes.
- */
-class BytePoolDim1 {
-    int maxsize = 256;
-    ObjectPool notusemap[] = new ObjectPool[maxsize];
-    ObjectPool inusemap[] = new ObjectPool[maxsize];
-    byte binit[][] = new byte[maxsize][0];
-
-    public BytePoolDim1(){
-	for(int i = 0; i < maxsize; i++){
-	    binit[i] = new byte[i];
-	    inusemap[i] = new ObjectPool();
-	    notusemap[i] = new ObjectPool();
-	}
-    }
-
-    public byte[] allocByte(int size){
-	if(size > maxsize){
-	    return new byte[size];
-	}
-
-	ObjectPool not_usel = notusemap[size];
-	ObjectPool in_usel = inusemap[size];
-	byte b[] = null;
-
-	if(!not_usel.isEmpty()) {
-	    Object o = not_usel.remove();
-	    b = (byte[]) o;
-	} else 
-	    b = new byte[size];
-	in_usel.add(b);
-	    
-	return b;
-    }
-	
-    public void deallocate(){
-	for(int i = 0; i < maxsize; i++){
-	    notusemap[i].addAll(inusemap[i]);
-	    inusemap[i].clear();
-	}
-
-    }
-}
-
-
-  
-/**
- * A simple and efficient class to pool two dimensional byte arrays
- * of different sizes.
- */
-class BytePoolDim2 {
-    int maxsize = 32;
-    ObjectPool notusemap[] = new ObjectPool[maxsize];
-    ObjectPool inusemap[] = new ObjectPool[maxsize];
-
-    public BytePoolDim2(){
-	for(int i = 0; i < maxsize; i++){
-	    inusemap[i] = new ObjectPool();
-	    notusemap[i] = new ObjectPool();
-	}
-    }
-
-    public byte[][] allocByte(int size){
-	if(size > maxsize){
-	    return new byte[size][0];
-	}
-	ObjectPool not_usel = notusemap[size];
-	ObjectPool in_usel =  inusemap[size];
-
-	byte b[][] = null;
-
-	if(!not_usel.isEmpty()) {
-	    Object o = not_usel.remove();
-	    b = (byte[][]) o;
-	} else 
-	    b = new byte[size][0];
-	in_usel.add(b);
-	return b;
-    }
-	
-    public void deallocate(){
-	for(int i = 0; i < maxsize; i++){
-	    notusemap[i].addAll(inusemap[i]);
-	    inusemap[i].clear();
-	}
-    }
 }
 

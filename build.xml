@@ -1,0 +1,94 @@
+<!--
+
+  build file to allow ant (http://jakarta.apache.org/ant/) to be used
+  to build the PostgreSQL JDBC Driver and any associated java utilities under
+  /contrib.
+
+  This is placed here for three reasons:
+
+  1: You only need to run ANT once to get everything.
+  2: To let people know that there are more java sources under /contrib.
+  3: In the next release (after 7.1) it's intended to have configure to
+     detect the presence of both the JDK and ANT, and if both are found
+     to build the jdbc driver and utils with the rest of postgresql.
+
+  $Id: build.xml,v 1.1 2001/01/18 14:50:14 peter Exp $
+
+-->
+
+<project name="postgresql" default="jar" basedir=".">
+
+  <!--
+	This is the normal entry point. It builds first the
+	jdbc driver, then the extra tools.
+  -->
+  <target name="jar">
+    <antcall target="call">
+      <param name="target" value="jar" />
+    </antcall>
+  </target>
+
+  <!--
+	This entry point clears the source tree. Call this when you want
+	to build a clean install.
+  -->
+  <target name="clean">
+    <antcall target="call">
+      <param name="target" value="clean" />
+    </antcall>
+  </target>
+
+  <!--
+	This entry point installs the .jar files into an install directory.
+
+	To use this, call ant as follows:
+
+	ant -Dinstall.directory=mydir install
+
+	Where mydir is the _Absolute_ path of the directory to create.
+
+
+	If the directory mydir does not exist it will be created.
+
+	If the directory is not absolute then the install will fail by
+	creating subdirectories in the build path. Be careful.
+
+
+	This is intended for "make install" to call it.
+
+e.g.
+  Windows: ant -Dc:\jars install
+     Unix: ant -Dinstall.directory=/usr/local/lib/jars install
+   Cygwin: ant -Dinstall.directory=$(cygpath -w /usr/local/lib/jars) install
+
+  -->
+  <target name="install" if="install.directory">
+    <mkdir dir="${install.directory}" />
+    <antcall target="call">
+      <param name="target" value="install" />
+    </antcall>
+  </target>
+
+  <!--
+	This actually calls the other two build.xml files.
+	To use it, use the <antcall> tag, and pass the destination target
+	within a <param> tag using name="target".
+
+	ie:
+
+	  <antcall target="call">
+	    <param name="target" value="mytarget" />
+	  </antcall>
+
+	Here, the target mytarget will be called from all the sub build.xml
+	files.
+
+	Note:	The target must be present in _ALL_ build.xml files otherwise
+		the build will fail.
+  -->
+  <target name="call">
+    <ant dir="src/interfaces/jdbc" target="${target}" />
+    <ant dir="contrib/retep" target="${target}" />
+  </target>
+</project>
+  

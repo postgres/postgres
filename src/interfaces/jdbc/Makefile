@@ -4,7 +4,7 @@
 #    Makefile for Java JDBC interface
 #
 # IDENTIFICATION
-#    $Id: Makefile,v 1.25 2000/10/12 08:55:23 peter Exp $
+#    $Id: Makefile,v 1.26 2001/01/18 14:50:14 peter Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -39,10 +39,30 @@ PGBASE		= org/postgresql
 # New for 7.1: The jar filename
 JARFILE		= postgresql.jar
 
+all:
+	@echo ------------------------------------------------------------
+	@echo The use of Make to build the driver is now depreciated in
+	@echo version 7.1 and later. To build the driver you now need to
+	@echo use ANT. This is the build tool of the Jakarta project, and
+	@echo you can obtain this from http://jakarta.apache.org/ant/
+	@echo
+	@echo Once you have this installed, change directory to the root
+	@echo directory of the postgresql source and type ant.
+	@echo
+	@echo ie: if you are currently in the pgsql/src/interfaces/jdbc
+	@echo directory then cd into the pgsql one \(cd ../../.. should
+	@echo do\).
+	@echo
+	@echo The file Implementation contains more info on this, as does
+	@echo the homepage http://jdbc.postgresql.org/
+	@echo ------------------------------------------------------------
+
 # Yet another attempt to check the version. In theory, any JVM that fails
 # this is breaking the versioning specifications released by Javasoft.
 #
-all:	utils/CheckVersion.class
+# In 7.1 this is renamed oldall so that the depreciated message is shown.
+#
+oldall:	utils/CheckVersion.class
 	@$(MAKE) `$(JAVA) utils.CheckVersion`
 
 # For 6.5.3 and 7.0+, we need to select the correct JDBC API, so prompt
@@ -72,7 +92,10 @@ huho:
 	@echo
 	@echo ------------------------------------------------------------
 
-msg:	
+# In 7.1 replaced msg so that the depreciated message is shown.
+msg: all
+
+oldmsg:	
 	@echo ------------------------------------------------------------
 	@echo The JDBC driver has now been built. To make it available to
 	@echo other applications, copy the postgresql.jar file to a public

@@ -10,10 +10,10 @@ import java.util.*;
 public class PSQLException extends SQLException
 {
     private String message;
-    
+
     // Cache for future errors
     static ResourceBundle bundle;
-    
+
     /**
      * This provides the same functionality to SQLException
      * @param error Error string
@@ -22,7 +22,7 @@ public class PSQLException extends SQLException
 	super();
 	translate(error,null);
     }
-    
+
     /**
      * A more generic entry point.
      * @param error Error string or standard message id
@@ -33,7 +33,7 @@ public class PSQLException extends SQLException
 	//super();
 	translate(error,args);
     }
-    
+
     /**
      * Helper version for 1 arg
      */
@@ -44,7 +44,7 @@ public class PSQLException extends SQLException
 	argv[0] = arg;
 	translate(error,argv);
     }
-    
+
     /**
      * Helper version for 2 args
      */
@@ -56,7 +56,7 @@ public class PSQLException extends SQLException
 	argv[1] = arg2;
 	translate(error,argv);
     }
-    
+
     /**
      * This does the actual translation
      */
@@ -70,7 +70,7 @@ public class PSQLException extends SQLException
                 message = id;
 	    }
 	}
-	
+
         if (bundle != null) {
 	// Now look up a localized message. If one is not found, then use
 	// the supplied message instead.
@@ -81,13 +81,13 @@ public class PSQLException extends SQLException
 	        message = id;
 	    }
         }
-	
+
 	// Expand any arguments
-	if(args!=null)
+	if(args!=null && message != null)
 	    message = MessageFormat.format(message,args);
-	
+
     }
-    
+
     /**
      * Overides Throwable
      */
@@ -95,7 +95,7 @@ public class PSQLException extends SQLException
     {
 	return message;
     }
-    
+
     /**
      * Overides Throwable
      */
@@ -103,7 +103,7 @@ public class PSQLException extends SQLException
     {
 	return message;
     }
-    
+
     /**
      * Overides Object
      */
@@ -111,5 +111,5 @@ public class PSQLException extends SQLException
     {
 	return message;
     }
-    
+
 }

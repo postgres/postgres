@@ -1,28 +1,87 @@
 This short document is provided to help programmers through the internals of
 the PostgreSQL JDBC driver.
 
+Last update: January 17 2001 peter@retep.org.uk
+
+build.xml
+---------
+
+As of 7.1, we now use the ANT build tool to build the driver. ANT is part of
+the Apache/Jakarta project, and provides far superior build capabilities. You
+can find ANT from http://jakarta.apache.org/ant/index.html and being pure java
+it will run on any java platform.
+
+So far I've tested it under JDK1.2.x & JDK1.3 (both Linux & NT) but not yet with
+JDK1.1.8. Because of the latter the Makefile still works for now, but should be
+gone for 7.2.
+
+Anyhow, to build, simply type ant and the .jar file will be created and put into
+the jars directory.
+
+Tip: If you run ant from the sources root directory (ie: where the configure
+script is located) you will find another build.xml file. It is advised to run
+ant from that directory as it will then compile some auxilary Java/JDBC
+utilities that are located under the /contrib/retep directory.
+
 Makefile
 --------
 
-All compilation must be done by using Make. This is because there are two
-versions of the driver, one for JDBC1 (for JDK 1.1.x) and the other for JDBC2
-(for JDK 1.2 or later). The makefile determines which version to compile by
-using a helper class makeVersion. This class is only used by make, and is not
-stored in the Jar file.
+Prior to 7.1, all compilation must be done by using Make. This is because there
+are three versions of the driver, one for JDBC1 (for JDK 1.1.x) and the others
+for JDBC2 (for JDK 1.2 or later, one standard and one enterprise).
 
-Note:	It is not sufficient to simply call javac on postgresql/Driver.java as
-	some classes are dynamically loaded, so javac will not compile them.
+As of 7.1, ANT is the build tool of choice. Just compare Makefile and build.xml
+to see why! Make just isn't suited to Java.
+
+Building with just the JDK
+--------------------------
+
+This is not advised, simply because you have to make sure you include the
+correct classes, and the fact that org.postgresql.Driver is built on the fly.
+Also, javac won't pick up all the classes because some (org.postgresql.geometric
+for example) are loaded dynamically.
+
+org/postgresql/Driver.java.in
+-----------------------------
+
+Because there are three versions of the driver, the org.postgresql.Driver class
+is built dynamically. To build correctly ANT copies the Driver.java.in file to
+Driver.java replacing certain values according to the required driver.
+
+The replaced values are of the format %VALUE%, ie: %MAJORVERSION% is replaced
+with 7 in the 7.1 version of the driver.
 
 postgresql.jar
 --------------
 
-This jar file is produced by make, and contains the driver for your JDK
-platform.
+This jar file is produced by ANT, and contains the driver for your JDK platform.
 
-Note:	It is possible to compile the driver under say JDK1.1.7, then under
-	JDK 1.2. Because make doesn't remove the old classes before compiling,
-	jar will simply package both sets together. When the driver is loaded,
-	the postgresql.Driver class will sort out which set of classes to use.
+If you downloaded a precompiled binary from the web, you may find that the
+jar file will be named differently. These are identical to this file but are
+named according to the backend and jdk versions.
+
+The naming convention is of the form: jdbc-#.#-#.##.jar
+
+ie: for 7.1
+  jdbc-7.1-1.1.jar    JDBC Driver for JDK1.1.8
+  jdbc-7.1-1.2.jar    JDBC Driver for JDK1.2 & JDK1.3
+  jdbc-7.1-1.2ent.jar JDBC Driver for JDK1.2 & JDK1.3 Enterprise Editions
+
+If in the future there are any 1.3 specific classes then there will be two new
+jar files.
+
+Note: All the precompiled binaries are built under Linux.
+
+jdbc.jpx
+--------
+
+This is a JBuilder4 project file. It's here to allow JBuilder to be used to
+develop the driver. Mainly for it's Editor's features like syntax checking and
+auto-completion etc.
+
+IMPORTANT: You CAN NOT build the driver from within JBuilder. You must use ANT.
+           This is because of the three versions of the JDK. If you try to use
+           JBuilder, it will try to build everything, and it will just not work.
 
 Importing packages
 ------------------
@@ -50,16 +109,17 @@ Package Layout
 
 The driver is split into several packages:
 
-postgresql			core classes, common to both JDBC 1 & 2
-postgresql.jdbc1		classes used only in implementing JDBC 1
-postgresql.jdbc2		classes used only in implementing JDBC 2
-postgresql.fastpath		FastPath to backend functions
-postgresql.geometric		2D Geometric types mapped to Java Objects
-postgresql.largeobject		Low level Large Object access
-postgresql.util			Utility classes
+org.postgresql			core classes that can be accessed by user code
+org.postgresql.core             core classes not normally used externally
+org.postgresql.jdbc1		classes used only in implementing JDBC 1
+org.postgresql.jdbc2		classes used only in implementing JDBC 2
+org.postgresql.fastpath		FastPath to backend functions
+org.postgresql.geometric		2D Geometric types mapped to Java Objects
+org.postgresql.largeobject		Low level Large Object access
+org.postgresql.util			Utility classes
 
 
-Package postgresql
+Package org.postgresql
 ------------------
 
 This package holds the core classes.
@@ -70,6 +130,9 @@ Driver		registers the driver when it's loaded, and determines which
 
 Field		Used internally to represent a Field
 PG_Stream	Used internally to manage the network stream.
+PostgresqlDataSource
+                Exists in the Java2 Enterprise edition driver only and is the
+                enterprise equivalent to Driver
 
 	These classes contains common code that is not dependent to the
 	two JDBC specifications.
@@ -77,13 +140,25 @@ PG_Stream	Used internally to manage the network stream.
 Connection	Common code used in Connections, mainly Network Protocol stuff.
 ResultSet	Common code used in ResultSet's
 
-Package postgresql.fastpath
+Package org.postgresql.core
+-----------------------
+
+New in 7.1, this is where core classes (common to all versions) will exist. Any
+new class that would have gone into org.postgresql must go in here instead.
+
+BytePoolDim1    Handles a pool of byte[] arrays.
+BytePoolDim2    Handles a pool of byte[][] arrays
+MemoryPool      Interface for managing MemoryPools. Not used (yet).
+ObjectPool      Interface for an Object Pool
+SimpleObjectPool Class that implements ObjectPool and used by BytePoolDim#
+
+Package org.postgresql.fastpath
 ---------------------------
 
 Fastpath	Handles executing a function on the PostgreSQL Backend
 FastpathArg	Defines an argument for a function call
 
-Package postgresql.geometric
+Package org.postgresql.geometric
 ----------------------------
 
 PGbox		Maps to postgresql type box
@@ -94,25 +169,25 @@ PGpath		Maps to postgresql type path
 PGpoint		Maps to postgresql type point
 PGpolygon	Maps to postgresql type polygon
 
-Package postgresql.jdbc1
+Package org.postgresql.jdbc1
 ------------------------
 
 The classes in this package handle the JDBC 1 Specification, for JDK 1.1.x
 All interfaces in the java.sql package are present here.
 
-Package postgresql.jdbc2
+Package org.postgresql.jdbc2
 ------------------------
 
 The classes in this package handle the JDBC 2 Specification, for JDK 1.2
 All interfaces in the java.sql, and javax.sql packages are present here.
 
-Package postgresql.largeobject
+Package org.postgresql.largeobject
 ------------------------------
 
 LargeObject		Represents an open LargeObject
 LargeObjectManager	Handles the opening and deleting of LargeObjects
 
-Package postgresql.util
+Package org.postgresql.util
 -----------------------
 
 PGmoney		Maps to postgresql type money

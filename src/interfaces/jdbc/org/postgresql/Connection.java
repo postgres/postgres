@@ -10,7 +10,7 @@ import org.postgresql.largeobject.*;
 import org.postgresql.util.*;
 
 /**
- * $Id: Connection.java,v 1.11 2000/12/22 03:08:52 momjian Exp $
+ * $Id: Connection.java,v 1.12 2001/01/18 14:50:14 peter Exp $
  *
  * This abstract class is used by org.postgresql.Driver to open either the JDBC1 or
  * JDBC2 versions of the Connection class.
@@ -20,10 +20,10 @@ public abstract class Connection
 {
   // This is the network stream associated with this connection
   public PG_Stream pg_stream;
-  
+
   // This is set by org.postgresql.Statement.setMaxRows()
   public int maxrows = 0;		// maximum no. of rows; 0 = unlimited
-  
+
   private String PG_HOST;
   private int PG_PORT;
   private String PG_USER;
@@ -38,17 +38,17 @@ public abstract class Connection
    *  used.
    */
   private String encoding;
-  
+
   public boolean CONNECTION_OK = true;
   public boolean CONNECTION_BAD = false;
-  
+
   public boolean autoCommit = true;
   public boolean readOnly = false;
-  
+
   public Driver this_driver;
   private String this_url;
   private String cursor = null;	// The positioned update cursor name
-  
+
   // These are new for v6.3, they determine the current protocol versions
   // supported by this version of the driver. They are defined in
   // src/include/libpq/pqcomm.h
@@ -59,41 +59,41 @@ public abstract class Connection
   private static final int SM_OPTIONS	= 64;
   private static final int SM_UNUSED	= 64;
   private static final int SM_TTY	= 64;
-  
+
   private static final int AUTH_REQ_OK       = 0;
   private static final int AUTH_REQ_KRB4     = 1;
   private static final int AUTH_REQ_KRB5     = 2;
   private static final int AUTH_REQ_PASSWORD = 3;
   private static final int AUTH_REQ_CRYPT    = 4;
-  
+
   // New for 6.3, salt value for crypt authorisation
   private String salt;
-  
+
   // This is used by Field to cache oid -> names.
   // It's here, because it's shared across this connection only.
   // Hence it cannot be static within the Field class, because it would then
   // be across all connections, which could be to different backends.
   public Hashtable fieldCache = new Hashtable();
-  
+
   // Now handle notices as warnings, so things like "show" now work
   public SQLWarning firstWarning = null;
-    
+
     // The PID an cancellation key we get from the backend process
     public int pid;
     public int ckey;
 
     // This receive_sbuf should be used by the different methods
-    // that call pg_stream.ReceiveString() in this Connection, so 
-    // so we avoid uneccesary new allocations. 
+    // that call pg_stream.ReceiveString() in this Connection, so
+    // so we avoid uneccesary new allocations.
     byte receive_sbuf[] = new byte[8192];
-    
+
     /**
      * This is called by Class.forName() from within org.postgresql.Driver
      */
     public Connection()
     {
     }
-    
+
     /**
      * This method actually opens the connection. It is called by Driver.
      *
@@ -115,7 +115,7 @@ public abstract class Connection
       throw new PSQLException("postgresql.con.user");
     if(info.getProperty("password")==null)
       throw new PSQLException("postgresql.con.pass");
-    
+
     this_driver = d;
     this_url = url;
     PG_DATABASE = database;
@@ -137,7 +137,7 @@ public abstract class Connection
       } catch (IOException e) {
 	throw new PSQLException ("postgresql.con.failed",e);
       }
-      
+
       // Now we need to construct and send a startup packet
       try
 	{
@@ -146,13 +146,13 @@ public abstract class Connection
 	  pg_stream.SendInteger(PG_PROTOCOL_LATEST_MAJOR,2);
 	  pg_stream.SendInteger(PG_PROTOCOL_LATEST_MINOR,2);
 	  pg_stream.Send(database.getBytes(),SM_DATABASE);
-	  
+
 	  // This last send includes the unused fields
 	  pg_stream.Send(PG_USER.getBytes(),SM_USER+SM_OPTIONS+SM_UNUSED+SM_TTY);
-	  
+
 	  // now flush the startup packets to the backend
 	  pg_stream.flush();
-	  
+
 	  // Now get the response from the backend, either an error message
 	  // or an authentication request
 	  int areq = -1; // must have a value here
@@ -169,11 +169,11 @@ public abstract class Connection
 		//
 		throw new SQLException(pg_stream.ReceiveString
                                        (receive_sbuf, 4096, getEncoding()));
-		
+
 	      case 'R':
 		// Get the type of request
 		areq = pg_stream.ReceiveIntegerR(4);
-		
+
 		// Get the password salt if there is one
 		if(areq == AUTH_REQ_CRYPT) {
 		  byte[] rst = new byte[2];
@@ -182,21 +182,21 @@ public abstract class Connection
 		  salt = new String(rst,0,2);
 		  DriverManager.println("Salt="+salt);
 		}
-		
+
 		// now send the auth packet
 		switch(areq)
 		  {
 		  case AUTH_REQ_OK:
 		    break;
-		    
+
 		  case AUTH_REQ_KRB4:
 		    DriverManager.println("postgresql: KRB4");
 		    throw new PSQLException("postgresql.con.kerb4");
-		    
+
 		  case AUTH_REQ_KRB5:
 		    DriverManager.println("postgresql: KRB5");
 		    throw new PSQLException("postgresql.con.kerb5");
-		    
+
 		  case AUTH_REQ_PASSWORD:
 		    DriverManager.println("postgresql: PASSWORD");
 		    pg_stream.SendInteger(5+PG_PASSWORD.length(),4);
@@ -204,7 +204,7 @@ public abstract class Connection
 		    pg_stream.SendInteger(0,1);
 		    pg_stream.flush();
 		    break;
-		    
+
 		  case AUTH_REQ_CRYPT:
 		    DriverManager.println("postgresql: CRYPT");
 		    String crypted = UnixCrypt.crypt(salt,PG_PASSWORD);
@@ -213,21 +213,21 @@ public abstract class Connection
 		    pg_stream.SendInteger(0,1);
 		    pg_stream.flush();
 		    break;
-		    
+
 		  default:
 		    throw new PSQLException("postgresql.con.auth",new Integer(areq));
 		  }
 		break;
-		
+
 	      default:
 		throw new PSQLException("postgresql.con.authfail");
 	      }
 	    } while(areq != AUTH_REQ_OK);
-	  
+
 	} catch (IOException e) {
 	  throw new PSQLException("postgresql.con.failed",e);
 	}
-	
+
 
       // As of protocol version 2.0, we should now receive the cancellation key and the pid
       int beresp = pg_stream.ReceiveChar();
@@ -266,7 +266,7 @@ public abstract class Connection
       // We also ask the DB for certain properties (i.e. DatabaseEncoding at this time)
       //
       firstWarning = null;
-      
+
       java.sql.ResultSet initrset = ExecSQL("set datestyle to 'ISO'; select getdatabaseencoding()");
 
       String dbEncoding = null;
@@ -341,19 +341,19 @@ public abstract class Connection
           encoding = null;
         }
       }
-      
+
       // Initialise object handling
       initObjectTypes();
-      
+
       // Mark the connection as ok, and cleanup
       firstWarning = null;
       PG_STATUS = CONNECTION_OK;
     }
-    
+
     // These methods used to be in the main Connection implementation. As they
     // are common to all implementations (JDBC1 or 2), they are placed here.
     // This should make it easy to maintain the two specifications.
-    
+
     /**
      * This adds a warning to the warning chain.
      * @param msg message to add
@@ -361,15 +361,15 @@ public abstract class Connection
     public void addWarning(String msg)
     {
 	DriverManager.println(msg);
-	
+
 	// Add the warning to the chain
 	if(firstWarning!=null)
 	    firstWarning.setNextWarning(new SQLWarning(msg));
 	else
 	    firstWarning = new SQLWarning(msg);
-	
+
 	// Now check for some specific messages
-	
+
 	// This is obsolete in 6.5, but I've left it in here so if we need to use this
 	// technique again, we'll know where to place it.
 	//
@@ -377,13 +377,13 @@ public abstract class Connection
 	//if(msg.startsWith("NOTICE:") && msg.indexOf("DateStyle")>0) {
 	//// 13 is the length off "DateStyle is "
 	//msg = msg.substring(msg.indexOf("DateStyle is ")+13);
-	//  
+	//
 	//for(int i=0;i<dateStyles.length;i+=2)
 	//if(msg.startsWith(dateStyles[i]))
 	//currentDateStyle=i+1; // this is the index of the format
 	//}
     }
-    
+
     /**
      * Send a query to the backend.  Returns one of the ResultSet
      * objects.
@@ -404,8 +404,10 @@ public abstract class Connection
   	    // This will let the driver reuse byte arrays that has already
   	    // been allocated instead of allocating new ones in order
   	    // to gain performance improvements.
-  	    pg_stream.deallocate();	    
-	    
+  	    // PM 17/01/01: Commented out due to race bug. See comments in
+            // PG_Stream
+            //pg_stream.deallocate();
+
 	    Field[] fields = null;
 	    Vector tuples = new Vector();
 	    byte[] buf = null;
@@ -415,7 +417,7 @@ public abstract class Connection
 	    int update_count = 1;
 	    int insert_oid = 0;
 	    SQLException final_error = null;
-	    
+
 	    // Commented out as the backend can now handle queries
 	    // larger than 8K. Peter June 6 2000
 	    //if (sql.length() > 8192)
@@ -441,13 +443,13 @@ public abstract class Connection
 		} catch (IOException e) {
 		    throw new PSQLException("postgresql.con.ioerror",e);
 		}
-	    
+
 	    while (!hfr || fqp > 0)
 		{
 		    Object tup=null;	// holds rows as they are recieved
-		    
+
 		    int c = pg_stream.ReceiveChar();
-		    
+
 		    switch (c)
 			{
 			case 'A':	// Asynchronous Notify
@@ -464,7 +466,7 @@ public abstract class Connection
 			    break;
 			case 'C':	// Command Status
 			    recv_status = pg_stream.ReceiveString(receive_sbuf,8192,getEncoding());
-				
+
 				// Now handle the update count correctly.
 				if(recv_status.startsWith("INSERT") || recv_status.startsWith("UPDATE") || recv_status.startsWith("DELETE")) {
 					try {
@@ -511,7 +513,7 @@ public abstract class Connection
 			    break;
 			case 'I':	// Empty Query
 			    int t = pg_stream.ReceiveChar();
-			    
+
 			    if (t != 0)
 				throw new PSQLException("postgresql.con.garbled");
 			    if (fqp > 0)
@@ -538,7 +540,7 @@ public abstract class Connection
 		}
 	    if (final_error != null)
 		throw final_error;
-		
+
 	    return getResultSet(this, fields, tuples, recv_status, update_count, insert_oid);
 	}
     }
@@ -553,7 +555,7 @@ public abstract class Connection
     {
 	int nf = pg_stream.ReceiveIntegerR(2), i;
 	Field[] fields = new Field[nf];
-	
+
 	for (i = 0 ; i < nf ; ++i)
 	    {
 		String typname = pg_stream.ReceiveString(receive_sbuf,8192,getEncoding());
@@ -564,7 +566,7 @@ public abstract class Connection
 	    }
 	return fields;
     }
-    
+
     /**
      * In SQL, a result table can be retrieved through a cursor that
      * is named.  The current row of a result can be updated or deleted
@@ -582,7 +584,7 @@ public abstract class Connection
     {
 	this.cursor = cursor;
     }
-    
+
     /**
      * getCursorName gets the cursor name.
      *
@@ -593,7 +595,7 @@ public abstract class Connection
     {
 	return cursor;
     }
-    
+
     /**
      * We are required to bring back certain information by
      * the DatabaseMetaData class.  These functions do that.
@@ -607,7 +609,7 @@ public abstract class Connection
     {
 	return this_url;
     }
-    
+
     /**
      * Method getUserName() brings back the User Name (again, we
      * saved it)
@@ -622,13 +624,13 @@ public abstract class Connection
 
     /**
      *  Get the character encoding to use for this connection.
-     *  @return the encoding to use, or <b>null</b> for the 
+     *  @return the encoding to use, or <b>null</b> for the
      *  default encoding.
      */
     public String getEncoding() throws SQLException {
         return encoding;
     }
-    
+
     /**
      * This returns the Fastpath API for the current connection.
      *
@@ -657,10 +659,10 @@ public abstract class Connection
 	    fastpath = new Fastpath(this,pg_stream);
 	return fastpath;
     }
-    
+
     // This holds a reference to the Fastpath API if already open
     private Fastpath fastpath = null;
-    
+
     /**
      * This returns the LargeObject API for the current connection.
      *
@@ -686,10 +688,10 @@ public abstract class Connection
 	    largeobject = new LargeObjectManager(this);
 	return largeobject;
     }
-    
+
     // This holds a reference to the LargeObject API if already open
     private LargeObjectManager largeobject = null;
-    
+
     /**
      * This method is used internally to return an object based around
      * org.postgresql's more unique data types.
@@ -713,7 +715,7 @@ public abstract class Connection
     {
 	try {
 	    Object o = objectTypes.get(type);
-	    
+
 	    // If o is null, then the type is unknown, so check to see if type
 	    // is an actual table name. If it does, see if a Class is known that
 	    // can handle it
@@ -722,7 +724,7 @@ public abstract class Connection
 		objectTypes.put(type,ser);
 		return ser.fetch(Integer.parseInt(value));
 	    }
-	    
+
 	    // If o is not null, and it is a String, then its a class name that
 	    // extends PGobject.
 	    //
@@ -748,11 +750,11 @@ public abstract class Connection
 	} catch(Exception ex) {
 	    throw new PSQLException("postgresql.con.creobj",type,ex);
 	}
-	
+
 	// should never be reached
 	return null;
     }
-    
+
     /**
      * This stores an object into the database.
      * @param o Object to store
@@ -765,7 +767,7 @@ public abstract class Connection
 	try {
 	    String type = o.getClass().getName();
 	    Object x = objectTypes.get(type);
-	    
+
 	    // If x is null, then the type is unknown, so check to see if type
 	    // is an actual table name. If it does, see if a Class is known that
 	    // can handle it
@@ -774,15 +776,15 @@ public abstract class Connection
 		objectTypes.put(type,ser);
 		return ser.store(o);
 	    }
-	    
+
 	    // If it's an object, it should be an instance of our Serialize class
 	    // If so, then call it's fetch method.
 	    if(x instanceof Serialize)
 		return ((Serialize)x).store(o);
-	    
+
 	    // Thow an exception because the type is unknown
 	    throw new PSQLException("postgresql.con.strobj");
-	    
+
 	} catch(SQLException sx) {
 	    // rethrow the exception. Done because we capture any others next
 	    sx.fillInStackTrace();
@@ -791,7 +793,7 @@ public abstract class Connection
 	    throw new PSQLException("postgresql.con.strobjex",ex);
 	}
     }
-    
+
     /**
      * This allows client code to add a handler for one of org.postgresql's
      * more unique data types.
@@ -816,10 +818,10 @@ public abstract class Connection
     {
 	objectTypes.put(type,name);
     }
-    
+
     // This holds the available types
     private Hashtable objectTypes = new Hashtable();
-    
+
     // This array contains the types that are supported as standard.
     //
     // The first entry is the types name on the database, the second
@@ -835,25 +837,25 @@ public abstract class Connection
 	{"polygon",	"org.postgresql.geometric.PGpolygon"},
 	{"money",	"org.postgresql.util.PGmoney"}
     };
-    
+
     // This initialises the objectTypes hashtable
     private void initObjectTypes()
     {
 	for(int i=0;i<defaultObjectTypes.length;i++)
 	    objectTypes.put(defaultObjectTypes[i][0],defaultObjectTypes[i][1]);
     }
-    
+
     // These are required by other common classes
     public abstract java.sql.Statement createStatement() throws SQLException;
-    
+
     /**
      * This returns a resultset. It must be overridden, so that the correct
      * version (from jdbc1 or jdbc2) are returned.
      */
     protected abstract java.sql.ResultSet getResultSet(org.postgresql.Connection conn, Field[] fields, Vector tuples, String status, int updateCount,int insertOID) throws SQLException;
-    
+
     public abstract void close() throws SQLException;
-	
+
     /**
      * Overides finalize(). If called, it closes the connection.
      *
@@ -866,12 +868,33 @@ public abstract class Connection
     {
 	close();
     }
-    
+
     /**
      * This is an attempt to implement SQL Escape clauses
      */
     public String EscapeSQL(String sql) {
-	return sql;
+      //if (DEBUG) { System.out.println ("parseSQLEscapes called"); }
+
+      // If we find a "{d", assume we have a date escape.
+      //
+      // Since the date escape syntax is very close to the
+      // native Postgres date format, we just remove the escape
+      // delimiters.
+      //
+      // This implementation could use some optimization, but it has
+      // worked in practice for two years of solid use.
+      int index = sql.indexOf("{d");
+      while (index != -1) {
+        //System.out.println ("escape found at index: " + index);
+        StringBuffer buf = new StringBuffer(sql);
+        buf.setCharAt(index, ' ');
+        buf.setCharAt(index + 1, ' ');
+        buf.setCharAt(sql.indexOf('}', index), ' ');
+        sql = new String(buf);
+        index = sql.indexOf("{d");
+      }
+      //System.out.println ("modified SQL: " + sql);
+      return sql;
     }
-    
+
 }
