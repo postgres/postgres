@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.163 1998/10/26 01:04:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.163.2.1 1998/11/24 05:50:42 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -460,12 +460,17 @@ tableList(PsqlSettings *pset, bool deep_tablelist, char info_type,
 				perror("malloc");
 
 			/* load table table */
+			/* Put double quotes around the table name to allow for mixed-case
+			 * and whitespaces in the table name. - BGA 1998-11-14
+			 */
 			for (i = 0; i < nColumns; i++)
 			{
-				table[i] = (char *) malloc(PQgetlength(res, i, 1) * sizeof(char) + 1);
+				table[i] = (char *) malloc(PQgetlength(res, i, 1) * sizeof(char) + 3);
 				if (table[i] == NULL)
 					perror("malloc");
-				strcpy(table[i], PQgetvalue(res, i, 1));
+				strcpy(table[i], "\"");
+				strcat(table[i], PQgetvalue(res, i, 1));
+				strcat(table[i], "\"");
 			}
 
 			PQclear(res);
