@@ -56,3 +56,9 @@ Thu Feb 24 12:26:12 CET 1998
 
 	- allow 'go to' in whenever statement as well as 'goto'
 	- new argument 'stop' for whenever statement
+
+Wed Feb 25 15:46:50 CET 1998
+
+	- corrected whenever continue handling
+	- removed whenever break
+

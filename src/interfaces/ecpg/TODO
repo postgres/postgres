@@ -47,7 +47,7 @@ The cursor is opened when the declare statement is issued.
 
 ecpg does not understand enum datatypes.
 
-The is no exec sql prepare statement.
+There is no exec sql prepare statement.
 
 The complete structure definition has to be listed inside the declare
 section for ecpg to be able to understand it.

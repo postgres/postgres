@@ -19,7 +19,6 @@ label	({letter}|{digit})*
 string	'[^']*'
 
 begin	[bB][eE][gG][iI][nN]
-break   [bB][rR][eE][aA][kK]
 commit  [cC][oO][mM][mM][iI][tT]
 connect [cC][oO][nN][nN][eE][cC][tT]
 continue [cC][oO][nN][tT][iI][nN][uU][eE]

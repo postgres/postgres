@@ -228,7 +228,7 @@ dump_variables(struct arguments * list)
 %token <tagname> SQL_BEGIN SQL_END SQL_DECLARE SQL_SECTION SQL_INCLUDE 
 %token <tagname> SQL_CONNECT SQL_OPEN SQL_EXECUTE SQL_IMMEDIATE
 %token <tagname> SQL_COMMIT SQL_ROLLBACK SQL_RELEASE SQL_WORK SQL_WHENEVER
-%token <tagname> SQL_SQLERROR SQL_NOT_FOUND SQL_BREAK SQL_CONTINUE
+%token <tagname> SQL_SQLERROR SQL_NOT_FOUND SQL_CONTINUE
 %token <tagname> SQL_DO SQL_GOTO SQL_SQLPRINT SQL_STOP
 
 %token <tagname> S_SYMBOL S_LENGTH S_ANYTHING S_LABEL
@@ -526,13 +526,8 @@ sqlwhenever : SQL_START SQL_WHENEVER SQL_SQLERROR {
 	fprintf(yyout, "; */\n");
 }
 
-action : SQL_BREAK {
-	$<action>$.code = W_BREAK;
-	$<action>$.str = NULL;
-	fprintf(yyout, "break");
-}
-       | SQL_CONTINUE {
-	$<action>$.code = W_CONTINUE;
+action : SQL_CONTINUE {
+	$<action>$.code = W_NOTHING;
 	$<action>$.str = NULL;
 	fprintf(yyout, "continue");
 }
@@ -615,7 +610,7 @@ sqlstatement_word : ':' symbol
 into_list : ':' symbol {
     add_variable(&argsresult, find_variable($2)); 
 }
-	  | into_list ',' ':' symbol{
+	  | into_list ',' ':' symbol {
     add_variable(&argsresult, find_variable($4)); 
 };
 
