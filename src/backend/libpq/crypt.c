@@ -9,7 +9,7 @@
  * Dec 17, 1997 - Todd A. Brandys
  *	Orignal Version Completed.
  *
- * $Id: crypt.c,v 1.29 2000/08/27 21:50:18 tgl Exp $
+ * $Id: crypt.c,v 1.30 2001/02/07 23:31:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,8 +30,11 @@
 char	  **pwd_cache = NULL;
 int			pwd_cache_count = 0;
 
-/*-------------------------------------------------------------------------*/
-
+/*
+ * crypt_getpwdfilename --- get name of password file
+ *
+ * Note that result string is palloc'd, and should be freed by the caller.
+ */
 char *
 crypt_getpwdfilename(void)
 {
@@ -45,8 +48,11 @@ crypt_getpwdfilename(void)
 	return pfnam;
 }
 
-/*-------------------------------------------------------------------------*/
-
+/*
+ * crypt_getpwdreloadfilename --- get name of password-reload-needed flag file
+ *
+ * Note that result string is palloc'd, and should be freed by the caller.
+ */
 char *
 crypt_getpwdreloadfilename(void)
 {
@@ -58,6 +64,7 @@ crypt_getpwdreloadfilename(void)
 	bufsize = strlen(pwdfilename) + strlen(CRYPT_PWD_RELOAD_SUFX) + 1;
 	rpfnam = (char *) palloc(bufsize);
 	snprintf(rpfnam, bufsize, "%s%s", pwdfilename, CRYPT_PWD_RELOAD_SUFX);
+	pfree(pwdfilename);
 
 	return rpfnam;
 }
@@ -76,6 +83,8 @@ crypt_openpwdfile(void)
 	if (pwdfile == NULL)
 		fprintf(stderr, "Couldn't read %s: %s\n",
 				filename, strerror(errno));
+
+	pfree(filename);
 
 	return pwdfile;
 }
@@ -119,7 +128,6 @@ compar_user(const void *user_a, const void *user_b)
 static void
 crypt_loadpwdfile(void)
 {
-
 	char	   *filename;
 	int			result;
 	FILE	   *pwd_file;
@@ -127,6 +135,7 @@ crypt_loadpwdfile(void)
 
 	filename = crypt_getpwdreloadfilename();
 	result = unlink(filename);
+	pfree(filename);
 
 	/*
 	 * We want to delete the flag file before reading the contents of the
@@ -134,7 +143,7 @@ crypt_loadpwdfile(void)
 	 * successful. This means that a backend performed a COPY of the
 	 * pg_shadow file to pg_pwd.  Therefore we must now do a reload.
 	 */
-	if (!pwd_cache || !result)
+	if (!pwd_cache || result == 0)
 	{
 		if (pwd_cache)
 		{						/* free the old data only if this is a
