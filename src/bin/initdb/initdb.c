@@ -12,7 +12,7 @@
  * This is a C implementation of the previous shell script for setting up a
  * PostgreSQL cluster location, and should be highly compatible with it.
  *
- * $Header: /cvsroot/pgsql/src/bin/initdb/initdb.c,v 1.5 2003/11/13 15:01:40 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/initdb/initdb.c,v 1.6 2003/11/13 20:12:47 momjian Exp $
  *
  * TODO:
  *	 - clean up find_postgres code and return values
@@ -122,6 +122,7 @@ static void canonicalize_path(char *);
 
 #ifdef WIN32
 static char *expanded_path(char *);
+
 #else
 #define expanded_path(x) (x)
 #endif
@@ -246,10 +247,10 @@ rmtree(char *path, bool rmtopdir)
 #ifndef WIN32
 	/* doesn't handle .* files */
 	snprintf(buf, sizeof(buf), "rm -rf '%s%s'", path,
-		rmtopdir ? "" : "/*");
+			 rmtopdir ? "" : "/*");
 #else
 	snprintf(buf, sizeof(buf), "%s /s /q \"%s\"",
-		rmtopdir ? "rmdir" : "del", path);
+			 rmtopdir ? "rmdir" : "del", path);
 #endif
 
 	return !system(buf);
@@ -816,6 +817,7 @@ find_postgres(char *path)
 		return FIND_NOT_REGFILE;
 
 #ifndef WIN32
+
 	/*
 	 * Only unix requires this test, on WIN32 an .exe file should be
 	 * executable
@@ -859,7 +861,7 @@ expanded_path(char *path)
 	canonicalize_path(abspath);
 	return xstrdup(abspath);
 }
-#endif 
+#endif
 
 /*
  * set the paths pointing to postgres
@@ -1045,7 +1047,7 @@ test_buffers(void)
 	for (i = 0; i < len; i++)
 	{
 		snprintf(cmd, sizeof(cmd), format, pgpath, bufs[i], n_connections,
-			DEVNULL, DEVNULL);
+				 DEVNULL, DEVNULL);
 		status = system(cmd);
 		if (status == 0)
 			break;
@@ -1286,7 +1288,7 @@ get_set_pwd(void)
 	PG_CMD_OPEN;
 
 	if (fprintf(pg,
-				"ALTER USER \"%s\" WITH PASSWORD '%s';\n", username, pwd1) < 0)
+		  "ALTER USER \"%s\" WITH PASSWORD '%s';\n", username, pwd1) < 0)
 	{
 		/* write failure */
 		exit_nicely();
@@ -2276,9 +2278,9 @@ main(int argc, char *argv[])
 	check_input(system_views_file);
 
 	printf("The files belonging to this database system will be owned "
-	       "by user \"%s\".\n"
-	       "This user must also own the server process.\n\n",
-	       effective_user);
+		   "by user \"%s\".\n"
+		   "This user must also own the server process.\n\n",
+		   effective_user);
 
 	setlocales();
 
@@ -2413,8 +2415,8 @@ main(int argc, char *argv[])
 		   "    %s%s%s/postmaster -D %s%s%s\n"
 		   "or\n"
 		   "    %s%s%s/pg_ctl -D %s%s%s -l logfile start\n\n",
-			QUOTE_PATH, pgpath, QUOTE_PATH, QUOTE_PATH, pg_data, QUOTE_PATH,
-			QUOTE_PATH, pgpath, QUOTE_PATH, QUOTE_PATH, pg_data, QUOTE_PATH);
+		 QUOTE_PATH, pgpath, QUOTE_PATH, QUOTE_PATH, pg_data, QUOTE_PATH,
+		QUOTE_PATH, pgpath, QUOTE_PATH, QUOTE_PATH, pg_data, QUOTE_PATH);
 
 	return 0;
 }
