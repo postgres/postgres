@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.69 2001/11/12 20:04:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.70 2002/03/01 06:01:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -777,6 +777,8 @@ adjust_inherited_attrs_mutator(Node *node,
 		newinfo->this_selec = -1;
 		newinfo->left_pathkey = NIL;	/* and these */
 		newinfo->right_pathkey = NIL;
+		newinfo->left_mergescansel = -1;
+		newinfo->right_mergescansel = -1;
 		newinfo->left_bucketsize = -1;
 		newinfo->right_bucketsize = -1;
 

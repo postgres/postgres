@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.163 2002/02/26 22:47:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.164 2002/03/01 06:01:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1406,6 +1406,8 @@ _copyRestrictInfo(RestrictInfo *from)
 	 */
 	newnode->left_pathkey = NIL;
 	newnode->right_pathkey = NIL;
+	newnode->left_mergescansel = from->left_mergescansel;
+	newnode->right_mergescansel = from->right_mergescansel;
 	newnode->hashjoinoperator = from->hashjoinoperator;
 	newnode->left_bucketsize = from->left_bucketsize;
 	newnode->right_bucketsize = from->right_bucketsize;

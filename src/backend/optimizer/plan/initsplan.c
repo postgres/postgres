@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.65 2001/10/25 05:49:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.66 2002/03/01 06:01:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -370,6 +370,8 @@ distribute_qual_to_rels(Query *root, Node *clause,
 	restrictinfo->right_sortop = InvalidOid;
 	restrictinfo->left_pathkey = NIL;	/* not computable yet */
 	restrictinfo->right_pathkey = NIL;
+	restrictinfo->left_mergescansel = -1; /* not computed until needed */
+	restrictinfo->right_mergescansel = -1;
 	restrictinfo->hashjoinoperator = InvalidOid;
 	restrictinfo->left_bucketsize = -1; /* not computed until needed */
 	restrictinfo->right_bucketsize = -1;

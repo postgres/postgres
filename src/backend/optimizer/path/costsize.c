@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.80 2002/03/01 04:09:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.81 2002/03/01 06:01:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -566,6 +566,7 @@ cost_mergejoin(Path *path, Query *root,
 	Cost		startup_cost = 0;
 	Cost		run_cost = 0;
 	Cost		cpu_per_tuple;
+	RestrictInfo *firstclause;
 	double		outer_rows,
 				inner_rows;
 	double		ntuples;
@@ -581,10 +582,18 @@ cost_mergejoin(Path *path, Query *root,
 	 * Estimate fraction of the left and right inputs that will actually
 	 * need to be scanned.  We use only the first (most significant)
 	 * merge clause for this purpose.
+	 *
+	 * Since this calculation is somewhat expensive, and will be the same
+	 * for all mergejoin paths associated with the merge clause, we cache
+	 * the results in the RestrictInfo node.
 	 */
-	mergejoinscansel(root,
-					 (Node *) ((RestrictInfo *) lfirst(mergeclauses))->clause,
-					 &leftscan, &rightscan);
+	firstclause = (RestrictInfo *) lfirst(mergeclauses);
+	if (firstclause->left_mergescansel < 0)	/* not computed yet? */
+		mergejoinscansel(root, (Node *) firstclause->clause,
+						 &firstclause->left_mergescansel,
+						 &firstclause->right_mergescansel);
+	leftscan = firstclause->left_mergescansel;
+	rightscan = firstclause->right_mergescansel;
 
 	outer_rows = outer_path->parent->rows * leftscan;
 	inner_rows = inner_path->parent->rows * rightscan;
@@ -1099,9 +1108,9 @@ cost_qual_eval_walker(Node *node, Cost *total)
  * big difference.)
  *
  * The "dirty" part comes from the fact that the selectivities of multiple
- * clauses are estimated independently and multiplied together.  Currently,
- * clauselist_selectivity can seldom do any better than that anyhow, but
- * someday it might be smarter.
+ * clauses are estimated independently and multiplied together.  Now
+ * clauselist_selectivity often can't do any better than that anyhow, but
+ * for some situations (such as range constraints) it is smarter.
  *
  * Since we are only using the results to estimate how many potential
  * output tuples are generated and passed through qpqual checking, it
