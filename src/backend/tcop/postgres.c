@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.154 2000/04/30 21:29:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.155 2000/05/21 02:23:30 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1452,7 +1452,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.154 $ $Date: 2000/04/30 21:29:23 $\n");
+		puts("$Revision: 1.155 $ $Date: 2000/05/21 02:23:30 $\n");
 	}
 
 	/*
@@ -1631,6 +1631,11 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 				TPRINTF(TRACE_VERBOSE, "CommitTransactionCommand");
 			PS_SET_STATUS("commit");
 			CommitTransactionCommand();
+#ifdef SHOW_MEMORY_STATS
+			/* print global-context stats at each commit for leak tracking */
+			if (ShowStats)
+				GlobalMemoryStats();
+#endif
 		}
 		else
 		{

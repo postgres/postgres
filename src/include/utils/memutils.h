@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: memutils.h,v 1.34 2000/04/12 17:16:55 momjian Exp $
+ * $Id: memutils.h,v 1.35 2000/05/21 02:23:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -224,6 +224,7 @@ extern AllocPointer AllocSetRealloc(AllocSet set, AllocPointer pointer,
 				Size size);
 
 extern void AllocSetDump(AllocSet set);
+extern void AllocSetStats(AllocSet set, const char *ident);
 
 
 #endif	 /* MEMUTILS_H */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/aset.c,v 1.26 2000/04/12 17:16:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/aset.c,v 1.27 2000/05/21 02:23:29 tgl Exp $
  *
  * NOTE:
  *	This is a new (Feb. 05, 1999) implementation of the allocation set
@@ -540,4 +540,42 @@ void
 AllocSetDump(AllocSet set)
 {
 	elog(DEBUG, "Currently unable to dump AllocSet");
+}
+
+/*
+ * AllocSetStats
+ *		Displays stats about memory consumption of an allocset.
+ */
+void
+AllocSetStats(AllocSet set, const char *ident)
+{
+	long		nblocks = 0;
+	long		nchunks = 0;
+	long		totalspace = 0;
+	long		freespace = 0;
+	AllocBlock	block;
+	AllocChunk	chunk;
+	int			fidx;
+
+	AssertArg(AllocSetIsValid(set));
+
+	for (block = set->blocks; block != NULL; block = block->next)
+	{
+		nblocks++;
+		totalspace += block->endptr - ((char *) block);
+		freespace += block->endptr - block->freeptr;
+	}
+	for (fidx = 0; fidx < ALLOCSET_NUM_FREELISTS; fidx++)
+	{
+		for (chunk = set->freelist[fidx]; chunk != NULL;
+			 chunk = (AllocChunk) chunk->aset)
+		{
+			nchunks++;
+			freespace += chunk->size + ALLOC_CHUNKHDRSZ;
+		}
+	}
+	fprintf(stderr,
+			"%s: %ld total in %ld blocks; %ld free (%ld chunks); %ld used\n",
+			ident, totalspace, nblocks, freespace, nchunks,
+			totalspace - freespace);
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/mcxt.c,v 1.20 2000/01/26 05:57:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/mcxt.c,v 1.21 2000/05/21 02:23:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -489,7 +489,7 @@ GlobalMemoryDump(GlobalMemory this)
 	if (PointerIsValid(context))
 		printf("\tsucessor=%s\n", GlobalMemoryGetName(context));
 
-	AllocSetDump(&this->setData);		/* XXX is this right interface */
+	AllocSetDump(&this->setData);
 }
 
 /*
@@ -511,9 +511,26 @@ DumpGlobalMemories()
 	{
 		GlobalMemoryDump(context);
 
-		context = (GlobalMemory) OrderedElemGetSuccessor(
-													 &context->elemData);
+		context = (GlobalMemory) OrderedElemGetSuccessor(&context->elemData);
 	}
 }
 
 #endif
+
+/*
+ * GlobalMemoryStats
+ *		Displays stats about memory consumption of all global contexts.
+ */
+void
+GlobalMemoryStats(void)
+{
+	GlobalMemory context;
+
+	context = (GlobalMemory) OrderedSetGetHead(&ActiveGlobalMemorySetData);
+
+	while (PointerIsValid(context))
+	{
+		AllocSetStats(&context->setData, GlobalMemoryGetName(context));
+		context = (GlobalMemory) OrderedElemGetSuccessor(&context->elemData);
+	}
+}

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: mcxt.h,v 1.16 2000/01/26 05:58:38 momjian Exp $
+ * $Id: mcxt.h,v 1.17 2000/05/21 02:23:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,6 +54,7 @@ extern void MemoryContextFree(MemoryContext context, Pointer pointer);
 extern MemoryContext MemoryContextSwitchTo(MemoryContext context);
 extern GlobalMemory CreateGlobalMemory(char *name);
 extern void GlobalMemoryDestroy(GlobalMemory context);
+extern void GlobalMemoryStats(void);
 
 
 #endif	 /* MCXT_H */
