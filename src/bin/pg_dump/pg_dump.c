@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.183 2000/12/03 20:45:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.184 2001/01/04 01:23:47 tgl Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -138,7 +138,7 @@ static void dumpTriggers(Archive *fout, const char *tablename,
 			 TableInfo *tblinfo, int numTables);
 static void dumpRules(Archive *fout, const char *tablename,
 		  TableInfo *tblinfo, int numTables);
-static char *checkForQuote(const char *s);
+static void formatStringLiteral(PQExpBuffer buf, const char *str);
 static void clearTableInfo(TableInfo *, int);
 static void dumpOneFunc(Archive *fout, FuncInfo *finfo, int i,
 			TypeInfo *tinfo, int numTypes);
@@ -434,7 +434,6 @@ dumpClasses_dumpData(Archive *fout, char* oid, void *dctxv)
 	PQExpBuffer q = createPQExpBuffer();
 	int			tuple;
 	int			field;
-	const char *expsrc;
 
 	appendPQExpBuffer(q, "SELECT * FROM %s", fmtId(classname, force_quotes));
 	res = PQexec(g_conn, q->data);
@@ -492,32 +491,10 @@ dumpClasses_dumpData(Archive *fout, char* oid, void *dctxv)
 					/*
 					 * All other types are printed as string literals,
 					 * with appropriate escaping of special characters.
-					 * Quote mark ' goes to '' per SQL standard, other
-					 * stuff goes to \ sequences.
 					 */
-					archputc('\'', fout);
-					expsrc = PQgetvalue(res, tuple, field);
-					while (*expsrc)
-					{
-						char		ch = *expsrc++;
-
-						if (ch == '\\' || ch == '\'')
-						{
-							archputc(ch, fout);			/* double these */
-							archputc(ch, fout);
-						}
-						else if (ch < '\040')
-						{
-							/* generate octal escape for control chars */
-							archputc('\\', fout);
-							archputc(((ch >> 6) & 3) + '0', fout);
-							archputc(((ch >> 3) & 7) + '0', fout);
-							archputc((ch & 7) + '0', fout);
-						}
-						else
-							archputc(ch, fout);
-					}
-					archputc('\'', fout);
+					resetPQExpBuffer(q);
+					formatStringLiteral(q, PQgetvalue(res, tuple, field));
+					archprintf(fout, "%s", q->data);
 					break;
 			}
 		}
@@ -525,6 +502,41 @@ dumpClasses_dumpData(Archive *fout, char* oid, void *dctxv)
 	}
 	PQclear(res);
 	return 1;
+}
+
+/*
+ * Convert a string value to an SQL string literal,
+ * with appropriate escaping of special characters.
+ * Quote mark ' goes to '' per SQL standard, other
+ * stuff goes to \ sequences.
+ * The literal is appended to the given PQExpBuffer.
+ */
+static void
+formatStringLiteral(PQExpBuffer buf, const char *str)
+{
+	appendPQExpBufferChar(buf, '\'');
+	while (*str)
+	{
+		char	ch = *str++;
+
+		if (ch == '\\' || ch == '\'')
+		{
+			appendPQExpBufferChar(buf, ch);	/* double these */
+			appendPQExpBufferChar(buf, ch);
+		}
+		else if ((unsigned char) ch < (unsigned char) ' ' &&
+				 ch != '\n' && ch != '\t')
+		{
+			/* generate octal escape for control chars other than whitespace */
+			appendPQExpBufferChar(buf, '\\');
+			appendPQExpBufferChar(buf, ((ch >> 6) & 3) + '0');
+			appendPQExpBufferChar(buf, ((ch >> 3) & 7) + '0');
+			appendPQExpBufferChar(buf, (ch & 7) + '0');
+		}
+		else
+			appendPQExpBufferChar(buf, ch);
+	}
+	appendPQExpBufferChar(buf, '\'');
 }
 
 /*
@@ -1067,7 +1079,8 @@ dumpDatabase(Archive *AH)
 
 	/* Get the dba */
 	appendPQExpBuffer(dbQry, "select (select usename from pg_user where datdba = usesysid) as dba from pg_database"
-							" where datname = '%s'", PQdb(g_conn));
+							" where datname = ");
+	formatStringLiteral(dbQry, PQdb(g_conn));
 
 	res = PQexec(g_conn, dbQry->data);
 	if (!res ||
@@ -1826,7 +1839,7 @@ getFuncs(int *numFuncs)
 		finfo[i].oid = strdup(PQgetvalue(res, i, i_oid));
 		finfo[i].proname = strdup(PQgetvalue(res, i, i_proname));
 
-		finfo[i].prosrc = checkForQuote(PQgetvalue(res, i, i_prosrc));
+		finfo[i].prosrc = strdup(PQgetvalue(res, i, i_prosrc));
 		finfo[i].probin = strdup(PQgetvalue(res, i, i_probin));
 
 		finfo[i].prorettype = strdup(PQgetvalue(res, i, i_prorettype));
@@ -1955,7 +1968,9 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 			PGresult   *res2;
 
 			resetPQExpBuffer(query);
-			appendPQExpBuffer(query, "SELECT pg_get_viewdef('%s') as viewdef ", tblinfo[i].relname);
+			appendPQExpBuffer(query, "SELECT pg_get_viewdef(");
+			formatStringLiteral(query, tblinfo[i].relname);
+			appendPQExpBuffer(query, ") as viewdef");
 			res2 = PQexec(g_conn, query->data);
 			if (!res2 || PQresultStatus(res2) != PGRES_TUPLES_OK)
 			{
@@ -2753,8 +2768,9 @@ dumpComment(Archive *fout, const char *target, const char *oid)
 	{
 		i_description = PQfnumber(res, "description");
 		resetPQExpBuffer(query);
-		appendPQExpBuffer(query, "COMMENT ON %s IS '%s';\n",
-							target, checkForQuote(PQgetvalue(res, 0, i_description)));
+		appendPQExpBuffer(query, "COMMENT ON %s IS ", target);
+		formatStringLiteral(query, PQgetvalue(res, 0, i_description));
+		appendPQExpBuffer(query, ";\n");
 
 		ArchiveEntry(fout, oid, target, "COMMENT", NULL, query->data, "" /*Del*/,
 					   "" /* Copy */, "" /*Owner*/, NULL, NULL);	
@@ -2788,8 +2804,8 @@ dumpDBComment(Archive *fout)
 	/*** Build query to find comment ***/
 
 	query = createPQExpBuffer();
-	appendPQExpBuffer(query, "SELECT oid FROM pg_database WHERE datname = '%s'",
-					  PQdb(g_conn));
+	appendPQExpBuffer(query, "SELECT oid FROM pg_database WHERE datname = ");
+	formatStringLiteral(query, PQdb(g_conn));
 
 	/*** Execute query ***/
 
@@ -2864,25 +2880,28 @@ dumpTypes(Archive *fout, FuncInfo *finfo, int numFuncs,
 		resetPQExpBuffer(q);
 		appendPQExpBuffer(q,
 						  "CREATE TYPE %s "
-			   "( internallength = %s, externallength = %s, input = %s, "
-				  "output = %s, send = %s, receive = %s, default = '%s'",
+						  "( internallength = %s, externallength = %s,",
 						  fmtId(tinfo[i].typname, force_quotes),
 						  tinfo[i].typlen,
-						  tinfo[i].typprtlen,
-						  tinfo[i].typinput,
-						  tinfo[i].typoutput,
-						  tinfo[i].typsend,
-						  tinfo[i].typreceive,
-						  tinfo[i].typdefault);
+						  tinfo[i].typprtlen);
+		/* cannot combine these because fmtId uses static result area */
+		appendPQExpBuffer(q, " input = %s,",
+						  fmtId(tinfo[i].typinput, force_quotes));
+		appendPQExpBuffer(q, " output = %s,",
+						  fmtId(tinfo[i].typoutput, force_quotes));
+		appendPQExpBuffer(q, " send = %s,",
+						  fmtId(tinfo[i].typsend, force_quotes));
+		appendPQExpBuffer(q, " receive = %s, default = ",
+						  fmtId(tinfo[i].typreceive, force_quotes));
+		formatStringLiteral(q, tinfo[i].typdefault);
 
 		if (tinfo[i].isArray)
 		{
 			char	   *elemType;
 
 			elemType = findTypeByOid(tinfo, numTypes, tinfo[i].typelem, zeroAsOpaque);
-
-			appendPQExpBuffer(q, ", element = %s, delimiter = '%s'",
-							  elemType, tinfo[i].typdelim);
+			appendPQExpBuffer(q, ", element = %s, delimiter = ", elemType);
+			formatStringLiteral(q, tinfo[i].typdelim);
 		}
 		if (tinfo[i].passedbyvalue)
 			appendPQExpBuffer(q, ",passedbyvalue);\n");
@@ -2971,23 +2990,24 @@ dumpProcLangs(Archive *fout, FuncInfo *finfo, int numFuncs,
 
 		dumpOneFunc(fout, finfo, fidx, tinfo, numTypes);
 
-		lanname = checkForQuote(PQgetvalue(res, i, i_lanname));
-		lancompiler = checkForQuote(PQgetvalue(res, i, i_lancompiler));
+		lanname = PQgetvalue(res, i, i_lanname);
+		lancompiler = PQgetvalue(res, i, i_lancompiler);
 
-		appendPQExpBuffer(delqry, "DROP PROCEDURAL LANGUAGE '%s';\n", lanname);
+		appendPQExpBuffer(delqry, "DROP PROCEDURAL LANGUAGE ");
+		formatStringLiteral(delqry, lanname);
+		appendPQExpBuffer(delqry, ";\n");
 
-		appendPQExpBuffer(defqry, "CREATE %sPROCEDURAL LANGUAGE '%s' "
-				"HANDLER %s LANCOMPILER '%s';\n",
-				(PQgetvalue(res, i, i_lanpltrusted)[0] == 't') ? "TRUSTED " : "",
-				lanname,
-				fmtId(finfo[fidx].proname, force_quotes),
-				lancompiler);
+		appendPQExpBuffer(defqry, "CREATE %sPROCEDURAL LANGUAGE ",
+						  (PQgetvalue(res, i, i_lanpltrusted)[0] == 't') ?
+						  "TRUSTED " : "");
+		formatStringLiteral(defqry, lanname);
+		appendPQExpBuffer(defqry, " HANDLER %s LANCOMPILER ",
+						  fmtId(finfo[fidx].proname, force_quotes));
+		formatStringLiteral(defqry, lancompiler);
+		appendPQExpBuffer(defqry, ";\n");
 
 		ArchiveEntry(fout, PQgetvalue(res, i, i_oid), lanname, "PROCEDURAL LANGUAGE",
 			    NULL, defqry->data, delqry->data, "", "", NULL, NULL);
-
-		free(lanname);
-		free(lancompiler);
 
 		resetPQExpBuffer(defqry);
 		resetPQExpBuffer(delqry);
@@ -3071,15 +3091,21 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo, int i,
 	 */
 	if (strcmp(finfo[i].probin, "-") != 0)
 	{
+		appendPQExpBuffer(asPart, "AS ");
+		formatStringLiteral(asPart, finfo[i].probin);
 		if (strcmp(finfo[i].prosrc, "-") != 0)
-			appendPQExpBuffer(asPart, "AS '%s', '%s'", finfo[i].probin, finfo[i].prosrc);
-		else
-			appendPQExpBuffer(asPart, "AS '%s'", finfo[i].probin);
+		{
+			appendPQExpBuffer(asPart, ", ");
+			formatStringLiteral(asPart, finfo[i].prosrc);
+		}
 	}
 	else
 	{
 		if (strcmp(finfo[i].prosrc, "-") != 0)
-			appendPQExpBuffer(asPart, "AS '%s'", finfo[i].prosrc);
+		{
+			appendPQExpBuffer(asPart, "AS ");
+			formatStringLiteral(asPart, finfo[i].prosrc);
+		}
 	}
 
 	strcpy(func_lang, PQgetvalue(res, 0, i_lanname));
@@ -3107,10 +3133,11 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo, int i,
 
 	resetPQExpBuffer(q);
 	appendPQExpBuffer(q, "CREATE FUNCTION %s ", fn->data );
-	appendPQExpBuffer(q, "RETURNS %s%s %s LANGUAGE '%s'",
-					  (finfo[i].retset) ? " SETOF " : "",
+	appendPQExpBuffer(q, "RETURNS %s%s %s LANGUAGE ",
+					  (finfo[i].retset) ? "SETOF " : "",
 					  findTypeByOid(tinfo, numTypes, finfo[i].prorettype, zeroAsOpaque),
-					  asPart->data, func_lang);
+					  asPart->data);
+	formatStringLiteral(q, func_lang);
 
 	if (finfo[i].iscachable || finfo[i].isstrict) /* OR in new attrs here */
 	{
@@ -3286,8 +3313,10 @@ dumpAggs(Archive *fout, AggInfo *agginfo, int numAggs,
 						  findTypeByOid(tinfo, numTypes, agginfo[i].aggtranstype, zeroAsOpaque + useBaseTypeName));
 
 		if (agginfo[i].agginitval)
-			appendPQExpBuffer(details, ", INITCOND = '%s'",
-							  agginfo[i].agginitval);
+		{
+			appendPQExpBuffer(details, ", INITCOND = ");
+			formatStringLiteral(details, agginfo[i].agginitval);
+		}
 
 		if (!(strcmp(agginfo[i].aggfinalfn, "-") == 0))
 			appendPQExpBuffer(details, ", FINALFUNC = %s",
@@ -3970,7 +3999,8 @@ findLastBuiltinOid(const char* dbname)
 	PQExpBuffer query = createPQExpBuffer();
 
 	resetPQExpBuffer(query);
-	appendPQExpBuffer(query, "SELECT datlastsysoid from pg_database where datname = '%s'", dbname);
+	appendPQExpBuffer(query, "SELECT datlastsysoid from pg_database where datname = ");
+	formatStringLiteral(query, dbname);
 
 	res = PQexec(g_conn, query->data);
 	if (res == NULL ||
@@ -3996,41 +4026,6 @@ findLastBuiltinOid(const char* dbname)
 	last_oid = atoi(PQgetvalue(res, 0, PQfnumber(res, "datlastsysoid")));
 	PQclear(res);
 	return last_oid;
-}
-
-
-/*
- * checkForQuote:
- *	  checks a string for quote characters and quotes them
- */
-static char *
-checkForQuote(const char *s)
-{
-	char	   *r;
-	char		c;
-	char	   *result;
-
-	int			j = 0;
-
-	r = malloc(strlen(s) * 3 + 1);		/* definitely long enough */
-
-	while ((c = *s) != '\0')
-	{
-
-		if (c == '\'')
-		{
-			r[j++] = '\'';		/* quote the single quotes */
-		}
-		r[j++] = c;
-		s++;
-	}
-	r[j] = '\0';
-
-	result = strdup(r);
-	free(r);
-
-	return result;
-
 }
 
 
@@ -4113,8 +4108,9 @@ dumpSequence(Archive *fout, TableInfo tbinfo)
 
 
 	resetPQExpBuffer(query);
-	appendPQExpBuffer(query, "SELECT setval ('%s', %d, '%c');\n", 
-						fmtId(tbinfo.relname, force_quotes), last, called);
+	appendPQExpBuffer(query, "SELECT setval (");
+	formatStringLiteral(query, fmtId(tbinfo.relname, force_quotes));
+	appendPQExpBuffer(query, ", %d, '%c');\n", last, called);
 
 	ArchiveEntry(fout, tbinfo.oid, fmtId(tbinfo.relname, force_quotes), "SEQUENCE SET", NULL,
 					query->data, "" /* Del */, "", "", NULL, NULL);
@@ -4191,12 +4187,13 @@ dumpRules(Archive *fout, const char *tablename,
 						  "   (select usename from pg_user where pg_class.relowner = usesysid) AS viewowner, "
 						  "   pg_rewrite.oid, pg_rewrite.rulename "
 						  "FROM pg_rewrite, pg_class, pg_rules "
-						  "WHERE pg_class.relname = '%s' "
+						  "WHERE pg_class.relname = ");
+		formatStringLiteral(query, tblinfo[t].relname);
+		appendPQExpBuffer(query,
 						  "    AND pg_rewrite.ev_class = pg_class.oid "
 						  "    AND pg_rules.tablename = pg_class.relname "
 						  "    AND pg_rules.rulename = pg_rewrite.rulename "
-						  "ORDER BY pg_rewrite.oid",
-						  tblinfo[t].relname);
+						  "ORDER BY pg_rewrite.oid");
 		res = PQexec(g_conn, query->data);
 		if (!res ||
 			PQresultStatus(res) != PGRES_TUPLES_OK)
