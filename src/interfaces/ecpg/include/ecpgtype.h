@@ -46,7 +46,8 @@ extern		"C"
 		ECPGt_EOIT,				/* End of insert types. */
 		ECPGt_EORT,				/* End of result types. */
 		ECPGt_NO_INDICATOR,		/* no indicator */
-		ECPGt_long_long, ECPGt_unsigned_long_long
+		ECPGt_long_long, ECPGt_unsigned_long_long,
+		ECPGt_descriptor	/* sql descriptor, no C variable */
 	};
 
 	/* descriptor items */
@@ -71,7 +72,7 @@ extern		"C"
 		ECPGd_EODT				/* End of descriptor types. */
 	};
 
-#define IS_SIMPLE_TYPE(type) (((type) >= ECPGt_char && (type) <= ECPGt_varchar2) || (type)>=ECPGt_long_long)
+#define IS_SIMPLE_TYPE(type) (((type) >= ECPGt_char && (type) <= ECPGt_varchar2) || ((type)>=ECPGt_long_long && (type) <= ECPGt_unsigned_long_long))
 
 #ifdef __cplusplus
 }

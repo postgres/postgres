@@ -169,6 +169,9 @@ get_type(enum ECPGttype typ)
 										 * quoted */
 			return ("ECPGt_char_variable");
 			break;
+		case ECPGt_descriptor:
+			return ("ECPGt_descriptor");
+			break;
 		default:
 			sprintf(errortext, "illegal variable type %d\n", typ);
 			yyerror(errortext);
@@ -252,6 +255,10 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * typ, const char *in
 			ECPGdump_a_simple(o, name, typ->typ, 1, 1, NULL, prefix);
 			ECPGdump_a_simple(o, ind_name, ind_typ->typ, ind_typ->size, -1, NULL, ind_prefix);
 			break;
+		case ECPGt_descriptor:
+			ECPGdump_a_simple(o, name, typ->typ, 0, -1, NULL, prefix);
+			ECPGdump_a_simple(o, ind_name, ind_typ->typ, ind_typ->size, -1, NULL, ind_prefix);
+			break;
 		default:
 			ECPGdump_a_simple(o, name, typ->typ, typ->size, -1, NULL, prefix);
 			if (ind_typ != NULL)
@@ -273,6 +280,9 @@ ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype typ,
 {
 	if (typ == ECPGt_NO_INDICATOR)
 		fprintf(o, "\n\tECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ");
+	else if (typ == ECPGt_descriptor)
+		/* remember that name here already contains quotes (if needed) */
+		fprintf(o, "\n\tECPGt_descriptor, %s, 0L, 0L, 0L, ", name);
 	else
 	{
 		char	   *variable = (char *) mm_alloc(strlen(name) + ((prefix == NULL) ? 0 : strlen(prefix)) + 4);

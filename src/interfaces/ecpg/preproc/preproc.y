@@ -217,8 +217,8 @@ make_name(void)
 %token  ABORT_TRANS, ACCESS, AFTER, AGGREGATE, ANALYSE, ANALYZE,
 		BACKWARD, BEFORE, BINARY, BIT, CACHE, CHECKPOINT, CLUSTER,
 		COMMENT, COPY, CREATEDB, CREATEUSER, CYCLE, DATABASE,
-		DELIMITERS, DO, EACH, ENCODING, EXCLUSIVE, EXPLAIN, EXTEND,
-		FORCE, FORWARD, FUNCTION, HANDLER, INCREMENT,
+		DELIMITERS, DO, EACH, ENCODING, EXCLUSIVE, EXPLAIN,
+		FORCE, FORWARD, FREEZE, FUNCTION, HANDLER, INCREMENT,
 		INDEX, INHERITS, INSTEAD, ISNULL, LANCOMPILER, LIMIT,
 		LISTEN, UNLISTEN, LOAD, LOCATION, LOCK_P, MAXVALUE,
 		MINVALUE, MODE, MOVE, NEW, NOCREATEDB, NOCREATEUSER,
@@ -303,7 +303,7 @@ make_name(void)
 %type  <str>    copy_delimiter ListenStmt CopyStmt copy_file_name opt_binary
 %type  <str>    opt_with_copy FetchStmt direction fetch_how_many from_in
 %type  <str>    ClosePortalStmt DropStmt VacuumStmt AnalyzeStmt opt_verbose
-%type  <str>    opt_full func_arg OptWithOids
+%type  <str>    opt_full func_arg OptWithOids opt_freeze opt_ecpg_into
 %type  <str>    analyze_keyword opt_name_list ExplainStmt index_params
 %type  <str>    index_list func_index index_elem opt_class access_method_clause
 %type  <str>    index_opt_unique IndexStmt func_return ConstInterval
@@ -342,7 +342,7 @@ make_name(void)
 %type  <str>    select_limit opt_for_update_clause CheckPointStmt
 
 %type  <str>	ECPGWhenever ECPGConnect connection_target ECPGOpen
-%type  <str>	indicator ECPGExecute ECPGPrepare ecpg_using
+%type  <str>	indicator ECPGExecute ECPGPrepare ecpg_using ecpg_into
 %type  <str>    storage_clause opt_initializer c_anything blockstart
 %type  <str>    blockend variable_list variable c_thing c_term
 %type  <str>	opt_pointer ECPGDisconnect dis_name storage_modifier
@@ -360,7 +360,7 @@ make_name(void)
 %type  <str>	ECPGGetDescriptorHeader ECPGColLabel ECPGTypeName
 %type  <str>	ECPGLabelTypeName ECPGColId variablelist cvariable
 
-%type  <descriptor> ECPGFetchDescStmt ECPGGetDescriptor
+%type  <descriptor> ECPGGetDescriptor
 
 %type  <type_enum> simple_type signed_type unsigned_type varchar_type
 
@@ -392,68 +392,68 @@ statement: ecpgstart opt_at stmt ';'	{ connection = NULL; }
 
 opt_at:	AT connection_target	{ connection = $2; };
 
-stmt:  AlterSchemaStmt 			{ output_statement($1, 0, NULL, connection); }
-		| AlterTableStmt	{ output_statement($1, 0, NULL, connection); }
-		| AlterGroupStmt	{ output_statement($1, 0, NULL, connection); }
-		| AlterUserStmt		{ output_statement($1, 0, NULL, connection); }
-		| ClosePortalStmt	{ output_statement($1, 0, NULL, connection); }
-		| CommentStmt		{ output_statement($1, 0, NULL, connection); }
-		| CopyStmt		{ output_statement($1, 0, NULL, connection); }
-		| CreateStmt		{ output_statement($1, 0, NULL, connection); }
-		| CreateAsStmt		{ output_statement($1, 0, NULL, connection); }
-		| CreateSchemaStmt   	{ output_statement($1, 0, NULL, connection); }
-		| CreateGroupStmt	{ output_statement($1, 0, NULL, connection); }
-		| CreateSeqStmt		{ output_statement($1, 0, NULL, connection); }
-		| CreatePLangStmt	{ output_statement($1, 0, NULL, connection); }
-		| CreateTrigStmt	{ output_statement($1, 0, NULL, connection); }
-		| CreateUserStmt	{ output_statement($1, 0, NULL, connection); }
-  		| ClusterStmt		{ output_statement($1, 0, NULL, connection); }
-		| DefineStmt 		{ output_statement($1, 0, NULL, connection); }
-		| DropStmt		{ output_statement($1, 0, NULL, connection); }
-		| DropSchemaStmt	{ output_statement($1, 0, NULL, connection); }
-		| TruncateStmt		{ output_statement($1, 0, NULL, connection); }
-		| DropGroupStmt		{ output_statement($1, 0, NULL, connection); }
-		| DropPLangStmt		{ output_statement($1, 0, NULL, connection); }
-		| DropTrigStmt		{ output_statement($1, 0, NULL, connection); }
-		| DropUserStmt		{ output_statement($1, 0, NULL, connection); }
-		| ExplainStmt		{ output_statement($1, 0, NULL, connection); }
-		| FetchStmt		{ output_statement($1, 1, NULL, connection); }
-		| GrantStmt		{ output_statement($1, 0, NULL, connection); }
-		| IndexStmt		{ output_statement($1, 0, NULL, connection); }
-		| ListenStmt		{ output_statement($1, 0, NULL, connection); }
-		| UnlistenStmt		{ output_statement($1, 0, NULL, connection); }
-		| LockStmt		{ output_statement($1, 0, NULL, connection); }
-		| NotifyStmt		{ output_statement($1, 0, NULL, connection); }
-		| ProcedureStmt		{ output_statement($1, 0, NULL, connection); }
-		| ReindexStmt		{ output_statement($1, 0, NULL, connection); }
-		| RemoveAggrStmt	{ output_statement($1, 0, NULL, connection); }
-		| RemoveOperStmt	{ output_statement($1, 0, NULL, connection); }
-		| RemoveFuncStmt	{ output_statement($1, 0, NULL, connection); }
-		| RenameStmt		{ output_statement($1, 0, NULL, connection); }
-		| RevokeStmt		{ output_statement($1, 0, NULL, connection); }
+stmt:  AlterSchemaStmt 			{ output_statement($1, 0, connection); }
+		| AlterTableStmt	{ output_statement($1, 0, connection); }
+		| AlterGroupStmt	{ output_statement($1, 0, connection); }
+		| AlterUserStmt		{ output_statement($1, 0, connection); }
+		| ClosePortalStmt	{ output_statement($1, 0, connection); }
+		| CommentStmt		{ output_statement($1, 0, connection); }
+		| CopyStmt		{ output_statement($1, 0, connection); }
+		| CreateStmt		{ output_statement($1, 0, connection); }
+		| CreateAsStmt		{ output_statement($1, 0, connection); }
+		| CreateSchemaStmt   	{ output_statement($1, 0, connection); }
+		| CreateGroupStmt	{ output_statement($1, 0, connection); }
+		| CreateSeqStmt		{ output_statement($1, 0, connection); }
+		| CreatePLangStmt	{ output_statement($1, 0, connection); }
+		| CreateTrigStmt	{ output_statement($1, 0, connection); }
+		| CreateUserStmt	{ output_statement($1, 0, connection); }
+  		| ClusterStmt		{ output_statement($1, 0, connection); }
+		| DefineStmt 		{ output_statement($1, 0, connection); }
+		| DropStmt		{ output_statement($1, 0, connection); }
+		| DropSchemaStmt	{ output_statement($1, 0, connection); }
+		| TruncateStmt		{ output_statement($1, 0, connection); }
+		| DropGroupStmt		{ output_statement($1, 0, connection); }
+		| DropPLangStmt		{ output_statement($1, 0, connection); }
+		| DropTrigStmt		{ output_statement($1, 0, connection); }
+		| DropUserStmt		{ output_statement($1, 0, connection); }
+		| ExplainStmt		{ output_statement($1, 0, connection); }
+		| FetchStmt		{ output_statement($1, 1, connection); }
+		| GrantStmt		{ output_statement($1, 0, connection); }
+		| IndexStmt		{ output_statement($1, 0, connection); }
+		| ListenStmt		{ output_statement($1, 0, connection); }
+		| UnlistenStmt		{ output_statement($1, 0, connection); }
+		| LockStmt		{ output_statement($1, 0, connection); }
+		| NotifyStmt		{ output_statement($1, 0, connection); }
+		| ProcedureStmt		{ output_statement($1, 0, connection); }
+		| ReindexStmt		{ output_statement($1, 0, connection); }
+		| RemoveAggrStmt	{ output_statement($1, 0, connection); }
+		| RemoveOperStmt	{ output_statement($1, 0, connection); }
+		| RemoveFuncStmt	{ output_statement($1, 0, connection); }
+		| RenameStmt		{ output_statement($1, 0, connection); }
+		| RevokeStmt		{ output_statement($1, 0, connection); }
                 | OptimizableStmt	{
 						if (strncmp($1, "/* " , sizeof("/* ")-1) == 0)
 							output_simple_statement($1);
 						else
-							output_statement($1, 1, NULL, connection);
+							output_statement($1, 1, connection);
 					}
-		| RuleStmt		{ output_statement($1, 0, NULL, connection); }
+		| RuleStmt		{ output_statement($1, 0, connection); }
 		| TransactionStmt	{
 						fprintf(yyout, "{ ECPGtrans(__LINE__, %s, \"%s\");", connection ? connection : "NULL", $1);
 						whenever_action(2);
 						free($1);
 					}
-		| ViewStmt		{ output_statement($1, 0, NULL, connection); }
-		| LoadStmt		{ output_statement($1, 0, NULL, connection); }
-		| CreatedbStmt		{ output_statement($1, 0, NULL, connection); }
-		| DropdbStmt		{ output_statement($1, 0, NULL, connection); }
-		| VacuumStmt		{ output_statement($1, 0, NULL, connection); }
-		| AnalyzeStmt		{ output_statement($1, 0, NULL, connection); }
-		| VariableSetStmt	{ output_statement($1, 0, NULL, connection); }
-		| VariableShowStmt	{ output_statement($1, 0, NULL, connection); }
-		| VariableResetStmt	{ output_statement($1, 0, NULL, connection); }
-		| ConstraintsSetStmt	{ output_statement($1, 0, NULL, connection); }
-		| CheckPointStmt	{ output_statement($1, 0, NULL, connection); }
+		| ViewStmt		{ output_statement($1, 0, connection); }
+		| LoadStmt		{ output_statement($1, 0, connection); }
+		| CreatedbStmt		{ output_statement($1, 0, connection); }
+		| DropdbStmt		{ output_statement($1, 0, connection); }
+		| VacuumStmt		{ output_statement($1, 0, connection); }
+		| AnalyzeStmt		{ output_statement($1, 0, connection); }
+		| VariableSetStmt	{ output_statement($1, 0, connection); }
+		| VariableShowStmt	{ output_statement($1, 0, connection); }
+		| VariableResetStmt	{ output_statement($1, 0, connection); }
+		| ConstraintsSetStmt	{ output_statement($1, 0, connection); }
+		| CheckPointStmt	{ output_statement($1, 0, connection); }
 		| ECPGAllocateDescr	{	fprintf(yyout,"ECPGallocate_desc(__LINE__, %s);",$1);
 								whenever_action(0);
 								free($1);
@@ -496,8 +496,7 @@ stmt:  AlterSchemaStmt 			{ output_statement($1, 0, NULL, connection); }
 						whenever_action(2);
 						free($1);
 					} 
-		| ECPGExecute		{	output_statement($1, 0, NULL, connection); }
-		| ECPGFetchDescStmt	{ 	output_statement($1.str, 1, $1.name, connection); }
+		| ECPGExecute		{	output_statement($1, 0, connection); }
 		| ECPGFree		{
 						fprintf(yyout, "{ ECPGdeallocate(__LINE__, \"%s\");", $1);
 
@@ -538,7 +537,7 @@ stmt:  AlterSchemaStmt 			{ output_statement($1, 0, NULL, connection); }
 						for (p = ptr->argsresult; p; p = p->next)
 							add_variable(&argsresult, p->variable, p->indicator); 
 
-						output_statement(mm_strdup(ptr->command), 0, NULL, ptr->connection ? mm_strdup(ptr->connection) : NULL);
+						output_statement(mm_strdup(ptr->command), 0, ptr->connection ? mm_strdup(ptr->connection) : NULL);
 					}
 		| ECPGPrepare		{
 						if (connection)
@@ -1566,26 +1565,26 @@ TruncateStmt:  TRUNCATE opt_table relation_name
  *
  *****************************************************************************/
 
-FetchStmt: FETCH direction fetch_how_many from_in name INTO into_list
+FetchStmt: FETCH direction fetch_how_many from_in name ecpg_into
 				{
 					if (strcmp($2, "relative") == 0 && atol($3) == 0L)
 						mmerror(ET_ERROR, "FETCH/RELATIVE at current position is not supported");
 
 					$$ = cat_str(5, make_str("fetch"), $2, $3, $4, $5);
 				}
-		| FETCH fetch_how_many from_in name INTO into_list
+		| FETCH fetch_how_many from_in name ecpg_into
   				{
 					$$ = cat_str(4, make_str("fetch"), $2, $3, $4);
 				}
-		| FETCH direction from_in name INTO into_list
+		| FETCH direction from_in name ecpg_into
   				{
 					$$ = cat_str(4, make_str("fetch"), $2, $3, $4);
 				}
-		| FETCH from_in name INTO into_list
+		| FETCH from_in name ecpg_into
   				{
 					$$ = cat_str(3, make_str("fetch"), $2, $3);
 				}
-		| FETCH name INTO into_list
+		| FETCH name ecpg_into
   				{
 					$$ = cat2_str(make_str("fetch"), $2);
 				}
@@ -1804,15 +1803,14 @@ RevokeStmt:  REVOKE privileges ON opt_table relation_name_list FROM grantee_list
  *		QUERY:
  *				create index <indexname> on <relname>
  *				  [ using <access> ] "(" (<col> with <op>)+ ")"
- *				  [ with <parameters> ]
  *				  [ where <predicate> ]
  *
  *****************************************************************************/
 
 IndexStmt:	CREATE index_opt_unique INDEX index_name ON relation_name
-			access_method_clause '(' index_params ')' opt_with where_clause
+			access_method_clause '(' index_params ')' where_clause
 				{
-					$$ = cat_str(12, make_str("create"), $2, make_str("index"), $4, make_str("on"), $6, $7, make_str("("), $9, make_str(")"), $11, $12);
+					$$ = cat_str(11, make_str("create"), $2, make_str("index"), $4, make_str("on"), $6, $7, make_str("("), $9, make_str(")"), $11);
 				}
 		;
 
@@ -2279,17 +2277,17 @@ ClusterStmt:  CLUSTER index_name ON relation_name
  *
  *****************************************************************************/
 
-VacuumStmt:  VACUUM opt_full opt_verbose
-				{
-					$$ = cat_str(3, make_str("vacuum"), $2, $3);
-				}
-		| VACUUM opt_full opt_verbose relation_name
+VacuumStmt:  VACUUM opt_full opt_freeze opt_verbose
 				{
 					$$ = cat_str(4, make_str("vacuum"), $2, $3, $4);
 				}
-		| VACUUM opt_full opt_verbose AnalyzeStmt
+		| VACUUM opt_full opt_freeze opt_verbose relation_name
 				{
-					$$ = cat_str(4, make_str("vacuum"), $2, $3, $4);
+					$$ = cat_str(5, make_str("vacuum"), $2, $3, $4, $5);
+				}
+		| VACUUM opt_full opt_freeze opt_verbose AnalyzeStmt
+				{
+					$$ = cat_str(5, make_str("vacuum"), $2, $3, $4, $5);
 				}
 		;
 
@@ -2313,6 +2311,10 @@ opt_verbose:  VERBOSE					{ $$ = make_str("verbose"); }
 
 opt_full:  FULL							{ $$ = make_str("full"); }
 		| /*EMPTY*/						{ $$ = EMPTY; }
+		;
+
+opt_freeze:  FREEZE						{ $$ = make_str("freeze"); }
+		| /*EMPTY*/					{ $$ = EMPTY; }
 		;
 
 opt_name_list:  '(' name_list ')'		{ $$ = cat_str(3, make_str("("), $2, make_str(")")); }
@@ -2580,8 +2582,8 @@ into_clause:  INTO OptTempTableName	{
 						FoundInto = 1;
 						$$= cat2_str(make_str("into"), $2);
 					}
-		| INTO into_list	{ $$ = EMPTY; }
-		| /*EMPTY*/		{ $$ = EMPTY; }
+		| ecpg_into		{ $$ = EMPTY; }
+		| /*EMPTY*/             { $$ = EMPTY; } 
 		;
 
 /*
@@ -4494,7 +4496,7 @@ ECPGExecute : EXECUTE IMMEDIATE execstring
 		sprintf(thisquery->name, "ECPGprepared_statement(\"%s\")", $2);
 
 		add_variable(&argsinsert, thisquery, &no_indicator); 
-	} ecpg_using
+	} ecpg_using opt_ecpg_into
 	{
 		$$ = make_str("?");
 	}
@@ -4521,6 +4523,22 @@ ecpg_using: /* empty */		{ $$ = EMPTY; }
 					$$ = EMPTY;
 				}
 	;
+
+opt_sql: /* empty */ | SQL_SQL;
+
+ecpg_into: INTO into_list	{
+					$$ = EMPTY;
+				}
+	| INTO opt_sql SQL_DESCRIPTOR quoted_ident_stringvar
+				{
+					add_variable(&argsresult, descriptor_variable($4,0), &no_indicator);
+					$$ = EMPTY;
+				}
+	;
+
+opt_ecpg_into: /* empty */         	{ $$ = EMPTY; } 
+		| ecpg_into		{ $$ = $1; }
+		;
 
 variable: civarind | civar 
 variablelist: variable | variable ',' variablelist;
@@ -4600,45 +4618,6 @@ ECPGGetDescriptor:	SQL_GET SQL_DESCRIPTOR quoted_ident_stringvar SQL_VALUE cvari
 	|	SQL_GET SQL_DESCRIPTOR quoted_ident_stringvar SQL_VALUE Iconst ECPGGetDescItems
 		{  $$.str = $5; $$.name = $3; }
 	;
-
-/*****************************************************************************
- *
- *		QUERY: 
- *                     fetch [forward | backward] [ # | all ] [ in <portalname> ]
- *                     fetch [ forward | backward | absolute | relative ]
- *                           [ # | all | next | prior ] [ [ in | from ] <portalname> ]
- *
- * 		Have to seperate the descriptor version since we have to
- * 		call a different output function
- *
- *****************************************************************************/
-
-ECPGFetchDescStmt:	FETCH direction fetch_how_many from_in name INTO SQL_SQL SQL_DESCRIPTOR quoted_ident_stringvar
-				{
-					$$.str = cat_str(5, make_str("fetch"), $2, $3, $4, $5);
-					$$.name=$9;
-				}
-		|	FETCH fetch_how_many from_in name INTO SQL_SQL SQL_DESCRIPTOR quoted_ident_stringvar
-  				{
-					$$.str = cat_str(4, make_str("fetch"), $2, $3, $4);
-					$$.name=$8;
-				}
-		|	FETCH direction from_in name INTO SQL_SQL SQL_DESCRIPTOR quoted_ident_stringvar
-  				{
-					$$.str = cat_str(4, make_str("fetch"), $2, $3, $4);
-					$$.name=$8;
-				}
-		|	FETCH from_in name INTO SQL_SQL SQL_DESCRIPTOR quoted_ident_stringvar
-  				{
-					$$.str = cat_str(3, make_str("fetch"), $2, $3);
-					$$.name=$7;
-				}
-		|	FETCH name INTO SQL_SQL SQL_DESCRIPTOR quoted_ident_stringvar
-  				{
-					$$.str = cat2_str(make_str("fetch"), $2);
-					$$.name=$6;
-				}
-		;
 
 /*
  * for compatibility with ORACLE we will also allow the keyword RELEASE
@@ -5010,6 +4989,7 @@ TokenId:  ABSOLUTE			{ $$ = make_str("absolute"); }
 	| DROP				{ $$ = make_str("drop"); }
 	| EACH				{ $$ = make_str("each"); }
 	| ENCODING			{ $$ = make_str("encoding"); }
+	| ENCRYPTED			{ $$ = make_str("encrypted"); }
 	| ESCAPE			{ $$ = make_str("escape"); }
 	| EXCLUSIVE			{ $$ = make_str("exclusive"); }
 	| EXECUTE			{ $$ = make_str("execute"); }
@@ -5087,6 +5067,7 @@ TokenId:  ABSOLUTE			{ $$ = make_str("absolute"); }
 	| TRIGGER			{ $$ = make_str("trigger"); }
 	| TRUNCATE			{ $$ = make_str("truncate"); }
 	| TRUSTED			{ $$ = make_str("trusted"); }
+	| UNENCRYPTED			{ $$ = make_str("unencrypted"); }
 	| UNLISTEN			{ $$ = make_str("unlisten"); }
 	| UNTIL				{ $$ = make_str("until"); }
 	| UPDATE			{ $$ = make_str("update"); }
@@ -5148,7 +5129,6 @@ ECPGColLabel:  ECPGColId	{ $$ = $1; }
 		| DISTINCT	{ $$ = make_str("distinct"); }
 		| DO		{ $$ = make_str("do"); }
 		| ELSE          { $$ = make_str("else"); }
-		| ENCRYPTED     { $$ = make_str("encrypted"); }
 		| END_TRANS     { $$ = make_str("end"); }
 		| EXCEPT	{ $$ = make_str("except"); }
 		| EXISTS	{ $$ = make_str("exists"); }
@@ -5157,6 +5137,7 @@ ECPGColLabel:  ECPGColId	{ $$ = $1; }
 		| FALSE_P	{ $$ = make_str("false"); }
 		| FOR		{ $$ = make_str("for"); }
 		| FOREIGN	{ $$ = make_str("foreign"); }
+		| FREEZE	{ $$ = make_str("freeze"); }
 		| FROM		{ $$ = make_str("from"); }
 		| FULL		{ $$ = make_str("full"); }
         	| IN            { $$ = make_str("in"); }
@@ -5216,7 +5197,6 @@ ECPGColLabel:  ECPGColId	{ $$ = $1; }
 		| TRANSACTION	{ $$ = make_str("transaction"); }
 		| TRIM		{ $$ = make_str("trim"); }
 		| TRUE_P	{ $$ = make_str("true"); }
-		| UNENCRYPTED	{ $$ = make_str("unencrypted"); }
 		| UNIQUE	{ $$ = make_str("unique"); }
 		| UNKNOWN	{ $$ = make_str("unknown"); }
 		| USER		{ $$ = make_str("user"); }

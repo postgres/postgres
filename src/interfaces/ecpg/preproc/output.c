@@ -103,16 +103,12 @@ hashline_number(void)
 }
 
 void
-output_statement(char *stmt, int mode, char *descriptor, char *con)
+output_statement(char *stmt, int mode, char *con)
 {
 	int			i,
 				j = strlen(stmt);
 
-	if (descriptor == NULL)
-		fprintf(yyout, "{ ECPGdo(__LINE__, %s, \"", con ? con : "NULL");
-	else
-		fprintf(yyout, "{ ECPGdo_descriptor(__LINE__, %s, %s, \"",
-				con ? con : "NULL", descriptor);
+	fprintf(yyout, "{ ECPGdo(__LINE__, %s, \"", con ? con : "NULL");
 
 	/* do this char by char as we have to filter '\"' */
 	for (i = 0; i < j; i++)
@@ -123,25 +119,18 @@ output_statement(char *stmt, int mode, char *descriptor, char *con)
 			fputs("\\\"", yyout);
 	}
 
-	if (descriptor == NULL)
-	{
-		fputs("\", ", yyout);
+	fputs("\", ", yyout);
 
-		/* dump variables to C file */
-		dump_variables(argsinsert, 1);
-		fputs("ECPGt_EOIT, ", yyout);
-		dump_variables(argsresult, 1);
-		fputs("ECPGt_EORT);", yyout);
-		reset_variables();
-	}
-	else
-		fputs("\");", yyout);
+	/* dump variables to C file */
+	dump_variables(argsinsert, 1);
+	fputs("ECPGt_EOIT, ", yyout);
+	dump_variables(argsresult, 1);
+	fputs("ECPGt_EORT);", yyout);
+	reset_variables();
 
 	mode |= 2;
 	whenever_action(mode);
 	free(stmt);
-	if (descriptor != NULL)
-		free(descriptor);
 	if (connection != NULL)
 		free(connection);
 }

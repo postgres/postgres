@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.22 2001/08/24 14:07:49 petere Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.23 2001/09/19 14:09:32 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -817,6 +817,7 @@ ECPGexecute(struct statement * stmt)
 	 * 		 it should go into a separate function
 	 */
 	{
+		bool clear_result = TRUE;
 		var = stmt->outlist;
 		switch (PQresultStatus(results))
 		{
@@ -840,7 +841,19 @@ ECPGexecute(struct statement * stmt)
 					break;
 				}
 
-				for (act_field = 0; act_field < nfields && status; act_field++)
+				if (var != NULL && var->type==ECPGt_descriptor)
+				{	PGresult **resultpp = ECPGdescriptor_lvalue(stmt->lineno, (const char*)var->pointer);
+					if (resultpp == NULL) status = false;
+					else
+					{	if (*resultpp)
+				    		PQclear(*resultpp);
+						*resultpp=results;
+						clear_result = FALSE;
+						ECPGlog("ECPGexecute putting result into descriptor '%s'\n", (const char*)var->pointer);
+					}
+					var = var->next;
+				}
+				else for (act_field = 0; act_field < nfields && status; act_field++)
 				{
 					if (var == NULL)
 					{
@@ -972,7 +985,7 @@ ECPGexecute(struct statement * stmt)
 				status = false;
 				break;
 		}
-		PQclear(results);
+		if (clear_result) PQclear(results);
 	}
 
 	/* check for asynchronous returns */
@@ -1032,186 +1045,12 @@ ECPGdo(int lineno, const char *connection_name, char *query,...)
 	return (status);
 }
 
-/* dynamic SQL support routines
- *
- * Copyright (c) 2000, Christof Petig <christof.petig@wtal.de>
- *
- * $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.22 2001/08/24 14:07:49 petere Exp $
- */
-
-PGconn	   *ECPG_internal_get_connection(char *name);
-
-extern struct descriptor
-{
-	char	   *name;
-	PGresult   *result;
-	struct descriptor *next;
-}		   *all_descriptors;
-
-/* like ECPGexecute */
-static bool
-execute_descriptor(int lineno, const char *query
-				   ,struct connection * con, PGresult **resultptr)
-{
-	bool		status = false;
-	PGresult   *results;
-	PGnotify   *notify;
-
-	/* Now the request is built. */
-
-	if (con->committed && !con->autocommit)
-	{
-		if ((results = PQexec(con->connection, "begin transaction")) == NULL)
-		{
-			ECPGraise(lineno, ECPG_TRANS, NULL);
-			return false;
-		}
-		PQclear(results);
-		con->committed = false;
-	}
-
-	ECPGlog("execute_descriptor line %d: QUERY: %s on connection %s\n", lineno, query, con->name);
-	results = PQexec(con->connection, query);
-
-	if (results == NULL)
-	{
-		ECPGlog("ECPGexecute line %d: error: %s", lineno,
-				PQerrorMessage(con->connection));
-		ECPGraise(lineno, ECPG_PGSQL, PQerrorMessage(con->connection));
-	}
-	else
-	{
-		*resultptr = results;
-		switch (PQresultStatus(results))
-		{
-				int			ntuples;
-
-			case PGRES_TUPLES_OK:
-				status = true;
-				sqlca.sqlerrd[2] = ntuples = PQntuples(results);
-				if (ntuples < 1)
-				{
-					ECPGlog("execute_descriptor line %d: Incorrect number of matches: %d\n",
-							lineno, ntuples);
-					ECPGraise(lineno, ECPG_NOT_FOUND, NULL);
-					status = false;
-					break;
-				}
-				break;
-#if 1							/* strictly these are not needed (yet) */
-			case PGRES_EMPTY_QUERY:
-				/* do nothing */
-				ECPGraise(lineno, ECPG_EMPTY, NULL);
-				break;
-			case PGRES_COMMAND_OK:
-				status = true;
-				sqlca.sqlerrd[1] = PQoidValue(results);
-				sqlca.sqlerrd[2] = atol(PQcmdTuples(results));
-				ECPGlog("ECPGexecute line %d Ok: %s\n", lineno, PQcmdStatus(results));
-				break;
-			case PGRES_COPY_OUT:
-				ECPGlog("ECPGexecute line %d: Got PGRES_COPY_OUT ... tossing.\n", lineno);
-				PQendcopy(con->connection);
-				break;
-			case PGRES_COPY_IN:
-				ECPGlog("ECPGexecute line %d: Got PGRES_COPY_IN ... tossing.\n", lineno);
-				PQendcopy(con->connection);
-				break;
-#else
-			case PGRES_EMPTY_QUERY:
-			case PGRES_COMMAND_OK:
-			case PGRES_COPY_OUT:
-			case PGRES_COPY_IN:
-				break;
-#endif
-			case PGRES_NONFATAL_ERROR:
-			case PGRES_FATAL_ERROR:
-			case PGRES_BAD_RESPONSE:
-				ECPGlog("ECPGexecute line %d: Error: %s",
-						lineno, PQerrorMessage(con->connection));
-				ECPGraise(lineno, ECPG_PGSQL, PQerrorMessage(con->connection));
-				status = false;
-				break;
-			default:
-				ECPGlog("ECPGexecute line %d: Got something else, postgres error.\n",
-						lineno);
-				ECPGraise(lineno, ECPG_PGSQL, PQerrorMessage(con->connection));
-				status = false;
-				break;
-		}
-	}
-
-	/* check for asynchronous returns */
-	notify = PQnotifies(con->connection);
-	if (notify)
-	{
-		ECPGlog("ECPGexecute line %d: ASYNC NOTIFY of '%s' from backend pid '%d' received\n",
-				lineno, notify->relname, notify->be_pid);
-		free(notify);
-	}
-	return status;
-}
-
-/* like ECPGdo */
-static bool
-do_descriptor2(int lineno, const char *connection_name,
-			   PGresult **resultptr, const char *query)
-{
-	struct connection *con = get_connection(connection_name);
-	bool		status = true;
-	char	   *locale = setlocale(LC_NUMERIC, NULL);
-
-	/* Make sure we do NOT honor the locale for numeric input/output */
-	/* since the database wants teh standard decimal point */
-	setlocale(LC_NUMERIC, "C");
-
-	if (!ecpg_init(con, connection_name, lineno))
-	{
-		setlocale(LC_NUMERIC, locale);
-		return (false);
-	}
-
-	/* are we connected? */
-	if (con == NULL || con->connection == NULL)
-	{
-		ECPGlog("do_descriptor2: not connected to %s\n", con->name);
-		ECPGraise(lineno, ECPG_NOT_CONN, NULL);
-		setlocale(LC_NUMERIC, locale);
-		return false;
-	}
-
-	status = execute_descriptor(lineno, query, con, resultptr);
-
-	/* and reset locale value so our application is not affected */
-	setlocale(LC_NUMERIC, locale);
-	return (status);
-}
-
+/* old descriptor interface */  
 bool
 ECPGdo_descriptor(int line, const char *connection,
 				  const char *descriptor, const char *query)
 {
-	struct descriptor *i;
-
-	for (i = all_descriptors; i != NULL; i = i->next)
-	{
-		if (!strcmp(descriptor, i->name))
-		{
-			bool		status;
-
-			/* free previous result */
-			if (i->result)
-				PQclear(i->result);
-			i->result = NULL;
-
-			status = do_descriptor2(line, connection, &i->result, query);
-
-			if (!i->result)
-				PQmakeEmptyPGresult(NULL, 0);
-			return (status);
-		}
-	}
-
-	ECPGraise(line, ECPG_UNKNOWN_DESCRIPTOR, (char *) descriptor);
-	return false;
+	return ECPGdo(line, connection, (char *)query, ECPGt_EOIT,
+		ECPGt_descriptor, descriptor, 0L, 0L, 0L,       
+                ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);
 }

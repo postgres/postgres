@@ -1,4 +1,7 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/descriptor.c,v 1.15 2001/08/24 14:07:49 petere Exp $ */
+/* dynamic SQL support routines
+ *
+ * $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/descriptor.c,v 1.16 2001/09/19 14:09:32 meskes Exp $
+ */
 
 #include "postgres_fe.h"
 
@@ -8,27 +11,15 @@
 #include "extern.h"
 #include "sql3types.h"
 
-struct descriptor
-{
-	char	   *name;
-	PGresult   *result;
-	struct descriptor *next;
-}		   *all_descriptors = NULL;
+struct descriptor *all_descriptors = NULL;
 
+/* old internal convenience function that might go away later */
 static PGresult
 		   *
 ECPGresultByDescriptor(int line, const char *name)
 {
-	struct descriptor *i;
-
-	for (i = all_descriptors; i != NULL; i = i->next)
-	{
-		if (!strcmp(name, i->name))
-			return i->result;
-	}
-
-	ECPGraise(line, ECPG_UNKNOWN_DESCRIPTOR, name);
-
+	PGresult **resultpp = ECPGdescriptor_lvalue ( line, name );
+	if (resultpp) return *resultpp;
 	return NULL;
 }
 
@@ -372,4 +363,19 @@ ECPGallocate_desc(int line, const char *name)
 	strcpy(new->name, name);
 	all_descriptors = new;
 	return true;
+}
+
+PGresult **
+ECPGdescriptor_lvalue(int line, const char *descriptor)
+{
+	struct descriptor *i;
+
+	for (i = all_descriptors; i != NULL; i = i->next)
+	{
+		if (!strcmp(descriptor, i->name)) 
+			return &i->result;
+	}
+
+	ECPGraise(line, ECPG_UNKNOWN_DESCRIPTOR, (char *) descriptor);
+	return NULL;
 }

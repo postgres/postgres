@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.76 2001/05/12 19:49:48 petere Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.77 2001/09/19 14:09:32 meskes Exp $
 
 subdir = src/interfaces/ecpg/preproc
 top_builddir = ../../../..

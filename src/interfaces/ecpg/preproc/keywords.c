@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.43 2001/08/16 20:38:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.44 2001/09/19 14:09:32 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -102,6 +102,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"each", EACH},
 	{"else", ELSE},
 	{"encoding", ENCODING},
+	{"encrypted", ENCRYPTED},
 	{"end", END_TRANS},
 	{"escape", ESCAPE},
 	{"except", EXCEPT},
@@ -261,6 +262,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"truncate", TRUNCATE},
 	{"trusted", TRUSTED},
 	{"type", TYPE_P},
+	{"unencrypted", UNENCRYPTED}, 
 	{"union", UNION},
 	{"unique", UNIQUE},
 	{"unknown", UNKNOWN},

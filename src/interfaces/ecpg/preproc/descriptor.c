@@ -196,3 +196,24 @@ output_get_descr(char *desc_name, char *index)
 
 	whenever_action(2 | 1);
 }
+
+/* I consider dynamic allocation overkill since at most two descriptor
+   variables are possible per statement. (input and output descriptor)
+   And descriptors are no normal variables, so they don't belong into 
+   the variable list.
+*/
+   
+#define MAX_DESCRIPTOR_NAMELEN 128
+struct variable *descriptor_variable(const char *name,int input)
+{	static char descriptor_names[2][MAX_DESCRIPTOR_NAMELEN];
+	static const struct ECPGtype descriptor_type =
+	{ ECPGt_descriptor, 0 };
+	static const struct variable varspace[2] =
+	{{ descriptor_names[0], (struct ECPGtype*)&descriptor_type, 0, NULL }, 
+	 { descriptor_names[1], (struct ECPGtype*)&descriptor_type, 0, NULL }
+	};
+	
+	strncpy(descriptor_names[input],name,MAX_DESCRIPTOR_NAMELEN);
+	descriptor_names[input][MAX_DESCRIPTOR_NAMELEN-1]=0;
+	return (struct variable*)&varspace[input];
+}

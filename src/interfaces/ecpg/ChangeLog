@@ -1084,10 +1084,17 @@ Wed Jun 13 14:39:12 CEST 2001
 
 	- Synced preproc.y with gram.y.  
 	- Applied bug fix by John Summerfield.
-	- Set ecpg version to 2.9.0.
-	- Set library version to 3.3.0.
 
 Son Aug 19 11:04:39 CEST 2001
 
 	- Synced preproc.y with gram.y. 
 	- Include some patches by Christof Petig <christof.petig@wtal.de>.
+
+Wed Sep 19 15:57:49 CEST 2001
+
+	- Synced preproc.y with gram.y. 
+	- Synced pgc.l with scan.l.
+        - Synced keyword.c.
+	- Include the remaining patches by Christof Petig <christof.petig@wtal.de>.
+	- Set ecpg version to 2.9.0.
+        - Set library version to 3.3.0.

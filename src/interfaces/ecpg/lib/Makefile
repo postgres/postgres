@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/Makefile,v 1.12 2001/05/11 01:46:33 momjian Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/Makefile,v 1.13 2001/09/19 14:09:32 meskes Exp $
 #
 #-------------------------------------------------------------------------
 

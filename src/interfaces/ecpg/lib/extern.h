@@ -52,3 +52,14 @@ struct connection
 	struct ECPGtype_information_cache *cache_head;
 	struct connection *next;
 };
+
+/* structure to store descriptors */
+struct descriptor
+{
+	char	   *name;
+	PGresult   *result;
+	struct descriptor *next;
+};
+
+PGresult **
+ECPGdescriptor_lvalue(int line, const char *descriptor);

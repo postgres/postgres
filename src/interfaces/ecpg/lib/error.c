@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/error.c,v 1.9 2001/08/24 14:07:49 petere Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/error.c,v 1.10 2001/09/19 14:09:32 meskes Exp $ */
 
 #include "postgres_fe.h"
 
