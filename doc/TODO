@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Mar 17 13:49:58 EST 2003
+Last updated:		Tue Mar 18 22:53:15 EST 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -481,7 +481,7 @@ Developers who have claimed items are:
 * Peter M is Peter T Mount <peter@retep.org.uk> of Retep Software
 * Peter E is Peter Eisentraut <peter_e@gmx.net>
 * Philip is Philip Warner <pjw@rhyme.com.au> of Albatross Consulting Pty. Ltd.
-* Rod is Rod Taylor <pg@rbt.ca)>
+* Rod is Rod Taylor <pg@rbt.ca>
 * Ross is Ross J. Reedstrom <reedstrm@wallace.ece.rice.edu>
 * Stephan is Stephan Szabo <sszabo@megazone23.bigpanda.com>
 * Tatsuo is Tatsuo Ishii <t-ishii@sra.co.jp> of Software Research Assoc.
