@@ -712,7 +712,7 @@ the connection that produced the result.
 <LISTITEM>
 <PARA>
 if the command was an INSERT, the OID of the 
-inserted tuple; otherwise an empty string.
+inserted tuple; otherwise 0.
 </PARA>
 </LISTITEM>
 </VARLISTENTRY>
