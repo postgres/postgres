@@ -120,6 +120,14 @@ Restructured port-specific file locations(Bryan, Marc)
 Unused/uninialized variables corrected
 
 
+PostgreSQL 1.09                 ???
+-------------------------------------------------------------
+
+Sorry, we stopped keeping track of changes from 1.02 to 1.09.  Some of
+the changes listed in 6.0 were actually included in the 1.02.1 to 1.09
+releases.
+
+
 Postgres95 1.02                 Thu Aug  1 18:00:00 EDT 1996
 -------------------------------------------------------------
 
