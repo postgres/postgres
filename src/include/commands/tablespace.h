@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/tablespace.h,v 1.2 2004/06/25 21:55:58 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/commands/tablespace.h,v 1.3 2004/07/11 19:52:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,7 @@ extern void CreateTableSpace(CreateTableSpaceStmt *stmt);
 
 extern void DropTableSpace(DropTableSpaceStmt *stmt);
 
-extern void TablespaceCreateDbspace(Oid spcNode, Oid dbNode);
+extern void TablespaceCreateDbspace(Oid spcNode, Oid dbNode, bool isRedo);
 
 extern Oid	get_tablespace_oid(const char *tablespacename);
 

@@ -45,7 +45,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.5 2004/07/02 18:59:22 joe Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.6 2004/07/11 19:52:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,9 +85,13 @@ static bool directory_is_empty(const char *path);
  *
  * If tablespaces are not supported, this is just a no-op; CREATE DATABASE
  * is expected to create the default subdirectory for the database.
+ *
+ * isRedo indicates that we are creating an object during WAL replay;
+ * we can skip doing locking in that case (and should do so to avoid
+ * any possible problems with pg_tablespace not being valid).
  */
 void
-TablespaceCreateDbspace(Oid spcNode, Oid dbNode)
+TablespaceCreateDbspace(Oid spcNode, Oid dbNode, bool isRedo)
 {
 #ifdef HAVE_SYMLINK
 	struct stat st;
@@ -116,7 +120,10 @@ TablespaceCreateDbspace(Oid spcNode, Oid dbNode)
 			 */
 			Relation rel;
 
-			rel = heap_openr(TableSpaceRelationName, ExclusiveLock);
+			if (!isRedo)
+				rel = heap_openr(TableSpaceRelationName, ExclusiveLock);
+			else
+				rel = NULL;
 
 			/*
 			 * Recheck to see if someone created the directory while
@@ -137,7 +144,8 @@ TablespaceCreateDbspace(Oid spcNode, Oid dbNode)
 			}
 
 			/* OK to drop the exclusive lock */
-			heap_close(rel, ExclusiveLock);
+			if (!isRedo)
+				heap_close(rel, ExclusiveLock);
 		}
 		else
 		{

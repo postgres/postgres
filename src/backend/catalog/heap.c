@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.271 2004/06/18 06:13:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.272 2004/07/11 19:52:48 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -43,7 +43,6 @@
 #include "catalog/pg_statistic.h"
 #include "catalog/pg_type.h"
 #include "commands/tablecmds.h"
-#include "commands/tablespace.h"
 #include "commands/trigger.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
@@ -195,10 +194,6 @@ SystemAttributeByName(const char *attname, bool relhasoids)
  *		and is mostly zeroes at return.
  *
  *		Remove the system relation specific code to elsewhere eventually.
- *
- * If storage_create is TRUE then heap_storage_create is called here,
- * else caller must call heap_storage_create later (or not at all,
- * if the relation doesn't need physical storage).
  * ----------------------------------------------------------------
  */
 Relation
@@ -207,7 +202,7 @@ heap_create(const char *relname,
 			Oid reltablespace,
 			TupleDesc tupDesc,
 			bool shared_relation,
-			bool storage_create,
+			bool create_storage,
 			bool allow_system_table_mods)
 {
 	Oid			relid;
@@ -269,6 +264,25 @@ heap_create(const char *relname,
 		relid = newoid();
 
 	/*
+	 * Never allow a pg_class entry to explicitly specify the database's
+	 * default tablespace in reltablespace; force it to zero instead.
+	 * This ensures that if the database is cloned with a different
+	 * default tablespace, the pg_class entry will still match where
+	 * CREATE DATABASE will put the physically copied relation.
+	 *
+	 * Yes, this is a bit of a hack.
+	 */
+	if (reltablespace == MyDatabaseTableSpace)
+		reltablespace = InvalidOid;
+
+	/*
+	 * Also, force reltablespace to zero if the relation has no physical
+	 * storage.  This is mainly just for cleanliness' sake.
+	 */
+	if (!create_storage)
+		reltablespace = InvalidOid;
+
+	/*
 	 * build the relcache entry.
 	 */
 	rel = RelationBuildLocalRelation(relname,
@@ -280,31 +294,16 @@ heap_create(const char *relname,
 									 nailme);
 
 	/*
-	 * have the storage manager create the relation's disk file, if
-	 * wanted.
+	 * have the storage manager create the relation's disk file, if needed.
 	 */
-	if (storage_create)
-		heap_storage_create(rel);
+	if (create_storage)
+	{
+		Assert(rel->rd_smgr == NULL);
+		rel->rd_smgr = smgropen(rel->rd_node);
+		smgrcreate(rel->rd_smgr, rel->rd_istemp, false);
+	}
 
 	return rel;
-}
-
-void
-heap_storage_create(Relation rel)
-{
-	/*
-	 * We may be using the target table space for the first time in this
-	 * database, so create a per-database subdirectory if needed.
-	 *
-	 * XXX it might be better to do this right in smgrcreate...
-	 */
-	TablespaceCreateDbspace(rel->rd_node.spcNode, rel->rd_node.dbNode);
-	/*
-	 * Now we can make the file.
-	 */
-	Assert(rel->rd_smgr == NULL);
-	rel->rd_smgr = smgropen(rel->rd_node);
-	smgrcreate(rel->rd_smgr, rel->rd_istemp, false);
 }
 
 /* ----------------------------------------------------------------
