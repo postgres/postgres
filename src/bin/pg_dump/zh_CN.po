@@ -1,12 +1,12 @@
 # simplified Chinese translation file for pg_dump and friends
 # Weiping He <laser@zhengmai.com.cn>, 2001.
-# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/zh_CN.po,v 1.3 2001/11/26 17:56:32 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/zh_CN.po,v 1.4 2001/12/03 18:43:21 momjian Exp $
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.2\n"
-"POT-Creation-Date: 2001-11-25 18:48+0800\n"
-"PO-Revision-Date: 2001-11-26 20:34:44+0800\n"
+"POT-Creation-Date: 2001-11-30 22:18+0800\n"
+"PO-Revision-Date: 2001-11-30 22:26:59+0800\n"
 "Last-Translator: Weiping He <laser@zhengmai.com.cn>\n"
 "Language-Team: Weiping He <laser@zhengmai.com.cn>\n"
 "MIME-Version: 1.0\n"
@@ -469,7 +469,7 @@ msgstr "视图 \"%s\" 的定义是空的(零长)\n"
 #: pg_dump.c:2232
 #, c-format
 msgid "finding CHECK constraints for table %s\n"
-msgstr "为表 \"%S\" 查找 CHECK 约束\n"
+msgstr "为表 \"%s\" 查找 CHECK 约束\n"
 
 #: pg_dump.c:2253
 #, c-format
@@ -529,7 +529,7 @@ msgstr "获取触发器的查询失败: %s"
 #: pg_dump.c:2410
 #, c-format
 msgid "expected %d triggers on table \"%s\" but found %d\n"
-msgstr "预期在表 \"%2$s\" 上有触发器 %d , 却发现 %d\n"
+msgstr "预期在表 \"%2$s\" 上有触发器 %1$d , 却发现 %3$d\n"
 
 #: pg_dump.c:2490
 #, c-format
@@ -550,12 +550,12 @@ msgid ""
 "table \"%s\" (oid of table: %s)\n"
 msgstr ""
 "对在表 \"%2$s\" 上的外键触发器 \"%1$s\" 上的查询生成 NULL 个引用表(表的 oid "
-"是: %s)\n"
+"是: %3$s)\n"
 
 #: pg_dump.c:2593
 #, c-format
 msgid "bad argument string (%s) for trigger \"%s\" on table \"%s\"\n"
-msgstr "给表 \"%3$s\" 上的触发器 \"%$2s\" 的错误参数 (%1$s)\n"
+msgstr "给表 \"%3$s\" 上的触发器 \"%2$s\" 的错误参数 (%1$s)\n"
 
 #: pg_dump.c:2681
 #, c-format
@@ -721,7 +721,7 @@ msgstr "dumpTables(): 健全检查失败,无法为主键约束找到索引 (%s)\n"
 #: pg_dump.c:4329
 #, c-format
 msgid "getAttrName(): invalid column number %d for table %s\n"
-msgstr "getAttrName(): 表 \"%s\" 的无效字段号 %d\n"
+msgstr "getAttrName(): 表 \"%2$s\" 的无效字段号 %1$d\n"
 
 #: pg_dump.c:4359
 #, c-format
@@ -1253,12 +1253,12 @@ msgstr "没有数据库联接时无法装载大对象\n"
 msgid "unrecognized data block type %d while restoring archive\n"
 msgstr "恢复归档时碰到不识别的数据块类型 %d\n"
 
-#: pg_backup_custom.c:549 pg_backup_custom.c:905
+#: pg_backup_custom.c:549 pg_backup_custom.c:907
 #, c-format
 msgid "could not initialize compression library: %s\n"
 msgstr "无法初始化压缩库: %s\n"
 
-#: pg_backup_custom.c:570 pg_backup_custom.c:694
+#: pg_backup_custom.c:570 pg_backup_custom.c:696
 #, c-format
 msgid "could not read data block - expected %d, got %d\n"
 msgstr "无法读取数据块 - 预期 %d, 实际 %d\n"
@@ -1268,39 +1268,44 @@ msgstr "无法读取数据块 - 预期 %d, 实际 %d\n"
 msgid "unable to uncompress data: %s\n"
 msgstr "无法压缩数据: %s\n"
 
-#: pg_backup_custom.c:722
+#: pg_backup_custom.c:626
+#, c-format
+msgid "could not close compression library: %s\n"
+msgstr "无法关闭压缩库: %s\n"
+
+#: pg_backup_custom.c:724
 #, c-format
 msgid "could not write byte: %s\n"
 msgstr "无法写字节: %s\n"
 
-#: pg_backup_custom.c:765 pg_backup_files.c:418
+#: pg_backup_custom.c:767 pg_backup_files.c:418
 #, c-format
 msgid "write error in _WriteBuf (%d != %d)\n"
 msgstr "在 _WriteBuf 里的写错误 (%d != %d)\n"
 
-#: pg_backup_custom.c:835
+#: pg_backup_custom.c:837
 #, c-format
 msgid "could not close archive file: %s\n"
 msgstr "无法关闭归档文件: %s\n"
 
-#: pg_backup_custom.c:858
+#: pg_backup_custom.c:860
 msgid "WARNING: ftell mismatch with expected position -- ftell ignored\n"
 msgstr "警告: ftell 和预期位置不匹配 -- 忽略 ftell\n"
 
-#: pg_backup_custom.c:937
+#: pg_backup_custom.c:939
 #, c-format
 msgid "could not compress data: %s\n"
 msgstr "无法压缩数据: %s\n"
 
-#: pg_backup_custom.c:957
+#: pg_backup_custom.c:959
 msgid "could not write compressed chunk\n"
 msgstr "无法写入压缩的块\n"
 
-#: pg_backup_custom.c:971
+#: pg_backup_custom.c:973
 msgid "could not write uncompressed chunk\n"
 msgstr "无法写入未压缩的块\n"
 
-#: pg_backup_custom.c:1020
+#: pg_backup_custom.c:1022
 #, c-format
 msgid "could not close compression stream: %s\n"
 msgstr "无法关闭压缩流: %s\n"
@@ -1419,7 +1424,7 @@ msgstr "为 %s.%s 修补大对象交叉引用\n"
 #: pg_backup_db.c:791
 #, c-format
 msgid "SQL: %s\n"
-msgstr ""
+msgstr "SQL: %s\n"
 
 #: pg_backup_db.c:796
 #, c-format
@@ -1699,20 +1704,21 @@ msgstr ""
 "选项:\n"
 
 #: pg_restore.c:389
+#
 msgid ""
 "  -a, --data-only          restore only the data, no schema\n"
 "  -c, --clean              clean (drop) schema prior to create\n"
 "  -C, --create             issue commands to create the database\n"
-"  -d, --dbname=NAME        specify database name\n"
-"  -f, --file=FILENAME      TOC output file name (see -l)\n"
+"  -d, --dbname=NAME        output database name\n"
+"  -f, --file=FILENAME      output file name\n"
 "  -F, --format={c|t}       specify backup file format\n"
 "  -h, --host=HOSTNAME      server host name\n"
 "  -i, --index=NAME         restore named index\n"
-"  -l, --list               dump summarized TOC for of the archive\n"
+"  -l, --list               print summarized TOC of the archive\n"
 "  -L, --use-list=FILENAME  use specified table of contents for ordering\n"
 "                           output from this file\n"
 "  -N, --orig-order         restore in original dump order\n"
-"  -o, --oid-order          restore in oid order\n"
+"  -o, --oid-order          restore in OID order\n"
 "  -O, --no-owner           do not reconnect to database to match\n"
 "                           object owner\n"
 "  -p, --port=PORT          server port number\n"
@@ -1737,15 +1743,15 @@ msgstr ""
 "  -a, --data-only          只恢复数据, 不包括大纲\n"
 "  -c, --clean              在创建之前清理(删除)大纲\n"
 "  -C, --create             发出创建数据库的命令\n"
-"  -d, --dbname=名字        声明数据库名字\n"
-"  -f, --file=文件名        TOC 输出文件名(见 -l)\n"
+"  -d, --dbname=名字        输出数据库名字\n"
+"  -f, --file=文件名        输出文件名\n"
 "  -F, --format={c|t}       声明备份文件格式\n"
 "  -h, --host=HOSTNAME      服务器主机名\n"
 "  -i, --index=名字         恢复指定的索引\n"
-"  -l, --list               为归档转储概要 TOC\n"
+"  -l, --list               打印归档的概要目录\n"
 "  -L, --use-list=文件名    使用指定目录作为此文件输出的排序方法\n"
 "  -N, --orig-order         按照原始的转储顺序恢复\n"
-"  -o, --oid-order          按照 oid 顺序恢复\n"
+"  -o, --oid-order          按照 OID 顺序恢复\n"
 "  -O, --no-owner           不要为了匹配对象所有者而重新联接数据库\n"
 "  -p, --port=PORT          服务器端口号\n"
 "  -P, --function=名字      恢复指定的函数\n"
@@ -1764,21 +1770,22 @@ msgstr ""
 "                           重新联接\n"
 
 #: pg_restore.c:425
+#
 msgid ""
 "  -a                       restore only the data, no schema\n"
 "  -c                       clean (drop) schema prior to create\n"
 "  -C                       issue commands to create the database\n"
-"  -d NAME                  specify database name\n"
-"  -f FILENAME              TOC output file name (see -l)\n"
+"  -d NAME                  output database name\n"
+"  -f FILENAME              output file name\n"
 "  -F {c|t}                 specify backup file format\n"
 "  -h HOSTNAME              server host name\n"
 "  -i NAME                  restore named index\n"
-"  -l                       dump summarized TOC for this file\n"
+"  -l                       print summarized TOC of the archive\n"
 "  -L FILENAME              use specified table of contents for ordering\n"
 "                           output from this file\n"
 "  -N                       restore in original dump order\n"
-"  -o                       restore in oid order\n"
-"  -O                       do not output reconnect to database to match\n"
+"  -o                       restore in OID order\n"
+"  -O                       do not reconnect to database to match\n"
 "                           object owner\n"
 "  -p PORT                  server port number\n"
 "  -P NAME                  restore named function\n"
@@ -1802,18 +1809,18 @@ msgstr ""
 "  -a                       只恢复数据, 不恢复大纲\n"
 "  -c                       创建之前清理(删除)大纲\n"
 "  -C                       发出创建数据库的命令\n"
-"  -d 名字                  声明数据库名\n"
-"  -f 文件名                TOC 输出文件名 (见 -l)\n"
+"  -d 名字                  输出数据库名\n"
+"  -f 文件名                输出文件名\n"
 "  -F {c|t}                 声明备份文件格式\n"
 "  -h 主机名                服务器主机名\n"
 "  -i 名字                  恢复指定索引\n"
-"  -l                       为该文件转储概要 TOC (目录)\n"
+"  -l                       打印归档的概要目录\n"
 "  -L 文件名                使用指定的目录作为对该文件输出的排序方法\n"
 "  -N                       以原始的转储顺序恢复\n"
 "  -o                       以 oid (对象标识) 的顺序恢复\n"
 "  -O                       不要为匹配对象所有者输出对数据库的重新联接命令\n"
 "  -p 端口                  服务器端口号\n"
-"  -P 名字                  恢复命名函数\n"
+"  -P 名字                  恢复指定函数\n"
 "  -r                       重新排列输出, 把索引等放到末尾\n"
 "  -R                       禁止所有与数据库的重新联接\n"
 "  -s                       只恢复大纲, 不恢复数据\n"
