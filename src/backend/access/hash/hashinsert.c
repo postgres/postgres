@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashinsert.c,v 1.35 2004/12/31 21:59:13 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashinsert.c,v 1.36 2005/03/21 01:23:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,7 @@ static OffsetNumber _hash_pgaddtup(Relation rel, Buffer buf,
  *		and hashinsert.  By here, hashitem is completely filled in.
  *		The datum to be used as a "key" is in the hashitem.
  */
-InsertIndexResult
+void
 _hash_doinsert(Relation rel, HashItem hitem)
 {
 	Buffer		buf;
@@ -39,7 +39,6 @@ _hash_doinsert(Relation rel, HashItem hitem)
 	IndexTuple	itup;
 	BlockNumber itup_blkno;
 	OffsetNumber itup_off;
-	InsertIndexResult res;
 	BlockNumber blkno;
 	Page		page;
 	HashPageOpaque pageopaque;
@@ -190,13 +189,6 @@ _hash_doinsert(Relation rel, HashItem hitem)
 
 	/* Finally drop our pin on the metapage */
 	_hash_dropbuf(rel, metabuf);
-
-	/* Create the return data structure */
-	res = (InsertIndexResult) palloc(sizeof(InsertIndexResultData));
-
-	ItemPointerSet(&(res->pointerData), itup_blkno, itup_off);
-
-	return res;
 }
 
 /*

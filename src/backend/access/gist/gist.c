@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gist.c,v 1.112 2004/12/31 21:59:10 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gist.c,v 1.113 2005/03/21 01:23:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,18 +71,16 @@ typedef struct
 /* non-export function prototypes */
 static void gistbuildCallback(Relation index,
 				  HeapTuple htup,
-				  Datum *attdata,
-				  char *nulls,
+				  Datum *values,
+				  bool *isnull,
 				  bool tupleIsAlive,
 				  void *state);
 static void gistdoinsert(Relation r,
 			 IndexTuple itup,
-			 InsertIndexResult *res,
 			 GISTSTATE *GISTstate);
 static int gistlayerinsert(Relation r, BlockNumber blkno,
 				IndexTuple **itup,
 				int *len,
-				InsertIndexResult *res,
 				GISTSTATE *giststate);
 static OffsetNumber gistwritebuffer(Relation r,
 				Page page,
@@ -114,8 +112,7 @@ static IndexTuple *gistSplit(Relation r,
 		  Buffer buffer,
 		  IndexTuple *itup,
 		  int *len,
-		  GISTSTATE *giststate,
-		  InsertIndexResult *res);
+		  GISTSTATE *giststate);
 static void gistnewroot(Relation r,
 			IndexTuple *itup, int len);
 static void GISTInitBuffer(Buffer b, uint32 f);
@@ -223,8 +220,8 @@ gistbuild(PG_FUNCTION_ARGS)
 static void
 gistbuildCallback(Relation index,
 				  HeapTuple htup,
-				  Datum *attdata,
-				  char *nulls,
+				  Datum *values,
+				  bool *isnull,
 				  bool tupleIsAlive,
 				  void *state)
 {
@@ -235,33 +232,33 @@ gistbuildCallback(Relation index,
 	int			i;
 
 	/* GiST cannot index tuples with leading NULLs */
-	if (nulls[0] == 'n')
+	if (isnull[0])
 		return;
 
 	/* immediately compress keys to normalize */
 	for (i = 0; i < buildstate->numindexattrs; i++)
 	{
-		if (nulls[i] == 'n')
+		if (isnull[i])
 		{
-			attdata[i] = (Datum) 0;
+			values[i] = (Datum) 0;
 			compvec[i] = FALSE;
 		}
 		else
 		{
-			gistcentryinit(&buildstate->giststate, i, &tmpcentry, attdata[i],
+			gistcentryinit(&buildstate->giststate, i, &tmpcentry, values[i],
 						   NULL, NULL, (OffsetNumber) 0,
 						 -1 /* size is currently bogus */ , TRUE, FALSE);
-			if (attdata[i] != tmpcentry.key &&
+			if (values[i] != tmpcentry.key &&
 				!(isAttByVal(&buildstate->giststate, i)))
 				compvec[i] = TRUE;
 			else
 				compvec[i] = FALSE;
-			attdata[i] = tmpcentry.key;
+			values[i] = tmpcentry.key;
 		}
 	}
 
 	/* form an index tuple and point it at the heap tuple */
-	itup = index_formtuple(buildstate->giststate.tupdesc, attdata, nulls);
+	itup = index_form_tuple(buildstate->giststate.tupdesc, values, isnull);
 	itup->t_tid = htup->t_self;
 
 	/*
@@ -271,13 +268,13 @@ gistbuildCallback(Relation index,
 	 * thing to do if you're inserting single tups, but not when you're
 	 * initializing the whole index at once.
 	 */
-	gistdoinsert(index, itup, NULL, &buildstate->giststate);
+	gistdoinsert(index, itup, &buildstate->giststate);
 
 	buildstate->indtuples += 1;
 
 	for (i = 0; i < buildstate->numindexattrs; i++)
 		if (compvec[i])
-			pfree(DatumGetPointer(attdata[i]));
+			pfree(DatumGetPointer(values[i]));
 
 	pfree(itup);
 }
@@ -292,15 +289,14 @@ Datum
 gistinsert(PG_FUNCTION_ARGS)
 {
 	Relation	r = (Relation) PG_GETARG_POINTER(0);
-	Datum	   *datum = (Datum *) PG_GETARG_POINTER(1);
-	char	   *nulls = (char *) PG_GETARG_POINTER(2);
+	Datum	   *values = (Datum *) PG_GETARG_POINTER(1);
+	bool	   *isnull = (bool *) PG_GETARG_POINTER(2);
 	ItemPointer ht_ctid = (ItemPointer) PG_GETARG_POINTER(3);
 
 #ifdef NOT_USED
 	Relation	heapRel = (Relation) PG_GETARG_POINTER(4);
 	bool		checkUnique = PG_GETARG_BOOL(5);
 #endif
-	InsertIndexResult res;
 	IndexTuple	itup;
 	GISTSTATE	giststate;
 	GISTENTRY	tmpentry;
@@ -314,47 +310,43 @@ gistinsert(PG_FUNCTION_ARGS)
 	 */
 
 	/* GiST cannot index tuples with leading NULLs */
-	if (nulls[0] == 'n')
-	{
-		res = NULL;
-		PG_RETURN_POINTER(res);
-	}
+	if (isnull[0])
+		PG_RETURN_BOOL(false);
 
 	initGISTstate(&giststate, r);
 
 	/* immediately compress keys to normalize */
 	for (i = 0; i < r->rd_att->natts; i++)
 	{
-		if (nulls[i] == 'n')
+		if (isnull[i])
 		{
-			datum[i] = (Datum) 0;
+			values[i] = (Datum) 0;
 			compvec[i] = FALSE;
 		}
 		else
 		{
-			gistcentryinit(&giststate, i, &tmpentry, datum[i],
+			gistcentryinit(&giststate, i, &tmpentry, values[i],
 						   NULL, NULL, (OffsetNumber) 0,
 						 -1 /* size is currently bogus */ , TRUE, FALSE);
-			if (datum[i] != tmpentry.key && !(isAttByVal(&giststate, i)))
+			if (values[i] != tmpentry.key && !(isAttByVal(&giststate, i)))
 				compvec[i] = TRUE;
 			else
 				compvec[i] = FALSE;
-			datum[i] = tmpentry.key;
+			values[i] = tmpentry.key;
 		}
 	}
-	itup = index_formtuple(giststate.tupdesc, datum, nulls);
+	itup = index_form_tuple(giststate.tupdesc, values, isnull);
 	itup->t_tid = *ht_ctid;
 
-	res = (InsertIndexResult) palloc(sizeof(InsertIndexResultData));
-	gistdoinsert(r, itup, &res, &giststate);
+	gistdoinsert(r, itup, &giststate);
 
 	for (i = 0; i < r->rd_att->natts; i++)
 		if (compvec[i] == TRUE)
-			pfree(DatumGetPointer(datum[i]));
+			pfree(DatumGetPointer(values[i]));
 	pfree(itup);
 	freeGISTstate(&giststate);
 
-	PG_RETURN_POINTER(res);
+	PG_RETURN_BOOL(true);
 }
 
 #ifdef GIST_PAGEADDITEM
@@ -411,7 +403,6 @@ gistPageAddItem(GISTSTATE *giststate,
 static void
 gistdoinsert(Relation r,
 			 IndexTuple itup,
-			 InsertIndexResult *res,
 			 GISTSTATE *giststate)
 {
 	IndexTuple *instup;
@@ -423,7 +414,7 @@ gistdoinsert(Relation r,
 	instup[0] = (IndexTuple) palloc(IndexTupleSize(itup));
 	memcpy(instup[0], itup, IndexTupleSize(itup));
 
-	ret = gistlayerinsert(r, GISTP_ROOT, &instup, &len, res, giststate);
+	ret = gistlayerinsert(r, GISTP_ROOT, &instup, &len, giststate);
 	if (ret & SPLITED)
 		gistnewroot(r, instup, len);
 
@@ -436,7 +427,6 @@ static int
 gistlayerinsert(Relation r, BlockNumber blkno,
 				IndexTuple **itup,		/* in - out, has compressed entry */
 				int *len,		/* in - out */
-				InsertIndexResult *res, /* out */
 				GISTSTATE *giststate)
 {
 	Buffer		buffer;
@@ -468,7 +458,7 @@ gistlayerinsert(Relation r, BlockNumber blkno,
 		 * contains keys for each page 2. if  child page wasn't splited,
 		 * then itup contains additional for adjustment of current key
 		 */
-		ret = gistlayerinsert(r, nblkno, itup, len, res, giststate);
+		ret = gistlayerinsert(r, nblkno, itup, len, giststate);
 
 		/* nothing inserted in child */
 		if (!(ret & INSERTED))
@@ -520,9 +510,7 @@ gistlayerinsert(Relation r, BlockNumber blkno,
 		itvec = gistreadbuffer(buffer, &tlen);
 		itvec = gistjoinvector(itvec, &tlen, (*itup), *len);
 		oldlen = *len;
-		newitup = gistSplit(r, buffer, itvec, &tlen, giststate,
-							(opaque->flags & F_LEAF) ? res : NULL);		/* res only for
-																		 * inserting in leaf */
+		newitup = gistSplit(r, buffer, itvec, &tlen, giststate);
 		ReleaseBuffer(buffer);
 		do
 			pfree((*itup)[oldlen - 1]);
@@ -544,12 +532,6 @@ gistlayerinsert(Relation r, BlockNumber blkno,
 			OffsetNumberNext(PageGetMaxOffsetNumber(page));
 		l = gistwritebuffer(r, page, (*itup), *len, off);
 		WriteBuffer(buffer);
-
-		/*
-		 * set res if insert into leaf page, in this case, len = 1 always
-		 */
-		if (res && (opaque->flags & F_LEAF))
-			ItemPointerSet(&((*res)->pointerData), blkno, l);
 
 		if (*len > 1)
 		{						/* previous insert ret & SPLITED != 0 */
@@ -666,7 +648,7 @@ gistunion(Relation r, IndexTuple *itvec, int len, GISTSTATE *giststate)
 {
 	Datum		attr[INDEX_MAX_KEYS];
 	bool		whatfree[INDEX_MAX_KEYS];
-	char		isnull[INDEX_MAX_KEYS];
+	bool		isnull[INDEX_MAX_KEYS];
 	GistEntryVector *evec;
 	Datum		datum;
 	int			datumsize,
@@ -706,7 +688,7 @@ gistunion(Relation r, IndexTuple *itvec, int len, GISTSTATE *giststate)
 		if (reallen == 0)
 		{
 			attr[j] = (Datum) 0;
-			isnull[j] = 'n';
+			isnull[j] = TRUE;
 			whatfree[j] = FALSE;
 		}
 		else
@@ -732,7 +714,7 @@ gistunion(Relation r, IndexTuple *itvec, int len, GISTSTATE *giststate)
 			gistcentryinit(giststate, j, &centry[j], datum,
 						   NULL, NULL, (OffsetNumber) 0,
 						   datumsize, FALSE, FALSE);
-			isnull[j] = ' ';
+			isnull[j] = FALSE;
 			attr[j] = centry[j].key;
 			if (!isAttByVal(giststate, j))
 			{
@@ -748,7 +730,7 @@ gistunion(Relation r, IndexTuple *itvec, int len, GISTSTATE *giststate)
 	pfree(evec);
 	pfree(needfree);
 
-	newtup = (IndexTuple) index_formtuple(giststate->tupdesc, attr, isnull);
+	newtup = index_form_tuple(giststate->tupdesc, attr, isnull);
 	for (j = 0; j < r->rd_att->natts; j++)
 		if (whatfree[j])
 			pfree(DatumGetPointer(attr[j]));
@@ -768,7 +750,7 @@ gistgetadjusted(Relation r, IndexTuple oldtup, IndexTuple addtup, GISTSTATE *gis
 	int			datumsize;
 	bool		result,
 				neednew = false;
-	char		isnull[INDEX_MAX_KEYS],
+	bool		isnull[INDEX_MAX_KEYS],
 				whatfree[INDEX_MAX_KEYS];
 	Datum		attr[INDEX_MAX_KEYS];
 	GISTENTRY	centry[INDEX_MAX_KEYS],
@@ -799,8 +781,8 @@ gistgetadjusted(Relation r, IndexTuple oldtup, IndexTuple addtup, GISTSTATE *gis
 	{
 		if (oldisnull[j] && addisnull[j])
 		{
-			isnull[j] = 'n';
 			attr[j] = (Datum) 0;
+			isnull[j] = TRUE;
 			whatfree[j] = FALSE;
 		}
 		else
@@ -839,8 +821,8 @@ gistgetadjusted(Relation r, IndexTuple oldtup, IndexTuple addtup, GISTSTATE *gis
 						   NULL, NULL, (OffsetNumber) 0,
 						   datumsize, FALSE, FALSE);
 
-			isnull[j] = ' ';
 			attr[j] = centry[j].key;
+			isnull[j] = FALSE;
 			if ((!isAttByVal(giststate, j)))
 			{
 				whatfree[j] = TRUE;
@@ -856,7 +838,7 @@ gistgetadjusted(Relation r, IndexTuple oldtup, IndexTuple addtup, GISTSTATE *gis
 	if (neednew)
 	{
 		/* need to update key */
-		newtup = (IndexTuple) index_formtuple(giststate->tupdesc, attr, isnull);
+		newtup = index_form_tuple(giststate->tupdesc, attr, isnull);
 		newtup->t_tid = oldtup->t_tid;
 	}
 
@@ -1010,7 +992,7 @@ gistfindgroup(GISTSTATE *giststate, GISTENTRY *valvec, GIST_SPLITVEC *spl)
 		/* find all other equal value in left part */
 		if (len)
 		{
-			/* add current val to list of equial values */
+			/* add current val to list of equal values */
 			spl->spl_idgrp[spl->spl_left[i]] = curid;
 			/* searching .. */
 			for (j = i + 1; j < spl->spl_nleft; j++)
@@ -1207,8 +1189,7 @@ gistSplit(Relation r,
 		  Buffer buffer,
 		  IndexTuple *itup,		/* contains compressed entry */
 		  int *len,
-		  GISTSTATE *giststate,
-		  InsertIndexResult *res)
+		  GISTSTATE *giststate)
 {
 	Page		p;
 	Buffer		leftbuf,
@@ -1344,8 +1325,7 @@ gistSplit(Relation r,
 	if (gistnospace(right, rvectup, v.spl_nright))
 	{
 		nlen = v.spl_nright;
-		newtup = gistSplit(r, rightbuf, rvectup, &nlen, giststate,
-			  (res && rvectup[nlen - 1] == itup[*len - 1]) ? res : NULL);
+		newtup = gistSplit(r, rightbuf, rvectup, &nlen, giststate);
 		ReleaseBuffer(rightbuf);
 		for (j = 1; j < r->rd_att->natts; j++)
 			if ((!isAttByVal(giststate, j)) && !v.spl_risnull[j])
@@ -1357,9 +1337,6 @@ gistSplit(Relation r,
 
 		l = gistwritebuffer(r, right, rvectup, v.spl_nright, FirstOffsetNumber);
 		WriteBuffer(rightbuf);
-
-		if (res)
-			ItemPointerSet(&((*res)->pointerData), rbknum, l);
 
 		nlen = 1;
 		newtup = (IndexTuple *) palloc(sizeof(IndexTuple) * 1);
@@ -1373,8 +1350,7 @@ gistSplit(Relation r,
 		int			llen = v.spl_nleft;
 		IndexTuple *lntup;
 
-		lntup = gistSplit(r, leftbuf, lvectup, &llen, giststate,
-			  (res && lvectup[llen - 1] == itup[*len - 1]) ? res : NULL);
+		lntup = gistSplit(r, leftbuf, lvectup, &llen, giststate);
 		ReleaseBuffer(leftbuf);
 
 		for (j = 1; j < r->rd_att->natts; j++)
@@ -1393,9 +1369,6 @@ gistSplit(Relation r,
 			PageRestoreTempPage(left, p);
 
 		WriteBuffer(leftbuf);
-
-		if (res)
-			ItemPointerSet(&((*res)->pointerData), lbknum, l);
 
 		nlen += 1;
 		newtup = (IndexTuple *) repalloc((void *) newtup, sizeof(IndexTuple) * nlen);
@@ -1704,7 +1677,7 @@ gist_tuple_replacekey(Relation r, GISTENTRY entry, IndexTuple t)
 	/*
 	 * If new entry fits in index tuple, copy it in.  To avoid worrying
 	 * about null-value bitmask, pass it off to the general
-	 * index_formtuple routine if either the previous or new value is
+	 * index_form_tuple routine if either the previous or new value is
 	 * NULL.
 	 */
 	if (!IsNull && DatumGetPointer(entry.key) != NULL &&
@@ -1725,12 +1698,10 @@ gist_tuple_replacekey(Relation r, GISTENTRY entry, IndexTuple t)
 		/* generate a new index tuple for the compressed entry */
 		TupleDesc	tupDesc = r->rd_att;
 		IndexTuple	newtup;
-		char		isnull;
+		bool		isnull;
 
-		isnull = DatumGetPointer(entry.key) != NULL ? ' ' : 'n';
-		newtup = (IndexTuple) index_formtuple(tupDesc,
-											  &(entry.key),
-											  &isnull);
+		isnull = (DatumGetPointer(entry.key) == NULL);
+		newtup = index_form_tuple(tupDesc, &(entry.key), &isnull);
 		newtup->t_tid = t->t_tid;
 		return newtup;
 	}
@@ -1799,7 +1770,6 @@ gistFormTuple(GISTSTATE *giststate, Relation r,
 			  Datum attdata[], int datumsize[], bool isnull[])
 {
 	IndexTuple	tup;
-	char		isnullchar[INDEX_MAX_KEYS];
 	bool		whatfree[INDEX_MAX_KEYS];
 	GISTENTRY	centry[INDEX_MAX_KEYS];
 	Datum		compatt[INDEX_MAX_KEYS];
@@ -1809,7 +1779,6 @@ gistFormTuple(GISTSTATE *giststate, Relation r,
 	{
 		if (isnull[j])
 		{
-			isnullchar[j] = 'n';
 			compatt[j] = (Datum) 0;
 			whatfree[j] = FALSE;
 		}
@@ -1818,7 +1787,6 @@ gistFormTuple(GISTSTATE *giststate, Relation r,
 			gistcentryinit(giststate, j, &centry[j], attdata[j],
 						   NULL, NULL, (OffsetNumber) 0,
 						   datumsize[j], FALSE, FALSE);
-			isnullchar[j] = ' ';
 			compatt[j] = centry[j].key;
 			if (!isAttByVal(giststate, j))
 			{
@@ -1831,7 +1799,7 @@ gistFormTuple(GISTSTATE *giststate, Relation r,
 		}
 	}
 
-	tup = (IndexTuple) index_formtuple(giststate->tupdesc, compatt, isnullchar);
+	tup = index_form_tuple(giststate->tupdesc, compatt, isnull);
 	for (j = 0; j < r->rd_att->natts; j++)
 		if (whatfree[j])
 			pfree(DatumGetPointer(compatt[j]));

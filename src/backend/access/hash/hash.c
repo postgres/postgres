@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hash.c,v 1.76 2004/12/31 21:59:13 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hash.c,v 1.77 2005/03/21 01:23:57 tgl Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -36,8 +36,8 @@ typedef struct
 
 static void hashbuildCallback(Relation index,
 				  HeapTuple htup,
-				  Datum *attdata,
-				  char *nulls,
+				  Datum *values,
+				  bool *isnull,
 				  bool tupleIsAlive,
 				  void *state);
 
@@ -103,18 +103,17 @@ hashbuild(PG_FUNCTION_ARGS)
 static void
 hashbuildCallback(Relation index,
 				  HeapTuple htup,
-				  Datum *attdata,
-				  char *nulls,
+				  Datum *values,
+				  bool *isnull,
 				  bool tupleIsAlive,
 				  void *state)
 {
 	HashBuildState *buildstate = (HashBuildState *) state;
 	IndexTuple	itup;
 	HashItem	hitem;
-	InsertIndexResult res;
 
 	/* form an index tuple and point it at the heap tuple */
-	itup = index_formtuple(RelationGetDescr(index), attdata, nulls);
+	itup = index_form_tuple(RelationGetDescr(index), values, isnull);
 	itup->t_tid = htup->t_self;
 
 	/* Hash indexes don't index nulls, see notes in hashinsert */
@@ -126,10 +125,7 @@ hashbuildCallback(Relation index,
 
 	hitem = _hash_formitem(itup);
 
-	res = _hash_doinsert(index, hitem);
-
-	if (res)
-		pfree(res);
+	_hash_doinsert(index, hitem);
 
 	buildstate->indtuples += 1;
 
@@ -141,27 +137,25 @@ hashbuildCallback(Relation index,
  *	hashinsert() -- insert an index tuple into a hash table.
  *
  *	Hash on the index tuple's key, find the appropriate location
- *	for the new tuple, put it there, and return an InsertIndexResult
- *	to the caller.
+ *	for the new tuple, and put it there.
  */
 Datum
 hashinsert(PG_FUNCTION_ARGS)
 {
 	Relation	rel = (Relation) PG_GETARG_POINTER(0);
-	Datum	   *datum = (Datum *) PG_GETARG_POINTER(1);
-	char	   *nulls = (char *) PG_GETARG_POINTER(2);
+	Datum	   *values = (Datum *) PG_GETARG_POINTER(1);
+	bool	   *isnull = (bool *) PG_GETARG_POINTER(2);
 	ItemPointer ht_ctid = (ItemPointer) PG_GETARG_POINTER(3);
 
 #ifdef NOT_USED
 	Relation	heapRel = (Relation) PG_GETARG_POINTER(4);
 	bool		checkUnique = PG_GETARG_BOOL(5);
 #endif
-	InsertIndexResult res;
 	HashItem	hitem;
 	IndexTuple	itup;
 
 	/* generate an index tuple */
-	itup = index_formtuple(RelationGetDescr(rel), datum, nulls);
+	itup = index_form_tuple(RelationGetDescr(rel), values, isnull);
 	itup->t_tid = *ht_ctid;
 
 	/*
@@ -176,17 +170,17 @@ hashinsert(PG_FUNCTION_ARGS)
 	if (IndexTupleHasNulls(itup))
 	{
 		pfree(itup);
-		PG_RETURN_POINTER(NULL);
+		PG_RETURN_BOOL(false);
 	}
 
 	hitem = _hash_formitem(itup);
 
-	res = _hash_doinsert(rel, hitem);
+	_hash_doinsert(rel, hitem);
 
 	pfree(hitem);
 	pfree(itup);
 
-	PG_RETURN_POINTER(res);
+	PG_RETURN_BOOL(true);
 }
 
 

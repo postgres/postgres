@@ -6,7 +6,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/access/tuptoaster.h,v 1.21 2005/01/01 05:43:09 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/tuptoaster.h,v 1.22 2005/03/21 01:24:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,7 @@
 /*
  * If an index value is larger than TOAST_INDEX_TARGET, we will try to
  * compress it (we can't move it out-of-line, however).  Note that this
- * number is per-datum, not per-tuple, for simplicity in index_formtuple().
+ * number is per-datum, not per-tuple, for simplicity in index_form_tuple().
  */
 #define TOAST_INDEX_TARGET		(MaxTupleSize / 16)
 

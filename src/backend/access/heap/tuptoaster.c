@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.48 2005/03/14 04:41:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.49 2005/03/21 01:23:58 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -283,7 +283,7 @@ toast_delete(Relation rel, HeapTuple oldtup)
 	int			numAttrs;
 	int			i;
 	Datum		toast_values[MaxHeapAttributeNumber];
-	char		toast_nulls[MaxHeapAttributeNumber];
+	bool		toast_isnull[MaxHeapAttributeNumber];
 
 	/*
 	 * Get the tuple descriptor and break down the tuple into fields.
@@ -301,7 +301,7 @@ toast_delete(Relation rel, HeapTuple oldtup)
 	numAttrs = tupleDesc->natts;
 
 	Assert(numAttrs <= MaxHeapAttributeNumber);
-	heap_deformtuple(oldtup, tupleDesc, toast_values, toast_nulls);
+	heap_deform_tuple(oldtup, tupleDesc, toast_values, toast_isnull);
 
 	/*
 	 * Check for external stored attributes and delete them from the
@@ -313,7 +313,7 @@ toast_delete(Relation rel, HeapTuple oldtup)
 		{
 			Datum		value = toast_values[i];
 
-			if (toast_nulls[i] != 'n' && VARATT_IS_EXTERNAL(value))
+			if (!toast_isnull[i] && VARATT_IS_EXTERNAL(value))
 				toast_delete_datum(rel, value);
 		}
 	}
@@ -343,8 +343,8 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 	Size		maxDataLen;
 
 	char		toast_action[MaxHeapAttributeNumber];
-	char		toast_nulls[MaxHeapAttributeNumber];
-	char		toast_oldnulls[MaxHeapAttributeNumber];
+	bool		toast_isnull[MaxHeapAttributeNumber];
+	bool		toast_oldisnull[MaxHeapAttributeNumber];
 	Datum		toast_values[MaxHeapAttributeNumber];
 	Datum		toast_oldvalues[MaxHeapAttributeNumber];
 	int32		toast_sizes[MaxHeapAttributeNumber];
@@ -359,9 +359,9 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 	numAttrs = tupleDesc->natts;
 
 	Assert(numAttrs <= MaxHeapAttributeNumber);
-	heap_deformtuple(newtup, tupleDesc, toast_values, toast_nulls);
+	heap_deform_tuple(newtup, tupleDesc, toast_values, toast_isnull);
 	if (oldtup != NULL)
-		heap_deformtuple(oldtup, tupleDesc, toast_oldvalues, toast_oldnulls);
+		heap_deform_tuple(oldtup, tupleDesc, toast_oldvalues, toast_oldisnull);
 
 	/* ----------
 	 * Then collect information about the values given
@@ -396,10 +396,10 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 			 * If the old value is an external stored one, check if it has
 			 * changed so we have to delete it later.
 			 */
-			if (att[i]->attlen == -1 && toast_oldnulls[i] != 'n' &&
+			if (att[i]->attlen == -1 && !toast_oldisnull[i] &&
 				VARATT_IS_EXTERNAL(old_value))
 			{
-				if (toast_nulls[i] == 'n' || !VARATT_IS_EXTERNAL(new_value) ||
+				if (toast_isnull[i] || !VARATT_IS_EXTERNAL(new_value) ||
 					old_value->va_content.va_external.va_valueid !=
 					new_value->va_content.va_external.va_valueid ||
 					old_value->va_content.va_external.va_toastrelid !=
@@ -436,7 +436,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 		/*
 		 * Handle NULL attributes
 		 */
-		if (toast_nulls[i] == 'n')
+		if (toast_isnull[i])
 		{
 			toast_action[i] = 'p';
 			has_nulls = true;
@@ -499,7 +499,8 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 	/*
 	 * Look for attributes with attstorage 'x' to compress
 	 */
-	while (MAXALIGN(ComputeDataSize(tupleDesc, toast_values, toast_nulls)) >
+	while (MAXALIGN(heap_compute_data_size(tupleDesc,
+										   toast_values, toast_isnull)) >
 		   maxDataLen)
 	{
 		int			biggest_attno = -1;
@@ -560,7 +561,8 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 	 * Second we look for attributes of attstorage 'x' or 'e' that are
 	 * still inline.
 	 */
-	while (MAXALIGN(ComputeDataSize(tupleDesc, toast_values, toast_nulls)) >
+	while (MAXALIGN(heap_compute_data_size(tupleDesc,
+										   toast_values, toast_isnull)) >
 		   maxDataLen && rel->rd_rel->reltoastrelid != InvalidOid)
 	{
 		int			biggest_attno = -1;
@@ -611,7 +613,8 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 	 * Round 3 - this time we take attributes with storage 'm' into
 	 * compression
 	 */
-	while (MAXALIGN(ComputeDataSize(tupleDesc, toast_values, toast_nulls)) >
+	while (MAXALIGN(heap_compute_data_size(tupleDesc,
+										   toast_values, toast_isnull)) >
 		   maxDataLen)
 	{
 		int			biggest_attno = -1;
@@ -671,7 +674,8 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 	/*
 	 * Finally we store attributes of type 'm' external
 	 */
-	while (MAXALIGN(ComputeDataSize(tupleDesc, toast_values, toast_nulls)) >
+	while (MAXALIGN(heap_compute_data_size(tupleDesc,
+										   toast_values, toast_isnull)) >
 		   maxDataLen && rel->rd_rel->reltoastrelid != InvalidOid)
 	{
 		int			biggest_attno = -1;
@@ -739,7 +743,8 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 			new_len += sizeof(Oid);
 		new_len = MAXALIGN(new_len);
 		Assert(new_len == olddata->t_hoff);
-		new_len += ComputeDataSize(tupleDesc, toast_values, toast_nulls);
+		new_len += heap_compute_data_size(tupleDesc,
+										  toast_values, toast_isnull);
 
 		/*
 		 * Allocate new tuple in same context as old one.
@@ -753,12 +758,12 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 		 */
 		memcpy(new_data, olddata, olddata->t_hoff);
 
-		DataFill((char *) new_data + olddata->t_hoff,
-				 tupleDesc,
-				 toast_values,
-				 toast_nulls,
-				 &(newtup->t_data->t_infomask),
-				 has_nulls ? newtup->t_data->t_bits : NULL);
+		heap_fill_tuple(tupleDesc,
+						toast_values,
+						toast_isnull,
+						(char *) new_data + olddata->t_hoff,
+						&(newtup->t_data->t_infomask),
+						has_nulls ? newtup->t_data->t_bits : NULL);
 
 		/*
 		 * In the case we modified a previously modified tuple again, free
@@ -810,7 +815,7 @@ toast_flatten_tuple_attribute(Datum value,
 	bool		need_change = false;
 	bool		has_nulls = false;
 	Datum		toast_values[MaxTupleAttributeNumber];
-	char		toast_nulls[MaxTupleAttributeNumber];
+	bool		toast_isnull[MaxTupleAttributeNumber];
 	bool		toast_free[MaxTupleAttributeNumber];
 
 	/*
@@ -836,7 +841,7 @@ toast_flatten_tuple_attribute(Datum value,
 	tmptup.t_data = olddata;
 
 	Assert(numAttrs <= MaxTupleAttributeNumber);
-	heap_deformtuple(&tmptup, tupleDesc, toast_values, toast_nulls);
+	heap_deform_tuple(&tmptup, tupleDesc, toast_values, toast_isnull);
 
 	memset(toast_free, 0, numAttrs * sizeof(bool));
 
@@ -845,7 +850,7 @@ toast_flatten_tuple_attribute(Datum value,
 		/*
 		 * Look at non-null varlena attributes
 		 */
-		if (toast_nulls[i] == 'n')
+		if (toast_isnull[i])
 			has_nulls = true;
 		else if (att[i]->attlen == -1)
 		{
@@ -879,7 +884,7 @@ toast_flatten_tuple_attribute(Datum value,
 		new_len += sizeof(Oid);
 	new_len = MAXALIGN(new_len);
 	Assert(new_len == olddata->t_hoff);
-	new_len += ComputeDataSize(tupleDesc, toast_values, toast_nulls);
+	new_len += heap_compute_data_size(tupleDesc, toast_values, toast_isnull);
 
 	new_data = (HeapTupleHeader) palloc0(new_len);
 
@@ -890,12 +895,12 @@ toast_flatten_tuple_attribute(Datum value,
 
 	HeapTupleHeaderSetDatumLength(new_data, new_len);
 
-	DataFill((char *) new_data + olddata->t_hoff,
-			 tupleDesc,
-			 toast_values,
-			 toast_nulls,
-			 &(new_data->t_infomask),
-			 has_nulls ? new_data->t_bits : NULL);
+	heap_fill_tuple(tupleDesc,
+					toast_values,
+					toast_isnull,
+					(char *) new_data + olddata->t_hoff,
+					&(new_data->t_infomask),
+					has_nulls ? new_data->t_bits : NULL);
 
 	/*
 	 * Free allocated temp values
@@ -955,10 +960,9 @@ toast_save_datum(Relation rel, Datum value)
 	Relation	toastrel;
 	Relation	toastidx;
 	HeapTuple	toasttup;
-	InsertIndexResult idxres;
 	TupleDesc	toasttupDesc;
 	Datum		t_values[3];
-	char		t_nulls[3];
+	bool		t_isnull[3];
 	varattrib  *result;
 	struct
 	{
@@ -996,9 +1000,9 @@ toast_save_datum(Relation rel, Datum value)
 	 */
 	t_values[0] = ObjectIdGetDatum(result->va_content.va_external.va_valueid);
 	t_values[2] = PointerGetDatum(&chunk_data);
-	t_nulls[0] = ' ';
-	t_nulls[1] = ' ';
-	t_nulls[2] = ' ';
+	t_isnull[0] = false;
+	t_isnull[1] = false;
+	t_isnull[2] = false;
 
 	/*
 	 * Get the data to process
@@ -1031,7 +1035,7 @@ toast_save_datum(Relation rel, Datum value)
 		t_values[1] = Int32GetDatum(chunk_seq++);
 		VARATT_SIZEP(&chunk_data) = chunk_size + VARHDRSZ;
 		memcpy(VARATT_DATA(&chunk_data), data_p, chunk_size);
-		toasttup = heap_formtuple(toasttupDesc, t_values, t_nulls);
+		toasttup = heap_form_tuple(toasttupDesc, t_values, t_isnull);
 		if (!HeapTupleIsValid(toasttup))
 			elog(ERROR, "failed to build TOAST tuple");
 
@@ -1045,16 +1049,13 @@ toast_save_datum(Relation rel, Datum value)
 		 * Note also that there had better not be any user-created index on
 		 * the TOAST table, since we don't bother to update anything else.
 		 */
-		idxres = index_insert(toastidx, t_values, t_nulls,
-							  &(toasttup->t_self),
-							  toastrel, toastidx->rd_index->indisunique);
-		if (idxres == NULL)
-			elog(ERROR, "failed to insert index entry for TOAST tuple");
+		index_insert(toastidx, t_values, t_isnull,
+					 &(toasttup->t_self),
+					 toastrel, toastidx->rd_index->indisunique);
 
 		/*
 		 * Free memory
 		 */
-		pfree(idxres);
 		heap_freetuple(toasttup);
 
 		/*

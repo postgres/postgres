@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.248 2005/03/20 22:00:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.249 2005/03/21 01:24:01 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -889,28 +889,29 @@ BuildIndexInfo(Relation index)
 
 /* ----------------
  *		FormIndexDatum
- *			Construct Datum[] and nullv[] arrays for a new index tuple.
+ *			Construct values[] and isnull[] arrays for a new index tuple.
  *
  *	indexInfo		Info about the index
  *	slot			Heap tuple for which we must prepare an index entry
  *	estate			executor state for evaluating any index expressions
- *	datum			Array of index Datums (output area)
- *	nullv			Array of is-null indicators (output area)
+ *	values			Array of index Datums (output area)
+ *	isnull			Array of is-null indicators (output area)
  *
  * When there are no index expressions, estate may be NULL.  Otherwise it
  * must be supplied, *and* the ecxt_scantuple slot of its per-tuple expr
  * context must point to the heap tuple passed in.
  *
- * For largely historical reasons, we don't actually call index_formtuple()
- * here, we just prepare its input arrays datum[] and nullv[].
+ * Notice we don't actually call index_form_tuple() here; we just prepare
+ * its input arrays values[] and isnull[].  This is because the index AM
+ * may wish to alter the data before storage.
  * ----------------
  */
 void
 FormIndexDatum(IndexInfo *indexInfo,
 			   TupleTableSlot *slot,
 			   EState *estate,
-			   Datum *datum,
-			   char *nullv)
+			   Datum *values,
+			   bool *isnull)
 {
 	ListCell   *indexpr_item;
 	int			i;
@@ -954,8 +955,8 @@ FormIndexDatum(IndexInfo *indexInfo,
 											   NULL);
 			indexpr_item = lnext(indexpr_item);
 		}
-		datum[i] = iDatum;
-		nullv[i] = (isNull) ? 'n' : ' ';
+		values[i] = iDatum;
+		isnull[i] = isNull;
 	}
 
 	if (indexpr_item != NULL)
@@ -1332,8 +1333,8 @@ IndexBuildHeapScan(Relation heapRelation,
 {
 	HeapScanDesc scan;
 	HeapTuple	heapTuple;
-	Datum		attdata[INDEX_MAX_KEYS];
-	char		nulls[INDEX_MAX_KEYS];
+	Datum		values[INDEX_MAX_KEYS];
+	bool		isnull[INDEX_MAX_KEYS];
 	double		reltuples;
 	List	   *predicate;
 	TupleTableSlot *slot;
@@ -1509,17 +1510,17 @@ IndexBuildHeapScan(Relation heapRelation,
 		FormIndexDatum(indexInfo,
 					   slot,
 					   estate,
-					   attdata,
-					   nulls);
+					   values,
+					   isnull);
 
 		/*
 		 * You'd think we should go ahead and build the index tuple here,
 		 * but some index AMs want to do further processing on the data
-		 * first.  So pass the attdata and nulls arrays, instead.
+		 * first.  So pass the values[] and isnull[] arrays, instead.
 		 */
 
 		/* Call the AM's callback routine to process the tuple */
-		callback(indexRelation, heapTuple, attdata, nulls, tupleIsAlive,
+		callback(indexRelation, heapTuple, values, isnull, tupleIsAlive,
 				 callback_state);
 	}
 

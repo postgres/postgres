@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/index/indexam.c,v 1.77 2004/12/31 21:59:19 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/index/indexam.c,v 1.78 2005/03/21 01:23:58 tgl Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relation OID
@@ -211,16 +211,15 @@ index_close(Relation relation)
  *		index_insert - insert an index tuple into a relation
  * ----------------
  */
-InsertIndexResult
+bool
 index_insert(Relation indexRelation,
-			 Datum *datums,
-			 char *nulls,
+			 Datum *values,
+			 bool *isnull,
 			 ItemPointer heap_t_ctid,
 			 Relation heapRelation,
 			 bool check_uniqueness)
 {
 	RegProcedure procedure;
-	InsertIndexResult specificResult;
 
 	RELATION_CHECKS;
 	GET_REL_PROCEDURE(insert, aminsert);
@@ -228,17 +227,13 @@ index_insert(Relation indexRelation,
 	/*
 	 * have the am's insert proc do all the work.
 	 */
-	specificResult = (InsertIndexResult)
-		DatumGetPointer(OidFunctionCall6(procedure,
+	return DatumGetBool(OidFunctionCall6(procedure,
 										 PointerGetDatum(indexRelation),
-										 PointerGetDatum(datums),
-										 PointerGetDatum(nulls),
+										 PointerGetDatum(values),
+										 PointerGetDatum(isnull),
 										 PointerGetDatum(heap_t_ctid),
 										 PointerGetDatum(heapRelation),
 										 BoolGetDatum(check_uniqueness)));
-
-	/* must be pfree'ed */
-	return specificResult;
 }
 
 /* ----------------

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/indextuple.c,v 1.72 2004/12/31 21:59:07 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/indextuple.c,v 1.73 2005/03/21 01:23:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,13 +28,13 @@
  */
 
 /* ----------------
- *		index_formtuple
+ *		index_form_tuple
  * ----------------
  */
 IndexTuple
-index_formtuple(TupleDesc tupleDescriptor,
-				Datum *value,
-				char *null)
+index_form_tuple(TupleDesc tupleDescriptor,
+				 Datum *values,
+				 bool *isnull)
 {
 	char	   *tp;				/* tuple pointer */
 	IndexTuple	tuple;			/* return tuple */
@@ -47,7 +47,7 @@ index_formtuple(TupleDesc tupleDescriptor,
 	int			numberOfAttributes = tupleDescriptor->natts;
 
 #ifdef TOAST_INDEX_HACK
-	Datum		untoasted_value[INDEX_MAX_KEYS];
+	Datum		untoasted_values[INDEX_MAX_KEYS];
 	bool		untoasted_free[INDEX_MAX_KEYS];
 #endif
 
@@ -62,22 +62,22 @@ index_formtuple(TupleDesc tupleDescriptor,
 	{
 		Form_pg_attribute att = tupleDescriptor->attrs[i];
 
-		untoasted_value[i] = value[i];
+		untoasted_values[i] = values[i];
 		untoasted_free[i] = false;
 
 		/* Do nothing if value is NULL or not of varlena type */
-		if (null[i] != ' ' || att->attlen != -1)
+		if (isnull[i] || att->attlen != -1)
 			continue;
 
 		/*
 		 * If value is stored EXTERNAL, must fetch it so we are not
 		 * depending on outside storage.  This should be improved someday.
 		 */
-		if (VARATT_IS_EXTERNAL(value[i]))
+		if (VARATT_IS_EXTERNAL(values[i]))
 		{
-			untoasted_value[i] = PointerGetDatum(
+			untoasted_values[i] = PointerGetDatum(
 												 heap_tuple_fetch_attr(
-							   (varattrib *) DatumGetPointer(value[i])));
+							   (varattrib *) DatumGetPointer(values[i])));
 			untoasted_free[i] = true;
 		}
 
@@ -85,18 +85,18 @@ index_formtuple(TupleDesc tupleDescriptor,
 		 * If value is above size target, and is of a compressible
 		 * datatype, try to compress it in-line.
 		 */
-		if (VARATT_SIZE(untoasted_value[i]) > TOAST_INDEX_TARGET &&
-			!VARATT_IS_EXTENDED(untoasted_value[i]) &&
+		if (VARATT_SIZE(untoasted_values[i]) > TOAST_INDEX_TARGET &&
+			!VARATT_IS_EXTENDED(untoasted_values[i]) &&
 			(att->attstorage == 'x' || att->attstorage == 'm'))
 		{
-			Datum		cvalue = toast_compress_datum(untoasted_value[i]);
+			Datum		cvalue = toast_compress_datum(untoasted_values[i]);
 
 			if (DatumGetPointer(cvalue) != NULL)
 			{
 				/* successful compression */
 				if (untoasted_free[i])
-					pfree(DatumGetPointer(untoasted_value[i]));
-				untoasted_value[i] = cvalue;
+					pfree(DatumGetPointer(untoasted_values[i]));
+				untoasted_values[i] = cvalue;
 				untoasted_free[i] = true;
 			}
 		}
@@ -105,7 +105,7 @@ index_formtuple(TupleDesc tupleDescriptor,
 
 	for (i = 0; i < numberOfAttributes; i++)
 	{
-		if (null[i] != ' ')
+		if (isnull[i])
 		{
 			hasnull = true;
 			break;
@@ -117,41 +117,42 @@ index_formtuple(TupleDesc tupleDescriptor,
 
 	hoff = IndexInfoFindDataOffset(infomask);
 #ifdef TOAST_INDEX_HACK
-	size = hoff + ComputeDataSize(tupleDescriptor, untoasted_value, null);
+	size = hoff + heap_compute_data_size(tupleDescriptor,
+										 untoasted_values, isnull);
 #else
-	size = hoff + ComputeDataSize(tupleDescriptor, value, null);
+	size = hoff + heap_compute_data_size(tupleDescriptor,
+										 values, isnull);
 #endif
 	size = MAXALIGN(size);		/* be conservative */
 
 	tp = (char *) palloc0(size);
 	tuple = (IndexTuple) tp;
 
-	DataFill((char *) tp + hoff,
-			 tupleDescriptor,
+	heap_fill_tuple(tupleDescriptor,
 #ifdef TOAST_INDEX_HACK
-			 untoasted_value,
+					untoasted_values,
 #else
-			 value,
+					values,
 #endif
-			 null,
-			 &tupmask,
-			 (hasnull ? (bits8 *) tp + sizeof(*tuple) : NULL));
+					isnull,
+					(char *) tp + hoff,
+					&tupmask,
+					(hasnull ? (bits8 *) tp + sizeof(*tuple) : NULL));
 
 #ifdef TOAST_INDEX_HACK
 	for (i = 0; i < numberOfAttributes; i++)
 	{
 		if (untoasted_free[i])
-			pfree(DatumGetPointer(untoasted_value[i]));
+			pfree(DatumGetPointer(untoasted_values[i]));
 	}
 #endif
 
 	/*
-	 * We do this because DataFill wants to initialize a "tupmask" which
-	 * is used for HeapTuples, but we want an indextuple infomask.	The
-	 * only relevant info is the "has variable attributes" field. We have
-	 * already set the hasnull bit above.
+	 * We do this because heap_fill_tuple wants to initialize a "tupmask"
+	 * which is used for HeapTuples, but we want an indextuple infomask.
+	 * The only relevant info is the "has variable attributes" field.
+	 * We have already set the hasnull bit above.
 	 */
-
 	if (tupmask & HEAP_HASVARWIDTH)
 		infomask |= INDEX_VAR_MASK;
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.118 2005/03/16 21:38:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.119 2005/03/21 01:24:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -861,8 +861,8 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
 	Relation	heapRelation;
 	IndexInfo **indexInfoArray;
 	ExprContext *econtext;
-	Datum		datum[INDEX_MAX_KEYS];
-	char		nullv[INDEX_MAX_KEYS];
+	Datum		values[INDEX_MAX_KEYS];
+	bool		isnull[INDEX_MAX_KEYS];
 
 	/*
 	 * Get information from the result relation info structure.
@@ -889,7 +889,6 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
 	for (i = 0; i < numIndices; i++)
 	{
 		IndexInfo  *indexInfo;
-		InsertIndexResult result;
 
 		if (relationDescs[i] == NULL)
 			continue;
@@ -920,35 +919,31 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
 		}
 
 		/*
-		 * FormIndexDatum fills in its datum and null parameters with
-		 * attribute information taken from the given tuple. It also
-		 * computes any expressions needed.
+		 * FormIndexDatum fills in its values and isnull parameters with
+		 * the appropriate values for the column(s) of the index.
 		 */
 		FormIndexDatum(indexInfo,
 					   slot,
 					   estate,
-					   datum,
-					   nullv);
+					   values,
+					   isnull);
 
 		/*
 		 * The index AM does the rest.	Note we suppress unique-index
 		 * checks if we are being called from VACUUM, since VACUUM may
 		 * need to move dead tuples that have the same keys as live ones.
 		 */
-		result = index_insert(relationDescs[i], /* index relation */
-							  datum,	/* array of index Datums */
-							  nullv,	/* info on nulls */
-							  tupleid,	/* tid of heap tuple */
-							  heapRelation,
-				  relationDescs[i]->rd_index->indisunique && !is_vacuum);
+		index_insert(relationDescs[i],	/* index relation */
+					 values,			/* array of index Datums */
+					 isnull,			/* null flags */
+					 tupleid,			/* tid of heap tuple */
+					 heapRelation,
+					 relationDescs[i]->rd_index->indisunique && !is_vacuum);
 
 		/*
 		 * keep track of index inserts for debugging
 		 */
 		IncrIndexInserted();
-
-		if (result)
-			pfree(result);
 	}
 }
 

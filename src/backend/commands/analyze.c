@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.83 2005/03/16 21:38:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.84 2005/03/21 01:24:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -448,8 +448,8 @@ compute_index_stats(Relation onerel, double totalrows,
 {
 	MemoryContext ind_context,
 				old_context;
-	Datum		attdata[INDEX_MAX_KEYS];
-	char		nulls[INDEX_MAX_KEYS];
+	Datum		values[INDEX_MAX_KEYS];
+	bool		isnull[INDEX_MAX_KEYS];
 	int			ind,
 				i;
 
@@ -528,8 +528,8 @@ compute_index_stats(Relation onerel, double totalrows,
 				FormIndexDatum(indexInfo,
 							   slot,
 							   estate,
-							   attdata,
-							   nulls);
+							   values,
+							   isnull);
 
 				/*
 				 * Save just the columns we care about.
@@ -539,8 +539,8 @@ compute_index_stats(Relation onerel, double totalrows,
 					VacAttrStats *stats = thisdata->vacattrstats[i];
 					int			attnum = stats->attr->attnum;
 
-					exprvals[tcnt] = attdata[attnum - 1];
-					exprnulls[tcnt] = (nulls[attnum - 1] == 'n');
+					exprvals[tcnt] = values[attnum - 1];
+					exprnulls[tcnt] = isnull[attnum - 1];
 					tcnt++;
 				}
 			}

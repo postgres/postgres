@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/indexam.sgml,v 2.1 2005/02/13 03:04:15 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/indexam.sgml,v 2.2 2005/03/21 01:23:55 tgl Exp $
 -->
 
 <chapter id="indexam">
@@ -151,16 +151,16 @@ ambuild (Relation heapRelation,
 
   <para>
 <programlisting>
-InsertIndexResult
+bool
 aminsert (Relation indexRelation,
-          Datum *datums,
-          char *nulls,
+          Datum *values,
+          bool *isnull,
           ItemPointer heap_tid,
           Relation heapRelation,
           bool check_uniqueness);
 </programlisting>
-   Insert a new tuple into an existing index.  The <literal>datums</> and
-   <literal>nulls</> arrays give the key values to be indexed, and
+   Insert a new tuple into an existing index.  The <literal>values</> and
+   <literal>isnull</> arrays give the key values to be indexed, and
    <literal>heap_tid</> is the TID to be indexed.
    If the access method supports unique indexes (its
    <structname>pg_am</>.<structfield>amcanunique</> flag is true) then
@@ -168,8 +168,9 @@ aminsert (Relation indexRelation,
    must verify that there is no conflicting row; this is the only situation in
    which the access method normally needs the <literal>heapRelation</>
    parameter.  See <xref linkend="index-unique-checks"> for details.
-   The result is a struct that must be pfree'd by the caller.  (The result
-   struct is really quite useless and should be removed...)
+   The result is TRUE if an index entry was inserted, FALSE if not. (A FALSE
+   result does not denote an error condition, but is used for cases such
+   as an index AM refusing to index a NULL.)
   </para>
 
   <para>

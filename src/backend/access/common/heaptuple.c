@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/heaptuple.c,v 1.98 2005/03/16 21:38:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/heaptuple.c,v 1.99 2005/03/21 01:23:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,7 +68,7 @@ heap_compute_data_size(TupleDesc tupleDesc,
  * OLD API with char 'n'/' ' convention for indicating nulls
  * ----------------
  */
-Size
+static Size
 ComputeDataSize(TupleDesc tupleDesc,
 				Datum *values,
 				char *nulls)
@@ -193,7 +193,7 @@ heap_fill_tuple(TupleDesc tupleDesc,
  * OLD API with char 'n'/' ' convention for indicating nulls
  * ----------------
  */
-void
+static void
 DataFill(char *data,
 		 TupleDesc tupleDesc,
 		 Datum *values,

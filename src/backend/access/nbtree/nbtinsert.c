@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.119 2004/12/31 21:59:22 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.120 2005/03/21 01:23:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,7 @@ static Buffer _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf);
 static TransactionId _bt_check_unique(Relation rel, BTItem btitem,
 				 Relation heapRel, Buffer buf,
 				 ScanKey itup_scankey);
-static InsertIndexResult _bt_insertonpg(Relation rel, Buffer buf,
+static void _bt_insertonpg(Relation rel, Buffer buf,
 			   BTStack stack,
 			   int keysz, ScanKey scankey,
 			   BTItem btitem,
@@ -71,7 +71,7 @@ static bool _bt_isequal(TupleDesc itupdesc, Page page, OffsetNumber offnum,
  *		This routine is called by the public interface routines, btbuild
  *		and btinsert.  By here, btitem is filled in, including the TID.
  */
-InsertIndexResult
+void
 _bt_doinsert(Relation rel, BTItem btitem,
 			 bool index_is_unique, Relation heapRel)
 {
@@ -80,7 +80,6 @@ _bt_doinsert(Relation rel, BTItem btitem,
 	ScanKey		itup_scankey;
 	BTStack		stack;
 	Buffer		buf;
-	InsertIndexResult res;
 
 	/* we need a scan key to do our search, so build one */
 	itup_scankey = _bt_mkscankey(rel, itup);
@@ -138,14 +137,11 @@ top:
 	}
 
 	/* do the insertion */
-	res = _bt_insertonpg(rel, buf, stack, natts, itup_scankey, btitem,
-						 0, false);
+	_bt_insertonpg(rel, buf, stack, natts, itup_scankey, btitem, 0, false);
 
 	/* be tidy */
 	_bt_freestack(stack);
 	_bt_freeskey(itup_scankey);
-
-	return res;
 }
 
 /*
@@ -357,7 +353,7 @@ _bt_check_unique(Relation rel, BTItem btitem, Relation heapRel,
  *		insertion on internal pages.
  *----------
  */
-static InsertIndexResult
+static void
 _bt_insertonpg(Relation rel,
 			   Buffer buf,
 			   BTStack stack,
@@ -367,7 +363,6 @@ _bt_insertonpg(Relation rel,
 			   OffsetNumber afteritem,
 			   bool split_only_page)
 {
-	InsertIndexResult res;
 	Page		page;
 	BTPageOpaque lpageop;
 	OffsetNumber itup_off;
@@ -630,12 +625,6 @@ _bt_insertonpg(Relation rel,
 
 		_bt_wrtbuf(rel, buf);
 	}
-
-	/* by here, the new tuple is inserted at itup_blkno/itup_off */
-	res = (InsertIndexResult) palloc(sizeof(InsertIndexResultData));
-	ItemPointerSet(&(res->pointerData), itup_blkno, itup_off);
-
-	return res;
 }
 
 /*
@@ -1190,7 +1179,6 @@ _bt_insert_parent(Relation rel,
 		BlockNumber bknum = BufferGetBlockNumber(buf);
 		BlockNumber rbknum = BufferGetBlockNumber(rbuf);
 		Page		page = BufferGetPage(buf);
-		InsertIndexResult newres;
 		BTItem		new_item;
 		BTStackData fakestack;
 		BTItem		ritem;
@@ -1244,12 +1232,11 @@ _bt_insert_parent(Relation rel,
 				 RelationGetRelationName(rel));
 
 		/* Recursively update the parent */
-		newres = _bt_insertonpg(rel, pbuf, stack->bts_parent,
-								0, NULL, new_item, stack->bts_offset,
-								is_only);
+		_bt_insertonpg(rel, pbuf, stack->bts_parent,
+					   0, NULL, new_item, stack->bts_offset,
+					   is_only);
 
 		/* be tidy */
-		pfree(newres);
 		pfree(new_item);
 	}
 }

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/indexing.c,v 1.108 2005/03/16 21:38:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/indexing.c,v 1.109 2005/03/21 01:24:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,8 +75,8 @@ CatalogIndexInsert(CatalogIndexState indstate, HeapTuple heapTuple)
 	Relation	heapRelation;
 	TupleTableSlot *slot;
 	IndexInfo **indexInfoArray;
-	Datum		datum[INDEX_MAX_KEYS];
-	char		nullv[INDEX_MAX_KEYS];
+	Datum		values[INDEX_MAX_KEYS];
+	bool		isnull[INDEX_MAX_KEYS];
 
 	/*
 	 * Get information from the state structure.  Fall out if nothing to do.
@@ -98,7 +98,6 @@ CatalogIndexInsert(CatalogIndexState indstate, HeapTuple heapTuple)
 	for (i = 0; i < numIndexes; i++)
 	{
 		IndexInfo  *indexInfo;
-		InsertIndexResult result;
 
 		indexInfo = indexInfoArray[i];
 
@@ -110,27 +109,24 @@ CatalogIndexInsert(CatalogIndexState indstate, HeapTuple heapTuple)
 		Assert(indexInfo->ii_Predicate == NIL);
 
 		/*
-		 * FormIndexDatum fills in its datum and null parameters with
-		 * attribute information taken from the given tuple.
+		 * FormIndexDatum fills in its values and isnull parameters with
+		 * the appropriate values for the column(s) of the index.
 		 */
 		FormIndexDatum(indexInfo,
 					   slot,
 					   NULL,	/* no expression eval to do */
-					   datum,
-					   nullv);
+					   values,
+					   isnull);
 
 		/*
 		 * The index AM does the rest.
 		 */
-		result = index_insert(relationDescs[i], /* index relation */
-							  datum,	/* array of heaptuple Datums */
-							  nullv,	/* info on nulls */
-							  &(heapTuple->t_self),		/* tid of heap tuple */
-							  heapRelation,
-							  relationDescs[i]->rd_index->indisunique);
-
-		if (result)
-			pfree(result);
+		index_insert(relationDescs[i],	/* index relation */
+					 values,			/* array of index Datums */
+					 isnull,			/* is-null flags */
+					 &(heapTuple->t_self),		/* tid of heap tuple */
+					 heapRelation,
+					 relationDescs[i]->rd_index->indisunique);
 	}
 
 	ExecDropSingleTupleTableSlot(slot);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/rtree/rtree.c,v 1.87 2005/01/24 02:47:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/rtree/rtree.c,v 1.88 2005/03/21 01:24:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,15 +81,14 @@ typedef struct
 /* non-export function prototypes */
 static void rtbuildCallback(Relation index,
 				HeapTuple htup,
-				Datum *attdata,
-				char *nulls,
+				Datum *values,
+				bool *isnull,
 				bool tupleIsAlive,
 				void *state);
-static InsertIndexResult rtdoinsert(Relation r, IndexTuple itup,
-		   RTSTATE *rtstate);
+static void rtdoinsert(Relation r, IndexTuple itup, RTSTATE *rtstate);
 static void rttighten(Relation r, RTSTACK *stk, Datum datum, int att_size,
 		  RTSTATE *rtstate);
-static InsertIndexResult rtdosplit(Relation r, Buffer buffer, RTSTACK *stack,
+static void rtdosplit(Relation r, Buffer buffer, RTSTACK *stack,
 		  IndexTuple itup, RTSTATE *rtstate);
 static void rtintinsert(Relation r, RTSTACK *stk, IndexTuple ltup,
 			IndexTuple rtup, RTSTATE *rtstate);
@@ -174,17 +173,16 @@ rtbuild(PG_FUNCTION_ARGS)
 static void
 rtbuildCallback(Relation index,
 				HeapTuple htup,
-				Datum *attdata,
-				char *nulls,
+				Datum *values,
+				bool *isnull,
 				bool tupleIsAlive,
 				void *state)
 {
 	RTBuildState *buildstate = (RTBuildState *) state;
 	IndexTuple	itup;
-	InsertIndexResult res;
 
 	/* form an index tuple and point it at the heap tuple */
-	itup = index_formtuple(RelationGetDescr(index), attdata, nulls);
+	itup = index_form_tuple(RelationGetDescr(index), values, isnull);
 	itup->t_tid = htup->t_self;
 
 	/* rtree indexes don't index nulls, see notes in rtinsert */
@@ -201,10 +199,7 @@ rtbuildCallback(Relation index,
 	 * if you're inserting single tups, but not when you're initializing
 	 * the whole index at once.
 	 */
-	res = rtdoinsert(index, itup, &buildstate->rtState);
-
-	if (res)
-		pfree(res);
+	rtdoinsert(index, itup, &buildstate->rtState);
 
 	buildstate->indtuples += 1;
 
@@ -221,20 +216,19 @@ Datum
 rtinsert(PG_FUNCTION_ARGS)
 {
 	Relation	r = (Relation) PG_GETARG_POINTER(0);
-	Datum	   *datum = (Datum *) PG_GETARG_POINTER(1);
-	char	   *nulls = (char *) PG_GETARG_POINTER(2);
+	Datum	   *values = (Datum *) PG_GETARG_POINTER(1);
+	bool	   *isnull = (bool *) PG_GETARG_POINTER(2);
 	ItemPointer ht_ctid = (ItemPointer) PG_GETARG_POINTER(3);
 
 #ifdef NOT_USED
 	Relation	heapRel = (Relation) PG_GETARG_POINTER(4);
 	bool		checkUnique = PG_GETARG_BOOL(5);
 #endif
-	InsertIndexResult res;
 	IndexTuple	itup;
 	RTSTATE		rtState;
 
 	/* generate an index tuple */
-	itup = index_formtuple(RelationGetDescr(r), datum, nulls);
+	itup = index_form_tuple(RelationGetDescr(r), values, isnull);
 	itup->t_tid = *ht_ctid;
 
 	/*
@@ -245,7 +239,7 @@ rtinsert(PG_FUNCTION_ARGS)
 	if (IndexTupleHasNulls(itup))
 	{
 		pfree(itup);
-		PG_RETURN_POINTER(NULL);
+		PG_RETURN_BOOL(false);
 	}
 
 	initRtstate(&rtState, r);
@@ -255,13 +249,12 @@ rtinsert(PG_FUNCTION_ARGS)
 	 * have acquired exclusive lock on index relation.	We need no locking
 	 * here.
 	 */
+	rtdoinsert(r, itup, &rtState);
 
-	res = rtdoinsert(r, itup, &rtState);
-
-	PG_RETURN_POINTER(res);
+	PG_RETURN_BOOL(true);
 }
 
-static InsertIndexResult
+static void
 rtdoinsert(Relation r, IndexTuple itup, RTSTATE *rtstate)
 {
 	Page		page;
@@ -270,7 +263,6 @@ rtdoinsert(Relation r, IndexTuple itup, RTSTATE *rtstate)
 	IndexTuple	which;
 	OffsetNumber l;
 	RTSTACK    *stack;
-	InsertIndexResult res;
 	RTreePageOpaque opaque;
 	Datum		datum;
 
@@ -305,10 +297,10 @@ rtdoinsert(Relation r, IndexTuple itup, RTSTATE *rtstate)
 	if (nospace(page, itup))
 	{
 		/* need to do a split */
-		res = rtdosplit(r, buffer, stack, itup, rtstate);
+		rtdosplit(r, buffer, stack, itup, rtstate);
 		freestack(stack);
 		WriteBuffer(buffer);	/* don't forget to release buffer! */
-		return res;
+		return;
 	}
 
 	/* add the item and write the buffer */
@@ -335,12 +327,6 @@ rtdoinsert(Relation r, IndexTuple itup, RTSTATE *rtstate)
 	/* now expand the page boundary in the parent to include the new child */
 	rttighten(r, stack, datum, IndexTupleAttSize(itup), rtstate);
 	freestack(stack);
-
-	/* build and return an InsertIndexResult for this insertion */
-	res = (InsertIndexResult) palloc(sizeof(InsertIndexResultData));
-	ItemPointerSet(&(res->pointerData), blk, l);
-
-	return res;
 }
 
 static void
@@ -422,7 +408,7 @@ rttighten(Relation r,
  *	  rtpicksplit does the interesting work of choosing the split.
  *	  This routine just does the bit-pushing.
  */
-static InsertIndexResult
+static void
 rtdosplit(Relation r,
 		  Buffer buffer,
 		  RTSTACK *stack,
@@ -446,9 +432,7 @@ rtdosplit(Relation r,
 				rbknum;
 	BlockNumber bufblock;
 	RTreePageOpaque opaque;
-	int			blank;
-	InsertIndexResult res;
-	char	   *isnull;
+	bool	   *isnull;
 	SPLITVEC	v;
 	OffsetNumber *spl_left,
 			   *spl_right;
@@ -493,9 +477,6 @@ rtdosplit(Relation r,
 	maxoff = PageGetMaxOffsetNumber(p);
 	newitemoff = OffsetNumberNext(maxoff);
 
-	/* build an InsertIndexResult for this insertion */
-	res = (InsertIndexResult) palloc(sizeof(InsertIndexResultData));
-
 	/*
 	 * spl_left contains a list of the offset numbers of the tuples that
 	 * will go to the left page.  For each offset number, get the tuple
@@ -521,9 +502,6 @@ rtdosplit(Relation r,
 				 RelationGetRelationName(r));
 		leftoff = OffsetNumberNext(leftoff);
 
-		if (i == newitemoff)
-			ItemPointerSet(&(res->pointerData), lbknum, leftoff);
-
 		spl_left++;				/* advance in left split vector */
 	}
 
@@ -544,9 +522,6 @@ rtdosplit(Relation r,
 			elog(ERROR, "failed to add index item to \"%s\"",
 				 RelationGetRelationName(r));
 		rightoff = OffsetNumberNext(rightoff);
-
-		if (i == newitemoff)
-			ItemPointerSet(&(res->pointerData), rbknum, rightoff);
 
 		spl_right++;			/* advance in right split vector */
 	}
@@ -582,14 +557,12 @@ rtdosplit(Relation r,
 	rtadjscans(r, RTOP_SPLIT, bufblock, FirstOffsetNumber);
 
 	tupDesc = r->rd_att;
-	isnull = (char *) palloc(r->rd_rel->relnatts);
-	for (blank = 0; blank < r->rd_rel->relnatts; blank++)
-		isnull[blank] = ' ';
+	isnull = (bool *) palloc(r->rd_rel->relnatts * sizeof(bool));
+	memset(isnull, false, r->rd_rel->relnatts * sizeof(bool));
 
-	ltup = (IndexTuple) index_formtuple(tupDesc,
-										&(v.spl_ldatum), isnull);
-	rtup = (IndexTuple) index_formtuple(tupDesc,
-										&(v.spl_rdatum), isnull);
+	ltup = index_form_tuple(tupDesc, &(v.spl_ldatum), isnull);
+	rtup = index_form_tuple(tupDesc, &(v.spl_rdatum), isnull);
+
 	pfree(isnull);
 	pfree(DatumGetPointer(v.spl_ldatum));
 	pfree(DatumGetPointer(v.spl_rdatum));
@@ -602,8 +575,6 @@ rtdosplit(Relation r,
 
 	pfree(ltup);
 	pfree(rtup);
-
-	return res;
 }
 
 static void
@@ -619,7 +590,6 @@ rtintinsert(Relation r,
 	Datum		ldatum,
 				rdatum,
 				newdatum;
-	InsertIndexResult res;
 
 	if (stk == NULL)
 	{
@@ -651,10 +621,9 @@ rtintinsert(Relation r,
 		newdatum = IndexTupleGetDatum(ltup);
 		rttighten(r, stk->rts_parent, newdatum,
 				  IndexTupleAttSize(ltup), rtstate);
-		res = rtdosplit(r, b, stk->rts_parent, rtup, rtstate);
+		rtdosplit(r, b, stk->rts_parent, rtup, rtstate);
 		WriteBuffer(b);			/* don't forget to release buffer!  -
 								 * 01/31/94 */
-		pfree(res);
 	}
 	else
 	{

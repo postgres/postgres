@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/itup.h,v 1.41 2004/12/31 22:03:21 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/access/itup.h,v 1.42 2005/03/21 01:24:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,14 +46,6 @@ typedef struct IndexTupleData
 typedef IndexTupleData *IndexTuple;
 
 
-typedef struct InsertIndexResultData
-{
-	ItemPointerData pointerData;
-} InsertIndexResultData;
-
-typedef InsertIndexResultData *InsertIndexResult;
-
-
 /* ----------------
  *		externs
  * ----------------
@@ -73,7 +65,7 @@ typedef InsertIndexResultData *InsertIndexResult;
 
 /*
  * Takes an infomask as argument (primarily because this needs to be usable
- * at index_formtuple time so enough space is allocated).
+ * at index_form_tuple time so enough space is allocated).
  *
  * Change me if adding an attribute to IndexTuples!!!!!!!!!!!
  */
@@ -134,8 +126,8 @@ typedef InsertIndexResultData *InsertIndexResult;
 
 
 /* routines in indextuple.c */
-extern IndexTuple index_formtuple(TupleDesc tupleDescriptor,
-				Datum *value, char *null);
+extern IndexTuple index_form_tuple(TupleDesc tupleDescriptor,
+				Datum *values, bool *isnull);
 extern Datum nocache_index_getattr(IndexTuple tup, int attnum,
 					  TupleDesc tupleDesc, bool *isnull);
 extern IndexTuple CopyIndexTuple(IndexTuple source);

@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.125 2005/03/20 22:00:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.126 2005/03/21 01:23:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,8 +52,8 @@ bool		FastBuild = true;	/* use SORT instead of insertion build */
 static void _bt_restscan(IndexScanDesc scan);
 static void btbuildCallback(Relation index,
 				HeapTuple htup,
-				Datum *attdata,
-				char *nulls,
+				Datum *values,
+				bool *isnull,
 				bool tupleIsAlive,
 				void *state);
 
@@ -178,18 +178,17 @@ btbuild(PG_FUNCTION_ARGS)
 static void
 btbuildCallback(Relation index,
 				HeapTuple htup,
-				Datum *attdata,
-				char *nulls,
+				Datum *values,
+				bool *isnull,
 				bool tupleIsAlive,
 				void *state)
 {
 	BTBuildState *buildstate = (BTBuildState *) state;
 	IndexTuple	itup;
 	BTItem		btitem;
-	InsertIndexResult res;
 
 	/* form an index tuple and point it at the heap tuple */
-	itup = index_formtuple(RelationGetDescr(index), attdata, nulls);
+	itup = index_form_tuple(RelationGetDescr(index), values, isnull);
 	itup->t_tid = htup->t_self;
 
 	btitem = _bt_formitem(itup);
@@ -212,10 +211,8 @@ btbuildCallback(Relation index,
 	}
 	else
 	{
-		res = _bt_doinsert(index, btitem,
-						   buildstate->isUnique, buildstate->heapRel);
-		if (res)
-			pfree(res);
+		_bt_doinsert(index, btitem,
+					 buildstate->isUnique, buildstate->heapRel);
 	}
 
 	buildstate->indtuples += 1;
@@ -228,33 +225,31 @@ btbuildCallback(Relation index,
  *	btinsert() -- insert an index tuple into a btree.
  *
  *		Descend the tree recursively, find the appropriate location for our
- *		new tuple, put it there, set its unique OID as appropriate, and
- *		return an InsertIndexResult to the caller.
+ *		new tuple, and put it there.
  */
 Datum
 btinsert(PG_FUNCTION_ARGS)
 {
 	Relation	rel = (Relation) PG_GETARG_POINTER(0);
-	Datum	   *datum = (Datum *) PG_GETARG_POINTER(1);
-	char	   *nulls = (char *) PG_GETARG_POINTER(2);
+	Datum	   *values = (Datum *) PG_GETARG_POINTER(1);
+	bool	   *isnull = (bool *) PG_GETARG_POINTER(2);
 	ItemPointer ht_ctid = (ItemPointer) PG_GETARG_POINTER(3);
 	Relation	heapRel = (Relation) PG_GETARG_POINTER(4);
 	bool		checkUnique = PG_GETARG_BOOL(5);
-	InsertIndexResult res;
 	BTItem		btitem;
 	IndexTuple	itup;
 
 	/* generate an index tuple */
-	itup = index_formtuple(RelationGetDescr(rel), datum, nulls);
+	itup = index_form_tuple(RelationGetDescr(rel), values, isnull);
 	itup->t_tid = *ht_ctid;
 	btitem = _bt_formitem(itup);
 
-	res = _bt_doinsert(rel, btitem, checkUnique, heapRel);
+	_bt_doinsert(rel, btitem, checkUnique, heapRel);
 
 	pfree(btitem);
 	pfree(itup);
 
-	PG_RETURN_POINTER(res);
+	PG_RETURN_BOOL(true);
 }
 
 /*
