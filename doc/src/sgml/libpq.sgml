@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.36 2000/03/31 03:27:40 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.37 2000/04/25 16:39:07 momjian Exp $
 -->
 
  <chapter id="libpq-chapter">
@@ -2031,6 +2031,8 @@ main()
     PQfinish(conn);
 
     /* fclose(debug); */
+    return 0;
+
 }
 </programlisting>
 </para>
@@ -2152,6 +2154,7 @@ main()
     /* close the connection to the database and cleanup */
     PQfinish(conn);
 
+    return 0;
 }
 </programlisting>
 </para>
@@ -2334,6 +2337,7 @@ main()
     /* close the connection to the database and cleanup */
     PQfinish(conn);
 
+    return 0;
 }
 </programlisting>
 </para>

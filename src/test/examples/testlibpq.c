@@ -130,5 +130,5 @@ main()
 	fclose(debug);
 #endif	 /* DEBUG */
 
-	exit(0);
+	return 0;
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/test/examples/testlo.c,v 1.14 2000/01/26 05:58:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/test/examples/testlo.c,v 1.15 2000/04/25 16:39:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -248,5 +248,5 @@ main(int argc, char **argv)
 	res = PQexec(conn, "end");
 	PQclear(res);
 	PQfinish(conn);
-	exit(0);
+	return 0;
 }
