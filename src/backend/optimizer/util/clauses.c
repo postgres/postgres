@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.60 2000/02/20 21:32:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.61 2000/03/12 19:32:06 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -991,18 +991,26 @@ eval_const_expressions_mutator (Node *node, void *context)
 				 * duplication of code and ensure we get the same result
 				 * as the executor would get.
 				 *
-				 * The only setup needed here is the replace_opid()
-				 * that we already did for the OP_EXPR case.
-				 *
+				 * Build a new Expr node containing the already-simplified
+				 * arguments.  The only other setup needed here is the
+				 * replace_opid() that we already did for the OP_EXPR case.
+				 */
+				newexpr = makeNode(Expr);
+				newexpr->typeOid = expr->typeOid;
+				newexpr->opType = expr->opType;
+				newexpr->oper = expr->oper;
+				newexpr->args = args;
+				/*
 				 * It is OK to pass econtext = NULL because none of the
 				 * ExecEvalExpr() code used in this situation will use
 				 * econtext.  That might seem fortuitous, but it's not
 				 * so unreasonable --- a constant expression does not
 				 * depend on context, by definition, n'est ce pas?
 				 */
-				const_val = ExecEvalExpr((Node *) expr, NULL,
+				const_val = ExecEvalExpr((Node *) newexpr, NULL,
 										 &const_is_null, &isDone);
 				Assert(isDone);	/* if this isn't set, we blew it... */
+				pfree(newexpr);
 				/*
 				 * Make the constant result node.
 				 */
