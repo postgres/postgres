@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.116 2001/05/17 15:22:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.117 2001/05/17 15:55:23 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1111,7 +1111,7 @@ heap_fetch(Relation relation,
 	IncrHeapAccessStat(global_fetch);
 
 	/*
-	 * get the buffer from the relation descriptor Note that this does a
+	 * get the buffer from the relation descriptor. Note that this does a
 	 * buffer pin.
 	 */
 

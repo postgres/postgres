@@ -19,7 +19,7 @@ then	echo "You appear to have GNU indent rather than BSD indent." >&2
 	echo "See the pgindent/README file for a description of its problems." >&2
 	EXTRA_OPTS="-ncdb -bli0 -npcs -cli4"
 else	echo "Hope you installed /src/tools/pgindent/indent.bsd.patch." >&2
-	EXTRA_OPTS="-bbb -cli1"
+	EXTRA_OPTS="-cli1"
 fi
 
 for FILE

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.191 2001/05/17 01:28:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.192 2001/05/17 15:55:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -762,7 +762,6 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 					}
 					else if (!TransactionIdIsInProgress(tuple.t_data->t_xmin))
 					{
-
 						/*
 						 * Not Aborted, Not Committed, Not in Progress -
 						 * so it's from crashed process. - vadim 11/26/96
@@ -817,7 +816,6 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 				}
 				else if (!TransactionIdIsInProgress(tuple.t_data->t_xmax))
 				{
-
 					/*
 					 * Not Aborted, Not Committed, Not in Progress - so it
 					 * from crashed process. - vadim 06/02/97
