@@ -3,7 +3,7 @@
  * client encoding and server internal encoding.
  * (currently mule internal code (mic) is used)
  * Tatsuo Ishii
- * $Id: mbutils.c,v 1.17 2001/04/16 02:42:01 tgl Exp $
+ * $Id: mbutils.c,v 1.18 2001/07/15 11:07:36 ishii Exp $
  */
 #include "postgres.h"
 
@@ -241,9 +241,9 @@ pg_mbstrlen_with_len(const unsigned char *mbstr, int limit)
 }
 
 /*
- * returns the length of a multi-byte string
+ * returns the byte length of a multi-byte string
  * (not necessarily  NULL terminated)
- * that is not longer than limit.
+ * that is no longer than limit.
  * this function does not break multi-byte word boundary.
  */
 int
@@ -267,8 +267,30 @@ pg_mbcliplen(const unsigned char *mbstr, int len, int limit)
 }
 
 /*
- * functions for utils/init
- */
+ * Similar to pg_mbcliplen but the limit parameter specifies the
+ * character length, not the byte length.  */
+int
+pg_mbcharcliplen(const unsigned char *mbstr, int len, int limit)
+{
+	int			clen = 0;
+	int			nch = 0;
+	int			l;
+
+	while (len > 0 && *mbstr)
+	{
+		l = pg_mblen(mbstr);
+		nch++;
+		if (nch > limit)
+			break;
+		clen += l;
+		len -= l;
+		mbstr += l;
+	}
+	return (clen);
+}
+
+/*
+ * functions for utils/init */
 static int	DatabaseEncoding = MULTIBYTE;
 
 void

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.80 2001/06/09 23:21:55 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.81 2001/07/15 11:07:37 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,26 +73,48 @@ bpcharin(PG_FUNCTION_ARGS)
 	char	   *r;
 	size_t		len, maxlen;
 	int			i;
+#ifdef MULTIBYTE
+	int	charlen;	/* number of charcters in the input string */
+#endif
 
 	len = strlen(s);
+#ifdef MULTIBYTE
+	charlen = pg_mbstrlen(s);
+#endif
 
 	/* If typmod is -1 (or invalid), use the actual string length */
 	if (atttypmod < (int32) VARHDRSZ)
+#ifdef MULTIBYTE
+		maxlen = charlen;
+#else
 		maxlen = len;
+#endif
 	else
 		maxlen = atttypmod - VARHDRSZ;
 
+#ifdef MULTIBYTE
+	if (charlen > maxlen)
+#else
 	if (len > maxlen)
+#endif
 	{
 		/* Verify that extra characters are spaces, and clip them off */
 #ifdef MULTIBYTE
-		size_t mbmaxlen = pg_mbcliplen(s, len, maxlen);
-
+		size_t mbmaxlen = pg_mbcharcliplen(s, len, maxlen);
+		/*
+		 * at this point, len is the actual BYTE length of the
+		 * input string, maxlen is the max number of
+		 * CHARACTERS allowed for this bpchar type. 
+		 */
 		if (strspn(s + mbmaxlen, " ") == len - mbmaxlen)
 			len = mbmaxlen;
 		else
 			elog(ERROR, "value too long for type character(%d)", maxlen);
-		Assert(len <= maxlen);
+		/*
+		 * XXX: at this point, maxlen is the necessary byte
+		 * length, not the number of CHARACTERS!
+		 */
+		maxlen = len;
 #else
 		if (strspn(s + maxlen, " ") == len - maxlen)
 			len = maxlen;
@@ -100,6 +122,16 @@ bpcharin(PG_FUNCTION_ARGS)
 			elog(ERROR, "value too long for type character(%d)", maxlen);
 #endif
 	}
+#ifdef MULTIBYTE
+	else
+	{
+		/*
+		 * XXX: at this point, maxlen is the necessary byte
+		 * length, not the number of CHARACTERS!
+		 */
+		maxlen = len + (maxlen - charlen);
+	}
+#endif
 
 	result = palloc(maxlen + VARHDRSZ);
 	VARATT_SIZEP(result) = maxlen + VARHDRSZ;
@@ -158,19 +190,29 @@ bpchar(PG_FUNCTION_ARGS)
 	char	   *r;
 	char	   *s;
 	int			i;
+#ifdef MULTIBYTE
+	int	charlen;	/* number of charcters in the input string 
+				 + VARHDRSZ*/
+#endif
 
 	len = VARSIZE(source);
+#ifdef MULTIBYTE
+	charlen = pg_mbstrlen_with_len(VARDATA(source), len - VARHDRSZ) + VARHDRSZ;
+#endif
 	/* No work if typmod is invalid or supplied data matches it already */
 	if (maxlen < (int32) VARHDRSZ || len == maxlen)
 		PG_RETURN_BPCHAR_P(source);
-
+#ifdef MULTIBYTE
+	if (charlen > maxlen)
+#else
 	if (len > maxlen)
+#endif
 	{
 		/* Verify that extra characters are spaces, and clip them off */
 #ifdef MULTIBYTE
 		size_t		maxmblen;
 
-		maxmblen = pg_mbcliplen(VARDATA(source), len - VARHDRSZ,
+		maxmblen = pg_mbcharcliplen(VARDATA(source), len - VARHDRSZ,
 								maxlen - VARHDRSZ) + VARHDRSZ;
 
 		for (i = maxmblen - VARHDRSZ; i < len - VARHDRSZ; i++)
@@ -179,7 +221,11 @@ bpchar(PG_FUNCTION_ARGS)
 					 maxlen - VARHDRSZ);
 
 		len = maxmblen;
-		Assert(len <= maxlen);
+		/*
+		 * XXX: at this point, maxlen is the necessary byte
+		 * length+VARHDRSZ, not the number of CHARACTERS!
+		 */
+		maxlen = len;
 #else
 		for (i = maxlen - VARHDRSZ; i < len - VARHDRSZ; i++)
 			if (*(VARDATA(source) + i) != ' ')
@@ -189,6 +235,16 @@ bpchar(PG_FUNCTION_ARGS)
 		len = maxlen;
 #endif
 	}
+#ifdef MULTIBYTE
+	else
+	{
+		/*
+		 * XXX: at this point, maxlen is the necessary byte
+		 * length+VARHDRSZ, not the number of CHARACTERS!
+		 */
+		maxlen = len + (maxlen - charlen);
+	}
+#endif
 
 	s = VARDATA(source);
 
@@ -333,9 +389,12 @@ name_bpchar(PG_FUNCTION_ARGS)
  * Convert a C string to VARCHAR internal representation.  atttypmod
  * is the declared length of the type plus VARHDRSZ.
  *
- * If the C string is too long, raise an error, unless the extra
- * characters are spaces, in which case they're truncated.  (per SQL)
- */
+ * Note that if MULTIBYTE is enabled, atttypmod is regarded as the
+ * number of characters, rather than number of bytes.
+ *
+ * If the C string is too long,
+ * raise an error, unless the extra characters are spaces, in which
+ * case they're truncated.  (per SQL) */
 Datum
 varcharin(PG_FUNCTION_ARGS)
 {
@@ -354,7 +413,7 @@ varcharin(PG_FUNCTION_ARGS)
 	{
 		/* Verify that extra characters are spaces, and clip them off */
 #ifdef MULTIBYTE
-		size_t mbmaxlen = pg_mbcliplen(s, len, maxlen);
+		size_t mbmaxlen = pg_mbcharcliplen(s, len, maxlen);
 
 		if (strspn(s + mbmaxlen, " ") == len - mbmaxlen)
 			len = mbmaxlen;
@@ -428,7 +487,7 @@ varchar(PG_FUNCTION_ARGS)
 		size_t		maxmblen;
 
 		/* truncate multi-byte string preserving multi-byte boundary */
-		maxmblen = pg_mbcliplen(VARDATA(source), len - VARHDRSZ,
+		maxmblen = pg_mbcharcliplen(VARDATA(source), len - VARHDRSZ,
 								maxlen - VARHDRSZ) + VARHDRSZ;
 
 		for (i = maxmblen - VARHDRSZ; i < len - VARHDRSZ; i++)
@@ -515,22 +574,9 @@ bpcharlen(PG_FUNCTION_ARGS)
 	BpChar	   *arg = PG_GETARG_BPCHAR_P(0);
 
 #ifdef MULTIBYTE
-	unsigned char *s;
-	int			len,
-				l,
-				wl;
-
-	l = VARSIZE(arg) - VARHDRSZ;
-	len = 0;
-	s = VARDATA(arg);
-	while (l > 0)
-	{
-		wl = pg_mblen(s);
-		l -= wl;
-		s += wl;
-		len++;
-	}
-	PG_RETURN_INT32(len);
+	PG_RETURN_INT32(
+		pg_mbstrlen_with_len(VARDATA(arg), VARSIZE(arg) - VARHDRSZ)
+	    );
 #else
 	PG_RETURN_INT32(VARSIZE(arg) - VARHDRSZ);
 #endif
@@ -736,22 +782,9 @@ varcharlen(PG_FUNCTION_ARGS)
 	VarChar    *arg = PG_GETARG_VARCHAR_P(0);
 
 #ifdef MULTIBYTE
-	unsigned char *s;
-	int			len,
-				l,
-				wl;
-
-	len = 0;
-	s = VARDATA(arg);
-	l = VARSIZE(arg) - VARHDRSZ;
-	while (l > 0)
-	{
-		wl = pg_mblen(s);
-		l -= wl;
-		s += wl;
-		len++;
-	}
-	PG_RETURN_INT32(len);
+	PG_RETURN_INT32(
+		pg_mbstrlen_with_len(VARDATA(arg), VARSIZE(arg) - VARHDRSZ)
+	    );
 #else
 	PG_RETURN_INT32(VARSIZE(arg) - VARHDRSZ);
 #endif
