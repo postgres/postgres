@@ -6,15 +6,8 @@ AC_CANONICAL_HOST
 case "$host_os" in
  solaris*)
         case "$host_cpu" in
-          sparc) os=sparc_solaris 
-             AC_LINK_FILES(backend/port/tas/sparc_solaris.s, backend/port/tas.s)
-             TAS=tas.o
-             AC_SUBST(TAS) ;;
-           i386) 
-             os=i386_solaris
-             AC_LINK_FILES(backend/port/tas/i386_solaris.s, backend/port/tas.s)
-             TAS=tas.o
-             AC_SUBST(TAS) ;;
+          sparc) os=sparc_solaris need_tas=yes ;;
+           i386) os=i386_solaris need_tas=yes ;;
         esac ;;
    sunos*) os=sunos4 ;;
      aux*) os=aux ;;
@@ -26,10 +19,7 @@ case "$host_os" in
 nextstep*) os=nextstep;;
   ultrix*) os=ultrix4;;
     irix*) os=irix5;;
-    hpux*) os=hpux
-           AC_LINK_FILES(backend/port/tas/hpux.s, backend/port/tas.s)
-           TAS=tas.o
-           AC_SUBST(TAS) ;;
+    hpux*) os=hpux need_tas=yes ;;
      osf*) os=alpha;;
      sco*) os=sco;;
  machten*) os=machten;;
@@ -52,6 +42,12 @@ nextstep*) os=nextstep;;
    exit;;
 esac
 
+if test $need_tas = "yes"
+then
+	AC_LINK_FILES(backend/port/tas/${os}.s, backend/port/${os}.s)
+	TAS=tas.o
+	AC_SUBST(TAS) 
+fi
 PORTNAME=${os}
 AC_LINK_FILES(backend/port/dynloader/${os}.c, backend/port/dynloader.c)
 AC_LINK_FILES(backend/port/dynloader/${os}.h, include/dynloader.h)
