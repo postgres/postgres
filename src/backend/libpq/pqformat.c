@@ -16,7 +16,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqformat.c,v 1.21 2002/06/20 20:29:28 momjian Exp $
+ *	$Id: pqformat.c,v 1.22 2002/08/08 06:32:26 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,9 +52,7 @@
 
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
-#ifdef MULTIBYTE
 #include "mb/pg_wchar.h"
-#endif
 #ifdef HAVE_ENDIAN_H
 #include <endian.h>
 #endif
@@ -127,7 +125,6 @@ pq_sendbytes(StringInfo buf, const char *data, int datalen)
 void
 pq_sendcountedtext(StringInfo buf, const char *str, int slen)
 {
-#ifdef MULTIBYTE
 	char	   *p;
 
 	p = (char *) pg_server_to_client((unsigned char *) str, slen);
@@ -139,7 +136,6 @@ pq_sendcountedtext(StringInfo buf, const char *str, int slen)
 		pfree(p);
 		return;
 	}
-#endif
 	pq_sendint(buf, slen + 4, 4);
 	appendBinaryStringInfo(buf, str, slen);
 }
@@ -156,7 +152,6 @@ pq_sendstring(StringInfo buf, const char *str)
 {
 	int			slen = strlen(str);
 
-#ifdef MULTIBYTE
 	char	   *p;
 
 	p = (char *) pg_server_to_client((unsigned char *) str, slen);
@@ -167,7 +162,6 @@ pq_sendstring(StringInfo buf, const char *str)
 		pfree(p);
 		return;
 	}
-#endif
 	appendBinaryStringInfo(buf, str, slen + 1);
 }
 
@@ -232,8 +226,6 @@ int
 pq_puttextmessage(char msgtype, const char *str)
 {
 	int			slen = strlen(str);
-
-#ifdef MULTIBYTE
 	char	   *p;
 
 	p = (char *) pg_server_to_client((unsigned char *) str, slen);
@@ -244,7 +236,6 @@ pq_puttextmessage(char msgtype, const char *str)
 		pfree(p);
 		return result;
 	}
-#endif
 	return pq_putmessage(msgtype, str, slen + 1);
 }
 
@@ -305,14 +296,10 @@ int
 pq_getstr(StringInfo s)
 {
 	int			result;
-
-#ifdef MULTIBYTE
 	char	   *p;
-#endif
 
 	result = pq_getstring(s);
 
-#ifdef MULTIBYTE
 	p = (char *) pg_client_to_server((unsigned char *) s->data, s->len);
 	if (p != s->data)			/* actual conversion has been done? */
 	{
@@ -322,7 +309,6 @@ pq_getstr(StringInfo s)
 		appendBinaryStringInfo(s, p, strlen(p));
 		pfree(p);
 	}
-#endif
 
 	return result;
 }
