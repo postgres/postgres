@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.58 2003/09/25 06:58:00 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.59 2003/09/25 15:58:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -302,7 +302,7 @@ check_ungrouped_columns_walker(Node *node,
 		if (context->sublevels_up == 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_GROUPING_ERROR),
-					 errmsg("column \"%s.%s\" must appear in GROUP BY clause or used in an aggregate function",
+					 errmsg("column \"%s.%s\" must appear in the GROUP BY clause or be used in an aggregate function",
 							rte->eref->aliasname, attname)));
 		else
 			ereport(ERROR,
