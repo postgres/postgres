@@ -14,6 +14,7 @@ TARGETS= refint$(DLSUFFIX) refint.sql
 CLEANFILES+= $(TARGETS)
 
 all:: $(TARGETS)
+	rm -f *.obj *.pic
 
 %.sql: %.source
 	rm -f $@; \
@@ -22,4 +23,4 @@ all:: $(TARGETS)
 	    -e "s:_DLSUFFIX_:$(DLSUFFIX):g" < $< > $@
 
 clean: 
-	rm -f $(TARGETS) refint.o
+	rm -f $(TARGETS) *.[op]*
