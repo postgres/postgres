@@ -4,7 +4,7 @@
 # translation of libpq-cs.po to
 # Czech translation of libpq messages
 #
-# $Id: sk.po,v 1.1 2004/08/02 15:17:21 petere Exp $
+# $PostgreSQL: pgsql/src/interfaces/libpq/po/sk.po,v 1.2 2005/03/07 22:59:43 neilc Exp $
 # Karel Zak <zakkr@zf.jcu.cz>, 2001-2003, 2004.
 # Zoltan Bartko <bartko.zoltan@pobox.sk>, 2004.
 #
