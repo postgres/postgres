@@ -27,7 +27,7 @@
 # Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.130 2001/07/15 22:48:18 tgl Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.131 2001/07/31 01:16:09 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -478,21 +478,28 @@ chmod 0600 "$PGDATA"/pg_hba.conf "$PGDATA"/pg_ident.conf \
 ##########################################################################
 #
 # CREATE VIEWS and other things
+#
+# NOTE: because here we are driving a standalone backend (not psql), we must
+# follow the standalone backend's convention that commands end at a newline.
+# To break an SQL command across lines in this script, backslash-escape all
+# internal newlines in the command.
 
 echo "Initializing pg_shadow."
 
 PGSQL_OPT="-o /dev/null -O -F -D$PGDATA"
 
-# Create a trigger so that direct updates to pg_shadow will be written
-# to the flat password file pg_pwd
-echo "CREATE TRIGGER pg_sync_pg_pwd AFTER INSERT OR UPDATE OR DELETE ON pg_shadow" \
-     "FOR EACH ROW EXECUTE PROCEDURE update_pg_pwd()" \
-     | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
-
-# needs to be done before alter user, because alter user checks that
-# pg_shadow is secure ...
-echo "REVOKE ALL on pg_shadow FROM public" \
-	| "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+"$PGPATH"/postgres $PGSQL_OPT template1 >/dev/null <<EOF
+-- Create a trigger so that direct updates to pg_shadow will be written
+-- to the flat password file pg_pwd
+CREATE TRIGGER pg_sync_pg_pwd AFTER INSERT OR UPDATE OR DELETE ON pg_shadow \
+FOR EACH ROW EXECUTE PROCEDURE update_pg_pwd();
+-- needs to be done before alter user, because alter user checks that
+-- pg_shadow is secure ...
+REVOKE ALL on pg_shadow FROM public;
+EOF
+if [ "$?" -ne 0 ]; then
+    exit_nicely
+fi
 
 # set up password
 if [ "$PwPrompt" ]; then
@@ -510,8 +517,12 @@ if [ "$PwPrompt" ]; then
         echo "Passwords didn't match." 1>&2
         exit_nicely
     fi
-    echo "ALTER USER \"$POSTGRES_SUPERUSERNAME\" WITH PASSWORD '$FirstPw'" \
-	| "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+    "$PGPATH"/postgres $PGSQL_OPT template1 >/dev/null <<EOF
+	ALTER USER "$POSTGRES_SUPERUSERNAME" WITH PASSWORD '$FirstPw';
+EOF
+    if [ "$?" -ne 0 ]; then
+	exit_nicely
+    fi
     if [ ! -f $PGDATA/global/pg_pwd ]; then
         echo "The password file wasn't generated. Please report this problem." 1>&2
         exit_nicely
@@ -522,281 +533,263 @@ fi
 
 echo "Enabling unlimited row width for system tables."
 
-echo "ALTER TABLE pg_attrdef CREATE TOAST TABLE" \
-        | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
-echo "ALTER TABLE pg_description CREATE TOAST TABLE" \
-        | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
-echo "ALTER TABLE pg_proc CREATE TOAST TABLE" \
-        | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
-echo "ALTER TABLE pg_relcheck CREATE TOAST TABLE" \
-        | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
-echo "ALTER TABLE pg_rewrite CREATE TOAST TABLE" \
-        | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
-echo "ALTER TABLE pg_statistic CREATE TOAST TABLE" \
-        | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+"$PGPATH"/postgres $PGSQL_OPT template1 >/dev/null <<EOF
+ALTER TABLE pg_attrdef CREATE TOAST TABLE;
+ALTER TABLE pg_description CREATE TOAST TABLE;
+ALTER TABLE pg_proc CREATE TOAST TABLE;
+ALTER TABLE pg_relcheck CREATE TOAST TABLE;
+ALTER TABLE pg_rewrite CREATE TOAST TABLE;
+ALTER TABLE pg_statistic CREATE TOAST TABLE;
+EOF
+if [ "$?" -ne 0 ]; then
+    exit_nicely
+fi
 
 
 echo "Creating system views."
 
-echo "CREATE VIEW pg_user AS \
-        SELECT \
-            usename, \
-            usesysid, \
-            usecreatedb, \
-            usetrace, \
-            usesuper, \
-            usecatupd, \
-            '********'::text as passwd, \
-            valuntil \
-        FROM pg_shadow" \
-        | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+"$PGPATH"/postgres $PGSQL_OPT template1 >/dev/null <<EOF
 
-echo "CREATE VIEW pg_rules AS \
-        SELECT \
-            C.relname AS tablename, \
-            R.rulename AS rulename, \
-	    pg_get_ruledef(R.rulename) AS definition \
-	FROM pg_rewrite R, pg_class C \
-	WHERE R.rulename !~ '^_RET' \
-            AND C.oid = R.ev_class;" \
-	| "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+CREATE VIEW pg_user AS \
+    SELECT \
+        usename, \
+        usesysid, \
+        usecreatedb, \
+        usetrace, \
+        usesuper, \
+        usecatupd, \
+        '********'::text as passwd, \
+        valuntil \
+    FROM pg_shadow;
 
-echo "CREATE VIEW pg_views AS \
-        SELECT \
-            C.relname AS viewname, \
-            pg_get_userbyid(C.relowner) AS viewowner, \
-            pg_get_viewdef(C.relname) AS definition \
-        FROM pg_class C \
-        WHERE C.relkind = 'v';" \
-	| "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+CREATE VIEW pg_rules AS \
+    SELECT \
+        C.relname AS tablename, \
+        R.rulename AS rulename, \
+        pg_get_ruledef(R.rulename) AS definition \
+    FROM pg_rewrite R, pg_class C \
+    WHERE R.rulename !~ '^_RET' \
+        AND C.oid = R.ev_class;
 
-# XXX why does pg_tables include sequences?
+CREATE VIEW pg_views AS \
+    SELECT \
+        C.relname AS viewname, \
+        pg_get_userbyid(C.relowner) AS viewowner, \
+        pg_get_viewdef(C.relname) AS definition \
+    FROM pg_class C \
+    WHERE C.relkind = 'v';
 
-echo "CREATE VIEW pg_tables AS \
-        SELECT \
-            C.relname AS tablename, \
-	    pg_get_userbyid(C.relowner) AS tableowner, \
-	    C.relhasindex AS hasindexes, \
-	    C.relhasrules AS hasrules, \
-	    (C.reltriggers > 0) AS hastriggers \
-        FROM pg_class C \
-        WHERE C.relkind IN ('r', 's');" \
-	| "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+-- XXX why does pg_tables include sequences?
 
-echo "CREATE VIEW pg_indexes AS \
-        SELECT \
-            C.relname AS tablename, \
-	    I.relname AS indexname, \
-            pg_get_indexdef(X.indexrelid) AS indexdef \
-        FROM pg_index X, pg_class C, pg_class I \
-	WHERE C.relkind = 'r' AND I.relkind = 'i' \
-	    AND C.oid = X.indrelid \
-            AND I.oid = X.indexrelid;" \
-        | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+CREATE VIEW pg_tables AS \
+    SELECT \
+        C.relname AS tablename, \
+        pg_get_userbyid(C.relowner) AS tableowner, \
+        C.relhasindex AS hasindexes, \
+        C.relhasrules AS hasrules, \
+        (C.reltriggers > 0) AS hastriggers \
+    FROM pg_class C \
+    WHERE C.relkind IN ('r', 's');
 
-echo "CREATE VIEW pg_stats AS \
-	SELECT \
-	    relname AS tablename, \
-	    attname AS attname, \
-	    stanullfrac AS null_frac, \
-	    stawidth AS avg_width, \
-	    stadistinct AS n_distinct, \
-	    CASE 1 \
-		WHEN stakind1 THEN stavalues1 \
-		WHEN stakind2 THEN stavalues2 \
-		WHEN stakind3 THEN stavalues3 \
-		WHEN stakind4 THEN stavalues4 \
-	    END AS most_common_vals, \
-	    CASE 1 \
-		WHEN stakind1 THEN stanumbers1 \
-		WHEN stakind2 THEN stanumbers2 \
-		WHEN stakind3 THEN stanumbers3 \
-		WHEN stakind4 THEN stanumbers4 \
-	    END AS most_common_freqs, \
-	    CASE 2 \
-		WHEN stakind1 THEN stavalues1 \
-		WHEN stakind2 THEN stavalues2 \
-		WHEN stakind3 THEN stavalues3 \
-		WHEN stakind4 THEN stavalues4 \
-	    END AS histogram_bounds, \
-	    CASE 3 \
-		WHEN stakind1 THEN stanumbers1[1] \
-		WHEN stakind2 THEN stanumbers2[1] \
-		WHEN stakind3 THEN stanumbers3[1] \
-		WHEN stakind4 THEN stanumbers4[1] \
-	    END AS correlation \
-	FROM pg_class c, pg_attribute a, pg_statistic s \
-	WHERE c.oid = s.starelid AND c.oid = a.attrelid \
-	    AND a.attnum = s.staattnum \
-	    AND has_table_privilege(c.oid, 'select');" \
-        | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+CREATE VIEW pg_indexes AS \
+    SELECT \
+        C.relname AS tablename, \
+        I.relname AS indexname, \
+        pg_get_indexdef(X.indexrelid) AS indexdef \
+    FROM pg_index X, pg_class C, pg_class I \
+    WHERE C.relkind = 'r' AND I.relkind = 'i' \
+        AND C.oid = X.indrelid \
+        AND I.oid = X.indexrelid;
 
-echo "REVOKE ALL on pg_statistic FROM public" \
-	| "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+CREATE VIEW pg_stats AS \
+    SELECT \
+        relname AS tablename, \
+        attname AS attname, \
+        stanullfrac AS null_frac, \
+        stawidth AS avg_width, \
+        stadistinct AS n_distinct, \
+        CASE 1 \
+            WHEN stakind1 THEN stavalues1 \
+            WHEN stakind2 THEN stavalues2 \
+            WHEN stakind3 THEN stavalues3 \
+            WHEN stakind4 THEN stavalues4 \
+        END AS most_common_vals, \
+        CASE 1 \
+            WHEN stakind1 THEN stanumbers1 \
+            WHEN stakind2 THEN stanumbers2 \
+            WHEN stakind3 THEN stanumbers3 \
+            WHEN stakind4 THEN stanumbers4 \
+        END AS most_common_freqs, \
+        CASE 2 \
+            WHEN stakind1 THEN stavalues1 \
+            WHEN stakind2 THEN stavalues2 \
+            WHEN stakind3 THEN stavalues3 \
+            WHEN stakind4 THEN stavalues4 \
+        END AS histogram_bounds, \
+        CASE 3 \
+            WHEN stakind1 THEN stanumbers1[1] \
+            WHEN stakind2 THEN stanumbers2[1] \
+            WHEN stakind3 THEN stanumbers3[1] \
+            WHEN stakind4 THEN stanumbers4[1] \
+        END AS correlation \
+    FROM pg_class c, pg_attribute a, pg_statistic s \
+    WHERE c.oid = s.starelid AND c.oid = a.attrelid \
+        AND a.attnum = s.staattnum \
+        AND has_table_privilege(c.oid, 'select');
 
-echo "CREATE VIEW pg_stat_all_tables AS \
-		SELECT \
-			C.oid AS relid, \
-			C.relname AS relname, \
-			pg_stat_get_numscans(C.oid) AS seq_scan, \
-			pg_stat_get_tuples_returned(C.oid) AS seq_tup_read, \
-			sum(pg_stat_get_numscans(I.indexrelid)) AS idx_scan, \
-			sum(pg_stat_get_tuples_fetched(I.indexrelid)) AS idx_tup_fetch, \
-			pg_stat_get_tuples_inserted(C.oid) AS n_tup_ins, \
-			pg_stat_get_tuples_updated(C.oid) AS n_tup_upd, \
-			pg_stat_get_tuples_deleted(C.oid) AS n_tup_del \
-		FROM pg_class C FULL OUTER JOIN \
-		     pg_index I ON C.oid = I.indrelid \
-		WHERE C.relkind = 'r' \
-		GROUP BY C.oid, C.relname;" \
-        | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+REVOKE ALL on pg_statistic FROM public;
 
-echo "CREATE VIEW pg_stat_sys_tables AS \
-		SELECT * FROM pg_stat_all_tables \
-		WHERE relname ~ '^pg_';" \
-        | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+CREATE VIEW pg_stat_all_tables AS \
+    SELECT \
+            C.oid AS relid, \
+            C.relname AS relname, \
+            pg_stat_get_numscans(C.oid) AS seq_scan, \
+            pg_stat_get_tuples_returned(C.oid) AS seq_tup_read, \
+            sum(pg_stat_get_numscans(I.indexrelid)) AS idx_scan, \
+            sum(pg_stat_get_tuples_fetched(I.indexrelid)) AS idx_tup_fetch, \
+            pg_stat_get_tuples_inserted(C.oid) AS n_tup_ins, \
+            pg_stat_get_tuples_updated(C.oid) AS n_tup_upd, \
+            pg_stat_get_tuples_deleted(C.oid) AS n_tup_del \
+    FROM pg_class C FULL OUTER JOIN \
+         pg_index I ON C.oid = I.indrelid \
+    WHERE C.relkind = 'r' \
+    GROUP BY C.oid, C.relname;
 
-echo "CREATE VIEW pg_stat_user_tables AS \
-		SELECT * FROM pg_stat_all_tables \
-		WHERE relname !~ '^pg_';" \
-        | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+CREATE VIEW pg_stat_sys_tables AS \
+    SELECT * FROM pg_stat_all_tables \
+    WHERE relname ~ '^pg_';
 
-echo "CREATE VIEW pg_statio_all_tables AS \
-		SELECT \
-			C.oid AS relid, \
-			C.relname AS relname, \
-			pg_stat_get_blocks_fetched(C.oid) - \
-				pg_stat_get_blocks_hit(C.oid) AS heap_blks_read, \
-			pg_stat_get_blocks_hit(C.oid) AS heap_blks_hit, \
-			sum(pg_stat_get_blocks_fetched(I.indexrelid) - \
-				pg_stat_get_blocks_hit(I.indexrelid)) AS idx_blks_read, \
-			sum(pg_stat_get_blocks_hit(I.indexrelid)) AS idx_blks_hit, \
-			pg_stat_get_blocks_fetched(T.oid) - \
-				pg_stat_get_blocks_hit(T.oid) AS toast_blks_read, \
-			pg_stat_get_blocks_hit(T.oid) AS toast_blks_hit, \
-			pg_stat_get_blocks_fetched(X.oid) - \
-				pg_stat_get_blocks_hit(X.oid) AS tidx_blks_read, \
-			pg_stat_get_blocks_hit(X.oid) AS tidx_blks_hit \
-		FROM pg_class C FULL OUTER JOIN \
-			pg_index I ON C.oid = I.indrelid FULL OUTER JOIN \
-			pg_class T ON C.reltoastrelid = T.oid FULL OUTER JOIN \
-			pg_class X ON C.reltoastidxid = X.oid \
-		WHERE C.relkind = 'r' \
-		GROUP BY C.oid, C.relname, T.oid, X.oid;" \
-        | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+CREATE VIEW pg_stat_user_tables AS \
+    SELECT * FROM pg_stat_all_tables \
+    WHERE relname !~ '^pg_';
 
-echo "CREATE VIEW pg_statio_sys_tables AS \
-		SELECT * FROM pg_statio_all_tables \
-		WHERE relname ~ '^pg_';" \
-        | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+CREATE VIEW pg_statio_all_tables AS \
+    SELECT \
+            C.oid AS relid, \
+            C.relname AS relname, \
+            pg_stat_get_blocks_fetched(C.oid) - \
+                    pg_stat_get_blocks_hit(C.oid) AS heap_blks_read, \
+            pg_stat_get_blocks_hit(C.oid) AS heap_blks_hit, \
+            sum(pg_stat_get_blocks_fetched(I.indexrelid) - \
+                    pg_stat_get_blocks_hit(I.indexrelid)) AS idx_blks_read, \
+            sum(pg_stat_get_blocks_hit(I.indexrelid)) AS idx_blks_hit, \
+            pg_stat_get_blocks_fetched(T.oid) - \
+                    pg_stat_get_blocks_hit(T.oid) AS toast_blks_read, \
+            pg_stat_get_blocks_hit(T.oid) AS toast_blks_hit, \
+            pg_stat_get_blocks_fetched(X.oid) - \
+                    pg_stat_get_blocks_hit(X.oid) AS tidx_blks_read, \
+            pg_stat_get_blocks_hit(X.oid) AS tidx_blks_hit \
+    FROM pg_class C FULL OUTER JOIN \
+            pg_index I ON C.oid = I.indrelid FULL OUTER JOIN \
+            pg_class T ON C.reltoastrelid = T.oid FULL OUTER JOIN \
+            pg_class X ON C.reltoastidxid = X.oid \
+    WHERE C.relkind = 'r' \
+    GROUP BY C.oid, C.relname, T.oid, X.oid;
 
-echo "CREATE VIEW pg_statio_user_tables AS \
-		SELECT * FROM pg_statio_all_tables \
-		WHERE relname !~ '^pg_';" \
-        | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+CREATE VIEW pg_statio_sys_tables AS \
+    SELECT * FROM pg_statio_all_tables \
+    WHERE relname ~ '^pg_';
 
-echo "CREATE VIEW pg_stat_all_indexes AS \
-		SELECT \
-			C.oid AS relid, \
-			I.oid AS indexrelid, \
-			C.relname AS relname, \
-			I.relname AS indexrelname, \
-			pg_stat_get_numscans(I.oid) AS idx_scan, \
-			pg_stat_get_tuples_returned(I.oid) AS idx_tup_read, \
-			pg_stat_get_tuples_fetched(I.oid) AS idx_tup_fetch \
-		FROM pg_class C, \
-			pg_class I, \
-			pg_index X \
-		WHERE C.relkind = 'r' AND \
-			X.indrelid = C.oid AND \
-			X.indexrelid = I.oid;" \
-        | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+CREATE VIEW pg_statio_user_tables AS \
+    SELECT * FROM pg_statio_all_tables \
+    WHERE relname !~ '^pg_';
 
-echo "CREATE VIEW pg_stat_sys_indexes AS \
-		SELECT * FROM pg_stat_all_indexes \
-		WHERE relname ~ '^pg_';" \
-        | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+CREATE VIEW pg_stat_all_indexes AS \
+    SELECT \
+            C.oid AS relid, \
+            I.oid AS indexrelid, \
+            C.relname AS relname, \
+            I.relname AS indexrelname, \
+            pg_stat_get_numscans(I.oid) AS idx_scan, \
+            pg_stat_get_tuples_returned(I.oid) AS idx_tup_read, \
+            pg_stat_get_tuples_fetched(I.oid) AS idx_tup_fetch \
+    FROM pg_class C, \
+            pg_class I, \
+            pg_index X \
+    WHERE C.relkind = 'r' AND \
+            X.indrelid = C.oid AND \
+            X.indexrelid = I.oid;
 
-echo "CREATE VIEW pg_stat_user_indexes AS \
-		SELECT * FROM pg_stat_all_indexes \
-		WHERE relname !~ '^pg_';" \
-        | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+CREATE VIEW pg_stat_sys_indexes AS \
+    SELECT * FROM pg_stat_all_indexes \
+    WHERE relname ~ '^pg_';
 
-echo "CREATE VIEW pg_statio_all_indexes AS \
-		SELECT \
-			C.oid AS relid, \
-			I.oid AS indexrelid, \
-			C.relname AS relname, \
-			I.relname AS indexrelname, \
-			pg_stat_get_blocks_fetched(I.oid) - \
-				pg_stat_get_blocks_hit(I.oid) AS idx_blks_read, \
-			pg_stat_get_blocks_hit(I.oid) AS idx_blks_hit \
-		FROM pg_class C, \
-			pg_class I, \
-			pg_index X \
-		WHERE C.relkind = 'r' AND \
-			X.indrelid = C.oid AND \
-			X.indexrelid = I.oid;" \
-        | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+CREATE VIEW pg_stat_user_indexes AS \
+    SELECT * FROM pg_stat_all_indexes \
+    WHERE relname !~ '^pg_';
 
-echo "CREATE VIEW pg_statio_sys_indexes AS \
-		SELECT * FROM pg_statio_all_indexes \
-		WHERE relname ~ '^pg_';" \
-        | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+CREATE VIEW pg_statio_all_indexes AS \
+    SELECT \
+            C.oid AS relid, \
+            I.oid AS indexrelid, \
+            C.relname AS relname, \
+            I.relname AS indexrelname, \
+            pg_stat_get_blocks_fetched(I.oid) - \
+                    pg_stat_get_blocks_hit(I.oid) AS idx_blks_read, \
+            pg_stat_get_blocks_hit(I.oid) AS idx_blks_hit \
+    FROM pg_class C, \
+            pg_class I, \
+            pg_index X \
+    WHERE C.relkind = 'r' AND \
+            X.indrelid = C.oid AND \
+            X.indexrelid = I.oid;
 
-echo "CREATE VIEW pg_statio_user_indexes AS \
-		SELECT * FROM pg_statio_all_indexes \
-		WHERE relname !~ '^pg_';" \
-        | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+CREATE VIEW pg_statio_sys_indexes AS \
+    SELECT * FROM pg_statio_all_indexes \
+    WHERE relname ~ '^pg_';
 
-echo "CREATE VIEW pg_statio_all_sequences AS \
-		SELECT \
-			C.oid AS relid, \
-			C.relname AS relname, \
-			pg_stat_get_blocks_fetched(C.oid) - \
-				pg_stat_get_blocks_hit(C.oid) AS blks_read, \
-			pg_stat_get_blocks_hit(C.oid) AS blks_hit \
-		FROM pg_class C \
-		WHERE C.relkind = 'S';" \
-        | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+CREATE VIEW pg_statio_user_indexes AS \
+    SELECT * FROM pg_statio_all_indexes \
+    WHERE relname !~ '^pg_';
 
-echo "CREATE VIEW pg_statio_sys_sequences AS \
-		SELECT * FROM pg_statio_all_sequences \
-		WHERE relname ~ '^pg_';" \
-        | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+CREATE VIEW pg_statio_all_sequences AS \
+    SELECT \
+            C.oid AS relid, \
+            C.relname AS relname, \
+            pg_stat_get_blocks_fetched(C.oid) - \
+                    pg_stat_get_blocks_hit(C.oid) AS blks_read, \
+            pg_stat_get_blocks_hit(C.oid) AS blks_hit \
+    FROM pg_class C \
+    WHERE C.relkind = 'S';
 
-echo "CREATE VIEW pg_statio_user_sequences AS \
-		SELECT * FROM pg_statio_all_sequences \
-		WHERE relname !~ '^pg_';" \
-        | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+CREATE VIEW pg_statio_sys_sequences AS \
+    SELECT * FROM pg_statio_all_sequences \
+    WHERE relname ~ '^pg_';
 
-echo "CREATE VIEW pg_stat_activity AS \
-		SELECT \
-			D.oid AS datid, \
-			D.datname AS datname, \
-			pg_stat_get_backend_pid(S.backendid) AS procpid, \
-			pg_stat_get_backend_userid(S.backendid) AS usesysid, \
-			U.usename AS usename, \
-			pg_stat_get_backend_activity(S.backendid) AS current_query \
-		FROM pg_database D, \
-			(SELECT pg_stat_get_backend_idset() AS backendid) AS S, \
-			pg_shadow U \
-		WHERE pg_stat_get_backend_dbid(S.backendid) = D.oid AND \
-			pg_stat_get_backend_userid(S.backendid) = U.usesysid;" \
-        | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+CREATE VIEW pg_statio_user_sequences AS \
+    SELECT * FROM pg_statio_all_sequences \
+    WHERE relname !~ '^pg_';
 
-echo "CREATE VIEW pg_stat_database AS \
-		SELECT \
-			D.oid AS datid, \
-			D.datname AS datname, \
-			pg_stat_get_db_numbackends(D.oid) AS numbackends, \
-			pg_stat_get_db_xact_commit(D.oid) AS xact_commit, \
-			pg_stat_get_db_xact_rollback(D.oid) AS xact_rollback, \
-			pg_stat_get_db_blocks_fetched(D.oid) - \
-				pg_stat_get_db_blocks_hit(D.oid) AS blks_read, \
-			pg_stat_get_db_blocks_hit(D.oid) AS blks_hit \
-		FROM pg_database D;" \
-        | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+CREATE VIEW pg_stat_activity AS \
+    SELECT \
+            D.oid AS datid, \
+            D.datname AS datname, \
+            pg_stat_get_backend_pid(S.backendid) AS procpid, \
+            pg_stat_get_backend_userid(S.backendid) AS usesysid, \
+            U.usename AS usename, \
+            pg_stat_get_backend_activity(S.backendid) AS current_query \
+    FROM pg_database D, \
+            (SELECT pg_stat_get_backend_idset() AS backendid) AS S, \
+            pg_shadow U \
+    WHERE pg_stat_get_backend_dbid(S.backendid) = D.oid AND \
+            pg_stat_get_backend_userid(S.backendid) = U.usesysid;
+
+CREATE VIEW pg_stat_database AS \
+    SELECT \
+            D.oid AS datid, \
+            D.datname AS datname, \
+            pg_stat_get_db_numbackends(D.oid) AS numbackends, \
+            pg_stat_get_db_xact_commit(D.oid) AS xact_commit, \
+            pg_stat_get_db_xact_rollback(D.oid) AS xact_rollback, \
+            pg_stat_get_db_blocks_fetched(D.oid) - \
+                    pg_stat_get_db_blocks_hit(D.oid) AS blks_read, \
+            pg_stat_get_db_blocks_hit(D.oid) AS blks_hit \
+    FROM pg_database D;
+
+EOF
+if [ "$?" -ne 0 ]; then
+    exit_nicely
+fi
 
 echo "Loading pg_description."
 (
@@ -806,26 +799,39 @@ echo "Loading pg_description."
 	| "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
 
 echo "Setting lastsysoid."
-echo "UPDATE pg_database SET \
+
+"$PGPATH"/postgres $PGSQL_OPT template1 >/dev/null <<EOF
+UPDATE pg_database SET \
 	datistemplate = 't', \
 	datlastsysoid = (SELECT max(oid) FROM pg_description) \
-        WHERE datname = 'template1'" \
-		| "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+    WHERE datname = 'template1';
+EOF
+if [ "$?" -ne 0 ]; then
+    exit_nicely
+fi
 
 echo "Vacuuming database."
-echo "VACUUM FULL ANALYZE" \
-	| "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+
+"$PGPATH"/postgres $PGSQL_OPT template1 >/dev/null <<EOF
+VACUUM FULL ANALYZE;
+EOF
+if [ "$?" -ne 0 ]; then
+    exit_nicely
+fi
 
 echo "Copying template1 to template0."
-echo "CREATE DATABASE template0" \
-	| "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
-echo "UPDATE pg_database SET \
+
+"$PGPATH"/postgres $PGSQL_OPT template1 >/dev/null <<EOF
+CREATE DATABASE template0;
+UPDATE pg_database SET \
 	datistemplate = 't', \
 	datallowconn = 'f' \
-        WHERE datname = 'template0'" \
-		| "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
-echo "VACUUM FULL pg_database" \
-	| "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+    WHERE datname = 'template0';
+VACUUM FULL pg_database;
+EOF
+if [ "$?" -ne 0 ]; then
+    exit_nicely
+fi
 
 
 ##########################################################################
