@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: proc.h,v 1.19 1999/02/19 06:06:37 tgl Exp $
+ * $Id: proc.h,v 1.20 1999/02/19 07:10:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -122,6 +122,5 @@ extern int ProcLockWakeup(PROC_QUEUE *queue, LOCKMETHOD lockmethod,
 			   LOCK *lock);
 extern void ProcAddLock(SHM_QUEUE *elem);
 extern void ProcReleaseSpins(PROC *proc);
-extern void ProcFreeAllSemaphores(void);
 
 #endif	 /* PROC_H */

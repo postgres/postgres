@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.19 1999/02/19 06:06:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.20 1999/02/19 07:10:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -101,7 +101,6 @@ CreateSharedMemoryAndSemaphores(IPCKey key, int maxBackends)
 	 * ----------------
 	 */
 	InitProcGlobal(key, maxBackends);
-	on_shmem_exit(ProcFreeAllSemaphores, NULL);
 
 	CreateSharedInvalidationState(key);
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.49 1999/02/19 06:06:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.50 1999/02/19 07:10:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@
  *		This is so that we can support more backends. (system-wide semaphore
  *		sets run out pretty fast.)				  -ay 4/95
  *
- * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.49 1999/02/19 06:06:08 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.50 1999/02/19 07:10:48 tgl Exp $
  */
 #include <sys/time.h>
 #include <unistd.h>
@@ -79,6 +79,7 @@
 
 static void HandleDeadLock(int sig);
 static PROC *ProcWakeup(PROC *proc, int errType);
+static void ProcFreeAllSemaphores(void);
 
 #define DeadlockCheckTimer pg_options[OPT_DEADLOCKTIMEOUT]
 
@@ -135,6 +136,8 @@ InitProcGlobal(IPCKey key, int maxBackends)
 
 	/* --------------------
 	 * We're the first - initialize.
+	 * XXX if found should ever be true, it is a sign of impending doom ...
+	 * ought to complain if so?
 	 * --------------------
 	 */
 	if (!found)
@@ -145,6 +148,12 @@ InitProcGlobal(IPCKey key, int maxBackends)
 		ProcGlobal->currKey = IPCGetProcessSemaphoreInitKey(key);
 		for (i = 0; i < MAX_PROC_SEMS / PROC_NSEMS_PER_SET; i++)
 			ProcGlobal->freeSemMap[i] = 0;
+
+		/* Arrange to delete semas on exit --- set this up now so that
+		 * we will clean up if pre-allocation fails...
+		 */
+		on_shmem_exit(ProcFreeAllSemaphores, NULL);
+
 		/* Pre-create the semaphores for the first maxBackends processes */
 		for (i = 0;
 			 i < (maxBackends+PROC_NSEMS_PER_SET-1) / PROC_NSEMS_PER_SET;
@@ -924,7 +933,7 @@ ProcFreeSem(IpcSemaphoreKey semKey, int semNum)
  *	  destroying shared state for a failed set of backends.
  *	  Free up all the semaphores allocated to the lmgrs of the backends.
  */
-void
+static void
 ProcFreeAllSemaphores()
 {
 	int			i;
