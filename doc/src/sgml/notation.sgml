@@ -1,9 +1,40 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/notation.sgml,v 1.22 2003/03/25 16:15:37 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/notation.sgml,v 1.23 2003/09/08 23:02:28 petere Exp $
 -->
 
 <sect1 id="notation">
- <title>Terminology and Notation</title>
+ <title>Conventions</title>
+
+ <para>
+  This book uses the following typographical conventions to mark
+  certain portions of test: new terms, foreign phrases, and other
+  important passages are emphasized in <emphasis>italics</>.
+  Everything that represents input or output of the computer, in
+  particular commands, program code, and screen output, is shown in a
+  monospaced front (<literal>example</literal>).  Within such
+  passages, italics (<replaceable>example</replaceable>) indicate,
+  that you must insert an actual value instead of the placeholder.  On
+  occasion, parts of program code are emphasized in bold face
+  (<emphasis role="bold"><literal>example</></>), if they have been
+  added or changed since the preceding example.
+ </para>
+
+ <para>
+  The following conventions are used in the synopsis of a command:
+  brackets (<literal>[</literal> and <literal>]</literal>) indicate
+  optional parts.  (In the synopsis of a Tcl command, question marks
+  (<literal>?</>) are used instead, as is usual in Tcl.)  Braces
+  (<literal>{</literal> and <literal>}</literal>) and vertical lines
+  (<literal>|</literal>) indicate that you must choose one
+  alternative.  Dots (<literal>...</>) mean that the preceding element
+  can be repeated.
+ </para>
+
+ <para>
+  Where it enhances the clarity, SQL commands are preceded by the
+  prompt <literal>=&gt;</>, and shell commands are preceded by the
+  prompt <literal>$</>.  Normally, prompts are not shown, though.
+ </para>
 
  <para>
   An <firstterm>administrator</firstterm> is generally a person who is
@@ -13,58 +44,4 @@ $Header: /cvsroot/pgsql/doc/src/sgml/notation.sgml,v 1.22 2003/03/25 16:15:37 pe
   be interpreted too narrowly; this documentation set does not have fixed
   presumptions about system administration procedures.
  </para>
-
- <para>
-  We use <filename>/usr/local/pgsql/</filename> as the root
-  directory of the installation and <filename>/usr/local/pgsql/data</filename>
-  as the directory with the database files.  These directories may vary
-  on your site, details can be derived in <xref linkend="installation">.
- </para>
-
- <para>
-  In a command synopsis, brackets
-  (<literal>[</literal> and <literal>]</literal>) indicate an optional phrase or keyword.
-  Anything in braces
-  (<literal>{</literal> and <literal>}</literal>) and containing vertical bars
-  (<literal>|</literal>)
-  indicates that you must choose one alternative.
- </para>
-
- <para>
-  Examples will show commands executed from various accounts and programs.
-  Commands executed from a Unix shell may be preceded with a dollar sign
-  (<quote><literal>$</literal></quote>).  Commands executed from particular user
-  accounts such as <systemitem>root</> or <systemitem>postgres</> are specially flagged and explained.
-  <acronym>SQL</acronym> commands may be preceded with
-  <quote><literal>=&gt;</literal></quote>
-  or will have no leading prompt, depending on the context.
- </para>
-
- <note>
-  <para>
-   The notation for
-   flagging commands is not universally consistent throughout the
-   documentation set.
-   Please report problems to the documentation mailing list
-   <email>pgsql-docs@postgresql.org</email>.
-  </para>
- </note>
-
 </sect1>
-
-<!-- Keep this comment at the end of the file
-Local variables:
-mode:sgml
-sgml-omittag:nil
-sgml-shorttag:t
-sgml-minimize-attributes:nil
-sgml-always-quote-attributes:t
-sgml-indent-step:1
-sgml-indent-data:t
-sgml-parent-document:nil
-sgml-default-dtd-file:"./reference.ced"
-sgml-exposed-tags:nil
-sgml-local-catalogs:("/usr/lib/sgml/catalog")
-sgml-local-ecat-files:nil
-End:
--->

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/stylesheet.dsl,v 1.23 2003/03/25 16:15:38 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/stylesheet.dsl,v 1.24 2003/09/08 23:02:28 petere Exp $ -->
 <!DOCTYPE style-sheet PUBLIC "-//James Clark//DTD DSSSL Style Sheet//EN" [
 
 <!-- must turn on one of these with -i on the jade command line -->
@@ -62,6 +62,38 @@
 (element type ($mono-seq$))
 (element (programlisting emphasis) ($bold-seq$)) ;; to highlight sections of code
 
+;; Special support for Tcl synopses
+(element optional
+  (if (equal? (attribute-string (normalize "role")) "tcl")
+      (make sequence
+        (literal "?")
+        ($charseq$)
+        (literal "?"))
+      (make sequence
+        (literal %arg-choice-opt-open-str%)
+        ($charseq$)
+        (literal %arg-choice-opt-close-str%))))
+
+;; Avoid excessive cross-reference labels
+(define (auto-xref-indirect? target ancestor)
+  (cond
+;   ;; Always add indirect references to another book
+;   ((member (gi ancestor) (book-element-list))
+;    #t)
+   ;; Add indirect references to the section or component a block
+   ;; is in iff chapters aren't autolabelled.  (Otherwise "Figure 1-3"
+   ;; is sufficient)
+   ((and (member (gi target) (block-element-list))
+         (not %chapter-autolabel%))
+    #t)
+   ;; Add indirect references to the component a section is in if
+   ;; the sections are not autolabelled
+   ((and (member (gi target) (section-element-list))
+         (member (gi ancestor) (component-element-list))
+         (not %section-autolabel%))
+    #t)
+   (else #f)))
+
 
 ;; Bibliography things
 
@@ -110,11 +142,6 @@
   (element issn
     (make sequence
       (literal "ISSN ")
-      (process-children)))
-
-  (element pagenums
-    (make sequence
-      (literal "p. ")
       (process-children))))
 
 
@@ -137,6 +164,7 @@
 <![ %output-html; [
 
 (define %section-autolabel%     #t)
+(define %label-preface-sections% #f)
 (define %generate-legalnotice-link% #t)
 (define %html-ext%              ".html")
 (define %root-filename%         "index")
@@ -144,6 +172,8 @@
 (define %use-id-as-filename%    #t)
 (define %stylesheet%            "stylesheet.css")
 (define %graphic-default-extension% "gif")
+(define %gentext-nav-use-ff%    #t)
+(define %body-attr%             '())
 
 ;; Returns the depth of auto TOC that should be made at the nd-level
 (define (toc-depth nd)

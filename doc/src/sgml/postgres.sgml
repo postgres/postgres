@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.54 2003/09/01 23:01:49 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.55 2003/09/08 23:02:28 petere Exp $
 -->
 
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook V3.1//EN" [
@@ -21,15 +21,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.54 2003/09/01 23:01:49 pe
   &legal;
  </bookinfo>
 
- <preface id="preface">
-  <title>Preface</title>
-
-  &intro;
-  &history;
-  &notation;
-  &problems;
-
- </preface>
+ &intro;
 
  <part id="tutorial">
   <title>Tutorial</title>

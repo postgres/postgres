@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/pltcl.sgml,v 2.25 2003/08/31 17:32:19 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/pltcl.sgml,v 2.26 2003/09/08 23:02:28 petere Exp $
 -->
 
  <chapter id="pltcl">
@@ -235,7 +235,7 @@ CREATE FUNCTION overpaid(employee) RETURNS boolean AS '
     <variablelist>
 
      <varlistentry>
-      <term><function>spi_exec</function> <literal>?-count <replaceable>n</replaceable>? ?-array <replaceable>name</replaceable>? <replaceable>command</replaceable> ?<replaceable>loop-body</replaceable>?</literal></term>
+      <term><literal><function>spi_exec</function> <optional role="tcl">-count <replaceable>n</replaceable></optional> <optional role="tcl">-array <replaceable>name</replaceable></optional> <replaceable>command</replaceable> <optional role="tcl"><replaceable>loop-body</replaceable></optional></literal></term>
       <listitem>
        <para>
 	Executes an SQL command given as a string.  An error in the command
@@ -329,7 +329,7 @@ spi_exec -array C "SELECT * FROM pg_class" {
      </varlistentry>
 
      <varlistentry>
-      <term><function>spi_execp</> <literal>?-count <replaceable>n</replaceable>? ?-array <replaceable>name</replaceable>? ?-nulls <replaceable>string</replaceable>? <replaceable>queryid</replaceable> ?<replaceable>value-list</replaceable>? ?<replaceable>loop-body</replaceable>?</literal></term>
+      <term><literal><function>spi_execp</> <optional role="tcl">-count <replaceable>n</replaceable></optional> <optional role="tcl">-array <replaceable>name</replaceable></optional> <optional role="tcl">-nulls <replaceable>string</replaceable></optional> <replaceable>queryid</replaceable> <optional role="tcl"><replaceable>value-list</replaceable></optional> <optional role="tcl"><replaceable>loop-body</replaceable></optional></literal></term>
       <listitem>
        <para>
 	Executes a query previously prepared with <function>spi_prepare</>.

@@ -201,7 +201,7 @@ load libpgtcl[info sharedlibextension]
  <refsynopsisdiv>
 <synopsis>
 pg_connect -conninfo <parameter>connectOptions</parameter>
-pg_connect <parameter>dbName</parameter> <optional>-host <parameter>hostName</parameter></optional> <optional>-port <parameter>portNumber</parameter></optional> <optional>-tty <parameter>tty</parameter</optional> <optional>-options <parameter>serverOptions</parameter></optional>
+pg_connect <parameter>dbName</parameter> <optional role="tcl">-host <parameter>hostName</parameter></optional> <optional role="tcl">-port <parameter>portNumber</parameter></optional> <optional role="tcl">-tty <parameter>tty</parameter</optional> <optional role="tcl">-options <parameter>serverOptions</parameter></optional>
 </synopsis>
  </refsynopsisdiv>
 
@@ -612,7 +612,7 @@ pg_result <parameter>resultHandle</parameter> <parameter>resultOption</parameter
        </varlistentry>
 
        <varlistentry>
-        <term><option>-assignbyidx <parameter>arrayName</> <optional><parameter>appendstr</></optional></option></term>
+        <term><option>-assignbyidx <parameter>arrayName</> <optional role="tcl"><parameter>appendstr</></optional></option></term>
         <listitem>
          <para>
           Assign the results to an array using the values of the
@@ -839,7 +839,7 @@ pg_select $pgconn "SELECT * FROM table1;" array {
 
  <refsynopsisdiv>
 <synopsis>
-pg_execute <optional>-array <parameter>arrayVar</parameter></optional> <optional>-oid <parameter>oidVar</parameter></optional> <parameter>conn</parameter> <parameter>commandString</parameter> <optional><parameter>procedure</parameter></optional>
+pg_execute <optional role="tcl">-array <parameter>arrayVar</parameter></optional> <optional role="tcl">-oid <parameter>oidVar</parameter></optional> <parameter>conn</parameter> <parameter>commandString</parameter> <optional role="tcl"><parameter>procedure</parameter></optional>
 </synopsis>
  </refsynopsisdiv>
 
@@ -1020,7 +1020,7 @@ pg_execute $pgconn "SELECT max(value) AS max, min(value) AS min FROM mytable;"
 
  <refsynopsisdiv>
 <synopsis>
-pg_listen <parameter>conn</parameter> <parameter>notifyName</parameter> <optional><parameter>callbackCommand</parameter></optional>
+pg_listen <parameter>conn</parameter> <parameter>notifyName</parameter> <optional role="tcl"><parameter>callbackCommand</parameter></optional>
 </synopsis>
  </refsynopsisdiv>
 
@@ -1120,7 +1120,7 @@ pg_listen <parameter>conn</parameter> <parameter>notifyName</parameter> <optiona
 
  <refsynopsisdiv>
 <synopsis>
-pg_on_connection_loss <parameter>conn</parameter> <optional><parameter>callbackCommand</parameter></optional>
+pg_on_connection_loss <parameter>conn</parameter> <optional role="tcl"><parameter>callbackCommand</parameter></optional>
 </synopsis>
  </refsynopsisdiv>
 
