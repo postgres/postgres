@@ -27,23 +27,13 @@
  */
 
 #include <Python.h>
-#include <postgres.h>
-#include <libpq-fe.h>
-#include <libpq/libpq-fs.h>
+#include "postgres.h"
+#include "libpq-fe.h"
+#include "libpq/libpq-fs.h"
+#include "catalog/pg_type.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-/* really bad stuff here - I'm so naughty */
-/* If you need to you can run mkdefines to get */
-/* current defines but it should not have changed */
-#define INT2OID		21
-#define INT4OID		23
-#define OIDOID		26
-#define FLOAT4OID	700
-#define FLOAT8OID	701
-#define CASHOID		790
-#define NUMERICOID	1700
 
 static PyObject *PGError;
 static const char *PyPgVersion = "3.2";
