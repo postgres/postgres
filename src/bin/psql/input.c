@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/input.c,v 1.19 2002/04/10 22:46:58 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/input.c,v 1.20 2002/09/05 22:05:50 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "input.h"
@@ -29,6 +29,8 @@ static void finishInput(void);
 /* designed for use with on_exit() */
 static void finishInput(int, void *);
 #endif
+
+#define PSQLHISTORY	"/.psql_history"
 
 
 /*
@@ -142,11 +144,12 @@ initializeInput(int flags)
 		home = getenv("HOME");
 		if (home)
 		{
-			char	   *psql_history = (char *) malloc(strlen(home) + 20);
+			char	   *psql_history = (char *) malloc(strlen(home) +
+												strlen(PSQLHISTORY) + 1);
 
 			if (psql_history)
 			{
-				sprintf(psql_history, "%s/.psql_history", home);
+				sprintf(psql_history, "%s" PSQLHISTORY, home);
 				read_history(psql_history);
 				free(psql_history);
 			}
@@ -201,14 +204,15 @@ finishInput(int exitstatus, void *arg)
 		home = getenv("HOME");
 		if (home)
 		{
-			psql_history = (char *) malloc(strlen(home) + 20);
+			psql_history = (char *) malloc(strlen(home) +
+									strlen(PSQLHISTORY) + 1);
 			if (psql_history)
 			{
 				const char *var = GetVariable(pset.vars, "HISTSIZE");
 
 				if (var)
 					stifle_history(atoi(var));
-				sprintf(psql_history, "%s/.psql_history", home);
+				sprintf(psql_history, "%s" PSQLHISTORY, home);
 				write_history(psql_history);
 				free(psql_history);
 			}

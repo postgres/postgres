@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.201 2002/09/04 20:31:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.202 2002/09/05 22:05:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,6 +66,7 @@ inet_aton(const char *cp, struct in_addr * inp)
 #define NOTIFYLIST_INITIAL_SIZE 10
 #define NOTIFYLIST_GROWBY 10
 
+#define PGPASSFILE "/.pgpass"
 
 /* ----------
  * Definition of the conninfo parameters and their fallback resources.
@@ -186,7 +187,7 @@ static int parseServiceInfo(PQconninfoOption *options,
 				 PQExpBuffer errorMessage);
 char	   *pwdfMatchesString(char *buf, char *token);
 char *PasswordFromFile(char *hostname, char *port, char *dbname,
-				 char *username, char *pwdfile);
+					   char *username);
 
 /*
  *		Connecting to a Database
@@ -395,10 +396,6 @@ PQconndefaults(void)
  *
  *	  PGPASSWORD   The user's password.
  *
- *	  PGPASSWORDFILE
- *				   A file that contains host:port:database:user:password
- *				   for authentication
- *
  *	  PGDATABASE   name of database to which to connect if <pgdatabase>
  *				   argument is NULL or a null string
  *
@@ -506,8 +503,7 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 	else if ((tmp = getenv("PGPASSWORD")) != NULL)
 		conn->pgpass = strdup(tmp);
 	else if ((tmp = PasswordFromFile(conn->pghost, conn->pgport,
-									 conn->dbName, conn->pguser,
-									 getenv("PGPASSWORDFILE"))) != NULL)
+									 conn->dbName, conn->pguser)))
 		conn->pgpass = tmp;
 	else
 		conn->pgpass = strdup(DefaultPassword);
@@ -2905,22 +2901,20 @@ pwdfMatchesString(char *buf, char *token)
 
 /* get a password from the password file. */
 char *
-PasswordFromFile(char *hostname, char *port, char *dbname,
-				 char *username, char *pwdfile)
+PasswordFromFile(char *hostname, char *port, char *dbname, char *username)
 {
 	FILE	   *fp;
+	char	   *pgpassfile;
+	char	   *home;
+	struct stat stat_buf;
 
 #define LINELEN NAMEDATALEN*5
 	char		buf[LINELEN];
-	struct stat stat_buf;
 
-	if (pwdfile == NULL || strcmp(pwdfile, "") == 0)
+	if (dbname == NULL || strlen(dbname) == 0)
 		return NULL;
 
-	if (dbname == NULL || strcmp(dbname, "") == 0)
-		return NULL;
-
-	if (username == NULL || strcmp(username, "") == 0)
+	if (username == NULL || strlen(username) == 0)
 		return NULL;
 
 	if (hostname == NULL)
@@ -2929,20 +2923,41 @@ PasswordFromFile(char *hostname, char *port, char *dbname,
 	if (port == NULL)
 		port = DEF_PGPORT_STR;
 
-	/* If password file cannot be opened, ignore it. */
-	if (stat(pwdfile, &stat_buf) == -1)
+	/* Look for it in the home dir */
+	home = getenv("HOME");
+	if (home)
+	{
+		pgpassfile = malloc(strlen(home) + strlen(PGPASSFILE) + 1);
+		if (!pgpassfile)
+		{
+			fprintf(stderr, gettext("%s: out of memory\n"), pset.progname);
+			exit(EXIT_FAILURE);
+		}
+	}
+	else
 		return NULL;
+
+	sprintf(pgpassfile, "%s" PGPASSFILE, home);
+
+	/* If password file cannot be opened, ignore it. */
+	if (stat(pgpassfile, &stat_buf) == -1)
+	{
+		free(pgpassfile);
+		return NULL;
+	}
 
 	/* If password file is insecure, alert the user and ignore it. */
 	if (stat_buf.st_mode & (S_IRWXG | S_IRWXO))
 	{
 		fprintf(stderr,
 				libpq_gettext("WARNING: Password file %s has world or group read access; permission should be u=rw (0600)"),
-				pwdfile);
+				pgpassfile);
+		free(pgpassfile);
 		return NULL;
 	}
 
-	fp = fopen(pwdfile, "r");
+	fp = fopen(pgpassfile, "r");
+	free(pgpassfile);
 	if (fp == NULL)
 		return NULL;
 
@@ -2965,6 +2980,7 @@ PasswordFromFile(char *hostname, char *port, char *dbname,
 		fclose(fp);
 		return ret;
 	}
+
 	fclose(fp);
 	return NULL;
 

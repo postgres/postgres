@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuumdb.sgml,v 1.24 2002/08/27 03:55:17 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuumdb.sgml,v 1.25 2002/09/05 22:05:50 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -62,9 +62,10 @@ PostgreSQL documentation
 
 
   <para>
-  <application>vacuumdb</application> will need to connect several times to the
-  <productname>PostgreSQL</productname> server, asking for the password each
-  time. It will probably be very convenient to have a PGPASSWORDFILE in that case.
+  <application>vacuumdb</application> might need to connect several
+  times to the <productname>PostgreSQL</productname> server, asking for
+  a password each time. It is convenient to have a
+  <filename>$HOME/.pgpass</> file in such cases.
   </para>
 
  </refsect1>

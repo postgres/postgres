@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.94 2002/09/02 20:21:32 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.95 2002/09/05 22:05:48 momjian Exp $
 -->
 
  <chapter id="libpq">
@@ -2052,23 +2052,6 @@ reasons; consider migrating to <envar>PGPASSWORDFILE</envar>.
 </listitem>
 <listitem>
 <para>
-<indexterm>
- <primary><envar>PGPASSWORDFILE</envar></primary>
-</indexterm>
-<envar>PGPASSWORDFILE</envar>
-sets the password file used if the backend demands password authentication.
-This file should have the format
-<screen>
-<replaceable>hostname</replaceable>:<replaceable>port</replaceable>:<replaceable>database</replaceable>:<replaceable>username</replaceable>:<replaceable>password</replaceable>
-</screen>
-Any of these may be a literal name, or a <literal>*</literal> that matches
-anything.  The first match will be the one used, so put more specific entries first.
-Entries with <literal>:</literal> or <literal>\</literal> should be escaped
-with <literal>\</literal>.
-</para>
-</listitem>
-<listitem>
-<para>
 <envar>PGREALM</envar> sets the Kerberos realm to  use  with  
 <productname>PostgreSQL</productname>, if  it is different from the local realm.
 If <envar>PGREALM</envar> is set, <productname>PostgreSQL</productname> 
@@ -2139,6 +2122,27 @@ Refer to the <command>SET</command> <acronym>SQL</acronym> command
 for information on correct values for these environment variables.
 </para>
 
+</sect1>
+
+
+<sect1 id="libpq-files">
+<title>Files</title>
+
+<indexterm zone="libpq-files">
+ <primary>files</primary>
+</indexterm>
+<para>
+<filename>$HOME/.pgpass</filename> is a file that can contain passwords
+to be used if the connection requires a password. This file should have the
+format:
+<screen>
+<replaceable>hostname</replaceable>:<replaceable>port</replaceable>:<replaceable>database</replaceable>:<replaceable>username</replaceable>:<replaceable>password</replaceable>
+</screen>
+Any of these may be a literal name, or <literal>*</literal>, which matches
+anything.  The first match will be used so put more specific entries first.
+Entries with <literal>:</literal> or <literal>\</literal> should be escaped
+with <literal>\</literal>.
+</para>
 </sect1>
 
 <sect1 id="libpq-threading">
