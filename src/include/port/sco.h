@@ -1,9 +1,3 @@
-#ifndef NOFILE
-#define NOFILE			NOFILES_MIN
-#endif
-
-#define DISABLE_COMPLEX_MACRO
-
 /* see src/backend/libpq/pqcomm.c */
 #define SCO_ACCEPT_BUG
 

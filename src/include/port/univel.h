@@ -9,8 +9,6 @@
 
 typedef unsigned char slock_t;
 
-#define DISABLE_COMPLEX_MACRO
-
 #ifndef			BIG_ENDIAN
 #define			BIG_ENDIAN		4321
 #endif
