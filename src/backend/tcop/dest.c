@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.18 1998/05/06 23:49:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.19 1998/05/14 17:18:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -288,6 +288,7 @@ BeginCommand(char *pname,
 														 * oops.. */
 					pq_putint((int) attrs[i]->atttypid, sizeof(attrs[i]->atttypid));
 					pq_putint(attrs[i]->attlen, sizeof(attrs[i]->attlen));
+					pq_putint(attrs[i]->atttypmod, sizeof(attrs[i]->atttypmod));
 				}
 			}
 			break;
