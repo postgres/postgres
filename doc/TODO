@@ -241,7 +241,6 @@ SOURCE CODE
 * Add use of 'const' for varibles in source tree
 * Fix C optimizer problem where fmgr_ptr calls return different types
 * Add needed includes and removed unneede include files(Bruce)
-* Fix port tests and __i386__/i386 test
 
 ---------------------------------------------------------------------------
 
