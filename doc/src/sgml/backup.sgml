@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/backup.sgml,v 2.16 2001/10/01 17:46:46 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/backup.sgml,v 2.17 2001/10/04 04:46:43 momjian Exp $ -->
 <chapter id="backup">
  <title>Backup and Restore</title>
 
@@ -369,7 +369,7 @@ tar -cf backup.tar /usr/local/pgsql/data
    change between releases of <productname>Postgres</>. This does not
    apply to different <quote>patch levels</quote>, these always have
    compatible storage formats. For example, releases 7.0.1, 7.1.2, and
-   7.2 are not compatible, whereas 7.1.2 and 7.1.1 are. When you
+   7.2 are not compatible, whereas &version;.1 and &version;.2 are. When you
    update between compatible versions, then you can simply reuse the
    data area in disk by the new executables. Otherwise you need to
    <quote>back up</> your data and <quote>restore</> it on the new
@@ -409,7 +409,7 @@ pg_dumpall -p 5432 | psql -d template1 -p 6543
 pg_dumpall > backup
 pg_ctl stop
 mv /usr/local/pgsql /usr/local/pgsql.old
-cd /usr/src/postgresql-7.2
+cd /usr/src/postgresql-&version;
 gmake install
 initdb -D /usr/local/pgsql/data
 postmaster -D /usr/local/pgsql/data
