@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plperl/plperl.c,v 1.12 2000/07/05 23:11:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plperl/plperl.c,v 1.13 2000/09/12 04:28:30 momjian Exp $
  *
  **********************************************************************/
 
@@ -324,13 +324,13 @@ plperl_create_sub(char * s)
 	count = perl_call_pv("mksafefunc", G_SCALAR | G_EVAL | G_KEEPERR);
 	SPAGAIN;
 
-	if (SvTRUE(GvSV(errgv)))
+	if (SvTRUE(ERRSV))
 	{
 		POPs;
 		PUTBACK;
 		FREETMPS;
 		LEAVE;
-		elog(ERROR, "creation of function failed : %s", SvPV(GvSV(errgv), na));
+		elog(ERROR, "creation of function failed : %s", SvPV_nolen(ERRSV));
 	}
 
 	if (count != 1) {
@@ -449,13 +449,13 @@ plperl_call_perl_func(plperl_proc_desc * desc, FunctionCallInfo fcinfo)
 		elog(ERROR, "plperl : didn't get a return item from function");
 	}
 
-	if (SvTRUE(GvSV(errgv)))
+	if (SvTRUE(ERRSV))
 	{
 		POPs;
 		PUTBACK;
 		FREETMPS;
 		LEAVE;
-		elog(ERROR, "plperl : error from function : %s", SvPV(GvSV(errgv), na));
+		elog(ERROR, "plperl : error from function : %s", SvPV_nolen(ERRSV));
 	}
 
 	retval = newSVsv(POPs);
@@ -661,7 +661,7 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 	else
 	{
 		retval = FunctionCall3(&prodesc->result_in_func,
-							   PointerGetDatum(SvPV(perlret, na)),
+							   PointerGetDatum(SvPV_nolen(perlret)),
 							   ObjectIdGetDatum(prodesc->result_in_elem),
 							   Int32GetDatum(prodesc->result_in_len));
 	}
@@ -2184,6 +2184,6 @@ plperl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc)
 			sv_catpvf(output, "'%s' => undef,", attname);
 	}
 	sv_catpv(output, "}");
-	output = perl_eval_pv(SvPV(output, na), TRUE);
+	output = perl_eval_pv(SvPV_nolen(output), TRUE);
 	return output;
 }
