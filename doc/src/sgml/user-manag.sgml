@@ -162,7 +162,7 @@ GRANT UPDATE ON accounts TO joe;
 GRANT SELECT ON accounts TO GROUP staff;
 </programlisting>
    The special <quote>user</quote> name <literal>PUBLIC</literal> can
-   be used to grant a privilege to every user on the system. Using
+   be used to grant a privilege to every user on the system. Writing
    <literal>ALL</literal> in place of a specific privilege specifies that all
    privileges will be granted.
   </para>
@@ -173,8 +173,12 @@ GRANT SELECT ON accounts TO GROUP staff;
 <programlisting>
 REVOKE ALL ON accounts FROM PUBLIC;
 </programlisting>
-   The special privileges of the table owner are always implicit
-   and cannot be granted or revoked.
+   The special privileges of the table owner (i.e., the right to do
+   <command>DROP</>, <command>GRANT</>, <command>REVOKE</>, etc)
+   are always implicit in being the owner,
+   and cannot be granted or revoked.  But the table owner can choose
+   to revoke his own ordinary privileges, for example to make a
+   table read-only for himself as well as others.
   </para>
  </sect1>
 
