@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: clauses.h,v 1.24 1999/07/27 03:51:00 tgl Exp $
+ * $Id: clauses.h,v 1.25 1999/08/09 00:51:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,7 +44,6 @@ extern void clause_get_relids_vars(Node *clause, Relids *relids, List **vars);
 extern int	NumRelids(Node *clause);
 extern bool is_joinable(Node *clause);
 extern bool qual_clause_p(Node *clause);
-extern void fix_opid(Node *clause);
 extern List *fix_opids(List *clauses);
 extern void get_relattval(Node *clause, int targetrelid,
 						  int *relid, AttrNumber *attno,
@@ -55,6 +54,8 @@ extern void CommuteClause(Node *clause);
 
 extern bool expression_tree_walker(Node *node, bool (*walker) (),
 								   void *context);
+extern Node *expression_tree_mutator(Node *node, Node * (*mutator) (),
+									 void *context);
 
 #define is_subplan(clause)	((Node*) (clause) != NULL && \
 						nodeTag((Node*) (clause)) == T_Expr && \

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.27 1999/07/17 20:17:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.28 1999/08/09 00:51:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,10 +45,9 @@ preprocess_targetlist(List *tlist,
 					  Index result_relation,
 					  List *range_table)
 {
-	List	   *expanded_tlist = NIL;
 	Oid			relid = InvalidOid;
-	List	   *t_list = NIL;
-	List	   *temp = NIL;
+	List	   *expanded_tlist;
+	List	   *t_list;
 
 	if (result_relation >= 1 && command_type != CMD_SELECT)
 		relid = getrelid(result_relation, range_table);
@@ -61,14 +60,7 @@ preprocess_targetlist(List *tlist,
 	expanded_tlist = expand_targetlist(tlist, relid, command_type, result_relation);
 
 	/* XXX should the fix-opids be this early?? */
-	/* was mapCAR  */
-	foreach(temp, expanded_tlist)
-	{
-		TargetEntry *tle = lfirst(temp);
-
-		if (tle->expr)
-			fix_opid(tle->expr);
-	}
+	fix_opids(expanded_tlist);
 	t_list = copyObject(expanded_tlist);
 
 	/* ------------------

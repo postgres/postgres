@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.43 1999/07/27 03:51:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.44 1999/08/09 00:51:24 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -28,7 +28,7 @@
 #include "utils/lsyscache.h"
 
 
-static bool fix_opid_walker(Node *node, void *context);
+static bool fix_opids_walker(Node *node, void *context);
 static int is_single_func(Node *node);
 
 
@@ -367,7 +367,7 @@ pull_constant_clauses(List *quals, List **constantQual)
 		else
 			restqual = lcons(lfirst(q), restqual);
 	}
-	freeList(quals);
+	freeList(quals);			/* XXX seems a tad risky? */
 	*constantQual = constqual;
 	return restqual;
 }
@@ -409,6 +409,7 @@ clause_get_relids_vars(Node *clause, Relids *relids, List **vars)
 		if (vi == NIL)
 			var_list = lappend(var_list, var);
 	}
+	freeList(clvars);
 
 	*relids = varno_list;
 	*vars = var_list;
@@ -426,6 +427,7 @@ NumRelids(Node *clause)
 	List	   *vars = pull_var_clause(clause);
 	List	   *var_list = NIL;
 	List	   *i;
+	int			result;
 
 	foreach(i, vars)
 	{
@@ -435,7 +437,10 @@ NumRelids(Node *clause)
 			var_list = lconsi(var->varno, var_list);
 	}
 
-	return length(var_list);
+	result = length(var_list);
+	freeList(vars);
+	freeList(var_list);
+	return result;
 }
 
 /*
@@ -506,42 +511,28 @@ qual_clause_p(Node *clause)
 }
 
 /*
- * fix_opid
+ * fix_opids
  *	  Calculate opid field from opno for each Oper node in given tree.
+ *	  (The given tree can be anything expression_tree_walker handles.)
  *
- * Returns nothing.
+ * Returns its argument, which has been modified in-place.
  */
-void
-fix_opid(Node *clause)
+List *
+fix_opids(List *clauses)
 {
 	/* This tree walk requires no special setup, so away we go... */
-	fix_opid_walker(clause, NULL);
+	fix_opids_walker((Node *) clauses, NULL);
+	return clauses;
 }
 
 static bool
-fix_opid_walker (Node *node, void *context)
+fix_opids_walker (Node *node, void *context)
 {
 	if (node == NULL)
 		return false;
 	if (is_opclause(node))
 		replace_opid((Oper *) ((Expr *) node)->oper);
-	return expression_tree_walker(node, fix_opid_walker, context);
-}
-
-/*
- * fix_opids
- *	  Calculate the opid from the opno for all the clauses...
- *
- * Returns its argument.
- *
- * XXX This could and should be merged with fix_opid.
- *
- */
-List *
-fix_opids(List *clauses)
-{
-	fix_opid((Node *) clauses);
-	return clauses;
+	return expression_tree_walker(node, fix_opids_walker, context);
 }
 
 /*
@@ -658,12 +649,17 @@ static int is_single_func(Node *node)
 		if (vars != NIL)
 		{
 			int		funcvarno = ((Var *) lfirst(vars))->varno;
+			List   *v;
 			/* need to check that all args of func are same relation */
-			while ((vars = lnext(vars)) != NIL)
+			foreach(v, lnext(vars))
 			{
-				if (((Var *) lfirst(vars))->varno != funcvarno)
-					return 0;
+				if (((Var *) lfirst(v))->varno != funcvarno)
+				{
+					funcvarno = 0;
+					break;
+				}
 			}
+			freeList(vars);
 			return funcvarno;
 		}
 	}
@@ -730,6 +726,8 @@ get_rels_atts(Node *clause,
 
 /*--------------------
  * CommuteClause: commute a binary operator clause
+ *
+ * XXX the clause is destructively modified!
  *--------------------
  */
 void
@@ -768,7 +766,7 @@ CommuteClause(Node *clause)
 }
 
 
-/*--------------------
+/*
  * Standard expression-tree walking support
  *
  * We used to have near-duplicate code in many different routines that
@@ -778,12 +776,15 @@ CommuteClause(Node *clause)
  * these routines only actually care about certain node types, and don't
  * care about other types except insofar as they have to recurse through
  * non-primitive node types.  Therefore, we now provide generic tree-walking
- * logic to consolidate the redundant "boilerplate" code.
- *
+ * logic to consolidate the redundant "boilerplate" code.  There are
+ * two versions: expression_tree_walker() and expression_tree_mutator().
+ */
+
+/*--------------------
  * expression_tree_walker() is designed to support routines that traverse
  * a tree in a read-only fashion (although it will also work for routines
- * that modify nodes in-place but never add or delete nodes).  A walker
- * routine should look like this:
+ * that modify nodes in-place but never add/delete/replace nodes).
+ * A walker routine should look like this:
  *
  * bool my_walker (Node *node, my_struct *context)
  * {
@@ -803,8 +804,8 @@ CommuteClause(Node *clause)
  * }
  *
  * The "context" argument points to a struct that holds whatever context
- * information the walker routine needs (it can be used to return data
- * gathered by the walker, too).  This argument is not touched by
+ * information the walker routine needs --- it can be used to return data
+ * gathered by the walker, too.  This argument is not touched by
  * expression_tree_walker, but it is passed down to recursive sub-invocations
  * of my_walker.  The tree walk is started from a setup routine that
  * fills in the appropriate context struct, calls my_walker with the top-level
@@ -930,7 +931,7 @@ expression_tree_walker(Node *node, bool (*walker) (), void *context)
 			break;
 		case T_SubLink:
 			/* A "bare" SubLink (note we will not come here if we found
-			 * a SUBPLAN_EXPR node above).  Examine the lefthand side,
+			 * a SUBPLAN_EXPR node above it).  Examine the lefthand side,
 			 * but not the oper list nor the subquery.
 			 */
 			return walker(((SubLink *) node)->lefthand, context);
@@ -949,4 +950,239 @@ expression_tree_walker(Node *node, bool (*walker) (), void *context)
 			break;
 	}
 	return false;
+}
+
+/*--------------------
+ * expression_tree_mutator() is designed to support routines that make a
+ * modified copy of an expression tree, with some nodes being added,
+ * removed, or replaced by new subtrees.  The original tree is (normally)
+ * not changed.  Each recursion level is responsible for returning a copy of
+ * (or appropriately modified substitute for) the subtree it is handed.
+ * A mutator routine should look like this:
+ *
+ * Node * my_mutator (Node *node, my_struct *context)
+ * {
+ *		if (node == NULL)
+ *			return NULL;
+ *		// check for nodes that special work is required for, eg:
+ *		if (IsA(node, Var))
+ *		{
+ *			... create and return modified copy of Var node
+ *		}
+ *		else if (IsA(node, ...))
+ *		{
+ *			... do special transformations of other node types
+ *		}
+ *		// for any node type not specially processed, do:
+ *		return expression_tree_mutator(node, my_mutator, (void *) context);
+ * }
+ *
+ * The "context" argument points to a struct that holds whatever context
+ * information the mutator routine needs --- it can be used to return extra
+ * data gathered by the mutator, too.  This argument is not touched by
+ * expression_tree_mutator, but it is passed down to recursive sub-invocations
+ * of my_mutator.  The tree walk is started from a setup routine that
+ * fills in the appropriate context struct, calls my_mutator with the
+ * top-level node of the tree, and does any required post-processing.
+ *
+ * Each level of recursion must return an appropriately modified Node.
+ * If expression_tree_mutator() is called, it will make an exact copy
+ * of the given Node, but invoke my_mutator() to copy the sub-node(s)
+ * of that Node.  In this way, my_mutator() has full control over the
+ * copying process but need not directly deal with expression trees
+ * that it has no interest in.
+ *
+ * Just as for expression_tree_walker, the node types handled by
+ * expression_tree_mutator include all those normally found in target lists
+ * and qualifier clauses during the planning stage.
+ *
+ * expression_tree_mutator will handle a SUBPLAN_EXPR node by recursing into
+ * the args and slink->oper lists (which belong to the outer plan), but it
+ * will simply copy the link to the inner plan, since that's typically what
+ * expression tree mutators want.  A mutator that wants to modify the subplan
+ * can force appropriate behavior by recognizing subplan nodes and doing the
+ * right thing.
+ *
+ * Bare SubLink nodes (without a SUBPLAN_EXPR) are handled by recursing into
+ * the "lefthand" argument list only.  (A bare SubLink should be seen only if
+ * the tree has not yet been processed by subselect.c.)  Again, this can be
+ * overridden by the mutator, but it seems to be the most useful default
+ * behavior.
+ *--------------------
+ */
+
+Node *
+expression_tree_mutator(Node *node, Node * (*mutator) (), void *context)
+{
+	/*
+	 * The mutator has already decided not to modify the current node,
+	 * but we must call the mutator for any sub-nodes.
+	 */
+
+#define FLATCOPY(newnode, node, nodetype)  \
+	( (newnode) = makeNode(nodetype), \
+	  memcpy((newnode), (node), sizeof(nodetype)) )
+
+#define CHECKFLATCOPY(newnode, node, nodetype)  \
+	( AssertMacro(IsA((node), nodetype)), \
+	  (newnode) = makeNode(nodetype), \
+	  memcpy((newnode), (node), sizeof(nodetype)) )
+
+#define MUTATE(newfield, oldfield, fieldtype)  \
+		( (newfield) = (fieldtype) mutator((Node *) (oldfield), context) )
+
+	if (node == NULL)
+		return NULL;
+	switch (nodeTag(node))
+	{
+		case T_Ident:
+		case T_Const:
+		case T_Var:
+		case T_Param:
+			/* primitive node types with no subnodes */
+			return (Node *) copyObject(node);
+		case T_Expr:
+			{
+				Expr   *expr = (Expr *) node;
+				Expr   *newnode;
+
+				FLATCOPY(newnode, expr, Expr);
+
+				if (expr->opType == SUBPLAN_EXPR)
+				{
+					SubLink	   *oldsublink = ((SubPlan *) expr->oper)->sublink;
+					SubPlan	   *newsubplan;
+
+					/* flat-copy the oper node, which is a SubPlan */
+					CHECKFLATCOPY(newsubplan, expr->oper, SubPlan);
+					newnode->oper = (Node *) newsubplan;
+					/* likewise its SubLink node */
+					CHECKFLATCOPY(newsubplan->sublink, oldsublink, SubLink);
+					/* transform args list (params to be passed to subplan) */
+					MUTATE(newnode->args, expr->args, List *);
+					/* transform sublink's oper list as well */
+					MUTATE(newsubplan->sublink->oper, oldsublink->oper, List*);
+					/* but not the subplan itself, which is referenced as-is */
+				}
+				else
+				{
+					/* for other Expr node types, just transform args list,
+					 * linking to original oper node (OK?)
+					 */
+					MUTATE(newnode->args, expr->args, List *);
+				}
+				return (Node *) newnode;
+			}
+			break;
+		case T_Aggref:
+			{
+				Aggref   *aggref = (Aggref *) node;
+				Aggref   *newnode;
+
+				FLATCOPY(newnode, aggref, Aggref);
+				MUTATE(newnode->target, aggref->target, Node *);
+				return (Node *) newnode;
+			}
+			break;
+		case T_Iter:
+			{
+				Iter   *iter = (Iter *) node;
+				Iter   *newnode;
+
+				FLATCOPY(newnode, iter, Iter);
+				MUTATE(newnode->iterexpr, iter->iterexpr, Node *);
+				return (Node *) newnode;
+			}
+			break;
+		case T_ArrayRef:
+			{
+				ArrayRef   *arrayref = (ArrayRef *) node;
+				ArrayRef   *newnode;
+
+				FLATCOPY(newnode, arrayref, ArrayRef);
+				MUTATE(newnode->refupperindexpr, arrayref->refupperindexpr,
+					   List *);
+				MUTATE(newnode->reflowerindexpr, arrayref->reflowerindexpr,
+					   List *);
+				MUTATE(newnode->refexpr, arrayref->refexpr,
+					   Node *);
+				MUTATE(newnode->refassgnexpr, arrayref->refassgnexpr,
+					   Node *);
+				return (Node *) newnode;
+			}
+			break;
+		case T_CaseExpr:
+			{
+				CaseExpr   *caseexpr = (CaseExpr *) node;
+				CaseExpr   *newnode;
+
+				FLATCOPY(newnode, caseexpr, CaseExpr);
+				MUTATE(newnode->args, caseexpr->args, List *);
+				/* caseexpr->arg should be null, but we'll check it anyway */
+				MUTATE(newnode->arg, caseexpr->arg, Node *);
+				MUTATE(newnode->defresult, caseexpr->defresult, Node *);
+				return (Node *) newnode;
+			}
+			break;
+		case T_CaseWhen:
+			{
+				CaseWhen   *casewhen = (CaseWhen *) node;
+				CaseWhen   *newnode;
+
+				FLATCOPY(newnode, casewhen, CaseWhen);
+				MUTATE(newnode->expr, casewhen->expr, Node *);
+				MUTATE(newnode->result, casewhen->result, Node *);
+				return (Node *) newnode;
+			}
+			break;
+		case T_SubLink:
+			{
+				/* A "bare" SubLink (note we will not come here if we found
+				 * a SUBPLAN_EXPR node above it).  Transform the lefthand side,
+				 * but not the oper list nor the subquery.
+				 */
+				SubLink   *sublink = (SubLink *) node;
+				SubLink   *newnode;
+
+				FLATCOPY(newnode, sublink, SubLink);
+				MUTATE(newnode->lefthand, sublink->lefthand, List *);
+				return (Node *) newnode;
+			}
+			break;
+		case T_List:
+			{
+				/* We assume the mutator isn't interested in the list nodes
+				 * per se, so just invoke it on each list element.
+				 * NOTE: this would fail badly on a list with integer elements!
+				 */
+				List	   *resultlist = NIL;
+				List	   *temp;
+
+				foreach(temp, (List *) node)
+				{
+					resultlist = lappend(resultlist,
+										 mutator((Node *) lfirst(temp),
+												 context));
+				}
+				return (Node *) resultlist;
+			}
+			break;
+		case T_TargetEntry:
+			{
+				/* We mutate the expression, but not the resdom, by default. */
+				TargetEntry   *targetentry = (TargetEntry *) node;
+				TargetEntry   *newnode;
+
+				FLATCOPY(newnode, targetentry, TargetEntry);
+				MUTATE(newnode->expr, targetentry->expr, Node *);
+				return (Node *) newnode;
+			}
+			break;
+		default:
+			elog(ERROR, "expression_tree_mutator: Unexpected node type %d",
+				 nodeTag(node));
+			break;
+	}
+	/* can't get here, but keep compiler happy */
+	return NULL;
 }
