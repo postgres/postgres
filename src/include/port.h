@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/port.h,v 1.73 2005/03/16 21:27:23 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/port.h,v 1.74 2005/03/25 00:34:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,8 @@
 #include <ctype.h>
 
 /* non-blocking */
-extern bool set_noblock(int sock);
+extern bool pg_set_noblock(int sock);
+extern bool pg_set_block(int sock);
 
 /* Portable path handling for Unix/Win32 */
 

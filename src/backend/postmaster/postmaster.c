@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.449 2005/03/24 18:16:17 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.450 2005/03/25 00:34:21 tgl Exp $
  *
  * NOTES
  *
@@ -1246,10 +1246,10 @@ ServerLoop(void)
 			PgStatPID = pgstat_start();
 
 		/*
-		 * Touch the socket and lock file at least every hour, to
+		 * Touch the socket and lock file every 58 minutes, to
 		 * ensure that they are not removed by overzealous /tmp-cleaning
-		 * tasks.  Set to 58 minutes so a cleaner never sees the
-		 * file as an hour old.
+		 * tasks.  We assume no one runs cleaners with cutoff times of
+		 * less than an hour ...
 		 */
 		now = time(NULL);
 		if (now - last_touch_time >= 58 * 60)
@@ -2479,7 +2479,7 @@ report_fork_failure_to_client(Port *port, int errnum)
 			 strerror(errnum));
 
 	/* Set port to non-blocking.  Don't do send() if this fails */
-	if (!set_noblock(port->sock))
+	if (!pg_set_noblock(port->sock))
 		return;
 
 	send(port->sock, buffer, strlen(buffer) + 1, 0);

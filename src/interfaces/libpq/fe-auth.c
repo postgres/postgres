@@ -10,7 +10,7 @@
  * exceed INITIAL_EXPBUFFER_SIZE (currently 256 bytes).
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.99 2005/01/12 21:37:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.100 2005/03/25 00:34:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -367,7 +367,13 @@ pg_krb5_sendauth(char *PQerrormsg, int sock, const char *hostname)
 	krb5_principal server;
 	krb5_auth_context auth_context = NULL;
 	krb5_error *err_ret = NULL;
-	int			flags;
+
+	if (!hostname)
+	{
+		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
+				 "pg_krb5_sendauth: hostname must be specified for Kerberos authentication\n");
+		return STATUS_ERROR;
+	}
 
 	ret = pg_krb5_init(PQerrormsg);
 	if (ret != STATUS_OK)
@@ -388,8 +394,7 @@ pg_krb5_sendauth(char *PQerrormsg, int sock, const char *hostname)
 	 * socket, and we have to block somehow to do mutual authentication
 	 * anyway. So we temporarily make it blocking.
 	 */
-	flags = fcntl(sock, F_GETFL);
-	if (flags < 0 || fcntl(sock, F_SETFL, (long) (flags & ~O_NONBLOCK)))
+	if (!pg_set_block(sock))
 	{
 		char		sebuf[256];
 
@@ -436,7 +441,7 @@ pg_krb5_sendauth(char *PQerrormsg, int sock, const char *hostname)
 
 	krb5_free_principal(pg_krb5_context, server);
 
-	if (fcntl(sock, F_SETFL, (long) flags))
+	if (!pg_set_noblock(sock))
 	{
 		char		sebuf[256];
 
@@ -599,8 +604,7 @@ fe_sendauth(AuthRequest areq, PGconn *conn, const char *hostname,
 							   (struct sockaddr_in *) & conn->raddr.addr,
 								 hostname) != STATUS_OK)
 			{
-				snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-					libpq_gettext("Kerberos 4 authentication failed\n"));
+				/* PQerrormsg already filled in */
 				pgunlock_thread();
 				return STATUS_ERROR;
 			}
@@ -618,8 +622,7 @@ fe_sendauth(AuthRequest areq, PGconn *conn, const char *hostname,
 			if (pg_krb5_sendauth(PQerrormsg, conn->sock,
 								 hostname) != STATUS_OK)
 			{
-				snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-					libpq_gettext("Kerberos 5 authentication failed\n"));
+				/* PQerrormsg already filled in */
 				pgunlock_thread();
 				return STATUS_ERROR;
 			}
