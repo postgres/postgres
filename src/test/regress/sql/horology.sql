@@ -147,3 +147,61 @@ RESET DateStyle;
 
 SHOW DateStyle;
 
+--
+-- formats
+--
+
+SET DateStyle TO 'US,Postgres';
+
+SHOW DateStyle;
+
+SELECT '' AS sixty_two, d1 AS us_postgres FROM DATETIME_TBL;
+
+SELECT '' AS eight, f1 AS us_postgres FROM ABSTIME_TBL;
+
+SET DateStyle TO 'US,ISO';
+
+SELECT '' AS sixty_two, d1 AS us_iso FROM DATETIME_TBL;
+
+SELECT '' AS eight, f1 AS us_iso FROM ABSTIME_TBL;
+
+SET DateStyle TO 'US,SQL';
+
+SHOW DateStyle;
+
+SELECT '' AS sixty_two, d1 AS us_sql FROM DATETIME_TBL;
+
+SELECT '' AS eight, f1 AS us_sql FROM ABSTIME_TBL;
+
+SET DateStyle TO 'European,Postgres';
+
+SHOW DateStyle;
+
+INSERT INTO DATETIME_TBL VALUES('13/06/1957');
+
+SELECT count(*) as one FROM DATETIME_TBL WHERE d1 = 'Jun 13 1957';
+
+SELECT '' AS sixty_three, d1 AS european_postgres FROM DATETIME_TBL;
+
+SELECT '' AS eight, f1 AS european_postgres FROM ABSTIME_TBL;
+
+SET DateStyle TO 'European,ISO';
+
+SHOW DateStyle;
+
+SELECT '' AS sixty_three, d1 AS european_iso FROM DATETIME_TBL;
+
+SELECT '' AS eight, f1 AS european_iso FROM ABSTIME_TBL;
+
+SET DateStyle TO 'European,SQL';
+
+SHOW DateStyle;
+
+SELECT '' AS sixty_three, d1 AS european_sql FROM DATETIME_TBL;
+
+SELECT '' AS eight, f1 AS european_sql FROM ABSTIME_TBL;
+
+RESET DateStyle;
+
+SHOW DateStyle;
+
