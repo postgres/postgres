@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/conversioncmds.c,v 1.6 2003/06/27 14:45:27 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/conversioncmds.c,v 1.7 2003/07/04 02:51:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,10 +70,8 @@ CreateConversionCommand(CreateConversionStmt *stmt)
 	 * Check the existence of the conversion function. Function name could
 	 * be a qualified name.
 	 */
-	funcoid = LookupFuncName(func_name, sizeof(funcargs) / sizeof(Oid), funcargs);
-	if (!OidIsValid(funcoid))
-		func_error("CreateConversion", func_name,
-				   sizeof(funcargs) / sizeof(Oid), funcargs, NULL);
+	funcoid = LookupFuncName(func_name, sizeof(funcargs) / sizeof(Oid),
+							 funcargs, false);
 
 	/* Check we have EXECUTE rights for the function */
 	aclresult = pg_proc_aclcheck(funcoid, GetUserId(), ACL_EXECUTE);

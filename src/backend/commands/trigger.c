@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.149 2003/06/24 23:25:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.150 2003/07/04 02:51:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -257,10 +257,7 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 	 * Find and validate the trigger function.
 	 */
 	MemSet(fargtypes, 0, FUNC_MAX_ARGS * sizeof(Oid));
-	funcoid = LookupFuncName(stmt->funcname, 0, fargtypes);
-	if (!OidIsValid(funcoid))
-		elog(ERROR, "CreateTrigger: function %s() does not exist",
-			 NameListToString(stmt->funcname));
+	funcoid = LookupFuncName(stmt->funcname, 0, fargtypes, false);
 	funcrettype = get_func_rettype(funcoid);
 	if (funcrettype != TRIGGEROID)
 	{

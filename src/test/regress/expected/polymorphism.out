@@ -107,7 +107,7 @@ CREATE AGGREGATE myaggp06a(BASETYPE = int, SFUNC = tf2p, STYPE = int[],
 -- should ERROR: tfnp(int[], anyelement) not matched by tfnp(int[], int)
 CREATE AGGREGATE myaggp07a(BASETYPE = anyelement, SFUNC = tfnp, STYPE = int[],
   FINALFUNC = ffp, INITCOND = '{}');
-ERROR:  AggregateCreate: function tfnp(integer[], anyelement) does not exist
+ERROR:  function tfnp(integer[], anyelement) does not exist
 --    N    N        P    P
 -- should CREATE
 CREATE AGGREGATE myaggp08a(BASETYPE = anyelement, SFUNC = tf2p, STYPE = int[],
@@ -128,18 +128,18 @@ CREATE AGGREGATE myaggp10b(BASETYPE = int, SFUNC = tfp, STYPE = int[],
 -- should ERROR: tf1p(int[],anyelement) not matched by tf1p(anyarray,int)
 CREATE AGGREGATE myaggp11a(BASETYPE = anyelement, SFUNC = tf1p, STYPE = int[],
   FINALFUNC = ffp, INITCOND = '{}');
-ERROR:  AggregateCreate: function tf1p(integer[], anyelement) does not exist
+ERROR:  function tf1p(integer[], anyelement) does not exist
 CREATE AGGREGATE myaggp11b(BASETYPE = anyelement, SFUNC = tf1p, STYPE = int[],
   INITCOND = '{}');
-ERROR:  AggregateCreate: function tf1p(integer[], anyelement) does not exist
+ERROR:  function tf1p(integer[], anyelement) does not exist
 --    N    P        P    P
 -- should ERROR: tfp(int[],anyelement) not matched by tfp(anyarray,anyelement)
 CREATE AGGREGATE myaggp12a(BASETYPE = anyelement, SFUNC = tfp, STYPE = int[],
   FINALFUNC = ffp, INITCOND = '{}');
-ERROR:  AggregateCreate: function tfp(integer[], anyelement) does not exist
+ERROR:  function tfp(integer[], anyelement) does not exist
 CREATE AGGREGATE myaggp12b(BASETYPE = anyelement, SFUNC = tfp, STYPE = int[],
   INITCOND = '{}');
-ERROR:  AggregateCreate: function tfp(integer[], anyelement) does not exist
+ERROR:  function tfp(integer[], anyelement) does not exist
 --    P    N        N    N
 -- should ERROR: tfnp(anyarray, int) not matched by tfnp(int[],int)
 CREATE AGGREGATE myaggp13a(BASETYPE = int, SFUNC = tfnp, STYPE = anyarray,
@@ -154,12 +154,12 @@ ERROR:  an aggregate using ANYARRAY or ANYELEMENT as trans type must also have o
 -- should ERROR: tfnp(anyarray, anyelement) not matched by tfnp(int[],int)
 CREATE AGGREGATE myaggp15a(BASETYPE = anyelement, SFUNC = tfnp,
   STYPE = anyarray, FINALFUNC = ffp, INITCOND = '{}');
-ERROR:  AggregateCreate: function tfnp(anyarray, anyelement) does not exist
+ERROR:  function tfnp(anyarray, anyelement) does not exist
 --    P    N        P    P
 -- should ERROR: tf2p(anyarray, anyelement) not matched by tf2p(int[],anyelement)
 CREATE AGGREGATE myaggp16a(BASETYPE = anyelement, SFUNC = tf2p,
   STYPE = anyarray, FINALFUNC = ffp, INITCOND = '{}');
-ERROR:  AggregateCreate: function tf2p(anyarray, anyelement) does not exist
+ERROR:  function tf2p(anyarray, anyelement) does not exist
 --    P    P        N    N
 -- should ERROR: we have no way to resolve S
 CREATE AGGREGATE myaggp17a(BASETYPE = int, SFUNC = tf1p, STYPE = anyarray,
@@ -180,10 +180,10 @@ ERROR:  an aggregate using ANYARRAY or ANYELEMENT as trans type must also have o
 -- should ERROR: tf1p(anyarray, anyelement) not matched by tf1p(anyarray, int)
 CREATE AGGREGATE myaggp19a(BASETYPE = anyelement, SFUNC = tf1p,
   STYPE = anyarray, FINALFUNC = ffp, INITCOND = '{}');
-ERROR:  AggregateCreate: function tf1p(anyarray, anyelement) does not exist
+ERROR:  function tf1p(anyarray, anyelement) does not exist
 CREATE AGGREGATE myaggp19b(BASETYPE = anyelement, SFUNC = tf1p,
   STYPE = anyarray, INITCOND = '{}');
-ERROR:  AggregateCreate: function tf1p(anyarray, anyelement) does not exist
+ERROR:  function tf1p(anyarray, anyelement) does not exist
 --    P    P        P    P
 -- should CREATE
 CREATE AGGREGATE myaggp20a(BASETYPE = anyelement, SFUNC = tfp,
@@ -237,10 +237,10 @@ CREATE AGGREGATE myaggn06b(BASETYPE = int, SFUNC = tf2p, STYPE = int[],
 -- should ERROR: tfnp(int[], anyelement) not matched by tfnp(int[], int)
 CREATE AGGREGATE myaggn07a(BASETYPE = anyelement, SFUNC = tfnp, STYPE = int[],
   FINALFUNC = ffnp, INITCOND = '{}');
-ERROR:  AggregateCreate: function tfnp(integer[], anyelement) does not exist
+ERROR:  function tfnp(integer[], anyelement) does not exist
 CREATE AGGREGATE myaggn07b(BASETYPE = anyelement, SFUNC = tfnp, STYPE = int[],
   INITCOND = '{}');
-ERROR:  AggregateCreate: function tfnp(integer[], anyelement) does not exist
+ERROR:  function tfnp(integer[], anyelement) does not exist
 --    N    N        P    P
 -- should CREATE
 CREATE AGGREGATE myaggn08a(BASETYPE = anyelement, SFUNC = tf2p, STYPE = int[],
@@ -259,12 +259,12 @@ CREATE AGGREGATE myaggn10a(BASETYPE = int, SFUNC = tfp, STYPE = int[],
 -- should ERROR: tf1p(int[],anyelement) not matched by tf1p(anyarray,int)
 CREATE AGGREGATE myaggn11a(BASETYPE = anyelement, SFUNC = tf1p, STYPE = int[],
   FINALFUNC = ffnp, INITCOND = '{}');
-ERROR:  AggregateCreate: function tf1p(integer[], anyelement) does not exist
+ERROR:  function tf1p(integer[], anyelement) does not exist
 --    N    P        P    P
 -- should ERROR: tfp(int[],anyelement) not matched by tfp(anyarray,anyelement)
 CREATE AGGREGATE myaggn12a(BASETYPE = anyelement, SFUNC = tfp, STYPE = int[],
   FINALFUNC = ffnp, INITCOND = '{}');
-ERROR:  AggregateCreate: function tfp(integer[], anyelement) does not exist
+ERROR:  function tfp(integer[], anyelement) does not exist
 --    P    N        N    N
 -- should ERROR: tfnp(anyarray, int) not matched by tfnp(int[],int)
 CREATE AGGREGATE myaggn13a(BASETYPE = int, SFUNC = tfnp, STYPE = anyarray,
@@ -285,18 +285,18 @@ ERROR:  an aggregate using ANYARRAY or ANYELEMENT as trans type must also have o
 -- should ERROR: tfnp(anyarray, anyelement) not matched by tfnp(int[],int)
 CREATE AGGREGATE myaggn15a(BASETYPE = anyelement, SFUNC = tfnp,
   STYPE = anyarray, FINALFUNC = ffnp, INITCOND = '{}');
-ERROR:  AggregateCreate: function tfnp(anyarray, anyelement) does not exist
+ERROR:  function tfnp(anyarray, anyelement) does not exist
 CREATE AGGREGATE myaggn15b(BASETYPE = anyelement, SFUNC = tfnp,
   STYPE = anyarray, INITCOND = '{}');
-ERROR:  AggregateCreate: function tfnp(anyarray, anyelement) does not exist
+ERROR:  function tfnp(anyarray, anyelement) does not exist
 --    P    N        P    P
 -- should ERROR: tf2p(anyarray, anyelement) not matched by tf2p(int[],anyelement)
 CREATE AGGREGATE myaggn16a(BASETYPE = anyelement, SFUNC = tf2p,
   STYPE = anyarray, FINALFUNC = ffnp, INITCOND = '{}');
-ERROR:  AggregateCreate: function tf2p(anyarray, anyelement) does not exist
+ERROR:  function tf2p(anyarray, anyelement) does not exist
 CREATE AGGREGATE myaggn16b(BASETYPE = anyelement, SFUNC = tf2p,
   STYPE = anyarray, INITCOND = '{}');
-ERROR:  AggregateCreate: function tf2p(anyarray, anyelement) does not exist
+ERROR:  function tf2p(anyarray, anyelement) does not exist
 --    P    P        N    N
 -- should ERROR: ffnp(anyarray) not matched by ffnp(int[])
 CREATE AGGREGATE myaggn17a(BASETYPE = int, SFUNC = tf1p, STYPE = anyarray,
@@ -311,12 +311,12 @@ ERROR:  an aggregate using ANYARRAY or ANYELEMENT as trans type must also have o
 -- should ERROR: tf1p(anyarray, anyelement) not matched by tf1p(anyarray, int)
 CREATE AGGREGATE myaggn19a(BASETYPE = anyelement, SFUNC = tf1p,
   STYPE = anyarray, FINALFUNC = ffnp, INITCOND = '{}');
-ERROR:  AggregateCreate: function tf1p(anyarray, anyelement) does not exist
+ERROR:  function tf1p(anyarray, anyelement) does not exist
 --    P    P        P    P
 -- should ERROR: ffnp(anyarray) not matched by ffnp(int[])
 CREATE AGGREGATE myaggn20a(BASETYPE = anyelement, SFUNC = tfp,
   STYPE = anyarray, FINALFUNC = ffnp, INITCOND = '{}');
-ERROR:  AggregateCreate: function ffnp(anyarray) does not exist
+ERROR:  function ffnp(anyarray) does not exist
 -- create test data for polymorphic aggregates
 create temp table t(f1 int, f2 int[], f3 text);
 insert into t values(1,array[1],'a');

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_func.h,v 1.46 2003/05/26 00:11:28 tgl Exp $
+ * $Id: parse_func.h,v 1.47 2003/07/04 02:51:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,8 @@ typedef struct _InhPaths
 /* Result codes for func_get_detail */
 typedef enum
 {
-	FUNCDETAIL_NOTFOUND,		/* no suitable interpretation */
+	FUNCDETAIL_NOTFOUND,		/* no matching function */
+	FUNCDETAIL_MULTIPLE,		/* too many matching functions */
 	FUNCDETAIL_NORMAL,			/* found a matching regular function */
 	FUNCDETAIL_AGGREGATE,		/* found a matching aggregate function */
 	FUNCDETAIL_COERCION			/* it's a type coercion request */
@@ -65,15 +66,14 @@ extern void make_fn_arguments(ParseState *pstate,
 							  Oid *actual_arg_types,
 							  Oid *declared_arg_types);
 
-extern void func_error(const char *caller, List *funcname,
-		   int nargs, const Oid *argtypes,
-		   const char *msg);
+extern const char *func_signature_string(List *funcname,
+										 int nargs, const Oid *argtypes);
 
-extern Oid find_aggregate_func(const char *caller, List *aggname,
-					Oid basetype);
+extern Oid find_aggregate_func(List *aggname, Oid basetype, bool noError);
 
-extern Oid	LookupFuncName(List *funcname, int nargs, const Oid *argtypes);
+extern Oid	LookupFuncName(List *funcname, int nargs, const Oid *argtypes,
+						   bool noError);
 extern Oid LookupFuncNameTypeNames(List *funcname, List *argtypes,
-						const char *caller);
+								   bool noError);
 
 #endif   /* PARSE_FUNC_H */

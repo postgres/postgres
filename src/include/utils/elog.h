@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: elog.h,v 1.45 2003/06/30 16:47:02 tgl Exp $
+ * $Id: elog.h,v 1.46 2003/07/04 02:51:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -175,7 +175,35 @@
 #define ERRCODE_WITH_CHECK_OPTION_VIOLATION	MAKE_SQLSTATE('4','4', '0','0','0')
 
 /* Implementation-defined error codes for PostgreSQL */
+/* Where appropriate, we borrow SQLSTATE values from DB2 */
 #define ERRCODE_INTERNAL_ERROR				MAKE_SQLSTATE('X','X', '0','0','0')
+#define ERRCODE_INSUFFICIENT_PRIVILEGE		MAKE_SQLSTATE('4','2', '5','0','1')
+#define ERRCODE_SYNTAX_ERROR				MAKE_SQLSTATE('4','2', '6','0','1')
+#define ERRCODE_UNTERMINATED_LITERAL		MAKE_SQLSTATE('4','2', '6','0','3')
+#define ERRCODE_INVALID_LITERAL				MAKE_SQLSTATE('4','2', '6','0','6')
+#define ERRCODE_TOO_MANY_ARGUMENTS			MAKE_SQLSTATE('4','2', '6','0','5')
+#define ERRCODE_UNDEFINED_COLUMN			MAKE_SQLSTATE('4','2', '7','0','3')
+/*
+ * Note: use the above SQL-standard error codes for undefined catalog, schema,
+ * prepared statement, or cursor names.  Curiously, they don't define error
+ * codes for any other kinds of objects.  We choose to define an errcode for
+ * undefined tables, as well as one for functions (also used for operators);
+ * all other names (rules, triggers, etc) are lumped as UNDEFINED_OBJECT.
+ * The same breakdown is used for "ambiguous" and "duplicate" complaints.
+ */
+#define ERRCODE_UNDEFINED_TABLE				MAKE_SQLSTATE('4','2', '7','0','4')
+#define ERRCODE_UNDEFINED_FUNCTION			MAKE_SQLSTATE('4','2', '8','8','3')
+#define ERRCODE_UNDEFINED_OBJECT			MAKE_SQLSTATE('4','2', '7','0','5')
+#define ERRCODE_AMBIGUOUS_COLUMN			MAKE_SQLSTATE('4','2', '7','0','2')
+#define ERRCODE_AMBIGUOUS_FUNCTION			MAKE_SQLSTATE('4','2', '7','2','5')
+#define ERRCODE_DUPLICATE_COLUMN			MAKE_SQLSTATE('4','2', '7','1','1')
+#define ERRCODE_DUPLICATE_TABLE				MAKE_SQLSTATE('4','2', '7','2','2')
+#define ERRCODE_DUPLICATE_FUNCTION			MAKE_SQLSTATE('4','2', '7','2','3')
+#define ERRCODE_DUPLICATE_OBJECT			MAKE_SQLSTATE('4','2', '7','1','0')
+#define ERRCODE_GROUPING_ERROR				MAKE_SQLSTATE('4','2', '8','0','3')
+#define ERRCODE_TYPE_MISMATCH				MAKE_SQLSTATE('4','2', '8','0','4')
+#define ERRCODE_CANNOT_COERCE				MAKE_SQLSTATE('4','2', '8','4','6')
+#define ERRCODE_INVALID_FOREIGN_KEY			MAKE_SQLSTATE('4','2', '8','3','0')
 
 
 /* Which __func__ symbol do we have, if any? */

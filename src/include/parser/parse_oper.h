@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_oper.h,v 1.29 2003/06/29 00:33:44 tgl Exp $
+ * $Id: parse_oper.h,v 1.30 2003/07/04 02:51:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,9 +21,10 @@
 typedef HeapTuple Operator;
 
 /* Routines to look up an operator given name and exact input type(s) */
-extern Oid	LookupOperName(List *opername, Oid oprleft, Oid oprright);
+extern Oid	LookupOperName(List *opername, Oid oprleft, Oid oprright,
+						   bool noError);
 extern Oid LookupOperNameTypeNames(List *opername, TypeName *oprleft,
-						TypeName *oprright, const char *caller);
+								   TypeName *oprright, bool noError);
 
 /* Routines to find operators matching a name and given input types */
 /* NB: the selected operator may require coercion of the input types! */

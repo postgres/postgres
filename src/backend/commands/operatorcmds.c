@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/operatorcmds.c,v 1.7 2002/09/04 20:31:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/operatorcmds.c,v 1.8 2003/07/04 02:51:33 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -206,14 +206,13 @@ RemoveOperator(RemoveOperStmt *stmt)
 	ObjectAddress object;
 
 	operOid = LookupOperNameTypeNames(operatorName, typeName1, typeName2,
-									  "RemoveOperator");
+									  false);
 
 	tup = SearchSysCache(OPEROID,
 						 ObjectIdGetDatum(operOid),
 						 0, 0, 0);
 	if (!HeapTupleIsValid(tup)) /* should not happen */
-		elog(ERROR, "RemoveOperator: failed to find tuple for operator '%s'",
-			 NameListToString(operatorName));
+		elog(ERROR, "cache lookup of operator %u failed", operOid);
 
 	/* Permission check: must own operator or its namespace */
 	if (!pg_oper_ownercheck(operOid, GetUserId()) &&

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.152 2003/06/25 21:30:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.153 2003/07/04 02:51:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -294,10 +294,23 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		/*
 		 * Else generate a detailed complaint for a function
 		 */
-		func_error(NULL, funcname, nargs, actual_arg_types,
-				   "Unable to identify a function that satisfies the "
-				   "given argument types"
-				   "\n\tYou may need to add explicit typecasts");
+		if (fdresult == FUNCDETAIL_MULTIPLE)
+			ereport(ERROR,
+					(errcode(ERRCODE_AMBIGUOUS_FUNCTION),
+					 errmsg("function %s is not unique",
+							func_signature_string(funcname, nargs,
+												  actual_arg_types)),
+					 errhint("Unable to choose a best candidate function. "
+							 "You may need to add explicit typecasts.")));
+
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_FUNCTION),
+					 errmsg("function %s does not exist",
+							func_signature_string(funcname, nargs,
+												  actual_arg_types)),
+					 errhint("No function matches the given name and argument types. "
+							 "You may need to add explicit typecasts.")));
 	}
 
 	/*
@@ -874,11 +887,11 @@ func_get_detail(List *funcname,
 
 					/*
 					 * If we were able to choose a best candidate, we're
-					 * done.  Otherwise, ambiguous function call, so fail
-					 * by exiting loop with best_candidate still NULL.
-					 * Either way, we're outta here.
+					 * done.  Otherwise, ambiguous function call.
 					 */
-					break;
+					if (best_candidate)
+						break;
+					return FUNCDETAIL_MULTIPLE;
 				}
 
 				/*
@@ -908,7 +921,8 @@ func_get_detail(List *funcname,
 							  ObjectIdGetDatum(best_candidate->oid),
 							  0, 0, 0);
 		if (!HeapTupleIsValid(ftup))	/* should not happen */
-			elog(ERROR, "function %u not found", best_candidate->oid);
+			elog(ERROR, "cache lookup of function %u failed",
+				 best_candidate->oid);
 		pform = (Form_pg_proc) GETSTRUCT(ftup);
 		*rettype = pform->prorettype;
 		*retset = pform->proretset;
@@ -918,7 +932,7 @@ func_get_detail(List *funcname,
 	}
 
 	return FUNCDETAIL_NOTFOUND;
-}	/* func_get_detail() */
+}
 
 /*
  *	argtype_inherit() -- Construct an argtype vector reflecting the
@@ -1324,18 +1338,22 @@ unknown_attribute(const char *schemaname, const char *relname,
 }
 
 /*
- * Error message when function lookup fails that gives details of the
- * argument types
+ * func_signature_string
+ *		Build a string representing a function name, including arg types.
+ *		The result is something like "foo(integer)".
+ *
+ * This is typically used in the construction of function-not-found error
+ * messages.
  */
-void
-func_error(const char *caller, List *funcname,
-		   int nargs, const Oid *argtypes,
-		   const char *msg)
+const char *
+func_signature_string(List *funcname, int nargs, const Oid *argtypes)
 {
 	StringInfoData argbuf;
 	int			i;
 
 	initStringInfo(&argbuf);
+
+	appendStringInfo(&argbuf, "%s(", NameListToString(funcname));
 
 	for (i = 0; i < nargs; i++)
 	{
@@ -1344,18 +1362,9 @@ func_error(const char *caller, List *funcname,
 		appendStringInfoString(&argbuf, format_type_be(argtypes[i]));
 	}
 
-	if (caller == NULL)
-	{
-		elog(ERROR, "Function %s(%s) does not exist%s%s",
-			 NameListToString(funcname), argbuf.data,
-			 ((msg != NULL) ? "\n\t" : ""), ((msg != NULL) ? msg : ""));
-	}
-	else
-	{
-		elog(ERROR, "%s: function %s(%s) does not exist%s%s",
-			 caller, NameListToString(funcname), argbuf.data,
-			 ((msg != NULL) ? "\n\t" : ""), ((msg != NULL) ? msg : ""));
-	}
+	appendStringInfoChar(&argbuf, ')');
+
+	return argbuf.data;			/* return palloc'd string buffer */
 }
 
 /*
@@ -1367,23 +1376,24 @@ func_error(const char *caller, List *funcname,
  * all types.
  */
 Oid
-find_aggregate_func(const char *caller, List *aggname, Oid basetype)
+find_aggregate_func(List *aggname, Oid basetype, bool noError)
 {
 	Oid			oid;
 	HeapTuple	ftup;
 	Form_pg_proc pform;
 
-	oid = LookupFuncName(aggname, 1, &basetype);
+	oid = LookupFuncName(aggname, 1, &basetype, true);
 
 	if (!OidIsValid(oid))
 	{
+		if (noError)
+			return InvalidOid;
 		if (basetype == ANYOID)
-			elog(ERROR, "%s: aggregate %s(*) does not exist",
-				 caller, NameListToString(aggname));
+			elog(ERROR, "aggregate %s(*) does not exist",
+				 NameListToString(aggname));
 		else
-			elog(ERROR, "%s: aggregate %s(%s) does not exist",
-				 caller, NameListToString(aggname),
-				 format_type_be(basetype));
+			elog(ERROR, "aggregate %s(%s) does not exist",
+				 NameListToString(aggname), format_type_be(basetype));
 	}
 
 	/* Make sure it's an aggregate */
@@ -1396,13 +1406,12 @@ find_aggregate_func(const char *caller, List *aggname, Oid basetype)
 
 	if (!pform->proisagg)
 	{
-		if (basetype == ANYOID)
-			elog(ERROR, "%s: function %s(*) is not an aggregate",
-				 caller, NameListToString(aggname));
-		else
-			elog(ERROR, "%s: function %s(%s) is not an aggregate",
-				 caller, NameListToString(aggname),
-				 format_type_be(basetype));
+		ReleaseSysCache(ftup);
+		if (noError)
+			return InvalidOid;
+		/* we do not use the (*) notation for functions... */
+		elog(ERROR, "function %s(%s) is not an aggregate",
+			 NameListToString(aggname), format_type_be(basetype));
 	}
 
 	ReleaseSysCache(ftup);
@@ -1413,13 +1422,16 @@ find_aggregate_func(const char *caller, List *aggname, Oid basetype)
 /*
  * LookupFuncName
  *		Given a possibly-qualified function name and a set of argument types,
- *		look up the function.  Returns InvalidOid if no such function.
+ *		look up the function.
  *
  * If the function name is not schema-qualified, it is sought in the current
  * namespace search path.
+ *
+ * If the function is not found, we return InvalidOid if noError is true,
+ * else raise an error.
  */
 Oid
-LookupFuncName(List *funcname, int nargs, const Oid *argtypes)
+LookupFuncName(List *funcname, int nargs, const Oid *argtypes, bool noError)
 {
 	FuncCandidateList clist;
 
@@ -1432,19 +1444,21 @@ LookupFuncName(List *funcname, int nargs, const Oid *argtypes)
 		clist = clist->next;
 	}
 
+	if (!noError)
+		elog(ERROR, "function %s does not exist",
+			 func_signature_string(funcname, nargs, argtypes));
+
 	return InvalidOid;
 }
 
 /*
  * LookupFuncNameTypeNames
  *		Like LookupFuncName, but the argument types are specified by a
- *		list of TypeName nodes.  Also, if we fail to find the function
- *		and caller is not NULL, then an error is reported via func_error.
+ *		list of TypeName nodes.
  */
 Oid
-LookupFuncNameTypeNames(List *funcname, List *argtypes, const char *caller)
+LookupFuncNameTypeNames(List *funcname, List *argtypes, bool noError)
 {
-	Oid			funcoid;
 	Oid			argoids[FUNC_MAX_ARGS];
 	int			argcount;
 	int			i;
@@ -1468,10 +1482,5 @@ LookupFuncNameTypeNames(List *funcname, List *argtypes, const char *caller)
 		argtypes = lnext(argtypes);
 	}
 
-	funcoid = LookupFuncName(funcname, argcount, argoids);
-
-	if (!OidIsValid(funcoid) && caller != NULL)
-		func_error(caller, funcname, argcount, argoids, NULL);
-
-	return funcoid;
+	return LookupFuncName(funcname, argcount, argoids, noError);
 }

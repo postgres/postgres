@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.68 2003/06/29 00:33:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.69 2003/07/04 02:51:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,7 @@
 #include "postgres.h"
 
 #include "catalog/pg_operator.h"
+#include "lib/stringinfo.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_func.h"
@@ -29,25 +30,32 @@
 
 static Oid binary_oper_exact(Oid arg1, Oid arg2,
 				  FuncCandidateList candidates);
-static Oid oper_select_candidate(int nargs, Oid *input_typeids,
-					  FuncCandidateList candidates);
-static void op_error(List *op, Oid arg1, Oid arg2);
-static void unary_op_error(List *op, Oid arg, bool is_left_op);
+static FuncDetailCode oper_select_candidate(int nargs,
+											Oid *input_typeids,
+											FuncCandidateList candidates,
+											Oid *operOid);
+static const char *op_signature_string(List *op, char oprkind,
+									   Oid arg1, Oid arg2);
+static void op_error(List *op, char oprkind, Oid arg1, Oid arg2,
+					 FuncDetailCode fdresult);
 
 
 /*
  * LookupOperName
  *		Given a possibly-qualified operator name and exact input datatypes,
- *		look up the operator.  Returns InvalidOid if no such operator.
+ *		look up the operator.
  *
  * Pass oprleft = InvalidOid for a prefix op, oprright = InvalidOid for
  * a postfix op.
  *
  * If the operator name is not schema-qualified, it is sought in the current
  * namespace search path.
+ *
+ * If the operator is not found, we return InvalidOid if noError is true,
+ * else raise an error.
  */
 Oid
-LookupOperName(List *opername, Oid oprleft, Oid oprright)
+LookupOperName(List *opername, Oid oprleft, Oid oprright, bool noError)
 {
 	FuncCandidateList clist;
 	char		oprkind;
@@ -68,22 +76,28 @@ LookupOperName(List *opername, Oid oprleft, Oid oprright)
 		clist = clist->next;
 	}
 
+	/* we don't use op_error here because only an exact match is wanted */
+	if (!noError)
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_FUNCTION),
+				 errmsg("operator does not exist: %s",
+						op_signature_string(opername, oprkind,
+											oprleft, oprright))));
+
 	return InvalidOid;
 }
 
 /*
  * LookupOperNameTypeNames
  *		Like LookupOperName, but the argument types are specified by
- *		TypeName nodes.  Also, if we fail to find the operator
- *		and caller is not NULL, then an error is reported.
+ *		TypeName nodes.
  *
  * Pass oprleft = NULL for a prefix op, oprright = NULL for a postfix op.
  */
 Oid
 LookupOperNameTypeNames(List *opername, TypeName *oprleft,
-						TypeName *oprright, const char *caller)
+						TypeName *oprright, bool noError)
 {
-	Oid			operoid;
 	Oid			leftoid,
 				rightoid;
 
@@ -93,7 +107,7 @@ LookupOperNameTypeNames(List *opername, TypeName *oprleft,
 	{
 		leftoid = LookupTypeName(oprleft);
 		if (!OidIsValid(leftoid))
-			elog(ERROR, "Type \"%s\" does not exist",
+			elog(ERROR, "type %s does not exist",
 				 TypeNameToString(oprleft));
 	}
 	if (oprright == NULL)
@@ -102,30 +116,11 @@ LookupOperNameTypeNames(List *opername, TypeName *oprleft,
 	{
 		rightoid = LookupTypeName(oprright);
 		if (!OidIsValid(rightoid))
-			elog(ERROR, "Type \"%s\" does not exist",
+			elog(ERROR, "type %s does not exist",
 				 TypeNameToString(oprright));
 	}
 
-	operoid = LookupOperName(opername, leftoid, rightoid);
-
-	if (!OidIsValid(operoid) && caller != NULL)
-	{
-		if (oprleft == NULL)
-			elog(ERROR, "%s: Prefix operator '%s' for type '%s' does not exist",
-				 caller, NameListToString(opername),
-				 TypeNameToString(oprright));
-		else if (oprright == NULL)
-			elog(ERROR, "%s: Postfix operator '%s' for type '%s' does not exist",
-				 caller, NameListToString(opername),
-				 TypeNameToString(oprleft));
-		else
-			elog(ERROR, "%s: Operator '%s' for types '%s' and '%s' does not exist",
-				 caller, NameListToString(opername),
-				 TypeNameToString(oprleft),
-				 TypeNameToString(oprright));
-	}
-
-	return operoid;
+	return LookupOperName(opername, leftoid, rightoid, noError);
 }
 
 /*
@@ -183,7 +178,7 @@ equality_oper(Oid argtype, bool noError)
 		}
 	}
 	if (!noError)
-		elog(ERROR, "Unable to identify an equality operator for type %s",
+		elog(ERROR, "unable to identify an equality operator for type %s",
 			 format_type_be(argtype));
 	return NULL;
 }
@@ -244,7 +239,7 @@ ordering_oper(Oid argtype, bool noError)
 		}
 	}
 	if (!noError)
-		elog(ERROR, "Unable to identify an ordering operator for type %s"
+		elog(ERROR, "unable to identify an ordering operator for type %s"
 			 "\n\tUse an explicit ordering operator or modify the query",
 			 format_type_be(argtype));
 	return NULL;
@@ -347,17 +342,18 @@ binary_oper_exact(Oid arg1, Oid arg2,
  *		Given the input argtype array and one or more candidates
  *		for the operator, attempt to resolve the conflict.
  *
- * Returns the OID of the selected operator if the conflict can be resolved,
- * otherwise returns InvalidOid.
+ * Returns FUNCDETAIL_NOTFOUND, FUNCDETAIL_MULTIPLE, or FUNCDETAIL_NORMAL.
+ * In the success case the Oid of the best candidate is stored in *operOid.
  *
  * Note that the caller has already determined that there is no candidate
  * exactly matching the input argtype(s).  Incompatible candidates are not yet
  * pruned away, however.
  */
-static Oid
+static FuncDetailCode
 oper_select_candidate(int nargs,
 					  Oid *input_typeids,
-					  FuncCandidateList candidates)
+					  FuncCandidateList candidates,
+					  Oid *operOid)	/* output argument */
 {
 	int			ncandidates;
 
@@ -370,9 +366,15 @@ oper_select_candidate(int nargs,
 
 	/* Done if no candidate or only one candidate survives */
 	if (ncandidates == 0)
-		return InvalidOid;
+	{
+		*operOid = InvalidOid;
+		return FUNCDETAIL_NOTFOUND;
+	}
 	if (ncandidates == 1)
-		return candidates->oid;
+	{
+		*operOid = candidates->oid;
+		return FUNCDETAIL_NORMAL;
+	}
 
 	/*
 	 * Use the same heuristics as for ambiguous functions to resolve
@@ -381,10 +383,14 @@ oper_select_candidate(int nargs,
 	candidates = func_select_candidate(nargs, input_typeids, candidates);
 
 	if (candidates)
-		return candidates->oid;
+	{
+		*operOid = candidates->oid;
+		return FUNCDETAIL_NORMAL;
+	}
 
-	return InvalidOid;			/* failed to select a best candidate */
-}	/* oper_select_candidate() */
+	*operOid = InvalidOid;
+	return FUNCDETAIL_MULTIPLE;	/* failed to select a best candidate */
+}
 
 
 /* oper() -- search for a binary operator
@@ -404,8 +410,9 @@ Operator
 oper(List *opname, Oid ltypeId, Oid rtypeId, bool noError)
 {
 	FuncCandidateList clist;
-	Oid			operOid;
 	Oid			inputOids[2];
+	Oid			operOid;
+	FuncDetailCode fdresult = FUNCDETAIL_NOTFOUND;
 	HeapTuple	tup = NULL;
 
 	/* Get binary operators of given name */
@@ -434,7 +441,7 @@ oper(List *opname, Oid ltypeId, Oid rtypeId, bool noError)
 				ltypeId = rtypeId;
 			inputOids[0] = ltypeId;
 			inputOids[1] = rtypeId;
-			operOid = oper_select_candidate(2, inputOids, clist);
+			fdresult = oper_select_candidate(2, inputOids, clist, &operOid);
 		}
 		if (OidIsValid(operOid))
 			tup = SearchSysCache(OPEROID,
@@ -443,7 +450,7 @@ oper(List *opname, Oid ltypeId, Oid rtypeId, bool noError)
 	}
 
 	if (!HeapTupleIsValid(tup) && !noError)
-		op_error(opname, ltypeId, rtypeId);
+		op_error(opname, 'b', ltypeId, rtypeId, fdresult);
 
 	return (Operator) tup;
 }
@@ -476,7 +483,8 @@ compatible_oper(List *op, Oid arg1, Oid arg2, bool noError)
 	ReleaseSysCache(optup);
 
 	if (!noError)
-		op_error(op, arg1, arg2);
+		elog(ERROR, "operator requires run-time type coercion: %s",
+			 op_signature_string(op, 'b', arg1, arg2));
 
 	return (Operator) NULL;
 }
@@ -504,7 +512,7 @@ compatible_oper_opid(List *op, Oid arg1, Oid arg2, bool noError)
 }
 
 
-/* right_oper() -- search for a unary right operator (operator on right)
+/* right_oper() -- search for a unary right operator (postfix operator)
  * Given operator name and type of arg, return oper struct.
  *
  * IMPORTANT: the returned operator (if any) is only promised to be
@@ -522,6 +530,7 @@ right_oper(List *op, Oid arg, bool noError)
 {
 	FuncCandidateList clist;
 	Oid			operOid = InvalidOid;
+	FuncDetailCode fdresult = FUNCDETAIL_NOTFOUND;
 	HeapTuple	tup = NULL;
 
 	/* Find candidates */
@@ -551,7 +560,7 @@ right_oper(List *op, Oid arg, bool noError)
 			 * candidate, otherwise we may falsely return a
 			 * non-type-compatible operator.
 			 */
-			operOid = oper_select_candidate(1, &arg, clist);
+			fdresult = oper_select_candidate(1, &arg, clist, &operOid);
 		}
 		if (OidIsValid(operOid))
 			tup = SearchSysCache(OPEROID,
@@ -560,13 +569,13 @@ right_oper(List *op, Oid arg, bool noError)
 	}
 
 	if (!HeapTupleIsValid(tup) && !noError)
-		unary_op_error(op, arg, FALSE);
+		op_error(op, 'r', arg, InvalidOid, fdresult);
 
 	return (Operator) tup;
 }
 
 
-/* left_oper() -- search for a unary left operator (operator on left)
+/* left_oper() -- search for a unary left operator (prefix operator)
  * Given operator name and type of arg, return oper struct.
  *
  * IMPORTANT: the returned operator (if any) is only promised to be
@@ -584,6 +593,7 @@ left_oper(List *op, Oid arg, bool noError)
 {
 	FuncCandidateList clist;
 	Oid			operOid = InvalidOid;
+	FuncDetailCode fdresult = FUNCDETAIL_NOTFOUND;
 	HeapTuple	tup = NULL;
 
 	/* Find candidates */
@@ -618,7 +628,7 @@ left_oper(List *op, Oid arg, bool noError)
 			 * candidate, otherwise we may falsely return a
 			 * non-type-compatible operator.
 			 */
-			operOid = oper_select_candidate(1, &arg, clist);
+			fdresult = oper_select_candidate(1, &arg, clist, &operOid);
 		}
 		if (OidIsValid(operOid))
 			tup = SearchSysCache(OPEROID,
@@ -627,66 +637,58 @@ left_oper(List *op, Oid arg, bool noError)
 	}
 
 	if (!HeapTupleIsValid(tup) && !noError)
-		unary_op_error(op, arg, TRUE);
+		op_error(op, 'l', InvalidOid, arg, fdresult);
 
 	return (Operator) tup;
 }
 
-
-/* op_error()
- * Give a somewhat useful error message when the operator for two types
- * is not found.
+/*
+ * op_signature_string
+ *		Build a string representing an operator name, including arg type(s).
+ *		The result is something like "integer + integer".
+ *
+ * This is typically used in the construction of operator-not-found error
+ * messages.
  */
-static void
-op_error(List *op, Oid arg1, Oid arg2)
+static const char *
+op_signature_string(List *op, char oprkind, Oid arg1, Oid arg2)
 {
-	if (!typeidIsValid(arg1))
-		elog(ERROR, "Left hand side of operator '%s' has an unknown type"
-			 "\n\tProbably a bad attribute name",
-			 NameListToString(op));
+	StringInfoData argbuf;
 
-	if (!typeidIsValid(arg2))
-		elog(ERROR, "Right hand side of operator %s has an unknown type"
-			 "\n\tProbably a bad attribute name",
-			 NameListToString(op));
+	initStringInfo(&argbuf);
 
-	elog(ERROR, "Unable to identify an operator '%s' for types '%s' and '%s'"
-		 "\n\tYou will have to retype this query using an explicit cast",
-		 NameListToString(op),
-		 format_type_be(arg1), format_type_be(arg2));
+	if (oprkind != 'l')
+		appendStringInfo(&argbuf, "%s ", format_type_be(arg1));
+
+	appendStringInfoString(&argbuf, NameListToString(op));
+
+	if (oprkind != 'r')
+		appendStringInfo(&argbuf, " %s", format_type_be(arg2));
+
+	return argbuf.data;			/* return palloc'd string buffer */
 }
 
-/* unary_op_error()
- * Give a somewhat useful error message when the operator for one type
- * is not found.
+/*
+ * op_error - utility routine to complain about an unresolvable operator
  */
 static void
-unary_op_error(List *op, Oid arg, bool is_left_op)
+op_error(List *op, char oprkind, Oid arg1, Oid arg2, FuncDetailCode fdresult)
 {
-	if (!typeidIsValid(arg))
-	{
-		if (is_left_op)
-			elog(ERROR, "operand of prefix operator '%s' has an unknown type"
-				 "\n\t(probably an invalid column reference)",
-				 NameListToString(op));
-		else
-			elog(ERROR, "operand of postfix operator '%s' has an unknown type"
-				 "\n\t(probably an invalid column reference)",
-				 NameListToString(op));
-	}
+	if (fdresult == FUNCDETAIL_MULTIPLE)
+		ereport(ERROR,
+				(errcode(ERRCODE_AMBIGUOUS_FUNCTION),
+				 errmsg("operator is not unique: %s",
+						op_signature_string(op, oprkind, arg1, arg2)),
+				 errhint("Unable to choose a best candidate operator. "
+						 "You may need to add explicit typecasts.")));
 	else
-	{
-		if (is_left_op)
-			elog(ERROR, "Unable to identify a prefix operator '%s' for type '%s'"
-			   "\n\tYou may need to add parentheses or an explicit cast",
-				 NameListToString(op), format_type_be(arg));
-		else
-			elog(ERROR, "Unable to identify a postfix operator '%s' for type '%s'"
-			   "\n\tYou may need to add parentheses or an explicit cast",
-				 NameListToString(op), format_type_be(arg));
-	}
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_FUNCTION),
+				 errmsg("operator does not exist: %s",
+						op_signature_string(op, oprkind, arg1, arg2)),
+				 errhint("No operator matches the given name and argument type(s). "
+						 "You may need to add explicit typecasts.")));
 }
-
 
 /*
  * make_op()

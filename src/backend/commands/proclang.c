@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/proclang.c,v 1.44 2003/06/27 14:45:27 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/proclang.c,v 1.45 2003/07/04 02:51:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,10 +77,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 	 * return type
 	 */
 	MemSet(typev, 0, sizeof(typev));
-	procOid = LookupFuncName(stmt->plhandler, 0, typev);
-	if (!OidIsValid(procOid))
-		elog(ERROR, "function %s() doesn't exist",
-			 NameListToString(stmt->plhandler));
+	procOid = LookupFuncName(stmt->plhandler, 0, typev, false);
 	funcrettype = get_func_rettype(procOid);
 	if (funcrettype != LANGUAGE_HANDLEROID)
 	{
@@ -104,10 +101,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 	if (stmt->plvalidator)
 	{
 		typev[0] = OIDOID;
-		valProcOid = LookupFuncName(stmt->plvalidator, 1, typev);
-		if (!OidIsValid(valProcOid))
-			elog(ERROR, "function %s(oid) doesn't exist",
-				 NameListToString(stmt->plvalidator));
+		valProcOid = LookupFuncName(stmt->plvalidator, 1, typev, false);
 		/* return value is ignored, so we don't check the type */
 	}
 	else

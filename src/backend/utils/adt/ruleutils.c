@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.144 2003/07/03 16:34:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.145 2003/07/04 02:51:34 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -3539,7 +3539,8 @@ generate_function_name(Oid funcid, int nargs, Oid *argtypes)
 							   NIL, nargs, argtypes,
 							   &p_funcid, &p_rettype,
 							   &p_retset, &p_true_typeids);
-	if (p_result != FUNCDETAIL_NOTFOUND && p_funcid == funcid)
+	if ((p_result == FUNCDETAIL_NORMAL || p_result == FUNCDETAIL_AGGREGATE) &&
+		p_funcid == funcid)
 		nspname = NULL;
 	else
 		nspname = get_namespace_name(procform->pronamespace);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.59 2003/07/01 19:10:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.60 2003/07/04 02:51:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,8 +109,7 @@ AggregateCreate(const char *aggName,
 						 ObjectIdGetDatum(transfn),
 						 0, 0, 0);
 	if (!HeapTupleIsValid(tup))
-		func_error("AggregateCreate", aggtransfnName,
-				   nargs_transfn, fnArgs, NULL);
+		elog(ERROR, "cache lookup of function %u failed", transfn);
 	proc = (Form_pg_proc) GETSTRUCT(tup);
 
 	/*
@@ -264,10 +263,12 @@ lookup_agg_function(List *fnName,
 							   &true_oid_array);
 
 	/* only valid case is a normal function not returning a set */
-	if (fdresult != FUNCDETAIL_NORMAL ||
-		!OidIsValid(fnOid) ||
-		retset)
-		func_error("AggregateCreate", fnName, nargs, input_types, NULL);
+	if (fdresult != FUNCDETAIL_NORMAL || !OidIsValid(fnOid))
+		elog(ERROR, "function %s does not exist",
+			 func_signature_string(fnName, nargs, input_types));
+	if (retset)
+		elog(ERROR, "function %s returns a set",
+			 func_signature_string(fnName, nargs, input_types));
 
 	/*
 	 * If the given type(s) are all polymorphic, there's nothing we
@@ -295,13 +296,15 @@ lookup_agg_function(List *fnName,
 	if (true_oid_array[0] != ANYARRAYOID &&
 		true_oid_array[0] != ANYELEMENTOID &&
 		!IsBinaryCoercible(input_types[0], true_oid_array[0]))
-		func_error("AggregateCreate", fnName, nargs, input_types, NULL);
+		elog(ERROR, "function %s requires run-time type coercion",
+			 func_signature_string(fnName, nargs, true_oid_array));
 
 	if (nargs == 2 &&
 		true_oid_array[1] != ANYARRAYOID &&
 		true_oid_array[1] != ANYELEMENTOID &&
 		!IsBinaryCoercible(input_types[1], true_oid_array[1]))
-		func_error("AggregateCreate", fnName, nargs, input_types, NULL);
+		elog(ERROR, "function %s requires run-time type coercion",
+			 func_signature_string(fnName, nargs, true_oid_array));
 
 	return fnOid;
 }

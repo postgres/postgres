@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.37 2003/06/06 15:04:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.38 2003/07/04 02:51:33 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -789,14 +789,14 @@ findTypeInputFunction(List *procname, Oid typeOid)
 
 	argList[0] = CSTRINGOID;
 
-	procOid = LookupFuncName(procname, 1, argList);
+	procOid = LookupFuncName(procname, 1, argList, true);
 	if (OidIsValid(procOid))
 		return procOid;
 
 	argList[1] = OIDOID;
 	argList[2] = INT4OID;
 
-	procOid = LookupFuncName(procname, 3, argList);
+	procOid = LookupFuncName(procname, 3, argList, true);
 	if (OidIsValid(procOid))
 		return procOid;
 
@@ -805,14 +805,14 @@ findTypeInputFunction(List *procname, Oid typeOid)
 
 	argList[0] = OPAQUEOID;
 
-	procOid = LookupFuncName(procname, 1, argList);
+	procOid = LookupFuncName(procname, 1, argList, true);
 
 	if (!OidIsValid(procOid))
 	{
 		argList[1] = OIDOID;
 		argList[2] = INT4OID;
 
-		procOid = LookupFuncName(procname, 3, argList);
+		procOid = LookupFuncName(procname, 3, argList, true);
 	}
 
 	if (OidIsValid(procOid))
@@ -834,7 +834,8 @@ findTypeInputFunction(List *procname, Oid typeOid)
 	/* Use CSTRING (preferred) in the error message */
 	argList[0] = CSTRINGOID;
 
-	func_error("TypeCreate", procname, 1, argList, NULL);
+	elog(ERROR, "function %s does not exist",
+		 func_signature_string(procname, 1, argList));
 
 	return InvalidOid;			/* keep compiler quiet */
 }
@@ -857,13 +858,13 @@ findTypeOutputFunction(List *procname, Oid typeOid)
 
 	argList[0] = typeOid;
 
-	procOid = LookupFuncName(procname, 1, argList);
+	procOid = LookupFuncName(procname, 1, argList, true);
 	if (OidIsValid(procOid))
 		return procOid;
 
 	argList[1] = OIDOID;
 
-	procOid = LookupFuncName(procname, 2, argList);
+	procOid = LookupFuncName(procname, 2, argList, true);
 	if (OidIsValid(procOid))
 		return procOid;
 
@@ -872,13 +873,13 @@ findTypeOutputFunction(List *procname, Oid typeOid)
 
 	argList[0] = OPAQUEOID;
 
-	procOid = LookupFuncName(procname, 1, argList);
+	procOid = LookupFuncName(procname, 1, argList, true);
 
 	if (!OidIsValid(procOid))
 	{
 		argList[1] = OIDOID;
 
-		procOid = LookupFuncName(procname, 2, argList);
+		procOid = LookupFuncName(procname, 2, argList, true);
 	}
 
 	if (OidIsValid(procOid))
@@ -899,7 +900,8 @@ findTypeOutputFunction(List *procname, Oid typeOid)
 	/* Use type name, not OPAQUE, in the failure message. */
 	argList[0] = typeOid;
 
-	func_error("TypeCreate", procname, 1, argList, NULL);
+	elog(ERROR, "function %s does not exist",
+		 func_signature_string(procname, 1, argList));
 
 	return InvalidOid;			/* keep compiler quiet */
 }
@@ -918,17 +920,18 @@ findTypeReceiveFunction(List *procname, Oid typeOid)
 
 	argList[0] = INTERNALOID;
 
-	procOid = LookupFuncName(procname, 1, argList);
+	procOid = LookupFuncName(procname, 1, argList, true);
 	if (OidIsValid(procOid))
 		return procOid;
 
 	argList[1] = OIDOID;
 
-	procOid = LookupFuncName(procname, 2, argList);
+	procOid = LookupFuncName(procname, 2, argList, true);
 	if (OidIsValid(procOid))
 		return procOid;
 
-	func_error("TypeCreate", procname, 1, argList, NULL);
+	elog(ERROR, "function %s does not exist",
+		 func_signature_string(procname, 1, argList));
 
 	return InvalidOid;			/* keep compiler quiet */
 }
@@ -947,17 +950,18 @@ findTypeSendFunction(List *procname, Oid typeOid)
 
 	argList[0] = typeOid;
 
-	procOid = LookupFuncName(procname, 1, argList);
+	procOid = LookupFuncName(procname, 1, argList, true);
 	if (OidIsValid(procOid))
 		return procOid;
 
 	argList[1] = OIDOID;
 
-	procOid = LookupFuncName(procname, 2, argList);
+	procOid = LookupFuncName(procname, 2, argList, true);
 	if (OidIsValid(procOid))
 		return procOid;
 
-	func_error("TypeCreate", procname, 1, argList, NULL);
+	elog(ERROR, "function %s does not exist",
+		 func_signature_string(procname, 1, argList));
 
 	return InvalidOid;			/* keep compiler quiet */
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.78 2003/01/28 22:13:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.79 2003/07/04 02:51:33 tgl Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
@@ -175,7 +175,7 @@ OperatorLookup(List *operatorName,
 	RegProcedure oprcode;
 
 	operatorObjectId = LookupOperName(operatorName, leftObjectId,
-									  rightObjectId);
+									  rightObjectId, true);
 	if (!OidIsValid(operatorObjectId))
 	{
 		*defined = false;
@@ -453,9 +453,7 @@ OperatorCreate(const char *operatorName,
 		typeId[1] = rightTypeId;
 		nargs = 2;
 	}
-	procOid = LookupFuncName(procedureName, nargs, typeId);
-	if (!OidIsValid(procOid))
-		func_error("OperatorDef", procedureName, nargs, typeId, NULL);
+	procOid = LookupFuncName(procedureName, nargs, typeId, false);
 	operResultType = get_func_rettype(procOid);
 
 	/*
@@ -469,9 +467,7 @@ OperatorCreate(const char *operatorName,
 		typeId[2] = INTERNALOID;	/* args list */
 		typeId[3] = INT4OID;	/* varRelid */
 
-		restOid = LookupFuncName(restrictionName, 4, typeId);
-		if (!OidIsValid(restOid))
-			func_error("OperatorDef", restrictionName, 4, typeId, NULL);
+		restOid = LookupFuncName(restrictionName, 4, typeId, false);
 	}
 	else
 		restOid = InvalidOid;
@@ -487,9 +483,7 @@ OperatorCreate(const char *operatorName,
 		typeId[2] = INTERNALOID;	/* args list */
 		typeId[3] = INT2OID;	/* jointype */
 
-		joinOid = LookupFuncName(joinName, 4, typeId);
-		if (!OidIsValid(joinOid))
-			func_error("OperatorDef", joinName, 4, typeId, NULL);
+		joinOid = LookupFuncName(joinName, 4, typeId, false);
 	}
 	else
 		joinOid = InvalidOid;

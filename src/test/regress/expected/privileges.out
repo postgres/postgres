@@ -235,7 +235,7 @@ GRANT USAGE ON FUNCTION testfunc1(int) TO regressuser3; -- semantic error
 ERROR:  invalid privilege type USAGE for function object
 GRANT ALL PRIVILEGES ON FUNCTION testfunc1(int) TO regressuser4;
 GRANT ALL PRIVILEGES ON FUNCTION testfunc_nosuch(int) TO regressuser4;
-ERROR:  GRANT: function testfunc_nosuch(integer) does not exist
+ERROR:  function testfunc_nosuch(integer) does not exist
 CREATE FUNCTION testfunc4(boolean) RETURNS text
   AS 'select col1 from atest2 where col2 = $1;'
   LANGUAGE sql SECURITY DEFINER;

@@ -340,14 +340,14 @@ CREATE TEMP TABLE FKTABLE (ftest1 inet);
 -- This next should fail, because inet=int does not exist
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1) references pktable;
 NOTICE:  ALTER TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
-ERROR:  Unable to identify an operator '=' for types 'inet' and 'integer'
-	You will have to retype this query using an explicit cast
+ERROR:  operator does not exist: inet = integer
+HINT:  No operator matches the given name and argument type(s). You may need to add explicit typecasts.
 -- This should also fail for the same reason, but here we
 -- give the column name
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1) references pktable(ptest1);
 NOTICE:  ALTER TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
-ERROR:  Unable to identify an operator '=' for types 'inet' and 'integer'
-	You will have to retype this query using an explicit cast
+ERROR:  operator does not exist: inet = integer
+HINT:  No operator matches the given name and argument type(s). You may need to add explicit typecasts.
 -- This should succeed, even though they are different types
 -- because varchar=int does exist
 DROP TABLE FKTABLE;
@@ -368,30 +368,30 @@ NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'pktable_pkey' fo
 CREATE TEMP TABLE FKTABLE (ftest1 cidr, ftest2 timestamp);
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1, ftest2) references pktable;
 NOTICE:  ALTER TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
-ERROR:  Unable to identify an operator '=' for types 'cidr' and 'integer'
-	You will have to retype this query using an explicit cast
+ERROR:  operator does not exist: cidr = integer
+HINT:  No operator matches the given name and argument type(s). You may need to add explicit typecasts.
 DROP TABLE FKTABLE;
 -- Again, so should this...
 CREATE TEMP TABLE FKTABLE (ftest1 cidr, ftest2 timestamp);
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1, ftest2)
      references pktable(ptest1, ptest2);
 NOTICE:  ALTER TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
-ERROR:  Unable to identify an operator '=' for types 'cidr' and 'integer'
-	You will have to retype this query using an explicit cast
+ERROR:  operator does not exist: cidr = integer
+HINT:  No operator matches the given name and argument type(s). You may need to add explicit typecasts.
 DROP TABLE FKTABLE;
 -- This fails because we mixed up the column ordering
 CREATE TEMP TABLE FKTABLE (ftest1 int, ftest2 inet);
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1, ftest2)
      references pktable(ptest2, ptest1);
 NOTICE:  ALTER TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
-ERROR:  Unable to identify an operator '=' for types 'integer' and 'inet'
-	You will have to retype this query using an explicit cast
+ERROR:  operator does not exist: integer = inet
+HINT:  No operator matches the given name and argument type(s). You may need to add explicit typecasts.
 -- As does this...
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest2, ftest1)
      references pktable(ptest1, ptest2);
 NOTICE:  ALTER TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
-ERROR:  Unable to identify an operator '=' for types 'inet' and 'integer'
-	You will have to retype this query using an explicit cast
+ERROR:  operator does not exist: inet = integer
+HINT:  No operator matches the given name and argument type(s). You may need to add explicit typecasts.
 -- temp tables should go away by themselves, need not drop them.
 -- test check constraint adding
 create table atacc1 ( test int );

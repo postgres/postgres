@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/aggregatecmds.c,v 1.9 2003/07/01 19:10:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/aggregatecmds.c,v 1.10 2003/07/04 02:51:33 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -165,7 +165,7 @@ RemoveAggregate(RemoveAggrStmt *stmt)
 	else
 		basetypeID = ANYOID;
 
-	procOid = find_aggregate_func("RemoveAggregate", aggName, basetypeID);
+	procOid = find_aggregate_func(aggName, basetypeID, false);
 
 	/*
 	 * Find the function tuple, do permissions and validity checks
@@ -223,7 +223,7 @@ RenameAggregate(List *name, TypeName *basetype, const char *newname)
 
 	rel = heap_openr(ProcedureRelationName, RowExclusiveLock);
 
-	procOid = find_aggregate_func("RenameAggregate", name, basetypeOid);
+	procOid = find_aggregate_func(name, basetypeOid, false);
 
 	tup = SearchSysCacheCopy(PROCOID,
 							 ObjectIdGetDatum(procOid),

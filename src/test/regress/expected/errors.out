@@ -111,7 +111,7 @@ create aggregate newavg2 (sfunc = int4pl,
 			  stype = int4,
 			  finalfunc = int2um,
 			  initcond = '0');
-ERROR:  AggregateCreate: function int2um(integer) does not exist
+ERROR:  function int2um(integer) does not exist
 -- left out basetype
 create aggregate newcnt1 (sfunc = int4inc,
 			  stype = int4,
@@ -146,10 +146,10 @@ drop aggregate newcnt (nonesuch);
 ERROR:  Type "nonesuch" does not exist
 -- no such aggregate 
 drop aggregate nonesuch (int4);
-ERROR:  RemoveAggregate: aggregate nonesuch(integer) does not exist
+ERROR:  aggregate nonesuch(integer) does not exist
 -- no such aggregate for type
 drop aggregate newcnt (float4);
-ERROR:  RemoveAggregate: aggregate newcnt(real) does not exist
+ERROR:  aggregate newcnt(real) does not exist
 --
 -- DROP FUNCTION
  
@@ -161,7 +161,7 @@ drop function 314159();
 ERROR:  syntax error at or near "314159" at character 15
 -- no such function 
 drop function nonesuch();
-ERROR:  RemoveFunction: function nonesuch() does not exist
+ERROR:  function nonesuch() does not exist
 --
 -- DROP TYPE
  
@@ -200,7 +200,7 @@ drop operator === (int4);
 ERROR:  parser: argument type missing (use NONE for unary operators)
 -- no such operator by that name 
 drop operator === (int4, int4);
-ERROR:  RemoveOperator: Operator '===' for types 'int4' and 'int4' does not exist
+ERROR:  operator does not exist: integer === integer
 -- no such type1 
 drop operator = (nonesuch);
 ERROR:  parser: argument type missing (use NONE for unary operators)
@@ -209,10 +209,10 @@ drop operator = ( , int4);
 ERROR:  syntax error at or near "," at character 19
 -- no such type1 
 drop operator = (nonesuch, int4);
-ERROR:  Type "nonesuch" does not exist
+ERROR:  type nonesuch does not exist
 -- no such type2 
 drop operator = (int4, nonesuch);
-ERROR:  Type "nonesuch" does not exist
+ERROR:  type nonesuch does not exist
 -- no such type2 
 drop operator = (int4, );
 ERROR:  syntax error at or near ")" at character 24

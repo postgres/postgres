@@ -299,8 +299,8 @@ SELECT date '1991-02-03' - time '04:05:06' AS "Subtract Time";
 (1 row)
 
 SELECT date '1991-02-03' - time with time zone '04:05:06 UTC' AS "Subtract Time UTC";
-ERROR:  Unable to identify an operator '-' for types 'date' and 'time with time zone'
-	You will have to retype this query using an explicit cast
+ERROR:  operator does not exist: date - time with time zone
+HINT:  No operator matches the given name and argument type(s). You may need to add explicit typecasts.
 --
 -- timestamp, interval arithmetic
 --
@@ -332,20 +332,20 @@ SELECT timestamp without time zone 'Jan 1, 4713 BC' + interval '106000000 days' 
        Feb 23, 285506       
 ----------------------------
  Fri Feb 23 00:00:00 285506
-  (1 row)
-  
+(1 row)
+
 SELECT timestamp without time zone 'Jan 1, 4713 BC' + interval '107000000 days' AS "Jan 20, 288244";
        Jan 20, 288244       
 ----------------------------
  Sat Jan 20 00:00:00 288244
-  (1 row)
-  
+(1 row)
+
 SELECT timestamp without time zone 'Jan 1, 4713 BC' + interval '109203489 days' AS "Dec 31, 294276";
        Dec 31, 294276       
 ----------------------------
  Sun Dec 31 00:00:00 294276
-  (1 row)
-  
+(1 row)
+
 SELECT timestamp without time zone '12/31/294276' - timestamp without time zone '12/23/1999' AS "106751991 Days";
   106751991 Days  
 ------------------

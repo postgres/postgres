@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/opclasscmds.c,v 1.10 2003/06/27 14:45:27 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/opclasscmds.c,v 1.11 2003/07/04 02:51:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -155,19 +155,15 @@ DefineOpClass(CreateOpClassStmt *stmt)
 					TypeName   *typeName2 = (TypeName *) lsecond(item->args);
 
 					operOid = LookupOperNameTypeNames(item->name,
-													typeName1, typeName2,
-													  "DefineOpClass");
-					/* No need to check for error */
+													  typeName1,
+													  typeName2,
+													  false);
 				}
 				else
 				{
 					/* Default to binary op on input datatype */
-					operOid = LookupOperName(item->name, typeoid, typeoid);
-					if (!OidIsValid(operOid))
-						elog(ERROR, "DefineOpClass: Operator '%s' for types '%s' and '%s' does not exist",
-							 NameListToString(item->name),
-							 format_type_be(typeoid),
-							 format_type_be(typeoid));
+					operOid = LookupOperName(item->name, typeoid, typeoid,
+											 false);
 				}
 				/* Caller must have execute permission on operators */
 				funcOid = get_opcode(operOid);
@@ -187,7 +183,7 @@ DefineOpClass(CreateOpClassStmt *stmt)
 					elog(ERROR, "DefineOpClass: procedure number %d appears more than once",
 						 item->number);
 				funcOid = LookupFuncNameTypeNames(item->name, item->args,
-												  "DefineOpClass");
+												  false);
 				/* Caller must have execute permission on functions */
 				aclresult = pg_proc_aclcheck(funcOid, GetUserId(),
 											 ACL_EXECUTE);
