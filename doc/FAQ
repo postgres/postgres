@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Mon Mar 17 14:52:36 EST 2003
+   Last updated: Wed Apr 16 14:55:59 EDT 2003
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -240,8 +240,9 @@
    
      http://www.PostgreSQL.org
      
-   There is also an IRC channel on EFNet, channel #PostgreSQL. I use the
-   Unix command irc -c '#PostgreSQL' "$USER" irc.phoenix.net.
+   There is also an IRC channel on EFNet and OpenProjects, channel
+   #PostgreSQL. I use the Unix command irc -c '#PostgreSQL' "$USER"
+   irc.phoenix.net.
    
    A list of commercial support companies is available at
    http://www.ca.PostgreSQL.org/users-lounge/commercial-support.html.
