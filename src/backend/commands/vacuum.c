@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.243 2002/10/21 22:06:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.244 2002/10/31 19:25:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1079,7 +1079,7 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 				 relname, blkno);
 			PageInit(page, BufferGetPageSize(buf), 0);
 			vacpage->free = ((PageHeader) page)->pd_upper - ((PageHeader) page)->pd_lower;
-			free_size += (vacpage->free - sizeof(ItemIdData));
+			free_size += vacpage->free;
 			new_pages++;
 			empty_end_pages++;
 			vacpagecopy = copy_vac_page(vacpage);
@@ -1092,7 +1092,7 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 		if (PageIsEmpty(page))
 		{
 			vacpage->free = ((PageHeader) page)->pd_upper - ((PageHeader) page)->pd_lower;
-			free_size += (vacpage->free - sizeof(ItemIdData));
+			free_size += vacpage->free;
 			empty_pages++;
 			empty_end_pages++;
 			vacpagecopy = copy_vac_page(vacpage);
@@ -1667,7 +1667,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 				/* Quick exit if we have no vtlinks to search in */
 				if (vacrelstats->vtlinks == NULL)
 				{
-					elog(WARNING, "Parent item in update-chain not found - can't continue repair_frag");
+					elog(DEBUG1, "Parent item in update-chain not found - can't continue repair_frag");
 					break;		/* out of walk-along-page loop */
 				}
 
@@ -1704,7 +1704,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 						 * in scan_heap(), but it's not implemented at the
 						 * moment and so we just stop shrinking here.
 						 */
-						elog(WARNING, "Child itemid in update-chain marked as unused - can't continue repair_frag");
+						elog(DEBUG1, "Child itemid in update-chain marked as unused - can't continue repair_frag");
 						chain_move_failed = true;
 						break;	/* out of loop to move to chain end */
 					}
@@ -1753,7 +1753,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 					}
 					to_vacpage->free -= MAXALIGN(tlen);
 					if (to_vacpage->offsets_used >= to_vacpage->offsets_free)
-						to_vacpage->free -= MAXALIGN(sizeof(ItemIdData));
+						to_vacpage->free -= sizeof(ItemIdData);
 					(to_vacpage->offsets_used)++;
 					if (free_vtmove == 0)
 					{
@@ -1789,7 +1789,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 					if (vtlp == NULL)
 					{
 						/* see discussion above */
-						elog(WARNING, "Parent item in update-chain not found - can't continue repair_frag");
+						elog(DEBUG1, "Parent item in update-chain not found - can't continue repair_frag");
 						chain_move_failed = true;
 						break;	/* out of check-all-items loop */
 					}
@@ -1825,7 +1825,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 									 HeapTupleHeaderGetXmin(tp.t_data))))
 					{
 						ReleaseBuffer(Pbuf);
-						elog(WARNING, "Too old parent tuple found - can't continue repair_frag");
+						elog(DEBUG1, "Too old parent tuple found - can't continue repair_frag");
 						chain_move_failed = true;
 						break;	/* out of check-all-items loop */
 					}
