@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.36 1997/09/05 18:11:12 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.37 1997/09/06 00:22:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,13 +54,13 @@ static int tm2timespan(struct tm *tm, double fsec, TimeSpan *span);
 
 #define isleap(y) (((y % 4) == 0) && (((y % 100) != 0) || ((y % 400) == 0)))
 
-int mdays[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 0}
+int mdays[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 0};
 
 char *months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
- "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", NULL}
+ "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", NULL};
 
 char *days[] = {"Sunday", "Monday", "Tuesday", "Wednesday",
- "Thursday", "Friday", "Saturday", NULL}
+ "Thursday", "Friday", "Saturday", NULL};
 
 /* TMODULO()
  * Macro to replace modf(), which is broken on some platforms.
@@ -1961,7 +1961,7 @@ static datetkn datetktbl[] = {
 {	"zp6",		TZ,	NEG(36)},	/* GMT +6  hours. */
 {	"z",		RESERV,	DTK_ZULU},	/* 00:00:00 */
 {	ZULU,		RESERV,	DTK_ZULU},	/* 00:00:00 */
-}
+};
 
 static unsigned int szdatetktbl = sizeof datetktbl / sizeof datetktbl[0];
 
@@ -2031,14 +2031,14 @@ static datetkn deltatktbl[] = {
 {	"years",	UNITS,	DTK_YEAR},	/* "years" relative time units */
 {	"yr",		UNITS,	DTK_YEAR},	/* "year" relative time units */
 {	"yrs",		UNITS,	DTK_YEAR},	/* "years" relative time units */
-}
+};
 
 static unsigned int szdeltatktbl = sizeof deltatktbl / sizeof deltatktbl[0];
 
 #if USE_DATE_CACHE
-datetkn *datecache[MAXDATEFIELDS] = {NULL}
+datetkn *datecache[MAXDATEFIELDS] = {NULL};
 
-datetkn *deltacache[MAXDATEFIELDS] = {NULL}
+datetkn *deltacache[MAXDATEFIELDS] = {NULL};
 #endif
 
 
