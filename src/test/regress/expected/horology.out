@@ -50,11 +50,11 @@ hundred|datetime                       |timespan                     |plus
        |Thu Feb 29 17:32:01.00 1996 PST|@ 10 days                    |Sun Mar 10 17:32:01.00 1996 PST
        |Fri Mar 01 17:32:01.00 1996 PST|@ 10 days                    |Mon Mar 11 17:32:01.00 1996 PST
        |Wed Feb 28 17:32:01.00 1996 PST|@ 3 mons                     |Tue May 28 18:32:01.00 1996 PDT
-       |Thu Feb 29 17:32:01.00 1996 PST|@ 3 mons                     |Fri May 31 18:32:01.00 1996 PDT
+       |Thu Feb 29 17:32:01.00 1996 PST|@ 3 mons                     |Wed May 29 18:32:01.00 1996 PDT
        |Fri Mar 01 17:32:01.00 1996 PST|@ 3 mons                     |Sat Jun 01 18:32:01.00 1996 PDT
        |Wed Feb 28 17:32:01.00 1996 PST|@ 5 mons                     |Sun Jul 28 18:32:01.00 1996 PDT
        |Wed Feb 28 17:32:01.00 1996 PST|@ 5 mons 12 hours            |Mon Jul 29 06:32:01.00 1996 PDT
-       |Thu Feb 29 17:32:01.00 1996 PST|@ 5 mons                     |Wed Jul 31 18:32:01.00 1996 PDT
+       |Thu Feb 29 17:32:01.00 1996 PST|@ 5 mons                     |Mon Jul 29 18:32:01.00 1996 PDT
        |Thu Feb 29 17:32:01.00 1996 PST|@ 5 mons 12 hours            |Thu Aug 01 06:32:01.00 1996 PDT
        |Fri Mar 01 17:32:01.00 1996 PST|@ 5 mons                     |Thu Aug 01 18:32:01.00 1996 PDT
        |Fri Mar 01 17:32:01.00 1996 PST|@ 5 mons 12 hours            |Fri Aug 02 06:32:01.00 1996 PDT
@@ -106,8 +106,8 @@ hundred|datetime                       |timespan                     |plus
        |Sun Dec 31 17:32:01.00 2000 PST|@ 5 mons 12 hours            |Fri Jun 01 06:32:01.00 2001 PDT
        |Mon Jan 01 17:32:01.00 2001 PST|@ 5 mons                     |Fri Jun 01 18:32:01.00 2001 PDT
        |Mon Jan 01 17:32:01.00 2001 PST|@ 5 mons 12 hours            |Sat Jun 02 06:32:01.00 2001 PDT
-       |Wed Feb 28 17:32:01.00 1996 PST|@ 6 years                    |Wed Feb 27 17:32:01.00 2002 PST
        |Thu Feb 29 17:32:01.00 1996 PST|@ 6 years                    |Thu Feb 28 17:32:01.00 2002 PST
+       |Wed Feb 28 17:32:01.00 1996 PST|@ 6 years                    |Thu Feb 28 17:32:01.00 2002 PST
        |Fri Mar 01 17:32:01.00 1996 PST|@ 6 years                    |Fri Mar 01 17:32:01.00 2002 PST
        |Mon Dec 30 17:32:01.00 1996 PST|@ 6 years                    |Mon Dec 30 17:32:01.00 2002 PST
        |Tue Dec 31 17:32:01.00 1996 PST|@ 6 years                    |Tue Dec 31 17:32:01.00 2002 PST
@@ -116,8 +116,8 @@ hundred|datetime                       |timespan                     |plus
        |Sat Jan 01 17:32:01.00 2000 PST|@ 6 years                    |Sun Jan 01 17:32:01.00 2006 PST
        |Sun Dec 31 17:32:01.00 2000 PST|@ 6 years                    |Sun Dec 31 17:32:01.00 2006 PST
        |Mon Jan 01 17:32:01.00 2001 PST|@ 6 years                    |Mon Jan 01 17:32:01.00 2007 PST
-       |Wed Feb 28 17:32:01.00 1996 PST|@ 34 years                   |Wed Feb 27 17:32:01.00 2030 PST
        |Thu Feb 29 17:32:01.00 1996 PST|@ 34 years                   |Thu Feb 28 17:32:01.00 2030 PST
+       |Wed Feb 28 17:32:01.00 1996 PST|@ 34 years                   |Thu Feb 28 17:32:01.00 2030 PST
        |Fri Mar 01 17:32:01.00 1996 PST|@ 34 years                   |Fri Mar 01 17:32:01.00 2030 PST
        |Mon Dec 30 17:32:01.00 1996 PST|@ 34 years                   |Mon Dec 30 17:32:01.00 2030 PST
        |Tue Dec 31 17:32:01.00 1996 PST|@ 34 years                   |Tue Dec 31 17:32:01.00 2030 PST
@@ -134,8 +134,8 @@ QUERY: SELECT '' AS hundred, d.f1 AS datetime, t.f1 AS timespan, d.f1 - t.f1 AS 
 hundred|datetime                       |timespan                     |minus                          
 -------+-------------------------------+-----------------------------+-------------------------------
        |epoch                          |@ 34 years                   |Tue Dec 31 16:00:00.00 1935 PST
-       |Wed Feb 28 17:32:01.00 1996 PST|@ 34 years                   |Tue Feb 27 17:32:01.00 1962 PST
        |Thu Feb 29 17:32:01.00 1996 PST|@ 34 years                   |Wed Feb 28 17:32:01.00 1962 PST
+       |Wed Feb 28 17:32:01.00 1996 PST|@ 34 years                   |Wed Feb 28 17:32:01.00 1962 PST
        |Fri Mar 01 17:32:01.00 1996 PST|@ 34 years                   |Thu Mar 01 17:32:01.00 1962 PST
        |Mon Dec 30 17:32:01.00 1996 PST|@ 34 years                   |Sun Dec 30 17:32:01.00 1962 PST
        |Tue Dec 31 17:32:01.00 1996 PST|@ 34 years                   |Mon Dec 31 17:32:01.00 1962 PST
@@ -152,8 +152,8 @@ hundred|datetime                       |timespan                     |minus
        |epoch                          |@ 5 hours                    |Wed Dec 31 11:00:00.00 1969 PST
        |epoch                          |@ 1 min                      |Wed Dec 31 15:59:00.00 1969 PST
        |epoch                          |@ 14 secs ago                |Wed Dec 31 16:00:14.00 1969 PST
-       |Wed Feb 28 17:32:01.00 1996 PST|@ 6 years                    |Tue Feb 27 17:32:01.00 1990 PST
        |Thu Feb 29 17:32:01.00 1996 PST|@ 6 years                    |Wed Feb 28 17:32:01.00 1990 PST
+       |Wed Feb 28 17:32:01.00 1996 PST|@ 6 years                    |Wed Feb 28 17:32:01.00 1990 PST
        |Fri Mar 01 17:32:01.00 1996 PST|@ 6 years                    |Thu Mar 01 17:32:01.00 1990 PST
        |Mon Dec 30 17:32:01.00 1996 PST|@ 6 years                    |Sun Dec 30 17:32:01.00 1990 PST
        |Tue Dec 31 17:32:01.00 1996 PST|@ 6 years                    |Mon Dec 31 17:32:01.00 1990 PST
@@ -163,12 +163,12 @@ hundred|datetime                       |timespan                     |minus
        |Mon Jan 01 17:32:01.00 2001 PST|@ 6 years                    |Sun Jan 01 17:32:01.00 1995 PST
        |Wed Feb 28 17:32:01.00 1996 PST|@ 5 mons 12 hours            |Thu Sep 28 06:32:01.00 1995 PDT
        |Wed Feb 28 17:32:01.00 1996 PST|@ 5 mons                     |Thu Sep 28 18:32:01.00 1995 PDT
-       |Thu Feb 29 17:32:01.00 1996 PST|@ 5 mons 12 hours            |Sat Sep 30 06:32:01.00 1995 PDT
-       |Thu Feb 29 17:32:01.00 1996 PST|@ 5 mons                     |Sat Sep 30 18:32:01.00 1995 PDT
+       |Thu Feb 29 17:32:01.00 1996 PST|@ 5 mons 12 hours            |Fri Sep 29 06:32:01.00 1995 PDT
+       |Thu Feb 29 17:32:01.00 1996 PST|@ 5 mons                     |Fri Sep 29 18:32:01.00 1995 PDT
        |Fri Mar 01 17:32:01.00 1996 PST|@ 5 mons 12 hours            |Sun Oct 01 06:32:01.00 1995 PDT
        |Fri Mar 01 17:32:01.00 1996 PST|@ 5 mons                     |Sun Oct 01 18:32:01.00 1995 PDT
        |Wed Feb 28 17:32:01.00 1996 PST|@ 3 mons                     |Tue Nov 28 17:32:01.00 1995 PST
-       |Thu Feb 29 17:32:01.00 1996 PST|@ 3 mons                     |Thu Nov 30 17:32:01.00 1995 PST
+       |Thu Feb 29 17:32:01.00 1996 PST|@ 3 mons                     |Wed Nov 29 17:32:01.00 1995 PST
        |Fri Mar 01 17:32:01.00 1996 PST|@ 3 mons                     |Fri Dec 01 17:32:01.00 1995 PST
        |Wed Feb 28 17:32:01.00 1996 PST|@ 10 days                    |Sun Feb 18 17:32:01.00 1996 PST
        |Thu Feb 29 17:32:01.00 1996 PST|@ 10 days                    |Mon Feb 19 17:32:01.00 1996 PST
@@ -189,8 +189,8 @@ hundred|datetime                       |timespan                     |minus
        |Mon Dec 30 17:32:01.00 1996 PST|@ 5 mons                     |Tue Jul 30 18:32:01.00 1996 PDT
        |Tue Dec 31 17:32:01.00 1996 PST|@ 5 mons 12 hours            |Wed Jul 31 06:32:01.00 1996 PDT
        |Tue Dec 31 17:32:01.00 1996 PST|@ 5 mons                     |Wed Jul 31 18:32:01.00 1996 PDT
-       |Mon Dec 30 17:32:01.00 1996 PST|@ 3 mons                     |Sun Sep 29 18:32:01.00 1996 PDT
        |Tue Dec 31 17:32:01.00 1996 PST|@ 3 mons                     |Mon Sep 30 18:32:01.00 1996 PDT
+       |Mon Dec 30 17:32:01.00 1996 PST|@ 3 mons                     |Mon Sep 30 18:32:01.00 1996 PDT
        |Mon Dec 30 17:32:01.00 1996 PST|@ 10 days                    |Fri Dec 20 17:32:01.00 1996 PST
        |Tue Dec 31 17:32:01.00 1996 PST|@ 10 days                    |Sat Dec 21 17:32:01.00 1996 PST
        |Mon Dec 30 17:32:01.00 1996 PST|@ 1 day 2 hours 3 mins 4 secs|Sun Dec 29 15:28:57.00 1996 PST
