@@ -26,8 +26,8 @@
 
 #include <sys/types.h>
 #include <string.h>
+#include "psqlodbc.h"
 #include "gpps.h"
-#include "misc.h"
 
 #ifndef TRUE
 #define TRUE	((BOOL)1)
