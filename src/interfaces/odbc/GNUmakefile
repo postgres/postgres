@@ -2,7 +2,7 @@
 #
 # GNUMakefile for psqlodbc (Postgres ODBC driver)
 #
-# $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/GNUmakefile,v 1.7 2000/10/28 15:10:36 petere Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/GNUmakefile,v 1.8 2000/12/16 18:14:25 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -29,6 +29,11 @@ all: all-lib
 
 # Shared library stuff
 include $(top_srcdir)/src/Makefile.shlib
+
+# Symbols must be resolved to the version in the shared library because
+# the driver manager (e.g., iodbc) provides some symbols with the same
+# names and we don't want those.  (This issue is probably ELF specific.)
+LINK.shared += $(shlib_symbolic)
 
 odbc_headers = isql.h isqlext.h iodbc.h
 odbc_includedir = $(includedir)/iodbc

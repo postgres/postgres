@@ -15,6 +15,7 @@ endif
 ifeq ($(DLSUFFIX), .so)
 CFLAGS_SL = -fpic
 export_dynamic = -export-dynamic
+shlib_symbolic = -Bsymbolic
 else
 CFLAGS_SL =
 endif

@@ -3,6 +3,8 @@ export_dynamic = -Wl,-Bexport
 ifeq ($(ld_R_works), yes)
 rpath = -Wl,-R$(libdir)
 endif
+shlib_symbolic = -Wl,-Bsymbolic
+
 DLSUFFIX = .so
 ifeq ($(GCC), yes)
 CFLAGS_SL = -fpic

@@ -1,6 +1,7 @@
 AROPT = crs
 export_dynamic = -export-dynamic
 rpath = -Wl,-rpath,$(libdir)
+shlib_symbolic = -Wl,-Bsymbolic
 DLSUFFIX = .so
 CFLAGS_SL = -fpic
 

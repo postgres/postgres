@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/src/makefiles/Makefile.solaris,v 1.5 2000/11/04 16:35:55 petere Exp $
+# $Header: /cvsroot/pgsql/src/makefiles/Makefile.solaris,v 1.6 2000/12/16 18:14:25 petere Exp $
 
 AROPT = crs
 
@@ -8,7 +8,7 @@ rpath = -Wl,-rpath,$(libdir)
 else
 rpath = -Wl,-R$(libdir)
 endif
-
+shlib_symbolic = -Wl,-Bsymbolic
 
 DLSUFFIX = .so
 ifeq ($(GCC), yes)
