@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.182 2000/08/06 18:05:21 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.183 2000/08/07 06:54:51 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -5539,6 +5539,10 @@ UserId:  ColId							{ $$ = $1; };
  * allowed as identifiers, but are acceptable as ColLabels:
  *  BETWEEN, IN, IS, ISNULL, NOTNULL, OVERLAPS
  * Thanks to Tom Lane for pointing this out. - thomas 2000-03-29
+ * Allow LIKE and ILIKE as TokenId (and ColId) to make sure that they
+ *  are allowed in the func_name production. Otherwise, we can't define
+ *  more like() and ilike() functions for new data types.
+ * - thomas 2000-08-07
  */
 ColId:  generic							{ $$ = $1; }
 		| datetime						{ $$ = $1; }
@@ -5597,6 +5601,7 @@ TokenId:  ABSOLUTE						{ $$ = "absolute"; }
 		| FUNCTION						{ $$ = "function"; }
 		| GRANT							{ $$ = "grant"; }
 		| HANDLER						{ $$ = "handler"; }
+		| ILIKE							{ $$ = "ilike"; }
 		| IMMEDIATE						{ $$ = "immediate"; }
 		| INCREMENT						{ $$ = "increment"; }
 		| INDEX							{ $$ = "index"; }
@@ -5609,6 +5614,7 @@ TokenId:  ABSOLUTE						{ $$ = "absolute"; }
 		| LANGUAGE						{ $$ = "language"; }
 		| LANCOMPILER					{ $$ = "lancompiler"; }
 		| LEVEL							{ $$ = "level"; }
+		| LIKE							{ $$ = "like"; }
 		| LOCATION						{ $$ = "location"; }
 		| MATCH							{ $$ = "match"; }
 		| MAXVALUE						{ $$ = "maxvalue"; }
@@ -5735,7 +5741,6 @@ ColLabel:  ColId						{ $$ = $1; }
 		| GLOBAL						{ $$ = "global"; }
 		| GROUP							{ $$ = "group"; }
 		| HAVING						{ $$ = "having"; }
-		| ILIKE							{ $$ = "ilike"; }
 		| INITIALLY						{ $$ = "initially"; }
 		| IN							{ $$ = "in"; }
 		| INNER_P						{ $$ = "inner"; }
@@ -5747,7 +5752,6 @@ ColLabel:  ColId						{ $$ = $1; }
 		| JOIN							{ $$ = "join"; }
 		| LEADING						{ $$ = "leading"; }
 		| LEFT							{ $$ = "left"; }
-		| LIKE							{ $$ = "like"; }
 		| LISTEN						{ $$ = "listen"; }
 		| LOAD							{ $$ = "load"; }
 		| LOCAL							{ $$ = "local"; }
