@@ -279,7 +279,7 @@ select "string"
 category if any candidate accepts that category (this bias towards string
 is appropriate since an unknown-type literal does look like a string).
 Otherwise, if all the remaining candidates accept the same type category,
-select that category; otherwise raise an error because
+select that category; otherwise fail because
 the correct choice cannot be deduced without more clues.  Also note whether
 any of the candidates accept a preferred datatype within the selected category.
 Now discard operator candidates that do not accept the selected type category;
@@ -292,7 +292,7 @@ argument.
 <para>
 If only one candidate remains, use it.  If no candidate or more than one
 candidate remains,
-then raise an error.
+then fail.
 </para>
 </step>
 </substeps>
@@ -488,7 +488,7 @@ select "string"
 category if any candidate accepts that category (this bias towards string
 is appropriate since an unknown-type literal does look like a string).
 Otherwise, if all the remaining candidates accept the same type category,
-select that category; otherwise raise an error because
+select that category; otherwise fail because
 the correct choice cannot be deduced without more clues.  Also note whether
 any of the candidates accept a preferred datatype within the selected category.
 Now discard operator candidates that do not accept the selected type category;
@@ -501,10 +501,21 @@ argument.
 <para>
 If only one candidate remains, use it.  If no candidate or more than one
 candidate remains,
-then raise an error.
+then fail.
 </para>
 </step>
 </substeps>
+</step>
+<step performance="required">
+<para>
+If no best match could be identified, see whether the function call appears
+to be a trivial type coercion request.  This happens if the function call
+has just one argument and the function name is the same as the (internal)
+name of some datatype.  Furthermore, the function argument must be either
+an unknown-type literal or a type that is binary-compatible with the named
+datatype.  When these conditions are met, the function argument is coerced
+to the named datatype.
+</para>
 </step>
 </procedure>
 
@@ -699,8 +710,7 @@ Otherwise, ignore the <type>unknown</type> inputs while choosing the type.
 
 <step performance="required">
 <para>
-If the non-unknown inputs are not all of the same type category, raise an
-error.
+If the non-unknown inputs are not all of the same type category, fail.
 </para></step>
 
 <step performance="required">
