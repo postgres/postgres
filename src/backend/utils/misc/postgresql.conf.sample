@@ -61,9 +61,12 @@
 #debug_shared_buffers = 0	# 0-600 seconds
 
 # - Background writer -
+#debug_shared_buffers = 0	# 0-600 seconds interval (0 = off)
 #bgwriter_delay = 200		# 10-5000 milliseconds
 #bgwriter_percent = 1		# 0-100% of dirty buffers
 #bgwriter_maxpages = 100	# 1-1000 buffers max at once
+#bgwriter_flush_method = none # how the bgwriter flushes kernel buffers
+							# one of: none or sync
 
 # - Free Space Map -
 

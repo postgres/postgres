@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.152 2004/01/09 21:08:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.153 2004/01/24 20:00:45 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,6 +55,7 @@
 #include "storage/proc.h"
 #include "storage/smgr.h"
 #include "utils/relcache.h"
+#include "utils/guc.h"
 
 #include "pgstat.h"
 
@@ -65,9 +66,23 @@
 /* GUC variable */
 bool		zero_damaged_pages = false;
 
+#define	BGWRITER_FLUSH_NONE			0
+#define	BGWRITER_FLUSH_NONE_STR		"none"
+#define	BGWRITER_FLUSH_SYNC			1
+#define	BGWRITER_FLUSH_SYNC_STR		"sync"
+
+#define	BGWRITER_FLUSH_DEFAULT		BGWRITER_FLUSH_NONE
+#define	BGWRITER_FLUSH_DEFAULT_STR	BGWRITER_FLUSH_NONE_STR
+
 int			BgWriterDelay = 200;
 int			BgWriterPercent = 1;
 int			BgWriterMaxpages = 100;
+int			BgWriterFlushMethod = BGWRITER_FLUSH_NONE;
+char	   *BgWriterFlushMethod_str = NULL;
+const char	BgWriterFlushMethod_default[] = BGWRITER_FLUSH_DEFAULT_STR;
+
+const char *BgWriterAssignSyncMethod(const char *method,
+            bool doit, GucSource source);
 
 static void WaitIO(BufferDesc *buf);
 static void StartBufferIO(BufferDesc *buf, bool forInput);
@@ -1027,6 +1042,19 @@ BufferBackgroundWriter(void)
 			return;
 
 		/*
+		 * Perform the configured buffer flush method
+		 */
+		switch (BgWriterFlushMethod)
+		{
+			case BGWRITER_FLUSH_NONE:
+				break;
+
+			case BGWRITER_FLUSH_SYNC:
+				smgrsync();
+				break;
+		}
+
+		/*
 		 * Nap for the configured time or sleep for 10 seconds if
 		 * there was nothing to do at all.
 		 */
@@ -1036,6 +1064,27 @@ BufferBackgroundWriter(void)
 			sleep(10);
 	}
 }
+
+const char *
+BgWriterAssignSyncMethod(const char *method, bool doit, GucSource source)
+{
+	int		new_flush_method;
+
+	if (strcasecmp(method, BGWRITER_FLUSH_NONE_STR) == 0)
+		new_flush_method = BGWRITER_FLUSH_NONE;
+	else 
+	if (strcasecmp(method, BGWRITER_FLUSH_SYNC_STR) == 0)
+		new_flush_method = BGWRITER_FLUSH_SYNC;
+	else
+		return NULL;
+	
+	if (!doit)
+		return method;
+
+	BgWriterFlushMethod = new_flush_method;
+	return method;
+}
+            
 
 /*
  * Do whatever is needed to prepare for commit at the bufmgr and smgr levels
