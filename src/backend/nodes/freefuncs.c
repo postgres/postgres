@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.33 2000/01/27 18:11:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.34 2000/02/07 04:40:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -735,7 +735,7 @@ _freeRelOptInfo(RelOptInfo *node)
 	 */
 	freeObject(node->cheapestpath);
 
-	freeObject(node->restrictinfo);
+	freeObject(node->baserestrictinfo);
 	freeObject(node->joininfo);
 	freeObject(node->innerjoin);
 
@@ -853,6 +853,10 @@ FreeJoinPathFields(JoinPath *node)
 {
 	freeObject(node->outerjoinpath);
 	freeObject(node->innerjoinpath);
+	/* XXX probably wrong, since ordinarily a JoinPath would share its
+	 * restrictinfo list with other paths made for the same join?
+	 */
+	freeObject(node->joinrestrictinfo);
 }
 
 /* ----------------

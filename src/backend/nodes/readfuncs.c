@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.81 2000/01/27 18:11:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.82 2000/02/07 04:40:57 tgl Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -1288,8 +1288,8 @@ _readRelOptInfo()
 	sscanf(token, "%x", (unsigned int *) &local_node->cheapestpath);
 
 
-	token = lsptok(NULL, &length);		/* get :restrictinfo */
-	local_node->restrictinfo = nodeRead(true);	/* now read it */
+	token = lsptok(NULL, &length);		/* get :baserestrictinfo */
+	local_node->baserestrictinfo = nodeRead(true);	/* now read it */
 
 	token = lsptok(NULL, &length);		/* get :joininfo */
 	local_node->joininfo = nodeRead(true);		/* now read it */
@@ -1518,25 +1518,14 @@ _readNestPath()
 	token = lsptok(NULL, &length);		/* get :pathkeys */
 	local_node->path.pathkeys = nodeRead(true); /* now read it */
 
-	/*
-	 * Not sure if these are nodes; they're declared as "struct path *".
-	 * For now, i'll just print the addresses.
-	 *
-	 * GJK:  Since I am parsing this stuff, I'll just ignore the addresses,
-	 * and initialize these pointers to NULL.
-	 */
-
 	token = lsptok(NULL, &length);		/* get :outerjoinpath */
-	token = lsptok(NULL, &length);		/* get @ */
-	token = lsptok(NULL, &length);		/* now read it */
-
-	local_node->outerjoinpath = NULL;
+	local_node->outerjoinpath = nodeRead(true); /* now read it */
 
 	token = lsptok(NULL, &length);		/* get :innerjoinpath */
-	token = lsptok(NULL, &length);		/* get @ */
-	token = lsptok(NULL, &length);		/* now read it */
+	local_node->innerjoinpath = nodeRead(true); /* now read it */
 
-	local_node->innerjoinpath = NULL;
+	token = lsptok(NULL, &length);		/* get :joinrestrictinfo */
+	local_node->joinrestrictinfo = nodeRead(true); /* now read it */
 
 	return local_node;
 }
@@ -1569,25 +1558,14 @@ _readMergePath()
 	token = lsptok(NULL, &length);		/* get :pathkeys */
 	local_node->jpath.path.pathkeys = nodeRead(true);	/* now read it */
 
-	/*
-	 * Not sure if these are nodes; they're declared as "struct path *".
-	 * For now, i'll just print the addresses.
-	 *
-	 * GJK:  Since I am parsing this stuff, I'll just ignore the addresses,
-	 * and initialize these pointers to NULL.
-	 */
-
 	token = lsptok(NULL, &length);		/* get :outerjoinpath */
-	token = lsptok(NULL, &length);		/* get @ */
-	token = lsptok(NULL, &length);		/* now read it */
-
-	local_node->jpath.outerjoinpath = NULL;
+	local_node->jpath.outerjoinpath = nodeRead(true); /* now read it */
 
 	token = lsptok(NULL, &length);		/* get :innerjoinpath */
-	token = lsptok(NULL, &length);		/* get @ */
-	token = lsptok(NULL, &length);		/* now read it */
+	local_node->jpath.innerjoinpath = nodeRead(true); /* now read it */
 
-	local_node->jpath.innerjoinpath = NULL;
+	token = lsptok(NULL, &length);		/* get :joinrestrictinfo */
+	local_node->jpath.joinrestrictinfo = nodeRead(true); /* now read it */
 
 	token = lsptok(NULL, &length);		/* get :path_mergeclauses */
 	local_node->path_mergeclauses = nodeRead(true);		/* now read it */
@@ -1629,25 +1607,14 @@ _readHashPath()
 	token = lsptok(NULL, &length);		/* get :pathkeys */
 	local_node->jpath.path.pathkeys = nodeRead(true);	/* now read it */
 
-	/*
-	 * Not sure if these are nodes; they're declared as "struct path *".
-	 * For now, i'll just print the addresses.
-	 *
-	 * GJK:  Since I am parsing this stuff, I'll just ignore the addresses,
-	 * and initialize these pointers to NULL.
-	 */
-
 	token = lsptok(NULL, &length);		/* get :outerjoinpath */
-	token = lsptok(NULL, &length);		/* get @ */
-	token = lsptok(NULL, &length);		/* now read it */
-
-	local_node->jpath.outerjoinpath = NULL;
+	local_node->jpath.outerjoinpath = nodeRead(true); /* now read it */
 
 	token = lsptok(NULL, &length);		/* get :innerjoinpath */
-	token = lsptok(NULL, &length);		/* get @ */
-	token = lsptok(NULL, &length);		/* now read it */
+	local_node->jpath.innerjoinpath = nodeRead(true); /* now read it */
 
-	local_node->jpath.innerjoinpath = NULL;
+	token = lsptok(NULL, &length);		/* get :joinrestrictinfo */
+	local_node->jpath.joinrestrictinfo = nodeRead(true); /* now read it */
 
 	token = lsptok(NULL, &length);		/* get :path_hashclauses */
 	local_node->path_hashclauses = nodeRead(true);		/* now read it */

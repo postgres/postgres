@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pathnode.h,v 1.24 2000/01/26 05:58:20 momjian Exp $
+ * $Id: pathnode.h,v 1.25 2000/02/07 04:41:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,8 +21,8 @@
  */
 extern bool path_is_cheaper(Path *path1, Path *path2);
 extern Path *set_cheapest(RelOptInfo *parent_rel, List *pathlist);
-extern List *add_pathlist(RelOptInfo *parent_rel, List *old_paths,
-						  List *new_paths);
+extern void add_path(RelOptInfo *parent_rel, Path *new_path);
+extern void add_pathlist(RelOptInfo *parent_rel, List *new_paths);
 
 extern Path *create_seqscan_path(RelOptInfo *rel);
 extern IndexPath *create_index_path(Query *root, RelOptInfo *rel,
@@ -31,25 +31,34 @@ extern IndexPath *create_index_path(Query *root, RelOptInfo *rel,
 extern TidPath *create_tidscan_path(RelOptInfo *rel, List *tideval);
 
 extern NestPath *create_nestloop_path(RelOptInfo *joinrel,
-									  Path *outer_path, Path *inner_path,
+									  Path *outer_path,
+									  Path *inner_path,
+									  List *restrict_clauses,
 									  List *pathkeys);
 
-extern MergePath *create_mergejoin_path(RelOptInfo *joinrel, Path *outer_path,
-										Path *inner_path, List *pathkeys,
+extern MergePath *create_mergejoin_path(RelOptInfo *joinrel,
+										Path *outer_path,
+										Path *inner_path,
+										List *restrict_clauses,
+										List *pathkeys,
 										List *mergeclauses,
 										List *outersortkeys,
 										List *innersortkeys);
 
-extern HashPath *create_hashjoin_path(RelOptInfo *joinrel, Path *outer_path,
-									  Path *inner_path, List *hashclauses,
+extern HashPath *create_hashjoin_path(RelOptInfo *joinrel,
+									  Path *outer_path,
+									  Path *inner_path,
+									  List *restrict_clauses,
+									  List *hashclauses,
 									  Selectivity innerdisbursion);
 
 /*
- * prototypes for rel.c
+ * prototypes for relnode.c
  */
-extern RelOptInfo *rel_member(Relids relid, List *rels);
 extern RelOptInfo *get_base_rel(Query *root, int relid);
-extern RelOptInfo *get_join_rel(Query *root, Relids relid);
+extern RelOptInfo *get_join_rel(Query *root, RelOptInfo *outer_rel,
+								RelOptInfo *inner_rel,
+								List **restrictlist_ptr);
 
 /*
  * prototypes for indexnode.h

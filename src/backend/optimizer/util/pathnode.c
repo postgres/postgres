@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.58 2000/01/26 05:56:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.59 2000/02/07 04:41:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,101 +76,104 @@ set_cheapest(RelOptInfo *parent_rel, List *pathlist)
 
 /*
  * add_pathlist
- *	  Construct an output path list by adding to old_paths each path in
- *	  new_paths that is worth considering --- that is, it has either a
- *	  better sort order (better pathkeys) or cheaper cost than any of the
- *	  existing old paths.
- *
- *	  Unless parent_rel->pruneable is false, we also remove from the output
- *	  pathlist any old paths that are dominated by added path(s) --- that is,
- *	  some new path is both cheaper and at least as well ordered.
- *
- *	  Note: the list old_paths is destructively modified, and in fact is
- *	  turned into the output list.
- *
- * 'parent_rel' is the relation entry to which these paths correspond.
- * 'old_paths' is the list of previously accepted paths for parent_rel.
- * 'new_paths' is a list of potential new paths.
- *
- * Returns the updated list of interesting pathnodes.
+ *	  Consider each path given in new_paths, and add it to the parent rel's
+ *	  pathlist if it seems worthy.
  */
-List *
-add_pathlist(RelOptInfo *parent_rel, List *old_paths, List *new_paths)
+void
+add_pathlist(RelOptInfo *parent_rel, List *new_paths)
 {
 	List	   *p1;
 
 	foreach(p1, new_paths)
 	{
 		Path	   *new_path = (Path *) lfirst(p1);
-		bool		accept_new = true; /* unless we find a superior old path */
-		List	   *p2_prev = NIL;
-		List	   *p2;
 
-		/*
-		 * Loop to check proposed new path against old paths.  Note it is
-		 * possible for more than one old path to be tossed out because
-		 * new_path dominates it.
-		 */
-		foreach(p2, old_paths)
+		add_path(parent_rel, new_path);
+	}
+}
+
+/*
+ * add_path
+ *	  Consider a potential implementation path for the specified parent rel,
+ *	  and add it to the rel's pathlist if it is worthy of consideration.
+ *	  A path is worthy if it has either a better sort order (better pathkeys)
+ *	  or cheaper cost than any of the existing old paths.
+ *
+ *	  Unless parent_rel->pruneable is false, we also remove from the rel's
+ *	  pathlist any old paths that are dominated by new_path --- that is,
+ *	  new_path is both cheaper and at least as well ordered.
+ *
+ * 'parent_rel' is the relation entry to which the path corresponds.
+ * 'new_path' is a potential path for parent_rel.
+ *
+ * Returns nothing, but modifies parent_rel->pathlist.
+ */
+void
+add_path(RelOptInfo *parent_rel, Path *new_path)
+{
+	bool		accept_new = true; /* unless we find a superior old path */
+	List	   *p1_prev = NIL;
+	List	   *p1;
+
+	/*
+	 * Loop to check proposed new path against old paths.  Note it is
+	 * possible for more than one old path to be tossed out because
+	 * new_path dominates it.
+	 */
+	foreach(p1, parent_rel->pathlist)
+	{
+		Path	   *old_path = (Path *) lfirst(p1);
+		bool		remove_old = false;	/* unless new proves superior */
+
+		switch (compare_pathkeys(new_path->pathkeys, old_path->pathkeys))
 		{
-			Path	   *old_path = (Path *) lfirst(p2);
-			bool		remove_old = false;	/* unless new proves superior */
-
-			switch (compare_pathkeys(new_path->pathkeys, old_path->pathkeys))
-			{
-				case PATHKEYS_EQUAL:
-					if (new_path->path_cost < old_path->path_cost)
-						remove_old = true; /* new dominates old */
-					else
-						accept_new = false;	/* old equals or dominates new */
-					break;
-				case PATHKEYS_BETTER1:
-					if (new_path->path_cost <= old_path->path_cost)
-						remove_old = true; /* new dominates old */
-					break;
-				case PATHKEYS_BETTER2:
-					if (new_path->path_cost >= old_path->path_cost)
-						accept_new = false;	/* old dominates new */
-					break;
-				case PATHKEYS_DIFFERENT:
-					/* keep both paths, since they have different ordering */
-					break;
-			}
-
-			/*
-			 * Remove current element from old_list if dominated by new,
-			 * unless xfunc told us not to remove any paths.
-			 */
-			if (remove_old && parent_rel->pruneable)
-			{
-				if (p2_prev)
-					lnext(p2_prev) = lnext(p2);
+			case PATHKEYS_EQUAL:
+				if (new_path->path_cost < old_path->path_cost)
+					remove_old = true; /* new dominates old */
 				else
-					old_paths = lnext(p2);
-			}
-			else
-				p2_prev = p2;
-
-			/*
-			 * If we found an old path that dominates new_path, we can quit
-			 * scanning old_paths; we will not add new_path, and we assume
-			 * new_path cannot dominate any other elements of old_paths.
-			 */
-			if (! accept_new)
+					accept_new = false;	/* old equals or dominates new */
+				break;
+			case PATHKEYS_BETTER1:
+				if (new_path->path_cost <= old_path->path_cost)
+					remove_old = true; /* new dominates old */
+				break;
+			case PATHKEYS_BETTER2:
+				if (new_path->path_cost >= old_path->path_cost)
+					accept_new = false;	/* old dominates new */
+				break;
+			case PATHKEYS_DIFFERENT:
+				/* keep both paths, since they have different ordering */
 				break;
 		}
 
-		if (accept_new)
+		/*
+		 * Remove current element from pathlist if dominated by new,
+		 * unless xfunc told us not to remove any paths.
+		 */
+		if (remove_old && parent_rel->pruneable)
 		{
-			/* Accept the path.  Note that it will now be eligible to be
-			 * compared against the additional elements of new_paths...
-			 */
-			new_path->parent = parent_rel; /* not redundant, see prune.c */
-			old_paths = lcons(new_path, old_paths);
+			if (p1_prev)
+				lnext(p1_prev) = lnext(p1);
+			else
+				parent_rel->pathlist = lnext(p1);
 		}
+		else
+			p1_prev = p1;
+
+		/*
+		 * If we found an old path that dominates new_path, we can quit
+		 * scanning the pathlist; we will not add new_path, and we assume
+		 * new_path cannot dominate any other elements of the pathlist.
+		 */
+		if (! accept_new)
+			break;
 	}
 
-	return old_paths;
+	if (accept_new)
+	{
+		/* Accept the path */
+		parent_rel->pathlist = lcons(new_path, parent_rel->pathlist);
+	}
 }
 
 
@@ -271,6 +274,7 @@ create_tidscan_path(RelOptInfo *rel, List *tideval)
  * 'joinrel' is the join relation.
  * 'outer_path' is the outer path
  * 'inner_path' is the inner path
+ * 'restrict_clauses' are the RestrictInfo nodes to apply at the join
  * 'pathkeys' are the path keys of the new join path
  *
  * Returns the resulting path node.
@@ -280,6 +284,7 @@ NestPath   *
 create_nestloop_path(RelOptInfo *joinrel,
 					 Path *outer_path,
 					 Path *inner_path,
+					 List *restrict_clauses,
 					 List *pathkeys)
 {
 	NestPath   *pathnode = makeNode(NestPath);
@@ -288,6 +293,7 @@ create_nestloop_path(RelOptInfo *joinrel,
 	pathnode->path.parent = joinrel;
 	pathnode->outerjoinpath = outer_path;
 	pathnode->innerjoinpath = inner_path;
+	pathnode->joinrestrictinfo = restrict_clauses;
 	pathnode->path.pathkeys = pathkeys;
 
 	pathnode->path.path_cost = cost_nestloop(outer_path,
@@ -305,6 +311,7 @@ create_nestloop_path(RelOptInfo *joinrel,
  * 'joinrel' is the join relation
  * 'outer_path' is the outer path
  * 'inner_path' is the inner path
+ * 'restrict_clauses' are the RestrictInfo nodes to apply at the join
  * 'pathkeys' are the path keys of the new join path
  * 'mergeclauses' are the applicable join/restriction clauses
  * 'outersortkeys' are the sort varkeys for the outer relation
@@ -315,6 +322,7 @@ MergePath  *
 create_mergejoin_path(RelOptInfo *joinrel,
 					  Path *outer_path,
 					  Path *inner_path,
+					  List *restrict_clauses,
 					  List *pathkeys,
 					  List *mergeclauses,
 					  List *outersortkeys,
@@ -337,6 +345,7 @@ create_mergejoin_path(RelOptInfo *joinrel,
 	pathnode->jpath.path.parent = joinrel;
 	pathnode->jpath.outerjoinpath = outer_path;
 	pathnode->jpath.innerjoinpath = inner_path;
+	pathnode->jpath.joinrestrictinfo = restrict_clauses;
 	pathnode->jpath.path.pathkeys = pathkeys;
 	pathnode->path_mergeclauses = mergeclauses;
 	pathnode->outersortkeys = outersortkeys;
@@ -356,6 +365,7 @@ create_mergejoin_path(RelOptInfo *joinrel,
  * 'joinrel' is the join relation
  * 'outer_path' is the cheapest outer path
  * 'inner_path' is the cheapest inner path
+ * 'restrict_clauses' are the RestrictInfo nodes to apply at the join
  * 'hashclauses' is a list of the hash join clause (always a 1-element list)
  * 'innerdisbursion' is an estimate of the disbursion of the inner hash key
  *
@@ -364,6 +374,7 @@ HashPath *
 create_hashjoin_path(RelOptInfo *joinrel,
 					 Path *outer_path,
 					 Path *inner_path,
+					 List *restrict_clauses,
 					 List *hashclauses,
 					 Selectivity innerdisbursion)
 {
@@ -373,6 +384,7 @@ create_hashjoin_path(RelOptInfo *joinrel,
 	pathnode->jpath.path.parent = joinrel;
 	pathnode->jpath.outerjoinpath = outer_path;
 	pathnode->jpath.innerjoinpath = inner_path;
+	pathnode->jpath.joinrestrictinfo = restrict_clauses;
 	/* A hashjoin never has pathkeys, since its ordering is unpredictable */
 	pathnode->jpath.path.pathkeys = NIL;
 	pathnode->path_hashclauses = hashclauses;

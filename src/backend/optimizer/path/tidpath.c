@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/tidpath.c,v 1.3 2000/01/26 05:56:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/tidpath.c,v 1.4 2000/02/07 04:40:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,7 @@
 #include "utils/lsyscache.h"
 
 static List	*create_tidscan_joinpaths(RelOptInfo *);
-static List	*TidqualFromRestrictinfo(List *relids, List * restrictinfo);
+static List	*TidqualFromRestrictinfo(List *relids, List *restrictinfo);
 static bool	isEvaluable(int varno, Node *node);
 static Node	*TidequalClause(int varno, Expr *node);
 static List	*TidqualFromExpr(int varno, Expr *expr);
@@ -209,16 +209,17 @@ List *TidqualFromExpr(int varno, Expr *expr)
 	return rlst;
 } 
 
-static
-List *TidqualFromRestrictinfo(List *relids, List * restrictinfo)
+static List *
+TidqualFromRestrictinfo(List *relids, List *restrictinfo)
 {
 	List	*lst, *rlst = NIL;
 	int	varno;
 	Node	*node;
 	Expr	*expr;
 
-	if (length(relids)>1)	return NIL;
-	varno = (int)lfirst(relids);
+	if (length(relids) != 1)
+		return NIL;
+	varno = lfirsti(relids);
 	foreach (lst, restrictinfo)
 	{
 		node = lfirst(lst);
@@ -226,9 +227,7 @@ List *TidqualFromRestrictinfo(List *relids, List * restrictinfo)
 		expr = ((RestrictInfo *)node)->clause;
 		rlst = TidqualFromExpr(varno, expr);
 		if (rlst)
-		{
 			break;
-		}
 	}
 	return rlst;
 }
@@ -281,8 +280,9 @@ List *
 create_tidscan_paths(Query *root, RelOptInfo *rel)
 {
 	List	*rlst = NIL;
-	TidPath	*pathnode = (TidPath *)0;
-	List	*tideval = TidqualFromRestrictinfo(rel->relids, rel->restrictinfo);
+	TidPath	*pathnode = (TidPath *) NULL;
+	List	*tideval = TidqualFromRestrictinfo(rel->relids,
+											   rel->baserestrictinfo);
 	
 	if (tideval)
 		pathnode = create_tidscan_path(rel, tideval);

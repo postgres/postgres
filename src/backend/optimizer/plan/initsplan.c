@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.43 2000/01/26 05:56:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.44 2000/02/07 04:41:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -179,7 +179,8 @@ add_restrict_and_join_to_rel(Query *root, Node *clause)
 		 */
 		RelOptInfo *rel = get_base_rel(root, lfirsti(relids));
 
-		rel->restrictinfo = lcons(restrictinfo, rel->restrictinfo);
+		rel->baserestrictinfo = lcons(restrictinfo,
+									  rel->baserestrictinfo);
 	}
 	else
 	{

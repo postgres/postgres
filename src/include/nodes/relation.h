@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relation.h,v 1.42 2000/01/26 05:58:17 momjian Exp $
+ * $Id: relation.h,v 1.43 2000/02/07 04:41:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,13 +54,26 @@ typedef List *Relids;
  *	 * The presence of the remaining fields depends on the restrictions
  *		and joins that the relation participates in:
  *
- *		restrictinfo - List of RestrictInfo nodes, containing info about each
- *					 qualification clause in which this relation participates
+ *		baserestrictinfo - List of RestrictInfo nodes, containing info about
+ *					each qualification clause in which this relation
+ *					participates (only used for base rels)
  *		joininfo  - List of JoinInfo nodes, containing info about each join
  *					clause in which this relation participates
  *		innerjoin - List of Path nodes that represent indices that may be used
  *					as inner paths of nestloop joins. This field is non-null
  *					only for base rels, since join rels have no indices.
+ *
+ * Note: Keeping a restrictinfo list in the RelOptInfo is useful only for
+ * base rels, because for a join rel the set of clauses that are treated as
+ * restrict clauses varies depending on which sub-relations we choose to join.
+ * (For example, in a 3-base-rel join, a clause relating rels 1 and 2 must be
+ * treated as a restrictclause if we join {1} and {2 3} to make {1 2 3}; but
+ * if we join {1 2} and {3} then that clause will be a restrictclause in {1 2}
+ * and should not be processed again at the level of {1 2 3}.)  Therefore,
+ * the restrictinfo list in the join case appears in individual JoinPaths
+ * (field joinrestrictinfo), not in the parent relation.  But it's OK for
+ * the RelOptInfo to store the joininfo lists, because those are the same
+ * for a given rel no matter how we form it.
  */
 
 typedef struct RelOptInfo
@@ -86,7 +99,7 @@ typedef struct RelOptInfo
 	double		tuples;
 
 	/* used by various scans and joins: */
-	List	   *restrictinfo;	/* RestrictInfo structures */
+	List	   *baserestrictinfo; /* RestrictInfo structures (if base rel) */
 	List	   *joininfo;		/* JoinInfo structures */
 	List	   *innerjoin;		/* potential indexscans for nestloop joins */
 	/* innerjoin indexscans are not in the main pathlist because they are
@@ -235,6 +248,10 @@ typedef struct JoinPath
 
 	Path	   *outerjoinpath;	/* path for the outer side of the join */
 	Path	   *innerjoinpath;	/* path for the inner side of the join */
+	List	   *joinrestrictinfo; /* RestrictInfos to apply to join */
+	/* See the notes for RelOptInfo to understand why joinrestrictinfo is
+	 * needed in JoinPath, and can't be merged into the parent RelOptInfo.
+	 */
 } JoinPath;
 
 /*
@@ -289,18 +306,29 @@ typedef struct HashPath
  * without having to evaluate the rest.  The RestrictInfo node itself stores
  * data used by the optimizer while choosing the best query plan.
  *
- * A restriction clause will appear in the restrictinfo list of a RelOptInfo
- * that describes exactly the set of base relations referenced by the
- * restriction clause.  It is not possible to apply the clause at any lower
- * nesting level, and there is little point in delaying its evaluation to
- * higher nesting levels.  (The "predicate migration" code was once intended
- * to push restriction clauses up and down the plan tree, but it's dead code
- * and is unlikely to be resurrected in the foreseeable future.)
+ * If a restriction clause references a single base relation, it will appear
+ * in the baserestrictinfo list of the RelOptInfo for that base rel.
  *
- * If a restriction clause references more than one base rel, it will also
- * appear in the JoinInfo list of every RelOptInfo that describes a strict
+ * If a restriction clause references more than one base rel, it will
+ * appear in the JoinInfo lists of every RelOptInfo that describes a strict
  * subset of the base rels mentioned in the clause.  The JoinInfo lists are
  * used to drive join tree building by selecting plausible join candidates.
+ * The clause cannot actually be applied until we have built a join rel
+ * containing all the base rels it references, however.
+ *
+ * When we construct a join rel that describes exactly the set of base rels
+ * referenced in a multi-relation restriction clause, we place that clause
+ * into the joinrestrictinfo lists of paths for the join rel.  It will be
+ * applied at that join level, and will not propagate any further up the
+ * join tree.  (Note: the "predicate migration" code was once intended to
+ * push restriction clauses up and down the plan tree based on evaluation
+ * costs, but it's dead code and is unlikely to be resurrected in the
+ * foreseeable future.)
+ *
+ * Note that in the presence of more than two rels, a multi-rel restriction
+ * might reach different heights in the join tree depending on the join
+ * sequence we use.  So, these clauses cannot be associated directly with
+ * the join RelOptInfo, but must be kept track of on a per-join-path basis.
  *
  * In general, the referenced clause might be arbitrarily complex.  The
  * kinds of clauses we can handle as indexscan quals, mergejoin clauses,

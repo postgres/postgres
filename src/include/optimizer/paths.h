@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: paths.h,v 1.41 2000/02/06 03:27:35 tgl Exp $
+ * $Id: paths.h,v 1.42 2000/02/07 04:41:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,15 +27,15 @@
 extern bool enable_geqo;
 extern int	geqo_rels;
 
-extern RelOptInfo *make_one_rel(Query *root, List *rels);
+extern RelOptInfo *make_one_rel(Query *root);
 
 /*
  * indxpath.c
  *	  routines to generate index paths
  */
 extern List *create_index_paths(Query *root, RelOptInfo *rel, List *indices,
-				   List *restrictinfo_list,
-				   List *joininfo_list);
+								List *restrictinfo_list,
+								List *joininfo_list);
 extern Oid indexable_operator(Expr *clause, Oid opclass, Oid relam,
 							  bool indexkey_on_left);
 extern List *extract_or_indexqual_conditions(RelOptInfo *rel,
@@ -60,7 +60,22 @@ extern List *create_tidscan_paths(Query *root, RelOptInfo *rel);
  * joinpath.c
  *	   routines to create join paths
  */
-extern void update_rels_pathlist_for_joins(Query *root, List *joinrels);
+extern void add_paths_to_joinrel(Query *root, RelOptInfo *joinrel,
+								 RelOptInfo *outerrel,
+								 RelOptInfo *innerrel,
+								 List *restrictlist);
+
+/*
+ * joinrels.c
+ *	  routines to determine which relations to join
+ */
+extern void make_rels_by_joins(Query *root, int level);
+extern RelOptInfo *make_rels_by_clause_joins(Query *root,
+											 RelOptInfo *old_rel,
+											 List *other_rels);
+extern RelOptInfo *make_rels_by_clauseless_joins(Query *root,
+												 RelOptInfo *old_rel,
+												 List *other_rels);
 
 /*
  * pathkeys.c
@@ -89,23 +104,5 @@ extern List *find_mergeclauses_for_pathkeys(List *pathkeys,
 											List *restrictinfos);
 extern List *make_pathkeys_for_mergeclauses(List *mergeclauses,
 											List *tlist);
-
-/*
- * joinrels.c
- *	  routines to determine which relations to join
- */
-extern List *make_rels_by_joins(Query *root, List *old_rels);
-extern List *make_rels_by_clause_joins(Query *root, RelOptInfo *old_rel,
-						  List *joininfo_list, Relids only_relids);
-extern List *make_rels_by_clauseless_joins(RelOptInfo *old_rel,
-							  List *inner_rels);
-extern RelOptInfo *get_cheapest_complete_rel(List *join_rel_list);
-
-/*
- * prune.c
- */
-extern void merge_rels_with_same_relids(List *rel_list);
-extern void rels_set_cheapest(Query *root, List *rel_list);
-extern List *del_rels_all_bushy_inactive(List *old_rels);
 
 #endif	 /* PATHS_H */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.103 2000/01/27 18:11:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.104 2000/02/07 04:40:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -977,7 +977,7 @@ _copyRelOptInfo(RelOptInfo *from)
 	newnode->pages = from->pages;
 	newnode->tuples = from->tuples;
 
-	Node_Copy(from, newnode, restrictinfo);
+	Node_Copy(from, newnode, baserestrictinfo);
 	Node_Copy(from, newnode, joininfo);
 	Node_Copy(from, newnode, innerjoin);
 
@@ -1137,6 +1137,7 @@ CopyJoinPathFields(JoinPath *from, JoinPath *newnode)
 {
 	Node_Copy(from, newnode, outerjoinpath);
 	Node_Copy(from, newnode, innerjoinpath);
+	Node_Copy(from, newnode, joinrestrictinfo);
 }
 
 /* ----------------

@@ -1,6 +1,20 @@
 Summary
 -------
 
+These directories take the Query structure returned by the parser, and
+generate a plan used by the executor.  The /plan directory generates the
+actual output plan, the /path code generates all possible ways to join the
+tables, and /prep handles special cases like inheritance.  /util is utility
+stuff.  /geqo is the separate "genetic optimization" planner --- it does
+a semi-random search through the join tree space, rather than exhaustively
+considering all possible join trees.  (But each join considered by geqo
+is given to /path to create paths for, so we consider all possible
+implementation paths for each specific join even in GEQO mode.)
+
+
+Join Tree Construction
+----------------------
+
 The optimizer generates optimal query plans by doing a more-or-less
 exhaustive search through the ways of executing the query.  During
 the planning/optimizing process, we build "Path" trees representing
@@ -26,8 +40,17 @@ the WHERE clause "tab1.col1 = tab2.col1" generates a JoinInfo for tab1
 listing tab2 as an unjoined relation, and also one for tab2 showing tab1
 as an unjoined relation.
 
+If we have only a single base relation in the query, we are done here.
+Otherwise we have to figure out how to join the base relations into a
+single join relation.
+
 2) Consider joining each RelOptInfo to each other RelOptInfo specified in
 its RelOptInfo.joininfo, and generate a Path for each possible join method.
+(If we have a RelOptInfo with no join clauses, we have no choice but to
+generate a clauseless Cartesian-product join; so we consider joining that
+rel to each other available rel.  But in the presence of join clauses we
+will only consider joins that use available join clauses.)
+
 At this stage each input RelOptInfo is a single relation, so we are joining
 every relation to the other relations as joined in the WHERE clause.  We
 generate a new "join" RelOptInfo for each possible combination of two
@@ -53,9 +76,17 @@ that represent the scan methods used for the two input relations.
 3) If we only had two base relations, we are done: we just pick the
 cheapest path for the join RelOptInfo.  If we had more than two, we now
 need to consider ways of joining join RelOptInfos to each other to make
-join RelOptInfos that represent more than two base relations.  This process
-is repeated until we have finally built a RelOptInfo that represents all
-the base relations in the query.  Then we pick its cheapest Path.
+join RelOptInfos that represent more than two base relations.
+
+The join tree is constructed using a "dynamic programming" algorithm:
+in the first pass (already described) we consider ways to create join rels
+representing exactly two base relations.  The second pass considers ways
+to make join rels that represent exactly three base relations; the next pass,
+four relations, etc.  The last pass considers how to make the final join
+relation that includes all base rels --- obviously there can be only one
+join rel at this top level, whereas there can be more than one join rel
+at lower levels.  At each level we use joins that follow available join
+clauses, if possible, just as described for the first level.
 
 For example:
 
@@ -69,6 +100,7 @@ For example:
     {1 2},{2 3},{3 4}
     {1 2 3},{2 3 4}
     {1 2 3 4}
+    (other possibilities will be excluded for lack of join clauses)
 
     SELECT  *
     FROM    tab1, tab2, tab3, tab4
@@ -78,26 +110,27 @@ For example:
 
     Tables 1, 2, 3, and 4 are joined as:
     {1 2},{1 3},{1 4}
-    {1 2 3},{1 3 4},{1,2,4}
+    {1 2 3},{1 3 4},{1 2 4}
     {1 2 3 4}
 
-In the default left-handed joins, each RelOptInfo adds one
-single-relation RelOptInfo in each join pass, and the added RelOptInfo
-is always the inner relation in the join.  In right-handed joins, the
-added RelOptInfo is the outer relation in the join.  In bushy plans,
-multi-relation RelOptInfo's can be joined to other multi-relation
-RelOptInfo's. 
+We consider left-handed plans (the outer rel of an upper join is a joinrel,
+but the inner is always a base rel); right-handed plans (outer rel is always
+a base rel); and bushy plans (both inner and outer can be joins themselves).
+For example, when building {1 2 3 4} we consider joining {1 2 3} to {4}
+(left-handed), {4} to {1 2 3} (right-handed), and {1 2} to {3 4} (bushy),
+among other choices.  Although the jointree scanning code produces these
+potential join combinations one at a time, all the ways to produce the
+same set of joined base rels will share the same RelOptInfo, so the paths
+produced from different join combinations that produce equivalent joinrels
+will compete in add_pathlist.
+
+Once we have built the final join rel, we use either the cheapest path
+for it or the cheapest path with the desired ordering (if that's cheaper
+than applying a sort to the cheapest other path).
+
 
 Optimizer Functions
 -------------------
-
-These directories take the Query structure returned by the parser, and
-generate a plan used by the executor.  The /plan directory generates the
-actual output plan, the /path code generates all possible ways to join the
-tables, and /prep handles special cases like inheritance.  /util is utility
-stuff.  /geqo is the separate "genetic optimization" planner --- it does
-a semi-random search rather than exhaustively considering all possible
-join trees.
 
 planner()
  handle inheritance by processing separately
@@ -105,29 +138,15 @@ planner()
   preprocess target list
   preprocess qualifications(WHERE)
 --query_planner()
-   cnfify()
-    Summary:
-
-     Simple cases with all AND's are handled by removing the AND's:
-
-     convert:   a = 1 AND b = 2 AND c = 3
-     to:        a = 1, b = 2, c = 3
-
-     Qualifications with OR's are handled differently.  OR's inside AND
-     clauses are not modified drastically:
-
-     convert:   a = 1 AND b = 2 AND (c = 3 OR d = 4)
-     to:        a = 1, b = 2, c = 3 OR d = 4
-
-     OR's in the upper level are more complex to handle:
-
-     convert:   (a = 1 AND b = 2) OR c = 3
-     to:        (a = 1 OR c = 3) AND (b = 2 OR c = 3)
-     finally:   (a = 1 OR c = 3), (b = 2 OR c = 3)
-
-     These clauses all have to be true for a result to be returned,
-     so the optimizer can choose the most restrictive clauses.
-
+   simplify constant subexpressions
+   canonicalize_qual()
+     Attempt to reduce WHERE clause to either CNF or DNF canonical form.
+     CNF (top-level-AND) is preferred, since the optimizer can then use
+     any of the AND subclauses to filter tuples; but quals that are in
+     or close to DNF form will suffer exponential expansion if we try to
+     force them to CNF.  In pathological cases either transform may expand
+     the qual unreasonably; so we may have to leave it un-normalized,
+     thereby reducing the accuracy of selectivity estimates.
    pull out constants from target list
    get a target list that only contains column names, no expressions
    if none, then return
@@ -142,27 +161,20 @@ planner()
       find selectivity of columns used in joins
 -----make_one_rel_by_joins()
       jump to geqo if needed
-      again:
-       make_rels_by_joins():
-        for each joinrel:
-         make_rels_by_clause_joins()
-          for each rel's joininfo list:
-           if a join from the join clause adds only one relation, do the join
-         or make_rels_by_clauseless_joins()
-       update_rels_pathlist_for_joins()
-        generate nested,merge,hash join paths for new rel's created above
-       merge_rels_with_same_relids()
-        merge RelOptInfo paths that have the same relids because of joins
-       rels_set_cheapest()
-        set cheapest path
-       if all relations in one RelOptInfo, return
+      else call make_rels_by_joins() for each level of join tree needed
+      make_rels_by_joins():
+        For each joinrel of the prior level, do make_rels_by_clause_joins()
+        if it has join clauses, or make_rels_by_clauseless_joins() if not.
+        Also generate "bushy plan" joins between joinrels of lower levels.
+      Back at make_one_rel_by_joins(), apply set_cheapest() to extract the
+      cheapest path for each newly constructed joinrel.
+      Loop back if this wasn't the top join level.
    do group(GROUP)
    do aggregate
    put back constants
    re-flatten target list
  make unique(DISTINCT)
  make sort(ORDER BY)
-
 
 
 Optimizer Data Structures
@@ -174,13 +186,13 @@ RelOptInfo      - a relation or joined relations
  JoinInfo       - join clauses, including the relids needed for the join
 
  Path           - every way to generate a RelOptInfo(sequential,index,joins)
-  SeqScan	- a plain Path node with nodeTag = T_SeqScan
+  SeqScan       - a plain Path node with nodeTag = T_SeqScan
   IndexPath     - index scans
   NestPath      - nested-loop joins
   MergePath     - merge joins
   HashPath      - hash joins
 
- PathKeys	- a data structure representing the ordering of a path
+ PathKeys       - a data structure representing the ordering of a path
 
 The optimizer spends a good deal of its time worrying about the ordering
 of the tuples returned by a path.  The reason this is useful is that by
@@ -192,21 +204,19 @@ generated during the optimization process are marked with their sort order
 (to the extent that it is known) for possible use by a higher-level merge.
 
 It is also possible to avoid an explicit sort step to implement a user's
-ORDER BY clause if the final path has the right ordering already.
-Currently, this is not very well implemented: we avoid generating a
-redundant sort if the chosen path has the desired order, but we do not do
-anything to encourage the selection of such a path --- so we only avoid the
-sort if the path that would be chosen anyway (because it is cheapest
-without regard to its ordering) is properly sorted.  The path winnowing
-process needs to be aware of the desired output order and account for the
-cost of doing an explicit sort while it is choosing the best path.
+ORDER BY clause if the final path has the right ordering already, so the
+sort ordering is of interest even at the top level.  subplanner() will
+look for the cheapest path with a sort order matching the desired order,
+and will compare its cost to the cost of using the cheapest-overall path
+and doing an explicit sort.
 
 When we are generating paths for a particular RelOptInfo, we discard a path
 if it is more expensive than another known path that has the same or better
 sort order.  We will never discard a path that is the only known way to
-achieve a given sort order.  In this way, the next level up will have the
-maximum freedom to build mergejoins without sorting, since it can pick from
-any of the paths retained for its inputs.
+achieve a given sort order (without an explicit sort, that is).  In this
+way, the next level up will have the maximum freedom to build mergejoins
+without sorting, since it can pick from any of the paths retained for its
+inputs.
 
 See path/pathkeys.c for an explanation of the PathKeys data structure that
 represents what is known about the sort order of a particular Path.

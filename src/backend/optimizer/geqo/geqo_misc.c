@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_misc.c,v 1.26 2000/01/26 05:56:33 momjian Exp $
+ * $Id: geqo_misc.c,v 1.27 2000/02/07 04:40:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -188,7 +188,7 @@ geqo_print_path(Query *root, Path *path, int indent)
 				for (i = 0; i < indent + 1; i++)
 					printf("\t");
 				printf("   clauses=(");
-				geqo_print_joinclauses(root, path->parent->restrictinfo);
+				geqo_print_joinclauses(root, jp->joinrestrictinfo);
 				printf(")\n");
 
 				if (nodeTag(path) == T_MergePath)

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.57 2000/01/26 05:56:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.58 2000/02/07 04:40:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
 
+
 #ifdef GEQO
 bool		enable_geqo = true;
 #else
@@ -30,31 +31,28 @@ bool		enable_geqo = false;
 int			geqo_rels = GEQO_RELS;
 
 
-static void set_base_rel_pathlist(Query *root, List *rels);
-static RelOptInfo *make_one_rel_by_joins(Query *root, List *rels,
-					  int levels_needed);
+static void set_base_rel_pathlist(Query *root);
+static RelOptInfo *make_one_rel_by_joins(Query *root, int levels_needed);
 
 #ifdef OPTIMIZER_DEBUG
 static void debug_print_rel(Query *root, RelOptInfo *rel);
-
 #endif
+
 
 /*
  * make_one_rel
  *	  Finds all possible access paths for executing a query, returning a
- *	  single rel.
- *
- * 'rels' is the list of single relation entries appearing in the query
+ *	  single rel that represents the join of all base rels in the query.
  */
 RelOptInfo *
-make_one_rel(Query *root, List *rels)
+make_one_rel(Query *root)
 {
 	int			levels_needed;
 
 	/*
 	 * Set the number of join (not nesting) levels yet to be processed.
 	 */
-	levels_needed = length(rels);
+	levels_needed = length(root->base_rel_list);
 
 	if (levels_needed <= 0)
 		return NULL;
@@ -62,159 +60,162 @@ make_one_rel(Query *root, List *rels)
 	/*
 	 * Generate access paths for the base rels.
 	 */
-	set_base_rel_pathlist(root, rels);
+	set_base_rel_pathlist(root);
 
-	if (levels_needed <= 1)
+	if (levels_needed == 1)
 	{
 		/*
 		 * Single relation, no more processing is required.
 		 */
-		return lfirst(rels);
+		return (RelOptInfo *) lfirst(root->base_rel_list);
 	}
 	else
 	{
 		/*
 		 * Generate join tree.
 		 */
-		return make_one_rel_by_joins(root, rels, levels_needed);
+		return make_one_rel_by_joins(root, levels_needed);
 	}
 }
 
 /*
  * set_base_rel_pathlist
- *	  Finds all paths available for scanning each relation entry in
- *	  'rels'.  Sequential scan and any available indices are considered
- *	  if possible (indices are not considered for lower nesting levels).
- *	  All useful paths are attached to the relation's 'pathlist' field.
- *
- *	  MODIFIES: rels
+ *	  Finds all paths available for scanning each base-relation entry.
+ *	  Sequential scan and any available indices are considered.
+ *	  Each useful path is attached to its relation's 'pathlist' field.
  */
 static void
-set_base_rel_pathlist(Query *root, List *rels)
+set_base_rel_pathlist(Query *root)
 {
-	List	   *temp;
+	List	   *rellist;
 
-	foreach(temp, rels)
+	foreach(rellist, root->base_rel_list)
 	{
-		RelOptInfo *rel = (RelOptInfo *) lfirst(temp);
+		RelOptInfo *rel = (RelOptInfo *) lfirst(rellist);
 		List	   *indices = find_relation_indices(root, rel);
-		List	   *sequential_scan_list;
-		List	   *rel_index_scan_list;
-		List	   *or_index_scan_list;
-		List	   *tidscan_pathlist;
 
-		sequential_scan_list = lcons(create_seqscan_path(rel), NIL);
-		/* Tid Scan Pathlist add */
-		tidscan_pathlist = create_tidscan_paths(root, rel);
-		if (tidscan_pathlist)
-			sequential_scan_list = nconc(sequential_scan_list,
-										 tidscan_pathlist);
-		rel_index_scan_list = create_index_paths(root,
-												 rel,
-												 indices,
-												 rel->restrictinfo,
-												 rel->joininfo);
+		/* Mark rel with estimated output rows, width, etc */
+		set_baserel_size_estimates(root, rel);
+
+		/*
+		 * Generate paths and add them to the rel's pathlist.
+		 *
+		 * add_path/add_pathlist will discard any paths that are dominated
+		 * by another available path, keeping only those paths that are
+		 * superior along at least one dimension of cost or sortedness.
+		 */
+
+		/* Consider sequential scan */
+		add_path(rel, create_seqscan_path(rel));
+
+		/* Consider TID scans */
+		add_pathlist(rel, create_tidscan_paths(root, rel));
+
+		/* Consider index paths for both simple and OR index clauses */
+		add_pathlist(rel, create_index_paths(root,
+											 rel,
+											 indices,
+											 rel->baserestrictinfo,
+											 rel->joininfo));
 
 		/* Note: create_or_index_paths depends on create_index_paths
 		 * to have marked OR restriction clauses with relevant indices;
 		 * this is why it doesn't need to be given the full list of indices.
 		 */
-		or_index_scan_list = create_or_index_paths(root, rel,
-												   rel->restrictinfo);
+		add_pathlist(rel, create_or_index_paths(root, rel,
+												rel->baserestrictinfo));
 
-		/* add_pathlist will discard any paths that are dominated by
-		 * another available path, keeping only those paths that are
-		 * superior along at least one dimension of cost or sortedness.
-		 */
-		rel->pathlist = add_pathlist(rel,
-									 sequential_scan_list,
-									 nconc(rel_index_scan_list,
-										   or_index_scan_list));
-
-		/* Now find the cheapest of the paths */
+		/* Now find the cheapest of the paths for this rel */
 		set_cheapest(rel, rel->pathlist);
-		/* Mark rel with estimated output rows and width */
-		set_rel_rows_width(root, rel);
 	}
 }
 
 /*
  * make_one_rel_by_joins
  *	  Find all possible joinpaths for a query by successively finding ways
- *	  to join single relations into join relations.
+ *	  to join component relations into join relations.
  *
- *	  Find all possible joinpaths(bushy trees) for a query by systematically
- *	  finding ways to join relations(both original and derived) together.
- *
- * 'rels' is the current list of relations for which join paths
- *				are to be found, i.e., the current list of relations that
- *				have already been derived.
- * 'levels_needed' is the number of iterations needed
+ * 'levels_needed' is the number of iterations needed, ie, the number of
+ *		base relations present in the query
  *
  * Returns the final level of join relations, i.e., the relation that is
  * the result of joining all the original relations together.
  */
 static RelOptInfo *
-make_one_rel_by_joins(Query *root, List *rels, int levels_needed)
+make_one_rel_by_joins(Query *root, int levels_needed)
 {
-	List	   *x;
-	List	   *joined_rels = NIL;
+	int			lev;
 	RelOptInfo *rel;
 
 	/*******************************************
 	 * genetic query optimizer entry point	   *
 	 *	  <utesch@aut.tu-freiberg.de>		   *
-	 *******************************************/
-	if (enable_geqo && length(root->base_rel_list) >= geqo_rels)
-		return geqo(root);
-
-	/*******************************************
 	 * rest will be skipped in case of GEQO    *
 	 *******************************************/
+	if (enable_geqo && levels_needed >= geqo_rels)
+		return geqo(root);
 
-	while (--levels_needed)
+	/*
+	 * We employ a simple "dynamic programming" algorithm: we first
+	 * find all ways to build joins of two base relations, then all ways
+	 * to build joins of three base relations (from two-base-rel joins
+	 * and other base rels), then four-base-rel joins, and so on until
+	 * we have considered all ways to join all N relations into one rel.
+	 */
+
+	for (lev = 2; lev <= levels_needed; lev++)
 	{
+		List	   *first_old_rel = root->join_rel_list;
+		List	   *x;
 
 		/*
 		 * Determine all possible pairs of relations to be joined at this
-		 * level.  Determine paths for joining these relation pairs and
-		 * modify 'joined_rels' accordingly, then eliminate redundant join
-		 * relations.
+		 * level, and build paths for making each one from every available
+		 * pair of lower-level relations.  Results are prepended to
+		 * root->join_rel_list.
 		 */
-		joined_rels = make_rels_by_joins(root, rels);
-
-		update_rels_pathlist_for_joins(root, joined_rels);
-
-		merge_rels_with_same_relids(joined_rels);
-
-		root->join_rel_list = rels = joined_rels;
-
-#ifdef NOT_USED
+		make_rels_by_joins(root, lev);
 
 		/*
-		 * * for each expensive predicate in each path in each distinct
-		 * rel, * consider doing pullup  -- JMH
+		 * The relations created at the current level will appear at the
+		 * front of root->join_rel_list.
 		 */
-		if (XfuncMode != XFUNC_NOPULL && XfuncMode != XFUNC_OFF)
-			foreach(x, joined_rels)
-				xfunc_trypullup((RelOptInfo *) lfirst(x));
-#endif
-
-		rels_set_cheapest(root, joined_rels);
-
-		foreach(x, joined_rels)
+		foreach(x, root->join_rel_list)
 		{
+			if (x == first_old_rel)
+				break;			/* no more rels added at this level */
+
 			rel = (RelOptInfo *) lfirst(x);
 
+#ifdef NOT_USED
+			/*
+			 * * for each expensive predicate in each path in each distinct
+			 * rel, * consider doing pullup  -- JMH
+			 */
+			if (XfuncMode != XFUNC_NOPULL && XfuncMode != XFUNC_OFF)
+				xfunc_trypullup(rel);
+#endif
+
+			/* Find and save the cheapest path for this rel */
+			set_cheapest(rel, rel->pathlist);
+
 #ifdef OPTIMIZER_DEBUG
-			printf("levels left: %d\n", levels_needed);
 			debug_print_rel(root, rel);
 #endif
 		}
-
 	}
 
-	return get_cheapest_complete_rel(rels);
+	/*
+	 * Now, the front of the join_rel_list should be the single rel
+	 * representing the join of all the base rels.
+	 */
+	Assert(length(root->join_rel_list) > 0);
+	rel = (RelOptInfo *) lfirst(root->join_rel_list);
+	Assert(length(rel->relids) == levels_needed);
+	Assert(length(root->join_rel_list) == 1 ||
+		   length(((RelOptInfo *) lsecond(root->join_rel_list))->relids) < levels_needed);
+
+	return rel;
 }
 
 /*****************************************************************************
@@ -222,6 +223,7 @@ make_one_rel_by_joins(Query *root, List *rels, int levels_needed)
  *****************************************************************************/
 
 #ifdef OPTIMIZER_DEBUG
+
 static void
 print_joinclauses(Query *root, List *clauses)
 {
@@ -286,7 +288,7 @@ print_path(Query *root, Path *path, int indent)
 				for (i = 0; i < indent + 1; i++)
 					printf("\t");
 				printf("   clauses=(");
-				print_joinclauses(root, jp->path.parent->restrictinfo);
+				print_joinclauses(root, jp->joinrestrictinfo);
 				printf(")\n");
 
 				if (nodeTag(path) == T_MergePath)

@@ -8,22 +8,11 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.42 2000/02/06 03:27:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.43 2000/02/07 04:40:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
-
-#ifdef HAVE_LIMITS_H
-#include <limits.h>
-#ifndef MAXINT
-#define MAXINT		  INT_MAX
-#endif
-#else
-#ifdef HAVE_VALUES_H
-#include <values.h>
-#endif
-#endif
 
 #include "optimizer/cost.h"
 #include "optimizer/joininfo.h"
@@ -31,376 +20,251 @@
 #include "optimizer/paths.h"
 #include "optimizer/tlist.h"
 
-static RelOptInfo *make_join_rel(RelOptInfo *outer_rel, RelOptInfo *inner_rel);
-static List *new_join_tlist(List *tlist, int first_resdomno);
-static void build_joinrel_restrict_and_join(RelOptInfo *joinrel,
-											List *joininfo_list,
-											Relids join_relids);
+
+static RelOptInfo *make_join_rel(Query *root, RelOptInfo *rel1,
+								 RelOptInfo *rel2);
+
 
 /*
  * make_rels_by_joins
- *	  Find all possible joins for each of the outer join relations in
- *	  'old_rels'.  A rel node is created for each possible join relation,
- *	  and the resulting list of nodes is returned.	If at all possible, only
- *	  those relations for which join clauses exist are considered.	If none
- *	  of these exist for a given relation, all remaining possibilities are
- *	  considered.
+ *	  Consider ways to produce join relations containing exactly 'level'
+ *	  base relations.  (This is one step of the dynamic-programming method
+ *	  embodied in make_one_rel_by_joins.)  Join rel nodes for each feasible
+ *	  combination of base rels are created and added to the front of the
+ *	  query's join_rel_list.  Implementation paths are created for each
+ *	  such joinrel, too.
  *
- * Returns a list of rel nodes corresponding to the new join relations.
+ * Returns nothing, but adds entries to root->join_rel_list.
  */
-List *
-make_rels_by_joins(Query *root, List *old_rels)
+void
+make_rels_by_joins(Query *root, int level)
 {
-	List	   *join_list = NIL;
 	List	   *r;
 
-	foreach(r, old_rels)
+	/*
+	 * First, consider left-sided and right-sided plans, in which rels of
+	 * exactly level-1 member relations are joined against base relations.
+	 * We prefer to join using join clauses, but if we find a rel of level-1
+	 * members that has no join clauses, we will generate Cartesian-product
+	 * joins against all base rels not already contained in it.
+	 *
+	 * In the first pass (level == 2), we try to join each base rel to each
+	 * base rel that appears later in base_rel_list.  (The mirror-image
+	 * joins are handled automatically by make_join_rel.)  In later passes,
+	 * we try to join rels of size level-1 from join_rel_list to each
+	 * base rel in base_rel_list.
+	 *
+	 * We assume that the rels already present in join_rel_list appear in
+	 * decreasing order of level (number of members).  This should be true
+	 * since we always add new higher-level rels to the front of the list.
+	 */
+	if (level == 2)
+		r = root->base_rel_list;	/* level-1 is base rels */
+	else
+		r = root->join_rel_list;
+	for (; r != NIL; r = lnext(r))
 	{
 		RelOptInfo *old_rel = (RelOptInfo *) lfirst(r);
-		List	   *joined_rels;
+		int			old_level = length(old_rel->relids);
+		List	   *other_rels;
 
-		if (!(joined_rels = make_rels_by_clause_joins(root, old_rel,
-													  old_rel->joininfo,
-													  NIL)))
+		if (old_level != level-1)
+			break;
+
+		if (level == 2)
+			other_rels = lnext(r); /* only consider remaining base rels */
+		else
+			other_rels = root->base_rel_list; /* consider all base rels */
+
+		if (old_rel->joininfo != NIL)
+		{
+			/*
+			 * Note that if all available join clauses for this rel require
+			 * more than one other rel, we will fail to make any joins against
+			 * it here.  That's OK; it'll be considered by "bushy plan" join
+			 * code in a higher-level pass.
+			 */
+			make_rels_by_clause_joins(root,
+									  old_rel,
+									  other_rels);
+		}
+		else
 		{
 			/*
 			 * Oops, we have a relation that is not joined to any other
 			 * relation.  Cartesian product time.
 			 */
-			joined_rels = make_rels_by_clauseless_joins(old_rel,
-													root->base_rel_list);
-			joined_rels = nconc(joined_rels,
-								make_rels_by_clauseless_joins(old_rel,
-															  old_rels));
+			make_rels_by_clauseless_joins(root,
+										  old_rel,
+										  other_rels);
 		}
-
-		join_list = nconc(join_list, joined_rels);
 	}
 
-	return join_list;
-}
-
-/*
- * make_rels_by_clause_joins
- *	  Build joins between an outer relation 'old_rel' and relations
- *	  within old_rel's joininfo nodes
- *	  (i.e., relations that participate in join clauses that 'old_rel'
- *	  also participates in).
- *
- * 'old_rel' is the relation entry for the outer relation
- * 'joininfo_list' is a list of join clauses which 'old_rel'
- *		participates in
- * 'only_relids': if not NIL, only joins against base rels mentioned in
- *		only_relids are allowable.
- *
- * Returns a list of new join relations.
- */
-List *
-make_rels_by_clause_joins(Query *root, RelOptInfo *old_rel,
-						  List *joininfo_list, Relids only_relids)
-{
-	List	   *join_list = NIL;
-	List	   *i;
-
-	foreach(i, joininfo_list)
+	/*
+	 * Now, consider "bushy plans" in which relations of k base rels are
+	 * joined to relations of level-k base rels, for 2 <= k <= level-2.
+	 * The previous loop left r pointing to the first rel of level level-2.
+	 *
+	 * We only consider bushy-plan joins for pairs of rels where there is
+	 * a suitable join clause, in order to avoid unreasonable growth of
+	 * planning time.
+	 */
+	for (; r != NIL; r = lnext(r))
 	{
-		JoinInfo   *joininfo = (JoinInfo *) lfirst(i);
-		Relids		unjoined_relids = joininfo->unjoined_relids;
-		RelOptInfo *joined_rel;
+		RelOptInfo *old_rel = (RelOptInfo *) lfirst(r);
+		int			old_level = length(old_rel->relids);
+		List	   *r2;
 
-		if (unjoined_relids == NIL)
-			continue;			/* probably can't happen */
+		/* We can quit once past the halfway point (make_join_rel took care
+		 * of making the opposite-direction joins)
+		 */
+		if (old_level * 2 < level)
+			break;
 
-		if (length(unjoined_relids) == 1 &&
-			(only_relids == NIL ||
-			 /* geqo only wants certain relids to be joined to old_rel */
-			 intMember(lfirsti(unjoined_relids), only_relids)))
+		if (old_rel->joininfo == NIL)
+			continue;			/* we ignore clauseless joins here */
+
+		foreach(r2, lnext(r))
 		{
-			RelOptInfo   *base_rel = get_base_rel(root,
-												  lfirsti(unjoined_relids));
+			RelOptInfo *new_rel = (RelOptInfo *) lfirst(r2);
+			int			new_level = length(new_rel->relids);
 
-			/* Left-sided join of outer rel against a single base rel */
-			joined_rel = make_join_rel(old_rel, base_rel);
-			join_list = lappend(join_list, joined_rel);
-
-			/* Consider right-sided plan as well */
-			if (length(old_rel->relids) > 1)
+			if (old_level + new_level > level)
+				continue;		/* scan down to new_rels of right size */
+			if (old_level + new_level < level)
+				break;			/* no more new_rels of right size */
+			if (nonoverlap_setsi(old_rel->relids, new_rel->relids))
 			{
-				joined_rel = make_join_rel(base_rel, old_rel);
-				join_list = lappend(join_list, joined_rel);
-			}
-		}
+				List	   *i;
 
-		if (only_relids == NIL)	/* no bushy plans for geqo */
-		{
-			List	   *r;
-
-			/* Build "bushy" plans: join old_rel against all pre-existing
-			 * joins of rels it doesn't already contain, if there is a
-			 * suitable join clause.
-			 */
-			foreach(r, root->join_rel_list)
-			{
-				RelOptInfo *join_rel = lfirst(r);
-
-				Assert(length(join_rel->relids) > 1);
-				if (is_subseti(unjoined_relids, join_rel->relids) &&
-					nonoverlap_setsi(old_rel->relids, join_rel->relids))
+				/* OK, we can build a rel of the right level from this pair of
+				 * rels.  Do so if there is at least one usable join clause.
+				 */
+				foreach(i, old_rel->joininfo)
 				{
-					joined_rel = make_join_rel(old_rel, join_rel);
-					join_list = lappend(join_list, joined_rel);
+					JoinInfo   *joininfo = (JoinInfo *) lfirst(i);
+
+					if (is_subseti(joininfo->unjoined_relids, new_rel->relids))
+					{
+						make_join_rel(root, old_rel, new_rel);
+						break;
+					}
 				}
 			}
 		}
 	}
+}
 
-	return join_list;
+/*
+ * make_rels_by_clause_joins
+ *	  Build joins between the given relation 'old_rel' and other relations
+ *	  that are mentioned within old_rel's joininfo nodes (i.e., relations
+ *	  that participate in join clauses that 'old_rel' also participates in).
+ *	  The join rel nodes are added to root->join_rel_list.
+ *
+ * 'old_rel' is the relation entry for the relation to be joined
+ * 'other_rels': other rels to be considered for joining
+ *
+ * Currently, this is only used with base rels in other_rels, but it would
+ * work for joining to joinrels too, if the caller ensures there is no
+ * membership overlap between old_rel and the rels in other_rels.  (We need
+ * no extra test for overlap for base rels, since the is_subset test can
+ * only succeed when other_rel is not already part of old_rel.)
+ *
+ * Returns NULL if no suitable joins were found, else the last suitable
+ * joinrel processed.  (The only caller who checks the return value is
+ * geqo_eval.c, and it sets things up so there can be no more than one
+ * "suitable" joinrel; so we don't bother with returning a list.)
+ */
+RelOptInfo *
+make_rels_by_clause_joins(Query *root,
+						  RelOptInfo *old_rel,
+						  List *other_rels)
+{
+	RelOptInfo *result = NULL;
+	List	   *i,
+			   *j;
+
+	foreach(i, old_rel->joininfo)
+	{
+		JoinInfo   *joininfo = (JoinInfo *) lfirst(i);
+		Relids		unjoined_relids = joininfo->unjoined_relids;
+
+		foreach(j, other_rels)
+		{
+			RelOptInfo   *other_rel = (RelOptInfo *) lfirst(j);
+
+			if (is_subseti(unjoined_relids, other_rel->relids))
+				result = make_join_rel(root, old_rel, other_rel);
+		}
+	}
+
+	return result;
 }
 
 /*
  * make_rels_by_clauseless_joins
- *	  Given an outer relation 'old_rel' and a list of inner relations
- *	  'inner_rels', create a join relation between 'old_rel' and each
- *	  member of 'inner_rels' that isn't already included in 'old_rel'.
+ *	  Given a relation 'old_rel' and a list of other relations
+ *	  'other_rels', create a join relation between 'old_rel' and each
+ *	  member of 'other_rels' that isn't already included in 'old_rel'.
  *
- * Returns a list of new join relations.
+ * 'old_rel' is the relation entry for the relation to be joined
+ * 'other_rels': other rels to be considered for joining
+ *
+ * Currently, this is only used with base rels in other_rels, but it would
+ * work for joining to joinrels too.
+ *
+ * Returns NULL if no suitable joins were found, else the last suitable
+ * joinrel processed.  (The only caller who checks the return value is
+ * geqo_eval.c, and it sets things up so there can be no more than one
+ * "suitable" joinrel; so we don't bother with returning a list.)
  */
-List *
-make_rels_by_clauseless_joins(RelOptInfo *old_rel, List *inner_rels)
+RelOptInfo *
+make_rels_by_clauseless_joins(Query *root,
+							  RelOptInfo *old_rel,
+							  List *other_rels)
 {
-	List	   *join_list = NIL;
+	RelOptInfo *result = NULL;
 	List	   *i;
 
-	foreach(i, inner_rels)
+	foreach(i, other_rels)
 	{
-		RelOptInfo *inner_rel = (RelOptInfo *) lfirst(i);
+		RelOptInfo *other_rel = (RelOptInfo *) lfirst(i);
 
-		if (nonoverlap_setsi(inner_rel->relids, old_rel->relids))
-		{
-			join_list = lappend(join_list,
-								make_join_rel(old_rel, inner_rel));
-		}
+		if (nonoverlap_setsi(other_rel->relids, old_rel->relids))
+			result = make_join_rel(root, old_rel, other_rel);
 	}
 
-	return join_list;
+	return result;
 }
+
 
 /*
  * make_join_rel
- *	  Creates and initializes a new join relation.
- *
- * 'outer_rel' and 'inner_rel' are relation nodes for the relations to be
- *		joined
- *
- * Returns the new join relation node.
+ *	   Find or create a join RelOptInfo that represents the join of
+ *	   the two given rels, and add to it path information for paths
+ *	   created with the two rels as outer and inner rel.
+ *	   (The join rel may already contain paths generated from other
+ *	   pairs of rels that add up to the same set of base rels.)
+ *	   The join rel is stored in the query's join_rel_list.
  */
 static RelOptInfo *
-make_join_rel(RelOptInfo *outer_rel, RelOptInfo *inner_rel)
+make_join_rel(Query *root, RelOptInfo *rel1, RelOptInfo *rel2)
 {
-	RelOptInfo *joinrel = makeNode(RelOptInfo);
-	List	   *new_outer_tlist;
-	List	   *new_inner_tlist;
+	RelOptInfo	   *joinrel;
+	List		   *restrictlist;
 
 	/*
-	 * This function uses a trick to pass inner/outer rels as two sublists.
-	 * The list will be flattened out in update_rels_pathlist_for_joins().
+	 * Find or build the join RelOptInfo, and compute the restrictlist
+	 * that goes with this particular joining.
 	 */
-	joinrel->relids = lcons(outer_rel->relids, lcons(inner_rel->relids, NIL));
-	joinrel->rows = 0;
-	joinrel->width = 0;
-	joinrel->targetlist = NIL;
-	joinrel->pathlist = NIL;
-	joinrel->cheapestpath = (Path *) NULL;
-	joinrel->pruneable = true;
-	joinrel->indexed = false;
-	joinrel->pages = 0;
-	joinrel->tuples = 0;
-	joinrel->restrictinfo = NIL;
-	joinrel->joininfo = NIL;
-	joinrel->innerjoin = NIL;
+	joinrel = get_join_rel(root, rel1, rel2, &restrictlist);
 
 	/*
-	 * Create a new tlist by removing irrelevant elements from both tlists
-	 * of the outer and inner join relations and then merging the results
-	 * together.
+	 * We consider paths using each rel as both outer and inner.
 	 */
-	new_outer_tlist = new_join_tlist(outer_rel->targetlist, 1);
-	new_inner_tlist = new_join_tlist(inner_rel->targetlist,
-									 length(new_outer_tlist) + 1);
-	joinrel->targetlist = nconc(new_outer_tlist, new_inner_tlist);
-
-	/*
-	 * Construct restrict and join clause lists for the new joinrel.
-	 *
-	 * nconc(listCopy(x), y) is an idiom for making a new list without
-	 * changing either input list.
-	 */
-	build_joinrel_restrict_and_join(joinrel,
-									nconc(listCopy(outer_rel->joininfo),
-										  inner_rel->joininfo),
-									nconc(listCopy(outer_rel->relids),
-										  inner_rel->relids));
+	add_paths_to_joinrel(root, joinrel, rel1, rel2, restrictlist);
+	add_paths_to_joinrel(root, joinrel, rel2, rel1, restrictlist);
 
 	return joinrel;
-}
-
-/*
- * new_join_tlist
- *	  Builds a join relation's target list by keeping those elements that
- *	  will be in the final target list and any other elements that are still
- *	  needed for future joins.	For a target list entry to still be needed
- *	  for future joins, its 'joinlist' field must not be empty after removal
- *	  of all relids in 'other_relids'.
- *
- *	  XXX this seems to be a dead test --- we don't keep track of joinlists
- *	  for individual targetlist entries anymore, if we ever did...
- *
- * 'tlist' is the target list of one of the join relations
- * 'other_relids' is a list of relids contained within the other
- *				join relation
- * 'first_resdomno' is the resdom number to use for the first created
- *				target list entry
- *
- * Returns the new target list.
- */
-static List *
-new_join_tlist(List *tlist,
-			   int first_resdomno)
-{
-	int			resdomno = first_resdomno - 1;
-	List	   *t_list = NIL;
-	List	   *i;
-	List	   *join_list = NIL;
-
-	foreach(i, tlist)
-	{
-		TargetEntry *xtl = lfirst(i);
-		bool		in_final_tlist;
-
-		/*
-		 * XXX surely this is wrong?  join_list is never changed?  tgl
-		 * 2/99
-		 */
-		in_final_tlist = (join_list == NIL);
-		if (in_final_tlist)
-		{
-			resdomno += 1;
-			t_list = lappend(t_list,
-							 create_tl_element(get_expr(xtl), resdomno));
-		}
-	}
-
-	return t_list;
-}
-
-/*
- * build_joinrel_restrict_and_join
- *	  Builds a join relation's restrictinfo and joininfo lists from the
- *	  joininfo lists of the relations it joins.  If a join clause from an
- *	  input relation refers to base rels still not present in the joinrel,
- *	  then it is still a join clause for the joinrel; we put it into an
- *	  appropriate JoinInfo list for the joinrel.  Otherwise, the clause is
- *	  now a restrict clause for the joined relation, and we put it into
- *	  the joinrel's restrictinfo list.  (It will not need to be considered
- *	  further up the join tree.)
- *
- * 'joininfo_list' is a list of joininfo nodes from the relations being joined
- * 'join_relids' is a list of all base relids in the new join relation
- *
- * NB: Formerly, we made deep(!) copies of each input RestrictInfo to pass
- * up to the join relation.  I believe this is no longer necessary, because
- * RestrictInfo nodes are no longer context-dependent.  Instead, just add
- * the original nodes to the lists belonging to the join relation.
- */
-static void
-build_joinrel_restrict_and_join(RelOptInfo *joinrel,
-								List *joininfo_list,
-								Relids join_relids)
-{
-	List	   *xjoininfo;
-
-	foreach(xjoininfo, joininfo_list)
-	{
-		JoinInfo   *joininfo = (JoinInfo *) lfirst(xjoininfo);
-		Relids		new_unjoined_relids;
-
-		new_unjoined_relids = set_differencei(joininfo->unjoined_relids,
-											  join_relids);
-		if (new_unjoined_relids == NIL)
-		{
-			/*
-			 * Clauses in this JoinInfo list become restriction clauses
-			 * for the joinrel, since they refer to no outside rels.
-			 *
-			 * Be careful to eliminate duplicates, since we will see the
-			 * same clauses arriving from both input relations...
-			 */
-			joinrel->restrictinfo =
-				LispUnion(joinrel->restrictinfo,
-						  joininfo->jinfo_restrictinfo);
-		}
-		else
-		{
-			/*
-			 * These clauses are still join clauses at this level,
-			 * so find or make the appropriate JoinInfo item for the joinrel,
-			 * and add the clauses to it (eliminating duplicates).
-			 */
-			JoinInfo   *new_joininfo;
-
-			new_joininfo = find_joininfo_node(joinrel, new_unjoined_relids);
-			new_joininfo->jinfo_restrictinfo =
-				LispUnion(new_joininfo->jinfo_restrictinfo,
-						  joininfo->jinfo_restrictinfo);
-		}
-	}
-}
-
-/*
- * get_cheapest_complete_rel
- *	   Find the join relation that includes all the original
- *	   relations, i.e. the final join result.
- *
- * 'join_rel_list' is a list of join relations.
- *
- * Returns the list of final join relations.
- */
-RelOptInfo *
-get_cheapest_complete_rel(List *join_rel_list)
-{
-	RelOptInfo *final_rel = NULL;
-	List	   *xrel;
-
-	/*
-	 * find the relations that have no further joins, i.e., its joininfos
-	 * all have unjoined_relids nil.  (Actually, a JoinInfo shouldn't
-	 * ever have nil unjoined_relids, so I think this code is overly
-	 * complex.  In fact it seems wrong; shouldn't we be looking for
-	 * rels with complete relids lists???  Seems like a cartesian-product
-	 * case could fail because sub-relations could have nil JoinInfo lists.
-	 * Doesn't actually fail but I don't really understand why...)
-	 */
-	foreach(xrel, join_rel_list)
-	{
-		RelOptInfo *rel = (RelOptInfo *) lfirst(xrel);
-		bool		final = true;
-		List	   *xjoininfo;
-
-		foreach(xjoininfo, rel->joininfo)
-		{
-			JoinInfo   *joininfo = (JoinInfo *) lfirst(xjoininfo);
-
-			if (joininfo->unjoined_relids != NIL)
-			{
-				final = false;
-				break;
-			}
-		}
-		if (final)
-			if (final_rel == NULL ||
-			 path_is_cheaper(rel->cheapestpath, final_rel->cheapestpath))
-				final_rel = rel;
-	}
-
-	return final_rel;
 }

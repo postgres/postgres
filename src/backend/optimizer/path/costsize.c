@@ -19,7 +19,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.50 2000/01/26 05:56:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.51 2000/02/07 04:40:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -447,22 +447,26 @@ cost_hashjoin(Path *outer_path,
 }
 
 /*
- * set_rel_rows_width
- *		Set the 'rows' and 'width' estimates for the given base relation.
+ * set_baserel_size_estimates
+ *		Set the size estimates for the given base relation.
  *
- * 'rows' is the estimated number of output tuples (after applying
- * restriction clauses).
- * 'width' is the estimated average output tuple width in bytes.
+ * The rel's targetlist and restrictinfo list must have been constructed
+ * already.
+ *
+ * We set the following fields of the rel node:
+ *	rows: the estimated number of output tuples (after applying
+ *	      restriction clauses).
+ *	width: the estimated average output tuple width in bytes.
  */
 void
-set_rel_rows_width(Query *root, RelOptInfo *rel)
+set_baserel_size_estimates(Query *root, RelOptInfo *rel)
 {
 	/* Should only be applied to base relations */
 	Assert(length(rel->relids) == 1);
 
 	rel->rows = rel->tuples *
 		restrictlist_selectivity(root,
-								 rel->restrictinfo,
+								 rel->baserestrictinfo,
 								 lfirsti(rel->relids));
 	Assert(rel->rows >= 0);
 
@@ -470,28 +474,56 @@ set_rel_rows_width(Query *root, RelOptInfo *rel)
 }
 
 /*
- * set_joinrel_rows_width
- *		Set the 'rows' and 'width' estimates for the given join relation.
+ * set_joinrel_size_estimates
+ *		Set the size estimates for the given join relation.
+ *
+ * The rel's targetlist must have been constructed already, and a
+ * restriction clause list that matches the given component rels must
+ * be provided.
+ *
+ * Since there is more than one way to make a joinrel for more than two
+ * base relations, the results we get here could depend on which component
+ * rel pair is provided.  In theory we should get the same answers no matter
+ * which pair is provided; in practice, since the selectivity estimation
+ * routines don't handle all cases equally well, we might not.  But there's
+ * not much to be done about it.  (Would it make sense to repeat the
+ * calculations for each pair of input rels that's encountered, and somehow
+ * average the results?  Probably way more trouble than it's worth.)
+ *
+ * We set the same relnode fields as set_baserel_size_estimates() does.
  */
 void
-set_joinrel_rows_width(Query *root, RelOptInfo *rel,
-					   JoinPath *joinpath)
+set_joinrel_size_estimates(Query *root, RelOptInfo *rel,
+						   RelOptInfo *outer_rel,
+						   RelOptInfo *inner_rel,
+						   List *restrictlist)
 {
 	double		temp;
 
 	/* cartesian product */
-	temp = joinpath->outerjoinpath->parent->rows *
-		joinpath->innerjoinpath->parent->rows;
+	temp = outer_rel->rows * inner_rel->rows;
 
-	/* apply join restrictivity */
+	/*
+	 * Apply join restrictivity.  Note that we are only considering clauses
+	 * that become restriction clauses at this join level; we are not
+	 * double-counting them because they were not considered in estimating
+	 * the sizes of the component rels.
+	 */
 	temp *= restrictlist_selectivity(root,
-									 joinpath->path.parent->restrictinfo,
+									 restrictlist,
 									 0);
 
 	Assert(temp >= 0);
 	rel->rows = temp;
 
-	set_rel_width(root, rel);
+	/*
+	 * We could apply set_rel_width() to compute the output tuple width
+	 * from scratch, but at present it's always just the sum of the input
+	 * widths, so why work harder than necessary?  If relnode.c is ever
+	 * taught to remove unneeded columns from join targetlists, go back
+	 * to using set_rel_width here.
+	 */
+	rel->width = outer_rel->width + inner_rel->width;
 }
 
 /*
@@ -516,6 +548,7 @@ set_rel_width(Query *root, RelOptInfo *rel)
  *
  *	  If a field is variable-length, we make a default assumption.  Would be
  *	  better if VACUUM recorded some stats about the average field width...
+ *	  also, we have access to the atttypmod, but fail to use it...
  */
 static int
 compute_attribute_width(TargetEntry *tlistentry)

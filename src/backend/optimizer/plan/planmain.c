@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.50 2000/01/26 05:56:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.51 2000/02/07 04:41:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -219,7 +219,7 @@ subplanner(Query *root,
 	add_restrict_and_join_to_rels(root, qual);
 	add_missing_rels_to_query(root);
 
-	final_rel = make_one_rel(root, root->base_rel_list);
+	final_rel = make_one_rel(root);
 
 	if (! final_rel)
 	{

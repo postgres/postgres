@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.58 2000/01/31 01:21:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.59 2000/02/07 04:40:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -373,6 +373,8 @@ _equalJoinPath(JoinPath *a, JoinPath *b)
 	if (!equal(a->outerjoinpath, b->outerjoinpath))
 		return false;
 	if (!equal(a->innerjoinpath, b->innerjoinpath))
+		return false;
+	if (!equal(a->joinrestrictinfo, b->joinrestrictinfo))
 		return false;
 	return true;
 }

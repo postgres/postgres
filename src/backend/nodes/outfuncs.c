@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.105 2000/01/27 18:11:28 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.106 2000/02/07 04:40:57 tgl Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -915,10 +915,10 @@ _outRelOptInfo(StringInfo str, RelOptInfo *node)
 	 */
 
 	appendStringInfo(str,
-					 " :cheapestpath @ 0x%x :pruneable %s :restrictinfo ",
+					 " :cheapestpath @ 0x%x :pruneable %s :baserestrictinfo ",
 					 (int) node->cheapestpath,
 					 node->pruneable ? "true" : "false");
-	_outNode(str, node->restrictinfo);
+	_outNode(str, node->baserestrictinfo);
 
 	appendStringInfo(str, " :joininfo ");
 	_outNode(str, node->joininfo);
@@ -1035,16 +1035,12 @@ _outNestPath(StringInfo str, NestPath *node)
 					 node->path.pathtype,
 					 node->path.path_cost);
 	_outNode(str, node->path.pathkeys);
-
-	/*
-	 * Not sure if these are nodes; they're declared as "struct path *".
-	 * For now, i'll just print the addresses.
-	 */
-
-	appendStringInfo(str,
-					 " :outerjoinpath @ 0x%x :innerjoinpath @ 0x%x ",
-					 (int) node->outerjoinpath,
-					 (int) node->innerjoinpath);
+	appendStringInfo(str, " :outerjoinpath ");
+	_outNode(str, node->outerjoinpath);
+	appendStringInfo(str, " :innerjoinpath ");
+	_outNode(str, node->innerjoinpath);
+	appendStringInfo(str, " :joinrestrictinfo ");
+	_outNode(str, node->joinrestrictinfo);
 }
 
 /*
@@ -1058,16 +1054,12 @@ _outMergePath(StringInfo str, MergePath *node)
 					 node->jpath.path.pathtype,
 					 node->jpath.path.path_cost);
 	_outNode(str, node->jpath.path.pathkeys);
-
-	/*
-	 * Not sure if these are nodes; they're declared as "struct path *".
-	 * For now, i'll just print the addresses.
-	 */
-
-	appendStringInfo(str,
-					 " :outerjoinpath @ 0x%x :innerjoinpath @ 0x%x ",
-					 (int) node->jpath.outerjoinpath,
-					 (int) node->jpath.innerjoinpath);
+	appendStringInfo(str, " :outerjoinpath ");
+	_outNode(str, node->jpath.outerjoinpath);
+	appendStringInfo(str, " :innerjoinpath ");
+	_outNode(str, node->jpath.innerjoinpath);
+	appendStringInfo(str, " :joinrestrictinfo ");
+	_outNode(str, node->jpath.joinrestrictinfo);
 
 	appendStringInfo(str, " :path_mergeclauses ");
 	_outNode(str, node->path_mergeclauses);
@@ -1090,16 +1082,12 @@ _outHashPath(StringInfo str, HashPath *node)
 					 node->jpath.path.pathtype,
 					 node->jpath.path.path_cost);
 	_outNode(str, node->jpath.path.pathkeys);
-
-	/*
-	 * Not sure if these are nodes; they're declared as "struct path *".
-	 * For now, i'll just print the addresses.
-	 */
-
-	appendStringInfo(str,
-					 " :outerjoinpath @ 0x%x :innerjoinpath @ 0x%x ",
-					 (int) node->jpath.outerjoinpath,
-					 (int) node->jpath.innerjoinpath);
+	appendStringInfo(str, " :outerjoinpath ");
+	_outNode(str, node->jpath.outerjoinpath);
+	appendStringInfo(str, " :innerjoinpath ");
+	_outNode(str, node->jpath.innerjoinpath);
+	appendStringInfo(str, " :joinrestrictinfo ");
+	_outNode(str, node->jpath.joinrestrictinfo);
 
 	appendStringInfo(str, " :path_hashclauses ");
 	_outNode(str, node->path_hashclauses);
