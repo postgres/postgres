@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/security.sgml,v 1.8 2000/03/31 03:27:41 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/security.sgml,v 1.9 2000/05/25 15:32:03 momjian Exp $
 -->
 
  <chapter id="security">
@@ -32,7 +32,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/security.sgml,v 1.8 2000/03/31 03:27:
     </listitem>
     <listitem>
      <para>
-      Client connections may be authenticated vi other external packages.
+      Client connections may be authenticated via other external packages.
      </para>
     </listitem>
     <listitem>
