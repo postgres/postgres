@@ -88,6 +88,17 @@ SELECT * FROM crosstab(
   'SELECT DISTINCT rowdt, attribute FROM cth ORDER BY 2')
 AS c(rowid text, rowdt timestamp, temperature int4, test_result text, test_startdate timestamp, volts float8);
 
+-- if source query returns zero rows, get zero rows returned
+SELECT * FROM crosstab(
+  'SELECT rowid, rowdt, attribute, val FROM cth WHERE false ORDER BY 1',
+  'SELECT DISTINCT attribute FROM cth ORDER BY 1')
+AS c(rowid text, rowdt timestamp, temperature text, test_result text, test_startdate text, volts text);
+
+-- if source query returns zero rows, get zero rows returned even if category query generates no rows
+SELECT * FROM crosstab(
+  'SELECT rowid, rowdt, attribute, val FROM cth WHERE false ORDER BY 1',
+  'SELECT DISTINCT attribute FROM cth WHERE false ORDER BY 1')
+AS c(rowid text, rowdt timestamp, temperature text, test_result text, test_startdate text, volts text);
 
 --
 -- connectby
