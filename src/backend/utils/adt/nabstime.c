@@ -4,16 +4,13 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	  $Id: nabstime.c,v 1.55 1999/05/25 16:12:09 momjian Exp $
+ *	  $Id: nabstime.c,v 1.55.2.1 1999/08/02 05:24:54 scrappy Exp $
  *
  */
-#include <stdio.h>
 #include <ctype.h>
-#include <string.h>
 #include <sys/types.h>
 
 #include "postgres.h"
-#include <miscadmin.h>
 #ifdef HAVE_FLOAT_H
 #include <float.h>
 #endif
@@ -23,8 +20,10 @@
 #ifndef USE_POSIX_TIME
 #include <sys/timeb.h>
 #endif
-#include "utils/builtins.h"
+
 #include "access/xact.h"
+#include "miscadmin.h"
+#include "utils/builtins.h"
 
 static AbsoluteTime tm2abstime(struct tm * tm, int tz);
 
@@ -348,8 +347,6 @@ nabstimeout(AbsoluteTime time)
 			break;
 		default:
 			abstime2tm(time, &tz, tm, tzn);
-#if DATEDEBUG
-#endif
 			EncodeDateTime(tm, fsec, &tz, &tzn, DateStyle, buf);
 			break;
 	}

@@ -6,31 +6,22 @@
  *
  *
  * IDENTIFICATION
- *
+ *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.38.2.1 1999/08/02 05:24:28 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include <postgres.h>
+#include "postgres.h"
 
-#include <fmgr.h>
-#include <access/genam.h>
-#include <access/gist.h>
-#include <access/gistscan.h>
-#include <access/heapam.h>
-#include <catalog/index.h>
-#include <executor/executor.h>
-#include <storage/bufmgr.h>
-#include <storage/bufpage.h>
-#include <storage/lmgr.h>
-#include <utils/syscache.h>
-#include <utils/tqual.h>
+#include "access/genam.h"
+#include "access/gist.h"
+#include "access/gistscan.h"
+#include "access/heapam.h"
+#include "catalog/index.h"
+#include "catalog/pg_index.h"
+#include "executor/executor.h"
+#include "utils/syscache.h"
 
-#ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
-#else
-#include <string.h>
-#endif
 
 /* non-export function prototypes */
 static InsertIndexResult gistdoinsert(Relation r, IndexTuple itup,
@@ -60,7 +51,9 @@ void		gistdelete(Relation r, ItemPointer tid);
 static IndexTuple gist_tuple_replacekey(Relation r, GISTENTRY entry, IndexTuple t);
 static void gistcentryinit(GISTSTATE *giststate, GISTENTRY *e, char *pr,
 			   Relation r, Page pg, OffsetNumber o, int b, bool l);
+#ifdef GISTDEBUG
 static char *int_range_out(INTRANGE *r);
+#endif
 
 /*
 ** routine to build an index.  Basically calls insert over and over

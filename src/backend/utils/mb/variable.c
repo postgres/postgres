@@ -2,9 +2,10 @@
  * This file contains some public functions
  * related to show/set/reset variable commands.
  * Tatsuo Ishii
- * $Id: variable.c,v 1.4 1999/05/25 16:12:44 momjian Exp $
+ * $Id: variable.c,v 1.4.2.1 1999/08/02 05:25:12 scrappy Exp $
  */
 
+#include "postgres.h"
 #include "mb/pg_wchar.h"
 
 bool

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.50 1999/05/25 22:40:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.50.2.1 1999/08/02 05:24:26 scrappy Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -16,22 +16,14 @@
  *-------------------------------------------------------------------------
  */
 
-#include <stdio.h>
+#include "postgres.h"
 
-#include <postgres.h>
+#include "catalog/pg_type.h"
+#include "nodes/parsenodes.h"
+#include "parser/parse_type.h"
+#include "utils/builtins.h"
+#include "utils/syscache.h"
 
-#include <catalog/pg_type.h>
-#include <nodes/parsenodes.h>
-#include <parser/parse_type.h>
-#include <utils/builtins.h>
-#include <utils/fcache.h>
-#include <utils/syscache.h>
-
-#ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
-#else
-#include <string.h>
-#endif
 
 /* ----------------------------------------------------------------
  *		CreateTemplateTupleDesc

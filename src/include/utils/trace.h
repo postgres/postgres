@@ -12,12 +12,8 @@
 #ifndef TRACE_H
 #define TRACE_H
 
-#include <stdio.h>
 #include <string.h>
 #include <time.h>
-#include <stdarg.h>
-
-#include "postgres.h"
 
 #ifdef ELOG_TIMESTAMPS
 char	   *tprintf_timestamp(void);

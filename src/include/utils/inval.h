@@ -6,15 +6,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: inval.h,v 1.11 1999/02/13 23:22:23 momjian Exp $
+ * $Id: inval.h,v 1.11.2.1 1999/08/02 05:25:25 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef INVAL_H
 #define INVAL_H
 
-#include <access/htup.h>
-#include <utils/rel.h>
+#include "access/htup.h"
 
 extern void InitLocalInvalidateData(void);
 

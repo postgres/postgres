@@ -7,18 +7,16 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.48 1999/05/25 16:12:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.48.2.1 1999/08/02 05:24:58 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <ctype.h>
-#include <string.h>
 
 #include "postgres.h"
-#include "utils/palloc.h"
-#include "utils/builtins.h"		/* where function declarations go */
 
 #include "mb/pg_wchar.h"
+#include "utils/builtins.h"
 
 static int	text_cmp(text *arg1, text *arg2);
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/aset.c,v 1.16 1999/05/25 16:12:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/aset.c,v 1.16.2.1 1999/08/02 05:25:15 scrappy Exp $
  *
  * NOTE:
  *	This is a new (Feb. 05, 1999) implementation of the allocation set
@@ -21,15 +21,8 @@
  *				Jan Wieck
  *-------------------------------------------------------------------------
  */
-#include <stdio.h>
 #include "postgres.h"
-#include "utils/excid.h"		/* for ExhaustedMemory */
-#include "utils/memutils.h"		/* where funnction declarations go */
-#ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
-#else
-#include <string.h>
-#endif
+#include "utils/memutils.h"
 
 
 #undef AllocSetReset

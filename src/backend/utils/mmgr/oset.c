@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/Attic/oset.c,v 1.13 1999/05/26 12:56:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/Attic/oset.c,v 1.13.2.1 1999/08/02 05:25:16 scrappy Exp $
  *
  * NOTE
  *	  XXX This is a preliminary implementation which lacks fail-fast
@@ -17,7 +17,7 @@
  */
 #include "postgres.h"
 
-#include "utils/memutils.h"		/* where declarations of this file goes */
+#include "utils/memutils.h"
 
 static Pointer OrderedElemGetBase(OrderedElem elem);
 static void OrderedElemPush(OrderedElem elem);

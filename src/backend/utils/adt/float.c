@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.42 1999/05/25 16:12:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.42.2.1 1999/08/02 05:24:52 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,10 +45,7 @@
  *		 for calls to pow(), exp() since on some machines (my Linux box
  *		 included) these routines do not set errno. - tgl 97/05/10
  */
-#include <stdio.h>				/* for sprintf() */
-#include <string.h>
 #include <ctype.h>
-#include <stdlib.h>
 #include <errno.h>
 
 #include <float.h>				/* faked on sunos4 */
@@ -60,8 +57,7 @@
 #include <limits.h>
 #endif
 #include "fmgr.h"
-#include "utils/builtins.h"		/* for ftod() prototype */
-#include "utils/palloc.h"
+#include "utils/builtins.h"
 
 #ifndef NAN
 #define NAN		(0.0/0.0)
@@ -134,7 +130,7 @@ extern double rint(double x);
  * until the distributions are updated.
  *								--djm 12/16/96
  */
-#if ( defined(linux) && defined(__alpha) ) && !defined(UNSAFE_FLOATS)
+#if ( defined(linux) && defined(__alpha__) ) && !defined(UNSAFE_FLOATS)
 #define UNSAFE_FLOATS
 #endif
 

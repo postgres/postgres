@@ -8,15 +8,12 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/char.c,v 1.22 1999/05/25 16:11:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/char.c,v 1.22.2.1 1999/08/02 05:24:50 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <stdio.h>				/* for sprintf() */
-#include <string.h>
 #include "postgres.h"
-#include "utils/palloc.h"
-#include "utils/builtins.h"		/* where the declarations go */
+#include "utils/builtins.h"
 
 /*****************************************************************************
  *	 USER I/O ROUTINES														 *

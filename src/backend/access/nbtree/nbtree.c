@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.41 1999/06/07 15:14:54 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.41.2.1 1999/08/02 05:24:41 scrappy Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -16,26 +16,16 @@
  *-------------------------------------------------------------------------
  */
 
-#include <postgres.h>
+#include "postgres.h"
 
-#include <access/genam.h>
-#include <storage/bufpage.h>
-#include <storage/bufmgr.h>
-#include <access/nbtree.h>
-#include <executor/executor.h>
-#include <access/heapam.h>
-#include <catalog/index.h>
-#include <miscadmin.h>
-
-#ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
-#else
-#include <string.h>
-#endif
+#include "access/genam.h"
+#include "access/heapam.h"
+#include "access/nbtree.h"
+#include "catalog/index.h"
+#include "executor/executor.h"
+#include "miscadmin.h"
 
 #ifdef BTREE_BUILD_STATS
-#include <tcop/tcopprot.h>
-#include <utils/trace.h>
 #define ShowExecutorStats pg_options[TRACE_EXECUTORSTATS]
 #endif
 

@@ -7,14 +7,15 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tqual.h,v 1.22 1999/05/25 22:43:39 momjian Exp $
+ * $Id: tqual.h,v 1.22.2.1 1999/08/02 05:25:26 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef TQUAL_H
 #define TQUAL_H
 
-#include <access/htup.h>
+#include "access/htup.h"
+#include "access/xact.h"
 
 typedef struct SnapshotData
 {

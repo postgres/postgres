@@ -8,22 +8,15 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/lselect.c,v 1.16 1999/07/10 18:21:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/lselect.c,v 1.16.2.1 1999/08/02 05:25:17 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <string.h>
-#include <stdio.h>
 
 #include "postgres.h"
 
-#include "storage/buf.h"
-#include "access/skey.h"
-#include "access/heapam.h"
-#include "access/htup.h"
-#include "utils/rel.h"
 
-#include "utils/psort.h"
+#include "access/heapam.h"
 #include "utils/lselect.h"
 
 /*

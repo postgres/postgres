@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.27 1999/05/25 18:20:31 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.27.2.1 1999/08/02 05:24:42 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,21 +15,13 @@
 #include "postgres.h"
 
 #include "access/genam.h"
-#include "access/iqual.h"
 #include "access/istrat.h"
 #include "access/nbtree.h"
 #include "executor/execdebug.h"
-#include "fmgr.h"
-#include "storage/bufpage.h"
 
 extern int	NIndexTupleProcessed;
 
 
-#ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
-#else
-#include <string.h>
-#endif
 
 ScanKey
 _bt_mkscankey(Relation rel, IndexTuple itup)

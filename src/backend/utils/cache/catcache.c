@@ -7,28 +7,18 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.43 1999/06/04 02:19:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.43.2.1 1999/08/02 05:24:59 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <string.h>
 #include "postgres.h"
-#include "access/heapam.h"
 #include "access/genam.h"
-#include "utils/tqual.h"
-#include "utils/builtins.h"
-#include "utils/portal.h"
-#include "utils/catcache.h"
-#include "utils/elog.h"
-#include "utils/palloc.h"
-#include "utils/mcxt.h"
-#include "utils/rel.h"
-#include "storage/bufpage.h"
+#include "access/heapam.h"
 #include "access/valid.h"
+#include "catalog/pg_type.h"
 #include "miscadmin.h"
-#include "fmgr.h"				/* for F_BOOLEQ, etc.  DANGER */
-#include "catalog/pg_type.h"	/* for OID of int28 type */
-#include "lib/dllist.h"
+#include "utils/builtins.h"
+#include "utils/catcache.h"
 
 static void CatCacheRemoveCTup(CatCache *cache, Dlelem *e);
 static Index CatalogCacheComputeHashIndex(struct catcache * cacheInP);

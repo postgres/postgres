@@ -9,11 +9,9 @@
  * workings can be found in the book "Software Solutions in C" by
  * Dale Schumacher, Academic Press, ISBN: 0-12-632360-7.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.28 1999/05/25 16:11:52 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.28.2.1 1999/08/02 05:24:50 scrappy Exp $
  */
 
-#include <stdio.h>
-#include <string.h>
 #include <limits.h>
 #include <ctype.h>
 #include <locale.h>
@@ -34,7 +32,6 @@ static const char *num_word(Cash value);
 
 #ifdef USE_LOCALE
 static struct lconv *lconvert = NULL;
-
 #endif
 
 /* cash_in()

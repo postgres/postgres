@@ -1,14 +1,13 @@
 /*
  *	Edmund Mergl <E.Mergl@bawue.de>
  *
- *	$Id: oracle_compat.c,v 1.18 1999/05/26 12:56:00 momjian Exp $
+ *	$Id: oracle_compat.c,v 1.18.2.1 1999/08/02 05:24:56 scrappy Exp $
  *
  */
 
 
 #include <ctype.h>
 #include "postgres.h"
-
 
 text	   *lower(text *string);
 text	   *upper(text *string);

@@ -7,30 +7,25 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.43 1999/05/25 16:11:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.43.2.1 1999/08/02 05:24:49 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include <ctype.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdarg.h>
 
 #include "postgres.h"
 
+
 #include "catalog/catalog.h"
 #include "catalog/pg_type.h"
-
-#include "utils/syscache.h"
-#include "utils/memutils.h"
-#include "storage/fd.h"
 #include "fmgr.h"
-#include "utils/array.h"
-#include "utils/elog.h"
-
-#include "libpq/libpq-fs.h"
 #include "libpq/be-fsstubs.h"
+#include "libpq/libpq-fs.h"
+#include "storage/fd.h"
+#include "utils/array.h"
+#include "utils/memutils.h"
+#include "utils/syscache.h"
 
 #define ASSGN	 "="
 
@@ -477,7 +472,7 @@ _ReadArrayStr(char *arrayStr,
 			if (values[i])
 			{
 				if (typalign == 'd')
-					*nbytes += DOUBLEALIGN(*(int32 *) values[i]);
+					*nbytes += MAXALIGN(*(int32 *) values[i]);
 				else
 					*nbytes += INTALIGN(*(int32 *) values[i]);
 			}

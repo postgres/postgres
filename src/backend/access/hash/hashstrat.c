@@ -7,15 +7,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/Attic/hashstrat.c,v 1.13 1999/02/13 23:14:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/Attic/hashstrat.c,v 1.13.2.1 1999/08/02 05:24:36 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include <postgres.h>
+#include "postgres.h"
 
-#include <access/hash.h>
-#include <access/istrat.h>
 
 /*
  *	only one valid strategy for hash tables: equality.

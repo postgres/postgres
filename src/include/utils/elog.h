@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: elog.h,v 1.10 1999/02/13 23:22:18 momjian Exp $
+ * $Id: elog.h,v 1.10.2.1 1999/08/02 05:25:24 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,6 @@
 #define ABORTX	0x4000			/* abort process after logging */
 #endif
 
-/***S*I***/
 /* Increase this to be able to use postmaster -d 3 with complex
  * view definitions (which are transformed to very, very large INSERT statements
  * and if -d 3 is used the query string of these statements is printed using

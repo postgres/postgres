@@ -7,24 +7,17 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashovfl.c,v 1.20 1999/02/13 23:14:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashovfl.c,v 1.20.2.1 1999/08/02 05:24:34 scrappy Exp $
  *
  * NOTES
  *	  Overflow pages look like ordinary relation pages.
  *
  *-------------------------------------------------------------------------
  */
-#include <postgres.h>
+#include "postgres.h"
 
-#include <access/hash.h>
-#include <storage/bufmgr.h>
-#include <utils/memutils.h>
+#include "access/hash.h"
 
-#ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
-#else
-#include <string.h>
-#endif
 
 static OverflowPageAddress _hash_getovfladdr(Relation rel, Buffer *metabufp);
 static uint32 _hash_firstfreebit(uint32 map);
@@ -538,7 +531,7 @@ _hash_squeezebucket(Relation rel,
 		hitem = (HashItem) PageGetItem(rpage, PageGetItemId(rpage, roffnum));
 		itemsz = IndexTupleDSize(hitem->hash_itup)
 			+ (sizeof(HashItemData) - sizeof(IndexTupleData));
-		itemsz = DOUBLEALIGN(itemsz);
+		itemsz = MAXALIGN(itemsz);
 
 		/*
 		 * walk up the bucket chain, looking for a page big enough for

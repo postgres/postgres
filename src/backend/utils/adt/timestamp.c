@@ -1,11 +1,10 @@
-#include <stdio.h>
-#include <string.h>
 #include <time.h>
 #include <ctype.h>
+
 #include "postgres.h"
+#include "access/xact.h"
 #include "miscadmin.h"
 #include "utils/builtins.h"
-#include "access/xact.h"
 
 time_t
 timestamp_in(const char *timestamp_str)

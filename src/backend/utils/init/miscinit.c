@@ -7,37 +7,24 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.29 1999/05/25 16:12:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.29.2.1 1999/08/02 05:25:10 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <string.h>
-#include <sys/param.h>			/* for MAXPATHLEN */
+#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/file.h>
-#include <stdio.h>
 #include <unistd.h>
-#include <grp.h>				/* for getgrgid */
-#include <pwd.h>				/* for getpwuid */
+#include <grp.h>
+#include <pwd.h>
 
 #include "postgres.h"
-
-#include "utils/portal.h"		/* for EnablePortalManager, etc. */
-#include "utils/exc.h"			/* for EnableExceptionHandling, etc. */
-#include "utils/mcxt.h"			/* for EnableMemoryContext, etc. */
-#include "utils/elog.h"
-#include "utils/builtins.h"
-
-#include "miscadmin.h"			/* where the declarations go */
-
 #include "catalog/catname.h"
 #include "catalog/pg_shadow.h"
-#include "catalog/pg_proc.h"
+#include "miscadmin.h"
 #include "utils/syscache.h"
 
-#include "storage/fd.h"			/* for O_ */
-#include "storage/ipc.h"		/* for proc_exit */
 
 /*
  * EnableAbortEnvVarName

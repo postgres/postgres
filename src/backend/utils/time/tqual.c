@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.29 1999/05/25 16:13:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.29.2.1 1999/08/02 05:25:19 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,12 +16,6 @@
 
 #include "postgres.h"
 
-#include "access/htup.h"
-#include "access/xact.h"
-#include "storage/bufmgr.h"
-#include "access/transam.h"
-#include "utils/elog.h"
-#include "utils/palloc.h"
 #include "utils/tqual.h"
 
 extern bool PostgresIsInitialized;

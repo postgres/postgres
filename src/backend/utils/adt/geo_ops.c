@@ -7,22 +7,18 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.41 1999/02/21 03:49:30 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.41.2.1 1999/08/02 05:24:52 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <math.h>
 #include <limits.h>
 #include <float.h>
-#include <stdio.h>				/* for sprintf proto, etc. */
-#include <stdlib.h>				/* for strtod, etc. */
-#include <string.h>
 #include <ctype.h>
 
 #include "postgres.h"
 
 #include "utils/geo_decls.h"
-#include "utils/palloc.h"
 
 #ifndef PI
 #define PI 3.1415926536

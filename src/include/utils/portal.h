@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: portal.h,v 1.15 1999/06/12 14:07:32 momjian Exp $
+ * $Id: portal.h,v 1.15.2.1 1999/08/02 05:25:26 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,10 +25,8 @@
 #ifndef PORTAL_H
 #define PORTAL_H
 
-#include <executor/execdesc.h>
-#include <lib/fstack.h>
-#include <nodes/memnodes.h>
-#include <utils/memutils.h>
+#include "executor/execdesc.h"
+#include "nodes/memnodes.h"
 
 typedef struct PortalBlockData
 {

@@ -7,25 +7,18 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/mcxt.c,v 1.14 1999/05/25 16:12:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/mcxt.c,v 1.14.2.1 1999/08/02 05:25:16 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <stdio.h>				/* XXX for printf debugging */
 
 #include "postgres.h"
 
-#include "utils/memutils.h"
-#include "utils/module.h"
-#include "utils/excid.h"
-
 #include "nodes/memnodes.h"
-#include "nodes/nodes.h"
+#include "utils/excid.h"
+#include "utils/module.h"
 
-#include "utils/mcxt.h"
-#include "utils/elog.h"
 
-#include "utils/palloc.h"
 
 #undef MemoryContextAlloc
 #undef MemoryContextFree

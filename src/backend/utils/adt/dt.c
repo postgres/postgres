@@ -7,19 +7,16 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.72 1999/07/08 03:22:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.72.2.1 1999/08/02 05:24:51 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <stdio.h>
 #include <ctype.h>
 #include <math.h>
-#include <string.h>
 #include <sys/types.h>
 #include <errno.h>
 
 #include "postgres.h"
-#include "miscadmin.h"
 #ifdef HAVE_FLOAT_H
 #include <float.h>
 #endif
@@ -29,8 +26,9 @@
 #ifndef USE_POSIX_TIME
 #include <sys/timeb.h>
 #endif
-#include "utils/builtins.h"
 
+#include "miscadmin.h"
+#include "utils/builtins.h"
 
 static int	DecodeDate(char *str, int fmask, int *tmask, struct tm * tm);
 static int DecodeNumber(int flen, char *field,

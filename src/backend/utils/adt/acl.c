@@ -7,21 +7,20 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.37 1999/07/09 03:28:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.37.2.1 1999/08/02 05:24:49 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <ctype.h>
-#include <string.h>
 #include "postgres.h"
 
-#include <utils/memutils.h>
-#include "utils/acl.h"
-#include "utils/syscache.h"
 #include "catalog/catalog.h"
 #include "catalog/pg_shadow.h"
 #include "catalog/pg_type.h"
 #include "miscadmin.h"
+#include "utils/acl.h"
+#include "utils/memutils.h"
+#include "utils/syscache.h"
 
 static char *getid(char *s, char *n);
 static int32 aclitemeq(AclItem *a1, AclItem *a2);

@@ -6,21 +6,17 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rtree.h,v 1.14 1999/02/13 23:20:57 momjian Exp $
+ * $Id: rtree.h,v 1.14.2.1 1999/08/02 05:25:22 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef RTREE_H
 #define RTREE_H
 
-#include <access/funcindex.h>
-#include <access/itup.h>
-#include <access/relscan.h>
-#include <access/sdir.h>
-#include <access/skey.h>
-#include <access/strat.h>
-#include <storage/block.h>
-#include <storage/off.h>
+#include "access/funcindex.h"
+#include "access/itup.h"
+#include "access/relscan.h"
+#include "access/sdir.h"
 
 /* see rtstrat.c for what all this is about */
 #define RTNStrategies					8

@@ -7,27 +7,21 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.37 1999/05/25 16:12:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.37.2.1 1999/08/02 05:24:57 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <string.h>
 #include "postgres.h"
-#include "miscadmin.h"
-#include "access/heapam.h"
-#include "access/genam.h"
-#include "access/itup.h"
-#include "access/relscan.h"
-#include "storage/bufmgr.h"
-#include "fmgr.h"
-#include "utils/palloc.h"
-#include "utils/syscache.h"
 
+#include "access/genam.h"
+#include "access/heapam.h"
 #include "catalog/catname.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
-#include "utils/builtins.h"		/* where function declarations go */
+#include "miscadmin.h"
+#include "utils/builtins.h"
+#include "utils/syscache.h"
 
 /*****************************************************************************
  *	 USER I/O ROUTINES														 *

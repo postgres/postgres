@@ -7,31 +7,28 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.45 1999/05/25 16:12:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.45.2.1 1999/08/02 05:25:04 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <stdio.h>
-#include <string.h>
 #include <time.h>
 #include <fcntl.h>
 #ifndef O_RDONLY
 #include <sys/file.h>
 #endif	 /* O_RDONLY */
 #include <sys/types.h>
-#include <stdarg.h>
 #include <errno.h>
 #include <unistd.h>
 #include <signal.h>
 
+#include "postgres.h"
 #ifdef USE_SYSLOG
 #include <syslog.h>
 #endif
 
-#include "postgres.h"
-#include "miscadmin.h"
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
+#include "miscadmin.h"
 #include "storage/proc.h"
 #include "tcop/tcopprot.h"
 #include "utils/trace.h"

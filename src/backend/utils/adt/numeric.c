@@ -5,14 +5,11 @@
  *
  *	1998 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.16 1999/05/25 22:42:13 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.16.2.1 1999/08/02 05:24:55 scrappy Exp $
  *
  * ----------
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <ctype.h>
 #include <float.h>
 #include <math.h>
@@ -21,9 +18,7 @@
 
 #include "postgres.h"
 #include "utils/builtins.h"
-#include "utils/palloc.h"
 #include "utils/numeric.h"
-
 
 /* ----------
  * Uncomment the following to enable compilation of dump_numeric()

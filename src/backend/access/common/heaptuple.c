@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.53 1999/06/12 14:07:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.53.2.1 1999/08/02 05:24:25 scrappy Exp $
  *
  * NOTES
  *	  The old interface functions have been converted to macros
@@ -17,21 +17,10 @@
  *-------------------------------------------------------------------------
  */
 
-#include <postgres.h>
+#include "postgres.h"
 
-#include <access/heapam.h>
-#include <access/htup.h>
-#include <access/transam.h>
-#include <access/tupmacs.h>
-#include <catalog/pg_type.h>
-#include <storage/bufpage.h>
-#include <utils/memutils.h>
-
-#ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
-#else
-#include <string.h>
-#endif
+#include "access/heapam.h"
+#include "catalog/pg_type.h"
 
 /* Used by heap_getattr() macro, for speed */
 long		heap_sysoffset[] = {
@@ -688,7 +677,7 @@ heap_formtuple(TupleDesc tupleDescriptor,
 		len += bitmaplen;
 	}
 
-	hoff = len = DOUBLEALIGN(len);		/* be conservative here */
+	hoff = len = MAXALIGN(len);		/* be conservative here */
 
 	len += ComputeDataSize(tupleDescriptor, value, nulls);
 
@@ -822,7 +811,7 @@ heap_addheader(uint32 natts,	/* max domain index */
 
 	len = offsetof(HeapTupleHeaderData, t_bits);
 
-	hoff = len = DOUBLEALIGN(len);		/* be conservative */
+	hoff = len = MAXALIGN(len);		/* be conservative */
 	len += structlen;
 	tuple = (HeapTuple) palloc(HEAPTUPLESIZE + len);
 	td = tuple->t_data = (HeapTupleHeader) ((char *) tuple + HEAPTUPLESIZE);

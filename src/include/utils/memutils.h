@@ -15,7 +15,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: memutils.h,v 1.28 1999/06/17 15:15:59 momjian Exp $
+ * $Id: memutils.h,v 1.28.2.1 1999/08/02 05:25:26 scrappy Exp $
  *
  * NOTES
  *	  some of the information in this file will be moved to
@@ -26,6 +26,10 @@
 #ifndef MEMUTILS_H
 #define MEMUTILS_H
 
+/*
+ *	This is not needed by this include file, but by almost every file
+ *	that includes this file.
+ */
 
 /* ----------------
  * Alignment macros: align a length or address appropriately for a given type.

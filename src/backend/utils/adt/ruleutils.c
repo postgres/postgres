@@ -3,7 +3,7 @@
  *			  out of it's tuple
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.18 1999/06/02 11:52:28 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.18.2.1 1999/08/02 05:24:57 scrappy Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -35,27 +35,15 @@
  *
  **********************************************************************/
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <string.h>
 
+#include "postgres.h"
 #include "executor/spi.h"
-#include "commands/trigger.h"
-#include "utils/elog.h"
-#include "utils/builtins.h"
-#include "nodes/nodes.h"
 #include "optimizer/clauses.h"
-#include "utils/syscache.h"
 #include "utils/lsyscache.h"
-#include "catalog/pg_class.h"
-#include "catalog/pg_type.h"
 #include "catalog/pg_shadow.h"
 #include "catalog/pg_index.h"
-#include "catalog/pg_opclass.h"
-#include "fmgr.h"
 
 #define BUFSIZE 8192
 

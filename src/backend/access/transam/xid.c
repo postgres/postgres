@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: xid.c,v 1.22 1999/05/25 16:07:52 momjian Exp $
+ *	$Id: xid.c,v 1.22.2.1 1999/08/02 05:24:46 scrappy Exp $
  *
  * OLD COMMENTS
  * XXX WARNING
@@ -18,10 +18,9 @@
  *-------------------------------------------------------------------------
  */
 
-#include <stdio.h>
 
-#include <postgres.h>
-#include <access/xact.h>
+#include "postgres.h"
+#include "access/xact.h"
 
 extern TransactionId NullTransactionId;
 extern TransactionId DisabledTransactionId;

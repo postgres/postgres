@@ -7,18 +7,16 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/assert.c,v 1.13 1999/02/13 23:19:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/assert.c,v 1.13.2.1 1999/08/02 05:25:04 scrappy Exp $
  *
  * NOTE
  *	  This should eventually work with elog(), dlog(), etc.
  *
  *-------------------------------------------------------------------------
  */
-#include <stdio.h>
 #include <unistd.h>
 
-#include "postgres.h"			/* where the declaration goes */
-#include "utils/module.h"
+#include "postgres.h"
 
 #include "utils/exc.h"
 #include "utils/trace.h"

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.23 1999/05/25 16:12:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.23.2.1 1999/08/02 05:25:00 scrappy Exp $
  *
  * Note - this code is real crufty...
  *
@@ -15,22 +15,14 @@
  */
 #include "postgres.h"
 
-#include <miscadmin.h>
-
-#include "access/heapam.h"		/* XXX to support hacks below */
-#include "access/htup.h"
 #include "catalog/catalog.h"
+#include "catalog/catname.h"
 #include "catalog/heap.h"
-#include "storage/bufpage.h"
-#include "storage/buf.h"		/* XXX for InvalidBuffer */
-#include "storage/ipc.h"
+#include "miscadmin.h"
 #include "storage/sinval.h"
 #include "utils/catcache.h"
 #include "utils/inval.h"
-#include "utils/rel.h"
 #include "utils/relcache.h"
-#include "catalog/catname.h"	/* XXX to support hacks below */
-#include "utils/syscache.h"		/* XXX to support the hacks below */
 
 static InvalidationEntry InvalidationEntryAllocate(uint16 size);
 static void LocalInvalidInvalidate(LocalInvalid invalid, void (*function) ());

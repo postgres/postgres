@@ -8,14 +8,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.33 1999/06/19 04:54:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.33.2.1 1999/08/02 05:24:39 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
-#include "miscadmin.h"
 #include "access/heapam.h"
 #include "access/istrat.h"
 #include "catalog/catname.h"
@@ -23,9 +22,8 @@
 #include "catalog/pg_amproc.h"
 #include "catalog/pg_index.h"
 #include "catalog/pg_operator.h"
+#include "miscadmin.h"
 #include "utils/syscache.h"
-#include "fmgr.h"
-#include "utils/memutils.h"		/* could have been access/itup.h */
 
 #ifdef USE_ASSERT_CHECKING
 static bool StrategyEvaluationIsValid(StrategyEvaluation evaluation);

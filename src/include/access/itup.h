@@ -6,18 +6,17 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: itup.h,v 1.17 1999/02/13 23:20:55 momjian Exp $
+ * $Id: itup.h,v 1.17.2.1 1999/08/02 05:25:22 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef ITUP_H
 #define ITUP_H
 
-#include <access/ibit.h>
-#include <access/tupmacs.h>
-#include <access/tupdesc.h>
-#include <storage/itemptr.h>
-#include <utils/memutils.h>
+#include "access/ibit.h"
+#include "access/tupdesc.h"
+#include "access/tupmacs.h"
+#include "storage/itemptr.h"
 
 #define MaxIndexAttributeNumber 7
 
@@ -104,7 +103,7 @@ typedef struct PredInfo
 	) \
 	: \
 	( \
-		(Size)DOUBLEALIGN(sizeof(IndexTupleData) + sizeof(IndexAttributeBitMapData)) \
+		(Size)MAXALIGN(sizeof(IndexTupleData) + sizeof(IndexAttributeBitMapData)) \
 	) \
 )
 

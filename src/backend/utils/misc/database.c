@@ -7,27 +7,18 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.24 1999/05/25 16:12:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.24.2.1 1999/08/02 05:25:14 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
 
 #include "postgres.h"
 
-#include "access/heapam.h"
 #include "access/xact.h"
-#include "catalog/catname.h"
 #include "catalog/pg_database.h"
-#include "fmgr.h"
 #include "miscadmin.h"
-#include "storage/bufmgr.h"
-#include "storage/bufpage.h"
-#include "utils/builtins.h"
 #include "utils/syscache.h"
 
 #ifdef MULTIBYTE

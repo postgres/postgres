@@ -7,24 +7,16 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtscan.c,v 1.23 1999/05/25 16:07:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtscan.c,v 1.23.2.1 1999/08/02 05:24:44 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include <postgres.h>
+#include "postgres.h"
 
-#include <storage/bufmgr.h>
-#include <access/genam.h>
-#include <storage/lmgr.h>
-#include <storage/bufpage.h>
-#include <access/rtree.h>
-#include <access/rtstrat.h>
-#ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
-#else
-#include <string.h>
-#endif
+#include "access/genam.h"
+#include "access/rtree.h"
+
 
 
 /* routines defined and used here */

@@ -10,7 +10,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: array.h,v 1.18 1999/05/25 16:14:49 momjian Exp $
+ * $Id: array.h,v 1.18.2.1 1999/08/02 05:25:24 scrappy Exp $
  *
  * NOTES
  *	  XXX the data array should be LONGALIGN'd -- notice that the array
@@ -22,7 +22,7 @@
 #ifndef ARRAY_H
 #define ARRAY_H
 
-#include <stdio.h>
+#include "utils/memutils.h"
 
 typedef struct
 {
@@ -84,24 +84,20 @@ typedef struct
  */
 #define ARR_DATA_PTR(a) \
 		(((char *) a) + \
-		 DOUBLEALIGN(sizeof(ArrayType) + 2 * (sizeof(int) * (a)->ndim)))
+		 MAXALIGN(sizeof(ArrayType) + 2 * (sizeof(int) * (a)->ndim)))
 
 /*
  * The total array header size for an array of dimension n (in bytes).
  */
 #define ARR_OVERHEAD(n) \
-		(DOUBLEALIGN(sizeof(ArrayType) + 2 * (n) * sizeof(int)))
+		(MAXALIGN(sizeof(ArrayType) + 2 * (n) * sizeof(int)))
 
 /*------------------------------------------------------------------------
  * Miscellaneous helper definitions and routines for arrayfuncs.c
  *------------------------------------------------------------------------
  */
 
-/* #if defined(irix5) */
-/* #define RETURN_NULL {*isNull = true; return(0); }*/
- /* #else *//* irix5 */
 #define RETURN_NULL {*isNull = true; return(0); }
- /* #endif *//* irix5 */
 #define NAME_LEN	30
 #define MAX_BUFF_SIZE BLCKSZ
 

@@ -7,16 +7,15 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/Attic/nbtstrat.c,v 1.8 1999/02/13 23:14:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/Attic/nbtstrat.c,v 1.8.2.1 1999/08/02 05:24:42 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include <postgres.h>
+#include "postgres.h"
 
-#include <access/istrat.h>
-#include <storage/bufpage.h>
-#include <access/nbtree.h>
+#include "access/istrat.h"
+#include "access/nbtree.h"
 
 /*
  * Note:

@@ -7,23 +7,16 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashutil.c,v 1.15 1999/02/13 23:14:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashutil.c,v 1.15.2.1 1999/08/02 05:24:36 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include <postgres.h>
+#include "postgres.h"
 
-#include <access/hash.h>
-#include <fmgr.h>
-#include <utils/memutils.h>
-#include <access/iqual.h>
+#include "access/hash.h"
+#include "access/iqual.h"
 
-#ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
-#else
-#include <string.h>
-#endif
 
 ScanKey
 _hash_mkscankey(Relation rel, IndexTuple itup, HashMetaPage metap)
@@ -134,9 +127,9 @@ _hash_checkpage(Page page, int flags)
 	Assert(((PageHeader) (page))->pd_lower >= (sizeof(PageHeaderData) - sizeof(ItemIdData)));
 #if 1
 	Assert(((PageHeader) (page))->pd_upper <=
-		   (BLCKSZ - DOUBLEALIGN(sizeof(HashPageOpaqueData))));
+		   (BLCKSZ - MAXALIGN(sizeof(HashPageOpaqueData))));
 	Assert(((PageHeader) (page))->pd_special ==
-		   (BLCKSZ - DOUBLEALIGN(sizeof(HashPageOpaqueData))));
+		   (BLCKSZ - MAXALIGN(sizeof(HashPageOpaqueData))));
 	Assert(((PageHeader) (page))->pd_opaque.od_pagesize == BLCKSZ);
 #endif
 	if (flags)

@@ -8,24 +8,17 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.33 1999/02/13 23:14:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.33.2.1 1999/08/02 05:24:25 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include <postgres.h>
+#include "postgres.h"
 
-#include <access/heapam.h>
-#include <access/ibit.h>
-#include <access/itup.h>
-#include <access/tupmacs.h>
-#include <catalog/pg_type.h>
+#include "access/heapam.h"
+#include "access/itup.h"
+#include "catalog/pg_type.h"
 
-#ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
-#else
-#include <string.h>
-#endif
 
 /* ----------------------------------------------------------------
  *				  index_ tuple interface routines
@@ -67,7 +60,7 @@ index_formtuple(TupleDesc tupleDescriptor,
 
 	hoff = IndexInfoFindDataOffset(infomask);
 	size = hoff + ComputeDataSize(tupleDescriptor, value, null);
-	size = DOUBLEALIGN(size);	/* be conservative */
+	size = MAXALIGN(size);	/* be conservative */
 
 	tp = (char *) palloc(size);
 	tuple = (IndexTuple) tp;

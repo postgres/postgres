@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.21 1999/07/09 15:09:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.21.2.1 1999/08/02 05:24:53 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,15 +28,13 @@
  * XXX makes massive and possibly unwarranted type promotion assumptions.
  * fix me when we figure out what we want to do about ANSIfication...
  */
-#include <stdio.h>
-#include <string.h>
+
+#include "postgres.h"
 #ifdef HAVE_LIMITS_H
 #include <limits.h>
 #endif
 
-#include "postgres.h"
-#include "fmgr.h"
-#include "utils/builtins.h"		/* where the declarations go */
+#include "utils/builtins.h"
 
 #ifndef SHRT_MAX
 #define SHRT_MAX (0x7FFF)

@@ -7,14 +7,14 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/excabort.c,v 1.6 1999/02/13 23:19:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/excabort.c,v 1.6.2.1 1999/08/02 05:25:04 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
-#include "utils/exc.h"			/* where function declarations go */
+#include "utils/exc.h"
 
 void
 ExcAbort(const Exception *excP,

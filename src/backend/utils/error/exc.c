@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/exc.c,v 1.25 1999/05/25 16:12:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/exc.c,v 1.25.2.1 1999/08/02 05:25:04 scrappy Exp $
  *
  * NOTE
  *	  XXX this code needs improvement--check for state violations and
@@ -15,14 +15,12 @@
  *
  *-------------------------------------------------------------------------
  */
-#include <stdio.h>				/* XXX use own I/O routines */
 #include <errno.h>
-#include <string.h>
 
 #include "postgres.h"
 
-#include "utils/exc.h"
 #include "storage/ipc.h"
+#include "utils/exc.h"
 
 static void ExcUnCaught(Exception *excP, ExcDetail detail, ExcData data,
 			ExcMessage message);

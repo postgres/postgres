@@ -3,11 +3,11 @@
  * client encoding and server internal encoding.
  * (currently mule internal code (mic) is used)
  * Tatsuo Ishii
- * $Id: mbutils.c,v 1.6 1999/05/25 16:12:43 momjian Exp $ */
+ * $Id: mbutils.c,v 1.6.2.1 1999/08/02 05:25:12 scrappy Exp $ */
 
-#include <stdio.h>
-#include <string.h>
 
+#include "postgres.h"
+#include "miscadmin.h"
 #include "mb/pg_wchar.h"
 
 static int	client_encoding = -1;

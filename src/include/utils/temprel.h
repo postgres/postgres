@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: temprel.h,v 1.3 1999/05/25 16:14:57 momjian Exp $
+ * $Id: temprel.h,v 1.3.2.1 1999/08/02 05:25:26 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -14,7 +14,6 @@
 #define TEMPREL_H
 
 #include "access/htup.h"
-#include "access/attnum.h"
 
 void		create_temp_relation(char *relname, HeapTuple pg_class_tuple);
 void		remove_all_temp_relations(void);

@@ -11,14 +11,12 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.18 1999/05/25 16:12:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.18.2.1 1999/08/02 05:24:55 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <string.h>
 #include "postgres.h"
-#include "utils/builtins.h"		/* where the declarations go */
-#include "utils/palloc.h"		/* where the declarations go */
+#include "utils/builtins.h"
 
 /*****************************************************************************
  *	 USER I/O ROUTINES (none)												 *

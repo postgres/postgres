@@ -5,9 +5,6 @@
  *
  *-------------------------------------------------------------------------
  */
-#include <stdio.h>				/* for sprintf proto, etc. */
-#include <stdlib.h>				/* for strtod, etc. */
-#include <string.h>
 #include <ctype.h>
 #include <time.h>
 #include <math.h>
@@ -15,7 +12,6 @@
 #include <limits.h>
 
 #include "postgres.h"
-#include "utils/palloc.h"
 #include "utils/int8.h"
 
 #define MAXINT8LEN		25

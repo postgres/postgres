@@ -10,21 +10,12 @@
  *-------------------------------------------------------------------------
  */
 
-#include <postgres.h>
+#include "postgres.h"
 
-#include <access/gist.h>
-#include <access/gistscan.h>
-#include <access/genam.h>
-#include <access/rtree.h>
-#include <storage/bufmgr.h>
-#include <access/giststrat.h>
-#include <storage/lmgr.h>
+#include "access/genam.h"
+#include "access/gist.h"
+#include "access/gistscan.h"
 
-#ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
-#else
-#include <string.h>
-#endif
 
 /* routines defined and used here */
 static void gistregscan(IndexScanDesc s);

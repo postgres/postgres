@@ -4,7 +4,7 @@
 #    Makefile for utils/adt
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/adt/Makefile,v 1.21 1998/12/30 19:56:29 wieck Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/adt/Makefile,v 1.21.2.1 1999/08/02 05:24:49 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -12,6 +12,16 @@ SRCDIR = ../../..
 include ../../../Makefile.global
 
 CFLAGS += -I../..
+
+# seems to be required for some date/time stuff 1999/07/22 bjm
+ifeq ($(CPU),alpha)
+ifeq ($(CC), gcc)
+CFLAGS+= -mieee
+endif
+ifeq ($(CC), egcs)
+CFLAGS+= -mieee
+endif
+endif
 
 ifdef MULTIBYTE
 CFLAGS+= $(MBFLAGS)
@@ -40,4 +50,3 @@ clean:
 ifeq (depend,$(wildcard depend))
 include depend
 endif
-

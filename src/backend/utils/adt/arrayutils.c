@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayutils.c,v 1.7 1999/02/13 23:19:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayutils.c,v 1.7.2.1 1999/08/02 05:24:50 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,9 +15,7 @@
 #define WEAK_C_OPTIMIZER
 
 #include "postgres.h"
-
 #include "utils/array.h"
-
 int
 GetOffset(int n, int *dim, int *lb, int *indx)
 {

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_selfuncs.c,v 1.8 1999/03/28 01:56:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_selfuncs.c,v 1.8.2.1 1999/08/02 05:24:53 scrappy Exp $
  *
  *		XXX These are totally bogus.
  *
@@ -16,9 +16,6 @@
  */
 #include "postgres.h"
 
-#include "access/attnum.h"
-#include "utils/geo_decls.h"	/* where function declarations go */
-#include "utils/palloc.h"
 #include "utils/builtins.h"
 
 float64

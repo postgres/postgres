@@ -7,28 +7,19 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.27 1999/05/29 01:45:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.27.2.1 1999/08/02 05:25:00 scrappy Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
  *-------------------------------------------------------------------------
  */
-#include <string.h>
 #include "postgres.h"
 
-#include "nodes/pg_list.h"
-#include "utils/syscache.h"
-#include "utils/lsyscache.h"
-#include "access/tupmacs.h"
-#include "utils/rel.h"
-#include "utils/palloc.h"
-#include "utils/elog.h"
-#include "access/attnum.h"
-#include "access/heapam.h"
 
-#include "catalog/pg_amop.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_type.h"
+#include "utils/lsyscache.h"
+#include "utils/syscache.h"
 
 /*				---------- AMOP CACHES ----------						 */
 

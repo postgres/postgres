@@ -12,25 +12,19 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.30 1999/06/19 00:44:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.30.2.1 1999/08/02 05:24:57 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <stdio.h>
-#include <string.h>
 
 #include "postgres.h"
 
 #include "access/heapam.h"
-#include "fmgr.h"
-#include "utils/builtins.h"		/* for textout() prototype and where the
-								 * declarations go */
-#include "utils/palloc.h"
-
 #include "catalog/catname.h"
-#include "utils/syscache.h"
-#include "utils/lsyscache.h"	/* for get_oprrest() */
 #include "catalog/pg_statistic.h"
+#include "utils/builtins.h"
+#include "utils/lsyscache.h"
+#include "utils/syscache.h"
 
 /* N is not a valid var/constant or relation id */
 #define NONVALUE(N)		((N) == -1)

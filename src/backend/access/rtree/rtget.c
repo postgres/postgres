@@ -7,24 +7,16 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtget.c,v 1.13 1999/02/13 23:14:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtget.c,v 1.13.2.1 1999/08/02 05:24:43 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include <postgres.h>
+#include "postgres.h"
 
-#include <storage/bufmgr.h>
-#include <access/sdir.h>
-#include <access/relscan.h>
-#include <access/iqual.h>
-#include <access/rtree.h>
-#include <storage/bufpage.h>
-#ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
-#else
-#include <string.h>
-#endif
+#include "access/iqual.h"
+#include "access/rtree.h"
+
 
 
 static OffsetNumber findnext(IndexScanDesc s, Page p, OffsetNumber n,

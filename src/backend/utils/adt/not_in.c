@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/not_in.c,v 1.16 1999/05/25 16:12:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/not_in.c,v 1.16.2.1 1999/08/02 05:24:55 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,12 +22,10 @@
  * columns are ******REALLY****** implemented!!!!!!!!!!!
  *
  */
-#include <stdio.h>
-#include <string.h>
+
 #include "postgres.h"
 #include "access/heapam.h"
-#include "access/relscan.h"
-#include "utils/builtins.h"		/* where function decls go */
+#include "utils/builtins.h"
 
 static int	my_varattno(Relation rd, char *a);
 

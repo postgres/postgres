@@ -10,23 +10,18 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.34 1999/07/10 17:03:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.34.2.1 1999/08/02 05:24:56 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <stdio.h>				/* for sprintf() */
 #include <errno.h>
 #include <math.h>
+
+#include "postgres.h"
 #ifdef HAVE_LIMITS_H
 #include <limits.h>
 #endif
-#include "postgres.h"
-#include "utils/builtins.h"		/* where the declarations go */
-#ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
-#else
-#include <string.h>
-#endif
+#include "utils/builtins.h"
 
 #ifndef INT_MAX
 #define INT_MAX (0x7FFFFFFFL)

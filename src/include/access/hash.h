@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hash.h,v 1.24 1999/05/25 22:42:30 momjian Exp $
+ * $Id: hash.h,v 1.24.2.1 1999/08/02 05:25:21 scrappy Exp $
  *
  * NOTES
  *		modeled after Margo Seltzer's hash implementation for unix.
@@ -16,12 +16,11 @@
 #ifndef HASH_H
 #define HASH_H
 
-#include <access/sdir.h>
-#include <access/funcindex.h>
-#include <storage/bufpage.h>
-#include <access/relscan.h>
-#include <access/itup.h>
-#include <utils/int8.h>
+#include "access/funcindex.h"
+#include "access/itup.h"
+#include "access/relscan.h"
+#include "access/sdir.h"
+#include "utils/int8.h"
 
 /*
  * An overflow page is a spare page allocated for storing data whose
@@ -203,7 +202,7 @@ typedef HashItemData *HashItem;
 #define BMPGSZ_BYTE(metap)		((metap)->hashm_bmsize)
 #define BMPGSZ_BIT(metap)		((metap)->hashm_bmsize << BYTE_TO_BIT)
 #define HashPageGetBitmap(pg) \
-	((uint32 *) (((char *) (pg)) + DOUBLEALIGN(sizeof(PageHeaderData))))
+	((uint32 *) (((char *) (pg)) + MAXALIGN(sizeof(PageHeaderData))))
 
 /*
  * The number of bits in an ovflpage bitmap which

@@ -7,12 +7,10 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.33 1999/05/25 16:11:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.33.2.1 1999/08/02 05:24:51 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <stdio.h>				/* for sprintf() */
-#include <string.h>
 #include <limits.h>
 
 #include "postgres.h"
@@ -21,9 +19,6 @@
 #endif
 #include "miscadmin.h"
 #include "utils/builtins.h"
-#include "utils/nabstime.h"
-#include "utils/datetime.h"
-#include "access/xact.h"
 
 static int	date2tm(DateADT dateVal, int *tzp, struct tm * tm, double *fsec, char **tzn);
 

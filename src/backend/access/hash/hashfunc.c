@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashfunc.c,v 1.18 1999/05/25 22:40:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashfunc.c,v 1.18.2.1 1999/08/02 05:24:33 scrappy Exp $
  *
  * NOTES
  *	  These functions are stored in pg_amproc.	For each operator class
@@ -19,7 +19,6 @@
 #include "postgres.h"
 
 #include "access/hash.h"
-#include "utils/int8.h"
 
 uint32
 hashint2(int16 key)

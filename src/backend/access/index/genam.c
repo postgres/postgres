@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/genam.c,v 1.17 1999/05/25 16:07:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/genam.c,v 1.17.2.1 1999/08/02 05:24:38 scrappy Exp $
  *
  * NOTES
  *	  many of the old access method routines have been turned into
@@ -44,17 +44,9 @@
  * ----------------------------------------------------------------
  */
 
-#include <postgres.h>
+#include "postgres.h"
+#include "access/genam.h"
 
-#include <utils/catcache.h>
-#include <access/genam.h>
-#include <storage/bufmgr.h>
-
-#ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
-#else
-#include <string.h>
-#endif
 
 /* ----------------------------------------------------------------
  *		general access method routines

@@ -5,12 +5,11 @@
  *
  * IDENTIFICATION
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/version.c,v 1.6 1999/04/06 15:35:36 thomas Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/version.c,v 1.6.2.1 1999/08/02 05:24:58 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include <string.h>
 
 #include "postgres.h"
 #include "version.h"

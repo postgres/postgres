@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.81 1999/05/26 12:57:03 momjian Exp $
+ * $Id: builtins.h,v 1.81.2.1 1999/08/02 05:25:24 scrappy Exp $
  *
  * NOTES
  *	  This should normally only be included by fmgr.h.
@@ -22,16 +22,14 @@
 #ifndef BUILTINS_H
 #define BUILTINS_H
 
-#include <storage/itemptr.h>
-#include <utils/array.h>
-#include <utils/geo_decls.h>
-#include <utils/datetime.h>
-#include <utils/nabstime.h>
-#include <utils/int8.h>
-#include <utils/cash.h>
-#include <utils/inet.h>
-#include <utils/rel.h>
-#include <utils/numeric.h>
+#include "storage/itemptr.h"
+#include "utils/array.h"
+#include "utils/datetime.h"
+#include "utils/geo_decls.h"
+#include "utils/inet.h"
+#include "utils/int8.h"
+#include "utils/nabstime.h"
+#include "utils/numeric.h"
 
 /*
  *		Defined in adt/

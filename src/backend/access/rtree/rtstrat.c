@@ -7,16 +7,15 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtstrat.c,v 1.11 1999/02/13 23:14:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtstrat.c,v 1.11.2.1 1999/08/02 05:24:44 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include <postgres.h>
+#include "postgres.h"
 
-#include <utils/rel.h>
-#include <access/rtree.h>
-#include <access/istrat.h>
+#include "access/istrat.h"
+#include "access/rtree.h"
 
 static StrategyNumber RelationGetRTStrategy(Relation r,
 					  AttrNumber attnum, RegProcedure proc);

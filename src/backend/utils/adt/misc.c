@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/misc.c,v 1.16 1999/02/13 23:19:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/misc.c,v 1.16.2.1 1999/08/02 05:24:54 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,8 +15,6 @@
 #include <sys/file.h>
 #include <time.h>
 #include "postgres.h"
-#include "utils/datum.h"
-#include "catalog/pg_type.h"
 #include "utils/builtins.h"
 
 /*-------------------------------------------------------------------------

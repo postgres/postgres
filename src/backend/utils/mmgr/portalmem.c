@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.23 1999/06/19 05:00:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.23.2.1 1999/08/02 05:25:16 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,22 +73,11 @@
  * PortalHeapMemory				y				y				y *
  *
  */
-#include <stdio.h>				/* for sprintf() */
-#include <string.h>				/* for strlen, strncpy */
 
 #include "postgres.h"
 
 #include "lib/hasht.h"
 #include "utils/module.h"
-#include "utils/excid.h"		/* for Unimplemented */
-#include "utils/mcxt.h"
-#include "utils/hsearch.h"
-
-#include "nodes/memnodes.h"
-#include "nodes/nodes.h"
-#include "nodes/pg_list.h"
-#include "nodes/execnodes.h"	/* for EState */
-
 #include "utils/portal.h"
 
 static void CollectNamedPortals(Portal *portalP, int destroy);

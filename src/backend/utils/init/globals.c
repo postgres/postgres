@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.30 1999/05/25 16:12:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.30.2.1 1999/08/02 05:25:10 scrappy Exp $
  *
  * NOTES
  *	  Globals used all over the place should be declared here and not
@@ -16,24 +16,18 @@
  *-------------------------------------------------------------------------
  */
 #include <fcntl.h>
-#include <stdio.h>
-#include <string.h>
 #include <sys/file.h>
 #include <sys/types.h>
 #include <math.h>
 #include <unistd.h>
 
 #include "postgres.h"
-#include "miscadmin.h"			/* where the declarations go */
 
-#include <storage/backendid.h>
-#include "access/heapam.h"
-#include "storage/sinval.h"
-#include "storage/sinvaladt.h"
-#include "storage/lmgr.h"
-#include "utils/elog.h"
-#include "libpq/pqcomm.h"
 #include "catalog/catname.h"
+#include "libpq/pqcomm.h"
+#include "miscadmin.h"
+#include "storage/backendid.h"
+#include "storage/lmgr.h"
 
 ProtocolVersion FrontendProtocol = PG_PROTOCOL_LATEST;
 

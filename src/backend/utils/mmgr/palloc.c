@@ -7,18 +7,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/Attic/palloc.c,v 1.12 1999/05/25 16:12:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/Attic/palloc.c,v 1.12.2.1 1999/08/02 05:25:16 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include <string.h>
 
 #include "postgres.h"
-
-#include "utils/mcxt.h"
-#include "utils/elog.h"
-#include "utils/palloc.h"
 
 #include "nodes/memnodes.h"
 

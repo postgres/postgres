@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datum.c,v 1.12 1999/02/13 23:19:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datum.c,v 1.12.2.1 1999/08/02 05:24:51 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,11 +27,8 @@
  * particular instance of the type and about its value.
  *
  */
-#include <string.h>
 #include "postgres.h"
 #include "utils/datum.h"
-#include "catalog/pg_type.h"
-#include "utils/palloc.h"
 
 /*-------------------------------------------------------------------------
  * datumGetSize

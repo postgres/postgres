@@ -7,16 +7,14 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/bool.c,v 1.16 1999/02/13 23:19:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/bool.c,v 1.16.2.1 1999/08/02 05:24:50 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include <string.h>
 #include "postgres.h"
 
-#include "utils/builtins.h"		/* where the declarations go */
-#include "utils/palloc.h"
+#include "utils/builtins.h"
 
 /*****************************************************************************
  *	 USER I/O ROUTINES														 *

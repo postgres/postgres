@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.62 1999/05/25 16:12:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.62.2.1 1999/08/02 05:25:01 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,54 +30,32 @@
  *
  */
 #include <sys/types.h>
-#include <stdio.h>				/* for sprintf() */
 #include <errno.h>
 #include <sys/file.h>
 #include <fcntl.h>
-#include <string.h>
 
 #include "postgres.h"
 
 #include "access/genam.h"
 #include "access/heapam.h"
-#include "access/htup.h"
 #include "access/istrat.h"
-#include "access/itup.h"
-#include "access/skey.h"
-#include "access/tupdesc.h"
-#include "access/tupmacs.h"
-#include "access/xact.h"
 #include "catalog/catalog.h"
 #include "catalog/catname.h"
 #include "catalog/index.h"
 #include "catalog/indexing.h"
-#include "catalog/pg_aggregate.h"
 #include "catalog/pg_attrdef.h"
-#include "catalog/pg_attribute.h"
-#include "catalog/pg_index.h"
-#include "catalog/pg_proc.h"
-#include "catalog/pg_class.h"
 #include "catalog/pg_log.h"
+#include "catalog/pg_proc.h"
 #include "catalog/pg_relcheck.h"
 #include "catalog/pg_rewrite.h"
 #include "catalog/pg_type.h"
 #include "catalog/pg_variable.h"
-#include "fmgr.h"
 #include "lib/hasht.h"
 #include "miscadmin.h"
-#include "storage/buf.h"
-#include "storage/bufmgr.h"
-#include "storage/fd.h"			/* for SEEK_ */
-#include "storage/lmgr.h"
 #include "storage/smgr.h"
 #include "utils/builtins.h"
 #include "utils/catcache.h"
-#include "utils/hsearch.h"
-#include "utils/mcxt.h"
-#include "utils/memutils.h"
-#include "utils/rel.h"
 #include "utils/relcache.h"
-#include "utils/syscache.h"
 
 
 static void RelationFlushRelation(Relation *relationPtr,

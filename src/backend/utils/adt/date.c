@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.32 1999/05/25 16:11:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.32.2.1 1999/08/02 05:24:51 scrappy Exp $
  *
  * NOTES
  *	 This code is actually (almost) unused.
@@ -24,23 +24,21 @@
  *-------------------------------------------------------------------------
  */
 #include <ctype.h>
-#include <stdio.h>
 #include <time.h>
 #include <sys/time.h>
 #include <sys/types.h>
-#include <string.h>
 
 #include "postgres.h"
-#include "miscadmin.h"
 #ifdef HAVE_FLOAT_H
 #include <float.h>
 #endif
 #ifdef HAVE_LIMITS_H
 #include <limits.h>
 #endif
+
 #include "access/xact.h"
-#include "utils/builtins.h"		/* where function declarations go */
-#include "utils/palloc.h"
+#include "miscadmin.h"
+#include "utils/builtins.h"
 #include "utils/dt.h"
 
 #define INVALID_RELTIME_STR		"Undefined RelTime"

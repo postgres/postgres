@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtcompare.c,v 1.24 1999/05/25 22:40:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtcompare.c,v 1.24.2.1 1999/08/02 05:24:40 scrappy Exp $
  *
  *	NOTES
  *		These functions are stored in pg_amproc.  For each operator class
@@ -20,12 +20,10 @@
  *-------------------------------------------------------------------------
  */
 
-#include <string.h>
 
-#include <postgres.h>
+#include "postgres.h"
 
-#include <utils/builtins.h>
-#include <utils/nabstime.h>
+#include "utils/builtins.h"
 
 int32
 btint2cmp(int16 a, int16 b)

@@ -6,20 +6,18 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/findbe.c,v 1.14 1999/05/25 16:12:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/findbe.c,v 1.14.2.1 1999/08/02 05:25:09 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <stdio.h>
 #include <grp.h>
 #include <pwd.h>
-#include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
 #include "postgres.h"
-#include "miscadmin.h"			/* for DebugLvl */
+#include "miscadmin.h"
 
 #ifndef S_IRUSR					/* XXX [TRH] should be in a header */
 #define S_IRUSR		 S_IREAD
