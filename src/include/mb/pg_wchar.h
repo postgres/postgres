@@ -1,4 +1,4 @@
-/* $Id: pg_wchar.h,v 1.4 1998/09/01 04:36:34 momjian Exp $ */
+/* $Id: pg_wchar.h,v 1.5 1998/09/25 01:46:25 momjian Exp $ */
 
 #ifndef PG_WCHAR_H
 #define PG_WCHAR_H
@@ -103,6 +103,7 @@ extern int	pg_mule_mblen(const unsigned char *);
 extern int	pg_mic_mblen(const unsigned char *);
 extern int	pg_mbstrlen(const unsigned char *);
 extern int	pg_mbstrlen_with_len(const unsigned char *, int);
+extern int	pg_mbcliplen(const unsigned char *, int, int);
 extern pg_encoding_conv_tbl *pg_get_encent_by_encoding(int);
 extern bool show_client_encoding(void);
 extern bool reset_client_encoding(void);

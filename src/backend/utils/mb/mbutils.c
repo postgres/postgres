@@ -3,7 +3,7 @@
  * client encoding and server internal encoding.
  * (currently mule internal code (mic) is used)
  * Tatsuo Ishii
- * $Id: mbutils.c,v 1.3 1998/09/01 04:33:22 momjian Exp $ */
+ * $Id: mbutils.c,v 1.4 1998/09/25 01:46:23 momjian Exp $ */
 
 #include <stdio.h>
 #include <string.h>
@@ -199,6 +199,34 @@ pg_mbstrlen_with_len(const unsigned char *mbstr, int limit)
 		len++;
 	}
 	return (len);
+}
+
+/*
+ * returns the length of a multi-byte string
+ * (not necessarily  NULL terminated)
+ * that is not longer than limit.
+ * this function does not break multi-byte word boundary.
+ */
+int
+pg_mbcliplen(const unsigned char *mbstr, int len, int limit)
+{
+	int			clen = 0;
+	int			l;
+
+	while (*mbstr &&  len > 0)
+	{
+		l = pg_mblen(mbstr);
+		if ((clen + l) > limit) {
+			break;
+		}
+		clen += l;
+		if (clen == limit) {
+			break;
+		}
+		len -= l;
+		mbstr += l;
+	}
+	return (clen);
 }
 
 /*
