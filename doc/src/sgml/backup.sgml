@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.43 2004/08/07 03:21:11 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.44 2004/08/07 12:21:25 momjian Exp $
 -->
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -818,7 +818,7 @@ restore_command = 'cp /mnt/server/archivedir/%f %p'
     which transaction ID to use.  Keep in mind that while transaction
     IDs are asigned sequentially at transaction start, transactions can
     complete in a different numeric order.
-   </para
+   </para>
    <para>
     Note that the stop point must be after the ending time of the backup
     (ie, the time of <function>pg_stop_backup</>).  You cannot use a base
