@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.47 1997/07/30 14:03:33 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.48 1997/07/30 14:08:11 scrappy Exp $
  *
  * NOTES
  *
@@ -35,7 +35,11 @@
                                 /* moved here to prevent double define */
 #include <sys/param.h>          /* for MAXHOSTNAMELEN on most */
 #ifdef HAVE_NETDB_H
-#include <netdb.h>              /* for MAXHOSTNAMELEN on some */
+#  include <netdb.h>              /* for MAXHOSTNAMELEN on some */
+#endif
+
+#ifndef MAXHOSTNAMELEN
+#  define MAXHOSTNAMELEN 256
 #endif
 
 #include "postgres.h"
