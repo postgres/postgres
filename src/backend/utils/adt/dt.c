@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.41 1997/09/20 16:20:29 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.42 1997/10/17 05:36:01 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -156,7 +156,7 @@ datetime_in(char *str)
 	}
 
 	return (result);
-}								/* datetime_in() */
+} /* datetime_in() */
 
 /* datetime_out()
  * Convert a datetime to external form.
@@ -195,7 +195,7 @@ datetime_out(DateTime *dt)
 	strcpy(result, buf);
 
 	return (result);
-}								/* datetime_out() */
+} /* datetime_out() */
 
 
 /* timespan_in()
@@ -252,7 +252,7 @@ timespan_in(char *str)
 	}
 
 	return (span);
-}								/* timespan_in() */
+} /* timespan_in() */
 
 /* timespan_out()
  * Convert a time span to external form.
@@ -280,7 +280,7 @@ timespan_out(TimeSpan *span)
 
 	strcpy(result, buf);
 	return (result);
-}								/* timespan_out() */
+} /* timespan_out() */
 
 
 /*****************************************************************************
@@ -295,7 +295,7 @@ datetime_finite(DateTime *datetime)
 		return FALSE;
 
 	return (!DATETIME_NOT_FINITE(*datetime));
-}								/* datetime_finite() */
+} /* datetime_finite() */
 
 
 #ifdef NOT_USED
@@ -306,7 +306,7 @@ timespan_finite(TimeSpan *timespan)
 		return FALSE;
 
 	return (!TIMESPAN_NOT_FINITE(*timespan));
-}								/* timespan_finite() */
+} /* timespan_finite() */
 
 #endif
 
@@ -339,7 +339,7 @@ GetEpochTime(struct tm * tm)
 #endif
 
 	return;
-}								/* GetEpochTime() */
+} /* GetEpochTime() */
 
 DateTime
 SetDateTime(DateTime dt)
@@ -366,7 +366,7 @@ SetDateTime(DateTime dt)
 	}
 
 	return (dt);
-}								/* SetDateTime() */
+} /* SetDateTime() */
 
 /*		datetime_relop	- is datetime1 relop datetime2
  */
@@ -391,7 +391,7 @@ datetime_eq(DateTime *datetime1, DateTime *datetime2)
 		dt2 = SetDateTime(dt2);
 
 	return (dt1 == dt2);
-}								/* datetime_eq() */
+} /* datetime_eq() */
 
 bool
 datetime_ne(DateTime *datetime1, DateTime *datetime2)
@@ -414,7 +414,7 @@ datetime_ne(DateTime *datetime1, DateTime *datetime2)
 		dt2 = SetDateTime(dt2);
 
 	return (dt1 != dt2);
-}								/* datetime_ne() */
+} /* datetime_ne() */
 
 bool
 datetime_lt(DateTime *datetime1, DateTime *datetime2)
@@ -437,7 +437,7 @@ datetime_lt(DateTime *datetime1, DateTime *datetime2)
 		dt2 = SetDateTime(dt2);
 
 	return (dt1 < dt2);
-}								/* datetime_lt() */
+} /* datetime_lt() */
 
 bool
 datetime_gt(DateTime *datetime1, DateTime *datetime2)
@@ -463,7 +463,7 @@ datetime_gt(DateTime *datetime1, DateTime *datetime2)
 	printf("datetime_gt- %f %s greater than %f\n", dt1, ((dt1 > dt2) ? "is" : "is not"), dt2);
 #endif
 	return (dt1 > dt2);
-}								/* datetime_gt() */
+} /* datetime_gt() */
 
 bool
 datetime_le(DateTime *datetime1, DateTime *datetime2)
@@ -486,7 +486,7 @@ datetime_le(DateTime *datetime1, DateTime *datetime2)
 		dt2 = SetDateTime(dt2);
 
 	return (dt1 <= dt2);
-}								/* datetime_le() */
+} /* datetime_le() */
 
 bool
 datetime_ge(DateTime *datetime1, DateTime *datetime2)
@@ -509,7 +509,7 @@ datetime_ge(DateTime *datetime1, DateTime *datetime2)
 		dt2 = SetDateTime(dt2);
 
 	return (dt1 >= dt2);
-}								/* datetime_ge() */
+} /* datetime_ge() */
 
 
 /*		datetime_cmp	- 3-state comparison for datetime
@@ -546,7 +546,7 @@ datetime_cmp(DateTime *datetime1, DateTime *datetime2)
 	}
 
 	return (((dt1 < dt2) ? -1 : ((dt1 > dt2) ? 1 : 0)));
-}								/* datetime_cmp() */
+} /* datetime_cmp() */
 
 
 /*		timespan_relop	- is timespan1 relop timespan2
@@ -562,7 +562,7 @@ timespan_eq(TimeSpan *timespan1, TimeSpan *timespan2)
 
 	return ((timespan1->time == timespan2->time)
 			&& (timespan1->month == timespan2->month));
-}								/* timespan_eq() */
+} /* timespan_eq() */
 
 bool
 timespan_ne(TimeSpan *timespan1, TimeSpan *timespan2)
@@ -575,7 +575,7 @@ timespan_ne(TimeSpan *timespan1, TimeSpan *timespan2)
 
 	return ((timespan1->time != timespan2->time)
 			|| (timespan1->month != timespan2->month));
-}								/* timespan_ne() */
+} /* timespan_ne() */
 
 bool
 timespan_lt(TimeSpan *timespan1, TimeSpan *timespan2)
@@ -597,7 +597,7 @@ timespan_lt(TimeSpan *timespan1, TimeSpan *timespan2)
 		span2 += (timespan2->month * (30.0 * 86400));
 
 	return (span1 < span2);
-}								/* timespan_lt() */
+} /* timespan_lt() */
 
 bool
 timespan_gt(TimeSpan *timespan1, TimeSpan *timespan2)
@@ -619,7 +619,7 @@ timespan_gt(TimeSpan *timespan1, TimeSpan *timespan2)
 		span2 += (timespan2->month * (30.0 * 86400));
 
 	return (span1 > span2);
-}								/* timespan_gt() */
+} /* timespan_gt() */
 
 bool
 timespan_le(TimeSpan *timespan1, TimeSpan *timespan2)
@@ -641,7 +641,7 @@ timespan_le(TimeSpan *timespan1, TimeSpan *timespan2)
 		span2 += (timespan2->month * (30.0 * 86400));
 
 	return (span1 <= span2);
-}								/* timespan_le() */
+} /* timespan_le() */
 
 bool
 timespan_ge(TimeSpan *timespan1, TimeSpan *timespan2)
@@ -663,7 +663,7 @@ timespan_ge(TimeSpan *timespan1, TimeSpan *timespan2)
 		span2 += (timespan2->month * (30.0 * 86400));
 
 	return (span1 >= span2);
-}								/* timespan_ge() */
+} /* timespan_ge() */
 
 
 /*		timespan_cmp	- 3-state comparison for timespan
@@ -695,7 +695,7 @@ timespan_cmp(TimeSpan *timespan1, TimeSpan *timespan2)
 		span2 += (timespan2->month * (30.0 * 86400));
 
 	return ((span1 < span2) ? -1 : (span1 > span2) ? 1 : 0);
-}								/* timespan_cmp() */
+} /* timespan_cmp() */
 
 
 /*----------------------------------------------------------
@@ -741,7 +741,7 @@ datetime_smaller(DateTime *datetime1, DateTime *datetime2)
 	}
 
 	return (result);
-}								/* datetime_smaller() */
+} /* datetime_smaller() */
 
 DateTime   *
 datetime_larger(DateTime *datetime1, DateTime *datetime2)
@@ -778,7 +778,7 @@ datetime_larger(DateTime *datetime1, DateTime *datetime2)
 	}
 
 	return (result);
-}								/* datetime_larger() */
+} /* datetime_larger() */
 
 
 TimeSpan   *
@@ -819,7 +819,7 @@ datetime_mi(DateTime *datetime1, DateTime *datetime2)
 	result->month = 0;
 
 	return (result);
-}								/* datetime_mi() */
+} /* datetime_mi() */
 
 
 /* datetime_pl_span()
@@ -922,7 +922,7 @@ datetime_pl_span(DateTime *datetime, TimeSpan *span)
 	}
 
 	return (result);
-}								/* datetime_pl_span() */
+} /* datetime_pl_span() */
 
 DateTime   *
 datetime_mi_span(DateTime *datetime, TimeSpan *span)
@@ -939,7 +939,7 @@ datetime_mi_span(DateTime *datetime, TimeSpan *span)
 	result = datetime_pl_span(datetime, &tspan);
 
 	return (result);
-}								/* datetime_mi_span() */
+} /* datetime_mi_span() */
 
 
 TimeSpan   *
@@ -956,7 +956,7 @@ timespan_um(TimeSpan *timespan)
 	result->month = -(timespan->month);
 
 	return (result);
-}								/* timespan_um() */
+} /* timespan_um() */
 
 
 TimeSpan   *
@@ -1012,7 +1012,7 @@ timespan_smaller(TimeSpan *timespan1, TimeSpan *timespan2)
 	}
 
 	return (result);
-}								/* timespan_smaller() */
+} /* timespan_smaller() */
 
 TimeSpan   *
 timespan_larger(TimeSpan *timespan1, TimeSpan *timespan2)
@@ -1067,7 +1067,7 @@ timespan_larger(TimeSpan *timespan1, TimeSpan *timespan2)
 	}
 
 	return (result);
-}								/* timespan_larger() */
+} /* timespan_larger() */
 
 
 TimeSpan   *
@@ -1084,7 +1084,7 @@ timespan_pl(TimeSpan *span1, TimeSpan *span2)
 	result->time = JROUND(span1->time + span2->time);
 
 	return (result);
-}								/* timespan_pl() */
+} /* timespan_pl() */
 
 TimeSpan   *
 timespan_mi(TimeSpan *span1, TimeSpan *span2)
@@ -1100,7 +1100,7 @@ timespan_mi(TimeSpan *span1, TimeSpan *span2)
 	result->time = JROUND(span1->time - span2->time);
 
 	return (result);
-}								/* timespan_mi() */
+} /* timespan_mi() */
 
 TimeSpan   *
 timespan_div(TimeSpan *span1, float8 *arg2)
@@ -1120,7 +1120,7 @@ timespan_div(TimeSpan *span1, float8 *arg2)
 	result->time = JROUND(span1->time / *arg2);
 
 	return (result);
-}								/* timespan_div() */
+} /* timespan_div() */
 
 /* datetime_age()
  * Calculate time difference while retaining year/month fields.
@@ -1264,7 +1264,7 @@ datetime_age(DateTime *datetime1, DateTime *datetime2)
 	}
 
 	return (result);
-}								/* datetime_age() */
+} /* datetime_age() */
 
 
 /*----------------------------------------------------------
@@ -1300,7 +1300,7 @@ datetime_text(DateTime *datetime)
 	PFREE(str);
 
 	return (result);
-}								/* datetime_text() */
+} /* datetime_text() */
 
 
 /* text_datetime()
@@ -1329,7 +1329,7 @@ text_datetime(text *str)
 	result = datetime_in(dstr);
 
 	return (result);
-}								/* text_datetime() */
+} /* text_datetime() */
 
 
 /* timespan_text()
@@ -1360,7 +1360,7 @@ timespan_text(TimeSpan *timespan)
 	PFREE(str);
 
 	return (result);
-}								/* timespan_text() */
+} /* timespan_text() */
 
 
 /* text_timespan()
@@ -1390,7 +1390,7 @@ text_timespan(text *str)
 	result = timespan_in(dstr);
 
 	return (result);
-}								/* text_timespan() */
+} /* text_timespan() */
 
 #endif
 
@@ -1540,7 +1540,7 @@ datetime_trunc(text *units, DateTime *datetime)
 	}
 
 	return (result);
-}								/* datetime_trunc() */
+} /* datetime_trunc() */
 
 /* timespan_trunc()
  * Extract specified field from timespan.
@@ -1665,7 +1665,7 @@ timespan_trunc(text *units, TimeSpan *timespan)
 	}
 
 	return (result);
-}								/* timespan_trunc() */
+} /* timespan_trunc() */
 
 
 /* datetime_part()
@@ -1817,7 +1817,7 @@ datetime_part(text *units, DateTime *datetime)
 	}
 
 	return (result);
-}								/* datetime_part() */
+} /* datetime_part() */
 
 
 /* timespan_part()
@@ -1954,7 +1954,7 @@ timespan_part(text *units, TimeSpan *timespan)
 	}
 
 	return (result);
-}								/* timespan_part() */
+} /* timespan_part() */
 
 
 /* datetime_zone()
@@ -2044,7 +2044,7 @@ datetime_zone(text *zone, DateTime *datetime)
 	}
 
 	return (result);
-}								/* datetime_zone() */
+} /* datetime_zone() */
 
 
 /*****************************************************************************
@@ -2329,7 +2329,7 @@ date2j(int y, int m, int d)
 
 	return ((1461 * (y + 4800 + m12)) / 4 + (367 * (m - 2 - 12 * (m12))) / 12
 			- (3 * ((y + 4900 + m12) / 100)) / 4 + d - 32075);
-}								/* date2j() */
+} /* date2j() */
 
 void
 j2date(int jd, int *year, int *month, int *day)
@@ -2358,7 +2358,7 @@ j2date(int jd, int *year, int *month, int *day)
 	*month = m;
 	*day = d;
 	return;
-}								/* j2date() */
+} /* j2date() */
 
 static int
 j2day(int date)
@@ -2368,7 +2368,7 @@ j2day(int date)
 	day = (date + 1) % 7;
 
 	return (day);
-}								/* j2day() */
+} /* j2day() */
 
 
 /* datetime2tm()
@@ -2528,7 +2528,7 @@ datetime2tm(DateTime dt, int *tzp, struct tm * tm, double *fsec, char **tzn)
 #endif
 
 	return 0;
-}								/* datetime2tm() */
+} /* datetime2tm() */
 
 
 /* tm2datetime()
@@ -2558,7 +2558,7 @@ tm2datetime(struct tm * tm, double fsec, int *tzp, DateTime *result)
 		*result = dt2local(*result, -(*tzp));
 
 	return 0;
-}								/* tm2datetime() */
+} /* tm2datetime() */
 
 
 /* timespan2tm()
@@ -2599,7 +2599,7 @@ timespan2tm(TimeSpan span, struct tm * tm, float8 *fsec)
 #endif
 
 	return 0;
-}								/* timespan2tm() */
+} /* timespan2tm() */
 
 static int
 tm2timespan(struct tm * tm, double fsec, TimeSpan *span)
@@ -2614,7 +2614,7 @@ tm2timespan(struct tm * tm, double fsec, TimeSpan *span)
 #endif
 
 	return 0;
-}								/* tm2timespan() */
+} /* tm2timespan() */
 
 
 static DateTime
@@ -2623,13 +2623,13 @@ dt2local(DateTime dt, int tz)
 	dt -= tz;
 	dt = JROUND(dt);
 	return (dt);
-}								/* dt2local() */
+} /* dt2local() */
 
 double
 time2t(const int hour, const int min, const double sec)
 {
 	return ((((hour * 60) + min) * 60) + sec);
-}								/* time2t() */
+} /* time2t() */
 
 static void
 dt2time(DateTime jd, int *hour, int *min, double *sec)
@@ -2645,7 +2645,7 @@ dt2time(DateTime jd, int *hour, int *min, double *sec)
 	*sec = JROUND(time);
 
 	return;
-}								/* dt2time() */
+} /* dt2time() */
 
 
 /*
@@ -2791,7 +2791,7 @@ ParseDateTime(char *timestr, char *lowstr,
 	*numfields = nf;
 
 	return 0;
-}								/* ParseDateTime() */
+} /* ParseDateTime() */
 
 
 /* DecodeDateTime()
@@ -3036,7 +3036,9 @@ DecodeDateTime(char *field[], int ftype[], int nf,
 
 	if ((mer != HR24) && (tm->tm_hour > 12))
 		return -1;
-	if (mer == PM)
+	if ((mer == AM) && (tm->tm_hour == 12))
+		tm->tm_hour = 0;
+	else if ((mer == PM) && (tm->tm_hour != 12))
 		tm->tm_hour += 12;
 
 #ifdef DATEDEBUG
@@ -3089,7 +3091,7 @@ DecodeDateTime(char *field[], int ftype[], int nf,
 	}
 
 	return 0;
-}								/* DecodeDateTime() */
+} /* DecodeDateTime() */
 
 
 /* DecodeTimeOnly()
@@ -3205,14 +3207,16 @@ DecodeTimeOnly(char *field[], int ftype[], int nf, int *dtype, struct tm * tm, d
 
 	if ((mer != HR24) && (tm->tm_hour > 12))
 		return -1;
-	if (mer == PM)
+	if ((mer == AM) && (tm->tm_hour == 12))
+		tm->tm_hour = 0;
+	else if ((mer == PM) && (tm->tm_hour != 12))
 		tm->tm_hour += 12;
 
 	if ((fmask & DTK_TIME_M) != DTK_TIME_M)
 		return -1;
 
 	return 0;
-}								/* DecodeTimeOnly() */
+} /* DecodeTimeOnly() */
 
 
 /* DecodeDate()
@@ -3318,7 +3322,7 @@ DecodeDate(char *str, int fmask, int *tmask, struct tm * tm)
 	}
 
 	return 0;
-}								/* DecodeDate() */
+} /* DecodeDate() */
 
 
 /* DecodeTime()
@@ -3377,7 +3381,7 @@ DecodeTime(char *str, int fmask, int *tmask, struct tm * tm, double *fsec)
 		return -1;
 
 	return 0;
-}								/* DecodeTime() */
+} /* DecodeTime() */
 
 
 /* DecodeNumber()
@@ -3506,7 +3510,7 @@ DecodeNumber(int flen, char *str, int fmask, int *tmask, struct tm * tm, double 
 	}
 
 	return 0;
-}								/* DecodeNumber() */
+} /* DecodeNumber() */
 
 
 /* DecodeNumberField()
@@ -3591,7 +3595,7 @@ DecodeNumberField(int len, char *str, int fmask, int *tmask, struct tm * tm, dou
 	}
 
 	return 0;
-}								/* DecodeNumberField() */
+} /* DecodeNumberField() */
 
 
 /* DecodeTimezone()
@@ -3634,7 +3638,7 @@ DecodeTimezone(char *str, int *tzp)
 
 	*tzp = -tz;
 	return (*cp != '\0');
-}								/* DecodeTimezone() */
+} /* DecodeTimezone() */
 
 
 /* DecodeSpecial()
@@ -3685,7 +3689,7 @@ DecodeSpecial(int field, char *lowtoken, int *val)
 	}
 
 	return (type);
-}								/* DecodeSpecial() */
+} /* DecodeSpecial() */
 
 
 /* DecodeDateDelta()
@@ -3746,8 +3750,7 @@ DecodeDateDelta(char *field[], int ftype[], int nf, int *dtype, struct tm * tm, 
 	}
 
 	/*
-	 * read through remaining list backwards to pick up units before
-	 * values
+	 * read through remaining list backwards to pick up units before values
 	 */
 	for (i = nf - 1; i >= ii; i--)
 	{
@@ -3924,7 +3927,7 @@ DecodeDateDelta(char *field[], int ftype[], int nf, int *dtype, struct tm * tm, 
 
 	/* ensure that at least one time field has been found */
 	return ((fmask != 0) ? 0 : -1);
-}								/* DecodeDateDelta() */
+} /* DecodeDateDelta() */
 
 
 /* DecodeUnits()
@@ -3970,7 +3973,7 @@ DecodeUnits(int field, char *lowtoken, int *val)
 	}
 
 	return (type);
-}								/* DecodeUnits() */
+} /* DecodeUnits() */
 
 
 /* datebsearch()
@@ -4047,7 +4050,7 @@ EncodeSpecialDateTime(DateTime dt, char *str)
 	}
 
 	return (FALSE);
-}								/* EncodeSpecialDateTime() */
+} /* EncodeSpecialDateTime() */
 
 
 /* EncodeDateOnly()
@@ -4160,7 +4163,7 @@ EncodeDateOnly(struct tm * tm, int style, char *str)
 #endif
 
 	return (TRUE);
-}								/* EncodeDateOnly() */
+} /* EncodeDateOnly() */
 
 
 /* EncodeTimeOnly()
@@ -4184,7 +4187,7 @@ EncodeTimeOnly(struct tm * tm, double fsec, int style, char *str)
 #endif
 
 	return (TRUE);
-}								/* EncodeTimeOnly() */
+} /* EncodeTimeOnly() */
 
 
 /* EncodeDateTime()
@@ -4343,7 +4346,7 @@ EncodeDateTime(struct tm * tm, double fsec, int *tzp, char **tzn, int style, cha
 #endif
 
 	return (TRUE);
-}								/* EncodeDateTime() */
+} /* EncodeDateTime() */
 
 
 /* EncodeTimeSpan()
@@ -4439,7 +4442,7 @@ EncodeTimeSpan(struct tm * tm, double fsec, int style, char *str)
 #endif
 
 	return 0;
-}								/* EncodeTimeSpan() */
+} /* EncodeTimeSpan() */
 
 
 #if defined(linux) && defined(PPC)
