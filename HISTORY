@@ -10,12 +10,13 @@ Allow TIME and TYPE column names(Thomas)
 Allow larger range of true/false as boolean values(Thomas)
 Support output of "now" and "current"(Thomas)
 Handle DEFAULT with INSERT of NULL properly(Vadim)
-fix for buffer cache reference count problem(Vadim)
+Fix for relation reference counts problem in buffer manager(Vadim)
 Allow strings to span lines, like ANSI(Thomas)
-Fix for backward ORDER BY(Vadim)
+Fix for backward cursor with ORDER BY(Vadim)
 Fix avg(cash) computation(Thomas)
-Fix for specifying a column twice in ORDER BY(Vadim)
-Documented new libpq function to return affected rows, PQcmdTuples(Vadim)
+Fix for specifying a column twice in ORDER/GROUP BY(Vadim)
+Documented new libpq function to return affected rows, PQcmdTuples(Bruce)
+Trigger function for inserting user names for INSERT/UPDATE(Brook Milligan)
 
 
 PostgreSQL 6.2               Thu Oct 02 12:53:46 EDT 1997
