@@ -48,10 +48,9 @@ char *ps_status_buffer = NULL
 
 #else							/* !linux */
 
-extern const char **ps_status;
+extern char Ps_status_buffer[];
 
-#define PS_DEFINE_BUFFER \
-const char **ps_status = NULL
+#define PS_DEFINE_BUFFER
 
 #define PS_INIT_STATUS(argc, argv, execname, username, hostname, dbname) \
 	{ \
@@ -61,18 +60,18 @@ const char **ps_status = NULL
 		argv[1] = hostname; \
 		argv[2] = username; \
 		argv[3] = dbname; \
-		ps_status = (const char **)&argv[4]; \
-		for (i = 4; i < argc; i++) \
+		argv[4] = Ps_status_buffer; \
+		for (i = 5; i < argc; i++) \
 			argv[i] = "";  /* blank them */ \
 	}
 
 #define PS_CLEAR_STATUS() \
-	{ if (ps_status) *ps_status = ""; }
+	{ Ps_status_buffer[0] = '\0'; }
 
 #define PS_SET_STATUS(status) \
-	{ if (ps_status) *ps_status = (status); }
+	{ strcpy(Ps_status_buffer, (status)); }
 
-#define PS_STATUS (ps_status ? *ps_status : "")
+#define PS_STATUS (Ps_status_buffer)
 #endif
 
 #ifdef NO_PS_STATUS
