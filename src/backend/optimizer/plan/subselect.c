@@ -1,20 +1,24 @@
 /*-------------------------------------------------------------------------
  *
  * subselect.c
+ *	  Planning routines for subselects and parameters.
+ *
+ * Copyright (c) 1994, Regents of the University of California
+ *
+ * IDENTIFICATION
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.18 1999/06/21 01:20:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include "catalog/pg_type.h"
-
 #include "nodes/pg_list.h"
 #include "nodes/plannodes.h"
 #include "nodes/parsenodes.h"
 #include "nodes/relation.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
-
 #include "optimizer/subselect.h"
 #include "optimizer/planner.h"
 #include "optimizer/planmain.h"
@@ -27,12 +31,31 @@
 #include "optimizer/cost.h"
 
 int			PlannerQueryLevel;	/* level of current query */
-List	   *PlannerVarParam;	/* correlation Vars to Param mapper */
-List	   *PlannerParamVar;	/* to get Var from Param->paramid */
 List	   *PlannerInitPlan;	/* init subplans for current query */
-int			PlannerPlanId;
+List	   *PlannerParamVar;	/* to get Var from Param->paramid */
+int			PlannerPlanId;		/* to assign unique ID to subquery plans */
+
+/*--------------------
+ * PlannerParamVar is a list of Var nodes, wherein the n'th entry
+ * (n counts from 0) corresponds to Param->paramid = n.  The Var nodes
+ * are ordinary except for one thing: their varlevelsup field does NOT
+ * have the usual interpretation of "subplan levels out from current".
+ * Instead, it contains the absolute plan level, with the outermost
+ * plan being level 1 and nested plans having higher level numbers.
+ * This nonstandardness is useful because we don't have to run around
+ * and update the list elements when we enter or exit a subplan
+ * recursion level.  But we must pay attention not to confuse this
+ * meaning with the normal meaning of varlevelsup.
+ *--------------------
+ */
 
 
+/*
+ * Create a new entry in the PlannerParamVar list, and return its index.
+ *
+ * var contains the data to be copied, except for varlevelsup which
+ * is set from the absolute level value given by varlevel.
+ */
 static int
 _new_param(Var *var, int varlevel)
 {
@@ -61,38 +84,49 @@ _new_param(Var *var, int varlevel)
 	return i;
 }
 
+/*
+ * Generate a Param node to replace the given Var,
+ * which is expected to have varlevelsup > 0 (ie, it is not local).
+ */
 static Param *
 _replace_var(Var *var)
 {
-	List	  **rt = (List **) nth(var->varlevelsup, PlannerVarParam);
-	List	   *vpe = rt[var->varno - 1];
+	List	   *ppv;
 	Param	   *retval;
+	int			varlevel;
 	int			i;
 
-	if (vpe == NULL)
-	{
-		vpe = rt[var->varno - 1] = makeNode(List);
-		lfirsti(vpe) = -1;
-		lnext(vpe) = NULL;
-	}
+	Assert(var->varlevelsup > 0 && var->varlevelsup < PlannerQueryLevel);
+	varlevel = PlannerQueryLevel - var->varlevelsup;
 
-	for (i = ObjectIdAttributeNumber;; i++)
+	/*
+	 * If there's already a PlannerParamVar entry for this same Var,
+	 * just use it.  NOTE: in situations involving UNION or inheritance,
+	 * it is possible for the same varno/varlevel to refer to different RTEs
+	 * in different parts of the parsetree, so that different fields might
+	 * end up sharing the same Param number.  As long as we check the vartype
+	 * as well, I believe that this sort of aliasing will cause no trouble.
+	 * The correct field should get stored into the Param slot at execution
+	 * in each part of the tree.
+	 */
+	i = 0;
+	foreach(ppv, PlannerParamVar)
 	{
-		if (i == var->varattno)
+		Var	   *pvar = lfirst(ppv);
+
+		if (pvar->varno == var->varno &&
+			pvar->varattno == var->varattno &&
+			pvar->varlevelsup == varlevel &&
+			pvar->vartype == var->vartype)
 			break;
-		if (lnext(vpe) == NULL)
-		{
-			lnext(vpe) = makeNode(List);
-			vpe = lnext(vpe);
-			lfirsti(vpe) = -1;
-			lnext(vpe) = NULL;
-		}
-		else
-			vpe = lnext(vpe);
+		i++;
 	}
 
-	if ((i = lfirsti(vpe)) < 0) /* parameter is not assigned */
-		i = _new_param(var, PlannerQueryLevel - var->varlevelsup);
+	if (! ppv)
+	{
+		/* Nope, so make a new one */
+		i = _new_param(var, varlevel);
+	}
 
 	retval = makeNode(Param);
 	retval->paramkind = PARAM_EXEC;
@@ -125,7 +159,7 @@ _make_subplan(SubLink *slink)
 	(void) SS_finalize_plan(plan);
 	plan->initPlan = PlannerInitPlan;
 
-	/* Get extParam from InitPlan-s */
+	/* Create extParam list as union of InitPlan-s' lists */
 	foreach(lst, PlannerInitPlan)
 	{
 		List	   *lp;
@@ -146,11 +180,12 @@ _make_subplan(SubLink *slink)
 	node->sublink = slink;
 	slink->subselect = NULL;	/* cool ?! */
 
-	/* make parParam list */
+	/* make parParam list of params coming from current query level */
 	foreach(lst, plan->extParam)
 	{
 		Var		   *var = nth(lfirsti(lst), PlannerParamVar);
 
+		/* note varlevelsup is absolute level number */
 		if (var->varlevelsup == PlannerQueryLevel)
 			node->parParam = lappendi(node->parParam, lfirsti(lst));
 	}
@@ -170,7 +205,7 @@ _make_subplan(SubLink *slink)
 			TargetEntry *te = nth(i, plan->targetlist);
 			Var		   *var = makeVar(0, 0, te->resdom->restype,
 									  te->resdom->restypmod,
-									  PlannerQueryLevel, 0, 0);
+									  0, 0, 0);
 			Param	   *prm = makeNode(Param);
 
 			prm->paramkind = PARAM_EXEC;
@@ -190,7 +225,7 @@ _make_subplan(SubLink *slink)
 	}
 	else if (node->parParam == NULL && slink->subLinkType == EXISTS_SUBLINK)
 	{
-		Var		   *var = makeVar(0, 0, BOOLOID, -1, PlannerQueryLevel, 0, 0);
+		Var		   *var = makeVar(0, 0, BOOLOID, -1, 0, 0, 0);
 		Param	   *prm = makeNode(Param);
 
 		prm->paramkind = PARAM_EXEC;
@@ -202,10 +237,10 @@ _make_subplan(SubLink *slink)
 		result = (Node *) prm;
 	}
 	else
-/* make expression of SUBPLAN type */
 	{
+		/* make expression of SUBPLAN type */
 		Expr	   *expr = makeNode(Expr);
-		List	   *args = NULL;
+		List	   *args = NIL;
 		int			i = 0;
 
 		expr->typeOid = BOOLOID;
@@ -222,6 +257,10 @@ _make_subplan(SubLink *slink)
 			Var		   *var = nth(lfirsti(lst), PlannerParamVar);
 
 			var = (Var *) copyObject(var);
+			/* Must fix absolute-level varlevelsup from the
+			 * PlannerParamVar entry.  But since var is at current
+			 * subplan level, this is easy:
+			 */
 			var->varlevelsup = 0;
 			args = lappend(args, var);
 		}
@@ -240,7 +279,6 @@ _make_subplan(SubLink *slink)
 	}
 
 	return result;
-
 }
 
 static List *
@@ -305,6 +343,7 @@ _finalize_primnode(void *expr, List **subplan)
 		{
 			Var		   *var = nth(lfirsti(lst), PlannerParamVar);
 
+			/* note varlevelsup is absolute level number */
 			if (var->varlevelsup < PlannerQueryLevel &&
 				!intMember(lfirsti(lst), result))
 				result = lappendi(result, lfirsti(lst));
@@ -332,10 +371,7 @@ SS_replace_correlation_vars(Node *expr)
 	else if (IsA(expr, Var))
 	{
 		if (((Var *) expr)->varlevelsup > 0)
-		{
-			Assert(((Var *) expr)->varlevelsup < PlannerQueryLevel);
 			expr = (Node *) _replace_var((Var *) expr);
-		}
 	}
 	else if (IsA(expr, Iter))
 		((Iter *) expr)->iterexpr = SS_replace_correlation_vars(((Iter *) expr)->iterexpr);
@@ -480,6 +516,7 @@ SS_finalize_plan(Plan *plan)
 	{
 		Var		   *var = nth(lfirsti(lst), PlannerParamVar);
 
+		/* note varlevelsup is absolute level number */
 		if (var->varlevelsup < PlannerQueryLevel)
 			extParam = lappendi(extParam, lfirsti(lst));
 		else if (var->varlevelsup > PlannerQueryLevel)

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.56 1999/06/12 19:27:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.57 1999/06/21 01:20:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,10 +73,10 @@ planner(Query *parse)
 {
 	Plan	   *result_plan;
 
+	/* Initialize state for subselects */
 	PlannerQueryLevel = 1;
-	PlannerVarParam = NULL;
-	PlannerParamVar = NULL;
 	PlannerInitPlan = NULL;
+	PlannerParamVar = NULL;
 	PlannerPlanId = 0;
 
 	transformKeySetQuery(parse);
@@ -155,7 +155,6 @@ union_planner(Query *parse)
 	}
 	else
 	{
-		List	  **vpm = NULL;
 		List	   *sub_tlist;
 
 		/* Preprocess targetlist in case we are inside an INSERT/UPDATE. */
@@ -208,19 +207,10 @@ union_planner(Query *parse)
 		sub_tlist = make_subplanTargetList(parse, tlist, &groupColIdx);
 
 		/* Generate the (sub) plan */
-		if (parse->rtable != NULL)
-		{
-			vpm = (List **) palloc(length(parse->rtable) * sizeof(List *));
-			memset(vpm, 0, length(parse->rtable) * sizeof(List *));
-		}
-		PlannerVarParam = lcons(vpm, PlannerVarParam);
 		result_plan = query_planner(parse,
 									parse->commandType,
 									sub_tlist,
 									(List *) parse->qual);
-		PlannerVarParam = lnext(PlannerVarParam);
-		if (vpm != NULL)
-			pfree(vpm);
 	}
 
 	/* query_planner returns NULL if it thinks plan is bogus */
@@ -264,34 +254,21 @@ union_planner(Query *parse)
 	 */
 	if (parse->havingQual)
 	{
-		List	  **vpm = NULL;
-
-		if (parse->rtable != NULL)
-		{
-			vpm = (List **) palloc(length(parse->rtable) * sizeof(List *));
-			memset(vpm, 0, length(parse->rtable) * sizeof(List *));
-		}
-		PlannerVarParam = lcons(vpm, PlannerVarParam);
-
 		/* convert the havingQual to conjunctive normal form (cnf) */
 		parse->havingQual = (Node *) cnfify((Expr *) parse->havingQual, true);
 
 		if (parse->hasSubLinks)
 		{
-
 			/*
-			 * There is a subselect in the havingQual, so we have to
+			 * There may be a subselect in the havingQual, so we have to
 			 * process it using the same function as for a subselect in
 			 * 'where'
 			 */
-			parse->havingQual =
-				(Node *) SS_process_sublinks(parse->havingQual);
+			parse->havingQual = SS_process_sublinks(parse->havingQual);
 
 			/*
 			 * Check for ungrouped variables passed to subplans. (Probably
-			 * this should be done by the parser, but right now the parser
-			 * is not smart enough to tell which level the vars belong
-			 * to?)
+			 * this should be done for the targetlist as well???)
 			 */
 			check_having_for_ungrouped_vars(parse->havingQual,
 											parse->groupClause,
@@ -300,10 +277,6 @@ union_planner(Query *parse)
 
 		/* Calculate the opfids from the opnos */
 		parse->havingQual = (Node *) fix_opids((List *) parse->havingQual);
-
-		PlannerVarParam = lnext(PlannerVarParam);
-		if (vpm != NULL)
-			pfree(vpm);
 	}
 
 	/*
@@ -325,10 +298,10 @@ union_planner(Query *parse)
 
 		/*
 		 * Check that we actually found some aggregates, else executor
-		 * will die unpleasantly.  (The rewrite module currently has bugs
-		 * that allow hasAggs to be incorrectly set 'true' sometimes. It's
-		 * not easy to recover here, since we've already made decisions
-		 * assuming there will be an Agg node.)
+		 * will die unpleasantly.  (This defends against possible bugs in
+		 * parser or rewrite that might cause hasAggs to be incorrectly
+		 * set 'true'. It's not easy to recover here, since we've already
+		 * made decisions assuming there will be an Agg node.)
 		 */
 		if (((Agg *) result_plan)->aggs == NIL)
 			elog(ERROR, "union_planner: query is marked hasAggs, but I don't see any");
