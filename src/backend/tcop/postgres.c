@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.327 2003/05/02 20:54:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.328 2003/05/02 21:52:42 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1453,6 +1453,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 				break;
 		}
 
+
 	/*
 	 * -d is not the same as setting
 	 * log_min_messages because it enables other
@@ -1577,6 +1578,9 @@ PostgresMain(int argc, char *argv[], const char *username)
 								 * restart... */
 		}
 		BaseInit();
+#ifdef EXECBACKEND
+		AttachSharedMemoryAndSemaphores();
+#endif
 	}
 	else
 	{
@@ -1672,7 +1676,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.327 $ $Date: 2003/05/02 20:54:35 $\n");
+		puts("$Revision: 1.328 $ $Date: 2003/05/02 21:52:42 $\n");
 	}
 
 	/*

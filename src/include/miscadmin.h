@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.118 2003/04/06 22:45:23 petere Exp $
+ * $Id: miscadmin.h,v 1.119 2003/05/02 21:52:42 momjian Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to
@@ -106,6 +106,7 @@ extern void ProcessInterrupts(void);
  */
 extern bool IsUnderPostmaster;
 extern bool ClientAuthInProgress;
+extern const bool ExecBackend;
 
 extern int	PostmasterMain(int argc, char *argv[]);
 extern void ClosePostmasterPorts(bool pgstat_too);

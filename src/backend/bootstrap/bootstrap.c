@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.148 2003/03/06 00:04:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.149 2003/05/02 21:52:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -301,6 +301,11 @@ BootstrapMain(int argc, char *argv[])
 
 	Assert(dbName);
 
+	if (IsUnderPostmaster && ExecBackend && MyProc /* ordinary backend */)
+	{
+		AttachSharedMemoryAndSemaphores();
+	}
+	
 	if (!IsUnderPostmaster)
 	{
 		if (!potential_DataDir)
