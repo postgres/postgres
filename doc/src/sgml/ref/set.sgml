@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.65 2002/09/21 18:32:54 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.66 2002/10/09 04:59:38 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -106,6 +106,12 @@ SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="PARAMETER">timezone</rep
    a single transaction: the <command>SET LOCAL</command> value will be
    seen until the end of the transaction, but afterwards (if the transaction
    is committed) the <command>SET</command> value will take effect.
+  </para>
+
+  <para>
+   With <literal>autocommit</> set to <literal>off</>, <command>SET</>
+   does not start a new transaction block. See the
+   <literal>autocommit</> section of the documentation for details.
   </para>
 
   <para>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.143 2002/10/03 02:26:49 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.144 2002/10/09 04:59:38 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1235,16 +1235,32 @@ env PGOPTIONS='-c geqo=off' psql
 	that is not inside an explicit transaction block (that is, unless a
 	<command>BEGIN</> with no matching <command>COMMIT</> has been
 	given).
-	If set to false, <productname>PostgreSQL</productname> will commit
-	the effects of commands only on receiving an explicit
-	<command>COMMIT</> command.  This mode can also be thought of as
-	implicitly issuing <command>BEGIN</> whenever a command is received
-	and <productname>PostgreSQL</productname> is not already inside
-	a transaction block.
-	The default is true, for compatibility with historical
-	<productname>PostgreSQL</productname> behavior.  But for maximum
-	compatibility with the SQL specification, set it to false.
+	If set to false, <productname>PostgreSQL</productname> will
+	commit the commands only when receiving an explicit
+	<command>COMMIT</> command. This mode can also be thought of as
+	implicitly issuing <command>BEGIN</> whenever a command is
+	received that is not already inside a transaction block. The
+	default is true, for compatibility with historical
+	<productname>PostgreSQL</productname> behavior. However, for
+	maximum compatibility with the SQL specification, set it to
+	false.
        </para>
+       <note>
+        <para>
+	 With <varname>autocommit</> set to false, <command>SET</>,
+	 <command>SHOW</>, and <command>RESET</> do not start new
+	 transaction blocks. They are run in their own transactions.
+	 Once another command is issued, multi-statement transaction
+	 behavior begins and any <command>SET</>, <command>SHOW</>, or
+	 <command>RESET</> commands are considered to be part of the
+	 transaction, i.e. they are committed or rolled back depending
+	 on the completion status of the transaction. To have
+	 <command>SET</>, <command>SHOW</>, and <command>RESET</>
+	 commands at the start of a transaction, use <command>BEGIN</>
+	 first.
+        </para>
+       </note>
+
       </listitem>
      </varlistentry>
 

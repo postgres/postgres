@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.299 2002/10/08 17:17:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.300 2002/10/09 04:59:38 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -76,6 +76,7 @@ char	   *debug_query_string; /* for pgmonitor and
 CommandDest whereToSendOutput = Debug;
 
 extern int	StatementTimeout;
+extern bool autocommit;
 
 static bool dontExecute = false;
 
@@ -122,7 +123,7 @@ static int	ReadCommand(StringInfo inBuf);
 static List *pg_parse_query(StringInfo query_string, Oid *typev, int nargs);
 static List *pg_analyze_and_rewrite(Node *parsetree);
 static void start_xact_command(void);
-static void finish_xact_command(void);
+static void finish_xact_command(bool forceCommit);
 static void SigHupHandler(SIGNAL_ARGS);
 static void FloatExceptionHandler(SIGNAL_ARGS);
 static const char *CreateCommandTag(Node *parsetree);
@@ -825,7 +826,7 @@ pg_exec_query_string(StringInfo query_string,	/* string to execute */
 			 */
 			if (isTransactionStmt)
 			{
-				finish_xact_command();
+				finish_xact_command(false);
 				xact_started = false;
 			}
 		}						/* end loop over queries generated from a
@@ -843,7 +844,19 @@ pg_exec_query_string(StringInfo query_string,	/* string to execute */
 		 */
 		if (lnext(parsetree_item) == NIL && xact_started)
 		{
-			finish_xact_command();
+			/*
+			 *	Don't allow SET/SHOW/RESET to start a new transaction
+			 *	with autocommit off.  We do this by forcing a COMMIT
+			 *	when these commands start a transaction.
+			 */
+			if (autocommit ||
+				IsTransactionState() ||
+				(strcmp(commandTag, "SET") != 0 &&
+				 strcmp(commandTag, "SHOW") != 0 &&
+				 strcmp(commandTag, "RESET") != 0))
+				finish_xact_command(false);
+			else
+				finish_xact_command(true);
 			xact_started = false;
 		}
 
@@ -878,7 +891,7 @@ pg_exec_query_string(StringInfo query_string,	/* string to execute */
 	 * will only happen if the querystring was empty.)
 	 */
 	if (xact_started)
-		finish_xact_command();
+		finish_xact_command(false);
 
 	if (save_Log_duration)
 	{
@@ -907,7 +920,7 @@ start_xact_command(void)
 }
 
 static void
-finish_xact_command(void)
+finish_xact_command(bool forceCommit)
 {
 	/* Invoke IMMEDIATE constraint triggers */
 	DeferredTriggerEndQuery();
@@ -915,7 +928,7 @@ finish_xact_command(void)
 	/* Now commit the command */
 	elog(DEBUG1, "CommitTransactionCommand");
 
-	CommitTransactionCommand(false);
+	CommitTransactionCommand(forceCommit);
 
 #ifdef SHOW_MEMORY_STATS
 	/* Print mem stats at each commit for leak tracking */
@@ -1720,7 +1733,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.299 $ $Date: 2002/10/08 17:17:19 $\n");
+		puts("$Revision: 1.300 $ $Date: 2002/10/09 04:59:38 $\n");
 	}
 
 	/*
@@ -1923,7 +1936,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 				}
 
 				/* commit the function-invocation transaction */
-				finish_xact_command();
+				finish_xact_command(false);
 				break;
 
 				/*
