@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.46.2.2 1998/12/19 03:23:18 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.46.2.3 1998/12/31 16:34:48 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,7 +61,7 @@ GetCurrentAbsoluteTime(void)
 	if (!HasCTZSet)
 	{
 #ifdef USE_POSIX_TIME
-#ifdef HAVE_TM_ZONE
+#if defined(HAVE_TM_ZONE)
 		tm = localtime(&now);
 
 		CTimeZone = -tm->tm_gmtoff;		/* tm_gmtoff is Sun/DEC-ism */
@@ -90,9 +90,8 @@ GetCurrentAbsoluteTime(void)
 		CTimeZone = tb.timezone * 60;
 		CDayLight = (tb.dstflag != 0);
 
-		/*
-		 * XXX does this work to get the local timezone string in V7? -
-		 * tgl 97/03/18
+		/* XXX does this work to get the local timezone string in V7?
+		 * - tgl 97/03/18
 		 */
 		strftime(CTZName, MAXTZLEN, "%Z", localtime(&now));
 #endif
@@ -140,14 +139,14 @@ abstime2tm(AbsoluteTime time, int *tzp, struct tm * tm, char *tzn)
 #endif
 
 #if defined(DATEDEBUG)
-#if (! defined(HAVE_TM_ZONE)) && defined(HAVE_INT_TIMEZONE)
-	printf("datetime2tm- (localtime) %d.%02d.%02d %02d:%02d:%02d %s %s dst=%d\n",
-		   tx->tm_year, tx->tm_mon, tx->tm_mday, tx->tm_hour, tx->tm_min, tx->tm_sec,
-		   tzname[0], tzname[1], tx->tm_isdst);
-#else
+#if defined(HAVE_TM_ZONE)
 	printf("datetime2tm- (localtime) %d.%02d.%02d %02d:%02d:%02d %s dst=%d\n",
 		   tx->tm_year, tx->tm_mon, tx->tm_mday, tx->tm_hour, tx->tm_min, tx->tm_sec,
 		   tx->tm_zone, tx->tm_isdst);
+#elif defined(HAVE_INT_TIMEZONE)
+	printf("datetime2tm- (localtime) %d.%02d.%02d %02d:%02d:%02d %s %s dst=%d\n",
+		   tx->tm_year, tx->tm_mon, tx->tm_mday, tx->tm_hour, tx->tm_min, tx->tm_sec,
+		   tzname[0], tzname[1], tx->tm_isdst);
 #endif
 #endif
 
@@ -161,7 +160,7 @@ abstime2tm(AbsoluteTime time, int *tzp, struct tm * tm, char *tzn)
 	tm->tm_sec = tx->tm_sec;
 	tm->tm_isdst = tx->tm_isdst;
 
-#ifdef HAVE_TM_ZONE
+#if defined(HAVE_TM_ZONE)
 	tm->tm_gmtoff = tx->tm_gmtoff;
 	tm->tm_zone = tx->tm_zone;
 
@@ -175,7 +174,7 @@ abstime2tm(AbsoluteTime time, int *tzp, struct tm * tm, char *tzn)
 		*tzp = (tm->tm_isdst ? (timezone - 3600) : timezone);
 	if (tzn != NULL)
 		strcpy(tzn, tzname[tm->tm_isdst]);
-#else							/* !HAVE_INT_TIMEZONE */
+#else
 #error POSIX time support is broken
 #endif
 #else							/* ! USE_POSIX_TIME */
