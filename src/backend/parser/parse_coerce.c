@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.88 2002/11/26 03:01:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.89 2002/11/30 18:28:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -570,8 +570,7 @@ coerce_type_typmod(Node *node, Oid targetTypeId, int32 targetTypMod,
 		 *
 		 * See the comments for the similar case in coerce_type.
 		 */
-		if (node && IsA(node, Const) &&
-			!((Const *) node)->constisnull)
+		if (node && IsA(node, Const))
 			node = eval_const_expressions(fcall);
 		else
 			node = fcall;
