@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createlang.sh,v 1.12 2000/05/28 17:56:08 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createlang.sh,v 1.13 2000/07/19 11:53:02 wieck Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -180,18 +180,29 @@ fi
 # ----------
 case "$langname" in
 	plpgsql)
-                lancomp="PL/pgSQL"
+		lancomp="PL/pgSQL"
 		trusted="TRUSTED "
 		handler="plpgsql_call_handler"
-                ;;
+		object="plpgsql"
+		;;
 	pltcl)
 		lancomp="PL/Tcl"
 		trusted="TRUSTED "
-		handler="pltcl_call_handler";;
+		handler="pltcl_call_handler"
+		object="pltcl"
+		;;
+	pltclu)
+		lancomp="PL/Tcl (untrusted)"
+		trusted=""
+		handler="pltclu_call_handler"
+		object="pltcl"
+		;;
 	plperl)
 		lancomp="PL/Perl"
 		trusted="TRUSTED "
-		handler="plperl_call_handler";;
+		handler="plperl_call_handler"
+		object="plperl"
+		;;
 	*)
 		echo "$CMDNAME: unsupported language '$langname'"
 		echo "Supported languages are 'plpgsql', 'pltcl', and 'plperl'."
@@ -204,7 +215,7 @@ esac
 # Check that the shared object for the call handler is installed
 # in PGLIB
 # ----------
-if [ ! -f $PGLIB/${langname}__DLSUFFIX__ ]; then
+if [ ! -f $PGLIB/${object}__DLSUFFIX__ ]; then
 	echo "$CMDNAME: cannot find the file $PGLIB/${langname}__DLSUFFIX__"
         echo ""
 	echo "This file contains the call handler for $lancomp. By default,"
@@ -244,7 +255,7 @@ fi
 # ----------
 # Create the call handler and the language
 # ----------
-$PSQL "CREATE FUNCTION $handler () RETURNS OPAQUE AS '$PGLIB/${langname}__DLSUFFIX__' LANGUAGE 'newC'"
+$PSQL "CREATE FUNCTION $handler () RETURNS OPAQUE AS '$PGLIB/${object}__DLSUFFIX__' LANGUAGE 'newC'"
 if [ $? -ne 0 ]; then
 	echo "$CMDNAME: language installation failed"
 	exit 1

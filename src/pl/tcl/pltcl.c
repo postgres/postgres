@@ -1,6 +1,6 @@
 /**********************************************************************
  * pltcl.c		- PostgreSQL support for Tcl as
- *			  procedural language (PL)
+ *			  	  procedural language (PL)
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -31,7 +31,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.27 2000/07/05 23:12:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.28 2000/07/19 11:53:02 wieck Exp $
  *
  **********************************************************************/
 
@@ -54,6 +54,7 @@
 #include "tcop/tcopprot.h"
 #include "utils/syscache.h"
 #include "catalog/pg_proc.h"
+#include "catalog/pg_language.h"
 #include "catalog/pg_type.h"
 
 
@@ -63,6 +64,7 @@
 typedef struct pltcl_proc_desc
 {
 	char	   *proname;
+	bool		lanpltrusted;
 	FmgrInfo	result_in_func;
 	Oid			result_in_elem;
 	int			nargs;
@@ -96,22 +98,26 @@ static int	pltcl_firstcall = 1;
 static int	pltcl_call_level = 0;
 static int	pltcl_restart_in_progress = 0;
 static Tcl_Interp *pltcl_hold_interp = NULL;
+static Tcl_Interp *pltcl_norm_interp = NULL;
 static Tcl_Interp *pltcl_safe_interp = NULL;
 static Tcl_HashTable *pltcl_proc_hash = NULL;
-static Tcl_HashTable *pltcl_query_hash = NULL;
+static Tcl_HashTable *pltcl_norm_query_hash = NULL;
+static Tcl_HashTable *pltcl_safe_query_hash = NULL;
+static FunctionCallInfo pltcl_actual_fcinfo = NULL;
 
 /**********************************************************************
  * Forward declarations
  **********************************************************************/
 static void pltcl_init_all(void);
-static void pltcl_init_safe_interp(void);
+static void pltcl_init_interp(Tcl_Interp *interp);
 
 #ifdef PLTCL_UNKNOWN_SUPPORT
-static void pltcl_init_load_unknown(void);
+static void pltcl_init_load_unknown(Tcl_Interp *interp);
 
 #endif	 /* PLTCL_UNKNOWN_SUPPORT */
 
 Datum pltcl_call_handler(PG_FUNCTION_ARGS);
+Datum pltclu_call_handler(PG_FUNCTION_ARGS);
 
 static Datum pltcl_func_handler(PG_FUNCTION_ARGS);
 
@@ -120,6 +126,10 @@ static HeapTuple pltcl_trigger_handler(PG_FUNCTION_ARGS);
 static int pltcl_elog(ClientData cdata, Tcl_Interp *interp,
 		   int argc, char *argv[]);
 static int pltcl_quote(ClientData cdata, Tcl_Interp *interp,
+			int argc, char *argv[]);
+static int pltcl_argisnull(ClientData cdata, Tcl_Interp *interp,
+			int argc, char *argv[]);
+static int pltcl_returnnull(ClientData cdata, Tcl_Interp *interp,
 			int argc, char *argv[]);
 
 static int pltcl_SPI_exec(ClientData cdata, Tcl_Interp *interp,
@@ -155,64 +165,40 @@ pltcl_init_all(void)
 	 * Create the dummy hold interpreter to prevent close of
 	 * stdout and stderr on DeleteInterp
 	 ************************************************************/
-	if (pltcl_hold_interp == NULL)
+	if ((pltcl_hold_interp = Tcl_CreateInterp()) == NULL)
 	{
-		if ((pltcl_hold_interp = Tcl_CreateInterp()) == NULL)
-		{
-			elog(ERROR, "pltcl: internal error - cannot create 'hold' "
-				 "interpreter");
-		}
+		elog(ERROR, "pltcl: internal error - cannot create 'hold' "
+			 "interpreter");
 	}
 
 	/************************************************************
-	 * Destroy the existing safe interpreter
+	 * Create the two interpreters
 	 ************************************************************/
-	if (pltcl_safe_interp != NULL)
+	if ((pltcl_norm_interp =
+		 Tcl_CreateSlave(pltcl_hold_interp, "norm", 0)) == NULL)
 	{
-		Tcl_DeleteInterp(pltcl_safe_interp);
-		pltcl_safe_interp = NULL;
+		elog(ERROR,
+			 "pltcl: internal error - cannot create 'normal' interpreter");
 	}
+	pltcl_init_interp(pltcl_norm_interp);
+
+	if ((pltcl_safe_interp =
+		 Tcl_CreateSlave(pltcl_hold_interp, "safe", 1)) == NULL)
+	{
+		elog(ERROR,
+			 "pltcl: internal error - cannot create 'safe' interpreter");
+	}
+	pltcl_init_interp(pltcl_safe_interp);
 
 	/************************************************************
-	 * Free the proc hash table
+	 * Initialize the proc and query hash tables
 	 ************************************************************/
-	if (pltcl_proc_hash != NULL)
-	{
-		hashent = Tcl_FirstHashEntry(pltcl_proc_hash, &hashsearch);
-		while (hashent != NULL)
-		{
-			prodesc = (pltcl_proc_desc *) Tcl_GetHashValue(hashent);
-			free(prodesc->proname);
-			free(prodesc);
-			hashent = Tcl_NextHashEntry(&hashsearch);
-		}
-		Tcl_DeleteHashTable(pltcl_proc_hash);
-		free(pltcl_proc_hash);
-		pltcl_proc_hash = NULL;
-	}
-
-	/************************************************************
-	 * Free the prepared query hash table
-	 ************************************************************/
-	if (pltcl_query_hash != NULL)
-	{
-		hashent = Tcl_FirstHashEntry(pltcl_query_hash, &hashsearch);
-		while (hashent != NULL)
-		{
-			querydesc = (pltcl_query_desc *) Tcl_GetHashValue(hashent);
-			free(querydesc->argtypes);
-			free(querydesc);
-			hashent = Tcl_NextHashEntry(&hashsearch);
-		}
-		Tcl_DeleteHashTable(pltcl_query_hash);
-		free(pltcl_query_hash);
-		pltcl_query_hash = NULL;
-	}
-
-	/************************************************************
-	 * Now recreate a new safe interpreter
-	 ************************************************************/
-	pltcl_init_safe_interp();
+	pltcl_proc_hash = (Tcl_HashTable *) malloc(sizeof(Tcl_HashTable));
+	pltcl_norm_query_hash = (Tcl_HashTable *) malloc(sizeof(Tcl_HashTable));
+	pltcl_safe_query_hash = (Tcl_HashTable *) malloc(sizeof(Tcl_HashTable));
+	Tcl_InitHashTable(pltcl_proc_hash, TCL_STRING_KEYS);
+	Tcl_InitHashTable(pltcl_norm_query_hash, TCL_STRING_KEYS);
+	Tcl_InitHashTable(pltcl_safe_query_hash, TCL_STRING_KEYS);
 
 	pltcl_firstcall = 0;
 	return;
@@ -220,52 +206,28 @@ pltcl_init_all(void)
 
 
 /**********************************************************************
- * pltcl_init_safe_interp() - Create the safe Tcl interpreter
+ * pltcl_init_interp() - initialize a Tcl interpreter
  **********************************************************************/
 static void
-pltcl_init_safe_interp(void)
+pltcl_init_interp(Tcl_Interp *interp)
 {
 	/************************************************************
-	 * Create the interpreter as a safe slave of the hold interp.
+	 * Install the commands for SPI support in the interpreter
 	 ************************************************************/
-	if ((pltcl_safe_interp =
-		 Tcl_CreateSlave(pltcl_hold_interp, "safe", 1)) == NULL)
-	{
-		elog(ERROR,
-			 "pltcl: internal error - cannot create 'safe' interpreter");
-	}
-
-	/************************************************************
-	 * Enable debugging output from the Tcl bytecode compiler
-	 * To see the trace, the interpreter must be created unsafe
-	 * USE ONLY FOR DEBUGGING!!!
-	 ************************************************************/
-
-	/*
-	 * Tcl_SetVar(pltcl_safe_interp, "tcl_traceCompile", "1", 0);
-	 */
-
-	/************************************************************
-	 * Initialize the proc and query hash tables
-	 ************************************************************/
-	pltcl_proc_hash = (Tcl_HashTable *) malloc(sizeof(Tcl_HashTable));
-	pltcl_query_hash = (Tcl_HashTable *) malloc(sizeof(Tcl_HashTable));
-	Tcl_InitHashTable(pltcl_proc_hash, TCL_STRING_KEYS);
-	Tcl_InitHashTable(pltcl_query_hash, TCL_STRING_KEYS);
-
-	/************************************************************
-	 * Install the commands for SPI support in the safe interpreter
-	 ************************************************************/
-	Tcl_CreateCommand(pltcl_safe_interp, "elog",
+	Tcl_CreateCommand(interp, "elog",
 					  pltcl_elog, NULL, NULL);
-	Tcl_CreateCommand(pltcl_safe_interp, "quote",
+	Tcl_CreateCommand(interp, "quote",
 					  pltcl_quote, NULL, NULL);
+	Tcl_CreateCommand(interp, "argisnull",
+					  pltcl_argisnull, NULL, NULL);
+	Tcl_CreateCommand(interp, "return_null",
+					  pltcl_returnnull, NULL, NULL);
 
-	Tcl_CreateCommand(pltcl_safe_interp, "spi_exec",
+	Tcl_CreateCommand(interp, "spi_exec",
 					  pltcl_SPI_exec, NULL, NULL);
-	Tcl_CreateCommand(pltcl_safe_interp, "spi_prepare",
+	Tcl_CreateCommand(interp, "spi_prepare",
 					  pltcl_SPI_prepare, NULL, NULL);
-	Tcl_CreateCommand(pltcl_safe_interp, "spi_execp",
+	Tcl_CreateCommand(interp, "spi_execp",
 					  pltcl_SPI_execp, NULL, NULL);
 
 #ifdef PLTCL_UNKNOWN_SUPPORT
@@ -273,10 +235,10 @@ pltcl_init_safe_interp(void)
 	 * Try to load the unknown procedure from pltcl_modules
 	 ************************************************************/
 	if (SPI_connect() != SPI_OK_CONNECT)
-		elog(ERROR, "pltcl_init_safe_interp(): SPI_connect failed");
-	pltcl_init_load_unknown();
+		elog(ERROR, "pltcl_init_interp(): SPI_connect failed");
+	pltcl_init_load_unknown(interp);
 	if (SPI_finish() != SPI_OK_FINISH)
-		elog(ERROR, "pltcl_init_safe_interp(): SPI_finish failed");
+		elog(ERROR, "pltcl_init_interp(): SPI_finish failed");
 #endif	 /* PLTCL_UNKNOWN_SUPPORT */
 }
 
@@ -349,7 +311,7 @@ pltcl_init_load_unknown(void)
 			pfree(part);
 		}
 	}
-	tcl_rc = Tcl_GlobalEval(pltcl_safe_interp, Tcl_DStringValue(&unknown_src));
+	tcl_rc = Tcl_GlobalEval(interp, Tcl_DStringValue(&unknown_src));
 	Tcl_DStringFree(&unknown_src);
 }
 
@@ -369,6 +331,7 @@ Datum
 pltcl_call_handler(PG_FUNCTION_ARGS)
 {
 	Datum		retval;
+	FunctionCallInfo save_fcinfo;
 
 	/************************************************************
 	 * Initialize interpreters on first call
@@ -390,14 +353,29 @@ pltcl_call_handler(PG_FUNCTION_ARGS)
 	 * Determine if called as function or trigger and
 	 * call appropriate subhandler
 	 ************************************************************/
+	save_fcinfo = pltcl_actual_fcinfo;
+
 	if (CALLED_AS_TRIGGER(fcinfo))
+	{
+		pltcl_actual_fcinfo = NULL;
 		retval = PointerGetDatum(pltcl_trigger_handler(fcinfo));
-	else
+	} else {
+		pltcl_actual_fcinfo = fcinfo;
 		retval = pltcl_func_handler(fcinfo);
+	}
+
+	pltcl_actual_fcinfo = save_fcinfo;
 
 	pltcl_call_level--;
 
 	return retval;
+}
+
+/* keep non-static */
+Datum
+pltclu_call_handler(PG_FUNCTION_ARGS)
+{
+	return pltcl_call_handler(fcinfo);
 }
 
 /**********************************************************************
@@ -406,6 +384,7 @@ pltcl_call_handler(PG_FUNCTION_ARGS)
 static Datum
 pltcl_func_handler(PG_FUNCTION_ARGS)
 {
+	Tcl_Interp *interp;
 	int			i;
 	char		internal_proname[512];
 	Tcl_HashEntry *hashent;
@@ -436,15 +415,17 @@ pltcl_func_handler(PG_FUNCTION_ARGS)
 		 *
 		 * Then we load the procedure into the safe interpreter.
 		 ************************************************************/
-		HeapTuple	procTup;
-		HeapTuple	typeTup;
-		Form_pg_proc procStruct;
-		Form_pg_type typeStruct;
-		Tcl_DString proc_internal_def;
-		Tcl_DString proc_internal_body;
-		char		proc_internal_args[4096];
-		char	   *proc_source;
-		char		buf[512];
+		HeapTuple		procTup;
+		HeapTuple		langTup;
+		HeapTuple		typeTup;
+		Form_pg_proc	procStruct;
+		Form_pg_language langStruct;
+		Form_pg_type	typeStruct;
+		Tcl_DString		proc_internal_def;
+		Tcl_DString		proc_internal_body;
+		char			proc_internal_args[4096];
+		char		   *proc_source;
+		char			buf[512];
 
 		/************************************************************
 		 * Allocate a new procedure description block
@@ -467,6 +448,27 @@ pltcl_func_handler(PG_FUNCTION_ARGS)
 				 fcinfo->flinfo->fn_oid);
 		}
 		procStruct = (Form_pg_proc) GETSTRUCT(procTup);
+
+		/************************************************************
+		 * Lookup the pg_language tuple by Oid
+		 ************************************************************/
+		langTup = SearchSysCacheTuple(LANGOID,
+									  ObjectIdGetDatum(procStruct->prolang),
+									  0, 0, 0);
+		if (!HeapTupleIsValid(langTup))
+		{
+			free(prodesc->proname);
+			free(prodesc);
+			elog(ERROR, "pltcl: cache lookup for language %u failed",
+				 procStruct->prolang);
+		}
+		langStruct = (Form_pg_language) GETSTRUCT(langTup);
+
+		prodesc->lanpltrusted = langStruct->lanpltrusted;
+		if (prodesc->lanpltrusted)
+			interp = pltcl_safe_interp;
+		else
+			interp = pltcl_norm_interp;
 
 		/************************************************************
 		 * Get the required information for input conversion of the
@@ -570,9 +572,9 @@ pltcl_func_handler(PG_FUNCTION_ARGS)
 		Tcl_DStringFree(&proc_internal_body);
 
 		/************************************************************
-		 * Create the procedure in the safe interpreter
+		 * Create the procedure in the interpreter
 		 ************************************************************/
-		tcl_rc = Tcl_GlobalEval(pltcl_safe_interp,
+		tcl_rc = Tcl_GlobalEval(interp,
 								Tcl_DStringValue(&proc_internal_def));
 		Tcl_DStringFree(&proc_internal_def);
 		if (tcl_rc != TCL_OK)
@@ -580,7 +582,7 @@ pltcl_func_handler(PG_FUNCTION_ARGS)
 			free(prodesc->proname);
 			free(prodesc);
 			elog(ERROR, "pltcl: cannot create internal procedure %s - %s",
-				 internal_proname, pltcl_safe_interp->result);
+				 internal_proname, interp->result);
 		}
 
 		/************************************************************
@@ -596,6 +598,11 @@ pltcl_func_handler(PG_FUNCTION_ARGS)
 		 * Found the proc description block in the hashtable
 		 ************************************************************/
 		prodesc = (pltcl_proc_desc *) Tcl_GetHashValue(hashent);
+
+		if (prodesc->lanpltrusted)
+		    interp = pltcl_safe_interp;
+		else
+		    interp = pltcl_norm_interp;
 	}
 
 	/************************************************************
@@ -671,7 +678,7 @@ pltcl_func_handler(PG_FUNCTION_ARGS)
 	/************************************************************
 	 * Call the Tcl function
 	 ************************************************************/
-	tcl_rc = Tcl_GlobalEval(pltcl_safe_interp, Tcl_DStringValue(&tcl_cmd));
+	tcl_rc = Tcl_GlobalEval(interp, Tcl_DStringValue(&tcl_cmd));
 	Tcl_DStringFree(&tcl_cmd);
 
 	/************************************************************
@@ -687,7 +694,7 @@ pltcl_func_handler(PG_FUNCTION_ARGS)
 			pltcl_restart_in_progress = 1;
 			if (--pltcl_call_level == 0)
 				pltcl_restart_in_progress = 0;
-			elog(ERROR, "pltcl: %s", pltcl_safe_interp->result);
+			elog(ERROR, "pltcl: %s", interp->result);
 		}
 		if (--pltcl_call_level == 0)
 			pltcl_restart_in_progress = 0;
@@ -720,7 +727,7 @@ pltcl_func_handler(PG_FUNCTION_ARGS)
 		elog(ERROR, "pltcl: SPI_finish() failed");
 
 	retval = FunctionCall3(&prodesc->result_in_func,
-						   PointerGetDatum(pltcl_safe_interp->result),
+						   PointerGetDatum(interp->result),
 						   ObjectIdGetDatum(prodesc->result_in_elem),
 						   Int32GetDatum(-1));
 
@@ -735,6 +742,7 @@ pltcl_func_handler(PG_FUNCTION_ARGS)
 static HeapTuple
 pltcl_trigger_handler(PG_FUNCTION_ARGS)
 {
+	Tcl_Interp *interp;
 	TriggerData *trigdata = (TriggerData *) fcinfo->context;
 	char		internal_proname[512];
 	char	   *stroid;
@@ -776,7 +784,9 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 		Tcl_DString proc_internal_def;
 		Tcl_DString proc_internal_body;
 		HeapTuple	procTup;
+		HeapTuple	langTup;
 		Form_pg_proc procStruct;
+		Form_pg_language langStruct;
 		char	   *proc_source;
 
 		/************************************************************
@@ -801,6 +811,27 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 				 fcinfo->flinfo->fn_oid);
 		}
 		procStruct = (Form_pg_proc) GETSTRUCT(procTup);
+
+		/************************************************************
+		 * Lookup the pg_language tuple by Oid
+		 ************************************************************/
+		langTup = SearchSysCacheTuple(LANGOID,
+									  ObjectIdGetDatum(procStruct->prolang),
+									  0, 0, 0);
+		if (!HeapTupleIsValid(langTup))
+		{
+			free(prodesc->proname);
+			free(prodesc);
+			elog(ERROR, "pltcl: cache lookup for language %u failed",
+				 procStruct->prolang);
+		}
+		langStruct = (Form_pg_language) GETSTRUCT(langTup);
+
+		prodesc->lanpltrusted = langStruct->lanpltrusted;
+		if (prodesc->lanpltrusted)
+			interp = pltcl_safe_interp;
+		else
+			interp = pltcl_norm_interp;
 
 		/************************************************************
 		 * Create the tcl command to define the internal
@@ -846,9 +877,9 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 		Tcl_DStringFree(&proc_internal_body);
 
 		/************************************************************
-		 * Create the procedure in the safe interpreter
+		 * Create the procedure in the interpreter
 		 ************************************************************/
-		tcl_rc = Tcl_GlobalEval(pltcl_safe_interp,
+		tcl_rc = Tcl_GlobalEval(interp,
 								Tcl_DStringValue(&proc_internal_def));
 		Tcl_DStringFree(&proc_internal_def);
 		if (tcl_rc != TCL_OK)
@@ -856,7 +887,7 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 			free(prodesc->proname);
 			free(prodesc);
 			elog(ERROR, "pltcl: cannot create internal procedure %s - %s",
-				 internal_proname, pltcl_safe_interp->result);
+				 internal_proname, interp->result);
 		}
 
 		/************************************************************
@@ -872,13 +903,18 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 		 * Found the proc description block in the hashtable
 		 ************************************************************/
 		prodesc = (pltcl_proc_desc *) Tcl_GetHashValue(hashent);
+
+		if (prodesc->lanpltrusted)
+			interp = pltcl_safe_interp;
+		else
+			interp = pltcl_norm_interp;
 	}
 
 	tupdesc = trigdata->tg_relation->rd_att;
 
 	/************************************************************
 	 * Create the tcl command to call the internal
-	 * proc in the safe interpreter
+	 * proc in the interpreter
 	 ************************************************************/
 	Tcl_DStringInit(&tcl_cmd);
 	Tcl_DStringInit(&tcl_trigtup);
@@ -998,7 +1034,7 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 	/************************************************************
 	 * Call the Tcl function
 	 ************************************************************/
-	tcl_rc = Tcl_GlobalEval(pltcl_safe_interp, Tcl_DStringValue(&tcl_cmd));
+	tcl_rc = Tcl_GlobalEval(interp, Tcl_DStringValue(&tcl_cmd));
 	Tcl_DStringFree(&tcl_cmd);
 
 	/************************************************************
@@ -1014,7 +1050,7 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 			pltcl_restart_in_progress = 1;
 			if (--pltcl_call_level == 0)
 				pltcl_restart_in_progress = 0;
-			elog(ERROR, "pltcl: %s", pltcl_safe_interp->result);
+			elog(ERROR, "pltcl: %s", interp->result);
 		}
 		if (--pltcl_call_level == 0)
 			pltcl_restart_in_progress = 0;
@@ -1037,9 +1073,9 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 	if (SPI_finish() != SPI_OK_FINISH)
 		elog(ERROR, "pltcl: SPI_finish() failed");
 
-	if (strcmp(pltcl_safe_interp->result, "OK") == 0)
+	if (strcmp(interp->result, "OK") == 0)
 		return rettup;
-	if (strcmp(pltcl_safe_interp->result, "SKIP") == 0)
+	if (strcmp(interp->result, "SKIP") == 0)
 	{
 		return (HeapTuple) NULL;;
 	}
@@ -1048,11 +1084,11 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 	 * Convert the result value from the safe interpreter
 	 * and setup structures for SPI_modifytuple();
 	 ************************************************************/
-	if (Tcl_SplitList(pltcl_safe_interp, pltcl_safe_interp->result,
+	if (Tcl_SplitList(interp, interp->result,
 					  &ret_numvals, &ret_values) != TCL_OK)
 	{
 		elog(NOTICE, "pltcl: cannot split return value from trigger");
-		elog(ERROR, "pltcl: %s", pltcl_safe_interp->result);
+		elog(ERROR, "pltcl: %s", interp->result);
 	}
 
 	if (ret_numvals % 2 != 0)
@@ -1272,6 +1308,91 @@ pltcl_quote(ClientData cdata, Tcl_Interp *interp,
 	Tcl_SetResult(interp, tmp, TCL_VOLATILE);
 	pfree(tmp);
 	return TCL_OK;
+}
+
+
+/**********************************************************************
+ * pltcl_argisnull()	- determine if a specific argument is NULL
+ **********************************************************************/
+static int
+pltcl_argisnull(ClientData cdata, Tcl_Interp *interp,
+			int argc, char *argv[])
+{
+	int		argno;
+	FunctionCallInfo fcinfo = pltcl_actual_fcinfo;
+
+	/************************************************************
+	 * Check call syntax
+	 ************************************************************/
+	if (argc != 2)
+	{
+		Tcl_SetResult(interp, "syntax error - 'argisnull argno'", TCL_VOLATILE);
+		return TCL_ERROR;
+	}
+
+	/************************************************************
+	 * Get the argument number
+	 ************************************************************/
+	if (Tcl_GetInt(interp, argv[1], &argno) != TCL_OK)
+		return TCL_ERROR;
+
+	/************************************************************
+	 * Check that we're called as a normal function
+	 ************************************************************/
+	if (fcinfo == NULL)
+	{
+		Tcl_SetResult(interp, "argisnull cannot be used in triggers", 
+				TCL_VOLATILE);
+		return TCL_ERROR;
+	}
+
+	/************************************************************
+	 * Check that the argno is valid
+	 ************************************************************/
+	argno--;
+	if (argno < 0 || argno >= fcinfo->nargs)
+	{
+		Tcl_SetResult(interp, "argno out of range", TCL_VOLATILE);
+		return TCL_ERROR;
+	}
+
+	/************************************************************
+	 * Get the requested NULL state
+	 ************************************************************/
+	if (PG_ARGISNULL(argno))
+		Tcl_SetResult(interp, "1", TCL_VOLATILE);
+	else
+		Tcl_SetResult(interp, "0", TCL_VOLATILE);
+
+	return TCL_OK;
+}
+
+
+/**********************************************************************
+ * pltcl_returnnull()	- Cause a NULL return from a function
+ **********************************************************************/
+static int
+pltcl_returnnull(ClientData cdata, Tcl_Interp *interp,
+			int argc, char *argv[])
+{
+	int		argno;
+	FunctionCallInfo fcinfo = pltcl_actual_fcinfo;
+
+	/************************************************************
+	 * Check call syntax
+	 ************************************************************/
+	if (argc != 1)
+	{
+		Tcl_SetResult(interp, "syntax error - 'return_null'", TCL_VOLATILE);
+		return TCL_ERROR;
+	}
+
+	/************************************************************
+	 * Set the NULL return flag and cause Tcl to return from the
+	 * procedure.
+	 ************************************************************/
+	fcinfo->isnull = true;
+	return TCL_RETURN;
 }
 
 
@@ -1524,6 +1645,7 @@ pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
 	Tcl_HashEntry *hashent;
 	int			hashnew;
 	sigjmp_buf	save_restart;
+	Tcl_HashTable *query_hash;
 
 	/************************************************************
 	 * Don't do anything if we are already in restart mode
@@ -1680,8 +1802,13 @@ pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
 	 * Insert a hashtable entry for the plan and return
 	 * the key to the caller
 	 ************************************************************/
+	if (interp == pltcl_norm_interp)
+	    query_hash = pltcl_norm_query_hash;
+	else
+	    query_hash = pltcl_safe_query_hash;
+
 	memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
-	hashent = Tcl_CreateHashEntry(pltcl_query_hash, qdesc->qname, &hashnew);
+	hashent = Tcl_CreateHashEntry(query_hash, qdesc->qname, &hashnew);
 	Tcl_SetHashValue(hashent, (ClientData) qdesc);
 
 	Tcl_SetResult(interp, qdesc->qname, TCL_VOLATILE);
@@ -1713,6 +1840,7 @@ pltcl_SPI_execp(ClientData cdata, Tcl_Interp *interp,
 	HeapTuple  *volatile tuples = NULL;
 	volatile TupleDesc tupdesc = NULL;
 	sigjmp_buf	save_restart;
+	Tcl_HashTable *query_hash;
 
 	char	   *usage = "syntax error - 'SPI_execp "
 	"?-nulls string? ?-count n? "
@@ -1786,7 +1914,12 @@ pltcl_SPI_execp(ClientData cdata, Tcl_Interp *interp,
 	/************************************************************
 	 * Get the prepared plan descriptor by its key
 	 ************************************************************/
-	hashent = Tcl_FindHashEntry(pltcl_query_hash, argv[i++]);
+	if (interp == pltcl_norm_interp)
+		query_hash = pltcl_norm_query_hash;
+	else
+		query_hash = pltcl_safe_query_hash;
+
+	hashent = Tcl_FindHashEntry(query_hash, argv[i++]);
 	if (hashent == NULL)
 	{
 		Tcl_AppendResult(interp, "invalid queryid '", argv[--i], "'", NULL);
