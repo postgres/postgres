@@ -3377,10 +3377,6 @@ unique1|string4
      19|OOOOxx 
 (20 rows)
 
-QUERY:     WHERE onek2.unique1 < 20
-    ORDER BY unique1 using >;
-WARN:parser: syntax error at or near "WHERE"
-
 QUERY: SELECT two, stringu1, ten, string4
    INTO TABLE temp
    FROM onek;
@@ -6507,8 +6503,6 @@ f    |27
 QUERY: ALTER TABLE f_star ADD COLUMN f int4;
 QUERY: UPDATE f_star SET f = 10;
 QUERY: ALTER TABLE e_star* ADD COLUMN e int4;
-QUERY: UPDATE e_star* SET e = 42;
-WARN:parser: syntax error at or near "*"
 
 QUERY: SELECT * FROM e_star*;
 class|aa|cc         | ee|e
@@ -6539,10 +6533,6 @@ f    |  |           |   |
 (23 rows)
 
 QUERY: ALTER TABLE a_star* ADD COLUMN a text;
-QUERY: UPDATE b_star*
-   SET a = 'gazpacho'::text
-   WHERE aa > 4;
-WARN:parser: syntax error at or near "*"
 
 QUERY: SELECT class, aa, a FROM a_star*;
 class|aa|a

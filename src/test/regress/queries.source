@@ -1,7 +1,7 @@
 --
 -- queries.source
 --
--- $Header: /cvsroot/pgsql/src/test/regress/Attic/queries.source,v 1.1.1.1 1996/07/09 06:22:24 scrappy Exp $
+-- $Header: /cvsroot/pgsql/src/test/regress/Attic/queries.source,v 1.2 1996/10/07 02:33:25 momjian Exp $
 --
 -- The comments that contain sequences of UNIX commands generate the 
 -- desired output for the POSTQUEL statement(s).
@@ -1470,15 +1470,15 @@ SELECT onek.unique1, onek.string4
 -- partial btree index
 -- awk '{if($1<10){print $0;}else{next;}}' onek.data | sort +0n -1
 --
--- SELECT onek2.* WHERE onek2.unique1 < 10;
+--SELECT onek2.* WHERE onek2.unique1 < 10;
 
 --
 -- partial btree index
 -- awk '{if($1<20){print $1,$14;}else{next;}}' onek.data | sort +0nr -1
 --
--- SELECT onek2.unique1, onek2.stringu1
-    WHERE onek2.unique1 < 20 
-    ORDER BY unique1 using >;
+--SELECT onek2.unique1, onek2.stringu1
+--    WHERE onek2.unique1 < 20 
+--    ORDER BY unique1 using >;
 
 --
 -- awk '{if($1>980){print $1,$14;}else{next;}}' onek.data | sort +1d -2
@@ -2481,15 +2481,15 @@ UPDATE f_star SET f = 10;
 
 ALTER TABLE e_star* ADD COLUMN e int4;
 
-UPDATE e_star* SET e = 42;
+--UPDATE e_star* SET e = 42;
 
 SELECT * FROM e_star*;
 
 ALTER TABLE a_star* ADD COLUMN a text;
 
-UPDATE b_star*
-   SET a = 'gazpacho'::text
-   WHERE aa > 4;
+--UPDATE b_star*
+--   SET a = 'gazpacho'::text
+--   WHERE aa > 4;
 
 SELECT class, aa, a FROM a_star*;
 
