@@ -9,7 +9,7 @@
  * workings can be found in the book "Software Solutions in C" by
  * Dale Schumacher, Academic Press, ISBN: 0-12-632360-7.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.45 2000/08/03 16:34:22 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.46 2000/11/18 03:55:51 tgl Exp $
  */
 
 #include <limits.h>
@@ -91,9 +91,19 @@ cash_in(PG_FUNCTION_ARGS)
 	if (lconvert == NULL)
 		lconvert = localeconv();
 
-	/* frac_digits in the C locale seems to return CHAR_MAX */
-	/* best guess is 2 in this case I think */
-	fpoint = ((lconvert->frac_digits != (char)CHAR_MAX) ? lconvert->frac_digits : 2); /* int_frac_digits? */
+	/*
+	 * frac_digits will be CHAR_MAX in some locales, notably C.  However,
+	 * just testing for == CHAR_MAX is risky, because of compilers like
+	 * gcc that "helpfully" let you alter the platform-standard definition
+	 * of whether char is signed or not.  If we are so unfortunate as to
+	 * get compiled with a nonstandard -fsigned-char or -funsigned-char
+	 * switch, then our idea of CHAR_MAX will not agree with libc's.
+	 * The safest course is not to test for CHAR_MAX at all, but to impose
+	 * a range check for plausible frac_digits values.
+	 */
+	fpoint = lconvert->frac_digits;
+	if (fpoint < 0 || fpoint > 10)
+		fpoint = 2;				/* best guess in this case, I think */
 
 	dsymbol = ((*lconvert->mon_decimal_point != '\0') ? *lconvert->mon_decimal_point : '.');
 	ssymbol = ((*lconvert->mon_thousands_sep != '\0') ? *lconvert->mon_thousands_sep : ',');
@@ -225,9 +235,9 @@ cash_out(PG_FUNCTION_ARGS)
 	int			count = LAST_DIGIT;
 	int			point_pos;
 	int			comma_position = 0;
-	char		mon_group,
-				comma,
-				points;
+	int			points,
+				mon_group;
+	char		comma;
 	char	   *csymbol,
 				dsymbol,
 			   *nsymbol;
@@ -237,31 +247,35 @@ cash_out(PG_FUNCTION_ARGS)
 	if (lconvert == NULL)
 		lconvert = localeconv();
 
+	/* see comments about frac_digits in cash_in() */
+	points = lconvert->frac_digits;
+	if (points < 0 || points > 10)
+		points = 2;				/* best guess in this case, I think */
+
+	/*
+	 * As with frac_digits, must apply a range check to mon_grouping
+	 * to avoid being fooled by variant CHAR_MAX values.
+	 */
 	mon_group = *lconvert->mon_grouping;
+	if (mon_group <= 0 || mon_group > 6)
+		mon_group = 3;
+
 	comma = ((*lconvert->mon_thousands_sep != '\0') ? *lconvert->mon_thousands_sep : ',');
-	/* frac_digits in the C locale seems to return CHAR_MAX */
-	/* best guess is 2 in this case I think */
-	points = ((lconvert->frac_digits != (char)CHAR_MAX) ? lconvert->frac_digits : 2); /* int_frac_digits? */
 	convention = lconvert->n_sign_posn;
 	dsymbol = ((*lconvert->mon_decimal_point != '\0') ? *lconvert->mon_decimal_point : '.');
 	csymbol = ((*lconvert->currency_symbol != '\0') ? lconvert->currency_symbol : "$");
 	nsymbol = ((*lconvert->negative_sign != '\0') ? lconvert->negative_sign : "-");
 #else
+	points = 2;
 	mon_group = 3;
 	comma = ',';
-	csymbol = "$";
-	dsymbol = '.';
-	nsymbol = "-";
-	points = 2;
 	convention = 0;
+	dsymbol = '.';
+	csymbol = "$";
+	nsymbol = "-";
 #endif
 
 	point_pos = LAST_DIGIT - points;
-
-	/* We're playing a little fast and loose with this.  Shoot me. */
-	/* Not me, that was the other guy. Haven't fixed it yet - thomas */
-	if (!mon_group || mon_group == (char)CHAR_MAX)
-		mon_group = 3;
 
 	/* allow more than three decimal points and separate them */
 	if (comma)
