@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.30 1999/08/23 23:48:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.31 1999/08/26 04:59:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,9 +28,7 @@ static Oid *oper_select_candidate(int nargs, Oid *input_typeids,
 static Operator oper_exact(char *op, Oid arg1, Oid arg2);
 static Operator oper_inexact(char *op, Oid arg1, Oid arg2);
 static int binary_oper_get_candidates(char *opname,
-						   Oid leftTypeId,
-						   Oid rightTypeId,
-						   CandidateList *candidates);
+									  CandidateList *candidates);
 static int unary_oper_get_candidates(char *op,
 						  Oid typeId,
 						  CandidateList *candidates,
@@ -64,15 +62,12 @@ oprid(Operator op)
 
 
 /* binary_oper_get_candidates()
- *	given opname, leftTypeId and rightTypeId,
- *	find all possible (arg1, arg2) pairs for which an operator named
- *	opname exists, such that leftTypeId can be coerced to arg1 and
- *	rightTypeId can be coerced to arg2
+ *	given opname, find all possible input type pairs for which an operator
+ *	named opname exists.  Build a list of the candidate input types.
+ *	Returns number of candidates found.
  */
 static int
 binary_oper_get_candidates(char *opname,
-						   Oid leftTypeId,
-						   Oid rightTypeId,
 						   CandidateList *candidates)
 {
 	CandidateList current_candidate;
@@ -224,14 +219,17 @@ oper_select_candidate(int nargs,
 			ncandidates++;
 		}
 		/* otherwise, don't bother keeping this one... */
-		else
-			last_candidate->next = NULL;
 	}
+
+	if (last_candidate)			/* terminate rebuilt list */
+		last_candidate->next = NULL;
 
 	if (ncandidates <= 1)
 	{
-		if (!can_coerce_type(1, &input_typeids[0], &candidates->args[0])
-		 || !can_coerce_type(1, &input_typeids[1], &candidates->args[1]))
+		if (ncandidates > 0 &&
+			(!can_coerce_type(1, &input_typeids[0], &candidates->args[0]) ||
+			 (nargs > 1 &&
+			  !can_coerce_type(1, &input_typeids[1], &candidates->args[1]))))
 			ncandidates = 0;
 		return (ncandidates == 1) ? candidates->args : NULL;
 	}
@@ -252,9 +250,9 @@ oper_select_candidate(int nargs,
 		nmatch = 0;
 		for (i = 0; i < nargs; i++)
 		{
-			current_category = TypeCategory(current_typeids[i]);
 			if (input_typeids[i] != UNKNOWNOID)
 			{
+				current_category = TypeCategory(current_typeids[i]);
 				if (current_typeids[i] == input_typeids[i])
 					nmatch++;
 				else if (IsPreferredType(current_category, current_typeids[i])
@@ -276,14 +274,17 @@ oper_select_candidate(int nargs,
 			last_candidate = current_candidate;
 			ncandidates++;
 		}
-		else
-			last_candidate->next = NULL;
 	}
+
+	if (last_candidate)			/* terminate rebuilt list */
+		last_candidate->next = NULL;
 
 	if (ncandidates <= 1)
 	{
-		if (!can_coerce_type(1, &input_typeids[0], &candidates->args[0])
-			|| ((nargs > 1) && !can_coerce_type(1, &input_typeids[1], &candidates->args[1])))
+		if (ncandidates > 0 &&
+			(!can_coerce_type(1, &input_typeids[0], &candidates->args[0]) ||
+			 (nargs > 1 &&
+			  !can_coerce_type(1, &input_typeids[1], &candidates->args[1]))))
 			ncandidates = 0;
 		return (ncandidates == 1) ? candidates->args : NULL;
 	}
@@ -309,12 +310,12 @@ oper_select_candidate(int nargs,
 			 current_candidate != NULL;
 			 current_candidate = current_candidate->next)
 		{
+			current_typeids = current_candidate->args;
 			nmatch = 0;
 			for (i = 0; i < nargs; i++)
 			{
-				current_typeids = current_candidate->args;
-				if ((current_type == current_typeids[i])
-				|| IS_BINARY_COMPATIBLE(current_type, current_typeids[i]))
+				if (current_type == current_typeids[i] ||
+					IS_BINARY_COMPATIBLE(current_type, current_typeids[i]))
 					nmatch++;
 			}
 			if (nmatch == nargs)
@@ -364,16 +365,20 @@ oper_select_candidate(int nargs,
 	}
 
 	ncandidates = 0;
+	last_candidate = NULL;
 	for (current_candidate = candidates;
 		 current_candidate != NULL;
 		 current_candidate = current_candidate->next)
 	{
 		if (can_coerce_type(1, &input_typeids[0], &current_candidate->args[0])
 			&& can_coerce_type(1, &input_typeids[1], &current_candidate->args[1]))
+		{
 			ncandidates++;
+			last_candidate = current_candidate;
+		}
 	}
 
-	return (ncandidates == 1) ? candidates->args : NULL;
+	return (ncandidates == 1) ? last_candidate->args : NULL;
 }	/* oper_select_candidate() */
 
 
@@ -423,7 +428,7 @@ oper_inexact(char *op, Oid arg1, Oid arg2)
 	if (arg1 == InvalidOid)
 		arg1 = arg2;
 
-	ncandidates = binary_oper_get_candidates(op, arg1, arg2, &candidates);
+	ncandidates = binary_oper_get_candidates(op, &candidates);
 
 	/* No operators found? Then return null... */
 	if (ncandidates == 0)
