@@ -13,17 +13,20 @@ It can be done by done by typing configure, make and make install.
 
 1. Install the Cygwin package
 2. Update to EGCS 1.1.2
+   (This may be optional.)
 
-1. Install the Andy Piper Tools
+1. Install the Andy Piper Tools (http://www.xemacs.freeserve.co.uk/)
+   (This may be optional.)
 
-1. Download the Cygwin32 IPC Package by Ludovic LANGE.
+1. Download the Cygwin32 IPC Package by Ludovic LANGE 
+   (http://www.multione.capgemini.fr/tools/pack_ipc/
 2. Untar the package and follow the readme instructions.
 3. I tested 1.03.
 4. I used the \cygwin-b20\h-i568-cygwin32\i586-cygwin32\lib and
 \cygwin-b20\h-i568-cygwin32\i586-cygwin32\include\sys instead of the
 /usr/local/lib and usr/local/include/sys.
 
-1. Download the current snapshot.tar.gz (24-3-98).
+1. Download the current version of PostgreSQL.
 2. Untar the package.
 3. Copy the files from \pgsql\src\win32 according to the readme file.
 3. Edit \pgsql\src\template\cygwin32 if needed (I had to adjust the YFLAGS
