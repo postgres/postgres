@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_eval.c,v 1.35 1999/02/18 05:26:18 momjian Exp $
+ * $Id: geqo_eval.c,v 1.36 1999/05/16 19:45:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,8 +48,6 @@
 #include "optimizer/geqo_gene.h"
 #include "optimizer/geqo.h"
 
-static RelOptInfo *geqo_nth(int stop, List *rels);
-
 /*
  * geqo_eval
  *
@@ -62,31 +60,28 @@ geqo_eval(Query *root, Gene *tour, int num_gene)
 	Cost		fitness;
 	List	   *temp;
 
-
-/* remember root->join_rel_list ... */
-/* because root->join_rel_list will be changed during the following */
+	/* remember root->join_rel_list ... */
+	/* because root->join_rel_list will be changed during the following */
 	temp = listCopy(root->join_rel_list);
 
-/* joinrel is readily processed query tree -- left-sided ! */
+	/* joinrel is readily processed query tree -- left-sided ! */
 	joinrel = gimme_tree(root, tour, 0, num_gene, NULL);
 
-/* compute fitness */
+	/* compute fitness */
 	fitness = (Cost) joinrel->cheapestpath->path_cost;
 
-	root->join_rel_list = listCopy(temp);
+	root->join_rel_list = temp;
 
 	pfree(joinrel);
-	freeList(temp);
 
 	return fitness;
-
 }
 
 /*
  * gimme_tree 
  *	  this program presumes that only LEFT-SIDED TREES are considered!
  *
- * 'old_rel' is the preceeding join
+ * 'old_rel' is the preceding join
  *
  * Returns a new join relation incorporating all joins in a left-sided tree.
  */
@@ -95,9 +90,8 @@ gimme_tree(Query *root, Gene *tour, int rel_count, int num_gene, RelOptInfo *old
 {
 	RelOptInfo *inner_rel;		/* current relation */
 	int			base_rel_index;
-
-	List	   *new_rels = NIL;
-	RelOptInfo *new_rel = NULL;
+	List	   *new_rels;
+	RelOptInfo *new_rel;
 
 	if (rel_count < num_gene)
 	{							/* tree not yet finished */
@@ -105,7 +99,7 @@ gimme_tree(Query *root, Gene *tour, int rel_count, int num_gene, RelOptInfo *old
 		/* tour[0] = 3; tour[1] = 1; tour[2] = 2 */
 		base_rel_index = (int) tour[rel_count];
 
-		inner_rel = (RelOptInfo *) geqo_nth(base_rel_index, root->base_rel_list);
+		inner_rel = (RelOptInfo *) nth(base_rel_index-1, root->base_rel_list);
 
 		if (rel_count == 0)
 		{						/* processing first join with
@@ -116,11 +110,11 @@ gimme_tree(Query *root, Gene *tour, int rel_count, int num_gene, RelOptInfo *old
 		else
 		{						/* tree main part */
 			if (!(new_rels = make_rels_by_clause_joins(root, old_rel,
-													   inner_rel->joininfo,
+													   old_rel->joininfo,
 													   inner_rel->relids)))
 			{
 				new_rels = make_rels_by_clauseless_joins(old_rel,
-											 	lcons(inner_rel,NIL));
+														 lcons(inner_rel,NIL));
 				/* we don't do bushy plans in geqo, do we?  bjm 02/18/1999
 				new_rels = append(new_rels,
 								  make_rels_by_clauseless_joins(old_rel,
@@ -151,11 +145,11 @@ gimme_tree(Query *root, Gene *tour, int rel_count, int num_gene, RelOptInfo *old
 				elog(DEBUG, "gimme_tree: still %d relations left", length(new_rels));
 			}
 
+			rels_set_cheapest(new_rels);
+
 			/* get essential new relation */
 			new_rel = (RelOptInfo *) lfirst(new_rels);
 			rel_count++;
-
-			set_cheapest(new_rel, new_rel->pathlist);
 
 			/* processing of other new_rel attributes */
 			if (new_rel->size <= 0)
@@ -166,24 +160,7 @@ gimme_tree(Query *root, Gene *tour, int rel_count, int num_gene, RelOptInfo *old
 
 			return gimme_tree(root, tour, rel_count, num_gene, new_rel);
 		}
-
 	}
 
 	return old_rel;			/* tree finished ... */
-}
-
-static RelOptInfo *
-geqo_nth(int stop, List *rels)
-{
-	List	   *r;
-	int			i = 1;
-
-	foreach(r, rels)
-	{
-		if (i == stop)
-			return lfirst(r);
-		i++;
-	}
-	elog(ERROR, "geqo_nth: Internal error - ran off end of list");
-	return NULL;				/* to keep compiler happy */
 }
