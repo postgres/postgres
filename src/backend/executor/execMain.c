@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.132 2000/11/12 00:36:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.133 2000/12/05 22:03:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -994,6 +994,7 @@ lnext:	;
 										  &isNull))
 					elog(ERROR, "ExecutePlan: NO (junk) `ctid' was found!");
 
+				/* shouldn't ever get a null result... */
 				if (isNull)
 					elog(ERROR, "ExecutePlan: (junk) `ctid' is NULL!");
 
@@ -1023,9 +1024,13 @@ lnext:	;
 						elog(ERROR, "ExecutePlan: NO (junk) `%s' was found!",
 							 erm->resname);
 
+					/*
+					 * Unlike the UPDATE/DELETE case, a null result is
+					 * possible here, when the referenced table is on the
+					 * nullable side of an outer join.  Ignore nulls.
+					 */
 					if (isNull)
-						elog(ERROR, "ExecutePlan: (junk) `%s' is NULL!",
-							 erm->resname);
+						continue;
 
 					tuple.t_self = *((ItemPointer) DatumGetPointer(datum));
 					test = heap_mark4update(erm->relation, &tuple, &buffer);
@@ -1038,11 +1043,8 @@ lnext:	;
 
 						case HeapTupleUpdated:
 							if (XactIsoLevel == XACT_SERIALIZABLE)
-							{
 								elog(ERROR, "Can't serialize access due to concurrent update");
-								return (NULL);
-							}
-							else if (!(ItemPointerEquals(&(tuple.t_self),
+							if (!(ItemPointerEquals(&(tuple.t_self),
 								  (ItemPointer) DatumGetPointer(datum))))
 							{
 								newSlot = EvalPlanQual(estate, erm->rti, &(tuple.t_self));
