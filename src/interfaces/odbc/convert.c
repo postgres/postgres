@@ -974,7 +974,7 @@ copy_statement_with_parameters(StatementClass *stmt)
 	ConnectionClass	*conn = SC_get_conn(stmt);
 	ConnInfo	*ci = &(conn->connInfo);
 	BOOL		prepare_dummy_cursor = FALSE, begin_first = FALSE;
-	char	token_save[32];
+	char	token_save[64];
 	int	token_len;
 	BOOL	prev_token_end;
 #ifdef	DRIVER_CURSOR_IMPLEMENT
@@ -1247,7 +1247,7 @@ copy_statement_with_parameters(StatementClass *stmt)
 					token_save[0] = oldchar;
 					token_len = 1;
 				}
-				else
+				else if (token_len + 1 < sizeof(token_save))
 					token_save[token_len++] = oldchar;
 			} 
 			CVT_APPEND_CHAR(oldchar);

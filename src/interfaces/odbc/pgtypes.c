@@ -586,10 +586,10 @@ pgtype_precision(StatementClass *stmt, Int4 type, int col, int handle_unknown_si
 			return 8;
 
 		case PG_TYPE_ABSTIME:
-		case PG_TYPE_DATETIME:
 		case PG_TYPE_TIMESTAMP:
-			/*return 19;*/
-return 21;
+			return 22;
+		case PG_TYPE_DATETIME:
+			return 22;
 
 		case PG_TYPE_BOOL:
 			return 1;
@@ -678,12 +678,12 @@ pgtype_length(StatementClass *stmt, Int4 type, int col, int handle_unknown_size_
 
 		case PG_TYPE_DATE:
 		case PG_TYPE_TIME:
-			return 6;
+			return 6;	/* sizeof(DATE(TIME)_STRUCT) */
 
 		case PG_TYPE_ABSTIME:
 		case PG_TYPE_DATETIME:
 		case PG_TYPE_TIMESTAMP:
-			return 16;
+			return 16;	/* sizeof(TIMESTAMP_STRUCT) */
 
 			/* Character types (and NUMERIC) use the default precision */
 		case PG_TYPE_VARCHAR:
@@ -723,8 +723,9 @@ pgtype_scale(StatementClass *stmt, Int4 type, int col)
 			 * "yyyy-mm=dd hh:mm:ss[.f...]"
 			 */
 		case PG_TYPE_ABSTIME:
-		case PG_TYPE_DATETIME:
 		case PG_TYPE_TIMESTAMP:
+			return 0;
+		case PG_TYPE_DATETIME:
 			return 0;
 
 		case PG_TYPE_NUMERIC:
