@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.41 2001/10/09 04:15:38 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.42 2001/10/09 04:55:11 tgl Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -519,8 +519,8 @@ create function cs_refresh_one_mv(integer) returns integer as '
         -- The mv_name column of cs_materialized_views stores view
         -- names.
  
-        TRUNCATE TABLE table_data.mv_name;
-        INSERT INTO table_data.mv_name || '' '' || table_data.mv_query;
+        EXECUTE ''TRUNCATE TABLE '' || quote_ident(table_data.mv_name);
+        EXECUTE ''INSERT INTO '' || quote_ident(table_data.mv_name) || '' '' || table_data.mv_query;
 
         return 1;
 end;
@@ -1151,7 +1151,7 @@ END LOOP;
 FOR i IN 1..10 LOOP
   -- some expressions here
 
-    RAISE NOTICE 'i is %',i;
+    RAISE NOTICE ''i is %'',i;
 END LOOP;
 
 FOR i IN REVERSE 1..10 LOOP
@@ -1304,9 +1304,9 @@ BEGIN
 
          -- Now "mviews" has one record from cs_materialized_views
 
-         PERFORM cs_log(''Refreshing materialized view '' || mview.mv_name || ''...'');
-         TRUNCATE TABLE mview.mv_name;
-         INSERT INTO mview.mv_name || '' '' || mview.mv_query;
+         PERFORM cs_log(''Refreshing materialized view '' || quote_ident(mviews.mv_name) || ''...'');
+         EXECUTE ''TRUNCATE TABLE  '' || quote_ident(mviews.mv_name);
+         EXECUTE ''INSERT INTO '' || quote_ident(mviews.mv_name) || '' '' || mviews.mv_query;
      END LOOP;
 
      PERFORM cs_log(''Done refreshing materialized views.'');
