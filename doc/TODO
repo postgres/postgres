@@ -1,14 +1,14 @@
 ====================================================
 TODO list (FAQ) for PostgreSQL
 ====================================================
-last updated:		Tue Jun  3 16:30:57 EDT 1997
+last updated:		Sun Jul 13 15:18:19 EDT 1997
 
 current maintainer:	Bruce Momjian (maillist@candle.pha.pa.us)
 
 The most recent version of this document can be viewed at
 the postgreSQL WWW site, http://www.postgreSQL.org.
 
-THE CHANGES FOR 6.1 APPEAR AT THE END OF THIS DOCUMENT
+THE CHANGES FOR 6.1 and 6.1.1 APPEAR AT THE END OF THIS DOCUMENT
 
 Developers who have claimed items are:
 	Bruce is Bruce Momjian<maillist@candle.pha.pa.us>
@@ -18,6 +18,7 @@ Developers who have claimed items are:
 	Darren is Darren King <darrenk@insightdist.com>
 	Edmund is Edmund Mergl <E.Mergl@bawue.de>
 	Erich Stamberger <eberger@gewi.kfunigraz.ac.at>
+	Gerhard is Gerhard Reithofer <gerhardr@tech-edv.co.at>
 	Igor is Igor <igor@sba.miami.edu>
 	Jun is Jun Kuwamura <juk@rccm.co.jp>
 	Kurt is "Kurt J. Lidl" <lidl@va.pubnix.com>
@@ -28,6 +29,7 @@ Developers who have claimed items are:
 	Soo-Ho Ok <shok@detc.dongeui-tc.ac.kr>
 	Stefan Simkovics <ssimkovi@rainbow.studorg.tuwien.ac.at>
 	Sven is Sven Verdoolaege <skimo@breughel.ufsia.ac.be>
+	Tatsuo is Tatsuo Ishii <t-ishii@sra.co.jp>
 	Thomas is Thomas Lockhart <tgl@mythos.jpl.nasa.gov>
 	Vadim is "Vadim B. Mikheev" <vadim@sable.krasnoyarsk.su>
 	Vivek is Vivek Khera <khera@kci.kciLink.com>
@@ -42,8 +44,6 @@ Fix all NULL features
 	allow psql to print nulls meaningfully
 Fix compile and security of Kerberos/GSSAPI code (Daniel Kalchev?)
 Dropping a table twice causes corruption, drop/create not rollback-able
-SELECT on two tables where zero or one table in WHERE and target
- 	clause returns no rows
 COUNT on VIEW always returns zero (maybe because there is no oid for views?)
 CREATE VIEW requires super-user priviledge
 SELECT a[1] FROM test fails, it needs test.a[1]
@@ -53,6 +53,9 @@ can lo_export()/lo_import() read/write anywhere, causing a security problem?
 Fix UPDATE key_table SET keyval=max(reftab.NUM)+1 WHERE tblname='reftab'
 SELECT COUNT(*) FROM TAB1, TAB2 fails
 Tables that start with xinv confused to be large objects
+Two and three dimmensional arrays display improperly, missing {}
+Add GROUP BY and HAVING to INSERT INTO table SELECT * FROM table2
+Make timestamp type recognize DateStyle(Tom)
 
 ENHANCEMENTS
 ------------
@@ -115,7 +118,6 @@ Remove stale files upon startup(Vivek)
 Add command to show privileges
 Allow INSERT INTO ... SELECT to convert column types
 Add syslog functionality
-Improve optimizer plan choice(Darren)
 Add STDDEV/VARIANCE() function for standard deviation computation/variance
 Add table/column/function discription table indexed by oid
 add pg_type attribute to identify types that need length (bpchar, varchar)
@@ -124,6 +126,8 @@ make pg_dumpall preserve table ownership, not just database ownership
 make large objects have their own reltype
 make number of backends a config parameter, storage/sinvaladt.h:MaxBackendId
 certain indexes will not shrink, i.e. oid indexes with many inserts
+make NULL's come out at the beginning or end depending on the ORDER BY direction
+change the library/backend interface to use network byte order
 
 PERFORMANCE
 -----------
@@ -150,10 +154,37 @@ Update usermanual source(many)
 remove time-travel in documentation(Bruce)
 added features used in grammer but not in docs, like :: and CAST
 add DECLARE manual page
+update libpq++ manual page
 
 PORTABILITY
 -----------
  
+
+---------------------------------------------------------------------------
+
+                     CHANGES IN THE 6.1.1 RELEASE
+
+Changes in this release
+-----------------------
+fix for SET with options (Thomas)
+fix month boundary arithmetic(Thomas)
+fix timezone daylight handling for some ports(Thomas)
+allow pg_dump/pg_dumpall to preserve ownership of all tables/objects(Bruce)
+new psql \connect option allows changing usernames without chaning databases
+fix for datetime arithmetic over month boundaries(Thomas)
+fix for initdb --debug option(Tatsuo)
+lextest cleanup(Bruce)
+hash fixes(Vadim)
+psql's \d now case-insensitive(Bruce)
+psql's backslash commands can now have trailing semicolon(Bruce)
+fix memory leak in psql when using \g(Bruce)
+major fix for endian handling of communication to server(Thomas, Tatsuo)
+improvements in datetime and timespan routines(Thomas)
+timestamp overhauled to use standard functions(Thomas)
+Fix for Solaris assembler and include files(Yoshihiko Ichikawa)
+allow underscores in usernames(Bruce)
+pg_dumpall now returns proper status, portability fix(Bruce)
+
 
 ---------------------------------------------------------------------------
 
@@ -188,6 +219,8 @@ fix btree duplicates handling (Vadim)
 fix deleted tuples re-incarnation caused by vacuum (Vadim)
 fix SELECT varchar()/char() INTO TABLE made zero-length fields(Bruce)
 many psql, pg_dump, and libpq memory leaks fixed using Purify (Igor)
+SELECT on two tables where zero or one table in WHERE and target
+ 	clause returns no rows(Vadim)
 
 Enhancements
 ------------
@@ -235,6 +268,7 @@ new destroydb -i option (Igor)
 new \dt and \di psql commands (Darren)
 SELECT "\n" now escapes newline (A. Duursma)
 new geometry conversion functions from old format (Thomas)
+Improve optimizer plan choice(Vadim)
 
 Source tree changes
 -------------------

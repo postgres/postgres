@@ -1,3 +1,33 @@
+PostgreSQL 6.1.1                 Sun Jul 13 15:11:47 EDT 1997
+-------------------------------------------------------------
+
+This release does not require a dump/restore.  Rerun configure.  Compile
+the new release. Recompile all your custom applications so they use the
+libpq library in this new release.  Stop the postmaster process, install
+the new release, and restart the postmaster.
+
+Changes in this release
+-----------------------
+fix for SET with options (Thomas)
+fix month boundary arithmetic(Thomas)
+fix timezone daylight handling for some ports(Thomas)
+allow pg_dump/pg_dumpall to preserve ownership of all tables/objects(Bruce)
+new psql \connect option allows changing usernames without chaning databases
+fix for datetime arithmetic over month boundaries(Thomas)
+fix for initdb --debug option(Tatsuo)
+lextest cleanup(Bruce)
+hash fixes(Vadim)
+psql's \d now case-insensitive(Bruce)
+psql's backslash commands can now have trailing semicolon(Bruce)
+fix memory leak in psql when using \g(Bruce)
+major fix for endian handling of communication to server(Thomas, Tatsuo)
+improvements in datetime and timespan routines(Thomas)
+timestamp overhauled to use standard functions(Thomas)
+Fix for Solaris assembler and include files(Yoshihiko Ichikawa)
+allow underscores in usernames(Bruce)
+pg_dumpall now returns proper status, portability fix(Bruce)
+
+
 PostgreSQL 6.1                   Sun Jun  8 14:41:13 EDT 1997
 -------------------------------------------------------------
 
