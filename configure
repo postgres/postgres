@@ -855,6 +855,7 @@ Optional Packages:
   --with-libraries=DIRS   look for additional libraries in DIRS
   --with-libs=DIRS        alternative spelling of --with-libraries
   --with-pgport=PORTNUM   change default port number 5432
+  --with-threads          allow libpq to be thread-safe
   --with-tcl              build Tcl and Tk interfaces
   --without-tk            do not build Tk interfaces if Tcl is enabled
   --with-tclconfig=DIR    tclConfig.sh and tkConfig.sh are in DIR
@@ -2810,6 +2811,41 @@ done
 IFS=$ac_save_IFS
 
 #
+# Enable libpq to be thread-safe
+#
+echo "$as_me:$LINENO: checking allow threaded libpq" >&5
+echo $ECHO_N "checking allow threaded libpq... $ECHO_C" >&6
+
+
+
+# Check whether --with-threads or --without-threads was given.
+if test "${with_threads+set}" = set; then
+  withval="$with_threads"
+
+  case $withval in
+    yes)
+      :
+      ;;
+    no)
+      :
+      ;;
+    *)
+      { { echo "$as_me:$LINENO: error: no argument expected for --with-threads option" >&5
+echo "$as_me: error: no argument expected for --with-threads option" >&2;}
+   { (exit 1); exit 1; }; }
+      ;;
+  esac
+
+else
+  with_threads=no
+
+fi;
+
+echo "$as_me:$LINENO: result: $with_threads" >&5
+echo "${ECHO_T}$with_threads" >&6
+
+
+#
 # Tcl/Tk
 #
 echo "$as_me:$LINENO: checking whether to build with Tcl" >&5
@@ -3550,7 +3586,7 @@ rm -f conftest*
 #
 # Pthreads
 #
-
+if test "$with_threads" = yes; then
 echo "$as_me:$LINENO: checking for ANSI C header files" >&5
 echo $ECHO_N "checking for ANSI C header files... $ECHO_C" >&6
 if test "${ac_cv_header_stdc+set}" = set; then
@@ -3850,25 +3886,38 @@ echo "${ECHO_T}$ac_cv_header_pthread_h" >&6
 
 fi
 if test $ac_cv_header_pthread_h = yes; then
-
-cat >>confdefs.h <<\_ACEOF
-#define HAVE_THREADS 1
-_ACEOF
-
+  :
+else
+  { { echo "$as_me:$LINENO: error: pthread.h not found, required for --with-threads" >&5
+echo "$as_me: error: pthread.h not found, required for --with-threads" >&2;}
+   { (exit 1); exit 1; }; }
 fi
 
 
-if test ! -z "$HAVE_THREADS"
-then
-	case $host_os in
-		# BSD/OS and NetBSD require no special libraries or flags
-		netbsd*|bsdi*) ;;
+case $host_os in
+		netbsd*|bsdi*)
+			# these require no special flags or libraries
+			;;
 		freebsd2*|freebsd3*|freebsd4*) THREAD_CFLAGS="-pthread" ;;
 		freebsd*) THREAD_LIBS="-lc_r" ;;
 		linux*) THREAD_LIBS="-lpthread"
 			THREAD_CFLAGS="-D_REENTRANT" ;;
-	# other operating systems might fail because they have pthread.h but need
-	# special libs we don't know about yet.
+		*)
+			# other operating systems might fail because they have pthread.h but need
+			# special libs we don't know about yet.
+			{ { echo "$as_me:$LINENO: error:
+Cannot enable threads on your platform.
+Please report your platform threading info to the PostgreSQL mailing lists
+so it can be added to the next release.  Report any compile or link flags,
+or libraries required for threading support.
+" >&5
+echo "$as_me: error:
+Cannot enable threads on your platform.
+Please report your platform threading info to the PostgreSQL mailing lists
+so it can be added to the next release.  Report any compile or link flags,
+or libraries required for threading support.
+" >&2;}
+   { (exit 1); exit 1; }; }
 	esac
 fi
 
@@ -17540,6 +17589,7 @@ s,@CPP@,$CPP,;t t
 s,@GCC@,$GCC,;t t
 s,@autodepend@,$autodepend,;t t
 s,@INCLUDES@,$INCLUDES,;t t
+s,@with_threads@,$with_threads,;t t
 s,@with_tcl@,$with_tcl,;t t
 s,@with_tk@,$with_tk,;t t
 s,@with_perl@,$with_perl,;t t

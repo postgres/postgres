@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.133 2003/06/11 06:56:06 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.134 2003/06/13 23:10:07 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -910,6 +910,15 @@ JAVACMD=$JAVA_HOME/bin/java
        <listitem>
         <para>
 	 Build with Rendezvous support.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><option>--with-threads</option></term>
+       <listitem>
+        <para>
+	 Allow separate libpq threads to safely control their private connection handles.
         </para>
        </listitem>
       </varlistentry>

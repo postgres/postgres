@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.123 2003/05/14 03:25:58 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.124 2003/06/13 23:10:07 momjian Exp $
 -->
 
  <chapter id="libpq">
@@ -509,11 +509,6 @@ typedef struct
     is leaked for each call to <function>PQconndefaults</function>.
    </para>
 
-   <para>
-    In <productname>PostgreSQL</productname> versions before 7.0, <function>PQconndefaults</function> returned a pointer
-    to a static array, rather than a dynamically allocated array.  That
-    was not thread-safe, so the behavior has been changed.
-   </para>
   </listitem>
  </varlistentry>
 
@@ -2549,17 +2544,23 @@ If the permissions are less strict than this, the file will be ignored.
 </indexterm>
 
 <para>
-<application>libpq</application> is thread-safe as of
-<productname>PostgreSQL</productname> 7.0, so long as no two threads
-attempt to manipulate the same <structname>PGconn</> object at the same
-time. In particular, you cannot issue concurrent commands from different
-threads through the same connection object. (If you need to run
-concurrent commands, start up multiple connections.)
+<application>libpq</application> is thread-safe if the library is
+compiled using the <literal>--with-threads</>
+<filename>configure</filename> command-line option.  (You might need to
+use other threading command-line options to compile your client code.)
 </para>
 
 <para>
-<structname>PGresult</> objects are read-only after creation, and so can be passed around
-freely between threads.
+One restriction is that no two threads attempt to manipulate the same
+<structname>PGconn</> object at the same time. In particular, you cannot
+issue concurrent commands from different threads through the same
+connection object. (If you need to run concurrent commands, start up
+multiple connections.)
+</para>
+
+<para>
+<structname>PGresult</> objects are read-only after creation, and so can be 
+passed around freely between threads.
 </para>
 
 <para>
