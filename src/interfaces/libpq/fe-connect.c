@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.33 1997/05/09 03:28:49 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.34 1997/05/13 01:46:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -720,7 +720,7 @@ startup2PacketBuf(StartupInfo* s, PacketBuf* res)
   tmp += sizeof(s->options);
   strncpy(tmp, s->execFile, sizeof(s->execFile));
   tmp += sizeof(s->execFile);
-  strncpy(tmp, s->tty, sizeof(s->execFile));
+  strncpy(tmp, s->tty, sizeof(s->tty));
 }
 
 /* ----------------
