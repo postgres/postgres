@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.8 1996/11/26 03:19:49 bryanh Exp $
+ * $Id: pg_dump.h,v 1.9 1996/12/27 23:12:57 bryanh Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -122,7 +122,7 @@ typedef struct _oprInfo {
 
 
 /* global decls */
-extern int g_verbose;  /* verbose flag */
+extern bool g_verbose;  /* verbose flag */
 extern int g_last_builtin_oid; /* value of the last builtin oid */
 extern FILE *g_fout;     /* the script file */
 
@@ -189,8 +189,6 @@ extern void dumpTables(FILE* fout, TableInfo* tbinfo, int numTables,
 extern void dumpIndices(FILE* fout, IndInfo* indinfo, int numIndices,
 			TableInfo* tbinfo, int numTables, const char *tablename);
 
-extern void dumpClasses(TableInfo *tbinfo, int numTables, FILE *fout, 
-                        const char *tablename, int oids);
 extern void dumpTuples(PGresult *res, FILE *fout, int *attrmap);
 extern void setMaxOid(FILE *fout);
 extern char* checkForQuote(const char* s);
