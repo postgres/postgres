@@ -12,7 +12,7 @@ import java.io.*;
  * interface to the PooledConnection is through the CPDS.
  *
  * @author Aaron Mulder (ammulder@chariotsolutions.com)
- * @version $Revision: 1.6.4.3 $
+ * @version $Revision: 1.6.4.4 $
  */
 public class ConnectionPoolTest extends BaseDataSourceTest
 {
@@ -131,13 +131,6 @@ public class ConnectionPoolTest extends BaseDataSourceTest
 			}
 			catch (SQLException e)
 			{}
-			try
-			{
-				con.close();
-				fail("Original connection wrapper should be closed when new connection wrapper is generated");
-			}
-			catch (SQLException e)
-			{}
 			con2.close();
 			pc.close();
 		}
@@ -194,13 +187,8 @@ public class ConnectionPoolTest extends BaseDataSourceTest
 			con.close();
 			assertTrue(cc.getCount() == 2);
 			assertTrue(cc.getErrorCount() == 0);
-			try
-			{
+			// a double close shouldn't fire additional events
 				con.close();
-				fail("Should not be able to close a connection wrapper twice");
-			}
-			catch (SQLException e)
-			{}
 			assertTrue(cc.getCount() == 2);
 			assertTrue(cc.getErrorCount() == 0);
 			pc.close();

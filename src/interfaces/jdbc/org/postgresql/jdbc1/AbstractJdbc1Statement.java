@@ -26,7 +26,7 @@ import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.Vector;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.41.2.3 2004/02/03 05:13:55 jurka Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.41.2.4 2004/02/24 13:11:44 jurka Exp $
  * This class defines methods of the jdbc1 specification.  This class is
  * extended by org.postgresql.jdbc2.AbstractJdbc2Statement which adds the jdbc2
  * methods.  The real Statement class (for jdbc1) is org.postgresql.jdbc1.Jdbc1Statement
@@ -83,6 +83,8 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 	private short m_isSingleStatement = UNKNOWN;   // Is the query a single statement?
 
 	private boolean m_useServerPrepare = false;
+
+	private boolean isClosed = false;
 
     // m_preparedCount is used for naming of auto-cursors and must
     // be synchronized so that multiple threads using the same
@@ -785,6 +787,10 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 	 */
 	public void close() throws SQLException
 	{
+		// closing an already closed Statement is a no-op.
+		if (isClosed)
+			return;
+
 		// Force the ResultSet to close
 		java.sql.ResultSet rs = getResultSet();
 		if (rs != null)
@@ -794,6 +800,7 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 
 		// Disasociate it from us (For Garbage Collection)
 		result = null;
+		isClosed = true;
 	}
 
  	/**

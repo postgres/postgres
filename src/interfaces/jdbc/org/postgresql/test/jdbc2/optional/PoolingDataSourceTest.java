@@ -1,6 +1,7 @@
 package org.postgresql.test.jdbc2.optional;
 
 import java.sql.SQLException;
+import java.sql.Statement;
 import org.postgresql.test.TestUtil;
 import org.postgresql.jdbc2.optional.PoolingDataSource;
 import org.postgresql.jdbc2.optional.BaseDataSource;
@@ -9,7 +10,7 @@ import org.postgresql.jdbc2.optional.BaseDataSource;
  * Minimal tests for pooling DataSource.  Needs many more.
  *
  * @author Aaron Mulder (ammulder@chariotsolutions.com)
- * @version $Revision: 1.1.6.1 $
+ * @version $Revision: 1.1.6.2 $
  */
 public class PoolingDataSourceTest extends BaseDataSourceTest
 {
@@ -95,5 +96,27 @@ public class PoolingDataSourceTest extends BaseDataSourceTest
         catch (IllegalArgumentException e)
         {
         }
+    }
+
+    /**
+     * Closing a Connection twice is not an error.
+     */
+    public void testDoubleConnectionClose() throws SQLException
+    {
+        con = getDataSourceConnection();
+        con.close();
+        con.close();
+    }
+
+    /**
+     * Closing a Statement twice is not an error.
+     */
+    public void testDoubleStatementClose() throws SQLException
+    {
+        con = getDataSourceConnection();
+        Statement stmt = con.createStatement();
+        stmt.close();
+        stmt.close();
+        con.close();
     }
 }

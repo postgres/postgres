@@ -14,7 +14,7 @@ import org.postgresql.PGConnection;
  *
  * @author Aaron Mulder (ammulder@chariotsolutions.com)
  * @author Csaba Nagy (ncsaba@yahoo.com)
- * @version $Revision: 1.7.4.2 $
+ * @version $Revision: 1.7.4.3 $
  */
 public class PooledConnectionImpl implements PooledConnection
 {
@@ -234,12 +234,17 @@ public class PooledConnectionImpl implements PooledConnection
 			{
 				return con == null ? Boolean.TRUE : Boolean.FALSE;
 			}
-			if (con == null)
+			if (con == null && !method.getName().equals("close"))
 			{
 				throw new SQLException(automatic ? "Connection has been closed automatically because a new connection was opened for the same PooledConnection or the PooledConnection has been closed" : "Connection has been closed");
 			}
 			if (method.getName().equals("close"))
 			{
+				// we are already closed and a double close
+				// is not an error.
+				if (con == null)
+					return null;
+
 				SQLException ex = null;
 				if (!con.getAutoCommit())
 				{
@@ -358,12 +363,12 @@ public class PooledConnectionImpl implements PooledConnection
                 return method.invoke(st, args);
             }
             // All the rest is from the Statement interface
-            if (st == null || con.isClosed())
-            {
-                throw new SQLException("Statement has been closed");
-            }
             if (method.getName().equals("close"))
             {
+                // closing an already closed object is a no-op
+                if (st == null || con.isClosed())
+                    return null;
+
                 try {
                     st.close();
                 } finally {
@@ -371,6 +376,10 @@ public class PooledConnectionImpl implements PooledConnection
                     st = null;
                 }
                 return null;
+            }
+            if (st == null || con.isClosed())
+            {
+                throw new SQLException("Statement has been closed");
             }
             else if (method.getName().equals("getConnection"))
             {

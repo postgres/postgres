@@ -10,7 +10,7 @@ import java.sql.*;
  *
  * PS: Do you know how difficult it is to type on a train? ;-)
  *
- * $Id: ConnectionTest.java,v 1.10 2002/10/17 05:33:52 barry Exp $
+ * $Id: ConnectionTest.java,v 1.10.6.1 2004/02/24 13:11:44 jurka Exp $
  */
 
 public class ConnectionTest extends TestCase
@@ -346,5 +346,15 @@ public class ConnectionTest extends TestCase
 		{
 			assertTrue(ex.getMessage(), false);
 		}
+	}
+
+	/**
+	 * Closing a Connection more than once is not an error.
+	 */
+	public void testDoubleClose() throws SQLException
+	{
+		Connection con = TestUtil.openDB();
+		con.close();
+		con.close();
 	}
 }
