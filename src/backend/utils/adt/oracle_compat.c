@@ -1,7 +1,7 @@
 /*
  *  Edmund Mergl <E.Mergl@bawue.de>
  *
- *  $Id: oracle_compat.c,v 1.6 1997/05/07 02:46:45 scrappy Exp $
+ *  $Id: oracle_compat.c,v 1.7 1997/07/29 16:12:01 thomas Exp $
  *
  */
 
@@ -15,6 +15,7 @@ text *upper(text *string);
 text *initcap(text *string);
 text *lpad(text *string1, int4 len, text *string2);
 text *rpad(text *string1, int4 len, text *string2);
+text *btrim(text *string, text *set);
 text *ltrim(text *string, text *set);
 text *rtrim(text *string, text *set);
 text *substr(text *string, int4 m, int4 n);
@@ -248,6 +249,81 @@ rpad(text *string1, int4 len, text *string2)
 
 /********************************************************************
  *
+ * btrim
+ *
+ * Syntax:
+ *
+ *   text *btrim(text *string, text *set)
+ *
+ * Purpose:
+ *
+ *   Returns string with characters removed from the front and back
+ *   up to the first character not in set.
+ *
+ ********************************************************************/
+
+text *
+btrim(text *string, text *set)
+{
+  text *ret;
+  char *ptr, *end, *ptr2, *end2;
+  int m;
+
+  if ((string == (text *)NULL) ||
+      ((m = VARSIZE(string) - VARHDRSZ) <= 0) ||
+      (set == (text *)NULL) ||
+      ((VARSIZE(set) - VARHDRSZ) <= 0))
+    return string;
+
+  ptr  = VARDATA(string);
+  ptr2 = VARDATA(set);
+  end2 = VARDATA(set) + VARSIZE(set) - VARHDRSZ - 1;
+  
+  while (m--) {
+    while (ptr2 <= end2) {
+      if (*ptr == *ptr2) {
+        break;
+      }
+      ++ptr2;
+    }
+    if (*ptr != *ptr2) {
+      break;
+    }
+    ptr++;
+    ptr2 = VARDATA(set);
+  }
+
+  ++m;
+
+  end  = VARDATA(string) + VARSIZE(string) - VARHDRSZ - 1;
+  ptr2 = VARDATA(set);
+
+  while (m--) {
+    while (ptr2 <= end2) {
+      if (*end == *ptr2) {
+        break;
+      }
+      ++ptr2;
+    }
+    if (*end != *ptr2) {
+      break;
+    }
+    --end;
+    ptr2 = VARDATA(set);
+  }
+
+  ++m;
+
+  ret = (text *)palloc(VARHDRSZ + m);
+  VARSIZE(ret) = VARHDRSZ + m;
+  memcpy(VARDATA(ret),ptr,m);
+
+  return ret;
+} /* btrim() */
+
+
+/********************************************************************
+ *
  * ltrim
  *
  * Syntax:
@@ -265,7 +341,7 @@ text *
 ltrim(text *string, text *set)
 {
   text *ret;
-  char *ptr, *ptr2, *end2, *ptr_ret;
+  char *ptr, *ptr2, *end2;
   int m;
 
   if ((string == (text *)NULL) ||
@@ -297,11 +373,7 @@ ltrim(text *string, text *set)
   ret = (text *)palloc(VARHDRSZ + m);
   VARSIZE(ret) = VARHDRSZ + m;
 
-  ptr_ret = VARDATA(ret);
-
-  while (m--) {
-    *ptr_ret++ = *ptr++;
-  }
+  memcpy(VARDATA(ret),ptr,m);
 
   return ret;
 }
@@ -357,6 +429,9 @@ rtrim(text *string, text *set)
 
   ret = (text *)palloc(VARHDRSZ + m);
   VARSIZE(ret) = VARHDRSZ + m;
+#if FALSE
+  memcpy(VARDATA(ret),ptr-VARSIZE(ret)+m,m);
+#endif
 
   ptr_ret = VARDATA(ret) + m - 1;
 
@@ -454,11 +529,3 @@ translate(text *string, char from, char to)
 
 
 /* EOF */
-
-
-
-
-
-
-
-

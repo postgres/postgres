@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.16 1997/06/11 05:18:02 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.17 1997/07/29 16:12:07 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -216,40 +216,81 @@ int textlen (text* t)
 /*
  * textcat -
  *    takes two text* and returns a text* that is the concatentation of 
- *  the two
- */
-
-/*
- * Rewrited by Sapa, sapa@hq.icb.chel.su. 8-Jul-96.
+ *    the two.
+ *
+ * Rewritten by Sapa, sapa@hq.icb.chel.su. 8-Jul-96.
+ * Updated by Thomas, Thomas.Lockhart@jpl.nasa.gov 1997-07-10.
+ * Allocate space for output in all cases.
+ * XXX - thomas 1997-07-10
+ * As in previous code, allow concatenation when one string is NULL.
+ * Is this OK?
  */
 
 text* 
 textcat(text* t1, text* t2)
 {
-    int len1, len2, newlen;
+    int len1, len2, len;
     char *ptr;
     text* result;
 
-    /* Check for NULL strings... */
-    if (t1 == NULL) return t2;
-    if (t2 == NULL) return t1;
+    if (!PointerIsValid(t1) && !PointerIsValid(t2))
+	return(NULL);
 
-    /* Check for ZERO-LENGTH strings... */
-    /* I use <= instead of == , I know - it's paranoia, but... */
-    if((len1 = VARSIZE(t1) - VARHDRSZ) <= 0) return t2;
-    if((len2 = VARSIZE(t2) - VARHDRSZ) <= 0) return t1;
+    len1 = (PointerIsValid(t1)? (VARSIZE(t1) - VARHDRSZ): 0);
+    if (len1 < 0) len1 = 0;
+    len2 = (PointerIsValid(t2)? (VARSIZE(t2) - VARHDRSZ): 0);
+    if (len2 < 0) len2 = 0;
 
-    result = (text *)palloc(newlen = len1 + len2 + VARHDRSZ);
+    result = PALLOC(len = len1 + len2 + VARHDRSZ);
 
     /* Fill data field of result string... */
-    memcpy(ptr = VARDATA(result), VARDATA(t1), len1);
-    memcpy(ptr + len1, VARDATA(t2), len2);
+    ptr = VARDATA(result);
+    if (PointerIsValid(t1)) memcpy(ptr, VARDATA(t1), len1);
+    if (PointerIsValid(t2)) memcpy(ptr + len1, VARDATA(t2), len2);
 
     /* Set size of result string... */
-    VARSIZE(result) = newlen;
+    VARSIZE(result) = len;
 
-    return result;
-}
+    return(result);
+} /* textcat() */
+
+/*
+ * textpos -
+ *    Return the position of the specified substring.
+ *    Implements the SQL92 POSITION() function.
+ *    Ref: A Guide To The SQL Standard, Date & Darwen, 1997
+ * - thomas 1997-07-27
+ */
+
+int32
+textpos(text* t1, text* t2)
+{
+    int pos;
+    int px, p;
+    int len1, len2;
+    char *p1, *p2;
+
+    if (!PointerIsValid(t1) || !PointerIsValid(t2))
+	return(0);
+
+    if (VARSIZE(t2) <= 0)
+	return(1);
+
+    len1 = (VARSIZE(t1) - VARHDRSZ);
+    len2 = (VARSIZE(t2) - VARHDRSZ);
+    p1 = VARDATA(t1);
+    p2 = VARDATA(t2);
+    pos = 0;
+    px = (len1 - len2);
+    for (p = 0; p <= px; p++) {
+	if ((*p2 == *p1) && (strncmp(p1, p2, len2) == 0)) {
+	    pos = p + 1;
+	    break;
+	};
+	p1++;
+    };
+    return(pos);
+} /* textpos() */
 
 /*
  *	texteq		- returns 1 iff arguments are equal
@@ -269,15 +310,15 @@ texteq(struct varlena *arg1, struct varlena *arg2)
     a2p = arg2->vl_dat;
     /*
      * Varlenas are stored as the total size (data + size variable)
-     * followed by the data.  The size variable is an int32 so the
-     * length of the data is the total length less sizeof(int32)
+     * followed by the data.
+     * Use VARHDRSZ instead of explicit sizeof() - thomas 1997-07-10
      */
-    len -= sizeof(int32);
+    len -= VARHDRSZ;
     while (len-- != 0)
 	if (*a1p++ != *a2p++)
 	    return((bool) 0);
     return((bool) 1);
-}
+} /* texteq() */
 
 bool
 textne(struct varlena *arg1, struct varlena *arg2) 
