@@ -34,7 +34,7 @@ return SD["call"]
 CREATE FUNCTION import_fail() returns text
     AS
 'try:
-	import socket
+	import foosocket
 except Exception, ex:
 	plpy.notice("import socket failed -- %s" % str(ex))
 	return "failed as expected"
@@ -304,30 +304,5 @@ CREATE OR REPLACE FUNCTION read_file(text) RETURNS text AS '
 
 CREATE OR REPLACE FUNCTION write_file(text,text) RETURNS text AS '
   open(args[0],"w").write(args[1])
+  return "Wrote to file: %s" % args[0]
 ' LANGUAGE 'plpython';
-
-CREATE OR REPLACE FUNCTION getpid() RETURNS int4 AS '
-  import os
-  return os.getpid()
-' LANGUAGE 'plpython';
-
-CREATE OR REPLACE FUNCTION uname() RETURNS int4 AS '
-  import os
-  return os.uname()
-' LANGUAGE 'plpython';
-
-CREATE OR REPLACE FUNCTION sys_exit() RETURNS text AS '
-  import sys
-  return sys.exit()
-' LANGUAGE 'plpython';
-
-CREATE OR REPLACE FUNCTION sys_argv() RETURNS text AS '
-  import sys
-  return str(sys.argv)
-' LANGUAGE 'plpython';
-
-CREATE OR REPLACE FUNCTION sys_version() RETURNS text AS '
-  import sys
-  return str(sys.version)
-' LANGUAGE 'plpython';
-

@@ -29,7 +29,7 @@
  * MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.33 2003/06/11 18:33:39 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.34 2003/06/25 01:18:58 momjian Exp $
  *
  *********************************************************************
  */
@@ -61,6 +61,8 @@
 #include "utils/syscache.h"
 
 #include <Python.h>
+#include <compile.h>
+#include <eval.h>
 #include "plpython.h"
 
 /* convert Postgresql Datum or tuple into a PyObject.
@@ -135,8 +137,6 @@ typedef struct PLyProcedure
 								 * tuple type */
 	PLyTypeInfo args[FUNC_MAX_ARGS];
 	int			nargs;
-	PyObject   *interp;			/* restricted interpreter instance */
-	PyObject   *reval;			/* interpreter return */
 	PyObject   *code;			/* compiled procedure code */
 	PyObject   *statics;		/* data saved across calls, local scope */
 	PyObject   *globals;		/* data saved across calls, global score */
@@ -186,12 +186,7 @@ PG_FUNCTION_INFO_V1(plpython_call_handler);
  */
 static void PLy_init_all(void);
 static void PLy_init_interp(void);
-static void PLy_init_safe_interp(void);
 static void PLy_init_plpy(void);
-
-/* Helper functions used during initialization */
-static int	populate_methods(PyObject * klass, PyMethodDef * methods);
-static PyObject *build_tuple(char *string_list[], int len);
 
 /* error handler.  collects the current Python exception, if any,
  * and appends it to the error and sends it to elog
@@ -249,10 +244,6 @@ static void PLy_input_datum_func2(PLyDatumToOb *, Oid, Form_pg_type);
 static void PLy_output_tuple_funcs(PLyTypeInfo *, TupleDesc);
 static void PLy_input_tuple_funcs(PLyTypeInfo *, TupleDesc);
 
-/* RExec methods
- */
-static PyObject *PLy_r_open(PyObject * self, PyObject * args);
-
 /* conversion functions
  */
 static PyObject *PLyDict_FromTuple(PLyTypeInfo *, HeapTuple, TupleDesc);
@@ -280,57 +271,8 @@ static PLyProcedure *PLy_last_procedure = NULL;
 static volatile int PLy_restart_in_progress = 0;
 
 static PyObject *PLy_interp_globals = NULL;
-static PyObject *PLy_interp_safe = NULL;
 static PyObject *PLy_interp_safe_globals = NULL;
-static PyObject *PLy_importable_modules = NULL;
-static PyObject *PLy_ok_posix_names = NULL;
-static PyObject *PLy_ok_sys_names = NULL;
 static PyObject *PLy_procedure_cache = NULL;
-
-static char *PLy_importable_modules_list[] = {
-	"array",
-	"bisect",
-	"binascii",
-	"calendar",
-	"cmath",
-	"codecs",
-	"errno",
-	"marshal",
-	"math",
-	"md5",
-	"mpz",
-	"operator",
-	"pcre",
-	"pickle",
-	"random",
-	"re",
-	"regex",
-	"sre",
-	"sha",
-	"string",
-	"StringIO",
-	"struct",
-	"time",
-	"whrandom",
-	"zlib"
-};
-
-static char *PLy_ok_posix_names_list[] = {
-	/* None for now */
-};
-
-static char *PLy_ok_sys_names_list[] = {
-	"byteeorder",
-	"copyright",
-	"getdefaultencoding",
-	"getrefcount",
-	"hexrevision",
-	"maxint",
-	"maxunicode",
-	"platform",
-	"version",
-	"version_info"
-};
 
 /* Python exceptions
  */
@@ -904,7 +846,7 @@ PLy_procedure_call(PLyProcedure * proc, char *kargs, PyObject * vargs)
 	current = PLy_last_procedure;
 	PLy_last_procedure = proc;
 	PyDict_SetItemString(proc->globals, kargs, vargs);
-	rv = PyObject_CallFunction(proc->reval, "O", proc->code);
+	rv = PyEval_EvalCode( (PyCodeObject*)proc->code, proc->globals, proc->globals);
 	PLy_last_procedure = current;
 
 	if ((rv == NULL) || (PyErr_Occurred()))
@@ -1084,7 +1026,7 @@ PLy_procedure_create(FunctionCallInfo fcinfo, bool is_trigger,
 	for (i = 0; i < FUNC_MAX_ARGS; i++)
 		PLy_typeinfo_init(&proc->args[i]);
 	proc->nargs = 0;
-	proc->code = proc->interp = proc->reval = proc->statics = NULL;
+	proc->code = proc->statics = NULL;
 	proc->globals = proc->me = NULL;
 
 	SAVE_EXC();
@@ -1189,45 +1131,12 @@ PLy_procedure_create(FunctionCallInfo fcinfo, bool is_trigger,
 void
 PLy_procedure_compile(PLyProcedure * proc, const char *src)
 {
-	PyObject   *module,
-			   *crv = NULL;
+	PyObject   *crv = NULL;
 	char	   *msrc;
 
 	enter();
 
-	/*
-	 * get an instance of rexec.RExec for the function
-	 */
-	proc->interp = PyObject_CallMethod(PLy_interp_safe, "RExec", NULL);
-	if ((proc->interp == NULL) || (PyErr_Occurred()))
-		PLy_elog(ERROR, "Unable to create rexec.RExec instance");
-
-	proc->reval = PyObject_GetAttrString(proc->interp, "r_eval");
-	if ((proc->reval == NULL) || (PyErr_Occurred()))
-		PLy_elog(ERROR, "Unable to get method `r_eval' from rexec.RExec");
-
-	/*
-	 * add a __main__ module to the function's interpreter
-	 */
-	module = PyObject_CallMethod(proc->interp, "add_module", "s", "__main__");
-	if ((module == NULL) || (PyErr_Occurred()))
-		PLy_elog(ERROR, "Unable to get module `__main__' from rexec.RExec");
-
-	/*
-	 * add plpy module to the interpreters main dictionary
-	 */
-	proc->globals = PyModule_GetDict(module);
-	if ((proc->globals == NULL) || (PyErr_Occurred()))
-		PLy_elog(ERROR, "Unable to get `__main__.__dict__' from rexec.RExec");
-
-	/*
-	 * why the hell won't r_import or r_exec('import plpy') work?
-	 */
-	module = PyDict_GetItemString(PLy_interp_globals, "plpy");
-	if ((module == NULL) || (PyErr_Occurred()))
-		PLy_elog(ERROR, "Unable to get `plpy'");
-	Py_INCREF(module);
-	PyDict_SetItemString(proc->globals, "plpy", module);
+	proc->globals = PyDict_Copy(PLy_interp_globals);
 
 	/*
 	 * SD is private preserved data between calls GD is global data shared
@@ -1235,13 +1144,12 @@ PLy_procedure_compile(PLyProcedure * proc, const char *src)
 	 */
 	proc->statics = PyDict_New();
 	PyDict_SetItemString(proc->globals, "SD", proc->statics);
-	PyDict_SetItemString(proc->globals, "GD", PLy_interp_safe_globals);
 
 	/*
 	 * insert the function code into the interpreter
 	 */
 	msrc = PLy_procedure_munge_source(proc->pyname, src);
-	crv = PyObject_CallMethod(proc->interp, "r_exec", "s", msrc);
+	crv = PyRun_String(msrc, Py_file_input, proc->globals, NULL);
 	free(msrc);
 
 	if ((crv != NULL) && (!PyErr_Occurred()))
@@ -1319,8 +1227,6 @@ PLy_procedure_delete(PLyProcedure * proc)
 	enter();
 
 	Py_XDECREF(proc->code);
-	Py_XDECREF(proc->interp);
-	Py_XDECREF(proc->reval);
 	Py_XDECREF(proc->statics);
 	Py_XDECREF(proc->globals);
 	Py_XDECREF(proc->me);
@@ -2418,7 +2324,6 @@ PLy_init_all(void)
 	Py_Initialize();
 	PLy_init_interp();
 	PLy_init_plpy();
-	PLy_init_safe_interp();
 	if (PyErr_Occurred())
 		PLy_elog(FATAL, "Untrapped error in initialization.");
 	PLy_procedure_cache = PyDict_New();
@@ -2442,6 +2347,8 @@ PLy_init_interp(void)
 		PLy_elog(ERROR, "Unable to import '__main__' module.");
 	Py_INCREF(mainmod);
 	PLy_interp_globals = PyModule_GetDict(mainmod);
+	PLy_interp_safe_globals = PyDict_New();
+	PyDict_SetItemString(PLy_interp_globals, "GD", PLy_interp_safe_globals);
 	Py_DECREF(mainmod);
 	if ((PLy_interp_globals == NULL) || (PyErr_Occurred()))
 		PLy_elog(ERROR, "Unable to initialize globals.");
@@ -2484,139 +2391,6 @@ PLy_init_plpy(void)
 	if (PyErr_Occurred())
 		elog(ERROR, "Unable to init plpy.");
 }
-
-/*
- *	New RExec methods
- */
-
-PyObject *
-PLy_r_open(PyObject * self, PyObject * args)
-{
-	PyErr_SetString(PyExc_IOError, "can't open files in restricted mode");
-	return NULL;
-}
-
-
-static PyMethodDef PLy_r_exec_methods[] = {
-	{"r_open", (PyCFunction) PLy_r_open, METH_VARARGS, NULL},
-	{NULL, NULL, 0, NULL}
-};
-
-/*
- *	Init new RExec
- */
-
-void
-PLy_init_safe_interp(void)
-{
-	PyObject   *rmod,
-			   *rexec,
-			   *rexec_dict;
-	char	   *rname = "rexec";
-	int			len;
-
-	enter();
-
-	rmod = PyImport_ImportModuleEx(rname, PLy_interp_globals,
-								   PLy_interp_globals, Py_None);
-	if ((rmod == NULL) || (PyErr_Occurred()))
-		PLy_elog(ERROR, "Unable to import %s.", rname);
-	PyDict_SetItemString(PLy_interp_globals, rname, rmod);
-	PLy_interp_safe = rmod;
-
-	len = sizeof(PLy_importable_modules_list) / sizeof(char *);
-	PLy_importable_modules = build_tuple(PLy_importable_modules_list, len);
-
-	len = sizeof(PLy_ok_posix_names_list) / sizeof(char *);
-	PLy_ok_posix_names = build_tuple(PLy_ok_posix_names_list, len);
-
-	len = sizeof(PLy_ok_sys_names_list) / sizeof(char *);
-	PLy_ok_sys_names = build_tuple(PLy_ok_sys_names_list, len);
-
-	PLy_interp_safe_globals = PyDict_New();
-	if (PLy_interp_safe_globals == NULL)
-		PLy_elog(ERROR, "Unable to create shared global dictionary.");
-
-	/*
-	 * get an rexec.RExec class
-	 */
-	rexec = PyDict_GetItemString(PyModule_GetDict(rmod), "RExec");
-
-	if (rexec == NULL || !PyClass_Check(rexec))
-		PLy_elog(ERROR, "Unable to get RExec object.");
-
-
-	rexec_dict = ((PyClassObject *) rexec)->cl_dict;
-
-	/*
-	 * tweak the list of permitted modules, posix and sys functions
-	 */
-	PyDict_SetItemString(rexec_dict, "ok_builtin_modules", PLy_importable_modules);
-	PyDict_SetItemString(rexec_dict, "ok_posix_names", PLy_ok_posix_names);
-	PyDict_SetItemString(rexec_dict, "ok_sys_names", PLy_ok_sys_names);
-
-	/*
-	 * change the r_open behavior
-	 */
-	if (populate_methods(rexec, PLy_r_exec_methods))
-		PLy_elog(ERROR, "Failed to update RExec methods.");
-}
-
-/* Helper function to build tuples from string lists */
-static
-PyObject *
-build_tuple(char *string_list[], int len)
-{
-	PyObject   *tup = PyTuple_New(len);
-	int			i;
-
-	for (i = 0; i < len; i++)
-	{
-		PyObject   *m = PyString_FromString(string_list[i]);
-
-		PyTuple_SetItem(tup, i, m);
-	}
-	return tup;
-}
-
-/* Helper function for populating a class with method wrappers. */
-static int
-populate_methods(PyObject * klass, PyMethodDef * methods)
-{
-	if (!klass || !methods)
-		return 0;
-
-	for (; methods->ml_name; ++methods)
-	{
-
-		/* get a wrapper for the built-in function */
-		PyObject   *func = PyCFunction_New(methods, NULL);
-		PyObject   *meth;
-		int			status;
-
-		if (!func)
-			return -1;
-
-		/* turn the function into an unbound method */
-		if (!(meth = PyMethod_New(func, NULL, klass)))
-		{
-			Py_DECREF(func);
-			return -1;
-		}
-
-		/* add method to dictionary */
-		status = PyDict_SetItemString(((PyClassObject *) klass)->cl_dict,
-									  methods->ml_name, meth);
-		Py_DECREF(meth);
-		Py_DECREF(func);
-
-		/* stop now if an error occurred, otherwise do the next method */
-		if (status)
-			return status;
-	}
-	return 0;
-}
-
 
 /* the python interface to the elog function
  * don't confuse these with PLy_elog
