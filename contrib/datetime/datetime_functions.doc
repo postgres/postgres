@@ -1,25 +1,16 @@
-From: Massimo Dal Zotto <dz@cs.unitn.it>
-Date: Tue, 14 May 1996 14:31:18 +0200 (MET DST)
-Subject: [PG95]: new postgres functions
+Date & time functions for use in Postgres version 6.1 & up
 
-- -----BEGIN PGP SIGNED MESSAGE-----
+This functions replaces the original ones from the postgresql.org
+because the date & time structures has changed.
 
-Some time ago I read in the mailing list requests of people looking
-for more time and date functions.  I have now written some of them:
+There is a Makefile that should be "ajusted" 
+for directories where postgres home after install.
 
-  time_difference(time1, time2) ,also defined as operator '-'
-  hour(time)
-  minutes(time)
-  seconds(time)
-  asMinutes(time)
-  asSeconds(time)
-  currentTime()
-  currentDate()
+In this case: /usr/postgres.
 
-The file can be compiled as shared library and loaded as dynamic module
-without need to recompile the backend.  This can also be taken as an example
-of the extensibility of postgres (user-defined functions, operators, etc).
-I would be nice to see more of these user contributed modules posted to this
-list and hopefully accessible from the Postgres home page.
+Hope this can help,
+
+
+Sergio Lenzi (lenzi@bsi.com.br)
 
 

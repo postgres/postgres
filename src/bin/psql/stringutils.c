@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/stringutils.c,v 1.9 1997/08/19 21:36:56 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/stringutils.c,v 1.10 1997/08/25 19:41:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,7 @@
 #include <ctype.h>
 #include <stdlib.h>
 
+#include "postgres.h"
 #ifndef HAVE_STRDUP
 #include "strdup.h"
 #endif

@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/Makefile,v 1.7 1997/04/26 05:04:21 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/bin/Makefile,v 1.8 1997/08/25 19:41:39 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -21,6 +21,7 @@
 	$(MAKE) -C pg_version $@
 	$(MAKE) -C psql $@
 	$(MAKE) -C pg_dump $@
+      $(MAKE) -C pg_passwd $@
 #
 # Shell scripts
 # 

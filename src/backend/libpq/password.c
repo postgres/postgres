@@ -79,7 +79,8 @@ verify_password(char *user, char *password, Port *port,
 	}
 
 	/* kill the newline */
-	test_pw[strlen(test_pw)-1] = '\0';
+       if (test_pw[strlen(test_pw)-1] == '\n')
+           test_pw[strlen(test_pw)-1] = '\0';
 
 	strNcpy(salt, test_pw, 2);
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.86 1997/08/22 04:13:18 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.87 1997/08/25 19:41:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1239,8 +1239,8 @@ HandleSlashCmds(PsqlSettings * settings,
  	} else if (!optarg) {				/* show tables, sequences and indices */
  	    tableList(settings, 0, 'b');
  	} else if (strcmp(optarg, "*") == 0) {		/* show everything */
- 	    tableList(settings, 0, 'b');
- 	    tableList(settings, 1, 'b');
+ 	    if (tableList(settings, 0, 'b') == 0)
+ 	        tableList(settings, 1, 'b');
  	} else {					/* describe the specified table */
 	    tableDesc(settings, optarg);
 	}
@@ -1945,6 +1945,13 @@ static void prompt_for_password(char *username, char *password)
     printf("Username: ");
     fgets(username, 9, stdin);
     length = strlen(username);
+    /* skip rest of the line */
+    if (length > 0 && username[length-1] != '\n') {
+      static char buf[512];
+      do {
+          fgets(buf, 512, stdin);
+      } while (buf[strlen(buf)-1] != '\n');
+    }
     if(length > 0 && username[length-1] == '\n') username[length-1] = '\0';
 
     printf("Password: ");
@@ -1960,6 +1967,13 @@ static void prompt_for_password(char *username, char *password)
 #endif
 
     length = strlen(password);
+    /* skip rest of the line */
+    if (length > 0 && password[length-1] != '\n') {
+      static char buf[512];
+      do {
+          fgets(buf, 512, stdin);
+      } while (buf[strlen(buf)-1] != '\n');
+    }
     if(length > 0 && password[length-1] == '\n') password[length-1] = '\0';
 
     printf("\n\n");
