@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.205.2.4 2001/08/03 20:14:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.205.2.5 2004/03/20 18:12:50 tgl Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -2311,6 +2311,7 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 			else
 				tblinfo[i].pkIndexOid = NULL;
 
+			PQclear(res2);
 		}
 		else
 			tblinfo[i].pkIndexOid = NULL;
@@ -2383,6 +2384,7 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 				perror("strdup");
 				exit(1);
 			}
+			PQclear(res2);
 		}
 		else
 			tblinfo[i].primary_key_name = NULL;
@@ -2533,6 +2535,7 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 				else
 					tgfunc = strdup(finfo[findx].proname);
 
+				resetPQExpBuffer(delqry);
 				appendPQExpBuffer(delqry, "DROP TRIGGER %s ", fmtId(tgname, force_quotes));
 				appendPQExpBuffer(delqry, "ON %s;\n",
 								fmtId(tblinfo[i].relname, force_quotes));
