@@ -1,4 +1,3 @@
-#define USE_POSIX_TIME
 #define HAS_TEST_AND_SET
 typedef unsigned char slock_t;
 

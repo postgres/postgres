@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.53 2000/09/12 05:41:37 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.54 2000/10/29 13:17:33 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,12 +19,7 @@
 #include <sys/types.h>
 #include <errno.h>
 #include <float.h>
-
 #include <limits.h>
-
-#ifndef USE_POSIX_TIME
-#include <sys/timeb.h>
-#endif
 
 #include "miscadmin.h"
 #include "utils/datetime.h"
@@ -885,7 +880,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 
 			if (IS_VALID_UTIME(tm->tm_year, tm->tm_mon, tm->tm_mday))
 			{
-#ifdef USE_POSIX_TIME
+#if defined(HAVE_TM_ZONE) || defined(HAVE_INT_TIMEZONE)
 				tm->tm_year -= 1900;
 				tm->tm_mon -= 1;
 				tm->tm_isdst = -1;
@@ -893,20 +888,18 @@ DecodeDateTime(char **field, int *ftype, int nf,
 				tm->tm_year += 1900;
 				tm->tm_mon += 1;
 
-#if defined(HAVE_TM_ZONE)
+# if defined(HAVE_TM_ZONE)
 				*tzp = -(tm->tm_gmtoff);		/* tm_gmtoff is
 												 * Sun/DEC-ism */
-#elif defined(HAVE_INT_TIMEZONE)
-#ifdef __CYGWIN__
+# elif defined(HAVE_INT_TIMEZONE)
+#  ifdef __CYGWIN__
 				*tzp = ((tm->tm_isdst > 0) ? (_timezone - 3600) : _timezone);
-#else
+#  else
 				*tzp = ((tm->tm_isdst > 0) ? (timezone - 3600) : timezone);
-#endif
-#else
-#error USE_POSIX_TIME is defined but neither HAVE_TM_ZONE or HAVE_INT_TIMEZONE are defined
-#endif
+#  endif /* __CYGWIN__ */
+# endif /* HAVE_INT_TIMEZONE */
 
-#else							/* !USE_POSIX_TIME */
+#else /* not (HAVE_TM_ZONE || HAVE_INT_TIMEZONE) */
 				*tzp = CTimeZone;
 #endif
 			}
@@ -1139,24 +1132,22 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 		tmp->tm_min = tm->tm_min;
 		tmp->tm_sec = tm->tm_sec;
 
-#ifdef USE_POSIX_TIME
+#if defined(HAVE_TM_ZONE) || defined(HAVE_INT_TIMEZONE)
 		tmp->tm_isdst = -1;
 		mktime(tmp);
 		tm->tm_isdst = tmp->tm_isdst;
 
-#if defined(HAVE_TM_ZONE)
+# if defined(HAVE_TM_ZONE)
 		*tzp = -(tmp->tm_gmtoff);		/* tm_gmtoff is Sun/DEC-ism */
-#elif defined(HAVE_INT_TIMEZONE)
-#ifdef __CYGWIN__
+# elif defined(HAVE_INT_TIMEZONE)
+#  ifdef __CYGWIN__
 		*tzp = ((tmp->tm_isdst > 0) ? (_timezone - 3600) : _timezone);
-#else
+#  else
 		*tzp = ((tmp->tm_isdst > 0) ? (timezone - 3600) : timezone);
-#endif
-#else
-#error USE_POSIX_TIME is defined but neither HAVE_TM_ZONE or HAVE_INT_TIMEZONE are defined
-#endif
+#  endif
+# endif
 
-#else							/* !USE_POSIX_TIME */
+#else /* not (HAVE_TM_ZONE || HAVE_INT_TIMEZONE) */
 		*tzp = CTimeZone;
 #endif
 	}

@@ -1,5 +1,3 @@
-#define USE_POSIX_TIME
-
 #if defined(__i386__)
 #define NEED_I386_TAS_ASM
 #define HAS_TEST_AND_SET

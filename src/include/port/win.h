@@ -6,7 +6,6 @@ typedef unsigned char slock_t;
 #endif
 
 #define tzname _tzname			/* should be in time.h? */
-#define USE_POSIX_TIME
 #define HAVE_INT_TIMEZONE		/* has int _timezone */
 
 #include <cygwin/version.h>

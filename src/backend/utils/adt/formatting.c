@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.22 2000/09/25 12:58:47 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.23 2000/10/29 13:17:34 petere Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2000, PostgreSQL, Inc
@@ -2781,34 +2781,32 @@ to_timestamp(PG_FUNCTION_ARGS)
 	if (IS_VALID_UTIME(tm->tm_year, tm->tm_mon, tm->tm_mday))
 	{
 
-#ifdef USE_POSIX_TIME
+#if defined(HAVE_TM_ZONE) || defined(HAVE_INT_TIMEZONE)
 		tm->tm_isdst = -1;
 		tm->tm_year -= 1900;
 		tm->tm_mon -= 1;
 
-#ifdef DEBUG_TO_FROM_CHAR
+# ifdef DEBUG_TO_FROM_CHAR
 		elog(DEBUG_elog_output, "TO-FROM_CHAR: Call mktime()");
 		NOTICE_TM;
-#endif
+# endif
 		mktime(tm);
 		tm->tm_year += 1900;
 		tm->tm_mon += 1;
 
-#if defined(HAVE_TM_ZONE)
+# if defined(HAVE_TM_ZONE)
 		tz = -(tm->tm_gmtoff);	/* tm_gmtoff is Sun/DEC-ism */
-#elif defined(HAVE_INT_TIMEZONE)
+# elif defined(HAVE_INT_TIMEZONE)
 
-#ifdef __CYGWIN__
+#  ifdef __CYGWIN__
 		tz = (tm->tm_isdst ? (_timezone - 3600) : _timezone);
-#else
+#  else
 		tz = (tm->tm_isdst ? (timezone - 3600) : timezone);
-#endif
+#  endif
 
-#else
-#error USE_POSIX_TIME is defined but neither HAVE_TM_ZONE or HAVE_INT_TIMEZONE are defined
-#endif
+# endif
 
-#else							/* !USE_POSIX_TIME */
+#else /* not (HAVE_TM_ZONE || HAVE_INT_TIMEZONE) */
 		tz = CTimeZone;
 #endif
 	}

@@ -9,7 +9,6 @@
 #include <semaphore.h>			/* for sem_t */
 #endif
 
-#define USE_POSIX_TIME
 #define HAS_TEST_AND_SET
 #define HAVE_STRING_H
 

@@ -1,5 +1,4 @@
 #define NOFIXADE
-#define USE_POSIX_TIME
 #define NEED_STRDUP
 
 #ifndef			BIG_ENDIAN

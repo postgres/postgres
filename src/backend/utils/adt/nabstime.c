@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.74 2000/09/29 13:53:31 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.75 2000/10/29 13:17:34 petere Exp $
  *
  * NOTES
  *
@@ -24,7 +24,7 @@
 #include <float.h>
 #include <limits.h>
 
-#ifndef USE_POSIX_TIME
+#if !(defined(HAVE_TM_ZONE) || defined(HAVE_INT_TIMEZONE))
 #include <sys/timeb.h>
 #endif
 
@@ -126,11 +126,11 @@ GetCurrentAbsoluteTime(void)
 {
 	time_t		now;
 
-#ifdef USE_POSIX_TIME
+#if defined(HAVE_TM_ZONE) || defined(HAVE_INT_TIMEZONE)
 	struct tm  *tm;
 
 	now = time(NULL);
-#else							/* ! USE_POSIX_TIME */
+#else
 	struct timeb tb;			/* the old V7-ism */
 
 	ftime(&tb);
@@ -139,7 +139,6 @@ GetCurrentAbsoluteTime(void)
 
 	if (!HasCTZSet)
 	{
-#ifdef USE_POSIX_TIME
 #if defined(HAVE_TM_ZONE)
 		tm = localtime(&now);
 
@@ -166,16 +165,13 @@ GetCurrentAbsoluteTime(void)
 
 		CDayLight = tm->tm_isdst;
 		CTimeZone =
-#ifdef __CYGWIN__
+# ifdef __CYGWIN__
 			(tm->tm_isdst ? (_timezone - 3600) : _timezone);
-#else
+# else
 			(tm->tm_isdst ? (timezone - 3600) : timezone);
-#endif
+# endif
 		strcpy(CTZName, tzname[tm->tm_isdst]);
-#else
-#error USE_POSIX_TIME defined but no time zone available
-#endif
-#else							/* ! USE_POSIX_TIME */
+#else /* neither HAVE_TM_ZONE nor HAVE_INT_TIMEZONE */
 		CTimeZone = tb.timezone * 60;
 		CDayLight = (tb.dstflag != 0);
 
@@ -206,25 +202,23 @@ void
 abstime2tm(AbsoluteTime _time, int *tzp, struct tm * tm, char *tzn)
 {
 	time_t time = (time_t) _time;
-#ifdef USE_POSIX_TIME
+#if defined(HAVE_TM_ZONE) || defined(HAVE_INT_TIMEZONE)
 	struct tm  *tx;
 
-#else							/* ! USE_POSIX_TIME */
+#else
 	struct timeb tb;			/* the old V7-ism */
 
 	ftime(&tb);
 #endif
 
-#ifdef USE_POSIX_TIME
+
+#if defined(HAVE_TM_ZONE) || defined(HAVE_INT_TIMEZONE)
 	if (tzp != NULL)
 		tx = localtime((time_t *) &time);
 	else
 	{
 		tx = gmtime((time_t *) &time);
 	};
-#endif
-
-#ifdef USE_POSIX_TIME
 
 	tm->tm_year = tx->tm_year + 1900;
 	tm->tm_mon = tx->tm_mon + 1;
@@ -234,7 +228,7 @@ abstime2tm(AbsoluteTime _time, int *tzp, struct tm * tm, char *tzn)
 	tm->tm_sec = tx->tm_sec;
 	tm->tm_isdst = tx->tm_isdst;
 
-#if defined(HAVE_TM_ZONE)
+# if defined(HAVE_TM_ZONE)
 	tm->tm_gmtoff = tx->tm_gmtoff;
 	tm->tm_zone = tx->tm_zone;
 
@@ -252,13 +246,13 @@ abstime2tm(AbsoluteTime _time, int *tzp, struct tm * tm, char *tzn)
 		if (strlen(tm->tm_zone) > MAXTZLEN)
 			elog(NOTICE, "Invalid timezone \'%s\'", tm->tm_zone);
 	}
-#elif defined(HAVE_INT_TIMEZONE)
+# elif defined(HAVE_INT_TIMEZONE)
 	if (tzp != NULL)
-#ifdef __CYGWIN__
+#  ifdef __CYGWIN__
 		*tzp = (tm->tm_isdst ? (_timezone - 3600) : _timezone);
-#else
+#  else
 		*tzp = (tm->tm_isdst ? (timezone - 3600) : timezone);
-#endif
+#  endif
 	if (tzn != NULL)
 	{
 
@@ -270,10 +264,8 @@ abstime2tm(AbsoluteTime _time, int *tzp, struct tm * tm, char *tzn)
 		if (strlen(tzname[tm->tm_isdst]) > MAXTZLEN)
 			elog(NOTICE, "Invalid timezone \'%s\'", tzname[tm->tm_isdst]);
 	}
-#else
-#error POSIX time support is broken
-#endif
-#else							/* ! USE_POSIX_TIME */
+# endif
+#else /* not (HAVE_TM_ZONE || HAVE_INT_TIMEZONE) */
 	if (tzp != NULL)
 		*tzp = tb.timezone * 60;
 

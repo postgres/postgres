@@ -1,5 +1,3 @@
-#define USE_POSIX_TIME
-
 #ifndef			BIG_ENDIAN
 #define			BIG_ENDIAN		4321
 #endif

@@ -1,4 +1,3 @@
-#define USE_POSIX_TIME
 #define CLASS_CONFLICT
 #define DISABLE_XOPEN_NLS
 #define HAS_TEST_AND_SET

@@ -1,5 +1,3 @@
-#define USE_POSIX_TIME
-
 #ifndef			BYTE_ORDER
 #ifdef			MIPSEB
 #define			BYTE_ORDER		BIG_ENDIAN

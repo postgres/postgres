@@ -1,11 +1,3 @@
-/* __USE_POSIX, __USE_BSD, and __USE_BSD_SIGNAL used to be defined either
-   here or with -D compile options, but __ macros should be set and used by C
-   library macros, not Postgres code.  __USE_POSIX is set by features.h,
-   __USE_BSD is set by bsd/signal.h, and __USE_BSD_SIGNAL appears not to
-   be used.
-*/
-#define USE_POSIX_TIME
-
 #if defined(__i386__)
 typedef unsigned char slock_t;
 
@@ -41,14 +33,4 @@ typedef unsigned int slock_t;
 
 #define HAS_TEST_AND_SET
 
-#endif
-
-#if defined(__GLIBC__) && (__GLIBC__ >= 2)
-#ifdef HAVE_INT_TIMEZONE
-#undef HAVE_INT_TIMEZONE
-#endif
-#endif
-
-#if defined(__powerpc__)
-#undef HAVE_INT_TIMEZONE
 #endif

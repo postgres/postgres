@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.50 2000/09/12 05:41:37 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.51 2000/10/29 13:17:33 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -232,7 +232,7 @@ date_timestamp(PG_FUNCTION_ARGS)
 
 	if (IS_VALID_UTIME(tm->tm_year, tm->tm_mon, tm->tm_mday))
 	{
-#ifdef USE_POSIX_TIME
+#if defined(HAVE_TM_ZONE) || defined(HAVE_INT_TIMEZONE)
 		tm->tm_hour = 0;
 		tm->tm_min = 0;
 		tm->tm_sec = 0;
@@ -245,7 +245,7 @@ date_timestamp(PG_FUNCTION_ARGS)
 			elog(ERROR, "Unable to convert date to tm");
 
 		result = utime + ((date2j(1970,1,1)-date2j(2000,1,1))*86400.0);
-#else							/* !USE_POSIX_TIME */
+#else
 		result = dateVal*86400.0+CTimeZone;
 #endif
 	}
