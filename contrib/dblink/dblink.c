@@ -29,7 +29,7 @@
 #include "postgres.h"
 
 #include "libpq-fe.h"
-#include "libpq-int.h"
+
 #include "fmgr.h"
 #include "funcapi.h"
 #include "access/tupdesc.h"
