@@ -1639,6 +1639,12 @@ Thu Sep 18 14:54:47 CEST 2003
 Fri Sep 19 08:33:39 CEST 2003
 
 	- Some code cleanup
+	
+Sat Sep 20 11:06:13 CEST 2003
+
+	- Applied some bug fixing patches by Dave Cramer <dave@fastcrypt.com>.
+	- Added protecting defines to include files.
+	- Renamed my own strndup() function because of a name clash.
 	- Set ecpg version to 3.0.0
 	- Set ecpg library to 4.0.0
 	- Set pgtypes library to 1.0.0

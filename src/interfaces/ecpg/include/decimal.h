@@ -1,3 +1,6 @@
+#ifndef _ECPG_DECIMAL_H
+#define _ECPG_DECIMAL_H
+
 #include <pgtypes_numeric.h>
 
 typedef decimal dec_t;
@@ -16,3 +19,5 @@ int			dectoasc(dec_t *, char *, int, int);
 int			dectodbl(dec_t *, double *);
 int			dectoint(dec_t *, int *);
 int			dectolong(dec_t *, long *);
+
+#endif /* ndef _ECPG_DECIMAL_H */

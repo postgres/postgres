@@ -573,7 +573,7 @@ dttofmtasc_replace(timestamp *ts, date dDate, int dow, struct tm * tm,
 					break;
 				case 'S':
 					replace_val.uint_val = tm->tm_sec;
-					replace_type = PGTYPES_TYPE_UINT;
+					replace_type = PGTYPES_TYPE_UINT_2_LZ;
 					break;
 				case 't':
 					replace_val.char_val = '\t';

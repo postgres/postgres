@@ -1,5 +1,5 @@
-#ifndef _ECPG_ERROR_H
-#define _ECPG_ERROR_H
+#ifndef _ECPG_ERRNO_H
+#define _ECPG_ERRNO_H
 
 #include <errno.h>
 
@@ -74,4 +74,4 @@
  /* WARNING:  BlankPortalAssignName: portal * already exists */
 #define ECPG_WARNING_PORTAL_EXISTS	   -605
 
-#endif   /* !_ECPG_ERROR_H */
+#endif   /* !_ECPG_ERRNO_H */

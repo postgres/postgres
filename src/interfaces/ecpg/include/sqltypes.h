@@ -1,3 +1,6 @@
+#ifndef ECPG_SQLTYPES_H
+#define ECPG_SQLTYPES_H
+
 #define CCHARTYPE	ECPGt_char
 #define CSHORTTYPE	ECPGt_short
 #define CINTTYPE	ECPGt_int
@@ -23,3 +26,5 @@
 #define CROWTYPE		123
 #define CLVCHARPTRTYPE	124
 #define CTYPEMAX	25
+
+#endif /* ndef ECPG_SQLTYPES_H */

@@ -146,6 +146,7 @@ set_var_from_str(char *str, char **ptr, numeric *dest)
 	bool		have_dp = FALSE;
 	int			i = 0;
 
+	errno = 0;
 	*ptr = str;
 	while (*(*ptr))
 	{
@@ -1386,6 +1387,7 @@ PGTYPESnumeric_copy(numeric *src, numeric *dst)
 {
 	int			i;
 
+	if ( dst == NULL ) return -1;
 	zero_var(dst);
 
 	dst->weight = src->weight;

@@ -1,8 +1,11 @@
+#ifndef _ECPG_SQL3TYPES_H
+#define _ECPG_SQL3TYPES_H
+
 /* SQL3 dynamic type codes
  *
  * Copyright (c) 2000, Christof Petig <christof.petig@wtal.de>
  *
- * $Header: /cvsroot/pgsql/src/interfaces/ecpg/include/sql3types.h,v 1.7 2001/10/28 06:26:11 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/interfaces/ecpg/include/sql3types.h,v 1.8 2003/09/20 09:10:09 meskes Exp $
  */
 
 /* chapter 13.1 table 2: Codes used for SQL data types in Dynamic SQL */
@@ -41,3 +44,5 @@ enum
 	SQL3_DDT_ILLEGAL			/* not a datetime data type (not part of
 								 * standard) */
 };
+
+#endif /* !_ECPG_SQL3TYPES_H */

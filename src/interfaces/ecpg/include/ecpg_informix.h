@@ -1,3 +1,5 @@
+#ifndef _ECPG_INFORMIX_H
+#define _ECPG_INFORMIX_H
 /*
  * This file contains stuff needed to be as compatible to Informix as possible.
  */
@@ -32,3 +34,5 @@ extern void ldchar(char *, int, char *);
 
 extern void ECPG_informix_set_var(int, void *, int);
 extern void *ECPG_informix_get_var(int);
+
+#endif /* ndef _ECPG_INFORMIX_H */

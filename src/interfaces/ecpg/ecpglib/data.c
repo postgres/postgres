@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/data.c,v 1.19 2003/09/19 14:06:21 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/data.c,v 1.20 2003/09/20 09:10:09 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -393,10 +393,12 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 					/* did we get an error? */
 					if (errno != 0)
 					{
+						ECPGlog("ECPGget_data line %d: RESULT: %s errno %d\n", lineno, pval ? pval : "", errno);
+
 						if (INFORMIX_MODE(compat))
 						{
 							/* Informix wants its own NULL value here instead of an error */
-							ECPGset_informix_null(ECPGt_numeric, &nres);
+							ECPGset_informix_null(ECPGt_numeric, nres);
 						}
 						else
 						{
@@ -440,7 +442,7 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 						if (INFORMIX_MODE(compat))
 						{
 							/* Informix wants its own NULL value here instead of an error */
-							ECPGset_informix_null(ECPGt_interval, &ires);
+							ECPGset_informix_null(ECPGt_interval, ires);
 						}
 						else
 						{

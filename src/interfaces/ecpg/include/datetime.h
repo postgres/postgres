@@ -1,3 +1,6 @@
+#ifndef _ECPG_DATETIME_H
+#define _ECPG_DATETIME_H
+
 #include <pgtypes_timestamp.h>
 #include <pgtypes_interval.h>
 
@@ -11,3 +14,5 @@ extern int	dttoasc(dtime_t *, char *);
 extern int	dttofmtasc(dtime_t *, char *, int, char *);
 extern int	intoasc(intrvl_t *, char *);
 extern int	dtcvfmtasc(char *, char *, dtime_t *);
+
+#endif /* ndef _ECPG_DATETIME_H */
