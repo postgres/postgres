@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.57 1999/08/25 23:21:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.58 1999/09/13 04:14:56 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -410,7 +410,8 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 					 * only bother with conversion if not NULL and
 					 * different type...
 					 */
-					if (wtype && (wtype != ptype))
+					if (wtype && (wtype != UNKNOWNOID)
+						&& (wtype != ptype))
 					{
 						if (can_coerce_type(1, &wtype, &ptype))
 						{
