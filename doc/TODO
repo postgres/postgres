@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Jul  4 00:45:03 EDT 2000
+Last updated:		Tue Jul  4 01:17:20 EDT 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -138,7 +138,6 @@ COMMANDS
 * Prevent truncate on table with a referential integrity trigger
 * MOVE 0 should not move to end of cursor
 * Overhaul ACL (access control) code
-* Add ALTER SESSION SET TRANSACTION ISOLATION
   
 CLIENTS
 
