@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.435 2004/10/21 19:28:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.436 2004/11/02 03:34:50 momjian Exp $
  *
  * NOTES
  *
@@ -313,7 +313,8 @@ PostmasterMain(int argc, char *argv[])
 	char	   *userDoption = NULL;
 	int			i;
 
-	progname = get_progname(argv[0]);
+	/* This will call exit() if strdup() fails. */
+	progname = get_progname(argv[0]);	
 
 	MyProcPid = PostmasterPid = getpid();
 
