@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/regress.sgml,v 1.28 2002/09/21 18:32:53 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/regress.sgml,v 1.29 2002/10/12 16:31:55 petere Exp $ -->
 
  <chapter id="regress">
   <title id="regress-title">Regression Tests</title>
@@ -361,7 +361,6 @@ diff results/random.out expected/random.out
    </sect2>
   </sect1>
 
-<![%standalone-ignore;[
 <!-- We might want to move the following section into the developer's guide. -->
   <sect1 id="regress-platform">
    <title>Platform-specific comparison files</title>
@@ -415,7 +414,6 @@ horology/hppa=horology-no-DST-before-1970
    </para>
     
   </sect1>
-]]>
   
 </chapter>
 
