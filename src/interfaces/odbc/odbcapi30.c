@@ -526,6 +526,12 @@ SQLBulkOperations(HSTMT hstmt, SQLSMALLINT operation)
 {
 	static char	*func = "SQLBulkOperations";
 	StatementClass	*stmt = (StatementClass *) hstmt;
+#ifndef	DRIVER_CURSOR_IMPLEMENT
+	stmt->errornumber = STMT_NOT_IMPLEMENTED_ERROR;
+	stmt->errormsg = "driver must be compiled with the DRIVER_CURSOR_IMPLEMENT option";
+	SC_log_error(func, "", stmt);
+	return SQL_ERROR;
+#else
 	ARDFields	*opts = SC_get_ARD(stmt);
 	RETCODE		ret;
 	UInt4		offset, bind_size = opts->bind_size, *bmark;
@@ -586,4 +592,5 @@ SQL_AUTOCOMMIT_OFF);
 			break;
 	}
 	return ret;
+#endif /* DRIVER_CURSOR_IMPLEMENT */
 }	
