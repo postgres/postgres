@@ -125,8 +125,8 @@ explained below.
       a program's messages in a language other than English, you need an
       implementation of the Gettext API. Some operating systems have this
       built-in (e.g., Linux, NetBSD, Solaris), for other systems you can
-      download an add-on package from here: http://www.postgresql.org/~petere/
-      gettext.html. If you are using the Gettext implementation in the GNU C
+      download an add-on package from here: http://developer.postgresql.org/~petere/
+      bsd-gettext/. If you are using the Gettext implementation in the GNU C
       library then you will additionally need the GNU Gettext package for some
       utility programs. For any of the other implementations you will not need
       it.

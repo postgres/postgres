@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.177.2.7 2003/12/11 19:57:24 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.177.2.8 2004/01/04 16:44:22 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -257,7 +257,7 @@ JAVACMD=$JAVA_HOME/bin/java
       class="osname">Linux</>, <systemitem class="osname">NetBSD</>,
       <systemitem class="osname">Solaris</>), for other systems you
       can download an add-on package from here: <ulink
-      url="http://www.postgresql.org/~petere/gettext.html" ></ulink>.
+      url="http://developer.postgresql.org/~petere/bsd-gettext/" ></ulink>.
       If you are using the <application>Gettext</> implementation in
       the <acronym>GNU</acronym> C library then you will additionally
       need the <productname>GNU Gettext</productname> package for some
