@@ -40,27 +40,25 @@ QUERY: insert into fkeys2 values (30, '3', 2);
 QUERY: insert into fkeys2 values (40, '4', 5);
 QUERY: insert into fkeys2 values (50, '5', 3);
 QUERY: insert into fkeys2 values (70, '5', 3);
-ERROR:  check_fkeys2_pkey_exist: tuple references non-existing key in pkeys
 QUERY: insert into fkeys values (10, '1', 2);
 QUERY: insert into fkeys values (30, '3', 3);
 QUERY: insert into fkeys values (40, '4', 2);
 QUERY: insert into fkeys values (50, '5', 2);
 QUERY: insert into fkeys values (70, '5', 1);
-ERROR:  check_fkeys_pkey_exist: tuple references non-existing key in pkeys
 QUERY: insert into fkeys values (60, '6', 4);
-ERROR:  check_fkeys_pkey2_exist: tuple references non-existing key in fkeys2
 QUERY: delete from pkeys where pkey1 = 30 and pkey2 = '3';
 NOTICE:  check_pkeys_fkey_cascade: 1 tuple(s) of fkeys are deleted
-ERROR:  check_fkeys2_fkey_restrict: tuple referenced in fkeys
+NOTICE:  check_pkeys_fkey_cascade: 1 tuple(s) of fkeys2 are deleted
 QUERY: delete from pkeys where pkey1 = 40 and pkey2 = '4';
 NOTICE:  check_pkeys_fkey_cascade: 1 tuple(s) of fkeys are deleted
 NOTICE:  check_pkeys_fkey_cascade: 1 tuple(s) of fkeys2 are deleted
 QUERY: update pkeys set pkey1 = 7, pkey2 = '70' where pkey1 = 50 and pkey2 = '5';
 NOTICE:  check_pkeys_fkey_cascade: 1 tuple(s) of fkeys are deleted
-ERROR:  check_fkeys2_fkey_restrict: tuple referenced in fkeys
+NOTICE:  check_pkeys_fkey_cascade: 1 tuple(s) of fkeys2 are deleted
 QUERY: update pkeys set pkey1 = 7, pkey2 = '70' where pkey1 = 10 and pkey2 = '1';
 NOTICE:  check_pkeys_fkey_cascade: 1 tuple(s) of fkeys are deleted
 NOTICE:  check_pkeys_fkey_cascade: 1 tuple(s) of fkeys2 are deleted
+ERROR:  Cannot insert a duplicate key into a unique index
 QUERY: DROP TABLE pkeys;
 QUERY: DROP TABLE fkeys;
 QUERY: DROP TABLE fkeys2;
