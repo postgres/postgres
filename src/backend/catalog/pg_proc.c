@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.108 2003/09/29 00:05:24 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.109 2003/10/03 19:26:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,6 +32,10 @@
 #include "utils/lsyscache.h"
 #include "utils/sets.h"
 #include "utils/syscache.h"
+
+
+/* GUC parameter */
+bool		check_function_bodies = true;
 
 
 Datum		fmgr_internal_validator(PG_FUNCTION_ARGS);
@@ -560,6 +564,11 @@ fmgr_internal_validator(PG_FUNCTION_ARGS)
 	Datum		tmp;
 	char	   *prosrc;
 
+	/*
+	 * We do not honor check_function_bodies since it's unlikely the
+	 * function name will be found later if it isn't there now.
+	 */
+
 	tuple = SearchSysCache(PROCOID,
 						   ObjectIdGetDatum(funcoid),
 						   0, 0, 0);
@@ -604,6 +613,12 @@ fmgr_c_validator(PG_FUNCTION_ARGS)
 	char	   *prosrc;
 	char	   *probin;
 
+	/*
+	 * It'd be most consistent to skip the check if !check_function_bodies,
+	 * but the purpose of that switch is to be helpful for pg_dump loading,
+	 * and for pg_dump loading it's much better if we *do* check.
+	 */
+
 	tuple = SearchSysCache(PROCOID,
 						   ObjectIdGetDatum(funcoid),
 						   0, 0, 0);
@@ -633,8 +648,7 @@ fmgr_c_validator(PG_FUNCTION_ARGS)
 /*
  * Validator for SQL language functions
  *
- * Parse it here in order to be sure that it contains no syntax
- * errors.
+ * Parse it here in order to be sure that it contains no syntax errors.
  */
 Datum
 fmgr_sql_validator(PG_FUNCTION_ARGS)
@@ -689,30 +703,34 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 		}
 	}
 
-	tmp = SysCacheGetAttr(PROCOID, tuple, Anum_pg_proc_prosrc, &isnull);
-	if (isnull)
-		elog(ERROR, "null prosrc");
-
-	prosrc = DatumGetCString(DirectFunctionCall1(textout, tmp));
-
-	/*
-	 * We can't do full prechecking of the function definition if there
-	 * are any polymorphic input types, because actual datatypes of
-	 * expression results will be unresolvable.  The check will be done at
-	 * runtime instead.
-	 *
-	 * We can run the text through the raw parser though; this will at least
-	 * catch silly syntactic errors.
-	 */
-	if (!haspolyarg)
+	/* Postpone body checks if !check_function_bodies */
+	if (check_function_bodies)
 	{
-		querytree_list = pg_parse_and_rewrite(prosrc,
-											  proc->proargtypes,
-											  proc->pronargs);
-		check_sql_fn_retval(proc->prorettype, functyptype, querytree_list);
+		tmp = SysCacheGetAttr(PROCOID, tuple, Anum_pg_proc_prosrc, &isnull);
+		if (isnull)
+			elog(ERROR, "null prosrc");
+
+		prosrc = DatumGetCString(DirectFunctionCall1(textout, tmp));
+
+		/*
+		 * We can't do full prechecking of the function definition if there
+		 * are any polymorphic input types, because actual datatypes of
+		 * expression results will be unresolvable.  The check will be done
+		 * at runtime instead.
+		 *
+		 * We can run the text through the raw parser though; this will at
+		 * least catch silly syntactic errors.
+		 */
+		if (!haspolyarg)
+		{
+			querytree_list = pg_parse_and_rewrite(prosrc,
+												  proc->proargtypes,
+												  proc->pronargs);
+			check_sql_fn_retval(proc->prorettype, functyptype, querytree_list);
+		}
+		else
+			querytree_list = pg_parse_query(prosrc);
 	}
-	else
-		querytree_list = pg_parse_query(prosrc);
 
 	ReleaseSysCache(tuple);
 

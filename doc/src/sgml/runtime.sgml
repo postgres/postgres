@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.209 2003/09/20 20:12:05 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.210 2003/10/03 19:26:49 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -2085,6 +2085,17 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
+     <varlistentry>
+      <term><varname>check_function_bodies</varname> (<type>boolean</type>)</term>
+      <listitem>
+       <para>
+        This parameter is normally true.  When set false, it disables
+	validation of the function body string in <command>CREATE FUNCTION</>.
+	Disabling validation is occasionally useful to avoid problems such as
+	forward references when restoring function definitions from a dump.
+       </para>
+      </listitem>
+     </varlistentry>
 
      <varlistentry>
       <indexterm>

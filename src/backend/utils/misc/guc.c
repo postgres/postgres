@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.161 2003/09/29 00:05:25 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.162 2003/10/03 19:26:49 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -66,6 +66,7 @@
 
 /* XXX these should appear in other modules' header files */
 extern bool Log_connections;
+extern bool check_function_bodies;
 extern int	PreAuthDelay;
 extern int	AuthenticationTimeout;
 extern int	CheckPointTimeout;
@@ -819,6 +820,14 @@ static struct config_bool ConfigureNamesBool[] =
 			NULL
 		},
 		&add_missing_from,
+		true, NULL, NULL
+	},
+	{
+		{"check_function_bodies", PGC_USERSET, CLIENT_CONN_STATEMENT,
+			gettext_noop("check function bodies during CREATE FUNCTION"),
+			NULL
+		},
+		&check_function_bodies,
 		true, NULL, NULL
 	},
 

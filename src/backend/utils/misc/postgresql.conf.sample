@@ -205,6 +205,7 @@
 # - Statement Behavior -
 
 #search_path = '$user,public'	# schema names
+#check_function_bodies = true
 #default_transaction_isolation = 'read committed'
 #default_transaction_read_only = false
 #statement_timeout = 0		# 0 is disabled, in milliseconds
