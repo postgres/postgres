@@ -7,16 +7,17 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execdesc.h,v 1.1 1996/08/28 07:22:08 scrappy Exp $
+ * $Id: execdesc.h,v 1.2 1996/11/04 12:11:40 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef EXECDESC_H
 #define EXECDESC_H
 
-#include "nodes/parsenodes.h"
-#include "nodes/plannodes.h"
-#include "tcop/dest.h"
+#include <tcop/dest.h>
+#include <nodes/plannodes.h>
+#include <nodes/parsenodes.h>
+#include <nodes/nodes.h>
 
 /* ----------------
  *	query descriptor:

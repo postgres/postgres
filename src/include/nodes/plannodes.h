@@ -6,14 +6,15 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: plannodes.h,v 1.3 1996/11/03 12:12:57 scrappy Exp $
+ * $Id: plannodes.h,v 1.4 1996/11/04 12:11:44 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef PLANNODES_H
 #define	PLANNODES_H
 
-#include "nodes/primnodes.h"
+#include <nodes/execnodes.h>
+#include <nodes/nodes.h>
 
 /* ----------------------------------------------------------------
  *  Executor State types are used in the plannode structures
@@ -49,7 +50,6 @@
  *
  * ----------------------------------------------------------------
  */
-#include "nodes/execnodes.h"		/* XXX move executor types elsewhere */
 
 
 /* ----------------------------------------------------------------
