@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/path.c,v 1.35 2004/09/02 16:42:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/port/path.c,v 1.36 2004/09/24 05:16:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,7 +32,7 @@
 #define IS_PATH_SEP(ch) ((ch) == ';')
 #endif
 
-const static char *relative_path(const char *bin_path, const char *other_path);
+static const char *relative_path(const char *bin_path, const char *other_path);
 static void make_relative(const char *my_exec_path, const char *p, char *ret_path);
 static void trim_directory(char *path);
 static void trim_trailing_separator(char *path);
