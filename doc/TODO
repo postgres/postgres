@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Feb 12 12:32:33 EST 2004
+Last updated:		Thu Feb 12 12:38:45 EST 2004
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -146,7 +146,7 @@ Indexes
 * Use bitmaps to combine existing indexes [performance]
 * Allow use of indexes to search for NULLs
 * Allow SELECT * FROM tab WHERE int2col = 4 to use int2col index, int8,
-  float4, numeric/decimal too [optimizer]
+  float4, numeric/decimal too
 * Add FILLFACTOR to btree index creation
 * Add concurrency to GIST
 * Allow a single index to index multiple tables (for inheritance and subtables)
@@ -419,7 +419,7 @@ Write-Ahead Log
 Optimizer / Executor
 ====================
 
-* Missing optimizer selectivities for date, r-tree, etc. [optimizer]
+* Missing optimizer selectivities for date, r-tree, etc
 * Allow ORDER BY ... LIMIT to select top values without sort or index
   using a sequential scan for highest/lowest values (Oleg)
 * Precompile SQL functions to avoid overhead (Neil)
@@ -464,7 +464,7 @@ Source Code
 * Acquire lock on a relation before building a relcache entry for it
 * Research interaction of setitimer() and sleep() used by statement_timeout
 * -Add checks for fclose() failure (Tom)
-* Change CVS $PostgreSQL: pgsql/doc/TODO,v 1.1204 2004/02/12 17:32:38 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1204 2004/02/12 17:32:38 momjian Exp $
+* Change CVS $PostgreSQL: pgsql/doc/TODO,v 1.1205 2004/02/12 17:38:50 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1205 2004/02/12 17:38:50 momjian Exp $
 * Exit postmaster if postgresql.conf can not be opened
 * Rename /scripts directory because they are all C programs now
 * Allow the regression tests to start postmaster with -i so the tests
