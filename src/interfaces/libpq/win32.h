@@ -8,6 +8,7 @@
 #define _timeb timeb
 #define _ftime(a) ftime(a)
 #define _errno errno
+#define popen(a,b) _popen(a,b)
 #else
 /* open provided elsewhere */
 #define close(a) _close(a)

@@ -68,6 +68,8 @@ LIB32_OBJS= \
 	"$(INTDIR)\inet_aton.obj" \
 	"$(INTDIR)\crypt.obj" \
 	"$(INTDIR)\path.obj" \
+	"$(INTDIR)\noblock.obj" \
+	"$(INTDIR)\pgstrcasecmp.obj" \
 	"$(INTDIR)\dllist.obj" \
 	"$(INTDIR)\md5.obj" \
 	"$(INTDIR)\ip.obj" \
@@ -84,6 +86,7 @@ LIB32_OBJS= \
 	"$(INTDIR)\wchar.obj" \
 	"$(INTDIR)\encnames.obj"
 
+
 RSC=brcc32.exe
 RSC_PROJ=-l 0x409 -i$(BCB)\include -fo"$(INTDIR)\libpq.res"
 
@@ -98,7 +101,7 @@ LINK32_OBJS= "$(INTDIR)\libpqdll.obj"
 
 # ---------------------------------------------------------------------------
 
-ALL: "$(OUTDIR)" "$(OUTDIR)\blibpq.dll" "$(OUTDIR)\blibpq.lib"
+ALL: config "$(OUTDIR)" "$(OUTDIR)\blibpq.dll" "$(OUTDIR)\blibpq.lib"
 
 CLEAN :
 	-@erase "$(INTDIR)\getaddrinfo.obj"
@@ -123,12 +126,24 @@ CLEAN :
 	-@erase "$(OUTDIR)\win32.obj"
 	-@erase "$(INTDIR)\wchar.obj"
 	-@erase "$(INTDIR)\encnames.obj"
+	-@erase "$(INTDIR)\noblock.obj"
+	-@erase "$(INTDIR)\pgstrcasecmp.obj"
 	-@erase "$(OUTDIR)\libpq.res"
 	-@erase "$(OUTDIR)\blibpq.lib"
 	-@erase "$(OUTDIR)\blibpqdll.lib"
 	-@erase "$(OUTDIR)\blibpq.dll"
 	-@erase "$(OUTDIR)\blibpq.tds"
 
+config: ..\..\include\pg_config.h pthread.h pg_config_paths.h
+
+..\..\include\pg_config.h: ..\..\include\pg_config.h.win32
+	copy ..\..\include\pg_config.h.win32 ..\..\include\pg_config.h
+
+pthread.h: pthread.h.win32
+	copy pthread.h.win32 pthread.h
+
+pg_config_paths.h: win32.mak
+	echo #define SYSCONFDIR "" >pg_config_paths.h
 
 "$(OUTDIR)" :
 	@if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
@@ -151,6 +166,7 @@ CLEAN :
 +-"$(**: =" &^
 +-")"
 !
+
 
 .c.obj:
 	$(CPP) -o"$(INTDIR)\$&" $(CPP_PROJ) $<
