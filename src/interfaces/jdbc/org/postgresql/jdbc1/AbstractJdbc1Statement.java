@@ -26,7 +26,7 @@ import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.Vector;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.41.2.7 2004/09/13 08:02:41 jurka Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.41.2.8 2004/10/21 19:13:55 jurka Exp $
  * This class defines methods of the jdbc1 specification.  This class is
  * extended by org.postgresql.jdbc2.AbstractJdbc2Statement which adds the jdbc2
  * methods.  The real Statement class (for jdbc1) is org.postgresql.jdbc1.Jdbc1Statement
@@ -1864,9 +1864,12 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 	public byte getByte(int parameterIndex) throws SQLException
 	{
 		checkIndex (parameterIndex, Types.TINYINT, "Byte");
-		if (callResult == null)
-			return 0;
-		return (byte)((Integer)callResult).intValue ();
+		// We expect the above checkIndex call to fail because
+		// we don't have an equivalent pg type for TINYINT.
+		// Possibly "char" (not char(N)), could be used, but
+		// for the moment we just bail out.
+		//
+		throw new PSQLException("postgresql.unusual", PSQLState.UNEXPECTED_ERROR);
 	}
 
 	/*
@@ -1881,7 +1884,7 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 		checkIndex (parameterIndex, Types.SMALLINT, "Short");
 		if (callResult == null)
 			return 0;
-		return (short)((Integer)callResult).intValue ();
+		return (short)((Short)callResult).intValue ();
 	}
 
 
