@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.54 1997/12/01 21:00:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.55 1997/12/01 22:02:32 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -2264,7 +2264,9 @@ dumpTables(FILE *fout, TableInfo *tblinfo, int numTables,
 							tblinfo[i].check_expr[k]);
 				}
 			}
-
+			strcat(q, ";\n");
+			fputs(q, fout);
+			
 			if (acls)
 				fprintf(fout,
 				 "UPDATE pg_class SET relacl='%s' where relname='%s';\n",
