@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.47 2001/06/19 19:42:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.48 2001/06/22 00:04:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,45 +24,52 @@
 
 
 static LOCKMASK LockConflicts[] = {
-	(int) NULL,
+	0,
 
-/* AccessShareLock */
+	/* AccessShareLock */
 	(1 << AccessExclusiveLock),
 
-/* RowShareLock */
+	/* RowShareLock */
 	(1 << ExclusiveLock) | (1 << AccessExclusiveLock),
 
-/* RowExclusiveLock */
+	/* RowExclusiveLock */
 	(1 << ExclusiveLock) | (1 << ShareRowExclusiveLock) | (1 << ShareLock) |
 	(1 << AccessExclusiveLock),
 
-/* ShareLock */
+	/* ShareLock */
 	(1 << ExclusiveLock) | (1 << ShareRowExclusiveLock) |
 	(1 << RowExclusiveLock) | (1 << AccessExclusiveLock),
 
-/* ShareRowExclusiveLock */
+	/* ShareRowExclusiveLock */
 	(1 << ExclusiveLock) | (1 << ShareRowExclusiveLock) |
 	(1 << ShareLock) | (1 << RowExclusiveLock) | (1 << AccessExclusiveLock),
 
-/* ExclusiveLock */
+	/* ExclusiveLock */
 	(1 << ExclusiveLock) | (1 << ShareRowExclusiveLock) | (1 << ShareLock) |
 	(1 << RowExclusiveLock) | (1 << RowShareLock) | (1 << AccessExclusiveLock),
 
-/* AccessExclusiveLock */
+	/* AccessExclusiveLock */
 	(1 << ExclusiveLock) | (1 << ShareRowExclusiveLock) | (1 << ShareLock) |
-	(1 << RowExclusiveLock) | (1 << RowShareLock) | (1 << AccessExclusiveLock) |
-	(1 << AccessShareLock),
+	(1 << RowExclusiveLock) | (1 << RowShareLock) |
+	(1 << AccessExclusiveLock) | (1 << AccessShareLock)
 
 };
 
 static int	LockPrios[] = {
-	(int) NULL,
+	0,
+	/* AccessShareLock */
 	1,
+	/* RowShareLock */
 	2,
+	/* RowExclusiveLock */
 	3,
+	/* ShareLock */
 	4,
+	/* ShareRowExclusiveLock */
 	5,
+	/* ExclusiveLock */
 	6,
+	/* AccessExclusiveLock */
 	7
 };
 
@@ -134,7 +141,8 @@ LockRelation(Relation relation, LOCKMODE lockmode)
 	tag.dbId = relation->rd_lockInfo.lockRelId.dbId;
 	tag.objId.blkno = InvalidBlockNumber;
 
-	if (!LockAcquire(LockTableId, &tag, GetCurrentTransactionId(), lockmode))
+	if (!LockAcquire(LockTableId, &tag, GetCurrentTransactionId(),
+					 lockmode, false))
 		elog(ERROR, "LockRelation: LockAcquire failed");
 
 	/*
@@ -146,6 +154,45 @@ LockRelation(Relation relation, LOCKMODE lockmode)
 	RelationIncrementReferenceCount(relation);
 	AcceptInvalidationMessages();
 	RelationDecrementReferenceCount(relation);
+}
+
+/*
+ *		ConditionalLockRelation
+ *
+ * As above, but only lock if we can get the lock without blocking.
+ * Returns TRUE iff the lock was acquired.
+ *
+ * NOTE: we do not currently need conditional versions of the other
+ * LockXXX routines in this file, but they could easily be added if needed.
+ */
+bool
+ConditionalLockRelation(Relation relation, LOCKMODE lockmode)
+{
+	LOCKTAG		tag;
+
+	if (LockingDisabled())
+		return true;
+
+	MemSet(&tag, 0, sizeof(tag));
+	tag.relId = relation->rd_lockInfo.lockRelId.relId;
+	tag.dbId = relation->rd_lockInfo.lockRelId.dbId;
+	tag.objId.blkno = InvalidBlockNumber;
+
+	if (!LockAcquire(LockTableId, &tag, GetCurrentTransactionId(),
+					 lockmode, true))
+		return false;
+
+	/*
+	 * Check to see if the relcache entry has been invalidated while we
+	 * were waiting to lock it.  If so, rebuild it, or elog() trying.
+	 * Increment the refcount to ensure that RelationFlushRelation will
+	 * rebuild it and not just delete it.
+	 */
+	RelationIncrementReferenceCount(relation);
+	AcceptInvalidationMessages();
+	RelationDecrementReferenceCount(relation);
+
+	return true;
 }
 
 /*
@@ -192,7 +239,8 @@ LockRelationForSession(LockRelId *relid, LOCKMODE lockmode)
 	tag.dbId = relid->dbId;
 	tag.objId.blkno = InvalidBlockNumber;
 
-	if (!LockAcquire(LockTableId, &tag, InvalidTransactionId, lockmode))
+	if (!LockAcquire(LockTableId, &tag, InvalidTransactionId,
+					 lockmode, false))
 		elog(ERROR, "LockRelationForSession: LockAcquire failed");
 }
 
@@ -231,7 +279,8 @@ LockPage(Relation relation, BlockNumber blkno, LOCKMODE lockmode)
 	tag.dbId = relation->rd_lockInfo.lockRelId.dbId;
 	tag.objId.blkno = blkno;
 
-	if (!LockAcquire(LockTableId, &tag, GetCurrentTransactionId(), lockmode))
+	if (!LockAcquire(LockTableId, &tag, GetCurrentTransactionId(),
+					 lockmode, false))
 		elog(ERROR, "LockPage: LockAcquire failed");
 }
 
@@ -267,7 +316,8 @@ XactLockTableInsert(TransactionId xid)
 	tag.dbId = InvalidOid;		/* xids are globally unique */
 	tag.objId.xid = xid;
 
-	if (!LockAcquire(LockTableId, &tag, xid, ExclusiveLock))
+	if (!LockAcquire(LockTableId, &tag, xid,
+					 ExclusiveLock, false))
 		elog(ERROR, "XactLockTableInsert: LockAcquire failed");
 }
 
@@ -303,7 +353,8 @@ XactLockTableWait(TransactionId xid)
 	tag.dbId = InvalidOid;
 	tag.objId.xid = xid;
 
-	if (!LockAcquire(LockTableId, &tag, GetCurrentTransactionId(), ShareLock))
+	if (!LockAcquire(LockTableId, &tag, GetCurrentTransactionId(),
+					 ShareLock, false))
 		elog(ERROR, "XactLockTableWait: LockAcquire failed");
 
 	LockRelease(LockTableId, &tag, GetCurrentTransactionId(), ShareLock);

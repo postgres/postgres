@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.88 2001/03/22 03:59:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.89 2001/06/22 00:04:59 tgl Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -161,13 +161,11 @@ static LOCKMASK BITS_ON[MAX_LOCKMODES];
 
 /*
  * Disable flag
- *
  */
 static bool LockingIsDisabled;
 
 /*
  * map from lockmethod to the lock table structure
- *
  */
 static LOCKMETHODTABLE *LockMethodTable[MAX_LOCK_METHODS];
 
@@ -176,7 +174,6 @@ static int	NumLockMethods;
 /*
  * InitLocks -- Init the lock module.  Create a private data
  *		structure for constructing conflict masks.
- *
  */
 void
 InitLocks(void)
@@ -194,7 +191,6 @@ InitLocks(void)
 
 /*
  * LockDisable -- sets LockingIsDisabled flag to TRUE or FALSE.
- *
  */
 void
 LockDisable(bool status)
@@ -204,7 +200,6 @@ LockDisable(bool status)
 
 /*
  * Boolean function to determine current locking status
- *
  */
 bool
 LockingDisabled(void)
@@ -278,7 +273,7 @@ LockMethodTableInit(char *tabName,
 	long		init_table_size,
 				max_table_size;
 
-	if (numModes > MAX_LOCKMODES)
+	if (numModes >= MAX_LOCKMODES)
 	{
 		elog(NOTICE, "LockMethodTableInit: too many lock types %d greater than %d",
 			 numModes, MAX_LOCKMODES);
@@ -299,14 +294,12 @@ LockMethodTableInit(char *tabName,
 
 	/*
 	 * find/acquire the spinlock for the table
-	 *
 	 */
 	SpinAcquire(LockMgrLock);
 
 	/*
 	 * allocate a control structure from shared memory or attach to it if
 	 * it already exists.
-	 *
 	 */
 	sprintf(shmemName, "%s (ctl)", tabName);
 	lockMethodTable->ctl = (LOCKMETHODCTL *)
@@ -317,13 +310,11 @@ LockMethodTableInit(char *tabName,
 
 	/*
 	 * no zero-th table
-	 *
 	 */
 	NumLockMethods = 1;
 
 	/*
 	 * we're first - initialize
-	 *
 	 */
 	if (!found)
 	{
@@ -334,7 +325,6 @@ LockMethodTableInit(char *tabName,
 
 	/*
 	 * other modules refer to the lock table by a lockmethod ID
-	 *
 	 */
 	LockMethodTable[NumLockMethods] = lockMethodTable;
 	NumLockMethods++;
@@ -343,7 +333,6 @@ LockMethodTableInit(char *tabName,
 	/*
 	 * allocate a hash table for LOCK structs.	This is used to store
 	 * per-locked-object information.
-	 *
 	 */
 	info.keysize = SHMEM_LOCKTAB_KEYSIZE;
 	info.datasize = SHMEM_LOCKTAB_DATASIZE;
@@ -364,7 +353,6 @@ LockMethodTableInit(char *tabName,
 	/*
 	 * allocate a hash table for HOLDER structs.  This is used to store
 	 * per-lock-holder information.
-	 *
 	 */
 	info.keysize = SHMEM_HOLDERTAB_KEYSIZE;
 	info.datasize = SHMEM_HOLDERTAB_DATASIZE;
@@ -426,11 +414,16 @@ LockMethodTableRename(LOCKMETHOD lockmethod)
  * LockAcquire -- Check for lock conflicts, sleep if conflict found,
  *		set lock if/when no conflicts.
  *
- * Returns: TRUE if parameters are correct, FALSE otherwise.
+ * Returns: TRUE if lock was acquired, FALSE otherwise.  Note that
+ *		a FALSE return is to be expected if dontWait is TRUE;
+ *		but if dontWait is FALSE, only a parameter error can cause
+ *		a FALSE return.  (XXX probably we should just elog on parameter
+ *		errors, instead of conflating this with failure to acquire lock?)
  *
- * Side Effects: The lock is always acquired.  No way to abort
- *		a lock acquisition other than aborting the transaction.
- *		Lock is recorded in the lkchain.
+ * Side Effects: The lock is acquired and recorded in lock tables.
+ *
+ * NOTE: if we wait for the lock, there is no way to abort the wait
+ * short of aborting the transaction.
  *
  *
  * Note on User Locks:
@@ -480,7 +473,7 @@ LockMethodTableRename(LOCKMETHOD lockmethod)
 
 bool
 LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
-			TransactionId xid, LOCKMODE lockmode)
+			TransactionId xid, LOCKMODE lockmode, bool dontWait)
 {
 	HOLDER	   *holder;
 	HOLDERTAG	holdertag;
@@ -532,7 +525,6 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 
 	/*
 	 * if it's a new lock object, initialize it
-	 *
 	 */
 	if (!found)
 	{
@@ -556,7 +548,6 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 
 	/*
 	 * Create the hash key for the holder table.
-	 *
 	 */
 	MemSet(&holdertag, 0, sizeof(HOLDERTAG));	/* must clear padding,
 												 * needed */
@@ -632,7 +623,6 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 	 * lock->nRequested and lock->requested[] count the total number of
 	 * requests, whether granted or waiting, so increment those
 	 * immediately. The other counts don't increment till we get the lock.
-	 *
 	 */
 	lock->nRequested++;
 	lock->requested[lockmode]++;
@@ -641,7 +631,6 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 	/*
 	 * If I already hold one or more locks of the requested type, just
 	 * grant myself another one without blocking.
-	 *
 	 */
 	if (holder->holding[lockmode] > 0)
 	{
@@ -654,7 +643,6 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 	/*
 	 * If this process (under any XID) is a holder of the lock, also grant
 	 * myself another one without blocking.
-	 *
 	 */
 	LockCountMyLocks(holder->tag.lock, MyProc, myHolding);
 	if (myHolding[lockmode] > 0)
@@ -669,7 +657,6 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 	 * If lock requested conflicts with locks requested by waiters, must
 	 * join wait queue.  Otherwise, check for conflict with already-held
 	 * locks.  (That's last because most complex check.)
-	 *
 	 */
 	if (lockMethodTable->ctl->conflictTab[lockmode] & lock->waitMask)
 		status = STATUS_FOUND;
@@ -686,13 +673,11 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 	else
 	{
 		Assert(status == STATUS_FOUND);
-#ifdef USER_LOCKS
-
 		/*
-		 * User locks are non blocking. If we can't acquire a lock we must
-		 * remove the holder entry and return FALSE without waiting.
+		 * We can't acquire the lock immediately.  If caller specified no
+		 * blocking, remove the holder entry and return FALSE without waiting.
 		 */
-		if (lockmethod == USER_LOCKMETHOD)
+		if (dontWait)
 		{
 			if (holder->nHolding == 0)
 			{
@@ -708,13 +693,12 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 				HOLDER_PRINT("LockAcquire: NHOLDING", holder);
 			lock->nRequested--;
 			lock->requested[lockmode]--;
-			LOCK_PRINT("LockAcquire: user lock failed", lock, lockmode);
+			LOCK_PRINT("LockAcquire: conditional lock failed", lock, lockmode);
 			Assert((lock->nRequested > 0) && (lock->requested[lockmode] >= 0));
 			Assert(lock->nGranted <= lock->nRequested);
 			SpinRelease(masterLock);
 			return FALSE;
 		}
-#endif	 /* USER_LOCKS */
 
 		/*
 		 * Construct bitmask of locks this process holds on this object.
@@ -781,7 +765,6 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
  *
  * The caller can optionally pass the process's total holding counts, if
  * known.  If NULL is passed then these values will be computed internally.
- *
  */
 int
 LockCheckConflicts(LOCKMETHODTABLE *lockMethodTable,
@@ -806,7 +789,6 @@ LockCheckConflicts(LOCKMETHODTABLE *lockMethodTable,
 	 * currently held locks.  conflictTable[lockmode] has a bit set for
 	 * each type of lock that conflicts with request.	Bitwise compare
 	 * tells if there is a conflict.
-	 *
 	 */
 	if (!(lockctl->conflictTab[lockmode] & lock->grantMask))
 	{
@@ -819,7 +801,6 @@ LockCheckConflicts(LOCKMETHODTABLE *lockMethodTable,
 	 * have to construct a conflict mask that does not reflect our own
 	 * locks.  Locks held by the current process under another XID also
 	 * count as "our own locks".
-	 *
 	 */
 	if (myHolding == NULL)
 	{
@@ -841,7 +822,6 @@ LockCheckConflicts(LOCKMETHODTABLE *lockMethodTable,
 	 * now check again for conflicts.  'bitmask' describes the types of
 	 * locks held by other processes.  If one of these conflicts with the
 	 * kind of lock that I want, there is a conflict and I have to sleep.
-	 *
 	 */
 	if (!(lockctl->conflictTab[lockmode] & bitmask))
 	{
@@ -977,7 +957,7 @@ WaitOnLock(LOCKMETHOD lockmethod, LOCKMODE lockmode,
 	return STATUS_OK;
 }
 
-/*--------------------
+/*
  * Remove a proc from the wait-queue it is on
  * (caller must know it is on one).
  *
@@ -988,7 +968,6 @@ WaitOnLock(LOCKMETHOD lockmethod, LOCKMODE lockmode,
  * during a subsequent LockReleaseAll call, which we expect will happen
  * during transaction cleanup.	(Removal of a proc from its wait queue by
  * this routine can only happen if we are aborting the transaction.)
- *--------------------
  */
 void
 RemoveFromWaitQueue(PROC *proc)
@@ -1164,7 +1143,6 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 	 * positive. But that's not true anymore, because the remaining
 	 * granted locks might belong to some waiter, who could now be
 	 * awakened because he doesn't conflict with his own locks.
-	 *
 	 */
 	if (lockMethodTable->ctl->conflictTab[lockmode] & lock->waitMask)
 		wakeupNeeded = true;
@@ -1175,7 +1153,6 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 		/*
 		 * if there's no one waiting in the queue, we just released the
 		 * last lock on this object. Delete it from the lock table.
-		 *
 		 */
 		Assert(lockMethodTable->lockHash->hash == tag_hash);
 		lock = (LOCK *) hash_search(lockMethodTable->lockHash,
@@ -1305,7 +1282,6 @@ LockReleaseAll(LOCKMETHOD lockmethod, PROC *proc,
 
 		/*
 		 * fix the general lock stats
-		 *
 		 */
 		if (lock->nRequested != holder->nHolding)
 		{
@@ -1335,11 +1311,9 @@ LockReleaseAll(LOCKMETHOD lockmethod, PROC *proc,
 		}
 		else
 		{
-
 			/*
 			 * This holder accounts for all the requested locks on the
 			 * object, so we can be lazy and just zero things out.
-			 *
 			 */
 			lock->nRequested = 0;
 			lock->nGranted = 0;
@@ -1380,7 +1354,6 @@ LockReleaseAll(LOCKMETHOD lockmethod, PROC *proc,
 			/*
 			 * We've just released the last lock, so garbage-collect the
 			 * lock object.
-			 *
 			 */
 			LOCK_PRINT("LockReleaseAll: deleting", lock, 0);
 			Assert(lockMethodTable->lockHash->hash == tag_hash);

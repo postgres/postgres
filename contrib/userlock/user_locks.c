@@ -1,26 +1,22 @@
 /*
  * user_locks.c --
  *
- * This loadable module, together with my user-lock.patch applied to the
- * backend, provides support for user-level long-term cooperative locks.
+ * This loadable module provides support for user-level long-term
+ * cooperative locks.
  *
  * Copyright (C) 1999, Massimo Dal Zotto <dz@cs.unitn.it>
  *
  * This software is distributed under the GNU General Public License
  * either version 2, or (at your option) any later version.
  */
-
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
-
 #include "postgres.h"
+
 #include "miscadmin.h"
 #include "storage/lmgr.h"
 #include "storage/proc.h"
-#include "utils/elog.h"
 
 #include "user_locks.h"
+
 
 int
 user_lock(uint32 id1, uint32 id2, LOCKMODE lockmode)
@@ -33,7 +29,8 @@ user_lock(uint32 id1, uint32 id2, LOCKMODE lockmode)
 	tag.objId.blkno = (BlockNumber) id2;
 	tag.offnum = (OffsetNumber) (id1 & 0xffff);
 
-	return LockAcquire(USER_LOCKMETHOD, &tag, InvalidTransactionId, lockmode);
+	return LockAcquire(USER_LOCKMETHOD, &tag, InvalidTransactionId,
+					   lockmode, true);
 }
 
 int

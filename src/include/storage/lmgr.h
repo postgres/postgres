@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lmgr.h,v 1.30 2001/03/22 04:01:07 momjian Exp $
+ * $Id: lmgr.h,v 1.31 2001/06/22 00:04:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,6 +33,12 @@
 #define AccessExclusiveLock		7		/* ALTER TABLE, DROP TABLE,
 										 * VACUUM, and unqualified LOCK
 										 * TABLE */
+
+/*
+ * Note: all lock mode numbers must be less than lock.h's MAX_LOCKMODES,
+ * so increase that if you want to add more modes.
+ */
+
 extern LOCKMETHOD LockTableId;
 
 
@@ -41,6 +47,7 @@ extern void RelationInitLockInfo(Relation relation);
 
 /* Lock a relation */
 extern void LockRelation(Relation relation, LOCKMODE lockmode);
+extern bool ConditionalLockRelation(Relation relation, LOCKMODE lockmode);
 extern void UnlockRelation(Relation relation, LOCKMODE lockmode);
 
 extern void LockRelationForSession(LockRelId *relid, LOCKMODE lockmode);

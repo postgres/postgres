@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lock.h,v 1.48 2001/03/22 04:01:07 momjian Exp $
+ * $Id: lock.h,v 1.49 2001/06/22 00:04:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,7 +38,6 @@ extern bool Trace_locks;
 extern bool Trace_userlocks;
 extern int	Trace_lock_table;
 extern bool Debug_deadlocks;
-
 #endif	 /* LOCK_DEBUG */
 
 
@@ -75,15 +74,15 @@ typedef int LOCKMETHOD;
 #define INVALID_LOCKMETHOD	INVALID_TABLEID
 #define DEFAULT_LOCKMETHOD	1
 #define USER_LOCKMETHOD		2
-#define MIN_LOCKMETHOD		DEFAULT_LOCKMETHOD
 
-/* There is normally only one lock method, the default one.
- * If user locks are enabled, an additional lock method is present
+/*
+ * There is normally only one lock method, the default one.
+ * If user locks are enabled, an additional lock method is present.
  *
  * LOCKMETHODCTL and LOCKMETHODTABLE are split because the first lives
  * in shared memory.  This is because it contains a spinlock.
  * LOCKMETHODTABLE exists in private memory.  Both are created by the
- * postmaster and should be the same in all backends
+ * postmaster and should be the same in all backends.
  */
 
 /*
@@ -263,7 +262,7 @@ extern LOCKMETHOD LockMethodTableInit(char *tabName, LOCKMASK *conflictsP,
 					int *prioP, int numModes, int maxBackends);
 extern LOCKMETHOD LockMethodTableRename(LOCKMETHOD lockmethod);
 extern bool LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
-			TransactionId xid, LOCKMODE lockmode);
+			TransactionId xid, LOCKMODE lockmode, bool dontWait);
 extern bool LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 			TransactionId xid, LOCKMODE lockmode);
 extern bool LockReleaseAll(LOCKMETHOD lockmethod, PROC *proc,
