@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/data.c,v 1.17 2003/09/09 10:46:37 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/data.c,v 1.18 2003/09/18 13:12:23 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -390,6 +390,21 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 					else
 						nres = PGTYPESnumeric_from_asc(pval, &scan_length);
 
+					/* did we get an error? */
+					if (errno != 0)
+					{
+						if (INFORMIX_MODE(compat))
+						{
+							/* Informix wants its own NULL value here instead of an error */
+							ECPGset_informix_null(ECPGt_numeric, &nres);
+							return (true);
+						}
+						else
+						{
+							ECPGraise(lineno, ECPG_NUMERIC_FORMAT, ECPG_SQLSTATE_DATATYPE_MISMATCH, pval);
+							return (false);
+						}
+					}
 					if (isarray && *scan_length == '"')
 						scan_length++;
 
@@ -417,6 +432,21 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 					else
 						ires = PGTYPESinterval_from_asc(pval, &scan_length);
 
+					/* did we get an error? */
+					if (errno != 0)
+					{
+						if (INFORMIX_MODE(compat))
+						{
+							/* Informix wants its own NULL value here instead of an error */
+							ECPGset_informix_null(ECPGt_interval, &ires);
+							return (true);
+						}
+						else
+						{
+							ECPGraise(lineno, ECPG_INTERVAL_FORMAT, ECPG_SQLSTATE_DATATYPE_MISMATCH, pval);
+							return (false);
+						}
+					}
 					if (isarray && *scan_length == '"')
 						scan_length++;
 
@@ -440,6 +470,22 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 					else
 						ddres = PGTYPESdate_from_asc(pval, &scan_length);
 
+					/* did we get an error? */
+					if (errno != 0)
+					{
+						if (INFORMIX_MODE(compat))
+						{
+							/* Informix wants its own NULL value here instead of an error */
+							ECPGset_informix_null(ECPGt_date, &ddres);
+							return (true);
+						}
+						else
+						{
+							ECPGraise(lineno, ECPG_DATE_FORMAT, ECPG_SQLSTATE_DATATYPE_MISMATCH, pval);
+							return (false);
+						}
+					}
+					
 					if (isarray && *scan_length == '"')
 						scan_length++;
 
@@ -462,6 +508,21 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 					else
 						tres = PGTYPEStimestamp_from_asc(pval, &scan_length);
 
+					/* did we get an error? */
+					if (errno != 0)
+					{
+						if (INFORMIX_MODE(compat))
+						{
+							/* Informix wants its own NULL value here instead of an error */
+							ECPGset_informix_null(ECPGt_timestamp, &tres);
+							return (true);
+						}
+						else
+						{
+							ECPGraise(lineno, ECPG_TIMESTAMP_FORMAT, ECPG_SQLSTATE_DATATYPE_MISMATCH, pval);
+							return (false);
+						}
+					}
 					if (isarray && *scan_length == '"')
 						scan_length++;
 

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.254 2003/09/09 10:46:38 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.255 2003/09/18 13:12:23 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -247,6 +247,38 @@ adjust_informix(struct arguments *list)
 	 return result;
 }
 
+static struct cursor *
+add_additional_variables(char *name, bool insert)
+{
+	struct cursor *ptr;
+	struct arguments *p;
+
+	for (ptr = cur; ptr != NULL; ptr=ptr->next)
+	{
+		if (strcmp(ptr->name, name) == 0)
+			break;
+	}
+
+	if (ptr == NULL)
+	{
+		snprintf(errortext, sizeof(errortext), "trying to access an undeclared cursor %s\n", name);
+		mmerror(PARSE_ERROR, ET_ERROR, errortext);
+		return NULL;
+	}
+	if (insert)
+	{
+		/* add all those input variables that were given earlier */
+		for (p = ptr->argsinsert; p; p = p->next)
+			add_variable(&argsinsert, p->variable, p->indicator);
+	}
+	else
+	{
+		/* add all those output variables that were given earlier */
+		for (p = ptr->argsresult; p; p = p->next)
+			add_variable(&argsresult, p->variable, p->indicator);
+	}
+	return ptr;
+}
 %}
 
 %union {
@@ -416,7 +448,7 @@ adjust_informix(struct arguments *list)
 %type  <str>	trim_list in_expr substr_for attrs TableFuncElement
 %type  <str>	Typename SimpleTypename Numeric opt_float opt_numeric
 %type  <str>	opt_decimal Character character opt_varying opt_charset
-%type  <str>	opt_collate opt_timezone opt_interval table_ref fetch_direction
+%type  <str>	opt_timezone opt_interval table_ref fetch_direction
 %type  <str>	row_descriptor ConstDatetime AlterDomainStmt AlterSeqStmt
 %type  <str>	SelectStmt into_clause OptTemp ConstraintAttributeSpec
 %type  <str>	opt_table opt_all sort_clause sortby_list ConstraintAttr
@@ -507,7 +539,7 @@ adjust_informix(struct arguments *list)
 %type  <str>	col_name_keyword func_name_keyword precision opt_scale
 %type  <str>	ECPGTypeName using_list ECPGColLabelCommon UsingConst
 %type  <str>	inf_val_list inf_col_list using_descriptor into_descriptor 
-%type  <str>	ecpg_into_using
+%type  <str>	ecpg_into_using prepared_name
 
 %type  <struct_union> s_struct_union_symbol
 
@@ -743,30 +775,9 @@ stmt:  AlterDatabaseSetStmt		{ output_statement($1, 0, connection); }
 		| ECPGOpen
 		{
 			struct cursor *ptr;
-			struct arguments *p;
 
-			for (ptr = cur; ptr != NULL; ptr=ptr->next)
-			{
-				if (strcmp(ptr->name, $1) == 0)
-					break;
-			}
-
-			if (ptr == NULL)
-			{
-				snprintf(errortext, sizeof(errortext), "trying to open undeclared cursor %s\n", $1);
-				mmerror(PARSE_ERROR, ET_ERROR, errortext);
-			}
-			else
-			{
-				/* merge variables given in prepare statement with those given here */
-				for (p = ptr->argsinsert; p; p = p->next)
-					append_variable(&argsinsert, p->variable, p->indicator);
-
-				for (p = ptr->argsresult; p; p = p->next)
-					add_variable(&argsresult, p->variable, p->indicator);
-
+			if ((ptr = add_additional_variables($1, true)) != NULL)
 				output_statement(mm_strdup(ptr->command), 0, ptr->connection ? mm_strdup(ptr->connection) : NULL);
-			}
 		}
 		| ECPGPrepare
 		{
@@ -1291,14 +1302,9 @@ TableElement:  columnDef		{ $$ = $1; }
 		| TableConstraint	{ $$ = $1; }
 		;
 
-columnDef:	ColId Typename ColQualList opt_collate
+columnDef:	ColId Typename ColQualList 
 		{
-			if (strlen($4) > 0)
-			{
-				snprintf(errortext, sizeof(errortext), "Currently unsupported CREATE TABLE / COLLATE %s will be passed to backend", $4);
-				mmerror(PARSE_ERROR, ET_WARNING, errortext);
-			}
-			$$ = cat_str(4, $1, $2, $3, $4);
+			$$ = cat_str(3, $1, $2, $3);
 		}
 		;
 
@@ -1823,21 +1829,45 @@ TruncateStmt:  TRUNCATE opt_table qualified_name
  * translate it to the PGSQL syntax. */
  
 FetchStmt: FETCH fetch_direction from_in name ecpg_into_using
-			{ $$ = cat_str(4, make_str("fetch"), $2, $3, $4); }
+			{
+				add_additional_variables($4, false);
+				$$ = cat_str(4, make_str("fetch"), $2, $3, $4);
+			}
 		| FETCH fetch_direction name ecpg_into_using
-			{ $$ = cat_str(4, make_str("fetch"), $2, make_str("from"), $3); }
+			{
+				add_additional_variables($3, false);
+				$$ = cat_str(4, make_str("fetch"), $2, make_str("from"), $3);
+			}
 		| FETCH from_in name ecpg_into_using
-			{ $$ = cat_str(3, make_str("fetch"), $2, $3); }
+			{
+			        add_additional_variables($3, false);
+				$$ = cat_str(3, make_str("fetch"), $2, $3);
+			}
 		| FETCH name ecpg_into_using
-			{ $$ = cat2_str(make_str("fetch"), $2); }
+			{
+			        add_additional_variables($2, false);
+				$$ = cat2_str(make_str("fetch"), $2);
+			}
 		| FETCH fetch_direction from_in name
-			{ $$ = cat_str(4, make_str("fetch"), $2, $3, $4); }
+			{
+			        add_additional_variables($4, false);
+				$$ = cat_str(4, make_str("fetch"), $2, $3, $4);
+			}
 		| FETCH fetch_direction name
-			{ $$ = cat_str(4, make_str("fetch"), $2, make_str("from"), $3); }
+			{
+			        add_additional_variables($3, false);
+				$$ = cat_str(4, make_str("fetch"), $2, make_str("from"), $3);
+			}
 		| FETCH from_in name 
-			{ $$ = cat_str(3, make_str("fetch"), $2, $3); }
+			{
+				add_additional_variables($3, false);
+				$$ = cat_str(3, make_str("fetch"), $2, $3);
+			}
 		| FETCH name 
-			{ $$ = cat2_str(make_str("fetch"), $2); }
+			{
+			        add_additional_variables($2, false);
+				$$ = cat2_str(make_str("fetch"), $2);
+			}
 		| MOVE fetch_direction from_in name
 			{ $$ = cat_str(4, make_str("move"), $2, $3, $4); }
 		| MOVE name
@@ -2487,9 +2517,9 @@ DropdbStmt: DROP DATABASE database_name
  *
  *****************************************************************************/
 
-CreateDomainStmt:  CREATE DOMAIN_P any_name opt_as Typename ColQualList opt_collate
+CreateDomainStmt:  CREATE DOMAIN_P any_name opt_as Typename ColQualList
 			{
-				$$ = cat_str(6, make_str("create domain"), $3, $4, $5, $6, $7);
+				$$ = cat_str(55555, make_str("create domain"), $3, $4, $5, $6);
  			}
 		;
 
@@ -3286,12 +3316,6 @@ opt_varying:  VARYING
 
 opt_charset:  CHARACTER SET ColId
 			{ $$ = cat2_str(make_str("character set"), $3); }
-		| /*EMPTY*/
-			{ $$ = EMPTY; }
-		;
-
-opt_collate:  COLLATE ColId
-			{ $$ = cat2_str(make_str("collate"), $2); }
 		| /*EMPTY*/
 			{ $$ = EMPTY; }
 		;
@@ -4330,7 +4354,7 @@ opt_options: Op ColId
  * Declare a prepared cursor. The syntax is different from the standard
  * declare statement, so we create a new rule.
  */
-ECPGCursorStmt:  DECLARE name cursor_options CURSOR opt_hold FOR ident
+ECPGCursorStmt:  DECLARE name cursor_options CURSOR opt_hold FOR prepared_name
 		{
 			struct cursor *ptr, *this;
 			struct variable *thisquery = (struct variable *)mm_alloc(sizeof(struct variable));
@@ -4357,8 +4381,8 @@ ECPGCursorStmt:  DECLARE name cursor_options CURSOR opt_hold FOR ident
 			thisquery->type = &ecpg_query;
 			thisquery->brace_level = 0;
 			thisquery->next = NULL;
-			thisquery->name = (char *) mm_alloc(sizeof("ECPGprepared_statement(\"\")") + strlen($7));
-			sprintf(thisquery->name, "ECPGprepared_statement(\"%s\")", $7);
+			thisquery->name = (char *) mm_alloc(sizeof("ECPGprepared_statement()") + strlen($7));
+			sprintf(thisquery->name, "ECPGprepared_statement(%s)", $7);
 
 			this->argsinsert = NULL;
 			add_variable(&(this->argsinsert), thisquery, &no_indicator);
@@ -4373,9 +4397,9 @@ ECPGCursorStmt:  DECLARE name cursor_options CURSOR opt_hold FOR ident
  * the exec sql deallocate prepare command to deallocate a previously
  * prepared statement
  */
-ECPGDeallocate: DEALLOCATE PREPARE ident
+ECPGDeallocate: DEALLOCATE PREPARE prepared_name
 			{ $$ = $3; }
-		| DEALLOCATE ident
+		| DEALLOCATE prepared_name
 			{ $$ = $2; }
 		;
 
@@ -5170,8 +5194,7 @@ opt_pointer: /*EMPTY*/				{ $$ = EMPTY; }
 		;
 
 /*
- * As long as the prepare statement is not supported by the backend, we will
- * try to simulate it here so we get dynamic SQL
+ * We try to simulate the correct DECLARE syntax here so we get dynamic SQL
  */
 ECPGDeclare: DECLARE STATEMENT ident
 		{
@@ -5211,15 +5234,15 @@ ECPGExecute : EXECUTE IMMEDIATE execstring
 
 			$$ = make_str("?");
 		}
-		| EXECUTE name
+		| EXECUTE prepared_name
 		{
 			struct variable *thisquery = (struct variable *)mm_alloc(sizeof(struct variable));
 
 			thisquery->type = &ecpg_query;
 			thisquery->brace_level = 0;
 			thisquery->next = NULL;
-			thisquery->name = (char *) mm_alloc(sizeof("ECPGprepared_statement(\"\")") + strlen($2));
-			sprintf(thisquery->name, "ECPGprepared_statement(\"%s\")", $2);
+			thisquery->name = (char *) mm_alloc(sizeof("ECPGprepared_statement()") + strlen($2));
+			sprintf(thisquery->name, "ECPGprepared_statement(%s)", $2);
 
 			add_variable(&argsinsert, thisquery, &no_indicator);
 		}
@@ -5241,6 +5264,9 @@ execstring: char_variable
 		|	CSTRING
 			{ $$ = make3_str(make_str("\""), $1, make_str("\"")); }
 		;
+
+prepared_name: name	 	{ $$ = make3_str(make_str("\""), $1, make_str("\"")); }
+		| char_variable	{ $$ = $1; }
 
 /*
  * the exec sql free command to deallocate a previously
@@ -5304,8 +5330,8 @@ UsingConst: AllConst
  *
  * It is supported now but not usable yet by ecpg.
  */
-ECPGPrepare: PREPARE name FROM execstring
-			{ $$ = cat2_str(make3_str(make_str("\""), $2, make_str("\",")), $4); }
+ECPGPrepare: PREPARE prepared_name FROM execstring
+			{ $$ = cat_str(3, $2, make_str(","), $4); }
 		;
 /* 
  * We accept descibe but do nothing with it so far.
@@ -6167,8 +6193,8 @@ indicator: CVARIABLE				{ check_indicator((find_variable($1))->type); $$ = $1; }
 		| SQL_INDICATOR name		{ check_indicator((find_variable($2))->type); $$ = $2; }
 		;
 
-ident: IDENT						{ $$ = $1; }
-		| CSTRING					{ $$ = make3_str(make_str("\""), $1, make_str("\"")); }
+ident: IDENT					{ $$ = $1; }
+		| CSTRING			{ $$ = make3_str(make_str("\""), $1, make_str("\"")); }
 		;
 
 quoted_ident_stringvar: name

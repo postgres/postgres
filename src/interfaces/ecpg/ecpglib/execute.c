@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.24 2003/09/09 10:46:37 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.25 2003/09/18 13:12:23 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -857,7 +857,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 							else
 								PGTYPESnumeric_from_decimal((decimal *) ((var + var->offset * element)->value), nval);
 
-							str = PGTYPESnumeric_to_asc(nval, 0);
+							str = PGTYPESnumeric_to_asc(nval, nval->dscale);
 							PGTYPESnumeric_free(nval);
 							slen = strlen(str);
 
@@ -879,7 +879,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 						else
 							PGTYPESnumeric_from_decimal((decimal *) (var->value), nval);
 
-						str = PGTYPESnumeric_to_asc(nval, 0);
+						str = PGTYPESnumeric_to_asc(nval, nval->dscale);
 
 						PGTYPESnumeric_free(nval);
 						slen = strlen(str);

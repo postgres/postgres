@@ -1622,6 +1622,19 @@ Tue Sep  9 12:13:51 CEST 2003
 Wed Sep 10 20:01:49 CEST 2003
 
 	- Some files still had uppercase typenames
+	
+Mon Sep 15 18:09:42 CEST 2003
+
+	- Accept output variables for FETCH in DECLARE statement.
+	
+Tue Sep 16 07:56:14 CEST 2003
+
+	- Synced parser.
+	- Allowed C variables to carry the name of prepared statements.
+	
+Thu Sep 18 14:54:47 CEST 2003
+
+	- Added Informix handling of datatype converion errors.
 	- Set ecpg version to 3.0.0
 	- Set ecpg library to 4.0.0
 	- Set pgtypes library to 1.0.0
