@@ -3,13 +3,14 @@
  *	is for IP V4 CIDR notation, but prepared for V6: just
  *	add the necessary bits where the comments indicate.
  *
- *	$Id: ip.c,v 1.3 1998/10/04 15:35:10 momjian Exp $
+ *	$Id: ip.c,v 1.4 1998/10/04 16:24:30 momjian Exp $
  */
 
 #include <sys/types.h>
 #include <sys/socket.h>
 
 #include <stdio.h>
+#include <string.h>
 #include <errno.h>
 
 #include <netinet/in.h>

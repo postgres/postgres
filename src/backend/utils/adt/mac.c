@@ -1,10 +1,11 @@
 /*
  *	PostgreSQL type definitions for MAC addresses.
  *
- *	$Id: mac.c,v 1.2 1998/10/04 15:35:12 momjian Exp $
+ *	$Id: mac.c,v 1.3 1998/10/04 16:24:32 momjian Exp $
  */
 
 #include <stdio.h>
+#include <string.h>
 
 #include <postgres.h>
 #include <utils/palloc.h>
