@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Wed Oct 9 23:14:53 EDT 2002
+   Last updated: Fri Oct 11 00:59:31 EDT 2002
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -96,6 +96,8 @@
    4.25) How do I return multiple rows or columns from a function?
    4.26) Why can't I reliably create/drop temporary tables in PL/PgSQL
    functions?
+   4.27) What replication options are available?
+   4.28) What encryption options are available?
    
                             Extending PostgreSQL
                                       
@@ -1046,12 +1048,13 @@ SELECT *
 
     4.24) How do I perform queries using multiple databases?
     
-   There is no way to query any database except the current one. Because
-   PostgreSQL loads database-specific system catalogs, it is uncertain
-   how a cross-database query should even behave.
+   There is no way to query a database other than the current one.
+   Because PostgreSQL loads database-specific system catalogs, it is
+   uncertain how a cross-database query should even behave.
    
-   Of course, a client can make simultaneous connections to different
-   databases and merge the information that way.
+   /contrib/dblink allows cross-database queries using function calls. Of
+   course, a client can make simultaneous connections to different
+   databases and merge the results on the client side.
    
     4.25) How do I return multiple rows or columns from a function?
     
@@ -1070,6 +1073,25 @@ SELECT *
    the old temporary table. The solution is to use EXECUTE for temporary
    table access in PL/PgSQL. This will cause the query to be reparsed
    every time.
+   
+    4.27) What replication options are available?
+    
+   There are several master/slave replication solutions available. These
+   allow only the master to make database changes and the slave can only
+   do database reads. The bottom of
+   http://gborg.postgresql.org/genpage?replication_research lists them. A
+   multi-master replication solution is being worked on at
+   http://gborg.postgresql.org/project/pgreplication/projdisplay.php.
+   
+    4.27) What encryption options are available?
+    
+     * /contrib/pgcrypto contains many encryption functions for use in
+       SQL queries.
+     * The only way to encrypt transmission from the client to the server
+       is by using hostssl in pg_hba.conf.
+     * Database user passwords are automatically encrypted when stored in
+       version 7.3. In previous versions, you must enable
+       password_encryption in postgresql.conf.
      _________________________________________________________________
    
                             Extending PostgreSQL
