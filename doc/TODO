@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri May 18 12:28:02 EDT 2001
+Last updated:		Sat May 19 21:11:38 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -140,7 +140,7 @@ COMMANDS
 * Allow RULE recompilation
 * Add BETWEEN ASYMMETRIC/SYMMETRIC
 * Change LIMIT val,val to offset,limit to match MySQL
-* Allow Pl/PgSQL's RAISE function to take expressions
+* Allow PL/PgSQL's RAISE function to take expressions
 * ALTER
 	* ALTER TABLE ADD COLUMN to inherited table put column in wrong place
 	  [inheritance]
