@@ -18,7 +18,7 @@
  * Portions Copyright (c) 2000-2001, PostgreSQL Global Development Group
  * Copyright 1999 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.29 2001/10/25 05:49:45 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.30 2001/11/12 00:46:36 tgl Exp $
  *
  * ----------
  */
@@ -43,16 +43,6 @@
  * Local definitions
  * ----------
  */
-#define RI_CONSTRAINT_NAME_ARGNO		0
-#define RI_FK_RELNAME_ARGNO				1
-#define RI_PK_RELNAME_ARGNO				2
-#define RI_MATCH_TYPE_ARGNO				3
-#define RI_FIRST_ATTNAME_ARGNO			4
-
-#define RI_MAX_NUMKEYS					16
-#define RI_MAX_ARGUMENTS		(RI_FIRST_ATTNAME_ARGNO + (RI_MAX_NUMKEYS * 2))
-#define RI_KEYPAIR_FK_IDX				0
-#define RI_KEYPAIR_PK_IDX				1
 
 #define RI_INIT_QUERYHASHSIZE			128
 #define RI_INIT_OPREQHASHSIZE			128
