@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.19 1999/02/04 19:20:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.20 1999/02/04 23:19:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -139,7 +139,6 @@ prune_rel_path(RelOptInfo * rel, Path *unorderedpath)
 	/* don't prune if not pruneable  -- JMH, 11/23/92 */
 	if (unorderedpath != cheapest && rel->pruneable)
 	{
-
 		rel->unorderedpath = (Path *) NULL;
 		rel->pathlist = lremove(unorderedpath, rel->pathlist);
 	}
