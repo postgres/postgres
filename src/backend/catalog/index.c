@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.57 1998/08/28 04:57:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.58 1998/08/31 17:49:16 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1281,8 +1281,7 @@ FormIndexDatum(int numberOfAttributes,
 	{
 		offset = AttrNumberGetAttrOffset(i);
 
-		datum[offset] =
-			PointerGetDatum(GetIndexValue(heapTuple,
+		datum[offset] =	PointerGetDatum(GetIndexValue(heapTuple,
 										  heapDescriptor,
 										  offset,
 										  attributeNumber,

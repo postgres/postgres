@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.23 1998/08/30 23:25:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.24 1998/08/31 17:49:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -132,8 +132,7 @@ CatalogIndexInsert(Relation *idescs,
 		pgIndexP = (IndexTupleForm) GETSTRUCT(pgIndexTup);
 
 		/*
-		 * Compute the number of attributes we are indexing upon. very
-		 * important - can't assume one if this is a functional index.
+		 * Compute the number of attributes we are indexing upon.
 		 */
 		for (attnumP = (&pgIndexP->indkey[0]), natts = 0;
 			 *attnumP != InvalidAttrNumber;
@@ -301,7 +300,7 @@ AttributeNumIndexScan(Relation heapRelation,
 						   (bits16) 0x0,
 						   (AttrNumber) 1,
 						   (RegProcedure)F_OIDEQ,
-						   Int32GetDatum(relid));
+						   ObjectIdGetDatum(relid));
 
 	ScanKeyEntryInitialize(&skey[1],
 						   (bits16) 0x0,
