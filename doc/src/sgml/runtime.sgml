@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.128 2002/08/29 19:53:58 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.129 2002/08/30 00:28:40 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -921,7 +921,8 @@ env PGOPTIONS='-c geqo=off' psql
         built (see the configure option
         <literal>--enable-cassert</literal>). Note that
         <literal>DEBUG_ASSERTIONS</literal> defaults to on if
-        <productname>PostgreSQL</productname> has been built this way.
+        <productname>PostgreSQL</productname> has been built with
+	assertions enabled.
        </para>
       </listitem>
      </varlistentry>

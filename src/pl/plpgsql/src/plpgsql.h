@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.25 2002/08/08 01:36:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.26 2002/08/30 00:28:41 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -40,8 +40,10 @@
 #include "postgres.h"
 
 #include "fmgr.h"
+#include "miscadmin.h"
 #include "executor/spi.h"
 #include "commands/trigger.h"
+#include "utils/tuplestore.h"
 
 /**********************************************************************
  * Definitions
@@ -90,6 +92,7 @@ enum
 	PLPGSQL_STMT_SELECT,
 	PLPGSQL_STMT_EXIT,
 	PLPGSQL_STMT_RETURN,
+	PLPGSQL_STMT_RETURN_NEXT,
 	PLPGSQL_STMT_RAISE,
 	PLPGSQL_STMT_EXECSQL,
 	PLPGSQL_STMT_DYNEXECUTE,
@@ -420,11 +423,18 @@ typedef struct
 {								/* RETURN statement			*/
 	int			cmd_type;
 	int			lineno;
-	bool		retistuple;
 	PLpgSQL_expr *expr;
 	int			retrecno;
 }	PLpgSQL_stmt_return;
 
+typedef struct
+{								/* RETURN NEXT statement */
+	int			cmd_type;
+	int			lineno;
+	PLpgSQL_rec *rec;
+	PLpgSQL_row *row;
+	PLpgSQL_expr *expr;
+}	PLpgSQL_stmt_return_next;
 
 typedef struct
 {								/* RAISE statement			*/
@@ -494,11 +504,18 @@ typedef struct
 {								/* Runtime execution data	*/
 	Datum		retval;
 	bool		retisnull;
-	Oid			rettype;
+	Oid			rettype;		/* type of current retval */
+
+	Oid			fn_rettype;		/* info about declared function rettype */
 	bool		retistuple;
-	TupleDesc	rettupdesc;
 	bool		retisset;
+
+	TupleDesc	rettupdesc;
 	char	   *exitlabel;
+
+	Tuplestorestate *tuple_store;		/* SRFs accumulate results here */
+	MemoryContext	tuple_store_cxt;
+	ReturnSetInfo *rsi;
 
 	int			trig_nargs;
 	Datum	   *trig_argv;

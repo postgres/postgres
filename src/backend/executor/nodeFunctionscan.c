@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeFunctionscan.c,v 1.7 2002/08/29 17:14:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeFunctionscan.c,v 1.8 2002/08/30 00:28:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,6 @@
  */
 #include "postgres.h"
 
-#include "miscadmin.h"
 #include "access/heapam.h"
 #include "catalog/pg_type.h"
 #include "executor/execdebug.h"
@@ -32,17 +31,10 @@
 #include "parser/parsetree.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_type.h"
-#include "storage/lmgr.h"
-#include "tcop/pquery.h"
 #include "utils/lsyscache.h"
-#include "utils/syscache.h"
-#include "utils/tuplestore.h"
+
 
 static TupleTableSlot *FunctionNext(FunctionScan *node);
-static TupleTableSlot *function_getonetuple(FunctionScanState *scanstate,
-											bool *isNull,
-											ExprDoneCond *isDone);
-static FunctionMode get_functionmode(Node *expr);
 static bool tupledesc_mismatch(TupleDesc tupdesc1, TupleDesc tupdesc2);
 
 /* ----------------------------------------------------------------
@@ -76,53 +68,42 @@ FunctionNext(FunctionScan *node)
 	tuplestorestate = scanstate->tuplestorestate;
 
 	/*
-	 * If first time through, read all tuples from function and pass them to
-	 * tuplestore.c. Subsequent calls just fetch tuples from tuplestore.
+	 * If first time through, read all tuples from function and put them
+	 * in a tuplestore. Subsequent calls just fetch tuples from tuplestore.
 	 */
 	if (tuplestorestate == NULL)
 	{
-		/*
-		 * Initialize tuplestore module.
-		 */
-		tuplestorestate = tuplestore_begin_heap(true,	/* randomAccess */
-												SortMem);
+		ExprContext	   *econtext = scanstate->csstate.cstate.cs_ExprContext;
+		TupleDesc		funcTupdesc;
 
-		scanstate->tuplestorestate = (void *) tuplestorestate;
-
-		/*
-		 * Compute all the function tuples and pass to tuplestore.
-		 */
-		for (;;)
-		{
-			bool				isNull;
-			ExprDoneCond		isDone;
-
-			isNull = false;
-			isDone = ExprSingleResult;
-			slot = function_getonetuple(scanstate, &isNull, &isDone);
-			if (TupIsNull(slot))
-				break;
-
-			tuplestore_puttuple(tuplestorestate, (void *) slot->val);
-			ExecClearTuple(slot);
-
-			if (isDone != ExprMultipleResult)
-				break;
-		}
+		scanstate->tuplestorestate = tuplestorestate =
+			ExecMakeTableFunctionResult((Expr *) scanstate->funcexpr,
+										econtext,
+										&funcTupdesc);
 
 		/*
-		 * Complete the store.
+		 * If function provided a tupdesc, cross-check it.  We only really
+		 * need to do this for functions returning RECORD, but might as well
+		 * do it always.
 		 */
-		tuplestore_donestoring(tuplestorestate);
+		if (funcTupdesc &&
+			tupledesc_mismatch(scanstate->tupdesc, funcTupdesc))
+			elog(ERROR, "Query-specified return tuple and actual function return tuple do not match");
 	}
 
 	/*
 	 * Get the next tuple from tuplestore. Return NULL if no more tuples.
 	 */
 	slot = scanstate->csstate.css_ScanTupleSlot;
-	heapTuple = tuplestore_getheaptuple(tuplestorestate,
-										ScanDirectionIsForward(direction),
-										&should_free);
+	if (tuplestorestate)
+		heapTuple = tuplestore_getheaptuple(tuplestorestate,
+											ScanDirectionIsForward(direction),
+											&should_free);
+	else
+	{
+		heapTuple = NULL;
+		should_free = false;
+	}
 
 	return ExecStoreTuple(heapTuple, slot, InvalidBuffer, should_free);
 }
@@ -219,7 +200,6 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate, Plan *parent)
 		rel = relation_open(funcrelid, AccessShareLock);
 		tupdesc = CreateTupleDescCopy(RelationGetDescr(rel));
 		relation_close(rel, AccessShareLock);
-		scanstate->returnsTuple = true;
 	}
 	else if (functyptype == 'b' || functyptype == 'd')
 	{
@@ -236,7 +216,6 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate, Plan *parent)
 						   -1,
 						   0,
 						   false);
-		scanstate->returnsTuple = false;
 	}
 	else if (functyptype == 'p' && funcrettype == RECORDOID)
 	{
@@ -246,13 +225,10 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate, Plan *parent)
 		List *coldeflist = rte->coldeflist;
 
 		tupdesc = BuildDescForRelation(coldeflist);
-		scanstate->returnsTuple = true;
 	}
 	else
 		elog(ERROR, "Unknown kind of return type specified for function");
 
-	scanstate->fn_typeid = funcrettype;
-	scanstate->fn_typtype = functyptype;
 	scanstate->tupdesc = tupdesc;
 	ExecSetSlotDescriptor(scanstate->csstate.css_ScanTupleSlot,
 						  tupdesc, false);
@@ -262,8 +238,6 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate, Plan *parent)
 	 */
 	scanstate->tuplestorestate = NULL;
 	scanstate->funcexpr = rte->funcexpr;
-
-	scanstate->functionmode = get_functionmode(rte->funcexpr);
 
 	scanstate->csstate.cstate.cs_TupFromTlist = false;
 
@@ -322,7 +296,7 @@ ExecEndFunctionScan(FunctionScan *node)
 	 * Release tuplestore resources
 	 */
 	if (scanstate->tuplestorestate != NULL)
-		tuplestore_end((Tuplestorestate *) scanstate->tuplestorestate);
+		tuplestore_end(scanstate->tuplestorestate);
 	scanstate->tuplestorestate = NULL;
 }
 
@@ -345,7 +319,7 @@ ExecFunctionMarkPos(FunctionScan *node)
 	if (!scanstate->tuplestorestate)
 		return;
 
-	tuplestore_markpos((Tuplestorestate *) scanstate->tuplestorestate);
+	tuplestore_markpos(scanstate->tuplestorestate);
 }
 
 /* ----------------------------------------------------------------
@@ -367,7 +341,7 @@ ExecFunctionRestrPos(FunctionScan *node)
 	if (!scanstate->tuplestorestate)
 		return;
 
-	tuplestore_restorepos((Tuplestorestate *) scanstate->tuplestorestate);
+	tuplestore_restorepos(scanstate->tuplestorestate);
 }
 
 /* ----------------------------------------------------------------
@@ -402,98 +376,13 @@ ExecFunctionReScan(FunctionScan *node, ExprContext *exprCtxt, Plan *parent)
 	 */
 	if (node->scan.plan.chgParam != NULL)
 	{
-		tuplestore_end((Tuplestorestate *) scanstate->tuplestorestate);
+		tuplestore_end(scanstate->tuplestorestate);
 		scanstate->tuplestorestate = NULL;
 	}
 	else
-		tuplestore_rescan((Tuplestorestate *) scanstate->tuplestorestate);
+		tuplestore_rescan(scanstate->tuplestorestate);
 }
 
-/*
- * Run the underlying function to get the next tuple
- */
-static TupleTableSlot *
-function_getonetuple(FunctionScanState *scanstate,
-					 bool *isNull,
-					 ExprDoneCond *isDone)
-{
-	HeapTuple		tuple;
-	Datum			retDatum;
-	char			nullflag;
-	TupleDesc		tupdesc = scanstate->tupdesc;
-	bool			returnsTuple = scanstate->returnsTuple;
-	Node		   *expr = scanstate->funcexpr;
-	Oid				fn_typeid = scanstate->fn_typeid;
-	char			fn_typtype = scanstate->fn_typtype;
-	ExprContext	   *econtext = scanstate->csstate.cstate.cs_ExprContext;
-	TupleTableSlot *slot = scanstate->csstate.css_ScanTupleSlot;
-
-	/*
-	 * reset per-tuple memory context before each call of the function.
-	 * This cleans up any local memory the function may leak when called.
-	 */
-	ResetExprContext(econtext);
-
-	/*
-	 * get the next Datum from the function
-	 */
-	retDatum = ExecEvalExprSwitchContext(expr, econtext, isNull, isDone);
-
-	/*
-	 * check to see if we're really done
-	 */
-	if (*isDone == ExprEndResult)
-		slot = NULL;
-	else
-	{
-		if (returnsTuple)
-		{
-			/*
-			 * Composite data type, i.e. a table's row type
-			 * function returns pointer to tts??
-			 */
-			slot = (TupleTableSlot *) retDatum;
-
-			/*
-			 * if function return type was RECORD, we need to check to be
-			 * sure the structure from the query matches the actual return
-			 * structure
-			 */
-			if (fn_typtype == 'p' && fn_typeid == RECORDOID)
-				if (tupledesc_mismatch(tupdesc, slot->ttc_tupleDescriptor))
-					elog(ERROR, "Query-specified return tuple and actual function return tuple do not match");
-		}
-		else
-		{
-			/*
-			 * Must be a base data type, i.e. scalar
-			 * turn it into a tuple
-			 */
-			nullflag = *isNull ? 'n' : ' ';
-			tuple = heap_formtuple(tupdesc, &retDatum, &nullflag);
-
-			/*
-			 * save the tuple in the scan tuple slot and return the slot.
-			 */
-			slot = ExecStoreTuple(tuple,			/* tuple to store */
-								  slot,				/* slot to store in */
-								  InvalidBuffer,	/* buffer associated with
-													 * this tuple */
-								  true);			/* pfree this tuple */
-		}
-	}
-
-	return slot;
-}
-
-static FunctionMode
-get_functionmode(Node *expr)
-{
-	/*
-	 * for the moment, hardwire this
-	 */
-	return PM_REPEATEDCALL;
-}
 
 static bool
 tupledesc_mismatch(TupleDesc tupdesc1, TupleDesc tupdesc2)

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/plpgsql.sgml,v 1.4 2002/08/29 04:12:02 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/plpgsql.sgml,v 1.5 2002/08/30 00:28:40 tgl Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -1142,11 +1142,20 @@ GET DIAGNOSTICS <replaceable>variable</replaceable> = <replaceable>item</replace
 RETURN <replaceable>expression</replaceable>;
 </synopsis>
 
+     RETURN with an expression is used to return from a
+     <application>PL/pgSQL</> function that does not return a set.
      The function terminates and the value of
-     <replaceable>expression</replaceable> will be returned to the
-     upper executor.
+     <replaceable>expression</replaceable> is returned to the caller.
+    </para>
+
+    <para>
+     To return a composite (row) value, you must write a record or row
+     variable as the <replaceable>expression</replaceable>.  When
+     returning a scalar type, any expression can be used.
      The expression's result will be automatically cast into the
      function's return type as described for assignments.
+     (If you have declared the function to return <type>void</>,
+     then the expression can be omitted, and will be ignored in any case.)
     </para>
 
     <para>
@@ -1154,6 +1163,28 @@ RETURN <replaceable>expression</replaceable>;
      reaches the end of the top-level block of 
      the function without hitting a RETURN statement, a run-time error
      will occur.
+    </para>
+
+    <para>
+     When a <application>PL/pgSQL</> function is declared to return
+     <literal>SETOF</literal> <replaceable>sometype</>, the procedure
+     to follow is slightly different.  The individual items to be returned
+     are specified in RETURN NEXT commands, and then a final RETURN with
+     no argument is given to indicate that the function is done generating
+     items.
+
+<synopsis>
+RETURN NEXT <replaceable>expression</replaceable>;
+</synopsis>
+
+     RETURN NEXT does not actually return from the function; it simply
+     saves away the value of the expression (or record or row variable,
+     as appropriate for the datatype being returned).
+     Execution then continues with the next statement in the
+     <application>PL/pgSQL</> function.  As successive RETURN NEXT
+     commands are executed, the result set is built up.  A final
+     RETURN, which need have no argument, causes control to exit
+     the function.
     </para>
    </sect2>
     
@@ -1531,8 +1562,8 @@ END LOOP;
     to worry about that, since FOR loops automatically use a cursor
     internally to avoid memory problems.) A more interesting usage is to
     return a reference to a cursor that it has created, allowing the
-    caller to read the rows. This provides a way to return row sets
-    from functions.
+    caller to read the rows. This provides an efficient way to return
+    large row sets from functions.
    </para>
    
    <sect2 id="plpgsql-cursor-declarations">
@@ -1794,19 +1825,27 @@ COMMIT;
 RAISE <replaceable class="parameter">level</replaceable> '<replaceable class="parameter">format</replaceable>' <optional>, <replaceable class="parameter">variable</replaceable> <optional>...</optional></optional>;
 </synopsis>
 
-    Possible levels are DEBUG (write the message into the postmaster log),
-    NOTICE (write the message into the postmaster log and forward it to
-    the client application) and EXCEPTION (raise an error,
-    aborting the transaction).
+    Possible levels are <literal>DEBUG</literal> (write the message to
+    the server log), <literal>LOG</literal> (write the message to the
+    server log with a higher priority), <literal>INFO</literal>,
+    <literal>NOTICE</literal> and <literal>WARNING</literal> (write
+    the message to the server log and send it to the client, with
+    respectively higher priorities), and <literal>EXCEPTION</literal>
+    (raise an error and abort the current transaction). Whether error
+    messages of a particular priority are reported to the client,
+    written to the server log, or both is controlled by the
+    <option>SERVER_MIN_MESSAGES</option> and
+    <option>CLIENT_MIN_MESSAGES</option> configuration variables. See
+    the <citetitle>PostgreSQL Administrator's Guide</citetitle> for more
+    information.
    </para>
 
    <para>
-    Inside the format string, <literal>%</literal> is replaced by the next
-    optional argument's external representation.
-    Write <literal>%%</literal> to emit a literal <literal>%</literal>.
-    Note that the optional arguments must presently
-    be simple variables, not expressions, and the format must be a simple
-    string literal.
+    Inside the format string, <literal>%</literal> is replaced by the
+    next optional argument's external representation. Write
+    <literal>%%</literal> to emit a literal <literal>%</literal>. Note
+    that the optional arguments must presently be simple variables,
+    not expressions, and the format must be a simple string literal.
    </para>
 
    <!--
@@ -1820,8 +1859,9 @@ RAISE <replaceable class="parameter">level</replaceable> '<replaceable class="pa
 <programlisting>
 RAISE NOTICE ''Calling cs_create_job(%)'',v_job_id;
 </programlisting>
-    In this example, the value of v_job_id will replace the % in the
-    string.
+
+    In this example, the value of v_job_id will replace the
+    <literal>%</literal> in the string.
    </para>
 
    <para>
@@ -1852,12 +1892,12 @@ RAISE EXCEPTION ''Inexistent ID --> %'',user_id;
     </para>
 
     <para>
-     Thus, the only thing <application>PL/pgSQL</application> currently does when it encounters
-     an abort during execution of a function or trigger
-     procedure is to write some additional NOTICE level log messages
-     telling in which function and where (line number and type of
-     statement) this happened.  The error always stops execution of
-     the function.
+     Thus, the only thing <application>PL/pgSQL</application>
+     currently does when it encounters an abort during execution of a
+     function or trigger procedure is to write some additional
+     <literal>NOTICE</literal> level log messages telling in which
+     function and where (line number and type of statement) this
+     happened.  The error always stops execution of the function.
     </para>
   </sect2>
  </sect1>

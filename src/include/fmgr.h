@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fmgr.h,v 1.22 2002/06/20 20:29:42 momjian Exp $
+ * $Id: fmgr.h,v 1.23 2002/08/30 00:28:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,8 +45,7 @@ typedef struct FmgrInfo
 								 * count */
 	bool		fn_strict;		/* function is "strict" (NULL in => NULL
 								 * out) */
-	bool		fn_retset;		/* function returns a set (over multiple
-								 * calls) */
+	bool		fn_retset;		/* function returns a set */
 	void	   *fn_extra;		/* extra space for use by handler */
 	MemoryContext fn_mcxt;		/* memory context to store fn_extra in */
 } FmgrInfo;

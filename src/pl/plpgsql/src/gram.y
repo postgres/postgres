@@ -4,7 +4,7 @@
  *						  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.35 2002/08/28 20:46:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.36 2002/08/30 00:28:41 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -48,7 +48,7 @@ static	PLpgSQL_type	*read_datatype(int tok);
 static	PLpgSQL_stmt	*make_select_stmt(void);
 static	PLpgSQL_stmt	*make_fetch_stmt(void);
 static	PLpgSQL_expr	*make_tupret_expr(PLpgSQL_row *row);
-static void check_assignable(PLpgSQL_datum *datum);
+static	void check_assignable(PLpgSQL_datum *datum);
 
 %}
 
@@ -121,8 +121,8 @@ static void check_assignable(PLpgSQL_datum *datum);
 %type <stmts>	proc_sect, proc_stmts, stmt_else, loop_body
 %type <stmt>	proc_stmt, pl_block
 %type <stmt>	stmt_assign, stmt_if, stmt_loop, stmt_while, stmt_exit
-%type <stmt>	stmt_return, stmt_raise, stmt_execsql, stmt_fori
-%type <stmt>	stmt_fors, stmt_select, stmt_perform
+%type <stmt>	stmt_return, stmt_return_next, stmt_raise, stmt_execsql
+%type <stmt>	stmt_fori, stmt_fors, stmt_select, stmt_perform
 %type <stmt>	stmt_dynexecute, stmt_dynfors, stmt_getdiag
 %type <stmt>	stmt_open, stmt_fetch, stmt_close
 
@@ -166,6 +166,7 @@ static void check_assignable(PLpgSQL_datum *datum);
 %token	K_IS
 %token	K_LOG
 %token	K_LOOP
+%token	K_NEXT
 %token	K_NOT
 %token	K_NOTICE
 %token	K_NULL
@@ -177,6 +178,7 @@ static void check_assignable(PLpgSQL_datum *datum);
 %token	K_RENAME
 %token	K_RESULT_OID
 %token	K_RETURN
+%token	K_RETURN_NEXT
 %token	K_REVERSE
 %token	K_SELECT
 %token	K_THEN
@@ -516,10 +518,8 @@ decl_aliasitem	: T_WORD
 
 						plpgsql_convert_ident(yytext, &name, 1);
 						if (name[0] != '$')
-						{
-							plpgsql_error_lineno = yylineno;
-							elog(ERROR, "can only alias positional parameters");
-						}
+							yyerror("can only alias positional parameters");
+
 						plpgsql_ns_setlocal(false);
 						nsi = plpgsql_ns_lookup(name, NULL);
 						if (nsi == NULL)
@@ -609,14 +609,11 @@ decl_defval		: ';'
 						switch (tok)
 						{
 							case 0:
-								plpgsql_error_lineno = lno;
-								elog(ERROR, "unexpected end of file");
+								yyerror("unexpected end of file");
 							case K_NULL:
 								if (yylex() != ';')
-								{
-									plpgsql_error_lineno = lno;
-									elog(ERROR, "expected ; after NULL");
-								}
+									yyerror("expected ; after NULL");
+
 								free(expr);
 								plpgsql_dstring_free(&ds);
 
@@ -628,10 +625,8 @@ decl_defval		: ';'
 								while ((tok = yylex()) != ';')
 								{
 									if (tok == 0)
-									{
-										plpgsql_error_lineno = lno;
-										elog(ERROR, "unterminated default value");
-									}
+										yyerror("unterminated default value");
+
 									if (plpgsql_SpaceScanned)
 										plpgsql_dstring_append(&ds, " ");
 									plpgsql_dstring_append(&ds, yytext);
@@ -663,7 +658,8 @@ proc_sect		:
 
 proc_stmts		: proc_stmts proc_stmt
 						{
-								if ($1->stmts_used == $1->stmts_alloc) {
+								if ($1->stmts_used == $1->stmts_alloc)
+								{
 									$1->stmts_alloc *= 2;
 									$1->stmts = realloc($1->stmts, sizeof(PLpgSQL_stmt *) * $1->stmts_alloc);
 								}
@@ -707,6 +703,8 @@ proc_stmt		: pl_block ';'
 				| stmt_exit
 						{ $$ = $1; }
 				| stmt_return
+						{ $$ = $1; }
+				| stmt_return_next
 						{ $$ = $1; }
 				| stmt_raise
 						{ $$ = $1; }
@@ -1121,45 +1119,73 @@ stmt_exit		: K_EXIT lno opt_exitlabel opt_exitcond
 stmt_return		: K_RETURN lno
 					{
 						PLpgSQL_stmt_return *new;
-						PLpgSQL_expr	*expr = NULL;
-						int				tok;
 
 						new = malloc(sizeof(PLpgSQL_stmt_return));
 						memset(new, 0, sizeof(PLpgSQL_stmt_return));
 
-						if (plpgsql_curr_compile->fn_retistuple)
+						if (plpgsql_curr_compile->fn_retistuple &&
+							!plpgsql_curr_compile->fn_retset)
 						{
-							new->retistuple = true;
 							new->retrecno	= -1;
-							switch (tok = yylex())
+							switch (yylex())
 							{
 								case K_NULL:
-									expr = NULL;
+									new->expr = NULL;
 									break;
 
 								case T_ROW:
-									expr = make_tupret_expr(yylval.row);
+									new->expr = make_tupret_expr(yylval.row);
 									break;
 
 								case T_RECORD:
 									new->retrecno = yylval.rec->recno;
-									expr = NULL;
+									new->expr = NULL;
 									break;
 
 								default:
-									yyerror("return type mismatch in function returning table row");
+									yyerror("return type mismatch in function returning tuple");
 									break;
 							}
 							if (yylex() != ';')
 								yyerror("expected ';'");
-						} else {
-							new->retistuple = false;
-							expr = plpgsql_read_expression(';', ";");
 						}
+						else
+							new->expr = plpgsql_read_expression(';', ";");
 
 						new->cmd_type = PLPGSQL_STMT_RETURN;
 						new->lineno   = $2;
-						new->expr	  = expr;
+
+						$$ = (PLpgSQL_stmt *)new;
+					}
+				;
+
+/* FIXME: this syntax needs work, RETURN NEXT breaks stmt_return */
+stmt_return_next: K_RETURN_NEXT lno
+					{
+						PLpgSQL_stmt_return_next *new;
+
+						new = malloc(sizeof(PLpgSQL_stmt_return_next));
+						memset(new, 0, sizeof(PLpgSQL_stmt_return_next));
+
+						new->cmd_type	= PLPGSQL_STMT_RETURN_NEXT;
+						new->lineno		= $2;
+
+						if (plpgsql_curr_compile->fn_retistuple)
+						{
+							int tok = yylex();
+
+							if (tok == T_RECORD)
+								new->rec = yylval.rec;
+							else if (tok == T_ROW)
+								new->row = yylval.row;
+							else
+								yyerror("Incorrect argument to RETURN NEXT");
+
+							if (yylex() != ';')
+								yyerror("Expected ';'");
+						}
+						else
+							new->expr = plpgsql_read_expression(';', ";");
 
 						$$ = (PLpgSQL_stmt *)new;
 					}
@@ -1226,7 +1252,7 @@ raise_level		: K_EXCEPTION
 					}
 				| K_DEBUG
 					{
-						$$ = DEBUG5;
+						$$ = DEBUG1;
 					}
 				;
 
@@ -1377,10 +1403,7 @@ stmt_open		: K_OPEN lno cursor_varptr
 								cp += strlen(cp) - 1;
 
 								if (*cp != ')')
-								{
-									plpgsql_error_lineno = yylineno;
-									elog(ERROR, "missing )");
-								}
+									yyerror("missing )");
 								*cp = '\0';
 							}
 							else
@@ -1433,10 +1456,8 @@ stmt_close		: K_CLOSE lno cursor_variable ';'
 cursor_varptr	: T_VARIABLE
 					{
 						if (yylval.variable->dtype != PLPGSQL_DTYPE_VAR)
-						{
-							plpgsql_error_lineno = yylineno;
-							elog(ERROR, "cursor variable must be a simple variable");
-						}
+							yyerror("cursor variable must be a simple variable");
+
 						if (((PLpgSQL_var *) yylval.variable)->datatype->typoid != REFCURSOROID)
 						{
 							plpgsql_error_lineno = yylineno;
@@ -1450,10 +1471,8 @@ cursor_varptr	: T_VARIABLE
 cursor_variable	: T_VARIABLE
 					{
 						if (yylval.variable->dtype != PLPGSQL_DTYPE_VAR)
-						{
-							plpgsql_error_lineno = yylineno;
-							elog(ERROR, "cursor variable must be a simple variable");
-						}
+							yyerror("cursor variable must be a simple variable");
+
 						if (((PLpgSQL_var *) yylval.variable)->datatype->typoid != REFCURSOROID)
 						{
 							plpgsql_error_lineno = yylineno;
@@ -1906,18 +1925,14 @@ make_fetch_stmt(void)
 			break;
 
 		default:
-			plpgsql_error_lineno = yylineno;
-			elog(ERROR, "syntax error at '%s'", yytext);
+			yyerror("syntax error");
 	}
 
 	if (!have_nexttok)
 		tok = yylex();
 
 	if (tok != ';')
-	{
-		plpgsql_error_lineno = yylineno;
-		elog(ERROR, "syntax error at '%s'", yytext);
-	}
+		yyerror("syntax error");
 
 	fetch = malloc(sizeof(PLpgSQL_stmt_select));
 	memset(fetch, 0, sizeof(PLpgSQL_stmt_fetch));
@@ -1976,11 +1991,10 @@ check_assignable(PLpgSQL_datum *datum)
 			/* always assignable? */
 			break;
 		case PLPGSQL_DTYPE_TRIGARG:
-			plpgsql_error_lineno = yylineno;
-			elog(ERROR, "cannot assign to tg_argv");
+			yyerror("cannot assign to tg_argv");
 			break;
 		default:
-			elog(ERROR, "check_assignable: unexpected datum type");
+			yyerror("check_assignable: unexpected datum type");
 			break;
 	}
 }

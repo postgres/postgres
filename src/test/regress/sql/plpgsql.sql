@@ -1419,6 +1419,12 @@ delete from HSlot;
 insert into IFace values ('IF', 'notthere', 'eth0', '');
 insert into IFace values ('IF', 'orion', 'ethernet_interface_name_too_long', '');
 
+
+--
+-- The following tests are unrelated to the scenario outlined above;
+-- they merely exercise specific parts of PL/PgSQL
+--
+
 --
 -- Test recursion, per bug report 7-Sep-01
 --
@@ -1440,7 +1446,7 @@ SELECT recursion_test(4,3);
 --
 CREATE TABLE found_test_tbl (a int);
 
-create function test_found ()
+create function test_found()
   returns boolean as '
   declare
   begin
@@ -1478,3 +1484,43 @@ create function test_found ()
 
 select test_found();
 select * from found_test_tbl;
+
+--
+-- Test set-returning functions for PL/pgSQL
+--
+
+create function test_table_func_rec() returns setof found_test_tbl as '
+DECLARE
+	rec RECORD;
+BEGIN
+	FOR rec IN select * from found_test_tbl LOOP
+		RETURN NEXT rec;
+	END LOOP;
+	RETURN;
+END;' language 'plpgsql';
+
+select * from test_table_func_rec();
+
+create function test_table_func_row() returns setof found_test_tbl as '
+DECLARE
+	row found_test_tbl%ROWTYPE;
+BEGIN
+	FOR row IN select * from found_test_tbl LOOP
+		RETURN NEXT row;
+	END LOOP;
+	RETURN;
+END;' language 'plpgsql';
+
+select * from test_table_func_row();
+
+create function test_ret_set_scalar(int,int) returns setof int as '
+DECLARE
+	i int;
+BEGIN
+	FOR i IN $1 .. $2 LOOP
+		RETURN NEXT i + 1;
+	END LOOP;
+	RETURN;
+END;' language 'plpgsql';
+
+select * from test_ret_set_scalar(1,10);

@@ -16,14 +16,13 @@
 #include "postgres.h"
 
 #include <ctype.h>
-#include <stdio.h>
 #include <sys/types.h>
-#include <string.h>
-#include "postgres.h"
+
 #include "access/heapam.h"
 #include "catalog/catname.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_proc.h"
+#include "catalog/pg_type.h"
 #include "executor/executor.h"
 #include "utils/fcache.h"
 #include "utils/sets.h"
@@ -97,7 +96,7 @@ static PGARRAY * GetPGArray(int4 state, int fAdd)
 		p->a.size = cb;
 		p->a.ndim = 0;
 		p->a.flags = 0;
-		p->a.elmtype = INT4OID;
+		p->a.elemtype = INT4OID;
 		p->items = 0;
 		p->lower= START_NUM;
 	}
@@ -150,7 +149,7 @@ static PGARRAY *ShrinkPGArray(PGARRAY *p)
 			pnew->a.size = cb;
 			pnew->a.ndim=1;
 			pnew->a.flags = 0;
-			pnew->a.elmtype = INT4OID;
+			pnew->a.elemtype = INT4OID;
 			pnew->lower = 0;
 		}
 		else
@@ -171,11 +170,11 @@ Datum int_agg_state(PG_FUNCTION_ARGS)
 	PGARRAY *p = GetPGArray(state, 1);
 	if(!p)
 	{
-		elog(ERROR,"No aggregate storage\n");
+		elog(ERROR,"No aggregate storage");
 	}
 	else if(p->items >= p->lower)
 	{
-		elog(ERROR,"aggregate storage too small\n");
+		elog(ERROR,"aggregate storage too small");
 	}
 	else
 	{
@@ -202,31 +201,23 @@ Datum int_agg_final_array(PG_FUNCTION_ARGS)
 /* This function accepts an array, and returns one item for each entry in the array */
 Datum int_enum(PG_FUNCTION_ARGS)
 {
-	CTX *pc;
 	PGARRAY *p = (PGARRAY *) PG_GETARG_POINTER(0);
+	CTX *pc;
 	ReturnSetInfo *rsi = (ReturnSetInfo *)fcinfo->resultinfo;
+
+	if (!rsi || !IsA(rsi, ReturnSetInfo))
+		elog(ERROR, "No ReturnSetInfo sent! function must be declared returning a 'setof' integer");
 
 	if(!p)
 	{
-		elog(WARNING, "No data sent\n");
-		return 0;
-	}
-	if(!rsi)
-	{
-		elog(ERROR, "No ReturnSetInfo sent! function must be declared returning a 'setof' integer");
+		elog(WARNING, "No data sent");
 		PG_RETURN_NULL();
-
 	}
+
 	if(!fcinfo->context)
 	{
 		/* Allocate a working context */
 		pc = (CTX *) palloc(sizeof(CTX));
-
-		if(!pc)
-		{
-			elog(ERROR, "CTX Alocation failed\n");
-			PG_RETURN_NULL();
-		}
 
 		/* Don't copy atribute if you don't need too */
 		if(VARATT_IS_EXTENDED(p) )
@@ -236,7 +227,7 @@ Datum int_enum(PG_FUNCTION_ARGS)
 			pc->flags = TOASTED;
 			if(!pc->p)
 			{
-				elog(ERROR, "Error in toaster!!! no detoasting\n");
+				elog(ERROR, "Error in toaster!!! no detoasting");
 				PG_RETURN_NULL();
 			}
 		}

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.101 2002/08/26 17:53:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.102 2002/08/30 00:28:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,12 +35,15 @@
 #include "postgres.h"
 
 #include "access/heapam.h"
+#include "catalog/pg_type.h"
 #include "executor/execdebug.h"
 #include "executor/functions.h"
 #include "executor/nodeSubplan.h"
+#include "miscadmin.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/fcache.h"
+#include "utils/lsyscache.h"
 
 
 /* static function decls */
@@ -646,9 +649,6 @@ ExecEvalFuncArgs(FunctionCallInfo fcinfo,
  *		ExecMakeFunctionResult
  *
  * Evaluate the arguments to a function and then the function itself.
- *
- * NOTE: econtext is used only for evaluating the argument expressions;
- * it is not passed to the function itself.
  */
 Datum
 ExecMakeFunctionResult(FunctionCachePtr fcache,
@@ -707,6 +707,11 @@ ExecMakeFunctionResult(FunctionCachePtr fcache,
 		fcinfo.resultinfo = (Node *) &rsinfo;
 		rsinfo.type = T_ReturnSetInfo;
 		rsinfo.econtext = econtext;
+		rsinfo.allowedModes = (int) SFRM_ValuePerCall;
+		rsinfo.returnMode = SFRM_ValuePerCall;
+		/* isDone is filled below */
+		rsinfo.setResult = NULL;
+		rsinfo.setDesc = NULL;
 	}
 
 	/*
@@ -837,10 +842,240 @@ ExecMakeFunctionResult(FunctionCachePtr fcache,
 }
 
 
+/*
+ *		ExecMakeTableFunctionResult
+ *
+ * Evaluate a table function, producing a materialized result in a Tuplestore
+ * object.  (If function returns an empty set, we just return NULL instead.)
+ */
+Tuplestorestate *
+ExecMakeTableFunctionResult(Expr *funcexpr,
+							ExprContext *econtext,
+							TupleDesc *returnDesc)
+{
+	Tuplestorestate *tupstore = NULL;
+	TupleDesc	tupdesc = NULL;
+	Func	   *func;
+	List	   *argList;
+	FunctionCachePtr fcache;
+	FunctionCallInfoData fcinfo;
+	ReturnSetInfo rsinfo;		/* for functions returning sets */
+	ExprDoneCond argDone;
+	MemoryContext callerContext;
+	MemoryContext oldcontext;
+	TupleTableSlot *slot;
+	bool		first_time = true;
+	bool		returnsTuple = false;
+
+	/* Extract data from function-call expression node */
+	if (!funcexpr || !IsA(funcexpr, Expr) || funcexpr->opType != FUNC_EXPR)
+		elog(ERROR, "ExecMakeTableFunctionResult: expression is not a function call");
+	func = (Func *) funcexpr->oper;
+	argList = funcexpr->args;
+
+	/*
+	 * get the fcache from the Func node. If it is NULL, then initialize it
+	 */
+	fcache = func->func_fcache;
+	if (fcache == NULL)
+	{
+		fcache = init_fcache(func->funcid, length(argList),
+							 econtext->ecxt_per_query_memory);
+		func->func_fcache = fcache;
+	}
+
+	/*
+	 * Evaluate the function's argument list.
+	 *
+	 * Note: ideally, we'd do this in the per-tuple context, but then the
+	 * argument values would disappear when we reset the context in the
+	 * inner loop.  So do it in caller context.  Perhaps we should make a
+	 * separate context just to hold the evaluated arguments?
+	 */
+	MemSet(&fcinfo, 0, sizeof(fcinfo));
+	fcinfo.flinfo = &(fcache->func);
+	argDone = ExecEvalFuncArgs(&fcinfo, argList, econtext);
+	/* We don't allow sets in the arguments of the table function */
+	if (argDone != ExprSingleResult)
+		elog(ERROR, "Set-valued function called in context that cannot accept a set");
+
+	/*
+	 * If function is strict, and there are any NULL arguments, skip
+	 * calling the function and return NULL (actually an empty set).
+	 */
+	if (fcache->func.fn_strict)
+	{
+		int			i;
+
+		for (i = 0; i < fcinfo.nargs; i++)
+		{
+			if (fcinfo.argnull[i])
+			{
+				*returnDesc = NULL;
+				return NULL;
+			}
+		}
+	}
+
+	/*
+	 * If function returns set, prepare a resultinfo node for
+	 * communication
+	 */
+	if (fcache->func.fn_retset)
+	{
+		fcinfo.resultinfo = (Node *) &rsinfo;
+		rsinfo.type = T_ReturnSetInfo;
+		rsinfo.econtext = econtext;
+		rsinfo.allowedModes = (int) (SFRM_ValuePerCall | SFRM_Materialize);
+	}
+	/* we set these fields always since we examine them below */
+	rsinfo.returnMode = SFRM_ValuePerCall;
+	/* isDone is filled below */
+	rsinfo.setResult = NULL;
+	rsinfo.setDesc = NULL;
+
+	/*
+	 * Switch to short-lived context for calling the function.
+	 */
+	callerContext = MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
+
+	/*
+	 * Loop to handle the ValuePerCall protocol.
+	 */
+	for (;;)
+	{
+		Datum		result;
+		HeapTuple	tuple;
+
+		/*
+		 * reset per-tuple memory context before each call of the function.
+		 * This cleans up any local memory the function may leak when called.
+		 */
+		ResetExprContext(econtext);
+
+		/* Call the function one time */
+		fcinfo.isnull = false;
+		rsinfo.isDone = ExprSingleResult;
+		result = FunctionCallInvoke(&fcinfo);
+
+		/* Which protocol does function want to use? */
+		if (rsinfo.returnMode == SFRM_ValuePerCall)
+		{
+			/*
+			 * Check for end of result set.
+			 *
+			 * Note: if function returns an empty set, we don't build a 
+			 * tupdesc or tuplestore (since we can't get a tupdesc in the
+			 * function-returning-tuple case)
+			 */
+			if (rsinfo.isDone == ExprEndResult)
+				break;
+			/*
+			 * If first time through, build tupdesc and tuplestore for result
+			 */
+			if (first_time)
+			{
+				Oid		funcrettype = funcexpr->typeOid;
+
+				oldcontext = MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
+				if (funcrettype == RECORDOID ||
+					get_typtype(funcrettype) == 'c')
+				{
+					/*
+					 * Composite type, so function should have returned a
+					 * TupleTableSlot; use its descriptor
+					 */
+					slot = (TupleTableSlot *) DatumGetPointer(result);
+					if (fcinfo.isnull || !slot || !IsA(slot, TupleTableSlot) ||
+						!slot->ttc_tupleDescriptor)
+						elog(ERROR, "ExecMakeTableFunctionResult: Invalid result from function returning tuple");
+					tupdesc = CreateTupleDescCopy(slot->ttc_tupleDescriptor);
+					returnsTuple = true;
+				}
+				else
+				{
+					/*
+					 * Scalar type, so make a single-column descriptor
+					 */
+					tupdesc = CreateTemplateTupleDesc(1, WITHOUTOID);
+					TupleDescInitEntry(tupdesc,
+									   (AttrNumber) 1,
+									   "column",
+									   funcrettype,
+									   -1,
+									   0,
+									   false);
+				}
+				tupstore = tuplestore_begin_heap(true, /* randomAccess */
+												 SortMem);
+				MemoryContextSwitchTo(oldcontext);
+				rsinfo.setResult = tupstore;
+				rsinfo.setDesc = tupdesc;
+			}
+
+			/*
+			 * Store current resultset item.
+			 */
+			if (returnsTuple)
+			{
+				slot = (TupleTableSlot *) DatumGetPointer(result);
+				if (fcinfo.isnull || !slot || !IsA(slot, TupleTableSlot) ||
+					TupIsNull(slot))
+					elog(ERROR, "ExecMakeTableFunctionResult: Invalid result from function returning tuple");
+				tuple = slot->val;
+			}
+			else
+			{
+				char nullflag;
+
+				nullflag = fcinfo.isnull ? 'n' : ' ';
+				tuple = heap_formtuple(tupdesc, &result, &nullflag);
+			}
+
+			oldcontext = MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
+			tuplestore_puttuple(tupstore, tuple);
+			MemoryContextSwitchTo(oldcontext);
+
+			/*
+			 * Are we done?
+			 */
+			if (rsinfo.isDone != ExprMultipleResult)
+				break;
+		}
+		else if (rsinfo.returnMode == SFRM_Materialize)
+		{
+			/* check we're on the same page as the function author */
+			if (!first_time || rsinfo.isDone != ExprSingleResult)
+				elog(ERROR, "ExecMakeTableFunctionResult: Materialize-mode protocol not followed");
+			/* Done evaluating the set result */
+			break;
+		}
+		else
+			elog(ERROR, "ExecMakeTableFunctionResult: unknown returnMode %d",
+				 (int) rsinfo.returnMode);
+
+		first_time = false;
+	}
+
+	/* If we have a locally-created tupstore, close it up */
+	if (tupstore)
+	{
+		MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
+		tuplestore_donestoring(tupstore);
+	}
+
+	MemoryContextSwitchTo(callerContext);
+
+	/* The returned pointers are those in rsinfo */
+	*returnDesc = rsinfo.setDesc;
+	return rsinfo.setResult;
+}
+
+
 /* ----------------------------------------------------------------
  *		ExecEvalOper
- *		ExecEvalDistinct
  *		ExecEvalFunc
+ *		ExecEvalDistinct
  *
  *		Evaluate the functional result of a list of arguments by calling the
  *		function manager.
@@ -880,6 +1115,48 @@ ExecEvalOper(Expr *opClause,
 		fcache = init_fcache(op->opid, length(argList),
 							 econtext->ecxt_per_query_memory);
 		op->op_fcache = fcache;
+	}
+
+	return ExecMakeFunctionResult(fcache, argList, econtext,
+								  isNull, isDone);
+}
+
+/* ----------------------------------------------------------------
+ *		ExecEvalFunc
+ * ----------------------------------------------------------------
+ */
+
+static Datum
+ExecEvalFunc(Expr *funcClause,
+			 ExprContext *econtext,
+			 bool *isNull,
+			 ExprDoneCond *isDone)
+{
+	Func	   *func;
+	List	   *argList;
+	FunctionCachePtr fcache;
+
+	/*
+	 * we extract the oid of the function associated with the func node
+	 * and then pass the work onto ExecMakeFunctionResult which evaluates
+	 * the arguments and returns the result of calling the function on the
+	 * evaluated arguments.
+	 *
+	 * this is nearly identical to the ExecEvalOper code.
+	 */
+	func = (Func *) funcClause->oper;
+	argList = funcClause->args;
+
+	/*
+	 * get the fcache from the Func node. If it is NULL, then initialize
+	 * it
+	 */
+	fcache = func->func_fcache;
+	if (fcache == NULL)
+	{
+		fcache = init_fcache(func->funcid, length(argList),
+							 econtext->ecxt_per_query_memory);
+		func->func_fcache = fcache;
 	}
 
 	return ExecMakeFunctionResult(fcache, argList, econtext,
@@ -958,48 +1235,6 @@ ExecEvalDistinct(Expr *opClause,
 	}
 
 	return BoolGetDatum(result);
-}
-
-/* ----------------------------------------------------------------
- *		ExecEvalFunc
- * ----------------------------------------------------------------
- */
-
-static Datum
-ExecEvalFunc(Expr *funcClause,
-			 ExprContext *econtext,
-			 bool *isNull,
-			 ExprDoneCond *isDone)
-{
-	Func	   *func;
-	List	   *argList;
-	FunctionCachePtr fcache;
-
-	/*
-	 * we extract the oid of the function associated with the func node
-	 * and then pass the work onto ExecMakeFunctionResult which evaluates
-	 * the arguments and returns the result of calling the function on the
-	 * evaluated arguments.
-	 *
-	 * this is nearly identical to the ExecEvalOper code.
-	 */
-	func = (Func *) funcClause->oper;
-	argList = funcClause->args;
-
-	/*
-	 * get the fcache from the Func node. If it is NULL, then initialize
-	 * it
-	 */
-	fcache = func->func_fcache;
-	if (fcache == NULL)
-	{
-		fcache = init_fcache(func->funcid, length(argList),
-							 econtext->ecxt_per_query_memory);
-		func->func_fcache = fcache;
-	}
-
-	return ExecMakeFunctionResult(fcache, argList, econtext,
-								  isNull, isDone);
 }
 
 /* ----------------------------------------------------------------

@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.59 2002/08/29 04:12:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.60 2002/08/30 00:28:41 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -35,12 +35,6 @@
  *
  **********************************************************************/
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <string.h>
 #include <ctype.h>
 #include <setjmp.h>
 
@@ -50,10 +44,8 @@
 #include "access/heapam.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
-#include "commands/trigger.h"
-#include "executor/spi.h"
 #include "executor/spi_priv.h"
-#include "fmgr.h"
+#include "funcapi.h"
 #include "optimizer/clauses.h"
 #include "parser/parse_expr.h"
 #include "tcop/tcopprot.h"
@@ -105,6 +97,8 @@ static int exec_stmt_exit(PLpgSQL_execstate * estate,
 			   PLpgSQL_stmt_exit * stmt);
 static int exec_stmt_return(PLpgSQL_execstate * estate,
 				 PLpgSQL_stmt_return * stmt);
+static int exec_stmt_return_next(PLpgSQL_execstate * estate,
+				 PLpgSQL_stmt_return_next * stmt);
 static int exec_stmt_raise(PLpgSQL_execstate * estate,
 				PLpgSQL_stmt_raise * stmt);
 static int exec_stmt_execsql(PLpgSQL_execstate * estate,
@@ -114,8 +108,9 @@ static int exec_stmt_dynexecute(PLpgSQL_execstate * estate,
 static int exec_stmt_dynfors(PLpgSQL_execstate * estate,
 				  PLpgSQL_stmt_dynfors * stmt);
 
-static void plpgsql_estate_setup(PLpgSQL_execstate * estate,
-					 PLpgSQL_function * func);
+static void plpgsql_estate_setup(PLpgSQL_execstate *estate,
+								 PLpgSQL_function *func,
+								 ReturnSetInfo *rsi);
 static void exec_eval_cleanup(PLpgSQL_execstate * estate);
 
 static void exec_prepare_plan(PLpgSQL_execstate * estate,
@@ -150,6 +145,8 @@ static Datum exec_cast_value(Datum value, Oid valtype,
 				int32 reqtypmod,
 				bool *isnull);
 static void exec_set_found(PLpgSQL_execstate * estate, bool state);
+static void exec_init_tuple_store(PLpgSQL_execstate *estate);
+static void exec_set_ret_tupdesc(PLpgSQL_execstate *estate, List *labels);
 
 
 /* ----------
@@ -211,7 +208,7 @@ plpgsql_exec_function(PLpgSQL_function * func, FunctionCallInfo fcinfo)
 	/*
 	 * Setup the execution state
 	 */
-	plpgsql_estate_setup(&estate, func);
+	plpgsql_estate_setup(&estate, func, (ReturnSetInfo *) fcinfo->resultinfo);
 
 	/*
 	 * Make local execution copies of all the datums
@@ -332,11 +329,36 @@ plpgsql_exec_function(PLpgSQL_function * func, FunctionCallInfo fcinfo)
 	 * We got a return value - process it
 	 */
 	error_info_stmt = NULL;
-	error_info_text = "while casting return value to functions return type";
+	error_info_text = "while casting return value to function's return type";
 
 	fcinfo->isnull = estate.retisnull;
 
-	if (!estate.retisnull)
+	if (estate.retisset)
+	{
+		ReturnSetInfo *rsi = estate.rsi;
+
+		/* Check caller can handle a set result */
+		if (!rsi || !IsA(rsi, ReturnSetInfo) ||
+			(rsi->allowedModes & SFRM_Materialize) == 0)
+			elog(ERROR, "Set-valued function called in context that cannot accept a set");
+		rsi->returnMode = SFRM_Materialize;
+
+		/* If we produced any tuples, send back the result */
+		if (estate.tuple_store)
+		{
+			MemoryContext oldcxt;
+
+			oldcxt = MemoryContextSwitchTo(estate.tuple_store_cxt);
+			tuplestore_donestoring(estate.tuple_store);
+			rsi->setResult = estate.tuple_store;
+			if (estate.rettupdesc)
+				rsi->setDesc = CreateTupleDescCopy(estate.rettupdesc);
+			MemoryContextSwitchTo(oldcxt);
+		}
+		estate.retval = (Datum) 0;
+		fcinfo->isnull = true;
+	}
+	else if (!estate.retisnull)
 	{
 		if (estate.retistuple)
 		{
@@ -455,7 +477,7 @@ plpgsql_exec_trigger(PLpgSQL_function * func,
 	/*
 	 * Setup the execution state
 	 */
-	plpgsql_estate_setup(&estate, func);
+	plpgsql_estate_setup(&estate, func, NULL);
 
 	/*
 	 * Make local execution copies of all the datums
@@ -641,6 +663,9 @@ plpgsql_exec_trigger(PLpgSQL_function * func,
 		error_info_text = "at END of toplevel PL block";
 		elog(ERROR, "control reaches end of trigger procedure without RETURN");
 	}
+
+	if (estate.retisset)
+		elog(ERROR, "trigger procedure cannot return a set");
 
 	/*
 	 * Check that the returned tuple structure has the same attributes,
@@ -862,6 +887,8 @@ exec_stmt(PLpgSQL_execstate * estate, PLpgSQL_stmt * stmt)
 	save_estmt = error_info_stmt;
 	error_info_stmt = stmt;
 
+	CHECK_FOR_INTERRUPTS();
+
 	switch (stmt->cmd_type)
 	{
 		case PLPGSQL_STMT_BLOCK:
@@ -906,6 +933,10 @@ exec_stmt(PLpgSQL_execstate * estate, PLpgSQL_stmt * stmt)
 
 		case PLPGSQL_STMT_RETURN:
 			rc = exec_stmt_return(estate, (PLpgSQL_stmt_return *) stmt);
+			break;
+
+		case PLPGSQL_STMT_RETURN_NEXT:
+			rc = exec_stmt_return_next(estate, (PLpgSQL_stmt_return_next *) stmt);
 			break;
 
 		case PLPGSQL_STMT_RAISE:
@@ -1302,13 +1333,10 @@ exec_stmt_fors(PLpgSQL_execstate * estate, PLpgSQL_stmt_fors * stmt)
 	 */
 	if (stmt->rec != NULL)
 		rec = (PLpgSQL_rec *) (estate->datums[stmt->rec->recno]);
+	else if (stmt->row != NULL)
+		row = (PLpgSQL_row *) (estate->datums[stmt->row->rowno]);
 	else
-	{
-		if (stmt->row != NULL)
-			row = (PLpgSQL_row *) (estate->datums[stmt->row->rowno]);
-		else
-			elog(ERROR, "unsupported target in exec_stmt_fors()");
-	}
+		elog(ERROR, "unsupported target in exec_stmt_fors()");
 
 	/*
 	 * Open the implicit cursor for the statement and fetch the initial 10
@@ -1499,6 +1527,14 @@ exec_stmt_exit(PLpgSQL_execstate * estate, PLpgSQL_stmt_exit * stmt)
 static int
 exec_stmt_return(PLpgSQL_execstate * estate, PLpgSQL_stmt_return * stmt)
 {
+	/*
+	 * If processing a set-returning PL/PgSQL function, the final RETURN
+	 * indicates that the function is finished producing tuples.  The rest
+	 * of the work will be done at the top level.
+	 */
+	if (estate->retisset)
+		return PLPGSQL_RC_RETURN;
+
 	if (estate->retistuple)
 	{
 		/* initialize for null result tuple */
@@ -1532,11 +1568,153 @@ exec_stmt_return(PLpgSQL_execstate * estate, PLpgSQL_stmt_return * stmt)
 		return PLPGSQL_RC_RETURN;
 	}
 
-	estate->retval = exec_eval_expr(estate, stmt->expr,
-									&(estate->retisnull),
-									&(estate->rettype));
+	if (estate->fn_rettype == VOIDOID)
+	{
+		/* Special hack for function returning VOID */
+		estate->retval = (Datum) 0;
+		estate->retisnull = false;
+		estate->rettype = VOIDOID;
+	}
+	else
+	{
+		/* Normal case for scalar results */
+		estate->retval = exec_eval_expr(estate, stmt->expr,
+										&(estate->retisnull),
+										&(estate->rettype));
+	}
 
 	return PLPGSQL_RC_RETURN;
+}
+
+/*
+ * Notes:
+ *  - the tuple store must be created in a sufficiently long-lived
+ *    memory context, as the same store must be used within the executor
+ *    after the PL/PgSQL call returns. At present, the code uses
+ *    TopTransactionContext.
+ */
+static int
+exec_stmt_return_next(PLpgSQL_execstate *estate,
+					  PLpgSQL_stmt_return_next *stmt)
+{
+	HeapTuple tuple;
+	bool		free_tuple = false;
+
+	if (!estate->retisset)
+		elog(ERROR, "Cannot use RETURN NEXT in a non-SETOF function");
+
+	if (estate->tuple_store == NULL)
+		exec_init_tuple_store(estate);
+
+	if (stmt->rec)
+	{
+		PLpgSQL_rec *rec = (PLpgSQL_rec *) (estate->datums[stmt->rec->recno]);
+		tuple = rec->tup;
+		estate->rettupdesc = rec->tupdesc;
+	}
+	else if (stmt->row)
+	{
+		PLpgSQL_var *var;
+		TupleDesc tupdesc;
+		Datum	*dvalues;
+		char	*nulls;
+		int		 natts;
+		int		 i;
+
+		if (!estate->rettupdesc)
+			exec_set_ret_tupdesc(estate, NIL);
+
+		tupdesc = estate->rettupdesc;
+		natts	= tupdesc->natts;
+		dvalues	= (Datum *) palloc(natts * sizeof(Datum));
+		nulls	= (char *) palloc(natts * sizeof(char));
+
+		MemSet(dvalues, 0, natts * sizeof(Datum));
+		MemSet(nulls, 'n', natts);
+
+		for (i = 0; i < stmt->row->nfields; i++)
+		{
+			var = (PLpgSQL_var *) (estate->datums[stmt->row->varnos[i]]);
+			dvalues[i] = var->value;
+			if (!var->isnull)
+				nulls[i] = ' ';
+		}
+
+		tuple = heap_formtuple(tupdesc, dvalues, nulls);
+
+		pfree(dvalues);
+		pfree(nulls);
+		free_tuple = true;
+	}
+	else if (stmt->expr)
+	{
+		Datum	retval;
+		bool	isNull;
+		char	nullflag;
+
+		if (!estate->rettupdesc)
+			exec_set_ret_tupdesc(estate, makeList1(makeString("unused")));
+
+		retval = exec_eval_expr(estate,
+								stmt->expr,
+								&isNull,
+								&(estate->rettype));
+
+		nullflag = isNull ? 'n' : ' ';
+
+		tuple = heap_formtuple(estate->rettupdesc, &retval, &nullflag);
+
+		free_tuple = true;
+
+		exec_eval_cleanup(estate);
+	}
+	else
+	{
+		elog(ERROR, "Blank RETURN NEXT not allowed");
+		tuple = NULL;			/* keep compiler quiet */
+	}
+
+	if (HeapTupleIsValid(tuple))
+	{
+		MemoryContext oldcxt;
+
+		oldcxt = MemoryContextSwitchTo(estate->tuple_store_cxt);
+		tuplestore_puttuple(estate->tuple_store, tuple);
+		MemoryContextSwitchTo(oldcxt);
+
+		if (free_tuple)
+			heap_freetuple(tuple);
+	}
+
+	return PLPGSQL_RC_OK;
+}
+
+static void
+exec_set_ret_tupdesc(PLpgSQL_execstate *estate, List *labels)
+{
+	estate->rettype = estate->fn_rettype;
+	estate->rettupdesc = TypeGetTupleDesc(estate->rettype, labels);
+
+	if (!estate->rettupdesc)
+		elog(ERROR, "Could not produce descriptor for rowtype");
+}
+
+static void
+exec_init_tuple_store(PLpgSQL_execstate *estate)
+{
+	ReturnSetInfo *rsi = estate->rsi;
+	MemoryContext oldcxt;
+
+	/* Check caller can handle a set result */
+	if (!rsi || !IsA(rsi, ReturnSetInfo) ||
+		(rsi->allowedModes & SFRM_Materialize) == 0)
+		elog(ERROR, "Set-valued function called in context that cannot accept a set");
+
+	estate->tuple_store_cxt = rsi->econtext->ecxt_per_query_memory;
+
+	oldcxt = MemoryContextSwitchTo(estate->tuple_store_cxt);
+	estate->tuple_store = tuplestore_begin_heap(true, SortMem);
+	MemoryContextSwitchTo(oldcxt);
 }
 
 
@@ -1700,20 +1878,28 @@ exec_stmt_raise(PLpgSQL_execstate * estate, PLpgSQL_stmt_raise * stmt)
 
 
 /* ----------
- * Initialize an empty estate
+ * Initialize a mostly empty execution state
  * ----------
  */
 static void
-plpgsql_estate_setup(PLpgSQL_execstate * estate,
-					 PLpgSQL_function * func)
+plpgsql_estate_setup(PLpgSQL_execstate *estate,
+					 PLpgSQL_function *func,
+					 ReturnSetInfo *rsi)
 {
 	estate->retval = (Datum) 0;
 	estate->retisnull = true;
 	estate->rettype = InvalidOid;
+
+	estate->fn_rettype = func->fn_rettype;
 	estate->retistuple = func->fn_retistuple;
-	estate->rettupdesc = NULL;
 	estate->retisset = func->fn_retset;
+
+	estate->rettupdesc = NULL;
 	estate->exitlabel = NULL;
+
+	estate->tuple_store = NULL;
+	estate->tuple_store_cxt = NULL;
+	estate->rsi = rsi;
 
 	estate->trig_nargs = 0;
 	estate->trig_argv = NULL;
@@ -2099,13 +2285,10 @@ exec_stmt_dynfors(PLpgSQL_execstate * estate, PLpgSQL_stmt_dynfors * stmt)
 	 */
 	if (stmt->rec != NULL)
 		rec = (PLpgSQL_rec *) (estate->datums[stmt->rec->recno]);
+	else if (stmt->row != NULL)
+		row = (PLpgSQL_row *) (estate->datums[stmt->row->rowno]);
 	else
-	{
-		if (stmt->row != NULL)
-			row = (PLpgSQL_row *) (estate->datums[stmt->row->rowno]);
-		else
-			elog(ERROR, "unsupported target in exec_stmt_fors()");
-	}
+		elog(ERROR, "unsupported target in exec_stmt_dynfors()");
 
 	/*
 	 * Evaluate the string expression after the EXECUTE keyword. It's

@@ -2,7 +2,7 @@
 #
 # Makefile for the plpgsql shared object
 #
-# $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Makefile,v 1.20 2001/11/16 16:32:33 petere Exp $
+# $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Makefile,v 1.21 2002/08/30 00:28:41 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -78,7 +78,7 @@ endif
 
 $(srcdir)/pl_scan.c: scan.l
 ifdef FLEX
-	$(FLEX) -i $(FLEXFLAGS) -Pplpgsql_base_yy -o'$@' $<
+	$(FLEX) $(FLEXFLAGS) -Pplpgsql_base_yy -o'$@' $<
 else
 	@$(missing) flex $< $@
 endif

@@ -4,7 +4,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/scan.l,v 1.21 2002/08/08 01:36:05 tgl Exp $
+ *    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/scan.l,v 1.22 2002/08/30 00:28:41 tgl Exp $
  *
  *    This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -46,6 +46,8 @@ static int	scanner_functype;
 static int	scanner_typereported;
 static int	pushback_token;
 static bool have_pushback_token;
+static int	lookahead_token;	
+static bool have_lookahead_token;
 
 int	plpgsql_SpaceScanned = 0;
 
@@ -134,6 +136,7 @@ into			{ return K_INTO;			}
 is				{ return K_IS;				}
 log				{ return K_LOG;				}
 loop			{ return K_LOOP;			}
+next			{ return K_NEXT;			}
 not				{ return K_NOT;				}
 notice			{ return K_NOTICE;			}
 null			{ return K_NULL;			}
@@ -255,18 +258,50 @@ plpgsql_input(char *buf, int *result, int max)
 }
 
 /*
- * This is the yylex routine called from outside.  It exists to provide
- * a token pushback facility.
+ * This is the yylex routine called from outside. It exists to provide
+ * a pushback facility, as well as to allow us to parse syntax that
+ * requires more than one token of lookahead.
  */
 int
 plpgsql_yylex(void)
 {
+	int cur_token;
+
 	if (have_pushback_token)
 	{
 		have_pushback_token = false;
-		return pushback_token;
+		cur_token = pushback_token;
 	}
-	return yylex();
+	else if (have_lookahead_token)
+	{
+		have_lookahead_token = false;
+		cur_token = lookahead_token;
+	}
+	else
+		cur_token = yylex();
+
+	/* Do we need to look ahead for a possible multiword token? */
+	switch (cur_token)
+	{
+		/* RETURN NEXT must be reduced to a single token */
+		case K_RETURN:
+			if (!have_lookahead_token)
+			{
+				lookahead_token = yylex();
+				have_lookahead_token = true;
+			}
+			if (lookahead_token == K_NEXT)
+			{
+				have_lookahead_token = false;
+				cur_token = K_RETURN_NEXT;
+			}
+			break;
+
+		default:
+			break;
+	}
+
+	return cur_token;
 }
 
 /*
@@ -312,4 +347,5 @@ plpgsql_setinput(char *source, int functype)
     scanner_typereported = 0;
 
 	have_pushback_token = false;
+	have_lookahead_token = false;
 }

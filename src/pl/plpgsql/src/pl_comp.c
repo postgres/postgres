@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.48 2002/08/28 20:46:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.49 2002/08/30 00:28:41 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -37,8 +37,6 @@
 
 #include "plpgsql.h"
 
-#include <unistd.h>
-#include <fcntl.h>
 #include <ctype.h>
 #include <setjmp.h>
 
@@ -52,9 +50,6 @@
 #include "catalog/pg_class.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
-#include "commands/trigger.h"
-#include "executor/spi.h"
-#include "fmgr.h"
 #include "nodes/makefuncs.h"
 #include "parser/gramparse.h"
 #include "parser/parse_type.h"
@@ -217,6 +212,7 @@ plpgsql_compile(Oid fn_oid, int functype)
 			typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
 
 			/* Disallow pseudotype result, except VOID */
+			/* XXX someday allow RECORD? */
 			if (typeStruct->typtype == 'p')
 			{
 				if (procStruct->prorettype == VOIDOID)

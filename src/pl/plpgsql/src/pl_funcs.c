@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.20 2002/08/29 07:22:30 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.21 2002/08/30 00:28:41 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -35,12 +35,6 @@
  *
  **********************************************************************/
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <string.h>
 #include <ctype.h>
 
 #include "plpgsql.h"
@@ -272,9 +266,7 @@ plpgsql_ns_lookup(char *name, char *label)
 				return ns->items[i];
 		}
 		if (ns_localmode)
-		{
 			return NULL;		/* name not found in current namespace */
-		}
 	}
 
 	return NULL;
@@ -461,6 +453,8 @@ plpgsql_stmt_typename(PLpgSQL_stmt * stmt)
 			return "exit";
 		case PLPGSQL_STMT_RETURN:
 			return "return";
+		case PLPGSQL_STMT_RETURN_NEXT:
+			return "return next";
 		case PLPGSQL_STMT_RAISE:
 			return "raise";
 		case PLPGSQL_STMT_EXECSQL:
@@ -500,6 +494,7 @@ static void dump_fors(PLpgSQL_stmt_fors * stmt);
 static void dump_select(PLpgSQL_stmt_select * stmt);
 static void dump_exit(PLpgSQL_stmt_exit * stmt);
 static void dump_return(PLpgSQL_stmt_return * stmt);
+static void dump_return_next(PLpgSQL_stmt_return_next * stmt);
 static void dump_raise(PLpgSQL_stmt_raise * stmt);
 static void dump_execsql(PLpgSQL_stmt_execsql * stmt);
 static void dump_dynexecute(PLpgSQL_stmt_dynexecute * stmt);
@@ -555,6 +550,9 @@ dump_stmt(PLpgSQL_stmt * stmt)
 			break;
 		case PLPGSQL_STMT_RETURN:
 			dump_return((PLpgSQL_stmt_return *) stmt);
+			break;
+		case PLPGSQL_STMT_RETURN_NEXT:
+			dump_return_next((PLpgSQL_stmt_return_next *) stmt);
 			break;
 		case PLPGSQL_STMT_RAISE:
 			dump_raise((PLpgSQL_stmt_raise *) stmt);
@@ -836,6 +834,20 @@ dump_return(PLpgSQL_stmt_return * stmt)
 		else
 			dump_expr(stmt->expr);
 	}
+	printf("\n");
+}
+
+static void
+dump_return_next(PLpgSQL_stmt_return_next * stmt)
+{
+	dump_ind();
+	printf("RETURN NEXT ");
+	if (stmt->rec != NULL)
+		printf("target = %d %s\n", stmt->rec->recno, stmt->rec->refname);
+	else if (stmt->row != NULL)
+		printf("target = %d %s\n", stmt->row->rowno, stmt->row->refname);
+	else if (stmt->expr != NULL)
+		dump_expr(stmt->expr);
 	printf("\n");
 }
 

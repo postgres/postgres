@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_handler.c,v 1.11 2002/06/15 19:54:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_handler.c,v 1.12 2002/08/30 00:28:41 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -34,13 +34,6 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  **********************************************************************/
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <string.h>
 
 #include "plpgsql.h"
 #include "pl.tab.h"

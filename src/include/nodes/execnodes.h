@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.72 2002/08/29 00:17:06 tgl Exp $
+ * $Id: execnodes.h,v 1.73 2002/08/30 00:28:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,8 @@
 #include "fmgr.h"
 #include "nodes/params.h"
 #include "nodes/primnodes.h"
+#include "utils/tuplestore.h"
+
 
 /* ----------------
  *	  IndexInfo information
@@ -126,19 +128,31 @@ typedef enum
 } ExprDoneCond;
 
 /*
+ * Return modes for functions returning sets.  Note values must be chosen
+ * as separate bits so that a bitmask can be formed to indicate supported
+ * modes.
+ */
+typedef enum
+{
+	SFRM_ValuePerCall = 0x01,	/* one value returned per call */
+	SFRM_Materialize = 0x02		/* result set instantiated in Tuplestore */
+} SetFunctionReturnMode;
+
+/*
  * When calling a function that might return a set (multiple rows),
  * a node of this type is passed as fcinfo->resultinfo to allow
  * return status to be passed back.  A function returning set should
- * raise an error if no such resultinfo is provided.  The ExprContext
- * in which the function is being called is also made available.
- *
- * XXX this mechanism is a quick hack and probably needs to be redesigned.
+ * raise an error if no such resultinfo is provided.
  */
 typedef struct ReturnSetInfo
 {
 	NodeTag		type;
-	ExprDoneCond isDone;
-	ExprContext *econtext;
+	ExprContext *econtext;		/* context function is being called in */
+	int			allowedModes;	/* bitmask: return modes caller can handle */
+	SetFunctionReturnMode	returnMode;	/* actual return mode */
+	ExprDoneCond isDone;		/* status for ValuePerCall mode */
+	Tuplestorestate *setResult;	/* return object for Materialize mode */
+	TupleDesc	setDesc;		/* descriptor for Materialize mode */
 } ReturnSetInfo;
 
 /* ----------------
@@ -509,32 +523,17 @@ typedef struct SubqueryScanState
  *		Function nodes are used to scan the results of a
  *		function appearing in FROM (typically a function returning set).
  *
- *		functionmode		function operating mode
- *		tupdesc				function's return tuple description
+ *		tupdesc				expected return tuple description
  *		tuplestorestate		private state of tuplestore.c
  *		funcexpr			function expression being evaluated
- *		returnsTuple		does function return tuples?
- *		fn_typeid			OID of function return type
- *		fn_typtype			return type's typtype
  * ----------------
  */
-typedef enum FunctionMode
-{
-	PM_REPEATEDCALL,
-	PM_MATERIALIZE,
-	PM_QUERY
-} FunctionMode;
-
 typedef struct FunctionScanState
 {
 	CommonScanState csstate;		/* its first field is NodeTag */
-	FunctionMode	functionmode;
 	TupleDesc		tupdesc;
-	void		   *tuplestorestate;
+	Tuplestorestate *tuplestorestate;
 	Node		   *funcexpr;
-	bool			returnsTuple;
-	Oid				fn_typeid;
-	char			fn_typtype;
 } FunctionScanState;
 
 /* ----------------------------------------------------------------
