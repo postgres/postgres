@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Nov 19 12:35:29 EST 2003
+Last updated:		Sat Nov 29 22:41:16 EST 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -448,7 +448,7 @@ Source Code
 * Improve access-permissions check on data directory in Cygwin (Tom)
 * Add documentation for perl, including mention of DBI/DBD perl location
 * Create improved PostgreSQL introductory documentation for the PHP
-  manuals (Rory)
+  manuals
 * Add optional CRC checksum to heap and index pages
 * Change representation of whole-tuple parameters to functions
 * Clarify use of 'application' and 'command' tags in SGML docs
@@ -458,7 +458,7 @@ Source Code
 * Acquire lock on a relation before building a relcache entry for it
 * Research interaction of setitimer() and sleep() used by statement_timeout
 * Add checks for fclose() failure
-* Change CVS $PostgreSQL: pgsql/doc/TODO,v 1.1172 2003/11/29 22:39:30 pgsql Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1172 2003/11/29 22:39:30 pgsql Exp $
+* Change CVS $PostgreSQL: pgsql/doc/TODO,v 1.1173 2003/11/30 03:41:10 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1173 2003/11/30 03:41:10 momjian Exp $
 * Exit postmaster if postgresql.conf can not be opened
 * Rename /scripts directory because they are all C programs now
 * Allow the regression tests to start postmaster with -i so the tests
@@ -493,7 +493,7 @@ Developers who have claimed items are:
 * Greg is Greg Sabino Mullane <greg@turnstep.com>
 * Hiroshi is Hiroshi Inoue <Inoue@tpf.co.jp>
 * Karel is Karel Zak <zakkr@zf.jcu.cz>
-* Jan is Jan Wieck <JanWieck@Yahoo.com> of PeerDirect Corp.
+* Jan is Jan Wieck <JanWieck@Yahoo.com> of Afilias, Inc.
 * Liam is Liam Stewart <liams@redhat.com> of Red Hat
 * Marc is Marc Fournier <scrappy@hub.org> of PostgreSQL, Inc.
 * Mark is Mark Hollomon <mhh@mindspring.com>
