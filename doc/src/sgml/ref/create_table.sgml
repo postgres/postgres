@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.61 2003/01/19 00:13:29 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.62 2003/02/19 03:13:25 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -230,7 +230,10 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
       for large tables, since it will reduce OID consumption and
       thereby postpone wraparound of the 32-bit OID counter.  Once the
       counter wraps around, uniqueness of OIDs can no longer be
-      assumed, which considerably reduces their usefulness.
+      assumed, which considerably reduces their usefulness. Specifying
+      <literal>WITHOUT OIDS</literal> also reduces the space required
+      to store the table on disk by 4 bytes per row of the table,
+      thereby improving performance.
      </para>
     </listitem>
    </varlistentry>
@@ -881,8 +884,8 @@ CREATE ASSERTION <replaceable>name</replaceable> CHECK ( <replaceable>condition<
 
 <!--    
     <para>
-     Domain constraints are defined by CREATE DOMAIN or ALTER DOMAIN
-     statements:
+     Domain constraints are defined by <command>CREATE
+     DOMAIN</command> or <command>ALTER DOMAIN</command> statements:
     </para>
     <para>
      Domain constraint: 

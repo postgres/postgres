@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_type.sgml,v 1.38 2003/01/19 00:13:29 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_type.sgml,v 1.39 2003/02/19 03:13:25 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -218,7 +218,8 @@ CREATE TYPE
   <para>
    The first form of <command>CREATE TYPE</command> creates a new base type
    (scalar type).  It  requires  the
-   registration of two functions (using CREATE FUNCTION) before defining the
+   registration of two functions (using <command>CREATE
+   FUNCTION</command>) before defining the
    type. The representation of a new base type is determined by
    <replaceable class="parameter">input_function</replaceable>, which
    converts the type's external  representation  to  an  internal
@@ -400,8 +401,8 @@ CREATE TYPE
    <para>
     User-defined type names cannot begin with the underscore character
     (<quote><literal>_</literal></quote>) and can only be 62
-    characters long (or in general <literal>NAMEDATALEN-2</>, rather than
-    the <literal>NAMEDATALEN-1</> characters allowed for other names).
+    characters long (or in general <symbol>NAMEDATALEN</symbol> - 2, rather than
+    the <symbol>NAMEDATALEN</symbol> - 1 characters allowed for other names).
     Type names beginning with underscore are
     reserved for internally-created array type names.
    </para>

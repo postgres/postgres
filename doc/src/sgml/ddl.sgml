@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ddl.sgml,v 1.10 2002/11/15 03:11:15 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ddl.sgml,v 1.11 2003/02/19 03:13:24 momjian Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -189,7 +189,7 @@ DROP TABLE products;
       individual table a row came from.  The
       <structfield>tableoid</structfield> can be joined against the
       <structfield>oid</structfield> column of
-      <classname>pg_class</classname> to obtain the table name.
+      <structname>pg_class</structname> to obtain the table name.
      </para>
     </listitem>
    </varlistentry>
@@ -904,9 +904,9 @@ WHERE c.altitude &gt; 500;
    139798 | Madison   |      845
 </programlisting>
 
-   (If you try to reproduce this example, you will probably get different
-   numeric OIDs.)  By doing a join with pg_class you can see the actual table
-   names:
+   (If you try to reproduce this example, you will probably get
+   different numeric OIDs.)  By doing a join with
+   <structname>pg_class</> you can see the actual table names:
 
 <programlisting>
 SELECT p.relname, c.name, c.altitude
