@@ -75,6 +75,11 @@
        <entry>calendar date without time of day</entry>
       </row>
       <row>
+       <entry>decimal</entry>
+       <entry>decimal(p,s)</entry>
+       <entry>exact numeric for p <= 9, s = 0</entry>
+      </row>
+      <row>
        <entry>float4/8</entry>
        <entry>float(p)</entry>
        <entry>floating-point number with precision p</entry>
@@ -100,16 +105,6 @@
        <entry>signed 4-byte integer</entry>
       </row>
       <row>
-       <entry>int4</entry>
-       <entry>decimal(p,s)</entry>
-       <entry>exact numeric for p <= 9, s = 0</entry>
-      </row>
-      <row>
-       <entry>int4</entry>
-       <entry>numeric(p,s)</entry>
-       <entry>exact numeric for p == 9, s = 0</entry>
-      </row>
-      <row>
        <entry>int8</entry>
        <entry></entry>
        <entry>signed 8-byte integer</entry>
@@ -128,6 +123,11 @@
        <entry>money</entry>
        <entry>decimal(9,2)</entry>
        <entry>US-style currency</entry>
+      </row>
+      <row>
+       <entry>numeric</entry>
+       <entry>numeric(p,s)</entry>
+       <entry>exact numeric for p == 9, s = 0</entry>
       </row>
       <row>
        <entry>path</entry>
@@ -283,6 +283,12 @@
       </thead>
       <tbody>
        <row>
+	<entry>decimal</entry>
+	<entry>variable</entry>
+	<entry>User-specified precision</entry>
+	<entry>no limit</entry>
+       </row>
+       <row>
 	<entry>float4</entry>
 	<entry>4 bytes</entry>
 	<entry>Variable-precision</entry>
@@ -311,6 +317,12 @@
 	<entry>8 bytes</entry>
 	<entry>Very large range fixed-precision</entry>
 	<entry>+/- &gt; 18 decimal places</entry>
+       </row>
+       <row>
+	<entry>numeric</entry>
+	<entry>variable</entry>
+	<entry>User-specified precision</entry>
+	<entry>no limit</entry>
        </row>
        <row>
 	<entry>serial</entry>
