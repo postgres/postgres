@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.104 2001/10/19 15:38:57 tgl Exp $
+ * $Id: c.h,v 1.105 2001/10/24 21:49:14 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,6 +68,9 @@
 #ifdef HAVE_SUPPORTDEFS_H
 #include <SupportDefs.h>
 #endif
+
+/* Must be before gettext() games below */
+#include <locale.h>
 
 #ifdef ENABLE_NLS
 #include <libintl.h>
