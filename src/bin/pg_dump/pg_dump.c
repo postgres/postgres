@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.166 2000/09/17 20:01:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.167 2000/09/18 03:24:03 pjw Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -1004,7 +1004,7 @@ dumpDatabase(Archive *AH)
 		fprintf(stderr, "%s saving database definition\n", g_comment_start);
 
 	/* Get the dba */
-	appendPQExpBuffer(dbQry, "select pg_get_userbyid(datdba) as dba from pg_database"
+	appendPQExpBuffer(dbQry, "select (select usename from pg_user where datdba = usesysid) as dba from pg_database"
 							" where datname = '%s'", PQdb(g_conn));
 
 	res = PQexec(g_conn, dbQry->data);
@@ -1172,11 +1172,11 @@ getTypes(int *numTypes)
 	 */
 
 	appendPQExpBuffer(query, "SELECT pg_type.oid, typowner, typname, typlen, typprtlen, "
-		  "typinput, typoutput, typreceive, typsend, typelem, typdelim, "
-		 "typdefault, typrelid, typbyval, usename, "
-		 "format_type(pg_type.oid, NULL) as typedefn "
-		 "from pg_type, pg_user "
-					  "where typowner = usesysid");
+		"typinput, typoutput, typreceive, typsend, typelem, typdelim, "
+		"typdefault, typrelid, typbyval, "
+		"(select usename from pg_user where typowner = usesysid) as usename, "
+		"format_type(pg_type.oid, NULL) as typedefn "
+		"from pg_type" );
 
 	res = PQexec(g_conn, query->data);
 	if (!res ||
@@ -1224,6 +1224,9 @@ getTypes(int *numTypes)
 		tinfo[i].typrelid = strdup(PQgetvalue(res, i, i_typrelid));
 		tinfo[i].usename = strdup(PQgetvalue(res, i, i_usename));
 		tinfo[i].typedefn = strdup(PQgetvalue(res, i, i_typedefn));
+
+		if (strlen(tinfo[i].usename) == 0)
+			fprintf(stderr, "WARNING: owner of type '%s' appears to be invalid\n",tinfo[i].typname);
 
 		if (strcmp(PQgetvalue(res, i, i_typbyval), "f") == 0)
 			tinfo[i].passedbyvalue = 0;
@@ -1288,9 +1291,9 @@ getOperators(int *numOprs)
 
 	appendPQExpBuffer(query, "SELECT pg_operator.oid, oprname, oprkind, oprcode, "
 			   "oprleft, oprright, oprcom, oprnegate, oprrest, oprjoin, "
-					  "oprcanhash, oprlsortop, oprrsortop, usename "
-					  "from pg_operator, pg_user "
-					  "where oprowner = usesysid");
+					"oprcanhash, oprlsortop, oprrsortop, "
+					"(select usename from pg_user where oprowner = usesysid) as usename "
+					"from pg_operator");
 
 	res = PQexec(g_conn, query->data);
 	if (!res ||
@@ -1336,6 +1339,11 @@ getOperators(int *numOprs)
 		oprinfo[i].oprlsortop = strdup(PQgetvalue(res, i, i_oprlsortop));
 		oprinfo[i].oprrsortop = strdup(PQgetvalue(res, i, i_oprrsortop));
 		oprinfo[i].usename = strdup(PQgetvalue(res, i, i_usename));
+
+		if (strlen(oprinfo[i].usename) == 0)
+			fprintf(stderr, "WARNING: owner of operator '%s' appears to be invalid\n",
+						oprinfo[i].oprname);
+
 	}
 
 	PQclear(res);
@@ -1627,10 +1635,11 @@ getAggregates(int *numAggs)
 	/* find all user-defined aggregates */
 
 	appendPQExpBuffer(query,
-					  "SELECT pg_aggregate.oid, aggname, aggtransfn, "
-					  "aggfinalfn, aggtranstype, aggbasetype, "
-					  "agginitval, usename from pg_aggregate, pg_user "
-					  "where aggowner = usesysid");
+						"SELECT pg_aggregate.oid, aggname, aggtransfn, "
+						"aggfinalfn, aggtranstype, aggbasetype, "
+						"agginitval, "
+						"(select usename from pg_user where aggowner = usesysid) as usename "
+						"from pg_aggregate" );
 
 	res = PQexec(g_conn, query->data);
 	if (!res ||
@@ -1665,6 +1674,10 @@ getAggregates(int *numAggs)
 		agginfo[i].aggbasetype = strdup(PQgetvalue(res, i, i_aggbasetype));
 		agginfo[i].agginitval = strdup(PQgetvalue(res, i, i_agginitval));
 		agginfo[i].usename = strdup(PQgetvalue(res, i, i_usename));
+		if (strlen(agginfo[i].usename) == 0)
+			fprintf(stderr, "WARNING: owner of aggregate '%s' appears to be invalid\n",
+						agginfo[i].aggname);
+
 	}
 
 	PQclear(res);
@@ -1706,10 +1719,11 @@ getFuncs(int *numFuncs)
 
 	appendPQExpBuffer(query,
 		   "SELECT pg_proc.oid, proname, prolang, pronargs, prorettype, "
-					  "proretset, proargtypes, prosrc, probin, usename, "
+					  "proretset, proargtypes, prosrc, probin, "
+					  "(select usename from pg_user where proowner = usesysid) as usename, "
 					  "proiscachable "
-					  "from pg_proc, pg_user "
-				 "where pg_proc.oid > '%u'::oid and proowner = usesysid",
+					  "from pg_proc "
+				 "where pg_proc.oid > '%u'::oid",
 					  g_last_builtin_oid);
 
 	res = PQexec(g_conn, query->data);
@@ -1755,6 +1769,11 @@ getFuncs(int *numFuncs)
 		finfo[i].lang = atoi(PQgetvalue(res, i, i_prolang));
 		finfo[i].usename = strdup(PQgetvalue(res, i, i_usename));
 		finfo[i].iscachable = (strcmp(PQgetvalue(res, i, i_iscachable),"t") == 0);
+
+		if (strlen(finfo[i].usename) == 0)
+			fprintf(stderr, "WARNING: owner of function '%s' appears to be invalid\n",
+						finfo[i].proname);
+
 		if (finfo[i].nargs < 0 || finfo[i].nargs > FUNC_MAX_ARGS)
 		{
 			fprintf(stderr, "failed sanity check: %s has %d args\n",
@@ -1818,10 +1837,11 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 	 */
 
 	appendPQExpBuffer(query,
-			   "SELECT pg_class.oid, relname, relkind, relacl, usename, "
+			   "SELECT pg_class.oid, relname, relkind, relacl, "
+					  "(select usename from pg_user where relowner = usesysid) as usename, "
 					  "relchecks, reltriggers, relhasindex, pg_get_viewdef(relname) as viewdef "
-					  "from pg_class, pg_user "
-					  "where relowner = usesysid and relname !~ '^pg_' "
+					  "from pg_class "
+					  "where relname !~ '^pg_' "
 					  "and relkind in ('%c', '%c', '%c') "
 					  "order by oid",
 				RELKIND_RELATION, RELKIND_SEQUENCE, RELKIND_VIEW);
@@ -1865,6 +1885,10 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 		} else {
 			tblinfo[i].viewdef = NULL;
 		}
+
+		if (strlen(tblinfo[i].usename) == 0)
+			fprintf(stderr, "WARNING: owner of table '%s' appears to be invalid\n",
+						tblinfo[i].relname);
 
 		/*
 		 * Exclude inherited CHECKs from CHECK constraints total. If a
@@ -3981,7 +4005,7 @@ dumpRules(Archive *fout, const char *tablename,
 		 */
 		resetPQExpBuffer(query);
 		appendPQExpBuffer(query, "SELECT definition,"
-						  "   pg_get_userbyid(pg_class.relowner) AS viewowner, "
+						  "   (select usename from pg_user where pg_class.relowner = usesysid) AS viewowner, "
 						  "   pg_rewrite.oid, pg_rewrite.rulename "
 						  "FROM pg_rewrite, pg_class, pg_rules "
 						  "WHERE pg_class.relname = '%s' "
