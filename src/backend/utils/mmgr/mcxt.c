@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/mcxt.c,v 1.34 2002/10/11 04:16:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/mcxt.c,v 1.35 2002/11/10 02:17:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -450,6 +450,29 @@ MemoryContextAlloc(MemoryContext context, Size size)
 			 (unsigned long) size);
 
 	return (*context->methods->alloc) (context, size);
+}
+
+/*
+ * MemoryContextAllocZero
+ *		Like MemoryContextAlloc, but clears allocated memory
+ *
+ *	We could just call MemoryContextAlloc then clear the memory, but this
+ *	function is called too many times, so we have a separate version.
+ */
+void *
+MemoryContextAllocZero(MemoryContext context, Size size)
+{
+	void *ret;
+
+	AssertArg(MemoryContextIsValid(context));
+
+	if (!AllocSizeIsValid(size))
+		elog(ERROR, "MemoryContextAllocZero: invalid request size %lu",
+			 (unsigned long) size);
+
+	ret = (*context->methods->alloc) (context, size);
+	MemSet(ret, 0, size);
+	return ret;
 }
 
 /*

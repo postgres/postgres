@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.121 2002/11/06 00:00:44 tgl Exp $
+ * $Id: nodes.h,v 1.122 2002/11/10 02:17:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -262,6 +262,24 @@ typedef struct Node
 
 #define nodeTag(nodeptr)		(((Node*)(nodeptr))->type)
 
+/*
+ *	There is no way to dereference the palloc'ed pointer to assign the
+ *	tag, and return the pointer itself, so we need a holder variable.
+ *	Fortunately, this function isn't recursive so we just define
+ *	a global variable for this purpose.
+ */
+extern Node *newNodeMacroHolder;
+
+#define newNode(size, tag) \
+( \
+	AssertMacro((size) >= sizeof(Node)),		/* need the tag, at least */ \
+\
+	newNodeMacroHolder = (Node *) palloc0(size), \
+	newNodeMacroHolder->type = (tag), \
+	newNodeMacroHolder \
+)
+
+
 #define makeNode(_type_)		((_type_ *) newNode(sizeof(_type_),T_##_type_))
 #define NodeSetTag(nodeptr,t)	(((Node*)(nodeptr))->type = (t))
 
@@ -282,11 +300,6 @@ typedef struct Node
  *					  extern declarations follow
  * ----------------------------------------------------------------
  */
-
-/*
- * nodes/nodes.c
- */
-extern Node *newNode(Size size, NodeTag tag);
 
 /*
  * nodes/{outfuncs.c,print.c}
