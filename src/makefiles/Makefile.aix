@@ -10,8 +10,7 @@ DLSUFFIX = .so
 ifneq ($(GCC), yes)
   ifeq ($(host_os), aix3.2.5)
     LDFLAGS_SL = -e _nostart
-  endif
-  ifneq (,$(findstring aix4.1, $(host_os)))
+  else
     LDFLAGS_SL = -bnoentry
   endif
 endif
