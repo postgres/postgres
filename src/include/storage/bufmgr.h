@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufmgr.h,v 1.32 1999/09/28 11:40:53 vadim Exp $
+ * $Id: bufmgr.h,v 1.33 2000/01/17 01:15:19 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -186,5 +186,6 @@ extern void SetBufferCommitInfoNeedsSave(Buffer buffer);
 
 extern void UnlockBuffers(void);
 extern void LockBuffer(Buffer buffer, int mode);
+extern void AbortBufferIO(void);
 
 #endif

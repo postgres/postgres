@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.65 1999/12/16 01:25:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.66 2000/01/17 01:15:18 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@
  *		This is so that we can support more backends. (system-wide semaphore
  *		sets run out pretty fast.)				  -ay 4/95
  *
- * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.65 1999/12/16 01:25:08 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.66 2000/01/17 01:15:18 inoue Exp $
  */
 #include <sys/time.h>
 #include <unistd.h>
@@ -848,6 +848,7 @@ ProcReleaseSpins(PROC *proc)
 			SpinRelease(i);
 		}
 	}
+	AbortBufferIO();
 }
 
 /*****************************************************************************

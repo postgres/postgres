@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.70 2000/01/15 02:59:33 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.71 2000/01/17 01:15:17 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,6 +73,18 @@ static int	WriteMode = BUFFER_LATE_WRITE;		/* Delayed write is
 												 * default */
 
 static void WaitIO(BufferDesc *buf, SPINLOCK spinlock);
+
+static void StartBufferIO(BufferDesc *buf, bool forInput);
+static void TerminateBufferIO(BufferDesc *buf);
+static void ContinueBufferIO(BufferDesc *buf, bool forInput);
+extern void InitBufferIO(void);
+extern void AbortBufferIO(void);
+
+/*
+ * Macro : BUFFER_IS_BROKEN
+ *      Note that write error doesn't mean the buffer broken
+*/
+#define BUFFER_IS_BROKEN(buf) ((buf->flags & BM_IO_ERROR) && !(buf->flags & BM_DIRTY))
 
 #ifndef HAS_TEST_AND_SET
 static void SignalIO(BufferDesc *buf);
@@ -312,12 +324,7 @@ ReadBufferWithBufferLock(Relation reln,
 	}
 
 	/* If anyone was waiting for IO to complete, wake them up now */
-#ifdef HAS_TEST_AND_SET
-	S_UNLOCK(&(bufHdr->io_in_progress_lock));
-#else
-	if (bufHdr->refcount > 1)
-		SignalIO(bufHdr);
-#endif
+	TerminateBufferIO(bufHdr);
 
 	SpinRelease(BufMgrLock);
 
@@ -375,13 +382,19 @@ BufferAlloc(Relation reln,
 		inProgress = (buf->flags & BM_IO_IN_PROGRESS);
 
 		*foundPtr = TRUE;
-		if (inProgress)
+		if (inProgress) /* confirm end of IO */
 		{
 			WaitIO(buf, BufMgrLock);
-			if (buf->flags & BM_IO_ERROR)
-			{
+			inProgress = (buf->flags & BM_IO_IN_PROGRESS);
+		}
+		if (BUFFER_IS_BROKEN(buf))
+		{
+			/* I couldn't understand the following old comment.
+			 * If there's no IO for the buffer and the buffer
+			 * is BROKEN,it should be read again. So start a
+			 * new buffer IO here. 
 
-				/*
+				 *
 				 * wierd race condition:
 				 *
 				 * We were waiting for someone else to read the buffer. While
@@ -396,13 +409,14 @@ BufferAlloc(Relation reln,
 				 *
 				 * This is never going to happen, don't worry about it.
 				 */
-				*foundPtr = FALSE;
-			}
+			*foundPtr = FALSE;
 		}
 #ifdef BMTRACE
 		_bm_trace((reln->rd_rel->relisshared ? 0 : MyDatabaseId), RelationGetRelid(reln), blockNum, BufferDescriptorGetBuffer(buf), BMT_ALLOCFND);
 #endif	 /* BMTRACE */
 
+		if (!(*foundPtr))
+			StartBufferIO(buf, true);
 		SpinRelease(BufMgrLock);
 
 		return buf;
@@ -454,7 +468,6 @@ BufferAlloc(Relation reln,
 			 * in WaitIO until we're done.
 			 */
 			inProgress = TRUE;
-			buf->flags |= BM_IO_IN_PROGRESS;
 #ifdef HAS_TEST_AND_SET
 
 			/*
@@ -462,9 +475,8 @@ BufferAlloc(Relation reln,
 			 * since no one had it pinned (it just came off the free
 			 * list), no one else can have this lock.
 			 */
-			Assert(S_LOCK_FREE(&(buf->io_in_progress_lock)));
-			S_LOCK(&(buf->io_in_progress_lock));
 #endif	 /* HAS_TEST_AND_SET */
+			StartBufferIO(buf, false);
 
 			/*
 			 * Write the buffer out, being careful to release BufMgrLock
@@ -486,12 +498,7 @@ BufferAlloc(Relation reln,
 				inProgress = FALSE;
 				buf->flags |= BM_IO_ERROR;
 				buf->flags &= ~BM_IO_IN_PROGRESS;
-#ifdef HAS_TEST_AND_SET
-				S_UNLOCK(&(buf->io_in_progress_lock));
-#else							/* !HAS_TEST_AND_SET */
-				if (buf->refcount > 1)
-					SignalIO(buf);
-#endif	 /* !HAS_TEST_AND_SET */
+				TerminateBufferIO(buf);
 				PrivateRefCount[BufferDescriptorGetBuffer(buf) - 1] = 0;
 				Assert(buf->refcount > 0);
 				buf->refcount--;
@@ -533,12 +540,7 @@ BufferAlloc(Relation reln,
 			{
 				inProgress = FALSE;
 				buf->flags &= ~BM_IO_IN_PROGRESS;
-#ifdef HAS_TEST_AND_SET
-				S_UNLOCK(&(buf->io_in_progress_lock));
-#else							/* !HAS_TEST_AND_SET */
-				if (buf->refcount > 1)
-					SignalIO(buf);
-#endif	 /* !HAS_TEST_AND_SET */
+				TerminateBufferIO(buf);
 				PrivateRefCount[BufferDescriptorGetBuffer(buf) - 1] = 0;
 				buf->refcount--;
 				buf = (BufferDesc *) NULL;
@@ -563,12 +565,7 @@ BufferAlloc(Relation reln,
 				 */
 				if (buf != NULL)
 				{
-#ifdef HAS_TEST_AND_SET
-					S_UNLOCK(&(buf->io_in_progress_lock));
-#else							/* !HAS_TEST_AND_SET */
-					if (buf->refcount > 1)
-						SignalIO(buf);
-#endif	 /* !HAS_TEST_AND_SET */
+					TerminateBufferIO(buf);
 					/* give up the buffer since we don't need it any more */
 					PrivateRefCount[BufferDescriptorGetBuffer(buf) - 1] = 0;
 					Assert(buf->refcount > 0);
@@ -588,10 +585,13 @@ BufferAlloc(Relation reln,
 				if (inProgress)
 				{
 					WaitIO(buf2, BufMgrLock);
-					if (buf2->flags & BM_IO_ERROR)
-						*foundPtr = FALSE;
+					inProgress = (buf2->flags & BM_IO_IN_PROGRESS);
 				}
+				if (BUFFER_IS_BROKEN(buf2))
+					*foundPtr = FALSE;
 
+				if (!(*foundPtr))
+					StartBufferIO(buf2, true);
 				SpinRelease(BufMgrLock);
 
 				return buf2;
@@ -640,12 +640,10 @@ BufferAlloc(Relation reln,
 	 */
 	if (!inProgress)
 	{
-		buf->flags |= BM_IO_IN_PROGRESS;
-#ifdef HAS_TEST_AND_SET
-		Assert(S_LOCK_FREE(&(buf->io_in_progress_lock)));
-		S_LOCK(&(buf->io_in_progress_lock));
-#endif	 /* HAS_TEST_AND_SET */
+		StartBufferIO(buf, true);
 	}
+	else
+		ContinueBufferIO(buf, true);
 
 #ifdef BMTRACE
 	_bm_trace((reln->rd_rel->relisshared ? 0 : MyDatabaseId), RelationGetRelid(reln), blockNum, BufferDescriptorGetBuffer(buf), BMT_ALLOCNOTFND);
@@ -806,7 +804,9 @@ FlushBuffer(Buffer buffer, bool release)
 
 	/* To check if block content changed while flushing. - vadim 01/17/97 */
 	SpinAcquire(BufMgrLock);
+	WaitIO(bufHdr, BufMgrLock);	/* confirm end of IO */
 	bufHdr->flags &= ~BM_JUST_DIRTIED;
+	StartBufferIO(bufHdr, false);	/* output IO start */
 	SpinRelease(BufMgrLock);
 
 	status = smgrflush(DEFAULT_SMGR, bufrel, bufHdr->tag.blockNum,
@@ -824,6 +824,8 @@ FlushBuffer(Buffer buffer, bool release)
 	BufferFlushCount++;
 
 	SpinAcquire(BufMgrLock);
+	bufHdr->flags &= ~BM_IO_IN_PROGRESS;	/* mark IO finished */
+	TerminateBufferIO(bufHdr);		/* output IO finished */
 
 	/*
 	 * If this buffer was marked by someone as DIRTY while we were
@@ -998,7 +1000,9 @@ BufferSync()
 				 * To check if block content changed while flushing (see
 				 * below). - vadim 01/17/97
 				 */
+				WaitIO(bufHdr, BufMgrLock);	/* confirm end of IO */
 				bufHdr->flags &= ~BM_JUST_DIRTIED;
+				StartBufferIO(bufHdr, false);	/* output IO start */
 
 				/*
 				 * If we didn't have the reldesc in our local cache, flush
@@ -1034,6 +1038,8 @@ BufferSync()
 					elog(ERROR, "BufferSync: cannot write %u for %s",
 						 bufHdr->tag.blockNum, bufHdr->sb_relname);
 				}
+				bufHdr->flags &= ~BM_IO_IN_PROGRESS;	/* mark IO finished */
+				TerminateBufferIO(bufHdr);	/* Sync IO finished */
 				BufferFlushCount++;
 
 				/*
@@ -1084,10 +1090,16 @@ BufferSync()
 static void
 WaitIO(BufferDesc *buf, SPINLOCK spinlock)
 {
-	SpinRelease(spinlock);
-	S_LOCK(&(buf->io_in_progress_lock));
-	S_UNLOCK(&(buf->io_in_progress_lock));
-	SpinAcquire(spinlock);
+	/*
+	 * Changed to wait until there's no IO - Inoue 01/13/2000
+	 */
+	while ((buf->flags & BM_IO_IN_PROGRESS) != 0)
+	{
+		SpinRelease(spinlock);
+		S_LOCK(&(buf->io_in_progress_lock));
+		S_UNLOCK(&(buf->io_in_progress_lock));
+		SpinAcquire(spinlock);
+	}
 }
 
 #else							/* !HAS_TEST_AND_SET */
@@ -2162,4 +2174,113 @@ LockBuffer(Buffer buffer, int mode)
 	IpcSemaphoreUnlock(WaitCLSemId, 0, IpcExclusiveLock);
 #endif
 
+}
+
+/*
+ *	Functions for IO error handling
+ *
+ *	Note : We assume that nested buffer IO never occur.
+ *	i.e at most one io_in_progress spinlock is held
+ *	per proc.
+*/
+static	BufferDesc *InProgressBuf = (BufferDesc *)NULL;
+static	bool	IsForInput;
+
+/*
+ * Function:StartBufferIO
+ *	(Assumptions)
+ *	My process is executing no IO
+ *	BufMgrLock is held
+ *	BM_IO_IN_PROGRESS mask is not set for the buffer 
+ *	The buffer is Pinned
+ *
+*/
+static void StartBufferIO(BufferDesc *buf, bool forInput)
+{
+	Assert(!InProgressBuf);
+	Assert(!(buf->flags & BM_IO_IN_PROGRESS));
+	buf->flags |= BM_IO_IN_PROGRESS;
+#ifdef	HAS_TEST_AND_SET
+	Assert(S_LOCK_FREE(&(buf->io_in_progress_lock)))
+	S_LOCK(&(buf->io_in_progress_lock));
+#endif /* HAS_TEST_AND_SET */
+	InProgressBuf = buf;
+	IsForInput = forInput;
+}
+
+/*
+ * Function:TerminateBufferIO
+ *	(Assumptions)
+ *	My process is executing IO for the buffer
+ *	BufMgrLock is held
+ *	The buffer is Pinned
+ *
+*/
+static void TerminateBufferIO(BufferDesc *buf)
+{
+	Assert(buf == InProgressBuf);
+#ifdef	HAS_TEST_AND_SET
+	S_UNLOCK(&(buf->io_in_progress_lock));
+#else
+	if (buf->refcount > 1)
+		SignalIO(buf);
+#endif /* HAS_TEST_AND_SET */
+	InProgressBuf = (BufferDesc *)0;
+}
+
+/*
+ * Function:ContinueBufferIO
+ *	(Assumptions)
+ *	My process is executing IO for the buffer
+ *	BufMgrLock is held
+ *	The buffer is Pinned
+ *
+*/
+static void ContinueBufferIO(BufferDesc *buf, bool forInput)
+{
+	Assert(buf == InProgressBuf);
+	Assert(buf->flags & BM_IO_IN_PROGRESS);
+	IsForInput = forInput;
+}
+
+extern void	InitBufferIO(void)
+{
+	InProgressBuf = (BufferDesc *)0;
+}
+
+/*
+ *	This function is called from ProcReleaseSpins().
+ *	BufMgrLock isn't held when this function is called. 
+ *	BM_IO_ERROR is always set. If BM_IO_ERROR was already
+ *	set in case of output,this routine would kill all 
+ *	backends and reset postmaster.
+ */
+extern void	AbortBufferIO(void)
+{
+	BufferDesc *buf = InProgressBuf;
+	if (buf)
+	{
+		Assert(buf->flags & BM_IO_IN_PROGRESS);
+		SpinAcquire(BufMgrLock);
+		if (IsForInput)
+		{
+			Assert(!(buf->flags & BM_DIRTY));
+		}
+		else
+		{
+			Assert(!(buf->flags & BM_DIRTY));
+			/* Assert(!(buf->flags & BM_IO_ERROR)); */
+			if (buf->flags & BM_IO_ERROR)
+			{
+				elog(NOTICE, "!!! write error seems permanent !!!");
+				elog(NOTICE, "!!! now kill all backends and reset postmaster !!!");
+				proc_exit(255);
+			}
+			buf->flags |= BM_DIRTY;
+		}
+		buf->flags |= BM_IO_ERROR;
+		TerminateBufferIO(buf);
+		buf->flags &= ~BM_IO_IN_PROGRESS;
+		SpinRelease(BufMgrLock);
+	}
 }
