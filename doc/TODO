@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Jan 27 23:55:43 EST 2000
+Last updated:		Sat Jan 29 12:23:49 EST 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -18,7 +18,7 @@ RELIABILITY
 
 RESOURCES
 
-* Disallow inherited columns with the same name as new columns
+* -Disallow inherited columns with the same name as new columns
 * -Elog() does not free all its memory
 * -spinlock stuck problem when elog(FATAL) and elog(ERROR) inside bufmgr
 * -Recover or force failure when disk space is exhausted(Hiroshi)
@@ -41,7 +41,9 @@ PARSER
 * -CREATE TABLE x AS SELECT 1 UNION SELECT 2 fails
 * -CREATE TABLE test(col char(2) DEFAULT user) fails in length restriction
 * -mismatched types in CREATE TABLE ... DEFAULT causes problems [default]
-* -SELECT ... UNION ... ORDER BY fails when sort expr not in result list
+* -SELECT ... UNION ... ORDER BY fails when sort expr not in result
+  list, ORDER BY is applied only to the first SELECT
+
 * Be smarter about promoting types when UNION merges different data types
 * redesign INSERT ... SELECT to have two levels of target list
 * -select * from pg_class where oid in (0,-1)
@@ -77,7 +79,8 @@ MISC
 * Fix libpq bug that causes it to drop backend error message sent
   just before connection closure (ie, any FATAL error message)
 * SELECT ... UNION ... ORDER BY fails when sort expr not in result list
-* SELECT ... UNION ... GROUP BY fails if column types disagree
+* SELECT ... UNION ... GROUP BY fails if column types disagree, no type
+  promotion occurs
 
 ENHANCEMENTS
 ------------
@@ -119,7 +122,6 @@ TYPES
 * Add IPv6 capability to INET/CIDR types
 * Make a separate SERIAL type?
 * Store binary-compatible type information in the system
-* -Allow user to define char1 column
 * Add support for & operator
 * Allow LOCALE on a per-column basis, default to ASCII
 * -Allow LOCALE to use indexes in regular expression searches(Tom)
@@ -133,7 +135,6 @@ TYPES
 * -Make Absolutetime/Relativetime int4 because time_t can be int8 on some ports
 * Functions returning sets don't really work right[function]
 * -Make type equivalency apply to aggregates
-* Allow user to define char1 column
 
 VIEWS
 
@@ -264,6 +265,7 @@ MISC
 
 * Allow compression of log and meta data
 * Allow char() not to use variable-sized header to reduce disk size
+* Allow char1 data type that takes one byte of storage
 * Do async I/O to do better read-ahead of data
 * -Fix memory exhaustion when using many OR's [cnfify](Tom)
 * Get faster regex() code from Henry Spencer <henry@zoo.utoronto.ca>
