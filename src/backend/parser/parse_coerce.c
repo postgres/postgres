@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.102 2003/07/01 19:10:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.103 2003/07/03 19:07:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -564,7 +564,7 @@ coerce_to_boolean(ParseState *pstate, Node *node,
 		if (node == NULL)
 		{
 			/* translator: first %s is name of a SQL construct, eg WHERE */
-			elog(ERROR, "Argument of %s must be type boolean, not type %s",
+			elog(ERROR, "argument of %s must be type boolean, not type %s",
 				 constructName, format_type_be(inputTypeId));
 		}
 	}
@@ -572,7 +572,46 @@ coerce_to_boolean(ParseState *pstate, Node *node,
 	if (expression_returns_set(node))
 	{
 		/* translator: %s is name of a SQL construct, eg WHERE */
-		elog(ERROR, "Argument of %s must not be a set function",
+		elog(ERROR, "argument of %s must not be a set function",
+			 constructName);
+	}
+
+	return node;
+}
+
+/* coerce_to_integer()
+ *		Coerce an argument of a construct that requires integer input
+ *		(LIMIT, OFFSET, etc).  Also check that input is not a set.
+ *
+ * Returns the possibly-transformed node tree.
+ *
+ * As with coerce_type, pstate may be NULL if no special unknown-Param
+ * processing is wanted.
+ */
+Node *
+coerce_to_integer(ParseState *pstate, Node *node,
+				  const char *constructName)
+{
+	Oid			inputTypeId = exprType(node);
+
+	if (inputTypeId != INT4OID)
+	{
+		node = coerce_to_target_type(pstate, node, inputTypeId,
+									 INT4OID, -1,
+									 COERCION_ASSIGNMENT,
+									 COERCE_IMPLICIT_CAST);
+		if (node == NULL)
+		{
+			/* translator: first %s is name of a SQL construct, eg LIMIT */
+			elog(ERROR, "argument of %s must be type integer, not type %s",
+				 constructName, format_type_be(inputTypeId));
+		}
+	}
+
+	if (expression_returns_set(node))
+	{
+		/* translator: %s is name of a SQL construct, eg LIMIT */
+		elog(ERROR, "argument of %s must not be a set function",
 			 constructName);
 	}
 

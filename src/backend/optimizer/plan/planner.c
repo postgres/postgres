@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.155 2003/06/16 02:03:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.156 2003/07/03 19:07:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,8 @@
 #define EXPRKIND_QUAL	0
 #define EXPRKIND_TARGET	1
 #define EXPRKIND_RTFUNC	2
-#define EXPRKIND_ININFO	3
+#define EXPRKIND_LIMIT	3
+#define EXPRKIND_ININFO	4
 
 
 static Node *preprocess_expression(Query *parse, Node *expr, int kind);
@@ -231,6 +232,11 @@ subquery_planner(Query *parse, double tuple_fraction)
 
 	parse->havingQual = preprocess_expression(parse, parse->havingQual,
 											  EXPRKIND_QUAL);
+
+	parse->limitOffset = preprocess_expression(parse, parse->limitOffset,
+											   EXPRKIND_LIMIT);
+	parse->limitCount = preprocess_expression(parse, parse->limitCount,
+											  EXPRKIND_LIMIT);
 
 	parse->in_info_list = (List *)
 		preprocess_expression(parse, (Node *) parse->in_info_list,

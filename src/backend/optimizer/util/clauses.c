@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.145 2003/07/03 16:33:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.146 2003/07/03 19:07:25 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2390,6 +2390,10 @@ query_tree_walker(Query *query,
 		return true;
 	if (walker(query->havingQual, context))
 		return true;
+	if (walker(query->limitOffset, context))
+		return true;
+	if (walker(query->limitCount, context))
+		return true;
 	if (walker(query->in_info_list, context))
 		return true;
 	foreach(rt, query->rtable)
@@ -2863,6 +2867,8 @@ query_tree_mutator(Query *query,
 	MUTATE(query->jointree, query->jointree, FromExpr *);
 	MUTATE(query->setOperations, query->setOperations, Node *);
 	MUTATE(query->havingQual, query->havingQual, Node *);
+	MUTATE(query->limitOffset, query->limitOffset, Node *);
+	MUTATE(query->limitCount, query->limitCount, Node *);
 	MUTATE(query->in_info_list, query->in_info_list, List *);
 	FastListInit(&newrt);
 	foreach(rt, query->rtable)

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.277 2003/06/25 04:19:24 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.278 2003/07/03 19:07:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -459,7 +459,7 @@ transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt)
 	qry->distinctClause = NIL;
 
 	/* fix where clause */
-	qual = transformWhereClause(pstate, stmt->whereClause);
+	qual = transformWhereClause(pstate, stmt->whereClause, "WHERE");
 
 	/* done building the range table and jointree */
 	qry->rtable = pstate->p_rtable;
@@ -1588,7 +1588,8 @@ transformIndexStmt(ParseState *pstate, IndexStmt *stmt)
 		/* no to join list, yes to namespace */
 		addRTEtoQuery(pstate, rte, false, true);
 
-		stmt->whereClause = transformWhereClause(pstate, stmt->whereClause);
+		stmt->whereClause = transformWhereClause(pstate, stmt->whereClause,
+												 "WHERE");
 	}
 
 	/* take care of any index expressions */
@@ -1699,7 +1700,8 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt,
 	}
 
 	/* take care of the where clause */
-	stmt->whereClause = transformWhereClause(pstate, stmt->whereClause);
+	stmt->whereClause = transformWhereClause(pstate, stmt->whereClause,
+											 "WHERE");
 
 	if (length(pstate->p_rtable) != 2)	/* naughty, naughty... */
 		elog(ERROR, "Rule WHERE condition may not contain references to other relations");
@@ -1891,13 +1893,14 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 	markTargetListOrigins(pstate, qry->targetList);
 
 	/* transform WHERE */
-	qual = transformWhereClause(pstate, stmt->whereClause);
+	qual = transformWhereClause(pstate, stmt->whereClause, "WHERE");
 
 	/*
 	 * Initial processing of HAVING clause is just like WHERE clause.
 	 * Additional work will be done in optimizer/plan/planner.c.
 	 */
-	qry->havingQual = transformWhereClause(pstate, stmt->havingClause);
+	qry->havingQual = transformWhereClause(pstate, stmt->havingClause,
+										   "HAVING");
 
 	/*
 	 * Transform sorting/grouping stuff.  Do ORDER BY first because both
@@ -1918,8 +1921,10 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 												  qry->targetList,
 												  &qry->sortClause);
 
-	qry->limitOffset = stmt->limitOffset;
-	qry->limitCount = stmt->limitCount;
+	qry->limitOffset = transformLimitClause(pstate, stmt->limitOffset,
+											"OFFSET");
+	qry->limitCount = transformLimitClause(pstate, stmt->limitCount,
+										   "LIMIT");
 
 	qry->rtable = pstate->p_rtable;
 	qry->jointree = makeFromExpr(pstate->p_joinlist, qual);
@@ -2124,8 +2129,10 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	if (tllen != length(qry->targetList))
 		elog(ERROR, "ORDER BY on a UNION/INTERSECT/EXCEPT result must be on one of the result columns");
 
-	qry->limitOffset = limitOffset;
-	qry->limitCount = limitCount;
+	qry->limitOffset = transformLimitClause(pstate, limitOffset,
+											"OFFSET");
+	qry->limitCount = transformLimitClause(pstate, limitCount,
+										   "LIMIT");
 
 	qry->rtable = pstate->p_rtable;
 	qry->jointree = makeFromExpr(pstate->p_joinlist, NULL);
@@ -2376,7 +2383,7 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 
 	qry->targetList = transformTargetList(pstate, stmt->targetList);
 
-	qual = transformWhereClause(pstate, stmt->whereClause);
+	qual = transformWhereClause(pstate, stmt->whereClause, "WHERE");
 
 	qry->rtable = pstate->p_rtable;
 	qry->jointree = makeFromExpr(pstate->p_joinlist, qual);

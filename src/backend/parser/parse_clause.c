@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.116 2003/06/16 02:03:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.117 2003/07/03 19:07:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -317,10 +317,7 @@ transformJoinOnClause(ParseState *pstate, JoinExpr *j,
 	save_namespace = pstate->p_namespace;
 	pstate->p_namespace = makeList2(j->larg, j->rarg);
 
-	/* This part is just like transformWhereClause() */
-	result = transformExpr(pstate, j->quals);
-
-	result = coerce_to_boolean(pstate, result, "JOIN/ON");
+	result = transformWhereClause(pstate, j->quals, "JOIN/ON");
 
 	pstate->p_namespace = save_namespace;
 
@@ -945,10 +942,14 @@ buildMergedJoinVar(ParseState *pstate, JoinType jointype,
 
 /*
  * transformWhereClause -
- *	  transforms the qualification and make sure it is of type Boolean
+ *	  Transform the qualification and make sure it is of type boolean.
+ *	  Used for WHERE and allied clauses.
+ *
+ * constructName does not affect the semantics, but is used in error messages
  */
 Node *
-transformWhereClause(ParseState *pstate, Node *clause)
+transformWhereClause(ParseState *pstate, Node *clause,
+					 const char *constructName)
 {
 	Node	   *qual;
 
@@ -957,7 +958,55 @@ transformWhereClause(ParseState *pstate, Node *clause)
 
 	qual = transformExpr(pstate, clause);
 
-	qual = coerce_to_boolean(pstate, qual, "WHERE");
+	qual = coerce_to_boolean(pstate, qual, constructName);
+
+	return qual;
+}
+
+
+/*
+ * transformLimitClause -
+ *	  Transform the expression and make sure it is of type integer.
+ *	  Used for LIMIT and allied clauses.
+ *
+ * constructName does not affect the semantics, but is used in error messages
+ */
+Node *
+transformLimitClause(ParseState *pstate, Node *clause,
+					 const char *constructName)
+{
+	Node	   *qual;
+
+	if (clause == NULL)
+		return NULL;
+
+	qual = transformExpr(pstate, clause);
+
+	qual = coerce_to_integer(pstate, qual, constructName);
+
+	/*
+	 * LIMIT can't refer to any vars or aggregates of the current query;
+	 * we don't allow subselects either (though that case would at least
+	 * be sensible)
+	 */
+	if (contain_vars_of_level(qual, 0))
+	{
+		/* translator: %s is name of a SQL construct, eg LIMIT */
+		elog(ERROR, "argument of %s must not contain variables",
+			 constructName);
+	}
+	if (checkExprHasAggs(qual))
+	{
+		/* translator: %s is name of a SQL construct, eg LIMIT */
+		elog(ERROR, "argument of %s must not contain aggregates",
+			 constructName);
+	}
+	if (contain_subplans(qual))
+	{
+		/* translator: %s is name of a SQL construct, eg LIMIT */
+		elog(ERROR, "argument of %s must not contain subselects",
+			 constructName);
+	}
 
 	return qual;
 }
