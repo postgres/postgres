@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.30 1999/02/21 03:49:27 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.31 1999/03/14 16:44:01 momjian Exp $
  *
  * NOTES
  *	 This code is actually (almost) unused.
@@ -94,7 +94,7 @@ static int	sec_tab[] = {
  * Function prototypes -- internal to this file only
  */
 
-static void reltime2tm(int32 time, struct tm * tm);
+static void reltime2tm(RelativeTime time, struct tm * tm);
 
 #ifdef NOT_USED
 static int	correct_unit(char *unit, int *unptr);
@@ -161,7 +161,7 @@ reltimein(char *str)
  *		reltimeout		- converts the internal format to a reltime string
  */
 char *
-reltimeout(int32 time)
+reltimeout(RelativeTime time)
 {
 	char	   *result;
 	struct tm	tt,
@@ -193,7 +193,7 @@ do { \
 } while(0)
 
 static void
-reltime2tm(int32 time, struct tm * tm)
+reltime2tm(RelativeTime time, struct tm * tm)
 {
 	TMODULO(time, tm->tm_year, 31536000);
 	TMODULO(time, tm->tm_mon, 2592000);

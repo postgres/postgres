@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.75 1999/03/14 05:09:05 momjian Exp $
+ * $Id: builtins.h,v 1.76 1999/03/14 16:44:01 momjian Exp $
  *
  * NOTES
  *	  This should normally only be included by fmgr.h.
@@ -195,8 +195,8 @@ extern int32 pqtest(struct varlena * vlena);
 /* arrayfuncs.c */
 
 /* date.c */
-extern int32 reltimein(char *timestring);
-extern char *reltimeout(int32 timevalue);
+extern RelativeTime reltimein(char *timestring);
+extern char *reltimeout(RelativeTime timevalue);
 extern TimeInterval tintervalin(char *intervalstr);
 extern char *tintervalout(TimeInterval interval);
 extern RelativeTime timespan_reltime(TimeSpan *timespan);

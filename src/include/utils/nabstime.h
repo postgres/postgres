@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nabstime.h,v 1.18 1999/02/13 23:22:25 momjian Exp $
+ * $Id: nabstime.h,v 1.19 1999/03/14 16:44:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,8 +23,13 @@
  *
  * ----------------------------------------------------------------
  */
-typedef int32 AbsoluteTime;
-typedef int32 RelativeTime;
+/* The original typedefs are bogus - they assume that the system's 'time_t'
+ * type is of size 32-bits.  Under AlphaLinux, time_t is a long int, which
+ * is 64-bits.  Therefore, typedef these both as simply 'time_t', and let
+ * the OS define what the size really is. -- RME 3/5/99
+ */
+typedef time_t AbsoluteTime;
+typedef time_t RelativeTime;
 
 typedef struct
 {
