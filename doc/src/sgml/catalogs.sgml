@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.74 2003/09/12 22:17:19 tgl Exp $
+ $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.75 2003/10/17 00:55:17 tgl Exp $
  -->
 
 <chapter id="catalogs">
@@ -1356,6 +1356,15 @@
     </tbody>
    </tgroup>
   </table>
+
+  <note>
+   <para>
+    <structfield>consrc</structfield> is not updated when referenced objects
+    change; for example, it won't track renaming of columns.  Rather than
+    relying on this field, it's best to use <function>pg_get_constraintdef()</>
+    to extract the definition of a check constraint.
+   </para>
+  </note>
 
   <note>
    <para>
