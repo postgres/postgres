@@ -26,7 +26,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.76 1999/12/20 05:39:40 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.77 1999/12/22 04:23:31 ishii Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -321,6 +321,7 @@ PG_HBA_SAMPLE="$PGLIB"/pg_hba.conf.sample
 TEMPLATE_DESCR="$PGLIB"/local1_template1.description
 GLOBAL_DESCR="$PGLIB"/global1.description
 PG_GEQO_SAMPLE="$PGLIB"/pg_geqo.sample
+PG_POSTMASTER_OPTS_DEFAULT_SAMPLE="$PGLIB"/postmaster.opts.default.sample
 
 for PREREQ_FILE in "$TEMPLATE" "$GLOBAL" "$PG_HBA_SAMPLE"
 do
@@ -433,6 +434,7 @@ then
 
     cp "$PG_HBA_SAMPLE" "$PGDATA"/pg_hba.conf     || exit_nicely
     cp "$PG_GEQO_SAMPLE" "$PGDATA"/pg_geqo.sample || exit_nicely
+    cp "$PG_POSTMASTER_OPTS_DEFAULT_SAMPLE" "$PGDATA"/postmaster.opts.default || exit_nicely
 
     echo "Adding template1 database to pg_database"
 
@@ -556,6 +558,8 @@ echo "VACUUM ANALYZE" \
 echo
 echo "$CMDNAME completed successfully. You can now start the database server."
 echo "($PGPATH/postmaster -D $PGDATA)"
+echo "or"
+echo "($PGPATH/pg_ctl -D $PGDATA start)"
 echo
 
 exit 0
