@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.51 2001/05/07 20:43:28 petere Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.52 2001/06/20 20:25:11 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -141,7 +141,6 @@ ifeq ($(PORTNAME), freebsd)
   ifdef ELF_SYSTEM
     shlib		:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
     LINK.shared		= $(COMPILER) -shared -Wl,-x,-soname,$(soname)
-    SHLIB_LINK		+= -lc
   else
     shlib		:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
     LINK.shared		= $(LD) -x -Bshareable -Bforcearchive
