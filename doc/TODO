@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Dec 18 00:15:58 EST 1998
+Last updated:		Fri Dec 18 02:30:47 EST 1998
 
 Current maintainer:	Bruce Momjian (maillist@candle.pha.pa.us)
 
@@ -52,10 +52,9 @@ RELIABILITY
 * Remove EXTEND?
 * Can lo_export()/lo_import() read/write anywhere, causing a security problem?
 * Tables that start with xinv confused to be large objects
-* Two and three dimmensional arrays display improperly, missing {}
+* Two and three dimensional arrays display improperly, missing {}
 * GROUP BY in INSERT INTO table SELECT * FROM table2 fails
 * Prevent auto-table reference, like SELECT table.col WHERE col = 3 (?)
-* SELECT * FROM table WHERE int4_column = '1' fails
 * SELECT a[1] FROM test fails, it needs test.a[1]
 * UPDATE table SET table.value = 3 fails
 * User who can create databases can modify pg_database table
@@ -64,13 +63,11 @@ RELIABILITY
 * views on subselects fail
 * disallow inherited columns with the same name as new columns
 * recover or force failure when disk space is exhausted
-* default char() value not to full length crashes server on some OS's
 * allow UPDATE using aggregate to affect all rows, not just one
 * computations in views fail:
 	create view test as select usesysid * usesysid from pg_shadow;
 * views containing aggregates sometimes fail(Jan)
 * ALTER TABLE ADD COLUMN does not honor DEFAULT, add CONSTRAINT
-* SELECT DISTINCT i FROM dtest ORDER BY j generates strange output
 * fix memory leak in aborted transactions
 * array index references without table name cause problems
 * aggregates on array indexes crash backend
@@ -93,14 +90,11 @@ ENHANCEMENTS
 	* add temporary tables
 	* add sql3 recursive unions
 	* add the concept of dataspaces
-	* add DECIMAL, NUMERIC, DOUBLE PRECISION, BIT, BIT VARYING
+	* add BIT, BIT VARYING
  	* NCHAR (as distinguished from ordinary varchar),
 	* DOMAIN capability
 * Allow compression of large fields or a compressed field type
 * Fix the rules system(Jan,Soo-Ho)
-	* add CONSTRAINT
-* Full set of text operations and functions
-	* word searches, concat,max() on text, char
 * Large objects
 	* Fix large object mapping scheme, own reltype(Peter)
 	* Allow large text type to use large objects(Peter)
@@ -113,11 +107,8 @@ ENHANCEMENTS
 	(fix lseek()/off_t, mdextend()/RELSEG_SIZE)
 * Add REGEX internationalization
 * allow row re-use without vacuum, maybe?(Vadim)
-* Add word index for text fields, maybe with trigrams, i.e.:
-    * ' (cat | dog) & ! fox ' meaning text has cat aor dog, but not fox
 * Populate backend status area and write program to dump status data
 * Add ALTER TABLE DROP/ALTER COLUMN feature
-* Allow INSERT INTO ... SELECT to convert column types
 * Add syslog functionality(Marc)
 * Add STDDEV/VARIANCE() function for standard deviation computation/variance
 * add UNIQUE capability to non-btree indexes
@@ -126,13 +117,11 @@ ENHANCEMENTS
 * make NULL's come out at the beginning or end depending on the ORDER BY direction
 * change the library/backend interface to use network byte order
 * Restore unused oid's on backend exit if no one else has gotten oids
-* remove non-standard types from the system, and make them loadable
 * have UPDATE/DELETE clean out indexes
 * allow WHERE restriction on ctid
 * allow pg_descriptions when creating types, tables, columns, and functions
 * Fix compile and security of Kerberos/GSSAPI code
 * Allow psql to print nulls as distinct from ""(?)
-* Allow variable casts with BETWEEN 'today'::asbtime AND 'today'::abstime
 * Allow INSERT INTO ... SELECT ... FROM view to work
 * Make VACUUM on database not lock pg_class
 * Make VACUUM ANALYZE only use a readlock
@@ -146,9 +135,7 @@ ENHANCEMENTS
 * New pg_shadow file, pg_user is now a view of pg_shadow(Jan)
 * Allow flag to control COPY input/output of NULLs
 * Allow CLUSTER on all tables at once, and improve CLUSTER
-* Change all references of Postgres to PostgreSQL, including binary names
 * Add ELOG_TIMESTAMPS to elog()(?)
-* Change LOCK tablename to LOCK TABLE tablename(?)
 * Allow max tuple length to be changed(Darren)
 * Have psql with no database name not connect to username as default(?)
 * Allow subqueries in target list
@@ -173,8 +160,7 @@ ENHANCEMENTS
 * multi-verion concurrency control(Vadim)
 * improve reporting of syntax errors by showing location of error in query
 * allow chaining of pages to allow >8k tuples
-* no min/max for oid type
-* remove un-needed conversion functions
+* remove un-needed conversion functions where appropriate
 * redesign the function call interface to handle NULLs better(Jan)
 * permissions on indexes - prevent them?
 * allow multiple generic operators in expressions without the use of parentheses
@@ -226,7 +212,6 @@ DOCUMENTATION
 -------------
 * Update usermanual source(many)
 * added features used in grammer but not in docs, like :: and CAST
-* Add keyword list to documentation, already in /tools
 * Add 'man pgsql' to show all manual page names
 * Add use of 'const' for varibles in source tree
 
@@ -236,22 +221,21 @@ DOCUMENTATION
 CHANGES IN THE 6.4.1 RELEASE
 ----------------------------
 Add pg_dump -N flag to force double quotes around identifiers.  This is
-	the default
+	the default(Thomas)
 Fix for NOT in where clause causing crash(Bruce)
 EXPLAIN VERBOSE coredump fix(Vadim)
 Fix shared-library problems on Linux
 Fix test for table existance to allow mixed-case and whitespace in
-	the table name
+	the table name(Thomas)
 Fix a couple of pg_dump bugs
-Fix for creating tables with constraints when table name is mixed-case(Billy)
 Configure matches template/.similar entries better(Tom)
 Change builtin function names from SPI_* to spi_*
 OR WHERE clause fix(Vadim)
 Fixes for mixed-case table names(Billy)
-contrib/linux/postgres.init.csh/sh fix
+contrib/linux/postgres.init.csh/sh fix(Thomas)
 libpq memory overrun fix
 SunOS fixes(Tom)
-Change exp() behavior to generate error on underflow
+Change exp() behavior to generate error on underflow(Thomas)
 pg_dump fixes for memory leak, inheritance constraints, layout change
 update pgaccess to 0.93
 Fix prototype for 64-bit platforms
@@ -262,7 +246,7 @@ Fix for lo_import() crash(Bruce)
 Better search for install program(Tom)
 Timezone fixes(Tom)
 HPUX fixes(Tom)
-Use implicit type coersion for matching DEFAULT values
+Use implicit type coersion for matching DEFAULT values(Thomas)
 Add routines to help with single-byte (internal) character type(Thomas)
 Compilation of libpq for Win32 fixes(Magnus)
 Upgrade to PyGreSQL 2.2(D'Arcy)
