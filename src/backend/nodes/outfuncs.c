@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.34 1998/04/27 02:58:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.35 1998/05/09 23:46:35 thomas Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -44,6 +44,10 @@
 
 #include "catalog/pg_type.h"
 #include "lib/stringinfo.h"
+
+#ifdef PARSEDEBUG
+#include "../parse.h"
+#endif
 
 static void _outDatum(StringInfo str, Datum value, Oid type);
 static void _outNode(StringInfo str, void *obj);
@@ -106,6 +110,26 @@ _outIndexStmt(StringInfo str, IndexStmt *node)
 	appendStringInfo(str, " :unique ");
 	appendStringInfo(str, (node->unique ? "true" : "false"));
 }
+
+#ifdef PARSEDEBUG
+static void
+_outSelectStmt(StringInfo str, SelectStmt *node)
+{
+	appendStringInfo(str, "SELECT");
+
+	appendStringInfo(str, " :where ");
+	_outNode(str, node->whereClause);
+}
+
+static void
+_outFuncCall(StringInfo str, FuncCall *node)
+{
+	appendStringInfo(str, "FUNCTION ");
+	appendStringInfo(str, node->funcname);
+	appendStringInfo(str, " :args ");
+	_outNode(str, node->args);
+}
+#endif
 
 static void
 _outColumnDef(StringInfo str, ColumnDef *node)
@@ -1534,7 +1558,31 @@ static void
 _outAExpr(StringInfo str, A_Expr *node)
 {
 	appendStringInfo(str, "EXPR ");
-	appendStringInfo(str, node->opname);
+#ifdef PARSEDEBUG
+	switch (node->oper)
+	{
+		case AND:
+			appendStringInfo(str, "AND");
+			break;
+		case OR:
+			appendStringInfo(str, "OR");
+			break;
+		case NOT:
+			appendStringInfo(str, "NOT");
+			break;
+		case ISNULL:
+			appendStringInfo(str, "ISNULL");
+			break;
+		case NOTNULL:
+			appendStringInfo(str, "NOTNULL");
+			break;
+		default:
+#endif
+			appendStringInfo(str, node->opname);
+#ifdef PARSEDEBUG
+			break;
+	}
+#endif
 	_outNode(str, node->lexpr);
 	_outNode(str, node->rexpr);
 	return;
@@ -1633,6 +1681,17 @@ _outNode(StringInfo str, void *obj)
 			case T_IndexElem:
 				_outIndexElem(str, obj);
 				break;
+
+#ifdef PARSEDEBUG
+			case T_VariableSetStmt:
+				break;
+			case T_SelectStmt:
+				_outSelectStmt(str, obj);
+				break;
+			case T_FuncCall:
+				_outFuncCall(str, obj);
+				break;
+#endif
 
 			case T_Query:
 				_outQuery(str, obj);
