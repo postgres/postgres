@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.231 2001/10/01 21:31:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.232 2001/10/03 05:23:12 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2066,47 +2066,47 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 	if (g_fout->remoteVersion >= 70200)
 	{
 		appendPQExpBuffer(query,
-					  "SELECT pg_class.oid, relname, relacl, relkind, "
-					  "(select usename from pg_user where relowner = usesysid) as usename, "
-					  "relchecks, reltriggers, relhasindex, relhasoids "
-					  "from pg_class "
-					  "where relname !~ '^pg_' "
-					  "and relkind in ('%c', '%c', '%c') "
-					  "order by oid",
-					  RELKIND_RELATION, RELKIND_SEQUENCE, RELKIND_VIEW);
+						  "SELECT pg_class.oid, relname, relacl, relkind, "
+						  "(select usename from pg_user where relowner = usesysid) as usename, "
+						  "relchecks, reltriggers, relhasindex, relhasoids "
+						  "from pg_class "
+						  "where relname !~ '^pg_' "
+						  "and relkind in ('%c', '%c', '%c') "
+						  "order by oid",
+						  RELKIND_RELATION, RELKIND_SEQUENCE, RELKIND_VIEW);
 	}
 	else if (g_fout->remoteVersion >= 70100)
 	{
 		/* all tables have oids in 7.1 */
 		appendPQExpBuffer(query,
-					  "SELECT pg_class.oid, relname, relacl, relkind, "
-					  "(select usename from pg_user where relowner = usesysid) as usename, "
-					  "relchecks, reltriggers, relhasindex, 't'::bool as relhasoids "
-					  "from pg_class "
-					  "where relname !~ '^pg_' "
-					  "and relkind in ('%c', '%c', '%c') "
-					  "order by oid",
-					  RELKIND_RELATION, RELKIND_SEQUENCE, RELKIND_VIEW);
+						  "SELECT pg_class.oid, relname, relacl, relkind, "
+						  "(select usename from pg_user where relowner = usesysid) as usename, "
+						  "relchecks, reltriggers, relhasindex, 't'::bool as relhasoids "
+						  "from pg_class "
+						  "where relname !~ '^pg_' "
+						  "and relkind in ('%c', '%c', '%c') "
+						  "order by oid",
+						  RELKIND_RELATION, RELKIND_SEQUENCE, RELKIND_VIEW);
 	} else {
 		/*
 		 * Before 7.1, view relkind was not set to 'v', so we must check
 		 * if we have a view by looking for a rule in pg_rewrite.
 		 */
 		appendPQExpBuffer(query,
-					  "SELECT c.oid, relname, relacl, "
-					  "CASE WHEN relhasrules and relkind = 'r' "
-					  "  and EXISTS(SELECT rulename FROM pg_rewrite r WHERE "
-					  "             r.ev_class = c.oid AND r.ev_type = '1') "
-					  "THEN '%c'::\"char\" "
-					  "ELSE relkind END AS relkind,"
-					  "(select usename from pg_user where relowner = usesysid) as usename, "
-					  "relchecks, reltriggers, relhasindex, 't'::bool as relhasoids "
-					  "from pg_class c "
-					  "where relname !~ '^pg_' "
-					  "and relkind in ('%c', '%c', '%c') "
-					  "order by oid",
-					  RELKIND_VIEW,
-					  RELKIND_RELATION, RELKIND_SEQUENCE, RELKIND_VIEW);
+						  "SELECT c.oid, relname, relacl, "
+						  "CASE WHEN relhasrules and relkind = 'r' "
+						  "  and EXISTS(SELECT rulename FROM pg_rewrite r WHERE "
+						  "             r.ev_class = c.oid AND r.ev_type = '1') "
+						  "THEN '%c'::\"char\" "
+						  "ELSE relkind END AS relkind,"
+						  "(select usename from pg_user where relowner = usesysid) as usename, "
+						  "relchecks, reltriggers, relhasindex, 't'::bool as relhasoids "
+						  "from pg_class c "
+						  "where relname !~ '^pg_' "
+						  "and relkind in ('%c', '%c', '%c') "
+						  "order by oid",
+						  RELKIND_VIEW,
+						  RELKIND_RELATION, RELKIND_SEQUENCE, RELKIND_VIEW);
 	}
 
 	res = PQexec(g_conn, query->data);
