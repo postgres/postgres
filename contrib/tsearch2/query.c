@@ -884,22 +884,18 @@ Datum
 to_tsquery_name(PG_FUNCTION_ARGS)
 {
 	text	   *name = PG_GETARG_TEXT_P(0);
-	Datum		res = DirectFunctionCall2(
-										  to_tsquery,
+	Datum		res = DirectFunctionCall2(to_tsquery,
 										Int32GetDatum(name2id_cfg(name)),
-										  PG_GETARG_DATUM(1)
-	);
+										  PG_GETARG_DATUM(1));
 
-	PG_FREE_IF_COPY(name, 1);
+	PG_FREE_IF_COPY(name, 0);
 	PG_RETURN_DATUM(res);
 }
 
 Datum
 to_tsquery_current(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_DATUM(DirectFunctionCall2(
-										to_tsquery,
+	PG_RETURN_DATUM(DirectFunctionCall2(to_tsquery,
 										Int32GetDatum(get_currcfg()),
-										PG_GETARG_DATUM(0)
-										));
+										PG_GETARG_DATUM(0)));
 }
