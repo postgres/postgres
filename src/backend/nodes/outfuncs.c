@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: outfuncs.c,v 1.55 1998/12/15 04:00:46 scrappy Exp $
+ *  $Id: outfuncs.c,v 1.56 1998/12/17 13:09:52 scrappy Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -634,7 +634,7 @@ static void
 _outVar(StringInfo str, Var *node)
 {
 	appendStringInfo(str, 
-			" VAR :varno %d :varattno %d :vartype %u %vartypmod %d ",
+			" VAR :varno %d :varattno %d :vartype %u :vartypmod %d ",
 			node->varno,
 			node->varattno,
 			node->vartype,
