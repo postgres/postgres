@@ -1909,7 +1909,7 @@ else
   echo "$ac_t""no" 1>&6
 fi
 
-if test "$PORTNAME" != "aix"
+if test "$PORTNAME" != "aix" -a "$PORTNAME" != "alpha"
 then
 	echo $ac_n "checking for main in -lbsd""... $ac_c" 1>&6
 echo "configure:1916: checking for main in -lbsd" >&5
@@ -3316,7 +3316,7 @@ else
 fi
 rm -f conftest*
 
-if test x$ac_cv_prog_gcc = xyes; then
+if test $ac_cv_prog_gcc = yes; then
     echo $ac_n "checking whether ${CC-cc} needs -traditional""... $ac_c" 1>&6
 echo "configure:3322: checking whether ${CC-cc} needs -traditional" >&5
 if eval "test \"`echo '$''{'ac_cv_prog_gcc_traditional'+set}'`\" = set"; then
