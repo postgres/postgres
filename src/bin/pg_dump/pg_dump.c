@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.394 2004/12/03 18:48:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.395 2004/12/14 21:35:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -142,6 +142,7 @@ static void dumpAttrDef(Archive *fout, AttrDefInfo *adinfo);
 static void dumpSequence(Archive *fout, TableInfo *tbinfo);
 static void dumpIndex(Archive *fout, IndxInfo *indxinfo);
 static void dumpConstraint(Archive *fout, ConstraintInfo *coninfo);
+static void dumpTableConstraintComment(Archive *fout, ConstraintInfo *coninfo);
 
 static void dumpACL(Archive *fout, CatalogId objCatId, DumpId objDumpId,
 		const char *type, const char *name,
@@ -3939,6 +3940,12 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 				constrs[j].conindex = 0;
 				constrs[j].coninherited = false;
 				constrs[j].separate = false;
+				/*
+				 * Mark the constraint as needing to appear before the
+				 * table --- this is so that any other dependencies of
+				 * the constraint will be emitted before we try to create
+				 * the table.
+				 */
 				addObjectDependency(&tbinfo->dobj,
 									constrs[j].dobj.dumpId);
 
@@ -4005,6 +4012,13 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
  * plus catalog ID and subid which are the lookup key for pg_description,
  * plus the dump ID for the object (for setting a dependency).
  * If a matching pg_description entry is found, it is dumped.
+ *
+ * Note: although this routine takes a dumpId for dependency purposes,
+ * that purpose is just to mark the dependency in the emitted dump file
+ * for possible future use by pg_restore.  We do NOT use it for determining
+ * ordering of the comment in the dump file, because this routine is called
+ * after dependency sorting occurs.  This routine should be called just after
+ * calling ArchiveEntry() for the specified object.
  */
 static void
 dumpComment(Archive *fout, const char *target,
@@ -6725,6 +6739,17 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 	/* Dump Table Comments */
 	dumpTableComment(fout, tbinfo, reltypename);
 
+	/* Dump comments on inlined table constraints */
+	for (j = 0; j < tbinfo->ncheck; j++)
+	{
+		ConstraintInfo *constr = &(tbinfo->checkexprs[j]);
+
+		if (constr->coninherited || constr->separate)
+			continue;
+
+		dumpTableConstraintComment(fout, constr);
+	}
+
 	destroyPQExpBuffer(query);
 	destroyPQExpBuffer(q);
 	destroyPQExpBuffer(delq);
@@ -6836,7 +6861,8 @@ dumpIndex(Archive *fout, IndxInfo *indxinfo)
 
 	/*
 	 * If there's an associated constraint, don't dump the index per se,
-	 * but do dump any comment for it.
+	 * but do dump any comment for it.  (This is safe because dependency
+	 * ordering will have ensured the constraint is emitted first.)
 	 */
 	if (indxinfo->indexconstraint == 0)
 	{
@@ -7078,28 +7104,43 @@ dumpConstraint(Archive *fout, ConstraintInfo *coninfo)
 	}
 
 	/* Dump Constraint Comments --- only works for table constraints */
-	if (tbinfo)
-	{
-		resetPQExpBuffer(q);
-		appendPQExpBuffer(q, "CONSTRAINT %s ",
-						  fmtId(coninfo->dobj.name));
-		appendPQExpBuffer(q, "ON %s",
-						  fmtId(tbinfo->dobj.name));
-		dumpComment(fout, q->data,
-					tbinfo->dobj.namespace->dobj.name,
-					tbinfo->usename,
-					coninfo->dobj.catId, 0, coninfo->dobj.dumpId);
-	}
+	if (tbinfo && coninfo->separate)
+		dumpTableConstraintComment(fout, coninfo);
 
 	destroyPQExpBuffer(q);
 	destroyPQExpBuffer(delq);
 }
 
 /*
+ * dumpTableConstraintComment --- dump a constraint's comment if any
+ *
+ * This is split out because we need the function in two different places
+ * depending on whether the constraint is dumped as part of CREATE TABLE
+ * or as a separate ALTER command.
+ */
+static void
+dumpTableConstraintComment(Archive *fout, ConstraintInfo *coninfo)
+{
+	TableInfo  *tbinfo = coninfo->contable;
+	PQExpBuffer q = createPQExpBuffer();
+
+	appendPQExpBuffer(q, "CONSTRAINT %s ",
+					  fmtId(coninfo->dobj.name));
+	appendPQExpBuffer(q, "ON %s",
+					  fmtId(tbinfo->dobj.name));
+	dumpComment(fout, q->data,
+				tbinfo->dobj.namespace->dobj.name,
+				tbinfo->usename,
+				coninfo->dobj.catId, 0,
+				coninfo->separate ? coninfo->dobj.dumpId : tbinfo->dobj.dumpId);
+
+	destroyPQExpBuffer(q);
+}
+
+/*
  * setMaxOid -
  * find the maximum oid and generate a COPY statement to set it
-*/
-
+ */
 static void
 setMaxOid(Archive *fout)
 {
