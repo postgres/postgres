@@ -3,7 +3,7 @@
  *			  procedural language (PL)
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.18 2000/01/15 22:43:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.19 2000/02/27 07:18:29 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -417,7 +417,7 @@ pltcl_func_handler(FmgrInfo *proinfo,
 	char	   *stroid;
 	Tcl_HashEntry *hashent;
 	int			hashnew;
-	pltcl_proc_desc *prodesc;
+	pltcl_proc_desc * volatile prodesc;
 	Tcl_DString tcl_cmd;
 	Tcl_DString list_tmp;
 	int			tcl_rc;
@@ -739,7 +739,7 @@ pltcl_trigger_handler(FmgrInfo *proinfo)
 	int			hashnew;
 	pltcl_proc_desc *prodesc;
 	TupleDesc	tupdesc;
-	HeapTuple	rettup;
+	volatile HeapTuple	rettup;
 	Tcl_DString tcl_cmd;
 	Tcl_DString tcl_trigtup;
 	Tcl_DString tcl_newtup;
@@ -1289,13 +1289,13 @@ pltcl_SPI_exec(ClientData cdata, Tcl_Interp *interp,
 	int			spi_rc;
 	char		buf[64];
 	int			count = 0;
-	char	   *arrayname = NULL;
-	int			query_idx;
+	char	   * volatile arrayname = NULL;
+	volatile int		query_idx;
 	int			i;
 	int			loop_rc;
 	int			ntuples;
-	HeapTuple  *tuples;
-	TupleDesc	tupdesc = NULL;
+	HeapTuple * volatile tuples;
+	volatile TupleDesc	tupdesc = NULL;
 	sigjmp_buf	save_restart;
 
 	char	   *usage = "syntax error - 'SPI_exec "
@@ -1701,20 +1701,20 @@ pltcl_SPI_execp(ClientData cdata, Tcl_Interp *interp,
 {
 	int			spi_rc;
 	char		buf[64];
-	int			i,
-				j;
+	volatile int i;
+	int			j;
 	int			loop_body;
 	Tcl_HashEntry *hashent;
 	pltcl_query_desc *qdesc;
-	char	   *nulls = NULL;
-	char	   *arrayname = NULL;
+	char * volatile nulls = NULL;
+	char * volatile arrayname = NULL;
 	int			count = 0;
 	int			callnargs;
 	static char **callargs = NULL;
 	int			loop_rc;
 	int			ntuples;
-	HeapTuple  *tuples = NULL;
-	TupleDesc	tupdesc = NULL;
+	HeapTuple * volatile tuples = NULL;
+	volatile TupleDesc	tupdesc = NULL;
 	sigjmp_buf	save_restart;
 
 	char	   *usage = "syntax error - 'SPI_execp "
