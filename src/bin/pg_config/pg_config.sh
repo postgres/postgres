@@ -7,7 +7,7 @@
 # Author:  Peter Eisentraut <peter_e@gmx.net> 
 # Public domain
 
-# $Header: /cvsroot/pgsql/src/bin/pg_config/Attic/pg_config.sh,v 1.1 2000/10/10 22:01:55 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_config/Attic/pg_config.sh,v 1.2 2000/11/11 22:59:47 petere Exp $
 
 me=`basename $0`
 
@@ -27,18 +27,18 @@ Operation modes:
   --bindir      show location of user executables
   --includedir  show location of C header files
   --libdir      show location of object code libraries
-  --configure   show options given to \`configure' script when
+  --configure   show options given to 'configure' script when
                 PostgreSQL was built
   --version     show PostgreSQL version and exit
 
 Report bugs to <pgsql-bugs@postgresql.org>."
 
 advice="\
-Try \`$me --help' for more information."
+Try '$me --help' for more information."
 
 if test $# -eq 0 ; then
-    echo "$me: argument required"
-    echo "$advice"
+    echo "$me: argument required" 1>&2
+    echo "$advice" 1>&2
     exit 1
 fi
 
@@ -56,8 +56,8 @@ do
                         exit 0;;
 	--help|-\?)     echo "$help"
                         exit 0;;
-        *)              echo "$me: invalid argument: $opt"
-                        echo "$advice"
+        *)              echo "$me: invalid argument: $opt" 1>&2
+                        echo "$advice" 1>&2
                         exit 1;;
     esac
 done

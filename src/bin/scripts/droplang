@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/droplang,v 1.7 2000/02/09 20:23:26 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/droplang,v 1.8 2000/11/11 22:59:48 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -88,8 +88,8 @@ do
                 ;;
 
 	-*)
-		echo "$CMDNAME: invalid option: $1"
-                echo "Try -? for help."
+		echo "$CMDNAME: invalid option: $1" 1>&2
+                echo "Try '$CMDNAME -?' for help." 1>&2
 		exit 1
 		;;
 	 *)
@@ -118,6 +118,9 @@ if [ "$usage" ]; then
 	echo "  -d, --dbname=DBNAME             Database to remove language from"
 	echo "  -l, --list                      Show a list of currently installed languages"
         echo
+        echo "If 'langname' is not specified, you will be prompted interactively."
+        echo "A database name must be specified."
+        echo
 	echo "Report bugs to <pgsql-bugs@postgresql.org>."
 	exit 0
 fi
@@ -133,8 +136,8 @@ fi
 # Check that we have a database
 # ----------
 if [ -z "$dbname" ]; then
-	echo "$CMDNAME: missing required argument database name"
-        echo "Try -? for help."
+	echo "$CMDNAME: missing required argument database name" 1>&2
+        echo "Try '$CMDNAME -?' for help." 1>&2
 	exit 1
 fi
 
@@ -159,13 +162,17 @@ case "$langname" in
 		lancomp="PL/Tcl"
 		handler="pltcl_call_handler"
                 ;;
+	pltclu)
+		lancomp="PL/Tcl (untrusted)"
+		handler="pltclu_call_handler"
+		;;
 	plperl)
 		lancomp="PL/Perl"
 		handler="plperl_call_handler"
                 ;;
 	*)
-		echo "$CMDNAME: unsupported language '$langname'"
-		echo "Supported languages are 'plpgsql', 'pltcl', and 'plperl'."
+		echo "$CMDNAME: unsupported language '$langname'" 1>&2
+		echo "Supported languages are 'plpgsql', 'pltcl', 'pltclu', and 'plperl'." 1>&2
 		exit 1
                 ;;
 esac
@@ -179,11 +186,11 @@ PSQL="${PATHNAME}psql -A -t -q $PSQLOPT -d $dbname -c"
 # ----------
 res=`$PSQL "SELECT oid FROM pg_language WHERE lanname = '$langname'"`
 if [ $? -ne 0 ]; then
-	echo "$CMDNAME: external error"
+	echo "$CMDNAME: external error" 1>&2
 	exit 1
 fi
 if [ -z "$res" ]; then
-	echo "$CMDNAME: '$langname' is not installed in database $dbname"
+	echo "$CMDNAME: '$langname' is not installed in database $dbname" 1>&2
 	exit 1
 fi
 
@@ -193,12 +200,12 @@ fi
 # ----------
 res=`$PSQL "SELECT COUNT(proname) FROM pg_proc P, pg_language L WHERE P.prolang = L.oid AND L.lanname = '$langname'"`
 if [ $? -ne 0 ]; then
-	echo "$CMDNAME: external error"
+	echo "$CMDNAME: external error" 1>&2
 	exit 1
 fi
 if [ $res -ne 0 ]; then
-	echo "$CMDNAME: There are $res functions/trigger procedures declared in language"
-        echo "$lancomp. Language not removed."
+	echo "$CMDNAME: There are $res functions/trigger procedures declared in language" 1>&2
+        echo "$lancomp. Language not removed." 1>&2
 	exit 1
 fi
 
@@ -207,14 +214,13 @@ fi
 # ----------
 $PSQL "DROP PROCEDURAL LANGUAGE '$langname'"
 if [ $? -ne 0 ]; then
-	echo "$CMDNAME: language removal failed"
+	echo "$CMDNAME: language removal failed" 1>&2
 	exit 1
 fi
 $PSQL "DROP FUNCTION $handler()"
 if [ $? -ne 0 ]; then
-	echo "$CMDNAME: language removal failed"
+	echo "$CMDNAME: language removal failed" 1>&2
 	exit 1
 fi
 
-echo "Ok"
 exit 0

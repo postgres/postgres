@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/dropuser,v 1.6 2000/01/19 20:08:36 petere Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/dropuser,v 1.7 2000/11/11 22:59:48 petere Exp $
 #
 # Note - this should NOT be setuid.
 #
@@ -84,8 +84,8 @@ do
 		forcedel=f
 		;;
 	-*)
-		echo "$CMDNAME: invalid option: $1"
-                echo "Try -? for help."
+		echo "$CMDNAME: invalid option: $1" 1>&2
+                echo "Try '$CMDNAME -?' for help." 1>&2
 		exit 1
 		;;
          *)
@@ -139,7 +139,7 @@ DelUser=`echo $DelUser | sed 's/\"/\\\"/g'`
 ${PATHNAME}psql $PSQLOPT -d template1 -c "DROP USER \"$DelUser\""
 
 if [ $? -ne 0 ]; then
-	echo "$CMDNAME: deletion of user \"$DelUser\" failed"
+	echo "$CMDNAME: deletion of user \"$DelUser\" failed" 1>&2
 	exit 1
 fi
 

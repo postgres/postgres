@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createuser,v 1.11 2000/06/12 03:40:49 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createuser,v 1.12 2000/11/11 22:59:48 petere Exp $
 #
 # Note - this should NOT be setuid.
 #
@@ -109,8 +109,8 @@ do
 		PwPrompt=t
 		;;
 	-*)
-		echo "$CMDNAME: invalid option: $1"
-                echo "Try -? for help."
+		echo "$CMDNAME: invalid option: $1" 1>&2
+                echo "Try '$CMDNAME -?' for help." 1>&2
 		exit 1
 		;;
          *)
@@ -140,13 +140,16 @@ if [ "$usage" ]; then
 	echo "  -e, --echo                      Show the query being sent to the backend"
         echo "  -q, --quiet                     Don't write any messages"
 	echo
+        echo "If one of -d, -D, -a, -A, and 'username' is not specified, you will"
+        echo "be prompted interactively."
+        echo
 	echo "Report bugs to <pgsql-bugs@postgresql.org>."
 	exit 0
 fi
 
 if [ "$SysID" ]; then
         if [ "$SysID" != "`echo $SysID | sed 's/[^0-9]//g'`" ]; then
-                echo "$CMDNAME: user sysid must be a positive number"
+                echo "$CMDNAME: user sysid must be a positive number" 1>&2
                 exit 1
         fi
 fi
@@ -176,7 +179,7 @@ if [ "$PwPrompt" ]; then
         stty echo >/dev/null 2>&1
         echo
         if [ "$FirstPw" != "$SecondPw" ]; then
-            echo "Passwords didn't match."
+            echo "Passwords didn't match." 1>&2
             exit 1
         fi
 	Password=$FirstPw
@@ -225,7 +228,7 @@ SUBQUERY=
 
 ${PATHNAME}psql -c "$QUERY" -d template1 $PSQLOPT
 if [ $? -ne 0 ]; then
-	echo "$CMDNAME: creation of user \"$NewUser\" failed"
+	echo "$CMDNAME: creation of user \"$NewUser\" failed" 1>&2
 	exit 1
 fi
 		

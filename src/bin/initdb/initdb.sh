@@ -23,7 +23,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.112 2000/11/09 11:26:00 vadim Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.113 2000/11/11 22:59:46 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -34,17 +34,17 @@
 
 exit_nicely(){
     stty echo > /dev/null 2>&1
-    echo
-    echo "$CMDNAME failed."
+    echo 1>&2
+    echo "$CMDNAME failed." 1>&2
     if [ "$noclean" != yes ]; then
         if [ "$template_only" != yes ] && [ "$made_new_pgdata" = yes ]; then
-            echo "Removing $PGDATA."
-            rm -rf "$PGDATA" || echo "Failed."
+            echo "Removing $PGDATA." 1>&2
+            rm -rf "$PGDATA" || echo "Failed." 1>&2
         fi
-        echo "Removing temp file $TEMPFILE."
-        rm -rf "$TEMPFILE" || echo "Failed."
+        echo "Removing temp file $TEMPFILE." 1>&2
+        rm -rf "$TEMPFILE" || echo "Failed." 1>&2
     else
-        echo "Data directory $PGDATA will not be removed at user's request."
+        echo "Data directory $PGDATA will not be removed at user's request." 1>&2
     fi
     exit 1
 }
@@ -117,13 +117,13 @@ elif [ -x "$bindir/postgres" ]; then
     then
         PGPATH=$bindir
     else
-        echo "The program '$bindir/postgres' needed by $CMDNAME does not belong to"
-        echo "PostgreSQL version $VERSION.  Check your installation."
+        echo "The program '$bindir/postgres' needed by $CMDNAME does not belong to" 1>&2
+        echo "PostgreSQL version $VERSION.  Check your installation." 1>&2
         exit 1
     fi
 else
-    echo "The program 'postgres' is needed by $CMDNAME but was not found in"
-    echo "the directory '$bindir'.  Check your installation."
+    echo "The program 'postgres' is needed by $CMDNAME but was not found in" 1>&2
+    echo "the directory '$bindir'.  Check your installation." 1>&2
     exit 1
 fi
 
@@ -131,29 +131,29 @@ fi
 # Now we can assume that 'pg_id' belongs to the same version as the
 # verified 'postgres' in the same directory.
 if [ ! -x "$PGPATH/pg_id" ]; then
-    echo "The program 'pg_id' is needed by $CMDNAME but was not found in"
-    echo "the directory '$PGPATH'.  Check your installation."
+    echo "The program 'pg_id' is needed by $CMDNAME but was not found in" 1>&2
+    echo "the directory '$PGPATH'.  Check your installation." 1>&2
     exit 1
 fi
 
 
 EffectiveUser=`$PGPATH/pg_id -n -u`
 if [ -z "$EffectiveUser" ]; then
-    echo "$CMDNAME: could not determine current user name"
+    echo "$CMDNAME: could not determine current user name" 1>&2
     exit 1
 fi
 
 if [ `$PGPATH/pg_id -u` -eq 0 ]
 then
-    echo "You cannot run $CMDNAME as root. Please log in (using, e.g., 'su')"
-    echo "as the (unprivileged) user that will own the server process."
+    echo "You cannot run $CMDNAME as root. Please log in (using, e.g., 'su')" 1>&2
+    echo "as the (unprivileged) user that will own the server process." 1>&2
     exit 1
 fi
 
 
 short_version=`echo $VERSION | sed -e 's!^\([0-9][0-9]*\.[0-9][0-9]*\).*!\1!'`
 if [ x"$short_version" = x"" ] ; then
-  echo "$CMDNAME: bug: version number is out of format"
+  echo "$CMDNAME: bug: version number has wrong format" 1>&2
   exit 1
 fi
 
@@ -252,7 +252,7 @@ do
                 ;;
 	-*)
 		echo "$CMDNAME: invalid option: $1"
-		echo "Try -? for help."
+		echo "Try '$CMDNAME -?' for help."
 		exit 1
 		;;
         *)
@@ -263,20 +263,20 @@ do
 done
 
 if [ "$usage" ]; then
-    echo "$CMDNAME initialized a PostgreSQL database cluster."
+    echo "$CMDNAME initializes a PostgreSQL database cluster."
     echo
     echo "Usage:"
     echo "  $CMDNAME [options] datadir"
     echo
     echo "Options:"
-    echo " [-D, --pgdata] <datadir>     Location for this database cluster"
+    echo " [-D, --pgdata] DATADIR       Location for this database cluster"
     echo "  -W, --pwprompt              Prompt for a password for the new superuser"
     if [ -n "$MULTIBYTE" ] ; then 
-        echo "  -E, --encoding <encoding>   Set the default multibyte encoding for new databases"
+        echo "  -E, --encoding ENCODING     Set the default multibyte encoding for new databases"
     fi
-    echo "  -i, --sysid <sysid>         Database sysid for the superuser"
+    echo "  -i, --sysid SYSID           Database sysid for the superuser"
     echo "Less commonly used options: "
-    echo "  -L <directory>              Where to find the input files"
+    echo "  -L DIRECTORY                Where to find the input files"
     echo "  -t, --template              Re-initialize template database only"
     echo "  -d, --debug                 Generate lots of debugging output"
     echo "  -n, --noclean               Do not clean up after errors"
@@ -294,15 +294,17 @@ then
 	MULTIBYTEID=`$PGPATH/pg_encoding $MULTIBYTE`
         if [ "$?" -ne 0 ]
 	then
+              (
                 echo "$CMDNAME: pg_encoding failed"
                 echo
                 echo "Perhaps you did not configure PostgreSQL for multibyte support or"
                 echo "the program was not successfully installed."
+              ) 1>&2
                 exit 1
         fi
 	if [ -z "$MULTIBYTEID" ]
 	then
-		echo "$CMDNAME: $MULTIBYTE is not a valid encoding name"
+		echo "$CMDNAME: $MULTIBYTE is not a valid encoding name" 1>&2
 		exit 1
 	fi
 fi
@@ -314,10 +316,11 @@ fi
 
 if [ -z "$PGDATA" ]
 then
+  (
     echo "$CMDNAME: You must identify where the the data for this database"
     echo "system will reside.  Do this with either a -D invocation"
     echo "option or a PGDATA environment variable."
-    echo
+  ) 1>&2
     exit 1
 fi
 
@@ -353,18 +356,22 @@ fi
 for PREREQ_FILE in "$TEMPLATE1_BKI" "$GLOBAL_BKI" "$PG_HBA_SAMPLE"
 do
     if [ ! -f "$PREREQ_FILE" ] ; then
+      (
         echo "$CMDNAME does not find the file '$PREREQ_FILE'."
         echo "This means you have a corrupted installation or identified the"
         echo "wrong directory with the -L invocation option."
+      ) 1>&2
         exit 1
     fi
 done
 
 for file in "$TEMPLATE1_BKI" "$GLOBAL_BKI"; do
      if [ x"`sed 1q $file`" != x"# PostgreSQL $short_version" ]; then
+       (
          echo "The input file '$file' needed by $CMDNAME does not"
          echo "belong to PostgreSQL $VERSION.  Check your installation or specify the"
          echo "correct path using the -L option."
+       ) 1>&2
          exit 1
      fi
 done
@@ -391,10 +398,12 @@ if [ x"$pgdata_contents" != x ]
 then
     if [ "$template_only" != yes ]
     then
+      (
         echo "$CMDNAME: The directory $PGDATA is exists but is not empty."
         echo "If you want to create a new database system, either remove or empty"
         echo "the directory $PGDATA or run initdb with an argument"
         echo "other than $PGDATA."
+      ) 1>&2
         exit 1
     fi
 else
@@ -509,13 +518,13 @@ if [ "$PwPrompt" ]; then
     stty echo > /dev/null 2>&1
     echo
     if [ "$FirstPw" != "$SecondPw" ]; then
-        echo "Passwords didn't match."
+        echo "Passwords didn't match." 1>&2
         exit_nicely
     fi
     echo "ALTER USER \"$POSTGRES_SUPERUSERNAME\" WITH PASSWORD '$FirstPw'" \
 	| "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
     if [ ! -f $PGDATA/pg_pwd ]; then
-        echo "The password file wasn't generated. Please report this problem."
+        echo "The password file wasn't generated. Please report this problem." 1>&2
         exit_nicely
     fi
     echo "Setting password"

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $Header: /cvsroot/pgsql/src/bin/ipcclean/Attic/ipcclean.sh,v 1.5 2000/03/25 14:44:41 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/ipcclean/Attic/ipcclean.sh,v 1.6 2000/11/11 22:59:47 petere Exp $
 #
 
 CMDNAME=`basename $0`
@@ -20,8 +20,10 @@ fi
 
 if [ "$USER" = 'root' -o "$LOGNAME" = 'root' ]
 then
+  (
     echo "You cannot run $CMDNAME as root. Please log in (using, e.g., 'su')"
     echo "as the (unprivileged) user that owned the server process."
+  ) 1>&2
     exit 1
 fi
 
@@ -42,7 +44,7 @@ if [ `uname` = 'Linux' ]; then
     did_anything=
 
     if ps x | grep -s 'postmaster' >/dev/null 2>&1 ; then
-        echo "$CMDNAME: You still have a postmaster running."
+        echo "$CMDNAME: You still have a postmaster running." 1>&2
         exit 1
     fi
 

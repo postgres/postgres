@@ -11,7 +11,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createdb,v 1.8 2000/02/10 20:08:58 petere Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createdb,v 1.9 2000/11/11 22:59:48 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -88,8 +88,8 @@ do
                 MB=`echo $1 | sed 's/^--encoding=//'`
                 ;;
 	-*)
-		echo "$CMDNAME: invalid option: $1"
-                echo "Try -? for help."
+		echo "$CMDNAME: invalid option: $1" 1>&2
+                echo "Try '$CMDNAME -?' for help." 1>&2
 		exit 1
 		;;
 	*)
@@ -118,6 +118,8 @@ if [ "$usage" ]; then
 	echo "  -W, --password                  Prompt for password"
 	echo "  -e, --echo                      Show the query being sent to the backend"
         echo "  -q, --quiet                     Don't write any messages"
+        echo
+        echo "By default, a database with the same name as the current user is created."
 	echo
 	echo "Report bugs to <pgsql-bugs@postgresql.org>."
 	exit 0
@@ -129,7 +131,7 @@ then
         mbcode=`${PATHNAME}pg_encoding "$MB"`
         if [ -z "$mbcode" ]
 	then
-		echo "$CMDNAME: \"$MB\" is not a valid encoding name"
+		echo "$CMDNAME: \"$MB\" is not a valid encoding name" 1>&2
 		exit 1
 	fi
 fi
@@ -155,7 +157,7 @@ withstring=
 
 ${PATHNAME}psql $PSQLOPT -d template1 -c "CREATE DATABASE \"$dbname\"$withstring"
 if [ $? -ne 0 ]; then
-	echo "$CMDNAME: database creation failed"
+	echo "$CMDNAME: database creation failed" 1>&2
 	exit 1
 fi
 
@@ -166,7 +168,7 @@ dbcomment=`echo $dbcomment | sed "s/'/\\\\\'/g"`
 
 ${PATHNAME}psql $PSQLOPT -d template1 -c "COMMENT ON DATABASE \"$dbname\" IS '$dbcomment'"
 if [ $? -ne 0 ]; then
-	echo "$CMDNAME: comment creation failed (database was created)"
+	echo "$CMDNAME: comment creation failed (database was created)" 1>&2
 	exit 1
 fi
 

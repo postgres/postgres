@@ -11,7 +11,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/vacuumdb,v 1.9 2000/01/19 20:08:36 petere Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/vacuumdb,v 1.10 2000/11/11 22:59:48 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -101,8 +101,8 @@ do
 		;;
 
 	-*)
-		echo "$CMDNAME: invalid option: $1"
-                echo "Try -? for help."
+		echo "$CMDNAME: invalid option: $1" 1>&2
+                echo "Try '$CMDNAME -?' for help." 1>&2
 		exit 1
 		;;
 	*)
@@ -131,20 +131,22 @@ if [ "$usage" ]; then
 	echo "  -e, --echo                      Show the command being sent to the backend"
         echo "  -q, --quiet                     Don't write any output"
         echo
+        echo "Read the description of the SQL command VACUUM for details."
+        echo
 	echo "Report bugs to <pgsql-bugs@postgresql.org>."
 	exit 0
 fi
 
 if [ "$alldb" ]; then
         if [ "$dbname" -o "$table" ]; then
-                echo "$CMDNAME: cannot vacuum all databases and a specific one at the same time"
+                echo "$CMDNAME: cannot vacuum all databases and a specific one at the same time" 1>&2
                 exit 1
         fi
 	dbname=`${PATHNAME}psql $PSQLOPT -q -t -A -d template1 -c 'SELECT datname FROM pg_database'`
 
 elif [ -z "$dbname" ]; then
-	echo "$CMDNAME: missing required argument database name"
-        echo "Try -? for help."
+	echo "$CMDNAME: missing required argument database name" 1>&2
+        echo "Try '$CMDNAME -?' for help." 1>&2
 	exit 1
 fi
 
@@ -155,7 +157,7 @@ do
 done
 
 if [ $? -ne 0 ]; then
-	echo "$CMDNAME: vacuum failed"
+	echo "$CMDNAME: vacuum failed" 1>&2
 	exit 1
 fi
 

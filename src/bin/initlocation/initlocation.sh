@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initlocation/Attic/initlocation.sh,v 1.8 2000/05/26 03:15:18 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initlocation/Attic/initlocation.sh,v 1.9 2000/11/11 22:59:46 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -50,8 +50,8 @@ do
             break;;
 
 	-*)
-            echo "$CMDNAME: unrecognized option $badparm"
-            echo "Try -? for help."
+            echo "$CMDNAME: invalid option: $1" 1>&2
+            echo "Try '$CMDNAME -?' for help." 1>&2
             exit 1
             ;;
 	*)
@@ -66,16 +66,18 @@ if [ "$usage" ]; then
         echo "$CMDNAME initializes an alternative filesystem location for database creation."
 	echo ""
 	echo "Usage:"
-        echo "  $CMDNAME <location>"
-	echo ""
+        echo "  $CMDNAME LOCATION"
+	echo
+	echo "Please read the description of the CREATE DATABASE command for details."
+	echo
         echo "Report bugs to <pgsql-bugs@postgresql.org>."
 	exit 0
 fi
 
 
 if [ -z "$Location" ]; then
-	echo "$CMDNAME: missing required argument <location>"
-        echo "Try -? for help."
+	echo "$CMDNAME: missing required argument LOCATION" 1>&2
+        echo "Try '$CMDNAME -?' for help." 1>&2
 	exit 1
 fi
 
@@ -99,7 +101,7 @@ echo "$Location" | grep '/' >/dev/null 2>&1
 if [ "$?" -ne 0 -a ! -d "$Location" ]; then
     PGALTDATA=`printenv $Location 2> /dev/null`
     if [ -z "$PGALTDATA" ]; then
-        echo "$CMDNAME: environment variable $Location not set"
+        echo "$CMDNAME: environment variable $Location not set" 1>&2
         exit 1
     fi
     haveenv=t
@@ -126,8 +128,8 @@ if [ ! -d $PGALTDATA ]; then
 	echo "Creating directory $PGALTDATA"
 	mkdir "$PGALTDATA"
 	if [ $? -ne 0 ]; then
-            echo "$CMDNAME: could not create $PGALTDATA"
-            echo "Make sure $PGALTDATA is a valid path and that you have permission to access it."
+            echo "$CMDNAME: could not create $PGALTDATA" 1>&2
+            echo "Make sure $PGALTDATA is a valid path and that you have permission to access it." 1>&2
             exit_nicely
         fi
 else
@@ -140,8 +142,8 @@ if [ ! -d $PGALTDATA/base ]; then
 	echo "Creating directory $PGALTDATA/base"
 	mkdir "$PGALTDATA/base"
 	if [ $? -ne 0 ]; then
-            echo "$CMDNAME: could not create $PGALTDATA/base"
-            echo "Make sure $PGALTDATA/base is a valid path and that you have permission to access it."
+            echo "$CMDNAME: could not create $PGALTDATA/base" 1>&2
+            echo "Make sure $PGALTDATA/base is a valid path and that you have permission to access it." 1>&2
             exit_nicely
         fi
 else

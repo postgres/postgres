@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createlang.sh,v 1.16 2000/09/29 17:17:34 petere Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createlang.sh,v 1.17 2000/11/11 22:59:48 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -98,8 +98,8 @@ do
                 ;;
 
 	-*)
-		echo "$CMDNAME: invalid option: $1"
-                echo "Try -? for help."
+		echo "$CMDNAME: invalid option: $1" 1>&2
+                echo "Try '$CMDNAME -?' for help." 1>&2
 		exit 1
 		;;
 	 *)
@@ -121,7 +121,7 @@ if [ "$usage" ]; then
         echo "$CMDNAME installs a procedural language into a PostgreSQL database."
 	echo
 	echo "Usage:"
-        echo "  $CMDNAME [options] [langname [dbname]]"
+        echo "  $CMDNAME [options] [langname] dbname"
         echo
 	echo "Options:"
 	echo "  -h, --host=HOSTNAME             Database server host"
@@ -132,6 +132,9 @@ if [ "$usage" ]; then
 	echo "  -L, --pglib=DIRECTORY           Find language interpreter file in DIRECTORY"
 	echo "  -l, --list                      Show a list of currently installed languages"
         echo
+        echo "If 'langname' is not specified, you will be prompted interactively."
+        echo "A database name must be specified."
+        echo
 	echo "Report bugs to <pgsql-bugs@postgresql.org>."
 	exit 0
 fi
@@ -141,8 +144,8 @@ fi
 # Check that we have a database
 # ----------
 if [ -z "$dbname" ]; then
-	echo "$CMDNAME: missing required argument database name"
-        echo "Try -? for help."
+	echo "$CMDNAME: missing required argument database name" 1>&2
+        echo "Try '$CMDNAME -?' for help." 1>&2
 	exit 1
 fi
 
@@ -200,8 +203,8 @@ case "$langname" in
 		object="plperl"
 		;;
 	*)
-		echo "$CMDNAME: unsupported language '$langname'"
-		echo "Supported languages are 'plpgsql', 'pltcl', and 'plperl'."
+		echo "$CMDNAME: unsupported language '$langname'" 1>&2
+		echo "Supported languages are 'plpgsql', 'pltcl', 'pltclu', and 'plperl'." 1>&2
 		exit 1
         ;;
 esac
@@ -213,14 +216,17 @@ DLSUFFIX='@DLSUFFIX@'
 # in PGLIB
 # ----------
 if [ ! -f "$PGLIB/$object$DLSUFFIX" ]; then
-	echo "$CMDNAME: cannot find the file \`$PGLIB/$langname$DLSUFFIX'"
+      (
+	echo "$CMDNAME: cannot find the file '$PGLIB/$langname$DLSUFFIX'"
         echo ""
-	echo "This file contains the call handler for $lancomp. By default,"
+	echo "This file contains the call handler for $lancomp.  By default,"
         echo "only PL/pgSQL is built and installed; other languages must be"
         echo "explicitly enabled at configure time."
 	echo ""
 	echo "To install PL/Tcl, make sure the option --with-tcl is given to"
-        echo "configure, then recompile and install."
+        echo "configure, then recompile and install.  To install PL/Perl use"
+        echo "--with-perl."
+      ) 1>&2
 	exit 1
 fi
 
@@ -232,11 +238,11 @@ PSQL="${PATHNAME}psql -A -t -q $PSQLOPT -d $dbname -c"
 # ----------
 res=`$PSQL "SELECT oid FROM pg_language WHERE lanname = '$langname'"`
 if [ $? -ne 0 ]; then
-	echo "$CMDNAME: external error"
+	echo "$CMDNAME: external error" 1>&2
 	exit 1
 fi
 if [ "$res" ]; then
-	echo "$CMDNAME: '$langname' is already installed in database $dbname"
+	echo "$CMDNAME: '$langname' is already installed in database $dbname" 1>&2
 	# separate exit status for "already installed"
 	exit 2
 fi
@@ -246,7 +252,7 @@ fi
 # ----------
 res=`$PSQL "SELECT oid FROM pg_proc WHERE proname = '$handler'"`
 if [ ! -z "$res" ]; then
-	echo "$CMDNAME: A function named '$handler' already exists. Installation aborted."
+	echo "$CMDNAME: A function named '$handler' already exists. Installation aborted." 1>&2
 	exit 1
 fi
 
@@ -255,13 +261,13 @@ fi
 # ----------
 $PSQL "CREATE FUNCTION $handler () RETURNS OPAQUE AS '$PGLIB/${object}$DLSUFFIX' LANGUAGE 'newC'"
 if [ $? -ne 0 ]; then
-	echo "$CMDNAME: language installation failed"
+	echo "$CMDNAME: language installation failed" 1>&2
 	exit 1
 fi
 
 $PSQL "CREATE ${trusted}PROCEDURAL LANGUAGE '$langname' HANDLER $handler LANCOMPILER '$lancomp'"
 if [ $? -ne 0 ]; then
-	echo "$CMDNAME: language installation failed"
+	echo "$CMDNAME: language installation failed" 1>&2
 	exit 1
 fi
 
