@@ -188,6 +188,8 @@ pg_connect <REPLACEABLE CLASS="PARAMETER">dbName</REPLACEABLE> <OPTIONAL>-host <
 </TERM>
 <LISTITEM>
 <PARA>A string of connection options, each written in the form keyword = value.
+A list of valid options can be found in <filename>libpq</>'s
+<function>PQconnectdb()</> manual entry.
 </PARA>
 </LISTITEM>
 </VARLISTENTRY>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.24 2001/01/20 20:59:28 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.25 2001/04/30 04:26:01 momjian Exp $
 -->
 
  <chapter id="libpqplusplus">
@@ -65,13 +65,15 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.24 2001/01/20 20:59:
 
     <para>
      The following environment variables can be used to select default
-     connection parameter values, which will be used by PQconnectdb or
-     PQsetdbLogin if no value is directly specified by the calling code.
+     connection parameter values, which will be used by
+     <function>PQconnectdb</> or
+     <function>PQsetdbLogin</> if no value is directly specified by the calling code.
      These are useful to avoid hard-coding database names into simple
      application programs.
      <note>
       <para>
-       <filename>libpq++</filename> uses only environment variables or PQconnectdb
+       <filename>libpq++</filename> uses only environment variables or
+       <filename>libpq</>'s <function>PQconnectdb</>
        conninfo style strings.
       </para>
      </note>
