@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/reindex.sgml,v 1.4 2001/09/03 12:57:50 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/reindex.sgml,v 1.5 2001/11/20 02:45:00 tgl Exp $
 Postgres documentation
 -->
 
@@ -15,7 +15,7 @@ Postgres documentation
    REINDEX
   </refname>
   <refpurpose>
-   recover a corrupted system index
+   rebuild corrupted indexes
   </refpurpose>
  </refnamediv>
  <refsynopsisdiv>
@@ -49,6 +49,7 @@ REINDEX { TABLE | DATABASE | INDEX } <replaceable class="PARAMETER">name</replac
       <listitem>
        <para>
 	Recreate all system indexes of a specified database.
+	(User-table indexes are not included.)
        </para>
       </listitem>
      </varlistentry>
@@ -72,8 +73,10 @@ REINDEX { TABLE | DATABASE | INDEX } <replaceable class="PARAMETER">name</replac
       <term>FORCE</term>
       <listitem>
        <para>
-	Recreate indexes forcedly. Without this keyword REINDEX does
-	nothing unless target indexes are invalidated.
+	Force rebuild of system indexes.  Without this keyword
+	<command>REINDEX</> skips system indexes that are not marked invalid.
+	FORCE is irrelevant for <command>REINDEX INDEX</>, or when reindexing
+	user indexes.
        </para>
       </listitem>
      </varlistentry>
@@ -114,11 +117,86 @@ REINDEX
    Description
   </title>
   <para>
-   <command>REINDEX</command> is used to recover corrupted system indexes.
-    In order to run REINDEX command, postmaster must be shut down and 
-    stand-alone Postgres should be started instead with options -O and
-    -P (an option to ignore system indexes).  Note that we couldn't rely
-    on system indexes for the recovery of system indexes.
+   <command>REINDEX</command> is used to rebuild corrupted indexes.
+   Although in theory this should never be necessary, in practice
+   indexes may become corrupted due to software bugs or hardware
+   failures.  <command>REINDEX</command> provides a recovery method.
+  </para>
+
+  <para>
+    If you suspect corruption of an index on a user table, you can
+    simply rebuild that index, or all indexes on the table, using
+    <command>REINDEX INDEX</command> or <command>REINDEX TABLE</command>.
+  </para>
+
+  <note>
+   <para>
+    Another approach to dealing with a corrupted user-table index is
+    just to drop and recreate it.  This may in fact be preferable if
+    you would like to maintain some semblance of normal operation on
+    the table meanwhile.  <command>REINDEX</> acquires exclusive lock
+    on the table, while <command>CREATE INDEX</> only locks out writes
+    not reads of the table.
+   </para>
+  </note>
+
+  <para>
+   Things are more difficult if you need to recover from corruption of an
+   index on a system table.  In this case it's important for the backend
+   doing the recovery to not have used any of the suspect indexes itself.
+   (Indeed, in this sort of scenario you may find that backends are
+   crashing immediately at startup, due to reliance on the corrupted
+   indexes.)  To recover safely, the postmaster must be shut down and a
+   stand-alone Postgres backend must be started instead, giving it
+   the command-line options -O and -P (these options allow system table
+   modifications and prevent use of system indexes, respectively).  Then
+   issue <command>REINDEX INDEX</>, <command>REINDEX TABLE</>, or
+   <command>REINDEX DATABASE</> depending on how much you want to reconstruct.
+   If in doubt, use <command>REINDEX DATABASE FORCE</> to force reconstruction
+   of all system indexes in the database.  Then quit the standalone backend
+   and restart the postmaster.
+  </para>
+
+  <para>
+   Since this is likely the only situation when most people will ever use
+   a standalone backend, some usage notes might be in order:
+
+   <itemizedlist>
+    <listitem>
+     <para>
+      Start the backend with a command like
+<screen>
+<userinput>postgres -D $PGDATA -O -P my_database</userinput>
+</screen>
+      Provide the correct path to the database area with <option>-D</>, or
+      make sure that the environment variable <envar>PGDATA</> is set.
+      Also specify the name of the particular database you want to work in.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      You can issue any SQL command, not only <command>REINDEX</>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Be aware that the standalone backend treats newline as the command
+      entry terminator, not semicolon; you can't continue commands across
+      lines, as you can in <application>psql</>.
+      Also, you won't have any of the conveniences of readline processing
+      (no command history, for example).
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      To quit the backend, type EOF (control-D, usually).
+     </para>
+    </listitem>
+
+   </itemizedlist>
   </para>
  </refsect1>
 
@@ -127,7 +205,7 @@ REINDEX
    Usage
   </title>
   <para>
-   Recreate the table <literal>mytable</literal>:
+   Recreate the indexes on the table <literal>mytable</literal>:
 
    <programlisting>
      REINDEX TABLE mytable;
@@ -135,11 +213,18 @@ REINDEX
   </para>
 
   <para>
-   Some more examples:
+   Rebuild a single index:
 
    <programlisting>
-REINDEX DATABASE my_database FORCE;
-REINDEX INDEX my_index;
+    REINDEX INDEX my_index;
+   </programlisting>
+  </para>
+
+  <para>
+   Rebuild all system indexes (this will only work in a standalone backend):
+
+   <programlisting>
+    REINDEX DATABASE my_database FORCE;
    </programlisting>
   </para>
  </refsect1>
