@@ -1,171 +1,171 @@
 LOAD '_OBJWD_/varbit.so';
 
-CREATE FUNCTION varbit_in(opaque)
+CREATE FUNCTION varbitin(opaque)
    RETURNS bit
    AS '_OBJWD_/varbit.so'
    LANGUAGE 'c';
 
-CREATE FUNCTION varbit_out(opaque)
+CREATE FUNCTION zpbitout(opaque)
    RETURNS opaque
    AS '_OBJWD_/varbit.so'
    LANGUAGE 'c';
 
-CREATE TYPE bits (
+CREATE TYPE bit (
    internallength = -1,
-   input = varbit_in,
-   output = varbit_out
+   input = varbitin,
+   output = zpbitout
 );
 
-CREATE FUNCTION bitcat(bits,bits) RETURNS bits
+CREATE FUNCTION bitcat(bit,bit) RETURNS bit
   AS '_OBJWD_/varbit.so'
   LANGUAGE 'C';
 
 CREATE OPERATOR || (
-  leftarg = bits,
-  rightarg = bits,
+  leftarg = bit,
+  rightarg = bit,
   procedure = bitcat
 );
 
-CREATE FUNCTION bitsubstr(bits,integer,integer) RETURNS bits
+CREATE FUNCTION bitsubstr(bit,integer,integer) RETURNS bit
   AS '_OBJWD_/varbit.so'
   LANGUAGE 'C';
 
-CREATE FUNCTION biteq(bits,bits) RETURNS bool
+CREATE FUNCTION biteq(bit,bit) RETURNS bool
   AS '_OBJWD_/varbit.so'
   LANGUAGE 'C';
 
 CREATE OPERATOR = (
-  leftarg = bits,
-  rightarg = bits,
+  leftarg = bit,
+  rightarg = bit,
   procedure = biteq,
   negator = <>,
   commutator = =
 ); 
 
-CREATE FUNCTION bitne(bits,bits) RETURNS bool
+CREATE FUNCTION bitne(bit,bit) RETURNS bool
   AS '_OBJWD_/varbit.so'
   LANGUAGE 'C';
 
 CREATE OPERATOR <> (
-  leftarg = bits,
-  rightarg = bits,
+  leftarg = bit,
+  rightarg = bit,
   procedure = bitne,
   negator = =,
   commutator = <>
 ); 
 
-CREATE FUNCTION bitlt(bits,bits) RETURNS bool
+CREATE FUNCTION bitlt(bit,bit) RETURNS bool
   AS '_OBJWD_/varbit.so'
   LANGUAGE 'C';
 
 CREATE OPERATOR < (
-  leftarg = bits,
-  rightarg = bits,
+  leftarg = bit,
+  rightarg = bit,
   procedure = bitlt
 ); 
 
-CREATE FUNCTION bitle(bits,bits) RETURNS bool
+CREATE FUNCTION bitle(bit,bit) RETURNS bool
   AS '_OBJWD_/varbit.so'
   LANGUAGE 'C';
 
 CREATE OPERATOR <= (
-  leftarg = bits,
-  rightarg = bits,
+  leftarg = bit,
+  rightarg = bit,
   procedure = bitle
 ); 
 
-CREATE FUNCTION bitgt(bits,bits) RETURNS bool
+CREATE FUNCTION bitgt(bit,bit) RETURNS bool
   AS '_OBJWD_/varbit.so'
   LANGUAGE 'C';
 
 CREATE OPERATOR > (
-  leftarg = bits,
-  rightarg = bits,
+  leftarg = bit,
+  rightarg = bit,
   procedure = bitgt,
   negator = <=,
   commutator = <
 ); 
 
-CREATE FUNCTION bitge(bits,bits) RETURNS bool
+CREATE FUNCTION bitge(bit,bit) RETURNS bool
   as '_OBJWD_/varbit.so'
   language 'C';
 
 CREATE OPERATOR >= (
-  leftarg = bits,
-  rightarg = bits,
+  leftarg = bit,
+  rightarg = bit,
   procedure = bitge,
   negator = <,
   commutator = <=
 ); 
 
-CREATE FUNCTION bitcmp(bits,bits) RETURNS int4
+CREATE FUNCTION bitcmp(bit,bit) RETURNS integer
   AS '_OBJWD_/varbit.so'
   LANGUAGE 'C';
 
 CREATE OPERATOR <=> (
-  leftarg = bits,
-  rightarg = bits,
+  leftarg = bit,
+  rightarg = bit,
   procedure = bitcmp
 ); 
 
-CREATE FUNCTION bitor(bits,bits) RETURNS bits
+CREATE FUNCTION bitor(bit,bit) RETURNS bit
   AS '_OBJWD_/varbit.so'
   LANGUAGE 'C';
 
 CREATE OPERATOR | (
-  leftarg = bits,
-  rightarg = bits,
+  leftarg = bit,
+  rightarg = bit,
   procedure = bitor,
   commutator = |
 ); 
 
-CREATE FUNCTION bitand(bits,bits) RETURNS bits
+CREATE FUNCTION bitand(bit,bit) RETURNS bit
   AS '_OBJWD_/varbit.so'
   LANGUAGE 'C';
 
 CREATE OPERATOR & (
-  leftarg = bits,
-  rightarg = bits,
+  leftarg = bit,
+  rightarg = bit,
   procedure = bitand,
   commutator = &
 ); 
 
 
-CREATE FUNCTION bitxor(bits,bits) RETURNS bits
+CREATE FUNCTION bitxor(bit,bit) RETURNS bit
   AS '_OBJWD_/varbit.so'
   LANGUAGE 'C';
 
 CREATE OPERATOR ^ (
-  leftarg = bits,
-  rightarg = bits,
+  leftarg = bit,
+  rightarg = bit,
   procedure = bitxor
 ); 
 
-CREATE FUNCTION bitnot(bits) RETURNS bits
+CREATE FUNCTION bitnot(bit) RETURNS bit
   AS '_OBJWD_/varbit.so'
   LANGUAGE 'C';
 
 CREATE OPERATOR ~ (
-  rightarg = bits,
+  rightarg = bit,
   procedure = bitnot
 ); 
 
-CREATE FUNCTION bitshiftleft(bits,int4) RETURNS bits
+CREATE FUNCTION bitshiftleft(bit,integer) RETURNS bit
   AS '_OBJWD_/varbit.so'
   LANGUAGE 'C';
 
 CREATE OPERATOR << (
-  leftarg = bits,
-  rightarg = int4,
+  leftarg = bit,
+  rightarg = integer,
   procedure = bitshiftleft
 );
 
-CREATE FUNCTION bitshiftright(bits,int4) RETURNS bits
+CREATE FUNCTION bitshiftright(bit,integer) RETURNS bit
   AS '_OBJWD_/varbit.so'
   LANGUAGE 'C';
 
 CREATE OPERATOR >> (
-  leftarg = bits,
-  rightarg = int4,
+  leftarg = bit,
+  rightarg = integer,
   procedure = bitshiftright
 );

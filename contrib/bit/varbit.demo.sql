@@ -1,4 +1,4 @@
-create table bit_example (a bits, b bits);
+create table bit_example (a bit, b bit);
 copy bit_example from stdin;
 X0F	X10
 X1F	X11
