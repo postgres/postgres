@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.119.2.6 2003/07/17 22:20:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.119.2.7 2003/12/07 04:11:26 joe Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -178,6 +178,7 @@ static bool string_lessthan(const char *str1, const char *str2,
 static Oid	find_operator(const char *opname, Oid datatype);
 static Datum string_to_datum(const char *str, Oid datatype);
 static Const *string_to_const(const char *str, Oid datatype);
+static Const *string_to_bytea_const(const char *str, size_t str_len);
 
 
 /*
@@ -2761,7 +2762,6 @@ like_fixed_prefix(Const *patt_const, bool case_insensitive,
 	char	   *match;
 	char	   *patt;
 	int			pattlen;
-	char	   *prefix;
 	char	   *rest;
 	Oid			typeid = patt_const->consttype;
 	int			pos,
@@ -2780,20 +2780,31 @@ like_fixed_prefix(Const *patt_const, bool case_insensitive,
 	}
 	else
 	{
-		patt = DatumGetCString(DirectFunctionCall1(byteaout, patt_const->constvalue));
-		pattlen = toast_raw_datum_size(patt_const->constvalue) - VARHDRSZ;
+		bytea   *bstr = DatumGetByteaP(patt_const->constvalue);
+
+		pattlen = VARSIZE(bstr) - VARHDRSZ;
+		if (pattlen > 0)
+		{
+			patt = (char *) palloc(pattlen);
+			memcpy(patt, VARDATA(bstr), pattlen);
+		}
+		else
+			patt = NULL;
+
+		if ((Pointer) bstr != DatumGetPointer(patt_const->constvalue))
+			pfree(bstr);
 	}
 
-	prefix = match = palloc(pattlen + 1);
+	match = palloc(pattlen + 1);
 	match_pos = 0;
-
 	for (pos = 0; pos < pattlen; pos++)
 	{
 		/* % and _ are wildcard characters in LIKE */
 		if (patt[pos] == '%' ||
 			patt[pos] == '_')
 			break;
-		/* Backslash quotes the next character */
+
+		/* Backslash escapes the next character */
 		if (patt[pos] == '\\')
 		{
 			pos++;
@@ -2819,12 +2830,20 @@ like_fixed_prefix(Const *patt_const, bool case_insensitive,
 	match[match_pos] = '\0';
 	rest = &patt[pos];
 
-	*prefix_const = string_to_const(prefix, typeid);
-	*rest_const = string_to_const(rest, typeid);
+	if (typeid != BYTEAOID)
+	{
+		*prefix_const = string_to_const(match, typeid);
+		*rest_const = string_to_const(rest, typeid);
+	}
+	else
+	{
+		*prefix_const = string_to_bytea_const(match, match_pos);
+		*rest_const = string_to_bytea_const(rest, pattlen - pos);
+	}
 
-	pfree(patt);
+	if (patt != NULL)
+		pfree(patt);
 	pfree(match);
-	prefix = NULL;
 
 	/* in LIKE, an empty pattern is an exact match! */
 	if (pos == pattlen)
@@ -3153,9 +3172,22 @@ like_selectivity(Const *patt_const, bool case_insensitive)
 	}
 	else
 	{
-		patt = DatumGetCString(DirectFunctionCall1(byteaout, patt_const->constvalue));
-		pattlen = toast_raw_datum_size(patt_const->constvalue) - VARHDRSZ;
+		bytea   *bstr = DatumGetByteaP(patt_const->constvalue);
+
+		pattlen = VARSIZE(bstr) - VARHDRSZ;
+		if (pattlen > 0)
+		{
+			patt = (char *) palloc(pattlen);
+			memcpy(patt, VARDATA(bstr), pattlen);
+		}
+		else
+			patt = NULL;
+
+		if ((Pointer) bstr != DatumGetPointer(patt_const->constvalue))
+			pfree(bstr);
 	}
+	/* patt should never be NULL in practice */
+	Assert(patt != NULL);
 
 	/* Skip any leading %; it's already factored into initial sel */
 	start = (*patt == '%') ? 1 : 0;
@@ -3368,8 +3400,9 @@ locale_is_like_safe(void)
 }
 
 /*
- * Try to generate a string greater than the given string or any string it is
- * a prefix of.  If successful, return a palloc'd string; else return NULL.
+ * Try to generate a string greater than the given string or any
+ * string it is a prefix of.  If successful, return a palloc'd string
+ * in the form of a Const pointer; else return NULL.
  *
  * To work correctly in non-ASCII locales with weird collation orders,
  * we cannot simply increment "foo" to "fop" --- we have to check whether
@@ -3393,27 +3426,38 @@ Const *
 make_greater_string(const Const *str_const)
 {
 	Oid			datatype = str_const->consttype;
-	char	   *str;
 	char	   *workstr;
 	int			len;
 
 	/* Get the string and a modifiable copy */
 	if (datatype == NAMEOID)
 	{
-		str = DatumGetCString(DirectFunctionCall1(nameout, str_const->constvalue));
-		len = strlen(str);
+		workstr = DatumGetCString(DirectFunctionCall1(nameout,
+													  str_const->constvalue));
+		len = strlen(workstr);
 	}
 	else if (datatype == BYTEAOID)
 	{
-		str = DatumGetCString(DirectFunctionCall1(byteaout, str_const->constvalue));
-		len = toast_raw_datum_size(str_const->constvalue) - VARHDRSZ;
+		bytea   *bstr = DatumGetByteaP(str_const->constvalue);
+
+		len = VARSIZE(bstr) - VARHDRSZ;
+		if (len > 0)
+		{
+			workstr = (char *) palloc(len);
+			memcpy(workstr, VARDATA(bstr), len);
+		}
+		else
+			workstr = NULL;
+
+		if ((Pointer) bstr != DatumGetPointer(str_const->constvalue))
+			pfree(bstr);
 	}
 	else
 	{
-		str = DatumGetCString(DirectFunctionCall1(textout, str_const->constvalue));
-		len = strlen(str);
+		workstr = DatumGetCString(DirectFunctionCall1(textout,
+													  str_const->constvalue));
+		len = strlen(workstr);
 	}
-	workstr = pstrdup(str);
 
 	while (len > 0)
 	{
@@ -3423,18 +3467,18 @@ make_greater_string(const Const *str_const)
 		/*
 		 * Try to generate a larger string by incrementing the last byte.
 		 */
-		while (*lastchar < (unsigned char) 255)
+		if (*lastchar < (unsigned char) 255)
 		{
-			(*lastchar)++;
-			if (string_lessthan(str, workstr, datatype))
-			{
-				/* Success! */
-				Const	   *workstr_const = string_to_const(workstr, datatype);
+			Const	   *workstr_const;
 
-				pfree(str);
-				pfree(workstr);
-				return workstr_const;
-			}
+			(*lastchar)++;
+			if (datatype != BYTEAOID)
+				workstr_const = string_to_const(workstr, datatype);
+			else
+				workstr_const = string_to_bytea_const(workstr, len);
+
+			pfree(workstr);
+			return workstr_const;
 		}
 
 		/* restore last byte so we don't confuse pg_mbcliplen */
@@ -3454,8 +3498,8 @@ make_greater_string(const Const *str_const)
 	}
 
 	/* Failed... */
-	pfree(str);
-	pfree(workstr);
+	if (workstr != NULL)
+		pfree(workstr);
 
 	return (Const *) NULL;
 }
@@ -3555,6 +3599,22 @@ string_to_const(const char *str, Oid datatype)
 
 	return makeConst(datatype, ((datatype == NAMEOID) ? NAMEDATALEN : -1),
 					 conval, false, false, false, false);
+}
+
+/*
+ * Generate a Const node of bytea type from a binary C string and a length.
+ */
+static Const *
+string_to_bytea_const(const char *str, size_t str_len)
+{
+	bytea  *bstr = palloc(VARHDRSZ + str_len);
+	Datum	conval;
+
+	memcpy(VARDATA(bstr), str, str_len);
+	VARATT_SIZEP(bstr) = VARHDRSZ + str_len;
+	conval = PointerGetDatum(bstr);
+
+	return makeConst(BYTEAOID, -1, conval, false, false, false, false);
 }
 
 /*-------------------------------------------------------------------------
