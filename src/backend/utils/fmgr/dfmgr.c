@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.24 1999/05/10 00:46:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.25 1999/05/22 19:49:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -148,7 +148,7 @@ handle_load(char *filename, char *funcname)
 		if (file_scanner == (DynamicFileList *) NULL)
 		{
 			if (stat(filename, &stat_buf) == -1)
-				elog(ERROR, "stat failed on file %s", filename);
+				elog(ERROR, "stat failed on file '%s': %m", filename);
 
 			for (file_scanner = file_list;
 				 file_scanner != (DynamicFileList *) NULL
@@ -237,13 +237,17 @@ void
 load_file(char *filename)
 {
 	DynamicFileList *file_scanner,
-			   *p;
+				   *p;
 	struct stat stat_buf;
-
 	int			done = 0;
 
+	/*
+	 * We need to do stat() in order to determine whether this is the
+	 * same file as a previously loaded file; it's also handy so as to
+	 * give a good error message if bogus file name given.
+	 */
 	if (stat(filename, &stat_buf) == -1)
-		elog(ERROR, "stat failed on file %s", filename);
+		elog(ERROR, "LOAD: could not open file '%s': %m", filename);
 
 	if (file_list != (DynamicFileList *) NULL
 		&& !NOT_EQUAL(stat_buf, *file_list))
