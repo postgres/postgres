@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/set.l,v 1.10 1998/10/14 02:36:44 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/set.l,v 1.11 1998/10/14 05:10:12 momjian Exp $
 .TH SET SQL 05/14/97 PostgreSQL PostgreSQL
 .SH NAME
 set - set run-time parameters for session
@@ -75,6 +75,12 @@ by default. It's not used by GEQO anyway.
 	on	- turn right-hand plan evaluation 'on'
 	off	- do not use right-hand plan evaluation
 .fi
+
+.PP
+.IR QUERY_LIMIT
+restricts the number of rows returned by a query.
+The default is unlimited.
+
 
 .SH EXAMPLES
 .nf

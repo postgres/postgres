@@ -2,7 +2,7 @@
  * Routines for handling of 'SET var TO',
  *	'SHOW var' and 'RESET var' statements.
  *
- * $Id: variable.c,v 1.15 1998/10/08 23:50:28 tgl Exp $
+ * $Id: variable.c,v 1.16 1998/10/14 05:09:58 momjian Exp $
  *
  */
 
@@ -17,6 +17,10 @@
 #include "optimizer/internal.h"
 #ifdef MULTIBYTE
 #include "mb/pg_wchar.h"
+#endif
+#ifdef QUERY_LIMIT
+#include "executor/executor.h"
+#include "executor/execdefs.h"
 #endif
 
 static bool show_date(void);
@@ -40,6 +44,11 @@ static bool parse_geqo(const char *);
 static bool show_ksqo(void);
 static bool reset_ksqo(void);
 static bool parse_ksqo(const char *);
+#ifdef QUERY_LIMIT
+static bool show_query_limit(void);
+static bool reset_query_limit(void);
+static bool parse_query_limit(const char *);
+#endif
 
 extern Cost _cpu_page_wight_;
 extern Cost _cpu_index_page_wight_;
@@ -48,7 +57,11 @@ extern int32 _use_geqo_rels_;
 extern bool _use_right_sided_plans_;
 extern bool _use_keyset_query_optimizer;
 
-/*-----------------------------------------------------------------------*/
+/*
+ *
+ * Get_Token
+ *
+ */
 static const char *
 get_token(char **tok, char **val, const char *str)
 {
@@ -149,7 +162,11 @@ get_token(char **tok, char **val, const char *str)
 	return str;
 }
 
-/*-----------------------------------------------------------------------*/
+/*
+ *
+ * GEQO
+ *
+ */
 static bool
 parse_geqo(const char *value)
 {
@@ -221,6 +238,11 @@ reset_geqo(void)
 	return TRUE;
 }
 
+/*
+ *
+ * R_PLANS
+ *
+ */
 static bool
 parse_r_plans(const char *value)
 {
@@ -240,7 +262,6 @@ parse_r_plans(const char *value)
 	return TRUE;
 }
 
-/*-----------------------------------------------------------------------*/
 static bool
 show_r_plans()
 {
@@ -264,7 +285,11 @@ reset_r_plans()
 	return TRUE;
 }
 
-/*-----------------------------------------------------------------------*/
+/*
+ *
+ * COST_HEAP
+ *
+ */
 static bool
 parse_cost_heap(const char *value)
 {
@@ -297,7 +322,11 @@ reset_cost_heap()
 	return TRUE;
 }
 
-/*-----------------------------------------------------------------------*/
+/*
+ *
+ * COST_INDEX
+ *
+ */
 static bool
 parse_cost_index(const char *value)
 {
@@ -330,7 +359,11 @@ reset_cost_index()
 	return TRUE;
 }
 
-/*-----------------------------------------------------------------------*/
+/*
+ *
+ * DATE_STYLE
+ *
+ */
 static bool
 parse_date(const char *value)
 {
@@ -448,6 +481,11 @@ static char *defaultTZ = NULL;
 static char TZvalue[64];
 static char tzbuf[64];
 
+/*
+ *
+ * TIMEZONE
+ *
+ */
 /* parse_timezone()
  * Handle SET TIME ZONE...
  * Try to save existing TZ environment variable for later use in RESET TIME ZONE.
@@ -545,7 +583,53 @@ reset_timezone()
 	return TRUE;
 }	/* reset_timezone() */
 
+/*
+ *
+ * Query_limit
+ *
+ */
+#ifdef QUERY_LIMIT
+static bool
+parse_query_limit(const char *value)
+{
+  int32 limit;
+
+  if (value == NULL) {
+    reset_query_limit();
+    return(TRUE);
+  }
+  limit = pg_atoi(value, sizeof(int32), '\0');
+  if (limit <= -1) {
+    elog(ERROR, "Bad value for # of query limit (%s)", value);
+  }
+  ExecutorLimit(limit);
+  return(TRUE);
+}
+
+static bool
+show_query_limit(void)
+{
+  int limit;
+
+  limit = ExecutorGetLimit();
+  if (limit == ALL_TUPLES) {
+    elog(NOTICE, "No query limit is set");
+  } else {
+    elog(NOTICE, "query limit is %d",limit);
+  }
+  return(TRUE);
+}
+
+static bool
+reset_query_limit(void)
+{
+  ExecutorLimit(ALL_TUPLES);
+  return(TRUE);
+}
+#endif
+
 /*-----------------------------------------------------------------------*/
+
 struct VariableParsers
 {
 	const char *name;
@@ -584,6 +668,11 @@ struct VariableParsers
 	{
 		"ksqo", parse_ksqo, show_ksqo, reset_ksqo
 	},
+#ifdef QUERY_LIMIT
+	{
+		"query_limit", parse_query_limit, show_query_limit, reset_query_limit
+	},
+#endif
 	{
 		NULL, NULL, NULL, NULL
 	}

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: psqlHelp.h,v 1.53 1998/10/08 01:10:28 tgl Exp $
+ * $Id: psqlHelp.h,v 1.54 1998/10/14 05:10:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -296,10 +296,10 @@ static struct _helpStruct QL_HELP[] = {
 		"set run-time environment back to default",
 #ifdef MULTIBYTE
 	"\
-\tRESET DateStyle|GEQO|R_PLANS|CLIENT_ENCODING"},
+\tRESET DateStyle|GEQO|R_PLANS|QUERY_LIMIT|CLIENT_ENCODING"},
 #else
 	"\
-\tRESET DateStyle|GEQO|R_PLANS"},
+\tRESET DateStyle|GEQO|R_PLANS|QUERY_LIMIT"},
 #endif
 	{"revoke",
 		"revoke access control from a user or group",
@@ -329,21 +329,23 @@ static struct _helpStruct QL_HELP[] = {
 \tSET DateStyle TO 'ISO'|'SQL'|'Postgres'|'European'|'US'|'NonEuropean'\n\
 set GEQO TO 'ON[=#]'|'OFF'\n\
 set R_PLANS TO 'ON'|'OFF'\n\
+set QUERY_LIMIT TO #\n\
 set CLIENT_ENCODING TO 'EUC_JP'|'SJIS'|'EUC_CN'|'EUC_KR'|'EUC_TW'|'MULE_INTERNAL'|'LATIN1'|'LATIN2'|'LATIN3'|'LATIN4'|'LATIN5'"},
 #else
 	"\
 \tSET DateStyle TO 'ISO'|'SQL'|'Postgres'|'European'|'US'|'NonEuropean'\n\
 set GEQO TO 'ON[=#]'|'OFF'\n\
-set R_PLANS TO 'ON'| 'OFF'"},
+set R_PLANS TO 'ON'| 'OFF'\n\
+set QUERY_LIMIT TO #"},
 #endif
 	{"show",
 		"show current run-time environment",
 #ifdef MULTIBYTE
 	"\
-\tSHOW DateStyle|GEQO|R_PLANS|CLIENT_ENCODING"},
+\tSHOW DateStyle|GEQO|R_PLANS|QUERY_LIMIT|CLIENT_ENCODING"},
 #else
 	"\
-\tSHOW DateStyle|GEQO|R_PLANS"},
+\tSHOW DateStyle|GEQO|R_PLANS|QUERY_LIMIT"},
 #endif
 	{"unlisten",
 		"stop listening for notification on a condition name",

@@ -415,6 +415,44 @@ Equivalent to specifying <command>SET R_PLANS=Off</command>.
                 The frontend may be initialized by setting the PGRPLANS
                 environment variable.
 
+<varlistentry>
+<term>
+QUERY_LIMIT
+</term>
+<listitem>
+<para>
+Sets the number of rows returned by a query.
+
+<variablelist>
+<varlistentry>
+<term>
+Value
+</term>
+<listitem>
+<para>
+Maximum number of rows to return for a query.  The default is unlimited.
+<varlistentry>
+<term>
+<replaceable class="parameter">#</replaceable>
+</term>
+<listitem>
+<para>
+Sets the maximum number of rows returned by a
+query to <replaceable class="parameter">#</replaceable>.
+<varlistentry>
+<term>
+DEFAULT
+</term>
+<listitem>
+<para>
+Sets the number of rows returned by a query to unlimited.
+</varlistentry>
+
+<para>
+                By default, there is no limit to the number of rows
+		returned by a query.
+</variablelist>
+
 </VARLISTENTRY>
 </VARIABLELIST>
 </REFSECT2>

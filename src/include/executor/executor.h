@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: executor.h,v 1.26 1998/10/08 18:30:29 momjian Exp $
+ * $Id: executor.h,v 1.27 1998/10/14 05:10:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -86,6 +86,10 @@ extern TupleDesc ExecutorStart(QueryDesc *queryDesc, EState *estate);
 extern TupleTableSlot *ExecutorRun(QueryDesc *queryDesc, EState *estate, int feature, int count);
 extern void ExecutorEnd(QueryDesc *queryDesc, EState *estate);
 extern HeapTuple ExecConstraints(char *caller, Relation rel, HeapTuple tuple);
+#ifdef QUERY_LIMIT
+extern int ExecutorLimit(int limit);
+extern int ExecutorGetLimit(void);
+#endif
 
 /*
  * prototypes from functions in execProcnode.c
