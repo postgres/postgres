@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/show.sgml,v 1.13 2001/09/03 12:57:50 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/show.sgml,v 1.14 2001/09/14 08:47:00 ishii Exp $
 Postgres documentation
 -->
 
@@ -110,7 +110,7 @@ NOTICE:  DateStyle is ISO with US (NonEuropean) conventions
    Show the current genetic optimizer (<literal>geqo</literal>) setting:
 <screen>
 SHOW GEQO;
-NOTICE:  geqo = true
+NOTICE:  geqo is on
 </screen>
   </para>
  </refsect1>
