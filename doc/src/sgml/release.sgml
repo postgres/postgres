@@ -1,6 +1,118 @@
 <Chapter Id="release">
 <Title>Release Notes</Title>
 
+
+<Sect1>
+<Title>Release 6.4.2</Title>
+<!--
+<docinfo>
+<authorgroup>
+<author>
+<firstname>Bruce</firstname>
+<surname>Momjian</surname>
+</author>
+</authorgroup>
+<date>1999-12-20</date>
+</docinfo>
+-->
+
+<para>
+The 6.4.1 release was improperly packaged.  This also has one additional
+bug fix.
+</para>
+
+
+<sect2>
+<title>Migration to v6.4.2</title>
+
+<para>
+A dump/restore is <emphasis>not</emphasis> required for those running
+6.4.*.
+</para>
+</sect2>
+<sect2>
+<title>Detailed Change List</title>
+
+<para>
+<programlisting>
+Fix for datetime constant problem on some platforms(Thomas)
+</programlisting>
+</Para>
+</sect2>
+</Sect1>
+
+
+
+<Sect1>
+<Title>Release 6.4.1</Title>
+<!--
+<docinfo>
+<authorgroup>
+<author>
+<firstname>Bruce</firstname>
+<surname>Momjian</surname>
+</author>
+</authorgroup>
+<date>1999-12-18</date>
+</docinfo>
+-->
+
+<para>
+This is basically a cleanup release for 6.4.  We have fixed a variety of
+problems reported by 6.4 users.
+</para>
+
+
+<sect2>
+<title>Migration to v6.4</title>
+
+<para>
+A dump/restore is <emphasis>not</emphasis> required for those running
+6.4.
+</para>
+</sect2>
+<sect2>
+<title>Detailed Change List</title>
+
+<para>
+<programlisting>
+Add pg_dump -N flag to force double quotes around identifiers.  This is
+	the default(Thomas)
+Fix for NOT in where clause causing crash(Bruce)
+EXPLAIN VERBOSE coredump fix(Vadim)
+Fix shared-library problems on Linux
+Fix test for table existance to allow mixed-case and whitespace in
+	the table name(Thomas)
+Fix a couple of pg_dump bugs
+Configure matches template/.similar entries better(Tom)
+Change builtin function names from SPI_* to spi_*
+OR WHERE clause fix(Vadim)
+Fixes for mixed-case table names(Billy)
+contrib/linux/postgres.init.csh/sh fix(Thomas)
+libpq memory overrun fix
+SunOS fixes(Tom)
+Change exp() behavior to generate error on underflow(Thomas)
+pg_dump fixes for memory leak, inheritance constraints, layout change
+update pgaccess to 0.93
+Fix prototype for 64-bit platforms
+Multi-byte fixes(Tatsuo)
+New ecpg man page
+Fix memory overruns(Tatsuo)
+Fix for lo_import() crash(Bruce)
+Better search for install program(Tom)
+Timezone fixes(Tom)
+HPUX fixes(Tom)
+Use implicit type coersion for matching DEFAULT values(Thomas)
+Add routines to help with single-byte (internal) character type(Thomas)
+Compilation of libpq for Win32 fixes(Magnus)
+Upgrade to PyGreSQL 2.2(D'Arcy)
+</programlisting>
+</Para>
+</sect2>
+</Sect1>
+
+
+
 <Sect1>
 <Title>Release 6.4</Title>
 <!--
