@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/pathkey.c,v 1.3 1999/02/19 05:18:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.1 1999/02/20 15:27:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
