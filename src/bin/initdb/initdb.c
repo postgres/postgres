@@ -39,7 +39,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.56 2004/10/06 09:13:10 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.57 2004/10/07 16:53:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -181,6 +181,7 @@ static void vacuum_db(void);
 static void make_template0(void);
 static void trapsig(int signum);
 static void check_ok(void);
+static void escape_locale(char **locale);
 static bool chklocale(const char *locale);
 static void setlocales(void);
 static void usage(const char *progname);
@@ -1099,16 +1100,20 @@ setup_config(void)
 	snprintf(repltok, sizeof(repltok), "shared_buffers = %d", n_buffers);
 	conflines = replace_token(conflines, "#shared_buffers = 1000", repltok);
 
+	   	   	   	
+	escape_locale(&lc_messages);
 	snprintf(repltok, sizeof(repltok), "lc_messages = '%s'", lc_messages);
 	conflines = replace_token(conflines, "#lc_messages = 'C'", repltok);
 
+	escape_locale(&lc_monetary);
 	snprintf(repltok, sizeof(repltok), "lc_monetary = '%s'", lc_monetary);
 	conflines = replace_token(conflines, "#lc_monetary = 'C'", repltok);
 
+	escape_locale(&lc_numeric);
 	snprintf(repltok, sizeof(repltok), "lc_numeric = '%s'", lc_numeric);
-
 	conflines = replace_token(conflines, "#lc_numeric = 'C'", repltok);
 
+	escape_locale(&lc_time);
 	snprintf(repltok, sizeof(repltok), "lc_time = '%s'", lc_time);
 	conflines = replace_token(conflines, "#lc_time = 'C'", repltok);
 
@@ -1896,11 +1901,27 @@ check_ok()
 	}
 }
 
+/*
+ * Escape any single quotes or backslashes in locale
+ */
+static void
+escape_locale(char **locale)
+{
+	int			len = strlen(*locale),
+				i, j;
+	char		*loc_temp = xmalloc(len * 2);
+	
+	for (i = 0, j = 0; i < len; i++)
+	{
+		if ((*locale)[i] == '\'' || (*locale)[i] == '\\')
+			loc_temp[j++] = '\\';
+		loc_temp[j++] = (*locale)[i];
+	}
+	*locale = loc_temp;
+}
 
 /*
  * check if given string is a valid locale specifier
- * based on some code given to me by Peter Eisentraut
- * (but I take responsibility for it :-)
  */
 static bool
 chklocale(const char *locale)
