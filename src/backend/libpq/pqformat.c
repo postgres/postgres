@@ -15,10 +15,16 @@
  * pq_getmessage, and then parsed and converted from that using the routines
  * in this module.
  *
+ * These same routines support reading and writing of external binary formats
+ * (typsend/typreceive routines).  The conversion routines for individual
+ * data types are exactly the same, only initialization and completion
+ * are different.
+ *
+ *
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/libpq/pqformat.c,v 1.29 2003/05/08 18:16:36 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/libpq/pqformat.c,v 1.30 2003/05/09 15:44:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,13 +34,19 @@
  *		pq_beginmessage - initialize StringInfo buffer
  *		pq_sendbyte		- append a raw byte to a StringInfo buffer
  *		pq_sendint		- append a binary integer to a StringInfo buffer
+ *		pq_sendint64	- append a binary 8-byte int to a StringInfo buffer
  *		pq_sendbytes	- append raw data to a StringInfo buffer
- *		pq_sendcountedtext - append a text string (with character set conversion)
+ *		pq_sendcountedtext - append a counted text string (with character set conversion)
+ *		pq_sendtext		- append a text string (with conversion)
  *		pq_sendstring	- append a null-terminated text string (with conversion)
  *		pq_endmessage	- send the completed message to the frontend
  * Note: it is also possible to append data to the StringInfo buffer using
  * the regular StringInfo routines, but this is discouraged since required
  * character set conversion may not occur.
+ *
+ * typsend support (construct a bytea value containing external binary data):
+ *		pq_begintypsend - initialize StringInfo buffer
+ *		pq_endtypsend	- return the completed string as a "bytea*"
  *
  * Special-case message output:
  *		pq_puttextmessage - generate a character set-converted message in one step
@@ -43,8 +55,10 @@
  * Message parsing after input:
  *		pq_getmsgbyte	- get a raw byte from a message buffer
  *		pq_getmsgint	- get a binary integer from a message buffer
+ *		pq_getmsgint64	- get a binary 8-byte int from a message buffer
  *		pq_getmsgbytes	- get raw data from a message buffer
  *		pq_copymsgbytes	- copy raw data from a message buffer
+ *		pq_getmsgtext	- get a counted text string (with conversion)
  *		pq_getmsgstring	- get a null-terminated text string (with conversion)
  *		pq_getmsgend	- verify message fully consumed
  */
@@ -101,7 +115,7 @@ pq_sendbytes(StringInfo buf, const char *data, int datalen)
 }
 
 /* --------------------------------
- *		pq_sendcountedtext - append a text string (with character set conversion)
+ *		pq_sendcountedtext - append a counted text string (with character set conversion)
  *
  * The data sent to the frontend by this routine is a 4-byte count field
  * followed by the string.  The count includes itself or not, as per the
@@ -133,6 +147,34 @@ pq_sendcountedtext(StringInfo buf, const char *str, int slen,
 }
 
 /* --------------------------------
+ *		pq_sendtext		- append a text string (with conversion)
+ *
+ * The passed text string need not be null-terminated, and the data sent
+ * to the frontend isn't either.  Note that this is not actually useful
+ * for direct frontend transmissions, since there'd be no way for the
+ * frontend to determine the string length.  But it is useful for binary
+ * format conversions.
+ * --------------------------------
+ */
+void
+pq_sendtext(StringInfo buf, const char *str, int slen)
+{
+	char	   *p;
+
+	p = (char *) pg_server_to_client((unsigned char *) str, slen);
+	if (p != str)				/* actual conversion has been done? */
+	{
+		slen = strlen(p);
+		appendBinaryStringInfo(buf, p, slen);
+		pfree(p);
+	}
+	else
+	{
+		appendBinaryStringInfo(buf, str, slen);
+	}
+}
+
+/* --------------------------------
  *		pq_sendstring	- append a null-terminated text string (with conversion)
  *
  * NB: passed text string must be null-terminated, and so is the data
@@ -152,9 +194,11 @@ pq_sendstring(StringInfo buf, const char *str)
 		slen = strlen(p);
 		appendBinaryStringInfo(buf, p, slen + 1);
 		pfree(p);
-		return;
 	}
-	appendBinaryStringInfo(buf, str, slen + 1);
+	else
+	{
+		appendBinaryStringInfo(buf, str, slen + 1);
+	}
 }
 
 /* --------------------------------
@@ -189,6 +233,35 @@ pq_sendint(StringInfo buf, int i, int b)
 }
 
 /* --------------------------------
+ *		pq_sendint64	- append a binary 8-byte int to a StringInfo buffer
+ *
+ * It is tempting to merge this with pq_sendint, but we'd have to make the
+ * argument int64 for all data widths --- that could be a big performance
+ * hit on machines where int64 isn't efficient.
+ * --------------------------------
+ */
+void
+pq_sendint64(StringInfo buf, int64 i)
+{
+	uint32		n32;
+
+	/* High order half first, since we're doing MSB-first */
+#ifdef INT64_IS_BUSTED
+	/* don't try a right shift of 32 on a 32-bit word */
+	n32 = (i < 0) ? -1 : 0;
+#else
+	n32 = (uint32) (i >> 32);
+#endif
+	n32 = htonl(n32);
+	appendBinaryStringInfo(buf, (char *) &n32, 4);
+
+	/* Now the low order half */
+	n32 = (uint32) i;
+	n32 = htonl(n32);
+	appendBinaryStringInfo(buf, (char *) &n32, 4);
+}
+
+/* --------------------------------
  *		pq_endmessage	- send the completed message to the frontend
  *
  * The data buffer is pfree()d, but if the StringInfo was allocated with
@@ -204,6 +277,44 @@ pq_endmessage(StringInfo buf)
 	pfree(buf->data);
 	buf->data = NULL;
 }
+
+
+/* --------------------------------
+ *		pq_begintypsend		- initialize for constructing a bytea result
+ * --------------------------------
+ */
+void
+pq_begintypsend(StringInfo buf)
+{
+	initStringInfo(buf);
+	/* Reserve four bytes for the bytea length word */
+	appendStringInfoCharMacro(buf, '\0');
+	appendStringInfoCharMacro(buf, '\0');
+	appendStringInfoCharMacro(buf, '\0');
+	appendStringInfoCharMacro(buf, '\0');
+}
+
+/* --------------------------------
+ *		pq_endtypsend	- finish constructing a bytea result
+ *
+ * The data buffer is returned as the palloc'd bytea value.  (We expect
+ * that it will be suitably aligned for this because it has been palloc'd.)
+ * We assume the StringInfoData is just a local variable in the caller and
+ * need not be pfree'd.
+ * --------------------------------
+ */
+bytea *
+pq_endtypsend(StringInfo buf)
+{
+	bytea	   *result = (bytea *) buf->data;
+
+	/* Insert correct length into bytea length word */
+	Assert(buf->len >= VARHDRSZ);
+	VARATT_SIZEP(result) = buf->len;
+
+	return result;
+}
+
 
 /* --------------------------------
  *		pq_puttextmessage - generate a character set-converted message in one step
@@ -290,6 +401,38 @@ pq_getmsgint(StringInfo msg, int b)
 }
 
 /* --------------------------------
+ *		pq_getmsgint64	- get a binary 8-byte int from a message buffer
+ *
+ * It is tempting to merge this with pq_getmsgint, but we'd have to make the
+ * result int64 for all data widths --- that could be a big performance
+ * hit on machines where int64 isn't efficient.
+ * --------------------------------
+ */
+int64
+pq_getmsgint64(StringInfo msg)
+{
+	int64		result;
+	uint32		h32;
+	uint32		l32;
+
+	pq_copymsgbytes(msg, (char *) &h32, 4);
+	pq_copymsgbytes(msg, (char *) &l32, 4);
+	h32 = ntohl(h32);
+	l32 = ntohl(l32);
+
+#ifdef INT64_IS_BUSTED
+	/* just lose the high half */
+	result = l32;
+#else
+	result = h32;
+	result <<= 32;
+	result |= l32;
+#endif
+
+	return result;
+}
+
+/* --------------------------------
  *		pq_getmsgbytes	- get raw data from a message buffer
  *
  *		Returns a pointer directly into the message buffer; note this
@@ -321,6 +464,39 @@ pq_copymsgbytes(StringInfo msg, char *buf, int datalen)
 		elog(ERROR, "pq_copymsgbytes: insufficient data left in message");
 	memcpy(buf, &msg->data[msg->cursor], datalen);
 	msg->cursor += datalen;
+}
+
+/* --------------------------------
+ *		pq_getmsgtext	- get a counted text string (with conversion)
+ *
+ *		Always returns a pointer to a freshly palloc'd result.
+ *		The result has a trailing null, *and* we return its strlen in *nbytes.
+ * --------------------------------
+ */
+char *
+pq_getmsgtext(StringInfo msg, int rawbytes, int *nbytes)
+{
+	char   *str;
+	char   *p;
+
+	if (rawbytes < 0 || rawbytes > (msg->len - msg->cursor))
+		elog(ERROR, "pq_getmsgtext: insufficient data left in message");
+	str = &msg->data[msg->cursor];
+	msg->cursor += rawbytes;
+
+	p = (char *) pg_client_to_server((unsigned char *) str, rawbytes);
+	if (p != str)				/* actual conversion has been done? */
+	{
+		*nbytes = strlen(p);
+	}
+	else
+	{
+		p = (char *) palloc(rawbytes + 1);
+		memcpy(p, str, rawbytes);
+		p[rawbytes] = '\0';
+		*nbytes = rawbytes;
+	}
+	return p;
 }
 
 /* --------------------------------

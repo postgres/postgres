@@ -7,35 +7,20 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int8.c,v 1.43 2003/03/11 21:01:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int8.c,v 1.44 2003/05/09 15:44:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include <ctype.h>
-#include <time.h>
 #include <math.h>
-#include <float.h>
-#include <limits.h>
 
+#include "libpq/pqformat.h"
 #include "utils/int8.h"
 
 
 #define MAXINT8LEN		25
-
-#ifndef INT_MAX
-#define INT_MAX (0x7FFFFFFFL)
-#endif
-#ifndef INT_MIN
-#define INT_MIN (-INT_MAX-1)
-#endif
-#ifndef SHRT_MAX
-#define SHRT_MAX (0x7FFF)
-#endif
-#ifndef SHRT_MIN
-#define SHRT_MIN (-SHRT_MAX-1)
-#endif
 
 
 /***********************************************************************
@@ -158,6 +143,31 @@ int8out(PG_FUNCTION_ARGS)
 
 	result = pstrdup(buf);
 	PG_RETURN_CSTRING(result);
+}
+
+/*
+ *		int8recv			- converts external binary format to int8
+ */
+Datum
+int8recv(PG_FUNCTION_ARGS)
+{
+	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
+
+	PG_RETURN_INT64(pq_getmsgint64(buf));
+}
+
+/*
+ *		int8send			- converts int8 to binary format
+ */
+Datum
+int8send(PG_FUNCTION_ARGS)
+{
+	int64		arg1 = PG_GETARG_INT64(0);
+	StringInfoData buf;
+
+	pq_begintypsend(&buf);
+	pq_sendint64(&buf, arg1);
+	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
 }
 
 

@@ -8,14 +8,16 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.53 2003/03/11 21:01:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.54 2003/05/09 15:44:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 /*
  * OLD COMMENTS
  *		I/O routines:
- *		 int2in, int2out, int2vectorin, int2vectorout, int4in, int4out
+ *		 int2in, int2out, int2recv, int2send
+ *		 int4in, int4out, int4recv, int4send
+ *		 int2vectorin, int2vectorout, int2vectorrecv, int2vectorsend
  *		Conversion routines:
  *		 itoi, int2_text, int4_text
  *		Boolean operators:
@@ -32,6 +34,7 @@
 #include <ctype.h>
 #include <limits.h>
 
+#include "libpq/pqformat.h"
 #include "utils/builtins.h"
 
 #ifndef SHRT_MAX
@@ -67,6 +70,31 @@ int2out(PG_FUNCTION_ARGS)
 
 	pg_itoa(arg1, result);
 	PG_RETURN_CSTRING(result);
+}
+
+/*
+ *		int2recv			- converts external binary format to int2
+ */
+Datum
+int2recv(PG_FUNCTION_ARGS)
+{
+	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
+
+	PG_RETURN_INT16((int16) pq_getmsgint(buf, sizeof(int16)));
+}
+
+/*
+ *		int2send			- converts int2 to binary format
+ */
+Datum
+int2send(PG_FUNCTION_ARGS)
+{
+	int16		arg1 = PG_GETARG_INT16(0);
+	StringInfoData buf;
+
+	pq_begintypsend(&buf);
+	pq_sendint(&buf, arg1, sizeof(int16));
+	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
 }
 
 /*
@@ -132,6 +160,41 @@ int2vectorout(PG_FUNCTION_ARGS)
 }
 
 /*
+ *		int2vectorrecv			- converts external binary format to int2vector
+ */
+Datum
+int2vectorrecv(PG_FUNCTION_ARGS)
+{
+	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
+	int16	   *result = (int16 *) palloc(sizeof(int16[INDEX_MAX_KEYS]));
+	int			slot;
+
+	for (slot = 0; slot < INDEX_MAX_KEYS; slot++)
+	{
+		result[slot] = (int16) pq_getmsgint(buf, sizeof(int16));
+	}
+	PG_RETURN_POINTER(result);
+}
+
+/*
+ *		int2vectorsend			- converts int2vector to binary format
+ */
+Datum
+int2vectorsend(PG_FUNCTION_ARGS)
+{
+	int16	   *int2Array = (int16 *) PG_GETARG_POINTER(0);
+	StringInfoData buf;
+	int			slot;
+
+	pq_begintypsend(&buf);
+	for (slot = 0; slot < INDEX_MAX_KEYS; slot++)
+	{
+		pq_sendint(&buf, int2Array[slot], sizeof(int16));
+	}
+	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
+}
+
+/*
  * We don't have a complete set of int2vector support routines,
  * but we need int2vectoreq for catcache indexing.
  */
@@ -171,6 +234,31 @@ int4out(PG_FUNCTION_ARGS)
 
 	pg_ltoa(arg1, result);
 	PG_RETURN_CSTRING(result);
+}
+
+/*
+ *		int4recv			- converts external binary format to int4
+ */
+Datum
+int4recv(PG_FUNCTION_ARGS)
+{
+	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
+
+	PG_RETURN_INT32((int32) pq_getmsgint(buf, sizeof(int32)));
+}
+
+/*
+ *		int4send			- converts int4 to binary format
+ */
+Datum
+int4send(PG_FUNCTION_ARGS)
+{
+	int32		arg1 = PG_GETARG_INT32(0);
+	StringInfoData buf;
+
+	pq_begintypsend(&buf);
+	pq_sendint(&buf, arg1, sizeof(int32));
+	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
 }
 
 

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.141 2003/05/08 22:19:57 tgl Exp $
+ * $Id: pg_type.h,v 1.142 2003/05/09 15:44:41 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -242,7 +242,7 @@ DATA(insert OID = 16 (	bool	   PGNSP PGUID	1 t b t \054 0	 0 boolin boolout - - 
 DESCR("boolean, 'true'/'false'");
 #define BOOLOID			16
 
-DATA(insert OID = 17 (	bytea	   PGNSP PGUID -1 f b t \054 0	0 byteain byteaout - - i x f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 17 (	bytea	   PGNSP PGUID -1 f b t \054 0	0 byteain byteaout bytearecv byteasend i x f 0 -1 0 _null_ _null_ ));
 DESCR("variable-length string, binary values escaped");
 #define BYTEAOID		17
 
@@ -254,19 +254,19 @@ DATA(insert OID = 19 (	name	   PGNSP PGUID NAMEDATALEN f b t \054 0 18 namein na
 DESCR("31-character type for storing system identifiers");
 #define NAMEOID			19
 
-DATA(insert OID = 20 (	int8	   PGNSP PGUID	8 f b t \054 0	 0 int8in int8out - - d p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 20 (	int8	   PGNSP PGUID	8 f b t \054 0	 0 int8in int8out int8recv int8send d p f 0 -1 0 _null_ _null_ ));
 DESCR("~18 digit integer, 8-byte storage");
 #define INT8OID			20
 
-DATA(insert OID = 21 (	int2	   PGNSP PGUID	2 t b t \054 0	 0 int2in int2out - - s p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 21 (	int2	   PGNSP PGUID	2 t b t \054 0	 0 int2in int2out int2recv int2send s p f 0 -1 0 _null_ _null_ ));
 DESCR("-32 thousand to 32 thousand, 2-byte storage");
 #define INT2OID			21
 
-DATA(insert OID = 22 (	int2vector PGNSP PGUID INDEX_MAX_KEYS*2 f b t \054 0  21 int2vectorin int2vectorout - - i p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 22 (	int2vector PGNSP PGUID INDEX_MAX_KEYS*2 f b t \054 0  21 int2vectorin int2vectorout int2vectorrecv int2vectorsend i p f 0 -1 0 _null_ _null_ ));
 DESCR("array of INDEX_MAX_KEYS int2 integers, used in system tables");
 #define INT2VECTOROID	22
 
-DATA(insert OID = 23 (	int4	   PGNSP PGUID	4 t b t \054 0	 0 int4in int4out - - i p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 23 (	int4	   PGNSP PGUID	4 t b t \054 0	 0 int4in int4out int4recv int4send i p f 0 -1 0 _null_ _null_ ));
 DESCR("-2 billion to 2 billion integer, 4-byte storage");
 #define INT4OID			23
 
@@ -274,11 +274,11 @@ DATA(insert OID = 24 (	regproc    PGNSP PGUID	4 t b t \054 0	 0 regprocin regpro
 DESCR("registered procedure");
 #define REGPROCOID		24
 
-DATA(insert OID = 25 (	text	   PGNSP PGUID -1 f b t \054 0	0 textin textout - - i x f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 25 (	text	   PGNSP PGUID -1 f b t \054 0	0 textin textout textrecv textsend i x f 0 -1 0 _null_ _null_ ));
 DESCR("variable-length string, no limit specified");
 #define TEXTOID			25
 
-DATA(insert OID = 26 (	oid		   PGNSP PGUID	4 t b t \054 0	 0 oidin oidout - - i p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 26 (	oid		   PGNSP PGUID	4 t b t \054 0	 0 oidin oidout oidrecv oidsend i p f 0 -1 0 _null_ _null_ ));
 DESCR("object identifier(oid), maximum 4 billion");
 #define OIDOID			26
 
@@ -294,7 +294,7 @@ DATA(insert OID = 29 (	cid		   PGNSP PGUID	4 t b t \054 0	 0 cidin cidout - - i 
 DESCR("command identifier type, sequence in transaction id");
 #define CIDOID 29
 
-DATA(insert OID = 30 (	oidvector  PGNSP PGUID INDEX_MAX_KEYS*4 f b t \054 0  26 oidvectorin oidvectorout - - i p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 30 (	oidvector  PGNSP PGUID INDEX_MAX_KEYS*4 f b t \054 0  26 oidvectorin oidvectorout oidvectorrecv oidvectorsend i p f 0 -1 0 _null_ _null_ ));
 DESCR("array of INDEX_MAX_KEYS oids, used in system tables");
 #define OIDVECTOROID	30
 
@@ -362,7 +362,7 @@ DESCR("relative, limited-range time interval (Unix delta time)");
 DATA(insert OID = 704 (  tinterval PGNSP PGUID 12 f b t \054 0	 0 tintervalin tintervalout - - i p f 0 -1 0 _null_ _null_ ));
 DESCR("(abstime,abstime), time interval");
 #define TINTERVALOID	704
-DATA(insert OID = 705 (  unknown   PGNSP PGUID -1 f b t \054 0	 0 unknownin unknownout - - i p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 705 (  unknown   PGNSP PGUID -1 f b t \054 0	 0 unknownin unknownout unknownrecv unknownsend i p f 0 -1 0 _null_ _null_ ));
 DESCR("");
 #define UNKNOWNOID		705
 
@@ -477,7 +477,7 @@ DATA(insert OID = 1700 ( numeric	   PGNSP PGUID -1 f b t \054 0	0 numeric_in num
 DESCR("numeric(precision, decimal), arbitrary precision number");
 #define NUMERICOID		1700
 
-DATA(insert OID = 1790 ( refcursor	   PGNSP PGUID -1 f b t \054 0	0 textin textout - - i x f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 1790 ( refcursor	   PGNSP PGUID -1 f b t \054 0	0 textin textout textrecv textsend i x f 0 -1 0 _null_ _null_ ));
 DESCR("reference cursor (portal name)");
 #define REFCURSOROID	1790
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: int8.h,v 1.36 2002/10/25 22:08:44 tgl Exp $
+ * $Id: int8.h,v 1.37 2003/05/09 15:44:42 tgl Exp $
  *
  * NOTES
  * These data types are supported on all 64-bit architectures, and may
@@ -27,6 +27,8 @@ extern bool scanint8(const char *str, bool errorOK, int64 *result);
 
 extern Datum int8in(PG_FUNCTION_ARGS);
 extern Datum int8out(PG_FUNCTION_ARGS);
+extern Datum int8recv(PG_FUNCTION_ARGS);
+extern Datum int8send(PG_FUNCTION_ARGS);
 
 extern Datum int8eq(PG_FUNCTION_ARGS);
 extern Datum int8ne(PG_FUNCTION_ARGS);

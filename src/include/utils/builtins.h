@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.212 2003/05/08 22:19:57 tgl Exp $
+ * $Id: builtins.h,v 1.213 2003/05/09 15:44:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,11 +90,17 @@ extern Datum cideq(PG_FUNCTION_ARGS);
 /* int.c */
 extern Datum int2in(PG_FUNCTION_ARGS);
 extern Datum int2out(PG_FUNCTION_ARGS);
+extern Datum int2recv(PG_FUNCTION_ARGS);
+extern Datum int2send(PG_FUNCTION_ARGS);
 extern Datum int2vectorin(PG_FUNCTION_ARGS);
 extern Datum int2vectorout(PG_FUNCTION_ARGS);
+extern Datum int2vectorrecv(PG_FUNCTION_ARGS);
+extern Datum int2vectorsend(PG_FUNCTION_ARGS);
 extern Datum int2vectoreq(PG_FUNCTION_ARGS);
 extern Datum int4in(PG_FUNCTION_ARGS);
 extern Datum int4out(PG_FUNCTION_ARGS);
+extern Datum int4recv(PG_FUNCTION_ARGS);
+extern Datum int4send(PG_FUNCTION_ARGS);
 extern Datum i2toi4(PG_FUNCTION_ARGS);
 extern Datum i4toi2(PG_FUNCTION_ARGS);
 extern Datum int2_text(PG_FUNCTION_ARGS);
@@ -324,6 +330,8 @@ extern Datum oidnotin(PG_FUNCTION_ARGS);
 /* oid.c */
 extern Datum oidin(PG_FUNCTION_ARGS);
 extern Datum oidout(PG_FUNCTION_ARGS);
+extern Datum oidrecv(PG_FUNCTION_ARGS);
+extern Datum oidsend(PG_FUNCTION_ARGS);
 extern Datum oideq(PG_FUNCTION_ARGS);
 extern Datum oidne(PG_FUNCTION_ARGS);
 extern Datum oidlt(PG_FUNCTION_ARGS);
@@ -336,6 +344,8 @@ extern Datum oid_text(PG_FUNCTION_ARGS);
 extern Datum text_oid(PG_FUNCTION_ARGS);
 extern Datum oidvectorin(PG_FUNCTION_ARGS);
 extern Datum oidvectorout(PG_FUNCTION_ARGS);
+extern Datum oidvectorrecv(PG_FUNCTION_ARGS);
+extern Datum oidvectorsend(PG_FUNCTION_ARGS);
 extern Datum oidvectoreq(PG_FUNCTION_ARGS);
 extern Datum oidvectorne(PG_FUNCTION_ARGS);
 extern Datum oidvectorlt(PG_FUNCTION_ARGS);
@@ -462,6 +472,8 @@ extern Datum varcharoctetlen(PG_FUNCTION_ARGS);
 /* varlena.c */
 extern Datum textin(PG_FUNCTION_ARGS);
 extern Datum textout(PG_FUNCTION_ARGS);
+extern Datum textrecv(PG_FUNCTION_ARGS);
+extern Datum textsend(PG_FUNCTION_ARGS);
 extern Datum textcat(PG_FUNCTION_ARGS);
 extern Datum texteq(PG_FUNCTION_ARGS);
 extern Datum textne(PG_FUNCTION_ARGS);
@@ -490,9 +502,13 @@ extern Datum md5_text(PG_FUNCTION_ARGS);
 
 extern Datum unknownin(PG_FUNCTION_ARGS);
 extern Datum unknownout(PG_FUNCTION_ARGS);
+extern Datum unknownrecv(PG_FUNCTION_ARGS);
+extern Datum unknownsend(PG_FUNCTION_ARGS);
 
 extern Datum byteain(PG_FUNCTION_ARGS);
 extern Datum byteaout(PG_FUNCTION_ARGS);
+extern Datum bytearecv(PG_FUNCTION_ARGS);
+extern Datum byteasend(PG_FUNCTION_ARGS);
 extern Datum byteaoctetlen(PG_FUNCTION_ARGS);
 extern Datum byteaGetByte(PG_FUNCTION_ARGS);
 extern Datum byteaGetBit(PG_FUNCTION_ARGS);

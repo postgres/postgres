@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.47 2002/06/20 20:29:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.48 2003/05/09 15:44:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,9 @@
 #include <errno.h>
 #include <limits.h>
 
+#include "libpq/pqformat.h"
 #include "utils/builtins.h"
+
 
 /*****************************************************************************
  *	 USER I/O ROUTINES														 *
@@ -108,6 +110,31 @@ oidout(PG_FUNCTION_ARGS)
 	PG_RETURN_CSTRING(result);
 }
 
+/*
+ *		oidrecv			- converts external binary format to oid
+ */
+Datum
+oidrecv(PG_FUNCTION_ARGS)
+{
+	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
+
+	PG_RETURN_OID((Oid) pq_getmsgint(buf, sizeof(Oid)));
+}
+
+/*
+ *		oidsend			- converts oid to binary format
+ */
+Datum
+oidsend(PG_FUNCTION_ARGS)
+{
+	Oid			arg1 = PG_GETARG_OID(0);
+	StringInfoData buf;
+
+	pq_begintypsend(&buf);
+	pq_sendint(&buf, arg1, sizeof(Oid));
+	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
+}
+
 
 /*
  *		oidvectorin			- converts "num num ..." to internal form
@@ -119,10 +146,8 @@ Datum
 oidvectorin(PG_FUNCTION_ARGS)
 {
 	char	   *oidString = PG_GETARG_CSTRING(0);
-	Oid		   *result;
+	Oid		   *result = (Oid *) palloc(sizeof(Oid[INDEX_MAX_KEYS]));
 	int			slot;
-
-	result = (Oid *) palloc(sizeof(Oid[INDEX_MAX_KEYS]));
 
 	for (slot = 0; slot < INDEX_MAX_KEYS; slot++)
 	{
@@ -172,6 +197,42 @@ oidvectorout(PG_FUNCTION_ARGS)
 	*rp = '\0';
 	PG_RETURN_CSTRING(result);
 }
+
+/*
+ *		oidvectorrecv			- converts external binary format to oidvector
+ */
+Datum
+oidvectorrecv(PG_FUNCTION_ARGS)
+{
+	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
+	Oid		   *result = (Oid *) palloc(sizeof(Oid[INDEX_MAX_KEYS]));
+	int			slot;
+
+	for (slot = 0; slot < INDEX_MAX_KEYS; slot++)
+	{
+		result[slot] = (Oid) pq_getmsgint(buf, sizeof(Oid));
+	}
+	PG_RETURN_POINTER(result);
+}
+
+/*
+ *		oidvectorsend			- converts oidvector to binary format
+ */
+Datum
+oidvectorsend(PG_FUNCTION_ARGS)
+{
+	Oid		   *oidArray = (Oid *) PG_GETARG_POINTER(0);
+	StringInfoData buf;
+	int			slot;
+
+	pq_begintypsend(&buf);
+	for (slot = 0; slot < INDEX_MAX_KEYS; slot++)
+	{
+		pq_sendint(&buf, oidArray[slot], sizeof(Oid));
+	}
+	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
+}
+
 
 /*****************************************************************************
  *	 PUBLIC ROUTINES														 *

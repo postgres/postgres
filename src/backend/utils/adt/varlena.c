@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.96 2003/04/24 21:16:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.97 2003/05/09 15:44:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,16 +20,20 @@
 #include "miscadmin.h"
 #include "access/tuptoaster.h"
 #include "lib/stringinfo.h"
+#include "libpq/crypt.h"
+#include "libpq/pqformat.h"
 #include "utils/builtins.h"
 #include "utils/pg_locale.h"
 
-extern bool md5_hash(const void *buff, size_t len, char *hexsum);
 
 typedef struct varlena unknown;
 
 #define DatumGetUnknownP(X)			((unknown *) PG_DETOAST_DATUM(X))
+#define DatumGetUnknownPCopy(X)		((unknown *) PG_DETOAST_DATUM_COPY(X))
 #define PG_GETARG_UNKNOWN_P(n)		DatumGetUnknownP(PG_GETARG_DATUM(n))
+#define PG_GETARG_UNKNOWN_P_COPY(n)	DatumGetUnknownPCopy(PG_GETARG_DATUM(n))
 #define PG_RETURN_UNKNOWN_P(x)		PG_RETURN_POINTER(x)
+
 #define PG_TEXTARG_GET_STR(arg_) \
 	DatumGetCString(DirectFunctionCall1(textout, PG_GETARG_DATUM(arg_)))
 #define PG_TEXT_GET_STR(textp_) \
@@ -111,10 +115,10 @@ byteain(PG_FUNCTION_ARGS)
 
 	byte += VARHDRSZ;
 	result = (bytea *) palloc(byte);
-	result->vl_len = byte;		/* set varlena length */
+	VARATT_SIZEP(result) = byte;		/* set varlena length */
 
 	tp = inputText;
-	rp = result->vl_dat;
+	rp = VARDATA(result);
 	while (*tp != '\0')
 	{
 		if (tp[0] != '\\')
@@ -170,8 +174,8 @@ byteaout(PG_FUNCTION_ARGS)
 	int			len;
 
 	len = 1;					/* empty string has 1 char */
-	vp = vlena->vl_dat;
-	for (i = vlena->vl_len - VARHDRSZ; i != 0; i--, vp++)
+	vp = VARDATA(vlena);
+	for (i = VARSIZE(vlena) - VARHDRSZ; i != 0; i--, vp++)
 	{
 		if (*vp == '\\')
 			len += 2;
@@ -181,8 +185,8 @@ byteaout(PG_FUNCTION_ARGS)
 			len += 4;
 	}
 	rp = result = (char *) palloc(len);
-	vp = vlena->vl_dat;
-	for (i = vlena->vl_len - VARHDRSZ; i != 0; i--, vp++)
+	vp = VARDATA(vlena);
+	for (i = VARSIZE(vlena) - VARHDRSZ; i != 0; i--, vp++)
 	{
 		if (*vp == '\\')
 		{
@@ -205,6 +209,36 @@ byteaout(PG_FUNCTION_ARGS)
 	}
 	*rp = '\0';
 	PG_RETURN_CSTRING(result);
+}
+
+/*
+ *		bytearecv			- converts external binary format to bytea
+ */
+Datum
+bytearecv(PG_FUNCTION_ARGS)
+{
+	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
+	bytea	   *result;
+	int			nbytes;
+
+	nbytes = buf->len - buf->cursor;
+	result = (bytea *) palloc(nbytes + VARHDRSZ);
+	VARATT_SIZEP(result) = nbytes + VARHDRSZ;
+	pq_copymsgbytes(buf, VARDATA(result), nbytes);
+	PG_RETURN_BYTEA_P(result);
+}
+
+/*
+ *		byteasend			- converts bytea to binary format
+ *
+ * This is a special case: just copy the input...
+ */
+Datum
+byteasend(PG_FUNCTION_ARGS)
+{
+	bytea	   *vlena = PG_GETARG_BYTEA_P_COPY(0);
+
+	PG_RETURN_BYTEA_P(vlena);
 }
 
 
@@ -259,6 +293,39 @@ textout(PG_FUNCTION_ARGS)
 	PG_RETURN_CSTRING(result);
 }
 
+/*
+ *		textrecv			- converts external binary format to text
+ */
+Datum
+textrecv(PG_FUNCTION_ARGS)
+{
+	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
+	text	   *result;
+	char	   *str;
+	int			nbytes;
+
+	str = pq_getmsgtext(buf, buf->len - buf->cursor, &nbytes);
+	result = (text *) palloc(nbytes + VARHDRSZ);
+	VARATT_SIZEP(result) = nbytes + VARHDRSZ;
+	memcpy(VARDATA(result), str, nbytes);
+	pfree(str);
+	PG_RETURN_TEXT_P(result);
+}
+
+/*
+ *		textsend			- converts text to binary format
+ */
+Datum
+textsend(PG_FUNCTION_ARGS)
+{
+	text	   *t = PG_GETARG_TEXT_P(0);
+	StringInfoData buf;
+
+	pq_begintypsend(&buf);
+	pq_sendtext(&buf, VARDATA(t), VARSIZE(t) - VARHDRSZ);
+	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
+}
+
 
 /*
  *		unknownin			- converts "..." to internal representation
@@ -280,7 +347,6 @@ unknownin(PG_FUNCTION_ARGS)
 	PG_RETURN_UNKNOWN_P(result);
 }
 
-
 /*
  *		unknownout			- converts internal representation to "..."
  */
@@ -297,6 +363,37 @@ unknownout(PG_FUNCTION_ARGS)
 	result[len] = '\0';
 
 	PG_RETURN_CSTRING(result);
+}
+
+/*
+ *		unknownrecv			- converts external binary format to unknown
+ */
+Datum
+unknownrecv(PG_FUNCTION_ARGS)
+{
+	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
+	unknown	   *result;
+	int			nbytes;
+
+	nbytes = buf->len - buf->cursor;
+	result = (unknown *) palloc(nbytes + VARHDRSZ);
+	VARATT_SIZEP(result) = nbytes + VARHDRSZ;
+	pq_copymsgbytes(buf, VARDATA(result), nbytes);
+	PG_RETURN_UNKNOWN_P(result);
+}
+
+/*
+ *		unknownsend			- converts unknown to binary format
+ *
+ * This is a special case: just copy the input, since it's
+ * effectively the same format as bytea
+ */
+Datum
+unknownsend(PG_FUNCTION_ARGS)
+{
+	unknown	   *vlena = PG_GETARG_UNKNOWN_P_COPY(0);
+
+	PG_RETURN_UNKNOWN_P(vlena);
 }
 
 
