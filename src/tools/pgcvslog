@@ -10,10 +10,10 @@
 # head:
 # cvs log -d'>2000-05-29 00:00:00 GMT' -b .
 # branch:
-# cvs log -d'>2000-05-29 00:00:00 GMT' -rREL7_3_STABLE` .
+# cvs log -d'>2000-05-29 00:00:00 GMT' -r REL8_0_STABLE` .
 #
 # date range
-# cvs log -d'2000-05-08 00:00:00 GMT<2000-05-29 00:00:00 GMT' -b .
+# cvs log -d'2005-05-08<2005-05-29' -b .
 #
 # Remove TODO and FAQ logs if desired
 #
