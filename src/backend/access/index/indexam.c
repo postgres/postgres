@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.20 1998/01/31 04:38:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.21 1998/02/26 12:07:10 vadim Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relationId
@@ -271,7 +271,6 @@ index_endscan(IndexScanDesc scan)
 	RelationUnsetRIntentLock(scan->relation);
 }
 
-#ifdef NOT_USED
 /* ----------------
  *		index_markpos  - mark a scan position
  * ----------------
@@ -287,9 +286,6 @@ index_markpos(IndexScanDesc scan)
 	fmgr(procedure, scan);
 }
 
-#endif
-
-#ifdef NOT_USED
 /* ----------------
  *		index_restrpos	- restore a scan position
  * ----------------
@@ -304,8 +300,6 @@ index_restrpos(IndexScanDesc scan)
 
 	fmgr(procedure, scan);
 }
-
-#endif
 
 /* ----------------
  *		index_getnext - get the next tuple from a scan
