@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.7 1997/04/02 18:33:09 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.8 1997/04/04 08:53:08 scrappy Exp $
  *
  * NOTES
  *   This code is actually (almost) unused.
@@ -32,6 +32,9 @@
 
 #include "postgres.h"
 #include "miscadmin.h"
+#ifdef HAVE_FLOAT_H
+# include <float.h>
+#endif
 #ifdef HAVE_LIMITS_H
 # include <limits.h>
 #endif
