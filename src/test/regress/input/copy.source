@@ -8,6 +8,12 @@
 --
 COPY onek FROM '_CWD_/../data/onek.data';
 
+COPY onek TO '_OBJWD_/results/onek.data';
+
+DELETE FROM onek;
+
+COPY onek FROM '_OBJWD_/results/onek.data';
+
 COPY tenk1 FROM '_CWD_/../data/tenk.data';
 
 COPY slow_emp4000 FROM '_CWD_/../data/rect.data';
