@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.310 2002/04/24 02:48:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.311 2002/05/02 18:44:10 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -107,6 +107,7 @@ static void doNegateFloat(Value *v);
 	int					ival;
 	char				chr;
 	char				*str;
+	const char			*keyword;
 	bool				boolean;
 	JoinType			jtype;
 	List				*list;
@@ -281,9 +282,11 @@ static void doNegateFloat(Value *v);
 %type <str>		Sconst, comment_text
 %type <str>		UserId, opt_boolean, ColId_or_Sconst
 %type <list>	var_list
-%type <str>		ColId, ColLabel, type_name, func_name_keyword
-%type <str>		col_name_keyword, unreserved_keyword, reserved_keyword
+%type <str>		ColId, ColLabel, type_name
 %type <node>	var_value, zone_value
+
+%type <keyword>	unreserved_keyword, func_name_keyword
+%type <keyword>	col_name_keyword, reserved_keyword
 
 %type <node>	TableConstraint
 %type <list>	ColQualList
@@ -317,8 +320,8 @@ static void doNegateFloat(Value *v);
  */
 
 /* Keywords (in SQL92 reserved words) */
-%token	ABSOLUTE, ACTION, ADD, ALL, ALTER, AND, ANY, AS, ASC, AT, AUTHORIZATION,
-		BEGIN_TRANS, BETWEEN, BOTH, BY,
+%token <keyword>	ABSOLUTE, ACTION, ADD, ALL, ALTER, AND, ANY, AS, ASC, AT,
+		AUTHORIZATION, BEGIN_TRANS, BETWEEN, BOTH, BY,
 		CASCADE, CASE, CAST, CHAR, CHARACTER, CHECK, CLOSE, 
 		COALESCE, COLLATE, COLUMN, COMMIT,
 		CONSTRAINT, CONSTRAINTS, CREATE, CROSS, CURRENT_DATE,
@@ -343,7 +346,7 @@ static void doNegateFloat(Value *v);
 		WHEN, WHERE, WITH, WORK, YEAR_P, ZONE
 
 /* Keywords (in SQL99 reserved words) */
-%token	ASSERTION, CHAIN, CHARACTERISTICS,
+%token <keyword>	ASSERTION, CHAIN, CHARACTERISTICS,
 		DEFERRABLE, DEFERRED,
 		IMMEDIATE, INITIALLY, INOUT,
 		OFF, OUT,
@@ -353,7 +356,7 @@ static void doNegateFloat(Value *v);
 		WITHOUT
 
 /* Keywords (in SQL92 non-reserved words) */
-%token	COMMITTED, SERIALIZABLE, TYPE_P, DOMAIN_P
+%token <keyword>	COMMITTED, SERIALIZABLE, TYPE_P, DOMAIN_P
 
 /* Keywords for Postgres support (not in SQL92 reserved words)
  *
@@ -361,7 +364,7 @@ static void doNegateFloat(Value *v);
  * when some sort of pg_privileges relation is introduced.
  * - Todd A. Brandys 1998-01-01?
  */
-%token	ABORT_TRANS, ACCESS, AFTER, AGGREGATE, ANALYSE, ANALYZE,
+%token <keyword>	ABORT_TRANS, ACCESS, AFTER, AGGREGATE, ANALYSE, ANALYZE,
 		BACKWARD, BEFORE, BINARY, BIT,
 		CACHE, CHECKPOINT, CLUSTER, COMMENT, COPY, CREATEDB, CREATEUSER, CYCLE,
 		DATABASE, DELIMITERS, DO,
@@ -2421,8 +2424,8 @@ fetch_how_many:  Iconst					{ $$ = $1; }
 		| PRIOR							{ $$ = -1; }
 		;
 
-from_in:  IN 
-	| FROM
+from_in:  IN							{ }
+	| FROM								{ }
 	;
 
 
@@ -5963,31 +5966,31 @@ UserId:  ColId							{ $$ = $1; };
 /* Column identifier --- names that can be column, table, etc names.
  */
 ColId:  IDENT							{ $$ = $1; }
-		| unreserved_keyword			{ $$ = $1; }
-		| col_name_keyword				{ $$ = $1; }
+		| unreserved_keyword			{ $$ = pstrdup($1); }
+		| col_name_keyword				{ $$ = pstrdup($1); }
 		;
 
 /* Type identifier --- names that can be type names.
  */
 type_name:  IDENT						{ $$ = $1; }
-		| unreserved_keyword			{ $$ = $1; }
+		| unreserved_keyword			{ $$ = pstrdup($1); }
 		;
 
 /* Function identifier --- names that can be function names.
  */
 function_name:  IDENT					{ $$ = $1; }
-		| unreserved_keyword			{ $$ = $1; }
-		| func_name_keyword				{ $$ = $1; }
+		| unreserved_keyword			{ $$ = pstrdup($1); }
+		| func_name_keyword				{ $$ = pstrdup($1); }
 		;
 
 /* Column label --- allowed labels in "AS" clauses.
  * This presently includes *all* Postgres keywords.
  */
 ColLabel:  IDENT						{ $$ = $1; }
-		| unreserved_keyword			{ $$ = $1; }
-		| col_name_keyword				{ $$ = $1; }
-		| func_name_keyword				{ $$ = $1; }
-		| reserved_keyword				{ $$ = $1; }
+		| unreserved_keyword			{ $$ = pstrdup($1); }
+		| col_name_keyword				{ $$ = pstrdup($1); }
+		| func_name_keyword				{ $$ = pstrdup($1); }
+		| reserved_keyword				{ $$ = pstrdup($1); }
 		;
 
 
@@ -6003,161 +6006,161 @@ ColLabel:  IDENT						{ $$ = $1; }
 /* "Unreserved" keywords --- available for use as any kind of name.
  */
 unreserved_keyword:
-		  ABORT_TRANS					{ $$ = "abort"; }
-		| ABSOLUTE						{ $$ = "absolute"; }
-		| ACCESS						{ $$ = "access"; }
-		| ACTION						{ $$ = "action"; }
-		| ADD							{ $$ = "add"; }
-		| AFTER							{ $$ = "after"; }
-		| AGGREGATE						{ $$ = "aggregate"; }
-		| ALTER							{ $$ = "alter"; }
-		| ASSERTION						{ $$ = "assertion"; }
-		| AT							{ $$ = "at"; }
-		| BACKWARD						{ $$ = "backward"; }
-		| BEFORE						{ $$ = "before"; }
-		| BEGIN_TRANS					{ $$ = "begin"; }
-		| BY							{ $$ = "by"; }
-		| CACHE							{ $$ = "cache"; }
-		| CASCADE						{ $$ = "cascade"; }
-		| CHAIN							{ $$ = "chain"; }
-		| CHARACTERISTICS				{ $$ = "characteristics"; }
-		| CHECKPOINT					{ $$ = "checkpoint"; }
-		| CLOSE							{ $$ = "close"; }
-		| CLUSTER						{ $$ = "cluster"; }
-		| COMMENT						{ $$ = "comment"; }
-		| COMMIT						{ $$ = "commit"; }
-		| COMMITTED						{ $$ = "committed"; }
-		| CONSTRAINTS					{ $$ = "constraints"; }
-		| COPY							{ $$ = "copy"; }
-		| CREATEDB						{ $$ = "createdb"; }
-		| CREATEUSER					{ $$ = "createuser"; }
-		| CURSOR						{ $$ = "cursor"; }
-		| CYCLE							{ $$ = "cycle"; }
-		| DATABASE						{ $$ = "database"; }
-		| DAY_P							{ $$ = "day"; }
-		| DECLARE						{ $$ = "declare"; }
-		| DEFERRED						{ $$ = "deferred"; }
-		| DELETE						{ $$ = "delete"; }
-		| DELIMITERS					{ $$ = "delimiters"; }
-		| DOMAIN_P						{ $$ = "domain"; }
-		| DOUBLE						{ $$ = "double"; }
-		| DROP							{ $$ = "drop"; }
-		| EACH							{ $$ = "each"; }
-		| ENCODING						{ $$ = "encoding"; }
-		| ENCRYPTED						{ $$ = "encrypted"; }
-		| ESCAPE						{ $$ = "escape"; }
-		| EXCLUSIVE						{ $$ = "exclusive"; }
-		| EXECUTE						{ $$ = "execute"; }
-		| EXPLAIN						{ $$ = "explain"; }
-		| FETCH							{ $$ = "fetch"; }
-		| FORCE							{ $$ = "force"; }
-		| FORWARD						{ $$ = "forward"; }
-		| FUNCTION						{ $$ = "function"; }
-		| GLOBAL						{ $$ = "global"; }
-		| HANDLER						{ $$ = "handler"; }
-		| HOUR_P						{ $$ = "hour"; }
-		| IMMEDIATE						{ $$ = "immediate"; }
-		| INCREMENT						{ $$ = "increment"; }
-		| INDEX							{ $$ = "index"; }
-		| INHERITS						{ $$ = "inherits"; }
-		| INOUT							{ $$ = "inout"; }
-		| INSENSITIVE					{ $$ = "insensitive"; }
-		| INSERT						{ $$ = "insert"; }
-		| INSTEAD						{ $$ = "instead"; }
-		| ISOLATION						{ $$ = "isolation"; }
-		| KEY							{ $$ = "key"; }
-		| LANGUAGE						{ $$ = "language"; }
-		| LANCOMPILER					{ $$ = "lancompiler"; }
-		| LEVEL							{ $$ = "level"; }
-		| LISTEN						{ $$ = "listen"; }
-		| LOAD							{ $$ = "load"; }
-		| LOCAL							{ $$ = "local"; }
-		| LOCATION						{ $$ = "location"; }
-		| LOCK_P						{ $$ = "lock"; }
-		| MATCH							{ $$ = "match"; }
-		| MAXVALUE						{ $$ = "maxvalue"; }
-		| MINUTE_P						{ $$ = "minute"; }
-		| MINVALUE						{ $$ = "minvalue"; }
-		| MODE							{ $$ = "mode"; }
-		| MONTH_P						{ $$ = "month"; }
-		| MOVE							{ $$ = "move"; }
-		| NAMES							{ $$ = "names"; }
-		| NATIONAL						{ $$ = "national"; }
-		| NEXT							{ $$ = "next"; }
-		| NO							{ $$ = "no"; }
-		| NOCREATEDB					{ $$ = "nocreatedb"; }
-		| NOCREATEUSER					{ $$ = "nocreateuser"; }
-		| NOTHING						{ $$ = "nothing"; }
-		| NOTIFY						{ $$ = "notify"; }
-		| OF							{ $$ = "of"; }
-		| OIDS							{ $$ = "oids"; }
-		| OPERATOR						{ $$ = "operator"; }
-		| OPTION						{ $$ = "option"; }
-		| OUT							{ $$ = "out"; }
-		| OWNER							{ $$ = "owner"; }
-		| PARTIAL						{ $$ = "partial"; }
-		| PASSWORD						{ $$ = "password"; }
-		| PATH_P						{ $$ = "path"; }
-		| PENDANT						{ $$ = "pendant"; }
-		| PRECISION						{ $$ = "precision"; }
-		| PRIOR							{ $$ = "prior"; }
-		| PRIVILEGES					{ $$ = "privileges"; }
-		| PROCEDURAL					{ $$ = "procedural"; }
-		| PROCEDURE						{ $$ = "procedure"; }
-		| READ							{ $$ = "read"; }
-		| REINDEX						{ $$ = "reindex"; }
-		| RELATIVE						{ $$ = "relative"; }
-		| RENAME						{ $$ = "rename"; }
-		| REPLACE						{ $$ = "replace"; }
-		| RESET							{ $$ = "reset"; }
-		| RESTRICT						{ $$ = "restrict"; }
-		| RETURNS						{ $$ = "returns"; }
-		| REVOKE						{ $$ = "revoke"; }
-		| ROLLBACK						{ $$ = "rollback"; }
-		| ROW							{ $$ = "row"; }
-		| RULE							{ $$ = "rule"; }
-		| SCHEMA						{ $$ = "schema"; }
-		| SCROLL						{ $$ = "scroll"; }
-		| SECOND_P						{ $$ = "second"; }
-		| SESSION						{ $$ = "session"; }
-		| SEQUENCE						{ $$ = "sequence"; }
-		| SERIALIZABLE					{ $$ = "serializable"; }
-		| SET							{ $$ = "set"; }
-		| SHARE							{ $$ = "share"; }
-		| SHOW							{ $$ = "show"; }
-		| START							{ $$ = "start"; }
-		| STATEMENT						{ $$ = "statement"; }
-		| STATISTICS					{ $$ = "statistics"; }
-		| STDIN							{ $$ = "stdin"; }
-		| STDOUT						{ $$ = "stdout"; }
-		| STORAGE						{ $$ = "storage"; }
-		| SYSID							{ $$ = "sysid"; }
-		| TEMP							{ $$ = "temp"; }
-		| TEMPLATE						{ $$ = "template"; }
-		| TEMPORARY						{ $$ = "temporary"; }
-		| TOAST							{ $$ = "toast"; }
-		| TRANSACTION					{ $$ = "transaction"; }
-		| TRIGGER						{ $$ = "trigger"; }
-		| TRUNCATE						{ $$ = "truncate"; }
-		| TRUSTED						{ $$ = "trusted"; }
-		| TYPE_P						{ $$ = "type"; }
-		| UNENCRYPTED					{ $$ = "unencrypted"; }
-		| UNKNOWN						{ $$ = "unknown"; }
-		| UNLISTEN						{ $$ = "unlisten"; }
-		| UNTIL							{ $$ = "until"; }
-		| UPDATE						{ $$ = "update"; }
-		| USAGE							{ $$ = "usage"; }
-		| VACUUM						{ $$ = "vacuum"; }
-		| VALID							{ $$ = "valid"; }
-		| VALUES						{ $$ = "values"; }
-		| VARYING						{ $$ = "varying"; }
-		| VERSION						{ $$ = "version"; }
-		| VIEW							{ $$ = "view"; }
-		| WITH							{ $$ = "with"; }
-		| WITHOUT						{ $$ = "without"; }
-		| WORK							{ $$ = "work"; }
-		| YEAR_P						{ $$ = "year"; }
-		| ZONE							{ $$ = "zone"; }
+		  ABORT_TRANS
+		| ABSOLUTE
+		| ACCESS
+		| ACTION
+		| ADD
+		| AFTER
+		| AGGREGATE
+		| ALTER
+		| ASSERTION
+		| AT
+		| BACKWARD
+		| BEFORE
+		| BEGIN_TRANS
+		| BY
+		| CACHE
+		| CASCADE
+		| CHAIN
+		| CHARACTERISTICS
+		| CHECKPOINT
+		| CLOSE
+		| CLUSTER
+		| COMMENT
+		| COMMIT
+		| COMMITTED
+		| CONSTRAINTS
+		| COPY
+		| CREATEDB
+		| CREATEUSER
+		| CURSOR
+		| CYCLE
+		| DATABASE
+		| DAY_P
+		| DECLARE
+		| DEFERRED
+		| DELETE
+		| DELIMITERS
+		| DOMAIN_P
+		| DOUBLE
+		| DROP
+		| EACH
+		| ENCODING
+		| ENCRYPTED
+		| ESCAPE
+		| EXCLUSIVE
+		| EXECUTE
+		| EXPLAIN
+		| FETCH
+		| FORCE
+		| FORWARD
+		| FUNCTION
+		| GLOBAL
+		| HANDLER
+		| HOUR_P
+		| IMMEDIATE
+		| INCREMENT
+		| INDEX
+		| INHERITS
+		| INOUT
+		| INSENSITIVE
+		| INSERT
+		| INSTEAD
+		| ISOLATION
+		| KEY
+		| LANGUAGE
+		| LANCOMPILER
+		| LEVEL
+		| LISTEN
+		| LOAD
+		| LOCAL
+		| LOCATION
+		| LOCK_P
+		| MATCH
+		| MAXVALUE
+		| MINUTE_P
+		| MINVALUE
+		| MODE
+		| MONTH_P
+		| MOVE
+		| NAMES
+		| NATIONAL
+		| NEXT
+		| NO
+		| NOCREATEDB
+		| NOCREATEUSER
+		| NOTHING
+		| NOTIFY
+		| OF
+		| OIDS
+		| OPERATOR
+		| OPTION
+		| OUT
+		| OWNER
+		| PARTIAL
+		| PASSWORD
+		| PATH_P
+		| PENDANT
+		| PRECISION
+		| PRIOR
+		| PRIVILEGES
+		| PROCEDURAL
+		| PROCEDURE
+		| READ
+		| REINDEX
+		| RELATIVE
+		| RENAME
+		| REPLACE
+		| RESET
+		| RESTRICT
+		| RETURNS
+		| REVOKE
+		| ROLLBACK
+		| ROW
+		| RULE
+		| SCHEMA
+		| SCROLL
+		| SECOND_P
+		| SESSION
+		| SEQUENCE
+		| SERIALIZABLE
+		| SET
+		| SHARE
+		| SHOW
+		| START
+		| STATEMENT
+		| STATISTICS
+		| STDIN
+		| STDOUT
+		| STORAGE
+		| SYSID
+		| TEMP
+		| TEMPLATE
+		| TEMPORARY
+		| TOAST
+		| TRANSACTION
+		| TRIGGER
+		| TRUNCATE
+		| TRUSTED
+		| TYPE_P
+		| UNENCRYPTED
+		| UNKNOWN
+		| UNLISTEN
+		| UNTIL
+		| UPDATE
+		| USAGE
+		| VACUUM
+		| VALID
+		| VALUES
+		| VARYING
+		| VERSION
+		| VIEW
+		| WITH
+		| WITHOUT
+		| WORK
+		| YEAR_P
+		| ZONE
 		;
 
 /* Column identifier --- keywords that can be column, table, etc names.
@@ -6171,27 +6174,27 @@ unreserved_keyword:
  * looks too much like a function call for an LR(1) parser.
  */
 col_name_keyword:
-		  BIT							{ $$ = "bit"; }
-		| CHAR							{ $$ = "char"; }
-		| CHARACTER						{ $$ = "character"; }
-		| COALESCE						{ $$ = "coalesce"; }
-		| DEC							{ $$ = "dec"; }
-		| DECIMAL						{ $$ = "decimal"; }
-		| EXISTS						{ $$ = "exists"; }
-		| EXTRACT						{ $$ = "extract"; }
-		| FLOAT							{ $$ = "float"; }
-		| INTERVAL						{ $$ = "interval"; }
-		| NCHAR							{ $$ = "nchar"; }
-		| NONE							{ $$ = "none"; }
-		| NULLIF						{ $$ = "nullif"; }
-		| NUMERIC						{ $$ = "numeric"; }
-		| POSITION						{ $$ = "position"; }
-		| SETOF							{ $$ = "setof"; }
-		| SUBSTRING						{ $$ = "substring"; }
-		| TIME							{ $$ = "time"; }
-		| TIMESTAMP						{ $$ = "timestamp"; }
-		| TRIM							{ $$ = "trim"; }
-		| VARCHAR						{ $$ = "varchar"; }
+		  BIT
+		| CHAR
+		| CHARACTER
+		| COALESCE
+		| DEC
+		| DECIMAL
+		| EXISTS
+		| EXTRACT
+		| FLOAT
+		| INTERVAL
+		| NCHAR
+		| NONE
+		| NULLIF
+		| NUMERIC
+		| POSITION
+		| SETOF
+		| SUBSTRING
+		| TIME
+		| TIMESTAMP
+		| TRIM
+		| VARCHAR
 		;
 
 /* Function identifier --- keywords that can be function names.
@@ -6205,26 +6208,26 @@ col_name_keyword:
  *  - thomas 2000-11-28
  */
 func_name_keyword:
-		  AUTHORIZATION					{ $$ = "authorization"; }
-		| BETWEEN						{ $$ = "between"; }
-		| BINARY						{ $$ = "binary"; }
-		| CROSS							{ $$ = "cross"; }
-		| FREEZE						{ $$ = "freeze"; }
-		| FULL							{ $$ = "full"; }
-		| ILIKE							{ $$ = "ilike"; }
-		| IN							{ $$ = "in"; }
-		| INNER_P						{ $$ = "inner"; }
-		| IS							{ $$ = "is"; }
-		| ISNULL						{ $$ = "isnull"; }
-		| JOIN							{ $$ = "join"; }
-		| LEFT							{ $$ = "left"; }
-		| LIKE							{ $$ = "like"; }
-		| NATURAL						{ $$ = "natural"; }
-		| NOTNULL						{ $$ = "notnull"; }
-		| OUTER_P						{ $$ = "outer"; }
-		| OVERLAPS						{ $$ = "overlaps"; }
-		| RIGHT							{ $$ = "right"; }
-		| VERBOSE						{ $$ = "verbose"; }
+		  AUTHORIZATION
+		| BETWEEN
+		| BINARY
+		| CROSS
+		| FREEZE
+		| FULL
+		| ILIKE
+		| IN
+		| INNER_P
+		| IS
+		| ISNULL
+		| JOIN
+		| LEFT
+		| LIKE
+		| NATURAL
+		| NOTNULL
+		| OUTER_P
+		| OVERLAPS
+		| RIGHT
+		| VERBOSE
 		;
 
 /* Reserved keyword --- these keywords are usable only as a ColLabel.
@@ -6234,71 +6237,71 @@ func_name_keyword:
  * forced to.
  */
 reserved_keyword:
-		  ALL							{ $$ = "all"; }
-		| ANALYSE						{ $$ = "analyse"; } /* British */
-		| ANALYZE						{ $$ = "analyze"; }
-		| AND							{ $$ = "and"; }
-		| ANY							{ $$ = "any"; }
-		| AS							{ $$ = "as"; }
-		| ASC							{ $$ = "asc"; }
-		| BOTH							{ $$ = "both"; }
-		| CASE							{ $$ = "case"; }
-		| CAST							{ $$ = "cast"; }
-		| CHECK							{ $$ = "check"; }
-		| COLLATE						{ $$ = "collate"; }
-		| COLUMN						{ $$ = "column"; }
-		| CONSTRAINT					{ $$ = "constraint"; }
-		| CREATE						{ $$ = "create"; }
-		| CURRENT_DATE					{ $$ = "current_date"; }
-		| CURRENT_TIME					{ $$ = "current_time"; }
-		| CURRENT_TIMESTAMP				{ $$ = "current_timestamp"; }
-		| CURRENT_USER					{ $$ = "current_user"; }
-		| DEFAULT						{ $$ = "default"; }
-		| DEFERRABLE					{ $$ = "deferrable"; }
-		| DESC							{ $$ = "desc"; }
-		| DISTINCT						{ $$ = "distinct"; }
-		| DO							{ $$ = "do"; }
-		| ELSE							{ $$ = "else"; }
-		| END_TRANS						{ $$ = "end"; }
-		| EXCEPT						{ $$ = "except"; }
-		| FALSE_P						{ $$ = "false"; }
-		| FOR							{ $$ = "for"; }
-		| FOREIGN						{ $$ = "foreign"; }
-		| FROM							{ $$ = "from"; }
-		| GRANT							{ $$ = "grant"; }
-		| GROUP							{ $$ = "group"; }
-		| HAVING						{ $$ = "having"; }
-		| INITIALLY						{ $$ = "initially"; }
-		| INTERSECT						{ $$ = "intersect"; }
-		| INTO							{ $$ = "into"; }
-		| LEADING						{ $$ = "leading"; }
-		| LIMIT							{ $$ = "limit"; }
-		| NEW							{ $$ = "new"; }
-		| NOT							{ $$ = "not"; }
-		| NULL_P						{ $$ = "null"; }
-		| OFF							{ $$ = "off"; }
-		| OFFSET						{ $$ = "offset"; }
-		| OLD							{ $$ = "old"; }
-		| ON							{ $$ = "on"; }
-		| ONLY							{ $$ = "only"; }
-		| OR							{ $$ = "or"; }
-		| ORDER							{ $$ = "order"; }
-		| PRIMARY						{ $$ = "primary"; }
-		| REFERENCES					{ $$ = "references"; }
-		| SELECT						{ $$ = "select"; }
-		| SESSION_USER					{ $$ = "session_user"; }
-		| SOME							{ $$ = "some"; }
-		| TABLE							{ $$ = "table"; }
-		| THEN							{ $$ = "then"; }
-		| TO							{ $$ = "to"; }
-		| TRAILING						{ $$ = "trailing"; }
-		| TRUE_P						{ $$ = "true"; }
-		| UNION							{ $$ = "union"; }
-		| UNIQUE						{ $$ = "unique"; }
-		| USER							{ $$ = "user"; }
-		| USING							{ $$ = "using"; }
-		| WHEN							{ $$ = "when"; }
-		| WHERE							{ $$ = "where"; }
+		  ALL
+		| ANALYSE
+		| ANALYZE
+		| AND
+		| ANY
+		| AS
+		| ASC
+		| BOTH
+		| CASE
+		| CAST
+		| CHECK
+		| COLLATE
+		| COLUMN
+		| CONSTRAINT
+		| CREATE
+		| CURRENT_DATE
+		| CURRENT_TIME
+		| CURRENT_TIMESTAMP
+		| CURRENT_USER
+		| DEFAULT
+		| DEFERRABLE
+		| DESC
+		| DISTINCT
+		| DO
+		| ELSE
+		| END_TRANS
+		| EXCEPT
+		| FALSE_P
+		| FOR
+		| FOREIGN
+		| FROM
+		| GRANT
+		| GROUP
+		| HAVING
+		| INITIALLY
+		| INTERSECT
+		| INTO
+		| LEADING
+		| LIMIT
+		| NEW
+		| NOT
+		| NULL_P
+		| OFF
+		| OFFSET
+		| OLD
+		| ON
+		| ONLY
+		| OR
+		| ORDER
+		| PRIMARY
+		| REFERENCES
+		| SELECT
+		| SESSION_USER
+		| SOME
+		| TABLE
+		| THEN
+		| TO
+		| TRAILING
+		| TRUE_P
+		| UNION
+		| UNIQUE
+		| USER
+		| USING
+		| WHEN
+		| WHERE
 		;
 
 

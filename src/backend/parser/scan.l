@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.93 2002/05/01 17:12:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.94 2002/05/02 18:44:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -504,14 +504,17 @@ other			.
 
 
 {identifier}	{
-					ScanKeyword	   *keyword;
+					const ScanKeyword *keyword;
 					char		   *ident;
 					int				i;
 
 					/* Is it a keyword? */
 					keyword = ScanKeywordLookup(yytext);
 					if (keyword != NULL)
+					{
+						yylval.keyword = keyword->name;
 						return keyword->value;
+					}
 
 					/*
 					 * No.  Convert the identifier to lower case, and truncate
