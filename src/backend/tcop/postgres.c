@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.4 1996/07/22 23:00:26 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.4.2.1 1996/08/19 13:36:43 scrappy Exp $
  *
  * NOTES
  *    this is the "main" module of the postgres backend and
@@ -556,14 +556,14 @@ pg_plan(char *query_string,	/* string to execute */
  */
 
 void
-pg_eval(char *query_string, char *argv[], Oid *typev, int nargs)
+pg_eval(char *query_string, char **argv, Oid *typev, int nargs)
 {
     pg_eval_dest(query_string, argv, typev, nargs, whereToSendOutput);
 }
 
 void
 pg_eval_dest(char *query_string, /* string to execute */
-	     char *argv[],	/* arguments */
+	     char **argv,	/* arguments */
 	     Oid *typev,	/* argument types */
 	     int nargs,		/* number of arguments */
 	     CommandDest dest)	/* where results should go */
@@ -1223,7 +1223,7 @@ PostgresMain(int argc, char *argv[])
      */
     if (IsUnderPostmaster == false) {
 	puts("\nPOSTGRES backend interactive interface");
-	puts("$Revision: 1.4 $ $Date: 1996/07/22 23:00:26 $");
+	puts("$Revision: 1.4.2.1 $ $Date: 1996/08/19 13:36:43 $");
     }
     
     /* ----------------
