@@ -7,17 +7,23 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/qnx4/isnan.c,v 1.4 2003/11/29 19:51:54 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/qnx4/isnan.c,v 1.5 2004/03/15 03:29:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "c.h"
 
-unsigned char __nan[8] = __nan_bytes;
+#include <math.h>
+
+#ifndef __nan_bytes
+#define __nan_bytes			{ 0, 0, 0, 0, 0, 0, 0xf8, 0x7f }
+#endif   /* __nan_bytes */
+
+static unsigned char __nan[8] = __nan_bytes;
 
 int
 isnan(double dsrc)
 {
-	return !memcmp(&dsrc, &NAN, sizeof(double));
+	return memcmp(&dsrc, __nan, sizeof(double)) == 0;
 }

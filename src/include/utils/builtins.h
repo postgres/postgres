@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.234 2004/02/03 08:29:57 joe Exp $
+ * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.235 2004/03/15 03:29:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -239,6 +239,12 @@ extern Datum bttext_pattern_cmp(PG_FUNCTION_ARGS);
 
 /* float.c */
 extern DLLIMPORT int	extra_float_digits;
+
+extern double get_float8_infinity(void);
+extern float get_float4_infinity(void);
+extern double get_float8_nan(void);
+extern float get_float4_nan(void);
+extern int	is_infinite(double val);
 
 extern Datum float4in(PG_FUNCTION_ARGS);
 extern Datum float4out(PG_FUNCTION_ARGS);

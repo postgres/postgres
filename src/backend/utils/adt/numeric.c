@@ -14,7 +14,7 @@
  * Copyright (c) 1998-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.71 2004/02/04 01:11:47 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.72 2004/03/15 03:29:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,15 +40,6 @@
  * ----------
 #define NUMERIC_DEBUG
  */
-
-
-/* ----------
- * Local definitions
- * ----------
- */
-#ifndef NAN
-#define NAN		(0.0/0.0)
-#endif
 
 
 /* ----------
@@ -1790,7 +1781,7 @@ numeric_float8(PG_FUNCTION_ARGS)
 	Datum		result;
 
 	if (NUMERIC_IS_NAN(num))
-		PG_RETURN_FLOAT8(NAN);
+		PG_RETURN_FLOAT8(get_float8_nan());
 
 	tmp = DatumGetCString(DirectFunctionCall1(numeric_out,
 											  NumericGetDatum(num)));
@@ -1811,7 +1802,7 @@ numeric_float8_no_overflow(PG_FUNCTION_ARGS)
 	double		val;
 
 	if (NUMERIC_IS_NAN(num))
-		PG_RETURN_FLOAT8(NAN);
+		PG_RETURN_FLOAT8(get_float8_nan());
 
 	val = numeric_to_double_no_overflow(num);
 
@@ -1850,7 +1841,7 @@ numeric_float4(PG_FUNCTION_ARGS)
 	Datum		result;
 
 	if (NUMERIC_IS_NAN(num))
-		PG_RETURN_FLOAT4((float4) NAN);
+		PG_RETURN_FLOAT4(get_float4_nan());
 
 	tmp = DatumGetCString(DirectFunctionCall1(numeric_out,
 											  NumericGetDatum(num)));

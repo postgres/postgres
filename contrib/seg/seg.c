@@ -755,7 +755,7 @@ seg_cmp(SEG * a, SEG * b)
 	 * a->lower == b->lower, so consider type of boundary.
 	 *
 	 * A '-' lower bound is < any other kind (this could only be relevant if
-	 * -HUGE is used as a regular data value). A '<' lower bound is < any
+	 * -HUGE_VAL is used as a regular data value). A '<' lower bound is < any
 	 * other kind except '-'. A '>' lower bound is > any other kind.
 	 */
 	if (a->l_ext != b->l_ext)
@@ -813,7 +813,7 @@ seg_cmp(SEG * a, SEG * b)
 	 * a->upper == b->upper, so consider type of boundary.
 	 *
 	 * A '-' upper bound is > any other kind (this could only be relevant if
-	 * HUGE is used as a regular data value). A '<' upper bound is < any
+	 * HUGE_VAL is used as a regular data value). A '<' upper bound is < any
 	 * other kind. A '>' upper bound is > any other kind except '-'.
 	 */
 	if (a->u_ext != b->u_ext)

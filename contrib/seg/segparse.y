@@ -6,10 +6,6 @@
 #include <math.h>
 
 #include "segdata.h"
-  
-#ifdef __CYGWIN__
-#define HUGE HUGE_VAL
-#endif /* __CYGWIN__ */
 
 #undef yylex                  /* falure to redefine yylex will result in calling the */
 #define yylex seg_yylex       /* wrong scanner when running inside postgres backend  */
@@ -86,7 +82,7 @@ range:
       |
           boundary RANGE {
 	    ((SEG *)result)->lower = $1.val;
-	    ((SEG *)result)->upper = HUGE;
+	    ((SEG *)result)->upper = HUGE_VAL;
 	    ((SEG *)result)->l_sigd = $1.sigd;
 	    ((SEG *)result)->u_sigd = 0;
 	    ((SEG *)result)->l_ext = ( $1.ext ? $1.ext : '\0' );
@@ -94,7 +90,7 @@ range:
           }
       |
           RANGE boundary {
-	    ((SEG *)result)->lower = -HUGE;
+	    ((SEG *)result)->lower = -HUGE_VAL;
 	    ((SEG *)result)->upper = $2.val;
 	    ((SEG *)result)->l_sigd = 0;
 	    ((SEG *)result)->u_sigd = $2.sigd;

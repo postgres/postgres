@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.100 2004/03/14 05:22:52 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.101 2004/03/15 03:29:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,9 +54,8 @@
 
 #include <ctype.h>
 #include <errno.h>
-#include <float.h>				/* faked on sunos4 */
+#include <float.h>
 #include <math.h>
-
 #include <limits.h>
 /* for finite() on Solaris */
 #ifdef HAVE_IEEEFP_H
@@ -70,17 +69,9 @@
 #include "utils/builtins.h"
 
 
-#ifndef HAVE_CBRT
-static double cbrt(double x);
-#endif   /* HAVE_CBRT */
-
 #ifndef M_PI
 /* from my RH5.2 gcc math.h file - thomas 2000-04-03 */
 #define M_PI 3.14159265358979323846
-#endif
-
-#ifndef NAN
-#define NAN		(0.0/0.0)
 #endif
 
 #ifndef SHRT_MAX
@@ -109,9 +100,78 @@ int			extra_float_digits = 0;		/* Added to DBL_DIG or FLT_DIG */
 
 static void CheckFloat4Val(double val);
 static void CheckFloat8Val(double val);
-static int	is_infinite(double val);
 static int	float4_cmp_internal(float4 a, float4 b);
 static int	float8_cmp_internal(float8 a, float8 b);
+#ifndef HAVE_CBRT
+static double cbrt(double x);
+#endif   /* HAVE_CBRT */
+
+
+/*
+ * Routines to provide reasonably platform-independent handling of
+ * infinity and NaN.  We assume that isinf() and isnan() are available
+ * and work per spec.  (On some platforms, we have to supply our own;
+ * see src/port.)  However, generating an Infinity or NaN in the first
+ * place is less well standardized; pre-C99 systems tend not to have C99's
+ * INFINITY and NAN macros.  We centralize our workarounds for this here.
+ */
+
+double
+get_float8_infinity(void)
+{
+#ifdef INFINITY
+	/* C99 standard way */
+	return (double) INFINITY;
+#else
+	/*
+	 * On some platforms, HUGE_VAL is an infinity, elsewhere it's just the
+	 * largest normal double.  We assume forcing an overflow will get us
+	 * a true infinity.
+	 */
+	return (double) (HUGE_VAL * HUGE_VAL);
+#endif
+}
+
+float
+get_float4_infinity(void)
+{
+#ifdef INFINITY
+	/* C99 standard way */
+	return (float) INFINITY;
+#else
+	/*
+	 * On some platforms, HUGE_VAL is an infinity, elsewhere it's just the
+	 * largest normal double.  We assume forcing an overflow will get us
+	 * a true infinity.
+	 */
+	return (float) (HUGE_VAL * HUGE_VAL);
+#endif
+}
+
+double
+get_float8_nan(void)
+{
+#ifdef NAN
+	/* C99 standard way */
+	return (double) NAN;
+#else
+	/* Assume we can get a NAN via zero divide */
+	return (double) (0.0 / 0.0);
+#endif
+}
+
+float
+get_float4_nan(void)
+{
+#ifdef NAN
+	/* C99 standard way */
+	return (float) NAN;
+#else
+	/* Assume we can get a NAN via zero divide */
+	return (float) (0.0 / 0.0);
+#endif
+}
+
 
 /*
  * Returns -1 if 'val' represents negative infinity, 1 if 'val'
@@ -120,7 +180,7 @@ static int	float8_cmp_internal(float8 a, float8 b);
  * does not specify that isinf() needs to distinguish between positive
  * and negative infinity.
  */
-static int
+int
 is_infinite(double val)
 {
 	int inf = isinf(val);
@@ -133,6 +193,7 @@ is_infinite(double val)
 
 	return -1;
 }
+
 
 /*
  * check to see if a float4 val is outside of the FLOAT4_MIN,
@@ -237,17 +298,17 @@ float4in(PG_FUNCTION_ARGS)
 		 */
 		if (strncasecmp(num, "NaN", 3) == 0)
 		{
-			val = NAN;
+			val = get_float4_nan();
 			endptr = num + 3;
 		}
 		else if (strncasecmp(num, "Infinity", 8) == 0)
 		{
-			val = HUGE_VAL;
+			val = get_float4_infinity();
 			endptr = num + 8;
 		}
 		else if (strncasecmp(num, "-Infinity", 9) == 0)
 		{
-			val = -HUGE_VAL;
+			val = - get_float4_infinity();
 			endptr = num + 9;
 		}
 		else
@@ -402,17 +463,17 @@ float8in(PG_FUNCTION_ARGS)
 		 */
 		if (strncasecmp(num, "NaN", 3) == 0)
 		{
-			val = NAN;
+			val = get_float8_nan();
 			endptr = num + 3;
 		}
 		else if (strncasecmp(num, "Infinity", 8) == 0)
 		{
-			val = HUGE_VAL;
+			val = get_float8_infinity();
 			endptr = num + 8;
 		}
 		else if (strncasecmp(num, "-Infinity", 9) == 0)
 		{
-			val = -HUGE_VAL;
+			val = - get_float8_infinity();
 			endptr = num + 9;
 		}
 		else
