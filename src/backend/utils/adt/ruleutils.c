@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.107 2002/05/28 22:16:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.108 2002/06/13 03:40:49 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -685,16 +685,21 @@ deparse_context_for(const char *aliasname, Oid relid)
  * The passed-in Nodes should be made using deparse_context_for_subplan
  * and/or deparse_context_for_relation.  The resulting context will work
  * for deparsing quals, tlists, etc of the plan node.
+ *
+ * An rtable list can also be passed in case plain Vars might be seen.
+ * This is not needed for true upper-level expressions, but is helpful for
+ * Sort nodes and similar cases with slightly bogus targetlists.
  */
 List *
 deparse_context_for_plan(int outer_varno, Node *outercontext,
-						 int inner_varno, Node *innercontext)
+						 int inner_varno, Node *innercontext,
+						 List *rtable)
 {
 	deparse_namespace *dpns;
 
 	dpns = (deparse_namespace *) palloc(sizeof(deparse_namespace));
 
-	dpns->rtable = NIL;
+	dpns->rtable = rtable;
 	dpns->outer_varno = outer_varno;
 	dpns->outer_rte = (RangeTblEntry *) outercontext;
 	dpns->inner_varno = inner_varno;
@@ -777,27 +782,6 @@ deparse_context_for_subplan(const char *name, List *tlist,
 	rte->inFromCl = true;
 
 	return (Node *) rte;
-}
-
-/*
- * deparse_context_from_rtable	- Build deparse context given a rangetable
- *
- * This is suitable for deparsing expressions that refer to only a single
- * level of variables (no outer-reference Vars).
- */
-List *
-deparse_context_from_rtable(List *rtable)
-{
-	deparse_namespace *dpns;
-
-	dpns = (deparse_namespace *) palloc(sizeof(deparse_namespace));
-
-	dpns->rtable = rtable;
-	dpns->outer_varno = dpns->inner_varno = 0;
-	dpns->outer_rte = dpns->inner_rte = NULL;
-
-	/* Return a one-deep namespace stack */
-	return makeList1(dpns);
 }
 
 /* ----------
