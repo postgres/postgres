@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.83 2005/01/01 05:43:07 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.84 2005/01/13 01:40:13 tgl Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2005, PostgreSQL Global Development Group
@@ -1462,7 +1462,9 @@ get_th(char *num, int type)
 static char *
 str_numth(char *dest, char *num, int type)
 {
-	sprintf(dest, "%s%s", num, get_th(num, type));
+	if (dest != num)
+		strcpy(dest, num);
+	strcat(dest, get_th(num, type));
 	return dest;
 }
 
@@ -2057,6 +2059,7 @@ static int
 dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 {
 	char		buff[DCH_CACHE_SIZE],
+				workbuff[32],
 			   *p_inout;
 	int			i,
 				len;
@@ -2117,7 +2120,6 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 
 	switch (arg)
 	{
-
 		case DCH_A_D:
 		case DCH_B_C:
 			if (flag == TO_CHAR)
@@ -2179,8 +2181,8 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 			}
 			break;
 		case DCH_MONTH:
-			strcpy(inout, months_full[tm->tm_mon - 1]);
-			sprintf(inout, "%*s", S_FM(suf) ? 0 : -9, str_toupper(inout));
+			strcpy(workbuff, months_full[tm->tm_mon - 1]);
+			sprintf(inout, "%*s", S_FM(suf) ? 0 : -9, str_toupper(workbuff));
 			if (S_FM(suf))
 				return strlen(p_inout) - 1;
 			else
@@ -2242,8 +2244,8 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 			}
 			break;
 		case DCH_DAY:
-			strcpy(inout, days[tm->tm_wday]);
-			sprintf(inout, "%*s", S_FM(suf) ? 0 : -9, str_toupper(inout));
+			strcpy(workbuff, days[tm->tm_wday]);
+			sprintf(inout, "%*s", S_FM(suf) ? 0 : -9, str_toupper(workbuff));
 			if (S_FM(suf))
 				return strlen(p_inout) - 1;
 			else
