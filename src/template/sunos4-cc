@@ -8,3 +8,4 @@ USE_LOCALE:no
 DLSUFFIX:.so
 YFLAGS:-d
 YACC:
+CC:cc
