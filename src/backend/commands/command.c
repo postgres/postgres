@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.64 2000/01/22 14:20:45 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.65 2000/01/24 23:40:35 petere Exp $
  *
  * NOTES
  *	  The PortalExecutorHeapMemory crap needs to be eliminated
@@ -672,209 +672,13 @@ drop_default(Oid relid, int16 attnum)
 
 /*
  * ALTER TABLE DROP COLUMN
- *
- * Strategy:
- * - permission/sanity checks
- * - create a new table _ATDC<name> with all attributes minus the desired one
- * - copy over all the data
- * - make the column defaults point to the new table
- * - kill the old table
- * - rename the intermediate table back
  */
 void
 AlterTableDropColumn(const char *relationName,
                      bool inh, const char *colName,
                      int behavior)
 {
-    Relation       oldrel, newrel, defrel;
-    HeapTuple      tuple;
-    TupleDesc      olddesc, newdesc, defdsc;
-    int16          dropattnum, oldnumatts;
-    Oid            oldrel_oid, newrel_oid;
-    char           tmpname[NAMEDATALEN];
-    int16          i;
-    HeapScanDesc   scan;
-    ScanKeyData    scankey;
-
-	if (!allowSystemTableMods && IsSystemRelationName(relationName))
-		elog(ERROR, "ALTER TABLE: relation \"%s\" is a system catalog",
-			 relationName);
-#ifndef NO_SECURITY
-	if (!pg_ownercheck(UserName, relationName, RELNAME))
-		elog(ERROR, "ALTER TABLE: permission denied");
-#endif
-
-    oldrel = heap_openr(relationName, AccessExclusiveLock);
-    if (oldrel->rd_rel->relkind != RELKIND_RELATION)
-    {
-        heap_close(oldrel, AccessExclusiveLock);
-        elog(ERROR, "ALTER TABLE: relation %s is not a table", relationName);
-    }
-
-    oldrel_oid = ObjectIdGetDatum(RelationGetRelid(oldrel));
-    oldnumatts = RelationGetNumberOfAttributes(oldrel);
-
-    if (oldnumatts==1)
-    {
-        heap_close(oldrel, AccessExclusiveLock);
-        elog(ERROR, "ALTER TABLE: relation %s only has one column", relationName);
-    }
-
-/* What to do here? */
-/*
-    if (length(find_all_inheritors(RelationGetRelid(oldrel)))>0)
-        elog(ERROR, "ALTER TABLE: cannot drop a column on table that is inherited from");
-*/
-    /*
-     * get the number of the attribute
-     */
-    tuple = SearchSysCacheTuple(ATTNAME, oldrel_oid, NameGetDatum(namein(colName)), 0, 0);
-    if (!HeapTupleIsValid(tuple))
-    {
-        heap_close(oldrel, AccessExclusiveLock);
-        elog(ERROR, "ALTER TABLE: relation \"%s\" has no column \"%s\"",
-             relationName, colName);
-    }
-
-    dropattnum = ((Form_pg_attribute) GETSTRUCT(tuple))->attnum;
-
-    if (snprintf(tmpname, NAMEDATALEN, "_ATDC%s", relationName)==-1)
-    {
-        heap_close(oldrel, AccessExclusiveLock);
-        elog(ERROR, "AlterTableDropColumn: relation name too long");
-    }
-
-    /*
-     * Build descriptor for new relation
-     */
-    olddesc = RelationGetDescr(oldrel);
-
-    newdesc = CreateTemplateTupleDesc(oldnumatts-1);
-    for(i = 1; i < dropattnum; i++)
-    {
-        Form_pg_attribute att = olddesc->attrs[i-1];
-        TupleDescInitEntry(newdesc, i, nameout(&(att->attname)),
-                           att->atttypid, att->atttypmod,
-                           att->attnelems, att->attisset);
-        /* the above function doesn't take care of these two */
-        newdesc->attrs[i-1]->attnotnull = att->attnotnull;
-        newdesc->attrs[i-1]->atthasdef = att->atthasdef;
-    }
-
-    for(i = dropattnum; i <= oldnumatts-1; i++)
-    {
-        Form_pg_attribute att = olddesc->attrs[i];
-        TupleDescInitEntry(newdesc, i, nameout(&(att->attname)),
-                           att->atttypid, att->atttypmod,
-                           att->attnelems, att->attisset);
-        /* the above function doesn't take care of these two */
-        newdesc->attrs[i-1]->attnotnull = att->attnotnull;
-        newdesc->attrs[i-1]->atthasdef = att->atthasdef;
-    }
-
-    /* Create the new table */
-    newrel_oid = heap_create_with_catalog(tmpname, newdesc, RELKIND_RELATION, false);
-    if (newrel_oid == InvalidOid)
-    {
-        heap_close(oldrel, AccessExclusiveLock);
-        elog(ERROR, "ALTER TABLE: something went wrong");
-    }
-
-    /* Make the new table visible */
-    CommandCounterIncrement();
-
-    /*
-     * Copy over the data
-     */
-    newrel = heap_open(newrel_oid, AccessExclusiveLock);
-
-    scan = heap_beginscan(oldrel, false, SnapshotNow, 0, NULL);
-    while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
-    {
-        bool       isnull;
-        Datum     *new_record;
-        bool      *new_record_nulls;
-        HeapTuple  new_tuple;
-
-        new_record = palloc((oldnumatts-1) * sizeof(*new_record));
-        new_record_nulls = palloc((oldnumatts-1) * sizeof(*new_record_nulls));
-
-        for(i = 1; i < dropattnum; i++)
-        {
-            new_record[i-1] = heap_getattr(tuple, i, olddesc, &isnull);
-            new_record_nulls[i-1] = isnull ? 'n' : ' ';
-        }
-        for(i = dropattnum+1; i <= oldnumatts; i++)
-        {
-            new_record[i-2] = heap_getattr(tuple, i, olddesc, &isnull);
-            new_record_nulls[i-2] = isnull ? 'n' : ' ';
-        }
-
-        new_tuple = heap_formtuple(newdesc, new_record, new_record_nulls);
-        Assert(new_tuple);
-
-        if (heap_insert(newrel, new_tuple) == InvalidOid)
-            elog(ERROR, "AlterTableDropColumn: heap_insert failed");
-
-        pfree(new_record);
-        pfree(new_record_nulls);
-    }
-    heap_endscan(scan);
-
-    heap_close(newrel, NoLock);
-    heap_close(oldrel, NoLock);
-
-    /*
-     * Move defaults over to the new table
-     */
-    defrel = heap_openr(AttrDefaultRelationName, AccessExclusiveLock);
-    defdsc = RelationGetDescr(defrel);
-
-    /* look for all entries referencing the old table */
-    ScanKeyEntryInitialize(&scankey, 0x0, Anum_pg_attrdef_adrelid, F_OIDEQ,
-                           ObjectIdGetDatum(oldrel_oid));
-    scan = heap_beginscan(defrel, false, SnapshotNow, 1, &scankey);
-    while(HeapTupleIsValid(tuple = heap_getnext(scan, false)))
-    {
-        HeapTuple   newtuple;
-        int2        attrnum;
-        Relation	irelations[Num_pg_attrdef_indices];
-
-        attrnum = ((Form_pg_attrdef) GETSTRUCT(tuple))->adnum;
-
-        /* remove the entry about the dropped column */
-        if (attrnum == dropattnum)
-        {
-            heap_delete(defrel, &tuple->t_self, NULL);
-            continue;
-        }
-
-        newtuple = heap_copytuple(tuple);
-
-        if (attrnum > dropattnum)
-            ((Form_pg_attrdef) GETSTRUCT(newtuple))->adnum--;
-
-        /* make it point to the new table */
-        ((Form_pg_attrdef) GETSTRUCT(newtuple))->adrelid = newrel_oid;
-        heap_update(defrel, &tuple->t_self, newtuple, NULL);
-
-        /* keep the system catalog indices current */
-        CatalogOpenIndices(Num_pg_attrdef_indices, Name_pg_attrdef_indices, irelations);
-        CatalogIndexInsert(irelations, Num_pg_attrdef_indices, defrel, newtuple);
-        CatalogCloseIndices(Num_pg_attrdef_indices, irelations);
-    }
-    heap_endscan(scan);
-    heap_close(defrel, NoLock);
-
-    CommandCounterIncrement();
-
-    /* make the old table disappear */
-    heap_drop_with_catalog(relationName);
-    CommandCounterIncrement();
-
-    /* set back original name */
-    TypeRename(tmpname, relationName);
-    renamerel(tmpname, relationName);
+    elog(ERROR, "ALTER TABLE / DROP COLUMN is not implemented");
 }
 
 
