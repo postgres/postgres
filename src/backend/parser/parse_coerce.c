@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.94 2003/04/08 23:20:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.95 2003/04/10 02:47:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -219,20 +219,6 @@ coerce_type(Node *node, Oid inputTypeId, Oid targetTypeId,
 			if (targetTypeId != baseTypeId)
 				result = coerce_to_domain(result, baseTypeId, targetTypeId,
 										  cformat);
-
-			/*
-			 * If the input is a constant, apply the type conversion
-			 * function now instead of delaying to runtime.  (We could, of
-			 * course, just leave this to be done during
-			 * planning/optimization; but it's a very frequent special
-			 * case, and we save cycles in the rewriter if we fold the
-			 * expression now.)
-			 *
-			 * Note that no folding will occur if the conversion function is
-			 * not marked 'immutable'.
-			 */
-			if (IsA(node, Const))
-				result = eval_const_expressions(result);
 		}
 		else
 		{
@@ -464,7 +450,6 @@ coerce_type_typmod(Node *node, Oid targetTypeId, int32 targetTypMod,
 	{
 		List	   *args;
 		Const	   *cons;
-		Node	   *fcall;
 
 		/* Pass given value, plus target typmod as an int4 constant */
 		cons = makeConst(INT4OID,
@@ -487,18 +472,7 @@ coerce_type_typmod(Node *node, Oid targetTypeId, int32 targetTypMod,
 			args = lappend(args, cons);
 		}
 
-		fcall = build_func_call(funcId, targetTypeId, args, cformat);
-
-		/*
-		 * If the input is a constant, apply the length coercion
-		 * function now instead of delaying to runtime.
-		 *
-		 * See the comments for the similar case in coerce_type.
-		 */
-		if (node && IsA(node, Const))
-			node = eval_const_expressions(fcall);
-		else
-			node = fcall;
+		node = build_func_call(funcId, targetTypeId, args, cformat);
 	}
 
 	return node;
