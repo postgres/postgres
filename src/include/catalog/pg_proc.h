@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.75 1998/10/21 16:06:47 momjian Exp $
+ * $Id: pg_proc.h,v 1.76 1998/10/21 21:14:20 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2104,7 +2104,7 @@ DESCR("is-supernet-or-equal");
 
 /* inet/cidr base versions */
 DATA(insert OID = 940 (  inet_netmask		PGUID 11 f t f 1 f 25 "869" 100 0 0 100  foo bar ));
-DESCR("netmask of inet address");
+DESCR("netmask of address");
 DATA(insert OID = 941 (  inet_netmasklen	PGUID 11 f t f 1 f 23 "869" 100 0 0 100  foo bar ));
 DESCR("netmask length");
 DATA(insert OID = 945 (  inet_broadcast		PGUID 11 f t f 1 f 25 "869" 100 0 0 100  foo bar ));
