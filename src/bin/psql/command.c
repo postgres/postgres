@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.135 2004/11/15 23:15:12 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.136 2004/11/30 19:01:28 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -1563,10 +1563,12 @@ do_shell(const char *command)
 
 		sys = pg_malloc(strlen(shellName) + 16);
 		sprintf(sys,
+		/* See EDITOR handling comment for an explaination */
 #ifndef WIN32
-				"exec "
-#endif
+				"exec %s", shellName);
+#else
 				"%s\"%s\"%s", SYSTEMQUOTE, shellName, SYSTEMQUOTE);
+#endif
 		result = system(sys);
 		free(sys);
 	}
