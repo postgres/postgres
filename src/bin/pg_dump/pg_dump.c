@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.206 2001/05/12 01:03:59 pjw Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.207 2001/05/12 23:36:03 tgl Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -1928,7 +1928,7 @@ getFuncs(int *numFuncs)
 		   "SELECT pg_proc.oid, proname, prolang, pronargs, prorettype, "
 					  "proretset, proargtypes, prosrc, probin, "
 				"(select usename from pg_user where proowner = usesysid) as usename, "
-				"proiscachable, 't'::boolean as proisstrict "
+				"proiscachable, 'f'::boolean as proisstrict "
 				"from pg_proc "
 				"where pg_proc.oid > '%u'::oid",
 					  g_last_builtin_oid);
@@ -2056,7 +2056,7 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 	if (g_fout->remoteVersion >= 70100)
 	{
 		appendPQExpBuffer(query,
-					  "SELECT pg_class.oid, relname, relkind, relacl, "
+					  "SELECT pg_class.oid, relname, relacl, relkind, "
 					  "(select usename from pg_user where relowner = usesysid) as usename, "
 					  "relchecks, reltriggers, relhasindex "
 					  "from pg_class "
@@ -2066,22 +2066,23 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 					  RELKIND_RELATION, RELKIND_SEQUENCE, RELKIND_VIEW);
 	} else {
 		/* 
-		 * In 7.1, view relkind was not set to 'v', so we fake this by checking
-		 * if we have a view by looking up pg_class & pg_rewrite.
+		 * Before 7.1, view relkind was not set to 'v', so we must check
+		 * if we have a view by looking for a rule in pg_rewrite.
 		 */
 		appendPQExpBuffer(query,
 					  "SELECT c.oid, relname, relacl, "
 					  "CASE WHEN relhasrules and relkind = 'r' "
-					  "           And EXISTS(SELECT r.rulename FROM pg_rewrite r WHERE "
-					  "               		r.ev_class = c.oid AND r.ev_type = '1'::\"char\") "
-					  "THEN 'v'::\"char\" "
-					  "ELSE relkind End AS relkind,"
-					  "relacl, (select usename from pg_user where relowner = usesysid) as usename, "
+					  "  and EXISTS(SELECT rulename FROM pg_rewrite r WHERE "
+					  "             r.ev_class = c.oid AND r.ev_type = '1') "
+					  "THEN '%c'::\"char\" "
+					  "ELSE relkind END AS relkind,"
+					  "(select usename from pg_user where relowner = usesysid) as usename, "
 					  "relchecks, reltriggers, relhasindex "
 					  "from pg_class c "
 					  "where relname !~ '^pg_' "
 					  "and relkind in ('%c', '%c', '%c') "
 					  "order by oid",
+					  RELKIND_VIEW,
 					  RELKIND_RELATION, RELKIND_SEQUENCE, RELKIND_VIEW);
 	}
 
@@ -2102,8 +2103,8 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 
 	i_reloid = PQfnumber(res, "oid");
 	i_relname = PQfnumber(res, "relname");
-	i_relkind = PQfnumber(res, "relkind");
 	i_relacl = PQfnumber(res, "relacl");
+	i_relkind = PQfnumber(res, "relkind");
 	i_usename = PQfnumber(res, "usename");
 	i_relchecks = PQfnumber(res, "relchecks");
 	i_reltriggers = PQfnumber(res, "reltriggers");
