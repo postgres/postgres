@@ -105,12 +105,11 @@ PostgreSQL:
   3a) Check that you have sufficient disk space.  You will need about
       17 Mbytes for /usr/src/pgsql, about 2 Mbytes for /usr/local/pgsql
       (excluding your database) and 1 Mbyte for an empty database.
-      The database will temporarily grow to about 20 Mbytes during the
-      regression tests.  You will also need about 3 Mbytes for the
-      distribution tar file.
+      For the regression tests, you will need an extra 20 Mbytes.
+      You will also need about 3 Mbytes for the distribution tar file.
 
       We therefore recommend that during installation and testing you
-      have well over 20 Mbytes free under /usr/local and another 25 Mbytes
+      have well over 20 Mbytes free under /usr/local and another 5 MB
       free on the disk partition containing your database.  Once you
       delete the source files, tar file and regression database, you
       will need 2 Mbytes for /usr/local/pgsql, 1 Mbyte for the empty
@@ -383,7 +382,6 @@ PostgreSQL:
 
 
  18) If you wish to skip the regression tests then skip to step 21.
-     However, we think skipping the tests is a BAD idea!
 
      The file /usr/src/pgsql/src/test/regress/README has detailed
      instructions for running and interpreting the regression tests.
