@@ -1,8 +1,8 @@
 #include <winver.h>
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 7,2,5,0
- PRODUCTVERSION 7,2,5,0
+ FILEVERSION 7,2,6,0
+ PRODUCTVERSION 7,2,6,0
  FILEFLAGSMASK 0x3fL
  FILEFLAGS 0x0L
  FILEOS 0x40004L
@@ -16,14 +16,14 @@ BEGIN
             VALUE "Comments", "\0"
             VALUE "CompanyName", " \0"
             VALUE "FileDescription", "PostgreSQL C++ Access Library\0"
-            VALUE "FileVersion", "7, 2, 5, 0\0"
+            VALUE "FileVersion", "7, 2, 6, 0\0"
             VALUE "InternalName", "libpq++\0"
             VALUE "LegalCopyright", "Copyright © 2000\0"
             VALUE "LegalTrademarks", "\0"
             VALUE "OriginalFilename", "libpq++.dll\0"
             VALUE "PrivateBuild", "\0"
             VALUE "ProductName", "PostgreSQL\0"
-            VALUE "ProductVersion", "7, 2, 5, 0\0"
+            VALUE "ProductVersion", "7, 2, 6, 0\0"
             VALUE "SpecialBuild", "\0"
         END
     END

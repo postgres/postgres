@@ -1,6 +1,36 @@
                                  Release Notes
 
 
+                               Release 7.2.6
+
+     Release date: 2004-10-22
+
+   This release contains a variety of fixes from 7.2.5.
+     _________________________________________________________________
+
+                         Migration to version 7.2.6
+
+   A dump/restore is not required for those running 7.2.X.
+     _________________________________________________________________
+
+                                  Changes
+
+     * Repair possible failure to update hint bits on disk
+       Under rare circumstances this oversight could lead to "could not
+       access transaction status" failures, which qualifies it as a
+       potential-data-loss bug.
+     * Ensure that hashed outer join does not miss tuples
+       Very large left joins using a hash join plan could fail to output
+       unmatched left-side rows given just the right data distribution.
+     * Disallow running pg_ctl as root
+       This is to guard against any possible security issues.
+     * Avoid using temp files in /tmp in make_oidjoins_check
+       This has been reported as a security issue, though it's hardly
+       worthy of concern since there is no reason for non-developers to
+       use this script anyway.
+     * Update to newer versions of Bison
+     _________________________________________________________________
+
                                Release 7.2.5
 
      Release date: 2004-08-16
