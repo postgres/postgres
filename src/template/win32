@@ -1,0 +1,4 @@
+# This is required to link pg_dump because it finds pg_toupper() in
+# libpq and pgport
+LDFLAGS="-Wl,--allow-multiple-definition"
+

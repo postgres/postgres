@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/bin/pg_dump/Makefile,v 1.57 2004/10/07 13:45:48 momjian Exp $
+# $PostgreSQL: pgsql/src/bin/pg_dump/Makefile,v 1.58 2004/11/08 05:23:23 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -21,12 +21,6 @@ OBJS=	pg_backup_archiver.o pg_backup_db.o pg_backup_custom.o \
 	dumputils.o $(WIN32RES)
 
 EXTRA_OBJS = $(top_builddir)/src/backend/parser/keywords.o
-
-# Not sure why MinGW needs this but it prevents a link failure
-# of duplicate definitions for pg_tolower().  2004-10-06
-ifeq ($(PORTNAME), win32)
-EXTRA_OBJS += $(top_builddir)/src/port/exec.o
-endif
 
 all: submake-libpq submake-libpgport submake-backend pg_dump pg_restore pg_dumpall
 
