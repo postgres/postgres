@@ -1,955 +1,1019 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.37 2002/09/21 18:32:52 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.38 2002/10/21 18:04:05 petere Exp $
 -->
 
- <chapter id="ecpg">
-  <docinfo>
-   <authorgroup>
-    <author>
-     <firstname>Linus</firstname>
-     <surname>Tolke</surname>
-    </author>
-    <author>
-     <firstname>Michael</firstname>
-     <surname>Meskes</surname>
-    </author>
-   </authorgroup>
-   <copyright>
-    <year>1996-1997</year>
-    <holder>Linus Tolke</holder>
-   </copyright>
-   <copyright>
-    <year>1998</year>
-    <holder>Michael Meskes</holder>
-   </copyright>
-   <date>Transcribed 1998-02-12</date>
-  </docinfo>
+<chapter id="ecpg">
+ <title><application>ECPG</application> - Embedded <acronym>SQL</acronym> in C</title>
 
-  <title><application>ecpg</application> - Embedded <acronym>SQL</acronym> 
-   in <acronym>C</acronym></title>
+ <indexterm zone="ecpg"><primary>embedded SQL</primary><secondary>in C</secondary></indexterm>
 
-  <indexterm zone="ecpg"><primary>embedded SQL</primary><secondary>in C</secondary></indexterm>
+ <para>
+  This chapter describes the embedded <acronym>SQL</acronym> package
+  for <productname>PostgreSQL</productname>. It works with
+  <acronym>C</acronym> and <acronym>C++</acronym>. It was written by
+  Linus Tolke (<email>linus@epact.se</email>) and Michael Meskes
+  (<email>meskes@postgresql.org</email>).
+ </para>
+
+ <para>
+  Admittedly, this documentation is quite incomplete.  But since this
+  interface is standardized, additional information can be found in
+  many resources about SQL.
+ </para>
+
+ <sect1 id="ecpg-concept">
+  <title>The Concept</title>
 
   <para>
-   This describes the embedded <acronym>SQL</acronym> package for
-   <productname>PostgreSQL</productname>. It works with
-   <acronym>C</acronym> and <acronym>C++</acronym>. It was written by
-   Linus Tolke (<email>linus@epact.se</email>) and Michael Meskes
-   (<email>meskes@debian.org</email>). The package is installed with the
-   <productname>PostgreSQL</> distribution, and carries a similar license.
+   An embedded SQL program consists of code written in an ordinary
+   programming language, in this case C, mixed with SQL commands in
+   specially marked sections.  To build the program, the source code
+   is first passed to the embedded SQL preprocessor, which converts it
+   to an ordinary C program, and afterwards it can be processed by a C
+   compilation tool chain.
   </para>
 
-  <sect1 id="ecpg-why">
-   <title>Why Embedded <acronym>SQL</acronym>?</title>
+  <para>
+   Embedded <acronym>SQL</acronym> has advantages over other methods
+   for handling <acronym>SQL</acronym> commands from C code. First, it
+   takes care of the tedious passing of information to and from
+   variables in your <acronym>C</acronym> program.  Secondly, embedded
+   SQL in C is defined in the SQL standard and supported by many other
+   SQL databases.  The PostgreSQL implementation is designed to match
+   this standard as much as possible, and it is usually possible to
+   port embedded <acronym>SQL</acronym> programs written for other
+   <acronym>RDBMS</acronym> to <productname>PostgreSQL</productname>
+   with relative ease.
+  </para>
 
-   <para>
-    Embedded <acronym>SQL</acronym> has advantages over other methods
-    for handling <acronym>SQL</acronym> queries. It takes care of
-    the tedious passing of information to and from variables in your
-    <acronym>C</acronym> or <acronym>C++</acronym> program. Many
-    <acronym>RDBMS</acronym> packages support this embedded language.
-   </para>
-
-   <para> 
-    There is an ANSI standard describing how the embedded language
-    should work. <application>ecpg</application> was designed to match
-    this standard as much as possible. It is possible to port embedded
-    <acronym>SQL</acronym> programs written for other
-    <acronym>RDBMS</acronym> to <productname>PostgreSQL</productname>.
-   </para>
-  </sect1>
-
-  <sect1 id="ecpg-concept">
-   <title>The Concept</title>
-
-   <para>
-    You write your program in <acronym>C/C++</acronym> with special
-    <acronym>SQL</acronym> constructs. When declaring variables to be
-    used in <acronym>SQL</acronym> statements, you need to put them in a
-    special <command>declare</> section. You use a special syntax for the
-    <acronym>SQL</acronym> queries.
-   </para>
-
-   <para>
-    Before compiling you run the file through the embedded
-    <acronym>SQL</acronym> <acronym>C</acronym> preprocessor and it
-    converts the <acronym>SQL</acronym> statements you used to function
-    calls with the variables used as arguments. Both query input and
-    result output variables are passed.
-   </para>
-
-   <para>
-    After compiling, you must link with a special library that contains
-    needed functions. These functions fetch information from the
-    arguments, perform the <acronym>SQL</acronym> query using the
-    <filename>libpq</filename> interface, and put the result in the
-    arguments specified for output.
-   </para>
-  </sect1>
-
-  <sect1 id="ecpg-use">
-   <title>How To Use <application>ecpg</application></title>
-
-   <para>
-    This section describes how to use <application>ecpg</application>.
-   </para>
-
-   <sect2>
-    <title>Preprocessor</title>
-
-    <para>
-     The preprocessor is called <application>ecpg</application>. After
-     installation it resides in the <productname>PostgreSQL</productname>
-     <filename>bin/</filename> directory.
-    </para>
-   </sect2>
-   <sect2>
-    <title>Library</title>
-
-    <para>
-     The <application>ecpg</application> library is called
-     <filename>libecpg.a</filename> or <filename>libecpg.so</filename>.
-     Additionally, the library uses the <filename>libpq</filename>
-     library for communication to the
-     <productname>PostgreSQL</productname> server. You will have to link
-     your program using <parameter>-lecpg -lpq</parameter>.
-    </para>
-
-    <para>
-     The library has some methods that are <quote>hidden</quote> but may prove
-     useful.
-
-     <itemizedlist>
-      <listitem>
-       <para>
-        <function>ECPGdebug(int <replaceable>on</replaceable>, FILE
-        *<replaceable>stream</replaceable>)</function> turns on debug
-        logging if called with the first argument non-zero. Debug
-        logging is done on <replaceable>stream</replaceable>. Most
-        <acronym>SQL</acronym> statement log their arguments and results.
-       </para>
-
-       <para>
-        The most important function , <function>ECPGdo</function>, logs
-        all <acronym>SQL</acronym> statements with both the expanded
-        string, i.e. the string with all the input variables inserted,
-        and the result from the <productname>PostgreSQL</productname>
-        server. This can be very useful when searching for errors in
-        your <acronym>SQL</acronym> statements.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        <function>ECPGstatus()</function>
-        This method returns TRUE if we are connected to a database and FALSE if not.
-       </para>
-      </listitem>
-     </itemizedlist>
-    </para>
-   </sect2>
-
-   <sect2>
-    <title>Error handling</title>
-
-    <para>
-     To detect errors from the <productname>PostgreSQL</productname>
-     server, include a line like: 
+  <para>
+   As indicated, programs written for the embedded SQL interface are
+   normal C programs with special code inserted to perform
+   database-related actions.  This special code always has the form
 <programlisting>
-exec sql include sqlca; 
+EXEC SQL ...;
 </programlisting>
-     in the include section of your file. This will define a <type>struct</> and
-     a variable with the name <varname>sqlca</varname> as follows:
+   These statements syntactically take the place of a C statement.
+   Depending on the particular statement, they may appear in the
+   global context or within a function.  Embedded SQL statements
+   follow the case-sensitivity rules of normal SQL code, and not those
+   of C.
+  </para>
+
+  <para>
+   The following sections explain all the embedded SQL statements.
+  </para>
+ </sect1>
+
+ <sect1 id="ecpg-connect">
+  <title>Connecting to the Database Server</title>
+
+  <para>
+   One connects to a database using the following statement:
 <programlisting>
-struct sqlca
-{
- char sqlcaid[8];
- long sqlabc;
- long sqlcode;
- struct
- {
-  int sqlerrml;
-  char sqlerrmc[70];
- } sqlerrm;
- char sqlerrp[8];
- long sqlerrd[6];
- /* 0: empty                                         */
- /* 1: OID of processed tuple if applicable          */
- /* 2: number of rows processed in an INSERT, UPDATE */
- /*    or DELETE statement                           */
- /* 3: empty                                         */
- /* 4: empty                                         */
- /* 5: empty                                         */
- char sqlwarn[8];
- /* 0: set to 'W' if at least one other is 'W'       */
- /* 1: if 'W' at least one character string          */
- /*    value was truncated when it was               */
- /*    stored into a host variable.                  */
- /* 2: empty                                         */
- /* 3: empty                                         */
- /* 4: empty                                         */
- /* 5: empty                                         */
- /* 6: empty                                         */
- /* 7: empty                                         */
- char sqlext[8];
-} sqlca;
+EXEC SQL CONNECT TO <replaceable>target</replaceable> <optional>AS <replaceable>connection-name</replaceable></optional> <optional>USER <replaceable>user-name</replaceable></optional>;
 </programlisting>
-    </para>
+   The <replaceable>target</replaceable> can be specified in the
+   following ways:
 
-    <para>
-     If an no error occurred in the last <acronym>SQL</acronym> statement.
-     <parameter>sqlca.sqlcode</parameter> will be 0 (<symbol>ECPG_NO_ERROR</>). If
-     <parameter>sqlca.sqlcode</parameter> is less that zero, this is a
-     serious error, like the database definition does not match the
-     query. If it is greater than zero, it is a normal error like the
-     table did not contain the requested row.
-    </para>
+   <itemizedlist>
+    <listitem>
+     <simpara>
+      <literal><replaceable>dbname</><optional>@<replaceable>hostname</></optional><optional>:<replaceable>port</></optional></literal>
+     </simpara>
+    </listitem>
 
-    <para>
-     <parameter>sqlca.sqlerrm.sqlerrmc</parameter> will contain a string
-     that describes the error. The string ends with the line number in
-     the source file.
-    </para>
+    <listitem>
+     <simpara>
+      <literal>tcp:postgresql://<replaceable>hostname</><optional>:<replaceable>port</></optional><optional>/<replaceable>dbname</></optional><optional>?<replaceable>options</></optional></literal>
+     </simpara>
+    </listitem>
 
-    <para>
-     These are the errors that can occur:
+    <listitem>
+     <simpara>
+      <literal>unix:postgresql://<replaceable>hostname</><optional>:<replaceable>port</></optional><optional>/<replaceable>dbname</></optional><optional>?<replaceable>options</></optional></literal>
+     </simpara>
+    </listitem>
+ 
+    <listitem>
+     <simpara>
+      <literal><replaceable>character variable</replaceable></literal>
+     </simpara>
+    </listitem>
 
-     <variablelist>
-      <varlistentry>
-       <term><computeroutput>-12, Out of memory in line %d.</computeroutput></term>
-       <listitem>
-        <para>
-         Should not normally occur. This indicates your virtual memory is
-         exhausted.
-        </para>
-       </listitem>
-      </varlistentry>
+    <listitem>
+     <simpara>
+      <literal><replaceable>character string</replaceable></literal>
+     </simpara>
+    </listitem>
+ 
+    <listitem>
+     <simpara>
+      <literal>DEFAULT</literal>
+     </simpara>
+    </listitem>
+   </itemizedlist>
+  </para>
 
-      <varlistentry>
-       <term><computeroutput>-200 (ECPG_UNSUPPORTED): Unsupported type %s on line %d.</computeroutput></term>
-       <listitem>
-        <para>
-         Should not normally occur. This indicates the preprocessor has
-         generated something that the library does not know about.
-         Perhaps you are running incompatible versions of the
-         preprocessor and the library.
-        </para>
-       </listitem>
-      </varlistentry>
+  <para>
+   There are also different ways to specify the user name:
 
-      <varlistentry>
-       <term><computeroutput>-201 (ECPG_TOO_MANY_ARGUMENTS): Too many arguments line %d.</computeroutput></term>
-       <listitem>
-        <para>
-         This means that <productname>PostgreSQL</productname> has
-         returned more arguments than we have matching variables.
-         Perhaps you have forgotten a couple of the host variables in
-         the <command>INTO :var1,:var2</command>-list.
-        </para>
-       </listitem>
-      </varlistentry>
+   <itemizedlist>
+    <listitem>
+     <simpara>
+      <literal><replaceable>userid</replaceable></literal>
+     </simpara>
+    </listitem>
 
-      <varlistentry>
-       <term><computeroutput>-202 (ECPG_TOO_FEW_ARGUMENTS): Too few arguments line %d.</computeroutput></term>
-       <listitem>
-        <para>
-         This means that <productname>PostgreSQL</productname> has
-         returned fewer arguments than we have host variables. Perhaps
-         you have too many host variables in the <command>INTO
-         :var1,:var2</command>-list.
-        </para> 
-       </listitem>
-      </varlistentry>
+    <listitem>
+     <simpara>
+      <literal><replaceable>userid</replaceable>/<replaceable>password</replaceable></literal>
+     </simpara>
+    </listitem>
 
-      <varlistentry>
-       <term><computeroutput>-203 (ECPG_TOO_MANY_MATCHES): Too many matches line %d.</computeroutput></term>
-       <listitem>
-        <para>
-         This means the query has returned several rows but the
-         variables specified are not arrays. The
-         <command>SELECT</command> command was not unique.
-        </para>
-       </listitem>
-      </varlistentry>
+    <listitem>
+     <simpara>
+      <literal><replaceable>userid</replaceable> IDENTIFIED BY <replaceable>password</replaceable></literal>
+     </simpara>
+    </listitem>
 
-      <varlistentry>
-       <term><computeroutput>-204 (ECPG_INT_FORMAT): Not correctly formatted int type: %s line %d.</computeroutput></term>
-       <listitem>
-        <para>
-         This means the host variable is of type <type>int</type> and
-         the field in the <productname>PostgreSQL</productname> database
-         is of another type and contains a value that cannot be
-         interpreted as an <type>int</type>. The library uses
-         <function>strtol()</function> for this conversion.
-        </para>
-       </listitem>
-      </varlistentry>
+    <listitem>
+     <simpara>
+      <literal><replaceable>userid</replaceable> USING <replaceable>password</replaceable></literal>
+     </simpara>
+    </listitem>
+   </itemizedlist>
+   The <replaceable>userid</replaceable> and
+   <replaceable>password</replaceable> may be a constant text, a
+   character variable, or a character string.
+  </para>
 
-      <varlistentry>
-       <term><computeroutput>-205 (ECPG_UINT_FORMAT): Not correctly formatted unsigned type: %s line %d.</computeroutput></term>
-       <listitem>
-        <para>
-         This means the host variable is of type <type>unsigned
-         int</type> and the field in the
-         <productname>PostgreSQL</productname> database is of another type
-         and contains a value that cannot be interpreted as an
-         <type>unsigned int</type>. The library uses
-         <function>strtoul()</function> for this conversion.
-        </para>
-       </listitem>
-      </varlistentry>
+  <para>
+   The <replaceable>connection-name</replaceable> is used to handle
+   multiple connections in one program.  It can be omitted if a
+   program uses only one connection.
+  </para>
+ </sect1>
 
-      <varlistentry>
-       <term><computeroutput>-206 (ECPG_FLOAT_FORMAT): Not correctly formatted floating-point type: %s line %d.</computeroutput></term>
-       <listitem>
-        <para>
-         This means the host variable is of type <type>float</type> and
-         the field in the <productname>PostgreSQL</productname> database
-         is of another type and contains a value that cannot be
-         interpreted as a <type>float</type>. The library uses
-         <function>strtod()</function> for this conversion.
-        </para>
-       </listitem>
-      </varlistentry>
+ <sect1 id="ecpg-disconnect">
+  <title>Closing a Connection</title>
 
-      <varlistentry>
-       <term><computeroutput>-207 (ECPG_CONVERT_BOOL): Unable to convert %s to bool on line %d.</computeroutput></term>
-       <listitem>
-        <para>
-         This means the host variable is of type <type>bool</type> and
-         the field in the <productname>PostgreSQL</productname> database
-         is neither <literal>'t'</> nor <literal>'f'</>.
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
-       <term><computeroutput>-208 (ECPG_EMPTY): Empty query line %d.</computeroutput></term>
-       <listitem>
-        <para>
-         <productname>PostgreSQL</productname> returned <symbol>PGRES_EMPTY_QUERY</symbol>, probably
-         because the query indeed was empty.
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
-       <term><computeroutput>-209 (ECPG_MISSING_INDICATOR): NULL value without indicator in line %d.</computeroutput></term>
-       <listitem>
-        <para>
-         <productname>PostgreSQL</productname> returned <symbol>ECPG_MISSING_INDICATOR</symbol>
-         because a NULL was returned and no NULL indicator variable was supplied.
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
-       <term><computeroutput>-210 (ECPG_NO_ARRAY): Variable is not an array in line %d.</computeroutput></term>
-       <listitem>
-        <para>
-         <productname>PostgreSQL</productname> returned <symbol>ECPG_NO_ARRAY</symbol>
-         because an ordinary variable was used in a place that requires
-         an array.
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
-       <term><computeroutput>-211 (ECPG_DATA_NOT_ARRAY): Data read from backend is not an array in line %d.</computeroutput></term>
-       <listitem>
-        <para>
-         <productname>PostgreSQL</productname> returned <symbol>ECPG_DATA_NOT_ARRAY</symbol>
-         because the database returned an ordinary variable in a place
-         that requires array value.
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
-       <term><computeroutput>-220 (ECPG_NO_CONN): No such connection %s in line %d.</computeroutput></term>
-       <listitem>
-        <para>
-         The program tried to access a connection that does not exist.
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
-       <term><computeroutput>-221 (ECPG_NOT_CONN): Not connected in line %d.</computeroutput></term>
-       <listitem>
-        <para>
-         The program tried to access a connection that does exist but is
-         not open.
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
-       <term><computeroutput>-230 (ECPG_INVALID_STMT): Invalid statement name %s in line %d.</computeroutput></term>
-       <listitem>
-        <para>
-         The statement you are trying to use has not been prepared.
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
-       <term><computeroutput>-240 (ECPG_UNKNOWN_DESCRIPTOR): Descriptor %s not found in line %d.</computeroutput></term>
-       <listitem>
-        <para>
-         The descriptor specified was not found. The statement you are trying to use has not been prepared.
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
-       <term><computeroutput>-241 (ECPG_INVALID_DESCRIPTOR_INDEX): Descriptor index out of range in line %d.</computeroutput></term>
-       <listitem>
-        <para>
-         The descriptor index specified was out of range.
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
-       <term><computeroutput>-242 (ECPG_UNKNOWN_DESCRIPTOR_ITEM): Descriptor %s not found in line %d.</computeroutput></term>
-       <listitem>
-        <para>
-         The descriptor specified was not found. The statement you are trying to use has not been prepared.
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
-       <term><computeroutput>-243 (ECPG_VAR_NOT_NUMERIC): Variable is not a numeric type in line %d.</computeroutput></term>
-       <listitem>
-        <para>
-         The database returned a numeric value and the variable was not
-         numeric.
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
-       <term><computeroutput>-244 (ECPG_VAR_NOT_CHAR): Variable is not a character type in line %d.</computeroutput></term>
-       <listitem>
-        <para>
-         The database returned a non-numeric value and the variable was
-         numeric.
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
-       <term><computeroutput>-400 (ECPG_PGSQL): Postgres error: %s line %d.</computeroutput></term>
-       <listitem>
-        <para>
-         Some <productname>PostgreSQL</productname> error. 
-         The message contains the error message from the
-         <productname>PostgreSQL</productname> backend.
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
-       <term><computeroutput>-401 (ECPG_TRANS): Error in transaction processing line %d.</computeroutput></term>
-       <listitem>
-        <para>
-         <productname>PostgreSQL</productname> signaled that we cannot start,
-         commit or rollback the transaction.
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
-       <term><computeroutput>-402 (ECPG_CONNECT): Could not connect to database %s in line %d.</computeroutput></term>
-       <listitem>
-        <para>
-         The connect to the database did not work.
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
-       <term><computeroutput>100 (ECPG_NOT_FOUND): Data not found line %d.</computeroutput></term>
-       <listitem>
-        <para>
-         This is a <quote>normal</quote> error that tells you that what you are querying cannot
-         be found or you are at the end of the cursor.
-        </para>
-       </listitem>
-      </varlistentry>
-
-     </variablelist>
-    </para>
-   </sect2>
-  </sect1>
-
-  <sect1 id="ecpg-limitations">
-   <title>Limitations</title>
-
-   <para>
-    What will never be included and why it cannot be done:
-
-    <variablelist>
-     <varlistentry>
-      <term>Oracle's single tasking</term>
-      <listitem>
-       <para>
-        Oracle version 7.0 on <systemitem class="osname">AIX</> 3 uses OS-supported locks in shared
-        memory that allow an application designer to link an application
-        in a <quote>single tasking</quote> way. Instead of starting one client
-        process per application process, both the database part and the
-        application part run in the same process. In later versions of
-        Oracle this is no longer supported.
-       </para>
-
-       <para>
-        This would require a total redesign of the
-        <productname>PostgreSQL</productname> access model and the
-        performance gain does not justify the effort.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </sect1>
-
-  <sect1 id="ecpg-porting">
-   <title>Porting From Other <acronym>RDBMS</acronym> Packages</title>
-
-   <para>
-    The design of <application>ecpg</application> follows the SQL
-    standard. Porting from a standard RDBMS should not be a problem.
-    Unfortunately there is no such thing as a standard RDBMS. Therefore
-    <application>ecpg</application> tries to understand syntax
-    extensions as long as they do not create conflicts with the
-    standard.
-   </para>
-
-   <para>
-    The following list shows all the known incompatibilities. If you
-    find one not listed please notify the developers. Note, however, that
-    we list only incompatibilities from a precompiler of another RDBMS
-    to <application>ecpg</application> and not
-    <application>ecpg</application> features that these RDBMS do not
-    support.
-   </para>
-
-   <para>
-    <variablelist>
-     <varlistentry>
-      <term>Syntax of FETCH</term>
-      <indexterm><primary>FETCH</><secondary>embedded SQL</></indexterm>
-      <listitem>
-       <para>
-        The standard syntax for FETCH is:
-       </para>
-       <para>
-        FETCH [direction] [amount] IN|FROM <replaceable>cursor</replaceable>.
-       </para>
-       <para>
-        <indexterm><primary>Oracle</></>
-        <application>Oracle</application>, however, does not use the keywords IN
-        or FROM. This feature cannot be added since it would create parsing
-        conflicts.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </sect1>
-
-  <sect1 id="ecpg-develop">
-   <title>For the Developer</title>
-
-   <para>
-    This section explain how <application>ecpg</application>
-    works internally. It contains valuable information to help users
-    understand how to use <application>ecpg</application>.
-   </para>
-
-   <sect2>
-    <title>The Preprocessor</title>
-
-    <para>
-     The first four lines written by <command>ecpg</command> to the output are fixed lines.
-     Two are comments and two are include lines necessary to interface
-     to the library.
-    </para>
-
-    <para>
-     Then the preprocessor reads through the file and writes output.
-     Normally it just echoes everything to the output.
-    </para>
-
-    <para>
-     When it sees an <command>EXEC SQL</command> statement, it
-     intervenes and changes it. The <command>EXEC SQL</command>
-     statement can be one of these:
-
-     <variablelist>
-      <varlistentry>
-       <term>Declare sections</term>
-       <listitem>
-        <para>
-         <command>Declare</> sections begin with:
+  <para>
+   To close a connection, use the following statement:
 <programlisting>
-exec sql begin declare section;
+EXEC SQL DISCONNECT [<replaceable>connection</replaceable>];
 </programlisting>
-         and end with:
+   The <replaceable>connection</replaceable> can be specified
+   in the following ways:
+
+   <itemizedlist>
+    <listitem>
+     <simpara>
+      <literal><replaceable>connection-name</replaceable></literal>
+     </simpara>
+    </listitem>
+
+    <listitem>
+     <simpara>
+      <literal>DEFAULT</literal>
+     </simpara>
+    </listitem>
+
+    <listitem>
+     <simpara>
+      <literal>CURRENT</literal>
+     </simpara>
+    </listitem>
+
+    <listitem>
+     <simpara>
+      <literal>ALL</literal>
+     </simpara>
+    </listitem>
+   </itemizedlist>
+  </para>
+ </sect1>
+
+ <sect1 id="ecpg-commands">
+  <title>Running SQL Commands</title>
+
+  <para>
+   Any SQL command can be run from within an embedded SQL application.
+   Below are some examples of how to do that.
+  </para>
+
+  <para>
+   Creating a table:
 <programlisting>
-exec sql end declare section;
+EXEC SQL CREATE TABLE foo (number integer, ascii char(16));
+EXEC SQL CREATE UNIQUE INDEX num1 ON foo(number);
+EXEC SQL COMMIT;
 </programlisting>
-         In this section only variable declarations are allowed. Every
-         variable declared within this section is stored in a list
-         of variables indexed by name together with its corresponding
-         type.
-        </para>
+  </para>
 
-        <para>
-         In particular the definition of a structure or union also must
-         be listed inside a <command>declare</> section. Otherwise
-         <application>ecpg</application> cannot handle these types since
-         it does not know the definition.
-        </para>
+  <para>
+   Inserting rows:
+<programlisting>
+EXEC SQL INSERT INTO foo (number, ascii) VALUES (9999, 'doodad');
+EXEC SQL COMMIT;
+</programlisting>
+  </para>
 
-        <para>
-         The declaration is also echoed to the file to make it a normal
-         C variable.
-        </para>
+  <para>
+   Deleting rows:
+<programlisting>
+EXEC SQL DELETE FROM foo WHERE number = 9999;
+EXEC SQL COMMIT;
+</programlisting>
+  </para>
 
-        <para>
-         The special types <type>VARCHAR</type> and
-         <type>VARCHAR2</type> are converted into a named <type>struct</> for
-         every variable. A declaration like:
+  <para>
+   Singleton Select:
+<programlisting>
+EXEC SQL SELECT foo INTO :FooBar FROM table1 WHERE ascii = 'doodad';
+</programlisting>
+  </para>
+
+  <para>
+   Select using Cursors:
+<programlisting>
+EXEC SQL DECLARE foo_bar CURSOR FOR
+    SELECT number, ascii FROM foo
+    ORDER BY ascii;
+EXEC SQL FETCH foo_bar INTO :FooBar, DooDad;
+...
+EXEC SQL CLOSE foo_bar;
+EXEC SQL COMMIT;
+</programlisting>
+  </para>
+
+  <para>
+   Updates:
+<programlisting>
+EXEC SQL UPDATE foo
+    SET ascii = 'foobar'
+    WHERE number = 9999;
+EXEC SQL COMMIT;
+</programlisting>
+  </para>
+
+  <para>
+   The tokens of the form
+   <literal>:<replaceable>something</replaceable></literal> are
+   <firstterm>host variables</firstterm>, that is, they refer to
+   variables in the C program.  They are explained in the next
+   section.
+  </para>
+
+  <para>
+   In the default mode, statements are committed only when
+   <command>EXEC SQL COMMIT</command> is issued. The embedded SQL
+   interface also supports autocommit of transactions (as known from
+   other interfaces) via the <option>-t</option> command-line option
+   to <command>ecpg</command> (see below) or via the <literal>EXEC SQL
+   SET AUTOCOMMIT TO ON</literal> statement. In autocommit mode, each
+   query is automatically committed unless it is inside an explicit
+   transaction block. This mode can be explicitly turned off using
+   <literal>EXEC SQL SET AUTOCOMMIT TO OFF</literal>.
+  </para>
+ </sect1>
+
+ <sect1 id="ecpg-variables">
+  <title>Passing Data</title>
+
+  <para>
+   To pass data from the program to the database, for example as
+   parameters in a query, or to pass data from the database back to
+   the program, the C variables that are intended to contain this data
+   need to be declared in a specially marked section, so the embedded
+   SQL preprocessor is made aware of them.
+  </para>
+
+  <para>
+   This section starts with
+<programlisting>
+EXEC SQL BEGIN DECLARE SECTION;
+</programlisting>
+   and ends with
+<programlisting>
+EXEC SQL END DECLARE SECTION;
+</programlisting>
+   Between those lines, there must be normal C variable declarations, such as
+<programlisting>
+int   x;
+char  foo[16], bar[16];
+</programlisting>
+  </para>
+
+  <para>
+   The declarations are also echoed to the output file as a normal C
+   variables, so there's no need to declare them again.  Variables
+   that are not intended to be used with SQL commands can be declared
+   normally outside these special sections.
+  </para>
+
+  <para>
+   The definition of a structure or union also must be listed inside a
+   <literal>DECLARE</> section. Otherwise the preprocessor cannot
+   handle these types since it does not know the definition.
+  </para>
+
+  <para>
+   The special types <type>VARCHAR</type> and <type>VARCHAR2</type>
+   are converted into a named <type>struct</> for every variable. A
+   declaration like:
 <programlisting>
 VARCHAR var[180];
 </programlisting>
-         is converted into:
+   is converted into:
 <programlisting>
 struct varchar_var { int len; char arr[180]; } var;
 </programlisting>
-        </para>
-       </listitem>
-      </varlistentry>
+   This structure is suitable for interfacing with SQL datums of type
+   <type>VARCHAR</type>.
+  </para>
 
-      <varlistentry>
-       <term>Include statements</term>
-       <listitem>
-        <para>
-         An include statement looks like:
+  <para>
+   To use a properly declared C variable in an SQL statement, write
+   <literal>:<replaceable>varname</></literal> where an expression is
+   expected.  See the previous section for some examples.
+  </para>
+ </sect1>
+
+ <sect1 id="ecpg-errors">
+  <title>Error Handling</title>
+
+  <para>
+   The embedded SQL interface provides a simplistic and a complex way
+   to handle exceptional conditions in a program.  The first method
+   causes a message to printed automatically when a certain condition
+   occurs.  For example:
 <programlisting>
-exec sql include filename;
+EXEC SQL WHENEVER sqlerror sqlprint;
 </programlisting>
-         Note that this is NOT the same as:
+   or
 <programlisting>
-#include &lt;filename.h&gt;
+EXEC SQL WHENEVER not found sqlprint;
 </programlisting>
-        </para>
+   This error handling remains enabled throughout the entire program.
+  </para>
 
-        <para>
-         Instead the file specified is parsed by
-         <application>ecpg</application> so the contents of the file are
-         included in the resulting C code. This way you are able to
-         specify EXEC SQL commands in an include file.
-        </para>
-       </listitem>
-      </varlistentry>
+  <note>
+   <para>
+    This is <emphasis>not</emphasis> an exhaustive example of usage
+    for the <command>EXEC SQL WHENEVER</command> statement.  Further
+    examples of usage may be found in SQL manuals (e.g.,
+    <citetitle>The LAN TIMES Guide to SQL</> by Groff and Weinberg).
+   </para>
+  </note>
 
-      <varlistentry>
-       <term>Connect statement</term>
-       <listitem>
-        <para>
-         A connect statement looks like:
+  <para>
+   For a more powerful error handling, the embedded SQL interface
+   provides a <type>struct</> and a variable with the name
+   <varname>sqlca</varname> as follows:
 <programlisting>
-exec sql connect to <replaceable>connection target</replaceable>;
+struct sqlca
+{
+    char sqlcaid[8];
+    long sqlabc;
+    long sqlcode;
+    struct
+    {
+        int sqlerrml;
+        char sqlerrmc[70];
+    } sqlerrm;
+    char sqlerrp[8];
+
+    long sqlerrd[6];
+    /* 0: empty                                         */
+    /* 1: OID of processed tuple if applicable          */
+    /* 2: number of rows processed in an INSERT, UPDATE */
+    /*    or DELETE statement                           */
+    /* 3: empty                                         */
+    /* 4: empty                                         */
+    /* 5: empty                                         */
+
+    char sqlwarn[8];
+    /* 0: set to 'W' if at least one other is 'W'       */
+    /* 1: if 'W' at least one character string          */
+    /*    value was truncated when it was               */
+    /*    stored into a host variable.                  */
+    /* 2: empty                                         */
+    /* 3: empty                                         */
+    /* 4: empty                                         */
+    /* 5: empty                                         */
+    /* 6: empty                                         */
+    /* 7: empty                                         */
+
+    char sqlext[8];
+} sqlca;
 </programlisting>
-         It creates a connection to the specified database.
-        </para>
+   (Many of the empty fields may be used in a future release.)
+  </para>
 
-        <para>
-         The <replaceable>connection target</replaceable> can be specified in the
-         following ways:
-         <itemizedlist>
-          <listitem>
-           <simpara>
-            <literal>dbname[@server][:port][as <replaceable>connection
-            name</replaceable>][user <replaceable>user name</replaceable>]</literal>
-           </simpara>
-          </listitem>
+  <para>
+   If no error occurred in the last <acronym>SQL</acronym> statement,
+   <literal>sqlca.sqlcode</literal> will be 0
+   (<symbol>ECPG_NO_ERROR</>). If <literal>sqlca.sqlcode</literal> is
+   less that zero, this is a serious error, like the database
+   definition does not match the query. If it is greater than zero, it
+   is a normal error like the table did not contain the requested row.
+  </para>
 
-          <listitem>
-           <simpara>
-            <literal>tcp:postgresql://server[:port][/dbname][as
-            <replaceable>connection name</replaceable>][user <replaceable>user name</replaceable>]</literal>
-           </simpara>
-          </listitem>
+  <para>
+   <literal>sqlca.sqlerrm.sqlerrmc</literal> will contain a string
+   that describes the error. The string ends with the line number in
+   the source file.
+  </para>
 
-          <listitem>
-           <simpara>
-            <literal>unix:postgresql://server[:port][/dbname][as
-            <replaceable>connection name</replaceable>][user <replaceable>user name</replaceable>]</literal>
-           </simpara>
-          </listitem>
- 
-          <listitem>
-           <simpara>
-            <literal><replaceable>character variable</replaceable>[as
-            <replaceable>connection name</replaceable>][user <replaceable>user name</replaceable>]</literal>
-           </simpara>
-          </listitem>
- 
-          <listitem>
-           <simpara>
-            <literal><replaceable>character string</replaceable>[as
-            <replaceable>connection name</replaceable>][<replaceable>user</replaceable>]</literal>
-           </simpara>
-          </listitem>
- 
-          <listitem>
-           <simpara>
-            <literal>default</literal>
-           </simpara>
-          </listitem>
- 
-          <listitem>
-           <simpara>
-            <literal>user</literal>
-           </simpara>
-          </listitem>
-         </itemizedlist>
-        </para>
+  <para>
+   These are the errors that can occur:
 
-        <para>
-         There are also different ways to specify the user name:
+   <variablelist>
+    <varlistentry>
+     <term><computeroutput>-12, Out of memory in line %d.</computeroutput></term>
+     <listitem>
+      <para>
+       Should not normally occur. This indicates your virtual memory
+       is exhausted.
+      </para>
+     </listitem>
+    </varlistentry>
 
-         <itemizedlist>
-          <listitem>
-           <simpara>
-            <literal><replaceable>userid</replaceable></literal>
-           </simpara>
-          </listitem>
+    <varlistentry>
+     <term><computeroutput>-200 (ECPG_UNSUPPORTED): Unsupported type %s on line %d.</computeroutput></term>
+     <listitem>
+      <para>
+       Should not normally occur. This indicates the preprocessor has
+       generated something that the library does not know about.
+       Perhaps you are running incompatible versions of the
+       preprocessor and the library.
+      </para>
+     </listitem>
+    </varlistentry>
 
-          <listitem>
-           <simpara>
-            <literal><replaceable>userid</replaceable>/<replaceable>password</replaceable></literal>
-           </simpara>
-          </listitem>
+    <varlistentry>
+     <term><computeroutput>-201 (ECPG_TOO_MANY_ARGUMENTS): Too many arguments line %d.</computeroutput></term>
+     <listitem>
+      <para>
+       This means that the server has returned more arguments than we
+       have matching variables.  Perhaps you have forgotten a couple
+       of the host variables in the <command>INTO
+       :var1,:var2</command> list.
+      </para>
+     </listitem>
+    </varlistentry>
 
-          <listitem>
-           <simpara>
-            <literal><replaceable>userid</replaceable> identified by <replaceable>password</replaceable></literal>
-           </simpara>
-          </listitem>
+    <varlistentry>
+     <term><computeroutput>-202 (ECPG_TOO_FEW_ARGUMENTS): Too few arguments line %d.</computeroutput></term>
+     <listitem>
+      <para>
+       This means that the server has returned fewer arguments than we
+       have host variables. Perhaps you have too many host variables
+       in the <command>INTO :var1,:var2</command> list.  </para>
+     </listitem>
+    </varlistentry>
 
-          <listitem>
-           <simpara>
-            <literal><replaceable>userid</replaceable> using <replaceable>password</replaceable></literal>
-           </simpara>
-          </listitem>
-         </itemizedlist>
-        </para>
+    <varlistentry>
+     <term><computeroutput>-203 (ECPG_TOO_MANY_MATCHES): Too many matches line %d.</computeroutput></term>
+     <listitem>
+      <para>
+       This means the query has returned several rows but the
+       variables specified are not arrays. The
+       <command>SELECT</command> command was not unique.
+      </para>
+     </listitem>
+    </varlistentry>
 
-        <para> 
-         Finally, the <replaceable>userid</replaceable> and <replaceable>password</replaceable> may be a constant text, a
-         character variable, or a character string.
-        </para>
-       </listitem>
-      </varlistentry>
+    <varlistentry>
+     <term><computeroutput>-204 (ECPG_INT_FORMAT): Not correctly formatted int type: %s line %d.</computeroutput></term>
+     <listitem>
+      <para>
+       This means the host variable is of type <type>int</type> and
+       the field in the <productname>PostgreSQL</productname> database
+       is of another type and contains a value that cannot be
+       interpreted as an <type>int</type>. The library uses
+       <function>strtol()</function> for this conversion.
+      </para>
+     </listitem>
+    </varlistentry>
 
-      <varlistentry>
-       <term>Disconnect statements</term>
-       <listitem>
-        <para>
-         A disconnect statement looks like:
-         <programlisting>
-exec sql disconnect [<replaceable>connection target</replaceable>];
-         </programlisting>
-         It closes the connection to the specified database.
-        </para>
+    <varlistentry>
+     <term><computeroutput>-205 (ECPG_UINT_FORMAT): Not correctly formatted unsigned type: %s line %d.</computeroutput></term>
+     <listitem>
+      <para>
+       This means the host variable is of type <type>unsigned
+       int</type> and the field in the
+       <productname>PostgreSQL</productname> database is of another
+       type and contains a value that cannot be interpreted as an
+       <type>unsigned int</type>. The library uses
+       <function>strtoul()</function> for this conversion.
+      </para>
+     </listitem>
+    </varlistentry>
 
-        <para>
-         The <replaceable>connection target</replaceable> can be specified in the
-         following ways:
+    <varlistentry>
+     <term><computeroutput>-206 (ECPG_FLOAT_FORMAT): Not correctly formatted floating-point type: %s line %d.</computeroutput></term>
+     <listitem>
+      <para>
+       This means the host variable is of type <type>float</type> and
+       the field in the <productname>PostgreSQL</productname> database
+       is of another type and contains a value that cannot be
+       interpreted as a <type>float</type>. The library uses
+       <function>strtod()</function> for this conversion.
+      </para>
+     </listitem>
+    </varlistentry>
 
-         <itemizedlist>
-          <listitem>
-           <simpara>
-            <literal><replaceable>connection name</replaceable></literal>
-           </simpara>
-          </listitem>
+    <varlistentry>
+     <term><computeroutput>-207 (ECPG_CONVERT_BOOL): Unable to convert %s to bool on line %d.</computeroutput></term>
+     <listitem>
+      <para>
+       This means the host variable is of type <type>bool</type> and
+       the field in the <productname>PostgreSQL</productname> database
+       is neither <literal>'t'</> nor <literal>'f'</>.
+      </para>
+     </listitem>
+    </varlistentry>
 
-          <listitem>
-           <simpara>
-           <literal>default</literal>
-           </simpara>
-          </listitem>
+    <varlistentry>
+     <term><computeroutput>-208 (ECPG_EMPTY): Empty query line %d.</computeroutput></term>
+     <listitem>
+      <para>
+       The query was empty.  (This cannot normally happen in an
+       embedded SQL program, so it may point to an internal error.)
+      </para>
+     </listitem>
+    </varlistentry>
 
-          <listitem>
-           <simpara>
-           <literal>current</literal>
-           </simpara>
-          </listitem>
+    <varlistentry>
+     <term><computeroutput>-209 (ECPG_MISSING_INDICATOR): NULL value without indicator in line %d.</computeroutput></term>
+     <listitem>
+      <para>
+       A null value was returned and no null indicator variable was
+       supplied.
+      </para>
+     </listitem>
+    </varlistentry>
 
-          <listitem>
-           <simpara>
-           <literal>all</literal>
-           </simpara>
-          </listitem>
-         </itemizedlist>
-        </para>
-       </listitem>
-      </varlistentry>
+    <varlistentry>
+     <term><computeroutput>-210 (ECPG_NO_ARRAY): Variable is not an array in line %d.</computeroutput></term>
+     <listitem>
+      <para>
+       An ordinary variable was used in a place that requires an
+       array.
+      </para>
+     </listitem>
+    </varlistentry>
 
-      <varlistentry>
-       <term>Open cursor statement</term>
-       <listitem>
-        <para>
-         An open cursor statement looks like:
+    <varlistentry>
+     <term><computeroutput>-211 (ECPG_DATA_NOT_ARRAY): Data read from backend is not an array in line %d.</computeroutput></term>
+     <listitem>
+      <para>
+       The database returned an ordinary variable in a place that
+       requires array value.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><computeroutput>-220 (ECPG_NO_CONN): No such connection %s in line %d.</computeroutput></term>
+     <listitem>
+      <para>
+       The program tried to access a connection that does not exist.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><computeroutput>-221 (ECPG_NOT_CONN): Not connected in line %d.</computeroutput></term>
+     <listitem>
+      <para>
+       The program tried to access a connection that does exist but is
+       not open.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><computeroutput>-230 (ECPG_INVALID_STMT): Invalid statement name %s in line %d.</computeroutput></term>
+     <listitem>
+      <para>
+       The statement you are trying to use has not been prepared.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><computeroutput>-240 (ECPG_UNKNOWN_DESCRIPTOR): Descriptor %s not found in line %d.</computeroutput></term>
+     <listitem>
+      <para>
+       The descriptor specified was not found. The statement you are
+       trying to use has not been prepared.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><computeroutput>-241 (ECPG_INVALID_DESCRIPTOR_INDEX): Descriptor index out of range in line %d.</computeroutput></term>
+     <listitem>
+      <para>
+       The descriptor index specified was out of range.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><computeroutput>-242 (ECPG_UNKNOWN_DESCRIPTOR_ITEM): Descriptor %s not found in line %d.</computeroutput></term>
+     <listitem>
+      <para>
+       The descriptor specified was not found. The statement you are trying to use has not been prepared.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><computeroutput>-243 (ECPG_VAR_NOT_NUMERIC): Variable is not a numeric type in line %d.</computeroutput></term>
+     <listitem>
+      <para>
+       The database returned a numeric value and the variable was not
+       numeric.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><computeroutput>-244 (ECPG_VAR_NOT_CHAR): Variable is not a character type in line %d.</computeroutput></term>
+     <listitem>
+      <para>
+       The database returned a non-numeric value and the variable was
+       numeric.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><computeroutput>-400 (ECPG_PGSQL): Postgres error: %s line %d.</computeroutput></term>
+     <listitem>
+      <para>
+       Some <productname>PostgreSQL</productname> error. The message
+       contains the error message from the
+       <productname>PostgreSQL</productname> backend.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><computeroutput>-401 (ECPG_TRANS): Error in transaction processing line %d.</computeroutput></term>
+     <listitem>
+      <para>
+       <productname>PostgreSQL</productname> signaled that we cannot
+       start, commit, or rollback the transaction.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><computeroutput>-402 (ECPG_CONNECT): Could not connect to database %s in line %d.</computeroutput></term>
+     <listitem>
+      <para>
+       The connect to the database did not work.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><computeroutput>100 (ECPG_NOT_FOUND): Data not found line %d.</computeroutput></term>
+     <listitem>
+      <para>
+       This is a <quote>normal</quote> error that tells you that what
+       you are querying cannot be found or you are at the end of the
+       cursor.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+ </sect1>
+
+ <sect1 id="ecpg-include">
+  <title>Including Files</title>
+
+  <para>
+   To include an external file into your embedded SQL program, use:
 <programlisting>
-exec sql open <replaceable>cursor</replaceable>;
+EXEC SQL INCLUDE <replaceable>filename</replaceable>;
 </programlisting>
-         and is not copied to the output. Instead, the cursor's
-         <command>DECLARE</> command is used because it opens the cursor
-         as well.
-        </para>
-       </listitem>
-      </varlistentry>
+   The embedded SQL preprocessor will look for a file named
+   <literal><replaceable>filename</replaceable>.h</literal>,
+   preprocess it, and include it in the resulting C output.  Thus,
+   embedded SQL statements in the included file are handled correctly.
+  </para>
 
-      <varlistentry>
-       <term>Commit statement</term>
-       <listitem>
-        <para>
-         A commit statement looks like:
+  <para>
+   Note that this is <emphasis>not</emphasis> the same as
 <programlisting>
-exec sql commit;
+#include &lt;<replaceable>filename</replaceable>.h&gt;
 </programlisting>
-        </para>
-       </listitem>
-      </varlistentry>
+   because the file would not be subject to SQL command preprocessing.
+   Naturally, you can continue to use the C
+   <literal>#include</literal> directive to include other header
+   files.
+  </para>
 
-      <varlistentry>
-       <term>Rollback statement</term>
-       <listitem>
-        <para>
-         A rollback statement looks like:
+  <note>
+   <para>
+    The include file name is case-sensitive, even though the rest of
+    the <literal>EXEC SQL INCLUDE</literal> command follows the normal
+    SQL case-sensitivity rules.
+   </para>
+  </note>
+ </sect1>
+
+ <sect1 id="ecpg-process">
+  <title>Processing Embedded SQL Programs</title>
+
+  <para>
+   Now that you have an idea how to form embedded SQL C programs, you
+   probably want to know how to compile them.  Before compiling you
+   run the file through the embedded <acronym>SQL</acronym>
+   <acronym>C</acronym> preprocessor, which converts the
+   <acronym>SQL</acronym> statements you used to special function
+   calls.  After compiling, you must link with a special library that
+   contains the needed functions. These functions fetch information
+   from the arguments, perform the <acronym>SQL</acronym> query using
+   the <application>libpq</application> interface, and put the result
+   in the arguments specified for output.
+  </para>
+
+  <para>
+   The preprocessor program is called <filename>ecpg</filename> and is
+   included in a normal PostgreSQL installation.  Embedded SQL
+   programs are typically named with an extension
+   <filename>.pgc</filename>.  If you have a program file called
+   <filename>prog1.pgc</filename>, you can preprocess it by simply
+   calling
 <programlisting>
-exec sql rollback;
+ecpg prog1.pgc
 </programlisting>
-        </para>
-       </listitem>
-      </varlistentry>
+   This will create a file called <filename>prog1.c</filename>.  If
+   your input files do not follow the suggested naming pattern, you
+   can specify the output file explicitly using the
+   <option>-o</option> option.
+  </para>
 
-      <varlistentry>
-       <term>Other statements</term>
-       <listitem>
-        <para>
-         Other <acronym>SQL</acronym> statements are used by
-         starting with <command>exec sql</command> and ending with
-         <command>;</command>. Everything in between is treated as an
-         <acronym>SQL</acronym> statement and parsed for variable
-         substitution.
-        </para>
+  <para>
+   The preprocessed file can be compiled normally, for example
+<programlisting>
+cc -c prog1.c
+</programlisting>
+   The generated C source files include headers files from the
+   PostgreSQL installation, so if you installed PostgreSQL in a
+   location that is not searched by default, you have to add an option
+   such as <literal>-I/usr/local/pgsql/include</literal> to the
+   compilation command line.
+  </para>
 
-        <para>
-         Variable substitution occurs when a symbol starts with a colon
-         (<command>:</command>). The variable with that name is looked
-         up among the variables that were previously declared within a
-         <command>declare</> section. Depending on whether the variable is
-         being use for input or output, a pointer to the variable is
-         output to allow access by the function.
-        </para>
+  <para>
+   To link an embedded SQL program, you need to include the
+   <filename>libecpg</filename> library, like so:
+<programlisting>
+cc -o myprog prog1.o prog2.o ... -lecpg
+</programlisting>
+   Again, you might have to add an option like
+   <literal>-L/usr/local/pgsql/lib</literal> to that command line.
+  </para>
 
-        <para>
-         For every variable that is part of the <acronym>SQL</acronym>
-         query, the function gets other arguments:
+  <para>
+   If you manage the build process of a larger project using
+   <application>make</application>, it may be convenient to include
+   the following implicit rule to your makefiles:
+<programlisting>
+ECPG = ecpg
 
-         <itemizedlist>
-          <listitem>
-           <para>
-            The type as a special symbol.
-           </para>
-          </listitem>
+%.c: %.pgc
+        $(ECPG) $<
+</programlisting>
+  </para>
 
-          <listitem>
-           <para> 
-            A pointer to the value or a pointer to the pointer.
-           </para>
-          </listitem>
+  <para>
+   The complete syntax of the <command>ecpg</command> command is
+   detailed in &cite-reference;.
+  </para>
+ </sect1>
 
-          <listitem>
-           <para>
-            The size of the variable if it is a <type>char</type> or <type>varchar</type>.
-           </para>
-          </listitem>
+ <sect1 id="ecpg-library">
+  <title>Library Functions</title>
 
-          <listitem>
-           <para>
-            The number of elements in the array (for array fetches).
-           </para>
-          </listitem>
+  <para>
+   The <filename>libecpg</filename> library primarily contains
+   <quote>hidden</quote> functions that are used to implement the
+   functionality expressed by the embedded SQL commands.  But there
+   are some functions that can usefully be called directly.  Note that
+   this makes your code unportable.
+  </para>
 
-          <listitem>
-           <para>
-            The offset to the next element in the array (for array fetches).
-           </para>
-          </listitem>
-
-          <listitem>
-           <para>
-            The type of the indicator variable as a special symbol.
-           </para>
-          </listitem>
-
-          <listitem>
-           <para>
-            A pointer to the value of the indicator variable or a pointer to the pointer of the indicator variable.
-           </para>
-          </listitem>
-
-          <listitem>
-           <para>
-            0.
-           </para>
-          </listitem>
-
-          <listitem>
-           <para>
-            Number of elements in the indicator array (for array fetches).
-           </para>
-          </listitem>
-
-          <listitem>
-           <para>
-            The offset to the next element in the indicator array (for
-            array fetches).
-           </para>
-          </listitem>
-         </itemizedlist>
-        </para>
-
-       </listitem>
-      </varlistentry>
-     </variablelist>
+  <itemizedlist>
+   <listitem>
+    <para>
+     <function>ECPGdebug(int <replaceable>on</replaceable>, FILE
+     *<replaceable>stream</replaceable>)</function> turns on debug
+     logging if called with the first argument non-zero. Debug logging
+     is done on <replaceable>stream</replaceable>. Most
+     <acronym>SQL</acronym> statement log their arguments and results.
     </para>
-   </sect2>
-
-   <sect2>
-    <title>A Complete Example</title>
 
     <para>
-     Here is a complete example describing the output of the preprocessor of a
-     file <filename>foo.pgc</filename>:
+     The most important function, <function>ECPGdo</function>, logs
+     all <acronym>SQL</acronym> statements with both the expanded
+     string, i.e. the string with all the input variables inserted,
+     and the result from the <productname>PostgreSQL</productname>
+     server. This can be very useful when searching for errors in your
+     <acronym>SQL</acronym> statements.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     <function>ECPGstatus()</function> This method returns true if we
+     are connected to a database and false if not.
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect1>
+
+ <sect1 id="ecpg-porting">
+  <title>Porting From Other <acronym>RDBMS</acronym> Packages</title>
+
+  <para>
+   The design of <application>ecpg</application> follows the SQL
+   standard. Porting from a standard RDBMS should not be a problem.
+   Unfortunately there is no such thing as a standard RDBMS. Therefore
+   <application>ecpg</application> tries to understand syntax
+   extensions as long as they do not create conflicts with the
+   standard.
+  </para>
+
+  <para>
+   The following list shows all the known incompatibilities. If you
+   find one not listed please notify the developers. Note, however,
+   that we list only incompatibilities from a preprocessor of another
+   RDBMS to <application>ecpg</application> and not
+   <application>ecpg</application> features that these RDBMS do not
+   support.
+  </para>
+
+  <variablelist>
+   <varlistentry>
+    <term>Syntax of <command>FETCH</command></term>
+    <indexterm><primary>FETCH</><secondary>embedded SQL</></indexterm>
+
+    <listitem>
+     <para>
+      The standard syntax for <command>FETCH</command> is:
+<synopsis>
+FETCH <optional><replaceable>direction</></> <optional><replaceable>amount</></> IN|FROM <replaceable>cursor</replaceable>
+</synopsis>
+      <indexterm><primary>Oracle</></>
+      <application>Oracle</application>, however, does not use the
+      keywords <literal>IN</literal> or <literal>FROM</literal>. This
+      feature cannot be added since it would create parsing conflicts.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </sect1>
+
+ <sect1 id="ecpg-develop">
+  <title>For the Developer</title>
+
+  <para>
+   This section explain how <application>ecpg</application> works
+   internally. This information can occasionally be useful to help
+   users understand how to use <application>ecpg</application>.
+  </para>
+
+  <sect2>
+   <title>The Preprocessor</title>
+
+   <para>
+    The first four lines written by <command>ecpg</command> to the
+    output are fixed lines.  Two are comments and two are include
+    lines necessary to interface to the library.  Then the
+    preprocessor reads through the file and writes output.  Normally
+    it just echoes everything to the output.
+   </para>
+
+   <para>
+    When it sees an <command>EXEC SQL</command> statement, it
+    intervenes and changes it. The command starts with <command>exec
+    sql</command> and ends with <command>;</command>. Everything in
+    between is treated as an <acronym>SQL</acronym> statement and
+    parsed for variable substitution.
+   </para>
+
+   <para>
+    Variable substitution occurs when a symbol starts with a colon
+    (<literal>:</literal>). The variable with that name is looked up
+    among the variables that were previously declared within a
+    <literal>EXEC SQL DECLARE</> section. Depending on whether the
+    variable is being use for input or output, a pointer to the
+    variable is output to allow access by the function.
+   </para>
+
+   <para>
+    For every variable that is part of the <acronym>SQL</acronym>
+    query, the function gets other arguments:
+
+    <itemizedlist>
+     <listitem>
+      <para>
+       The type as a special symbol.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para> 
+       A pointer to the value or a pointer to the pointer.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       The size of the variable if it is a <type>char</type> or <type>varchar</type>.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       The number of elements in the array (for array fetches).
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       The offset to the next element in the array (for array fetches).
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       The type of the indicator variable as a special symbol.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       A pointer to the value of the indicator variable or a pointer
+       to the pointer of the indicator variable.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       0
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Number of elements in the indicator array (for array fetches).
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       The offset to the next element in the indicator array (for
+       array fetches).
+      </para>
+     </listitem>
+    </itemizedlist>
+   </para>
+
+   <para>
+    Note that not all SQL commands are treated in this way.  For
+    instance, an open cursor statement like
 <programlisting>
-exec sql begin declare section;
+EXEC SQL OPEN <replaceable>cursor</replaceable>;
+</programlisting>
+    is not copied to the output. Instead, the cursor's
+    <command>DECLARE</> command is used because it opens the cursor as
+    well.
+   </para>
+
+   <para>
+    Here is a complete example describing the output of the
+    preprocessor of a file <filename>foo.pgc</filename> (details may
+    change with each particular version of the preprocessor):
+<programlisting>
+EXEC SQL BEGIN DECLARE SECTION;
 int index;
 int result;
-exec sql end declare section;
+EXEC SQL END DECLARE SECTION;
 ...
-exec sql select res into :result from mytable where index = :index;
+EXEC SQL SELECT res INTO :result FROM mytable WHERE index = :index;
 </programlisting>
-     is translated into:
+    is translated into:
 <programlisting>
 /* Processed by ecpg (2.6.0) */
 /* These two include files are added by the preprocessor */
@@ -964,109 +1028,101 @@ exec sql select res into :result from mytable where index = :index;
  int result;
 /* exec sql end declare section */
 ...
-ECPGdo(__LINE__, NULL, "select  res  from mytable where index = ?     ",
+ECPGdo(__LINE__, NULL, "SELECT res FROM mytable WHERE index = ?     ",
         ECPGt_int,&amp;(index),1L,1L,sizeof(int),
         ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT,
         ECPGt_int,&amp;(result),1L,1L,sizeof(int),
         ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);
 #line 147 "foo.pgc"
 </programlisting>
-     (The indentation in this manual is added for readability and not
-     something the preprocessor does.)
-    </para>
-   </sect2>
+    (The indentation in this manual is added for readability and not
+    something the preprocessor does.)
+   </para>
+  </sect2>
 
-   <sect2>
-    <title>The Library</title>
+  <sect2>
+   <title>The Library</title>
 
-    <para>
-     The most important function in the library is
-     <function>ECPGdo</function>. It takes a variable number of
-     arguments. Hopefully there are no computers that limit the
-     number of variables that can be accepted by a <function>varargs()</function> function. This
-     can easily add up to 50 or so arguments.
-    </para>
+   <para>
+    The most important function in the library is
+    <function>ECPGdo</function>. It takes a variable number of
+    arguments. Hopefully there are no computers that limit the number
+    of variables that can be accepted by a
+    <function>varargs()</function> function. This can easily add up to
+    50 or so arguments.
+   </para>
 
-    <para>
-     The arguments are:
+   <para>
+    The arguments are:
 
-     <variablelist>
-      <varlistentry>
-       <term>A line number</term>
-       <listitem>
-        <para>
-         This is a line number of the original line; used in error messages only.
-        </para>
-       </listitem>
-      </varlistentry>
+    <variablelist>
+     <varlistentry>
+      <term>A line number</term>
+      <listitem>
+       <para>
+        This is a line number of the original line; used in error
+        messages only.
+       </para>
+      </listitem>
+     </varlistentry>
 
-      <varlistentry>
-       <term>A string</term>
-       <listitem>
-        <para>
-         This is the <acronym>SQL</acronym> query that is to be issued.
-         It is modified by the input variables, i.e. the variables that
-         where not known at compile time but are to be entered in the
-         query. Where the variables should go the string contains
-         <literal>?</literal>.
-        </para>
-       </listitem>
-      </varlistentry>
+     <varlistentry>
+      <term>A string</term>
+      <listitem>
+       <para>
+        This is the <acronym>SQL</acronym> query that is to be issued.
+        It is modified by the input variables, i.e. the variables that
+        where not known at compile time but are to be entered in the
+        query. Where the variables should go the string contains
+        <literal>?</literal>.
+       </para>
+      </listitem>
+     </varlistentry>
 
-      <varlistentry>
-       <term>Input variables</term>
-       <listitem>
-        <para>
-         As described in the section about the preprocessor, every input variable
-         gets ten arguments.
-        </para>
-       </listitem>
-      </varlistentry>
+     <varlistentry>
+      <term>Input variables</term>
+      <listitem>
+       <para>
+        As described in the section about the preprocessor, every
+        input variable gets ten arguments.
+       </para>
+      </listitem>
+     </varlistentry>
 
-      <varlistentry>
-       <term><parameter>ECPGt_EOIT</></term>
-       <listitem>
-        <para>
-         An <type>enum</> telling that there are no more input variables.
-        </para>
-       </listitem>
-      </varlistentry>
+     <varlistentry>
+      <term><parameter>ECPGt_EOIT</></term>
+      <listitem>
+       <para>
+        An <type>enum</> telling that there are no more input
+        variables.
+       </para>
+      </listitem>
+     </varlistentry>
 
-      <varlistentry>
-       <term>Output variables</term>
-       <listitem>
-        <para>
-         As described in the section about the preprocessor, every input variable
-         gets ten arguments. These variables are filled by the function.
-        </para>
-       </listitem>
-      </varlistentry>
+     <varlistentry>
+      <term>Output variables</term>
+      <listitem>
+       <para>
+        As described in the section about the preprocessor, every
+        input variable gets ten arguments. These variables are filled
+        by the function.
+       </para>
+      </listitem>
+     </varlistentry>
 
       <varlistentry>
        <term><parameter>ECPGt_EORT</></term>
        <listitem>
-        <para>
-         An <type>enum</> telling that there are no more variables.
-        </para>
-       </listitem>
-      </varlistentry>
-     </variablelist>
-    </para>
-
-    <para>
-     In the default mode, queries are committed only when <command>exec
-     sql commit</command> is issued. <application>Ecpg</application>
-     also supports auto-commit of transactions via the
-     <option>-t</option> command-line option or via the <literal>exec
-     sql set autocommit to on</literal> statement. In
-     <literal>autocommit</literal> mode, each query is automatically
-     committed unless it is inside an explicit transaction block. This
-     mode can be explicitly turned off using <literal>exec sql set
-     autocommit to off</literal>.
-    </para>
-   </sect2>
-  </sect1>
- </chapter>
+       <para>
+        An <type>enum</> telling that there are no more variables.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+  </sect2>
+ </sect1>
+</chapter>
 
 <!-- Keep this comment at the end of the file
 Local variables:

@@ -1,56 +1,55 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/ecpg-ref.sgml,v 1.20 2002/07/28 15:22:20 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/ecpg-ref.sgml,v 1.21 2002/10/21 18:04:05 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="APP-ECPG">
  <refmeta>
-  <refentrytitle id="app-ecpg-title"><application>ecpg</application></refentrytitle>
+  <refentrytitle><application>ecpg</application></refentrytitle>
   <manvolnum>1</manvolnum>
   <refmiscinfo>Application</refmiscinfo>
  </refmeta>
 
  <refnamediv>
-  <refname>
-   <application>ecpg</application>
-  </refname>
-  <refpurpose>
-   embedded SQL C preprocessor
-  </refpurpose>
+  <refname><application>ecpg</application></refname>
+  <refpurpose>embedded SQL C preprocessor</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>1999-07-20</date>
-  </refsynopsisdivinfo>
   <cmdsynopsis>
    <command>ecpg</command>
-   <arg choice="opt">-v</arg>
-   <arg choice="opt">-t</arg>
-   <arg choice="opt">-I <replaceable>include-path</replaceable></arg>
-   <arg choice="opt">-o <replaceable>outfile</replaceable></arg>
+   <arg choice="opt" rep="repeat"><replaceable>option</replaceable></arg>
    <arg choice="plain" rep="repeat"><replaceable>file</replaceable></arg>
   </cmdsynopsis>
  </refsynopsisdiv>
+
 
  <refsect1 id="APP-ECPG-description">
   <title>Description</title>
 
   <para>
-   <application>ecpg</application>
-   is an embedded SQL preprocessor for the C language and the
-   <productname>PostgreSQL</productname>. It
-   enables development of C programs with embedded SQL code.
+   <command>ecpg</command> is the embedded SQL preprocessor for C
+   programs.  It converts C programs with embedded SQL statements to
+   normal C code by replacing the SQL invocations with special
+   function calls.  The output files can then be processed with any C
+   compiler tool chain.
   </para>
 
   <para>
-   Linus Tolke (<email>linus@epact.se</email>) was the
-   original author of <application>ecpg</application> (up to version 0.2).
-   Michael Meskes (<email>meskes@debian.org</email>)
-   is the current author and maintainer of <application>ecpg</application>.
-   Thomas Good (<email>tomg@q8.nrnet.org</email>)
-   is the author of the last revision of the <application>ecpg</application> man page, on which
-   this document is based.
+   <command>ecpg</command> will convert each input file given on the
+   command line to the corresponding C output file.  Input files
+   preferrably have the extension <filename>.pgc</filename>, in which
+   case the extension will be replaced by <filename>.c</filename> to
+   determine the output file name.  If the extension of the input file
+   is not <filename>.pgc</filename>, then the output file name is
+   computed by appending <literal>.c</literal> to the full file name.
+   The output file name can also be overridden using the
+   <option>-o</option> option.
+  </para>
+
+  <para>
+   This reference page does not describe the embedded SQL language.
+   See &cite-programmer; for that.
   </para>
  </refsect1>
 
@@ -58,339 +57,138 @@ PostgreSQL documentation
  <refsect1>
   <title>Options</title>
 
-   <para>
-    <application>ecpg</application> accepts the following command
-    line arguments:
-
-    <variablelist>
-     <varlistentry>
-      <term>-v</term>
-      <listitem>
-       <para>
-	Print version information. 
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>-t</term>
-      <listitem>
-       <para>
-	Turn on auto-commit of transactions. In this mode, each query is
-	automatically committed unless it is inside an explicit
-	transaction block. In the default mode, queries are committed
-	only when <command>exec sql commit</command> is issued.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>-I <replaceable class="parameter">include-path</replaceable></term>
-      <listitem>
-       <para>
-	Specify an additional include path.
-	Defaults are <filename>.</filename> (current directory),
-	<filename>/usr/local/include</filename>, the
-	<productname>PostgreSQL</productname> include path which is
-	defined at compile time (default:
-	<filename>/usr/local/pgsql/include</filename>), and
-	<filename>/usr/include</filename>.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>-o <replaceable>outfile</replaceable></term>
-      <listitem>
-       <para>
-	Specifies that <application>ecpg</application> should write all its output to <replaceable>outfile</replaceable>.
-	If no such option is given the output is written to
-	<filename><replaceable>name</replaceable>.c</filename>,
-	assuming the input file was 
-	named <filename><replaceable>name</replaceable>.pgc</filename>.
-	If the input file does have the expected
-	<literal>.pgc</literal> suffix, then the output file will have 
-	<literal>.pgc</literal> appended to the input file name.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="parameter">file</replaceable></term>
-      <listitem>
-       <para>
-	The files to be processed.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
- </refsect1>
-
-
- <refsect1>
-  <title>Exit Status</title>
-
   <para>
-   <application>ecpg</application> returns 0 to the shell on
-   successful completion, non-zero for errors.
+   <command>ecpg</command> accepts the following command-line
+   arguments:
+
+   <variablelist>
+    <varlistentry>
+     <term><option>-c</option></term>
+     <listitem>
+      <para>
+       Automatically generate C code from SQL code.  Currently, this
+       works for <literal>EXEC SQL TYPE</literal>.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>-D <replaceable>symbol</replaceable></option></term>
+     <listitem>
+      <para>
+       Define a C preprocessor symbol.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>-I <replaceable class="parameter">directory</replaceable></option></term>
+     <listitem>
+      <para>
+       Specify an additional include path, used to find files included
+       via <literal>EXEC SQL INCLUDE</literal>.  Defaults are
+       <filename>.</filename> (current directory),
+       <filename>/usr/local/include</filename>, the
+       <productname>PostgreSQL</productname> include directory which
+       is defined at compile time (default:
+       <filename>/usr/local/pgsql/include</filename>), and
+       <filename>/usr/include</filename>, in that order.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>-o <replaceable>filename</replaceable></option></term>
+     <listitem>
+      <para>
+       Specifies that <application>ecpg</application> should write all
+       its output to the given <replaceable>filename</replaceable>.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>-t</option></term>
+     <listitem>
+      <para>
+       Turn on autocommit of transactions. In this mode, each query is
+       automatically committed unless it is inside an explicit
+       transaction block. In the default mode, queries are committed
+       only when <command>EXEC SQL COMMIT</command> is issued.
+      </para>
+     </listitem>
+    </varlistentry>
+    
+    <varlistentry>
+     <term><option>-v</option></term>
+     <listitem>
+      <para>
+       Print additional information including the version and the
+       include path.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>---help</option></term>
+     <listitem>
+      <para>
+       Show a brief summary of the command usage, then exit.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>--version</option></term>
+     <listitem>
+      <para>
+       Output version information, then exit.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
   </para>
  </refsect1>
 
 
  <refsect1>
-  <title>Usage</title>
-
-  <refsect2 id="APP-ECPG-preprocessing">
-   <title>Preprocessing for Compilation</title>
-
-   <para>
-    An embedded SQL source file must be preprocessed before
-    compilation: 
-<synopsis>
-ecpg [ -d ] [ -o <replaceable>file</replaceable> ] <replaceable>file</replaceable>.pgc
-</synopsis>
-
-    where the optional <option>-d</option> flag turns on debugging.
-    The <literal>.pgc</literal> extension is an 
-    arbitrary means of denoting <application>ecpg</application> source.
-   </para>
-
-   <para>
-    You may want to redirect the preprocessor output to a log file.
-   </para>
-  </refsect2>
-
-  <refsect2 id="APP-ECPG-compiling">
-   <title>Compiling and Linking</title>
-
-   <para>
-    Assuming the <productname>PostgreSQL</productname> binaries are in
-    <filename>/usr/local/pgsql</filename>, you will need to compile
-    and link your preprocessed source file:
-
-<synopsis>
-gcc -g -I /usr/local/pgsql/include [ -o <replaceable>file</replaceable> ] <replaceable>file</replaceable>.c -L /usr/local/pgsql/lib -lecpg -lpq
-</synopsis>
-   </para>
-  </refsect2>
- </refsect1>
-
- <refsect1 id="APP-ECPG-grammar">
-  <title>Grammar</title>
-
-  <refsect2 id="APP-ECPG-library">
-   <title>Libraries</title>
-
-   <para>
-    The preprocessor will prepend two directives to the source:
-
-<programlisting>
-#include &lt;ecpgtype.h&gt;
-#include &lt;ecpglib.h&gt;
-</programlisting>
-   </para>
-  </refsect2>
-
-  <refsect2 id="APP-ecpg-declaration">
-   <title>Variable Declaration</title>
-
-   <para>
-    Variables declared within <application>ecpg</application> source code must be prepended with:
-
-<programlisting>
-EXEC SQL BEGIN DECLARE SECTION;
-</programlisting>
-   </para>
-
-   <para>
-    Similarly, variable declaration sections must terminate with:
-
-<programlisting>
-EXEC SQL END DECLARE SECTION;
-</programlisting>
-
-    <note>
-     <para>
-      Prior to version 2.1.0, each variable had to be declared 
-      on a separate line.  As of version 2.1.0 multiple variables may
-      be declared on a single line:
-<programlisting>
-char  foo[16], bar[16];
-</programlisting>
-     </para>
-    </note>
-   </para>
-  </refsect2>
-
-  <refsect2 id="APP-ECPG-errors">
-   <title>Error Handling</title>
-
-   <para>
-    The SQL communication area is defined with:
-
-<programlisting>
-EXEC SQL INCLUDE sqlca;
-</programlisting>
-   </para>
-
-    <note>
-     <para>
-      The <literal>sqlca</literal> is in lowercase.
-      While SQL convention may be 
-      followed, i.e., using uppercase to separate embedded SQL 
-      from C statements, <literal>sqlca</literal> (which includes the <filename>sqlca.h</>
-      header file) <emphasis>must</> be lowercase.  This is because the
-      EXEC SQL prefix indicates that this inclusion will be parsed by
-      <application>ecpg</application>.
-      <application>ecpg</application> observes case sensitivity
-      (<filename>SQLCA.h</> will not be found).
-      <command>EXEC SQL INCLUDE</command>
-      can be used to include other header files
-      as long as case sensitivity is observed.
-     </para>
-    </note>
-
-   <para>
-    The <literal>sqlprint</literal> command is used with the <literal>EXEC SQL WHENEVER</literal>
-    statement to turn on error handling throughout the 
-    program:
-
-<programlisting>
-EXEC SQL WHENEVER sqlerror sqlprint;
-</programlisting>
-
-    and
-
-<programlisting>
-EXEC SQL WHENEVER not found sqlprint;
-</programlisting>
-   </para>
-
-    <note>
-     <para>
-      This is <emphasis>not</emphasis> an exhaustive example of usage for
-      the <command>EXEC SQL WHENEVER</command> statement.
-      Further examples of usage may
-      be found in SQL manuals (e.g., <citetitle>The LAN TIMES Guide to SQL</> by
-      Groff and Weinberg).
-     </para>
-    </note>
-  </refsect2>
-
-  <refsect2 id="APP-ECPG-connecting">
-   <title>Connecting to the Database Server</title>
-
-   <para>
-    One connects to a database using the following:
-
-<programlisting>
-EXEC SQL CONNECT TO <replaceable>dbname</replaceable>;
-</programlisting>
-
-    where the database name is not quoted. Prior to version 2.1.0, the 
-    database name was required to be inside single quotes.
-   </para>
-
-   <para>
-    Specifying a server and port name in the connect statement is also 
-    possible. The syntax is:
-
-<synopsis>
-<replaceable>dbname</replaceable>[@<replaceable>server</replaceable>][:<replaceable>port</replaceable>]
-</synopsis>
-
-    or
-
-<synopsis>
-&lt;tcp|unix&gt;:postgresql://<replaceable>server</replaceable>[:<replaceable>port</replaceable>][/<replaceable>dbname</replaceable>][?<replaceable>options</replaceable>]
-</synopsis>
-   </para>
-  </refsect2>
-
-  <refsect2 id="APP-ECPG-queries">
-   <title>Queries</title>
-
-   <para>
-    In general, SQL queries acceptable to other applications such as
-    <application>psql</application> can be embedded into your C
-    code. Here are some examples of how to do that.
-   </para>
-
-   <para>
-    Create Table:
-
-<programlisting>
-EXEC SQL CREATE TABLE foo (number int4, ascii char(16));
-EXEC SQL CREATE UNIQUE index num1 on foo(number);
-EXEC SQL COMMIT;
-</programlisting>
-   </para>
-
-   <para>
-    Insert:
-
-<programlisting>
-EXEC SQL INSERT INTO foo (number, ascii) VALUES (9999, 'doodad');
-EXEC SQL COMMIT;
-</programlisting>
-   </para>
-
-   <para>
-    Delete:
-
-<programlisting>
-EXEC SQL DELETE FROM foo WHERE number = 9999;
-EXEC SQL COMMIT;
-</programlisting>
-   </para>
-
-   <para>
-    Singleton Select:
-
-<programlisting>
-EXEC SQL SELECT foo INTO :FooBar FROM table1 WHERE ascii = 'doodad';
-</programlisting>
-   </para>
-
-   <para>
-    Select using Cursors:
-
-<programlisting>
-EXEC SQL DECLARE foo_bar CURSOR FOR
-    SELECT number, ascii FROM foo
-    ORDER BY ascii;
-EXEC SQL FETCH foo_bar INTO :FooBar, DooDad;
-...
-EXEC SQL CLOSE foo_bar;
-EXEC SQL COMMIT;
-</programlisting>
-   </para>
-
-   <para>
-    Updates:
-<programlisting>
-EXEC SQL UPDATE foo
-    SET ascii = 'foobar'
-    WHERE number = 9999;
-EXEC SQL COMMIT;
-</programlisting>
-   </para>
-  </refsect2>
- </refsect1>
-
- <refsect1 id="APP-ECPG-notes">
   <title>Notes</title>
+
   <para>
-   The complete structure definition MUST be listed
-   inside the declare section.
+   When compiling the preprocessed C code files, the compiler needs to
+   be able to find the <application>ECPG</> header files in the
+   PostgreSQL include directory.  Therefore, one might have to use the
+   <option>-I</> option when invoking the compiler (e.g.,
+   <literal>-I/usr/local/pgsql/include</literal>).
   </para>
 
   <para>
-   See the <filename>TODO</filename> file in the source for some more
-   missing features.
+   Programs using C code with embedded SQL have to be linked against
+   the <filename>libecpg</filename> library, for example using the
+   flags <literal>-L/usr/local/pgsql/lib -lecpg</literal>.
   </para>
 
+  <para>
+   The value of either of these directories that is appropriate for
+   the installation can be found out using <xref
+   linkend="app-pgconfig">.
+  </para>
+ </refsect1>
+
+
+ <refsect1>
+  <title>Examples</title>
+
+  <para>
+   If you have an embedded SQL C source file named
+   <filename>prog1.pgc</filename>, you can create an executable
+   program using the following sequence of commands:
+<programlisting>
+ecpg prog1.pgc
+cc -I/usr/local/pgsql/include -c prog1.c
+cc -o prog1 prog1.o -L/usr/local/pgsql/lib -lecpg
+</programlisting>
+  </para>
  </refsect1>
 
 
@@ -399,7 +197,7 @@ EXEC SQL COMMIT;
 
   <para>
    <citetitle>PostgreSQL Programmer's Guide</citetitle> for a more
-   detailed description of the embedded SQL interface.
+   detailed description of the embedded SQL interface
   </para>
  </refsect1>
 
