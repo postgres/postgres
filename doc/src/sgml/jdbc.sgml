@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.26 2001/10/12 23:32:33 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.27 2001/10/25 22:00:31 barry Exp $
 -->
 
  <chapter id="jdbc">
@@ -8,8 +8,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.26 2001/10/12 23:32:33 
   <note>
    <title>Author</title>
    <para>
-    Written by Peter T. Mount (<email>peter@retep.org.uk</email>), the
-    author of the <acronym>JDBC</acronym> driver.
+    Originally written by Peter T. Mount (<email>peter@retep.org.uk</email>), 
+    the original author of the <acronym>JDBC</acronym> driver.
    </para>
   </note>
 
@@ -41,14 +41,19 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.26 2001/10/12 23:32:33 
   <title>Setting up the <acronym>JDBC</acronym> Driver</title>
 
   <sect2 id="jdbc-build">
-   <title>Building the Driver</title>
+   <title>Getting the Driver</title>
 
    <para>
-    Precompiled versions of the driver are regularly made available on
+    Precompiled versions of the driver can be downloaded from
     the <ulink
     url="http://jdbc.postgresql.org"><productname>PostgreSQL</productname>
-    <acronym>JDBC</acronym> web site</ulink>.  Here we describe how to
-    build the driver manually.
+    <acronym>JDBC</acronym> web site</ulink>.
+   </para>
+
+   <para>
+    Alternatively you can build the driver from source.  Although you 
+    should only need to do this if you are making changes to the source
+    code.
    </para>
 
    <para>
@@ -70,27 +75,37 @@ JAVACMD=$JAVA_HOME/bin/java
    </para>
 
    <para>
-    The build the driver, add the <option>--with-java</option> option to your
+    To build the driver, add the <option>--with-java</option> option to your
     <filename>configure</filename> command line, e.g.,
 <screen>
 <prompt>$</prompt> <userinput>./configure --prefix=<replaceable>xxx</replaceable> --with-java ...</userinput>
 </screen>
     This will build and install the driver along with the rest of the
     <productname>PostgreSQL</productname> package when you issue the
-    <literal>gmake</literal> and <literal>gmake install</literal>
+    <literal>make/gmake</literal> and <literal>make/gmake install</literal>
     commands.  If you only want to build the driver and not the rest
     of <productname>PostgreSQL</productname>, change into the
     directory <filename
     class="directory">src/interfaces/jdbc</filename> and issue the
-    respective <literal>make</literal> command there.  Refer to the
+    respective <literal>make/gmake</literal> command there.  Refer to the
     <productname>PostgreSQL</productname> installation instructions
     for more information about the configuration and build process.
    </para>
 
+   <para>When building the driver from source the jar file that is created
+    will be named <filename>postgresql.jar</filename>.  The build will 
+    create this file in the <filename>src/interfaces/jdbc/jars</filename>
+    directory.  The resulting driver will be built for the version of 
+    Java you are running.  If you build with a 1.1 JDK you will build
+    a version that supports the jdbc1 specification, if you build with a 
+    Java2 JDK (i.e. JDK1.2 or JDK1.3) you will build a version that 
+    supports the jdbc2 specification. 
+   </para>
+ 
    <note>
     <para>
-     Do not try to build by calling <command>javac</command> directly,
-     as the driver uses some dynamic loading techniques for
+     Do not try to build the driver by calling <command>javac</command> 
+     directly, as the driver uses some dynamic loading techniques for
      performance reasons, and <command>javac</command> cannot cope.
      Do not try to run <command>ant</command> directly either, because
      some configuration information is communicated through the
@@ -104,8 +119,12 @@ JAVACMD=$JAVA_HOME/bin/java
    <title>Setting up the Class Path</title>
 
    <para>
-    To use the driver, the jar archive
-    <filename>postgresql.jar</filename> needs to be included in the
+    To use the driver, the jar archive (named
+    <filename>postgresql.jar</filename> if you built from source, otherwise
+    it will likely be named <filename>jdbc7.2-1.1.jar</filename> or 
+    <filename>jdbc7.2-1.2.jar</filename> for the jdbc1 and jdbc2 versions
+    respectively)
+    needs to be included in the
     class path, either by putting it in the <envar>CLASSPATH</envar>
     environment variable, or by using flags on the
     <command>java</command> command line.  By default, the jar archive
@@ -113,7 +132,8 @@ JAVACMD=$JAVA_HOME/bin/java
     class="directory">/usr/local/pgsql/share/java</filename>.  You may
     have it in a different directory if you used the
     <option>--prefix</option> option when you ran
-    <filename>configure</filename>.
+    <filename>configure</filename>, or if you are using a binary distribution
+    that places it in some different location.
    </para>
 
    <informalexample>
@@ -124,16 +144,16 @@ JAVACMD=$JAVA_HOME/bin/java
      <acronym>JDBC</acronym> driver installed in the <filename
      class="directory">/usr/local/lib</filename> directory, and the
      Java <acronym>JDK</acronym> installed in
-     <filename>/usr/local/jdk1.1.6</filename>.  To run the
+     <filename>/usr/local/jdk1.3.1</filename>.  To run the
      application, I would use:
 <programlisting>
 export CLASSPATH=/usr/local/lib/finder.jar<co id="co.jdbc-finder">:/usr/local/pgsql/share/java/postgresql.jar:.
-java uk.org.retep.finder.Main
+java Finder
 </programlisting>
      <calloutlist>
       <callout arearefs="co.jdbc-finder">
        <para>
-        <filename>finder.jar</filename> contains my application.
+        <filename>finder.jar</filename> contains the Finder application.
        </para>
       </callout>
      </calloutlist>
@@ -150,10 +170,12 @@ java uk.org.retep.finder.Main
    <title>Preparing the Database for <acronym>JDBC</acronym></title>
 
    <para>
-    Because Java can only use TCP/IP connections, the
-    <application>Postgres</application> server must be configured to
-    accept TCP/IP connections, for instance by supplying the
-    <option>-i</option> option flag when starting the
+    Because Java only uses TCP/IP connections, the
+    <application>PostgreSQL</application> server must be configured to
+    accept TCP/IP connections.  This can be done by setting 
+    <literal>tcpip_socket = true</literal> in the 
+    <filename>postgresql.conf</filename> file or by supplying the
+    <option>-i</option> option flag when starting
     <command>postmaster</command>.
    </para>
 
@@ -162,7 +184,7 @@ java uk.org.retep.finder.Main
     <filename>pg_hba.conf</filename> file may need to be configured.
     Refer to the <citetitle>Administrator's Guide</citetitle> for
     details.  The <acronym>JDBC</acronym> Driver supports trust,
-    ident, password, and md5, crypt authentication methods.
+    ident, password, md5, and crypt authentication methods.
    </para>
   </sect2>
  </sect1>
