@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.18 2004/07/10 23:06:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.19 2004/07/22 05:28:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,7 +32,7 @@
 #define T_WEEK  ((time_t) (60*60*24*7))
 #define T_MONTH ((time_t) (60*60*24*31))
 
-#define MAX_TEST_TIMES (52*35)	/* 35 years, or 1970..2004 */
+#define MAX_TEST_TIMES (52*40)	/* 40 years, or 1964..2004 */
 
 struct tztry
 {
@@ -43,8 +43,9 @@ struct tztry
 static char tzdir[MAXPGPATH];
 static int	done_tzdir = 0;
 
-static bool scan_available_timezones(char *tzdir, char *tzdirsub,
-									 struct tztry *tt);
+static void scan_available_timezones(char *tzdir, char *tzdirsub,
+									 struct tztry *tt,
+									 int *bestscore, char *bestzonename);
 
 
 /*
@@ -144,10 +145,18 @@ compare_tm(struct tm *s, struct pg_tm *p)
 }
 
 /*
- * See if a specific timezone setting matches the system behavior
+ * See how well a specific timezone setting matches the system behavior
+ *
+ * We score a timezone setting according to the number of test times it
+ * matches.  (The test times are ordered later-to-earlier, but this routine
+ * doesn't actually know that; it just scans until the first non-match.)
+ *
+ * We return -1 for a completely unusable setting; this is worse than the
+ * score of zero for a setting that works but matches not even the first
+ * test time.
  */
-static bool
-try_timezone(const char *tzname, struct tztry *tt)
+static int
+score_timezone(const char *tzname, struct tztry *tt)
 {
 	int			i;
 	pg_time_t	pgtt;
@@ -156,7 +165,14 @@ try_timezone(const char *tzname, struct tztry *tt)
 	char		cbuf[TZ_STRLEN_MAX + 1];
 
 	if (!pg_tzset(tzname))
-		return false;			/* can't handle the TZ name at all */
+		return -1;				/* can't handle the TZ name at all */
+
+	/* Reject if leap seconds involved */
+	if (!tz_acceptable())
+	{
+		elog(DEBUG4, "Reject TZ \"%s\": uses leap seconds", tzname);
+		return -1;
+	}
 
 	/* Check for match at all the test times */
 	for (i = 0; i < tt->n_test_times; i++)
@@ -164,51 +180,44 @@ try_timezone(const char *tzname, struct tztry *tt)
 		pgtt = (pg_time_t) (tt->test_times[i]);
 		pgtm = pg_localtime(&pgtt);
 		if (!pgtm)
-			return false;		/* probably shouldn't happen */
+			return -1;		/* probably shouldn't happen */
 		systm = localtime(&(tt->test_times[i]));
 		if (!compare_tm(systm, pgtm))
 		{
-			elog(DEBUG4, "Reject TZ \"%s\": at %ld %04d-%02d-%02d %02d:%02d:%02d %s versus %04d-%02d-%02d %02d:%02d:%02d %s",
-				 tzname, (long) pgtt,
+			elog(DEBUG4, "TZ \"%s\" scores %d: at %ld %04d-%02d-%02d %02d:%02d:%02d %s versus %04d-%02d-%02d %02d:%02d:%02d %s",
+				 tzname, i, (long) pgtt,
 				 pgtm->tm_year + 1900, pgtm->tm_mon + 1, pgtm->tm_mday,
 				 pgtm->tm_hour, pgtm->tm_min, pgtm->tm_sec,
 				 pgtm->tm_isdst ? "dst" : "std",
 				 systm->tm_year + 1900, systm->tm_mon + 1, systm->tm_mday,
 				 systm->tm_hour, systm->tm_min, systm->tm_sec,
 				 systm->tm_isdst ? "dst" : "std");
-			return false;
+			return i;
 		}
 		if (systm->tm_isdst >= 0)
 		{
 			/* Check match of zone names, too */
 			if (pgtm->tm_zone == NULL)
-				return false;
+				return -1;		/* probably shouldn't happen */
 			memset(cbuf, 0, sizeof(cbuf));
 			strftime(cbuf, sizeof(cbuf) - 1, "%Z", systm); /* zone abbr */
 			if (strcmp(TZABBREV(cbuf), pgtm->tm_zone) != 0)
 			{
-				elog(DEBUG4, "Reject TZ \"%s\": at %ld \"%s\" versus \"%s\"",
-					 tzname, (long) pgtt,
+				elog(DEBUG4, "TZ \"%s\" scores %d: at %ld \"%s\" versus \"%s\"",
+					 tzname, i, (long) pgtt,
 					 pgtm->tm_zone, cbuf);
-				return false;
+				return i;
 			}
 		}
 	}
 
-	/* Reject if leap seconds involved */
-	if (!tz_acceptable())
-	{
-		elog(DEBUG4, "Reject TZ \"%s\": uses leap seconds", tzname);
-		return false;
-	}
-
-	elog(DEBUG4, "Accept TZ \"%s\"", tzname);
-	return true;
+	elog(DEBUG4, "TZ \"%s\" gets max score %d", tzname, i);
+	return i;
 }
 
 
 /*
- * Try to identify a timezone name (in our terminology) that matches the
+ * Try to identify a timezone name (in our terminology) that best matches the
  * observed behavior of the system timezone library.  We cannot assume that
  * the system TZ environment setting (if indeed there is one) matches our
  * terminology, so we ignore it and just look at what localtime() returns.
@@ -221,6 +230,7 @@ identify_system_timezone(void)
 	time_t		t;
 	struct tztry tt;
 	struct tm  *tm;
+	int			bestscore;
 	char		tmptzdir[MAXPGPATH];
 	int			std_ofs;
 	char		std_zone_name[TZ_STRLEN_MAX + 1],
@@ -231,36 +241,38 @@ identify_system_timezone(void)
 	tzset();
 
 	/*
-	 * Set up the list of dates to be probed to verify that our timezone
-	 * matches the system zone.  We first probe January and July of 1970;
+	 * Set up the list of dates to be probed to see how well our timezone
+	 * matches the system zone.  We first probe January and July of 2004;
 	 * this serves to quickly eliminate the vast majority of the TZ database
-	 * entries.  If those dates match, we probe every week from 1970 to
-	 * late 2004.  This exhaustive test is intended to ensure that we have
-	 * the same DST transition rules as the system timezone.  (Note: we
-	 * probe Thursdays, not Sundays, to avoid triggering DST-transition
-	 * bugs in localtime itself.)
-	 *
-	 * Ideally we'd probe some dates before 1970 too, but that is guaranteed
-	 * to fail if the system TZ library doesn't cope with DST before 1970.
+	 * entries.  If those dates match, we probe every week from 2004 backwards
+	 * to late 1964.  (Weekly resolution is good enough to identify DST
+	 * transition rules, since everybody switches on Sundays.)  The further
+	 * back the zone matches, the better we score it.  This may seem like
+	 * a rather random way of doing things, but experience has shown that
+	 * system-supplied timezone definitions are likely to have DST behavior
+	 * that is right for the recent past and not so accurate further back.
+	 * Scoring in this way allows us to recognize zones that have some
+	 * commonality with the zic database, without insisting on exact match.
+	 * (Note: we probe Thursdays, not Sundays, to avoid triggering
+	 * DST-transition bugs in localtime itself.)
 	 */
 	tt.n_test_times = 0;
-	tt.test_times[tt.n_test_times++] = t = build_time_t(1970, 1, 15);
-	tt.test_times[tt.n_test_times++] = build_time_t(1970, 7, 15);
+	tt.test_times[tt.n_test_times++] = build_time_t(2004, 1, 15);
+	tt.test_times[tt.n_test_times++] = t = build_time_t(2004, 7, 15);
 	while (tt.n_test_times < MAX_TEST_TIMES)
 	{
-		t += T_WEEK;
+		t -= T_WEEK;
 		tt.test_times[tt.n_test_times++] = t;
 	}
 
-	/* Search for a matching timezone file */
+	/* Search for the best-matching timezone file */
 	strcpy(tmptzdir, pg_TZDIR());
-	if (scan_available_timezones(tmptzdir,
-								 tmptzdir + strlen(tmptzdir) + 1,
-								 &tt))
-	{
-		StrNCpy(resultbuf, pg_get_current_timezone(), sizeof(resultbuf));
+	bestscore = 0;
+	scan_available_timezones(tmptzdir, tmptzdir + strlen(tmptzdir) + 1,
+							 &tt,
+							 &bestscore, resultbuf);
+	if (bestscore > 0)
 		return resultbuf;
-	}
 
 	/*
 	 * Couldn't find a match in the database, so next we try constructed zone
@@ -326,19 +338,19 @@ identify_system_timezone(void)
 	{
 		snprintf(resultbuf, sizeof(resultbuf), "%s%d%s",
 				 std_zone_name, -std_ofs / 3600, dst_zone_name);
-		if (try_timezone(resultbuf, &tt))
+		if (score_timezone(resultbuf, &tt) > 0)
 			return resultbuf;
 	}
 
 	/* Try just the STD timezone (works for GMT at least) */
 	strcpy(resultbuf, std_zone_name);
-	if (try_timezone(resultbuf, &tt))
+	if (score_timezone(resultbuf, &tt) > 0)
 		return resultbuf;
 
 	/* Try STD<ofs> */
 	snprintf(resultbuf, sizeof(resultbuf), "%s%d",
 			 std_zone_name, -std_ofs / 3600);
-	if (try_timezone(resultbuf, &tt))
+	if (score_timezone(resultbuf, &tt) > 0)
 		return resultbuf;
 
 	/*
@@ -358,7 +370,7 @@ identify_system_timezone(void)
 }
 
 /*
- * Recursively scan the timezone database looking for a usable match to
+ * Recursively scan the timezone database looking for the best match to
  * the system timezone behavior.
  *
  * tzdir points to a buffer of size MAXPGPATH.  On entry, it holds the
@@ -372,14 +384,15 @@ identify_system_timezone(void)
  *
  * tt tells about the system timezone behavior we need to match.
  *
- * On success, returns TRUE leaving the proper timezone selected.
- * On failure, returns FALSE with a random timezone selected.
+ * *bestscore and *bestzonename on entry hold the best score found so far
+ * and the name of the best zone.  We overwrite them if we find a better
+ * score.  bestzonename must be a buffer of length TZ_STRLEN_MAX + 1.
  */
-static bool
-scan_available_timezones(char *tzdir, char *tzdirsub, struct tztry *tt)
+static void
+scan_available_timezones(char *tzdir, char *tzdirsub, struct tztry *tt,
+						 int *bestscore, char *bestzonename)
 {
 	int			tzdir_orig_len = strlen(tzdir);
-	bool		found = false;
 	DIR		   *dirdesc;
 
 	dirdesc = AllocateDir(tzdir);
@@ -388,7 +401,7 @@ scan_available_timezones(char *tzdir, char *tzdirsub, struct tztry *tt)
 		ereport(LOG,
 				(errcode_for_file_access(),
 				 errmsg("could not open directory \"%s\": %m", tzdir)));
-		return false;
+		return;
 	}
 
 	for (;;)
@@ -432,16 +445,19 @@ scan_available_timezones(char *tzdir, char *tzdirsub, struct tztry *tt)
 		if (S_ISDIR(statbuf.st_mode))
 		{
 			/* Recurse into subdirectory */
-			found = scan_available_timezones(tzdir, tzdirsub, tt);
-			if (found)
-				break;
+			scan_available_timezones(tzdir, tzdirsub, tt,
+									 bestscore, bestzonename);
 		}
 		else
 		{
 			/* Load and test this file */
-			found = try_timezone(tzdirsub, tt);
-			if (found)
-				break;
+			int score = score_timezone(tzdirsub, tt);
+
+			if (score > *bestscore)
+			{
+				*bestscore = score;
+				StrNCpy(bestzonename, tzdirsub, TZ_STRLEN_MAX + 1);
+			}
 		}
 	}
 
@@ -449,8 +465,6 @@ scan_available_timezones(char *tzdir, char *tzdirsub, struct tztry *tt)
 
 	/* Restore tzdir */
 	tzdir[tzdir_orig_len] = '\0';
-
-	return found;
 }
 
 
