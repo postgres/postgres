@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/create_function.l,v 1.10 1998/06/24 13:21:24 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/create_function.l,v 1.11 1999/05/20 02:44:53 tgl Exp $
 .TH "CREATE FUNCTION" SQL 11/05/95 PostgreSQL PostgreSQL
 .SH "NAME"
 create function - define a new function
@@ -9,8 +9,9 @@ create function - define a new function
 \fBcreate function\fP function_name 
 	\fB(\fP[type1 {, type-n}]\fB)\fP
 	\fBreturns\fP type-r
-	\fBas\fP {'/full/path/to/objectfile' | 'sql-queries'}
-	\fBlanguage\fP {'c' \ 'sql' \ 'internal' \ 'plname'}
+	\fBas\fP { '/full/path/to/objectfile' | 'sql-queries' |
+                   'builtin-function-name' | 'pl-program-text' }
+	\fBlanguage\fP { 'c' | 'sql' | 'internal' | 'plname' }
 .fi
 .SH "DESCRIPTION"
 With this command, a Postgres user can register a function with Postgres.
@@ -35,9 +36,8 @@ or
 .IR "plname"
 is the language name of a created procedural language. See
 create_language(l) for details.)
-(The
-.IR "arg is"
-clause may be left out if the function has no arguments, or
+(The argument list
+may be left out if the function has no arguments, or
 alternatively the argument list may be left empty.)
 The input types may be base or complex types, or 
 .IR opaque .
@@ -54,32 +54,43 @@ modifier indicates that the function will return a set of items,
 rather than a single item.  
 The
 .IR as
-clause of the command is treated differently for C and SQL
-functions, as explained below.
+clause of the command is treated differently depending on the language,
+as explained below.
+.SH "INTERNAL FUNCTIONS"
+Internal functions are functions written in C which have been statically
+linked into the postgres backend process.  The 
+.BR as
+clause gives the C-language name of the function, which need not be the
+same as the name being declared for SQL use.  (For reasons of backwards
+compatibility, an empty
+.BR as
+string is accepted as meaning that the C-language function name is the
+same as the SQL name.)  Normally, all internal functions present in the
+backend are declared as SQL functions during database initialization,
+but a user could use
+.BR "create function"
+to create additional alias names for an internal function.
 .SH "C FUNCTIONS"
 Functions written in C can be defined to Postgres, which will dynamically
-load them into its address space.  The loading happens either using
+load them into its address space.  The
+.IR as
+clause gives the full path name of the object file that contains the
+function.  This file is loaded either using
 .IR load(l)
 or automatically the first time the function is necessary for
 execution. Repeated execution of a function will cause negligible
 additional overhead, as the function will remain in a main memory
 cache.
-.PP
-Internal functions are functions written in C which have been statically
-linked into the postgres backend process.  The 
-.BR as
-clause must still be specified when defining an internal function but
-the contents are ignored.
 .SH "Writing C Functions"
-The body of a C function following 
+For a C function, the string following 
 .BR as
 should be the
 .BR "FULL PATH"
-of the object code (.o file) for the function, bracketed by quotation
+of the object code file for the function, bracketed by quotation
 marks.  (Postgres will not compile a function automatically - it must
 be compiled before it is used in a
-.BR "define function"
-command.)
+.BR "create function"
+command.  See below for additional information.)
 .PP
 C functions with base type arguments can be written in a
 straightforward fashion.  The C equivalents of built-in Postgres types
@@ -297,7 +308,7 @@ on.  If an argument is complex, then a \*(lqdot\*(rq notation may be
 used to access attributes of the argument (e.g. \*(lq$1.emp\*(rq), or
 to invoke functions via a nested-dot syntax.
 .SH "PL FUNCTIONS"
-Procedural languages aren't builtin to Postgres. They are offered
+Procedural languages aren't built into Postgres. They are offered
 by loadable modules. Please refer to the documentation for the
 PL in question for details about the syntax and how the
 .IR "as"
@@ -400,10 +411,11 @@ A function may also have the same name as an attribute.  In the case
 that there is an ambiguity between a function on a complex type and
 an attribute of the complex type, the attribute will always be used.
 .SH "RESTRICTIONS"
-The name of the C function must be a legal C function name, and the
-name of the function in C code must be exactly the same as the name
-used in
-.BR "create function" .
+For functions written in C, the SQL name declared in
+.BR "create function"
+must be exactly the same as the actual name of the function in the
+C code (hence it must be a legal C function name).
+.PP
 There is a subtle implication of this restriction: while the
 dynamic loading routines in most operating systems are more than 
 happy to allow you to load any number of shared libraries that 
@@ -421,6 +433,14 @@ Since there is no problem overloading SQL functions, you can
 define a set of C functions with different names and then define 
 a set of identically-named SQL function wrappers that take the
 appropriate argument types and call the matching C function.
+.PP
+Another solution is not to use dynamic loading, but to link your
+functions into the backend statically and declare them as INTERNAL
+functions.  Then, the functions must all have distinct C names but
+they can be declared with the same SQL names (as long as their
+argument types differ, of course).  This way avoids the overhead of
+an SQL wrapper function, at the cost of more effort to prepare a
+custom backend executable.
 .PP
 .IR opaque
 cannot be given as an argument to a SQL function.
