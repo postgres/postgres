@@ -6,7 +6,7 @@
  * WIN1250 client encoding support contributed by Pavel Behal
  * SJIS UDC (NEC selection IBM kanji) support contributed by Eiji Tokuya
  *
- * $Id: conv.c,v 1.25 2001/04/29 07:27:38 ishii Exp $
+ * $Id: conv.c,v 1.26 2001/05/28 01:00:25 ishii Exp $
  *
  *
  */
@@ -1287,7 +1287,7 @@ utf_to_local(unsigned char *utf, unsigned char *iso,
 					sizeof(pg_utf_to_local), compare1);
 		if (p == NULL)
 		{
-			elog(NOTICE, "utf_to_latin: could not convert UTF-8 (0x%04x) Ignored", iutf);
+			elog(NOTICE, "utf_to_local: could not convert UTF-8 (0x%04x). Ignored", iutf);
 			continue;
 		}
 		if (p->code & 0xff000000)
