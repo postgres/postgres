@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/select_into.sgml,v 1.11 2001/09/03 12:57:50 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/select_into.sgml,v 1.12 2001/09/23 13:34:44 momjian Exp $
 Postgres documentation
 -->
 
@@ -32,7 +32,8 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="PARAMETER">expression</replac
     [ { UNION | INTERSECT | EXCEPT [ ALL ] } <replaceable class="PARAMETER">select</replaceable> ]
     [ ORDER BY <replaceable class="PARAMETER">expression</replaceable> [ ASC | DESC | USING <replaceable class="PARAMETER">operator</replaceable> ] [, ...] ]
     [ FOR UPDATE [ OF <replaceable class="PARAMETER">tablename</replaceable> [, ...] ] ]
-    [ LIMIT { <replaceable class="PARAMETER">count</replaceable> | ALL } [ { OFFSET | , } <replaceable class="PARAMETER">start</replaceable> ]]
+    [ LIMIT [ <replaceable class="PARAMETER">start</replaceable> , ] { <replaceable class="PARAMETER">count</replaceable> | ALL } ]
+    [ OFFSET <replaceable class="PARAMETER">start</replaceable> ]
 
 where <replaceable class="PARAMETER">from_item</replaceable> can be:
 
