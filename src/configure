@@ -5421,7 +5421,7 @@ rm -f conftest*
 fi
 if eval "test \"`echo '$ac_cv_header_'$ac_safe`\" = yes"; then
   echo "$ac_t""yes" 1>&6
-  TCL_INCDIR=
+  TCL_INCDIR=yes
 else
   echo "$ac_t""no" 1>&6
 fi
@@ -5430,14 +5430,13 @@ if test "$TCL_INCDIR" = "no"; then
 echo "configure: warning: tcl support disabled; tcl.h missing" 1>&2
 USE_TCL=
 fi
-
 fi
 
 if test "$USE_TCL" = "true"
 then
 TCL_LIB=
 echo $ac_n "checking for main in -ltcl""... $ac_c" 1>&6
-echo "configure:5441: checking for main in -ltcl" >&5
+echo "configure:5440: checking for main in -ltcl" >&5
 ac_lib_var=`echo tcl'_'main | sed 'y%./+-%__p_%'`
 if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
@@ -5445,14 +5444,14 @@ else
   ac_save_LIBS="$LIBS"
 LIBS="-ltcl  $LIBS"
 cat > conftest.$ac_ext <<EOF
-#line 5449 "configure"
+#line 5448 "configure"
 #include "confdefs.h"
 
 int main() {
 main()
 ; return 0; }
 EOF
-if { (eval echo configure:5456: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest; then
+if { (eval echo configure:5455: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest; then
   rm -rf conftest*
   eval "ac_cv_lib_$ac_lib_var=yes"
 else
@@ -5495,17 +5494,17 @@ CPPFLAGS="$CPPFLAGS $X_CFLAGS"
 TK_INCDIR=no
 ac_safe=`echo "tk.h" | sed 'y%./+-%__p_%'`
 echo $ac_n "checking for tk.h""... $ac_c" 1>&6
-echo "configure:5499: checking for tk.h" >&5
+echo "configure:5498: checking for tk.h" >&5
 if eval "test \"`echo '$''{'ac_cv_header_$ac_safe'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 5504 "configure"
+#line 5503 "configure"
 #include "confdefs.h"
 #include <tk.h>
 EOF
 ac_try="$ac_cpp conftest.$ac_ext >/dev/null 2>conftest.out"
-{ (eval echo configure:5509: \"$ac_try\") 1>&5; (eval $ac_try) 2>&5; }
+{ (eval echo configure:5508: \"$ac_try\") 1>&5; (eval $ac_try) 2>&5; }
 ac_err=`grep -v '^ *+' conftest.out`
 if test -z "$ac_err"; then
   rm -rf conftest*
@@ -5521,7 +5520,7 @@ rm -f conftest*
 fi
 if eval "test \"`echo '$ac_cv_header_'$ac_safe`\" = yes"; then
   echo "$ac_t""yes" 1>&6
-  TK_INCDIR=
+  TK_INCDIR=yes
 else
   echo "$ac_t""no" 1>&6
 fi
@@ -5530,7 +5529,6 @@ if test "$TK_INCDIR" = "no"; then
 echo "configure: warning: tcl support disabled; tk.h missing" 1>&2
 USE_TCL=
 fi
-
 
 LIBS="$ice_save_LIBS"
 CFLAGS="$ice_save_CFLAGS"
@@ -5542,7 +5540,7 @@ if test "$USE_TCL" = "true"
 then
 TK_LIB=
 echo $ac_n "checking for main in -ltk""... $ac_c" 1>&6
-echo "configure:5546: checking for main in -ltk" >&5
+echo "configure:5544: checking for main in -ltk" >&5
 ac_lib_var=`echo tk'_'main | sed 'y%./+-%__p_%'`
 if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
@@ -5550,14 +5548,14 @@ else
   ac_save_LIBS="$LIBS"
 LIBS="-ltk  $LIBS"
 cat > conftest.$ac_ext <<EOF
-#line 5554 "configure"
+#line 5552 "configure"
 #include "confdefs.h"
 
 int main() {
 main()
 ; return 0; }
 EOF
-if { (eval echo configure:5561: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest; then
+if { (eval echo configure:5559: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest; then
   rm -rf conftest*
   eval "ac_cv_lib_$ac_lib_var=yes"
 else
@@ -5774,9 +5772,7 @@ s%@X_PRE_LIBS@%$X_PRE_LIBS%g
 s%@X_LIBS@%$X_LIBS%g
 s%@X_EXTRA_LIBS@%$X_EXTRA_LIBS%g
 s%@X11_LIBS@%$X11_LIBS%g
-s%@TCL_INCDIR@%$TCL_INCDIR%g
 s%@TCL_LIB@%$TCL_LIB%g
-s%@TK_INCDIR@%$TK_INCDIR%g
 s%@TK_LIB@%$TK_LIB%g
 
 CEOF
