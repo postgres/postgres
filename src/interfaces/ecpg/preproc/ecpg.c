@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.53 2002/01/10 10:42:54 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.54 2002/03/21 09:42:50 meskes Exp $ */
 
 /* New main for ecpg, the PostgreSQL embedded SQL precompiler. */
 /* (C) Michael Meskes <meskes@postgresql.org> Feb 5th, 1998 */
@@ -17,7 +17,8 @@ extern char *optarg;
 #include "extern.h"
 
 int			ret_value = 0,
-			autocommit = 0;
+			autocommit = false;
+			auto_create_c = false;
 struct _include_path *include_paths = NULL;
 struct cursor *cur = NULL;
 struct typedefs *types = NULL;
@@ -31,11 +32,11 @@ help(const char *progname)
 	/* printf is a macro some places; don't #ifdef inside its arguments */
 #ifdef YYDEBUG
 	printf("Usage:\n"
-	   "  %s [-d] [-I DIRECTORY] [-o OUTFILE] [-t] file1 [file2...]\n\n",
+	   "  %s [-d] [-I DIRECTORY] [-o OUTFILE] [-t] [-c] [-D symbol] file1 [file2...]\n\n",
 		   progname);
 #else
 	printf("Usage:\n"
-		   "  %s [-I DIRECTORY] [-o OUTFILE] [-t] file1 [file2...]\n\n",
+		   "  %s [-I DIRECTORY] [-o OUTFILE] [-t] [-c] [-D symbol] file1 [file2...]\n\n",
 		   progname);
 #endif
 	printf("Options:\n");
@@ -45,6 +46,8 @@ help(const char *progname)
 	printf("  -I DIRECTORY         search DIRECTORY for include files\n");
 	printf("  -o OUTFILE           write result to OUTFILE\n");
 	printf("  -t                   turn on autocommit of transactions\n");
+	printf("  -c                   automatically generate C code from embedded SQL code\n                        currently this works for EXEC SQL TYPE\n");
+	printf("  -D symbol           define symbo\n");
 	printf("\nIf no output file is specified, the name is formed by adding .c\n"
 	   "to the input file name, after stripping off .pgc if present.\n");
 	printf("\nReport bugs to <pgsql-bugs@postgresql.org>.\n");
@@ -58,6 +61,7 @@ add_include_path(char *path)
 	include_paths = mm_alloc(sizeof(struct _include_path));
 	include_paths->path = path;
 	include_paths->next = ip;
+		
 }
 
 static void
@@ -107,7 +111,7 @@ main(int argc, char *const argv[])
 	add_include_path("/usr/local/include");
 	add_include_path(".");
 
-	while ((c = getopt(argc, argv, "vo:I:tD:d")) != -1)
+	while ((c = getopt(argc, argv, "vco:I:tD:d")) != -1)
 	{
 		switch (c)
 		{
@@ -122,13 +126,15 @@ main(int argc, char *const argv[])
 				add_include_path(optarg);
 				break;
 			case 't':
-				autocommit = 1;
+				autocommit = true;
 				break;
 			case 'v':
 				verbose = true;
 				break;
+			case 'c':
+				auto_create_c = true;
+				break;
 			case 'D':
-				/* XXX not documented */
 				add_preprocessor_define(optarg);
 				break;
 			case 'd':

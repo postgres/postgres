@@ -169,6 +169,7 @@ make_name(void)
 		S_DOTPOINT S_EQUAL S_EXTERN S_INC S_LSHIFT S_MEMPOINT
 		S_MEMBER S_MOD S_MUL S_NEQUAL S_OR S_REGISTER S_RSHIFT
 		S_STATIC S_SUB S_VOLATILE
+		S_TYPEDEF
 
 /* I need this and don't know where it is defined inside the backend */
 %token	TYPECAST
@@ -354,12 +355,13 @@ make_name(void)
 %type  <str>	stmt ECPGRelease execstring server_name
 %type  <str>	connection_object opt_server opt_port c_stuff c_stuff_item
 %type  <str>	user_name opt_user char_variable ora_user ident opt_reference
-%type  <str>	quoted_ident_stringvar
+%type  <str>	quoted_ident_stringvar var_type_declarations
 %type  <str>	db_prefix server opt_options opt_connection_name c_list
 %type  <str>	ECPGSetConnection cpp_line ECPGTypedef c_args ECPGKeywords
 %type  <str>	enum_type civar civarind ECPGCursorStmt ECPGDeallocate
 %type  <str>	ECPGFree ECPGDeclare ECPGVar opt_at enum_definition
-%type  <str>	struct_type s_struct declaration declarations variable_declarations
+%type  <str>	struct_type s_struct vt_declarations variable_declarations
+%type  <str>	var_declaration type_declaration 
 %type  <str>	s_union union_type ECPGSetAutocommit on_off
 %type  <str>	ECPGAllocateDescr ECPGDeallocateDescr symbol opt_symbol
 %type  <str>	ECPGGetDescriptorHeader ECPGColLabel
@@ -418,7 +420,7 @@ stmt:  AlterDatabaseSetStmt { output_statement($1, 0, connection); }
 		| AlterUserSetStmt	{ output_statement($1, 0, connection); }
 		| ClosePortalStmt	{ output_statement($1, 0, connection); }
 		| CommentStmt		{ output_statement($1, 0, connection); }
-		| CopyStmt			{ output_statement($1, 0, connection); }
+		| CopyStmt		{ output_statement($1, 0, connection); }
 		| CreateStmt		{ output_statement($1, 0, connection); }
 		| CreateAsStmt		{ output_statement($1, 0, connection); }
 		| CreateSchemaStmt	{ output_statement($1, 0, connection); }
@@ -429,7 +431,7 @@ stmt:  AlterDatabaseSetStmt { output_statement($1, 0, connection); }
 		| CreateUserStmt	{ output_statement($1, 0, connection); }
 		| ClusterStmt		{ output_statement($1, 0, connection); }
 		| DefineStmt		{ output_statement($1, 0, connection); }
-		| DropStmt			{ output_statement($1, 0, connection); }
+		| DropStmt		{ output_statement($1, 0, connection); }
 		| DropSchemaStmt	{ output_statement($1, 0, connection); }
 		| TruncateStmt		{ output_statement($1, 0, connection); }
 		| DropGroupStmt		{ output_statement($1, 0, connection); }
@@ -437,12 +439,12 @@ stmt:  AlterDatabaseSetStmt { output_statement($1, 0, connection); }
 		| DropTrigStmt		{ output_statement($1, 0, connection); }
 		| DropUserStmt		{ output_statement($1, 0, connection); }
 		| ExplainStmt		{ output_statement($1, 0, connection); }
-		| FetchStmt			{ output_statement($1, 1, connection); }
-		| GrantStmt			{ output_statement($1, 0, connection); }
-		| IndexStmt			{ output_statement($1, 0, connection); }
+		| FetchStmt		{ output_statement($1, 1, connection); }
+		| GrantStmt		{ output_statement($1, 0, connection); }
+		| IndexStmt		{ output_statement($1, 0, connection); }
 		| ListenStmt		{ output_statement($1, 0, connection); }
 		| UnlistenStmt		{ output_statement($1, 0, connection); }
-		| LockStmt			{ output_statement($1, 0, connection); }
+		| LockStmt		{ output_statement($1, 0, connection); }
 		| NotifyStmt		{ output_statement($1, 0, connection); }
 		| ProcedureStmt		{ output_statement($1, 0, connection); }
 		| ReindexStmt		{ output_statement($1, 0, connection); }
@@ -458,23 +460,23 @@ stmt:  AlterDatabaseSetStmt { output_statement($1, 0, connection); }
 			else
 				output_statement($1, 1, connection);
 		}
-		| RuleStmt			{ output_statement($1, 0, connection); }
+		| RuleStmt		{ output_statement($1, 0, connection); }
 		| TransactionStmt
 		{
 			fprintf(yyout, "{ ECPGtrans(__LINE__, %s, \"%s\");", connection ? connection : "NULL", $1);
 			whenever_action(2);
 			free($1);
 		}
-		| ViewStmt			{ output_statement($1, 0, connection); }
-		| LoadStmt			{ output_statement($1, 0, connection); }
+		| ViewStmt		{ output_statement($1, 0, connection); }
+		| LoadStmt		{ output_statement($1, 0, connection); }
 		| CreatedbStmt		{ output_statement($1, 0, connection); }
 		| DropdbStmt		{ output_statement($1, 0, connection); }
 		| VacuumStmt		{ output_statement($1, 0, connection); }
 		| AnalyzeStmt		{ output_statement($1, 0, connection); }
 		| VariableSetStmt	{ output_statement($1, 0, connection); }
 		| VariableShowStmt	{ output_statement($1, 0, connection); }
-		| VariableResetStmt { output_statement($1, 0, connection); }
-		| ConstraintsSetStmt { output_statement($1, 0, connection); }
+		| VariableResetStmt	{ output_statement($1, 0, connection); }
+		| ConstraintsSetStmt	{ output_statement($1, 0, connection); }
 		| CheckPointStmt	{ output_statement($1, 0, connection); }
 		| ECPGAllocateDescr
 		{
@@ -605,7 +607,9 @@ stmt:  AlterDatabaseSetStmt { output_statement($1, 0, connection); }
 			if (connection)
 				mmerror(PARSE_ERROR, ET_ERROR, "no at option for typedef statement.\n");
 
-			output_simple_statement($1);
+			fprintf(yyout, "%s", $1);
+			free($1);
+			output_line_number();
 		}
 		| ECPGVar
 		{
@@ -3666,7 +3670,7 @@ ECPGDeallocate: SQL_DEALLOCATE SQL_PREPARE ident
  */
 ECPGDeclaration: sql_startdeclare
 		{ fputs("/* exec sql begin declare section */", yyout); }
-		variable_declarations sql_enddeclare
+		var_type_declarations sql_enddeclare
 		{
 			fprintf(yyout, "%s/* exec sql end declare section */", $3);
 			free($3);
@@ -3678,15 +3682,82 @@ sql_startdeclare: ecpgstart BEGIN_TRANS DECLARE SQL_SECTION ';' {};
 
 sql_enddeclare: ecpgstart END_TRANS DECLARE SQL_SECTION ';' {};
 
-variable_declarations:	/*EMPTY*/			{ $$ = EMPTY; }
-		| declarations						{ $$ = $1; }
+var_type_declarations:	/*EMPTY*/			{ $$ = EMPTY; }
+		| vt_declarations			{ $$ = $1; }
 		;
 
-declarations:  declaration					{ $$ = $1; }
-		| declarations declaration			{ $$ = cat2_str($1, $2); }
+vt_declarations:  var_declaration			{ $$ = $1; }
+		| type_declaration			{ $$ = $1; }
+		| vt_declarations var_declaration	{ $$ = cat2_str($1, $2); }
+		| vt_declarations type_declaration	{ $$ = cat2_str($1, $2); }
 		;
 
-declaration: storage_clause storage_modifier
+variable_declarations:	var_declaration                         { $$ = $1; }
+		| variable_declarations var_declaration         { $$ = cat2_str($1, $2); }
+		;
+
+type_declaration: S_TYPEDEF
+	{
+		/* reset this variable so we see if there was */
+		/* an initializer specified */
+		initializer = 0;
+	}
+	type opt_pointer ECPGColLabel opt_type_array_bounds ';' 
+	{
+		/* add entry to list */
+		struct typedefs *ptr, *this;
+		int dimension = $6.index1;
+		int length = $6.index2;
+
+		if (($3.type_enum == ECPGt_struct ||
+		     $3.type_enum == ECPGt_union) &&
+		    initializer == 1)
+		{
+			mmerror(PARSE_ERROR, ET_ERROR, "Initializer not allowed in typedef command");
+
+		}
+		else
+		{
+			for (ptr = types; ptr != NULL; ptr = ptr->next)
+			{
+				if (strcmp($5, ptr->name) == 0)
+				{
+			        	/* re-definition is a bug */
+					sprintf(errortext, "Type %s already defined", $5);
+					mmerror(PARSE_ERROR, ET_ERROR, errortext);
+				}
+			}
+
+			adjust_array($3.type_enum, &dimension, &length, $3.type_dimension, $3.type_index, *$4?1:0);
+
+			this = (struct typedefs *) mm_alloc(sizeof(struct typedefs));
+
+	        	/* initial definition */
+		        this->next = types;
+	        	this->name = $5;
+			this->type = (struct this_type *) mm_alloc(sizeof(struct this_type));
+			this->type->type_enum = $3.type_enum;
+			this->type->type_str = mm_strdup($5);
+			this->type->type_dimension = dimension; /* dimension of array */
+			this->type->type_index = length;    /* lenght of string */
+			this->struct_member_list = ($3.type_enum == ECPGt_struct || $3.type_enum == ECPGt_union) ?
+				struct_member_list[struct_level] : NULL;
+
+			if ($3.type_enum != ECPGt_varchar &&
+			    $3.type_enum != ECPGt_char &&
+	        	    $3.type_enum != ECPGt_unsigned_char &&
+			    this->type->type_index >= 0)
+				mmerror(PARSE_ERROR, ET_ERROR, "No multi-dimensional array support for simple data types");
+
+			types = this;
+		}
+
+		fprintf(yyout, "typedef %s %s %s %s;\n", $3.type_str, *$4?"*":"", $5, $6.str);
+		output_line_number();
+		$$ = make_str("");
+	};
+
+var_declaration: storage_clause storage_modifier
 		{
 			actual_storage[struct_level] = cat2_str(mm_strdup($1), mm_strdup($2));
 			actual_startline[struct_level] = hashline_number();
@@ -4239,7 +4310,7 @@ ECPGTypedef: TYPE_P
 			if (($5.type_enum == ECPGt_struct ||
 				 $5.type_enum == ECPGt_union) &&
 				initializer == 1)
-				mmerror(PARSE_ERROR, ET_ERROR, "Initializer not allowed in EXEC SQL VAR command");
+				mmerror(PARSE_ERROR, ET_ERROR, "Initializer not allowed in EXEC SQL TYPE command");
 			else
 			{
 				for (ptr = types; ptr != NULL; ptr = ptr->next)
@@ -4276,7 +4347,10 @@ ECPGTypedef: TYPE_P
 				types = this;
 			}
 
-			$$ = cat_str(7, make_str("/* exec sql type"), mm_strdup($3), make_str("is"), mm_strdup($5.type_str), mm_strdup($6.str), $7, make_str("*/"));
+			if (auto_create_c == false)
+				$$ = cat_str(7, make_str("/* exec sql type"), mm_strdup($3), make_str("is"), mm_strdup($5.type_str), mm_strdup($6.str), $7, make_str("*/"));
+			else
+				$$ = cat_str(6, make_str("typedef "), mm_strdup($5.type_str), *$7?make_str("*"):make_str(""), mm_strdup($6.str), mm_strdup($3), make_str(";"));
 		}
 		;
 
@@ -4504,10 +4578,10 @@ ECPGKeywords:  SQL_BREAK		{ $$ = make_str("break"); }
 		;
 
 /* additional keywords that can be SQL type names (but not ECPGColLabels) */
-ECPGTypeName:  SQL_BOOL			{ $$ = make_str("bool"); }
-		| SQL_INT				{ $$ = make_str("int"); }
-		| SQL_LONG				{ $$ = make_str("long"); }
-		| SQL_SHORT				{ $$ = make_str("short"); }
+ECPGTypeName:  SQL_BOOL				{ $$ = make_str("bool"); }
+		| SQL_INT			{ $$ = make_str("int"); }
+		| SQL_LONG			{ $$ = make_str("long"); }
+		| SQL_SHORT			{ $$ = make_str("short"); }
 		| SQL_STRUCT			{ $$ = make_str("struct"); }
 		| SQL_SIGNED			{ $$ = make_str("signed"); }
 		| SQL_UNSIGNED			{ $$ = make_str("unsigned"); }
@@ -5006,6 +5080,7 @@ c_anything:  IDENT					{ $$ = $1; }
 		| S_RSHIFT					{ $$ = make_str(">>"); }
 		| S_STATIC					{ $$ = make_str("static"); }
 		| S_SUB						{ $$ = make_str("-="); }
+		| S_TYPEDEF				{ $$ = make_str("typedef"); }
 		| SQL_BOOL					{ $$ = make_str("bool"); }
 		| SQL_ENUM					{ $$ = make_str("enum"); }
 		| SQL_INT					{ $$ = make_str("int"); }

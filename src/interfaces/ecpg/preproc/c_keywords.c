@@ -36,6 +36,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"signed", SQL_SIGNED},
 	{"static", S_STATIC},
 	{"struct", SQL_STRUCT},
+	{"typedef", S_TYPEDEF},
 	{"union", UNION},
 	{"unsigned", SQL_UNSIGNED},
 	{"varchar", VARCHAR},

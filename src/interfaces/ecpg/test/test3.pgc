@@ -11,9 +11,8 @@ exec sql type str is varchar[10];
 int
 main ()
 {
-	typedef struct { long born; short age; } birthinfo;
-	exec sql type birthinfo is struct { long born; short age; };
 exec sql begin declare section;
+	typedef struct { long born; short age; } birthinfo;
 	struct personal_struct	{	str name;
 					birthinfo birth;
 				} personal;

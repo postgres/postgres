@@ -11,6 +11,7 @@
 
 extern int	braces_open,
 			autocommit,
+			auto_create_c,
 			ret_value,
 			struct_level;
 extern char *descriptor_index;
