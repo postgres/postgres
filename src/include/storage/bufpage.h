@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufpage.h,v 1.53 2002/09/04 20:31:45 momjian Exp $
+ * $Id: bufpage.h,v 1.54 2003/03/28 20:17:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,6 @@
 #include "storage/item.h"
 #include "storage/itemid.h"
 #include "storage/off.h"
-#include "storage/page.h"
 #include "access/xlog.h"
 
 /*
@@ -74,11 +73,7 @@
  * fields.
  */
 
-/*
- * PageIsValid
- *		True iff page is valid.
- */
-#define PageIsValid(page) PointerIsValid(page)
+typedef Pointer Page;
 
 
 /*
@@ -141,22 +136,12 @@ typedef PageHeaderData *PageHeader;
  *						page support macros
  * ----------------------------------------------------------------
  */
-/*
- * PageIsValid -- This is defined in page.h.
- */
 
 /*
- * PageIsUsed
- *		True iff the page size is used.
- *
- * Note:
- *		Assumes page is valid.
+ * PageIsValid
+ *		True iff page is valid.
  */
-#define PageIsUsed(page) \
-( \
-	AssertMacro(PageIsValid(page)), \
-	((bool) (((PageHeader) (page))->pd_lower != 0)) \
-)
+#define PageIsValid(page) PointerIsValid(page)
 
 /*
  * line pointer does not count as part of header
@@ -172,9 +157,8 @@ typedef PageHeaderData *PageHeader;
 
 /*
  * PageIsNew
- *		returns true iff page is not initialized (by PageInit)
+ *		returns true iff page has not been initialized (by PageInit)
  */
-
 #define PageIsNew(page) (((PageHeader) (page))->pd_upper == 0)
 
 /*
@@ -199,12 +183,6 @@ typedef PageHeaderData *PageHeader;
 /*
  * PageSizeIsValid
  *		True iff the page size is valid.
- *
- * XXX currently all page sizes are "valid" but we only actually
- *	   use BLCKSZ.
- *
- * 01/06/98 Now does something useful.	darrenk
- *
  */
 #define PageSizeIsValid(pageSize) ((pageSize) == BLCKSZ)
 
@@ -214,7 +192,7 @@ typedef PageHeaderData *PageHeader;
  *
  * this can only be called on a formatted page (unlike
  * BufferGetPageSize, which can be called on an unformatted page).
- * however, it can be called on a page for which there is no buffer.
+ * however, it can be called on a page that is not stored in a buffer.
  */
 #define PageGetPageSize(page) \
 	((Size) (((PageHeader) (page))->pd_pagesize_version & (uint16) 0xFF00))
@@ -222,10 +200,6 @@ typedef PageHeaderData *PageHeader;
 /*
  * PageGetPageLayoutVersion
  *		Returns the page layout version of a page.
- *
- * this can only be called on a formatted page (unlike
- * BufferGetPageSize, which can be called on an unformatted page).
- * however, it can be called on a page for which there is no buffer.
  */
 #define PageGetPageLayoutVersion(page) \
 	(((PageHeader) (page))->pd_pagesize_version & 0x00FF)
@@ -251,9 +225,6 @@ typedef PageHeaderData *PageHeader;
 /*
  * PageGetSpecialSize
  *		Returns size of special space on a page.
- *
- * Note:
- *		Assumes page is locked.
  */
 #define PageGetSpecialSize(page) \
 	((uint16) (PageGetPageSize(page) - ((PageHeader)(page))->pd_special))
@@ -261,9 +232,6 @@ typedef PageHeaderData *PageHeader;
 /*
  * PageGetSpecialPointer
  *		Returns pointer to special space on a page.
- *
- * Note:
- *		Assumes page is locked.
  */
 #define PageGetSpecialPointer(page) \
 ( \
@@ -339,6 +307,7 @@ typedef PageHeaderData *PageHeader;
  */
 
 extern void PageInit(Page page, Size pageSize, Size specialSize);
+extern bool PageHeaderIsValid(PageHeader page);
 extern OffsetNumber PageAddItem(Page page, Item item, Size size,
 			OffsetNumber offsetNumber, ItemIdFlags flags);
 extern Page PageGetTempPage(Page page, Size specialSize);

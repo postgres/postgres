@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufmgr.h,v 1.66 2002/10/22 20:00:48 petere Exp $
+ * $Id: bufmgr.h,v 1.67 2003/03/28 20:17:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,6 +24,9 @@ typedef void *Block;
 
 /* in globals.c ... this duplicates miscadmin.h */
 extern DLLIMPORT int	NBuffers;
+
+/* in bufmgr.c */
+extern bool zero_damaged_pages;
 
 /* in buf_init.c */
 extern DLLIMPORT Block *BufferBlockPointers;

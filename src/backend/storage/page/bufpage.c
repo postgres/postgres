@@ -8,13 +8,11 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.51 2003/01/11 05:01:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.52 2003/03/28 20:17:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
-
-#include <sys/file.h>
 
 #include "storage/bufpage.h"
 
@@ -45,6 +43,51 @@ PageInit(Page page, Size pageSize, Size specialSize)
 	p->pd_upper = pageSize - specialSize;
 	p->pd_special = pageSize - specialSize;
 	PageSetPageSizeAndVersion(page, pageSize, PG_PAGE_LAYOUT_VERSION);
+}
+
+
+/*
+ * PageHeaderIsValid
+ *		Check that the header fields of a page appear valid.
+ *
+ * This is called when a page has just been read in from disk.  The idea is
+ * to cheaply detect trashed pages before we go nuts following bogus item
+ * pointers, testing invalid transaction identifiers, etc.
+ *
+ * It turns out to be necessary to allow zeroed pages here too.  Even though
+ * this routine is *not* called when deliberately adding a page to a relation,
+ * there are scenarios in which a zeroed page might be found in a table.
+ * (Example: a backend extends a relation, then crashes before it can write
+ * any WAL entry about the new page.  The kernel will already have the
+ * zeroed page in the file, and it will stay that way after restart.)  So we
+ * allow zeroed pages here, and are careful that the page access macros
+ * treat such a page as empty and without free space.  Eventually, VACUUM
+ * will clean up such a page and make it usable.
+ */
+bool
+PageHeaderIsValid(PageHeader page)
+{
+	char	   *pagebytes;
+	int			i;
+
+	/* Check normal case */
+	if (PageGetPageSize(page) == BLCKSZ &&
+		PageGetPageLayoutVersion(page) == PG_PAGE_LAYOUT_VERSION &&
+		page->pd_lower >= SizeOfPageHeaderData &&
+		page->pd_lower <= page->pd_upper &&
+		page->pd_upper <= page->pd_special &&
+		page->pd_special <= BLCKSZ &&
+		page->pd_special == MAXALIGN(page->pd_special))
+		return true;
+
+	/* Check all-zeroes case */
+	pagebytes = (char *) page;
+	for (i = 0; i < BLCKSZ; i++)
+	{
+		if (pagebytes[i] != 0)
+			return false;
+	}
+	return true;
 }
 
 

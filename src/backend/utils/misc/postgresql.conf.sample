@@ -213,6 +213,6 @@
 #sql_inheritance = true
 #transform_null_equals = false
 #statement_timeout = 0		# 0 is disabled, in milliseconds
+#zero_damaged_pages = false     # set this true only for disaster recovery
 #db_user_namespace = false
 #preload_libraries = ''
- 

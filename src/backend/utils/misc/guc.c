@@ -5,7 +5,7 @@
  * command, configuration file, and command line options.
  * See src/backend/utils/misc/README for more information.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.117 2003/03/20 04:51:44 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.118 2003/03/28 20:17:13 tgl Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -356,6 +356,10 @@ static struct config_bool
 	{
 		{"fsync", PGC_SIGHUP}, &enableFsync,
 		true, NULL, NULL
+	},
+	{
+		{"zero_damaged_pages", PGC_SUSET}, &zero_damaged_pages,
+		false, NULL, NULL
 	},
 	{
 		{"silent_mode", PGC_POSTMASTER}, &SilentMode,
