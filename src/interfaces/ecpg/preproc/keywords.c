@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.50 2002/06/20 20:29:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.50.2.1 2002/07/01 07:10:10 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
