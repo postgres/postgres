@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.117 2000/10/18 16:16:10 momjian Exp $
+ * $Id: parsenodes.h,v 1.118 2000/11/05 00:15:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -782,7 +782,7 @@ typedef struct InsertStmt
 	/*
 	 * An INSERT statement has *either* VALUES or SELECT, never both.
 	 * If VALUES, a targetList is supplied (empty for DEFAULT VALUES).
-	 * If SELECT, a complete SelectStmt (or SetOperation tree) is supplied.
+	 * If SELECT, a complete SelectStmt (or set-operation tree) is supplied.
 	 */
 	List	   *targetList;		/* the target list (of ResTarget) */
 	Node	   *selectStmt;		/* the source SELECT */
@@ -816,51 +816,71 @@ typedef struct UpdateStmt
 
 /* ----------------------
  *		Select Statement
- * ----------------------
- */
-typedef struct SelectStmt
-{
-	NodeTag		type;
-	List	   *distinctClause; /* NULL, list of DISTINCT ON exprs, or
-								 * lcons(NIL,NIL) for all (SELECT
-								 * DISTINCT) */
-	char	   *into;			/* name of table (for select into table) */
-	List	   *targetList;		/* the target list (of ResTarget) */
-	List	   *fromClause;		/* the from clause */
-	Node	   *whereClause;	/* qualifications */
-	List	   *groupClause;	/* GROUP BY clauses */
-	Node	   *havingClause;	/* having conditional-expression */
-	List	   *sortClause;		/* sort clause (a list of SortGroupBy's) */
-	char	   *portalname;		/* the portal (cursor) to create */
-	bool		binary;			/* a binary (internal) portal? */
-	bool		istemp;			/* into is a temp table */
-	Node	   *limitOffset;	/* # of result tuples to skip */
-	Node	   *limitCount;		/* # of result tuples to return */
-	List	   *forUpdate;		/* FOR UPDATE clause */
-} SelectStmt;
-
-/* ----------------------
- *		Select Statement with Set Operations
  *
- * UNION/INTERSECT/EXCEPT operations are represented in the output of gram.y
- * as a tree whose leaves are SelectStmts and internal nodes are
- * SetOperationStmts.  The statement-wide info (ORDER BY, etc clauses)
- * is placed in the leftmost SelectStmt leaf.
- *
- * After parse analysis, there is a top-level Query node containing the leaf
- * SELECTs as subqueries in its range table.  Its setOperations field is the
- * SetOperationStmt tree with leaf SelectStmt nodes replaced by RangeTblRef
- * nodes.  The statement-wide options such as ORDER BY are attached to this
- * top-level Query.
+ * A "simple" SELECT is represented in the output of gram.y by a single
+ * SelectStmt node.  A SELECT construct containing set operators (UNION,
+ * INTERSECT, EXCEPT) is represented by a tree of SelectStmt nodes, in
+ * which the leaf nodes are component SELECTs and the internal nodes
+ * represent UNION, INTERSECT, or EXCEPT operators.  Using the same node
+ * type for both leaf and internal nodes allows gram.y to stick ORDER BY,
+ * LIMIT, etc, clause values into a SELECT statement without worrying
+ * whether it is a simple or compound SELECT.
  * ----------------------
  */
 typedef enum SetOperation
 {
+	SETOP_NONE = 0,
 	SETOP_UNION,
 	SETOP_INTERSECT,
 	SETOP_EXCEPT
 } SetOperation;
 
+typedef struct SelectStmt
+{
+	NodeTag		type;
+	/*
+	 * These fields are used only in "leaf" SelectStmts.
+	 */
+	List	   *distinctClause; /* NULL, list of DISTINCT ON exprs, or
+								 * lcons(NIL,NIL) for all (SELECT
+								 * DISTINCT) */
+	char	   *into;			/* name of table (for select into table) */
+	bool		istemp;			/* into is a temp table? */
+	List	   *targetList;		/* the target list (of ResTarget) */
+	List	   *fromClause;		/* the FROM clause */
+	Node	   *whereClause;	/* WHERE qualification */
+	List	   *groupClause;	/* GROUP BY clauses */
+	Node	   *havingClause;	/* HAVING conditional-expression */
+	/*
+	 * These fields are used in both "leaf" SelectStmts and upper-level
+	 * SelectStmts.  portalname/binary may only be set at the top level.
+	 */
+	List	   *sortClause;		/* sort clause (a list of SortGroupBy's) */
+	char	   *portalname;		/* the portal (cursor) to create */
+	bool		binary;			/* a binary (internal) portal? */
+	Node	   *limitOffset;	/* # of result tuples to skip */
+	Node	   *limitCount;		/* # of result tuples to return */
+	List	   *forUpdate;		/* FOR UPDATE clause */
+	/*
+	 * These fields are used only in upper-level SelectStmts.
+	 */
+	SetOperation op;			/* type of set op */
+	bool		all;			/* ALL specified? */
+	struct SelectStmt *larg;	/* left child */
+	struct SelectStmt *rarg;	/* right child */
+	/* Eventually add fields for CORRESPONDING spec here */
+} SelectStmt;
+
+/* ----------------------
+ *		Set Operation node for post-analysis query trees
+ *
+ * After parse analysis, a SELECT with set operations is represented by a
+ * top-level Query node containing the leaf SELECTs as subqueries in its
+ * range table.  Its setOperations field shows the tree of set operations,
+ * with leaf SelectStmt nodes replaced by RangeTblRef nodes, and internal
+ * nodes replaced by SetOperationStmt nodes.
+ * ----------------------
+ */
 typedef struct SetOperationStmt
 {
 	NodeTag		type;
@@ -870,7 +890,7 @@ typedef struct SetOperationStmt
 	Node	   *rarg;			/* right child */
 	/* Eventually add fields for CORRESPONDING spec here */
 
-	/* This field is filled in during parse analysis: */
+	/* Fields derived during parse analysis: */
 	List	   *colTypes;		/* integer list of OIDs of output column types */
 } SetOperationStmt;
 

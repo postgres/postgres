@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: analyze.c,v 1.162 2000/11/04 18:29:09 momjian Exp $
+ *	$Id: analyze.c,v 1.163 2000/11/05 00:15:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,8 +46,8 @@ static Query *transformIndexStmt(ParseState *pstate, IndexStmt *stmt);
 static Query *transformExtendStmt(ParseState *pstate, ExtendStmt *stmt);
 static Query *transformRuleStmt(ParseState *query, RuleStmt *stmt);
 static Query *transformSelectStmt(ParseState *pstate, SelectStmt *stmt);
-static Query *transformSetOperationStmt(ParseState *pstate, SetOperationStmt *stmt);
-static Node *transformSetOperationTree(ParseState *pstate, Node *node);
+static Query *transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt);
+static Node *transformSetOperationTree(ParseState *pstate, SelectStmt *stmt);
 static Query *transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt);
 static Query *transformCreateStmt(ParseState *pstate, CreateStmt *stmt);
 static Query *transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt);
@@ -257,11 +257,12 @@ transformStmt(ParseState *pstate, Node *parseTree)
 			break;
 
 		case T_SelectStmt:
-			result = transformSelectStmt(pstate, (SelectStmt *) parseTree);
-			break;
-
-		case T_SetOperationStmt:
-			result = transformSetOperationStmt(pstate, (SetOperationStmt *) parseTree);
+			if (((SelectStmt *) parseTree)->op == SETOP_NONE)
+				result = transformSelectStmt(pstate,
+											 (SelectStmt *) parseTree);
+			else
+				result = transformSetOperationStmt(pstate,
+												   (SelectStmt *) parseTree);
 			break;
 
 		default:
@@ -1173,7 +1174,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 					found=1;
 				}
 				if (!found)
-					elog(ERROR, "columns in foreign key table of constraint not found.");
+					elog(ERROR, "columns referenced in foreign key constraint not found.");
 			}
 
 			/*
@@ -1772,29 +1773,30 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 
 /*
  * transformSetOperationsStmt -
- *	  transforms a SetOperations Statement
+ *	  transforms a set-operations tree
  *
- * SetOperations is actually just a SELECT, but with UNION/INTERSECT/EXCEPT
+ * A set-operation tree is just a SELECT, but with UNION/INTERSECT/EXCEPT
  * structure to it.  We must transform each leaf SELECT and build up a top-
  * level Query that contains the leaf SELECTs as subqueries in its rangetable.
- * The SetOperations tree (with leaf SelectStmts replaced by RangeTblRef nodes)
- * becomes the setOperations field of the top-level Query.
+ * The tree of set operations is converted into the setOperations field of
+ * the top-level Query.
  */
 static Query *
-transformSetOperationStmt(ParseState *pstate, SetOperationStmt *stmt)
+transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 {
 	Query	   *qry = makeNode(Query);
-	Node	   *node;
 	SelectStmt *leftmostSelect;
 	Query	   *leftmostQuery;
+	SetOperationStmt *sostmt;
 	char	   *into;
+	bool		istemp;
 	char	   *portalname;
 	bool		binary;
-	bool		istemp;
 	List	   *sortClause;
 	Node	   *limitOffset;
 	Node	   *limitCount;
 	List	   *forUpdate;
+	Node	   *node;
 	List	   *lefttl,
 			   *dtlist;
 	int			tllen;
@@ -1802,50 +1804,55 @@ transformSetOperationStmt(ParseState *pstate, SetOperationStmt *stmt)
 	qry->commandType = CMD_SELECT;
 
 	/*
-	 * Find leftmost leaf SelectStmt and extract the one-time-only items
-	 * from it.
+	 * Find leftmost leaf SelectStmt; extract the one-time-only items
+	 * from it and from the top-level node.
 	 */
-	node = stmt->larg;
-	while (node && IsA(node, SetOperationStmt))
-		node = ((SetOperationStmt *) node)->larg;
-	Assert(node && IsA(node, SelectStmt));
-	leftmostSelect = (SelectStmt *) node;
-
+	leftmostSelect = stmt->larg;
+	while (leftmostSelect && leftmostSelect->op != SETOP_NONE)
+		leftmostSelect = leftmostSelect->larg;
+	Assert(leftmostSelect && IsA(leftmostSelect, SelectStmt) &&
+		   leftmostSelect->larg == NULL);
 	into = leftmostSelect->into;
-	portalname = leftmostSelect->portalname;
-	binary = leftmostSelect->binary;
 	istemp = leftmostSelect->istemp;
-	sortClause = leftmostSelect->sortClause;
-	limitOffset = leftmostSelect->limitOffset;
-	limitCount = leftmostSelect->limitCount;
-	forUpdate = leftmostSelect->forUpdate;
+	portalname = stmt->portalname;
+	binary = stmt->binary;
 
 	/* clear them to prevent complaints in transformSetOperationTree() */
 	leftmostSelect->into = NULL;
-	leftmostSelect->portalname = NULL;
-	leftmostSelect->binary = false;
 	leftmostSelect->istemp = false;
-	leftmostSelect->sortClause = NIL;
-	leftmostSelect->limitOffset = NULL;
-	leftmostSelect->limitCount = NULL;
-	leftmostSelect->forUpdate = NIL;
+	stmt->portalname = NULL;
+	stmt->binary = false;
 
-	/* We don't actually support forUpdate with set ops at the moment. */
+	/*
+	 * These are not one-time, exactly, but we want to process them here
+	 * and not let transformSetOperationTree() see them --- else it'll just
+	 * recurse right back here!
+	 */
+	sortClause = stmt->sortClause;
+	limitOffset = stmt->limitOffset;
+	limitCount = stmt->limitCount;
+	forUpdate = stmt->forUpdate;
+
+	stmt->sortClause = NIL;
+	stmt->limitOffset = NULL;
+	stmt->limitCount = NULL;
+	stmt->forUpdate = NIL;
+
+	/* We don't support forUpdate with set ops at the moment. */
 	if (forUpdate)
 		elog(ERROR, "SELECT FOR UPDATE is not allowed with UNION/INTERSECT/EXCEPT");
 
 	/*
 	 * Recursively transform the components of the tree.
 	 */
-	stmt = (SetOperationStmt *)
-		transformSetOperationTree(pstate, (Node *) stmt);
-	Assert(stmt && IsA(stmt, SetOperationStmt));
-	qry->setOperations = (Node *) stmt;
+	sostmt = (SetOperationStmt *) transformSetOperationTree(pstate, stmt);
+	Assert(sostmt && IsA(sostmt, SetOperationStmt));
+	qry->setOperations = (Node *) sostmt;
 
 	/*
 	 * Re-find leftmost SELECT (now it's a sub-query in rangetable)
 	 */
-	node = stmt->larg;
+	node = sostmt->larg;
 	while (node && IsA(node, SetOperationStmt))
 		node = ((SetOperationStmt *) node)->larg;
 	Assert(node && IsA(node, RangeTblRef));
@@ -1858,7 +1865,7 @@ transformSetOperationStmt(ParseState *pstate, SetOperationStmt *stmt)
 	 */
 	qry->targetList = NIL;
 	lefttl = leftmostQuery->targetList;
-	foreach(dtlist, stmt->colTypes)
+	foreach(dtlist, sostmt->colTypes)
 	{
 		Oid		colType = (Oid) lfirsti(dtlist);
 		char   *colName = ((TargetEntry *) lfirst(lefttl))->resdom->resname;
@@ -1953,11 +1960,47 @@ transformSetOperationStmt(ParseState *pstate, SetOperationStmt *stmt)
  *		Recursively transform leaves and internal nodes of a set-op tree
  */
 static Node *
-transformSetOperationTree(ParseState *pstate, Node *node)
+transformSetOperationTree(ParseState *pstate, SelectStmt *stmt)
 {
-	if (IsA(node, SelectStmt))
+	bool	isLeaf;
+
+	Assert(stmt && IsA(stmt, SelectStmt));
+
+	/*
+	 * Validity-check both leaf and internal SELECTs for disallowed ops.
+	 */
+	if (stmt->into)
+		elog(ERROR, "INTO is only allowed on first SELECT of UNION/INTERSECT/EXCEPT");
+	if (stmt->portalname)		/* should not happen */
+		elog(ERROR, "Portal may not appear in UNION/INTERSECT/EXCEPT");
+	/* We don't support forUpdate with set ops at the moment. */
+	if (stmt->forUpdate)
+		elog(ERROR, "SELECT FOR UPDATE is not allowed with UNION/INTERSECT/EXCEPT");
+
+	/*
+	 * If an internal node of a set-op tree has ORDER BY, UPDATE, or LIMIT
+	 * clauses attached, we need to treat it like a leaf node to generate
+	 * an independent sub-Query tree.  Otherwise, it can be represented by
+	 * a SetOperationStmt node underneath the parent Query.
+	 */
+	if (stmt->op == SETOP_NONE)
 	{
-		SelectStmt *stmt = (SelectStmt *) node;
+		Assert(stmt->larg == NULL && stmt->rarg == NULL);
+		isLeaf = true;
+	}
+	else
+	{
+		Assert(stmt->larg != NULL && stmt->rarg != NULL);
+		if (stmt->sortClause || stmt->limitOffset || stmt->limitCount ||
+			stmt->forUpdate)
+			isLeaf = true;
+		else
+			isLeaf = false;
+	}
+
+	if (isLeaf)
+	{
+		/* Process leaf SELECT */
 		List   *save_rtable;
 		List   *selectList;
 		Query  *selectQuery;
@@ -1965,20 +2008,6 @@ transformSetOperationTree(ParseState *pstate, Node *node)
 		RangeTblEntry *rte;
 		RangeTblRef *rtr;
 
-		/*
-		 * Validity-check leaf SELECTs for disallowed ops.  INTO check is
-		 * necessary, the others should have been disallowed by grammar.
-		 */
-		if (stmt->into)
-			elog(ERROR, "INTO is only allowed on first SELECT of UNION/INTERSECT/EXCEPT");
-		if (stmt->portalname)
-			elog(ERROR, "Portal is only allowed on first SELECT of UNION/INTERSECT/EXCEPT");
-		if (stmt->sortClause)
-			elog(ERROR, "ORDER BY is only allowed at end of UNION/INTERSECT/EXCEPT");
-		if (stmt->limitOffset || stmt->limitCount)
-			elog(ERROR, "LIMIT is only allowed at end of UNION/INTERSECT/EXCEPT");
-		if (stmt->forUpdate)
-			elog(ERROR, "FOR UPDATE is only allowed at end of UNION/INTERSECT/EXCEPT");
 		/*
 		 * Transform SelectStmt into a Query.  We do not want any previously
 		 * transformed leaf queries to be visible in the outer context of
@@ -2011,21 +2040,26 @@ transformSetOperationTree(ParseState *pstate, Node *node)
 		Assert(rte == rt_fetch(rtr->rtindex, pstate->p_rtable));
 		return (Node *) rtr;
 	}
-	else if (IsA(node, SetOperationStmt))
+	else
 	{
-		SetOperationStmt *op = (SetOperationStmt *) node;
+		/* Process an internal node (set operation node) */
+		SetOperationStmt *op = makeNode(SetOperationStmt);
 		List   *lcoltypes;
 		List   *rcoltypes;
 		const char *context;
 
-		context = (op->op == SETOP_UNION ? "UNION" :
-				   (op->op == SETOP_INTERSECT ? "INTERSECT" :
+		context = (stmt->op == SETOP_UNION ? "UNION" :
+				   (stmt->op == SETOP_INTERSECT ? "INTERSECT" :
 					"EXCEPT"));
+
+		op->op = stmt->op;
+		op->all = stmt->all;
+
 		/*
 		 * Recursively transform the child nodes.
 		 */
-		op->larg = transformSetOperationTree(pstate, op->larg);
-		op->rarg = transformSetOperationTree(pstate, op->rarg);
+		op->larg = transformSetOperationTree(pstate, stmt->larg);
+		op->rarg = transformSetOperationTree(pstate, stmt->rarg);
 		/*
 		 * Verify that the two children have the same number of non-junk
 		 * columns, and determine the types of the merged output columns.
@@ -2048,13 +2082,8 @@ transformSetOperationTree(ParseState *pstate, Node *node)
 			lcoltypes = lnext(lcoltypes);
 			rcoltypes = lnext(rcoltypes);
 		}
+
 		return (Node *) op;
-	}
-	else
-	{
-		elog(ERROR, "transformSetOperationTree: unexpected node %d",
-			 (int) nodeTag(node));
-		return NULL;			/* keep compiler quiet */
 	}
 }
 

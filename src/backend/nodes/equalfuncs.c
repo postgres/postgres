@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.78 2000/10/31 10:22:10 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.79 2000/11/05 00:15:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -686,6 +686,8 @@ _equalSelectStmt(SelectStmt *a, SelectStmt *b)
 		return false;
 	if (!equalstr(a->into, b->into))
 		return false;
+	if (a->istemp != b->istemp)
+		return false;
 	if (!equal(a->targetList, b->targetList))
 		return false;
 	if (!equal(a->fromClause, b->fromClause))
@@ -702,13 +704,19 @@ _equalSelectStmt(SelectStmt *a, SelectStmt *b)
 		return false;
 	if (a->binary != b->binary)
 		return false;
-	if (a->istemp != b->istemp)
-		return false;
 	if (!equal(a->limitOffset, b->limitOffset))
 		return false;
 	if (!equal(a->limitCount, b->limitCount))
 		return false;
 	if (!equal(a->forUpdate, b->forUpdate))
+		return false;
+	if (a->op != b->op)
+		return false;
+	if (a->all != b->all)
+		return false;
+	if (!equal(a->larg, b->larg))
+		return false;
+	if (!equal(a->rarg, b->rarg))
 		return false;
 
 	return true;

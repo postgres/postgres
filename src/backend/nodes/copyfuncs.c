@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.128 2000/10/31 10:22:10 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.129 2000/11/05 00:15:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1826,6 +1826,7 @@ _copySelectStmt(SelectStmt *from)
 	Node_Copy(from, newnode, distinctClause);
 	if (from->into)
 		newnode->into = pstrdup(from->into);
+	newnode->istemp = from->istemp;
 	Node_Copy(from, newnode, targetList);
 	Node_Copy(from, newnode, fromClause);
 	Node_Copy(from, newnode, whereClause);
@@ -1835,10 +1836,13 @@ _copySelectStmt(SelectStmt *from)
 	if (from->portalname)
 		newnode->portalname = pstrdup(from->portalname);
 	newnode->binary = from->binary;
-	newnode->istemp = from->istemp;
 	Node_Copy(from, newnode, limitOffset);
 	Node_Copy(from, newnode, limitCount);
 	Node_Copy(from, newnode, forUpdate);
+	newnode->op = from->op;
+	newnode->all = from->all;
+	Node_Copy(from, newnode, larg);
+	Node_Copy(from, newnode, rarg);
 
 	return newnode;
 }

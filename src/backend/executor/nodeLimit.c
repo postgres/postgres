@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeLimit.c,v 1.1 2000/10/26 21:35:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeLimit.c,v 1.2 2000/11/05 00:15:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -188,17 +188,11 @@ recompute_limits(Limit *node)
 														econtext,
 														&isNull,
 														NULL));
-		/* Interpret NULL count as no count */
+		/* Interpret NULL count as no count (LIMIT ALL) */
 		if (isNull)
 			limitstate->noCount = true;
-		else
-		{
-			/* Currently, LIMIT 0 is specified as meaning no limit.
-			 * I think this is pretty bogus, but ...
-			 */
-			if (limitstate->count <= 0)
-				limitstate->noCount = true;
-		}
+		else if (limitstate->count < 0)
+			limitstate->count = 0;
 	}
 	else
 	{

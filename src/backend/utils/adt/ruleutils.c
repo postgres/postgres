@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.67 2000/10/26 21:37:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.68 2000/11/05 00:15:53 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -941,7 +941,11 @@ get_select_query_def(Query *query, deparse_context *context)
 	if (query->limitCount != NULL)
 	{
 		appendStringInfo(buf, " LIMIT ");
-		get_rule_expr(query->limitCount, context);
+		if (IsA(query->limitCount, Const) &&
+			((Const *) query->limitCount)->constisnull)
+			appendStringInfo(buf, "ALL");
+		else
+			get_rule_expr(query->limitCount, context);
 	}
 }
 

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.203 2000/11/04 21:04:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.204 2000/11/05 00:15:54 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -80,7 +80,11 @@ static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr);
 static Node *makeTypeCast(Node *arg, TypeName *typename);
 static Node *makeRowExpr(char *opr, List *largs, List *rargs);
 static void mapTargetColumns(List *source, List *target);
-static SelectStmt *findLeftmostSelect(Node *node);
+static SelectStmt *findLeftmostSelect(SelectStmt *node);
+static void insertSelectOptions(SelectStmt *stmt,
+								List *sortClause, List *forUpdate,
+								Node *limitOffset, Node *limitCount);
+static Node *makeSetOp(SetOperation op, bool all, Node *larg, Node *rarg);
 static bool exprIsNullConstant(Node *arg);
 static Node *doNegate(Node *n);
 static void doNegateFloat(Value *v);
@@ -134,7 +138,7 @@ static void doNegateFloat(Value *v);
 		UnlistenStmt, UpdateStmt, VacuumStmt, VariableResetStmt,
 		VariableSetStmt, VariableShowStmt, ViewStmt
 
-%type <node>	select_clause, select_subclause
+%type <node>	select_no_parens, select_clause, simple_select
 
 %type <list>	SessionList
 %type <node>	SessionClause
@@ -174,8 +178,8 @@ static void doNegateFloat(Value *v);
 %type <chr>		operation, TriggerOneEvent
 
 %type <list>	stmtblock, stmtmulti,
-		result, OptTempTableName, relation_name_list, OptTableElementList,
-		OptUnder, OptInherit, definition, opt_distinct,
+		into_clause, OptTempTableName, relation_name_list,
+		OptTableElementList, OptUnder, OptInherit, definition, opt_distinct,
 		opt_with, func_args, func_args_list, func_as,
 		oper_argtypes, RuleActionList, RuleActionMulti,
 		opt_column_list, columnList, opt_va_list, va_list,
@@ -183,13 +187,13 @@ static void doNegateFloat(Value *v);
 		from_clause, from_list, opt_array_bounds,
 		expr_list, attrs, target_list, update_target_list,
 		def_list, opt_indirection, group_clause, TriggerFuncArgs,
-		opt_select_limit
+		select_limit, opt_select_limit
 
 %type <typnam>	func_arg, func_return, aggr_argtype
 
 %type <boolean>	opt_arg, TriggerForOpt, TriggerForType, OptTemp
 
-%type <list>	for_update_clause, update_list
+%type <list>	for_update_clause, opt_for_update_clause, update_list
 %type <boolean>	opt_all
 %type <boolean>	opt_table
 %type <boolean>	opt_chain, opt_trans
@@ -385,6 +389,7 @@ static void doNegateFloat(Value *v);
 %right		UMINUS
 %left		'.'
 %left		'[' ']'
+%left		'(' ')'
 %left		TYPECAST
 %%
 
@@ -444,6 +449,7 @@ stmt :	AlterSchemaStmt
 		| ListenStmt
 		| UnlistenStmt
 		| LockStmt
+		| NotifyStmt
 		| ProcedureStmt
 		| ReindexStmt
 		| RemoveAggrStmt
@@ -1527,7 +1533,14 @@ OptInherit:  INHERITS '(' relation_name_list ')'		{ $$ = $3; }
 
 CreateAsStmt:  CREATE OptTemp TABLE relation_name OptUnder OptCreateAs AS SelectStmt
 				{
-					SelectStmt *n = findLeftmostSelect($8);
+					/*
+					 * When the SelectStmt is a set-operation tree, we must
+					 * stuff the INTO information into the leftmost component
+					 * Select, because that's where analyze.c will expect
+					 * to find it.  Similarly, the output column names must
+					 * be attached to that Select's target list.
+					 */
+					SelectStmt *n = findLeftmostSelect((SelectStmt *) $8);
 					if (n->into != NULL)
 						elog(ERROR,"CREATE TABLE/AS SELECT may not specify INTO");
 					n->istemp = $2;
@@ -1541,7 +1554,7 @@ CreateAsStmt:  CREATE OptTemp TABLE relation_name OptUnder OptCreateAs AS Select
 		;
 
 OptCreateAs:  '(' CreateAsList ')'				{ $$ = $2; }
-			| /*EMPTY*/							{ $$ = NULL; }
+			| /*EMPTY*/							{ $$ = NIL; }
 		;
 
 CreateAsList:  CreateAsList ',' CreateAsElement	{ $$ = lappend($1, $3); }
@@ -2682,7 +2695,6 @@ RuleStmt:  CREATE RULE name AS
 		;
 
 RuleActionList:  NOTHING				{ $$ = NIL; }
-		| SelectStmt					{ $$ = makeList1($1); }
 		| RuleActionStmt				{ $$ = makeList1($1); }
 		| '[' RuleActionMulti ']'		{ $$ = $2; }
 		| '(' RuleActionMulti ')'		{ $$ = $2; } 
@@ -2703,7 +2715,17 @@ RuleActionMulti:  RuleActionMulti ';' RuleActionStmtOrEmpty
 				}
 		;
 
-RuleActionStmt:	InsertStmt
+/*
+ * Allowing RuleActionStmt to be a SelectStmt creates an ambiguity:
+ * is the RuleActionList "((SELECT foo))" a standalone RuleActionStmt,
+ * or a one-entry RuleActionMulti list?  We don't really care, but yacc
+ * wants to know.  We use operator precedence to resolve the ambiguity:
+ * giving this rule a higher precedence than ')' will force a reduce
+ * rather than shift decision, causing the one-entry-list interpretation
+ * to be chosen.
+ */
+RuleActionStmt:	SelectStmt				%prec TYPECAST
+		| InsertStmt
 		| UpdateStmt
 		| DeleteStmt
 		| NotifyStmt
@@ -3070,7 +3092,6 @@ OptimizableStmt:  SelectStmt
 		| CursorStmt
 		| UpdateStmt
 		| InsertStmt
-		| NotifyStmt
 		| DeleteStmt					/* by default all are $$=$1 */
 		;
 
@@ -3225,7 +3246,7 @@ UpdateStmt:  UPDATE opt_only relation_name
  *****************************************************************************/
 CursorStmt:  DECLARE name opt_cursor CURSOR FOR SelectStmt
   				{
- 					SelectStmt *n = findLeftmostSelect($6);
+ 					SelectStmt *n = (SelectStmt *)$6;
 					n->portalname = $2;
 					n->binary = $3;
 					$$ = $6;
@@ -3246,55 +3267,99 @@ opt_cursor:  BINARY						{ $$ = TRUE; }
  *
  *****************************************************************************/
 
-/* A complete SELECT statement looks like this.  Note sort, for_update,
- * and limit clauses can only appear once, not in each set operation.
- * 
- * The rule returns either a SelectStmt node or a SetOperationStmt tree.
- * One-time clauses are attached to the leftmost SelectStmt leaf.
+/* A complete SELECT statement looks like this.
  *
- * NOTE: only the leftmost SelectStmt leaf should have INTO, either.
- * However, this is not checked by the grammar; parse analysis must check it.
+ * The rule returns either a single SelectStmt node or a tree of them,
+ * representing a set-operation tree.
+ *
+ * To avoid ambiguity problems with nested parentheses, we have to define
+ * a "select_no_parens" nonterminal in which there are no parentheses
+ * at the outermost level.  This is used in the production
+ *		c_expr: '(' select_no_parens ')'
+ * This gives a unique parsing of constructs where a subselect is nested
+ * in an expression with extra parentheses: the parentheses are not part
+ * of the subselect but of the outer expression.  yacc is not quite bright
+ * enough to handle the situation completely, however.  To prevent a shift/
+ * reduce conflict, we also have to attach a precedence to the
+ *		SelectStmt: select_no_parens
+ * rule that is higher than the precedence of ')'.  This means that when
+ * "((SELECT foo" has been parsed in an expression context, and the
+ * next token is ')', the parser will follow the '(' SelectStmt ')' reduction
+ * path rather than '(' select_no_parens ')'.  The upshot is that excess
+ * parens don't work in this context: SELECT ((SELECT foo)) will give a
+ * parse error, whereas SELECT ((SELECT foo) UNION (SELECT bar)) is OK.
+ * This is ugly, but it beats not allowing excess parens anywhere...
+ *
+ * In all other contexts, we can use SelectStmt which allows outer parens.
  */
 
-SelectStmt:	  select_clause sort_clause for_update_clause opt_select_limit
+SelectStmt: select_no_parens			%prec TYPECAST
 			{
-				SelectStmt *n = findLeftmostSelect($1);
+				$$ = $1;
+			}
+		| '(' SelectStmt ')'
+			{
+				$$ = $2;
+			}
+		;
 
-				n->sortClause = $2;
-				n->forUpdate = $3;
-				n->limitOffset = nth(0, $4);
-				n->limitCount = nth(1, $4);
+select_no_parens: simple_select
+			{
+				$$ = $1;
+			}
+		| select_clause sort_clause opt_for_update_clause opt_select_limit
+			{
+				insertSelectOptions((SelectStmt *) $1, $2, $3,
+									nth(0, $4), nth(1, $4));
+				$$ = $1;
+			}
+		| select_clause for_update_clause opt_select_limit
+			{
+				insertSelectOptions((SelectStmt *) $1, NIL, $2,
+									nth(0, $3), nth(1, $3));
+				$$ = $1;
+			}
+		| select_clause select_limit
+			{
+				insertSelectOptions((SelectStmt *) $1, NIL, NIL,
+									nth(0, $2), nth(1, $2));
 				$$ = $1;
 			}
 		;
 
-/* This rule parses Select statements that can appear within set operations,
+select_clause: simple_select
+			{
+				$$ = $1;
+			}
+		| '(' SelectStmt ')'
+			{
+				$$ = $2;
+			}
+		;
+
+/*
+ * This rule parses SELECT statements that can appear within set operations,
  * including UNION, INTERSECT and EXCEPT.  '(' and ')' can be used to specify
  * the ordering of the set operations.  Without '(' and ')' we want the
  * operations to be ordered per the precedence specs at the head of this file.
  *
- * Since parentheses around SELECTs also appear in the expression grammar,
- * there is a parse ambiguity if parentheses are allowed at the top level of a
- * select_clause: are the parens part of the expression or part of the select?
- * We separate select_clause into two levels to resolve this: select_clause
- * can have top-level parentheses, select_subclause cannot.
+ * As with select_no_parens, simple_select cannot have outer parentheses,
+ * but can have parenthesized subclauses.
  *
- * Note that sort clauses cannot be included at this level --- a sort clause
- * can only appear at the end of the complete Select, and it will be handled
- * by the topmost SelectStmt rule.  Likewise FOR UPDATE and LIMIT.
+ * Note that sort clauses cannot be included at this level --- SQL92 requires
+ *		SELECT foo UNION SELECT bar ORDER BY baz
+ * to be parsed as
+ *		(SELECT foo UNION SELECT bar) ORDER BY baz
+ * not
+ *		SELECT foo UNION (SELECT bar ORDER BY baz)
+ * Likewise FOR UPDATE and LIMIT.  This does not limit functionality,
+ * because you can reintroduce sort and limit clauses inside parentheses.
+ *
+ * NOTE: only the leftmost component SelectStmt should have INTO.
+ * However, this is not checked by the grammar; parse analysis must check it.
  */
-select_clause: '(' select_subclause ')'
-			{
-				$$ = $2; 
-			}
-		| select_subclause
-			{
-				$$ = $1; 
-			}
-		;
-
-select_subclause: SELECT opt_distinct target_list
-			 result from_clause where_clause
+simple_select: SELECT opt_distinct target_list
+			 into_clause from_clause where_clause
 			 group_clause having_clause
 				{
 					SelectStmt *n = makeNode(SelectStmt);
@@ -3310,35 +3375,20 @@ select_subclause: SELECT opt_distinct target_list
 				}
 		| select_clause UNION opt_all select_clause
 			{	
-				SetOperationStmt *n = makeNode(SetOperationStmt);
-				n->op = SETOP_UNION;
-				n->all = $3;
-				n->larg = $1;
-				n->rarg = $4;
-				$$ = (Node *) n;
+				$$ = makeSetOp(SETOP_UNION, $3, $1, $4);
 			}
 		| select_clause INTERSECT opt_all select_clause
 			{
-				SetOperationStmt *n = makeNode(SetOperationStmt);
-				n->op = SETOP_INTERSECT;
-				n->all = $3;
-				n->larg = $1;
-				n->rarg = $4;
-				$$ = (Node *) n;
+				$$ = makeSetOp(SETOP_INTERSECT, $3, $1, $4);
 			}
 		| select_clause EXCEPT opt_all select_clause
 			{
-				SetOperationStmt *n = makeNode(SetOperationStmt);
-				n->op = SETOP_EXCEPT;
-				n->all = $3;
-				n->larg = $1;
-				n->rarg = $4;
-				$$ = (Node *) n;
+				$$ = makeSetOp(SETOP_EXCEPT, $3, $1, $4);
 			}
 		; 
 
 		/* easy way to return two values. Can someone improve this?  bjm */
-result:  INTO OptTempTableName			{ $$ = $2; }
+into_clause:  INTO OptTempTableName		{ $$ = $2; }
 		| /*EMPTY*/						{ $$ = lcons(makeInteger(FALSE), NIL); }
 		;
 
@@ -3391,7 +3441,6 @@ opt_distinct:  DISTINCT							{ $$ = makeList1(NIL); }
 		;
 
 sort_clause:  ORDER BY sortby_list				{ $$ = $3; }
-		| /*EMPTY*/								{ $$ = NIL; }
 		;
 
 sortby_list:  sortby							{ $$ = makeList1($1); }
@@ -3413,7 +3462,7 @@ OptUseOp:  USING all_Op							{ $$ = $2; }
 		;
 
 
-opt_select_limit:	LIMIT select_limit_value ',' select_offset_value
+select_limit:	LIMIT select_limit_value ',' select_offset_value
 			{ $$ = makeList2($4, $2); }
 		| LIMIT select_limit_value OFFSET select_offset_value
 			{ $$ = makeList2($4, $2); }
@@ -3423,20 +3472,22 @@ opt_select_limit:	LIMIT select_limit_value ',' select_offset_value
 			{ $$ = makeList2($2, $4); }
 		| OFFSET select_offset_value
 			{ $$ = makeList2($2, NULL); }
-		| /* EMPTY */
-			{ $$ = makeList2(NULL, NULL); }
+		;
+
+opt_select_limit:	select_limit				{ $$ = $1; }
+		| /* EMPTY */							{ $$ = makeList2(NULL,NULL); }
 		;
 
 select_limit_value:  Iconst
 			{
 				Const	*n = makeNode(Const);
 
-				if ($1 < 1)
-					elog(ERROR, "Selection limit must be ALL or a positive integer value");
+				if ($1 < 0)
+					elog(ERROR, "LIMIT must not be negative");
 
 				n->consttype	= INT4OID;
 				n->constlen		= sizeof(int4);
-				n->constvalue	= (Datum)$1;
+				n->constvalue	= Int32GetDatum($1);
 				n->constisnull	= FALSE;
 				n->constbyval	= TRUE;
 				n->constisset	= FALSE;
@@ -3445,12 +3496,13 @@ select_limit_value:  Iconst
 			}
 		| ALL
 			{
+				/* LIMIT ALL is represented as a NULL constant */
 				Const	*n = makeNode(Const);
 
 				n->consttype	= INT4OID;
 				n->constlen		= sizeof(int4);
-				n->constvalue	= (Datum)0;
-				n->constisnull	= FALSE;
+				n->constvalue	= (Datum) 0;
+				n->constisnull	= TRUE;
 				n->constbyval	= TRUE;
 				n->constisset	= FALSE;
 				n->constiscast	= FALSE;
@@ -3471,9 +3523,12 @@ select_offset_value:	Iconst
 			{
 				Const	*n = makeNode(Const);
 
+				if ($1 < 0)
+					elog(ERROR, "OFFSET must not be negative");
+
 				n->consttype	= INT4OID;
 				n->constlen		= sizeof(int4);
-				n->constvalue	= (Datum)$1;
+				n->constvalue	= Int32GetDatum($1);
 				n->constisnull	= FALSE;
 				n->constbyval	= TRUE;
 				n->constisset	= FALSE;
@@ -3490,6 +3545,7 @@ select_offset_value:	Iconst
 				$$ = (Node *)n;
 			}
 		;
+
 /*
  *	jimmy bell-style recursive queries aren't supported in the
  *	current system.
@@ -3522,6 +3578,9 @@ having_clause:  HAVING a_expr
 
 for_update_clause:  FOR UPDATE update_list		{ $$ = $3; }
 		| FOR READ ONLY							{ $$ = NULL; }
+		;
+
+opt_for_update_clause:	for_update_clause		{ $$ = $1; }
 		| /* EMPTY */							{ $$ = NULL; }
 		;
 
@@ -3565,7 +3624,7 @@ table_ref:  relation_expr
 					$1->name = $2;
 					$$ = (Node *) $1;
 				}
-		| '(' select_subclause ')' alias_clause
+		| '(' SelectStmt ')' alias_clause
 				{
 					RangeSubselect *n = makeNode(RangeSubselect);
 					n->subquery = $2;
@@ -4101,7 +4160,7 @@ opt_interval:  datetime							{ $$ = makeList1($1); }
  * Define row_descriptor to allow yacc to break the reduce/reduce conflict
  *  with singleton expressions.
  */
-row_expr: '(' row_descriptor ')' IN '(' select_subclause ')'
+row_expr: '(' row_descriptor ')' IN '(' SelectStmt ')'
 				{
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = $2;
@@ -4111,7 +4170,7 @@ row_expr: '(' row_descriptor ')' IN '(' select_subclause ')'
 					n->subselect = $6;
 					$$ = (Node *)n;
 				}
-		| '(' row_descriptor ')' NOT IN '(' select_subclause ')'
+		| '(' row_descriptor ')' NOT IN '(' SelectStmt ')'
 				{
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = $2;
@@ -4121,7 +4180,7 @@ row_expr: '(' row_descriptor ')' IN '(' select_subclause ')'
 					n->subselect = $7;
 					$$ = (Node *)n;
 				}
-		| '(' row_descriptor ')' all_Op sub_type '(' select_subclause ')'
+		| '(' row_descriptor ')' all_Op sub_type '(' SelectStmt ')'
 				{
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = $2;
@@ -4134,7 +4193,7 @@ row_expr: '(' row_descriptor ')' IN '(' select_subclause ')'
 					n->subselect = $7;
 					$$ = (Node *)n;
 				}
-		| '(' row_descriptor ')' all_Op '(' select_subclause ')'
+		| '(' row_descriptor ')' all_Op '(' SelectStmt ')'
 				{
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = $2;
@@ -4458,7 +4517,7 @@ a_expr:  c_expr
 						$$ = n;
 					}
 				}
-		| a_expr all_Op sub_type '(' select_subclause ')'
+		| a_expr all_Op sub_type '(' SelectStmt ')'
 				{
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = makeList1($1);
@@ -4851,7 +4910,7 @@ c_expr:  attr
 					n->agg_distinct = FALSE;
 					$$ = (Node *)n;
 				}
-		| '(' select_subclause ')'
+		| '(' select_no_parens ')'
 				{
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = NIL;
@@ -4861,7 +4920,7 @@ c_expr:  attr
 					n->subselect = $2;
 					$$ = (Node *)n;
 				}
-		| EXISTS '(' select_subclause ')'
+		| EXISTS '(' SelectStmt ')'
 				{
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = NIL;
@@ -4960,7 +5019,7 @@ trim_list:  a_expr FROM expr_list
 				{ $$ = $1; }
 		;
 
-in_expr:  select_subclause
+in_expr:  SelectStmt
 				{
 					SubLink *n = makeNode(SubLink);
 					n->subselect = $1;
@@ -5688,20 +5747,71 @@ mapTargetColumns(List *src, List *dst)
 		src = lnext(src);
 		dst = lnext(dst);
 	}
-	return;
 } /* mapTargetColumns() */
 
 
 /* findLeftmostSelect()
- *		Find the leftmost SelectStmt in a SetOperationStmt parsetree.
+ *		Find the leftmost component SelectStmt in a set-operation parsetree.
  */
 static SelectStmt *
-findLeftmostSelect(Node *node)
+findLeftmostSelect(SelectStmt *node)
 {
-	while (node && IsA(node, SetOperationStmt))
-		node = ((SetOperationStmt *) node)->larg;
-	Assert(node && IsA(node, SelectStmt));
-	return (SelectStmt *) node;
+	while (node && node->op != SETOP_NONE)
+		node = node->larg;
+	Assert(node && IsA(node, SelectStmt) && node->larg == NULL);
+	return node;
+}
+
+/* insertSelectOptions()
+ *		Insert ORDER BY, etc into an already-constructed SelectStmt.
+ *
+ * This routine is just to avoid duplicating code in SelectStmt productions.
+ */
+static void
+insertSelectOptions(SelectStmt *stmt,
+					List *sortClause, List *forUpdate,
+					Node *limitOffset, Node *limitCount)
+{
+	/*
+	 * Tests here are to reject constructs like
+	 *	(SELECT foo ORDER BY bar) ORDER BY baz
+	 */
+	if (sortClause)
+	{
+		if (stmt->sortClause)
+			elog(ERROR, "Multiple ORDER BY clauses not allowed");
+		stmt->sortClause = sortClause;
+	}
+	if (forUpdate)
+	{
+		if (stmt->forUpdate)
+			elog(ERROR, "Multiple FOR UPDATE clauses not allowed");
+		stmt->forUpdate = forUpdate;
+	}
+	if (limitOffset)
+	{
+		if (stmt->limitOffset)
+			elog(ERROR, "Multiple OFFSET clauses not allowed");
+		stmt->limitOffset = limitOffset;
+	}
+	if (limitCount)
+	{
+		if (stmt->limitCount)
+			elog(ERROR, "Multiple LIMIT clauses not allowed");
+		stmt->limitCount = limitCount;
+	}
+}
+
+static Node *
+makeSetOp(SetOperation op, bool all, Node *larg, Node *rarg)
+{
+	SelectStmt *n = makeNode(SelectStmt);
+
+	n->op = op;
+	n->all = all;
+	n->larg = (SelectStmt *) larg;
+	n->rarg = (SelectStmt *) rarg;
+	return (Node *) n;
 }
 
 
