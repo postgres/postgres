@@ -3,136 +3,65 @@
  * client encoding and server internal encoding.
  * (currently mule internal code (mic) is used)
  * Tatsuo Ishii
- * $Id: mbutils.c,v 1.27 2001/11/20 01:32:29 ishii Exp $
+ * $Id: mbutils.c,v 1.28 2002/07/18 02:02:30 ishii Exp $
  */
 #include "postgres.h"
 
 #include "miscadmin.h"
 #include "mb/pg_wchar.h"
 #include "utils/builtins.h"
+#include "utils/syscache.h"
+#include "catalog/namespace.h"
 
 /*
  * We handle for actual FE and BE encoding setting encoding-identificator
  * and encoding-name too. It prevent searching and conversion from encoding
  * to encoding name in getdatabaseencoding() and other routines.
- *
- * Default is PG_SQL_ASCII encoding (but this is never used, because
- * backend during startup init it by SetDatabaseEncoding()).
- *
- * Karel Zak (Aug 2001)
  */
 static pg_enc2name *ClientEncoding = &pg_enc2name_tbl[PG_SQL_ASCII];
 static pg_enc2name *DatabaseEncoding = &pg_enc2name_tbl[PG_SQL_ASCII];
-
-static to_mic_converter client_to_mic;	/* something to MIC */
-static from_mic_converter client_from_mic;		/* MIC to something */
-static to_mic_converter server_to_mic;	/* something to MIC */
-static from_mic_converter server_from_mic;		/* MIC to something */
-
-/*
- * find encoding table entry by encoding
- */
-pg_enconv *
-pg_get_enconv_by_encoding(int encoding)
-{
-	if (PG_VALID_ENCODING(encoding))
-	{
-		Assert((&pg_enconv_tbl[encoding])->encoding == encoding);
-		return &pg_enconv_tbl[encoding];
-	}
-	return 0;
-}
-
-/*
- * Find appropriate encoding conversion functions. If no such
- * functions found, returns -1.
- *
- * Arguments:
- *
- * src, dest (in): source and destination encoding ids
- *
- * src_to_mic (out): pointer to a function which converts src to
- * mic/unicode according to dest. if src == mic/unicode or no
- * appropriate function found, set to 0.
- *
- * dest_from_mic (out): pointer to a function which converts
- * mic/unicode to dest according to src. if dest == mic/unicode or no
- * appropriate function found, set to 0.
- */
-int
-pg_find_encoding_converters(int src, int dest,
-							to_mic_converter *src_to_mic,
-							from_mic_converter *dest_from_mic)
-{
-	if (src == dest)
-	{							/* src == dest? */
-		*src_to_mic = *dest_from_mic = 0;
-	}
-	else if (src == PG_MULE_INTERNAL)
-	{							/* src == MULE_INETRNAL? */
-		*dest_from_mic = pg_get_enconv_by_encoding(dest)->from_mic;
-		if (*dest_from_mic == 0)
-			return (-1);
-		*src_to_mic = 0;
-	}
-	else if (dest == PG_MULE_INTERNAL)
-	{							/* dest == MULE_INETRNAL? */
-		*src_to_mic = pg_get_enconv_by_encoding(src)->to_mic;
-		if (*src_to_mic == 0)
-			return (-1);
-		*dest_from_mic = 0;
-	}
-	else if (src == PG_UTF8)
-	{							/* src == UNICODE? */
-		*dest_from_mic = pg_get_enconv_by_encoding(dest)->from_unicode;
-		if (*dest_from_mic == 0)
-			return (-1);
-		*src_to_mic = 0;
-	}
-	else if (dest == PG_UTF8)
-	{							/* dest == UNICODE? */
-		*src_to_mic = pg_get_enconv_by_encoding(src)->to_unicode;
-		if (*src_to_mic == 0)
-			return (-1);
-		*dest_from_mic = 0;
-	}
-	else
-	{
-		*src_to_mic = pg_get_enconv_by_encoding(src)->to_mic;
-		*dest_from_mic = pg_get_enconv_by_encoding(dest)->from_mic;
-		if (*src_to_mic == 0 || *dest_from_mic == 0)
-			return (-1);
-	}
-	return (0);
-}
 
 /*
  * set the client encoding. if encoding conversion between
  * client/server encoding is not supported, returns -1
  */
 int
-pg_set_client_encoding(int encoding)
+SetClientEncoding(int encoding, bool doit)
 {
-	int			current_server_encoding = DatabaseEncoding->encoding;
+	int			current_server_encoding;
+
+	current_server_encoding = GetDatabaseEncoding();
 
 	if (!PG_VALID_FE_ENCODING(encoding))
 		return (-1);
 
-	if (pg_find_encoding_converters(encoding, current_server_encoding, &client_to_mic, &server_from_mic) < 0)
-		return (-1);
+	if (current_server_encoding == encoding)
+	{
+		ClientEncoding = &pg_enc2name_tbl[encoding];
+		return 0;
+	}
+
+	/* XXX We cannot use FindDefaultConversionProc() while in
+	 * bootstrap or initprocessing mode since namespace functions will
+	 * not work.
+	 */
+	if (IsNormalProcessingMode())
+	{
+		if (!OidIsValid(FindDefaultConversionProc(encoding, current_server_encoding)) ||
+			!OidIsValid(FindDefaultConversionProc(current_server_encoding, encoding)))
+			return (-1);
+	}
+
+	if (!doit)
+		return 0;
 
 	ClientEncoding = &pg_enc2name_tbl[encoding];
 
-	Assert(ClientEncoding->encoding == encoding);
-
-	if (pg_find_encoding_converters(current_server_encoding, encoding, &server_to_mic, &client_from_mic) < 0)
-		return (-1);
 	return 0;
 }
 
 /*
- * returns the current client encoding
- */
+ * returns the current client encoding */
 int
 pg_get_client_encoding(void)
 {
@@ -151,55 +80,61 @@ pg_get_client_encoding_name(void)
 }
 
 /*
- * Convert src encoding and returns it. Actual conversion is done by
- * src_to_mic and dest_from_mic, which can be obtained by
- * pg_find_encoding_converters(). The reason we require two conversion
- * functions is that we have an intermediate encoding: MULE_INTERNAL
- * Using intermediate encodings will reduce the number of functions
- * doing encoding conversions. Special case is either src or dest is
- * the intermediate encoding itself. In this case, you don't need src
- * or dest (setting 0 will indicate there's no conversion
- * function). Another case is you have direct-conversion function from
- * src to dest. In this case either src_to_mic or dest_from_mic could
- * be set to 0 also.
+ * Apply encoding conversion on src and return it. The encoding
+ * conversion function is chosen from the pg_conversion system catalog
+ * marked as "default". If it is not found in the schema search path,
+ * it's taken from pg_catalog schema. If it even is not in the schema,
+ * warn and returns src. We cannot raise an error, since it will cause
+ * an infinit loop in error message sending.
  *
- * Note that If src or dest is UNICODE, we have to do
- * direct-conversion, since we don't support conversion bwteen UNICODE
- * and MULE_INTERNAL, we cannot go through MULE_INTERNAL.
+ * In the case of no coversion, src is returned.
  *
- * CASE 1: if no conversion is required, then the given pointer s is returned.
- *
- * CASE 2: if conversion is required, a palloc'd string is returned.
- *
- * Callers must check whether return value differs from passed value
- * to determine whether to pfree the result or not!
- *
- * Note: we assume that conversion cannot cause more than a 4-to-1 growth
- * in the length of the string --- is this enough?	*/
+ * XXX We assume that storage for converted result is 4-to-1 growth in
+ * the worst case. The rate for currently supported encoding pares are within 3
+ * (SJIS JIS X0201 half width kanna -> UTF-8 is the worst case).
+ * So "4" should be enough for the moment.
+ */
 
 unsigned char *
 pg_do_encoding_conversion(unsigned char *src, int len,
-						  to_mic_converter src_to_mic,
-						  from_mic_converter dest_from_mic)
+						  int src_encoding, int dest_encoding)
 {
-	unsigned char *result = src;
-	unsigned char *buf;
+	unsigned char *result;
+	Oid	proc;
 
-	if (src_to_mic)
+	if (src_encoding == dest_encoding)
+		return src;
+
+	proc = FindDefaultConversionProc(src_encoding, dest_encoding);
+	if (!OidIsValid(proc))
 	{
-		buf = (unsigned char *) palloc(len * 4 + 1);
-		(*src_to_mic) (result, buf, len);
-		result = buf;
-		len = strlen(result);
+		elog(LOG, "default conversion proc for %s to %s not found",
+			 pg_encoding_to_char(src_encoding), pg_encoding_to_char(dest_encoding));
+		return src;
 	}
-	if (dest_from_mic)
+
+	/* XXX we shoud avoid throwing errors in OidFuctionCall. Otherwise
+	 * we are going into inifinite loop!  So we have to make sure that
+	 * the function exists before calling OidFunctionCall.
+	 */
+	if (!SearchSysCacheExists(PROCOID,
+							 ObjectIdGetDatum(proc),
+							 0, 0, 0))
 	{
-		buf = (unsigned char *) palloc(len * 4 + 1);
-		(*dest_from_mic) (result, buf, len);
-		if (result != src)
-			pfree(result);		/* release first buffer */
-		result = buf;
+		elog(LOG, "default conversion proc %u for %s to %s not found in pg_proc",
+			 proc,
+			 pg_encoding_to_char(src_encoding), pg_encoding_to_char(dest_encoding));
+		return src;
 	}
+
+	result = palloc(len * 4 + 1);
+
+	OidFunctionCall5(proc,
+					 Int32GetDatum(src_encoding),
+					 Int32GetDatum(dest_encoding),
+					 CStringGetDatum(src),
+					 CStringGetDatum(result),
+					 Int32GetDatum(len));
 	return result;
 }
 
@@ -207,8 +142,7 @@ pg_do_encoding_conversion(unsigned char *src, int len,
  * Convert string using encoding_nanme. We assume that string's
  * encoding is same as DB encoding.
  *
- * TEXT convert(TEXT string, NAME encoding_name)
- */
+ * TEXT convert(TEXT string, NAME encoding_name) */
 Datum
 pg_convert(PG_FUNCTION_ARGS)
 {
@@ -230,7 +164,7 @@ pg_convert(PG_FUNCTION_ARGS)
 /*
  * Convert string using encoding_nanme.
  *
- * TEXT convert(TEXT string, NAME src_encoding_name, NAME dest_encoding_name)
+ * TEXT convert2(TEXT string, NAME src_encoding_name, NAME dest_encoding_name)
  */
 Datum
 pg_convert2(PG_FUNCTION_ARGS)
@@ -240,8 +174,6 @@ pg_convert2(PG_FUNCTION_ARGS)
 	int			src_encoding = pg_char_to_encoding(src_encoding_name);
 	char	   *dest_encoding_name = NameStr(*PG_GETARG_NAME(2));
 	int			dest_encoding = pg_char_to_encoding(dest_encoding_name);
-	to_mic_converter src;
-	from_mic_converter dest;
 	unsigned char *result;
 	text	   *retval;
 	unsigned char *str;
@@ -252,19 +184,13 @@ pg_convert2(PG_FUNCTION_ARGS)
 	if (dest_encoding < 0)
 		elog(ERROR, "Invalid destination encoding name %s", dest_encoding_name);
 
-	if (pg_find_encoding_converters(src_encoding, dest_encoding, &src, &dest) < 0)
-	{
-		elog(ERROR, "Conversion from %s to %s is not possible",
-			 src_encoding_name, dest_encoding_name);
-	}
-
 	/* make sure that source string is null terminated */
 	len = VARSIZE(string) - VARHDRSZ;
 	str = palloc(len + 1);
 	memcpy(str, VARDATA(string), len);
 	*(str + len) = '\0';
 
-	result = pg_do_encoding_conversion(str, len, src, dest);
+	result = pg_do_encoding_conversion(str, len, src_encoding, dest_encoding);
 	if (result == NULL)
 		elog(ERROR, "Encoding conversion failed");
 
@@ -288,16 +214,6 @@ pg_convert2(PG_FUNCTION_ARGS)
 
 /*
  * convert client encoding to server encoding.
- *
- * CASE 1: if no conversion is required, then the given pointer s is returned.
- *
- * CASE 2: if conversion is required, a palloc'd string is returned.
- *
- * Callers must check whether return value differs from passed value
- * to determine whether to pfree the result or not!
- *
- * Note: we assume that conversion cannot cause more than a 4-to-1 growth
- * in the length of the string --- is this enough?
  */
 unsigned char *
 pg_client_to_server(unsigned char *s, int len)
@@ -308,21 +224,12 @@ pg_client_to_server(unsigned char *s, int len)
 	if (ClientEncoding->encoding == DatabaseEncoding->encoding)
 		return s;
 
-	return pg_do_encoding_conversion(s, len, client_to_mic, server_from_mic);
+	return pg_do_encoding_conversion(s, len, ClientEncoding->encoding, 
+									 DatabaseEncoding->encoding);
 }
 
 /*
  * convert server encoding to client encoding.
- *
- * CASE 1: if no conversion is required, then the given pointer s is returned.
- *
- * CASE 2: if conversion is required, a palloc'd string is returned.
- *
- * Callers must check whether return value differs from passed value
- * to determine whether to pfree the result or not!
- *
- * Note: we assume that conversion cannot cause more than a 4-to-1 growth
- * in the length of the string --- is this enough?
  */
 unsigned char *
 pg_server_to_client(unsigned char *s, int len)
@@ -333,7 +240,8 @@ pg_server_to_client(unsigned char *s, int len)
 	if (ClientEncoding->encoding == DatabaseEncoding->encoding)
 		return s;
 
-	return pg_do_encoding_conversion(s, len, server_to_mic, client_from_mic);
+	return pg_do_encoding_conversion(s, len, DatabaseEncoding->encoding,
+									 ClientEncoding->encoding);
 }
 
 /* convert a multi-byte string to a wchar */
@@ -446,6 +354,12 @@ SetDatabaseEncoding(int encoding)
 
 	DatabaseEncoding = &pg_enc2name_tbl[encoding];
 	Assert(DatabaseEncoding->encoding == encoding);
+}
+
+void
+SetDefaultClientEncoding()
+{
+	ClientEncoding = &pg_enc2name_tbl[GetDatabaseEncoding()];
 }
 
 int

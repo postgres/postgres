@@ -1,4 +1,4 @@
-/* $Id: pg_wchar.h,v 1.39 2002/06/13 08:30:22 ishii Exp $ */
+/* $Id: pg_wchar.h,v 1.40 2002/07/18 02:02:30 ishii Exp $ */
 
 #ifndef PG_WCHAR_H
 #define PG_WCHAR_H
@@ -145,7 +145,7 @@ typedef unsigned int pg_wchar;
  * Encoding numeral identificators
  *
  * WARNING: the order of this table must be same as order
- *			in the pg_enconv[] (mb/conv.c) and pg_enc2name[] (mb/encnames.c) array!
+ *			in the pg_enc2name[] (mb/encnames.c) array!
  *
  *			If you add some encoding don'y forget check
  *			PG_ENCODING_[BE|FE]_LAST macros.
@@ -248,30 +248,6 @@ extern pg_encname *pg_char_to_encname_struct(const char *name);
 extern int	pg_char_to_encoding(const char *s);
 extern const char *pg_encoding_to_char(int encoding);
 
-typedef void (*to_mic_converter) (unsigned char *l, unsigned char *p, int len);
-typedef void (*from_mic_converter) (unsigned char *mic, unsigned char *p, int len);
-
-/*
- * The backend encoding conversion routines
- * Careful:
- *
- *	if (PG_VALID_ENCODING(enc))
- *		pg_encconv_tbl[ enc ]->foo
- */
-#ifndef FRONTEND
-typedef struct pg_enconv
-{
-	pg_enc		encoding;		/* encoding identifier */
-	to_mic_converter to_mic;	/* client encoding to MIC */
-	from_mic_converter from_mic;	/* MIC to client encoding */
-	to_mic_converter to_unicode;	/* client encoding to UTF-8 */
-	from_mic_converter from_unicode;	/* UTF-8 to client encoding */
-} pg_enconv;
-
-extern pg_enconv pg_enconv_tbl[];
-extern pg_enconv *pg_get_enconv_by_encoding(int encoding);
-#endif   /* FRONTEND */
-
 /*
  * pg_wchar stuff
  */
@@ -325,7 +301,8 @@ extern int	pg_mbcharcliplen(const unsigned char *, int, int);
 extern int	pg_encoding_max_length(int);
 extern int	pg_database_encoding_max_length(void);
 
-extern int	pg_set_client_encoding(int);
+extern void	SetDefaultClientEncoding(void);
+extern int	SetClientEncoding(int encoding, bool doit);
 extern int	pg_get_client_encoding(void);
 extern const char *pg_get_client_encoding_name(void);
 
@@ -337,12 +314,9 @@ extern int	pg_valid_client_encoding(const char *name);
 extern int	pg_valid_server_encoding(const char *name);
 
 extern int	pg_utf_mblen(const unsigned char *);
-extern int pg_find_encoding_converters(int src, int dest,
-							to_mic_converter *src_to_mic,
-							from_mic_converter *dest_from_mic);
 extern unsigned char *pg_do_encoding_conversion(unsigned char *src, int len,
-						  to_mic_converter src_to_mic,
-						  from_mic_converter dest_from_mic);
+												int src_encoding,
+												int dest_encoding);
 
 extern unsigned char *pg_client_to_server(unsigned char *, int);
 extern unsigned char *pg_server_to_client(unsigned char *, int);
@@ -350,7 +324,18 @@ extern unsigned char *pg_server_to_client(unsigned char *, int);
 extern unsigned short BIG5toCNS(unsigned short, unsigned char *);
 extern unsigned short CNStoBIG5(unsigned short, unsigned char);
 
+extern void LocalToUtf(unsigned char *iso, unsigned char *utf,
+					   pg_local_to_utf *map, int size, int encoding, int len);
+
+extern void UtfToLocal(unsigned char *utf, unsigned char *iso,
+					   pg_utf_to_local *map, int size, int len);
+
 char	   *pg_verifymbstr(const unsigned char *, int);
+
+void	pg_ascii2mic(unsigned char *src, unsigned char *dest, int len);
+void	pg_mic2ascii(unsigned char *src, unsigned char *dest, int len);
+void	pg_print_bogus_char(unsigned char **mic, unsigned char **p);
+
 #endif   /* MULTIBYTE */
 
 #endif   /* PG_WCHAR_H */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.188 2002/06/20 20:29:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.189 2002/07/18 02:02:30 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2714,7 +2714,6 @@ PQclientEncoding(const PGconn *conn)
 	return conn->client_encoding;
 }
 
-#ifdef MULTIBYTE
 int
 PQsetClientEncoding(PGconn *conn, const char *encoding)
 {
@@ -2750,15 +2749,6 @@ PQsetClientEncoding(PGconn *conn, const char *encoding)
 	PQclear(res);
 	return (status);
 }
-
-#else							/* without multibytle support */
-
-int
-PQsetClientEncoding(PGconn *conn, const char *encoding)
-{
-	return -1;
-}
-#endif
 
 void
 PQtrace(PGconn *conn, FILE *debug_port)

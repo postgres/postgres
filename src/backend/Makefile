@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.80 2002/07/16 05:46:35 momjian Exp $
+# $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.81 2002/07/18 02:02:29 ishii Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -131,6 +131,7 @@ endif
 ifeq ($(enable_nls), yes)
 	$(MAKE) -C po $@
 endif
+	$(MAKE) -C utils/mb $@
 
 install-bin: postgres $(POSTGRES_IMP) installdirs
 	$(INSTALL_PROGRAM) postgres$(X) $(DESTDIR)$(bindir)/postgres$(X)

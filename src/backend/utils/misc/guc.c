@@ -5,7 +5,7 @@
  * command, configuration file, and command line options.
  * See src/backend/utils/misc/README for more information.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.71 2002/07/13 01:02:14 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.72 2002/07/18 02:02:30 ishii Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -28,6 +28,7 @@
 #include "fmgr.h"
 #include "libpq/auth.h"
 #include "libpq/pqcomm.h"
+#include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "optimizer/cost.h"
 #include "optimizer/geqo.h"
@@ -1115,11 +1116,9 @@ InitializeGUCOptions(void)
 	if (env != NULL)
 		SetConfigOption("timezone", env, PGC_POSTMASTER, PGC_S_ENV_VAR);
 
-#ifdef MULTIBYTE
 	env = getenv("PGCLIENTENCODING");
 	if (env != NULL)
 		SetConfigOption("client_encoding", env, PGC_POSTMASTER, PGC_S_ENV_VAR);
-#endif
 }
 
 

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.341 2002/07/16 22:12:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.342 2002/07/18 02:02:30 ishii Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -62,13 +62,7 @@
 #include "utils/numeric.h"
 #include "utils/datetime.h"
 #include "utils/date.h"
-
-#ifdef MULTIBYTE
 #include "mb/pg_wchar.h"
-#else
-#define GetStandardEncoding()	0		/* PG_SQL_ASCII */
-#define GetStandardEncodingName()	"SQL_ASCII"
-#endif
 
 extern List *parsetree;			/* final parse result is delivered here */
 
@@ -3570,28 +3564,23 @@ createdb_opt_item:
 			| ENCODING opt_equal Sconst
 				{
 					int		encoding;
-#ifdef MULTIBYTE
-					encoding = pg_char_to_encoding($3);
-					if (encoding == -1)
+
+					if (pg_valid_server_encoding($3) < 0)
 						elog(ERROR, "%s is not a valid encoding name", $3);
-#else
-					if (strcasecmp($3, GetStandardEncodingName()) != 0)
-						elog(ERROR, "Multi-byte support is not enabled");
-					encoding = GetStandardEncoding();
-#endif
+					encoding = pg_char_to_encoding($3);
+
 					$$ = makeNode(DefElem);
 					$$->defname = "encoding";
 					$$->arg = (Node *)makeInteger(encoding);
 				}
 			| ENCODING opt_equal Iconst
 				{
-#ifdef MULTIBYTE
-					if (!pg_get_enconv_by_encoding($3))
+					const char *encoding_name;
+
+					encoding_name = pg_encoding_to_char($3);
+					if (!strcmp(encoding_name,"") ||
+					    pg_valid_server_encoding(encoding_name) < 0)
 						elog(ERROR, "%d is not a valid encoding code", $3);
-#else
-					if ($3 != GetStandardEncoding())
-						elog(ERROR, "Multi-byte support is not enabled");
-#endif
 					$$ = makeNode(DefElem);
 					$$->defname = "encoding";
 					$$->arg = (Node *)makeInteger($3);

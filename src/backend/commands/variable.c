@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.69 2002/06/20 20:29:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.70 2002/07/18 02:02:29 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,15 +27,7 @@
 #include "utils/guc.h"
 #include "utils/syscache.h"
 #include "utils/tqual.h"
-
-#ifdef MULTIBYTE
 #include "mb/pg_wchar.h"
-#else
-/* Grand unified hard-coded badness */
-#define pg_get_client_encoding_name()  "SQL_ASCII"
-#define GetDatabaseEncodingName() "SQL_ASCII"
-#endif
-
 
 /*
  * DATESTYLE
@@ -472,43 +464,30 @@ show_random_seed(void)
 
 
 /*
- * MULTIBYTE-related functions
- *
- * If MULTIBYTE support was not compiled, we still allow these variables
- * to exist, but you can't set them to anything but "SQL_ASCII".  This
- * minimizes interoperability problems between non-MB servers and MB-enabled
- * clients.
+ * encoding handling functions
  */
 
 const char *
 assign_client_encoding(const char *value, bool doit, bool interactive)
 {
-#ifdef MULTIBYTE
 	int			encoding;
-	int			old_encoding = 0;
 
 	encoding = pg_valid_client_encoding(value);
 	if (encoding < 0)
 		return NULL;
-	/*
-	 * Ugly API here ... can't test validity without setting new encoding...
+		
+	/* XXX SetClientEncoding depends on namespace functions which are
+	 * not available at startup time. So we accept requested client
+	 * encoding anyway which might not be valid (e.g. no conversion
+	 * procs available).
 	 */
-	if (!doit)
-		old_encoding = pg_get_client_encoding();
-	if (pg_set_client_encoding(encoding) < 0)
+	if (SetClientEncoding(encoding, doit) < 0)
 	{
 		if (interactive)
 			elog(ERROR, "Conversion between %s and %s is not supported",
 				 value, GetDatabaseEncodingName());
 		return NULL;
 	}
-	if (!doit)
-		pg_set_client_encoding(old_encoding);
-#else
-	if (strcasecmp(value, pg_get_client_encoding_name()) != 0)
-		return NULL;
-#endif
-
 	return value;
 }
 

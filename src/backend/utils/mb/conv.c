@@ -1,104 +1,24 @@
-/*
- * conversion between client encoding and server internal encoding
- * (currently mule internal code (mic) is used)
- * Tatsuo Ishii
+/*-------------------------------------------------------------------------
  *
- * WIN1250 client encoding support contributed by Pavel Behal
- * SJIS UDC (NEC selection IBM kanji) support contributed by Eiji Tokuya
+ *	  Utility functions for conversion procs.
  *
- * $Id: conv.c,v 1.38 2002/06/13 08:28:54 ishii Exp $
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
+ * IDENTIFICATION
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conv.c,v 1.39 2002/07/18 02:02:30 ishii Exp $
  *
+ *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 #include "mb/pg_wchar.h"
-
-#ifdef UNICODE_CONVERSION
-
-/*
- * for Unicode (UTF-8) support
- */
-#include "Unicode/utf8_to_iso8859_2.map"
-#include "Unicode/utf8_to_iso8859_3.map"
-#include "Unicode/utf8_to_iso8859_4.map"
-#include "Unicode/utf8_to_iso8859_5.map"
-#include "Unicode/utf8_to_iso8859_6.map"
-#include "Unicode/utf8_to_iso8859_7.map"
-#include "Unicode/utf8_to_iso8859_8.map"
-#include "Unicode/utf8_to_iso8859_9.map"
-#include "Unicode/utf8_to_iso8859_10.map"
-#include "Unicode/utf8_to_iso8859_13.map"
-#include "Unicode/utf8_to_iso8859_14.map"
-#include "Unicode/utf8_to_iso8859_15.map"
-#include "Unicode/utf8_to_iso8859_16.map"
-#include "Unicode/iso8859_2_to_utf8.map"
-#include "Unicode/iso8859_3_to_utf8.map"
-#include "Unicode/iso8859_4_to_utf8.map"
-#include "Unicode/iso8859_5_to_utf8.map"
-#include "Unicode/iso8859_6_to_utf8.map"
-#include "Unicode/iso8859_7_to_utf8.map"
-#include "Unicode/iso8859_8_to_utf8.map"
-#include "Unicode/iso8859_9_to_utf8.map"
-#include "Unicode/iso8859_10_to_utf8.map"
-#include "Unicode/iso8859_13_to_utf8.map"
-#include "Unicode/iso8859_14_to_utf8.map"
-#include "Unicode/iso8859_15_to_utf8.map"
-#include "Unicode/iso8859_16_to_utf8.map"
-#include "Unicode/utf8_to_euc_jp.map"
-#include "Unicode/euc_jp_to_utf8.map"
-#include "Unicode/utf8_to_euc_cn.map"
-#include "Unicode/euc_cn_to_utf8.map"
-#include "Unicode/utf8_to_gb18030.map"
-#include "Unicode/gb18030_to_utf8.map"
-#include "Unicode/utf8_to_euc_kr.map"
-#include "Unicode/euc_kr_to_utf8.map"
-#include "Unicode/utf8_to_euc_tw.map"
-#include "Unicode/euc_tw_to_utf8.map"
-#include "Unicode/utf8_to_sjis.map"
-#include "Unicode/sjis_to_utf8.map"
-#include "Unicode/utf8_to_big5.map"
-#include "Unicode/big5_to_utf8.map"
-#include "Unicode/utf8_to_gbk.map"
-#include "Unicode/gbk_to_utf8.map"
-#include "Unicode/utf8_to_uhc.map"
-#include "Unicode/uhc_to_utf8.map"
-#include "Unicode/utf8_to_johab.map"
-#include "Unicode/johab_to_utf8.map"
-#include "Unicode/utf8_to_tcvn.map"
-#include "Unicode/tcvn_to_utf8.map"
-#include "Unicode/utf8_to_win1250.map"
-#include "Unicode/win1250_to_utf8.map"
-#include "Unicode/utf8_to_win1256.map"
-#include "Unicode/win1256_to_utf8.map"
-#include "Unicode/utf8_to_win874.map"
-#include "Unicode/win874_to_utf8.map"
-/* Cyrillic charset conversion */
-#include "Unicode/alt_to_utf8.map"
-#include "Unicode/koi8r_to_utf8.map"
-#include "Unicode/win1251_to_utf8.map"
-#include "Unicode/utf8_to_alt.map"
-#include "Unicode/utf8_to_koi8r.map"
-#include "Unicode/utf8_to_win1251.map"
-#endif   /* UNICODE_CONVERSION */
-
-/*
- * SJIS alternative code.
- * this code is used if a mapping EUC -> SJIS is not defined.
- */
-#define PGSJISALTCODE 0x81ac
-#define PGEUCALTCODE 0xa2ae
-
-/*
- * conversion table between SJIS UDC (IBM kanji) and EUC_JP
- */
-#include "sjis.map"
 
 /*
  * convert bogus chars that cannot be represented in the current
  * encoding system.
  */
-static void
-printBogusChar(unsigned char **mic, unsigned char **p)
+void
+pg_print_bogus_char(unsigned char **mic, unsigned char **p)
 {
 	char		strbuf[16];
 	int			l = pg_mic_mblen(*mic);
@@ -111,298 +31,6 @@ printBogusChar(unsigned char **mic, unsigned char **p)
 		*(*p)++ = strbuf[1];
 	}
 	*(*p)++ = ')';
-}
-
-/*
- * SJIS ---> MIC
- */
-static void
-sjis2mic(unsigned char *sjis, unsigned char *p, int len)
-{
-	int			c1,
-				c2,
-/* Eiji Tokuya patched begin */
-				i,
-				k,
-				k2;
-
-/* Eiji Tokuya patched end */
-	while (len > 0 && (c1 = *sjis++))
-	{
-		if (c1 >= 0xa1 && c1 <= 0xdf)
-		{
-			/* JIS X0201 (1 byte kana) */
-			len--;
-			*p++ = LC_JISX0201K;
-			*p++ = c1;
-		}
-		else if (c1 > 0x7f)
-		{
-			/*
-			 * JIS X0208, X0212, user defined extended characters
-			 */
-			c2 = *sjis++;
-			k = (c1 << 8) + c2;
-/* Eiji Tokuya patched begin */
-			if (k >= 0xed40 && k < 0xf040)
-			{
-				/* NEC selection IBM kanji */
-				for (i = 0;; i++)
-				{
-					k2 = ibmkanji[i].nec;
-					if (k2 == 0xffff)
-						break;
-					if (k2 == k)
-					{
-						k = ibmkanji[i].sjis;
-						c1 = (k >> 8) & 0xff;
-						c2 = k & 0xff;
-					}
-				}
-			}
-
-			if (k < 0xeb3f)
-/* Eiji Tokuya patched end */
-			{
-				/* JIS X0208 */
-				len -= 2;
-				*p++ = LC_JISX0208;
-				*p++ = ((c1 & 0x3f) << 1) + 0x9f + (c2 > 0x9e);
-				*p++ = c2 + ((c2 > 0x9e) ? 2 : 0x60) + (c2 < 0x80);
-			}
-/* Eiji Tokuya patched begin */
-			else if ((k >= 0xeb40 && k < 0xf040) || (k >= 0xfc4c && k <= 0xfcfc))
-			{
-				/* NEC selection IBM kanji - Other undecided justice */
-/* Eiji Tokuya patched end */
-				*p++ = LC_JISX0208;
-				*p++ = PGEUCALTCODE >> 8;
-				*p++ = PGEUCALTCODE & 0xff;
-			}
-			else if (k >= 0xf040 && k < 0xf540)
-			{
-				/*
-				 * UDC1 mapping to X0208 85 ku - 94 ku JIS code 0x7521 -
-				 * 0x7e7e EUC 0xf5a1 - 0xfefe
-				 */
-				len -= 2;
-				*p++ = LC_JISX0208;
-				c1 -= 0x6f;
-				*p++ = ((c1 & 0x3f) << 1) + 0xf3 + (c2 > 0x9e);
-				*p++ = c2 + ((c2 > 0x9e) ? 2 : 0x60) + (c2 < 0x80);
-			}
-			else if (k >= 0xf540 && k < 0xfa40)
-			{
-				/*
-				 * UDC2 mapping to X0212 85 ku - 94 ku JIS code 0x7521 -
-				 * 0x7e7e EUC 0x8ff5a1 - 0x8ffefe
-				 */
-				len -= 2;
-				*p++ = LC_JISX0212;
-				c1 -= 0x74;
-				*p++ = ((c1 & 0x3f) << 1) + 0xf3 + (c2 > 0x9e);
-				*p++ = c2 + ((c2 > 0x9e) ? 2 : 0x60) + (c2 < 0x80);
-			}
-			else if (k >= 0xfa40)
-			{
-				/*
-				 * mapping IBM kanji to X0208 and X0212
-				 *
-				 */
-				len -= 2;
-				for (i = 0;; i++)
-				{
-					k2 = ibmkanji[i].sjis;
-					if (k2 == 0xffff)
-						break;
-					if (k2 == k)
-					{
-						k = ibmkanji[i].euc;
-						if (k >= 0x8f0000)
-						{
-							*p++ = LC_JISX0212;
-							*p++ = 0x80 | ((k & 0xff00) >> 8);
-							*p++ = 0x80 | (k & 0xff);
-						}
-						else
-						{
-							*p++ = LC_JISX0208;
-							*p++ = 0x80 | (k >> 8);
-							*p++ = 0x80 | (k & 0xff);
-						}
-					}
-				}
-			}
-		}
-		else
-		{						/* should be ASCII */
-			len--;
-			*p++ = c1;
-		}
-	}
-	*p = '\0';
-}
-
-/*
- * MIC ---> SJIS
- */
-static void
-mic2sjis(unsigned char *mic, unsigned char *p, int len)
-{
-	int			c1,
-				c2,
-				k;
-
-	while (len > 0 && (c1 = *mic))
-	{
-		len -= pg_mic_mblen(mic++);
-
-		if (c1 == LC_JISX0201K)
-			*p++ = *mic++;
-		else if (c1 == LC_JISX0208)
-		{
-			c1 = *mic++;
-			c2 = *mic++;
-			k = (c1 << 8) | (c2 & 0xff);
-			if (k >= 0xf5a1)
-			{
-				/* UDC1 */
-				c1 -= 0x54;
-				*p++ = ((c1 - 0xa1) >> 1) + ((c1 < 0xdf) ? 0x81 : 0xc1) + 0x6f;
-			}
-			else
-				*p++ = ((c1 - 0xa1) >> 1) + ((c1 < 0xdf) ? 0x81 : 0xc1);
-			*p++ = c2 - ((c1 & 1) ? ((c2 < 0xe0) ? 0x61 : 0x60) : 2);
-		}
-		else if (c1 == LC_JISX0212)
-		{
-			int			i,
-						k2;
-
-			c1 = *mic++;
-			c2 = *mic++;
-			k = c1 << 8 | c2;
-			if (k >= 0xf5a1)
-			{
-				/* UDC2 */
-				c1 -= 0x54;
-				*p++ = ((c1 - 0xa1) >> 1) + ((c1 < 0xdf) ? 0x81 : 0xc1) + 0x74;
-				*p++ = c2 - ((c1 & 1) ? ((c2 < 0xe0) ? 0x61 : 0x60) : 2);
-			}
-			else
-			{
-				/* IBM kanji */
-				for (i = 0;; i++)
-				{
-					k2 = ibmkanji[i].euc & 0xffff;
-					if (k2 == 0xffff)
-					{
-						*p++ = PGSJISALTCODE >> 8;
-						*p++ = PGSJISALTCODE & 0xff;
-						break;
-					}
-					if (k2 == k)
-					{
-						k = ibmkanji[i].sjis;
-						*p++ = k >> 8;
-						*p++ = k & 0xff;
-						break;
-					}
-				}
-			}
-		}
-		else if (c1 > 0x7f)
-		{
-			/* cannot convert to SJIS! */
-			*p++ = PGSJISALTCODE >> 8;
-			*p++ = PGSJISALTCODE & 0xff;
-		}
-		else
-		{						/* should be ASCII */
-			*p++ = c1;
-		}
-	}
-	*p = '\0';
-}
-
-/*
- * EUC_JP ---> MIC
- */
-static void
-euc_jp2mic(unsigned char *euc, unsigned char *p, int len)
-{
-	int			c1;
-
-	while (len > 0 && (c1 = *euc++))
-	{
-		if (c1 == SS2)
-		{						/* 1 byte kana? */
-			len -= 2;
-			*p++ = LC_JISX0201K;
-			*p++ = *euc++;
-		}
-		else if (c1 == SS3)
-		{						/* JIS X0212 kanji? */
-			len -= 3;
-			*p++ = LC_JISX0212;
-			*p++ = *euc++;
-			*p++ = *euc++;
-		}
-		else if (c1 & 0x80)
-		{						/* kanji? */
-			len -= 2;
-			*p++ = LC_JISX0208;
-			*p++ = c1;
-			*p++ = *euc++;
-		}
-		else
-		{						/* should be ASCII */
-			len--;
-			*p++ = c1;
-		}
-	}
-	*p = '\0';
-}
-
-/*
- * MIC ---> EUC_JP
- */
-static void
-mic2euc_jp(unsigned char *mic, unsigned char *p, int len)
-{
-	int			c1;
-
-	while (len > 0 && (c1 = *mic))
-	{
-		len -= pg_mic_mblen(mic++);
-
-		if (c1 == LC_JISX0201K)
-		{
-			*p++ = SS2;
-			*p++ = *mic++;
-		}
-		else if (c1 == LC_JISX0212)
-		{
-			*p++ = SS3;
-			*p++ = *mic++;
-			*p++ = *mic++;
-		}
-		else if (c1 == LC_JISX0208)
-		{
-			*p++ = *mic++;
-			*p++ = *mic++;
-		}
-		else if (c1 > 0x7f)
-		{						/* cannot convert to EUC_JP! */
-			mic--;
-			printBogusChar(&mic, &p);
-		}
-		else
-		{						/* should be ASCII */
-			*p++ = c1;
-		}
-	}
-	*p = '\0';
 }
 
 /*
@@ -451,7 +79,7 @@ mic2euc_kr(unsigned char *mic, unsigned char *p, int len)
 		else if (c1 > 0x7f)
 		{						/* cannot convert to EUC_KR! */
 			mic--;
-			printBogusChar(&mic, &p);
+			pg_print_bogus_char(&mic, &p);
 		}
 		else
 		{						/* should be ASCII */
@@ -507,7 +135,7 @@ mic2euc_cn(unsigned char *mic, unsigned char *p, int len)
 		else if (c1 > 0x7f)
 		{						/* cannot convert to EUC_CN! */
 			mic--;
-			printBogusChar(&mic, &p);
+			pg_print_bogus_char(&mic, &p);
 		}
 		else
 		{						/* should be ASCII */
@@ -517,6 +145,7 @@ mic2euc_cn(unsigned char *mic, unsigned char *p, int len)
 	*p = '\0';
 }
 
+#ifdef NOT_USED
 /*
  * GB18030 ---> MIC
  * Added by Bill Huang <bhuang@redhat.com>,<bill_huanghb@ybb.ne.jp>
@@ -594,206 +223,19 @@ mic2gb18030(unsigned char *mic, unsigned char *p, int len)
 			}	
 			else{
 				mic--;
-				printBogusChar(&mic, &p);
+				pg_print_bogus_char(&mic, &p);
 				mic--;
-				printBogusChar(&mic, &p);
+				pg_print_bogus_char(&mic, &p);
 			}		
 		}
 		else{
 			mic--;
-			printBogusChar(&mic, &p);
+			pg_print_bogus_char(&mic, &p);
 		}
 	}
 	*p = '\0';
 }
-
-/*
- * EUC_TW ---> MIC
- */
-static void
-euc_tw2mic(unsigned char *euc, unsigned char *p, int len)
-{
-	int			c1;
-
-	while (len > 0 && (c1 = *euc++))
-	{
-		if (c1 == SS2)
-		{
-			len -= 4;
-			c1 = *euc++;		/* plane No. */
-			if (c1 == 0xa1)
-				*p++ = LC_CNS11643_1;
-			else if (c1 == 0xa2)
-				*p++ = LC_CNS11643_2;
-			else
-			{
-				*p++ = 0x9d;	/* LCPRV2 */
-				*p++ = 0xa3 - c1 + LC_CNS11643_3;
-			}
-			*p++ = *euc++;
-			*p++ = *euc++;
-		}
-		else if (c1 & 0x80)
-		{						/* CNS11643-1 */
-			len -= 2;
-			*p++ = LC_CNS11643_1;
-			*p++ = c1;
-			*p++ = *euc++;
-		}
-		else
-		{						/* should be ASCII */
-			len--;
-			*p++ = c1;
-		}
-	}
-	*p = '\0';
-}
-
-/*
- * MIC ---> EUC_TW
- */
-static void
-mic2euc_tw(unsigned char *mic, unsigned char *p, int len)
-{
-	int			c1;
-
-	while (len > 0 && (c1 = *mic))
-	{
-		len -= pg_mic_mblen(mic++);
-
-		if (c1 == LC_CNS11643_1)
-		{
-			*p++ = *mic++;
-			*p++ = *mic++;
-		}
-		else if (c1 == LC_CNS11643_2)
-		{
-			*p++ = SS2;
-			*p++ = 0xa2;
-			*p++ = *mic++;
-			*p++ = *mic++;
-		}
-		else if (c1 == 0x9d)
-		{						/* LCPRV2? */
-			*p++ = SS2;
-			*p++ = *mic++ - LC_CNS11643_3 + 0xa3;
-			*p++ = *mic++;
-			*p++ = *mic++;
-		}
-		else if (c1 > 0x7f)
-		{						/* cannot convert to EUC_TW! */
-			mic--;
-			printBogusChar(&mic, &p);
-		}
-		else
-		{						/* should be ASCII */
-			*p++ = c1;
-		}
-	}
-	*p = '\0';
-}
-
-/*
- * Big5 ---> MIC
- */
-static void
-big52mic(unsigned char *big5, unsigned char *p, int len)
-{
-	unsigned short c1;
-	unsigned short big5buf,
-				cnsBuf;
-	unsigned char lc;
-	char		bogusBuf[3];
-	int			i;
-
-	while (len > 0 && (c1 = *big5++))
-	{
-		if (c1 <= 0x7fU)
-		{						/* ASCII */
-			len--;
-			*p++ = c1;
-		}
-		else
-		{
-			len -= 2;
-			big5buf = c1 << 8;
-			c1 = *big5++;
-			big5buf |= c1;
-			cnsBuf = BIG5toCNS(big5buf, &lc);
-			if (lc != 0)
-			{
-				if (lc == LC_CNS11643_3 || lc == LC_CNS11643_4)
-				{
-					*p++ = 0x9d;	/* LCPRV2 */
-				}
-				*p++ = lc;		/* Plane No. */
-				*p++ = (cnsBuf >> 8) & 0x00ff;
-				*p++ = cnsBuf & 0x00ff;
-			}
-			else
-			{					/* cannot convert */
-				big5 -= 2;
-				*p++ = '(';
-				for (i = 0; i < 2; i++)
-				{
-					sprintf(bogusBuf, "%02x", *big5++);
-					*p++ = bogusBuf[0];
-					*p++ = bogusBuf[1];
-				}
-				*p++ = ')';
-			}
-		}
-	}
-	*p = '\0';
-}
-
-/*
- * MIC ---> Big5
- */
-static void
-mic2big5(unsigned char *mic, unsigned char *p, int len)
-{
-	int			l;
-	unsigned short c1;
-	unsigned short big5buf,
-				cnsBuf;
-
-	while (len > 0 && (c1 = *mic))
-	{
-		l = pg_mic_mblen(mic++);
-		len -= l;
-
-		/* 0x9d means LCPRV2 */
-		if (c1 == LC_CNS11643_1 || c1 == LC_CNS11643_2 || c1 == 0x9d)
-		{
-			if (c1 == 0x9d)
-			{
-				c1 = *mic++;	/* get plane no. */
-			}
-			cnsBuf = (*mic++) << 8;
-			cnsBuf |= (*mic++) & 0x00ff;
-			big5buf = CNStoBIG5(cnsBuf, c1);
-			if (big5buf == 0)
-			{					/* cannot convert to Big5! */
-				mic -= l;
-				printBogusChar(&mic, &p);
-			}
-			else
-			{
-				*p++ = (big5buf >> 8) & 0x00ff;
-				*p++ = big5buf & 0x00ff;
-			}
-		}
-		else if (c1 <= 0x7f)	/* ASCII */
-			*p++ = c1;
-		else
-		{						/* cannot convert to Big5! */
-			mic--;
-			printBogusChar(&mic, &p);
-		}
-	}
-	*p = '\0';
-}
+#endif
 
 /*
  * LATINn ---> MIC
@@ -806,7 +248,7 @@ latin2mic(unsigned char *l, unsigned char *p, int len, int lc)
 	while (len-- > 0 && (c1 = *l++))
 	{
 		if (c1 > 0x7f)
-		{						/* Latin1? */
+		{						/* Latin? */
 			*p++ = lc;
 		}
 		*p++ = c1;
@@ -831,7 +273,7 @@ mic2latin(unsigned char *mic, unsigned char *p, int len, int lc)
 		else if (c1 > 0x7f)
 		{
 			mic--;
-			printBogusChar(&mic, &p);
+			pg_print_bogus_char(&mic, &p);
 		}
 		else
 		{						/* should be ASCII */
@@ -882,24 +324,11 @@ mic2latin4(unsigned char *mic, unsigned char *p, int len)
 	mic2latin(mic, p, len, LC_ISO8859_4);
 }
 
-#ifdef NOT_USED
-static void
-latin52mic(unsigned char *l, unsigned char *p, int len)
-{
-	latin2mic(l, p, len, LC_ISO8859_5);
-}
-static void
-mic2latin5(unsigned char *mic, unsigned char *p, int len)
-{
-	mic2latin(mic, p, len, LC_ISO8859_5);
-}
-#endif
-
 /*
  * ASCII ---> MIC
  */
-static void
-ascii2mic(unsigned char *l, unsigned char *p, int len)
+void
+pg_ascii2mic(unsigned char *l, unsigned char *p, int len)
 {
 	int			c1;
 
@@ -911,15 +340,15 @@ ascii2mic(unsigned char *l, unsigned char *p, int len)
 /*
  * MIC ---> ASCII
  */
-static void
-mic2ascii(unsigned char *mic, unsigned char *p, int len)
+void
+pg_mic2ascii(unsigned char *mic, unsigned char *p, int len)
 {
 	int			c1;
 
 	while (len-- > 0 && (c1 = *mic))
 	{
 		if (c1 > 0x7f)
-			printBogusChar(&mic, &p);
+			pg_print_bogus_char(&mic, &p);
 		else
 		{						/* should be ASCII */
 			*p++ = c1;
@@ -1257,82 +686,6 @@ mic2win1250(unsigned char *mic, unsigned char *p, int len)
 	mic2latin_with_table(mic, p, len, LC_ISO8859_2, iso88592_2_win1250);
 }
 
-#ifdef UNICODE_CONVERSION
-
-/*
- * UNICODE(UTF-8) support
- */
-
-/*
- * ASCII ---> UTF-8
- */
-static void
-ascii2utf(unsigned char *ascii, unsigned char *utf, int len)
-{
-	ascii2mic(ascii, utf, len);
-}
-
-/*
- * UTF-8 ---> ASCII
- */
-static void
-utf2ascii(unsigned char *utf, unsigned char *ascii, int len)
-{
-	mic2ascii(utf, ascii, len);
-}
-
-/*
- * ISO8859-1 ---> UTF-8
- */
-static void
-iso8859_1_to_utf(unsigned char *iso, unsigned char *utf, int len)
-{
-	unsigned short c;
-
-	while (len-- > 0 && (c = *iso++))
-	{
-		if (c < 0x80)
-			*utf++ = c;
-		else
-		{
-			*utf++ = (c >> 6) | 0xc0;
-			*utf++ = (c & 0x003f) | 0x80;
-		}
-	}
-	*utf = '\0';
-}
-
-/*
- * UTF-8 ---> ISO8859-1
- */
-static void
-utf_to_iso8859_1(unsigned char *utf, unsigned char *iso, int len)
-{
-	unsigned short c,
-				c1,
-				c2;
-
-	while (len > 0 && (c = *utf++))
-	{
-		if ((c & 0xe0) == 0xc0)
-		{
-			c1 = c & 0x1f;
-			c2 = *utf++ & 0x3f;
-			*iso = c1 << 6;
-			*iso++ |= c2;
-			len -= 2;
-		}
-		else if ((c & 0xe0) == 0xe0)
-			elog(ERROR, "Could not convert UTF-8 to ISO8859-1");
-		else
-		{
-			*iso++ = c;
-			len--;
-		}
-	}
-	*iso = '\0';
-}
-
 /*
  * comparison routine for bsearch()
  * this routine is intended for UTF-8 -> local code
@@ -1372,9 +725,9 @@ compare2(const void *p1, const void *p2)
  * map: the conversion map.
  * size: the size of the conversion map.
  */
-static void
-utf_to_local(unsigned char *utf, unsigned char *iso,
-			 pg_utf_to_local *map, int size, int len)
+void
+UtfToLocal(unsigned char *utf, unsigned char *iso,
+		   pg_utf_to_local *map, int size, int len)
 {
 	unsigned int iutf;
 	int			l;
@@ -1420,43 +773,6 @@ utf_to_local(unsigned char *utf, unsigned char *iso,
 
 #ifdef NOT_USED
 /*
- * UTF-8 ---> ISO8859-2
- */
-static void
-utf_to_latin2(unsigned char *utf, unsigned char *iso, int len)
-{
-	utf_to_local(utf, iso, ULmapISO8859_2, sizeof(ULmapISO8859_2) / sizeof(pg_utf_to_local), len);
-}
-
-/*
- * UTF-8 ---> ISO8859-3
- */
-static void
-utf_to_latin3(unsigned char *utf, unsigned char *iso, int len)
-{
-	utf_to_local(utf, iso, ULmapISO8859_3, sizeof(ULmapISO8859_3) / sizeof(pg_utf_to_local), len);
-}
-
-/*
- * UTF-8 ---> ISO8859-4
- */
-static void
-utf_to_latin4(unsigned char *utf, unsigned char *iso, int len)
-{
-	utf_to_local(utf, iso, ULmapISO8859_4, sizeof(ULmapISO8859_4) / sizeof(pg_utf_to_local), len);
-}
-
-/*
- * UTF-8 ---> ISO8859-5
- */
-static void
-utf_to_latin5(unsigned char *utf, unsigned char *iso, int len)
-{
-	utf_to_local(utf, iso, ULmapISO8859_5, sizeof(ULmapISO8859_5) / sizeof(pg_utf_to_local), len);
-}
-#endif   /* NOT_USED */
-
-/*
  * Cyrillic charsets
  */
 
@@ -1490,11 +806,13 @@ utf_to_ALT(unsigned char *utf, unsigned char *iso, int len)
 	utf_to_local(utf, iso, ULmap_ALT, sizeof(ULmap_ALT) / sizeof(pg_utf_to_local), len);
 }
 
+#endif
+
 /*
  * local code ---> UTF-8
  */
-static void
-local_to_utf(unsigned char *iso, unsigned char *utf,
+void
+LocalToUtf(unsigned char *iso, unsigned char *utf,
 			 pg_local_to_utf *map, int size, int encoding, int len)
 {
 	unsigned int iiso;
@@ -1557,69 +875,6 @@ local_to_utf(unsigned char *iso, unsigned char *utf,
 
 #ifdef NOT_USED
 /*
- * ISO-8859-2 ---> UTF-8
- */
-static void
-latin2_to_utf(unsigned char *iso, unsigned char *utf, int len)
-{
-	local_to_utf(iso, utf, LUmapISO8859_2, sizeof(LUmapISO8859_2) / sizeof(pg_local_to_utf), PG_LATIN2, len);
-}
-
-/*
- * ISO-8859-3 ---> UTF-8
- */
-static void
-latin3_to_utf(unsigned char *iso, unsigned char *utf, int len)
-{
-	local_to_utf(iso, utf, LUmapISO8859_3, sizeof(LUmapISO8859_3) / sizeof(pg_local_to_utf), PG_LATIN3, len);
-}
-
-/*
- * ISO-8859-4 ---> UTF-8
- */
-static void
-latin4_to_utf(unsigned char *iso, unsigned char *utf, int len)
-{
-	local_to_utf(iso, utf, LUmapISO8859_4, sizeof(LUmapISO8859_4) / sizeof(pg_local_to_utf), PG_LATIN4, len);
-}
-
-/*
- * ISO-8859-5 ---> UTF-8
- */
-static void
-latin5_to_utf(unsigned char *iso, unsigned char *utf, int len)
-{
-	local_to_utf(iso, utf, LUmapISO8859_5, sizeof(LUmapISO8859_5) / sizeof(pg_local_to_utf), PG_LATIN5, len);
-}
-#endif   /* NOT_USED */
-
-#define UTF_ISO8859(_id_) \
-static void \
-utf_to_iso8859_##_id_(unsigned char *utf, unsigned char *iso, int len) \
-{ \
-	utf_to_local(utf, iso, ULmapISO8859_##_id_, sizeof(ULmapISO8859_##_id_) / sizeof(pg_utf_to_local), len); \
-} \
-static void \
-iso8859_##_id_##_to_utf(unsigned char *iso, unsigned char *utf, int len) \
-{ \
-	local_to_utf(iso, utf, LUmapISO8859_##_id_, sizeof(LUmapISO8859_##_id_) / sizeof(pg_local_to_utf), PG_LATIN1, len); \
-}
-
-UTF_ISO8859(2);
-UTF_ISO8859(3);
-UTF_ISO8859(4);
-UTF_ISO8859(5);
-UTF_ISO8859(6);
-UTF_ISO8859(7);
-UTF_ISO8859(8);
-UTF_ISO8859(9);
-UTF_ISO8859(10);
-UTF_ISO8859(13);
-UTF_ISO8859(14);
-UTF_ISO8859(15);
-UTF_ISO8859(16);
-
-/*
  * KOI8-R ---> UTF-8
  */
 static void
@@ -1644,215 +899,6 @@ static void
 ALT_to_utf(unsigned char *iso, unsigned char *utf, int len)
 {
 	local_to_utf(iso, utf, LUmapALT, sizeof(LUmapALT) / sizeof(pg_local_to_utf), PG_ALT, len);
-}
-
-/*
- * UTF-8 ---> EUC_JP
- */
-static void
-utf_to_euc_jp(unsigned char *utf, unsigned char *euc, int len)
-
-{
-	utf_to_local(utf, euc, ULmapEUC_JP,
-				 sizeof(ULmapEUC_JP) / sizeof(pg_utf_to_local), len);
-}
-
-/*
- * EUC_JP ---> UTF-8
- */
-static void
-euc_jp_to_utf(unsigned char *euc, unsigned char *utf, int len)
-{
-	local_to_utf(euc, utf, LUmapEUC_JP,
-		  sizeof(LUmapEUC_JP) / sizeof(pg_local_to_utf), PG_EUC_JP, len);
-}
-
-/*
- * UTF-8 ---> EUC_CN
- */
-static void
-utf_to_euc_cn(unsigned char *utf, unsigned char *euc, int len)
-
-{
-	utf_to_local(utf, euc, ULmapEUC_CN,
-				 sizeof(ULmapEUC_CN) / sizeof(pg_utf_to_local), len);
-}
-
-/*
- * EUC_CN ---> UTF-8
- */
-static void
-euc_cn_to_utf(unsigned char *euc, unsigned char *utf, int len)
-{
-	local_to_utf(euc, utf, LUmapEUC_CN,
-		  sizeof(LUmapEUC_CN) / sizeof(pg_local_to_utf), PG_EUC_CN, len);
-}
-
-/*
- * UTF-8 ---> GB18030
- */
-static void
-utf_to_gb18030(unsigned char *utf, unsigned char *euc, int len)
-
-{
-	utf_to_local(utf, euc, ULmapGB18030,
-				 sizeof(ULmapGB18030) / sizeof(pg_utf_to_local), len);
-}
-
-/*
- * GB18030 ---> UTF-8
- */
-static void
-gb18030_to_utf(unsigned char *euc, unsigned char *utf, int len)
-{
-	local_to_utf(euc, utf, LUmapGB18030,
-		  sizeof(LUmapGB18030) / sizeof(pg_local_to_utf), PG_GB18030, len);
-}
-/*
- * UTF-8 ---> EUC_KR
- */
-static void
-utf_to_euc_kr(unsigned char *utf, unsigned char *euc, int len)
-
-{
-	utf_to_local(utf, euc, ULmapEUC_KR,
-				 sizeof(ULmapEUC_KR) / sizeof(pg_utf_to_local), len);
-}
-
-/*
- * EUC_KR ---> UTF-8
- */
-static void
-euc_kr_to_utf(unsigned char *euc, unsigned char *utf, int len)
-{
-	local_to_utf(euc, utf, LUmapEUC_KR,
-		  sizeof(LUmapEUC_KR) / sizeof(pg_local_to_utf), PG_EUC_KR, len);
-}
-
-/*
- * UTF-8 ---> EUC_TW
- */
-static void
-utf_to_euc_tw(unsigned char *utf, unsigned char *euc, int len)
-
-{
-	utf_to_local(utf, euc, ULmapEUC_TW,
-				 sizeof(ULmapEUC_TW) / sizeof(pg_utf_to_local), len);
-}
-
-/*
- * EUC_TW ---> UTF-8
- */
-static void
-euc_tw_to_utf(unsigned char *euc, unsigned char *utf, int len)
-{
-	local_to_utf(euc, utf, LUmapEUC_TW,
-		  sizeof(LUmapEUC_TW) / sizeof(pg_local_to_utf), PG_EUC_TW, len);
-}
-
-/*
- * UTF-8 ---> SJIS
- */
-static void
-utf_to_sjis(unsigned char *utf, unsigned char *euc, int len)
-
-{
-	utf_to_local(utf, euc, ULmapSJIS,
-				 sizeof(ULmapSJIS) / sizeof(pg_utf_to_local), len);
-}
-
-/*
- * SJIS ---> UTF-8
- */
-static void
-sjis_to_utf(unsigned char *euc, unsigned char *utf, int len)
-{
-	local_to_utf(euc, utf, LUmapSJIS,
-			  sizeof(LUmapSJIS) / sizeof(pg_local_to_utf), PG_SJIS, len);
-}
-
-/*
- * UTF-8 ---> BIG5
- */
-static void
-utf_to_big5(unsigned char *utf, unsigned char *euc, int len)
-
-{
-	utf_to_local(utf, euc, ULmapBIG5,
-				 sizeof(ULmapBIG5) / sizeof(pg_utf_to_local), len);
-}
-
-/*
- * BIG5 ---> UTF-8
- */
-static void
-big5_to_utf(unsigned char *euc, unsigned char *utf, int len)
-{
-	local_to_utf(euc, utf, LUmapBIG5,
-			  sizeof(LUmapBIG5) / sizeof(pg_local_to_utf), PG_BIG5, len);
-}
-
-/*
- * UTF-8 ---> GBK
- */
-static void
-utf_to_gbk(unsigned char *utf, unsigned char *euc, int len)
-
-{
-	utf_to_local(utf, euc, ULmapGBK,
-				 sizeof(ULmapGBK) / sizeof(pg_utf_to_local), len);
-}
-
-/*
- * GBK ---> UTF-8
- */
-static void
-gbk_to_utf(unsigned char *euc, unsigned char *utf, int len)
-{
-	local_to_utf(euc, utf, LUmapGBK,
-			  sizeof(LUmapGBK) / sizeof(pg_local_to_utf), PG_GBK, len);
-}
-
-/*
- * UTF-8 ---> UHC
- */
-static void
-utf_to_uhc(unsigned char *utf, unsigned char *euc, int len)
-
-{
-	utf_to_local(utf, euc, ULmapUHC,
-				 sizeof(ULmapUHC) / sizeof(pg_utf_to_local), len);
-}
-
-/*
- * UHC ---> UTF-8
- */
-static void
-uhc_to_utf(unsigned char *euc, unsigned char *utf, int len)
-{
-	local_to_utf(euc, utf, LUmapUHC,
-			  sizeof(LUmapUHC) / sizeof(pg_local_to_utf), PG_UHC, len);
-}
-
-/*
- * UTF-8 ---> JOHAB
- */
-static void
-utf_to_johab(unsigned char *utf, unsigned char *euc, int len)
-
-{
-	utf_to_local(utf, euc, ULmapJOHAB,
-				 sizeof(ULmapJOHAB) / sizeof(pg_utf_to_local), len);
-}
-
-/*
- * JOHAB ---> UTF-8
- */
-static void
-johab_to_utf(unsigned char *euc, unsigned char *utf, int len)
-{
-	local_to_utf(euc, utf, LUmapJOHAB,
-			  sizeof(LUmapJOHAB) / sizeof(pg_local_to_utf), PG_JOHAB, len);
 }
 
 /*
@@ -1898,27 +944,6 @@ win1256_to_utf(unsigned char *euc, unsigned char *utf, int len)
 }
 
 /*
- * UTF-8 ---> TCVN
- */
-static void
-utf_to_tcvn(unsigned char *utf, unsigned char *euc, int len)
-
-{
-	utf_to_local(utf, euc, ULmapTCVN,
-				 sizeof(ULmapTCVN) / sizeof(pg_utf_to_local), len);
-}
-
-/*
- * TCVN ---> UTF-8
- */
-static void
-tcvn_to_utf(unsigned char *euc, unsigned char *utf, int len)
-{
-	local_to_utf(euc, utf, LUmapTCVN,
-			  sizeof(LUmapTCVN) / sizeof(pg_local_to_utf), PG_TCVN, len);
-}
-
-/*
  * UTF-8 ---> WIN874
  */
 static void
@@ -1939,213 +964,4 @@ win874_to_utf(unsigned char *euc, unsigned char *utf, int len)
 			  sizeof(LUmapWIN874) / sizeof(pg_local_to_utf), PG_WIN874, len);
 }
 
-/* ----------
- * Encoding conversion routines
- *
- * WARINIG: must by same order as pg_enc in include/mb/pg_wchar.h!
- * ----------
- */
-pg_enconv	pg_enconv_tbl[] =
-{
-	{
-		PG_SQL_ASCII, ascii2mic, mic2ascii, ascii2utf, utf2ascii
-	},
-	{
-		PG_EUC_JP, euc_jp2mic, mic2euc_jp, euc_jp_to_utf, utf_to_euc_jp
-	},
-	{
-		PG_EUC_CN, euc_cn2mic, mic2euc_cn, euc_cn_to_utf, utf_to_euc_cn
-	},
-	{
-		PG_EUC_KR, euc_kr2mic, mic2euc_kr, euc_kr_to_utf, utf_to_euc_kr
-	},
-	{
-		PG_EUC_TW, euc_tw2mic, mic2euc_tw, euc_tw_to_utf, utf_to_euc_tw
-	},
-	{
-		PG_JOHAB, 0, 0, johab_to_utf, utf_to_johab
-	},
-	{
-		PG_UTF8, 0, 0, 0, 0
-	},
-	{
-		PG_MULE_INTERNAL, 0, 0, 0, 0
-	},
-	{
-		PG_LATIN1, latin12mic, mic2latin1, iso8859_1_to_utf, utf_to_iso8859_1
-	},
-	{
-		PG_LATIN2, latin22mic, mic2latin2, iso8859_2_to_utf, utf_to_iso8859_2
-	},
-	{
-		PG_LATIN3, latin32mic, mic2latin3, iso8859_3_to_utf, utf_to_iso8859_3
-	},
-	{
-		PG_LATIN4, latin42mic, mic2latin4, iso8859_4_to_utf, utf_to_iso8859_4
-	},
-	{
-		PG_LATIN5, iso2mic, mic2iso, iso8859_9_to_utf, utf_to_iso8859_9
-	},
-	{
-		PG_LATIN6, 0, 0, iso8859_10_to_utf, utf_to_iso8859_10
-	},
-	{
-		PG_LATIN7, 0, 0, iso8859_13_to_utf, utf_to_iso8859_13
-	},
-	{
-		PG_LATIN8, 0, 0, iso8859_14_to_utf, utf_to_iso8859_14
-	},
-	{
-		PG_LATIN9, 0, 0, iso8859_15_to_utf, utf_to_iso8859_15
-	},
-	{
-		PG_LATIN10, 0, 0, iso8859_16_to_utf, utf_to_iso8859_16
-	},
-	{
-		PG_WIN1256, 0, 0, win1256_to_utf, utf_to_win1256
-	},
-	{
-		PG_TCVN, 0, 0, tcvn_to_utf, utf_to_tcvn
-	},
-	{
-		PG_WIN874, 0, 0, win874_to_utf, utf_to_win874
-	},
-	{
-		PG_KOI8R, koi8r2mic, mic2koi8r, KOI8R_to_utf, utf_to_KOI8R
-	},
-	{
-		PG_WIN1251, win12512mic, mic2win1251, WIN1251_to_utf, utf_to_WIN1251
-	},
-	{
-		PG_ALT, alt2mic, mic2alt, ALT_to_utf, utf_to_ALT
-	},
-	{
-		PG_ISO_8859_5, 0, 0, iso8859_5_to_utf, utf_to_iso8859_5
-	},
-	{
-		PG_ISO_8859_6, 0, 0, iso8859_6_to_utf, utf_to_iso8859_6
-	},
-	{
-		PG_ISO_8859_7, 0, 0, iso8859_7_to_utf, utf_to_iso8859_7
-	},
-	{
-		PG_ISO_8859_8, 0, 0, iso8859_8_to_utf, utf_to_iso8859_8
-	},
-
-	{
-		PG_SJIS, sjis2mic, mic2sjis, sjis_to_utf, utf_to_sjis
-	},
-	{
-		PG_BIG5, big52mic, mic2big5, big5_to_utf, utf_to_big5
-	},
-	{
-		PG_GBK, 0, 0, gbk_to_utf, utf_to_gbk
-	},
-	{
-		PG_UHC, 0, 0, uhc_to_utf, utf_to_uhc
-	},
-	{
-		PG_WIN1250, win12502mic, mic2win1250, win1250_to_utf, utf_to_win1250
-	},
-	{
-		PG_GB18030, gb180302mic, mic2gb18030, gb18030_to_utf, utf_to_gb18030
-	},
-};
-
-#else
-
-pg_enconv	pg_enconv_tbl[] =
-{
-	{
-		PG_SQL_ASCII, ascii2mic, mic2ascii, 0, 0
-	},
-	{
-		PG_EUC_JP, euc_jp2mic, mic2euc_jp, 0, 0
-	},
-	{
-		PG_EUC_CN, euc_cn2mic, mic2euc_cn, 0, 0
-	},
-	{
-		PG_EUC_KR, euc_kr2mic, mic2euc_kr, 0, 0
-	},
-	{
-		PG_EUC_TW, euc_tw2mic, mic2euc_tw, 0, 0
-	},
-	{
-		PG_UTF8, 0, 0, 0, 0
-	},
-	{
-		PG_MULE_INTERNAL, 0, 0, 0, 0
-	},
-	{
-		PG_LATIN1, latin12mic, mic2latin1, 0, 0
-	},
-	{
-		PG_LATIN2, latin22mic, mic2latin2, 0, 0
-	},
-	{
-		PG_LATIN3, latin32mic, mic2latin3, 0, 0
-	},
-	{
-		PG_LATIN4, latin42mic, mic2latin4, 0, 0
-	},
-	{
-		PG_LATIN5, iso2mic, mic2iso, 0, 0
-	},
-	{
-		PG_LATIN6, 0, 0, 0, 0
-	},
-	{
-		PG_LATIN7, 0, 0, 0, 0
-	},
-	{
-		PG_LATIN8, 0, 0, 0, 0
-	},
-	{
-		PG_LATIN9, 0, 0, 0, 0
-	},
-	{
-		PG_LATIN10, 0, 0, 0, 0
-	},
-	{
-		PG_KOI8R, koi8r2mic, mic2koi8r, 0, 0
-	},
-	{
-		PG_WIN1251, win12512mic, mic2win1251, 0, 0
-	},
-	{
-		PG_ALT, alt2mic, mic2alt, 0, 0
-	},
-	{
-		PG_ISO_8859_5, 0, 0, 0, 0
-	},
-	{
-		PG_ISO_8859_6, 0, 0, 0, 0
-	},
-	{
-		PG_ISO_8859_7, 0, 0, 0, 0
-	},
-	{
-		PG_ISO_8859_8, 0, 0, 0, 0
-	},
-	{
-		PG_SJIS, sjis2mic, mic2sjis, 0, 0
-	},
-	{
-		PG_BIG5, big52mic, mic2big5, 0, 0
-	},
-	{
-		PG_GBK, 0, 0, 0, 0
-	},
-	{
-		PG_UHC, 0, 0, 0, 0
-	},
-	{
-		PG_WIN1250, win12502mic, mic2win1250, 0, 0
-	},
-	{
-		PG_GB18030, gb180302mic, mic2gb18030, 0, 0
-	},
-};
-
-#endif   /* UNICODE_CONVERSION */
+#endif

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.73 2002/07/15 01:56:25 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.74 2002/07/18 02:02:30 ishii Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -38,14 +38,7 @@
 #include "print.h"
 #include "settings.h"
 #include "variables.h"
-
-#ifdef MULTIBYTE
 #include "mb/pg_wchar.h"
-#else
-/* Grand unified hard-coded badness */
-#define pg_encoding_to_char(x) "SQL_ASCII"
-#endif
-
 
 /* functions for use in this file */
 
@@ -457,10 +450,9 @@ exec_command(const char *cmd,
 			puts(pg_encoding_to_char(pset.encoding));
 		else
 		{
-#ifdef MULTIBYTE
 			/* set encoding */
 			if (PQsetClientEncoding(pset.db, encoding) == -1)
-				psql_error("%s: invalid encoding name\n", encoding);
+				psql_error("%s: invalid encoding name or conversion proc not found\n", encoding);
 
 			else
 			{
@@ -468,9 +460,6 @@ exec_command(const char *cmd,
 				pset.encoding = PQclientEncoding(pset.db);
 				SetVariable(pset.vars, "ENCODING", pg_encoding_to_char(pset.encoding));
 			}
-#else
-			psql_error("\\%s: multibyte support is not enabled\n", cmd);
-#endif
 			free(encoding);
 		}
 	}

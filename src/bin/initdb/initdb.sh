@@ -27,7 +27,7 @@
 # Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.158 2002/07/16 17:48:46 tgl Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.159 2002/07/18 02:02:30 ishii Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -992,6 +992,11 @@ EOF
 EOF
 ) \
 	| "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+echo "ok"
+
+# Create pg_conversion and support functions
+$ECHO_N "creating conversions... "$ECHO_C
+cat $datadir/conversion_create.sql | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
 echo "ok"
 
 # Set most system catalogs and built-in functions as world-accessible.
