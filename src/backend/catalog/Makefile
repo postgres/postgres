@@ -2,7 +2,7 @@
 #
 # Makefile for catalog
 #
-# $Header: /cvsroot/pgsql/src/backend/catalog/Makefile,v 1.33 2001/05/14 20:30:19 momjian Exp $
+# $Header: /cvsroot/pgsql/src/backend/catalog/Makefile,v 1.34 2001/05/14 21:58:10 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -23,7 +23,7 @@ SUBSYS.o: $(OBJS)
 
 
 GLOBAL_BKI_SRCS := $(addprefix $(top_srcdir)/src/include/catalog/,\
-	pg_database.h pg_variable.h pg_shadow.h pg_group.h pg_log.h \
+	pg_database.h pg_shadow.h pg_group.h pg_log.h \
     )
 
 TEMPLATE1_BKI_SRCS := $(addprefix $(top_srcdir)/src/include/catalog/,\

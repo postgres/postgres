@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_attribute.h,v 1.71 2001/05/07 00:43:24 tgl Exp $
+ * $Id: pg_attribute.h,v 1.72 2001/05/14 21:58:10 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -526,17 +526,6 @@ DATA(insert OID = 0 ( 1219 cmin				29 0  4  -4 0 -1 -1 t p f i f f));
 DATA(insert OID = 0 ( 1219 xmax				28 0  4  -5 0 -1 -1 t p f i f f));
 DATA(insert OID = 0 ( 1219 cmax				29 0  4  -6 0 -1 -1 t p f i f f));
 DATA(insert OID = 0 ( 1219 tableoid			26 0  4  -7 0 -1 -1 t p f i f f));
-
-/* ----------------
- *		pg_variable - this relation is modified by special purpose access
- *				  method code.	The following is garbage but is needed
- *				  so that the reldesc code works properly.
- * ----------------
- */
-#define Schema_pg_variable \
-{ 1264, {"varfoo"},  26, 0, 4, 1, 0, -1, -1, true, 'p', false, 'i', false, false }
-
-DATA(insert OID = 0 ( 1264 varfoo			26 0  4   1 0 -1 -1 t p f i f f));
 
 /* ----------------
  *		pg_log - this relation is modified by special purpose access
