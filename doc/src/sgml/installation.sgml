@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.69 2001/12/08 03:24:22 thomas Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.70 2001/12/19 18:49:56 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -65,7 +65,7 @@ su - postgres
 <screen>
 <userinput>gmake --version</userinput>
 </screen>
-      If at all possible you should use version 3.76.1 or later.
+      It is recommended to use version 3.76.1 or later.
      </para>
     </listitem>
 
@@ -477,7 +477,7 @@ su - postgres
        into private directories under
        <varname>includedir</varname>.
        See the <citetitle>Programmer's Guide</citetitle> for
-       information how to get at the header files for each interface.
+       information about how to get at the header files for each interface.
        Finally, a private subdirectory will also be created, if appropriate,
        under <varname>libdir</varname> for dynamically loadable modules.       
       </para>
@@ -568,7 +568,8 @@ su - postgres
          to display a program's message in a language other than
          English.  <replaceable>LANGUAGES</replaceable> is a space
          separated list of codes of the languages that you want
-         supported.  (The intersection between your list and the set
+         supported, for example <literal>--enable-nls='de fr'</>.
+         (The intersection between your list and the set
          of actually provided translations will be computed
          automatically.)  If you do not specify it, then all available
          translations are installed.
@@ -697,8 +698,9 @@ su - postgres
         <para>
          Build the ODBC driver.  By default, the driver will be independent
          of a driver manager.  To work better with a driver manager already
-         installed on your system, use one of the following options.  More
-         information can be found in the <citetitle>Programmer's Guide</citetitle>.
+         installed on your system, use one of the following options in addition
+         to this one.  More information can be found in the
+         <citetitle>Programmer's Guide</citetitle>.
         </para>
        </listitem>
       </varlistentry>
@@ -743,8 +745,8 @@ su - postgres
       </varlistentry>
 
       <varlistentry>
-       <term><option>--with-krb4=<replaceable>DIRECTORY</></option></term>
-       <term><option>--with-krb5=<replaceable>DIRECTORY</></option></term>
+       <term><option>--with-krb4<optional>=<replaceable>DIRECTORY</></></option></term>
+       <term><option>--with-krb5<optional>=<replaceable>DIRECTORY</></></option></term>
        <listitem>
         <para>
          Build with support for Kerberos authentication. You can use
@@ -786,7 +788,7 @@ su - postgres
         <seealso>SSL</seealso>
        </indexterm>
 
-       <term><option>--with-openssl=<replaceable>DIRECTORY</></option></term>
+       <term><option>--with-openssl<optional>=<replaceable>DIRECTORY</></></option></term>
        <listitem>
         <para>
          Build with support for <acronym>SSL</> (encrypted) connections. 
@@ -969,7 +971,7 @@ All of PostgreSQL is successfully made. Ready to install.
    </para>
 
    <para>
-    The standard install installs only the header files needed for client
+    The standard installation contains only the header files needed for client
     application development.  If you plan to do any server-side program
     development (such as custom functions or data types written in C),
     then you may want to install the entire <productname>PostgreSQL</>
@@ -984,7 +986,7 @@ All of PostgreSQL is successfully made. Ready to install.
    </para>
 
    <formalpara>
-    <title>Client-only installation</title>
+    <title>Client-only installation:</title>
     <para>
      If you want to install only the client applications and
      interface libraries, then you can use these commands:
@@ -1057,7 +1059,7 @@ setenv LD_LIBRARY_PATH /usr/local/pgsql/lib
     <option><literal>--libdir</></> to in <xref linkend="configure">.
     You should put these commands into a shell start-up file such as
     <filename>/etc/profile</> or <filename>~/.bash_profile</>.  Some
-    good information about the caveats associated with the method can
+    good information about the caveats associated with this method can
     be found at <ulink
     url="http://www.visi.com/~barr/ldpath.html"></ulink>.
    </para>
@@ -1268,21 +1270,21 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
    <itemizedlist>
     <listitem>
      <para>
-      The <citetitle>Tutorial</> should be your first reading if you
-      are completely new to <acronym>SQL</> databases. It should have
-      been installed at
-      <filename>/usr/local/pgsql/doc/html/tutorial.html</> unless you
+      The <productname>PostgreSQL</> distribution contains a
+      comprehensive documentation set, which you should read sometime.
+      After installation, the documentation can be accessed by
+      pointing your browser to
+      <filename>/usr/local/pgsql/doc/html/index.html</>, unless you
       changed the installation directories.
      </para>
-    </listitem>
 
-    <listitem>
      <para>
+      The <citetitle>Tutorial</> should be your first reading if you
+      are completely new to <acronym>SQL</> databases.
       If you are familiar with database concepts then you want to
       proceed with the <citetitle>Administrator's Guide</citetitle>,
       which contains information about how to set up the database
-      server, database users, and authentication. It can be found at
-      <filename>/usr/local/pgsql/doc/html/admin.html</>.
+      server, database users, and authentication.
      </para>
     </listitem>
 
@@ -1552,7 +1554,7 @@ gunzip -c user.ps.gz \
         <entry>OBSD-3.0</entry>
        </row>
        <row>
-	<entry><systemitem class="osname">OpenUnix</></entry>
+	<entry><systemitem class="osname">OpenUNIX</></entry>
 	<entry><systemitem>x86</></entry>
 	<entry>7.2</entry>
 	<entry>2001-11-28,
@@ -1567,7 +1569,7 @@ gunzip -c user.ps.gz \
       <entry>2001-05-24,
        Bernd Tegge (<email>tegge@repas-aeg.de</email>)
       </entry>
-      <entry>7.2 w/patches on QNX 6; see also <filename>doc/FAQ_QNX4</filename></entry>
+      <entry>see also <filename>doc/FAQ_QNX4</filename></entry>
      </row>
        <row>
 	<entry><systemitem class="osname">Solaris</></entry>
@@ -1585,20 +1587,8 @@ gunzip -c user.ps.gz \
 	 Martin Renters (<email>martin@datafax.com</email>)</entry>
 	<entry>2.8; see also <filename>doc/FAQ_Solaris</filename></entry>
        </row>
-<!--
-No longer compiles without error, but not really needing to be listed
-as unsupported either since it is superceded by Solaris. - thomas 2001-12-03
        <row>
-	<entry><systemitem class="osname">SunOS</></entry>
-	<entry><systemitem>Sparc</></entry>
-	<entry>7.1</entry>
-	<entry>2001-03-23,
-	 Tatsuo Ishii (<email>t-ishii@sra.co.jp</email>)</entry>
-	<entry>4.1.4</entry>
-       </row>
--->
-       <row>
-	<entry><systemitem class="osname">Tru64</></entry>
+	<entry><systemitem class="osname">Tru64 UNIX</></entry>
 	<entry><systemitem>Alpha</></entry>
 	<entry>7.2</entry>
 	<entry>2001-11-26,
@@ -1618,12 +1608,12 @@ as unsupported either since it is superceded by Solaris. - thomas 2001-12-03
     </informaltable>
 
   <formalpara>
-   <title>Unsupported Platforms</title>
+   <title>Unsupported Platforms:</title>
    <para>
-    The following platforms have not been verified to work. Platforms
-    listed for version 6.3.x and later should also work with
-    &version;, but we did not receive explicit confirmation of such at
-    the time this list was compiled. We include these here to let you
+    The following platforms are either known not to work, or they used
+    to work in a previous release and we did not receive explicit
+    confirmation of a successful test with version &majorversion; at
+    the time this list was compiled.  We include these here to let you
     know that these platforms <emphasis>could</> be supported if given
     some attention.
    </para>
@@ -1647,7 +1637,7 @@ as unsupported either since it is superceded by Solaris. - thomas 2001-12-03
       <entry><systemitem>m88k</></entry>
       <entry>6.3</entry>
       <entry>1998-03-01, Brian E Gallew (<email>geek+@cmu.edu</email>)</entry>
-      <entry>6.4 probably OK</entry>
+      <entry>no recent reports</entry>
      </row>
 <!--
 Obsolete platform? This distro was merged into PPC afaik. - thomas 2001-12-07
@@ -1667,11 +1657,25 @@ Obsolete platform? This distro was merged into PPC afaik. - thomas 2001-12-07
       <entry>bit rot suspected</entry>
      </row>
      <row>
+      <entry><systemitem class="osname">QNX 6</></entry>
+      <entry><systemitem>x86</></entry>
+      <entry>7.2</entry>
+      <entry>2001-11-20, Igor Kovalenko (<email>Igor.Kovalenko@motorola.com</email>)</entry>
+      <entry>patches available, but too late for 7.2</entry>
+     </row>
+     <row>
       <entry><systemitem class="osname">SCO OpenServer 5</></entry>
       <entry><systemitem>x86</></entry>
       <entry>6.5</entry>
       <entry>1999-05-25, Andrew Merrill (<email>andrew@compclass.com</>)</entry>
-      <entry>7.1 should work, but no reports; see also <filename>doc/FAQ_SCO</filename></entry>
+      <entry>7.2 should work, but no reports; see also <filename>doc/FAQ_SCO</filename></entry>
+     </row>
+     <row>
+      <entry><systemitem class="osname">SunOS</></entry>
+      <entry><systemitem>Sparc</></entry>
+      <entry>7.2</entry>
+      <entry>2001-12-04, Tatsuo Ishii (<email>t-ishii@sra.co.jp</email>)</entry>
+      <entry><function>memcmp()</> does not work correctly, so probably not reliable</entry>
      </row>
      <row>
       <entry><systemitem class="osname">System V R4</></entry>
@@ -1685,7 +1689,7 @@ Obsolete platform? This distro was merged into PPC afaik. - thomas 2001-12-07
       <entry><systemitem>MIPS</></entry>
       <entry>6.4</entry>
       <entry>1998-10-28, Frank Ridderbusch (<email>ridderbusch.pad@sni.de</email>)</entry>
-      <entry>no 64-bit integer</entry>
+      <entry>no recent reports</entry>
      </row>
      <row>
       <entry><systemitem class="osname">Ultrix</></entry>
@@ -1699,7 +1703,7 @@ Obsolete platform? This distro was merged into PPC afaik. - thomas 2001-12-07
       <entry><systemitem>VAX</></entry>
       <entry>6.x</entry>
       <entry>1998-03-01</entry>
-      <entry>No recent reports</entry>
+      <entry>no recent reports</entry>
      </row>
      <row>
       <entry><systemitem class="osname">Windows 9x, ME, NT, 2000</> (native)</entry>
@@ -1708,7 +1712,7 @@ Obsolete platform? This distro was merged into PPC afaik. - thomas 2001-12-07
       <entry>2001-03-26, Magnus Hagander (<email>mha@sollentuna.net</email>)</entry>
       <entry>
        client-side libraries (<application>libpq</> and <application>psql</>) or ODBC or JDBC, no server-side;
-<![%standalone-include[see Administrator's Guide]]>
+<![%standalone-include[see <citetitle>Administrator's Guide</>]]>
 <![%standalone-ignore[see <xref linkend="install-win32">]]>
        for instructions
       </entry>
