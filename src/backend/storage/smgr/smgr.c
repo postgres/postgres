@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.82 2004/09/06 17:56:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.83 2004/11/05 17:11:34 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -454,7 +454,7 @@ smgr_internal_unlink(RelFileNode rnode, int which, bool isTemp, bool isRedo)
 	if (!(*(smgrsw[which].smgr_unlink)) (rnode, isRedo))
 		ereport(WARNING,
 				(errcode_for_file_access(),
-				 errmsg("could not unlink relation %u/%u/%u: %m",
+				 errmsg("could not remove relation %u/%u/%u: %m",
 						rnode.spcNode,
 						rnode.dbNode,
 						rnode.relNode)));

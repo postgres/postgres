@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.175 2004/10/29 00:16:08 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.176 2004/11/05 17:10:56 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1660,7 +1660,7 @@ XLogFileCopy(uint32 log, uint32 seg,
 						 errmsg("could not read file \"%s\": %m", path)));
 			else
 				ereport(PANIC,
-					 (errmsg("insufficient data in file \"%s\"", path)));
+					 (errmsg("not enough data in file \"%s\"", path)));
 		}
 		errno = 0;
 		if ((int) write(fd, buffer, sizeof(buffer)) != (int) sizeof(buffer))
@@ -2049,7 +2049,7 @@ RestoreArchivedFile(char *path, const char *xlogfname,
 	 * program incorrectly.  We have to assume the former.
 	 */
 	ereport(DEBUG1,
-		 (errmsg("could not restore \"%s\" from archive: return code %d",
+		 (errmsg("could not restore file \"%s\" from archive: return code %d",
 				 xlogfname, rc)));
 
 	/*

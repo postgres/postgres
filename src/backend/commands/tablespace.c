@@ -45,7 +45,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.12 2004/10/17 20:47:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.13 2004/11/05 17:11:05 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -589,7 +589,7 @@ remove_tablespace_directories(Oid tablespaceoid, bool redo)
 		if (errno != ENOENT)
 			ereport(ERROR,
 					(errcode_for_file_access(),
-					 errmsg("could not unlink file \"%s\": %m",
+					 errmsg("could not remove file \"%s\": %m",
 							subfile)));
 	}
 
@@ -614,7 +614,7 @@ remove_tablespace_directories(Oid tablespaceoid, bool redo)
 		if (unlink(location) < 0)
 			ereport(ERROR,
 					(errcode_for_file_access(),
-					 errmsg("could not unlink symbolic link \"%s\": %m",
+					 errmsg("could not remove symbolic link \"%s\": %m",
 							location)));
 	}
 
