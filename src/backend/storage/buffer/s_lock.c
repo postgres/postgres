@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/Attic/s_lock.c,v 1.14 1998/12/18 17:25:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/Attic/s_lock.c,v 1.15 1998/12/26 18:15:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -99,6 +99,25 @@ s_lock(volatile slock_t *lock, const char *file, const int line)
  */
 
 
+#if defined(__m68k__)
+static void
+tas_dummy()	/* really means: extern int tas(slock_t **lock); */
+{
+	__asm__("		\n\
+.global		_tas		\n\
+_tas:				\n\
+	movel   sp@(0x4),a0	\n\
+	tas a0@			\n\
+	beq _success		\n\
+	moveq   #-128,d0	\n\
+	rts			\n\
+_success:			\n\
+	moveq   #0,d0		\n\
+	rts			\n\
+	");
+}
+
+#endif	 /* __m68k__ */
 
 #if defined(PPC)
 /* Note: need a nice gcc constrained asm version so it can be inlined */

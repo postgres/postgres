@@ -15,7 +15,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: memutils.h,v 1.18 1998/09/07 05:35:48 momjian Exp $
+ * $Id: memutils.h,v 1.19 1998/12/26 18:15:53 momjian Exp $
  *
  * NOTES
  *	  some of the information in this file will be moved to
@@ -58,13 +58,17 @@ tending
 #define SHORTALIGN(LEN)\
 		(((long)(LEN) + (sizeof (short) - 1)) & ~(sizeof (short) - 1))
 
+#if defined(m68k)
+#define INTALIGN(LEN)	 SHORTALIGN(LEN)
+#else
 #define INTALIGN(LEN)\
 		(((long)(LEN) + (sizeof (int) - 1)) & ~(sizeof (int) -1))
+#endif
 
 /*
  *		LONGALIGN(LEN)	- length (or address) aligned for longs
  */
-#if defined(sun) && ! defined(sparc)
+#if (defined(sun) && ! defined(sparc)) || defined(m68k)
 #define LONGALIGN(LEN)	SHORTALIGN(LEN)
 #elif defined (__alpha)
 
@@ -81,7 +85,10 @@ tending
 		(((long)(LEN) + (sizeof (long) - 1)) & ~(sizeof (long) -1))
 #endif
 
-#if ! defined(sco)
+#if defined(m68k)
+#define DOUBLEALIGN(LEN) SHORTALIGN(LEN)
+#define MAXALIGN(LEN)	 SHORTALIGN(LEN)
+#elif ! defined(sco)
 #define DOUBLEALIGN(LEN)\
 		(((long)(LEN) + (sizeof (double) - 1)) & ~(sizeof (double) -1))
 
