@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Nov 21 20:34:04 EST 2001
+Last updated:		Wed Nov 21 21:46:38 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -181,6 +181,8 @@ COMMANDS
 	o ALTER TABLE ADD PRIMARY KEY (Christopher Kings-Lynne)
 	o ALTER TABLE ADD UNIQUE (Christopher Kings-Lynne)
 	o ALTER TABLE table ADD COLUMN column SERIAL doesn't create sequence
+	o Prevent ALTER TABLE RENAME from renaming indexes and sequences (?)
+
 * CLUSTER
 	o cluster all tables at once
 	o prevent lose of indexes, permissions, inheritance
