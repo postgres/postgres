@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.23 1999/07/17 20:17:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.24 1999/09/04 18:36:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -450,20 +450,11 @@ SIGetLastDataEntry(SISeg *segP)
 /************************************************************************/
 /* SIGetNextDataEntry(segP, offset)  returns next data entry			*/
 /************************************************************************/
-static SISegEntry *
-SIGetNextDataEntry(SISeg *segP, Offset offset)
-{
-	SISegEntry *eP;
-
-	if (offset == InvalidOffset)
-		return NULL;
-
-	eP = (SISegEntry *) ((Pointer) segP +
-						 SIGetStartEntrySection(segP) +
-						 offset);
-	return eP;
-}
-
+#define SIGetNextDataEntry(segP,offset) \
+	(((offset) == InvalidOffset) ? (SISegEntry *) NULL : \
+	 (SISegEntry *) ((Pointer) (segP) + \
+					 (segP)->startEntrySection + \
+					 (Offset) (offset)))
 
 /************************************************************************/
 /* SIGetNthDataEntry(segP, n)	returns the n-th data entry in chain	*/
@@ -566,31 +557,38 @@ SIDecProcLimit(SISeg *segP, int num)
 
 
 /************************************************************************/
-/* SIDelDataEntry(segP)		- free the FIRST entry						*/
+/* SIDelDataEntries(segP, n)		- free the FIRST n entries			*/
 /************************************************************************/
 bool
-SIDelDataEntry(SISeg *segP)
+SIDelDataEntries(SISeg *segP, int n)
 {
-	SISegEntry *e1P;
+	int			i;
 
-	if (!SIDecNumEntries(segP, 1))
+	if (n <= 0)
+		return false;
+
+	if (!SIDecNumEntries(segP, n))
 	{
-		/* no entries in buffer */
+		/* not that many entries in buffer */
 		return false;
 	}
 
-	e1P = SIGetFirstDataEntry(segP);
-	SISetStartEntryChain(segP, e1P->next);
-	if (SIGetStartEntryChain(segP) == InvalidOffset)
+	for (i = 1; i <= n; i++)
 	{
-		/* it was the last entry */
-		SISetEndEntryChain(segP, InvalidOffset);
+		SISegEntry *e1P = SIGetFirstDataEntry(segP);
+		SISetStartEntryChain(segP, e1P->next);
+		if (SIGetStartEntryChain(segP) == InvalidOffset)
+		{
+			/* it was the last entry */
+			SISetEndEntryChain(segP, InvalidOffset);
+		}
+		/* free the entry */
+		e1P->isfree = true;
+		e1P->next = SIGetStartFreeSpace(segP);
+		SISetStartFreeSpace(segP, SIEntryOffset(segP, e1P));
 	}
-	/* free the entry */
-	e1P->isfree = true;
-	e1P->next = SIGetStartFreeSpace(segP);
-	SISetStartFreeSpace(segP, SIEntryOffset(segP, e1P));
-	SIDecProcLimit(segP, 1);
+
+	SIDecProcLimit(segP, n);
 	return true;
 }
 
@@ -621,51 +619,51 @@ SISetProcStateInvalid(SISeg *segP)
 }
 
 /************************************************************************/
-/* SIReadEntryData(segP, backendId, function)							*/
-/*						- marks messages to be read by id				*/
-/*						  and executes function							*/
+/* SIGetDataEntry(segP, backendId, data)								*/
+/*		get next SI message for specified backend, if there is one		*/
+/*																		*/
+/*		Possible return values:											*/
+/*			0: no SI message available									*/
+/*			1: next SI message has been extracted into *data			*/
+/*				(there may be more messages available after this one!)	*/
+/*		   -1: SI reset message extracted								*/
 /************************************************************************/
-void
-SIReadEntryData(SISeg *segP,
-				int backendId,
-				void (*invalFunction) (),
-				void (*resetFunction) ())
+int
+SIGetDataEntry(SISeg *segP, int backendId,
+			   SharedInvalidData *data)
 {
-	int			i = 0;
-	SISegEntry *data;
+	SISegEntry *msg;
 
 	Assert(segP->procState[backendId - 1].tag == MyBackendTag);
 
-	if (!segP->procState[backendId - 1].resetState)
+	if (segP->procState[backendId - 1].resetState)
 	{
-		/* invalidate data, but only those, you have not seen yet !! */
-		/* therefore skip read messages */
-		data = SIGetNthDataEntry(segP,
-						   SIGetProcStateLimit(segP, backendId - 1) + 1);
-		while (data != NULL)
-		{
-			i++;
-			segP->procState[backendId - 1].limit++;		/* one more message read */
-			invalFunction(data->entryData.cacheId,
-						  data->entryData.hashIndex,
-						  &data->entryData.pointerData);
-			data = SIGetNextDataEntry(segP, data->next);
-		}
-		/* SIDelExpiredDataEntries(segP); */
-	}
-	else
-	{
-		/* backend must not read messages, its own state has to be reset	 */
-		elog(NOTICE, "SIReadEntryData: cache state reset");
-		resetFunction();		/* XXXX call it here, parameters? */
-
 		/* new valid state--mark all messages "read" */
 		segP->procState[backendId - 1].resetState = false;
 		segP->procState[backendId - 1].limit = SIGetNumEntries(segP);
+		return -1;
 	}
-	/* check whether we can remove dead messages							*/
-	if (i > MAXNUMMESSAGES)
-		elog(FATAL, "SIReadEntryData: Invalid segment state");
+
+	/* Get next message for this backend, if any */
+
+	/* This is fairly inefficient if there are many messages,
+	 * but normally there should not be...
+	 */
+	msg = SIGetNthDataEntry(segP,
+							SIGetProcStateLimit(segP, backendId - 1) + 1);
+
+	if (msg == NULL)
+		return 0;				/* nothing to read */
+
+	*data = msg->entryData;		/* return contents of message */
+
+	segP->procState[backendId - 1].limit++;		/* one more message read */
+
+	/* There may be other backends that haven't read the message,
+	 * so we cannot delete it here.
+	 * SIDelExpiredDataEntries() should be called to remove dead messages.
+	 */
+	return 1;					/* got a message */
 }
 
 /************************************************************************/
@@ -688,15 +686,12 @@ SIDelExpiredDataEntries(SISeg *segP)
 				min = h;
 		}
 	}
-	if (min != 9999999)
+	if (min < 9999999 && min > 0)
 	{
 		/* we can remove min messages */
-		for (i = 1; i <= min; i++)
-		{
-			/* this  adjusts also the state limits! */
-			if (!SIDelDataEntry(segP))
-				elog(FATAL, "SIDelExpiredDataEntries: Invalid segment state");
-		}
+		/* this adjusts also the state limits! */
+		if (!SIDelDataEntries(segP, min))
+			elog(FATAL, "SIDelExpiredDataEntries: Invalid segment state");
 	}
 }
 
@@ -784,8 +779,7 @@ SISegmentAttach(IpcMemoryId shmid)
 	if (shmInvalBuffer == IpcMemAttachFailed)
 	{
 		/* XXX use validity function */
-		elog(NOTICE, "SISegmentAttach: Could not attach segment");
-		elog(FATAL, "SISegmentAttach: %m");
+		elog(FATAL, "SISegmentAttach: Could not attach segment: %m");
 	}
 }
 

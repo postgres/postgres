@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.16 1999/07/15 22:39:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.17 1999/09/04 18:36:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,9 +21,9 @@
 #include "storage/sinval.h"
 #include "storage/sinvaladt.h"
 
-extern SISeg *shmInvalBuffer;	/* the shared buffer segment, set by */
-
- /* SISegmentAttach()			   */
+extern SISeg *shmInvalBuffer;	/* the shared buffer segment, set by
+								 * SISegmentAttach()
+								 */
 extern BackendId MyBackendId;
 extern BackendTag MyBackendTag;
 
@@ -127,21 +127,20 @@ RegisterSharedInvalid(int cacheId,		/* XXX */
 		ItemPointerSetInvalid(&newInvalid.pointerData);
 
 	SpinAcquire(SInvalLock);
-	if (!SISetDataEntry(shmInvalBuffer, &newInvalid))
+	while (!SISetDataEntry(shmInvalBuffer, &newInvalid))
 	{
 		/* buffer full */
 		/* release a message, mark process cache states to be invalid */
 		SISetProcStateInvalid(shmInvalBuffer);
 
-		if (!SIDelDataEntry(shmInvalBuffer))
+		if (!SIDelDataEntries(shmInvalBuffer, 1))
 		{
 			/* inconsistent buffer state -- shd never happen */
 			SpinRelease(SInvalLock);
 			elog(FATAL, "RegisterSharedInvalid: inconsistent buffer state");
 		}
 
-		/* write again */
-		SISetDataEntry(shmInvalBuffer, &newInvalid);
+		/* loop around to try write again */
 	}
 	SpinRelease(SInvalLock);
 }
@@ -157,13 +156,41 @@ RegisterSharedInvalid(int cacheId,		/* XXX */
 /*	should be called by a backend											*/
 /****************************************************************************/
 void
-			InvalidateSharedInvalid(void (*invalFunction) (),
-									void (*resetFunction) ())
+InvalidateSharedInvalid(void (*invalFunction) (),
+						void (*resetFunction) ())
 {
-	SpinAcquire(SInvalLock);
-	SIReadEntryData(shmInvalBuffer, MyBackendId,
-					invalFunction, resetFunction);
+	SharedInvalidData	data;
+	int					getResult;
+	bool				gotMessage = false;
 
-	SIDelExpiredDataEntries(shmInvalBuffer);
-	SpinRelease(SInvalLock);
+	for (;;)
+	{
+		SpinAcquire(SInvalLock);
+		getResult = SIGetDataEntry(shmInvalBuffer, MyBackendId, &data);
+		SpinRelease(SInvalLock);
+		if (getResult == 0)
+			break;				/* nothing more to do */
+		if (getResult < 0)
+		{
+			/* got a reset message */
+			elog(NOTICE, "InvalidateSharedInvalid: cache state reset");
+			resetFunction();
+		}
+		else
+		{
+			/* got a normal data message */
+			invalFunction(data.cacheId,
+						  data.hashIndex,
+						  &data.pointerData);
+		}
+		gotMessage = true;
+	}
+
+	/* If we got any messages, try to release dead messages */
+	if (gotMessage)
+	{
+		SpinAcquire(SInvalLock);
+		SIDelExpiredDataEntries(shmInvalBuffer);
+		SpinRelease(SInvalLock);
+	}
 }
