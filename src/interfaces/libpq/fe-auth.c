@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.18 1998/07/03 04:24:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.19 1998/07/09 03:32:09 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -522,6 +522,12 @@ fe_sendauth(AuthRequest areq, PGconn *conn, const char *hostname,
 
 		case AUTH_REQ_PASSWORD:
 		case AUTH_REQ_CRYPT:
+			if (password == NULL || *password == '\0')
+			{
+				(void) sprintf(PQerrormsg,
+				 "fe_sendauth: no password supplied\n");
+				return (STATUS_ERROR);
+			}
 			if (pg_password_sendauth(conn, password, areq) != STATUS_OK)
 			{
 				(void) sprintf(PQerrormsg,

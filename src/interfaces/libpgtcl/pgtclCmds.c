@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.27 1998/06/16 06:53:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.28 1998/07/09 03:32:09 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -441,24 +441,7 @@ Pg_exec(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
     }
     else {
 	/* error occurred during the query */
-	Tcl_SetResult(interp, conn->errorMessage, TCL_STATIC);
-	if (connStatus != CONNECTION_OK) {
-	    /* Is this REALLY a good idea?  I don't think so! */
-	    PQreset(conn);
-	    if (conn->status == CONNECTION_OK) {
-		result = PQexec(conn, argv[2]);
-		PgNotifyTransferEvents(connid);
-		if (result) {
-		    int rId = PgSetResultId(interp, argv[1], result);
-		    if (result->resultStatus == PGRES_COPY_IN ||
-			result->resultStatus == PGRES_COPY_OUT) {
-			    connid->res_copyStatus = RES_COPY_INPROGRESS;
-			    connid->res_copy = rId;
-		    }
-		    return TCL_OK;
-		}
-	    }
-	}
+	Tcl_SetResult(interp, conn->errorMessage, TCL_VOLATILE);
 	return TCL_ERROR;
     }
 }

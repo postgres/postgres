@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.73 1998/07/09 03:29:07 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.74 1998/07/09 03:32:10 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -767,17 +767,6 @@ connectDB(PGconn *conn)
 	 */
 
 	PQsetenv(conn);
-
-	/* Free the password so it's not hanging out in memory forever */
-	/* XXX Is this *really* a good idea?  The security gain is marginal
-	 * if not totally illusory, and it breaks PQreset() for databases
-	 * that use passwords.
-	 */
-	if (conn->pgpass != NULL)
-	{
-		free(conn->pgpass);
-		conn->pgpass = NULL;
-	}
 
 	return CONNECTION_OK;
 
