@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Id: hio.c,v 1.1.1.1 1996/07/09 06:21:11 scrappy Exp $
+ *    $Id: hio.c,v 1.2 1996/10/18 07:43:43 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,13 +92,6 @@ RelationPutHeapTuple(Relation relation,
     /* return an accurate tuple */
     ItemPointerSet(&tuple->t_ctid, blockIndex, offnum);
 }
-
-/*
- * The heap_insert routines "know" that a buffer page is initialized to
- * zero when a BlockExtend operation is performed. 
- */
-
-#define PageIsNew(page) ((page)->pd_upper == 0)
 
 /*
  * This routine is another in the series of attempts to reduce the number
