@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.50.2.1 2002/07/01 07:10:10 meskes Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.50.2.2 2002/07/21 08:26:52 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,6 +44,8 @@ static ScanKeyword ScanKeywords[] = {
 	{"as", AS},
 	{"asc", ASC},
 	{"assertion", ASSERTION},
+	{"assignment", ASSIGNMENT},
+	{"asymmetric", ASYMMETRIC},
 	{"at", AT},
 	{"authorization", AUTHORIZATION},
 	{"backward", BACKWARD},
@@ -77,6 +79,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"committed", COMMITTED},
 	{"constraint", CONSTRAINT},
 	{"constraints", CONSTRAINTS},
+	{"conversion", CONVERSION_P},
 	{"copy", COPY},
 	{"create", CREATE},
 	{"createdb", CREATEDB},
@@ -98,6 +101,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"deferred", DEFERRED},
 	{"definer", DEFINER},
 	{"delete", DELETE_P},
+	{"delimiter", DELIMITER},
 	{"delimiters", DELIMITERS},
 	{"desc", DESC},
 	{"distinct", DISTINCT},
@@ -251,6 +255,8 @@ static ScanKeyword ScanKeywords[] = {
 	{"setof", SETOF},
 	{"share", SHARE},
 	{"show", SHOW},
+	{"similar", SIMILAR},
+	{"simple", SIMPLE},
 	{"smallint", SMALLINT},
 	{"some", SOME},
 	{"stable", STABLE},
@@ -262,6 +268,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"storage", STORAGE},
 	{"strict", STRICT},
 	{"substring", SUBSTRING},
+	{"symmetric", SYMMETRIC},
 	{"sysid", SYSID},
 	{"table", TABLE},
 	{"temp", TEMP},
@@ -274,6 +281,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"toast", TOAST},
 	{"trailing", TRAILING},
 	{"transaction", TRANSACTION},
+	{"treat", TREAT},
 	{"trigger", TRIGGER},
 	{"trim", TRIM},
 	{"true", TRUE_P},
@@ -304,6 +312,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"with", WITH},
 	{"without", WITHOUT},
 	{"work", WORK},
+	{"write", WRITE},
 	{"year", YEAR_P},
 	{"zone", ZONE},
 };
