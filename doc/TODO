@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Mar 24 13:15:38 EST 2004
+Last updated:		Tue Mar 30 16:51:38 EST 2004
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -75,6 +75,7 @@ Data Types
 * Allow functions to have a search path specified at creation time
 * Make LENGTH() of CHAR() not count trailing spaces
 * Allow substring/replace() to get/set bit values
+* Add GUC variable to allow output of interval values in ISO8601 format
 
 
 * ARRAYS
