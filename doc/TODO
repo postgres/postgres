@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Jan 26 16:17:17 EST 2001
+Last updated:		Fri Jan 26 16:34:15 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -325,6 +325,7 @@ SOURCE CODE
 * Experiment with multi-threaded backend [thread]
 * Fix problems with libpq non-blocking/async code [async]
 * Merge global and template BKI files
+* Fix username/password length limits in all areas
 
 ---------------------------------------------------------------------------
 
