@@ -5,10 +5,12 @@
  *
  *	1998 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.22 2000/01/15 23:42:49 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.23 2000/01/18 03:44:41 tgl Exp $
  *
  * ----------
  */
+
+#include "postgres.h"
 
 #include <ctype.h>
 #include <float.h>
@@ -16,7 +18,6 @@
 #include <errno.h>
 #include <sys/types.h>
 
-#include "postgres.h"
 #include "utils/builtins.h"
 #include "utils/numeric.h"
 
@@ -32,9 +33,6 @@
  * Local definitions
  * ----------
  */
-#define NUMERIC_MIN_BUFSIZE		2048
-#define NUMERIC_MAX_FREEBUFS	20
-
 #ifndef MIN
 #define MIN(a,b) (((a)<(b)) ? (a) : (b))
 #endif
@@ -59,16 +57,23 @@
  * but they are just auxiliary information until rounding is done before
  * final storage or display.  (Scales are the number of digits wanted
  * *after* the decimal point.  Scales are always >= 0.)
+ *
+ * buf points at the physical start of the palloc'd digit buffer for the
+ * NumericVar.  digits points at the first digit in actual use (the one
+ * with the specified weight).  We normally leave an unused byte or two
+ * (preset to zeroes) between buf and digits, so that there is room to store
+ * a carry out of the top digit without special pushups.  We just need to
+ * decrement digits (and increment weight) to make room for the carry digit.
+ *
+ * If buf is NULL then the digit buffer isn't actually palloc'd and should
+ * not be freed --- see the constants below for an example.
+ *
+ * NB: All the variable-level functions are written in a style that makes it
+ * possible to give one and the same variable as argument and destination.
+ * This is feasible because the digit buffer is separate from the variable.
  * ----------
  */
 typedef unsigned char NumericDigit;
-
-typedef struct NumericDigitBuf
-{
-	struct NumericDigitBuf *prev;
-	struct NumericDigitBuf *next;
-	int			size;
-} NumericDigitBuf;
 
 typedef struct NumericVar
 {
@@ -77,7 +82,7 @@ typedef struct NumericVar
 	int			rscale;			/* result scale */
 	int			dscale;			/* display scale */
 	int			sign;			/* NUMERIC_POS, NUMERIC_NEG, or NUMERIC_NAN */
-	NumericDigitBuf *buf;
+	NumericDigit *buf;			/* start of palloc'd space for digits[] */
 	NumericDigit *digits;		/* decimal digits */
 } NumericVar;
 
@@ -86,9 +91,6 @@ typedef struct NumericVar
  * Local data
  * ----------
  */
-static NumericDigitBuf *digitbuf_freelist = NULL;
-static NumericDigitBuf *digitbuf_usedlist = NULL;
-static int	digitbuf_nfree = 0;
 static int	global_rscale = NUMERIC_MIN_RESULT_SCALE;
 
 /* ----------
@@ -120,22 +122,28 @@ static NumericVar const_nan =
 #ifdef NUMERIC_DEBUG
 static void dump_numeric(char *str, Numeric num);
 static void dump_var(char *str, NumericVar *var);
-
 #else
 #define dump_numeric(s,n)
 #define dump_var(s,v)
 #endif
 
-static NumericDigitBuf *digitbuf_alloc(int size);
-static void digitbuf_free(NumericDigitBuf *buf);
+#define digitbuf_alloc(size)  ((NumericDigit *) palloc(size))
+#define digitbuf_free(buf)  \
+	do { \
+		 if ((buf) != NULL) \
+			 pfree(buf); \
+	} while (0)
 
 #define init_var(v)		memset(v,0,sizeof(NumericVar))
+static void alloc_var(NumericVar *var, int ndigits);
 static void free_var(NumericVar *var);
-static void free_allvars(void);
+static void zero_var(NumericVar *var);
 
 static void set_var_from_str(char *str, NumericVar *dest);
 static void set_var_from_num(Numeric value, NumericVar *dest);
 static void set_var_from_var(NumericVar *value, NumericVar *dest);
+static char *get_str_from_var(NumericVar *var, int dscale);
+
 static Numeric make_result(NumericVar *var);
 
 static void apply_typmod(NumericVar *var, int32 typmod);
@@ -224,11 +232,8 @@ numeric_in(char *str, int dummy, int32 typmod)
 char *
 numeric_out(Numeric num)
 {
-	char	   *str;
-	char	   *cp;
 	NumericVar	x;
-	int			i;
-	int			d;
+	char	   *str;
 
 	/* ----------
 	 * Handle NULL
@@ -256,92 +261,10 @@ numeric_out(Numeric num)
 	init_var(&x);
 	set_var_from_num(num, &x);
 
-	/* ----------
-	 * Check if we must round up before printing the value and
-	 * do so.
-	 * ----------
-	 */
-	i = x.dscale + x.weight + 1;
-	if (i >= 0 && x.ndigits > i)
-	{
-		int		carry = (x.digits[i] > 4) ? 1 : 0;
+	str = get_str_from_var(&x, x.dscale);
 
-		x.ndigits = i;
-
-		while (carry)
-		{
-			carry += x.digits[--i];
-			x.digits[i] = carry % 10;
-			carry /= 10;
-		}
-
-		if (i < 0)
-		{
-			Assert(i == -1);	/* better not have added more than 1 digit */
-			Assert(x.digits > (NumericDigit *) (x.buf + 1));
-			x.digits--;
-			x.ndigits++;
-			x.weight++;
-		}
-	}
-	else
-		x.ndigits = MAX(0, MIN(i, x.ndigits));
-
-	/* ----------
-	 * Allocate space for the result
-	 * ----------
-	 */
-	str = palloc(MAX(0, x.dscale) + MAX(0, x.weight) + 4);
-	cp = str;
-
-	/* ----------
-	 * Output a dash for negative values
-	 * ----------
-	 */
-	if (x.sign == NUMERIC_NEG)
-		*cp++ = '-';
-
-	/* ----------
-	 * Output all digits before the decimal point
-	 * ----------
-	 */
-	i = MAX(x.weight, 0);
-	d = 0;
-
-	while (i >= 0)
-	{
-		if (i <= x.weight && d < x.ndigits)
-			*cp++ = x.digits[d++] + '0';
-		else
-			*cp++ = '0';
-		i--;
-	}
-
-	/* ----------
-	 * If requested, output a decimal point and all the digits
-	 * that follow it.
-	 * ----------
-	 */
-	if (x.dscale > 0)
-	{
-		*cp++ = '.';
-		while (i >= -x.dscale)
-		{
-			if (i <= x.weight && d < x.ndigits)
-				*cp++ = x.digits[d++] + '0';
-			else
-				*cp++ = '0';
-			i--;
-		}
-	}
-
-	/* ----------
-	 * Get rid of the variable, terminate the string and return it
-	 * ----------
-	 */
 	free_var(&x);
 
-	*cp = '\0';
 	return str;
 }
 
@@ -551,11 +474,8 @@ numeric_round(Numeric num, int32 scale)
 	 * ----------
 	 */
 	if (scale < 0 || scale > NUMERIC_MAX_DISPLAY_SCALE)
-	{
-		free_allvars();
 		elog(ERROR, "illegal numeric scale %d - must be between 0 and %d",
 			 scale, NUMERIC_MAX_DISPLAY_SCALE);
-	}
 
 	/* ----------
 	 * Let numeric() and in turn apply_typmod() do the job
@@ -598,11 +518,8 @@ numeric_trunc(Numeric num, int32 scale)
 	 * ----------
 	 */
 	if (scale < 0 || scale > NUMERIC_MAX_DISPLAY_SCALE)
-	{
-		free_allvars();
 		elog(ERROR, "illegal numeric scale %d - must be between 0 and %d",
 			 scale, NUMERIC_MAX_DISPLAY_SCALE);
-	}
 
 	/* ----------
 	 * Unpack the argument and truncate it
@@ -1702,7 +1619,8 @@ int4_numeric(int32 val)
 int32
 numeric_int4(Numeric num)
 {
-	char	   *tmp;
+	NumericVar	x;
+	char	   *str;
 	int32		result;
 
 	if (num == NULL)
@@ -1711,9 +1629,19 @@ numeric_int4(Numeric num)
 	if (NUMERIC_IS_NAN(num))
 		return 0;
 
-	tmp = numeric_out(num);
-	result = int4in(tmp);
-	pfree(tmp);
+	/* ----------
+	 * Get the number in the variable format so we can round to integer.
+	 * ----------
+	 */
+	init_var(&x);
+	set_var_from_num(num, &x);
+
+	str = get_str_from_var(&x, 0); /* dscale = 0 produces rounding */
+
+	free_var(&x);
+
+	result = int4in(str);
+	pfree(str);
 
 	return result;
 }
@@ -1724,7 +1652,7 @@ float8_numeric(float64 val)
 {
 	Numeric		res;
 	NumericVar	result;
-	char		buf[512];
+	char		buf[DBL_DIG + 100];
 
 	if (val == NULL)
 		return NULL;
@@ -1732,9 +1660,10 @@ float8_numeric(float64 val)
 	if (isnan(*val))
 		return make_result(&const_nan);
 
+	sprintf(buf, "%.*g", DBL_DIG, *val);
+
 	init_var(&result);
 
-	sprintf(buf, "%f", *val);
 	set_var_from_str(buf, &result);
 	res = make_result(&result);
 
@@ -1742,7 +1671,6 @@ float8_numeric(float64 val)
 
 	return res;
 }
-
 
 
 float64
@@ -1774,7 +1702,7 @@ float4_numeric(float32 val)
 {
 	Numeric		res;
 	NumericVar	result;
-	char	   *tmp;
+	char		buf[FLT_DIG + 100];
 
 	if (val == NULL)
 		return NULL;
@@ -1782,14 +1710,14 @@ float4_numeric(float32 val)
 	if (isnan(*val))
 		return make_result(&const_nan);
 
+	sprintf(buf, "%.*g", FLT_DIG, *val);
+
 	init_var(&result);
 
-	tmp = float4out(val);
-	set_var_from_str(tmp, &result);
+	set_var_from_str(buf, &result);
 	res = make_result(&result);
 
 	free_var(&result);
-	pfree(tmp);
 
 	return res;
 }
@@ -1899,225 +1827,54 @@ dump_var(char *str, NumericVar *var)
 
 
 /* ----------
- * digitbuf_alloc() -
+ * alloc_var() -
  *
- *	All variables used in the arithmetic functions hold some base
- *	information (sign, scales etc.) and a digit buffer for the
- *	value itself. All the variable level functions are written in
- *	a style that makes it possible to give one and the same variable
- *	as argument and result destination.
- *
- *	The two functions below manage unused buffers in a free list
- *	as a try to reduce the number of malloc()/free() calls.
- * ----------
- */
-static NumericDigitBuf *
-digitbuf_alloc(int size)
-{
-	NumericDigitBuf *buf;
-	int			asize;
-
-	/* ----------
-	 * Lookup the free list if there is a digit buffer of
-	 * the required size available
-	 * ----------
-	 */
-	for (buf = digitbuf_freelist; buf != NULL; buf = buf->next)
-	{
-		if (buf->size < size)
-			continue;
-
-		/* ----------
-		 * We found a free buffer that is big enough - remove it from
-		 * the free list
-		 * ----------
-		 */
-		if (buf->prev == NULL)
-		{
-			digitbuf_freelist = buf->next;
-			if (buf->next != NULL)
-				buf->next->prev = NULL;
-		}
-		else
-		{
-			buf->prev->next = buf->next;
-			if (buf->next != NULL)
-				buf->next->prev = buf->prev;
-		}
-		digitbuf_nfree--;
-
-		/* ----------
-		 * Put it onto the used list
-		 * ----------
-		 */
-		buf->prev = NULL;
-		buf->next = digitbuf_usedlist;
-		if (digitbuf_usedlist != NULL)
-			digitbuf_usedlist->prev = buf;
-		digitbuf_usedlist = buf;
-
-		/* ----------
-		 * Return this buffer
-		 * ----------
-		 */
-		return buf;
-	}
-
-	/* ----------
-	 * There is no free buffer big enough - allocate a new one
-	 * ----------
-	 */
-	for (asize = NUMERIC_MIN_BUFSIZE; asize < size; asize *= 2);
-	buf = (NumericDigitBuf *) malloc(sizeof(NumericDigitBuf) + asize);
-	buf->size = asize;
-
-	/* ----------
-	 * Put it onto the used list
-	 * ----------
-	 */
-	buf->prev = NULL;
-	buf->next = digitbuf_usedlist;
-	if (digitbuf_usedlist != NULL)
-		digitbuf_usedlist->prev = buf;
-	digitbuf_usedlist = buf;
-
-	/* ----------
-	 * Return the new buffer
-	 * ----------
-	 */
-	return buf;
-}
-
-
-/* ----------
- * digitbuf_free() -
+ *	Allocate a digit buffer of ndigits digits (plus a spare digit for rounding)
  * ----------
  */
 static void
-digitbuf_free(NumericDigitBuf *buf)
+alloc_var(NumericVar *var, int ndigits)
 {
-	NumericDigitBuf *smallest;
-
-	if (buf == NULL)
-		return;
-
-	/* ----------
-	 * Remove the buffer from the used list
-	 * ----------
-	 */
-	if (buf->prev == NULL)
-	{
-		digitbuf_usedlist = buf->next;
-		if (buf->next != NULL)
-			buf->next->prev = NULL;
-	}
-	else
-	{
-		buf->prev->next = buf->next;
-		if (buf->next != NULL)
-			buf->next->prev = buf->prev;
-	}
-
-	/* ----------
-	 * Put it onto the free list
-	 * ----------
-	 */
-	if (digitbuf_freelist != NULL)
-		digitbuf_freelist->prev = buf;
-	buf->prev = NULL;
-	buf->next = digitbuf_freelist;
-	digitbuf_freelist = buf;
-	digitbuf_nfree++;
-
-	/* ----------
-	 * Check for maximum free buffers
-	 * ----------
-	 */
-	if (digitbuf_nfree <= NUMERIC_MAX_FREEBUFS)
-		return;
-
-	/* ----------
-	 * Have too many free buffers - destroy the smallest one
-	 * ----------
-	 */
-	smallest = buf;
-	for (buf = digitbuf_freelist->next; buf != NULL; buf = buf->next)
-	{
-		if (buf->size < smallest->size)
-			smallest = buf;
-	}
-
-	/* ----------
-	 * Remove it from the free list
-	 * ----------
-	 */
-	if (smallest->prev == NULL)
-	{
-		digitbuf_freelist = smallest->next;
-		if (smallest->next != NULL)
-			smallest->next->prev = NULL;
-	}
-	else
-	{
-		smallest->prev->next = smallest->next;
-		if (smallest->next != NULL)
-			smallest->next->prev = smallest->prev;
-	}
-	digitbuf_nfree--;
-
-	/* ----------
-	 * And destroy it
-	 * ----------
-	 */
-	free(smallest);
+	digitbuf_free(var->buf);
+	var->buf = digitbuf_alloc(ndigits + 1);
+	var->buf[0] = 0;
+	var->digits = var->buf + 1;
+	var->ndigits = ndigits;
 }
 
 
 /* ----------
  * free_var() -
  *
- *	Return the digit buffer of a variable to the pool
+ *	Return the digit buffer of a variable to the free pool
  * ----------
  */
 static void
 free_var(NumericVar *var)
 {
-	if (var->buf != NULL)
-	{
-		digitbuf_free(var->buf);
-		var->buf = NULL;
-		var->digits = NULL;
-	}
+	digitbuf_free(var->buf);
+	var->buf = NULL;
+	var->digits = NULL;
 	var->sign = NUMERIC_NAN;
 }
 
 
 /* ----------
- * free_allvars() -
+ * zero_var() -
  *
- *	Put all the currently used buffers back into the pool.
- *
- *	Warning: the variables currently holding the buffers aren't
- *	cleaned! This function should only be used directly before
- *	a call to elog(ERROR,...) or if it is totally impossible that
- *	any other call to free_var() will occur. None of the variable
- *	level functions should call it if it might return later without
- *	an error.
+ *	Set a variable to ZERO.
+ *	Note: rscale and dscale are not touched.
  * ----------
  */
 static void
-free_allvars(void)
+zero_var(NumericVar *var)
 {
-	NumericDigitBuf *buf;
-	NumericDigitBuf *next;
-
-	buf = digitbuf_usedlist;
-	while (buf != NULL)
-	{
-		next = buf->next;
-		digitbuf_free(buf);
-		buf = next;
-	}
+	digitbuf_free(var->buf);
+	var->buf = NULL;
+	var->digits = NULL;
+	var->ndigits = 0;
+	var->weight = 0;			/* by convention; doesn't really matter */
+	var->sign = NUMERIC_POS;	/* anything but NAN... */
 }
 
 
@@ -2132,7 +1889,7 @@ set_var_from_str(char *str, NumericVar *dest)
 {
 	char	   *cp = str;
 	bool		have_dp = FALSE;
-	int			i = 1;
+	int			i = 0;
 
 	while (*cp)
 	{
@@ -2141,29 +1898,13 @@ set_var_from_str(char *str, NumericVar *dest)
 		cp++;
 	}
 
-	digitbuf_free(dest->buf);
-
-	dest->buf = digitbuf_alloc(strlen(cp) + 2);
-	dest->digits = (NumericDigit *) (dest->buf) + sizeof(NumericDigitBuf);
-	dest->digits[0] = 0;
-	dest->weight = 0;
+	alloc_var(dest, strlen(cp));
+	dest->weight = -1;
 	dest->dscale = 0;
+	dest->sign = NUMERIC_POS;
 
 	switch (*cp)
 	{
-		case '0':
-		case '1':
-		case '2':
-		case '3':
-		case '4':
-		case '5':
-		case '6':
-		case '7':
-		case '8':
-		case '9':
-			dest->sign = NUMERIC_POS;
-			break;
-
 		case '+':
 			dest->sign = NUMERIC_POS;
 			cp++;
@@ -2173,92 +1914,76 @@ set_var_from_str(char *str, NumericVar *dest)
 			dest->sign = NUMERIC_NEG;
 			cp++;
 			break;
-
-		case '.':
-			dest->sign = NUMERIC_POS;
-			have_dp = TRUE;
-			cp++;
-			break;
-
-		default:
-			free_allvars();
-			elog(ERROR, "Bad numeric input format '%s'", str);
 	}
 
 	if (*cp == '.')
 	{
-		if (have_dp)
-		{
-			free_allvars();
-			elog(ERROR, "Bad numeric input format '%s'", str);
-		}
-
 		have_dp = TRUE;
 		cp++;
 	}
 
-	if (*cp < '0' && *cp > '9')
-	{
-		free_allvars();
+	if (! isdigit(*cp))
 		elog(ERROR, "Bad numeric input format '%s'", str);
-	}
 
 	while (*cp)
 	{
-		if (isspace(*cp))
-			break;
-
-		if (*cp == 'e' || *cp == 'E')
-			break;
-
-		switch (*cp)
+		if (isdigit(*cp))
 		{
-			case '0':
-			case '1':
-			case '2':
-			case '3':
-			case '4':
-			case '5':
-			case '6':
-			case '7':
-			case '8':
-			case '9':
-				dest->digits[i++] = *cp++ - '0';
-				if (!have_dp)
-					dest->weight++;
-				else
-					dest->dscale++;
-				break;
-
-			case '.':
-				if (have_dp)
-				{
-					free_allvars();
-					elog(ERROR, "Bad numeric input format '%s'", str);
-				}
-				have_dp = TRUE;
-				cp++;
-				break;
-
-			default:
-				free_allvars();
-				elog(ERROR, "Bad numeric input format '%s'", str);
+			dest->digits[i++] = *cp++ - '0';
+			if (!have_dp)
+				dest->weight++;
+			else
+				dest->dscale++;
 		}
+		else if (*cp == '.')
+		{
+			if (have_dp)
+				elog(ERROR, "Bad numeric input format '%s'", str);
+			have_dp = TRUE;
+			cp++;
+		}
+		else
+			break;
 	}
 	dest->ndigits = i;
 
+	/* Handle exponent, if any */
 	if (*cp == 'e' || *cp == 'E')
 	{
-		/* XXX Should handle ...Ennn */
-		elog(ERROR, "Bad numeric input format '%s'", str);
+		long	exponent;
+		char   *endptr;
+
+		cp++;
+		exponent = strtol(cp, &endptr, 10);
+		if (endptr == cp)
+			elog(ERROR, "Bad numeric input format '%s'", str);
+		cp = endptr;
+		if (exponent > NUMERIC_MAX_PRECISION ||
+			exponent < -NUMERIC_MAX_PRECISION)
+			elog(ERROR, "Bad numeric input format '%s'", str);
+		dest->weight += (int) exponent;
+		dest->dscale -= (int) exponent;
+		if (dest->dscale < 0)
+			dest->dscale = 0;
 	}
 
+	/* Should be nothing left but spaces */
+	while (*cp)
+	{
+		if (!isspace(*cp))
+			elog(ERROR, "Bad numeric input format '%s'", str);
+		cp++;
+	}
+
+	/* Strip any leading zeroes */
 	while (dest->ndigits > 0 && *(dest->digits) == 0)
 	{
 		(dest->digits)++;
 		(dest->weight)--;
 		(dest->ndigits)--;
 	}
+	if (dest->ndigits == 0)
+		dest->weight = 0;
 
 	dest->rscale = dest->dscale;
 }
@@ -2279,22 +2004,14 @@ set_var_from_num(Numeric num, NumericVar *dest)
 
 	n = num->varlen - NUMERIC_HDRSZ; /* number of digit-pairs in packed fmt */
 
-	digitbuf_free(dest->buf);
-	dest->buf = digitbuf_alloc(n * 2 + 2);
-
-	digit = ((NumericDigit *) (dest->buf)) + sizeof(NumericDigitBuf);
-
-	/* We always leave an extra high-order digit pair for carry! */
-	*digit++ = 0;
-	*digit++ = 0;
-
-	dest->digits = digit;
-	dest->ndigits = n * 2;
+	alloc_var(dest, n * 2);
 
 	dest->weight = num->n_weight;
 	dest->rscale = num->n_rscale;
 	dest->dscale = NUMERIC_DSCALE(num);
 	dest->sign = NUMERIC_SIGN(num);
+
+	digit = dest->digits;
 
 	for (i = 0; i < n; i++)
 	{
@@ -2314,19 +2031,122 @@ set_var_from_num(Numeric num, NumericVar *dest)
 static void
 set_var_from_var(NumericVar *value, NumericVar *dest)
 {
-	NumericDigitBuf *newbuf;
-	NumericDigit *newdigits;
+	NumericDigit *newbuf;
 
-	/* XXX shouldn't we provide a spare digit for rounding here? */
-
-	newbuf = digitbuf_alloc(value->ndigits);
-	newdigits = ((NumericDigit *) newbuf) + sizeof(NumericDigitBuf);
-	memcpy(newdigits, value->digits, value->ndigits);
+	newbuf = digitbuf_alloc(value->ndigits + 1);
+	newbuf[0] = 0;				/* spare digit for rounding */
+	memcpy(newbuf + 1, value->digits, value->ndigits);
 
 	digitbuf_free(dest->buf);
+
 	memcpy(dest, value, sizeof(NumericVar));
 	dest->buf = newbuf;
-	dest->digits = newdigits;
+	dest->digits = newbuf + 1;
+}
+
+
+/* ----------
+ * get_str_from_var() -
+ *
+ *	Convert a var to text representation (guts of numeric_out).
+ *	CAUTION: var's contents may be modified by rounding!
+ *	Caller must have checked for NaN case.
+ *	Returns a palloc'd string.
+ * ----------
+ */
+static char *
+get_str_from_var(NumericVar *var, int dscale)
+{
+	char	   *str;
+	char	   *cp;
+	int			i;
+	int			d;
+
+	/* ----------
+	 * Check if we must round up before printing the value and
+	 * do so.
+	 * ----------
+	 */
+	i = dscale + var->weight + 1;
+	if (i >= 0 && var->ndigits > i)
+	{
+		int		carry = (var->digits[i] > 4) ? 1 : 0;
+
+		var->ndigits = i;
+
+		while (carry)
+		{
+			carry += var->digits[--i];
+			var->digits[i] = carry % 10;
+			carry /= 10;
+		}
+
+		if (i < 0)
+		{
+			Assert(i == -1);	/* better not have added more than 1 digit */
+			Assert(var->digits > var->buf);
+			var->digits--;
+			var->ndigits++;
+			var->weight++;
+		}
+	}
+	else
+		var->ndigits = MAX(0, MIN(i, var->ndigits));
+
+	/* ----------
+	 * Allocate space for the result
+	 * ----------
+	 */
+	str = palloc(MAX(0, dscale) + MAX(0, var->weight) + 4);
+	cp = str;
+
+	/* ----------
+	 * Output a dash for negative values
+	 * ----------
+	 */
+	if (var->sign == NUMERIC_NEG)
+		*cp++ = '-';
+
+	/* ----------
+	 * Output all digits before the decimal point
+	 * ----------
+	 */
+	i = MAX(var->weight, 0);
+	d = 0;
+
+	while (i >= 0)
+	{
+		if (i <= var->weight && d < var->ndigits)
+			*cp++ = var->digits[d++] + '0';
+		else
+			*cp++ = '0';
+		i--;
+	}
+
+	/* ----------
+	 * If requested, output a decimal point and all the digits
+	 * that follow it.
+	 * ----------
+	 */
+	if (dscale > 0)
+	{
+		*cp++ = '.';
+		while (i >= -dscale)
+		{
+			if (i <= var->weight && d < var->ndigits)
+				*cp++ = var->digits[d++] + '0';
+			else
+				*cp++ = '0';
+			i--;
+		}
+	}
+
+	/* ----------
+	 * terminate the string and return it
+	 * ----------
+	 */
+	*cp = '\0';
+	return str;
 }
 
 
@@ -2445,7 +2265,7 @@ apply_typmod(NumericVar *var, int32 typmod)
 		if (i < 0)
 		{
 			Assert(i == -1);	/* better not have added more than 1 digit */
-			Assert(var->digits > (NumericDigit *) (var->buf + 1));
+			Assert(var->digits > var->buf);
 			var->digits--;
 			var->ndigits++;
 			var->weight++;
@@ -2476,12 +2296,9 @@ apply_typmod(NumericVar *var, int32 typmod)
 		}
 		
 		if (tweight >= maxweight && i < var->ndigits)
-		{
-			free_allvars();
 			elog(ERROR, "overflow on numeric "
 				 "ABS(value) >= 10^%d for field with precision %d scale %d",
 				 tweight, precision, scale);
-		}
 	}
 
 	var->rscale = scale;
@@ -2567,15 +2384,9 @@ add_var(NumericVar *var1, NumericVar *var2, NumericVar *result)
 												 * result = ZERO
 												 * ----------
 												 */
-					digitbuf_free(result->buf);
-					result->buf = digitbuf_alloc(0);
-					result->ndigits = 0;
-					result->digits = ((NumericDigit *) (result->buf)) +
-						sizeof(NumericDigitBuf);
-					result->weight = 0;
+					zero_var(result);
 					result->rscale = MAX(var1->rscale, var2->rscale);
 					result->dscale = MAX(var1->dscale, var2->dscale);
-					result->sign = NUMERIC_POS;
 					break;
 
 				case 1: /* ----------
@@ -2614,15 +2425,9 @@ add_var(NumericVar *var1, NumericVar *var2, NumericVar *result)
 												 * result = ZERO
 												 * ----------
 												 */
-					digitbuf_free(result->buf);
-					result->buf = digitbuf_alloc(0);
-					result->ndigits = 0;
-					result->digits = ((NumericDigit *) (result->buf)) +
-						sizeof(NumericDigitBuf);
-					result->weight = 0;
+					zero_var(result);
 					result->rscale = MAX(var1->rscale, var2->rscale);
 					result->dscale = MAX(var1->dscale, var2->dscale);
-					result->sign = NUMERIC_POS;
 					break;
 
 				case 1: /* ----------
@@ -2698,15 +2503,9 @@ sub_var(NumericVar *var1, NumericVar *var2, NumericVar *result)
 												 * result = ZERO
 												 * ----------
 												 */
-					digitbuf_free(result->buf);
-					result->buf = digitbuf_alloc(0);
-					result->ndigits = 0;
-					result->digits = ((NumericDigit *) (result->buf)) +
-						sizeof(NumericDigitBuf);
-					result->weight = 0;
+					zero_var(result);
 					result->rscale = MAX(var1->rscale, var2->rscale);
 					result->dscale = MAX(var1->dscale, var2->dscale);
-					result->sign = NUMERIC_POS;
 					break;
 
 				case 1: /* ----------
@@ -2745,15 +2544,9 @@ sub_var(NumericVar *var1, NumericVar *var2, NumericVar *result)
 												 * result = ZERO
 												 * ----------
 												 */
-					digitbuf_free(result->buf);
-					result->buf = digitbuf_alloc(0);
-					result->ndigits = 0;
-					result->digits = ((NumericDigit *) (result->buf)) +
-						sizeof(NumericDigitBuf);
-					result->weight = 0;
+					zero_var(result);
 					result->rscale = MAX(var1->rscale, var2->rscale);
 					result->dscale = MAX(var1->dscale, var2->dscale);
-					result->sign = NUMERIC_POS;
 					break;
 
 				case 1: /* ----------
@@ -2799,7 +2592,7 @@ sub_var(NumericVar *var1, NumericVar *var2, NumericVar *result)
 static void
 mul_var(NumericVar *var1, NumericVar *var2, NumericVar *result)
 {
-	NumericDigitBuf *res_buf;
+	NumericDigit *res_buf;
 	NumericDigit *res_digits;
 	int			res_ndigits;
 	int			res_weight;
@@ -2818,7 +2611,7 @@ mul_var(NumericVar *var1, NumericVar *var2, NumericVar *result)
 		res_sign = NUMERIC_NEG;
 
 	res_buf = digitbuf_alloc(res_ndigits);
-	res_digits = ((NumericDigit *) res_buf) + sizeof(NumericDigitBuf);
+	res_digits = res_buf;
 	memset(res_digits, 0, res_ndigits);
 
 	ri = res_ndigits;
@@ -2907,10 +2700,7 @@ div_var(NumericVar *var1, NumericVar *var2, NumericVar *result)
 	 */
 	ndigits_tmp = var2->ndigits + 1;
 	if (ndigits_tmp == 1)
-	{
-		free_allvars();
 		elog(ERROR, "division by zero on numeric");
-	}
 
 	/* ----------
 	 * Determine the result sign, weight and number of digits to calculate
@@ -2922,6 +2712,8 @@ div_var(NumericVar *var1, NumericVar *var2, NumericVar *result)
 		res_sign = NUMERIC_NEG;
 	res_weight = var1->weight - var2->weight + 1;
 	res_ndigits = global_rscale + res_weight;
+	if (res_ndigits <= 0)
+		res_ndigits = 1;
 
 	/* ----------
 	 * Now result zero check
@@ -2929,13 +2721,8 @@ div_var(NumericVar *var1, NumericVar *var2, NumericVar *result)
 	 */
 	if (var1->ndigits == 0)
 	{
-		digitbuf_free(result->buf);
-		result->buf = digitbuf_alloc(0);
-		result->digits = ((NumericDigit *) (result->buf)) + sizeof(NumericDigitBuf);
-		result->ndigits = 0;
-		result->weight = 0;
+		zero_var(result);
 		result->rscale = global_rscale;
-		result->sign = NUMERIC_POS;
 		return;
 	}
 
@@ -2947,7 +2734,6 @@ div_var(NumericVar *var1, NumericVar *var2, NumericVar *result)
 	for (i = 1; i < 10; i++)
 		init_var(&divisor[i]);
 
-
 	/* ----------
 	 * Make a copy of the divisor which has one leading zero digit
 	 * ----------
@@ -2956,8 +2742,7 @@ div_var(NumericVar *var1, NumericVar *var2, NumericVar *result)
 	divisor[1].rscale = var2->ndigits;
 	divisor[1].sign = NUMERIC_POS;
 	divisor[1].buf = digitbuf_alloc(ndigits_tmp);
-	divisor[1].digits = ((NumericDigit *) (divisor[1].buf)) +
-		sizeof(NumericDigitBuf);
+	divisor[1].digits = divisor[1].buf;
 	divisor[1].digits[0] = 0;
 	memcpy(&(divisor[1].digits[1]), var2->digits, ndigits_tmp - 1);
 
@@ -2970,7 +2755,7 @@ div_var(NumericVar *var1, NumericVar *var2, NumericVar *result)
 	dividend.rscale = var1->ndigits;
 	dividend.sign = NUMERIC_POS;
 	dividend.buf = digitbuf_alloc(var1->ndigits);
-	dividend.digits = ((NumericDigit *) (dividend.buf)) + sizeof(NumericDigitBuf);
+	dividend.digits = dividend.buf;
 	memcpy(dividend.digits, var1->digits, var1->ndigits);
 
 	/* ----------
@@ -2979,7 +2764,7 @@ div_var(NumericVar *var1, NumericVar *var2, NumericVar *result)
 	 */
 	digitbuf_free(result->buf);
 	result->buf = digitbuf_alloc(res_ndigits + 2);
-	res_digits = ((NumericDigit *) (result->buf)) + sizeof(NumericDigitBuf);
+	res_digits = result->buf;
 	result->digits = res_digits;
 	result->ndigits = res_ndigits;
 	result->weight = res_weight;
@@ -2997,7 +2782,7 @@ div_var(NumericVar *var1, NumericVar *var2, NumericVar *result)
 	weight_tmp = 1;
 	rscale_tmp = divisor[1].rscale;
 
-	for (ri = 0; ri < res_ndigits + 1; ri++)
+	for (ri = 0; ri <= res_ndigits; ri++)
 	{
 		first_have = first_have * 10;
 		if (first_nextdigit >= 0 && first_nextdigit < dividend.ndigits)
@@ -3017,8 +2802,7 @@ div_var(NumericVar *var1, NumericVar *var2, NumericVar *result)
 
 				memcpy(&divisor[guess], &divisor[1], sizeof(NumericVar));
 				divisor[guess].buf = digitbuf_alloc(divisor[guess].ndigits);
-				divisor[guess].digits = ((NumericDigit *) (divisor[guess].buf) +
-										 sizeof(NumericDigitBuf));
+				divisor[guess].digits = divisor[guess].buf;
 				for (i = divisor[1].ndigits - 1; i >= 0; i--)
 				{
 					sum += divisor[1].digits[i] * guess;
@@ -3212,10 +2996,7 @@ sqrt_var(NumericVar *arg, NumericVar *result)
 	}
 
 	if (stat < 0)
-	{
-		free_allvars();
 		elog(ERROR, "math error on numeric - cannot compute SQRT of negative value");
-	}
 
 	init_var(&tmp_arg);
 	init_var(&tmp_val);
@@ -3230,7 +3011,7 @@ sqrt_var(NumericVar *arg, NumericVar *result)
 	 */
 	digitbuf_free(result->buf);
 	result->buf = digitbuf_alloc(1);
-	result->digits = ((NumericDigit *) (result->buf)) + sizeof(NumericDigitBuf);
+	result->digits = result->buf;
 	result->digits[0] = tmp_arg.digits[0] / 2;
 	if (result->digits[0] == 0)
 		result->digits[0] = 1;
@@ -3302,10 +3083,7 @@ exp_var(NumericVar *arg, NumericVar *result)
 		if (d < x.ndigits)
 			global_rscale += x.digits[d];
 		if (global_rscale >= 1000)
-		{
-			free_allvars();
 			elog(ERROR, "argument for EXP() too big");
-		}
 	}
 
 	global_rscale = global_rscale / 2 + save_global_rscale + 8;
@@ -3372,10 +3150,7 @@ ln_var(NumericVar *arg, NumericVar *result)
 	int			save_global_rscale;
 
 	if (cmp_var(arg, &const_zero) <= 0)
-	{
-		free_allvars();
 		elog(ERROR, "math error on numeric - cannot compute LN of value <= zero");
-	}
 
 	save_global_rscale = global_rscale;
 	global_rscale += 8;
@@ -3572,7 +3347,7 @@ cmp_abs(NumericVar *var1, NumericVar *var2)
 static void
 add_abs(NumericVar *var1, NumericVar *var2, NumericVar *result)
 {
-	NumericDigitBuf *res_buf;
+	NumericDigit *res_buf;
 	NumericDigit *res_digits;
 	int			res_ndigits;
 	int			res_weight;
@@ -3587,9 +3362,11 @@ add_abs(NumericVar *var1, NumericVar *var2, NumericVar *result)
 	res_rscale = MAX(var1->rscale, var2->rscale);
 	res_dscale = MAX(var1->dscale, var2->dscale);
 	res_ndigits = res_rscale + res_weight + 1;
+	if (res_ndigits <= 0)
+		res_ndigits = 1;
 
 	res_buf = digitbuf_alloc(res_ndigits);
-	res_digits = ((NumericDigit *) res_buf) + sizeof(NumericDigitBuf);
+	res_digits = res_buf;
 
 	i1 = res_rscale + var1->weight + 1;
 	i2 = res_rscale + var2->weight + 1;
@@ -3641,7 +3418,7 @@ add_abs(NumericVar *var1, NumericVar *var2, NumericVar *result)
 static void
 sub_abs(NumericVar *var1, NumericVar *var2, NumericVar *result)
 {
-	NumericDigitBuf *res_buf;
+	NumericDigit *res_buf;
 	NumericDigit *res_digits;
 	int			res_ndigits;
 	int			res_weight;
@@ -3656,9 +3433,11 @@ sub_abs(NumericVar *var1, NumericVar *var2, NumericVar *result)
 	res_rscale = MAX(var1->rscale, var2->rscale);
 	res_dscale = MAX(var1->dscale, var2->dscale);
 	res_ndigits = res_rscale + res_weight + 1;
+	if (res_ndigits <= 0)
+		res_ndigits = 1;
 
 	res_buf = digitbuf_alloc(res_ndigits);
-	res_digits = ((NumericDigit *) res_buf) + sizeof(NumericDigitBuf);
+	res_digits = res_buf;
 
 	i1 = res_rscale + var1->weight + 1;
 	i2 = res_rscale + var2->weight + 1;
