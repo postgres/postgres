@@ -4426,14 +4426,13 @@ done
 
 
 if test "$YACC"; then
-  if "$YACC" --version | sed q | $AWK '{ if ($4 < 1.875) exit 0; else exit 1;}'; then
+  if $YACC --version | sed q | $AWK '{ if ($4 < 1.875) exit 0; else exit 1;}'; then
     { echo "$as_me:$LINENO: WARNING:
 *** The installed version of Bison is too old.  PostgreSQL needs
 *** Bison version 1.875 or later." >&5
 echo "$as_me: WARNING:
 *** The installed version of Bison is too old.  PostgreSQL needs
 *** Bison version 1.875 or later." >&2;}
-    unset YACC
   fi
 fi
 
