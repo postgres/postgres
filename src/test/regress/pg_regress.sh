@@ -1,5 +1,5 @@
 #! /bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/pg_regress.sh,v 1.10 2000/10/29 12:49:49 petere Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/pg_regress.sh,v 1.11 2000/11/21 17:34:21 petere Exp $
 
 me=`basename $0`
 : ${TMPDIR=/tmp}
@@ -358,7 +358,7 @@ else # not temp-install
         echo "(using postmaster on Unix socket, $port_info)"
     fi
     message "dropping database \"$dbname\""
-    "$bindir/dropdb" $psql_options "$dbname" >/dev/null 2>&1
+    "$bindir/dropdb" $psql_options "$dbname"
     # errors can be ignored
 fi
 
