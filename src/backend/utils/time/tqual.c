@@ -16,7 +16,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.69 2003/09/25 18:58:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.70 2003/10/01 21:30:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,14 +26,19 @@
 #include "storage/sinval.h"
 #include "utils/tqual.h"
 
-
-static SnapshotData SnapshotDirtyData;
-Snapshot	SnapshotDirty = &SnapshotDirtyData;
-
+/*
+ * The SnapshotData structs are static to simplify memory allocation
+ * (see the hack in GetSnapshotData to avoid repeated malloc/free).
+ */
 static SnapshotData QuerySnapshotData;
 static SnapshotData SerializableSnapshotData;
+static SnapshotData CurrentSnapshotData;
+static SnapshotData SnapshotDirtyData;
+
+/* Externally visible pointers to valid snapshots: */
 Snapshot	QuerySnapshot = NULL;
 Snapshot	SerializableSnapshot = NULL;
+Snapshot	SnapshotDirty = &SnapshotDirtyData;
 
 /* These are updated by GetSnapshotData: */
 TransactionId RecentXmin = InvalidTransactionId;
@@ -387,10 +392,8 @@ HeapTupleSatisfiesToast(HeapTupleHeader tuple)
  *	CurrentCommandId.
  */
 int
-HeapTupleSatisfiesUpdate(HeapTuple htuple, CommandId curcid)
+HeapTupleSatisfiesUpdate(HeapTupleHeader tuple, CommandId curcid)
 {
-	HeapTupleHeader tuple = htuple->t_data;
-
 	if (!(tuple->t_infomask & HEAP_XMIN_COMMITTED))
 	{
 		if (tuple->t_infomask & HEAP_XMIN_INVALID)
@@ -1024,6 +1027,42 @@ CopyQuerySnapshot(void)
 }
 
 /*
+ * CopyCurrentSnapshot
+ *		Make a snapshot that is up-to-date as of the current instant,
+ *		and return a copy.
+ *
+ * The copy is palloc'd in the current memory context.
+ */
+Snapshot
+CopyCurrentSnapshot(void)
+{
+	Snapshot	currentSnapshot;
+	Snapshot	snapshot;
+
+	if (QuerySnapshot == NULL)	/* should not be first call in xact */
+		elog(ERROR, "no snapshot has been set");
+
+	/* Update the static struct */
+	currentSnapshot = GetSnapshotData(&CurrentSnapshotData, false);
+	currentSnapshot->curcid = GetCurrentCommandId();
+
+	/* Make a copy */
+	snapshot = (Snapshot) palloc(sizeof(SnapshotData));
+	memcpy(snapshot, currentSnapshot, sizeof(SnapshotData));
+	if (snapshot->xcnt > 0)
+	{
+		snapshot->xip = (TransactionId *)
+			palloc(snapshot->xcnt * sizeof(TransactionId));
+		memcpy(snapshot->xip, currentSnapshot->xip,
+			   snapshot->xcnt * sizeof(TransactionId));
+	}
+	else
+		snapshot->xip = NULL;
+
+	return snapshot;
+}
+
+/*
  * FreeXactSnapshot
  *		Free snapshot(s) at end of transaction.
  */
@@ -1031,8 +1070,9 @@ void
 FreeXactSnapshot(void)
 {
 	/*
-	 * We do not free(QuerySnapshot->xip); or
-	 * free(SerializableSnapshot->xip); they will be reused soon
+	 * We do not free the xip arrays for the snapshot structs;
+	 * they will be reused soon.  So this is now just a state
+	 * change to prevent outside callers from accessing the snapshots.
 	 */
 	QuerySnapshot = NULL;
 	SerializableSnapshot = NULL;

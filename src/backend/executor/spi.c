@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.106 2003/09/25 18:58:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.107 2003/10/01 21:30:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,11 +33,11 @@ static int	_SPI_curid = -1;
 
 static int	_SPI_execute(const char *src, int tcount, _SPI_plan *plan);
 static int	_SPI_pquery(QueryDesc *queryDesc, bool runit,
-						bool useSnapshotNow, int tcount);
+						bool useCurrentSnapshot, int tcount);
 
 static int _SPI_execute_plan(_SPI_plan *plan,
 							 Datum *Values, const char *Nulls,
-							 bool useSnapshotNow, int tcount);
+							 bool useCurrentSnapshot, int tcount);
 
 static void _SPI_cursor_operation(Portal portal, bool forward, int count,
 					  DestReceiver *dest);
@@ -245,12 +245,14 @@ SPI_execp(void *plan, Datum *Values, const char *Nulls, int tcount)
 }
 
 /*
- * SPI_execp_now -- identical to SPI_execp, except that we use SnapshotNow
- * instead of the normal QuerySnapshot.  This is currently not documented
- * in spi.sgml because it is only intended for use by RI triggers.
+ * SPI_execp_current -- identical to SPI_execp, except that we expose the
+ * Executor option to use a current snapshot instead of the normal
+ * QuerySnapshot.  This is currently not documented in spi.sgml because
+ * it is only intended for use by RI triggers.
  */
 int
-SPI_execp_now(void *plan, Datum *Values, const char *Nulls, int tcount)
+SPI_execp_current(void *plan, Datum *Values, const char *Nulls,
+				  bool useCurrentSnapshot, int tcount)
 {
 	int			res;
 
@@ -264,7 +266,8 @@ SPI_execp_now(void *plan, Datum *Values, const char *Nulls, int tcount)
 	if (res < 0)
 		return res;
 
-	res = _SPI_execute_plan((_SPI_plan *) plan, Values, Nulls, true, tcount);
+	res = _SPI_execute_plan((_SPI_plan *) plan, Values, Nulls,
+							useCurrentSnapshot, tcount);
 
 	_SPI_end_call(true);
 	return res;
@@ -1124,7 +1127,7 @@ _SPI_execute(const char *src, int tcount, _SPI_plan *plan)
 
 static int
 _SPI_execute_plan(_SPI_plan *plan, Datum *Values, const char *Nulls,
-				  bool useSnapshotNow, int tcount)
+				  bool useCurrentSnapshot, int tcount)
 {
 	List	   *query_list_list = plan->qtlist;
 	List	   *plan_list = plan->ptlist;
@@ -1195,7 +1198,7 @@ _SPI_execute_plan(_SPI_plan *plan, Datum *Values, const char *Nulls,
 			{
 				qdesc = CreateQueryDesc(queryTree, planTree, dest,
 										paramLI, false);
-				res = _SPI_pquery(qdesc, true, useSnapshotNow,
+				res = _SPI_pquery(qdesc, true, useCurrentSnapshot,
 								  queryTree->canSetTag ? tcount : 0);
 				if (res < 0)
 					return res;
@@ -1208,7 +1211,8 @@ _SPI_execute_plan(_SPI_plan *plan, Datum *Values, const char *Nulls,
 }
 
 static int
-_SPI_pquery(QueryDesc *queryDesc, bool runit, bool useSnapshotNow, int tcount)
+_SPI_pquery(QueryDesc *queryDesc, bool runit,
+			bool useCurrentSnapshot, int tcount)
 {
 	int			operation = queryDesc->operation;
 	int			res;
@@ -1245,7 +1249,7 @@ _SPI_pquery(QueryDesc *queryDesc, bool runit, bool useSnapshotNow, int tcount)
 		ResetUsage();
 #endif
 
-	ExecutorStart(queryDesc, useSnapshotNow, false);
+	ExecutorStart(queryDesc, useCurrentSnapshot, false);
 
 	ExecutorRun(queryDesc, ForwardScanDirection, (long) tcount);
 

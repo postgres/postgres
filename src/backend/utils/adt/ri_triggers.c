@@ -17,7 +17,7 @@
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.60 2003/09/29 00:05:25 petere Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.61 2003/10/01 21:30:52 tgl Exp $
  *
  * ----------
  */
@@ -157,6 +157,7 @@ static void *ri_PlanCheck(const char *querystr, int nargs, Oid *argtypes,
 static bool ri_PerformCheck(RI_QueryKey *qkey, void *qplan,
 				Relation fk_rel, Relation pk_rel,
 				HeapTuple old_tuple, HeapTuple new_tuple,
+				bool detectNewRows,
 				int expect_OK, const char *constrname);
 static void ri_ExtractValues(RI_QueryKey *qkey, int key_idx,
 				 Relation rel, HeapTuple tuple,
@@ -276,6 +277,7 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 		ri_PerformCheck(&qkey, qplan,
 						fk_rel, pk_rel,
 						NULL, NULL,
+						false,
 						SPI_OK_SELECT,
 						tgargs[RI_CONSTRAINT_NAME_ARGNO]);
 
@@ -433,6 +435,7 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 	ri_PerformCheck(&qkey, qplan,
 					fk_rel, pk_rel,
 					NULL, new_row,
+					false,
 					SPI_OK_SELECT,
 					tgargs[RI_CONSTRAINT_NAME_ARGNO]);
 
@@ -594,6 +597,7 @@ ri_Check_Pk_Match(Relation pk_rel, Relation fk_rel,
 	result = ri_PerformCheck(&qkey, qplan,
 							 fk_rel, pk_rel,
 							 old_row, NULL,
+							 true,		/* treat like update */
 							 SPI_OK_SELECT, NULL);
 
 	if (SPI_finish() != SPI_OK_FINISH)
@@ -752,6 +756,7 @@ RI_FKey_noaction_del(PG_FUNCTION_ARGS)
 			ri_PerformCheck(&qkey, qplan,
 							fk_rel, pk_rel,
 							old_row, NULL,
+							true, /* must detect new rows */
 							SPI_OK_SELECT,
 							tgargs[RI_CONSTRAINT_NAME_ARGNO]);
 
@@ -942,6 +947,7 @@ RI_FKey_noaction_upd(PG_FUNCTION_ARGS)
 			ri_PerformCheck(&qkey, qplan,
 							fk_rel, pk_rel,
 							old_row, NULL,
+							true, /* must detect new rows */
 							SPI_OK_SELECT,
 							tgargs[RI_CONSTRAINT_NAME_ARGNO]);
 
@@ -1102,6 +1108,7 @@ RI_FKey_cascade_del(PG_FUNCTION_ARGS)
 			ri_PerformCheck(&qkey, qplan,
 							fk_rel, pk_rel,
 							old_row, NULL,
+							true, /* must detect new rows */
 							SPI_OK_DELETE,
 							tgargs[RI_CONSTRAINT_NAME_ARGNO]);
 
@@ -1285,6 +1292,7 @@ RI_FKey_cascade_upd(PG_FUNCTION_ARGS)
 			ri_PerformCheck(&qkey, qplan,
 							fk_rel, pk_rel,
 							old_row, new_row,
+							true, /* must detect new rows */
 							SPI_OK_UPDATE,
 							tgargs[RI_CONSTRAINT_NAME_ARGNO]);
 
@@ -1453,6 +1461,7 @@ RI_FKey_restrict_del(PG_FUNCTION_ARGS)
 			ri_PerformCheck(&qkey, qplan,
 							fk_rel, pk_rel,
 							old_row, NULL,
+							true, /* must detect new rows */
 							SPI_OK_SELECT,
 							tgargs[RI_CONSTRAINT_NAME_ARGNO]);
 
@@ -1633,6 +1642,7 @@ RI_FKey_restrict_upd(PG_FUNCTION_ARGS)
 			ri_PerformCheck(&qkey, qplan,
 							fk_rel, pk_rel,
 							old_row, NULL,
+							true, /* must detect new rows */
 							SPI_OK_SELECT,
 							tgargs[RI_CONSTRAINT_NAME_ARGNO]);
 
@@ -1802,6 +1812,7 @@ RI_FKey_setnull_del(PG_FUNCTION_ARGS)
 			ri_PerformCheck(&qkey, qplan,
 							fk_rel, pk_rel,
 							old_row, NULL,
+							true, /* must detect new rows */
 							SPI_OK_UPDATE,
 							tgargs[RI_CONSTRAINT_NAME_ARGNO]);
 
@@ -2019,6 +2030,7 @@ RI_FKey_setnull_upd(PG_FUNCTION_ARGS)
 			ri_PerformCheck(&qkey, qplan,
 							fk_rel, pk_rel,
 							old_row, NULL,
+							true, /* must detect new rows */
 							SPI_OK_UPDATE,
 							tgargs[RI_CONSTRAINT_NAME_ARGNO]);
 
@@ -2188,6 +2200,7 @@ RI_FKey_setdefault_del(PG_FUNCTION_ARGS)
 			ri_PerformCheck(&qkey, qplan,
 							fk_rel, pk_rel,
 							old_row, NULL,
+							true, /* must detect new rows */
 							SPI_OK_UPDATE,
 							tgargs[RI_CONSTRAINT_NAME_ARGNO]);
 
@@ -2392,6 +2405,7 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 			ri_PerformCheck(&qkey, qplan,
 							fk_rel, pk_rel,
 							old_row, NULL,
+							true, /* must detect new rows */
 							SPI_OK_UPDATE,
 							tgargs[RI_CONSTRAINT_NAME_ARGNO]);
 
@@ -2788,11 +2802,13 @@ static bool
 ri_PerformCheck(RI_QueryKey *qkey, void *qplan,
 				Relation fk_rel, Relation pk_rel,
 				HeapTuple old_tuple, HeapTuple new_tuple,
+				bool detectNewRows,
 				int expect_OK, const char *constrname)
 {
 	Relation	query_rel,
 				source_rel;
 	int			key_idx;
+	bool		useCurrentSnapshot;
 	int			limit;
 	int			spi_result;
 	AclId		save_uid;
@@ -2842,9 +2858,25 @@ ri_PerformCheck(RI_QueryKey *qkey, void *qplan,
 						 vals, nulls);
 	}
 
-	/* Switch to proper UID to perform check as */
-	save_uid = GetUserId();
-	SetUserId(RelationGetForm(query_rel)->relowner);
+	/*
+	 * In READ COMMITTED mode, we just need to make sure the regular query
+	 * snapshot is up-to-date, and we will see all rows that could be
+	 * interesting.  In SERIALIZABLE mode, we can't update the regular query
+	 * snapshot.  If the caller passes detectNewRows == false then it's okay
+	 * to do the query with the transaction snapshot; otherwise we tell the
+	 * executor to force a current snapshot (and error out if it finds any
+	 * rows under current snapshot that wouldn't be visible per the
+	 * transaction snapshot).
+	 */
+	if (XactIsoLevel == XACT_SERIALIZABLE)
+	{
+		useCurrentSnapshot = detectNewRows;
+	}
+	else
+	{
+		SetQuerySnapshot();
+		useCurrentSnapshot = false;
+	}
 
 	/*
 	 * If this is a select query (e.g., for a 'no action' or 'restrict'
@@ -2854,19 +2886,20 @@ ri_PerformCheck(RI_QueryKey *qkey, void *qplan,
 	 */
 	limit = (expect_OK == SPI_OK_SELECT) ? 1 : 0;
 
-	/*
-	 * Run the plan, using SnapshotNow time qual rules so that we can see
-	 * all committed tuples, even those committed after our own transaction
-	 * or query started.
-	 */
-	spi_result = SPI_execp_now(qplan, vals, nulls, limit);
+	/* Switch to proper UID to perform check as */
+	save_uid = GetUserId();
+	SetUserId(RelationGetForm(query_rel)->relowner);
+
+	/* Finally we can run the query. */
+	spi_result = SPI_execp_current(qplan, vals, nulls,
+								   useCurrentSnapshot, limit);
 
 	/* Restore UID */
 	SetUserId(save_uid);
 
 	/* Check result */
 	if (spi_result < 0)
-		elog(ERROR, "SPI_execp_now returned %d", spi_result);
+		elog(ERROR, "SPI_execp_current returned %d", spi_result);
 
 	if (expect_OK >= 0 && spi_result != expect_OK)
 		ri_ReportViolation(qkey, constrname ? constrname : "",

@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.219 2003/09/25 18:58:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.220 2003/10/01 21:30:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,8 +104,14 @@ static void EvalPlanQualStop(evalPlanQual *epq);
  * field of the QueryDesc is filled in to describe the tuples that will be
  * returned, and the internal fields (estate and planstate) are set up.
  *
- * If useSnapshotNow is true, run the query with SnapshotNow time qual rules
- * instead of the normal use of QuerySnapshot.
+ * If useCurrentSnapshot is true, run the query with the latest available
+ * snapshot, instead of the normal QuerySnapshot.  Also, if it's an update
+ * or delete query, check that the rows to be updated or deleted would be
+ * visible to the normal QuerySnapshot.  (This is a special-case behavior
+ * needed for referential integrity updates in serializable transactions.
+ * We must check all currently-committed rows, but we want to throw a
+ * can't-serialize error if any rows that would need updates would not be
+ * visible under the normal serializable snapshot.)
  *
  * If explainOnly is true, we are not actually intending to run the plan,
  * only to set up for EXPLAIN; so skip unwanted side-effects.
@@ -115,7 +121,7 @@ static void EvalPlanQualStop(evalPlanQual *epq);
  * ----------------------------------------------------------------
  */
 void
-ExecutorStart(QueryDesc *queryDesc, bool useSnapshotNow, bool explainOnly)
+ExecutorStart(QueryDesc *queryDesc, bool useCurrentSnapshot, bool explainOnly)
 {
 	EState	   *estate;
 	MemoryContext oldcontext;
@@ -157,15 +163,18 @@ ExecutorStart(QueryDesc *queryDesc, bool useSnapshotNow, bool explainOnly)
 	 * the life of this query, even if it outlives the current command and
 	 * current snapshot.
 	 */
-	if (useSnapshotNow)
+	if (useCurrentSnapshot)
 	{
-		estate->es_snapshot = SnapshotNow;
-		estate->es_snapshot_cid = GetCurrentCommandId();
+		/* RI update/delete query --- must use an up-to-date snapshot */
+		estate->es_snapshot = CopyCurrentSnapshot();
+		/* crosscheck updates/deletes against transaction snapshot */
+		estate->es_crosscheck_snapshot = CopyQuerySnapshot();
 	}
 	else
 	{
+		/* normal query --- use query snapshot, no crosscheck */
 		estate->es_snapshot = CopyQuerySnapshot();
-		estate->es_snapshot_cid = estate->es_snapshot->curcid;
+		estate->es_crosscheck_snapshot = SnapshotAny;
 	}
 
 	/*
@@ -1118,7 +1127,7 @@ lnext:	;
 
 					tuple.t_self = *((ItemPointer) DatumGetPointer(datum));
 					test = heap_mark4update(erm->relation, &tuple, &buffer,
-											estate->es_snapshot_cid);
+											estate->es_snapshot->curcid);
 					ReleaseBuffer(buffer);
 					switch (test)
 					{
@@ -1278,7 +1287,7 @@ ExecSelect(TupleTableSlot *slot,
 	if (estate->es_into_relation_descriptor != NULL)
 	{
 		heap_insert(estate->es_into_relation_descriptor, tuple,
-					estate->es_snapshot_cid);
+					estate->es_snapshot->curcid);
 		IncrAppended();
 	}
 
@@ -1354,7 +1363,7 @@ ExecInsert(TupleTableSlot *slot,
 	 * insert the tuple
 	 */
 	newId = heap_insert(resultRelationDesc, tuple,
-						estate->es_snapshot_cid);
+						estate->es_snapshot->curcid);
 
 	IncrAppended();
 	(estate->es_processed)++;
@@ -1406,7 +1415,7 @@ ExecDelete(TupleTableSlot *slot,
 		bool		dodelete;
 
 		dodelete = ExecBRDeleteTriggers(estate, resultRelInfo, tupleid,
-										estate->es_snapshot_cid);
+										estate->es_snapshot->curcid);
 
 		if (!dodelete)			/* "do nothing" */
 			return;
@@ -1418,7 +1427,8 @@ ExecDelete(TupleTableSlot *slot,
 ldelete:;
 	result = heap_delete(resultRelationDesc, tupleid,
 						 &ctid,
-						 estate->es_snapshot_cid,
+						 estate->es_snapshot->curcid,
+						 estate->es_crosscheck_snapshot,
 						 true /* wait for commit */);
 	switch (result)
 	{
@@ -1517,7 +1527,7 @@ ExecUpdate(TupleTableSlot *slot,
 
 		newtuple = ExecBRUpdateTriggers(estate, resultRelInfo,
 										tupleid, tuple,
-										estate->es_snapshot_cid);
+										estate->es_snapshot->curcid);
 
 		if (newtuple == NULL)	/* "do nothing" */
 			return;
@@ -1553,7 +1563,8 @@ lreplace:;
 	 */
 	result = heap_update(resultRelationDesc, tupleid, tuple,
 						 &ctid,
-						 estate->es_snapshot_cid,
+						 estate->es_snapshot->curcid,
+						 estate->es_crosscheck_snapshot,
 						 true /* wait for commit */);
 	switch (result)
 	{
@@ -2039,7 +2050,7 @@ EvalPlanQualStart(evalPlanQual *epq, EState *estate, evalPlanQual *priorepq)
 	 */
 	epqstate->es_direction = ForwardScanDirection;
 	epqstate->es_snapshot = estate->es_snapshot;
-	epqstate->es_snapshot_cid = estate->es_snapshot_cid;
+	epqstate->es_crosscheck_snapshot = estate->es_crosscheck_snapshot;
 	epqstate->es_range_table = estate->es_range_table;
 	epqstate->es_result_relations = estate->es_result_relations;
 	epqstate->es_num_result_relations = estate->es_num_result_relations;

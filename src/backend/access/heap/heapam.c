@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.156 2003/09/25 06:57:56 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.157 2003/10/01 21:30:52 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1207,14 +1207,23 @@ simple_heap_insert(Relation relation, HeapTuple tup)
  * NB: do not call this directly unless you are prepared to deal with
  * concurrent-update conditions.  Use simple_heap_delete instead.
  *
+ *	relation - table to be modified
+ *	tid - TID of tuple to be deleted
+ *	ctid - output parameter, used only for failure case (see below)
+ *	cid - delete command ID to use in verifying tuple visibility
+ *	crosscheck - if not SnapshotAny, also check tuple against this
+ *	wait - true if should wait for any conflicting update to commit/abort
+ *
  * Normal, successful return value is HeapTupleMayBeUpdated, which
  * actually means we did delete it.  Failure return codes are
  * HeapTupleSelfUpdated, HeapTupleUpdated, or HeapTupleBeingUpdated
- * (the last only possible if wait == false).
+ * (the last only possible if wait == false).  On a failure return,
+ * *ctid is set to the ctid link of the target tuple (possibly a later
+ * version of the row).
  */
 int
 heap_delete(Relation relation, ItemPointer tid,
-			ItemPointer ctid, CommandId cid, bool wait)
+			ItemPointer ctid, CommandId cid, Snapshot crosscheck, bool wait)
 {
 	ItemId		lp;
 	HeapTupleData tp;
@@ -1240,7 +1249,7 @@ heap_delete(Relation relation, ItemPointer tid,
 	tp.t_tableOid = relation->rd_id;
 
 l1:
-	result = HeapTupleSatisfiesUpdate(&tp, cid);
+	result = HeapTupleSatisfiesUpdate(tp.t_data, cid);
 
 	if (result == HeapTupleInvisible)
 	{
@@ -1278,6 +1287,14 @@ l1:
 		else
 			result = HeapTupleUpdated;
 	}
+
+	if (crosscheck != SnapshotAny && result == HeapTupleMayBeUpdated)
+	{
+		/* Perform additional check for serializable RI updates */
+		if (!HeapTupleSatisfiesSnapshot(tp.t_data, crosscheck))
+			result = HeapTupleUpdated;
+	}
+
 	if (result != HeapTupleMayBeUpdated)
 	{
 		Assert(result == HeapTupleSelfUpdated ||
@@ -1378,7 +1395,7 @@ simple_heap_delete(Relation relation, ItemPointer tid)
 
 	result = heap_delete(relation, tid,
 						 &ctid,
-						 GetCurrentCommandId(),
+						 GetCurrentCommandId(), SnapshotAny,
 						 true /* wait for commit */);
 	switch (result)
 	{
@@ -1407,14 +1424,26 @@ simple_heap_delete(Relation relation, ItemPointer tid)
  * NB: do not call this directly unless you are prepared to deal with
  * concurrent-update conditions.  Use simple_heap_update instead.
  *
+ *	relation - table to be modified
+ *	otid - TID of old tuple to be replaced
+ *	newtup - newly constructed tuple data to store
+ *	ctid - output parameter, used only for failure case (see below)
+ *	cid - update command ID to use in verifying old tuple visibility
+ *	crosscheck - if not SnapshotAny, also check old tuple against this
+ *	wait - true if should wait for any conflicting update to commit/abort
+ *
  * Normal, successful return value is HeapTupleMayBeUpdated, which
  * actually means we *did* update it.  Failure return codes are
  * HeapTupleSelfUpdated, HeapTupleUpdated, or HeapTupleBeingUpdated
- * (the last only possible if wait == false).
+ * (the last only possible if wait == false).  On a failure return,
+ * *ctid is set to the ctid link of the old tuple (possibly a later
+ * version of the row).
+ * On success, newtup->t_self is set to the TID where the new tuple
+ * was inserted.
  */
 int
 heap_update(Relation relation, ItemPointer otid, HeapTuple newtup,
-			ItemPointer ctid, CommandId cid, bool wait)
+			ItemPointer ctid, CommandId cid, Snapshot crosscheck, bool wait)
 {
 	ItemId		lp;
 	HeapTupleData oldtup;
@@ -1450,7 +1479,7 @@ heap_update(Relation relation, ItemPointer otid, HeapTuple newtup,
 	 */
 
 l2:
-	result = HeapTupleSatisfiesUpdate(&oldtup, cid);
+	result = HeapTupleSatisfiesUpdate(oldtup.t_data, cid);
 
 	if (result == HeapTupleInvisible)
 	{
@@ -1488,6 +1517,14 @@ l2:
 		else
 			result = HeapTupleUpdated;
 	}
+
+	if (crosscheck != SnapshotAny && result == HeapTupleMayBeUpdated)
+	{
+		/* Perform additional check for serializable RI updates */
+		if (!HeapTupleSatisfiesSnapshot(oldtup.t_data, crosscheck))
+			result = HeapTupleUpdated;
+	}
+
 	if (result != HeapTupleMayBeUpdated)
 	{
 		Assert(result == HeapTupleSelfUpdated ||
@@ -1718,7 +1755,7 @@ simple_heap_update(Relation relation, ItemPointer otid, HeapTuple tup)
 
 	result = heap_update(relation, otid, tup,
 						 &ctid,
-						 GetCurrentCommandId(),
+						 GetCurrentCommandId(), SnapshotAny,
 						 true /* wait for commit */);
 	switch (result)
 	{
@@ -1767,7 +1804,7 @@ heap_mark4update(Relation relation, HeapTuple tuple, Buffer *buffer,
 	tuple->t_len = ItemIdGetLength(lp);
 
 l3:
-	result = HeapTupleSatisfiesUpdate(tuple, cid);
+	result = HeapTupleSatisfiesUpdate(tuple->t_data, cid);
 
 	if (result == HeapTupleInvisible)
 	{

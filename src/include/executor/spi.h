@@ -2,7 +2,7 @@
  *
  * spi.h
  *
- * $Id: spi.h,v 1.38 2003/09/25 18:58:36 tgl Exp $
+ * $Id: spi.h,v 1.39 2003/10/01 21:30:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -84,8 +84,8 @@ extern void SPI_pop(void);
 extern int	SPI_exec(const char *src, int tcount);
 extern int SPI_execp(void *plan, Datum *values, const char *Nulls,
 		  int tcount);
-extern int SPI_execp_now(void *plan, Datum *values, const char *Nulls,
-		  int tcount);
+extern int SPI_execp_current(void *plan, Datum *values, const char *Nulls,
+							 bool useCurrentSnapshot, int tcount);
 extern void *SPI_prepare(const char *src, int nargs, Oid *argtypes);
 extern void *SPI_saveplan(void *plan);
 extern int	SPI_freeplan(void *plan);

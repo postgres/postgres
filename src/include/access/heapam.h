@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heapam.h,v 1.84 2003/09/15 23:33:43 tgl Exp $
+ * $Id: heapam.h,v 1.85 2003/10/01 21:30:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -155,9 +155,9 @@ extern void setLastTid(const ItemPointer tid);
 
 extern Oid	heap_insert(Relation relation, HeapTuple tup, CommandId cid);
 extern int heap_delete(Relation relation, ItemPointer tid, ItemPointer ctid,
-			CommandId cid, bool wait);
+			CommandId cid, Snapshot crosscheck, bool wait);
 extern int heap_update(Relation relation, ItemPointer otid, HeapTuple tup,
-			ItemPointer ctid, CommandId cid, bool wait);
+			ItemPointer ctid, CommandId cid, Snapshot crosscheck, bool wait);
 extern int heap_mark4update(Relation relation, HeapTuple tup,
 				 Buffer *userbuf, CommandId cid);
 
