@@ -111,7 +111,7 @@ textnlike(struct varlena *s, struct varlena *p)
 }
 
 
-/*	$Revision: 1.22 $
+/*	$Revision: 1.23 $
 **	"like.c" A first attempt at a LIKE operator for Postgres95.
 **
 **	Originally written by Rich $alz, mirror!rs, Wed Nov 26 19:03:17 EST 1986.
@@ -150,10 +150,8 @@ DoMatch(pg_wchar *text, pg_wchar *p)
 {
 	int			matched;
 
-	for (; *p; text ++, p++)
+	for (; *p && *text; text++, p++)
 	{
-		if (*text == '\0' && *p != '%')
-			return LIKE_ABORT;
 		switch (*p)
 		{
 			case '\\':
@@ -161,27 +159,43 @@ DoMatch(pg_wchar *text, pg_wchar *p)
 				p++;
 				/* FALLTHROUGH */
 			default:
-				if (*text !=*p)
+				if (*text != *p)
 					return LIKE_FALSE;
-				continue;
+				break;
 			case '_':
 				/* Match anything. */
-				continue;
+				break;
 			case '%':
-				while (*++p == '%')
-					/* Consecutive percents act just like one. */
-					continue;
+				/* %% is the same as % according to the SQL standard */
+				/* Advance past all %'s */
+				while (*p == '%')
+					p++;
 				if (*p == '\0')
 					/* Trailing percent matches everything. */
 					return LIKE_TRUE;
 				while (*text)
-					if ((matched = DoMatch(text ++, p)) != LIKE_FALSE)
+				{
+					/* Optimization to prevent most recursion */
+					if ((*text == *p ||
+					     *p == '\\' || *p == '%' || *p == '_') &&
+						(matched = DoMatch(text, p)) != LIKE_FALSE)
 						return matched;
+					text++;
+				}
 				return LIKE_ABORT;
 		}
 	}
 
-	return *text == '\0';
+	if (*text != '\0')
+		return LIKE_ABORT;
+	else
+	{
+		/* End of input string.  Do we have matching string remaining? */
+		if (p[0] == '\0' || (p[0] == '%' && p[1] == '\0'))
+			return LIKE_TRUE;
+		else
+			return LIKE_ABORT;
+	}
 }
 
 
