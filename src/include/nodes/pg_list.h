@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_list.h,v 1.28 2002/06/20 20:29:51 momjian Exp $
+ * $Id: pg_list.h,v 1.29 2002/08/19 00:10:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,10 +24,12 @@
 /*----------------------
  *		Value node
  *
- * The same Value struct is used for three node types: T_Integer,
- * T_Float, and T_String.  Integral values are actually represented
- * by a machine integer, but both floats and strings are represented
- * as strings.	Using T_Float as the node type simply indicates that
+ * The same Value struct is used for five node types: T_Integer,
+ * T_Float, T_String, T_BitString, T_Null.
+ *
+ * Integral values are actually represented by a machine integer,
+ * but both floats and strings are represented as strings.
+ * Using T_Float as the node type simply indicates that
  * the contents of the string look like a valid numeric literal.
  *
  * (Before Postgres 7.0, we used a double to represent T_Float,
@@ -38,6 +40,8 @@
  *
  * Note that an integer-looking string will get lexed as T_Float if
  * the value is too large to fit in a 'long'.
+ *
+ * Nulls, of course, don't need the value part at all.
  *----------------------
  */
 typedef struct Value
