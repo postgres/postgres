@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/standalone-install.sgml,v 2.2 2000/11/30 21:44:07 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/standalone-install.sgml,v 2.3 2001/09/21 18:37:05 petere Exp $ -->
 
 <!--
 This file helps in generating the INSTALL text file that lives in the
@@ -32,8 +32,8 @@ equivalent of C's #ifdef and friends. The other end of this is in
 installation.sgml.
 -->
 
- <!entity % flattext-install-ignore  "IGNORE">
- <!entity % flattext-install-include "INCLUDE">
+ <!entity % standalone-ignore  "IGNORE">
+ <!entity % standalone-include "INCLUDE">
 
 <!--
 When you're building the Administrator's Guide, you want to flip the

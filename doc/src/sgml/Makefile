@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.39 2001/09/18 12:08:26 petere Exp $
+#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.40 2001/09/21 18:37:05 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -148,10 +148,10 @@ $(addsuffix .tex, $(ALLBOOKS)): %.tex: %.sgml $(ALLSGML) stylesheet.dsl
 
 JADE.text = $(JADE) $(JADEFLAGS) $(SGMLINCLUDE) -c $(CATALOG) -d stylesheet.dsl -i output-text -t sgml
 
-INSTALL HISTORY: % : %.html
+INSTALL HISTORY regress_README: % : %.html
 	@echo "|";\
-	 echo "| You should now take \`$<', save it as a text file in Netscape,";\
-	 echo "| and put it in place of the existing \`$@' file.";\
+	 echo "| You should now take '$<', save it as a text file in Netscape,";\
+	 echo "| and put it in place of the existing '$@' file.";\
 	 echo "|"
 
 INSTALL.html: standalone-install.sgml installation.sgml
@@ -162,6 +162,13 @@ HISTORY.html: release.sgml
 	  cat $< ) >tempfile_HISTORY.sgml
 	$(JADE.text) -V nochunks tempfile_HISTORY.sgml >$@
 	rm tempfile_HISTORY.sgml
+
+regress_README.html: regress.sgml
+	( echo '<!doctype chapter PUBLIC "-//OASIS//DTD DocBook V3.1//EN" ['; \
+	  echo '<!entity % standalone-ignore "IGNORE"> ]>'; \
+	  cat $< ) >tempfile_regress_README.sgml
+	$(JADE.text) -V nochunks tempfile_regress_README.sgml >$@
+	rm tempfile_regress_README.sgml
 
 
 ##

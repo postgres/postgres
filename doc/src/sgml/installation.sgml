@@ -1,7 +1,7 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.56 2001/09/16 16:11:09 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.57 2001/09/21 18:37:05 petere Exp $ -->
 
 <chapter id="installation">
- <title><![%flattext-install-include[<productname>PostgreSQL</>]]>
+ <title><![%standalone-include[<productname>PostgreSQL</>]]>
   Installation Instructions</title>
 
  <indexterm zone="installation">
@@ -27,8 +27,8 @@ su - postgres
 /usr/local/pgsql/bin/psql test
 </synopsis>
    The long version is the rest of this
-   <![%flattext-install-include;[document.]]>
-   <![%flattext-install-ignore;[chapter.]]>
+   <![%standalone-include;[document.]]>
+   <![%standalone-ignore;[chapter.]]>
   </para>
  </sect1>
 
@@ -156,7 +156,7 @@ su - postgres
   </para>
  </sect1>
 
-<![%flattext-install-ignore;[
+<![%standalone-ignore;[
  <sect1 id="install-getsource">
   <title>Getting The Source</title>
 
@@ -221,8 +221,8 @@ su - postgres
      foreign keys), then use the <option>-o</option> option when running
      <command>pg_dumpall</>.  <command>pg_dumpall</command> does not
      save large objects.  Check
-     <![%flattext-install-include[the <citetitle>Administrator's Guide</>]]>
-     <![%flattext-install-ignore[<xref linkend="backup-dump-caveats">]]>
+     <![%standalone-include[the <citetitle>Administrator's Guide</>]]>
+     <![%standalone-ignore[<xref linkend="backup-dump-caveats">]]>
      if you need to do this.
     </para>
 
@@ -290,8 +290,8 @@ su - postgres
   <para>
    You can also install the new version in parallel with the old one
    to decrease the downtime. These topics are discussed at length in
-   <![%flattext-install-include[the <citetitle>Administrator's Guide</>,]]>
-   <![%flattext-install-ignore[<xref linkend="migration">,]]>
+   <![%standalone-include[the <citetitle>Administrator's Guide</>,]]>
+   <![%standalone-ignore[<xref linkend="migration">,]]>
    which you are encouraged
    to read in any case.
   </para>
@@ -531,8 +531,8 @@ su - postgres
        <listitem>
         <para>
          Enables single-byte character set recode support. See
-         <![%flattext-install-include[the <citetitle>Administrator's Guide</citetitle>]]>
-         <![%flattext-install-ignore[<xref linkend="recode">]]> about this feature.
+         <![%standalone-include[the <citetitle>Administrator's Guide</citetitle>]]>
+         <![%standalone-ignore[<xref linkend="recode">]]> about this feature.
         </para>
        </listitem>
       </varlistentry>
@@ -544,8 +544,8 @@ su - postgres
          Allows the use of multibyte character encodings. This is
          primarily for languages like Japanese, Korean, and Chinese.
          Read 
-         <![%flattext-install-include[the <citetitle>Administrator's Guide</citetitle>]]>
-         <![%flattext-install-ignore[<xref linkend="multibyte">]]>
+         <![%standalone-include[the <citetitle>Administrator's Guide</citetitle>]]>
+         <![%standalone-ignore[<xref linkend="multibyte">]]>
          for details.
         </para>
        </listitem>
@@ -902,10 +902,10 @@ All of PostgreSQL is successfully made. Ready to install.
 </screen>
     It is possible that some tests fail, due to differences in error
     message wording or floating point results.
-    <![%flattext-install-include[The file
+    <![%standalone-include[The file
     <filename>src/test/regress/README</> and the
     <citetitle>Administrator's Guide</citetitle> contain]]>
-    <![%flattext-install-ignore[<xref linkend="regress"> contains]]>
+    <![%standalone-ignore[<xref linkend="regress"> contains]]>
     detailed information about interpreting the test results. You can
     repeat this test at any later time by issuing the same command.
    </para>
@@ -1127,7 +1127,7 @@ MANPATH=$MANPATH:/usr/local/pgsql/man
  </sect1>
 
 
-<![%flattext-install-include;[
+<![%standalone-include;[
  <sect1 id="install-getting-started">
   <title>Getting Started</title>
 
@@ -1634,8 +1634,8 @@ gunzip -c user.ps.gz \
       <entry>2001-03-26, Magnus Hagander (<email>mha@sollentuna.net</email>)</entry>
       <entry>
        client-side libraries (<application>libpq</> and <application>psql</>) or ODBC/JDBC, no server-side;
-<![%flattext-install-include[see Administrator's Guide]]>
-<![%flattext-install-ignore[see <xref linkend="install-win32">]]>
+<![%standalone-include[see Administrator's Guide]]>
+<![%standalone-ignore[see <xref linkend="install-win32">]]>
        for instructions
       </entry>
      </row>

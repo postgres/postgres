@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/docguide.sgml,v 1.33 2001/09/13 15:55:22 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/docguide.sgml,v 1.34 2001/09/21 18:37:05 petere Exp $ -->
 
 <appendix label="DG2" id="docguide">
  <title>Documentation</title>
@@ -901,21 +901,9 @@ exit
 
    <para>
     The file <filename>HISTORY</filename> can be created similarly,
-    using the command <userinput>gmake HISTORY</userinput>.  The table
-    of contents should be removed manually from the resulting text
-    file.
-   </para>
-
-   <para>
-    Since it does not change very often, the generation of the file
-    <filename>src/test/regress/README</filename> is not fully
-    automated.  After building the <acronym>HTML</acronym> version of
-    the <citetitle>Administrator's Guide</citetitle>, convert the
-    resulting files <filename>regress.html</filename> and
-    <filename>regress-platform.html</filename> to text, using
-    <productname>Netscape</productname>.  Then paste the text files
-    together and edit them to taste (e.g., remove the navigation
-    bars, remove the references to other chapters).
+    using the command <userinput>gmake HISTORY</userinput>.  For the
+    file <filename>src/test/regress/README</filename> the command is
+    <userinput>gmake regress_README</userinput>.
    </para>
 
 <!--

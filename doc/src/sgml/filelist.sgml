@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/filelist.sgml,v 1.15 2001/09/02 23:27:49 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/filelist.sgml,v 1.16 2001/09/21 18:37:05 petere Exp $ -->
 
 <!entity history    SYSTEM "history.sgml">
 <!entity info       SYSTEM "info.sgml">
@@ -100,6 +100,11 @@
 <!entity sources    SYSTEM "sources.sgml">
 <!entity nls        SYSTEM "nls.sgml">
 
-<!-- see standalone-install.sgml about these -->
-<!entity % flattext-install-ignore  "INCLUDE">
-<!entity % flattext-install-include "IGNORE">
+<!--
+ Some parts of the documentation are also source for some plain-text
+ files used during installation.  To selectively ignore or include
+ some parts (e.g., external xref's) when generating these files we use
+ these parameter entities.  See also standalone-install.sgml.
+ -->
+<!entity % standalone-ignore  "INCLUDE">
+<!entity % standalone-include "IGNORE">

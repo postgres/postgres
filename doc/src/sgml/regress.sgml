@@ -1,13 +1,10 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/regress.sgml,v 1.20 2001/09/11 02:24:52 ishii Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/regress.sgml,v 1.21 2001/09/21 18:37:05 petere Exp $ -->
 
  <chapter id="regress">
   <title id="regress-title">Regression Tests</title>
 
-  <abstract>
-   <para>
-    Regression test instructions and analysis
-   </para>
-  </abstract>
+  <sect1 id="regress-intro">
+   <title>Introduction</title>
 
   <para>
    The regression tests are a comprehensive set of tests for the SQL
@@ -19,6 +16,11 @@
    Lockhart.  From <productname>PostgreSQL</productname> 6.1 onward
    the regression tests are current for every official release.
   </para>
+
+  </sect1>
+
+  <sect1 id="regress-run">
+   <title>Running the Tests</title>
 
   <para>
    The regression test can be run against an already installed and
@@ -97,9 +99,9 @@
   </tip>
 
   <para>
-   To run the tests after installation (see <xref
-   linkend="installation">), initialize a data area and start the
-   server, as explained in <xref linkend="runtime">, then type
+   To run the tests after installation<![%standalone-ignore;[ (see <xref linkend="installation">)]]>,
+   initialize a data area and start the
+   server, <![%standalone-ignore;[as explained in <xref linkend="runtime">, ]]> then type
 <screen>
 <prompt>$ </prompt><userinput>gmake installcheck</userinput>
 </screen>
@@ -107,6 +109,7 @@
    default port number, unless directed otherwise by <envar>PGHOST</envar> and <envar>PGPORT</envar>
    environment variables.
   </para>
+  </sect1>
 
   <sect1 id="regress-evaluation">
    <title>Test Evaluation</title> 
@@ -255,7 +258,7 @@ PGTZ='PST8PDT7,M04.01.0,M10.05.03'; export PGTZ
       
     <para>
      Several of the tests involve operations on geographic data about
-     the Oakland/Berkeley, CA street map. The map data is expressed as
+     the Oakland/Berkeley, California street map. The map data is expressed as
      polygons whose vertices are represented as pairs of <type>double
      precision</type> numbers (decimal latitude and
      longitude). Initially, some tables are created and loaded with
@@ -277,15 +280,15 @@ SELECT * from iexit;
    </sect2>
 
    <sect2>
-    <title>Tuple ordering differences</title>
+    <title>Row ordering differences</title>
       
     <para>
-You might see differences in which the same tuples are output in a
+You might see differences in which the same rows are output in a
 different order than what appears in the expected file.  In most cases
 this is not, strictly speaking, a bug.  Most of the regression test
 scripts are not so pedantic as to use an ORDER BY for every single
-SELECT, and so their result tuple orderings are not well-defined
-according to the letter of the SQL spec.  In practice, since we are
+SELECT, and so their result row orderings are not well-defined
+according to the letter of the SQL specification.  In practice, since we are
 looking at the same queries being executed on the same data by the same
 software, we usually get the same result ordering on all platforms, and
 so the lack of ORDER BY isn't a problem.  Some queries do exhibit
@@ -325,12 +328,13 @@ diff results/random.out expected/random.out
      not worry unless the random test always fails in repeated
      attempts.  (On the other hand, if the random test is
      <emphasis>never</emphasis> reported to fail even in many trials
-     of the regress tests, you probably <emphasis>should</emphasis>
+     of the regression tests, you probably <emphasis>should</emphasis>
      worry.)
     </para>
    </sect2>
   </sect1>
 
+<![%standalone-ignore;[
 <!-- We might want to move the following section into the developer's guide. -->
   <sect1 id="regress-platform">
    <title>Platform-specific comparison files</title>
@@ -384,6 +388,7 @@ horology/hppa=horology-no-DST-before-1970
    </para>
     
   </sect1>
+]]>
   
 </chapter>
 
