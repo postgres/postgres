@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Tue Jun 11 06:36:10 EDT 2002
+   Last updated: Thu Jun 20 22:00:57 EDT 2002
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -53,6 +53,7 @@
    3.7) What debugging features are available?
    3.8) Why do I get "Sorry, too many clients" when trying to connect?
    3.9) What are the pg_sorttempNNN.NN files in my database directory?
+   3.10) Why do I need to do a dump and restore to upgrade PostgreSQL?
    
                            Operational Questions
                                       
@@ -596,6 +597,24 @@
    The temporary files should be deleted automatically, but might not if
    a backend crashes during a sort. If you have no backends running at
    the time, it is safe to delete the pg_tempNNN.NN files.
+   
+    3.10) Why do I need to do a dump and restore to upgrade PostgreSQL?
+    
+   The PostgreSQL team tries very heard to maintain compatability across
+   minor releases. So upgrading from 7.2 to 7.2.1 does not require a dump
+   a restore. However, new features are continuously being adding and
+   sometimes this requires new fields to be added to system tables.
+   
+   These changes may be across many tables and so maintaining backward
+   compatability would be quite difficult. Thus, restoring from a dump is
+   required to make everything work.
+   
+   Note that the actual on-disk file format does not change very often, a
+   feature the pg_upgrade script uses quite successfully. There the dump
+   is used create the necessary information in the system tables. The
+   data files are then just copied across. This method is not as
+   guarenteed as the dump/restore method but when it works it can make
+   upgrades very efficient.
      _________________________________________________________________
    
                            Operational Questions
