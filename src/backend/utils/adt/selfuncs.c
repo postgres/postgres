@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.56 2000/02/16 00:59:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.57 2000/02/26 23:03:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -470,9 +470,19 @@ scalargtjoinsel(Oid opid,
  *	  Returns "true" if successful.
  *
  * All numeric datatypes are simply converted to their equivalent
- * "double" values.  String datatypes are converted to a crude scale
- * using their first character (only if it is in the ASCII range,
- * to try to avoid problems with non-ASCII collating sequences).
+ * "double" values.
+ *
+ * String datatypes are converted to a crude scale using their first character
+ * (only if it is in the ASCII range, to try to avoid problems with non-ASCII
+ * collating sequences).
+ *
+ * The several datatypes representing absolute times are all converted
+ * to Timestamp, which is actually a double, and then we just use that
+ * double value.  Note this will give bad results for the various "special"
+ * values of Timestamp --- what can we do with those?
+ *
+ * The several datatypes representing relative times (intervals) are all
+ * converted to measurements expressed in seconds.
  */
 bool
 convert_to_scalar(Datum value, Oid typid,
@@ -551,12 +561,63 @@ convert_to_scalar(Datum value, Oid typid,
 			break;
 		}
 
+		/*
+		 * Built-in absolute-time types
+		 */
+		case TIMESTAMPOID:
+			*scaleval = * ((Timestamp *) DatumGetPointer(value));
+			return true;
+		case ABSTIMEOID:
+			*scaleval = * abstime_timestamp(value);
+			return true;
+		case DATEOID:
+			*scaleval = * date_timestamp(value);
+			return true;
+
+		/*
+		 * Built-in relative-time types
+		 */
+		case INTERVALOID:
+		{
+			Interval   *interval = (Interval *) DatumGetPointer(value);
+
+			/*
+			 * Convert the month part of Interval to days using assumed
+			 * average month length of 365.25/12.0 days.  Not too accurate,
+			 * but plenty good enough for our purposes.
+			 */
+			*scaleval = interval->time +
+				interval->month * (365.25/12.0 * 24.0 * 60.0 * 60.0);
+			return true;
+		}
+		case RELTIMEOID:
+			*scaleval = (RelativeTime) DatumGetInt32(value);
+			return true;
+		case TINTERVALOID:
+		{
+	 		TimeInterval	interval = (TimeInterval) DatumGetPointer(value);
+
+			if (interval->status != 0)
+			{
+				*scaleval = interval->data[1] - interval->data[0];
+				return true;
+			}
+			break;
+		}
+		case TIMEOID:
+			*scaleval = * ((TimeADT *) DatumGetPointer(value));
+			return true;
+
 		default:
 		{
 			/*
 			 * See whether there is a registered type-conversion function,
 			 * namely a procedure named "float8" with the right signature.
 			 * If so, assume we can convert the value to the numeric scale.
+			 *
+			 * NOTE: there are no such procedures in the standard distribution,
+			 * except with argument types that we already dealt with above.
+			 * This code is just here as an escape for user-defined types.
 			 */
 			Oid			oid_array[FUNC_MAX_ARGS];
 			HeapTuple	ftup;
