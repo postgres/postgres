@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.55 2004/12/31 21:59:50 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.56 2005/01/08 22:51:12 tgl Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -676,7 +676,7 @@ initialize_SSL(void)
 		 */
 #if !defined(WIN32) && !defined(__CYGWIN__)
 		if (!S_ISREG(buf.st_mode) || (buf.st_mode & (S_IRWXG | S_IRWXO)) ||
-			buf.st_uid != getuid())
+			buf.st_uid != geteuid())
 			ereport(FATAL,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
 				  errmsg("unsafe permissions on private key file \"%s\"",

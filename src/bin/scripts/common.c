@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/common.c,v 1.15 2004/12/31 22:03:17 pgsql Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/common.c,v 1.16 2005/01/08 22:51:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,7 @@ get_user_name(const char *progname)
 #ifndef WIN32
 	struct passwd *pw;
 
-	pw = getpwuid(getuid());
+	pw = getpwuid(geteuid());
 	if (!pw)
 	{
 		fprintf(stderr, _("%s: could not obtain information about current user: %s\n"),

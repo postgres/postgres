@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.99 2005/01/01 05:43:08 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.100 2005/01/08 22:51:13 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -19,7 +19,7 @@
 #include <pwd.h>				/* for getpwuid() */
 #endif
 #include <sys/types.h>			/* (ditto) */
-#include <unistd.h>				/* for getuid() */
+#include <unistd.h>				/* for geteuid() */
 #else
 #include <win32.h>
 #endif

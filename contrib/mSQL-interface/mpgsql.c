@@ -1,6 +1,7 @@
 #include <time.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include "msql.h"
 #include "libpq-fe.h"
 
@@ -264,7 +265,7 @@ msqlListTables(int a)
 
 	snprintf(tbuf, BUFSIZ,
 		"select relname from pg_class where relkind='r' and relowner=%d",
-			 getuid());
+			 geteuid());
 	if (msqlQuery(a, tbuf) > 0)
 	{
 		m = msqlStoreResult();
@@ -288,7 +289,7 @@ msqlListIndex(int a, char *b, char *c)
 
 	snprintf(tbuf, BUFSIZ,
 		"select relname from pg_class where relkind='i' and relowner=%d",
-			 getuid());
+			 geteuid());
 	if (msqlQuery(a, tbuf) > 0)
 	{
 		m = msqlStoreResult();

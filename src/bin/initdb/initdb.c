@@ -39,7 +39,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.72 2004/12/31 22:02:59 pgsql Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.73 2005/01/08 22:51:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -628,11 +628,11 @@ get_id(void)
 
 	struct passwd *pw;
 
-	pw = getpwuid(getuid());
+	pw = getpwuid(geteuid());
 
 #ifndef __BEOS__				/* no root check on BEOS */
 
-	if (!geteuid())				/* 0 is root's uid */
+	if (geteuid() == 0)			/* 0 is root's uid */
 	{
 		fprintf(stderr,
 				_("%s: cannot be run as root\n"
