@@ -17,6 +17,11 @@ QUERY: CREATE FUNCTION check_foreign_key ()
 	AS '_OBJWD_/../../../contrib/spi/refint_DLSUFFIX_'
 	LANGUAGE 'c'
 ;
+QUERY: CREATE FUNCTION autoinc ()
+	RETURNS opaque
+	AS '_OBJWD_/../../../contrib/spi/autoinc_DLSUFFIX_'
+	LANGUAGE 'c'
+;
 QUERY: CREATE FUNCTION funny_dup17 ()
         RETURNS opaque
         AS '_OBJWD_/regress_DLSUFFIX_'

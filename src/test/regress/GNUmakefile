@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/test/regress/GNUmakefile,v 1.11 1997/09/24 08:35:07 vadim Exp $
+#    $Header: /cvsroot/pgsql/src/test/regress/GNUmakefile,v 1.12 1997/10/17 09:57:49 vadim Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -43,7 +43,8 @@ endif
 all: $(INFILES)
 	cd input; $(MAKE) all; cd ..
 	cd output; $(MAKE) all; cd ..
-	$(MAKE) -C ../../../contrib/spi REFINT_VERBOSE=1 refint$(DLSUFFIX)
+	$(MAKE) -C ../../../contrib/spi REFINT_VERBOSE=1 refint$(DLSUFFIX) \
+	autoinc$(DLSUFFIX)
 
 #
 # run the test

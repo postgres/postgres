@@ -122,19 +122,25 @@ create sequence ttdummy_seq increment 10 start 0 minvalue 0;
 create table tttest (
 	price_id	int4, 
 	price_val	int4, 
-	price_on	int4 default nextval('ttdummy_seq'),
+	price_on	int4,
 	price_off	int4 default 999999
 );
-
-insert into tttest values (1, 1, null, null);
-insert into tttest values (2, 2, null, null);
-insert into tttest values (3, 3, null, null);
 
 create trigger ttdummy 
 	before delete or update on tttest
 	for each row 
 	execute procedure 
 	ttdummy (price_on, price_off);
+
+create trigger ttserial 
+	before insert or update on tttest
+	for each row 
+	execute procedure 
+	autoinc (price_on, ttdummy_seq);
+
+insert into tttest values (1, 1, null);
+insert into tttest values (2, 2, null);
+insert into tttest values (3, 3, 0);
 
 select * from tttest;
 delete from tttest where price_id = 2;
@@ -176,8 +182,8 @@ update tttest set price_on = -1 where price_id = 1;
 select * from tttest;
 -- isn't it what we need ?
 
--- get price for price_id == 5 as it was @ "date" 25
-select * from tttest where price_on <= 25 and price_off > 25 and price_id = 5;
+-- get price for price_id == 5 as it was @ "date" 35
+select * from tttest where price_on <= 35 and price_off > 35 and price_id = 5;
 
 drop table tttest;
 drop sequence ttdummy_seq;
