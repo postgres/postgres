@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.12 1997/04/02 18:24:52 scrappy Exp $
+ * $Id: parsenodes.h,v 1.13 1997/04/05 06:19:22 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -752,7 +752,7 @@ typedef struct SortClause {
  */
 typedef struct GroupClause {
     NodeTag		type;
-    Var			*grpAttr;	/* attributes to group on */
+    Resdom		*resdom;	/* attributes to group on */
     Oid			grpOpoid;	/* the sort operator to use */
 } GroupClause;
 
