@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Jan 26 15:58:49 EST 2001
+Last updated:		Fri Jan 26 16:16:06 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -209,6 +209,8 @@ REFERENTIAL INTEGRITY
 * Allow oid to act as a foreign key
 * Implement dirty reads and use them in RI triggers
 * Enforce referential integrity for system tables
+* INSERT & UPDATE/DELETE in transaction of primary key referenced by
+  foreign key fails with deferredTriggerGetPreviousEvent or "change violation"
 
 EXOTIC FEATURES
 
