@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Tue Dec 17 23:56:27 EST 2002
+   Last updated: Sun Jan 12 00:16:01 EST 2003
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -834,13 +834,14 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
    space used is slightly greater than the declared size. However, these
    data types are also subject to compression or being stored out-of-line
    by TOAST, so the space on disk might also be less than expected.
-   
-   CHAR(n) is best when storing strings that are usually the same length.
    VARCHAR(n) is best when storing variable-length strings but it limits
    how long a string can be. TEXT is for strings of unlimited length,
-   maximum 1 gigabyte. BYTEA is for storing binary data, particularly
-   values that include NULL bytes. These types have similar performance
-   characteristics.
+   maximum 1 gigabyte.
+   
+   CHAR(n) is for storing strings that are all the same length. CHAR(n)
+   stores trailing spaces, while VARCHAR(n) trims them. BYTEA is for
+   storing binary data, particularly values that include NULL bytes.
+   These types have similar performance characteristics.
    
     4.15.1) How do I create a serial/auto-incrementing field?
     
