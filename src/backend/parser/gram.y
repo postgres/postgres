@@ -1,4 +1,4 @@
-	%{
+%{
 
 /*#define YYDEBUG 1*/
 /*-------------------------------------------------------------------------
@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.327 2002/06/17 20:38:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.328 2002/06/18 00:28:11 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -659,14 +659,8 @@ OptUserElem:
 				}
 		;
 
-user_list:	user_list ',' UserId
-				{
-					$$ = lappend($1, makeString($3));
-				}
-			| UserId
-				{
-					$$ = makeList1(makeString($1));
-				}
+user_list:	user_list ',' UserId		{ $$ = lappend($1, makeString($3)); }
+			| UserId					{ $$ = makeList1(makeString($1)); }
 		;
 
 
@@ -913,8 +907,7 @@ var_list_or_default:
 			| DEFAULT								{ $$ = NIL; }
 		;
 
-var_list:
-			var_value								{ $$ = makeList1($1); }
+var_list:	var_value								{ $$ = makeList1($1); }
 			| var_list ',' var_value				{ $$ = lappend($1, $3); }
 		;
 
@@ -1654,8 +1647,9 @@ opt_column_list:
 			| /*EMPTY*/								{ $$ = NIL; }
 		;
 
-columnList: columnList ',' columnElem				{ $$ = lappend($1, $3); }
-			| columnElem							{ $$ = makeList1($1); }
+columnList:
+			columnElem								{ $$ = makeList1($1); }
+			| columnList ',' columnElem				{ $$ = lappend($1, $3); }
 		;
 
 columnElem: ColId
@@ -1742,8 +1736,8 @@ OptCreateAs:
 		;
 
 CreateAsList:
-			CreateAsList ',' CreateAsElement		{ $$ = lappend($1, $3); }
-			| CreateAsElement						{ $$ = makeList1($1); }
+			CreateAsElement							{ $$ = makeList1($1); }
+			| CreateAsList ',' CreateAsElement		{ $$ = lappend($1, $3); }
 		;
 
 CreateAsElement:
@@ -2015,8 +2009,7 @@ TriggerForType:
 
 TriggerFuncArgs:
 			TriggerFuncArg							{ $$ = makeList1($1); }
-			| TriggerFuncArgs ',' TriggerFuncArg
-													{ $$ = lappend($1, $3); }
+			| TriggerFuncArgs ',' TriggerFuncArg	{ $$ = lappend($1, $3); }
 			| /*EMPTY*/								{ $$ = NIL; }
 		;
 
@@ -2169,7 +2162,7 @@ DefineStmt:
 definition: '(' def_list ')'						{ $$ = $2; }
 		;
 
-def_list:  def_elem									{ $$ = makeList1($1); }
+def_list:  	def_elem								{ $$ = makeList1($1); }
 			| def_list ',' def_elem					{ $$ = lappend($1, $3); }
 		;
 
@@ -2659,10 +2652,9 @@ opt_revoke_grant_option:
 
 
 function_with_argtypes_list:
-			function_with_argtypes
-				{ $$ = makeList1($1); }
+			function_with_argtypes					{ $$ = makeList1($1); }
 			| function_with_argtypes_list ',' function_with_argtypes
-				{ $$ = lappend($1, $3); }
+													{ $$ = lappend($1, $3); }
 		;
 
 function_with_argtypes:
@@ -2700,23 +2692,23 @@ IndexStmt:	CREATE index_opt_unique INDEX index_name ON qualified_name
 		;
 
 index_opt_unique:
-			UNIQUE										{ $$ = TRUE; }
-			| /*EMPTY*/									{ $$ = FALSE; }
+			UNIQUE									{ $$ = TRUE; }
+			| /*EMPTY*/								{ $$ = FALSE; }
 		;
 
 access_method_clause:
-			USING access_method							{ $$ = $2; }
+			USING access_method						{ $$ = $2; }
 			/* If btree changes as our default, update pg_get_indexdef() */
-			| /*EMPTY*/									{ $$ = DEFAULT_INDEX_TYPE; }
+			| /*EMPTY*/								{ $$ = DEFAULT_INDEX_TYPE; }
 		;
 
 index_params:
-			index_list									{ $$ = $1; }
-			| func_index								{ $$ = makeList1($1); }
+			index_list								{ $$ = $1; }
+			| func_index							{ $$ = makeList1($1); }
 		;
 
-index_list: index_list ',' index_elem					{ $$ = lappend($1, $3); }
-			| index_elem								{ $$ = makeList1($1); }
+index_list:	index_elem								{ $$ = makeList1($1); }
+			| index_list ',' index_elem				{ $$ = lappend($1, $3); }
 		;
 
 func_index: func_name '(' name_list ')' opt_class
@@ -2770,8 +2762,8 @@ opt_class:	any_name
 					else
 						$$ = $1;
 				}
-			| USING any_name							{ $$ = $2; }
-			| /*EMPTY*/									{ $$ = NIL; }
+			| USING any_name						{ $$ = $2; }
+			| /*EMPTY*/								{ $$ = NIL; }
 		;
 
 /*****************************************************************************
@@ -2882,9 +2874,10 @@ func_type:	Typename								{ $$ = $1; }
 
 
 createfunc_opt_list:
-			createfunc_opt_item						{ $$ = makeList1($1); }
-			| createfunc_opt_list createfunc_opt_item  { $$ = lappend($1, $2); }
-		;
+			/* Must be at least one to prevent conflict */
+			createfunc_opt_item                     { $$ = makeList1($1); }
+			| createfunc_opt_list createfunc_opt_item { $$ = lappend($1, $2); }
+	;
 
 createfunc_opt_item:
 			AS func_as
@@ -3389,21 +3382,11 @@ CreatedbStmt:
 					}
 					$$ = (Node *)n;
 				}
-			| CREATE DATABASE database_name
-				{
-					CreatedbStmt *n = makeNode(CreatedbStmt);
-					n->dbname = $3;
-					n->dbowner = NULL;
-					n->dbpath = NULL;
-					n->dbtemplate = NULL;
-					n->encoding = -1;
-					$$ = (Node *)n;
-				}
 		;
 
 createdb_opt_list:
-			createdb_opt_item						{ $$ = makeList1($1); }
-			| createdb_opt_list createdb_opt_item	{ $$ = lappend($1, $2); }
+			createdb_opt_list createdb_opt_item		{ $$ = lappend($1, $2); }
+			| /* EMPTY */							{ $$ = NIL; }
 		;
 
 /*
@@ -3756,8 +3739,8 @@ insert_rest:
 		;
 
 insert_column_list:
-			insert_column_list ',' insert_column_item		{ $$ = lappend($1, $3); }
-			| insert_column_item							{ $$ = makeList1($1); }
+			insert_column_item						{ $$ = makeList1($1); }
+			| insert_column_list ',' insert_column_item	{ $$ = lappend($1, $3); }
 		;
 
 insert_column_item:
@@ -4226,8 +4209,9 @@ from_clause:
 			| /*EMPTY*/								{ $$ = NIL; }
 		;
 
-from_list:	from_list ',' table_ref					{ $$ = lappend($1, $3); }
-			| table_ref								{ $$ = makeList1($1); }
+from_list:
+			table_ref								{ $$ = makeList1($1); }
+			| from_list ',' table_ref				{ $$ = lappend($1, $3); }
 		;
 
 /*
@@ -4993,20 +4977,11 @@ row_expr:	'(' row_descriptor ')' IN_P select_with_parens
 		;
 
 row_descriptor:
-			row_list ',' a_expr
-				{
-					$$ = lappend($1, $3);
-				}
+			row_list ',' a_expr						{ $$ = lappend($1, $3); }
 		;
 
-row_list:	row_list ',' a_expr
-				{
-					$$ = lappend($1, $3);
-				}
-			| a_expr
-				{
-					$$ = makeList1($1);
-				}
+row_list:	a_expr		  							{ $$ = makeList1($1); }
+			| row_list ',' a_expr					{ $$ = lappend($1, $3); }
 		;
 
 sub_type:	ANY										{ $$ = ANY_SUBLINK; }
@@ -5030,12 +5005,12 @@ MathOp:		 '+'									{ $$ = "+"; }
 		;
 
 qual_Op:	Op										{ $$ = makeList1(makeString($1)); }
-			|  OPERATOR '(' any_operator ')'		{ $$ = $3; }
+			| OPERATOR '(' any_operator ')'			{ $$ = $3; }
 		;
 
 qual_all_Op:
 			all_Op									{ $$ = makeList1(makeString($1)); }
-			|  OPERATOR '(' any_operator ')'		{ $$ = $3; }
+			| OPERATOR '(' any_operator ')'			{ $$ = $3; }
 		;
 
 /*
@@ -5445,8 +5420,7 @@ c_expr:		columnref								{ $$ = (Node *) $1; }
 					n->indirection = $3;
 					$$ = (Node *)n;
 				}
-			| '(' a_expr ')'
-				{ $$ = $2; }
+			| '(' a_expr ')'						{ $$ = $2; }
 			| '(' a_expr ')' attrs opt_indirection
 				{
 					ExprFieldSelect *n = makeNode(ExprFieldSelect);
@@ -6056,8 +6030,9 @@ case_expr:	CASE case_arg when_clause_list case_default END_TRANS
 		;
 
 when_clause_list:
-			when_clause_list when_clause			{ $$ = lappend($1, $2); }
-			| when_clause							{ $$ = makeList1($1); }
+			/* There must be at least one */
+			when_clause								{ $$ = makeList1($1); }
+			| when_clause_list when_clause			{ $$ = lappend($1, $2); }
 		;
 
 when_clause:
@@ -6117,8 +6092,8 @@ attrs:		'.' attr_name							{ $$ = makeList1(makeString($2)); }
 /* Target lists as found in SELECT ... and INSERT VALUES ( ... ) */
 
 target_list:
-			target_list ',' target_el				{ $$ = lappend($1, $3); }
-			| target_el								{ $$ = makeList1($1); }
+			target_el								{ $$ = makeList1($1); }
+			| target_list ',' target_el				{ $$ = lappend($1, $3); }
 		;
 
 /* AS is not optional because shift/red conflict with unary ops */
@@ -6155,8 +6130,8 @@ target_el:	a_expr AS ColLabel
 }
  */
 update_target_list:
-			update_target_list ',' update_target_el { $$ = lappend($1,$3); }
-			| update_target_el						{ $$ = makeList1($1); }
+			update_target_el						{ $$ = makeList1($1); }
+			| update_target_list ',' update_target_el { $$ = lappend($1,$3); }
 		;
 
 update_target_el:
@@ -6170,8 +6145,8 @@ update_target_el:
 		;
 
 insert_target_list:
-			insert_target_list ',' insert_target_el { $$ = lappend($1, $3); }
-			| insert_target_el						{ $$ = makeList1($1); }
+			insert_target_el						{ $$ = makeList1($1); }
+			| insert_target_list ',' insert_target_el { $$ = lappend($1, $3); }
 		;
 
 insert_target_el:
