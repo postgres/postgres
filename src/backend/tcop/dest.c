@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.46 2001/10/28 06:25:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.46.2.1 2002/02/26 23:48:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,8 +40,6 @@
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
 
-
-static char CommandInfo[32] = {0};
 
 /* ----------------
  *		dummy DestReceiver functions
@@ -102,7 +100,6 @@ BeginCommand(char *pname,
 			 * if this is a "retrieve into portal" query, done because
 			 * nothing needs to be sent to the fe.
 			 */
-			CommandInfo[0] = '\0';
 			if (isIntoPortal)
 				break;
 
@@ -198,30 +195,22 @@ DestToFunction(CommandDest dest)
 }
 
 /* ----------------
- *		EndCommand - tell destination that no more tuples will arrive
+ *		EndCommand - tell destination that query is complete
  * ----------------
  */
 void
-EndCommand(char *commandTag, CommandDest dest)
+EndCommand(const char *commandTag, CommandDest dest)
 {
-	char		buf[64];
-
 	switch (dest)
 	{
 		case Remote:
 		case RemoteInternal:
-
-			/*
-			 * tell the fe that the query is over
-			 */
-			sprintf(buf, "%s%s", commandTag, CommandInfo);
-			pq_puttextmessage('C', buf);
-			CommandInfo[0] = '\0';
+			pq_puttextmessage('C', commandTag);
 			break;
 
-		case Debug:
 		case None:
-		default:
+		case Debug:
+		case SPI:
 			break;
 	}
 }
@@ -314,26 +303,6 @@ ReadyForQuery(CommandDest dest)
 		case Debug:
 		case None:
 		default:
-			break;
-	}
-}
-
-void
-UpdateCommandInfo(int operation, Oid lastoid, uint32 tuples)
-{
-	switch (operation)
-	{
-		case CMD_INSERT:
-			if (tuples > 1)
-				lastoid = InvalidOid;
-			sprintf(CommandInfo, " %u %u", lastoid, tuples);
-			break;
-		case CMD_DELETE:
-		case CMD_UPDATE:
-			sprintf(CommandInfo, " %u", tuples);
-			break;
-		default:
-			CommandInfo[0] = '\0';
 			break;
 	}
 }

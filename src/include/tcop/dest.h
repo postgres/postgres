@@ -39,7 +39,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dest.h,v 1.28 2001/11/05 17:46:36 momjian Exp $
+ * $Id: dest.h,v 1.28.2.1 2002/02/26 23:48:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,6 +47,11 @@
 #define DEST_H
 
 #include "access/htup.h"
+
+
+/* buffer size to use for command completion tags */
+#define COMPLETION_TAG_BUFSIZE	64
+
 
 /* ----------------
  *		CommandDest is a simplistic means of identifying the desired
@@ -88,7 +93,7 @@ extern void BeginCommand(char *pname, int operation, TupleDesc attinfo,
 			 bool isIntoRel, bool isIntoPortal, char *tag,
 			 CommandDest dest);
 extern DestReceiver *DestToFunction(CommandDest dest);
-extern void EndCommand(char *commandTag, CommandDest dest);
+extern void EndCommand(const char *commandTag, CommandDest dest);
 
 /* Additional functions that go with destination management, more or less. */
 
@@ -96,6 +101,5 @@ extern void SendCopyBegin(void);
 extern void ReceiveCopyBegin(void);
 extern void NullCommand(CommandDest dest);
 extern void ReadyForQuery(CommandDest dest);
-extern void UpdateCommandInfo(int operation, Oid lastoid, uint32 tuples);
 
 #endif   /* DEST_H */

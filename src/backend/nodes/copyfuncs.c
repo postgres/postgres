@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.160 2001/11/05 05:00:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.160.2.1 2002/02/26 23:48:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1755,6 +1755,7 @@ _copyQuery(Query *from)
 	newnode->isTemp = from->isTemp;
 	newnode->hasAggs = from->hasAggs;
 	newnode->hasSubLinks = from->hasSubLinks;
+	newnode->originalQuery = from->originalQuery;
 
 	Node_Copy(from, newnode, rtable);
 	Node_Copy(from, newnode, jointree);

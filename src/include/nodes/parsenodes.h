@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.151 2001/11/05 17:46:34 momjian Exp $
+ * $Id: parsenodes.h,v 1.151.2.1 2002/02/26 23:48:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,6 +47,8 @@ typedef struct Query
 
 	bool		hasAggs;		/* has aggregates in tlist or havingQual */
 	bool		hasSubLinks;	/* has subquery SubLink */
+
+	bool		originalQuery;	/* marks original query through rewriting */
 
 	List	   *rtable;			/* list of range table entries */
 	FromExpr   *jointree;		/* table join tree (FROM and WHERE

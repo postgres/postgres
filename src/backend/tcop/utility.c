@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.125 2002/02/07 00:27:30 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.125.2.1 2002/02/26 23:48:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,7 +44,6 @@
 #include "rewrite/rewriteRemove.h"
 #include "tcop/utility.h"
 #include "utils/acl.h"
-#include "utils/ps_status.h"
 #include "utils/syscache.h"
 #include "utils/temprel.h"
 #include "access/xlog.h"
@@ -130,17 +129,30 @@ CheckDropPermissions(char *name, char rightkind)
 }
 
 
-/* ----------------
+/*
+ * ProcessUtility
  *		general utility function invoker
- * ----------------
+ *
+ *	parsetree: the parse tree for the utility statement
+ *	dest: where to send results
+ *	completionTag: points to a buffer of size COMPLETION_TAG_BUFSIZE
+ *		in which to store a command completion status string.
+ *
+ * completionTag is only set nonempty if we want to return a nondefault
+ * status (currently, only used for MOVE/FETCH).
+ *
+ * completionTag may be NULL if caller doesn't want a status string.
  */
 void
 ProcessUtility(Node *parsetree,
-			   CommandDest dest)
+			   CommandDest dest,
+			   char *completionTag)
 {
-	char	   *commandTag = NULL;
 	char	   *relname;
 	char	   *relationName;
+
+	if (completionTag)
+		completionTag[0] = '\0';
 
 	switch (nodeTag(parsetree))
 	{
@@ -155,17 +167,14 @@ ProcessUtility(Node *parsetree,
 				switch (stmt->command)
 				{
 					case BEGIN_TRANS:
-						set_ps_display(commandTag = "BEGIN");
 						BeginTransactionBlock();
 						break;
 
 					case COMMIT:
-						set_ps_display(commandTag = "COMMIT");
 						EndTransactionBlock();
 						break;
 
 					case ROLLBACK:
-						set_ps_display(commandTag = "ROLLBACK");
 						UserAbortTransactionBlock();
 						break;
 				}
@@ -180,8 +189,6 @@ ProcessUtility(Node *parsetree,
 			{
 				ClosePortalStmt *stmt = (ClosePortalStmt *) parsetree;
 
-				set_ps_display(commandTag = "CLOSE");
-
 				PerformPortalClose(stmt->portalname, dest);
 			}
 			break;
@@ -193,8 +200,6 @@ ProcessUtility(Node *parsetree,
 				bool		forward;
 				int			count;
 
-				set_ps_display(commandTag = (stmt->ismove) ? "MOVE" : "FETCH");
-
 				SetQuerySnapshot();
 
 				forward = (bool) (stmt->direction == FORWARD);
@@ -204,8 +209,9 @@ ProcessUtility(Node *parsetree,
 				 */
 
 				count = stmt->howMany;
-				PerformPortalFetch(portalName, forward, count, commandTag,
-								   (stmt->ismove) ? None : dest);		/* /dev/null for MOVE */
+				PerformPortalFetch(portalName, forward, count,
+								   (stmt->ismove) ? None : dest,
+								   completionTag);
 			}
 			break;
 
@@ -215,8 +221,6 @@ ProcessUtility(Node *parsetree,
 			 *
 			 */
 		case T_CreateStmt:
-			set_ps_display(commandTag = "CREATE");
-
 			DefineRelation((CreateStmt *) parsetree, RELKIND_RELATION);
 
 			/*
@@ -233,8 +237,6 @@ ProcessUtility(Node *parsetree,
 				DropStmt   *stmt = (DropStmt *) parsetree;
 				List	   *args = stmt->names;
 				List	   *arg;
-
-				set_ps_display(commandTag = "DROP");
 
 				foreach(arg, args)
 				{
@@ -296,8 +298,6 @@ ProcessUtility(Node *parsetree,
 			{
 				Relation	rel;
 
-				set_ps_display(commandTag = "TRUNCATE");
-
 				relname = ((TruncateStmt *) parsetree)->relName;
 				if (!allowSystemTableMods && IsSystemRelationName(relname))
 					elog(ERROR, "TRUNCATE cannot be used on system tables. '%s' is a system table",
@@ -325,8 +325,6 @@ ProcessUtility(Node *parsetree,
 
 				statement = ((CommentStmt *) parsetree);
 
-				set_ps_display(commandTag = "COMMENT");
-
 				CommentObject(statement->objtype, statement->objname,
 							  statement->objproperty, statement->objlist,
 							  statement->comment);
@@ -336,8 +334,6 @@ ProcessUtility(Node *parsetree,
 		case T_CopyStmt:
 			{
 				CopyStmt   *stmt = (CopyStmt *) parsetree;
-
-				set_ps_display(commandTag = "COPY");
 
 				if (stmt->direction != FROM)
 					SetQuerySnapshot();
@@ -364,8 +360,6 @@ ProcessUtility(Node *parsetree,
 		case T_RenameStmt:
 			{
 				RenameStmt *stmt = (RenameStmt *) parsetree;
-
-				set_ps_display(commandTag = "ALTER");
 
 				relname = stmt->relname;
 				if (!allowSystemTableMods && IsSystemRelationName(relname))
@@ -412,8 +406,6 @@ ProcessUtility(Node *parsetree,
 		case T_AlterTableStmt:
 			{
 				AlterTableStmt *stmt = (AlterTableStmt *) parsetree;
-
-				set_ps_display(commandTag = "ALTER");
 
 				/*
 				 * Some or all of these functions are recursive to cover
@@ -475,9 +467,6 @@ ProcessUtility(Node *parsetree,
 			{
 				GrantStmt  *stmt = (GrantStmt *) parsetree;
 
-				commandTag = stmt->is_grant ? "GRANT" : "REVOKE";
-				set_ps_display(commandTag);
-
 				ExecuteGrantStmt(stmt);
 			}
 			break;
@@ -490,8 +479,6 @@ ProcessUtility(Node *parsetree,
 		case T_DefineStmt:
 			{
 				DefineStmt *stmt = (DefineStmt *) parsetree;
-
-				set_ps_display(commandTag = "CREATE");
 
 				switch (stmt->defType)
 				{
@@ -514,23 +501,17 @@ ProcessUtility(Node *parsetree,
 			{
 				ViewStmt   *stmt = (ViewStmt *) parsetree;
 
-				set_ps_display(commandTag = "CREATE");
-
 				DefineView(stmt->viewname, stmt->query);		/* retrieve parsetree */
 			}
 			break;
 
 		case T_ProcedureStmt:	/* CREATE FUNCTION */
-			set_ps_display(commandTag = "CREATE");
-
 			CreateFunction((ProcedureStmt *) parsetree);
 			break;
 
 		case T_IndexStmt:		/* CREATE INDEX */
 			{
 				IndexStmt  *stmt = (IndexStmt *) parsetree;
-
-				set_ps_display(commandTag = "CREATE");
 
 				relname = stmt->relname;
 				if (!allowSystemTableMods && IsSystemRelationName(relname))
@@ -559,15 +540,12 @@ ProcessUtility(Node *parsetree,
 				aclcheck_result = pg_aclcheck(relname, GetUserId(), ACL_RULE);
 				if (aclcheck_result != ACLCHECK_OK)
 					elog(ERROR, "%s: %s", relname, aclcheck_error_strings[aclcheck_result]);
-				set_ps_display(commandTag = "CREATE");
 
 				DefineQueryRewrite(stmt);
 			}
 			break;
 
 		case T_CreateSeqStmt:
-			set_ps_display(commandTag = "CREATE");
-
 			DefineSequence((CreateSeqStmt *) parsetree);
 			break;
 
@@ -575,8 +553,6 @@ ProcessUtility(Node *parsetree,
 			{
 				RemoveAggrStmt *stmt = (RemoveAggrStmt *) parsetree;
 				char	   *typename = (char *) NULL;
-
-				set_ps_display(commandTag = "DROP");
 
 				if (stmt->aggtype != NULL)
 					typename = TypeNameToInternalName((TypeName *) stmt->aggtype);
@@ -589,8 +565,6 @@ ProcessUtility(Node *parsetree,
 			{
 				RemoveFuncStmt *stmt = (RemoveFuncStmt *) parsetree;
 
-				set_ps_display(commandTag = "DROP");
-
 				RemoveFunction(stmt->funcname, stmt->args);
 			}
 			break;
@@ -602,8 +576,6 @@ ProcessUtility(Node *parsetree,
 				TypeName   *typenode2 = (TypeName *) lsecond(stmt->args);
 				char	   *typename1 = (char *) NULL;
 				char	   *typename2 = (char *) NULL;
-
-				set_ps_display(commandTag = "DROP");
 
 				if (typenode1 != NULL)
 					typename1 = TypeNameToInternalName(typenode1);
@@ -622,8 +594,6 @@ ProcessUtility(Node *parsetree,
 			{
 				CreatedbStmt *stmt = (CreatedbStmt *) parsetree;
 
-				set_ps_display(commandTag = "CREATE DATABASE");
-
 				createdb(stmt->dbname, stmt->dbpath,
 						 stmt->dbtemplate, stmt->encoding);
 			}
@@ -632,8 +602,6 @@ ProcessUtility(Node *parsetree,
 		case T_DropdbStmt:
 			{
 				DropdbStmt *stmt = (DropdbStmt *) parsetree;
-
-				set_ps_display(commandTag = "DROP DATABASE");
 
 				dropdb(stmt->dbname);
 			}
@@ -644,8 +612,6 @@ ProcessUtility(Node *parsetree,
 			{
 				NotifyStmt *stmt = (NotifyStmt *) parsetree;
 
-				set_ps_display(commandTag = "NOTIFY");
-
 				Async_Notify(stmt->relname);
 			}
 			break;
@@ -654,8 +620,6 @@ ProcessUtility(Node *parsetree,
 			{
 				ListenStmt *stmt = (ListenStmt *) parsetree;
 
-				set_ps_display(commandTag = "LISTEN");
-
 				Async_Listen(stmt->relname, MyProcPid);
 			}
 			break;
@@ -663,8 +627,6 @@ ProcessUtility(Node *parsetree,
 		case T_UnlistenStmt:
 			{
 				UnlistenStmt *stmt = (UnlistenStmt *) parsetree;
-
-				set_ps_display(commandTag = "UNLISTEN");
 
 				Async_Unlisten(stmt->relname, MyProcPid);
 			}
@@ -678,8 +640,6 @@ ProcessUtility(Node *parsetree,
 			{
 				LoadStmt   *stmt = (LoadStmt *) parsetree;
 
-				set_ps_display(commandTag = "LOAD");
-
 				closeAllVfds(); /* probably not necessary... */
 				load_file(stmt->filename);
 			}
@@ -688,8 +648,6 @@ ProcessUtility(Node *parsetree,
 		case T_ClusterStmt:
 			{
 				ClusterStmt *stmt = (ClusterStmt *) parsetree;
-
-				set_ps_display(commandTag = "CLUSTER");
 
 				relname = stmt->relname;
 				if (IsSystemRelationName(relname))
@@ -703,20 +661,12 @@ ProcessUtility(Node *parsetree,
 			break;
 
 		case T_VacuumStmt:
-			if (((VacuumStmt *) parsetree)->vacuum)
-				commandTag = "VACUUM";
-			else
-				commandTag = "ANALYZE";
-			set_ps_display(commandTag);
-
 			vacuum((VacuumStmt *) parsetree);
 			break;
 
 		case T_ExplainStmt:
 			{
 				ExplainStmt *stmt = (ExplainStmt *) parsetree;
-
-				set_ps_display(commandTag = "EXPLAIN");
 
 				ExplainQuery(stmt->query, stmt->verbose, stmt->analyze, dest);
 			}
@@ -731,8 +681,6 @@ ProcessUtility(Node *parsetree,
 			{
 				RecipeStmt *stmt = (RecipeStmt *) parsetree;
 
-				set_ps_display(commandTag = "EXECUTE RECIPE");
-
 				beginRecipe(stmt);
 			}
 			break;
@@ -746,7 +694,6 @@ ProcessUtility(Node *parsetree,
 				VariableSetStmt *n = (VariableSetStmt *) parsetree;
 
 				SetPGVariable(n->name, n->args);
-				set_ps_display(commandTag = "SET VARIABLE");
 			}
 			break;
 
@@ -755,7 +702,6 @@ ProcessUtility(Node *parsetree,
 				VariableShowStmt *n = (VariableShowStmt *) parsetree;
 
 				GetPGVariable(n->name);
-				set_ps_display(commandTag = "SHOW VARIABLE");
 			}
 			break;
 
@@ -764,7 +710,6 @@ ProcessUtility(Node *parsetree,
 				VariableResetStmt *n = (VariableResetStmt *) parsetree;
 
 				ResetPGVariable(n->name);
-				set_ps_display(commandTag = "RESET VARIABLE");
 			}
 			break;
 
@@ -772,14 +717,10 @@ ProcessUtility(Node *parsetree,
 			 * ******************************** TRIGGER statements *******************************
 			 */
 		case T_CreateTrigStmt:
-			set_ps_display(commandTag = "CREATE");
-
 			CreateTrigger((CreateTrigStmt *) parsetree);
 			break;
 
 		case T_DropTrigStmt:
-			set_ps_display(commandTag = "DROP");
-
 			DropTrigger((DropTrigStmt *) parsetree);
 			break;
 
@@ -787,14 +728,10 @@ ProcessUtility(Node *parsetree,
 			 * ************* PROCEDURAL LANGUAGE statements *****************
 			 */
 		case T_CreatePLangStmt:
-			set_ps_display(commandTag = "CREATE");
-
 			CreateProceduralLanguage((CreatePLangStmt *) parsetree);
 			break;
 
 		case T_DropPLangStmt:
-			set_ps_display(commandTag = "DROP");
-
 			DropProceduralLanguage((DropPLangStmt *) parsetree);
 			break;
 
@@ -803,57 +740,39 @@ ProcessUtility(Node *parsetree,
 			 *
 			 */
 		case T_CreateUserStmt:
-			set_ps_display(commandTag = "CREATE USER");
-
 			CreateUser((CreateUserStmt *) parsetree);
 			break;
 
 		case T_AlterUserStmt:
-			set_ps_display(commandTag = "ALTER USER");
-
 			AlterUser((AlterUserStmt *) parsetree);
 			break;
 
 		case T_DropUserStmt:
-			set_ps_display(commandTag = "DROP USER");
-
 			DropUser((DropUserStmt *) parsetree);
 			break;
 
 		case T_LockStmt:
-			set_ps_display(commandTag = "LOCK TABLE");
-
 			LockTableCommand((LockStmt *) parsetree);
 			break;
 
 		case T_ConstraintsSetStmt:
-			set_ps_display(commandTag = "SET CONSTRAINTS");
-
 			DeferredTriggerSetState((ConstraintsSetStmt *) parsetree);
 			break;
 
 		case T_CreateGroupStmt:
-			set_ps_display(commandTag = "CREATE GROUP");
-
 			CreateGroup((CreateGroupStmt *) parsetree);
 			break;
 
 		case T_AlterGroupStmt:
-			set_ps_display(commandTag = "ALTER GROUP");
-
 			AlterGroup((AlterGroupStmt *) parsetree, "ALTER GROUP");
 			break;
 
 		case T_DropGroupStmt:
-			set_ps_display(commandTag = "DROP GROUP");
-
 			DropGroup((DropGroupStmt *) parsetree);
 			break;
 
 		case T_CheckPointStmt:
 			{
-				set_ps_display(commandTag = "CHECKPOINT");
-
 				if (!superuser())
 					elog(ERROR, "permission denied");
 				CreateCheckPoint(false);
@@ -863,8 +782,6 @@ ProcessUtility(Node *parsetree,
 		case T_ReindexStmt:
 			{
 				ReindexStmt *stmt = (ReindexStmt *) parsetree;
-
-				set_ps_display(commandTag = "REINDEX");
 
 				switch (stmt->reindexType)
 				{
@@ -911,9 +828,4 @@ ProcessUtility(Node *parsetree,
 				 nodeTag(parsetree));
 			break;
 	}
-
-	/*
-	 * tell fe/be or whatever that we're done.
-	 */
-	EndCommand(commandTag, dest);
 }

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.213 2002/01/03 23:21:31 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.213.2.1 2002/02/26 23:48:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -121,6 +121,7 @@ parse_analyze(Node *parseTree, ParseState *parentParseState)
 	List	   *result = NIL;
 	ParseState *pstate = make_parsestate(parentParseState);
 	Query	   *query;
+	List	   *listscan;
 
 	extras_before = extras_after = NIL;
 
@@ -143,6 +144,18 @@ parse_analyze(Node *parseTree, ParseState *parentParseState)
 						 transformStmt(pstate, lfirst(extras_after)));
 		release_pstate_resources(pstate);
 		extras_after = lnext(extras_after);
+	}
+
+	/*
+	 * Make sure that only the original query is marked original.
+	 * We have to do this explicitly since recursive calls of parse_analyze
+	 * will have set originalQuery in some of the added-on queries.
+	 */
+	foreach(listscan, result)
+	{
+		Query  *q = lfirst(listscan);
+
+		q->originalQuery = (q == query);
 	}
 
 	pfree(pstate);
