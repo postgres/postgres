@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.322 2003/03/20 07:05:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.323 2003/03/27 16:39:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -605,6 +605,14 @@ main(int argc, char **argv)
 
 	/* Now sort the output nicely */
 	SortTocByOID(g_fout);
+
+		/*
+		 * Procedural languages have to be declared just after
+		 * database and schema creation, before they are used.
+		 */
+	MoveToStart(g_fout, "ACL LANGUAGE");
+	MoveToStart(g_fout, "PROCEDURAL LANGUAGE");
+	MoveToStart(g_fout, "FUNC PROCEDURAL LANGUAGE");
 	MoveToStart(g_fout, "SCHEMA");
 	MoveToStart(g_fout, "DATABASE");
 	MoveToEnd(g_fout, "TABLE DATA");
@@ -3626,7 +3634,7 @@ dumpProcLangs(Archive *fout, FuncInfo finfo[], int numFuncs)
 		{
 			char	   *tmp = strdup(fmtId(lanname));
 
-			dumpACL(fout, "LANGUAGE", tmp, lanname,
+			dumpACL(fout, "ACL LANGUAGE", tmp, lanname,
 					finfo[fidx].pronamespace->nspname,
 					NULL, lanacl, lanoid);
 			free(tmp);
@@ -3732,6 +3740,7 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo)
 	char	   *prosecdef;
 	char	   *lanname;
 	char	   *rettypename;
+	char       *funcproclang;	/* Boolean : is this function a PLang handler ? */
 
 	if (finfo->dumped)
 		goto done;
@@ -3747,7 +3756,8 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo)
 		appendPQExpBuffer(query,
 						  "SELECT proretset, prosrc, probin, "
 						  "provolatile, proisstrict, prosecdef, "
-						  "(SELECT lanname FROM pg_catalog.pg_language WHERE oid = prolang) as lanname "
+						  "(SELECT lanname FROM pg_catalog.pg_language WHERE oid = prolang) as lanname, "
+						  "exists (SELECT 'x' FROM pg_catalog.pg_language WHERE lanplcallfoid = pg_catalog.pg_proc.oid) as funcproclang "
 						  "FROM pg_catalog.pg_proc "
 						  "WHERE oid = '%s'::pg_catalog.oid",
 						  finfo->oid);
@@ -3759,7 +3769,8 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo)
 		 "case when proiscachable then 'i' else 'v' end as provolatile, "
 						  "proisstrict, "
 						  "'f'::boolean as prosecdef, "
-						  "(SELECT lanname FROM pg_language WHERE oid = prolang) as lanname "
+						  "(SELECT lanname FROM pg_language WHERE oid = prolang) as lanname, "
+						  "exists (SELECT 'x' FROM pg_language WHERE lanplcallfoid = pg_proc.oid) as funcproclang "
 						  "FROM pg_proc "
 						  "WHERE oid = '%s'::oid",
 						  finfo->oid);
@@ -3771,7 +3782,8 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo)
 		 "case when proiscachable then 'i' else 'v' end as provolatile, "
 						  "'f'::boolean as proisstrict, "
 						  "'f'::boolean as prosecdef, "
-						  "(SELECT lanname FROM pg_language WHERE oid = prolang) as lanname "
+						  "(SELECT lanname FROM pg_language WHERE oid = prolang) as lanname, "
+						  "exists (SELECT 'x' FROM pg_language WHERE lanplcallfoid = pg_proc.oid) as funcproclang "
 						  "FROM pg_proc "
 						  "WHERE oid = '%s'::oid",
 						  finfo->oid);
@@ -3802,6 +3814,7 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo)
 	proisstrict = PQgetvalue(res, 0, PQfnumber(res, "proisstrict"));
 	prosecdef = PQgetvalue(res, 0, PQfnumber(res, "prosecdef"));
 	lanname = PQgetvalue(res, 0, PQfnumber(res, "lanname"));
+	funcproclang = PQgetvalue(res, 0, PQfnumber(res, "funcproclang"));
 
 	/*
 	 * See backend/commands/define.c for details of how the 'AS' clause is
@@ -3872,7 +3885,7 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo)
 
 	ArchiveEntry(fout, finfo->oid, funcsig_tag,
 				 finfo->pronamespace->nspname,
-				 finfo->usename, "FUNCTION", NULL,
+				 finfo->usename, strcmp(funcproclang,"t")?"FUNCTION":"FUNC PROCEDURAL LANGUAGE", NULL,
 				 q->data, delqry->data,
 				 NULL, NULL, NULL);
 
@@ -5024,11 +5037,21 @@ dumpACL(Archive *fout, const char *type, const char *name,
 	PQExpBuffer sql, grantee, grantor, privs, privswgo;
 	bool		found_owner_privs = false;
 
+		/* acl_lang is a flag only true if we are dumping language's ACL,
+		 * so we can set 'type' to a value that is suitable to build
+		 * SQL requests as for other types.
+		 */
+	bool       acl_lang = false;
+	if(!strcmp(type,"ACL LANGUAGE")){
+		type = "LANGUAGE";
+		acl_lang = true;
+	}
+
 	if (strlen(acls) == 0)
 		return;					/* object has default permissions */
 
 #define MKENTRY(grantor, command) \
-	ArchiveEntry(fout, objoid, tag, nspname, grantor ? grantor : "", "ACL", NULL, command, "", NULL, NULL, NULL)
+	ArchiveEntry(fout, objoid, tag, nspname, grantor ? grantor : "", acl_lang ? "ACL LANGUAGE" : "ACL" , NULL, command, "", NULL, NULL, NULL)
 
 	sql = createPQExpBuffer();
 	grantee = createPQExpBuffer();
