@@ -1,6 +1,6 @@
 AROPT = crs
 export_dynamic = -Wl,-Bexport
-ifneq (,$(findstring uw7.1, $(host_os)))
+ifeq ($(ld_R_works), yes)
 rpath = -Wl,-R$(libdir)
 endif
 DLSUFFIX = .so

@@ -203,13 +203,17 @@ Or do not specify an argument to the option to use the default.]);;
 AC_SUBST(MULTIBYTE)
 
 #
-# Unicode conversion (--enable-uniconv)
+# Unicode conversion (--enable-unicode-conversion)
 #
 AC_MSG_CHECKING([whether to build with Unicode conversion support])
-PGAC_ARG_BOOL(enable, uniconv, no, [  --enable-uniconv         enable unicode conversion support],
-              [AC_DEFINE([UNICODE_CONVERSION], 1,
-                         [Set to 1 if you want Unicode conversion support (--enable-uniconv)])])
-AC_MSG_RESULT([$enable_uniconv])
+PGAC_ARG_BOOL(enable, unicode-conversion, no,
+              [  --enable-unicode-conversion  enable unicode conversion support],
+[if test -z "$MULTIBYTE"; then
+  AC_MSG_ERROR([--enable-unicode-conversion only works with --enable-multibyte])
+fi
+AC_DEFINE([UNICODE_CONVERSION], 1,
+          [Set to 1 if you want Unicode conversion support (--enable-unicode-conversion)])])
+AC_MSG_RESULT([$enable_unicode_conversion])
 
 #
 # Default port number (--with-pgport), default 5432
@@ -609,7 +613,7 @@ INSTALL_SCRIPT="\${INSTALL} -m 755"
 # needs here if necessary.
 case $host_os in
     hpux*)      INSTL_SHLIB_OPTS="-m 555" ;;
-    *)          INSTL_SHLIB_OPTS="-m 644" ;;
+    *)          INSTL_SHLIB_OPTS="-m 755" ;;
 esac
 
 INSTALL_SHLIB="\${INSTALL} $INSTL_SHLIB_OPTS"
@@ -622,6 +626,16 @@ AC_PROG_LN_S
 AC_PROG_LD
 AC_SUBST(LD)
 AC_SUBST(with_gnu_ld)
+case $host_os in sysv5uw*)
+  AC_CACHE_CHECK([whether ld -R works], [pgac_cv_prog_ld_R],
+  [
+    pgac_save_LDFLAGS=$LDFLAGS; LDFLAGS="$LDFLAGS -Wl,-R/usr/lib"
+    AC_TRY_LINK([], [], [pgac_cv_prog_ld_R=yes], [pgac_cv_prog_ld_R=no])
+    LDFLAGS=$pgac_save_LDFLAGS
+  ])
+  ld_R_works=$pgac_cv_prog_ld_R
+  AC_SUBST(ld_R_works)
+esac
 AC_PROG_RANLIB
 AC_CHECK_PROGS(LORDER, lorder)
 AC_PATH_PROG(TAR, tar)
