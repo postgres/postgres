@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.44 2002/03/07 04:45:53 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.45 2002/03/07 20:48:41 momjian Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -732,10 +732,9 @@ psql_completion(char *text, int start, int end)
 
 /* VACUUM */
 	else if (strcasecmp(prev_wd, "VACUUM") == 0)
-		COMPLETE_WITH_QUERY("SELECT relname FROM pg_class WHERE relkind='r' and substr(relname,1,%d)='%s' UNION SELECT 'ANALYZE'::text");
-	else if (strcasecmp(prev2_wd, "VACUUM") == 0 && strcasecmp(prev_wd, "ANALYZE") == 0)
+		COMPLETE_WITH_QUERY("SELECT relname FROM pg_class WHERE relkind='r' and substr(relname,1,%d)='%s' UNION SELECT 'FULL'::text UNION SELECT 'ANALYZE'::text");
+	else if (strcasecmp(prev2_wd, "VACUUM") == 0 && (strcasecmp(prev_wd, "FULL") == 0 || strcasecmp(prev_wd, "ANALYZE") == 0))
 		COMPLETE_WITH_QUERY(Query_for_list_of_tables);
-
 
 /* ... FROM ... */
 	else if (strcasecmp(prev_wd, "FROM") == 0)
