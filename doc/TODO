@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Nov  6 12:50:56 EST 2002
+Last updated:		Thu Nov  7 23:31:04 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -64,6 +64,8 @@ Data Types
 * Add function to return compressed length of TOAST data values (Tom)
 * Allow INET subnet tests using non-constants
 * Add now("transaction|statement|clock") functionality
+* Add GUC variables extra_float_digits and extra_double_digits to
+  control output digits
 
 * CONVERSION
 	o Allow better handling of numeric constants, type conversion 
@@ -417,6 +419,7 @@ Source Code
 * Remove memory/file descriptor freeing befor elog(ERROR)  (Bruce)
 * Create native Win32 port [win32]
 * Acquire lock on a relation before building a relcache entry for it
+* Research interaction of setitimer() and sleep() used by statement_timeout
 
 ---------------------------------------------------------------------------
 
