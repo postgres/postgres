@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.211 2004/09/16 16:58:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.212 2004/11/20 20:19:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -119,6 +119,11 @@ static long relcacheInvalsReceived = 0L;
  * init file.
  */
 static List *initFileRelationIds = NIL;
+
+/*
+ * This flag lets us optimize away work in AtEOSubXact_RelationCache().
+ */
+static bool need_eosubxact_work = false;
 
 /*
  *		RelationBuildDescInfo exists so code can be shared
@@ -2087,6 +2092,9 @@ AtEOXact_RelationCache(bool isCommit)
 			relation->rd_indexvalid = 0;
 		}
 	}
+
+	/* Once done with the transaction, we can reset need_eosubxact_work */
+	need_eosubxact_work = false;
 }
 
 /*
@@ -2102,6 +2110,21 @@ AtEOSubXact_RelationCache(bool isCommit, SubTransactionId mySubid,
 {
 	HASH_SEQ_STATUS status;
 	RelIdCacheEnt *idhentry;
+
+	/*
+	 * In the majority of subtransactions there is not anything for this
+	 * routine to do, and since there are usually many entries in the
+	 * relcache, uselessly scanning the cache represents a surprisingly
+	 * large fraction of the subtransaction entry/exit overhead.  To avoid
+	 * this, we keep a static flag that must be set whenever a condition
+	 * is created that requires subtransaction-end work.  (Currently, this
+	 * means either a relation is created in the current xact, or an index
+	 * list is forced.)  For simplicity, the flag remains set till end of
+	 * top-level transaction, even though we could clear it earlier in some
+	 * cases.
+	 */
+	if (!need_eosubxact_work)
+		return;
 
 	hash_seq_init(&status, RelationIdCache);
 
@@ -2183,6 +2206,9 @@ RelationBuildLocalRelation(const char *relname,
 
 	/* it's being created in this transaction */
 	rel->rd_createSubid = GetCurrentSubTransactionId();
+
+	/* must flag that we have rels created in this transaction */
+	need_eosubxact_work = true;
 
 	/* is it a temporary relation? */
 	rel->rd_istemp = isTempNamespace(relnamespace);
@@ -2745,6 +2771,8 @@ RelationSetIndexList(Relation relation, List *indexIds)
 	list_free(relation->rd_indexlist);
 	relation->rd_indexlist = indexIds;
 	relation->rd_indexvalid = 2;	/* mark list as forced */
+	/* must flag that we have a forced index list */
+	need_eosubxact_work = true;
 }
 
 /*
@@ -3172,6 +3200,7 @@ load_relcache_init_file(void)
 			rel->rd_refcnt = 0;
 		rel->rd_indexvalid = 0;
 		rel->rd_indexlist = NIL;
+		rel->rd_createSubid = InvalidSubTransactionId;
 		MemSet(&rel->pgstat_info, 0, sizeof(rel->pgstat_info));
 
 		/*
