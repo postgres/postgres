@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.26 1996/12/31 07:29:15 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.27 1997/01/08 23:25:32 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -380,6 +380,10 @@ process_response_from_backend(FILE *pfin, FILE *pfout, FILE *pfdebug,
        responses, less the number of corresponding responses we have 
        received.
        */
+  int errors;
+    /* If an error is received, we must still drain out the empty
+       queries sent. So we need another flag.
+       */
   char cmdStatus[MAX_MESSAGE_LEN];
   char pname[MAX_MESSAGE_LEN]; /* portal name */
 
@@ -388,6 +392,7 @@ process_response_from_backend(FILE *pfin, FILE *pfout, FILE *pfdebug,
    */
 
   emptiesSent = 0;  /* No empty queries sent yet */
+  errors = 0;       /* No errors received yet */
   pname[0] = '\0';
 
   done = false;  /* initial value */
@@ -444,7 +449,10 @@ process_response_from_backend(FILE *pfin, FILE *pfout, FILE *pfdebug,
                          "but attempt to read the error message failed.");
         }
         *result_p = (PGresult*)NULL;
-        done = true;
+	errors++;
+	if (emptiesSent == 0) {
+	    done = true;
+	}
         break;
       case 'I':  { /* empty query */
         /* read and throw away the closing '\0' */
@@ -458,13 +466,21 @@ process_response_from_backend(FILE *pfin, FILE *pfout, FILE *pfdebug,
              * If this is the result of a portal query command set the
              * command status and message accordingly.  DZ - 31-8-1996
              */
-            *result_p = makeEmptyPGresult(conn,PGRES_COMMAND_OK);
-            strncpy((*result_p)->cmdStatus, cmdStatus, CMDSTATUS_LEN-1);
+	    if (!errors) {
+		*result_p = makeEmptyPGresult(conn,PGRES_COMMAND_OK);
+		strncpy((*result_p)->cmdStatus, cmdStatus, CMDSTATUS_LEN-1);
+	    } else {
+		*result_p = (PGresult*)NULL;
+	    }
             done = true;
           }
         }
         else {
-          *result_p = makeEmptyPGresult(conn, PGRES_EMPTY_QUERY);
+	  if (!errors) {
+              *result_p = makeEmptyPGresult(conn, PGRES_EMPTY_QUERY);
+	  } else {
+	      *result_p = (PGresult*)NULL;
+	  }
           done = true;
         }
       }
