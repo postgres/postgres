@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.44 1997/11/17 16:23:33 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.45 1997/12/04 23:30:52 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4099,103 +4099,54 @@ EncodeSpecialDateTime(DateTime dt, char *str)
 int
 EncodeDateOnly(struct tm * tm, int style, char *str)
 {
-#if FALSE
-	int			day;
-
-#endif
-
 	if ((tm->tm_mon < 1) || (tm->tm_mon > 12))
 		return -1;
 
-	/* compatible with ISO date formats */
-	if (style == USE_ISO_DATES)
+	switch (style)
 	{
-		if (tm->tm_year > 0)
-		{
-			sprintf(str, "%04d-%02d-%02d",
+		/* compatible with ISO date formats */
+		case USE_ISO_DATES:
+			if (tm->tm_year > 0)
+				sprintf(str, "%04d-%02d-%02d",
 					tm->tm_year, tm->tm_mon, tm->tm_mday);
-
-		}
-		else
-		{
-			sprintf(str, "%04d-%02d-%02d %s",
+			else
+				sprintf(str, "%04d-%02d-%02d %s",
 					-(tm->tm_year - 1), tm->tm_mon, tm->tm_mday, "BC");
-		}
+			break;
 
 		/* compatible with Oracle/Ingres date formats */
-	}
-	else if (style == USE_SQL_DATES)
-	{
-		if (EuroDates)
-		{
-			sprintf(str, "%02d/%02d", tm->tm_mday, tm->tm_mon);
-		}
-		else
-		{
-			sprintf(str, "%02d/%02d", tm->tm_mon, tm->tm_mday);
-		}
-		if (tm->tm_year > 0)
-		{
-			sprintf((str + 5), "/%04d", tm->tm_year);
+		case USE_SQL_DATES:
+			if (EuroDates)
+				sprintf(str, "%02d/%02d", tm->tm_mday, tm->tm_mon);
+			else
+				sprintf(str, "%02d/%02d", tm->tm_mon, tm->tm_mday);
+			if (tm->tm_year > 0)
+				sprintf((str + 5), "/%04d", tm->tm_year);
+			else
+				sprintf((str + 5), "/%04d %s", -(tm->tm_year - 1), "BC");
+			break;
 
-		}
-		else
-		{
-			sprintf((str + 5), "/%04d %s", -(tm->tm_year - 1), "BC");
-		}
-
-		/* backward-compatible with traditional Postgres abstime dates */
-	}
-	else
-	{							/* if (style == USE_POSTGRES_DATES) */
-
-#if FALSE
-		day = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday);
-#ifdef DATEDEBUG
-		printf("EncodeDateOnly- day is %d\n", day);
-#endif
-		tm->tm_wday = j2day(day);
-
-		strncpy(str, days[tm->tm_wday], 3);
-		strcpy((str + 3), " ");
-
-		if (EuroDates)
-		{
-			sprintf((str + 4), "%02d %3s", tm->tm_mday, months[tm->tm_mon - 1]);
-		}
-		else
-		{
-			sprintf((str + 4), "%3s %02d", months[tm->tm_mon - 1], tm->tm_mday);
-		}
-		if (tm->tm_year > 0)
-		{
-			sprintf((str + 10), " %04d", tm->tm_year);
-
-		}
-		else
-		{
-			sprintf((str + 10), " %04d %s", -(tm->tm_year - 1), "BC");
-		}
-#endif
+		/* German-style date format */
+		case USE_GERMAN_DATES:
+			sprintf(str, "%02d.%02d", tm->tm_mday, tm->tm_mon);
+			if (tm->tm_year > 0)
+				sprintf((str + 5), "/%04d", tm->tm_year);
+			else
+				sprintf((str + 5), "/%04d %s", -(tm->tm_year - 1), "BC");
+			break;
 
 		/* traditional date-only style for Postgres */
-		if (EuroDates)
-		{
-			sprintf(str, "%02d-%02d", tm->tm_mday, tm->tm_mon);
-		}
-		else
-		{
-			sprintf(str, "%02d-%02d", tm->tm_mon, tm->tm_mday);
-		}
-		if (tm->tm_year > 0)
-		{
-			sprintf((str + 5), "-%04d", tm->tm_year);
-
-		}
-		else
-		{
-			sprintf((str + 5), "-%04d %s", -(tm->tm_year - 1), "BC");
-		}
+		case USE_POSTGRES_DATES:
+		default:
+			if (EuroDates)
+				sprintf(str, "%02d-%02d", tm->tm_mday, tm->tm_mon);
+			else
+				sprintf(str, "%02d-%02d", tm->tm_mon, tm->tm_mday);
+			if (tm->tm_year > 0)
+				sprintf((str + 5), "-%04d", tm->tm_year);
+			else
+				sprintf((str + 5), "-%04d %s", -(tm->tm_year - 1), "BC");
+			break;
 	}
 
 #ifdef DATEDEBUG
@@ -4232,6 +4183,14 @@ EncodeTimeOnly(struct tm * tm, double fsec, int style, char *str)
 
 /* EncodeDateTime()
  * Encode date and time interpreted as local time.
+ * Support several date styles:
+ *  Postgres - day mon hh:mm:ss yyyy tz
+ *  SQL - mm/dd/yyyy hh:mm:ss.ss tz
+ *  ISO - yyyy-mm-dd hh:mm:ss+/-tz
+ *  German - dd.mm/yyyy hh:mm:ss tz
+ * Variants (affects order of month and day for Postgres and SQL styles):
+ *  US - mm/dd/yyyy
+ *  European - dd/mm/yyyy
  */
 int
 EncodeDateTime(struct tm * tm, double fsec, int *tzp, char **tzn, int style, char *str)
@@ -4261,124 +4220,134 @@ EncodeDateTime(struct tm * tm, double fsec, int *tzp, char **tzn, int style, cha
 #endif
 #endif
 
-	/* compatible with ISO date formats */
-	if (style == USE_ISO_DATES)
+	switch (style)
 	{
-		if (tm->tm_year > 0)
-		{
-			sprintf(str, "%04d-%02d-%02d %02d:%02d:",
-					tm->tm_year, tm->tm_mon, tm->tm_mday, tm->tm_hour, tm->tm_min);
-			sprintf((str + 17), ((fsec != 0) ? "%05.2f" : "%02.0f"), sec);
+		/* compatible with ISO date formats */
 
-			if ((*tzn != NULL) && (tm->tm_isdst >= 0))
+		case USE_ISO_DATES:
+			if (tm->tm_year > 0)
 			{
-				if (tzp != NULL)
+				sprintf(str, "%04d-%02d-%02d %02d:%02d:",
+					tm->tm_year, tm->tm_mon, tm->tm_mday, tm->tm_hour, tm->tm_min);
+				sprintf((str + 17), ((fsec != 0) ? "%05.2f" : "%02.0f"), sec);
+
+				if ((*tzn != NULL) && (tm->tm_isdst >= 0))
 				{
-					hour = -(*tzp / 3600);
-					min = ((abs(*tzp) / 60) % 60);
+					if (tzp != NULL)
+					{
+						hour = -(*tzp / 3600);
+						min = ((abs(*tzp) / 60) % 60);
+					}
+					else
+					{
+						hour = 0;
+						min = 0;
+					}
+					sprintf((str + strlen(str)), ((min != 0) ? "%+03d:%02d" : "%+03d"), hour, min);
+				}
+
+			}
+			else
+			{
+				if (tm->tm_hour || tm->tm_min)
+					sprintf(str, "%04d-%02d-%02d %02d:%02d %s",
+						-(tm->tm_year - 1), tm->tm_mon, tm->tm_mday, tm->tm_hour, tm->tm_min, "BC");
+				else
+					sprintf(str, "%04d-%02d-%02d %s",
+						-(tm->tm_year - 1), tm->tm_mon, tm->tm_mday, "BC");
+			}
+			break;
+
+		/* compatible with Oracle/Ingres date formats */
+		case USE_SQL_DATES:
+			if (EuroDates)
+				sprintf(str, "%02d/%02d", tm->tm_mday, tm->tm_mon);
+			else
+				sprintf(str, "%02d/%02d", tm->tm_mon, tm->tm_mday);
+
+			if (tm->tm_year > 0)
+			{
+				sprintf((str + 5), "/%04d %02d:%02d:%05.2f",
+					tm->tm_year, tm->tm_hour, tm->tm_min, sec);
+
+				if ((*tzn != NULL) && (tm->tm_isdst >= 0))
+				{
+					strcpy((str + 22), " ");
+					strcpy((str + 23), *tzn);
+				}
+
+			}
+			else
+				sprintf((str + 5), "/%04d %02d:%02d %s",
+					-(tm->tm_year - 1), tm->tm_hour, tm->tm_min, "BC");
+			break;
+
+		/* German variant on European style; note mixed delimiters dd.mm/yyyy */
+		case USE_GERMAN_DATES:
+			sprintf(str, "%02d.%02d", tm->tm_mday, tm->tm_mon);
+			if (tm->tm_year > 0)
+			{
+				sprintf((str + 5), "/%04d %02d:%02d:%05.2f",
+					tm->tm_year, tm->tm_hour, tm->tm_min, sec);
+
+				if ((*tzn != NULL) && (tm->tm_isdst >= 0))
+				{
+					strcpy((str + 22), " ");
+					strcpy((str + 23), *tzn);
+				}
+
+			}
+			else
+			sprintf((str + 5), "/%04d %02d:%02d %s",
+					-(tm->tm_year - 1), tm->tm_hour, tm->tm_min, "BC");
+			break;
+
+		/* backward-compatible with traditional Postgres abstime dates */
+		case USE_POSTGRES_DATES:
+		default:
+			day = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday);
+#ifdef DATEDEBUG
+			printf("EncodeDateTime- day is %d\n", day);
+#endif
+			tm->tm_wday = j2day(day);
+
+			strncpy(str, days[tm->tm_wday], 3);
+			strcpy((str + 3), " ");
+
+			if (EuroDates)
+				sprintf((str + 4), "%02d %3s", tm->tm_mday, months[tm->tm_mon - 1]);
+			else
+				sprintf((str + 4), "%3s %02d", months[tm->tm_mon - 1], tm->tm_mday);
+
+			if (tm->tm_year > 0)
+			{
+				sprintf((str + 10), " %02d:%02d", tm->tm_hour, tm->tm_min);
+				if (fsec != 0)
+				{
+					sprintf((str + 16), ":%05.2f %04d", sec, tm->tm_year);
+					if ((*tzn != NULL) && (tm->tm_isdst >= 0))
+					{
+						strcpy((str + 27), " ");
+						strcpy((str + 28), *tzn);
+					}
 				}
 				else
 				{
-					hour = 0;
-					min = 0;
+					sprintf((str + 16), ":%02.0f %04d", sec, tm->tm_year);
+					if ((*tzn != NULL) && (tm->tm_isdst >= 0))
+					{
+						strcpy((str + 24), " ");
+						strcpy((str + 25), *tzn);
+					}
 				}
-				sprintf((str + strlen(str)), ((min != 0) ? "%+03d:%02d" : "%+03d"), hour, min);
-			}
 
-		}
-		else
-		{
-			if (tm->tm_hour || tm->tm_min)
-			{
-				sprintf(str, "%04d-%02d-%02d %02d:%02d %s",
-						-(tm->tm_year - 1), tm->tm_mon, tm->tm_mday, tm->tm_hour, tm->tm_min, "BC");
 			}
 			else
 			{
-				sprintf(str, "%04d-%02d-%02d %s",
-					  -(tm->tm_year - 1), tm->tm_mon, tm->tm_mday, "BC");
-			}
-		}
-
-		/* compatible with Oracle/Ingres date formats */
-	}
-	else if (style == USE_SQL_DATES)
-	{
-		if (EuroDates)
-		{
-			sprintf(str, "%02d/%02d", tm->tm_mday, tm->tm_mon);
-		}
-		else
-		{
-			sprintf(str, "%02d/%02d", tm->tm_mon, tm->tm_mday);
-		}
-		if (tm->tm_year > 0)
-		{
-			sprintf((str + 5), "/%04d %02d:%02d:%05.2f",
-					tm->tm_year, tm->tm_hour, tm->tm_min, sec);
-
-			if ((*tzn != NULL) && (tm->tm_isdst >= 0))
-			{
-				strcpy((str + 22), " ");
-				strcpy((str + 23), *tzn);
-			}
-
-		}
-		else
-		{
-			sprintf((str + 5), "/%04d %02d:%02d %s",
-					-(tm->tm_year - 1), tm->tm_hour, tm->tm_min, "BC");
-		}
-
-		/* backward-compatible with traditional Postgres abstime dates */
-	}
-	else
-	{							/* if (style == USE_POSTGRES_DATES) */
-		day = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday);
-#ifdef DATEDEBUG
-		printf("EncodeDateTime- day is %d\n", day);
-#endif
-		tm->tm_wday = j2day(day);
-
-		strncpy(str, days[tm->tm_wday], 3);
-		strcpy((str + 3), " ");
-
-		if (EuroDates)
-		{
-			sprintf((str + 4), "%02d %3s", tm->tm_mday, months[tm->tm_mon - 1]);
-		}
-		else
-		{
-			sprintf((str + 4), "%3s %02d", months[tm->tm_mon - 1], tm->tm_mday);
-		}
-		if (tm->tm_year > 0)
-		{
-			sprintf((str + 10), " %02d:%02d", tm->tm_hour, tm->tm_min);
-			if (fsec != 0)
-			{
-				sprintf((str + 16), ":%05.2f %04d", sec, tm->tm_year);
-				if ((*tzn != NULL) && (tm->tm_isdst >= 0))
-				{
-					strcpy((str + 27), " ");
-					strcpy((str + 28), *tzn);
-				}
-			}
-			else
-			{
-				sprintf((str + 16), ":%02.0f %04d", sec, tm->tm_year);
-				if ((*tzn != NULL) && (tm->tm_isdst >= 0))
-				{
-					strcpy((str + 24), " ");
-					strcpy((str + 25), *tzn);
-				}
-			}
-
-		}
-		else
-		{
-			sprintf((str + 10), " %02d:%02d %04d %s",
+				sprintf((str + 10), " %02d:%02d %04d %s",
 					tm->tm_hour, tm->tm_min, -(tm->tm_year - 1), "BC");
-		}
+			}
+			break;
 	}
 
 #ifdef DATEDEBUG
