@@ -229,10 +229,10 @@ public class ResultSetTest extends TestCase
 		
 		assertTrue(rs.next());
 		assertEquals(-1,rs.getByte(1));
-		int count = 3;
 		
 		while (rs.next())
 		{
+			thrown = false;
 			try
 			{
 				rs.getByte(1);
@@ -243,10 +243,7 @@ public class ResultSetTest extends TestCase
 			}
 			if (!thrown)
 				fail("Exception expected.");
-			count++;
 		}
-		if (count != 9)
-			fail("Exception expected.");
 	}
 		
        public void testgetShort() throws Exception
@@ -262,10 +259,10 @@ public class ResultSetTest extends TestCase
 		
 		assertTrue(rs.next());
 		assertEquals(-1,rs.getShort(1));
-		int count = 3;
 		
 		while (rs.next())
 		{
+			thrown = false;
 			try
 			{
 				rs.getShort(1);
@@ -276,10 +273,7 @@ public class ResultSetTest extends TestCase
 			}
 			if (!thrown)
 				fail("Exception expected.");
-			count++;
 		}
-		if (count != 9)
-			fail("Exception expected.");
 	}
        
 }
