@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.289 2002/08/22 00:01:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.290 2002/08/22 21:29:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -124,7 +124,7 @@ static char *GetPrivileges(Archive *AH, const char *s, const char *type);
 static int	dumpBlobs(Archive *AH, char *, void *);
 static int	dumpDatabase(Archive *AH);
 static const char *getAttrName(int attrnum, TableInfo *tblInfo);
-static const char* fmtCopyColumnList(const TableInfo* ti);
+static const char *fmtCopyColumnList(const TableInfo *ti);
 
 extern char *optarg;
 extern int	optind,
@@ -828,7 +828,16 @@ dumpClasses_nodumpData(Archive *fout, char *oid, void *dctxv)
 	 */
 	selectSourceSchema(tbinfo->relnamespace->nspname);
 
-	column_list = fmtCopyColumnList(tbinfo);
+	/*
+	 * If possible, specify the column list explicitly so that we have no
+	 * possibility of retrieving data in the wrong column order.  (The
+	 * default column ordering of COPY will not be what we want in certain
+	 * corner cases involving ADD COLUMN and inheritance.)
+	 */
+	if (g_fout->remoteVersion >= 70300)
+		column_list = fmtCopyColumnList(tbinfo);
+	else
+		column_list = "";		/* can't select columns in COPY */
 
 	if (oids && hasoids)
 	{
@@ -1123,11 +1132,11 @@ static void
 dumpClasses(const TableInfo *tblinfo, const int numTables, Archive *fout,
 			const bool oids)
 {
-	int			i;
+	PQExpBuffer	copyBuf = createPQExpBuffer();
 	DataDumperPtr dumpFn;
 	DumpContext *dumpCtx;
-	char		copyBuf[512];
 	char	   *copyStmt;
+	int			i;
 
 	for (i = 0; i < numTables; i++)
 	{
@@ -1162,11 +1171,12 @@ dumpClasses(const TableInfo *tblinfo, const int numTables, Archive *fout,
 
 				dumpFn = dumpClasses_nodumpData;
 				column_list = fmtCopyColumnList(&(tblinfo[i]));
-				sprintf(copyBuf, "COPY %s %s %sFROM stdin;\n",
-						fmtId(tblinfo[i].relname),
-						column_list,
-						(oids && tblinfo[i].hasoids) ? "WITH OIDS " : "");
-				copyStmt = copyBuf;
+				resetPQExpBuffer(copyBuf);
+				appendPQExpBuffer(copyBuf, "COPY %s %s %sFROM stdin;\n",
+								  fmtId(tblinfo[i].relname),
+								  column_list,
+								  (oids && tblinfo[i].hasoids) ? "WITH OIDS " : "");
+				copyStmt = copyBuf->data;
 			}
 			else
 			{
@@ -1181,6 +1191,8 @@ dumpClasses(const TableInfo *tblinfo, const int numTables, Archive *fout,
 						 dumpFn, dumpCtx);
 		}
 	}
+
+	destroyPQExpBuffer(copyBuf);
 }
 
 
@@ -6652,11 +6664,9 @@ fmtQualifiedId(const char *schema, const char *id)
 
 /*
  * return a column list clause for the given relation.
- * returns an empty string if the remote server is older than
- * 7.3.
  */
-static const char*
-fmtCopyColumnList(const TableInfo* ti)
+static const char *
+fmtCopyColumnList(const TableInfo *ti)
 {
 	static PQExpBuffer q = NULL;
 	int			numatts = ti->numatts;
@@ -6665,15 +6675,10 @@ fmtCopyColumnList(const TableInfo* ti)
 	bool	needComma;
 	int i;
 
-	if (g_fout->remoteVersion < 70300)
-		return "";
-
 	if (q)				/* first time through? */
 		resetPQExpBuffer(q);
 	else
 		q = createPQExpBuffer();
-
-	resetPQExpBuffer(q);
 
 	appendPQExpBuffer(q, "(");
 	needComma = false;
