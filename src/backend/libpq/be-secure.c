@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.4 2002/06/14 04:35:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.5 2002/06/14 04:36:58 momjian Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -62,7 +62,7 @@
  *	  [*] private key permissions
  *
  *	  milestone 4: provide endpoint authentication (client)
- *	  [ ] server verifies client certificates
+ *	  [*] server verifies client certificates
  *
  *	  milestone 5: provide informational callbacks
  *	  [ ] provide informational callbacks
@@ -124,6 +124,7 @@ ssize_t secure_write(Port *, const void *ptr, size_t len);
 static DH *load_dh_file(int keylength);
 static DH *load_dh_buffer(const char *, size_t);
 static DH *tmp_dh_cb(SSL *s, int is_export, int keylength);
+static int verify_cb(int, X509_STORE_CTX *);
 static int initialize_SSL(void);
 static void destroy_SSL(void);
 static int open_server_SSL(Port *);
@@ -137,7 +138,7 @@ static const char *SSLerrmessage(void);
  *	(total in both directions) before we require renegotiation.
  */
 #define RENEGOTIATION_LIMIT	(64 * 1024)
-
+#define CA_PATH	NULL
 static SSL_CTX *SSL_context = NULL;
 #endif
 
@@ -522,6 +523,24 @@ tmp_dh_cb (SSL *s, int is_export, int keylength)
 }
 
 /*
+ *	Certificate verification callback
+ *
+ *	This callback allows us to log intermediate problems during
+ *	verification, but for now we'll see if the final error message
+ *	contains enough information.
+ *
+ *	This callback also allows us to override the default acceptance
+ *	criteria (e.g., accepting self-signed or expired certs), but
+ *	for now we accept the default checks.
+ */
+static int
+verify_cb (int ok, X509_STORE_CTX *ctx)
+{
+	return ok;
+}
+
+
+/*
  *	Initialize global SSL context.
  */
 static int
@@ -583,6 +602,17 @@ initialize_SSL (void)
 	SSL_CTX_set_tmp_dh_callback(SSL_context, tmp_dh_cb);
 	SSL_CTX_set_options(SSL_context, SSL_OP_SINGLE_DH_USE);
 
+	/* accept client certificates, but don't require them. */
+	snprintf(fnbuf, sizeof fnbuf, "%s/root.crt", DataDir);
+	if (!SSL_CTX_load_verify_locations(SSL_context, fnbuf, CA_PATH))
+	{
+		postmaster_error("could not read root cert file (%s): %s",
+						 fnbuf, SSLerrmessage());
+		ExitPostmaster(1);
+	}
+	SSL_CTX_set_verify(SSL_context, 
+		SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE, verify_cb);
+
 	return 0;
 }
 
@@ -614,6 +644,24 @@ open_server_SSL (Port *port)
 		return -1;
 	}
 	port->count = 0;
+
+	/* get client certificate, if available. */
+	port->peer = SSL_get_peer_certificate(port->ssl);
+	if (port->peer == NULL)
+	{
+		strncpy(port->peer_dn, "(anonymous)", sizeof (port->peer_dn));
+		strncpy(port->peer_cn, "(anonymous)", sizeof (port->peer_cn));
+	}
+	else
+	{
+		X509_NAME_oneline(X509_get_subject_name(port->peer),
+			port->peer_dn, sizeof (port->peer_dn));
+		port->peer_dn[sizeof(port->peer_dn)-1] = '\0';
+		X509_NAME_get_text_by_NID(X509_get_subject_name(port->peer),
+			NID_commonName, port->peer_cn, sizeof (port->peer_cn));
+		port->peer_cn[sizeof(port->peer_cn)-1] = '\0';
+	}
+	elog(DEBUG, "secure connection from '%s'", port->peer_cn);
 
 	return 0;
 }

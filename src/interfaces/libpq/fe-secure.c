@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-secure.c,v 1.2 2002/06/14 04:31:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-secure.c,v 1.3 2002/06/14 04:36:58 momjian Exp $
  *	  
  * NOTES
  *	  The client *requires* a valid server certificate.  Since
@@ -52,6 +52,20 @@
  *	  should normally be stored encrypted.  However we still
  *	  support EPH since it's useful for other reasons.
  *
+ *	  ...
+ *
+ *	  Client certificates are supported, if the server requests
+ *	  or requires them.  Client certificates can be used for
+ *	  authentication, to prevent sessions from being hijacked,
+ *	  or to allow "road warriors" to access the database while
+ *	  keeping it closed to everyone else.
+ *
+ *	  The user's certificate and private key are located in
+ *	    $HOME/.postgresql/postgresql.crt
+ *	  and
+ *	    $HOME/.postgresql/postgresql.key
+ *	  respectively.
+ *
  * OS DEPENDENCIES
  *	  The code currently assumes a POSIX password entry.  How should
  *	  Windows and Mac users be handled?
@@ -71,7 +85,7 @@
  *	  [*] emphermal DH keys, default values
  *
  *	  milestone 4: provide endpoint authentication (client)
- *	  [ ] server verifies client certificates
+ *	  [*] server verifies client certificates
  *
  *	  milestone 5: provide informational callbacks
  *	  [ ] provide informational callbacks
@@ -135,6 +149,7 @@ static int verify_peer(PGconn *);
 static DH *load_dh_file(int keylength);
 static DH *load_dh_buffer(const char *, size_t);
 static DH *tmp_dh_cb(SSL *s, int is_export, int keylength);
+static int client_cert_cb(SSL *, X509 **, EVP_PKEY **);
 static int initialize_SSL(PGconn *);
 static void destroy_SSL(void);
 static int open_client_SSL(PGconn *);
@@ -615,6 +630,101 @@ tmp_dh_cb (SSL *s, int is_export, int keylength)
 }
 
 /*
+ *	Callback used by SSL to load client cert and key.
+ *	This callback is only called when the server wants a
+ *	client cert.
+ *
+ *	Returns 1 on success, 0 on no data, -1 on error.
+ */
+static int
+client_cert_cb (SSL *ssl, X509 **x509, EVP_PKEY **pkey)
+{
+	struct passwd *pwd;
+	struct stat buf, buf2;
+	char fnbuf[2048];
+	FILE *fp;
+	PGconn *conn = (PGconn *) SSL_get_app_data(ssl);
+	int (*cb)() = NULL; /* how to read user password */
+
+	if ((pwd = getpwuid(getuid())) == NULL)
+	{
+		printfPQExpBuffer(&conn->errorMessage, 
+			libpq_gettext("unable to get user information\n"));
+		return -1;
+	}
+
+	/* read the user certificate */
+	snprintf(fnbuf, sizeof fnbuf, "%s/.postgresql/postgresql.crt",
+		pwd->pw_dir);
+	if (stat(fnbuf, &buf) == -1)
+		return 0;
+	if ((fp = fopen(fnbuf, "r")) == NULL)
+	{
+		printfPQExpBuffer(&conn->errorMessage, 
+			libpq_gettext("unable to open certificate (%s): %s\n"),
+			fnbuf, strerror(errno));
+		return -1;
+	}
+	if (PEM_read_X509(fp, x509, NULL, NULL) == NULL)
+	{
+		printfPQExpBuffer(&conn->errorMessage, 
+			libpq_gettext("unable to read certificate (%s): %s\n"),
+			fnbuf, SSLerrmessage());
+		fclose(fp);
+		return -1;
+	}
+	fclose(fp);
+
+	/* read the user key */
+	snprintf(fnbuf, sizeof fnbuf, "%s/.postgresql/postgresql.key",
+		pwd->pw_dir);
+	if (stat(fnbuf, &buf) == -1)
+	{
+		printfPQExpBuffer(&conn->errorMessage, 
+			libpq_gettext("certificate present, but not private key (%s)\n"),
+			fnbuf);
+		X509_free(*x509);
+		return 0;
+	}
+	if (!S_ISREG(buf.st_mode) || (buf.st_mode & 0077) ||
+		buf.st_uid != getuid())
+	{
+		printfPQExpBuffer(&conn->errorMessage, 
+			libpq_gettext("private key has bad permissions (%s)\n"), fnbuf);
+		X509_free(*x509);
+		return -1;
+	}
+	if ((fp = fopen(fnbuf, "r")) == NULL)
+	{
+		printfPQExpBuffer(&conn->errorMessage, 
+			libpq_gettext("unable to open private key file (%s): %s\n"),
+			fnbuf, strerror(errno));
+		X509_free(*x509);
+		return -1;
+	}
+	if (fstat(fileno(fp), &buf2) == -1 ||
+		buf.st_dev != buf2.st_dev || buf.st_ino != buf2.st_ino)
+	{
+		printfPQExpBuffer(&conn->errorMessage, 
+			libpq_gettext("private key changed under us (%s)\n"), fnbuf);
+		X509_free(*x509);
+		return -1;
+	}
+	if (PEM_read_PrivateKey(fp, pkey, cb, NULL) == NULL)
+	{
+		printfPQExpBuffer(&conn->errorMessage, 
+			libpq_gettext("unable to read private key (%s): %s\n"),
+			fnbuf, SSLerrmessage());
+		X509_free(*x509);
+		fclose(fp);
+		return -1;
+	}
+	fclose(fp);
+
+	return 1;
+}
+
+/*
  *	Initialize global SSL context.
  */
 static int
@@ -666,6 +776,9 @@ initialize_SSL (PGconn *conn)
 	SSL_CTX_set_tmp_dh_callback(SSL_context, tmp_dh_cb);
 	SSL_CTX_set_options(SSL_context, SSL_OP_SINGLE_DH_USE);
 
+	/* set up mechanism to provide client certificate, if available */
+	SSL_CTX_set_client_cert_cb(SSL_context, client_cert_cb);
+
 	return 0;
 }
 
@@ -691,6 +804,7 @@ open_client_SSL (PGconn *conn)
 	int r;
 
 	if (!(conn->ssl = SSL_new(SSL_context)) ||
+		!SSL_set_app_data(conn->ssl, conn) ||
 		!SSL_set_fd(conn->ssl, conn->sock) ||
 		SSL_connect(conn->ssl) <= 0)
 	{
