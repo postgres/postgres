@@ -241,15 +241,15 @@ gistindex_keytest(IndexTuple tuple,
 							  1,
 							  tupdesc,
 							  &isNull);
-		gistdentryinit(giststate, &de, (char *) datum, r, p, offset,
-					   IndexTupleSize(tuple) - sizeof(IndexTupleData),
-					   FALSE);
-
-		if (isNull)
+		if (isNull || IndexTupleSize(tuple) == sizeof(IndexTupleData) )
 		{
 			/* XXX eventually should check if SK_ISNULL */
 			return false;
 		}
+
+		gistdentryinit(giststate, &de, (char *) datum, r, p, offset,
+					   IndexTupleSize(tuple) - sizeof(IndexTupleData),
+					   FALSE);
 
 		if (key[0].sk_flags & SK_COMMUTE)
 		{
@@ -265,6 +265,9 @@ gistindex_keytest(IndexTuple tuple,
 								 key[0].sk_argument,
 								 ObjectIdGetDatum(key[0].sk_procedure));
 		}
+
+		if ( (char*)de.pred != (char*)datum )
+			if ( de.pred ) pfree( de.pred );
 
 		if (DatumGetBool(test) == !!(key[0].sk_flags & SK_NEGATE))
 			return false;
