@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.104 2002/09/21 18:32:52 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.105 2002/10/21 02:12:08 tgl Exp $
 -->
 
  <chapter id="datatype">
@@ -2267,7 +2267,7 @@ SELECT * FROM test1 WHERE a;
 	<entry><type>line</type></entry>
 	<entry>32 bytes</entry>
 	<entry>((x1,y1),(x2,y2))</entry>
-	<entry>Infinite line (not implemented)</entry>
+	<entry>Infinite line (not fully implemented)</entry>
        </row>
        <row>
 	<entry><type>lseg</type></entry>
@@ -2283,19 +2283,19 @@ SELECT * FROM test1 WHERE a;
        </row>
        <row>
 	<entry><type>path</type></entry>
-	<entry>4+32n bytes</entry>
+	<entry>16+16n bytes</entry>
 	<entry>((x1,y1),...)</entry>
 	<entry>Closed path (similar to polygon)</entry>
        </row>
        <row>
 	<entry><type>path</type></entry>
-	<entry>4+32n bytes</entry>
+	<entry>16+16n bytes</entry>
 	<entry>[(x1,y1),...]</entry>
 	<entry>Open path</entry>
        </row>
        <row>
 	<entry><type>polygon</type></entry>
-	<entry>4+32n bytes</entry>
+	<entry>40+16n bytes</entry>
 	<entry>((x1,y1),...)</entry>
 	<entry>Polygon (similar to closed path)</entry>
        </row>
