@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_view.sgml,v 1.24 2003/09/12 00:12:47 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_view.sgml,v 1.25 2003/09/27 00:10:31 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -118,6 +118,12 @@ CREATE VIEW vista AS SELECT 'Hello World';
 CREATE VIEW vista AS SELECT text 'Hello World' AS hello;
 </programlisting>
    </para>
+
+   <para>
+    While access to tables in the view is controlled entirely by permissions
+    on the view, functions called by the view are checked independently.
+   </para>
+
  </refsect1>
 
  <refsect1>
