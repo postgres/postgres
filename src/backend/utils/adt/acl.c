@@ -7,17 +7,18 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.40 1999/07/17 20:17:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.41 1999/10/18 03:32:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <ctype.h>
+
 #include "postgres.h"
 
 #include "catalog/catalog.h"
 #include "catalog/pg_shadow.h"
 #include "catalog/pg_type.h"
-#include "miscadmin.h"
+#include "lib/stringinfo.h"
 #include "utils/acl.h"
 #include "utils/memutils.h"
 #include "utils/syscache.h"
@@ -41,7 +42,7 @@ static char *aclparse(char *s, AclItem *aip, unsigned *modechg);
  *		the string position in 's' that points to the next non-space character
  *		in 's', after any quotes.  Also:
  *		- loads the identifier into 'name'.  (If no identifier is found, 'name'
- *		  contains an empty string).
+ *		  contains an empty string.)  name must be NAMEDATALEN bytes.
  */
 static char *
 getid(char *s, char *n)
@@ -69,9 +70,9 @@ getid(char *s, char *n)
 			in_quotes = 0;
 		}
 	}
-	if (len > sizeof(NameData))
-		elog(ERROR, "getid: identifier cannot be >%d characters",
-			 sizeof(NameData));
+	if (len >= NAMEDATALEN)
+		elog(ERROR, "getid: identifier must be <%d characters",
+			 NAMEDATALEN);
 	if (len > 0)
 		memmove(n, id, len);
 	n[len] = '\0';
@@ -205,10 +206,10 @@ makeacl(int n)
 	Size		size;
 
 	if (n < 0)
-		elog(ERROR, "makeacl: invalid size: %d\n", n);
+		elog(ERROR, "makeacl: invalid size: %d", n);
 	size = ACL_N_SIZE(n);
 	if (!(new_acl = (Acl *) palloc(size)))
-		elog(ERROR, "makeacl: palloc failed on %d\n", size);
+		elog(ERROR, "makeacl: palloc failed on %d", size);
 	MemSet((char *) new_acl, 0, size);
 	new_acl->size = size;
 	new_acl->ndim = 1;
@@ -679,34 +680,37 @@ ChangeACLStmt *
 makeAclStmt(char *privileges, List *rel_list, char *grantee,
 			char grant_or_revoke)
 {
-	ChangeACLStmt *n = makeNode(ChangeACLStmt);
-	char		str[MAX_PARSE_BUFFER];
+	ChangeACLStmt  *n = makeNode(ChangeACLStmt);
+	StringInfoData	str;
+
+	initStringInfo(&str);
 
 	/* see comment in pg_type.h */
 	Assert(ACLITEMSIZE == sizeof(AclItem));
 
 	n->aclitem = (AclItem *) palloc(sizeof(AclItem));
 
-	/* the grantee string is "G <group_name>", "U  <user_name>", or "ALL" */
+	/* the grantee string is "G <group_name>", "U <user_name>", or "ALL" */
 	if (grantee[0] == 'G')		/* group permissions */
 	{
-		sprintf(str, "%s %c%s%c%c%s",
-				ACL_IDTYPE_GID_KEYWORD,
-				'"', grantee + 2, '"', grant_or_revoke, privileges);
+		appendStringInfo(&str, "%s \"%s\"%c%s",
+						 ACL_IDTYPE_GID_KEYWORD,
+						 grantee + 2, grant_or_revoke, privileges);
 	}
 	else if (grantee[0] == 'U') /* user permission */
 	{
-		sprintf(str, "%s %c%s%c%c%s",
-				ACL_IDTYPE_UID_KEYWORD,
-				'"', grantee + 2, '"', grant_or_revoke, privileges);
+		appendStringInfo(&str, "%s \"%s\"%c%s",
+						 ACL_IDTYPE_UID_KEYWORD,
+						 grantee + 2, grant_or_revoke, privileges);
 	}
 	else
-/* all permission */
 	{
-		sprintf(str, "%c%s",
-				grant_or_revoke, privileges);
+		/* all permission */
+		appendStringInfo(&str, "%c%s",
+						 grant_or_revoke, privileges);
 	}
 	n->relNames = rel_list;
-	aclparse(str, n->aclitem, (unsigned *) &n->modechg);
+	aclparse(str.data, n->aclitem, (unsigned *) &n->modechg);
+	pfree(str.data);
 	return n;
 }
