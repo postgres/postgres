@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed May 16 16:18:15 EDT 2001
+Last updated:		Wed May 16 20:08:28 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -27,7 +27,6 @@ PARSER
 MISC
 
 * Plpgsql does not handle quoted mixed-case identifiers
-* SELECT cash_out(1) causes crash
 
 ENHANCEMENTS
 ------------
@@ -84,7 +83,6 @@ MULTILANGUAGE SUPPORT
 
 * Add nchar (as distinguished from ordinary varchar),
 * Allow LOCALE on a per-column basis, default to ASCII
-* Add SHOW command to see locale
 * Support multiple simultaneous character sets, per SQL92
 * Reject character sequences those are not valid in their charset
 * Make functions more multi-byte aware, i.e. trim()
@@ -175,6 +173,7 @@ COMMANDS
 	* Remove SET KSQO option now that OR processing is improved (Tom)
 	* Add SET PERFORMANCE_TIPS option to suggest INDEX, VACUUM, VACUUM
 	  ANALYZE, and CLUSTER
+	* Add SHOW command to see locale
 * Change LIMIT val,val to offset,limit to match MySQL
 * Allow Pl/PgSQL's RAISE function to take expressions
 
@@ -305,6 +304,7 @@ SOURCE CODE
 * Allow ps status display to work on Solaris/SVr4-based systems
 * Decide on spelling of indexes/indices
 * Add mention of VACUUM, log rotation to Administrator's Guide
+* Use BlockNumber rather than int where appropriate
 
 ---------------------------------------------------------------------------
 
