@@ -448,4 +448,4 @@ else
 fi 
 
 
-AC_OUTPUT(GNUmakefile Makefile.global backend/port/Makefile bin/pg_version bin/psql/Makefile bin/pg_dump/Makefile backend/utils/Gen_fmgrtab.sh) 
+AC_OUTPUT(GNUmakefile Makefile.global backend/port/Makefile bin/pg_version/Makefile bin/psql/Makefile bin/pg_dump/Makefile backend/utils/Gen_fmgrtab.sh) 
