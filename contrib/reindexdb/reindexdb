@@ -1,6 +1,6 @@
 #!/bin/sh
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- #
-# Package : reindexdb                 Version : $Revision: 1.2 $
+# Package : reindexdb                 Version : $Revision: 1.3 $
 # Date    : 05/08/2002                Author  : Shaun Thomas
 # Req     : psql, sh, perl, sed         Type  : Utility
 #
@@ -111,8 +111,11 @@ do
       dbname="$2"
       shift
       ;;
-    -d*|--dbname=*)
-      dbname=`echo $1 | perl -pn -e 's/^--?d(bname=)?//'`
+    -d*)
+      dbname=`echo "$1" | sed 's/^-d/'`
+      ;;
+    --dbname=*)
+      dbname=`echo "$1" | sed 's/^--dbname=//'`
       ;;
 
     # Reindex specific Table.  Disables index reindexing.
@@ -120,8 +123,11 @@ do
       table="$2"
       shift
       ;;
-    -t*|--table=*)
-      table=`echo $1 | perl -pn -e 's/^--?t(able=)?//'`
+    -t*)
+      table=`echo "$1" | sed 's/^-t//'`
+      ;;
+    --table=*)
+      table=`echo "$1" | sed 's/^--table=//'`
       ;;
 
     # Reindex specific index.  Disables table reindexing.
@@ -129,8 +135,11 @@ do
       index="$2"
       shift
       ;;
-    -i*|--index=*)
-      index=`echo $1 | perl -pn -e 's/^--?i(ndex=)?//'`
+    -i*)
+      index=`echo "$1" | sed 's/^-i//'`
+      ;;
+    --index=*)
+      index=`echo "$1" | sed 's/^--index=//'`
       ;;
 
     # Yeah, no options?  Whine, and show usage.
