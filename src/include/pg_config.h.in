@@ -43,6 +43,9 @@
    (--enable-thread-safety) */
 #undef ENABLE_THREAD_SAFETY
 
+/* Define to 1 if getpwuid_r() takes a 5th argument. */
+#undef GETPWUID_R_5ARG
+
 /* Define to 1 if gettimeofday() takes only 1 argument. */
 #undef GETTIMEOFDAY_1ARG
 

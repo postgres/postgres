@@ -1,5 +1,5 @@
 # Macros that test various C library quirks
-# $Header: /cvsroot/pgsql/config/c-library.m4,v 1.23 2003/07/23 23:30:39 tgl Exp $
+# $Header: /cvsroot/pgsql/config/c-library.m4,v 1.23.4.1 2004/03/20 15:39:40 momjian Exp $
 
 
 # PGAC_VAR_INT_TIMEZONE
@@ -71,6 +71,29 @@ AH_VERBATIM(GETTIMEOFDAY_1ARG_,
 @%:@ define gettimeofday(a,b) gettimeofday(a)
 @%:@endif])dnl
 ])# PGAC_FUNC_GETTIMEOFDAY_1ARG
+
+
+# PGAC_FUNC_GETPWUID_R_5ARG
+# ---------------------------
+# Check if getpwuid_r() takes a fifth argument (later POSIX standard, not draft version)
+# If so, define GETPWUID_R_5ARG
+AC_DEFUN([PGAC_FUNC_GETPWUID_R_5ARG],
+[AC_CACHE_CHECK(whether getpwuid_r takes a fifth argument,
+pgac_func_getpwuid_r_5arg,
+[AC_TRY_COMPILE([#include <sys/types.h>
+#include <pwd.h>],
+[uid_t uid;
+struct passwd *space;
+char *buf;
+size_t bufsize;
+struct passwd **result;
+getpwuid_r(uid, space, buf, bufsize, result);],
+[pgac_func_getpwuid_r_5arg=yes],
+[pgac_func_getpwuid_r_5arg=no])])
+if test x"$pgac_func_getpwuid_r_5arg" = xyes ; then
+  AC_DEFINE(GETPWUID_R_5ARG,, [Define to 1 if getpwuid_r() takes a 5th argument.])
+fi
+])# PGAC_FUNC_GETPWUID_R_5ARG
 
 
 # PGAC_UNION_SEMUN

@@ -7,7 +7,7 @@
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
- * $Id: thread.c,v 1.12.2.3 2004/03/14 14:01:54 momjian Exp $
+ * $Id: thread.c,v 1.12.2.4 2004/03/20 15:39:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -107,14 +107,17 @@ pqGetpwuid(uid_t uid, struct passwd *resultbuf, char *buffer,
 		   size_t buflen, struct passwd **result)
 {
 #if defined(FRONTEND) && defined(ENABLE_THREAD_SAFETY) && defined(NEED_REENTRANT_FUNCS) && defined(HAVE_GETPWUID_R)
+
+#ifdef GETPWUID_R_5ARG
+	/* POSIX version */
+	getpwuid_r(uid, resultbuf, buffer, buflen, result);
+#else
 	/*
 	 * Early POSIX draft of getpwuid_r() returns 'struct passwd *'.
 	 *    getpwuid_r(uid, resultbuf, buffer, buflen)
-	 * Do we need to support it?  bjm 2003-08-14
 	 */
-	/* POSIX version */
-	getpwuid_r(uid, resultbuf, buffer, buflen, result);
-
+	result = getpwuid_r(uid, resultbuf, buffer, buflen);
+#endif
 #else
 
 #if defined(FRONTEND) && defined(ENABLE_THREAD_SAFETY) && defined(NEED_REENTRANT_FUNCS) && !defined(HAVE_GETPWUID_R)
