@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.36 2000/05/30 00:49:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.37 2000/06/08 19:51:03 momjian Exp $
  *
  * Note - this code is real crufty...
  *
@@ -905,6 +905,7 @@ ImmediateInvalidateSharedHeapTuple(Relation relation, HeapTuple tuple)
 								"ImmediateInvalidateSharedHeapTuple");
 }
 
+#ifdef NOT_USED
 /*
  * ImmediateSharedRelationCacheInvalidate
  *	Register shared relation cache invalidation immediately
@@ -940,3 +941,4 @@ ImmediateSharedRelationCacheInvalidate(Relation relation)
 	RelationIdImmediateRegisterSharedInvalid(
 							RelOid_pg_class, RelationGetRelid(relation));
 }
+#endif

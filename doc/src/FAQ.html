@@ -728,10 +728,13 @@ from the postmaster, it is not running in an identical environment and
 locking/backend interaction problems may not be duplicated.<P>
 
 Another method is to start <I>psql</I> in one window, then find the
-<small>PID</small> of the <i>postgres</i> process being used by the
+<small>PID</small> of the <i>postgres</i> process used by
 <i>psql.</i> Use a debugger to attach to the <i>postgres</i>
-<small>PID.</small>  You can set breakpoints in the debugger and issues
-queries from <i>psql.</i>
+<small>PID.</small> You can set breakpoints in the debugger and issue
+queries from <i>psql.</i> If you are debugging <i>postgres</i> startup,
+you can set PGOPTIONS="-W n", then start <i>psql.</i> This will cause
+startup to delay for <i>n</i> seconds so you can attach with the
+debugger and trace through the startup sequence.<P>
 
 The postgres program has -s, -A, and -t options that can be very useful
 for debugging and performance measurements.<P>

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: inval.h,v 1.16 2000/01/26 05:58:38 momjian Exp $
+ * $Id: inval.h,v 1.17 2000/06/08 19:51:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,5 @@ extern void RelationInvalidateHeapTuple(Relation relation, HeapTuple tuple);
 extern void RelationMark4RollbackHeapTuple(Relation relation, HeapTuple tuple);
 
 extern void ImmediateInvalidateSharedHeapTuple(Relation relation, HeapTuple tuple);
-
-extern void ImmediateSharedRelationCacheInvalidate(Relation relation);
 
 #endif	 /* INVAL_H */
