@@ -18,7 +18,7 @@
  * Portions Copyright (c) 2000-2001, PostgreSQL Global Development Group
  * Copyright 1999 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.32 2002/03/06 06:10:14 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.33 2002/03/19 02:57:15 momjian Exp $
  *
  * ----------
  */
@@ -207,6 +207,17 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 		old_row = NULL;
 		new_row = trigdata->tg_trigtuple;
 	}
+
+        /*
+         * We should not even consider checking the row if it is no longer
+         * valid since it was either deleted (doesn't matter) or updated
+         * (in which case it'll be checked with its final values).
+         */
+        if (new_row) {
+                if (!HeapTupleSatisfiesItself(new_row->t_data)) {
+                        return PointerGetDatum(NULL);
+                }
+        }
 
 	/* ----------
 	 * SQL3 11.9 <referential constraint definition>
