@@ -1,7 +1,7 @@
 /*
  * conversion functions between pg_wchar and multi-byte streams.
  * Tatsuo Ishii
- * $Id: wchar.c,v 1.9 1999/07/11 22:47:20 ishii Exp $
+ * $Id: wchar.c,v 1.10 2000/01/25 02:12:27 ishii Exp $
  *
  * WIN1250 client encoding updated by Pavel Behal
  *
@@ -166,11 +166,7 @@ pg_euccn_mblen(const unsigned char *s)
 {
 	int			len;
 
-	if (*s == SS2)
-		len = 3;
-	else if (*s == SS3)
-		len = 3;
-	else if (*s & 0x80)
+	if (*s & 0x80)
 		len = 2;
 	else
 		len = 1;
