@@ -3,6 +3,7 @@
     doc/src/sgml/version.sgml
     bump interface version numbers
     update src/interfaces/libpq/libpq.rc
+    update /src/include/config.h.win32
 
 * Release notes
     update doc/src/sgml/release.sgml 
