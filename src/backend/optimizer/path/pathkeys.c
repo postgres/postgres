@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.5 1999/02/20 19:02:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.6 1999/02/21 01:55:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,8 +27,6 @@
 
 static int match_pathkey_joinkeys(List *pathkey, List *joinkeys,
 						int outer_or_inner);
-static bool joinkeys_pathkeys_match(List *joinkeys, List *pathkey,
-		   				int outer_or_inner);
 static List *new_join_pathkey(List *subkeys, List *considered_subkeys,
 					 	List *join_rel_tlist, List *joinclauses);
 static List *new_matching_subkeys(Var *subkey, List *considered_subkeys,
@@ -94,19 +92,20 @@ static List *new_matching_subkeys(Var *subkey, List *considered_subkeys,
  * Returns the join keys and corresponding join clauses in a list if all
  * of the path keys were matched:
  *		(
- *		 ( (outerkey0 innerkey0) ... (outerkeyN innerkeyN) )
+ *		 ( (outerkey0 innerkey0) ... (outerkeyN or innerkeyN) )
  *		 ( clause0 ... clauseN )
  *		)
  * and nil otherwise.
  *
  * Returns a list of matched join keys and a list of matched join clauses
- * in matchedJoinClausesPtr.  - ay 11/94
+ * in pointers if valid order can be found.
  */
-List *
+bool
 order_joinkeys_by_pathkeys(List *pathkeys,
 							List *joinkeys,
 							List *joinclauses,
 							int outer_or_inner,
+							List **matchedJoinKeysPtr,
 							List **matchedJoinClausesPtr)
 {
 	List	   *matched_joinkeys = NIL;
@@ -114,7 +113,7 @@ order_joinkeys_by_pathkeys(List *pathkeys,
 	List	   *pathkey = NIL;
 	List	   *i = NIL;
 	int			matched_joinkey_index = -1;
-
+	int			matched_keys = 0;
 	/*
 	 *	Reorder the joinkeys by picking out one that matches each pathkey,
 	 *	and create a new joinkey/joinclause list in pathkey order
@@ -127,11 +126,19 @@ order_joinkeys_by_pathkeys(List *pathkeys,
 
 		if (matched_joinkey_index != -1)
 		{
-			List	   *xjoinkey = nth(matched_joinkey_index, joinkeys);
-			List	   *joinclause = nth(matched_joinkey_index, joinclauses);
-
-			matched_joinkeys = lappend(matched_joinkeys, xjoinkey);
-			matched_joinclauses = lappend(matched_joinclauses, joinclause);
+			matched_keys++;
+			if (matchedJoinKeysPtr)
+			{
+				JoinKey	   *joinkey = nth(matched_joinkey_index, joinkeys);
+				matched_joinkeys = lappend(matched_joinkeys, joinkey);
+			}
+			
+			if (matchedJoinClausesPtr && joinclauses)
+			{
+				Expr	   *joinclause = nth(matched_joinkey_index,
+											 joinclauses);
+				matched_joinclauses = lappend(matched_joinclauses, joinclause);
+			}
 		}
 		else
 			/*	A pathkey could not be matched. */
@@ -142,14 +149,20 @@ order_joinkeys_by_pathkeys(List *pathkeys,
 	 *	Did we fail to match all the joinkeys?
 	 *	Extra pathkeys are no problem.
 	 */
-	if (length(joinkeys) != length(matched_joinkeys))
+	if (matched_keys != length(joinkeys))
 	{
-			*matchedJoinClausesPtr = NIL;
-			return NIL;
+			if (matchedJoinKeysPtr)
+				*matchedJoinKeysPtr = NIL;
+			if (matchedJoinClausesPtr)
+				*matchedJoinClausesPtr = NIL;
+			return false;
 	}
 
-	*matchedJoinClausesPtr = matched_joinclauses;
-	return matched_joinkeys;
+	if (matchedJoinKeysPtr)
+		*matchedJoinKeysPtr = matched_joinkeys;
+	if (matchedJoinClausesPtr)
+		*matchedJoinClausesPtr = matched_joinclauses;
+	return true;
 }
 
 
@@ -221,8 +234,8 @@ get_cheapest_path_for_joinkeys(List *joinkeys,
 		Path	   *path = (Path *) lfirst(i);
 		int			better_sort, better_key;
 		
-		if (joinkeys_pathkeys_match(joinkeys, path->pathkeys, outer_or_inner) &&
-			length(joinkeys) == length(path->pathkeys) &&
+		if (order_joinkeys_by_pathkeys(path->pathkeys, joinkeys, NIL,
+									   outer_or_inner, NULL, NULL) &&
 			pathorder_match(ordering, path->pathorder, &better_sort) &&
 			better_sort == 0)
 		{
@@ -246,7 +259,7 @@ get_cheapest_path_for_joinkeys(List *joinkeys,
  * 'joinkeys' is a list of join key pairs
  * 'tlist' is a relation target list
  * 'outer_or_inner' is a flag that selects the desired subkey of a join key
- *		in 'joinkeys'
+ *	in 'joinkeys'
  *
  * Returns a list of pathkeys: ((tlvar1)(tlvar2)...(tlvarN)).
  * It is a list of lists because of multi-key indexes.
@@ -288,42 +301,6 @@ extract_path_keys(List *joinkeys,
 		pathkeys = lappend(pathkeys, lcons(key, NIL));
 	}
 	return pathkeys;
-}
-
-
-/*
- * joinkeys_pathkeys_match
- */
-static bool
-joinkeys_pathkeys_match(List *joinkeys, List *pathkey, int outer_or_inner)
-{
-	JoinKey    *xjoinkey;
-	Var		   *temp;
-	Var		   *tempkey = NULL;
-	bool		found = false;
-	List	   *i = NIL;
-	List	   *j = NIL;
-
-	foreach(i, joinkeys)
-	{
-		xjoinkey = (JoinKey *) lfirst(i);
-		found = false;
-		foreach(j, pathkey)
-		{
-			temp = (Var *) lfirst((List *) lfirst(j));
-			if (temp == NULL)
-				continue;
-			tempkey = extract_join_key(xjoinkey, outer_or_inner);
-			if (var_equal(tempkey, temp))
-			{
-				found = true;
-				break;
-			}
-		}
-		if (found == false)
-			return false;
-	}
-	return found;
 }
 
 

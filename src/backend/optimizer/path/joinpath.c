@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.30 1999/02/19 05:18:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.31 1999/02/21 01:55:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -309,11 +309,12 @@ match_unsorted_outer(RelOptInfo *joinrel,
 		{
 			List	   *jmkeys = xmergeinfo->jmethod.jmkeys;
 
-			matchedJoinKeys = order_joinkeys_by_pathkeys(outerpath->pathkeys,
-														jmkeys,
-														clauses,
-														OUTER,
-														&matchedJoinClauses);
+			order_joinkeys_by_pathkeys(outerpath->pathkeys,
+										jmkeys,
+										clauses,
+										OUTER,
+										&matchedJoinKeys,
+										&matchedJoinClauses);
  			merge_pathkeys = new_join_pathkeys(outerpath->pathkeys,
 											  joinrel->targetlist, clauses);
 		}
@@ -449,10 +450,11 @@ match_unsorted_inner(RelOptInfo *joinrel,
 		{
 			List	   *jmkeys = xmergeinfo->jmethod.jmkeys;
 
-			matchedJoinKeys = order_joinkeys_by_pathkeys(innerpath->pathkeys,
+			order_joinkeys_by_pathkeys(innerpath->pathkeys,
 										jmkeys,
 										clauses,
 										INNER,
+										&matchedJoinKeys,
 										&matchedJoinClauses);
 		}
 

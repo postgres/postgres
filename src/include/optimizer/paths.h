@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: paths.h,v 1.24 1999/02/19 05:18:06 momjian Exp $
+ * $Id: paths.h,v 1.25 1999/02/21 01:55:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,9 +54,10 @@ extern List *group_clauses_by_hashop(List *restrictinfo_list,
  * joinutils.h
  *	  generic join method key/clause routines
  */
-extern List *order_joinkeys_by_pathkeys(List *pathkeys,
+extern bool order_joinkeys_by_pathkeys(List *pathkeys,
 					 List *joinkeys, List *joinclauses, int outer_or_inner,
-						List **matchedJoinClausesPtr);
+					 List **matchedJoinKeysPtr,
+					 List **matchedJoinClausesPtr);
 extern List *extract_path_keys(List *joinkeys, List *tlist,
 				  int outer_or_inner);
 extern Path *get_cheapest_path_for_joinkeys(List *joinkeys,
