@@ -467,11 +467,11 @@ select * from rtest_view3;
 delete from rtest_view3;
 
 insert into rtest_view4 select * from rtest_vview4 where 3 > refcount;
-select * from rtest_view4;
+select * from rtest_view4 order by a, b;
 delete from rtest_view4;
 
 insert into rtest_view4 select * from rtest_vview5 where a > 2 and refcount = 0;
-select * from rtest_view4 order by a, b;
+select * from rtest_view4;
 delete from rtest_view4;
 --
 -- Test for computations in views
