@@ -216,7 +216,33 @@ These dictionaries are tried in order,
 stopping either with the first one to return a lexeme for the token,
 or discarding the token if no dictionary returns a lexeme for it.
 
-<h2><a name="dictionaries">Parsers</a></h2>
+<h2><a name="testing">Testing</a></h2>
+
+Function <tt>ts_debug</tt> allows easy testing of your <b>current</b> configuration. 
+You may always test another configuration using <tt>set_curcfg</tt> function.
+<p>
+Example:
+</p><pre>apod=# select * from ts_debug('Tsearch module for PostgreSQL 7.3.3');
+ ts_name | tok_type | description |   token    | dict_name |  tsvector    
+---------+----------+-------------+------------+-----------+--------------
+ default | lword    | Latin word  | Tsearch    | {en_stem} | 'tsearch'
+ default | lword    | Latin word  | module     | {en_stem} | 'modul'
+ default | lword    | Latin word  | for        | {en_stem} | 
+ default | lword    | Latin word  | PostgreSQL | {en_stem} | 'postgresql'
+ default | version  | VERSION     | 7.3.3      | {simple}  | '7.3.3'
+</pre>
+Here: 
+<br>
+<ul>
+<li>tsname - configuration name 
+</li><li>tok_type - token type 
+</li><li>description - human readable name of tok_type 
+</li><li>token - parser's token 
+</li><li>dict_name - dictionary used for the token 
+</li><li>tsvector - final result</li></ul>
+
+
+<h2><a name="parsers">Parsers</a></h2>
 
 Each parser is defined by a record in the <tt>pg_ts_parser</tt> table:
 
@@ -261,33 +287,6 @@ the current parser is used when this argument is omitted.
  which the parser will label each token of that type,
  the <tt>alias</tt> which names the token type,
  and a short description <tt>descr</tt> for the user to read.
- <br>
- Example:
- <br>
- <pre> apod=# select m.ts_name, t.alias as tok_type, t.descr as description, p.token,\
- apod=# m.dict_name, strip(to_tsvector(p.token)) as tsvector\
- apod=# from parse('Tsearch module for PostgreSQL 7.3.3') as\
- apod=# p, token_type() as t, pg_ts_cfgmap as m, pg_ts_cfg as c\
- apod=# where t.tokid=p.tokid and t.alias = m.tok_alias\
- apod=# and m.ts_name=c.ts_name and c.oid=show_curcfg();
-  ts_name | tok_type | description |   token    | dict_name |  tsvector    
- ---------+----------+-------------+------------+-----------+--------------
-  default | lword    | Latin word  | Tsearch    | {en_stem} | 'tsearch'
-  default | word     | Word        | module     | {simple}  | 'modul'
-  default | lword    | Latin word  | for        | {en_stem} | 
-  default | lword    | Latin word  | PostgreSQL | {en_stem} | 'postgresql'
-  default | version  | VERSION     | 7.3.3      | {simple}  | '7.3.3'
- </pre>
- Here:
- <ul>
- <li> tsname - configuration name
- </li><li> tok_type  - token type
- </li><li> description - human readable name of tok_type
- </li><li> token       - parser's token
- </li><li> dict_name - dictionary will be used for the token
- </li><li> tsvector - final result
- </li></ul>
-
 </dd><dt>
  <tt>CREATE FUNCTION parse(
   <em>[</em> <i>parser</i>, <em>]</em> <i>document</i> TEXT
