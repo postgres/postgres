@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.261 2004/05/22 11:06:55 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.262 2004/05/24 04:54:22 neilc Exp $
 -->
 
 <appendix id="release">
@@ -1447,7 +1447,11 @@ DROP SCHEMA information_schema CASCADE;
     </listitem>
 
     <listitem>
-     <para>Have <command>COMMENT ON DATABASE</command> on nonlocal database generate a warning (Rod)</para>
+     <para>
+       Have <command>COMMENT ON DATABASE</command> on nonlocal
+       database generate a warning, rather than an error (Rod)
+      </para>
+
      <para>
       Database comments are stored in database-local tables so
       comments on a database have to be stored in each database.
