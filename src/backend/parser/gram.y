@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.164 2000/03/27 17:12:06 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.165 2000/03/30 06:02:36 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -297,7 +297,8 @@ static void doNegateFloat(Value *v);
 		COALESCE, COLLATE, COLUMN, COMMIT,
 		CONSTRAINT, CONSTRAINTS, CREATE, CROSS, CURRENT, CURRENT_DATE,
 		CURRENT_TIME, CURRENT_TIMESTAMP, CURRENT_USER, CURSOR,
-		DAY_P, DEC, DECIMAL, DECLARE, DEFAULT, DELETE, DESC, DISTINCT, DOUBLE, DROP,
+		DAY_P, DEC, DECIMAL, DECLARE, DEFAULT, DELETE, DESC,
+		DISTINCT, DOUBLE, DROP,
 		ELSE, END_TRANS, EXCEPT, EXECUTE, EXISTS, EXTRACT,
 		FALSE_P, FETCH, FLOAT, FOR, FOREIGN, FROM, FULL,
 		GLOBAL, GRANT, GROUP, HAVING, HOUR_P,
@@ -712,8 +713,71 @@ opt_level:  READ COMMITTED					{ $$ = "committed"; }
 		| SERIALIZABLE						{ $$ = "serializable"; }
 		;
 
-var_value:  Sconst			{ $$ = $1; }
-		| DEFAULT			{ $$ = NULL; }
+var_value:  Sconst
+				{
+					/* Plain old string (pointer to char) */
+					$$ = $1;
+				}
+		| FCONST
+				{
+					/* Floating pumeric argument?
+					 * This recently changed to preserve "stringiness" until here,
+					 * so we don't have any work to do at all. Nice.
+					 * - thomas 2000-03-29
+					 */
+					$$ = $1;
+				}
+		| Iconst
+				{
+					char   *result;
+					char	buf[64];
+
+					/* Integer pumeric argument?
+					 */
+					if (sprintf(buf, "%d", $1) != 1)
+					{
+						result = pstrdup(buf);
+					}
+					else
+						elog(ERROR, "Unable to convert constant to string (internal error)");
+
+					$$ = result;
+				}
+		| name_list
+				{
+					List *n;
+					int llen, slen = 0;
+					char *result;
+
+					llen = length($1);
+
+					/* List of words? Then concatenate together */
+					if (llen < 1)
+						elog(ERROR, "SET must have at least one argument");
+
+					foreach (n, $1)
+					{
+						Value *p = (Value *) lfirst(n);
+						Assert(IsA(p, String));
+						/* keep track of room for string and trailing comma */
+						slen += (strlen(p->val.str) + 1);
+					}
+					result = palloc(slen + 1);
+					*result = '\0';
+					foreach (n, $1)
+					{
+						Value *p = (Value *) lfirst(n);
+						strcat(result, p->val.str);
+						strcat(result, ",");
+					}
+					/* remove the trailing comma from the last element */
+					*(result+strlen(result)-1) = '\0';
+					$$ = result;
+				}
+		| DEFAULT
+				{
+					$$ = NULL;
+				}
 		;
 
 zone_value:  Sconst			{ $$ = $1; }
@@ -1609,9 +1673,9 @@ TriggerFuncArgs:  TriggerFuncArg
 
 TriggerFuncArg:  ICONST
 				{
-					char *s = (char *) palloc(64);
-					sprintf (s, "%d", $1);
-					$$ = s;
+					char buf[64];
+					sprintf (buf, "%d", $1);
+					$$ = pstrdup(buf);
 				}
 			| FCONST						{  $$ = $1; }
 			| Sconst						{  $$ = $1; }
@@ -3396,7 +3460,7 @@ opt_select_limit:	LIMIT select_limit_value ',' select_offset_value
 			{ $$ = lappend(lappend(NIL, NULL), NULL); }
 		;
 
-select_limit_value:		Iconst
+select_limit_value:  Iconst
 			{
 				Const	*n = makeNode(Const);
 
@@ -5236,6 +5300,15 @@ UserId:  IDENT							{ $$ = $1; };
  *  some of these keywords will have to be removed from this
  *  list due to shift/reduce conflicts in yacc. If so, move
  *  down to the ColLabel entity. - thomas 1997-11-06
+ * These show up as operators, ans will screw up the parsing if
+ * allowed as identifiers or labels.
+ * Thanks to Tom Lane for pointing this out. - thomas 2000-03-29
+		| BETWEEN						{ $$ = "between"; }
+		| IN							{ $$ = "in"; }
+		| IS							{ $$ = "is"; }
+		| ISNULL						{ $$ = "isnull"; }
+		| NOTNULL						{ $$ = "notnull"; }
+		| OVERLAPS						{ $$ = "overlaps"; }
  */
 ColId:  IDENT							{ $$ = $1; }
 		| datetime						{ $$ = $1; }
@@ -5249,7 +5322,6 @@ ColId:  IDENT							{ $$ = $1; }
 		| BACKWARD						{ $$ = "backward"; }
 		| BEFORE						{ $$ = "before"; }
 		| BEGIN_TRANS					{ $$ = "begin"; }
-		| BETWEEN						{ $$ = "between"; }
 		| BY							{ $$ = "by"; }
 		| CACHE							{ $$ = "cache"; }
 		| CASCADE						{ $$ = "cascade"; }
@@ -5281,7 +5353,6 @@ ColId:  IDENT							{ $$ = $1; }
 		| GRANT							{ $$ = "grant"; }
 		| HANDLER						{ $$ = "handler"; }
 		| IMMEDIATE						{ $$ = "immediate"; }
-		| IN							{ $$ = "in"; }
 		| INCREMENT						{ $$ = "increment"; }
 		| INDEX							{ $$ = "index"; }
 		| INHERITS						{ $$ = "inherits"; }
@@ -5289,8 +5360,6 @@ ColId:  IDENT							{ $$ = $1; }
 		| INSERT						{ $$ = "insert"; }
 		| INSTEAD						{ $$ = "instead"; }
 		| INTERVAL						{ $$ = "interval"; }
-		| IS							{ $$ = "is"; }
-		| ISNULL						{ $$ = "isnull"; }
 		| ISOLATION						{ $$ = "isolation"; }
 		| KEY							{ $$ = "key"; }
 		| LANGUAGE						{ $$ = "language"; }
@@ -5309,13 +5378,11 @@ ColId:  IDENT							{ $$ = $1; }
 		| NOCREATEUSER					{ $$ = "nocreateuser"; }
 		| NOTHING						{ $$ = "nothing"; }
 		| NOTIFY						{ $$ = "notify"; }
-		| NOTNULL						{ $$ = "notnull"; }
 		| OF							{ $$ = "of"; }
 		| OIDS							{ $$ = "oids"; }
 		| ONLY							{ $$ = "only"; }
 		| OPERATOR						{ $$ = "operator"; }
 		| OPTION						{ $$ = "option"; }
-		| OVERLAPS						{ $$ = "overlaps"; }
 		| PARTIAL						{ $$ = "partial"; }
 		| PASSWORD						{ $$ = "password"; }
 		| PENDANT						{ $$ = "pendant"; }
@@ -5375,12 +5442,23 @@ ColId:  IDENT							{ $$ = $1; }
  * Add other keywords to this list. Note that they appear here
  *  rather than in ColId if there was a shift/reduce conflict
  *  when used as a full identifier. - thomas 1997-11-06
+ * These show up as operators, ans will screw up the parsing if
+ * allowed as identifiers or labels.
+ * Thanks to Tom Lane for pointing this out. - thomas 2000-03-29
+		| ALL							{ $$ = "all"; }
+		| ANY							{ $$ = "any"; }
+		| EXCEPT						{ $$ = "except"; }
+		| INTERSECT						{ $$ = "intersect"; }
+		| LIKE							{ $$ = "like"; }
+		| NOT							{ $$ = "not"; }
+		| NULLIF						{ $$ = "nullif"; }
+		| NULL_P						{ $$ = "null_p"; }
+		| OR							{ $$ = "or"; }
+		| UNION							{ $$ = "union"; }
  */
 ColLabel:  ColId						{ $$ = $1; }
 		| ABORT_TRANS					{ $$ = "abort"; }
-		| ALL							{ $$ = "all"; }
 		| ANALYZE						{ $$ = "analyze"; }
-		| ANY							{ $$ = "any"; }
 		| ASC							{ $$ = "asc"; }
 		| BINARY						{ $$ = "binary"; }
 		| BIT							{ $$ = "bit"; }
@@ -5411,7 +5489,6 @@ ColLabel:  ColId						{ $$ = $1; }
 		| DO							{ $$ = "do"; }
 		| ELSE							{ $$ = "else"; }
 		| END_TRANS						{ $$ = "end"; }
-		| EXCEPT						{ $$ = "except"; }
 		| EXISTS						{ $$ = "exists"; }
 		| EXPLAIN						{ $$ = "explain"; }
 		| EXTEND						{ $$ = "extend"; }
@@ -5427,12 +5504,10 @@ ColLabel:  ColId						{ $$ = $1; }
 		| HAVING						{ $$ = "having"; }
 		| INITIALLY						{ $$ = "initially"; }
 		| INNER_P						{ $$ = "inner"; }
-		| INTERSECT						{ $$ = "intersect"; }
 		| INTO							{ $$ = "into"; }
 		| JOIN							{ $$ = "join"; }
 		| LEADING						{ $$ = "leading"; }
 		| LEFT							{ $$ = "left"; }
-		| LIKE							{ $$ = "like"; }
 		| LISTEN						{ $$ = "listen"; }
 		| LOAD							{ $$ = "load"; }
 		| LOCAL							{ $$ = "local"; }
@@ -5442,13 +5517,9 @@ ColLabel:  ColId						{ $$ = $1; }
 		| NCHAR							{ $$ = "nchar"; }
 		| NEW							{ $$ = "new"; }
 		| NONE							{ $$ = "none"; }
-		| NOT							{ $$ = "not"; }
-		| NULLIF						{ $$ = "nullif"; }
-		| NULL_P						{ $$ = "null_p"; }
 		| NUMERIC						{ $$ = "numeric"; }
 		| OFFSET						{ $$ = "offset"; }
 		| ON							{ $$ = "on"; }
-		| OR							{ $$ = "or"; }
 		| ORDER							{ $$ = "order"; }
 		| OUTER_P						{ $$ = "outer"; }
 		| POSITION						{ $$ = "position"; }
@@ -5470,7 +5541,6 @@ ColLabel:  ColId						{ $$ = $1; }
 		| TRANSACTION					{ $$ = "transaction"; }
 		| TRIM							{ $$ = "trim"; }
 		| TRUE_P						{ $$ = "true"; }
-		| UNION							{ $$ = "union"; }
 		| UNIQUE						{ $$ = "unique"; }
 		| USER							{ $$ = "user"; }
 		| USING							{ $$ = "using"; }
