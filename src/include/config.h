@@ -190,13 +190,11 @@
  */
 #define DEADLOCK_TIMEOUT 60
 
-
 #define INDEXSCAN_PATCH 
 
 /* #define DATEDEBUG */
 
 /* #define USE_SHORT_YEAR */
-/* #define AMERICAN_STYLE */
 
 /*
  * defining unsafe floats's will make float4 and float8
