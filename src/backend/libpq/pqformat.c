@@ -15,7 +15,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqformat.c,v 1.9 1999/09/11 22:28:05 tgl Exp $
+ *	$Id: pqformat.c,v 1.10 1999/09/12 22:27:47 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,6 +53,9 @@
 #endif
 #ifdef HAVE_ENDIAN_H
 #include "endian.h"
+#endif
+#ifdef HAVE_SYS_PARAM_H
+#include <sys/param.h>
 #endif
 
 #ifndef BYTE_ORDER
