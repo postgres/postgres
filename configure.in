@@ -33,6 +33,9 @@ AC_SUBST(VERSION)
 AC_DEFINE_UNQUOTED(PG_VERSION, "$VERSION")
 
 AC_CANONICAL_HOST
+AC_SUBST(host)
+AC_SUBST(host_cpu)
+AC_SUBST(host_os)
 
 template=
 AC_MSG_CHECKING([which template to use])
@@ -100,9 +103,7 @@ line.
 AC_MSG_RESULT([$template])
 
 PORTNAME=$template
-CPU=$host_cpu
 AC_SUBST(PORTNAME)
-AC_SUBST(CPU)
 
 AC_LINK_FILES([src/backend/port/dynloader/${template}.c], [src/backend/port/dynloader.c])
 AC_LINK_FILES([src/backend/port/dynloader/${template}.h], [src/include/dynloader.h])

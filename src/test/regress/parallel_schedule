@@ -1,0 +1,75 @@
+# ----------
+# The first group of parallel test
+# ----------
+test: boolean char name varchar text int2 int4 int8 oid float4 float8 numeric
+
+# Depends on things setup during char, varchar and text
+test: strings
+# Depends on int2, int4, int8, float4, float8
+test: numerology
+
+# ----------
+# The second group of parallel test
+# ----------
+test: point lseg box path polygon circle date time timestamp interval abstime reltime tinterval inet comments oidjoins type_sanity opr_sanity
+
+# Depends on point, lseg, box, path, polygon and circle
+test: geometry
+# Depends on interval, timestamp, reltime and abstime
+test: horology	
+
+# ----------
+# These four each depend on the previous one
+# ----------
+test: create_function_1
+test: create_type
+test: create_table
+test: create_function_2
+
+# ----------
+# Load huge amounts of data
+# We should split the data files into single files and then
+# execute two copy tests parallel, to check that copy itself
+# is concurrent safe.
+# ----------
+test: copy
+
+# ----------
+# The third group of parallel test
+# ----------
+test: constraints triggers create_misc create_aggregate create_operator create_index inherit
+
+# Depends on the above
+test: create_view
+
+# ----------
+# sanity_check does a vacuum, affecting the sort order of SELECT *
+# results. So it should not run parallel to other tests.
+# ----------
+test: sanity_check
+
+# ----------
+# Believe it or not, select creates a table, subsequent
+# tests need.
+# ----------
+test: errors
+test: select
+
+# ----------
+# The fourth group of parallel test
+# ----------
+ignore: random
+test: select_into select_distinct select_distinct_on select_implicit select_having subselect union case join aggregates transactions random portals arrays btree_index hash_index
+
+test: misc
+
+# ----------
+# The fifth group of parallel test
+# ----------
+test: select_views alter_table portals_p2 rules foreign_key
+
+# ----------
+# The sixth group of parallel test
+# ----------
+# "plpgsql" cannot run concurrently with "rules"
+test: limit plpgsql temp

@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.96 2000/09/27 15:17:54 petere Exp $
+# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.97 2000/09/29 17:17:32 petere Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -162,7 +162,10 @@ endif
 
 # Name of the target platform.
 PORTNAME= @PORTNAME@
-CPU= @CPU@
+
+host_tuple = @host@
+host_os = @host_os@
+host_cpu = @host_cpu@
 
 # Various grungy items needed to configure some platforms.
 HAVE_POSIX_SIGNALS= @HAVE_POSIX_SIGNALS@
@@ -239,7 +242,7 @@ STRERROR2 = @STRERROR2@
 SNPRINTF = @SNPRINTF@
 STRDUP = @STRDUP@
 
-.PHONY: all install installdirs uninstall dep depend clean distclean maintainer-clean distprep
+.PHONY: all install installdirs uninstall dep depend clean distclean maintainer-clean distprep check installcheck
 .SILENT: installdirs
 
 # make `all' the default target

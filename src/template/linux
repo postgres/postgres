@@ -5,5 +5,4 @@ DLSUFFIX=.so
 
 case $host_cpu in
   mips*)   CFLAGS="$CFLAGS -mips2";;
-  alpha*)  CPU=alpha;;
 esac

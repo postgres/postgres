@@ -1,7 +1,7 @@
 #
 # Makefile for utils/adt
 #
-# $Header: /cvsroot/pgsql/src/backend/utils/adt/Makefile,v 1.46 2000/09/05 20:25:12 wieck Exp $
+# $Header: /cvsroot/pgsql/src/backend/utils/adt/Makefile,v 1.47 2000/09/29 17:17:33 petere Exp $
 #
 
 subdir = src/backend/utils/adt
@@ -9,8 +9,8 @@ top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 
 # seems to be required for some date/time stuff 1999/07/22 bjm
-ifeq ($(CPU),alpha)
-ifeq ($(GCC), yes)
+ifeq "$(findstring alpha,$(host_cpu))" "alpha"
+ifeq "$(GCC)" "yes"
 CFLAGS+= -mieee
 endif
 endif

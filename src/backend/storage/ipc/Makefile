@@ -1,7 +1,7 @@
 #
 # Makefile for storage/ipc
 #
-# $Header: /cvsroot/pgsql/src/backend/storage/ipc/Makefile,v 1.13 2000/08/31 16:10:33 petere Exp $
+# $Header: /cvsroot/pgsql/src/backend/storage/ipc/Makefile,v 1.14 2000/09/29 17:17:33 petere Exp $
 #
 
 subdir = src/backend/storage/ipc
@@ -9,8 +9,8 @@ top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 
 # seems to be required 1999/07/22 bjm
-ifeq ($(CPU), alpha)
-ifeq ($(GCC), yes)
+ifeq "$(findstring alpha,$(host_cpu))" "alpha"
+ifeq "$(GCC)" "yes"
 CFLAGS+= -fno-inline
 endif
 endif

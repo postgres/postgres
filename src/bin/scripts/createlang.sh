@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createlang.sh,v 1.15 2000/09/08 18:29:28 petere Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createlang.sh,v 1.16 2000/09/29 17:17:34 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -237,7 +237,8 @@ if [ $? -ne 0 ]; then
 fi
 if [ "$res" ]; then
 	echo "$CMDNAME: '$langname' is already installed in database $dbname"
-	exit 1
+	# separate exit status for "already installed"
+	exit 2
 fi
 
 # ----------

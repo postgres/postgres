@@ -7,10 +7,9 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/test/Makefile,v 1.2 1996/11/12 11:42:41 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/test/Makefile,v 1.3 2000/09/29 17:17:36 petere Exp $
 #
 #-------------------------------------------------------------------------
 
-.DEFAULT all:
-	$(MAKE) -C bench $@
+.DEFAULT:
 	$(MAKE) -C regress $@

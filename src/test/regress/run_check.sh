@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/run_check.sh,v 1.25 2000/07/23 13:01:11 petere Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/run_check.sh,v 1.26 2000/09/29 17:17:37 petere Exp $
 
 # ----------
 # Check call syntax
@@ -162,6 +162,7 @@ fi
 echo "=============== Create ./tmp_check directory           ================"
 mkdir -p $CHKDIR
 mkdir -p $LOGDIR
+mkdir -p results
 
 
 # ----------
