@@ -139,7 +139,8 @@ class DB:
 			else:
 				l[attname] = 'text'
 
-		self.__attnames__[cl] = l
+		l['oid'] = 'int'				# every table has this
+		self.__attnames__[cl] = l		# cache it
 		return self.__attnames__[cl]
 
 	# return a tuple from a database
@@ -194,7 +195,7 @@ class DB:
 		l = []
 		n = []
 		for f in fnames.keys():
-			if a.has_key(f):
+			if f != 'oid' and a.has_key(f):
 				l.append(_quote(a[f], fnames[f]))
 				n.append(f)
 
@@ -228,7 +229,7 @@ class DB:
 		fnames = self.get_attnames(cl)
 
 		for ff in fnames.keys():
-			if a.has_key(ff):
+			if ff != 'oid' and a.has_key(ff):
 				v.append("%s = %s" % (ff, _quote(a[ff], fnames[ff])))
 
 		if v == []:
