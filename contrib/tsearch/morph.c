@@ -173,6 +173,10 @@ lemmatize(char *word, int *len, int type)
 			/* word is stopword */
 			return NULL;
 		}
+		else if (nd == BYLOCALE)
+		{
+			continue; /* no dict for current locale */
+		}
 		else
 		{
 			dict = &dicts[nd];
