@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/pathkey.c,v 1.1 1999/02/18 19:58:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/pathkey.c,v 1.2 1999/02/19 02:05:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,9 +27,9 @@
 
 
 static int match_pathkey_joinkeys(List *pathkey, List *joinkeys,
-						int which_subkey);
+						int outer_or_inner);
 static bool every_func(List *joinkeys, List *pathkey,
-		   				int which_subkey);
+		   				int outer_or_inner);
 static List *new_join_pathkey(List *subkeys, List *considered_subkeys,
 					 	List *join_rel_tlist, List *joinclauses);
 static List *new_matching_subkeys(Var *subkey, List *considered_subkeys,
@@ -54,7 +54,7 @@ static List *new_matching_subkeys(Var *subkey, List *considered_subkeys,
  *		( (outer inner) (outer inner) ... )
  * 'joinclauses' is a list of clauses corresponding to the join keys in
  *		'joinkeys'
- * 'which_subkey' is a flag that selects the desired subkey of a join key
+ * 'outer_or_inner' is a flag that selects the desired subkey of a join key
  *		in 'joinkeys'
  *
  * Returns the join keys and corresponding join clauses in a list if all
@@ -72,7 +72,7 @@ List *
 match_pathkeys_joinkeys(List *pathkeys,
 						List *joinkeys,
 						List *joinclauses,
-						int which_subkey,
+						int outer_or_inner,
 						List **matchedJoinClausesPtr)
 {
 	List	   *matched_joinkeys = NIL;
@@ -84,19 +84,17 @@ match_pathkeys_joinkeys(List *pathkeys,
 	foreach(i, pathkeys)
 	{
 		pathkey = lfirst(i);
-		matched_joinkey_index = match_pathkey_joinkeys(pathkey, joinkeys, which_subkey);
+		matched_joinkey_index = match_pathkey_joinkeys(pathkey, joinkeys,
+													   outer_or_inner);
 
 		if (matched_joinkey_index != -1)
 		{
 			List	   *xjoinkey = nth(matched_joinkey_index, joinkeys);
 			List	   *joinclause = nth(matched_joinkey_index, joinclauses);
 
-			/* XXX was "push" function */
-			matched_joinkeys = lappend(matched_joinkeys, xjoinkey);
-			matched_joinkeys = nreverse(matched_joinkeys);
+			matched_joinkeys = lcons(xjoinkey, matched_joinkeys);
+			matched_joinclauses = lcons(joinclause, matched_joinclauses);
 
-			matched_joinclauses = lappend(matched_joinclauses, joinclause);
-			matched_joinclauses = nreverse(matched_joinclauses);
 			joinkeys = LispRemove(xjoinkey, joinkeys);
 		}
 		else
@@ -111,6 +109,7 @@ match_pathkeys_joinkeys(List *pathkeys,
 	return nreverse(matched_joinkeys);
 }
 
+
 /*
  * match_pathkey_joinkeys
  *	  Returns the 0-based index into 'joinkeys' of the first joinkey whose
@@ -119,7 +118,7 @@ match_pathkeys_joinkeys(List *pathkeys,
 static int
 match_pathkey_joinkeys(List *pathkey,
 					   List *joinkeys,
-					   int which_subkey)
+					   int outer_or_inner)
 {
 	Var		   *path_subkey;
 	int			pos;
@@ -135,13 +134,14 @@ match_pathkey_joinkeys(List *pathkey,
 		{
 			jk = (JoinKey *) lfirst(x);
 			if (var_equal(path_subkey,
-						  extract_join_subkey(jk, which_subkey)))
+						  extract_join_key(jk, outer_or_inner)))
 				return pos;
 			pos++;
 		}
 	}
 	return -1;					/* no index found	*/
 }
+
 
 /*
  * match_paths_joinkeys
@@ -159,53 +159,16 @@ match_pathkey_joinkeys(List *pathkey,
  *		must correspond
  * 'paths' is a list of(inner) paths which are to be matched against
  *		each join key in 'joinkeys'
- * 'which_subkey' is a flag that selects the desired subkey of a join key
+ * 'outer_or_inner' is a flag that selects the desired subkey of a join key
  *		in 'joinkeys'
  *
- * Returns the matching path node if one exists, nil otherwise.
- */
-static bool
-every_func(List *joinkeys, List *pathkey, int which_subkey)
-{
-	JoinKey    *xjoinkey;
-	Var		   *temp;
-	Var		   *tempkey = NULL;
-	bool		found = false;
-	List	   *i = NIL;
-	List	   *j = NIL;
-
-	foreach(i, joinkeys)
-	{
-		xjoinkey = (JoinKey *) lfirst(i);
-		found = false;
-		foreach(j, pathkey)
-		{
-			temp = (Var *) lfirst((List *) lfirst(j));
-			if (temp == NULL)
-				continue;
-			tempkey = extract_join_subkey(xjoinkey, which_subkey);
-			if (var_equal(tempkey, temp))
-			{
-				found = true;
-				break;
-			}
-		}
-		if (found == false)
-			return false;
-	}
-	return found;
-}
-
-
-/*
- * match_paths_joinkeys -
- *	  find the cheapest path that matches the join keys
+ *	Find the cheapest path that matches the join keys
  */
 Path *
 match_paths_joinkeys(List *joinkeys,
 					 PathOrder *ordering,
 					 List *paths,
-					 int which_subkey)
+					 int outer_or_inner)
 {
 	Path	   *matched_path = NULL;
 	bool		key_match = false;
@@ -216,13 +179,12 @@ match_paths_joinkeys(List *joinkeys,
 		Path	   *path = (Path *) lfirst(i);
 		int			better_sort;
 		
-		key_match = every_func(joinkeys, path->pathkeys, which_subkey);
+		key_match = every_func(joinkeys, path->pathkeys, outer_or_inner);
 
 		if (pathorder_match(ordering, path->pathorder, &better_sort) &&
 			better_sort == 0 &&
 			length(joinkeys) == length(path->pathkeys) && key_match)
 		{
-
 			if (matched_path)
 			{
 				if (path->path_cost < matched_path->path_cost)
@@ -236,7 +198,6 @@ match_paths_joinkeys(List *joinkeys,
 }
 
 
-
 /*
  * extract_path_keys
  *	  Builds a subkey list for a path by pulling one of the subkeys from
@@ -245,7 +206,7 @@ match_paths_joinkeys(List *joinkeys,
  *
  * 'joinkeys' is a list of join key pairs
  * 'tlist' is a relation target list
- * 'which_subkey' is a flag that selects the desired subkey of a join key
+ * 'outer_or_inner' is a flag that selects the desired subkey of a join key
  *		in 'joinkeys'
  *
  * Returns a list of pathkeys: ((tlvar1)(tlvar2)...(tlvarN)).
@@ -254,7 +215,7 @@ match_paths_joinkeys(List *joinkeys,
 List *
 extract_path_keys(List *joinkeys,
 				  List *tlist,
-				  int which_subkey)
+				  int outer_or_inner)
 {
 	List	   *pathkeys = NIL;
 	List	   *jk;
@@ -269,7 +230,7 @@ extract_path_keys(List *joinkeys,
 		/*
 		 * find the right Var in the target list for this key
 		 */
-		var = (Var *) extract_join_subkey(jkey, which_subkey);
+		var = (Var *) extract_join_key(jkey, outer_or_inner);
 		key = (Var *) matching_tlist_var(var, tlist);
 
 		/*
@@ -288,6 +249,42 @@ extract_path_keys(List *joinkeys,
 		pathkeys = lappend(pathkeys, lcons(key, NIL));
 	}
 	return pathkeys;
+}
+
+
+/*
+ * every_func
+ */
+static bool
+every_func(List *joinkeys, List *pathkey, int outer_or_inner)
+{
+	JoinKey    *xjoinkey;
+	Var		   *temp;
+	Var		   *tempkey = NULL;
+	bool		found = false;
+	List	   *i = NIL;
+	List	   *j = NIL;
+
+	foreach(i, joinkeys)
+	{
+		xjoinkey = (JoinKey *) lfirst(i);
+		found = false;
+		foreach(j, pathkey)
+		{
+			temp = (Var *) lfirst((List *) lfirst(j));
+			if (temp == NULL)
+				continue;
+			tempkey = extract_join_key(xjoinkey, outer_or_inner);
+			if (var_equal(tempkey, temp))
+			{
+				found = true;
+				break;
+			}
+		}
+		if (found == false)
+			return false;
+	}
+	return found;
 }
 
 

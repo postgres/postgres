@@ -5,12 +5,14 @@ The optimizer generates optimial query plans by doing several steps:
 
 1) Take each relation in a query, and make a RelOptInfo structure for
 it.  Find each way of accessing the relation, called a Path, including
-sequential and index scans, and add it to RelOptInfo.pathlist.
+sequential and index scans, and add it to RelOptInfo.pathlist.  Also
+create RelOptInfo.joininfo that lists all the joins that involve this
+relation.
 
-2) Join each RelOptInfo to each other RelOptInfo as specified in the
-WHERE clause.  At this point each RelOptInfo is a single relation, so
-you are joining every relation to every relation as joined in the WHERE
-clause.
+2) Join each RelOptInfo to other RelOptInfo as specified in
+RelOptInfo.joininfo.  At this point each RelOptInfo is a single
+relation, so you are joining every relation to the other relations as
+joined in the WHERE clause.
 
 Joins occur using two RelOptInfos.  One is outer, the other inner. 
 Outers drive lookups of values in the inner.  In a nested loop, lookups
@@ -137,8 +139,8 @@ Optimizer Structures
 
 RelOptInfo      - a relation or joined relations
 
- RestrictInfo   - restriction clauses
- JoinInfo       - join clauses
+ RestrictInfo   - restriction clauses, like "x = 3"
+ JoinInfo       - join clauses, including the relids needed for the join
 
  Path           - every way to generate a RelOptInfo(sequential,index,joins)
   IndexPath     - index scans

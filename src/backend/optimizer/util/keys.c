@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/keys.c,v 1.17 1999/02/13 23:16:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/keys.c,v 1.18 1999/02/19 02:05:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,17 +80,17 @@ equal_indexkey_var(int index_key, Var *var)
 }
 
 /*
- * extract_join_subkey
+ * extract_join_key
  *	 Returns the subkey in a join key corresponding to the outer or inner
  *	 relation.
  *
  */
 Var *
-extract_join_subkey(JoinKey *jk, int which_subkey)
+extract_join_key(JoinKey *jk, int outer_or_inner)
 {
 	Var		   *retval;
 
-	switch (which_subkey)
+	switch (outer_or_inner)
 	{
 		case OUTER:
 			retval = jk->outer;
@@ -99,7 +99,7 @@ extract_join_subkey(JoinKey *jk, int which_subkey)
 			retval = jk->inner;
 			break;
 		default:				/* do nothing */
-			elog(DEBUG, "extract_join_subkey with neither INNER or OUTER");
+			elog(DEBUG, "extract_join_key with neither INNER or OUTER");
 			retval = NULL;
 	}
 	return retval;
