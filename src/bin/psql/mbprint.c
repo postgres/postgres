@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/mbprint.c,v 1.4 2002/08/27 20:16:48 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/mbprint.c,v 1.5 2002/10/03 17:09:42 momjian Exp $
  */
 
 #include "postgres_fe.h"
@@ -202,7 +202,7 @@ mb_utf_wcswidth(unsigned char *pwcs, size_t len)
 	for (; *pwcs && len > 0; pwcs += l)
 	{
 		l = pg_utf_mblen(pwcs);
-		if ((len < l) || ((w = ucs_wcwidth(utf2ucs(pwcs))) < 0))
+		if ((len < (size_t) l) || ((w = ucs_wcwidth(utf2ucs(pwcs))) < 0))
 			return width;
 		len -= l;
 		width += w;

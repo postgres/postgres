@@ -22,7 +22,7 @@
 /*
  * crypt not available (yet)
  */
-#define crypt(a,b) (a)
+#define crypt(a,b) ((char *) a)
 
 #undef EAGAIN					/* doesn't apply on sockets */
 #undef EINTR

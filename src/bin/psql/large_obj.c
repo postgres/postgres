@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/large_obj.c,v 1.21 2002/09/04 20:31:36 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/large_obj.c,v 1.22 2002/10/03 17:09:41 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "large_obj.h"
@@ -196,7 +196,7 @@ do_lo_import(const char *filename_arg, const char *comment_arg)
 	{
 		char	   *cmdbuf;
 		char	   *bufptr;
-		int			slen = strlen(comment_arg);
+		size_t		slen = strlen(comment_arg);
 
 		cmdbuf = malloc(slen * 2 + 256);
 		if (!cmdbuf)

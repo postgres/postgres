@@ -16,6 +16,8 @@
 
 #define MAXPGPATH 1024
 
+#define INDEX_MAX_KEYS 32
+
 #define HAVE_ATEXIT
 #define HAVE_MEMMOVE
 
@@ -48,6 +50,10 @@
 
 #define DLLIMPORT
 
+#endif
+
+#ifndef __CYGWIN__
+#include <windows.h>
 #endif
 
 #endif /* pg_config_h_win32__ */

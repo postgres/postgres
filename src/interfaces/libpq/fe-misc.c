@@ -25,7 +25,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.79 2002/09/04 20:31:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.80 2002/10/03 17:09:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -150,9 +150,9 @@ pqPutBytes(const char *s, size_t nbytes, PGconn *conn)
 				 * try to grow the buffer. FIXME: The new size could be
 				 * chosen more intelligently.
 				 */
-				size_t		buflen = conn->outCount + nbytes;
+				size_t		buflen = (size_t) conn->outCount + nbytes;
 
-				if (buflen > conn->outBufSize)
+				if (buflen > (size_t) conn->outBufSize)
 				{
 					char	   *newbuf = realloc(conn->outBuffer, buflen);
 
@@ -240,7 +240,7 @@ pqPuts(const char *s, PGconn *conn)
 int
 pqGetnchar(char *s, size_t len, PGconn *conn)
 {
-	if (len < 0 || len > conn->inEnd - conn->inCursor)
+	if (len < 0 || len > (size_t) (conn->inEnd - conn->inCursor))
 		return EOF;
 
 	memcpy(s, conn->inBuffer + conn->inCursor, len);

@@ -17,7 +17,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/interfaces/libpq/pqexpbuffer.c,v 1.13 2002/06/20 20:29:54 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/interfaces/libpq/pqexpbuffer.c,v 1.14 2002/10/03 17:09:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -192,7 +192,7 @@ printfPQExpBuffer(PQExpBuffer str, const char *fmt,...)
 			 * actually stored, but at least one returns -1 on failure. Be
 			 * conservative about believing whether the print worked.
 			 */
-			if (nprinted >= 0 && nprinted < avail - 1)
+			if (nprinted >= 0 && nprinted < (int) avail - 1)
 			{
 				/* Success.  Note nprinted does not include trailing null. */
 				str->len += nprinted;
@@ -240,7 +240,7 @@ appendPQExpBuffer(PQExpBuffer str, const char *fmt,...)
 			 * actually stored, but at least one returns -1 on failure. Be
 			 * conservative about believing whether the print worked.
 			 */
-			if (nprinted >= 0 && nprinted < avail - 1)
+			if (nprinted >= 0 && nprinted < (int) avail - 1)
 			{
 				/* Success.  Note nprinted does not include trailing null. */
 				str->len += nprinted;

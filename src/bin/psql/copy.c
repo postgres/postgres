@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/copy.c,v 1.25 2002/09/22 20:57:21 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/copy.c,v 1.26 2002/10/03 17:09:41 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "copy.h"
@@ -28,6 +28,8 @@
 
 #ifdef WIN32
 #define strcasecmp(x,y) stricmp(x,y)
+#define	__S_ISTYPE(mode, mask)	(((mode) & S_IFMT) == (mask))
+#define	S_ISDIR(mode)	 __S_ISTYPE((mode), S_IFDIR)
 #endif
 
 bool		copy_in_state;

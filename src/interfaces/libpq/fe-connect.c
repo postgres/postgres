@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.205 2002/09/22 20:57:21 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.206 2002/10/03 17:09:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,6 @@
 #include <errno.h>
 #include <ctype.h>
 #include <time.h>
-#include <unistd.h>
 
 #include "libpq-fe.h"
 #include "libpq-int.h"
@@ -1053,10 +1052,10 @@ connectDBComplete(PGconn *conn)
 {
 	PostgresPollingStatusType flag = PGRES_POLLING_WRITING;
 
-	struct timeval remains,
-			   *rp = NULL,
-				finish_time,
-				start_time;
+	time_t			finish_time = 0,
+					current_time;
+	struct timeval	remains,
+				   *rp = NULL;
 
 	if (conn == NULL || conn->status == CONNECTION_BAD)
 		return 0;
@@ -1074,19 +1073,13 @@ connectDBComplete(PGconn *conn)
 		}
 		remains.tv_usec = 0;
 		rp = &remains;
+
+		/* calculate the finish time based on start + timeout */
+		finish_time = time((time_t *) NULL) + remains.tv_sec;
 	}
 
 	while (rp == NULL || remains.tv_sec > 0 || remains.tv_usec > 0)
 	{
-		/*
-		 * If connecting timeout is set, get current time.
-		 */
-		if (rp != NULL && gettimeofday(&start_time, NULL) == -1)
-		{
-			conn->status = CONNECTION_BAD;
-			return 0;
-		}
-
 		/*
 		 * Wait, if necessary.	Note that the initial state (just after
 		 * PQconnectStart) is to wait for the socket to select for
@@ -1128,26 +1121,18 @@ connectDBComplete(PGconn *conn)
 		flag = PQconnectPoll(conn);
 
 		/*
-		 * If connecting timeout is set, calculate remain time.
+		 * If connecting timeout is set, calculate remaining time.
 		 */
 		if (rp != NULL)
 		{
-			if (gettimeofday(&finish_time, NULL) == -1)
+			if (time(&current_time) == -1)
 			{
 				conn->status = CONNECTION_BAD;
 				return 0;
 			}
-			if ((finish_time.tv_usec -= start_time.tv_usec) < 0)
-			{
-				remains.tv_sec++;
-				finish_time.tv_usec += 1000000;
-			}
-			if ((remains.tv_usec -= finish_time.tv_usec) < 0)
-			{
-				remains.tv_sec--;
-				remains.tv_usec += 1000000;
-			}
-			remains.tv_sec -= finish_time.tv_sec - start_time.tv_sec;
+
+			remains.tv_sec = finish_time - current_time;
+			remains.tv_usec = 0;
 		}
 	}
 	conn->status = CONNECTION_BAD;
@@ -2946,6 +2931,7 @@ PasswordFromFile(char *hostname, char *port, char *dbname, char *username)
 		return NULL;
 	}
 
+#ifndef WIN32
 	/* If password file is insecure, alert the user and ignore it. */
 	if (stat_buf.st_mode & (S_IRWXG | S_IRWXO))
 	{
@@ -2955,6 +2941,7 @@ PasswordFromFile(char *hostname, char *port, char *dbname, char *username)
 		free(pgpassfile);
 		return NULL;
 	}
+#endif
 
 	fp = fopen(pgpassfile, "r");
 	free(pgpassfile);

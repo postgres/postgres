@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.81 2002/09/22 20:57:21 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.82 2002/10/03 17:09:41 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -23,6 +23,7 @@
 #include <win32.h>
 #include <io.h>
 #include <fcntl.h>
+#include <direct.h>
 #endif
 
 #include "libpq-fe.h"
@@ -1163,7 +1164,7 @@ scan_option(char **string, enum option_type type, char *quote, bool semicolon)
 						return NULL;
 					}
 
-					if (i < token_len - 1)
+					if (i < (int) token_len - 1)
 						return_val[i + 1] = '\0';
 				}
 
@@ -1240,7 +1241,7 @@ unescape(const unsigned char *source, size_t len)
 		exit(EXIT_FAILURE);
 	}
 
-	for (p = source; p - source < len && *p; p += PQmblen(p, pset.encoding))
+	for (p = source; p - source < (int) len && *p; p += PQmblen(p, pset.encoding))
 	{
 		if (esc)
 		{
@@ -1278,7 +1279,7 @@ unescape(const unsigned char *source, size_t len)
 						char	   *end;
 
 						l = strtol(p, &end, 0);
-						c = l;
+						c = (char) l;
 						p = end - 1;
 						break;
 					}

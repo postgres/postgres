@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.45 2002/09/14 19:46:01 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.46 2002/10/03 17:09:41 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -11,17 +11,18 @@
 
 #include <errno.h>
 #include <stdarg.h>
-#include <sys/time.h>
 #ifndef HAVE_STRDUP
 #include <strdup.h>
 #endif
 #include <signal.h>
 #ifndef WIN32
+#include <sys/time.h>
 #include <unistd.h>				/* for write() */
 #include <setjmp.h>
 #else
 #include <io.h>					/* for _write() */
 #include <win32.h>
+#include <sys/timeb.h>			/* for _ftime() */
 #endif
 
 #include "libpq-fe.h"
@@ -295,9 +296,13 @@ SendQuery(const char *query)
 	bool		success = false;
 	PGresult   *results;
 	PGnotify   *notify;
+#ifndef WIN32
 	struct timeval before,
 				after;
-	struct timezone tz;
+#else
+	struct _timeb before,
+				after;
+#endif
 
 	if (!pset.db)
 	{
@@ -327,11 +332,21 @@ SendQuery(const char *query)
 	}
 
 	cancelConn = pset.db;
+
+#ifndef WIN32
 	if (pset.timing)
-		gettimeofday(&before, &tz);
+		gettimeofday(&before, NULL);
 	results = PQexec(pset.db, query);
 	if (pset.timing)
-		gettimeofday(&after, &tz);
+		gettimeofday(&after, NULL);
+#else
+	if (pset.timing)
+		_ftime(&before);
+	results = PQexec(pset.db, query);
+	if (pset.timing)
+		_ftime(&after);
+#endif
+
 	if (PQresultStatus(results) == PGRES_COPY_IN)
 		copy_in_state = true;
 	/* keep cancel connection for copy out state */
@@ -463,8 +478,13 @@ SendQuery(const char *query)
 
 	/* Possible microtiming output */
 	if (pset.timing && success)
+#ifndef WIN32
 		printf(gettext("Time: %.2f ms\n"),
 			   ((after.tv_sec - before.tv_sec) * 1000000.0 + after.tv_usec - before.tv_usec) / 1000.0);
+#else
+		printf(gettext("Time: %.2f ms\n"),
+			   ((after.time - before.time) * 1000.0 + after.millitm - before.millitm));
+#endif
 
 	return success;
 }

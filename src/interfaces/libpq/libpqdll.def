@@ -1,5 +1,4 @@
 LIBRARY LIBPQ
-DESCRIPTION "Postgres Client Access Library"
 EXPORTS
 	PQconnectdb 		@ 1
 	PQsetdbLogin 		@ 2
@@ -90,3 +89,7 @@ EXPORTS
 	PQfreeNotify		@ 87
 	PQescapeString		@ 88
 	PQescapeBytea		@ 89
+	printfPQExpBuffer	@ 90
+	appendPQExpBuffer	@ 91
+	pg_encoding_to_char	@ 92
+	pg_utf_mblen		@ 93

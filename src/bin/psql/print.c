@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/print.c,v 1.31 2002/09/01 23:30:46 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/print.c,v 1.32 2002/10/03 17:09:42 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "print.h"
@@ -282,7 +282,7 @@ print_aligned_text(const char *title, const char *const * headers,
 	{
 		int			tlen;
 
-		if ((tlen = pg_wcswidth((unsigned char *) title, strlen(title))) >= total_w)
+		if ((unsigned int) (tlen = pg_wcswidth((unsigned char *) title, strlen(title))) >= total_w)
 			fprintf(fout, "%s\n", title);
 		else
 			fprintf(fout, "%-*s%s\n", (int) (total_w - tlen) / 2, "", title);
@@ -1184,8 +1184,8 @@ printQuery(const PGresult *result, const printQueryOpt *opt, FILE *fout)
 			   footers ? (const char *const *) footers : (const char *const *) (opt->footers),
 			   align, &opt->topt, fout);
 
-	free(headers);
-	free(cells);
+	free((void *) headers);
+	free((void *) cells);
 	if (footers)
 	{
 		free(footers[0]);

@@ -10,7 +10,7 @@
  * didn't really belong there.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.46 2002/08/29 07:22:30 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.47 2002/10/03 17:09:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -299,7 +299,7 @@ PQprint(FILE *fout,
 					(PQntuples(res) == 1) ? "" : "s");
 		free(fieldMax);
 		free(fieldNotNum);
-		free(fieldNames);
+		free((void *) fieldNames);
 		if (usePipe)
 		{
 #ifdef WIN32
