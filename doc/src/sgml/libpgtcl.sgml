@@ -128,10 +128,13 @@ in a BEGIN/END transaction block.
 <Sect1 id="libpgtcl-examples">
 <Title>Examples</Title>
 
-<Para>
-Here's a small example of how to use the routines:
+  <example>
+   <title><application>pgtcl</application> Example Program</title>
 
-<ProgramListing>
+   <para>
+    Here's a small example of how to use the routines:
+
+<programlisting>
 # getDBs :
 #   get the names of all the databases at a given host and port number
 #   with the defaults being the localhost and port 5432
@@ -149,8 +152,8 @@ proc getDBs { {host "localhost"} {port "5432"} } {
     return $datnames
 }
 </ProgramListing>
-
-</Para>
+   </para>
+  </example>
 </Sect1>
 
 <Sect1 id="libpgtcl-ref">

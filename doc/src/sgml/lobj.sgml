@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/lobj.sgml,v 1.20 2001/09/13 15:55:23 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/lobj.sgml,v 1.21 2001/09/15 16:08:59 petere Exp $
 -->
 
  <chapter id="largeObjects">
@@ -254,7 +254,7 @@ Oid lo_unlink(PGconn *<replaceable class="parameter">conn</replaceable>, Oid lob
 </sect1>
 
 <sect1 id="lo-funcs">
-<title>Built in registered functions</title>
+<title>Server-side Built-in Functions</title>
 
 <para>
      There  are two built-in registered functions, <acronym>lo_import</acronym>
@@ -295,10 +295,11 @@ SELECT lo_export(image.raster, '/tmp/motd') from image
 </para>
 </sect1>
 
-<sect1 id="lo-sample">
-<title>Sample Program</title>
+<sect1 id="lo-example">
+<title>Example Program</title>
 
-<para>
+  <example>
+   <title>Large Objects with <application>Libpq</application> Example Program</title>
 <programlisting>
 /*--------------------------------------------------------------
  *
@@ -320,8 +321,8 @@ SELECT lo_export(image.raster, '/tmp/motd') from image
 #define BUFSIZE          1024
 
 /*
- * importFile *    import file &quot;in_filename&quot; into database as large object &quot;lob
-jOid&quot;
+ * importFile
+ *    import file &quot;in_filename&quot; into database as large object &quot;lobjOid&quot;
  *
  */
 Oid
@@ -552,7 +553,7 @@ main(int argc, char **argv)
     exit(0);
 }
 </programlisting>
-</para>
+</example>
 
 </sect1>
 </chapter>
