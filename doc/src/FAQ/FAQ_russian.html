@@ -9,17 +9,16 @@
     <TITLE>PostgreSQL FAQ</TITLE>
   </HEAD>
 
-  <BODY bgcolor="#ffffff" text="#000000" link="#ff0000" vlink="#a00000"
-  alink="#0000ff">
+  <BODY bgcolor="#ffffff" text="#000000" link="#ff0000" vlink="#a00000" alink="#0000ff">
     <H1>Ответы на часто задаваемые вопросы по PostgreSQL</H1>
 
-    <P>Дата последнего обновления: Воскресенье 5 Октября 10:25:21 EDT 2003</P>
+    <P>Дата последнего обновления: Среда 19 ноября 11:50:04 EDT 2003</P>
 
     <P>Английский вариант сопровождает: Брюс Момьян (Bruce Momjian) (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
     </P>
     <P>Перевел на русский: Виктор Вислобоков (<A href=
-    "mailto:pgman@candle.pha.pa.us">victor_v@permonline.ru</A>)<BR>
+    "mailto:pgman@candle.pha.pa.us">corochoone@perm.ru</A>)<BR>
     </P>
 
     <P>Самую свежую английскую версию документа можно найти на
@@ -321,16 +320,17 @@
       <A href="http://www.PostgreSQL.org">http://www.PostgreSQL.org</A>
     </BLOCKQUOTE>
 
-    <P>Еще существует IRC канал на EFNet и OpenProjects, с названием
+    <P>Еще существует IRC канал на EFNet и Freenode, с названием
     <I>#PostgreSQL</I>. Я использую для подключения к этому каналу команду Unix
-    <CODE>irc -c '#PostgreSQL' "$USER" irc.phoenix.net.</CODE></P>
+    <CODE>irc -c '#PostgreSQL' "$USER" irc.phoenix.net.</CODE> или
+    <CODE>irc -c '#PostgreSQL' "$USER" irc.freenode.net.</CODE></P>
 
     <P>Список коммерческой поддержки компаний доступен на
     <A href="http://techdocs.postgresql.org/companies.php">http://techdocs.postgresql.org/companies.php</A>.</P>
 
     <H4><A name="1.7">1.7</A>) Какая последняя версия?</H4>
 
-    <P>Последний выпуск PostgreSQL - это версия 7.3.4.</P>
+    <P>Последний выпуск PostgreSQL - это версия 7.4.</P>
 
     <P>Мы планируем выпускать новые версии каждые 6-8 месяцев.</P>
 
@@ -566,7 +566,7 @@
 
     <P>Да, существует несколько графических интерфейсов для PostgreSQL.
     Это PgAccess (<A href="http://www.pgaccess.org/">http://www.pgaccess.org</A>,
-    PgAdmin II (<A href="http://www.pgadmin.org/">http://www.pgadmin.org</A>,
+    PgAdmin III (<A href="http://www.pgadmin.org/">http://www.pgadmin.org</A>,
     Win32-only), RHDB Admin (<A href="http://sources.redhat.com/rhdb/">
     http://sources.redhat.com/rhdb/</A>) и Rekall
     (<A href="http://www.thekompany.com/products/rekall/">
@@ -885,7 +885,7 @@
 
     <P>Существуют следующие ограничения:</P>
 <PRE>
-    Максимальный размер базы?              неограничен (существуют базы на 4 TB)
+    Максимальный размер базы?              неограничен (существуют базы на 32 TB)
     Максимальный размер таблицы?           32 TB
     Максимальный размер записи?            1.6 TB
     Максимальный размер поля?              1 GB
@@ -1122,8 +1122,7 @@ BYTEA           bytea           массив байт переменной длины (можно использовать
     serial/с-авто-увеличением?</H4>
 
     <P>PostgreSQL поддерживает тип данных <SMALL>SERIAL</SMALL>. Он
-    автоматически создает последовательность и индекс для колонки.
-    Например:</P>
+    автоматически создает последовательность. Например:</P>
 <PRE>
     CREATE TABLE person ( 
         id   SERIAL, 
@@ -1138,7 +1137,6 @@ BYTEA           bytea           массив байт переменной длины (можно использовать
         id   INT4 NOT NULL DEFAULT nextval('person_id_seq'),
         name TEXT 
     );
-    CREATE UNIQUE INDEX person_id_key ON person ( id );
 </PRE>
 
     Смотрите подробности о последовательностях на странице руководства
@@ -1334,10 +1332,10 @@ BYTEA           bytea           массив байт переменной длины (можно использовать
     <H4><A name="4.22">4.22</A>) Почему мои подзапросы, использующие
     <CODE><SMALL>IN</SMALL></CODE> так медленно работаеют?</H4>
 
-    <P>В настоящий момент, мы связываем позапросы для внешних запросов
-    через последовательный перебор результата подзапроса для каждой
-    записи внешнего запроса. Если подзапрос возвращает только несколько
-    записей и внешний запрос возвращает много записей,
+    <P>В версиях до 7.4, подзапросы связывались с родительскими запросами
+    через последовательный перебор результатов позапроса для каждой
+    записи родительского запроса. Если подзапрос возвращает только несколько
+    записей, а родительский запрос возвращает много записей,
     <CODE><SMALL>IN</SMALL></CODE> работает наиболее быстро. Чтобы
     увеличить скорость в других запросах, замените <CODE>IN</CODE> на
     <CODE>EXISTS</CODE>:</P>
@@ -1355,8 +1353,11 @@ BYTEA           bytea           массив байт переменной длины (можно использовать
 </PRE>
 
     Чтобы такая конструкция работала быстро, колонка <CODE>subcol</CODE>
-    должна быть проиндексирована. Эта проблема производительности будет
-    устранена в версии 7.4.
+    должна быть проиндексирована.
+
+    <P>В версии 7.4 и выше, <CODE>IN</CODE> фактически использует такой же
+    механизм связывания как и обычные запросы, поэтому предпочтительным
+    является использование <CODE>EXISTS</CODE></P>.
 
     <H4><A name="4.23">4.23</A>) Как мне выполнить внешнее связывание?</H4>
 

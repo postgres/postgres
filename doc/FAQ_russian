@@ -1,12 +1,12 @@
 
                Otvety na chasto zadavaemye voprosy po PostgreSQL
                                        
-   Data poslednego obnovleniya: Voskresen'e 5 Oktyabrya 10:25:21 EDT 2003
+   Data poslednego obnovleniya: Sreda 19 noyabrya 11:50:04 EDT 2003
    
    Anglijskij variant soprovozhdaet: Bryus Mom'yan (Bruce Momjian)
    (pgman@candle.pha.pa.us)
    
-   Perevel na russkij: Viktor Vislobokov (victor_v@permonline.ru)
+   Perevel na russkij: Viktor Vislobokov (corochoone@perm.ru)
    
    Samuyu svezhuyu anglijskuyu versiyu dokumenta mozhno najti na
    http://www.PostgreSQL.org/docs/faqs/FAQ.html.
@@ -273,16 +273,17 @@
    
      http://www.PostgreSQL.org
      
-   Esche suschestvuet IRC kanal na EFNet i OpenProjects, s nazvaniem
+   Esche suschestvuet IRC kanal na EFNet i Freenode, s nazvaniem
    #PostgreSQL. YA ispol'zuyu dlya podklyucheniya k `etomu kanalu komandu
-   Unix irc -c '#PostgreSQL' "$USER" irc.phoenix.net.
+   Unix irc -c '#PostgreSQL' "$USER" irc.phoenix.net. ili irc -c
+   '#PostgreSQL' "$USER" irc.freenode.net.
    
    Spisok kommercheskoj podderzhki kompanij dostupen na
    http://techdocs.postgresql.org/companies.php.
    
     1.7) Kakaya poslednyaya versiya?
     
-   Poslednij vypusk PostgreSQL - `eto versiya 7.3.4.
+   Poslednij vypusk PostgreSQL - `eto versiya 7.4.
    
    My planiruem vypuskat' novye versii kazhdye 6-8 mesyacev.
    
@@ -485,7 +486,7 @@
     2.3) Est' li u PostgreSQL graficheskij interfejs pol'zovatelya?
     
    Da, suschestvuet neskol'ko graficheskih interfejsov dlya PostgreSQL.
-   `Eto PgAccess (http://www.pgaccess.org, PgAdmin II
+   `Eto PgAccess (http://www.pgaccess.org, PgAdmin III
    (http://www.pgadmin.org, Win32-only), RHDB Admin (
    http://sources.redhat.com/rhdb/) i Rekall (
    http://www.thekompany.com/products/rekall/, kommercheskij). Takzhe
@@ -770,7 +771,7 @@ dalit'
     
    Suschestvuyut sleduyuschie ogranicheniya:
     Maksimal'nyj razmer bazy?              neogranichen (suschestvuyut bazy na
-4 TB)
+32 TB)
     Maksimal'nyj razmer tablicy?           32 TB
     Maksimal'nyj razmer zapisi?            1.6 TB
     Maksimal'nyj razmer polya?              1 GB
@@ -990,7 +991,7 @@ t' null-bajt bez opaski)
     4.15.1) Kak mne sozdat' pole serial/s-avto-uvelicheniem?
     
    PostgreSQL podderzhivaet tip dannyh SERIAL. On avtomaticheski sozdaet
-   posledovatel'nost' i indeks dlya kolonki. Naprimer:
+   posledovatel'nost'. Naprimer:
     CREATE TABLE person (
         id   SERIAL,
         name TEXT
@@ -1002,7 +1003,6 @@ t' null-bajt bez opaski)
         id   INT4 NOT NULL DEFAULT nextval('person_id_seq'),
         name TEXT
     );
-    CREATE UNIQUE INDEX person_id_key ON person ( id );
 
    Smotrite podrobnosti o posledovatel'nostyah na stranice rukovodstva
    posvyaschennoj create_sequence. Vy takzhe mozhete ispol'zovat' kazhdoe
@@ -1160,12 +1160,12 @@ CREATE TABLE test (x int, modtime timestamp DEFAULT CURRENT_TIMESTAMP );
 
     4.22) Pochemu moi podzaprosy, ispol'zuyuschie IN tak medlenno rabotaeyut?
     
-   V nastoyaschij moment, my svyazyvaem pozaprosy dlya vneshnih zaprosov
-   cherez posledovatel'nyj perebor rezul'tata podzaprosa dlya kazhdoj
-   zapisi vneshnego zaprosa. Esli podzapros vozvraschaet tol'ko neskol'ko
-   zapisej i vneshnij zapros vozvraschaet mnogo zapisej, IN rabotaet
-   naibolee bystro. CHtoby uvelichit' skorost' v drugih zaprosah,
-   zamenite IN na EXISTS:
+   V versiyah do 7.4, podzaprosy svyazyvalis' s roditel'skimi zaprosami
+   cherez posledovatel'nyj perebor rezul'tatov pozaprosa dlya kazhdoj
+   zapisi roditel'skogo zaprosa. Esli podzapros vozvraschaet tol'ko
+   neskol'ko zapisej, a roditel'skij zapros vozvraschaet mnogo zapisej,
+   IN rabotaet naibolee bystro. CHtoby uvelichit' skorost' v drugih
+   zaprosah, zamenite IN na EXISTS:
     SELECT *
     FROM tab
     WHERE col IN (SELECT subcol FROM subtab);
@@ -1176,8 +1176,12 @@ CREATE TABLE test (x int, modtime timestamp DEFAULT CURRENT_TIMESTAMP );
     WHERE EXISTS (SELECT subcol FROM subtab WHERE subcol = col);
 
    CHtoby takaya konstrukciya rabotala bystro, kolonka subcol dolzhna
-   byt' proindeksirovana. `Eta problema proizvoditel'nosti budet
-   ustranena v versii 7.4.
+   byt' proindeksirovana.
+   
+   V versii 7.4 i vyshe, IN fakticheski ispol'zuet takoj zhe mehanizm
+   svyazyvaniya kak i obychnye zaprosy, po`etomu predpochtitel'nym
+   yavlyaetsya ispol'zovanie EXISTS
+   .
    
     4.23) Kak mne vypolnit' vneshnee svyazyvanie?
     
