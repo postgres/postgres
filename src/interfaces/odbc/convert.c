@@ -893,12 +893,12 @@ copy_statement_with_parameters(StatementClass *stmt)
 				break;
 
 			case SQL_C_DOUBLE:
-				sprintf(param_string, "%15g",
+				sprintf(param_string, "%.15g",
 						*((SDOUBLE *) buffer));
 				break;
 
 			case SQL_C_FLOAT:
-				sprintf(param_string, "%6g",
+				sprintf(param_string, "%.6g",
 						*((SFLOAT *) buffer));
 				break;
 
