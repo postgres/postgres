@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.38 1999/05/25 22:41:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.39 1999/06/06 17:46:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -254,6 +254,27 @@ _equalParam(Param *a, Param *b)
 				 a->paramkind);
 	}
 
+	return true;
+}
+
+/*
+ *	Aggref is a subclass of Expr.
+ */
+static bool
+_equalAggref(Aggref *a, Aggref *b)
+{
+	if (strcmp(a->aggname, b->aggname) != 0)
+		return false;
+	if (a->basetype != b->basetype)
+		return false;
+	if (a->aggtype != b->aggtype)
+		return false;
+	if (!equal(a->target, b->target))
+		return false;
+	if (a->aggno != b->aggno)
+		return false;
+	if (a->usenulls != b->usenulls)
+		return false;
 	return true;
 }
 
@@ -768,6 +789,9 @@ equal(void *a, void *b)
 			break;
 		case T_Param:
 			retval = _equalParam(a, b);
+			break;
+		case T_Aggref:
+			retval = _equalAggref(a, b);
 			break;
 		case T_Func:
 			retval = _equalFunc(a, b);
