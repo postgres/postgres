@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.41 2000/01/26 05:56:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.42 2000/02/06 03:27:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -144,8 +144,8 @@ make_rels_by_clause_joins(Query *root, RelOptInfo *old_rel,
 				RelOptInfo *join_rel = lfirst(r);
 
 				Assert(length(join_rel->relids) > 1);
-				if (is_subset(unjoined_relids, join_rel->relids) &&
-					nonoverlap_sets(old_rel->relids, join_rel->relids))
+				if (is_subseti(unjoined_relids, join_rel->relids) &&
+					nonoverlap_setsi(old_rel->relids, join_rel->relids))
 				{
 					joined_rel = make_join_rel(old_rel, join_rel);
 					join_list = lappend(join_list, joined_rel);
@@ -175,7 +175,7 @@ make_rels_by_clauseless_joins(RelOptInfo *old_rel, List *inner_rels)
 	{
 		RelOptInfo *inner_rel = (RelOptInfo *) lfirst(i);
 
-		if (nonoverlap_sets(inner_rel->relids, old_rel->relids))
+		if (nonoverlap_setsi(inner_rel->relids, old_rel->relids))
 		{
 			join_list = lappend(join_list,
 								make_join_rel(old_rel, inner_rel));
@@ -403,40 +403,4 @@ get_cheapest_complete_rel(List *join_rel_list)
 	}
 
 	return final_rel;
-}
-
-/*
- * Subset-inclusion tests on integer lists.
- *
- * XXX these probably ought to be in nodes/list.c or some such place.
- */
-
-bool
-nonoverlap_sets(List *s1, List *s2)
-{
-	List	   *x;
-
-	foreach(x, s1)
-	{
-		int			e = lfirsti(x);
-
-		if (intMember(e, s2))
-			return false;
-	}
-	return true;
-}
-
-bool
-is_subset(List *s1, List *s2)
-{
-	List	   *x;
-
-	foreach(x, s1)
-	{
-		int			e = lfirsti(x);
-
-		if (!intMember(e, s2))
-			return false;
-	}
-	return true;
 }

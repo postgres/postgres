@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.49 2000/01/26 05:56:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.50 2000/02/06 03:27:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -181,7 +181,7 @@ best_innerjoin(List *join_paths, Relids outer_relids)
 		 * outer_relids in order to use this inner path, because those
 		 * rels are used in the index join quals of this inner path.
 		 */
-		if (is_subset(((IndexPath *) path)->joinrelids, outer_relids) &&
+		if (is_subseti(((IndexPath *) path)->joinrelids, outer_relids) &&
 			(cheapest == NULL ||
 			 path_is_cheaper(path, cheapest)))
 			cheapest = path;

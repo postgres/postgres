@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_list.h,v 1.14 2000/01/26 05:58:16 momjian Exp $
+ * $Id: pg_list.h,v 1.15 2000/02/06 03:27:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,7 +106,10 @@ extern List *set_difference(List *list1, List *list2);
 extern List *set_differencei(List *list1, List *list2);
 extern List *LispUnion(List *list1, List *list2);
 extern List *LispUnioni(List *list1, List *list2);
-extern bool same(List *list1, List *list2);
+
+extern bool sameseti(List *list1, List *list2);
+extern bool nonoverlap_setsi(List *list1, List *list2);
+extern bool is_subseti(List *list1, List *list2);
 
 extern void freeList(List *list);
 

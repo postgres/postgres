@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/joininfo.c,v 1.25 2000/01/26 05:56:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/joininfo.c,v 1.26 2000/02/06 03:27:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,7 @@ joininfo_member(List *join_relids, List *joininfo_list)
 	{
 		JoinInfo   *joininfo = (JoinInfo *) lfirst(i);
 
-		if (same(join_relids, joininfo->unjoined_relids))
+		if (sameseti(join_relids, joininfo->unjoined_relids))
 			return joininfo;
 	}
 	return NULL;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.45 2000/01/26 05:56:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.46 2000/02/06 03:27:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,7 +67,7 @@ merge_rel_with_same_relids(RelOptInfo *rel, List *unmerged_rels)
 	{
 		RelOptInfo *unmerged_rel = (RelOptInfo *) lfirst(i);
 
-		if (same(rel->relids, unmerged_rel->relids))
+		if (sameseti(rel->relids, unmerged_rel->relids))
 		{
 			/*
 			 * These rels are for the same set of base relations,

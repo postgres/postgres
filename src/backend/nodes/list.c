@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.28 2000/01/26 05:56:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.29 2000/02/06 03:27:32 tgl Exp $
  *
  * NOTES
  *	  XXX a few of the following functions are duplicated to handle
@@ -264,34 +264,32 @@ freeList(List *list)
 }
 
 /*
- *		same
+ *		sameseti
  *
- *		Returns t if two lists contain the same elements
+ *		Returns t if two integer lists contain the same elements
  *		(but unlike equal(), they need not be in the same order)
- *	    
  *
- * XXX should be called samei() --- only good for IntList	-ay
+ *		Caution: this routine could be fooled if list1 contains
+ *		duplicate elements.  It is intended to be used on lists
+ *		containing only nonduplicate elements, eg Relids lists.
  */
 bool
-same(List *l1, List *l2)
+sameseti(List *list1, List *list2)
 {
 	List	   *temp;
 
-	if (l1 == NIL)
-		return l2 == NIL;
-	if (l2 == NIL)
-		return l1 == NIL;
-	if (length(l1) == length(l2))
+	if (list1 == NIL)
+		return list2 == NIL;
+	if (list2 == NIL)
+		return false;
+	if (length(list1) != length(list2))
+		return false;
+	foreach(temp, list1)
 	{
-		foreach(temp, l1)
-		{
-			if (!intMember(lfirsti(temp), l2))
-				return false;
-		}
-		return true;
+		if (!intMember(lfirsti(temp), list2))
+			return false;
 	}
-	return false;
-
+	return true;
 }
 
 /*
@@ -518,4 +516,40 @@ set_differencei(List *l1, List *l2)
 			result = lappendi(result, lfirsti(i));
 	}
 	return result;
+}
+
+/*
+ * Return t if two integer lists have no members in common.
+ */
+bool
+nonoverlap_setsi(List *list1, List *list2)
+{
+	List	   *x;
+
+	foreach(x, list1)
+	{
+		int			e = lfirsti(x);
+
+		if (intMember(e, list2))
+			return false;
+	}
+	return true;
+}
+
+/*
+ * Return t if all members of integer list list1 appear in list2.
+ */
+bool
+is_subseti(List *list1, List *list2)
+{
+	List	   *x;
+
+	foreach(x, list1)
+	{
+		int			e = lfirsti(x);
+
+		if (!intMember(e, list2))
+			return false;
+	}
+	return true;
 }

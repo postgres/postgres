@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: paths.h,v 1.40 2000/02/05 18:26:07 tgl Exp $
+ * $Id: paths.h,v 1.41 2000/02/06 03:27:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -100,8 +100,6 @@ extern List *make_rels_by_clause_joins(Query *root, RelOptInfo *old_rel,
 extern List *make_rels_by_clauseless_joins(RelOptInfo *old_rel,
 							  List *inner_rels);
 extern RelOptInfo *get_cheapest_complete_rel(List *join_rel_list);
-extern bool nonoverlap_sets(List *s1, List *s2);
-extern bool is_subset(List *s1, List *s2);
 
 /*
  * prune.c
