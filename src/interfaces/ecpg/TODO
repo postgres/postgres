@@ -24,7 +24,7 @@ indicator-error?
 
 Add a semantic check level, e.g. check if a table really exists.
 
-How can on insert arrays from c variables?
+How can one insert arrays from c variables?
 
 Missing statements:
  - exec sql ifdef

@@ -749,3 +749,9 @@ Wed Dec 15 08:10:52 CET 1999
 	- Some cleanup in libecpg.
 	- Set library version to 3.0.9.
 	- Set ecpg version to 2.6.12.
+
+Thu Dec 23 13:25:05 CET 1999
+
+	- Fixed command line parsing. 
+	- Set ecpg version to 2.6.13.
+
