@@ -9,7 +9,7 @@
  * didn't really belong there.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.30 2000/01/18 19:05:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.31 2000/01/19 01:33:16 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,6 +36,7 @@
 #endif
 
 #ifdef MULTIBYTE
+#include "miscadmin.h"
 #include "mb/pg_wchar.h"
 #endif
 
