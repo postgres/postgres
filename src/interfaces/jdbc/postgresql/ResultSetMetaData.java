@@ -378,9 +378,9 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
   public boolean isWritable(int column) throws SQLException
   {
     if (isReadOnly(column))
-      return true;
-    else
       return false;
+    else
+      return true;
   }
   
   /**
