@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.48 2001/03/22 03:59:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.49 2001/05/10 20:38:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,17 +30,18 @@ typedef struct f_smgr
 	int			(*smgr_shutdown) (void);		/* may be NULL */
 	int			(*smgr_create) (Relation reln);
 	int			(*smgr_unlink) (RelFileNode rnode);
-	int			(*smgr_extend) (Relation reln, char *buffer);
+	int			(*smgr_extend) (Relation reln, BlockNumber blocknum,
+								char *buffer);
 	int			(*smgr_open) (Relation reln);
 	int			(*smgr_close) (Relation reln);
 	int			(*smgr_read) (Relation reln, BlockNumber blocknum,
-										  char *buffer);
+							  char *buffer);
 	int			(*smgr_write) (Relation reln, BlockNumber blocknum,
-										   char *buffer);
+							   char *buffer);
 	int			(*smgr_flush) (Relation reln, BlockNumber blocknum,
-										   char *buffer);
+							   char *buffer);
 	int			(*smgr_blindwrt) (RelFileNode rnode, BlockNumber blkno,
-											  char *buffer, bool dofsync);
+								  char *buffer, bool dofsync);
 	int			(*smgr_markdirty) (Relation reln, BlockNumber blkno);
 	int			(*smgr_blindmarkdirty) (RelFileNode, BlockNumber blkno);
 	int			(*smgr_nblocks) (Relation reln);
@@ -227,15 +228,20 @@ smgrunlink(int16 which, Relation reln)
 /*
  *	smgrextend() -- Add a new block to a file.
  *
+ *		The semantics are basically the same as smgrwrite(): write at the
+ *		specified position.  However, we are expecting to extend the
+ *		relation (ie, blocknum is the current EOF), and so in case of
+ *		failure we clean up by truncating.
+ *
  *		Returns SM_SUCCESS on success; aborts the current transaction on
  *		failure.
  */
 int
-smgrextend(int16 which, Relation reln, char *buffer)
+smgrextend(int16 which, Relation reln, BlockNumber blocknum, char *buffer)
 {
 	int			status;
 
-	status = (*(smgrsw[which].smgr_extend)) (reln, buffer);
+	status = (*(smgrsw[which].smgr_extend)) (reln, blocknum, buffer);
 
 	if (status == SM_FAIL)
 		elog(ERROR, "cannot extend %s: %m.\n\tCheck free disk space.",

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: smgr.h,v 1.28 2001/03/22 04:01:09 momjian Exp $
+ * $Id: smgr.h,v 1.29 2001/05/10 20:38:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,8 @@
 extern int	smgrinit(void);
 extern int	smgrcreate(int16 which, Relation reln);
 extern int	smgrunlink(int16 which, Relation reln);
-extern int	smgrextend(int16 which, Relation reln, char *buffer);
+extern int	smgrextend(int16 which, Relation reln, BlockNumber blocknum,
+					   char *buffer);
 extern int	smgropen(int16 which, Relation reln, bool failOK);
 extern int	smgrclose(int16 which, Relation reln);
 extern int smgrread(int16 which, Relation reln, BlockNumber blocknum,
@@ -60,7 +61,7 @@ extern void smgr_desc(char *buf, uint8 xl_info, char *rec);
 extern int	mdinit(void);
 extern int	mdcreate(Relation reln);
 extern int	mdunlink(RelFileNode rnode);
-extern int	mdextend(Relation reln, char *buffer);
+extern int	mdextend(Relation reln, BlockNumber blocknum, char *buffer);
 extern int	mdopen(Relation reln);
 extern int	mdclose(Relation reln);
 extern int	mdread(Relation reln, BlockNumber blocknum, char *buffer);
@@ -82,7 +83,7 @@ extern SPINLOCK MMCacheLock;
 extern int	mminit(void);
 extern int	mmcreate(Relation reln);
 extern int	mmunlink(RelFileNode rnode);
-extern int	mmextend(Relation reln, char *buffer);
+extern int	mmextend(Relation reln, BlockNumber blocknum, char *buffer);
 extern int	mmopen(Relation reln);
 extern int	mmclose(Relation reln);
 extern int	mmread(Relation reln, BlockNumber blocknum, char *buffer);

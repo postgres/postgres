@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.83 2001/04/02 23:20:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.84 2001/05/10 20:38:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,10 +54,9 @@ typedef struct _MdfdVec
 	int			mdfd_flags;		/* fd status flags */
 
 /* these are the assigned bits in mdfd_flags: */
-#define MDFD_FREE		(1 << 0)/* unused entry */
+#define MDFD_FREE	(1 << 0)	/* unused entry */
 
-	int			mdfd_lstbcnt;	/* most recent block count */
-	int			mdfd_nextFree;	/* next free vector */
+	int			mdfd_nextFree;	/* link to next freelist member, if free */
 #ifndef LET_OS_MANAGE_FILESIZE
 	struct _MdfdVec *mdfd_chain;/* for large relations */
 #endif
@@ -164,7 +163,6 @@ mdcreate(Relation reln)
 
 	Md_fdvec[vfd].mdfd_vfd = fd;
 	Md_fdvec[vfd].mdfd_flags = (uint16) 0;
-	Md_fdvec[vfd].mdfd_lstbcnt = 0;
 #ifndef LET_OS_MANAGE_FILESIZE
 	Md_fdvec[vfd].mdfd_chain = (MdfdVec *) NULL;
 #endif
@@ -225,52 +223,69 @@ mdunlink(RelFileNode rnode)
 /*
  *	mdextend() -- Add a block to the specified relation.
  *
+ *		The semantics are basically the same as mdwrite(): write at the
+ *		specified position.  However, we are expecting to extend the
+ *		relation (ie, blocknum is the current EOF), and so in case of
+ *		failure we clean up by truncating.
+ *
  *		This routine returns SM_FAIL or SM_SUCCESS, with errno set as
  *		appropriate.
+ *
+ * Note: this routine used to call mdnblocks() to get the block position
+ * to write at, but that's pretty silly since the caller needs to know where
+ * the block will be written, and accordingly must have done mdnblocks()
+ * already.  Might as well pass in the position and save a seek.
  */
 int
-mdextend(Relation reln, char *buffer)
+mdextend(Relation reln, BlockNumber blocknum, char *buffer)
 {
-	long		pos,
-				nbytes;
-	int			nblocks;
+	long		seekpos;
+	int			nbytes;
 	MdfdVec    *v;
 
-	nblocks = mdnblocks(reln);
-	v = _mdfd_getseg(reln, nblocks);
+	v = _mdfd_getseg(reln, blocknum);
 
-	if ((pos = FileSeek(v->mdfd_vfd, 0L, SEEK_END)) < 0)
+#ifndef LET_OS_MANAGE_FILESIZE
+	seekpos = (long) (BLCKSZ * (blocknum % RELSEG_SIZE));
+#ifdef DIAGNOSTIC
+	if (seekpos >= BLCKSZ * RELSEG_SIZE)
+		elog(FATAL, "seekpos too big!");
+#endif
+#else
+	seekpos = (long) (BLCKSZ * (blocknum));
+#endif
+
+	/*
+	 * Note: because caller obtained blocknum by calling mdnblocks, which
+	 * did a seek(SEEK_END), this seek is often redundant and will be
+	 * optimized away by fd.c.  It's not redundant, however, if there is a
+	 * partial page at the end of the file.  In that case we want to try to
+	 * overwrite the partial page with a full page.  It's also not redundant
+	 * if bufmgr.c had to dump another buffer of the same file to make room
+	 * for the new page's buffer.
+	 */
+	if (FileSeek(v->mdfd_vfd, seekpos, SEEK_SET) != seekpos)
 		return SM_FAIL;
-
-	if (pos % BLCKSZ != 0)		/* the last block is incomplete */
-	{
-		pos -= pos % BLCKSZ;
-		if (FileSeek(v->mdfd_vfd, pos, SEEK_SET) < 0)
-			return SM_FAIL;
-	}
 
 	if ((nbytes = FileWrite(v->mdfd_vfd, buffer, BLCKSZ)) != BLCKSZ)
 	{
 		if (nbytes > 0)
 		{
-			FileTruncate(v->mdfd_vfd, pos);
-			FileSeek(v->mdfd_vfd, pos, SEEK_SET);
+			int		save_errno = errno;
+
+			/* Remove the partially-written page */
+			FileTruncate(v->mdfd_vfd, seekpos);
+			FileSeek(v->mdfd_vfd, seekpos, SEEK_SET);
+			errno = save_errno;
 		}
 		return SM_FAIL;
 	}
 
-	/* try to keep the last block count current, though it's just a hint */
 #ifndef LET_OS_MANAGE_FILESIZE
-	if ((v->mdfd_lstbcnt = (++nblocks % RELSEG_SIZE)) == 0)
-		v->mdfd_lstbcnt = RELSEG_SIZE;
-
 #ifdef DIAGNOSTIC
-	if (_mdnblocks(v->mdfd_vfd, BLCKSZ) > RELSEG_SIZE
-		|| v->mdfd_lstbcnt > RELSEG_SIZE)
+	if (_mdnblocks(v->mdfd_vfd, BLCKSZ) > RELSEG_SIZE)
 		elog(FATAL, "segment too big!");
 #endif
-#else
-	v->mdfd_lstbcnt = ++nblocks;
 #endif
 
 	return SM_SUCCESS;
@@ -319,12 +334,11 @@ mdopen(Relation reln)
 
 	Md_fdvec[vfd].mdfd_vfd = fd;
 	Md_fdvec[vfd].mdfd_flags = (uint16) 0;
-	Md_fdvec[vfd].mdfd_lstbcnt = _mdnblocks(fd, BLCKSZ);
 #ifndef LET_OS_MANAGE_FILESIZE
 	Md_fdvec[vfd].mdfd_chain = (MdfdVec *) NULL;
 
 #ifdef DIAGNOSTIC
-	if (Md_fdvec[vfd].mdfd_lstbcnt > RELSEG_SIZE)
+	if (_mdnblocks(fd, BLCKSZ) > RELSEG_SIZE)
 		elog(FATAL, "segment too big on relopen!");
 #endif
 #endif
@@ -440,9 +454,12 @@ mdread(Relation reln, BlockNumber blocknum, char *buffer)
 	status = SM_SUCCESS;
 	if ((nbytes = FileRead(v->mdfd_vfd, buffer, BLCKSZ)) != BLCKSZ)
 	{
-		if (nbytes == 0)
-			MemSet(buffer, 0, BLCKSZ);
-		else if (blocknum == 0 && nbytes > 0 && mdnblocks(reln) == 0)
+		/*
+		 * If we are at EOF, return zeroes without complaining.
+		 * (XXX Is this still necessary/a good idea??)
+		 */
+		if (nbytes == 0 ||
+			(nbytes > 0 && mdnblocks(reln) == blocknum))
 			MemSet(buffer, 0, BLCKSZ);
 		else
 			status = SM_FAIL;
@@ -459,7 +476,6 @@ mdread(Relation reln, BlockNumber blocknum, char *buffer)
 int
 mdwrite(Relation reln, BlockNumber blocknum, char *buffer)
 {
-	int			status;
 	long		seekpos;
 	MdfdVec    *v;
 
@@ -478,11 +494,10 @@ mdwrite(Relation reln, BlockNumber blocknum, char *buffer)
 	if (FileSeek(v->mdfd_vfd, seekpos, SEEK_SET) != seekpos)
 		return SM_FAIL;
 
-	status = SM_SUCCESS;
 	if (FileWrite(v->mdfd_vfd, buffer, BLCKSZ) != BLCKSZ)
-		status = SM_FAIL;
+		return SM_FAIL;
 
-	return status;
+	return SM_SUCCESS;
 }
 
 /*
@@ -662,31 +677,29 @@ mdnblocks(Relation reln)
 		nblocks = _mdnblocks(v->mdfd_vfd, BLCKSZ);
 		if (nblocks > RELSEG_SIZE)
 			elog(FATAL, "segment too big in mdnblocks!");
-		v->mdfd_lstbcnt = nblocks;
-		if (nblocks == RELSEG_SIZE)
-		{
-			segno++;
-
-			if (v->mdfd_chain == (MdfdVec *) NULL)
-			{
-
-				/*
-				 * Because we pass O_CREAT, we will create the next
-				 * segment (with zero length) immediately, if the last
-				 * segment is of length REL_SEGSIZE.  This is unnecessary
-				 * but harmless, and testing for the case would take more
-				 * cycles than it seems worth.
-				 */
-				v->mdfd_chain = _mdfd_openseg(reln, segno, O_CREAT);
-				if (v->mdfd_chain == (MdfdVec *) NULL)
-					elog(ERROR, "cannot count blocks for %s -- open failed: %m",
-						 RelationGetRelationName(reln));
-			}
-
-			v = v->mdfd_chain;
-		}
-		else
+		if (nblocks < RELSEG_SIZE)
 			return (segno * RELSEG_SIZE) + nblocks;
+		/*
+		 * If segment is exactly RELSEG_SIZE, advance to next one.
+		 */
+		segno++;
+
+		if (v->mdfd_chain == (MdfdVec *) NULL)
+		{
+			/*
+			 * Because we pass O_CREAT, we will create the next
+			 * segment (with zero length) immediately, if the last
+			 * segment is of length REL_SEGSIZE.  This is unnecessary
+			 * but harmless, and testing for the case would take more
+			 * cycles than it seems worth.
+			 */
+			v->mdfd_chain = _mdfd_openseg(reln, segno, O_CREAT);
+			if (v->mdfd_chain == (MdfdVec *) NULL)
+				elog(ERROR, "cannot count blocks for %s -- open failed: %m",
+					 RelationGetRelationName(reln));
+		}
+
+		v = v->mdfd_chain;
 	}
 #else
 	return _mdnblocks(v->mdfd_vfd, BLCKSZ);
@@ -761,7 +774,6 @@ mdtruncate(Relation reln, int nblocks)
 
 			if (FileTruncate(v->mdfd_vfd, lastsegblocks * BLCKSZ) < 0)
 				return -1;
-			v->mdfd_lstbcnt = lastsegblocks;
 			v = v->mdfd_chain;
 			ov->mdfd_chain = (MdfdVec *) NULL;
 		}
@@ -779,7 +791,6 @@ mdtruncate(Relation reln, int nblocks)
 #else
 	if (FileTruncate(v->mdfd_vfd, nblocks * BLCKSZ) < 0)
 		return -1;
-	v->mdfd_lstbcnt = nblocks;
 #endif
 
 	return nblocks;
@@ -958,13 +969,12 @@ _mdfd_openseg(Relation reln, int segno, int oflags)
 	/* fill the entry */
 	v->mdfd_vfd = fd;
 	v->mdfd_flags = (uint16) 0;
-	v->mdfd_lstbcnt = _mdnblocks(fd, BLCKSZ);
 #ifndef LET_OS_MANAGE_FILESIZE
 	v->mdfd_chain = (MdfdVec *) NULL;
 
 #ifdef DIAGNOSTIC
-	if (v->mdfd_lstbcnt > RELSEG_SIZE)
-		elog(FATAL, "segment too big on open!");
+	if (_mdnblocks(fd, BLCKSZ) > RELSEG_SIZE)
+		elog(FATAL, "segment too big on openseg!");
 #endif
 #endif
 

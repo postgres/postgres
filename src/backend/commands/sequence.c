@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.54 2001/04/04 15:43:25 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.55 2001/05/10 20:38:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -569,7 +569,7 @@ read_info(char *caller, SeqTable elm, Buffer *buf)
 	sequence_magic *sm;
 	Form_pg_sequence seq;
 
-	if (RelationGetNumberOfBlocks(elm->rel) != 1)
+	if (elm->rel->rd_nblocks > 1)
 		elog(ERROR, "%s.%s: invalid number of blocks in sequence",
 			 elm->name, caller);
 

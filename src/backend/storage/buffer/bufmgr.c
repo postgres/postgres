@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.109 2001/03/22 03:59:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.110 2001/05/10 20:38:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -173,9 +173,9 @@ ReadBufferWithBufferLock(Relation reln,
 						 bool bufferLockHeld)
 {
 	BufferDesc *bufHdr;
-	int			extend;			/* extending the file by one block */
 	int			status;
 	bool		found;
+	bool		extend;			/* extending the file by one block */
 	bool		isLocalBuf;
 
 	extend = (blockNum == P_NEW);
@@ -207,21 +207,13 @@ ReadBufferWithBufferLock(Relation reln,
 	/* if it's already in the buffer pool, we're done */
 	if (found)
 	{
-
 		/*
-		 * This happens when a bogus buffer was returned previously and is
-		 * floating around in the buffer pool.	A routine calling this
-		 * would want this extended.
+		 * Could see found && extend if a buffer was already created for
+		 * the next page position, but then smgrextend failed to write
+		 * the page.  Must fall through and try to extend file again.
 		 */
-		if (extend)
-		{
-			/* new buffers are zero-filled */
-			MemSet((char *) MAKE_PTR(bufHdr->data), 0, BLCKSZ);
-			smgrextend(DEFAULT_SMGR, reln,
-					   (char *) MAKE_PTR(bufHdr->data));
-		}
-		return BufferDescriptorGetBuffer(bufHdr);
-
+		if (!extend)
+			return BufferDescriptorGetBuffer(bufHdr);
 	}
 
 	/*
@@ -232,17 +224,25 @@ ReadBufferWithBufferLock(Relation reln,
 	{
 		/* new buffers are zero-filled */
 		MemSet((char *) MAKE_PTR(bufHdr->data), 0, BLCKSZ);
-		status = smgrextend(DEFAULT_SMGR, reln,
+		status = smgrextend(DEFAULT_SMGR, reln, bufHdr->tag.blockNum,
 							(char *) MAKE_PTR(bufHdr->data));
 	}
 	else
 	{
-		status = smgrread(DEFAULT_SMGR, reln, blockNum,
+		status = smgrread(DEFAULT_SMGR, reln, bufHdr->tag.blockNum,
 						  (char *) MAKE_PTR(bufHdr->data));
 	}
 
 	if (isLocalBuf)
+	{
+		/* No shared buffer state to update... */
+		if (status == SM_FAIL)
+		{
+			bufHdr->flags |= BM_IO_ERROR;
+			return InvalidBuffer;
+		}
 		return BufferDescriptorGetBuffer(bufHdr);
+	}
 
 	/* lock buffer manager again to update IO IN PROGRESS */
 	SpinAcquire(BufMgrLock);
@@ -302,13 +302,11 @@ BufferAlloc(Relation reln,
 			   *buf2;
 	BufferTag	newTag;			/* identity of requested block */
 	bool		inProgress;		/* buffer undergoing IO */
-	bool		newblock = FALSE;
 
 	/* create a new tag so we can lookup the buffer */
 	/* assume that the relation is already open */
 	if (blockNum == P_NEW)
 	{
-		newblock = TRUE;
 		blockNum = smgrnblocks(DEFAULT_SMGR, reln);
 	}
 
@@ -1102,7 +1100,8 @@ BufferReplace(BufferDesc *bufHdr)
 
 /*
  * RelationGetNumberOfBlocks
- *		Returns the buffer descriptor associated with a page in a relation.
+ *		Determines the current number of pages in the relation.
+ *		Side effect: relation->rd_nblocks is updated.
  *
  * Note:
  *		XXX may fail for huge relations.
@@ -1112,9 +1111,16 @@ BufferReplace(BufferDesc *bufHdr)
 BlockNumber
 RelationGetNumberOfBlocks(Relation relation)
 {
-	return ((relation->rd_myxactonly) ? relation->rd_nblocks :
-			((relation->rd_rel->relkind == RELKIND_VIEW) ? 0 :
-			 smgrnblocks(DEFAULT_SMGR, relation)));
+	/*
+	 * relation->rd_nblocks should be accurate already if the relation
+	 * is myxactonly.  (XXX how safe is that really?)  Don't call smgr
+	 * on a view, either.
+	 */
+	if (relation->rd_rel->relkind == RELKIND_VIEW)
+		relation->rd_nblocks = 0;
+	else if (!relation->rd_myxactonly)
+		relation->rd_nblocks = smgrnblocks(DEFAULT_SMGR, relation);
+	return relation->rd_nblocks;
 }
 
 /* ---------------------------------------------------------------------

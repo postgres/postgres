@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/Attic/mm.c,v 1.22 2001/01/24 19:43:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/Attic/mm.c,v 1.23 2001/05/10 20:38:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -267,7 +267,7 @@ mmunlink(RelFileNode rnode)
  *		appropriate.
  */
 int
-mmextend(Relation reln, char *buffer)
+mmextend(Relation reln, BlockNumber blocknum, char *buffer)
 {
 	MMRelHashEntry *rentry;
 	MMHashEntry *entry;
