@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/charset.sgml,v 2.5 2000/12/22 21:51:57 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/charset.sgml,v 2.6 2001/01/19 04:47:50 tgl Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -54,7 +54,7 @@
    cultural preferences regarding alphabets, sorting, number
    formatting, etc.  <productname>PostgreSQL</> uses the standard ISO
    C and POSIX-like locale facilities provided by the server operating
-   system.  For additional information refer the documentation of your
+   system.  For additional information refer to the documentation of your
    system.
   </para>
 
@@ -62,7 +62,7 @@
    <title>Overview</>
 
   <para>
-    Locale support is not build into <productname>PostgreSQL</> by
+    Locale support is not built into <productname>PostgreSQL</> by
     default; to enable it, supply the <option>--enable-locale</> option
     to the <filename>configure</> script:
 <informalexample>
@@ -95,7 +95,7 @@ export LANG=sv_SE
 
    <para>
     Occasionally it is useful to mix rules from several locales, e.g.,
-    use U.S. rules but Spanish messages.  To do that a set of
+    use U.S. collation rules but Spanish messages.  To do that a set of
     environment variables exist that override the default of
     <envar>LANG</> for a particular category:
 
@@ -141,14 +141,23 @@ export LANG=sv_SE
    </para>
 
    <para>
-    Once you have chosen a set of localization rules this way you must
-    keep them fixed for any particular database cluster.  That means
-    that the locales that were active when you ran <filename>initdb</>
-    must be kept the same when you start the postmaster.  Otherwise,
-    the changed sort order can corrupt indexes or make your data
-    disappear mysteriously.  It is currently not possible to change the
-    locales after database initialization or to use more than one set
-    of locales for a given database cluster.
+    Note that the locale behavior is determined by the environment
+    variables seen by the server, not by the environment of any client.
+    Therefore, be careful to set these variables before starting the
+    postmaster. 
+   </para>
+
+   <para>
+    The <envar>LC_COLLATE</> and <envar>LC_CTYPE</> variables affect the
+    sort order of indexes.  Therefore, these values must be kept fixed
+    for any particular database cluster, or indexes on text columns will
+    become corrupt.  <productname>Postgres</productname> enforces this
+    by recording the values of <envar>LC_COLLATE</> and <envar>LC_CTYPE</>
+    that are seen by <command>initdb</>.  The server automatically adopts
+    those two values when it is started; only the other <envar>LC_</>
+    categories can be set from the environment at server startup.
+    In short, only one collation order can be used in a database cluster,
+    and it is chosen at <command>initdb</> time.
    </para>
   </sect2>
 
@@ -183,7 +192,10 @@ export LANG=sv_SE
    <para>
     The only severe drawback of using the locale support in
     <productname>PostgreSQL</> is its speed.  So use locale only if you
-    actually need it.
+    actually need it.  It should be noted in particular that selecting
+    a non-C locale disables index optimizations for <literal>LIKE</> and
+    <literal>~</> operators, which can make a huge difference in the
+    speed of searches that use those operators.
    </para>
   </sect2>
 
@@ -261,7 +273,7 @@ perl: warning: Falling back to the standard locale ("C").
 
    <para>
     <acronym>MB</acronym> also fixes some problems concerning 8-bit single byte
-    character sets including ISO8859. (I would not say all of problems
+    character sets including ISO8859. (I would not say all problems
     have been fixed. I just confirmed that the regression test ran fine
     and a few French characters could be used with the patch. Please let
     me know if you find any problem while using 8-bit characters.)
@@ -271,7 +283,7 @@ perl: warning: Falling back to the standard locale ("C").
     <title>Enabling MB</title>
 
     <para>
-     Run configure with a multibyte option:
+     Run configure with the multibyte option:
 
      <programlisting>
 % ./configure --enable-multibyte[=<replaceable>encoding_system</replaceable>]
@@ -383,11 +395,11 @@ perl: warning: Falling back to the standard locale ("C").
 % initdb -E EUC_JP
      </programlisting>
 
-     sets the default encoding to EUC_JP(Extended Unix Code for Japanese).
+     sets the default encoding to EUC_JP (Extended Unix Code for Japanese).
      Note that you can use "--encoding" instead of "-E" if you prefer
      to type longer option strings. 
      If no -E or --encoding option is given, the encoding
-     specified at the compile time is used.
+     specified at configure time is used.
     </para>
 
     <para>
@@ -397,8 +409,8 @@ perl: warning: Falling back to the standard locale ("C").
 % createdb -E EUC_KR korean
      </programlisting>
 
-     will create a database named "korean" with EUC_KR encoding. The
-     another way to accomplish this is to use a SQL command:
+     will create a database named "korean" with EUC_KR encoding.
+     Another way to accomplish this is to use a SQL command:
 
      <programlisting>
 CREATE DATABASE korean WITH ENCODING = 'EUC_KR';
@@ -529,18 +541,9 @@ char *pg_encoding_to_char(int <replaceable>encoding_id</replaceable>)
 
       <listitem>
        <para>
-	Using <envar>PGCLIENTENCODING</envar>.
-
-	If an environment variable <envar>PGCLIENTENCODING</envar> is defined in the
-	frontend, an automatic encoding translation is done by the backend.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
 	Using <command>SET CLIENT_ENCODING TO</command>.
 
-	Setting the frontend side encoding can be done a SQL command:
+	Setting the frontend side encoding can be done by this SQL command:
 
 	<programlisting>
 SET CLIENT_ENCODING TO 'encoding';
@@ -552,7 +555,7 @@ SET CLIENT_ENCODING TO 'encoding';
 SET NAMES 'encoding';
 	</programlisting>
 
-	To query the current the frontend encoding:
+	To query the current frontend encoding:
 
 	<programlisting>
 SHOW CLIENT_ENCODING;
@@ -563,6 +566,17 @@ SHOW CLIENT_ENCODING;
 	<programlisting>
 RESET CLIENT_ENCODING;
 	</programlisting>
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+	Using <envar>PGCLIENTENCODING</envar>.
+
+	If environment variable <envar>PGCLIENTENCODING</envar> is defined
+	in the client's environment, that client encoding is automatically
+	selected when a backend connection is made.  (This can subsequently
+	be overridden using any of the other methods mentioned above.)
        </para>
       </listitem>
      </itemizedlist>
@@ -588,7 +602,7 @@ RESET CLIENT_ENCODING;
     <para>
      Suppose you choose EUC_JP for the backend, LATIN1 for the frontend,
      then some Japanese characters could not be translated into LATIN1. In
-     this case, a letter cannot be represented in the LATIN1 character set,
+     this case, a letter that cannot be represented in the LATIN1 character set
      would be transformed as:
 
      <programlisting>
@@ -601,7 +615,7 @@ RESET CLIENT_ENCODING;
     <title>References</title>
 
     <para>
-     These are good sources to start learning various kind of encoding
+     These are good sources to start learning about various kinds of encoding
      systems.
 
      <itemizedlist>
@@ -724,8 +738,7 @@ Mar 1, 1998 PL1 released
     <para>
 <!--
 [Here is a good documentation explaining how to use WIN1250 on
-Windows/ODBC from Pavel Behal. Please note that Installation step 1)
-is not necceary in 6.5.1 - Tatsuo]
+Windows/ODBC from Pavel Behal]
 
 Version: 0.91 for PgSQL 6.5
 Author: Pavel Behal
@@ -815,20 +828,14 @@ Sorry for my Eglish and C code, I'm not native :-)
      <title>WIN1250 on Windows/ODBC</title>
      <step>
       <para>
-       Change the three relevant files in the source directories.
-      </para>
-     </step>
-
-     <step>
-      <para>
-       Compile <productname>Postgres</productname> with local enabled
+       Compile <productname>Postgres</productname> with locale enabled
        and the multibyte encoding set to <literal>LATIN2</literal>.
       </para>
      </step>
 
      <step>
       <para>
-       Set up your instalation. Do not forget to create locale
+       Set up your installation. Do not forget to create locale
        variables in your profile (environment). For example (this may
        not be correct for <emphasis>your</emphasis> environment):
 
@@ -936,8 +943,8 @@ HostCharset      <replaceable>host_spec</>    <replaceable>host_charset</>
   <para>
    The <filename>charset.conf</> file is always processed up to the
    end, so you can easily specify exceptions from the previous
-   rules. In the src/data you will find charset.conf example and a few
-   recoding tables.
+   rules. In the <filename>src/data/</> directory you will find an
+   example <filename>charset.conf</> and a few recoding tables.
   </para>
 
   <para>
@@ -945,7 +952,7 @@ HostCharset      <replaceable>host_spec</>    <replaceable>host_charset</>
    set mapping there are obviously some restrictions as well. You
    cannot use different encodings on the same host at the same
    time. It is also inconvenient when you boot your client hosts into
-   more operating systems.  Nevertheless, when these restrictions are
+   multiple operating systems.  Nevertheless, when these restrictions are
    not limiting and you do not need multi-byte characters than it is a
    simple and effective solution.
   </para>
