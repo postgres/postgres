@@ -1,4 +1,4 @@
-/*	$KAME: md5.h,v 1.3 2000/02/22 14:01:18 itojun Exp $	*/
+/*	$Id: md5.h,v 1.2 2000/12/04 01:20:38 tgl Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -36,8 +36,8 @@
 
 typedef struct {
 	union {
-		u_int32_t	md5_state32[4];
-		u_int8_t	md5_state8[16];
+		uint32_t	md5_state32[4];
+		uint8_t		md5_state8[16];
 	} md5_st;
 
 #define md5_sta		md5_st.md5_state32[0]
@@ -47,20 +47,20 @@ typedef struct {
 #define md5_st8		md5_st.md5_state8
 
 	union {
-		u_int64_t	md5_count64;
-		u_int8_t	md5_count8[8];
+		uint64_t	md5_count64;
+		uint8_t		md5_count8[8];
 	} md5_count;
 #define md5_n	md5_count.md5_count64
 #define md5_n8	md5_count.md5_count8
 
-	u_int	md5_i;
-	u_int8_t	md5_buf[MD5_BUFLEN];
+	unsigned int	md5_i;
+	uint8_t			md5_buf[MD5_BUFLEN];
 } md5_ctxt;
 
-extern void md5_init __P((md5_ctxt *));
-extern void md5_loop __P((md5_ctxt *, u_int8_t *, u_int));
-extern void md5_pad __P((md5_ctxt *));
-extern void md5_result __P((u_int8_t *, md5_ctxt *));
+extern void md5_init (md5_ctxt *);
+extern void md5_loop (md5_ctxt *, uint8_t *, unsigned int);
+extern void md5_pad (md5_ctxt *);
+extern void md5_result (uint8_t *, md5_ctxt *);
 
 /* compatibility */
 #define MD5_CTX		md5_ctxt

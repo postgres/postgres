@@ -1,4 +1,4 @@
-/*	$KAME: md5.c,v 1.3 2000/02/22 14:01:17 itojun Exp $	*/
+/*	$Id: md5.c,v 1.2 2000/12/04 01:20:38 tgl Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
 #define MD5_D0	0x10325476
 
 /* Integer part of 4294967296 times abs(sin(i)), where i is in radians. */
-static const u_int32_t T[65] = {
+static const uint32_t T[65] = {
 	0,
 	0xd76aa478, 	0xe8c7b756,	0x242070db,	0xc1bdceee,
 	0xf57c0faf,	0x4787c62a, 	0xa8304613,	0xfd469501,
@@ -114,7 +114,7 @@ static const u_int32_t T[65] = {
 	0xf7537e82, 	0xbd3af235, 	0x2ad7d2bb, 	0xeb86d391,
 };
 
-static const u_int8_t md5_paddat[MD5_BUFLEN] = {
+static const uint8_t md5_paddat[MD5_BUFLEN] = {
 	0x80,	0,	0,	0,	0,	0,	0,	0,
 	0,	0,	0,	0,	0,	0,	0,	0,
 	0,	0,	0,	0,	0,	0,	0,	0,
@@ -125,7 +125,7 @@ static const u_int8_t md5_paddat[MD5_BUFLEN] = {
 	0,	0,	0,	0,	0,	0,	0,	0,	
 };
 
-static void md5_calc __P((u_int8_t *, md5_ctxt *));
+static void md5_calc (uint8_t *, md5_ctxt *);
 
 void md5_init(ctxt)
 	md5_ctxt *ctxt;
@@ -141,10 +141,10 @@ void md5_init(ctxt)
 
 void md5_loop(ctxt, input, len)
 	md5_ctxt *ctxt;
-	u_int8_t *input;
-	u_int len; /* number of bytes */
+	uint8_t *input;
+	unsigned int len; /* number of bytes */
 {
-	u_int gap, i;
+	unsigned int gap, i;
 
 	ctxt->md5_n += len * 8; /* byte to bit */
 	gap = MD5_BUFLEN - ctxt->md5_i;
@@ -155,7 +155,7 @@ void md5_loop(ctxt, input, len)
 		md5_calc(ctxt->md5_buf, ctxt);
 
 		for (i = gap; i + MD5_BUFLEN <= len; i += MD5_BUFLEN) {
-			md5_calc((u_int8_t *)(input + i), ctxt);
+			md5_calc((uint8_t *)(input + i), ctxt);
 		}
 		
 		ctxt->md5_i = len - i;
@@ -170,7 +170,7 @@ void md5_loop(ctxt, input, len)
 void md5_pad(ctxt)
 	md5_ctxt *ctxt;
 {
-	u_int gap;
+	unsigned int gap;
 
 	/* Don't count up padding. Keep md5_n. */	
 	gap = MD5_BUFLEN - ctxt->md5_i;
@@ -207,7 +207,7 @@ void md5_pad(ctxt)
 }
 
 void md5_result(digest, ctxt)
-	u_int8_t *digest;
+	uint8_t *digest;
 	md5_ctxt *ctxt;
 {
 	/* 4 byte words */
@@ -227,24 +227,24 @@ void md5_result(digest, ctxt)
 }
 
 #if BYTE_ORDER == BIG_ENDIAN
-u_int32_t X[16];
+uint32_t X[16];
 #endif
 
 static void md5_calc(b64, ctxt)
-	u_int8_t *b64;
+	uint8_t *b64;
 	md5_ctxt *ctxt;
 {
-	u_int32_t A = ctxt->md5_sta;
-	u_int32_t B = ctxt->md5_stb;
-	u_int32_t C = ctxt->md5_stc;
-	u_int32_t D = ctxt->md5_std;
+	uint32_t A = ctxt->md5_sta;
+	uint32_t B = ctxt->md5_stb;
+	uint32_t C = ctxt->md5_stc;
+	uint32_t D = ctxt->md5_std;
 #if BYTE_ORDER == LITTLE_ENDIAN
-	u_int32_t *X = (u_int32_t *)b64;
+	uint32_t *X = (uint32_t *)b64;
 #endif	
 #if BYTE_ORDER == BIG_ENDIAN
 	/* 4 byte words */
 	/* what a brute force but fast! */
-	u_int8_t *y = (u_int8_t *)X;
+	uint8_t *y = (uint8_t *)X;
 	y[ 0] = b64[ 3]; y[ 1] = b64[ 2]; y[ 2] = b64[ 1]; y[ 3] = b64[ 0];
 	y[ 4] = b64[ 7]; y[ 5] = b64[ 6]; y[ 6] = b64[ 5]; y[ 7] = b64[ 4];
 	y[ 8] = b64[11]; y[ 9] = b64[10]; y[10] = b64[ 9]; y[11] = b64[ 8];

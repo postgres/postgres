@@ -1,4 +1,4 @@
-/*	$KAME: sha1.h,v 1.4 2000/02/22 14:01:18 itojun Exp $	*/
+/*	$Id: sha1.h,v 1.2 2000/12/04 01:20:38 tgl Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -39,24 +39,24 @@
 
 struct sha1_ctxt {
 	union {
-		u_int8_t	b8[20];
-		u_int32_t	b32[5];
+		uint8_t		b8[20];
+		uint32_t	b32[5];
 	} h;
 	union {
-		u_int8_t	b8[8];
-		u_int64_t	b64[1];
+		uint8_t		b8[8];
+		uint64_t	b64[1];
 	} c;
 	union {
-		u_int8_t	b8[64];
-		u_int32_t	b32[16];
+		uint8_t		b8[64];
+		uint32_t	b32[16];
 	} m;
-	u_int8_t	count;
+	uint8_t			count;
 };
 
-extern void sha1_init __P((struct sha1_ctxt *));
-extern void sha1_pad __P((struct sha1_ctxt *));
-extern void sha1_loop __P((struct sha1_ctxt *, const caddr_t, size_t));
-extern void sha1_result __P((struct sha1_ctxt *, caddr_t));
+extern void sha1_init (struct sha1_ctxt *);
+extern void sha1_pad (struct sha1_ctxt *);
+extern void sha1_loop (struct sha1_ctxt *, const caddr_t, size_t);
+extern void sha1_result (struct sha1_ctxt *, caddr_t);
 
 /* compatibilty with other SHA1 source codes */
 typedef struct sha1_ctxt SHA1_CTX;

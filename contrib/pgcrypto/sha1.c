@@ -1,4 +1,4 @@
-/*	$KAME: sha1.c,v 1.3 2000/02/22 14:01:18 itojun Exp $	*/
+/*	$Id: sha1.c,v 1.2 2000/12/04 01:20:38 tgl Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -49,7 +49,7 @@
 #ifndef unsupported
 
 /* constant table */
-static u_int32_t _K[] = { 0x5a827999, 0x6ed9eba1, 0x8f1bbcdc, 0xca62c1d6 };
+static uint32_t _K[] = { 0x5a827999, 0x6ed9eba1, 0x8f1bbcdc, 0xca62c1d6 };
 #define	K(t)	_K[(t) / 20]
 
 #define	F0(b, c, d)	(((b) & (c)) | ((~(b)) & (d)))
@@ -81,15 +81,15 @@ static u_int32_t _K[] = { 0x5a827999, 0x6ed9eba1, 0x8f1bbcdc, 0xca62c1d6 };
 		sha1_step(ctxt);		\
      }
 
-static void sha1_step __P((struct sha1_ctxt *));
+static void sha1_step (struct sha1_ctxt *);
 
 static void
 sha1_step(ctxt)
 	struct sha1_ctxt *ctxt;
 {
-	u_int32_t	a, b, c, d, e;
+	uint32_t	a, b, c, d, e;
 	size_t t, s;
-	u_int32_t	tmp;
+	uint32_t	tmp;
 
 #if BYTE_ORDER == LITTLE_ENDIAN
 	struct sha1_ctxt tctxt;
@@ -221,13 +221,13 @@ sha1_loop(ctxt, input0, len)
 	const caddr_t input0;
 	size_t len;
 {
-	const u_int8_t *input;
+	const uint8_t *input;
 	size_t gaplen;
 	size_t gapstart;
 	size_t off;
 	size_t copysiz;
 
-	input = (const u_int8_t *)input0;
+	input = (const uint8_t *)input0;
 	off = 0;
 
 	while (off < len) {
@@ -250,9 +250,9 @@ sha1_result(ctxt, digest0)
 	struct sha1_ctxt *ctxt;
 	caddr_t digest0;
 {
-	u_int8_t *digest;
+	uint8_t *digest;
 
-	digest = (u_int8_t *)digest0;
+	digest = (uint8_t *)digest0;
 	sha1_pad(ctxt);
 #if BYTE_ORDER == BIG_ENDIAN
 	bcopy(&ctxt->h.b8[0], digest, 20);
