@@ -8,14 +8,14 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.37 2001/03/22 03:59:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.38 2001/10/23 02:20:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
+#include "postgres.h"
+
 #include <sys/types.h>
 #include <sys/file.h>
-
-#include "postgres.h"
 
 #include "storage/bufpage.h"
 
@@ -38,11 +38,11 @@ PageInit(Page page, Size pageSize, Size specialSize)
 {
 	PageHeader	p = (PageHeader) page;
 
+	specialSize = MAXALIGN(specialSize);
+
 	Assert(pageSize == BLCKSZ);
 	Assert(pageSize >
 		   specialSize + sizeof(PageHeaderData) - sizeof(ItemIdData));
-
-	specialSize = MAXALIGN(specialSize);
 
 	p->pd_lower = sizeof(PageHeaderData) - sizeof(ItemIdData);
 	p->pd_upper = pageSize - specialSize;
@@ -93,7 +93,7 @@ PageAddItem(Page page,
 	ItemId		itemId;
 	OffsetNumber limit;
 	bool		needshuffle = false;
-	bool		overwritemode = flags & OverwritePageMode;
+	bool		overwritemode = (flags & OverwritePageMode) != 0;
 
 	flags &= ~OverwritePageMode;
 
@@ -209,7 +209,7 @@ PageGetTempPage(Page page, Size specialSize)
 	thdr = (PageHeader) temp;
 
 	/* copy old page in */
-	memmove(temp, page, pageSize);
+	memcpy(temp, page, pageSize);
 
 	/* clear out the middle */
 	size = (pageSize - sizeof(PageHeaderData)) + sizeof(ItemIdData);
@@ -239,27 +239,22 @@ PageRestoreTempPage(Page tempPage, Page oldPage)
 	pfree(tempPage);
 }
 
-/* ----------------
- *		itemid stuff for PageRepairFragmentation
- * ----------------
+/*
+ * sorting support for PageRepairFragmentation
  */
 struct itemIdSortData
 {
 	int			offsetindex;	/* linp array index */
-	ItemIdData	itemiddata;
+	int			itemoff;		/* page offset of item data */
+	Size		alignedlen;		/* MAXALIGN(item data len) */
 };
 
 static int
-itemidcompare(const void *itemidp1, const void *itemidp2)
+itemoffcompare(const void *itemidp1, const void *itemidp2)
 {
-	if (((struct itemIdSortData *) itemidp1)->itemiddata.lp_off ==
-		((struct itemIdSortData *) itemidp2)->itemiddata.lp_off)
-		return 0;
-	else if (((struct itemIdSortData *) itemidp1)->itemiddata.lp_off <
-			 ((struct itemIdSortData *) itemidp2)->itemiddata.lp_off)
-		return 1;
-	else
-		return -1;
+	/* Sort in decreasing itemoff order */
+	return ((struct itemIdSortData *) itemidp2)->itemoff -
+		((struct itemIdSortData *) itemidp1)->itemoff;
 }
 
 /*
@@ -269,20 +264,40 @@ itemidcompare(const void *itemidp1, const void *itemidp2)
  * It doesn't remove unused line pointers! Please don't change this.
  * This routine is usable for heap pages only.
  *
+ * Returns number of unused line pointers on page.  If "unused" is not NULL
+ * then the unused[] array is filled with indexes of unused line pointers.
  */
 int
 PageRepairFragmentation(Page page, OffsetNumber *unused)
 {
-	int			i;
+	Offset		pd_lower = ((PageHeader) page)->pd_lower;
+	Offset		pd_upper = ((PageHeader) page)->pd_upper;
+	Offset		pd_special = ((PageHeader) page)->pd_special;
 	struct itemIdSortData *itemidbase,
 			   *itemidptr;
 	ItemId		lp;
 	int			nline,
 				nused;
+	int			i;
+	Size		totallen;
 	Offset		upper;
-	Size		alignedSize;
 
-	nline = (int16) PageGetMaxOffsetNumber(page);
+	/*
+	 * It's worth the trouble to be more paranoid here than in most places,
+	 * because we are about to reshuffle data in (what is usually) a shared
+	 * disk buffer.  If we aren't careful then corrupted pointers, lengths,
+	 * etc could cause us to clobber adjacent disk buffers, spreading the
+	 * data loss further.  So, check everything.
+	 */
+	if (pd_lower < (sizeof(PageHeaderData) - sizeof(ItemIdData)) ||
+		pd_lower > pd_upper ||
+		pd_upper > pd_special ||
+		pd_special > BLCKSZ ||
+		pd_special != MAXALIGN(pd_special))
+		elog(ERROR, "PageRepairFragmentation: corrupted page pointers: lower = %u, upper = %u, special = %u",
+			 pd_lower, pd_upper, pd_special);
+
+	nline = PageGetMaxOffsetNumber(page);
 	nused = 0;
 	for (i = 0; i < nline; i++)
 	{
@@ -297,55 +312,64 @@ PageRepairFragmentation(Page page, OffsetNumber *unused)
 
 	if (nused == 0)
 	{
+		/* Page is completely empty, so just reset it quickly */
 		for (i = 0; i < nline; i++)
 		{
 			lp = ((PageHeader) page)->pd_linp + i;
-			if ((*lp).lp_len > 0)		/* unused, but allocated */
-				(*lp).lp_len = 0;		/* indicate unused & deallocated */
+			(*lp).lp_len = 0;	/* indicate unused & deallocated */
 		}
-
-		((PageHeader) page)->pd_upper = ((PageHeader) page)->pd_special;
+		((PageHeader) page)->pd_upper = pd_special;
 	}
 	else
 	{							/* nused != 0 */
+		/* Need to compact the page the hard way */
 		itemidbase = (struct itemIdSortData *)
 			palloc(sizeof(struct itemIdSortData) * nused);
-		MemSet((char *) itemidbase, 0, sizeof(struct itemIdSortData) * nused);
 		itemidptr = itemidbase;
+		totallen = 0;
 		for (i = 0; i < nline; i++)
 		{
 			lp = ((PageHeader) page)->pd_linp + i;
 			if ((*lp).lp_flags & LP_USED)
 			{
 				itemidptr->offsetindex = i;
-				itemidptr->itemiddata = *lp;
+				itemidptr->itemoff = (*lp).lp_off;
+				if (itemidptr->itemoff < (int) pd_upper ||
+					itemidptr->itemoff >= (int) pd_special)
+					elog(ERROR, "PageRepairFragmentation: corrupted item pointer %u",
+						 itemidptr->itemoff);
+				itemidptr->alignedlen = MAXALIGN((*lp).lp_len);
+				totallen += itemidptr->alignedlen;
 				itemidptr++;
 			}
 			else
 			{
-				if ((*lp).lp_len > 0)	/* unused, but allocated */
-					(*lp).lp_len = 0;	/* indicate unused & deallocated */
+				(*lp).lp_len = 0; /* indicate unused & deallocated */
 			}
 		}
 
-		/* sort itemIdSortData array... */
+		if (totallen > (Size) (pd_special - pd_lower))
+			elog(ERROR, "PageRepairFragmentation: corrupted item lengths, total %u, avail %u",
+				 totallen, pd_special - pd_lower);
+
+		/* sort itemIdSortData array into decreasing itemoff order */
 		qsort((char *) itemidbase, nused, sizeof(struct itemIdSortData),
-			  itemidcompare);
+			  itemoffcompare);
 
 		/* compactify page */
-		((PageHeader) page)->pd_upper = ((PageHeader) page)->pd_special;
+		upper = pd_special;
 
 		for (i = 0, itemidptr = itemidbase; i < nused; i++, itemidptr++)
 		{
 			lp = ((PageHeader) page)->pd_linp + itemidptr->offsetindex;
-			alignedSize = MAXALIGN((*lp).lp_len);
-			upper = ((PageHeader) page)->pd_upper - alignedSize;
+			upper -= itemidptr->alignedlen;
 			memmove((char *) page + upper,
-					(char *) page + (*lp).lp_off,
-					(*lp).lp_len);
+					(char *) page + itemidptr->itemoff,
+					itemidptr->alignedlen);
 			(*lp).lp_off = upper;
-			((PageHeader) page)->pd_upper = upper;
 		}
+
+		((PageHeader) page)->pd_upper = upper;
 
 		pfree(itemidbase);
 	}
@@ -362,12 +386,11 @@ PageGetFreeSpace(Page page)
 {
 	Size		space;
 
-
 	space = ((PageHeader) page)->pd_upper - ((PageHeader) page)->pd_lower;
 
 	if (space < sizeof(ItemIdData))
 		return 0;
-	space -= sizeof(ItemIdData);/* XXX not always true */
+	space -= sizeof(ItemIdData); /* XXX not always appropriate */
 
 	return space;
 }
