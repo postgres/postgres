@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.30 2004/08/29 05:06:53 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.31 2004/09/02 20:07:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -355,21 +355,21 @@ test_postmaster_connection(void)
 	for (p = post_opts; *p;)
 	{
 		/* advance past whitespace/quoting */
-		while (isspace(*p) || *p == '\'' || *p == '"')
+		while (isspace((unsigned char) *p) || *p == '\'' || *p == '"')
 			p++;
 
 		if (strncmp(p, "-p", strlen("-p")) == 0)
 		{
 			p += strlen("-p");
 			/* advance past whitespace/quoting */
-			while (isspace(*p) || *p == '\'' || *p == '"')
+			while (isspace((unsigned char) *p) || *p == '\'' || *p == '"')
 				p++;
 			StrNCpy(portstr, p, Min(strcspn(p, "\"'" WHITESPACE) + 1,
 									sizeof(portstr)));
 			/* keep looking, maybe there is another -p */
 		}
 		/* Advance to next whitespace */
-		while (*p && !isspace(*p))
+		while (*p && !isspace((unsigned char) *p))
 			p++;
 	}
 
@@ -385,17 +385,17 @@ test_postmaster_connection(void)
 			{
 				p = *optlines;
 
-				while (isspace(*p))
+				while (isspace((unsigned char) *p))
 					p++;
 				if (strncmp(p, "port", strlen("port")) != 0)
 					continue;
 				p += strlen("port");
-				while (isspace(*p))
+				while (isspace((unsigned char) *p))
 					p++;
 				if (*p != '=')
 					continue;
 				p++;
-				while (isspace(*p))
+				while (isspace((unsigned char) *p))
 					p++;
 				StrNCpy(portstr, p, Min(strcspn(p, "#" WHITESPACE) + 1,
 										sizeof(portstr)));
