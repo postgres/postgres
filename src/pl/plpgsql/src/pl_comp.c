@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.18 2000/04/12 17:17:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.19 2000/04/16 04:16:55 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -135,7 +135,7 @@ plpgsql_compile(Oid fn_oid, int functype)
 								  ObjectIdGetDatum(fn_oid),
 								  0, 0, 0);
 	if (!HeapTupleIsValid(procTup))
-		elog(ERROR, "plpgsql: cache lookup from pg_proc failed");
+		elog(ERROR, "plpgsql: cache lookup for proc %u failed", fn_oid);
 
 	/* ----------
 	 * Setup the scanner input and error info
