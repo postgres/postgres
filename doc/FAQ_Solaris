@@ -3,7 +3,7 @@ Frequently Asked Questions (FAQ) for PostgreSQL
 Sun Solaris specific
 to be read in conjunction with the installation instructions
 ============================================================
-last updated:        $Date: 2002/11/11 20:04:05 $
+last updated:        $Date: 2003/10/09 17:11:13 $
 
 current maintainer:  Peter Eisentraut <peter_e@gmx.net>
 
@@ -13,8 +13,8 @@ Contents:
 1) What tools do I need to build and install PostgreSQL on Solaris?
 2) Why do I get problems when building with OpenSSL support?
 3) Why does configure complain about a failed test program?
-5) Why does my 64-bit build sometimes crash?
-
+4) Why does my 64-bit build sometimes crash?
+5) How can I compile for optimum performance?
 
 1) What tools do I need to build and install PostgreSQL on Solaris?
 
@@ -88,3 +88,14 @@ to read
 does not matter.)
 
 Then build as usual.
+
+
+5) How can I compile for optimum performance?
+
+Try using the "-fast" compile flag.  The binaries might not be portable to
+other Solaris systems, and you might need to compile everything that links
+to PostgreSQL with "-fast", but PostgreSQL will run significantly faster,
+50% faster on some tests.
+
+
+
