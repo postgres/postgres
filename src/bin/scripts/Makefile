@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/scripts/Makefile,v 1.5 2000/06/27 00:31:44 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/scripts/Makefile,v 1.6 2000/06/28 05:09:37 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -20,7 +20,7 @@ createlang: createlang.sh
 	sed -e 's/__DLSUFFIX__/$(DLSUFFIX)/' $< > $@
 
 install: all installdirs
-	$(INSTALL_SCRIPT) $(SCRIPTS) $(bindir)
+	for i in $(SCRIPTS); do $(INSTALL_SCRIPT) $$i $(bindir); done
 
 installdirs:
 	$(mkinstalldirs) $(bindir)
