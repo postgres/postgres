@@ -8,8 +8,9 @@
 # 	o how users are authenticated on each host
 # 	o databases accessible by each host
 # 
-# It is read by the PostgreSQL postmaster each time a host tries to make a
-# connection to a database.
+# It is read on postmaster startup and when the postmaster receives a SIGHUP.
+# If you edit the file on a running system, you have to SIGHUP the postmaster
+# for the changes to take effect.
 # 
 # Each line is a new record. Records cannot be continued across multiple
 # lines. Comments begin with # and continue to the end of the line. 

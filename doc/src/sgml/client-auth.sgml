@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.13 2001/07/11 21:27:07 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.14 2001/08/01 00:48:52 momjian Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -280,9 +280,10 @@ hostssl <replaceable>database</replaceable> <replaceable>IP-address</replaceable
   </para>
 
   <para>
-   The <filename>pg_hba.conf</filename> file is re-read during each
-   connection attempt. It is therefore trivial to modify access
-   permissions while the server is running: just edit the file.
+   The <filename>pg_hba.conf</filename> file is loaded only on startup
+   and when the <application>postmaster</> receives a SIGHUP signal. If
+   you edit the file on an active system, you will need to issue a
+   SIGHUP to the <application>postmaster</> using <application>kill</>.
   </para>
 
   <para>
