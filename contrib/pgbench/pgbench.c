@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.29 2003/11/29 19:51:35 pgsql Exp $
+ * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.30 2003/12/07 19:55:58 tgl Exp $
  *
  * pgbench: a simple TPC-B like benchmark program for PostgreSQL
  * written by Tatsuo Ishii
@@ -261,14 +261,14 @@ doOne(CState * state, int n, int debug, int ttype)
 				 */
 				if (use_log)
 				{
-					long long	diff;
+					double	diff;
 					struct timeval now;
 
 					gettimeofday(&now, 0);
-					diff = (now.tv_sec - st->txn_begin.tv_sec) * 1000000 +
-						(now.tv_usec - st->txn_begin.tv_usec);
+					diff = (int) (now.tv_sec - st->txn_begin.tv_sec) * 1000000.0 +
+						(int) (now.tv_usec - st->txn_begin.tv_usec);
 
-					fprintf(LOGFILE, "%d %d %lld\n", st->id, st->cnt, diff);
+					fprintf(LOGFILE, "%d %d %.0f\n", st->id, st->cnt, diff);
 				}
 
 				res = PQgetResult(st->con);
