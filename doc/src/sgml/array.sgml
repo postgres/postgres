@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/array.sgml,v 1.14 2001/11/19 03:58:23 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/array.sgml,v 1.15 2001/11/19 09:05:00 tgl Exp $ -->
 
 <chapter id="arrays">
  <title>Arrays</title>
@@ -20,7 +20,7 @@ CREATE TABLE sal_emp (
 );
 </programlisting>
   As shown, an array data type is named by appending square brackets
-  (<literal>[ ]</>) to the data type name of the array elements.
+  (<literal>[]</>) to the data type name of the array elements.
   The above query will create a table named
   <structname>sal_emp</structname> with a <type>text</type> string
   (<structfield>name</structfield>), a one-dimensional array of type

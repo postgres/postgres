@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.70 2001/11/19 03:58:22 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.71 2001/11/19 09:05:00 tgl Exp $
 -->
 
  <chapter id="datatype">
@@ -23,15 +23,12 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.70 2001/11/19 03:58:22 tg
 
   <para>
    <xref linkend="datatype-table"> shows all general-purpose data types
-   available to users.  Most of the alternative names listed in the
+   included in the standard distribution.  Most of the alternative names
+   listed in the 
    <quote>Aliases</quote> column are the names used internally by
    <productname>Postgres</productname> for historical reasons.  In
    addition, some internally used or deprecated types are available,
-   but they are not documented here.  Many of the built-in types have
-   obvious external formats. However, several types are either unique
-   to <productname>Postgres</productname>, such as open and closed
-   paths, or have several possibilities for formats, such as the date
-   and time types.
+   but they are not listed here.
   </para>
 
   <para>
@@ -242,7 +239,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.70 2001/11/19 03:58:22 tg
       <row>
        <entry><type>timestamp [ with time zone ]</type></entry>
        <entry>timestamptz</entry>
-       <entry>date and time</entry>
+       <entry>date and time, including time zone</entry>
       </row>
      </tbody>
     </tgroup>
@@ -264,20 +261,26 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.70 2001/11/19 03:58:22 tg
   </note>
 
   <para>
+   Each data type has an external representation determined by its input
+   and output functions.  Many of the built-in types have
+   obvious external formats.  However, several types are either unique
+   to <productname>Postgres</productname>, such as open and closed
+   paths, or have several possibilities for formats, such as the date
+   and time types.
    Most of the input and output functions corresponding to the
    base types (e.g., integers and floating point numbers) do some
    error-checking.
+   Some of the input and output functions are not invertible.  That is,
+   the result of an output function may lose precision when compared to
+   the original input.
+  </para>
+
+  <para>
    Some of the operators and functions (e.g.,
    addition and multiplication) do not perform run-time error-checking in the
    interests of improving execution speed.
    On some systems, for example, the numeric operators for some data types may
    silently underflow or overflow.
-  </para>
-
-  <para>
-   Some of the input and output functions are not invertible.  That is,
-   the result of an output function may lose precision when compared to
-   the original input.
   </para>
 
   <sect1 id="datatype-numeric">
@@ -465,6 +468,14 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.70 2001/11/19 03:58:22 tg
      platform where this is actually the case.
     </para>
 
+    <para>
+     SQL only specifies the integer types <type>integer</type> (or
+     <type>int</type>) and <type>smallint</type>.  The type
+     <type>bigint</type>, and the type names <type>int2</type>,
+     <type>int4</type>, and <type>int8</type> are extensions, which
+     are shared with various other RDBMS products.
+    </para>
+
     <note>
      <para>
       If you have a column of type <type>smallint</type> or
@@ -475,24 +486,16 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.70 2001/11/19 03:58:22 tg
 ... WHERE smallint_column = 42
 </programlisting>
       will not use an index, because the system assigns type
-      <type>integer</type> to the 42, and PostgreSQL currently cannot
-      use an index when two different data types are involved.  A
+      <type>integer</type> to the constant 42, and PostgreSQL currently
+      cannot use an index when two different data types are involved.  A
       workaround is to single-quote the constant, thus:
 <programlisting>
 ... WHERE smallint_column = '42'
 </programlisting>
-      This will cause the system to delay the type resolution and will
+      This will cause the system to delay type resolution and will
       assign the right type to the constant.
      </para>
     </note>
-
-    <para>
-     SQL only specifies the integer types <type>integer</type> (or
-     <type>int</type>) and <type>smallint</type>.  The type
-     <type>bigint</type>, and the type names <type>int2</type>,
-     <type>int4</type>, and <type>int8</type> are extensions, which
-     are shared with various other RDBMS products.
-    </para>
 
    </sect2>
 
@@ -609,9 +612,9 @@ NUMERIC
 
     <para>
      Normally, the <type>real</type> type has a range of at least
-     -1E+37 to +1E+37 with a precision of at least 6.  The
+     -1E+37 to +1E+37 with a precision of at least 6 decimal digits.  The
      <type>double precision</type> type normally has a range of around
-     -1E+308 to +1E+308 with a precision of at least 15.  Values that
+     -1E+308 to +1E+308 with a precision of at least 15 digits.  Values that
      are too large or too small will cause an error.  Rounding may
      take place if the precision of an input number is too high.
      Numbers too close to zero that are not representable as distinct
@@ -1553,13 +1556,13 @@ January 8 04:05:06 1999 PST
       or abbreviations or plurals of these units;
       <literal>Direction</literal> can be <literal>ago</literal> or
       empty.  The at sign (<literal>@</>) is optional noise.  The amounts
-      of different quantities are implicitly added up with appropriate
+      of different units are implicitly added up with appropriate
       sign accounting.
      </para>
 
      <para>
       Quantities of days, hours, minutes, and seconds can be specified without
-      explicit unit markings: for example, <literal>'1 12:59:10'</> is read
+      explicit unit markings.  For example, <literal>'1 12:59:10'</> is read
       the same as <literal>'1 day 12 hours 59 min 10 sec'</>.
      </para>
     </sect3>
@@ -1637,10 +1640,6 @@ January 8 04:05:06 1999 PST
        </tbody>
       </tgroup>
      </table>
-     <literal>'now'</literal> is resolved when the value is inserted, <literal>'current'</literal>
-     is resolved every time the value is retrieved. So you probably want to use <literal>'now'</literal>
-     in most applications. (Of course you <emphasis>really</emphasis> want to use
-     <literal>CURRENT_TIMESTAMP</literal>, which is equivalent to <literal>'now'</literal>.)
     </para>
     </sect3>
 
@@ -1705,7 +1704,7 @@ January 8 04:05:06 1999 PST
     </para>
 
     <para>
-     The output of the <type>date</type> and <type>time</type> styles is of course
+     The output of the <type>date</type> and <type>time</type> types is of course
      only the date or time part in accordance with the above examples.
     </para>
 
@@ -1794,7 +1793,7 @@ January 8 04:05:06 1999 PST
        <para>
 	Although the <type>date</type> type 
 	does not have an associated time zone, the
-	<type>time</type> type can or does.
+	<type>time</type> type can.
 	Time zones in the real world can have no meaning unless 
 	associated with a date as well as a time
 	since the offset may vary through the year with daylight savings

@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.44 2001/11/05 17:46:29 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.45 2001/11/19 09:05:01 tgl Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2000, PostgreSQL Global Development Group
@@ -3050,7 +3050,7 @@ to_timestamp(PG_FUNCTION_ARGS)
 		if (tm.tm_year > 0)
 			tm.tm_year = -(tm.tm_year - 1);
 		else
-			elog(ERROR, "Inconsistant use of year %04d and 'BC'", tm.tm_year);
+			elog(ERROR, "Inconsistent use of year %04d and 'BC'", tm.tm_year);
 	}
 
 	if (tmfc.j)

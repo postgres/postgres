@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.50 2001/11/08 23:34:33 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.51 2001/11/19 09:05:01 tgl Exp $
 -->
 
 <chapter id="sql-syntax">
@@ -743,8 +743,8 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
      Transaction identifiers are 32-bit quantities.  In a long-lived
      database it is possible for transaction IDs to wrap around.  This
      is not a fatal problem given appropriate maintenance procedures;
-     see the Administrator's Guide for details.  However, it is unwise
-     to depend on uniqueness of transaction IDs over the long term
+     see the <citetitle>Administrator's Guide</> for details.  However, it is
+     unwise to depend on uniqueness of transaction IDs over the long term
      (more than one billion transactions).
     </para>
 

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/indices.sgml,v 1.26 2001/11/18 00:59:00 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/indices.sgml,v 1.27 2001/11/19 09:05:01 tgl Exp $ -->
 
 <chapter id="indexes">
  <title id="indexes-title">Indexes</title>
@@ -83,10 +83,9 @@ CREATE INDEX test1_id_index ON test1 (id);
   </para>
 
   <para>
-   Indexes can also benefit <command>UPDATE</command>s and
-   <command>DELETE</command>s with search conditions.  Note that a
-   query or data manipulation commands can only use at most one index
-   per table.  Indexes can also be used in table join methods.  Thus,
+   Indexes can benefit <command>UPDATE</command>s and
+   <command>DELETE</command>s with search conditions.  Indexes can also be
+   used in join queries.  Thus,
    an index defined on a column that is part of a join condition can
    significantly speed up queries with joins.
   </para>
@@ -95,7 +94,9 @@ CREATE INDEX test1_id_index ON test1 (id);
    When an index is created, it has to be kept synchronized with the
    table.  This adds overhead to data manipulation operations.
    Therefore indexes that are non-essential or do not get used at all
-   should be removed.
+   should be removed.  Note that a
+   query or data manipulation command can use at most one index
+   per table.
   </para>
  </sect1>
 
@@ -140,7 +141,7 @@ CREATE INDEX test1_id_index ON test1 (id);
     <primary>R-tree</primary>
     <see>indexes</see>
    </indexterm>
-   R-tree indexes are especially suited for spacial data.  To create
+   R-tree indexes are especially suited for spatial data.  To create
    an R-tree index, use a command of the form
 <synopsis>
 CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable> USING RTREE (<replaceable>column</replaceable>);
@@ -221,7 +222,7 @@ CREATE TABLE test2 (
   name varchar
 );
 </programlisting>
-   (Say, you keep you your <filename class="directory">/dev</filename>
+   (Say, you keep your <filename class="directory">/dev</filename>
    directory in a database...) and you frequently make queries like
 <programlisting>
 SELECT name FROM test2 WHERE major = <replaceable>constant</replaceable> AND minor = <replaceable>constant</replaceable>;
@@ -337,11 +338,11 @@ CREATE UNIQUE INDEX <replaceable>name</replaceable> ON <replaceable>table</repla
 
   <para>
    For example, a common way to do case-insensitive comparisons is to
-   use the <function>lower</function>:
+   use the <function>lower</function> function:
 <programlisting>
 SELECT * FROM test1 WHERE lower(col1) = 'value';
 </programlisting>
-   In order for that query to be able to use an index, it has to be
+   This query can use an index, if one has been
    defined on the result of the <literal>lower(column)</literal>
    operation:
 <programlisting>
@@ -360,8 +361,8 @@ CREATE INDEX test1_lower_col1_idx ON test1 (lower(col1));
   <tip>
    <para>
     The restrictions mentioned in the previous paragraph can easily be
-    worked around by defining custom functions to use in the index
-    definition that call the desired function(s) internally.
+    worked around by defining a custom function to use in the index
+    definition that computes any desired result internally.
    </para>
   </tip>
  </sect1>
@@ -600,7 +601,8 @@ CREATE MEMSTORE ON <replaceable>table</replaceable> COLUMNS <replaceable>cols</r
    A <firstterm>partial index</firstterm> is an index built over a
    subset of a table; the subset is defined by a conditional
    expression (called the <firstterm>predicate</firstterm> of the
-   partial index).
+   partial index).  The index contains entries for only those table
+   rows that satisfy the predicate.
   </para>
 
   <para>
@@ -608,8 +610,8 @@ CREATE MEMSTORE ON <replaceable>table</replaceable> COLUMNS <replaceable>cols</r
    values.  Since a query conditionalized on a common value will not
    use the index anyway, there is no point in keeping those rows in the
    index at all.  This reduces the size of the index, which will speed
-   up queries that do use the index.  It will also speed up many data
-   manipulation operations because the index does not need to be
+   up queries that do use the index.  It will also speed up many table
+   update operations because the index does not need to be
    updated in all cases.  <xref linkend="indexes-partial-ex1"> shows a
    possible application of this idea.
   </para>
@@ -766,7 +768,7 @@ SELECT * FROM orders WHERE order_nr = 3501;
 
   <para>
    Although indexes in <productname>PostgreSQL</> do not need
-   maintenance and tuning, it is still important that it is checked
+   maintenance and tuning, it is still important to check
    which indexes are actually used by the real-life query workload.
    Examining index usage is done with the <command>EXPLAIN</> command;
    its application for this purpose is illustrated in <xref
@@ -863,7 +865,7 @@ SELECT * FROM orders WHERE order_nr = 3501;
 
     <para>
      If you do not succeed in adjusting the costs to be more
-     appropriate, then you may have to do with forcing index usage
+     appropriate, then you may have to resort to forcing index usage
      explicitly.  You may also want to contact the
      <productname>PostgreSQL</> developers to examine the issue.
     </para>

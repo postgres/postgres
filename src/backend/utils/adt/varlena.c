@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.75 2001/11/18 12:07:07 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.76 2001/11/19 09:05:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -328,7 +328,7 @@ textcat(PG_FUNCTION_ARGS)
  *	- string length
  *
  * If the starting position is zero or less, then return from the start of the string
- *	adjusting the length to be consistant with the "negative start" per SQL92.
+ *	adjusting the length to be consistent with the "negative start" per SQL92.
  * If the length is less than zero, return the remaining string.
  *
  * Note that the arguments operate on octet length,
@@ -740,7 +740,7 @@ byteacat(PG_FUNCTION_ARGS)
  *	- string length
  *
  * If the starting position is zero or less, then return from the start of the string
- * adjusting the length to be consistant with the "negative start" per SQL92.
+ * adjusting the length to be consistent with the "negative start" per SQL92.
  * If the length is less than zero, return the remaining string.
  *
  */

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.81 2001/11/19 03:58:23 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.82 2001/11/19 09:05:01 tgl Exp $
 Postgres documentation
 -->
 
@@ -31,7 +31,7 @@ Postgres documentation
   and some explicitly marked functions, are not specified by the <acronym>SQL</acronym>
   standard. Some of this extended functionality is present in other
   <acronym>RDBMS</acronym> products, and in many cases this
-  functionality is compatible and consistant between various products.
+  functionality is compatible and consistent between various products.
  </para>
 
 
@@ -697,8 +697,8 @@ Postgres documentation
    Functions returning a <type>numeric</type> result take
    <type>numeric</type> input arguments, unless otherwise specified.
    Many of these functions are implemented on top
-   of the host system's C library and behavior in boundary cases could
-   therefore vary depending on the operating system.
+   of the host system's C library; accuracy and behavior in boundary cases
+   could therefore vary depending on the host system.
   </para>
 
   <table>
@@ -828,7 +828,7 @@ Postgres documentation
       <entry><function>char_length</function>(<parameter>string</parameter>) or <function>character_length</function>(<parameter>string</parameter>)</entry>
       <entry><type>integer</type></entry>
       <entry>
-       length of string
+       number of characters in string
        <indexterm>
         <primary>character strings</primary>
 	<secondary>length</secondary>
@@ -892,7 +892,7 @@ Postgres documentation
        <parameter>characters</parameter> (a space by default) from the
        beginning/end/both ends of the <parameter>string</parameter>.
       </entry>
-      <entry><literal>trim(both 'x' from 'xTomx')</literal></entry>
+      <entry><literal>trim(both 'x' from 'xTomxx')</literal></entry>
       <entry><literal>Tom</literal></entry>
      </row>
 
@@ -910,7 +910,7 @@ Postgres documentation
   <para>
    Additional string manipulation functions are available and are
    listed below.  Some of them are used internally to implement the
-   <acronym>SQL</acronym> string functions listed above.
+   <acronym>SQL</acronym>-standard string functions listed above.
   </para>
 
   <table id="functions-string-other">
