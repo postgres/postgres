@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.36 1999/03/28 20:31:56 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.37 1999/04/12 16:56:08 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -100,11 +100,12 @@ l1:
 		if (!PageIsEmpty(page) && offset <= maxoff)
 		{
 			TupleDesc		itupdesc;
-			BTItem			btitem;
+			BTItem			cbti;
 			HeapTupleData	htup;
 			BTPageOpaque 	opaque;
 			Buffer			nbuf;
 			BlockNumber 	blkno;
+			bool			chtup = true;
 
 			itupdesc = RelationGetDescr(rel);
 			nbuf = InvalidBuffer;
@@ -121,8 +122,22 @@ l1:
 			 */
 			while (_bt_isequal(itupdesc, page, offset, natts, itup_scankey))
 			{					/* they're equal */
-				btitem = (BTItem) PageGetItem(page, PageGetItemId(page, offset));
-				htup.t_self = btitem->bti_itup.t_tid;
+				/*
+				 * Have to check is inserted heap tuple deleted one
+				 * (i.e. just moved to another place by vacuum)!
+				 */
+				if (chtup)
+				{
+					htup.t_self = btitem->bti_itup.t_tid;
+					heap_fetch(heapRel, SnapshotDirty, &htup, &buffer);
+					if (htup.t_data	== NULL)	/* YES! */
+						break;
+					/* Live tuple was inserted */
+					ReleaseBuffer(buffer);
+					chtup = false;
+				}
+				cbti = (BTItem) PageGetItem(page, PageGetItemId(page, offset));
+				htup.t_self = cbti->bti_itup.t_tid;
 				heap_fetch(heapRel, SnapshotDirty, &htup, &buffer);
 				if (htup.t_data	!= NULL)	/* it is a duplicate */
 				{
