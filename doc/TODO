@@ -153,6 +153,7 @@ INDEXES
 * Add FILLFACTOR to index creation
 * -Allow indexing of LIKE with localle character sets
 * -Allow indexing of more than eight columns
+* update pg_class.relhasindex during vacuum when all indexes are dropped
 
 COMMANDS
 
