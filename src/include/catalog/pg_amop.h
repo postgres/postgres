@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_amop.h,v 1.22 1999/03/28 02:01:38 tgl Exp $
+ * $Id: pg_amop.h,v 1.23 1999/04/03 18:07:47 tgl Exp $
  *
  * NOTES
  *	 the genbki.sh script reads this file and generates .bki
@@ -97,12 +97,12 @@ DATA(insert OID = 0 (  402 433 497 8 rtsel rtnpage ));
 
 DATA(insert OID = 0 (  402 434 485 1 rtsel rtnpage ));
 DATA(insert OID = 0 (  402 434 486 2 rtsel rtnpage ));
-DATA(insert OID = 0 (  402 434 487 3 rtsel rtnpage ));
-DATA(insert OID = 0 (  402 434 488 4 rtsel rtnpage ));
-DATA(insert OID = 0 (  402 434 489 5 rtsel rtnpage ));
-DATA(insert OID = 0 (  402 434 490 6 rtsel rtnpage ));
-DATA(insert OID = 0 (  402 434 491 7 rtsel rtnpage ));
-DATA(insert OID = 0 (  402 434 492 8 rtsel rtnpage ));
+DATA(insert OID = 0 (  402 434 492 3 rtsel rtnpage ));
+DATA(insert OID = 0 (  402 434 487 4 rtsel rtnpage ));
+DATA(insert OID = 0 (  402 434 488 5 rtsel rtnpage ));
+DATA(insert OID = 0 (  402 434 491 6 rtsel rtnpage ));
+DATA(insert OID = 0 (  402 434 490 7 rtsel rtnpage ));
+DATA(insert OID = 0 (  402 434 489 8 rtsel rtnpage ));
 
 /*
  *	rtree circle_ops (supports circles)
@@ -110,12 +110,12 @@ DATA(insert OID = 0 (  402 434 492 8 rtsel rtnpage ));
 
 DATA(insert OID = 0 (  402 714 1506 1 rtsel rtnpage ));
 DATA(insert OID = 0 (  402 714 1507 2 rtsel rtnpage ));
-DATA(insert OID = 0 (  402 714 1508 3 rtsel rtnpage ));
-DATA(insert OID = 0 (  402 714 1509 4 rtsel rtnpage ));
-DATA(insert OID = 0 (  402 714 1510 5 rtsel rtnpage ));
-DATA(insert OID = 0 (  402 714 1511 6 rtsel rtnpage ));
-DATA(insert OID = 0 (  402 714 1512 7 rtsel rtnpage ));
-DATA(insert OID = 0 (  402 714 1513 8 rtsel rtnpage ));
+DATA(insert OID = 0 (  402 714 1513 3 rtsel rtnpage ));
+DATA(insert OID = 0 (  402 714 1508 4 rtsel rtnpage ));
+DATA(insert OID = 0 (  402 714 1509 5 rtsel rtnpage ));
+DATA(insert OID = 0 (  402 714 1512 6 rtsel rtnpage ));
+DATA(insert OID = 0 (  402 714 1511 7 rtsel rtnpage ));
+DATA(insert OID = 0 (  402 714 1510 8 rtsel rtnpage ));
 
 /*
  *	nbtree int2_ops
@@ -332,11 +332,11 @@ DATA(insert OID = 0 (  403 935 1205 5 btreesel btreenpage ));
  *	nbtree cidr
  */
 
-DATA(insert OID = 0 (  403 652 1203 1 btreesel btreenpage ));
-DATA(insert OID = 0 (  403 652 1204 2 btreesel btreenpage ));
-DATA(insert OID = 0 (  403 652 1201 3 btreesel btreenpage ));
-DATA(insert OID = 0 (  403 652 1206 4 btreesel btreenpage ));
-DATA(insert OID = 0 (  403 652 1205 5 btreesel btreenpage ));
+DATA(insert OID = 0 (  403 652 822 1 btreesel btreenpage ));
+DATA(insert OID = 0 (  403 652 823 2 btreesel btreenpage ));
+DATA(insert OID = 0 (  403 652 820 3 btreesel btreenpage ));
+DATA(insert OID = 0 (  403 652 825 4 btreesel btreenpage ));
+DATA(insert OID = 0 (  403 652 824 5 btreesel btreenpage ));
 
 /*
  *	hash table _ops
@@ -349,7 +349,7 @@ DATA(insert OID = 0 (  405	423  670 1 hashsel hashnpage ));
 /* int4_ops */
 DATA(insert OID = 0 (  405	426   96 1 hashsel hashnpage ));
 /* int8_ops */
-DATA(insert OID = 0 (  405	754   96 1 hashsel hashnpage ));
+DATA(insert OID = 0 (  405	754  410 1 hashsel hashnpage ));
 /* oid_ops */
 DATA(insert OID = 0 (  405	427  607 1 hashsel hashnpage ));
 /* oid8_ops */
