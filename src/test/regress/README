@@ -6,12 +6,12 @@ Introduction
   Andrew Yu. It tests standard SQL operations as well as the extensibility
   capabilities of PostgreSQL.
 
-  These tests have recently been revised by Marc Fournier and others to
-  become current for PostgreSQL v6.1. The tests are now packaged as
+  These tests have recently been revised by Marc Fournier and Thomas Lockhart
+  to become current for PostgreSQL v6.1. The tests are now packaged as
   functional units and should be easier to run and easier to interpret.
 
   Some properly installed and fully functional PostgreSQL installations
-  can fail these regression tests due to artifacts of floating point
+  can fail some of these regression tests due to artifacts of floating point
   representation and time zone support. The current tests are evaluated
   using a simple "diff" algorithm, and are sensitive to small system
   differences. For apparently failed tests, examining the differences
@@ -27,12 +27,20 @@ Preparation
   files with absolute pathnames and user names.
 
   The postmaster should be invoked with the system time zone set for
-  Berkeley, California. On some systems, this can be accomplished by
+  Berkeley, California. On many systems, this can be accomplished by
   setting the TZ environment variable before starting the postmaster
   (for csh/bash; use set/export for some other shells):
 
-    setenv TZ PST8PDT7,M04.01.0,M10.05.03
+    setenv TZ PST8PDT
+    date
     /usr/local/pgsql/bin/postmaster -s
+
+  The "date" command above should have returned the current system time
+  in the PST8PDT time zone. If the PST8PDT database is not available, then
+  your system may have returned the time in GMT. If the PST8PDT time zone
+  is not available, you can set the time zone rules explicitly:
+
+    setenv TZ PST8PDT7,M04.01.0,M10.05.03
 
 Directory Layout
 
@@ -73,6 +81,15 @@ Comparing expected/actual output
   The files might not compare exactly. The following paragraphs attempt
   to explain the differences.
 
+Error message differences
+
+  Some of the regression tests involve intentional invalid input values.
+  Error messages can come from either the Postgres code or from the host
+  platform system routines. In the latter case, the messages may vary
+  between platforms, but should reflect similar information. These
+  differences in messages will result in a "failed" regression test which
+  can be validated by inspection.
+
 OID differences
 
   There are several places where PostgreSQL OID (object identifiers) appear
@@ -93,12 +110,14 @@ DATE/TIME differences
   is running in the same time zone as Berkeley, California. See details in
   the section on how to run the regression tests.
 
-  If you do not explicitly set your time zone environment to PST/PDT, then
+  If you do not explicitly set your time zone environment to PST8PDT, then
   most of the date and time results will reflect your local time zone and
   will fail the regression testing.
 
-  There appear to be some systems which do not accept the same syntax for
-  setting the local time zone.
+  There appears to be some systems which do not accept the recommended syntax
+  for explicitly setting the local time zone rules. Some systems using the
+  public domain time zone package exhibit minor problems with pre-1970 PDT
+  times, representing them in PST instead.
 
 FLOATING POINT differences
 
@@ -168,11 +187,9 @@ Current release notes (Thomas.Lockhart@jpl.nasa.gov)
 
   Three new data types (datetime, timespan, and circle) have been added to
   the native set of PostgreSQL types. Points, boxes, paths, and polygons
-  have had their output formats improved, but the old-style input formats
-  are accepted by v6.1. The source data files have not been updated to the
-  new formats, but should be for the next release. The polygon output in
-  misc.out has only been spot-checked for correctness relative to the
-  original regression output.
+  have had their output formats made consistant across the data types.
+  The polygon output in misc.out has only been spot-checked for correctness
+  relative to the original regression output.
 
   PostgreSQL v6.1 introduces a new, alternate optimizer which uses "genetic"
   algorithms. These algorithms introduce a random behavior in the ordering
@@ -204,6 +221,6 @@ Sample timing results
   to run, presumably due to the timing vagaries of multitasking systems.
 
   Time   System
-  06:12  Pentium Pro 180, 32MB, Linux 2.0.27, gcc 2.7.2 -O2 -m486
+  06:12  Pentium Pro 180, 32MB, Linux 2.0.30, gcc 2.7.2 -O2 -m486
   12:06  P-100, 48MB, Linux 2.0.29, gcc
   39:58  Sparc IPC 32MB, Solaris 2.5, gcc 2.7.2.1 -O -g
