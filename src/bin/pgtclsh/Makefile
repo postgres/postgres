@@ -6,7 +6,7 @@
 # Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/pgtclsh/Attic/Makefile,v 1.39 2002/06/20 20:29:42 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/pgtclsh/Attic/Makefile,v 1.40 2002/12/30 17:19:51 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -19,7 +19,7 @@ libpgtcl_srcdir = $(top_srcdir)/src/interfaces/libpgtcl
 libpgtcl_builddir = $(top_builddir)/src/interfaces/libpgtcl
 libpgtcl = -L$(libpgtcl_builddir) -lpgtcl
 
-override CPPFLAGS := -I$(libpgtcl_srcdir) $(CPPFLAGS) $(TK_XINCLUDES)
+override CPPFLAGS := -I$(libpgtcl_srcdir) $(CPPFLAGS) $(TK_XINCLUDES) $(TCL_INCLUDE_SPEC)
 
 
 # If we are here then Tcl is available

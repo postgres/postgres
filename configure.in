@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $Header: /cvsroot/pgsql/configure.in,v 1.223 2002/12/29 03:56:35 momjian Exp $
+dnl $Header: /cvsroot/pgsql/configure.in,v 1.224 2002/12/30 17:19:49 tgl Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -1135,6 +1135,13 @@ if test "$with_tcl" = yes; then
     PGAC_EVAL_TCLCONFIGSH([$TCL_CONFIG_SH],
                           [TCL_LIB_FILE,TCL_LIBS,TCL_LIB_SPEC,TCL_SHARED_BUILD])
     AC_SUBST(TCL_SHLIB_LD_LIBS)dnl don't want to double-evaluate that one
+    # TCL_INCLUDE_SPEC is only provided in Tcl 8.4 and later
+    if test "${TCL_INCLUDE_SPEC+set}" = set; then
+	eval TCL_INCLUDE_SPEC=\"$TCL_INCLUDE_SPEC\"
+    else
+	TCL_INCLUDE_SPEC=''
+    fi
+    AC_SUBST(TCL_INCLUDE_SPEC)dnl
 fi
 
 # Check for Tk configuration script tkConfig.sh

@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.156 2002/11/10 00:37:28 momjian Exp $
+# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.157 2002/12/30 17:19:50 tgl Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -144,6 +144,7 @@ TCLSH			= @TCLSH@
 TCL_LIB_FILE		= @TCL_LIB_FILE@
 TCL_LIBS		= @TCL_LIBS@
 TCL_LIB_SPEC		= @TCL_LIB_SPEC@
+TCL_INCLUDE_SPEC	= @TCL_INCLUDE_SPEC@
 TCL_SHARED_BUILD	= @TCL_SHARED_BUILD@
 TCL_SHLIB_LD_LIBS	= @TCL_SHLIB_LD_LIBS@
 

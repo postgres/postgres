@@ -2,13 +2,16 @@
 #
 # Makefile for the pltcl shared object
 #
-# $Header: /cvsroot/pgsql/src/pl/tcl/Makefile,v 1.38 2002/05/24 18:10:17 petere Exp $
+# $Header: /cvsroot/pgsql/src/pl/tcl/Makefile,v 1.39 2002/12/30 17:19:54 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
 subdir = src/pl/tcl
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
+
+
+override CPPFLAGS := $(CPPFLAGS) $(TCL_INCLUDE_SPEC)
 
 
 # Find out whether Tcl was built as a shared library --- if not, we
