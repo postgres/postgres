@@ -13698,7 +13698,7 @@ fi
 done
 
 
-# Do test here with thread flags
+# Do test here with the proper thread flags
 echo "$as_me:$LINENO: checking whether getpwuid_r takes a fifth argument" >&5
 echo $ECHO_N "checking whether getpwuid_r takes a fifth argument... $ECHO_C" >&6
 if test "${pgac_func_getpwuid_r_5arg+set}" = set; then
