@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.21 1997/09/08 21:48:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.22 1997/11/23 21:39:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -253,9 +253,14 @@ textcat(text *t1, text *t2)
 	len1 = (PointerIsValid(t1) ? (VARSIZE(t1) - VARHDRSZ) : 0);
 	if (len1 < 0)
 		len1 = 0;
+	while (len1 > 0 && VARDATA(t1)[len1 - 1] == '\0')
+		len1--;
+
 	len2 = (PointerIsValid(t2) ? (VARSIZE(t2) - VARHDRSZ) : 0);
 	if (len2 < 0)
 		len2 = 0;
+	while (len2 > 0 && VARDATA(t2)[len2 - 1] == '\0')
+		len2--;
 
 	result = PALLOC(len = len1 + len2 + VARHDRSZ);
 
