@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.32 2002/03/01 19:01:22 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.33 2002/03/01 20:38:12 momjian Exp $
 -->
 
 <refentry id="SQL-CREATEFUNCTION">
@@ -18,12 +18,12 @@ $Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.32 2002/03/01 
 CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceable class="parameter">argtype</replaceable> [, ...] ] )
     RETURNS <replaceable class="parameter">rettype</replaceable>
     AS '<replaceable class="parameter">definition</replaceable>'
-    LANGUAGE '<replaceable class="parameter">langname</replaceable>'
+    LANGUAGE <replaceable class="parameter">langname</replaceable>
     [ WITH ( <replaceable class="parameter">attribute</replaceable> [, ...] ) ]
 CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceable class="parameter">argtype</replaceable> [, ...] ] )
     RETURNS <replaceable class="parameter">rettype</replaceable>
     AS '<replaceable class="parameter">obj_file</replaceable>', '<replaceable class="parameter">link_symbol</replaceable>'
-    LANGUAGE '<replaceable class="parameter">langname</replaceable>'
+    LANGUAGE <replaceable class="parameter">langname</replaceable>
     [ WITH ( <replaceable class="parameter">attribute</replaceable> [, ...] ) ]
 </synopsis>
  </refsynopsisdiv>
