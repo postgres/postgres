@@ -1,0 +1,201 @@
+
+/* -----------------------------------------------------------------------
+ * ascii.c
+ *
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/ascii.c,v 1.3 2000/08/05 14:59:17 momjian Exp $
+ *
+ *	 Portions Copyright (c) 1999-2000, PostgreSQL, Inc
+ *
+ *
+ *	 TO_ASCII()
+ *
+ *	 The PostgreSQL routine for string to ascii conversion.
+ *
+ * -----------------------------------------------------------------------
+ */
+
+#include "postgres.h"
+#include "utils/builtins.h"
+#include "mb/pg_wchar.h"
+#include "utils/ascii.h"
+
+/* ----------
+ * even if MULTIBYTE is not enabled, these functions are necessary
+ * since pg_proc.h has references to them.
+ * ----------
+ */
+#ifndef MULTIBYTE
+
+static void multibyte_error(void);
+
+static void
+multibyte_error()
+{
+	elog(ERROR, "multibyte not supported.");
+}
+
+Datum 
+to_ascii_encname(PG_FUNCTION_ARGS)
+{
+	multibyte_error();
+}
+
+Datum 
+to_ascii_enc(PG_FUNCTION_ARGS)
+{
+	multibyte_error();
+}
+
+Datum 
+to_ascii_default(PG_FUNCTION_ARGS)
+{
+	multibyte_error();
+}
+
+
+#else /* with MULTIBYTE */
+
+
+/* ----------
+ * even if MULTIBYTE is enabled
+ * ----------
+ */
+ 
+static text *encode_to_ascii(text *data, int enc);
+
+/* ----------
+ * to_ascii 
+ * ----------
+ */
+char *
+pg_to_ascii(unsigned char *src, unsigned char *src_end, unsigned char *desc, int enc)
+{
+	unsigned char	*x 	= NULL;
+	unsigned char	*ascii	= NULL ;
+	int		range	= 0;
+	
+	/* 
+	 * relevant start for an encoding 
+	 */ 
+	#define RANGE_128	128	
+	#define RANGE_160	160
+	
+	
+	if (enc == LATIN1)
+	{
+		/* ----------
+		 * ISO-8859-1 <range: 160 -- 255>
+		 * ----------
+		 */
+		ascii = "  cL Y  \"Ca  -R     'u .,      ?AAAAAAACEEEEIIII NOOOOOxOUUUUYTBaaaaaaaceeeeiiii nooooo/ouuuuyty";
+		range = RANGE_160;
+	}
+	else if (enc == LATIN2)
+	{
+		/* ----------
+		 * ISO-8859-2 <range: 160 -- 255>
+		 * ----------
+		 */
+		ascii = " A L LS \"SSTZ-ZZ a,l'ls ,sstz\"zzRAAAALCCCEEEEIIDDNNOOOOxRUUUUYTBraaaalccceeeeiiddnnoooo/ruuuuyt.";
+		range = RANGE_160;
+	}
+	else if (enc == WIN1250)
+	{
+		/* ----------
+		 * Window CP1250 <range: 128 -- 255>
+		 * ----------
+		 */
+		ascii = "  ' \"    %S<STZZ `'\"\".--  s>stzz   L A  \"CS  -RZ  ,l'u .,as L\"lzRAAAALCCCEEEEIIDDNNOOOOxRUUUUYTBraaaalccceeeeiiddnnoooo/ruuuuyt ";
+		range = RANGE_128;
+	}
+	else
+	{
+		elog(ERROR, "pg_to_ascii(): unsupported encoding from %s", 
+						pg_encoding_to_char(enc));
+	}
+	
+	/* ----------
+	 * Encode
+	 * ----------
+	 */
+	for (x = src; x <= src_end; x++)
+	{
+		if (*x < 128)			
+			*desc++ = *x;
+		else if (*x < range)
+			*desc++ = ' ';  	/* bogus 128 to 'range' */
+		else
+			*desc++ = ascii[*x - range];	
+	}		
+	
+	return desc;
+}
+
+/* ----------
+ * encode text
+ * ----------
+ */
+static text *
+encode_to_ascii(text *data, int enc)
+{
+	pg_to_ascii(
+		(unsigned char *) VARDATA(data), 		/* src */
+		VARDATA(data) + VARSIZE(data),			/* src end */
+		(unsigned char *) VARDATA(data),		/* desc */	
+		enc);						/* encoding */
+	
+	return data;
+}
+
+/* ----------
+ * convert to ASCII - enc is set as 'name' arg.
+ * ----------
+ */
+Datum
+to_ascii_encname(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_TEXT_P
+	( 
+		encode_to_ascii
+		( 
+			PG_GETARG_TEXT_P_COPY(0), 
+			pg_char_to_encoding( NameStr(*PG_GETARG_NAME(1)) ) 
+		)
+	);	
+}
+
+/* ----------
+ * convert to ASCII - enc is set as int4
+ * ----------
+ */
+Datum 
+to_ascii_enc(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_TEXT_P
+	( 
+		encode_to_ascii
+		( 
+			PG_GETARG_TEXT_P_COPY(0), 
+			PG_GETARG_INT32(1) 
+		)
+	);	
+}
+
+/* ----------
+ * convert to ASCII - current enc is DatabaseEncoding
+ * ----------
+ */
+Datum
+to_ascii_default(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_TEXT_P 
+	( 
+		encode_to_ascii
+		( 
+			PG_GETARG_TEXT_P_COPY(0), 
+			GetDatabaseEncoding()
+		)
+	);
+}
+
+#endif /* MULTIBYTE */		
