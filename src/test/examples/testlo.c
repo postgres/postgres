@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/test/examples/testlo.c,v 1.15 2000/04/25 16:39:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/test/examples/testlo.c,v 1.16 2000/10/24 00:08:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -96,6 +96,8 @@ pickout(PGconn *conn, Oid lobjId, int start, int len)
 		buf[nbytes] = '\0';
 		fprintf(stderr, ">>> %s", buf);
 		nread += nbytes;
+		if (nbytes <= 0)
+			break;				/* no more data? */
 	}
 	fprintf(stderr, "\n");
 	lo_close(conn, lobj_fd);
@@ -126,6 +128,11 @@ overwrite(PGconn *conn, Oid lobjId, int start, int len)
 	{
 		nbytes = lo_write(conn, lobj_fd, buf + nwritten, len - nwritten);
 		nwritten += nbytes;
+		if (nbytes <= 0)
+		{
+			fprintf(stderr, "\nWRITE FAILED!\n");
+			break;
+		}
 	}
 	fprintf(stderr, "\n");
 	lo_close(conn, lobj_fd);
@@ -229,21 +236,24 @@ main(int argc, char **argv)
 /*	lobjOid = importFile(conn, in_filename); */
 	lobjOid = lo_import(conn, in_filename);
 	if (lobjOid == 0)
+	{
 		fprintf(stderr, "%s\n", PQerrorMessage(conn));
+	}
+	else
+	{
+		printf("\tas large object %u.\n", lobjOid);
 
-	printf("\tas large object %u.\n", lobjOid);
+		printf("picking out bytes 1000-2000 of the large object\n");
+		pickout(conn, lobjOid, 1000, 1000);
 
-	printf("picking out bytes 1000-2000 of the large object\n");
-	pickout(conn, lobjOid, 1000, 1000);
+		printf("overwriting bytes 1000-2000 of the large object with X's\n");
+		overwrite(conn, lobjOid, 1000, 1000);
 
-	printf("overwriting bytes 1000-2000 of the large object with X's\n");
-	overwrite(conn, lobjOid, 1000, 1000);
-
-
-	printf("exporting large object to file \"%s\" ...\n", out_filename);
-/*	  exportFile(conn, lobjOid, out_filename); */
-	if (!lo_export(conn, lobjOid, out_filename))
-		fprintf(stderr, "%s\n", PQerrorMessage(conn));
+		printf("exporting large object to file \"%s\" ...\n", out_filename);
+/*		exportFile(conn, lobjOid, out_filename); */
+		if (!lo_export(conn, lobjOid, out_filename))
+			fprintf(stderr, "%s\n", PQerrorMessage(conn));
+	}
 
 	res = PQexec(conn, "end");
 	PQclear(res);
