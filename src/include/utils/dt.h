@@ -8,7 +8,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dt.h,v 1.33.2.1 1999/03/03 05:11:39 thomas Exp $
+ * $Id: dt.h,v 1.33.2.2 1999/03/06 22:49:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -269,7 +269,7 @@ extern int	datetime_is_epoch(double j);
 
 extern int day_tab[2][13];
 
-#define isleap(y) (((y % 4) == 0 && (y % 100) != 0) || (y % 400) == 0)
+#define isleap(y) (((y) % 4) == 0 && (((y) % 100) != 0 || ((y) % 400) == 0))
 
 /* Julian date support for date2j() and j2date()
  * Set the minimum year to one greater than the year of the first valid day

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.59.2.2 1999/02/13 05:59:34 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.59.2.3 1999/03/06 22:49:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,8 +56,6 @@ static int	tm2timespan(struct tm * tm, double fsec, TimeSpan *span);
 #define ROUND_ALL 0
 
 #if 0
-#define isleap(y) (((y % 4) == 0) && (((y % 100) != 0) || ((y % 400) == 0)))
-
 int			mdays[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 0};
 #endif
 
@@ -2302,8 +2300,7 @@ datetkn    *deltacache[MAXDATEFIELDS] = {NULL};
  * These routines will be used by other date/time packages - tgl 97/02/25
  */
 
-#if 0
-XXX moved to dt.h - thomas 1999-01-15
+#if 1
 /* Set the minimum year to one greater than the year of the first valid day
  *	to avoid having to check year and day both. - tgl 97/05/08
  */

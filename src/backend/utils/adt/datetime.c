@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.25.2.2 1999/02/13 05:59:34 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.25.2.3 1999/03/06 22:49:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,14 +26,6 @@
 #include "access/xact.h"
 
 static int	date2tm(DateADT dateVal, int *tzp, struct tm * tm, double *fsec, char **tzn);
-
-#if 0
-static int	day_tab[2][12] = {
-	{31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31},
-{31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}};
-
-#define isleap(y) (((y % 4) == 0 && (y % 100) != 0) || (y % 400) == 0)
-#endif
 
 #define UTIME_MINYEAR (1901)
 #define UTIME_MINMONTH (12)
