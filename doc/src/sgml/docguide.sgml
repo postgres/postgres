@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/docguide.sgml,v 1.43 2003/02/19 04:06:27 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/docguide.sgml,v 1.44 2003/06/06 14:17:08 petere Exp $ -->
 
 <appendix id="docguide">
  <title>Documentation</title>
@@ -20,7 +20,7 @@
    </listitem>
    <listitem>
     <para>
-     Postscript, for printing
+     PDF or Postscript, for printing
     </para>
    </listitem>
    <listitem>
@@ -36,55 +36,13 @@
  </para>
 
  <para>
-  The documentation is organized into several <quote>books</quote>:
-
-  <itemizedlist>
-   <listitem>
-    <para>
-     <citetitle>Tutorial</citetitle>:  introduction for new users
-    </para>
-   </listitem>
-   <listitem>
-    <para>
-     <citetitle>User's Guide</citetitle>: documents the SQL implementation
-    </para>
-   </listitem>
-   <listitem>
-    <para>
-     <citetitle>Reference Manual</citetitle>: reference pages for programs and SQL commands
-    </para>
-   </listitem>
-   <listitem>
-    <para>
-     <citetitle>Administrator's Guide</citetitle>: installation and server maintenance
-    </para>
-   </listitem>
-   <listitem>
-    <para>
-     <citetitle>Programmer's Guide</citetitle>: programming client
-     applications and server extensions
-    </para>
-   </listitem>
-   <listitem>
-    <para>
-     <citetitle>Developer's Guide</citetitle>: assorted information
-     for developers of <productname>PostgreSQL</> proper
-    </para>
-   </listitem>
-  </itemizedlist>
-
-  All books are available as HTML and Postscript.  The
-  <citetitle>Reference Manual</citetitle> contains reference entries which
-  are also shipped as man pages.
- </para>
-
- <para>
   <acronym>HTML</acronym> documentation and man pages are part of a
-  standard distribution and are installed by default.  Postscript
-  format documentation is available separately for download.
+  standard distribution and are installed by default.  PDF and
+  Postscript format documentation is available separately for
+  download.
  </para>
 
- <sect1>
+ <sect1 id="docguide-docbook">
   <title>DocBook</title>
   <para>
    The documentation sources are written in
@@ -115,7 +73,7 @@
  </sect1>
 
 
- <sect1 id="doc-toolsets">
+ <sect1 id="docguide-toolsets">
   <title>Tool Sets</title>
 
   <para>
@@ -211,18 +169,17 @@
    the various tools that are needed to process the documentation.
    These will be described below.  There may be some other packaged
    distributions for these tools. Please report package status to the
-   docs mailing list and we will include that information here.
+   documentation mailing list, and we will include that information
+   here.
   </para>
 
   <sect2>
    <title><productname>Linux</productname> <acronym>RPM</acronym> Installation</title>
 
    <para>
-    Many vendors provide a complete RPM set for DocBook processing in
-    their distribution, which is usually based on the <ulink
-    url="http://sources.redhat.com/docbook-tools/">docbook-tools</ulink>
-    effort at Red Hat Software.  Look for an <quote>SGML</quote>
-    option while installing, or the following packages:
+    Most vendors provide a complete RPM set for DocBook processing in
+    their distribution.  Look for an <quote>SGML</quote> option while
+    installing, or the following packages:
     <filename>sgml-common</filename>, <filename>docbook</filename>,
     <filename>stylesheets</filename>, <filename>openjade</filename>
     (or <filename>jade</filename>).  Possibly
@@ -475,8 +432,8 @@ CATALOG "docbook-dsssl--1.<replaceable>xx</>/catalog
      Because stylesheets change rather often, and it's sometimes
      beneficial to try out alternative versions,
      <productname>PostgreSQL</productname> doesn't use this catalog
-     entry.  See <xref linkend="doc-build"> for information about how
-     to select the stylesheets instead.
+     entry.  See <xref linkend="docguide-toolsets-configure"> for
+     information about how to select the stylesheets instead.
     </para>
    </sect3>
 
@@ -533,17 +490,15 @@ CATALOG "docbook-dsssl--1.<replaceable>xx</>/catalog
    </sect3>
 
   </sect2>
- </sect1>
 
-
- <sect1 id="doc-build">
-  <title>Building The Documentation</title>
+  <sect2 id="docguide-toolsets-configure">
+   <title>Detection by <command>configure</command></title>
 
   <para>
    Before you can build the documentation you need to run the
    <filename>configure</filename> script as you would when building
-   the programs themselves.  Check the output near the end of the run,
-   it should look something like this:
+   the PostgreSQL programs themselves.  Check the output near the end
+   of the run, it should look something like this:
 <screen>
 <computeroutput>
 checking for onsgmls... onsgmls
@@ -566,85 +521,46 @@ checking for sgmlspl... sgmlspl
    <filename>configure</filename> afterwards.
   </para>
 
+  </sect2>
+ </sect1>
+
+ <sect1 id="docguide-build">
+  <title>Building The Documentation</title>
+
   <para>
    Once you have everything set up, change to the directory
-   <filename>doc/src/sgml</filename> and run one of the following
-   commands: (Remember to use GNU make.)
-   <itemizedlist>
-    <listitem>
-     <para>
-      To build the <acronym>HTML</acronym> version of the
-      <citetitle>Administrator's Guide</citetitle>:
-<screen>
-<prompt>doc/src/sgml$ </prompt><userinput>gmake admin.html</userinput>
-</screen>
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      For the RTF version of the same:
-<screen>
-<prompt>doc/src/sgml$ </prompt><userinput>gmake admin.rtf</userinput>
-</screen>
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      To get a <acronym>DVI</acronym> version via
-      <productname>JadeTeX</productname>:
-<screen>
-<prompt>doc/src/sgml$ </prompt><userinput>gmake admin.dvi</userinput>
-</screen>
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      And Postscript from the <acronym>DVI</acronym>:
-<screen>
-<prompt>doc/src/sgml$ </prompt><userinput>gmake admin.ps</userinput>
-</screen>
-     </para>
-     <note>
-      <para>
-       The official Postscript format documentation is generated
-       differently.  See <xref linkend="doc-hardcopy"> below.
-      </para>
-     </note>
-    </listitem>
-   </itemizedlist>
-
-   The other books can be built with analogous commands by replacing
-   <literal>admin</literal> with one of <literal>developer</literal>,
-   <literal>programmer</literal>, <literal>tutorial</literal>, or
-   <literal>user</literal>.  Using <literal>postgres</literal> builds
-   an integrated version of all 5 books, which is practical since the
-   browser interface makes it easy to move around all of the
-   documentation by just clicking.
+   <filename>doc/src/sgml</filename> and run one of the commands
+   described in the following subsections to build the
+   documentation. (Remember to use GNU make.)
   </para>
 
   <sect2>
    <title>HTML</title>
 
    <para>
-    When building <acronym>HTML</acronym> documentation in
-    <filename>doc/src/sgml</filename>, some of the resulting files
-    will possibly (or quite certainly) have conflicting names between
-    books.  Therefore the files are not in that directory in the
-    regular distribution.  Instead, the files belonging to each book
-    are stored in a tar archive that is unpacked at installation time.
-    To create a set of <acronym>HTML</acronym> documentation packages
-    use the commands
+    To build the <acronym>HTML</acronym> version of the documentation:
+<screen>
+<prompt>doc/src/sgml$ </prompt><userinput>gmake html</userinput>
+</screen>
+    This is also the default target.
+   </para>
+
+   <para>
+    When the HTML documentation is built, the process also generates
+    the linking information for the index entries.  Thus, if you want
+    your documentation to have a concept index at the end, you need to
+    build the HTML documentation once, and then build the
+    documentation again in whatever format you like.
+   </para>
+
+   <para>
+    To allow for easier handling in the final distribution, the files
+    comprising the HTML documentation are stored in a tar archive that
+    is unpacked at installation time.  To create the
+    <acronym>HTML</acronym> documentation package, use the commands
 <programlisting>
 cd doc/src
-gmake tutorial.tar.gz
-gmake user.tar.gz
-gmake admin.tar.gz
-gmake programmer.tar.gz
 gmake postgres.tar.gz
-gmake install
 </programlisting>
     In the distribution, these archives live in the
     <filename>doc</filename> directory and are installed by default
@@ -652,118 +568,142 @@ gmake install
   </para>
  </sect2>
 
- <sect2 id="doc-manpages">
+ <sect2>
   <title>Manpages</title>
 
   <para>
    We use the <application>docbook2man</application> utility to
    convert <productname>DocBook</productname>
-   <sgmltag>REFENTRY</sgmltag> pages to *roff output suitable for man
+   <sgmltag>refentry</sgmltag> pages to *roff output suitable for man
    pages.  The man pages are also distributed as a tar archive,
-   similar to the <acronym>HTML</acronym> version.  To create the man page package, use the commands
+   similar to the <acronym>HTML</acronym> version.  To create the man
+   page package, use the commands
 <programlisting>
 cd doc/src
-gmake man
+gmake man.tar.gz
 </programlisting>
    which will result in a tar file being generated in the
    <filename>doc/src</filename> directory.
   </para>
 
   <para>
-   The man build leaves a lot of confusing output, and special care
-   must be taken to produce quality results.  There is still room for
-   improvement in this area.
+   To generate quality man pages, it might be necessary to use a
+   hacked version of the conversion utility or do some manual
+   postprocessing.  All man pages should be manually inspected before
+   distribution.
   </para>
  </sect2>
 
- <sect2 id="doc-hardcopy">
-  <title>Hardcopy Generation</title>
-
-  <para>
-   The hardcopy Postscript documentation is generated by converting the
-   <acronym>SGML</acronym> source code to <acronym>RTF</acronym>, then
-   importing into <productname>Applixware</productname>. 
-   After a little cleanup (see the following
-   section) the output is <quote>printed</quote> to a postscript file.
-  </para>
-
-<!--
-  <para>
-   Some figures were redrawn to avoid having bitmap
-   <acronym>GIF</acronym> files in the hardcopy documentation. One
-   figure, of the system catalogs, was sufficiently complex that there
-   was  not time to redraw it. It was converted to fit using the
-   following commands:
-
-   <programlisting>
-% convert -monochrome -v -geometry 500x500'>' catalogs.ps catalogs.gif
-% convert -v -crop 400x500 catalogs.gif catalogs-cropped.gif
-   </programlisting>
-
-  </para>
--->
+  <sect2>
+   <title>Print Output via <application>JadeTex</application></title>
 
    <para>
-    Several areas are addressed while generating Postscript
-    hardcopy, including RTF repair, ToC generation, and page break
-    adjustments. 
+    If you want to use <application>JadeTex</application> to produce a
+    printable rendition of the documentation, you can use one of the
+    following commands:
+
+    <itemizedlist>
+     <listitem>
+      <para>
+       To make a <acronym>DVI</acronym> version:
+<screen>
+<prompt>doc/src/sgml$ </prompt><userinput>gmake postgres.dvi</userinput>
+</screen>
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       To generate Postscript from the <acronym>DVI</acronym>:
+<screen>
+<prompt>doc/src/sgml$ </prompt><userinput>gmake postgres.ps</userinput>
+</screen>
+      </para>
+     </listitem>
+  
+     <listitem>
+      <para>
+       To make a <acronym>PDF</acronym>:
+<screen>
+<prompt>doc/src/sgml$ </prompt><userinput>gmake postgres.pdf</userinput>
+</screen>
+       (Of course you can also make a <acronym>PDF</acronym> version
+       from the Postscript, but if you generate <acronym>PDF</acronym>
+       directly, it will have hyperlinks and other enhanced features.)
+      </para>
+     </listitem>
+    </itemizedlist>
    </para>
+  </sect2>
+
+  <sect2>
+   <title>Print Output via <acronym>RTF</acronym></title>
+
+   <para>
+    You can also create a printable version of the PostgreSQL
+    documentation by converting it to <acronym>RTF</acronym> and
+    applying minor formatting corrections using an office suite.
+    Depending on the capabilities of the particular office suite, you
+    can then convert the documentation to Postscript of
+    <acronym>PDF</acronym>.  The procedure below illustrates this
+    process using <productname>Applixware</productname>.
+   </para>
+
+   <note>
+    <para>
+     It appears that current versions of the PostgreSQL documentation
+     trigger some bug in or exceed the size limit of OpenJade.  If the
+     build process of the <acronym>RTF</acronym> version hangs for a
+     long time and the output file still has size 0, then you may have
+     hit that problem.  (But keep in mind that a normal build takes 5
+     to 10 minutes, so don't abort too soon.)
+    </para>
+   </note>
 
    <procedure>
     <title><productname>Applixware</productname> <acronym>RTF</acronym> Cleanup</title>
 
     <para>
-     <application>jade</application>, an integral part of the
-     hardcopy procedure, omits specifying a default style for body
-     text. In the past, this undiagnosed problem led to a long process
-     of Table of Contents (ToC) generation. However, with great help
-     from the <productname>Applixware</productname> folks the symptom was diagnosed and a
-     workaround is available.
+     <application>OpenJade</application> omits specifying a default
+     style for body text. In the past, this undiagnosed problem led to
+     a long process of table of contents generation. However, with
+     great help from the <productname>Applixware</productname> folks
+     the symptom was diagnosed and a workaround is available.
     </para>
 
     <step performance="required">
      <para>
-      Generate the <acronym>RTF</acronym> input by typing (for example):
-      <programlisting>
-% cd doc/src/sgml
-% make tutorial.rtf
-      </programlisting>
+      Generate the <acronym>RTF</acronym> version by typing:
+<screen>
+<prompt>doc/src/sgml$ </prompt><userinput>gmake postgres.rtf</userinput>
+</screen>
      </para>
     </step>
 
-
     <step performance="required">
      <para>
-      Repair the RTF file to correctly specify all
-      styles, in particular the default style. If the document
-       contains <sgmltag>REFENTRY</sgmltag> sections, one must also
-       replace formatting hints which tie a
-       <emphasis>preceding</emphasis> paragraph to the current
-       paragraph, and instead tie the current paragraph to the
-       following one. A utility, <application>fixrtf</application> is
-       available in 
-       <filename>doc/src/sgml</filename> to accomplish these repairs:
+      Repair the RTF file to correctly specify all styles, in
+      particular the default style. If the document contains
+      <sgmltag>refentry</sgmltag> sections, one must also replace
+      formatting hints which tie a preceding paragraph to the current
+      paragraph, and instead tie the current paragraph to the
+      following one. A utility, <command>fixrtf</command>, is
+      available in <filename>doc/src/sgml</filename> to accomplish
+      these repairs:
 
-       <programlisting>
-% cd doc/src/sgml
-% fixrtf tutorial.rtf
-       </programlisting>
+<screen>
+<prompt>doc/src/sgml$ </prompt><userinput>./fixrtf --refentry postgres.rtf</userinput>
+</screen>
+     </para>
 
-       or
-
-       <programlisting>
-% cd doc/src/sgml
-% fixrtf --refentry reference.rtf
-       </programlisting>
-      </para>
-
-      <para>
-      The script adds <literal>{\s0 Normal;}</literal> as
-      the zero-th style in the document. According to <productname>Applixware</productname>, the
-      RTF standard would prohibit adding an implicit zero-th style,
-      though M$Word happens to handle this case. For repairing
-       <sgmltag>REFENTRY</sgmltag> sections, the script replaces
-       <literal>\keepn</literal> tags with <literal>\keep</literal>.
+     <para>
+      The script adds <literal>{\s0 Normal;}</literal> as the zeroth
+      style in the document. According to
+      <productname>Applixware</productname>, the RTF standard would
+      prohibit adding an implicit zeroth style, though Microsoft Word
+      happens to handle this case. For repairing
+      <sgmltag>refentry</sgmltag> sections, the script replaces
+      <literal>\keepn</literal> tags with <literal>\keep</literal>.
      </para>
     </step>
 
@@ -776,92 +716,70 @@ gmake man
 
     <step performance="required">
      <para>
-      Generate a new ToC using <productname>Applixware</productname>.
+      Generate a new table of contents (ToC) using
+      <productname>Applixware</productname>.
      </para>
 
      <substeps>
       <step>
        <para>
-	Select the existing ToC lines, from the beginning of the first
-	character on the first line to the last character of the last
-	line.
+        Select the existing ToC lines, from the beginning of the first
+        character on the first line to the last character of the last
+        line.
        </para>
       </step>
 
       <step>
        <para>
-	Build a new ToC using
-	<literal>Tools.BookBuilding.CreateToC</literal>. Select the
-	first three levels of headers for inclusion in the ToC. 
-	This will
-	replace the existing lines imported in the RTF with a native
-	<productname>Applixware</productname> ToC.
+        Build a new ToC using
+        <menuchoice><guimenu>Tools</guimenu><guisubmenu>Book
+        Building</guisubmenu><guimenuitem>Create Table of
+        Contents</guimenuitem></menuchoice>. Select the first three
+        levels of headers for inclusion in the ToC. This will replace
+        the existing lines imported in the RTF with a native
+        <productname>Applixware</productname> ToC.
        </para>
       </step>
 
       <step>
        <para>
-	Adjust the ToC formatting by using
-	<literal>Format.Style</literal>, selecting each of the three
-	ToC styles, and adjusting the indents for <literal>First</literal> and
-	<literal>Left</literal>. Use the following values:
+        Adjust the ToC formatting by using
+        <menuchoice><guimenu>Format</guimenu><guimenuitem>Style</guimenuitem></menuchoice>,
+        selecting each of the three ToC styles, and adjusting the
+        indents for <literal>First</literal> and
+        <literal>Left</literal>. Use the following values:
 
-	<table>
-	 <title>Indent Formatting for Table of Contents</title>
-	 <tgroup cols="3">
-	  <thead>
-	   <row>
-	    <entry>
-	     Style
-	    </entry>
-	    <entry>
-	     First Indent (inches)
-	    </entry>
-	    <entry>
-	     Left Indent (inches)
-	    </entry>
-	   </row>
-	  </thead>
+        <informaltable>
+         <tgroup cols="3">
+          <thead>
+           <row>
+            <entry>Style</entry>
+            <entry>First Indent (inches)</entry>
+            <entry>Left Indent (inches)</entry>
+           </row>
+          </thead>
 
-	  <tbody>
-	   <row>
-	    <entry>
-	     <literal>TOC-Heading 1</literal>
-	    </entry>
-	    <entry>
-	     <literal>0.4</literal>
-	    </entry>
-	    <entry>
-	     <literal>0.4</literal>
-	    </entry>
-	   </row>
+          <tbody>
+           <row>
+            <entry><literal>TOC-Heading 1</literal></entry>
+            <entry><literal>0.4</literal></entry>
+            <entry><literal>0.4</literal></entry>
+           </row>
 
-	   <row>
-	    <entry>
-	     <literal>TOC-Heading 2</literal>
-	    </entry>
-	    <entry>
-	     <literal>0.8</literal>
-	    </entry>
-	    <entry>
-	     <literal>0.8</literal>
-	    </entry>
-	   </row>
+           <row>
+            <entry><literal>TOC-Heading 2</literal></entry>
+            <entry><literal>0.8</literal></entry>
+            <entry><literal>0.8</literal></entry>
+           </row>
 
-	   <row>
-	    <entry>
-	     <literal>TOC-Heading 3</literal>
-	    </entry>
-	    <entry>
-	     <literal>1.2</literal>
-	    </entry>
-	    <entry>
-	     <literal>1.2</literal>
-	    </entry>
-	   </row>
-	  </tbody>
-	 </tgroup>
-	</table>
+           <row>
+            <entry><literal>TOC-Heading 3</literal></entry>
+            <entry><literal>1.2</literal></entry>
+            <entry><literal>1.2</literal></entry>
+           </row>
+          </tbody>
+         </tgroup>
+        </informaltable>
        </para>
       </step>
      </substeps>
@@ -873,32 +791,15 @@ gmake man
 
       <itemizedlist>
        <listitem>
-	<para>
-	 Adjust page breaks.
-	</para>
+        <para>
+         Adjust page breaks.
+        </para>
        </listitem>
 
        <listitem>
-	<para>
-	 Adjust table column widths.
-	</para>
-       </listitem>
-
-       <listitem>
-	<para>
-	 Insert figures into the document. Center each figure on the page using
-	 the centering margins button on the <productname>Applixware</productname> toolbar.
-
-	 <note>
-	  <para>
-	   Not all documents have figures.
-	   You can grep the <acronym>SGML</acronym> source files for
-	   the string <literal>graphic</literal> to identify those parts of the
-	   documentation that may have figures. A few figures are replicated in
-	   various parts of the documentation.
-	  </para>
-	 </note>
-	</para>
+        <para>
+         Adjust table column widths.
+        </para>
        </listitem>
       </itemizedlist>
      </para>
@@ -907,23 +808,10 @@ gmake man
     <step performance="required">
      <para>
       Replace the right-justified page numbers in the Examples and
-      Figures portions of the ToC with
-      correct values. This only takes a few minutes per document.
+      Figures portions of the ToC with correct values. This only takes
+      a few minutes.
      </para>
     </step>
-
-<!--
-Later stylesheets seem to not need this adjustment - thomas 2001-11-29
-    <step performance="required">
-     <para>
-      If a bibliography is present, remove the <firstterm>short
-       form</firstterm> reference title from each entry. The
-      <productname>DocBook</productname> stylesheets from Norm Walsh
-      seem to print these out, even though this is a subset of the
-      information immediately following.
-     </para>
-    </step>
--->
 
     <step performance="optional">
      <para>
@@ -938,39 +826,41 @@ Later stylesheets seem to not need this adjustment - thomas 2001-11-29
 
       <substeps>
        <step>
-	<para>
-	 Select the ToC field.
-	</para>
+        <para>
+         Select the ToC field.
+        </para>
        </step>
 
        <step>
-	<para>
-	 Select
-	 <literal>Tools->Book Building->Create Table of
-	  Contents</literal>. 
-	</para>
+        <para>
+         Select <menuchoice><guimenu>Tools</guimenu><guisubmenu>Book
+         Building</guisubmenu><guimenuitem>Create Table of
+         Contents</guimenuitem></menuchoice>.
+        </para>
        </step>
 
        <step>
-	<para>
-	 Unbind the ToC by selecting
-	 <literal>Tools->Field Editing->Unprotect</literal>.
-	</para>
+        <para>
+         Unbind the ToC by selecting
+         <menuchoice><guimenu>Tools</guimenu><guisubmenu>Field
+         Editing</guisubmenu><guimenuitem>Unprotect</guimenuitem></menuchoice>.
+        </para>
        </step>
 
        <step>
-	<para>
-	 Delete the first line in the ToC, which is an entry for the
-	 ToC itself.
-	</para>
+        <para>
+         Delete the first line in the ToC, which is an entry for the
+         ToC itself.
+        </para>
        </step>
       </substeps>
     </step>
 
     <step performance="required">
      <para>
-      Save the document as native <productname>Applixware Words</productname> format to allow easier last
-      minute editing later.
+      Save the document as native <productname>Applixware
+      Words</productname> format to allow easier last minute editing
+      later.
      </para>
     </step>
 
@@ -978,13 +868,6 @@ Later stylesheets seem to not need this adjustment - thomas 2001-11-29
      <para>
       <quote>Print</quote> the document
       to a file in Postscript format.
-     </para>
-    </step>
-
-    <step performance="required">
-     <para>
-      Compress the Postscript file using <application>gzip</application>.
-      Place the compressed file into the <filename>doc</filename> directory.
      </para>
     </step>
    </procedure>
@@ -996,16 +879,16 @@ Later stylesheets seem to not need this adjustment - thomas 2001-11-29
    <para>
     Several files are distributed as plain text, for reading during
     the installation process. The <filename>INSTALL</filename> file
-    corresponds to the chapter in the <citetitle>Administrator's
-    Guide</citetitle>, with some minor changes to account for the
-    different context.  To recreate the file, change to the directory
-    <filename>doc/src/sgml</filename> and enter <userinput>gmake
-    INSTALL</userinput>.  This will create a file
-    <filename>INSTALL.html</filename> that can be saved as text with
-    <productname>Netscape Navigator</productname> and put into the
-    place of the existing file.  <productname>Netscape</productname>
-    seems to offer the best quality for <acronym>HTML</acronym> to
-    text conversions (over <application>lynx</application> and
+    corresponds to <xref linkend="installation">, with some minor
+    changes to account for the different context.  To recreate the
+    file, change to the directory <filename>doc/src/sgml</filename>
+    and enter <userinput>gmake INSTALL</userinput>.  This will create
+    a file <filename>INSTALL.html</filename> that can be saved as text
+    with <productname>Netscape Navigator</productname> and put into
+    the place of the existing file.
+    <productname>Netscape</productname> seems to offer the best
+    quality for <acronym>HTML</acronym> to text conversions (over
+    <application>lynx</application> and
     <application>w3m</application>).
    </para>
 
@@ -1015,96 +898,24 @@ Later stylesheets seem to not need this adjustment - thomas 2001-11-29
     file <filename>src/test/regress/README</filename> the command is
     <userinput>gmake regress_README</userinput>.
    </para>
+  </sect2>
 
-<!--
-  * This is how you can create text files via RTF and ApplixWare,
-  * for historical reference.
+  <sect2>
+   <title>Syntax Check</title>
 
-   <procedure>
-    <title>Plain Text Generation</title>
-
-    <para>
-     Both <filename>INSTALL</filename> and
-     <filename>HISTORY</filename> are generated from existing
-     <acronym>SGML</acronym> sources. They are extracted from the same 
-     intermediate <acronym>RTF</acronym> file.
-    </para>
-
-    <step performance="required">
-     <para>
-      Generate <acronym>RTF</acronym> by typing:
-      <programlisting>
-% cd doc/src/sgml
-% make installation.rtf
-      </programlisting>
-     </para>
-    </step>
-      
-    <step performance="required">
-     <para>
-      Import <filename>installation.rtf</filename> into
-      <productname>Applix Words</productname>.
-     </para>
-    </step>
-
-    <step performance="required">
-     <para>
-      Set the page width and margins.
-     </para>
-
-     <substeps>
-      <step performance="required">
-       <para>
-	Adjust the page width in File.PageSetup to 10 inches.
-       </para>
-      </step>
-
-      <step performance="required">
-       <para>
-	Select all text.
-	Adjust the right margin using the ruler to 9.5 inches. This
-	will give a maximum column width of 79 characters, within the
-	80 columns upper limit goal.
-       </para>
-      </step>
-     </substeps>
-    </step>
-
-    <step performance="required">
-     <para>
-      Lop off the parts of the document that are not needed.
-     </para>
-
-     <para>
-      For <filename>INSTALL</filename>, remove all release notes from
-      the end of the text, except for those from the current release.
-      For <filename>HISTORY</filename>, remove all text up to the
-      release notes, preserving and modifying the title and ToC.
-     </para>
-    </step>
-
-    <step performance="required">
-     <para>
-      Export the result as <literal>ASCII Layout</literal>.
-     </para>
-    </step>
-
-    <step performance="required">
-     <para>
-      Using emacs or vi, clean up the tabular information in
-      <filename>INSTALL</filename>. Remove the <literal>mailto</literal>
-      <acronym>URLs</acronym> for the porting contributors to shrink
-      the column heights.
-     </para>
-    </step>
-   </procedure>
--->
-
+   <para>
+    Building the documentation can take very long.  But there is a
+    method to just check the correct syntax of the documentation
+    files, which only takes a few seconds:
+<screen>
+<prompt>doc/src/sgml$ </prompt><userinput>gmake check</userinput>
+</screen>
+   </para>
   </sect2>
  </sect1>
 
 
- <sect1 id="doc-sources">
+ <sect1 id="docguide-authoring">
   <title>Documentation Authoring</title>
 
    <para>
@@ -1222,7 +1033,7 @@ End:
      the first line look like this:
 
 <programlisting>
-&lt;!doctype appendix PUBLIC "-//OASIS//DTD DocBook V3.1//EN"&gt;
+&lt;!DOCTYPE appendix PUBLIC "-//OASIS//DTD DocBook V3.1//EN"&gt;
 </programlisting>
 
      This means that anything and everything that reads
@@ -1255,7 +1066,7 @@ End:
  </sect1>
 
 
- <sect1 id="doc-style">
+ <sect1 id="docguide-style">
   <title>Style Guide</title>
 
   <sect2>
