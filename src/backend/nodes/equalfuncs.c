@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.185 2003/02/09 06:56:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.186 2003/02/10 04:44:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -730,7 +730,7 @@ _equalCreateStmt(CreateStmt *a, CreateStmt *b)
 static bool
 _equalDefineStmt(DefineStmt *a, DefineStmt *b)
 {
-	COMPARE_SCALAR_FIELD(defType);
+	COMPARE_SCALAR_FIELD(kind);
 	COMPARE_NODE_FIELD(defnames);
 	COMPARE_NODE_FIELD(definition);
 
@@ -898,7 +898,7 @@ _equalUnlistenStmt(UnlistenStmt *a, UnlistenStmt *b)
 static bool
 _equalTransactionStmt(TransactionStmt *a, TransactionStmt *b)
 {
-	COMPARE_SCALAR_FIELD(command);
+	COMPARE_SCALAR_FIELD(kind);
 	COMPARE_NODE_FIELD(options);
 
 	return true;
@@ -1187,7 +1187,7 @@ _equalDropGroupStmt(DropGroupStmt *a, DropGroupStmt *b)
 static bool
 _equalReindexStmt(ReindexStmt *a, ReindexStmt *b)
 {
-	COMPARE_SCALAR_FIELD(reindexType);
+	COMPARE_SCALAR_FIELD(kind);
 	COMPARE_NODE_FIELD(relation);
 	COMPARE_STRING_FIELD(name);
 	COMPARE_SCALAR_FIELD(force);
@@ -1276,7 +1276,7 @@ _equalDeallocateStmt(DeallocateStmt *a, DeallocateStmt *b)
 static bool
 _equalAExpr(A_Expr *a, A_Expr *b)
 {
-	COMPARE_SCALAR_FIELD(oper);
+	COMPARE_SCALAR_FIELD(kind);
 	COMPARE_NODE_FIELD(name);
 	COMPARE_NODE_FIELD(lexpr);
 	COMPARE_NODE_FIELD(rexpr);

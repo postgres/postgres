@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: makefuncs.h,v 1.43 2002/12/12 15:49:40 tgl Exp $
+ * $Id: makefuncs.h,v 1.44 2003/02/10 04:44:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,10 +17,11 @@
 #include "nodes/parsenodes.h"
 
 
-extern A_Expr *makeA_Expr(int oper, List *name, Node *lexpr, Node *rexpr);
+extern A_Expr *makeA_Expr(A_Expr_Kind kind, List *name,
+						  Node *lexpr, Node *rexpr);
 
-extern A_Expr *makeSimpleA_Expr(int oper, const char *name,
-				 Node *lexpr, Node *rexpr);
+extern A_Expr *makeSimpleA_Expr(A_Expr_Kind kind, const char *name,
+								Node *lexpr, Node *rexpr);
 
 extern Var *makeVar(Index varno,
 		AttrNumber varattno,

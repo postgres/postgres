@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.314 2003/01/01 21:57:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.315 2003/02/10 04:44:46 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -44,7 +44,6 @@
 #include "optimizer/cost.h"
 #include "optimizer/planner.h"
 #include "parser/analyze.h"
-#include "parser/parse.h"
 #include "parser/parser.h"
 #include "rewrite/rewriteHandler.h"
 #include "storage/ipc.h"
@@ -666,7 +665,8 @@ pg_exec_query_string(StringInfo query_string,	/* string to execute */
 			{
 				TransactionStmt *stmt = (TransactionStmt *) parsetree;
 
-				if (stmt->command == COMMIT || stmt->command == ROLLBACK)
+				if (stmt->kind == TRANS_STMT_COMMIT ||
+					stmt->kind == TRANS_STMT_ROLLBACK)
 					allowit = true;
 			}
 
@@ -1781,7 +1781,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.314 $ $Date: 2003/01/01 21:57:05 $\n");
+		puts("$Revision: 1.315 $ $Date: 2003/02/10 04:44:46 $\n");
 	}
 
 	/*
@@ -2212,21 +2212,21 @@ CreateCommandTag(Node *parsetree)
 			{
 				TransactionStmt *stmt = (TransactionStmt *) parsetree;
 
-				switch (stmt->command)
+				switch (stmt->kind)
 				{
-					case BEGIN_TRANS:
+					case TRANS_STMT_BEGIN:
 						tag = "BEGIN";
 						break;
 
-					case START:
+					case TRANS_STMT_START:
 						tag = "START TRANSACTION";
 						break;
 
-					case COMMIT:
+					case TRANS_STMT_COMMIT:
 						tag = "COMMIT";
 						break;
 
-					case ROLLBACK:
+					case TRANS_STMT_ROLLBACK:
 						tag = "ROLLBACK";
 						break;
 
@@ -2329,15 +2329,15 @@ CreateCommandTag(Node *parsetree)
 			break;
 
 		case T_DefineStmt:
-			switch (((DefineStmt *) parsetree)->defType)
+			switch (((DefineStmt *) parsetree)->kind)
 			{
-				case AGGREGATE:
+				case DEFINE_STMT_AGGREGATE:
 					tag = "CREATE AGGREGATE";
 					break;
-				case OPERATOR:
+				case DEFINE_STMT_OPERATOR:
 					tag = "CREATE OPERATOR";
 					break;
-				case TYPE_P:
+				case DEFINE_STMT_TYPE:
 					tag = "CREATE TYPE";
 					break;
 				default:

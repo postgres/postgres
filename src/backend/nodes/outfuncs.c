@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.198 2003/02/09 06:56:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.199 2003/02/10 04:44:45 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -27,7 +27,6 @@
 #include "nodes/parsenodes.h"
 #include "nodes/plannodes.h"
 #include "nodes/relation.h"
-#include "parser/parse.h"
 #include "utils/datum.h"
 
 
@@ -1259,19 +1258,27 @@ _outAExpr(StringInfo str, A_Expr *node)
 {
 	WRITE_NODE_TYPE("AEXPR");
 
-	switch (node->oper)
+	switch (node->kind)
 	{
-		case AND:
+		case AEXPR_OP:
+			appendStringInfo(str, " ");
+			WRITE_NODE_FIELD(name);
+			break;
+		case AEXPR_AND:
 			appendStringInfo(str, " AND");
 			break;
-		case OR:
+		case AEXPR_OR:
 			appendStringInfo(str, " OR");
 			break;
-		case NOT:
+		case AEXPR_NOT:
 			appendStringInfo(str, " NOT");
 			break;
-		case OP:
-			appendStringInfo(str, " ");
+		case AEXPR_DISTINCT:
+			appendStringInfo(str, " DISTINCT ");
+			WRITE_NODE_FIELD(name);
+			break;
+		case AEXPR_OF:
+			appendStringInfo(str, " OF ");
 			WRITE_NODE_FIELD(name);
 			break;
 		default:

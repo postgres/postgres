@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.228 2003/02/09 06:56:28 tgl Exp $
+ * $Id: parsenodes.h,v 1.229 2003/02/10 04:44:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -165,15 +165,25 @@ typedef struct ParamRef
 } ParamRef;
 
 /*
- * A_Expr - binary expressions
+ * A_Expr - infix, prefix, and postfix expressions
  */
+typedef enum A_Expr_Kind
+{
+	AEXPR_OP,					/* normal operator */
+	AEXPR_AND,					/* booleans - name field is unused */
+	AEXPR_OR,
+	AEXPR_NOT,
+	AEXPR_DISTINCT,				/* IS DISTINCT FROM - name must be "=" */
+	AEXPR_OF					/* IS (not) OF - name must be "=" or "!=" */
+} A_Expr_Kind;
+
 typedef struct A_Expr
 {
 	NodeTag		type;
-	int			oper;			/* type of operation (OP,OR,AND,NOT) */
+	A_Expr_Kind	kind;			/* see above */
 	List	   *name;			/* possibly-qualified name of operator */
-	Node	   *lexpr;			/* left argument */
-	Node	   *rexpr;			/* right argument */
+	Node	   *lexpr;			/* left argument, or NULL if none */
+	Node	   *rexpr;			/* right argument, or NULL if none */
 } A_Expr;
 
 /*
@@ -1058,13 +1068,20 @@ typedef struct CreateSeqStmt
 } CreateSeqStmt;
 
 /* ----------------------
- *		Create {Operator|Type|Aggregate} Statement
+ *		Create {Aggregate|Operator|Type} Statement
  * ----------------------
  */
+typedef enum DefineStmtKind
+{
+	DEFINE_STMT_AGGREGATE,
+	DEFINE_STMT_OPERATOR,
+	DEFINE_STMT_TYPE
+} DefineStmtKind;
+
 typedef struct DefineStmt
 {
 	NodeTag		type;
-	int			defType;		/* OPERATOR|TYPE_P|AGGREGATE */
+	DefineStmtKind kind;		/* see above */
 	List	   *defnames;		/* qualified name (list of Value strings) */
 	List	   *definition;		/* a list of DefElem */
 } DefineStmt;
@@ -1196,11 +1213,18 @@ typedef struct CommentStmt
  *		Fetch Statement
  * ----------------------
  */
+typedef enum FetchDirection
+{
+	FETCH_FORWARD,
+	FETCH_BACKWARD
+	/* ABSOLUTE someday? */
+} FetchDirection;
+
 typedef struct FetchStmt
 {
 	NodeTag		type;
-	int			direction;		/* FORWARD or BACKWARD */
-	long		howMany;		/* amount to fetch */
+	FetchDirection direction;	/* see above */
+	long		howMany;		/* number of rows */
 	char	   *portalname;		/* name of portal (cursor) */
 	bool		ismove;			/* TRUE if MOVE */
 } FetchStmt;
@@ -1357,11 +1381,19 @@ typedef struct UnlistenStmt
  *		{Begin|Commit|Rollback} Transaction Statement
  * ----------------------
  */
+typedef enum TransactionStmtKind
+{
+	TRANS_STMT_BEGIN,
+	TRANS_STMT_START,			/* semantically identical to BEGIN */
+	TRANS_STMT_COMMIT,
+	TRANS_STMT_ROLLBACK
+} TransactionStmtKind;
+
 typedef struct TransactionStmt
 {
 	NodeTag		type;
-	int			command;		/* BEGIN_TRANS|START|COMMIT|ROLLBACK */
-	List	   *options;
+	TransactionStmtKind kind;	/* see above */
+	List	   *options;		/* for BEGIN/START only */
 } TransactionStmt;
 
 /* ----------------------
@@ -1544,10 +1576,17 @@ typedef struct ConstraintsSetStmt
  *		REINDEX Statement
  * ----------------------
  */
+typedef enum ReindexStmtKind
+{
+	REINDEX_INDEX,
+	REINDEX_TABLE,
+	REINDEX_DATABASE
+} ReindexStmtKind;
+
 typedef struct ReindexStmt
 {
 	NodeTag		type;
-	int			reindexType;	/* INDEX|TABLE|DATABASE */
+	ReindexStmtKind kind;		/* see above */
 	RangeVar   *relation;		/* Table or index to reindex */
 	const char *name;			/* name of database to reindex */
 	bool		force;

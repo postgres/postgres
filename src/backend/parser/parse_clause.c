@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.105 2003/02/09 06:56:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.106 2003/02/10 04:44:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,6 @@
 #include "optimizer/tlist.h"
 #include "optimizer/var.h"
 #include "parser/analyze.h"
-#include "parser/parse.h"
 #include "parser/parsetree.h"
 #include "parser/parse_clause.h"
 #include "parser/parse_coerce.h"
@@ -263,7 +262,7 @@ transformJoinUsingClause(ParseState *pstate, List *leftVars, List *rightVars)
 		Node	   *rvar = (Node *) lfirst(rvars);
 		A_Expr	   *e;
 
-		e = makeSimpleA_Expr(OP, "=", copyObject(lvar), copyObject(rvar));
+		e = makeSimpleA_Expr(AEXPR_OP, "=", copyObject(lvar), copyObject(rvar));
 
 		if (result == NULL)
 			result = (Node *) e;
@@ -271,7 +270,7 @@ transformJoinUsingClause(ParseState *pstate, List *leftVars, List *rightVars)
 		{
 			A_Expr	   *a;
 
-			a = makeA_Expr(AND, NIL, result, (Node *) e);
+			a = makeA_Expr(AEXPR_AND, NIL, result, (Node *) e);
 			result = (Node *) a;
 		}
 

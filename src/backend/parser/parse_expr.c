@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.143 2003/02/09 06:56:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.144 2003/02/10 04:44:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,6 @@
 #include "nodes/plannodes.h"
 #include "parser/analyze.h"
 #include "parser/gramparse.h"
-#include "parser/parse.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_func.h"
@@ -178,9 +177,9 @@ transformExpr(ParseState *pstate, Node *expr)
 			{
 				A_Expr	   *a = (A_Expr *) expr;
 
-				switch (a->oper)
+				switch (a->kind)
 				{
-					case OP:
+					case AEXPR_OP:
 						{
 							/*
 							 * Special-case "foo = NULL" and "NULL = foo"
@@ -219,7 +218,7 @@ transformExpr(ParseState *pstate, Node *expr)
 							}
 						}
 						break;
-					case AND:
+					case AEXPR_AND:
 						{
 							Node	   *lexpr = transformExpr(pstate,
 															  a->lexpr);
@@ -234,7 +233,7 @@ transformExpr(ParseState *pstate, Node *expr)
 																	 rexpr));
 						}
 						break;
-					case OR:
+					case AEXPR_OR:
 						{
 							Node	   *lexpr = transformExpr(pstate,
 															  a->lexpr);
@@ -249,7 +248,7 @@ transformExpr(ParseState *pstate, Node *expr)
 																	 rexpr));
 						}
 						break;
-					case NOT:
+					case AEXPR_NOT:
 						{
 							Node	   *rexpr = transformExpr(pstate,
 															  a->rexpr);
@@ -260,7 +259,7 @@ transformExpr(ParseState *pstate, Node *expr)
 														   makeList1(rexpr));
 						}
 						break;
-					case DISTINCT:
+					case AEXPR_DISTINCT:
 						{
 							Node	   *lexpr = transformExpr(pstate,
 															  a->lexpr);
@@ -278,18 +277,17 @@ transformExpr(ParseState *pstate, Node *expr)
 							NodeSetTag(result, T_DistinctExpr);
 						}
 						break;
-					case OF:
+					case AEXPR_OF:
 						{
+							/*
+							 * Checking an expression for match to type.
+							 * Will result in a boolean constant node.
+							 */
 							List	   *telem;
 							A_Const    *n;
 							Oid			ltype,
 										rtype;
 							bool		matched = FALSE;
-
-							/*
-							 * Checking an expression for match to type.
-							 * Will result in a boolean constant node.
-							 */
 							Node	   *lexpr = transformExpr(pstate,
 															  a->lexpr);
 
@@ -530,7 +528,7 @@ transformExpr(ParseState *pstate, Node *expr)
 					if (c->arg != NULL)
 					{
 						/* shorthand form was specified, so expand... */
-						warg = (Node *) makeSimpleA_Expr(OP, "=",
+						warg = (Node *) makeSimpleA_Expr(AEXPR_OP, "=",
 														 (Node *) c->arg,
 														 warg);
 					}

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.190 2003/01/27 00:48:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.191 2003/02/10 04:44:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,7 +42,6 @@
 #include "commands/view.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
-#include "parser/parse.h"
 #include "parser/parse_clause.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_type.h"
@@ -261,9 +260,9 @@ ProcessUtility(Node *parsetree,
 			{
 				TransactionStmt *stmt = (TransactionStmt *) parsetree;
 
-				switch (stmt->command)
+				switch (stmt->kind)
 				{
-					case BEGIN_TRANS:
+					case TRANS_STMT_BEGIN:
 						BeginTransactionBlock();
 						break;
 
@@ -272,7 +271,7 @@ ProcessUtility(Node *parsetree,
 						 * Identical to BEGIN, except that it takes a few
 						 * additional options.
 						 */
-					case START:
+					case TRANS_STMT_START:
 						{
 							BeginTransactionBlock();
 
@@ -295,11 +294,11 @@ ProcessUtility(Node *parsetree,
 						}
 						break;
 
-					case COMMIT:
+					case TRANS_STMT_COMMIT:
 						EndTransactionBlock();
 						break;
 
-					case ROLLBACK:
+					case TRANS_STMT_ROLLBACK:
 						UserAbortTransactionBlock();
 						break;
 				}
@@ -320,17 +319,10 @@ ProcessUtility(Node *parsetree,
 		case T_FetchStmt:
 			{
 				FetchStmt  *stmt = (FetchStmt *) parsetree;
-				char	   *portalName = stmt->portalname;
-				bool		forward;
-				long		count;
 
-				forward = (bool) (stmt->direction == FORWARD);
-
-				/*
-				 * parser ensures that count is >= 0
-				 */
-				count = stmt->howMany;
-				PerformPortalFetch(portalName, forward, count,
+				PerformPortalFetch(stmt->portalname,
+								   stmt->direction == FETCH_FORWARD,
+								   stmt->howMany,
 								   (stmt->ismove) ? None : dest,
 								   completionTag);
 			}
@@ -693,16 +685,16 @@ ProcessUtility(Node *parsetree,
 			{
 				DefineStmt *stmt = (DefineStmt *) parsetree;
 
-				switch (stmt->defType)
+				switch (stmt->kind)
 				{
-					case OPERATOR:
+					case DEFINE_STMT_AGGREGATE:
+						DefineAggregate(stmt->defnames, stmt->definition);
+						break;
+					case DEFINE_STMT_OPERATOR:
 						DefineOperator(stmt->defnames, stmt->definition);
 						break;
-					case TYPE_P:
+					case DEFINE_STMT_TYPE:
 						DefineType(stmt->defnames, stmt->definition);
-						break;
-					case AGGREGATE:
-						DefineAggregate(stmt->defnames, stmt->definition);
 						break;
 				}
 			}
@@ -981,17 +973,17 @@ ProcessUtility(Node *parsetree,
 			{
 				ReindexStmt *stmt = (ReindexStmt *) parsetree;
 
-				switch (stmt->reindexType)
+				switch (stmt->kind)
 				{
-					case INDEX:
+					case REINDEX_INDEX:
 						CheckOwnership(stmt->relation, false);
 						ReindexIndex(stmt->relation, stmt->force);
 						break;
-					case TABLE:
+					case REINDEX_TABLE:
 						CheckOwnership(stmt->relation, false);
 						ReindexTable(stmt->relation, stmt->force);
 						break;
-					case DATABASE:
+					case REINDEX_DATABASE:
 						ReindexDatabase(stmt->name, stmt->force, false);
 						break;
 				}

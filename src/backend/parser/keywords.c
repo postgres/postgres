@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.133 2003/02/03 14:04:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.134 2003/02/10 04:44:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,7 @@
  */
 static const ScanKeyword ScanKeywords[] = {
 	/* name, value */
-	{"abort", ABORT_TRANS},
+	{"abort", ABORT_P},
 	{"absolute", ABSOLUTE},
 	{"access", ACCESS},
 	{"action", ACTION},
@@ -51,7 +51,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"authorization", AUTHORIZATION},
 	{"backward", BACKWARD},
 	{"before", BEFORE},
-	{"begin", BEGIN_TRANS},
+	{"begin", BEGIN_P},
 	{"between", BETWEEN},
 	{"bigint", BIGINT},
 	{"binary", BINARY},
@@ -117,7 +117,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"else", ELSE},
 	{"encoding", ENCODING},
 	{"encrypted", ENCRYPTED},
-	{"end", END_TRANS},
+	{"end", END_P},
 	{"escape", ESCAPE},
 	{"except", EXCEPT},
 	{"exclusive", EXCLUSIVE},
@@ -137,7 +137,6 @@ static const ScanKeyword ScanKeywords[] = {
 	{"from", FROM},
 	{"full", FULL},
 	{"function", FUNCTION},
-	{"get", GET},
 	{"global", GLOBAL},
 	{"grant", GRANT},
 	{"group", GROUP_P},
