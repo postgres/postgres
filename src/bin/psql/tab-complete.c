@@ -65,7 +65,7 @@ static char * complete_from_list(char *text, int state);
 
 static PGresult * exec_query(char * query);
 char * quote_file_name(char *text, int match_type, char * quote_pointer);
-//char * dequote_file_name(char *text, char quote_char);
+//static char * dequote_file_name(char *text, char quote_char);
 static char * previous_word(int point, int skip);
 
 /* These variables are used to pass information into the completion functions.
@@ -793,7 +793,8 @@ char * quote_file_name(char *text, int match_type, char * quote_pointer)
 }
 
 
-char * dequote_file_name(char *text, char quote_char)
+#ifdef NOT_USED
+static char * dequote_file_name(char *text, char quote_char)
 {
     char *s;
     size_t length;
@@ -808,5 +809,6 @@ char * dequote_file_name(char *text, char quote_char)
 
     return s;
 }
+#endif
 
 #endif /* USE_READLINE */
