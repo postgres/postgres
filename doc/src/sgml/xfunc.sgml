@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.42 2001/11/12 19:19:39 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.43 2001/11/14 22:14:22 tgl Exp $
 -->
 
  <chapter id="xfunc">
@@ -947,11 +947,18 @@ typedef struct {
     </para>
 
     <para>
-     Obviously,  the  data  field shown here is not long enough to hold
-     all possible strings; it's impossible to declare such
-     a  structure  in  <acronym>C</acronym>.  When manipulating 
+     Obviously,  the  data  field declared here is not long enough to hold
+     all possible strings.  Since it's impossible to declare a variable-size
+     structure in <acronym>C</acronym>, we rely on the knowledge that the
+     <acronym>C</acronym> compiler won't range-check array subscripts.  We
+     just allocate the necessary amount of space and then access the array as
+     if it were declared the right length.  (If this isn't a familiar trick to
+     you, you may wish to spend some time with an introductory
+     <acronym>C</acronym> programming textbook before delving deeper into
+     <productname>Postgres</productname> server programming.)
+     When manipulating 
      variable-length types, we must  be  careful  to  allocate  
-     the  correct amount  of memory and initialize the length field.  
+     the  correct amount  of memory and set the length field correctly.
      For example, if we wanted to  store  40  bytes  in  a  text
      structure, we might use a code fragment like this:
 
@@ -962,9 +969,13 @@ char buffer[40]; /* our source data */
 ...
 text *destination = (text *) palloc(VARHDRSZ + 40);
 destination-&gt;length = VARHDRSZ + 40;
-memmove(destination-&gt;data, buffer, 40);
+memcpy(destination-&gt;data, buffer, 40);
 ...
 </programlisting>
+
+     <literal>VARHDRSZ</> is the same as <literal>sizeof(int4)</>, but
+     it's considered good style to use the macro <literal>VARHDRSZ</>
+     to refer to the size of the overhead for a variable-length type.
     </para>
 
     <para>
