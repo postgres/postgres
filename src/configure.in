@@ -488,7 +488,7 @@ AC_SUBST(USE_ODBC)
 AC_SUBST(MULTIBYTE)
 
 dnl Check for C++ support (allow override if needed)
-HAVECXX='HAVE_Cplusplus=true'
+HAVECXX='true'
 AC_ARG_WITH(CXX,
     [  --with-CXX=compiler     use specific C++ compiler
   --without-CXX           prevent building C++ code ],
@@ -498,13 +498,36 @@ AC_ARG_WITH(CXX,
 	    AC_MSG_ERROR([*** You must supply an argument to the --with-CC option.])
 	  ;;
 	n | no)
-	    HAVECXX='HAVE_Cplusplus=false'
+	    HAVECXX='false'
 	  ;;
 	esac
 	CXX="$withval"
     ],
     [   AC_PROG_CXX])
 AC_SUBST(HAVECXX)
+
+if test "$HAVECXX" = 'true' ; then
+    AC_LANG_CPLUSPLUS
+
+    dnl check whether "using namespace std" works on this C++ compiler
+    AC_MSG_CHECKING([for namespace std in C++])
+    AC_TRY_COMPILE([#include <stdio.h>
+#include <stdlib.h>
+using namespace std;
+], [],
+    [AC_DEFINE(HAVE_NAMESPACE_STD) AC_MSG_RESULT(yes)],
+    [AC_MSG_RESULT(no)])
+
+    dnl check whether "#include <string>" works on this C++ compiler
+    AC_MSG_CHECKING([for include <string> in C++])
+    AC_TRY_COMPILE([#include <stdio.h>
+#include <stdlib.h>
+#include <string>
+], [],
+    [AC_DEFINE(HAVE_CXX_STRING_HEADER) AC_MSG_RESULT(yes)],
+    [AC_MSG_RESULT(no)])
+
+fi
 
 dnl make sure we revert to C compiler, not C++, for subsequent tests
 AC_LANG_C

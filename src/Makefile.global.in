@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.67 2000/03/08 01:58:15 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.68 2000/03/30 05:29:20 tgl Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the
@@ -105,7 +105,7 @@ ODBCINST= $(POSTGRESDIR)
 # (that is, prepend '#', don't set it to "0" or "no").
 
 # Compile libpq++
-@HAVECXX@
+HAVE_Cplusplus=@HAVECXX@
 
 # Comment out ENFORCE_ALIGNMENT if you do NOT want unaligned access to
 # multi-byte types to generate a bus error.
