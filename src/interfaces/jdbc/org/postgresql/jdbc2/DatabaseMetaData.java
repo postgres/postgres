@@ -15,7 +15,7 @@ import org.postgresql.util.PSQLException;
 /*
  * This class provides information about the database as a whole.
  *
- * $Id: DatabaseMetaData.java,v 1.51 2002/03/05 03:02:52 davec Exp $
+ * $Id: DatabaseMetaData.java,v 1.52 2002/04/16 13:28:44 davec Exp $
  *
  * <p>Many of the methods here return lists of information in ResultSets.  You
  * can use the normal ResultSet methods such as getString and getInt to
@@ -2146,6 +2146,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 			tuple[16] = r.getBytes(5);				// ordinal position
 			tuple[17] = (nullFlag.equals("f") ? "YES" : "NO").getBytes();	// Is nullable
 
+			v.addElement(tuple);
 		}
 		r.close();
 
