@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.141 2003/09/25 06:58:01 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.141.2.1 2003/12/01 16:53:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -227,7 +227,13 @@ ReadBufferInternal(Relation reln, BlockNumber blockNum,
 		if (status == SM_SUCCESS &&
 			!PageHeaderIsValid((PageHeader) MAKE_PTR(bufHdr->data)))
 		{
-			if (zero_damaged_pages)
+			/*
+			 * During WAL recovery, the first access to any data page should
+			 * overwrite the whole page from the WAL; so a clobbered page
+			 * header is not reason to fail.  Hence, when InRecovery we may
+			 * always act as though zero_damaged_pages is ON.
+			 */
+			if (zero_damaged_pages || InRecovery)
 			{
 				ereport(WARNING,
 						(errcode(ERRCODE_DATA_CORRUPTED),
