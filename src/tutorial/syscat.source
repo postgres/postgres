@@ -7,7 +7,7 @@
 -- Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
 -- Portions Copyright (c) 1994, Regents of the University of California
 --
--- $Id: syscat.source,v 1.10 2003/10/26 04:51:51 momjian Exp $
+-- $Id: syscat.source,v 1.11 2003/10/31 03:58:15 tgl Exp $
 --
 ---------------------------------------------------------------------------
 
@@ -29,12 +29,12 @@ SELECT usename, datname
 --
 -- lists all user-defined classes
 --
-SELECT pgn.nspname, pgc.relname
-  FROM pg_class pgc, pg_namespace pgn
-  WHERE pgc.relnamespace=pgn.oid
-    and pgc.relkind = 'r'           -- not indices, views, etc
-    and pgn.nspname not like 'pg_%' -- not catalogs
-    and pgn.nspname != 'information_schema' -- not information_schema
+SELECT n.nspname, c.relname
+  FROM pg_class c, pg_namespace n
+  WHERE c.relnamespace=n.oid
+    and c.relkind = 'r'                   -- not indices, views, etc
+    and n.nspname not like 'pg\\_%'       -- not catalogs
+    and n.nspname != 'information_schema' -- not information_schema
   ORDER BY nspname, relname;
 
 
@@ -69,7 +69,7 @@ SELECT n.nspname, c.relname, a.attname, format_type(t.oid, null) as typname
        pg_attribute a, pg_type t
   WHERE n.oid = c.relnamespace
     and c.relkind = 'r'     -- no indices
-    and n.nspname not like 'pg_%' -- no catalogs
+    and n.nspname not like 'pg\\_%' -- no catalogs
     and n.nspname != 'information_schema' -- no information_schema
     and a.attnum > 0        -- no system att's
     and not a.attisdropped   -- no dropped columns
@@ -87,7 +87,7 @@ SELECT n.nspname, u.usename, format_type(t.oid, null) as typname
     and t.typnamespace = n.oid
     and t.typrelid = '0'::oid   -- no complex types
     and t.typelem = '0'::oid    -- no arrays
-    and n.nspname not like 'pg_%' -- no catalogs
+    and n.nspname not like 'pg\\_%' -- no catalogs
     and n.nspname != 'information_schema' -- no information_schema
   ORDER BY nspname, usename, typname;
 
@@ -146,7 +146,7 @@ SELECT n.nspname, p.proname, p.pronargs, format_type(t.oid, null) as return_type
   FROM pg_namespace n, pg_proc p, 
        pg_language l, pg_type t
   WHERE p.pronamespace = n.oid
-    and n.nspname not like 'pg_%' -- no catalogs
+    and n.nspname not like 'pg\\_%' -- no catalogs
     and n.nspname != 'information_schema' -- no information_schema
     and p.prolang = l.oid 
     and p.prorettype = t.oid
