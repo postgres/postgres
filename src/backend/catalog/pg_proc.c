@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.85 2002/08/04 23:49:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.86 2002/08/05 00:21:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -372,25 +372,27 @@ checkretval(Oid rettype, char fn_typtype, List *queryTreeList)
 
 	if (fn_typtype == 'b')
 	{
+		/* Shouldn't have a typerelid */
+		Assert(typerelid == InvalidOid);
+
 		/*
 		 * For base-type returns, the target list should have exactly one
 		 * entry, and its type should agree with what the user declared. (As
 		 * of Postgres 7.2, we accept binary-compatible types too.)
 		 */
+		if (tlistlen != 1)
+			elog(ERROR, "function declared to return %s returns multiple columns in final SELECT",
+				 format_type_be(rettype));
 
-		if (typerelid == InvalidOid)
-		{
-			if (tlistlen != 1)
-				elog(ERROR, "function declared to return %s returns multiple columns in final SELECT",
-					 format_type_be(rettype));
-
-			restype = ((TargetEntry *) lfirst(tlist))->resdom->restype;
-			if (!IsBinaryCompatible(restype, rettype))
-				elog(ERROR, "return type mismatch in function: declared to return %s, returns %s",
-					 format_type_be(rettype), format_type_be(restype));
-
-			return;
-		}
+		restype = ((TargetEntry *) lfirst(tlist))->resdom->restype;
+		if (!IsBinaryCompatible(restype, rettype))
+			elog(ERROR, "return type mismatch in function: declared to return %s, returns %s",
+				 format_type_be(rettype), format_type_be(restype));
+	}
+	else if (fn_typtype == 'c')
+	{
+		/* Must have a typerelid */
+		Assert(typerelid != InvalidOid);
 
 		/*
 		 * If the target list is of length 1, and the type of the varnode in
@@ -405,14 +407,13 @@ checkretval(Oid rettype, char fn_typtype, List *queryTreeList)
 			if (IsBinaryCompatible(restype, rettype))
 				return;
 		}
-	}
-	else if (fn_typtype == 'c')
-	{
+
 		/*
-		 * By here, the procedure returns a tuple or set of tuples.  This part
-		 * of the typechecking is a hack. We look up the relation that is the
-		 * declared return type, and scan the non-deleted attributes to ensure
-		 * that they match the datatypes of the non-resjunk columns.
+		 * Otherwise verify that the targetlist matches the return tuple type.
+		 * This part of the typechecking is a hack. We look up the relation
+		 * that is the declared return type, and scan the non-deleted
+		 * attributes to ensure that they match the datatypes of the
+		 * non-resjunk columns.
 		 */
 		reln = heap_open(typerelid, AccessShareLock);
 		relnatts = reln->rd_rel->relnatts;
@@ -462,16 +463,16 @@ checkretval(Oid rettype, char fn_typtype, List *queryTreeList)
 				 format_type_be(rettype), rellogcols);
 
 		heap_close(reln, AccessShareLock);
-
-		return;
 	}
 	else if (fn_typtype == 'p' && rettype == RECORDOID)
 	{
+		/* Shouldn't have a typerelid */
+		Assert(typerelid == InvalidOid);
+
 		/*
 		 * For RECORD return type, defer this check until we get the
 		 * first tuple.
 		 */
-		return;
 	}
 	else
 		elog(ERROR, "Unknown kind of return type specified for function");
