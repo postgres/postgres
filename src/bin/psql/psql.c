@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.134 1998/02/23 19:26:36 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.135 1998/02/25 14:50:36 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -333,7 +333,7 @@ tableList(PsqlSettings *pset, bool deep_tablelist, char info_type,
 	
 	listbuf[0] = '\0';
 	strcat(listbuf, "SELECT usename, relname, relkind, relhasrules ");
-	strcat(listbuf, "FROM pg_class, db_user ");
+	strcat(listbuf, "FROM pg_class, pg_user ");
 	switch (info_type)
 	{
 		case 't':
@@ -351,9 +351,9 @@ tableList(PsqlSettings *pset, bool deep_tablelist, char info_type,
 			break;
 	}
 	if (!system_tables)
-		strcat(listbuf, "  and relname !~ '^[dp][bg]_'");
+		strcat(listbuf, "  and relname !~ '^pg_'");
 	else
-		strcat(listbuf, "  and relname ~ '^[dp][bg]_'");
+		strcat(listbuf, "  and relname ~ '^pg_'");
 	strcat(listbuf, "  and relname !~ '^xin[vx][0-9]+'");
 
 	/*
@@ -492,9 +492,9 @@ rightsList(PsqlSettings *pset)
 
 	listbuf[0] = '\0';
 	strcat(listbuf, "SELECT relname, relacl ");
-	strcat(listbuf, "FROM pg_class, db_user ");
+	strcat(listbuf, "FROM pg_class, pg_user ");
 	strcat(listbuf, "WHERE ( relkind = 'r' OR relkind = 'i' OR relkind = 'S') ");
-	strcat(listbuf, "  and relname !~ '^[dp][bg]_'");
+	strcat(listbuf, "  and relname !~ '^pg_'");
 	strcat(listbuf, "  and relname !~ '^xin[vx][0-9]+'");
 	strcat(listbuf, "  and usesysid = relowner");
 	strcat(listbuf, "  ORDER BY relname ");
