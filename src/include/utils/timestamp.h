@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: timestamp.h,v 1.19 2001/10/03 05:29:25 thomas Exp $
+ * $Id: timestamp.h,v 1.20 2001/10/03 15:42:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,7 +49,7 @@ typedef struct
  * Therefore Timestamp is pass-by-reference if and only if float8 is!
  */
 #define DatumGetTimestamp(X)  ((Timestamp) DatumGetFloat8(X))
-#define DatumGetTimestampTz(X)  ((Timestamp) DatumGetFloat8(X))
+#define DatumGetTimestampTz(X)  ((TimestampTz) DatumGetFloat8(X))
 #define DatumGetIntervalP(X)  ((Interval *) DatumGetPointer(X))
 
 #define TimestampGetDatum(X) Float8GetDatum(X)
