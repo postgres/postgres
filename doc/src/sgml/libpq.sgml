@@ -57,14 +57,13 @@ header file <FileName>libpq-fe.h</FileName> and must link with the
 <synopsis>
 PGconn *PQconnectdb(const char *conninfo)
 </synopsis>
-   This routine opens a new database connection using the parameters
-   taken from the string <literal>conninfo</literal>.  Unlike PQsetdbLogin()
-   below, the parameter set
-   can be extended without changing the function signature, so use
-   of this routine is prefered for application programming.  The passed
-   string can be empty to use all default
-   parameters, or it can contain one or more parameter settings
-   separated by whitespace. 
+   This routine opens a new database connection using the parameters taken
+   from the string <literal>conninfo</literal>.  Unlike PQsetdbLogin() below,
+   the parameter set can be extended without changing the function signature,
+   so use either of this routine or the non-blocking analogues PQconnectStart
+   / PQconnectPoll is prefered for application programming.  The passed string
+   can be empty to use all default parameters, or it can contain one or more
+   parameter settings separated by whitespace.
    </Para>
    <Para>
    Each parameter setting is in the form <literal>keyword = value</literal>.
@@ -80,8 +79,38 @@ PGconn *PQconnectdb(const char *conninfo)
      <term><literal>host</literal></term>
      <ListItem>
      <Para>
-      Host to connect to. If a non-zero-length string is specified, TCP/IP communication is used.
-      Without a host name, libpq will connect using a local Unix domain socket.
+      Name of host to connect to. If a non-zero-length string is specified, TCP/IP
+      communication is used.  Using this parameter causes a hostname look-up.
+      See hostaddr.
+     </Para>
+     </ListItem>
+    </VarListEntry>
+
+    <VarListEntry>
+     <term><literal>hostaddr</literal></term>
+     <ListItem>
+     <Para>
+      IP address of host to connect to. This should be in standard
+      numbers-and-dots form, as used by the BSD functions inet_aton et al. If
+      a non-zero-length string is specified, TCP/IP communication is used.
+     </Para>
+     <Para>
+      Using hostaddr instead of host allows the application to avoid a host
+      name look-up, which may be important in applications with time
+      constraints. However, Kerberos authentication requires the host
+      name. The following therefore applies. If host is specified without
+      hostaddr, a hostname look-up is forced. If hostaddr is specified without
+      host, the value for hostaddr gives the remote address; if Kerberos is
+      used, this causes a reverse name query. If both host and hostaddr are
+      specified, the value for hostaddr gives the remote address; the value
+      for host is ignored, unless Kerberos is used, in which case that value
+      is used for Kerberos authentication. Note that authentication is likely
+      to fail if libpq is passed a host name which is not the name of the
+      machine at hostaddr.
+     </Para>
+     <Para>
+      Without both a host name and host address, libpq will connect using a
+      local Unix domain socket.
      </Para>
      </ListItem>
     </VarListEntry>
@@ -149,6 +178,9 @@ PGconn *PQconnectdb(const char *conninfo)
    The return value is a pointer to an abstract struct
    representing the connection to the backend.
    </Para>
+   <Para>
+    This function is not thread-safe.
+   </Para>
   </ListItem>
 
   <ListItem>
@@ -167,6 +199,9 @@ PGconn *PQsetdbLogin(const char *pghost,
    This is the predecessor of <function>PQconnectdb</function> with a fixed number
    of parameters but the same functionality.   
    </Para>
+   <Para>
+    This function is not thread-safe.
+   </Para>
   </ListItem>
 
   <ListItem>
@@ -184,6 +219,173 @@ PGconn *PQsetdb(char *pghost,
    for backward compatibility with old programs.
    </Para>
   </ListItem>
+
+ <ListItem>
+  <Para>
+   <Function>PQconnectStart</Function>
+   <Function>PQconnectPoll</Function>
+   Make a connection to the database server in a non-blocking manner.
+<synopsis>
+PGconn *PQconnectStart(const char *conninfo)
+</synopsis>
+<synopsis>
+PostgresPollingStatusType *PQconnectPoll(PQconn *conn)
+</synopsis>
+   These two routines are used to open a connection to a database server such
+   that your application's thread of execution is not blocked on remote I/O
+   whilst doing so.
+  </Para>
+  <Para>
+   The database connection is made using the parameters taken from the string
+   <literal>conninfo</literal>, passed to PQconnectStart. This string is in
+   the same format as described above for PQconnectdb.
+  </Para>
+  <Para>
+   Neither PQconnectStart nor PQconnectPoll will block, as long as a number of
+   restrictions are met:
+   <ItemizedList>
+    <ListItem>
+     <Para>
+      The hostaddr and host parameters are used appropriately to ensure that
+      name and reverse name queries are not made. See the documentation of
+      these parameters under PQconnectdb above for details.
+     </Para>
+    </ListItem>
+
+    <ListItem>
+     <Para>
+      If you call PQtrace, ensure that the stream object into which you trace
+      will not block.
+     </Para>
+    </ListItem>
+
+    <ListItem>
+     <Para>
+      You ensure for yourself that the socket is in the appropriate state
+      before calling PQconnectPoll, as described below.
+     </Para>
+    </ListItem>
+   </ItemizedList>
+  </Para>
+
+  <Para>
+   To begin, call conn=PQconnectStart("&lt;connection_info_string&gt;"). If
+   conn is NULL, then libpq has been unable to allocate a new PGconn
+   structure. Otherwise, a valid PGconn pointer is returned (though not yet
+   representing a valid connection to the database). On return from
+   PQconnectStart, call status=PQstatus(conn). If status equals
+   CONNECTION_BAD, PQconnectStart has failed.
+  </Para>
+  <Para>
+   If PQconnectStart succeeds, the next stage is to poll libpq so that it may
+   proceed with the connection sequence.  Loop thus: Consider a connection
+   'inactive' by default. If PQconnectPoll last returned PGRES_POLLING_ACTIVE,
+   consider it 'active' instead. If PQconnectPoll(conn) last returned
+   PGRES_POLLING_READING, perform a select for reading on PQsocket(conn). If
+   it last returned PGRES_POLLING_WRITING, perform a select for writing on
+   PQsocket(conn). If you have yet to call PQconnectPoll, i.e. after the call
+   to PQconnectStart, behave as if it last returned PGRES_POLLING_WRITING.  If
+   the select shows that the socket is ready, consider it 'active'. If it has
+   been decided that this connection is 'active', call PQconnectPoll(conn)
+   again. If this call returns PGRES_POLLING_FAILED, the connection procedure
+   has failed.  If this call returns PGRES_POLLING_OK, the connection has been
+   successfully made.
+  </Para>
+  <Para>
+    Note that the use of select() to ensure that the socket is ready is merely
+    a (likely) example; those with other facilities available, such as a
+    poll() call, may of course use that instead.
+  </Para>
+  <Para>
+    At any time during connection, the status of the connection may be
+    checked, by calling PQstatus. If this is CONNECTION_BAD, then the
+    connection procedure has failed; if this is CONNECTION_OK, then the
+    connection is ready.  Either of these states should be equally detectable
+    from the return value of PQconnectPoll, as above. Other states may be
+    shown during (and only during) an asynchronous connection procedure. These
+    indicate the current stage of the connection procedure, and may be useful
+    to provide feedback to the user for example. These statuses may include:
+    <ItemizedList>
+     <ListItem>
+      <Para>
+      CONNECTION_STARTED: Waiting for connection to be made.
+      </Para>
+     </ListItem>
+     <ListItem>
+      <Para>
+      CONNECTION_MADE: Connection OK; waiting to send.
+      </Para>
+     </ListItem>
+     <ListItem>
+      <Para>
+      CONNECTION_AWAITING_RESPONSE: Waiting for a response from the backend.
+      </Para>
+     </ListItem>
+     <ListItem>
+      <Para>
+      CONNECTION_AUTH_RESPONSE: Got an authentication response; about to deal
+      with it.
+      </Para>
+     </ListItem>
+     <ListItem>
+      <Para>
+      CONNECTION_ERROR_RESPONSE: Got an error response; about to deal with it.
+      </Para>
+     </ListItem>
+     <ListItem>
+      <Para>
+      CONNECTION_AUTH_OK: Received authentication; waiting for ReadyForQuery etc.
+      </Para>
+     </ListItem>
+     <ListItem>
+      <Para>
+      CONNECTION_SETENV: Negotiating environment.
+      </Para>
+     </ListItem>
+    </ItemizedList>
+
+    Note that, although these constants will remain (in order to maintain
+    compatibility) an application should never rely upon these appearing in a
+    particular order, or at all, or on the status always being one of these
+    documented values. An application may do something like this:
+<ProgramListing>
+    switch(PQstatus(conn))
+    {
+        case CONNECTION_STARTED:
+            feedback = "Connecting...";
+	    break;
+
+        case CONNECTION_MADE:
+            feedback = "Connected to server...";
+            break;
+.
+.
+.
+        default:
+	    feedback = "Connecting...";
+    }
+</ProgramListing>
+  </Para>
+  <Para>
+   Note that if PQconnectStart returns a non-NULL pointer, you must call
+   PQfinish upon that, when you are finished with it, in order to dispose of
+   the structure and any associated memory blocks. This must be done even if a
+   call to PQconnectStart or PQconnectPoll failed.
+  </Para>
+  <Para>
+   PQconnectPoll will currently block if libpq is compiled with USE_SSL
+   defined. This restriction may be removed in the future.
+  </Para>
+  <Para>
+   PQconnectPoll will currently block under Windows, unless libpq is compiled
+   with WIN32_NON_BLOCKING_CONNECTIONS defined. This code has not yet been
+   tested under Windows, and so it is currently off by default. This may be
+   changed in the future.
+  </Para>
+  <Para>
+   These functions are not thread-safe.
+  </Para>
+ </ListItem>
 
   <ListItem>
    <Para>
@@ -215,6 +417,9 @@ struct PQconninfoOption
    will depend on environment variables and other context.
    Callers must treat the connection options data as read-only.
    </Para>
+   <Para>
+    This function is not thread-safe.
+   </Para>
   </ListItem>
 
   <ListItem>
@@ -244,6 +449,31 @@ void PQreset(PGconn *conn)
    connection to the same postmaster, using all the same
    parameters previously used.  This may be useful for
    error recovery if a working connection is lost.
+   </Para>
+  </ListItem>
+
+  <ListItem>
+   <Para>
+   <Function>PQresetStart</Function>
+   <Function>PQresetPoll</Function>
+   Reset the communication  port  with  the  backend, in a non-blocking manner.
+<synopsis>
+int PQresetStart(PGconn *conn);
+</synopsis>
+<synopsis>
+PostgresPollingStatusType PQresetPoll(PGconn *conn);
+</synopsis>
+    These functions will close the connection to the backend and attempt to
+    reestablish a new connection to the same postmaster, using all the same
+    parameters previously used. This may be useful for error recovery if a
+    working connection is lost. They differ from PQreset (above) in that they
+    act in a non-blocking manner. These functions suffer from the same
+    restrictions as PQconnectStart and PQconnectPoll.
+   </Para>
+   <Para>
+    Call PQresetStart. If it returns 0, the reset has failed. If it returns 1,
+    poll the reset using PQresetPoll in exactly the same way as you would
+    create the connection using PQconnectPoll.
    </Para>
   </ListItem>
 
@@ -338,19 +568,25 @@ const char *PQoptions(const PGconn *conn)
 <Para>
 <Function>PQstatus</Function>
          Returns the status of the connection. 
-         The status can be <literal>CONNECTION_OK</literal> or <literal>CONNECTION_BAD</literal>.
 <synopsis>
 ConnStatusType PQstatus(const PGconn *conn)
 </synopsis>
 </Para>
 
 <Para>
-A failed connection attempt is signaled by status <literal>CONNECTION_BAD</literal>.
-Ordinarily, an OK status will remain so until <function>PQfinish</function>, but a
+The status can be one of a number of values. However, only two of these are
+seen outside of an asynchronous connection procedure -
+<literal>CONNECTION_OK</literal> or <literal>CONNECTION_BAD</literal>. A good
+connection to the database has the status CONNECTION_OK. A failed connection
+attempt is signaled by status <literal>CONNECTION_BAD</literal>.  Ordinarily,
+an OK status will remain so until <function>PQfinish</function>, but a
 communications failure might result in the status changing to
-<literal>CONNECTION_BAD</literal> prematurely.  In that case the application could
-try to recover by calling <function>PQreset</function>.
+<literal>CONNECTION_BAD</literal> prematurely.  In that case the application
+could try to recover by calling <function>PQreset</function>.
 </Para>
+<Para>
+See the entry for PQconnectStart and PQconnectPoll with regards to other status codes
+that might be seen.
 </ListItem>
 
 <ListItem>
@@ -385,6 +621,60 @@ server host, not the local host!
 </Para>
 </ListItem>
 
+ <ListItem>
+  <Para>
+   <Function>PQsetenvStart</Function>
+   <Function>PQsetenvPoll</Function>
+   <Function>PQsetenvAbort</Function>
+   Perform an environment negotiation.
+<synopsis>
+PGsetenvHandle *PQsetenvStart(PGconn *conn)
+</synopsis>
+<synopsis>
+PostgresPollingStatusType *PQsetenvPoll(PGsetenvHandle handle)
+</synopsis>
+<synopsis>
+void PQsetenvAbort(PGsetenvHandle handle)
+</synopsis>
+   These two routines can be used to re-perform the environment negotiation
+   that occurs during the opening of a connection to a database server. I have
+   no idea why this might be useful (XXX anyone?) but it might prove useful
+   for users to be able to reconfigure their character encodings on-the-fly,
+   for example.
+  </Para>
+  <Para>
+   These functions will not block, subject to the restrictions applied to
+   PQconnectStart and PQconnectPoll.
+  </Para>
+  <Para>
+   To begin, call handle=PQsetenvStart(conn), where conn is an open connection
+   to the database server. If handle is NULL, then libpq has been unable to
+   allocate a new PGsetenvHandle structure. Otherwise, a valid handle is
+   returned. This handle is intended to be opaque - you may only use it to
+   call other functions in libpq (PQsetenvPoll, for example).
+  </Para>
+  <Para>
+    Poll the procedure using PQsetenvPoll, in exactly the same way as you would
+    create a connection using PQconnectPoll.
+  </Para>
+  <Para>
+    The procedure may be aborted at any time by calling PQsetenvAbort(handle).
+  </Para>
+  <Para>
+   These functions are not thread-safe.
+  </Para>
+ </ListItem>
+
+ <ListItem>
+  <Para>
+   <Function>PQsetenv</Function>
+   Perform an environment negotiation.
+<synopsis>
+int PQsetenv(PGconn *conn)
+</synopsis>
+   This function performs the same duties as PQsetenvStart and PQsetenvPoll, but
+   blocks to do so. It returns 1 on success and 0 on failure.
+  </Para>
 </ItemizedList>
 </Para>
 </Sect1>

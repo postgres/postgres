@@ -24,7 +24,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.32 1999/11/11 00:10:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.33 1999/11/30 03:08:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -269,29 +269,69 @@ pqPutInt(int value, size_t bytes, PGconn *conn)
 
 /* --------------------------------------------------------------------- */
 /* pqReadReady: is select() saying the file is ready to read?
+ * Returns -1 on failure, 0 if not ready, 1 if ready.
  */
-static int
+int
 pqReadReady(PGconn *conn)
 {
 	fd_set		input_mask;
 	struct timeval timeout;
 
-	if (conn->sock < 0)
-		return 0;
+	if (!conn || conn->sock < 0)
+		return -1;
 
 	FD_ZERO(&input_mask);
 	FD_SET(conn->sock, &input_mask);
 	timeout.tv_sec = 0;
 	timeout.tv_usec = 0;
+ retry:
 	if (select(conn->sock + 1, &input_mask, (fd_set *) NULL, (fd_set *) NULL,
 			   &timeout) < 0)
 	{
+		if (errno == EINTR)
+			/* Interrupted system call - we'll just try again */
+			goto retry;
+
 		printfPQExpBuffer(&conn->errorMessage,
 						  "pqReadReady() -- select() failed: errno=%d\n%s\n",
 						  errno, strerror(errno));
-		return 0;
+		return -1;
 	}
-	return FD_ISSET(conn->sock, &input_mask);
+
+	return FD_ISSET(conn->sock, &input_mask) ? 1 : 0;
+}
+
+/* --------------------------------------------------------------------- */
+/* pqWriteReady: is select() saying the file is ready to write?
+ * Returns -1 on failure, 0 if not ready, 1 if ready.
+ */
+int
+pqWriteReady(PGconn *conn)
+{
+	fd_set		input_mask;
+	struct timeval timeout;
+
+	if (!conn || conn->sock < 0)
+		return -1;
+
+	FD_ZERO(&input_mask);
+	FD_SET(conn->sock, &input_mask);
+	timeout.tv_sec = 0;
+	timeout.tv_usec = 0;
+ retry:
+	if (select(conn->sock + 1, (fd_set *) NULL, &input_mask, (fd_set *) NULL,
+			   &timeout) < 0)
+	{
+		if (errno == EINTR)
+			/* Interrupted system call - we'll just try again */
+			goto retry;
+
+		printfPQExpBuffer(&conn->errorMessage,
+						  "pqWriteReady() -- select() failed: errno=%d\n%s\n",
+						  errno, strerror(errno));
+		return -1;
+	}
+	return FD_ISSET(conn->sock, &input_mask) ? 1 : 0;
 }
 
 /* --------------------------------------------------------------------- */
@@ -418,8 +458,17 @@ tryAgain:
 	 * be taken much, since in normal practice we should not be trying to
 	 * read data unless the file selected for reading already.
 	 */
-	if (!pqReadReady(conn))
-		return 0;				/* definitely no data available */
+	switch (pqReadReady(conn))
+	{
+		case 0:
+			/* definitely no data available */
+			return 0;
+		case 1:
+			/* ready for read */
+			break;
+		default:
+			goto definitelyFailed;
+	}
 
 	/*
 	 * Still not sure that it's EOF, because some data could have just
@@ -570,6 +619,10 @@ pqFlush(PGconn *conn)
 		if (len > 0)
 		{
 			/* We didn't send it all, wait till we can send more */
+
+			/* At first glance this looks as though it should block.  I think
+			 * that it will be OK though, as long as the socket is
+			 * non-blocking. */
 			if (pqWait(FALSE, TRUE, conn))
 				return EOF;
 		}
@@ -599,9 +652,9 @@ pqWait(int forRead, int forWrite, PGconn *conn)
 		return EOF;
 	}
 
-	/* loop in case select returns EINTR */
-	for (;;)
+	if (forRead || forWrite)
 	{
+	retry:
 		FD_ZERO(&input_mask);
 		FD_ZERO(&output_mask);
 		if (forRead)
@@ -612,14 +665,12 @@ pqWait(int forRead, int forWrite, PGconn *conn)
 				   (struct timeval *) NULL) < 0)
 		{
 			if (errno == EINTR)
-				continue;
+				goto retry;
 			printfPQExpBuffer(&conn->errorMessage,
 							  "pqWait() -- select() failed: errno=%d\n%s\n",
 							  errno, strerror(errno));
 			return EOF;
 		}
-		/* On nonerror return, assume we're done */
-		break;
 	}
 
 	return 0;

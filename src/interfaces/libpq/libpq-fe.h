@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.52 1999/11/11 00:10:14 momjian Exp $
+ * $Id: libpq-fe.h,v 1.53 1999/11/30 03:08:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,9 +29,39 @@ extern		"C"
 
 	typedef enum
 	{
+		/* Although you may decide to change this list in some way,
+		   values which become unused should never be removed, nor
+           should constants be redefined - that would break 
+           compatibility with existing code.                           */
 		CONNECTION_OK,
-		CONNECTION_BAD
+		CONNECTION_BAD,
+		/* Non-blocking mode only below here */
+		/* The existence of these should never be relied upon - they
+		   should only be used for user feedback or similar purposes.  */
+		CONNECTION_STARTED,     /* Waiting for connection to be made.  */
+		CONNECTION_MADE,        /* Connection OK; waiting to send.     */
+		CONNECTION_AWAITING_RESPONSE,   /* Waiting for a response
+										   from the backend.           */
+		CONNECTION_AUTH_RESPONSE,       /* Got an authentication
+										   response; about to deal
+										   with it.                    */
+		CONNECTION_ERROR_RESPONSE,      /* Got an error
+										   response; about to deal 
+										   with it.                    */
+		CONNECTION_AUTH_OK,             /* Received authentication;
+										   waiting for ReadyForQuery
+										   etc.                        */
+		CONNECTION_SETENV               /* Negotiating environment.    */
 	} ConnStatusType;
+
+	typedef enum
+	{
+		PGRES_POLLING_FAILED = 0,
+		PGRES_POLLING_READING,     /* These two indicate that one may    */
+		PGRES_POLLING_WRITING,     /* use select before polling again.   */
+		PGRES_POLLING_OK,
+		PGRES_POLLING_ACTIVE       /* Can call poll function immediately.*/
+	} PostgresPollingStatusType;
 
 	typedef enum
 	{
@@ -66,6 +96,12 @@ extern		"C"
  * The contents of this struct are not supposed to be known to applications.
  */
 	typedef struct pg_result PGresult;
+
+/* PGsetenvHandle is an opaque handle which is returned by PQsetenvStart and
+ * which should be passed to PQsetenvPoll or PQsetenvAbort in order to refer
+ * to the particular process being performed.
+ */
+	typedef struct pg_setenv_state *PGsetenvHandle;
 
 /* PGnotify represents the occurrence of a NOTIFY message.
  * Ideally this would be an opaque typedef, but it's so simple that it's
@@ -152,11 +188,15 @@ extern		"C"
 /* ===	in fe-connect.c === */
 
 	/* make a new client connection to the backend */
+	/* Asynchronous (non-blocking) */
+	extern PGconn *PQconnectStart(const char *conninfo);
+	extern PostgresPollingStatusType PQconnectPoll(PGconn *conn);
+	/* Synchronous (blocking) */
 	extern PGconn *PQconnectdb(const char *conninfo);
 	extern PGconn *PQsetdbLogin(const char *pghost, const char *pgport,
 								const char *pgoptions, const char *pgtty,
-											const char *dbName,
-									 const char *login, const char *pwd);
+								const char *dbName,
+								const char *login, const char *pwd);
 #define PQsetdb(M_PGHOST,M_PGPORT,M_PGOPT,M_PGTTY,M_DBNAME)  \
 	PQsetdbLogin(M_PGHOST, M_PGPORT, M_PGOPT, M_PGTTY, M_DBNAME, NULL, NULL)
 
@@ -170,6 +210,10 @@ extern		"C"
 	 * close the current connection and restablish a new one with the same
 	 * parameters
 	 */
+	/* Asynchronous (non-blocking) */
+	extern int PQresetStart(PGconn *conn);
+	extern PostgresPollingStatusType PQresetPoll(PGconn *conn);
+	/* Synchronous (blocking) */
 	extern void PQreset(PGconn *conn);
 
 	/* issue a cancel request */
@@ -194,6 +238,15 @@ extern		"C"
 
 	/* Override default notice processor */
 	extern PQnoticeProcessor PQsetNoticeProcessor(PGconn *conn, PQnoticeProcessor proc, void *arg);
+
+	/* Passing of environment variables */
+	/* Asynchronous (non-blocking) */
+	extern PGsetenvHandle PQsetenvStart(PGconn *conn);
+	extern PostgresPollingStatusType PQsetenvPoll(PGsetenvHandle handle);
+	extern void PQsetenvAbort(PGsetenvHandle handle);
+
+	/* Synchronous (blocking) */
+	extern int PQsetenv(PGconn *conn);
 
 /* === in fe-exec.c === */
 

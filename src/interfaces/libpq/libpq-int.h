@@ -11,7 +11,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-int.h,v 1.13 1999/11/11 00:10:14 momjian Exp $
+ * $Id: libpq-int.h,v 1.14 1999/11/30 03:08:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -168,6 +168,10 @@ struct pg_conn
 	/* Saved values of connection options */
 	char	   *pghost;			/* the machine on which the server is
 								 * running */
+	char	   *pghostaddr;		/* the IPv4 address of the machine on
+								 * which the server is running, in
+								 * IPv4 numbers-and-dots notation. Takes
+								 * precedence over above. */
 	char	   *pgport;			/* the server's communication port */
 	char	   *pgtty;			/* tty on which the backend messages is
 								 * displayed (NOT ACTUALLY USED???) */
@@ -220,6 +224,9 @@ struct pg_conn
 	PGresult   *result;			/* result being constructed */
 	PGresAttValue *curTuple;	/* tuple currently being read */
 
+	/* Handle for setenv request.  Used during connection only. */
+	PGsetenvHandle setenv_handle;
+
 #ifdef USE_SSL
         SSL *ssl;
 #endif
@@ -268,6 +275,8 @@ extern int	pqPutInt(int value, size_t bytes, PGconn *conn);
 extern int	pqReadData(PGconn *conn);
 extern int	pqFlush(PGconn *conn);
 extern int	pqWait(int forRead, int forWrite, PGconn *conn);
+extern int	pqReadReady(PGconn *conn);
+extern int	pqWriteReady(PGconn *conn);
 
 /* bits in a byte */
 #define BYTELEN 8
