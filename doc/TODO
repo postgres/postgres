@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Oct  3 14:35:37 EDT 2001
+Last updated:		Wed Oct  3 14:35:59 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -134,7 +134,7 @@ INDEXES
 * Prevent index uniqueness checks when UPDATE does not modifying column
 * Add bitmap indexes [performance]
 * Improve handling of index scans for NULL
-* Allow GIST indexes to handle NULLs
+* Improve concurrency in GIST
 
 SYSTEM TABLES
 
