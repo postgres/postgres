@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.146 2003/03/27 14:33:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.147 2003/03/31 20:47:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +15,7 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
+#include "access/xact.h"
 #include "catalog/catalog.h"
 #include "catalog/catname.h"
 #include "catalog/dependency.h"
@@ -1601,14 +1602,12 @@ ltrmark:;
  */
 
 
-/* ----------
- * Internal data to the deferred trigger mechanism is held
- * during entire session in a global context created at startup and
- * over statements/commands in a separate context which
- * is created at transaction start and destroyed at transaction end.
- * ----------
+/*
+ * Internal data to the deferred trigger mechanism is held over
+ * statements/commands in a context which is created at transaction
+ * start and destroyed at transaction end.
  */
-static MemoryContext deftrig_gcxt = NULL;
+
 static MemoryContext deftrig_cxt = NULL;
 
 /* ----------
@@ -1616,8 +1615,6 @@ static MemoryContext deftrig_cxt = NULL;
  * state IMMEDIATE or DEFERRED.
  * ----------
  */
-static List *deftrig_dfl_trigstates = NIL;
-
 static bool deftrig_all_isset = false;
 static bool deftrig_all_isdeferred = false;
 static List *deftrig_trigstates;
@@ -2017,11 +2014,8 @@ deferredTriggerInvokeEvents(bool immediate_only)
 void
 DeferredTriggerInit(void)
 {
-	deftrig_gcxt = AllocSetContextCreate(TopMemoryContext,
-										 "DeferredTriggerSession",
-										 ALLOCSET_DEFAULT_MINSIZE,
-										 ALLOCSET_DEFAULT_INITSIZE,
-										 ALLOCSET_DEFAULT_MAXSIZE);
+	/* Nothing to do */
+	;
 }
 
 
@@ -2035,26 +2029,18 @@ DeferredTriggerInit(void)
 void
 DeferredTriggerBeginXact(void)
 {
-	MemoryContext oldcxt;
-	List	   *l;
-	DeferredTriggerStatus dflstat;
-	DeferredTriggerStatus stat;
-
 	if (deftrig_cxt != NULL)
 		elog(ERROR,
 		   "DeferredTriggerBeginXact() called while inside transaction");
 
 	/*
-	 * Create the per transaction memory context and copy all states from
-	 * the per session context to here.
+	 * Create the per transaction memory context
 	 */
 	deftrig_cxt = AllocSetContextCreate(TopTransactionContext,
 										"DeferredTriggerXact",
 										ALLOCSET_DEFAULT_MINSIZE,
 										ALLOCSET_DEFAULT_INITSIZE,
 										ALLOCSET_DEFAULT_MAXSIZE);
-	oldcxt = MemoryContextSwitchTo(deftrig_cxt);
-
 	deftrig_all_isset = false;
 
 	/*
@@ -2063,19 +2049,6 @@ DeferredTriggerBeginXact(void)
 	deftrig_all_isdeferred = false;
 
 	deftrig_trigstates = NIL;
-	foreach(l, deftrig_dfl_trigstates)
-	{
-		dflstat = (DeferredTriggerStatus) lfirst(l);
-		stat = (DeferredTriggerStatus)
-			palloc(sizeof(DeferredTriggerStatusData));
-
-		stat->dts_tgoid = dflstat->dts_tgoid;
-		stat->dts_tgisdeferred = dflstat->dts_tgisdeferred;
-
-		deftrig_trigstates = lappend(deftrig_trigstates, stat);
-	}
-
-	MemoryContextSwitchTo(oldcxt);
 
 	deftrig_events = NULL;
 	deftrig_event_tail = NULL;
