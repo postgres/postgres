@@ -1,8 +1,11 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.4 1999/06/23 06:17:51 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.5 1999/10/12 13:57:04 thomas Exp $
 Date/time details
 
 $Log: datetime.sgml,v $
+Revision 2.5  1999/10/12 13:57:04  thomas
+Sequence of date interpretation not quite right.
+
 Revision 2.4  1999/06/23 06:17:51  thomas
 Clarify input/output timezone information.
 Add detail on exact interpretation of "concatenated date"
@@ -425,13 +428,13 @@ Finish initial markup of cvs.sgml, and include it in the programmer's guide
      then <literal>EST</literal> refers to Australia Eastern Std Time,
      which has an offset of +10:00 hours from UTC.
     </para>
-   </note>
-  </para>
 
-  <para>
-   Australian time zones and their naming variants
-   account for fully one quarter of all time zones in the 
-   <productname>Postgres</productname> time zone lookup table.
+    <para>
+     Australian time zones and their naming variants
+     account for fully one quarter of all time zones in the 
+     <productname>Postgres</productname> time zone lookup table.
+    </para>
+   </note>
   </para>
 
   <procedure>
@@ -488,12 +491,13 @@ Finish initial markup of cvs.sgml, and include it in the programmer's guide
        Do a binary-search table lookup for the token
        as either a special string (e.g. <literal>today</literal>),
        day (e.g. <literal>Thursday</literal>),
-       month (e.g. <literal>January</literal>), or noise word (e.g. <literal>on</literal>).
+       month (e.g. <literal>January</literal>),
+       or noise word (e.g. <literal>on</literal>).
       </para>
       <para>
        Set field values and bit mask for fields.
-       For example, set year, month, day for <literal>today</literal>, and additionally
-       hour, minute, second for <literal>now</literal>.
+       For example, set year, month, day for <literal>today</literal>, 
+       and additionally hour, minute, second for <literal>now</literal>.
       </para>
      </step>
      
@@ -524,7 +528,7 @@ Finish initial markup of cvs.sgml, and include it in the programmer's guide
        and if no other date fields have been previously read, then interpret 
        as a "concatenated date" (e.g. <literal>19990118</literal>). 8
        and 6 digits are interpreted as year, month, and day, while 7
-       and 5 digits are interpreted as year, day of year.
+       and 5 digits are interpreted as year, day of year, respectively.
       </para>
      </step>
 
@@ -550,7 +554,7 @@ Finish initial markup of cvs.sgml, and include it in the programmer's guide
 
      <step>
       <para>
-       If in non-European (US) date mode, and if the month field has not yet been read,
+       If the month field has not yet been read,
        and if the value is less than or equal to 12, then interpret as a month.
       </para>
      </step>
@@ -558,14 +562,7 @@ Finish initial markup of cvs.sgml, and include it in the programmer's guide
      <step>
       <para>
        If the day field has not yet been read,
-       and if the value is less than or equal to 31, then interpret as a month.
-	</para>
-       </step>
-
-     <step>
-      <para>
-       If the month field has not yet been read,
-       and if the value is less than or equal to 12, then interpret as a month.
+       and if the value is less than or equal to 31, then interpret as a day.
       </para>
      </step>
 
