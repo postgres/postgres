@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.28 1998/10/08 18:29:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.29 1998/12/14 00:02:10 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -303,7 +303,7 @@ replace_clause_joinvar_refs(Expr *clause,
 	{
 		temp = (List *) replace_joinvar_refs((Var *) clause,
 											 outer_tlist, inner_tlist);
-		if (temp)
+		if (temp != NULL)
 			return temp;
 		else if (clause != NULL)
 			return (List *) clause;
@@ -402,6 +402,33 @@ replace_clause_joinvar_refs(Expr *clause,
 										   inner_tlist);
 		return (List *) clause;
 	}
+	else if (IsA(clause, CaseExpr))
+	{
+		((CaseExpr *) clause)->args =
+			(List *) replace_subclause_joinvar_refs(((CaseExpr *) clause)->args,
+													outer_tlist,
+													inner_tlist);
+
+		((CaseExpr *) clause)->defresult =
+			(Node *) replace_clause_joinvar_refs((Expr *) ((CaseExpr *) clause)->defresult,
+												 outer_tlist,
+												 inner_tlist);
+		return (List *) clause;
+	}
+	else if (IsA(clause, CaseWhen))
+	{
+		((CaseWhen *) clause)->expr =
+			(Node *) replace_clause_joinvar_refs((Expr *) ((CaseWhen *) clause)->expr,
+												 outer_tlist,
+												 inner_tlist);
+
+		((CaseWhen *) clause)->result =
+			(Node *) replace_clause_joinvar_refs((Expr *) ((CaseWhen *) clause)->result,
+												 outer_tlist,
+												 inner_tlist);
+		return (List *) clause;
+	}
+
 	/* shouldn't reach here */
 	elog(ERROR, "replace_clause_joinvar_refs: unsupported clause %d",
 		 nodeTag(clause));

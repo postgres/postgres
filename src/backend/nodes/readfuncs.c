@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.39 1998/11/22 10:48:40 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.40 1998/12/14 00:01:47 thomas Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -782,6 +782,50 @@ _readExpr()
 
 	token = lsptok(NULL, &length);		/* eat :args */
 	local_node->args = nodeRead(true);	/* now read it */
+
+	return local_node;
+}
+
+/* ----------------
+ *		_readCaseExpr
+ *
+ *	CaseExpr is a subclass of Node
+ * ----------------
+ */
+static CaseExpr *
+_readCaseExpr()
+{
+	CaseExpr   *local_node;
+	char	   *token;
+	int			length;
+
+	local_node = makeNode(CaseExpr);
+
+	local_node->args = nodeRead(true);
+	token = lsptok(NULL, &length);		/* eat :default */
+	local_node->defresult = nodeRead(true);
+
+	return local_node;
+}
+
+/* ----------------
+ *		_readCaseWhen
+ *
+ *	CaseWhen is a subclass of Node
+ * ----------------
+ */
+static CaseWhen *
+_readCaseWhen()
+{
+	CaseWhen   *local_node;
+	char	   *token;
+	int			length;
+
+	local_node = makeNode(CaseWhen);
+
+	local_node->expr = nodeRead(true);
+	token = lsptok(NULL, &length);		/* eat :then */
+	local_node->result = nodeRead(true);
 
 	return local_node;
 }
@@ -2037,6 +2081,10 @@ parsePlanString(void)
 		return_value = _readSortClause();
 	else if (!strncmp(token, "GROUPCLAUSE", length))
 		return_value = _readGroupClause();
+	else if (!strncmp(token, "CASE", length))
+		return_value = _readCaseExpr();
+	else if (!strncmp(token, "WHEN", length))
+		return_value = _readCaseWhen();
 	else
 		elog(ERROR, "badly formatted planstring \"%.10s\"...\n", token);
 

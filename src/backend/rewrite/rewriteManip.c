@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.22 1998/10/21 16:21:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.23 1998/12/14 00:02:17 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -186,6 +186,38 @@ OffsetVarNodes(Node *node, int offset, int sublevels_up)
 
 				OffsetVarNodes(
 						(Node *)(qry->groupClause),
+						offset,
+						sublevels_up);
+			}
+			break;
+
+		case T_CaseExpr:
+			{
+				CaseExpr	*exp = (CaseExpr *)node;
+
+				OffsetVarNodes(
+						(Node *)(exp->args),
+						offset,
+						sublevels_up);
+
+				OffsetVarNodes(
+						(Node *)(exp->defresult),
+						offset,
+						sublevels_up);
+			}
+			break;
+
+		case T_CaseWhen:
+			{
+				CaseWhen	*exp = (CaseWhen *)node;
+
+				OffsetVarNodes(
+						(Node *)(exp->expr),
+						offset,
+						sublevels_up);
+
+				OffsetVarNodes(
+						(Node *)(exp->result),
 						offset,
 						sublevels_up);
 			}
@@ -371,6 +403,42 @@ ChangeVarNodes(Node *node, int rt_index, int new_index, int sublevels_up)
 
 				ChangeVarNodes(
 						(Node *)(qry->groupClause),
+						rt_index,
+						new_index,
+						sublevels_up);
+			}
+			break;
+
+		case T_CaseExpr:
+			{
+				CaseExpr	*exp = (CaseExpr *)node;
+
+				ChangeVarNodes(
+						(Node *)(exp->args),
+						rt_index,
+						new_index,
+						sublevels_up);
+
+				ChangeVarNodes(
+						(Node *)(exp->defresult),
+						rt_index,
+						new_index,
+						sublevels_up);
+			}
+			break;
+
+		case T_CaseWhen:
+			{
+				CaseWhen	*exp = (CaseWhen *)node;
+
+				ChangeVarNodes(
+						(Node *)(exp->expr),
+						rt_index,
+						new_index,
+						sublevels_up);
+
+				ChangeVarNodes(
+						(Node *)(exp->result),
 						rt_index,
 						new_index,
 						sublevels_up);

@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.26 1998/12/04 15:34:36 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.27 1998/12/14 00:02:16 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1457,6 +1457,34 @@ apply_RIR_adjust_sublevel(Node *node, int sublevels_up)
 			}
 			break;
 
+		case T_CaseExpr:
+			{
+				CaseExpr	*exp = (CaseExpr *)node;
+
+				apply_RIR_adjust_sublevel(
+						(Node *)(exp->args),
+						sublevels_up);
+
+				apply_RIR_adjust_sublevel(
+						(Node *)(exp->defresult),
+						sublevels_up);
+			}
+			break;
+
+		case T_CaseWhen:
+			{
+				CaseWhen	*exp = (CaseWhen *)node;
+
+				apply_RIR_adjust_sublevel(
+						(Node *)(exp->expr),
+						sublevels_up);
+
+				apply_RIR_adjust_sublevel(
+						(Node *)(exp->result),
+						sublevels_up);
+			}
+			break;
+
 		default:
 			elog(NOTICE, "unknown node tag %d in attribute_used()", nodeTag(node));
 			elog(NOTICE, "Node is: %s", nodeToString(node));
@@ -1691,6 +1719,50 @@ apply_RIR_view(Node **nodePtr, int rt_index, RangeTblEntry *rte, List *tlist, in
 			}
 			break;
 
+		case T_CaseExpr:
+			{
+				CaseExpr	*exp = (CaseExpr *)node;
+
+				apply_RIR_view(
+						(Node **)(&(exp->args)),
+						rt_index,
+						rte,
+						tlist,
+						modified,
+						sublevels_up);
+
+				apply_RIR_view(
+						(Node **)(&(exp->defresult)),
+						rt_index,
+						rte,
+						tlist,
+						modified,
+						sublevels_up);
+			}
+			break;
+
+		case T_CaseWhen:
+			{
+				CaseWhen	*exp = (CaseWhen *)node;
+
+				apply_RIR_view(
+						(Node **)(&(exp->expr)),
+						rt_index,
+						rte,
+						tlist,
+						modified,
+						sublevels_up);
+
+				apply_RIR_view(
+						(Node **)(&(exp->result)),
+						rt_index,
+						rte,
+						tlist,
+						modified,
+						sublevels_up);
+			}
+			break;
+
 		default:
 			elog(NOTICE, "unknown node tag %d in apply_RIR_view()", nodeTag(node));
 			elog(NOTICE, "Node is: %s", nodeToString(node));
@@ -1885,7 +1957,27 @@ fireRIRonSubselect(Node *node)
 			break;
 
 		case T_CaseExpr:
+			{
+				CaseExpr	*exp = (CaseExpr *)node;
+
+				fireRIRonSubselect(
+						(Node *)(exp->args));
+
+				fireRIRonSubselect(
+						(Node *)(exp->defresult));
+			}
+			break;
+
 		case T_CaseWhen:
+			{
+				CaseWhen	*exp = (CaseWhen *)node;
+
+				fireRIRonSubselect(
+						(Node *)(exp->expr));
+
+				fireRIRonSubselect(
+						(Node *)(exp->result));
+			}
 			break;
 
 		case T_Query:

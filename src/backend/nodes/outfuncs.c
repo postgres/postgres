@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.49 1998/12/04 15:33:33 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.50 1998/12/14 00:01:47 thomas Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -1702,7 +1702,7 @@ _outCaseWhen(StringInfo str, CaseWhen *node)
 {
 	char		buf[500];
 
-	sprintf(buf, " :when ");
+	sprintf(buf, " WHEN ");
 	appendStringInfo(str, buf);
 	_outNode(str, node->expr);
 	sprintf(buf, " :then ");
