@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.150 2004/06/18 06:13:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.151 2004/07/12 05:37:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -237,8 +237,6 @@ static const ScanKeyword ScanKeywords[] = {
 	{"owner", OWNER},
 	{"partial", PARTIAL},
 	{"password", PASSWORD},
-	{"path", PATH_P},
-	{"pendant", PENDANT},
 	{"placing", PLACING},
 	{"position", POSITION},
 	{"precision", PRECISION},
@@ -333,7 +331,6 @@ static const ScanKeyword ScanKeywords[] = {
 	{"varchar", VARCHAR},
 	{"varying", VARYING},
 	{"verbose", VERBOSE},
-	{"version", VERSION},
 	{"view", VIEW},
 	{"volatile", VOLATILE},
 	{"when", WHEN},

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.466 2004/07/11 23:13:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.467 2004/07/12 05:37:44 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -380,7 +380,7 @@ static void doNegateFloat(Value *v);
 	OBJECT_P OF OFF OFFSET OIDS OLD ON ONLY OPERATOR OPTION OR
 	ORDER OUT_P OUTER_P OVERLAPS OVERLAY OWNER
 
-	PARTIAL PASSWORD PATH_P PENDANT PLACING POSITION
+	PARTIAL PASSWORD PLACING POSITION
 	PRECISION PRESERVE PREPARE PRIMARY
 	PRIOR PRIVILEGES PROCEDURAL PROCEDURE
 
@@ -403,7 +403,7 @@ static void doNegateFloat(Value *v);
 	UPDATE USAGE USER USING
 
 	VACUUM VALID VALIDATOR VALUES VARCHAR VARYING
-	VERBOSE VERSION VIEW VOLATILE
+	VERBOSE VIEW VOLATILE
 
 	WHEN WHERE WITH WITHOUT WORK WRITE
 
@@ -417,7 +417,7 @@ static void doNegateFloat(Value *v);
  */
 %token			UNIONJOIN
 
-/* Special keywords, not in the query language - see the "lex" file */
+/* Special token types, not actually keywords - see the "lex" file */
 %token <str>	IDENT FCONST SCONST BCONST XCONST Op
 %token <ival>	ICONST PARAM
 
@@ -1994,13 +1994,12 @@ CreateAsElement:
  *****************************************************************************/
 
 CreateSeqStmt:
-			CREATE OptTemp SEQUENCE qualified_name OptSeqList OptTableSpace
+			CREATE OptTemp SEQUENCE qualified_name OptSeqList
 				{
 					CreateSeqStmt *n = makeNode(CreateSeqStmt);
 					$4->istemp = $2;
 					n->sequence = $4;
 					n->options = $5;
-					n->tablespacename = $6;
 					$$ = (Node *)n;
 				}
 		;
@@ -7572,6 +7571,7 @@ unreserved_keyword:
 			| ADD
 			| AFTER
 			| AGGREGATE
+			| ALSO
 			| ALTER
 			| ASSERTION
 			| ASSIGNMENT
@@ -7677,8 +7677,6 @@ unreserved_keyword:
 			| OWNER
 			| PARTIAL
 			| PASSWORD
-			| PATH_P
-			| PENDANT
 			| PREPARE
 			| PRESERVE
 			| PRIOR
@@ -7743,7 +7741,6 @@ unreserved_keyword:
 			| VALIDATOR
 			| VALUES
 			| VARYING
-			| VERSION
 			| VIEW
 			| VOLATILE
 			| WITH
