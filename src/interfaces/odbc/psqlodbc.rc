@@ -133,7 +133,7 @@ BEGIN
     PUSHBUTTON      "Defaults",IDDEFAULTS,185,205,50,15
 END
 
-DLG_OPTIONS_DS DIALOG DISCARDABLE  0, 0, 267, 161
+DLG_OPTIONS_DS DIALOG DISCARDABLE  0, 0, 267, 125
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Advanced Options (DataSource)"
 FONT 8, "MS Sans Serif"
@@ -144,16 +144,16 @@ BEGIN
                     BS_AUTOCHECKBOX | WS_TABSTOP,130,10,85,10
     CONTROL         "Show System &Tables",DS_SHOWSYSTEMTABLES,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,25,25,85,10
-    GROUPBOX        "OID Options",IDC_STATIC,15,70,180,25
+    GROUPBOX        "OID Options",IDC_STATIC,39,41,180,25
     CONTROL         "Show &Column",DS_SHOWOIDCOLUMN,"Button",BS_AUTOCHECKBOX | 
-                    WS_GROUP | WS_TABSTOP,25,81,59,10
+                    WS_GROUP | WS_TABSTOP,62,51,59,10
     CONTROL         "Fake &Index",DS_FAKEOIDINDEX,"Button",BS_AUTOCHECKBOX | 
-                    WS_GROUP | WS_TABSTOP,115,81,51,10
-    RTEXT           "Connect &Settings:",IDC_STATIC,10,105,35,25
-    EDITTEXT        DS_CONNSETTINGS,50,105,200,20,ES_MULTILINE | 
+                    WS_GROUP | WS_TABSTOP,151,51,51,10
+    RTEXT           "Connect &Settings:",IDC_STATIC,11,73,35,25
+    EDITTEXT        DS_CONNSETTINGS,49,73,200,20,ES_MULTILINE | 
                     ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_WANTRETURN
-    DEFPUSHBUTTON   "OK",IDOK,71,135,50,14,WS_GROUP
-    PUSHBUTTON      "Cancel",IDCANCEL,146,135,50,14
+    DEFPUSHBUTTON   "OK",IDOK,71,103,50,14,WS_GROUP
+    PUSHBUTTON      "Cancel",IDCANCEL,145,103,50,14
 END
 
 
@@ -184,7 +184,7 @@ BEGIN
         RIGHTMARGIN, 260
         VERTGUIDE, 55
         TOPMARGIN, 7
-        BOTTOMMARGIN, 154
+        BOTTOMMARGIN, 118
     END
 END
 #endif    // APSTUDIO_INVOKED
@@ -197,8 +197,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 7,1,0,2
- PRODUCTVERSION 7,1,0,2
+ FILEVERSION 7,1,0,3
+ PRODUCTVERSION 7,1,0,3
  FILEFLAGSMASK 0x3L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -216,14 +216,14 @@ BEGIN
             VALUE "Comments", "PostgreSQL ODBC driver\0"
             VALUE "CompanyName", "Insight Distribution Systems\0"
             VALUE "FileDescription", "PostgreSQL Driver\0"
-            VALUE "FileVersion", " 07.01.0002\0"
+            VALUE "FileVersion", " 07.01.0003\0"
             VALUE "InternalName", "psqlodbc\0"
             VALUE "LegalCopyright", "\0"
             VALUE "LegalTrademarks", "ODBC(TM) is a trademark of Microsoft Corporation.  Microsoft® is a registered trademark of Microsoft Corporation. Windows(TM) is a trademark of Microsoft Corporation.\0"
             VALUE "OriginalFilename", "psqlodbc.dll\0"
             VALUE "PrivateBuild", "\0"
             VALUE "ProductName", "Microsoft Open Database Connectivity\0"
-            VALUE "ProductVersion", " 07.01.0002\0"
+            VALUE "ProductVersion", " 07.01.0003\0"
             VALUE "SpecialBuild", "\0"
         END
     END

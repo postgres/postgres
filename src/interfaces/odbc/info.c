@@ -201,9 +201,8 @@ SQLGetInfo(
 
 			/*
 			 * The ODBC spec wants ##.##.#### ...whatever... so prepend
-			 * the driver
+			 * the driver version number to the dbms version string 
 			 */
-			/* version number to the dbms version string */
 			sprintf(tmp, "%s %s", POSTGRESDRIVERVERSION, conn->pg_version);
 			p = tmp;
 			break;
