@@ -1,9 +1,66 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.87 2001/05/03 16:26:21 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.88 2001/05/03 17:17:41 momjian Exp $
 -->
 
  <appendix id="release">
   <title>Release Notes</title>
+
+  <sect1 id="release-7-1-1">
+   <title>Release 7.1.1</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2001-05-04</simpara>
+   </note>
+
+   <!--
+  <docinfo>
+  <authorgroup>
+  <author>
+  <firstname>Bruce</firstname>
+  <surname>Momjian</surname>
+  </author>
+  </authorgroup>
+  </docinfo>
+   -->
+
+   <para>
+    This has a variety of fixes from 7.1.
+   </para>
+
+
+   <sect2>
+    <title>Migration to version 7.1.1</title>
+
+    <para>
+     A dump/restore is <emphasis>not</emphasis> required for those running
+     7.1.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+    <para>
+     <programlisting>
+Fix for numeric MODULO operator (Tom)
+pg_dump fixes (Philip)
+readline 4.2 fixes (Peter E)
+JOIN fixes (Tom)
+AIX, MSWIN, VAX,N32K fixes (Tom)
+Multibytes fixes (Tom)
+Unicode fixes (Tatsuo)
+Optimizer improvements (Tom)
+Fix for whole tuples in functions (Tom)
+Fix for pg_ctl and option strings with spaces (Peter E)
+ODBC fixes (Hiroshi)
+EXTRACT can now take string argument (Thomas)
+Python fixes (Darcy)
+     </programlisting>
+    </para>
+   </sect2>
+  </sect1>
+
 
   <sect1>
    <title>Release 7.1</title>
