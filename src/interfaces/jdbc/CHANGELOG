@@ -1,3 +1,8 @@
+Tue Jun 06 08:37:00 BST 2000 petermount@it.maidstone.gov.uk
+	- Removed a hardwired 8K limit on query strings
+	- Added some missing org.'s in Connection that prevented
+	  the use of the geometric types.
+
 Thu Jun 01 07:26:00 BST 2000 petermount@it.maidstone.gov.uk
 	- Removed timezone in getTimestamp() methods in ResultSet.
 
