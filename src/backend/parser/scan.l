@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.73 2000/07/14 15:43:32 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.74 2000/08/06 17:50:38 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -136,6 +136,7 @@ xqcat			{quote}{whitespace_with_newline}{quote}
 dquote			\"
 xdstart			{dquote}
 xdstop			{dquote}
+xddouble		{dquote}{dquote}
 xdinside		[^"]+
 
 /* C-style comments
@@ -350,6 +351,9 @@ other			.
 					}
 					yylval.str = pstrdup(literalbuf);
 					return IDENT;
+				}
+<xd>{xddouble} {
+					addlit(yytext, yyleng-1);
 				}
 <xd>{xdinside}	{
 					addlit(yytext, yyleng);
