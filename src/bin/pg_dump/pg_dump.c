@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.205.2.3 2001/07/29 22:12:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.205.2.4 2001/08/03 20:14:06 tgl Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -180,7 +180,8 @@ typedef enum _formatLiteralOptions
 	/* only checks for 'opts == CONV_ALL' anyway. */
 } formatLiteralOptions;
 
-static void dumpComment(Archive *outfile, const char *target, const char *oid);
+static void dumpComment(Archive *outfile, const char *target, const char *oid,
+						const char *((*deps)[]));
 static void dumpSequence(Archive *fout, TableInfo tbinfo, const bool schemaOnly, const bool dataOnly);
 static void dumpACL(Archive *fout, TableInfo tbinfo);
 static void dumpTriggers(Archive *fout, const char *tablename,
@@ -1329,7 +1330,10 @@ getTypes(int *numTypes)
 	int			i_typdelim;
 	int			i_typdefault;
 	int			i_typrelid;
+	int			i_typalign;
+	int			i_typstorage;
 	int			i_typbyval;
+	int			i_typisdefined;
 	int			i_usename;
 	int			i_typedefn;
 
@@ -1348,14 +1352,14 @@ getTypes(int *numTypes)
 	{
 		appendPQExpBuffer(query, "SELECT pg_type.oid, typowner, typname, typlen, typprtlen, "
 						"typinput, typoutput, typreceive, typsend, typelem, typdelim, "
-						"typdefault, typrelid, typbyval, "
+						"typdefault, typrelid, typalign, 'p'::char as typstorage, typbyval, typisdefined, "
 						"(select usename from pg_user where typowner = usesysid) as usename, "
 						"typname as typedefn "
 						"from pg_type");
 	} else {
 		appendPQExpBuffer(query, "SELECT pg_type.oid, typowner, typname, typlen, typprtlen, "
 						"typinput, typoutput, typreceive, typsend, typelem, typdelim, "
-						"typdefault, typrelid, typbyval, "
+						"typdefault, typrelid, typalign, typstorage, typbyval, typisdefined, "
 						"(select usename from pg_user where typowner = usesysid) as usename, "
 						"format_type(pg_type.oid, NULL) as typedefn "
 						"from pg_type");
@@ -1386,7 +1390,10 @@ getTypes(int *numTypes)
 	i_typdelim = PQfnumber(res, "typdelim");
 	i_typdefault = PQfnumber(res, "typdefault");
 	i_typrelid = PQfnumber(res, "typrelid");
+	i_typalign = PQfnumber(res, "typalign");
+	i_typstorage = PQfnumber(res, "typstorage");
 	i_typbyval = PQfnumber(res, "typbyval");
+	i_typisdefined = PQfnumber(res, "typisdefined");
 	i_usename = PQfnumber(res, "usename");
 	i_typedefn = PQfnumber(res, "typedefn");
 
@@ -1405,6 +1412,8 @@ getTypes(int *numTypes)
 		tinfo[i].typdelim = strdup(PQgetvalue(res, i, i_typdelim));
 		tinfo[i].typdefault = strdup(PQgetvalue(res, i, i_typdefault));
 		tinfo[i].typrelid = strdup(PQgetvalue(res, i, i_typrelid));
+		tinfo[i].typalign = strdup(PQgetvalue(res, i, i_typalign));
+		tinfo[i].typstorage = strdup(PQgetvalue(res, i, i_typstorage));
 		tinfo[i].usename = strdup(PQgetvalue(res, i, i_usename));
 		tinfo[i].typedefn = strdup(PQgetvalue(res, i, i_typedefn));
 
@@ -1424,11 +1433,18 @@ getTypes(int *numTypes)
 			tinfo[i].isArray = 1;
 		else
 			tinfo[i].isArray = 0;
+
+		if (strcmp(PQgetvalue(res, i, i_typisdefined), "f") == 0)
+			tinfo[i].isDefined = 0;
+		else
+			tinfo[i].isDefined = 1;
 	}
 
 	*numTypes = ntups;
 
 	PQclear(res);
+
+	destroyPQExpBuffer(query);
 
 	return tinfo;
 }
@@ -1567,8 +1583,14 @@ clearTypeInfo(TypeInfo *tp, int numTypes)
 			free(tp[i].typdefault);
 		if (tp[i].typrelid)
 			free(tp[i].typrelid);
+		if (tp[i].typalign)
+			free(tp[i].typalign);
+		if (tp[i].typstorage)
+			free(tp[i].typstorage);
 		if (tp[i].usename)
 			free(tp[i].usename);
+		if (tp[i].typedefn)
+			free(tp[i].typedefn);
 	}
 	free(tp);
 }
@@ -2989,16 +3011,17 @@ getIndices(int *numIndices)
  * oid handed to this routine. The routine takes a constant character
  * string for the target part of the object and the oid of the object
  * whose comments are to be dumped. It is perfectly acceptable
- * to hand an oid to this routine which has not been commented. In
- * addition, the routine takes the stdio FILE handle to which the
- * output should be written.
+ * to hand an oid to this routine which has not been commented.  Additional
+ * dependencies can be passed for the comment, too --- this is needed for
+ * VIEWs, whose comments are filed under the table OID but which are dumped
+ * in order by their rule OID.
  *------------------------------------------------------------------
 */
 
 static void
-dumpComment(Archive *fout, const char *target, const char *oid)
+dumpComment(Archive *fout, const char *target, const char *oid,
+			const char *((*deps)[]))
 {
-
 	PGresult   *res;
 	PQExpBuffer query;
 	int			i_description;
@@ -3033,7 +3056,8 @@ dumpComment(Archive *fout, const char *target, const char *oid)
 		formatStringLiteral(query, PQgetvalue(res, 0, i_description), PASS_LFTAB);
 		appendPQExpBuffer(query, ";\n");
 
-		ArchiveEntry(fout, oid, target, "COMMENT", NULL, query->data, "" /* Del */ ,
+		ArchiveEntry(fout, oid, target, "COMMENT", deps,
+					 query->data, "" /* Del */ ,
 					 "" /* Copy */ , "" /* Owner */ , NULL, NULL);
 
 	}
@@ -3085,13 +3109,13 @@ dumpDBComment(Archive *fout)
 		i_oid = PQfnumber(res, "oid");
 		resetPQExpBuffer(query);
 		appendPQExpBuffer(query, "DATABASE %s", fmtId(PQdb(g_conn), force_quotes));
-		dumpComment(fout, query->data, PQgetvalue(res, 0, i_oid));
+		dumpComment(fout, query->data, PQgetvalue(res, 0, i_oid), NULL);
 	}
 
 	/*** Clear the statement buffer and return ***/
 
 	PQclear(res);
-
+	destroyPQExpBuffer(query);
 }
 
 /*
@@ -3108,13 +3132,10 @@ dumpTypes(Archive *fout, FuncInfo *finfo, int numFuncs,
 	PQExpBuffer delq = createPQExpBuffer();
 	int			funcInd;
 	const char *((*deps)[]);
-	int			depIdx = 0;
-
-	deps = malloc(sizeof(char*) * 10);
+	int			depIdx;
 
 	for (i = 0; i < numTypes; i++)
 	{
-
 		/* skip all the builtin types */
 		if (atooid(tinfo[i].oid) <= g_last_builtin_oid)
 			continue;
@@ -3123,10 +3144,17 @@ dumpTypes(Archive *fout, FuncInfo *finfo, int numFuncs,
 		if (atoi(tinfo[i].typrelid) != 0)
 			continue;
 
+		/* skip undefined placeholder types */
+		if (!tinfo[i].isDefined)
+			continue;
+
 		/* skip all array types that start w/ underscore */
 		if ((tinfo[i].typname[0] == '_') &&
 			(strcmp(tinfo[i].typinput, "array_in") == 0))
 			continue;
+
+		deps = malloc(sizeof(char*) * 10);
+		depIdx = 0;
 
 		/*
 		 * before we create a type, we need to create the input and output
@@ -3146,6 +3174,7 @@ dumpTypes(Archive *fout, FuncInfo *finfo, int numFuncs,
 			dumpOneFunc(fout, finfo, funcInd, tinfo, numTypes);
 		}
 
+		resetPQExpBuffer(delq);
 		appendPQExpBuffer(delq, "DROP TYPE %s;\n", fmtId(tinfo[i].typname, force_quotes));
 
 		resetPQExpBuffer(q);
@@ -3175,8 +3204,6 @@ dumpTypes(Archive *fout, FuncInfo *finfo, int numFuncs,
 			{
 				fprintf(stderr, "Notice: array type %s - type for elements (oid %s) is not dumped.\n",
 						tinfo[i].typname, tinfo[i].typelem);
-				resetPQExpBuffer(q);
-				resetPQExpBuffer(delq);
 				continue;
 			}
 
@@ -3185,8 +3212,24 @@ dumpTypes(Archive *fout, FuncInfo *finfo, int numFuncs,
 
 			(*deps)[depIdx++] = strdup(tinfo[i].typelem);
 		}
+
+		/* XXX these are all the aligns currently handled by DefineType */
+		if (strcmp(tinfo[i].typalign, "i") == 0)
+			appendPQExpBuffer(q, ", alignment = int4");
+		else if (strcmp(tinfo[i].typalign, "d") == 0)
+			appendPQExpBuffer(q, ", alignment = double");
+
+		if (strcmp(tinfo[i].typstorage, "p") == 0)
+			appendPQExpBuffer(q, ", storage = plain");
+		if (strcmp(tinfo[i].typstorage, "e") == 0)
+			appendPQExpBuffer(q, ", storage = external");
+		if (strcmp(tinfo[i].typstorage, "x") == 0)
+			appendPQExpBuffer(q, ", storage = extended");
+		if (strcmp(tinfo[i].typstorage, "m") == 0)
+			appendPQExpBuffer(q, ", storage = main");
+
 		if (tinfo[i].passedbyvalue)
-			appendPQExpBuffer(q, ",passedbyvalue);\n");
+			appendPQExpBuffer(q, ", passedbyvalue);\n");
 		else
 			appendPQExpBuffer(q, ");\n");
 
@@ -3201,7 +3244,7 @@ dumpTypes(Archive *fout, FuncInfo *finfo, int numFuncs,
 		resetPQExpBuffer(delq);
 
 		appendPQExpBuffer(q, "TYPE %s", fmtId(tinfo[i].typname, force_quotes));
-		dumpComment(fout, q->data, tinfo[i].oid);
+		dumpComment(fout, q->data, tinfo[i].oid, NULL);
 
 		resetPQExpBuffer(q);
 	}
@@ -3486,7 +3529,7 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo, int i,
 	appendPQExpBuffer(q, "FUNCTION %s ",
 					  fmtId(finfo[i].proname, force_quotes));
 	appendPQExpBuffer(q, "( %s )", fnlist->data);
-	dumpComment(fout, q->data, finfo[i].oid);
+	dumpComment(fout, q->data, finfo[i].oid, NULL);
 
 }
 
@@ -3743,7 +3786,7 @@ dumpAggs(Archive *fout, AggInfo *agginfo, int numAggs,
 		resetPQExpBuffer(q);
 		appendPQExpBuffer(q, "AGGREGATE %s %s", agginfo[i].aggname,
 						  findTypeByOid(tinfo, numTypes, agginfo[i].aggbasetype, zeroAsOpaque + useBaseTypeName));
-		dumpComment(fout, q->data, agginfo[i].oid);
+		dumpComment(fout, q->data, agginfo[i].oid, NULL);
 
 	}
 }
@@ -4001,6 +4044,7 @@ dumpTables(Archive *fout, TableInfo *tblinfo, int numTables,
 	int			actual_atts;	/* number of attrs in this CREATE statment */
 	char	   *reltypename;
 	char	   *objoid;
+	const char *((*commentDeps)[]);
 
 	/* First - dump SEQUENCEs */
 	if (tablename && strlen(tablename) > 0)
@@ -4043,12 +4087,15 @@ dumpTables(Archive *fout, TableInfo *tblinfo, int numTables,
 				objoid = tblinfo[i].viewoid;
 				appendPQExpBuffer(delq, "DROP VIEW %s;\n", fmtId(tblinfo[i].relname, force_quotes));
 				appendPQExpBuffer(q, "CREATE VIEW %s as %s\n", fmtId(tblinfo[i].relname, force_quotes), tblinfo[i].viewdef);
-
+				commentDeps = malloc(sizeof(char*) * 2);
+				(*commentDeps)[0] = strdup(objoid);
+				(*commentDeps)[1] = NULL; /* end of list */
 			}
 			else
 			{
 				reltypename = "TABLE";
 				objoid = tblinfo[i].oid;
+				commentDeps = NULL;
 				parentRels = tblinfo[i].parentRels;
 				numParents = tblinfo[i].numParents;
 
@@ -4167,17 +4214,20 @@ dumpTables(Archive *fout, TableInfo *tblinfo, int numTables,
 				appendPQExpBuffer(q, "COLUMN %s", fmtId(tblinfo[i].relname, force_quotes));
 				appendPQExpBuffer(q, ".");
 				appendPQExpBuffer(q, "%s", fmtId(tblinfo[i].attnames[j], force_quotes));
-				dumpComment(fout, q->data, tblinfo[i].attoids[j]);
+				dumpComment(fout, q->data, tblinfo[i].attoids[j], NULL);
 			}
 
 			/* Dump Table Comments */
 
 			resetPQExpBuffer(q);
 			appendPQExpBuffer(q, "%s %s", reltypename, fmtId(tblinfo[i].relname, force_quotes));
-			dumpComment(fout, q->data, tblinfo[i].oid);
+			dumpComment(fout, q->data, tblinfo[i].oid, commentDeps);
 
 		}
 	}
+
+	destroyPQExpBuffer(q);
+	destroyPQExpBuffer(delq);
 }
 
 static PQExpBuffer
@@ -4461,7 +4511,7 @@ dumpIndices(Archive *fout, IndInfo *indinfo, int numIndices,
 			/* Dump Index Comments */
 			resetPQExpBuffer(q);
 			appendPQExpBuffer(q, "INDEX %s", id1->data);
-			dumpComment(fout, q->data, indinfo[i].indoid);
+			dumpComment(fout, q->data, indinfo[i].indoid, NULL);
 
 		}
 	}
@@ -4776,7 +4826,7 @@ dumpSequence(Archive *fout, TableInfo tbinfo, const bool schemaOnly, const bool 
 
 		resetPQExpBuffer(query);
 		appendPQExpBuffer(query, "SEQUENCE %s", fmtId(tbinfo.relname, force_quotes));
-		dumpComment(fout, query->data, tbinfo.oid);
+		dumpComment(fout, query->data, tbinfo.oid, NULL);
 	}
 }
 
@@ -4802,7 +4852,7 @@ dumpTriggers(Archive *fout, const char *tablename,
 			ArchiveEntry(fout, tblinfo[i].triggers[j].oid, tblinfo[i].triggers[j].tgname,
 				   "TRIGGER", NULL, tblinfo[i].triggers[j].tgsrc, "", "",
 						 tblinfo[i].usename, NULL, NULL);
-			dumpComment(fout, tblinfo[i].triggers[j].tgcomment, tblinfo[i].triggers[j].oid);
+			dumpComment(fout, tblinfo[i].triggers[j].tgcomment, tblinfo[i].triggers[j].oid, NULL);
 		}
 	}
 }
@@ -4882,7 +4932,7 @@ dumpRules(Archive *fout, const char *tablename,
 
 			resetPQExpBuffer(query);
 			appendPQExpBuffer(query, "RULE %s", fmtId(PQgetvalue(res, i, i_rulename), force_quotes));
-			dumpComment(fout, query->data, PQgetvalue(res, i, i_oid));
+			dumpComment(fout, query->data, PQgetvalue(res, i, i_oid), NULL);
 
 		}
 

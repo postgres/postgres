@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.63 2001/04/25 07:03:20 pjw Exp $
+ * $Id: pg_dump.h,v 1.63.2.1 2001/08/03 20:14:07 tgl Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -49,10 +49,13 @@ typedef struct _typeInfo
 	char	   *typdelim;
 	char	   *typdefault;
 	char	   *typrelid;
+	char	   *typalign;
+	char	   *typstorage;
 	char	   *usename;
 	char	   *typedefn;
 	int			passedbyvalue;
 	int			isArray;
+	int			isDefined;
 } TypeInfo;
 
 typedef struct _funcInfo
