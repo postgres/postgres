@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.23 1998/08/31 07:35:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.24 1998/08/31 07:55:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,12 +35,12 @@
  *		proid of NULL signifies unknown
  */
 int32
-regprocin(char *pro_oid_name)
+regprocin(char *pro_name_and_oid)
 {
-	HeapTuple	proctup;
+	HeapTuple	proctup = NULL;
 	RegProcedure result = (Oid) 0;
 
-	if (pro_oid_name == NULL)
+	if (pro_name_and_oid == NULL)
 		return (0);
 
 
@@ -48,15 +48,25 @@ regprocin(char *pro_oid_name)
 	{
 		/*
 		 *  we need to use the oid because there can be multiple entries
-		 *	with the same name, i.e.  1323_int4eq
+		 *	with the same name.  We accept 1323_int4eq and 1323.
 		 */
-		proctup = SearchSysCacheTuple(PROOID,
-										/* atoi stops at the _ */
-										ObjectIdGetDatum(atoi(pro_oid_name)),
-										0, 0, 0);
+		if (strrchr(pro_name_and_oid,'_') != NULL)
+		{
+			proctup = SearchSysCacheTuple(PROOID,
+						ObjectIdGetDatum(atoi(strrchr(pro_name_and_oid,'_')+1)),
+											0, 0, 0);
+
+		}
+		else if (atoi(pro_name_and_oid) != InvalidOid)
+		{
+			proctup = SearchSysCacheTuple(PROOID,
+											/* atoi stops at the _ */
+						ObjectIdGetDatum(atoi(pro_name_and_oid)),
+											0, 0, 0);
+		}
 		if (HeapTupleIsValid(proctup))
 				result = (RegProcedure) proctup->t_oid;
-		else	result = (RegProcedure) 0;
+		else	elog(ERROR, "regprocin: no such procedure %s", pro_name_and_oid);
 	}
 	else
 	{
@@ -76,7 +86,7 @@ regprocin(char *pro_oid_name)
 							   (bits16) 0,
 							   (AttrNumber) 1,
 							   (RegProcedure) F_NAMEEQ,
-							   (Datum) pro_oid_name);
+							   (Datum) pro_name_and_oid);
 	
 		procscan = heap_beginscan(proc, 0, SnapshotNow, 1, &key);
 		if (!HeapScanIsValid(procscan))
@@ -94,7 +104,7 @@ regprocin(char *pro_oid_name)
 											RelationGetTupleDescriptor(proc),
 													 &isnull);
 				if (isnull)
-					elog(FATAL, "regprocin: null procedure %s", pro_oid_name);
+					elog(FATAL, "regprocin: null procedure %s", pro_name_and_oid);
 		}
 		else
 				result = (RegProcedure) 0;
@@ -104,13 +114,13 @@ regprocin(char *pro_oid_name)
 	}	
 
 #ifdef	EBUG
-	elog(DEBUG, "regprocin: no such procedure %s", pro_oid_name);
+	elog(DEBUG, "regprocin: no such procedure %s", pro_name_and_oid);
 #endif							/* defined(EBUG) */
 	return (int32) result;
 }
 
 /*
- *		regprocout		- converts proid to "pro_oid_name"
+ *		regprocout		- converts proid to "pro_name_and_oid"
  */
 char *
 regprocout(RegProcedure proid)
@@ -131,7 +141,7 @@ regprocout(RegProcedure proid)
 				char	   *s;
 	
 				s = ((Form_pg_proc) GETSTRUCT(proctup))->proname.data;
-				snprintf(result, NAMEDATALEN, "%d_%s", proid, s);
+				snprintf(result, NAMEDATALEN, "%s_%d", s, proid);
 		}
 		else
 		{

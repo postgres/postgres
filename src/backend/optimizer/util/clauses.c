@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.21 1998/08/31 07:19:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.22 1998/08/31 07:55:47 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -199,7 +199,8 @@ bool
 or_clause(Node *clause)
 {
 	return clause != NULL &&
-		   nodeTag(clause) == T_Expr && ((Expr *) clause)->opType == OR_EXPR);
+		   nodeTag(clause) == T_Expr &&
+		   ((Expr *) clause)->opType == OR_EXPR;
 }
 
 /*
