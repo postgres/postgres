@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinpath.c,v 1.89 2004/08/29 04:12:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinpath.c,v 1.90 2004/08/29 05:06:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -254,7 +254,7 @@ sort_inner_and_outer(Query *root,
 
 		/* Forget it if can't use all the clauses in right/full join */
 		if (useallclauses &&
-			list_length(cur_mergeclauses) != list_length(mergeclause_list))
+		  list_length(cur_mergeclauses) != list_length(mergeclause_list))
 			continue;
 
 		/*
@@ -492,8 +492,8 @@ match_unsorted_outer(Query *root,
 		/*
 		 * Done with this outer path if no chance for a mergejoin.
 		 *
-		 * Special corner case: for "x FULL JOIN y ON true", there will be
-		 * no join clauses at all.  Ordinarily we'd generate a clauseless
+		 * Special corner case: for "x FULL JOIN y ON true", there will be no
+		 * join clauses at all.  Ordinarily we'd generate a clauseless
 		 * nestloop path, but since mergejoin is our only join type that
 		 * supports FULL JOIN, it's necessary to generate a clauseless
 		 * mergejoin path instead.
@@ -506,7 +506,7 @@ match_unsorted_outer(Query *root,
 		if (mergeclauses == NIL)
 		{
 			if (jointype == JOIN_FULL && restrictlist == NIL)
-				/* okay to try for mergejoin */ ;
+				 /* okay to try for mergejoin */ ;
 			else
 				continue;
 		}

@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.28 2004/08/29 00:38:03 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.29 2004/08/29 05:06:57 momjian Exp $ */
 
 /* undefine and redefine after #include */
 #undef mkdir
@@ -31,7 +31,7 @@
 #define DLLIMPORT __declspec (dllimport)
 #endif
 
-#elif defined(WIN32) && (defined(_MSC_VER) || defined(__BORLANDC__))		/* not CYGWIN or MingW */
+#elif defined(WIN32) && (defined(_MSC_VER) || defined(__BORLANDC__))	/* not CYGWIN or MingW */
 
 #if defined(_DLL)
 #define DLLIMPORT __declspec (dllexport)
@@ -104,10 +104,10 @@ int			semop(int semId, struct sembuf * sops, int flag);
 
 
 /* In backend/port/win32/signal.c */
-void pgwin32_signal_initialize(void);
+void		pgwin32_signal_initialize(void);
 extern DLLIMPORT HANDLE pgwin32_signal_event;
-void pgwin32_dispatch_queued_signals(void);
-void pg_queue_signal(int signum);
+void		pgwin32_dispatch_queued_signals(void);
+void		pg_queue_signal(int signum);
 
 #define sigmask(sig) ( 1 << (sig-1) )
 
@@ -121,7 +121,7 @@ void pg_queue_signal(int signum);
 
 #ifndef FRONTEND
 #define pg_usleep(t) pgwin32_backend_usleep(t)
-void pgwin32_backend_usleep(long microsec);
+void		pgwin32_backend_usleep(long microsec);
 #endif
 
 /* In backend/port/win32/socket.c */
@@ -133,28 +133,28 @@ void pgwin32_backend_usleep(long microsec);
 #define recv(s, buf, len, flags) pgwin32_recv(s, buf, len, flags)
 #define send(s, buf, len, flags) pgwin32_send(s, buf, len, flags)
 
-SOCKET pgwin32_socket(int af, int type, int protocol);
-SOCKET pgwin32_accept(SOCKET s, struct sockaddr* addr, int* addrlen);
-int pgwin32_connect(SOCKET s, const struct sockaddr* name, int namelen);
-int pgwin32_select(int nfds, fd_set* readfs, fd_set* writefds, fd_set* exceptfds, const struct timeval* timeout);
-int pgwin32_recv(SOCKET s, char* buf, int len, int flags);
-int pgwin32_send(SOCKET s, char* buf, int len, int flags);
+SOCKET		pgwin32_socket(int af, int type, int protocol);
+SOCKET		pgwin32_accept(SOCKET s, struct sockaddr * addr, int *addrlen);
+int			pgwin32_connect(SOCKET s, const struct sockaddr * name, int namelen);
+int			pgwin32_select(int nfds, fd_set *readfs, fd_set *writefds, fd_set *exceptfds, const struct timeval * timeout);
+int			pgwin32_recv(SOCKET s, char *buf, int len, int flags);
+int			pgwin32_send(SOCKET s, char *buf, int len, int flags);
 
 const char *pgwin32_socket_strerror(int err);
 
 /* in backend/port/win32/security.c */
-extern int pgwin32_is_admin(void);
-extern int pgwin32_is_service(void);
+extern int	pgwin32_is_admin(void);
+extern int	pgwin32_is_service(void);
 #endif
 
 /* in backend/port/win32/error.c */
-void _dosmaperr(unsigned long);
+void		_dosmaperr(unsigned long);
 
 
-#define WEXITSTATUS(w)  (((w) >> 8) & 0xff)
-#define WIFEXITED(w)    (((w) & 0xff) == 0)
-#define WIFSIGNALED(w)  (((w) & 0x7f) > 0 && (((w) & 0x7f) < 0x7f))
-#define WTERMSIG(w)     ((w) & 0x7f)
+#define WEXITSTATUS(w)	(((w) >> 8) & 0xff)
+#define WIFEXITED(w)	(((w) & 0xff) == 0)
+#define WIFSIGNALED(w)	(((w) & 0x7f) > 0 && (((w) & 0x7f) < 0x7f))
+#define WTERMSIG(w)		((w) & 0x7f)
 
 /* Some extra signals */
 #define SIGHUP				1
@@ -182,11 +182,12 @@ struct timezone
 
 /* for setitimer in backend/port/win32/timer.c */
 #define ITIMER_REAL 0
-struct itimerval {
+struct itimerval
+{
 	struct timeval it_interval;
 	struct timeval it_value;
 };
-int setitimer(int which, const struct itimerval *value, struct itimerval *ovalue);
+int			setitimer(int which, const struct itimerval * value, struct itimerval * ovalue);
 
 
 /* FROM SRA */
@@ -225,4 +226,3 @@ int setitimer(int which, const struct itimerval *value, struct itimerval *ovalue
 #define ECONNREFUSED WSAECONNREFUSED
 #define EBADFD WSAENOTSOCK
 #define EOPNOTSUPP WSAEOPNOTSUPP
-

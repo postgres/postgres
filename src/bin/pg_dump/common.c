@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/common.c,v 1.83 2004/08/29 04:13:01 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/common.c,v 1.84 2004/08/29 05:06:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,14 +49,14 @@ static int	numCatalogIds = 0;
  * These variables are static to avoid the notational cruft of having to pass
  * them into findTableByOid() and friends.
  */
-static TableInfo  *tblinfo;
-static TypeInfo   *typinfo;
-static FuncInfo   *funinfo;
-static OprInfo    *oprinfo;
-static int		numTables;
-static int		numTypes;
-static int		numFuncs;
-static int		numOperators;
+static TableInfo *tblinfo;
+static TypeInfo *typinfo;
+static FuncInfo *funinfo;
+static OprInfo *oprinfo;
+static int	numTables;
+static int	numTypes;
+static int	numFuncs;
+static int	numOperators;
 
 
 static void flagInhTables(TableInfo *tbinfo, int numTables,
@@ -65,7 +65,7 @@ static void flagInhAttrs(TableInfo *tbinfo, int numTables,
 			 InhInfo *inhinfo, int numInherits);
 static int	DOCatalogIdCompare(const void *p1, const void *p2);
 static void findParentsByOid(TableInfo *self,
-							 InhInfo *inhinfo, int numInherits);
+				 InhInfo *inhinfo, int numInherits);
 static int	strInArray(const char *pattern, char **arr, int arr_size);
 
 
@@ -302,7 +302,7 @@ flagInhAttrs(TableInfo *tblinfo, int numTables,
 						{
 							defaultsFound = true;
 							defaultsMatch &= (strcmp(attrDef->adef_expr,
-													 inhDef->adef_expr) == 0);
+												inhDef->adef_expr) == 0);
 						}
 					}
 				}
@@ -358,7 +358,7 @@ flagInhAttrs(TableInfo *tblinfo, int numTables,
 
 			for (k = 0; k < numParents; k++)
 			{
-				int		l;
+				int			l;
 
 				parent = parents[k];
 				for (l = 0; l < parent->ncheck; l++)
@@ -403,7 +403,7 @@ AssignDumpId(DumpableObject *dobj)
 
 	while (dobj->dumpId >= allocedDumpIds)
 	{
-		int		newAlloc;
+		int			newAlloc;
 
 		if (allocedDumpIds <= 0)
 		{
@@ -470,7 +470,7 @@ findObjectByDumpId(DumpId dumpId)
  *
  * We use binary search in a sorted list that is built on first call.
  * If AssignDumpId() and findObjectByCatalogId() calls were intermixed,
- * the code would work, but possibly be very slow.  In the current usage
+ * the code would work, but possibly be very slow.	In the current usage
  * pattern that does not happen, indeed we only need to build the list once.
  */
 DumpableObject *

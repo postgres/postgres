@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.h,v 1.20 2004/08/29 04:13:02 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.h,v 1.21 2004/08/29 05:06:54 momjian Exp $
  */
 #ifndef COMMAND_H
 #define COMMAND_H
@@ -26,7 +26,7 @@ typedef enum _backslashResult
 
 
 extern backslashResult HandleSlashCmds(PsqlScanState scan_state,
-									   PQExpBuffer query_buf);
+				PQExpBuffer query_buf);
 
 extern int	process_file(char *filename);
 

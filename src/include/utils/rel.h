@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/rel.h,v 1.78 2004/08/29 04:13:11 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/rel.h,v 1.79 2004/08/29 05:06:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,21 +106,23 @@ typedef struct RelationData
 {
 	RelFileNode rd_node;		/* relation physical identifier */
 	/* use "struct" here to avoid needing to include smgr.h: */
-	struct SMgrRelationData *rd_smgr; /* cached file handle, or NULL */
+	struct SMgrRelationData *rd_smgr;	/* cached file handle, or NULL */
 	BlockNumber rd_targblock;	/* current insertion target block, or
 								 * InvalidBlockNumber */
 	int			rd_refcnt;		/* reference count */
 	bool		rd_istemp;		/* rel uses the local buffer mgr */
 	bool		rd_isnailed;	/* rel is nailed in cache */
 	bool		rd_isvalid;		/* relcache entry is valid */
-	char		rd_indexvalid;	/* state of rd_indexlist: 0 = not valid,
-								 * 1 = valid, 2 = temporarily forced */
-	TransactionId rd_createxact; /* rel was created in current xact */
+	char		rd_indexvalid;	/* state of rd_indexlist: 0 = not valid, 1
+								 * = valid, 2 = temporarily forced */
+	TransactionId rd_createxact;	/* rel was created in current xact */
+
 	/*
 	 * rd_createxact is the XID of the highest subtransaction the rel has
 	 * survived into; or zero if the rel was not created in the current
-	 * transaction.  This should be relied on only for optimization purposes;
-	 * it is possible for new-ness to be "forgotten" (eg, after CLUSTER).
+	 * transaction.  This should be relied on only for optimization
+	 * purposes; it is possible for new-ness to be "forgotten" (eg, after
+	 * CLUSTER).
 	 */
 	Form_pg_class rd_rel;		/* RELATION tuple */
 	TupleDesc	rd_att;			/* tuple descriptor */
@@ -141,7 +143,7 @@ typedef struct RelationData
 	 * index access support info (used only for an index relation)
 	 *
 	 * Note: only default operators and support procs for each opclass are
-	 * cached, namely those with subtype zero.  The arrays are indexed by
+	 * cached, namely those with subtype zero.	The arrays are indexed by
 	 * strategy or support number, which is a sufficient identifier given
 	 * that restriction.
 	 */

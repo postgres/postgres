@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/mainloop.c,v 1.63 2004/08/29 04:13:02 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/mainloop.c,v 1.64 2004/08/29 05:06:54 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "mainloop.h"
@@ -45,6 +45,7 @@ MainLoop(FILE *source)
 	volatile promptStatus_t prompt_status = PROMPT_READY;
 	volatile int count_eof = 0;
 	volatile bool die_on_error = false;
+
 	/* Save the prior command source */
 	FILE	   *prev_cmd_source;
 	bool		prev_cmd_interactive;
@@ -107,9 +108,7 @@ MainLoop(FILE *source)
 			prompt_status = PROMPT_READY;
 
 			if (pset.cur_cmd_interactive)
-			{
 				putc('\n', stdout);
-			}
 			else
 			{
 				successResult = EXIT_USER;
@@ -245,10 +244,11 @@ MainLoop(FILE *source)
 				/* handle backslash command */
 
 				/*
-				 * If we added a newline to query_buf, and nothing else has
-				 * been inserted in query_buf by the lexer, then strip off
-				 * the newline again.  This avoids any change to query_buf
-				 * when a line contains only a backslash command.
+				 * If we added a newline to query_buf, and nothing else
+				 * has been inserted in query_buf by the lexer, then strip
+				 * off the newline again.  This avoids any change to
+				 * query_buf when a line contains only a backslash
+				 * command.
 				 */
 				if (query_buf->len == added_nl_pos)
 					query_buf->data[--query_buf->len] = '\0';
@@ -256,7 +256,7 @@ MainLoop(FILE *source)
 
 				slashCmdStatus = HandleSlashCmds(scan_state,
 												 query_buf->len > 0 ?
-												 query_buf : previous_buf);
+											   query_buf : previous_buf);
 
 				success = slashCmdStatus != CMD_ERROR;
 

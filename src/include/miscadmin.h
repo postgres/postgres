@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.166 2004/08/29 04:13:03 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.167 2004/08/29 05:06:55 momjian Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to other files.
@@ -84,7 +84,7 @@ do { \
 		ProcessInterrupts(); \
 } while(0)
 
-#else  /* WIN32 */
+#else							/* WIN32 */
 
 #define CHECK_FOR_INTERRUPTS() \
 do { \
@@ -93,8 +93,7 @@ do { \
 	if (InterruptPending) \
 		ProcessInterrupts(); \
 } while(0)
-
-#endif /* WIN32 */
+#endif   /* WIN32 */
 
 
 #define HOLD_INTERRUPTS()  (InterruptHoldoffCount++)
@@ -139,6 +138,7 @@ extern long MyCancelKey;
 extern char OutputFileName[];
 extern char my_exec_path[];
 extern char pkglib_path[];
+
 #ifdef EXEC_BACKEND
 extern char postgres_exec_path[];
 #endif
@@ -211,7 +211,7 @@ extern int	VacuumCostLimit;
 extern int	VacuumCostDelay;
 
 extern int	VacuumCostBalance;
-extern bool	VacuumCostActive;
+extern bool VacuumCostActive;
 
 
 /* in tcop/postgres.c */

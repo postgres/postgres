@@ -6,7 +6,7 @@
  *
  * Copyright (c) 2000-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/access/tuptoaster.h,v 1.19 2004/08/29 04:13:04 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/tuptoaster.h,v 1.20 2004/08/29 05:06:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -115,12 +115,12 @@ extern varattrib *heap_tuple_untoast_attr_slice(varattrib *attr,
  *
  *	If a Datum is of composite type, "flatten" it to contain no toasted fields.
  *	This must be invoked on any potentially-composite field that is to be
- *	inserted into a tuple.  Doing this preserves the invariant that toasting
+ *	inserted into a tuple.	Doing this preserves the invariant that toasting
  *	goes only one level deep in a tuple.
  * ----------
  */
 extern Datum toast_flatten_tuple_attribute(Datum value,
-										   Oid typeId, int32 typeMod);
+							  Oid typeId, int32 typeMod);
 
 /* ----------
  * toast_compress_datum -

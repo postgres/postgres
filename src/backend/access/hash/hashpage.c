@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashpage.c,v 1.45 2004/08/29 04:12:18 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashpage.c,v 1.46 2004/08/29 05:06:40 momjian Exp $
  *
  * NOTES
  *	  Postgres hash pages look like ordinary relation pages.  The opaque
@@ -35,11 +35,11 @@
 
 
 static void _hash_splitbucket(Relation rel, Buffer metabuf,
-							  Bucket obucket, Bucket nbucket,
-							  BlockNumber start_oblkno,
-							  BlockNumber start_nblkno,
-							  uint32 maxbucket,
-							  uint32 highmask, uint32 lowmask);
+				  Bucket obucket, Bucket nbucket,
+				  BlockNumber start_oblkno,
+				  BlockNumber start_nblkno,
+				  uint32 maxbucket,
+				  uint32 highmask, uint32 lowmask);
 
 
 /*
@@ -47,7 +47,7 @@ static void _hash_splitbucket(Relation rel, Buffer metabuf,
  * of the locking rules).  However, we can skip taking lmgr locks when the
  * index is local to the current backend (ie, either temp or new in the
  * current transaction).  No one else can see it, so there's no reason to
- * take locks.  We still take buffer-level locks, but not lmgr locks.
+ * take locks.	We still take buffer-level locks, but not lmgr locks.
  */
 #define USELOCKING(rel)		(!RELATION_IS_LOCAL(rel))
 
@@ -239,13 +239,13 @@ _hash_metapinit(Relation rel)
 			 RelationGetRelationName(rel));
 
 	/*
-	 * Determine the target fill factor (tuples per bucket) for this index.
-	 * The idea is to make the fill factor correspond to pages about 3/4ths
-	 * full.  We can compute it exactly if the index datatype is fixed-width,
-	 * but for var-width there's some guessing involved.
+	 * Determine the target fill factor (tuples per bucket) for this
+	 * index. The idea is to make the fill factor correspond to pages
+	 * about 3/4ths full.  We can compute it exactly if the index datatype
+	 * is fixed-width, but for var-width there's some guessing involved.
 	 */
 	data_width = get_typavgwidth(RelationGetDescr(rel)->attrs[0]->atttypid,
-								 RelationGetDescr(rel)->attrs[0]->atttypmod);
+							 RelationGetDescr(rel)->attrs[0]->atttypmod);
 	item_width = MAXALIGN(sizeof(HashItemData)) + MAXALIGN(data_width) +
 		sizeof(ItemIdData);		/* include the line pointer */
 	ffactor = (BLCKSZ * 3 / 4) / item_width;
@@ -288,8 +288,9 @@ _hash_metapinit(Relation rel)
 	metap->hashm_procid = index_getprocid(rel, 1, HASHPROC);
 
 	/*
-	 * We initialize the index with two buckets, 0 and 1, occupying physical
-	 * blocks 1 and 2.  The first freespace bitmap page is in block 3.
+	 * We initialize the index with two buckets, 0 and 1, occupying
+	 * physical blocks 1 and 2.  The first freespace bitmap page is in
+	 * block 3.
 	 */
 	metap->hashm_maxbucket = metap->hashm_lowmask = 1;	/* nbuckets - 1 */
 	metap->hashm_highmask = 3;	/* (nbuckets << 1) - 1 */
@@ -297,7 +298,7 @@ _hash_metapinit(Relation rel)
 	MemSet((char *) metap->hashm_spares, 0, sizeof(metap->hashm_spares));
 	MemSet((char *) metap->hashm_mapp, 0, sizeof(metap->hashm_mapp));
 
-	metap->hashm_spares[1] = 1;	/* the first bitmap page is only spare */
+	metap->hashm_spares[1] = 1; /* the first bitmap page is only spare */
 	metap->hashm_ovflpoint = 1;
 	metap->hashm_firstfree = 0;
 
@@ -319,8 +320,8 @@ _hash_metapinit(Relation rel)
 	}
 
 	/*
-	 * Initialize first bitmap page.  Can't do this until we
-	 * create the first two buckets, else smgr will complain.
+	 * Initialize first bitmap page.  Can't do this until we create the
+	 * first two buckets, else smgr will complain.
 	 */
 	_hash_initbitmap(rel, metap, 3);
 
@@ -362,17 +363,18 @@ _hash_expandtable(Relation rel, Buffer metabuf)
 	uint32		lowmask;
 
 	/*
-	 * Obtain the page-zero lock to assert the right to begin a split
-	 * (see README).
+	 * Obtain the page-zero lock to assert the right to begin a split (see
+	 * README).
 	 *
 	 * Note: deadlock should be impossible here. Our own backend could only
-	 * be holding bucket sharelocks due to stopped indexscans; those will not
-	 * block other holders of the page-zero lock, who are only interested in
-	 * acquiring bucket sharelocks themselves.  Exclusive bucket locks are
-	 * only taken here and in hashbulkdelete, and neither of these operations
-	 * needs any additional locks to complete.  (If, due to some flaw in this
-	 * reasoning, we manage to deadlock anyway, it's okay to error out; the
-	 * index will be left in a consistent state.)
+	 * be holding bucket sharelocks due to stopped indexscans; those will
+	 * not block other holders of the page-zero lock, who are only
+	 * interested in acquiring bucket sharelocks themselves.  Exclusive
+	 * bucket locks are only taken here and in hashbulkdelete, and neither
+	 * of these operations needs any additional locks to complete.	(If,
+	 * due to some flaw in this reasoning, we manage to deadlock anyway,
+	 * it's okay to error out; the index will be left in a consistent
+	 * state.)
 	 */
 	_hash_getlock(rel, 0, HASH_EXCLUSIVE);
 
@@ -383,8 +385,8 @@ _hash_expandtable(Relation rel, Buffer metabuf)
 	_hash_checkpage(rel, (Page) metap, LH_META_PAGE);
 
 	/*
-	 * Check to see if split is still needed; someone else might have already
-	 * done one while we waited for the lock.
+	 * Check to see if split is still needed; someone else might have
+	 * already done one while we waited for the lock.
 	 *
 	 * Make sure this stays in sync with_hash_doinsert()
 	 */
@@ -394,16 +396,16 @@ _hash_expandtable(Relation rel, Buffer metabuf)
 
 	/*
 	 * Determine which bucket is to be split, and attempt to lock the old
-	 * bucket.  If we can't get the lock, give up.
+	 * bucket.	If we can't get the lock, give up.
 	 *
 	 * The lock protects us against other backends, but not against our own
 	 * backend.  Must check for active scans separately.
 	 *
-	 * Ideally we would lock the new bucket too before proceeding, but if
-	 * we are about to cross a splitpoint then the BUCKET_TO_BLKNO mapping
+	 * Ideally we would lock the new bucket too before proceeding, but if we
+	 * are about to cross a splitpoint then the BUCKET_TO_BLKNO mapping
 	 * isn't correct yet.  For simplicity we update the metapage first and
-	 * then lock.  This should be okay because no one else should be trying
-	 * to lock the new bucket yet...
+	 * then lock.  This should be okay because no one else should be
+	 * trying to lock the new bucket yet...
 	 */
 	new_bucket = metap->hashm_maxbucket + 1;
 	old_bucket = (new_bucket & metap->hashm_lowmask);
@@ -417,7 +419,8 @@ _hash_expandtable(Relation rel, Buffer metabuf)
 		goto fail;
 
 	/*
-	 * Okay to proceed with split.  Update the metapage bucket mapping info.
+	 * Okay to proceed with split.	Update the metapage bucket mapping
+	 * info.
 	 */
 	metap->hashm_maxbucket = new_bucket;
 
@@ -431,11 +434,11 @@ _hash_expandtable(Relation rel, Buffer metabuf)
 	/*
 	 * If the split point is increasing (hashm_maxbucket's log base 2
 	 * increases), we need to adjust the hashm_spares[] array and
-	 * hashm_ovflpoint so that future overflow pages will be created beyond
-	 * this new batch of bucket pages.
+	 * hashm_ovflpoint so that future overflow pages will be created
+	 * beyond this new batch of bucket pages.
 	 *
-	 * XXX should initialize new bucket pages to prevent out-of-order
-	 * page creation?  Don't wanna do it right here though.
+	 * XXX should initialize new bucket pages to prevent out-of-order page
+	 * creation?  Don't wanna do it right here though.
 	 */
 	spare_ndx = _hash_log2(metap->hashm_maxbucket + 1);
 	if (spare_ndx > metap->hashm_ovflpoint)
@@ -456,9 +459,10 @@ _hash_expandtable(Relation rel, Buffer metabuf)
 	/*
 	 * Copy bucket mapping info now; this saves re-accessing the meta page
 	 * inside _hash_splitbucket's inner loop.  Note that once we drop the
-	 * split lock, other splits could begin, so these values might be out of
-	 * date before _hash_splitbucket finishes.  That's okay, since all it
-	 * needs is to tell which of these two buckets to map hashkeys into.
+	 * split lock, other splits could begin, so these values might be out
+	 * of date before _hash_splitbucket finishes.  That's okay, since all
+	 * it needs is to tell which of these two buckets to map hashkeys
+	 * into.
 	 */
 	maxbucket = metap->hashm_maxbucket;
 	highmask = metap->hashm_highmask;
@@ -539,8 +543,8 @@ _hash_splitbucket(Relation rel,
 
 	/*
 	 * It should be okay to simultaneously write-lock pages from each
-	 * bucket, since no one else can be trying to acquire buffer lock
-	 * on pages of either bucket.
+	 * bucket, since no one else can be trying to acquire buffer lock on
+	 * pages of either bucket.
 	 */
 	oblkno = start_oblkno;
 	nblkno = start_nblkno;
@@ -562,9 +566,9 @@ _hash_splitbucket(Relation rel,
 	nopaque->hasho_filler = HASHO_FILL;
 
 	/*
-	 * Partition the tuples in the old bucket between the old bucket and the
-	 * new bucket, advancing along the old bucket's overflow bucket chain
-	 * and adding overflow pages to the new bucket as needed.
+	 * Partition the tuples in the old bucket between the old bucket and
+	 * the new bucket, advancing along the old bucket's overflow bucket
+	 * chain and adding overflow pages to the new bucket as needed.
 	 */
 	ooffnum = FirstOffsetNumber;
 	omaxoffnum = PageGetMaxOffsetNumber(opage);
@@ -582,9 +586,10 @@ _hash_splitbucket(Relation rel,
 			oblkno = oopaque->hasho_nextblkno;
 			if (!BlockNumberIsValid(oblkno))
 				break;
+
 			/*
-			 * we ran out of tuples on this particular page, but we
-			 * have more overflow pages; advance to next page.
+			 * we ran out of tuples on this particular page, but we have
+			 * more overflow pages; advance to next page.
 			 */
 			_hash_wrtbuf(rel, obuf);
 
@@ -600,8 +605,8 @@ _hash_splitbucket(Relation rel,
 		/*
 		 * Re-hash the tuple to determine which bucket it now belongs in.
 		 *
-		 * It is annoying to call the hash function while holding locks,
-		 * but releasing and relocking the page for each tuple is unappealing
+		 * It is annoying to call the hash function while holding locks, but
+		 * releasing and relocking the page for each tuple is unappealing
 		 * too.
 		 */
 		hitem = (HashItem) PageGetItem(opage, PageGetItemId(opage, ooffnum));
@@ -666,10 +671,11 @@ _hash_splitbucket(Relation rel,
 	}
 
 	/*
-	 * We're at the end of the old bucket chain, so we're done partitioning
-	 * the tuples.  Before quitting, call _hash_squeezebucket to ensure the
-	 * tuples remaining in the old bucket (including the overflow pages) are
-	 * packed as tightly as possible.  The new bucket is already tight.
+	 * We're at the end of the old bucket chain, so we're done
+	 * partitioning the tuples.  Before quitting, call _hash_squeezebucket
+	 * to ensure the tuples remaining in the old bucket (including the
+	 * overflow pages) are packed as tightly as possible.  The new bucket
+	 * is already tight.
 	 */
 	_hash_wrtbuf(rel, obuf);
 	_hash_wrtbuf(rel, nbuf);

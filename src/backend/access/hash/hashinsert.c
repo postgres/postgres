@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashinsert.c,v 1.33 2004/08/29 04:12:18 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashinsert.c,v 1.34 2004/08/29 05:06:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,7 @@
 
 
 static OffsetNumber _hash_pgaddtup(Relation rel, Buffer buf,
-								   Size itemsize, HashItem hitem);
+			   Size itemsize, HashItem hitem);
 
 
 /*
@@ -81,7 +81,7 @@ _hash_doinsert(Relation rel, HashItem hitem)
 
 	/*
 	 * Check whether the item can fit on a hash page at all. (Eventually,
-	 * we ought to try to apply TOAST methods if not.)  Note that at this
+	 * we ought to try to apply TOAST methods if not.)	Note that at this
 	 * point, itemsz doesn't include the ItemId.
 	 */
 	if (itemsz > HashMaxItemSize((Page) metap))
@@ -105,7 +105,8 @@ _hash_doinsert(Relation rel, HashItem hitem)
 	_hash_chgbufaccess(rel, metabuf, HASH_READ, HASH_NOLOCK);
 
 	/*
-	 * Acquire share lock on target bucket; then we can release split lock.
+	 * Acquire share lock on target bucket; then we can release split
+	 * lock.
 	 */
 	_hash_getlock(rel, blkno, HASH_SHARE);
 
@@ -124,7 +125,7 @@ _hash_doinsert(Relation rel, HashItem hitem)
 		/*
 		 * no space on this page; check for an overflow page
 		 */
-		BlockNumber	nextblkno = pageopaque->hasho_nextblkno;
+		BlockNumber nextblkno = pageopaque->hasho_nextblkno;
 
 		if (BlockNumberIsValid(nextblkno))
 		{
@@ -169,8 +170,8 @@ _hash_doinsert(Relation rel, HashItem hitem)
 	_hash_droplock(rel, blkno, HASH_SHARE);
 
 	/*
-	 * Write-lock the metapage so we can increment the tuple count.
-	 * After incrementing it, check to see if it's time for a split.
+	 * Write-lock the metapage so we can increment the tuple count. After
+	 * incrementing it, check to see if it's time for a split.
 	 */
 	_hash_chgbufaccess(rel, metabuf, HASH_NOLOCK, HASH_WRITE);
 

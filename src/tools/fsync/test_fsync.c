@@ -29,7 +29,7 @@
 #endif
 #endif
 
-#define WAL_FILE_SIZE 	(16 * 1024 * 1024)
+#define WAL_FILE_SIZE	(16 * 1024 * 1024)
 
 void		die(char *str);
 void		print_elapse(struct timeval start_t, struct timeval elapse_t);
@@ -41,20 +41,20 @@ main(int argc, char *argv[])
 	struct timeval elapse_t;
 	int			tmpfile,
 				i,
-				loops=1000;
+				loops = 1000;
 	char	   *strout = (char *) malloc(WAL_FILE_SIZE);
 	char	   *filename = FSYNC_FILENAME;
 
-	if (argc > 2 && strcmp(argv[1],"-f") == 0)
+	if (argc > 2 && strcmp(argv[1], "-f") == 0)
 	{
 		filename = argv[2];
 		argv += 2;
 		argc -= 2;
 	}
-		
+
 	if (argc > 1)
-			loops = atoi(argv[1]);
-		
+		loops = atoi(argv[1]);
+
 	for (i = 0; i < WAL_FILE_SIZE; i++)
 		strout[i] = 'a';
 

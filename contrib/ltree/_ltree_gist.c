@@ -75,8 +75,8 @@ _ltree_compress(PG_FUNCTION_ARGS)
 
 		if (ARR_NDIM(val) != 1)
 			ereport(ERROR,
-				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
-				 errmsg("array must be one-dimensional")));
+					(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
+					 errmsg("array must be one-dimensional")));
 
 		key = (ltree_gist *) palloc(len);
 		key->len = len;
@@ -98,7 +98,7 @@ _ltree_compress(PG_FUNCTION_ARGS)
 					  entry->rel, entry->page,
 					  entry->offset, key->len, FALSE);
 	}
-	else if ( !LTG_ISALLTRUE(entry->key) ) 
+	else if (!LTG_ISALLTRUE(entry->key))
 	{
 		int4		i,
 					len;
@@ -107,7 +107,7 @@ _ltree_compress(PG_FUNCTION_ARGS)
 		BITVECP		sign = LTG_SIGN(DatumGetPointer(entry->key));
 
 		ALOOPBYTE(
-				  if ((sign[i]&0xff) != 0xff)
+				  if ((sign[i] & 0xff) != 0xff)
 				  PG_RETURN_POINTER(retval);
 		);
 		len = LTG_HDRSIZE;
@@ -172,10 +172,11 @@ unionkey(BITVECP sbase, ltree_gist * add)
 Datum
 _ltree_union(PG_FUNCTION_ARGS)
 {
-	GistEntryVector	   *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
+	GistEntryVector *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
 	int		   *size = (int *) PG_GETARG_POINTER(1);
 	ABITVEC		base;
-	int4		i,len;
+	int4		i,
+				len;
 	int4		flag = 0;
 	ltree_gist *result;
 
@@ -212,28 +213,33 @@ sizebitvec(BITVECP sign)
 	return size;
 }
 
-static int                      
-hemdistsign(BITVECP  a, BITVECP b) {
-	int i,dist=0;
-                 
+static int
+hemdistsign(BITVECP a, BITVECP b)
+{
+	int			i,
+				dist = 0;
+
 	ALOOPBIT(
-		if ( GETBIT(a,i) != GETBIT(b,i) )
-			dist++;
+			 if (GETBIT(a, i) != GETBIT(b, i))
+			 dist++;
 	);
 	return dist;
 }
 
 static int
-hemdist(ltree_gist   *a, ltree_gist   *b) {
-        if ( LTG_ISALLTRUE(a) ) {   
-                if (LTG_ISALLTRUE(b))
-                        return 0;
-                else
-                        return ASIGLENBIT-sizebitvec(LTG_SIGN(b));
-        } else if (LTG_ISALLTRUE(b))
-                return ASIGLENBIT-sizebitvec(LTG_SIGN(a));
- 
-        return hemdistsign( LTG_SIGN(a), LTG_SIGN(b) );
+hemdist(ltree_gist * a, ltree_gist * b)
+{
+	if (LTG_ISALLTRUE(a))
+	{
+		if (LTG_ISALLTRUE(b))
+			return 0;
+		else
+			return ASIGLENBIT - sizebitvec(LTG_SIGN(b));
+	}
+	else if (LTG_ISALLTRUE(b))
+		return ASIGLENBIT - sizebitvec(LTG_SIGN(a));
+
+	return hemdistsign(LTG_SIGN(a), LTG_SIGN(b));
 }
 
 
@@ -244,7 +250,7 @@ _ltree_penalty(PG_FUNCTION_ARGS)
 	ltree_gist *newval = (ltree_gist *) DatumGetPointer(((GISTENTRY *) PG_GETARG_POINTER(1))->key);
 	float	   *penalty = (float *) PG_GETARG_POINTER(2);
 
-	*penalty=hemdist(origval,newval);
+	*penalty = hemdist(origval, newval);
 	PG_RETURN_POINTER(penalty);
 }
 
@@ -263,7 +269,7 @@ comparecost(const void *a, const void *b)
 Datum
 _ltree_picksplit(PG_FUNCTION_ARGS)
 {
-	GistEntryVector	   *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
+	GistEntryVector *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
 	GIST_SPLITVEC *v = (GIST_SPLITVEC *) PG_GETARG_POINTER(1);
 	OffsetNumber k,
 				j;
@@ -271,7 +277,8 @@ _ltree_picksplit(PG_FUNCTION_ARGS)
 			   *datum_r;
 	BITVECP		union_l,
 				union_r;
-	int4		size_alpha, size_beta;
+	int4		size_alpha,
+				size_beta;
 	int4		size_waste,
 				waste = -1;
 	int4		nbytes;
@@ -291,11 +298,14 @@ _ltree_picksplit(PG_FUNCTION_ARGS)
 	v->spl_left = (OffsetNumber *) palloc(nbytes);
 	v->spl_right = (OffsetNumber *) palloc(nbytes);
 
-	for (k = FirstOffsetNumber; k < maxoff; k = OffsetNumberNext(k)) {
+	for (k = FirstOffsetNumber; k < maxoff; k = OffsetNumberNext(k))
+	{
 		_k = GETENTRY(entryvec, k);
-		for (j = OffsetNumberNext(k); j <= maxoff; j = OffsetNumberNext(j)) {
-			size_waste=hemdist(_k, GETENTRY(entryvec, j));
-			if (size_waste > waste ) {
+		for (j = OffsetNumberNext(k); j <= maxoff; j = OffsetNumberNext(j))
+		{
+			size_waste = hemdist(_k, GETENTRY(entryvec, j));
+			if (size_waste > waste)
+			{
 				waste = size_waste;
 				seed_1 = k;
 				seed_2 = j;
@@ -349,15 +359,15 @@ _ltree_picksplit(PG_FUNCTION_ARGS)
 	{
 		costvector[j - 1].pos = j;
 		_j = GETENTRY(entryvec, j);
-		size_alpha = hemdist(datum_l,_j);
-		size_beta  = hemdist(datum_r,_j);
+		size_alpha = hemdist(datum_l, _j);
+		size_beta = hemdist(datum_r, _j);
 		costvector[j - 1].cost = abs(size_alpha - size_beta);
 	}
 	qsort((void *) costvector, maxoff, sizeof(SPLITCOST), comparecost);
 
-	union_l=LTG_SIGN(datum_l);
-	union_r=LTG_SIGN(datum_r);
-	
+	union_l = LTG_SIGN(datum_l);
+	union_r = LTG_SIGN(datum_r);
+
 	for (k = 0; k < maxoff; k++)
 	{
 		j = costvector[k].pos;
@@ -374,18 +384,21 @@ _ltree_picksplit(PG_FUNCTION_ARGS)
 			continue;
 		}
 		_j = GETENTRY(entryvec, j);
-		size_alpha = hemdist(datum_l,_j);
-		size_beta  = hemdist(datum_r,_j);
+		size_alpha = hemdist(datum_l, _j);
+		size_beta = hemdist(datum_r, _j);
 
-		if (size_alpha < size_beta  + WISH_F(v->spl_nleft, v->spl_nright, 0.00001))
+		if (size_alpha < size_beta + WISH_F(v->spl_nleft, v->spl_nright, 0.00001))
 		{
-			if (LTG_ISALLTRUE(datum_l) || LTG_ISALLTRUE(_j) ) {
+			if (LTG_ISALLTRUE(datum_l) || LTG_ISALLTRUE(_j))
+			{
 				if (!LTG_ISALLTRUE(datum_l))
-					MemSet((void *) union_l, 0xff, sizeof(ABITVEC)); 
-			} else {
-				ptr=LTG_SIGN(_j);
+					MemSet((void *) union_l, 0xff, sizeof(ABITVEC));
+			}
+			else
+			{
+				ptr = LTG_SIGN(_j);
 				ALOOPBYTE(
-					union_l[i] |= ptr[i];
+						  union_l[i] |= ptr[i];
 				);
 			}
 			*left++ = j;
@@ -393,13 +406,16 @@ _ltree_picksplit(PG_FUNCTION_ARGS)
 		}
 		else
 		{
-			if (LTG_ISALLTRUE(datum_r) || LTG_ISALLTRUE(_j) ) {
+			if (LTG_ISALLTRUE(datum_r) || LTG_ISALLTRUE(_j))
+			{
 				if (!LTG_ISALLTRUE(datum_r))
-					MemSet((void *) union_r, 0xff, sizeof(ABITVEC)); 
-			} else {
-				ptr=LTG_SIGN(_j);
+					MemSet((void *) union_r, 0xff, sizeof(ABITVEC));
+			}
+			else
+			{
+				ptr = LTG_SIGN(_j);
 				ALOOPBYTE(
-					union_r[i] |= ptr[i];
+						  union_r[i] |= ptr[i];
 				);
 			}
 			*right++ = j;
@@ -498,22 +514,24 @@ gist_qe(ltree_gist * key, lquery * query)
 }
 
 static bool
-_arrq_cons(ltree_gist *key, ArrayType *_query) {
-        lquery  *query = (lquery *) ARR_DATA_PTR(_query);
-        int     num = ArrayGetNItems(ARR_NDIM(_query), ARR_DIMS(_query));
+_arrq_cons(ltree_gist * key, ArrayType *_query)
+{
+	lquery	   *query = (lquery *) ARR_DATA_PTR(_query);
+	int			num = ArrayGetNItems(ARR_NDIM(_query), ARR_DIMS(_query));
 
-        if (ARR_NDIM(_query) != 1)
-			ereport(ERROR,
+	if (ARR_NDIM(_query) != 1)
+		ereport(ERROR,
 				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
 				 errmsg("array must be one-dimensional")));
 
-        while (num > 0) {
-                if ( gist_qe(key, query) )
-                        return true;
-                num--;
-                query = (lquery*)NEXTVAL(query);
-        }
-        return false;
+	while (num > 0)
+	{
+		if (gist_qe(key, query))
+			return true;
+		num--;
+		query = (lquery *) NEXTVAL(query);
+	}
+	return false;
 }
 
 Datum

@@ -45,7 +45,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.124 2004/08/29 04:12:31 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.125 2004/08/29 05:06:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -252,11 +252,11 @@ initialize_aggregates(AggState *aggstate,
 		}
 
 		/*
-		 * If we are reinitializing after a group boundary, we have to free
-		 * any prior transValue to avoid memory leakage.  We must check not
-		 * only the isnull flag but whether the pointer is NULL; since
-		 * pergroupstate is initialized with palloc0, the initial condition
-		 * has isnull = 0 and null pointer.
+		 * If we are reinitializing after a group boundary, we have to
+		 * free any prior transValue to avoid memory leakage.  We must
+		 * check not only the isnull flag but whether the pointer is NULL;
+		 * since pergroupstate is initialized with palloc0, the initial
+		 * condition has isnull = 0 and null pointer.
 		 */
 		if (!peraggstate->transtypeByVal &&
 			!pergroupstate->transValueIsNull &&
@@ -811,14 +811,14 @@ agg_retrieve_direct(AggState *aggstate)
 		/*
 		 * If we have no first tuple (ie, the outerPlan didn't return
 		 * anything), create a dummy all-nulls input tuple for use by
-		 * ExecQual/ExecProject. 99.44% of the time this is a waste of cycles,
-		 * because ordinarily the projected output tuple's targetlist
-		 * cannot contain any direct (non-aggregated) references to input
-		 * columns, so the dummy tuple will not be referenced. However
-		 * there are special cases where this isn't so --- in particular
-		 * an UPDATE involving an aggregate will have a targetlist
-		 * reference to ctid.  We need to return a null for ctid in that
-		 * situation, not coredump.
+		 * ExecQual/ExecProject. 99.44% of the time this is a waste of
+		 * cycles, because ordinarily the projected output tuple's
+		 * targetlist cannot contain any direct (non-aggregated)
+		 * references to input columns, so the dummy tuple will not be
+		 * referenced. However there are special cases where this isn't so
+		 * --- in particular an UPDATE involving an aggregate will have a
+		 * targetlist reference to ctid.  We need to return a null for
+		 * ctid in that situation, not coredump.
 		 *
 		 * The values returned for the aggregates will be the initial values
 		 * of the transition functions.
@@ -865,9 +865,9 @@ agg_retrieve_direct(AggState *aggstate)
 		if (ExecQual(aggstate->ss.ps.qual, econtext, false))
 		{
 			/*
-			 * Form and return a projection tuple using the aggregate results
-			 * and the representative input tuple.  Note we do not support
-			 * aggregates returning sets ...
+			 * Form and return a projection tuple using the aggregate
+			 * results and the representative input tuple.	Note we do not
+			 * support aggregates returning sets ...
 			 */
 			return ExecProject(projInfo, NULL);
 		}
@@ -1009,9 +1009,9 @@ agg_retrieve_hash_table(AggState *aggstate)
 		if (ExecQual(aggstate->ss.ps.qual, econtext, false))
 		{
 			/*
-			 * Form and return a projection tuple using the aggregate results
-			 * and the representative input tuple.  Note we do not support
-			 * aggregates returning sets ...
+			 * Form and return a projection tuple using the aggregate
+			 * results and the representative input tuple.	Note we do not
+			 * support aggregates returning sets ...
 			 */
 			return ExecProject(projInfo, NULL);
 		}
@@ -1478,7 +1478,10 @@ ExecReScanAgg(AggState *node, ExprContext *exprCtxt)
 	}
 	else
 	{
-		/* Reset the per-group state (in particular, mark transvalues null) */
+		/*
+		 * Reset the per-group state (in particular, mark transvalues
+		 * null)
+		 */
 		MemSet(node->pergroup, 0,
 			   sizeof(AggStatePerGroupData) * node->numaggs);
 	}

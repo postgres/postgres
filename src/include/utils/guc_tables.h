@@ -7,7 +7,7 @@
  *
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  *
- *	  $PostgreSQL: pgsql/src/include/utils/guc_tables.h,v 1.15 2004/08/29 04:13:11 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/include/utils/guc_tables.h,v 1.16 2004/08/29 05:06:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,8 +85,8 @@ typedef struct guc_stack
 	int			status;			/* previous status bits, see below */
 	GucSource	tentative_source;		/* source of the tentative_value */
 	GucSource	source;			/* source of the actual value */
-	union config_var_value tentative_val;	/* previous tentative val */
-	union config_var_value value;			/* previous actual value */
+	union config_var_value tentative_val;		/* previous tentative val */
+	union config_var_value value;		/* previous actual value */
 } GucStack;
 
 /*
@@ -122,7 +122,8 @@ struct config_generic
 #define GUC_REPORT				0x0010	/* auto-report changes to client */
 #define GUC_NOT_IN_SAMPLE		0x0020	/* not in postgresql.conf.sample */
 #define GUC_DISALLOW_IN_FILE	0x0040	/* can't set in postgresql.conf */
-#define GUC_CUSTOM_PLACEHOLDER	0x0080	/* placeholder for a custom variable */
+#define GUC_CUSTOM_PLACEHOLDER	0x0080	/* placeholder for a custom
+										 * variable */
 
 /* bit values in status field */
 #define GUC_HAVE_TENTATIVE	0x0001		/* tentative value is defined */
@@ -200,4 +201,4 @@ extern struct config_generic **get_guc_variables(void);
 
 extern void build_guc_variables(void);
 
-#endif /* GUC_TABLES_H */
+#endif   /* GUC_TABLES_H */

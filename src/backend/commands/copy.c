@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.229 2004/08/29 04:12:30 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.230 2004/08/29 05:06:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -133,22 +133,22 @@ static void DoCopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 		 char *delim, char *null_print, bool csv_mode, char *quote,
 		 char *escape, List *force_quote_atts, bool fe_copy);
 static void CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
-	   char *delim, char *null_print, bool csv_mode, char *quote, char *escape,
+ char *delim, char *null_print, bool csv_mode, char *quote, char *escape,
 	   List *force_quote_atts);
 static void CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
-		 char *delim, char *null_print, bool csv_mode, char *quote, char *escape,
+ char *delim, char *null_print, bool csv_mode, char *quote, char *escape,
 		 List *force_notnull_atts);
 static bool CopyReadLine(void);
 static char *CopyReadAttribute(const char *delim, const char *null_print,
-							   CopyReadResult *result, bool *isnull);
+				  CopyReadResult *result, bool *isnull);
 static char *CopyReadAttributeCSV(const char *delim, const char *null_print,
-							   char *quote, char *escape,
-							   CopyReadResult *result, bool *isnull);
+					 char *quote, char *escape,
+					 CopyReadResult *result, bool *isnull);
 static Datum CopyReadBinaryAttribute(int column_no, FmgrInfo *flinfo,
 						Oid typioparam, bool *isnull);
 static void CopyAttributeOut(char *string, char *delim);
 static void CopyAttributeOutCSV(char *string, char *delim, char *quote,
-								char *escape, bool force_quote);
+					char *escape, bool force_quote);
 static List *CopyGetAttnums(Relation rel, List *attnamelist);
 static void limit_printout_length(StringInfo buf);
 
@@ -413,7 +413,7 @@ CopyGetData(void *databuf, int datasize)
 					/* Try to receive another message */
 					int			mtype;
 
-				readmessage:
+			readmessage:
 					mtype = pq_getbyte();
 					if (mtype == EOF)
 						ereport(ERROR,
@@ -439,11 +439,12 @@ CopyGetData(void *databuf, int datasize)
 							break;
 						case 'H':		/* Flush */
 						case 'S':		/* Sync */
+
 							/*
 							 * Ignore Flush/Sync for the convenience of
 							 * client libraries (such as libpq) that may
-							 * send those without noticing that the command
-							 * they just sent was COPY.
+							 * send those without noticing that the
+							 * command they just sent was COPY.
 							 */
 							goto readmessage;
 						default:
@@ -693,7 +694,7 @@ DoCopy(const CopyStmt *stmt)
 	bool		fe_copy = false;
 	bool		binary = false;
 	bool		oids = false;
-	bool        csv_mode = false;
+	bool		csv_mode = false;
 	char	   *delim = NULL;
 	char	   *quote = NULL;
 	char	   *escape = NULL;
@@ -773,7 +774,7 @@ DoCopy(const CopyStmt *stmt)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("conflicting or redundant options")));
-			force_quote = (List *)defel->arg;
+			force_quote = (List *) defel->arg;
 		}
 		else if (strcmp(defel->defname, "force_notnull") == 0)
 		{
@@ -781,7 +782,7 @@ DoCopy(const CopyStmt *stmt)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("conflicting or redundant options")));
-			force_notnull = (List *)defel->arg;
+			force_notnull = (List *) defel->arg;
 		}
 		else
 			elog(ERROR, "option \"%s\" not recognized",
@@ -806,7 +807,7 @@ DoCopy(const CopyStmt *stmt)
 	/* Set defaults */
 	if (!delim)
 		delim = csv_mode ? "," : "\t";
-	
+
 	if (!null_print)
 		null_print = csv_mode ? "" : "\\N";
 
@@ -817,7 +818,7 @@ DoCopy(const CopyStmt *stmt)
 		if (!escape)
 			escape = quote;
 	}
-		
+
 	/*
 	 * Only single-character delimiter strings are supported.
 	 */
@@ -862,7 +863,7 @@ DoCopy(const CopyStmt *stmt)
 	if (force_quote != NIL && is_from)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("COPY force quote only available using COPY TO")));
+			   errmsg("COPY force quote only available using COPY TO")));
 
 	/*
 	 * Check force_notnull
@@ -870,11 +871,11 @@ DoCopy(const CopyStmt *stmt)
 	if (!csv_mode && force_notnull != NIL)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("COPY force not null available only in CSV mode")));
+			  errmsg("COPY force not null available only in CSV mode")));
 	if (force_notnull != NIL && !is_from)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("COPY force not null only available using COPY FROM")));
+		  errmsg("COPY force not null only available using COPY FROM")));
 
 	/*
 	 * Don't allow the delimiter to appear in the null string.
@@ -948,11 +949,11 @@ DoCopy(const CopyStmt *stmt)
 			if (!list_member_int(attnumlist, attnum))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-						 errmsg("FORCE QUOTE column \"%s\" not referenced by COPY",
-								NameStr(attr[attnum - 1]->attname))));
+				errmsg("FORCE QUOTE column \"%s\" not referenced by COPY",
+					   NameStr(attr[attnum - 1]->attname))));
 		}
 	}
-	
+
 	/*
 	 * Check that FORCE NOT NULL references valid COPY columns
 	 */
@@ -975,7 +976,7 @@ DoCopy(const CopyStmt *stmt)
 								NameStr(attr[attnum - 1]->attname))));
 		}
 	}
-	
+
 	/*
 	 * Set up variables to avoid per-attribute overhead.
 	 */
@@ -1152,9 +1153,9 @@ DoCopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 	PG_CATCH();
 	{
 		/*
-		 * Make sure we turn off old-style COPY OUT mode upon error.
-		 * It is okay to do this in all cases, since it does nothing
-		 * if the mode is not on.
+		 * Make sure we turn off old-style COPY OUT mode upon error. It is
+		 * okay to do this in all cases, since it does nothing if the mode
+		 * is not on.
 		 */
 		pq_endcopyout(true);
 		PG_RE_THROW();
@@ -1202,10 +1203,10 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 	{
 		int			attnum = lfirst_int(cur);
 		Oid			out_func_oid;
-		
+
 		if (binary)
 			getTypeBinaryOutputInfo(attr[attnum - 1]->atttypid,
-									&out_func_oid, &typioparams[attnum - 1],
+								 &out_func_oid, &typioparams[attnum - 1],
 									&isvarlena[attnum - 1]);
 		else
 			getTypeOutputInfo(attr[attnum - 1]->atttypid,
@@ -1266,6 +1267,7 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 	while ((tuple = heap_getnext(scandesc, ForwardScanDirection)) != NULL)
 	{
 		bool		need_delim = false;
+
 		CHECK_FOR_INTERRUPTS();
 
 		MemoryContextReset(mycontext);
@@ -1325,13 +1327,13 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 				{
 					string = DatumGetCString(FunctionCall3(&out_functions[attnum - 1],
 														   value,
-								  ObjectIdGetDatum(typioparams[attnum - 1]),
+							   ObjectIdGetDatum(typioparams[attnum - 1]),
 							Int32GetDatum(attr[attnum - 1]->atttypmod)));
 					if (csv_mode)
 					{
 						CopyAttributeOutCSV(string, delim, quote, escape,
-											(strcmp(string, null_print) == 0 ||
-											force_quote[attnum - 1]));
+									  (strcmp(string, null_print) == 0 ||
+									   force_quote[attnum - 1]));
 					}
 					else
 						CopyAttributeOut(string, delim);
@@ -1343,7 +1345,7 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 
 					outputbytes = DatumGetByteaP(FunctionCall2(&out_functions[attnum - 1],
 															   value,
-								ObjectIdGetDatum(typioparams[attnum - 1])));
+							 ObjectIdGetDatum(typioparams[attnum - 1])));
 					/* We assume the result will not have been toasted */
 					CopySendInt32(VARSIZE(outputbytes) - VARHDRSZ);
 					CopySendData(VARDATA(outputbytes),
@@ -1444,7 +1446,7 @@ limit_printout_length(StringInfo buf)
 {
 #define MAX_COPY_DATA_DISPLAY 100
 
-	int len;
+	int			len;
 
 	/* Fast path if definitely okay */
 	if (buf->len <= MAX_COPY_DATA_DISPLAY)
@@ -1551,7 +1553,7 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 		/* Fetch the input function and typioparam info */
 		if (binary)
 			getTypeBinaryInputInfo(attr[attnum - 1]->atttypid,
-								   &in_func_oid, &typioparams[attnum - 1]);
+								 &in_func_oid, &typioparams[attnum - 1]);
 		else
 			getTypeInputInfo(attr[attnum - 1]->atttypid,
 							 &in_func_oid, &typioparams[attnum - 1]);
@@ -1561,7 +1563,7 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 			force_notnull[attnum - 1] = true;
 		else
 			force_notnull[attnum - 1] = false;
-		
+
 		/* Get default info if needed */
 		if (!list_member_int(attnumlist, attnum))
 		{
@@ -1603,7 +1605,7 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 									COERCE_IMPLICIT_CAST, false);
 
 			constraintexprs[attnum - 1] = ExecPrepareExpr((Expr *) node,
-												 estate);
+														  estate);
 			hasConstraints = true;
 		}
 	}
@@ -1718,10 +1720,10 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 			done = CopyReadLine();
 
 			/*
-			 * EOF at start of line means we're done.  If we see EOF
-			 * after some characters, we act as though it was newline
-			 * followed by EOF, ie, process the line and then exit loop
-			 * on next iteration.
+			 * EOF at start of line means we're done.  If we see EOF after
+			 * some characters, we act as though it was newline followed
+			 * by EOF, ie, process the line and then exit loop on next
+			 * iteration.
 			 */
 			if (done && line_buf.len == 0)
 				break;
@@ -1770,29 +1772,29 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 				if (csv_mode)
 				{
 					string = CopyReadAttributeCSV(delim, null_print, quote,
-												  escape, &result, &isnull);
+											   escape, &result, &isnull);
 					if (result == UNTERMINATED_FIELD)
 						ereport(ERROR,
 								(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-								 errmsg("unterminated CSV quoted field")));
+							   errmsg("unterminated CSV quoted field")));
 				}
 				else
-					string = CopyReadAttribute(delim, null_print, 
+					string = CopyReadAttribute(delim, null_print,
 											   &result, &isnull);
 
 				if (csv_mode && isnull && force_notnull[m])
 				{
-					string = null_print;	/* set to NULL string */
+					string = null_print;		/* set to NULL string */
 					isnull = false;
 				}
 
- 				/* we read an SQL NULL, no need to do anything */
+				/* we read an SQL NULL, no need to do anything */
 				if (!isnull)
 				{
 					copy_attname = NameStr(attr[m]->attname);
 					values[m] = FunctionCall3(&in_functions[m],
 											  CStringGetDatum(string),
-										   ObjectIdGetDatum(typioparams[m]),
+										ObjectIdGetDatum(typioparams[m]),
 									  Int32GetDatum(attr[m]->atttypmod));
 					nulls[m] = ' ';
 					copy_attname = NULL;
@@ -1809,7 +1811,7 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 			if (result == NORMAL_ATTR && line_buf.len != 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-						 errmsg("extra data after last expected column")));
+					   errmsg("extra data after last expected column")));
 		}
 		else
 		{
@@ -1835,8 +1837,8 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 				copy_attname = "oid";
 				loaded_oid =
 					DatumGetObjectId(CopyReadBinaryAttribute(0,
-															 &oid_in_function,
-															 oid_typioparam,
+														&oid_in_function,
+														  oid_typioparam,
 															 &isnull));
 				if (isnull || loaded_oid == InvalidOid)
 					ereport(ERROR,
@@ -2022,14 +2024,14 @@ CopyReadLine(void)
 	result = false;
 
 	/*
-	 * In this loop we only care for detecting newlines (\r and/or \n)
-	 * and the end-of-copy marker (\.).  For backwards compatibility
-	 * we allow backslashes to escape newline characters.  Backslashes
-	 * other than the end marker get put into the line_buf, since
-	 * CopyReadAttribute does its own escape processing.  These four
-	 * characters, and only these four, are assumed the same in frontend
-	 * and backend encodings.  We do not assume that second and later bytes
-	 * of a frontend multibyte character couldn't look like ASCII characters.
+	 * In this loop we only care for detecting newlines (\r and/or \n) and
+	 * the end-of-copy marker (\.).  For backwards compatibility we allow
+	 * backslashes to escape newline characters.  Backslashes other than
+	 * the end marker get put into the line_buf, since CopyReadAttribute
+	 * does its own escape processing.	These four characters, and only
+	 * these four, are assumed the same in frontend and backend encodings.
+	 * We do not assume that second and later bytes of a frontend
+	 * multibyte character couldn't look like ASCII characters.
 	 */
 	for (;;)
 	{
@@ -2120,9 +2122,9 @@ CopyReadLine(void)
 							 errmsg("end-of-copy marker does not match previous newline style")));
 
 				/*
-				 * In protocol version 3, we should ignore anything
-				 * after \. up to the protocol end of copy data.  (XXX
-				 * maybe better not to treat \. as special?)
+				 * In protocol version 3, we should ignore anything after
+				 * \. up to the protocol end of copy data.	(XXX maybe
+				 * better not to treat \. as special?)
 				 */
 				if (copy_dest == COPY_NEW_FE)
 				{
@@ -2140,10 +2142,10 @@ CopyReadLine(void)
 
 		/*
 		 * When client encoding != server, must be careful to read the
-		 * extra bytes of a multibyte character exactly, since the encoding
-		 * might not ensure they don't look like ASCII.  When the encodings
-		 * are the same, we need not do this, since no server encoding we
-		 * use has ASCII-like following bytes.
+		 * extra bytes of a multibyte character exactly, since the
+		 * encoding might not ensure they don't look like ASCII.  When the
+		 * encodings are the same, we need not do this, since no server
+		 * encoding we use has ASCII-like following bytes.
 		 */
 		if (change_encoding)
 		{
@@ -2162,7 +2164,7 @@ CopyReadLine(void)
 			if (result)
 				break;			/* out of outer loop */
 		}
-	} /* end of outer loop */
+	}							/* end of outer loop */
 
 	/*
 	 * Done reading the line.  Convert it to server encoding.
@@ -2170,8 +2172,9 @@ CopyReadLine(void)
 	 * Note: set line_buf_converted to true *before* attempting conversion;
 	 * this prevents infinite recursion during error reporting should
 	 * pg_client_to_server() issue an error, due to copy_in_error_callback
-	 * again attempting the same conversion.  We'll end up issuing the message
-	 * without conversion, which is bad but better than nothing ...
+	 * again attempting the same conversion.  We'll end up issuing the
+	 * message without conversion, which is bad but better than nothing
+	 * ...
 	 */
 	line_buf_converted = true;
 
@@ -2295,9 +2298,11 @@ CopyReadAttribute(const char *delim, const char *null_print,
 				case 'v':
 					c = '\v';
 					break;
-				/*
-				 * in all other cases, take the char after '\' literally
-				 */
+
+					/*
+					 * in all other cases, take the char after '\'
+					 * literally
+					 */
 			}
 		}
 		appendStringInfoCharMacro(&attribute_buf, c);
@@ -2316,7 +2321,7 @@ CopyReadAttribute(const char *delim, const char *null_print,
 
 
 /*
- * Read the value of a single attribute in CSV mode, 
+ * Read the value of a single attribute in CSV mode,
  * performing de-escaping as needed. Escaping does not follow the normal
  * PostgreSQL text mode, but instead "standard" (i.e. common) CSV usage.
  *
@@ -2329,7 +2334,7 @@ CopyReadAttribute(const char *delim, const char *null_print,
  * *result is set to indicate what terminated the read:
  *		NORMAL_ATTR:	column delimiter
  *		END_OF_LINE:	end of line
- *      UNTERMINATED_FIELD no quote detected at end of a quoted field
+ *		UNTERMINATED_FIELD no quote detected at end of a quoted field
  *
  * In any case, the string read up to the terminator (or end of file)
  * is returned.
@@ -2345,15 +2350,15 @@ static char *
 CopyReadAttributeCSV(const char *delim, const char *null_print, char *quote,
 					 char *escape, CopyReadResult *result, bool *isnull)
 {
-	char        delimc = delim[0];
-	char        quotec = quote[0];
-	char        escapec = escape[0];
+	char		delimc = delim[0];
+	char		quotec = quote[0];
+	char		escapec = escape[0];
 	char		c;
 	int			start_cursor = line_buf.cursor;
 	int			end_cursor = start_cursor;
 	int			input_len;
-	bool        in_quote = false;
-	bool        saw_quote = false;
+	bool		in_quote = false;
+	bool		saw_quote = false;
 
 	/* reset attribute_buf to empty */
 	attribute_buf.len = 0;
@@ -2367,18 +2372,18 @@ CopyReadAttributeCSV(const char *delim, const char *null_print, char *quote,
 		/* handle multiline quoted fields */
 		if (in_quote && line_buf.cursor >= line_buf.len)
 		{
-			bool done;
+			bool		done;
 
-			switch(eol_type)
+			switch (eol_type)
 			{
 				case EOL_NL:
-					appendStringInfoString(&attribute_buf,"\n");
+					appendStringInfoString(&attribute_buf, "\n");
 					break;
 				case EOL_CR:
-					appendStringInfoString(&attribute_buf,"\r");
+					appendStringInfoString(&attribute_buf, "\r");
 					break;
 				case EOL_CRNL:
-					appendStringInfoString(&attribute_buf,"\r\n");
+					appendStringInfoString(&attribute_buf, "\r\n");
 					break;
 				case EOL_UNKNOWN:
 					/* shouldn't happen - just keep going */
@@ -2396,16 +2401,18 @@ CopyReadAttributeCSV(const char *delim, const char *null_print, char *quote,
 		if (line_buf.cursor >= line_buf.len)
 			break;
 		c = line_buf.data[line_buf.cursor++];
-		/* 
-		 * unquoted field delimiter 
+
+		/*
+		 * unquoted field delimiter
 		 */
 		if (!in_quote && c == delimc)
 		{
 			*result = NORMAL_ATTR;
 			break;
 		}
-		/* 
-		 * start of quoted field (or part of field) 
+
+		/*
+		 * start of quoted field (or part of field)
 		 */
 		if (!in_quote && c == quotec)
 		{
@@ -2413,18 +2420,20 @@ CopyReadAttributeCSV(const char *delim, const char *null_print, char *quote,
 			in_quote = true;
 			continue;
 		}
-		/* 
+
+		/*
 		 * escape within a quoted field
 		 */
 		if (in_quote && c == escapec)
 		{
-			/* 
-			 * peek at the next char if available, and escape it if it
-			 * is an escape char or a quote char
+			/*
+			 * peek at the next char if available, and escape it if it is
+			 * an escape char or a quote char
 			 */
 			if (line_buf.cursor <= line_buf.len)
 			{
-				char nextc = line_buf.data[line_buf.cursor];
+				char		nextc = line_buf.data[line_buf.cursor];
+
 				if (nextc == escapec || nextc == quotec)
 				{
 					appendStringInfoCharMacro(&attribute_buf, nextc);
@@ -2433,10 +2442,11 @@ CopyReadAttributeCSV(const char *delim, const char *null_print, char *quote,
 				}
 			}
 		}
+
 		/*
-		 * end of quoted field. 
-		 * Must do this test after testing for escape in case quote char
-		 * and escape char are the same (which is the common case).
+		 * end of quoted field. Must do this test after testing for escape
+		 * in case quote char and escape char are the same (which is the
+		 * common case).
 		 */
 		if (in_quote && c == quotec)
 		{
@@ -2586,7 +2596,7 @@ CopyAttributeOut(char *server_string, char *delim)
 }
 
 /*
- * Send CSV representation of one attribute, with conversion and 
+ * Send CSV representation of one attribute, with conversion and
  * CSV type escaping
  */
 static void
@@ -2596,9 +2606,9 @@ CopyAttributeOutCSV(char *server_string, char *delim, char *quote,
 	char	   *string;
 	char		c;
 	char		delimc = delim[0];
-	char        quotec = quote[0];
- 	char        escapec = escape[0];
-	char        *test_string;
+	char		quotec = quote[0];
+	char		escapec = escape[0];
+	char	   *test_string;
 	bool		same_encoding;
 	int			mblen;
 	int			i;
@@ -2610,13 +2620,14 @@ CopyAttributeOutCSV(char *server_string, char *delim, char *quote,
 	else
 		string = server_string;
 
-	/* have to run through the string twice,
-	 * first time to see if it needs quoting, second to actually send it
+	/*
+	 * have to run through the string twice, first time to see if it needs
+	 * quoting, second to actually send it
 	 */
 
-	for(test_string = string; 
-		!use_quote && (c = *test_string) != '\0'; 
-		test_string += mblen)
+	for (test_string = string;
+		 !use_quote && (c = *test_string) != '\0';
+		 test_string += mblen)
 	{
 		if (c == delimc || c == quotec || c == '\n' || c == '\r')
 			use_quote = true;
@@ -2695,8 +2706,8 @@ CopyGetAttnums(Relation rel, List *attnamelist)
 			if (list_member_int(attnums, attnum))
 				ereport(ERROR,
 						(errcode(ERRCODE_DUPLICATE_COLUMN),
-					  errmsg("column \"%s\" specified more than once",
-							 name)));
+						 errmsg("column \"%s\" specified more than once",
+								name)));
 			attnums = lappend_int(attnums, attnum);
 		}
 	}

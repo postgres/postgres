@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.120 2004/08/29 04:12:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.121 2004/08/29 05:06:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,9 +58,9 @@ static void compare_tlist_datatypes(List *tlist, List *colTypes,
 static bool qual_is_pushdown_safe(Query *subquery, Index rti, Node *qual,
 					  bool *differentTypes);
 static void subquery_push_qual(Query *subquery, List *rtable,
-							   Index rti, Node *qual);
+				   Index rti, Node *qual);
 static void recurse_push_qual(Node *setOp, Query *topquery,
-							  List *rtable, Index rti, Node *qual);
+				  List *rtable, Index rti, Node *qual);
 
 
 /*
@@ -102,7 +102,7 @@ make_one_rel(Query *root)
 static void
 set_base_rel_pathlists(Query *root)
 {
-	ListCell	   *l;
+	ListCell   *l;
 
 	foreach(l, root->base_rel_list)
 	{
@@ -156,9 +156,9 @@ set_plain_rel_pathlist(Query *root, RelOptInfo *rel, RangeTblEntry *rte)
 	check_partial_indexes(root, rel);
 
 	/*
-	 * Check to see if we can extract any restriction conditions from
-	 * join quals that are OR-of-AND structures.  If so, add them to the
-	 * rel's restriction list, and recompute the size estimates.
+	 * Check to see if we can extract any restriction conditions from join
+	 * quals that are OR-of-AND structures.  If so, add them to the rel's
+	 * restriction list, and recompute the size estimates.
 	 */
 	if (create_or_index_quals(root, rel))
 		set_baserel_size_estimates(root, rel);
@@ -303,7 +303,7 @@ set_inherited_rel_pathlist(Query *root, RelOptInfo *rel,
 			Var		   *parentvar = (Var *) lfirst(parentvars);
 			Var		   *childvar = (Var *) lfirst(childvars);
 
-			if (IsA(parentvar, Var) && IsA(childvar, Var))
+			if (IsA(parentvar, Var) &&IsA(childvar, Var))
 			{
 				int			pndx = parentvar->varattno - rel->min_attr;
 				int			cndx = childvar->varattno - childrel->min_attr;

@@ -9,7 +9,7 @@
 
 #include "spi_internal.h"
 
-static HV* plperl_spi_execute_fetch_result(SPITupleTable*, int, int );
+static HV  *plperl_spi_execute_fetch_result(SPITupleTable *, int, int);
 
 
 int
@@ -48,30 +48,31 @@ spi_ERROR(void)
 	return ERROR;
 }
 
-HV*
-plperl_spi_exec(char* query, int limit)
+HV *
+plperl_spi_exec(char *query, int limit)
 {
-	HV *ret_hv;
-	int spi_rv;
+	HV		   *ret_hv;
+	int			spi_rv;
 
 	spi_rv = SPI_exec(query, limit);
-	ret_hv=plperl_spi_execute_fetch_result(SPI_tuptable, SPI_processed, spi_rv);
+	ret_hv = plperl_spi_execute_fetch_result(SPI_tuptable, SPI_processed, spi_rv);
 
 	return ret_hv;
 }
 
-static HV*
+static HV  *
 plperl_hash_from_tuple(HeapTuple tuple, TupleDesc tupdesc)
 {
-	int	i;
-	char	*attname;
-	char	*attdata;
+	int			i;
+	char	   *attname;
+	char	   *attdata;
 
-	HV *array;
+	HV		   *array;
 
 	array = newHV();
 
-	for (i = 0; i < tupdesc->natts; i++) {
+	for (i = 0; i < tupdesc->natts; i++)
+	{
 		/************************************************************
 		* Get the attribute name
 		************************************************************/
@@ -80,24 +81,24 @@ plperl_hash_from_tuple(HeapTuple tuple, TupleDesc tupdesc)
 		/************************************************************
 		* Get the attributes value
 		************************************************************/
-		attdata = SPI_getvalue(tuple, tupdesc, i+1);
-		if(attdata)
-		hv_store(array, attname, strlen(attname), newSVpv(attdata,0), 0);
+		attdata = SPI_getvalue(tuple, tupdesc, i + 1);
+		if (attdata)
+			hv_store(array, attname, strlen(attname), newSVpv(attdata, 0), 0);
 		else
-			hv_store(array, attname, strlen(attname), newSVpv("undef",0), 0);
+			hv_store(array, attname, strlen(attname), newSVpv("undef", 0), 0);
 	}
 	return array;
 }
 
-static HV*
+static HV  *
 plperl_spi_execute_fetch_result(SPITupleTable *tuptable, int processed, int status)
 {
-	HV *result;
+	HV		   *result;
 
 	result = newHV();
 
 	hv_store(result, "status", strlen("status"),
-			 newSVpv((char*)SPI_result_code_string(status),0), 0);
+			 newSVpv((char *) SPI_result_code_string(status), 0), 0);
 	hv_store(result, "processed", strlen("processed"),
 			 newSViv(processed), 0);
 
@@ -105,18 +106,18 @@ plperl_spi_execute_fetch_result(SPITupleTable *tuptable, int processed, int stat
 	{
 		if (processed)
 		{
-			AV *rows;
-			HV *row;
-			int i;
+			AV		   *rows;
+			HV		   *row;
+			int			i;
 
 			rows = newAV();
 			for (i = 0; i < processed; i++)
 			{
 				row = plperl_hash_from_tuple(tuptable->vals[i], tuptable->tupdesc);
-				av_store(rows, i, newRV_noinc((SV*)row));
+				av_store(rows, i, newRV_noinc((SV *) row));
 			}
 			hv_store(result, "rows", strlen("rows"),
-					 newRV_noinc((SV*)rows), 0);
+					 newRV_noinc((SV *) rows), 0);
 		}
 	}
 

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/localbuf.c,v 1.58 2004/08/29 04:12:47 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/localbuf.c,v 1.59 2004/08/29 05:06:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +39,7 @@ static int	nextFreeLocalBuf = 0;
  *	  allocate a local buffer. We do round robin allocation for now.
  *
  * API is similar to bufmgr.c's BufferAlloc, except that we do not need
- * to have the BufMgrLock since this is all local.  Also, IO_IN_PROGRESS
+ * to have the BufMgrLock since this is all local.	Also, IO_IN_PROGRESS
  * does not get set.
  */
 BufferDesc *
@@ -64,7 +64,7 @@ LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool *foundPtr)
 
 			LocalRefCount[i]++;
 			ResourceOwnerRememberBuffer(CurrentResourceOwner,
-										BufferDescriptorGetBuffer(bufHdr));
+									  BufferDescriptorGetBuffer(bufHdr));
 			if (bufHdr->flags & BM_VALID)
 				*foundPtr = TRUE;
 			else
@@ -92,7 +92,7 @@ LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool *foundPtr)
 			bufHdr = &LocalBufferDescriptors[b];
 			LocalRefCount[b]++;
 			ResourceOwnerRememberBuffer(CurrentResourceOwner,
-										BufferDescriptorGetBuffer(bufHdr));
+									  BufferDescriptorGetBuffer(bufHdr));
 			nextFreeLocalBuf = (b + 1) % NLocBuffer;
 			break;
 		}
@@ -245,7 +245,7 @@ AtEOXact_LocalBuffers(bool isCommit)
 					 "local buffer leak: [%03d] (rel=%u/%u/%u, blockNum=%u, flags=0x%x, refcount=%u %d)",
 					 i,
 					 buf->tag.rnode.spcNode, buf->tag.rnode.dbNode,
-					 buf->tag.rnode.relNode, buf->tag.blockNum, buf->flags,
+				   buf->tag.rnode.relNode, buf->tag.blockNum, buf->flags,
 					 buf->refcount, LocalRefCount[i]);
 
 			LocalRefCount[i] = 0;

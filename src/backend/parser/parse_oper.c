@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_oper.c,v 1.79 2004/08/29 04:12:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_oper.c,v 1.80 2004/08/29 05:06:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -141,8 +141,8 @@ equality_oper(Oid argtype, bool noError)
 	Operator	optup;
 
 	/*
-	 * Look for an "=" operator for the datatype.  We require it to be
-	 * an exact or binary-compatible match, since most callers are not
+	 * Look for an "=" operator for the datatype.  We require it to be an
+	 * exact or binary-compatible match, since most callers are not
 	 * prepared to cope with adding any run-time type coercion steps.
 	 */
 	typentry = lookup_type_cache(argtype, TYPECACHE_EQ_OPR);
@@ -155,7 +155,7 @@ equality_oper(Oid argtype, bool noError)
 	 */
 	if (oproid == ARRAY_EQ_OP)
 	{
-		Oid		elem_type = get_element_type(argtype);
+		Oid			elem_type = get_element_type(argtype);
 
 		if (OidIsValid(elem_type))
 		{
@@ -166,7 +166,7 @@ equality_oper(Oid argtype, bool noError)
 				oproid = InvalidOid;	/* element type has no "=" */
 		}
 		else
-			oproid = InvalidOid;		/* bogus array type? */
+			oproid = InvalidOid;	/* bogus array type? */
 	}
 
 	if (OidIsValid(oproid))
@@ -200,14 +200,14 @@ ordering_oper(Oid argtype, bool noError)
 	Operator	optup;
 
 	/*
-	 * Look for a "<" operator for the datatype.  We require it to be
-	 * an exact or binary-compatible match, since most callers are not
+	 * Look for a "<" operator for the datatype.  We require it to be an
+	 * exact or binary-compatible match, since most callers are not
 	 * prepared to cope with adding any run-time type coercion steps.
 	 *
 	 * Note: the search algorithm used by typcache.c ensures that if a "<"
 	 * operator is returned, it will be consistent with the "=" operator
-	 * returned by equality_oper.  This is critical for sorting and grouping
-	 * purposes.
+	 * returned by equality_oper.  This is critical for sorting and
+	 * grouping purposes.
 	 */
 	typentry = lookup_type_cache(argtype, TYPECACHE_LT_OPR);
 	oproid = typentry->lt_opr;
@@ -219,7 +219,7 @@ ordering_oper(Oid argtype, bool noError)
 	 */
 	if (oproid == ARRAY_LT_OP)
 	{
-		Oid		elem_type = get_element_type(argtype);
+		Oid			elem_type = get_element_type(argtype);
 
 		if (OidIsValid(elem_type))
 		{
@@ -230,7 +230,7 @@ ordering_oper(Oid argtype, bool noError)
 				oproid = InvalidOid;	/* element type has no "<" */
 		}
 		else
-			oproid = InvalidOid;		/* bogus array type? */
+			oproid = InvalidOid;	/* bogus array type? */
 	}
 
 	if (OidIsValid(oproid))
@@ -265,14 +265,14 @@ reverse_ordering_oper(Oid argtype, bool noError)
 	Operator	optup;
 
 	/*
-	 * Look for a ">" operator for the datatype.  We require it to be
-	 * an exact or binary-compatible match, since most callers are not
+	 * Look for a ">" operator for the datatype.  We require it to be an
+	 * exact or binary-compatible match, since most callers are not
 	 * prepared to cope with adding any run-time type coercion steps.
 	 *
 	 * Note: the search algorithm used by typcache.c ensures that if a ">"
 	 * operator is returned, it will be consistent with the "=" operator
-	 * returned by equality_oper.  This is critical for sorting and grouping
-	 * purposes.
+	 * returned by equality_oper.  This is critical for sorting and
+	 * grouping purposes.
 	 */
 	typentry = lookup_type_cache(argtype, TYPECACHE_GT_OPR);
 	oproid = typentry->gt_opr;
@@ -284,7 +284,7 @@ reverse_ordering_oper(Oid argtype, bool noError)
 	 */
 	if (oproid == ARRAY_GT_OP)
 	{
-		Oid		elem_type = get_element_type(argtype);
+		Oid			elem_type = get_element_type(argtype);
 
 		if (OidIsValid(elem_type))
 		{
@@ -295,7 +295,7 @@ reverse_ordering_oper(Oid argtype, bool noError)
 				oproid = InvalidOid;	/* element type has no ">" */
 		}
 		else
-			oproid = InvalidOid;		/* bogus array type? */
+			oproid = InvalidOid;	/* bogus array type? */
 	}
 
 	if (OidIsValid(oproid))
@@ -394,7 +394,7 @@ static Oid
 binary_oper_exact(Oid arg1, Oid arg2,
 				  FuncCandidateList candidates)
 {
-	FuncCandidateList	cand;
+	FuncCandidateList cand;
 	bool		was_unknown = false;
 
 	/* Unspecified type for one of the arguments? then use the other */
@@ -418,7 +418,7 @@ binary_oper_exact(Oid arg1, Oid arg2,
 	if (was_unknown)
 	{
 		/* arg1 and arg2 are the same here, need only look at arg1 */
-		Oid		basetype = getBaseType(arg1);
+		Oid			basetype = getBaseType(arg1);
 
 		if (basetype != arg1)
 		{

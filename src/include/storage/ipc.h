@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/ipc.h,v 1.67 2004/08/29 04:13:10 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/storage/ipc.h,v 1.68 2004/08/29 05:06:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,13 +30,13 @@ extern void on_exit_reset(void);
 
 /* ipci.c */
 extern void CreateSharedMemoryAndSemaphores(bool makePrivate,
-											int maxBackends,
-											int port);
+								int maxBackends,
+								int port);
 
 #ifdef EXEC_BACKEND
 /* postmaster.c */
-extern size_t	ShmemBackendArraySize(void);
-extern void		ShmemBackendArrayAllocation(void);
+extern size_t ShmemBackendArraySize(void);
+extern void ShmemBackendArrayAllocation(void);
 #endif
 
 #endif   /* IPC_H */

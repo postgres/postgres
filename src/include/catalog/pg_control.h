@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_control.h,v 1.17 2004/08/29 04:13:05 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_control.h,v 1.18 2004/08/29 05:06:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,13 +30,13 @@
  */
 typedef struct CheckPoint
 {
-	XLogRecPtr	redo;			/* next RecPtr available when we
-								 * began to create CheckPoint
-								 * (i.e. REDO start point) */
+	XLogRecPtr	redo;			/* next RecPtr available when we began to
+								 * create CheckPoint (i.e. REDO start
+								 * point) */
 	XLogRecPtr	undo;			/* first record of oldest in-progress
-								 * transaction when we started
-								 * (i.e. UNDO end point) */
-	TimeLineID	ThisTimeLineID;	/* current TLI */
+								 * transaction when we started (i.e. UNDO
+								 * end point) */
+	TimeLineID	ThisTimeLineID; /* current TLI */
 	TransactionId nextXid;		/* next free XID */
 	Oid			nextOid;		/* next free OID */
 	time_t		time;			/* time stamp of checkpoint */

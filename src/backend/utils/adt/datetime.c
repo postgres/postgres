@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.132 2004/08/29 04:12:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.133 2004/08/29 05:06:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1223,7 +1223,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 						case DTK_TIME:
 							/* previous field was "t" for ISO time */
 							dterr = DecodeNumberField(strlen(field[i]), field[i],
-													  (fmask | DTK_DATE_M),
+													(fmask | DTK_DATE_M),
 													  &tmask, tm,
 													  fsec, &is2digits);
 							if (dterr < 0)
@@ -1543,7 +1543,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 
 		/*
 		 * Check for valid day of month, now that we know for sure the
-		 * month and year.  Note we don't use MD_FIELD_OVERFLOW here,
+		 * month and year.	Note we don't use MD_FIELD_OVERFLOW here,
 		 * since it seems unlikely that "Feb 29" is a YMD-order error.
 		 */
 		if (tm->tm_mday > day_tab[isleap(tm->tm_year)][tm->tm_mon - 1])
@@ -1582,7 +1582,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
  * any faster than this code.
  */
 int
-DetermineLocalTimeZone(struct pg_tm *tm)
+DetermineLocalTimeZone(struct pg_tm * tm)
 {
 	int			tz;
 	int			date,
@@ -1592,7 +1592,7 @@ DetermineLocalTimeZone(struct pg_tm *tm)
 				locsec,
 				delta1,
 				delta2;
-	struct pg_tm  *tx;
+	struct pg_tm *tx;
 
 	if (HasCTZSet)
 	{
@@ -1602,9 +1602,9 @@ DetermineLocalTimeZone(struct pg_tm *tm)
 
 	/*
 	 * First, generate the pg_time_t value corresponding to the given
-	 * y/m/d/h/m/s taken as GMT time.  If this overflows, punt and
-	 * decide the timezone is GMT.  (We only need to worry about overflow
-	 * on machines where pg_time_t is 32 bits.)
+	 * y/m/d/h/m/s taken as GMT time.  If this overflows, punt and decide
+	 * the timezone is GMT.  (We only need to worry about overflow on
+	 * machines where pg_time_t is 32 bits.)
 	 */
 	if (!IS_VALID_JULIAN(tm->tm_year, tm->tm_mon, tm->tm_mday))
 		goto overflow;
@@ -1619,8 +1619,8 @@ DetermineLocalTimeZone(struct pg_tm *tm)
 		goto overflow;
 
 	/*
-	 * Use pg_localtime to convert that pg_time_t to broken-down time,
-	 * and reassemble to get a representation of local time.  (We could get
+	 * Use pg_localtime to convert that pg_time_t to broken-down time, and
+	 * reassemble to get a representation of local time.  (We could get
 	 * overflow of a few hours in the result, but the delta calculation
 	 * should still work.)
 	 */
@@ -1638,12 +1638,12 @@ DetermineLocalTimeZone(struct pg_tm *tm)
 	delta1 = mysec - locsec;
 
 	/*
-	 * However, if that GMT time and the local time we are
-	 * actually interested in are on opposite sides of a
-	 * daylight-savings-time transition, then this is not the time
-	 * offset we want.	So, adjust the pg_time_t to be what we think
-	 * the GMT time corresponding to our target local time is, and
-	 * repeat the pg_localtime() call and delta calculation.
+	 * However, if that GMT time and the local time we are actually
+	 * interested in are on opposite sides of a daylight-savings-time
+	 * transition, then this is not the time offset we want.  So, adjust
+	 * the pg_time_t to be what we think the GMT time corresponding to our
+	 * target local time is, and repeat the pg_localtime() call and delta
+	 * calculation.
 	 *
 	 * We have to watch out for overflow while adjusting the pg_time_t.
 	 */
@@ -1662,13 +1662,13 @@ DetermineLocalTimeZone(struct pg_tm *tm)
 	/*
 	 * We may have to do it again to get the correct delta.
 	 *
-	 * It might seem we should just loop until we get the same delta
-	 * twice in a row, but if we've been given an "impossible" local
-	 * time (in the gap during a spring-forward transition) we'd never
-	 * get out of the loop.  The behavior we want is that "impossible"
-	 * times are taken as standard time, and also that ambiguous times
-	 * (during a fall-back transition) are taken as standard time.
-	 * Therefore, we bias the code to prefer the standard-time solution.
+	 * It might seem we should just loop until we get the same delta twice in
+	 * a row, but if we've been given an "impossible" local time (in the
+	 * gap during a spring-forward transition) we'd never get out of the
+	 * loop.  The behavior we want is that "impossible" times are taken as
+	 * standard time, and also that ambiguous times (during a fall-back
+	 * transition) are taken as standard time. Therefore, we bias the code
+	 * to prefer the standard-time solution.
 	 */
 	if (delta2 != delta1 && tx->tm_isdst != 0)
 	{
@@ -1679,7 +1679,7 @@ DetermineLocalTimeZone(struct pg_tm *tm)
 		mysec += delta2;
 		tx = pg_localtime(&mysec);
 		if (!tx)
-			goto overflow;			/* probably can't happen */
+			goto overflow;		/* probably can't happen */
 		day = date2j(tx->tm_year + 1900, tx->tm_mon + 1, tx->tm_mday) -
 			UNIX_EPOCH_JDATE;
 		locsec = tx->tm_sec + (tx->tm_min + (day * 24 + tx->tm_hour) * 60) * 60;
@@ -1985,7 +1985,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 						case DTK_TIME:
 							/* previous field was "t" for ISO time */
 							dterr = DecodeNumberField(strlen(field[i]), field[i],
-													  (fmask | DTK_DATE_M),
+													(fmask | DTK_DATE_M),
 													  &tmask, tm,
 													  fsec, &is2digits);
 							if (dterr < 0)
@@ -2034,7 +2034,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 							 * fields later. Example: 20011223 or 040506
 							 */
 							dterr = DecodeNumberField(flen, field[i],
-													  (fmask | DTK_DATE_M),
+													(fmask | DTK_DATE_M),
 													  &tmask, tm,
 													  fsec, &is2digits);
 							if (dterr < 0)
@@ -2214,7 +2214,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 	/* timezone not specified? then find local timezone if possible */
 	if ((tzp != NULL) && (!(fmask & DTK_M(TZ))))
 	{
-		struct pg_tm	tt,
+		struct pg_tm tt,
 				   *tmp = &tt;
 
 		/*
@@ -2567,11 +2567,12 @@ DecodeNumber(int flen, char *str, bool haveTextMonth, int fmask,
 			if (haveTextMonth)
 			{
 				/*
-				 * We are at the first numeric field of a date that included
-				 * a textual month name.  We want to support the variants
-				 * MON-DD-YYYY, DD-MON-YYYY, and YYYY-MON-DD as unambiguous
-				 * inputs.  We will also accept MON-DD-YY or DD-MON-YY in
-				 * either DMY or MDY modes, as well as YY-MON-DD in YMD mode.
+				 * We are at the first numeric field of a date that
+				 * included a textual month name.  We want to support the
+				 * variants MON-DD-YYYY, DD-MON-YYYY, and YYYY-MON-DD as
+				 * unambiguous inputs.	We will also accept MON-DD-YY or
+				 * DD-MON-YY in either DMY or MDY modes, as well as
+				 * YY-MON-DD in YMD mode.
 				 */
 				if (flen >= 3 || DateOrder == DATEORDER_YMD)
 				{
@@ -2599,7 +2600,7 @@ DecodeNumber(int flen, char *str, bool haveTextMonth, int fmask,
 				if (flen >= 3 && *is2digits)
 				{
 					/* Guess that first numeric field is day was wrong */
-					*tmask = DTK_M(DAY); /* YEAR is already set */
+					*tmask = DTK_M(DAY);		/* YEAR is already set */
 					tm->tm_mday = tm->tm_year;
 					tm->tm_year = val;
 					*is2digits = FALSE;
@@ -2645,8 +2646,8 @@ DecodeNumber(int flen, char *str, bool haveTextMonth, int fmask,
 	}
 
 	/*
-	 * When processing a year field, mark it for adjustment if it's
-	 * only one or two digits.
+	 * When processing a year field, mark it for adjustment if it's only
+	 * one or two digits.
 	 */
 	if (*tmask == DTK_M(YEAR))
 		*is2digits = (flen <= 2);
@@ -2664,7 +2665,7 @@ DecodeNumber(int flen, char *str, bool haveTextMonth, int fmask,
  */
 static int
 DecodeNumberField(int len, char *str, int fmask,
-				  int *tmask, struct pg_tm * tm, fsec_t *fsec, int *is2digits)
+			 int *tmask, struct pg_tm * tm, fsec_t *fsec, int *is2digits)
 {
 	char	   *cp;
 
@@ -2974,7 +2975,7 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct pg_tm * tm, 
 				while ((*cp != '\0') && (*cp != ':') && (*cp != '.'))
 					cp++;
 				if ((*cp == ':') &&
-					(DecodeTime(field[i] + 1, fmask, &tmask, tm, fsec) == 0))
+				(DecodeTime(field[i] + 1, fmask, &tmask, tm, fsec) == 0))
 				{
 					if (*field[i] == '-')
 					{
@@ -3328,9 +3329,9 @@ DateTimeParseError(int dterr, const char *str, const char *datatype)
 			break;
 		case DTERR_TZDISP_OVERFLOW:
 			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_TIME_ZONE_DISPLACEMENT_VALUE),
-					 errmsg("time zone displacement out of range: \"%s\"",
-							str)));
+				  (errcode(ERRCODE_INVALID_TIME_ZONE_DISPLACEMENT_VALUE),
+				   errmsg("time zone displacement out of range: \"%s\"",
+						  str)));
 			break;
 		case DTERR_BAD_FORMAT:
 		default:

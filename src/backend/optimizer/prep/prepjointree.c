@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.22 2004/08/29 04:12:34 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.23 2004/08/29 05:06:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@ typedef struct reduce_outer_joins_state
 static bool is_simple_subquery(Query *subquery);
 static bool has_nullable_targetlist(Query *subquery);
 static void resolvenew_in_jointree(Node *jtnode, int varno,
-								   List *rtable, List *subtlist);
+					   List *rtable, List *subtlist);
 static reduce_outer_joins_state *reduce_outer_joins_pass1(Node *jtnode);
 static void reduce_outer_joins_pass2(Node *jtnode,
 						 reduce_outer_joins_state *state,
@@ -151,8 +151,8 @@ pull_up_subqueries(Query *parse, Node *jtnode, bool below_outer_join)
 		 * entries for upper Var references would do the wrong thing (the
 		 * results wouldn't become NULL when they're supposed to).
 		 *
-		 * XXX This could be improved by generating pseudo-variables for
-		 * such expressions; we'd have to figure out how to get the pseudo-
+		 * XXX This could be improved by generating pseudo-variables for such
+		 * expressions; we'd have to figure out how to get the pseudo-
 		 * variables evaluated at the right place in the modified plan
 		 * tree. Fix it someday.
 		 */
@@ -167,23 +167,23 @@ pull_up_subqueries(Query *parse, Node *jtnode, bool below_outer_join)
 			/*
 			 * Need a modifiable copy of the subquery to hack on.  Even if
 			 * we didn't sometimes choose not to pull up below, we must do
-			 * this to avoid problems if the same subquery is referenced from
-			 * multiple jointree items (which can't happen normally, but might
-			 * after rule rewriting).
+			 * this to avoid problems if the same subquery is referenced
+			 * from multiple jointree items (which can't happen normally,
+			 * but might after rule rewriting).
 			 */
 			subquery = copyObject(subquery);
 
 			/*
-			 * Pull up any IN clauses within the subquery's WHERE,
-			 * so that we don't leave unoptimized INs behind.
+			 * Pull up any IN clauses within the subquery's WHERE, so that
+			 * we don't leave unoptimized INs behind.
 			 */
 			if (subquery->hasSubLinks)
 				subquery->jointree->quals = pull_up_IN_clauses(subquery,
 											  subquery->jointree->quals);
 
 			/*
-			 * Recursively pull up the subquery's subqueries, so that
-			 * this routine's processing is complete for its jointree and
+			 * Recursively pull up the subquery's subqueries, so that this
+			 * routine's processing is complete for its jointree and
 			 * rangetable.
 			 *
 			 * Note: 'false' is correct here even if we are within an outer
@@ -213,9 +213,9 @@ pull_up_subqueries(Query *parse, Node *jtnode, bool below_outer_join)
 				 * Give up, return unmodified RangeTblRef.
 				 *
 				 * Note: The work we just did will be redone when the
-				 * subquery gets planned on its own.  Perhaps we could avoid
-				 * that by storing the modified subquery back into the
-				 * rangetable, but I'm not gonna risk it now.
+				 * subquery gets planned on its own.  Perhaps we could
+				 * avoid that by storing the modified subquery back into
+				 * the rangetable, but I'm not gonna risk it now.
 				 */
 				return jtnode;
 			}
@@ -277,8 +277,8 @@ pull_up_subqueries(Query *parse, Node *jtnode, bool below_outer_join)
 
 			/*
 			 * Pull up any FOR UPDATE markers, too.  (OffsetVarNodes
-			 * already adjusted the marker values, so just list_concat
-			 * the list.)
+			 * already adjusted the marker values, so just list_concat the
+			 * list.)
 			 */
 			parse->rowMarks = list_concat(parse->rowMarks, subquery->rowMarks);
 
@@ -939,7 +939,7 @@ simplify_jointree(Query *parse, Node *jtnode)
 					 * lists.  NOTE: we put the pulled-up quals first.
 					 */
 					f->quals = (Node *) list_concat((List *) subf->quals,
-											  (List *) f->quals);
+													(List *) f->quals);
 				}
 				else
 					newlist = lappend(newlist, child);
@@ -1000,14 +1000,14 @@ simplify_jointree(Query *parse, Node *jtnode)
 					f->fromlist = list_concat(f->fromlist,
 											  subf->fromlist);
 					f->quals = (Node *) list_concat((List *) f->quals,
-											  (List *) subf->quals);
+													(List *) subf->quals);
 				}
 				else
 					f->fromlist = lappend(f->fromlist, j->rarg);
 
 				/* pulled-up quals first */
 				f->quals = (Node *) list_concat((List *) f->quals,
-										  (List *) j->quals);
+												(List *) j->quals);
 
 				return (Node *) f;
 			}

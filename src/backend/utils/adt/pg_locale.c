@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 2002-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/pg_locale.c,v 1.27 2004/08/29 04:12:52 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/pg_locale.c,v 1.28 2004/08/29 05:06:49 momjian Exp $
  *
  *-----------------------------------------------------------------------
  */
@@ -133,9 +133,11 @@ locale_messages_assign(const char *value, bool doit, GucSource source)
 		if (!setlocale(LC_MESSAGES, value))
 		{
 #ifdef WIN32
+
 			/*
-			 * Win32 returns NULL when you set LC_MESSAGES to "".  So don't
-			 * complain unless we're trying to set it to something else.
+			 * Win32 returns NULL when you set LC_MESSAGES to "".  So
+			 * don't complain unless we're trying to set it to something
+			 * else.
 			 */
 			if (value[0])
 				return NULL;
@@ -146,7 +148,7 @@ locale_messages_assign(const char *value, bool doit, GucSource source)
 	}
 	else
 		value = locale_xxx_assign(LC_MESSAGES, value, false, source);
-#endif /* LC_MESSAGES */
+#endif   /* LC_MESSAGES */
 	return value;
 }
 

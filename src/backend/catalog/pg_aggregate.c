@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_aggregate.c,v 1.67 2004/08/29 04:12:28 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_aggregate.c,v 1.68 2004/08/29 05:06:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,8 +78,8 @@ AggregateCreate(const char *aggName,
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 				 errmsg("cannot determine transition data type"),
-				 errdetail("An aggregate using \"anyarray\" or \"anyelement\" as "
-				 "transition type must have one of them as its base type.")));
+		errdetail("An aggregate using \"anyarray\" or \"anyelement\" as "
+			"transition type must have one of them as its base type.")));
 
 	/* handle transfn */
 	MemSet(fnArgs, 0, FUNC_MAX_ARGS * sizeof(Oid));
@@ -163,8 +163,8 @@ AggregateCreate(const char *aggName,
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
 				 errmsg("cannot determine result data type"),
-			   errdetail("An aggregate returning \"anyarray\" or \"anyelement\" "
-						 "must have one of them as its base type.")));
+		errdetail("An aggregate returning \"anyarray\" or \"anyelement\" "
+				  "must have one of them as its base type.")));
 
 	/*
 	 * Everything looks okay.  Try to create the pg_proc entry for the
@@ -190,8 +190,8 @@ AggregateCreate(const char *aggName,
 							  PROVOLATILE_IMMUTABLE,	/* volatility (not
 														 * needed for agg) */
 							  1,	/* parameterCount */
-							  fnArgs, /* parameterTypes */
-							  NULL); /* parameterNames */
+							  fnArgs,	/* parameterTypes */
+							  NULL);	/* parameterNames */
 
 	/*
 	 * Okay to create the pg_aggregate entry.

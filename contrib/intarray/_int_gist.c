@@ -87,7 +87,7 @@ g_int_consistent(PG_FUNCTION_ARGS)
 Datum
 g_int_union(PG_FUNCTION_ARGS)
 {
-	GistEntryVector	   *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
+	GistEntryVector *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
 	int		   *size = (int *) PG_GETARG_POINTER(1);
 	int4		i;
 	ArrayType  *res;
@@ -317,7 +317,7 @@ comparecost(const void *a, const void *b)
 Datum
 g_int_picksplit(PG_FUNCTION_ARGS)
 {
-	GistEntryVector	   *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
+	GistEntryVector *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
 	GIST_SPLITVEC *v = (GIST_SPLITVEC *) PG_GETARG_POINTER(1);
 	OffsetNumber i,
 				j;
@@ -359,10 +359,10 @@ g_int_picksplit(PG_FUNCTION_ARGS)
 	waste = 0.0;
 	for (i = FirstOffsetNumber; i < maxoff; i = OffsetNumberNext(i))
 	{
-		datum_alpha = GETENTRY(entryvec,i);
+		datum_alpha = GETENTRY(entryvec, i);
 		for (j = OffsetNumberNext(i); j <= maxoff; j = OffsetNumberNext(j))
 		{
-			datum_beta = GETENTRY(entryvec,j); 
+			datum_beta = GETENTRY(entryvec, j);
 
 			/* compute the wasted space by unioning these guys */
 			/* size_waste = size_union - size_inter; */
@@ -402,10 +402,10 @@ g_int_picksplit(PG_FUNCTION_ARGS)
 		seed_2 = 2;
 	}
 
-	datum_alpha = GETENTRY(entryvec,seed_1);
+	datum_alpha = GETENTRY(entryvec, seed_1);
 	datum_l = copy_intArrayType(datum_alpha);
 	rt__int_size(datum_l, &size_l);
-	datum_beta = GETENTRY(entryvec,seed_2);
+	datum_beta = GETENTRY(entryvec, seed_2);
 	datum_r = copy_intArrayType(datum_beta);
 	rt__int_size(datum_r, &size_r);
 
@@ -418,7 +418,7 @@ g_int_picksplit(PG_FUNCTION_ARGS)
 	for (i = FirstOffsetNumber; i <= maxoff; i = OffsetNumberNext(i))
 	{
 		costvector[i - 1].pos = i;
-		datum_alpha = GETENTRY(entryvec,i);
+		datum_alpha = GETENTRY(entryvec, i);
 		union_d = inner_int_union(datum_l, datum_alpha);
 		rt__int_size(union_d, &size_alpha);
 		pfree(union_d);
@@ -466,7 +466,7 @@ g_int_picksplit(PG_FUNCTION_ARGS)
 		}
 
 		/* okay, which page needs least enlargement? */
-		datum_alpha = GETENTRY(entryvec,i);
+		datum_alpha = GETENTRY(entryvec, i);
 		union_dl = inner_int_union(datum_l, datum_alpha);
 		union_dr = inner_int_union(datum_r, datum_alpha);
 		rt__int_size(union_dl, &size_alpha);

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/list.c,v 1.61 2004/08/29 04:12:32 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/list.c,v 1.62 2004/08/29 05:06:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,9 +50,10 @@ check_list_invariants(List *list)
 		Assert(list->head->next == list->tail);
 	Assert(list->tail->next == NULL);
 }
+
 #else
 #define check_list_invariants(l)
-#endif /* USE_ASSERT_CHECKING */
+#endif   /* USE_ASSERT_CHECKING */
 
 /*
  * Return a freshly allocated List. Since empty non-NIL lists are
@@ -62,8 +63,8 @@ check_list_invariants(List *list)
 static List *
 new_list(NodeTag type)
 {
-	List		*new_list;
-	ListCell	*new_head;
+	List	   *new_list;
+	ListCell   *new_head;
 
 	new_head = (ListCell *) palloc(sizeof(*new_head));
 	new_head->next = NULL;
@@ -88,7 +89,7 @@ new_list(NodeTag type)
 static void
 new_head_cell(List *list)
 {
-	ListCell *new_head;
+	ListCell   *new_head;
 
 	new_head = (ListCell *) palloc(sizeof(*new_head));
 	new_head->next = list->head;
@@ -107,7 +108,7 @@ new_head_cell(List *list)
 static void
 new_tail_cell(List *list)
 {
-	ListCell *new_tail;
+	ListCell   *new_tail;
 
 	new_tail = (ListCell *) palloc(sizeof(*new_tail));
 	new_tail->next = NULL;
@@ -142,7 +143,7 @@ lappend(List *list, void *datum)
 /*
  * Append an integer to the specified list. See lappend()
  */
-List * 
+List *
 lappend_int(List *list, int datum)
 {
 	Assert(IsIntegerList(list));
@@ -160,7 +161,7 @@ lappend_int(List *list, int datum)
 /*
  * Append an OID to the specified list. See lappend()
  */
-List * 
+List *
 lappend_oid(List *list, Oid datum)
 {
 	Assert(IsOidList(list));
@@ -184,7 +185,7 @@ lappend_oid(List *list, Oid datum)
 static ListCell *
 add_new_cell(List *list, ListCell *prev_cell)
 {
-	ListCell *new_cell;
+	ListCell   *new_cell;
 
 	new_cell = (ListCell *) palloc(sizeof(*new_cell));
 	/* new_cell->data is left undefined! */
@@ -208,7 +209,7 @@ add_new_cell(List *list, ListCell *prev_cell)
 ListCell *
 lappend_cell(List *list, ListCell *prev, void *datum)
 {
-	ListCell *new_cell;
+	ListCell   *new_cell;
 
 	Assert(IsPointerList(list));
 
@@ -221,7 +222,7 @@ lappend_cell(List *list, ListCell *prev, void *datum)
 ListCell *
 lappend_cell_int(List *list, ListCell *prev, int datum)
 {
-	ListCell *new_cell;
+	ListCell   *new_cell;
 
 	Assert(IsIntegerList(list));
 
@@ -234,7 +235,7 @@ lappend_cell_int(List *list, ListCell *prev, int datum)
 ListCell *
 lappend_cell_oid(List *list, ListCell *prev, Oid datum)
 {
-	ListCell *new_cell;
+	ListCell   *new_cell;
 
 	Assert(IsOidList(list));
 
@@ -291,7 +292,7 @@ lcons_int(int datum, List *list)
 /*
  * Prepend an OID to the list. See lcons()
  */
-List * 
+List *
 lcons_oid(Oid datum, List *list)
 {
 	Assert(IsOidList(list));
@@ -349,18 +350,18 @@ list_concat(List *list1, List *list2)
 List *
 list_truncate(List *list, int new_size)
 {
-	ListCell	*cell;
-	int			 n;
+	ListCell   *cell;
+	int			n;
 
 	if (new_size <= 0)
-		return NIL;		/* truncate to zero length */
+		return NIL;				/* truncate to zero length */
 
 	/* If asked to effectively extend the list, do nothing */
 	if (new_size >= list_length(list))
 		return list;
 
 	n = 1;
-	foreach (cell, list)
+	foreach(cell, list)
 	{
 		if (n == new_size)
 		{
@@ -385,7 +386,7 @@ list_truncate(List *list, int new_size)
 static ListCell *
 list_nth_cell(List *list, int n)
 {
-	ListCell *match;
+	ListCell   *match;
 
 	Assert(list != NIL);
 	Assert(n >= 0);
@@ -443,12 +444,12 @@ list_nth_oid(List *list, int n)
 bool
 list_member(List *list, void *datum)
 {
-	ListCell *cell;
+	ListCell   *cell;
 
 	Assert(IsPointerList(list));
 	check_list_invariants(list);
 
-	foreach (cell, list)
+	foreach(cell, list)
 	{
 		if (equal(lfirst(cell), datum))
 			return true;
@@ -464,12 +465,12 @@ list_member(List *list, void *datum)
 bool
 list_member_ptr(List *list, void *datum)
 {
-	ListCell *cell;
+	ListCell   *cell;
 
 	Assert(IsPointerList(list));
 	check_list_invariants(list);
 
-	foreach (cell, list)
+	foreach(cell, list)
 	{
 		if (lfirst(cell) == datum)
 			return true;
@@ -484,12 +485,12 @@ list_member_ptr(List *list, void *datum)
 bool
 list_member_int(List *list, int datum)
 {
-	ListCell *cell;
+	ListCell   *cell;
 
 	Assert(IsIntegerList(list));
 	check_list_invariants(list);
 
-	foreach (cell, list)
+	foreach(cell, list)
 	{
 		if (lfirst_int(cell) == datum)
 			return true;
@@ -504,12 +505,12 @@ list_member_int(List *list, int datum)
 bool
 list_member_oid(List *list, Oid datum)
 {
-	ListCell *cell;
+	ListCell   *cell;
 
 	Assert(IsOidList(list));
 	check_list_invariants(list);
 
-	foreach (cell, list)
+	foreach(cell, list)
 	{
 		if (lfirst_oid(cell) == datum)
 			return true;
@@ -543,8 +544,8 @@ list_delete_cell(List *list, ListCell *cell, ListCell *prev)
 
 	/*
 	 * Otherwise, adjust the necessary list links, deallocate the
-	 * particular node we have just removed, and return the list we
-	 * were given.
+	 * particular node we have just removed, and return the list we were
+	 * given.
 	 */
 	list->length--;
 
@@ -567,14 +568,14 @@ list_delete_cell(List *list, ListCell *cell, ListCell *prev)
 List *
 list_delete(List *list, void *datum)
 {
-	ListCell	*cell;
-	ListCell	*prev;
+	ListCell   *cell;
+	ListCell   *prev;
 
 	Assert(IsPointerList(list));
 	check_list_invariants(list);
 
 	prev = NULL;
-	foreach (cell, list)
+	foreach(cell, list)
 	{
 		if (equal(lfirst(cell), datum))
 			return list_delete_cell(list, cell, prev);
@@ -590,14 +591,14 @@ list_delete(List *list, void *datum)
 List *
 list_delete_ptr(List *list, void *datum)
 {
-	ListCell	*cell;
-	ListCell	*prev;
+	ListCell   *cell;
+	ListCell   *prev;
 
 	Assert(IsPointerList(list));
 	check_list_invariants(list);
 
 	prev = NULL;
-	foreach (cell, list)
+	foreach(cell, list)
 	{
 		if (lfirst(cell) == datum)
 			return list_delete_cell(list, cell, prev);
@@ -613,14 +614,14 @@ list_delete_ptr(List *list, void *datum)
 List *
 list_delete_int(List *list, int datum)
 {
-	ListCell	*cell;
-	ListCell	*prev;
+	ListCell   *cell;
+	ListCell   *prev;
 
 	Assert(IsIntegerList(list));
 	check_list_invariants(list);
 
 	prev = NULL;
-	foreach (cell, list)
+	foreach(cell, list)
 	{
 		if (lfirst_int(cell) == datum)
 			return list_delete_cell(list, cell, prev);
@@ -636,14 +637,14 @@ list_delete_int(List *list, int datum)
 List *
 list_delete_oid(List *list, Oid datum)
 {
-	ListCell	*cell;
-	ListCell	*prev;
+	ListCell   *cell;
+	ListCell   *prev;
 
 	Assert(IsOidList(list));
 	check_list_invariants(list);
 
 	prev = NULL;
-	foreach (cell, list)
+	foreach(cell, list)
 	{
 		if (lfirst_oid(cell) == datum)
 			return list_delete_cell(list, cell, prev);
@@ -693,8 +694,8 @@ list_delete_first(List *list)
 List *
 list_union(List *list1, List *list2)
 {
-	List		*result;
-	ListCell	*cell;
+	List	   *result;
+	ListCell   *cell;
 
 	Assert(IsPointerList(list1));
 	Assert(IsPointerList(list2));
@@ -717,8 +718,8 @@ list_union(List *list1, List *list2)
 List *
 list_union_ptr(List *list1, List *list2)
 {
-	List		*result;
-	ListCell	*cell;
+	List	   *result;
+	ListCell   *cell;
 
 	Assert(IsPointerList(list1));
 	Assert(IsPointerList(list2));
@@ -740,8 +741,8 @@ list_union_ptr(List *list1, List *list2)
 List *
 list_union_int(List *list1, List *list2)
 {
-	List		*result;
-	ListCell	*cell;
+	List	   *result;
+	ListCell   *cell;
 
 	Assert(IsIntegerList(list1));
 	Assert(IsIntegerList(list2));
@@ -763,8 +764,8 @@ list_union_int(List *list1, List *list2)
 List *
 list_union_oid(List *list1, List *list2)
 {
-	List		*result;
-	ListCell	*cell;
+	List	   *result;
+	ListCell   *cell;
 
 	Assert(IsOidList(list1));
 	Assert(IsOidList(list2));
@@ -792,8 +793,8 @@ list_union_oid(List *list1, List *list2)
 List *
 list_difference(List *list1, List *list2)
 {
-	ListCell	*cell;
-	List		*result = NIL;
+	ListCell   *cell;
+	List	   *result = NIL;
 
 	Assert(IsPointerList(list1));
 	Assert(IsPointerList(list2));
@@ -801,7 +802,7 @@ list_difference(List *list1, List *list2)
 	if (list2 == NIL)
 		return list_copy(list1);
 
-	foreach (cell, list1)
+	foreach(cell, list1)
 	{
 		if (!list_member(list2, lfirst(cell)))
 			result = lappend(result, lfirst(cell));
@@ -818,8 +819,8 @@ list_difference(List *list1, List *list2)
 List *
 list_difference_ptr(List *list1, List *list2)
 {
-	ListCell	*cell;
-	List		*result = NIL;
+	ListCell   *cell;
+	List	   *result = NIL;
 
 	Assert(IsPointerList(list1));
 	Assert(IsPointerList(list2));
@@ -827,7 +828,7 @@ list_difference_ptr(List *list1, List *list2)
 	if (list2 == NIL)
 		return list_copy(list1);
 
-	foreach (cell, list1)
+	foreach(cell, list1)
 	{
 		if (!list_member_ptr(list2, lfirst(cell)))
 			result = lappend(result, lfirst(cell));
@@ -843,8 +844,8 @@ list_difference_ptr(List *list1, List *list2)
 List *
 list_difference_int(List *list1, List *list2)
 {
-	ListCell	*cell;
-	List		*result = NIL;
+	ListCell   *cell;
+	List	   *result = NIL;
 
 	Assert(IsIntegerList(list1));
 	Assert(IsIntegerList(list2));
@@ -852,7 +853,7 @@ list_difference_int(List *list1, List *list2)
 	if (list2 == NIL)
 		return list_copy(list1);
 
-	foreach (cell, list1)
+	foreach(cell, list1)
 	{
 		if (!list_member_int(list2, lfirst_int(cell)))
 			result = lappend_int(result, lfirst_int(cell));
@@ -868,8 +869,8 @@ list_difference_int(List *list1, List *list2)
 List *
 list_difference_oid(List *list1, List *list2)
 {
-	ListCell	*cell;
-	List		*result = NIL;
+	ListCell   *cell;
+	List	   *result = NIL;
 
 	Assert(IsOidList(list1));
 	Assert(IsOidList(list2));
@@ -877,7 +878,7 @@ list_difference_oid(List *list1, List *list2)
 	if (list2 == NIL)
 		return list_copy(list1);
 
-	foreach (cell, list1)
+	foreach(cell, list1)
 	{
 		if (!list_member_oid(list2, lfirst_oid(cell)))
 			result = lappend_oid(result, lfirst_oid(cell));
@@ -891,14 +892,14 @@ list_difference_oid(List *list1, List *list2)
 static void
 list_free_private(List *list, bool deep)
 {
-	ListCell	*cell;
+	ListCell   *cell;
 
 	check_list_invariants(list);
 
 	cell = list_head(list);
 	while (cell != NULL)
 	{
-		ListCell *tmp = cell;
+		ListCell   *tmp = cell;
 
 		cell = lnext(cell);
 		if (deep)
@@ -948,9 +949,9 @@ list_free_deep(List *list)
 List *
 list_copy(List *oldlist)
 {
-	List		*newlist;
-	ListCell	*newlist_prev;
-	ListCell	*oldlist_cur;
+	List	   *newlist;
+	ListCell   *newlist_prev;
+	ListCell   *oldlist_cur;
 
 	if (oldlist == NIL)
 		return NIL;
@@ -968,7 +969,7 @@ list_copy(List *oldlist)
 	oldlist_cur = oldlist->head->next;
 	while (oldlist_cur)
 	{
-		ListCell *newlist_cur;
+		ListCell   *newlist_cur;
 
 		newlist_cur = (ListCell *) palloc(sizeof(*newlist_cur));
 		newlist_cur->data = oldlist_cur->data;
@@ -991,9 +992,9 @@ list_copy(List *oldlist)
 List *
 list_copy_tail(List *oldlist, int nskip)
 {
-	List		*newlist;
-	ListCell	*newlist_prev;
-	ListCell	*oldlist_cur;
+	List	   *newlist;
+	ListCell   *newlist_prev;
+	ListCell   *oldlist_cur;
 
 	if (nskip < 0)
 		nskip = 0;				/* would it be better to elog? */
@@ -1012,8 +1013,8 @@ list_copy_tail(List *oldlist, int nskip)
 		oldlist_cur = oldlist_cur->next;
 
 	/*
-	 * Copy over the data in the first remaining cell; new_list() has already
-	 * allocated the head cell itself
+	 * Copy over the data in the first remaining cell; new_list() has
+	 * already allocated the head cell itself
 	 */
 	newlist->head->data = oldlist_cur->data;
 
@@ -1021,7 +1022,7 @@ list_copy_tail(List *oldlist, int nskip)
 	oldlist_cur = oldlist_cur->next;
 	while (oldlist_cur)
 	{
-		ListCell *newlist_cur;
+		ListCell   *newlist_cur;
 
 		newlist_cur = (ListCell *) palloc(sizeof(*newlist_cur));
 		newlist_cur->data = oldlist_cur->data;
@@ -1063,8 +1064,7 @@ list_length(List *l)
 {
 	return l ? l->length : 0;
 }
-
-#endif /* ! __GNUC__ */
+#endif   /* ! __GNUC__ */
 
 /*
  * Temporary compatibility functions
@@ -1082,7 +1082,7 @@ list_length(List *l)
  * list_length() macro in order to avoid the overhead of a function
  * call.
  */
-int length(List *list);
+int			length(List *list);
 
 int
 length(List *list)

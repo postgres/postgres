@@ -17,7 +17,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.60 2004/08/20 20:00:34 momjian Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.61 2004/08/29 05:06:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,8 +79,11 @@ typedef z_stream *z_streamp;
 #define K_VERS_1_6 (( (1 * 256 + 6) * 256 + 0) * 256 + 0)		/* Schema field in TOCs */
 #define K_VERS_1_7 (( (1 * 256 + 7) * 256 + 0) * 256 + 0)		/* File Offset size in
 																 * header */
-#define K_VERS_1_8 (( (1 * 256 + 8) * 256 + 0) * 256 + 0)		/* change interpretation of ID numbers and dependencies */
-#define K_VERS_1_9 (( (1 * 256 + 9) * 256 + 0) * 256 + 0)		/* add default_with_oids tracking */
+#define K_VERS_1_8 (( (1 * 256 + 8) * 256 + 0) * 256 + 0)		/* change interpretation
+																 * of ID numbers and
+																 * dependencies */
+#define K_VERS_1_9 (( (1 * 256 + 9) * 256 + 0) * 256 + 0)		/* add default_with_oids
+																 * tracking */
 
 #define K_VERS_MAX (( (1 * 256 + 9) * 256 + 255) * 256 + 0)
 
@@ -149,15 +152,15 @@ typedef struct
 	char		lastChar;
 	char		quoteChar;
 	int			braceDepth;
-	PQExpBuffer	tagBuf;
+	PQExpBuffer tagBuf;
 } sqlparseInfo;
 
-typedef enum 
+typedef enum
 {
-    STAGE_NONE = 0,
-    STAGE_INITIALIZING,
-    STAGE_PROCESSING,
-    STAGE_FINALIZING
+	STAGE_NONE = 0,
+	STAGE_INITIALIZING,
+	STAGE_PROCESSING,
+	STAGE_FINALIZING
 } ArchiverStage;
 
 typedef struct _archiveHandle
@@ -258,16 +261,16 @@ typedef struct _archiveHandle
 	char	   *currUser;		/* current username */
 	char	   *currSchema;		/* current schema */
 	bool		currWithOids;	/* current default_with_oids setting */
-	
+
 	void	   *lo_buf;
 	size_t		lo_buf_used;
 	size_t		lo_buf_size;
 
-	int		noTocComments;
-	ArchiverStage		stage;
-	ArchiverStage		lastErrorStage;
-	struct _tocEntry	*currentTE;
-	struct _tocEntry	*lastErrorTE;
+	int			noTocComments;
+	ArchiverStage stage;
+	ArchiverStage lastErrorStage;
+	struct _tocEntry *currentTE;
+	struct _tocEntry *lastErrorTE;
 } ArchiveHandle;
 
 typedef struct _tocEntry

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/tupdesc.h,v 1.44 2004/08/29 04:13:04 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/tupdesc.h,v 1.45 2004/08/29 05:06:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,7 +49,7 @@ typedef struct tupleConstr
  * TupleDesc; with the exception that tdhasoid indicates if OID is present.
  *
  * If the tuple is known to correspond to a named rowtype (such as a table's
- * rowtype) then tdtypeid identifies that type and tdtypmod is -1.  Otherwise
+ * rowtype) then tdtypeid identifies that type and tdtypmod is -1.	Otherwise
  * tdtypeid is RECORDOID, and tdtypmod can be either -1 for a fully anonymous
  * row type, or a value >= 0 to allow the rowtype to be looked up in the
  * typcache.c type cache.

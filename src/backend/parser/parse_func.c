@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.173 2004/08/29 04:12:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.174 2004/08/29 05:06:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,7 @@
 
 
 static Node *ParseComplexProjection(ParseState *pstate, char *funcname,
-									Node *first_arg);
+					   Node *first_arg);
 static Oid **argtype_inherit(int nargs, Oid *argtypes);
 
 static int	find_inheritors(Oid relid, Oid **supervec);
@@ -111,9 +111,10 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 											first_arg);
 			if (retval)
 				return retval;
+
 			/*
-			 * If ParseComplexProjection doesn't recognize it as a projection,
-			 * just press on.
+			 * If ParseComplexProjection doesn't recognize it as a
+			 * projection, just press on.
 			 */
 		}
 	}
@@ -203,7 +204,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 							func_signature_string(funcname, nargs,
 												  actual_arg_types)),
 					 errhint("No function matches the given name and argument types. "
-							 "You may need to add explicit type casts.")));
+						   "You may need to add explicit type casts.")));
 	}
 
 	/*
@@ -902,8 +903,7 @@ find_inheritors(Oid relid, Oid **supervec)
 	ListCell   *queue_item;
 
 	/*
-	 * Begin the search at the relation itself, so add relid to the
-	 * queue.
+	 * Begin the search at the relation itself, so add relid to the queue.
 	 */
 	queue = list_make1_oid(relid);
 	visited = NIL;
@@ -911,18 +911,18 @@ find_inheritors(Oid relid, Oid **supervec)
 	inhrel = heap_openr(InheritsRelationName, AccessShareLock);
 
 	/*
-	 * Use queue to do a breadth-first traversal of the inheritance
-	 * graph from the relid supplied up to the root.  Notice that we
-	 * append to the queue inside the loop --- this is okay because
-	 * the foreach() macro doesn't advance queue_item until the next
-	 * loop iteration begins.
+	 * Use queue to do a breadth-first traversal of the inheritance graph
+	 * from the relid supplied up to the root.	Notice that we append to
+	 * the queue inside the loop --- this is okay because the foreach()
+	 * macro doesn't advance queue_item until the next loop iteration
+	 * begins.
 	 */
 	foreach(queue_item, queue)
 	{
-		Oid				this_relid = lfirst_oid(queue_item);
-		ScanKeyData		skey;
-		HeapScanDesc	inhscan;
-		HeapTuple		inhtup;
+		Oid			this_relid = lfirst_oid(queue_item);
+		ScanKeyData skey;
+		HeapScanDesc inhscan;
+		HeapTuple	inhtup;
 
 		/* If we've seen this relid already, skip it */
 		if (list_member_oid(visited, this_relid))
@@ -931,8 +931,8 @@ find_inheritors(Oid relid, Oid **supervec)
 		/*
 		 * Okay, this is a not-yet-seen relid. Add it to the list of
 		 * already-visited OIDs, then find all the types this relid
-		 * inherits from and add them to the queue. The one exception
-		 * is we don't add the original relation to 'visited'.
+		 * inherits from and add them to the queue. The one exception is
+		 * we don't add the original relation to 'visited'.
 		 */
 		if (queue_item != list_head(queue))
 			visited = lappend_oid(visited, this_relid);
@@ -1146,10 +1146,10 @@ ParseComplexProjection(ParseState *pstate, char *funcname, Node *first_arg)
 
 	/*
 	 * Special case for whole-row Vars so that we can resolve (foo.*).bar
-	 * even when foo is a reference to a subselect, join, or RECORD function.
-	 * A bonus is that we avoid generating an unnecessary FieldSelect; our
-	 * result can omit the whole-row Var and just be a Var for the selected
-	 * field.
+	 * even when foo is a reference to a subselect, join, or RECORD
+	 * function. A bonus is that we avoid generating an unnecessary
+	 * FieldSelect; our result can omit the whole-row Var and just be a
+	 * Var for the selected field.
 	 */
 	if (IsA(first_arg, Var) &&
 		((Var *) first_arg)->varattno == InvalidAttrNumber)
@@ -1221,8 +1221,8 @@ unknown_attribute(ParseState *pstate, Node *relref, char *attname)
 		else if (relTypeId == RECORDOID)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_COLUMN),
-					 errmsg("could not identify column \"%s\" in record data type",
-							attname)));
+			errmsg("could not identify column \"%s\" in record data type",
+				   attname)));
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.48 2004/08/29 04:13:12 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.49 2004/08/29 05:07:00 momjian Exp $
  *
  * NOTES
  *	  The client *requires* a valid server certificate.  Since
@@ -145,7 +145,7 @@ static void SSLerrfree(char *buf);
 #endif
 
 #ifdef USE_SSL
-bool pq_initssllib = true;
+bool		pq_initssllib = true;
 
 static SSL_CTX *SSL_context = NULL;
 #endif
@@ -256,7 +256,8 @@ pqsecure_open_client(PGconn *conn)
 			!SSL_set_app_data(conn->ssl, conn) ||
 			!SSL_set_fd(conn->ssl, conn->sock))
 		{
-			char *err = SSLerrmessage();
+			char	   *err = SSLerrmessage();
+
 			printfPQExpBuffer(&conn->errorMessage,
 			   libpq_gettext("could not establish SSL connection: %s\n"),
 							  err);
@@ -335,9 +336,10 @@ rloop:
 				}
 			case SSL_ERROR_SSL:
 				{
-					char *err = SSLerrmessage();
+					char	   *err = SSLerrmessage();
+
 					printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("SSL error: %s\n"), err);
+								  libpq_gettext("SSL error: %s\n"), err);
 					SSLerrfree(err);
 				}
 				/* fall through */
@@ -347,7 +349,7 @@ rloop:
 				break;
 			default:
 				printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("unrecognized SSL error code\n"));
+						 libpq_gettext("unrecognized SSL error code\n"));
 				n = -1;
 				break;
 		}
@@ -414,9 +416,10 @@ pqsecure_write(PGconn *conn, const void *ptr, size_t len)
 				}
 			case SSL_ERROR_SSL:
 				{
-					char *err = SSLerrmessage();
+					char	   *err = SSLerrmessage();
+
 					printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("SSL error: %s\n"), err);
+								  libpq_gettext("SSL error: %s\n"), err);
 					SSLerrfree(err);
 				}
 				/* fall through */
@@ -426,7 +429,7 @@ pqsecure_write(PGconn *conn, const void *ptr, size_t len)
 				break;
 			default:
 				printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("unrecognized SSL error code\n"));
+						 libpq_gettext("unrecognized SSL error code\n"));
 				n = -1;
 				break;
 		}
@@ -501,12 +504,12 @@ verify_peer(PGconn *conn)
 		struct hostent hpstr;
 		char		buf[BUFSIZ];
 		int			herrno = 0;
-		
+
 		/*
-		 *	Currently, pqGethostbyname() is used only on platforms that
-		 *	don't have getaddrinfo().  If you enable this function,
-		 *	you should convert the pqGethostbyname() function call to
-		 *	use getaddrinfo().
+		 * Currently, pqGethostbyname() is used only on platforms that
+		 * don't have getaddrinfo().  If you enable this function, you
+		 * should convert the pqGethostbyname() function call to use
+		 * getaddrinfo().
 		 */
 		pqGethostbyname(conn->peer_cn, &hpstr, buf, sizeof(buf),
 						&h, &herrno);
@@ -583,7 +586,7 @@ static DH  *
 load_dh_file(int keylength)
 {
 #ifdef WIN32
-    return NULL;
+	return NULL;
 #else
 	char		pwdbuf[BUFSIZ];
 	struct passwd pwdstr;
@@ -730,7 +733,7 @@ static int
 client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 {
 #ifdef WIN32
-   return 0;
+	return 0;
 #else
 	char		pwdbuf[BUFSIZ];
 	struct passwd pwdstr;
@@ -765,7 +768,8 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 	}
 	if (PEM_read_X509(fp, x509, NULL, NULL) == NULL)
 	{
-		char *err = SSLerrmessage();
+		char	   *err = SSLerrmessage();
+
 		printfPQExpBuffer(&conn->errorMessage,
 				  libpq_gettext("could not read certificate (%s): %s\n"),
 						  fnbuf, err);
@@ -812,7 +816,8 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 	}
 	if (PEM_read_PrivateKey(fp, pkey, cb, NULL) == NULL)
 	{
-		char *err = SSLerrmessage();
+		char	   *err = SSLerrmessage();
+
 		printfPQExpBuffer(&conn->errorMessage,
 				  libpq_gettext("could not read private key (%s): %s\n"),
 						  fnbuf, err);
@@ -826,7 +831,8 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 	/* verify that the cert and key go together */
 	if (!X509_check_private_key(*x509, *pkey))
 	{
-		char *err = SSLerrmessage();
+		char	   *err = SSLerrmessage();
+
 		printfPQExpBuffer(&conn->errorMessage,
 			libpq_gettext("certificate/private key mismatch (%s): %s\n"),
 						  fnbuf, err);
@@ -845,52 +851,55 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 static unsigned long
 pq_threadidcallback(void)
 {
-	return (unsigned long)pthread_self();
+	return (unsigned long) pthread_self();
 }
 
 static pthread_mutex_t *pq_lockarray;
 static void
 pq_lockingcallback(int mode, int n, const char *file, int line)
 {
-	if (mode & CRYPTO_LOCK) {
+	if (mode & CRYPTO_LOCK)
 		pthread_mutex_lock(&pq_lockarray[n]);
-	} else {
+	else
 		pthread_mutex_unlock(&pq_lockarray[n]);
-	}
 }
-
-#endif /* ENABLE_THREAD_SAFETY */
+#endif   /* ENABLE_THREAD_SAFETY */
 
 static int
 init_ssl_system(PGconn *conn)
 {
 #ifdef ENABLE_THREAD_SAFETY
 #ifndef WIN32
-        static pthread_mutex_t init_mutex = PTHREAD_MUTEX_INITIALIZER;
+	static pthread_mutex_t init_mutex = PTHREAD_MUTEX_INITIALIZER;
+
 #else
 	static pthread_mutex_t init_mutex = NULL;
 	static long mutex_initlock = 0;
 
-	if (init_mutex == NULL) {
-		while(InterlockedExchange(&mutex_initlock, 1) == 1)
-			/* loop, another thread own the lock */ ;
+	if (init_mutex == NULL)
+	{
+		while (InterlockedExchange(&mutex_initlock, 1) == 1)
+			 /* loop, another thread own the lock */ ;
 		if (init_mutex == NULL)
 			pthread_mutex_init(&init_mutex, NULL);
-		InterlockedExchange(&mutex_initlock,0);
+		InterlockedExchange(&mutex_initlock, 0);
 	}
 #endif
 	pthread_mutex_lock(&init_mutex);
-	
-	if (pq_initssllib && pq_lockarray == NULL) {
-		int i;
+
+	if (pq_initssllib && pq_lockarray == NULL)
+	{
+		int			i;
+
 		CRYPTO_set_id_callback(pq_threadidcallback);
 
-		pq_lockarray = malloc(sizeof(pthread_mutex_t)*CRYPTO_num_locks());
-		if (!pq_lockarray) {
+		pq_lockarray = malloc(sizeof(pthread_mutex_t) * CRYPTO_num_locks());
+		if (!pq_lockarray)
+		{
 			pthread_mutex_unlock(&init_mutex);
 			return -1;
 		}
-		for (i=0;i<CRYPTO_num_locks();i++)
+		for (i = 0; i < CRYPTO_num_locks(); i++)
 			pthread_mutex_init(&pq_lockarray[i], NULL);
 
 		CRYPTO_set_locking_callback(pq_lockingcallback);
@@ -898,14 +907,16 @@ init_ssl_system(PGconn *conn)
 #endif
 	if (!SSL_context)
 	{
-		if (pq_initssllib) {
+		if (pq_initssllib)
+		{
 			SSL_library_init();
 			SSL_load_error_strings();
 		}
 		SSL_context = SSL_CTX_new(TLSv1_method());
 		if (!SSL_context)
 		{
-			char *err = SSLerrmessage();
+			char	   *err = SSLerrmessage();
+
 			printfPQExpBuffer(&conn->errorMessage,
 					 libpq_gettext("could not create SSL context: %s\n"),
 							  err);
@@ -921,6 +932,7 @@ init_ssl_system(PGconn *conn)
 #endif
 	return 0;
 }
+
 /*
  *	Initialize global SSL context.
  */
@@ -935,7 +947,7 @@ initialize_SSL(PGconn *conn)
 	char		fnbuf[2048];
 #endif
 
-	if(init_ssl_system(conn))
+	if (init_ssl_system(conn))
 		return -1;
 
 #ifndef WIN32
@@ -958,7 +970,8 @@ initialize_SSL(PGconn *conn)
 		}
 		if (!SSL_CTX_load_verify_locations(SSL_context, fnbuf, 0))
 		{
-			char *err = SSLerrmessage();
+			char	   *err = SSLerrmessage();
+
 			printfPQExpBuffer(&conn->errorMessage,
 							  libpq_gettext("could not read root certificate list (%s): %s\n"),
 							  fnbuf, err);
@@ -1030,9 +1043,10 @@ open_client_SSL(PGconn *conn)
 				}
 			case SSL_ERROR_SSL:
 				{
-					char *err = SSLerrmessage();
+					char	   *err = SSLerrmessage();
+
 					printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("SSL error: %s\n"), err);
+								  libpq_gettext("SSL error: %s\n"), err);
 					SSLerrfree(err);
 					close_SSL(conn);
 					return PGRES_POLLING_FAILED;
@@ -1040,7 +1054,7 @@ open_client_SSL(PGconn *conn)
 
 			default:
 				printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("unrecognized SSL error code\n"));
+						 libpq_gettext("unrecognized SSL error code\n"));
 				close_SSL(conn);
 				return PGRES_POLLING_FAILED;
 		}
@@ -1070,7 +1084,8 @@ open_client_SSL(PGconn *conn)
 	conn->peer = SSL_get_peer_certificate(conn->ssl);
 	if (conn->peer == NULL)
 	{
-		char *err = SSLerrmessage();
+		char	   *err = SSLerrmessage();
+
 		printfPQExpBuffer(&conn->errorMessage,
 				libpq_gettext("certificate could not be obtained: %s\n"),
 						  err);
@@ -1136,27 +1151,30 @@ close_SSL(PGconn *conn)
  * want to return NULL ever.
  */
 static char ssl_nomem[] = "Out of memory allocating error description";
-#define SSL_ERR_LEN	128
+
+#define SSL_ERR_LEN 128
 
 static char *
 SSLerrmessage(void)
 {
 	unsigned long errcode;
 	const char *errreason;
-	char *errbuf;
+	char	   *errbuf;
 
 	errbuf = malloc(SSL_ERR_LEN);
 	if (!errbuf)
 		return ssl_nomem;
 	errcode = ERR_get_error();
-	if (errcode == 0) {
+	if (errcode == 0)
+	{
 		strcpy(errbuf, "No SSL error reported");
 		return errbuf;
 	}
 	errreason = ERR_reason_error_string(errcode);
-	if (errreason != NULL) {
-		strncpy(errbuf, errreason, SSL_ERR_LEN-1);
-		errbuf[SSL_ERR_LEN-1] = '\0';
+	if (errreason != NULL)
+	{
+		strncpy(errbuf, errreason, SSL_ERR_LEN - 1);
+		errbuf[SSL_ERR_LEN - 1] = '\0';
 		return errbuf;
 	}
 	snprintf(errbuf, SSL_ERR_LEN, "SSL error code %lu", errcode);
@@ -1169,6 +1187,7 @@ SSLerrfree(char *buf)
 	if (buf != ssl_nomem)
 		free(buf);
 }
+
 /*
  *	Return pointer to SSL object.
  */
@@ -1179,7 +1198,6 @@ PQgetssl(PGconn *conn)
 		return NULL;
 	return conn->ssl;
 }
-
 #endif   /* USE_SSL */
 
 
@@ -1192,8 +1210,9 @@ void
 pq_check_sigpipe_handler(void)
 {
 	pthread_key_create(&pq_thread_in_send, NULL);
+
 	/*
-	 *	Find current pipe handler and chain on to it.
+	 * Find current pipe handler and chain on to it.
 	 */
 	pq_pipe_handler = pqsignalinquire(SIGPIPE);
 	pqsignal(SIGPIPE, sigpipe_handler_ignore_send);
@@ -1206,22 +1225,21 @@ void
 sigpipe_handler_ignore_send(int signo)
 {
 	/*
-	 *	If we have gotten a SIGPIPE outside send(), chain or
-	 *	exit if we are at the end of the chain.
-	 *	Synchronous signals are delivered to the thread that
-	 *	caused the signal.
+	 * If we have gotten a SIGPIPE outside send(), chain or exit if we are
+	 * at the end of the chain. Synchronous signals are delivered to the
+	 * thread that caused the signal.
 	 */
 	if (!PQinSend())
 	{
-		if (pq_pipe_handler == SIG_DFL)	/* not set by application */
+		if (pq_pipe_handler == SIG_DFL) /* not set by application */
 			exit(128 + SIGPIPE);	/* typical return value for SIG_DFL */
 		else
-			(*pq_pipe_handler)(signo);      /* call original handler */
+			(*pq_pipe_handler) (signo); /* call original handler */
 	}
 }
 #endif
 #endif
- 
+
 /*
  *	Indicates whether the current thread is in send()
  *	For use by SIGPIPE signal handlers;  they should
@@ -1233,13 +1251,14 @@ PQinSend(void)
 {
 #ifdef ENABLE_THREAD_SAFETY
 	return (pthread_getspecific(pq_thread_in_send) /* has it been set? */ &&
-			*(char *)pthread_getspecific(pq_thread_in_send) == 't') ? true : false;
+			*(char *) pthread_getspecific(pq_thread_in_send) == 't') ? true : false;
 #else
+
 	/*
-	 *	No threading: our code ignores SIGPIPE around send().
-	 *	Therefore, we can't be in send() if we are checking
-	 *	from a SIGPIPE signal handler.
+	 * No threading: our code ignores SIGPIPE around send(). Therefore, we
+	 * can't be in send() if we are checking from a SIGPIPE signal
+	 * handler.
 	 */
-	return false;	
+	return false;
 #endif
 }

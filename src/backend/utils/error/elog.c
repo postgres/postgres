@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.147 2004/08/29 04:12:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.148 2004/08/29 05:06:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,7 +71,7 @@ sigjmp_buf *PG_exception_stack = NULL;
 
 /* GUC parameters */
 PGErrorVerbosity Log_error_verbosity = PGERROR_VERBOSE;
-char       *Log_line_prefix = NULL; /* format for extra log line info */
+char	   *Log_line_prefix = NULL;		/* format for extra log line info */
 int			Log_destination = LOG_DESTINATION_STDERR;
 
 #ifdef HAVE_SYSLOG
@@ -233,11 +233,11 @@ errstart(int elevel, const char *filename, int lineno,
 	if (++errordata_stack_depth >= ERRORDATA_STACK_SIZE)
 	{
 		/*
-		 * Wups, stack not big enough.  We treat this as a PANIC condition
+		 * Wups, stack not big enough.	We treat this as a PANIC condition
 		 * because it suggests an infinite loop of errors during error
 		 * recovery.
 		 */
-		errordata_stack_depth = -1;	/* make room on stack */
+		errordata_stack_depth = -1;		/* make room on stack */
 		ereport(PANIC, (errmsg_internal("ERRORDATA_STACK_SIZE exceeded")));
 	}
 
@@ -318,8 +318,8 @@ errfinish(int dummy,...)
 	/*
 	 * Check some other reasons for treating ERROR as FATAL:
 	 *
-	 * 1. we have no handler to pass the error to (implies we are in
-	 * the postmaster or in backend startup).
+	 * 1. we have no handler to pass the error to (implies we are in the
+	 * postmaster or in backend startup).
 	 *
 	 * 2. ExitOnAnyError mode switch is set (initdb uses this).
 	 *
@@ -348,19 +348,21 @@ errfinish(int dummy,...)
 			ImmediateInterruptOK = false;
 
 			/*
-			 * Reset InterruptHoldoffCount in case we ereport'd from inside an
-			 * interrupt holdoff section.  (We assume here that no handler
-			 * will itself be inside a holdoff section.  If necessary, such
-			 * a handler could save and restore InterruptHoldoffCount for
-			 * itself, but this should make life easier for most.)
+			 * Reset InterruptHoldoffCount in case we ereport'd from
+			 * inside an interrupt holdoff section.  (We assume here that
+			 * no handler will itself be inside a holdoff section.	If
+			 * necessary, such a handler could save and restore
+			 * InterruptHoldoffCount for itself, but this should make life
+			 * easier for most.)
 			 */
 			InterruptHoldoffCount = 0;
 
-			CritSectionCount = 0;	/* should be unnecessary, but... */
+			CritSectionCount = 0;		/* should be unnecessary, but... */
 
 			/*
-			 * Note that we leave CurrentMemoryContext set to ErrorContext.
-			 * The handler should reset it to something else soon.
+			 * Note that we leave CurrentMemoryContext set to
+			 * ErrorContext. The handler should reset it to something else
+			 * soon.
 			 */
 
 			recursion_depth--;
@@ -372,8 +374,8 @@ errfinish(int dummy,...)
 	 * If we are doing FATAL or PANIC, abort any old-style COPY OUT in
 	 * progress, so that we can report the message before dying.  (Without
 	 * this, pq_putmessage will refuse to send the message at all, which
-	 * is what we want for NOTICE messages, but not for fatal exits.)
-	 * This hack is necessary because of poor design of old-style copy
+	 * is what we want for NOTICE messages, but not for fatal exits.) This
+	 * hack is necessary because of poor design of old-style copy
 	 * protocol.  Note we must do this even if client is fool enough to
 	 * have set client_min_messages above FATAL, so don't look at
 	 * output_to_client.
@@ -421,21 +423,20 @@ errfinish(int dummy,...)
 			whereToSendOutput = None;
 
 		/*
-		 * fflush here is just to improve the odds that we get to see
-		 * the error message, in case things are so hosed that
-		 * proc_exit crashes.  Any other code you might be tempted to
-		 * add here should probably be in an on_proc_exit callback
-		 * instead.
+		 * fflush here is just to improve the odds that we get to see the
+		 * error message, in case things are so hosed that proc_exit
+		 * crashes.  Any other code you might be tempted to add here
+		 * should probably be in an on_proc_exit callback instead.
 		 */
 		fflush(stdout);
 		fflush(stderr);
 
 		/*
-		 * If proc_exit is already running, we exit with nonzero exit code to
-		 * indicate that something's pretty wrong.  We also want to exit with
-		 * nonzero exit code if not running under the postmaster (for example,
-		 * if we are being run from the initdb script, we'd better return an
-		 * error status).
+		 * If proc_exit is already running, we exit with nonzero exit code
+		 * to indicate that something's pretty wrong.  We also want to
+		 * exit with nonzero exit code if not running under the postmaster
+		 * (for example, if we are being run from the initdb script, we'd
+		 * better return an error status).
 		 */
 		proc_exit(proc_exit_inprogress || !IsUnderPostmaster);
 	}
@@ -519,8 +520,8 @@ errcode_for_file_access(void)
 			/* Wrong object type or state */
 		case ENOTDIR:			/* Not a directory */
 		case EISDIR:			/* Is a directory */
-#if defined(ENOTEMPTY) && (ENOTEMPTY != EEXIST)	/* same code on AIX */
-		case ENOTEMPTY:			/* Directory not empty */
+#if defined(ENOTEMPTY) && (ENOTEMPTY != EEXIST) /* same code on AIX */
+		case ENOTEMPTY: /* Directory not empty */
 #endif
 			edata->sqlerrcode = ERRCODE_WRONG_OBJECT_TYPE;
 			break;
@@ -937,7 +938,7 @@ EmitErrorReport(void)
 /*
  * CopyErrorData --- obtain a copy of the topmost error stack entry
  *
- * This is only for use in error handler code.  The data is copied into the
+ * This is only for use in error handler code.	The data is copied into the
  * current memory context, so callers should always switch away from
  * ErrorContext first; otherwise it will be lost when FlushErrorState is done.
  */
@@ -1010,8 +1011,8 @@ FlushErrorState(void)
 	/*
 	 * Reset stack to empty.  The only case where it would be more than
 	 * one deep is if we serviced an error that interrupted construction
-	 * of another message.  We assume control escaped out of that
-	 * message construction and won't ever go back.
+	 * of another message.	We assume control escaped out of that message
+	 * construction and won't ever go back.
 	 */
 	errordata_stack_depth = -1;
 	recursion_depth = 0;
@@ -1024,7 +1025,7 @@ FlushErrorState(void)
  *
  * A handler can do CopyErrorData/FlushErrorState to get out of the error
  * subsystem, then do some processing, and finally ReThrowError to re-throw
- * the original error.  This is slower than just PG_RE_THROW() but should
+ * the original error.	This is slower than just PG_RE_THROW() but should
  * be used if the "some processing" is likely to incur another error.
  */
 void
@@ -1041,11 +1042,11 @@ ReThrowError(ErrorData *edata)
 	if (++errordata_stack_depth >= ERRORDATA_STACK_SIZE)
 	{
 		/*
-		 * Wups, stack not big enough.  We treat this as a PANIC condition
+		 * Wups, stack not big enough.	We treat this as a PANIC condition
 		 * because it suggests an infinite loop of errors during error
 		 * recovery.
 		 */
-		errordata_stack_depth = -1;	/* make room on stack */
+		errordata_stack_depth = -1;		/* make room on stack */
 		ereport(PANIC, (errmsg_internal("ERRORDATA_STACK_SIZE exceeded")));
 	}
 
@@ -1088,7 +1089,7 @@ DebugFileOpen(void)
 					   0666)) < 0)
 			ereport(FATAL,
 					(errcode_for_file_access(),
-				   errmsg("could not open file \"%s\": %m", OutputFileName)));
+			  errmsg("could not open file \"%s\": %m", OutputFileName)));
 		istty = isatty(fd);
 		close(fd);
 
@@ -1111,8 +1112,8 @@ DebugFileOpen(void)
 			if (!freopen(OutputFileName, "a", stdout))
 				ereport(FATAL,
 						(errcode_for_file_access(),
-						 errmsg("could not reopen file \"%s\" as stdout: %m",
-								OutputFileName)));
+					 errmsg("could not reopen file \"%s\" as stdout: %m",
+							OutputFileName)));
 	}
 }
 
@@ -1240,10 +1241,12 @@ static void
 write_eventlog(int level, const char *line)
 {
 	static HANDLE evtHandle = INVALID_HANDLE_VALUE;
-	
-	if (evtHandle == INVALID_HANDLE_VALUE) {
-		evtHandle = RegisterEventSource(NULL,"PostgreSQL");
-		if (evtHandle == NULL) {
+
+	if (evtHandle == INVALID_HANDLE_VALUE)
+	{
+		evtHandle = RegisterEventSource(NULL, "PostgreSQL");
+		if (evtHandle == NULL)
+		{
 			evtHandle = INVALID_HANDLE_VALUE;
 			return;
 		}
@@ -1252,14 +1255,14 @@ write_eventlog(int level, const char *line)
 	ReportEvent(evtHandle,
 				level,
 				0,
-				0, /* All events are Id 0 */
+				0,				/* All events are Id 0 */
 				NULL,
 				1,
 				0,
 				&line,
 				NULL);
 }
-#endif /* WIN32*/
+#endif   /* WIN32 */
 
 /*
  * Format tag info for log lines; append to the provided buffer.
@@ -1269,11 +1272,12 @@ log_line_prefix(StringInfo buf)
 {
 	/* static counter for line numbers */
 	static long log_line_number = 0;
+
 	/* has counter been reset in current process? */
 	static int	log_my_pid = 0;
 
-	int format_len;
-	int i;
+	int			format_len;
+	int			i;
 
 	/*
 	 * This is one of the few places where we'd rather not inherit a
@@ -1321,7 +1325,7 @@ log_line_prefix(StringInfo buf)
 					appendStringInfo(buf, "%s", username);
 				}
 				break;
-			case 'd': 
+			case 'd':
 				if (MyProcPort)
 				{
 					const char *dbname = MyProcPort->database_name;
@@ -1335,12 +1339,12 @@ log_line_prefix(StringInfo buf)
 				if (MyProcPort)
 				{
 					appendStringInfo(buf, "%lx.%lx",
-									 (long)(MyProcPort->session_start.tv_sec),
-									 (long)MyProcPid);
+							   (long) (MyProcPort->session_start.tv_sec),
+									 (long) MyProcPid);
 				}
 				break;
 			case 'p':
-				appendStringInfo(buf, "%ld", (long)MyProcPid);
+				appendStringInfo(buf, "%ld", (long) MyProcPid);
 				break;
 			case 'l':
 				appendStringInfo(buf, "%ld", log_line_number);
@@ -1348,17 +1352,17 @@ log_line_prefix(StringInfo buf)
 			case 't':
 				{
 					/*
-					 * Note: for %t and %s we deliberately use the C library's
-					 * strftime/localtime, and not the equivalent functions
-					 * from src/timezone.  This ensures that all backends
-					 * will report log entries in the same timezone, namely
-					 * whatever C-library setting they inherit from the
-					 * postmaster.  If we used src/timezone then local
-					 * settings of the TimeZone GUC variable would confuse
-					 * the log.
+					 * Note: for %t and %s we deliberately use the C
+					 * library's strftime/localtime, and not the
+					 * equivalent functions from src/timezone.	This
+					 * ensures that all backends will report log entries
+					 * in the same timezone, namely whatever C-library
+					 * setting they inherit from the postmaster.  If we
+					 * used src/timezone then local settings of the
+					 * TimeZone GUC variable would confuse the log.
 					 */
-					time_t stamp_time = time(NULL);
-					char strfbuf[128];
+					time_t		stamp_time = time(NULL);
+					char		strfbuf[128];
 
 					strftime(strfbuf, sizeof(strfbuf),
 							 "%Y-%m-%d %H:%M:%S %Z",
@@ -1369,8 +1373,8 @@ log_line_prefix(StringInfo buf)
 			case 's':
 				if (MyProcPort)
 				{
-					time_t stamp_time = MyProcPort->session_start.tv_sec;
-					char strfbuf[128];
+					time_t		stamp_time = MyProcPort->session_start.tv_sec;
+					char		strfbuf[128];
 
 					strftime(strfbuf, sizeof(strfbuf),
 							 "%Y-%m-%d %H:%M:%S %Z",
@@ -1380,9 +1384,7 @@ log_line_prefix(StringInfo buf)
 				break;
 			case 'i':
 				if (MyProcPort)
-				{
 					appendStringInfo(buf, "%s", MyProcPort->commandTag);
-				}
 				break;
 			case 'r':
 				if (MyProcPort)
@@ -1393,13 +1395,13 @@ log_line_prefix(StringInfo buf)
 										 MyProcPort->remote_port);
 				}
 				break;
-			case 'x': 
+			case 'x':
 				/* in postmaster and friends, stop if %x is seen */
 				/* in a backend, just ignore */
 				if (MyProcPort == NULL)
 					i = format_len;
 				break;
-			case '%': 
+			case '%':
 				appendStringInfoChar(buf, '%');
 				break;
 			default:
@@ -1504,7 +1506,8 @@ send_message_to_server_log(ErrorData *edata)
 	}
 
 	/*
-	 * If the user wants the query that generated this error logged, do it.
+	 * If the user wants the query that generated this error logged, do
+	 * it.
 	 */
 	if (edata->elevel >= log_min_error_statement && debug_query_string != NULL)
 	{
@@ -1557,8 +1560,9 @@ send_message_to_server_log(ErrorData *edata)
 #ifdef WIN32
 	if (Log_destination & LOG_DESTINATION_EVENTLOG)
 	{
-		int eventlog_level;
-		switch (edata->elevel) 
+		int			eventlog_level;
+
+		switch (edata->elevel)
 		{
 			case DEBUG5:
 			case DEBUG4:
@@ -1586,9 +1590,7 @@ send_message_to_server_log(ErrorData *edata)
 #endif   /* WIN32 */
 	/* Write to stderr, if enabled */
 	if ((Log_destination & LOG_DESTINATION_STDERR) || whereToSendOutput == Debug)
-	{
 		fprintf(stderr, "%s", buf.data);
-	}
 
 	/* If in the syslogger process, try to write messages direct to file */
 	if (am_syslogger)
@@ -1893,7 +1895,7 @@ error_severity(int elevel)
 static void
 append_with_tabs(StringInfo buf, const char *str)
 {
-	char	ch;
+	char		ch;
 
 	while ((ch = *str++) != '\0')
 	{
@@ -1904,15 +1906,15 @@ append_with_tabs(StringInfo buf, const char *str)
 }
 
 
-/* 
+/*
  * Write errors to stderr (or by equal means when stderr is
  * not available). Used before ereport/elog can be used
- * safely (memory context, GUC load etc) 
+ * safely (memory context, GUC load etc)
  */
 void
 write_stderr(const char *fmt,...)
 {
-	va_list ap;
+	va_list		ap;
 
 	fmt = gettext(fmt);
 
@@ -1921,17 +1923,21 @@ write_stderr(const char *fmt,...)
 	/* On Unix, we just fprintf to stderr */
 	vfprintf(stderr, fmt, ap);
 #else
-	/* On Win32, we print to stderr if running on a console, or write to 
-	 * eventlog if running as a service */
-	if (pgwin32_is_service()) /* Running as a service */
+
+	/*
+	 * On Win32, we print to stderr if running on a console, or write to
+	 * eventlog if running as a service
+	 */
+	if (pgwin32_is_service())	/* Running as a service */
 	{
-		char errbuf[2048]; /* Arbitrary size? */
+		char		errbuf[2048];		/* Arbitrary size? */
 
 		vsnprintf(errbuf, sizeof(errbuf), fmt, ap);
-		
+
 		write_eventlog(EVENTLOG_ERROR_TYPE, errbuf);
 	}
-	else /* Not running as service, write to stderr */
+	else
+/* Not running as service, write to stderr */
 		vfprintf(stderr, fmt, ap);
 #endif
 	va_end(ap);

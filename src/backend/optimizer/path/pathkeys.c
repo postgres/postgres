@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/pathkeys.c,v 1.61 2004/08/29 04:12:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/pathkeys.c,v 1.62 2004/08/29 05:06:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,10 +48,11 @@ makePathKeyItem(Node *key, Oid sortop, bool checkType)
 
 	/*
 	 * Some callers pass expressions that are not necessarily of the same
-	 * type as the sort operator expects as input (for example when dealing
-	 * with an index that uses binary-compatible operators).  We must relabel
-	 * these with the correct type so that the key expressions will be seen
-	 * as equal() to expressions that have been correctly labeled.
+	 * type as the sort operator expects as input (for example when
+	 * dealing with an index that uses binary-compatible operators).  We
+	 * must relabel these with the correct type so that the key
+	 * expressions will be seen as equal() to expressions that have been
+	 * correctly labeled.
 	 */
 	if (checkType)
 	{

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execGrouping.c,v 1.10 2004/08/29 04:12:31 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execGrouping.c,v 1.11 2004/08/29 05:06:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,8 +26,8 @@
 static TupleHashTable CurTupleHashTable = NULL;
 
 static uint32 TupleHashTableHash(const void *key, Size keysize);
-static int	TupleHashTableMatch(const void *key1, const void *key2,
-								Size keysize);
+static int TupleHashTableMatch(const void *key1, const void *key2,
+					Size keysize);
 
 
 /*****************************************************************************
@@ -303,7 +303,7 @@ BuildTupleHashTable(int numCols, AttrNumber *keyColIdx,
 	Assert(entrysize >= sizeof(TupleHashEntryData));
 
 	hashtable = (TupleHashTable) MemoryContextAlloc(tablecxt,
-												sizeof(TupleHashTableData));
+											 sizeof(TupleHashTableData));
 
 	hashtable->numCols = numCols;
 	hashtable->keyColIdx = keyColIdx;
@@ -321,7 +321,7 @@ BuildTupleHashTable(int numCols, AttrNumber *keyColIdx,
 	hash_ctl.hcxt = tablecxt;
 	hashtable->hashtab = hash_create("TupleHashTable", (long) nbuckets,
 									 &hash_ctl,
-					HASH_ELEM | HASH_FUNCTION | HASH_COMPARE | HASH_CONTEXT);
+				HASH_ELEM | HASH_FUNCTION | HASH_COMPARE | HASH_CONTEXT);
 	if (hashtable->hashtab == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
@@ -359,8 +359,8 @@ LookupTupleHashEntry(TupleHashTable hashtable, TupleTableSlot *slot,
 	/*
 	 * Set up data needed by hash and match functions
 	 *
-	 * We save and restore CurTupleHashTable just in case someone manages
-	 * to invoke this code re-entrantly.
+	 * We save and restore CurTupleHashTable just in case someone manages to
+	 * invoke this code re-entrantly.
 	 */
 	hashtable->tupdesc = tupdesc;
 	saveCurHT = CurTupleHashTable;
@@ -389,8 +389,8 @@ LookupTupleHashEntry(TupleHashTable hashtable, TupleTableSlot *slot,
 
 			/*
 			 * Zero any caller-requested space in the entry.  (This zaps
-			 * the "key data" dynahash.c copied into the new entry, but
-			 * we don't care since we're about to overwrite it anyway.)
+			 * the "key data" dynahash.c copied into the new entry, but we
+			 * don't care since we're about to overwrite it anyway.)
 			 */
 			MemSet(entry, 0, hashtable->entrysize);
 
@@ -414,13 +414,13 @@ LookupTupleHashEntry(TupleHashTable hashtable, TupleTableSlot *slot,
  *
  * The passed-in key is a pointer to a HeapTuple pointer -- this is either
  * the firstTuple field of a TupleHashEntry struct, or the key value passed
- * to hash_search.  We ignore the keysize.
+ * to hash_search.	We ignore the keysize.
  *
  * CurTupleHashTable must be set before calling this, since dynahash.c
  * doesn't provide any API that would let us get at the hashtable otherwise.
  *
  * Also, the caller must select an appropriate memory context for running
- * the hash functions.  (dynahash.c doesn't change CurrentMemoryContext.)
+ * the hash functions.	(dynahash.c doesn't change CurrentMemoryContext.)
  */
 static uint32
 TupleHashTableHash(const void *key, Size keysize)

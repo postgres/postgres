@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/transam.c,v 1.60 2004/08/29 04:12:23 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/transam.c,v 1.61 2004/08/29 05:06:40 momjian Exp $
  *
  * NOTES
  *	  This file contains the high level access-method interface to the
@@ -126,7 +126,7 @@ TransactionLogUpdate(TransactionId transactionId,		/* trans id to update */
 static void
 TransactionLogMultiUpdate(int nxids, TransactionId *xids, XidStatus status)
 {
-	int i;
+	int			i;
 
 	Assert(nxids != 0);
 
@@ -199,9 +199,10 @@ TransactionIdDidCommit(TransactionId transactionId)
 		return true;
 
 	/*
-	 * If it's marked subcommitted, we have to check the parent recursively.
-	 * However, if it's older than RecentXmin, we can't look at pg_subtrans;
-	 * instead assume that the parent crashed without cleaning up its children.
+	 * If it's marked subcommitted, we have to check the parent
+	 * recursively. However, if it's older than RecentXmin, we can't look
+	 * at pg_subtrans; instead assume that the parent crashed without
+	 * cleaning up its children.
 	 */
 	if (xidstatus == TRANSACTION_STATUS_SUB_COMMITTED)
 	{
@@ -214,7 +215,7 @@ TransactionIdDidCommit(TransactionId transactionId)
 		return TransactionIdDidCommit(parentXid);
 	}
 
-	/* 
+	/*
 	 * It's not committed.
 	 */
 	return false;
@@ -247,9 +248,10 @@ TransactionIdDidAbort(TransactionId transactionId)
 		return true;
 
 	/*
-	 * If it's marked subcommitted, we have to check the parent recursively.
-	 * However, if it's older than RecentXmin, we can't look at pg_subtrans;
-	 * instead assume that the parent crashed without cleaning up its children.
+	 * If it's marked subcommitted, we have to check the parent
+	 * recursively. However, if it's older than RecentXmin, we can't look
+	 * at pg_subtrans; instead assume that the parent crashed without
+	 * cleaning up its children.
 	 */
 	if (xidstatus == TRANSACTION_STATUS_SUB_COMMITTED)
 	{

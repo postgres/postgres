@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.124 2004/08/29 04:13:02 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.125 2004/08/29 05:06:54 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -44,8 +44,8 @@
 
 /* functions for use in this file */
 static backslashResult exec_command(const char *cmd,
-									PsqlScanState scan_state,
-									PQExpBuffer query_buf);
+			 PsqlScanState scan_state,
+			 PQExpBuffer query_buf);
 static bool do_edit(const char *filename_arg, PQExpBuffer query_buf);
 static bool do_connect(const char *new_dbname, const char *new_user);
 static bool do_shell(const char *command);
@@ -92,7 +92,7 @@ HandleSlashCmds(PsqlScanState scan_state,
 		 * one-letter command with immediately following argument (a
 		 * still-supported, but no longer encouraged, syntax).
 		 */
-		char	new_cmd[2];
+		char		new_cmd[2];
 
 		/* don't change cmd until we know it's okay */
 		new_cmd[0] = cmd[0];
@@ -266,7 +266,7 @@ exec_command(const char *cmd,
 	else if (pg_strcasecmp(cmd, "copy") == 0)
 	{
 		char	   *opt = psql_scan_slash_option(scan_state,
-												 OT_WHOLE_LINE, NULL, false);
+											 OT_WHOLE_LINE, NULL, false);
 
 		success = do_copy(opt);
 		free(opt);
@@ -397,7 +397,7 @@ exec_command(const char *cmd,
 			fout = stdout;
 
 		while ((value = psql_scan_slash_option(scan_state,
-											   OT_NORMAL, &quoted, false)))
+											 OT_NORMAL, &quoted, false)))
 		{
 			if (!quoted && strcmp(value, "-n") == 0)
 				no_newline = true;
@@ -419,7 +419,7 @@ exec_command(const char *cmd,
 	else if (strcmp(cmd, "encoding") == 0)
 	{
 		char	   *encoding = psql_scan_slash_option(scan_state,
-													  OT_NORMAL, NULL, false);
+												 OT_NORMAL, NULL, false);
 
 		if (!encoding)
 		{
@@ -447,7 +447,7 @@ exec_command(const char *cmd,
 	else if (strcmp(cmd, "f") == 0)
 	{
 		char	   *fname = psql_scan_slash_option(scan_state,
-												   OT_NORMAL, NULL, false);
+												 OT_NORMAL, NULL, false);
 
 		success = do_pset("fieldsep", fname, &pset.popt, quiet);
 		free(fname);
@@ -457,7 +457,7 @@ exec_command(const char *cmd,
 	else if (strcmp(cmd, "g") == 0)
 	{
 		char	   *fname = psql_scan_slash_option(scan_state,
-												   OT_FILEPIPE, NULL, false);
+											   OT_FILEPIPE, NULL, false);
 
 		if (!fname)
 			pset.gfname = NULL;
@@ -474,7 +474,7 @@ exec_command(const char *cmd,
 	else if (strcmp(cmd, "h") == 0 || strcmp(cmd, "help") == 0)
 	{
 		char	   *opt = psql_scan_slash_option(scan_state,
-												 OT_WHOLE_LINE, NULL, false);
+											 OT_WHOLE_LINE, NULL, false);
 
 		helpSQL(opt, pset.popt.topt.pager);
 		free(opt);
@@ -582,7 +582,7 @@ exec_command(const char *cmd,
 	else if (strcmp(cmd, "o") == 0 || strcmp(cmd, "out") == 0)
 	{
 		char	   *fname = psql_scan_slash_option(scan_state,
-												   OT_FILEPIPE, NULL, true);
+												OT_FILEPIPE, NULL, true);
 
 		expand_tilde(&fname);
 		success = setQFout(fname);
@@ -710,7 +710,7 @@ exec_command(const char *cmd,
 	else if (strcmp(cmd, "T") == 0)
 	{
 		char	   *value = psql_scan_slash_option(scan_state,
-												   OT_NORMAL, NULL, false);
+												 OT_NORMAL, NULL, false);
 
 		success = do_pset("tableattr", value, &pset.popt, quiet);
 		free(value);
@@ -822,7 +822,7 @@ exec_command(const char *cmd,
 	else if (strcmp(cmd, "z") == 0)
 	{
 		char	   *pattern = psql_scan_slash_option(scan_state,
-													 OT_NORMAL, NULL, true);
+												  OT_NORMAL, NULL, true);
 
 		success = permissionsList(pattern);
 		if (pattern)
@@ -833,7 +833,7 @@ exec_command(const char *cmd,
 	else if (strcmp(cmd, "!") == 0)
 	{
 		char	   *opt = psql_scan_slash_option(scan_state,
-												 OT_WHOLE_LINE, NULL, false);
+											 OT_WHOLE_LINE, NULL, false);
 
 		success = do_shell(opt);
 		free(opt);

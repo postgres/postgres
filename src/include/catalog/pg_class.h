@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_class.h,v 1.83 2004/08/29 04:13:05 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_class.h,v 1.84 2004/08/29 05:06:55 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -144,13 +144,13 @@ DATA(insert OID = 1255 (  pg_proc		PGNSP 81 PGUID 0 1255 0 0 0 0 0 f f r 16 0 0 
 DESCR("");
 DATA(insert OID = 1259 (  pg_class		PGNSP 83 PGUID 0 1259 0 0 0 0 0 f f r 25 0 0 0 0 0 t f f f _null_ ));
 DESCR("");
-DATA(insert OID = 1260 (  pg_shadow		PGNSP 86 PGUID 0 1260 1664 0 0 0 0 f t r 8  0 0 0 0 0 f f f f _null_ ));
+DATA(insert OID = 1260 (  pg_shadow		PGNSP 86 PGUID 0 1260 1664 0 0 0 0 f t r 8	0 0 0 0 0 f f f f _null_ ));
 DESCR("");
-DATA(insert OID = 1261 (  pg_group		PGNSP 87 PGUID 0 1261 1664 0 0 0 0 f t r 3  0 0 0 0 0 f f f f _null_ ));
+DATA(insert OID = 1261 (  pg_group		PGNSP 87 PGUID 0 1261 1664 0 0 0 0 f t r 3	0 0 0 0 0 f f f f _null_ ));
 DESCR("");
 DATA(insert OID = 1262 (  pg_database	PGNSP 88 PGUID 0 1262 1664 0 0 0 0 f t r 11 0 0 0 0 0 t f f f _null_ ));
 DESCR("");
-DATA(insert OID = 1213 (  pg_tablespace	PGNSP 90 PGUID 0 1213 1664 0 0 0 0 f t r 4  0 0 0 0 0 t f f f _null_ ));
+DATA(insert OID = 1213 (  pg_tablespace PGNSP 90 PGUID 0 1213 1664 0 0 0 0 f t r 4	0 0 0 0 0 t f f f _null_ ));
 DESCR("");
 DATA(insert OID = 376  (  pg_xactlock	PGNSP  0 PGUID 0 0 1664 0 0 0 0 f t s 1  0 0 0 0 0 f f f f _null_ ));
 DESCR("");

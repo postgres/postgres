@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-protocol3.c,v 1.14 2004/08/29 04:13:12 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-protocol3.c,v 1.15 2004/08/29 05:07:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -261,15 +261,16 @@ pqParseInput3(PGconn *conn)
 					}
 					break;
 				case 'n':		/* No Data */
+
 					/*
 					 * NoData indicates that we will not be seeing a
 					 * RowDescription message because the statement or
-					 * portal inquired about doesn't return rows.
-					 * Set up a COMMAND_OK result, instead of TUPLES_OK.
+					 * portal inquired about doesn't return rows. Set up a
+					 * COMMAND_OK result, instead of TUPLES_OK.
 					 */
 					if (conn->result == NULL)
 						conn->result = PQmakeEmptyPGresult(conn,
-														   PGRES_COMMAND_OK);
+													   PGRES_COMMAND_OK);
 					break;
 				case 'D':		/* Data Row */
 					if (conn->result != NULL &&
@@ -1107,6 +1108,7 @@ pqEndcopy3(PGconn *conn)
 		if (pqPutMsgStart('c', false, conn) < 0 ||
 			pqPutMsgEnd(conn) < 0)
 			return 1;
+
 		/*
 		 * If we sent the COPY command in extended-query mode, we must
 		 * issue a Sync as well.

@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/createlang.c,v 1.13 2004/08/29 04:13:03 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/createlang.c,v 1.14 2004/08/29 05:06:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -249,7 +249,7 @@ main(int argc, char *argv[])
 		PQclear(result);
 	}
 	else
-		validatorexists = true;			/* don't try to create it */
+		validatorexists = true; /* don't try to create it */
 
 	/*
 	 * Create the function(s) and the language

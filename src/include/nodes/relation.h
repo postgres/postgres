@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.98 2004/08/29 04:13:07 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.99 2004/08/29 05:06:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -244,7 +244,7 @@ typedef struct RelOptInfo
  *
  *		The indexprs and indpred expressions have been run through
  *		prepqual.c and eval_const_expressions() for ease of matching to
- *		WHERE clauses.  indpred is in implicit-AND form.
+ *		WHERE clauses.	indpred is in implicit-AND form.
  */
 
 typedef struct IndexOptInfo
@@ -443,7 +443,7 @@ typedef struct MaterialPath
  *
  * This is unlike the other Path nodes in that it can actually generate
  * different plans: either hash-based or sort-based implementation, or a
- * no-op if the input path can be proven distinct already.  The decision
+ * no-op if the input path can be proven distinct already.	The decision
  * is sufficiently localized that it's not worth having separate Path node
  * types.  (Note: in the no-op case, we could eliminate the UniquePath node
  * entirely and just return the subpath; but it's convenient to have a
@@ -587,7 +587,7 @@ typedef struct HashPath
  * because they used no other rels.  That's what the is_pushed_down flag is
  * for; it tells us that a qual came from a point above the join of the
  * specific set of base rels that it uses (or that the JoinInfo structures
- * claim it uses).  A clause that originally came from WHERE will *always*
+ * claim it uses).	A clause that originally came from WHERE will *always*
  * have its is_pushed_down flag set; a clause that came from an INNER JOIN
  * condition, but doesn't use all the rels being joined, will also have
  * is_pushed_down set because it will get attached to some lower joinrel.
@@ -620,16 +620,16 @@ typedef struct RestrictInfo
 
 	Expr	   *clause;			/* the represented clause of WHERE or JOIN */
 
-	bool		is_pushed_down;	/* TRUE if clause was pushed down in level */
+	bool		is_pushed_down; /* TRUE if clause was pushed down in level */
 
-	bool		valid_everywhere;	/* TRUE if valid on every level */
+	bool		valid_everywhere;		/* TRUE if valid on every level */
 
 	/*
 	 * This flag is set true if the clause looks potentially useful as a
 	 * merge or hash join clause, that is if it is a binary opclause with
-	 * nonoverlapping sets of relids referenced in the left and right sides.
-	 * (Whether the operator is actually merge or hash joinable isn't
-	 * checked, however.)
+	 * nonoverlapping sets of relids referenced in the left and right
+	 * sides. (Whether the operator is actually merge or hash joinable
+	 * isn't checked, however.)
 	 */
 	bool		can_join;
 

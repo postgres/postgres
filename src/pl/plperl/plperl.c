@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.48 2004/07/31 00:45:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.49 2004/08/29 05:07:01 momjian Exp $
  *
  **********************************************************************/
 
@@ -79,7 +79,7 @@ typedef struct plperl_proc_desc
 	CommandId	fn_cmin;
 	bool		lanpltrusted;
 	bool		fn_retistuple;	/* true, if function returns tuple */
-	bool		fn_retisset;		/*true, if function returns set*/
+	bool		fn_retisset;	/* true, if function returns set */
 	Oid			ret_oid;		/* Oid of returning type */
 	FmgrInfo	result_in_func;
 	Oid			result_typioparam;
@@ -98,10 +98,10 @@ static int	plperl_firstcall = 1;
 static bool plperl_safe_init_done = false;
 static PerlInterpreter *plperl_interp = NULL;
 static HV  *plperl_proc_hash = NULL;
-static AV		   *g_row_keys = NULL;
-static AV		   *g_column_keys = NULL;
-static SV		   *srf_perlret=NULL; /*keep returned value*/
-static int			g_attr_num = 0;
+static AV  *g_row_keys = NULL;
+static AV  *g_column_keys = NULL;
+static SV  *srf_perlret = NULL; /* keep returned value */
+static int	g_attr_num = 0;
 
 /**********************************************************************
  * Forward declarations
@@ -214,8 +214,8 @@ plperl_init_interp(void)
 		"", "-e",
 
 		/*
-		 * no commas between the next lines please. They are supposed to be
-		 * one string
+		 * no commas between the next lines please. They are supposed to
+		 * be one string
 		 */
 		"SPI::bootstrap(); use vars qw(%_SHARED);"
 		"sub ::mkunsafefunc {return eval(qq[ sub { $_[0] $_[1] } ]); }"
@@ -240,33 +240,33 @@ plperl_init_interp(void)
 static void
 plperl_safe_init(void)
 {
-	static char *safe_module  =
-		"require Safe; $Safe::VERSION";
+	static char *safe_module =
+	"require Safe; $Safe::VERSION";
 
-	static char * safe_ok =
-		"use vars qw($PLContainer); $PLContainer = new Safe('PLPerl');"
-		"$PLContainer->permit_only(':default');$PLContainer->permit(':base_math');"
-		"$PLContainer->share(qw[&elog &spi_exec_query &DEBUG &LOG &INFO &NOTICE &WARNING &ERROR %SHARED ]);"
-		"sub ::mksafefunc { return $PLContainer->reval(qq[sub { $_[0] $_[1]}]); }"
-		;
+	static char *safe_ok =
+	"use vars qw($PLContainer); $PLContainer = new Safe('PLPerl');"
+	"$PLContainer->permit_only(':default');$PLContainer->permit(':base_math');"
+	"$PLContainer->share(qw[&elog &spi_exec_query &DEBUG &LOG &INFO &NOTICE &WARNING &ERROR %SHARED ]);"
+	"sub ::mksafefunc { return $PLContainer->reval(qq[sub { $_[0] $_[1]}]); }"
+			   ;
 
-	static char * safe_bad = 
-		"use vars qw($PLContainer); $PLContainer = new Safe('PLPerl');"
-		"$PLContainer->permit_only(':default');$PLContainer->permit(':base_math');"
-		"$PLContainer->share(qw[&elog &DEBUG &LOG &INFO &NOTICE &WARNING &ERROR %SHARED ]);"
-		"sub ::mksafefunc { return $PLContainer->reval(qq[sub { "
-		"elog(ERROR,'trusted perl functions disabled - please upgrade perl Safe module to at least 2.09');}]); }"
-		;
+	static char *safe_bad =
+	"use vars qw($PLContainer); $PLContainer = new Safe('PLPerl');"
+	"$PLContainer->permit_only(':default');$PLContainer->permit(':base_math');"
+	"$PLContainer->share(qw[&elog &DEBUG &LOG &INFO &NOTICE &WARNING &ERROR %SHARED ]);"
+	"sub ::mksafefunc { return $PLContainer->reval(qq[sub { "
+	"elog(ERROR,'trusted perl functions disabled - please upgrade perl Safe module to at least 2.09');}]); }"
+			   ;
 
-	SV * res;
+	SV		   *res;
 
-	float safe_version;
+	float		safe_version;
 
-	res = eval_pv(safe_module,FALSE); /* TRUE = croak if failure */
+	res = eval_pv(safe_module, FALSE);	/* TRUE = croak if failure */
 
 	safe_version = SvNV(res);
 
-	eval_pv((safe_version < 2.09 ? safe_bad : safe_ok),FALSE);
+	eval_pv((safe_version < 2.09 ? safe_bad : safe_ok), FALSE);
 
 	plperl_safe_init_done = true;
 }
@@ -431,7 +431,7 @@ plperl_is_set(SV * sv)
 /**********************************************************************
  * extract a list of keys from a hash
  **********************************************************************/
-static AV *
+static AV  *
 plperl_get_keys(HV * hv)
 {
 	AV		   *ret;
@@ -523,9 +523,9 @@ plperl_modify_tuple(HV * hvTD, TriggerData *tdata, HeapTuple otup, Oid fn_oid)
 		elog(ERROR, "plperl: $_TD->{new} is not a hash");
 
 	plkeys = plperl_get_keys(hvNew);
-    natts = av_len(plkeys)+1;
-    if (natts != tupdesc->natts)
-        elog(ERROR, "plperl: $_TD->{new} has an incorrect number of keys.");
+	natts = av_len(plkeys) + 1;
+	if (natts != tupdesc->natts)
+		elog(ERROR, "plperl: $_TD->{new} has an incorrect number of keys.");
 
 	modattrs = palloc0(natts * sizeof(int));
 	modvalues = palloc0(natts * sizeof(Datum));
@@ -558,7 +558,7 @@ plperl_modify_tuple(HV * hvTD, TriggerData *tdata, HeapTuple otup, Oid fn_oid)
 			modvalues[i] = FunctionCall3(&finfo,
 										 CStringGetDatum(plval),
 										 ObjectIdGetDatum(typelem),
-					 Int32GetDatum(tupdesc->attrs[atti]->atttypmod));
+						 Int32GetDatum(tupdesc->attrs[atti]->atttypmod));
 			modnulls[i] = ' ';
 		}
 		else
@@ -629,7 +629,7 @@ plperl_create_sub(char *s, bool trusted)
 	SV		   *subref;
 	int			count;
 
-	if(trusted && !plperl_safe_init_done)
+	if (trusted && !plperl_safe_init_done)
 		plperl_safe_init();
 
 	ENTER;
@@ -770,7 +770,7 @@ plperl_call_perl_func(plperl_proc_desc * desc, FunctionCallInfo fcinfo)
 
 				tmp = DatumGetCString(FunctionCall3(&(desc->arg_out_func[i]),
 													fcinfo->arg[i],
-								 ObjectIdGetDatum(desc->arg_typioparam[i]),
+							   ObjectIdGetDatum(desc->arg_typioparam[i]),
 													Int32GetDatum(-1)));
 				XPUSHs(sv_2mortal(newSVpv(tmp, 0)));
 				pfree(tmp);
@@ -877,21 +877,21 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 	/************************************************************
 	 * Call the Perl function if not returning set
 	 ************************************************************/
-	 if (!prodesc->fn_retisset)
-	perlret = plperl_call_perl_func(prodesc, fcinfo);
-	 else 
+	if (!prodesc->fn_retisset)
+		perlret = plperl_call_perl_func(prodesc, fcinfo);
+	else
 	{
-		if (SRF_IS_FIRSTCALL()) /*call function only once*/
+		if (SRF_IS_FIRSTCALL()) /* call function only once */
 			srf_perlret = plperl_call_perl_func(prodesc, fcinfo);
 		perlret = srf_perlret;
-	 }
+	}
 
-	 if (prodesc->fn_retisset && SRF_IS_FIRSTCALL())
-	 {
+	if (prodesc->fn_retisset && SRF_IS_FIRSTCALL())
+	{
 		if (prodesc->fn_retistuple)
 			g_column_keys = newAV();
 		if (SvTYPE(perlret) != SVt_RV)
-			 elog(ERROR, "plperl: set-returning function must return reference");
+			elog(ERROR, "plperl: set-returning function must return reference");
 	}
 
 	/************************************************************
@@ -903,7 +903,7 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 	if (SPI_finish() != SPI_OK_FINISH)
 		elog(ERROR, "SPI_finish() failed");
 
-	if (!(perlret && SvOK(perlret) && SvTYPE(perlret)!=SVt_NULL ))
+	if (!(perlret && SvOK(perlret) && SvTYPE(perlret) != SVt_NULL))
 	{
 		/* return NULL if Perl code returned undef */
 		retval = (Datum) 0;
@@ -916,7 +916,7 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 	if (prodesc->fn_retistuple && perlret && SvTYPE(perlret) != SVt_RV)
 		elog(ERROR, "plperl: composite-returning function must return a reference");
 
-	if (prodesc->fn_retistuple && fcinfo->resultinfo ) /*  set of tuples */
+	if (prodesc->fn_retistuple && fcinfo->resultinfo)	/* set of tuples */
 	{
 		/* SRF support */
 		HV		   *ret_hv;
@@ -930,13 +930,13 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 		AttInMetadata *attinmeta;
 		bool		isset = 0;
 		char	  **values = NULL;
-		ReturnSetInfo  *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+		ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 
 		if (prodesc->fn_retisset && !rsinfo)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					errmsg("returning a composite type is not allowed in this context"),
-					errhint("This function is intended for use in the FROM clause.")));
+					 errmsg("returning a composite type is not allowed in this context"),
+					 errhint("This function is intended for use in the FROM clause.")));
 
 
 		isset = plperl_is_set(perlret);
@@ -1020,8 +1020,8 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 						values[i] = NULL;
 				}
 			}
-	else
-	{
+			else
+			{
 				int			i;
 
 				values = (char **) palloc(g_attr_num * sizeof(char *));
@@ -1045,38 +1045,38 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 			SRF_RETURN_DONE(funcctx);
 		}
 	}
-	else if (prodesc->fn_retisset) /* set of non-tuples */
+	else if (prodesc->fn_retisset)		/* set of non-tuples */
 	{
-		FuncCallContext	*funcctx;
-		
+		FuncCallContext *funcctx;
+
 		if (SRF_IS_FIRSTCALL())
 		{
 			MemoryContext oldcontext;
-			int i;
+			int			i;
 
 			funcctx = SRF_FIRSTCALL_INIT();
 			oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
 			funcctx->max_calls = av_len((AV *) SvRV(perlret)) + 1;
 		}
-		
+
 		funcctx = SRF_PERCALL_SETUP();
-		
+
 		if (funcctx->call_cntr < funcctx->max_calls)
 		{
 			Datum		result;
-			AV* 		array;
-			SV** 		svp;
-			int 			i;
+			AV		   *array;
+			SV		  **svp;
+			int			i;
 
-			array = (AV*)SvRV(perlret);
+			array = (AV *) SvRV(perlret);
 			svp = av_fetch(array, funcctx->call_cntr, FALSE);
 
 			if (SvTYPE(*svp) != SVt_NULL)
 				result = FunctionCall3(&prodesc->result_in_func,
-								   PointerGetDatum(SvPV(*svp, PL_na)),
-								   ObjectIdGetDatum(prodesc->result_typioparam),
-								   Int32GetDatum(-1));
+									   PointerGetDatum(SvPV(*svp, PL_na)),
+							ObjectIdGetDatum(prodesc->result_typioparam),
+									   Int32GetDatum(-1));
 			else
 			{
 				fcinfo->isnull = true;
@@ -1084,27 +1084,28 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 			}
 			SRF_RETURN_NEXT(funcctx, result);
 			fcinfo->isnull = false;
-		} 
+		}
 		else
 		{
 			if (perlret)
 				SvREFCNT_dec(perlret);
 			SRF_RETURN_DONE(funcctx);
 		}
-	 }
-	else if (!fcinfo->isnull) /* non-null singleton */
+	}
+	else if (!fcinfo->isnull)	/* non-null singleton */
 	{
 
 
-		if (prodesc->fn_retistuple) /* singleton perl hash to Datum */
+		if (prodesc->fn_retistuple)		/* singleton perl hash to Datum */
 		{
-			TupleDesc td = lookup_rowtype_tupdesc(prodesc->ret_oid,(int32)-1);
-			HV * perlhash = (HV *) SvRV(perlret);
-			int i;
-			char **values;
-			char * key, *val;
+			TupleDesc	td = lookup_rowtype_tupdesc(prodesc->ret_oid, (int32) -1);
+			HV		   *perlhash = (HV *) SvRV(perlret);
+			int			i;
+			char	  **values;
+			char	   *key,
+					   *val;
 			AttInMetadata *attinmeta;
-			HeapTuple tup;
+			HeapTuple	tup;
 
 			if (!td)
 				ereport(ERROR,
@@ -1115,7 +1116,7 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 			for (i = 0; i < td->natts; i++)
 			{
 
-				key = SPI_fname(td,i+1);
+				key = SPI_fname(td, i + 1);
 				val = plperl_get_elem(perlhash, key);
 				if (val)
 					values[i] = val;
@@ -1125,14 +1126,15 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 			attinmeta = TupleDescGetAttInMetadata(td);
 			tup = BuildTupleFromCStrings(attinmeta, values);
 			retval = HeapTupleGetDatum(tup);
-			
-		}
-		else /* perl string to Datum */
 
-		retval = FunctionCall3(&prodesc->result_in_func,
-							   PointerGetDatum(SvPV(perlret, PL_na)),
-							   ObjectIdGetDatum(prodesc->result_typioparam),
-							   Int32GetDatum(-1));
+		}
+		else
+/* perl string to Datum */
+
+			retval = FunctionCall3(&prodesc->result_in_func,
+								   PointerGetDatum(SvPV(perlret, PL_na)),
+							ObjectIdGetDatum(prodesc->result_typioparam),
+								   Int32GetDatum(-1));
 
 	}
 
@@ -1159,9 +1161,10 @@ plperl_trigger_handler(PG_FUNCTION_ARGS)
 	/************************************************************
 	* Call the Perl function
 	************************************************************/
+
 	/*
-	* call perl trigger function and build TD hash
-	*/
+	 * call perl trigger function and build TD hash
+	 */
 	svTD = plperl_trigger_build_args(fcinfo);
 	perlret = plperl_call_perl_trigger_func(prodesc, fcinfo, svTD);
 
@@ -1386,9 +1389,9 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 			if (typeStruct->typtype == 'c' || procStruct->prorettype == RECORDOID)
 			{
 				prodesc->fn_retistuple = true;
-				prodesc->ret_oid = 
-					procStruct->prorettype == RECORDOID ? 
-					typeStruct->typrelid : 
+				prodesc->ret_oid =
+					procStruct->prorettype == RECORDOID ?
+					typeStruct->typrelid :
 					procStruct->prorettype;
 			}
 
@@ -1547,7 +1550,7 @@ plperl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc)
 		 ************************************************************/
 		outputstr = DatumGetCString(OidFunctionCall3(typoutput,
 													 attr,
-											   ObjectIdGetDatum(typioparam),
+											ObjectIdGetDatum(typioparam),
 						   Int32GetDatum(tupdesc->attrs[i]->atttypmod)));
 		sv_catpvf(output, "'%s' => '%s',", attname, outputstr);
 		pfree(outputstr);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.175 2004/08/29 04:12:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.176 2004/08/29 05:06:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,17 +39,17 @@ bool		Transform_null_equals = false;
 
 static Node *transformColumnRef(ParseState *pstate, ColumnRef *cref);
 static Node *transformWholeRowRef(ParseState *pstate, char *schemaname,
-								  char *relname);
+					 char *relname);
 static Node *transformIndirection(ParseState *pstate, Node *basenode,
 					 List *indirection);
 static Node *typecast_expression(ParseState *pstate, Node *expr,
 					TypeName *typename);
 static Node *make_row_op(ParseState *pstate, List *opname,
-						 Node *ltree, Node *rtree);
+			Node *ltree, Node *rtree);
 static Node *make_row_distinct_op(ParseState *pstate, List *opname,
-								  Node *ltree, Node *rtree);
+					 Node *ltree, Node *rtree);
 static Expr *make_distinct_op(ParseState *pstate, List *opname,
-							  Node *ltree, Node *rtree);
+				 Node *ltree, Node *rtree);
 
 
 /*
@@ -162,7 +162,7 @@ transformExpr(ParseState *pstate, Node *expr)
 			}
 		case T_A_Indirection:
 			{
-				A_Indirection	*ind = (A_Indirection *) expr;
+				A_Indirection *ind = (A_Indirection *) expr;
 
 				result = transformExpr(pstate, ind->arg);
 				result = transformIndirection(pstate, result,
@@ -196,7 +196,7 @@ transformExpr(ParseState *pstate, Node *expr)
 							 */
 							if (Transform_null_equals &&
 								list_length(a->name) == 1 &&
-								strcmp(strVal(linitial(a->name)), "=") == 0 &&
+							strcmp(strVal(linitial(a->name)), "=") == 0 &&
 								(exprIsNullConstant(lexpr) ||
 								 exprIsNullConstant(rexpr)))
 							{
@@ -218,12 +218,12 @@ transformExpr(ParseState *pstate, Node *expr)
 							{
 								/*
 								 * Convert "row op subselect" into a
-								 * MULTIEXPR sublink.  Formerly the grammar
-								 * did this, but now that a row construct is
-								 * allowed anywhere in expressions, it's
-								 * easier to do it here.
+								 * MULTIEXPR sublink.  Formerly the
+								 * grammar did this, but now that a row
+								 * construct is allowed anywhere in
+								 * expressions, it's easier to do it here.
 								 */
-								SubLink	   *s = (SubLink *) rexpr;
+								SubLink    *s = (SubLink *) rexpr;
 
 								s->subLinkType = MULTIEXPR_SUBLINK;
 								s->lefthand = ((RowExpr *) lexpr)->args;
@@ -261,8 +261,8 @@ transformExpr(ParseState *pstate, Node *expr)
 							rexpr = coerce_to_boolean(pstate, rexpr, "AND");
 
 							result = (Node *) makeBoolExpr(AND_EXPR,
-														   list_make2(lexpr,
-																	  rexpr));
+														list_make2(lexpr,
+																 rexpr));
 						}
 						break;
 					case AEXPR_OR:
@@ -276,8 +276,8 @@ transformExpr(ParseState *pstate, Node *expr)
 							rexpr = coerce_to_boolean(pstate, rexpr, "OR");
 
 							result = (Node *) makeBoolExpr(OR_EXPR,
-														   list_make2(lexpr,
-																	  rexpr));
+														list_make2(lexpr,
+																 rexpr));
 						}
 						break;
 					case AEXPR_NOT:
@@ -288,7 +288,7 @@ transformExpr(ParseState *pstate, Node *expr)
 							rexpr = coerce_to_boolean(pstate, rexpr, "NOT");
 
 							result = (Node *) makeBoolExpr(NOT_EXPR,
-													   list_make1(rexpr));
+													  list_make1(rexpr));
 						}
 						break;
 					case AEXPR_OP_ANY:
@@ -329,7 +329,7 @@ transformExpr(ParseState *pstate, Node *expr)
 							{
 								/* "row op row" */
 								result = make_row_distinct_op(pstate, a->name,
-															  lexpr, rexpr);
+														   lexpr, rexpr);
 							}
 							else
 							{
@@ -338,7 +338,7 @@ transformExpr(ParseState *pstate, Node *expr)
 								rexpr = transformExpr(pstate, rexpr);
 
 								result = (Node *) make_distinct_op(pstate,
-																   a->name,
+																 a->name,
 																   lexpr,
 																   rexpr);
 							}
@@ -420,8 +420,8 @@ transformExpr(ParseState *pstate, Node *expr)
 				 * copy and then transform-in-place to avoid O(N^2)
 				 * behavior from repeated lappend's.
 				 *
-				 * XXX: repeated lappend() would no longer result in
-				 * O(n^2) behavior; worth reconsidering this design?
+				 * XXX: repeated lappend() would no longer result in O(n^2)
+				 * behavior; worth reconsidering this design?
 				 */
 				targs = list_copy(fn->args);
 				foreach(args, targs)
@@ -480,10 +480,10 @@ transformExpr(ParseState *pstate, Node *expr)
 					 * (ignoring resjunk targets).
 					 */
 					if (tlist_item == NULL ||
-						((TargetEntry *) lfirst(tlist_item))->resdom->resjunk)
+					((TargetEntry *) lfirst(tlist_item))->resdom->resjunk)
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("subquery must return a column")));
+							   errmsg("subquery must return a column")));
 					while ((tlist_item = lnext(tlist_item)) != NULL)
 					{
 						if (!((TargetEntry *) lfirst(tlist_item))->resdom->resjunk)
@@ -573,7 +573,7 @@ transformExpr(ParseState *pstate, Node *expr)
 						if (ll_item == NULL)
 							ereport(ERROR,
 									(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("subquery has too many columns")));
+							   errmsg("subquery has too many columns")));
 						lexpr = lfirst(ll_item);
 						ll_item = lnext(ll_item);
 
@@ -611,7 +611,7 @@ transformExpr(ParseState *pstate, Node *expr)
 					if (ll_item != NULL)
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
-							  errmsg("subquery has too few columns")));
+								 errmsg("subquery has too few columns")));
 
 					if (needNot)
 					{
@@ -673,7 +673,7 @@ transformExpr(ParseState *pstate, Node *expr)
 					{
 						/* shorthand form was specified, so expand... */
 						warg = (Node *) makeSimpleA_Expr(AEXPR_OP, "=",
-														 (Node *) placeholder,
+													(Node *) placeholder,
 														 warg);
 					}
 					neww->expr = (Expr *) transformExpr(pstate, warg);
@@ -805,8 +805,8 @@ transformExpr(ParseState *pstate, Node *expr)
 
 		case T_RowExpr:
 			{
-				RowExpr	   *r = (RowExpr *) expr;
-				RowExpr	   *newr = makeNode(RowExpr);
+				RowExpr    *r = (RowExpr *) expr;
+				RowExpr    *newr = makeNode(RowExpr);
 				List	   *newargs = NIL;
 				ListCell   *arg;
 
@@ -967,17 +967,15 @@ transformIndirection(ParseState *pstate, Node *basenode, List *indirection)
 
 	/*
 	 * We have to split any field-selection operations apart from
-	 * subscripting.  Adjacent A_Indices nodes have to be treated
-	 * as a single multidimensional subscript operation.
+	 * subscripting.  Adjacent A_Indices nodes have to be treated as a
+	 * single multidimensional subscript operation.
 	 */
 	foreach(i, indirection)
 	{
-		Node	*n = lfirst(i);
+		Node	   *n = lfirst(i);
 
 		if (IsA(n, A_Indices))
-		{
 			subscripts = lappend(subscripts, n);
-		}
 		else
 		{
 			Assert(IsA(n, String));
@@ -986,7 +984,7 @@ transformIndirection(ParseState *pstate, Node *basenode, List *indirection)
 			if (subscripts)
 				result = (Node *) transformArraySubscripts(pstate,
 														   result,
-														   exprType(result),
+														exprType(result),
 														   InvalidOid,
 														   -1,
 														   subscripts,
@@ -1069,9 +1067,9 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 					}
 
 					/*
-					 * Try to find the name as a relation.  Note that only
-					 * relations already entered into the rangetable will be
-					 * recognized.
+					 * Try to find the name as a relation.	Note that only
+					 * relations already entered into the rangetable will
+					 * be recognized.
 					 *
 					 * This is a hack for backwards compatibility with
 					 * PostQUEL-inspired syntax.  The preferred form now
@@ -1111,7 +1109,7 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 					 */
 					node = transformWholeRowRef(pstate, NULL, name1);
 					node = ParseFuncOrColumn(pstate,
-											 list_make1(makeString(name2)),
+										   list_make1(makeString(name2)),
 											 list_make1(node),
 											 false, false, true);
 				}
@@ -1137,7 +1135,7 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 					/* Try it as a function call */
 					node = transformWholeRowRef(pstate, name1, name2);
 					node = ParseFuncOrColumn(pstate,
-											 list_make1(makeString(name3)),
+										   list_make1(makeString(name3)),
 											 list_make1(node),
 											 false, false, true);
 				}
@@ -1173,7 +1171,7 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 					/* Try it as a function call */
 					node = transformWholeRowRef(pstate, name2, name3);
 					node = ParseFuncOrColumn(pstate,
-											 list_make1(makeString(name4)),
+										   list_make1(makeString(name4)),
 											 list_make1(node),
 											 false, false, true);
 				}
@@ -1262,11 +1260,12 @@ transformWholeRowRef(ParseState *pstate, char *schemaname, char *relname)
 			}
 			break;
 		default:
+
 			/*
-			 * RTE is a join or subselect.  We represent this as a whole-row
-			 * Var of RECORD type.  (Note that in most cases the Var will
-			 * be expanded to a RowExpr during planning, but that is not
-			 * our concern here.)
+			 * RTE is a join or subselect.	We represent this as a
+			 * whole-row Var of RECORD type.  (Note that in most cases the
+			 * Var will be expanded to a RowExpr during planning, but that
+			 * is not our concern here.)
 			 */
 			result = (Node *) makeVar(vnum,
 									  InvalidAttrNumber,
@@ -1666,7 +1665,7 @@ static Node *
 make_row_op(ParseState *pstate, List *opname, Node *ltree, Node *rtree)
 {
 	Node	   *result = NULL;
-	RowExpr	   *lrow,
+	RowExpr    *lrow,
 			   *rrow;
 	List	   *largs,
 			   *rargs;
@@ -1700,27 +1699,23 @@ make_row_op(ParseState *pstate, List *opname, Node *ltree, Node *rtree)
 		(strcmp(oprname, "<=") == 0) ||
 		(strcmp(oprname, ">") == 0) ||
 		(strcmp(oprname, ">=") == 0))
-	{
 		boolop = AND_EXPR;
-	}
 	else if (strcmp(oprname, "<>") == 0)
-	{
 		boolop = OR_EXPR;
-	}
 	else
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("operator %s is not supported for row expressions",
-						oprname)));
-		boolop = 0;			/* keep compiler quiet */
+			   errmsg("operator %s is not supported for row expressions",
+					  oprname)));
+		boolop = 0;				/* keep compiler quiet */
 	}
 
 	forboth(l, largs, r, rargs)
 	{
-		Node	*larg = (Node *) lfirst(l);
-		Node	*rarg = (Node *) lfirst(r);
-		Node	*cmp;
+		Node	   *larg = (Node *) lfirst(l);
+		Node	   *rarg = (Node *) lfirst(r);
+		Node	   *cmp;
 
 		cmp = (Node *) make_op(pstate, opname, larg, rarg);
 		cmp = coerce_to_boolean(pstate, cmp, "row comparison");
@@ -1751,7 +1746,7 @@ make_row_distinct_op(ParseState *pstate, List *opname,
 					 Node *ltree, Node *rtree)
 {
 	Node	   *result = NULL;
-	RowExpr	   *lrow,
+	RowExpr    *lrow,
 			   *rrow;
 	List	   *largs,
 			   *rargs;
@@ -1773,9 +1768,9 @@ make_row_distinct_op(ParseState *pstate, List *opname,
 
 	forboth(l, largs, r, rargs)
 	{
-		Node	*larg = (Node *) lfirst(l);
-		Node	*rarg = (Node *) lfirst(r);
-		Node	*cmp;
+		Node	   *larg = (Node *) lfirst(l);
+		Node	   *rarg = (Node *) lfirst(r);
+		Node	   *cmp;
 
 		cmp = (Node *) make_distinct_op(pstate, opname, larg, rarg);
 		if (result == NULL)
@@ -1800,16 +1795,16 @@ make_row_distinct_op(ParseState *pstate, List *opname,
 static Expr *
 make_distinct_op(ParseState *pstate, List *opname, Node *ltree, Node *rtree)
 {
-	Expr	*result;
+	Expr	   *result;
 
 	result = make_op(pstate, opname, ltree, rtree);
 	if (((OpExpr *) result)->opresulttype != BOOLOID)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("IS DISTINCT FROM requires = operator to yield boolean")));
+		errmsg("IS DISTINCT FROM requires = operator to yield boolean")));
+
 	/*
-	 * We rely on DistinctExpr and OpExpr being
-	 * same struct
+	 * We rely on DistinctExpr and OpExpr being same struct
 	 */
 	NodeSetTag(result, T_DistinctExpr);
 

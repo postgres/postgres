@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.81 2004/08/29 04:13:03 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.82 2004/08/29 05:06:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -431,7 +431,7 @@ extern Buffer _bt_getroot(Relation rel, int access);
 extern Buffer _bt_gettrueroot(Relation rel);
 extern Buffer _bt_getbuf(Relation rel, BlockNumber blkno, int access);
 extern Buffer _bt_relandgetbuf(Relation rel, Buffer obuf,
-							   BlockNumber blkno, int access);
+				 BlockNumber blkno, int access);
 extern void _bt_relbuf(Relation rel, Buffer buf);
 extern void _bt_wrtbuf(Relation rel, Buffer buf);
 extern void _bt_wrtnorelbuf(Relation rel, Buffer buf);
@@ -445,8 +445,8 @@ extern int	_bt_pagedel(Relation rel, Buffer buf, bool vacuum_full);
  * prototypes for functions in nbtsearch.c
  */
 extern BTStack _bt_search(Relation rel,
-						  int keysz, ScanKey scankey, bool nextkey,
-						  Buffer *bufP, int access);
+		   int keysz, ScanKey scankey, bool nextkey,
+		   Buffer *bufP, int access);
 extern Buffer _bt_moveright(Relation rel, Buffer buf, int keysz,
 			  ScanKey scankey, bool nextkey, int access);
 extern OffsetNumber _bt_binsrch(Relation rel, Buffer buf, int keysz,

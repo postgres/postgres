@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.89 2004/07/20 18:06:41 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.90 2004/08/29 05:07:00 momjian Exp $ */
 
 /* New main for ecpg, the PostgreSQL embedded SQL precompiler. */
 /* (C) Michael Meskes <meskes@postgresql.org> Feb 5th, 1998 */
@@ -121,9 +121,9 @@ main(int argc, char *const argv[])
 				out_option = 0;
 	struct _include_path *ip;
 	const char *progname;
-	char	   my_exec_path[MAXPGPATH];
-	char	   include_path[MAXPGPATH];
-	
+	char		my_exec_path[MAXPGPATH];
+	char		include_path[MAXPGPATH];
+
 	progname = get_progname(argv[0]);
 
 	if (argc > 1)
@@ -180,9 +180,9 @@ main(int argc, char *const argv[])
 			case 'C':
 				if (strncmp(optarg, "INFORMIX", strlen("INFORMIX")) == 0)
 				{
-					char	   pkginclude_path[MAXPGPATH];
-					char	   informix_path[MAXPGPATH];
-				
+					char		pkginclude_path[MAXPGPATH];
+					char		informix_path[MAXPGPATH];
+
 					compat = (strcmp(optarg, "INFORMIX") == 0) ? ECPG_COMPAT_INFORMIX : ECPG_COMPAT_INFORMIX_SE;
 					/* system_includes = true; */
 					add_preprocessor_define("dec_t=decimal");
@@ -281,7 +281,7 @@ main(int argc, char *const argv[])
 					ptr2ext[0] = '.';
 					ptr2ext[1] = 'p';
 					ptr2ext[2] = 'g';
-					ptr2ext[3] = (header_mode == true)? 'h' : 'c';
+					ptr2ext[3] = (header_mode == true) ? 'h' : 'c';
 					ptr2ext[4] = '\0';
 				}
 
@@ -298,7 +298,7 @@ main(int argc, char *const argv[])
 
 					ptr2ext = strrchr(output_filename, '.');
 					/* make extension = .c resp. .h */
-					ptr2ext[1] = (header_mode == true)? 'h' : 'c';
+					ptr2ext[1] = (header_mode == true) ? 'h' : 'c';
 					ptr2ext[2] = '\0';
 
 					yyout = fopen(output_filename, PG_BINARY_W);
@@ -403,7 +403,7 @@ main(int argc, char *const argv[])
 				/* we need several includes */
 				/* but not if we are in header mode */
 				fprintf(yyout, "/* Processed by ecpg (%d.%d.%d) */\n", MAJOR_VERSION, MINOR_VERSION, PATCHLEVEL);
-				
+
 				if (header_mode == false)
 				{
 					fprintf(yyout, "/* These include files are added by the preprocessor */\n#include <ecpgtype.h>\n#include <ecpglib.h>\n#include <ecpgerrno.h>\n#include <sqlca.h>\n");
@@ -416,24 +416,27 @@ main(int argc, char *const argv[])
 				}
 
 				fprintf(yyout, "#line 1 \"%s\"\n", input_filename);
-				
+
 				/* and parse the source */
 				yyparse();
 
 				/* check if all cursors were indeed opened */
 				for (ptr = cur; ptr != NULL;)
 				{
-					char errortext[128];
-					
+					char		errortext[128];
+
 					if (!(ptr->opened))
 					{
-						/* Does not really make sense to declare a cursor but not open it */
+						/*
+						 * Does not really make sense to declare a cursor
+						 * but not open it
+						 */
 						snprintf(errortext, sizeof(errortext), "cursor `%s´ has been declared but ot opened\n", ptr->name);
 						mmerror(PARSE_ERROR, ET_WARNING, errortext);
 					}
 					ptr = ptr->next;
 				}
-				
+
 				if (yyin != NULL && yyin != stdin)
 					fclose(yyin);
 				if (out_option == 0 && yyout != stdout)

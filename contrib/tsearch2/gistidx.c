@@ -123,8 +123,8 @@ gtsvector_compress(PG_FUNCTION_ARGS)
 	if (entry->leafkey)
 	{							/* tsvector */
 		GISTTYPE   *res;
-		tsvector	   *toastedval = (tsvector *) DatumGetPointer(entry->key);
-		tsvector	   *val = (tsvector *) DatumGetPointer(PG_DETOAST_DATUM(entry->key));
+		tsvector   *toastedval = (tsvector *) DatumGetPointer(entry->key);
+		tsvector   *val = (tsvector *) DatumGetPointer(PG_DETOAST_DATUM(entry->key));
 		int4		len;
 		int4	   *arr;
 		WordEntry  *ptr = ARRPTR(val);
@@ -277,10 +277,10 @@ gtsvector_consistent(PG_FUNCTION_ARGS)
 			PG_RETURN_BOOL(true);
 
 		PG_RETURN_BOOL(TS_execute(
-							   GETQUERY(query),
-							   (void *) GETSIGN(key), false,
-							   checkcondition_bit
-							   ));
+								  GETQUERY(query),
+								  (void *) GETSIGN(key), false,
+								  checkcondition_bit
+								  ));
 	}
 	else
 	{							/* only leaf pages */
@@ -289,10 +289,10 @@ gtsvector_consistent(PG_FUNCTION_ARGS)
 		chkval.arrb = GETARR(key);
 		chkval.arre = chkval.arrb + ARRNELEM(key);
 		PG_RETURN_BOOL(TS_execute(
-							   GETQUERY(query),
-							   (void *) &chkval, true,
-							   checkcondition_arr
-							   ));
+								  GETQUERY(query),
+								  (void *) &chkval, true,
+								  checkcondition_arr
+								  ));
 	}
 }
 
@@ -326,10 +326,11 @@ unionkey(BITVECP sbase, GISTTYPE * add)
 Datum
 gtsvector_union(PG_FUNCTION_ARGS)
 {
-	GistEntryVector	   *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
+	GistEntryVector *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
 	int		   *size = (int *) PG_GETARG_POINTER(1);
 	BITVEC		base;
-	int4		i,len;
+	int4		i,
+				len;
 	int4		flag = 0;
 	GISTTYPE   *result;
 
@@ -418,34 +419,39 @@ sizebitvec(BITVECP sign)
 				i;
 
 	LOOPBYTE(
-		size += SUMBIT(*(char *) sign);
-		sign = (BITVECP) (((char *) sign) + 1);
+			 size += SUMBIT(*(char *) sign);
+	sign = (BITVECP) (((char *) sign) + 1);
 	);
 	return size;
 }
 
 static int
-hemdistsign(BITVECP  a, BITVECP b) {
-	int i,dist=0;
+hemdistsign(BITVECP a, BITVECP b)
+{
+	int			i,
+				dist = 0;
 
 	LOOPBIT(
-		if ( GETBIT(a,i) != GETBIT(b,i) )
+			if (GETBIT(a, i) != GETBIT(b, i))
 			dist++;
 	);
 	return dist;
 }
 
 static int
-hemdist(GISTTYPE   *a, GISTTYPE   *b) {
-	if ( ISALLTRUE(a) ) {
+hemdist(GISTTYPE * a, GISTTYPE * b)
+{
+	if (ISALLTRUE(a))
+	{
 		if (ISALLTRUE(b))
 			return 0;
 		else
-			return SIGLENBIT-sizebitvec(GETSIGN(b));
-	} else if (ISALLTRUE(b))
-		return SIGLENBIT-sizebitvec(GETSIGN(a));
+			return SIGLENBIT - sizebitvec(GETSIGN(b));
+	}
+	else if (ISALLTRUE(b))
+		return SIGLENBIT - sizebitvec(GETSIGN(a));
 
-	return hemdistsign( GETSIGN(a), GETSIGN(b) );
+	return hemdistsign(GETSIGN(a), GETSIGN(b));
 }
 
 Datum
@@ -460,17 +466,19 @@ gtsvector_penalty(PG_FUNCTION_ARGS)
 
 	*penalty = 0.0;
 
-	if (ISARRKEY(newval)) {
-		BITVEC sign;
+	if (ISARRKEY(newval))
+	{
+		BITVEC		sign;
+
 		makesign(sign, newval);
 
-		if ( ISALLTRUE(origval) ) 
-			*penalty=((float)(SIGLENBIT-sizebitvec(sign)))/(float)(SIGLENBIT+1);
-		else 
-			*penalty=hemdistsign(sign,orig);
-	} else {
-		*penalty=hemdist(origval,newval);
+		if (ISALLTRUE(origval))
+			*penalty = ((float) (SIGLENBIT - sizebitvec(sign))) / (float) (SIGLENBIT + 1);
+		else
+			*penalty = hemdistsign(sign, orig);
 	}
+	else
+		*penalty = hemdist(origval, newval);
 	PG_RETURN_POINTER(penalty);
 }
 
@@ -510,22 +518,25 @@ comparecost(const void *a, const void *b)
 
 
 static int
-hemdistcache(CACHESIGN   *a, CACHESIGN   *b) {
-	if ( a->allistrue ) {
+hemdistcache(CACHESIGN * a, CACHESIGN * b)
+{
+	if (a->allistrue)
+	{
 		if (b->allistrue)
 			return 0;
 		else
-			return SIGLENBIT-sizebitvec(b->sign);
-	} else if (b->allistrue)
-		return SIGLENBIT-sizebitvec(a->sign);
+			return SIGLENBIT - sizebitvec(b->sign);
+	}
+	else if (b->allistrue)
+		return SIGLENBIT - sizebitvec(a->sign);
 
-	return hemdistsign( a->sign, b->sign );
+	return hemdistsign(a->sign, b->sign);
 }
 
 Datum
 gtsvector_picksplit(PG_FUNCTION_ARGS)
 {
-	GistEntryVector	   *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
+	GistEntryVector *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
 	GIST_SPLITVEC *v = (GIST_SPLITVEC *) PG_GETARG_POINTER(1);
 	OffsetNumber k,
 				j;
@@ -556,13 +567,16 @@ gtsvector_picksplit(PG_FUNCTION_ARGS)
 	cache = (CACHESIGN *) palloc(sizeof(CACHESIGN) * (maxoff + 2));
 	fillcache(&cache[FirstOffsetNumber], GETENTRY(entryvec, FirstOffsetNumber));
 
-	for (k = FirstOffsetNumber; k < maxoff; k = OffsetNumberNext(k)) {
-		for (j = OffsetNumberNext(k); j <= maxoff; j = OffsetNumberNext(j)) {
+	for (k = FirstOffsetNumber; k < maxoff; k = OffsetNumberNext(k))
+	{
+		for (j = OffsetNumberNext(k); j <= maxoff; j = OffsetNumberNext(j))
+		{
 			if (k == FirstOffsetNumber)
 				fillcache(&cache[j], GETENTRY(entryvec, j));
 
-			size_waste=hemdistcache(&(cache[j]),&(cache[k]));
-			if (size_waste > waste) {
+			size_waste = hemdistcache(&(cache[j]), &(cache[k]));
+			if (size_waste > waste)
+			{
 				waste = size_waste;
 				seed_1 = k;
 				seed_2 = j;
@@ -575,101 +589,124 @@ gtsvector_picksplit(PG_FUNCTION_ARGS)
 	right = v->spl_right;
 	v->spl_nright = 0;
 
-	if (seed_1 == 0 || seed_2 == 0) {
+	if (seed_1 == 0 || seed_2 == 0)
+	{
 		seed_1 = 1;
 		seed_2 = 2;
 	}
 
 	/* form initial .. */
-	if (cache[seed_1].allistrue) {
+	if (cache[seed_1].allistrue)
+	{
 		datum_l = (GISTTYPE *) palloc(CALCGTSIZE(SIGNKEY | ALLISTRUE, 0));
 		datum_l->len = CALCGTSIZE(SIGNKEY | ALLISTRUE, 0);
 		datum_l->flag = SIGNKEY | ALLISTRUE;
-	} else {
+	}
+	else
+	{
 		datum_l = (GISTTYPE *) palloc(CALCGTSIZE(SIGNKEY, 0));
 		datum_l->len = CALCGTSIZE(SIGNKEY, 0);
 		datum_l->flag = SIGNKEY;
 		memcpy((void *) GETSIGN(datum_l), (void *) cache[seed_1].sign, sizeof(BITVEC));
 	}
-	if (cache[seed_2].allistrue) {
+	if (cache[seed_2].allistrue)
+	{
 		datum_r = (GISTTYPE *) palloc(CALCGTSIZE(SIGNKEY | ALLISTRUE, 0));
 		datum_r->len = CALCGTSIZE(SIGNKEY | ALLISTRUE, 0);
 		datum_r->flag = SIGNKEY | ALLISTRUE;
-	} else {
+	}
+	else
+	{
 		datum_r = (GISTTYPE *) palloc(CALCGTSIZE(SIGNKEY, 0));
 		datum_r->len = CALCGTSIZE(SIGNKEY, 0);
 		datum_r->flag = SIGNKEY;
 		memcpy((void *) GETSIGN(datum_r), (void *) cache[seed_2].sign, sizeof(BITVEC));
 	}
 
-	union_l=GETSIGN(datum_l);
-	union_r=GETSIGN(datum_r);
+	union_l = GETSIGN(datum_l);
+	union_r = GETSIGN(datum_r);
 	maxoff = OffsetNumberNext(maxoff);
 	fillcache(&cache[maxoff], GETENTRY(entryvec, maxoff));
 	/* sort before ... */
 	costvector = (SPLITCOST *) palloc(sizeof(SPLITCOST) * maxoff);
-	for (j = FirstOffsetNumber; j <= maxoff; j = OffsetNumberNext(j)) {
+	for (j = FirstOffsetNumber; j <= maxoff; j = OffsetNumberNext(j))
+	{
 		costvector[j - 1].pos = j;
 		size_alpha = hemdistcache(&(cache[seed_1]), &(cache[j]));
-		size_beta  = hemdistcache(&(cache[seed_2]), &(cache[j]));
+		size_beta = hemdistcache(&(cache[seed_2]), &(cache[j]));
 		costvector[j - 1].cost = abs(size_alpha - size_beta);
 	}
 	qsort((void *) costvector, maxoff, sizeof(SPLITCOST), comparecost);
 
-	for (k = 0; k < maxoff; k++) {
+	for (k = 0; k < maxoff; k++)
+	{
 		j = costvector[k].pos;
-		if (j == seed_1) {
+		if (j == seed_1)
+		{
 			*left++ = j;
 			v->spl_nleft++;
 			continue;
-		} else if (j == seed_2) {
+		}
+		else if (j == seed_2)
+		{
 			*right++ = j;
 			v->spl_nright++;
 			continue;
 		}
 
-		if (ISALLTRUE(datum_l) || cache[j].allistrue) {
-			if ( ISALLTRUE(datum_l) && cache[j].allistrue )
-				size_alpha=0;
+		if (ISALLTRUE(datum_l) || cache[j].allistrue)
+		{
+			if (ISALLTRUE(datum_l) && cache[j].allistrue)
+				size_alpha = 0;
 			else
-				size_alpha = SIGLENBIT-sizebitvec(  
-					( cache[j].allistrue ) ? GETSIGN(datum_l) : GETSIGN(cache[j].sign)  
-				);
-		} else {
-			size_alpha=hemdistsign(cache[j].sign,GETSIGN(datum_l));
+				size_alpha = SIGLENBIT - sizebitvec(
+													(cache[j].allistrue) ? GETSIGN(datum_l) : GETSIGN(cache[j].sign)
+					);
 		}
+		else
+			size_alpha = hemdistsign(cache[j].sign, GETSIGN(datum_l));
 
-		if (ISALLTRUE(datum_r) || cache[j].allistrue) {
-			if ( ISALLTRUE(datum_r) && cache[j].allistrue )
-				size_beta=0;
+		if (ISALLTRUE(datum_r) || cache[j].allistrue)
+		{
+			if (ISALLTRUE(datum_r) && cache[j].allistrue)
+				size_beta = 0;
 			else
-				size_beta = SIGLENBIT-sizebitvec(  
-					( cache[j].allistrue ) ? GETSIGN(datum_r) : GETSIGN(cache[j].sign)  
-				);
-		} else {
-			size_beta=hemdistsign(cache[j].sign,GETSIGN(datum_r));
+				size_beta = SIGLENBIT - sizebitvec(
+												   (cache[j].allistrue) ? GETSIGN(datum_r) : GETSIGN(cache[j].sign)
+					);
 		}
+		else
+			size_beta = hemdistsign(cache[j].sign, GETSIGN(datum_r));
 
-		if (size_alpha  < size_beta + WISH_F(v->spl_nleft, v->spl_nright, 0.1)) {
-			if (ISALLTRUE(datum_l) || cache[j].allistrue) {
-				if (! ISALLTRUE(datum_l) )
+		if (size_alpha < size_beta + WISH_F(v->spl_nleft, v->spl_nright, 0.1))
+		{
+			if (ISALLTRUE(datum_l) || cache[j].allistrue)
+			{
+				if (!ISALLTRUE(datum_l))
 					MemSet((void *) GETSIGN(datum_l), 0xff, sizeof(BITVEC));
-			} else {
-				ptr=cache[j].sign;
+			}
+			else
+			{
+				ptr = cache[j].sign;
 				LOOPBYTE(
-					union_l[i] |= ptr[i];
+						 union_l[i] |= ptr[i];
 				);
 			}
 			*left++ = j;
 			v->spl_nleft++;
-		} else {
-			if (ISALLTRUE(datum_r) || cache[j].allistrue) {
-				if (! ISALLTRUE(datum_r) )
+		}
+		else
+		{
+			if (ISALLTRUE(datum_r) || cache[j].allistrue)
+			{
+				if (!ISALLTRUE(datum_r))
 					MemSet((void *) GETSIGN(datum_r), 0xff, sizeof(BITVEC));
-			} else {
-				ptr=cache[j].sign;
+			}
+			else
+			{
+				ptr = cache[j].sign;
 				LOOPBYTE(
-					union_r[i] |= ptr[i];
+						 union_r[i] |= ptr[i];
 				);
 			}
 			*right++ = j;

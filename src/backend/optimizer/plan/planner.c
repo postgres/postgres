@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.173 2004/08/29 04:12:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.174 2004/08/29 05:06:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,7 +43,7 @@
 #include "utils/syscache.h"
 
 
-ParamListInfo PlannerBoundParamList = NULL;	/* current boundParams */
+ParamListInfo PlannerBoundParamList = NULL;		/* current boundParams */
 
 
 /* Expression kind codes for preprocess_expression */
@@ -88,10 +88,11 @@ planner(Query *parse, bool isCursor, int cursorOptions,
 	 * eval_const_expressions tries to pre-evaluate an SQL function). So,
 	 * these global state variables must be saved and restored.
 	 *
-	 * Query level and the param list cannot be moved into the Query structure
-	 * since their whole purpose is communication across multiple sub-Queries.
-	 * Also, boundParams is explicitly info from outside the Query, and so
-	 * is likewise better handled as a global variable.
+	 * Query level and the param list cannot be moved into the Query
+	 * structure since their whole purpose is communication across
+	 * multiple sub-Queries. Also, boundParams is explicitly info from
+	 * outside the Query, and so is likewise better handled as a global
+	 * variable.
 	 *
 	 * Note we do NOT save and restore PlannerPlanId: it exists to assign
 	 * unique IDs to SubPlan nodes, and we want those IDs to be unique for
@@ -391,9 +392,9 @@ preprocess_expression(Query *parse, Node *expr, int kind)
 		expr = flatten_join_alias_vars(parse, expr);
 
 	/*
-	 * If it's a qual or havingQual, canonicalize it.  It seems most useful
-	 * to do this before applying eval_const_expressions, since the latter
-	 * can optimize flattened AND/ORs better than unflattened ones.
+	 * If it's a qual or havingQual, canonicalize it.  It seems most
+	 * useful to do this before applying eval_const_expressions, since the
+	 * latter can optimize flattened AND/ORs better than unflattened ones.
 	 *
 	 * Note: all processing of a qual expression after this point must be
 	 * careful to maintain AND/OR flatness --- that is, do not generate a
@@ -430,8 +431,8 @@ preprocess_expression(Query *parse, Node *expr, int kind)
 	/*
 	 * If it's a qual or havingQual, convert it to implicit-AND format.
 	 * (We don't want to do this before eval_const_expressions, since the
-	 * latter would be unable to simplify a top-level AND correctly.  Also,
-	 * SS_process_sublinks expects explicit-AND format.)
+	 * latter would be unable to simplify a top-level AND correctly.
+	 * Also, SS_process_sublinks expects explicit-AND format.)
 	 */
 	if (kind == EXPRKIND_QUAL)
 		expr = (Node *) make_ands_implicit((Expr *) expr);
@@ -585,7 +586,7 @@ grouping_planner(Query *parse, double tuple_fraction)
 
 	if (parse->setOperations)
 	{
-		List   *set_sortclauses;
+		List	   *set_sortclauses;
 
 		/*
 		 * Construct the plan for set operations.  The result will not
@@ -600,7 +601,7 @@ grouping_planner(Query *parse, double tuple_fraction)
 		 * the sort key information...
 		 */
 		current_pathkeys = make_pathkeys_for_sortclauses(set_sortclauses,
-													result_plan->targetlist);
+												result_plan->targetlist);
 		current_pathkeys = canonicalize_pathkeys(parse, current_pathkeys);
 
 		/*
@@ -731,8 +732,8 @@ grouping_planner(Query *parse, double tuple_fraction)
 		 *
 		 * Note: think not that we can turn off hasAggs if we find no aggs.
 		 * It is possible for constant-expression simplification to remove
-		 * all explicit references to aggs, but we still have to follow the
-		 * aggregate semantics (eg, producing only one output row).
+		 * all explicit references to aggs, but we still have to follow
+		 * the aggregate semantics (eg, producing only one output row).
 		 */
 		if (parse->hasAggs)
 			numAggs = count_agg_clause((Node *) tlist) +
@@ -981,8 +982,8 @@ grouping_planner(Query *parse, double tuple_fraction)
 			{
 				/*
 				 * Use hashed grouping if (a) we think we can fit the
-				 * hashtable into work_mem, *and* (b) the estimated cost is
-				 * no more than doing it the other way.  While avoiding
+				 * hashtable into work_mem, *and* (b) the estimated cost
+				 * is no more than doing it the other way.	While avoiding
 				 * the need for sorted input is usually a win, the fact
 				 * that the output won't be sorted may be a loss; so we
 				 * need to do an actual cost comparison.
@@ -1452,10 +1453,10 @@ make_subplanTargetList(Query *parse,
 
 		foreach(gl, parse->groupClause)
 		{
-			GroupClause		*grpcl = (GroupClause *) lfirst(gl);
-			Node			*groupexpr = get_sortgroupclause_expr(grpcl, tlist);
-			TargetEntry		*te = NULL;
-			ListCell		*sl;
+			GroupClause *grpcl = (GroupClause *) lfirst(gl);
+			Node	   *groupexpr = get_sortgroupclause_expr(grpcl, tlist);
+			TargetEntry *te = NULL;
+			ListCell   *sl;
 
 			/* Find or make a matching sub_tlist entry */
 			foreach(sl, sub_tlist)
@@ -1513,10 +1514,10 @@ locate_grouping_columns(Query *parse,
 
 	foreach(gl, parse->groupClause)
 	{
-		GroupClause		*grpcl = (GroupClause *) lfirst(gl);
-		Node			*groupexpr = get_sortgroupclause_expr(grpcl, tlist);
-		TargetEntry		*te = NULL;
-		ListCell		*sl;
+		GroupClause *grpcl = (GroupClause *) lfirst(gl);
+		Node	   *groupexpr = get_sortgroupclause_expr(grpcl, tlist);
+		TargetEntry *te = NULL;
+		ListCell   *sl;
 
 		foreach(sl, sub_tlist)
 		{

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.155 2004/08/29 04:13:05 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.156 2004/08/29 05:06:55 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -304,13 +304,13 @@ DATA(insert OID = 30 (	oidvector  PGNSP PGUID INDEX_MAX_KEYS*4 f b t \054 0  26 
 DESCR("array of INDEX_MAX_KEYS oids, used in system tables");
 #define OIDVECTOROID	30
 
-DATA(insert OID = 71 (	pg_type		 	PGNSP PGUID -1 f c t \054 1247 0 record_in record_out record_recv record_send - d x f 0 -1 0 _null_ _null_ ));
-DATA(insert OID = 75 (	pg_attribute 	PGNSP PGUID -1 f c t \054 1249 0 record_in record_out record_recv record_send - d x f 0 -1 0 _null_ _null_ ));
-DATA(insert OID = 81 (	pg_proc		 	PGNSP PGUID -1 f c t \054 1255 0 record_in record_out record_recv record_send - d x f 0 -1 0 _null_ _null_ ));
-DATA(insert OID = 83 (	pg_class	 	PGNSP PGUID -1 f c t \054 1259 0 record_in record_out record_recv record_send - d x f 0 -1 0 _null_ _null_ ));
-DATA(insert OID = 86 (	pg_shadow	 	PGNSP PGUID -1 f c t \054 1260 0 record_in record_out record_recv record_send - d x f 0 -1 0 _null_ _null_ ));
-DATA(insert OID = 87 (	pg_group	 	PGNSP PGUID -1 f c t \054 1261 0 record_in record_out record_recv record_send - d x f 0 -1 0 _null_ _null_ ));
-DATA(insert OID = 88 (	pg_database  	PGNSP PGUID -1 f c t \054 1262 0 record_in record_out record_recv record_send - d x f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 71 (	pg_type			PGNSP PGUID -1 f c t \054 1247 0 record_in record_out record_recv record_send - d x f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 75 (	pg_attribute	PGNSP PGUID -1 f c t \054 1249 0 record_in record_out record_recv record_send - d x f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 81 (	pg_proc			PGNSP PGUID -1 f c t \054 1255 0 record_in record_out record_recv record_send - d x f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 83 (	pg_class		PGNSP PGUID -1 f c t \054 1259 0 record_in record_out record_recv record_send - d x f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 86 (	pg_shadow		PGNSP PGUID -1 f c t \054 1260 0 record_in record_out record_recv record_send - d x f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 87 (	pg_group		PGNSP PGUID -1 f c t \054 1261 0 record_in record_out record_recv record_send - d x f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 88 (	pg_database		PGNSP PGUID -1 f c t \054 1262 0 record_in record_out record_recv record_send - d x f 0 -1 0 _null_ _null_ ));
 DATA(insert OID = 90 (	pg_tablespace	PGNSP PGUID -1 f c t \054 1213 0 record_in record_out record_recv record_send - d x f 0 -1 0 _null_ _null_ ));
 
 /* OIDS 100 - 199 */

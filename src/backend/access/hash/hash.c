@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hash.c,v 1.72 2004/08/29 04:12:17 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hash.c,v 1.73 2004/08/29 05:06:40 momjian Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -210,8 +210,8 @@ hashgettuple(PG_FUNCTION_ARGS)
 	bool		res;
 
 	/*
-	 * We hold pin but not lock on current buffer while outside the hash AM.
-	 * Reacquire the read lock here.
+	 * We hold pin but not lock on current buffer while outside the hash
+	 * AM. Reacquire the read lock here.
 	 */
 	if (BufferIsValid(so->hashso_curbuf))
 		_hash_chgbufaccess(rel, so->hashso_curbuf, HASH_NOLOCK, HASH_READ);
@@ -470,7 +470,7 @@ hashbulkdelete(PG_FUNCTION_ARGS)
 	/*
 	 * Read the metapage to fetch original bucket and tuple counts.  Also,
 	 * we keep a copy of the last-seen metapage so that we can use its
-	 * hashm_spares[] values to compute bucket page addresses.  This is a
+	 * hashm_spares[] values to compute bucket page addresses.	This is a
 	 * bit hokey but perfectly safe, since the interesting entries in the
 	 * spares array cannot change under us; and it beats rereading the
 	 * metapage for each bucket.
@@ -532,7 +532,7 @@ loop_top:
 				ItemPointer htup;
 
 				hitem = (HashItem) PageGetItem(page,
-											   PageGetItemId(page, offno));
+											 PageGetItemId(page, offno));
 				htup = &(hitem->hash_itup.t_tid);
 				if (callback(htup, callback_state))
 				{
@@ -595,8 +595,8 @@ loop_top:
 		orig_ntuples == metap->hashm_ntuples)
 	{
 		/*
-		 * No one has split or inserted anything since start of scan,
-		 * so believe our count as gospel.
+		 * No one has split or inserted anything since start of scan, so
+		 * believe our count as gospel.
 		 */
 		metap->hashm_ntuples = num_index_tuples;
 	}
@@ -604,7 +604,7 @@ loop_top:
 	{
 		/*
 		 * Otherwise, our count is untrustworthy since we may have
-		 * double-scanned tuples in split buckets.  Proceed by
+		 * double-scanned tuples in split buckets.	Proceed by
 		 * dead-reckoning.
 		 */
 		if (metap->hashm_ntuples > tuples_removed)

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.50 2004/08/29 04:13:01 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.51 2004/08/29 05:06:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,7 +59,7 @@ static PGconn *connectDatabase(const char *dbname, const char *pghost, const cha
 				const char *pguser, bool require_password);
 static PGresult *executeQuery(PGconn *conn, const char *query);
 
-char	    pg_dump_bin[MAXPGPATH];
+char		pg_dump_bin[MAXPGPATH];
 PQExpBuffer pgdumpopts;
 bool		output_clean = false;
 bool		skip_acls = false;
@@ -67,9 +67,9 @@ bool		verbose = false;
 int			server_version;
 
 /* flags for -X long options */
-int	disable_dollar_quoting = 0;
-int	disable_triggers = 0;
-int	use_setsessauth = 0;
+int			disable_dollar_quoting = 0;
+int			disable_triggers = 0;
+int			use_setsessauth = 0;
 
 int
 main(int argc, char *argv[])
@@ -82,7 +82,8 @@ main(int argc, char *argv[])
 	bool		globals_only = false;
 	bool		schema_only = false;
 	PGconn	   *conn;
-	int			c, ret;
+	int			c,
+				ret;
 
 	static struct option long_options[] = {
 		{"data-only", no_argument, NULL, 'a'},
@@ -140,16 +141,16 @@ main(int argc, char *argv[])
 	{
 		if (ret == -1)
 			fprintf(stderr,
-						_("The program \"pg_dump\" is needed by %s "
-						"but was not found in the same directory as \"%s\".\n"
-						"Check your installation.\n"),
-						progname, progname);
+					_("The program \"pg_dump\" is needed by %s "
+				   "but was not found in the same directory as \"%s\".\n"
+					  "Check your installation.\n"),
+					progname, progname);
 		else
 			fprintf(stderr,
-						_("The program \"pg_dump\" was found by %s "
-						"but was not the same version as \"%s\".\n"
-						"Check your installation.\n"),
-						progname, progname);
+					_("The program \"pg_dump\" was found by %s "
+					  "but was not the same version as \"%s\".\n"
+					  "Check your installation.\n"),
+					progname, progname);
 		exit(1);
 	}
 
@@ -231,7 +232,7 @@ main(int argc, char *argv[])
 				else if (strcmp(optarg, "disable-triggers") == 0)
 					appendPQExpBuffer(pgdumpopts, " -X disable-triggers");
 				else if (strcmp(optarg, "use-set-session-authorization") == 0)
-					/* no-op, still allowed for compatibility */ ;
+					 /* no-op, still allowed for compatibility */ ;
 				else
 				{
 					fprintf(stderr,
@@ -251,14 +252,14 @@ main(int argc, char *argv[])
 		}
 	}
 
-	/*  Add long options to the pg_dump argument list */
+	/* Add long options to the pg_dump argument list */
 	if (disable_dollar_quoting)
 		appendPQExpBuffer(pgdumpopts, " -X disable-dollar-quoting");
 	if (disable_triggers)
 		appendPQExpBuffer(pgdumpopts, " -X disable-triggers");
 	if (use_setsessauth)
 		appendPQExpBuffer(pgdumpopts, " -X use-set-session-authorization");
-		
+
 	if (optind < argc)
 	{
 		fprintf(stderr, _("%s: too many command-line arguments (first is \"%s\")\n"),
@@ -273,7 +274,7 @@ main(int argc, char *argv[])
 
 	printf("--\n-- PostgreSQL database cluster dump\n--\n\n");
 	if (verbose)
-			dumpTimestamp("Started on");
+		dumpTimestamp("Started on");
 
 	printf("\\connect \"template1\"\n\n");
 
@@ -330,7 +331,7 @@ help(void)
 	printf(_("  -X disable-dollar-quoting, --disable-dollar-quoting\n"
 			 "                           disable dollar quoting, use SQL standard quoting\n"));
 	printf(_("  -X disable-triggers, --disable-triggers\n"
-	         "                           disable triggers during data-only restore\n"));
+			 "                           disable triggers during data-only restore\n"));
 	printf(_("  -X use-set-session-authorization, --use-set-session-authorization\n"
 			 "                           use SESSION AUTHORIZATION commands instead of\n"
 			 "                           OWNER TO commands\n"));
@@ -378,15 +379,20 @@ dumpUsers(PGconn *conn, bool initdbonly)
 	for (i = 0; i < PQntuples(res); i++)
 	{
 		const char *username;
-		bool clusterowner;
+		bool		clusterowner;
 		PQExpBuffer buf = createPQExpBuffer();
+
 		username = PQgetvalue(res, i, 0);
 		clusterowner = (strcmp(PQgetvalue(res, i, 6), "t") == 0);
 
 		/* Check which pass we're on */
-		if ((initdbonly && !clusterowner) || (!initdbonly && clusterowner)) continue;
+		if ((initdbonly && !clusterowner) || (!initdbonly && clusterowner))
+			continue;
 
-		/* Dump ALTER USER for the cluster owner and CREATE USER for all other users */
+		/*
+		 * Dump ALTER USER for the cluster owner and CREATE USER for all
+		 * other users
+		 */
 		if (!clusterowner)
 			appendPQExpBuffer(buf, "CREATE USER %s WITH SYSID %s",
 							  fmtId(username),
@@ -502,22 +508,22 @@ dumpTablespaces(PGconn *conn)
 	 * pg_xxx)
 	 */
 	res = executeQuery(conn, "SELECT spcname, "
-					   "pg_catalog.pg_get_userbyid(spcowner) AS spcowner, "
+					 "pg_catalog.pg_get_userbyid(spcowner) AS spcowner, "
 					   "spclocation, spcacl "
 					   "FROM pg_catalog.pg_tablespace "
 					   "WHERE spcname NOT LIKE 'pg\\_%'");
-	
+
 	if (PQntuples(res) > 0)
 		printf("--\n-- Tablespaces\n--\n\n");
 
 	for (i = 0; i < PQntuples(res); i++)
 	{
 		PQExpBuffer buf = createPQExpBuffer();
-		char	*spcname = PQgetvalue(res, i, 0);
-		char	*spcowner = PQgetvalue(res, i, 1);
-		char	*spclocation = PQgetvalue(res, i, 2);
-		char	*spcacl = PQgetvalue(res, i, 3);
-		char	*fspcname;
+		char	   *spcname = PQgetvalue(res, i, 0);
+		char	   *spcowner = PQgetvalue(res, i, 1);
+		char	   *spclocation = PQgetvalue(res, i, 2);
+		char	   *spcacl = PQgetvalue(res, i, 3);
+		char	   *fspcname;
 
 		/* needed for buildACLCommands() */
 		fspcname = strdup(fmtId(spcname));
@@ -778,11 +784,15 @@ makeAlterConfigCommand(const char *arrayitem, const char *type, const char *name
 	*pos = 0;
 	appendPQExpBuffer(buf, "ALTER %s %s ", type, fmtId(name));
 	appendPQExpBuffer(buf, "SET %s TO ", fmtId(mine));
-	/* Some GUC variable names are 'LIST' type and hence must not be quoted. */
+
+	/*
+	 * Some GUC variable names are 'LIST' type and hence must not be
+	 * quoted.
+	 */
 	if (strcasecmp(mine, "DateStyle") == 0
-			|| strcasecmp(mine, "search_path") == 0)
+		|| strcasecmp(mine, "search_path") == 0)
 		appendPQExpBuffer(buf, "%s", pos + 1);
-	else 
+	else
 		appendStringLiteral(buf, pos + 1, false);
 	appendPQExpBuffer(buf, ";\n");
 
@@ -841,10 +851,10 @@ runPgDump(const char *dbname)
 	int			ret;
 
 	/*
-	 *	Win32 has to use double-quotes for args, rather than single quotes.
-	 *	Strangely enough, this is the only place we pass a database name
-	 *	on the command line, except template1 that doesn't need quoting.
-	 */	
+	 * Win32 has to use double-quotes for args, rather than single quotes.
+	 * Strangely enough, this is the only place we pass a database name on
+	 * the command line, except template1 that doesn't need quoting.
+	 */
 #ifndef WIN32
 	appendPQExpBuffer(cmd, "%s\"%s\" %s -Fp '", SYSTEMQUOTE, pg_dump_bin,
 #else
@@ -871,7 +881,7 @@ runPgDump(const char *dbname)
 #else
 	appendPQExpBufferChar(cmd, '"');
 #endif
-	
+
 	appendPQExpBuffer(cmd, "%s", SYSTEMQUOTE);
 
 	if (verbose)
@@ -994,8 +1004,8 @@ executeQuery(PGconn *conn, const char *query)
 static void
 dumpTimestamp(char *msg)
 {
-	char buf[256];
-	time_t now = time(NULL);
+	char		buf[256];
+	time_t		now = time(NULL);
 
 	if (strftime(buf, 256, "%Y-%m-%d %H:%M:%S %Z", localtime(&now)) != 0)
 		printf("-- %s %s\n\n", msg, buf);

@@ -13,11 +13,11 @@
 static int
 compareSNMapEntry(const void *a, const void *b)
 {
-	if ( ((SNMapEntry *) a)->nsp < ((SNMapEntry *) b)->nsp ) 
+	if (((SNMapEntry *) a)->nsp < ((SNMapEntry *) b)->nsp)
 		return -1;
-	else if ( ((SNMapEntry *) a)->nsp > ((SNMapEntry *) b)->nsp )
+	else if (((SNMapEntry *) a)->nsp > ((SNMapEntry *) b)->nsp)
 		return 1;
-	else 
+	else
 		return strcmp(((SNMapEntry *) a)->key, ((SNMapEntry *) b)->key);
 }
 

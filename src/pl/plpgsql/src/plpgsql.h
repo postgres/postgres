@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.51 2004/08/20 22:00:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.52 2004/08/29 05:07:01 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -197,7 +197,7 @@ typedef struct PLpgSQL_expr
 	void	   *plan;
 	Oid		   *plan_argtypes;
 	/* fields for "simple expression" fast-path execution: */
-	Expr	   *expr_simple_expr;	/* NULL means not a simple expr */
+	Expr	   *expr_simple_expr;		/* NULL means not a simple expr */
 	Oid			expr_simple_type;
 	/* if expr is simple AND in use in current xact, these fields are set: */
 	ExprState  *expr_simple_state;
@@ -339,7 +339,8 @@ typedef struct
 
 typedef struct
 {								/* List of WHEN clauses			*/
-	int			exceptions_alloc;	/* XXX this oughta just be a List ... */
+	int			exceptions_alloc;		/* XXX this oughta just be a List
+										 * ... */
 	int			exceptions_used;
 	PLpgSQL_exception **exceptions;
 }	PLpgSQL_exceptions;
@@ -552,10 +553,10 @@ typedef struct PLpgSQL_func_hashkey
 	Oid			funcOid;
 
 	/*
-	 * For a trigger function, the OID of the relation triggered on is part
-	 * of the hashkey --- we want to compile the trigger separately for each
-	 * relation it is used with, in case the rowtype is different.  Zero if
-	 * not called as a trigger.
+	 * For a trigger function, the OID of the relation triggered on is
+	 * part of the hashkey --- we want to compile the trigger separately
+	 * for each relation it is used with, in case the rowtype is
+	 * different.  Zero if not called as a trigger.
 	 */
 	Oid			trigrelOid;
 
@@ -669,7 +670,7 @@ extern PLpgSQL_function *plpgsql_curr_compile;
  * ----------
  */
 extern PLpgSQL_function *plpgsql_compile(FunctionCallInfo fcinfo,
-										 bool forValidator);
+				bool forValidator);
 extern int	plpgsql_parse_word(char *word);
 extern int	plpgsql_parse_dblword(char *word);
 extern int	plpgsql_parse_tripword(char *word);
@@ -681,10 +682,10 @@ extern int	plpgsql_parse_dblwordrowtype(char *word);
 extern PLpgSQL_type *plpgsql_parse_datatype(const char *string);
 extern PLpgSQL_type *plpgsql_build_datatype(Oid typeOid, int32 typmod);
 extern PLpgSQL_variable *plpgsql_build_variable(char *refname, int lineno,
-												PLpgSQL_type *dtype,
-												bool add2namespace);
+					   PLpgSQL_type * dtype,
+					   bool add2namespace);
 extern PLpgSQL_condition *plpgsql_parse_err_condition(char *condname);
-extern void plpgsql_adddatum(PLpgSQL_datum *new);
+extern void plpgsql_adddatum(PLpgSQL_datum * new);
 extern int	plpgsql_add_initdatums(int **varnos);
 extern void plpgsql_HashTableInit(void);
 

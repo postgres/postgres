@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.209 2004/08/29 04:12:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.210 2004/08/29 05:06:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,7 +72,7 @@
  */
 #define RELCACHE_INIT_FILENAME	"pg_internal.init"
 
-#define RELCACHE_INIT_FILEMAGIC		0x573262 /* version ID value */
+#define RELCACHE_INIT_FILEMAGIC		0x573262	/* version ID value */
 
 /*
  *		hardcoded tuple descriptors.  see include/catalog/pg_attribute.h
@@ -572,7 +572,7 @@ RelationBuildTupleDesc(RelationBuildDescInfo buildinfo,
 			constr->num_check = relation->rd_rel->relchecks;
 			constr->check = (ConstrCheck *)
 				MemoryContextAllocZero(CacheMemoryContext,
-									constr->num_check * sizeof(ConstrCheck));
+								constr->num_check * sizeof(ConstrCheck));
 			CheckConstraintFetch(relation);
 		}
 		else
@@ -1010,8 +1010,8 @@ RelationInitIndexAccessInfo(Relation relation)
 	relation->rd_supportinfo = supportinfo;
 
 	/*
-	 * Fill the operator and support procedure OID arrays.
-	 * (supportinfo is left as zeroes, and is filled on-the-fly when used)
+	 * Fill the operator and support procedure OID arrays. (supportinfo is
+	 * left as zeroes, and is filled on-the-fly when used)
 	 */
 	IndexSupportInitialize(relation->rd_index,
 						   operator, support,
@@ -1201,8 +1201,8 @@ LookupOpclassInfo(Oid operatorClassOid,
 	}
 
 	/*
-	 * Scan pg_amproc to obtain support procs for the opclass.  We only fetch
-	 * the default ones (those with subtype zero).
+	 * Scan pg_amproc to obtain support procs for the opclass.	We only
+	 * fetch the default ones (those with subtype zero).
 	 */
 	if (numSupport > 0)
 	{
@@ -1323,8 +1323,8 @@ formrdesc(const char *relationName,
 	 * because it will never be replaced.  The input values must be
 	 * correctly defined by macros in src/include/catalog/ headers.
 	 *
-	 * Note however that rd_att's tdtypeid, tdtypmod, tdhasoid fields are
-	 * not right at this point.  They will be fixed later when the real
+	 * Note however that rd_att's tdtypeid, tdtypmod, tdhasoid fields are not
+	 * right at this point.  They will be fixed later when the real
 	 * pg_class row is loaded.
 	 */
 	relation->rd_att = CreateTemplateTupleDesc(natts, false);
@@ -1586,7 +1586,7 @@ RelationClose(Relation relation)
 /*
  * RelationReloadClassinfo - reload the pg_class row (only)
  *
- *	This function is used only for nailed indexes.  Since a REINDEX can
+ *	This function is used only for nailed indexes.	Since a REINDEX can
  *	change the relfilenode value for a nailed index, we have to reread
  *	the pg_class row anytime we get an SI invalidation on a nailed index
  *	(without throwing away the whole relcache entry, since we'd be unable
@@ -1612,6 +1612,7 @@ RelationReloadClassinfo(Relation relation)
 	/* Read the pg_class row */
 	buildinfo.infotype = INFO_RELID;
 	buildinfo.i.info_id = relation->rd_id;
+
 	/*
 	 * Don't try to use an indexscan of pg_class_oid_index to reload the
 	 * info for pg_class_oid_index ...
@@ -1662,22 +1663,22 @@ RelationClearRelation(Relation relation, bool rebuild)
 	/*
 	 * Never, never ever blow away a nailed-in system relation, because
 	 * we'd be unable to recover.  However, we must reset rd_targblock, in
-	 * case we got called because of a relation cache flush that was triggered
-	 * by VACUUM.
+	 * case we got called because of a relation cache flush that was
+	 * triggered by VACUUM.
 	 *
-	 * If it's a nailed index, then we need to re-read the pg_class row to see
-	 * if its relfilenode changed.  We can't necessarily do that here, because
-	 * we might be in a failed transaction.  We assume it's okay to do it if
-	 * there are open references to the relcache entry (cf notes for
-	 * AtEOXact_RelationCache).  Otherwise just mark the entry as possibly
-	 * invalid, and it'll be fixed when next opened.
+	 * If it's a nailed index, then we need to re-read the pg_class row to
+	 * see if its relfilenode changed.	We can't necessarily do that here,
+	 * because we might be in a failed transaction.  We assume it's okay
+	 * to do it if there are open references to the relcache entry (cf
+	 * notes for AtEOXact_RelationCache).  Otherwise just mark the entry
+	 * as possibly invalid, and it'll be fixed when next opened.
 	 */
 	if (relation->rd_isnailed)
 	{
 		relation->rd_targblock = InvalidBlockNumber;
 		if (relation->rd_rel->relkind == RELKIND_INDEX)
 		{
-			relation->rd_isvalid = false;	/* needs to be revalidated */
+			relation->rd_isvalid = false;		/* needs to be revalidated */
 			if (relation->rd_refcnt > 1)
 				RelationReloadClassinfo(relation);
 		}
@@ -1735,12 +1736,12 @@ RelationClearRelation(Relation relation, bool rebuild)
 	{
 		/*
 		 * When rebuilding an open relcache entry, must preserve ref count
-		 * and rd_createxact state.  Also attempt to preserve the tupledesc
-		 * and rewrite-rule substructures in place.
+		 * and rd_createxact state.  Also attempt to preserve the
+		 * tupledesc and rewrite-rule substructures in place.
 		 *
-		 * Note that this process does not touch CurrentResourceOwner;
-		 * which is good because whatever ref counts the entry may have
-		 * do not necessarily belong to that resource owner.
+		 * Note that this process does not touch CurrentResourceOwner; which
+		 * is good because whatever ref counts the entry may have do not
+		 * necessarily belong to that resource owner.
 		 */
 		int			old_refcnt = relation->rd_refcnt;
 		TransactionId old_createxact = relation->rd_createxact;
@@ -1856,8 +1857,8 @@ RelationForgetRelation(Oid rid)
  *
  * Ordinarily, if rnode is supplied then it will match the relfilenode of
  * the target relid.  However, it's possible for rnode to be different if
- * someone is engaged in a relfilenode change.  In that case we want to
- * make sure we clear the right cache entries.  This has to be done here
+ * someone is engaged in a relfilenode change.	In that case we want to
+ * make sure we clear the right cache entries.	This has to be done here
  * to keep things in sync between relcache and smgr cache --- we can't have
  * someone flushing an smgr cache entry that a relcache entry still points
  * to.
@@ -1897,7 +1898,7 @@ RelationCacheInvalidateEntry(Oid relationId, RelFileNode *rnode)
 /*
  * RelationCacheInvalidate
  *	 Blow away cached relation descriptors that have zero reference counts,
- *	 and rebuild those with positive reference counts.  Also reset the smgr
+ *	 and rebuild those with positive reference counts.	Also reset the smgr
  *	 relation cache.
  *
  *	 This is currently used only to recover from SI message buffer overflow,
@@ -2024,13 +2025,12 @@ AtEOXact_RelationCache(bool isCommit)
 		/*
 		 * Is it a relation created in the current transaction?
 		 *
-		 * During commit, reset the flag to zero, since we are now out of
-		 * the creating transaction.  During abort, simply delete the
-		 * relcache entry --- it isn't interesting any longer.  (NOTE: if
-		 * we have forgotten the new-ness of a new relation due to a
-		 * forced cache flush, the entry will get deleted anyway by
-		 * shared-cache-inval processing of the aborted pg_class
-		 * insertion.)
+		 * During commit, reset the flag to zero, since we are now out of the
+		 * creating transaction.  During abort, simply delete the relcache
+		 * entry --- it isn't interesting any longer.  (NOTE: if we have
+		 * forgotten the new-ness of a new relation due to a forced cache
+		 * flush, the entry will get deleted anyway by shared-cache-inval
+		 * processing of the aborted pg_class insertion.)
 		 */
 		if (TransactionIdIsValid(relation->rd_createxact))
 		{
@@ -2697,7 +2697,7 @@ RelationGetIndexList(Relation relation)
 static List *
 insert_ordered_oid(List *list, Oid datum)
 {
-	ListCell *prev;
+	ListCell   *prev;
 
 	/* Does the datum belong at the front? */
 	if (list == NIL || datum < linitial_oid(list))
@@ -2706,10 +2706,10 @@ insert_ordered_oid(List *list, Oid datum)
 	prev = list_head(list);
 	for (;;)
 	{
-		ListCell *curr = lnext(prev);
+		ListCell   *curr = lnext(prev);
 
 		if (curr == NULL || datum < lfirst_oid(curr))
-			break;		/* it belongs after 'prev', before 'curr' */
+			break;				/* it belongs after 'prev', before 'curr' */
 
 		prev = curr;
 	}
@@ -2722,7 +2722,7 @@ insert_ordered_oid(List *list, Oid datum)
  * RelationSetIndexList -- externally force the index list contents
  *
  * This is used to temporarily override what we think the set of valid
- * indexes is.  The forcing will be valid only until transaction commit
+ * indexes is.	The forcing will be valid only until transaction commit
  * or abort.
  *
  * This should only be applied to nailed relations, because in a non-nailed
@@ -2744,7 +2744,7 @@ RelationSetIndexList(Relation relation, List *indexIds)
 	/* Okay to replace old list */
 	list_free(relation->rd_indexlist);
 	relation->rd_indexlist = indexIds;
-	relation->rd_indexvalid = 2;		/* mark list as forced */
+	relation->rd_indexvalid = 2;	/* mark list as forced */
 }
 
 /*
@@ -2794,10 +2794,11 @@ RelationGetIndexExpressions(Relation relation)
 	pfree(exprsString);
 
 	/*
-	 * Run the expressions through flatten_andors and eval_const_expressions.
-	 * This is not just an optimization, but is necessary, because the planner
-	 * will be comparing them to similarly-processed qual clauses, and may
-	 * fail to detect valid matches without this.
+	 * Run the expressions through flatten_andors and
+	 * eval_const_expressions. This is not just an optimization, but is
+	 * necessary, because the planner will be comparing them to
+	 * similarly-processed qual clauses, and may fail to detect valid
+	 * matches without this.
 	 */
 	result = (List *) flatten_andors((Node *) result);
 
@@ -2868,10 +2869,11 @@ RelationGetIndexPredicate(Relation relation)
 	pfree(predString);
 
 	/*
-	 * Run the expression through canonicalize_qual and eval_const_expressions.
-	 * This is not just an optimization, but is necessary, because the planner
-	 * will be comparing it to similarly-processed qual clauses, and may fail
-	 * to detect valid matches without this.
+	 * Run the expression through canonicalize_qual and
+	 * eval_const_expressions. This is not just an optimization, but is
+	 * necessary, because the planner will be comparing it to
+	 * similarly-processed qual clauses, and may fail to detect valid
+	 * matches without this.
 	 */
 	result = (List *) canonicalize_qual((Expr *) result);
 
@@ -3035,7 +3037,7 @@ load_relcache_init_file(void)
 		rel->rd_att = CreateTemplateTupleDesc(relform->relnatts,
 											  relform->relhasoids);
 		rel->rd_att->tdtypeid = relform->reltype;
-		rel->rd_att->tdtypmod = -1;			/* unnecessary, but... */
+		rel->rd_att->tdtypmod = -1;		/* unnecessary, but... */
 
 		/* next read all the attribute tuple form data entries */
 		has_not_null = false;
@@ -3174,8 +3176,8 @@ load_relcache_init_file(void)
 
 		/*
 		 * Recompute lock and physical addressing info.  This is needed in
-		 * case the pg_internal.init file was copied from some other database
-		 * by CREATE DATABASE.
+		 * case the pg_internal.init file was copied from some other
+		 * database by CREATE DATABASE.
 		 */
 		RelationInitLockInfo(rel);
 		RelationInitPhysicalAddr(rel);
@@ -3200,7 +3202,7 @@ load_relcache_init_file(void)
 		RelationCacheInsert(rels[relno]);
 		/* also make a list of their OIDs, for RelationIdIsInInitFile */
 		initFileRelationIds = lcons_oid(RelationGetRelid(rels[relno]),
-									 initFileRelationIds);
+										initFileRelationIds);
 	}
 
 	pfree(rels);
@@ -3266,7 +3268,7 @@ write_relcache_init_file(void)
 	}
 
 	/*
-	 * Write a magic number to serve as a file version identifier.  We can
+	 * Write a magic number to serve as a file version identifier.	We can
 	 * change the magic number whenever the relcache layout changes.
 	 */
 	magic = RELCACHE_INIT_FILEMAGIC;
@@ -3359,7 +3361,7 @@ write_relcache_init_file(void)
 		/* also make a list of their OIDs, for RelationIdIsInInitFile */
 		oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 		initFileRelationIds = lcons_oid(RelationGetRelid(rel),
-									 initFileRelationIds);
+										initFileRelationIds);
 		MemoryContextSwitchTo(oldcxt);
 	}
 

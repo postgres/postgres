@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lmgr.c,v 1.68 2004/08/29 04:12:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lmgr.c,v 1.69 2004/08/29 05:06:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,7 +66,7 @@ static LOCKMASK LockConflicts[] = {
 
 };
 
-static	LOCKMETHODID	LockTableId = INVALID_LOCKMETHOD;
+static LOCKMETHODID LockTableId = INVALID_LOCKMETHOD;
 
 /*
  * Create the lock table described by LockConflicts
@@ -74,7 +74,7 @@ static	LOCKMETHODID	LockTableId = INVALID_LOCKMETHOD;
 void
 InitLockTable(int maxBackends)
 {
-	LOCKMETHODID	LongTermTableId;
+	LOCKMETHODID LongTermTableId;
 
 	/* there's no zero-th table */
 	NumLockMethods = 1;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashsearch.c,v 1.36 2004/08/29 04:12:18 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashsearch.c,v 1.37 2004/08/29 05:06:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -137,12 +137,13 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
 	 * We do not support hash scans with no index qualification, because
 	 * we would have to read the whole index rather than just one bucket.
 	 * That creates a whole raft of problems, since we haven't got a
-	 * practical way to lock all the buckets against splits or compactions.
+	 * practical way to lock all the buckets against splits or
+	 * compactions.
 	 */
 	if (scan->numberOfKeys < 1)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("hash indexes do not support whole-index scans")));
+			   errmsg("hash indexes do not support whole-index scans")));
 
 	/*
 	 * If the constant in the index qual is NULL, assume it cannot match
@@ -182,7 +183,8 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
 	_hash_relbuf(rel, metabuf);
 
 	/*
-	 * Acquire share lock on target bucket; then we can release split lock.
+	 * Acquire share lock on target bucket; then we can release split
+	 * lock.
 	 */
 	_hash_getlock(rel, blkno, HASH_SHARE);
 
@@ -287,9 +289,8 @@ _hash_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 				while (offnum > maxoff)
 				{
 					/*
-					 * either this page is empty
-					 * (maxoff == InvalidOffsetNumber)
-					 * or we ran off the end.
+					 * either this page is empty (maxoff ==
+					 * InvalidOffsetNumber) or we ran off the end.
 					 */
 					_hash_readnext(rel, &buf, &page, &opaque);
 					if (BufferIsValid(buf))
@@ -315,15 +316,12 @@ _hash_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 				while (offnum < FirstOffsetNumber)
 				{
 					/*
-					 * either this page is empty
-					 * (offnum == InvalidOffsetNumber)
-					 * or we ran off the end.
+					 * either this page is empty (offnum ==
+					 * InvalidOffsetNumber) or we ran off the end.
 					 */
 					_hash_readprev(rel, &buf, &page, &opaque);
 					if (BufferIsValid(buf))
-					{
 						maxoff = offnum = PageGetMaxOffsetNumber(page);
-					}
 					else
 					{
 						/* end of bucket */

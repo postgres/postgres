@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.94 2004/08/20 20:00:34 momjian Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.95 2004/08/29 05:06:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,12 +47,12 @@ static char *modulename = gettext_noop("archiver");
 
 static ArchiveHandle *_allocAH(const char *FileSpec, const ArchiveFormat fmt,
 		 const int compression, ArchiveMode mode);
-static char 	*_getObjectFromDropStmt(const char *dropStmt, const char *type);
+static char *_getObjectFromDropStmt(const char *dropStmt, const char *type);
 static void _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isData, bool acl_pass);
 
 
 static void fixPriorBlobRefs(ArchiveHandle *AH, TocEntry *blobte,
-							 RestoreOptions *ropt);
+				 RestoreOptions *ropt);
 static void _doSetFixedOutputState(ArchiveHandle *AH);
 static void _doSetSessionAuth(ArchiveHandle *AH, const char *user);
 static void _doSetWithOids(ArchiveHandle *AH, const bool withOids);
@@ -167,7 +167,11 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 		ConnectDatabase(AHX, ropt->dbname,
 						ropt->pghost, ropt->pgport, ropt->username,
 						ropt->requirePassword, ropt->ignoreVersion);
-		/* If we're talking to the DB directly, don't send comments since they obscure SQL when displaying errors */
+
+		/*
+		 * If we're talking to the DB directly, don't send comments since
+		 * they obscure SQL when displaying errors
+		 */
 		AH->noTocComments = 1;
 	}
 
@@ -294,7 +298,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 				/*
 				 * If we can output the data, then restore it.
 				 */
-				if (AH->PrintTocDataPtr != NULL && (reqs & REQ_DATA) != 0)
+				if (AH->PrintTocDataPtr !=NULL && (reqs & REQ_DATA) != 0)
 				{
 #ifndef HAVE_LIBZ
 					if (AH->compression != 0)
@@ -350,10 +354,10 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 						 * If we just restored blobs, fix references in
 						 * previously-loaded tables; otherwise, if we
 						 * previously restored blobs, fix references in
-						 * this table.  Note that in standard cases the BLOBS
-						 * entry comes after all TABLE DATA entries, but
-						 * we should cope with other orders in case the
-						 * user demands reordering.
+						 * this table.	Note that in standard cases the
+						 * BLOBS entry comes after all TABLE DATA entries,
+						 * but we should cope with other orders in case
+						 * the user demands reordering.
 						 */
 						if (strcmp(te->desc, "BLOBS") == 0)
 							fixPriorBlobRefs(AH, te, ropt);
@@ -376,7 +380,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 			}
 		}
 		te = te->next;
-	}		/* end loop over TOC entries */
+	}							/* end loop over TOC entries */
 
 	/*
 	 * Scan TOC again to output ownership commands and ACLs
@@ -424,7 +428,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 
 /*
  * After restoring BLOBS, fix all blob references in previously-restored
- * tables.  (Normally, the BLOBS entry should appear after all TABLE DATA
+ * tables.	(Normally, the BLOBS entry should appear after all TABLE DATA
  * entries, so this will in fact handle all blob references.)
  */
 static void
@@ -504,8 +508,8 @@ _disableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *rop
 
 	/*
 	 * Become superuser if possible, since they are the only ones who can
-	 * update pg_class.  If -S was not given, assume the initial user identity
-	 * is a superuser.
+	 * update pg_class.  If -S was not given, assume the initial user
+	 * identity is a superuser.
 	 */
 	_becomeUser(AH, ropt->superuser);
 
@@ -543,8 +547,8 @@ _enableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt
 
 	/*
 	 * Become superuser if possible, since they are the only ones who can
-	 * update pg_class.  If -S was not given, assume the initial user identity
-	 * is a superuser.
+	 * update pg_class.  If -S was not given, assume the initial user
+	 * identity is a superuser.
 	 */
 	_becomeUser(AH, ropt->superuser);
 
@@ -650,7 +654,7 @@ ArchiveEntry(Archive *AHX,
 
 	newToc->formatData = NULL;
 
-	if (AH->ArchiveEntryPtr != NULL)
+	if (AH->ArchiveEntryPtr !=NULL)
 		(*AH->ArchiveEntryPtr) (AH, newToc);
 }
 
@@ -664,7 +668,7 @@ PrintTOCSummary(Archive *AHX, RestoreOptions *ropt)
 	char	   *fmtName;
 
 	if (ropt->filename)
-		sav = SetOutput(AH, ropt->filename, 0 /* no compression */);
+		sav = SetOutput(AH, ropt->filename, 0 /* no compression */ );
 
 	ahprintf(AH, ";\n; Archive created at %s", ctime(&AH->createDate));
 	ahprintf(AH, ";     dbname: %s\n;     TOC Entries: %d\n;     Compression: %d\n",
@@ -942,9 +946,8 @@ archprintf(Archive *AH, const char *fmt,...)
 
 	/*
 	 * This is paranoid: deal with the possibility that vsnprintf is
-	 * willing to ignore trailing null
-	 * or returns > 0 even if string does not fit. It may be the case that
-	 * it returns cnt = bufsize
+	 * willing to ignore trailing null or returns > 0 even if string does
+	 * not fit. It may be the case that it returns cnt = bufsize
 	 */
 	while (cnt < 0 || cnt >= (bSize - 1))
 	{
@@ -1236,48 +1239,45 @@ die_horribly(ArchiveHandle *AH, const char *modulename, const char *fmt,...)
 
 /* on some error, we may decide to go on... */
 void
-warn_or_die_horribly(ArchiveHandle *AH, 
-					 const char *modulename, const char *fmt, ...)
+warn_or_die_horribly(ArchiveHandle *AH,
+					 const char *modulename, const char *fmt,...)
 {
-	va_list ap;
+	va_list		ap;
 
-	switch(AH->stage) {
+	switch (AH->stage)
+	{
 
 		case STAGE_NONE:
 			/* Do nothing special */
 			break;
 
 		case STAGE_INITIALIZING:
-			if (AH->stage != AH->lastErrorStage) {
+			if (AH->stage != AH->lastErrorStage)
 				write_msg(modulename, "Error while INITIALIZING:\n");
-			}
 			break;
 
 		case STAGE_PROCESSING:
-			if (AH->stage != AH->lastErrorStage) {
+			if (AH->stage != AH->lastErrorStage)
 				write_msg(modulename, "Error while PROCESSING TOC:\n");
-			}
 			break;
 
 		case STAGE_FINALIZING:
-			if (AH->stage != AH->lastErrorStage) {
+			if (AH->stage != AH->lastErrorStage)
 				write_msg(modulename, "Error while FINALIZING:\n");
-			}
 			break;
 	}
-	if (AH->currentTE != NULL && AH->currentTE != AH->lastErrorTE) {
+	if (AH->currentTE != NULL && AH->currentTE != AH->lastErrorTE)
+	{
 		write_msg(modulename, "Error from TOC Entry %d; %u %u %s %s %s\n", AH->currentTE->dumpId,
-				 AH->currentTE->catalogId.tableoid, AH->currentTE->catalogId.oid,
-				 AH->currentTE->desc, AH->currentTE->tag, AH->currentTE->owner);
+		 AH->currentTE->catalogId.tableoid, AH->currentTE->catalogId.oid,
+		  AH->currentTE->desc, AH->currentTE->tag, AH->currentTE->owner);
 	}
 	AH->lastErrorStage = AH->stage;
 	AH->lastErrorTE = AH->currentTE;
 
 	va_start(ap, fmt);
 	if (AH->public.exit_on_error)
-	{
 		_die_horribly(AH, modulename, fmt, ap);
-	}
 	else
 	{
 		_write_msg(modulename, fmt, ap);
@@ -1312,7 +1312,6 @@ _moveBefore(ArchiveHandle *AH, TocEntry *pos, TocEntry *te)
 	pos->prev->next = te;
 	pos->prev = te;
 }
-
 #endif
 
 static TocEntry *
@@ -1689,7 +1688,7 @@ _allocAH(const char *FileSpec, const ArchiveFormat fmt,
 								 * later if necessary */
 	AH->currSchema = strdup("");	/* ditto */
 	AH->currWithOids = -1;		/* force SET */
-	
+
 	AH->toc = (TocEntry *) calloc(1, sizeof(TocEntry));
 	if (!AH->toc)
 		die_horribly(AH, modulename, "out of memory\n");
@@ -1863,7 +1862,7 @@ ReadToc(ArchiveHandle *AH)
 		/* Sanity check */
 		if (te->dumpId <= 0)
 			die_horribly(AH, modulename,
-						 "entry ID %d out of range -- perhaps a corrupt TOC\n",
+				   "entry ID %d out of range -- perhaps a corrupt TOC\n",
 						 te->dumpId);
 
 		te->hadDumper = ReadInt(AH);
@@ -1901,7 +1900,7 @@ ReadToc(ArchiveHandle *AH)
 		}
 		else
 			te->withOids = true;
-		
+
 		/* Read TOC entry dependencies */
 		if (AH->version >= K_VERS_1_5)
 		{
@@ -2129,7 +2128,7 @@ _doSetWithOids(ArchiveHandle *AH, const bool withOids)
 	PQExpBuffer cmd = createPQExpBuffer();
 
 	appendPQExpBuffer(cmd, "SET default_with_oids = %s;", withOids ?
-			"true" : "false");
+					  "true" : "false");
 
 	if (RestoringToDB(AH))
 	{
@@ -2138,7 +2137,7 @@ _doSetWithOids(ArchiveHandle *AH, const bool withOids)
 		res = PQexec(AH->connection, cmd->data);
 
 		if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
-			warn_or_die_horribly(AH, modulename, 
+			warn_or_die_horribly(AH, modulename,
 								 "could not set default_with_oids: %s",
 								 PQerrorMessage(AH->connection));
 
@@ -2192,7 +2191,7 @@ _reconnectToDB(ArchiveHandle *AH, const char *dbname, const char *user)
 		free(AH->currSchema);
 	AH->currSchema = strdup("");
 	AH->currWithOids = -1;
-	
+
 	/* re-establish fixed state */
 	_doSetFixedOutputState(AH);
 }
@@ -2224,7 +2223,7 @@ _becomeUser(ArchiveHandle *AH, const char *user)
 }
 
 /*
- * Become the owner of the the given TOC entry object.  If
+ * Become the owner of the the given TOC entry object.	If
  * changes in ownership are not allowed, this doesn't do anything.
  */
 static void
@@ -2278,9 +2277,9 @@ _selectOutputSchema(ArchiveHandle *AH, const char *schemaName)
 		res = PQexec(AH->connection, qry->data);
 
 		if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
-			warn_or_die_horribly(AH, modulename, 
-								 "could not set search_path to \"%s\": %s",
-								 schemaName, PQerrorMessage(AH->connection));
+			warn_or_die_horribly(AH, modulename,
+							   "could not set search_path to \"%s\": %s",
+							 schemaName, PQerrorMessage(AH->connection));
 
 		PQclear(res);
 	}
@@ -2304,21 +2303,27 @@ static char *
 _getObjectFromDropStmt(const char *dropStmt, const char *type)
 {
 	/* Chop "DROP" off the front and make a copy */
-	char *first = strdup(dropStmt + 5);
-	char *last = first + strlen(first) - 1; /* Points to the last real char in extract */
-	char *buf = NULL;
+	char	   *first = strdup(dropStmt + 5);
+	char	   *last = first + strlen(first) - 1;		/* Points to the last
+														 * real char in extract */
+	char	   *buf = NULL;
 
-	/* Loop from the end of the string until last char is no longer '\n' or ';' */
-	while (last >= first && (*last == '\n' || *last == ';')) {
+	/*
+	 * Loop from the end of the string until last char is no longer '\n'
+	 * or ';'
+	 */
+	while (last >= first && (*last == '\n' || *last == ';'))
 		last--;
-	}
 
 	/* Insert end of string one place after last */
 	*(last + 1) = '\0';
 
-	/* Take off CASCADE if necessary.  Only TYPEs seem to have this, but may
-	 * as well check for all */
-	if ((last - first) >= 8) {
+	/*
+	 * Take off CASCADE if necessary.  Only TYPEs seem to have this, but
+	 * may as well check for all
+	 */
+	if ((last - first) >= 8)
+	{
 		if (strcmp(last - 7, " CASCADE") == 0)
 			last -= 8;
 	}
@@ -2329,22 +2334,22 @@ _getObjectFromDropStmt(const char *dropStmt, const char *type)
 	/* Special case VIEWs and SEQUENCEs.  They must use ALTER TABLE. */
 	if (strcmp(type, "VIEW") == 0 && (last - first) >= 5)
 	{
-		int len = 6 + strlen(first + 5) + 1;
+		int			len = 6 + strlen(first + 5) + 1;
+
 		buf = malloc(len);
 		snprintf(buf, len, "TABLE %s", first + 5);
-		free (first);
+		free(first);
 	}
 	else if (strcmp(type, "SEQUENCE") == 0 && (last - first) >= 9)
 	{
-		int len = 6 + strlen(first + 9) + 1;
+		int			len = 6 + strlen(first + 9) + 1;
+
 		buf = malloc(len);
 		snprintf(buf, len, "TABLE %s", first + 9);
-		free (first);
+		free(first);
 	}
 	else
-	{
 		buf = first;
-	}
 
 	return buf;
 }
@@ -2352,7 +2357,7 @@ _getObjectFromDropStmt(const char *dropStmt, const char *type)
 static void
 _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isData, bool acl_pass)
 {
-	const char	   *pfx;
+	const char *pfx;
 
 	/* ACLs are dumped only during acl pass */
 	if (acl_pass)
@@ -2366,7 +2371,7 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isDat
 			return;
 	}
 
-	if (AH->noTocComments) 
+	if (AH->noTocComments)
 		return;
 
 	/*
@@ -2399,7 +2404,7 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isDat
 				 te->dumpId, te->catalogId.tableoid, te->catalogId.oid);
 		if (te->nDeps > 0)
 		{
-			int		i;
+			int			i;
 
 			ahprintf(AH, "-- Dependencies:");
 			for (i = 0; i < te->nDeps; i++)
@@ -2411,16 +2416,16 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isDat
 			 pfx, te->tag, te->desc,
 			 te->namespace ? te->namespace : "-",
 			 te->owner);
-	if (AH->PrintExtraTocPtr != NULL)
+	if (AH->PrintExtraTocPtr !=NULL)
 		(*AH->PrintExtraTocPtr) (AH, te);
 	ahprintf(AH, "--\n\n");
 
 	/*
 	 * Actually print the definition.
 	 *
-	 * Really crude hack for suppressing AUTHORIZATION clause of CREATE SCHEMA
-	 * when --no-owner mode is selected.  This is ugly, but I see no other
-	 * good way ...
+	 * Really crude hack for suppressing AUTHORIZATION clause of CREATE
+	 * SCHEMA when --no-owner mode is selected.  This is ugly, but I see
+	 * no other good way ...
 	 */
 	if (AH->ropt && AH->ropt->noOwner && strcmp(te->desc, "SCHEMA") == 0)
 	{
@@ -2434,10 +2439,10 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isDat
 
 	/*
 	 * If we aren't using SET SESSION AUTH to determine ownership, we must
-	 * instead issue an ALTER OWNER command.  Ugly, since we have to
-	 * cons one up based on the dropStmt.  We don't need this for schemas
-	 * (since we use CREATE SCHEMA AUTHORIZATION instead), nor for some other
-	 * object types.
+	 * instead issue an ALTER OWNER command.  Ugly, since we have to cons
+	 * one up based on the dropStmt.  We don't need this for schemas
+	 * (since we use CREATE SCHEMA AUTHORIZATION instead), nor for some
+	 * other object types.
 	 */
 	if (!ropt->noOwner && !ropt->use_setsessauth &&
 		strlen(te->owner) > 0 && strlen(te->dropStmt) > 0 &&
@@ -2452,7 +2457,7 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isDat
 		 strcmp(te->desc, "VIEW") == 0 ||
 		 strcmp(te->desc, "SEQUENCE") == 0))
 	{
-		char *temp = _getObjectFromDropStmt(te->dropStmt, te->desc);
+		char	   *temp = _getObjectFromDropStmt(te->dropStmt, te->desc);
 
 		ahprintf(AH, "ALTER %s OWNER TO %s;\n\n", temp, fmtId(te->owner));
 		free(temp);
@@ -2460,7 +2465,8 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isDat
 
 	/*
 	 * If it's an ACL entry, it might contain SET SESSION AUTHORIZATION
-	 * commands, so we can no longer assume we know the current auth setting.
+	 * commands, so we can no longer assume we know the current auth
+	 * setting.
 	 */
 	if (strncmp(te->desc, "ACL", 3) == 0)
 	{

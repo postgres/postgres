@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.103 2004/08/29 04:13:07 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.104 2004/08/29 05:06:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,14 +33,14 @@
  * Notes:
  *
  * In a SELECT's targetlist, resno should always be equal to the item's
- * ordinal position (counting from 1).  However, in an INSERT or UPDATE
+ * ordinal position (counting from 1).	However, in an INSERT or UPDATE
  * targetlist, resno represents the attribute number of the destination
  * column for the item; so there may be missing or out-of-order resnos.
  * It is even legal to have duplicated resnos; consider
  *		UPDATE table SET arraycol[1] = ..., arraycol[2] = ..., ...
  * The two meanings come together in the executor, because the planner
  * transforms INSERT/UPDATE tlists into a normalized form with exactly
- * one entry for each column of the destination table.  Before that's
+ * one entry for each column of the destination table.	Before that's
  * happened, however, it is risky to assume that resno == position.
  * Generally get_tle_by_resno() should be used rather than list_nth()
  * to fetch tlist entries by resno, and only in SELECT should you assume
@@ -49,9 +49,9 @@
  * resname is required to represent the correct column name in non-resjunk
  * entries of top-level SELECT targetlists, since it will be used as the
  * column title sent to the frontend.  In most other contexts it is only
- * a debugging aid, and may be wrong or even NULL.  (In particular, it may
+ * a debugging aid, and may be wrong or even NULL.	(In particular, it may
  * be wrong in a tlist from a stored rule, if the referenced column has been
- * renamed by ALTER TABLE since the rule was made.  Also, the planner tends
+ * renamed by ALTER TABLE since the rule was made.	Also, the planner tends
  * to store NULL rather than look up a valid name for tlist entries in
  * non-toplevel plan nodes.)  In resjunk entries, resname should be either
  * a specific system-generated name (such as "ctid") or NULL; anything else
@@ -100,7 +100,7 @@ typedef struct Resdom
  *
  * Note: colnames is a list of Value nodes (always strings).  In Alias structs
  * associated with RTEs, there may be entries corresponding to dropped
- * columns; these are normally empty strings ("").  See parsenodes.h for info.
+ * columns; these are normally empty strings ("").	See parsenodes.h for info.
  */
 typedef struct Alias
 {
@@ -553,7 +553,7 @@ typedef struct FieldSelect
  * portion of a column.
  *
  * A single FieldStore can actually represent updates of several different
- * fields.  The parser only generates FieldStores with single-element lists,
+ * fields.	The parser only generates FieldStores with single-element lists,
  * but the planner will collapse multiple updates of the same base column
  * into one FieldStore.
  * ----------------
@@ -601,7 +601,7 @@ typedef struct RelabelType
  * and the testexpr in the second case.
  *
  * In the raw grammar output for the second form, the condition expressions
- * of the WHEN clauses are just the comparison values.  Parse analysis
+ * of the WHEN clauses are just the comparison values.	Parse analysis
  * converts these to valid boolean expressions of the form
  *		CaseTestExpr '=' compexpr
  * where the CaseTestExpr node is a placeholder that emits the correct
@@ -669,10 +669,10 @@ typedef struct ArrayExpr
  *
  * Note: the list of fields must have a one-for-one correspondence with
  * physical fields of the associated rowtype, although it is okay for it
- * to be shorter than the rowtype.  That is, the N'th list element must
+ * to be shorter than the rowtype.	That is, the N'th list element must
  * match up with the N'th physical field.  When the N'th physical field
  * is a dropped column (attisdropped) then the N'th list element can just
- * be a NULL constant.  (This case can only occur for named composite types,
+ * be a NULL constant.	(This case can only occur for named composite types,
  * not RECORD types, since those are built from the RowExpr itself rather
  * than vice versa.)  It is important not to assume that length(args) is
  * the same as the number of columns logically present in the rowtype.
@@ -682,6 +682,7 @@ typedef struct RowExpr
 	Expr		xpr;
 	List	   *args;			/* the fields */
 	Oid			row_typeid;		/* RECORDOID or a composite type's ID */
+
 	/*
 	 * Note: we deliberately do NOT store a typmod.  Although a typmod
 	 * will be associated with specific RECORD types at runtime, it will

@@ -230,7 +230,7 @@ g_cube_union(GistEntryVector *entryvec, int *sizep)
 	for (i = 1; i < entryvec->n; i++)
 	{
 		out = g_cube_binary_union(tmp, (NDBOX *)
-		   DatumGetPointer(entryvec->vector[i].key),
+								DatumGetPointer(entryvec->vector[i].key),
 								  sizep);
 		if (i > 1)
 			pfree(tmp);

@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.235 2004/08/29 04:12:31 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.236 2004/08/29 05:06:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -521,8 +521,8 @@ InitPlan(QueryDesc *queryDesc, bool explainOnly)
 			 * Multiple result relations (due to inheritance)
 			 * parseTree->resultRelations identifies them all
 			 */
-			ResultRelInfo	*resultRelInfo;
-			ListCell		*l;
+			ResultRelInfo *resultRelInfo;
+			ListCell   *l;
 
 			numResultRelations = list_length(resultRelations);
 			resultRelInfos = (ResultRelInfo *)
@@ -644,10 +644,10 @@ InitPlan(QueryDesc *queryDesc, bool explainOnly)
 	/*
 	 * Initialize the junk filter if needed.  SELECT and INSERT queries
 	 * need a filter if there are any junk attrs in the tlist.	INSERT and
-	 * SELECT INTO also need a filter if the plan may return raw disk tuples
-	 * (else heap_insert will be scribbling on the source relation!).
-	 * UPDATE and DELETE always need a filter, since there's always a junk
-	 * 'ctid' attribute present --- no need to look first.
+	 * SELECT INTO also need a filter if the plan may return raw disk
+	 * tuples (else heap_insert will be scribbling on the source
+	 * relation!). UPDATE and DELETE always need a filter, since there's
+	 * always a junk 'ctid' attribute present --- no need to look first.
 	 */
 	{
 		bool		junk_filter_needed = false;
@@ -1460,7 +1460,7 @@ ldelete:;
 						 &ctid,
 						 estate->es_snapshot->curcid,
 						 estate->es_crosscheck_snapshot,
-						 true /* wait for commit */);
+						 true /* wait for commit */ );
 	switch (result)
 	{
 		case HeapTupleSelfUpdated:
@@ -1596,7 +1596,7 @@ lreplace:;
 						 &ctid,
 						 estate->es_snapshot->curcid,
 						 estate->es_crosscheck_snapshot,
-						 true /* wait for commit */);
+						 true /* wait for commit */ );
 	switch (result)
 	{
 		case HeapTupleSelfUpdated:

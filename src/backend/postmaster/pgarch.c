@@ -4,22 +4,22 @@
  *
  *	PostgreSQL WAL archiver
  *
- *  All functions relating to archiver are included here
+ *	All functions relating to archiver are included here
  *
- *  - All functions executed by archiver process
+ *	- All functions executed by archiver process
  *
- *  - archiver is forked from postmaster, and the two
- *  processes then communicate using signals. All functions
- *  executed by postmaster are included in this file.
+ *	- archiver is forked from postmaster, and the two
+ *	processes then communicate using signals. All functions
+ *	executed by postmaster are included in this file.
  *
- *  Initial author: Simon Riggs     simon@2ndquadrant.com
+ *	Initial author: Simon Riggs		simon@2ndquadrant.com
  *
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/pgarch.c,v 1.8 2004/08/29 04:12:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/pgarch.c,v 1.9 2004/08/29 05:06:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,7 +65,7 @@
  */
 #define MIN_XFN_CHARS	16
 #define MAX_XFN_CHARS	40
-#define VALID_XFN_CHARS	"0123456789ABCDEF.history.backup"
+#define VALID_XFN_CHARS "0123456789ABCDEF.history.backup"
 
 #define NUM_ARCHIVE_RETRIES 3
 
@@ -129,16 +129,16 @@ pgarch_start(void)
 		return 0;
 
 	/*
-	 * Do nothing if too soon since last archiver start.  This is a
-	 * safety valve to protect against continuous respawn attempts if the
-	 * archiver is dying immediately at launch. Note that since we will
-	 * be re-called from the postmaster main loop, we will get another
-	 * chance later.
+	 * Do nothing if too soon since last archiver start.  This is a safety
+	 * valve to protect against continuous respawn attempts if the
+	 * archiver is dying immediately at launch. Note that since we will be
+	 * re-called from the postmaster main loop, we will get another chance
+	 * later.
 	 */
 	curtime = time(NULL);
 	if ((unsigned int) (curtime - last_pgarch_start_time) <
 		(unsigned int) PGARCH_RESTART_INTERVAL)
- 		return 0;
+		return 0;
 	last_pgarch_start_time = curtime;
 
 	fflush(stdout);
@@ -205,8 +205,8 @@ pgarch_start(void)
 static pid_t
 pgarch_forkexec(void)
 {
-	char *av[10];
-	int ac = 0;
+	char	   *av[10];
+	int			ac = 0;
 
 	av[ac++] = "postgres";
 
@@ -219,8 +219,7 @@ pgarch_forkexec(void)
 
 	return postmaster_forkexec(ac, av);
 }
-
-#endif /* EXEC_BACKEND */
+#endif   /* EXEC_BACKEND */
 
 
 /*
@@ -232,44 +231,44 @@ pgarch_forkexec(void)
 NON_EXEC_STATIC void
 PgArchiverMain(int argc, char *argv[])
 {
-    IsUnderPostmaster = true;	/* we are a postmaster subprocess now */
+	IsUnderPostmaster = true;	/* we are a postmaster subprocess now */
 
-    MyProcPid = getpid();		/* reset MyProcPid */
+	MyProcPid = getpid();		/* reset MyProcPid */
 
 	/* Lose the postmaster's on-exit routines */
 	on_exit_reset();
 
-    /*
-     * Ignore all signals usually bound to some action in the postmaster,
+	/*
+	 * Ignore all signals usually bound to some action in the postmaster,
 	 * except for SIGHUP, SIGUSR1 and SIGQUIT.
-     */
-    pqsignal(SIGHUP, ArchSigHupHandler);
-    pqsignal(SIGINT, SIG_IGN);
-    pqsignal(SIGTERM, SIG_IGN);
-    pqsignal(SIGQUIT, pgarch_exit);
-    pqsignal(SIGALRM, SIG_IGN);
-    pqsignal(SIGPIPE, SIG_IGN);
-    pqsignal(SIGUSR1, pgarch_waken);
-    pqsignal(SIGUSR2, SIG_IGN);
-    pqsignal(SIGCHLD, SIG_DFL);
-    pqsignal(SIGTTIN, SIG_DFL);
-    pqsignal(SIGTTOU, SIG_DFL);
-    pqsignal(SIGCONT, SIG_DFL);
-    pqsignal(SIGWINCH, SIG_DFL);
-    PG_SETMASK(&UnBlockSig);
+	 */
+	pqsignal(SIGHUP, ArchSigHupHandler);
+	pqsignal(SIGINT, SIG_IGN);
+	pqsignal(SIGTERM, SIG_IGN);
+	pqsignal(SIGQUIT, pgarch_exit);
+	pqsignal(SIGALRM, SIG_IGN);
+	pqsignal(SIGPIPE, SIG_IGN);
+	pqsignal(SIGUSR1, pgarch_waken);
+	pqsignal(SIGUSR2, SIG_IGN);
+	pqsignal(SIGCHLD, SIG_DFL);
+	pqsignal(SIGTTIN, SIG_DFL);
+	pqsignal(SIGTTOU, SIG_DFL);
+	pqsignal(SIGCONT, SIG_DFL);
+	pqsignal(SIGWINCH, SIG_DFL);
+	PG_SETMASK(&UnBlockSig);
 
-    /*
-     * Identify myself via ps
-     */
-    init_ps_display("archiver process", "", "");
-    set_ps_display("");
+	/*
+	 * Identify myself via ps
+	 */
+	init_ps_display("archiver process", "", "");
+	set_ps_display("");
 
-    /* Init XLOG file paths --- needed in EXEC_BACKEND case */
+	/* Init XLOG file paths --- needed in EXEC_BACKEND case */
 	XLOGPathInit();
 
-    pgarch_MainLoop();
+	pgarch_MainLoop();
 
- 	exit(0);
+	exit(0);
 }
 
 /* SIGQUIT signal handler for archiver process */
@@ -278,10 +277,10 @@ pgarch_exit(SIGNAL_ARGS)
 {
 	/*
 	 * For now, we just nail the doors shut and get out of town.  It might
-	 * seem cleaner to finish up any pending archive copies, but there's
-	 * a nontrivial risk that init will kill us partway through.
+	 * seem cleaner to finish up any pending archive copies, but there's a
+	 * nontrivial risk that init will kill us partway through.
 	 */
-    exit(0);
+	exit(0);
 }
 
 /* SIGHUP: set flag to re-read config file at next convenient time */
@@ -306,8 +305,8 @@ pgarch_waken(SIGNAL_ARGS)
 static void
 pgarch_MainLoop(void)
 {
-	time_t last_copy_time = 0;
-	time_t curtime;
+	time_t		last_copy_time = 0;
+	time_t		curtime;
 
 	/*
 	 * We run the copy loop immediately upon entry, in case there are
@@ -317,7 +316,8 @@ pgarch_MainLoop(void)
 	 */
 	wakened = true;
 
-	do {
+	do
+	{
 
 		/* Check for config update */
 		if (got_SIGHUP)
@@ -337,12 +337,12 @@ pgarch_MainLoop(void)
 		}
 
 		/*
-		 * There shouldn't be anything for the archiver to do except
-		 * to wait for a signal, so we could use pause(3) here...
-		 * ...however, the archiver exists to protect our data, so
-		 * she wakes up occasionally to allow herself to be proactive.
-		 * In particular this avoids getting stuck if a signal arrives
-		 * just before we enter sleep().
+		 * There shouldn't be anything for the archiver to do except to
+		 * wait for a signal, so we could use pause(3) here... ...however,
+		 * the archiver exists to protect our data, so she wakes up
+		 * occasionally to allow herself to be proactive. In particular
+		 * this avoids getting stuck if a signal arrives just before we
+		 * enter sleep().
 		 */
 		if (!wakened)
 		{
@@ -353,7 +353,7 @@ pgarch_MainLoop(void)
 				(unsigned int) PGARCH_AUTOWAKE_INTERVAL)
 				wakened = true;
 		}
- 	} while (PostmasterIsAlive(true));
+	} while (PostmasterIsAlive(true));
 }
 
 /*
@@ -364,18 +364,17 @@ pgarch_MainLoop(void)
 static void
 pgarch_ArchiverCopyLoop(void)
 {
- 	char	xlog[MAX_XFN_CHARS + 1];
+	char		xlog[MAX_XFN_CHARS + 1];
 
-    /*
-     * loop through all xlogs with archive_status of .ready
-     * and archive them...mostly we expect this to be a single
-     * file, though it is possible some backend will add
-     * files onto the list of those that need archiving while we
-     * are still copying earlier archives
-     */
- 	while (pgarch_readyXlog(xlog))
+	/*
+	 * loop through all xlogs with archive_status of .ready and archive
+	 * them...mostly we expect this to be a single file, though it is
+	 * possible some backend will add files onto the list of those that
+	 * need archiving while we are still copying earlier archives
+	 */
+	while (pgarch_readyXlog(xlog))
 	{
-		int     failures = 0;
+		int			failures = 0;
 
 		for (;;)
 		{
@@ -410,14 +409,14 @@ pgarch_ArchiverCopyLoop(void)
 static bool
 pgarch_archiveXlog(char *xlog)
 {
-    char xlogarchcmd[MAXPGPATH];
-    char pathname[MAXPGPATH];
-	char *dp;
-	char *endp;
+	char		xlogarchcmd[MAXPGPATH];
+	char		pathname[MAXPGPATH];
+	char	   *dp;
+	char	   *endp;
 	const char *sp;
-    int rc;
+	int			rc;
 
-    snprintf(pathname, MAXPGPATH, "%s/%s", XLogDir, xlog);
+	snprintf(pathname, MAXPGPATH, "%s/%s", XLogDir, xlog);
 
 	/*
 	 * construct the command to be executed
@@ -435,14 +434,14 @@ pgarch_archiveXlog(char *xlog)
 				case 'p':
 					/* %p: full path of source file */
 					sp++;
-					StrNCpy(dp, pathname, endp-dp);
+					StrNCpy(dp, pathname, endp - dp);
 					make_native_path(dp);
 					dp += strlen(dp);
 					break;
 				case 'f':
 					/* %f: filename of source file */
 					sp++;
-					StrNCpy(dp, xlog, endp-dp);
+					StrNCpy(dp, xlog, endp - dp);
 					dp += strlen(dp);
 					break;
 				case '%':
@@ -467,19 +466,20 @@ pgarch_archiveXlog(char *xlog)
 	*dp = '\0';
 
 	ereport(DEBUG3,
-            (errmsg_internal("executing archive command \"%s\"",
+			(errmsg_internal("executing archive command \"%s\"",
 							 xlogarchcmd)));
-    rc = system(xlogarchcmd);
-    if (rc != 0) {
-    	ereport(LOG,
+	rc = system(xlogarchcmd);
+	if (rc != 0)
+	{
+		ereport(LOG,
 				(errmsg("archive command \"%s\" failed: return code %d",
 						xlogarchcmd, rc)));
-        return false;
-    }
+		return false;
+	}
 	ereport(LOG,
-            (errmsg("archived transaction log file \"%s\"", xlog)));
+			(errmsg("archived transaction log file \"%s\"", xlog)));
 
-    return true;
+	return true;
 }
 
 /*
@@ -507,57 +507,63 @@ static bool
 pgarch_readyXlog(char *xlog)
 {
 	/*
-	 * open xlog status directory and read through list of
-	 * xlogs that have the .ready suffix, looking for earliest file.
-	 * It is possible to optimise this code, though only a single
-	 * file is expected on the vast majority of calls, so....
+	 * open xlog status directory and read through list of xlogs that have
+	 * the .ready suffix, looking for earliest file. It is possible to
+	 * optimise this code, though only a single file is expected on the
+	 * vast majority of calls, so....
 	 */
 	char		XLogArchiveStatusDir[MAXPGPATH];
-  	char		newxlog[MAX_XFN_CHARS + 6 + 1];
- 	DIR		    *rldir;
- 	struct dirent 	*rlde;
- 	bool		found = false;
+	char		newxlog[MAX_XFN_CHARS + 6 + 1];
+	DIR		   *rldir;
+	struct dirent *rlde;
+	bool		found = false;
 
-    snprintf(XLogArchiveStatusDir, MAXPGPATH, "%s/archive_status", XLogDir);
+	snprintf(XLogArchiveStatusDir, MAXPGPATH, "%s/archive_status", XLogDir);
 	rldir = AllocateDir(XLogArchiveStatusDir);
 	if (rldir == NULL)
 		ereport(ERROR,
-			(errcode_for_file_access(),
+				(errcode_for_file_access(),
 			 errmsg("could not open archive status directory \"%s\": %m",
 					XLogArchiveStatusDir)));
 
 	errno = 0;
 	while ((rlde = readdir(rldir)) != NULL)
 	{
-		int		basenamelen = (int) strlen(rlde->d_name) - 6;
+		int			basenamelen = (int) strlen(rlde->d_name) - 6;
 
 		if (basenamelen >= MIN_XFN_CHARS &&
 			basenamelen <= MAX_XFN_CHARS &&
 			strspn(rlde->d_name, VALID_XFN_CHARS) >= basenamelen &&
 			strcmp(rlde->d_name + basenamelen, ".ready") == 0)
 		{
-		    if (!found) {
-   				strcpy(newxlog, rlde->d_name);
-   				found = true;
-		    } else {
-          		if (strcmp(rlde->d_name, newxlog) < 0)
-   					strcpy(newxlog, rlde->d_name);
-		    }
+			if (!found)
+			{
+				strcpy(newxlog, rlde->d_name);
+				found = true;
+			}
+			else
+			{
+				if (strcmp(rlde->d_name, newxlog) < 0)
+					strcpy(newxlog, rlde->d_name);
+			}
 		}
 
 		errno = 0;
 	}
 #ifdef WIN32
-	/* This fix is in mingw cvs (runtime/mingwex/dirent.c rev 1.4), but
-	   not in released version */
+
+	/*
+	 * This fix is in mingw cvs (runtime/mingwex/dirent.c rev 1.4), but
+	 * not in released version
+	 */
 	if (GetLastError() == ERROR_NO_MORE_FILES)
 		errno = 0;
 #endif
 	if (errno)
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not read archive status directory \"%s\": %m",
-						XLogArchiveStatusDir)));
+			 errmsg("could not read archive status directory \"%s\": %m",
+					XLogArchiveStatusDir)));
 	FreeDir(rldir);
 
 	if (found)
@@ -580,13 +586,13 @@ pgarch_readyXlog(char *xlog)
 static void
 pgarch_archiveDone(char *xlog)
 {
-    char		rlogready[MAXPGPATH];
-    char		rlogdone[MAXPGPATH];
+	char		rlogready[MAXPGPATH];
+	char		rlogdone[MAXPGPATH];
 
 	StatusFilePath(rlogready, xlog, ".ready");
 	StatusFilePath(rlogdone, xlog, ".done");
- 	if (rename(rlogready, rlogdone) < 0)
- 		ereport(WARNING,
+	if (rename(rlogready, rlogdone) < 0)
+		ereport(WARNING,
 				(errcode_for_file_access(),
 				 errmsg("could not rename file \"%s\" to \"%s\": %m",
 						rlogready, rlogdone)));

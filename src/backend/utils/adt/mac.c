@@ -1,7 +1,7 @@
 /*
  *	PostgreSQL type definitions for MAC addresses.
  *
- *	$PostgreSQL: pgsql/src/backend/utils/adt/mac.c,v 1.33 2003/11/29 19:51:58 pgsql Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/mac.c,v 1.34 2004/08/29 05:06:49 momjian Exp $
  */
 
 #include "postgres.h"
@@ -62,14 +62,14 @@ macaddr_in(PG_FUNCTION_ARGS)
 	if (count != 6)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-			   errmsg("invalid input syntax for type macaddr: \"%s\"", str)));
+		  errmsg("invalid input syntax for type macaddr: \"%s\"", str)));
 
 	if ((a < 0) || (a > 255) || (b < 0) || (b > 255) ||
 		(c < 0) || (c > 255) || (d < 0) || (d > 255) ||
 		(e < 0) || (e > 255) || (f < 0) || (f > 255))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("invalid octet value in \"macaddr\" value: \"%s\"", str)));
+		errmsg("invalid octet value in \"macaddr\" value: \"%s\"", str)));
 
 	result = (macaddr *) palloc(sizeof(macaddr));
 

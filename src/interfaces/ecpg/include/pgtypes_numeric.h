@@ -23,7 +23,7 @@ typedef struct
 								 * NUMERIC_NAN */
 	NumericDigit *buf;			/* start of alloc'd space for digits[] */
 	NumericDigit *digits;		/* decimal digits */
-} numeric;
+}	numeric;
 
 typedef struct
 {
@@ -38,11 +38,11 @@ typedef struct
 }	decimal;
 
 #ifdef __cplusplus
-extern          "C"
+extern		"C"
 {
 #endif
-	
-numeric    *PGTYPESnumeric_new(void);
+
+			numeric * PGTYPESnumeric_new(void);
 void		PGTYPESnumeric_free(numeric *);
 numeric    *PGTYPESnumeric_from_asc(char *, char **);
 char	   *PGTYPESnumeric_to_asc(numeric *, int);

@@ -36,7 +36,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/typcache.c,v 1.9 2004/08/29 04:12:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/typcache.c,v 1.10 2004/08/29 05:06:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,7 +71,7 @@ static HTAB *TypeCacheHash = NULL;
  *
  * Stored record types are remembered in a linear array of TupleDescs,
  * which can be indexed quickly with the assigned typmod.  There is also
- * a hash table to speed searches for matching TupleDescs.  The hash key
+ * a hash table to speed searches for matching TupleDescs.	The hash key
  * uses just the first N columns' type OIDs, and so we may have multiple
  * entries with the same hash key.
  */
@@ -80,7 +80,7 @@ static HTAB *TypeCacheHash = NULL;
 typedef struct RecordCacheEntry
 {
 	/* the hash lookup key MUST BE FIRST */
-	Oid			hashkey[REC_HASH_KEYS];	/* column type IDs, zero-filled */
+	Oid			hashkey[REC_HASH_KEYS]; /* column type IDs, zero-filled */
 
 	/* list of TupleDescs for record types with this hashkey */
 	List	   *tupdescs;
@@ -93,7 +93,7 @@ static int32 RecordCacheArrayLen = 0;	/* allocated length of array */
 static int32 NextRecordTypmod = 0;		/* number of entries used */
 
 
-static Oid lookup_default_opclass(Oid type_id, Oid am_id);
+static Oid	lookup_default_opclass(Oid type_id, Oid am_id);
 
 
 /*
@@ -194,9 +194,9 @@ lookup_type_cache(Oid type_id, int flags)
 		else
 		{
 			/*
-			 * If we find a btree opclass where previously we only found
-			 * a hash opclass, forget the hash equality operator so we
-			 * can use the btree operator instead.
+			 * If we find a btree opclass where previously we only found a
+			 * hash opclass, forget the hash equality operator so we can
+			 * use the btree operator instead.
 			 */
 			typentry->eq_opr = InvalidOid;
 			typentry->eq_opr_finfo.fn_oid = InvalidOid;
@@ -229,7 +229,7 @@ lookup_type_cache(Oid type_id, int flags)
 		if (typentry->btree_opc != InvalidOid)
 			typentry->gt_opr = get_opclass_member(typentry->btree_opc,
 												  InvalidOid,
-												  BTGreaterStrategyNumber);
+												BTGreaterStrategyNumber);
 	}
 	if ((flags & (TYPECACHE_CMP_PROC | TYPECACHE_CMP_PROC_FINFO)) &&
 		typentry->cmp_proc == InvalidOid)
@@ -244,14 +244,14 @@ lookup_type_cache(Oid type_id, int flags)
 	 * Set up fmgr lookup info as requested
 	 *
 	 * Note: we tell fmgr the finfo structures live in CacheMemoryContext,
-	 * which is not quite right (they're really in DynaHashContext) but this
-	 * will do for our purposes.
+	 * which is not quite right (they're really in DynaHashContext) but
+	 * this will do for our purposes.
 	 */
 	if ((flags & TYPECACHE_EQ_OPR_FINFO) &&
 		typentry->eq_opr_finfo.fn_oid == InvalidOid &&
 		typentry->eq_opr != InvalidOid)
 	{
-		Oid		eq_opr_func;
+		Oid			eq_opr_func;
 
 		eq_opr_func = get_opcode(typentry->eq_opr);
 		if (eq_opr_func != InvalidOid)
@@ -275,11 +275,12 @@ lookup_type_cache(Oid type_id, int flags)
 	{
 		Relation	rel;
 
-		if (!OidIsValid(typentry->typrelid)) /* should not happen */
+		if (!OidIsValid(typentry->typrelid))	/* should not happen */
 			elog(ERROR, "invalid typrelid for composite type %u",
 				 typentry->type_id);
 		rel = relation_open(typentry->typrelid, AccessShareLock);
 		Assert(rel->rd_rel->reltype == typentry->type_id);
+
 		/*
 		 * Notice that we simply store a link to the relcache's tupdesc.
 		 * Since we are relying on relcache to detect cache flush events,
@@ -297,7 +298,7 @@ lookup_type_cache(Oid type_id, int flags)
  * lookup_default_opclass
  *
  * Given the OIDs of a datatype and an access method, find the default
- * operator class, if any.  Returns InvalidOid if there is none.
+ * operator class, if any.	Returns InvalidOid if there is none.
  */
 static Oid
 lookup_default_opclass(Oid type_id, Oid am_id)
@@ -324,7 +325,8 @@ lookup_default_opclass(Oid type_id, Oid am_id)
 	 * than one exact match, then someone put bogus entries in pg_opclass.
 	 *
 	 * This is the same logic as GetDefaultOpClass() in indexcmds.c, except
-	 * that we consider all opclasses, regardless of the current search path.
+	 * that we consider all opclasses, regardless of the current search
+	 * path.
 	 */
 	rel = heap_openr(OperatorClassRelationName, AccessShareLock);
 
@@ -510,10 +512,10 @@ assign_record_type_typmod(TupleDesc tupDesc)
 	}
 	else if (NextRecordTypmod >= RecordCacheArrayLen)
 	{
-		int32 newlen = RecordCacheArrayLen * 2;
+		int32		newlen = RecordCacheArrayLen * 2;
 
 		RecordCacheArray = (TupleDesc *) repalloc(RecordCacheArray,
-												  newlen * sizeof(TupleDesc));
+											 newlen * sizeof(TupleDesc));
 		RecordCacheArrayLen = newlen;
 	}
 

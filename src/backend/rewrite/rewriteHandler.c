@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.143 2004/08/29 04:12:47 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.144 2004/08/29 05:06:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,8 +48,8 @@ static Query *rewriteRuleAction(Query *parsetree,
 static List *adjustJoinTreeList(Query *parsetree, bool removert, int rt_index);
 static void rewriteTargetList(Query *parsetree, Relation target_relation);
 static TargetEntry *process_matched_tle(TargetEntry *src_tle,
-										TargetEntry *prior_tle,
-										const char *attrName);
+					TargetEntry *prior_tle,
+					const char *attrName);
 static Node *get_assignment_input(Node *node);
 static void markQueryForUpdate(Query *qry, bool skipOldNew);
 static List *matchLocks(CmdType event, RuleLock *rulelocks,
@@ -110,30 +110,32 @@ rewriteRuleAction(Query *parsetree,
 	 * action.	Some of the entries may be unused after we finish
 	 * rewriting, but we leave them all in place for two reasons:
 	 *
-	 *		* We'd have a much harder job to adjust the query's varnos
-	 *		  if we selectively removed RT entries.
+	 * We'd have a much harder job to adjust the query's varnos if we
+	 * selectively removed RT entries.
 	 *
-	 *		* If the rule is INSTEAD, then the original query won't be
-	 *		  executed at all, and so its rtable must be preserved so that
-	 *		  the executor will do the correct permissions checks on it.
+	 * If the rule is INSTEAD, then the original query won't be executed at
+	 * all, and so its rtable must be preserved so that the executor will
+	 * do the correct permissions checks on it.
 	 *
 	 * RT entries that are not referenced in the completed jointree will be
 	 * ignored by the planner, so they do not affect query semantics.  But
 	 * any permissions checks specified in them will be applied during
-	 * executor startup (see ExecCheckRTEPerms()).  This allows us to check
-	 * that the caller has, say, insert-permission on a view, when the view
-	 * is not semantically referenced at all in the resulting query.
+	 * executor startup (see ExecCheckRTEPerms()).	This allows us to
+	 * check that the caller has, say, insert-permission on a view, when
+	 * the view is not semantically referenced at all in the resulting
+	 * query.
 	 *
 	 * When a rule is not INSTEAD, the permissions checks done on its copied
-	 * RT entries will be redundant with those done during execution of the
-	 * original query, but we don't bother to treat that case differently.
+	 * RT entries will be redundant with those done during execution of
+	 * the original query, but we don't bother to treat that case
+	 * differently.
 	 *
 	 * NOTE: because planner will destructively alter rtable, we must ensure
 	 * that rule action's rtable is separate and shares no substructure
 	 * with the main rtable.  Hence do a deep copy here.
 	 */
 	sub_action->rtable = list_concat((List *) copyObject(parsetree->rtable),
-							   sub_action->rtable);
+									 sub_action->rtable);
 
 	/*
 	 * Each rule action's jointree should be the main parsetree's jointree
@@ -251,7 +253,11 @@ adjustJoinTreeList(Query *parsetree, bool removert, int rt_index)
 				rtr->rtindex == rt_index)
 			{
 				newjointree = list_delete_ptr(newjointree, rtr);
-				/* foreach is safe because we exit loop after list_delete... */
+
+				/*
+				 * foreach is safe because we exit loop after
+				 * list_delete...
+				 */
 				break;
 			}
 		}
@@ -469,7 +475,7 @@ process_matched_tle(TargetEntry *src_tle,
 	 * assignments appear to occur left-to-right.
 	 *
 	 * For FieldStore, instead of nesting we can generate a single
-	 * FieldStore with multiple target fields.  We must nest when
+	 * FieldStore with multiple target fields.	We must nest when
 	 * ArrayRefs are involved though.
 	 *----------
 	 */
@@ -492,7 +498,7 @@ process_matched_tle(TargetEntry *src_tle,
 	priorbottom = prior_input;
 	for (;;)
 	{
-		Node	*newbottom = get_assignment_input(priorbottom);
+		Node	   *newbottom = get_assignment_input(priorbottom);
 
 		if (newbottom == NULL)
 			break;				/* found the original Var reference */
@@ -509,7 +515,7 @@ process_matched_tle(TargetEntry *src_tle,
 	 */
 	if (IsA(src_expr, FieldStore))
 	{
-		FieldStore   *fstore = makeNode(FieldStore);
+		FieldStore *fstore = makeNode(FieldStore);
 
 		if (IsA(prior_expr, FieldStore))
 		{
@@ -517,10 +523,10 @@ process_matched_tle(TargetEntry *src_tle,
 			memcpy(fstore, prior_expr, sizeof(FieldStore));
 			fstore->newvals =
 				list_concat(list_copy(((FieldStore *) prior_expr)->newvals),
-							list_copy(((FieldStore *) src_expr)->newvals));
+						  list_copy(((FieldStore *) src_expr)->newvals));
 			fstore->fieldnums =
 				list_concat(list_copy(((FieldStore *) prior_expr)->fieldnums),
-							list_copy(((FieldStore *) src_expr)->fieldnums));
+						list_copy(((FieldStore *) src_expr)->fieldnums));
 		}
 		else
 		{
@@ -1233,8 +1239,8 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 			 */
 			if (product_queries != NIL)
 			{
-				ListCell	   *n;
-				rewrite_event  *rev;
+				ListCell   *n;
+				rewrite_event *rev;
 
 				foreach(n, rewrite_events)
 				{

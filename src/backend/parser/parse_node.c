@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_node.c,v 1.85 2004/08/29 04:12:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_node.c,v 1.86 2004/08/29 05:06:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -148,8 +148,8 @@ transformArraySubscripts(ParseState *pstate,
 	 * element.  If any of the items are double subscripts (lower:upper),
 	 * then the subscript expression means an array slice operation. In
 	 * this case, we supply a default lower bound of 1 for any items that
-	 * contain only a single subscript.  We have to prescan the indirection
-	 * list to see if there are any double subscripts.
+	 * contain only a single subscript.  We have to prescan the
+	 * indirection list to see if there are any double subscripts.
 	 */
 	foreach(idx, indirection)
 	{
@@ -224,7 +224,8 @@ transformArraySubscripts(ParseState *pstate,
 
 	/*
 	 * If doing an array store, coerce the source value to the right type.
-	 * (This should agree with the coercion done by updateTargetListEntry.)
+	 * (This should agree with the coercion done by
+	 * updateTargetListEntry.)
 	 */
 	if (assignFrom != NULL)
 	{
@@ -243,7 +244,7 @@ transformArraySubscripts(ParseState *pstate,
 							" but expression is of type %s",
 							format_type_be(typeneeded),
 							format_type_be(typesource)),
-					 errhint("You will need to rewrite or cast the expression.")));
+			errhint("You will need to rewrite or cast the expression.")));
 	}
 
 	/*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeMergejoin.c,v 1.67 2004/08/29 04:12:31 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeMergejoin.c,v 1.68 2004/08/29 05:06:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,10 +104,10 @@ static void
 MJFormSkipQuals(List *qualList, List **ltQuals, List **gtQuals,
 				PlanState *parent)
 {
-	List		*ltexprs,
-				*gtexprs;
-	ListCell	*ltcdr,
-				*gtcdr;
+	List	   *ltexprs,
+			   *gtexprs;
+	ListCell   *ltcdr,
+			   *gtcdr;
 
 	/*
 	 * Make modifiable copies of the qualList.

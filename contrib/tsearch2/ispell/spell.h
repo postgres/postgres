@@ -10,19 +10,21 @@
 struct SPNode;
 
 
-typedef struct {
-	uint32 
-		val:8,
-		isword:1,
-		compoundallow:1,
-		affix:22;
-	struct SPNode *node; 
-} SPNodeData;
+typedef struct
+{
+	uint32
+				val:8,
+				isword:1,
+				compoundallow:1,
+				affix:22;
+	struct SPNode *node;
+}	SPNodeData;
 
-typedef struct SPNode {
-	uint32 	length;
-	SPNodeData	data[1];	
-} SPNode;
+typedef struct SPNode
+{
+	uint32		length;
+	SPNodeData	data[1];
+}	SPNode;
 
 #define SPNHRDSZ	(sizeof(uint32))
 
@@ -30,81 +32,87 @@ typedef struct SPNode {
 typedef struct spell_struct
 {
 	char	   *word;
-	union {
+	union
+	{
 		char		flag[16];
-		struct {
-			int		affix;
-			int 		len;
-		} d;
-	} p;
+		struct
+		{
+			int			affix;
+			int			len;
+		}			d;
+	}			p;
 }	SPELL;
 
 typedef struct aff_struct
 {
-        uint32
-                flag:8,
-                type:2,
-                compile:1,
-                flagflags:3,
-                issimple:1,
-                isregis:1,
-                unused:1,
-                replen:16;
-        char            mask[32];
-        char            find[16];
-        char            repl[16];
-        union {
-                regex_t         regex;
-                Regis           regis;
-        } reg;
+	uint32
+				flag:8,
+				type:2,
+				compile:1,
+				flagflags:3,
+				issimple:1,
+				isregis:1,
+				unused:1,
+				replen:16;
+	char		mask[32];
+	char		find[16];
+	char		repl[16];
+	union
+	{
+		regex_t		regex;
+		Regis		regis;
+	}			reg;
 }	AFFIX;
 
-#define FF_CROSSPRODUCT 	0x01
-#define FF_COMPOUNDWORD 	0x02
-#define FF_COMPOUNDONLYAFX      0x04
-#define FF_SUFFIX               2
-#define FF_PREFIX               1
+#define FF_CROSSPRODUCT		0x01
+#define FF_COMPOUNDWORD		0x02
+#define FF_COMPOUNDONLYAFX		0x04
+#define FF_SUFFIX				2
+#define FF_PREFIX				1
 
 struct AffixNode;
 
-typedef struct {
+typedef struct
+{
 	uint32
-		val:8,
-		naff:24;
-	AFFIX   **aff;
+				val:8,
+				naff:24;
+	AFFIX	  **aff;
 	struct AffixNode *node;
-} AffixNodeData;
+}	AffixNodeData;
 
-typedef struct AffixNode {
-        uint32  isvoid:1,
-                length:31;
-	AffixNodeData	data[1];
-} AffixNode;
+typedef struct AffixNode
+{
+	uint32		isvoid:1,
+				length:31;
+	AffixNodeData data[1];
+}	AffixNode;
 
-#define ANHRDSZ        (sizeof(uint32))
+#define ANHRDSZ		   (sizeof(uint32))
 
-typedef struct {
-	char *affix;
-	int len;
-} CMPDAffix;
+typedef struct
+{
+	char	   *affix;
+	int			len;
+}	CMPDAffix;
 
 typedef struct
 {
 	int			maffixes;
 	int			naffixes;
 	AFFIX	   *Affix;
-	char			compoundcontrol;
+	char		compoundcontrol;
 
 	int			nspell;
 	int			mspell;
 	SPELL	   *Spell;
 
-	AffixNode	*Suffix;
-	AffixNode	*Prefix;
+	AffixNode  *Suffix;
+	AffixNode  *Prefix;
 
-	SPNode	*Dictionary;
-	char	**AffixData;
-	CMPDAffix    *CompoundAffix;
+	SPNode	   *Dictionary;
+	char	  **AffixData;
+	CMPDAffix  *CompoundAffix;
 
 }	IspellDict;
 

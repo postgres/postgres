@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/int8.c,v 1.54 2004/08/29 04:12:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/int8.c,v 1.55 2004/08/29 05:06:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,7 @@ typedef struct
 	int64		current;
 	int64		finish;
 	int64		step;
-}	generate_series_fctx;
+} generate_series_fctx;
 
 /***********************************************************************
  **
@@ -93,7 +93,7 @@ scanint8(const char *str, bool errorOK, int64 *result)
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				  errmsg("invalid input syntax for type bigint: \"%s\"", str)));
+			errmsg("invalid input syntax for type bigint: \"%s\"", str)));
 	}
 
 	/* process digits */
@@ -124,7 +124,7 @@ scanint8(const char *str, bool errorOK, int64 *result)
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				  errmsg("invalid input syntax for type bigint: \"%s\"", str)));
+			errmsg("invalid input syntax for type bigint: \"%s\"", str)));
 	}
 
 	*result = (sign < 0) ? -tmp : tmp;
@@ -960,17 +960,17 @@ generate_series_int8(PG_FUNCTION_ARGS)
 Datum
 generate_series_step_int8(PG_FUNCTION_ARGS)
 {
-	FuncCallContext		   *funcctx;
-	generate_series_fctx   *fctx;
-	int64					result;
-	MemoryContext			oldcontext;
+	FuncCallContext *funcctx;
+	generate_series_fctx *fctx;
+	int64		result;
+	MemoryContext oldcontext;
 
 	/* stuff done only on the first call of the function */
 	if (SRF_IS_FIRSTCALL())
 	{
-		int64			start = PG_GETARG_INT64(0);
-		int64			finish = PG_GETARG_INT64(1);
-		int64			step = 1;
+		int64		start = PG_GETARG_INT64(0);
+		int64		finish = PG_GETARG_INT64(1);
+		int64		step = 1;
 
 		/* see if we were given an explicit step size */
 		if (PG_NARGS() == 3)
@@ -993,8 +993,8 @@ generate_series_step_int8(PG_FUNCTION_ARGS)
 		fctx = (generate_series_fctx *) palloc(sizeof(generate_series_fctx));
 
 		/*
-		 * Use fctx to keep state from call to call.
-		 * Seed current with the original start value
+		 * Use fctx to keep state from call to call. Seed current with the
+		 * original start value
 		 */
 		fctx->current = start;
 		fctx->finish = finish;
@@ -1008,8 +1008,8 @@ generate_series_step_int8(PG_FUNCTION_ARGS)
 	funcctx = SRF_PERCALL_SETUP();
 
 	/*
-	 * get the saved state and use current as the result for
-	 * this iteration
+	 * get the saved state and use current as the result for this
+	 * iteration
 	 */
 	fctx = funcctx->user_fctx;
 	result = fctx->current;
@@ -1027,4 +1027,3 @@ generate_series_step_int8(PG_FUNCTION_ARGS)
 		/* do when there is no more left */
 		SRF_RETURN_DONE(funcctx);
 }
-

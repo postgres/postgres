@@ -78,7 +78,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.43 2004/08/29 04:13:00 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.44 2004/08/29 05:06:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -478,8 +478,8 @@ tuplesort_begin_heap(TupleDesc tupDesc,
 						   &state->sortFnKinds[i]);
 
 		/*
-		 * We needn't fill in sk_strategy or sk_subtype since these scankeys
-		 * will never be passed to an index.
+		 * We needn't fill in sk_strategy or sk_subtype since these
+		 * scankeys will never be passed to an index.
 		 */
 		ScanKeyInit(&state->scanKeys[i],
 					attNums[i],
@@ -1776,8 +1776,8 @@ SelectSortFunction(Oid sortOperator,
 	 * Can't find a comparator, so use the operator as-is.  Decide whether
 	 * it is forward or reverse sort by looking at its name (grotty, but
 	 * this only matters for deciding which end NULLs should get sorted
-	 * to).  XXX possibly better idea: see whether its selectivity function
-	 * is scalargtcmp?
+	 * to).  XXX possibly better idea: see whether its selectivity
+	 * function is scalargtcmp?
 	 */
 	tuple = SearchSysCache(OPEROID,
 						   ObjectIdGetDatum(sortOperator),
@@ -2084,9 +2084,9 @@ comparetup_index(Tuplesortstate *state, const void *a, const void *b)
 
 	/*
 	 * If key values are equal, we sort on ItemPointer.  This does not
-	 * affect validity of the finished index, but it offers cheap insurance
-	 * against performance problems with bad qsort implementations that have
-	 * trouble with large numbers of equal keys.
+	 * affect validity of the finished index, but it offers cheap
+	 * insurance against performance problems with bad qsort
+	 * implementations that have trouble with large numbers of equal keys.
 	 */
 	{
 		BlockNumber blk1 = ItemPointerGetBlockNumber(&tuple1->t_tid);

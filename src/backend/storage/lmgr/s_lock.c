@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/s_lock.c,v 1.29 2004/08/29 04:12:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/s_lock.c,v 1.30 2004/08/29 05:06:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,8 +73,8 @@ s_lock(volatile slock_t *lock, const char *file, int line)
 	 * (and thus the probability of unintended failure) than to fix the
 	 * total time spent.
 	 *
-	 * The pg_usleep() delays are measured in centiseconds (0.01 sec) because 10
-	 * msec is a common resolution limit at the OS level.
+	 * The pg_usleep() delays are measured in centiseconds (0.01 sec) because
+	 * 10 msec is a common resolution limit at the OS level.
 	 */
 #define SPINS_PER_DELAY		100
 #define NUM_DELAYS			1000
@@ -125,7 +125,7 @@ s_lock(volatile slock_t *lock, const char *file, int line)
  */
 
 
-#ifdef HAVE_SPINLOCKS	/* skip spinlocks if requested */
+#ifdef HAVE_SPINLOCKS			/* skip spinlocks if requested */
 
 
 #if defined(__GNUC__)
@@ -238,10 +238,8 @@ tas_dummy()						/* really means: extern int tas(slock_t
 }
 #endif   /* __sparc || __sparc__ */
 
-
 #endif   /* not __GNUC__ */
-
-#endif /* HAVE_SPINLOCKS */
+#endif   /* HAVE_SPINLOCKS */
 
 
 

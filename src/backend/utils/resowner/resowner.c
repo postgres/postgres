@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/resowner/resowner.c,v 1.5 2004/08/29 04:13:00 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/resowner/resowner.c,v 1.6 2004/08/29 05:06:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,7 +38,7 @@ typedef struct ResourceOwnerData
 	ResourceOwner parent;		/* NULL if no parent (toplevel owner) */
 	ResourceOwner firstchild;	/* head of linked list of children */
 	ResourceOwner nextchild;	/* next child of same parent */
-	const char   *name;			/* name (just for debugging) */
+	const char *name;			/* name (just for debugging) */
 
 	/* We have built-in support for remembering owned buffers */
 	int			nbuffers;		/* number of owned buffer pins */
@@ -52,7 +52,7 @@ typedef struct ResourceOwnerData
 
 	int			ncatlistrefs;	/* number of owned catcache-list pins */
 	CatCList  **catlistrefs;	/* dynamically allocated array */
-	int			maxcatlistrefs;	/* currently allocated array size */
+	int			maxcatlistrefs; /* currently allocated array size */
 
 	/* We have built-in support for remembering relcache references */
 	int			nrelrefs;		/* number of owned relcache pins */
@@ -84,9 +84,9 @@ static ResourceReleaseCallbackItem *ResourceRelease_callbacks = NULL;
 
 /* Internal routines */
 static void ResourceOwnerReleaseInternal(ResourceOwner owner,
-										 ResourceReleasePhase phase,
-										 bool isCommit,
-										 bool isTopLevel);
+							 ResourceReleasePhase phase,
+							 bool isCommit,
+							 bool isTopLevel);
 
 
 /*****************************************************************************
@@ -107,7 +107,7 @@ ResourceOwnerCreate(ResourceOwner parent, const char *name)
 	ResourceOwner owner;
 
 	owner = (ResourceOwner) MemoryContextAllocZero(TopMemoryContext,
-												   sizeof(ResourceOwnerData));
+											  sizeof(ResourceOwnerData));
 	owner->name = name;
 
 	if (parent)
@@ -126,7 +126,7 @@ ResourceOwnerCreate(ResourceOwner parent, const char *name)
  *		but don't delete the owner objects themselves.
  *
  * Note that this executes just one phase of release, and so typically
- * must be called three times.  We do it this way because (a) we want to
+ * must be called three times.	We do it this way because (a) we want to
  * do all the recursion separately for each phase, thereby preserving
  * the needed order of operations; and (b) xact.c may have other operations
  * to do between the phases.
@@ -157,9 +157,7 @@ ResourceOwnerRelease(ResourceOwner owner,
 
 	save = CurrentResourceOwner;
 	PG_TRY();
-	{
 		ResourceOwnerReleaseInternal(owner, phase, isCommit, isTopLevel);
-	}
 	PG_CATCH();
 	{
 		CurrentResourceOwner = save;
@@ -198,7 +196,8 @@ ResourceOwnerReleaseInternal(ResourceOwner owner,
 		{
 			/*
 			 * For a top-level xact we are going to release all buffers,
-			 * so just do a single bufmgr call at the top of the recursion.
+			 * so just do a single bufmgr call at the top of the
+			 * recursion.
 			 */
 			if (owner == TopTransactionResourceOwner)
 				AtEOXact_Buffers(isCommit);
@@ -208,14 +207,14 @@ ResourceOwnerReleaseInternal(ResourceOwner owner,
 		else
 		{
 			/*
-			 * Release buffers retail.  Note that ReleaseBuffer will remove
-			 * the buffer entry from my list, so I just have to iterate till
-			 * there are none.
+			 * Release buffers retail.	Note that ReleaseBuffer will
+			 * remove the buffer entry from my list, so I just have to
+			 * iterate till there are none.
 			 *
-			 * XXX this is fairly inefficient due to multiple BufMgrLock grabs
-			 * if there are lots of buffers to be released, but we don't
-			 * expect many (indeed none in the success case) so it's probably
-			 * not worth optimizing.
+			 * XXX this is fairly inefficient due to multiple BufMgrLock
+			 * grabs if there are lots of buffers to be released, but we
+			 * don't expect many (indeed none in the success case) so it's
+			 * probably not worth optimizing.
 			 *
 			 * We are however careful to release back-to-front, so as to
 			 * avoid O(N^2) behavior in ResourceOwnerForgetBuffer().
@@ -227,8 +226,9 @@ ResourceOwnerReleaseInternal(ResourceOwner owner,
 		if (isTopLevel)
 		{
 			/*
-			 * For a top-level xact we are going to release all references,
-			 * so just do a single relcache call at the top of the recursion.
+			 * For a top-level xact we are going to release all
+			 * references, so just do a single relcache call at the top of
+			 * the recursion.
 			 */
 			if (owner == TopTransactionResourceOwner)
 				AtEOXact_RelationCache(isCommit);
@@ -239,8 +239,8 @@ ResourceOwnerReleaseInternal(ResourceOwner owner,
 		{
 			/*
 			 * Release relcache refs retail.  Note that RelationClose will
-			 * remove the relref entry from my list, so I just have to iterate
-			 * till there are none.
+			 * remove the relref entry from my list, so I just have to
+			 * iterate till there are none.
 			 */
 			while (owner->nrelrefs > 0)
 				RelationClose(owner->relrefs[owner->nrelrefs - 1]);
@@ -251,9 +251,9 @@ ResourceOwnerReleaseInternal(ResourceOwner owner,
 		if (isTopLevel)
 		{
 			/*
-			 * For a top-level xact we are going to release all locks (or at
-			 * least all non-session locks), so just do a single lmgr call
-			 * at the top of the recursion.
+			 * For a top-level xact we are going to release all locks (or
+			 * at least all non-session locks), so just do a single lmgr
+			 * call at the top of the recursion.
 			 */
 			if (owner == TopTransactionResourceOwner)
 				ProcReleaseLocks(isCommit);
@@ -262,8 +262,8 @@ ResourceOwnerReleaseInternal(ResourceOwner owner,
 		{
 			/*
 			 * Release locks retail.  Note that if we are committing a
-			 * subtransaction, we do NOT release its locks yet, but transfer
-			 * them to the parent.
+			 * subtransaction, we do NOT release its locks yet, but
+			 * transfer them to the parent.
 			 */
 			Assert(owner->parent != NULL);
 			if (isCommit)
@@ -278,8 +278,9 @@ ResourceOwnerReleaseInternal(ResourceOwner owner,
 		if (isTopLevel)
 		{
 			/*
-			 * For a top-level xact we are going to release all references,
-			 * so just do a single catcache call at the top of the recursion.
+			 * For a top-level xact we are going to release all
+			 * references, so just do a single catcache call at the top of
+			 * the recursion.
 			 */
 			if (owner == TopTransactionResourceOwner)
 				AtEOXact_CatCache(isCommit);
@@ -290,9 +291,9 @@ ResourceOwnerReleaseInternal(ResourceOwner owner,
 		else
 		{
 			/*
-			 * Release catcache refs retail.  Note that ReleaseCatCache will
-			 * remove the catref entry from my list, so I just have to iterate
-			 * till there are none.  Ditto for catcache lists.
+			 * Release catcache refs retail.  Note that ReleaseCatCache
+			 * will remove the catref entry from my list, so I just have
+			 * to iterate till there are none.	Ditto for catcache lists.
 			 */
 			while (owner->ncatrefs > 0)
 				ReleaseCatCache(owner->catrefs[owner->ncatrefs - 1]);
@@ -331,16 +332,16 @@ ResourceOwnerDelete(ResourceOwner owner)
 	Assert(owner->nrelrefs == 0);
 
 	/*
-	 * Delete children.  The recursive call will delink the child
-	 * from me, so just iterate as long as there is a child.
+	 * Delete children.  The recursive call will delink the child from me,
+	 * so just iterate as long as there is a child.
 	 */
 	while (owner->firstchild != NULL)
 		ResourceOwnerDelete(owner->firstchild);
 
 	/*
-	 * We delink the owner from its parent before deleting it, so that
-	 * if there's an error we won't have deleted/busted owners still
-	 * attached to the owner tree.  Better a leak than a crash.
+	 * We delink the owner from its parent before deleting it, so that if
+	 * there's an error we won't have deleted/busted owners still attached
+	 * to the owner tree.  Better a leak than a crash.
 	 */
 	ResourceOwnerNewParent(owner, NULL);
 
@@ -523,8 +524,8 @@ ResourceOwnerForgetBuffer(ResourceOwner owner, Buffer buffer)
 		int			i;
 
 		/*
-		 * Scan back-to-front because it's more likely we are releasing
-		 * a recently pinned buffer.  This isn't always the case of course,
+		 * Scan back-to-front because it's more likely we are releasing a
+		 * recently pinned buffer.	This isn't always the case of course,
 		 * but it's the way to bet.
 		 */
 		for (i = nb1; i >= 0; i--)

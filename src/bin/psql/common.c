@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.89 2004/08/29 04:13:02 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.90 2004/08/29 05:06:54 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -57,7 +57,6 @@ typedef struct _timeb TimevalStruct;
 #define DIFF_MSEC(T, U) \
 	(((T)->time - (U)->time) * 1000.0 + \
 	 ((T)->millitm - (U)->millitm))
-
 #endif
 
 extern bool prompt_state;
@@ -358,10 +357,19 @@ ReportSyntaxErrorPosition(const PGresult *result, const char *query)
 
 	int			loc = 0;
 	const char *sp;
-	int clen, slen, i, *qidx, *scridx, qoffset, scroffset, ibeg, iend,
-		loc_line;
-	char *wquery;
-	bool beg_trunc, end_trunc;
+	int			clen,
+				slen,
+				i,
+			   *qidx,
+			   *scridx,
+				qoffset,
+				scroffset,
+				ibeg,
+				iend,
+				loc_line;
+	char	   *wquery;
+	bool		beg_trunc,
+				end_trunc;
 	PQExpBufferData msg;
 
 	if (pset.verbosity == PQERRORS_TERSE)
@@ -420,17 +428,17 @@ ReportSyntaxErrorPosition(const PGresult *result, const char *query)
 	psql_assert(clen < slen);
 
 	/* convert loc to zero-based offset in qidx/scridx arrays */
-	loc--; 
+	loc--;
 
 	/* do we have something to show? */
 	if (loc >= 0 && loc <= clen)
 	{
-		 /* input line number of our syntax error. */
+		/* input line number of our syntax error. */
 		loc_line = 1;
 		/* first included char of extract. */
-		ibeg = 0; 
+		ibeg = 0;
 		/* last-plus-1 included char of extract. */
-		iend = clen; 
+		iend = clen;
 
 		/*
 		 * Replace tabs with spaces in the writable copy.  (Later we might
@@ -438,31 +446,31 @@ ReportSyntaxErrorPosition(const PGresult *result, const char *query)
 		 * but not today.)
 		 *
 		 * Extract line number and begin and end indexes of line containing
-		 * error location.  There will not be any newlines or carriage
+		 * error location.	There will not be any newlines or carriage
 		 * returns in the selected extract.
 		 */
-		for (i=0; i<clen; i++)
+		for (i = 0; i < clen; i++)
 		{
 			/* character length must be 1 or it's not ASCII */
-			if ((qidx[i+1]-qidx[i]) == 1)
+			if ((qidx[i + 1] - qidx[i]) == 1)
 			{
-				if (wquery[qidx[i]] == '\t') 
+				if (wquery[qidx[i]] == '\t')
 					wquery[qidx[i]] = ' ';
 				else if (wquery[qidx[i]] == '\r' || wquery[qidx[i]] == '\n')
 				{
 					if (i < loc)
 					{
 						/*
-						 * count lines before loc.  Each \r or \n counts
+						 * count lines before loc.	Each \r or \n counts
 						 * as a line except when \r \n appear together.
 						 */
 						if (wquery[qidx[i]] == '\r' ||
 							i == 0 ||
-							(qidx[i]-qidx[i-1]) != 1 ||
-							wquery[qidx[i-1]] != '\r')
+							(qidx[i] - qidx[i - 1]) != 1 ||
+							wquery[qidx[i - 1]] != '\r')
 							loc_line++;
 						/* extract beginning = last line start before loc. */
-						ibeg = i+1;
+						ibeg = i + 1;
 					}
 					else
 					{
@@ -478,30 +486,30 @@ ReportSyntaxErrorPosition(const PGresult *result, const char *query)
 		/* If the line extracted is too long, we truncate it. */
 		beg_trunc = false;
 		end_trunc = false;
-		if (scridx[iend]-scridx[ibeg] > DISPLAY_SIZE)
+		if (scridx[iend] - scridx[ibeg] > DISPLAY_SIZE)
 		{
 			/*
 			 * We first truncate right if it is enough.  This code might
 			 * be off a space or so on enforcing MIN_RIGHT_CUT if there's
 			 * a wide character right there, but that should be okay.
 			 */
-			if (scridx[ibeg]+DISPLAY_SIZE >= scridx[loc]+MIN_RIGHT_CUT)
+			if (scridx[ibeg] + DISPLAY_SIZE >= scridx[loc] + MIN_RIGHT_CUT)
 			{
-				while (scridx[iend]-scridx[ibeg] > DISPLAY_SIZE)
+				while (scridx[iend] - scridx[ibeg] > DISPLAY_SIZE)
 					iend--;
 				end_trunc = true;
 			}
 			else
 			{
 				/* Truncate right if not too close to loc. */
-				while (scridx[loc]+MIN_RIGHT_CUT < scridx[iend])
+				while (scridx[loc] + MIN_RIGHT_CUT < scridx[iend])
 				{
 					iend--;
 					end_trunc = true;
 				}
 
 				/* Truncate left if still too long. */
-				while (scridx[iend]-scridx[ibeg] > DISPLAY_SIZE)
+				while (scridx[iend] - scridx[ibeg] > DISPLAY_SIZE)
 				{
 					ibeg++;
 					beg_trunc = true;
@@ -510,7 +518,7 @@ ReportSyntaxErrorPosition(const PGresult *result, const char *query)
 		}
 
 		/* the extract MUST contain the target position! */
-		psql_assert(ibeg<=loc && loc<=iend);
+		psql_assert(ibeg <= loc && loc <= iend);
 
 		/* truncate working copy at desired endpoint */
 		wquery[qidx[iend]] = '\0';
@@ -526,9 +534,7 @@ ReportSyntaxErrorPosition(const PGresult *result, const char *query)
 		 */
 		scroffset = 0;
 		for (i = 0; i < msg.len; i += PQmblen(&msg.data[i], pset.encoding))
-		{
 			scroffset += PQdsplen(&msg.data[i], pset.encoding);
-		}
 
 		/* Finish and emit the message. */
 		appendPQExpBufferStr(&msg, &wquery[qidx[ibeg]]);

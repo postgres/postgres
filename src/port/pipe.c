@@ -10,7 +10,7 @@
  *	must be replaced with recv/send.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/pipe.c,v 1.8 2004/08/29 04:13:12 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/pipe.c,v 1.9 2004/08/29 05:07:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,7 @@ pgpipe(int handles[2])
 
 	if ((s = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET)
 	{
-		ereport(LOG,(errmsg_internal("pgpipe failed to create socket: %ui",WSAGetLastError())));
+		ereport(LOG, (errmsg_internal("pgpipe failed to create socket: %ui", WSAGetLastError())));
 		return -1;
 	}
 
@@ -37,40 +37,40 @@ pgpipe(int handles[2])
 	serv_addr.sin_family = AF_INET;
 	serv_addr.sin_port = htons(0);
 	serv_addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-	if (bind(s, (SOCKADDR *) & serv_addr, len) == SOCKET_ERROR) 
+	if (bind(s, (SOCKADDR *) & serv_addr, len) == SOCKET_ERROR)
 	{
-		ereport(LOG,(errmsg_internal("pgpipe failed to bind: %ui",WSAGetLastError())));
+		ereport(LOG, (errmsg_internal("pgpipe failed to bind: %ui", WSAGetLastError())));
 		closesocket(s);
 		return -1;
 	}
 	if (listen(s, 1) == SOCKET_ERROR)
 	{
-		ereport(LOG,(errmsg_internal("pgpipe failed to listen: %ui",WSAGetLastError())));
+		ereport(LOG, (errmsg_internal("pgpipe failed to listen: %ui", WSAGetLastError())));
 		closesocket(s);
 		return -1;
 	}
-	if (getsockname(s, (SOCKADDR *) & serv_addr, &len) == SOCKET_ERROR) 
+	if (getsockname(s, (SOCKADDR *) & serv_addr, &len) == SOCKET_ERROR)
 	{
-		ereport(LOG,(errmsg_internal("pgpipe failed to getsockname: %ui",WSAGetLastError())));
+		ereport(LOG, (errmsg_internal("pgpipe failed to getsockname: %ui", WSAGetLastError())));
 		closesocket(s);
 		return -1;
 	}
 	if ((handles[1] = socket(PF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET)
 	{
-		ereport(LOG,(errmsg_internal("pgpipe failed to create socket 2: %ui",WSAGetLastError())));
+		ereport(LOG, (errmsg_internal("pgpipe failed to create socket 2: %ui", WSAGetLastError())));
 		closesocket(s);
 		return -1;
 	}
 
 	if (connect(handles[1], (SOCKADDR *) & serv_addr, len) == SOCKET_ERROR)
 	{
-		ereport(LOG,(errmsg_internal("pgpipe failed to connect socket: %ui",WSAGetLastError())));
+		ereport(LOG, (errmsg_internal("pgpipe failed to connect socket: %ui", WSAGetLastError())));
 		closesocket(s);
 		return -1;
 	}
 	if ((handles[0] = accept(s, (SOCKADDR *) & serv_addr, &len)) == INVALID_SOCKET)
 	{
-		ereport(LOG,(errmsg_internal("pgpipe failed to accept socket: %ui",WSAGetLastError())));
+		ereport(LOG, (errmsg_internal("pgpipe failed to accept socket: %ui", WSAGetLastError())));
 		closesocket(handles[1]);
 		handles[1] = INVALID_SOCKET;
 		closesocket(s);
@@ -81,13 +81,15 @@ pgpipe(int handles[2])
 }
 
 
-int piperead(int s, char* buf, int len)
+int
+piperead(int s, char *buf, int len)
 {
-	int ret = recv(s,buf,len,0);
+	int			ret = recv(s, buf, len, 0);
+
 	if (ret < 0 && WSAGetLastError() == WSAECONNRESET)
 		/* EOF on the pipe! (win32 socket based implementation) */
 		ret = 0;
 	return ret;
 }
-#endif
 
+#endif

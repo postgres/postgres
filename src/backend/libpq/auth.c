@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.117 2004/08/29 04:12:32 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.118 2004/08/29 05:06:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -387,7 +387,7 @@ auth_failed(Port *port, int status)
 			errstr = gettext_noop("PAM authentication failed for user \"%s\"");
 			break;
 #endif   /* USE_PAM */
-		default :
+		default:
 			errstr = gettext_noop("Unknown auth method: authentication failed for user \"%s\"");
 			break;
 	}
@@ -473,6 +473,7 @@ ClientAuthentication(Port *port)
 			break;
 
 		case uaIdent:
+
 			/*
 			 * If we are doing ident on unix-domain sockets, use SCM_CREDS
 			 * only if it is defined and SO_PEERCRED isn't.
@@ -483,6 +484,7 @@ ClientAuthentication(Port *port)
 			if (port->raddr.addr.ss_family == AF_UNIX)
 			{
 #if defined(HAVE_STRUCT_FCRED) || defined(HAVE_STRUCT_SOCKCRED)
+
 				/*
 				 * Receive credentials on next message receipt, BSD/OS,
 				 * NetBSD. We need to set this before the client sends the
@@ -493,7 +495,7 @@ ClientAuthentication(Port *port)
 				if (setsockopt(port->sock, 0, LOCAL_CREDS, &on, sizeof(on)) < 0)
 					ereport(FATAL,
 							(errcode_for_socket_access(),
-					 errmsg("could not enable credential reception: %m")));
+					errmsg("could not enable credential reception: %m")));
 #endif
 
 				sendAuthRequest(port, AUTH_REQ_SCM_CREDS);
@@ -770,8 +772,8 @@ recv_password_packet(Port *port)
 			if (mtype != EOF)
 				ereport(COMMERROR,
 						(errcode(ERRCODE_PROTOCOL_VIOLATION),
-					errmsg("expected password response, got message type %d",
-						   mtype)));
+				errmsg("expected password response, got message type %d",
+					   mtype)));
 			return NULL;		/* EOF or bad message type */
 		}
 	}

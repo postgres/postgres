@@ -5,7 +5,7 @@
  *
  * The pg_subtrans manager is a pg_clog-like manager that stores the parent
  * transaction Id for each transaction.  It is a fundamental part of the
- * nested transactions implementation.  A main transaction has a parent
+ * nested transactions implementation.	A main transaction has a parent
  * of InvalidTransactionId, and each subtransaction has its immediate parent.
  * The tree can easily be walked from child to parent, but not in the
  * opposite direction.
@@ -22,7 +22,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/subtrans.c,v 1.4 2004/08/29 04:12:23 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/subtrans.c,v 1.5 2004/08/29 05:06:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,6 +57,7 @@
  * Link to shared-memory data structures for SUBTRANS control
  */
 static SlruCtlData SubTransCtlData;
+
 #define SubTransCtl  (&SubTransCtlData)
 
 
@@ -101,7 +102,7 @@ SubTransGetParent(TransactionId xid)
 	int			entryno = TransactionIdToEntry(xid);
 	int			slotno;
 	TransactionId *ptr;
-	TransactionId	parent;
+	TransactionId parent;
 
 	/* Can't ask about stuff that might not be around anymore */
 	Assert(TransactionIdFollowsOrEquals(xid, RecentXmin));
@@ -139,7 +140,7 @@ TransactionId
 SubTransGetTopmostTransaction(TransactionId xid)
 {
 	TransactionId parentXid = xid,
-				  previousXid = xid;
+				previousXid = xid;
 
 	/* Can't ask about stuff that might not be around anymore */
 	Assert(TransactionIdFollowsOrEquals(xid, RecentXmin));
@@ -185,7 +186,7 @@ SUBTRANSShmemInit(void)
  * must have been called already.)
  *
  * Note: it's not really necessary to create the initial segment now,
- * since slru.c would create it on first write anyway.  But we may as well
+ * since slru.c would create it on first write anyway.	But we may as well
  * do it to be sure the directory is set up correctly.
  */
 void
@@ -229,10 +230,11 @@ StartupSUBTRANS(void)
 	int			startPage;
 
 	/*
-	 * Since we don't expect pg_subtrans to be valid across crashes,
-	 * we initialize the currently-active page to zeroes during startup.
+	 * Since we don't expect pg_subtrans to be valid across crashes, we
+	 * initialize the currently-active page to zeroes during startup.
 	 * Whenever we advance into a new page, ExtendSUBTRANS will likewise
-	 * zero the new page without regard to whatever was previously on disk.
+	 * zero the new page without regard to whatever was previously on
+	 * disk.
 	 */
 	LWLockAcquire(SubtransControlLock, LW_EXCLUSIVE);
 
@@ -251,8 +253,8 @@ ShutdownSUBTRANS(void)
 	/*
 	 * Flush dirty SUBTRANS pages to disk
 	 *
-	 * This is not actually necessary from a correctness point of view.
-	 * We do it merely as a debugging aid.
+	 * This is not actually necessary from a correctness point of view. We do
+	 * it merely as a debugging aid.
 	 */
 	SimpleLruFlush(SubTransCtl, false);
 }
@@ -266,8 +268,8 @@ CheckPointSUBTRANS(void)
 	/*
 	 * Flush dirty SUBTRANS pages to disk
 	 *
-	 * This is not actually necessary from a correctness point of view.
-	 * We do it merely to improve the odds that writing of dirty pages is done
+	 * This is not actually necessary from a correctness point of view. We do
+	 * it merely to improve the odds that writing of dirty pages is done
 	 * by the checkpoint process and not by backends.
 	 */
 	SimpleLruFlush(SubTransCtl, true);

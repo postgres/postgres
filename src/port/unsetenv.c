@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/unsetenv.c,v 1.2 2004/08/29 04:13:12 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/unsetenv.c,v 1.3 2004/08/29 05:07:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,22 +19,23 @@
 void
 unsetenv(const char *name)
 {
-	char  *envstr;
+	char	   *envstr;
 
 	if (getenv(name) == NULL)
 		return;					/* no work */
 
 	/*
-	 * The technique embodied here works if libc follows the Single Unix Spec
-	 * and actually uses the storage passed to putenv() to hold the environ
-	 * entry.  When we clobber the entry in the second step we are ensuring
-	 * that we zap the actual environ member.  However, there are some libc
-	 * implementations (notably recent BSDs) that do not obey SUS but copy
-	 * the presented string.  This method fails on such platforms.  Hopefully
-	 * all such platforms have unsetenv() and thus won't be using this hack.
+	 * The technique embodied here works if libc follows the Single Unix
+	 * Spec and actually uses the storage passed to putenv() to hold the
+	 * environ entry.  When we clobber the entry in the second step we are
+	 * ensuring that we zap the actual environ member.	However, there are
+	 * some libc implementations (notably recent BSDs) that do not obey
+	 * SUS but copy the presented string.  This method fails on such
+	 * platforms.  Hopefully all such platforms have unsetenv() and thus
+	 * won't be using this hack.
 	 *
-	 * Note that repeatedly setting and unsetting a var using this code
-	 * will leak memory.
+	 * Note that repeatedly setting and unsetting a var using this code will
+	 * leak memory.
 	 */
 
 	envstr = (char *) malloc(strlen(name) + 2);
@@ -49,8 +50,8 @@ unsetenv(const char *name)
 	strcpy(envstr, "=");
 
 	/*
-	 * This last putenv cleans up if we have multiple zero-length names
-	 * as a result of unsetting multiple things.
+	 * This last putenv cleans up if we have multiple zero-length names as
+	 * a result of unsetting multiple things.
 	 */
 	putenv(envstr);
 }

@@ -469,7 +469,7 @@ TS_execute(ITEM * curitem, void *checkval, bool calcnot, bool (*chkcond) (void *
 Datum
 rexectsq(PG_FUNCTION_ARGS)
 {
-        SET_FUNCOID();
+	SET_FUNCOID();
 	return DirectFunctionCall2(
 							   exectsq,
 							   PG_GETARG_DATUM(1),
@@ -484,7 +484,8 @@ exectsq(PG_FUNCTION_ARGS)
 	QUERYTYPE  *query = (QUERYTYPE *) DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_DATUM(1)));
 	CHKVAL		chkval;
 	bool		result;
-        SET_FUNCOID();
+
+	SET_FUNCOID();
 	if (!val->size || !query->size)
 	{
 		PG_FREE_IF_COPY(val, 0);
@@ -639,7 +640,7 @@ static QUERYTYPE *
 Datum
 tsquery_in(PG_FUNCTION_ARGS)
 {
-        SET_FUNCOID();
+	SET_FUNCOID();
 	PG_RETURN_POINTER(queryin((char *) PG_GETARG_POINTER(0), pushval_asis, 0));
 }
 
@@ -865,7 +866,8 @@ to_tsquery(PG_FUNCTION_ARGS)
 	QUERYTYPE  *query;
 	ITEM	   *res;
 	int4		len;
-        SET_FUNCOID();
+
+	SET_FUNCOID();
 
 	str = text2char(in);
 	PG_FREE_IF_COPY(in, 1);
@@ -888,10 +890,11 @@ to_tsquery_name(PG_FUNCTION_ARGS)
 {
 	text	   *name = PG_GETARG_TEXT_P(0);
 	Datum		res;
-        SET_FUNCOID();
+
+	SET_FUNCOID();
 	res = DirectFunctionCall2(to_tsquery,
-										Int32GetDatum(name2id_cfg(name)),
-										  PG_GETARG_DATUM(1));
+							  Int32GetDatum(name2id_cfg(name)),
+							  PG_GETARG_DATUM(1));
 
 	PG_FREE_IF_COPY(name, 0);
 	PG_RETURN_DATUM(res);

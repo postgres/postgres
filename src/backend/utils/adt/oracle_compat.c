@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/backend/utils/adt/oracle_compat.c,v 1.54 2004/08/29 04:12:52 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/oracle_compat.c,v 1.55 2004/08/29 05:06:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,7 +35,7 @@
 /*
  * If the system provides the needed functions for wide-character manipulation
  * (which are all standardized by C99), then we implement upper/lower/initcap
- * using wide-character functions.  Otherwise we use the traditional <ctype.h>
+ * using wide-character functions.	Otherwise we use the traditional <ctype.h>
  * functions, which of course will not work as desired in multibyte character
  * sets.  Note that in either case we are effectively assuming that the
  * database character encoding matches the encoding implied by LC_CTYPE.
@@ -62,7 +62,7 @@ texttowcs(const text *txt)
 {
 	int			nbytes = VARSIZE(txt) - VARHDRSZ;
 	char	   *workstr;
-	wchar_t	   *result;
+	wchar_t    *result;
 	size_t		ncodes;
 
 	/* Overflow paranoia */
@@ -86,12 +86,12 @@ texttowcs(const text *txt)
 	if (ncodes == (size_t) -1)
 	{
 		/*
-		 * Invalid multibyte character encountered.  We try to give a useful
-		 * error message by letting pg_verifymbstr check the string.  But
-		 * it's possible that the string is OK to us, and not OK to mbstowcs
-		 * --- this suggests that the LC_CTYPE locale is different from the
-		 * database encoding.  Give a generic error message if verifymbstr
-		 * can't find anything wrong.
+		 * Invalid multibyte character encountered.  We try to give a
+		 * useful error message by letting pg_verifymbstr check the
+		 * string.	But it's possible that the string is OK to us, and not
+		 * OK to mbstowcs --- this suggests that the LC_CTYPE locale is
+		 * different from the database encoding.  Give a generic error
+		 * message if verifymbstr can't find anything wrong.
 		 */
 		pg_verifymbstr(workstr, nbytes, false);
 		ereport(ERROR,
@@ -144,8 +144,7 @@ wcstotext(const wchar_t *str, int ncodes)
 
 	return result;
 }
-
-#endif /* USE_WIDE_UPPER_LOWER */
+#endif   /* USE_WIDE_UPPER_LOWER */
 
 
 /********************************************************************
@@ -171,7 +170,7 @@ lower(PG_FUNCTION_ARGS)
 	{
 		text	   *string = PG_GETARG_TEXT_P(0);
 		text	   *result;
-		wchar_t	   *workspace;
+		wchar_t    *workspace;
 		int			i;
 
 		workspace = texttowcs(string);
@@ -186,13 +185,16 @@ lower(PG_FUNCTION_ARGS)
 		PG_RETURN_TEXT_P(result);
 	}
 	else
-#endif /* USE_WIDE_UPPER_LOWER */
+#endif   /* USE_WIDE_UPPER_LOWER */
 	{
 		text	   *string = PG_GETARG_TEXT_P_COPY(0);
 		char	   *ptr;
 		int			m;
 
-		/* Since we copied the string, we can scribble directly on the value */
+		/*
+		 * Since we copied the string, we can scribble directly on the
+		 * value
+		 */
 		ptr = VARDATA(string);
 		m = VARSIZE(string) - VARHDRSZ;
 
@@ -230,7 +232,7 @@ upper(PG_FUNCTION_ARGS)
 	{
 		text	   *string = PG_GETARG_TEXT_P(0);
 		text	   *result;
-		wchar_t	   *workspace;
+		wchar_t    *workspace;
 		int			i;
 
 		workspace = texttowcs(string);
@@ -245,13 +247,16 @@ upper(PG_FUNCTION_ARGS)
 		PG_RETURN_TEXT_P(result);
 	}
 	else
-#endif /* USE_WIDE_UPPER_LOWER */
+#endif   /* USE_WIDE_UPPER_LOWER */
 	{
 		text	   *string = PG_GETARG_TEXT_P_COPY(0);
 		char	   *ptr;
 		int			m;
 
-		/* Since we copied the string, we can scribble directly on the value */
+		/*
+		 * Since we copied the string, we can scribble directly on the
+		 * value
+		 */
 		ptr = VARDATA(string);
 		m = VARSIZE(string) - VARHDRSZ;
 
@@ -292,7 +297,7 @@ initcap(PG_FUNCTION_ARGS)
 	{
 		text	   *string = PG_GETARG_TEXT_P(0);
 		text	   *result;
-		wchar_t	   *workspace;
+		wchar_t    *workspace;
 		int			wasalnum = 0;
 		int			i;
 
@@ -314,14 +319,17 @@ initcap(PG_FUNCTION_ARGS)
 		PG_RETURN_TEXT_P(result);
 	}
 	else
-#endif /* USE_WIDE_UPPER_LOWER */
+#endif   /* USE_WIDE_UPPER_LOWER */
 	{
 		text	   *string = PG_GETARG_TEXT_P_COPY(0);
 		int			wasalnum = 0;
 		char	   *ptr;
 		int			m;
 
-		/* Since we copied the string, we can scribble directly on the value */
+		/*
+		 * Since we copied the string, we can scribble directly on the
+		 * value
+		 */
 		ptr = VARDATA(string);
 		m = VARSIZE(string) - VARHDRSZ;
 
@@ -1068,7 +1076,7 @@ ascii(PG_FUNCTION_ARGS)
  ********************************************************************/
 
 Datum
-chr(PG_FUNCTION_ARGS)
+chr			(PG_FUNCTION_ARGS)
 {
 	int32		cvalue = PG_GETARG_INT32(0);
 	text	   *result;

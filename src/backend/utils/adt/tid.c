@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tid.c,v 1.46 2004/08/29 04:12:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tid.c,v 1.47 2004/08/29 05:06:49 momjian Exp $
  *
  * NOTES
  *	  input routine largely stolen from boxin().
@@ -242,7 +242,7 @@ currtid_for_view(Relation viewrel, ItemPointer tid)
 			if (list_length(rewrite->actions) != 1)
 				elog(ERROR, "only one select rule is allowed in views");
 			query = (Query *) linitial(rewrite->actions);
-			tle = get_tle_by_resno(query->targetList, tididx+1);
+			tle = get_tle_by_resno(query->targetList, tididx + 1);
 			if (tle && tle->expr && IsA(tle->expr, Var))
 			{
 				Var		   *var = (Var *) tle->expr;

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.173 2004/08/29 04:12:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.174 2004/08/29 05:06:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,11 +45,11 @@ static Result *create_result_plan(Query *root, ResultPath *best_path);
 static Material *create_material_plan(Query *root, MaterialPath *best_path);
 static Plan *create_unique_plan(Query *root, UniquePath *best_path);
 static SeqScan *create_seqscan_plan(Query *root, Path *best_path,
-									List *tlist, List *scan_clauses);
+					List *tlist, List *scan_clauses);
 static IndexScan *create_indexscan_plan(Query *root, IndexPath *best_path,
 					  List *tlist, List *scan_clauses);
 static TidScan *create_tidscan_plan(Query *root, TidPath *best_path,
-									List *tlist, List *scan_clauses);
+					List *tlist, List *scan_clauses);
 static SubqueryScan *create_subqueryscan_plan(Query *root, Path *best_path,
 						 List *tlist, List *scan_clauses);
 static FunctionScan *create_functionscan_plan(Query *root, Path *best_path,
@@ -712,7 +712,7 @@ create_indexscan_plan(Query *root,
 	 * If this is a innerjoin scan, the indexclauses will contain join
 	 * clauses that are not present in scan_clauses (since the passed-in
 	 * value is just the rel's baserestrictinfo list).  We must add these
-	 * clauses to scan_clauses to ensure they get checked.  In most cases
+	 * clauses to scan_clauses to ensure they get checked.	In most cases
 	 * we will remove the join clauses again below, but if a join clause
 	 * contains a special operator, we need to make sure it gets into the
 	 * scan_clauses.
@@ -721,12 +721,12 @@ create_indexscan_plan(Query *root,
 	{
 		/*
 		 * We don't currently support OR indexscans in joins, so we only
-		 * need to worry about the plain AND case.  Also, pointer comparison
-		 * should be enough to determine RestrictInfo matches.
+		 * need to worry about the plain AND case.	Also, pointer
+		 * comparison should be enough to determine RestrictInfo matches.
 		 */
 		Assert(list_length(best_path->indexclauses) == 1);
 		scan_clauses = list_union_ptr(scan_clauses,
-									  (List *) linitial(best_path->indexclauses));
+							 (List *) linitial(best_path->indexclauses));
 	}
 
 	/* Reduce RestrictInfo list to bare expressions */
@@ -751,7 +751,7 @@ create_indexscan_plan(Query *root,
 	stripped_indxquals = NIL;
 	foreach(l, indxquals)
 	{
-		List   *andlist = (List *) lfirst(l);
+		List	   *andlist = (List *) lfirst(l);
 
 		stripped_indxquals = lappend(stripped_indxquals,
 									 get_actual_clauses(andlist));
@@ -759,10 +759,10 @@ create_indexscan_plan(Query *root,
 
 	/*
 	 * The qpqual list must contain all restrictions not automatically
-	 * handled by the index.  All the predicates in the indexquals will
-	 * be checked (either by the index itself, or by nodeIndexscan.c), but
-	 * if there are any "special" operators involved then they must be
-	 * added to qpqual.  The upshot is that qpquals must contain scan_clauses
+	 * handled by the index.  All the predicates in the indexquals will be
+	 * checked (either by the index itself, or by nodeIndexscan.c), but if
+	 * there are any "special" operators involved then they must be added
+	 * to qpqual.  The upshot is that qpquals must contain scan_clauses
 	 * minus whatever appears in indxquals.
 	 */
 	if (list_length(indxquals) > 1)
@@ -770,7 +770,7 @@ create_indexscan_plan(Query *root,
 		/*
 		 * Build an expression representation of the indexqual, expanding
 		 * the implicit OR and AND semantics of the first- and
-		 * second-level lists.  (The odds that this will exactly match any
+		 * second-level lists.	(The odds that this will exactly match any
 		 * scan_clause are not great; perhaps we need more smarts here.)
 		 */
 		indxqual_or_expr = make_expr_from_indexclauses(indxquals);
@@ -1182,7 +1182,8 @@ fix_indxqual_references(List *indexquals, IndexPath *index_path,
 	Relids		baserelids = index_path->path.parent->relids;
 	int			baserelid = index_path->path.parent->relid;
 	List	   *index_info = index_path->indexinfo;
-	ListCell   *iq, *ii;
+	ListCell   *iq,
+			   *ii;
 
 	*fixed_indexquals = NIL;
 	*indxstrategy = NIL;
@@ -1211,7 +1212,7 @@ fix_indxqual_references(List *indexquals, IndexPath *index_path,
  *
  * For each qual clause, commute if needed to put the indexkey operand on the
  * left, and then fix its varattno.  (We do not need to change the other side
- * of the clause.)  Then determine the operator's strategy number and subtype
+ * of the clause.)	Then determine the operator's strategy number and subtype
  * number, and check for lossy index behavior.
  *
  * Returns four lists:
@@ -1247,7 +1248,7 @@ fix_indxqual_sublist(List *indexqual,
 
 		Assert(IsA(rinfo, RestrictInfo));
 		clause = (OpExpr *) rinfo->clause;
-		if (!IsA(clause, OpExpr) || list_length(clause->args) != 2)
+		if (!IsA(clause, OpExpr) ||list_length(clause->args) != 2)
 			elog(ERROR, "indexqual clause is not binary opclause");
 
 		/*
@@ -1272,16 +1273,17 @@ fix_indxqual_sublist(List *indexqual,
 		 * indexkey operand as needed, and get the index opclass.
 		 */
 		linitial(newclause->args) = fix_indxqual_operand(linitial(newclause->args),
-													   baserelid,
-													   index,
-													   &opclass);
+														 baserelid,
+														 index,
+														 &opclass);
 
 		*fixed_quals = lappend(*fixed_quals, newclause);
 
 		/*
-		 * Look up the (possibly commuted) operator in the operator class to
-		 * get its strategy numbers and the recheck indicator.  This also
-		 * double-checks that we found an operator matching the index.
+		 * Look up the (possibly commuted) operator in the operator class
+		 * to get its strategy numbers and the recheck indicator.  This
+		 * also double-checks that we found an operator matching the
+		 * index.
 		 */
 		get_op_opclass_properties(newclause->opno, opclass,
 								  &stratno, &stratsubtype, &recheck);
@@ -1642,7 +1644,7 @@ make_append(List *appendplans, bool isTarget, List *tlist)
 	{
 		Plan	   *subplan = (Plan *) lfirst(subnode);
 
-		if (subnode == list_head(appendplans))		/* first node? */
+		if (subnode == list_head(appendplans))	/* first node? */
 			plan->startup_cost = subplan->startup_cost;
 		plan->total_cost += subplan->total_cost;
 		plan->plan_rows += subplan->plan_rows;
@@ -1837,7 +1839,10 @@ make_sort_from_pathkeys(Query *root, Plan *lefttree, List *pathkeys)
 	AttrNumber *sortColIdx;
 	Oid		   *sortOperators;
 
-	/* We will need at most list_length(pathkeys) sort columns; possibly less */
+	/*
+	 * We will need at most list_length(pathkeys) sort columns; possibly
+	 * less
+	 */
 	numsortkeys = list_length(pathkeys);
 	sortColIdx = (AttrNumber *) palloc(numsortkeys * sizeof(AttrNumber));
 	sortOperators = (Oid *) palloc(numsortkeys * sizeof(Oid));
@@ -1876,8 +1881,8 @@ make_sort_from_pathkeys(Query *root, Plan *lefttree, List *pathkeys)
 			/* No matching Var; look for a computable expression */
 			foreach(j, keysublist)
 			{
-				List		*exprvars;
-				ListCell	*k;
+				List	   *exprvars;
+				ListCell   *k;
 
 				pathkey = (PathKeyItem *) lfirst(j);
 				exprvars = pull_var_clause(pathkey->key, false);
@@ -1948,7 +1953,10 @@ make_sort_from_sortclauses(Query *root, List *sortcls, Plan *lefttree)
 	AttrNumber *sortColIdx;
 	Oid		   *sortOperators;
 
-	/* We will need at most list_length(sortcls) sort columns; possibly less */
+	/*
+	 * We will need at most list_length(sortcls) sort columns; possibly
+	 * less
+	 */
 	numsortkeys = list_length(sortcls);
 	sortColIdx = (AttrNumber *) palloc(numsortkeys * sizeof(AttrNumber));
 	sortOperators = (Oid *) palloc(numsortkeys * sizeof(Oid));
@@ -2001,7 +2009,10 @@ make_sort_from_groupcols(Query *root,
 	AttrNumber *sortColIdx;
 	Oid		   *sortOperators;
 
-	/* We will need at most list_length(groupcls) sort columns; possibly less */
+	/*
+	 * We will need at most list_length(groupcls) sort columns; possibly
+	 * less
+	 */
 	numsortkeys = list_length(groupcls);
 	sortColIdx = (AttrNumber *) palloc(numsortkeys * sizeof(AttrNumber));
 	sortOperators = (Oid *) palloc(numsortkeys * sizeof(Oid));

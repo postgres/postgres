@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.92 2004/08/29 04:12:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.93 2004/08/29 05:06:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -119,10 +119,10 @@ replace_outer_var(Var *var)
 	 * The correct field should get stored into the Param slot at
 	 * execution in each part of the tree.
 	 *
-	 * We also need to demand a match on vartypmod.  This does not matter
-	 * for the Param itself, since those are not typmod-dependent, but it
-	 * does matter when make_subplan() instantiates a modified copy of the
-	 * Var for a subplan's args list.
+	 * We also need to demand a match on vartypmod.  This does not matter for
+	 * the Param itself, since those are not typmod-dependent, but it does
+	 * matter when make_subplan() instantiates a modified copy of the Var
+	 * for a subplan's args list.
 	 */
 	i = 0;
 	foreach(ppl, PlannerParamList)
@@ -509,7 +509,9 @@ convert_sublink_opers(List *lefthand, List *operOids,
 					  List **righthandIds)
 {
 	List	   *result = NIL;
-	ListCell   *l, *lefthand_item, *tlist_item;
+	ListCell   *l,
+			   *lefthand_item,
+			   *tlist_item;
 
 	*righthandIds = NIL;
 	lefthand_item = list_head(lefthand);
@@ -533,8 +535,9 @@ convert_sublink_opers(List *lefthand, List *operOids,
 									   te->resdom->restype,
 									   te->resdom->restypmod,
 									   0);
+
 			/*
-			 * Copy it for caller.  NB: we need a copy to avoid having
+			 * Copy it for caller.	NB: we need a copy to avoid having
 			 * doubly-linked substructure in the modified parse tree.
 			 */
 			*righthandIds = lappend(*righthandIds, copyObject(rightop));
@@ -616,8 +619,8 @@ subplan_is_hashable(SubLink *slink, SubPlan *node)
 		return false;
 
 	/*
-	 * The estimated size of the subquery result must fit in work_mem. (XXX
-	 * what about hashtable overhead?)
+	 * The estimated size of the subquery result must fit in work_mem.
+	 * (XXX what about hashtable overhead?)
 	 */
 	subquery_size = node->plan->plan_rows *
 		(MAXALIGN(node->plan->plan_width) + MAXALIGN(sizeof(HeapTupleData)));
@@ -746,8 +749,8 @@ convert_IN_to_join(Query *parse, SubLink *sublink)
 
 	/*
 	 * Build the result qual expressions.  As a side effect,
-	 * ininfo->sub_targetlist is filled with a list of Vars
-	 * representing the subselect outputs.
+	 * ininfo->sub_targetlist is filled with a list of Vars representing
+	 * the subselect outputs.
 	 */
 	exprs = convert_sublink_opers(sublink->lefthand,
 								  sublink->operOids,
@@ -851,25 +854,25 @@ process_sublinks_mutator(Node *node, bool *isTopQual)
 
 	/*
 	 * Because make_subplan() could return an AND or OR clause, we have to
-	 * take steps to preserve AND/OR flatness of a qual.  We assume the input
-	 * has been AND/OR flattened and so we need no recursion here.
+	 * take steps to preserve AND/OR flatness of a qual.  We assume the
+	 * input has been AND/OR flattened and so we need no recursion here.
 	 *
-	 * If we recurse down through anything other than an AND node,
-	 * we are definitely not at top qual level anymore.  (Due to the coding
-	 * here, we will not get called on the List subnodes of an AND, so no
-	 * check is needed for List.)
+	 * If we recurse down through anything other than an AND node, we are
+	 * definitely not at top qual level anymore.  (Due to the coding here,
+	 * we will not get called on the List subnodes of an AND, so no check
+	 * is needed for List.)
 	 */
 	if (and_clause(node))
 	{
-		List		*newargs = NIL;
-		ListCell	*l;
+		List	   *newargs = NIL;
+		ListCell   *l;
 
 		/* Still at qual top-level */
 		locTopQual = *isTopQual;
 
 		foreach(l, ((BoolExpr *) node)->args)
 		{
-			Node *newarg;
+			Node	   *newarg;
 
 			newarg = process_sublinks_mutator(lfirst(l),
 											  (void *) &locTopQual);
@@ -886,12 +889,12 @@ process_sublinks_mutator(Node *node, bool *isTopQual)
 
 	if (or_clause(node))
 	{
-		List		*newargs = NIL;
-		ListCell	*l;
+		List	   *newargs = NIL;
+		ListCell   *l;
 
 		foreach(l, ((BoolExpr *) node)->args)
 		{
-			Node *newarg;
+			Node	   *newarg;
 
 			newarg = process_sublinks_mutator(lfirst(l),
 											  (void *) &locTopQual);
@@ -1035,7 +1038,7 @@ finalize_plan(Plan *plan, List *rtable,
 
 		case T_Append:
 			{
-				ListCell *l;
+				ListCell   *l;
 
 				foreach(l, ((Append *) plan)->appendplans)
 				{

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteDefine.c,v 1.97 2004/08/29 04:12:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteDefine.c,v 1.98 2004/08/29 05:06:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -245,7 +245,7 @@ DefineQueryRewrite(RuleStmt *stmt)
 	 */
 	if (event_type == CMD_SELECT)
 	{
-		ListCell	   *tllist;
+		ListCell   *tllist;
 		int			i;
 
 		/*
@@ -272,7 +272,7 @@ DefineQueryRewrite(RuleStmt *stmt)
 		if (!is_instead || query->commandType != CMD_SELECT)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("rules on SELECT must have action INSTEAD SELECT")));
+			 errmsg("rules on SELECT must have action INSTEAD SELECT")));
 
 		/*
 		 * ... there can be no rule qual, ...
@@ -404,28 +404,28 @@ DefineQueryRewrite(RuleStmt *stmt)
 			if (heap_getnext(scanDesc, ForwardScanDirection) != NULL)
 				ereport(ERROR,
 					  (errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				errmsg("could not convert table \"%s\" to a view because it is not empty",
-					   event_obj->relname)));
+					   errmsg("could not convert table \"%s\" to a view because it is not empty",
+							  event_obj->relname)));
 			heap_endscan(scanDesc);
 
 			if (event_relation->rd_rel->reltriggers != 0)
 				ereport(ERROR,
-						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-						 errmsg("could not convert table \"%s\" to a view because it has triggers",
-								event_obj->relname),
-						 errhint("In particular, the table may not be involved in any foreign key relationships.")));
+					  (errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					   errmsg("could not convert table \"%s\" to a view because it has triggers",
+							  event_obj->relname),
+					   errhint("In particular, the table may not be involved in any foreign key relationships.")));
 
 			if (event_relation->rd_rel->relhasindex)
 				ereport(ERROR,
-						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-						 errmsg("could not convert table \"%s\" to a view because it has indexes",
-								event_obj->relname)));
+					  (errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					   errmsg("could not convert table \"%s\" to a view because it has indexes",
+							  event_obj->relname)));
 
 			if (event_relation->rd_rel->relhassubclass)
 				ereport(ERROR,
-						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-						 errmsg("could not convert table \"%s\" to a view because it has child tables",
-								event_obj->relname)));
+					  (errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					   errmsg("could not convert table \"%s\" to a view because it has child tables",
+							  event_obj->relname)));
 
 			RelisBecomingView = true;
 		}
@@ -441,8 +441,8 @@ DefineQueryRewrite(RuleStmt *stmt)
 	 * We want the rule's table references to be checked as though by the
 	 * rule owner, not the user referencing the rule.  Therefore, scan
 	 * through the rule's rtables and set the checkAsUser field on all
-	 * rtable entries.  We have to look at event_qual as well, in case
-	 * it contains sublinks.
+	 * rtable entries.	We have to look at event_qual as well, in case it
+	 * contains sublinks.
 	 */
 	foreach(l, action)
 	{
@@ -502,7 +502,7 @@ DefineQueryRewrite(RuleStmt *stmt)
  * Note: for a view (ON SELECT rule), the checkAsUser field of the *OLD*
  * RTE entry will be overridden when the view rule is expanded, and the
  * checkAsUser field of the *NEW* entry is irrelevant because that entry's
- * requiredPerms bits will always be zero.  However, for other types of rules
+ * requiredPerms bits will always be zero.	However, for other types of rules
  * it's important to set these fields to match the rule owner.  So we just set
  * them always.
  */

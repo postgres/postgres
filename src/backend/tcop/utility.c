@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.227 2004/08/29 04:12:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.228 2004/08/29 05:06:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -144,7 +144,7 @@ DropErrorMsgNonExistent(RangeVar *rel, char rightkind)
 					 errmsg(rentry->nonexistent_msg, rel->relname)));
 	}
 
-	Assert(false); /* Should be impossible */
+	Assert(false);				/* Should be impossible */
 }
 
 static void
@@ -326,10 +326,10 @@ ProcessUtility(Node *parsetree,
 
 				switch (stmt->kind)
 				{
-					/*
-					 * START TRANSACTION, as defined by SQL99:
-					 * Identical to BEGIN.  Same code for both.
-					 */
+						/*
+						 * START TRANSACTION, as defined by SQL99:
+						 * Identical to BEGIN.	Same code for both.
+						 */
 					case TRANS_STMT_BEGIN:
 					case TRANS_STMT_START:
 						{
@@ -367,14 +367,15 @@ ProcessUtility(Node *parsetree,
 
 					case TRANS_STMT_SAVEPOINT:
 						{
-							ListCell *cell;
-							char     *name = NULL;
+							ListCell   *cell;
+							char	   *name = NULL;
 
-							RequireTransactionChain((void *)stmt, "SAVEPOINT");
+							RequireTransactionChain((void *) stmt, "SAVEPOINT");
 
-							foreach (cell, stmt->options)
+							foreach(cell, stmt->options)
 							{
-								DefElem *elem = lfirst(cell);
+								DefElem    *elem = lfirst(cell);
+
 								if (strcmp(elem->defname, "savepoint_name") == 0)
 									name = strVal(elem->arg);
 							}
@@ -386,16 +387,17 @@ ProcessUtility(Node *parsetree,
 						break;
 
 					case TRANS_STMT_RELEASE:
-						RequireTransactionChain((void *)stmt, "RELEASE SAVEPOINT");
+						RequireTransactionChain((void *) stmt, "RELEASE SAVEPOINT");
 						ReleaseSavepoint(stmt->options);
 						break;
 
 					case TRANS_STMT_ROLLBACK_TO:
-						RequireTransactionChain((void *)stmt, "ROLLBACK TO SAVEPOINT");
+						RequireTransactionChain((void *) stmt, "ROLLBACK TO SAVEPOINT");
 						RollbackToSavepoint(stmt->options);
+
 						/*
-						 * CommitTransactionCommand is in charge
-						 * of re-defining the savepoint again
+						 * CommitTransactionCommand is in charge of
+						 * re-defining the savepoint again
 						 */
 						break;
 				}
@@ -686,10 +688,10 @@ ProcessUtility(Node *parsetree,
 							stmt->unique,
 							stmt->primary,
 							stmt->isconstraint,
-							false,				/* is_alter_table */
-							true,				/* check_rights */
-							false,				/* skip_build */
-							false);				/* quiet */
+							false,		/* is_alter_table */
+							true,		/* check_rights */
+							false,		/* skip_build */
+							false);		/* quiet */
 			}
 			break;
 
@@ -797,10 +799,10 @@ ProcessUtility(Node *parsetree,
 
 						if (strcmp(item->defname, "transaction_isolation") == 0)
 							SetPGVariable("transaction_isolation",
-									  list_make1(item->arg), n->is_local);
+									 list_make1(item->arg), n->is_local);
 						else if (strcmp(item->defname, "transaction_read_only") == 0)
 							SetPGVariable("transaction_read_only",
-									  list_make1(item->arg), n->is_local);
+									 list_make1(item->arg), n->is_local);
 					}
 				}
 				else if (strcmp(n->name, "SESSION CHARACTERISTICS") == 0)
@@ -813,10 +815,10 @@ ProcessUtility(Node *parsetree,
 
 						if (strcmp(item->defname, "transaction_isolation") == 0)
 							SetPGVariable("default_transaction_isolation",
-									  list_make1(item->arg), n->is_local);
+									 list_make1(item->arg), n->is_local);
 						else if (strcmp(item->defname, "transaction_read_only") == 0)
 							SetPGVariable("default_transaction_read_only",
-									  list_make1(item->arg), n->is_local);
+									 list_make1(item->arg), n->is_local);
 					}
 				}
 				else
@@ -1337,13 +1339,13 @@ CreateCommandTag(Node *parsetree)
 			{
 				AlterTableStmt *stmt = (AlterTableStmt *) parsetree;
 
-				/* 
-				 * We might be supporting ALTER INDEX here, so
-				 * set the completion table appropriately.
-				 * Catch all other possibilities with ALTER TABLE
+				/*
+				 * We might be supporting ALTER INDEX here, so set the
+				 * completion table appropriately. Catch all other
+				 * possibilities with ALTER TABLE
 				 */
 
-				if(stmt->relkind == OBJECT_INDEX) 
+				if (stmt->relkind == OBJECT_INDEX)
 					tag = "ALTER INDEX";
 				else
 					tag = "ALTER TABLE";

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/nabstime.c,v 1.124 2004/08/29 04:12:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/nabstime.c,v 1.125 2004/08/29 05:06:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -181,7 +181,7 @@ void
 abstime2tm(AbsoluteTime _time, int *tzp, struct pg_tm * tm, char **tzn)
 {
 	pg_time_t	time = (pg_time_t) _time;
-	struct pg_tm  *tx;
+	struct pg_tm *tx;
 
 	/*
 	 * If HasCTZSet is true then we have a brute force time zone
@@ -302,7 +302,7 @@ abstimein(PG_FUNCTION_ARGS)
 	AbsoluteTime result;
 	fsec_t		fsec;
 	int			tz = 0;
-	struct pg_tm	date,
+	struct pg_tm date,
 			   *tm = &date;
 	int			dterr;
 	char	   *field[MAXDATEFIELDS];
@@ -368,7 +368,7 @@ abstimeout(PG_FUNCTION_ARGS)
 	char	   *result;
 	int			tz;
 	double		fsec = 0;
-	struct pg_tm	tt,
+	struct pg_tm tt,
 			   *tm = &tt;
 	char		buf[MAXDATELEN + 1];
 	char		zone[MAXDATELEN + 1],
@@ -445,9 +445,9 @@ static int
 abstime_cmp_internal(AbsoluteTime a, AbsoluteTime b)
 {
 	/*
-	 * We consider all INVALIDs to be equal and larger than any non-INVALID.
-	 * This is somewhat arbitrary; the important thing is to have a
-	 * consistent sort order.
+	 * We consider all INVALIDs to be equal and larger than any
+	 * non-INVALID. This is somewhat arbitrary; the important thing is to
+	 * have a consistent sort order.
 	 */
 	if (a == INVALID_ABSTIME)
 	{
@@ -551,7 +551,7 @@ timestamp_abstime(PG_FUNCTION_ARGS)
 	AbsoluteTime result;
 	fsec_t		fsec;
 	int			tz;
-	struct pg_tm	tt,
+	struct pg_tm tt,
 			   *tm = &tt;
 
 	if (TIMESTAMP_IS_NOBEGIN(timestamp))
@@ -582,7 +582,7 @@ abstime_timestamp(PG_FUNCTION_ARGS)
 {
 	AbsoluteTime abstime = PG_GETARG_ABSOLUTETIME(0);
 	Timestamp	result;
-	struct pg_tm	tt,
+	struct pg_tm tt,
 			   *tm = &tt;
 	int			tz;
 	char		zone[MAXDATELEN + 1],
@@ -627,7 +627,7 @@ timestamptz_abstime(PG_FUNCTION_ARGS)
 	TimestampTz timestamp = PG_GETARG_TIMESTAMP(0);
 	AbsoluteTime result;
 	fsec_t		fsec;
-	struct pg_tm	tt,
+	struct pg_tm tt,
 			   *tm = &tt;
 
 	if (TIMESTAMP_IS_NOBEGIN(timestamp))
@@ -655,7 +655,7 @@ abstime_timestamptz(PG_FUNCTION_ARGS)
 {
 	AbsoluteTime abstime = PG_GETARG_ABSOLUTETIME(0);
 	TimestampTz result;
-	struct pg_tm	tt,
+	struct pg_tm tt,
 			   *tm = &tt;
 	int			tz;
 	char		zone[MAXDATELEN + 1],
@@ -703,7 +703,7 @@ reltimein(PG_FUNCTION_ARGS)
 {
 	char	   *str = PG_GETARG_CSTRING(0);
 	RelativeTime result;
-	struct pg_tm	tt,
+	struct pg_tm tt,
 			   *tm = &tt;
 	fsec_t		fsec;
 	int			dtype;
@@ -751,7 +751,7 @@ reltimeout(PG_FUNCTION_ARGS)
 {
 	RelativeTime time = PG_GETARG_RELATIVETIME(0);
 	char	   *result;
-	struct pg_tm	tt,
+	struct pg_tm tt,
 			   *tm = &tt;
 	char		buf[MAXDATELEN + 1];
 
@@ -882,7 +882,7 @@ tintervalrecv(PG_FUNCTION_ARGS)
 		  interval->status == T_INTERVAL_VALID))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
-				 errmsg("invalid status in external \"tinterval\" value")));
+			  errmsg("invalid status in external \"tinterval\" value")));
 
 	interval->data[0] = pq_getmsgint(buf, sizeof(interval->data[0]));
 	interval->data[1] = pq_getmsgint(buf, sizeof(interval->data[1]));
@@ -1138,9 +1138,9 @@ static int
 reltime_cmp_internal(RelativeTime a, RelativeTime b)
 {
 	/*
-	 * We consider all INVALIDs to be equal and larger than any non-INVALID.
-	 * This is somewhat arbitrary; the important thing is to have a
-	 * consistent sort order.
+	 * We consider all INVALIDs to be equal and larger than any
+	 * non-INVALID. This is somewhat arbitrary; the important thing is to
+	 * have a consistent sort order.
 	 */
 	if (a == INVALID_RELTIME)
 	{
@@ -1252,7 +1252,7 @@ tintervalsame(PG_FUNCTION_ARGS)
  * tinterval comparison routines
  *
  * Note: comparison is based on the lengths of the intervals, not on
- * endpoint value.  This is pretty bogus, but since it's only a legacy
+ * endpoint value.	This is pretty bogus, but since it's only a legacy
  * datatype I'm not going to propose changing it.
  */
 static int
@@ -1264,9 +1264,9 @@ tinterval_cmp_internal(TimeInterval a, TimeInterval b)
 	AbsoluteTime b_len;
 
 	/*
-	 * We consider all INVALIDs to be equal and larger than any non-INVALID.
-	 * This is somewhat arbitrary; the important thing is to have a
-	 * consistent sort order.
+	 * We consider all INVALIDs to be equal and larger than any
+	 * non-INVALID. This is somewhat arbitrary; the important thing is to
+	 * have a consistent sort order.
 	 */
 	a_invalid = ((a->status == T_INTERVAL_INVAL) ||
 				 (a->data[0] == INVALID_ABSTIME) ||

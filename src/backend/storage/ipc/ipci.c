@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipci.c,v 1.70 2004/08/29 04:12:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipci.c,v 1.71 2004/08/29 05:06:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,15 +55,16 @@ CreateSharedMemoryAndSemaphores(bool makePrivate,
 								int port)
 {
 	PGShmemHeader *seghdr = NULL;
+
 	if (!IsUnderPostmaster)
 	{
-		int	size;
-		int	numSemas;
+		int			size;
+		int			numSemas;
 
 		/*
 		 * Size of the Postgres shared-memory block is estimated via
-		 * moderately-accurate estimates for the big hogs, plus 100K for the
-		 * stuff that's too small to bother with estimating.
+		 * moderately-accurate estimates for the big hogs, plus 100K for
+		 * the stuff that's too small to bother with estimating.
 		 */
 		size = hash_estimate_size(SHMEM_INDEX_SIZE, sizeof(ShmemIndexEnt));
 		size += BufferShmemSize();
@@ -99,9 +100,8 @@ CreateSharedMemoryAndSemaphores(bool makePrivate,
 	else
 	{
 		/*
-		 * Attach to the shmem segment.
-		 * (this should only ever be reached by EXEC_BACKEND code,
-		 *  and only then with makePrivate == false)
+		 * Attach to the shmem segment. (this should only ever be reached
+		 * by EXEC_BACKEND code, and only then with makePrivate == false)
 		 */
 #ifdef EXEC_BACKEND
 		Assert(!makePrivate);
@@ -165,6 +165,7 @@ CreateSharedMemoryAndSemaphores(bool makePrivate,
 	BgWriterShmemInit();
 
 #ifdef EXEC_BACKEND
+
 	/*
 	 * Alloc the win32 shared backend array
 	 */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/schemacmds.c,v 1.23 2004/08/29 04:12:30 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/schemacmds.c,v 1.24 2004/08/29 05:06:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -103,12 +103,12 @@ CreateSchemaCommand(CreateSchemaStmt *stmt)
 		errdetail("The prefix \"pg_\" is reserved for system schemas.")));
 
 	/*
-	 * Select default tablespace for schema.  If not given, use zero
-	 * which implies the database's default tablespace.
+	 * Select default tablespace for schema.  If not given, use zero which
+	 * implies the database's default tablespace.
 	 */
 	if (stmt->tablespacename)
 	{
-		AclResult   aclresult;
+		AclResult	aclresult;
 
 		tablespaceId = get_tablespace_oid(stmt->tablespacename);
 		if (!OidIsValid(tablespaceId))
@@ -122,7 +122,9 @@ CreateSchemaCommand(CreateSchemaStmt *stmt)
 		if (aclresult != ACLCHECK_OK)
 			aclcheck_error(aclresult, ACL_KIND_TABLESPACE,
 						   stmt->tablespacename);
-	} else {
+	}
+	else
+	{
 		tablespaceId = InvalidOid;
 		/* note there is no permission check in this path */
 	}
@@ -316,20 +318,20 @@ AlterSchemaOwner(const char *name, AclId newOwnerSysId)
 {
 	HeapTuple	tup;
 	Relation	rel;
-	Form_pg_namespace	nspForm;
+	Form_pg_namespace nspForm;
 
 	rel = heap_openr(NamespaceRelationName, RowExclusiveLock);
 
 	tup = SearchSysCache(NAMESPACENAME,
-							 CStringGetDatum(name),
-							 0, 0, 0);
+						 CStringGetDatum(name),
+						 0, 0, 0);
 	if (!HeapTupleIsValid(tup))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_SCHEMA),
 				 errmsg("schema \"%s\" does not exist", name)));
 	nspForm = (Form_pg_namespace) GETSTRUCT(tup);
 
-	/* 
+	/*
 	 * If the new owner is the same as the existing owner, consider the
 	 * command to have succeeded.  This is for dump restoration purposes.
 	 */
@@ -338,7 +340,7 @@ AlterSchemaOwner(const char *name, AclId newOwnerSysId)
 		Datum		repl_val[Natts_pg_namespace];
 		char		repl_null[Natts_pg_namespace];
 		char		repl_repl[Natts_pg_namespace];
-		Acl		*newAcl;
+		Acl		   *newAcl;
 		Datum		aclDatum;
 		bool		isNull;
 		HeapTuple	newtuple;
@@ -377,7 +379,7 @@ AlterSchemaOwner(const char *name, AclId newOwnerSysId)
 
 		heap_freetuple(newtuple);
 	}
-	
+
 	ReleaseSysCache(tup);
 	heap_close(rel, NoLock);
 }

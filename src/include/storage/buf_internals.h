@@ -2,13 +2,13 @@
  *
  * buf_internals.h
  *	  Internal definitions for buffer manager and the buffer replacement
- *    strategy.
+ *	  strategy.
  *
  *
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/buf_internals.h,v 1.72 2004/08/29 04:13:10 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/storage/buf_internals.h,v 1.73 2004/08/29 05:06:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,12 +24,15 @@
 /*
  * Flags for buffer descriptors
  */
-#define BM_DIRTY				(1 << 0) /* data needs writing */
-#define BM_VALID				(1 << 1) /* data is valid */
-#define BM_IO_IN_PROGRESS		(1 << 2) /* read or write in progress */
-#define BM_IO_ERROR				(1 << 3) /* previous I/O failed */
-#define BM_JUST_DIRTIED			(1 << 4) /* dirtied since write started */
-#define BM_PIN_COUNT_WAITER		(1 << 5) /* have waiter for sole pin */
+#define BM_DIRTY				(1 << 0)		/* data needs writing */
+#define BM_VALID				(1 << 1)		/* data is valid */
+#define BM_IO_IN_PROGRESS		(1 << 2)		/* read or write in
+												 * progress */
+#define BM_IO_ERROR				(1 << 3)		/* previous I/O failed */
+#define BM_JUST_DIRTIED			(1 << 4)		/* dirtied since write
+												 * started */
+#define BM_PIN_COUNT_WAITER		(1 << 5)		/* have waiter for sole
+												 * pin */
 
 typedef bits16 BufFlags;
 
@@ -137,13 +140,13 @@ typedef struct
  */
 typedef struct
 {
-	int				prev;		/* list links */
-	int				next;
-	short			list;		/* ID of list it is currently in */
-	bool			t1_vacuum;	/* t => present only because of VACUUM */
-	TransactionId	t1_xid;		/* the xid this entry went onto T1 */
-	BufferTag		buf_tag;	/* page identifier */
-	int				buf_id;		/* currently assigned data buffer, or -1 */
+	int			prev;			/* list links */
+	int			next;
+	short		list;			/* ID of list it is currently in */
+	bool		t1_vacuum;		/* t => present only because of VACUUM */
+	TransactionId t1_xid;		/* the xid this entry went onto T1 */
+	BufferTag	buf_tag;		/* page identifier */
+	int			buf_id;			/* currently assigned data buffer, or -1 */
 } BufferStrategyCDB;
 
 /*
@@ -151,22 +154,23 @@ typedef struct
  */
 typedef struct
 {
-	int		target_T1_size;				/* What T1 size are we aiming for */
-	int		listUnusedCDB;				/* All unused StrategyCDB */
-	int		listHead[STRAT_NUM_LISTS];	/* ARC lists B1, T1, T2 and B2 */
-	int		listTail[STRAT_NUM_LISTS];
-	int		listSize[STRAT_NUM_LISTS];
-	Buffer	listFreeBuffers;			/* List of unused buffers */
+	int			target_T1_size; /* What T1 size are we aiming for */
+	int			listUnusedCDB;	/* All unused StrategyCDB */
+	int			listHead[STRAT_NUM_LISTS];		/* ARC lists B1, T1, T2
+												 * and B2 */
+	int			listTail[STRAT_NUM_LISTS];
+	int			listSize[STRAT_NUM_LISTS];
+	Buffer		listFreeBuffers;	/* List of unused buffers */
 
-	long	num_lookup;					/* Some hit statistics */
-	long	num_hit[STRAT_NUM_LISTS];
-	time_t	stat_report;
+	long		num_lookup;		/* Some hit statistics */
+	long		num_hit[STRAT_NUM_LISTS];
+	time_t		stat_report;
 
 	/* Array of CDB's starts here */
-	BufferStrategyCDB	cdb[1];			/* VARIABLE SIZE ARRAY */
+	BufferStrategyCDB cdb[1];	/* VARIABLE SIZE ARRAY */
 } BufferStrategyControl;
 
- 
+
 /* counters in buf_init.c */
 extern long int ReadBufferCount;
 extern long int ReadLocalBufferCount;
@@ -184,19 +188,19 @@ extern long int LocalBufferFlushCount;
 
 /* freelist.c */
 extern BufferDesc *StrategyBufferLookup(BufferTag *tagPtr, bool recheck,
-										int *cdb_found_index);
+					 int *cdb_found_index);
 extern BufferDesc *StrategyGetBuffer(int *cdb_replace_index);
 extern void StrategyReplaceBuffer(BufferDesc *buf, BufferTag *newTag,
-								  int cdb_found_index, int cdb_replace_index);
+					  int cdb_found_index, int cdb_replace_index);
 extern void StrategyInvalidateBuffer(BufferDesc *buf);
 extern void StrategyHintVacuum(bool vacuum_active);
 extern int StrategyDirtyBufferList(BufferDesc **buffers, BufferTag *buftags,
-								   int max_buffers);
+						int max_buffers);
 extern void StrategyInitialize(bool init);
 
 /* buf_table.c */
 extern void InitBufTable(int size);
-extern int BufTableLookup(BufferTag *tagPtr);
+extern int	BufTableLookup(BufferTag *tagPtr);
 extern void BufTableInsert(BufferTag *tagPtr, int cdb_id);
 extern void BufTableDelete(BufferTag *tagPtr);
 

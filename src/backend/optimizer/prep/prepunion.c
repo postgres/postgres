@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.115 2004/08/29 04:12:34 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.116 2004/08/29 05:06:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,7 +69,7 @@ static Node *adjust_inherited_attrs_mutator(Node *node,
 							   adjust_inherited_attrs_context *context);
 static Relids adjust_relid_set(Relids relids, Index oldrelid, Index newrelid);
 static List *adjust_inherited_tlist(List *tlist,
-									adjust_inherited_attrs_context *context);
+					   adjust_inherited_attrs_context *context);
 
 
 /*
@@ -371,7 +371,7 @@ recurse_union_children(Node *setOp, Query *parse,
 					   SetOperationStmt *top_union,
 					   List *refnames_tlist)
 {
-	List   *child_sortclauses;
+	List	   *child_sortclauses;
 
 	if (IsA(setOp, SetOperationStmt))
 	{
@@ -754,7 +754,7 @@ expand_inherited_rtentry(Query *parse, Index rti, bool dup_parent)
 	if (dup_parent)
 		inhRTIs = NIL;
 	else
-		inhRTIs = list_make1_int(rti);		/* include original RTE in result */
+		inhRTIs = list_make1_int(rti);	/* include original RTE in result */
 
 	foreach(l, inhOIDs)
 	{
@@ -811,8 +811,9 @@ adjust_inherited_attrs(Node *node,
 	}
 
 	/*
-	 * We assume that by now the planner has acquired at least AccessShareLock
-	 * on both rels, and so we need no additional lock now.
+	 * We assume that by now the planner has acquired at least
+	 * AccessShareLock on both rels, and so we need no additional lock
+	 * now.
 	 */
 	oldrelation = heap_open(old_relid, NoLock);
 	newrelation = heap_open(new_relid, NoLock);
@@ -913,21 +914,21 @@ static Node *
 generate_whole_row(Var *var,
 				   adjust_inherited_attrs_context *context)
 {
-	RowExpr		*rowexpr;
-	List		*fields = NIL;
+	RowExpr    *rowexpr;
+	List	   *fields = NIL;
 	int			oldnatts = context->old_tupdesc->natts;
 	int			i;
 
 	for (i = 0; i < oldnatts; i++)
 	{
 		Form_pg_attribute att = context->old_tupdesc->attrs[i];
-		Var		*newvar;
+		Var		   *newvar;
 
 		if (att->attisdropped)
 		{
 			/*
-			 * can't use atttypid here, but it doesn't really matter
-			 * what type the Const claims to be.
+			 * can't use atttypid here, but it doesn't really matter what
+			 * type the Const claims to be.
 			 */
 			newvar = (Var *) makeNullConst(INT4OID);
 		}
@@ -941,7 +942,7 @@ generate_whole_row(Var *var,
 	}
 	rowexpr = makeNode(RowExpr);
 	rowexpr->args = fields;
-	rowexpr->row_typeid = var->vartype;	/* report parent's rowtype */
+	rowexpr->row_typeid = var->vartype; /* report parent's rowtype */
 	rowexpr->row_format = COERCE_IMPLICIT_CAST;
 
 	return (Node *) rowexpr;

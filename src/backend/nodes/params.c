@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/params.c,v 1.2 2004/08/29 04:12:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/params.c,v 1.3 2004/08/29 05:06:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,8 @@ ParamListInfo
 copyParamList(ParamListInfo from)
 {
 	ParamListInfo retval;
-	int i, size;
+	int			i,
+				size;
 
 	if (from == NULL)
 		return NULL;
@@ -39,7 +40,8 @@ copyParamList(ParamListInfo from)
 
 	retval = (ParamListInfo) palloc0((size + 1) * sizeof(ParamListInfoData));
 
-	for (i = 0; i < size; i++) {
+	for (i = 0; i < size; i++)
+	{
 		/* copy metadata */
 		retval[i].kind = from[i].kind;
 		if (from[i].kind == PARAM_NAMED)
@@ -51,12 +53,12 @@ copyParamList(ParamListInfo from)
 		retval[i].isnull = from[i].isnull;
 		if (from[i].isnull)
 		{
-			retval[i].value = from[i].value; /* nulls just copy */
+			retval[i].value = from[i].value;	/* nulls just copy */
 		}
 		else
 		{
-			int16 typLen;
-			bool  typByVal;
+			int16		typLen;
+			bool		typByVal;
 
 			get_typlenbyval(from[i].ptype, &typLen, &typByVal);
 			retval[i].value = datumCopy(from[i].value, typByVal, typLen);

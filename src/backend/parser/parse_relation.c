@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.99 2004/08/29 04:12:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.100 2004/08/29 05:06:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,9 +43,9 @@ static void scanNameSpaceForConflict(ParseState *pstate, Node *nsnode,
 						 RangeTblEntry *rte1, const char *aliasname1);
 static bool isForUpdate(ParseState *pstate, char *refname);
 static void expandRelation(Oid relid, Alias *eref,
-						   int rtindex, int sublevels_up,
-						   bool include_dropped,
-						   List **colnames, List **colvars);
+			   int rtindex, int sublevels_up,
+			   bool include_dropped,
+			   List **colnames, List **colvars);
 static int	specialAttNum(const char *attname);
 static void warnAutoRange(ParseState *pstate, RangeVar *relation);
 
@@ -142,7 +142,7 @@ scanNameSpaceForRefname(ParseState *pstate, Node *nsnode,
 		return NULL;
 	if (IsA(nsnode, RangeTblRef))
 	{
-		int			   varno = ((RangeTblRef *) nsnode)->rtindex;
+		int			varno = ((RangeTblRef *) nsnode)->rtindex;
 		RangeTblEntry *rte = rt_fetch(varno, pstate->p_rtable);
 
 		if (strcmp(rte->eref->aliasname, refname) == 0)
@@ -489,14 +489,15 @@ scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte, char *colname)
 	 * Scan the user column names (or aliases) for a match. Complain if
 	 * multiple matches.
 	 *
-	 * Note: eref->colnames may include entries for dropped columns,
-	 * but those will be empty strings that cannot match any legal SQL
+	 * Note: eref->colnames may include entries for dropped columns, but
+	 * those will be empty strings that cannot match any legal SQL
 	 * identifier, so we don't bother to test for that case here.
 	 *
 	 * Should this somehow go wrong and we try to access a dropped column,
 	 * we'll still catch it by virtue of the checks in
-	 * get_rte_attribute_type(), which is called by make_var().  That routine
-	 * has to do a cache lookup anyway, so the check there is cheap.
+	 * get_rte_attribute_type(), which is called by make_var().  That
+	 * routine has to do a cache lookup anyway, so the check there is
+	 * cheap.
 	 */
 	foreach(c, rte->eref->colnames)
 	{
@@ -723,7 +724,7 @@ buildRelationAliases(TupleDesc tupdesc, Alias *alias, Alias *eref)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
 				 errmsg("table \"%s\" has %d columns available but %d columns specified",
-						eref->aliasname, maxattrs - numdropped, numaliases)));
+				   eref->aliasname, maxattrs - numdropped, numaliases)));
 }
 
 /*
@@ -761,8 +762,8 @@ addRangeTableEntry(ParseState *pstate,
 	rte->relid = RelationGetRelid(rel);
 
 	/*
-	 * Build the list of effective column names using user-supplied aliases
-	 * and/or actual column names.
+	 * Build the list of effective column names using user-supplied
+	 * aliases and/or actual column names.
 	 */
 	rte->eref = makeAlias(refname, NIL);
 	buildRelationAliases(rel->rd_att, alias, rte->eref);
@@ -788,7 +789,7 @@ addRangeTableEntry(ParseState *pstate,
 	rte->inFromCl = inFromCl;
 
 	rte->requiredPerms = ACL_SELECT;
-	rte->checkAsUser = 0;			/* not set-uid by default, either */
+	rte->checkAsUser = 0;		/* not set-uid by default, either */
 
 	/*
 	 * Add completed RTE to pstate's range table list, but not to join
@@ -834,8 +835,8 @@ addRangeTableEntryForRelation(ParseState *pstate,
 	rte->relid = relid;
 
 	/*
-	 * Build the list of effective column names using user-supplied aliases
-	 * and/or actual column names.
+	 * Build the list of effective column names using user-supplied
+	 * aliases and/or actual column names.
 	 */
 	rte->eref = makeAlias(refname, NIL);
 	buildRelationAliases(rel->rd_att, alias, rte->eref);
@@ -861,7 +862,7 @@ addRangeTableEntryForRelation(ParseState *pstate,
 	rte->inFromCl = inFromCl;
 
 	rte->requiredPerms = ACL_SELECT;
-	rte->checkAsUser = 0;			/* not set-uid by default, either */
+	rte->checkAsUser = 0;		/* not set-uid by default, either */
 
 	/*
 	 * Add completed RTE to pstate's range table list, but not to join
@@ -1131,7 +1132,7 @@ addRangeTableEntryForJoin(ParseState *pstate,
 	/* fill in any unspecified alias columns */
 	if (numaliases < list_length(colnames))
 		eref->colnames = list_concat(eref->colnames,
-									 list_copy_tail(colnames, numaliases));
+								   list_copy_tail(colnames, numaliases));
 
 	rte->eref = eref;
 
@@ -1273,8 +1274,8 @@ expandRTE(List *rtable, int rtindex, int sublevels_up,
 		case RTE_SUBQUERY:
 			{
 				/* Subquery RTE */
-				ListCell	   *aliasp_item = list_head(rte->eref->colnames);
-				ListCell	   *tlistitem;
+				ListCell   *aliasp_item = list_head(rte->eref->colnames);
+				ListCell   *tlistitem;
 
 				varattno = 0;
 				foreach(tlistitem, rte->subquery->targetList)
@@ -1338,7 +1339,7 @@ expandRTE(List *rtable, int rtindex, int sublevels_up,
 					 */
 					if (colnames)
 						*colnames = lappend(*colnames,
-											linitial(rte->eref->colnames));
+										  linitial(rte->eref->colnames));
 
 					if (colvars)
 					{
@@ -1396,13 +1397,13 @@ expandRTE(List *rtable, int rtindex, int sublevels_up,
 		case RTE_JOIN:
 			{
 				/* Join RTE */
-				ListCell	*colname;
-				ListCell	*aliasvar;
+				ListCell   *colname;
+				ListCell   *aliasvar;
 
 				Assert(list_length(rte->eref->colnames) == list_length(rte->joinaliasvars));
 
 				varattno = 0;
-				forboth (colname, rte->eref->colnames, aliasvar, rte->joinaliasvars)
+				forboth(colname, rte->eref->colnames, aliasvar, rte->joinaliasvars)
 				{
 					varattno++;
 
@@ -1420,16 +1421,16 @@ expandRTE(List *rtable, int rtindex, int sublevels_up,
 						{
 							if (colnames)
 								*colnames = lappend(*colnames,
-													makeString(pstrdup("")));
+												makeString(pstrdup("")));
 							if (colvars)
 							{
 								/*
 								 * can't use atttypid here, but it doesn't
-								 * really matter what type the Const claims to
-								 * be.
+								 * really matter what type the Const
+								 * claims to be.
 								 */
 								*colvars = lappend(*colvars,
-												   makeNullConst(INT4OID));
+												 makeNullConst(INT4OID));
 							}
 						}
 						continue;
@@ -1493,8 +1494,8 @@ expandRelation(Oid relid, Alias *eref, int rtindex, int sublevels_up,
 				if (colvars)
 				{
 					/*
-					 * can't use atttypid here, but it doesn't really matter
-					 * what type the Const claims to be.
+					 * can't use atttypid here, but it doesn't really
+					 * matter what type the Const claims to be.
 					 */
 					*colvars = lappend(*colvars, makeNullConst(INT4OID));
 				}
@@ -1559,7 +1560,8 @@ expandRelAttrs(ParseState *pstate, List *rtable, int rtindex, int sublevels_up)
 		te_list = lappend(te_list, te);
 	}
 
-	Assert(name == NULL && var == NULL); /* lists not the same length? */
+	Assert(name == NULL && var == NULL);		/* lists not the same
+												 * length? */
 
 	return te_list;
 }
@@ -1761,7 +1763,10 @@ get_rte_attribute_is_dropped(List *rtable, int rtindex, AttrNumber attnum)
 	{
 		case RTE_RELATION:
 			{
-				/* Plain relation RTE --- get the attribute's catalog entry */
+				/*
+				 * Plain relation RTE --- get the attribute's catalog
+				 * entry
+				 */
 				HeapTuple	tp;
 				Form_pg_attribute att_tup;
 
@@ -1784,18 +1789,20 @@ get_rte_attribute_is_dropped(List *rtable, int rtindex, AttrNumber attnum)
 		case RTE_JOIN:
 			{
 				/*
-				 * A join RTE would not have dropped columns when constructed,
-				 * but one in a stored rule might contain columns that were
-				 * dropped from the underlying tables, if said columns are
-				 * nowhere explicitly referenced in the rule.  So we have to
-				 * recursively look at the referenced column.
+				 * A join RTE would not have dropped columns when
+				 * constructed, but one in a stored rule might contain
+				 * columns that were dropped from the underlying tables,
+				 * if said columns are nowhere explicitly referenced in
+				 * the rule.  So we have to recursively look at the
+				 * referenced column.
 				 */
-				Var		*aliasvar;
+				Var		   *aliasvar;
 
 				if (attnum <= 0 ||
 					attnum > list_length(rte->joinaliasvars))
 					elog(ERROR, "invalid varattno %d", attnum);
 				aliasvar = (Var *) list_nth(rte->joinaliasvars, attnum - 1);
+
 				/*
 				 * If the list item isn't a simple Var, then it must
 				 * represent a merged column, ie a USING column, and so it
@@ -1807,7 +1814,7 @@ get_rte_attribute_is_dropped(List *rtable, int rtindex, AttrNumber attnum)
 				else
 					result = get_rte_attribute_is_dropped(rtable,
 														  aliasvar->varno,
-														  aliasvar->varattno);
+													 aliasvar->varattno);
 			}
 			break;
 		case RTE_FUNCTION:
@@ -1865,7 +1872,7 @@ get_rte_attribute_is_dropped(List *rtable, int rtindex, AttrNumber attnum)
 TargetEntry *
 get_tle_by_resno(List *tlist, AttrNumber resno)
 {
-	ListCell  *l;
+	ListCell   *l;
 
 	foreach(l, tlist)
 	{

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varchar.c,v 1.106 2004/08/29 04:12:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varchar.c,v 1.107 2004/08/29 05:06:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -221,9 +221,9 @@ bpchar(PG_FUNCTION_ARGS)
 			for (i = maxmblen - VARHDRSZ; i < len - VARHDRSZ; i++)
 				if (*(VARDATA(source) + i) != ' ')
 					ereport(ERROR,
-							(errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
-						  errmsg("value too long for type character(%d)",
-								 maxlen - VARHDRSZ)));
+						  (errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
+						   errmsg("value too long for type character(%d)",
+								  maxlen - VARHDRSZ)));
 		}
 
 		len = maxmblen;
@@ -514,7 +514,7 @@ bpcharlen(PG_FUNCTION_ARGS)
 
 	/* get number of bytes, ignoring trailing spaces */
 	len = bcTruelen(arg);
-	
+
 	/* in multibyte encoding, convert to number of characters */
 	if (pg_database_encoding_max_length() != 1)
 		len = pg_mbstrlen_with_len(VARDATA(arg), len);

@@ -6,4 +6,4 @@
 typedef timestamp dtime_t;
 typedef interval intrvl_t;
 
-#endif /* ndef _ECPG_DATETIME_H */
+#endif   /* ndef _ECPG_DATETIME_H */

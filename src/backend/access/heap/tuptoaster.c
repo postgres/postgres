@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.44 2004/08/29 04:12:20 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.45 2004/08/29 05:06:40 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -288,13 +288,13 @@ toast_delete(Relation rel, HeapTuple oldtup)
 	/*
 	 * Get the tuple descriptor and break down the tuple into fields.
 	 *
-	 * NOTE: it's debatable whether to use heap_deformtuple() here or
-	 * just heap_getattr() only the varlena columns.  The latter could
-	 * win if there are few varlena columns and many non-varlena ones.
-	 * However, heap_deformtuple costs only O(N) while the heap_getattr
-	 * way would cost O(N^2) if there are many varlena columns, so it
-	 * seems better to err on the side of linear cost.  (We won't even
-	 * be here unless there's at least one varlena column, by the way.)
+	 * NOTE: it's debatable whether to use heap_deformtuple() here or just
+	 * heap_getattr() only the varlena columns.  The latter could win if
+	 * there are few varlena columns and many non-varlena ones. However,
+	 * heap_deformtuple costs only O(N) while the heap_getattr way would
+	 * cost O(N^2) if there are many varlena columns, so it seems better
+	 * to err on the side of linear cost.  (We won't even be here unless
+	 * there's at least one varlena column, by the way.)
 	 */
 	tupleDesc = rel->rd_att;
 	att = tupleDesc->attrs;
@@ -311,7 +311,7 @@ toast_delete(Relation rel, HeapTuple oldtup)
 	{
 		if (att[i]->attlen == -1)
 		{
-			Datum	value = toast_values[i];
+			Datum		value = toast_values[i];
 
 			if (toast_nulls[i] != 'n' && VARATT_IS_EXTERNAL(value))
 				toast_delete_datum(rel, value);
@@ -791,7 +791,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
  *
  *	If a Datum is of composite type, "flatten" it to contain no toasted fields.
  *	This must be invoked on any potentially-composite field that is to be
- *	inserted into a tuple.  Doing this preserves the invariant that toasting
+ *	inserted into a tuple.	Doing this preserves the invariant that toasting
  *	goes only one level deep in a tuple.
  * ----------
  */
@@ -1105,7 +1105,7 @@ toast_delete_datum(Relation rel, Datum value)
 	ScanKeyInit(&toastkey,
 				(AttrNumber) 1,
 				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(attr->va_content.va_external.va_valueid));
+			  ObjectIdGetDatum(attr->va_content.va_external.va_valueid));
 
 	/*
 	 * Find the chunks by index
@@ -1176,7 +1176,7 @@ toast_fetch_datum(varattrib *attr)
 	ScanKeyInit(&toastkey,
 				(AttrNumber) 1,
 				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(attr->va_content.va_external.va_valueid));
+			  ObjectIdGetDatum(attr->va_content.va_external.va_valueid));
 
 	/*
 	 * Read the chunks by index
@@ -1330,7 +1330,7 @@ toast_fetch_datum_slice(varattrib *attr, int32 sliceoffset, int32 length)
 	ScanKeyInit(&toastkey[0],
 				(AttrNumber) 1,
 				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(attr->va_content.va_external.va_valueid));
+			  ObjectIdGetDatum(attr->va_content.va_external.va_valueid));
 
 	/*
 	 * Use equality condition for one chunk, a range condition otherwise:

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/input.c,v 1.36 2004/08/29 04:13:02 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/input.c,v 1.37 2004/08/29 05:06:54 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "input.h"
@@ -171,7 +171,7 @@ initializeInput(int flags)
 #ifdef USE_READLINE
 	if (flags & 1)
 	{
-		char home[MAXPGPATH];
+		char		home[MAXPGPATH];
 
 		useReadline = true;
 		initialize_readline();
@@ -182,7 +182,7 @@ initializeInput(int flags)
 		using_history();
 		if (get_home_path(home))
 		{
-			char *psql_history;
+			char	   *psql_history;
 
 			psql_history = pg_malloc(strlen(home) + 1 +
 									 strlen(PSQLHISTORY) + 1);
@@ -230,12 +230,12 @@ finishInput(int exitstatus, void *arg)
 #ifdef USE_READLINE
 	if (useHistory)
 	{
-		char	   home[MAXPGPATH];
+		char		home[MAXPGPATH];
 
 		if (get_home_path(home))
 		{
-			char	*psql_history;
-			int		 hist_size;
+			char	   *psql_history;
+			int			hist_size;
 
 			psql_history = pg_malloc(strlen(home) + 1 +
 									 strlen(PSQLHISTORY) + 1);

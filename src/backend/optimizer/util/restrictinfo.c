@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.29 2004/08/29 04:12:34 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.30 2004/08/29 05:06:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,12 +22,12 @@
 
 
 static RestrictInfo *make_restrictinfo_internal(Expr *clause,
-												Expr *orclause,
-												bool is_pushed_down,
-												bool valid_everywhere);
+						   Expr *orclause,
+						   bool is_pushed_down,
+						   bool valid_everywhere);
 static Expr *make_sub_restrictinfos(Expr *clause,
-									bool is_pushed_down,
-									bool valid_everywhere);
+					   bool is_pushed_down,
+					   bool valid_everywhere);
 static RestrictInfo *join_clause_is_redundant(Query *root,
 						 RestrictInfo *rinfo,
 						 List *reference_list,
@@ -104,7 +104,7 @@ make_restrictinfo_from_indexclauses(List *indexclauses,
 	/* Else we need an OR RestrictInfo structure */
 	foreach(orlist, indexclauses)
 	{
-		List   *andlist = (List *) lfirst(orlist);
+		List	   *andlist = (List *) lfirst(orlist);
 
 		/* Create AND subclause with RestrictInfos */
 		withris = lappend(withris, make_ands_explicit(andlist));
@@ -113,9 +113,9 @@ make_restrictinfo_from_indexclauses(List *indexclauses,
 		withoutris = lappend(withoutris, make_ands_explicit(andlist));
 	}
 	return list_make1(make_restrictinfo_internal(make_orclause(withoutris),
-												make_orclause(withris),
-												is_pushed_down,
-												valid_everywhere));
+												 make_orclause(withris),
+												 is_pushed_down,
+												 valid_everywhere));
 }
 
 /*
@@ -136,8 +136,8 @@ make_restrictinfo_internal(Expr *clause, Expr *orclause,
 	restrictinfo->can_join = false;		/* may get set below */
 
 	/*
-	 * If it's a binary opclause, set up left/right relids info.
-	 * In any case set up the total clause relids info.
+	 * If it's a binary opclause, set up left/right relids info. In any
+	 * case set up the total clause relids info.
 	 */
 	if (is_opclause(clause) && list_length(((OpExpr *) clause)->args) == 2)
 	{
@@ -145,12 +145,12 @@ make_restrictinfo_internal(Expr *clause, Expr *orclause,
 		restrictinfo->right_relids = pull_varnos(get_rightop(clause));
 
 		restrictinfo->clause_relids = bms_union(restrictinfo->left_relids,
-												restrictinfo->right_relids);
+											 restrictinfo->right_relids);
 
 		/*
 		 * Does it look like a normal join clause, i.e., a binary operator
 		 * relating expressions that come from distinct relations? If so
-		 * we might be able to use it in a join algorithm.  Note that this
+		 * we might be able to use it in a join algorithm.	Note that this
 		 * is a purely syntactic test that is made regardless of context.
 		 */
 		if (!bms_is_empty(restrictinfo->left_relids) &&
@@ -169,10 +169,10 @@ make_restrictinfo_internal(Expr *clause, Expr *orclause,
 	}
 
 	/*
-	 * Fill in all the cacheable fields with "not yet set" markers.
-	 * None of these will be computed until/unless needed.  Note in
-	 * particular that we don't mark a binary opclause as mergejoinable
-	 * or hashjoinable here; that happens only if it appears in the right
+	 * Fill in all the cacheable fields with "not yet set" markers. None
+	 * of these will be computed until/unless needed.  Note in particular
+	 * that we don't mark a binary opclause as mergejoinable or
+	 * hashjoinable here; that happens only if it appears in the right
 	 * context (top level of a joinclause list).
 	 */
 	restrictinfo->eval_cost.startup = -1;
@@ -322,16 +322,16 @@ remove_redundant_join_clauses(Query *root, List *restrictinfo_list,
 
 	/*
 	 * If there are any redundant clauses, we want to eliminate the ones
-	 * that are more expensive in favor of the ones that are less so.
-	 * Run cost_qual_eval() to ensure the eval_cost fields are set up.
+	 * that are more expensive in favor of the ones that are less so. Run
+	 * cost_qual_eval() to ensure the eval_cost fields are set up.
 	 */
 	cost_qual_eval(&cost, restrictinfo_list);
 
 	/*
-	 * We don't have enough knowledge yet to be able to estimate the number
-	 * of times a clause might be evaluated, so it's hard to weight the
-	 * startup and per-tuple costs appropriately.  For now just weight 'em
-	 * the same.
+	 * We don't have enough knowledge yet to be able to estimate the
+	 * number of times a clause might be evaluated, so it's hard to weight
+	 * the startup and per-tuple costs appropriately.  For now just weight
+	 * 'em the same.
 	 */
 #define CLAUSECOST(r)  ((r)->eval_cost.startup + (r)->eval_cost.per_tuple)
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.110 2004/08/29 04:12:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.111 2004/08/29 05:06:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,9 +38,9 @@ static Acl *allocacl(int n);
 static const char *aclparse(const char *s, AclItem *aip);
 static bool aclitem_match(const AclItem *a1, const AclItem *a2);
 static void check_circularity(const Acl *old_acl, const AclItem *mod_aip,
-							  AclId ownerid);
+				  AclId ownerid);
 static Acl *recursive_revoke(Acl *acl, AclId grantee, AclMode revoke_privs,
-							 AclId ownerid, DropBehavior behavior);
+				 AclId ownerid, DropBehavior behavior);
 static bool in_group(AclId uid, AclId gid);
 
 static AclMode convert_priv_string(text *priv_type_text);
@@ -55,7 +55,7 @@ static Oid	convert_language_name(text *languagename);
 static AclMode convert_language_priv_string(text *priv_type_text);
 static Oid	convert_schema_name(text *schemaname);
 static AclMode convert_schema_priv_string(text *priv_type_text);
-static Oid convert_tablespace_name(text *tablespacename);
+static Oid	convert_tablespace_name(text *tablespacename);
 static AclMode convert_tablespace_priv_string(text *priv_type_text);
 
 
@@ -107,8 +107,8 @@ getid(const char *s, char *n)
 			ereport(ERROR,
 					(errcode(ERRCODE_NAME_TOO_LONG),
 					 errmsg("identifier too long"),
-					 errdetail("Identifier must be less than %d characters.",
-							   NAMEDATALEN)));
+				 errdetail("Identifier must be less than %d characters.",
+						   NAMEDATALEN)));
 
 		n[len++] = *s;
 	}
@@ -195,13 +195,13 @@ aclparse(const char *s, AclItem *aip)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					 errmsg("unrecognized key word: \"%s\"", name),
-				 errhint("ACL key word must be \"group\" or \"user\".")));
+				errhint("ACL key word must be \"group\" or \"user\".")));
 		s = getid(s, name);		/* move s to the name beyond the keyword */
 		if (name[0] == '\0')
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					 errmsg("missing name"),
-			   errhint("A name must follow the \"group\" or \"user\" key word.")));
+					 errhint("A name must follow the \"group\" or \"user\" key word.")));
 	}
 	if (name[0] == '\0')
 		idtype = ACL_IDTYPE_WORLD;
@@ -295,7 +295,7 @@ aclparse(const char *s, AclItem *aip)
 		aip->ai_grantor = BOOTSTRAP_USESYSID;
 		ereport(WARNING,
 				(errcode(ERRCODE_INVALID_GRANTOR),
-				 errmsg("defaulting grantor to user ID %u", BOOTSTRAP_USESYSID)));
+		errmsg("defaulting grantor to user ID %u", BOOTSTRAP_USESYSID)));
 	}
 
 	ACLITEM_SET_PRIVS_IDTYPE(*aip, privs, goption, idtype);
@@ -568,8 +568,8 @@ acldefault(GrantObjectType objtype, AclId ownerid)
 	/*
 	 * Note that the owner's entry shows all ordinary privileges but no
 	 * grant options.  This is because his grant options come "from the
-	 * system" and not from his own efforts.  (The SQL spec says that
-	 * the owner's rights come from a "_SYSTEM" authid.)  However, we do
+	 * system" and not from his own efforts.  (The SQL spec says that the
+	 * owner's rights come from a "_SYSTEM" authid.)  However, we do
 	 * consider that the owner's ordinary privileges are self-granted;
 	 * this lets him revoke them.  We implement the owner's grant options
 	 * without any explicit "_SYSTEM"-like ACL entry, by internally
@@ -679,7 +679,7 @@ aclupdate(const Acl *old_acl, const AclItem *mod_aip,
 			break;
 		case ACL_MODECHG_DEL:
 			ACLITEM_SET_RIGHTS(new_aip[dst],
-							   old_rights & ~ACLITEM_GET_RIGHTS(*mod_aip));
+							 old_rights & ~ACLITEM_GET_RIGHTS(*mod_aip));
 			break;
 		case ACL_MODECHG_EQL:
 			ACLITEM_SET_RIGHTS(new_aip[dst],
@@ -703,8 +703,8 @@ aclupdate(const Acl *old_acl, const AclItem *mod_aip,
 	}
 
 	/*
-	 * Remove abandoned privileges (cascading revoke).  Currently we
-	 * can only handle this when the grantee is a user.
+	 * Remove abandoned privileges (cascading revoke).	Currently we can
+	 * only handle this when the grantee is a user.
 	 */
 	if ((old_goptions & ~new_goptions) != 0)
 	{
@@ -732,11 +732,11 @@ Acl *
 aclnewowner(const Acl *old_acl, AclId oldownerid, AclId newownerid)
 {
 	Acl		   *new_acl;
-	AclItem	   *new_aip;
-	AclItem	   *old_aip;
-	AclItem	   *dst_aip;
-	AclItem	   *src_aip;
-	AclItem	   *targ_aip;
+	AclItem    *new_aip;
+	AclItem    *old_aip;
+	AclItem    *dst_aip;
+	AclItem    *src_aip;
+	AclItem    *targ_aip;
 	bool		newpresent = false;
 	int			dst,
 				src,
@@ -745,8 +745,8 @@ aclnewowner(const Acl *old_acl, AclId oldownerid, AclId newownerid)
 
 	/*
 	 * Make a copy of the given ACL, substituting new owner ID for old
-	 * wherever it appears as either grantor or grantee.  Also note if
-	 * the new owner ID is already present.
+	 * wherever it appears as either grantor or grantee.  Also note if the
+	 * new owner ID is already present.
 	 */
 	num = ACL_NUM(old_acl);
 	old_aip = ACL_DAT(old_acl);
@@ -771,7 +771,7 @@ aclnewowner(const Acl *old_acl, AclId oldownerid, AclId newownerid)
 
 	/*
 	 * If the old ACL contained any references to the new owner, then we
-	 * may now have generated an ACL containing duplicate entries.  Find
+	 * may now have generated an ACL containing duplicate entries.	Find
 	 * them and merge them so that there are not duplicates.  (This is
 	 * relatively expensive since we use a stupid O(N^2) algorithm, but
 	 * it's unlikely to be the normal case.)
@@ -779,11 +779,12 @@ aclnewowner(const Acl *old_acl, AclId oldownerid, AclId newownerid)
 	 * To simplify deletion of duplicate entries, we temporarily leave them
 	 * in the array but set their privilege masks to zero; when we reach
 	 * such an entry it's just skipped.  (Thus, a side effect of this code
-	 * will be to remove privilege-free entries, should there be any in the
-	 * input.)  dst is the next output slot, targ is the currently considered
-	 * input slot (always >= dst), and src scans entries to the right of targ
-	 * looking for duplicates.  Once an entry has been emitted to dst it is
-	 * known duplicate-free and need not be considered anymore.
+	 * will be to remove privilege-free entries, should there be any in
+	 * the input.)	dst is the next output slot, targ is the currently
+	 * considered input slot (always >= dst), and src scans entries to the
+	 * right of targ looking for duplicates.  Once an entry has been
+	 * emitted to dst it is known duplicate-free and need not be
+	 * considered anymore.
 	 */
 	if (newpresent)
 	{
@@ -845,7 +846,7 @@ check_circularity(const Acl *old_acl, const AclItem *mod_aip,
 
 	/*
 	 * For now, grant options can only be granted to users, not groups or
-	 * PUBLIC.  Otherwise we'd have to work a bit harder here.
+	 * PUBLIC.	Otherwise we'd have to work a bit harder here.
 	 */
 	Assert(ACLITEM_GET_IDTYPE(*mod_aip) == ACL_IDTYPE_UID);
 
@@ -884,7 +885,7 @@ cc_restart:
 	own_privs = aclmask(acl,
 						mod_aip->ai_grantor,
 						ownerid,
-						ACL_GRANT_OPTION_FOR(ACLITEM_GET_GOPTIONS(*mod_aip)),
+					ACL_GRANT_OPTION_FOR(ACLITEM_GET_GOPTIONS(*mod_aip)),
 						ACLMASK_ALL);
 	own_privs = ACL_OPTION_TO_PRIVS(own_privs);
 
@@ -1036,7 +1037,7 @@ aclmask(const Acl *acl, AclId userid, AclId ownerid,
 	 */
 	for (i = 0; i < num; i++)
 	{
-		AclItem	   *aidata = &aidat[i];
+		AclItem    *aidata = &aidat[i];
 
 		if (ACLITEM_GET_IDTYPE(*aidata) == ACL_IDTYPE_WORLD
 			|| (ACLITEM_GET_IDTYPE(*aidata) == ACL_IDTYPE_UID
@@ -1049,13 +1050,13 @@ aclmask(const Acl *acl, AclId userid, AclId ownerid,
 	}
 
 	/*
-	 * Check privileges granted via groups.  We do this in a separate
-	 * pass to minimize expensive lookups in pg_group.
+	 * Check privileges granted via groups.  We do this in a separate pass
+	 * to minimize expensive lookups in pg_group.
 	 */
 	remaining = (mask & ~result);
 	for (i = 0; i < num; i++)
 	{
-		AclItem	   *aidata = &aidat[i];
+		AclItem    *aidata = &aidat[i];
 
 		if (ACLITEM_GET_IDTYPE(*aidata) == ACL_IDTYPE_GID
 			&& (aidata->ai_privs & remaining)
@@ -1187,7 +1188,7 @@ makeaclitem(PG_FUNCTION_ARGS)
 
 	if (u_grantee == 0 && g_grantee == 0)
 	{
-		aclitem->ai_grantee = ACL_ID_WORLD;
+		aclitem   ->ai_grantee = ACL_ID_WORLD;
 
 		ACLITEM_SET_IDTYPE(*aclitem, ACL_IDTYPE_WORLD);
 	}
@@ -1199,18 +1200,19 @@ makeaclitem(PG_FUNCTION_ARGS)
 	}
 	else if (u_grantee != 0)
 	{
-		aclitem->ai_grantee = u_grantee;
+		aclitem   ->ai_grantee = u_grantee;
 
 		ACLITEM_SET_IDTYPE(*aclitem, ACL_IDTYPE_UID);
 	}
-	else /* (g_grantee != 0) */
+	else
+/* (g_grantee != 0) */
 	{
-		aclitem->ai_grantee = g_grantee;
+		aclitem   ->ai_grantee = g_grantee;
 
 		ACLITEM_SET_IDTYPE(*aclitem, ACL_IDTYPE_GID);
 	}
 
-	aclitem->ai_grantor = grantor;
+	aclitem   ->ai_grantor = grantor;
 
 	ACLITEM_SET_PRIVS(*aclitem, priv);
 	if (goption)
@@ -2474,11 +2476,11 @@ has_tablespace_privilege_id_id(PG_FUNCTION_ARGS)
 static Oid
 convert_tablespace_name(text *tablespacename)
 {
-	char			*spcname;
+	char	   *spcname;
 	Oid			oid;
 
 	spcname = DatumGetCString(DirectFunctionCall1(textout,
-												  PointerGetDatum(tablespacename)));
+									   PointerGetDatum(tablespacename)));
 	oid = get_tablespace_oid(spcname);
 
 	if (!OidIsValid(oid))

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_eval.c,v 1.70 2004/08/29 04:12:33 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_eval.c,v 1.71 2004/08/29 05:06:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,7 +32,7 @@
 
 
 static bool desirable_join(Query *root,
-						   RelOptInfo *outer_rel, RelOptInfo *inner_rel);
+			   RelOptInfo *outer_rel, RelOptInfo *inner_rel);
 
 
 /*
@@ -56,8 +56,8 @@ geqo_eval(Gene *tour, int num_gene, GeqoEvalData *evaldata)
 	 * redundant cost calculations, we simply reject tours where tour[0] >
 	 * tour[1], assigning them an artificially bad fitness.
 	 *
-	 * init_tour() is aware of this rule and so we should never reject a
-	 * tour during the initial filling of the pool.  It seems difficult to
+	 * init_tour() is aware of this rule and so we should never reject a tour
+	 * during the initial filling of the pool.	It seems difficult to
 	 * persuade the recombination logic never to break the rule, however.
 	 */
 	if (num_gene >= 2 && tour[0] > tour[1])
@@ -151,23 +151,24 @@ gimme_tree(Gene *tour, int num_gene, GeqoEvalData *evaldata)
 	/*
 	 * Push each relation onto the stack in the specified order.  After
 	 * pushing each relation, see whether the top two stack entries are
-	 * joinable according to the desirable_join() heuristics.  If so,
-	 * join them into one stack entry, and try again to combine with the
-	 * next stack entry down (if any).  When the stack top is no longer
-	 * joinable, continue to the next input relation.  After we have pushed
-	 * the last input relation, the heuristics are disabled and we force
-	 * joining all the remaining stack entries.
+	 * joinable according to the desirable_join() heuristics.  If so, join
+	 * them into one stack entry, and try again to combine with the next
+	 * stack entry down (if any).  When the stack top is no longer
+	 * joinable, continue to the next input relation.  After we have
+	 * pushed the last input relation, the heuristics are disabled and we
+	 * force joining all the remaining stack entries.
 	 *
 	 * If desirable_join() always returns true, this produces a straight
-	 * left-to-right join just like the old code.  Otherwise we may produce
-	 * a bushy plan or a left/right-sided plan that really corresponds to
-	 * some tour other than the one given.  To the extent that the heuristics
-	 * are helpful, however, this will be a better plan than the raw tour.
+	 * left-to-right join just like the old code.  Otherwise we may
+	 * produce a bushy plan or a left/right-sided plan that really
+	 * corresponds to some tour other than the one given.  To the extent
+	 * that the heuristics are helpful, however, this will be a better
+	 * plan than the raw tour.
 	 *
-	 * Also, when a join attempt fails (because of IN-clause constraints),
-	 * we may be able to recover and produce a workable plan, where the old
-	 * code just had to give up.  This case acts the same as a false result
-	 * from desirable_join().
+	 * Also, when a join attempt fails (because of IN-clause constraints), we
+	 * may be able to recover and produce a workable plan, where the old
+	 * code just had to give up.  This case acts the same as a false
+	 * result from desirable_join().
 	 */
 	for (rel_count = 0; rel_count < num_gene; rel_count++)
 	{
@@ -189,20 +190,20 @@ gimme_tree(Gene *tour, int num_gene, GeqoEvalData *evaldata)
 			RelOptInfo *inner_rel = stack[stack_depth - 1];
 
 			/*
-			 * Don't pop if heuristics say not to join now.  However,
-			 * once we have exhausted the input, the heuristics can't
-			 * prevent popping.
+			 * Don't pop if heuristics say not to join now.  However, once
+			 * we have exhausted the input, the heuristics can't prevent
+			 * popping.
 			 */
 			if (rel_count < num_gene - 1 &&
 				!desirable_join(evaldata->root, outer_rel, inner_rel))
 				break;
 
 			/*
-			 * Construct a RelOptInfo representing the join of these
-			 * two input relations.  These are always inner joins.
-			 * Note that we expect the joinrel not to exist in
-			 * root->join_rel_list yet, and so the paths constructed for it
-			 * will only include the ones we want.
+			 * Construct a RelOptInfo representing the join of these two
+			 * input relations.  These are always inner joins. Note that
+			 * we expect the joinrel not to exist in root->join_rel_list
+			 * yet, and so the paths constructed for it will only include
+			 * the ones we want.
 			 */
 			joinrel = make_join_rel(evaldata->root, outer_rel, inner_rel,
 									JOIN_INNER);
@@ -252,9 +253,9 @@ desirable_join(Query *root,
 	}
 
 	/*
-	 * Join if the rels are members of the same IN sub-select.  This is
-	 * needed to improve the odds that we will find a valid solution in
-	 * a case where an IN sub-select has a clauseless join.
+	 * Join if the rels are members of the same IN sub-select.	This is
+	 * needed to improve the odds that we will find a valid solution in a
+	 * case where an IN sub-select has a clauseless join.
 	 */
 	foreach(l, root->in_info_list)
 	{

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/contrib/rtree_gist/rtree_gist.c,v 1.9 2004/03/30 15:45:33 teodor Exp $
+ *	$PostgreSQL: pgsql/contrib/rtree_gist/rtree_gist.c,v 1.10 2004/08/29 05:06:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,7 +98,7 @@ gbox_consistent(PG_FUNCTION_ARGS)
 Datum
 gbox_union(PG_FUNCTION_ARGS)
 {
-	GistEntryVector	   *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
+	GistEntryVector *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
 	int		   *sizep = (int *) PG_GETARG_POINTER(1);
 	int			numranges,
 				i;
@@ -186,7 +186,7 @@ compare_KB(const void *a, const void *b)
 Datum
 gbox_picksplit(PG_FUNCTION_ARGS)
 {
-	GistEntryVector	   *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
+	GistEntryVector *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
 	GIST_SPLITVEC *v = (GIST_SPLITVEC *) PG_GETARG_POINTER(1);
 	OffsetNumber i;
 	OffsetNumber *listL,

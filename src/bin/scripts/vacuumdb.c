@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/vacuumdb.c,v 1.10 2004/08/29 04:13:03 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/vacuumdb.c,v 1.11 2004/08/29 05:06:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -14,14 +14,12 @@
 #include "common.h"
 
 
-static void
-vacuum_one_database(const char *dbname, bool full, bool verbose, bool analyze,
+static void vacuum_one_database(const char *dbname, bool full, bool verbose, bool analyze,
 					const char *table,
 					const char *host, const char *port,
 					const char *username, bool password,
 					const char *progname, bool echo, bool quiet);
-static void
-vacuum_all_databases(bool full, bool verbose, bool analyze,
+static void vacuum_all_databases(bool full, bool verbose, bool analyze,
 					 const char *host, const char *port,
 					 const char *username, bool password,
 					 const char *progname, bool echo, bool quiet);

@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.178 2004/08/19 20:57:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.179 2004/08/29 05:06:49 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -157,12 +157,12 @@ static void decompile_column_index_array(Datum column_index_array, Oid relId,
 							 StringInfo buf);
 static char *pg_get_ruledef_worker(Oid ruleoid, int prettyFlags);
 static char *pg_get_indexdef_worker(Oid indexrelid, int colno,
-									int prettyFlags);
+					   int prettyFlags);
 static char *pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
-										 int prettyFlags);
+							int prettyFlags);
 static char *pg_get_expr_worker(text *expr, Oid relid, char *relname,
-								int prettyFlags);
-static Oid get_constraint_index(Oid constraintRelOid, Oid constraintOid);
+				   int prettyFlags);
+static Oid	get_constraint_index(Oid constraintRelOid, Oid constraintOid);
 static void make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 			 int prettyFlags);
 static void make_viewdef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
@@ -204,7 +204,7 @@ static void get_from_clause(Query *query, deparse_context *context);
 static void get_from_clause_item(Node *jtnode, Query *query,
 					 deparse_context *context);
 static void get_from_clause_alias(Alias *alias, int varno,
-								  Query *query, deparse_context *context);
+					  Query *query, deparse_context *context);
 static void get_from_clause_coldeflist(List *coldeflist,
 						   deparse_context *context);
 static void get_opclass_name(Oid opclass, Oid actual_datatype,
@@ -774,13 +774,13 @@ pg_get_indexdef_worker(Oid indexrelid, int colno, int prettyFlags)
 		appendStringInfoChar(&buf, ')');
 
 		/*
-		 * If the index is in a different tablespace from its parent,
-		 * tell about that
+		 * If the index is in a different tablespace from its parent, tell
+		 * about that
 		 */
 		if (OidIsValid(idxrelrec->reltablespace) &&
 			idxrelrec->reltablespace != get_rel_tablespace(indrelid))
 		{
-			char	*spcname = get_tablespace_name(idxrelrec->reltablespace);
+			char	   *spcname = get_tablespace_name(idxrelrec->reltablespace);
 
 			if (spcname)		/* just paranoia... */
 			{
@@ -837,7 +837,7 @@ pg_get_constraintdef(PG_FUNCTION_ARGS)
 	Oid			constraintId = PG_GETARG_OID(0);
 
 	PG_RETURN_TEXT_P(string_to_text(pg_get_constraintdef_worker(constraintId,
-																false, 0)));
+															 false, 0)));
 }
 
 Datum
@@ -849,7 +849,7 @@ pg_get_constraintdef_ext(PG_FUNCTION_ARGS)
 
 	prettyFlags = pretty ? PRETTYFLAG_PAREN | PRETTYFLAG_INDENT : 0;
 	PG_RETURN_TEXT_P(string_to_text(pg_get_constraintdef_worker(constraintId,
-																false, prettyFlags)));
+												   false, prettyFlags)));
 }
 
 /* Internal version that returns a palloc'd C string */
@@ -1042,17 +1042,17 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 												constraintId);
 				if (OidIsValid(indexOid))
 				{
-					Oid		reltablespace;
-					Oid		indtablespace;
+					Oid			reltablespace;
+					Oid			indtablespace;
 
 					reltablespace = get_rel_tablespace(conForm->conrelid);
 					indtablespace = get_rel_tablespace(indexOid);
 					if (OidIsValid(indtablespace) &&
 						indtablespace != reltablespace)
 					{
-						char	*spcname = get_tablespace_name(indtablespace);
+						char	   *spcname = get_tablespace_name(indtablespace);
 
-						if (spcname)		/* just paranoia... */
+						if (spcname)	/* just paranoia... */
 						{
 							appendStringInfo(&buf, " USING INDEX TABLESPACE %s",
 											 quote_identifier(spcname));
@@ -1098,13 +1098,15 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 												   prettyFlags, 0);
 
 				/*
-				 * Now emit the constraint definition.  There are cases where
-				 * the constraint expression will be fully parenthesized and
-				 * we don't need the outer parens ... but there are other
-				 * cases where we do need 'em.  Be conservative for now.
+				 * Now emit the constraint definition.	There are cases
+				 * where the constraint expression will be fully
+				 * parenthesized and we don't need the outer parens ...
+				 * but there are other cases where we do need 'em.  Be
+				 * conservative for now.
 				 *
 				 * Note that simply checking for leading '(' and trailing ')'
-				 * would NOT be good enough, consider "(x > 0) AND (y > 0)".
+				 * would NOT be good enough, consider "(x > 0) AND (y >
+				 * 0)".
 				 */
 				appendStringInfo(&buf, "CHECK (%s)", consrc);
 
@@ -1270,13 +1272,13 @@ pg_get_userbyid(PG_FUNCTION_ARGS)
 Datum
 pg_get_serial_sequence(PG_FUNCTION_ARGS)
 {
-	text	*tablename = PG_GETARG_TEXT_P(0);
-	text	*columnname = PG_GETARG_TEXT_P(1);
+	text	   *tablename = PG_GETARG_TEXT_P(0);
+	text	   *columnname = PG_GETARG_TEXT_P(1);
 	RangeVar   *tablerv;
 	Oid			tableOid;
-	char	*column;
+	char	   *column;
 	AttrNumber	attnum;
-	Oid		sequenceId = InvalidOid;
+	Oid			sequenceId = InvalidOid;
 	Relation	depRel;
 	ScanKeyData key[3];
 	SysScanDesc scan;
@@ -1284,12 +1286,12 @@ pg_get_serial_sequence(PG_FUNCTION_ARGS)
 
 	/* Get the OID of the table */
 	tablerv = makeRangeVarFromNameList(textToQualifiedNameList(tablename,
-													"pg_get_serial_sequence"));
+											  "pg_get_serial_sequence"));
 	tableOid = RangeVarGetRelid(tablerv, false);
 
 	/* Get the number of the column */
 	column = DatumGetCString(DirectFunctionCall1(textout,
-												 PointerGetDatum(columnname)));
+										   PointerGetDatum(columnname)));
 
 	attnum = get_attnum(tableOid, column);
 	if (attnum == InvalidAttrNumber)
@@ -1319,7 +1321,7 @@ pg_get_serial_sequence(PG_FUNCTION_ARGS)
 
 	while (HeapTupleIsValid(tup = systable_getnext(scan)))
 	{
-		Form_pg_depend	deprec = (Form_pg_depend) GETSTRUCT(tup);
+		Form_pg_depend deprec = (Form_pg_depend) GETSTRUCT(tup);
 
 		/*
 		 * We assume any internal dependency of a relation on a column
@@ -1340,9 +1342,9 @@ pg_get_serial_sequence(PG_FUNCTION_ARGS)
 	if (OidIsValid(sequenceId))
 	{
 		HeapTuple	classtup;
-		Form_pg_class	classtuple;
-		char *nspname;
-		char *result;
+		Form_pg_class classtuple;
+		char	   *nspname;
+		char	   *result;
 
 		/* Get the sequence's pg_class entry */
 		classtup = SearchSysCache(RELOID,
@@ -1410,11 +1412,11 @@ get_constraint_index(Oid constraintRelOid, Oid constraintOid)
 
 	while (HeapTupleIsValid(tup = systable_getnext(scan)))
 	{
-		Form_pg_depend	deprec = (Form_pg_depend) GETSTRUCT(tup);
+		Form_pg_depend deprec = (Form_pg_depend) GETSTRUCT(tup);
 
 		/*
-		 * We assume any internal dependency of a relation on the constraint
-		 * must be what we are looking for.
+		 * We assume any internal dependency of a relation on the
+		 * constraint must be what we are looking for.
 		 */
 		if (deprec->classid == RelOid_pg_class &&
 			deprec->objsubid == 0 &&
@@ -1984,9 +1986,9 @@ get_select_query_def(Query *query, deparse_context *context,
 			sortcoltype = exprType(sortexpr);
 			/* See whether operator is default < or > for datatype */
 			typentry = lookup_type_cache(sortcoltype,
-										 TYPECACHE_LT_OPR | TYPECACHE_GT_OPR);
+									TYPECACHE_LT_OPR | TYPECACHE_GT_OPR);
 			if (srt->sortop == typentry->lt_opr)
-				/* ASC is default, so emit nothing */ ;
+				 /* ASC is default, so emit nothing */ ;
 			else if (srt->sortop == typentry->gt_opr)
 				appendStringInfo(buf, " DESC");
 			else
@@ -2181,10 +2183,10 @@ get_setop_query(Node *setOp, Query *query, deparse_context *context,
 		SetOperationStmt *op = (SetOperationStmt *) setOp;
 
 		/*
-		 * We force parens whenever nesting two SetOperationStmts.
-		 * There are some cases in which parens are needed around a leaf
-		 * query too, but those are more easily handled at the next level
-		 * down (see code above).
+		 * We force parens whenever nesting two SetOperationStmts. There
+		 * are some cases in which parens are needed around a leaf query
+		 * too, but those are more easily handled at the next level down
+		 * (see code above).
 		 */
 		need_paren = !IsA(op->larg, RangeTblRef);
 
@@ -2330,12 +2332,13 @@ get_insert_query_def(Query *query, deparse_context *context)
 		 * tle->resname, since resname will fail to track RENAME.
 		 */
 		appendStringInfoString(buf,
-							   quote_identifier(get_relid_attribute_name(rte->relid,
-																		 tle->resdom->resno)));
+					quote_identifier(get_relid_attribute_name(rte->relid,
+												   tle->resdom->resno)));
 
 		/*
-		 * Print any indirection needed (subfields or subscripts), and strip
-		 * off the top-level nodes representing the indirection assignments.
+		 * Print any indirection needed (subfields or subscripts), and
+		 * strip off the top-level nodes representing the indirection
+		 * assignments.
 		 */
 		strippedexprs = lappend(strippedexprs,
 								processIndirection((Node *) tle->expr,
@@ -2351,7 +2354,7 @@ get_insert_query_def(Query *query, deparse_context *context)
 		sep = "";
 		foreach(l, strippedexprs)
 		{
-			Node   *expr = lfirst(l);
+			Node	   *expr = lfirst(l);
 
 			appendStringInfo(buf, sep);
 			sep = ", ";
@@ -2372,10 +2375,10 @@ get_insert_query_def(Query *query, deparse_context *context)
 static void
 get_update_query_def(Query *query, deparse_context *context)
 {
-	StringInfo		 buf = context->buf;
-	char			*sep;
-	RangeTblEntry	*rte;
-	ListCell		*l;
+	StringInfo	buf = context->buf;
+	char	   *sep;
+	RangeTblEntry *rte;
+	ListCell   *l;
 
 	/*
 	 * Start the query with UPDATE relname SET
@@ -2396,7 +2399,7 @@ get_update_query_def(Query *query, deparse_context *context)
 	foreach(l, query->targetList)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(l);
-		Node	*expr;
+		Node	   *expr;
 
 		if (tle->resdom->resjunk)
 			continue;			/* ignore junk entries */
@@ -2409,12 +2412,13 @@ get_update_query_def(Query *query, deparse_context *context)
 		 * tle->resname, since resname will fail to track RENAME.
 		 */
 		appendStringInfoString(buf,
-						quote_identifier(get_relid_attribute_name(rte->relid,
-														tle->resdom->resno)));
+					quote_identifier(get_relid_attribute_name(rte->relid,
+												   tle->resdom->resno)));
 
 		/*
-		 * Print any indirection needed (subfields or subscripts), and strip
-		 * off the top-level nodes representing the indirection assignments.
+		 * Print any indirection needed (subfields or subscripts), and
+		 * strip off the top-level nodes representing the indirection
+		 * assignments.
 		 */
 		expr = processIndirection((Node *) tle->expr, context);
 
@@ -2583,13 +2587,13 @@ get_names_for_var(Var *var, deparse_context *context,
 static RangeTblEntry *
 find_rte_by_refname(const char *refname, deparse_context *context)
 {
-	RangeTblEntry  *result = NULL;
-	ListCell	   *nslist;
+	RangeTblEntry *result = NULL;
+	ListCell   *nslist;
 
 	foreach(nslist, context->namespaces)
 	{
 		deparse_namespace *dpns = (deparse_namespace *) lfirst(nslist);
-		ListCell	   *rtlist;
+		ListCell   *rtlist;
 
 		foreach(rtlist, dpns->rtable)
 		{
@@ -2777,10 +2781,10 @@ isSimpleNode(Node *node, Node *parentNode, int prettyFlags)
 				case T_BoolExpr:		/* lower precedence */
 				case T_ArrayRef:		/* other separators */
 				case T_ArrayExpr:		/* other separators */
-				case T_RowExpr:			/* other separators */
+				case T_RowExpr:	/* other separators */
 				case T_CoalesceExpr:	/* own parentheses */
 				case T_NullIfExpr:		/* other separators */
-				case T_Aggref:			/* own parentheses */
+				case T_Aggref:	/* own parentheses */
 				case T_CaseExpr:		/* other separators */
 					return true;
 				default:
@@ -2824,10 +2828,10 @@ isSimpleNode(Node *node, Node *parentNode, int prettyFlags)
 					}
 				case T_ArrayRef:		/* other separators */
 				case T_ArrayExpr:		/* other separators */
-				case T_RowExpr:			/* other separators */
+				case T_RowExpr:	/* other separators */
 				case T_CoalesceExpr:	/* own parentheses */
 				case T_NullIfExpr:		/* other separators */
-				case T_Aggref:			/* own parentheses */
+				case T_Aggref:	/* own parentheses */
 				case T_CaseExpr:		/* other separators */
 					return true;
 				default:
@@ -3008,8 +3012,8 @@ get_rule_expr(Node *node, deparse_context *context,
 				bool		need_parens;
 
 				/*
-				 * Parenthesize the argument unless it's a simple Var or
-				 * a FieldSelect.  (In particular, if it's another ArrayRef,
+				 * Parenthesize the argument unless it's a simple Var or a
+				 * FieldSelect.  (In particular, if it's another ArrayRef,
 				 * we *must* parenthesize to avoid confusion.)
 				 */
 				need_parens = !IsA(aref->refexpr, Var) &&
@@ -3020,6 +3024,7 @@ get_rule_expr(Node *node, deparse_context *context,
 				if (need_parens)
 					appendStringInfoChar(buf, ')');
 				printSubscripts(aref, context);
+
 				/*
 				 * Array assignment nodes should have been handled in
 				 * processIndirection().
@@ -3166,11 +3171,13 @@ get_rule_expr(Node *node, deparse_context *context,
 						 format_type_be(argType));
 				fieldname = get_relid_attribute_name(typrelid,
 													 fselect->fieldnum);
+
 				/*
 				 * Parenthesize the argument unless it's an ArrayRef or
-				 * another FieldSelect.  Note in particular that it would be
-				 * WRONG to not parenthesize a Var argument; simplicity is not
-				 * the issue here, having the right number of names is.
+				 * another FieldSelect.  Note in particular that it would
+				 * be WRONG to not parenthesize a Var argument; simplicity
+				 * is not the issue here, having the right number of names
+				 * is.
 				 */
 				need_parens = !IsA(fselect->arg, ArrayRef) &&
 					!IsA(fselect->arg, FieldSelect);
@@ -3184,6 +3191,7 @@ get_rule_expr(Node *node, deparse_context *context,
 			break;
 
 		case T_FieldStore:
+
 			/*
 			 * We shouldn't see FieldStore here; it should have been
 			 * stripped off by processIndirection().
@@ -3239,7 +3247,7 @@ get_rule_expr(Node *node, deparse_context *context,
 					if (caseexpr->arg)
 					{
 						/* Show only the RHS of "CaseTestExpr = RHS" */
-						Node   *rhs;
+						Node	   *rhs;
 
 						Assert(IsA(when->expr, OpExpr));
 						rhs = (Node *) lsecond(((OpExpr *) when->expr)->args);
@@ -3284,16 +3292,16 @@ get_rule_expr(Node *node, deparse_context *context,
 
 		case T_RowExpr:
 			{
-				RowExpr	   *rowexpr = (RowExpr *) node;
+				RowExpr    *rowexpr = (RowExpr *) node;
 				TupleDesc	tupdesc = NULL;
 				ListCell   *arg;
 				int			i;
 				char	   *sep;
 
 				/*
-				 * If it's a named type and not RECORD, we may have to skip
-				 * dropped columns and/or claim there are NULLs for added
-				 * columns.
+				 * If it's a named type and not RECORD, we may have to
+				 * skip dropped columns and/or claim there are NULLs for
+				 * added columns.
 				 */
 				if (rowexpr->row_typeid != RECORDOID)
 				{
@@ -3302,8 +3310,8 @@ get_rule_expr(Node *node, deparse_context *context,
 				}
 
 				/*
-				 * SQL99 allows "ROW" to be omitted when there is more than
-				 * one column, but for simplicity we always print it.
+				 * SQL99 allows "ROW" to be omitted when there is more
+				 * than one column, but for simplicity we always print it.
 				 */
 				appendStringInfo(buf, "ROW(");
 				sep = "";
@@ -3337,7 +3345,7 @@ get_rule_expr(Node *node, deparse_context *context,
 				appendStringInfo(buf, ")");
 				if (rowexpr->row_format == COERCE_EXPLICIT_CAST)
 					appendStringInfo(buf, "::%s",
-									 format_type_with_typemod(rowexpr->row_typeid, -1));
+					  format_type_with_typemod(rowexpr->row_typeid, -1));
 			}
 			break;
 
@@ -3674,7 +3682,7 @@ get_const_expr(Const *constval, deparse_context *context)
 
 	extval = DatumGetCString(OidFunctionCall3(typoutput,
 											  constval->constvalue,
-											  ObjectIdGetDatum(typioparam),
+											ObjectIdGetDatum(typioparam),
 											  Int32GetDatum(-1)));
 
 	switch (constval->consttype)
@@ -4096,7 +4104,7 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 					if (col != list_head(j->using))
 						appendStringInfo(buf, ", ");
 					appendStringInfoString(buf,
-								quote_identifier(strVal(lfirst(col))));
+								  quote_identifier(strVal(lfirst(col))));
 				}
 				appendStringInfoChar(buf, ')');
 			}
@@ -4137,7 +4145,7 @@ get_from_clause_alias(Alias *alias, int varno,
 {
 	StringInfo	buf = context->buf;
 	ListCell   *col;
-	AttrNumber attnum;
+	AttrNumber	attnum;
 	bool		first = true;
 
 	if (alias == NULL || alias->colnames == NIL)
@@ -4230,7 +4238,10 @@ get_opclass_name(Oid opclass, Oid actual_datatype,
 		elog(ERROR, "cache lookup failed for opclass %u", opclass);
 	opcrec = (Form_pg_opclass) GETSTRUCT(ht_opc);
 
-	/* Special case for ARRAY_OPS: pretend it is default for any array type */
+	/*
+	 * Special case for ARRAY_OPS: pretend it is default for any array
+	 * type
+	 */
 	if (OidIsValid(actual_datatype))
 	{
 		if (opcrec->opcintype == ANYARRAYOID &&
@@ -4240,7 +4251,7 @@ get_opclass_name(Oid opclass, Oid actual_datatype,
 
 	/* Must force use of opclass name if not in search path */
 	isvisible = OpclassIsVisible(opclass);
-	
+
 	if (actual_datatype != opcrec->opcintype || !opcrec->opcdefault ||
 		!isvisible)
 	{
@@ -4287,16 +4298,18 @@ processIndirection(Node *node, deparse_context *context)
 			if (!OidIsValid(typrelid))
 				elog(ERROR, "argument type %s of FieldStore is not a tuple type",
 					 format_type_be(fstore->resulttype));
+
 			/*
-			 * Get the field name.  Note we assume here that there's only
+			 * Get the field name.	Note we assume here that there's only
 			 * one field being assigned to.  This is okay in stored rules
-			 * but could be wrong in executable target lists.  Presently no
-			 * problem since explain.c doesn't print plan targetlists, but
-			 * someday may have to think of something ...
+			 * but could be wrong in executable target lists.  Presently
+			 * no problem since explain.c doesn't print plan targetlists,
+			 * but someday may have to think of something ...
 			 */
 			fieldname = get_relid_attribute_name(typrelid,
-												 linitial_int(fstore->fieldnums));
+										linitial_int(fstore->fieldnums));
 			appendStringInfo(buf, ".%s", quote_identifier(fieldname));
+
 			/*
 			 * We ignore arg since it should be an uninteresting reference
 			 * to the target column or subcolumn.
@@ -4310,9 +4323,10 @@ processIndirection(Node *node, deparse_context *context)
 			if (aref->refassgnexpr == NULL)
 				break;
 			printSubscripts(aref, context);
+
 			/*
-			 * We ignore refexpr since it should be an uninteresting reference
-			 * to the target column or subcolumn.
+			 * We ignore refexpr since it should be an uninteresting
+			 * reference to the target column or subcolumn.
 			 */
 			node = (Node *) aref->refassgnexpr;
 		}
@@ -4330,7 +4344,7 @@ printSubscripts(ArrayRef *aref, deparse_context *context)
 	ListCell   *lowlist_item;
 	ListCell   *uplist_item;
 
-	lowlist_item = list_head(aref->reflowerindexpr); /* could be NULL */
+	lowlist_item = list_head(aref->reflowerindexpr);	/* could be NULL */
 	foreach(uplist_item, aref->refupperindexpr)
 	{
 		appendStringInfoChar(buf, '[');
@@ -4612,8 +4626,8 @@ generate_operator_name(Oid operid, Oid arg1, Oid arg2)
 static void
 print_operator_name(StringInfo buf, List *opname)
 {
-	ListCell	*op = list_head(opname);
-	int			 nnames = list_length(opname);
+	ListCell   *op = list_head(opname);
+	int			nnames = list_length(opname);
 
 	if (nnames == 1)
 		appendStringInfoString(buf, strVal(lfirst(op)));

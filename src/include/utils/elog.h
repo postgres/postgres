@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/elog.h,v 1.74 2004/08/29 04:13:10 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/elog.h,v 1.75 2004/08/29 05:06:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,10 +34,10 @@
 #define NOTICE		18			/* Helpful messages to users about query
 								 * operation;  sent to client and server
 								 * log by default. */
-#define WARNING		19			/* Warnings.  NOTICE is for expected messages
-								 * like implicit sequence creation by SERIAL.
-								 * WARNING is for unexpected messages.
-								 */
+#define WARNING		19			/* Warnings.  NOTICE is for expected
+								 * messages like implicit sequence
+								 * creation by SERIAL. WARNING is for
+								 * unexpected messages. */
 #define ERROR		20			/* user error - abort transaction; return
 								 * to known state */
 /* Save ERROR value in PGERROR so it can be restored when Win32 includes
@@ -207,7 +207,7 @@ extern DLLIMPORT ErrorContextCallback *error_context_stack;
 		{ \
 			PG_exception_stack = &local_sigjmp_buf
 
-#define PG_CATCH()  \
+#define PG_CATCH()	\
 		} \
 		else \
 		{ \
@@ -272,11 +272,11 @@ typedef enum
 
 extern PGErrorVerbosity Log_error_verbosity;
 extern char *Log_line_prefix;
-extern int Log_destination;
+extern int	Log_destination;
 
 /* Log destination bitmap */
-#define LOG_DESTINATION_STDERR   1
-#define LOG_DESTINATION_SYSLOG   2
+#define LOG_DESTINATION_STDERR	 1
+#define LOG_DESTINATION_SYSLOG	 2
 #define LOG_DESTINATION_EVENTLOG 4
 
 /* Other exported functions */
@@ -287,7 +287,8 @@ extern void DebugFileOpen(void);
  * not available). Used before ereport/elog can be used
  * safely (memory context, GUC load etc)
  */
-extern void write_stderr(const char *fmt,...)
+extern void
+write_stderr(const char *fmt,...)
 /* This extension allows gcc to check the format string for consistency with
    the supplied arguments. */
 __attribute__((format(printf, 1, 2)));

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/defrem.h,v 1.60 2004/08/29 04:13:05 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/commands/defrem.h,v 1.61 2004/08/29 05:06:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,9 +37,9 @@ extern void ReindexIndex(RangeVar *indexRelation, bool force);
 extern void ReindexTable(RangeVar *relation, bool force);
 extern void ReindexDatabase(const char *databaseName, bool force, bool all);
 extern char *makeObjectName(const char *name1, const char *name2,
-							const char *label);
+			   const char *label);
 extern char *ChooseRelationName(const char *name1, const char *name2,
-								const char *label, Oid namespace);
+				   const char *label, Oid namespace);
 
 /* commands/functioncmds.c */
 extern void CreateFunction(CreateFunctionStmt *stmt);
@@ -58,7 +58,7 @@ extern void DefineOperator(List *names, List *parameters);
 extern void RemoveOperator(RemoveOperStmt *stmt);
 extern void RemoveOperatorById(Oid operOid);
 extern void AlterOperatorOwner(List *name, TypeName *typeName1,
-							   TypeName *typename2, AclId newOwnerSysId);
+				   TypeName *typename2, AclId newOwnerSysId);
 
 /* commands/aggregatecmds.c */
 extern void DefineAggregate(List *names, List *parameters);
@@ -71,7 +71,7 @@ extern void DefineOpClass(CreateOpClassStmt *stmt);
 extern void RemoveOpClass(RemoveOpClassStmt *stmt);
 extern void RemoveOpClassById(Oid opclassOid);
 extern void RenameOpClass(List *name, const char *access_method, const char *newname);
-extern void AlterOpClassOwner(List *name, const char *access_method, AclId newOwnerSysId); 
+extern void AlterOpClassOwner(List *name, const char *access_method, AclId newOwnerSysId);
 
 /* support routines in commands/define.c */
 

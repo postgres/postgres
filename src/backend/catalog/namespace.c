@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.69 2004/08/29 04:12:28 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.70 2004/08/29 05:06:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -170,9 +170,9 @@ RangeVarGetRelid(const RangeVar *relation, bool failOK)
 		if (strcmp(relation->catalogname, get_database_name(MyDatabaseId)) != 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			   errmsg("cross-database references are not implemented: \"%s.%s.%s\"",
-					  relation->catalogname, relation->schemaname,
-					  relation->relname)));
+					 errmsg("cross-database references are not implemented: \"%s.%s.%s\"",
+							relation->catalogname, relation->schemaname,
+							relation->relname)));
 	}
 
 	if (relation->schemaname)
@@ -225,9 +225,9 @@ RangeVarGetCreationNamespace(const RangeVar *newRelation)
 		if (strcmp(newRelation->catalogname, get_database_name(MyDatabaseId)) != 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			   errmsg("cross-database references are not implemented: \"%s.%s.%s\"",
-					  newRelation->catalogname, newRelation->schemaname,
-					  newRelation->relname)));
+					 errmsg("cross-database references are not implemented: \"%s.%s.%s\"",
+					   newRelation->catalogname, newRelation->schemaname,
+							newRelation->relname)));
 	}
 
 	if (newRelation->istemp)
@@ -236,7 +236,7 @@ RangeVarGetCreationNamespace(const RangeVar *newRelation)
 		if (newRelation->schemaname)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-				   errmsg("temporary tables may not specify a schema name")));
+			  errmsg("temporary tables may not specify a schema name")));
 		/* Initialize temp namespace if first time through */
 		if (!OidIsValid(myTempNamespace))
 			InitTempTableNamespace();
@@ -699,12 +699,13 @@ OpernameGetCandidates(List *names, char oprkind)
 
 	/*
 	 * In typical scenarios, most if not all of the operators found by the
-	 * catcache search will end up getting returned; and there can be quite
-	 * a few, for common operator names such as '=' or '+'.  To reduce the
-	 * time spent in palloc, we allocate the result space as an array large
-	 * enough to hold all the operators.  The original coding of this routine
-	 * did a separate palloc for each operator, but profiling revealed that
-	 * the pallocs used an unreasonably large fraction of parsing time.
+	 * catcache search will end up getting returned; and there can be
+	 * quite a few, for common operator names such as '=' or '+'.  To
+	 * reduce the time spent in palloc, we allocate the result space as an
+	 * array large enough to hold all the operators.  The original coding
+	 * of this routine did a separate palloc for each operator, but
+	 * profiling revealed that the pallocs used an unreasonably large
+	 * fraction of parsing time.
 	 */
 #define SPACE_PER_OP MAXALIGN(sizeof(struct _FuncCandidateList) + sizeof(Oid))
 
@@ -1191,8 +1192,8 @@ DeconstructQualifiedName(List *names,
 			if (strcmp(catalogname, get_database_name(MyDatabaseId)) != 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				errmsg("cross-database references are not implemented: %s",
-					   NameListToString(names))));
+						 errmsg("cross-database references are not implemented: %s",
+								NameListToString(names))));
 			break;
 		default:
 			ereport(ERROR,
@@ -1645,10 +1646,11 @@ InitTempTableNamespace(void)
 	 * tables.	We use a nonstandard error message here since
 	 * "databasename: permission denied" might be a tad cryptic.
 	 *
-	 * Note that ACL_CREATE_TEMP rights are rechecked in pg_namespace_aclmask;
-	 * that's necessary since current user ID could change during the session.
-	 * But there's no need to make the namespace in the first place until a
-	 * temp table creation request is made by someone with appropriate rights.
+	 * Note that ACL_CREATE_TEMP rights are rechecked in
+	 * pg_namespace_aclmask; that's necessary since current user ID could
+	 * change during the session. But there's no need to make the
+	 * namespace in the first place until a temp table creation request is
+	 * made by someone with appropriate rights.
 	 */
 	if (pg_database_aclcheck(MyDatabaseId, GetUserId(),
 							 ACL_CREATE_TEMP) != ACLCHECK_OK)
@@ -1847,7 +1849,8 @@ assign_search_path(const char *newval, bool doit, GucSource source)
 		 * ALTER DATABASE SET or ALTER USER SET command.  It could be that
 		 * the intended use of the search path is for some other database,
 		 * so we should not error out if it mentions schemas not present
-		 * in the current database.  We reduce the message to NOTICE instead.
+		 * in the current database.  We reduce the message to NOTICE
+		 * instead.
 		 */
 		foreach(l, namelist)
 		{

@@ -6,7 +6,7 @@
  * 1996-06-05 by Arthur David Olson (arthur_david_olson@nih.gov).
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/private.h,v 1.8 2004/05/21 20:59:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/private.h,v 1.9 2004/08/29 05:07:02 momjian Exp $
  */
 
 /*
@@ -56,6 +56,7 @@
 
 #ifndef remove
 extern int	unlink(const char *filename);
+
 #define remove	unlink
 #endif   /* !defined remove */
 

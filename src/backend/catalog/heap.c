@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.274 2004/08/29 04:12:27 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.275 2004/08/29 05:06:41 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -265,10 +265,10 @@ heap_create(const char *relname,
 
 	/*
 	 * Never allow a pg_class entry to explicitly specify the database's
-	 * default tablespace in reltablespace; force it to zero instead.
-	 * This ensures that if the database is cloned with a different
-	 * default tablespace, the pg_class entry will still match where
-	 * CREATE DATABASE will put the physically copied relation.
+	 * default tablespace in reltablespace; force it to zero instead. This
+	 * ensures that if the database is cloned with a different default
+	 * tablespace, the pg_class entry will still match where CREATE
+	 * DATABASE will put the physically copied relation.
 	 *
 	 * Yes, this is a bit of a hack.
 	 */
@@ -294,7 +294,8 @@ heap_create(const char *relname,
 									 nailme);
 
 	/*
-	 * have the storage manager create the relation's disk file, if needed.
+	 * have the storage manager create the relation's disk file, if
+	 * needed.
 	 */
 	if (create_storage)
 	{
@@ -980,12 +981,12 @@ RemoveAttributeById(Oid relid, AttrNumber attnum)
 
 		/*
 		 * Set the type OID to invalid.  A dropped attribute's type link
-		 * cannot be relied on (once the attribute is dropped, the type might
-		 * be too). Fortunately we do not need the type row --- the only
-		 * really essential information is the type's typlen and typalign,
-		 * which are preserved in the attribute's attlen and attalign.  We set
-		 * atttypid to zero here as a means of catching code that incorrectly
-		 * expects it to be valid.
+		 * cannot be relied on (once the attribute is dropped, the type
+		 * might be too). Fortunately we do not need the type row --- the
+		 * only really essential information is the type's typlen and
+		 * typalign, which are preserved in the attribute's attlen and
+		 * attalign.  We set atttypid to zero here as a means of catching
+		 * code that incorrectly expects it to be valid.
 		 */
 		attStruct->atttypid = InvalidOid;
 
@@ -995,7 +996,10 @@ RemoveAttributeById(Oid relid, AttrNumber attnum)
 		/* We don't want to keep stats for it anymore */
 		attStruct->attstattarget = 0;
 
-		/* Change the column name to something that isn't likely to conflict */
+		/*
+		 * Change the column name to something that isn't likely to
+		 * conflict
+		 */
 		snprintf(newattname, sizeof(newattname),
 				 "........pg.dropped.%d........", attnum);
 		namestrcpy(&(attStruct->attname), newattname);
@@ -1199,7 +1203,7 @@ heap_drop_with_catalog(Oid relid)
 	/*
 	 * Flush the relation from the relcache.  We want to do this before
 	 * starting to remove catalog entries, just to be certain that no
-	 * relcache entry rebuild will happen partway through.  (That should
+	 * relcache entry rebuild will happen partway through.	(That should
 	 * not really matter, since we don't do CommandCounterIncrement here,
 	 * but let's be safe.)
 	 */
@@ -1584,11 +1588,11 @@ AddRelationRawConstraints(Relation rel,
 		if (pstate->p_hasSubLinks)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				   errmsg("cannot use subquery in check constraint")));
+					 errmsg("cannot use subquery in check constraint")));
 		if (pstate->p_hasAggs)
 			ereport(ERROR,
 					(errcode(ERRCODE_GROUPING_ERROR),
-					 errmsg("cannot use aggregate function in check constraint")));
+			errmsg("cannot use aggregate function in check constraint")));
 
 		/*
 		 * Check name uniqueness, or generate a name if none was given.
@@ -1614,8 +1618,8 @@ AddRelationRawConstraints(Relation rel,
 				if (strcmp((char *) lfirst(cell2), ccname) == 0)
 					ereport(ERROR,
 							(errcode(ERRCODE_DUPLICATE_OBJECT),
-							 errmsg("check constraint \"%s\" already exists",
-									ccname)));
+						 errmsg("check constraint \"%s\" already exists",
+								ccname)));
 			}
 		}
 		else
@@ -1623,18 +1627,18 @@ AddRelationRawConstraints(Relation rel,
 			/*
 			 * When generating a name, we want to create "tab_col_check"
 			 * for a column constraint and "tab_check" for a table
-			 * constraint.  We no longer have any info about the
-			 * syntactic positioning of the constraint phrase, so we
-			 * approximate this by seeing whether the expression references
-			 * more than one column.  (If the user played by the rules,
-			 * the result is the same...)
+			 * constraint.	We no longer have any info about the syntactic
+			 * positioning of the constraint phrase, so we approximate
+			 * this by seeing whether the expression references more than
+			 * one column.	(If the user played by the rules, the result
+			 * is the same...)
 			 *
-			 * Note: pull_var_clause() doesn't descend into sublinks,
-			 * but we eliminated those above; and anyway this only needs
-			 * to be an approximate answer.
+			 * Note: pull_var_clause() doesn't descend into sublinks, but we
+			 * eliminated those above; and anyway this only needs to be an
+			 * approximate answer.
 			 */
-			List *vars;
-			char *colname;
+			List	   *vars;
+			char	   *colname;
 
 			vars = pull_var_clause(expr, false);
 
@@ -1763,7 +1767,7 @@ cookDefault(ParseState *pstate,
 	if (contain_var_clause(expr))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-			  errmsg("cannot use column references in default expression")));
+		  errmsg("cannot use column references in default expression")));
 
 	/*
 	 * It can't return a set either.
@@ -1783,7 +1787,7 @@ cookDefault(ParseState *pstate,
 	if (pstate->p_hasAggs)
 		ereport(ERROR,
 				(errcode(ERRCODE_GROUPING_ERROR),
-				 errmsg("cannot use aggregate function in default expression")));
+		 errmsg("cannot use aggregate function in default expression")));
 
 	/*
 	 * Coerce the expression to the correct type and typmod, if given.
@@ -2047,7 +2051,7 @@ heap_truncate_check_FKs(Relation rel)
 		return;
 
 	/*
-	 * Otherwise, must scan pg_constraint.  Right now, this is a seqscan
+	 * Otherwise, must scan pg_constraint.	Right now, this is a seqscan
 	 * because there is no available index on confrelid.
 	 */
 	fkeyRel = heap_openr(ConstraintRelationName, AccessShareLock);

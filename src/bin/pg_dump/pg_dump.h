@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.h,v 1.111 2004/08/29 04:13:01 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.h,v 1.112 2004/08/29 05:06:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +39,7 @@ typedef struct
 	Oid			oid;
 } CatalogId;
 
-typedef int		DumpId;
+typedef int DumpId;
 
 
 /*
@@ -105,6 +105,7 @@ typedef struct _namespaceInfo
 typedef struct _typeInfo
 {
 	DumpableObject dobj;
+
 	/*
 	 * Note: dobj.name is the pg_type.typname entry.  format_type() might
 	 * produce something different than typname
@@ -199,22 +200,22 @@ typedef struct _tableInfo
 	bool	   *attisserial;	/* true if attr is serial or bigserial */
 
 	/*
-	 * Note: we need to store per-attribute notnull, default, and constraint
-	 * stuff for all interesting tables so that we can tell which constraints
-	 * were inherited.
+	 * Note: we need to store per-attribute notnull, default, and
+	 * constraint stuff for all interesting tables so that we can tell
+	 * which constraints were inherited.
 	 */
 	bool	   *notnull;		/* Not null constraints on attributes */
-	struct _attrDefInfo **attrdefs;	/* DEFAULT expressions */
+	struct _attrDefInfo **attrdefs;		/* DEFAULT expressions */
 	bool	   *inhAttrs;		/* true if each attribute is inherited */
 	bool	   *inhAttrDef;		/* true if attr's default is inherited */
 	bool	   *inhNotNull;		/* true if NOT NULL is inherited */
-	struct _constraintInfo *checkexprs;	/* CHECK constraints */
+	struct _constraintInfo *checkexprs; /* CHECK constraints */
 
 	/*
 	 * Stuff computed only for dumpable tables.
 	 */
 	int			numParents;		/* number of (immediate) parent tables */
-	struct _tableInfo **parents; /* TableInfos of immediate parents */
+	struct _tableInfo **parents;	/* TableInfos of immediate parents */
 } TableInfo;
 
 typedef struct _attrDefInfo
@@ -271,7 +272,7 @@ typedef struct _triggerInfo
 } TriggerInfo;
 
 /*
- * struct ConstraintInfo is used for all constraint types.  However we
+ * struct ConstraintInfo is used for all constraint types.	However we
  * use a different objType for foreign key constraints, to make it easier
  * to sort them the way we want.
  */
@@ -328,8 +329,8 @@ extern char g_opaque_type[10];	/* name for the opaque type */
  */
 
 extern TableInfo *getSchemaData(int *numTablesPtr,
-		   const bool schemaOnly,
-		   const bool dataOnly);
+			  const bool schemaOnly,
+			  const bool dataOnly);
 
 typedef enum _OidOptions
 {

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/postmaster/syslogger.h,v 1.1 2004/08/05 23:32:12 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/postmaster/syslogger.h,v 1.2 2004/08/29 05:06:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,13 +22,14 @@ extern char *Log_filename_prefix;
 extern bool am_syslogger;
 
 #ifndef WIN32
-extern int syslogPipe[2];
+extern int	syslogPipe[2];
+
 #else
 extern HANDLE syslogPipe[2];
 #endif
 
 
-extern int SysLogger_Start(void);
+extern int	SysLogger_Start(void);
 
 extern void write_syslogger_file(const char *buffer, int count);
 

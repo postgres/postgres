@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/catcache.c,v 1.115 2004/08/29 04:12:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/catcache.c,v 1.116 2004/08/29 05:06:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -519,9 +519,9 @@ CreateCacheMemoryContext(void)
 	if (!CacheMemoryContext)
 		CacheMemoryContext = AllocSetContextCreate(TopMemoryContext,
 												   "CacheMemoryContext",
-												   ALLOCSET_DEFAULT_MINSIZE,
-												   ALLOCSET_DEFAULT_INITSIZE,
-												   ALLOCSET_DEFAULT_MAXSIZE);
+												ALLOCSET_DEFAULT_MINSIZE,
+											   ALLOCSET_DEFAULT_INITSIZE,
+											   ALLOCSET_DEFAULT_MAXSIZE);
 }
 
 

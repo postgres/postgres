@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-int.h,v 1.90 2004/08/29 04:13:12 momjian Exp $
+ * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-int.h,v 1.91 2004/08/29 05:07:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -361,13 +361,14 @@ extern int pqPacketSend(PGconn *conn, char pack_type,
 
 #ifdef ENABLE_THREAD_SAFETY
 extern pgthreadlock_t *g_threadlock;
+
 #define pglock_thread() g_threadlock(true);
 #define pgunlock_thread() g_threadlock(false);
 #else
 #define pglock_thread() ((void)0)
 #define pgunlock_thread() ((void)0)
 #endif
-	 
+
 
 /* === in fe-exec.c === */
 
@@ -455,6 +456,7 @@ extern PostgresPollingStatusType pqsecure_open_client(PGconn *);
 extern void pqsecure_close(PGconn *);
 extern ssize_t pqsecure_read(PGconn *, void *ptr, size_t len);
 extern ssize_t pqsecure_write(PGconn *, const void *ptr, size_t len);
+
 #ifdef ENABLE_THREAD_SAFETY
 extern void pq_check_sigpipe_handler(void);
 extern pthread_key_t pq_thread_in_send;

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/heapam.h,v 1.91 2004/08/29 04:13:03 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/heapam.h,v 1.92 2004/08/29 05:06:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -116,7 +116,7 @@ extern Datum fastgetattr(HeapTuple tup, int attnum, TupleDesc tupleDesc,
 )
 
 extern Datum heap_getsysattr(HeapTuple tup, int attnum, TupleDesc tupleDesc,
-							 bool *isnull);
+				bool *isnull);
 
 
 /* ----------------
@@ -151,8 +151,8 @@ extern bool heap_fetch(Relation relation, Snapshot snapshot,
 		   HeapTuple tuple, Buffer *userbuf, bool keep_buf,
 		   PgStat_Info *pgstat_info);
 extern bool heap_release_fetch(Relation relation, Snapshot snapshot,
-		   HeapTuple tuple, Buffer *userbuf, bool keep_buf,
-		   PgStat_Info *pgstat_info);
+				   HeapTuple tuple, Buffer *userbuf, bool keep_buf,
+				   PgStat_Info *pgstat_info);
 
 extern ItemPointer heap_get_latest_tid(Relation relation, Snapshot snapshot,
 					ItemPointer tid);
@@ -162,7 +162,7 @@ extern Oid	heap_insert(Relation relation, HeapTuple tup, CommandId cid);
 extern int heap_delete(Relation relation, ItemPointer tid, ItemPointer ctid,
 			CommandId cid, Snapshot crosscheck, bool wait);
 extern int heap_update(Relation relation, ItemPointer otid, HeapTuple tup,
-			ItemPointer ctid, CommandId cid, Snapshot crosscheck, bool wait);
+		ItemPointer ctid, CommandId cid, Snapshot crosscheck, bool wait);
 extern int heap_mark4update(Relation relation, HeapTuple tup,
 				 Buffer *userbuf, CommandId cid);
 
@@ -196,12 +196,12 @@ extern void heap_copytuple_with_tuple(HeapTuple src, HeapTuple dest);
 extern HeapTuple heap_formtuple(TupleDesc tupleDescriptor,
 			   Datum *values, char *nulls);
 extern HeapTuple heap_modifytuple(HeapTuple tuple,
-								  Relation relation,
-								  Datum *replValues,
-								  char *replNulls,
-								  char *replActions);
+				 Relation relation,
+				 Datum *replValues,
+				 char *replNulls,
+				 char *replActions);
 extern void heap_deformtuple(HeapTuple tuple, TupleDesc tupleDesc,
-							 Datum *values, char *nulls);
+				 Datum *values, char *nulls);
 extern void heap_freetuple(HeapTuple tuple);
 extern HeapTuple heap_addheader(int natts, bool withoid, Size structlen, void *structure);
 

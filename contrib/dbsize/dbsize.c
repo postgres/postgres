@@ -16,7 +16,7 @@
 
 
 static int64
-get_tablespace_size(Oid dbid, Oid spcid, bool baddirOK);
+			get_tablespace_size(Oid dbid, Oid spcid, bool baddirOK);
 
 static char *
 psnprintf(size_t len, const char *fmt,...)
@@ -50,10 +50,11 @@ database_size(PG_FUNCTION_ARGS)
 
 	Oid			dbid;
 	int64		totalsize;
+
 #ifdef SYMLINK
-	Relation		dbrel;
-	HeapScanDesc 	scan;
-	HeapTuple		tuple;
+	Relation	dbrel;
+	HeapScanDesc scan;
+	HeapTuple	tuple;
 #endif
 
 	dbid = get_database_oid(NameStr(*dbname));
@@ -62,17 +63,18 @@ database_size(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
 			errmsg("database \"%s\" does not exist", NameStr(*dbname))));
 
-#ifdef SYMLINK 
+#ifdef SYMLINK
 
-	dbrel = heap_openr(TableSpaceRelationName, AccessShareLock);	
+	dbrel = heap_openr(TableSpaceRelationName, AccessShareLock);
 	scan = heap_beginscan(dbrel, SnapshotNow, 0, (ScanKey) NULL);
 
 	totalsize = 0;
 
-	while((tuple = heap_getnext(scan, ForwardScanDirection)))
+	while ((tuple = heap_getnext(scan, ForwardScanDirection)))
 	{
-		Oid spcid = HeapTupleGetOid(tuple);
-		if(spcid != GLOBALTABLESPACE_OID)
+		Oid			spcid = HeapTupleGetOid(tuple);
+
+		if (spcid != GLOBALTABLESPACE_OID)
 			totalsize += get_tablespace_size(dbid, spcid, true);
 	}
 	heap_endscan(scan);
@@ -94,8 +96,8 @@ database_size(PG_FUNCTION_ARGS)
 static int64
 get_tablespace_size(Oid dbid, Oid spcid, bool baddirOK)
 {
-	char		*dbpath;
-	DIR			*dirdesc;
+	char	   *dbpath;
+	DIR		   *dirdesc;
 	struct dirent *direntry;
 	int64		totalsize;
 
@@ -104,11 +106,11 @@ get_tablespace_size(Oid dbid, Oid spcid, bool baddirOK)
 	dirdesc = AllocateDir(dbpath);
 	if (!dirdesc)
 	{
-		if(baddirOK)
+		if (baddirOK)
 			return 0;
 		else
 			ereport(ERROR,
-				(errcode_for_file_access(),
+					(errcode_for_file_access(),
 				 errmsg("could not open directory \"%s\": %m", dbpath)));
 	}
 	totalsize = 0;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.124 2004/08/29 04:12:42 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.125 2004/08/29 05:06:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -113,8 +113,8 @@ transformTargetList(ParseState *pstate, List *targetlist)
 
 		/*
 		 * Check for "something.*".  Depending on the complexity of the
-		 * "something", the star could appear as the last name in ColumnRef,
-		 * or as the last indirection item in A_Indirection.
+		 * "something", the star could appear as the last name in
+		 * ColumnRef, or as the last indirection item in A_Indirection.
 		 */
 		if (IsA(res->val, ColumnRef))
 		{
@@ -130,15 +130,15 @@ transformTargetList(ParseState *pstate, List *targetlist)
 		}
 		else if (IsA(res->val, A_Indirection))
 		{
-			A_Indirection  *ind = (A_Indirection *) res->val;
-			Node	*lastitem = llast(ind->indirection);
+			A_Indirection *ind = (A_Indirection *) res->val;
+			Node	   *lastitem = llast(ind->indirection);
 
 			if (IsA(lastitem, String) &&
 				strcmp(strVal(lastitem), "*") == 0)
 			{
 				/* It is something.*, expand into multiple items */
 				p_target = list_concat(p_target,
-									   ExpandIndirectionStar(pstate, ind));
+									 ExpandIndirectionStar(pstate, ind));
 				continue;
 			}
 		}
@@ -290,7 +290,7 @@ updateTargetListEntry(ParseState *pstate,
 			if (IsA(linitial(indirection), A_Indices))
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("cannot set an array element to DEFAULT")));
+					  errmsg("cannot set an array element to DEFAULT")));
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -303,9 +303,9 @@ updateTargetListEntry(ParseState *pstate,
 
 	/*
 	 * If there is indirection on the target column, prepare an array or
-	 * subfield assignment expression.  This will generate a new column value
-	 * that the source value has been inserted into, which can then be placed
-	 * in the new tuple constructed by INSERT or UPDATE.
+	 * subfield assignment expression.	This will generate a new column
+	 * value that the source value has been inserted into, which can then
+	 * be placed in the new tuple constructed by INSERT or UPDATE.
 	 */
 	if (indirection)
 	{
@@ -314,9 +314,9 @@ updateTargetListEntry(ParseState *pstate,
 		if (pstate->p_is_insert)
 		{
 			/*
-			 * The command is INSERT INTO table (col.something) ...
-			 * so there is not really a source value to work with.
-			 * Insert a NULL constant as the source value.
+			 * The command is INSERT INTO table (col.something) ... so
+			 * there is not really a source value to work with. Insert a
+			 * NULL constant as the source value.
 			 */
 			colVar = (Node *) makeNullConst(attrtype);
 		}
@@ -360,7 +360,7 @@ updateTargetListEntry(ParseState *pstate,
 							colname,
 							format_type_be(attrtype),
 							format_type_be(type_id)),
-					 errhint("You will need to rewrite or cast the expression.")));
+			errhint("You will need to rewrite or cast the expression.")));
 	}
 
 	/*
@@ -369,9 +369,10 @@ updateTargetListEntry(ParseState *pstate,
 	 */
 	resnode->restype = attrtype;
 	resnode->restypmod = attrtypmod;
+
 	/*
 	 * Set the resno to identify the target column --- the rewriter and
-	 * planner depend on this.  We also set the resname to identify the
+	 * planner depend on this.	We also set the resname to identify the
 	 * target column, but this is only for debugging purposes; it should
 	 * not be relied on.  (In particular, it might be out of date in a
 	 * stored rule.)
@@ -432,12 +433,12 @@ transformAssignmentIndirection(ParseState *pstate,
 
 	/*
 	 * We have to split any field-selection operations apart from
-	 * subscripting.  Adjacent A_Indices nodes have to be treated
-	 * as a single multidimensional subscript operation.
+	 * subscripting.  Adjacent A_Indices nodes have to be treated as a
+	 * single multidimensional subscript operation.
 	 */
 	for_each_cell(i, indirection)
 	{
-		Node	*n = lfirst(i);
+		Node	   *n = lfirst(i);
 
 		if (IsA(n, A_Indices))
 		{
@@ -448,18 +449,18 @@ transformAssignmentIndirection(ParseState *pstate,
 		else
 		{
 			FieldStore *fstore;
-			Oid		typrelid;
-			AttrNumber attnum;
-			Oid	fieldTypeId;
-			int32 fieldTypMod;
+			Oid			typrelid;
+			AttrNumber	attnum;
+			Oid			fieldTypeId;
+			int32		fieldTypMod;
 
 			Assert(IsA(n, String));
 
 			/* process subscripts before this field selection */
 			if (subscripts)
 			{
-				Oid elementTypeId = transformArrayType(targetTypeId);
-				Oid	typeNeeded = isSlice ? targetTypeId : elementTypeId;
+				Oid			elementTypeId = transformArrayType(targetTypeId);
+				Oid			typeNeeded = isSlice ? targetTypeId : elementTypeId;
 
 				/* recurse to create appropriate RHS for array assign */
 				rhs = transformAssignmentIndirection(pstate,
@@ -494,7 +495,7 @@ transformAssignmentIndirection(ParseState *pstate,
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_COLUMN),
 						 errmsg("column \"%s\" not found in data type %s",
-								strVal(n), format_type_be(targetTypeId))));
+							  strVal(n), format_type_be(targetTypeId))));
 			if (attnum < 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_COLUMN),
@@ -528,8 +529,8 @@ transformAssignmentIndirection(ParseState *pstate,
 	/* process trailing subscripts, if any */
 	if (subscripts)
 	{
-		Oid elementTypeId = transformArrayType(targetTypeId);
-		Oid	typeNeeded = isSlice ? targetTypeId : elementTypeId;
+		Oid			elementTypeId = transformArrayType(targetTypeId);
+		Oid			typeNeeded = isSlice ? targetTypeId : elementTypeId;
 
 		/* recurse to create appropriate RHS for array assign */
 		rhs = transformAssignmentIndirection(pstate,
@@ -567,7 +568,7 @@ transformAssignmentIndirection(ParseState *pstate,
 							targetName,
 							format_type_be(targetTypeId),
 							format_type_be(exprType(rhs))),
-					 errhint("You will need to rewrite or cast the expression.")));
+			errhint("You will need to rewrite or cast the expression.")));
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
@@ -576,7 +577,7 @@ transformAssignmentIndirection(ParseState *pstate,
 							targetName,
 							format_type_be(targetTypeId),
 							format_type_be(exprType(rhs))),
-					 errhint("You will need to rewrite or cast the expression.")));
+			errhint("You will need to rewrite or cast the expression.")));
 	}
 
 	return result;
@@ -645,8 +646,8 @@ checkInsertTargets(ParseState *pstate, List *cols, List **attrnos)
 				if (list_member_int(*attrnos, attrno))
 					ereport(ERROR,
 							(errcode(ERRCODE_DUPLICATE_COLUMN),
-							 errmsg("column \"%s\" specified more than once",
-									name)));
+						 errmsg("column \"%s\" specified more than once",
+								name)));
 				wholecols = lappend_int(wholecols, attrno);
 			}
 			else
@@ -655,8 +656,8 @@ checkInsertTargets(ParseState *pstate, List *cols, List **attrnos)
 				if (list_member_int(wholecols, attrno))
 					ereport(ERROR,
 							(errcode(ERRCODE_DUPLICATE_COLUMN),
-							 errmsg("column \"%s\" specified more than once",
-									name)));
+						 errmsg("column \"%s\" specified more than once",
+								name)));
 			}
 
 			*attrnos = lappend_int(*attrnos, attrno);
@@ -713,22 +714,21 @@ ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref)
 				relname = strVal(lsecond(fields));
 				break;
 			case 4:
-			{
-				char	   *name1 = strVal(linitial(fields));
+				{
+					char	   *name1 = strVal(linitial(fields));
 
-				/*
-				 * We check the catalog name and then ignore
-				 * it.
-				 */
-				if (strcmp(name1, get_database_name(MyDatabaseId)) != 0)
-					ereport(ERROR,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("cross-database references are not implemented: %s",
-									NameListToString(fields))));
-				schemaname = strVal(lsecond(fields));
-				relname = strVal(lthird(fields));
-				break;
-			}
+					/*
+					 * We check the catalog name and then ignore it.
+					 */
+					if (strcmp(name1, get_database_name(MyDatabaseId)) != 0)
+						ereport(ERROR,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("cross-database references are not implemented: %s",
+										NameListToString(fields))));
+					schemaname = strVal(lsecond(fields));
+					relname = strVal(lthird(fields));
+					break;
+				}
 			default:
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
@@ -780,7 +780,7 @@ ExpandAllTables(ParseState *pstate)
 		else
 		{
 			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(n));
-			rtindex = 0;			/* keep compiler quiet */
+			rtindex = 0;		/* keep compiler quiet */
 		}
 
 		/*
@@ -923,7 +923,7 @@ FigureColnameInternal(Node *node, char **name)
 				/* find last field name, if any, ignoring "*" */
 				foreach(l, ((ColumnRef *) node)->fields)
 				{
-					Node   *i = lfirst(l);
+					Node	   *i = lfirst(l);
 
 					if (strcmp(strVal(i), "*") != 0)
 						fname = strVal(i);
@@ -944,7 +944,7 @@ FigureColnameInternal(Node *node, char **name)
 				/* find last field name, if any, ignoring "*" */
 				foreach(l, ind->indirection)
 				{
-					Node   *i = lfirst(l);
+					Node	   *i = lfirst(l);
 
 					if (IsA(i, String) &&
 						strcmp(strVal(i), "*") != 0)

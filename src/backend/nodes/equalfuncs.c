@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.230 2004/08/29 04:12:32 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.231 2004/08/29 05:06:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1680,19 +1680,19 @@ _equalFkConstraint(FkConstraint *a, FkConstraint *b)
 static bool
 _equalList(List *a, List *b)
 {
-	ListCell *item_a;
-	ListCell *item_b;
+	ListCell   *item_a;
+	ListCell   *item_b;
 
 	/*
-	 * Try to reject by simple scalar checks before grovelling through
-	 * all the list elements...
+	 * Try to reject by simple scalar checks before grovelling through all
+	 * the list elements...
 	 */
 	COMPARE_SCALAR_FIELD(type);
 	COMPARE_SCALAR_FIELD(length);
 
 	/*
-	 * We place the switch outside the loop for the sake of
-	 * efficiency; this may not be worth doing...
+	 * We place the switch outside the loop for the sake of efficiency;
+	 * this may not be worth doing...
 	 */
 	switch (a->type)
 	{

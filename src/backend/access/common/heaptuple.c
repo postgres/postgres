@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/heaptuple.c,v 1.93 2004/08/29 04:12:17 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/heaptuple.c,v 1.94 2004/08/29 05:06:39 momjian Exp $
  *
  * NOTES
  *	  The old interface functions have been converted to macros
@@ -468,17 +468,19 @@ heap_getsysattr(HeapTuple tup, int attnum, TupleDesc tupleDesc, bool *isnull)
 			break;
 
 			/*
-			 * If the attribute number is 0, then we are supposed to return
-			 * the entire tuple as a row-type Datum.  (Using zero for this
-			 * purpose is unclean since it risks confusion with "invalid attr"
-			 * result codes, but it's not worth changing now.)
+			 * If the attribute number is 0, then we are supposed to
+			 * return the entire tuple as a row-type Datum.  (Using zero
+			 * for this purpose is unclean since it risks confusion with
+			 * "invalid attr" result codes, but it's not worth changing
+			 * now.)
 			 *
-			 * We have to make a copy of the tuple so we can safely insert the
-			 * Datum overhead fields, which are not set in on-disk tuples.
+			 * We have to make a copy of the tuple so we can safely insert
+			 * the Datum overhead fields, which are not set in on-disk
+			 * tuples.
 			 */
 		case InvalidAttrNumber:
 			{
-				HeapTupleHeader	dtup;
+				HeapTupleHeader dtup;
 
 				dtup = (HeapTupleHeader) palloc(tup->t_len);
 				memcpy((char *) dtup, (char *) tup->t_data, tup->t_len);
@@ -555,7 +557,7 @@ heap_copytuple_with_tuple(HeapTuple src, HeapTuple dest)
  *		construct a tuple from the given values[] and nulls[] arrays
  *
  *		Null attributes are indicated by a 'n' in the appropriate byte
- *		of nulls[].	Non-null attributes are indicated by a ' ' (space).
+ *		of nulls[]. Non-null attributes are indicated by a ' ' (space).
  * ----------------
  */
 HeapTuple
@@ -580,7 +582,7 @@ heap_formtuple(TupleDesc tupleDescriptor,
 
 	/*
 	 * Check for nulls and embedded tuples; expand any toasted attributes
-	 * in embedded tuples.  This preserves the invariant that toasting can
+	 * in embedded tuples.	This preserves the invariant that toasting can
 	 * only go one level deep.
 	 *
 	 * We can skip calling toast_flatten_tuple_attribute() if the attribute
@@ -620,7 +622,7 @@ heap_formtuple(TupleDesc tupleDescriptor,
 	len += ComputeDataSize(tupleDescriptor, values, nulls);
 
 	/*
-	 * Allocate and zero the space needed.  Note that the tuple body and
+	 * Allocate and zero the space needed.	Note that the tuple body and
 	 * HeapTupleData management structure are allocated in one chunk.
 	 */
 	tuple = (HeapTuple) palloc0(HEAPTUPLESIZE + len);
@@ -683,9 +685,9 @@ heap_modifytuple(HeapTuple tuple,
 	 * allocate and fill values and nulls arrays from either the tuple or
 	 * the repl information, as appropriate.
 	 *
-	 * NOTE: it's debatable whether to use heap_deformtuple() here or
-	 * just heap_getattr() only the non-replaced colums.  The latter could
-	 * win if there are many replaced columns and few non-replaced ones.
+	 * NOTE: it's debatable whether to use heap_deformtuple() here or just
+	 * heap_getattr() only the non-replaced colums.  The latter could win
+	 * if there are many replaced columns and few non-replaced ones.
 	 * However, heap_deformtuple costs only O(N) while the heap_getattr
 	 * way would cost O(N^2) if there are many non-replaced columns, so it
 	 * seems better to err on the side of linear cost.
@@ -763,10 +765,11 @@ heap_deformtuple(HeapTuple tuple,
 	bool		slow = false;	/* can we use/set attcacheoff? */
 
 	natts = tup->t_natts;
+
 	/*
-	 * In inheritance situations, it is possible that the given tuple actually
-	 * has more fields than the caller is expecting.  Don't run off the end
-	 * of the caller's arrays.
+	 * In inheritance situations, it is possible that the given tuple
+	 * actually has more fields than the caller is expecting.  Don't run
+	 * off the end of the caller's arrays.
 	 */
 	natts = Min(natts, tdesc_natts);
 
@@ -787,9 +790,7 @@ heap_deformtuple(HeapTuple tuple,
 		nulls[attnum] = ' ';
 
 		if (!slow && att[attnum]->attcacheoff >= 0)
-		{
 			off = att[attnum]->attcacheoff;
-		}
 		else
 		{
 			off = att_align(off, att[attnum]->attalign);
@@ -807,8 +808,8 @@ heap_deformtuple(HeapTuple tuple,
 	}
 
 	/*
-	 * If tuple doesn't have all the atts indicated by tupleDesc, read
-	 * the rest as null
+	 * If tuple doesn't have all the atts indicated by tupleDesc, read the
+	 * rest as null
 	 */
 	for (; attnum < tdesc_natts; attnum++)
 	{

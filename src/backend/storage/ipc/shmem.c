@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/shmem.c,v 1.79 2004/08/29 04:12:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/shmem.c,v 1.80 2004/08/29 05:06:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,11 +74,14 @@ SHMEM_OFFSET ShmemBase;			/* start address of shared memory */
 
 static SHMEM_OFFSET ShmemEnd;	/* end+1 address of shared memory */
 
-NON_EXEC_STATIC slock_t *ShmemLock;		/* spinlock for shared memory allocation */
+NON_EXEC_STATIC slock_t *ShmemLock;		/* spinlock for shared memory
+										 * allocation */
 
 NON_EXEC_STATIC slock_t *ShmemIndexLock;		/* spinlock for ShmemIndex */
 
-NON_EXEC_STATIC void *ShmemIndexAlloc = NULL; /* Memory actually allocated for ShmemIndex */
+NON_EXEC_STATIC void *ShmemIndexAlloc = NULL;	/* Memory actually
+												 * allocated for
+												 * ShmemIndex */
 
 static HTAB *ShmemIndex = NULL; /* primary index hashtable for shmem */
 
@@ -126,7 +129,7 @@ InitShmemAllocation(void *seghdr, bool init)
 		 * Initialize ShmemVariableCache for transaction manager.
 		 */
 		ShmemVariableCache = (VariableCache)
-		ShmemAlloc(sizeof(*ShmemVariableCache));
+			ShmemAlloc(sizeof(*ShmemVariableCache));
 		memset(ShmemVariableCache, 0, sizeof(*ShmemVariableCache));
 	}
 }
@@ -348,11 +351,11 @@ ShmemInitStruct(const char *name, Size size, bool *foundPtr)
 		else
 		{
 			/*
-			 * If the shmem index doesn't exist, we are bootstrapping: we must
-			 * be trying to init the shmem index itself.
+			 * If the shmem index doesn't exist, we are bootstrapping: we
+			 * must be trying to init the shmem index itself.
 			 *
-			 * Notice that the ShmemIndexLock is held until the shmem index has
-			 * been completely initialized.
+			 * Notice that the ShmemIndexLock is held until the shmem index
+			 * has been completely initialized.
 			 */
 			Assert(strcmp(name, "ShmemIndex") == 0);
 			Assert(ShmemBootstrap);

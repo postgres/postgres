@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlogutils.c,v 1.33 2004/08/29 04:12:23 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlogutils.c,v 1.34 2004/08/29 05:06:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -212,11 +212,11 @@ XLogOpenRelation(bool redo, RmgrId rmid, RelFileNode rnode)
 		res->reldata.rd_node = rnode;
 
 		/*
-		 * We set up the lockRelId in case anything tries to lock the dummy
-		 * relation.  Note that this is fairly bogus since relNode may be
-		 * different from the relation's OID.  It shouldn't really matter
-		 * though, since we are presumably running by ourselves and can't
-		 * have any lock conflicts ...
+		 * We set up the lockRelId in case anything tries to lock the
+		 * dummy relation.	Note that this is fairly bogus since relNode
+		 * may be different from the relation's OID.  It shouldn't really
+		 * matter though, since we are presumably running by ourselves and
+		 * can't have any lock conflicts ...
 		 */
 		res->reldata.rd_lockInfo.lockRelId.dbId = rnode.dbNode;
 		res->reldata.rd_lockInfo.lockRelId.relId = rnode.relNode;
@@ -234,14 +234,15 @@ XLogOpenRelation(bool redo, RmgrId rmid, RelFileNode rnode)
 
 		res->reldata.rd_targblock = InvalidBlockNumber;
 		res->reldata.rd_smgr = smgropen(res->reldata.rd_node);
+
 		/*
 		 * Create the target file if it doesn't already exist.  This lets
 		 * us cope if the replay sequence contains writes to a relation
 		 * that is later deleted.  (The original coding of this routine
 		 * would instead return NULL, causing the writes to be suppressed.
-		 * But that seems like it risks losing valuable data if the filesystem
-		 * loses an inode during a crash.  Better to write the data until we
-		 * are actually told to delete the file.)
+		 * But that seems like it risks losing valuable data if the
+		 * filesystem loses an inode during a crash.  Better to write the
+		 * data until we are actually told to delete the file.)
 		 */
 		smgrcreate(res->reldata.rd_smgr, res->reldata.rd_istemp, true);
 	}

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/psqlscan.h,v 1.2 2004/08/29 04:13:02 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/psqlscan.h,v 1.3 2004/08/29 05:06:54 momjian Exp $
  */
 #ifndef PSQLSCAN_H
 #define PSQLSCAN_H
@@ -40,12 +40,12 @@ extern PsqlScanState psql_scan_create(void);
 extern void psql_scan_destroy(PsqlScanState state);
 
 extern void psql_scan_setup(PsqlScanState state,
-							const char *line, int line_len);
+				const char *line, int line_len);
 extern void psql_scan_finish(PsqlScanState state);
 
 extern PsqlScanResult psql_scan(PsqlScanState state,
-								PQExpBuffer query_buf,
-								promptStatus_t *prompt);
+		  PQExpBuffer query_buf,
+		  promptStatus_t *prompt);
 
 extern void psql_scan_reset(PsqlScanState state);
 
@@ -54,9 +54,9 @@ extern bool psql_scan_in_quote(PsqlScanState state);
 extern char *psql_scan_slash_command(PsqlScanState state);
 
 extern char *psql_scan_slash_option(PsqlScanState state,
-									enum slash_option_type type,
-									char *quote,
-									bool semicolon);
+					   enum slash_option_type type,
+					   char *quote,
+					   bool semicolon);
 
 extern void psql_scan_slash_command_end(PsqlScanState state);
 

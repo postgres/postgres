@@ -115,7 +115,7 @@ struct cursor
 	char	   *name;
 	char	   *command;
 	char	   *connection;
-	bool	    opened;
+	bool		opened;
 	struct arguments *argsinsert;
 	struct arguments *argsresult;
 	struct cursor *next;
@@ -123,28 +123,28 @@ struct cursor
 
 struct typedefs
 {
-	char				*name;
-	struct this_type		*type;
-	struct ECPGstruct_member 	*struct_member_list;
-	int				brace_level;
-	struct typedefs 		*next;
+	char	   *name;
+	struct this_type *type;
+	struct ECPGstruct_member *struct_member_list;
+	int			brace_level;
+	struct typedefs *next;
 };
 
 struct _defines
 {
-	char	   	*old;
-	char	   	*new;
-	int		pertinent;
-	void 		*used;
+	char	   *old;
+	char	   *new;
+	int			pertinent;
+	void	   *used;
 	struct _defines *next;
 };
 
 /* This is a linked list of the variable names and types. */
 struct variable
 {
-	char	   	*name;
+	char	   *name;
 	struct ECPGtype *type;
-	int		brace_level;
+	int			brace_level;
 	struct variable *next;
 };
 

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/operatorcmds.c,v 1.18 2004/08/29 04:12:30 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/operatorcmds.c,v 1.19 2004/08/29 05:06:41 momjian Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -275,7 +275,7 @@ AlterOperatorOwner(List *name, TypeName *typeName1, TypeName *typeName2,
 	Oid			operOid;
 	HeapTuple	tup;
 	Relation	rel;
-	Form_pg_operator	oprForm;
+	Form_pg_operator oprForm;
 
 	rel = heap_openr(OperatorRelationName, RowExclusiveLock);
 
@@ -283,14 +283,14 @@ AlterOperatorOwner(List *name, TypeName *typeName1, TypeName *typeName2,
 									  false);
 
 	tup = SearchSysCacheCopy(OPEROID,
-						 ObjectIdGetDatum(operOid),
-						 0, 0, 0);
+							 ObjectIdGetDatum(operOid),
+							 0, 0, 0);
 	if (!HeapTupleIsValid(tup)) /* should not happen */
 		elog(ERROR, "cache lookup failed for operator %u", operOid);
 
 	oprForm = (Form_pg_operator) GETSTRUCT(tup);
 
-	/* 
+	/*
 	 * If the new owner is the same as the existing owner, consider the
 	 * command to have succeeded.  This is for dump restoration purposes.
 	 */
@@ -302,7 +302,10 @@ AlterOperatorOwner(List *name, TypeName *typeName1, TypeName *typeName2,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("must be superuser to change owner")));
 
-		/* Modify the owner --- okay to scribble on tup because it's a copy */
+		/*
+		 * Modify the owner --- okay to scribble on tup because it's a
+		 * copy
+		 */
 		oprForm->oprowner = newOwnerSysId;
 
 		simple_heap_update(rel, &tup->t_self, tup);
@@ -314,5 +317,3 @@ AlterOperatorOwner(List *name, TypeName *typeName1, TypeName *typeName2,
 	heap_freetuple(tup);
 
 }
-
-

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/numutils.c,v 1.64 2004/08/29 04:12:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/numutils.c,v 1.65 2004/08/29 05:06:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,8 +85,8 @@ pg_atoi(char *s, int size, int c)
 						s)));
 
 	/*
-	 * Skip any trailing whitespace; if anything but whitespace
-	 * remains before the terminating character, bail out
+	 * Skip any trailing whitespace; if anything but whitespace remains
+	 * before the terminating character, bail out
 	 */
 	while (*badp != c && isspace((unsigned char) *badp))
 		badp++;

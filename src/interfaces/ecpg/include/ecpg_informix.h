@@ -1,7 +1,7 @@
 /*
  * This file contains stuff needed to be as compatible to Informix as possible.
  *
- * $PostgreSQL: pgsql/src/interfaces/ecpg/include/ecpg_informix.h,v 1.15 2004/05/10 13:46:06 meskes Exp $
+ * $PostgreSQL: pgsql/src/interfaces/ecpg/include/ecpg_informix.h,v 1.16 2004/08/29 05:06:59 momjian Exp $
  */
 #ifndef _ECPG_INFORMIX_H
 #define _ECPG_INFORMIX_H
@@ -15,14 +15,14 @@
 #define SQLNOTFOUND 100
 
 #define ECPG_INFORMIX_NUM_OVERFLOW	-1200
-#define ECPG_INFORMIX_NUM_UNDERFLOW	-1201
+#define ECPG_INFORMIX_NUM_UNDERFLOW -1201
 #define ECPG_INFORMIX_DIVIDE_ZERO	-1202
 #define ECPG_INFORMIX_BAD_YEAR		-1204
 #define ECPG_INFORMIX_BAD_MONTH		-1205
 #define ECPG_INFORMIX_BAD_DAY		-1206
 #define ECPG_INFORMIX_ENOSHORTDATE	-1209
 #define ECPG_INFORMIX_DATE_CONVERT	-1210
-#define ECPG_INFORMIX_OUT_OF_MEMORY	-1211
+#define ECPG_INFORMIX_OUT_OF_MEMORY -1211
 #define ECPG_INFORMIX_ENOTDMY		-1212
 #define ECPG_INFORMIX_BAD_NUMERIC	-1213
 #define ECPG_INFORMIX_BAD_EXPONENT	-1216
@@ -30,12 +30,12 @@
 #define ECPG_INFORMIX_EXTRA_CHARS	-1264
 
 #ifdef __cplusplus
-extern          "C"
+extern		"C"
 {
 #endif
 
 extern int	rdatestr(date, char *);
-extern void 	rtoday(date *);
+extern void rtoday(date *);
 extern int	rjulmdy(date, short *);
 extern int	rdefmtdate(date *, char *, char *);
 extern int	rfmtdate(date, char *, char *);
@@ -50,7 +50,7 @@ extern int	rsetnull(int, char *);
 extern int	rtypalign(int, int);
 extern int	rtypmsize(int, int);
 extern int	rtypwidth(int, int);
-extern void 	rupshift(char *);
+extern void rupshift(char *);
 
 extern int	byleng(char *, int);
 extern void ldchar(char *, int, char *);
@@ -59,25 +59,25 @@ extern void ECPG_informix_set_var(int, void *, int);
 extern void *ECPG_informix_get_var(int);
 
 /* Informix defines these in decimal.h */
-int	decadd(decimal *, decimal *, decimal *);
-int	deccmp(decimal *, decimal *);
-void	deccopy(decimal *, decimal *);
-int	deccvasc(char *, int, decimal *);
-int	deccvdbl(double, decimal *);
-int	deccvint(int, decimal *);
-int	deccvlong(long, decimal *);
-int	decdiv(decimal *, decimal *, decimal *);
-int	decmul(decimal *, decimal *, decimal *);
-int	decsub(decimal *, decimal *, decimal *);
-int	dectoasc(decimal *, char *, int, int);
-int	dectodbl(decimal *, double *);
-int	dectoint(decimal *, int *);
-int	dectolong(decimal *, long *);
+int			decadd(decimal *, decimal *, decimal *);
+int			deccmp(decimal *, decimal *);
+void		deccopy(decimal *, decimal *);
+int			deccvasc(char *, int, decimal *);
+int			deccvdbl(double, decimal *);
+int			deccvint(int, decimal *);
+int			deccvlong(long, decimal *);
+int			decdiv(decimal *, decimal *, decimal *);
+int			decmul(decimal *, decimal *, decimal *);
+int			decsub(decimal *, decimal *, decimal *);
+int			dectoasc(decimal *, char *, int, int);
+int			dectodbl(decimal *, double *);
+int			dectoint(decimal *, int *);
+int			dectolong(decimal *, long *);
 
 /* Informix defines these in datetime.h */
-extern void	dtcurrent(timestamp *);
-extern int  	dtcvasc(char *, timestamp *);
-extern int  	dtsub(timestamp *, timestamp *, interval *);
+extern void dtcurrent(timestamp *);
+extern int	dtcvasc(char *, timestamp *);
+extern int	dtsub(timestamp *, timestamp *, interval *);
 extern int	dttoasc(timestamp *, char *);
 extern int	dttofmtasc(timestamp *, char *, int, char *);
 extern int	intoasc(interval *, char *);
@@ -87,4 +87,4 @@ extern int	dtcvfmtasc(char *, char *, timestamp *);
 }
 #endif
 
-#endif /* ndef _ECPG_INFORMIX_H */
+#endif   /* ndef _ECPG_INFORMIX_H */

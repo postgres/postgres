@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/acl.h,v 1.74 2004/08/29 04:13:10 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/acl.h,v 1.75 2004/08/29 05:06:58 momjian Exp $
  *
  * NOTES
  *	  An ACL array is simply an array of AclItems, representing the union
@@ -72,7 +72,7 @@ typedef struct AclItem
 #define ACLITEM_GET_IDTYPE(item)   ((item).ai_privs >> 30)
 
 #define ACL_GRANT_OPTION_FOR(privs) (((AclMode) (privs) & 0x7FFF) << 15)
-#define ACL_OPTION_TO_PRIVS(privs)  (((AclMode) (privs) >> 15) & 0x7FFF)
+#define ACL_OPTION_TO_PRIVS(privs)	(((AclMode) (privs) >> 15) & 0x7FFF)
 
 #define ACLITEM_SET_PRIVS(item,privs) \
   ((item).ai_privs = ((item).ai_privs & ~((AclMode) 0x7FFF)) | \
@@ -223,11 +223,11 @@ typedef enum AclObjectKind
  */
 extern Acl *acldefault(GrantObjectType objtype, AclId ownerid);
 extern Acl *aclupdate(const Acl *old_acl, const AclItem *mod_aip,
-					  int modechg, AclId ownerid, DropBehavior behavior);
+		  int modechg, AclId ownerid, DropBehavior behavior);
 extern Acl *aclnewowner(const Acl *old_acl, AclId oldownerid, AclId newownerid);
-					  
+
 extern AclMode aclmask(const Acl *acl, AclId userid, AclId ownerid,
-					   AclMode mask, AclMaskHow how);
+		AclMode mask, AclMaskHow how);
 
 /*
  * SQL functions (from acl.c)
@@ -249,17 +249,17 @@ extern AclId get_grosysid(char *groname);
 extern char *get_groname(AclId grosysid);
 
 extern AclMode pg_class_aclmask(Oid table_oid, AclId userid,
-								AclMode mask, AclMaskHow how);
+				 AclMode mask, AclMaskHow how);
 extern AclMode pg_database_aclmask(Oid db_oid, AclId userid,
-								   AclMode mask, AclMaskHow how);
+					AclMode mask, AclMaskHow how);
 extern AclMode pg_proc_aclmask(Oid proc_oid, AclId userid,
-							   AclMode mask, AclMaskHow how);
+				AclMode mask, AclMaskHow how);
 extern AclMode pg_language_aclmask(Oid lang_oid, AclId userid,
-								   AclMode mask, AclMaskHow how);
+					AclMode mask, AclMaskHow how);
 extern AclMode pg_namespace_aclmask(Oid nsp_oid, AclId userid,
-									AclMode mask, AclMaskHow how);
+					 AclMode mask, AclMaskHow how);
 extern AclMode pg_tablespace_aclmask(Oid spc_oid, AclId userid,
-						            AclMode mask, AclMaskHow how);
+					  AclMode mask, AclMaskHow how);
 
 extern AclResult pg_class_aclcheck(Oid table_oid, AclId userid, AclMode mode);
 extern AclResult pg_database_aclcheck(Oid db_oid, AclId userid, AclMode mode);

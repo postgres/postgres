@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/pmsignal.c,v 1.16 2004/08/29 04:12:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/pmsignal.c,v 1.17 2004/08/29 05:06:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,9 +45,10 @@ static volatile sig_atomic_t *PMSignalFlags;
 void
 PMSignalInit(void)
 {
-	bool found;
+	bool		found;
+
 	PMSignalFlags = (sig_atomic_t *)
-		ShmemInitStruct("PMSignalFlags",NUM_PMSIGNALS * sizeof(sig_atomic_t),&found);
+		ShmemInitStruct("PMSignalFlags", NUM_PMSIGNALS * sizeof(sig_atomic_t), &found);
 
 	if (!found)
 		MemSet(PMSignalFlags, 0, NUM_PMSIGNALS * sizeof(sig_atomic_t));
@@ -108,14 +109,14 @@ PostmasterIsAlive(bool amDirectChild)
 	else
 	{
 		/*
-		 * Use kill() to see if the postmaster is still alive.  This can
-		 * sometimes give a false positive result, since the postmaster's PID
-		 * may get recycled, but it is good enough for existing uses by
-		 * indirect children.
+		 * Use kill() to see if the postmaster is still alive.	This can
+		 * sometimes give a false positive result, since the postmaster's
+		 * PID may get recycled, but it is good enough for existing uses
+		 * by indirect children.
 		 */
 		return (kill(PostmasterPid, 0) == 0);
 	}
-#else /* WIN32 */
+#else							/* WIN32 */
 	return (WaitForSingleObject(PostmasterHandle, 0) == WAIT_TIMEOUT);
-#endif /* WIN32 */
+#endif   /* WIN32 */
 }

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/relfilenode.h,v 1.10 2004/08/29 04:13:10 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/storage/relfilenode.h,v 1.11 2004/08/29 05:06:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,7 @@
  * spcNode identifies the tablespace of the relation.  It corresponds to
  * pg_tablespace.oid.
  *
- * dbNode identifies the database of the relation.  It is zero for
+ * dbNode identifies the database of the relation.	It is zero for
  * "shared" relations (those common to all databases of a cluster).
  * Nonzero dbNode values correspond to pg_database.oid.
  *
@@ -57,4 +57,4 @@ typedef struct RelFileNode
 	 (node1).dbNode == (node2).dbNode && \
 	 (node1).spcNode == (node2).spcNode)
 
-#endif /* RELFILENODE_H */
+#endif   /* RELFILENODE_H */

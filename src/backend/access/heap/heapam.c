@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.172 2004/08/29 04:12:20 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.173 2004/08/29 05:06:40 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -75,9 +75,9 @@ initscan(HeapScanDesc scan, ScanKey key)
 	/*
 	 * Determine the number of blocks we have to scan.
 	 *
-	 * It is sufficient to do this once at scan start, since any tuples
-	 * added while the scan is in progress will be invisible to my
-	 * transaction anyway...
+	 * It is sufficient to do this once at scan start, since any tuples added
+	 * while the scan is in progress will be invisible to my transaction
+	 * anyway...
 	 */
 	scan->rs_nblocks = RelationGetNumberOfBlocks(scan->rs_rd);
 
@@ -1141,12 +1141,13 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid)
 	tup->t_data->t_infomask |= HEAP_XMAX_INVALID;
 	HeapTupleHeaderSetXmin(tup->t_data, GetCurrentTransactionId());
 	HeapTupleHeaderSetCmin(tup->t_data, cid);
-	HeapTupleHeaderSetCmax(tup->t_data, 0);	/* zero out Datum fields */
+	HeapTupleHeaderSetCmax(tup->t_data, 0);		/* zero out Datum fields */
 	tup->t_tableOid = relation->rd_id;
 
 	/*
 	 * If the new tuple is too big for storage or contains already toasted
-	 * out-of-line attributes from some other relation, invoke the toaster.
+	 * out-of-line attributes from some other relation, invoke the
+	 * toaster.
 	 */
 	if (HeapTupleHasExternal(tup) ||
 		(MAXALIGN(tup->t_len) > TOAST_TUPLE_THRESHOLD))
@@ -1273,7 +1274,7 @@ simple_heap_insert(Relation relation, HeapTuple tup)
  */
 int
 heap_delete(Relation relation, ItemPointer tid,
-			ItemPointer ctid, CommandId cid, Snapshot crosscheck, bool wait)
+		 ItemPointer ctid, CommandId cid, Snapshot crosscheck, bool wait)
 {
 	ItemId		lp;
 	HeapTupleData tp;
@@ -1404,9 +1405,9 @@ l1:
 
 	/*
 	 * If the tuple has toasted out-of-line attributes, we need to delete
-	 * those items too.  We have to do this before WriteBuffer because we need
-	 * to look at the contents of the tuple, but it's OK to release the
-	 * context lock on the buffer first.
+	 * those items too.  We have to do this before WriteBuffer because we
+	 * need to look at the contents of the tuple, but it's OK to release
+	 * the context lock on the buffer first.
 	 */
 	if (HeapTupleHasExternal(&tp))
 		heap_tuple_toast_attrs(relation, NULL, &tp);
@@ -1443,7 +1444,7 @@ simple_heap_delete(Relation relation, ItemPointer tid)
 	result = heap_delete(relation, tid,
 						 &ctid,
 						 GetCurrentCommandId(), SnapshotAny,
-						 true /* wait for commit */);
+						 true /* wait for commit */ );
 	switch (result)
 	{
 		case HeapTupleSelfUpdated:
@@ -1490,7 +1491,7 @@ simple_heap_delete(Relation relation, ItemPointer tid)
  */
 int
 heap_update(Relation relation, ItemPointer otid, HeapTuple newtup,
-			ItemPointer ctid, CommandId cid, Snapshot crosscheck, bool wait)
+		 ItemPointer ctid, CommandId cid, Snapshot crosscheck, bool wait)
 {
 	ItemId		lp;
 	HeapTupleData oldtup;
@@ -1804,7 +1805,7 @@ simple_heap_update(Relation relation, ItemPointer otid, HeapTuple tup)
 	result = heap_update(relation, otid, tup,
 						 &ctid,
 						 GetCurrentCommandId(), SnapshotAny,
-						 true /* wait for commit */);
+						 true /* wait for commit */ );
 	switch (result)
 	{
 		case HeapTupleSelfUpdated:
@@ -2198,8 +2199,8 @@ heap_xlog_newpage(bool redo, XLogRecPtr lsn, XLogRecord *record)
 	Page		page;
 
 	/*
-	 * Note: the NEWPAGE log record is used for both heaps and indexes,
-	 * so do not do anything that assumes we are touching a heap.
+	 * Note: the NEWPAGE log record is used for both heaps and indexes, so
+	 * do not do anything that assumes we are touching a heap.
 	 */
 
 	if (!redo || (record->xl_info & XLR_BKP_BLOCK_1))
@@ -2668,7 +2669,7 @@ static void
 out_target(char *buf, xl_heaptid *target)
 {
 	sprintf(buf + strlen(buf), "rel %u/%u/%u; tid %u/%u",
-			target->node.spcNode, target->node.dbNode, target->node.relNode,
+		 target->node.spcNode, target->node.dbNode, target->node.relNode,
 			ItemPointerGetBlockNumber(&(target->tid)),
 			ItemPointerGetOffsetNumber(&(target->tid)));
 }

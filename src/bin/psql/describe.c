@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.105 2004/08/29 04:13:02 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.106 2004/08/29 05:06:54 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -39,8 +39,8 @@ static void processNamePattern(PQExpBuffer buf, const char *pattern,
 				   const char *schemavar, const char *namevar,
 				   const char *altnamevar, const char *visibilityrule);
 
-static void add_tablespace_footer(char relkind, Oid tablespace, 
-		char **footers, int *count, PQExpBufferData buf);
+static void add_tablespace_footer(char relkind, Oid tablespace,
+					  char **footers, int *count, PQExpBufferData buf);
 
 /*----------------
  * Handlers for various slash commands displaying some sort of list
@@ -112,25 +112,26 @@ describeTablespaces(const char *pattern, bool verbose)
 	PGresult   *res;
 	printQueryOpt myopt = pset.popt;
 
-	if (pset.sversion < 70500) {
-			fprintf(stderr, _("This server version (%d) does not support tablespaces.\n"),
-							pset.sversion);
-			return true;
+	if (pset.sversion < 70500)
+	{
+		fprintf(stderr, _("This server version (%d) does not support tablespaces.\n"),
+				pset.sversion);
+		return true;
 	}
 
 	initPQExpBuffer(&buf);
 
 	printfPQExpBuffer(&buf,
 					  "SELECT spcname AS \"%s\",\n"
-					  "  pg_catalog.pg_get_userbyid(spcowner) AS \"%s\",\n"
+					"  pg_catalog.pg_get_userbyid(spcowner) AS \"%s\",\n"
 					  "  spclocation AS \"%s\"",
 					  _("Name"), _("Owner"), _("Location"));
 
 	if (verbose)
 		appendPQExpBuffer(&buf,
-			",\n  spcacl as \"%s\"",
-			_("Access privileges"));
-						  
+						  ",\n  spcacl as \"%s\"",
+						  _("Access privileges"));
+
 	appendPQExpBuffer(&buf,
 					  "\nFROM pg_catalog.pg_tablespace\n");
 
@@ -697,7 +698,7 @@ describeOneTableDetails(const char *schemaname,
 		char		relkind;
 		bool		hasindex;
 		bool		hasrules;
-		bool	    hasoids;
+		bool		hasoids;
 		Oid			tablespace;
 	}			tableinfo;
 	bool		show_modifiers = false;
@@ -711,8 +712,8 @@ describeOneTableDetails(const char *schemaname,
 
 	/* Get general table info */
 	printfPQExpBuffer(&buf,
-	 "SELECT relhasindex, relkind, relchecks, reltriggers, relhasrules, \n" 
-					"relhasoids %s \n"
+	"SELECT relhasindex, relkind, relchecks, reltriggers, relhasrules, \n"
+					  "relhasoids %s \n"
 					  "FROM pg_catalog.pg_class WHERE oid = '%s'",
 					  pset.sversion >= 70500 ? ", reltablespace" : "",
 					  oid);
@@ -736,8 +737,8 @@ describeOneTableDetails(const char *schemaname,
 	tableinfo.hasindex = strcmp(PQgetvalue(res, 0, 0), "t") == 0;
 	tableinfo.hasrules = strcmp(PQgetvalue(res, 0, 4), "t") == 0;
 	tableinfo.hasoids = strcmp(PQgetvalue(res, 0, 5), "t") == 0;
-	tableinfo.tablespace = (pset.sversion >= 70500) ? 
-			atooid(PQgetvalue(res, 0, 6)) : 0;
+	tableinfo.tablespace = (pset.sversion >= 70500) ?
+		atooid(PQgetvalue(res, 0, 6)) : 0;
 	PQclear(res);
 
 	headers[0] = _("Column");
@@ -895,8 +896,8 @@ describeOneTableDetails(const char *schemaname,
 		PGresult   *result;
 
 		printfPQExpBuffer(&buf,
-		  "SELECT i.indisunique, i.indisprimary, i.indisclustered, a.amname, c2.relname,\n"
-					  "  pg_catalog.pg_get_expr(i.indpred, i.indrelid, true)\n"
+						  "SELECT i.indisunique, i.indisprimary, i.indisclustered, a.amname, c2.relname,\n"
+				"  pg_catalog.pg_get_expr(i.indpred, i.indrelid, true)\n"
 						  "FROM pg_catalog.pg_index i, pg_catalog.pg_class c, pg_catalog.pg_class c2, pg_catalog.pg_am a\n"
 						  "WHERE i.indexrelid = c.oid AND c.oid = '%s' AND c.relam = a.oid\n"
 						  "AND i.indrelid = c2.oid",
@@ -941,7 +942,7 @@ describeOneTableDetails(const char *schemaname,
 			footers = pg_malloc_zero(4 * sizeof(*footers));
 			footers[count_footers++] = pg_strdup(tmpbuf.data);
 			add_tablespace_footer(tableinfo.relkind, tableinfo.tablespace,
-														footers, &count_footers, tmpbuf);
+								  footers, &count_footers, tmpbuf);
 			footers[count_footers] = NULL;
 
 		}
@@ -1020,8 +1021,8 @@ describeOneTableDetails(const char *schemaname,
 		if (tableinfo.hasindex)
 		{
 			printfPQExpBuffer(&buf,
-					 "SELECT c2.relname, i.indisprimary, i.indisunique, i.indisclustered, "
-							  "pg_catalog.pg_get_indexdef(i.indexrelid, 0, true)\n"
+							  "SELECT c2.relname, i.indisprimary, i.indisunique, i.indisclustered, "
+					"pg_catalog.pg_get_indexdef(i.indexrelid, 0, true)\n"
 							  "FROM pg_catalog.pg_class c, pg_catalog.pg_class c2, pg_catalog.pg_index i\n"
 							  "WHERE c.oid = '%s' AND c.oid = i.indrelid AND i.indexrelid = c2.oid\n"
 							  "ORDER BY i.indisprimary DESC, i.indisunique DESC, c2.relname",
@@ -1038,10 +1039,10 @@ describeOneTableDetails(const char *schemaname,
 		{
 			printfPQExpBuffer(&buf,
 							  "SELECT "
-							  "pg_catalog.pg_get_constraintdef(r.oid, true), "
+						 "pg_catalog.pg_get_constraintdef(r.oid, true), "
 							  "conname\n"
 							  "FROM pg_catalog.pg_constraint r\n"
-							  "WHERE r.conrelid = '%s' AND r.contype = 'c'",
+						   "WHERE r.conrelid = '%s' AND r.contype = 'c'",
 							  oid);
 			result2 = PSQLexec(buf.data, false);
 			if (!result2)
@@ -1102,7 +1103,7 @@ describeOneTableDetails(const char *schemaname,
 		{
 			printfPQExpBuffer(&buf,
 							  "SELECT conname,\n"
-					 "  pg_catalog.pg_get_constraintdef(oid, true) as condef\n"
+			   "  pg_catalog.pg_get_constraintdef(oid, true) as condef\n"
 							  "FROM pg_catalog.pg_constraint r\n"
 						   "WHERE r.conrelid = '%s' AND r.contype = 'f'",
 							  oid);
@@ -1255,14 +1256,15 @@ describeOneTableDetails(const char *schemaname,
 
 		if (verbose)
 		{
-			char *s = _("Contains OIDs");
+			char	   *s = _("Contains OIDs");
+
 			printfPQExpBuffer(&buf, "%s: %s", s,
 							  (tableinfo.hasoids ? _("yes") : _("no")));
 			footers[count_footers++] = pg_strdup(buf.data);
 		}
 
 		add_tablespace_footer(tableinfo.relkind, tableinfo.tablespace,
-			footers, &count_footers, buf);
+							  footers, &count_footers, buf);
 		/* end of list marker */
 		footers[count_footers] = NULL;
 
@@ -1315,29 +1317,30 @@ error_return:
 
 
 static void
-add_tablespace_footer(char relkind, Oid tablespace, char **footers, 
-		int *count, PQExpBufferData buf)
+add_tablespace_footer(char relkind, Oid tablespace, char **footers,
+					  int *count, PQExpBufferData buf)
 {
 	/* relkinds for which we support tablespaces */
-	if(relkind == 'r' || relkind == 'i')
+	if (relkind == 'r' || relkind == 'i')
 	{
 		/*
 		 * We ignore the database default tablespace so that users not
 		 * using tablespaces don't need to know about them.
 		 */
-		if(tablespace != 0)
+		if (tablespace != 0)
 		{
 			PGresult   *result1 = NULL;
+
 			printfPQExpBuffer(&buf, "SELECT spcname FROM pg_tablespace \n"
-				"WHERE oid = '%u';", tablespace);
+							  "WHERE oid = '%u';", tablespace);
 			result1 = PSQLexec(buf.data, false);
-	        if (!result1)
+			if (!result1)
 				return;
 			/* Should always be the case, but.... */
-			if(PQntuples(result1) > 0)
+			if (PQntuples(result1) > 0)
 			{
 				printfPQExpBuffer(&buf, _("Tablespace: \"%s\""),
-					PQgetvalue(result1, 0, 0));
+								  PQgetvalue(result1, 0, 0));
 				footers[(*count)++] = pg_strdup(buf.data);
 			}
 			PQclear(result1);
@@ -1716,21 +1719,21 @@ listSchemas(const char *pattern, bool verbose)
 
 	initPQExpBuffer(&buf);
 	printfPQExpBuffer(&buf,
-		"SELECT n.nspname AS \"%s\",\n"
-		"       u.usename AS \"%s\"",
-		_("Name"), _("Owner"));
-		
+					  "SELECT n.nspname AS \"%s\",\n"
+					  "       u.usename AS \"%s\"",
+					  _("Name"), _("Owner"));
+
 	if (verbose)
 		appendPQExpBuffer(&buf,
-			",\n  n.nspacl as \"%s\","
-			"  pg_catalog.obj_description(n.oid, 'pg_namespace') as \"%s\"",
-			_("Access privileges"), _("Description"));
-						  
+						  ",\n  n.nspacl as \"%s\","
+		 "  pg_catalog.obj_description(n.oid, 'pg_namespace') as \"%s\"",
+						  _("Access privileges"), _("Description"));
+
 	appendPQExpBuffer(&buf,
-		"\nFROM pg_catalog.pg_namespace n LEFT JOIN pg_catalog.pg_user u\n"
-		"       ON n.nspowner=u.usesysid\n"
-		"WHERE	(n.nspname NOT LIKE 'pg\\\\_temp\\\\_%%' OR\n"
-		"		 n.nspname = (pg_catalog.current_schemas(true))[1])\n");	/* temp schema is first */
+	  "\nFROM pg_catalog.pg_namespace n LEFT JOIN pg_catalog.pg_user u\n"
+					  "       ON n.nspowner=u.usesysid\n"
+				 "WHERE	(n.nspname NOT LIKE 'pg\\\\_temp\\\\_%%' OR\n"
+	   "		 n.nspname = (pg_catalog.current_schemas(true))[1])\n");		/* temp schema is first */
 
 	processNamePattern(&buf, pattern, true, false,
 					   NULL, "n.nspname", NULL,

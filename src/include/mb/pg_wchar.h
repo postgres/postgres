@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/mb/pg_wchar.h,v 1.50 2004/03/15 10:41:26 ishii Exp $ */
+/* $PostgreSQL: pgsql/src/include/mb/pg_wchar.h,v 1.51 2004/08/29 05:06:56 momjian Exp $ */
 
 #ifndef PG_WCHAR_H
 #define PG_WCHAR_H
@@ -255,7 +255,8 @@ typedef struct
 	mb2wchar_with_len_converter mb2wchar_with_len;		/* convert a multibyte
 														 * string to a wchar */
 	mblen_converter mblen;		/* returns the length of a multibyte char */
-	mbdisplaylen_converter	dsplen;	/* returns the lenghth of a display length */
+	mbdisplaylen_converter dsplen;		/* returns the lenghth of a
+										 * display length */
 	int			maxmblen;		/* max bytes for a char in this charset */
 } pg_wchar_tbl;
 

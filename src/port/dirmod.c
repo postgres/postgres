@@ -10,7 +10,7 @@
  *	Win32 (NT, Win2k, XP).	replace() doesn't work on Win95/98/Me.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/dirmod.c,v 1.21 2004/08/29 04:13:12 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/dirmod.c,v 1.22 2004/08/29 05:07:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,28 +70,28 @@ pgrename(const char *from, const char *to)
 	while (!MoveFileEx(from, to, MOVEFILE_REPLACE_EXISTING))
 #endif
 #ifdef __CYGWIN__
-	while (rename(from, to) < 0)
+		while (rename(from, to) < 0)
 #endif
-	{
+		{
 #ifdef WIN32
-		if (GetLastError() != ERROR_ACCESS_DENIED)
+			if (GetLastError() != ERROR_ACCESS_DENIED)
 #endif
 #ifdef __CYGWIN__
-		if (errno != EACCES)
+				if (errno != EACCES)
 #endif
-			/* set errno? */
-			return -1;
-		pg_usleep(100000);				/* us */
-		if (loops == 30)
+					/* set errno? */
+					return -1;
+			pg_usleep(100000);	/* us */
+			if (loops == 30)
 #ifndef FRONTEND
-			elog(LOG, "could not rename \"%s\" to \"%s\", continuing to try",
-				 from, to);
+				elog(LOG, "could not rename \"%s\" to \"%s\", continuing to try",
+					 from, to);
 #else
-			fprintf(stderr, "could not rename \"%s\" to \"%s\", continuing to try\n",
-					from, to);
+				fprintf(stderr, "could not rename \"%s\" to \"%s\", continuing to try\n",
+						from, to);
 #endif
-		loops++;
-	}
+			loops++;
+		}
 
 	if (loops > 30)
 #ifndef FRONTEND
@@ -147,17 +147,18 @@ pgunlink(const char *path)
  */
 typedef struct
 {
-    DWORD  ReparseTag;
-    WORD   ReparseDataLength;
-    WORD   Reserved;
-    /* SymbolicLinkReparseBuffer */
-        WORD   SubstituteNameOffset;
-        WORD   SubstituteNameLength;
-        WORD   PrintNameOffset;
-        WORD   PrintNameLength;
-        WCHAR PathBuffer[1];
+	DWORD		ReparseTag;
+	WORD		ReparseDataLength;
+	WORD		Reserved;
+	/* SymbolicLinkReparseBuffer */
+	WORD		SubstituteNameOffset;
+	WORD		SubstituteNameLength;
+	WORD		PrintNameOffset;
+	WORD		PrintNameLength;
+	WCHAR		PathBuffer[1];
 }
-REPARSE_JUNCTION_DATA_BUFFER;
+
+			REPARSE_JUNCTION_DATA_BUFFER;
 
 #define REPARSE_JUNCTION_DATA_BUFFER_HEADER_SIZE   \
 		FIELD_OFFSET(REPARSE_JUNCTION_DATA_BUFFER, SubstituteNameOffset)
@@ -171,27 +172,27 @@ REPARSE_JUNCTION_DATA_BUFFER;
 int
 pgsymlink(const char *oldpath, const char *newpath)
 {
-	HANDLE dirhandle;
-	DWORD len;
-	char buffer[MAX_PATH*sizeof(WCHAR) + sizeof(REPARSE_JUNCTION_DATA_BUFFER)];
-	char nativeTarget[MAX_PATH];
-	char *p = nativeTarget;
-	REPARSE_JUNCTION_DATA_BUFFER *reparseBuf = (REPARSE_JUNCTION_DATA_BUFFER*)buffer;
-    
+	HANDLE		dirhandle;
+	DWORD		len;
+	char		buffer[MAX_PATH * sizeof(WCHAR) + sizeof(REPARSE_JUNCTION_DATA_BUFFER)];
+	char		nativeTarget[MAX_PATH];
+	char	   *p = nativeTarget;
+	REPARSE_JUNCTION_DATA_BUFFER *reparseBuf = (REPARSE_JUNCTION_DATA_BUFFER *) buffer;
+
 	CreateDirectory(newpath, 0);
-	dirhandle = CreateFile(newpath, GENERIC_READ | GENERIC_WRITE, 
-			0, 0, OPEN_EXISTING, 
-			FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_BACKUP_SEMANTICS, 0);
-    
+	dirhandle = CreateFile(newpath, GENERIC_READ | GENERIC_WRITE,
+						   0, 0, OPEN_EXISTING,
+		   FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_BACKUP_SEMANTICS, 0);
+
 	if (dirhandle == INVALID_HANDLE_VALUE)
 		return -1;
-    
+
 	/* make sure we have an unparsed native win32 path */
 	if (memcmp("\\??\\", oldpath, 4))
 		sprintf(nativeTarget, "\\??\\%s", oldpath);
 	else
 		strcpy(nativeTarget, oldpath);
-    
+
 	while ((p = strchr(p, '/')) != 0)
 		*p++ = '\\';
 
@@ -201,36 +202,36 @@ pgsymlink(const char *oldpath, const char *newpath)
 	reparseBuf->Reserved = 0;
 	reparseBuf->SubstituteNameOffset = 0;
 	reparseBuf->SubstituteNameLength = len;
-	reparseBuf->PrintNameOffset = len+sizeof(WCHAR);
+	reparseBuf->PrintNameOffset = len + sizeof(WCHAR);
 	reparseBuf->PrintNameLength = 0;
 	MultiByteToWideChar(CP_ACP, 0, nativeTarget, -1,
 						reparseBuf->PathBuffer, MAX_PATH);
-    
-	/*
-	 * FSCTL_SET_REPARSE_POINT is coded differently depending on SDK version;
-	 * we use our own definition
-	 */
-	if (!DeviceIoControl(dirhandle, 
-		CTL_CODE(FILE_DEVICE_FILE_SYSTEM, 41, METHOD_BUFFERED, FILE_ANY_ACCESS),
-		reparseBuf, 
-		reparseBuf->ReparseDataLength + REPARSE_JUNCTION_DATA_BUFFER_HEADER_SIZE,
-		0, 0, &len, 0))
-	{
-		LPSTR msg;
 
-		errno=0;
+	/*
+	 * FSCTL_SET_REPARSE_POINT is coded differently depending on SDK
+	 * version; we use our own definition
+	 */
+	if (!DeviceIoControl(dirhandle,
+						 CTL_CODE(FILE_DEVICE_FILE_SYSTEM, 41, METHOD_BUFFERED, FILE_ANY_ACCESS),
+						 reparseBuf,
+						 reparseBuf->ReparseDataLength + REPARSE_JUNCTION_DATA_BUFFER_HEADER_SIZE,
+						 0, 0, &len, 0))
+	{
+		LPSTR		msg;
+
+		errno = 0;
 		FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-					  NULL, GetLastError(), 
+					  NULL, GetLastError(),
 					  MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-					  (LPSTR)&msg, 0, NULL );
+					  (LPSTR) & msg, 0, NULL);
 #ifndef FRONTEND
 		ereport(ERROR, (errcode_for_file_access(),
-			errmsg("Error setting junction for %s: %s", nativeTarget, msg)));
+		errmsg("Error setting junction for %s: %s", nativeTarget, msg)));
 #else
 		fprintf(stderr, "Error setting junction for %s: %s", nativeTarget, msg);
 #endif
 		LocalFree(msg);
-	    
+
 		CloseHandle(dirhandle);
 		RemoveDirectory(newpath);
 		return -1;
@@ -240,7 +241,6 @@ pgsymlink(const char *oldpath, const char *newpath)
 
 	return 0;
 }
-
 #endif
 
 
@@ -255,9 +255,9 @@ pgsymlink(const char *oldpath, const char *newpath)
  *	deallocate memory used for filenames
  */
 static void
-rmt_cleanup(char ** filenames)
+rmt_cleanup(char **filenames)
 {
-	char ** fn;
+	char	  **fn;
 
 	for (fn = filenames; *fn; fn++)
 #ifdef FRONTEND
@@ -326,7 +326,7 @@ rmtree(char *path, bool rmtopdir)
 		if (strcmp(file->d_name, ".") != 0 && strcmp(file->d_name, "..") != 0)
 #ifdef FRONTEND
 			if ((filenames[numnames++] = strdup(file->d_name)) == NULL)
-		    {
+			{
 				fprintf(stderr, _("out of memory\n"));
 				exit(1);
 			}

@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgstattuple/pgstattuple.c,v 1.15 2004/05/08 19:09:24 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgstattuple/pgstattuple.c,v 1.16 2004/08/29 05:06:37 momjian Exp $
  *
  * Copyright (c) 2001,2002	Tatsuo Ishii
  *
@@ -129,7 +129,7 @@ pgstattuple_real(Relation rel)
 
 	scan = heap_beginscan(rel, SnapshotAny, 0, NULL);
 
-	nblocks = scan->rs_nblocks;	/* # blocks to be scanned */
+	nblocks = scan->rs_nblocks; /* # blocks to be scanned */
 
 	/* scan the relation */
 	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
@@ -189,9 +189,9 @@ pgstattuple_real(Relation rel)
 	}
 
 	/*
-	 * Prepare a values array for constructing the tuple. This should be an
-	 * array of C strings which will be processed later by the appropriate
-	 * "in" functions.
+	 * Prepare a values array for constructing the tuple. This should be
+	 * an array of C strings which will be processed later by the
+	 * appropriate "in" functions.
 	 */
 	values = (char **) palloc(NCOLUMNS * sizeof(char *));
 	for (i = 0; i < NCOLUMNS; i++)

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/define.c,v 1.90 2004/08/29 04:12:30 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/define.c,v 1.91 2004/08/29 05:06:41 momjian Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -126,8 +126,8 @@ bool
 defGetBoolean(DefElem *def)
 {
 	/*
-	 * Presently, boolean flags must simply be present or absent.
-	 * Later we could allow 'flag = t', 'flag = f', etc.
+	 * Presently, boolean flags must simply be present or absent. Later we
+	 * could allow 'flag = t', 'flag = f', etc.
 	 */
 	if (def->arg == NULL)
 		return true;
@@ -265,7 +265,7 @@ defGetTypeLength(DefElem *def)
 		case T_TypeName:
 			/* cope if grammar chooses to believe "variable" is a typename */
 			if (pg_strcasecmp(TypeNameToString((TypeName *) def->arg),
-						   "variable") == 0)
+							  "variable") == 0)
 				return -1;		/* variable length */
 			break;
 		case T_List:

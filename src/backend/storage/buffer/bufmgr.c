@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.174 2004/08/29 04:12:47 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.175 2004/08/29 05:06:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,7 +58,7 @@
 bool		zero_damaged_pages = false;
 
 #ifdef NOT_USED
-bool			ShowPinTrace = false;
+bool		ShowPinTrace = false;
 #endif
 
 long		NDirectFileRead;	/* some I/O's are direct file access.
@@ -143,6 +143,7 @@ ReadBufferInternal(Relation reln, BlockNumber blockNum,
 	{
 		ReadBufferCount++;
 		pgstat_count_buffer_read(&reln->pgstat_info, reln);
+
 		/*
 		 * lookup the buffer.  IO_IN_PROGRESS is set if the requested
 		 * block is not currently in memory.
@@ -174,11 +175,11 @@ ReadBufferInternal(Relation reln, BlockNumber blockNum,
 	 * it, if it's a shared buffer.
 	 *
 	 * Note: if smgrextend fails, we will end up with a buffer that is
-	 * allocated but not marked BM_VALID.  P_NEW will still select the same
-	 * block number (because the relation didn't get any longer on disk)
-	 * and so future attempts to extend the relation will find the same
-	 * buffer (if it's not been recycled) but come right back here to try
-	 * smgrextend again.
+	 * allocated but not marked BM_VALID.  P_NEW will still select the
+	 * same block number (because the relation didn't get any longer on
+	 * disk) and so future attempts to extend the relation will find the
+	 * same buffer (if it's not been recycled) but come right back here to
+	 * try smgrextend again.
 	 */
 	Assert(!(bufHdr->flags & BM_VALID));
 
@@ -196,10 +197,11 @@ ReadBufferInternal(Relation reln, BlockNumber blockNum,
 		if (!PageHeaderIsValid((PageHeader) MAKE_PTR(bufHdr->data)))
 		{
 			/*
-			 * During WAL recovery, the first access to any data page should
-			 * overwrite the whole page from the WAL; so a clobbered page
-			 * header is not reason to fail.  Hence, when InRecovery we may
-			 * always act as though zero_damaged_pages is ON.
+			 * During WAL recovery, the first access to any data page
+			 * should overwrite the whole page from the WAL; so a
+			 * clobbered page header is not reason to fail.  Hence, when
+			 * InRecovery we may always act as though zero_damaged_pages
+			 * is ON.
 			 */
 			if (zero_damaged_pages || InRecovery)
 			{
@@ -212,8 +214,8 @@ ReadBufferInternal(Relation reln, BlockNumber blockNum,
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_DATA_CORRUPTED),
-					  errmsg("invalid page header in block %u of relation \"%s\"",
-							 blockNum, RelationGetRelationName(reln))));
+						 errmsg("invalid page header in block %u of relation \"%s\"",
+							  blockNum, RelationGetRelationName(reln))));
 		}
 	}
 
@@ -348,9 +350,9 @@ BufferAlloc(Relation reln,
 			 * if someone were writing it.
 			 *
 			 * Note: it's okay to grab the io_in_progress lock while holding
-			 * BufMgrLock.  All code paths that acquire this lock pin the
-			 * buffer first; since no one had it pinned (it just came off the
-			 * free list), no one else can have the lock.
+			 * BufMgrLock.	All code paths that acquire this lock pin the
+			 * buffer first; since no one had it pinned (it just came off
+			 * the free list), no one else can have the lock.
 			 */
 			StartBufferIO(buf, false);
 
@@ -364,23 +366,23 @@ BufferAlloc(Relation reln,
 
 			/*
 			 * Somebody could have allocated another buffer for the same
-			 * block we are about to read in. While we flush out the
-			 * dirty buffer, we don't hold the lock and someone could have
+			 * block we are about to read in. While we flush out the dirty
+			 * buffer, we don't hold the lock and someone could have
 			 * allocated another buffer for the same block. The problem is
 			 * we haven't yet inserted the new tag into the buffer table.
 			 * So we need to check here.		-ay 3/95
 			 *
-			 * Another reason we have to do this is to update cdb_found_index,
-			 * since the CDB could have disappeared from B1/B2 list while
-			 * we were writing.
+			 * Another reason we have to do this is to update
+			 * cdb_found_index, since the CDB could have disappeared from
+			 * B1/B2 list while we were writing.
 			 */
 			buf2 = StrategyBufferLookup(&newTag, true, &cdb_found_index);
 			if (buf2 != NULL)
 			{
 				/*
-				 * Found it. Someone has already done what we were about to
-				 * do. We'll just handle this as if it were found in the
-				 * buffer pool in the first place.  First, give up the
+				 * Found it. Someone has already done what we were about
+				 * to do. We'll just handle this as if it were found in
+				 * the buffer pool in the first place.	First, give up the
 				 * buffer we were planning to use.
 				 */
 				TerminateBufferIO(buf, 0);
@@ -404,8 +406,9 @@ BufferAlloc(Relation reln,
 					if (!(buf->flags & BM_VALID))
 					{
 						/*
-						 * If we get here, previous attempts to read the buffer
-						 * must have failed ... but we shall bravely try again.
+						 * If we get here, previous attempts to read the
+						 * buffer must have failed ... but we shall
+						 * bravely try again.
 						 */
 						*foundPtr = FALSE;
 						StartBufferIO(buf, true);
@@ -441,8 +444,8 @@ BufferAlloc(Relation reln,
 
 	/*
 	 * Tell the buffer replacement strategy that we are replacing the
-	 * buffer content. Then rename the buffer.  Clearing BM_VALID here
-	 * is necessary, clearing the dirtybits is just paranoia.
+	 * buffer content. Then rename the buffer.	Clearing BM_VALID here is
+	 * necessary, clearing the dirtybits is just paranoia.
 	 */
 	StrategyReplaceBuffer(buf, &newTag, cdb_found_index, cdb_replace_index);
 	buf->tag = newTag;
@@ -685,9 +688,9 @@ BufferSync(int percent, int maxpages)
 											   NBuffers);
 
 	/*
-	 * If called by the background writer, we are usually asked to
-	 * only write out some portion of dirty buffers now, to prevent
-	 * the IO storm at checkpoint time.
+	 * If called by the background writer, we are usually asked to only
+	 * write out some portion of dirty buffers now, to prevent the IO
+	 * storm at checkpoint time.
 	 */
 	if (percent > 0)
 	{
@@ -702,8 +705,8 @@ BufferSync(int percent, int maxpages)
 
 	/*
 	 * Loop over buffers to be written.  Note the BufMgrLock is held at
-	 * loop top, but is released and reacquired within FlushBuffer,
-	 * so we aren't holding it long.
+	 * loop top, but is released and reacquired within FlushBuffer, so we
+	 * aren't holding it long.
 	 */
 	for (i = 0; i < num_buffer_dirty; i++)
 	{
@@ -712,8 +715,8 @@ BufferSync(int percent, int maxpages)
 		/*
 		 * Check it is still the same page and still needs writing.
 		 *
-		 * We can check bufHdr->cntxDirty here *without* holding any lock
-		 * on buffer context as long as we set this flag in access methods
+		 * We can check bufHdr->cntxDirty here *without* holding any lock on
+		 * buffer context as long as we set this flag in access methods
 		 * *before* logging changes with XLogInsert(): if someone will set
 		 * cntxDirty just after our check we don't worry because of our
 		 * checkpoint.redo points before log record for upcoming changes
@@ -860,7 +863,7 @@ AtEOXact_Buffers(bool isCommit)
 			if (isCommit)
 				elog(WARNING,
 					 "buffer refcount leak: [%03d] "
-					 "(rel=%u/%u/%u, blockNum=%u, flags=0x%x, refcount=%u %d)",
+				"(rel=%u/%u/%u, blockNum=%u, flags=0x%x, refcount=%u %d)",
 					 i,
 					 buf->tag.rnode.spcNode, buf->tag.rnode.dbNode,
 					 buf->tag.rnode.relNode,
@@ -1009,12 +1012,12 @@ FlushBuffer(BufferDesc *buf, SMgrRelation reln)
 	XLogFlush(recptr);
 
 	/*
-	 * Now it's safe to write buffer to disk. Note that no one else
-	 * should have been able to write it while we were busy with
-	 * locking and log flushing because caller has set the IO flag.
+	 * Now it's safe to write buffer to disk. Note that no one else should
+	 * have been able to write it while we were busy with locking and log
+	 * flushing because caller has set the IO flag.
 	 *
-	 * It would be better to clear BM_JUST_DIRTIED right here, but we'd
-	 * have to reacquire the BufMgrLock and it doesn't seem worth it.
+	 * It would be better to clear BM_JUST_DIRTIED right here, but we'd have
+	 * to reacquire the BufMgrLock and it doesn't seem worth it.
 	 */
 	smgrwrite(reln,
 			  buf->tag.blockNum,

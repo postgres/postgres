@@ -49,7 +49,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.133 2004/08/29 04:12:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.134 2004/08/29 05:06:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -746,10 +746,10 @@ cost_nestloop(NestPath *path, Query *root)
 	Selectivity joininfactor;
 
 	/*
-	 * If inner path is an indexscan, be sure to use its estimated output row
-	 * count, which may be lower than the restriction-clause-only row count of
-	 * its parent.  (We don't include this case in the PATH_ROWS macro because
-	 * it applies *only* to a nestloop's inner relation.)
+	 * If inner path is an indexscan, be sure to use its estimated output
+	 * row count, which may be lower than the restriction-clause-only row
+	 * count of its parent.  (We don't include this case in the PATH_ROWS
+	 * macro because it applies *only* to a nestloop's inner relation.)
 	 */
 	if (IsA(inner_path, IndexPath))
 		inner_path_rows = ((IndexPath *) inner_path)->rows;
@@ -761,8 +761,8 @@ cost_nestloop(NestPath *path, Query *root)
 	 * If we're doing JOIN_IN then we will stop scanning inner tuples for
 	 * an outer tuple as soon as we have one match.  Account for the
 	 * effects of this by scaling down the cost estimates in proportion to
-	 * the JOIN_IN selectivity.  (This assumes that all the quals
-	 * attached to the join are IN quals, which should be true.)
+	 * the JOIN_IN selectivity.  (This assumes that all the quals attached
+	 * to the join are IN quals, which should be true.)
 	 */
 	joininfactor = join_in_selectivity(path, root);
 
@@ -922,7 +922,7 @@ cost_mergejoin(MergePath *path, Query *root)
 	if (mergeclauses)
 	{
 		firstclause = (RestrictInfo *) linitial(mergeclauses);
-		if (firstclause->left_mergescansel < 0)	/* not computed yet? */
+		if (firstclause->left_mergescansel < 0) /* not computed yet? */
 			mergejoinscansel(root, (Node *) firstclause->clause,
 							 &firstclause->left_mergescansel,
 							 &firstclause->right_mergescansel);
@@ -1159,7 +1159,7 @@ cost_hashjoin(HashPath *path, Query *root)
 					/* not cached yet */
 					thisbucketsize =
 						estimate_hash_bucketsize(root,
-												 get_rightop(restrictinfo->clause),
+									   get_rightop(restrictinfo->clause),
 												 virtualbuckets);
 					restrictinfo->right_bucketsize = thisbucketsize;
 				}
@@ -1175,7 +1175,7 @@ cost_hashjoin(HashPath *path, Query *root)
 					/* not cached yet */
 					thisbucketsize =
 						estimate_hash_bucketsize(root,
-												 get_leftop(restrictinfo->clause),
+										get_leftop(restrictinfo->clause),
 												 virtualbuckets);
 					restrictinfo->left_bucketsize = thisbucketsize;
 				}
@@ -1617,11 +1617,12 @@ join_in_selectivity(JoinPath *path, Query *root)
 		return 1.0;
 
 	/*
-	 * Return 1.0 if the inner side is already known unique.  The case where
-	 * the inner path is already a UniquePath probably cannot happen in
-	 * current usage, but check it anyway for completeness.  The interesting
-	 * case is where we've determined the inner relation itself is unique,
-	 * which we can check by looking at the rows estimate for its UniquePath.
+	 * Return 1.0 if the inner side is already known unique.  The case
+	 * where the inner path is already a UniquePath probably cannot happen
+	 * in current usage, but check it anyway for completeness.	The
+	 * interesting case is where we've determined the inner relation
+	 * itself is unique, which we can check by looking at the rows
+	 * estimate for its UniquePath.
 	 */
 	if (IsA(path->innerjoinpath, UniquePath))
 		return 1.0;
@@ -1633,11 +1634,11 @@ join_in_selectivity(JoinPath *path, Query *root)
 		return 1.0;
 
 	/*
-	 * Compute same result set_joinrel_size_estimates would compute
-	 * for JOIN_INNER.  Note that we use the input rels' absolute size
-	 * estimates, not PATH_ROWS() which might be less; if we used PATH_ROWS()
-	 * we'd be double-counting the effects of any join clauses used in
-	 * input scans.
+	 * Compute same result set_joinrel_size_estimates would compute for
+	 * JOIN_INNER.	Note that we use the input rels' absolute size
+	 * estimates, not PATH_ROWS() which might be less; if we used
+	 * PATH_ROWS() we'd be double-counting the effects of any join clauses
+	 * used in input scans.
 	 */
 	selec = clauselist_selectivity(root,
 								   path->joinrestrictinfo,

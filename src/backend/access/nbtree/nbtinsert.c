@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.115 2004/08/29 04:12:21 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.116 2004/08/29 05:06:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -200,26 +200,26 @@ _bt_check_unique(Relation rel, BTItem btitem, Relation heapRel,
 			 * We can skip items that are marked killed.
 			 *
 			 * Formerly, we applied _bt_isequal() before checking the kill
-			 * flag, so as to fall out of the item loop as soon as possible.
-			 * However, in the presence of heavy update activity an index
-			 * may contain many killed items with the same key; running
-			 * _bt_isequal() on each killed item gets expensive.  Furthermore
-			 * it is likely that the non-killed version of each key appears
-			 * first, so that we didn't actually get to exit any sooner anyway.
-			 * So now we just advance over killed items as quickly as we can.
-			 * We only apply _bt_isequal() when we get to a non-killed item or
-			 * the end of the page.
+			 * flag, so as to fall out of the item loop as soon as
+			 * possible. However, in the presence of heavy update activity
+			 * an index may contain many killed items with the same key;
+			 * running _bt_isequal() on each killed item gets expensive.
+			 * Furthermore it is likely that the non-killed version of
+			 * each key appears first, so that we didn't actually get to
+			 * exit any sooner anyway. So now we just advance over killed
+			 * items as quickly as we can. We only apply _bt_isequal()
+			 * when we get to a non-killed item or the end of the page.
 			 */
 			if (!ItemIdDeleted(curitemid))
 			{
 				/*
-				 * _bt_compare returns 0 for (1,NULL) and (1,NULL) - this's
-				 * how we handling NULLs - and so we must not use _bt_compare
-				 * in real comparison, but only for ordering/finding items on
-				 * pages. - vadim 03/24/97
+				 * _bt_compare returns 0 for (1,NULL) and (1,NULL) -
+				 * this's how we handling NULLs - and so we must not use
+				 * _bt_compare in real comparison, but only for
+				 * ordering/finding items on pages. - vadim 03/24/97
 				 */
 				if (!_bt_isequal(itupdesc, page, offset, natts, itup_scankey))
-					break;			/* we're past all the equal tuples */
+					break;		/* we're past all the equal tuples */
 
 				/* okay, we gotta fetch the heap tuple ... */
 				cbti = (BTItem) PageGetItem(page, curitemid);

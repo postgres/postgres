@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.111 2004/08/29 04:12:47 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.112 2004/08/29 05:06:47 momjian Exp $
  *
  * NOTES:
  *
@@ -57,7 +57,7 @@
  * and other code that tries to open files without consulting fd.c.  This
  * is the number left free.  (While we can be pretty sure we won't get
  * EMFILE, there's never any guarantee that we won't get ENFILE due to
- * other processes chewing up FDs.  So it's a bad idea to try to open files
+ * other processes chewing up FDs.	So it's a bad idea to try to open files
  * without consulting fd.c.  Nonetheless we cannot control all code.)
  *
  * Because this is just a fixed setting, we are effectively assuming that
@@ -95,7 +95,7 @@ int			max_files_per_process = 1000;
  * Note: the value of max_files_per_process is taken into account while
  * setting this variable, and so need not be tested separately.
  */
-static int	max_safe_fds = 32;			/* default if not changed */
+static int	max_safe_fds = 32;	/* default if not changed */
 
 
 /* Debugging.... */
@@ -157,21 +157,24 @@ static int	nfile = 0;
  */
 #define MAX_ALLOCATED_DESCS  32
 
-typedef enum {
+typedef enum
+{
 	AllocateDescFile,
 	AllocateDescDir
 } AllocateDescKind;
 
-typedef struct {
-	AllocateDescKind	kind;
-	union	{
-		FILE	*file;
-		DIR		*dir;
-	} desc;
+typedef struct
+{
+	AllocateDescKind kind;
+	union
+	{
+		FILE	   *file;
+		DIR		   *dir;
+	}			desc;
 	TransactionId create_xid;
 } AllocateDesc;
 
-static int numAllocatedDescs = 0;
+static int	numAllocatedDescs = 0;
 static AllocateDesc allocatedDescs[MAX_ALLOCATED_DESCS];
 
 /*
@@ -280,7 +283,7 @@ count_usable_fds(int *usable_fds, int *already_open)
 	/* dup until failure ... */
 	for (;;)
 	{
-		int		thisfd;
+		int			thisfd;
 
 		thisfd = dup(0);
 		if (thisfd < 0)
@@ -309,12 +312,12 @@ count_usable_fds(int *usable_fds, int *already_open)
 	pfree(fd);
 
 	/*
-	 * Return results.  usable_fds is just the number of successful dups.
-	 * We assume that the system limit is highestfd+1 (remember 0 is a legal
-	 * FD number) and so already_open is highestfd+1 - usable_fds.
+	 * Return results.	usable_fds is just the number of successful dups.
+	 * We assume that the system limit is highestfd+1 (remember 0 is a
+	 * legal FD number) and so already_open is highestfd+1 - usable_fds.
 	 */
 	*usable_fds = used;
-	*already_open = highestfd+1 - used;
+	*already_open = highestfd + 1 - used;
 }
 
 /*
@@ -328,11 +331,11 @@ set_max_safe_fds(void)
 	int			already_open;
 
 	/*
-	 * We want to set max_safe_fds to
-	 *			MIN(usable_fds, max_files_per_process - already_open)
-	 * less the slop factor for files that are opened without consulting
-	 * fd.c.  This ensures that we won't exceed either max_files_per_process
-	 * or the experimentally-determined EMFILE limit.
+	 * We want to set max_safe_fds to MIN(usable_fds,
+	 * max_files_per_process - already_open) less the slop factor for
+	 * files that are opened without consulting fd.c.  This ensures that
+	 * we won't exceed either max_files_per_process or the
+	 * experimentally-determined EMFILE limit.
 	 */
 	count_usable_fds(&usable_fds, &already_open);
 
@@ -1148,9 +1151,9 @@ AllocateFile(char *name, char *mode)
 
 	/*
 	 * The test against MAX_ALLOCATED_DESCS prevents us from overflowing
-	 * allocatedFiles[]; the test against max_safe_fds prevents AllocateFile
-	 * from hogging every one of the available FDs, which'd lead to infinite
-	 * looping.
+	 * allocatedFiles[]; the test against max_safe_fds prevents
+	 * AllocateFile from hogging every one of the available FDs, which'd
+	 * lead to infinite looping.
 	 */
 	if (numAllocatedDescs >= MAX_ALLOCATED_DESCS ||
 		numAllocatedDescs >= max_safe_fds - 1)
@@ -1192,7 +1195,7 @@ TryAgain:
 static int
 FreeDesc(AllocateDesc *desc)
 {
-	int		result;
+	int			result;
 
 	/* Close the underlying object */
 	switch (desc->kind)
@@ -1256,16 +1259,16 @@ FreeFile(FILE *file)
 DIR *
 AllocateDir(const char *dirname)
 {
-	DIR	   *dir;
+	DIR		   *dir;
 
 	DO_DB(elog(LOG, "AllocateDir: Allocated %d (%s)",
 			   numAllocatedDescs, dirname));
 
 	/*
 	 * The test against MAX_ALLOCATED_DESCS prevents us from overflowing
-	 * allocatedDescs[]; the test against max_safe_fds prevents AllocateDir
-	 * from hogging every one of the available FDs, which'd lead to infinite
-	 * looping.
+	 * allocatedDescs[]; the test against max_safe_fds prevents
+	 * AllocateDir from hogging every one of the available FDs, which'd
+	 * lead to infinite looping.
 	 */
 	if (numAllocatedDescs >= MAX_ALLOCATED_DESCS ||
 		numAllocatedDescs >= max_safe_fds - 1)
@@ -1361,7 +1364,7 @@ closeAllVfds(void)
 void
 AtEOSubXact_Files(bool isCommit, TransactionId myXid, TransactionId parentXid)
 {
-	Index i;
+	Index		i;
 
 	if (SizeVfdCache > 0)
 	{
@@ -1498,7 +1501,7 @@ RemovePgTempFiles(void)
 			/* no PG_TEMP_FILES_DIR in DataDir in non EXEC_BACKEND case */
 				|| strcmp(db_de->d_name, "..") == 0
 #endif
-			)
+				)
 				continue;
 
 			snprintf(temp_path, sizeof(temp_path),

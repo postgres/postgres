@@ -1,7 +1,7 @@
 /* -------------------------------------------------------------------------
  * pg_dumplo
  *
- * $PostgreSQL: pgsql/contrib/pg_dumplo/utils.c,v 1.8 2003/11/29 19:51:35 pgsql Exp $
+ * $PostgreSQL: pgsql/contrib/pg_dumplo/utils.c,v 1.9 2004/08/29 05:06:36 momjian Exp $
  *
  *					Karel Zak 1999-2000
  * -------------------------------------------------------------------------
@@ -30,7 +30,7 @@ void
 index_file(LODumpMaster * pgLO)
 {
 	char		path[BUFSIZ];
-	int		sz;
+	int			sz;
 
 	if (pgLO->action == ACTION_SHOW)
 		return;
@@ -51,7 +51,7 @@ index_file(LODumpMaster * pgLO)
 		}
 
 		sz = strlen(path);
-		strncat(path, "/lo_dump.index", BUFSIZ-sz);
+		strncat(path, "/lo_dump.index", BUFSIZ - sz);
 
 		if ((pgLO->index = fopen(path, "w")) == NULL)
 		{
@@ -63,7 +63,7 @@ index_file(LODumpMaster * pgLO)
 	else if (pgLO->action != ACTION_NONE)
 	{
 		sz = strlen(path);
-		strncat(path, "/lo_dump.index", BUFSIZ-sz);
+		strncat(path, "/lo_dump.index", BUFSIZ - sz);
 
 		if ((pgLO->index = fopen(path, "r")) == NULL)
 		{

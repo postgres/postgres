@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/fastpath.c,v 1.74 2004/08/29 04:12:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/fastpath.c,v 1.75 2004/08/29 05:06:49 momjian Exp $
  *
  * NOTES
  *	  This cruft is the server side of PQfn.
@@ -157,7 +157,7 @@ SendFunctionResult(Datum retval, bool isnull, Oid rettype, int16 format)
 			getTypeOutputInfo(rettype, &typoutput, &typioparam, &typisvarlena);
 			outputstr = DatumGetCString(OidFunctionCall3(typoutput,
 														 retval,
-											   ObjectIdGetDatum(typioparam),
+											ObjectIdGetDatum(typioparam),
 													 Int32GetDatum(-1)));
 			pq_sendcountedtext(&buf, outputstr, strlen(outputstr), false);
 			pfree(outputstr);
@@ -173,7 +173,7 @@ SendFunctionResult(Datum retval, bool isnull, Oid rettype, int16 format)
 									&typsend, &typioparam, &typisvarlena);
 			outputbytes = DatumGetByteaP(OidFunctionCall2(typsend,
 														  retval,
-											 ObjectIdGetDatum(typioparam)));
+										  ObjectIdGetDatum(typioparam)));
 			/* We assume the result will not have been toasted */
 			pq_sendint(&buf, VARSIZE(outputbytes) - VARHDRSZ, 4);
 			pq_sendbytes(&buf, VARDATA(outputbytes),
@@ -302,7 +302,7 @@ HandleFunctionRequest(StringInfo msgBuf)
 		ereport(ERROR,
 				(errcode(ERRCODE_IN_FAILED_SQL_TRANSACTION),
 				 errmsg("current transaction is aborted, "
-					 "commands ignored until end of transaction block")));
+					"commands ignored until end of transaction block")));
 
 	/*
 	 * Begin parsing the buffer contents.
@@ -501,7 +501,7 @@ parse_fcall_arguments(StringInfo msgBuf, struct fp_info * fip,
 
 			fcinfo->arg[i] = OidFunctionCall2(typreceive,
 											  PointerGetDatum(&abuf),
-											  ObjectIdGetDatum(typioparam));
+										   ObjectIdGetDatum(typioparam));
 
 			/* Trouble if it didn't eat the whole buffer */
 			if (abuf.cursor != abuf.len)

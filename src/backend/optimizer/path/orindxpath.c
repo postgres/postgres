@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/orindxpath.c,v 1.61 2004/08/29 04:12:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/orindxpath.c,v 1.62 2004/08/29 05:06:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,7 @@
 
 
 static IndexPath *best_or_subclause_indexes(Query *root, RelOptInfo *rel,
-											List *subclauses);
+						  List *subclauses);
 static bool best_or_subclause_index(Query *root,
 						RelOptInfo *rel,
 						Expr *subclause,
@@ -55,7 +55,7 @@ static bool best_or_subclause_index(Query *root,
  *
  * The added quals are partially redundant with the original OR, and therefore
  * will cause the size of the joinrel to be underestimated when it is finally
- * formed.  (This would be true of a full transformation to CNF as well; the
+ * formed.	(This would be true of a full transformation to CNF as well; the
  * fault is not really in the transformation, but in clauselist_selectivity's
  * inability to recognize redundant conditions.)  To minimize the collateral
  * damage, we want to minimize the number of quals added.  Therefore we do
@@ -70,7 +70,7 @@ static bool best_or_subclause_index(Query *root,
  * it is finally formed.  This is a MAJOR HACK: it depends on the fact
  * that clause selectivities are cached and on the fact that the same
  * RestrictInfo node will appear in every joininfo list that might be used
- * when the joinrel is formed.  And it probably isn't right in cases where
+ * when the joinrel is formed.	And it probably isn't right in cases where
  * the size estimation is nonlinear (i.e., outer and IN joins).  But it
  * beats not doing anything.
  *
@@ -103,9 +103,9 @@ create_or_index_quals(Query *root, RelOptInfo *rel)
 	ListCell   *i;
 
 	/*
-	 * We use the best_or_subclause_indexes() machinery to locate the
-	 * best combination of restriction subclauses.  Note we must ignore
-	 * any joinclauses that are not marked valid_everywhere, because they
+	 * We use the best_or_subclause_indexes() machinery to locate the best
+	 * combination of restriction subclauses.  Note we must ignore any
+	 * joinclauses that are not marked valid_everywhere, because they
 	 * cannot be pushed down due to outer-join rules.
 	 */
 	foreach(i, rel->joininfo)
@@ -124,12 +124,12 @@ create_or_index_quals(Query *root, RelOptInfo *rel)
 
 				pathnode = best_or_subclause_indexes(root,
 													 rel,
-										((BoolExpr *) rinfo->orclause)->args);
+								   ((BoolExpr *) rinfo->orclause)->args);
 
 				if (pathnode)
 				{
 					if (bestpath == NULL ||
-						pathnode->path.total_cost < bestpath->path.total_cost)
+					pathnode->path.total_cost < bestpath->path.total_cost)
 					{
 						bestpath = pathnode;
 						bestrinfo = rinfo;
@@ -144,8 +144,8 @@ create_or_index_quals(Query *root, RelOptInfo *rel)
 		return false;
 
 	/*
-	 * Convert the indexclauses structure to a RestrictInfo tree,
-	 * and add it to the rel's restriction list.
+	 * Convert the indexclauses structure to a RestrictInfo tree, and add
+	 * it to the rel's restriction list.
 	 */
 	newrinfos = make_restrictinfo_from_indexclauses(bestpath->indexclauses,
 													true, true);
@@ -157,9 +157,9 @@ create_or_index_quals(Query *root, RelOptInfo *rel)
 	 * Adjust the original OR clause's cached selectivity to compensate
 	 * for the selectivity of the added (but redundant) lower-level qual.
 	 * This should result in the join rel getting approximately the same
-	 * rows estimate as it would have gotten without all these shenanigans.
-	 * (XXX major hack alert ... this depends on the assumption that the
-	 * selectivity will stay cached ...)
+	 * rows estimate as it would have gotten without all these
+	 * shenanigans. (XXX major hack alert ... this depends on the
+	 * assumption that the selectivity will stay cached ...)
 	 */
 	or_selec = clause_selectivity(root, (Node *) or_rinfo,
 								  0, JOIN_INNER);
@@ -193,8 +193,8 @@ create_or_index_paths(Query *root, RelOptInfo *rel)
 	ListCell   *l;
 
 	/*
-	 * Check each restriction clause to see if it is an OR clause, and if so,
-	 * try to make a path using it.
+	 * Check each restriction clause to see if it is an OR clause, and if
+	 * so, try to make a path using it.
 	 */
 	foreach(l, rel->baserestrictinfo)
 	{
@@ -206,7 +206,7 @@ create_or_index_paths(Query *root, RelOptInfo *rel)
 
 			pathnode = best_or_subclause_indexes(root,
 												 rel,
-							   ((BoolExpr *) rinfo->orclause)->args);
+								   ((BoolExpr *) rinfo->orclause)->args);
 
 			if (pathnode)
 				add_path(rel, (Path *) pathnode);
@@ -264,20 +264,21 @@ best_or_subclause_indexes(Query *root,
 		if (!best_or_subclause_index(root, rel, subclause,
 									 &best_indexinfo,
 									 &best_indexclauses, &best_indexquals,
-									 &best_startup_cost, &best_total_cost))
+								   &best_startup_cost, &best_total_cost))
 			return NULL;		/* failed to match this subclause */
 
 		infos = lappend(infos, best_indexinfo);
 		clauses = lappend(clauses, best_indexclauses);
 		quals = lappend(quals, best_indexquals);
+
 		/*
-		 * Path startup_cost is the startup cost for the first index scan only;
-		 * startup costs for later scans will be paid later on, so they just
-		 * get reflected in total_cost.
+		 * Path startup_cost is the startup cost for the first index scan
+		 * only; startup costs for later scans will be paid later on, so
+		 * they just get reflected in total_cost.
 		 *
 		 * Total cost is sum of the per-scan costs.
 		 */
-		if (slist == list_head(subclauses))	/* first scan? */
+		if (slist == list_head(subclauses))		/* first scan? */
 			path_startup_cost = best_startup_cost;
 		path_total_cost += best_total_cost;
 	}
@@ -292,8 +293,8 @@ best_or_subclause_indexes(Query *root,
 
 	/*
 	 * This is an IndexScan, but the overall result will consist of tuples
-	 * extracted in multiple passes (one for each subclause of the OR),
-	 * so the result cannot be claimed to have any particular ordering.
+	 * extracted in multiple passes (one for each subclause of the OR), so
+	 * the result cannot be claimed to have any particular ordering.
 	 */
 	pathnode->path.pathkeys = NIL;
 
@@ -339,7 +340,7 @@ best_or_subclause_index(Query *root,
 						RelOptInfo *rel,
 						Expr *subclause,
 						IndexOptInfo **retIndexInfo,	/* return value */
-						List **retIndexClauses,	/* return value */
+						List **retIndexClauses, /* return value */
 						List **retIndexQuals,	/* return value */
 						Cost *retStartupCost,	/* return value */
 						Cost *retTotalCost)		/* return value */

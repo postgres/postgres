@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtutils.c,v 1.59 2004/08/29 04:12:21 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtutils.c,v 1.60 2004/08/29 05:06:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,8 +48,8 @@ _bt_mkscankey(Relation rel, IndexTuple itup)
 		bool		null;
 
 		/*
-		 * We can use the cached (default) support procs since no cross-type
-		 * comparison can be needed.
+		 * We can use the cached (default) support procs since no
+		 * cross-type comparison can be needed.
 		 */
 		procinfo = index_getprocinfo(rel, i + 1, BTORDER_PROC);
 		arg = index_getattr(itup, i + 1, itupdesc, &null);
@@ -68,7 +68,7 @@ _bt_mkscankey(Relation rel, IndexTuple itup)
 /*
  * _bt_mkscankey_nodata
  *		Build a scan key that contains comparator routines appropriate to
- *		the key datatypes, but no comparison data.  The comparison data
+ *		the key datatypes, but no comparison data.	The comparison data
  *		ultimately used must match the key datatypes.
  *
  *		The result cannot be used with _bt_compare().  Currently this
@@ -93,8 +93,8 @@ _bt_mkscankey_nodata(Relation rel)
 		FmgrInfo   *procinfo;
 
 		/*
-		 * We can use the cached (default) support procs since no cross-type
-		 * comparison can be needed.
+		 * We can use the cached (default) support procs since no
+		 * cross-type comparison can be needed.
 		 */
 		procinfo = index_getprocinfo(rel, i + 1, BTORDER_PROC);
 		ScanKeyEntryInitializeWithInfo(&skey[i],
@@ -163,12 +163,12 @@ _bt_formitem(IndexTuple itup)
  *	_bt_preprocess_keys() -- Preprocess scan keys
  *
  * The caller-supplied keys (in scan->keyData[]) are copied to
- * so->keyData[] with possible transformation.  scan->numberOfKeys is
+ * so->keyData[] with possible transformation.	scan->numberOfKeys is
  * the number of input keys, so->numberOfKeys gets the number of output
  * keys (possibly less, never greater).
  *
  * The primary purpose of this routine is to discover how many scan keys
- * must be satisfied to continue the scan.  It also attempts to eliminate
+ * must be satisfied to continue the scan.	It also attempts to eliminate
  * redundant keys and detect contradictory keys.  At present, redundant and
  * contradictory keys can only be detected for same-data-type comparisons,
  * but that's the usual case so it seems worth doing.
@@ -198,7 +198,7 @@ _bt_formitem(IndexTuple itup)
  * or one or two boundary-condition keys for each attr.)  However, we can
  * only detect redundant keys when the right-hand datatypes are all equal
  * to the index datatype, because we do not know suitable operators for
- * comparing right-hand values of two different datatypes.  (In theory
+ * comparing right-hand values of two different datatypes.	(In theory
  * we could handle comparison of a RHS of the index datatype with a RHS of
  * another type, but that seems too much pain for too little gain.)  So,
  * keys whose operator has a nondefault subtype (ie, its RHS is not of the
@@ -285,9 +285,9 @@ _bt_preprocess_keys(IndexScanDesc scan)
 	 *
 	 * xform[i] points to the currently best scan key of strategy type i+1,
 	 * if any is found with a default operator subtype; it is NULL if we
-	 * haven't yet found such a key for this attr.  Scan keys of nondefault
-	 * subtypes are transferred to the output with no processing except for
-	 * noting if they are of "=" type.
+	 * haven't yet found such a key for this attr.  Scan keys of
+	 * nondefault subtypes are transferred to the output with no
+	 * processing except for noting if they are of "=" type.
 	 */
 	attno = 1;
 	memset(xform, 0, sizeof(xform));
@@ -361,7 +361,7 @@ _bt_preprocess_keys(IndexScanDesc scan)
 				/*
 				 * If no "=" for this key, we're done with required keys
 				 */
-				if (! hasOtherTypeEqual)
+				if (!hasOtherTypeEqual)
 					allEqualSoFar = false;
 			}
 
@@ -369,8 +369,8 @@ _bt_preprocess_keys(IndexScanDesc scan)
 			if (xform[BTLessStrategyNumber - 1]
 				&& xform[BTLessEqualStrategyNumber - 1])
 			{
-				ScanKey lt = xform[BTLessStrategyNumber - 1];
-				ScanKey le = xform[BTLessEqualStrategyNumber - 1];
+				ScanKey		lt = xform[BTLessStrategyNumber - 1];
+				ScanKey		le = xform[BTLessEqualStrategyNumber - 1];
 
 				test = FunctionCall2(&le->sk_func,
 									 lt->sk_argument,
@@ -385,8 +385,8 @@ _bt_preprocess_keys(IndexScanDesc scan)
 			if (xform[BTGreaterStrategyNumber - 1]
 				&& xform[BTGreaterEqualStrategyNumber - 1])
 			{
-				ScanKey gt = xform[BTGreaterStrategyNumber - 1];
-				ScanKey ge = xform[BTGreaterEqualStrategyNumber - 1];
+				ScanKey		gt = xform[BTGreaterStrategyNumber - 1];
+				ScanKey		ge = xform[BTGreaterEqualStrategyNumber - 1];
 
 				test = FunctionCall2(&ge->sk_func,
 									 gt->sk_argument,
@@ -545,21 +545,23 @@ _bt_checkkeys(IndexScanDesc scan, IndexTuple tuple,
 		{
 			/*
 			 * Tuple fails this qual.  If it's a required qual, then we
-			 * may be able to conclude no further tuples will pass, either.
-			 * We have to look at the scan direction and the qual type.
+			 * may be able to conclude no further tuples will pass,
+			 * either. We have to look at the scan direction and the qual
+			 * type.
 			 *
 			 * Note: the only case in which we would keep going after failing
-			 * a required qual is if there are partially-redundant quals that
-			 * _bt_preprocess_keys() was unable to eliminate.  For example,
-			 * given "x > 4 AND x > 10" where both are cross-type comparisons
-			 * and so not removable, we might start the scan at the x = 4
-			 * boundary point.  The "x > 10" condition will fail until we
-			 * pass x = 10, but we must not stop the scan on its account.
+			 * a required qual is if there are partially-redundant quals
+			 * that _bt_preprocess_keys() was unable to eliminate.	For
+			 * example, given "x > 4 AND x > 10" where both are cross-type
+			 * comparisons and so not removable, we might start the scan
+			 * at the x = 4 boundary point.  The "x > 10" condition will
+			 * fail until we pass x = 10, but we must not stop the scan on
+			 * its account.
 			 *
-			 * Note: because we stop the scan as soon as any required equality
-			 * qual fails, it is critical that equality quals be used for the
-			 * initial positioning in _bt_first() when they are available.
-			 * See comments in _bt_first().
+			 * Note: because we stop the scan as soon as any required
+			 * equality qual fails, it is critical that equality quals be
+			 * used for the initial positioning in _bt_first() when they
+			 * are available. See comments in _bt_first().
 			 */
 			if (ikey < so->numberOfRequiredKeys)
 			{

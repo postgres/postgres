@@ -4,7 +4,7 @@
  *	  routines for finding buffers in the buffer pool.
  *
  * NOTE: these days, what this table actually provides is a mapping from
- * BufferTags to CDB indexes, not directly to buffers.  The function names
+ * BufferTags to CDB indexes, not directly to buffers.	The function names
  * are thus slight misnomers.
  *
  * Note: all routines in this file assume that the BufMgrLock is held
@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/buf_table.c,v 1.36 2004/08/29 04:12:47 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/buf_table.c,v 1.37 2004/08/29 05:06:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

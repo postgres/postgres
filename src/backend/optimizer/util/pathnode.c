@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.109 2004/08/29 04:12:34 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.110 2004/08/29 05:06:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -100,8 +100,9 @@ compare_fuzzy_path_costs(Path *path1, Path *path2, CostSelector criterion)
 	Cost		fuzz;
 
 	/*
-	 * The fuzz factor is set at one percent of the smaller total_cost, but
-	 * not less than 0.01 cost units (just in case total cost is zero).
+	 * The fuzz factor is set at one percent of the smaller total_cost,
+	 * but not less than 0.01 cost units (just in case total cost is
+	 * zero).
 	 *
 	 * XXX does this percentage need to be user-configurable?
 	 */
@@ -278,7 +279,7 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 	 * possible for more than one old path to be tossed out because
 	 * new_path dominates it.
 	 */
-	p1 = list_head(parent_rel->pathlist);	/* cannot use foreach here */
+	p1 = list_head(parent_rel->pathlist);		/* cannot use foreach here */
 	while (p1 != NULL)
 	{
 		Path	   *old_path = (Path *) lfirst(p1);
@@ -286,9 +287,9 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 		int			costcmp;
 
 		/*
-		 * As of Postgres 8.0, we use fuzzy cost comparison to avoid wasting
-		 * cycles keeping paths that are really not significantly different
-		 * in cost.
+		 * As of Postgres 8.0, we use fuzzy cost comparison to avoid
+		 * wasting cycles keeping paths that are really not significantly
+		 * different in cost.
 		 */
 		costcmp = compare_fuzzy_path_costs(new_path, old_path, TOTAL_COST);
 
@@ -298,8 +299,8 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 		 * slower) comparison of pathkeys.	If they compare the same,
 		 * proceed with the pathkeys comparison.  Note: this test relies
 		 * on the fact that compare_fuzzy_path_costs will only return 0 if
-		 * both costs are effectively equal (and, therefore, there's no need
-		 * to call it twice in that case).
+		 * both costs are effectively equal (and, therefore, there's no
+		 * need to call it twice in that case).
 		 */
 		if (costcmp == 0 ||
 			costcmp == compare_fuzzy_path_costs(new_path, old_path,
@@ -321,9 +322,9 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 						 */
 						if (compare_path_costs(new_path, old_path,
 											   TOTAL_COST) < 0)
-							remove_old = true; /* new dominates old */
+							remove_old = true;	/* new dominates old */
 						else
-							accept_new = false;	/* old equals or dominates
+							accept_new = false; /* old equals or dominates
 												 * new */
 					}
 					break;
@@ -521,7 +522,7 @@ create_append_path(RelOptInfo *rel, List *subpaths)
 	{
 		Path	   *subpath = (Path *) lfirst(l);
 
-		if (l == list_head(subpaths))		/* first node? */
+		if (l == list_head(subpaths))	/* first node? */
 			pathnode->path.startup_cost = subpath->startup_cost;
 		pathnode->path.total_cost += subpath->total_cost;
 	}
@@ -641,8 +642,8 @@ create_unique_path(Query *root, RelOptInfo *rel, Path *subpath)
 	pathnode->subpath = subpath;
 
 	/*
-	 * If the input is a subquery whose output must be unique already,
-	 * we don't need to do anything.
+	 * If the input is a subquery whose output must be unique already, we
+	 * don't need to do anything.
 	 */
 	if (rel->rtekind == RTE_SUBQUERY)
 	{
@@ -777,7 +778,7 @@ is_distinct_query(Query *query)
 
 	/*
 	 * GROUP BY guarantees uniqueness if all the grouped columns appear in
-	 * the output.  In our implementation this means checking they are non
+	 * the output.	In our implementation this means checking they are non
 	 * resjunk columns.
 	 */
 	if (query->groupClause)

@@ -15,6 +15,4 @@ int			spi_WARNING(void);
 
 int			spi_ERROR(void);
 
-HV*		plperl_spi_exec(char*, int);
-
-
+HV		   *plperl_spi_exec(char *, int);

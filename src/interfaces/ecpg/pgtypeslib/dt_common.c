@@ -2729,7 +2729,7 @@ int PGTYPEStimestamp_defmt_scan(char **, char *, timestamp *, int *, int *, int 
 							int *, int *, int *, int *);
 
 int
-PGTYPEStimestamp_defmt_scan(char **str, char *fmt, timestamp *d,
+PGTYPEStimestamp_defmt_scan(char **str, char *fmt, timestamp * d,
 							int *year, int *month, int *day,
 							int *hour, int *minute, int *second,
 							int *tz)

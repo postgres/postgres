@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.268 2004/08/29 04:13:07 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.269 2004/08/29 05:06:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -279,7 +279,7 @@ typedef struct A_Indices
  *
  * Note: as of Postgres 8.0, we don't support arrays of composite values,
  * so cases in which a field select follows a subscript aren't actually
- * semantically legal.  However the parser is prepared to handle such.
+ * semantically legal.	However the parser is prepared to handle such.
  */
 typedef struct A_Indirection
 {
@@ -449,8 +449,8 @@ typedef struct DefElem
  *
  *	  In RELATION RTEs, the colnames in both alias and eref are indexed by
  *	  physical attribute number; this means there must be colname entries for
- *	  dropped columns.  When building an RTE we insert empty strings ("") for
- *	  dropped columns.  Note however that a stored rule may have nonempty
+ *	  dropped columns.	When building an RTE we insert empty strings ("") for
+ *	  dropped columns.	Note however that a stored rule may have nonempty
  *	  colnames for columns dropped since the rule was created (and for that
  *	  matter the colnames might be out of date due to column renamings).
  *	  The same comments apply to FUNCTION RTEs when the function's return type
@@ -458,9 +458,9 @@ typedef struct DefElem
  *
  *	  In JOIN RTEs, the colnames in both alias and eref are one-to-one with
  *	  joinaliasvars entries.  A JOIN RTE will omit columns of its inputs when
- *	  those columns are known to be dropped at parse time.  Again, however,
+ *	  those columns are known to be dropped at parse time.	Again, however,
  *	  a stored rule might contain entries for columns dropped since the rule
- *	  was created.  (This is only possible for columns not actually referenced
+ *	  was created.	(This is only possible for columns not actually referenced
  *	  in the rule.)
  *
  *	  inh is TRUE for relation references that should be expanded to include
@@ -478,7 +478,7 @@ typedef struct DefElem
  *	  expansion of '*'.
  *
  *	  requiredPerms and checkAsUser specify run-time access permissions
- *	  checks to be performed at query startup.  The user must have *all*
+ *	  checks to be performed at query startup.	The user must have *all*
  *	  of the permissions that are OR'd together in requiredPerms (zero
  *	  indicates no permissions checking).  If checkAsUser is not zero,
  *	  then do the permissions checks using the access rights of that user,
@@ -654,8 +654,7 @@ typedef enum ContainsOids
 	MUST_NOT_HAVE_OIDS,			/* WITHOUT OIDS explicitely specified */
 	DEFAULT_OIDS				/* neither specified; use the default,
 								 * which is the value of the
-								 * default_with_oids GUC var
-								 */
+								 * default_with_oids GUC var */
 } ContainsOids;
 
 typedef struct SelectStmt
@@ -665,8 +664,8 @@ typedef struct SelectStmt
 	/*
 	 * These fields are used only in "leaf" SelectStmts.
 	 *
-	 * into, intoColNames and intoHasOids are a kluge; they belong
-	 * somewhere else...
+	 * into, intoColNames and intoHasOids are a kluge; they belong somewhere
+	 * else...
 	 */
 	List	   *distinctClause; /* NULL, list of DISTINCT ON exprs, or
 								 * lcons(NIL,NIL) for all (SELECT
@@ -778,7 +777,7 @@ typedef struct CreateSchemaStmt
 	NodeTag		type;
 	char	   *schemaname;		/* the name of the schema to create */
 	char	   *authid;			/* the owner of the created schema */
-	char	   *tablespacename;	/* default tablespace for schema, or NULL */
+	char	   *tablespacename; /* default tablespace for schema, or NULL */
 	List	   *schemaElts;		/* schema components (list of parsenodes) */
 } CreateSchemaStmt;
 
@@ -813,8 +812,8 @@ typedef enum AlterTableType
 	AT_AddIndex,				/* add index */
 	AT_ReAddIndex,				/* internal to commands/tablecmds.c */
 	AT_AddConstraint,			/* add constraint */
-	AT_ProcessedConstraint,		/* pre-processed add constraint
-								 * (local in parser/analyze.c) */
+	AT_ProcessedConstraint,		/* pre-processed add constraint (local in
+								 * parser/analyze.c) */
 	AT_DropConstraint,			/* drop constraint */
 	AT_DropConstraintQuietly,	/* drop constraint, no error/warning
 								 * (local in commands/tablecmds.c) */
@@ -958,9 +957,9 @@ typedef struct CreateStmt
 	List	   *inhRelations;	/* relations to inherit from (list of
 								 * inhRelation) */
 	List	   *constraints;	/* constraints (list of Constraint nodes) */
-	ContainsOids   hasoids;		/* should it have OIDs? */
+	ContainsOids hasoids;		/* should it have OIDs? */
 	OnCommitAction oncommit;	/* what do we do at COMMIT? */
-	char	   *tablespacename;	/* table space to use, or NULL */
+	char	   *tablespacename; /* table space to use, or NULL */
 } CreateStmt;
 
 /* ----------
@@ -1054,7 +1053,7 @@ typedef struct FkConstraint
 
 
 /* ----------------------
- *      Create/Drop Table Space Statements
+ *		Create/Drop Table Space Statements
  * ----------------------
  */
 
@@ -1463,7 +1462,7 @@ typedef struct RenameStmt
 } RenameStmt;
 
 /* ----------------------
- *		Alter Object Owner Statement 
+ *		Alter Object Owner Statement
  * ----------------------
  */
 typedef struct AlterOwnerStmt
@@ -1709,7 +1708,7 @@ typedef struct LockStmt
 	NodeTag		type;
 	List	   *relations;		/* relations to lock */
 	int			mode;			/* lock mode */
-	bool		nowait;		/* no wait mode */
+	bool		nowait;			/* no wait mode */
 } LockStmt;
 
 /* ----------------------

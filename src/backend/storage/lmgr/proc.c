@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.152 2004/08/29 04:12:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.153 2004/08/29 05:06:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -122,7 +122,8 @@ ProcGlobalSemas(int maxBackends)
 void
 InitProcGlobal(int maxBackends)
 {
-	bool		foundProcGlobal, foundDummy;
+	bool		foundProcGlobal,
+				foundDummy;
 
 	/* Create or attach to the ProcGlobal shared structure */
 	ProcGlobal = (PROC_HDR *)
@@ -279,7 +280,7 @@ InitProcess(void)
 void
 InitDummyProcess(int proctype)
 {
-	PGPROC	*dummyproc;
+	PGPROC	   *dummyproc;
 
 	/*
 	 * ProcGlobal should be set by a previous call to InitProcGlobal (we
@@ -365,9 +366,9 @@ LockWaitCancel(void)
 	{
 		/*
 		 * Somebody kicked us off the lock queue already.  Perhaps they
-		 * granted us the lock, or perhaps they detected a deadlock.
-		 * If they did grant us the lock, we'd better remember it in
-		 * our local lock table.
+		 * granted us the lock, or perhaps they detected a deadlock. If
+		 * they did grant us the lock, we'd better remember it in our
+		 * local lock table.
 		 */
 		if (MyProc->waitStatus == STATUS_OK)
 			GrantAwaitedLock();
@@ -480,8 +481,8 @@ ProcKill(int code, Datum arg)
 static void
 DummyProcKill(int code, Datum arg)
 {
-	int		proctype = DatumGetInt32(arg);
-	PGPROC	*dummyproc;
+	int			proctype = DatumGetInt32(arg);
+	PGPROC	   *dummyproc;
 
 	Assert(proctype >= 0 && proctype < NUM_DUMMY_PROCS);
 
@@ -696,8 +697,8 @@ ProcSleep(LockMethod lockMethodTable,
 	/*
 	 * Set timer so we can wake up after awhile and check for a deadlock.
 	 * If a deadlock is detected, the handler releases the process's
-	 * semaphore and sets MyProc->waitStatus = STATUS_ERROR, allowing us to
-	 * know that we must report failure rather than success.
+	 * semaphore and sets MyProc->waitStatus = STATUS_ERROR, allowing us
+	 * to know that we must report failure rather than success.
 	 *
 	 * By delaying the check until we've waited for a bit, we can avoid
 	 * running the rather expensive deadlock-check code in most cases.
@@ -914,8 +915,8 @@ CheckDeadLock(void)
 	RemoveFromWaitQueue(MyProc);
 
 	/*
-	 * Set MyProc->waitStatus to STATUS_ERROR so that ProcSleep will report
-	 * an error after we return from the signal handler.
+	 * Set MyProc->waitStatus to STATUS_ERROR so that ProcSleep will
+	 * report an error after we return from the signal handler.
 	 */
 	MyProc->waitStatus = STATUS_ERROR;
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.179 2004/08/29 04:12:34 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.180 2004/08/29 05:06:44 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -66,19 +66,19 @@ static bool contain_volatile_functions_walker(Node *node, void *context);
 static bool contain_nonstrict_functions_walker(Node *node, void *context);
 static bool set_coercionform_dontcare_walker(Node *node, void *context);
 static Node *eval_const_expressions_mutator(Node *node,
-									eval_const_expressions_context *context);
-static List *simplify_or_arguments(List *args,
-								   bool *haveNull, bool *forceTrue);
-static List *simplify_and_arguments(List *args,
-									bool *haveNull, bool *forceFalse);
-static Expr *simplify_function(Oid funcid, Oid result_type, List *args,
-							   bool allow_inline,
 							   eval_const_expressions_context *context);
+static List *simplify_or_arguments(List *args,
+					  bool *haveNull, bool *forceTrue);
+static List *simplify_and_arguments(List *args,
+					   bool *haveNull, bool *forceFalse);
+static Expr *simplify_function(Oid funcid, Oid result_type, List *args,
+				  bool allow_inline,
+				  eval_const_expressions_context *context);
 static Expr *evaluate_function(Oid funcid, Oid result_type, List *args,
 				  HeapTuple func_tuple);
 static Expr *inline_function(Oid funcid, Oid result_type, List *args,
-							 HeapTuple func_tuple,
-							 eval_const_expressions_context *context);
+				HeapTuple func_tuple,
+				eval_const_expressions_context *context);
 static Node *substitute_actual_parameters(Node *expr, int nargs, List *args,
 							 int *usecounts);
 static Node *substitute_actual_parameters_mutator(Node *node,
@@ -717,7 +717,7 @@ contain_volatile_functions_walker(Node *node, void *context)
  * The idea here is that the caller has verified that the expression contains
  * one or more Var or Param nodes (as appropriate for the caller's need), and
  * now wishes to prove that the expression result will be NULL if any of these
- * inputs is NULL.  If we return false, then the proof succeeded.
+ * inputs is NULL.	If we return false, then the proof succeeded.
  */
 bool
 contain_nonstrict_functions(Node *clause)
@@ -1164,11 +1164,11 @@ eval_const_expressions_mutator(Node *node,
 			if (paramInfo)
 			{
 				/*
-				 * Found it, so return a Const representing the param value.
-				 * Note that we don't copy pass-by-ref datatypes, so the
-				 * Const will only be valid as long as the bound parameter
-				 * list exists. This is okay for intended uses of
-				 * estimate_expression_value().
+				 * Found it, so return a Const representing the param
+				 * value. Note that we don't copy pass-by-ref datatypes,
+				 * so the Const will only be valid as long as the bound
+				 * parameter list exists. This is okay for intended uses
+				 * of estimate_expression_value().
 				 */
 				int16		typLen;
 				bool		typByVal;
@@ -1381,7 +1381,7 @@ eval_const_expressions_mutator(Node *node,
 					bool		forceTrue = false;
 
 					newargs = simplify_or_arguments(args,
-													&haveNull, &forceTrue);
+												  &haveNull, &forceTrue);
 					if (forceTrue)
 						return makeBoolConst(true, false);
 					if (haveNull)
@@ -1402,7 +1402,7 @@ eval_const_expressions_mutator(Node *node,
 					bool		forceFalse = false;
 
 					newargs = simplify_and_arguments(args,
-													 &haveNull, &forceFalse);
+												 &haveNull, &forceFalse);
 					if (forceFalse)
 						return makeBoolConst(false, false);
 					if (haveNull)
@@ -1420,7 +1420,7 @@ eval_const_expressions_mutator(Node *node,
 				Assert(list_length(args) == 1);
 				if (IsA(linitial(args), Const))
 				{
-					Const *const_input = (Const *) linitial(args);
+					Const	   *const_input = (Const *) linitial(args);
 
 					/* NOT NULL => NULL */
 					if (const_input->constisnull)
@@ -1659,9 +1659,9 @@ eval_const_expressions_mutator(Node *node,
 		 * it can arise while simplifying functions.)  Also, we can
 		 * optimize field selection from a RowExpr construct.
 		 *
-		 * We must however check that the declared type of the field is
-		 * still the same as when the FieldSelect was created --- this
-		 * can change if someone did ALTER COLUMN TYPE on the rowtype.
+		 * We must however check that the declared type of the field is still
+		 * the same as when the FieldSelect was created --- this can
+		 * change if someone did ALTER COLUMN TYPE on the rowtype.
 		 */
 		FieldSelect *fselect = (FieldSelect *) node;
 		FieldSelect *newfselect;
@@ -1684,13 +1684,13 @@ eval_const_expressions_mutator(Node *node,
 		}
 		if (arg && IsA(arg, RowExpr))
 		{
-			RowExpr	*rowexpr = (RowExpr *) arg;
+			RowExpr    *rowexpr = (RowExpr *) arg;
 
 			if (fselect->fieldnum > 0 &&
 				fselect->fieldnum <= list_length(rowexpr->args))
 			{
-				Node *fld = (Node *) list_nth(rowexpr->args,
-											  fselect->fieldnum - 1);
+				Node	   *fld = (Node *) list_nth(rowexpr->args,
+												  fselect->fieldnum - 1);
 
 				if (rowtype_field_matches(rowexpr->row_typeid,
 										  fselect->fieldnum,
@@ -1746,17 +1746,18 @@ simplify_or_arguments(List *args, bool *haveNull, bool *forceTrue)
 
 	foreach(larg, args)
 	{
-		Node   *arg = (Node *) lfirst(larg);
+		Node	   *arg = (Node *) lfirst(larg);
 
 		if (IsA(arg, Const))
 		{
-			Const  *const_input = (Const *) arg;
+			Const	   *const_input = (Const *) arg;
 
 			if (const_input->constisnull)
 				*haveNull = true;
 			else if (DatumGetBool(const_input->constvalue))
 			{
 				*forceTrue = true;
+
 				/*
 				 * Once we detect a TRUE result we can just exit the loop
 				 * immediately.  However, if we ever add a notion of
@@ -1769,13 +1770,11 @@ simplify_or_arguments(List *args, bool *haveNull, bool *forceTrue)
 		else if (or_clause(arg))
 		{
 			newargs = list_concat(newargs,
-								  simplify_or_arguments(((BoolExpr *) arg)->args,
-														haveNull, forceTrue));
+						  simplify_or_arguments(((BoolExpr *) arg)->args,
+												haveNull, forceTrue));
 		}
 		else
-		{
 			newargs = lappend(newargs, arg);
-		}
 	}
 
 	return newargs;
@@ -1807,17 +1806,18 @@ simplify_and_arguments(List *args, bool *haveNull, bool *forceFalse)
 
 	foreach(larg, args)
 	{
-		Node   *arg = (Node *) lfirst(larg);
+		Node	   *arg = (Node *) lfirst(larg);
 
 		if (IsA(arg, Const))
 		{
-			Const  *const_input = (Const *) arg;
+			Const	   *const_input = (Const *) arg;
 
 			if (const_input->constisnull)
 				*haveNull = true;
 			else if (!DatumGetBool(const_input->constvalue))
 			{
 				*forceFalse = true;
+
 				/*
 				 * Once we detect a FALSE result we can just exit the loop
 				 * immediately.  However, if we ever add a notion of
@@ -1830,13 +1830,11 @@ simplify_and_arguments(List *args, bool *haveNull, bool *forceFalse)
 		else if (and_clause(arg))
 		{
 			newargs = list_concat(newargs,
-								  simplify_and_arguments(((BoolExpr *) arg)->args,
-														 haveNull, forceFalse));
+						 simplify_and_arguments(((BoolExpr *) arg)->args,
+												haveNull, forceFalse));
 		}
 		else
-		{
 			newargs = lappend(newargs, arg);
-		}
 	}
 
 	return newargs;
@@ -2272,7 +2270,7 @@ substitute_actual_parameters_mutator(Node *node,
 static void
 sql_inline_error_callback(void *arg)
 {
-	HeapTuple func_tuple = (HeapTuple) arg;
+	HeapTuple	func_tuple = (HeapTuple) arg;
 	Form_pg_proc funcform = (Form_pg_proc) GETSTRUCT(func_tuple);
 	int			syntaxerrposition;
 
@@ -2586,7 +2584,7 @@ expression_tree_walker(Node *node,
 			return walker(((FieldSelect *) node)->arg, context);
 		case T_FieldStore:
 			{
-				FieldStore   *fstore = (FieldStore *) node;
+				FieldStore *fstore = (FieldStore *) node;
 
 				if (walker(fstore->arg, context))
 					return true;
@@ -3041,8 +3039,8 @@ expression_tree_mutator(Node *node,
 			break;
 		case T_RowExpr:
 			{
-				RowExpr	   *rowexpr = (RowExpr *) node;
-				RowExpr	   *newnode;
+				RowExpr    *rowexpr = (RowExpr *) node;
+				RowExpr    *newnode;
 
 				FLATCOPY(newnode, rowexpr, RowExpr);
 				MUTATE(newnode->args, rowexpr->args, List *);
@@ -3259,9 +3257,7 @@ query_tree_mutator(Query *query,
 				break;
 			case RTE_JOIN:
 				if (!(flags & QTW_IGNORE_JOINALIASES))
-				{
 					MUTATE(newrte->joinaliasvars, rte->joinaliasvars, List *);
-				}
 				break;
 			case RTE_FUNCTION:
 				MUTATE(newrte->funcexpr, rte->funcexpr, Node *);

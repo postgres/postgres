@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/print.c,v 1.70 2004/08/29 04:12:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/print.c,v 1.71 2004/08/29 05:06:43 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -194,17 +194,17 @@ pretty_format_node_dump(const char *dump)
 					j = indentDist - 1;
 					/* j will equal indentDist on next loop iteration */
 					/* suppress whitespace just after } */
-					while (dump[i+1] == ' ')
+					while (dump[i + 1] == ' ')
 						i++;
 					break;
 				case ')':
 					/* force line break after ), unless another ) follows */
-					if (dump[i+1] != ')')
+					if (dump[i + 1] != ')')
 					{
 						line[j + 1] = '\0';
 						appendStringInfo(&str, "%s\n", line);
 						j = indentDist - 1;
-						while (dump[i+1] == ' ')
+						while (dump[i + 1] == ' ')
 							i++;
 					}
 					break;
@@ -360,7 +360,7 @@ print_expr(Node *expr, List *rtable)
 
 		outputstr = DatumGetCString(OidFunctionCall3(typoutput,
 													 c->constvalue,
-											   ObjectIdGetDatum(typioparam),
+											ObjectIdGetDatum(typioparam),
 													 Int32GetDatum(-1)));
 		printf("%s", outputstr);
 		pfree(outputstr);

@@ -18,8 +18,8 @@
  * We support three types of lists:
  *
  *	T_List: lists of pointers
- *      (in practice usually pointers to Nodes, but not always;
- *      declared as "void *" to minimize casting annoyances)
+ *		(in practice usually pointers to Nodes, but not always;
+ *		declared as "void *" to minimize casting annoyances)
  *	T_IntList: lists of integers
  *	T_OidList: lists of Oids
  *
@@ -30,7 +30,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/pg_list.h,v 1.48 2004/08/29 04:13:07 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/pg_list.h,v 1.49 2004/08/29 05:06:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,21 +44,21 @@ typedef struct ListCell ListCell;
 
 typedef struct List
 {
-	NodeTag		 type;	/* T_List, T_IntList, or T_OidList */
-	int			 length;
-	ListCell	*head;
-	ListCell	*tail;
+	NodeTag		type;			/* T_List, T_IntList, or T_OidList */
+	int			length;
+	ListCell   *head;
+	ListCell   *tail;
 } List;
 
 struct ListCell
 {
 	union
 	{
-		void	*ptr_value;
-		int		 int_value;
-		Oid		 oid_value;
-	} data;
-	ListCell *next;
+		void	   *ptr_value;
+		int			int_value;
+		Oid			oid_value;
+	}			data;
+	ListCell   *next;
 };
 
 /*
@@ -98,9 +98,8 @@ list_length(List *l)
 
 extern ListCell *list_head(List *l);
 extern ListCell *list_tail(List *l);
-extern int list_length(List *l);
-
-#endif /* __GNUC__ */
+extern int	list_length(List *l);
+#endif   /* __GNUC__ */
 
 /*
  * NB: There is an unfortunate legacy from a previous incarnation of
@@ -149,12 +148,12 @@ extern int list_length(List *l);
 #define list_make1_int(x1)			lcons_int(x1, NIL)
 #define list_make2_int(x1,x2)		lcons_int(x1, list_make1_int(x2))
 #define list_make3_int(x1,x2,x3)	lcons_int(x1, list_make2_int(x2, x3))
-#define list_make4_int(x1,x2,x3,x4)	lcons_int(x1, list_make3_int(x2, x3, x4))
+#define list_make4_int(x1,x2,x3,x4) lcons_int(x1, list_make3_int(x2, x3, x4))
 
 #define list_make1_oid(x1)			lcons_oid(x1, NIL)
 #define list_make2_oid(x1,x2)		lcons_oid(x1, list_make1_oid(x2))
 #define list_make3_oid(x1,x2,x3)	lcons_oid(x1, list_make2_oid(x2, x3))
-#define list_make4_oid(x1,x2,x3,x4)	lcons_oid(x1, list_make3_oid(x2, x3, x4))
+#define list_make4_oid(x1,x2,x3,x4) lcons_oid(x1, list_make3_oid(x2, x3, x4))
 
 /*
  * foreach -
@@ -173,11 +172,11 @@ extern int list_length(List *l);
 
 /*
  * forboth -
- *    a convenience macro for advancing through two linked lists
- *    simultaneously. This macro loops through both lists at the same
- *    time, stopping when either list runs out of elements. Depending
- *    on the requirements of the call site, it may also be wise to
- *    assert that the lengths of the two lists are equal.
+ *	  a convenience macro for advancing through two linked lists
+ *	  simultaneously. This macro loops through both lists at the same
+ *	  time, stopping when either list runs out of elements. Depending
+ *	  on the requirements of the call site, it may also be wise to
+ *	  assert that the lengths of the two lists are equal.
  */
 #define forboth(cell1, list1, cell2, list2)							\
 	for ((cell1) = list_head(list1), (cell2) = list_head(list2);	\
@@ -200,8 +199,8 @@ extern List *list_concat(List *list1, List *list2);
 extern List *list_truncate(List *list, int new_size);
 
 extern void *list_nth(List *list, int n);
-extern int list_nth_int(List *list, int n);
-extern Oid list_nth_oid(List *list, int n);
+extern int	list_nth_int(List *list, int n);
+extern Oid	list_nth_oid(List *list, int n);
 
 extern bool list_member(List *list, void *datum);
 extern bool list_member_ptr(List *list, void *datum);
@@ -297,8 +296,7 @@ extern List *list_copy_tail(List *list, int nskip);
 
 #define listCopy(list)				list_copy(list)
 
-extern int length(List *list);
-
-#endif /* ENABLE_LIST_COMPAT */
+extern int	length(List *list);
+#endif   /* ENABLE_LIST_COMPAT */
 
 #endif   /* PG_LIST_H */

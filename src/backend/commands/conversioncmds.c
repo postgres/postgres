@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/conversioncmds.c,v 1.14 2004/08/29 04:12:30 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/conversioncmds.c,v 1.15 2004/08/29 05:06:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -181,7 +181,7 @@ AlterConversionOwner(List *name, AclId newOwnerSysId)
 	Oid			conversionOid;
 	HeapTuple	tup;
 	Relation	rel;
-	Form_pg_conversion	convForm;
+	Form_pg_conversion convForm;
 
 	rel = heap_openr(ConversionRelationName, RowExclusiveLock);
 
@@ -200,7 +200,7 @@ AlterConversionOwner(List *name, AclId newOwnerSysId)
 
 	convForm = (Form_pg_conversion) GETSTRUCT(tup);
 
-	/* 
+	/*
 	 * If the new owner is the same as the existing owner, consider the
 	 * command to have succeeded.  This is for dump restoration purposes.
 	 */
@@ -212,7 +212,10 @@ AlterConversionOwner(List *name, AclId newOwnerSysId)
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("must be superuser to change owner")));
 
-		/* Modify the owner --- okay to scribble on tup because it's a copy */
+		/*
+		 * Modify the owner --- okay to scribble on tup because it's a
+		 * copy
+		 */
 		convForm->conowner = newOwnerSysId;
 
 		simple_heap_update(rel, &tup->t_self, tup);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.237 2004/08/29 04:12:27 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.238 2004/08/29 05:06:41 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -511,9 +511,10 @@ index_create(Oid heapRelationId,
 	 * We cannot allow indexing a shared relation after initdb (because
 	 * there's no way to make the entry in other databases' pg_class).
 	 * Unfortunately we can't distinguish initdb from a manually started
-	 * standalone backend (toasting of shared rels happens after the bootstrap
-	 * phase, so checking IsBootstrapProcessingMode() won't work).  However,
-	 * we can at least prevent this mistake under normal multi-user operation.
+	 * standalone backend (toasting of shared rels happens after the
+	 * bootstrap phase, so checking IsBootstrapProcessingMode() won't
+	 * work).  However, we can at least prevent this mistake under normal
+	 * multi-user operation.
 	 */
 	if (shared_relation && IsUnderPostmaster)
 		ereport(ERROR,
@@ -800,8 +801,8 @@ index_drop(Oid indexId)
 
 	/*
 	 * Close and flush the index's relcache entry, to ensure relcache
-	 * doesn't try to rebuild it while we're deleting catalog entries.
-	 * We keep the lock though.
+	 * doesn't try to rebuild it while we're deleting catalog entries. We
+	 * keep the lock though.
 	 */
 	index_close(userIndexRelation);
 
@@ -826,8 +827,8 @@ index_drop(Oid indexId)
 	heap_close(indexRelation, RowExclusiveLock);
 
 	/*
-	 * if it has any expression columns, we might have stored
-	 * statistics about them.
+	 * if it has any expression columns, we might have stored statistics
+	 * about them.
 	 */
 	if (hasexprs)
 		RemoveStatistics(indexId, 0);
@@ -1008,7 +1009,7 @@ setRelhasindex(Oid relid, bool hasindex, bool isprimary, Oid reltoastidxid)
 
 	/*
 	 * Find the tuple to update in pg_class.  In bootstrap mode we can't
-	 * use heap_update, so cheat and overwrite the tuple in-place.  In
+	 * use heap_update, so cheat and overwrite the tuple in-place.	In
 	 * normal processing, make a copy to scribble on.
 	 */
 	pg_class = heap_openr(RelationRelationName, RowExclusiveLock);
@@ -1122,13 +1123,13 @@ setNewRelfilenode(Relation relation)
 	newrelfilenode = newoid();
 
 	/*
-	 * Find the pg_class tuple for the given relation.  This is not used
+	 * Find the pg_class tuple for the given relation.	This is not used
 	 * during bootstrap, so okay to use heap_update always.
 	 */
 	pg_class = heap_openr(RelationRelationName, RowExclusiveLock);
 
 	tuple = SearchSysCacheCopy(RELOID,
-							   ObjectIdGetDatum(RelationGetRelid(relation)),
+							ObjectIdGetDatum(RelationGetRelid(relation)),
 							   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "could not find tuple for relation %u",
@@ -1206,15 +1207,15 @@ UpdateStats(Oid relid, double reltuples)
 
 	/*
 	 * Find the tuple to update in pg_class.  Normally we make a copy of
-	 * the tuple using the syscache, modify it, and apply heap_update.
-	 * But in bootstrap mode we can't use heap_update, so we cheat and
+	 * the tuple using the syscache, modify it, and apply heap_update. But
+	 * in bootstrap mode we can't use heap_update, so we cheat and
 	 * overwrite the tuple in-place.
 	 *
-	 * We also must cheat if reindexing pg_class itself, because the
-	 * target index may presently not be part of the set of indexes that
+	 * We also must cheat if reindexing pg_class itself, because the target
+	 * index may presently not be part of the set of indexes that
 	 * CatalogUpdateIndexes would update (see reindex_relation).  In this
 	 * case the stats updates will not be WAL-logged and so could be lost
-	 * in a crash.  This seems OK considering VACUUM does the same thing.
+	 * in a crash.	This seems OK considering VACUUM does the same thing.
 	 */
 	pg_class = heap_openr(RelationRelationName, RowExclusiveLock);
 
@@ -1454,7 +1455,7 @@ IndexBuildHeapScan(Relation heapRelation,
 	scan = heap_beginscan(heapRelation, /* relation */
 						  snapshot,		/* seeself */
 						  0,	/* number of keys */
-						  NULL);		/* scan key */
+						  NULL);	/* scan key */
 
 	reltuples = 0;
 
@@ -1513,7 +1514,7 @@ IndexBuildHeapScan(Relation heapRelation,
 					 * system catalogs before committing.
 					 */
 					if (!TransactionIdIsCurrentTransactionId(
-							  HeapTupleHeaderGetXmin(heapTuple->t_data))
+							   HeapTupleHeaderGetXmin(heapTuple->t_data))
 						&& !IsSystemRelation(heapRelation))
 						elog(ERROR, "concurrent insert in progress");
 					indexIt = true;
@@ -1531,7 +1532,7 @@ IndexBuildHeapScan(Relation heapRelation,
 					 * system catalogs before committing.
 					 */
 					if (!TransactionIdIsCurrentTransactionId(
-							  HeapTupleHeaderGetXmax(heapTuple->t_data))
+							   HeapTupleHeaderGetXmax(heapTuple->t_data))
 						&& !IsSystemRelation(heapRelation))
 						elog(ERROR, "concurrent delete in progress");
 					indexIt = true;
@@ -1659,11 +1660,11 @@ reindex_index(Oid indexId)
 	 * Note: for REINDEX INDEX, doing this before opening the parent heap
 	 * relation means there's a possibility for deadlock failure against
 	 * another xact that is doing normal accesses to the heap and index.
-	 * However, it's not real clear why you'd be wanting to do REINDEX INDEX
-	 * on a table that's in active use, so I'd rather have the protection of
-	 * making sure the index is locked down.  In the REINDEX TABLE and
-	 * REINDEX DATABASE cases, there is no problem because caller already
-	 * holds exclusive lock on the parent table.
+	 * However, it's not real clear why you'd be wanting to do REINDEX
+	 * INDEX on a table that's in active use, so I'd rather have the
+	 * protection of making sure the index is locked down.	In the REINDEX
+	 * TABLE and REINDEX DATABASE cases, there is no problem because
+	 * caller already holds exclusive lock on the parent table.
 	 */
 	iRel = index_open(indexId);
 	LockRelation(iRel, AccessExclusiveLock);
@@ -1680,8 +1681,8 @@ reindex_index(Oid indexId)
 	 * we can do it the normal transaction-safe way.
 	 *
 	 * Since inplace processing isn't crash-safe, we only allow it in a
-	 * standalone backend.  (In the REINDEX TABLE and REINDEX DATABASE cases,
-	 * the caller should have detected this.)
+	 * standalone backend.	(In the REINDEX TABLE and REINDEX DATABASE
+	 * cases, the caller should have detected this.)
 	 */
 	inplace = iRel->rd_rel->relisshared;
 
@@ -1705,7 +1706,8 @@ reindex_index(Oid indexId)
 		{
 			/*
 			 * Release any buffers associated with this index.	If they're
-			 * dirty, they're just dropped without bothering to flush to disk.
+			 * dirty, they're just dropped without bothering to flush to
+			 * disk.
 			 */
 			DropRelationBuffers(iRel);
 
@@ -1724,8 +1726,8 @@ reindex_index(Oid indexId)
 		index_build(heapRelation, iRel, indexInfo);
 
 		/*
-		 * index_build will close both the heap and index relations (but not
-		 * give up the locks we hold on them).	So we're done.
+		 * index_build will close both the heap and index relations (but
+		 * not give up the locks we hold on them).	So we're done.
 		 */
 	}
 	PG_CATCH();
@@ -1774,13 +1776,13 @@ reindex_relation(Oid relid, bool toast_too)
 
 	/*
 	 * reindex_index will attempt to update the pg_class rows for the
-	 * relation and index.  If we are processing pg_class itself, we
-	 * want to make sure that the updates do not try to insert index
-	 * entries into indexes we have not processed yet.  (When we are
-	 * trying to recover from corrupted indexes, that could easily
-	 * cause a crash.)  We can accomplish this because CatalogUpdateIndexes
-	 * will use the relcache's index list to know which indexes to update.
-	 * We just force the index list to be only the stuff we've processed.
+	 * relation and index.	If we are processing pg_class itself, we want
+	 * to make sure that the updates do not try to insert index entries
+	 * into indexes we have not processed yet.	(When we are trying to
+	 * recover from corrupted indexes, that could easily cause a crash.)
+	 * We can accomplish this because CatalogUpdateIndexes will use the
+	 * relcache's index list to know which indexes to update. We just
+	 * force the index list to be only the stuff we've processed.
 	 *
 	 * It is okay to not insert entries into the indexes we have not
 	 * processed yet because all of this is transaction-safe.  If we fail
@@ -1795,7 +1797,7 @@ reindex_relation(Oid relid, bool toast_too)
 	/* Reindex all the indexes. */
 	foreach(indexId, indexIds)
 	{
-		Oid		indexOid = lfirst_oid(indexId);
+		Oid			indexOid = lfirst_oid(indexId);
 
 		if (is_pg_class)
 			RelationSetIndexList(rel, doneIndexes);
@@ -1819,8 +1821,8 @@ reindex_relation(Oid relid, bool toast_too)
 	result = (indexIds != NIL);
 
 	/*
-	 * If the relation has a secondary toast rel, reindex that too while we
-	 * still hold the lock on the master table.
+	 * If the relation has a secondary toast rel, reindex that too while
+	 * we still hold the lock on the master table.
 	 */
 	if (toast_too && OidIsValid(toast_relid))
 		result |= reindex_relation(toast_relid, false);

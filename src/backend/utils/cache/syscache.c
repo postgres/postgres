@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/syscache.c,v 1.94 2004/08/29 04:12:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/syscache.c,v 1.95 2004/08/29 05:06:50 momjian Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -436,7 +436,8 @@ static const struct cachedesc cacheinfo[] = {
 	}}
 };
 
-static CatCache *SysCache[lengthof(cacheinfo)];
+static CatCache *SysCache[
+						  lengthof(cacheinfo)];
 static int	SysCacheSize = lengthof(cacheinfo);
 static bool CacheInitialized = false;
 

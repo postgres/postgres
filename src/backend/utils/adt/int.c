@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/int.c,v 1.61 2004/08/29 04:12:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/int.c,v 1.62 2004/08/29 05:06:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,7 +50,7 @@ typedef struct
 	int32		current;
 	int32		finish;
 	int32		step;
-}	generate_series_fctx;
+} generate_series_fctx;
 
 /*****************************************************************************
  *	 USER I/O ROUTINES														 *
@@ -1042,17 +1042,17 @@ generate_series_int4(PG_FUNCTION_ARGS)
 Datum
 generate_series_step_int4(PG_FUNCTION_ARGS)
 {
-	FuncCallContext		   *funcctx;
-	generate_series_fctx   *fctx;
-	int32					result;
-	MemoryContext			oldcontext;
+	FuncCallContext *funcctx;
+	generate_series_fctx *fctx;
+	int32		result;
+	MemoryContext oldcontext;
 
 	/* stuff done only on the first call of the function */
 	if (SRF_IS_FIRSTCALL())
 	{
-		int32			start = PG_GETARG_INT32(0);
-		int32			finish = PG_GETARG_INT32(1);
-		int32			step = 1;
+		int32		start = PG_GETARG_INT32(0);
+		int32		finish = PG_GETARG_INT32(1);
+		int32		step = 1;
 
 		/* see if we were given an explicit step size */
 		if (PG_NARGS() == 3)
@@ -1075,8 +1075,8 @@ generate_series_step_int4(PG_FUNCTION_ARGS)
 		fctx = (generate_series_fctx *) palloc(sizeof(generate_series_fctx));
 
 		/*
-		 * Use fctx to keep state from call to call.
-		 * Seed current with the original start value
+		 * Use fctx to keep state from call to call. Seed current with the
+		 * original start value
 		 */
 		fctx->current = start;
 		fctx->finish = finish;
@@ -1090,8 +1090,8 @@ generate_series_step_int4(PG_FUNCTION_ARGS)
 	funcctx = SRF_PERCALL_SETUP();
 
 	/*
-	 * get the saved state and use current as the result for
-	 * this iteration
+	 * get the saved state and use current as the result for this
+	 * iteration
 	 */
 	fctx = funcctx->user_fctx;
 	result = fctx->current;
@@ -1109,4 +1109,3 @@ generate_series_step_int4(PG_FUNCTION_ARGS)
 		/* do when there is no more left */
 		SRF_RETURN_DONE(funcctx);
 }
-

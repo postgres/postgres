@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.283 2004/08/29 04:13:12 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.284 2004/08/29 05:07:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -449,7 +449,7 @@ connectOptions2(PGconn *conn)
 		{
 			conn->status = CONNECTION_BAD;
 			printfPQExpBuffer(&conn->errorMessage,
-						 libpq_gettext("invalid sslmode value: \"%s\"\n"),
+						libpq_gettext("invalid sslmode value: \"%s\"\n"),
 							  conn->sslmode);
 			return false;
 		}
@@ -881,6 +881,7 @@ connectDBStart(PGconn *conn)
 	struct addrinfo hint;
 	const char *node = NULL;
 	int			ret;
+
 #ifdef ENABLE_THREAD_SAFETY
 #ifndef WIN32
 	static pthread_once_t check_sigpipe_once = PTHREAD_ONCE_INIT;
@@ -2283,11 +2284,12 @@ retry4:
 	}
 
 	/*
-	 * Wait for the postmaster to close the connection, which indicates that
-	 * it's processed the request.  Without this delay, we might issue another
-	 * command only to find that our cancel zaps that command instead of the
-	 * one we thought we were canceling.  Note we don't actually expect this
-	 * read to obtain any data, we are just waiting for EOF to be signaled.
+	 * Wait for the postmaster to close the connection, which indicates
+	 * that it's processed the request.  Without this delay, we might
+	 * issue another command only to find that our cancel zaps that
+	 * command instead of the one we thought we were canceling.  Note we
+	 * don't actually expect this read to obtain any data, we are just
+	 * waiting for EOF to be signaled.
 	 */
 retry5:
 	if (recv(tmpsock, (char *) &crp, 1, 0) < 0)
@@ -2385,11 +2387,11 @@ parseServiceInfo(PQconninfoOption *options, PQExpBuffer errorMessage)
 		service = getenv("PGSERVICE");
 
 	/*
-	 *	This could be used by any application so we can't use the binary
-	 *	location to find our config files.
-	 */	
+	 * This could be used by any application so we can't use the binary
+	 * location to find our config files.
+	 */
 	snprintf(serviceFile, MAXPGPATH, "%s/pg_service.conf",
-			 getenv("PGSYSCONFDIR") ? getenv("PGSYSCONFDIR") : SYSCONFDIR);
+		   getenv("PGSYSCONFDIR") ? getenv("PGSYSCONFDIR") : SYSCONFDIR);
 
 	if (service != NULL)
 	{
@@ -3112,12 +3114,12 @@ PasswordFromFile(char *hostname, char *port, char *dbname, char *username)
 		port = DEF_PGPORT_STR;
 
 	/*
-	 *	Look for it in the home dir.
-	 *	We don't use get_home_path() so we don't pull path.c into our library.
+	 * Look for it in the home dir. We don't use get_home_path() so we
+	 * don't pull path.c into our library.
 	 */
 	if (!(home = getenv(HOMEDIR)))
 		return NULL;
-	
+
 	pgpassfile = malloc(strlen(home) + 1 + strlen(PGPASSFILE) + 1);
 	if (!pgpassfile)
 	{
@@ -3208,16 +3210,18 @@ default_threadlock(int acquire)
 #ifdef ENABLE_THREAD_SAFETY
 #ifndef WIN32
 	static pthread_mutex_t singlethread_lock = PTHREAD_MUTEX_INITIALIZER;
+
 #else
 	static pthread_mutex_t singlethread_lock = NULL;
 	static long mutex_initlock = 0;
 
-	if (singlethread_lock == NULL) {
-		while(InterlockedExchange(&mutex_initlock, 1) == 1)
-			/* loop, another thread own the lock */ ;
+	if (singlethread_lock == NULL)
+	{
+		while (InterlockedExchange(&mutex_initlock, 1) == 1)
+			 /* loop, another thread own the lock */ ;
 		if (singlethread_lock == NULL)
 			pthread_mutex_init(&singlethread_lock, NULL);
-		InterlockedExchange(&mutex_initlock,0);
+		InterlockedExchange(&mutex_initlock, 0);
 	}
 #endif
 	if (acquire)
@@ -3241,4 +3245,3 @@ PQregisterThreadLock(pgthreadlock_t *newhandler)
 		g_threadlock = default_threadlock;
 	return prev;
 }
-

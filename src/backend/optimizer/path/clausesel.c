@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/clausesel.c,v 1.69 2004/08/29 04:12:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/clausesel.c,v 1.70 2004/08/29 05:06:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -128,7 +128,7 @@ clauselist_selectivity(Query *root,
 		/*
 		 * See if it looks like a restriction clause with a pseudoconstant
 		 * on one side.  (Anything more complicated than that might not
-		 * behave in the simple way we are expecting.)  Most of the tests
+		 * behave in the simple way we are expecting.)	Most of the tests
 		 * here can be done more efficiently with rinfo than without.
 		 */
 		if (is_opclause(clause) && list_length(((OpExpr *) clause)->args) == 2)
@@ -141,10 +141,10 @@ clauselist_selectivity(Query *root,
 			{
 				ok = (bms_membership(rinfo->clause_relids) == BMS_SINGLETON) &&
 					(is_pseudo_constant_clause_relids(lsecond(expr->args),
-													  rinfo->right_relids) ||
+												  rinfo->right_relids) ||
 					 (varonleft = false,
-					  is_pseudo_constant_clause_relids(linitial(expr->args),
-													   rinfo->left_relids)));
+				   is_pseudo_constant_clause_relids(linitial(expr->args),
+													rinfo->left_relids)));
 			}
 			else
 			{
@@ -158,9 +158,8 @@ clauselist_selectivity(Query *root,
 			{
 				/*
 				 * If it's not a "<" or ">" operator, just merge the
-				 * selectivity in generically.  But if it's the
-				 * right oprrest, add the clause to rqlist for later
-				 * processing.
+				 * selectivity in generically.	But if it's the right
+				 * oprrest, add the clause to rqlist for later processing.
 				 */
 				switch (get_oprrest(expr->opno))
 				{
@@ -409,16 +408,17 @@ clause_selectivity(Query *root,
 		rinfo = (RestrictInfo *) clause;
 
 		/*
-		 * If possible, cache the result of the selectivity calculation for
-		 * the clause.  We can cache if varRelid is zero or the clause
-		 * contains only vars of that relid --- otherwise varRelid will affect
-		 * the result, so mustn't cache.  We also have to be careful about
-		 * the jointype.  It's OK to cache when jointype is JOIN_INNER or
-		 * one of the outer join types (any given outer-join clause should
-		 * always be examined with the same jointype, so result won't change).
-		 * It's not OK to cache when jointype is one of the special types
-		 * associated with IN processing, because the same clause may be
-		 * examined with different jointypes and the result should vary.
+		 * If possible, cache the result of the selectivity calculation
+		 * for the clause.	We can cache if varRelid is zero or the clause
+		 * contains only vars of that relid --- otherwise varRelid will
+		 * affect the result, so mustn't cache.  We also have to be
+		 * careful about the jointype.	It's OK to cache when jointype is
+		 * JOIN_INNER or one of the outer join types (any given outer-join
+		 * clause should always be examined with the same jointype, so
+		 * result won't change). It's not OK to cache when jointype is one
+		 * of the special types associated with IN processing, because the
+		 * same clause may be examined with different jointypes and the
+		 * result should vary.
 		 */
 		if (varRelid == 0 ||
 			bms_is_subset_singleton(rinfo->clause_relids, varRelid))
@@ -481,7 +481,7 @@ clause_selectivity(Query *root,
 				s1 = restriction_selectivity(root,
 											 BooleanEqualOperator,
 											 list_make2(var,
-														makeBoolConst(true,
+													  makeBoolConst(true,
 																 false)),
 											 varRelid);
 			}
@@ -495,7 +495,7 @@ clause_selectivity(Query *root,
 	else if (IsA(clause, Param))
 	{
 		/* see if we can replace the Param */
-		Node	*subst = estimate_expression_value(clause);
+		Node	   *subst = estimate_expression_value(clause);
 
 		if (IsA(subst, Const))
 		{
@@ -527,8 +527,8 @@ clause_selectivity(Query *root,
 	else if (or_clause(clause))
 	{
 		/*
-		 * Selectivities for an OR clause are computed as s1+s2 - s1*s2
-		 * to account for the probable overlap of selected tuple sets.
+		 * Selectivities for an OR clause are computed as s1+s2 - s1*s2 to
+		 * account for the probable overlap of selected tuple sets.
 		 *
 		 * XXX is this too conservative?
 		 */
@@ -563,7 +563,8 @@ clause_selectivity(Query *root,
 		{
 			/*
 			 * Otherwise, it's a join if there's more than one relation
-			 * used.  We can optimize this calculation if an rinfo was passed.
+			 * used.  We can optimize this calculation if an rinfo was
+			 * passed.
 			 */
 			if (rinfo)
 				is_join_clause = (bms_membership(rinfo->clause_relids) ==

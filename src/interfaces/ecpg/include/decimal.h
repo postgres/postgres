@@ -5,4 +5,4 @@
 
 typedef decimal dec_t;
 
-#endif /* ndef _ECPG_DECIMAL_H */
+#endif   /* ndef _ECPG_DECIMAL_H */

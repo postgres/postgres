@@ -314,7 +314,7 @@ winsock_strerror(int err, char *strerrbuf, size_t buflen)
 	{
 		strerrbuf[buflen - 1] = '\0';
 		offs = strlen(strerrbuf);
-		if (offs > (int)buflen - 64)
+		if (offs > (int) buflen - 64)
 			offs = buflen - 64;
 		sprintf(strerrbuf + offs, " (0x%08X/%i)", err, err);
 	}

@@ -1,6 +1,6 @@
 /* dynamic SQL support routines
  *
- * $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/descriptor.c,v 1.11 2004/07/05 09:45:53 meskes Exp $
+ * $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/descriptor.c,v 1.12 2004/08/29 05:06:59 momjian Exp $
  */
 
 #define POSTGRES_ECPG_INTERNAL
@@ -434,10 +434,10 @@ bool
 ECPGset_desc_header(int lineno, char *desc_name, int count)
 {
 	struct descriptor *desc;
-	
+
 	for (desc = all_descriptors; desc; desc = desc->next)
 	{
-		if (strcmp(desc_name, desc->name)==0)
+		if (strcmp(desc_name, desc->name) == 0)
 			break;
 	}
 
@@ -461,7 +461,7 @@ ECPGset_desc(int lineno, char *desc_name, int index,...)
 
 	for (desc = all_descriptors; desc; desc = desc->next)
 	{
-		if (strcmp(desc_name, desc->name)==0)
+		if (strcmp(desc_name, desc->name) == 0)
 			break;
 	}
 
@@ -486,7 +486,7 @@ ECPGset_desc(int lineno, char *desc_name, int index,...)
 	}
 
 	if (!(var = (struct variable *) ECPGalloc(sizeof(struct variable), lineno)))
-	        return false;
+		return false;
 
 	va_start(args, index);
 
@@ -494,7 +494,7 @@ ECPGset_desc(int lineno, char *desc_name, int index,...)
 	{
 		enum ECPGdtype itemtype;
 		enum ECPGttype type;
-		const char	*tobeinserted = NULL;
+		const char *tobeinserted = NULL;
 		bool		malloced;
 
 		itemtype = va_arg(args, enum ECPGdtype);
@@ -508,17 +508,17 @@ ECPGset_desc(int lineno, char *desc_name, int index,...)
 		switch (itemtype)
 		{
 			case ECPGd_data:
-			{
-				if (!ECPGstore_input(lineno, true, var, &tobeinserted, &malloced))
 				{
-					ECPGfree(var);
-					return false;
+					if (!ECPGstore_input(lineno, true, var, &tobeinserted, &malloced))
+					{
+						ECPGfree(var);
+						return false;
+					}
+
+					desc_item->data = (char *) tobeinserted;
+					tobeinserted = NULL;
+					break;
 				}
-				
-				desc_item->data = (char *) tobeinserted;
-				tobeinserted = NULL;
-				break;
-			}
 
 			case ECPGd_indicator:
 				set_int_item(lineno, &desc_item->indicator, var->pointer, var->type);
@@ -541,20 +541,20 @@ ECPGset_desc(int lineno, char *desc_name, int index,...)
 				break;
 
 			default:
-			{
-				char	type_str[20];
-				snprintf(type_str, sizeof(type_str), "%d", itemtype);
-				ECPGraise(lineno, ECPG_UNKNOWN_DESCRIPTOR_ITEM, ECPG_SQLSTATE_ECPG_INTERNAL_ERROR, type_str);
-				ECPGfree(var);
-				return false;
-			}
+				{
+					char		type_str[20];
+
+					snprintf(type_str, sizeof(type_str), "%d", itemtype);
+					ECPGraise(lineno, ECPG_UNKNOWN_DESCRIPTOR_ITEM, ECPG_SQLSTATE_ECPG_INTERNAL_ERROR, type_str);
+					ECPGfree(var);
+					return false;
+				}
 		}
 
-		/*if (itemtype == ECPGd_data)
-		{
-			free(desc_item->data);
-			desc_item->data = NULL;
-		}*/
+		/*
+		 * if (itemtype == ECPGd_data) { free(desc_item->data);
+		 * desc_item->data = NULL; }
+		 */
 	}
 	while (true);
 	ECPGfree(var);

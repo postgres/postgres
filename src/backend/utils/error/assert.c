@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/assert.c,v 1.28 2004/08/29 04:12:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/assert.c,v 1.29 2004/08/29 05:06:50 momjian Exp $
  *
  * NOTE
  *	  This should eventually work with elog()
@@ -35,16 +35,17 @@ ExceptionalCondition(char *conditionName,
 	else
 	{
 		write_stderr("TRAP: %s(\"%s\", File: \"%s\", Line: %d)\n",
-				errorType, conditionName,
-				fileName, lineNumber);
+					 errorType, conditionName,
+					 fileName, lineNumber);
 	}
 
 #ifdef SLEEP_ON_ASSERT
+
 	/*
-	 *	It would be nice to use pg_usleep() here, but only does 2000 sec
-	 *	or 33 minutes, which seems too short.
-	 */	 
-	sleep(1000000);	
+	 * It would be nice to use pg_usleep() here, but only does 2000 sec or
+	 * 33 minutes, which seems too short.
+	 */
+	sleep(1000000);
 #endif
 
 	abort();

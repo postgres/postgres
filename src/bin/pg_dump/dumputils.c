@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.14 2004/08/29 04:13:01 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.15 2004/08/29 05:06:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -154,7 +154,7 @@ void
 appendStringLiteralDQ(PQExpBuffer buf, const char *str, const char *dqprefix)
 {
 	static const char suffixes[] = "_XXXXXXX";
-	int nextchar = 0;
+	int			nextchar = 0;
 	PQExpBuffer delimBuf = createPQExpBuffer();
 
 	/* start with $ + dqprefix if not NULL */
@@ -163,15 +163,15 @@ appendStringLiteralDQ(PQExpBuffer buf, const char *str, const char *dqprefix)
 		appendPQExpBuffer(delimBuf, dqprefix);
 
 	/*
-	 * Make sure we choose a delimiter which (without the trailing $)
-	 * is not present in the string being quoted. We don't check with the
+	 * Make sure we choose a delimiter which (without the trailing $) is
+	 * not present in the string being quoted. We don't check with the
 	 * trailing $ because a string ending in $foo must not be quoted with
 	 * $foo$.
 	 */
 	while (strstr(str, delimBuf->data) != NULL)
 	{
 		appendPQExpBufferChar(delimBuf, suffixes[nextchar++]);
-		nextchar %= sizeof(suffixes)-1;
+		nextchar %= sizeof(suffixes) - 1;
 	}
 
 	/* add trailing $ */
@@ -195,9 +195,9 @@ appendStringLiteralDQOpt(PQExpBuffer buf, const char *str,
 						 bool escapeAll, const char *dqprefix)
 {
 	if (strchr(str, '\'') == NULL && strchr(str, '\\') == NULL)
-		appendStringLiteral(buf,str,escapeAll);
+		appendStringLiteral(buf, str, escapeAll);
 	else
-		appendStringLiteralDQ(buf,str,dqprefix);
+		appendStringLiteralDQ(buf, str, dqprefix);
 }
 
 
@@ -621,7 +621,10 @@ copyAclUserName(PQExpBuffer output, char *input)
 
 	while (*input && *input != '=')
 	{
-		/* If user name isn't quoted, then just add it to the output buffer */
+		/*
+		 * If user name isn't quoted, then just add it to the output
+		 * buffer
+		 */
 		if (*input != '"')
 			appendPQExpBufferChar(output, *input++);
 		else

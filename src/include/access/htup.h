@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/htup.h,v 1.69 2004/08/29 04:13:03 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/htup.h,v 1.70 2004/08/29 05:06:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,6 +109,7 @@ typedef struct DatumTupleFields
 	int32		datum_typmod;	/* -1, or identifier of a record type */
 
 	Oid			datum_typeid;	/* composite type OID, or RECORDOID */
+
 	/*
 	 * Note: field ordering is chosen with thought that Oid might someday
 	 * widen to 64 bits.
@@ -119,8 +120,8 @@ typedef struct HeapTupleHeaderData
 {
 	union
 	{
-		HeapTupleFields		t_heap;
-		DatumTupleFields	t_datum;
+		HeapTupleFields t_heap;
+		DatumTupleFields t_datum;
 	}			t_choice;
 
 	ItemPointerData t_ctid;		/* current TID of this or newer tuple */

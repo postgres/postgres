@@ -31,7 +31,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.44 2004/08/29 04:12:30 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.45 2004/08/29 05:06:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -594,14 +594,14 @@ lazy_scan_index(Relation indrel, LVRelStats *vacrelstats)
 						false);
 
 	ereport(elevel,
-			(errmsg("index \"%s\" now contains %.0f row versions in %u pages",
-					RelationGetRelationName(indrel),
-					stats->num_index_tuples,
-					stats->num_pages),
-			 errdetail("%u index pages have been deleted, %u are currently reusable.\n"
-					   "%s",
-					   stats->pages_deleted, stats->pages_free,
-					   vac_show_rusage(&ru0))));
+	   (errmsg("index \"%s\" now contains %.0f row versions in %u pages",
+			   RelationGetRelationName(indrel),
+			   stats->num_index_tuples,
+			   stats->num_pages),
+		errdetail("%u index pages have been deleted, %u are currently reusable.\n"
+				  "%s",
+				  stats->pages_deleted, stats->pages_free,
+				  vac_show_rusage(&ru0))));
 
 	pfree(stats);
 }
@@ -654,16 +654,16 @@ lazy_vacuum_index(Relation indrel, LVRelStats *vacrelstats)
 						false);
 
 	ereport(elevel,
-			(errmsg("index \"%s\" now contains %.0f row versions in %u pages",
-					RelationGetRelationName(indrel),
-					stats->num_index_tuples,
-					stats->num_pages),
-			 errdetail("%.0f index row versions were removed.\n"
+	   (errmsg("index \"%s\" now contains %.0f row versions in %u pages",
+			   RelationGetRelationName(indrel),
+			   stats->num_index_tuples,
+			   stats->num_pages),
+		errdetail("%.0f index row versions were removed.\n"
 		 "%u index pages have been deleted, %u are currently reusable.\n"
-					   "%s",
-					   stats->tuples_removed,
-					   stats->pages_deleted, stats->pages_free,
-					   vac_show_rusage(&ru0))));
+				  "%s",
+				  stats->tuples_removed,
+				  stats->pages_deleted, stats->pages_free,
+				  vac_show_rusage(&ru0))));
 
 	pfree(stats);
 }

@@ -1,7 +1,7 @@
 /*
  *	PostgreSQL type definitions for the INET and CIDR types.
  *
- *	$PostgreSQL: pgsql/src/backend/utils/adt/network.c,v 1.52 2004/06/13 21:57:25 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/network.c,v 1.53 2004/08/29 05:06:49 momjian Exp $
  *
  *	Jon Postel RIP 16 Oct 1998
  */
@@ -195,7 +195,7 @@ inet_recv(PG_FUNCTION_ARGS)
 		ip_family(addr) != PGSQL_AF_INET6)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
-				 errmsg("invalid address family in external \"inet\" value")));
+		   errmsg("invalid address family in external \"inet\" value")));
 	bits = pq_getmsgbyte(buf);
 	if (bits < 0 || bits > ip_maxbits(addr))
 		ereport(ERROR,
@@ -995,29 +995,30 @@ network_scan_last(Datum in)
 Datum
 inet_client_addr(PG_FUNCTION_ARGS)
 {
-	Port *port = MyProcPort;
-	char	remote_host[NI_MAXHOST];
-	int	ret;
+	Port	   *port = MyProcPort;
+	char		remote_host[NI_MAXHOST];
+	int			ret;
 
 	if (port == NULL)
 		PG_RETURN_NULL();
 
-	switch (port->raddr.addr.ss_family) {
-	case AF_INET:
+	switch (port->raddr.addr.ss_family)
+	{
+		case AF_INET:
 #ifdef HAVE_IPV6
-	case AF_INET6:
+		case AF_INET6:
 #endif
-	  break;
-	default:
-		PG_RETURN_NULL();
+			break;
+		default:
+			PG_RETURN_NULL();
 	}
 
 	remote_host[0] = '\0';
 
 	ret = getnameinfo_all(&port->raddr.addr, port->raddr.salen,
-			      remote_host, sizeof(remote_host),
-			      NULL, 0,
-			      NI_NUMERICHOST | NI_NUMERICSERV);
+						  remote_host, sizeof(remote_host),
+						  NULL, 0,
+						  NI_NUMERICHOST | NI_NUMERICSERV);
 	if (ret)
 		PG_RETURN_NULL();
 
@@ -1031,29 +1032,30 @@ inet_client_addr(PG_FUNCTION_ARGS)
 Datum
 inet_client_port(PG_FUNCTION_ARGS)
 {
-	Port *port = MyProcPort;
-	char	remote_port[NI_MAXSERV];
-	int	ret;
+	Port	   *port = MyProcPort;
+	char		remote_port[NI_MAXSERV];
+	int			ret;
 
 	if (port == NULL)
 		PG_RETURN_NULL();
 
-	switch (port->raddr.addr.ss_family) {
-	case AF_INET:
+	switch (port->raddr.addr.ss_family)
+	{
+		case AF_INET:
 #ifdef HAVE_IPV6
-	case AF_INET6:
+		case AF_INET6:
 #endif
-	  break;
-	default:
-		PG_RETURN_NULL();
+			break;
+		default:
+			PG_RETURN_NULL();
 	}
 
 	remote_port[0] = '\0';
 
 	ret = getnameinfo_all(&port->raddr.addr, port->raddr.salen,
-			      NULL, 0,
-			      remote_port, sizeof(remote_port),
-			      NI_NUMERICHOST | NI_NUMERICSERV);
+						  NULL, 0,
+						  remote_port, sizeof(remote_port),
+						  NI_NUMERICHOST | NI_NUMERICSERV);
 	if (ret)
 		PG_RETURN_NULL();
 
@@ -1067,29 +1069,30 @@ inet_client_port(PG_FUNCTION_ARGS)
 Datum
 inet_server_addr(PG_FUNCTION_ARGS)
 {
-	Port *port = MyProcPort;
-	char	local_host[NI_MAXHOST];
-	int	ret;
+	Port	   *port = MyProcPort;
+	char		local_host[NI_MAXHOST];
+	int			ret;
 
 	if (port == NULL)
 		PG_RETURN_NULL();
 
-	switch (port->laddr.addr.ss_family) {
-	case AF_INET:
+	switch (port->laddr.addr.ss_family)
+	{
+		case AF_INET:
 #ifdef HAVE_IPV6
-	case AF_INET6:
+		case AF_INET6:
 #endif
-	  break;
-	default:
-		PG_RETURN_NULL();
+			break;
+		default:
+			PG_RETURN_NULL();
 	}
 
 	local_host[0] = '\0';
 
 	ret = getnameinfo_all(&port->laddr.addr, port->laddr.salen,
-			      local_host, sizeof(local_host),
-			      NULL, 0,
-			      NI_NUMERICHOST | NI_NUMERICSERV);
+						  local_host, sizeof(local_host),
+						  NULL, 0,
+						  NI_NUMERICHOST | NI_NUMERICSERV);
 	if (ret)
 		PG_RETURN_NULL();
 
@@ -1103,29 +1106,30 @@ inet_server_addr(PG_FUNCTION_ARGS)
 Datum
 inet_server_port(PG_FUNCTION_ARGS)
 {
-	Port *port = MyProcPort;
-	char	local_port[NI_MAXSERV];
-	int	ret;
+	Port	   *port = MyProcPort;
+	char		local_port[NI_MAXSERV];
+	int			ret;
 
 	if (port == NULL)
 		PG_RETURN_NULL();
 
-	switch (port->laddr.addr.ss_family) {
-	case AF_INET:
+	switch (port->laddr.addr.ss_family)
+	{
+		case AF_INET:
 #ifdef HAVE_IPV6
-	case AF_INET6:
+		case AF_INET6:
 #endif
-	  break;
-	default:
-		PG_RETURN_NULL();
+			break;
+		default:
+			PG_RETURN_NULL();
 	}
 
 	local_port[0] = '\0';
 
 	ret = getnameinfo_all(&port->laddr.addr, port->laddr.salen,
-			      NULL, 0,
-			      local_port, sizeof(local_port),
-			      NI_NUMERICHOST | NI_NUMERICSERV);
+						  NULL, 0,
+						  local_port, sizeof(local_port),
+						  NI_NUMERICHOST | NI_NUMERICSERV);
 	if (ret)
 		PG_RETURN_NULL();
 

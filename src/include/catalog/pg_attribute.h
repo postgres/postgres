@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_attribute.h,v 1.111 2004/08/29 04:13:05 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_attribute.h,v 1.112 2004/08/29 05:06:55 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -236,7 +236,7 @@ typedef FormData_pg_attribute *Form_pg_attribute;
 { 1247, {"typoutput"},	   24, -1,	4, 12, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
 { 1247, {"typreceive"},    24, -1,	4, 13, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
 { 1247, {"typsend"},	   24, -1,	4, 14, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
-{ 1247, {"typanalyze"},	   24, -1,	4, 15, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
+{ 1247, {"typanalyze"},    24, -1,	4, 15, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
 { 1247, {"typalign"},	   18, -1,	1, 16, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0 }, \
 { 1247, {"typstorage"},    18, -1,	1, 17, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0 }, \
 { 1247, {"typnotnull"},    16, -1,	1, 18, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0 }, \
@@ -282,7 +282,7 @@ DATA(insert ( 1247 tableoid			26 0  4  -7 0 -1 -1 t p i t f f t 0));
  *		pg_database
  * ----------------
  */
-DATA(insert ( 1262 datname			19 -1 NAMEDATALEN   1 0 -1 -1 f p i t f f t 0));
+DATA(insert ( 1262 datname			19 -1 NAMEDATALEN	1 0 -1 -1 f p i t f f t 0));
 DATA(insert ( 1262 datdba			23 -1 4   2 0 -1 -1 t p i t f f t 0));
 DATA(insert ( 1262 encoding			23 -1 4   3 0 -1 -1 t p i t f f t 0));
 DATA(insert ( 1262 datistemplate	16 -1 1   4 0 -1 -1 t p c t f f t 0));
@@ -308,15 +308,15 @@ DATA(insert ( 1262 tableoid			26 0  4  -7 0 -1 -1 t p i t f f t 0));
 #define Schema_pg_proc \
 { 1255, {"proname"},			19, -1, NAMEDATALEN,  1, 0, -1, -1, false, 'p', 'i', true, false, false, true, 0 }, \
 { 1255, {"pronamespace"},		26, -1, 4,	2, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
-{ 1255, {"proowner"},			23, -1,	4,	3, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
-{ 1255, {"prolang"},			26, -1,	4,	4, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
+{ 1255, {"proowner"},			23, -1, 4,	3, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
+{ 1255, {"prolang"},			26, -1, 4,	4, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
 { 1255, {"proisagg"},			16, -1, 1,	5, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0 }, \
-{ 1255, {"prosecdef"},			16, -1,	1,	6, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0 }, \
-{ 1255, {"proisstrict"},		16, -1,	1,	7, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0 }, \
-{ 1255, {"proretset"},			16, -1,	1,	8, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0 }, \
-{ 1255, {"provolatile"},		18, -1,	1,	9, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0 }, \
-{ 1255, {"pronargs"},			21, -1,	2, 10, 0, -1, -1, true, 'p', 's', true, false, false, true, 0 }, \
-{ 1255, {"prorettype"},			26, -1,	4, 11, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
+{ 1255, {"prosecdef"},			16, -1, 1,	6, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0 }, \
+{ 1255, {"proisstrict"},		16, -1, 1,	7, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0 }, \
+{ 1255, {"proretset"},			16, -1, 1,	8, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0 }, \
+{ 1255, {"provolatile"},		18, -1, 1,	9, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0 }, \
+{ 1255, {"pronargs"},			21, -1, 2, 10, 0, -1, -1, true, 'p', 's', true, false, false, true, 0 }, \
+{ 1255, {"prorettype"},			26, -1, 4, 11, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
 { 1255, {"proargtypes"},		30, -1, INDEX_MAX_KEYS*4, 12, 0, -1, -1, false, 'p', 'i', true, false, false, true, 0 }, \
 { 1255, {"proargnames"},	  1009, -1, -1, 13, 1, -1, -1, false, 'x', 'i', false, false, false, true, 0 }, \
 { 1255, {"prosrc"},				25, -1, -1, 14, 0, -1, -1, false, 'x', 'i', false, false, false, true, 0 }, \
@@ -443,7 +443,7 @@ DATA(insert ( 1249 tableoid			26 0  4  -7 0 -1 -1 t p i t f f t 0));
 { 1259, {"relfilenode"},   26, -1,	4,	6, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
 { 1259, {"reltablespace"}, 26, -1,	4,	7, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
 { 1259, {"relpages"},	   23, -1,	4,	8, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
-{ 1259, {"reltuples"},	   700, -1,	4,	9, 0, -1, -1, false, 'p', 'i', true, false, false, true, 0 }, \
+{ 1259, {"reltuples"},	   700, -1, 4,	9, 0, -1, -1, false, 'p', 'i', true, false, false, true, 0 }, \
 { 1259, {"reltoastrelid"}, 26, -1,	4, 10, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
 { 1259, {"reltoastidxid"}, 26, -1,	4, 11, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
 { 1259, {"relhasindex"},   16, -1,	1, 12, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0 }, \

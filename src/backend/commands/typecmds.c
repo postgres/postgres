@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.62 2004/08/29 04:12:30 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.63 2004/08/29 05:06:41 momjian Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -302,8 +302,8 @@ DefineType(List *names, List *parameters)
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("type output function %s must return type \"cstring\"",
-							NameListToString(outputName))));
+			errmsg("type output function %s must return type \"cstring\"",
+				   NameListToString(outputName))));
 	}
 	if (receiveOid)
 	{
@@ -311,8 +311,8 @@ DefineType(List *names, List *parameters)
 		if (resulttype != typoid)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("type receive function %s must return type %s",
-							NameListToString(receiveName), typeName)));
+				   errmsg("type receive function %s must return type %s",
+						  NameListToString(receiveName), typeName)));
 	}
 	if (sendOid)
 	{
@@ -320,13 +320,14 @@ DefineType(List *names, List *parameters)
 		if (resulttype != BYTEAOID)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("type send function %s must return type \"bytea\"",
-							NameListToString(sendName))));
+			   errmsg("type send function %s must return type \"bytea\"",
+					  NameListToString(sendName))));
 	}
 
 	/*
-	 * Convert analysis function proc name to an OID. If no analysis function
-	 * is specified, we'll use zero to select the built-in default algorithm.
+	 * Convert analysis function proc name to an OID. If no analysis
+	 * function is specified, we'll use zero to select the built-in
+	 * default algorithm.
 	 */
 	if (analyzeName)
 		analyzeOid = findTypeAnalyzeFunction(analyzeName, typoid);
@@ -691,7 +692,7 @@ DefineDomain(CreateDomainStmt *stmt)
 			case CONSTR_UNIQUE:
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
-				errmsg("unique constraints not possible for domains")));
+				 errmsg("unique constraints not possible for domains")));
 				break;
 
 			case CONSTR_PRIMARY:
@@ -932,8 +933,8 @@ findTypeOutputFunction(List *procname, Oid typeOid)
 	 * arguments (data value, element OID).
 	 *
 	 * For backwards compatibility we allow OPAQUE in place of the actual
-	 * type name; if we see this, we issue a warning and fix up the pg_proc
-	 * entry.
+	 * type name; if we see this, we issue a warning and fix up the
+	 * pg_proc entry.
 	 */
 	MemSet(argList, 0, FUNC_MAX_ARGS * sizeof(Oid));
 
@@ -967,8 +968,8 @@ findTypeOutputFunction(List *procname, Oid typeOid)
 	{
 		/* Found, but must complain and fix the pg_proc entry */
 		ereport(WARNING,
-		(errmsg("changing argument type of function %s from \"opaque\" to %s",
-				NameListToString(procname), format_type_be(typeOid))));
+				(errmsg("changing argument type of function %s from \"opaque\" to %s",
+				  NameListToString(procname), format_type_be(typeOid))));
 		SetFunctionArgType(procOid, 0, typeOid);
 
 		/*
@@ -1062,7 +1063,8 @@ findTypeAnalyzeFunction(List *procname, Oid typeOid)
 	Oid			procOid;
 
 	/*
-	 * Analyze functions always take one INTERNAL argument and return bool.
+	 * Analyze functions always take one INTERNAL argument and return
+	 * bool.
 	 */
 	MemSet(argList, 0, FUNC_MAX_ARGS * sizeof(Oid));
 
@@ -1078,8 +1080,8 @@ findTypeAnalyzeFunction(List *procname, Oid typeOid)
 	if (get_func_rettype(procOid) != BOOLOID)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				 errmsg("type analyze function %s must return type \"boolean\"",
-						NameListToString(procname))));
+		  errmsg("type analyze function %s must return type \"boolean\"",
+				 NameListToString(procname))));
 
 	return procOid;
 }
@@ -1110,8 +1112,8 @@ DefineCompositeType(const RangeVar *typevar, List *coldeflist)
 			 errmsg("composite type must have at least one attribute")));
 
 	/*
-	 * now set the parameters for keys/inheritance etc. All of these
-	 * are uninteresting for composite types...
+	 * now set the parameters for keys/inheritance etc. All of these are
+	 * uninteresting for composite types...
 	 */
 	createStmt->relation = (RangeVar *) typevar;
 	createStmt->tableElts = coldeflist;
@@ -1337,8 +1339,8 @@ AlterDomainNotNull(List *names, bool notNull)
 						ereport(ERROR,
 								(errcode(ERRCODE_NOT_NULL_VIOLATION),
 								 errmsg("column \"%s\" of table \"%s\" contains null values",
-										NameStr(tupdesc->attrs[attnum - 1]->attname),
-										RelationGetRelationName(testrel))));
+							NameStr(tupdesc->attrs[attnum - 1]->attname),
+									 RelationGetRelationName(testrel))));
 				}
 			}
 			heap_endscan(scan);
@@ -1499,7 +1501,7 @@ AlterDomainAddConstraint(List *names, Node *newConstraint)
 	if (IsA(newConstraint, FkConstraint))
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-		   errmsg("foreign key constraints not possible for domains")));
+			errmsg("foreign key constraints not possible for domains")));
 
 	/* otherwise it should be a plain Constraint */
 	if (!IsA(newConstraint, Constraint))
@@ -1517,13 +1519,13 @@ AlterDomainAddConstraint(List *names, Node *newConstraint)
 		case CONSTR_UNIQUE:
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("unique constraints not possible for domains")));
+				 errmsg("unique constraints not possible for domains")));
 			break;
 
 		case CONSTR_PRIMARY:
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("primary key constraints not possible for domains")));
+			errmsg("primary key constraints not possible for domains")));
 			break;
 
 		case CONSTR_ATTR_DEFERRABLE:
@@ -1604,7 +1606,7 @@ AlterDomainAddConstraint(List *names, Node *newConstraint)
 					ereport(ERROR,
 							(errcode(ERRCODE_CHECK_VIOLATION),
 							 errmsg("column \"%s\" of table \"%s\" contains values that violate the new constraint",
-									NameStr(tupdesc->attrs[attnum - 1]->attname),
+							NameStr(tupdesc->attrs[attnum - 1]->attname),
 									RelationGetRelationName(testrel))));
 			}
 
@@ -2078,9 +2080,9 @@ AlterTypeOwner(List *names, AclId newOwnerSysId)
 	typTup = (Form_pg_type) GETSTRUCT(tup);
 
 	/*
-	 * If it's a composite type, we need to check that it really is a 
- 	 * free-standing composite type, and not a table's underlying type.
-	 * We want people to use ALTER TABLE not ALTER TYPE for that case.
+	 * If it's a composite type, we need to check that it really is a
+	 * free-standing composite type, and not a table's underlying type. We
+	 * want people to use ALTER TABLE not ALTER TYPE for that case.
 	 */
 	if (typTup->typtype == 'c' && get_rel_relkind(typTup->typrelid) != 'c')
 		ereport(ERROR,
@@ -2088,7 +2090,7 @@ AlterTypeOwner(List *names, AclId newOwnerSysId)
 				 errmsg("\"%s\" is a table's row type",
 						TypeNameToString(typename))));
 
-	/* 
+	/*
 	 * If the new owner is the same as the existing owner, consider the
 	 * command to have succeeded.  This is for dump restoration purposes.
 	 */
@@ -2100,7 +2102,10 @@ AlterTypeOwner(List *names, AclId newOwnerSysId)
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("must be superuser to change owner")));
 
-		/* Modify the owner --- okay to scribble on typTup because it's a copy */
+		/*
+		 * Modify the owner --- okay to scribble on typTup because it's a
+		 * copy
+		 */
 		typTup->typowner = newOwnerSysId;
 
 		simple_heap_update(rel, &tup->t_self, tup);

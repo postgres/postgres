@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_tablespace.h,v 1.3 2004/08/29 04:13:05 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_tablespace.h,v 1.4 2004/08/29 05:06:55 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -57,7 +57,7 @@ typedef FormData_pg_tablespace *Form_pg_tablespace;
 #define Anum_pg_tablespace_spclocation	3
 #define Anum_pg_tablespace_spcacl		4
 
-DATA(insert OID = 1663 ( pg_default	PGUID "" _null_ ));
+DATA(insert OID = 1663 ( pg_default PGUID "" _null_ ));
 DATA(insert OID = 1664 ( pg_global	PGUID "" _null_ ));
 
 #define DEFAULTTABLESPACE_OID 1663

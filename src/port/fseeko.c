@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/fseeko.c,v 1.15 2004/08/29 04:13:12 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/fseeko.c,v 1.16 2004/08/29 05:07:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,7 +68,7 @@ fseeko(FILE *stream, off_t offset, int whence)
 #ifdef bsdi
 			flockfile(stream);
 #endif
-			fflush(stream);	/* force writes to fd for stat() */
+			fflush(stream);		/* force writes to fd for stat() */
 			if (fstat(fileno(stream), &filestat) != 0)
 				goto failure;
 			floc = filestat.st_size;

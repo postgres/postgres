@@ -39,7 +39,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.52 2004/08/29 04:13:01 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.53 2004/08/29 05:06:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,7 +53,7 @@
 #include <signal.h>
 #include <errno.h>
 #ifdef HAVE_LANGINFO_H
-# include <langinfo.h>
+#include <langinfo.h>
 #endif
 
 #include "libpq/pqsignal.h"
@@ -73,7 +73,7 @@ int			optreset;
 /*
  * these values are passed in by makefile defines
  */
-char		*share_path = NULL;
+char	   *share_path = NULL;
 
 /* values to be obtained from arguments */
 char	   *pg_data = "";
@@ -87,8 +87,8 @@ char	   *lc_time = "";
 char	   *lc_messages = "";
 char	   *username = "";
 bool		pwprompt = false;
-char       *pwfilename = NULL;
-char       *authmethod = "";
+char	   *pwfilename = NULL;
+char	   *authmethod = "";
 bool		debug = false;
 bool		noclean = false;
 bool		show_setting = false;
@@ -122,12 +122,12 @@ int			n_buffers = 50;
 /*
  * Warning messages for authentication methods
  */
-char *authtrust_warning =											\
-	"# CAUTION: Configuring the system for local \"trust\" authentication allows\n"
-	"# any local user to connect as any PostgreSQL user, including the database\n"
-	"# superuser. If you do not trust all your local users, use another\n"
-	"# authenication method.\n";
-char *authwarning = NULL;
+char	   *authtrust_warning = \
+"# CAUTION: Configuring the system for local \"trust\" authentication allows\n"
+"# any local user to connect as any PostgreSQL user, including the database\n"
+"# superuser. If you do not trust all your local users, use another\n"
+"# authenication method.\n";
+char	   *authwarning = NULL;
 
 /*
  * Centralized knowledge of switches to pass to backend
@@ -141,20 +141,20 @@ static const char *backend_options = "-F -O -c search_path=pg_catalog -c exit_on
 
 
 /* path to 'initdb' binary directory */
-char	   bin_path[MAXPGPATH];
-char	   backend_exec[MAXPGPATH];
+char		bin_path[MAXPGPATH];
+char		backend_exec[MAXPGPATH];
 
 static void *xmalloc(size_t size);
 static char *xstrdup(const char *s);
 static char **replace_token(char **lines, char *token, char *replacement);
 static char **readfile(char *path);
 static void writefile(char *path, char **lines);
-static int mkdir_p(char *path, mode_t omode);
+static int	mkdir_p(char *path, mode_t omode);
 static void exit_nicely(void);
 static char *get_id(void);
 static char *get_encoding_id(char *encoding_name);
 static char *get_short_version(void);
-static int check_data_dir(void);
+static int	check_data_dir(void);
 static bool mkdatadir(const char *subdir);
 static void set_input(char **dest, char *filename);
 static void check_input(char *path);
@@ -564,9 +564,9 @@ get_id(void)
 	{
 		fprintf(stderr,
 				_("%s: cannot be run as root\n"
-				"Please log in (using, e.g., \"su\") as the "
-				"(unprivileged) user that will\n"
-				"own the server process.\n"),
+				  "Please log in (using, e.g., \"su\") as the "
+				  "(unprivileged) user that will\n"
+				  "own the server process.\n"),
 				progname);
 		exit(1);
 	}
@@ -610,9 +610,7 @@ get_encoding_id(char *encoding_name)
 	{
 		if ((enc = pg_char_to_encoding(encoding_name)) >= 0 &&
 			pg_valid_server_encoding(encoding_name) >= 0)
-		{
 			return encodingid_to_string(enc);
-		}
 	}
 	fprintf(stderr, _("%s: \"%s\" is not a valid server encoding name\n"),
 			progname, encoding_name ? encoding_name : "(null)");
@@ -627,106 +625,106 @@ get_encoding_id(char *encoding_name)
 
 struct encoding_match
 {
-	enum pg_enc	pg_enc_code;
+	enum pg_enc pg_enc_code;
 	char	   *system_enc_name;
 };
 
 struct encoding_match encoding_match_list[] = {
-	{ PG_EUC_JP, "EUC-JP" },
-	{ PG_EUC_JP, "eucJP" },
-	{ PG_EUC_JP, "IBM-eucJP" },
-	{ PG_EUC_JP, "sdeckanji" },
+	{PG_EUC_JP, "EUC-JP"},
+	{PG_EUC_JP, "eucJP"},
+	{PG_EUC_JP, "IBM-eucJP"},
+	{PG_EUC_JP, "sdeckanji"},
 
-	{ PG_EUC_CN, "EUC-CN" },
-	{ PG_EUC_CN, "eucCN" },
-	{ PG_EUC_CN, "IBM-eucCN" },
-	{ PG_EUC_CN, "GB2312" },
-	{ PG_EUC_CN, "dechanzi" },
+	{PG_EUC_CN, "EUC-CN"},
+	{PG_EUC_CN, "eucCN"},
+	{PG_EUC_CN, "IBM-eucCN"},
+	{PG_EUC_CN, "GB2312"},
+	{PG_EUC_CN, "dechanzi"},
 
-	{ PG_EUC_KR, "EUC-KR" },
-	{ PG_EUC_KR, "eucKR" },
-	{ PG_EUC_KR, "IBM-eucKR" },
-	{ PG_EUC_KR, "deckorean" },
-	{ PG_EUC_KR, "5601" },
+	{PG_EUC_KR, "EUC-KR"},
+	{PG_EUC_KR, "eucKR"},
+	{PG_EUC_KR, "IBM-eucKR"},
+	{PG_EUC_KR, "deckorean"},
+	{PG_EUC_KR, "5601"},
 
-	{ PG_EUC_TW, "EUC-TW" },
-	{ PG_EUC_TW, "eucTW" },
-	{ PG_EUC_TW, "IBM-eucTW" },
-	{ PG_EUC_TW, "cns11643" },
+	{PG_EUC_TW, "EUC-TW"},
+	{PG_EUC_TW, "eucTW"},
+	{PG_EUC_TW, "IBM-eucTW"},
+	{PG_EUC_TW, "cns11643"},
 
 #ifdef NOT_VERIFIED
-	{ PG_JOHAB, "???" },
+	{PG_JOHAB, "???"},
 #endif
 
-	{ PG_UTF8, "UTF-8" },
-	{ PG_UTF8, "utf8" },
+	{PG_UTF8, "UTF-8"},
+	{PG_UTF8, "utf8"},
 
-	{ PG_LATIN1, "ISO-8859-1" },
-	{ PG_LATIN1, "ISO8859-1" },
-	{ PG_LATIN1, "iso88591" },
+	{PG_LATIN1, "ISO-8859-1"},
+	{PG_LATIN1, "ISO8859-1"},
+	{PG_LATIN1, "iso88591"},
 
-	{ PG_LATIN2, "ISO-8859-2" },
-	{ PG_LATIN2, "ISO8859-2" },
-	{ PG_LATIN2, "iso88592" },
+	{PG_LATIN2, "ISO-8859-2"},
+	{PG_LATIN2, "ISO8859-2"},
+	{PG_LATIN2, "iso88592"},
 
-	{ PG_LATIN3, "ISO-8859-3" },
-	{ PG_LATIN3, "ISO8859-3" },
-	{ PG_LATIN3, "iso88593" },
+	{PG_LATIN3, "ISO-8859-3"},
+	{PG_LATIN3, "ISO8859-3"},
+	{PG_LATIN3, "iso88593"},
 
-	{ PG_LATIN4, "ISO-8859-4" },
-	{ PG_LATIN4, "ISO8859-4" },
-	{ PG_LATIN4, "iso88594" },
+	{PG_LATIN4, "ISO-8859-4"},
+	{PG_LATIN4, "ISO8859-4"},
+	{PG_LATIN4, "iso88594"},
 
-	{ PG_LATIN5, "ISO-8859-9" },
-	{ PG_LATIN5, "ISO8859-9" },
-	{ PG_LATIN5, "iso88599" },
+	{PG_LATIN5, "ISO-8859-9"},
+	{PG_LATIN5, "ISO8859-9"},
+	{PG_LATIN5, "iso88599"},
 
-	{ PG_LATIN6, "ISO-8859-10" },
-	{ PG_LATIN6, "ISO8859-10" },
-	{ PG_LATIN6, "iso885910" },
+	{PG_LATIN6, "ISO-8859-10"},
+	{PG_LATIN6, "ISO8859-10"},
+	{PG_LATIN6, "iso885910"},
 
-	{ PG_LATIN7, "ISO-8859-13" },
-	{ PG_LATIN7, "ISO8859-13" },
-	{ PG_LATIN7, "iso885913" },
+	{PG_LATIN7, "ISO-8859-13"},
+	{PG_LATIN7, "ISO8859-13"},
+	{PG_LATIN7, "iso885913"},
 
-	{ PG_LATIN8, "ISO-8859-14" },
-	{ PG_LATIN8, "ISO8859-14" },
-	{ PG_LATIN8, "iso885914" },
+	{PG_LATIN8, "ISO-8859-14"},
+	{PG_LATIN8, "ISO8859-14"},
+	{PG_LATIN8, "iso885914"},
 
-	{ PG_LATIN9, "ISO-8859-15" },
-	{ PG_LATIN9, "ISO8859-15" },
-	{ PG_LATIN9, "iso885915" },
+	{PG_LATIN9, "ISO-8859-15"},
+	{PG_LATIN9, "ISO8859-15"},
+	{PG_LATIN9, "iso885915"},
 
-	{ PG_LATIN10, "ISO-8859-16" },
-	{ PG_LATIN10, "ISO8859-16" },
-	{ PG_LATIN10, "iso885916" },
+	{PG_LATIN10, "ISO-8859-16"},
+	{PG_LATIN10, "ISO8859-16"},
+	{PG_LATIN10, "iso885916"},
 
-	{ PG_WIN1256, "CP1256" },
-	{ PG_TCVN, "CP1258" },
+	{PG_WIN1256, "CP1256"},
+	{PG_TCVN, "CP1258"},
 #ifdef NOT_VERIFIED
-	{ PG_WIN874, "???" },
+	{PG_WIN874, "???"},
 #endif
-	{ PG_KOI8R, "KOI8-R" },
-	{ PG_WIN1251, "CP1251" },
-	{ PG_ALT, "CP866" },
+	{PG_KOI8R, "KOI8-R"},
+	{PG_WIN1251, "CP1251"},
+	{PG_ALT, "CP866"},
 
-	{ PG_ISO_8859_5, "ISO-8859-5" },
-	{ PG_ISO_8859_5, "ISO8859-5" },
-	{ PG_ISO_8859_5, "iso88595" },
+	{PG_ISO_8859_5, "ISO-8859-5"},
+	{PG_ISO_8859_5, "ISO8859-5"},
+	{PG_ISO_8859_5, "iso88595"},
 
-	{ PG_ISO_8859_6, "ISO-8859-6" },
-	{ PG_ISO_8859_6, "ISO8859-6" },
-	{ PG_ISO_8859_6, "iso88596" },
+	{PG_ISO_8859_6, "ISO-8859-6"},
+	{PG_ISO_8859_6, "ISO8859-6"},
+	{PG_ISO_8859_6, "iso88596"},
 
-	{ PG_ISO_8859_7, "ISO-8859-7" },
-	{ PG_ISO_8859_7, "ISO8859-7" },
-	{ PG_ISO_8859_7, "iso88597" },
+	{PG_ISO_8859_7, "ISO-8859-7"},
+	{PG_ISO_8859_7, "ISO8859-7"},
+	{PG_ISO_8859_7, "iso88597"},
 
-	{ PG_ISO_8859_8, "ISO-8859-8" },
-	{ PG_ISO_8859_8, "ISO8859-8" },
-	{ PG_ISO_8859_8, "iso88598" },
+	{PG_ISO_8859_8, "ISO-8859-8"},
+	{PG_ISO_8859_8, "ISO8859-8"},
+	{PG_ISO_8859_8, "iso88598"},
 
-	{ PG_SQL_ASCII, NULL } /* end marker */
+	{PG_SQL_ASCII, NULL}		/* end marker */
 };
 
 static char *
@@ -753,15 +751,15 @@ get_encoding_from_locale(const char *ctype)
 static void
 check_encodings_match(int pg_enc, const char *ctype)
 {
-	char *sys;
-	int i;
+	char	   *sys;
+	int			i;
 
 	sys = get_encoding_from_locale(ctype);
 
 	for (i = 0; encoding_match_list[i].system_enc_name; i++)
 	{
 		if (pg_enc == encoding_match_list[i].pg_enc_code
-			&& strcasecmp(sys, encoding_match_list[i].system_enc_name) == 0)
+		 && strcasecmp(sys, encoding_match_list[i].system_enc_name) == 0)
 		{
 			free(sys);
 			return;
@@ -772,9 +770,9 @@ check_encodings_match(int pg_enc, const char *ctype)
 			_("%s: warning: encoding mismatch\n"), progname);
 	fprintf(stderr,
 			_("The encoding you selected (%s) and the encoding that the selected\n"
-			  "locale uses (%s) are not known to match.  This may lead to\n"
+		   "locale uses (%s) are not known to match.  This may lead to\n"
 			  "misbehavior in various character string processing functions.  To fix\n"
-			  "this situation, rerun %s and either do not specify an encoding\n"
+	   "this situation, rerun %s and either do not specify an encoding\n"
 			  "explicitly, or choose a matching combination.\n"),
 			pg_encoding_to_char(pg_enc), sys, progname);
 
@@ -785,8 +783,8 @@ check_encodings_match(int pg_enc, const char *ctype)
 static int
 find_matching_encoding(const char *ctype)
 {
-	char *sys;
-	int i;
+	char	   *sys;
+	int			i;
 
 	sys = get_encoding_from_locale(ctype);
 
@@ -802,7 +800,7 @@ find_matching_encoding(const char *ctype)
 	free(sys);
 	return -1;
 }
-#endif /* HAVE_LANGINFO_H && CODESET */
+#endif   /* HAVE_LANGINFO_H && CODESET */
 
 /*
  * get short version of VERSION
@@ -924,7 +922,7 @@ check_input(char *path)
 	{
 		fprintf(stderr,
 				_("%s: file \"%s\" does not exist\n"
-				  "This means you have a corrupted installation or identified\n"
+		   "This means you have a corrupted installation or identified\n"
 				  "the wrong directory with the invocation option -L.\n"),
 				progname, path);
 		exit(1);
@@ -1019,7 +1017,7 @@ test_buffers(void)
 {
 	char		cmd[MAXPGPATH];
 	static const int bufs[] = {1000, 900, 800, 700, 600, 500,
-							   400, 300, 200, 100, 50};
+	400, 300, 200, 100, 50};
 	static const int len = sizeof(bufs) / sizeof(int);
 	int			i,
 				status;
@@ -1100,16 +1098,16 @@ setup_config(void)
 							  "host    all         all         ::1",
 							  "#host    all         all         ::1");
 #endif
-	
+
 	/* Replace default authentication methods */
 	conflines = replace_token(conflines,
-							 "@authmethod@",
+							  "@authmethod@",
 							  authmethod);
-	
+
 	conflines = replace_token(conflines,
 							  "@authcomment@",
-							  strcmp(authmethod,"trust") ? "" : authtrust_warning);
-		
+				   strcmp(authmethod, "trust") ? "" : authtrust_warning);
+
 	snprintf(path, sizeof(path), "%s/pg_hba.conf", pg_data);
 
 	writefile(path, conflines);
@@ -1160,9 +1158,9 @@ bootstrap_template1(char *short_version)
 	if (strcmp(headerline, *bki_lines) != 0)
 	{
 		fprintf(stderr,
-				_("%s: input file \"%s\" does not belong to PostgreSQL %s\n"
-				"Check your installation or specify the correct path "
-				"using the option -L.\n"),
+			 _("%s: input file \"%s\" does not belong to PostgreSQL %s\n"
+			   "Check your installation or specify the correct path "
+			   "using the option -L.\n"),
 				progname, bki_file, PG_VERSION);
 		exit_nicely();
 
@@ -1175,8 +1173,8 @@ bootstrap_template1(char *short_version)
 	/*
 	 * Pass correct LC_xxx environment to bootstrap.
 	 *
-	 * The shell script arranged to restore the LC settings afterwards,
-	 * but there doesn't seem to be any compelling reason to do that.
+	 * The shell script arranged to restore the LC settings afterwards, but
+	 * there doesn't seem to be any compelling reason to do that.
 	 */
 	snprintf(cmd, sizeof(cmd), "LC_COLLATE=%s", lc_collate);
 	putenv(xstrdup(cmd));
@@ -1287,13 +1285,13 @@ get_set_pwd(void)
 		 * Read password from file
 		 *
 		 * Ideally this should insist that the file not be world-readable.
-		 * However, this option is mainly intended for use on Windows where
-		 * file permissions may not exist at all, so we'll skip the paranoia
-		 * for now.
+		 * However, this option is mainly intended for use on Windows
+		 * where file permissions may not exist at all, so we'll skip the
+		 * paranoia for now.
 		 */
-		FILE *pwf = fopen(pwfilename,"r");
-		char pwdbuf[MAXPGPATH];
-		int  i;
+		FILE	   *pwf = fopen(pwfilename, "r");
+		char		pwdbuf[MAXPGPATH];
+		int			i;
 
 		if (!pwf)
 		{
@@ -1310,11 +1308,11 @@ get_set_pwd(void)
 		fclose(pwf);
 
 		i = strlen(pwdbuf);
-		while (i > 0 && (pwdbuf[i-1] == '\r' || pwdbuf[i-1] == '\n'))
+		while (i > 0 && (pwdbuf[i - 1] == '\r' || pwdbuf[i - 1] == '\n'))
 			pwdbuf[--i] = '\0';
-		
+
 		pwd1 = xstrdup(pwdbuf);
-		
+
 	}
 	printf(_("setting password ... "));
 	fflush(stdout);
@@ -1327,7 +1325,7 @@ get_set_pwd(void)
 	PG_CMD_OPEN;
 
 	if (fprintf(pg,
-		  "ALTER USER \"%s\" WITH PASSWORD '%s';\n", effective_user, pwd1) < 0)
+	"ALTER USER \"%s\" WITH PASSWORD '%s';\n", effective_user, pwd1) < 0)
 	{
 		/* write failure */
 		exit_nicely();
@@ -1341,7 +1339,7 @@ get_set_pwd(void)
 	{
 		fprintf(stderr,
 				_("%s: The password file was not generated. "
-				"Please report this problem.\n"),
+				  "Please report this problem.\n"),
 				progname);
 		exit_nicely();
 	}
@@ -1676,7 +1674,8 @@ setup_schema(void)
 	lines = readfile(info_schema_file);
 
 	/*
-	 * We use -N here to avoid backslashing stuff in information_schema.sql
+	 * We use -N here to avoid backslashing stuff in
+	 * information_schema.sql
 	 */
 	snprintf(cmd, sizeof(cmd),
 			 "\"%s\" %s -N template1 >%s",
@@ -2000,7 +1999,7 @@ main(int argc, char *argv[])
 		{"lc-time", required_argument, NULL, 6},
 		{"lc-messages", required_argument, NULL, 7},
 		{"no-locale", no_argument, NULL, 8},
-		{"auth", required_argument, NULL, 'A'}, 
+		{"auth", required_argument, NULL, 'A'},
 		{"pwprompt", no_argument, NULL, 'W'},
 		{"pwfile", required_argument, NULL, 9},
 		{"username", required_argument, NULL, 'U'},
@@ -2033,19 +2032,19 @@ main(int argc, char *argv[])
 	progname = get_progname(argv[0]);
 	set_pglocale_pgservice(argv[0], "initdb");
 
-    if (argc > 1)
-    {
-        if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-?") == 0)
-        {
-            usage(progname);
-            exit(0);
-        }
-        if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-V") == 0)
-        {
-            puts("initdb (PostgreSQL) " PG_VERSION);
-            exit(0);
-        }
-    }
+	if (argc > 1)
+	{
+		if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-?") == 0)
+		{
+			usage(progname);
+			exit(0);
+		}
+		if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-V") == 0)
+		{
+			puts("initdb (PostgreSQL) " PG_VERSION);
+			exit(0);
+		}
+	}
 
 	/* process command-line options */
 
@@ -2070,7 +2069,7 @@ main(int argc, char *argv[])
 				break;
 			case 'd':
 				debug = true;
-                printf(_("Running in debug mode.\n"));
+				printf(_("Running in debug mode.\n"));
 				break;
 			case 'n':
 				noclean = true;
@@ -2111,7 +2110,7 @@ main(int argc, char *argv[])
 				break;
 			default:
 				fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
-                        progname);
+						progname);
 				exit(1);
 		}
 	}
@@ -2126,7 +2125,7 @@ main(int argc, char *argv[])
 	if (optind < argc)
 	{
 		fprintf(stderr, _("%s: too many command-line arguments (first is \"%s\")\n"),
-						  progname, argv[optind + 1]);
+				progname, argv[optind + 1]);
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
 				progname);
 	}
@@ -2136,39 +2135,41 @@ main(int argc, char *argv[])
 		fprintf(stderr, _("%s: you cannot specify both password prompt and password file\n"), progname);
 		exit(1);
 	}
-	
+
 	if (authmethod == NULL || !strlen(authmethod))
 	{
 		authwarning = _("\nWARNING: enabling \"trust\" authentication for local connections.\n"
 						"You can change this by editing pg_hba.conf or using the -A flag the\n"
 						"next time you run initdb.\n");
-		authmethod="trust";
+		authmethod = "trust";
 	}
 
-	if (strcmp(authmethod,"md5") &&
-		strcmp(authmethod,"ident") && 
-		strncmp(authmethod,"ident ",6) && /* ident with space = param */
-		strcmp(authmethod,"trust") &&
+	if (strcmp(authmethod, "md5") &&
+		strcmp(authmethod, "ident") &&
+		strncmp(authmethod, "ident ", 6) &&		/* ident with space =
+												 * param */
+		strcmp(authmethod, "trust") &&
 #ifdef USE_PAM
-		strcmp(authmethod,"pam") &&
-		strncmp(authmethod,"pam ",4) && /* pam with space = param */
+		strcmp(authmethod, "pam") &&
+		strncmp(authmethod, "pam ", 4) &&		/* pam with space = param */
 #endif
-		strcmp(authmethod,"crypt") &&
-		strcmp(authmethod,"password")
+		strcmp(authmethod, "crypt") &&
+		strcmp(authmethod, "password")
 		)
+
 		/*
-		 *	Kerberos methods not listed because they are not supported
-		 * 	over local connections and are rejected in hba.c
+		 * Kerberos methods not listed because they are not supported over
+		 * local connections and are rejected in hba.c
 		 */
 	{
 		fprintf(stderr, _("%s: unknown authentication method \"%s\".\n"), progname, authmethod);
 		exit(1);
 	}
 
-	if ((!strcmp(authmethod,"md5") ||
-		 !strcmp(authmethod,"crypt") ||
-		 !strcmp(authmethod,"password")) &&
-		 !(pwprompt || pwfilename))
+	if ((!strcmp(authmethod, "md5") ||
+		 !strcmp(authmethod, "crypt") ||
+		 !strcmp(authmethod, "password")) &&
+		!(pwprompt || pwfilename))
 	{
 		fprintf(stderr, _("%s: you need to specify a password for the superuser to enable %s authentication.\n"), progname, authmethod);
 		exit(1);
@@ -2198,9 +2199,9 @@ main(int argc, char *argv[])
 
 	/*
 	 * we have to set PGDATA for postgres rather than pass it on the
-	 * command line to avoid dumb quoting problems on Windows, and we would
-	 * especially need quotes otherwise on Windows because paths there are
-	 * most likely to have embedded spaces.
+	 * command line to avoid dumb quoting problems on Windows, and we
+	 * would especially need quotes otherwise on Windows because paths
+	 * there are most likely to have embedded spaces.
 	 */
 	pgdenv = xmalloc(8 + strlen(pg_data));
 	sprintf(pgdenv, "PGDATA=%s", pg_data);
@@ -2211,16 +2212,16 @@ main(int argc, char *argv[])
 	{
 		if (ret == -1)
 			fprintf(stderr,
-						_("The program \"postgres\" is needed by %s "
-						"but was not found in the same directory as \"%s\".\n"
-						"Check your installation.\n"),
-						progname, progname);
+					_("The program \"postgres\" is needed by %s "
+				   "but was not found in the same directory as \"%s\".\n"
+					  "Check your installation.\n"),
+					progname, progname);
 		else
 			fprintf(stderr,
-						_("The program \"postgres\" was found by %s "
-						"but was not the same version as \"%s\".\n"
-						"Check your installation.\n"),
-						progname, progname);
+					_("The program \"postgres\" was found by %s "
+					  "but was not the same version as \"%s\".\n"
+					  "Check your installation.\n"),
+					progname, progname);
 		exit(1);
 	}
 
@@ -2239,7 +2240,7 @@ main(int argc, char *argv[])
 		fprintf(stderr, _("%s: input file location must be an absolute path\n"), progname);
 		exit(1);
 	}
-	
+
 	canonicalize_path(share_path);
 
 	if ((short_version = get_short_version()) == NULL)
@@ -2298,8 +2299,8 @@ main(int argc, char *argv[])
 	setlocales();
 
 	printf(_("The files belonging to this database system will be owned "
-		   "by user \"%s\".\n"
-		   "This user must also own the server process.\n\n"),
+			 "by user \"%s\".\n"
+			 "This user must also own the server process.\n\n"),
 		   effective_user);
 
 	if (strcmp(lc_ctype, lc_collate) == 0 &&
@@ -2307,18 +2308,16 @@ main(int argc, char *argv[])
 		strcmp(lc_ctype, lc_numeric) == 0 &&
 		strcmp(lc_ctype, lc_monetary) == 0 &&
 		strcmp(lc_ctype, lc_messages) == 0)
-	{
 		printf(_("The database cluster will be initialized with locale %s.\n"), lc_ctype);
-	}
 	else
 	{
 		printf(_("The database cluster will be initialized with locales\n"
-			   "  COLLATE:  %s\n"
-			   "  CTYPE:    %s\n"
-			   "  MESSAGES: %s\n"
-			   "  MONETARY: %s\n"
-			   "  NUMERIC:  %s\n"
-			   "  TIME:     %s\n"),
+				 "  COLLATE:  %s\n"
+				 "  CTYPE:    %s\n"
+				 "  MESSAGES: %s\n"
+				 "  MONETARY: %s\n"
+				 "  NUMERIC:  %s\n"
+				 "  TIME:     %s\n"),
 			   lc_collate,
 			   lc_ctype,
 			   lc_messages,
@@ -2332,7 +2331,8 @@ main(int argc, char *argv[])
 	{
 		if (strlen(encoding) == 0)
 		{
-			int tmp;
+			int			tmp;
+
 			tmp = find_matching_encoding(lc_ctype);
 			if (tmp == -1)
 			{
@@ -2344,14 +2344,14 @@ main(int argc, char *argv[])
 			else
 			{
 				encodingid = encodingid_to_string(tmp);
-				printf(_("The default database encoding has accordingly been set to %s.\n"), 
+				printf(_("The default database encoding has accordingly been set to %s.\n"),
 					   pg_encoding_to_char(tmp));
 			}
 		}
 		else
 			check_encodings_match(atoi(encodingid), lc_ctype);
 	}
-#endif /* HAVE_LANGINFO_H && CODESET */
+#endif   /* HAVE_LANGINFO_H && CODESET */
 
 	printf("\n");
 
@@ -2418,9 +2418,9 @@ main(int argc, char *argv[])
 			/* Present and not empty */
 			fprintf(stderr,
 					_("%s: directory \"%s\" exists but is not empty\n"
-					"If you want to create a new database system, either remove or empty\n"
-					"the directory \"%s\" or run %s\n"
-					"with an argument other than \"%s\".\n"),
+					  "If you want to create a new database system, either remove or empty\n"
+					  "the directory \"%s\" or run %s\n"
+					  "with an argument other than \"%s\".\n"),
 					progname, pg_data, pg_data, progname, pg_data);
 			exit(1);			/* no further message needed */
 
@@ -2449,9 +2449,9 @@ main(int argc, char *argv[])
 	/*
 	 * Determine platform-specific config settings
 	 *
-	 * Use reasonable values if kernel will let us, else scale back.  Probe for
-	 * max_connections first since it is subject to more constraints than
-	 * shared_buffers.
+	 * Use reasonable values if kernel will let us, else scale back.  Probe
+	 * for max_connections first since it is subject to more constraints
+	 * than shared_buffers.
 	 */
 
 	set_null_conf();
@@ -2465,7 +2465,10 @@ main(int argc, char *argv[])
 	/* Bootstrap template1 */
 	bootstrap_template1(short_version);
 
-	/* Make the per-database PG_VERSION for template1 only after init'ing it */
+	/*
+	 * Make the per-database PG_VERSION for template1 only after init'ing
+	 * it
+	 */
 	set_short_version(short_version, "base/1");
 
 	/* Create the stuff we don't need to use bootstrap mode for */
@@ -2496,11 +2499,11 @@ main(int argc, char *argv[])
 		fprintf(stderr, authwarning);
 
 	printf(_("\nSuccess. You can now start the database server using:\n\n"
-		   "    %s%s%s/postmaster -D %s%s%s\n"
-		   "or\n"
-		   "    %s%s%s/pg_ctl -D %s%s%s -l logfile start\n\n"),
-		 QUOTE_PATH, bin_path, QUOTE_PATH, QUOTE_PATH, pg_data, QUOTE_PATH,
-		QUOTE_PATH, bin_path, QUOTE_PATH, QUOTE_PATH, pg_data, QUOTE_PATH);
+			 "    %s%s%s/postmaster -D %s%s%s\n"
+			 "or\n"
+			 "    %s%s%s/pg_ctl -D %s%s%s -l logfile start\n\n"),
+	   QUOTE_PATH, bin_path, QUOTE_PATH, QUOTE_PATH, pg_data, QUOTE_PATH,
+	  QUOTE_PATH, bin_path, QUOTE_PATH, QUOTE_PATH, pg_data, QUOTE_PATH);
 
 	return 0;
 }

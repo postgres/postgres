@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	  $PostgreSQL: pgsql/src/backend/lib/stringinfo.c,v 1.39 2004/08/29 04:12:32 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/lib/stringinfo.c,v 1.40 2004/08/29 05:06:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -223,7 +223,7 @@ enlargeStringInfo(StringInfo str, int needed)
 
 	/*
 	 * Guard against ridiculous "needed" values, which can occur if we're
-	 * fed bogus data.  Without this, we can get an overflow or infinite
+	 * fed bogus data.	Without this, we can get an overflow or infinite
 	 * loop in the following.
 	 */
 	if (needed < 0 ||
@@ -249,9 +249,9 @@ enlargeStringInfo(StringInfo str, int needed)
 		newlen = 2 * newlen;
 
 	/*
-	 * Clamp to MaxAllocSize in case we went past it.  Note we are assuming
-	 * here that MaxAllocSize <= INT_MAX/2, else the above loop could
-	 * overflow.  We will still have newlen >= needed.
+	 * Clamp to MaxAllocSize in case we went past it.  Note we are
+	 * assuming here that MaxAllocSize <= INT_MAX/2, else the above loop
+	 * could overflow.	We will still have newlen >= needed.
 	 */
 	if (newlen > (int) MaxAllocSize)
 		newlen = (int) MaxAllocSize;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinrels.c,v 1.70 2004/08/29 04:12:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinrels.c,v 1.71 2004/08/29 05:06:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,7 +70,8 @@ make_rels_by_joins(Query *root, int level, List **joinrels)
 			other_rels = lnext(r);		/* only consider remaining initial
 										 * rels */
 		else
-			other_rels = list_head(joinrels[1]);	/* consider all initial rels */
+			other_rels = list_head(joinrels[1]);		/* consider all initial
+														 * rels */
 
 		if (old_rel->joininfo != NIL)
 		{
@@ -84,12 +85,14 @@ make_rels_by_joins(Query *root, int level, List **joinrels)
 			new_rels = make_rels_by_clause_joins(root,
 												 old_rel,
 												 other_rels);
+
 			/*
-			 * An exception occurs when there is a clauseless join inside an
-			 * IN (sub-SELECT) construct.  Here, the members of the subselect
-			 * all have join clauses (against the stuff outside the IN), but
-			 * they *must* be joined to each other before we can make use of
-			 * those join clauses.  So do the clauseless join bit.
+			 * An exception occurs when there is a clauseless join inside
+			 * an IN (sub-SELECT) construct.  Here, the members of the
+			 * subselect all have join clauses (against the stuff outside
+			 * the IN), but they *must* be joined to each other before we
+			 * can make use of those join clauses.	So do the clauseless
+			 * join bit.
 			 *
 			 * See also the last-ditch case below.
 			 */
@@ -223,8 +226,8 @@ make_rels_by_joins(Query *root, int level, List **joinrels)
 				other_rels = lnext(r);	/* only consider remaining initial
 										 * rels */
 			else
-				other_rels = list_head(joinrels[1]); /* consider all initial
-													  * rels */
+				other_rels = list_head(joinrels[1]);	/* consider all initial
+														 * rels */
 
 			new_rels = make_rels_by_clauseless_joins(root,
 													 old_rel,
@@ -241,11 +244,11 @@ make_rels_by_joins(Query *root, int level, List **joinrels)
 
 		/*----------
 		 * When IN clauses are involved, there may be no legal way to make
-		 * an N-way join for some values of N.  For example consider
+		 * an N-way join for some values of N.	For example consider
 		 *
 		 * SELECT ... FROM t1 WHERE
-		 *   x IN (SELECT ... FROM t2,t3 WHERE ...) AND
-		 *   y IN (SELECT ... FROM t4,t5 WHERE ...)
+		 *	 x IN (SELECT ... FROM t2,t3 WHERE ...) AND
+		 *	 y IN (SELECT ... FROM t4,t5 WHERE ...)
 		 *
 		 * We will flatten this query to a 5-way join problem, but there are
 		 * no 4-way joins that make_join_rel() will consider legal.  We have
@@ -486,8 +489,8 @@ make_join_rel(Query *root, RelOptInfo *rel1, RelOptInfo *rel2,
 
 			/*
 			 * This IN clause is not relevant unless its RHS overlaps the
-			 * proposed join.  (Check this first as a fast path for dismissing
-			 * most irrelevant INs quickly.)
+			 * proposed join.  (Check this first as a fast path for
+			 * dismissing most irrelevant INs quickly.)
 			 */
 			if (!bms_overlap(ininfo->righthand, joinrelids))
 				continue;
@@ -516,8 +519,9 @@ make_join_rel(Query *root, RelOptInfo *rel1, RelOptInfo *rel2,
 			 * some other rel(s).
 			 *
 			 * If we already joined IN's RHS to any other rels in either
-			 * input path, then this join is not constrained (the necessary
-			 * work was done at the lower level where that join occurred).
+			 * input path, then this join is not constrained (the
+			 * necessary work was done at the lower level where that join
+			 * occurred).
 			 */
 			if (bms_is_subset(ininfo->righthand, rel1->relids) &&
 				!bms_equal(ininfo->righthand, rel1->relids))

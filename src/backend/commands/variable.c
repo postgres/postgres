@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/variable.c,v 1.100 2004/08/29 04:12:30 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/variable.c,v 1.101 2004/08/29 05:06:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,7 +62,7 @@ assign_datestyle(const char *value, bool doit, GucSource source)
 		if (source >= PGC_S_INTERACTIVE)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("invalid list syntax for parameter \"datestyle\"")));
+			 errmsg("invalid list syntax for parameter \"datestyle\"")));
 		return NULL;
 	}
 
@@ -148,8 +148,8 @@ assign_datestyle(const char *value, bool doit, GucSource source)
 			if (source >= PGC_S_INTERACTIVE)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("unrecognized \"datestyle\" key word: \"%s\"",
-								tok)));
+					errmsg("unrecognized \"datestyle\" key word: \"%s\"",
+						   tok)));
 			ok = false;
 			break;
 		}
@@ -314,9 +314,10 @@ assign_timezone(const char *value, bool doit, GucSource source)
 			 *
 			 * During GUC initialization, since the timezone library isn't
 			 * set up yet, pg_get_current_timezone will return NULL and we
-			 * will leave the setting as UNKNOWN.  If this isn't overridden
-			 * from the config file then pg_timezone_initialize() will
-			 * eventually select a default value from the environment.
+			 * will leave the setting as UNKNOWN.  If this isn't
+			 * overridden from the config file then
+			 * pg_timezone_initialize() will eventually select a default
+			 * value from the environment.
 			 */
 			const char *curzone = pg_get_current_timezone();
 
@@ -329,13 +330,14 @@ assign_timezone(const char *value, bool doit, GucSource source)
 			 * Otherwise assume it is a timezone name.
 			 *
 			 * We have to actually apply the change before we can have any
-			 * hope of checking it.  So, save the old value in case we have
-			 * to back out.  We have to copy since pg_get_current_timezone
-			 * returns a pointer to its static state.
+			 * hope of checking it.  So, save the old value in case we
+			 * have to back out.  We have to copy since
+			 * pg_get_current_timezone returns a pointer to its static
+			 * state.
 			 *
-			 * This would all get a lot simpler if the TZ library had a better
-			 * API that would let us look up and test a timezone name without
-			 * making it the default.
+			 * This would all get a lot simpler if the TZ library had a
+			 * better API that would let us look up and test a timezone
+			 * name without making it the default.
 			 */
 			const char *cur_tz;
 			char	   *save_tz;
@@ -368,22 +370,23 @@ assign_timezone(const char *value, bool doit, GucSource source)
 				else
 				{
 					/*
-					 * TZ library wasn't initialized yet.  Annoyingly, we will
-					 * come here during startup because guc-file.l checks
-					 * the value with doit = false before actually applying.
-					 * The best approach seems to be as follows:
+					 * TZ library wasn't initialized yet.  Annoyingly, we
+					 * will come here during startup because guc-file.l
+					 * checks the value with doit = false before actually
+					 * applying. The best approach seems to be as follows:
 					 *
 					 * 1. known && acceptable: leave the setting in place,
 					 * since we'll apply it soon anyway.  This is mainly
-					 * so that any log messages printed during this interval
-					 * are timestamped with the user's requested timezone.
+					 * so that any log messages printed during this
+					 * interval are timestamped with the user's requested
+					 * timezone.
 					 *
-					 * 2. known && !acceptable: revert to GMT for lack of
-					 * any better idea.  (select_default_timezone() may get
+					 * 2. known && !acceptable: revert to GMT for lack of any
+					 * better idea.  (select_default_timezone() may get
 					 * called later to undo this.)
 					 *
-					 * 3. !known: no need to do anything since TZ library
-					 * did not change its state.
+					 * 3. !known: no need to do anything since TZ library did
+					 * not change its state.
 					 *
 					 * Again, this should all go away sometime soon.
 					 */
@@ -441,7 +444,7 @@ assign_timezone(const char *value, bool doit, GucSource source)
 const char *
 show_timezone(void)
 {
-	const char	   *tzn;
+	const char *tzn;
 
 	if (HasCTZSet)
 	{
@@ -472,14 +475,14 @@ assign_XactIsoLevel(const char *value, bool doit, GucSource source)
 {
 	if (doit && source >= PGC_S_INTERACTIVE)
 	{
-	   if (SerializableSnapshot != NULL)
-		ereport(ERROR,
-				(errcode(ERRCODE_ACTIVE_SQL_TRANSACTION),
-				 errmsg("SET TRANSACTION ISOLATION LEVEL must be called before any query")));
-	   if (IsSubTransaction())
-		ereport(ERROR,
-				(errcode(ERRCODE_ACTIVE_SQL_TRANSACTION),
-				 errmsg("SET TRANSACTION ISOLATION LEVEL must not be called in a subtransaction")));
+		if (SerializableSnapshot != NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_ACTIVE_SQL_TRANSACTION),
+					 errmsg("SET TRANSACTION ISOLATION LEVEL must be called before any query")));
+		if (IsSubTransaction())
+			ereport(ERROR,
+					(errcode(ERRCODE_ACTIVE_SQL_TRANSACTION),
+					 errmsg("SET TRANSACTION ISOLATION LEVEL must not be called in a subtransaction")));
 	}
 
 	if (strcmp(value, "serializable") == 0)
@@ -596,7 +599,7 @@ assign_client_encoding(const char *value, bool doit, GucSource source)
  * limit on names, so we can tell whether we're being passed an initial
  * username or a saved/restored value.
  */
-extern char *session_authorization_string; /* in guc.c */
+extern char *session_authorization_string;		/* in guc.c */
 
 const char *
 assign_session_authorization(const char *value, bool doit, GucSource source)

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/win32/signal.c,v 1.6 2004/08/29 04:12:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/win32/signal.c,v 1.7 2004/08/29 05:06:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,8 +33,11 @@ static DWORD WINAPI pg_signal_thread(LPVOID param);
 static BOOL WINAPI pg_console_handler(DWORD dwCtrlType);
 
 /* Sleep function that can be interrupted by signals */
-void pgwin32_backend_usleep(long microsec) {
-	if (WaitForSingleObject(pgwin32_signal_event, (microsec < 500 ? 1 : (microsec + 500) / 1000)) == WAIT_OBJECT_0) {
+void
+pgwin32_backend_usleep(long microsec)
+{
+	if (WaitForSingleObject(pgwin32_signal_event, (microsec < 500 ? 1 : (microsec + 500) / 1000)) == WAIT_OBJECT_0)
+	{
 		pgwin32_dispatch_queued_signals();
 		errno = EINTR;
 		return;
@@ -61,20 +64,20 @@ pgwin32_signal_initialize(void)
 
 	/* Create the global event handle used to flag signals */
 	pgwin32_signal_event = CreateEvent(NULL, TRUE, FALSE, NULL);
-	if (pgwin32_signal_event == NULL) 
+	if (pgwin32_signal_event == NULL)
 		ereport(FATAL,
-				(errmsg_internal("failed to create signal event: %d", (int)GetLastError())));
+				(errmsg_internal("failed to create signal event: %d", (int) GetLastError())));
 
 	/* Create thread for handling signals */
 	signal_thread_handle = CreateThread(NULL, 0, pg_signal_thread, NULL, 0, NULL);
 	if (signal_thread_handle == NULL)
 		ereport(FATAL,
-				(errmsg_internal("failed to create signal handler thread")));
+			(errmsg_internal("failed to create signal handler thread")));
 
 	/* Create console control handle to pick up Ctrl-C etc */
-	if (!SetConsoleCtrlHandler(pg_console_handler, TRUE)) 
+	if (!SetConsoleCtrlHandler(pg_console_handler, TRUE))
 		ereport(FATAL,
-				(errmsg_internal("failed to set console control handler")));
+			 (errmsg_internal("failed to set console control handler")));
 }
 
 
@@ -246,13 +249,16 @@ pg_signal_thread(LPVOID param)
 }
 
 
-/* Console control handler will execute on a thread created 
+/* Console control handler will execute on a thread created
    by the OS at the time of invocation */
-static BOOL WINAPI pg_console_handler(DWORD dwCtrlType) {
+static BOOL WINAPI
+pg_console_handler(DWORD dwCtrlType)
+{
 	if (dwCtrlType == CTRL_C_EVENT ||
 		dwCtrlType == CTRL_BREAK_EVENT ||
 		dwCtrlType == CTRL_CLOSE_EVENT ||
-		dwCtrlType == CTRL_SHUTDOWN_EVENT) {
+		dwCtrlType == CTRL_SHUTDOWN_EVENT)
+	{
 		pg_queue_signal(SIGINT);
 		return TRUE;
 	}

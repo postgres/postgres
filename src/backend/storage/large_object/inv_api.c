@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/large_object/inv_api.c,v 1.105 2004/08/29 04:12:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/large_object/inv_api.c,v 1.106 2004/08/29 05:06:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -171,13 +171,9 @@ inv_create(int flags)
 	retval->offset = 0;
 
 	if (flags & INV_WRITE)
-	{
 		retval->flags = IFS_WRLOCK | IFS_RDLOCK;
-	}
 	else if (flags & INV_READ)
-	{
 		retval->flags = IFS_RDLOCK;
-	}
 	else
 		elog(ERROR, "invalid flags: %d", flags);
 
@@ -207,13 +203,9 @@ inv_open(Oid lobjId, int flags)
 	retval->offset = 0;
 
 	if (flags & INV_WRITE)
-	{
 		retval->flags = IFS_WRLOCK | IFS_RDLOCK;
-	}
 	else if (flags & INV_READ)
-	{
 		retval->flags = IFS_RDLOCK;
-	}
 	else
 		elog(ERROR, "invalid flags: %d", flags);
 
@@ -238,7 +230,7 @@ inv_close(LargeObjectDesc *obj_desc)
 int
 inv_drop(Oid lobjId)
 {
-	Oid classoid;
+	Oid			classoid;
 
 	LargeObjectDrop(lobjId);
 

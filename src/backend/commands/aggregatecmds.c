@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/aggregatecmds.c,v 1.20 2004/08/29 04:12:29 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/aggregatecmds.c,v 1.21 2004/08/29 05:06:41 momjian Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -223,9 +223,9 @@ RenameAggregate(List *name, TypeName *basetype, const char *newname)
 
 	/*
 	 * if a basetype is passed in, then attempt to find an aggregate for
-	 * that specific type; else attempt to find an aggregate with a basetype
-	 * of ANYOID. This means that the aggregate applies to all basetypes
-	 * (eg, COUNT).
+	 * that specific type; else attempt to find an aggregate with a
+	 * basetype of ANYOID. This means that the aggregate applies to all
+	 * basetypes (eg, COUNT).
 	 */
 	if (basetype)
 		basetypeOid = typenameTypeId(basetype);
@@ -302,9 +302,9 @@ AlterAggregateOwner(List *name, TypeName *basetype, AclId newOwnerSysId)
 
 	/*
 	 * if a basetype is passed in, then attempt to find an aggregate for
-	 * that specific type; else attempt to find an aggregate with a basetype
-	 * of ANYOID. This means that the aggregate applies to all basetypes
-	 * (eg, COUNT).
+	 * that specific type; else attempt to find an aggregate with a
+	 * basetype of ANYOID. This means that the aggregate applies to all
+	 * basetypes (eg, COUNT).
 	 */
 	if (basetype)
 		basetypeOid = typenameTypeId(basetype);
@@ -322,7 +322,7 @@ AlterAggregateOwner(List *name, TypeName *basetype, AclId newOwnerSysId)
 		elog(ERROR, "cache lookup failed for function %u", procOid);
 	procForm = (Form_pg_proc) GETSTRUCT(tup);
 
-	/* 
+	/*
 	 * If the new owner is the same as the existing owner, consider the
 	 * command to have succeeded.  This is for dump restoration purposes.
 	 */
@@ -334,7 +334,10 @@ AlterAggregateOwner(List *name, TypeName *basetype, AclId newOwnerSysId)
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("must be superuser to change owner")));
 
-		/* Modify the owner --- okay to scribble on tup because it's a copy */
+		/*
+		 * Modify the owner --- okay to scribble on tup because it's a
+		 * copy
+		 */
 		procForm->proowner = newOwnerSysId;
 
 		simple_heap_update(rel, &tup->t_self, tup);

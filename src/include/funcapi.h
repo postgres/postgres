@@ -9,7 +9,7 @@
  *
  * Copyright (c) 2002-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/funcapi.h,v 1.13 2004/08/29 04:13:03 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/funcapi.h,v 1.14 2004/08/29 05:06:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -100,7 +100,8 @@ typedef struct FuncCallContext
 	AttInMetadata *attinmeta;
 
 	/*
-	 * memory context used for structures that must live for multiple calls
+	 * memory context used for structures that must live for multiple
+	 * calls
 	 *
 	 * multi_call_memory_ctx is set by SRF_FIRSTCALL_INIT() for you, and used
 	 * by SRF_RETURN_DONE() for cleanup. It is the most appropriate memory
@@ -112,13 +113,13 @@ typedef struct FuncCallContext
 	/*
 	 * OPTIONAL pointer to struct containing tuple description
 	 *
-	 * tuple_desc is for use when returning tuples (i.e. composite data types)
-	 * and is only needed if you are going to build the tuples with
-	 * heap_formtuple() rather than with BuildTupleFromCStrings().  Note that
-	 * the TupleDesc pointer stored here should usually have been run through
-	 * BlessTupleDesc() first.
+	 * tuple_desc is for use when returning tuples (i.e. composite data
+	 * types) and is only needed if you are going to build the tuples with
+	 * heap_formtuple() rather than with BuildTupleFromCStrings().	Note
+	 * that the TupleDesc pointer stored here should usually have been run
+	 * through BlessTupleDesc() first.
 	 */
-	TupleDesc tuple_desc;
+	TupleDesc	tuple_desc;
 
 } FuncCallContext;
 

@@ -192,12 +192,13 @@ prsd_headline(PG_FUNCTION_ARGS)
 	int			bestb = -1,
 				beste = -1;
 	int			bestlen = -1;
-	int			pose = 0, posb,
+	int			pose = 0,
+				posb,
 				poslen,
 				curlen;
 
 	int			i;
-	int 			highlight=0;
+	int			highlight = 0;
 
 	/* config */
 	prs->startsel = NULL;
@@ -224,13 +225,13 @@ prsd_headline(PG_FUNCTION_ARGS)
 				prs->stopsel = pstrdup(mptr->value);
 			else if (pg_strcasecmp(mptr->key, "HighlightAll") == 0)
 				highlight = (
-					pg_strcasecmp(mptr->value, "1")==0 || 
-					pg_strcasecmp(mptr->value, "on")==0 || 
-					pg_strcasecmp(mptr->value, "true")==0 || 
-					pg_strcasecmp(mptr->value, "t")==0 || 
-					pg_strcasecmp(mptr->value, "y")==0 || 
-					pg_strcasecmp(mptr->value, "yes")==0 ) ?
-				1 : 0;
+							 pg_strcasecmp(mptr->value, "1") == 0 ||
+							 pg_strcasecmp(mptr->value, "on") == 0 ||
+							 pg_strcasecmp(mptr->value, "true") == 0 ||
+							 pg_strcasecmp(mptr->value, "t") == 0 ||
+							 pg_strcasecmp(mptr->value, "y") == 0 ||
+							 pg_strcasecmp(mptr->value, "yes") == 0) ?
+					1 : 0;
 
 			pfree(mptr->key);
 			pfree(mptr->value);
@@ -239,23 +240,25 @@ prsd_headline(PG_FUNCTION_ARGS)
 		}
 		pfree(map);
 
-		if (highlight==0) {
+		if (highlight == 0)
+		{
 			if (min_words >= max_words)
 				ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("MinWords should be less than MaxWords")));
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					   errmsg("MinWords should be less than MaxWords")));
 			if (min_words <= 0)
 				ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("MinWords should be positive")));
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("MinWords should be positive")));
 			if (shortword < 0)
 				ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("ShortWord should be >= 0")));
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("ShortWord should be >= 0")));
 		}
 	}
 
-	if (highlight==0) {
+	if (highlight == 0)
+	{
 		while (hlCover(prs, query, &p, &q))
 		{
 			/* find cover len in words */
@@ -269,17 +272,17 @@ prsd_headline(PG_FUNCTION_ARGS)
 					poslen++;
 				pose = i;
 			}
-	
+
 			if (poslen < bestlen && !(NOENDTOKEN(prs->words[beste].type) || prs->words[beste].len <= shortword))
 			{
 				/* best already finded, so try one more cover */
 				p++;
 				continue;
 			}
-	
-			posb=p;
+
+			posb = p;
 			if (curlen < max_words)
-			{						/* find good end */
+			{					/* find good end */
 				for (i = i - 1; i < prs->curwords && curlen < max_words; i++)
 				{
 					if (i != q)
@@ -295,8 +298,11 @@ prsd_headline(PG_FUNCTION_ARGS)
 					if (curlen >= min_words)
 						break;
 				}
-				if ( curlen < min_words && i>=prs->curwords ) { /* got end of text and our cover is shoter than min_words */
-					for(i=p; i>= 0; i--) {
+				if (curlen < min_words && i >= prs->curwords)
+				{				/* got end of text and our cover is shoter
+								 * than min_words */
+					for (i = p; i >= 0; i--)
+					{
 						if (!NONWORDTOKEN(prs->words[i].type))
 							curlen++;
 						if (prs->words[i].item && !prs->words[i].repeated)
@@ -306,11 +312,11 @@ prsd_headline(PG_FUNCTION_ARGS)
 						if (curlen >= min_words)
 							break;
 					}
-					posb=(i>=0) ? i : 0;
+					posb = (i >= 0) ? i : 0;
 				}
 			}
 			else
-			{						/* shorter cover :((( */
+			{					/* shorter cover :((( */
 				for (; curlen > min_words; i--)
 				{
 					if (!NONWORDTOKEN(prs->words[i].type))
@@ -323,7 +329,7 @@ prsd_headline(PG_FUNCTION_ARGS)
 					break;
 				}
 			}
-	
+
 			if (bestlen < 0 || (poslen > bestlen && !(NOENDTOKEN(prs->words[pose].type) || prs->words[pose].len <= shortword)) ||
 				(bestlen >= 0 && !(NOENDTOKEN(prs->words[pose].type) || prs->words[pose].len <= shortword) &&
 				 (NOENDTOKEN(prs->words[beste].type) || prs->words[beste].len <= shortword)))
@@ -332,7 +338,7 @@ prsd_headline(PG_FUNCTION_ARGS)
 				beste = pose;
 				bestlen = poslen;
 			}
-	
+
 			p++;
 		}
 
@@ -348,19 +354,24 @@ prsd_headline(PG_FUNCTION_ARGS)
 			bestb = 0;
 			beste = pose;
 		}
-	} else {
-		bestb=0;
-		beste=prs->curwords-1;
+	}
+	else
+	{
+		bestb = 0;
+		beste = prs->curwords - 1;
 	}
 
 	for (i = bestb; i <= beste; i++)
 	{
 		if (prs->words[i].item)
 			prs->words[i].selected = 1;
-		if ( highlight==0 ) { 
+		if (highlight == 0)
+		{
 			if (HLIDIGNORE(prs->words[i].type))
 				prs->words[i].replace = 1;
-		} else {
+		}
+		else
+		{
 			if (HTMLHLIDIGNORE(prs->words[i].type))
 				prs->words[i].replace = 1;
 		}

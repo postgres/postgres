@@ -38,10 +38,10 @@ init_cfg(Oid id, TSCfgInfo * cfg)
 				j;
 	text	   *ptr;
 	text	   *prsname = NULL;
-	char *nsp=get_namespace(TSNSP_FunctionOid);
-	char buf[1024];
+	char	   *nsp = get_namespace(TSNSP_FunctionOid);
+	char		buf[1024];
 	MemoryContext oldcontext;
-	void *plan;
+	void	   *plan;
 
 	arg[0] = OIDOID;
 	arg[1] = OIDOID;
@@ -52,7 +52,7 @@ init_cfg(Oid id, TSCfgInfo * cfg)
 	SPI_connect();
 
 	sprintf(buf, "select prs_name from %s.pg_ts_cfg where oid = $1", nsp);
-	plan= SPI_prepare(buf, 1, arg);
+	plan = SPI_prepare(buf, 1, arg);
 	if (!plan)
 		ts_error(ERROR, "SPI_prepare() failed");
 
@@ -77,7 +77,7 @@ init_cfg(Oid id, TSCfgInfo * cfg)
 
 	arg[0] = TEXTOID;
 	sprintf(buf, "select lt.tokid, map.dict_name from %s.pg_ts_cfgmap as map, %s.pg_ts_cfg as cfg, %s.token_type( $1 ) as lt where lt.alias =  map.tok_alias and map.ts_name = cfg.ts_name and cfg.oid= $2 order by lt.tokid desc;", nsp, nsp, nsp);
-	plan= SPI_prepare(buf, 2, arg);
+	plan = SPI_prepare(buf, 2, arg);
 	if (!plan)
 		ts_error(ERROR, "SPI_prepare() failed");
 
@@ -118,7 +118,7 @@ init_cfg(Oid id, TSCfgInfo * cfg)
 		cfg->map[lexid].len = ARRNELEMS(a);
 		cfg->map[lexid].dict_id = (Datum *) malloc(sizeof(Datum) * cfg->map[lexid].len);
 		if (!cfg->map[lexid].dict_id)
-				ts_error(ERROR, "No memory");
+			ts_error(ERROR, "No memory");
 
 		memset(cfg->map[lexid].dict_id, 0, sizeof(Datum) * cfg->map[lexid].len);
 		ptr = (text *) ARR_DATA_PTR(a);
@@ -235,9 +235,9 @@ name2id_cfg(text *name)
 	Datum		pars[1];
 	int			stat;
 	Oid			id = findSNMap_t(&(CList.name2id_map), name);
-	void *plan;
-	char *nsp;
-	char buf[1024];
+	void	   *plan;
+	char	   *nsp;
+	char		buf[1024];
 
 	arg[0] = TEXTOID;
 	pars[0] = PointerGetDatum(name);
@@ -245,10 +245,10 @@ name2id_cfg(text *name)
 	if (id)
 		return id;
 
-	nsp=get_namespace(TSNSP_FunctionOid);
+	nsp = get_namespace(TSNSP_FunctionOid);
 	SPI_connect();
-        sprintf(buf, "select oid from %s.pg_ts_cfg where ts_name = $1", nsp);
-	plan= SPI_prepare(buf, 1, arg);
+	sprintf(buf, "select oid from %s.pg_ts_cfg where ts_name = $1", nsp);
+	plan = SPI_prepare(buf, 1, arg);
 	if (!plan)
 		/* internal error */
 		elog(ERROR, "SPI_prepare() failed");
@@ -301,13 +301,14 @@ parsetext_v2(TSCfgInfo * cfg, PRSTEXT * prs, char *buf, int4 buflen)
 									   PointerGetDatum(&lenlemm)))) != 0)
 	{
 
-		if (lenlemm >= MAXSTRLEN) {
+		if (lenlemm >= MAXSTRLEN)
+		{
 #ifdef IGNORE_LONGLEXEME
 			ereport(NOTICE,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("word is too long")));
 			continue;
-#else 
+#else
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("word is too long")));
@@ -435,13 +436,14 @@ hlparsetext(TSCfgInfo * cfg, HLPRSTEXT * prs, QUERYTYPE * query, char *buf, int4
 									   PointerGetDatum(&lenlemm)))) != 0)
 	{
 
-		if (lenlemm >= MAXSTRLEN) {
+		if (lenlemm >= MAXSTRLEN)
+		{
 #ifdef IGNORE_LONGLEXEME
 			ereport(NOTICE,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("word is too long")));
 			continue;
-#else 
+#else
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("word is too long")));
@@ -532,9 +534,8 @@ genhl(HLPRSTEXT * prs)
 					ptr += prs->stopsellen;
 				}
 			}
-		} else
-
-		if (!wrd->repeated)
+		}
+		else if (!wrd->repeated)
 			pfree(wrd->word);
 
 		wrd++;
@@ -552,16 +553,16 @@ get_currcfg(void)
 	Datum		pars[1];
 	bool		isnull;
 	int			stat;
-        char buf[1024];
-        char *nsp;
-	void *plan;
+	char		buf[1024];
+	char	   *nsp;
+	void	   *plan;
 
 	if (current_cfg_id > 0)
 		return current_cfg_id;
 
-        nsp=get_namespace(TSNSP_FunctionOid);
+	nsp = get_namespace(TSNSP_FunctionOid);
 	SPI_connect();
-        sprintf(buf, "select oid from %s.pg_ts_cfg where locale = $1 ", nsp);
+	sprintf(buf, "select oid from %s.pg_ts_cfg where locale = $1 ", nsp);
 	pfree(nsp);
 	plan = SPI_prepare(buf, 1, arg);
 	if (!plan)
@@ -593,7 +594,7 @@ Datum		set_curcfg(PG_FUNCTION_ARGS);
 Datum
 set_curcfg(PG_FUNCTION_ARGS)
 {
-        SET_FUNCOID();
+	SET_FUNCOID();
 	findcfg(PG_GETARG_OID(0));
 	current_cfg_id = PG_GETARG_OID(0);
 	PG_RETURN_VOID();
@@ -605,7 +606,8 @@ Datum
 set_curcfg_byname(PG_FUNCTION_ARGS)
 {
 	text	   *name = PG_GETARG_TEXT_P(0);
-        SET_FUNCOID();
+
+	SET_FUNCOID();
 	DirectFunctionCall1(
 						set_curcfg,
 						ObjectIdGetDatum(name2id_cfg(name))
@@ -619,7 +621,7 @@ Datum		show_curcfg(PG_FUNCTION_ARGS);
 Datum
 show_curcfg(PG_FUNCTION_ARGS)
 {
-        SET_FUNCOID();
+	SET_FUNCOID();
 	PG_RETURN_OID(get_currcfg());
 }
 
@@ -628,8 +630,7 @@ Datum		reset_tsearch(PG_FUNCTION_ARGS);
 Datum
 reset_tsearch(PG_FUNCTION_ARGS)
 {
-        SET_FUNCOID();
+	SET_FUNCOID();
 	ts_error(NOTICE, "TSearch cache cleaned");
 	PG_RETURN_VOID();
 }
-

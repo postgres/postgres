@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/parser/parsetree.h,v 1.27 2004/08/29 04:13:09 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/parser/parsetree.h,v 1.28 2004/08/29 05:06:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,7 +60,7 @@ extern void get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
  * get_rte_attribute_type will fail on such an attr)
  */
 extern bool get_rte_attribute_is_dropped(List *rtable, int rtindex,
-										 AttrNumber attnum);
+							 AttrNumber attnum);
 
 
 /* ----------------

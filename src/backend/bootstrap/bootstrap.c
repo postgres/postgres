@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.192 2004/08/29 04:12:25 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.193 2004/08/29 05:06:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -111,46 +111,46 @@ struct typinfo
 
 static const struct typinfo TypInfo[] = {
 	{"bool", BOOLOID, 0, 1, true, 'c', 'p',
-	 F_BOOLIN, F_BOOLOUT},
+	F_BOOLIN, F_BOOLOUT},
 	{"bytea", BYTEAOID, 0, -1, false, 'i', 'x',
-	 F_BYTEAIN, F_BYTEAOUT},
+	F_BYTEAIN, F_BYTEAOUT},
 	{"char", CHAROID, 0, 1, true, 'c', 'p',
-	 F_CHARIN, F_CHAROUT},
+	F_CHARIN, F_CHAROUT},
 	{"name", NAMEOID, CHAROID, NAMEDATALEN, false, 'i', 'p',
-	 F_NAMEIN, F_NAMEOUT},
+	F_NAMEIN, F_NAMEOUT},
 	{"int2", INT2OID, 0, 2, true, 's', 'p',
-	 F_INT2IN, F_INT2OUT},
+	F_INT2IN, F_INT2OUT},
 	{"int4", INT4OID, 0, 4, true, 'i', 'p',
-	 F_INT4IN, F_INT4OUT},
+	F_INT4IN, F_INT4OUT},
 	{"regproc", REGPROCOID, 0, 4, true, 'i', 'p',
-	 F_REGPROCIN, F_REGPROCOUT},
+	F_REGPROCIN, F_REGPROCOUT},
 	{"regclass", REGCLASSOID, 0, 4, true, 'i', 'p',
-	 F_REGCLASSIN, F_REGCLASSOUT},
+	F_REGCLASSIN, F_REGCLASSOUT},
 	{"regtype", REGTYPEOID, 0, 4, true, 'i', 'p',
-	 F_REGTYPEIN, F_REGTYPEOUT},
+	F_REGTYPEIN, F_REGTYPEOUT},
 	{"text", TEXTOID, 0, -1, false, 'i', 'x',
-	 F_TEXTIN, F_TEXTOUT},
+	F_TEXTIN, F_TEXTOUT},
 	{"oid", OIDOID, 0, 4, true, 'i', 'p',
-	 F_OIDIN, F_OIDOUT},
+	F_OIDIN, F_OIDOUT},
 	{"tid", TIDOID, 0, 6, false, 's', 'p',
-	 F_TIDIN, F_TIDOUT},
+	F_TIDIN, F_TIDOUT},
 	{"xid", XIDOID, 0, 4, true, 'i', 'p',
-	 F_XIDIN, F_XIDOUT},
+	F_XIDIN, F_XIDOUT},
 	{"cid", CIDOID, 0, 4, true, 'i', 'p',
-	 F_CIDIN, F_CIDOUT},
+	F_CIDIN, F_CIDOUT},
 	{"int2vector", INT2VECTOROID, INT2OID, INDEX_MAX_KEYS * 2, false, 's', 'p',
-	 F_INT2VECTORIN, F_INT2VECTOROUT},
+	F_INT2VECTORIN, F_INT2VECTOROUT},
 	{"oidvector", OIDVECTOROID, OIDOID, INDEX_MAX_KEYS * 4, false, 'i', 'p',
-	 F_OIDVECTORIN, F_OIDVECTOROUT},
+	F_OIDVECTORIN, F_OIDVECTOROUT},
 	{"_int4", INT4ARRAYOID, INT4OID, -1, false, 'i', 'x',
-	 F_ARRAY_IN, F_ARRAY_OUT},
+	F_ARRAY_IN, F_ARRAY_OUT},
 	{"_text", 1009, TEXTOID, -1, false, 'i', 'x',
-	 F_ARRAY_IN, F_ARRAY_OUT},
+	F_ARRAY_IN, F_ARRAY_OUT},
 	{"_aclitem", 1034, ACLITEMOID, -1, false, 'i', 'x',
-	 F_ARRAY_IN, F_ARRAY_OUT}
+	F_ARRAY_IN, F_ARRAY_OUT}
 };
 
-static const int	n_types = sizeof(TypInfo) / sizeof(struct typinfo);
+static const int n_types = sizeof(TypInfo) / sizeof(struct typinfo);
 
 struct typmap
 {								/* a hack */
@@ -498,13 +498,13 @@ static void
 usage(void)
 {
 	write_stderr("Usage:\n"
-					"  postgres -boot [OPTION]... DBNAME\n"
-					"  -c NAME=VALUE    set run-time parameter\n"
-					"  -d 1-5           debug level\n"
-					"  -D datadir       data directory\n"
-					"  -F               turn off fsync\n"
-					"  -o file          send debug output to file\n"
-					"  -x num           internal use\n");
+				 "  postgres -boot [OPTION]... DBNAME\n"
+				 "  -c NAME=VALUE    set run-time parameter\n"
+				 "  -d 1-5           debug level\n"
+				 "  -D datadir       data directory\n"
+				 "  -F               turn off fsync\n"
+				 "  -o file          send debug output to file\n"
+				 "  -x num           internal use\n");
 
 	proc_exit(1);
 }

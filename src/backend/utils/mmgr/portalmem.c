@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.70 2004/08/29 04:13:00 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.71 2004/08/29 05:06:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -318,24 +318,24 @@ PortalDrop(Portal portal, bool isTopCommit)
 		(*portal->cleanup) (portal);
 
 	/*
-	 * Release any resources still attached to the portal.  There are
+	 * Release any resources still attached to the portal.	There are
 	 * several cases being covered here:
 	 *
 	 * Top transaction commit (indicated by isTopCommit): normally we should
 	 * do nothing here and let the regular end-of-transaction resource
-	 * releasing mechanism handle these resources too.  However, if we have
-	 * a FAILED portal (eg, a cursor that got an error), we'd better clean
-	 * up its resources to avoid resource-leakage warning messages.
+	 * releasing mechanism handle these resources too.	However, if we
+	 * have a FAILED portal (eg, a cursor that got an error), we'd better
+	 * clean up its resources to avoid resource-leakage warning messages.
 	 *
-	 * Sub transaction commit: never comes here at all, since we don't
-	 * kill any portals in AtSubCommit_Portals().
+	 * Sub transaction commit: never comes here at all, since we don't kill
+	 * any portals in AtSubCommit_Portals().
 	 *
 	 * Main or sub transaction abort: we will do nothing here because
 	 * portal->resowner was already set NULL; the resources were already
 	 * cleaned up in transaction abort.
 	 *
 	 * Ordinary portal drop: must release resources.  However, if the portal
-	 * is not FAILED then we do not release its locks.  The locks become
+	 * is not FAILED then we do not release its locks.	The locks become
 	 * the responsibility of the transaction's ResourceOwner (since it is
 	 * the parent of the portal's owner) and will be released when the
 	 * transaction eventually ends.
@@ -343,7 +343,7 @@ PortalDrop(Portal portal, bool isTopCommit)
 	if (portal->resowner &&
 		(!isTopCommit || portal->status == PORTAL_FAILED))
 	{
-		bool	isCommit = (portal->status != PORTAL_FAILED);
+		bool		isCommit = (portal->status != PORTAL_FAILED);
 
 		ResourceOwnerRelease(portal->resowner,
 							 RESOURCE_RELEASE_BEFORE_LOCKS,
@@ -439,8 +439,8 @@ AtCommit_Portals(void)
 		 * Do not touch active portals --- this can only happen in the
 		 * case of a multi-transaction utility command, such as VACUUM.
 		 *
-		 * Note however that any resource owner attached to such a portal
-		 * is still going to go away, so don't leave a dangling pointer.
+		 * Note however that any resource owner attached to such a portal is
+		 * still going to go away, so don't leave a dangling pointer.
 		 */
 		if (portal->status == PORTAL_ACTIVE)
 		{
@@ -474,8 +474,8 @@ AtCommit_Portals(void)
 			PersistHoldablePortal(portal);
 
 			/*
-			 * Any resources belonging to the portal will be released in the
-			 * upcoming transaction-wide cleanup; the portal will no
+			 * Any resources belonging to the portal will be released in
+			 * the upcoming transaction-wide cleanup; the portal will no
 			 * longer have its own resources.
 			 */
 			portal->resowner = NULL;
@@ -529,10 +529,11 @@ AtAbort_Portals(void)
 			(*portal->cleanup) (portal);
 			portal->cleanup = NULL;
 		}
+
 		/*
 		 * Any resources belonging to the portal will be released in the
-		 * upcoming transaction-wide cleanup; they will be gone before
-		 * we run PortalDrop.
+		 * upcoming transaction-wide cleanup; they will be gone before we
+		 * run PortalDrop.
 		 */
 		portal->resowner = NULL;
 	}
@@ -592,7 +593,7 @@ AtSubCommit_Portals(TransactionId parentXid,
 
 	while ((hentry = (PortalHashEnt *) hash_seq_search(&status)) != NULL)
 	{
-		Portal	portal = hentry->portal;
+		Portal		portal = hentry->portal;
 
 		if (portal->createXact == curXid)
 		{
@@ -622,23 +623,24 @@ AtSubAbort_Portals(TransactionId parentXid,
 
 	while ((hentry = (PortalHashEnt *) hash_seq_search(&status)) != NULL)
 	{
-		Portal	portal = hentry->portal;
+		Portal		portal = hentry->portal;
 
 		if (portal->createXact != curXid)
 			continue;
 
 		/*
-		 * Force any active portals of my own transaction into FAILED state.
-		 * This is mostly to ensure that a portal running a FETCH will go
-		 * FAILED if the underlying cursor fails.  (Note we do NOT want to
-		 * do this to upper-level portals, since they may be able to continue.)
+		 * Force any active portals of my own transaction into FAILED
+		 * state. This is mostly to ensure that a portal running a FETCH
+		 * will go FAILED if the underlying cursor fails.  (Note we do NOT
+		 * want to do this to upper-level portals, since they may be able
+		 * to continue.)
 		 */
- 		if (portal->status == PORTAL_ACTIVE)
+		if (portal->status == PORTAL_ACTIVE)
 			portal->status = PORTAL_FAILED;
 
 		/*
-		 * If the portal is READY then allow it to survive into the
-		 * parent transaction; otherwise shut it down.
+		 * If the portal is READY then allow it to survive into the parent
+		 * transaction; otherwise shut it down.
 		 */
 		if (portal->status == PORTAL_READY)
 		{
@@ -654,10 +656,11 @@ AtSubAbort_Portals(TransactionId parentXid,
 				(*portal->cleanup) (portal);
 				portal->cleanup = NULL;
 			}
+
 			/*
-			 * Any resources belonging to the portal will be released in the
-			 * upcoming transaction-wide cleanup; they will be gone before
-			 * we run PortalDrop.
+			 * Any resources belonging to the portal will be released in
+			 * the upcoming transaction-wide cleanup; they will be gone
+			 * before we run PortalDrop.
 			 */
 			portal->resowner = NULL;
 		}

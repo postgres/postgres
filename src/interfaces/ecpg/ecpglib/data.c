@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/data.c,v 1.26 2004/07/04 15:02:22 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/data.c,v 1.27 2004/08/29 05:06:59 momjian Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -16,12 +16,16 @@
 #include "pgtypes_timestamp.h"
 #include "pgtypes_interval.h"
 
-static bool garbage_left(enum ARRAY_TYPE isarray, char *scan_length, enum COMPAT_MODE compat)
+static bool
+garbage_left(enum ARRAY_TYPE isarray, char *scan_length, enum COMPAT_MODE compat)
 {
-	/* INFORMIX allows for selecting a numeric into an int, the result is truncated */
-	if (isarray == ECPG_ARRAY_NONE && INFORMIX_MODE(compat) && *scan_length == '.') 
+	/*
+	 * INFORMIX allows for selecting a numeric into an int, the result is
+	 * truncated
+	 */
+	if (isarray == ECPG_ARRAY_NONE && INFORMIX_MODE(compat) && *scan_length == '.')
 		return false;
-	
+
 	if (isarray == ECPG_ARRAY_ARRAY && *scan_length != ',' && *scan_length != '}')
 		return true;
 
@@ -44,7 +48,7 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 	char	   *pval = (char *) PQgetvalue(results, act_tuple, act_field);
 	int			value_for_indicator = 0;
 
-	ECPGlog("ECPGget_data line %d: RESULT: %s offset: %ld array: %s\n", lineno, pval ? pval : "", offset, isarray?"Yes":"No");
+	ECPGlog("ECPGget_data line %d: RESULT: %s offset: %ld array: %s\n", lineno, pval ? pval : "", offset, isarray ? "Yes" : "No");
 
 	/* pval is a pointer to the value */
 	/* let's check if it really is an array if it should be one */
@@ -228,7 +232,7 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 				{
 					*((unsigned long long int *) (var + offset * act_tuple)) = strtoull(pval, &scan_length, 10);
 					if ((isarray && *scan_length != ',' && *scan_length != '}')
-						|| (!isarray && !(INFORMIX_MODE(compat) && *scan_length == '.') && *scan_length != '\0' && *scan_length != ' '))	/* Garbage left */
+						|| (!isarray && !(INFORMIX_MODE(compat) && *scan_length == '.') && *scan_length != '\0' && *scan_length != ' '))		/* Garbage left */
 					{
 						ECPGraise(lineno, ECPG_UINT_FORMAT, ECPG_SQLSTATE_DATATYPE_MISMATCH, pval);
 						return (false);
@@ -419,7 +423,10 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 
 						if (INFORMIX_MODE(compat))
 						{
-							/* Informix wants its own NULL value here instead of an error */
+							/*
+							 * Informix wants its own NULL value here
+							 * instead of an error
+							 */
 							ECPGset_noind_null(ECPGt_numeric, nres);
 						}
 						else
@@ -463,7 +470,10 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 					{
 						if (INFORMIX_MODE(compat))
 						{
-							/* Informix wants its own NULL value here instead of an error */
+							/*
+							 * Informix wants its own NULL value here
+							 * instead of an error
+							 */
 							ECPGset_noind_null(ECPGt_interval, ires);
 						}
 						else
@@ -503,7 +513,10 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 					{
 						if (INFORMIX_MODE(compat))
 						{
-							/* Informix wants its own NULL value here instead of an error */
+							/*
+							 * Informix wants its own NULL value here
+							 * instead of an error
+							 */
 							ECPGset_noind_null(ECPGt_date, &ddres);
 						}
 						else
@@ -542,7 +555,10 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 					{
 						if (INFORMIX_MODE(compat))
 						{
-							/* Informix wants its own NULL value here instead of an error */
+							/*
+							 * Informix wants its own NULL value here
+							 * instead of an error
+							 */
 							ECPGset_noind_null(ECPGt_timestamp, &tres);
 						}
 						else

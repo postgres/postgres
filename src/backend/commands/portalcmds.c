@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/portalcmds.c,v 1.32 2004/08/29 04:12:30 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/portalcmds.c,v 1.33 2004/08/29 05:06:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,10 +106,9 @@ PerformCursorOpen(DeclareCursorStmt *stmt, ParamListInfo params)
 
 	/*
 	 * Also copy the outer portal's parameter list into the inner portal's
-	 * memory context.  We want to pass down the parameter values in case
-	 * we had a command like
-	 *			DECLARE c CURSOR FOR SELECT ... WHERE foo = $1
-	 * This will have been parsed using the outer parameter set and the
+	 * memory context.	We want to pass down the parameter values in case
+	 * we had a command like DECLARE c CURSOR FOR SELECT ... WHERE foo =
+	 * $1 This will have been parsed using the outer parameter set and the
 	 * parameter value needs to be preserved for use when the cursor is
 	 * executed.
 	 */
@@ -180,8 +179,8 @@ PerformPortalFetch(FetchStmt *stmt,
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_CURSOR),
-				 errmsg("cursor \"%s\" does not exist", stmt->portalname)));
-		return; /* keep compiler happy */
+			  errmsg("cursor \"%s\" does not exist", stmt->portalname)));
+		return;					/* keep compiler happy */
 	}
 
 	/* Adjust dest if needed.  MOVE wants destination None */
@@ -228,7 +227,7 @@ PerformPortalClose(const char *name)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_CURSOR),
 				 errmsg("cursor \"%s\" does not exist", name)));
-		return; /* keep compiler happy */
+		return;					/* keep compiler happy */
 	}
 
 	/*
@@ -354,8 +353,9 @@ PersistHoldablePortal(Portal portal)
 		MemoryContextSwitchTo(PortalContext);
 
 		/*
-		 * Rewind the executor: we need to store the entire result set in the
-		 * tuplestore, so that subsequent backward FETCHs can be processed.
+		 * Rewind the executor: we need to store the entire result set in
+		 * the tuplestore, so that subsequent backward FETCHs can be
+		 * processed.
 		 */
 		ExecutorRewind(queryDesc);
 
@@ -371,15 +371,15 @@ PersistHoldablePortal(Portal portal)
 		/*
 		 * Now shut down the inner executor.
 		 */
-		portal->queryDesc = NULL;	/* prevent double shutdown */
+		portal->queryDesc = NULL;		/* prevent double shutdown */
 		ExecutorEnd(queryDesc);
 
 		/*
 		 * Reset the position in the result set: ideally, this could be
-		 * implemented by just skipping straight to the tuple # that we need
-		 * to be at, but the tuplestore API doesn't support that. So we start
-		 * at the beginning of the tuplestore and iterate through it until we
-		 * reach where we need to be.  FIXME someday?
+		 * implemented by just skipping straight to the tuple # that we
+		 * need to be at, but the tuplestore API doesn't support that. So
+		 * we start at the beginning of the tuplestore and iterate through
+		 * it until we reach where we need to be.  FIXME someday?
 		 */
 		MemoryContextSwitchTo(portal->holdContext);
 
@@ -389,8 +389,8 @@ PersistHoldablePortal(Portal portal)
 
 			if (portal->posOverflow)	/* oops, cannot trust portalPos */
 				ereport(ERROR,
-						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-						 errmsg("could not reposition held cursor")));
+					  (errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					   errmsg("could not reposition held cursor")));
 
 			tuplestore_rescan(portal->holdStore);
 

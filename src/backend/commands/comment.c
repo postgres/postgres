@@ -7,7 +7,7 @@
  * Copyright (c) 1996-2004, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/comment.c,v 1.78 2004/08/29 04:12:30 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/comment.c,v 1.79 2004/08/29 05:06:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -123,10 +123,10 @@ CommentObject(CommentStmt *stmt)
 			CommentOpClass(stmt->objname, stmt->objargs, stmt->comment);
 			break;
 		case OBJECT_LARGEOBJECT:
-			CommentLargeObject(stmt->objname,  stmt->comment);
+			CommentLargeObject(stmt->objname, stmt->comment);
 			break;
 		case OBJECT_CAST:
-			CommentCast(stmt->objname, stmt->objargs,  stmt->comment);
+			CommentCast(stmt->objname, stmt->objargs, stmt->comment);
 			break;
 		default:
 			elog(ERROR, "unrecognized object type: %d",
@@ -401,8 +401,8 @@ CommentAttribute(List *qualname, char *comment)
 	if (attnum == InvalidAttrNumber)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_COLUMN),
-			 errmsg("column \"%s\" of relation \"%s\" does not exist",
-					attrname, RelationGetRelationName(relation))));
+				 errmsg("column \"%s\" of relation \"%s\" does not exist",
+						attrname, RelationGetRelationName(relation))));
 
 	/* Create the comment using the relation's oid */
 
@@ -462,7 +462,8 @@ CommentDatabase(List *qualname, char *comment)
 	/* Only allow comments on the current database */
 	if (oid != MyDatabaseId)
 	{
-		ereport(WARNING,	/* throw just a warning so pg_restore doesn't fail */
+		ereport(WARNING,		/* throw just a warning so pg_restore
+								 * doesn't fail */
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("database comments may only be applied to the current database")));
 		return;
@@ -586,7 +587,7 @@ CommentRule(List *qualname, char *comment)
 												  ForwardScanDirection)))
 			ereport(ERROR,
 					(errcode(ERRCODE_DUPLICATE_OBJECT),
-					 errmsg("there are multiple rules named \"%s\"", rulename),
+			   errmsg("there are multiple rules named \"%s\"", rulename),
 			errhint("Specify a relation name as well as a rule name.")));
 
 		heap_endscan(scanDesc);
@@ -615,8 +616,8 @@ CommentRule(List *qualname, char *comment)
 		if (!HeapTupleIsValid(tuple))
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("rule \"%s\" for relation \"%s\" does not exist",
-							rulename, RelationGetRelationName(relation))));
+				 errmsg("rule \"%s\" for relation \"%s\" does not exist",
+						rulename, RelationGetRelationName(relation))));
 		Assert(reloid == ((Form_pg_rewrite) GETSTRUCT(tuple))->ev_class);
 		ruleoid = HeapTupleGetOid(tuple);
 		ReleaseSysCache(tuple);
@@ -832,8 +833,8 @@ CommentTrigger(List *qualname, char *comment)
 	if (!HeapTupleIsValid(triggertuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-			  errmsg("trigger \"%s\" for table \"%s\" does not exist",
-					 trigname, RelationGetRelationName(relation))));
+				 errmsg("trigger \"%s\" for table \"%s\" does not exist",
+						trigname, RelationGetRelationName(relation))));
 
 	oid = HeapTupleGetOid(triggertuple);
 
@@ -924,8 +925,8 @@ CommentConstraint(List *qualname, char *comment)
 	if (!OidIsValid(conOid))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-		   errmsg("constraint \"%s\" for table \"%s\" does not exist",
-				  conName, RelationGetRelationName(relation))));
+			  errmsg("constraint \"%s\" for table \"%s\" does not exist",
+					 conName, RelationGetRelationName(relation))));
 
 	/* Create the comment with the pg_constraint oid */
 	CreateComments(conOid, RelationGetRelid(pg_constraint), 0, comment);
@@ -1003,7 +1004,7 @@ CommentLanguage(List *qualname, char *comment)
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-			   errmsg("must be superuser to comment on procedural language")));
+		 errmsg("must be superuser to comment on procedural language")));
 
 	/* pg_language doesn't have a hard-coded OID, so must look it up */
 	classoid = get_system_catalog_relid(LanguageRelationName);
@@ -1084,7 +1085,7 @@ CommentOpClass(List *qualname, List *arguments, char *comment)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("operator class \"%s\" does not exist for access method \"%s\"",
-					NameListToString(qualname), amname)));
+						NameListToString(qualname), amname)));
 
 	opcID = HeapTupleGetOid(tuple);
 
@@ -1116,7 +1117,7 @@ CommentLargeObject(List *qualname, char *comment)
 {
 	Oid			loid;
 	Oid			classoid;
-	Node	   *node; 
+	Node	   *node;
 
 	Assert(list_length(qualname) == 1);
 	node = (Node *) linitial(qualname);
@@ -1127,19 +1128,20 @@ CommentLargeObject(List *qualname, char *comment)
 			loid = intVal(node);
 			break;
 		case T_Float:
+
 			/*
 			 * Values too large for int4 will be represented as Float
-			 * constants by the lexer.  Accept these if they are valid
-			 * OID strings.
+			 * constants by the lexer.	Accept these if they are valid OID
+			 * strings.
 			 */
 			loid = DatumGetObjectId(DirectFunctionCall1(oidin,
-										CStringGetDatum(strVal(node))));
+										 CStringGetDatum(strVal(node))));
 			break;
 		default:
 			elog(ERROR, "unrecognized node type: %d",
 				 (int) nodeTag(node));
 			/* keep compiler quiet */
-			loid = InvalidOid; 
+			loid = InvalidOid;
 	}
 
 	/* check that the large object exists */
@@ -1152,7 +1154,7 @@ CommentLargeObject(List *qualname, char *comment)
 	classoid = get_system_catalog_relid(LargeObjectRelationName);
 
 	/* Call CreateComments() to create/drop the comments */
-	CreateComments(loid, classoid, 0, comment);	
+	CreateComments(loid, classoid, 0, comment);
 }
 
 /*
@@ -1182,7 +1184,7 @@ CommentCast(List *qualname, List *arguments, char *comment)
 	Assert(list_length(arguments) == 1);
 	targettype = (TypeName *) linitial(arguments);
 	Assert(IsA(targettype, TypeName));
-	
+
 	sourcetypeid = typenameTypeId(sourcetype);
 	if (!OidIsValid(sourcetypeid))
 		ereport(ERROR,
@@ -1210,7 +1212,7 @@ CommentCast(List *qualname, List *arguments, char *comment)
 
 	/* Get the OID of the cast */
 	castOid = HeapTupleGetOid(tuple);
-	
+
 	/* Permission check */
 	if (!pg_type_ownercheck(sourcetypeid, GetUserId())
 		&& !pg_type_ownercheck(targettypeid, GetUserId()))
@@ -1226,5 +1228,5 @@ CommentCast(List *qualname, List *arguments, char *comment)
 	classoid = get_system_catalog_relid(CastRelationName);
 
 	/* Call CreateComments() to create/drop the comments */
-	CreateComments(castOid, classoid, 0, comment);	
+	CreateComments(castOid, classoid, 0, comment);
 }

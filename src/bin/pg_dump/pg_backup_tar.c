@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.43 2004/05/07 00:24:58 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.44 2004/08/29 05:06:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -160,7 +160,7 @@ InitArchiveFmt_Tar(ArchiveHandle *AH)
 	AH->formatData = (void *) ctx;
 	ctx->filePos = 0;
 	ctx->isSpecialScript = 0;
-	
+
 	/* Initialize LO buffering */
 	AH->lo_buf_size = LOBBUFSIZE;
 	AH->lo_buf = (void *) malloc(LOBBUFSIZE);

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/read.c,v 1.44 2004/08/29 04:12:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/read.c,v 1.45 2004/08/29 05:06:43 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -50,7 +50,7 @@ stringToNode(char *str)
 
 	pg_strtok_ptr = str;		/* point pg_strtok at the string to read */
 
-	retval = nodeRead(NULL, 0);	/* do the reading */
+	retval = nodeRead(NULL, 0); /* do the reading */
 
 	pg_strtok_ptr = save_strtok;
 
@@ -184,7 +184,7 @@ debackslash(char *token, int length)
 #define RIGHT_PAREN (1000000 + 1)
 #define LEFT_PAREN	(1000000 + 2)
 #define LEFT_BRACE	(1000000 + 3)
-#define OTHER_TOKEN	(1000000 + 4)
+#define OTHER_TOKEN (1000000 + 4)
 
 /*
  * nodeTokenType -
@@ -315,8 +315,8 @@ nodeRead(char *token, int tok_len)
 					/* List of integers */
 					for (;;)
 					{
-						int		val;
-						char   *endptr;
+						int			val;
+						char	   *endptr;
 
 						token = pg_strtok(&tok_len);
 						if (token == NULL)
@@ -335,8 +335,8 @@ nodeRead(char *token, int tok_len)
 					/* List of OIDs */
 					for (;;)
 					{
-						Oid		val;
-						char   *endptr;
+						Oid			val;
+						char	   *endptr;
 
 						token = pg_strtok(&tok_len);
 						if (token == NULL)
@@ -369,7 +369,7 @@ nodeRead(char *token, int tok_len)
 			}
 		case RIGHT_PAREN:
 			elog(ERROR, "unexpected right parenthesis");
-			result = NULL;	/* keep compiler happy */
+			result = NULL;		/* keep compiler happy */
 			break;
 		case OTHER_TOKEN:
 			if (tok_len == 0)
@@ -384,6 +384,7 @@ nodeRead(char *token, int tok_len)
 			}
 			break;
 		case T_Integer:
+
 			/*
 			 * we know that the token terminates on a char atol will stop
 			 * at
@@ -415,7 +416,7 @@ nodeRead(char *token, int tok_len)
 			}
 		default:
 			elog(ERROR, "unrecognized node type: %d", (int) type);
-			result = NULL;	/* keep compiler happy */
+			result = NULL;		/* keep compiler happy */
 			break;
 	}
 

@@ -10,7 +10,7 @@
  *
  * Copyright (c) 2002-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_cast.h,v 1.14 2004/08/29 04:13:05 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_cast.h,v 1.15 2004/08/29 05:06:55 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -46,7 +46,7 @@ typedef enum CoercionCodes
 										 * expression */
 	COERCION_CODE_ASSIGNMENT = 'a',		/* coercion in context of
 										 * assignment */
-	COERCION_CODE_EXPLICIT = 'e'		/* explicit cast operation */
+	COERCION_CODE_EXPLICIT = 'e'	/* explicit cast operation */
 } CoercionCodes;
 
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashscan.c,v 1.36 2004/08/29 04:12:18 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashscan.c,v 1.37 2004/08/29 05:06:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,9 +44,9 @@ ReleaseResources_hash(void)
 	HashScanList next;
 
 	/*
-	 * Note: this should be a no-op during normal query shutdown.
-	 * However, in an abort situation ExecutorEnd is not called and so
-	 * there may be open index scans to clean up.
+	 * Note: this should be a no-op during normal query shutdown. However,
+	 * in an abort situation ExecutorEnd is not called and so there may be
+	 * open index scans to clean up.
 	 */
 	prev = NULL;
 

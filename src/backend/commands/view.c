@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/view.c,v 1.84 2004/08/29 04:12:30 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/view.c,v 1.85 2004/08/29 05:06:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -191,8 +191,8 @@ checkViewTupleDesc(TupleDesc newdesc, TupleDesc olddesc)
 			newattr->atttypmod != oldattr->atttypmod)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-				   errmsg("cannot change data type of view column \"%s\"",
-						  NameStr(oldattr->attname))));
+				  errmsg("cannot change data type of view column \"%s\"",
+						 NameStr(oldattr->attname))));
 		/* We can ignore the remaining attributes of an attribute... */
 	}
 

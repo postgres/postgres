@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/main/main.c,v 1.88 2004/08/29 04:12:32 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/main/main.c,v 1.89 2004/08/29 05:06:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -110,7 +110,7 @@ main(int argc, char *argv[])
 		if (err != 0)
 		{
 			write_stderr("%s: WSAStartup failed: %d\n",
-					argv[0], err);
+						 argv[0], err);
 			exit(1);
 		}
 
@@ -215,7 +215,7 @@ main(int argc, char *argv[])
 			write_stderr("\"root\" execution of the PostgreSQL server is not permitted.\n"
 						 "The server must be started under an unprivileged user ID to prevent\n"
 						 "possible system security compromise.  See the documentation for\n"
-						 "more information on how to properly start the server.\n");
+			  "more information on how to properly start the server.\n");
 			exit(1);
 		}
 #endif   /* !__BEOS__ */
@@ -235,13 +235,13 @@ main(int argc, char *argv[])
 						 argv[0]);
 			exit(1);
 		}
-#else /* WIN32 */
+#else							/* WIN32 */
 		if (pgwin32_is_admin())
 		{
 			write_stderr("execution of PostgreSQL by a user with administrative permissions is not permitted.\n"
 						 "The server must be started under an unprivileged user ID to prevent\n"
 						 "possible system security compromise.  See the documentation for\n"
-						 "more information on how to properly start the server.\n");
+			  "more information on how to properly start the server.\n");
 			exit(1);
 		}
 #endif   /* !WIN32 */
@@ -276,8 +276,8 @@ main(int argc, char *argv[])
 #endif
 
 	/*
-	 * If the first argument is "-boot", then invoke bootstrap mode.
-	 * (This path is taken only for a standalone bootstrap process.)
+	 * If the first argument is "-boot", then invoke bootstrap mode. (This
+	 * path is taken only for a standalone bootstrap process.)
 	 */
 	if (argc > 1 && strcmp(argv[1], "-boot") == 0)
 		exit(BootstrapMain(argc, argv));
@@ -312,11 +312,11 @@ main(int argc, char *argv[])
 		if (!GetUserName(pw_name_persist, &namesize))
 		{
 			write_stderr("%s: could not determine user name (GetUserName failed)\n",
-					argv[0]);
+						 argv[0]);
 			exit(1);
 		}
 	}
-#endif /* WIN32 */
+#endif   /* WIN32 */
 
 	exit(PostgresMain(argc, argv, pw_name_persist));
 }

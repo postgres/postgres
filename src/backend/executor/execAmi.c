@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/executor/execAmi.c,v 1.80 2004/08/29 04:12:31 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/executor/execAmi.c,v 1.81 2004/08/29 05:06:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,7 +51,7 @@
  * needs access to variables of the current outer tuple.  (The handling of
  * this parameter is currently pretty inconsistent: some callers pass NULL
  * and some pass down their parent's value; so don't rely on it in other
- * situations.  It'd probably be better to remove the whole thing and use
+ * situations.	It'd probably be better to remove the whole thing and use
  * the generalized parameter mechanism instead.)
  */
 void
@@ -64,7 +64,7 @@ ExecReScan(PlanState *node, ExprContext *exprCtxt)
 	/* If we have changed parameters, propagate that info */
 	if (node->chgParam != NULL)
 	{
-		ListCell	*l;
+		ListCell   *l;
 
 		foreach(l, node->initPlan)
 		{
@@ -365,19 +365,19 @@ ExecMayReturnRawTuples(PlanState *node)
 {
 	/*
 	 * At a table scan node, we check whether ExecAssignScanProjectionInfo
-	 * decided to do projection or not.  Most non-scan nodes always project
-	 * and so we can return "false" immediately.  For nodes that don't
-	 * project but just pass up input tuples, we have to recursively
+	 * decided to do projection or not.  Most non-scan nodes always
+	 * project and so we can return "false" immediately.  For nodes that
+	 * don't project but just pass up input tuples, we have to recursively
 	 * examine the input plan node.
 	 *
-	 * Note: Hash and Material are listed here because they sometimes
-	 * return an original input tuple, not a copy.  But Sort and SetOp
-	 * never return an original tuple, so they can be treated like
-	 * projecting nodes.
+	 * Note: Hash and Material are listed here because they sometimes return
+	 * an original input tuple, not a copy.  But Sort and SetOp never
+	 * return an original tuple, so they can be treated like projecting
+	 * nodes.
 	 */
 	switch (nodeTag(node))
 	{
-		/* Table scan nodes */
+			/* Table scan nodes */
 		case T_SeqScanState:
 		case T_IndexScanState:
 		case T_TidScanState:
@@ -387,7 +387,7 @@ ExecMayReturnRawTuples(PlanState *node)
 				return true;
 			break;
 
-		/* Non-projecting nodes */
+			/* Non-projecting nodes */
 		case T_HashState:
 		case T_MaterialState:
 		case T_UniqueState:
@@ -395,19 +395,19 @@ ExecMayReturnRawTuples(PlanState *node)
 			return ExecMayReturnRawTuples(node->lefttree);
 
 		case T_AppendState:
-		{
-			AppendState *appendstate = (AppendState *) node;
-			int			j;
-
-			for (j = 0; j < appendstate->as_nplans; j++)
 			{
-				if (ExecMayReturnRawTuples(appendstate->appendplans[j]))
-					return true;
-			}
-			break;
-		}
+				AppendState *appendstate = (AppendState *) node;
+				int			j;
 
-		/* All projecting node types come here */
+				for (j = 0; j < appendstate->as_nplans; j++)
+				{
+					if (ExecMayReturnRawTuples(appendstate->appendplans[j]))
+						return true;
+				}
+				break;
+			}
+
+			/* All projecting node types come here */
 		default:
 			break;
 	}

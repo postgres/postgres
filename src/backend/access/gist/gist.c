@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gist.c,v 1.110 2004/08/29 04:12:17 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gist.c,v 1.111 2004/08/29 05:06:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -667,7 +667,7 @@ gistunion(Relation r, IndexTuple *itvec, int len, GISTSTATE *giststate)
 	Datum		attr[INDEX_MAX_KEYS];
 	bool		whatfree[INDEX_MAX_KEYS];
 	char		isnull[INDEX_MAX_KEYS];
-	GistEntryVector	   *evec;
+	GistEntryVector *evec;
 	Datum		datum;
 	int			datumsize,
 				i,
@@ -715,8 +715,8 @@ gistunion(Relation r, IndexTuple *itvec, int len, GISTSTATE *giststate)
 			{
 				evec->n = 2;
 				gistentryinit(evec->vector[1],
-					evec->vector[0].key, r, NULL,
-							  (OffsetNumber) 0, evec->vector[0].bytes, FALSE);
+							  evec->vector[0].key, r, NULL,
+						 (OffsetNumber) 0, evec->vector[0].bytes, FALSE);
 
 			}
 			else
@@ -763,7 +763,7 @@ gistunion(Relation r, IndexTuple *itvec, int len, GISTSTATE *giststate)
 static IndexTuple
 gistgetadjusted(Relation r, IndexTuple oldtup, IndexTuple addtup, GISTSTATE *giststate)
 {
-	GistEntryVector	   *evec;
+	GistEntryVector *evec;
 	Datum		datum;
 	int			datumsize;
 	bool		result,
@@ -879,7 +879,7 @@ gistunionsubkey(Relation r, GISTSTATE *giststate, IndexTuple *itvec, GIST_SPLITV
 	int			len,
 			   *attrsize;
 	OffsetNumber *entries;
-	GistEntryVector	   *evec;
+	GistEntryVector *evec;
 	Datum		datum;
 	int			datumsize;
 	int			reallen;
@@ -940,8 +940,8 @@ gistunionsubkey(Relation r, GISTSTATE *giststate, IndexTuple *itvec, GIST_SPLITV
 			else
 			{
 				/*
-				 * evec->vector[0].bytes may be not
-				 * defined, so form union with itself
+				 * evec->vector[0].bytes may be not defined, so form union
+				 * with itself
 				 */
 				if (reallen == 1)
 				{
@@ -1056,7 +1056,7 @@ gistadjsubkey(Relation r,
 			   *ev1p;
 	float		lpenalty,
 				rpenalty;
-	GistEntryVector	   *evec;
+	GistEntryVector *evec;
 	int			datumsize;
 	bool		isnull[INDEX_MAX_KEYS];
 	int			i,
@@ -1222,7 +1222,7 @@ gistSplit(Relation r,
 				rbknum;
 	GISTPageOpaque opaque;
 	GIST_SPLITVEC v;
-	GistEntryVector	   *entryvec;
+	GistEntryVector *entryvec;
 	bool	   *decompvec;
 	int			i,
 				j,

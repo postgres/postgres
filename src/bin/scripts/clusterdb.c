@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 2002-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/scripts/clusterdb.c,v 1.10 2004/08/29 04:13:03 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/clusterdb.c,v 1.11 2004/08/29 05:06:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -14,13 +14,11 @@
 #include "dumputils.h"
 
 
-static void
-cluster_one_database(const char *dbname, const char *table,
+static void cluster_one_database(const char *dbname, const char *table,
 					 const char *host, const char *port,
 					 const char *username, bool password,
 					 const char *progname, bool echo, bool quiet);
-static void
-cluster_all_databases(const char *host, const char *port,
+static void cluster_all_databases(const char *host, const char *port,
 					  const char *username, bool password,
 					  const char *progname, bool echo, bool quiet);
 

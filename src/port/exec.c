@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.24 2004/08/29 04:13:12 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.25 2004/08/29 05:07:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,6 +69,7 @@ validate_exec(const char *path)
 	struct passwd *pwp;
 	int			i;
 	int			in_grp = 0;
+
 #else
 	char		path_exe[MAXPGPATH + 2 + strlen(".exe")];
 #endif
@@ -122,8 +123,8 @@ validate_exec(const char *path)
 	}
 
 	/* OK, check group bits */
-	
-	pwp = getpwuid(euid);	/* not thread-safe */
+
+	pwp = getpwuid(euid);		/* not thread-safe */
 	if (pwp)
 	{
 		if (pwp->pw_gid == buf.st_gid)	/* my primary group? */
@@ -131,7 +132,7 @@ validate_exec(const char *path)
 		else if (pwp->pw_name &&
 				 (gp = getgrgid(buf.st_gid)) != NULL && /* not thread-safe */
 				 gp->gr_mem != NULL)
-		{	/* try list of member groups */
+		{						/* try list of member groups */
 			for (i = 0; gp->gr_mem[i]; ++i)
 			{
 				if (!strcmp(gp->gr_mem[i], pwp->pw_name))
@@ -153,7 +154,6 @@ validate_exec(const char *path)
 	is_r = buf.st_mode & S_IROTH;
 	is_x = buf.st_mode & S_IXOTH;
 	return is_x ? (is_r ? 0 : -2) : -1;
-
 #endif
 }
 
@@ -166,23 +166,24 @@ validate_exec(const char *path)
  * path because we will later change working directory.
  *
  * This function is not thread-safe because of it calls validate_exec(),
- * which calls getgrgid().  This function should be used only in
+ * which calls getgrgid().	This function should be used only in
  * non-threaded binaries, not in library routines.
  */
 int
 find_my_exec(const char *argv0, char *retpath)
 {
-	char		cwd[MAXPGPATH], test_path[MAXPGPATH];
- 	char	   *path;
+	char		cwd[MAXPGPATH],
+				test_path[MAXPGPATH];
+	char	   *path;
 
 	if (!getcwd(cwd, MAXPGPATH))
 		cwd[0] = '\0';
 
 	/*
-	 * First try: use the binary that's located in the
-	 * same directory if it was invoked with an explicit path.
-	 * Presumably the user used an explicit path because it
-	 * wasn't in PATH, and we don't want to use incompatible executables.
+	 * First try: use the binary that's located in the same directory if
+	 * it was invoked with an explicit path. Presumably the user used an
+	 * explicit path because it wasn't in PATH, and we don't want to use
+	 * incompatible executables.
 	 *
 	 * For the binary: First try: if we're given some kind of path, use it
 	 * (making sure that a relative path is made absolute before returning
@@ -201,7 +202,7 @@ find_my_exec(const char *argv0, char *retpath)
 			StrNCpy(retpath, argv0, MAXPGPATH);
 		else
 			snprintf(retpath, MAXPGPATH, "%s/%s", cwd, argv0);
-		
+
 		canonicalize_path(retpath);
 		if (validate_exec(retpath) == 0)
 		{
@@ -231,7 +232,8 @@ find_my_exec(const char *argv0, char *retpath)
 	 */
 	if ((path = getenv("PATH")) && *path)
 	{
-	 	char	   *startp = NULL, *endp = NULL;
+		char	   *startp = NULL,
+				   *endp = NULL;
 
 		do
 		{
@@ -242,7 +244,7 @@ find_my_exec(const char *argv0, char *retpath)
 
 			endp = first_path_separator(startp);
 			if (!endp)
-				endp = startp + strlen(startp);	/* point to end */
+				endp = startp + strlen(startp); /* point to end */
 
 			StrNCpy(test_path, startp, Min(endp - startp + 1, MAXPGPATH));
 
@@ -270,12 +272,13 @@ find_my_exec(const char *argv0, char *retpath)
 	return -1;
 
 #if 0
+
 	/*
-	 *	Win32 has a native way to find the executable name, but the above
-	 *	method works too.
+	 * Win32 has a native way to find the executable name, but the above
+	 * method works too.
 	 */
 	if (GetModuleFileName(NULL, retpath, MAXPGPATH) == 0)
-		log_error("GetModuleFileName failed (%i)",(int)GetLastError());
+		log_error("GetModuleFileName failed (%i)", (int) GetLastError());
 #endif
 }
 
@@ -287,11 +290,12 @@ find_my_exec(const char *argv0, char *retpath)
  * Executing a command in a pipe and reading the first line from it
  * is all we need.
  */
-	
-static char *pipe_read_line(char *cmd, char *line, int maxsize)
+
+static char *
+pipe_read_line(char *cmd, char *line, int maxsize)
 {
 #ifndef WIN32
-	FILE *pgver;
+	FILE	   *pgver;
 
 	/* flush output buffers in case popen does not... */
 	fflush(stdout);
@@ -299,7 +303,7 @@ static char *pipe_read_line(char *cmd, char *line, int maxsize)
 
 	if ((pgver = popen(cmd, "r")) == NULL)
 		return NULL;
-	
+
 	if (fgets(line, maxsize, pgver) == NULL)
 	{
 		perror("fgets failure");
@@ -308,15 +312,17 @@ static char *pipe_read_line(char *cmd, char *line, int maxsize)
 
 	if (pclose_check(pgver))
 		return NULL;
-	
+
 	return line;
 #else
 	/* Win32 */
 	SECURITY_ATTRIBUTES sattr;
-	HANDLE childstdoutrd, childstdoutwr, childstdoutrddup;
+	HANDLE		childstdoutrd,
+				childstdoutwr,
+				childstdoutrddup;
 	PROCESS_INFORMATION pi;
 	STARTUPINFO si;
-	char *retval = NULL;
+	char	   *retval = NULL;
 
 	sattr.nLength = sizeof(SECURITY_ATTRIBUTES);
 	sattr.bInheritHandle = TRUE;
@@ -324,7 +330,7 @@ static char *pipe_read_line(char *cmd, char *line, int maxsize)
 
 	if (!CreatePipe(&childstdoutrd, &childstdoutwr, &sattr, 0))
 		return NULL;
-	
+
 	if (!DuplicateHandle(GetCurrentProcess(),
 						 childstdoutrd,
 						 GetCurrentProcess(),
@@ -339,15 +345,15 @@ static char *pipe_read_line(char *cmd, char *line, int maxsize)
 	}
 
 	CloseHandle(childstdoutrd);
-	
-	ZeroMemory(&pi,sizeof(pi));
-	ZeroMemory(&si,sizeof(si));
+
+	ZeroMemory(&pi, sizeof(pi));
+	ZeroMemory(&si, sizeof(si));
 	si.cb = sizeof(si);
 	si.dwFlags = STARTF_USESTDHANDLES;
 	si.hStdError = childstdoutwr;
 	si.hStdOutput = childstdoutwr;
 	si.hStdInput = INVALID_HANDLE_VALUE;
-	
+
 	if (CreateProcess(NULL,
 					  cmd,
 					  NULL,
@@ -359,13 +365,14 @@ static char *pipe_read_line(char *cmd, char *line, int maxsize)
 					  &si,
 					  &pi))
 	{
-		DWORD bytesread = 0;
+		DWORD		bytesread = 0;
+
 		/* Successfully started the process */
 
-		ZeroMemory(line,maxsize);
-		
+		ZeroMemory(line, maxsize);
+
 		/* Let's see if we can read */
-		if (WaitForSingleObject(childstdoutrddup, 10000) != WAIT_OBJECT_0) 
+		if (WaitForSingleObject(childstdoutrddup, 10000) != WAIT_OBJECT_0)
 		{
 			/* Got timeout */
 			CloseHandle(pi.hProcess);
@@ -381,42 +388,41 @@ static char *pipe_read_line(char *cmd, char *line, int maxsize)
 		{
 			/* So we read some data */
 			retval = line;
-			int len = strlen(line);
+			int			len = strlen(line);
 
 			/*
-			 *	If EOL is \r\n, convert to just \n.
-			 *	Because stdout is a text-mode stream, the \n output by
-			 *	the child process is received as \r\n, so we convert it
-			 *	to \n.  The server main.c sets
-			 *	setvbuf(stdout, NULL, _IONBF, 0) which has the effect
-			 *	of disabling \n to \r\n expansion for stdout.
+			 * If EOL is \r\n, convert to just \n. Because stdout is a
+			 * text-mode stream, the \n output by the child process is
+			 * received as \r\n, so we convert it to \n.  The server
+			 * main.c sets setvbuf(stdout, NULL, _IONBF, 0) which has the
+			 * effect of disabling \n to \r\n expansion for stdout.
 			 */
-			if (len >= 2 && line[len-2] == '\r' && line[len-1] == '\n')
+			if (len >= 2 && line[len - 2] == '\r' && line[len - 1] == '\n')
 			{
-				line[len-2] = '\n';
-				line[len-1] = '\0';
+				line[len - 2] = '\n';
+				line[len - 1] = '\0';
 				len--;
 			}
 
 			/*
-			 *	We emulate fgets() behaviour. So if there is no newline
-			 *	at the end, we add one...
+			 * We emulate fgets() behaviour. So if there is no newline at
+			 * the end, we add one...
 			 */
-			if (len == 0 || line[len-1] != '\n')
-				strcat(line,"\n");
+			if (len == 0 || line[len - 1] != '\n')
+				strcat(line, "\n");
 		}
 
 		CloseHandle(pi.hProcess);
 		CloseHandle(pi.hThread);
 	}
-	
+
 	CloseHandle(childstdoutwr);
 	CloseHandle(childstdoutrddup);
 
 	return retval;
 #endif
 }
-	
+
 
 
 /*
@@ -429,11 +435,11 @@ find_other_exec(const char *argv0, const char *target,
 {
 	char		cmd[MAXPGPATH];
 	char		line[100];
-	
+
 	if (find_my_exec(argv0, retpath) < 0)
 		return -1;
 
-	/* Trim off program name and keep just directory */	
+	/* Trim off program name and keep just directory */
 	*last_dir_separator(retpath) = '\0';
 	canonicalize_path(retpath);
 
@@ -443,12 +449,12 @@ find_other_exec(const char *argv0, const char *target,
 
 	if (validate_exec(retpath))
 		return -1;
-	
+
 	snprintf(cmd, sizeof(cmd), "\"%s\" -V 2>%s", retpath, DEVNULL);
 
 	if (!pipe_read_line(cmd, line, sizeof(line)))
 		return -1;
-	
+
 	if (strcmp(line, versionstr) != 0)
 		return -2;
 
@@ -464,12 +470,12 @@ find_other_exec(const char *argv0, const char *target,
 int
 pclose_check(FILE *stream)
 {
-	int		exitstatus;
+	int			exitstatus;
 
 	exitstatus = pclose(stream);
 
 	if (exitstatus == 0)
-		return 0;					/* all is well */
+		return 0;				/* all is well */
 
 	if (exitstatus == -1)
 	{
@@ -479,17 +485,17 @@ pclose_check(FILE *stream)
 	else if (WIFEXITED(exitstatus))
 	{
 		log_error(_("child process exited with exit code %d\n"),
-				WEXITSTATUS(exitstatus));
+				  WEXITSTATUS(exitstatus));
 	}
 	else if (WIFSIGNALED(exitstatus))
 	{
 		log_error(_("child process was terminated by signal %d\n"),
-				WTERMSIG(exitstatus));
+				  WTERMSIG(exitstatus));
 	}
 	else
 	{
 		log_error(_("child process exited with unrecognized status %d\n"),
-				exitstatus);
+				  exitstatus);
 	}
 
 	return -1;

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/hash.h,v 1.57 2004/08/29 04:13:03 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/hash.h,v 1.58 2004/08/29 05:06:55 momjian Exp $
  *
  * NOTES
  *		modeled after Margo Seltzer's hash implementation for unix.
@@ -56,6 +56,7 @@ typedef struct HashPageOpaqueData
 	Bucket		hasho_bucket;	/* bucket number this pg belongs to */
 	uint16		hasho_flag;		/* page type code, see above */
 	uint16		hasho_filler;	/* available for future use */
+
 	/*
 	 * We presently set hasho_filler to HASHO_FILL (0x1234); this is for
 	 * the convenience of pg_filedump, which otherwise would have a hard
@@ -75,21 +76,23 @@ typedef HashPageOpaqueData *HashPageOpaque;
 typedef struct HashScanOpaqueData
 {
 	/*
-	 * By definition, a hash scan should be examining only one bucket.
-	 * We record the bucket number here as soon as it is known.
+	 * By definition, a hash scan should be examining only one bucket. We
+	 * record the bucket number here as soon as it is known.
 	 */
 	Bucket		hashso_bucket;
 	bool		hashso_bucket_valid;
+
 	/*
 	 * If we have a share lock on the bucket, we record it here.  When
 	 * hashso_bucket_blkno is zero, we have no such lock.
 	 */
-	BlockNumber	hashso_bucket_blkno;
+	BlockNumber hashso_bucket_blkno;
+
 	/*
-	 * We also want to remember which buffers we're currently examining in the
-	 * scan. We keep these buffers pinned (but not locked) across hashgettuple
-	 * calls, in order to avoid doing a ReadBuffer() for every tuple in the
-	 * index.
+	 * We also want to remember which buffers we're currently examining in
+	 * the scan. We keep these buffers pinned (but not locked) across
+	 * hashgettuple calls, in order to avoid doing a ReadBuffer() for
+	 * every tuple in the index.
 	 */
 	Buffer		hashso_curbuf;
 	Buffer		hashso_mrkbuf;
@@ -148,8 +151,8 @@ typedef struct HashMetaPageData
 	uint32		hashm_firstfree;	/* lowest-number free ovflpage (bit#) */
 	uint32		hashm_nmaps;	/* number of bitmap pages */
 	RegProcedure hashm_procid;	/* hash procedure id from pg_proc */
-	uint32		hashm_spares[HASH_MAX_SPLITPOINTS];	/* spare pages before
-													 * each splitpoint */
+	uint32		hashm_spares[HASH_MAX_SPLITPOINTS];		/* spare pages before
+														 * each splitpoint */
 	BlockNumber hashm_mapp[HASH_MAX_BITMAPS];	/* blknos of ovfl bitmaps */
 } HashMetaPageData;
 
@@ -269,9 +272,9 @@ extern InsertIndexResult _hash_doinsert(Relation rel, HashItem hitem);
 extern Buffer _hash_addovflpage(Relation rel, Buffer metabuf, Buffer buf);
 extern BlockNumber _hash_freeovflpage(Relation rel, Buffer ovflbuf);
 extern void _hash_initbitmap(Relation rel, HashMetaPage metap,
-							 BlockNumber blkno);
+				 BlockNumber blkno);
 extern void _hash_squeezebucket(Relation rel,
-								Bucket bucket, BlockNumber bucket_blkno);
+					Bucket bucket, BlockNumber bucket_blkno);
 
 /* hashpage.c */
 extern void _hash_getlock(Relation rel, BlockNumber whichlock, int access);
@@ -304,7 +307,7 @@ extern bool _hash_checkqual(IndexScanDesc scan, IndexTuple itup);
 extern HashItem _hash_formitem(IndexTuple itup);
 extern uint32 _hash_datum2hashkey(Relation rel, Datum key);
 extern Bucket _hash_hashkey2bucket(uint32 hashkey, uint32 maxbucket,
-								   uint32 highmask, uint32 lowmask);
+					 uint32 highmask, uint32 lowmask);
 extern uint32 _hash_log2(uint32 num);
 extern void _hash_checkpage(Relation rel, Page page, int flags);
 

@@ -4,8 +4,9 @@
 #include <pgtypes_timestamp.h>
 
 typedef long date;
+
 #ifdef __cplusplus
-extern          "C"
+extern		"C"
 {
 #endif
 

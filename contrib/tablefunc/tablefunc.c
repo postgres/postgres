@@ -875,7 +875,7 @@ get_crosstab_tuplestore(char *sql,
 			/* no qualifying category tuples */
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					errmsg("provided \"categories\" SQL must " \
+					 errmsg("provided \"categories\" SQL must " \
 							"return 1 column of at least one row")));
 		}
 

@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execTuples.c,v 1.81 2004/08/29 04:12:31 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execTuples.c,v 1.82 2004/08/29 05:06:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -117,7 +117,7 @@
 
 
 static TupleDesc ExecTypeFromTLInternal(List *targetList,
-										bool hasoid, bool skipjunk);
+					   bool hasoid, bool skipjunk);
 
 
 /* ----------------------------------------------------------------
@@ -149,7 +149,7 @@ ExecCreateTupleTable(int initialSize)	/* initial number of slots in
 
 	/*
 	 * Now allocate our new table along with space for the pointers to the
-	 * tuples.  Zero out the slots.
+	 * tuples.	Zero out the slots.
 	 */
 
 	newtable = (TupleTable) palloc(sizeof(TupleTableData));
@@ -568,10 +568,10 @@ ExecCleanTypeFromTL(List *targetList, bool hasoid)
 static TupleDesc
 ExecTypeFromTLInternal(List *targetList, bool hasoid, bool skipjunk)
 {
-	TupleDesc	 typeInfo;
-	ListCell	*l;
-	int			 len;
-	int			 cur_resno = 1;
+	TupleDesc	typeInfo;
+	ListCell   *l;
+	int			len;
+	int			cur_resno = 1;
 
 	if (skipjunk)
 		len = ExecCleanTargetListLength(targetList);
@@ -581,8 +581,8 @@ ExecTypeFromTLInternal(List *targetList, bool hasoid, bool skipjunk)
 
 	foreach(l, targetList)
 	{
-		TargetEntry	*tle = lfirst(l);
-		Resdom		*resdom = tle->resdom;
+		TargetEntry *tle = lfirst(l);
+		Resdom	   *resdom = tle->resdom;
 
 		if (skipjunk && resdom->resjunk)
 			continue;
@@ -605,16 +605,16 @@ ExecTypeFromTLInternal(List *targetList, bool hasoid, bool skipjunk)
 TupleDesc
 ExecTypeFromExprList(List *exprList)
 {
-	TupleDesc	 typeInfo;
-	ListCell	*l;
-	int			 cur_resno = 1;
+	TupleDesc	typeInfo;
+	ListCell   *l;
+	int			cur_resno = 1;
 	char		fldname[NAMEDATALEN];
 
 	typeInfo = CreateTemplateTupleDesc(list_length(exprList), false);
 
 	foreach(l, exprList)
 	{
-		Node	*e = lfirst(l);
+		Node	   *e = lfirst(l);
 
 		sprintf(fldname, "f%d", cur_resno);
 

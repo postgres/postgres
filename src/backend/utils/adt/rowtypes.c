@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/rowtypes.c,v 1.5 2004/08/29 04:12:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/rowtypes.c,v 1.6 2004/08/29 05:06:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,15 +67,15 @@ record_in(PG_FUNCTION_ARGS)
 	StringInfoData buf;
 
 	/*
-	 * Use the passed type unless it's RECORD; we can't support input
-	 * of anonymous types, mainly because there's no good way to figure
-	 * out which anonymous type is wanted.  Note that for RECORD,
-	 * what we'll probably actually get is RECORD's typelem, ie, zero.
+	 * Use the passed type unless it's RECORD; we can't support input of
+	 * anonymous types, mainly because there's no good way to figure out
+	 * which anonymous type is wanted.	Note that for RECORD, what we'll
+	 * probably actually get is RECORD's typelem, ie, zero.
 	 */
 	if (tupType == InvalidOid || tupType == RECORDOID)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("input of anonymous composite types is not implemented")));
+		errmsg("input of anonymous composite types is not implemented")));
 	tupTypmod = -1;				/* for all non-anonymous types */
 	tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
 	ncolumns = tupdesc->natts;
@@ -112,8 +112,8 @@ record_in(PG_FUNCTION_ARGS)
 	nulls = (char *) palloc(ncolumns * sizeof(char));
 
 	/*
-	 * Scan the string.  We use "buf" to accumulate the de-quoted data
-	 * for each column, which is then fed to the appropriate input converter.
+	 * Scan the string.  We use "buf" to accumulate the de-quoted data for
+	 * each column, which is then fed to the appropriate input converter.
 	 */
 	ptr = string;
 	/* Allow leading whitespace */
@@ -145,10 +145,11 @@ record_in(PG_FUNCTION_ARGS)
 			/* Skip comma that separates prior field from this one */
 			if (*ptr == ',')
 				ptr++;
-			else				/* *ptr must be ')' */
+			else
+/* *ptr must be ')' */
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-						 errmsg("malformed record literal: \"%s\"", string),
+					  errmsg("malformed record literal: \"%s\"", string),
 						 errdetail("Too few columns.")));
 		}
 
@@ -161,13 +162,13 @@ record_in(PG_FUNCTION_ARGS)
 		else
 		{
 			/* Extract string for this column */
-			bool	inquote = false;
+			bool		inquote = false;
 
 			buf.len = 0;
 			buf.data[0] = '\0';
 			while (inquote || !(*ptr == ',' || *ptr == ')'))
 			{
-				char ch = *ptr++;
+				char		ch = *ptr++;
 
 				if (ch == '\0')
 					ereport(ERROR,
@@ -179,10 +180,10 @@ record_in(PG_FUNCTION_ARGS)
 				{
 					if (*ptr == '\0')
 						ereport(ERROR,
-								(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-								 errmsg("malformed record literal: \"%s\"",
-										string),
-								 errdetail("Unexpected end of input.")));
+						   (errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+							errmsg("malformed record literal: \"%s\"",
+								   string),
+							errdetail("Unexpected end of input.")));
 					appendStringInfoChar(&buf, *ptr++);
 				}
 				else if (ch == '\"')
@@ -216,8 +217,8 @@ record_in(PG_FUNCTION_ARGS)
 
 			values[i] = FunctionCall3(&column_info->proc,
 									  CStringGetDatum(buf.data),
-									  ObjectIdGetDatum(column_info->typioparam),
-									  Int32GetDatum(tupdesc->attrs[i]->atttypmod));
+							   ObjectIdGetDatum(column_info->typioparam),
+							Int32GetDatum(tupdesc->attrs[i]->atttypmod));
 			nulls[i] = ' ';
 		}
 
@@ -333,9 +334,9 @@ record_out(PG_FUNCTION_ARGS)
 	{
 		ColumnIOData *column_info = &my_extra->columns[i];
 		Oid			column_type = tupdesc->attrs[i]->atttypid;
-		char	*value;
-		char	*tmp;
-		bool	nq;
+		char	   *value;
+		char	   *tmp;
+		bool		nq;
 
 		/* Ignore dropped columns in datatype */
 		if (tupdesc->attrs[i]->attisdropped)
@@ -356,7 +357,7 @@ record_out(PG_FUNCTION_ARGS)
 		 */
 		if (column_info->column_type != column_type)
 		{
-			bool	typIsVarlena;
+			bool		typIsVarlena;
 
 			getTypeOutputInfo(column_type,
 							  &column_info->typiofunc,
@@ -369,8 +370,8 @@ record_out(PG_FUNCTION_ARGS)
 
 		value = DatumGetCString(FunctionCall3(&column_info->proc,
 											  values[i],
-											  ObjectIdGetDatum(column_info->typioparam),
-											  Int32GetDatum(tupdesc->attrs[i]->atttypmod)));
+							   ObjectIdGetDatum(column_info->typioparam),
+						   Int32GetDatum(tupdesc->attrs[i]->atttypmod)));
 
 		/* Detect whether we need double quotes for this value */
 		nq = (value[0] == '\0');	/* force quotes for empty string */
@@ -430,15 +431,15 @@ record_recv(PG_FUNCTION_ARGS)
 	char	   *nulls;
 
 	/*
-	 * Use the passed type unless it's RECORD; we can't support input
-	 * of anonymous types, mainly because there's no good way to figure
-	 * out which anonymous type is wanted.  Note that for RECORD,
-	 * what we'll probably actually get is RECORD's typelem, ie, zero.
+	 * Use the passed type unless it's RECORD; we can't support input of
+	 * anonymous types, mainly because there's no good way to figure out
+	 * which anonymous type is wanted.	Note that for RECORD, what we'll
+	 * probably actually get is RECORD's typelem, ie, zero.
 	 */
 	if (tupType == InvalidOid || tupType == RECORDOID)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("input of anonymous composite types is not implemented")));
+		errmsg("input of anonymous composite types is not implemented")));
 	tupTypmod = -1;				/* for all non-anonymous types */
 	tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
 	ncolumns = tupdesc->natts;
@@ -531,9 +532,10 @@ record_recv(PG_FUNCTION_ARGS)
 		{
 			/*
 			 * Rather than copying data around, we just set up a phony
-			 * StringInfo pointing to the correct portion of the input buffer.
-			 * We assume we can scribble on the input buffer so as to maintain
-			 * the convention that StringInfos have a trailing null.
+			 * StringInfo pointing to the correct portion of the input
+			 * buffer. We assume we can scribble on the input buffer so as
+			 * to maintain the convention that StringInfos have a trailing
+			 * null.
 			 */
 			StringInfoData item_buf;
 			char		csave;
@@ -561,7 +563,7 @@ record_recv(PG_FUNCTION_ARGS)
 
 			values[i] = FunctionCall2(&column_info->proc,
 									  PointerGetDatum(&item_buf),
-									  ObjectIdGetDatum(column_info->typioparam));
+							  ObjectIdGetDatum(column_info->typioparam));
 
 			nulls[i] = ' ';
 
@@ -569,8 +571,8 @@ record_recv(PG_FUNCTION_ARGS)
 			if (item_buf.cursor != itemlen)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
-						 errmsg("improper binary format in record column %d",
-								i + 1)));
+					 errmsg("improper binary format in record column %d",
+							i + 1)));
 
 			buf->data[buf->cursor] = csave;
 		}
@@ -694,7 +696,7 @@ record_send(PG_FUNCTION_ARGS)
 		 */
 		if (column_info->column_type != column_type)
 		{
-			bool	typIsVarlena;
+			bool		typIsVarlena;
 
 			getTypeBinaryOutputInfo(column_type,
 									&column_info->typiofunc,
@@ -707,7 +709,7 @@ record_send(PG_FUNCTION_ARGS)
 
 		outputbytes = DatumGetByteaP(FunctionCall2(&column_info->proc,
 												   values[i],
-												   ObjectIdGetDatum(column_info->typioparam)));
+							 ObjectIdGetDatum(column_info->typioparam)));
 
 		/* We assume the result will not have been toasted */
 		pq_sendint(&buf, VARSIZE(outputbytes) - VARHDRSZ, 4);

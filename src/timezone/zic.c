@@ -3,7 +3,7 @@
  * 1996-06-05 by Arthur David Olson (arthur_david_olson@nih.gov).
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/zic.c,v 1.11 2004/08/11 16:53:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/zic.c,v 1.12 2004/08/29 05:07:02 momjian Exp $
  */
 
 #include "postgres.h"
@@ -353,7 +353,7 @@ static const int len_years[2] = {
 
 static struct attype
 {
-	pg_time_t		at;
+	pg_time_t	at;
 	unsigned char type;
 }	attypes[TZ_MAX_TIMES];
 static long gmtoffs[TZ_MAX_TYPES];
@@ -412,8 +412,8 @@ static void
 error(const char *string)
 {
 	/*
-	 * Match the format of "cc" to allow sh users to  zic ... 2>&1 |
-	 * error -t "*" -v on BSD systems.
+	 * Match the format of "cc" to allow sh users to  zic ... 2>&1 | error
+	 * -t "*" -v on BSD systems.
 	 */
 	(void) fprintf(stderr, _("\"%s\", line %d: %s"),
 				   filename, linenum, string);
@@ -679,13 +679,13 @@ setboundaries(void)
 	 * pg_time_t is always signed, but might be only 32 bits ...
 	 */
 	min_time = ~(pg_time_t) 0;
-	min_time <<= TYPE_BIT(pg_time_t) - 1;
+	min_time <<= TYPE_BIT(pg_time_t) -1;
 	max_time = ~(pg_time_t) 0 - min_time;
 
 	/*
-	 * For the moment, hard-wire the range as 1901 to 2038.  We cannot
-	 * go wider without adopting an incompatible zone file format, which
-	 * is a step I'd just as soon not take just yet.
+	 * For the moment, hard-wire the range as 1901 to 2038.  We cannot go
+	 * wider without adopting an incompatible zone file format, which is a
+	 * step I'd just as soon not take just yet.
 	 */
 	min_time = Max(min_time, (pg_time_t) INT_MIN);
 	max_time = Min(max_time, (pg_time_t) INT_MAX);
@@ -800,8 +800,8 @@ associate(void)
 								  TRUE);
 
 			/*
-			 * Note, though, that if there's no rule, a '%s' in the
-			 * format is a bad thing.
+			 * Note, though, that if there's no rule, a '%s' in the format
+			 * is a bad thing.
 			 */
 			if (strchr(zp->z_format, '%') != 0)
 				error(_("%s in ruleless zone"));
@@ -1137,8 +1137,8 @@ inzsub(register char **fields, const int nfields, const int iscont)
 	zones[nzones++] = z;
 
 	/*
-	 * If there was an UNTIL field on this line, there's more
-	 * information about the zone on the next line.
+	 * If there was an UNTIL field on this line, there's more information
+	 * about the zone on the next line.
 	 */
 	return hasuntil;
 }
@@ -1155,7 +1155,7 @@ inleap(register char **fields, const int nfields)
 				day;
 	long		dayoff,
 				tod;
-	pg_time_t		t;
+	pg_time_t	t;
 
 	if (nfields != LEAP_FIELDS)
 	{
@@ -1418,7 +1418,7 @@ rulesub(register struct rule * rp, const char *loyearp, const char *hiyearp,
 		min_year = rp->r_loyear;
 
 	/*
-	 * Day work. Accept things such as:  1  last-Sunday  Sun<=20  Sun>=7
+	 * Day work. Accept things such as:  1	last-Sunday  Sun<=20  Sun>=7
 	 */
 	dp = ecpyalloc(dayp);
 	if ((lp = byword(dp, lasts)) != NULL)
@@ -1505,7 +1505,7 @@ writezone(const char *name)
 				j;
 	static char *fullname;
 	static struct tzhead tzh;
-	pg_time_t		ats[TZ_MAX_TIMES];
+	pg_time_t	ats[TZ_MAX_TIMES];
 	unsigned char types[TZ_MAX_TIMES];
 
 	/*
@@ -1710,8 +1710,8 @@ outzone(const struct zone * zpfirst, const int zonecount)
 	charcnt = 0;
 
 	/*
-	 * Thanks to Earl Chew (earl@dnd.icp.nec.com.au) for noting the
-	 * need to unconditionally initialize startttisstd.
+	 * Thanks to Earl Chew (earl@dnd.icp.nec.com.au) for noting the need
+	 * to unconditionally initialize startttisstd.
 	 */
 	startttisstd = FALSE;
 	startttisgmt = FALSE;
@@ -1753,8 +1753,8 @@ outzone(const struct zone * zpfirst, const int zonecount)
 					break;
 
 				/*
-				 * Mark which rules to do in the current year. For
-				 * those to do, calculate rpytime(rp, year);
+				 * Mark which rules to do in the current year. For those
+				 * to do, calculate rpytime(rp, year);
 				 */
 				for (j = 0; j < zp->z_nrules; ++j)
 				{
@@ -1778,8 +1778,8 @@ outzone(const struct zone * zpfirst, const int zonecount)
 					if (useuntil)
 					{
 						/*
-						 * Turn untiltime into UTC assuming the
-						 * current gmtoff and stdoff values.
+						 * Turn untiltime into UTC assuming the current
+						 * gmtoff and stdoff values.
 						 */
 						untiltime = zp->z_untiltime;
 						if (!zp->z_untilrule.r_todisgmt)
@@ -1791,8 +1791,8 @@ outzone(const struct zone * zpfirst, const int zonecount)
 					}
 
 					/*
-					 * Find the rule (of those to do, if any) that
-					 * takes effect earliest in the year.
+					 * Find the rule (of those to do, if any) that takes
+					 * effect earliest in the year.
 					 */
 					k = -1;
 					for (j = 0; j < zp->z_nrules; ++j)
@@ -1955,8 +1955,7 @@ addtype(const long gmtoff, const char *abbr, const int isdst,
 	}
 
 	/*
-	 * There isn't one; add a new one, unless there are already too
-	 * many.
+	 * There isn't one; add a new one, unless there are already too many.
 	 */
 	if (typecnt >= TZ_MAX_TYPES)
 	{
@@ -2333,10 +2332,9 @@ mkdirs(char *argname)
 		if (!itsdir(name))
 		{
 			/*
-			 * It doesn't seem to exist, so we try to create it.
-			 * Creation may fail because of the directory being created
-			 * by some other multiprocessor, so we get to do extra
-			 * checking.
+			 * It doesn't seem to exist, so we try to create it. Creation
+			 * may fail because of the directory being created by some
+			 * other multiprocessor, so we get to do extra checking.
 			 */
 			if (mkdir(name, MKDIR_UMASK) != 0)
 			{

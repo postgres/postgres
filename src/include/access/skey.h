@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/skey.h,v 1.26 2004/08/29 04:13:03 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/skey.h,v 1.27 2004/08/29 05:06:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,7 +42,7 @@ typedef uint16 StrategyNumber;
 
 /*
  * A ScanKey represents the application of a comparison operator between
- * a table or index column and a constant.  When it's part of an array of
+ * a table or index column and a constant.	When it's part of an array of
  * ScanKeys, the comparison conditions are implicitly ANDed.  The index
  * column is the left argument of the operator, if it's a binary operator.
  * (The data structure can support unary indexable operators too; in that
@@ -61,7 +61,7 @@ typedef struct ScanKeyData
 {
 	int			sk_flags;		/* flags, see below */
 	AttrNumber	sk_attno;		/* table or index column number */
-	StrategyNumber sk_strategy;	/* operator strategy number */
+	StrategyNumber sk_strategy; /* operator strategy number */
 	Oid			sk_subtype;		/* strategy subtype */
 	FmgrInfo	sk_func;		/* lookup info for function to call */
 	Datum		sk_argument;	/* data to compare */
@@ -78,23 +78,23 @@ typedef ScanKeyData *ScanKey;
  * prototypes for functions in access/common/scankey.c
  */
 extern void ScanKeyInit(ScanKey entry,
-						AttrNumber attributeNumber,
-						StrategyNumber strategy,
-						RegProcedure procedure,
-						Datum argument);
+			AttrNumber attributeNumber,
+			StrategyNumber strategy,
+			RegProcedure procedure,
+			Datum argument);
 extern void ScanKeyEntryInitialize(ScanKey entry,
-								   int flags,
-								   AttrNumber attributeNumber,
-								   StrategyNumber strategy,
-								   Oid subtype,
-								   RegProcedure procedure,
-								   Datum argument);
+					   int flags,
+					   AttrNumber attributeNumber,
+					   StrategyNumber strategy,
+					   Oid subtype,
+					   RegProcedure procedure,
+					   Datum argument);
 extern void ScanKeyEntryInitializeWithInfo(ScanKey entry,
-										   int flags,
-										   AttrNumber attributeNumber,
-										   StrategyNumber strategy,
-										   Oid subtype,
-										   FmgrInfo *finfo,
-										   Datum argument);
+							   int flags,
+							   AttrNumber attributeNumber,
+							   StrategyNumber strategy,
+							   Oid subtype,
+							   FmgrInfo *finfo,
+							   Datum argument);
 
 #endif   /* SKEY_H */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execJunk.c,v 1.42 2004/08/29 04:12:31 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execJunk.c,v 1.43 2004/08/29 05:06:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -274,9 +274,9 @@ ExecRemoveJunk(JunkFilter *junkfilter, TupleTableSlot *slot)
 	 * dealing with a small number of attributes. for large tuples we just
 	 * use palloc.
 	 *
-	 * Note: we could use just one set of arrays if we were willing to
-	 * assume that the resno mapping is monotonic... I think it is, but
-	 * won't take the risk of breaking things right now.
+	 * Note: we could use just one set of arrays if we were willing to assume
+	 * that the resno mapping is monotonic... I think it is, but won't
+	 * take the risk of breaking things right now.
 	 */
 	if (cleanLength > 64)
 	{
@@ -309,7 +309,7 @@ ExecRemoveJunk(JunkFilter *junkfilter, TupleTableSlot *slot)
 	 */
 	for (i = 0; i < cleanLength; i++)
 	{
-		int j = cleanMap[i] - 1;
+		int			j = cleanMap[i] - 1;
 
 		values[i] = old_values[j];
 		nulls[i] = old_nulls[j];

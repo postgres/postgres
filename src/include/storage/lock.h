@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/lock.h,v 1.82 2004/08/29 04:13:10 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/storage/lock.h,v 1.83 2004/08/29 05:06:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,6 +48,7 @@ extern bool Debug_deadlocks;
  */
 typedef int LOCKMASK;
 typedef int LOCKMODE;
+
 /* MAX_LOCKMODES cannot be larger than the # of bits in LOCKMASK */
 #define MAX_LOCKMODES		10
 
@@ -60,6 +61,7 @@ typedef int LOCKMODE;
  * Lock methods are identified by LOCKMETHODID.
  */
 typedef uint16 LOCKMETHODID;
+
 /* MAX_LOCK_METHODS is the number of distinct lock control tables allowed */
 #define MAX_LOCK_METHODS	3
 
@@ -69,12 +71,12 @@ typedef uint16 LOCKMETHODID;
 
 #define LockMethodIsValid(lockmethodid) ((lockmethodid) != INVALID_LOCKMETHOD)
 
-extern int NumLockMethods;
+extern int	NumLockMethods;
 
 
 /*
  * This is the control structure for a lock table. It lives in shared
- * memory.  Currently, none of these fields change after startup.  In addition
+ * memory.	Currently, none of these fields change after startup.  In addition
  * to the LockMethodData, a lock table has a shared "lockHash" table holding
  * per-locked-object lock information, and a shared "proclockHash" table
  * holding per-lock-holder/waiter lock information.
@@ -90,9 +92,9 @@ extern int NumLockMethods;
  */
 typedef struct LockMethodData
 {
-	LWLockId		masterLock;
-	int				numLockModes;
-	LOCKMASK		conflictTab[MAX_LOCKMODES];
+	LWLockId	masterLock;
+	int			numLockModes;
+	LOCKMASK	conflictTab[MAX_LOCKMODES];
 } LockMethodData;
 
 typedef LockMethodData *LockMethod;
@@ -114,12 +116,12 @@ typedef struct LOCKTAG
 
 	/*
 	 * offnum should be part of objId union above, but doing that would
-	 * increase sizeof(LOCKTAG) due to padding.  Currently used by userlocks
-	 * only.
+	 * increase sizeof(LOCKTAG) due to padding.  Currently used by
+	 * userlocks only.
 	 */
 	OffsetNumber offnum;
 
-	LOCKMETHODID lockmethodid;		/* needed by userlocks */
+	LOCKMETHODID lockmethodid;	/* needed by userlocks */
 } LOCKTAG;
 
 
@@ -174,7 +176,7 @@ typedef struct LOCK
  *
  * Currently, session proclocks are used for user locks and for cross-xact
  * locks obtained for VACUUM.  Note that a single backend can hold locks
- * under several different XIDs at once (including session locks).  We treat
+ * under several different XIDs at once (including session locks).	We treat
  * such locks as never conflicting (a backend can never block itself).
  *
  * The holdMask field shows the already-granted locks represented by this
@@ -213,7 +215,7 @@ typedef struct PROCLOCK
 
 /*
  * Each backend also maintains a local hash table with information about each
- * lock it is currently interested in.  In particular the local table counts
+ * lock it is currently interested in.	In particular the local table counts
  * the number of times that lock has been acquired.  This allows multiple
  * requests for the same lock to be executed without additional accesses to
  * shared memory.  We also track the number of lock acquisitions per
@@ -230,8 +232,8 @@ typedef struct LOCALLOCKTAG
 typedef struct LOCALLOCKOWNER
 {
 	/*
-	 * Note: owner can be NULL to indicate a non-transactional lock.
-	 * Must use a forward struct reference to avoid circularity.
+	 * Note: owner can be NULL to indicate a non-transactional lock. Must
+	 * use a forward struct reference to avoid circularity.
 	 */
 	struct ResourceOwnerData *owner;
 	int			nLocks;			/* # of times held by this owner */
@@ -248,7 +250,7 @@ typedef struct LOCALLOCK
 	int			nLocks;			/* total number of times lock is held */
 	int			numLockOwners;	/* # of relevant ResourceOwners */
 	int			maxLockOwners;	/* allocated size of array */
-	LOCALLOCKOWNER *lockOwners;	/* dynamically resizable array */
+	LOCALLOCKOWNER *lockOwners; /* dynamically resizable array */
 } LOCALLOCK;
 
 #define LOCALLOCK_LOCKMETHOD(llock) ((llock).tag.lock.lockmethodid)
@@ -278,8 +280,8 @@ typedef struct
 extern void InitLocks(void);
 extern LockMethod GetLocksMethodTable(LOCK *lock);
 extern LOCKMETHODID LockMethodTableInit(const char *tabName,
-										const LOCKMASK *conflictsP,
-										int numModes, int maxBackends);
+					const LOCKMASK *conflictsP,
+					int numModes, int maxBackends);
 extern LOCKMETHODID LockMethodTableRename(LOCKMETHODID lockmethodid);
 extern bool LockAcquire(LOCKMETHODID lockmethodid, LOCKTAG *locktag,
 			TransactionId xid, LOCKMODE lockmode, bool dontWait);

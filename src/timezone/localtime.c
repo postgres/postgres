@@ -3,7 +3,7 @@
  * 1996-06-05 by Arthur David Olson (arthur_david_olson@nih.gov).
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/localtime.c,v 1.7 2004/06/03 02:08:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/localtime.c,v 1.8 2004/08/29 05:07:02 momjian Exp $
  */
 
 /*
@@ -117,9 +117,9 @@ static void gmtload(struct state * sp);
 static void gmtsub(const pg_time_t *timep, long offset, struct pg_tm * tmp);
 static void localsub(const pg_time_t *timep, long offset, struct pg_tm * tmp);
 static void timesub(const pg_time_t *timep, long offset,
-					const struct state * sp, struct pg_tm * tmp);
+		const struct state * sp, struct pg_tm * tmp);
 static pg_time_t transtime(pg_time_t janfirst, int year,
-						const struct rule * rulep, long offset);
+		  const struct rule * rulep, long offset);
 static int	tzload(const char *name, struct state * sp);
 static int	tzparse(const char *name, struct state * sp, int lastditch);
 
@@ -370,9 +370,8 @@ getsecs(register const char *strp, long *secsp)
 
 	/*
 	 * `HOURSPERDAY * DAYSPERWEEK - 1' allows quasi-Posix rules like
-	 * "M10.4.6/26", which does not conform to Posix, but which
-	 * specifies the equivalent of ``02:00 on the first Sunday on or
-	 * after 23 Oct''.
+	 * "M10.4.6/26", which does not conform to Posix, but which specifies
+	 * the equivalent of ``02:00 on the first Sunday on or after 23 Oct''.
 	 */
 	strp = getnum(strp, &num, 0, HOURSPERDAY * DAYSPERWEEK - 1);
 	if (strp == NULL)
@@ -512,10 +511,10 @@ transtime(const pg_time_t janfirst, const int year,
 		case JULIAN_DAY:
 
 			/*
-			 * Jn - Julian day, 1 == January 1, 60 == March 1 even in
-			 * leap years. In non-leap years, or if the day number is
-			 * 59 or less, just add SECSPERDAY times the day number-1 to
-			 * the time of January 1, midnight, to get the day.
+			 * Jn - Julian day, 1 == January 1, 60 == March 1 even in leap
+			 * years. In non-leap years, or if the day number is 59 or
+			 * less, just add SECSPERDAY times the day number-1 to the
+			 * time of January 1, midnight, to get the day.
 			 */
 			value = janfirst + (rulep->r_day - 1) * SECSPERDAY;
 			if (leapyear && rulep->r_day >= 60)
@@ -525,9 +524,8 @@ transtime(const pg_time_t janfirst, const int year,
 		case DAY_OF_YEAR:
 
 			/*
-			 * n - day of year. Just add SECSPERDAY times the day
-			 * number to the time of January 1, midnight, to get the
-			 * day.
+			 * n - day of year. Just add SECSPERDAY times the day number
+			 * to the time of January 1, midnight, to get the day.
 			 */
 			value = janfirst + rulep->r_day * SECSPERDAY;
 			break;
@@ -542,8 +540,8 @@ transtime(const pg_time_t janfirst, const int year,
 				value += mon_lengths[leapyear][i] * SECSPERDAY;
 
 			/*
-			 * Use Zeller's Congruence to get day-of-week of first day
-			 * of month.
+			 * Use Zeller's Congruence to get day-of-week of first day of
+			 * month.
 			 */
 			m1 = (rulep->r_mon + 9) % 12 + 1;
 			yy0 = (rulep->r_mon <= 2) ? (year - 1) : year;
@@ -555,9 +553,9 @@ transtime(const pg_time_t janfirst, const int year,
 				dow += DAYSPERWEEK;
 
 			/*
-			 * "dow" is the day-of-week of the first day of the month.
-			 * Get the day-of-month (zero-origin) of the first "dow" day
-			 * of the month.
+			 * "dow" is the day-of-week of the first day of the month. Get
+			 * the day-of-month (zero-origin) of the first "dow" day of
+			 * the month.
 			 */
 			d = rulep->r_day - dow;
 			if (d < 0)
@@ -652,8 +650,8 @@ tzparse(const char *name, register struct state * sp, const int lastditch)
 			struct rule end;
 			register int year;
 			register pg_time_t janfirst;
-			pg_time_t		starttime;
-			pg_time_t		endtime;
+			pg_time_t	starttime;
+			pg_time_t	endtime;
 
 			++name;
 			if ((name = getrule(name, &start)) == NULL)
@@ -750,8 +748,8 @@ tzparse(const char *name, register struct state * sp, const int lastditch)
 			theiroffset = theirstdoffset;
 
 			/*
-			 * Now juggle transition times and types tracking offsets
-			 * as you do.
+			 * Now juggle transition times and types tracking offsets as
+			 * you do.
 			 */
 			for (i = 0; i < sp->timecnt; ++i)
 			{
@@ -929,8 +927,8 @@ gmtsub(const pg_time_t *timep, const long offset, struct pg_tm * tmp)
 	timesub(timep, offset, gmtptr, tmp);
 
 	/*
-	 * Could get fancy here and deliver something such as "UTC+xxxx"
-	 * or "UTC-xxxx" if offset is non-zero, but this is no time for a
+	 * Could get fancy here and deliver something such as "UTC+xxxx" or
+	 * "UTC-xxxx" if offset is non-zero, but this is no time for a
 	 * treasure hunt.
 	 */
 	if (offset != 0)
@@ -952,6 +950,7 @@ timesub(const pg_time_t *timep, const long offset,
 		register const struct state * sp, register struct pg_tm * tmp)
 {
 	register const struct lsinfo *lp;
+
 	/* expand days to 64 bits to support full Julian-day range */
 	register int64 days;
 	register int idays;
@@ -1026,12 +1025,14 @@ timesub(const pg_time_t *timep, const long offset,
 	if (tmp->tm_wday < 0)
 		tmp->tm_wday += DAYSPERWEEK;
 	y = EPOCH_YEAR;
+
 	/*
-	 * Note: the point of adding 4800 is to ensure we make the same assumptions
-	 * as Postgres' Julian-date routines about the placement of leap years
-	 * in centuries BC, at least back to 4713BC which is as far as we'll go.
-	 * This is effectively extending Gregorian timekeeping into pre-Gregorian
-	 * centuries, which is a tad bogus but it conforms to the SQL spec...
+	 * Note: the point of adding 4800 is to ensure we make the same
+	 * assumptions as Postgres' Julian-date routines about the placement
+	 * of leap years in centuries BC, at least back to 4713BC which is as
+	 * far as we'll go. This is effectively extending Gregorian
+	 * timekeeping into pre-Gregorian centuries, which is a tad bogus but
+	 * it conforms to the SQL spec...
 	 */
 #define LEAPS_THRU_END_OF(y)	(((y) + 4800) / 4 - ((y) + 4800) / 100 + ((y) + 4800) / 400)
 	while (days < 0 || days >= (int64) year_lengths[yleap = isleap(y)])

@@ -26,18 +26,18 @@ init_dict(Oid id, DictInfo * dict)
 	bool		isnull;
 	Datum		pars[1];
 	int			stat;
-	void *plan;
-	char buf[1024];
-	char *nsp = get_namespace(TSNSP_FunctionOid);
+	void	   *plan;
+	char		buf[1024];
+	char	   *nsp = get_namespace(TSNSP_FunctionOid);
 
 	arg[0] = OIDOID;
 	pars[0] = ObjectIdGetDatum(id);
 
 	memset(dict, 0, sizeof(DictInfo));
 	SPI_connect();
-	sprintf(buf,"select dict_init, dict_initoption, dict_lexize from %s.pg_ts_dict where oid = $1", nsp);
+	sprintf(buf, "select dict_init, dict_initoption, dict_lexize from %s.pg_ts_dict where oid = $1", nsp);
 	pfree(nsp);
-	plan= SPI_prepare(buf, 1, arg);
+	plan = SPI_prepare(buf, 1, arg);
 	if (!plan)
 		ts_error(ERROR, "SPI_prepare() failed");
 
@@ -142,8 +142,9 @@ name2id_dict(text *name)
 	Datum		pars[1];
 	int			stat;
 	Oid			id = findSNMap_t(&(DList.name2id_map), name);
-	void *plan;
-	char buf[1024], *nsp;
+	void	   *plan;
+	char		buf[1024],
+			   *nsp;
 
 	arg[0] = TEXTOID;
 	pars[0] = PointerGetDatum(name);
@@ -153,9 +154,9 @@ name2id_dict(text *name)
 
 	nsp = get_namespace(TSNSP_FunctionOid);
 	SPI_connect();
-	sprintf(buf,"select oid from %s.pg_ts_dict where dict_name = $1", nsp);
+	sprintf(buf, "select oid from %s.pg_ts_dict where dict_name = $1", nsp);
 	pfree(nsp);
-	plan= SPI_prepare(buf, 1, arg);
+	plan = SPI_prepare(buf, 1, arg);
 	if (!plan)
 		ts_error(ERROR, "SPI_prepare() failed");
 
@@ -245,7 +246,8 @@ lexize_byname(PG_FUNCTION_ARGS)
 {
 	text	   *dictname = PG_GETARG_TEXT_P(0);
 	Datum		res;
-        SET_FUNCOID();
+
+	SET_FUNCOID();
 
 	res = DirectFunctionCall3(
 							  lexize,
@@ -267,7 +269,7 @@ Datum		set_curdict(PG_FUNCTION_ARGS);
 Datum
 set_curdict(PG_FUNCTION_ARGS)
 {
-        SET_FUNCOID();
+	SET_FUNCOID();
 	finddict(PG_GETARG_OID(0));
 	currect_dictionary_id = PG_GETARG_OID(0);
 	PG_RETURN_VOID();
@@ -279,7 +281,8 @@ Datum
 set_curdict_byname(PG_FUNCTION_ARGS)
 {
 	text	   *dictname = PG_GETARG_TEXT_P(0);
-        SET_FUNCOID();
+
+	SET_FUNCOID();
 	DirectFunctionCall1(
 						set_curdict,
 						ObjectIdGetDatum(name2id_dict(dictname))
@@ -294,7 +297,8 @@ Datum
 lexize_bycurrent(PG_FUNCTION_ARGS)
 {
 	Datum		res;
-        SET_FUNCOID();
+
+	SET_FUNCOID();
 	if (currect_dictionary_id == 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),

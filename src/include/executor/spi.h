@@ -2,7 +2,7 @@
  *
  * spi.h
  *
- * $PostgreSQL: pgsql/src/include/executor/spi.h,v 1.46 2004/07/31 20:55:42 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/executor/spi.h,v 1.47 2004/08/29 05:06:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,17 +81,17 @@ extern int	SPI_connect(void);
 extern int	SPI_finish(void);
 extern void SPI_push(void);
 extern void SPI_pop(void);
-extern int  SPI_exec(const char *src, int tcount);
-extern int  SPI_execp(void *plan, Datum *values, const char *Nulls,
+extern int	SPI_exec(const char *src, int tcount);
+extern int SPI_execp(void *plan, Datum *values, const char *Nulls,
 		  int tcount);
 extern int SPI_execp_current(void *plan, Datum *values, const char *Nulls,
-							 bool useCurrentSnapshot, int tcount);
+				  bool useCurrentSnapshot, int tcount);
 extern void *SPI_prepare(const char *src, int nargs, Oid *argtypes);
 extern void *SPI_saveplan(void *plan);
 extern int	SPI_freeplan(void *plan);
 
-extern Oid SPI_getargtypeid(void *plan, int argIndex);
-extern int SPI_getargcount(void *plan);
+extern Oid	SPI_getargtypeid(void *plan, int argIndex);
+extern int	SPI_getargcount(void *plan);
 extern bool SPI_is_cursor_plan(void *plan);
 extern const char *SPI_result_code_string(int code);
 

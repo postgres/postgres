@@ -404,7 +404,8 @@ tsvector_in(PG_FUNCTION_ARGS)
 			   *cur;
 	int4		i,
 				buflen = 256;
-        SET_FUNCOID();
+
+	SET_FUNCOID();
 	state.prsbuf = buf;
 	state.len = 32;
 	state.word = (char *) palloc(state.len);
@@ -453,7 +454,7 @@ tsvector_in(PG_FUNCTION_ARGS)
 	if (len > 0)
 		len = uniqueentry(arr, len, tmpbuf, &buflen);
 	else
-		buflen=0;
+		buflen = 0;
 	totallen = CALCDATASIZE(len, buflen);
 	in = (tsvector *) palloc(totallen);
 	memset(in, 0, totallen);
@@ -638,7 +639,8 @@ uniqueWORD(TSWORD * a, int4 l)
 					res->alen *= 2;
 					res->pos.apos = (uint16 *) repalloc(res->pos.apos, sizeof(uint16) * res->alen);
 				}
-				if ( res->pos.apos[0]==0 || res->pos.apos[res->pos.apos[0]] != LIMITPOS(ptr->pos.pos) ) { 
+				if (res->pos.apos[0] == 0 || res->pos.apos[res->pos.apos[0]] != LIMITPOS(ptr->pos.pos))
+				{
 					res->pos.apos[res->pos.apos[0] + 1] = LIMITPOS(ptr->pos.pos);
 					res->pos.apos[0]++;
 				}
@@ -725,7 +727,7 @@ to_tsvector(PG_FUNCTION_ARGS)
 	tsvector   *out = NULL;
 	TSCfgInfo  *cfg;
 
-        SET_FUNCOID();
+	SET_FUNCOID();
 	cfg = findcfg(PG_GETARG_INT32(0));
 
 	prs.lenwords = 32;
@@ -753,13 +755,14 @@ to_tsvector_name(PG_FUNCTION_ARGS)
 {
 	text	   *cfg = PG_GETARG_TEXT_P(0);
 	Datum		res;
-        SET_FUNCOID();
+
+	SET_FUNCOID();
 	res = DirectFunctionCall3(
-										  to_tsvector,
-										  Int32GetDatum(name2id_cfg(cfg)),
-										  PG_GETARG_DATUM(1),
-										  (Datum) 0
-	);
+							  to_tsvector,
+							  Int32GetDatum(name2id_cfg(cfg)),
+							  PG_GETARG_DATUM(1),
+							  (Datum) 0
+		);
 
 	PG_FREE_IF_COPY(cfg, 0);
 	PG_RETURN_DATUM(res);
@@ -769,13 +772,14 @@ Datum
 to_tsvector_current(PG_FUNCTION_ARGS)
 {
 	Datum		res;
-        SET_FUNCOID();
+
+	SET_FUNCOID();
 	res = DirectFunctionCall3(
-										  to_tsvector,
-										  Int32GetDatum(get_currcfg()),
-										  PG_GETARG_DATUM(0),
-										  (Datum) 0
-	);
+							  to_tsvector,
+							  Int32GetDatum(get_currcfg()),
+							  PG_GETARG_DATUM(0),
+							  (Datum) 0
+		);
 
 	PG_RETURN_DATUM(res);
 }
@@ -823,7 +827,7 @@ tsearch2(PG_FUNCTION_ARGS)
 	Oid			funcoid = InvalidOid;
 	TSCfgInfo  *cfg;
 
-        SET_FUNCOID();
+	SET_FUNCOID();
 	cfg = findcfg(get_currcfg());
 
 	if (!CALLED_AS_TRIGGER(fcinfo))
@@ -947,26 +951,30 @@ tsearch2(PG_FUNCTION_ARGS)
 }
 
 static int
-silly_cmp_tsvector(const tsvector *a, const tsvector *b) {
-	if ( a->len < b->len ) 	
+silly_cmp_tsvector(const tsvector * a, const tsvector * b)
+{
+	if (a->len < b->len)
 		return -1;
-	else if ( a->len > b->len )
+	else if (a->len > b->len)
 		return 1;
-	else if ( a->size < b->size ) 
+	else if (a->size < b->size)
 		return -1;
-	else if ( a->size > b->size )
+	else if (a->size > b->size)
 		return 1;
-	else {
-		unsigned char *aptr=(unsigned char *)(a->data) + DATAHDRSIZE;
-		unsigned char *bptr=(unsigned char *)(b->data) + DATAHDRSIZE;
-		
-		while( aptr - ( (unsigned char *)(a->data) ) < a->len ) {
-			if ( *aptr != *bptr )
-				return ( *aptr < *bptr ) ? -1 : 1;
-			aptr++; bptr++;
-		} 
+	else
+	{
+		unsigned char *aptr = (unsigned char *) (a->data) + DATAHDRSIZE;
+		unsigned char *bptr = (unsigned char *) (b->data) + DATAHDRSIZE;
+
+		while (aptr - ((unsigned char *) (a->data)) < a->len)
+		{
+			if (*aptr != *bptr)
+				return (*aptr < *bptr) ? -1 : 1;
+			aptr++;
+			bptr++;
+		}
 	}
-	return 0;	
+	return 0;
 }
 
 PG_FUNCTION_INFO_V1(tsvector_cmp);
@@ -976,60 +984,66 @@ PG_FUNCTION_INFO_V1(tsvector_eq);
 PG_FUNCTION_INFO_V1(tsvector_ne);
 PG_FUNCTION_INFO_V1(tsvector_ge);
 PG_FUNCTION_INFO_V1(tsvector_gt);
-Datum           tsvector_cmp(PG_FUNCTION_ARGS);
-Datum           tsvector_lt(PG_FUNCTION_ARGS);
-Datum           tsvector_le(PG_FUNCTION_ARGS);
-Datum           tsvector_eq(PG_FUNCTION_ARGS);
-Datum           tsvector_ne(PG_FUNCTION_ARGS);
-Datum           tsvector_ge(PG_FUNCTION_ARGS);
-Datum           tsvector_gt(PG_FUNCTION_ARGS);
+Datum		tsvector_cmp(PG_FUNCTION_ARGS);
+Datum		tsvector_lt(PG_FUNCTION_ARGS);
+Datum		tsvector_le(PG_FUNCTION_ARGS);
+Datum		tsvector_eq(PG_FUNCTION_ARGS);
+Datum		tsvector_ne(PG_FUNCTION_ARGS);
+Datum		tsvector_ge(PG_FUNCTION_ARGS);
+Datum		tsvector_gt(PG_FUNCTION_ARGS);
 
-#define RUNCMP     									\
-tsvector *a        = (tsvector *) DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_DATUM(0)));\
-tsvector *b        = (tsvector *) DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_DATUM(1)));\
+#define RUNCMP										\
+tsvector *a		   = (tsvector *) DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_DATUM(0)));\
+tsvector *b		   = (tsvector *) DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_DATUM(1)));\
 int res = silly_cmp_tsvector(a,b);							\
 PG_FREE_IF_COPY(a,0);									\
 PG_FREE_IF_COPY(b,1);									\
 
 Datum
-tsvector_cmp(PG_FUNCTION_ARGS)   {
+tsvector_cmp(PG_FUNCTION_ARGS)
+{
 	RUNCMP
 	PG_RETURN_INT32(res);
 }
 
 Datum
-tsvector_lt(PG_FUNCTION_ARGS) {
+tsvector_lt(PG_FUNCTION_ARGS)
+{
 	RUNCMP
 	PG_RETURN_BOOL((res < 0) ? true : false);
 }
 
 Datum
-tsvector_le(PG_FUNCTION_ARGS) {
+tsvector_le(PG_FUNCTION_ARGS)
+{
 	RUNCMP
 	PG_RETURN_BOOL((res <= 0) ? true : false);
 }
 
 Datum
-tsvector_eq(PG_FUNCTION_ARGS) {
+tsvector_eq(PG_FUNCTION_ARGS)
+{
 	RUNCMP
 	PG_RETURN_BOOL((res == 0) ? true : false);
 }
 
 Datum
-tsvector_ge(PG_FUNCTION_ARGS) {
+tsvector_ge(PG_FUNCTION_ARGS)
+{
 	RUNCMP
 	PG_RETURN_BOOL((res >= 0) ? true : false);
 }
- 
+
 Datum
-tsvector_gt(PG_FUNCTION_ARGS) {
+tsvector_gt(PG_FUNCTION_ARGS)
+{
 	RUNCMP
 	PG_RETURN_BOOL((res > 0) ? true : false);
-}               
- 
-Datum
-tsvector_ne(PG_FUNCTION_ARGS) {   
-	RUNCMP      
-	PG_RETURN_BOOL((res != 0) ? true : false);
 }
 
+Datum
+tsvector_ne(PG_FUNCTION_ARGS)
+{
+	RUNCMP
+	PG_RETURN_BOOL((res != 0) ? true : false);
+}

@@ -34,7 +34,7 @@
  *	the other backends won't see our updated tuples as good.
  *
  *	When a subtransaction aborts, we can process and discard any events
- *	it has queued.  When a subtransaction commits, we just add its events
+ *	it has queued.	When a subtransaction commits, we just add its events
  *	to the pending lists of the parent transaction.
  *
  *	In short, we need to remember until xact end every insert or delete
@@ -80,7 +80,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/inval.c,v 1.65 2004/08/29 04:12:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/inval.c,v 1.66 2004/08/29 05:06:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -146,7 +146,7 @@ typedef struct TransInvalidationInfo
 	InvalidationListHeader PriorCmdInvalidMsgs;
 
 	/* init file must be invalidated? */
-	bool RelcacheInitFileInval;
+	bool		RelcacheInitFileInval;
 } TransInvalidationInfo;
 
 static TransInvalidationInfo *transInvalInfo = NULL;
@@ -304,7 +304,7 @@ AddRelcacheInvalidationMessage(InvalidationListHeader *hdr,
 	/* relfilenode fields must be checked to support reassignment */
 	ProcessMessageList(hdr->rclist,
 					   if (msg->rc.relId == relId &&
-						   RelFileNodeEquals(msg->rc.physId, physId)) return);
+					  RelFileNodeEquals(msg->rc.physId, physId)) return);
 
 	/* OK, add the item */
 	msg.rc.id = SHAREDINVALRELCACHE_ID;
@@ -411,9 +411,9 @@ LocalExecuteInvalidationMessage(SharedInvalidationMessage *msg)
 	else if (msg->id == SHAREDINVALRELCACHE_ID)
 	{
 		/*
-		 * If the message includes a valid relfilenode, we must ensure that
-		 * smgr cache entry gets zapped.  The relcache will handle this if
-		 * called, otherwise we must do it directly.
+		 * If the message includes a valid relfilenode, we must ensure
+		 * that smgr cache entry gets zapped.  The relcache will handle
+		 * this if called, otherwise we must do it directly.
 		 */
 		if (msg->rc.dbId == MyDatabaseId || msg->rc.dbId == InvalidOid)
 		{
@@ -483,7 +483,7 @@ PrepareForTupleInvalidation(Relation relation, HeapTuple tuple,
 	Oid			tupleRelId;
 	Oid			databaseId;
 	Oid			relationId;
-	RelFileNode	rnode;
+	RelFileNode rnode;
 
 	/* Do nothing during bootstrap */
 	if (IsBootstrapProcessingMode())
@@ -531,12 +531,14 @@ PrepareForTupleInvalidation(Relation relation, HeapTuple tuple,
 			rnode.spcNode = MyDatabaseTableSpace;
 		rnode.dbNode = databaseId;
 		rnode.relNode = classtup->relfilenode;
+
 		/*
-		 * Note: during a pg_class row update that assigns a new relfilenode
-		 * or reltablespace value, we will be called on both the old and new
-		 * tuples, and thus will broadcast invalidation messages showing both
-		 * the old and new RelFileNode values.  This ensures that other
-		 * backends will close smgr references to the old file.
+		 * Note: during a pg_class row update that assigns a new
+		 * relfilenode or reltablespace value, we will be called on both
+		 * the old and new tuples, and thus will broadcast invalidation
+		 * messages showing both the old and new RelFileNode values.  This
+		 * ensures that other backends will close smgr references to the
+		 * old file.
 		 */
 	}
 	else if (tupleRelId == RelOid_pg_attribute)
@@ -544,13 +546,15 @@ PrepareForTupleInvalidation(Relation relation, HeapTuple tuple,
 		Form_pg_attribute atttup = (Form_pg_attribute) GETSTRUCT(tuple);
 
 		relationId = atttup->attrelid;
+
 		/*
-		 * KLUGE ALERT: we always send the relcache event with MyDatabaseId,
-		 * even if the rel in question is shared (which we can't easily tell).
-		 * This essentially means that only backends in this same database
-		 * will react to the relcache flush request.  This is in fact
-		 * appropriate, since only those backends could see our pg_attribute
-		 * change anyway.  It looks a bit ugly though.
+		 * KLUGE ALERT: we always send the relcache event with
+		 * MyDatabaseId, even if the rel in question is shared (which we
+		 * can't easily tell). This essentially means that only backends
+		 * in this same database will react to the relcache flush request.
+		 * This is in fact appropriate, since only those backends could
+		 * see our pg_attribute change anyway.	It looks a bit ugly
+		 * though.
 		 */
 		databaseId = MyDatabaseId;
 		/* We assume no smgr cache flush is needed, either */
@@ -659,7 +663,7 @@ AtEOXact_Inval(bool isCommit)
 			RelationCacheInitFileInvalidate(true);
 
 		AppendInvalidationMessages(&transInvalInfo->PriorCmdInvalidMsgs,
-								   &transInvalInfo->CurrentCmdInvalidMsgs);
+								 &transInvalInfo->CurrentCmdInvalidMsgs);
 
 		ProcessInvalidationMessages(&transInvalInfo->PriorCmdInvalidMsgs,
 									SendSharedInvalidMessage);
@@ -690,7 +694,7 @@ AtEOXact_Inval(bool isCommit)
  * We can forget about CurrentCmdInvalidMsgs too, since those changes haven't
  * touched the caches yet.
  *
- * In any case, pop the transaction stack.  We need not physically free memory
+ * In any case, pop the transaction stack.	We need not physically free memory
  * here, since CurTransactionContext is about to be emptied anyway
  * (if aborting).
  */
@@ -748,8 +752,8 @@ CommandEndInvalidationMessages(void)
 {
 	/*
 	 * You might think this shouldn't be called outside any transaction,
-	 * but bootstrap does it, and also ABORT issued when not in a transaction.
-	 * So just quietly return if no state to work on.
+	 * but bootstrap does it, and also ABORT issued when not in a
+	 * transaction. So just quietly return if no state to work on.
 	 */
 	if (transInvalInfo == NULL)
 		return;
@@ -808,7 +812,7 @@ CacheInvalidateRelcacheByTuple(HeapTuple classTuple)
 	Form_pg_class classtup = (Form_pg_class) GETSTRUCT(classTuple);
 	Oid			databaseId;
 	Oid			relationId;
-	RelFileNode	rnode;
+	RelFileNode rnode;
 
 	relationId = HeapTupleGetOid(classTuple);
 	if (classtup->relisshared)

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.429 2004/08/29 04:12:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.430 2004/08/29 05:06:49 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -77,7 +77,7 @@ const char *debug_query_string; /* for pgmonitor and
 CommandDest whereToSendOutput = Debug;
 
 /* flag for logging end of session */
-bool        Log_disconnections = false;
+bool		Log_disconnections = false;
 
 LogStmtLevel log_statement = LOGSTMT_NONE;
 
@@ -91,7 +91,7 @@ int			max_stack_depth = 2048;
  */
 
 /* max_stack_depth converted to bytes for speed of checking */
-static int	max_stack_depth_bytes = 2048*1024;
+static int	max_stack_depth_bytes = 2048 * 1024;
 
 /* stack base pointer (initialized by PostgresMain) */
 static char *stack_base_ptr = NULL;
@@ -436,9 +436,9 @@ pg_parse_and_rewrite(const char *query_string,	/* string to execute */
 		Node	   *parsetree = (Node *) lfirst(list_item);
 
 		querytree_list = list_concat(querytree_list,
-							   pg_analyze_and_rewrite(parsetree,
-													  paramTypes,
-													  numParams));
+									 pg_analyze_and_rewrite(parsetree,
+															paramTypes,
+															numParams));
 	}
 
 	return querytree_list;
@@ -480,24 +480,24 @@ pg_parse_query(const char *query_string)
 		{
 			Node	   *parsetree = (Node *) lfirst(parsetree_item);
 			const char *commandTag;
-	
+
 			if (IsA(parsetree, ExplainStmt) &&
-				((ExplainStmt *)parsetree)->analyze)
-				parsetree = (Node *)(((ExplainStmt *)parsetree)->query);
-			
+				((ExplainStmt *) parsetree)->analyze)
+				parsetree = (Node *) (((ExplainStmt *) parsetree)->query);
+
 			if (IsA(parsetree, PrepareStmt))
-				parsetree = (Node *)(((PrepareStmt *)parsetree)->query);
-			
+				parsetree = (Node *) (((PrepareStmt *) parsetree)->query);
+
 			if (IsA(parsetree, SelectStmt))
-				continue;	/* optimization for frequent command */
-				
+				continue;		/* optimization for frequent command */
+
 			if (log_statement == LOGSTMT_MOD &&
 				(IsA(parsetree, InsertStmt) ||
 				 IsA(parsetree, UpdateStmt) ||
 				 IsA(parsetree, DeleteStmt) ||
 				 IsA(parsetree, TruncateStmt) ||
 				 (IsA(parsetree, CopyStmt) &&
-				  ((CopyStmt *)parsetree)->is_from)))	/* COPY FROM */
+				  ((CopyStmt *) parsetree)->is_from)))	/* COPY FROM */
 			{
 				ereport(LOG,
 						(errmsg("statement: %s", query_string)));
@@ -843,7 +843,7 @@ exec_simple_query(const char *query_string)
 				ereport(ERROR,
 						(errcode(ERRCODE_IN_FAILED_SQL_TRANSACTION),
 						 errmsg("current transaction is aborted, "
-					 "commands ignored until end of transaction block")));
+					"commands ignored until end of transaction block")));
 		}
 
 		/* Make sure we are in a transaction command */
@@ -1006,22 +1006,22 @@ exec_simple_query(const char *query_string)
 		if (save_log_duration)
 			ereport(LOG,
 					(errmsg("duration: %ld.%03ld ms",
-							(long) ((stop_t.tv_sec - start_t.tv_sec) * 1000 +
-							(stop_t.tv_usec - start_t.tv_usec) / 1000),
-							(long) (stop_t.tv_usec - start_t.tv_usec) % 1000)));
+						(long) ((stop_t.tv_sec - start_t.tv_sec) * 1000 +
+							  (stop_t.tv_usec - start_t.tv_usec) / 1000),
+					 (long) (stop_t.tv_usec - start_t.tv_usec) % 1000)));
 
 		/*
-		 * Output a duration_statement to the log if the query has exceeded
-		 * the min duration, or if we are to print all durations.
+		 * Output a duration_statement to the log if the query has
+		 * exceeded the min duration, or if we are to print all durations.
 		 */
 		if (save_log_min_duration_statement == 0 ||
 			(save_log_min_duration_statement > 0 &&
 			 usecs >= save_log_min_duration_statement * 1000))
 			ereport(LOG,
 					(errmsg("duration: %ld.%03ld ms  statement: %s",
-							(long) ((stop_t.tv_sec - start_t.tv_sec) * 1000 +
-							(stop_t.tv_usec - start_t.tv_usec) / 1000),
-							(long) (stop_t.tv_usec - start_t.tv_usec) % 1000,
+						(long) ((stop_t.tv_sec - start_t.tv_sec) * 1000 +
+							  (stop_t.tv_usec - start_t.tv_usec) / 1000),
+						(long) (stop_t.tv_usec - start_t.tv_usec) % 1000,
 							query_string)));
 	}
 
@@ -1164,7 +1164,7 @@ exec_parse_message(const char *query_string,	/* string to execute */
 				ereport(ERROR,
 						(errcode(ERRCODE_IN_FAILED_SQL_TRANSACTION),
 						 errmsg("current transaction is aborted, "
-					 "commands ignored until end of transaction block")));
+					"commands ignored until end of transaction block")));
 		}
 
 		/*
@@ -1191,8 +1191,8 @@ exec_parse_message(const char *query_string,	/* string to execute */
 			if (ptype == InvalidOid || ptype == UNKNOWNOID)
 				ereport(ERROR,
 						(errcode(ERRCODE_INDETERMINATE_DATATYPE),
-				  errmsg("could not determine data type of parameter $%d",
-						 i + 1)));
+				 errmsg("could not determine data type of parameter $%d",
+						i + 1)));
 			param_list = lappend_oid(param_list, ptype);
 		}
 
@@ -1349,7 +1349,7 @@ exec_bind_message(StringInfo input_message)
 		ereport(ERROR,
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
 				 errmsg("bind message supplies %d parameters, but prepared statement \"%s\" requires %d",
-					numParams, stmt_name, list_length(pstmt->argtype_list))));
+			   numParams, stmt_name, list_length(pstmt->argtype_list))));
 
 	/*
 	 * Create the portal.  Allow silent replacement of an existing portal
@@ -1464,7 +1464,7 @@ exec_bind_message(StringInfo input_message)
 						params[i].value =
 							OidFunctionCall2(typreceive,
 											 PointerGetDatum(&pbuf),
-											 ObjectIdGetDatum(typioparam));
+										   ObjectIdGetDatum(typioparam));
 
 						/* Trouble if it didn't eat the whole buffer */
 						if (pbuf.cursor != pbuf.len)
@@ -1516,8 +1516,8 @@ exec_bind_message(StringInfo input_message)
 	 * If we didn't plan the query before, do it now.  This allows the
 	 * planner to make use of the concrete parameter values we now have.
 	 *
-	 * This happens only for unnamed statements, and so switching into
-	 * the statement context for planning is correct (see notes in
+	 * This happens only for unnamed statements, and so switching into the
+	 * statement context for planning is correct (see notes in
 	 * exec_parse_message).
 	 */
 	if (pstmt->plan_list == NIL && pstmt->query_list != NIL &&
@@ -1648,7 +1648,7 @@ exec_execute_message(const char *portal_name, long max_rows)
 			ereport(ERROR,
 					(errcode(ERRCODE_IN_FAILED_SQL_TRANSACTION),
 					 errmsg("current transaction is aborted, "
-					 "commands ignored until end of transaction block")));
+					"commands ignored until end of transaction block")));
 	}
 
 	/* Check for cancel signal before we start execution */
@@ -1874,11 +1874,11 @@ quickdie(SIGNAL_ARGS)
 	 */
 	ereport(WARNING,
 			(errcode(ERRCODE_CRASH_SHUTDOWN),
-		errmsg("terminating connection because of crash of another server process"),
-	   errdetail("The postmaster has commanded this server process to roll back"
-				 " the current transaction and exit, because another"
-				 " server process exited abnormally and possibly corrupted"
-				 " shared memory."),
+			 errmsg("terminating connection because of crash of another server process"),
+			 errdetail("The postmaster has commanded this server process to roll back"
+					 " the current transaction and exit, because another"
+			   " server process exited abnormally and possibly corrupted"
+					   " shared memory."),
 			 errhint("In a moment you should be able to reconnect to the"
 					 " database and repeat your command.")));
 
@@ -2061,29 +2061,32 @@ ProcessInterrupts(void)
 void
 check_stack_depth(void)
 {
-	char	stack_top_loc;
-	int		stack_depth;
+	char		stack_top_loc;
+	int			stack_depth;
 
 	/*
 	 * Compute distance from PostgresMain's local variables to my own
 	 *
 	 * Note: in theory stack_depth should be ptrdiff_t or some such, but
-	 * since the whole point of this code is to bound the value to something
-	 * much less than integer-sized, int should work fine.
+	 * since the whole point of this code is to bound the value to
+	 * something much less than integer-sized, int should work fine.
 	 */
 	stack_depth = (int) (stack_base_ptr - &stack_top_loc);
+
 	/*
-	 * Take abs value, since stacks grow up on some machines, down on others
+	 * Take abs value, since stacks grow up on some machines, down on
+	 * others
 	 */
 	if (stack_depth < 0)
 		stack_depth = -stack_depth;
+
 	/*
 	 * Trouble?
 	 *
 	 * The test on stack_base_ptr prevents us from erroring out if called
-	 * during process setup or in a non-backend process.  Logically it should
-	 * be done first, but putting it here avoids wasting cycles during normal
-	 * cases.
+	 * during process setup or in a non-backend process.  Logically it
+	 * should be done first, but putting it here avoids wasting cycles
+	 * during normal cases.
 	 */
 	if (stack_depth > max_stack_depth_bytes &&
 		stack_base_ptr != NULL)
@@ -2166,10 +2169,10 @@ PostgresMain(int argc, char *argv[], const char *username)
 	char	   *tmp;
 	int			firstchar;
 	char		stack_base;
-	StringInfoData	input_message;
+	StringInfoData input_message;
 	sigjmp_buf	local_sigjmp_buf;
 	volatile bool send_rfq = true;
-	
+
 	/*
 	 * Catch standard options before doing much else.  This even works on
 	 * systems without getopt_long.
@@ -2216,7 +2219,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 			elog(FATAL, "%s: could not locate my own executable path",
 				 argv[0]);
 	}
-	
+
 	if (pkglib_path[0] == '\0')
 		get_pkglib_path(my_exec_path, pkglib_path);
 
@@ -2395,9 +2398,9 @@ PostgresMain(int argc, char *argv[], const char *username)
 				/*
 				 * ignore system indexes
 				 *
-				 * As of PG 7.4 this is safe to allow from the client,
-				 * since it only disables reading the system indexes,
-				 * not writing them.  Worst case consequence is slowness.
+				 * As of PG 7.4 this is safe to allow from the client, since
+				 * it only disables reading the system indexes, not
+				 * writing them.  Worst case consequence is slowness.
 				 */
 				IgnoreSystemIndexes(true);
 				break;
@@ -2412,6 +2415,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 				break;
 
 			case 'p':
+
 				/*
 				 * p - special flag passed if backend was forked by a
 				 * postmaster.
@@ -2486,7 +2490,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 				/*
 				 * wait N seconds to allow attach from a debugger
 				 */
-				pg_usleep(atoi(optarg)*1000000L);
+				pg_usleep(atoi(optarg) * 1000000L);
 				break;
 
 			case 'c':
@@ -2551,8 +2555,8 @@ PostgresMain(int argc, char *argv[], const char *username)
 
 		while (gucopts)
 		{
-			char *name;
-			char *value;
+			char	   *name;
+			char	   *value;
 
 			name = lfirst(gucopts);
 			gucopts = lnext(gucopts);
@@ -2651,8 +2655,8 @@ PostgresMain(int argc, char *argv[], const char *username)
 		{
 			ereport(FATAL,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("invalid command-line arguments for server process"),
-					 errhint("Try \"%s --help\" for more information.", argv[0])));
+			 errmsg("invalid command-line arguments for server process"),
+			errhint("Try \"%s --help\" for more information.", argv[0])));
 		}
 
 		XLOGPathInit();
@@ -2668,7 +2672,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("%s: invalid command-line arguments",
 							argv[0]),
-					 errhint("Try \"%s --help\" for more information.", argv[0])));
+			errhint("Try \"%s --help\" for more information.", argv[0])));
 		}
 		else if (argc - optind == 1)
 			dbname = argv[optind];
@@ -2766,13 +2770,13 @@ PostgresMain(int argc, char *argv[], const char *username)
 	 * If an exception is encountered, processing resumes here so we abort
 	 * the current transaction and start a new one.
 	 *
-	 * You might wonder why this isn't coded as an infinite loop around
-	 * a PG_TRY construct.  The reason is that this is the bottom of the
+	 * You might wonder why this isn't coded as an infinite loop around a
+	 * PG_TRY construct.  The reason is that this is the bottom of the
 	 * exception stack, and so with PG_TRY there would be no exception
 	 * handler in force at all during the CATCH part.  By leaving the
 	 * outermost setjmp always active, we have at least some chance of
-	 * recovering from an error during error recovery.  (If we get into
-	 * an infinite loop thereby, it will soon be stopped by overflow of
+	 * recovering from an error during error recovery.	(If we get into an
+	 * infinite loop thereby, it will soon be stopped by overflow of
 	 * elog.c's internal state stack.)
 	 */
 
@@ -2781,9 +2785,10 @@ PostgresMain(int argc, char *argv[], const char *username)
 		/*
 		 * NOTE: if you are tempted to add more code in this if-block,
 		 * consider the high probability that it should be in
-		 * AbortTransaction() instead.  The only stuff done directly here
-		 * should be stuff that is guaranteed to apply *only* for outer-level
-		 * error recovery, such as adjusting the FE/BE protocol status.
+		 * AbortTransaction() instead.	The only stuff done directly here
+		 * should be stuff that is guaranteed to apply *only* for
+		 * outer-level error recovery, such as adjusting the FE/BE
+		 * protocol status.
 		 */
 
 		/* Since not using PG_TRY, must reset error stack by hand */
@@ -2794,16 +2799,17 @@ PostgresMain(int argc, char *argv[], const char *username)
 
 		/*
 		 * Forget any pending QueryCancel request, since we're returning
-		 * to the idle loop anyway, and cancel the statement timer if running.
+		 * to the idle loop anyway, and cancel the statement timer if
+		 * running.
 		 */
 		QueryCancelPending = false;
 		disable_sig_alarm(true);
 		QueryCancelPending = false;		/* again in case timeout occurred */
 
 		/*
-		 * Turn off these interrupts too.  This is only needed here and not
-		 * in other exception-catching places since these interrupts are
-		 * only enabled while we wait for client input.
+		 * Turn off these interrupts too.  This is only needed here and
+		 * not in other exception-catching places since these interrupts
+		 * are only enabled while we wait for client input.
 		 */
 		DisableNotifyInterrupt();
 		DisableCatchupInterrupt();
@@ -2812,8 +2818,8 @@ PostgresMain(int argc, char *argv[], const char *username)
 		EmitErrorReport();
 
 		/*
-		 * Make sure debug_query_string gets reset before we possibly clobber
-		 * the storage it points at.
+		 * Make sure debug_query_string gets reset before we possibly
+		 * clobber the storage it points at.
 		 */
 		debug_query_string = NULL;
 
@@ -2882,8 +2888,8 @@ PostgresMain(int argc, char *argv[], const char *username)
 		 *
 		 * This is also a good time to send collected statistics to the
 		 * collector, and to update the PS stats display.  We avoid doing
-		 * those every time through the message loop because it'd slow down
-		 * processing of batched messages.
+		 * those every time through the message loop because it'd slow
+		 * down processing of batched messages.
 		 */
 		if (send_rfq)
 		{
@@ -3300,27 +3306,29 @@ ShowUsage(const char *title)
 /*
  * on_proc_exit handler to log end of session
  */
-static void 
+static void
 log_disconnections(int code, Datum arg)
 {
-	Port *port = MyProcPort;
+	Port	   *port = MyProcPort;
 	struct timeval end;
-	int  hours, minutes, seconds;
+	int			hours,
+				minutes,
+				seconds;
 
-	char session_time[20];
-	char uname[6+NAMEDATALEN];
-	char dbname[10+NAMEDATALEN];
-	char remote_host[7 + NI_MAXHOST];
-	char remote_port[7 + NI_MAXSERV];
-      
-	snprintf(uname, sizeof(uname)," user=%s",port->user_name);
-	snprintf(dbname, sizeof(dbname)," database=%s",port->database_name);
-	snprintf(remote_host,sizeof(remote_host)," host=%s",
+	char		session_time[20];
+	char		uname[6 + NAMEDATALEN];
+	char		dbname[10 + NAMEDATALEN];
+	char		remote_host[7 + NI_MAXHOST];
+	char		remote_port[7 + NI_MAXSERV];
+
+	snprintf(uname, sizeof(uname), " user=%s", port->user_name);
+	snprintf(dbname, sizeof(dbname), " database=%s", port->database_name);
+	snprintf(remote_host, sizeof(remote_host), " host=%s",
 			 port->remote_host);
-	snprintf(remote_port,sizeof(remote_port)," port=%s",port->remote_port);
+	snprintf(remote_port, sizeof(remote_port), " port=%s", port->remote_port);
 
 
-	gettimeofday(&end,NULL);
+	gettimeofday(&end, NULL);
 
 	if (end.tv_usec < port->session_start.tv_usec)
 	{
@@ -3338,16 +3346,20 @@ log_disconnections(int code, Datum arg)
 	/* if time has gone backwards for some reason say so, or print time */
 
 	if (end.tv_sec < 0)
-		snprintf(session_time,sizeof(session_time),"negative!");
+		snprintf(session_time, sizeof(session_time), "negative!");
 	else
-		/* for stricter accuracy here we could round - this is close enough */
+
+		/*
+		 * for stricter accuracy here we could round - this is close
+		 * enough
+		 */
 		snprintf(session_time, sizeof(session_time),
-			 "%d:%02d:%02d.%02d",
-			 hours, minutes, seconds, (int) (end.tv_usec/10000));
-      
+				 "%d:%02d:%02d.%02d",
+				 hours, minutes, seconds, (int) (end.tv_usec / 10000));
+
 	ereport(
-		LOG,
-		(errmsg("disconnection: session time: %s%s%s%s%s",
-				session_time,uname,dbname,remote_host,remote_port)));
+			LOG,
+			(errmsg("disconnection: session time: %s%s%s%s%s",
+				session_time, uname, dbname, remote_host, remote_port)));
 
 }

@@ -27,4 +27,4 @@
 #define CLVCHARPTRTYPE	124
 #define CTYPEMAX	25
 
-#endif /* ndef ECPG_SQLTYPES_H */
+#endif   /* ndef ECPG_SQLTYPES_H */

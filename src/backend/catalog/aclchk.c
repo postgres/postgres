@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.106 2004/08/29 04:12:26 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.107 2004/08/29 05:06:41 momjian Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -73,7 +73,7 @@ dumpacl(Acl *acl)
  * Determine the effective grantor ID for a GRANT or REVOKE operation.
  *
  * Ordinarily this is just the current user, but when a superuser does
- * GRANT or REVOKE, we pretend he is the object owner.  This ensures that
+ * GRANT or REVOKE, we pretend he is the object owner.	This ensures that
  * all granted privileges appear to flow from the object owner, and there
  * are never multiple "original sources" of a privilege.
  */
@@ -122,25 +122,25 @@ merge_acl_with_grant(Acl *old_acl, bool is_grant,
 	foreach(j, grantees)
 	{
 		PrivGrantee *grantee = (PrivGrantee *) lfirst(j);
-		AclItem		aclitem;
+		AclItem aclitem;
 		uint32		idtype;
 		Acl		   *newer_acl;
 
 		if (grantee->username)
 		{
-			aclitem.ai_grantee = get_usesysid(grantee->username);
+			aclitem.	ai_grantee = get_usesysid(grantee->username);
 
 			idtype = ACL_IDTYPE_UID;
 		}
 		else if (grantee->groupname)
 		{
-			aclitem.ai_grantee = get_grosysid(grantee->groupname);
+			aclitem.	ai_grantee = get_grosysid(grantee->groupname);
 
 			idtype = ACL_IDTYPE_GID;
 		}
 		else
 		{
-			aclitem.ai_grantee = ACL_ID_WORLD;
+			aclitem.	ai_grantee = ACL_ID_WORLD;
 
 			idtype = ACL_IDTYPE_WORLD;
 		}
@@ -157,18 +157,19 @@ merge_acl_with_grant(Acl *old_acl, bool is_grant,
 					(errcode(ERRCODE_INVALID_GRANT_OPERATION),
 					 errmsg("grant options can only be granted to individual users")));
 
-		aclitem.ai_grantor = grantor_uid;
+		aclitem.	ai_grantor = grantor_uid;
 
 		/*
 		 * The asymmetry in the conditions here comes from the spec.  In
-		 * GRANT, the grant_option flag signals WITH GRANT OPTION, which means
-		 * to grant both the basic privilege and its grant option.  But in
-		 * REVOKE, plain revoke revokes both the basic privilege and its
-		 * grant option, while REVOKE GRANT OPTION revokes only the option.
+		 * GRANT, the grant_option flag signals WITH GRANT OPTION, which
+		 * means to grant both the basic privilege and its grant option.
+		 * But in REVOKE, plain revoke revokes both the basic privilege
+		 * and its grant option, while REVOKE GRANT OPTION revokes only
+		 * the option.
 		 */
 		ACLITEM_SET_PRIVS_IDTYPE(aclitem,
-								 (is_grant || !grant_option) ? privileges : ACL_NO_RIGHTS,
-								 (!is_grant || grant_option) ? privileges : ACL_NO_RIGHTS,
+				(is_grant || !grant_option) ? privileges : ACL_NO_RIGHTS,
+				(!is_grant || grant_option) ? privileges : ACL_NO_RIGHTS,
 								 idtype);
 
 		newer_acl = aclupdate(new_acl, &aclitem, modechg, owner_uid, behavior);
@@ -318,11 +319,11 @@ ExecuteGrantStmt_Relation(GrantStmt *stmt)
 
 		/*
 		 * Restrict the operation to what we can actually grant or revoke,
-		 * and issue a warning if appropriate.  (For REVOKE this isn't quite
-		 * what the spec says to do: the spec seems to want a warning only
-		 * if no privilege bits actually change in the ACL.  In practice
-		 * that behavior seems much too noisy, as well as inconsistent with
-		 * the GRANT case.)
+		 * and issue a warning if appropriate.	(For REVOKE this isn't
+		 * quite what the spec says to do: the spec seems to want a
+		 * warning only if no privilege bits actually change in the ACL.
+		 * In practice that behavior seems much too noisy, as well as
+		 * inconsistent with the GRANT case.)
 		 */
 		this_privileges = privileges & my_goptions;
 		if (stmt->is_grant)
@@ -476,11 +477,11 @@ ExecuteGrantStmt_Database(GrantStmt *stmt)
 
 		/*
 		 * Restrict the operation to what we can actually grant or revoke,
-		 * and issue a warning if appropriate.  (For REVOKE this isn't quite
-		 * what the spec says to do: the spec seems to want a warning only
-		 * if no privilege bits actually change in the ACL.  In practice
-		 * that behavior seems much too noisy, as well as inconsistent with
-		 * the GRANT case.)
+		 * and issue a warning if appropriate.	(For REVOKE this isn't
+		 * quite what the spec says to do: the spec seems to want a
+		 * warning only if no privilege bits actually change in the ACL.
+		 * In practice that behavior seems much too noisy, as well as
+		 * inconsistent with the GRANT case.)
 		 */
 		this_privileges = privileges & my_goptions;
 		if (stmt->is_grant)
@@ -630,11 +631,11 @@ ExecuteGrantStmt_Function(GrantStmt *stmt)
 
 		/*
 		 * Restrict the operation to what we can actually grant or revoke,
-		 * and issue a warning if appropriate.  (For REVOKE this isn't quite
-		 * what the spec says to do: the spec seems to want a warning only
-		 * if no privilege bits actually change in the ACL.  In practice
-		 * that behavior seems much too noisy, as well as inconsistent with
-		 * the GRANT case.)
+		 * and issue a warning if appropriate.	(For REVOKE this isn't
+		 * quite what the spec says to do: the spec seems to want a
+		 * warning only if no privilege bits actually change in the ACL.
+		 * In practice that behavior seems much too noisy, as well as
+		 * inconsistent with the GRANT case.)
 		 */
 		this_privileges = privileges & my_goptions;
 		if (stmt->is_grant)
@@ -761,7 +762,7 @@ ExecuteGrantStmt_Language(GrantStmt *stmt)
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("language \"%s\" is not trusted", langname),
-					 errhint("Only superusers may use untrusted languages.")));
+			   errhint("Only superusers may use untrusted languages.")));
 
 		/*
 		 * Note: for now, languages are treated as owned by the bootstrap
@@ -793,11 +794,11 @@ ExecuteGrantStmt_Language(GrantStmt *stmt)
 
 		/*
 		 * Restrict the operation to what we can actually grant or revoke,
-		 * and issue a warning if appropriate.  (For REVOKE this isn't quite
-		 * what the spec says to do: the spec seems to want a warning only
-		 * if no privilege bits actually change in the ACL.  In practice
-		 * that behavior seems much too noisy, as well as inconsistent with
-		 * the GRANT case.)
+		 * and issue a warning if appropriate.	(For REVOKE this isn't
+		 * quite what the spec says to do: the spec seems to want a
+		 * warning only if no privilege bits actually change in the ACL.
+		 * In practice that behavior seems much too noisy, as well as
+		 * inconsistent with the GRANT case.)
 		 */
 		this_privileges = privileges & my_goptions;
 		if (stmt->is_grant)
@@ -946,11 +947,11 @@ ExecuteGrantStmt_Namespace(GrantStmt *stmt)
 
 		/*
 		 * Restrict the operation to what we can actually grant or revoke,
-		 * and issue a warning if appropriate.  (For REVOKE this isn't quite
-		 * what the spec says to do: the spec seems to want a warning only
-		 * if no privilege bits actually change in the ACL.  In practice
-		 * that behavior seems much too noisy, as well as inconsistent with
-		 * the GRANT case.)
+		 * and issue a warning if appropriate.	(For REVOKE this isn't
+		 * quite what the spec says to do: the spec seems to want a
+		 * warning only if no privilege bits actually change in the ACL.
+		 * In practice that behavior seems much too noisy, as well as
+		 * inconsistent with the GRANT case.)
 		 */
 		this_privileges = privileges & my_goptions;
 		if (stmt->is_grant)
@@ -1039,8 +1040,8 @@ ExecuteGrantStmt_Tablespace(GrantStmt *stmt)
 			if (priv & ~((AclMode) ACL_ALL_RIGHTS_TABLESPACE))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_GRANT_OPERATION),
-						 errmsg("invalid privilege type %s for tablespace",
-								privilege_to_string(priv))));
+					   errmsg("invalid privilege type %s for tablespace",
+							  privilege_to_string(priv))));
 			privileges |= priv;
 		}
 	}
@@ -1076,7 +1077,7 @@ ExecuteGrantStmt_Tablespace(GrantStmt *stmt)
 		if (!HeapTupleIsValid(tuple))
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("tablespace \"%s\" does not exist", spcname)));
+				   errmsg("tablespace \"%s\" does not exist", spcname)));
 		pg_tablespace_tuple = (Form_pg_tablespace) GETSTRUCT(tuple);
 
 		ownerId = pg_tablespace_tuple->spcowner;
@@ -1105,11 +1106,11 @@ ExecuteGrantStmt_Tablespace(GrantStmt *stmt)
 
 		/*
 		 * Restrict the operation to what we can actually grant or revoke,
-		 * and issue a warning if appropriate.  (For REVOKE this isn't quite
-		 * what the spec says to do: the spec seems to want a warning only
-		 * if no privilege bits actually change in the ACL.  In practice
-		 * that behavior seems much too noisy, as well as inconsistent with
-		 * the GRANT case.)
+		 * and issue a warning if appropriate.	(For REVOKE this isn't
+		 * quite what the spec says to do: the spec seems to want a
+		 * warning only if no privilege bits actually change in the ACL.
+		 * In practice that behavior seems much too noisy, as well as
+		 * inconsistent with the GRANT case.)
 		 */
 		this_privileges = privileges & my_goptions;
 		if (stmt->is_grant)
@@ -1389,11 +1390,12 @@ pg_class_aclmask(Oid table_oid, AclId userid,
 	/*
 	 * Deny anyone permission to update a system catalog unless
 	 * pg_shadow.usecatupd is set.	(This is to let superusers protect
-	 * themselves from themselves.)  Also allow it if allowSystemTableMods.
+	 * themselves from themselves.)  Also allow it if
+	 * allowSystemTableMods.
 	 *
-	 * As of 7.4 we have some updatable system views; those shouldn't
-	 * be protected in this way.  Assume the view rules can take care
-	 * of themselves.
+	 * As of 7.4 we have some updatable system views; those shouldn't be
+	 * protected in this way.  Assume the view rules can take care of
+	 * themselves.
 	 */
 	if ((mask & (ACL_INSERT | ACL_UPDATE | ACL_DELETE)) &&
 		IsSystemClass(classForm) &&
@@ -1648,23 +1650,23 @@ pg_namespace_aclmask(Oid nsp_oid, AclId userid,
 		return mask;
 
 	/*
-	 * If we have been assigned this namespace as a temp namespace,
-	 * check to make sure we have CREATE TEMP permission on the database,
-	 * and if so act as though we have all standard (but not GRANT OPTION)
+	 * If we have been assigned this namespace as a temp namespace, check
+	 * to make sure we have CREATE TEMP permission on the database, and if
+	 * so act as though we have all standard (but not GRANT OPTION)
 	 * permissions on the namespace.  If we don't have CREATE TEMP, act as
 	 * though we have only USAGE (and not CREATE) rights.
 	 *
-	 * This may seem redundant given the check in InitTempTableNamespace,
-	 * but it really isn't since current user ID may have changed since then.
+	 * This may seem redundant given the check in InitTempTableNamespace, but
+	 * it really isn't since current user ID may have changed since then.
 	 * The upshot of this behavior is that a SECURITY DEFINER function can
-	 * create temp tables that can then be accessed (if permission is granted)
-	 * by code in the same session that doesn't have permissions to create
-	 * temp tables.
+	 * create temp tables that can then be accessed (if permission is
+	 * granted) by code in the same session that doesn't have permissions
+	 * to create temp tables.
 	 *
 	 * XXX Would it be safe to ereport a special error message as
 	 * InitTempTableNamespace does?  Returning zero here means we'll get a
-	 * generic "permission denied for schema pg_temp_N" message, which is not
-	 * remarkably user-friendly.
+	 * generic "permission denied for schema pg_temp_N" message, which is
+	 * not remarkably user-friendly.
 	 */
 	if (isTempNamespace(nsp_oid))
 	{
@@ -1731,8 +1733,8 @@ pg_tablespace_aclmask(Oid spc_oid, AclId userid,
 	AclId		ownerId;
 
 	/*
-	 * Only shared relations can be stored in global space; don't let
-	 * even superusers override this
+	 * Only shared relations can be stored in global space; don't let even
+	 * superusers override this
 	 */
 	if (spc_oid == GLOBALTABLESPACE_OID && !IsBootstrapProcessingMode())
 		return 0;
@@ -1756,7 +1758,7 @@ pg_tablespace_aclmask(Oid spc_oid, AclId userid,
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("tablespace with OID %u does not exist", spc_oid)));
+			  errmsg("tablespace with OID %u does not exist", spc_oid)));
 
 	ownerId = ((Form_pg_tablespace) GETSTRUCT(tuple))->spcowner;
 
@@ -2034,7 +2036,7 @@ pg_tablespace_ownercheck(Oid spc_oid, AclId userid)
 	if (!HeapTupleIsValid(spctuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("tablespace with OID %u does not exist", spc_oid)));
+			  errmsg("tablespace with OID %u does not exist", spc_oid)));
 
 	spcowner = ((Form_pg_tablespace) GETSTRUCT(spctuple))->spcowner;
 
@@ -2131,7 +2133,7 @@ pg_conversion_ownercheck(Oid conv_oid, AclId userid)
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("conversion with OID %u does not exist", conv_oid)));
+			 errmsg("conversion with OID %u does not exist", conv_oid)));
 
 	owner_id = ((Form_pg_conversion) GETSTRUCT(tuple))->conowner;
 

@@ -7,7 +7,7 @@
  * Copyright (c) 2000-2004, PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
- * $PostgreSQL: pgsql/src/include/utils/guc.h,v 1.50 2004/08/29 04:13:11 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/guc.h,v 1.51 2004/08/29 05:06:58 momjian Exp $
  *--------------------------------------------------------------------
  */
 #ifndef GUC_H
@@ -82,7 +82,7 @@ typedef enum
  *
  * PGC_S_TEST is used when testing values to be stored as per-database or
  * per-user defaults ("doit" will always be false, so this never gets stored
- * as the actual source of any value).  This is an interactive case, but
+ * as the actual source of any value).	This is an interactive case, but
  * it needs its own source value because some assign hooks need to make
  * different validity checks in this case.
  */
@@ -102,12 +102,12 @@ typedef enum
 	PGC_S_SESSION				/* SET command */
 } GucSource;
 
-typedef const char* (*GucStringAssignHook)(const char *newval, bool doit, GucSource source);
-typedef bool (*GucBoolAssignHook)(bool newval, bool doit, GucSource source);
-typedef bool (*GucIntAssignHook)(int newval, bool doit, GucSource source);
-typedef bool (*GucRealAssignHook)(double newval, bool doit, GucSource source);
+typedef const char *(*GucStringAssignHook) (const char *newval, bool doit, GucSource source);
+typedef bool (*GucBoolAssignHook) (bool newval, bool doit, GucSource source);
+typedef bool (*GucIntAssignHook) (int newval, bool doit, GucSource source);
+typedef bool (*GucRealAssignHook) (double newval, bool doit, GucSource source);
 
-typedef const char* (*GucShowHook)(void);
+typedef const char *(*GucShowHook) (void);
 
 #define GUC_QUALIFIER_SEPARATOR '.'
 
@@ -147,42 +147,42 @@ extern void SetConfigOption(const char *name, const char *value,
 				GucContext context, GucSource source);
 
 extern void DefineCustomBoolVariable(
-	const char* name,
-	const char* short_desc,
-	const char* long_desc,
-	bool*       valueAddr,
-	GucContext  context,
-	GucBoolAssignHook assign_hook,
-	GucShowHook show_hook);
+						 const char *name,
+						 const char *short_desc,
+						 const char *long_desc,
+						 bool *valueAddr,
+						 GucContext context,
+						 GucBoolAssignHook assign_hook,
+						 GucShowHook show_hook);
 
 extern void DefineCustomIntVariable(
-	const char* name,
-	const char* short_desc,
-	const char* long_desc,
-	int*        valueAddr,
-	GucContext  context,
-	GucIntAssignHook assign_hook,
-	GucShowHook show_hook);
+						const char *name,
+						const char *short_desc,
+						const char *long_desc,
+						int *valueAddr,
+						GucContext context,
+						GucIntAssignHook assign_hook,
+						GucShowHook show_hook);
 
 extern void DefineCustomRealVariable(
-	const char* name,
-	const char* short_desc,
-	const char* long_desc,
-	double*     valueAddr,
-	GucContext  context,
-	GucRealAssignHook assign_hook,
-	GucShowHook show_hook);
+						 const char *name,
+						 const char *short_desc,
+						 const char *long_desc,
+						 double *valueAddr,
+						 GucContext context,
+						 GucRealAssignHook assign_hook,
+						 GucShowHook show_hook);
 
 extern void DefineCustomStringVariable(
-	const char* name,
-	const char* short_desc,
-	const char* long_desc,
-	char**      valueAddr,
-	GucContext  context,
-	GucStringAssignHook assign_hook,
-	GucShowHook show_hook);
+						   const char *name,
+						   const char *short_desc,
+						   const char *long_desc,
+						   char **valueAddr,
+						   GucContext context,
+						   GucStringAssignHook assign_hook,
+						   GucShowHook show_hook);
 
-extern void EmitWarningsOnPlaceholders(const char* className);
+extern void EmitWarningsOnPlaceholders(const char *className);
 
 extern const char *GetConfigOption(const char *name);
 extern const char *GetConfigOptionResetString(const char *name);
@@ -225,12 +225,15 @@ extern void read_nondefault_variables(void);
 
 /* in utils/adt/datetime.c */
 extern bool ClearDateCache(bool newval, bool doit, GucSource source);
+
 /* in utils/adt/regexp.c */
 extern const char *assign_regex_flavor(const char *value,
 					bool doit, GucSource source);
+
 /* in catalog/namespace.c */
 extern const char *assign_search_path(const char *newval,
 				   bool doit, GucSource source);
+
 /* in access/transam/xlog.c */
 extern const char *assign_xlog_sync_method(const char *method,
 						bool doit, GucSource source);

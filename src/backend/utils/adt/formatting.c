@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.76 2004/08/29 04:12:51 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.77 2004/08/29 05:06:49 momjian Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2004, PostgreSQL Global Development Group
@@ -409,7 +409,7 @@ typedef struct
  */
 typedef struct TmToChar
 {
-	struct pg_tm	tm;				/* classic 'tm' struct */
+	struct pg_tm tm;			/* classic 'tm' struct */
 	fsec_t		fsec;			/* fractional seconds */
 	char	   *tzn;			/* timezone */
 } TmToChar;
@@ -896,7 +896,7 @@ static int	dch_global(int arg, char *inout, int suf, int flag, FormatNode *node,
 static int	dch_time(int arg, char *inout, int suf, int flag, FormatNode *node, void *data);
 static int	dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data);
 static void do_to_timestamp(text *date_txt, text *fmt,
-							struct pg_tm *tm, fsec_t *fsec);
+				struct pg_tm * tm, fsec_t *fsec);
 static char *fill_str(char *str, int c, int max);
 static FormatNode *NUM_cache(int len, NUMDesc *Num, char *pars_str, bool *shouldFree);
 static char *int_to_roman(int number);
@@ -1309,13 +1309,14 @@ DCH_processor(FormatNode *node, char *inout, int flag, void *data)
 
 	for (n = node, s = inout; n->type != NODE_TYPE_END; n++)
 	{
-		if (flag == FROM_CHAR && *s=='\0')
+		if (flag == FROM_CHAR && *s == '\0')
+
 			/*
-			 * The input string is shorter than format picture, 
-			 * so it's good time to break this loop...
-			 * 
-			 * Note: this isn't relevant for TO_CHAR mode, beacuse 
-			 *       it use 'inout' allocated by format picture length.
+			 * The input string is shorter than format picture, so it's
+			 * good time to break this loop...
+			 *
+			 * Note: this isn't relevant for TO_CHAR mode, beacuse it use
+			 * 'inout' allocated by format picture length.
 			 */
 			break;
 
@@ -1353,7 +1354,7 @@ DCH_processor(FormatNode *node, char *inout, int flag, void *data)
 				}
 			}
 		}
-		
+
 		++s;					/* ! */
 	}
 
@@ -1694,7 +1695,7 @@ static int
 dch_time(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 {
 	char	   *p_inout = inout;
-	struct pg_tm  *tm = NULL;
+	struct pg_tm *tm = NULL;
 	TmFromChar *tmfc = NULL;
 	TmToChar   *tmtc = NULL;
 
@@ -2056,7 +2057,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 			   *p_inout;
 	int			i,
 				len;
-	struct pg_tm  *tm = NULL;
+	struct pg_tm *tm = NULL;
 	TmFromChar *tmfc = NULL;
 	TmToChar   *tmtc = NULL;
 
@@ -2467,21 +2468,21 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 			{
 				if (tm->tm_year <= 9999 && tm->tm_year >= -9998)
 					sprintf(inout, "%0*d",
-						S_FM(suf) ? 0 : 4,
-						arg == DCH_YYYY ?
-						YEAR_ABS(tm->tm_year) :
-						YEAR_ABS(date2isoyear(
-							tm->tm_year,
-							tm->tm_mon,
-							tm->tm_mday)));
+							S_FM(suf) ? 0 : 4,
+							arg == DCH_YYYY ?
+							YEAR_ABS(tm->tm_year) :
+							YEAR_ABS(date2isoyear(
+												  tm->tm_year,
+												  tm->tm_mon,
+												  tm->tm_mday)));
 				else
 					sprintf(inout, "%d",
-						arg == DCH_YYYY ?
-						YEAR_ABS(tm->tm_year) :
-						YEAR_ABS(date2isoyear(
-							tm->tm_year,
-							tm->tm_mon,
-							tm->tm_mday)));
+							arg == DCH_YYYY ?
+							YEAR_ABS(tm->tm_year) :
+							YEAR_ABS(date2isoyear(
+												  tm->tm_year,
+												  tm->tm_mon,
+												  tm->tm_mday)));
 				if (S_THth(suf))
 					str_numth(p_inout, inout, S_TH_TYPE(suf));
 				return strlen(p_inout) - 1;
@@ -2505,10 +2506,10 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 			if (flag == TO_CHAR)
 			{
 				snprintf(buff, sizeof(buff), "%03d",
-					arg == DCH_YYY ?
-					YEAR_ABS(tm->tm_year) :
-					YEAR_ABS(date2isoyear(tm->tm_year,
-						tm->tm_mon, tm->tm_mday)));
+						 arg == DCH_YYY ?
+						 YEAR_ABS(tm->tm_year) :
+						 YEAR_ABS(date2isoyear(tm->tm_year,
+											   tm->tm_mon, tm->tm_mday)));
 				i = strlen(buff);
 				strcpy(inout, buff + (i - 3));
 				if (S_THth(suf))
@@ -2540,10 +2541,10 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 			if (flag == TO_CHAR)
 			{
 				snprintf(buff, sizeof(buff), "%02d",
-					arg == DCH_YY ?
-					YEAR_ABS(tm->tm_year) :
-					YEAR_ABS(date2isoyear(tm->tm_year,
-						tm->tm_mon, tm->tm_mday)));
+						 arg == DCH_YY ?
+						 YEAR_ABS(tm->tm_year) :
+						 YEAR_ABS(date2isoyear(tm->tm_year,
+											   tm->tm_mon, tm->tm_mday)));
 				i = strlen(buff);
 				strcpy(inout, buff + (i - 2));
 				if (S_THth(suf))
@@ -2575,10 +2576,10 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 			if (flag == TO_CHAR)
 			{
 				snprintf(buff, sizeof(buff), "%1d",
-					arg == DCH_Y ?
-					YEAR_ABS(tm->tm_year) :
-					YEAR_ABS(date2isoyear(tm->tm_year,
-						tm->tm_mon, tm->tm_mday)));
+						 arg == DCH_Y ?
+						 YEAR_ABS(tm->tm_year) :
+						 YEAR_ABS(date2isoyear(tm->tm_year,
+											   tm->tm_mon, tm->tm_mday)));
 				i = strlen(buff);
 				strcpy(inout, buff + (i - 1));
 				if (S_THth(suf))
@@ -2730,7 +2731,7 @@ DCH_cache_getnew(char *str)
 		return ent;
 	}
 
-	return NULL;		/* never */
+	return NULL;				/* never */
 }
 
 static DCHCacheEntry *
@@ -2767,11 +2768,11 @@ static text *
 datetime_to_char_body(TmToChar *tmtc, text *fmt)
 {
 	FormatNode *format;
-	struct pg_tm  *tm = NULL;
+	struct pg_tm *tm = NULL;
 	char	   *fmt_str,
-		   *result;
-	bool	incache;
-	int	fmt_len = VARSIZE(fmt) - VARHDRSZ;
+			   *result;
+	bool		incache;
+	int			fmt_len = VARSIZE(fmt) - VARHDRSZ;
 
 	tm = tmtcTm(tmtc);
 	tm->tm_wday = (date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) + 1) % 7;
@@ -2791,7 +2792,7 @@ datetime_to_char_body(TmToChar *tmtc, text *fmt)
 
 	/*
 	 * Allocate new memory if format picture is bigger than static cache
-	 * and not use cache (call parser always) 
+	 * and not use cache (call parser always)
 	 */
 	if (fmt_len > DCH_CACHE_SIZE)
 	{
@@ -2801,7 +2802,7 @@ datetime_to_char_body(TmToChar *tmtc, text *fmt)
 		parse_format(format, fmt_str, DCH_keywords,
 					 DCH_suff, DCH_index, DCH_TYPE, NULL);
 
-		(format + fmt_len)->type = NODE_TYPE_END;	/* Paranoia? */
+		(format + fmt_len)->type = NODE_TYPE_END;		/* Paranoia? */
 
 	}
 	else
@@ -2810,6 +2811,7 @@ datetime_to_char_body(TmToChar *tmtc, text *fmt)
 		 * Use cache buffers
 		 */
 		DCHCacheEntry *ent;
+
 		incache = TRUE;
 
 		if ((ent = DCH_cache_search(fmt_str)) == NULL)
@@ -2824,7 +2826,7 @@ datetime_to_char_body(TmToChar *tmtc, text *fmt)
 			parse_format(ent->format, fmt_str, DCH_keywords,
 						 DCH_suff, DCH_index, DCH_TYPE, NULL);
 
-			(ent->format + fmt_len)->type = NODE_TYPE_END;	/* Paranoia? */
+			(ent->format + fmt_len)->type = NODE_TYPE_END;		/* Paranoia? */
 
 #ifdef DEBUG_TO_FROM_CHAR
 			/* dump_node(ent->format, fmt_len); */
@@ -2847,8 +2849,8 @@ datetime_to_char_body(TmToChar *tmtc, text *fmt)
 	 */
 	if (result && *result)
 	{
-		int len = strlen(result);
-	
+		int			len = strlen(result);
+
 		if (len)
 		{
 			text	   *res = (text *) palloc(len + 1 + VARHDRSZ);
@@ -2961,7 +2963,7 @@ to_timestamp(PG_FUNCTION_ARGS)
 	text	   *fmt = PG_GETARG_TEXT_P(1);
 	Timestamp	result;
 	int			tz;
-	struct pg_tm	tm;
+	struct pg_tm tm;
 	fsec_t		fsec;
 
 	do_to_timestamp(date_txt, fmt, &tm, &fsec);
@@ -2987,7 +2989,7 @@ to_date(PG_FUNCTION_ARGS)
 	text	   *date_txt = PG_GETARG_TEXT_P(0);
 	text	   *fmt = PG_GETARG_TEXT_P(1);
 	DateADT		result;
-	struct pg_tm	tm;
+	struct pg_tm tm;
 	fsec_t		fsec;
 
 	do_to_timestamp(date_txt, fmt, &tm, &fsec);
@@ -3005,11 +3007,11 @@ to_date(PG_FUNCTION_ARGS)
  */
 static void
 do_to_timestamp(text *date_txt, text *fmt,
-				struct pg_tm *tm, fsec_t *fsec)
+				struct pg_tm * tm, fsec_t *fsec)
 {
 	FormatNode *format;
 	TmFromChar	tmfc;
-	int		fmt_len;
+	int			fmt_len;
 
 	ZERO_tm(tm);
 	*fsec = 0;
@@ -3020,11 +3022,11 @@ do_to_timestamp(text *date_txt, text *fmt,
 
 	if (fmt_len)
 	{
-		int date_len;
-		char *fmt_str;
-		char *date_str;
-		bool incache;
-		
+		int			date_len;
+		char	   *fmt_str;
+		char	   *date_str;
+		bool		incache;
+
 		fmt_str = (char *) palloc(fmt_len + 1);
 		memcpy(fmt_str, VARDATA(fmt), fmt_len);
 		*(fmt_str + fmt_len) = '\0';
@@ -3041,7 +3043,7 @@ do_to_timestamp(text *date_txt, text *fmt,
 			parse_format(format, fmt_str, DCH_keywords,
 						 DCH_suff, DCH_index, DCH_TYPE, NULL);
 
-			(format + fmt_len)->type = NODE_TYPE_END;		/* Paranoia? */
+			(format + fmt_len)->type = NODE_TYPE_END;	/* Paranoia? */
 		}
 		else
 		{
@@ -3049,6 +3051,7 @@ do_to_timestamp(text *date_txt, text *fmt,
 			 * Use cache buffers
 			 */
 			DCHCacheEntry *ent;
+
 			incache = TRUE;
 
 			if ((ent = DCH_cache_search(fmt_str)) == NULL)
@@ -3063,7 +3066,7 @@ do_to_timestamp(text *date_txt, text *fmt,
 				parse_format(ent->format, fmt_str, DCH_keywords,
 							 DCH_suff, DCH_index, DCH_TYPE, NULL);
 
-				(ent->format + fmt_len)->type = NODE_TYPE_END;		/* Paranoia? */
+				(ent->format + fmt_len)->type = NODE_TYPE_END;	/* Paranoia? */
 #ifdef DEBUG_TO_FROM_CHAR
 				/* dump_node(ent->format, fmt_len); */
 				/* dump_index(DCH_keywords, DCH_index); */
@@ -3207,7 +3210,7 @@ do_to_timestamp(text *date_txt, text *fmt,
 		if (!tm->tm_year)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-				errmsg("cannot calculate day of year without year information")));
+					 errmsg("cannot calculate day of year without year information")));
 
 		y = ysum[isleap(tm->tm_year)];
 

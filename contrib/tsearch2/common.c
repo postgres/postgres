@@ -21,7 +21,7 @@
 #include "dict.h"
 
 
-Oid TSNSP_FunctionOid = InvalidOid;
+Oid			TSNSP_FunctionOid = InvalidOid;
 
 
 text *
@@ -121,44 +121,45 @@ text_cmp(text *a, text *b)
 
 }
 
-char*
-get_namespace(Oid funcoid) {
-        HeapTuple       tuple;
-        Form_pg_proc    proc;
-        Form_pg_namespace nsp;
-        Oid             nspoid;   
-        char *txt;
+char *
+get_namespace(Oid funcoid)
+{
+	HeapTuple	tuple;
+	Form_pg_proc proc;
+	Form_pg_namespace nsp;
+	Oid			nspoid;
+	char	   *txt;
 
-        tuple = SearchSysCache(PROCOID, ObjectIdGetDatum(funcoid), 0, 0, 0);
-        if (!HeapTupleIsValid(tuple))
-                elog(ERROR, "cache lookup failed for proc oid %u", funcoid);
-        proc=(Form_pg_proc) GETSTRUCT(tuple);
-        nspoid = proc->pronamespace;
-        ReleaseSysCache(tuple);
+	tuple = SearchSysCache(PROCOID, ObjectIdGetDatum(funcoid), 0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "cache lookup failed for proc oid %u", funcoid);
+	proc = (Form_pg_proc) GETSTRUCT(tuple);
+	nspoid = proc->pronamespace;
+	ReleaseSysCache(tuple);
 
-        tuple = SearchSysCache(NAMESPACEOID, ObjectIdGetDatum(nspoid), 0, 0, 0);
-        if (!HeapTupleIsValid(tuple))
-                elog(ERROR, "cache lookup failed for namespace oid %u", nspoid);
-        nsp = (Form_pg_namespace) GETSTRUCT(tuple);
-        txt = pstrdup( NameStr((nsp->nspname)) );
-        ReleaseSysCache(tuple);
+	tuple = SearchSysCache(NAMESPACEOID, ObjectIdGetDatum(nspoid), 0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "cache lookup failed for namespace oid %u", nspoid);
+	nsp = (Form_pg_namespace) GETSTRUCT(tuple);
+	txt = pstrdup(NameStr((nsp->nspname)));
+	ReleaseSysCache(tuple);
 
-        return txt;
+	return txt;
 }
 
 Oid
-get_oidnamespace(Oid funcoid) {
-        HeapTuple       tuple;
-        Form_pg_proc    proc;
-        Oid             nspoid;   
+get_oidnamespace(Oid funcoid)
+{
+	HeapTuple	tuple;
+	Form_pg_proc proc;
+	Oid			nspoid;
 
-        tuple = SearchSysCache(PROCOID, ObjectIdGetDatum(funcoid), 0, 0, 0);
-        if (!HeapTupleIsValid(tuple))
-                elog(ERROR, "cache lookup failed for proc oid %u", funcoid);
-        proc=(Form_pg_proc) GETSTRUCT(tuple);
-        nspoid = proc->pronamespace;
-        ReleaseSysCache(tuple);
+	tuple = SearchSysCache(PROCOID, ObjectIdGetDatum(funcoid), 0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "cache lookup failed for proc oid %u", funcoid);
+	proc = (Form_pg_proc) GETSTRUCT(tuple);
+	nspoid = proc->pronamespace;
+	ReleaseSysCache(tuple);
 
-        return nspoid;
+	return nspoid;
 }
-

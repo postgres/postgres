@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.291 2004/08/29 04:12:32 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.292 2004/08/29 05:06:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -942,7 +942,7 @@ _copyArrayExpr(ArrayExpr *from)
 static RowExpr *
 _copyRowExpr(RowExpr *from)
 {
-	RowExpr  *newnode = makeNode(RowExpr);
+	RowExpr    *newnode = makeNode(RowExpr);
 
 	COPY_NODE_FIELD(args);
 	COPY_SCALAR_FIELD(row_typeid);
@@ -1402,7 +1402,7 @@ _copyTypeName(TypeName *from)
 static SortBy *
 _copySortBy(SortBy *from)
 {
-	SortBy *newnode = makeNode(SortBy);
+	SortBy	   *newnode = makeNode(SortBy);
 
 	COPY_SCALAR_FIELD(sortby_kind);
 	COPY_NODE_FIELD(useOp);
@@ -2499,9 +2499,9 @@ _copyDeallocateStmt(DeallocateStmt *from)
 static List *
 _copyList(List *from)
 {
-	List		*new;
-	ListCell	*curr_old;
-	ListCell	*prev_new;
+	List	   *new;
+	ListCell   *curr_old;
+	ListCell   *prev_new;
 
 	Assert(list_length(from) >= 1);
 
@@ -2779,10 +2779,10 @@ copyObject(void *from)
 		case T_List:
 			retval = _copyList(from);
 			break;
+
 			/*
-			 * Lists of integers and OIDs don't need to be
-			 * deep-copied, so we perform a shallow copy via
-			 * list_copy()
+			 * Lists of integers and OIDs don't need to be deep-copied, so
+			 * we perform a shallow copy via list_copy()
 			 */
 		case T_IntList:
 		case T_OidList:

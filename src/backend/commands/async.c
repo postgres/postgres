@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/async.c,v 1.114 2004/08/29 04:12:29 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/async.c,v 1.115 2004/08/29 05:06:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,7 +106,8 @@
  */
 static List *pendingNotifies = NIL;
 
-static List *upperPendingNotifies = NIL; /* list of upper-xact lists */
+static List *upperPendingNotifies = NIL;		/* list of upper-xact
+												 * lists */
 
 /*
  * State for inbound notifies consists of two flags: one saying whether
@@ -524,25 +525,27 @@ AtCommit_Notify(void)
 
 				rTuple = heap_modifytuple(lTuple, lRel,
 										  value, nulls, repl);
+
 				/*
 				 * We cannot use simple_heap_update here because the tuple
 				 * could have been modified by an uncommitted transaction;
 				 * specifically, since UNLISTEN releases exclusive lock on
-				 * the table before commit, the other guy could already have
-				 * tried to unlisten.  There are no other cases where we
-				 * should be able to see an uncommitted update or delete.
-				 * Therefore, our response to a HeapTupleBeingUpdated result
-				 * is just to ignore it.  We do *not* wait for the other
-				 * guy to commit --- that would risk deadlock, and we don't
-				 * want to block while holding the table lock anyway for
-				 * performance reasons.  We also ignore HeapTupleUpdated,
-				 * which could occur if the other guy commits between our
-				 * heap_getnext and heap_update calls.
+				 * the table before commit, the other guy could already
+				 * have tried to unlisten.	There are no other cases where
+				 * we should be able to see an uncommitted update or
+				 * delete. Therefore, our response to a
+				 * HeapTupleBeingUpdated result is just to ignore it.  We
+				 * do *not* wait for the other guy to commit --- that
+				 * would risk deadlock, and we don't want to block while
+				 * holding the table lock anyway for performance reasons.
+				 * We also ignore HeapTupleUpdated, which could occur if
+				 * the other guy commits between our heap_getnext and
+				 * heap_update calls.
 				 */
 				result = heap_update(lRel, &lTuple->t_self, rTuple,
 									 &ctid,
 									 GetCurrentCommandId(), SnapshotAny,
-									 false /* no wait for commit */);
+									 false /* no wait for commit */ );
 				switch (result)
 				{
 					case HeapTupleSelfUpdated:
@@ -620,7 +623,7 @@ AtAbort_Notify(void)
 void
 AtSubStart_Notify(void)
 {
-	MemoryContext	old_cxt;
+	MemoryContext old_cxt;
 
 	/* Keep the list-of-lists in TopTransactionContext for simplicity */
 	old_cxt = MemoryContextSwitchTo(TopTransactionContext);
@@ -640,13 +643,14 @@ AtSubStart_Notify(void)
 void
 AtSubCommit_Notify(void)
 {
-	List	*parentPendingNotifies;
+	List	   *parentPendingNotifies;
 
 	parentPendingNotifies = (List *) linitial(upperPendingNotifies);
 	upperPendingNotifies = list_delete_first(upperPendingNotifies);
 
 	/*
-	 * We could try to eliminate duplicates here, but it seems not worthwhile.
+	 * We could try to eliminate duplicates here, but it seems not
+	 * worthwhile.
 	 */
 	pendingNotifies = list_concat(parentPendingNotifies, pendingNotifies);
 }
@@ -836,7 +840,7 @@ EnableNotifyInterrupt(void)
 bool
 DisableNotifyInterrupt(void)
 {
-	bool	result = (notifyInterruptEnabled != 0);
+	bool		result = (notifyInterruptEnabled != 0);
 
 	notifyInterruptEnabled = 0;
 
@@ -914,11 +918,12 @@ ProcessIncomingNotify(void)
 					 relname, (int) sourcePID);
 
 			NotifyMyFrontEnd(relname, sourcePID);
+
 			/*
 			 * Rewrite the tuple with 0 in notification column.
 			 *
-			 * simple_heap_update is safe here because no one else would
-			 * have tried to UNLISTEN us, so there can be no uncommitted
+			 * simple_heap_update is safe here because no one else would have
+			 * tried to UNLISTEN us, so there can be no uncommitted
 			 * changes.
 			 */
 			rTuple = heap_modifytuple(lTuple, lRel, value, nulls, repl);

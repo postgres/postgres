@@ -12,7 +12,7 @@
 #include <pgtypes_numeric.h>
 #include <sqltypes.h>
 
-char       *ECPGalloc(long, int);
+char	   *ECPGalloc(long, int);
 
 static int
 deccall2(decimal * arg1, decimal * arg2, int (*ptr) (numeric *, numeric *))
@@ -60,7 +60,10 @@ deccall3(decimal * arg1, decimal * arg2, decimal * result, int (*ptr) (numeric *
 			   *nres;
 	int			i;
 
-	/* we must NOT set the result to NULL here because it may be the same variable as one of the arguments */
+	/*
+	 * we must NOT set the result to NULL here because it may be the same
+	 * variable as one of the arguments
+	 */
 	if (risnull(CDECIMALTYPE, (char *) arg1) || risnull(CDECIMALTYPE, (char *) arg2))
 		return 0;
 
@@ -100,12 +103,12 @@ deccall3(decimal * arg1, decimal * arg2, decimal * result, int (*ptr) (numeric *
 
 	if (i == 0)					/* No error */
 	{
-		
+
 		/* set the result to null in case it errors out later */
 		rsetnull(CDECIMALTYPE, (char *) result);
 		PGTYPESnumeric_to_decimal(nres, result);
 	}
-	
+
 	PGTYPESnumeric_free(nres);
 	PGTYPESnumeric_free(a1);
 	PGTYPESnumeric_free(a2);
@@ -161,8 +164,9 @@ ecpg_strndup(const char *str, size_t len)
 int
 deccvasc(char *cp, int len, decimal * np)
 {
-	char	   *str = ecpg_strndup(cp, len); /* decimal_in always converts the
-										 * complete string */
+	char	   *str = ecpg_strndup(cp, len);	/* decimal_in always
+												 * converts the complete
+												 * string */
 	int			ret = 0;
 	numeric    *result;
 
@@ -269,7 +273,7 @@ deccvlong(long lng, decimal * np)
 int
 decdiv(decimal * n1, decimal * n2, decimal * result)
 {
-	
+
 	int			i;
 
 	i = deccall3(n1, n2, result, PGTYPESnumeric_div);
@@ -295,7 +299,7 @@ int
 decmul(decimal * n1, decimal * n2, decimal * result)
 {
 	int			i;
-	
+
 	i = deccall3(n1, n2, result, PGTYPESnumeric_mul);
 
 	if (i != 0)
@@ -316,7 +320,7 @@ int
 decsub(decimal * n1, decimal * n2, decimal * result)
 {
 	int			i;
-	
+
 	i = deccall3(n1, n2, result, PGTYPESnumeric_sub);
 
 	if (i != 0)
@@ -452,48 +456,50 @@ int
 rstrdate(char *str, date * d)
 {
 	date		dat;
-	char strbuf[10];
-	int i,j;
+	char		strbuf[10];
+	int			i,
+				j;
 
-	rsetnull(CDATETYPE, (char *)&dat);	
-	/* 
-	* we have to flip the year month date around for postgres
-	* expects yyyymmdd
-	*
-	*/
-	
-	for (i=0,j=0; i < 10; i++ )
+	rsetnull(CDATETYPE, (char *) &dat);
+
+	/*
+	 * we have to flip the year month date around for postgres expects
+	 * yyyymmdd
+	 *
+	 */
+
+	for (i = 0, j = 0; i < 10; i++)
 	{
 		/* ignore non-digits */
-		if ( isdigit((unsigned char) str[i]) )
+		if (isdigit((unsigned char) str[i]))
 		{
-			
+
 			/* j only increments if it is a digit */
-			switch(j)
+			switch (j)
 			{
-				/* stick the month into the 4th, 5th position */
+					/* stick the month into the 4th, 5th position */
 				case 0:
 				case 1:
-					strbuf[j+4] = str[i];
+					strbuf[j + 4] = str[i];
 					break;
-				/* stick the day into the 6th, and 7th position */
+					/* stick the day into the 6th, and 7th position */
 				case 2:
 				case 3:
-					strbuf[j+4] = str[i];
+					strbuf[j + 4] = str[i];
 					break;
 
-				/* stick the year into the first 4 positions */
+					/* stick the year into the first 4 positions */
 				case 4:
 				case 5:
 				case 6:
 				case 7:
-					strbuf[j-4] = str[i];
+					strbuf[j - 4] = str[i];
 					break;
-				
+
 			}
 			j++;
-		} 
-	}	
+		}
+	}
 	strbuf[8] = '\0';
 	dat = PGTYPESdate_from_asc(strbuf, NULL);
 
@@ -581,13 +587,13 @@ rdayofweek(date d)
 /* And the datetime stuff */
 
 void
-dtcurrent(timestamp *ts)
+dtcurrent(timestamp * ts)
 {
 	PGTYPEStimestamp_current(ts);
 }
 
 int
-dtcvasc(char *str, timestamp *ts)
+dtcvasc(char *str, timestamp * ts)
 {
 	timestamp	ts_tmp;
 	int			i;
@@ -610,13 +616,13 @@ dtcvasc(char *str, timestamp *ts)
 }
 
 int
-dtsub(timestamp *ts1, timestamp *ts2, interval *iv)
+dtsub(timestamp * ts1, timestamp * ts2, interval * iv)
 {
 	return PGTYPEStimestamp_sub(ts1, ts2, iv);
 }
 
 int
-dttoasc(timestamp *ts, char *output)
+dttoasc(timestamp * ts, char *output)
 {
 	char	   *asctime = PGTYPEStimestamp_to_asc(*ts);
 
@@ -626,13 +632,13 @@ dttoasc(timestamp *ts, char *output)
 }
 
 int
-dttofmtasc(timestamp *ts, char *output, int str_len, char *fmtstr)
+dttofmtasc(timestamp * ts, char *output, int str_len, char *fmtstr)
 {
 	return PGTYPEStimestamp_fmt_asc(ts, output, str_len, fmtstr);
 }
 
 int
-intoasc(interval *i, char *str)
+intoasc(interval * i, char *str)
 {
 	str = PGTYPESinterval_to_asc(i);
 
@@ -665,46 +671,48 @@ static struct
  * of the long value
  */
 static void
-initValue (long lng_val)
+initValue(long lng_val)
 {
-  int i, j;
-  long l, dig;
+	int			i,
+				j;
+	long		l,
+				dig;
 
-  /* set some obvious things */
-  value.val = lng_val >= 0 ? lng_val : lng_val * (-1);
-  value.sign = lng_val >= 0 ? '+' : '-';
-  value.maxdigits = log10 (2) * (8 * sizeof (long) - 1);
+	/* set some obvious things */
+	value.val = lng_val >= 0 ? lng_val : lng_val * (-1);
+	value.sign = lng_val >= 0 ? '+' : '-';
+	value.maxdigits = log10(2) * (8 * sizeof(long) - 1);
 
-  /* determine the number of digits */
-  i = 0;
-  l = 1;
-  do
-    {
-      i++;
-      l *= 10;
-    }
-  while ((l - 1) < value.val && l <= LONG_MAX / 10);
+	/* determine the number of digits */
+	i = 0;
+	l = 1;
+	do
+	{
+		i++;
+		l *= 10;
+	}
+	while ((l - 1) < value.val && l <= LONG_MAX / 10);
 
-  if (l <= LONG_MAX/10) 
-  {
-	  value.digits = i;
-	  l /= 10;
-  }
-  else
-	  value.digits = i + 1;
+	if (l <= LONG_MAX / 10)
+	{
+		value.digits = i;
+		l /= 10;
+	}
+	else
+		value.digits = i + 1;
 
-  value.remaining = value.digits;
+	value.remaining = value.digits;
 
-  /* convert the long to string */
-  value.val_string = (char *) malloc (value.digits + 1);
-  dig = value.val;
-  for (i = value.digits, j = 0; i > 0; i--, j++)
-    {
-	value.val_string[j] = dig/l + '0';
-	dig = dig % l;
-	l /= 10; 
-    }
-  value.val_string[value.digits] = '\0';
+	/* convert the long to string */
+	value.val_string = (char *) malloc(value.digits + 1);
+	dig = value.val;
+	for (i = value.digits, j = 0; i > 0; i--, j++)
+	{
+		value.val_string[j] = dig / l + '0';
+		dig = dig % l;
+		l /= 10;
+	}
+	value.val_string[value.digits] = '\0';
 }
 
 /* return the position oft the right-most dot in some string */

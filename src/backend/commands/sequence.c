@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/sequence.c,v 1.115 2004/08/29 04:12:30 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/sequence.c,v 1.116 2004/08/29 05:06:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -326,7 +326,7 @@ AlterSequence(AlterSeqStmt *stmt)
 	memcpy(seq, &new, sizeof(FormData_pg_sequence));
 
 	/* Clear local cache so that we don't think we have cached numbers */
-	elm->last = new.last_value;			/* last returned number */
+	elm->last = new.last_value; /* last returned number */
 	elm->cached = new.last_value;		/* last cached number (forget
 										 * cached values) */
 
@@ -950,26 +950,22 @@ init_params(List *options, Form_pg_sequence new, bool isInit)
 
 	/* MAXVALUE (null arg means NO MAXVALUE) */
 	if (max_value != NULL && max_value->arg)
-	{
 		new->max_value = defGetInt64(max_value);
-	}
 	else if (isInit || max_value != NULL)
 	{
 		if (new->increment_by > 0)
 			new->max_value = SEQ_MAXVALUE;		/* ascending seq */
 		else
-			new->max_value = -1;				/* descending seq */
+			new->max_value = -1;	/* descending seq */
 	}
 
 	/* MINVALUE (null arg means NO MINVALUE) */
 	if (min_value != NULL && min_value->arg)
-	{
 		new->min_value = defGetInt64(min_value);
-	}
 	else if (isInit || min_value != NULL)
 	{
 		if (new->increment_by > 0)
-			new->min_value = 1;					/* ascending seq */
+			new->min_value = 1; /* ascending seq */
 		else
 			new->min_value = SEQ_MINVALUE;		/* descending seq */
 	}
@@ -1073,7 +1069,7 @@ seq_redo(XLogRecPtr lsn, XLogRecord *record)
 	buffer = XLogReadBuffer(true, reln, 0);
 	if (!BufferIsValid(buffer))
 		elog(PANIC, "seq_redo: can't read block 0 of rel %u/%u/%u",
-			 xlrec->node.spcNode, xlrec->node.dbNode, xlrec->node.relNode);
+		   xlrec->node.spcNode, xlrec->node.dbNode, xlrec->node.relNode);
 
 	page = (Page) BufferGetPage(buffer);
 

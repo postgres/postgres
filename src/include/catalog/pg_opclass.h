@@ -16,10 +16,10 @@
  * such an index.
  *
  * Normally opckeytype = InvalidOid (zero), indicating that the data stored
- * in the index is the same as the data in the indexed column.  If opckeytype
+ * in the index is the same as the data in the indexed column.	If opckeytype
  * is nonzero then it indicates that a conversion step is needed to produce
  * the stored index data, which will be of type opckeytype (which might be
- * the same or different from the input datatype).  Performing such a
+ * the same or different from the input datatype).	Performing such a
  * conversion is the responsibility of the index access method --- not all
  * AMs support this.
  *
@@ -27,7 +27,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_opclass.h,v 1.60 2004/08/29 04:13:05 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_opclass.h,v 1.61 2004/08/29 05:06:55 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki

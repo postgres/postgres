@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.128 2004/08/29 04:12:29 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.129 2004/08/29 05:06:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -286,8 +286,8 @@ cluster_rel(RelToCluster *rvtc, bool recheck)
 	/*
 	 * We grab exclusive access to the target rel and index for the
 	 * duration of the transaction.  (This is redundant for the single-
-	 * transaction case, since cluster() already did it.)  The index
-	 * lock is taken inside check_index_is_clusterable.
+	 * transaction case, since cluster() already did it.)  The index lock
+	 * is taken inside check_index_is_clusterable.
 	 */
 	OldHeap = heap_open(rvtc->tableOid, AccessExclusiveLock);
 
@@ -391,7 +391,7 @@ check_index_is_clusterable(Relation OldHeap, Oid indexOid)
 	if (isOtherTempNamespace(RelationGetNamespace(OldHeap)))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			   errmsg("cannot cluster temporary tables of other sessions")));
+		   errmsg("cannot cluster temporary tables of other sessions")));
 
 	/* Drop relcache refcnt on OldIndex, but keep lock */
 	index_close(OldIndex);
@@ -438,7 +438,7 @@ mark_index_clustered(Relation rel, Oid indexOid)
 
 	foreach(index, RelationGetIndexList(rel))
 	{
-		Oid		thisIndexOid = lfirst_oid(index);
+		Oid			thisIndexOid = lfirst_oid(index);
 
 		indexTuple = SearchSysCacheCopy(INDEXRELID,
 										ObjectIdGetDatum(thisIndexOid),
@@ -540,8 +540,8 @@ rebuild_relation(Relation OldHeap, Oid indexOid)
 	/* performDeletion does CommandCounterIncrement at end */
 
 	/*
-	 * Rebuild each index on the relation (but not the toast table,
-	 * which is all-new at this point).  We do not need
+	 * Rebuild each index on the relation (but not the toast table, which
+	 * is all-new at this point).  We do not need
 	 * CommandCounterIncrement() because reindex_relation does it.
 	 */
 	reindex_relation(tableOid, false);
@@ -569,7 +569,7 @@ make_new_heap(Oid OIDOldHeap, const char *NewName, Oid NewTableSpace)
 
 	OIDNewHeap = heap_create_with_catalog(NewName,
 										  RelationGetNamespace(OldHeap),
-		                                  NewTableSpace,
+										  NewTableSpace,
 										  tupdesc,
 										  OldHeap->rd_rel->relkind,
 										  OldHeap->rd_rel->relisshared,
@@ -745,8 +745,8 @@ swap_relation_files(Oid r1, Oid r2)
 	 * their new owning relations.	Otherwise the wrong one will get
 	 * dropped ...
 	 *
-	 * NOTE: it is possible that only one table has a toast table; this
-	 * can happen in CLUSTER if there were dropped columns in the old table,
+	 * NOTE: it is possible that only one table has a toast table; this can
+	 * happen in CLUSTER if there were dropped columns in the old table,
 	 * and in ALTER TABLE when adding or changing type of columns.
 	 *
 	 * NOTE: at present, a TOAST table's only dependency is the one on its
@@ -802,15 +802,15 @@ swap_relation_files(Oid r1, Oid r2)
 	/*
 	 * Blow away the old relcache entries now.	We need this kluge because
 	 * relcache.c keeps a link to the smgr relation for the physical file,
-	 * and that will be out of date as soon as we do CommandCounterIncrement.
-	 * Whichever of the rels is the second to be cleared during cache
-	 * invalidation will have a dangling reference to an already-deleted smgr
-	 * relation.  Rather than trying to avoid this by ordering operations
-	 * just so, it's easiest to not have the relcache entries there at all.
-	 * (Fortunately, since one of the entries is local in our transaction,
-	 * it's sufficient to clear out our own relcache this way; the problem
-	 * cannot arise for other backends when they see our update on the
-	 * non-local relation.)
+	 * and that will be out of date as soon as we do
+	 * CommandCounterIncrement. Whichever of the rels is the second to be
+	 * cleared during cache invalidation will have a dangling reference to
+	 * an already-deleted smgr relation.  Rather than trying to avoid this
+	 * by ordering operations just so, it's easiest to not have the
+	 * relcache entries there at all. (Fortunately, since one of the
+	 * entries is local in our transaction, it's sufficient to clear out
+	 * our own relcache this way; the problem cannot arise for other
+	 * backends when they see our update on the non-local relation.)
 	 */
 	RelationForgetRelation(r1);
 	RelationForgetRelation(r2);

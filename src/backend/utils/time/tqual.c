@@ -16,7 +16,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/time/tqual.c,v 1.76 2004/08/29 04:13:01 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/time/tqual.c,v 1.77 2004/08/29 05:06:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -773,8 +773,8 @@ HeapTupleSatisfiesSnapshot(HeapTupleHeader tuple, Snapshot snapshot)
 	 * By here, the inserting transaction has committed - have to check
 	 * when...
 	 *
-	 * Note that the provided snapshot contains only top-level XIDs, so
-	 * we have to convert a subxact XID to its parent for comparison.
+	 * Note that the provided snapshot contains only top-level XIDs, so we
+	 * have to convert a subxact XID to its parent for comparison.
 	 * However, we can make first-pass range checks with the given XID,
 	 * because a subxact with XID < xmin has surely also got a parent with
 	 * XID < xmin, while one with XID >= xmax must belong to a parent that
@@ -1133,9 +1133,9 @@ void
 FreeXactSnapshot(void)
 {
 	/*
-	 * We do not free the xip arrays for the snapshot structs;
-	 * they will be reused soon.  So this is now just a state
-	 * change to prevent outside callers from accessing the snapshots.
+	 * We do not free the xip arrays for the snapshot structs; they will
+	 * be reused soon.	So this is now just a state change to prevent
+	 * outside callers from accessing the snapshots.
 	 */
 	QuerySnapshot = NULL;
 	SerializableSnapshot = NULL;

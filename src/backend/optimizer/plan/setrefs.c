@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.103 2004/08/29 04:12:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.104 2004/08/29 05:06:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -84,7 +84,7 @@ static void set_sa_opfuncid(ScalarArrayOpExpr *opexpr);
 void
 set_plan_references(Plan *plan, List *rtable)
 {
-	ListCell *l;
+	ListCell   *l;
 
 	if (plan == NULL)
 		return;
@@ -184,10 +184,11 @@ set_plan_references(Plan *plan, List *rtable)
 			 */
 			break;
 		case T_Limit:
+
 			/*
-			 * Like the plan types above, Limit doesn't evaluate its
-			 * tlist or quals.  It does have live expressions for
-			 * limit/offset, however.
+			 * Like the plan types above, Limit doesn't evaluate its tlist
+			 * or quals.  It does have live expressions for limit/offset,
+			 * however.
 			 */
 			fix_expr_references(plan, ((Limit *) plan)->limitOffset);
 			fix_expr_references(plan, ((Limit *) plan)->limitCount);
@@ -213,11 +214,12 @@ set_plan_references(Plan *plan, List *rtable)
 			fix_expr_references(plan, ((Result *) plan)->resconstantqual);
 			break;
 		case T_Append:
+
 			/*
 			 * Append, like Sort et al, doesn't actually evaluate its
-			 * targetlist or quals, and we haven't bothered to give it
-			 * its own tlist copy. So, don't fix targetlist/qual. But
-			 * do recurse into child plans.
+			 * targetlist or quals, and we haven't bothered to give it its
+			 * own tlist copy. So, don't fix targetlist/qual. But do
+			 * recurse into child plans.
 			 */
 			foreach(l, ((Append *) plan)->appendplans)
 				set_plan_references((Plan *) lfirst(l), rtable);

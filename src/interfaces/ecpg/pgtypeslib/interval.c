@@ -720,7 +720,7 @@ interval2tm(interval span, struct tm * tm, fsec_t *fsec)
 }	/* interval2tm() */
 
 static int
-tm2interval(struct tm * tm, fsec_t fsec, interval *span)
+tm2interval(struct tm * tm, fsec_t fsec, interval * span)
 {
 	span->month = ((tm->tm_year * 12) + tm->tm_mon);
 #ifdef HAVE_INT64_TIMESTAMP
@@ -797,7 +797,7 @@ PGTYPESinterval_from_asc(char *str, char **endptr)
 }
 
 char *
-PGTYPESinterval_to_asc(interval *span)
+PGTYPESinterval_to_asc(interval * span)
 {
 	struct tm	tt,
 			   *tm = &tt;
@@ -821,7 +821,7 @@ PGTYPESinterval_to_asc(interval *span)
 }
 
 int
-PGTYPESinterval_copy(interval *intvlsrc, interval *intrcldest)
+PGTYPESinterval_copy(interval * intvlsrc, interval * intrcldest)
 {
 	intrcldest->time = intvlsrc->time;
 	intrcldest->month = intvlsrc->month;

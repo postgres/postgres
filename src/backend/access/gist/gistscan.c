@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistscan.c,v 1.54 2004/08/29 04:12:17 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistscan.c,v 1.55 2004/08/29 05:06:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -115,9 +115,7 @@ gistrescan(PG_FUNCTION_ARGS)
 		 * the sk_subtype field.
 		 */
 		for (i = 0; i < s->numberOfKeys; i++)
-		{
 			s->keyData[i].sk_func = p->giststate->consistentFn[s->keyData[i].sk_attno - 1];
-		}
 	}
 
 	PG_RETURN_VOID();
@@ -266,9 +264,9 @@ ReleaseResources_gist(void)
 	GISTScanList next;
 
 	/*
-	 * Note: this should be a no-op during normal query shutdown.
-	 * However, in an abort situation ExecutorEnd is not called and so
-	 * there may be open index scans to clean up.
+	 * Note: this should be a no-op during normal query shutdown. However,
+	 * in an abort situation ExecutorEnd is not called and so there may be
+	 * open index scans to clean up.
 	 */
 	prev = NULL;
 

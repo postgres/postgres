@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/sysv_shmem.c,v 1.35 2004/08/29 04:12:42 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/sysv_shmem.c,v 1.36 2004/08/29 05:06:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,15 +92,15 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, uint32 size)
 		 */
 		ereport(FATAL,
 				(errmsg("could not create shared memory segment: %m"),
-			errdetail("Failed system call was shmget(key=%lu, size=%u, 0%o).",
-					  (unsigned long) memKey, size,
-					  IPC_CREAT | IPC_EXCL | IPCProtection),
+		errdetail("Failed system call was shmget(key=%lu, size=%u, 0%o).",
+				  (unsigned long) memKey, size,
+				  IPC_CREAT | IPC_EXCL | IPCProtection),
 				 (errno == EINVAL) ?
 				 errhint("This error usually means that PostgreSQL's request for a shared memory "
 						 "segment exceeded your kernel's SHMMAX parameter.  You can either "
 						 "reduce the request size or reconfigure the kernel with larger SHMMAX.  "
-						 "To reduce the request size (currently %u bytes), reduce "
-						 "PostgreSQL's shared_buffers parameter (currently %d) and/or "
+			   "To reduce the request size (currently %u bytes), reduce "
+		   "PostgreSQL's shared_buffers parameter (currently %d) and/or "
 						 "its max_connections parameter (currently %d).\n"
 						 "If the request size is already small, it's possible that it is less than "
 						 "your kernel's SHMMIN parameter, in which case raising the request size or "
@@ -252,21 +252,21 @@ PGSharedMemoryCreate(uint32 size, bool makePrivate, int port)
 	/* If Exec case, just attach and return the pointer */
 	if (UsedShmemSegAddr != NULL && !makePrivate && IsUnderPostmaster)
 	{
-		void* origUsedShmemSegAddr = UsedShmemSegAddr;
+		void	   *origUsedShmemSegAddr = UsedShmemSegAddr;
 
 #ifdef __CYGWIN__
 		/* cygipc (currently) appears to not detach on exec. */
 		PGSharedMemoryDetach();
 		UsedShmemSegAddr = origUsedShmemSegAddr;
 #endif
-		elog(DEBUG3,"Attaching to %p",UsedShmemSegAddr);
+		elog(DEBUG3, "Attaching to %p", UsedShmemSegAddr);
 		hdr = PGSharedMemoryAttach((IpcMemoryKey) UsedShmemSegID, &shmid);
 		if (hdr == NULL)
 			elog(FATAL, "could not attach to proper memory at fixed address: shmget(key=%d, addr=%p) failed: %m",
 				 (int) UsedShmemSegID, UsedShmemSegAddr);
 		if (hdr != origUsedShmemSegAddr)
-			elog(FATAL,"attaching to shared mem returned unexpected address (got %p, expected %p)",
-				 hdr,UsedShmemSegAddr);
+			elog(FATAL, "attaching to shared mem returned unexpected address (got %p, expected %p)",
+				 hdr, UsedShmemSegAddr);
 		UsedShmemSegAddr = hdr;
 		return hdr;
 	}
@@ -363,7 +363,7 @@ PGSharedMemoryCreate(uint32 size, bool makePrivate, int port)
  *
  * Detach from the shared memory segment, if still attached.  This is not
  * intended for use by the process that originally created the segment
- * (it will have an on_shmem_exit callback registered to do that).  Rather,
+ * (it will have an on_shmem_exit callback registered to do that).	Rather,
  * this is for subprocesses that have inherited an attachment and want to
  * get rid of it.
  */
@@ -374,7 +374,7 @@ PGSharedMemoryDetach(void)
 	{
 		if ((shmdt(UsedShmemSegAddr) < 0)
 #if (defined(EXEC_BACKEND) && defined(__CYGWIN__))
-			/* Work-around for cygipc exec bug */
+		/* Work-around for cygipc exec bug */
 			&& shmdt(NULL) < 0
 #endif
 			)

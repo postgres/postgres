@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/globals.c,v 1.93 2004/08/29 04:12:54 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/globals.c,v 1.94 2004/08/29 05:06:50 momjian Exp $
  *
  * NOTES
  *	  Globals used all over the place should be declared here and not
@@ -49,7 +49,8 @@ char		my_exec_path[MAXPGPATH];	/* full path to my executable */
 char		pkglib_path[MAXPGPATH];		/* full path to lib directory */
 
 #ifdef EXEC_BACKEND
-char		postgres_exec_path[MAXPGPATH];	/* full path to backend */
+char		postgres_exec_path[MAXPGPATH];		/* full path to backend */
+
 /* note: currently this is not valid in backend processes */
 #endif
 
@@ -92,11 +93,11 @@ int			maintenance_work_mem = 16384;
 int			NBuffers = 1000;
 int			MaxBackends = 100;
 
-int			VacuumCostPageHit = 1;			/* GUC parameters for vacuum */
+int			VacuumCostPageHit = 1;		/* GUC parameters for vacuum */
 int			VacuumCostPageMiss = 10;
 int			VacuumCostPageDirty = 20;
 int			VacuumCostLimit = 200;
 int			VacuumCostDelay = 0;
 
-int			VacuumCostBalance = 0;			/* working state for vacuum */
+int			VacuumCostBalance = 0;		/* working state for vacuum */
 bool		VacuumCostActive = false;

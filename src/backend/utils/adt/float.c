@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.108 2004/08/29 04:12:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.109 2004/08/29 05:06:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -102,6 +102,7 @@ static void CheckFloat4Val(double val);
 static void CheckFloat8Val(double val);
 static int	float4_cmp_internal(float4 a, float4 b);
 static int	float8_cmp_internal(float8 a, float8 b);
+
 #ifndef HAVE_CBRT
 static double cbrt(double x);
 #endif   /* HAVE_CBRT */
@@ -123,10 +124,11 @@ get_float8_infinity(void)
 	/* C99 standard way */
 	return (double) INFINITY;
 #else
+
 	/*
 	 * On some platforms, HUGE_VAL is an infinity, elsewhere it's just the
-	 * largest normal double.  We assume forcing an overflow will get us
-	 * a true infinity.
+	 * largest normal double.  We assume forcing an overflow will get us a
+	 * true infinity.
 	 */
 	return (double) (HUGE_VAL * HUGE_VAL);
 #endif
@@ -139,10 +141,11 @@ get_float4_infinity(void)
 	/* C99 standard way */
 	return (float) INFINITY;
 #else
+
 	/*
 	 * On some platforms, HUGE_VAL is an infinity, elsewhere it's just the
-	 * largest normal double.  We assume forcing an overflow will get us
-	 * a true infinity.
+	 * largest normal double.  We assume forcing an overflow will get us a
+	 * true infinity.
 	 */
 	return (float) (HUGE_VAL * HUGE_VAL);
 #endif
@@ -183,7 +186,7 @@ get_float4_nan(void)
 int
 is_infinite(double val)
 {
-	int inf = isinf(val);
+	int			inf = isinf(val);
 
 	if (inf == 0)
 		return 0;
@@ -250,20 +253,19 @@ float4in(PG_FUNCTION_ARGS)
 
 	/*
 	 * endptr points to the first character _after_ the sequence we
-	 * recognized as a valid floating point number. orig_num points to
-	 * the original input string.
+	 * recognized as a valid floating point number. orig_num points to the
+	 * original input string.
 	 */
 	orig_num = num;
 
 	/*
-	 * Check for an empty-string input to begin with, to avoid
-	 * the vagaries of strtod() on different platforms.
+	 * Check for an empty-string input to begin with, to avoid the
+	 * vagaries of strtod() on different platforms.
 	 *
-	 * In releases prior to 8.0, we accepted an empty string as valid
-	 * input (yielding a float4 of 0). In 8.0, we accept empty
-	 * strings, but emit a warning noting that the feature is
-	 * deprecated. In 8.1+, the warning should be replaced by an
-	 * error.
+	 * In releases prior to 8.0, we accepted an empty string as valid input
+	 * (yielding a float4 of 0). In 8.0, we accept empty strings, but emit
+	 * a warning noting that the feature is deprecated. In 8.1+, the
+	 * warning should be replaced by an error.
 	 */
 	if (*num == '\0')
 	{
@@ -286,9 +288,9 @@ float4in(PG_FUNCTION_ARGS)
 	if (endptr == num || errno != 0)
 	{
 		/*
-		 * C99 requires that strtod() accept NaN and [-]Infinity, but
-		 * not all platforms support that yet (and some accept them but
-		 * set ERANGE anyway...)  Therefore, we check for these inputs
+		 * C99 requires that strtod() accept NaN and [-]Infinity, but not
+		 * all platforms support that yet (and some accept them but set
+		 * ERANGE anyway...)  Therefore, we check for these inputs
 		 * ourselves.
 		 */
 		if (pg_strncasecmp(num, "NaN", 3) == 0)
@@ -303,7 +305,7 @@ float4in(PG_FUNCTION_ARGS)
 		}
 		else if (pg_strncasecmp(num, "-Infinity", 9) == 0)
 		{
-			val = - get_float4_infinity();
+			val = -get_float4_infinity();
 			endptr = num + 9;
 		}
 		else if (errno == ERANGE)
@@ -322,13 +324,13 @@ float4in(PG_FUNCTION_ARGS)
 	{
 		/*
 		 * Many versions of Solaris have a bug wherein strtod sets endptr
-		 * to point one byte beyond the end of the string when given
-		 * "inf" or "infinity".
+		 * to point one byte beyond the end of the string when given "inf"
+		 * or "infinity".
 		 */
 		if (endptr != num && endptr[-1] == '\0')
 			endptr--;
 	}
-#endif /* HAVE_BUGGY_SOLARIS_STRTOD */
+#endif   /* HAVE_BUGGY_SOLARIS_STRTOD */
 
 	/* skip trailing whitespace */
 	while (*endptr != '\0' && isspace((unsigned char) *endptr))
@@ -373,13 +375,14 @@ float4out(PG_FUNCTION_ARGS)
 			strcpy(ascii, "-Infinity");
 			break;
 		default:
-		{
-			int ndig = FLT_DIG + extra_float_digits;
-			if (ndig < 1)
-				ndig = 1;
+			{
+				int			ndig = FLT_DIG + extra_float_digits;
 
-			sprintf(ascii, "%.*g", ndig, num);
-		}
+				if (ndig < 1)
+					ndig = 1;
+
+				sprintf(ascii, "%.*g", ndig, num);
+			}
 	}
 
 	PG_RETURN_CSTRING(ascii);
@@ -427,26 +430,25 @@ float8in(PG_FUNCTION_ARGS)
 
 	/*
 	 * endptr points to the first character _after_ the sequence we
-	 * recognized as a valid floating point number. orig_num points to
-	 * the original input string.
+	 * recognized as a valid floating point number. orig_num points to the
+	 * original input string.
 	 */
 	orig_num = num;
 
 	/*
-	 * Check for an empty-string input to begin with, to avoid
-	 * the vagaries of strtod() on different platforms.
+	 * Check for an empty-string input to begin with, to avoid the
+	 * vagaries of strtod() on different platforms.
 	 *
-	 * In releases prior to 8.0, we accepted an empty string as valid
-	 * input (yielding a float8 of 0). In 8.0, we accept empty
-	 * strings, but emit a warning noting that the feature is
-	 * deprecated. In 8.1+, the warning should be replaced by an
-	 * error.
+	 * In releases prior to 8.0, we accepted an empty string as valid input
+	 * (yielding a float8 of 0). In 8.0, we accept empty strings, but emit
+	 * a warning noting that the feature is deprecated. In 8.1+, the
+	 * warning should be replaced by an error.
 	 */
 	if (*num == '\0')
 	{
 		ereport(WARNING,
 				(errcode(ERRCODE_WARNING_DEPRECATED_FEATURE),
-				 errmsg("deprecated input syntax for type double precision: \"\""),
+		errmsg("deprecated input syntax for type double precision: \"\""),
 				 errdetail("This input will be rejected in "
 						   "a future release of PostgreSQL.")));
 		PG_RETURN_FLOAT8(0.0);
@@ -463,9 +465,9 @@ float8in(PG_FUNCTION_ARGS)
 	if (endptr == num || errno != 0)
 	{
 		/*
-		 * C99 requires that strtod() accept NaN and [-]Infinity, but
-		 * not all platforms support that yet (and some accept them but
-		 * set ERANGE anyway...)  Therefore, we check for these inputs
+		 * C99 requires that strtod() accept NaN and [-]Infinity, but not
+		 * all platforms support that yet (and some accept them but set
+		 * ERANGE anyway...)  Therefore, we check for these inputs
 		 * ourselves.
 		 */
 		if (pg_strncasecmp(num, "NaN", 3) == 0)
@@ -480,14 +482,14 @@ float8in(PG_FUNCTION_ARGS)
 		}
 		else if (pg_strncasecmp(num, "-Infinity", 9) == 0)
 		{
-			val = - get_float8_infinity();
+			val = -get_float8_infinity();
 			endptr = num + 9;
 		}
 		else if (errno == ERANGE)
 			ereport(ERROR,
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-					 errmsg("\"%s\" is out of range for type double precision",
-							orig_num)));
+			   errmsg("\"%s\" is out of range for type double precision",
+					  orig_num)));
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
@@ -499,13 +501,13 @@ float8in(PG_FUNCTION_ARGS)
 	{
 		/*
 		 * Many versions of Solaris have a bug wherein strtod sets endptr
-		 * to point one byte beyond the end of the string when given
-		 * "inf" or "infinity".
+		 * to point one byte beyond the end of the string when given "inf"
+		 * or "infinity".
 		 */
 		if (endptr != num && endptr[-1] == '\0')
 			endptr--;
 	}
-#endif /* HAVE_BUGGY_SOLARIS_STRTOD */
+#endif   /* HAVE_BUGGY_SOLARIS_STRTOD */
 
 	/* skip trailing whitespace */
 	while (*endptr != '\0' && isspace((unsigned char) *endptr))
@@ -515,8 +517,8 @@ float8in(PG_FUNCTION_ARGS)
 	if (*endptr != '\0')
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				 errmsg("invalid input syntax for type double precision: \"%s\"",
-						orig_num)));
+		 errmsg("invalid input syntax for type double precision: \"%s\"",
+				orig_num)));
 
 	if (!isinf(val))
 		CheckFloat8Val(val);
@@ -546,13 +548,14 @@ float8out(PG_FUNCTION_ARGS)
 			strcpy(ascii, "-Infinity");
 			break;
 		default:
-		{
-			int ndig = DBL_DIG + extra_float_digits;
-			if (ndig < 1)
-				ndig = 1;
+			{
+				int			ndig = DBL_DIG + extra_float_digits;
 
-			sprintf(ascii, "%.*g", ndig, num);
-		}
+				if (ndig < 1)
+					ndig = 1;
+
+				sprintf(ascii, "%.*g", ndig, num);
+			}
 	}
 
 	PG_RETURN_CSTRING(ascii);
@@ -1474,8 +1477,8 @@ dpow(PG_FUNCTION_ARGS)
 	float8		result;
 
 	/*
-	 * The SQL spec requires that we emit a particular SQLSTATE error
-	 * code for certain error conditions.
+	 * The SQL spec requires that we emit a particular SQLSTATE error code
+	 * for certain error conditions.
 	 */
 	if ((arg1 == 0 && arg2 < 0) ||
 		(arg1 < 0 && floor(arg2) != arg2))
@@ -1543,8 +1546,8 @@ dlog1(PG_FUNCTION_ARGS)
 	float8		result;
 
 	/*
-	 * Emit particular SQLSTATE error codes for ln(). This is required
-	 * by the SQL standard.
+	 * Emit particular SQLSTATE error codes for ln(). This is required by
+	 * the SQL standard.
 	 */
 	if (arg1 == 0.0)
 		ereport(ERROR,
@@ -1573,9 +1576,8 @@ dlog10(PG_FUNCTION_ARGS)
 
 	/*
 	 * Emit particular SQLSTATE error codes for log(). The SQL spec
-	 * doesn't define log(), but it does define ln(), so it makes
-	 * sense to emit the same error code for an analogous error
-	 * condition.
+	 * doesn't define log(), but it does define ln(), so it makes sense to
+	 * emit the same error code for an analogous error condition.
 	 */
 	if (arg1 == 0.0)
 		ereport(ERROR,

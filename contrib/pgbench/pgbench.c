@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.31 2004/06/14 11:00:12 ishii Exp $
+ * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.32 2004/08/29 05:06:36 momjian Exp $
  *
  * pgbench: a simple TPC-B like benchmark program for PostgreSQL
  * written by Tatsuo Ishii
@@ -261,7 +261,7 @@ doOne(CState * state, int n, int debug, int ttype)
 				 */
 				if (use_log)
 				{
-					double	diff;
+					double		diff;
 					struct timeval now;
 
 					gettimeofday(&now, 0);
@@ -492,7 +492,7 @@ init(void)
 	static char *DDLAFTERs[] = {
 		"alter table branches add primary key (bid)",
 		"alter table tellers add primary key (tid)",
-		"alter table accounts add primary key (aid)"};
+	"alter table accounts add primary key (aid)"};
 
 
 	char		sql[256];

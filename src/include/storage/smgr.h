@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/smgr.h,v 1.47 2004/08/29 04:13:10 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/storage/smgr.h,v 1.48 2004/08/29 05:06:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,13 +31,13 @@
 typedef struct SMgrRelationData
 {
 	/* rnode is the hashtable lookup key, so it must be first! */
-	RelFileNode	smgr_rnode;		/* relation physical identifier */
+	RelFileNode smgr_rnode;		/* relation physical identifier */
 
 	/* additional public fields may someday exist here */
 
 	/*
 	 * Fields below here are intended to be private to smgr.c and its
-	 * submodules.  Do not touch them from elsewhere.
+	 * submodules.	Do not touch them from elsewhere.
 	 */
 	int			smgr_which;		/* storage manager selector */
 
@@ -56,13 +56,13 @@ extern void smgrcreate(SMgrRelation reln, bool isTemp, bool isRedo);
 extern void smgrscheduleunlink(SMgrRelation reln, bool isTemp);
 extern void smgrdounlink(SMgrRelation reln, bool isTemp, bool isRedo);
 extern void smgrextend(SMgrRelation reln, BlockNumber blocknum, char *buffer,
-					   bool isTemp);
+		   bool isTemp);
 extern void smgrread(SMgrRelation reln, BlockNumber blocknum, char *buffer);
 extern void smgrwrite(SMgrRelation reln, BlockNumber blocknum, char *buffer,
-					  bool isTemp);
+		  bool isTemp);
 extern BlockNumber smgrnblocks(SMgrRelation reln);
 extern BlockNumber smgrtruncate(SMgrRelation reln, BlockNumber nblocks,
-								bool isTemp);
+			 bool isTemp);
 extern void smgrimmedsync(SMgrRelation reln);
 extern void smgrDoPendingDeletes(bool isCommit);
 extern int	smgrGetPendingDeletes(bool forCommit, RelFileNode **ptr);
@@ -85,13 +85,13 @@ extern bool mdclose(SMgrRelation reln);
 extern bool mdcreate(SMgrRelation reln, bool isRedo);
 extern bool mdunlink(RelFileNode rnode, bool isRedo);
 extern bool mdextend(SMgrRelation reln, BlockNumber blocknum, char *buffer,
-					 bool isTemp);
+		 bool isTemp);
 extern bool mdread(SMgrRelation reln, BlockNumber blocknum, char *buffer);
 extern bool mdwrite(SMgrRelation reln, BlockNumber blocknum, char *buffer,
-					bool isTemp);
+		bool isTemp);
 extern BlockNumber mdnblocks(SMgrRelation reln);
 extern BlockNumber mdtruncate(SMgrRelation reln, BlockNumber nblocks,
-							  bool isTemp);
+		   bool isTemp);
 extern bool mdimmedsync(SMgrRelation reln);
 extern bool mdsync(void);
 

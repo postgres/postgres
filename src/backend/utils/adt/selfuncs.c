@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.163 2004/08/29 04:12:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.164 2004/08/29 05:06:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -192,16 +192,16 @@ static double convert_one_bytea_to_scalar(unsigned char *value, int valuelen,
 static unsigned char *convert_string_datum(Datum value, Oid typid);
 static double convert_timevalue_to_scalar(Datum value, Oid typid);
 static bool get_restriction_variable(Query *root, List *args, int varRelid,
-					VariableStatData *vardata, Node **other,
-					bool *varonleft);
+						 VariableStatData *vardata, Node **other,
+						 bool *varonleft);
 static void get_join_variables(Query *root, List *args,
-							   VariableStatData *vardata1,
-							   VariableStatData *vardata2);
+				   VariableStatData *vardata1,
+				   VariableStatData *vardata2);
 static void examine_variable(Query *root, Node *node, int varRelid,
-							 VariableStatData *vardata);
+				 VariableStatData *vardata);
 static double get_variable_numdistinct(VariableStatData *vardata);
 static bool get_variable_maximum(Query *root, VariableStatData *vardata,
-								 Oid sortop, Datum *max);
+					 Oid sortop, Datum *max);
 static Selectivity prefix_selectivity(Query *root, VariableStatData *vardata,
 				   Oid opclass, Const *prefix);
 static Selectivity pattern_selectivity(Const *patt, Pattern_Type ptype);
@@ -704,8 +704,8 @@ scalarltsel(PG_FUNCTION_ARGS)
 	double		selec;
 
 	/*
-	 * If expression is not variable op something or something op variable,
-	 * then punt and return a default estimate.
+	 * If expression is not variable op something or something op
+	 * variable, then punt and return a default estimate.
 	 */
 	if (!get_restriction_variable(root, args, varRelid,
 								  &vardata, &other, &varonleft))
@@ -780,8 +780,8 @@ scalargtsel(PG_FUNCTION_ARGS)
 	double		selec;
 
 	/*
-	 * If expression is not variable op something or something op variable,
-	 * then punt and return a default estimate.
+	 * If expression is not variable op something or something op
+	 * variable, then punt and return a default estimate.
 	 */
 	if (!get_restriction_variable(root, args, varRelid,
 								  &vardata, &other, &varonleft))
@@ -1238,9 +1238,9 @@ booltestsel(Query *root, BoolTestType booltesttype, Node *arg,
 	{
 		/*
 		 * If we can't get variable statistics for the argument, perhaps
-		 * clause_selectivity can do something with it.  We ignore
-		 * the possibility of a NULL value when using clause_selectivity,
-		 * and just assume the value is either TRUE or FALSE.
+		 * clause_selectivity can do something with it.  We ignore the
+		 * possibility of a NULL value when using clause_selectivity, and
+		 * just assume the value is either TRUE or FALSE.
 		 */
 		switch (booltesttype)
 		{
@@ -1258,7 +1258,7 @@ booltestsel(Query *root, BoolTestType booltesttype, Node *arg,
 			case IS_FALSE:
 			case IS_NOT_TRUE:
 				selec = 1.0 - (double) clause_selectivity(root, arg,
-														  varRelid, jointype);
+													 varRelid, jointype);
 				break;
 			default:
 				elog(ERROR, "unrecognized booltesttype: %d",
@@ -1334,7 +1334,7 @@ nulltestsel(Query *root, NullTestType nulltesttype, Node *arg, int varRelid)
 			default:
 				elog(ERROR, "unrecognized nulltesttype: %d",
 					 (int) nulltesttype);
-				return (Selectivity) 0;		/* keep compiler quiet */
+				return (Selectivity) 0; /* keep compiler quiet */
 		}
 	}
 
@@ -1407,17 +1407,16 @@ eqjoinsel(PG_FUNCTION_ARGS)
 	{
 		/*
 		 * We have most-common-value lists for both relations.	Run
-		 * through the lists to see which MCVs actually join to each
-		 * other with the given operator.  This allows us to determine
-		 * the exact join selectivity for the portion of the relations
-		 * represented by the MCV lists.  We still have to estimate
-		 * for the remaining population, but in a skewed distribution
-		 * this gives us a big leg up in accuracy.	For motivation see
-		 * the analysis in Y. Ioannidis and S. Christodoulakis, "On
-		 * the propagation of errors in the size of join results",
-		 * Technical Report 1018, Computer Science Dept., University
-		 * of Wisconsin, Madison, March 1991 (available from
-		 * ftp.cs.wisc.edu).
+		 * through the lists to see which MCVs actually join to each other
+		 * with the given operator.  This allows us to determine the exact
+		 * join selectivity for the portion of the relations represented
+		 * by the MCV lists.  We still have to estimate for the remaining
+		 * population, but in a skewed distribution this gives us a big
+		 * leg up in accuracy.	For motivation see the analysis in Y.
+		 * Ioannidis and S. Christodoulakis, "On the propagation of errors
+		 * in the size of join results", Technical Report 1018, Computer
+		 * Science Dept., University of Wisconsin, Madison, March 1991
+		 * (available from ftp.cs.wisc.edu).
 		 */
 		FmgrInfo	eqproc;
 		bool	   *hasmatch1;
@@ -1441,22 +1440,20 @@ eqjoinsel(PG_FUNCTION_ARGS)
 		hasmatch2 = (bool *) palloc0(nvalues2 * sizeof(bool));
 
 		/*
-		 * If we are doing any variant of JOIN_IN, pretend all the
-		 * values of the righthand relation are unique (ie, act as if
-		 * it's been DISTINCT'd).
+		 * If we are doing any variant of JOIN_IN, pretend all the values
+		 * of the righthand relation are unique (ie, act as if it's been
+		 * DISTINCT'd).
 		 *
-		 * NOTE: it might seem that we should unique-ify the lefthand
-		 * input when considering JOIN_REVERSE_IN.	But this is not
-		 * so, because the join clause we've been handed has not been
-		 * commuted from the way the parser originally wrote it.  We
-		 * know that the unique side of the IN clause is *always* on
-		 * the right.
+		 * NOTE: it might seem that we should unique-ify the lefthand input
+		 * when considering JOIN_REVERSE_IN.  But this is not so, because
+		 * the join clause we've been handed has not been commuted from
+		 * the way the parser originally wrote it.	We know that the
+		 * unique side of the IN clause is *always* on the right.
 		 *
-		 * NOTE: it would be dangerous to try to be smart about JOIN_LEFT
-		 * or JOIN_RIGHT here, because we do not have enough
-		 * information to determine which var is really on which side
-		 * of the join. Perhaps someday we should pass in more
-		 * information.
+		 * NOTE: it would be dangerous to try to be smart about JOIN_LEFT or
+		 * JOIN_RIGHT here, because we do not have enough information to
+		 * determine which var is really on which side of the join.
+		 * Perhaps someday we should pass in more information.
 		 */
 		if (jointype == JOIN_IN ||
 			jointype == JOIN_REVERSE_IN ||
@@ -1471,11 +1468,10 @@ eqjoinsel(PG_FUNCTION_ARGS)
 		}
 
 		/*
-		 * Note we assume that each MCV will match at most one member
-		 * of the other MCV list.  If the operator isn't really
-		 * equality, there could be multiple matches --- but we don't
-		 * look for them, both for speed and because the math wouldn't
-		 * add up...
+		 * Note we assume that each MCV will match at most one member of
+		 * the other MCV list.	If the operator isn't really equality,
+		 * there could be multiple matches --- but we don't look for them,
+		 * both for speed and because the math wouldn't add up...
 		 */
 		matchprodfreq = 0.0;
 		nmatches = 0;
@@ -1524,8 +1520,8 @@ eqjoinsel(PG_FUNCTION_ARGS)
 		pfree(hasmatch2);
 
 		/*
-		 * Compute total frequency of non-null values that are not in
-		 * the MCV lists.
+		 * Compute total frequency of non-null values that are not in the
+		 * MCV lists.
 		 */
 		otherfreq1 = 1.0 - nullfrac1 - matchfreq1 - unmatchfreq1;
 		otherfreq2 = 1.0 - nullfrac2 - matchfreq2 - unmatchfreq2;
@@ -1533,12 +1529,12 @@ eqjoinsel(PG_FUNCTION_ARGS)
 		CLAMP_PROBABILITY(otherfreq2);
 
 		/*
-		 * We can estimate the total selectivity from the point of
-		 * view of relation 1 as: the known selectivity for matched
-		 * MCVs, plus unmatched MCVs that are assumed to match against
-		 * random members of relation 2's non-MCV population, plus
-		 * non-MCV values that are assumed to match against random
-		 * members of relation 2's unmatched MCVs plus non-MCV values.
+		 * We can estimate the total selectivity from the point of view of
+		 * relation 1 as: the known selectivity for matched MCVs, plus
+		 * unmatched MCVs that are assumed to match against random members
+		 * of relation 2's non-MCV population, plus non-MCV values that
+		 * are assumed to match against random members of relation 2's
+		 * unmatched MCVs plus non-MCV values.
 		 */
 		totalsel1 = matchprodfreq;
 		if (nd2 > nvalues2)
@@ -1555,11 +1551,10 @@ eqjoinsel(PG_FUNCTION_ARGS)
 				(nd1 - nmatches);
 
 		/*
-		 * Use the smaller of the two estimates.  This can be
-		 * justified in essentially the same terms as given below for
-		 * the no-stats case: to a first approximation, we are
-		 * estimating from the point of view of the relation with
-		 * smaller nd.
+		 * Use the smaller of the two estimates.  This can be justified in
+		 * essentially the same terms as given below for the no-stats
+		 * case: to a first approximation, we are estimating from the
+		 * point of view of the relation with smaller nd.
 		 */
 		selec = (totalsel1 < totalsel2) ? totalsel1 : totalsel2;
 	}
@@ -1567,26 +1562,24 @@ eqjoinsel(PG_FUNCTION_ARGS)
 	{
 		/*
 		 * We do not have MCV lists for both sides.  Estimate the join
-		 * selectivity as
-		 * MIN(1/nd1,1/nd2)*(1-nullfrac1)*(1-nullfrac2). This is
-		 * plausible if we assume that the join operator is strict and
-		 * the non-null values are about equally distributed: a given
+		 * selectivity as MIN(1/nd1,1/nd2)*(1-nullfrac1)*(1-nullfrac2).
+		 * This is plausible if we assume that the join operator is strict
+		 * and the non-null values are about equally distributed: a given
 		 * non-null tuple of rel1 will join to either zero or
-		 * N2*(1-nullfrac2)/nd2 rows of rel2, so total join rows are
-		 * at most N1*(1-nullfrac1)*N2*(1-nullfrac2)/nd2 giving a join
-		 * selectivity of not more than
-		 * (1-nullfrac1)*(1-nullfrac2)/nd2. By the same logic it is
-		 * not more than (1-nullfrac1)*(1-nullfrac2)/nd1, so the
-		 * expression with MIN() is an upper bound.  Using the MIN()
-		 * means we estimate from the point of view of the relation
-		 * with smaller nd (since the larger nd is determining the
-		 * MIN).  It is reasonable to assume that most tuples in this
-		 * rel will have join partners, so the bound is probably
-		 * reasonably tight and should be taken as-is.
+		 * N2*(1-nullfrac2)/nd2 rows of rel2, so total join rows are at
+		 * most N1*(1-nullfrac1)*N2*(1-nullfrac2)/nd2 giving a join
+		 * selectivity of not more than (1-nullfrac1)*(1-nullfrac2)/nd2.
+		 * By the same logic it is not more than
+		 * (1-nullfrac1)*(1-nullfrac2)/nd1, so the expression with MIN()
+		 * is an upper bound.  Using the MIN() means we estimate from the
+		 * point of view of the relation with smaller nd (since the larger
+		 * nd is determining the MIN).	It is reasonable to assume that
+		 * most tuples in this rel will have join partners, so the bound
+		 * is probably reasonably tight and should be taken as-is.
 		 *
-		 * XXX Can we be smarter if we have an MCV list for just one
-		 * side? It seems that if we assume equal distribution for the
-		 * other side, we end up with the same answer anyway.
+		 * XXX Can we be smarter if we have an MCV list for just one side? It
+		 * seems that if we assume equal distribution for the other side,
+		 * we end up with the same answer anyway.
 		 */
 		double		nullfrac1 = stats1 ? stats1->stanullfrac : 0.0;
 		double		nullfrac2 = stats2 ? stats2->stanullfrac : 0.0;
@@ -2849,7 +2842,7 @@ get_restriction_variable(Query *root, List *args, int varRelid,
 	right = (Node *) lsecond(args);
 
 	/*
-	 * Examine both sides.  Note that when varRelid is nonzero, Vars of
+	 * Examine both sides.	Note that when varRelid is nonzero, Vars of
 	 * other relations will be treated as pseudoconstants.
 	 */
 	examine_variable(root, left, varRelid, vardata);
@@ -2961,18 +2954,18 @@ examine_variable(Query *root, Node *node, int varRelid,
 		{
 			vardata->statsTuple = SearchSysCache(STATRELATT,
 												 ObjectIdGetDatum(relid),
-												 Int16GetDatum(var->varattno),
+											Int16GetDatum(var->varattno),
 												 0, 0);
 		}
 		else
 		{
 			/*
-			 * XXX This means the Var comes from a JOIN or sub-SELECT.  Later
-			 * add code to dig down into the join etc and see if we can trace
-			 * the variable to something with stats.  (But beware of
-			 * sub-SELECTs with DISTINCT/GROUP BY/etc.  Perhaps there are
-			 * no cases where this would really be useful, because we'd have
-			 * flattened the subselect if it is??)
+			 * XXX This means the Var comes from a JOIN or sub-SELECT.
+			 * Later add code to dig down into the join etc and see if we
+			 * can trace the variable to something with stats.	(But
+			 * beware of sub-SELECTs with DISTINCT/GROUP BY/etc.  Perhaps
+			 * there are no cases where this would really be useful,
+			 * because we'd have flattened the subselect if it is??)
 			 */
 		}
 
@@ -2981,8 +2974,8 @@ examine_variable(Query *root, Node *node, int varRelid,
 
 	/*
 	 * Okay, it's a more complicated expression.  Determine variable
-	 * membership.  Note that when varRelid isn't zero, only vars of
-	 * that relation are considered "real" vars.
+	 * membership.	Note that when varRelid isn't zero, only vars of that
+	 * relation are considered "real" vars.
 	 */
 	varnos = pull_varnos(node);
 
@@ -2997,7 +2990,7 @@ examine_variable(Query *root, Node *node, int varRelid,
 			if (varRelid == 0 || bms_is_member(varRelid, varnos))
 			{
 				onerel = find_base_rel(root,
-						 (varRelid ? varRelid : bms_singleton_member(varnos)));
+				   (varRelid ? varRelid : bms_singleton_member(varnos)));
 				vardata->rel = onerel;
 			}
 			/* else treat it as a constant */
@@ -3026,13 +3019,13 @@ examine_variable(Query *root, Node *node, int varRelid,
 	if (onerel)
 	{
 		/*
-		 * We have an expression in vars of a single relation.  Try to
+		 * We have an expression in vars of a single relation.	Try to
 		 * match it to expressional index columns, in hopes of finding
 		 * some statistics.
 		 *
 		 * XXX it's conceivable that there are multiple matches with
 		 * different index opclasses; if so, we need to pick one that
-		 * matches the operator we are estimating for.  FIXME later.
+		 * matches the operator we are estimating for.	FIXME later.
 		 */
 		ListCell   *ilist;
 
@@ -3067,8 +3060,8 @@ examine_variable(Query *root, Node *node, int varRelid,
 					if (equal(node, indexkey))
 					{
 						/*
-						 * Found a match ... is it a unique index?
-						 * Tests here should match has_unique_index().
+						 * Found a match ... is it a unique index? Tests
+						 * here should match has_unique_index().
 						 */
 						if (index->unique &&
 							index->ncolumns == 1 &&
@@ -3076,8 +3069,8 @@ examine_variable(Query *root, Node *node, int varRelid,
 							vardata->isunique = true;
 						/* Has it got stats? */
 						vardata->statsTuple = SearchSysCache(STATRELATT,
-															 ObjectIdGetDatum(index->indexoid),
-															 Int16GetDatum(pos + 1),
+									   ObjectIdGetDatum(index->indexoid),
+												  Int16GetDatum(pos + 1),
 															 0, 0);
 						if (vardata->statsTuple)
 							break;
@@ -3107,9 +3100,9 @@ get_variable_numdistinct(VariableStatData *vardata)
 	double		ntuples;
 
 	/*
-	 * Determine the stadistinct value to use.  There are cases where
-	 * we can get an estimate even without a pg_statistic entry, or
-	 * can get a better value than is in pg_statistic.
+	 * Determine the stadistinct value to use.	There are cases where we
+	 * can get an estimate even without a pg_statistic entry, or can get a
+	 * better value than is in pg_statistic.
 	 */
 	if (HeapTupleIsValid(vardata->statsTuple))
 	{
@@ -3124,16 +3117,16 @@ get_variable_numdistinct(VariableStatData *vardata)
 		/*
 		 * Special-case boolean columns: presumably, two distinct values.
 		 *
-		 * Are there any other datatypes we should wire in special
-		 * estimates for?
+		 * Are there any other datatypes we should wire in special estimates
+		 * for?
 		 */
 		stadistinct = 2.0;
 	}
 	else
 	{
 		/*
-		 * We don't keep statistics for system columns, but in some
-		 * cases we can infer distinctness anyway.
+		 * We don't keep statistics for system columns, but in some cases
+		 * we can infer distinctness anyway.
 		 */
 		if (vardata->var && IsA(vardata->var, Var))
 		{
@@ -3141,27 +3134,28 @@ get_variable_numdistinct(VariableStatData *vardata)
 			{
 				case ObjectIdAttributeNumber:
 				case SelfItemPointerAttributeNumber:
-					stadistinct = -1.0;			/* unique */
+					stadistinct = -1.0; /* unique */
 					break;
 				case TableOidAttributeNumber:
-					stadistinct = 1.0;			/* only 1 value */
+					stadistinct = 1.0;	/* only 1 value */
 					break;
 				default:
-					stadistinct = 0.0;			/* means "unknown" */
+					stadistinct = 0.0;	/* means "unknown" */
 					break;
 			}
 		}
 		else
-			stadistinct = 0.0;					/* means "unknown" */
+			stadistinct = 0.0;	/* means "unknown" */
+
 		/*
 		 * XXX consider using estimate_num_groups on expressions?
 		 */
 	}
 
 	/*
-	 * If there is a unique index for the variable, assume it is unique
-	 * no matter what pg_statistic says (the statistics could be out
-	 * of date).  Can skip search if we already think it's unique.
+	 * If there is a unique index for the variable, assume it is unique no
+	 * matter what pg_statistic says (the statistics could be out of
+	 * date).  Can skip search if we already think it's unique.
 	 */
 	if (stadistinct != -1.0)
 	{
@@ -3169,7 +3163,7 @@ get_variable_numdistinct(VariableStatData *vardata)
 			stadistinct = -1.0;
 		else if (vardata->var && IsA(vardata->var, Var) &&
 				 vardata->rel &&
-				 has_unique_index(vardata->rel, 
+				 has_unique_index(vardata->rel,
 								  ((Var *) vardata->var)->varattno))
 			stadistinct = -1.0;
 	}
@@ -3381,7 +3375,7 @@ like_fixed_prefix(Const *patt_const, bool case_insensitive,
 	}
 	else
 	{
-		bytea   *bstr = DatumGetByteaP(patt_const->constvalue);
+		bytea	   *bstr = DatumGetByteaP(patt_const->constvalue);
 
 		pattlen = VARSIZE(bstr) - VARHDRSZ;
 		if (pattlen > 0)
@@ -3768,7 +3762,7 @@ like_selectivity(Const *patt_const, bool case_insensitive)
 	}
 	else
 	{
-		bytea   *bstr = DatumGetByteaP(patt_const->constvalue);
+		bytea	   *bstr = DatumGetByteaP(patt_const->constvalue);
 
 		pattlen = VARSIZE(bstr) - VARHDRSZ;
 		if (pattlen > 0)
@@ -4005,12 +3999,12 @@ make_greater_string(const Const *str_const)
 	if (datatype == NAMEOID)
 	{
 		workstr = DatumGetCString(DirectFunctionCall1(nameout,
-													  str_const->constvalue));
+												 str_const->constvalue));
 		len = strlen(workstr);
 	}
 	else if (datatype == BYTEAOID)
 	{
-		bytea   *bstr = DatumGetByteaP(str_const->constvalue);
+		bytea	   *bstr = DatumGetByteaP(str_const->constvalue);
 
 		len = VARSIZE(bstr) - VARHDRSZ;
 		if (len > 0)
@@ -4027,7 +4021,7 @@ make_greater_string(const Const *str_const)
 	else
 	{
 		workstr = DatumGetCString(DirectFunctionCall1(textout,
-													  str_const->constvalue));
+												 str_const->constvalue));
 		len = strlen(workstr);
 	}
 
@@ -4123,8 +4117,8 @@ string_to_const(const char *str, Oid datatype)
 static Const *
 string_to_bytea_const(const char *str, size_t str_len)
 {
-	bytea  *bstr = palloc(VARHDRSZ + str_len);
-	Datum	conval;
+	bytea	   *bstr = palloc(VARHDRSZ + str_len);
+	Datum		conval;
 
 	memcpy(VARDATA(bstr), str, str_len);
 	VARATT_SIZEP(bstr) = VARHDRSZ + str_len;
@@ -4162,30 +4156,31 @@ genericcostestimate(Query *root, RelOptInfo *rel,
 	/*
 	 * If the index is partial, AND the index predicate with the
 	 * explicitly given indexquals to produce a more accurate idea of the
-	 * index selectivity.  This may produce redundant clauses.  We get rid
-	 * of exact duplicates in the code below.  We expect that most
-	 * cases of partial redundancy (such as "x < 4" from the qual and
-	 * "x < 5" from the predicate) will be recognized and handled correctly
-	 * by clauselist_selectivity().  This assumption is somewhat fragile,
+	 * index selectivity.  This may produce redundant clauses.	We get rid
+	 * of exact duplicates in the code below.  We expect that most cases
+	 * of partial redundancy (such as "x < 4" from the qual and "x < 5"
+	 * from the predicate) will be recognized and handled correctly by
+	 * clauselist_selectivity().  This assumption is somewhat fragile,
 	 * since it depends on pred_test() and clauselist_selectivity() having
-	 * similar capabilities, and there are certainly many cases where we will
-	 * end up with a too-low selectivity estimate.  This will bias the system
-	 * in favor of using partial indexes where possible, which is not
-	 * necessarily a bad thing.  But it'd be nice to do better someday.
+	 * similar capabilities, and there are certainly many cases where we
+	 * will end up with a too-low selectivity estimate.  This will bias
+	 * the system in favor of using partial indexes where possible, which
+	 * is not necessarily a bad thing.	But it'd be nice to do better
+	 * someday.
 	 *
 	 * Note that index->indpred and indexQuals are both in implicit-AND form,
 	 * so ANDing them together just takes merging the lists.  However,
-	 * eliminating duplicates is a bit trickier because indexQuals contains
-	 * RestrictInfo nodes and the indpred does not.  It is okay to pass a
-	 * mixed list to clauselist_selectivity, but we have to work a bit to
-	 * generate a list without logical duplicates.  (We could just list_union
-	 * indpred and strippedQuals, but then we'd not get caching of per-qual
-	 * selectivity estimates.)
+	 * eliminating duplicates is a bit trickier because indexQuals
+	 * contains RestrictInfo nodes and the indpred does not.  It is okay
+	 * to pass a mixed list to clauselist_selectivity, but we have to work
+	 * a bit to generate a list without logical duplicates.  (We could
+	 * just list_union indpred and strippedQuals, but then we'd not get
+	 * caching of per-qual selectivity estimates.)
 	 */
 	if (index->indpred != NIL)
 	{
-		List   *strippedQuals;
-		List   *predExtraQuals;
+		List	   *strippedQuals;
+		List	   *predExtraQuals;
 
 		strippedQuals = get_actual_clauses(indexQuals);
 		predExtraQuals = list_difference(index->indpred, strippedQuals);
@@ -4236,22 +4231,22 @@ genericcostestimate(Query *root, RelOptInfo *rel,
 	/*
 	 * Compute the index access cost.
 	 *
-	 * Disk cost: our generic assumption is that the index pages will be
-	 * read sequentially, so they have cost 1.0 each, not random_page_cost.
+	 * Disk cost: our generic assumption is that the index pages will be read
+	 * sequentially, so they have cost 1.0 each, not random_page_cost.
 	 */
 	*indexTotalCost = numIndexPages;
 
 	/*
-	 * CPU cost: any complex expressions in the indexquals will need to
-	 * be evaluated once at the start of the scan to reduce them to runtime
-	 * keys to pass to the index AM (see nodeIndexscan.c).  We model the
-	 * per-tuple CPU costs as cpu_index_tuple_cost plus one cpu_operator_cost
-	 * per indexqual operator.
+	 * CPU cost: any complex expressions in the indexquals will need to be
+	 * evaluated once at the start of the scan to reduce them to runtime
+	 * keys to pass to the index AM (see nodeIndexscan.c).	We model the
+	 * per-tuple CPU costs as cpu_index_tuple_cost plus one
+	 * cpu_operator_cost per indexqual operator.
 	 *
 	 * Note: this neglects the possible costs of rechecking lossy operators
-	 * and OR-clause expressions.  Detecting that that might be needed seems
-	 * more expensive than it's worth, though, considering all the other
-	 * inaccuracies here ...
+	 * and OR-clause expressions.  Detecting that that might be needed
+	 * seems more expensive than it's worth, though, considering all the
+	 * other inaccuracies here ...
 	 */
 	cost_qual_eval(&index_qual_cost, indexQuals);
 	qual_op_cost = cpu_operator_cost * list_length(indexQuals);
@@ -4290,12 +4285,13 @@ btcostestimate(PG_FUNCTION_ARGS)
 						indexSelectivity, indexCorrelation);
 
 	/*
-	 * If we can get an estimate of the first column's ordering correlation C
-	 * from pg_statistic, estimate the index correlation as C for a single-
-	 * column index, or C * 0.75 for multiple columns.  (The idea here is
-	 * that multiple columns dilute the importance of the first column's
-	 * ordering, but don't negate it entirely.  Before 8.0 we divided the
-	 * correlation by the number of columns, but that seems too strong.)
+	 * If we can get an estimate of the first column's ordering
+	 * correlation C from pg_statistic, estimate the index correlation as
+	 * C for a single- column index, or C * 0.75 for multiple columns.
+	 * (The idea here is that multiple columns dilute the importance of
+	 * the first column's ordering, but don't negate it entirely.  Before
+	 * 8.0 we divided the correlation by the number of columns, but that
+	 * seems too strong.)
 	 */
 	if (index->indexkeys[0] != 0)
 	{

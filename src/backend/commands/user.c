@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.143 2004/08/29 04:12:30 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.144 2004/08/29 05:06:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,10 +46,10 @@ extern bool Password_encryption;
 
 /*
  * The need-to-update-files flags are a pair of TransactionIds that show what
- * level of the transaction tree requested the update.  To register an update,
+ * level of the transaction tree requested the update.	To register an update,
  * the transaction saves its own TransactionId in the flag, unless the value
  * was already set to a valid TransactionId.  If it aborts and the value is its
- * TransactionId, it resets the value to InvalidTransactionId.  If it commits,
+ * TransactionId, it resets the value to InvalidTransactionId.	If it commits,
  * it changes the value to its parent's TransactionId.  This way the value is
  * propagated up to the topmost transaction, which will update the files if a
  * valid TransactionId is detected.
@@ -169,7 +169,7 @@ write_group_file(Relation grel)
 	if (fp == NULL)
 		ereport(ERROR,
 				(errcode_for_file_access(),
-			  errmsg("could not write to temporary file \"%s\": %m", tempname)));
+				 errmsg("could not write to temporary file \"%s\": %m", tempname)));
 
 	/*
 	 * Read pg_group and write the file.  Note we use SnapshotSelf to
@@ -316,7 +316,7 @@ write_user_file(Relation urel)
 	if (fp == NULL)
 		ereport(ERROR,
 				(errcode_for_file_access(),
-			  errmsg("could not write to temporary file \"%s\": %m", tempname)));
+				 errmsg("could not write to temporary file \"%s\": %m", tempname)));
 
 	/*
 	 * Read pg_shadow and write the file.  Note we use SnapshotSelf to
@@ -1009,7 +1009,7 @@ AlterUserSet(AlterUserSetStmt *stmt)
 				 errmsg("user \"%s\" does not exist", stmt->user)));
 
 	if (!(superuser() ||
-	    ((Form_pg_shadow) GETSTRUCT(oldtuple))->usesysid == GetUserId()))
+		((Form_pg_shadow) GETSTRUCT(oldtuple))->usesysid == GetUserId()))
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("permission denied")));
@@ -1216,14 +1216,14 @@ RenameUser(const char *oldname, const char *newname)
 	char		repl_null[Natts_pg_shadow];
 	char		repl_repl[Natts_pg_shadow];
 	int			i;
-	
+
 	/* ExclusiveLock because we need to update the password file */
 	rel = heap_openr(ShadowRelationName, ExclusiveLock);
 	dsc = RelationGetDescr(rel);
 
 	oldtuple = SearchSysCache(SHADOWNAME,
-							 CStringGetDatum(oldname),
-							 0, 0, 0);
+							  CStringGetDatum(oldname),
+							  0, 0, 0);
 	if (!HeapTupleIsValid(oldtuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -1259,7 +1259,7 @@ RenameUser(const char *oldname, const char *newname)
 
 	repl_repl[Anum_pg_shadow_usename - 1] = 'r';
 	repl_val[Anum_pg_shadow_usename - 1] = DirectFunctionCall1(namein,
-											CStringGetDatum(newname));
+											   CStringGetDatum(newname));
 	repl_null[Anum_pg_shadow_usename - 1] = ' ';
 
 	datum = heap_getattr(oldtuple, Anum_pg_shadow_passwd, dsc, &isnull);
@@ -1269,14 +1269,14 @@ RenameUser(const char *oldname, const char *newname)
 		/* MD5 uses the username as salt, so just clear it on a rename */
 		repl_repl[Anum_pg_shadow_passwd - 1] = 'r';
 		repl_null[Anum_pg_shadow_passwd - 1] = 'n';
-	
+
 		ereport(NOTICE,
-			(errmsg("MD5 password cleared because of user rename")));
+				(errmsg("MD5 password cleared because of user rename")));
 	}
-			 
+
 	newtuple = heap_modifytuple(oldtuple, rel, repl_val, repl_null, repl_repl);
 	simple_heap_update(rel, &oldtuple->t_self, newtuple);
-	
+
 	CatalogUpdateIndexes(rel, newtuple);
 
 	ReleaseSysCache(oldtuple);

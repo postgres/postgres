@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/typcache.h,v 1.5 2004/08/29 04:13:11 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/typcache.h,v 1.6 2004/08/29 05:06:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,17 +48,17 @@ typedef struct TypeCacheEntry
 	/*
 	 * Pre-set-up fmgr call info for the equality operator and the btree
 	 * comparison function.  These are kept in the type cache to avoid
-	 * problems with memory leaks in repeated calls to array_eq and array_cmp.
-	 * There is not currently a need to maintain call info for the lt_opr
-	 * or gt_opr.
+	 * problems with memory leaks in repeated calls to array_eq and
+	 * array_cmp. There is not currently a need to maintain call info for
+	 * the lt_opr or gt_opr.
 	 */
 	FmgrInfo	eq_opr_finfo;
 	FmgrInfo	cmp_proc_finfo;
 
 	/*
 	 * Tuple descriptor if it's a composite type (row type).  NULL if not
-	 * composite or information hasn't yet been requested.  (NOTE: this
-	 * is actually just a link to information maintained by relcache.c.)
+	 * composite or information hasn't yet been requested.  (NOTE: this is
+	 * actually just a link to information maintained by relcache.c.)
 	 */
 	TupleDesc	tupDesc;
 } TypeCacheEntry;
@@ -77,7 +77,7 @@ extern TypeCacheEntry *lookup_type_cache(Oid type_id, int flags);
 extern TupleDesc lookup_rowtype_tupdesc(Oid type_id, int32 typmod);
 
 extern TupleDesc lookup_rowtype_tupdesc_noerror(Oid type_id, int32 typmod,
-												bool noError);
+							   bool noError);
 
 extern void assign_record_type_typmod(TupleDesc tupDesc);
 

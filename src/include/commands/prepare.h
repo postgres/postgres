@@ -6,7 +6,7 @@
  *
  * Copyright (c) 2002-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/commands/prepare.h,v 1.11 2004/08/29 04:13:05 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/commands/prepare.h,v 1.12 2004/08/29 05:06:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,7 +43,7 @@ typedef struct
 /* Utility statements PREPARE, EXECUTE, DEALLOCATE, EXPLAIN EXECUTE */
 extern void PrepareQuery(PrepareStmt *stmt);
 extern void ExecuteQuery(ExecuteStmt *stmt, DestReceiver *dest,
-					   char *completionTag);
+			 char *completionTag);
 extern void DeallocateQuery(DeallocateStmt *stmt);
 extern void ExplainExecuteQuery(ExplainStmt *stmt, TupOutputState *tstate);
 

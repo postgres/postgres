@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/ip.c,v 1.27 2004/08/29 04:12:32 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/ip.c,v 1.28 2004/08/29 05:06:43 momjian Exp $
  *
  * This file and the IPV6 implementation were initially provided by
  * Nigel Kukard <nkukard@lbsd.net>, Linux Based Systems Design
@@ -34,8 +34,8 @@
 #endif
 #include <arpa/inet.h>
 #include <sys/file.h>
-
-#endif /* !defined(_MSC_VER) && !defined(__BORLANDC__) */
+#endif   /* !defined(_MSC_VER) &&
+								 * !defined(__BORLANDC__) */
 
 #include "libpq/ip.h"
 
@@ -67,7 +67,7 @@ static int getnameinfo_unix(const struct sockaddr_un * sa, int salen,
  */
 int
 getaddrinfo_all(const char *hostname, const char *servname,
-				const struct addrinfo *hintp, struct addrinfo **result)
+				const struct addrinfo * hintp, struct addrinfo ** result)
 {
 	/* not all versions of getaddrinfo() zero *result on failure */
 	*result = NULL;
@@ -269,7 +269,6 @@ getnameinfo_unix(const struct sockaddr_un * sa, int salen,
 
 	return 0;
 }
-
 #endif   /* HAVE_UNIX_SOCKETS */
 
 
@@ -328,7 +327,6 @@ rangeSockAddrAF_INET6(const struct sockaddr_in6 * addr,
 
 	return 1;
 }
-
 #endif
 
 /*
@@ -472,4 +470,4 @@ promote_v4_to_v6_mask(struct sockaddr_storage * addr)
 	memcpy(addr, &addr6, sizeof(addr6));
 }
 
-#endif /* HAVE_IPV6 */
+#endif   /* HAVE_IPV6 */

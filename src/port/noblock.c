@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/noblock.c,v 1.3 2004/08/29 04:13:12 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/noblock.c,v 1.4 2004/08/29 05:07:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,13 +17,14 @@
 #include <sys/types.h>
 #include <fcntl.h>
 
-bool set_noblock(int sock)
+bool
+set_noblock(int sock)
 {
 #if !defined(WIN32) && !defined(__BEOS__)
 	return (fcntl(sock, F_SETFL, O_NONBLOCK) != -1);
 #else
-	long ioctlsocket_ret = 1;
-	
+	long		ioctlsocket_ret = 1;
+
 	/* Returns non-0 on failure, while fcntl() returns -1 on failure */
 #ifdef WIN32
 	return (ioctlsocket(sock, FIONBIO, &ioctlsocket_ret) == 0);

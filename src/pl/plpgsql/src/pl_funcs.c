@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.34 2004/07/31 23:04:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.35 2004/08/29 05:07:01 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -355,7 +355,7 @@ plpgsql_convert_ident(const char *s, char **output, int numidents)
 		{
 			/* Quoted identifier: copy, collapsing out doubled quotes */
 
-			curident = palloc(strlen(s) + 1); /* surely enough room */
+			curident = palloc(strlen(s) + 1);	/* surely enough room */
 			cp = curident;
 			s++;
 			while (*s)
@@ -375,7 +375,7 @@ plpgsql_convert_ident(const char *s, char **output, int numidents)
 			s++;
 			*cp = '\0';
 			/* Truncate to NAMEDATALEN */
-			truncate_identifier(curident, cp-curident, false);
+			truncate_identifier(curident, cp - curident, false);
 		}
 		else
 		{
@@ -385,7 +385,7 @@ plpgsql_convert_ident(const char *s, char **output, int numidents)
 			while (*s && *s != '.' && !isspace((unsigned char) *s))
 				s++;
 			/* Downcase and truncate to NAMEDATALEN */
-			curident = downcase_truncate_identifier(thisstart, s-thisstart,
+			curident = downcase_truncate_identifier(thisstart, s - thisstart,
 													false);
 		}
 

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump_sort.c,v 1.5 2004/08/29 04:13:01 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump_sort.c,v 1.6 2004/08/29 05:06:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,30 +22,30 @@ static char *modulename = gettext_noop("sorter");
 /*
  * Sort priority for object types when dumping a pre-7.3 database.
  * Objects are sorted by priority levels, and within an equal priority level
- * by OID.  (This is a relatively crude hack to provide semi-reasonable
+ * by OID.	(This is a relatively crude hack to provide semi-reasonable
  * behavior for old databases without full dependency info.)
  */
 static const int oldObjectTypePriority[] =
 {
-	1,				/* DO_NAMESPACE */
-	2,				/* DO_TYPE */
-	2,				/* DO_FUNC */
-	2,				/* DO_AGG */
-	3,				/* DO_OPERATOR */
-	4,				/* DO_OPCLASS */
-	5,				/* DO_CONVERSION */
-	6,				/* DO_TABLE */
-	8,				/* DO_ATTRDEF */
-	12,				/* DO_INDEX */
-	13,				/* DO_RULE */
-	14,				/* DO_TRIGGER */
-	11,				/* DO_CONSTRAINT */
-	15,				/* DO_FK_CONSTRAINT */
-	2,				/* DO_PROCLANG */
-	2,				/* DO_CAST */
-	9,				/* DO_TABLE_DATA */
-	7,				/* DO_TABLE_TYPE */
-	10				/* DO_BLOBS */
+	1,							/* DO_NAMESPACE */
+	2,							/* DO_TYPE */
+	2,							/* DO_FUNC */
+	2,							/* DO_AGG */
+	3,							/* DO_OPERATOR */
+	4,							/* DO_OPCLASS */
+	5,							/* DO_CONVERSION */
+	6,							/* DO_TABLE */
+	8,							/* DO_ATTRDEF */
+	12,							/* DO_INDEX */
+	13,							/* DO_RULE */
+	14,							/* DO_TRIGGER */
+	11,							/* DO_CONSTRAINT */
+	15,							/* DO_FK_CONSTRAINT */
+	2,							/* DO_PROCLANG */
+	2,							/* DO_CAST */
+	9,							/* DO_TABLE_DATA */
+	7,							/* DO_TABLE_TYPE */
+	10							/* DO_BLOBS */
 };
 
 /*
@@ -54,46 +54,46 @@ static const int oldObjectTypePriority[] =
  */
 static const int newObjectTypePriority[] =
 {
-	1,				/* DO_NAMESPACE */
-	3,				/* DO_TYPE */
-	4,				/* DO_FUNC */
-	5,				/* DO_AGG */
-	6,				/* DO_OPERATOR */
-	7,				/* DO_OPCLASS */
-	9,				/* DO_CONVERSION */
-	10,				/* DO_TABLE */
-	12,				/* DO_ATTRDEF */
-	16,				/* DO_INDEX */
-	17,				/* DO_RULE */
-	18,				/* DO_TRIGGER */
-	15,				/* DO_CONSTRAINT */
-	19,				/* DO_FK_CONSTRAINT */
-	2,				/* DO_PROCLANG */
-	8,				/* DO_CAST */
-	13,				/* DO_TABLE_DATA */
-	11,				/* DO_TABLE_TYPE */
-	14				/* DO_BLOBS */
+	1,							/* DO_NAMESPACE */
+	3,							/* DO_TYPE */
+	4,							/* DO_FUNC */
+	5,							/* DO_AGG */
+	6,							/* DO_OPERATOR */
+	7,							/* DO_OPCLASS */
+	9,							/* DO_CONVERSION */
+	10,							/* DO_TABLE */
+	12,							/* DO_ATTRDEF */
+	16,							/* DO_INDEX */
+	17,							/* DO_RULE */
+	18,							/* DO_TRIGGER */
+	15,							/* DO_CONSTRAINT */
+	19,							/* DO_FK_CONSTRAINT */
+	2,							/* DO_PROCLANG */
+	8,							/* DO_CAST */
+	13,							/* DO_TABLE_DATA */
+	11,							/* DO_TABLE_TYPE */
+	14							/* DO_BLOBS */
 };
 
 
 static int	DOTypeNameCompare(const void *p1, const void *p2);
 static int	DOTypeOidCompare(const void *p1, const void *p2);
 static bool TopoSort(DumpableObject **objs,
-					 int numObjs,
-					 DumpableObject **ordering,
-					 int *nOrdering);
+		 int numObjs,
+		 DumpableObject **ordering,
+		 int *nOrdering);
 static void addHeapElement(int val, int *heap, int heapLength);
 static int	removeHeapElement(int *heap, int heapLength);
 static void findDependencyLoops(DumpableObject **objs, int nObjs, int totObjs);
 static bool findLoop(DumpableObject *obj,
-					 DumpId startPoint,
-					 DumpableObject **workspace,
-					 int depth,
-					 int *newDepth);
+		 DumpId startPoint,
+		 DumpableObject **workspace,
+		 int depth,
+		 int *newDepth);
 static void repairDependencyLoop(DumpableObject **loop,
-								 int nLoop);
+					 int nLoop);
 static void describeDumpableObject(DumpableObject *obj,
-								   char *buf, int bufsize);
+					   char *buf, int bufsize);
 
 
 /*
@@ -185,7 +185,7 @@ DOTypeOidCompare(const void *p1, const void *p2)
 void
 sortDumpableObjects(DumpableObject **objs, int numObjs)
 {
-	DumpableObject  **ordering;
+	DumpableObject **ordering;
 	int			nOrdering;
 
 	if (numObjs <= 0)
@@ -207,11 +207,11 @@ sortDumpableObjects(DumpableObject **objs, int numObjs)
  * TopoSort -- topological sort of a dump list
  *
  * Generate a re-ordering of the dump list that satisfies all the dependency
- * constraints shown in the dump list.  (Each such constraint is a fact of a
+ * constraints shown in the dump list.	(Each such constraint is a fact of a
  * partial ordering.)  Minimize rearrangement of the list not needed to
  * achieve the partial ordering.
  *
- * The input is the list of numObjs objects in objs[].  This list is not
+ * The input is the list of numObjs objects in objs[].	This list is not
  * modified.
  *
  * Returns TRUE if able to build an ordering that satisfies all the
@@ -233,32 +233,33 @@ static bool
 TopoSort(DumpableObject **objs,
 		 int numObjs,
 		 DumpableObject **ordering,		/* output argument */
-		 int *nOrdering)				/* output argument */
+		 int *nOrdering)		/* output argument */
 {
 	DumpId		maxDumpId = getMaxDumpId();
 	int		   *pendingHeap;
 	int		   *beforeConstraints;
 	int		   *idMap;
-	DumpableObject   *obj;
+	DumpableObject *obj;
 	int			heapLength;
 	int			i,
 				j,
 				k;
 
 	/*
-	 * This is basically the same algorithm shown for topological sorting in
-	 * Knuth's Volume 1.  However, we would like to minimize unnecessary
-	 * rearrangement of the input ordering; that is, when we have a choice
-	 * of which item to output next, we always want to take the one highest
-	 * in the original list.  Therefore, instead of maintaining an unordered
-	 * linked list of items-ready-to-output as Knuth does, we maintain a heap
-	 * of their item numbers, which we can use as a priority queue.  This
-	 * turns the algorithm from O(N) to O(N log N) because each insertion or
-	 * removal of a heap item takes O(log N) time.  However, that's still
-	 * plenty fast enough for this application.
+	 * This is basically the same algorithm shown for topological sorting
+	 * in Knuth's Volume 1.  However, we would like to minimize
+	 * unnecessary rearrangement of the input ordering; that is, when we
+	 * have a choice of which item to output next, we always want to take
+	 * the one highest in the original list.  Therefore, instead of
+	 * maintaining an unordered linked list of items-ready-to-output as
+	 * Knuth does, we maintain a heap of their item numbers, which we can
+	 * use as a priority queue.  This turns the algorithm from O(N) to O(N
+	 * log N) because each insertion or removal of a heap item takes O(log
+	 * N) time.  However, that's still plenty fast enough for this
+	 * application.
 	 */
 
-	*nOrdering = numObjs;	/* for success return */
+	*nOrdering = numObjs;		/* for success return */
 
 	/* Eliminate the null case */
 	if (numObjs <= 0)
@@ -272,9 +273,9 @@ TopoSort(DumpableObject **objs,
 	/*
 	 * Scan the constraints, and for each item in the input, generate a
 	 * count of the number of constraints that say it must be before
-	 * something else. The count for the item with dumpId j is
-	 * stored in beforeConstraints[j].  We also make a map showing the
-	 * input-order index of the item with dumpId j.
+	 * something else. The count for the item with dumpId j is stored in
+	 * beforeConstraints[j].  We also make a map showing the input-order
+	 * index of the item with dumpId j.
 	 */
 	beforeConstraints = (int *) malloc((maxDumpId + 1) * sizeof(int));
 	if (beforeConstraints == NULL)
@@ -304,23 +305,24 @@ TopoSort(DumpableObject **objs,
 	 * the indexes of items that already have beforeConstraints[id] == 0.
 	 *
 	 * The essential property of a heap is heap[(j-1)/2] >= heap[j] for each
-	 * j in the range 1..heapLength-1 (note we are using 0-based subscripts
-	 * here, while the discussion in Knuth assumes 1-based subscripts).
-	 * So, if we simply enter the indexes into pendingHeap[] in decreasing
-	 * order, we a-fortiori have the heap invariant satisfied at completion
-	 * of this loop, and don't need to do any sift-up comparisons.
+	 * j in the range 1..heapLength-1 (note we are using 0-based
+	 * subscripts here, while the discussion in Knuth assumes 1-based
+	 * subscripts). So, if we simply enter the indexes into pendingHeap[]
+	 * in decreasing order, we a-fortiori have the heap invariant
+	 * satisfied at completion of this loop, and don't need to do any
+	 * sift-up comparisons.
 	 */
 	heapLength = 0;
-	for (i = numObjs; --i >= 0; )
+	for (i = numObjs; --i >= 0;)
 	{
 		if (beforeConstraints[objs[i]->dumpId] == 0)
 			pendingHeap[heapLength++] = i;
 	}
 
 	/*--------------------
-	 * Now emit objects, working backwards in the output list.  At each step,
+	 * Now emit objects, working backwards in the output list.	At each step,
 	 * we use the priority heap to select the last item that has no remaining
-	 * before-constraints.  We remove that item from the heap, output it to
+	 * before-constraints.	We remove that item from the heap, output it to
 	 * ordering[], and decrease the beforeConstraints count of each of the
 	 * items it was constrained against.  Whenever an item's beforeConstraints
 	 * count is thereby decreased to zero, we insert it into the priority heap
@@ -343,7 +345,7 @@ TopoSort(DumpableObject **objs,
 		/* Update beforeConstraints counts of its predecessors */
 		for (k = 0; k < obj->nDeps; k++)
 		{
-			int		id = obj->dependencies[k];
+			int			id = obj->dependencies[k];
 
 			if ((--beforeConstraints[id]) == 0)
 				addHeapElement(idMap[id], pendingHeap, heapLength++);
@@ -448,7 +450,7 @@ removeHeapElement(int *heap, int heapLength)
  * before trying TopoSort again.  We can safely repair loops that are
  * disjoint (have no members in common); if we find overlapping loops
  * then we repair only the first one found, because the action taken to
- * repair the first might have repaired the other as well.  (If not,
+ * repair the first might have repaired the other as well.	(If not,
  * we'll fix it on the next go-round.)
  *
  * objs[] lists the objects TopoSort couldn't sort
@@ -459,25 +461,25 @@ static void
 findDependencyLoops(DumpableObject **objs, int nObjs, int totObjs)
 {
 	/*
-	 * We use a workspace array, the initial part of which stores
-	 * objects already processed, and the rest of which is used as
-	 * temporary space to try to build a loop in.  This is convenient
-	 * because we do not care about loops involving already-processed
-	 * objects (see notes above); we can easily reject such loops in
-	 * findLoop() because of this representation.  After we identify
-	 * and process a loop, we can add it to the initial part of the
-	 * workspace just by moving the boundary pointer.
+	 * We use a workspace array, the initial part of which stores objects
+	 * already processed, and the rest of which is used as temporary space
+	 * to try to build a loop in.  This is convenient because we do not
+	 * care about loops involving already-processed objects (see notes
+	 * above); we can easily reject such loops in findLoop() because of
+	 * this representation.  After we identify and process a loop, we can
+	 * add it to the initial part of the workspace just by moving the
+	 * boundary pointer.
 	 *
-	 * When we determine that an object is not part of any interesting
-	 * loop, we also add it to the initial part of the workspace.  This
-	 * is not necessary for correctness, but saves later invocations of
+	 * When we determine that an object is not part of any interesting loop,
+	 * we also add it to the initial part of the workspace.  This is not
+	 * necessary for correctness, but saves later invocations of
 	 * findLoop() from uselessly chasing references to such an object.
 	 *
-	 * We make the workspace large enough to hold all objects in the
-	 * original universe.  This is probably overkill, but it's provably
-	 * enough space...
+	 * We make the workspace large enough to hold all objects in the original
+	 * universe.  This is probably overkill, but it's provably enough
+	 * space...
 	 */
-	DumpableObject  **workspace;
+	DumpableObject **workspace;
 	int			initiallen;
 	bool		fixedloop;
 	int			i;
@@ -491,9 +493,9 @@ findDependencyLoops(DumpableObject **objs, int nObjs, int totObjs)
 	for (i = 0; i < nObjs; i++)
 	{
 		DumpableObject *obj = objs[i];
-		int		newlen;
+		int			newlen;
 
-		workspace[initiallen] = NULL; /* see test below */
+		workspace[initiallen] = NULL;	/* see test below */
 
 		if (findLoop(obj, obj->dumpId, workspace, initiallen, &newlen))
 		{
@@ -506,10 +508,10 @@ findDependencyLoops(DumpableObject **objs, int nObjs, int totObjs)
 		else
 		{
 			/*
-			 * Didn't find a loop, but add this object to workspace anyway,
-			 * unless it's already present.  We piggyback on the test that
-			 * findLoop() already did: it won't have tentatively added obj
-			 * to workspace if it's already present.
+			 * Didn't find a loop, but add this object to workspace
+			 * anyway, unless it's already present.  We piggyback on the
+			 * test that findLoop() already did: it won't have tentatively
+			 * added obj to workspace if it's already present.
 			 */
 			if (workspace[initiallen] == obj)
 				initiallen++;
@@ -561,12 +563,15 @@ findLoop(DumpableObject *obj,
 		if (workspace[i] == obj)
 			return false;
 	}
+
 	/*
 	 * Okay, tentatively add obj to workspace
 	 */
 	workspace[depth++] = obj;
+
 	/*
-	 * See if we've found a loop back to the desired startPoint; if so, done
+	 * See if we've found a loop back to the desired startPoint; if so,
+	 * done
 	 */
 	for (i = 0; i < obj->nDeps; i++)
 	{
@@ -576,6 +581,7 @@ findLoop(DumpableObject *obj,
 			return true;
 		}
 	}
+
 	/*
 	 * Recurse down each outgoing branch
 	 */
@@ -620,6 +626,7 @@ repairTypeFuncLoop(DumpableObject *typeobj, DumpableObject *funcobj)
 	if (inputFuncInfo == NULL)
 		return;
 	addObjectDependency(funcobj, inputFuncInfo->dobj.dumpId);
+
 	/*
 	 * Make sure the input function's dependency on type gets removed too;
 	 * if it hasn't been done yet, we'd end up with loops involving the
@@ -900,7 +907,7 @@ repairDependencyLoop(DumpableObject **loop,
 	write_msg(modulename, "WARNING: could not resolve dependency loop among these items:\n");
 	for (i = 0; i < nLoop; i++)
 	{
-		char	buf[1024];
+		char		buf[1024];
 
 		describeDumpableObject(loop[i], buf, sizeof(buf));
 		write_msg(modulename, "  %s\n", buf);

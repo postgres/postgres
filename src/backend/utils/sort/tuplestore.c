@@ -36,7 +36,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplestore.c,v 1.19 2004/08/29 04:13:00 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplestore.c,v 1.20 2004/08/29 05:06:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -219,7 +219,7 @@ tuplestore_begin_common(bool randomAccess, bool interXact, int maxKBytes)
 	state->myfile = NULL;
 
 	state->memtupcount = 0;
-	state->memtupsize = 1024;					/* initial guess */
+	state->memtupsize = 1024;	/* initial guess */
 	state->memtuples = (void **) palloc(state->memtupsize * sizeof(void *));
 
 	USEMEM(state, GetMemoryChunkSpace(state->memtuples));

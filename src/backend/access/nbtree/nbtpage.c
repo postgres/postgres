@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtpage.c,v 1.79 2004/08/29 04:12:21 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtpage.c,v 1.80 2004/08/29 05:06:40 momjian Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -276,8 +276,8 @@ _bt_getroot(Relation rel, int access)
 		rootlevel = metad->btm_fastlevel;
 
 		/*
-		 * We are done with the metapage; arrange to release it via
-		 * first _bt_relandgetbuf call
+		 * We are done with the metapage; arrange to release it via first
+		 * _bt_relandgetbuf call
 		 */
 		rootbuf = metabuf;
 
@@ -368,8 +368,8 @@ _bt_gettrueroot(Relation rel)
 	rootlevel = metad->btm_level;
 
 	/*
-	 * We are done with the metapage; arrange to release it via
-	 * first _bt_relandgetbuf call
+	 * We are done with the metapage; arrange to release it via first
+	 * _bt_relandgetbuf call
 	 */
 	rootbuf = metabuf;
 
@@ -433,21 +433,22 @@ _bt_getbuf(Relation rel, BlockNumber blkno, int access)
 		 * page could have been re-used between the time the last VACUUM
 		 * scanned it and the time the VACUUM made its FSM updates.)
 		 *
-		 * In fact, it's worse than that: we can't even assume that it's
-		 * safe to take a lock on the reported page.  If somebody else
-		 * has a lock on it, or even worse our own caller does, we could
+		 * In fact, it's worse than that: we can't even assume that it's safe
+		 * to take a lock on the reported page.  If somebody else has a
+		 * lock on it, or even worse our own caller does, we could
 		 * deadlock.  (The own-caller scenario is actually not improbable.
 		 * Consider an index on a serial or timestamp column.  Nearly all
 		 * splits will be at the rightmost page, so it's entirely likely
-		 * that _bt_split will call us while holding a lock on the page most
-		 * recently acquired from FSM.  A VACUUM running concurrently with
-		 * the previous split could well have placed that page back in FSM.)
+		 * that _bt_split will call us while holding a lock on the page
+		 * most recently acquired from FSM.  A VACUUM running concurrently
+		 * with the previous split could well have placed that page back
+		 * in FSM.)
 		 *
 		 * To get around that, we ask for only a conditional lock on the
-		 * reported page.  If we fail, then someone else is using the page,
-		 * and we may reasonably assume it's not free.  (If we happen to be
-		 * wrong, the worst consequence is the page will be lost to use till
-		 * the next VACUUM, which is no big problem.)
+		 * reported page.  If we fail, then someone else is using the
+		 * page, and we may reasonably assume it's not free.  (If we
+		 * happen to be wrong, the worst consequence is the page will be
+		 * lost to use till the next VACUUM, which is no big problem.)
 		 */
 		for (;;)
 		{

@@ -17,7 +17,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/interfaces/libpq/pqexpbuffer.c,v 1.18 2004/08/29 04:13:12 momjian Exp $
+ * $PostgreSQL: pgsql/src/interfaces/libpq/pqexpbuffer.c,v 1.19 2004/08/29 05:07:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -136,7 +136,7 @@ enlargePQExpBuffer(PQExpBuffer str, size_t needed)
 
 	/*
 	 * Guard against ridiculous "needed" values, which can occur if we're
-	 * fed bogus data.  Without this, we can get an overflow or infinite
+	 * fed bogus data.	Without this, we can get an overflow or infinite
 	 * loop in the following.
 	 */
 	if (needed >= ((size_t) INT_MAX - str->len))

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.124 2004/08/29 04:12:30 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.125 2004/08/29 05:06:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,10 +47,10 @@
 /* non-export function prototypes */
 static void CheckPredicate(Expr *predicate);
 static void ComputeIndexAttrs(IndexInfo *indexInfo, Oid *classOidP,
-							  List *attList,
-							  Oid relId,
-							  char *accessMethodName, Oid accessMethodId,
-							  bool isconstraint);
+				  List *attList,
+				  Oid relId,
+				  char *accessMethodName, Oid accessMethodId,
+				  bool isconstraint);
 static Oid GetIndexOpClass(List *opclass, Oid attrType,
 				char *accessMethodName, Oid accessMethodId);
 static Oid	GetDefaultOpClass(Oid attrType, Oid accessMethodId);
@@ -143,7 +143,8 @@ DefineIndex(RangeVar *heapRelation,
 	 * Verify we (still) have CREATE rights in the rel's namespace.
 	 * (Presumably we did when the rel was created, but maybe not
 	 * anymore.)  Skip check if caller doesn't want it.  Also skip check
-	 * if bootstrapping, since permissions machinery may not be working yet.
+	 * if bootstrapping, since permissions machinery may not be working
+	 * yet.
 	 */
 	if (check_rights && !IsBootstrapProcessingMode())
 	{
@@ -159,7 +160,7 @@ DefineIndex(RangeVar *heapRelation,
 	/* Determine tablespace to use */
 	if (tableSpaceName)
 	{
-		AclResult   aclresult;
+		AclResult	aclresult;
 
 		tablespaceId = get_tablespace_oid(tableSpaceName);
 		if (!OidIsValid(tablespaceId))
@@ -173,7 +174,9 @@ DefineIndex(RangeVar *heapRelation,
 		if (aclresult != ACLCHECK_OK)
 			aclcheck_error(aclresult, ACL_KIND_TABLESPACE,
 						   tableSpaceName);
-	} else {
+	}
+	else
+	{
 		/* Use the parent rel's tablespace */
 		tablespaceId = get_rel_tablespace(relationId);
 		/* Note there is no additional permission check in this path */
@@ -256,9 +259,9 @@ DefineIndex(RangeVar *heapRelation,
 
 		/*
 		 * If ALTER TABLE, check that there isn't already a PRIMARY KEY.
-		 * In CREATE TABLE, we have faith that the parser rejected multiple
-		 * pkey clauses; and CREATE INDEX doesn't have a way to say
-		 * PRIMARY KEY, so it's no problem either.
+		 * In CREATE TABLE, we have faith that the parser rejected
+		 * multiple pkey clauses; and CREATE INDEX doesn't have a way to
+		 * say PRIMARY KEY, so it's no problem either.
 		 */
 		if (is_alter_table &&
 			relationHasPrimaryKey(rel))
@@ -270,8 +273,8 @@ DefineIndex(RangeVar *heapRelation,
 		}
 
 		/*
-		 * Check that all of the attributes in a primary key are marked as not
-		 * null, otherwise attempt to ALTER TABLE .. SET NOT NULL
+		 * Check that all of the attributes in a primary key are marked as
+		 * not null, otherwise attempt to ALTER TABLE .. SET NOT NULL
 		 */
 		cmds = NIL;
 		foreach(keys, attributeList)
@@ -294,7 +297,7 @@ DefineIndex(RangeVar *heapRelation,
 				if (!((Form_pg_attribute) GETSTRUCT(atttuple))->attnotnull)
 				{
 					/* Add a subcommand to make this one NOT NULL */
-					AlterTableCmd  *cmd = makeNode(AlterTableCmd);
+					AlterTableCmd *cmd = makeNode(AlterTableCmd);
 
 					cmd->subtype = AT_SetNotNull;
 					cmd->name = key->name;
@@ -318,15 +321,15 @@ DefineIndex(RangeVar *heapRelation,
 		}
 
 		/*
-		 * XXX: Shouldn't the ALTER TABLE .. SET NOT NULL cascade
-		 * to child tables?  Currently, since the PRIMARY KEY
-		 * itself doesn't cascade, we don't cascade the
-		 * notnull constraint(s) either; but this is pretty debatable.
+		 * XXX: Shouldn't the ALTER TABLE .. SET NOT NULL cascade to child
+		 * tables?	Currently, since the PRIMARY KEY itself doesn't
+		 * cascade, we don't cascade the notnull constraint(s) either; but
+		 * this is pretty debatable.
 		 *
-		 * XXX: possible future improvement: when being called from
-		 * ALTER TABLE, it would be more efficient to merge this with
-		 * the outer ALTER TABLE, so as to avoid two scans.  But that
-		 * seems to complicate DefineIndex's API unduly.
+		 * XXX: possible future improvement: when being called from ALTER
+		 * TABLE, it would be more efficient to merge this with the outer
+		 * ALTER TABLE, so as to avoid two scans.  But that seems to
+		 * complicate DefineIndex's API unduly.
 		 */
 		if (cmds)
 			AlterTableInternal(relationId, cmds, false);
@@ -352,15 +355,15 @@ DefineIndex(RangeVar *heapRelation,
 	heap_close(rel, NoLock);
 
 	/*
-	 * Report index creation if appropriate (delay this till after most
-	 * of the error checks)
+	 * Report index creation if appropriate (delay this till after most of
+	 * the error checks)
 	 */
 	if (isconstraint && !quiet)
 		ereport(NOTICE,
 				(errmsg("%s %s will create implicit index \"%s\" for table \"%s\"",
-						is_alter_table ? "ALTER TABLE / ADD" : "CREATE TABLE /",
+				 is_alter_table ? "ALTER TABLE / ADD" : "CREATE TABLE /",
 						primary ? "PRIMARY KEY" : "UNIQUE",
-						indexRelationName, RelationGetRelationName(rel))));
+					  indexRelationName, RelationGetRelationName(rel))));
 
 	index_create(relationId, indexRelationName,
 				 indexInfo, accessMethodId, tablespaceId, classObjectId,
@@ -450,8 +453,8 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 				if (isconstraint)
 					ereport(ERROR,
 							(errcode(ERRCODE_UNDEFINED_COLUMN),
-							 errmsg("column \"%s\" named in key does not exist",
-									attribute->name)));
+					  errmsg("column \"%s\" named in key does not exist",
+							 attribute->name)));
 				else
 					ereport(ERROR,
 							(errcode(ERRCODE_UNDEFINED_COLUMN),
@@ -488,11 +491,11 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 			if (contain_subplans(attribute->expr))
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				   errmsg("cannot use subquery in index expression")));
+					 errmsg("cannot use subquery in index expression")));
 			if (contain_agg_clause(attribute->expr))
 				ereport(ERROR,
 						(errcode(ERRCODE_GROUPING_ERROR),
-					errmsg("cannot use aggregate function in index expression")));
+						 errmsg("cannot use aggregate function in index expression")));
 
 			/*
 			 * A expression using mutable functions is probably wrong,
@@ -647,7 +650,7 @@ GetDefaultOpClass(Oid attrType, Oid accessMethodId)
 	 * than one exact match, then someone put bogus entries in pg_opclass.
 	 *
 	 * The initial search is done by namespace.c so that we only consider
-	 * opclasses visible in the current namespace search path.  (See also
+	 * opclasses visible in the current namespace search path.	(See also
 	 * typcache.c, which applies the same logic, but over all opclasses.)
 	 */
 	for (opclass = OpclassGetCandidates(accessMethodId);
@@ -962,16 +965,16 @@ ReindexTable(RangeVar *relation, bool force /* currently unused */ )
  * separate transaction, so we can release the lock on it right away.
  */
 void
-ReindexDatabase(const char *dbname, bool force /* currently unused */,
+ReindexDatabase(const char *dbname, bool force /* currently unused */ ,
 				bool all)
 {
-	Relation	 relationRelation;
+	Relation	relationRelation;
 	HeapScanDesc scan;
-	HeapTuple	 tuple;
+	HeapTuple	tuple;
 	MemoryContext private_context;
 	MemoryContext old;
-	List		*relids = NIL;
-	ListCell	*l;
+	List	   *relids = NIL;
+	ListCell   *l;
 
 	AssertArg(dbname);
 
@@ -1006,7 +1009,7 @@ ReindexDatabase(const char *dbname, bool force /* currently unused */,
 	/*
 	 * We always want to reindex pg_class first.  This ensures that if
 	 * there is any corruption in pg_class' indexes, they will be fixed
-	 * before we process any other tables.  This is critical because
+	 * before we process any other tables.	This is critical because
 	 * reindexing itself will try to update pg_class.
 	 */
 	old = MemoryContextSwitchTo(private_context);
@@ -1054,7 +1057,7 @@ ReindexDatabase(const char *dbname, bool force /* currently unused */,
 	CommitTransactionCommand();
 	foreach(l, relids)
 	{
-		Oid		relid = lfirst_oid(l);
+		Oid			relid = lfirst_oid(l);
 
 		StartTransactionCommand();
 		SetQuerySnapshot();		/* might be needed for functions in

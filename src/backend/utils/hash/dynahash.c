@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/hash/dynahash.c,v 1.52 2004/08/29 04:12:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/hash/dynahash.c,v 1.53 2004/08/29 05:06:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,7 +85,7 @@ DynaHashAlloc(Size size)
 }
 
 #define MEM_ALLOC		DynaHashAlloc
-#undef 	MEM_FREE	/* already in windows header files */
+#undef	MEM_FREE				/* already in windows header files */
 #define MEM_FREE		pfree
 
 
@@ -135,7 +135,7 @@ hash_create(const char *tabname, long nelem, HASHCTL *info, int flags)
 	/*
 	 * If you don't specify a match function, it defaults to strncmp() if
 	 * you used string_hash (either explicitly or by default) and to
-	 * memcmp() otherwise.  (Prior to PostgreSQL 7.4, memcmp() was always
+	 * memcmp() otherwise.	(Prior to PostgreSQL 7.4, memcmp() was always
 	 * used.)
 	 */
 	if (flags & HASH_COMPARE)
@@ -806,9 +806,9 @@ expand_table(HTAB *hashp)
 
 	/*
 	 * Relocate records to the new bucket.	NOTE: because of the way the
-	 * hash masking is done in calc_bucket, only one old bucket can need to
-	 * be split at this point.	With a different way of reducing the hash
-	 * value, that might not be true!
+	 * hash masking is done in calc_bucket, only one old bucket can need
+	 * to be split at this point.  With a different way of reducing the
+	 * hash value, that might not be true!
 	 */
 	old_segnum = old_bucket >> hctl->sshift;
 	old_segndx = MOD(old_bucket, hctl->ssize);

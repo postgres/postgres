@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_type.c,v 1.70 2004/08/29 04:12:42 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_type.c,v 1.71 2004/08/29 05:06:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,8 +91,8 @@ LookupTypeName(const TypeName *typename)
 		if (attnum == InvalidAttrNumber)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_COLUMN),
-			 errmsg("column \"%s\" of relation \"%s\" does not exist",
-					field, rel->relname)));
+				errmsg("column \"%s\" of relation \"%s\" does not exist",
+					   field, rel->relname)));
 		restype = get_atttype(relid, attnum);
 
 		/* this construct should never have an array indicator */
@@ -370,10 +370,11 @@ pts_error_callback(void *arg)
 	const char *str = (const char *) arg;
 
 	errcontext("invalid type name \"%s\"", str);
+
 	/*
-	 * Currently we just suppress any syntax error position report,
-	 * rather than transforming to an "internal query" error.  It's
-	 * unlikely that a type name is complex enough to need positioning.
+	 * Currently we just suppress any syntax error position report, rather
+	 * than transforming to an "internal query" error.	It's unlikely that
+	 * a type name is complex enough to need positioning.
 	 */
 	errposition(0);
 }

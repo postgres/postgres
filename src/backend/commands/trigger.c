@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.167 2004/08/29 04:12:30 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.168 2004/08/29 05:06:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -480,8 +480,8 @@ DropTrigger(Oid relid, const char *trigname, DropBehavior behavior)
 	if (!HeapTupleIsValid(tup))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-			  errmsg("trigger \"%s\" for table \"%s\" does not exist",
-					 trigname, get_rel_name(relid))));
+				 errmsg("trigger \"%s\" for table \"%s\" does not exist",
+						trigname, get_rel_name(relid))));
 
 	if (!pg_class_ownercheck(relid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
@@ -694,8 +694,8 @@ renametrig(Oid relid,
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-			  errmsg("trigger \"%s\" for table \"%s\" does not exist",
-					 oldname, RelationGetRelationName(targetrel))));
+				 errmsg("trigger \"%s\" for table \"%s\" does not exist",
+						oldname, RelationGetRelationName(targetrel))));
 	}
 
 	systable_endscan(tgscan);
@@ -1638,7 +1638,7 @@ ltrmark:;
  * Deferred trigger stuff
  *
  * The DeferredTriggersData struct holds data about pending deferred
- * trigger events during the current transaction tree.  The struct and
+ * trigger events during the current transaction tree.	The struct and
  * most of its subsidiary data are kept in TopTransactionContext; however
  * the individual event records are kept in CurTransactionContext, so that
  * they will easily go away during subtransaction abort.
@@ -1670,7 +1670,7 @@ ltrmark:;
  * saves a copy, which we use to restore the state if we abort.
  *
  * numpushed and numalloc keep control of allocation and storage in the above
- * stacks.  numpushed is essentially the current subtransaction nesting depth.
+ * stacks.	numpushed is essentially the current subtransaction nesting depth.
  *
  * XXX We need to be able to save the per-event data in a file if it grows too
  * large.
@@ -1723,11 +1723,11 @@ typedef struct DeferredTriggerStatusData *DeferredTriggerStatus;
  */
 typedef struct DeferredTriggerStateData
 {
-	bool	all_isset;
-	bool	all_isdeferred;
-	int		numstates;			/* number of trigstates[] entries in use */
-	int		numalloc;			/* allocated size of trigstates[] */
-	DeferredTriggerStatusData trigstates[1]; /* VARIABLE LENGTH ARRAY */
+	bool		all_isset;
+	bool		all_isdeferred;
+	int			numstates;		/* number of trigstates[] entries in use */
+	int			numalloc;		/* allocated size of trigstates[] */
+	DeferredTriggerStatusData trigstates[1];	/* VARIABLE LENGTH ARRAY */
 } DeferredTriggerStateData;
 
 typedef DeferredTriggerStateData *DeferredTriggerState;
@@ -1735,15 +1735,15 @@ typedef DeferredTriggerStateData *DeferredTriggerState;
 /* Per-transaction data */
 typedef struct DeferredTriggersData
 {
-	DeferredTriggerState	state;
-	DeferredTriggerEvent	events;
-	DeferredTriggerEvent	tail_thisxact;
-	DeferredTriggerEvent	events_imm;
-	DeferredTriggerEvent   *tail_stack;
-	DeferredTriggerEvent   *imm_stack;
-	DeferredTriggerState   *state_stack;
-	int						numpushed;
-	int						numalloc;
+	DeferredTriggerState state;
+	DeferredTriggerEvent events;
+	DeferredTriggerEvent tail_thisxact;
+	DeferredTriggerEvent events_imm;
+	DeferredTriggerEvent *tail_stack;
+	DeferredTriggerEvent *imm_stack;
+	DeferredTriggerState *state_stack;
+	int			numpushed;
+	int			numalloc;
 } DeferredTriggersData;
 
 typedef DeferredTriggersData *DeferredTriggers;
@@ -1757,7 +1757,7 @@ static void DeferredTriggerExecute(DeferredTriggerEvent event, int itemno,
 static DeferredTriggerState DeferredTriggerStateCreate(int numalloc);
 static DeferredTriggerState DeferredTriggerStateCopy(DeferredTriggerState state);
 static DeferredTriggerState DeferredTriggerStateAddItem(DeferredTriggerState state,
-														Oid tgoid, bool tgisdeferred);
+							Oid tgoid, bool tgisdeferred);
 
 
 /* ----------
@@ -1770,8 +1770,8 @@ static DeferredTriggerState DeferredTriggerStateAddItem(DeferredTriggerState sta
 static bool
 deferredTriggerCheckState(Oid tgoid, int32 itemstate)
 {
-	bool	tgisdeferred;
-	int		i;
+	bool		tgisdeferred;
+	int			i;
 
 	/*
 	 * For not-deferrable triggers (i.e. normal AFTER ROW triggers and
@@ -1798,7 +1798,8 @@ deferredTriggerCheckState(Oid tgoid, int32 itemstate)
 
 	/*
 	 * No ALL state known either, remember the default state as the
-	 * current and return that.  (XXX why do we bother making a state entry?)
+	 * current and return that.  (XXX why do we bother making a state
+	 * entry?)
 	 */
 	tgisdeferred = ((itemstate & TRIGGER_DEFERRED_INITDEFERRED) != 0);
 	deferredTriggers->state =
@@ -1982,8 +1983,8 @@ deferredTriggerInvokeEvents(bool immediate_only)
 
 	/*
 	 * If immediate_only is true, then the only events that could need
-	 * firing are those since events_imm.  (But if
-	 * events_imm is NULL, we must scan the entire list.)
+	 * firing are those since events_imm.  (But if events_imm is NULL, we
+	 * must scan the entire list.)
 	 */
 	if (immediate_only && deferredTriggers->events_imm != NULL)
 	{
@@ -2003,13 +2004,13 @@ deferredTriggerInvokeEvents(bool immediate_only)
 		int			i;
 
 		/*
-		 * Skip executing cancelled events, and events done by transactions
-		 * that are not aborted.
+		 * Skip executing cancelled events, and events done by
+		 * transactions that are not aborted.
 		 */
 		if (!(event->dte_event & TRIGGER_DEFERRED_CANCELED) ||
-				(event->dte_event & TRIGGER_DEFERRED_DONE &&
-				 TransactionIdIsValid(event->dte_done_xid) &&
-				 !TransactionIdDidAbort(event->dte_done_xid)))
+			(event->dte_event & TRIGGER_DEFERRED_DONE &&
+			 TransactionIdIsValid(event->dte_done_xid) &&
+			 !TransactionIdDidAbort(event->dte_done_xid)))
 		{
 			MemoryContextReset(per_tuple_context);
 
@@ -2019,8 +2020,8 @@ deferredTriggerInvokeEvents(bool immediate_only)
 			for (i = 0; i < event->dte_n_items; i++)
 			{
 				if (event->dte_item[i].dti_state & TRIGGER_DEFERRED_DONE &&
-						TransactionIdIsValid(event->dte_item[i].dti_done_xid) &&
-						!(TransactionIdDidAbort(event->dte_item[i].dti_done_xid)))
+				 TransactionIdIsValid(event->dte_item[i].dti_done_xid) &&
+				!(TransactionIdDidAbort(event->dte_item[i].dti_done_xid)))
 					continue;
 
 				/*
@@ -2097,8 +2098,8 @@ deferredTriggerInvokeEvents(bool immediate_only)
 		{
 			/*
 			 * We can drop an item if it's done, but only if we're not
-			 * inside a subtransaction because it could abort later on.
-			 * We will want to check the item again if it does.
+			 * inside a subtransaction because it could abort later on. We
+			 * will want to check the item again if it does.
 			 */
 			if (immediate_only && !IsSubTransaction())
 			{
@@ -2209,8 +2210,8 @@ DeferredTriggerEndXact(void)
 	/*
 	 * Forget everything we know about deferred triggers.
 	 *
-	 * Since all the info is in TopTransactionContext or children thereof,
-	 * we need do nothing special to reclaim memory.
+	 * Since all the info is in TopTransactionContext or children thereof, we
+	 * need do nothing special to reclaim memory.
 	 */
 	deferredTriggers = NULL;
 }
@@ -2236,8 +2237,8 @@ DeferredTriggerAbortXact(void)
 	/*
 	 * Forget everything we know about deferred triggers.
 	 *
-	 * Since all the info is in TopTransactionContext or children thereof,
-	 * we need do nothing special to reclaim memory.
+	 * Since all the info is in TopTransactionContext or children thereof, we
+	 * need do nothing special to reclaim memory.
 	 */
 	deferredTriggers = NULL;
 }
@@ -2285,13 +2286,13 @@ DeferredTriggerBeginSubXact(void)
 
 			deferredTriggers->tail_stack = (DeferredTriggerEvent *)
 				repalloc(deferredTriggers->tail_stack,
-						 deferredTriggers->numalloc * sizeof(DeferredTriggerEvent));
+			  deferredTriggers->numalloc * sizeof(DeferredTriggerEvent));
 			deferredTriggers->imm_stack = (DeferredTriggerEvent *)
 				repalloc(deferredTriggers->imm_stack,
-						deferredTriggers->numalloc * sizeof(DeferredTriggerEvent));
+			  deferredTriggers->numalloc * sizeof(DeferredTriggerEvent));
 			deferredTriggers->state_stack = (DeferredTriggerState *)
 				repalloc(deferredTriggers->state_stack,
-						 deferredTriggers->numalloc * sizeof(DeferredTriggerState));
+			  deferredTriggers->numalloc * sizeof(DeferredTriggerState));
 		}
 	}
 
@@ -2358,8 +2359,8 @@ DeferredTriggerEndSubXact(bool isCommit)
 			deferredTriggers->tail_thisxact->dte_next = NULL;
 
 		/*
-		 * We don't need to free the items, since the CurTransactionContext
-		 * will be reset shortly.
+		 * We don't need to free the items, since the
+		 * CurTransactionContext will be reset shortly.
 		 */
 
 		/*
@@ -2393,7 +2394,7 @@ DeferredTriggerStateCreate(int numalloc)
 	state = (DeferredTriggerState)
 		MemoryContextAllocZero(TopTransactionContext,
 							   sizeof(DeferredTriggerStateData) +
-							   (numalloc - 1) * sizeof(DeferredTriggerStatusData));
+					  (numalloc - 1) *sizeof(DeferredTriggerStatusData));
 
 	state->numalloc = numalloc;
 
@@ -2429,13 +2430,13 @@ DeferredTriggerStateAddItem(DeferredTriggerState state,
 {
 	if (state->numstates >= state->numalloc)
 	{
-		int		newalloc = state->numalloc * 2;
+		int			newalloc = state->numalloc * 2;
 
-		newalloc = Max(newalloc, 8); /* in case original has size 0 */
+		newalloc = Max(newalloc, 8);	/* in case original has size 0 */
 		state = (DeferredTriggerState)
 			repalloc(state,
 					 sizeof(DeferredTriggerStateData) +
-					 (newalloc - 1) * sizeof(DeferredTriggerStatusData));
+					 (newalloc - 1) *sizeof(DeferredTriggerStatusData));
 		state->numalloc = newalloc;
 		Assert(state->numstates < state->numalloc);
 	}
@@ -2463,8 +2464,9 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 		return;
 
 	/*
-	 * If in a subtransaction, and we didn't save the current state already,
-	 * save it so it can be restored if the subtransaction aborts.
+	 * If in a subtransaction, and we didn't save the current state
+	 * already, save it so it can be restored if the subtransaction
+	 * aborts.
 	 */
 	if (deferredTriggers->numpushed > 0 &&
 		deferredTriggers->state_stack[deferredTriggers->numpushed - 1] == NULL)
@@ -2686,7 +2688,7 @@ DeferredTriggerSaveEvent(ResultRelInfo *relinfo, int event, bool row_trigger,
 		return;
 
 	/*
-	 * Create a new event.  We use the CurTransactionContext so the event
+	 * Create a new event.	We use the CurTransactionContext so the event
 	 * will automatically go away if the subtransaction aborts.
 	 */
 	oldcxt = MemoryContextSwitchTo(CurTransactionContext);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.56 2004/08/29 04:12:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.57 2004/08/29 05:06:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,11 +50,11 @@ SIBufferInit(int maxBackends)
 	int			segSize;
 	SISeg	   *segP;
 	int			i;
-	bool found;
+	bool		found;
 
 	/* Allocate space in shared memory */
 	segSize = SInvalShmemSize(maxBackends);
-	shmInvalBuffer = segP = (SISeg *) ShmemInitStruct("shmInvalBuffer",segSize,&found);
+	shmInvalBuffer = segP = (SISeg *) ShmemInitStruct("shmInvalBuffer", segSize, &found);
 	if (found)
 		return;
 
@@ -215,8 +215,8 @@ SIInsertDataEntry(SISeg *segP, SharedInvalidationMessage *data)
 	/*
 	 * Try to prevent table overflow.  When the table is 70% full send a
 	 * WAKEN_CHILDREN request to the postmaster.  The postmaster will send
-	 * a SIGUSR1 signal to all the backends, which will cause sinval.c
-	 * to read any pending SI entries.
+	 * a SIGUSR1 signal to all the backends, which will cause sinval.c to
+	 * read any pending SI entries.
 	 *
 	 * This should never happen if all the backends are actively executing
 	 * queries, but if a backend is sitting idle then it won't be starting

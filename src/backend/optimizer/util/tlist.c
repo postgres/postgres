@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/tlist.c,v 1.66 2004/08/29 04:12:34 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/tlist.c,v 1.67 2004/08/29 05:06:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,8 +90,8 @@ tlist_member(Node *node, List *targetlist)
 TargetEntry *
 create_tl_element(Var *var, int resdomno)
 {
-	Oid		vartype;
-	int32	vartypmod;
+	Oid			vartype;
+	int32		vartypmod;
 
 	if (IsA(var, Var))
 	{

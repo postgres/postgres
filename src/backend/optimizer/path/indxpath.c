@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.163 2004/08/29 04:12:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.164 2004/08/29 05:06:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,11 +57,11 @@ static List *group_clauses_by_indexkey_for_join(Query *root,
 								   Relids outer_relids,
 								   JoinType jointype, bool isouterjoin);
 static bool match_clause_to_indexcol(RelOptInfo *rel, IndexOptInfo *index,
-									 int indexcol, Oid opclass,
-									 RestrictInfo *rinfo);
+						 int indexcol, Oid opclass,
+						 RestrictInfo *rinfo);
 static bool match_join_clause_to_indexcol(RelOptInfo *rel, IndexOptInfo *index,
-										  int indexcol, Oid opclass,
-										  RestrictInfo *rinfo);
+							  int indexcol, Oid opclass,
+							  RestrictInfo *rinfo);
 static Oid indexable_operator(Expr *clause, Oid opclass,
 				   bool indexkey_on_left);
 static bool pred_test(List *predicate_list, List *restrictinfo_list);
@@ -137,8 +137,8 @@ create_index_paths(Query *root, RelOptInfo *rel)
 			continue;
 
 		/*
-		 * 1. Match the index against non-OR restriction clauses.
-		 * (OR clauses will be considered later by orindxpath.c.)
+		 * 1. Match the index against non-OR restriction clauses. (OR
+		 * clauses will be considered later by orindxpath.c.)
 		 */
 		restrictclauses = group_clauses_by_indexkey(rel, index);
 
@@ -312,12 +312,12 @@ group_clauses_by_indexkey_for_join(Query *root,
 		ListCell   *l;
 
 		/*
-		 * We can always use plain restriction clauses for the rel.  We scan
-		 * these first because we want them first in the clausegroup list
-		 * for the convenience of remove_redundant_join_clauses, which can
-		 * never remove non-join clauses and hence won't be able to get rid
-		 * of a non-join clause if it appears after a join clause it is
-		 * redundant with.
+		 * We can always use plain restriction clauses for the rel.  We
+		 * scan these first because we want them first in the clausegroup
+		 * list for the convenience of remove_redundant_join_clauses,
+		 * which can never remove non-join clauses and hence won't be able
+		 * to get rid of a non-join clause if it appears after a join
+		 * clause it is redundant with.
 		 */
 		foreach(l, rel->baserestrictinfo)
 		{
@@ -374,8 +374,8 @@ group_clauses_by_indexkey_for_join(Query *root,
 		}
 
 		/*
-		 * If we found clauses in more than one list, we may now have clauses
-		 * that are known redundant.  Get rid of 'em.
+		 * If we found clauses in more than one list, we may now have
+		 * clauses that are known redundant.  Get rid of 'em.
 		 */
 		if (numsources > 1)
 		{
@@ -416,7 +416,7 @@ group_clauses_by_indexkey_for_join(Query *root,
  * top-level restriction clauses of the relation.  Furthermore, we demand
  * that at least one such use be made, otherwise we fail and return NIL.
  * (Any path we made without such a use would be redundant with non-OR
- * indexscans.  Compare also group_clauses_by_indexkey_for_join.)
+ * indexscans.	Compare also group_clauses_by_indexkey_for_join.)
  *
  * XXX When we generate an indexqual list that uses both the OR subclause
  * and top-level restriction clauses, we end up with a slightly inefficient
@@ -473,8 +473,8 @@ group_clauses_by_indexkey_for_or(RelOptInfo *rel,
 		 * If we found no clauses for this indexkey in the OR subclause
 		 * itself, try looking in the rel's top-level restriction list.
 		 *
-		 * XXX should we always search the top-level list?  Slower but
-		 * could sometimes yield a better plan.
+		 * XXX should we always search the top-level list?	Slower but could
+		 * sometimes yield a better plan.
 		 */
 		if (clausegroup == NIL)
 		{
@@ -910,7 +910,7 @@ pred_test_recurse_pred(Expr *predicate, Node *clause)
  *
  * The strategy numbers defined by btree indexes (see access/skey.h) are:
  *		(1) <	(2) <=	 (3) =	 (4) >=   (5) >
- * and in addition we use (6) to represent <>.  <> is not a btree-indexable
+ * and in addition we use (6) to represent <>.	<> is not a btree-indexable
  * operator, but we assume here that if the equality operator of a btree
  * opclass has a negator operator, the negator behaves as <> for the opclass.
  *
@@ -943,14 +943,14 @@ static const StrategyNumber
 /*
  *			The target operator:
  *
- *	   LT   LE     EQ    GE    GT    NE
+ *	   LT	LE	   EQ	 GE    GT	 NE
  */
-	{BTGE, BTGE,    0,    0,    0, BTGE},		/* LT */
-	{BTGT, BTGE,    0,    0,    0, BTGT},		/* LE */
+	{BTGE, BTGE, 0, 0, 0, BTGE},	/* LT */
+	{BTGT, BTGE, 0, 0, 0, BTGT},	/* LE */
 	{BTGT, BTGE, BTEQ, BTLE, BTLT, BTNE},		/* EQ */
-	{   0,    0,    0, BTLE, BTLT, BTLT},		/* GE */
-	{   0,    0,    0, BTLE, BTLE, BTLE},		/* GT */
-	{   0,    0,    0,    0,    0, BTEQ}		/* NE */
+	{0, 0, 0, BTLE, BTLT, BTLT},	/* GE */
+	{0, 0, 0, BTLE, BTLE, BTLE},	/* GT */
+	{0, 0, 0, 0, 0, BTEQ}		/* NE */
 };
 
 
@@ -963,21 +963,21 @@ static const StrategyNumber
  * implies another:
  *
  * A simple and general way is to see if they are equal(); this works for any
- * kind of expression.  (Actually, there is an implied assumption that the
+ * kind of expression.	(Actually, there is an implied assumption that the
  * functions in the expression are immutable, ie dependent only on their input
  * arguments --- but this was checked for the predicate by CheckPredicate().)
  *
  * When the predicate is of the form "foo IS NOT NULL", we can conclude that
  * the predicate is implied if the clause is a strict operator or function
- * that has "foo" as an input.  In this case the clause must yield NULL when
+ * that has "foo" as an input.	In this case the clause must yield NULL when
  * "foo" is NULL, which we can take as equivalent to FALSE because we know
  * we are within an AND/OR subtree of a WHERE clause.  (Again, "foo" is
  * already known immutable, so the clause will certainly always fail.)
  *
  * Our other way works only for binary boolean opclauses of the form
- * "foo op constant", where "foo" is the same in both clauses.  The operators
+ * "foo op constant", where "foo" is the same in both clauses.	The operators
  * and constants can be different but the operators must be in the same btree
- * operator class.  We use the above operator implication table to be able to
+ * operator class.	We use the above operator implication table to be able to
  * derive implications between nonidentical clauses.  (Note: "foo" is known
  * immutable, and constants are surely immutable, but we have to check that
  * the operators are too.  As of 8.0 it's possible for opclasses to contain
@@ -1028,7 +1028,7 @@ pred_test_simple_clause(Expr *predicate, Node *clause)
 	if (predicate && IsA(predicate, NullTest) &&
 		((NullTest *) predicate)->nulltesttype == IS_NOT_NULL)
 	{
-		Expr *nonnullarg = ((NullTest *) predicate)->arg;
+		Expr	   *nonnullarg = ((NullTest *) predicate)->arg;
 
 		if (is_opclause(clause) &&
 			list_member(((OpExpr *) clause)->args, nonnullarg) &&
@@ -1044,8 +1044,8 @@ pred_test_simple_clause(Expr *predicate, Node *clause)
 	/*
 	 * Can't do anything more unless they are both binary opclauses with a
 	 * Const on one side, and identical subexpressions on the other sides.
-	 * Note we don't have to think about binary relabeling of the Const node,
-	 * since that would have been folded right into the Const.
+	 * Note we don't have to think about binary relabeling of the Const
+	 * node, since that would have been folded right into the Const.
 	 *
 	 * If either Const is null, we also fail right away; this assumes that
 	 * the test operator will always be strict.
@@ -1097,9 +1097,9 @@ pred_test_simple_clause(Expr *predicate, Node *clause)
 		return false;
 
 	/*
-	 * Check for matching subexpressions on the non-Const sides.  We used to
-	 * only allow a simple Var, but it's about as easy to allow any
-	 * expression.  Remember we already know that the pred expression does
+	 * Check for matching subexpressions on the non-Const sides.  We used
+	 * to only allow a simple Var, but it's about as easy to allow any
+	 * expression.	Remember we already know that the pred expression does
 	 * not contain any non-immutable functions, so identical expressions
 	 * should yield identical results.
 	 */
@@ -1107,9 +1107,8 @@ pred_test_simple_clause(Expr *predicate, Node *clause)
 		return false;
 
 	/*
-	 * Okay, get the operators in the two clauses we're comparing.
-	 * Commute them if needed so that we can assume the variables are
-	 * on the left.
+	 * Okay, get the operators in the two clauses we're comparing. Commute
+	 * them if needed so that we can assume the variables are on the left.
 	 */
 	pred_op = ((OpExpr *) predicate)->opno;
 	if (!pred_var_on_left)
@@ -1132,16 +1131,16 @@ pred_test_simple_clause(Expr *predicate, Node *clause)
 	 *
 	 * We must find a btree opclass that contains both operators, else the
 	 * implication can't be determined.  Also, the pred_op has to be of
-	 * default subtype (implying left and right input datatypes are the same);
-	 * otherwise it's unsafe to put the pred_const on the left side of the
-	 * test.  Also, the opclass must contain a suitable test operator
-	 * matching the clause_const's type (which we take to mean that it has
-	 * the same subtype as the original clause_operator).
+	 * default subtype (implying left and right input datatypes are the
+	 * same); otherwise it's unsafe to put the pred_const on the left side
+	 * of the test.  Also, the opclass must contain a suitable test
+	 * operator matching the clause_const's type (which we take to mean
+	 * that it has the same subtype as the original clause_operator).
 	 *
 	 * If there are multiple matching opclasses, assume we can use any one to
-	 * determine the logical relationship of the two operators and the correct
-	 * corresponding test operator.  This should work for any logically
-	 * consistent opclasses.
+	 * determine the logical relationship of the two operators and the
+	 * correct corresponding test operator.  This should work for any
+	 * logically consistent opclasses.
 	 */
 	catlist = SearchSysCacheList(AMOPOPID, 1,
 								 ObjectIdGetDatum(pred_op),
@@ -1160,7 +1159,7 @@ pred_test_simple_clause(Expr *predicate, Node *clause)
 			pred_op_negated = true;
 			ReleaseSysCacheList(catlist);
 			catlist = SearchSysCacheList(AMOPOPID, 1,
-										 ObjectIdGetDatum(pred_op_negator),
+									   ObjectIdGetDatum(pred_op_negator),
 										 0, 0, 0);
 		}
 	}
@@ -1197,8 +1196,8 @@ pred_test_simple_clause(Expr *predicate, Node *clause)
 		}
 
 		/*
-		 * From the same opclass, find a strategy number for the clause_op,
-		 * if possible
+		 * From the same opclass, find a strategy number for the
+		 * clause_op, if possible
 		 */
 		clause_tuple = SearchSysCache(AMOPOPID,
 									  ObjectIdGetDatum(clause_op),
@@ -1217,7 +1216,7 @@ pred_test_simple_clause(Expr *predicate, Node *clause)
 		else if (OidIsValid(clause_op_negator))
 		{
 			clause_tuple = SearchSysCache(AMOPOPID,
-										  ObjectIdGetDatum(clause_op_negator),
+									 ObjectIdGetDatum(clause_op_negator),
 										  ObjectIdGetDatum(opclass_id),
 										  0, 0);
 			if (HeapTupleIsValid(clause_tuple))
@@ -1272,8 +1271,8 @@ pred_test_simple_clause(Expr *predicate, Node *clause)
 			/*
 			 * Last check: test_op must be immutable.
 			 *
-			 * Note that we require only the test_op to be immutable, not
-			 * the original clause_op.  (pred_op must be immutable, else it
+			 * Note that we require only the test_op to be immutable, not the
+			 * original clause_op.	(pred_op must be immutable, else it
 			 * would not be allowed in an index predicate.)  Essentially
 			 * we are assuming that the opclass is consistent even if it
 			 * contains operators that are merely stable.
@@ -1314,7 +1313,7 @@ pred_test_simple_clause(Expr *predicate, Node *clause)
 
 	/* And execute it. */
 	test_result = ExecEvalExprSwitchContext(test_exprstate,
-											GetPerTupleExprContext(estate),
+										  GetPerTupleExprContext(estate),
 											&isNull, NULL);
 
 	/* Get back to outer memory context */
@@ -1667,9 +1666,7 @@ flatten_clausegroups_list(List *clausegroups)
 	ListCell   *l;
 
 	foreach(l, clausegroups)
-	{
 		allclauses = list_concat(allclauses, list_copy((List *) lfirst(l)));
-	}
 	return allclauses;
 }
 
@@ -1692,7 +1689,7 @@ make_expr_from_indexclauses(List *indexclauses)
 
 	foreach(orlist, indexclauses)
 	{
-		List   *andlist = (List *) lfirst(orlist);
+		List	   *andlist = (List *) lfirst(orlist);
 
 		/* Strip RestrictInfos */
 		andlist = get_actual_clauses(andlist);
@@ -1994,7 +1991,7 @@ match_special_index_operator(Expr *clause, Oid opclass,
  * (The latter is not depended on by any part of the planner, so far as I can
  * tell; but some parts of the executor do assume that the indxqual list
  * ultimately delivered to the executor is so ordered.	One such place is
- * _bt_preprocess_keys() in the btree support.  Perhaps that ought to be fixed
+ * _bt_preprocess_keys() in the btree support.	Perhaps that ought to be fixed
  * someday --- tgl 7/00)
  */
 List *
@@ -2019,7 +2016,7 @@ expand_indexqual_conditions(IndexOptInfo *index, List *clausegroups)
 
 			resultquals = list_concat(resultquals,
 									  expand_indexqual_condition(rinfo,
-																 curClass));
+															  curClass));
 		}
 
 		clausegroup_item = lnext(clausegroup_item);
@@ -2040,6 +2037,7 @@ static List *
 expand_indexqual_condition(RestrictInfo *rinfo, Oid opclass)
 {
 	Expr	   *clause = rinfo->clause;
+
 	/* we know these will succeed */
 	Node	   *leftop = get_leftop(clause);
 	Node	   *rightop = get_rightop(clause);

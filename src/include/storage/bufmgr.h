@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/bufmgr.h,v 1.85 2004/08/29 04:13:10 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/storage/bufmgr.h,v 1.86 2004/08/29 05:06:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -131,7 +131,7 @@ extern void RelationTruncate(Relation rel, BlockNumber nblocks);
 extern void FlushRelationBuffers(Relation rel, BlockNumber firstDelBlock);
 extern void DropRelationBuffers(Relation rel);
 extern void DropRelFileNodeBuffers(RelFileNode rnode, bool istemp,
-								   BlockNumber firstDelBlock);
+					   BlockNumber firstDelBlock);
 extern void DropBuffers(Oid dbid);
 
 #ifdef NOT_USED

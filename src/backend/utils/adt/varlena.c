@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.116 2004/08/29 04:12:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.117 2004/08/29 05:06:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -415,7 +415,7 @@ textlen(PG_FUNCTION_ARGS)
  *	Does the real work for textlen()
  *
  *	This is broken out so it can be called directly by other string processing
- *	functions.  Note that the argument is passed as a Datum, to indicate that
+ *	functions.	Note that the argument is passed as a Datum, to indicate that
  *	it may still be in compressed form.  We can avoid decompressing it at all
  *	in some cases.
  */
@@ -547,7 +547,7 @@ text_substr_no_len(PG_FUNCTION_ARGS)
  *	Does the real work for text_substr() and text_substr_no_len()
  *
  *	This is broken out so it can be called directly by other string processing
- *	functions.  Note that the argument is passed as a Datum, to indicate that
+ *	functions.	Note that the argument is passed as a Datum, to indicate that
  *	it may still be in compressed/toasted form.  We can avoid detoasting all
  *	of it in some cases.
  */
@@ -1728,8 +1728,10 @@ SplitIdentifierString(char *rawstring, char separator,
 			endp = nextp;
 			if (curname == nextp)
 				return false;	/* empty unquoted name not allowed */
+
 			/*
-			 * Downcase the identifier, using same code as main lexer does.
+			 * Downcase the identifier, using same code as main lexer
+			 * does.
 			 *
 			 * XXX because we want to overwrite the input in-place, we cannot
 			 * support a downcasing transformation that increases the
@@ -2119,7 +2121,7 @@ text_to_array(PG_FUNCTION_ARGS)
 			{
 				/* otherwise create array and exit */
 				PG_RETURN_ARRAYTYPE_P(makeArrayResult(astate,
-													  CurrentMemoryContext));
+												  CurrentMemoryContext));
 			}
 		}
 		else if (start_posn == 0)
@@ -2139,7 +2141,7 @@ text_to_array(PG_FUNCTION_ARGS)
 			/* interior field requested */
 			result_text = text_substring(PointerGetDatum(inputstring),
 										 start_posn + fldsep_len,
-										 end_posn - start_posn - fldsep_len,
+									  end_posn - start_posn - fldsep_len,
 										 false);
 		}
 
@@ -2230,7 +2232,7 @@ array_to_text(PG_FUNCTION_ARGS)
 
 		value = DatumGetCString(FunctionCall3(&my_extra->proc,
 											  itemvalue,
-											  ObjectIdGetDatum(typioparam),
+											ObjectIdGetDatum(typioparam),
 											  Int32GetDatum(-1)));
 
 		if (i > 0)

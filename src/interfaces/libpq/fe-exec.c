@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-exec.c,v 1.160 2004/08/29 04:13:12 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-exec.c,v 1.161 2004/08/29 05:07:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,14 +45,14 @@ char	   *const pgresStatus[] = {
 
 static bool PQsendQueryStart(PGconn *conn);
 static int PQsendQueryGuts(PGconn *conn,
-						   const char *command,
-						   const char *stmtName,
-						   int nParams,
-						   const Oid *paramTypes,
-						   const char *const * paramValues,
-						   const int *paramLengths,
-						   const int *paramFormats,
-						   int resultFormat);
+				const char *command,
+				const char *stmtName,
+				int nParams,
+				const Oid *paramTypes,
+				const char *const * paramValues,
+				const int *paramLengths,
+				const int *paramFormats,
+				int resultFormat);
 static void parseInput(PGconn *conn);
 static bool PQexecStart(PGconn *conn);
 static PGresult *PQexecFinish(PGconn *conn);
@@ -623,7 +623,7 @@ pqSaveParameterStatus(PGconn *conn, const char *name, const char *value)
 		cnt = sscanf(value, "%d.%d.%d", &vmaj, &vmin, &vrev);
 
 		if (cnt < 2)
-			conn->sversion = 0;			/* unknown */
+			conn->sversion = 0; /* unknown */
 		else
 		{
 			if (cnt == 2)
@@ -737,15 +737,15 @@ PQsendQueryPrepared(PGconn *conn,
 	if (!stmtName)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("statement name is a null pointer\n"));
+					libpq_gettext("statement name is a null pointer\n"));
 		return 0;
 	}
 
 	return PQsendQueryGuts(conn,
-						   NULL, /* no command to parse */
+						   NULL,	/* no command to parse */
 						   stmtName,
 						   nParams,
-						   NULL, /* no param types */
+						   NULL,	/* no param types */
 						   paramValues,
 						   paramLengths,
 						   paramFormats,
@@ -811,13 +811,13 @@ PQsendQueryGuts(PGconn *conn,
 	if (PG_PROTOCOL_MAJOR(conn->pversion) < 3)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-			 libpq_gettext("function requires at least protocol version 3.0\n"));
+						  libpq_gettext("function requires at least protocol version 3.0\n"));
 		return 0;
 	}
 
 	/*
-	 * We will send Parse (if needed), Bind, Describe Portal, Execute, Sync,
-	 * using specified statement name and the unnamed portal.
+	 * We will send Parse (if needed), Bind, Describe Portal, Execute,
+	 * Sync, using specified statement name and the unnamed portal.
 	 */
 
 	if (command)
@@ -1445,6 +1445,7 @@ PQputCopyEnd(PGconn *conn, const char *errormsg)
 				pqPutMsgEnd(conn) < 0)
 				return -1;
 		}
+
 		/*
 		 * If we sent the COPY command in extended-query mode, we must
 		 * issue a Sync as well.
@@ -1462,7 +1463,7 @@ PQputCopyEnd(PGconn *conn, const char *errormsg)
 		{
 			/* Ooops, no way to do this in 2.0 */
 			printfPQExpBuffer(&conn->errorMessage,
-			 libpq_gettext("function requires at least protocol version 3.0\n"));
+							  libpq_gettext("function requires at least protocol version 3.0\n"));
 			return -1;
 		}
 		else
@@ -1843,7 +1844,7 @@ PQfname(const PGresult *res, int field_num)
  * downcasing in the frontend might follow different locale rules than
  * downcasing in the backend...
  *
- * Returns -1 if no match.  In the present backend it is also possible
+ * Returns -1 if no match.	In the present backend it is also possible
  * to have multiple matches, in which case the first one is found.
  */
 int
@@ -1859,8 +1860,8 @@ PQfnumber(const PGresult *res, const char *field_name)
 		return -1;
 
 	/*
-	 * Note: it is correct to reject a zero-length input string; the proper
-	 * input to match a zero-length field name would be "".
+	 * Note: it is correct to reject a zero-length input string; the
+	 * proper input to match a zero-length field name would be "".
 	 */
 	if (field_name == NULL ||
 		field_name[0] == '\0' ||
@@ -1869,8 +1870,8 @@ PQfnumber(const PGresult *res, const char *field_name)
 
 	/*
 	 * Note: this code will not reject partially quoted strings, eg
-	 * foo"BAR"foo will become fooBARfoo when it probably ought to be
-	 * an error condition.
+	 * foo"BAR"foo will become fooBARfoo when it probably ought to be an
+	 * error condition.
 	 */
 	field_case = strdup(field_name);
 	if (field_case == NULL)
@@ -1880,7 +1881,7 @@ PQfnumber(const PGresult *res, const char *field_name)
 	optr = field_case;
 	for (iptr = field_case; *iptr; iptr++)
 	{
-		char	c = *iptr;
+		char		c = *iptr;
 
 		if (in_quotes)
 		{
@@ -1899,9 +1900,7 @@ PQfnumber(const PGresult *res, const char *field_name)
 				*optr++ = c;
 		}
 		else if (c == '"')
-		{
 			in_quotes = true;
-		}
 		else
 		{
 			c = pg_tolower((unsigned char) c);
@@ -2148,7 +2147,7 @@ PQgetisnull(const PGresult *res, int tup_num, int field_num)
 int
 PQsetnonblocking(PGconn *conn, int arg)
 {
-	bool	barg;
+	bool		barg;
 
 	if (!conn || conn->status == CONNECTION_BAD)
 		return -1;
@@ -2283,7 +2282,7 @@ PQescapeString(char *to, const char *from, size_t length)
  *		'\'' == ASCII 39 == \'
  *		'\\' == ASCII 92 == \\\\
  *		anything < 0x20, or > 0x7e ---> \\ooo
- *                                      (where ooo is an octal expression)
+ *										(where ooo is an octal expression)
  */
 unsigned char *
 PQescapeBytea(const unsigned char *bintext, size_t binlen, size_t *bytealen)
@@ -2378,6 +2377,7 @@ PQunescapeBytea(const unsigned char *strtext, size_t *retbuflen)
 		return NULL;
 
 	strtextlen = strlen(strtext);
+
 	/*
 	 * Length of input is max length of output, but add one to avoid
 	 * unportable malloc(0) if input is zero-length.
@@ -2386,7 +2386,7 @@ PQunescapeBytea(const unsigned char *strtext, size_t *retbuflen)
 	if (buffer == NULL)
 		return NULL;
 
-	for (i = j = 0; i < strtextlen; )
+	for (i = j = 0; i < strtextlen;)
 	{
 		switch (strtext[i])
 		{
@@ -2400,7 +2400,7 @@ PQunescapeBytea(const unsigned char *strtext, size_t *retbuflen)
 						(ISOCTDIGIT(strtext[i + 1])) &&
 						(ISOCTDIGIT(strtext[i + 2])))
 					{
-						int		byte;
+						int			byte;
 
 						byte = OCTVAL(strtext[i++]);
 						byte = (byte << 3) + OCTVAL(strtext[i++]);
@@ -2408,12 +2408,13 @@ PQunescapeBytea(const unsigned char *strtext, size_t *retbuflen)
 						buffer[j++] = byte;
 					}
 				}
+
 				/*
-				 * Note: if we see '\' followed by something that isn't
-				 * a recognized escape sequence, we loop around having
-				 * done nothing except advance i.  Therefore the something
-				 * will be emitted as ordinary data on the next cycle.
-				 * Corner case: '\' at end of string will just be discarded.
+				 * Note: if we see '\' followed by something that isn't a
+				 * recognized escape sequence, we loop around having done
+				 * nothing except advance i.  Therefore the something will
+				 * be emitted as ordinary data on the next cycle. Corner
+				 * case: '\' at end of string will just be discarded.
 				 */
 				break;
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.118 2004/08/29 04:13:07 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.119 2004/08/29 05:06:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -290,7 +290,7 @@ typedef struct EState
 	/* Basic state for all query types: */
 	ScanDirection es_direction; /* current scan direction */
 	Snapshot	es_snapshot;	/* time qual to use */
-	Snapshot	es_crosscheck_snapshot;	/* crosscheck time qual for RI */
+	Snapshot	es_crosscheck_snapshot; /* crosscheck time qual for RI */
 	List	   *es_range_table; /* List of RangeTableEntrys */
 
 	/* Info about target table for insert/update/delete queries: */
@@ -315,7 +315,7 @@ typedef struct EState
 	List	   *es_rowMark;		/* not good place, but there is no other */
 
 	bool		es_instrument;	/* true requests runtime instrumentation */
-	bool		es_select_into;	/* true if doing SELECT INTO */
+	bool		es_select_into; /* true if doing SELECT INTO */
 	bool		es_into_oids;	/* true to generate OIDs in SELECT INTO */
 
 	List	   *es_exprcontexts;	/* List of ExprContexts within EState */
@@ -403,15 +403,15 @@ typedef HASH_SEQ_STATUS TupleHashIterator;
 typedef struct ExprState ExprState;
 
 typedef Datum (*ExprStateEvalFunc) (ExprState *expression,
-									ExprContext *econtext,
-									bool *isNull,
-									ExprDoneCond *isDone);
+												ExprContext *econtext,
+												bool *isNull,
+												ExprDoneCond *isDone);
 
 struct ExprState
 {
 	NodeTag		type;
 	Expr	   *expr;			/* associated Expr node */
-	ExprStateEvalFunc evalfunc;	/* routine to run to execute node */
+	ExprStateEvalFunc evalfunc; /* routine to run to execute node */
 };
 
 /* ----------------
@@ -498,8 +498,9 @@ typedef struct FuncExprState
 
 	/*
 	 * Flag to remember whether we have registered a shutdown callback for
-	 * this FuncExprState.  We do so only if setArgsValid has been true at
-	 * least once (since all the callback is for is to clear setArgsValid).
+	 * this FuncExprState.	We do so only if setArgsValid has been true at
+	 * least once (since all the callback is for is to clear
+	 * setArgsValid).
 	 */
 	bool		shutdown_reg;	/* a shutdown callback is registered */
 

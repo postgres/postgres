@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-protocol2.c,v 1.12 2004/08/29 04:13:12 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-protocol2.c,v 1.13 2004/08/29 05:07:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -177,10 +177,10 @@ pqSetenvPoll(PGconn *conn)
 					 * must use begin/commit in case autocommit is off by
 					 * default in a 7.3 server.
 					 *
-					 * Note: version() exists in all
-					 * protocol-2.0-supporting backends.  In 7.3 it would
-					 * be safer to write pg_catalog.version(), but we can't
-					 * do that without causing problems on older versions.
+					 * Note: version() exists in all protocol-2.0-supporting
+					 * backends.  In 7.3 it would be safer to write
+					 * pg_catalog.version(), but we can't do that without
+					 * causing problems on older versions.
 					 */
 					if (!PQsendQuery(conn, "begin; select version(); end"))
 						goto error_return;
@@ -303,9 +303,9 @@ pqSetenvPoll(PGconn *conn)
 						else
 						{
 							/*
-							 * Error: presumably function not
-							 * available, so use PGCLIENTENCODING or
-							 * SQL_ASCII as the fallback.
+							 * Error: presumably function not available,
+							 * so use PGCLIENTENCODING or SQL_ASCII as the
+							 * fallback.
 							 */
 							val = getenv("PGCLIENTENCODING");
 							if (val && *val)

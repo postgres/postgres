@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/tupdesc.c,v 1.105 2004/08/29 04:12:17 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/tupdesc.c,v 1.106 2004/08/29 05:06:39 momjian Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -52,8 +52,8 @@ CreateTemplateTupleDesc(int natts, bool hasoid)
 
 	/*
 	 * Allocate enough memory for the tuple descriptor, and zero the
-	 * attrs[] array since TupleDescInitEntry assumes that the array
-	 * is filled with NULL pointers.
+	 * attrs[] array since TupleDescInitEntry assumes that the array is
+	 * filled with NULL pointers.
 	 */
 	desc = (TupleDesc) palloc(sizeof(struct tupleDesc));
 
@@ -420,8 +420,8 @@ TupleDescInitEntry(TupleDesc desc,
 
 	/*
 	 * Note: attributeName can be NULL, because the planner doesn't always
-	 * fill in valid resname values in targetlists, particularly for resjunk
-	 * attributes.
+	 * fill in valid resname values in targetlists, particularly for
+	 * resjunk attributes.
 	 */
 	if (attributeName != NULL)
 		namestrcpy(&(att->attname), attributeName);
@@ -464,7 +464,7 @@ TupleDescInitEntry(TupleDesc desc,
  * Given a relation schema (list of ColumnDef nodes), build a TupleDesc.
  *
  * Note: the default assumption is no OIDs; caller may modify the returned
- * TupleDesc if it wants OIDs.  Also, tdtypeid will need to be filled in
+ * TupleDesc if it wants OIDs.	Also, tdtypeid will need to be filled in
  * later on.
  */
 TupleDesc

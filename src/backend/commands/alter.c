@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/alter.c,v 1.10 2004/08/29 04:12:29 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/alter.c,v 1.11 2004/08/29 05:06:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,7 +38,7 @@
 
 
 /*
- * Executes an ALTER OBJECT / RENAME TO statement.  Based on the object
+ * Executes an ALTER OBJECT / RENAME TO statement.	Based on the object
  * type, the function appropriate to that type is executed.
  */
 void
@@ -153,7 +153,7 @@ ExecRenameStmt(RenameStmt *stmt)
 void
 ExecAlterOwnerStmt(AlterOwnerStmt *stmt)
 {
-	AclId	newowner = get_usesysid(stmt->newowner);
+	AclId		newowner = get_usesysid(stmt->newowner);
 
 	switch (stmt->objectType)
 	{

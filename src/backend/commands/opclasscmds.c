@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/opclasscmds.c,v 1.27 2004/08/29 04:12:30 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/opclasscmds.c,v 1.28 2004/08/29 05:06:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -300,8 +300,8 @@ DefineOpClass(CreateOpClassStmt *stmt)
 						 errmsg("could not make operator class \"%s\" be default for type %s",
 								opcname,
 								TypeNameToString(stmt->datatype)),
-						 errdetail("Operator class \"%s\" already is the default.",
-								   NameStr(opclass->opcname))));
+				errdetail("Operator class \"%s\" already is the default.",
+						  NameStr(opclass->opcname))));
 		}
 
 		systable_endscan(scan);
@@ -419,6 +419,7 @@ assignOperSubtype(Oid amoid, Oid typeoid, Oid operOid)
 	if (optup == NULL)
 		elog(ERROR, "cache lookup failed for operator %u", operOid);
 	opform = (Form_pg_operator) GETSTRUCT(optup);
+
 	/*
 	 * btree operators must be binary ops returning boolean, and the
 	 * left-side input type must match the operator class' input type.
@@ -434,10 +435,11 @@ assignOperSubtype(Oid amoid, Oid typeoid, Oid operOid)
 	if (opform->oprleft != typeoid)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				 errmsg("btree operators must have index type as left input")));
+		  errmsg("btree operators must have index type as left input")));
+
 	/*
-	 * The subtype is "default" (0) if oprright matches the operator class,
-	 * otherwise it is oprright.
+	 * The subtype is "default" (0) if oprright matches the operator
+	 * class, otherwise it is oprright.
 	 */
 	if (opform->oprright == typeoid)
 		subtype = InvalidOid;
@@ -471,6 +473,7 @@ assignProcSubtype(Oid amoid, Oid typeoid, Oid procOid)
 	if (proctup == NULL)
 		elog(ERROR, "cache lookup failed for function %u", procOid);
 	procform = (Form_pg_proc) GETSTRUCT(proctup);
+
 	/*
 	 * btree support procs must be 2-arg procs returning int4, and the
 	 * first input type must match the operator class' input type.
@@ -486,10 +489,11 @@ assignProcSubtype(Oid amoid, Oid typeoid, Oid procOid)
 	if (procform->proargtypes[0] != typeoid)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				 errmsg("btree procedures must have index type as first input")));
+		errmsg("btree procedures must have index type as first input")));
+
 	/*
-	 * The subtype is "default" (0) if second input type matches the operator
-	 * class, otherwise it is the second input type.
+	 * The subtype is "default" (0) if second input type matches the
+	 * operator class, otherwise it is the second input type.
 	 */
 	if (procform->proargtypes[1] == typeoid)
 		subtype = InvalidOid;
@@ -518,13 +522,13 @@ addClassMember(List **list, OpClassMember *member, bool isProc)
 			if (isProc)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-						 errmsg("procedure number %d appears more than once",
-								member->number)));
+					 errmsg("procedure number %d appears more than once",
+							member->number)));
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-						 errmsg("operator number %d appears more than once",
-								member->number)));
+					  errmsg("operator number %d appears more than once",
+							 member->number)));
 		}
 	}
 	*list = lappend(*list, member);
@@ -885,7 +889,7 @@ AlterOpClassOwner(List *name, const char *access_method, AclId newOwnerSysId)
 	char	   *opcname;
 	HeapTuple	tup;
 	Relation	rel;
-	Form_pg_opclass	opcForm;
+	Form_pg_opclass opcForm;
 
 	amOid = GetSysCacheOid(AMNAME,
 						   CStringGetDatum(access_method),
@@ -937,7 +941,7 @@ AlterOpClassOwner(List *name, const char *access_method, AclId newOwnerSysId)
 	}
 	opcForm = (Form_pg_opclass) GETSTRUCT(tup);
 
-	/* 
+	/*
 	 * If the new owner is the same as the existing owner, consider the
 	 * command to have succeeded.  This is for dump restoration purposes.
 	 */
@@ -949,7 +953,10 @@ AlterOpClassOwner(List *name, const char *access_method, AclId newOwnerSysId)
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("must be superuser to change owner")));
 
-		/* Modify the owner --- okay to scribble on tup because it's a copy */
+		/*
+		 * Modify the owner --- okay to scribble on tup because it's a
+		 * copy
+		 */
 		opcForm->opcowner = newOwnerSysId;
 
 		simple_heap_update(rel, &tup->t_self, tup);

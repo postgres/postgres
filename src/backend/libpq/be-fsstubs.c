@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/be-fsstubs.c,v 1.73 2004/08/29 04:12:32 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/be-fsstubs.c,v 1.74 2004/08/29 05:06:43 momjian Exp $
  *
  * NOTES
  *	  This should be moved to a more appropriate place.  It is here
@@ -507,8 +507,8 @@ AtEOXact_LargeObject(bool isCommit)
 	currentContext = MemoryContextSwitchTo(fscxt);
 
 	/*
-	 * Close LO fds and clear cookies array so that LO fds are no longer good.
-	 * On abort we skip the close step.
+	 * Close LO fds and clear cookies array so that LO fds are no longer
+	 * good. On abort we skip the close step.
 	 */
 	for (i = 0; i < cookies_size; i++)
 	{
@@ -536,7 +536,7 @@ AtEOXact_LargeObject(bool isCommit)
 
 /*
  * AtEOSubXact_LargeObject
- * 		Take care of large objects at subtransaction commit/abort
+ *		Take care of large objects at subtransaction commit/abort
  *
  * Reassign LOs created/opened during a committing subtransaction
  * to the parent transaction.  On abort, just close them.
@@ -545,7 +545,7 @@ void
 AtEOSubXact_LargeObject(bool isCommit, TransactionId myXid,
 						TransactionId parentXid)
 {
-	int				i;
+	int			i;
 
 	if (fscxt == NULL)			/* no LO operations in this xact */
 		return;
@@ -561,8 +561,8 @@ AtEOSubXact_LargeObject(bool isCommit, TransactionId myXid,
 			else
 			{
 				/*
-				 * Make sure we do not call inv_close twice if it errors out
-				 * for some reason.  Better a leak than a crash.
+				 * Make sure we do not call inv_close twice if it errors
+				 * out for some reason.  Better a leak than a crash.
 				 */
 				deleteLOfd(i);
 				inv_close(lo);

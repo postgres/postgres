@@ -267,7 +267,7 @@ remove_typedefs(int brace_level)
 			else
 				prev->next = p->next;
 
-			if (p->type->type_enum == ECPGt_struct || p->type->type_enum == ECPGt_union) 
+			if (p->type->type_enum == ECPGt_struct || p->type->type_enum == ECPGt_union)
 				free(p->struct_member_list);
 			free(p->type);
 			free(p->name);
@@ -366,7 +366,7 @@ reset_variables(void)
 	argsresult = NULL;
 }
 
-/* Insert a new variable into our request list. 
+/* Insert a new variable into our request list.
  * Note: The list is dumped from the end,
  * so we have to add new entries at the beginning */
 void
@@ -554,9 +554,10 @@ adjust_array(enum ECPGttype type_enum, char **dimension, char **length, char *ty
 				 * given bounds
 				 */
 				if (atoi(*dimension) < 0 && !type_definition)
+
 					/*
-					 * do not change this for typedefs 
-					 * since it will be changed later on when the variable is defined
+					 * do not change this for typedefs since it will be
+					 * changed later on when the variable is defined
 					 */
 					*length = make_str("1");
 				else if (atoi(*dimension) == 0)

@@ -6,11 +6,11 @@
  * to keep regular backends from having to write out dirty shared buffers
  * (which they would only do when needing to free a shared buffer to read in
  * another page).  In the best scenario all writes from shared buffers will
- * be issued by the background writer process.  However, regular backends are
+ * be issued by the background writer process.	However, regular backends are
  * still empowered to issue writes if the bgwriter fails to maintain enough
  * clean shared buffers.
  *
- * The bgwriter is also charged with handling all checkpoints.  It will
+ * The bgwriter is also charged with handling all checkpoints.	It will
  * automatically dispatch a checkpoint after a certain amount of time has
  * elapsed since the last one, and it can be signaled to perform requested
  * checkpoints as well.  (The GUC parameter that mandates a checkpoint every
@@ -21,7 +21,7 @@
  * The bgwriter is started by the postmaster as soon as the startup subprocess
  * finishes.  It remains alive until the postmaster commands it to terminate.
  * Normal termination is by SIGUSR2, which instructs the bgwriter to execute
- * a shutdown checkpoint and then exit(0).  (All backends must be stopped
+ * a shutdown checkpoint and then exit(0).	(All backends must be stopped
  * before SIGUSR2 is issued!)  Emergency termination is by SIGQUIT; like any
  * backend, the bgwriter will simply abort and exit on SIGQUIT.
  *
@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.7 2004/08/29 04:12:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.8 2004/08/29 05:06:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,22 +92,22 @@
  */
 typedef struct
 {
-	RelFileNode		rnode;
-	BlockNumber		segno;
+	RelFileNode rnode;
+	BlockNumber segno;
 	/* might add a request-type field later */
 } BgWriterRequest;
 
 typedef struct
 {
-	pid_t	bgwriter_pid;		/* PID of bgwriter (0 if not started) */
+	pid_t		bgwriter_pid;	/* PID of bgwriter (0 if not started) */
 
-	sig_atomic_t	ckpt_started;	/* advances when checkpoint starts */
-	sig_atomic_t	ckpt_done;		/* advances when checkpoint done */
-	sig_atomic_t	ckpt_failed;	/* advances when checkpoint fails */
+	sig_atomic_t ckpt_started;	/* advances when checkpoint starts */
+	sig_atomic_t ckpt_done;		/* advances when checkpoint done */
+	sig_atomic_t ckpt_failed;	/* advances when checkpoint fails */
 
-	int				num_requests;	/* current # of requests */
-	int				max_requests;	/* allocated array size */
-	BgWriterRequest	requests[1];	/* VARIABLE LENGTH ARRAY */
+	int			num_requests;	/* current # of requests */
+	int			max_requests;	/* allocated array size */
+	BgWriterRequest requests[1];	/* VARIABLE LENGTH ARRAY */
 } BgWriterShmemStruct;
 
 static BgWriterShmemStruct *BgWriterShmem;
@@ -132,11 +132,11 @@ static volatile sig_atomic_t shutdown_requested = false;
 /*
  * Private state
  */
-static bool		am_bg_writer = false;
+static bool am_bg_writer = false;
 
-static bool		ckpt_active = false;
+static bool ckpt_active = false;
 
-static time_t	last_checkpoint_time;
+static time_t last_checkpoint_time;
 
 
 static void bg_quickdie(SIGNAL_ARGS);
@@ -164,20 +164,20 @@ BackgroundWriterMain(void)
 	 * Properly accept or ignore signals the postmaster might send us
 	 *
 	 * Note: we deliberately ignore SIGTERM, because during a standard Unix
-	 * system shutdown cycle, init will SIGTERM all processes at once.  We
-	 * want to wait for the backends to exit, whereupon the postmaster will
-	 * tell us it's okay to shut down (via SIGUSR2).
+	 * system shutdown cycle, init will SIGTERM all processes at once.	We
+	 * want to wait for the backends to exit, whereupon the postmaster
+	 * will tell us it's okay to shut down (via SIGUSR2).
 	 *
 	 * SIGUSR1 is presently unused; keep it spare in case someday we want
 	 * this process to participate in sinval messaging.
 	 */
 	pqsignal(SIGHUP, BgSigHupHandler);	/* set flag to read config file */
 	pqsignal(SIGINT, ReqCheckpointHandler);		/* request checkpoint */
-	pqsignal(SIGTERM, SIG_IGN);			/* ignore SIGTERM */
+	pqsignal(SIGTERM, SIG_IGN); /* ignore SIGTERM */
 	pqsignal(SIGQUIT, bg_quickdie);		/* hard crash time */
 	pqsignal(SIGALRM, SIG_IGN);
 	pqsignal(SIGPIPE, SIG_IGN);
-	pqsignal(SIGUSR1, SIG_IGN);			/* reserve for sinval */
+	pqsignal(SIGUSR1, SIG_IGN); /* reserve for sinval */
 	pqsignal(SIGUSR2, ReqShutdownHandler);		/* request shutdown */
 
 	/*
@@ -197,8 +197,8 @@ BackgroundWriterMain(void)
 #endif
 
 	/*
-	 * Initialize so that first time-driven checkpoint happens
-	 * at the correct time.
+	 * Initialize so that first time-driven checkpoint happens at the
+	 * correct time.
 	 */
 	last_checkpoint_time = time(NULL);
 
@@ -220,8 +220,8 @@ BackgroundWriterMain(void)
 
 		/*
 		 * These operations are really just a minimal subset of
-		 * AbortTransaction().  We don't have very many resources
-		 * to worry about in bgwriter, but we do have LWLocks and buffers.
+		 * AbortTransaction().	We don't have very many resources to worry
+		 * about in bgwriter, but we do have LWLocks and buffers.
 		 */
 		LWLockReleaseAll();
 		AbortBufferIO();
@@ -266,7 +266,7 @@ BackgroundWriterMain(void)
 	PG_SETMASK(&UnBlockSig);
 
 	/*
-	 * Loop forever 
+	 * Loop forever
 	 */
 	for (;;)
 	{
@@ -309,8 +309,8 @@ BackgroundWriterMain(void)
 		}
 
 		/*
-		 * Do an unforced checkpoint if too much time has elapsed
-		 * since the last one.
+		 * Do an unforced checkpoint if too much time has elapsed since
+		 * the last one.
 		 */
 		now = time(NULL);
 		elapsed_secs = now - last_checkpoint_time;
@@ -328,8 +328,8 @@ BackgroundWriterMain(void)
 				/*
 				 * Ideally we should only warn if this checkpoint was
 				 * requested due to running out of segment files, and not
-				 * if it was manually requested.  However we can't tell the
-				 * difference with the current signalling mechanism.
+				 * if it was manually requested.  However we can't tell
+				 * the difference with the current signalling mechanism.
 				 */
 				if (elapsed_secs < CheckPointWarning)
 					ereport(LOG,
@@ -354,16 +354,17 @@ BackgroundWriterMain(void)
 
 			/*
 			 * Note we record the checkpoint start time not end time as
-			 * last_checkpoint_time.  This is so that time-driven checkpoints
-			 * happen at a predictable spacing.
+			 * last_checkpoint_time.  This is so that time-driven
+			 * checkpoints happen at a predictable spacing.
 			 */
 			last_checkpoint_time = now;
 
 			/*
-			 * After any checkpoint, close all smgr files.  This is so we
-			 * won't hang onto smgr references to deleted files indefinitely.
-			 * (It is safe to do this because this process does not have a
-			 * relcache, and so no dangling references could remain.)
+			 * After any checkpoint, close all smgr files.	This is so we
+			 * won't hang onto smgr references to deleted files
+			 * indefinitely. (It is safe to do this because this process
+			 * does not have a relcache, and so no dangling references
+			 * could remain.)
 			 */
 			smgrcloseall();
 
@@ -371,17 +372,15 @@ BackgroundWriterMain(void)
 			n = 1;
 		}
 		else
-		{
 			n = BufferSync(BgWriterPercent, BgWriterMaxPages);
-		}
 
 		/*
-		 * Nap for the configured time or sleep for 10 seconds if
-		 * there was nothing to do at all.
+		 * Nap for the configured time or sleep for 10 seconds if there
+		 * was nothing to do at all.
 		 *
 		 * On some platforms, signals won't interrupt the sleep.  To ensure
-		 * we respond reasonably promptly when someone signals us,
-		 * break down the sleep into 1-second increments, and check for
+		 * we respond reasonably promptly when someone signals us, break
+		 * down the sleep into 1-second increments, and check for
 		 * interrupts after each nap.
 		 *
 		 * We absorb pending requests after each short sleep.
@@ -469,7 +468,7 @@ BgWriterShmemSize(void)
 	 * equal to NBuffers.  This may prove too large or small ...
 	 */
 	return MAXALIGN(sizeof(BgWriterShmemStruct) +
-					(NBuffers - 1) * sizeof(BgWriterRequest));
+					(NBuffers - 1) *sizeof(BgWriterRequest));
 }
 
 /*
@@ -479,7 +478,7 @@ BgWriterShmemSize(void)
 void
 BgWriterShmemInit(void)
 {
-	bool found;
+	bool		found;
 
 	BgWriterShmem = (BgWriterShmemStruct *)
 		ShmemInitStruct("Background Writer Data",
@@ -509,12 +508,12 @@ RequestCheckpoint(bool waitforit)
 {
 	/* use volatile pointer to prevent code rearrangement */
 	volatile BgWriterShmemStruct *bgs = BgWriterShmem;
-	sig_atomic_t	old_failed = bgs->ckpt_failed;
-	sig_atomic_t	old_started = bgs->ckpt_started;
+	sig_atomic_t old_failed = bgs->ckpt_failed;
+	sig_atomic_t old_started = bgs->ckpt_started;
 
 	/*
-	 * Send signal to request checkpoint.  When waitforit is false,
-	 * we consider failure to send the signal to be nonfatal.
+	 * Send signal to request checkpoint.  When waitforit is false, we
+	 * consider failure to send the signal to be nonfatal.
 	 */
 	if (BgWriterShmem->bgwriter_pid == 0)
 		elog(waitforit ? ERROR : LOG,
@@ -535,15 +534,16 @@ RequestCheckpoint(bool waitforit)
 			pg_usleep(100000L);
 		}
 		old_started = bgs->ckpt_started;
+
 		/*
-		 * We are waiting for ckpt_done >= old_started, in a modulo
-		 * sense.  This is a little tricky since we don't know the
-		 * width or signedness of sig_atomic_t.  We make the lowest
-		 * common denominator assumption that it is only as wide
-		 * as "char".  This means that this algorithm will cope
-		 * correctly as long as we don't sleep for more than 127
-		 * completed checkpoints.  (If we do, we will get another
-		 * chance to exit after 128 more checkpoints...)
+		 * We are waiting for ckpt_done >= old_started, in a modulo sense.
+		 * This is a little tricky since we don't know the width or
+		 * signedness of sig_atomic_t.	We make the lowest common
+		 * denominator assumption that it is only as wide as "char".  This
+		 * means that this algorithm will cope correctly as long as we
+		 * don't sleep for more than 127 completed checkpoints.  (If we
+		 * do, we will get another chance to exit after 128 more
+		 * checkpoints...)
 		 */
 		while (((signed char) (bgs->ckpt_done - old_started)) < 0)
 		{
@@ -634,9 +634,7 @@ AbsorbFsyncRequests(void)
 	LWLockRelease(BgWriterCommLock);
 
 	for (request = requests; n > 0; request++, n--)
-	{
 		RememberFsyncRequest(request->rnode, request->segno);
-	}
 	if (requests)
 		pfree(requests);
 }

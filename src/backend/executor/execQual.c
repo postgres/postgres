@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.167 2004/08/29 04:12:31 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.168 2004/08/29 05:06:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,51 +59,51 @@ static Datum ExecEvalArrayRef(ArrayRefExprState *astate,
 				 ExprContext *econtext,
 				 bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalAggref(AggrefExprState *aggref,
-							ExprContext *econtext,
-							bool *isNull, ExprDoneCond *isDone);
+			   ExprContext *econtext,
+			   bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalVar(ExprState *exprstate, ExprContext *econtext,
-						 bool *isNull, ExprDoneCond *isDone);
+			bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalConst(ExprState *exprstate, ExprContext *econtext,
-						 bool *isNull, ExprDoneCond *isDone);
+			  bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalParam(ExprState *exprstate, ExprContext *econtext,
-						   bool *isNull, ExprDoneCond *isDone);
+			  bool *isNull, ExprDoneCond *isDone);
 static ExprDoneCond ExecEvalFuncArgs(FunctionCallInfo fcinfo,
 				 List *argList, ExprContext *econtext);
 static Datum ExecMakeFunctionResultNoSets(FuncExprState *fcache,
-										  ExprContext *econtext,
-										  bool *isNull, ExprDoneCond *isDone);
+							 ExprContext *econtext,
+							 bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalFunc(FuncExprState *fcache, ExprContext *econtext,
 			 bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalOper(FuncExprState *fcache, ExprContext *econtext,
 			 bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalDistinct(FuncExprState *fcache, ExprContext *econtext,
-							  bool *isNull, ExprDoneCond *isDone);
+				 bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalScalarArrayOp(ScalarArrayOpExprState *sstate,
-								   ExprContext *econtext,
-								   bool *isNull, ExprDoneCond *isDone);
+					  ExprContext *econtext,
+					  bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalNot(BoolExprState *notclause, ExprContext *econtext,
-						 bool *isNull, ExprDoneCond *isDone);
+			bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalOr(BoolExprState *orExpr, ExprContext *econtext,
-						bool *isNull, ExprDoneCond *isDone);
+		   bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalAnd(BoolExprState *andExpr, ExprContext *econtext,
-						 bool *isNull, ExprDoneCond *isDone);
+			bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalCase(CaseExprState *caseExpr, ExprContext *econtext,
 			 bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalCaseTestExpr(ExprState *exprstate,
-								  ExprContext *econtext,
-								  bool *isNull, ExprDoneCond *isDone);
+					 ExprContext *econtext,
+					 bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalArray(ArrayExprState *astate,
-						   ExprContext *econtext,
-						   bool *isNull, ExprDoneCond *isDone);
+			  ExprContext *econtext,
+			  bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalRow(RowExprState *rstate,
-						 ExprContext *econtext,
-						 bool *isNull, ExprDoneCond *isDone);
+			ExprContext *econtext,
+			bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalCoalesce(CoalesceExprState *coalesceExpr,
-							  ExprContext *econtext,
-							  bool *isNull, ExprDoneCond *isDone);
+				 ExprContext *econtext,
+				 bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalNullIf(FuncExprState *nullIfExpr,
-							ExprContext *econtext,
-							bool *isNull, ExprDoneCond *isDone);
+			   ExprContext *econtext,
+			   bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalNullTest(GenericExprState *nstate,
 				 ExprContext *econtext,
 				 bool *isNull, ExprDoneCond *isDone);
@@ -114,14 +114,14 @@ static Datum ExecEvalCoerceToDomain(CoerceToDomainState *cstate,
 					   ExprContext *econtext,
 					   bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalCoerceToDomainValue(ExprState *exprstate,
-										 ExprContext *econtext,
-										 bool *isNull, ExprDoneCond *isDone);
+							ExprContext *econtext,
+							bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalFieldSelect(FieldSelectState *fstate,
 					ExprContext *econtext,
 					bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalFieldStore(FieldStoreState *fstate,
-					ExprContext *econtext,
-					bool *isNull, ExprDoneCond *isDone);
+				   ExprContext *econtext,
+				   bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalRelabelType(GenericExprState *exprstate,
 					ExprContext *econtext,
 					bool *isNull, ExprDoneCond *isDone);
@@ -145,7 +145,7 @@ static Datum ExecEvalRelabelType(GenericExprState *exprstate,
  *
  * Note: for notational simplicity we declare these functions as taking the
  * specific type of ExprState that they work on.  This requires casting when
- * assigning the function pointer in ExecInitExpr.  Be careful that the
+ * assigning the function pointer in ExecInitExpr.	Be careful that the
  * function signature is declared correctly, because the cast suppresses
  * automatic checking!
  *
@@ -236,13 +236,13 @@ ExecEvalArrayRef(ArrayRefExprState *astate,
 									 isDone));
 
 	/*
-	 * If refexpr yields NULL, and it's a fetch, then result is NULL.
-	 * In the assignment case, we'll cons up something below.
+	 * If refexpr yields NULL, and it's a fetch, then result is NULL. In
+	 * the assignment case, we'll cons up something below.
 	 */
 	if (*isNull)
 	{
 		if (isDone && *isDone == ExprEndResult)
-			return (Datum) NULL; /* end of set result */
+			return (Datum) NULL;	/* end of set result */
 		if (!isAssignment)
 			return (Datum) NULL;
 	}
@@ -321,10 +321,11 @@ ExecEvalArrayRef(ArrayRefExprState *astate,
 		 *
 		 * XXX At some point we'll need to look into making the old value of
 		 * the array element available via CaseTestExpr, as is done by
-		 * ExecEvalFieldStore.  This is not needed now but will be needed
-		 * to support arrays of composite types; in an assignment to a field
-		 * of an array member, the parser would generate a FieldStore that
-		 * expects to fetch its input tuple via CaseTestExpr.
+		 * ExecEvalFieldStore.	This is not needed now but will be needed
+		 * to support arrays of composite types; in an assignment to a
+		 * field of an array member, the parser would generate a
+		 * FieldStore that expects to fetch its input tuple via
+		 * CaseTestExpr.
 		 */
 		sourceData = ExecEvalExpr(astate->refassgnexpr,
 								  econtext,
@@ -339,15 +340,16 @@ ExecEvalArrayRef(ArrayRefExprState *astate,
 			return PointerGetDatum(array_source);
 
 		/*
-		 * For an assignment, if all the subscripts and the input expression
-		 * are non-null but the original array is null, then substitute an
-		 * empty (zero-dimensional) array and proceed with the assignment.
-		 * This only works for varlena arrays, though; for fixed-length
-		 * array types we punt and return the null input array.
+		 * For an assignment, if all the subscripts and the input
+		 * expression are non-null but the original array is null, then
+		 * substitute an empty (zero-dimensional) array and proceed with
+		 * the assignment. This only works for varlena arrays, though; for
+		 * fixed-length array types we punt and return the null input
+		 * array.
 		 */
 		if (*isNull)
 		{
-			if (astate->refattrlength > 0) /* fixed-length array? */
+			if (astate->refattrlength > 0)		/* fixed-length array? */
 				return PointerGetDatum(array_source);
 
 			array_source = construct_md_array(NULL, 0, NULL, NULL,
@@ -444,10 +446,10 @@ ExecEvalVar(ExprState *exprstate, ExprContext *econtext,
 	/*
 	 * Get the slot and attribute number we want
 	 *
-	 * The asserts check that references to system attributes only appear
-	 * at the level of a relation scan; at higher levels, system attributes
-	 * must be treated as ordinary variables (since we no longer have access
-	 * to the original tuple).
+	 * The asserts check that references to system attributes only appear at
+	 * the level of a relation scan; at higher levels, system attributes
+	 * must be treated as ordinary variables (since we no longer have
+	 * access to the original tuple).
 	 */
 	attnum = variable->varattno;
 
@@ -476,8 +478,8 @@ ExecEvalVar(ExprState *exprstate, ExprContext *econtext,
 	tuple_type = slot->ttc_tupleDescriptor;
 
 	/*
-	 * Some checks that are only applied for user attribute numbers
-	 * (bogus system attnums will be caught inside heap_getattr).
+	 * Some checks that are only applied for user attribute numbers (bogus
+	 * system attnums will be caught inside heap_getattr).
 	 */
 	if (attnum > 0)
 	{
@@ -488,9 +490,10 @@ ExecEvalVar(ExprState *exprstate, ExprContext *econtext,
 			   tuple_type->attrs[attnum - 1] != NULL);
 
 		/*
-		 * If the attribute's column has been dropped, we force a NULL result.
-		 * This case should not happen in normal use, but it could happen if
-		 * we are executing a plan cached before the column was dropped.
+		 * If the attribute's column has been dropped, we force a NULL
+		 * result. This case should not happen in normal use, but it could
+		 * happen if we are executing a plan cached before the column was
+		 * dropped.
 		 */
 		if (tuple_type->attrs[attnum - 1]->attisdropped)
 		{
@@ -499,13 +502,14 @@ ExecEvalVar(ExprState *exprstate, ExprContext *econtext,
 		}
 
 		/*
-		 * This assert checks that the datatype the plan expects to get (as
-		 * told by our "variable" argument) is in fact the datatype of the
-		 * attribute being fetched (as seen in the current context, identified
-		 * by our "econtext" argument).  Otherwise crashes are likely.
+		 * This assert checks that the datatype the plan expects to get
+		 * (as told by our "variable" argument) is in fact the datatype of
+		 * the attribute being fetched (as seen in the current context,
+		 * identified by our "econtext" argument).	Otherwise crashes are
+		 * likely.
 		 *
-		 * Note that we can't check dropped columns, since their atttypid
-		 * has been zeroed.
+		 * Note that we can't check dropped columns, since their atttypid has
+		 * been zeroed.
 		 */
 		Assert(variable->vartype == tuple_type->attrs[attnum - 1]->atttypid);
 	}
@@ -590,7 +594,8 @@ ExecEvalParam(ExprState *exprstate, ExprContext *econtext,
 	else
 	{
 		/*
-		 * All other parameter types must be sought in ecxt_param_list_info.
+		 * All other parameter types must be sought in
+		 * ecxt_param_list_info.
 		 */
 		ParamListInfo paramInfo;
 
@@ -964,7 +969,7 @@ ExecMakeFunctionResult(FuncExprState *fcache,
 					{
 						RegisterExprContextCallback(econtext,
 													ShutdownFuncExpr,
-													PointerGetDatum(fcache));
+												PointerGetDatum(fcache));
 						fcache->shutdown_reg = true;
 					}
 				}
@@ -1006,8 +1011,8 @@ ExecMakeFunctionResult(FuncExprState *fcache,
 		 *
 		 * We change the ExprState function pointer to use the simpler
 		 * ExecMakeFunctionResultNoSets on subsequent calls.  This amounts
-		 * to assuming that no argument can return a set if it didn't do so
-		 * the first time.
+		 * to assuming that no argument can return a set if it didn't do
+		 * so the first time.
 		 */
 		fcache->xprstate.evalfunc = (ExprStateEvalFunc) ExecMakeFunctionResultNoSets;
 
@@ -1098,7 +1103,7 @@ ExecMakeFunctionResultNoSets(FuncExprState *fcache,
 			}
 		}
 	}
-	/* fcinfo.isnull = false; */		/* handled by MemSet */
+	/* fcinfo.isnull = false; */	/* handled by MemSet */
 	result = FunctionCallInvoke(&fcinfo);
 	*isNull = fcinfo.isnull;
 
@@ -1273,9 +1278,9 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 				break;
 
 			/*
-			 * Can't do anything useful with NULL rowtype values.  Currently
-			 * we raise an error, but another alternative is to just ignore
-			 * the result and "continue" to get another row.
+			 * Can't do anything useful with NULL rowtype values.
+			 * Currently we raise an error, but another alternative is to
+			 * just ignore the result and "continue" to get another row.
 			 */
 			if (returnsTuple && fcinfo.isnull)
 				ereport(ERROR,
@@ -1293,13 +1298,14 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 				{
 					/*
 					 * Use the type info embedded in the rowtype Datum to
-					 * look up the needed tupdesc.  Make a copy for the query.
+					 * look up the needed tupdesc.	Make a copy for the
+					 * query.
 					 */
-					HeapTupleHeader	td;
+					HeapTupleHeader td;
 
 					td = DatumGetHeapTupleHeader(result);
 					tupdesc = lookup_rowtype_tupdesc(HeapTupleHeaderGetTypeId(td),
-													 HeapTupleHeaderGetTypMod(td));
+										   HeapTupleHeaderGetTypMod(td));
 					tupdesc = CreateTupleDescCopy(tupdesc);
 				}
 				else
@@ -1326,7 +1332,7 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 			 */
 			if (returnsTuple)
 			{
-				HeapTupleHeader	td;
+				HeapTupleHeader td;
 
 				td = DatumGetHeapTupleHeader(result);
 
@@ -1826,10 +1832,10 @@ ExecEvalCase(CaseExprState *caseExpr, ExprContext *econtext,
 		*isDone = ExprSingleResult;
 
 	/*
-	 * If there's a test expression, we have to evaluate it and save
-	 * the value where the CaseTestExpr placeholders can find it.
-	 * We must save and restore prior setting of econtext's caseValue fields,
-	 * in case this node is itself within a larger CASE.
+	 * If there's a test expression, we have to evaluate it and save the
+	 * value where the CaseTestExpr placeholders can find it. We must save
+	 * and restore prior setting of econtext's caseValue fields, in case
+	 * this node is itself within a larger CASE.
 	 */
 	save_datum = econtext->caseValue_datum;
 	save_isNull = econtext->caseValue_isNull;
@@ -1838,7 +1844,7 @@ ExecEvalCase(CaseExprState *caseExpr, ExprContext *econtext,
 	{
 		econtext->caseValue_datum = ExecEvalExpr(caseExpr->arg,
 												 econtext,
-												 &econtext->caseValue_isNull,
+											 &econtext->caseValue_isNull,
 												 NULL);
 	}
 
@@ -2009,7 +2015,7 @@ ExecEvalArray(ArrayExprState *astate, ExprContext *econtext,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
 						 errmsg("cannot merge incompatible arrays"),
 						 errdetail("Array with element type %s cannot be "
-								   "included in ARRAY construct with element type %s.",
+					 "included in ARRAY construct with element type %s.",
 								   format_type_be(ARR_ELEMTYPE(array)),
 								   format_type_be(element_type))));
 
@@ -2021,8 +2027,8 @@ ExecEvalArray(ArrayExprState *astate, ExprContext *econtext,
 				if (ndims <= 0 || ndims > MAXDIM)
 					ereport(ERROR,
 							(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-							 errmsg("number of array dimensions (%d) exceeds " \
-									"the maximum allowed (%d)", ndims, MAXDIM)));
+					  errmsg("number of array dimensions (%d) exceeds " \
+							 "the maximum allowed (%d)", ndims, MAXDIM)));
 
 				elem_dims = (int *) palloc(elem_ndims * sizeof(int));
 				memcpy(elem_dims, ARR_DIMS(array), elem_ndims * sizeof(int));
@@ -2600,18 +2606,18 @@ ExecEvalFieldStore(FieldStoreState *fstate,
 
 	forboth(l1, fstate->newvals, l2, fstore->fieldnums)
 	{
-		ExprState *newval = (ExprState *) lfirst(l1);
-		AttrNumber fieldnum = lfirst_int(l2);
+		ExprState  *newval = (ExprState *) lfirst(l1);
+		AttrNumber	fieldnum = lfirst_int(l2);
 		bool		eisnull;
 
 		Assert(fieldnum > 0 && fieldnum <= tupDesc->natts);
 
 		/*
-		 * Use the CaseTestExpr mechanism to pass down the old value of the
-		 * field being replaced; this is useful in case we have a nested field
-		 * update situation.  It's safe to reuse the CASE mechanism because
-		 * there cannot be a CASE between here and where the value would be
-		 * needed.
+		 * Use the CaseTestExpr mechanism to pass down the old value of
+		 * the field being replaced; this is useful in case we have a
+		 * nested field update situation.  It's safe to reuse the CASE
+		 * mechanism because there cannot be a CASE between here and where
+		 * the value would be needed.
 		 */
 		econtext->caseValue_datum = values[fieldnum - 1];
 		econtext->caseValue_isNull = (nulls[fieldnum - 1] == 'n');
@@ -2981,7 +2987,7 @@ ExecInitExpr(Expr *node, PlanState *parent)
 			break;
 		case T_RowExpr:
 			{
-				RowExpr	   *rowexpr = (RowExpr *) node;
+				RowExpr    *rowexpr = (RowExpr *) node;
 				RowExprState *rstate = makeNode(RowExprState);
 				Form_pg_attribute *attrs;
 				List	   *outlist = NIL;
@@ -3016,15 +3022,15 @@ ExecInitExpr(Expr *node, PlanState *parent)
 						/*
 						 * Guard against ALTER COLUMN TYPE on rowtype
 						 * since the RowExpr was created.  XXX should we
-						 * check typmod too?  Not sure we can be sure it'll
-						 * be the same.
+						 * check typmod too?  Not sure we can be sure
+						 * it'll be the same.
 						 */
 						if (exprType((Node *) e) != attrs[i]->atttypid)
 							ereport(ERROR,
 									(errcode(ERRCODE_DATATYPE_MISMATCH),
 									 errmsg("ROW() column has type %s instead of type %s",
-											format_type_be(exprType((Node *) e)),
-											format_type_be(attrs[i]->atttypid))));
+									format_type_be(exprType((Node *) e)),
+								   format_type_be(attrs[i]->atttypid))));
 					}
 					else
 					{
@@ -3111,7 +3117,7 @@ ExecInitExpr(Expr *node, PlanState *parent)
 				TargetEntry *tle = (TargetEntry *) node;
 				GenericExprState *gstate = makeNode(GenericExprState);
 
-				gstate->xprstate.evalfunc = NULL;	/* not used */
+				gstate->xprstate.evalfunc = NULL;		/* not used */
 				gstate->arg = ExecInitExpr(tle->expr, parent);
 				state = (ExprState *) gstate;
 			}
@@ -3546,8 +3552,8 @@ ExecProject(ProjectionInfo *projInfo, ExprDoneCond *isDone)
 	/*
 	 * store the tuple in the projection slot and return the slot.
 	 */
-	return ExecStoreTuple(newTuple,			/* tuple to store */
-						  slot,				/* slot to store in */
-						  InvalidBuffer,	/* tuple has no buffer */
+	return ExecStoreTuple(newTuple,		/* tuple to store */
+						  slot, /* slot to store in */
+						  InvalidBuffer,		/* tuple has no buffer */
 						  true);
 }

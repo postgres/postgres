@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.38 2004/08/29 04:12:27 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.39 2004/08/29 05:06:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -970,6 +970,7 @@ find_expr_references_walker(Node *node,
 		if (var->varno <= 0 || var->varno > list_length(rtable))
 			elog(ERROR, "invalid varno %d", var->varno);
 		rte = rt_fetch(var->varno, rtable);
+
 		/*
 		 * A whole-row Var references no specific columns, so adds no new
 		 * dependency.
@@ -995,7 +996,7 @@ find_expr_references_walker(Node *node,
 				var->varattno > list_length(rte->joinaliasvars))
 				elog(ERROR, "invalid varattno %d", var->varattno);
 			find_expr_references_walker((Node *) list_nth(rte->joinaliasvars,
-														  var->varattno - 1),
+													  var->varattno - 1),
 										context);
 			list_free(context->rtables);
 			context->rtables = save_rtables;
@@ -1424,8 +1425,8 @@ getObjectDescription(const ObjectAddress *object)
 			getRelationDescription(&buffer, object->objectId);
 			if (object->objectSubId != 0)
 				appendStringInfo(&buffer, gettext(" column %s"),
-								 get_relid_attribute_name(object->objectId,
-														  object->objectSubId));
+							   get_relid_attribute_name(object->objectId,
+												   object->objectSubId));
 			break;
 
 		case OCLASS_PROC:
@@ -1624,7 +1625,7 @@ getObjectDescription(const ObjectAddress *object)
 
 				appendStringInfo(&buffer, gettext("operator class %s for %s"),
 								 quote_qualified_identifier(nspname,
-											 NameStr(opcForm->opcname)),
+											  NameStr(opcForm->opcname)),
 								 NameStr(amForm->amname));
 
 				ReleaseSysCache(amTup);

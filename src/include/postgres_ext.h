@@ -15,7 +15,7 @@
  *	use header files that are otherwise internal to Postgres to interface
  *	with the backend.
  *
- * $PostgreSQL: pgsql/src/include/postgres_ext.h,v 1.15 2004/03/21 22:29:11 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/postgres_ext.h,v 1.16 2004/08/29 05:06:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,7 +55,7 @@ typedef unsigned int Oid;
  */
 #define PG_DIAG_SEVERITY		'S'
 #define PG_DIAG_SQLSTATE		'C'
-#define PG_DIAG_MESSAGE_PRIMARY	'M'
+#define PG_DIAG_MESSAGE_PRIMARY 'M'
 #define PG_DIAG_MESSAGE_DETAIL	'D'
 #define PG_DIAG_MESSAGE_HINT	'H'
 #define PG_DIAG_STATEMENT_POSITION 'P'
@@ -64,6 +64,6 @@ typedef unsigned int Oid;
 #define PG_DIAG_CONTEXT			'W'
 #define PG_DIAG_SOURCE_FILE		'F'
 #define PG_DIAG_SOURCE_LINE		'L'
-#define PG_DIAG_SOURCE_FUNCTION	'R'
+#define PG_DIAG_SOURCE_FUNCTION 'R'
 
 #endif

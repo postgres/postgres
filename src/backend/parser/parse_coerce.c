@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.122 2004/08/29 04:12:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.123 2004/08/29 05:06:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,17 +33,17 @@
 
 
 static Node *coerce_type_typmod(Node *node,
-								Oid targetTypeId, int32 targetTypMod,
-								CoercionForm cformat, bool isExplicit,
-								bool hideInputCoercion);
+				   Oid targetTypeId, int32 targetTypMod,
+				   CoercionForm cformat, bool isExplicit,
+				   bool hideInputCoercion);
 static void hide_coercion_node(Node *node);
 static Node *build_coercion_expression(Node *node, Oid funcId,
-									   Oid targetTypeId, int32 targetTypMod,
-									   CoercionForm cformat, bool isExplicit);
+						  Oid targetTypeId, int32 targetTypMod,
+						  CoercionForm cformat, bool isExplicit);
 static Node *coerce_record_to_complex(ParseState *pstate, Node *node,
-									  Oid targetTypeId,
-									  CoercionContext ccontext,
-									  CoercionForm cformat);
+						 Oid targetTypeId,
+						 CoercionContext ccontext,
+						 CoercionForm cformat);
 
 
 /*
@@ -72,7 +72,7 @@ coerce_to_target_type(ParseState *pstate, Node *expr, Oid exprtype,
 					  CoercionContext ccontext,
 					  CoercionForm cformat)
 {
-	Node	*result;
+	Node	   *result;
 
 	if (!can_coerce_type(1, &exprtype, &targettype, ccontext))
 		return NULL;
@@ -83,7 +83,7 @@ coerce_to_target_type(ParseState *pstate, Node *expr, Oid exprtype,
 
 	/*
 	 * If the target is a fixed-length type, it may need a length coercion
-	 * as well as a type coercion.  If we find ourselves adding both,
+	 * as well as a type coercion.	If we find ourselves adding both,
 	 * force the inner coercion node to implicit display form.
 	 */
 	result = coerce_type_typmod(result,
@@ -253,14 +253,15 @@ coerce_type(ParseState *pstate, Node *node,
 			 * Generate an expression tree representing run-time
 			 * application of the conversion function.	If we are dealing
 			 * with a domain target type, the conversion function will
-			 * yield the base type (and we assume targetTypeMod must be -1).
+			 * yield the base type (and we assume targetTypeMod must be
+			 * -1).
 			 */
 			Oid			baseTypeId = getBaseType(targetTypeId);
 
 			result = build_coercion_expression(node, funcId,
 											   baseTypeId, targetTypeMod,
 											   cformat,
-											   (cformat != COERCE_IMPLICIT_CAST));
+									  (cformat != COERCE_IMPLICIT_CAST));
 
 			/*
 			 * If domain, coerce to the domain type and relabel with
@@ -384,8 +385,8 @@ can_coerce_type(int nargs, Oid *input_typeids, Oid *target_typeids,
 			continue;
 
 		/*
-		 * If input is RECORD and target is a composite type, assume
-		 * we can coerce (may need tighter checking here)
+		 * If input is RECORD and target is a composite type, assume we
+		 * can coerce (may need tighter checking here)
 		 */
 		if (inputTypeId == RECORDOID &&
 			ISCOMPLEX(targetTypeId))
@@ -538,7 +539,7 @@ coerce_type_typmod(Node *node, Oid targetTypeId, int32 targetTypMod,
  * Mark a coercion node as IMPLICIT so it will never be displayed by
  * ruleutils.c.  We use this when we generate a nest of coercion nodes
  * to implement what is logically one conversion; the inner nodes are
- * forced to IMPLICIT_CAST format.  This does not change their semantics,
+ * forced to IMPLICIT_CAST format.	This does not change their semantics,
  * only display behavior.
  *
  * It is caller error to call this on something that doesn't have a
@@ -585,9 +586,9 @@ build_coercion_expression(Node *node, Oid funcId,
 	procstruct = (Form_pg_proc) GETSTRUCT(tp);
 
 	/*
-	 * Asserts essentially check that function is a legal coercion function.
-	 * We can't make the seemingly obvious tests on prorettype and
-	 * proargtypes[0], because of various binary-compatibility cases.
+	 * Asserts essentially check that function is a legal coercion
+	 * function. We can't make the seemingly obvious tests on prorettype
+	 * and proargtypes[0], because of various binary-compatibility cases.
 	 */
 	/* Assert(targetTypeId == procstruct->prorettype); */
 	Assert(!procstruct->proretset);
@@ -643,7 +644,7 @@ coerce_record_to_complex(ParseState *pstate, Node *node,
 						 CoercionContext ccontext,
 						 CoercionForm cformat)
 {
-	RowExpr	   *rowexpr;
+	RowExpr    *rowexpr;
 	TupleDesc	tupdesc;
 	List	   *args = NIL;
 	List	   *newargs;
@@ -662,9 +663,9 @@ coerce_record_to_complex(ParseState *pstate, Node *node,
 	else if (node && IsA(node, Var) &&
 			 ((Var *) node)->varattno == InvalidAttrNumber)
 	{
-		int		rtindex = ((Var *) node)->varno;
-		int		sublevels_up = ((Var *) node)->varlevelsup;
-		List *rtable;
+		int			rtindex = ((Var *) node)->varno;
+		int			sublevels_up = ((Var *) node)->varlevelsup;
+		List	   *rtable;
 
 		rtable = GetLevelNRangeTable(pstate, sublevels_up);
 		expandRTE(rtable, rtindex, sublevels_up, false, NULL, &args);
@@ -682,15 +683,15 @@ coerce_record_to_complex(ParseState *pstate, Node *node,
 	arg = list_head(args);
 	for (i = 0; i < tupdesc->natts; i++)
 	{
-		Node   *expr;
-		Oid		exprtype;
+		Node	   *expr;
+		Oid			exprtype;
 
 		/* Fill in NULLs for dropped columns in rowtype */
 		if (tupdesc->attrs[i]->attisdropped)
 		{
 			/*
-			 * can't use atttypid here, but it doesn't really matter
-			 * what type the Const claims to be.
+			 * can't use atttypid here, but it doesn't really matter what
+			 * type the Const claims to be.
 			 */
 			newargs = lappend(newargs, makeNullConst(INT4OID));
 			continue;
@@ -720,7 +721,7 @@ coerce_record_to_complex(ParseState *pstate, Node *node,
 							format_type_be(targetTypeId)),
 					 errdetail("Cannot cast type %s to %s in column %d.",
 							   format_type_be(exprtype),
-							   format_type_be(tupdesc->attrs[i]->atttypid),
+							 format_type_be(tupdesc->attrs[i]->atttypid),
 							   ucolno)));
 		newargs = lappend(newargs, expr);
 		ucolno++;
@@ -862,6 +863,7 @@ select_common_type(List *typeids, const char *context)
 				 */
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
+
 				/*
 				 * translator: first %s is name of a SQL construct, eg
 				 * CASE
@@ -1104,7 +1106,7 @@ enforce_generic_type_consistency(Oid *actual_arg_types,
 			if (OidIsValid(elem_typeid) && actual_type != elem_typeid)
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
-				errmsg("arguments declared \"anyelement\" are not all alike"),
+						 errmsg("arguments declared \"anyelement\" are not all alike"),
 						 errdetail("%s versus %s",
 								   format_type_be(elem_typeid),
 								   format_type_be(actual_type))));
@@ -1121,7 +1123,7 @@ enforce_generic_type_consistency(Oid *actual_arg_types,
 			if (OidIsValid(array_typeid) && actual_type != array_typeid)
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("arguments declared \"anyarray\" are not all alike"),
+						 errmsg("arguments declared \"anyarray\" are not all alike"),
 						 errdetail("%s versus %s",
 								   format_type_be(array_typeid),
 								   format_type_be(actual_type))));
@@ -1220,8 +1222,8 @@ enforce_generic_type_consistency(Oid *actual_arg_types,
 			if (!OidIsValid(array_typeid))
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_OBJECT),
-					  errmsg("could not find array type for data type %s",
-							 format_type_be(elem_typeid))));
+					 errmsg("could not find array type for data type %s",
+							format_type_be(elem_typeid))));
 		}
 		return array_typeid;
 	}
@@ -1274,8 +1276,8 @@ resolve_generic_type(Oid declared_type,
 			if (!OidIsValid(array_typeid))
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_OBJECT),
-					  errmsg("could not find array type for data type %s",
-							 format_type_be(context_actual_type))));
+					 errmsg("could not find array type for data type %s",
+							format_type_be(context_actual_type))));
 			return array_typeid;
 		}
 	}
@@ -1647,8 +1649,9 @@ find_coercion_pathway(Oid targetTypeId, Oid sourceTypeId,
 	{
 		/*
 		 * If there's no pg_cast entry, perhaps we are dealing with a pair
-		 * of array types.	If so, and if the element types have a suitable
-		 * cast, use array_type_coerce() or array_type_length_coerce().
+		 * of array types.	If so, and if the element types have a
+		 * suitable cast, use array_type_coerce() or
+		 * array_type_length_coerce().
 		 */
 		Oid			targetElemType;
 		Oid			sourceElemType;
@@ -1668,8 +1671,8 @@ find_coercion_pathway(Oid targetTypeId, Oid sourceTypeId,
 				else
 				{
 					/* does the function take a typmod arg? */
-					Oid		argtypes[FUNC_MAX_ARGS];
-					int		nargs;
+					Oid			argtypes[FUNC_MAX_ARGS];
+					int			nargs;
 
 					(void) get_func_signature(elemfuncid, argtypes, &nargs);
 					if (nargs > 1)

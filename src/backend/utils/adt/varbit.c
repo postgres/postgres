@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varbit.c,v 1.41 2004/08/29 04:12:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varbit.c,v 1.42 2004/08/29 05:06:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1215,9 +1215,7 @@ bitfromint4(PG_FUNCTION_ARGS)
 	}
 	/* store last fractional byte */
 	if (destbitsleft > 0)
-	{
 		*r = (bits8) ((a << (8 - destbitsleft)) & BITMASK);
-	}
 
 	PG_RETURN_VARBIT_P(result);
 }
@@ -1296,9 +1294,7 @@ bitfromint8(PG_FUNCTION_ARGS)
 	}
 	/* store last fractional byte */
 	if (destbitsleft > 0)
-	{
 		*r = (bits8) ((a << (8 - destbitsleft)) & BITMASK);
-	}
 
 	PG_RETURN_VARBIT_P(result);
 }

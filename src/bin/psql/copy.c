@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.53 2004/08/29 04:13:02 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.54 2004/08/29 05:06:54 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "copy.h"
@@ -70,8 +70,8 @@ struct copy_options
 	char	   *null;
 	char	   *quote;
 	char	   *escape;
-	char 	   *force_quote_list;
-	char 	   *force_notnull_list;
+	char	   *force_quote_list;
+	char	   *force_notnull_list;
 };
 
 
@@ -232,7 +232,7 @@ parse_slash_copy(const char *args)
 		result->file = NULL;
 	}
 	else if (pg_strcasecmp(token, "pstdin") == 0 ||
-		pg_strcasecmp(token, "pstdout") == 0)
+			 pg_strcasecmp(token, "pstdout") == 0)
 	{
 		result->psql_inout = true;
 		result->file = NULL;
@@ -271,8 +271,8 @@ parse_slash_copy(const char *args)
 	if (token)
 	{
 		/*
-		 * WITH is optional.  Also, the backend will allow WITH followed by
-		 * nothing, so we do too.
+		 * WITH is optional.  Also, the backend will allow WITH followed
+		 * by nothing, so we do too.
 		 */
 		if (pg_strcasecmp(token, "with") == 0)
 			token = strtokx(NULL, whitespace, NULL, NULL,
@@ -280,19 +280,15 @@ parse_slash_copy(const char *args)
 
 		while (token)
 		{
-			bool fetch_next;
+			bool		fetch_next;
 
 			fetch_next = true;
-			
+
 			/* someday allow BINARY here */
 			if (pg_strcasecmp(token, "oids") == 0)
-			{
 				result->oids = true;
-			}
 			else if (pg_strcasecmp(token, "csv") == 0)
-			{
 				result->csv_mode = true;
-			}
 			else if (pg_strcasecmp(token, "delimiter") == 0)
 			{
 				token = strtokx(NULL, whitespace, NULL, "'",
@@ -434,7 +430,7 @@ do_copy(const char *args)
 	PGresult   *result;
 	bool		success;
 	struct stat st;
-	
+
 	/* parse options */
 	options = parse_slash_copy(args);
 
@@ -483,10 +479,8 @@ do_copy(const char *args)
 	}
 
 	if (options->csv_mode)
-	{
 		appendPQExpBuffer(&query, " CSV");
-	}
-	
+
 	if (options->quote)
 	{
 		if (options->quote[0] == '\'')
@@ -504,14 +498,10 @@ do_copy(const char *args)
 	}
 
 	if (options->force_quote_list)
-	{
 		appendPQExpBuffer(&query, " FORCE QUOTE %s", options->force_quote_list);
-	}
 
 	if (options->force_notnull_list)
-	{
 		appendPQExpBuffer(&query, " FORCE NOT NULL %s", options->force_notnull_list);
-	}
 
 	if (options->file)
 		canonicalize_path(options->file);
@@ -521,16 +511,16 @@ do_copy(const char *args)
 		if (options->file)
 			copystream = fopen(options->file, PG_BINARY_R);
 		else if (!options->psql_inout)
- 			copystream = pset.cur_cmd_source;
+			copystream = pset.cur_cmd_source;
 		else
- 			copystream = stdin;
+			copystream = stdin;
 	}
 	else
 	{
 		if (options->file)
 			copystream = fopen(options->file, "w");
 		else if (!options->psql_inout)
- 			copystream = pset.queryFout;
+			copystream = pset.queryFout;
 		else
 			copystream = stdout;
 	}
@@ -578,7 +568,7 @@ do_copy(const char *args)
 
 	PQclear(result);
 
- 	if (options->file != NULL)
+	if (options->file != NULL)
 	{
 		if (fclose(copystream) != 0)
 		{
@@ -676,13 +666,11 @@ handleCopyIn(PGconn *conn, FILE *copystream)
 	{
 		if (!QUIET())
 			puts(gettext("Enter data to be copied followed by a newline.\n"
-				"End with a backslash and a period on a line by itself."));
+			  "End with a backslash and a period on a line by itself."));
 		prompt = get_prompt(PROMPT_COPY);
 	}
 	else
-	{
 		prompt = NULL;
-	}
 
 	while (!copydone)
 	{							/* for each input line ... */
@@ -720,8 +708,8 @@ handleCopyIn(PGconn *conn, FILE *copystream)
 			if (c == EOF && s == copybuf && firstload)
 			{
 				/*
-				 * We are guessing a little bit as to the right line-ending
-				 * here...
+				 * We are guessing a little bit as to the right
+				 * line-ending here...
 				 */
 				if (saw_cr)
 					PQputline(conn, "\\.\r\n");

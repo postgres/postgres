@@ -700,8 +700,8 @@ main(int argc, char **argv)
 	if (verbose > 1)
 		printf("Opening dbf-file\n");
 
-	setlocale(LC_ALL, "");	/* fix for isprint() */
-	
+	setlocale(LC_ALL, "");		/* fix for isprint() */
+
 	if ((dbh = dbf_open(argv[0], O_RDONLY)) == (dbhead *) - 1)
 	{
 		fprintf(stderr, "Couldn't open xbase-file %s\n", argv[0]);

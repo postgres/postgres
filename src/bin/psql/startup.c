@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.98 2004/08/29 04:13:02 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.99 2004/08/29 05:06:54 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -45,7 +45,7 @@ int			optreset;
 PsqlSettings pset;
 
 #define SYSPSQLRC	"psqlrc"
-#define PSQLRC 		".psqlrc"
+#define PSQLRC		".psqlrc"
 
 /*
  * Structures to pass information between the option parsing routine
@@ -121,7 +121,7 @@ main(int argc, char *argv[])
 	}
 
 #ifdef WIN32
-	setvbuf(stderr,NULL,_IONBF,0);
+	setvbuf(stderr, NULL, _IONBF, 0);
 #endif
 	pset.cur_cmd_source = stdin;
 	pset.cur_cmd_interactive = false;
@@ -287,7 +287,7 @@ main(int argc, char *argv[])
 						   "Type:  \\copyright for distribution terms\n"
 						   "       \\h for help with SQL commands\n"
 						   "       \\? for help with psql commands\n"
-						   "       \\g or terminate with semicolon to execute query\n"
+			  "       \\g or terminate with semicolon to execute query\n"
 						   "       \\q to quit\n\n"),
 				   pset.progname, PG_VERSION);
 #ifdef USE_SSL
@@ -574,10 +574,10 @@ static void
 process_psqlrc(char *argv0)
 {
 	char	   *psqlrc;
-	char	   home[MAXPGPATH];
-	char	   global_file[MAXPGPATH];
-	char	   my_exec_path[MAXPGPATH];
-	char	   etc_path[MAXPGPATH];
+	char		home[MAXPGPATH];
+	char		global_file[MAXPGPATH];
+	char		my_exec_path[MAXPGPATH];
+	char		etc_path[MAXPGPATH];
 
 	find_my_exec(argv0, my_exec_path);
 	get_etc_path(my_exec_path, etc_path);
@@ -610,7 +610,7 @@ process_psqlrc_file(char *filename)
 	if (access(psqlrc, R_OK) == 0)
 		process_file(psqlrc);
 	else if (access(filename, R_OK) == 0)
-			process_file(filename);
+		process_file(filename);
 	free(psqlrc);
 }
 
@@ -652,7 +652,6 @@ printSSLInfo(void)
 	printf(gettext("SSL connection (cipher: %s, bits: %i)\n\n"),
 		   SSL_get_cipher(ssl), sslbits);
 }
-
 #endif
 
 
@@ -666,15 +665,18 @@ printSSLInfo(void)
 static void
 checkWin32Codepage(void)
 {
-	unsigned int wincp, concp;
+	unsigned int wincp,
+				concp;
 
 	wincp = GetACP();
 	concp = GetConsoleCP();
-	if (wincp != concp) {
-	  printf("Warning: Console codepage (%u) differs from windows codepage (%u)\n"
-			 "         8-bit characters will not work correctly. See PostgreSQL\n"
-			 "         documentation \"Installation on Windows\" for details.\n\n",
-			 concp, wincp);
+	if (wincp != concp)
+	{
+		printf("Warning: Console codepage (%u) differs from windows codepage (%u)\n"
+			   "         8-bit characters will not work correctly. See PostgreSQL\n"
+			   "         documentation \"Installation on Windows\" for details.\n\n",
+			   concp, wincp);
 	}
 }
+
 #endif

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeIndexscan.c,v 1.96 2004/08/29 04:12:31 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeIndexscan.c,v 1.97 2004/08/29 05:06:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,7 +38,7 @@
  * In a multiple-index plan, we must take care to return any given tuple
  * only once, even if it matches conditions of several index scans.  Our
  * preferred way to do this is to record already-returned tuples in a hash
- * table (using the TID as unique identifier).  However, in a very large
+ * table (using the TID as unique identifier).	However, in a very large
  * scan this could conceivably run out of memory.  We limit the hash table
  * to no more than work_mem KB; if it grows past that, we fall back to the
  * pre-7.4 technique: evaluate the prior-scan index quals again for each
@@ -129,11 +129,11 @@ IndexNext(IndexScanState *node)
 	scanrelid = ((IndexScan *) node->ss.ps.plan)->scan.scanrelid;
 
 	/*
-	 * Clear any reference to the previously returned tuple.  The idea here
-	 * is to not have the tuple slot be the last holder of a pin on that
-	 * tuple's buffer; if it is, we'll need a separate visit to the bufmgr
-	 * to release the buffer.  By clearing here, we get to have the release
-	 * done by ReleaseAndReadBuffer inside index_getnext.
+	 * Clear any reference to the previously returned tuple.  The idea
+	 * here is to not have the tuple slot be the last holder of a pin on
+	 * that tuple's buffer; if it is, we'll need a separate visit to the
+	 * bufmgr to release the buffer.  By clearing here, we get to have the
+	 * release done by ReleaseAndReadBuffer inside index_getnext.
 	 */
 	ExecClearTuple(slot);
 
@@ -215,8 +215,9 @@ IndexNext(IndexScanState *node)
 						   false);		/* don't pfree */
 
 			/*
-			 * If any of the index operators involved in this scan are lossy,
-			 * recheck them by evaluating the original operator clauses.
+			 * If any of the index operators involved in this scan are
+			 * lossy, recheck them by evaluating the original operator
+			 * clauses.
 			 */
 			if (lossyQual)
 			{
@@ -224,15 +225,19 @@ IndexNext(IndexScanState *node)
 				ResetExprContext(econtext);
 				if (!ExecQual(lossyQual, econtext, false))
 				{
-					/* Fails lossy op, so drop it and loop back for another */
+					/*
+					 * Fails lossy op, so drop it and loop back for
+					 * another
+					 */
 					ExecClearTuple(slot);
 					continue;
 				}
 			}
 
 			/*
-			 * If it's a multiple-index scan, make sure not to double-report
-			 * a tuple matched by more than one index.  (See notes above.)
+			 * If it's a multiple-index scan, make sure not to
+			 * double-report a tuple matched by more than one index.  (See
+			 * notes above.)
 			 */
 			if (numIndices > 1)
 			{
@@ -240,7 +245,7 @@ IndexNext(IndexScanState *node)
 				if (node->iss_DupHash)
 				{
 					DupHashTabEntry *entry;
-					bool	found;
+					bool		found;
 
 					entry = (DupHashTabEntry *)
 						hash_search(node->iss_DupHash,
@@ -248,7 +253,7 @@ IndexNext(IndexScanState *node)
 									HASH_ENTER,
 									&found);
 					if (entry == NULL ||
-						node->iss_DupHash->hctl->nentries > node->iss_MaxHash)
+					node->iss_DupHash->hctl->nentries > node->iss_MaxHash)
 					{
 						/* out of memory (either hard or soft limit) */
 						/* release hash table and fall thru to old code */
@@ -679,10 +684,11 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 	 * initialize child expressions
 	 *
 	 * Note: we don't initialize all of the indxqual expression, only the
-	 * sub-parts corresponding to runtime keys (see below).  The indxqualorig
-	 * expression is always initialized even though it will only be used in
-	 * some uncommon cases --- would be nice to improve that.  (Problem is
-	 * that any SubPlans present in the expression must be found now...)
+	 * sub-parts corresponding to runtime keys (see below).  The
+	 * indxqualorig expression is always initialized even though it will
+	 * only be used in some uncommon cases --- would be nice to improve
+	 * that.  (Problem is that any SubPlans present in the expression must
+	 * be found now...)
 	 */
 	indexstate->ss.ps.targetlist = (List *)
 		ExecInitExpr((Expr *) node->scan.plan.targetlist,
@@ -788,14 +794,14 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 		lossyflag_cell = list_head(lossyflags);
 		for (j = 0; j < n_keys; j++)
 		{
-			OpExpr	   *clause;			/* one clause of index qual */
-			Expr	   *leftop;			/* expr on lhs of operator */
-			Expr	   *rightop;		/* expr on rhs ... */
+			OpExpr	   *clause; /* one clause of index qual */
+			Expr	   *leftop; /* expr on lhs of operator */
+			Expr	   *rightop;	/* expr on rhs ... */
 			int			flags = 0;
 			AttrNumber	varattno;		/* att number used in scan */
 			StrategyNumber strategy;	/* op's strategy number */
-			Oid			subtype;		/* op's strategy subtype */
-			int			lossy;			/* op's recheck flag */
+			Oid			subtype;	/* op's strategy subtype */
+			int			lossy;	/* op's recheck flag */
 			RegProcedure opfuncid;		/* operator proc id used in scan */
 			Datum		scanvalue;		/* value used in scan (if const) */
 
@@ -819,15 +825,16 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 			/*
 			 * Here we figure out the contents of the index qual. The
 			 * usual case is (var op const) which means we form a scan key
-			 * for the attribute listed in the var node and use the value of
-			 * the const as comparison data.
+			 * for the attribute listed in the var node and use the value
+			 * of the const as comparison data.
 			 *
 			 * If we don't have a const node, it means our scan key is a
-			 * function of information obtained during the execution of the
-			 * plan, in which case we need to recalculate the index scan key
-			 * at run time.  Hence, we set have_runtime_keys to true and place
-			 * the appropriate subexpression in run_keys. The corresponding
-			 * scan key values are recomputed at run time.
+			 * function of information obtained during the execution of
+			 * the plan, in which case we need to recalculate the index
+			 * scan key at run time.  Hence, we set have_runtime_keys to
+			 * true and place the appropriate subexpression in run_keys.
+			 * The corresponding scan key values are recomputed at run
+			 * time.
 			 */
 			run_keys[j] = NULL;
 
@@ -892,18 +899,18 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 								   scanvalue);	/* constant */
 
 			/*
-			 * If this operator is lossy, add its indxqualorig
-			 * expression to the list of quals to recheck.  The
-			 * list_nth() calls here could be avoided by chasing the
-			 * lists in parallel to all the other lists, but since
-			 * lossy operators are very uncommon, it's probably a
-			 * waste of time to do so.
+			 * If this operator is lossy, add its indxqualorig expression
+			 * to the list of quals to recheck.  The list_nth() calls here
+			 * could be avoided by chasing the lists in parallel to all
+			 * the other lists, but since lossy operators are very
+			 * uncommon, it's probably a waste of time to do so.
 			 */
 			if (lossy)
 			{
-				List *qualOrig = indexstate->indxqualorig;
+				List	   *qualOrig = indexstate->indxqualorig;
+
 				lossyQuals[i] = lappend(lossyQuals[i],
-										list_nth((List *) list_nth(qualOrig, i), j));
+							list_nth((List *) list_nth(qualOrig, i), j));
 			}
 		}
 
@@ -1037,7 +1044,7 @@ create_duphash(IndexScanState *node)
 	node->iss_DupHash = hash_create("DupHashTable",
 									nbuckets,
 									&hash_ctl,
-									HASH_ELEM | HASH_FUNCTION | HASH_CONTEXT);
+							   HASH_ELEM | HASH_FUNCTION | HASH_CONTEXT);
 	if (node->iss_DupHash == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),

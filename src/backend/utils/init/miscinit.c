@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.131 2004/08/29 04:12:54 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.132 2004/08/29 05:06:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,7 +54,7 @@ static char socketLockFile[MAXPGPATH];
  *
  * NOTE: "ignoring system indexes" means we do not use the system indexes
  * for lookups (either in hardwired catalog accesses or in planner-generated
- * plans).  We do, however, still update the indexes when a catalog
+ * plans).	We do, however, still update the indexes when a catalog
  * modification is made.
  * ----------------------------------------------------------------
  */
@@ -129,7 +129,7 @@ SetReindexProcessing(Oid heapOid, Oid indexOid)
 
 /*
  * ResetReindexProcessing
- * 		Unset reindexing status.
+ *		Unset reindexing status.
  */
 void
 ResetReindexProcessing(void)
@@ -544,9 +544,9 @@ CreateLockFile(const char *filename, bool amPostmaster,
 						 errmsg("lock file \"%s\" already exists",
 								filename),
 						 isDDLock ?
-					 errhint("Is another %s (PID %d) running in data directory \"%s\"?",
+						 errhint("Is another %s (PID %d) running in data directory \"%s\"?",
 						   (encoded_pid < 0 ? "postgres" : "postmaster"),
-							 (int) other_pid, refName) :
+								 (int) other_pid, refName) :
 						 errhint("Is another %s (PID %d) using socket file \"%s\"?",
 						   (encoded_pid < 0 ? "postgres" : "postmaster"),
 								 (int) other_pid, refName)));
@@ -580,7 +580,7 @@ CreateLockFile(const char *filename, bool amPostmaster,
 									  "(key %lu, ID %lu) is still in use",
 									  id1, id2),
 							   errhint("If you're sure there are no old "
-									   "server processes still running, remove "
+								"server processes still running, remove "
 									   "the shared memory block with "
 									   "the command \"ipcrm\", or just delete the file \"%s\".",
 									   filename)));
@@ -599,7 +599,7 @@ CreateLockFile(const char *filename, bool amPostmaster,
 					 errmsg("could not remove old lock file \"%s\": %m",
 							filename),
 					 errhint("The file seems accidentally left over, but "
-						  "it could not be removed. Please remove the file "
+					   "it could not be removed. Please remove the file "
 							 "by hand and try again.")));
 	}
 
@@ -837,7 +837,7 @@ ValidatePgVersion(const char *path)
 		else
 			ereport(FATAL,
 					(errcode_for_file_access(),
-					 errmsg("could not open file \"%s\": %m", full_path)));
+				   errmsg("could not open file \"%s\": %m", full_path)));
 	}
 
 	ret = fscanf(file, "%ld.%ld", &file_major, &file_minor);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinval.c,v 1.71 2004/08/29 04:12:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinval.c,v 1.72 2004/08/29 05:06:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,20 +43,19 @@ static long xc_slow_answer = 0;
 
 static void DisplayXidCache(int code, Datum arg);
 
-#else /* !XIDCACHE_DEBUG */
+#else							/* !XIDCACHE_DEBUG */
 
 #define xc_by_recent_xmin_inc()		((void) 0)
 #define xc_by_main_xid_inc()		((void) 0)
 #define xc_by_child_xid_inc()		((void) 0)
 #define xc_slow_answer_inc()		((void) 0)
-
-#endif /* XIDCACHE_DEBUG */
+#endif   /* XIDCACHE_DEBUG */
 
 /*
  * Because backends sitting idle will not be reading sinval events, we
  * need a way to give an idle backend a swift kick in the rear and make
  * it catch up before the sinval queue overflows and forces everyone
- * through a cache reset exercise.  This is done by broadcasting SIGUSR1
+ * through a cache reset exercise.	This is done by broadcasting SIGUSR1
  * to all backends when the queue is threatening to become full.
  *
  * State for catchup events consists of two flags: one saying whether
@@ -107,7 +106,7 @@ InitBackendSharedInvalidationState(void)
 
 #ifdef XIDCACHE_DEBUG
 	on_proc_exit(DisplayXidCache, (Datum) 0);
-#endif /* XIDCACHE_DEBUG */
+#endif   /* XIDCACHE_DEBUG */
 }
 
 /*
@@ -148,8 +147,8 @@ ReceiveSharedInvalidMessages(
 	for (;;)
 	{
 		/*
-		 * We can discard any pending catchup event, since we will not exit
-		 * this loop until we're fully caught up.
+		 * We can discard any pending catchup event, since we will not
+		 * exit this loop until we're fully caught up.
 		 */
 		catchupInterruptOccurred = 0;
 
@@ -206,7 +205,7 @@ ReceiveSharedInvalidMessages(
  *
  * If we are idle (catchupInterruptEnabled is set), we can safely
  * invoke ProcessCatchupEvent directly.  Otherwise, just set a flag
- * to do it later.  (Note that it's quite possible for normal processing
+ * to do it later.	(Note that it's quite possible for normal processing
  * of the current transaction to cause ReceiveSharedInvalidMessages()
  * to be run later on; in that case the flag will get cleared again,
  * since there's no longer any reason to do anything.)
@@ -283,7 +282,7 @@ CatchupInterruptHandler(SIGNAL_ARGS)
  * EnableCatchupInterrupt
  *
  * This is called by the PostgresMain main loop just before waiting
- * for a frontend command.  We process any pending catchup events,
+ * for a frontend command.	We process any pending catchup events,
  * and enable the signal handler to process future events directly.
  *
  * NOTE: the signal handler starts out disabled, and stays so until
@@ -302,11 +301,11 @@ EnableCatchupInterrupt(void)
 	 * then test the occurred flag.  If we see an unserviced interrupt has
 	 * occurred, we re-clear the enable flag before going off to do the
 	 * service work.  (That prevents re-entrant invocation of
-	 * ProcessCatchupEvent() if another interrupt occurs.) If an
-	 * interrupt comes in between the setting and clearing of
-	 * catchupInterruptEnabled, then it will have done the service work and
-	 * left catchupInterruptOccurred zero, so we have to check again after
-	 * clearing enable.  The whole thing has to be in a loop in case
+	 * ProcessCatchupEvent() if another interrupt occurs.) If an interrupt
+	 * comes in between the setting and clearing of
+	 * catchupInterruptEnabled, then it will have done the service work
+	 * and left catchupInterruptOccurred zero, so we have to check again
+	 * after clearing enable.  The whole thing has to be in a loop in case
 	 * another interrupt occurs while we're servicing the first. Once we
 	 * get out of the loop, enable is set and we know there is no
 	 * unserviced interrupt.
@@ -322,9 +321,7 @@ EnableCatchupInterrupt(void)
 			break;
 		catchupInterruptEnabled = 0;
 		if (catchupInterruptOccurred)
-		{
 			ProcessCatchupEvent();
-		}
 	}
 }
 
@@ -332,7 +329,7 @@ EnableCatchupInterrupt(void)
  * DisableCatchupInterrupt
  *
  * This is called by the PostgresMain main loop just after receiving
- * a frontend command.  Signal handler execution of catchup events
+ * a frontend command.	Signal handler execution of catchup events
  * is disabled until the next EnableCatchupInterrupt call.
  *
  * The SIGUSR2 signal handler also needs to call this, so as to
@@ -342,7 +339,7 @@ EnableCatchupInterrupt(void)
 bool
 DisableCatchupInterrupt(void)
 {
-	bool	result = (catchupInterruptEnabled != 0);
+	bool		result = (catchupInterruptEnabled != 0);
 
 	catchupInterruptEnabled = 0;
 
@@ -361,23 +358,23 @@ DisableCatchupInterrupt(void)
 static void
 ProcessCatchupEvent(void)
 {
-	bool	notify_enabled;
+	bool		notify_enabled;
 
 	/* Must prevent SIGUSR2 interrupt while I am running */
 	notify_enabled = DisableNotifyInterrupt();
 
 	/*
-	 * What we need to do here is cause ReceiveSharedInvalidMessages()
-	 * to run, which will do the necessary work and also reset the
-	 * catchupInterruptOccurred flag.  If we are inside a transaction
-	 * we can just call AcceptInvalidationMessages() to do this.  If we
+	 * What we need to do here is cause ReceiveSharedInvalidMessages() to
+	 * run, which will do the necessary work and also reset the
+	 * catchupInterruptOccurred flag.  If we are inside a transaction we
+	 * can just call AcceptInvalidationMessages() to do this.  If we
 	 * aren't, we start and immediately end a transaction; the call to
 	 * AcceptInvalidationMessages() happens down inside transaction start.
 	 *
 	 * It is awfully tempting to just call AcceptInvalidationMessages()
 	 * without the rest of the xact start/stop overhead, and I think that
-	 * would actually work in the normal case; but I am not sure that things
-	 * would clean up nicely if we got an error partway through.
+	 * would actually work in the normal case; but I am not sure that
+	 * things would clean up nicely if we got an error partway through.
 	 */
 	if (IsTransactionOrTransactionBlock())
 	{
@@ -501,27 +498,27 @@ IsBackendPid(int pid)
  * We can find this out cheaply too.
  *
  * 3. Search the SubTrans tree to find the Xid's topmost parent, and then
- * see if that is running according to PGPROC.  This is the slowest, but
+ * see if that is running according to PGPROC.	This is the slowest, but
  * sadly it has to be done always if the other two failed, unless we see
  * that the cached subxact sets are complete (none have overflowed).
  *
  * SInvalLock has to be held while we do 1 and 2.  If we save the top Xids
- * while doing 1, we can release the SInvalLock while we do 3.  This buys back
+ * while doing 1, we can release the SInvalLock while we do 3.	This buys back
  * some concurrency (we can't retrieve the main Xids from PGPROC again anyway;
  * see GetNewTransactionId).
  */
 bool
 TransactionIdIsInProgress(TransactionId xid)
 {
-	bool			result = false;
-	SISeg		   *segP = shmInvalBuffer;
-	ProcState	   *stateP = segP->procState;
-	int				i,
-					j;
-	int				nxids = 0;
-	TransactionId  *xids;
-	TransactionId	topxid;
-	bool			locked;
+	bool		result = false;
+	SISeg	   *segP = shmInvalBuffer;
+	ProcState  *stateP = segP->procState;
+	int			i,
+				j;
+	int			nxids = 0;
+	TransactionId *xids;
+	TransactionId topxid;
+	bool		locked;
 
 	/*
 	 * Don't bother checking a very old transaction.
@@ -563,8 +560,8 @@ TransactionIdIsInProgress(TransactionId xid)
 			}
 
 			/*
-			 * We can ignore main Xids that are younger than the target Xid,
-			 * since the target could not possibly be their child.
+			 * We can ignore main Xids that are younger than the target
+			 * Xid, since the target could not possibly be their child.
 			 */
 			if (TransactionIdPrecedes(xid, pxid))
 				continue;
@@ -586,11 +583,11 @@ TransactionIdIsInProgress(TransactionId xid)
 			}
 
 			/*
-			 * Save the main Xid for step 3.  We only need to remember main
-			 * Xids that have uncached children.  (Note: there is no race
-			 * condition here because the overflowed flag cannot be cleared,
-			 * only set, while we hold SInvalLock.  So we can't miss an Xid
-			 * that we need to worry about.)
+			 * Save the main Xid for step 3.  We only need to remember
+			 * main Xids that have uncached children.  (Note: there is no
+			 * race condition here because the overflowed flag cannot be
+			 * cleared, only set, while we hold SInvalLock.  So we can't
+			 * miss an Xid that we need to worry about.)
 			 */
 			if (proc->subxids.overflowed)
 				xids[nxids++] = pxid;
@@ -601,8 +598,8 @@ TransactionIdIsInProgress(TransactionId xid)
 	locked = false;
 
 	/*
-	 * If none of the relevant caches overflowed, we know the Xid is
-	 * not running without looking at pg_subtrans.
+	 * If none of the relevant caches overflowed, we know the Xid is not
+	 * running without looking at pg_subtrans.
 	 */
 	if (nxids == 0)
 		goto result_known;
@@ -610,10 +607,11 @@ TransactionIdIsInProgress(TransactionId xid)
 	/*
 	 * Step 3: have to check pg_subtrans.
 	 *
-	 * At this point, we know it's either a subtransaction of one of the
-	 * Xids in xids[], or it's not running.  If it's an already-failed
-	 * subtransaction, we want to say "not running" even though its parent may
-	 * still be running.  So first, check pg_clog to see if it's been aborted.
+	 * At this point, we know it's either a subtransaction of one of the Xids
+	 * in xids[], or it's not running.  If it's an already-failed
+	 * subtransaction, we want to say "not running" even though its parent
+	 * may still be running.  So first, check pg_clog to see if it's been
+	 * aborted.
 	 */
 	xc_slow_answer_inc();
 
@@ -621,10 +619,10 @@ TransactionIdIsInProgress(TransactionId xid)
 		goto result_known;
 
 	/*
-	 * It isn't aborted, so check whether the transaction tree it
-	 * belongs to is still running (or, more precisely, whether it
-	 * was running when this routine started -- note that we already
-	 * released SInvalLock).
+	 * It isn't aborted, so check whether the transaction tree it belongs
+	 * to is still running (or, more precisely, whether it was running
+	 * when this routine started -- note that we already released
+	 * SInvalLock).
 	 */
 	topxid = SubTransGetTopmostTransaction(xid);
 	Assert(TransactionIdIsValid(topxid));
@@ -677,10 +675,10 @@ GetOldestXmin(bool allDbs)
 	int			index;
 
 	/*
-	 * Normally we start the min() calculation with our own XID.  But
-	 * if called by checkpointer, we will not be inside a transaction,
-	 * so use next XID as starting point for min() calculation.  (Note
-	 * that if there are no xacts running at all, that will be the subtrans
+	 * Normally we start the min() calculation with our own XID.  But if
+	 * called by checkpointer, we will not be inside a transaction, so use
+	 * next XID as starting point for min() calculation.  (Note that if
+	 * there are no xacts running at all, that will be the subtrans
 	 * truncation point!)
 	 */
 	if (IsTransactionState())
@@ -758,9 +756,9 @@ GetSnapshotData(Snapshot snapshot, bool serializable)
 	 * lastBackend would be sufficient.  But it seems better to do the
 	 * malloc while not holding the lock, so we can't look at lastBackend.
 	 *
-	 * This does open a possibility for avoiding repeated malloc/free:
-	 * since MaxBackends does not change at runtime, we can simply reuse
-	 * the previous xip array if any.  (This relies on the fact that all
+	 * This does open a possibility for avoiding repeated malloc/free: since
+	 * MaxBackends does not change at runtime, we can simply reuse the
+	 * previous xip array if any.  (This relies on the fact that all
 	 * callers pass static SnapshotData structs.)
 	 */
 	if (snapshot->xip == NULL)
@@ -961,7 +959,7 @@ GetUndoRecPtr(void)
 
 	return (urec);
 }
-#endif /* NOT_USED */
+#endif   /* NOT_USED */
 
 /*
  * BackendIdGetProc - given a BackendId, find its PGPROC structure
@@ -1024,19 +1022,20 @@ CountEmptyBackendSlots(void)
  * XidCacheRemoveRunningXids
  *
  * Remove a bunch of TransactionIds from the list of known-running
- * subtransactions for my backend.  Both the specified xid and those in
+ * subtransactions for my backend.	Both the specified xid and those in
  * the xids[] array (of length nxids) are removed from the subxids cache.
  */
 void
 XidCacheRemoveRunningXids(TransactionId xid, int nxids, TransactionId *xids)
 {
-	int		i, j;
+	int			i,
+				j;
 
 	Assert(!TransactionIdEquals(xid, InvalidTransactionId));
 
 	/*
 	 * We must hold SInvalLock exclusively in order to remove transactions
-	 * from the PGPROC array.  (See notes in GetSnapshotData.)  It's
+	 * from the PGPROC array.  (See notes in GetSnapshotData.)	It's
 	 * possible this could be relaxed since we know this routine is only
 	 * used to abort subtransactions, but pending closer analysis we'd
 	 * best be conservative.
@@ -1044,13 +1043,13 @@ XidCacheRemoveRunningXids(TransactionId xid, int nxids, TransactionId *xids)
 	LWLockAcquire(SInvalLock, LW_EXCLUSIVE);
 
 	/*
-	 * Under normal circumstances xid and xids[] will be in increasing order,
-	 * as will be the entries in subxids.  Scan backwards to avoid O(N^2)
-	 * behavior when removing a lot of xids.
+	 * Under normal circumstances xid and xids[] will be in increasing
+	 * order, as will be the entries in subxids.  Scan backwards to avoid
+	 * O(N^2) behavior when removing a lot of xids.
 	 */
 	for (i = nxids - 1; i >= 0; i--)
 	{
-		TransactionId	anxid = xids[i];
+		TransactionId anxid = xids[i];
 
 		for (j = MyProc->subxids.nxids - 1; j >= 0; j--)
 		{
@@ -1087,11 +1086,11 @@ static void
 DisplayXidCache(int code, Datum arg)
 {
 	fprintf(stderr,
-			"XidCache: xmin: %ld, mainxid: %ld, childxid: %ld, slow: %ld\n",
+		 "XidCache: xmin: %ld, mainxid: %ld, childxid: %ld, slow: %ld\n",
 			xc_by_recent_xmin,
 			xc_by_main_xid,
 			xc_by_child_xid,
 			xc_slow_answer);
 }
 
-#endif /* XIDCACHE_DEBUG */
+#endif   /* XIDCACHE_DEBUG */

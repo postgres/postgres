@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/page/bufpage.c,v 1.60 2004/08/29 04:12:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/page/bufpage.c,v 1.61 2004/08/29 05:06:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -289,7 +289,7 @@ itemoffcompare(const void *itemidp1, const void *itemidp2)
 {
 	/* Sort in decreasing itemoff order */
 	return ((itemIdSort) itemidp2)->itemoff -
-		   ((itemIdSort) itemidp1)->itemoff;
+		((itemIdSort) itemidp1)->itemoff;
 }
 
 /*
@@ -339,7 +339,7 @@ PageRepairFragmentation(Page page, OffsetNumber *unused)
 	for (i = 0; i < nline; i++)
 	{
 		lp = PageGetItemId(page, i + 1);
-		if (lp->lp_flags & LP_DELETE) /* marked for deletion */
+		if (lp->lp_flags & LP_DELETE)	/* marked for deletion */
 			lp->lp_flags &= ~(LP_USED | LP_DELETE);
 		if (lp->lp_flags & LP_USED)
 			nused++;
@@ -353,7 +353,7 @@ PageRepairFragmentation(Page page, OffsetNumber *unused)
 		for (i = 0; i < nline; i++)
 		{
 			lp = PageGetItemId(page, i + 1);
-			lp->lp_len = 0;	/* indicate unused & deallocated */
+			lp->lp_len = 0;		/* indicate unused & deallocated */
 		}
 		((PageHeader) page)->pd_upper = pd_special;
 	}
@@ -382,7 +382,7 @@ PageRepairFragmentation(Page page, OffsetNumber *unused)
 			}
 			else
 			{
-				lp->lp_len = 0;		/* indicate unused & deallocated */
+				lp->lp_len = 0; /* indicate unused & deallocated */
 			}
 		}
 
@@ -536,7 +536,8 @@ PageIndexTupleDelete(Page page, OffsetNumber offnum)
 		nline--;				/* there's one less than when we started */
 		for (i = 1; i <= nline; i++)
 		{
-			ItemId ii = PageGetItemId(phdr, i);
+			ItemId		ii = PageGetItemId(phdr, i);
+
 			if (ii->lp_off <= offset)
 				ii->lp_off += size;
 		}

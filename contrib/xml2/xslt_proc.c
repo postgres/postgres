@@ -32,153 +32,150 @@ extern xmlChar *pgxml_texttoxmlchar(text *textstring);
 /* local defs */
 static void parse_params(const char **params, text *paramstr);
 
-Datum xslt_process(PG_FUNCTION_ARGS);
+Datum		xslt_process(PG_FUNCTION_ARGS);
 
 
 #define MAXPARAMS 20
 
 PG_FUNCTION_INFO_V1(xslt_process);
 
-Datum xslt_process(PG_FUNCTION_ARGS) {
+Datum
+xslt_process(PG_FUNCTION_ARGS)
+{
 
 
-  const char *params[MAXPARAMS + 1]; /* +1 for the terminator */
-  xsltStylesheetPtr stylesheet = NULL;
-  xmlDocPtr doctree;
-  xmlDocPtr restree;
-  xmlDocPtr ssdoc = NULL;
-  xmlChar *resstr;
-  int resstat;
-  int reslen;
+	const char *params[MAXPARAMS + 1];	/* +1 for the terminator */
+	xsltStylesheetPtr stylesheet = NULL;
+	xmlDocPtr	doctree;
+	xmlDocPtr	restree;
+	xmlDocPtr	ssdoc = NULL;
+	xmlChar    *resstr;
+	int			resstat;
+	int			reslen;
 
-  text *doct  = PG_GETARG_TEXT_P(0);
-  text *ssheet  = PG_GETARG_TEXT_P(1);
-  text *paramstr;
-  text *tres;
+	text	   *doct = PG_GETARG_TEXT_P(0);
+	text	   *ssheet = PG_GETARG_TEXT_P(1);
+	text	   *paramstr;
+	text	   *tres;
 
 
-  if (fcinfo->nargs == 3)
-    {
-      paramstr = PG_GETARG_TEXT_P(2);
-      parse_params(params,paramstr);
-    }
-  else /* No parameters */
-    {
-      params[0] = NULL;
-    }
-
-  /* Setup parser */
-  pgxml_parser_init();
-
-  /* Check to see if document is a file or a literal */
-
-  if (VARDATA(doct)[0] == '<')
-    {
-      doctree = xmlParseMemory((char *) VARDATA(doct), VARSIZE(doct)-VARHDRSZ);
-    } 
-  else 
-    {
-      doctree = xmlParseFile(GET_STR(doct));
-    }
-
-  if (doctree == NULL)
-    {
-      xmlCleanupParser();
-      elog_error(ERROR,"Error parsing XML document",0);
-
-      PG_RETURN_NULL();
-    }
-
-  /* Same for stylesheet */
-  if (VARDATA(ssheet)[0] == '<')
-    {
-      ssdoc = xmlParseMemory((char *) VARDATA(ssheet),
-					    VARSIZE(ssheet)-VARHDRSZ);
-      if (ssdoc == NULL) 
+	if (fcinfo->nargs == 3)
 	{
-	  xmlFreeDoc(doctree);
-	  xmlCleanupParser();
-	  elog_error(ERROR,"Error parsing stylesheet as XML document",0);	  
-	  PG_RETURN_NULL();
+		paramstr = PG_GETARG_TEXT_P(2);
+		parse_params(params, paramstr);
+	}
+	else
+/* No parameters */
+		params[0] = NULL;
+
+	/* Setup parser */
+	pgxml_parser_init();
+
+	/* Check to see if document is a file or a literal */
+
+	if (VARDATA(doct)[0] == '<')
+		doctree = xmlParseMemory((char *) VARDATA(doct), VARSIZE(doct) - VARHDRSZ);
+	else
+		doctree = xmlParseFile(GET_STR(doct));
+
+	if (doctree == NULL)
+	{
+		xmlCleanupParser();
+		elog_error(ERROR, "Error parsing XML document", 0);
+
+		PG_RETURN_NULL();
 	}
 
-      stylesheet = xsltParseStylesheetDoc(ssdoc);
-    }
-  else 
-   {
-      stylesheet = xsltParseStylesheetFile(GET_STR(ssheet));
-    }
+	/* Same for stylesheet */
+	if (VARDATA(ssheet)[0] == '<')
+	{
+		ssdoc = xmlParseMemory((char *) VARDATA(ssheet),
+							   VARSIZE(ssheet) - VARHDRSZ);
+		if (ssdoc == NULL)
+		{
+			xmlFreeDoc(doctree);
+			xmlCleanupParser();
+			elog_error(ERROR, "Error parsing stylesheet as XML document", 0);
+			PG_RETURN_NULL();
+		}
+
+		stylesheet = xsltParseStylesheetDoc(ssdoc);
+	}
+	else
+		stylesheet = xsltParseStylesheetFile(GET_STR(ssheet));
 
 
-  if (stylesheet == NULL)
-    {
-      xmlFreeDoc(doctree);
-      xsltCleanupGlobals();
-      xmlCleanupParser();
-      elog_error(ERROR,"Failed to parse stylesheet",0);
-      PG_RETURN_NULL();
-    }
+	if (stylesheet == NULL)
+	{
+		xmlFreeDoc(doctree);
+		xsltCleanupGlobals();
+		xmlCleanupParser();
+		elog_error(ERROR, "Failed to parse stylesheet", 0);
+		PG_RETURN_NULL();
+	}
 
-  restree = xsltApplyStylesheet(stylesheet, doctree, params);
-  resstat = xsltSaveResultToString(&resstr, &reslen, restree, stylesheet);
+	restree = xsltApplyStylesheet(stylesheet, doctree, params);
+	resstat = xsltSaveResultToString(&resstr, &reslen, restree, stylesheet);
 
-  xsltFreeStylesheet(stylesheet);
-  xmlFreeDoc(restree);
-  xmlFreeDoc(doctree);
-  
-  xsltCleanupGlobals();
-  xmlCleanupParser();
-  
-  if (resstat < 0) {
-    PG_RETURN_NULL();
-  }
-  
-  tres = palloc(reslen + VARHDRSZ);
-  memcpy(VARDATA(tres),resstr,reslen);
-  VARATT_SIZEP(tres) = reslen + VARHDRSZ;
-  
-  PG_RETURN_TEXT_P(tres);
+	xsltFreeStylesheet(stylesheet);
+	xmlFreeDoc(restree);
+	xmlFreeDoc(doctree);
+
+	xsltCleanupGlobals();
+	xmlCleanupParser();
+
+	if (resstat < 0)
+		PG_RETURN_NULL();
+
+	tres = palloc(reslen + VARHDRSZ);
+	memcpy(VARDATA(tres), resstr, reslen);
+	VARATT_SIZEP(tres) = reslen + VARHDRSZ;
+
+	PG_RETURN_TEXT_P(tres);
 }
 
 
-void parse_params(const char **params, text *paramstr)
+void
+parse_params(const char **params, text *paramstr)
 {
-  char *pos;
-  char *pstr;
+	char	   *pos;
+	char	   *pstr;
 
-  int i;
-  char *nvsep="=";
-  char *itsep=",";
+	int			i;
+	char	   *nvsep = "=";
+	char	   *itsep = ",";
 
-  pstr = GET_STR(paramstr);
+	pstr = GET_STR(paramstr);
 
-  pos=pstr;
-  
-  for (i=0; i < MAXPARAMS; i++) 
-    {
-      params[i] = pos;
-      pos = strstr(pos,nvsep);
-      if (pos != NULL) {
-	*pos = '\0';
-	pos++;
-      } else {
-	params[i]=NULL;
-	break;
-      }
-      /* Value */
-      i++;
-      params[i]=pos;
-      pos = strstr(pos,itsep);
-      if (pos != NULL) {
-	*pos = '\0';
-	pos++;
-      } else {
-	break;
-      }
+	pos = pstr;
 
-    }
-  if (i < MAXPARAMS) 
-    {
-      params[i+1]=NULL;
-    }
+	for (i = 0; i < MAXPARAMS; i++)
+	{
+		params[i] = pos;
+		pos = strstr(pos, nvsep);
+		if (pos != NULL)
+		{
+			*pos = '\0';
+			pos++;
+		}
+		else
+		{
+			params[i] = NULL;
+			break;
+		}
+		/* Value */
+		i++;
+		params[i] = pos;
+		pos = strstr(pos, itsep);
+		if (pos != NULL)
+		{
+			*pos = '\0';
+			pos++;
+		}
+		else
+			break;
+
+	}
+	if (i < MAXPARAMS)
+		params[i + 1] = NULL;
 }

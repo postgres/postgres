@@ -571,8 +571,8 @@ dblink_fetch(PG_FUNCTION_ARGS)
 				rsinfo->expectedDesc == NULL)
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("function returning record called in context "
-								"that cannot accept type record")));
+					errmsg("function returning record called in context "
+						   "that cannot accept type record")));
 
 			/* get the requested return tuple description */
 			tupdesc = CreateTupleDescCopy(rsinfo->expectedDesc);
@@ -777,8 +777,8 @@ dblink_record(PG_FUNCTION_ARGS)
 					rsinfo->expectedDesc == NULL)
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("function returning record called in context "
-									"that cannot accept type record")));
+					errmsg("function returning record called in context "
+						   "that cannot accept type record")));
 
 				/* get the requested return tuple description */
 				tupdesc = CreateTupleDescCopy(rsinfo->expectedDesc);

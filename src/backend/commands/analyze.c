@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.75 2004/08/29 04:12:29 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.76 2004/08/29 05:06:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,9 +42,9 @@
 /* Data structure for Algorithm S from Knuth 3.4.2 */
 typedef struct
 {
-	BlockNumber	N;				/* number of blocks, known in advance */
+	BlockNumber N;				/* number of blocks, known in advance */
 	int			n;				/* desired sample size */
-	BlockNumber	t;				/* current block number */
+	BlockNumber t;				/* current block number */
 	int			m;				/* blocks selected so far */
 } BlockSamplerData;
 typedef BlockSamplerData *BlockSampler;
@@ -68,13 +68,13 @@ static MemoryContext anl_context = NULL;
 
 
 static void BlockSampler_Init(BlockSampler bs, BlockNumber nblocks,
-							  int samplesize);
+				  int samplesize);
 static bool BlockSampler_HasMore(BlockSampler bs);
 static BlockNumber BlockSampler_Next(BlockSampler bs);
 static void compute_index_stats(Relation onerel, double totalrows,
-								AnlIndexData *indexdata, int nindexes,
-								HeapTuple *rows, int numrows,
-								MemoryContext col_context);
+					AnlIndexData *indexdata, int nindexes,
+					HeapTuple *rows, int numrows,
+					MemoryContext col_context);
 static VacAttrStats *examine_attribute(Relation onerel, int attnum);
 static int acquire_sample_rows(Relation onerel, HeapTuple *rows,
 					int targrows, double *totalrows);
@@ -157,9 +157,8 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 	}
 
 	/*
-	 * Check that it's a plain table; we used to do this in
-	 * get_rel_oids() but seems safer to check after we've locked the
-	 * relation.
+	 * Check that it's a plain table; we used to do this in get_rel_oids()
+	 * but seems safer to check after we've locked the relation.
 	 */
 	if (onerel->rd_rel->relkind != RELKIND_RELATION)
 	{
@@ -239,9 +238,10 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 	}
 
 	/*
-	 * Open all indexes of the relation, and see if there are any analyzable
-	 * columns in the indexes.  We do not analyze index columns if there was
-	 * an explicit column list in the ANALYZE command, however.
+	 * Open all indexes of the relation, and see if there are any
+	 * analyzable columns in the indexes.  We do not analyze index columns
+	 * if there was an explicit column list in the ANALYZE command,
+	 * however.
 	 */
 	vac_open_indexes(onerel, &nindexes, &Irel);
 	hasindex = (nindexes > 0);
@@ -253,10 +253,10 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 		for (ind = 0; ind < nindexes; ind++)
 		{
 			AnlIndexData *thisdata = &indexdata[ind];
-			IndexInfo *indexInfo;
+			IndexInfo  *indexInfo;
 
 			thisdata->indexInfo = indexInfo = BuildIndexInfo(Irel[ind]);
-			thisdata->tupleFract = 1.0;		/* fix later if partial */
+			thisdata->tupleFract = 1.0; /* fix later if partial */
 			if (indexInfo->ii_Expressions != NIL && vacstmt->va_cols == NIL)
 			{
 				ListCell   *indexpr_item = list_head(indexInfo->ii_Expressions);
@@ -273,25 +273,26 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 						/* Found an index expression */
 						Node	   *indexkey;
 
-						if (indexpr_item == NULL)	/* shouldn't happen */
+						if (indexpr_item == NULL)		/* shouldn't happen */
 							elog(ERROR, "too few entries in indexprs list");
 						indexkey = (Node *) lfirst(indexpr_item);
 						indexpr_item = lnext(indexpr_item);
 
 						/*
-						 * Can't analyze if the opclass uses a storage type
-						 * different from the expression result type.  We'd
-						 * get confused because the type shown in pg_attribute
-						 * for the index column doesn't match what we are
-						 * getting from the expression.  Perhaps this can be
-						 * fixed someday, but for now, punt.
+						 * Can't analyze if the opclass uses a storage
+						 * type different from the expression result type.
+						 * We'd get confused because the type shown in
+						 * pg_attribute for the index column doesn't match
+						 * what we are getting from the expression.
+						 * Perhaps this can be fixed someday, but for now,
+						 * punt.
 						 */
 						if (exprType(indexkey) !=
 							Irel[ind]->rd_att->attrs[i]->atttypid)
 							continue;
 
 						thisdata->vacattrstats[tcnt] =
-							examine_attribute(Irel[ind], i+1);
+							examine_attribute(Irel[ind], i + 1);
 						if (thisdata->vacattrstats[tcnt] != NULL)
 						{
 							tcnt++;
@@ -401,10 +402,10 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 
 	/*
 	 * If we are running a standalone ANALYZE, update pages/tuples stats
-	 * in pg_class.  We know the accurate page count from the smgr,
-	 * but only an approximate number of tuples; therefore, if we are part
-	 * of VACUUM ANALYZE do *not* overwrite the accurate count already
-	 * inserted by VACUUM.  The same consideration applies to indexes.
+	 * in pg_class.  We know the accurate page count from the smgr, but
+	 * only an approximate number of tuples; therefore, if we are part of
+	 * VACUUM ANALYZE do *not* overwrite the accurate count already
+	 * inserted by VACUUM.	The same consideration applies to indexes.
 	 */
 	if (!vacstmt->vacuum)
 	{
@@ -446,7 +447,7 @@ compute_index_stats(Relation onerel, double totalrows,
 					MemoryContext col_context)
 {
 	MemoryContext ind_context,
-		old_context;
+				old_context;
 	TupleDesc	heapDescriptor;
 	Datum		attdata[INDEX_MAX_KEYS];
 	char		nulls[INDEX_MAX_KEYS];
@@ -465,7 +466,7 @@ compute_index_stats(Relation onerel, double totalrows,
 	for (ind = 0; ind < nindexes; ind++)
 	{
 		AnlIndexData *thisdata = &indexdata[ind];
-		IndexInfo *indexInfo = thisdata->indexInfo;
+		IndexInfo  *indexInfo = thisdata->indexInfo;
 		int			attr_cnt = thisdata->attr_cnt;
 		TupleTable	tupleTable;
 		TupleTableSlot *slot;
@@ -526,8 +527,9 @@ compute_index_stats(Relation onerel, double totalrows,
 			if (attr_cnt > 0)
 			{
 				/*
-				 * Evaluate the index row to compute expression values.
-				 * We could do this by hand, but FormIndexDatum is convenient.
+				 * Evaluate the index row to compute expression values. We
+				 * could do this by hand, but FormIndexDatum is
+				 * convenient.
 				 */
 				FormIndexDatum(indexInfo,
 							   heapTuple,
@@ -535,16 +537,17 @@ compute_index_stats(Relation onerel, double totalrows,
 							   estate,
 							   attdata,
 							   nulls);
+
 				/*
 				 * Save just the columns we care about.
 				 */
 				for (i = 0; i < attr_cnt; i++)
 				{
 					VacAttrStats *stats = thisdata->vacattrstats[i];
-					int	attnum = stats->attr->attnum;
+					int			attnum = stats->attr->attnum;
 
-					exprvals[tcnt] = attdata[attnum-1];
-					exprnulls[tcnt] = (nulls[attnum-1] == 'n');
+					exprvals[tcnt] = attdata[attnum - 1];
+					exprnulls[tcnt] = (nulls[attnum - 1] == 'n');
 					tcnt++;
 				}
 			}
@@ -552,7 +555,8 @@ compute_index_stats(Relation onerel, double totalrows,
 
 		/*
 		 * Having counted the number of rows that pass the predicate in
-		 * the sample, we can estimate the total number of rows in the index.
+		 * the sample, we can estimate the total number of rows in the
+		 * index.
 		 */
 		thisdata->tupleFract = (double) numindexrows / (double) numrows;
 		totalindexrows = ceil(thisdata->tupleFract * totalrows);
@@ -630,7 +634,7 @@ examine_attribute(Relation onerel, int attnum)
 	stats->tupattnum = attnum;
 
 	/*
-	 * Call the type-specific typanalyze function.  If none is specified,
+	 * Call the type-specific typanalyze function.	If none is specified,
 	 * use std_typanalyze().
 	 */
 	if (OidIsValid(stats->attrtype->typanalyze))
@@ -667,10 +671,10 @@ static void
 BlockSampler_Init(BlockSampler bs, BlockNumber nblocks, int samplesize)
 {
 	bs->N = nblocks;			/* measured table size */
+
 	/*
-	 * If we decide to reduce samplesize for tables that have less or
-	 * not much more than samplesize blocks, here is the place to do
-	 * it.
+	 * If we decide to reduce samplesize for tables that have less or not
+	 * much more than samplesize blocks, here is the place to do it.
 	 */
 	bs->n = samplesize;
 	bs->t = 0;					/* blocks scanned so far */
@@ -686,10 +690,10 @@ BlockSampler_HasMore(BlockSampler bs)
 static BlockNumber
 BlockSampler_Next(BlockSampler bs)
 {
-	BlockNumber	K = bs->N - bs->t;		/* remaining blocks */
+	BlockNumber K = bs->N - bs->t;		/* remaining blocks */
 	int			k = bs->n - bs->m;		/* blocks still to sample */
-	double		p;						/* probability to skip block */
-	double		V;						/* random */
+	double		p;				/* probability to skip block */
+	double		V;				/* random */
 
 	Assert(BlockSampler_HasMore(bs));	/* hence K > 0 and k > 0 */
 
@@ -706,7 +710,7 @@ BlockSampler_Next(BlockSampler bs)
 	 * If we are to skip, we should advance t (hence decrease K), and
 	 * repeat the same probabilistic test for the next block.  The naive
 	 * implementation thus requires a random_fract() call for each block
-	 * number.  But we can reduce this to one random_fract() call per
+	 * number.	But we can reduce this to one random_fract() call per
 	 * selected block, by noting that each time the while-test succeeds,
 	 * we can reinterpret V as a uniform random number in the range 0 to p.
 	 * Therefore, instead of choosing a new V, we just adjust p to be
@@ -770,11 +774,11 @@ static int
 acquire_sample_rows(Relation onerel, HeapTuple *rows, int targrows,
 					double *totalrows)
 {
-	int			numrows = 0;					/* # rows collected */
-	double		liverows = 0;					/* # rows seen */
+	int			numrows = 0;	/* # rows collected */
+	double		liverows = 0;	/* # rows seen */
 	double		deadrows = 0;
-	double		rowstoskip = -1;				/* -1 means not set yet */
-	BlockNumber	totalblocks;
+	double		rowstoskip = -1;	/* -1 means not set yet */
+	BlockNumber totalblocks;
 	BlockSamplerData bs;
 	double		rstate;
 
@@ -826,14 +830,13 @@ acquire_sample_rows(Relation onerel, HeapTuple *rows, int targrows,
 			{
 				/*
 				 * The first targrows live rows are simply copied into the
-				 * reservoir.
-				 * Then we start replacing tuples in the sample until
-				 * we reach the end of the relation.  This algorithm is
-				 * from Jeff Vitter's paper (see full citation below).
+				 * reservoir. Then we start replacing tuples in the sample
+				 * until we reach the end of the relation.	This algorithm
+				 * is from Jeff Vitter's paper (see full citation below).
 				 * It works by repeatedly computing the number of tuples
 				 * to skip before selecting a tuple, which replaces a
-				 * randomly chosen element of the reservoir (current
-				 * set of tuples).  At all times the reservoir is a true
+				 * randomly chosen element of the reservoir (current set
+				 * of tuples).	At all times the reservoir is a true
 				 * random sample of the tuples we've passed over so far,
 				 * so when we fall off the end of the relation we're done.
 				 */
@@ -842,10 +845,10 @@ acquire_sample_rows(Relation onerel, HeapTuple *rows, int targrows,
 				else
 				{
 					/*
-					 * t in Vitter's paper is the number of records already
-					 * processed.  If we need to compute a new S value, we
-					 * must use the not-yet-incremented value of liverows
-					 * as t.
+					 * t in Vitter's paper is the number of records
+					 * already processed.  If we need to compute a new S
+					 * value, we must use the not-yet-incremented value of
+					 * liverows as t.
 					 */
 					if (rowstoskip < 0)
 						rowstoskip = get_next_S(liverows, targrows, &rstate);
@@ -853,10 +856,10 @@ acquire_sample_rows(Relation onerel, HeapTuple *rows, int targrows,
 					if (rowstoskip <= 0)
 					{
 						/*
-						 * Found a suitable tuple, so save it,
-						 * replacing one old tuple at random
+						 * Found a suitable tuple, so save it, replacing
+						 * one old tuple at random
 						 */
-						int	k = (int) (targrows * random_fract());
+						int			k = (int) (targrows * random_fract());
 
 						Assert(k >= 0 && k < targrows);
 						heap_freetuple(rows[k]);
@@ -874,9 +877,9 @@ acquire_sample_rows(Relation onerel, HeapTuple *rows, int targrows,
 			else
 			{
 				/*
-				 * Count dead rows, but not empty slots.  This information is
-				 * currently not used, but it seems likely we'll want it
-				 * someday.
+				 * Count dead rows, but not empty slots.  This information
+				 * is currently not used, but it seems likely we'll want
+				 * it someday.
 				 */
 				if (targtuple.t_data != NULL)
 					deadrows += 1;
@@ -888,12 +891,12 @@ acquire_sample_rows(Relation onerel, HeapTuple *rows, int targrows,
 	}
 
 	/*
-	 * If we didn't find as many tuples as we wanted then we're done.
-	 * No sort is needed, since they're already in order.
+	 * If we didn't find as many tuples as we wanted then we're done. No
+	 * sort is needed, since they're already in order.
 	 *
 	 * Otherwise we need to sort the collected tuples by position
-	 * (itempointer).  It's not worth worrying about corner cases
-	 * where the tuples are already sorted.
+	 * (itempointer).  It's not worth worrying about corner cases where
+	 * the tuples are already sorted.
 	 */
 	if (numrows == targrows)
 		qsort((void *) rows, numrows, sizeof(HeapTuple), compare_rows);
@@ -907,7 +910,7 @@ acquire_sample_rows(Relation onerel, HeapTuple *rows, int targrows,
 		*totalrows = 0.0;
 
 	/*
-	 * Emit some interesting relation info 
+	 * Emit some interesting relation info
 	 */
 	ereport(elevel,
 			(errmsg("\"%s\": scanned %d of %u pages, "
@@ -1128,10 +1131,10 @@ update_attstats(Oid relid, int natts, VacAttrStats **vacattrstats)
 
 		i = 0;
 		values[i++] = ObjectIdGetDatum(relid);	/* starelid */
-		values[i++] = Int16GetDatum(stats->attr->attnum);	/* staattnum */
-		values[i++] = Float4GetDatum(stats->stanullfrac);	/* stanullfrac */
+		values[i++] = Int16GetDatum(stats->attr->attnum);		/* staattnum */
+		values[i++] = Float4GetDatum(stats->stanullfrac);		/* stanullfrac */
 		values[i++] = Int32GetDatum(stats->stawidth);	/* stawidth */
-		values[i++] = Float4GetDatum(stats->stadistinct);	/* stadistinct */
+		values[i++] = Float4GetDatum(stats->stadistinct);		/* stadistinct */
 		for (k = 0; k < STATISTIC_NUM_SLOTS; k++)
 		{
 			values[i++] = Int16GetDatum(stats->stakind[k]);		/* stakindN */
@@ -1305,13 +1308,13 @@ static int *datumCmpTupnoLink;
 
 
 static void compute_minimal_stats(VacAttrStatsP stats,
-								  AnalyzeAttrFetchFunc fetchfunc,
-								  int samplerows,
-								  double totalrows);
+					  AnalyzeAttrFetchFunc fetchfunc,
+					  int samplerows,
+					  double totalrows);
 static void compute_scalar_stats(VacAttrStatsP stats,
-								 AnalyzeAttrFetchFunc fetchfunc,
-								 int samplerows,
-								 double totalrows);
+					 AnalyzeAttrFetchFunc fetchfunc,
+					 int samplerows,
+					 double totalrows);
 static int	compare_scalars(const void *a, const void *b);
 static int	compare_mcvs(const void *a, const void *b);
 

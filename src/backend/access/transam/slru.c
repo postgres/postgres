@@ -48,7 +48,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/slru.c,v 1.20 2004/08/29 04:12:23 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/slru.c,v 1.21 2004/08/29 05:06:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,7 +79,7 @@
  * segment and page numbers in SimpleLruTruncate (see PagePrecedes()).
  *
  * Note: this file currently assumes that segment file names will be four
- * hex digits.  This sets a lower bound on the segment size (64K transactions
+ * hex digits.	This sets a lower bound on the segment size (64K transactions
  * for 32-bit TransactionIds).
  */
 #define SLRU_PAGES_PER_SEGMENT	32
@@ -96,9 +96,9 @@
  */
 typedef struct SlruFlushData
 {
-	int			num_files;					/* # files actually open */
-	int			fd[NUM_SLRU_BUFFERS];		/* their FD's */
-	int			segno[NUM_SLRU_BUFFERS];	/* their log seg#s */
+	int			num_files;		/* # files actually open */
+	int			fd[NUM_SLRU_BUFFERS];	/* their FD's */
+	int			segno[NUM_SLRU_BUFFERS];		/* their log seg#s */
 } SlruFlushData;
 
 /*
@@ -132,7 +132,7 @@ static int	slru_errno;
 
 static bool SlruPhysicalReadPage(SlruCtl ctl, int pageno, int slotno);
 static bool SlruPhysicalWritePage(SlruCtl ctl, int pageno, int slotno,
-								  SlruFlush fdata);
+					  SlruFlush fdata);
 static void SlruReportIOError(SlruCtl ctl, int pageno, TransactionId xid);
 static int	SlruSelectLRUPage(SlruCtl ctl, int pageno);
 
@@ -385,7 +385,7 @@ SimpleLruWritePage(SlruCtl ctl, int slotno, SlruFlush fdata)
 	/* If we failed, and we're in a flush, better close the files */
 	if (!ok && fdata)
 	{
-		int		i;
+		int			i;
 
 		for (i = 0; i < fdata->num_files; i++)
 			close(fdata->fd[i]);
@@ -511,7 +511,7 @@ SlruPhysicalWritePage(SlruCtl ctl, int pageno, int slotno, SlruFlush fdata)
 	 */
 	if (fdata)
 	{
-		int		i;
+		int			i;
 
 		for (i = 0; i < fdata->num_files; i++)
 		{
@@ -527,16 +527,17 @@ SlruPhysicalWritePage(SlruCtl ctl, int pageno, int slotno, SlruFlush fdata)
 	{
 		/*
 		 * If the file doesn't already exist, we should create it.  It is
-		 * possible for this to need to happen when writing a page that's not
-		 * first in its segment; we assume the OS can cope with that.
-		 * (Note: it might seem that it'd be okay to create files only when
-		 * SimpleLruZeroPage is called for the first page of a segment.
-		 * However, if after a crash and restart the REDO logic elects to
-		 * replay the log from a checkpoint before the latest one, then it's
-		 * possible that we will get commands to set transaction status of
-		 * transactions that have already been truncated from the commit log.
-		 * Easiest way to deal with that is to accept references to
-		 * nonexistent files here and in SlruPhysicalReadPage.)
+		 * possible for this to need to happen when writing a page that's
+		 * not first in its segment; we assume the OS can cope with that.
+		 * (Note: it might seem that it'd be okay to create files only
+		 * when SimpleLruZeroPage is called for the first page of a
+		 * segment. However, if after a crash and restart the REDO logic
+		 * elects to replay the log from a checkpoint before the latest
+		 * one, then it's possible that we will get commands to set
+		 * transaction status of transactions that have already been
+		 * truncated from the commit log. Easiest way to deal with that is
+		 * to accept references to nonexistent files here and in
+		 * SlruPhysicalReadPage.)
 		 */
 		SlruFileName(ctl, path, segno);
 		fd = BasicOpenFile(path, O_RDWR | PG_BINARY, S_IRUSR | S_IWUSR);
@@ -648,36 +649,36 @@ SlruReportIOError(SlruCtl ctl, int pageno, TransactionId xid)
 			ereport(ERROR,
 					(errcode_for_file_access(),
 				errmsg("could not access status of transaction %u", xid),
-				  errdetail("could not seek in file \"%s\" to offset %u: %m",
-							path, offset)));
+			  errdetail("could not seek in file \"%s\" to offset %u: %m",
+						path, offset)));
 			break;
 		case SLRU_READ_FAILED:
 			ereport(ERROR,
 					(errcode_for_file_access(),
 				errmsg("could not access status of transaction %u", xid),
-				   errdetail("could not read from file \"%s\" at offset %u: %m",
-							 path, offset)));
+			errdetail("could not read from file \"%s\" at offset %u: %m",
+					  path, offset)));
 			break;
 		case SLRU_WRITE_FAILED:
 			ereport(ERROR,
 					(errcode_for_file_access(),
 				errmsg("could not access status of transaction %u", xid),
-				  errdetail("could not write to file \"%s\" at offset %u: %m",
-							path, offset)));
+			 errdetail("could not write to file \"%s\" at offset %u: %m",
+					   path, offset)));
 			break;
 		case SLRU_FSYNC_FAILED:
 			ereport(ERROR,
 					(errcode_for_file_access(),
 				errmsg("could not access status of transaction %u", xid),
-				  errdetail("could not fsync file \"%s\": %m",
-							path)));
+					 errdetail("could not fsync file \"%s\": %m",
+							   path)));
 			break;
 		case SLRU_CLOSE_FAILED:
 			ereport(ERROR,
 					(errcode_for_file_access(),
 				errmsg("could not access status of transaction %u", xid),
-				  errdetail("could not close file \"%s\": %m",
-							path)));
+					 errdetail("could not close file \"%s\": %m",
+							   path)));
 			break;
 		default:
 			/* can't get here, we trust */
@@ -841,8 +842,8 @@ SimpleLruTruncate(SlruCtl ctl, int cutoffPage)
 	/*
 	 * Scan shared memory and remove any pages preceding the cutoff page,
 	 * to ensure we won't rewrite them later.  (Since this is normally
-	 * called in or just after a checkpoint, any dirty pages should
-	 * have been flushed already ... we're just being extra careful here.)
+	 * called in or just after a checkpoint, any dirty pages should have
+	 * been flushed already ... we're just being extra careful here.)
 	 */
 	LWLockAcquire(shared->ControlLock, LW_EXCLUSIVE);
 
@@ -952,8 +953,11 @@ SlruScanDirectory(SlruCtl ctl, int cutoffPage, bool doDeletions)
 		errno = 0;
 	}
 #ifdef WIN32
-	/* This fix is in mingw cvs (runtime/mingwex/dirent.c rev 1.4), but
-	   not in released version */
+
+	/*
+	 * This fix is in mingw cvs (runtime/mingwex/dirent.c rev 1.4), but
+	 * not in released version
+	 */
 	if (GetLastError() == ERROR_NO_MORE_FILES)
 		errno = 0;
 #endif

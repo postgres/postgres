@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.135 2004/08/29 04:12:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.136 2004/08/29 05:06:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -158,7 +158,8 @@ setTargetTable(ParseState *pstate, RangeVar *relation,
 	 *
 	 * If we find an explicit reference to the rel later during parse
 	 * analysis, scanRTEForColumn will add the ACL_SELECT bit back again.
-	 * That can't happen for INSERT but it is possible for UPDATE and DELETE.
+	 * That can't happen for INSERT but it is possible for UPDATE and
+	 * DELETE.
 	 */
 	rte->requiredPerms = requiredPerms;
 
@@ -231,7 +232,8 @@ extractRemainingColumns(List *common_colnames,
 {
 	List	   *new_colnames = NIL;
 	List	   *new_colvars = NIL;
-	ListCell   *lnames, *lvars;
+	ListCell   *lnames,
+			   *lvars;
 
 	Assert(list_length(src_colnames) == list_length(src_colvars));
 
@@ -272,7 +274,8 @@ static Node *
 transformJoinUsingClause(ParseState *pstate, List *leftVars, List *rightVars)
 {
 	Node	   *result = NULL;
-	ListCell   *lvars, *rvars;
+	ListCell   *lvars,
+			   *rvars;
 
 	/*
 	 * We cheat a little bit here by building an untransformed operator
@@ -1139,11 +1142,11 @@ findTargetlistEntry(ParseState *pstate, Node *node, List **tlist, int clause)
 			 *
 			 * Small tweak for 7.4.3: ignore matches in upper query levels.
 			 * This effectively changes the search order for bare names to
-			 * (1) local FROM variables, (2) local targetlist aliases,
-			 * (3) outer FROM variables, whereas before it was (1) (3) (2).
-			 * SQL92 and SQL99 do not allow GROUPing BY an outer reference,
-			 * so this breaks no cases that are legal per spec, and it
-			 * seems a more self-consistent behavior.
+			 * (1) local FROM variables, (2) local targetlist aliases, (3)
+			 * outer FROM variables, whereas before it was (1) (3) (2).
+			 * SQL92 and SQL99 do not allow GROUPing BY an outer
+			 * reference, so this breaks no cases that are legal per spec,
+			 * and it seems a more self-consistent behavior.
 			 */
 			if (colNameToVar(pstate, name, true) != NULL)
 				name = NULL;
@@ -1164,7 +1167,11 @@ findTargetlistEntry(ParseState *pstate, Node *node, List **tlist, int clause)
 						if (!equal(target_result->expr, tle->expr))
 							ereport(ERROR,
 									(errcode(ERRCODE_AMBIGUOUS_COLUMN),
-									 /* translator: first %s is name of a SQL construct, eg ORDER BY */
+
+							/*
+							 * translator: first %s is name of a SQL
+							 * construct, eg ORDER BY
+							 */
 									 errmsg("%s \"%s\" is ambiguous",
 											clauseText[clause], name)));
 					}
@@ -1444,7 +1451,7 @@ transformDistinctClause(ParseState *pstate, List *distinctlist,
 			else
 			{
 				*sortClause = addTargetToSortList(pstate, tle,
-												  *sortClause, *targetlist,
+												*sortClause, *targetlist,
 												  SORTBY_ASC, NIL, true);
 
 				/*
@@ -1484,7 +1491,7 @@ List *
 addAllTargetsToSortList(ParseState *pstate, List *sortlist,
 						List *targetlist, bool resolveUnknown)
 {
-	ListCell  *l;
+	ListCell   *l;
 
 	foreach(l, targetlist)
 	{

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.87 2004/08/29 04:12:47 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.88 2004/08/29 05:06:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -856,7 +856,7 @@ AddInvertedQual(Query *parsetree, Node *qual)
  * The caller must also provide target_rtable, the rangetable containing
  * the target relation (which must be described by the target_varno'th
  * RTE in that list).  This is needed to handle whole-row Vars referencing
- * the target.  We expand such Vars into RowExpr constructs.
+ * the target.	We expand such Vars into RowExpr constructs.
  *
  * Note: the business with inserted_sublink is needed to update hasSubLinks
  * in subqueries when the replacement adds a subquery inside a subquery.
@@ -932,14 +932,14 @@ ResolveNew_mutator(Node *node, ResolveNew_context *context)
 			if (var->varattno == InvalidAttrNumber)
 			{
 				/* Must expand whole-tuple reference into RowExpr */
-				RowExpr *rowexpr;
-				List	*fields;
+				RowExpr    *rowexpr;
+				List	   *fields;
 
 				/*
 				 * If generating an expansion for a var of a named rowtype
-				 * (ie, this is a plain relation RTE), then we must include
-				 * dummy items for dropped columns.  If the var is RECORD
-				 * (ie, this is a JOIN), then omit dropped columns.
+				 * (ie, this is a plain relation RTE), then we must
+				 * include dummy items for dropped columns.  If the var is
+				 * RECORD (ie, this is a JOIN), then omit dropped columns.
 				 */
 				expandRTE(context->target_rtable, this_varno, this_varlevelsup,
 						  (var->vartype != RECORDOID),

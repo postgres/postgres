@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/md.c,v 1.109 2004/08/29 04:12:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/smgr/md.c,v 1.110 2004/08/29 05:06:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,9 +54,9 @@
 
 typedef struct _MdfdVec
 {
-	File		mdfd_vfd;			/* fd number in fd.c's pool */
-	BlockNumber	mdfd_segno;			/* segment number, from 0 */
-#ifndef LET_OS_MANAGE_FILESIZE		/* for large relations */
+	File		mdfd_vfd;		/* fd number in fd.c's pool */
+	BlockNumber mdfd_segno;		/* segment number, from 0 */
+#ifndef LET_OS_MANAGE_FILESIZE	/* for large relations */
 	struct _MdfdVec *mdfd_chain;	/* next segment, or NULL */
 #endif
 } MdfdVec;
@@ -69,7 +69,7 @@ static MemoryContext MdCxt;		/* context for all md.c allocations */
  * we keep track of pending fsync operations: we need to remember all relation
  * segments that have been written since the last checkpoint, so that we can
  * fsync them down to disk before completing the next checkpoint.  This hash
- * table remembers the pending operations.  We use a hash table not because
+ * table remembers the pending operations.	We use a hash table not because
  * we want to look up individual operations, but simply as a convenient way
  * of eliminating duplicate requests.
  *
@@ -80,8 +80,8 @@ static MemoryContext MdCxt;		/* context for all md.c allocations */
  */
 typedef struct
 {
-	RelFileNode	rnode;			/* the targeted relation */
-	BlockNumber	segno;			/* which segment */
+	RelFileNode rnode;			/* the targeted relation */
+	BlockNumber segno;			/* which segment */
 } PendingOperationEntry;
 
 static HTAB *pendingOpsTable = NULL;
@@ -91,12 +91,13 @@ static HTAB *pendingOpsTable = NULL;
 static MdfdVec *mdopen(SMgrRelation reln, bool allowNotFound);
 static bool register_dirty_segment(SMgrRelation reln, MdfdVec *seg);
 static MdfdVec *_fdvec_alloc(void);
+
 #ifndef LET_OS_MANAGE_FILESIZE
 static MdfdVec *_mdfd_openseg(SMgrRelation reln, BlockNumber segno,
-							  int oflags);
+			  int oflags);
 #endif
 static MdfdVec *_mdfd_getseg(SMgrRelation reln, BlockNumber blkno,
-							 bool allowNotFound);
+			 bool allowNotFound);
 static BlockNumber _mdnblocks(File file, Size blcksz);
 
 
@@ -113,10 +114,10 @@ mdinit(void)
 								  ALLOCSET_DEFAULT_MAXSIZE);
 
 	/*
-	 * Create pending-operations hashtable if we need it.  Currently,
-	 * we need it if we are standalone (not under a postmaster) OR
-	 * if we are a bootstrap-mode subprocess of a postmaster (that is,
-	 * a startup or bgwriter process).
+	 * Create pending-operations hashtable if we need it.  Currently, we
+	 * need it if we are standalone (not under a postmaster) OR if we are
+	 * a bootstrap-mode subprocess of a postmaster (that is, a startup or
+	 * bgwriter process).
 	 */
 	if (!IsUnderPostmaster || IsBootstrapProcessingMode())
 	{
@@ -130,7 +131,7 @@ mdinit(void)
 		pendingOpsTable = hash_create("Pending Ops Table",
 									  100L,
 									  &hash_ctl,
-									  HASH_ELEM | HASH_FUNCTION | HASH_CONTEXT);
+							   HASH_ELEM | HASH_FUNCTION | HASH_CONTEXT);
 		if (pendingOpsTable == NULL)
 			ereport(FATAL,
 					(errcode(ERRCODE_OUT_OF_MEMORY),
@@ -333,7 +334,7 @@ mdextend(SMgrRelation reln, BlockNumber blocknum, char *buffer, bool isTemp)
 static MdfdVec *
 mdopen(SMgrRelation reln, bool allowNotFound)
 {
-	MdfdVec	   *mdfd;
+	MdfdVec    *mdfd;
 	char	   *path;
 	File		fd;
 
@@ -613,8 +614,7 @@ mdtruncate(SMgrRelation reln, BlockNumber nblocks, bool isTemp)
 			FileTruncate(v->mdfd_vfd, 0);
 			FileUnlink(v->mdfd_vfd);
 			v = v->mdfd_chain;
-			Assert(ov != reln->md_fd);			/* we never drop the 1st
-												 * segment */
+			Assert(ov != reln->md_fd);	/* we never drop the 1st segment */
 			pfree(ov);
 		}
 		else if (priorblocks + ((BlockNumber) RELSEG_SIZE) > nblocks)
@@ -714,8 +714,8 @@ mdsync(void)
 	/*
 	 * If we are in the bgwriter, the sync had better include all fsync
 	 * requests that were queued by backends before the checkpoint REDO
-	 * point was determined.  We go that a little better by accepting
-	 * all requests queued up to the point where we start fsync'ing.
+	 * point was determined.  We go that a little better by accepting all
+	 * requests queued up to the point where we start fsync'ing.
 	 */
 	AbsorbFsyncRequests();
 
@@ -724,22 +724,22 @@ mdsync(void)
 	{
 		/*
 		 * If fsync is off then we don't have to bother opening the file
-		 * at all.  (We delay checking until this point so that changing
+		 * at all.	(We delay checking until this point so that changing
 		 * fsync on the fly behaves sensibly.)
 		 */
 		if (enableFsync)
 		{
 			SMgrRelation reln;
-			MdfdVec *seg;
+			MdfdVec    *seg;
 
 			/*
-			 * Find or create an smgr hash entry for this relation.
-			 * This may seem a bit unclean -- md calling smgr?  But it's
-			 * really the best solution.  It ensures that the open file
-			 * reference isn't permanently leaked if we get an error here.
-			 * (You may say "but an unreferenced SMgrRelation is still a
-			 * leak!"  Not really, because the only case in which a checkpoint
-			 * is done by a process that isn't about to shut down is in the
+			 * Find or create an smgr hash entry for this relation. This
+			 * may seem a bit unclean -- md calling smgr?  But it's really
+			 * the best solution.  It ensures that the open file reference
+			 * isn't permanently leaked if we get an error here. (You may
+			 * say "but an unreferenced SMgrRelation is still a leak!"
+			 * Not really, because the only case in which a checkpoint is
+			 * done by a process that isn't about to shut down is in the
 			 * bgwriter, and it will periodically do smgrcloseall().  This
 			 * fact justifies our not closing the reln in the success path
 			 * either, which is a good thing since in non-bgwriter cases
@@ -750,11 +750,11 @@ mdsync(void)
 			reln = smgropen(entry->rnode);
 
 			/*
-			 * It is possible that the relation has been dropped or truncated
-			 * since the fsync request was entered.  Therefore, we have to
-			 * allow file-not-found errors.  This applies both during
-			 * _mdfd_getseg() and during FileSync, since fd.c might have
-			 * closed the file behind our back.
+			 * It is possible that the relation has been dropped or
+			 * truncated since the fsync request was entered.  Therefore,
+			 * we have to allow file-not-found errors.	This applies both
+			 * during _mdfd_getseg() and during FileSync, since fd.c might
+			 * have closed the file behind our back.
 			 */
 			seg = _mdfd_getseg(reln,
 							   entry->segno * ((BlockNumber) RELSEG_SIZE),
@@ -903,8 +903,7 @@ _mdfd_openseg(SMgrRelation reln, BlockNumber segno, int oflags)
 	/* all done */
 	return v;
 }
-
-#endif /* LET_OS_MANAGE_FILESIZE */
+#endif   /* LET_OS_MANAGE_FILESIZE */
 
 /*
  *	_mdfd_getseg() -- Find the segment of the relation holding the
@@ -915,6 +914,7 @@ static MdfdVec *
 _mdfd_getseg(SMgrRelation reln, BlockNumber blkno, bool allowNotFound)
 {
 	MdfdVec    *v = mdopen(reln, allowNotFound);
+
 #ifndef LET_OS_MANAGE_FILESIZE
 	BlockNumber segstogo;
 	BlockNumber nextsegno;

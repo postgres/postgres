@@ -240,7 +240,7 @@ gseg_union(GistEntryVector *entryvec, int *sizep)
 	for (i = 1; i < numranges; i++)
 	{
 		out = gseg_binary_union(tmp, (SEG *)
-			   DatumGetPointer(entryvec->vector[i].key),
+								DatumGetPointer(entryvec->vector[i].key),
 								sizep);
 		if (i > 1)
 			pfree(tmp);
@@ -755,8 +755,8 @@ seg_cmp(SEG * a, SEG * b)
 	 * a->lower == b->lower, so consider type of boundary.
 	 *
 	 * A '-' lower bound is < any other kind (this could only be relevant if
-	 * -HUGE_VAL is used as a regular data value). A '<' lower bound is < any
-	 * other kind except '-'. A '>' lower bound is > any other kind.
+	 * -HUGE_VAL is used as a regular data value). A '<' lower bound is <
+	 * any other kind except '-'. A '>' lower bound is > any other kind.
 	 */
 	if (a->l_ext != b->l_ext)
 	{
@@ -813,8 +813,8 @@ seg_cmp(SEG * a, SEG * b)
 	 * a->upper == b->upper, so consider type of boundary.
 	 *
 	 * A '-' upper bound is > any other kind (this could only be relevant if
-	 * HUGE_VAL is used as a regular data value). A '<' upper bound is < any
-	 * other kind. A '>' upper bound is > any other kind except '-'.
+	 * HUGE_VAL is used as a regular data value). A '<' upper bound is <
+	 * any other kind. A '>' upper bound is > any other kind except '-'.
 	 */
 	if (a->u_ext != b->u_ext)
 	{

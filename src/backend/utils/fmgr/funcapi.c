@@ -7,7 +7,7 @@
  * Copyright (c) 2002-2004, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/funcapi.c,v 1.16 2004/08/29 04:12:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/funcapi.c,v 1.17 2004/08/29 05:06:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,7 +43,7 @@ init_MultiFuncCall(PG_FUNCTION_ARGS)
 		/*
 		 * First call
 		 */
-		ReturnSetInfo	   *rsi = (ReturnSetInfo *) fcinfo->resultinfo;
+		ReturnSetInfo *rsi = (ReturnSetInfo *) fcinfo->resultinfo;
 
 		/*
 		 * Allocate suitably long-lived space and zero it
@@ -106,8 +106,8 @@ per_MultiFuncCall(PG_FUNCTION_ARGS)
 	 * at the beginning of each call, the Slot will hold a dangling
 	 * pointer to an already-recycled tuple.  We clear it out here.
 	 *
-	 * Note: use of retval->slot is obsolete as of 8.0, and we expect that
-	 * it will always be NULL.  This is just here for backwards compatibility
+	 * Note: use of retval->slot is obsolete as of 8.0, and we expect that it
+	 * will always be NULL.  This is just here for backwards compatibility
 	 * in case someone creates a slot anyway.
 	 */
 	if (retval->slot != NULL)
@@ -123,7 +123,7 @@ per_MultiFuncCall(PG_FUNCTION_ARGS)
 void
 end_MultiFuncCall(PG_FUNCTION_ARGS, FuncCallContext *funcctx)
 {
-	ReturnSetInfo	   *rsi = (ReturnSetInfo *) fcinfo->resultinfo;
+	ReturnSetInfo *rsi = (ReturnSetInfo *) fcinfo->resultinfo;
 
 	/* Deregister the shutdown callback */
 	UnregisterExprContextCallback(rsi->econtext,
@@ -141,7 +141,7 @@ end_MultiFuncCall(PG_FUNCTION_ARGS, FuncCallContext *funcctx)
 static void
 shutdown_MultiFuncCall(Datum arg)
 {
-	FmgrInfo *flinfo = (FmgrInfo *) DatumGetPointer(arg);
+	FmgrInfo   *flinfo = (FmgrInfo *) DatumGetPointer(arg);
 	FuncCallContext *funcctx = (FuncCallContext *) flinfo->fn_extra;
 
 	/* unbind from flinfo */

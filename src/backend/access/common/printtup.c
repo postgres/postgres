@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/printtup.c,v 1.84 2004/08/29 04:12:17 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/printtup.c,v 1.85 2004/08/29 05:06:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -356,7 +356,7 @@ printtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 
 			outputstr = DatumGetCString(FunctionCall3(&thisState->finfo,
 													  attr,
-									ObjectIdGetDatum(thisState->typioparam),
+								 ObjectIdGetDatum(thisState->typioparam),
 						  Int32GetDatum(typeinfo->attrs[i]->atttypmod)));
 			pq_sendcountedtext(&buf, outputstr, strlen(outputstr), false);
 			pfree(outputstr);
@@ -368,7 +368,7 @@ printtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 
 			outputbytes = DatumGetByteaP(FunctionCall2(&thisState->finfo,
 													   attr,
-								  ObjectIdGetDatum(thisState->typioparam)));
+							   ObjectIdGetDatum(thisState->typioparam)));
 			/* We assume the result will not have been toasted */
 			pq_sendint(&buf, VARSIZE(outputbytes) - VARHDRSZ, 4);
 			pq_sendbytes(&buf, VARDATA(outputbytes),
@@ -458,7 +458,7 @@ printtup_20(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 
 		outputstr = DatumGetCString(FunctionCall3(&thisState->finfo,
 												  attr,
-									ObjectIdGetDatum(thisState->typioparam),
+								 ObjectIdGetDatum(thisState->typioparam),
 						  Int32GetDatum(typeinfo->attrs[i]->atttypmod)));
 		pq_sendcountedtext(&buf, outputstr, strlen(outputstr), true);
 		pfree(outputstr);
@@ -579,7 +579,7 @@ debugtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 
 		value = DatumGetCString(OidFunctionCall3(typoutput,
 												 attr,
-											   ObjectIdGetDatum(typioparam),
+											ObjectIdGetDatum(typioparam),
 						  Int32GetDatum(typeinfo->attrs[i]->atttypmod)));
 
 		printatt((unsigned) i + 1, typeinfo->attrs[i], value);
@@ -672,7 +672,7 @@ printtup_internal_20(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 
 		outputbytes = DatumGetByteaP(FunctionCall2(&thisState->finfo,
 												   attr,
-								  ObjectIdGetDatum(thisState->typioparam)));
+							   ObjectIdGetDatum(thisState->typioparam)));
 		/* We assume the result will not have been toasted */
 		pq_sendint(&buf, VARSIZE(outputbytes) - VARHDRSZ, 4);
 		pq_sendbytes(&buf, VARDATA(outputbytes),

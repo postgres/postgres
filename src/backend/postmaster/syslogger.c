@@ -18,7 +18,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/syslogger.c,v 1.6 2004/08/29 00:38:03 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/syslogger.c,v 1.7 2004/08/29 05:06:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,40 +55,41 @@
 
 
 /*
- * GUC parameters.  Redirect_stderr cannot be changed after postmaster
+ * GUC parameters.	Redirect_stderr cannot be changed after postmaster
  * start, but the rest can change at SIGHUP.
  */
 bool		Redirect_stderr = false;
-int			Log_RotationAge = 24*60;
-int			Log_RotationSize  = 10*1024;
-char *      Log_directory = "pg_log";
-char *      Log_filename_prefix = "postgresql-";
+int			Log_RotationAge = 24 * 60;
+int			Log_RotationSize = 10 * 1024;
+char	   *Log_directory = "pg_log";
+char	   *Log_filename_prefix = "postgresql-";
 
 /*
  * Globally visible state (used by elog.c)
  */
-bool am_syslogger = false;
+bool		am_syslogger = false;
 
 /*
  * Private state
  */
-static pg_time_t	last_rotation_time = 0;
+static pg_time_t last_rotation_time = 0;
 
-static bool	redirection_done = false;
+static bool redirection_done = false;
 
-static bool	pipe_eof_seen = false;
+static bool pipe_eof_seen = false;
 
 static FILE *syslogFile = NULL;
 
 /* These must be exported for EXEC_BACKEND case ... annoying */
 #ifndef WIN32
-int syslogPipe[2] = {-1, -1};
+int			syslogPipe[2] = {-1, -1};
+
 #else
-HANDLE syslogPipe[2] = {0, 0};
+HANDLE		syslogPipe[2] = {0, 0};
 #endif
 
 #ifdef WIN32
-static HANDLE threadHandle=0;
+static HANDLE threadHandle = 0;
 static CRITICAL_SECTION sysfileSection;
 #endif
 
@@ -104,11 +105,12 @@ static pid_t syslogger_forkexec(void);
 static void syslogger_parseArgs(int argc, char *argv[]);
 #endif
 static void write_syslogger_file_binary(const char *buffer, int count);
+
 #ifdef WIN32
 static unsigned int __stdcall pipeThread(void *arg);
 #endif
 static void logfile_rotate(void);
-static char* logfile_getname(pg_time_t timestamp);
+static char *logfile_getname(pg_time_t timestamp);
 static void sigHupHandler(SIGNAL_ARGS);
 
 
@@ -119,7 +121,7 @@ static void sigHupHandler(SIGNAL_ARGS);
 NON_EXEC_STATIC void
 SysLoggerMain(int argc, char *argv[])
 {
-	char         currentLogDir[MAXPGPATH];
+	char		currentLogDir[MAXPGPATH];
 
 	IsUnderPostmaster = true;	/* we are a postmaster subprocess now */
 
@@ -130,7 +132,7 @@ SysLoggerMain(int argc, char *argv[])
 
 #ifdef EXEC_BACKEND
 	syslogger_parseArgs(argc, argv);
-#endif /* EXEC_BACKEND */
+#endif   /* EXEC_BACKEND */
 
 	am_syslogger = true;
 
@@ -139,20 +141,21 @@ SysLoggerMain(int argc, char *argv[])
 
 	/*
 	 * If we restarted, our stderr is already redirected into our own
-	 * input pipe.  This is of course pretty useless, not to mention that
+	 * input pipe.	This is of course pretty useless, not to mention that
 	 * it interferes with detecting pipe EOF.  Point stderr to /dev/null.
-	 * This assumes that all interesting messages generated in the syslogger
-	 * will come through elog.c and will be sent to write_syslogger_file.
+	 * This assumes that all interesting messages generated in the
+	 * syslogger will come through elog.c and will be sent to
+	 * write_syslogger_file.
 	 */
 	if (redirection_done)
 	{
-		int	fd = open(NULL_DEV, O_WRONLY);
+		int			fd = open(NULL_DEV, O_WRONLY);
 
 		/*
-		 * The closes might look redundant, but they are not: we want to be
-		 * darn sure the pipe gets closed even if the open failed.  We can
-		 * survive running with stderr pointing nowhere, but we can't afford
-		 * to have extra pipe input descriptors hanging around.
+		 * The closes might look redundant, but they are not: we want to
+		 * be darn sure the pipe gets closed even if the open failed.  We
+		 * can survive running with stderr pointing nowhere, but we can't
+		 * afford to have extra pipe input descriptors hanging around.
 		 */
 		close(fileno(stdout));
 		close(fileno(stderr));
@@ -163,7 +166,7 @@ SysLoggerMain(int argc, char *argv[])
 
 	/*
 	 * Also close our copy of the write end of the pipe.  This is needed
-	 * to ensure we can detect pipe EOF correctly.  (But note that in the
+	 * to ensure we can detect pipe EOF correctly.	(But note that in the
 	 * restart case, the postmaster already did this.)
 	 */
 #ifndef WIN32
@@ -185,7 +188,7 @@ SysLoggerMain(int argc, char *argv[])
 	 */
 
 	pqsignal(SIGHUP, sigHupHandler);	/* set flag to read config file */
-	pqsignal(SIGINT,  SIG_IGN);
+	pqsignal(SIGINT, SIG_IGN);
 	pqsignal(SIGTERM, SIG_IGN);
 	pqsignal(SIGQUIT, SIG_IGN);
 	pqsignal(SIGALRM, SIG_IGN);
@@ -211,9 +214,9 @@ SysLoggerMain(int argc, char *argv[])
 	{
 		unsigned int tid;
 
-		threadHandle = (HANDLE)_beginthreadex(0, 0, pipeThread, 0, 0, &tid);
+		threadHandle = (HANDLE) _beginthreadex(0, 0, pipeThread, 0, 0, &tid);
 	}
-#endif  /* WIN32 */
+#endif   /* WIN32 */
 
 	/* remember age of initial logfile */
 	last_rotation_time = time(NULL);
@@ -223,11 +226,12 @@ SysLoggerMain(int argc, char *argv[])
 	/* main worker loop */
 	for (;;)
 	{
-		bool rotation_requested = false;
+		bool		rotation_requested = false;
+
 #ifndef WIN32
-		char        logbuffer[1024];
-		int          bytesRead;
-		int         rc;
+		char		logbuffer[1024];
+		int			bytesRead;
+		int			rc;
 		fd_set		rfds;
 		struct timeval timeout;
 #endif
@@ -238,9 +242,9 @@ SysLoggerMain(int argc, char *argv[])
 			ProcessConfigFile(PGC_SIGHUP);
 
 			/*
-			 * Check if the log directory changed in postgresql.conf. If so,
-			 * force rotation to make sure we're writing the logfiles in the
-			 * right place.
+			 * Check if the log directory changed in postgresql.conf. If
+			 * so, force rotation to make sure we're writing the logfiles
+			 * in the right place.
 			 *
 			 * XXX is it worth responding similarly to a change of
 			 * Log_filename_prefix?
@@ -257,11 +261,11 @@ SysLoggerMain(int argc, char *argv[])
 			Log_RotationAge > 0)
 		{
 			/*
-			 * Do a logfile rotation if too much time has elapsed
-			 * since the last one.
+			 * Do a logfile rotation if too much time has elapsed since
+			 * the last one.
 			 */
-			pg_time_t   now = time(NULL);
-			int         elapsed_secs = now - last_rotation_time;
+			pg_time_t	now = time(NULL);
+			int			elapsed_secs = now - last_rotation_time;
 
 			if (elapsed_secs >= Log_RotationAge * 60)
 				rotation_requested = true;
@@ -280,26 +284,27 @@ SysLoggerMain(int argc, char *argv[])
 			logfile_rotate();
 
 #ifndef WIN32
+
 		/*
 		 * Wait for some data, timing out after 1 second
 		 */
 		FD_ZERO(&rfds);
 		FD_SET(syslogPipe[0], &rfds);
-		timeout.tv_sec=1;
-		timeout.tv_usec=0;
+		timeout.tv_sec = 1;
+		timeout.tv_usec = 0;
 
-		rc = select(syslogPipe[0]+1, &rfds, NULL, NULL, &timeout);
+		rc = select(syslogPipe[0] + 1, &rfds, NULL, NULL, &timeout);
 
 		if (rc < 0)
 		{
 			if (errno != EINTR)
 				ereport(LOG,
 						(errcode_for_socket_access(),
-						 errmsg("select() failed in logger process: %m")));
+					   errmsg("select() failed in logger process: %m")));
 		}
 		else if (rc > 0 && FD_ISSET(syslogPipe[0], &rfds))
 		{
-		    bytesRead = piperead(syslogPipe[0],
+			bytesRead = piperead(syslogPipe[0],
 								 logbuffer, sizeof(logbuffer));
 
 			if (bytesRead < 0)
@@ -307,7 +312,7 @@ SysLoggerMain(int argc, char *argv[])
 				if (errno != EINTR)
 					ereport(LOG,
 							(errcode_for_socket_access(),
-							 errmsg("could not read from logger pipe: %m")));
+						 errmsg("could not read from logger pipe: %m")));
 			}
 			else if (bytesRead > 0)
 			{
@@ -318,33 +323,35 @@ SysLoggerMain(int argc, char *argv[])
 			{
 				/*
 				 * Zero bytes read when select() is saying read-ready
-				 * means EOF on the pipe: that is, there are no longer
-				 * any processes with the pipe write end open.  Therefore,
-				 * the postmaster and all backends are shut down, and we
-				 * are done.
+				 * means EOF on the pipe: that is, there are no longer any
+				 * processes with the pipe write end open.	Therefore, the
+				 * postmaster and all backends are shut down, and we are
+				 * done.
 				 */
 				pipe_eof_seen = true;
 			}
 		}
-#else /* WIN32 */
+#else							/* WIN32 */
+
 		/*
-		 * On Windows we leave it to a separate thread to transfer data and
-		 * detect pipe EOF.  The main thread just wakes up once a second to
-		 * check for SIGHUP and rotation conditions.
+		 * On Windows we leave it to a separate thread to transfer data
+		 * and detect pipe EOF.  The main thread just wakes up once a
+		 * second to check for SIGHUP and rotation conditions.
 		 */
 		pgwin32_backend_usleep(1000000);
-#endif /* WIN32 */
+#endif   /* WIN32 */
 
 		if (pipe_eof_seen)
 		{
 			ereport(LOG,
 					(errmsg("logger shutting down")));
+
 			/*
-			 * Normal exit from the syslogger is here.  Note that we
-			 * deliberately do not close syslogFile before exiting;
-			 * this is to allow for the possibility of elog messages
-			 * being generated inside proc_exit.  Regular exit() will
-			 * take care of flushing and closing stdio channels.
+			 * Normal exit from the syslogger is here.	Note that we
+			 * deliberately do not close syslogFile before exiting; this
+			 * is to allow for the possibility of elog messages being
+			 * generated inside proc_exit.	Regular exit() will take care
+			 * of flushing and closing stdio channels.
 			 */
 			proc_exit(0);
 		}
@@ -357,34 +364,35 @@ SysLoggerMain(int argc, char *argv[])
 int
 SysLogger_Start(void)
 {
-    pid_t sysloggerPid;
-	pg_time_t now;
-	char *filename;
+	pid_t		sysloggerPid;
+	pg_time_t	now;
+	char	   *filename;
 
 	if (!Redirect_stderr)
-	    return 0;
+		return 0;
 
 	/*
-	 * If first time through, create the pipe which will receive stderr output.
+	 * If first time through, create the pipe which will receive stderr
+	 * output.
 	 *
 	 * If the syslogger crashes and needs to be restarted, we continue to use
-	 * the same pipe (indeed must do so, since extant backends will be writing
-	 * into that pipe).
+	 * the same pipe (indeed must do so, since extant backends will be
+	 * writing into that pipe).
 	 *
 	 * This means the postmaster must continue to hold the read end of the
 	 * pipe open, so we can pass it down to the reincarnated syslogger.
 	 * This is a bit klugy but we have little choice.
 	 */
 #ifndef WIN32
-    if (syslogPipe[0] < 0)
+	if (syslogPipe[0] < 0)
 	{
-	    if (pgpipe(syslogPipe) < 0)
-		    ereport(FATAL,
+		if (pgpipe(syslogPipe) < 0)
+			ereport(FATAL,
 					(errcode_for_socket_access(),
-					 (errmsg("could not create pipe for syslogging: %m"))));
+				  (errmsg("could not create pipe for syslogging: %m"))));
 	}
 #else
-    if (!syslogPipe[0])
+	if (!syslogPipe[0])
 	{
 		SECURITY_ATTRIBUTES sa;
 
@@ -393,9 +401,9 @@ SysLogger_Start(void)
 		sa.bInheritHandle = TRUE;
 
 		if (!CreatePipe(&syslogPipe[0], &syslogPipe[1], &sa, 32768))
-		    ereport(FATAL,
+			ereport(FATAL,
 					(errcode_for_file_access(),
-					 (errmsg("could not create pipe for syslogging: %m"))));
+				  (errmsg("could not create pipe for syslogging: %m"))));
 	}
 #endif
 
@@ -413,8 +421,8 @@ SysLogger_Start(void)
 	}
 
 	/*
-	 * The initial logfile is created right in the postmaster,
-	 * to verify that the Log_directory is writable.
+	 * The initial logfile is created right in the postmaster, to verify
+	 * that the Log_directory is writable.
 	 */
 	now = time(NULL);
 	filename = logfile_getname(now);
@@ -422,7 +430,7 @@ SysLogger_Start(void)
 	syslogFile = fopen(filename, "a");
 
 	if (!syslogFile)
-	    ereport(FATAL,
+		ereport(FATAL,
 				(errcode_for_file_access(),
 				 (errmsg("could not create logfile \"%s\": %m",
 						 filename))));
@@ -496,7 +504,7 @@ SysLogger_Start(void)
 				close(syslogPipe[1]);
 				syslogPipe[1] = -1;
 #else
-				int		fd;
+				int			fd;
 
 				fflush(stderr);
 				fd = _open_osfhandle((long) syslogPipe[1],
@@ -534,9 +542,11 @@ SysLogger_Start(void)
 static pid_t
 syslogger_forkexec(void)
 {
-	char *av[10];
-	int ac = 0, bufc = 0, i;
-	char numbuf[2][32];
+	char	   *av[10];
+	int			ac = 0,
+				bufc = 0,
+				i;
+	char		numbuf[2][32];
 
 	av[ac++] = "postgres";
 	av[ac++] = "-forklog";
@@ -545,18 +555,18 @@ syslogger_forkexec(void)
 	/* static variables (those not passed by write_backend_variables) */
 #ifndef WIN32
 	if (syslogFile != NULL)
-	    snprintf(numbuf[bufc++], 32, "%d", fileno(syslogFile));
-    else
-	    strcpy(numbuf[bufc++], "-1");
+		snprintf(numbuf[bufc++], 32, "%d", fileno(syslogFile));
+	else
+		strcpy(numbuf[bufc++], "-1");
 	snprintf(numbuf[bufc++], 32, "%d", (int) redirection_done);
-#else  /* WIN32 */
+#else							/* WIN32 */
 	if (syslogFile != NULL)
-	    snprintf(numbuf[bufc++], 32, "%ld",
+		snprintf(numbuf[bufc++], 32, "%ld",
 				 _get_osfhandle(_fileno(syslogFile)));
-    else
-	    strcpy(numbuf[bufc++], "0");
+	else
+		strcpy(numbuf[bufc++], "0");
 	snprintf(numbuf[bufc++], 32, "%d", (int) redirection_done);
-#endif /* WIN32 */
+#endif   /* WIN32 */
 
 	/* Add to the arg list */
 	Assert(bufc <= lengthof(numbuf));
@@ -577,7 +587,7 @@ syslogger_forkexec(void)
 static void
 syslogger_parseArgs(int argc, char *argv[])
 {
-    int fd;
+	int			fd;
 
 	Assert(argc == 5);
 	argv += 3;
@@ -586,11 +596,11 @@ syslogger_parseArgs(int argc, char *argv[])
 	fd = atoi(*argv++);
 	if (fd != -1)
 	{
-	    syslogFile = fdopen(fd, "a");
+		syslogFile = fdopen(fd, "a");
 		setvbuf(syslogFile, NULL, LBF_MODE, 0);
 	}
 	redirection_done = (bool) atoi(*argv++);
-#else  /* WIN32 */
+#else							/* WIN32 */
 	fd = atoi(*argv++);
 	if (fd != 0)
 	{
@@ -602,10 +612,9 @@ syslogger_parseArgs(int argc, char *argv[])
 		}
 	}
 	redirection_done = (bool) atoi(*argv++);
-#endif /* WIN32 */
+#endif   /* WIN32 */
 }
-
-#endif /* EXEC_BACKEND */
+#endif   /* EXEC_BACKEND */
 
 
 /* --------------------------------
@@ -624,23 +633,24 @@ void
 write_syslogger_file(const char *buffer, int count)
 {
 #ifdef WIN32
+
 	/*
 	 * On Windows we need to do our own newline-to-CRLF translation.
 	 */
-	char	convbuf[256];
-	char   *p;
-	int		n;
+	char		convbuf[256];
+	char	   *p;
+	int			n;
 
 	p = convbuf;
 	n = 0;
 	while (count-- > 0)
 	{
-        if (*buffer == '\n')
-        {
-            *p++ = '\r';
+		if (*buffer == '\n')
+		{
+			*p++ = '\r';
 			n++;
-        }
-        *p++ = *buffer++;
+		}
+		*p++ = *buffer++;
 		n++;
 		if (n >= sizeof(convbuf) - 1)
 		{
@@ -648,10 +658,10 @@ write_syslogger_file(const char *buffer, int count)
 			p = convbuf;
 			n = 0;
 		}
-    }
+	}
 	if (n > 0)
 		write_syslogger_file_binary(convbuf, n);
-#else  /* !WIN32 */
+#else							/* !WIN32 */
 	write_syslogger_file_binary(buffer, count);
 #endif
 }
@@ -665,18 +675,18 @@ write_syslogger_file(const char *buffer, int count)
 static void
 write_syslogger_file_binary(const char *buffer, int count)
 {
-    int rc;
+	int			rc;
 
 #ifndef WIN32
-    rc = fwrite(buffer, 1, count, syslogFile);
+	rc = fwrite(buffer, 1, count, syslogFile);
 #else
-    EnterCriticalSection(&sysfileSection);
-    rc = fwrite(buffer, 1, count, syslogFile);
-    LeaveCriticalSection(&sysfileSection);
+	EnterCriticalSection(&sysfileSection);
+	rc = fwrite(buffer, 1, count, syslogFile);
+	LeaveCriticalSection(&sysfileSection);
 #endif
 
-    if (rc != count)
-        ereport(LOG,
+	if (rc != count)
+		ereport(LOG,
 				(errcode_for_file_access(),
 				 errmsg("could not write to logfile: %m")));
 }
@@ -693,15 +703,15 @@ write_syslogger_file_binary(const char *buffer, int count)
 static unsigned int __stdcall
 pipeThread(void *arg)
 {
-    DWORD bytesRead;
-    char    logbuffer[1024];
+	DWORD		bytesRead;
+	char		logbuffer[1024];
 
-    for (;;)
-    {
-        if (!ReadFile(syslogPipe[0], logbuffer, sizeof(logbuffer),
+	for (;;)
+	{
+		if (!ReadFile(syslogPipe[0], logbuffer, sizeof(logbuffer),
 					  &bytesRead, 0))
 		{
-			DWORD error = GetLastError();
+			DWORD		error = GetLastError();
 
 			if (error == ERROR_HANDLE_EOF ||
 				error == ERROR_BROKEN_PIPE)
@@ -711,17 +721,16 @@ pipeThread(void *arg)
 					(errcode_for_file_access(),
 					 errmsg("could not read from logger pipe: %m")));
 		}
-        else if (bytesRead > 0)
-            write_syslogger_file_binary(logbuffer, bytesRead);
-    }
+		else if (bytesRead > 0)
+			write_syslogger_file_binary(logbuffer, bytesRead);
+	}
 
 	/* We exit the above loop only upon detecting pipe EOF */
 	pipe_eof_seen = true;
-    _endthread();
-    return 0;
+	_endthread();
+	return 0;
 }
-
-#endif /* WIN32 */
+#endif   /* WIN32 */
 
 /*
  * perform logfile rotation
@@ -729,9 +738,9 @@ pipeThread(void *arg)
 static void
 logfile_rotate(void)
 {
-	char *filename;
-	pg_time_t now;
-	FILE *fh;
+	char	   *filename;
+	pg_time_t	now;
+	FILE	   *fh;
 
 	now = time(NULL);
 	filename = logfile_getname(now);
@@ -739,7 +748,7 @@ logfile_rotate(void)
 	fh = fopen(filename, "a");
 	if (!fh)
 	{
-		int	saveerrno = errno;
+		int			saveerrno = errno;
 
 		ereport(LOG,
 				(errcode_for_file_access(),
@@ -747,15 +756,15 @@ logfile_rotate(void)
 						filename)));
 
 		/*
-		 * ENFILE/EMFILE are not too surprising on a busy system; just keep
-		 * using the old file till we manage to get a new one.  Otherwise,
-		 * assume something's wrong with Log_directory and stop trying to
-		 * create files.
+		 * ENFILE/EMFILE are not too surprising on a busy system; just
+		 * keep using the old file till we manage to get a new one.
+		 * Otherwise, assume something's wrong with Log_directory and stop
+		 * trying to create files.
 		 */
 		if (saveerrno != ENFILE && saveerrno != EMFILE)
 		{
 			ereport(LOG,
-				(errmsg("disabling auto rotation (use SIGHUP to reenable)")));
+			(errmsg("disabling auto rotation (use SIGHUP to reenable)")));
 			Log_RotationAge = 0;
 			Log_RotationSize = 0;
 		}
@@ -786,11 +795,11 @@ logfile_rotate(void)
  *
  * Result is palloc'd.
  */
-static char*
+static char *
 logfile_getname(pg_time_t timestamp)
 {
-	char *filename;
-	char stamptext[128];
+	char	   *filename;
+	char		stamptext[128];
 
 	pg_strftime(stamptext, sizeof(stamptext), "%Y-%m-%d_%H%M%S",
 				pg_localtime(&timestamp));
@@ -818,5 +827,5 @@ logfile_getname(pg_time_t timestamp)
 static void
 sigHupHandler(SIGNAL_ARGS)
 {
-    got_SIGHUP = true;
+	got_SIGHUP = true;
 }

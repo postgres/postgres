@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/timestamp.h,v 1.38 2004/08/29 04:13:11 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/timestamp.h,v 1.39 2004/08/29 05:06:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -252,7 +252,7 @@ extern Datum now(PG_FUNCTION_ARGS);
 /* Internal routines (not fmgr-callable) */
 
 extern int	tm2timestamp(struct pg_tm * tm, fsec_t fsec, int *tzp, Timestamp *dt);
-extern int	timestamp2tm(Timestamp dt, int *tzp, struct pg_tm * tm,
+extern int timestamp2tm(Timestamp dt, int *tzp, struct pg_tm * tm,
 			 fsec_t *fsec, char **tzn);
 extern void dt2time(Timestamp dt, int *hour, int *min, int *sec, fsec_t *fsec);
 
@@ -263,6 +263,7 @@ extern Timestamp SetEpochTimestamp(void);
 extern void GetEpochTime(struct pg_tm * tm);
 
 extern int	timestamp_cmp_internal(Timestamp dt1, Timestamp dt2);
+
 /* timestamp comparison works for timestamptz also */
 #define timestamptz_cmp_internal(dt1,dt2)	timestamp_cmp_internal(dt1, dt2)
 

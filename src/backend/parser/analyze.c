@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.310 2004/08/29 04:12:35 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.311 2004/08/29 05:06:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -100,7 +100,7 @@ static List *do_parse_analyze(Node *parseTree, ParseState *pstate);
 static Query *transformStmt(ParseState *pstate, Node *stmt,
 			  List **extras_before, List **extras_after);
 static Query *transformViewStmt(ParseState *pstate, ViewStmt *stmt,
-								List **extras_before, List **extras_after);
+				  List **extras_before, List **extras_after);
 static Query *transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt);
 static Query *transformInsertStmt(ParseState *pstate, InsertStmt *stmt,
 					List **extras_before, List **extras_after);
@@ -403,7 +403,7 @@ static Query *
 transformViewStmt(ParseState *pstate, ViewStmt *stmt,
 				  List **extras_before, List **extras_after)
 {
-	Query *result = makeNode(Query);
+	Query	   *result = makeNode(Query);
 
 	result->commandType = CMD_UTILITY;
 	result->utilityStmt = (Node *) stmt;
@@ -412,16 +412,16 @@ transformViewStmt(ParseState *pstate, ViewStmt *stmt,
 								extras_before, extras_after);
 
 	/*
-	 * If a list of column names was given, run through and insert
-	 * these into the actual query tree. - thomas 2000-03-08
+	 * If a list of column names was given, run through and insert these
+	 * into the actual query tree. - thomas 2000-03-08
 	 *
 	 * Outer loop is over targetlist to make it easier to skip junk
 	 * targetlist entries.
 	 */
 	if (stmt->aliases != NIL)
 	{
-		ListCell	   *alist_item = list_head(stmt->aliases);
-		ListCell	   *targetList;
+		ListCell   *alist_item = list_head(stmt->aliases);
+		ListCell   *targetList;
 
 		foreach(targetList, stmt->query->targetList)
 		{
@@ -437,7 +437,7 @@ transformViewStmt(ParseState *pstate, ViewStmt *stmt,
 			rd->resname = pstrdup(strVal(lfirst(alist_item)));
 			alist_item = lnext(alist_item);
 			if (alist_item == NULL)
-				break;		/* done assigning aliases */
+				break;			/* done assigning aliases */
 		}
 
 		if (alist_item != NULL)
@@ -846,13 +846,13 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 		/*
 		 * Determine namespace and name to use for the sequence.
 		 *
-		 * Although we use ChooseRelationName, it's not guaranteed that
-		 * the selected sequence name won't conflict; given sufficiently
-		 * long field names, two different serial columns in the same table
+		 * Although we use ChooseRelationName, it's not guaranteed that the
+		 * selected sequence name won't conflict; given sufficiently long
+		 * field names, two different serial columns in the same table
 		 * could be assigned the same sequence name, and we'd not notice
 		 * since we aren't creating the sequence quite yet.  In practice
-		 * this seems quite unlikely to be a problem, especially since
-		 * few people would need two serial columns in one table.
+		 * this seems quite unlikely to be a problem, especially since few
+		 * people would need two serial columns in one table.
 		 */
 		snamespaceid = RangeVarGetCreationNamespace(cxt->relation);
 		snamespace = get_namespace_name(snamespaceid);
@@ -946,7 +946,7 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("conflicting NULL/NOT NULL declarations for column \"%s\" of table \"%s\"",
-									column->colname, cxt->relation->relname)));
+							  column->colname, cxt->relation->relname)));
 				column->is_not_null = FALSE;
 				saw_nullable = true;
 				break;
@@ -956,7 +956,7 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("conflicting NULL/NOT NULL declarations for column \"%s\" of table \"%s\"",
-									column->colname, cxt->relation->relname)));
+							  column->colname, cxt->relation->relname)));
 				column->is_not_null = TRUE;
 				saw_nullable = true;
 				break;
@@ -966,7 +966,7 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("multiple default values specified for column \"%s\" of table \"%s\"",
-									column->colname, cxt->relation->relname)));
+							  column->colname, cxt->relation->relname)));
 				column->raw_default = constraint->raw_expr;
 				Assert(constraint->cooked_expr == NULL);
 				break;
@@ -1185,6 +1185,7 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 						 errmsg("multiple primary keys for table \"%s\" are not allowed",
 								cxt->relation->relname)));
 			cxt->pkey = index;
+
 			/*
 			 * In ALTER TABLE case, a primary index might already exist,
 			 * but DefineIndex will check for it.
@@ -1363,11 +1364,10 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 			if (equal(index->indexParams, priorindex->indexParams))
 			{
 				/*
-				 * If the prior index is as yet unnamed, and this one
-				 * is named, then transfer the name to the prior
-				 * index. This ensures that if we have named and
-				 * unnamed constraints, we'll use (at least one of)
-				 * the names for the index.
+				 * If the prior index is as yet unnamed, and this one is
+				 * named, then transfer the name to the prior index. This
+				 * ensures that if we have named and unnamed constraints,
+				 * we'll use (at least one of) the names for the index.
 				 */
 				if (priorindex->idxname == NULL)
 					priorindex->idxname = index->idxname;
@@ -1406,9 +1406,9 @@ transformFKConstraints(ParseState *pstate, CreateStmtContext *cxt,
 
 	/*
 	 * For CREATE TABLE or ALTER TABLE ADD COLUMN, gin up an ALTER TABLE
-	 * ADD CONSTRAINT command to execute after the basic command is complete.
-	 * (If called from ADD CONSTRAINT, that routine will add the FK constraints
-	 * to its own subcommand list.)
+	 * ADD CONSTRAINT command to execute after the basic command is
+	 * complete. (If called from ADD CONSTRAINT, that routine will add the
+	 * FK constraints to its own subcommand list.)
 	 *
 	 * Note: the ADD CONSTRAINT command must also execute after any index
 	 * creation commands.  Thus, this should run after
@@ -1426,7 +1426,7 @@ transformFKConstraints(ParseState *pstate, CreateStmtContext *cxt,
 		foreach(fkclist, cxt->fkconstraints)
 		{
 			FkConstraint *fkconstraint = (FkConstraint *) lfirst(fkclist);
-			AlterTableCmd  *altercmd = makeNode(AlterTableCmd);
+			AlterTableCmd *altercmd = makeNode(AlterTableCmd);
 
 			altercmd->subtype = AT_ProcessedConstraint;
 			altercmd->name = NULL;
@@ -1585,7 +1585,7 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt,
 	stmt->whereClause = transformWhereClause(pstate, stmt->whereClause,
 											 "WHERE");
 
-	if (list_length(pstate->p_rtable) != 2)	/* naughty, naughty... */
+	if (list_length(pstate->p_rtable) != 2)		/* naughty, naughty... */
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 				 errmsg("rule WHERE condition may not contain references to other relations")));
@@ -2273,8 +2273,8 @@ getSetColTypes(ParseState *pstate, Node *node)
 static void
 applyColumnNames(List *dst, List *src)
 {
-	ListCell *dst_item = list_head(dst);
-	ListCell *src_item = list_head(src);
+	ListCell   *dst_item = list_head(dst);
+	ListCell   *src_item = list_head(src);
 
 	if (list_length(src) > list_length(dst))
 		ereport(ERROR,
@@ -2356,9 +2356,9 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 		{
 			/*
 			 * Resjunk nodes need no additional processing, but be sure
-			 * they have resnos that do not match any target columns;
-			 * else rewriter or planner might get confused.  They don't
-			 * need a resname either.
+			 * they have resnos that do not match any target columns; else
+			 * rewriter or planner might get confused.	They don't need a
+			 * resname either.
 			 */
 			resnode->resno = (AttrNumber) pstate->p_next_resno++;
 			resnode->resname = NULL;
@@ -2396,7 +2396,7 @@ transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt,
 			   *l;
 	List	   *newcmds = NIL;
 	bool		skipValidation = true;
-	AlterTableCmd  *newcmd;
+	AlterTableCmd *newcmd;
 
 	cxt.stmtType = "ALTER TABLE";
 	cxt.relation = stmt->relation;
@@ -2413,58 +2413,62 @@ transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt,
 
 	/*
 	 * The only subtypes that currently require parse transformation
-	 * handling are ADD COLUMN and ADD CONSTRAINT.	These largely
-	 * re-use code from CREATE TABLE.
+	 * handling are ADD COLUMN and ADD CONSTRAINT.	These largely re-use
+	 * code from CREATE TABLE.
 	 */
 	foreach(lcmd, stmt->cmds)
 	{
-		AlterTableCmd  *cmd = (AlterTableCmd *) lfirst(lcmd);
+		AlterTableCmd *cmd = (AlterTableCmd *) lfirst(lcmd);
 
 		switch (cmd->subtype)
 		{
 			case AT_AddColumn:
-			{
-				ColumnDef *def = (ColumnDef *) cmd->def;
-
-				Assert(IsA(cmd->def, ColumnDef));
-				transformColumnDefinition(pstate, &cxt,
-										  (ColumnDef *) cmd->def);
-
-				/*
-				 * If the column has a non-null default, we can't skip
-				 * validation of foreign keys.
-				 */
-				if (((ColumnDef *) cmd->def)->raw_default != NULL)
-					skipValidation = false;
-
-				newcmds = lappend(newcmds, cmd);
-
-				/*
-				 * Convert an ADD COLUMN ... NOT NULL constraint to a separate
-				 * command
-				 */
-				if (def->is_not_null)
 				{
-					/* Remove NOT NULL from AddColumn */
-					def->is_not_null = false;
+					ColumnDef  *def = (ColumnDef *) cmd->def;
 
-					/* Add as a separate AlterTableCmd */
-					newcmd = makeNode(AlterTableCmd);
-					newcmd->subtype = AT_SetNotNull;
-					newcmd->name = pstrdup(def->colname);
-					newcmds = lappend(newcmds, newcmd);
+					Assert(IsA(cmd->def, ColumnDef));
+					transformColumnDefinition(pstate, &cxt,
+											  (ColumnDef *) cmd->def);
+
+					/*
+					 * If the column has a non-null default, we can't skip
+					 * validation of foreign keys.
+					 */
+					if (((ColumnDef *) cmd->def)->raw_default != NULL)
+						skipValidation = false;
+
+					newcmds = lappend(newcmds, cmd);
+
+					/*
+					 * Convert an ADD COLUMN ... NOT NULL constraint to a
+					 * separate command
+					 */
+					if (def->is_not_null)
+					{
+						/* Remove NOT NULL from AddColumn */
+						def->is_not_null = false;
+
+						/* Add as a separate AlterTableCmd */
+						newcmd = makeNode(AlterTableCmd);
+						newcmd->subtype = AT_SetNotNull;
+						newcmd->name = pstrdup(def->colname);
+						newcmds = lappend(newcmds, newcmd);
+					}
+
+					/*
+					 * All constraints are processed in other ways. Remove
+					 * the original list
+					 */
+					def->constraints = NIL;
+
+					break;
 				}
+			case AT_AddConstraint:
 
 				/*
-				 * All constraints are processed in other ways.
-				 * Remove the original list
+				 * The original AddConstraint cmd node doesn't go to
+				 * newcmds
 				 */
-				def->constraints = NIL;
-
-				break;
-			}
-			case AT_AddConstraint:
-				/* The original AddConstraint cmd node doesn't go to newcmds */
 
 				if (IsA(cmd->def, Constraint))
 					transformTableConstraint(pstate, &cxt,
@@ -2482,8 +2486,8 @@ transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt,
 			case AT_ProcessedConstraint:
 
 				/*
-				 * Already-transformed ADD CONSTRAINT, so just make it look
-				 * like the standard case.
+				 * Already-transformed ADD CONSTRAINT, so just make it
+				 * look like the standard case.
 				 */
 				cmd->subtype = AT_AddConstraint;
 				newcmds = lappend(newcmds, cmd);
@@ -2501,12 +2505,12 @@ transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt,
 	transformFKConstraints(pstate, &cxt, skipValidation, true);
 
 	/*
-	 * Push any index-creation commands into the ALTER, so that
-	 * they can be scheduled nicely by tablecmds.c.
+	 * Push any index-creation commands into the ALTER, so that they can
+	 * be scheduled nicely by tablecmds.c.
 	 */
 	foreach(l, cxt.alist)
 	{
-		Node   *idxstmt = (Node *) lfirst(l);
+		Node	   *idxstmt = (Node *) lfirst(l);
 
 		Assert(IsA(idxstmt, IndexStmt));
 		newcmd = makeNode(AlterTableCmd);
@@ -2642,7 +2646,8 @@ transformExecuteStmt(ParseState *pstate, ExecuteStmt *stmt)
 	{
 		int			nparams = list_length(stmt->params);
 		int			nexpected = list_length(paramtypes);
-		ListCell   *l, *l2;
+		ListCell   *l,
+				   *l2;
 		int			i = 1;
 
 		if (nparams != nexpected)
@@ -2665,11 +2670,11 @@ transformExecuteStmt(ParseState *pstate, ExecuteStmt *stmt)
 			if (pstate->p_hasSubLinks)
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				  errmsg("cannot use subquery in EXECUTE parameter")));
+					errmsg("cannot use subquery in EXECUTE parameter")));
 			if (pstate->p_hasAggs)
 				ereport(ERROR,
 						(errcode(ERRCODE_GROUPING_ERROR),
-				   errmsg("cannot use aggregate function in EXECUTE parameter")));
+						 errmsg("cannot use aggregate function in EXECUTE parameter")));
 
 			given_type_id = exprType(expr);
 
@@ -2714,7 +2719,7 @@ CheckSelectForUpdate(Query *qry)
 	if (qry->hasAggs)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("SELECT FOR UPDATE is not allowed with aggregate functions")));
+				 errmsg("SELECT FOR UPDATE is not allowed with aggregate functions")));
 }
 
 /*
@@ -2750,6 +2755,7 @@ transformForUpdate(Query *qry, List *forUpdate)
 					rte->requiredPerms |= ACL_SELECT_FOR_UPDATE;
 					break;
 				case RTE_SUBQUERY:
+
 					/*
 					 * FOR UPDATE of subquery is propagated to subquery's
 					 * rels
@@ -2780,11 +2786,12 @@ transformForUpdate(Query *qry, List *forUpdate)
 					switch (rte->rtekind)
 					{
 						case RTE_RELATION:
-							if (!list_member_int(rowMarks, i)) /* avoid duplicates */
+							if (!list_member_int(rowMarks, i))	/* avoid duplicates */
 								rowMarks = lappend_int(rowMarks, i);
 							rte->requiredPerms |= ACL_SELECT_FOR_UPDATE;
 							break;
 						case RTE_SUBQUERY:
+
 							/*
 							 * FOR UPDATE of subquery is propagated to
 							 * subquery's rels
@@ -2793,18 +2800,18 @@ transformForUpdate(Query *qry, List *forUpdate)
 							break;
 						case RTE_JOIN:
 							ereport(ERROR,
-									(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-									 errmsg("SELECT FOR UPDATE cannot be applied to a join")));
+								 (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								  errmsg("SELECT FOR UPDATE cannot be applied to a join")));
 							break;
 						case RTE_SPECIAL:
 							ereport(ERROR,
-									(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-									 errmsg("SELECT FOR UPDATE cannot be applied to NEW or OLD")));
+								 (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								  errmsg("SELECT FOR UPDATE cannot be applied to NEW or OLD")));
 							break;
 						case RTE_FUNCTION:
 							ereport(ERROR,
-									(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-									 errmsg("SELECT FOR UPDATE cannot be applied to a function")));
+								 (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								  errmsg("SELECT FOR UPDATE cannot be applied to a function")));
 							break;
 						default:
 							elog(ERROR, "unrecognized RTE type: %d",
@@ -3065,7 +3072,7 @@ analyzeCreateSchemaStmt(CreateSchemaStmt *stmt)
 
 			case T_IndexStmt:
 				{
-					IndexStmt *elp = (IndexStmt *) element;
+					IndexStmt  *elp = (IndexStmt *) element;
 
 					setSchemaName(cxt.schemaname, &elp->relation->schemaname);
 					cxt.indexes = lappend(cxt.indexes, element);
@@ -3131,8 +3138,8 @@ check_parameter_resolution_walker(Node *node,
 			if (param->paramtype != context->paramTypes[paramno - 1])
 				ereport(ERROR,
 						(errcode(ERRCODE_AMBIGUOUS_PARAMETER),
-				  errmsg("could not determine data type of parameter $%d",
-						 paramno)));
+				 errmsg("could not determine data type of parameter $%d",
+						paramno)));
 		}
 		return false;
 	}

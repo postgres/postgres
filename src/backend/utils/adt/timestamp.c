@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.111 2004/08/29 04:12:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.112 2004/08/29 05:06:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,7 +70,7 @@ timestamp_in(PG_FUNCTION_ARGS)
 	int32		typmod = PG_GETARG_INT32(2);
 	Timestamp	result;
 	fsec_t		fsec;
-	struct pg_tm	tt,
+	struct pg_tm tt,
 			   *tm = &tt;
 	int			tz;
 	int			dtype;
@@ -137,7 +137,7 @@ timestamp_out(PG_FUNCTION_ARGS)
 {
 	Timestamp	timestamp = PG_GETARG_TIMESTAMP(0);
 	char	   *result;
-	struct pg_tm	tt,
+	struct pg_tm tt,
 			   *tm = &tt;
 	fsec_t		fsec;
 	char	   *tzn = NULL;
@@ -167,7 +167,7 @@ timestamp_recv(PG_FUNCTION_ARGS)
 {
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
 	Timestamp	timestamp;
-	struct pg_tm	tt,
+	struct pg_tm tt,
 			   *tm = &tt;
 	fsec_t		fsec;
 
@@ -179,7 +179,7 @@ timestamp_recv(PG_FUNCTION_ARGS)
 
 	/* rangecheck: see if timestamp_out would like it */
 	if (TIMESTAMP_NOT_FINITE(timestamp))
-		/* ok */;
+		 /* ok */ ;
 	else if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL) != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
@@ -310,7 +310,7 @@ timestamptz_in(PG_FUNCTION_ARGS)
 	int32		typmod = PG_GETARG_INT32(2);
 	TimestampTz result;
 	fsec_t		fsec;
-	struct pg_tm	tt,
+	struct pg_tm tt,
 			   *tm = &tt;
 	int			tz;
 	int			dtype;
@@ -378,7 +378,7 @@ timestamptz_out(PG_FUNCTION_ARGS)
 	TimestampTz dt = PG_GETARG_TIMESTAMPTZ(0);
 	char	   *result;
 	int			tz;
-	struct pg_tm	tt,
+	struct pg_tm tt,
 			   *tm = &tt;
 	fsec_t		fsec;
 	char	   *tzn;
@@ -407,9 +407,9 @@ Datum
 timestamptz_recv(PG_FUNCTION_ARGS)
 {
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
-	TimestampTz	timestamp;
+	TimestampTz timestamp;
 	int			tz;
-	struct pg_tm	tt,
+	struct pg_tm tt,
 			   *tm = &tt;
 	fsec_t		fsec;
 	char	   *tzn;
@@ -422,7 +422,7 @@ timestamptz_recv(PG_FUNCTION_ARGS)
 
 	/* rangecheck: see if timestamptz_out would like it */
 	if (TIMESTAMP_NOT_FINITE(timestamp))
-		/* ok */;
+		 /* ok */ ;
 	else if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn) != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
@@ -486,7 +486,7 @@ interval_in(PG_FUNCTION_ARGS)
 	int32		typmod = PG_GETARG_INT32(2);
 	Interval   *result;
 	fsec_t		fsec;
-	struct pg_tm	tt,
+	struct pg_tm tt,
 			   *tm = &tt;
 	int			dtype;
 	int			nf;
@@ -550,7 +550,7 @@ interval_out(PG_FUNCTION_ARGS)
 {
 	Interval   *span = PG_GETARG_INTERVAL_P(0);
 	char	   *result;
-	struct pg_tm	tt,
+	struct pg_tm tt,
 			   *tm = &tt;
 	fsec_t		fsec;
 	char		buf[MAXDATELEN + 1];
@@ -961,7 +961,7 @@ dt2time(Timestamp jd, int *hour, int *min, int *sec, fsec_t *fsec)
  *	-1 on out of range
  */
 int
-timestamp2tm(Timestamp dt, int *tzp, struct pg_tm *tm, fsec_t *fsec, char **tzn)
+timestamp2tm(Timestamp dt, int *tzp, struct pg_tm * tm, fsec_t *fsec, char **tzn)
 {
 	Timestamp	date;
 	Timestamp	time;
@@ -1042,7 +1042,7 @@ timestamp2tm(Timestamp dt, int *tzp, struct pg_tm *tm, fsec_t *fsec, char **tzn)
 	 *
 	 * First, convert to an integral timestamp, avoiding possibly
 	 * platform-specific roundoff-in-wrong-direction errors, and adjust to
-	 * Unix epoch.  Then see if we can convert to pg_time_t without loss.
+	 * Unix epoch.	Then see if we can convert to pg_time_t without loss.
 	 * This coding avoids hardwiring any assumptions about the width of
 	 * pg_time_t, so it should behave sanely on machines without int64.
 	 */
@@ -1056,7 +1056,7 @@ timestamp2tm(Timestamp dt, int *tzp, struct pg_tm *tm, fsec_t *fsec, char **tzn)
 	utime = (pg_time_t) dt;
 	if ((Timestamp) utime == dt)
 	{
-		struct pg_tm  *tx = pg_localtime(&utime);
+		struct pg_tm *tx = pg_localtime(&utime);
 
 		tm->tm_year = tx->tm_year + 1900;
 		tm->tm_mon = tx->tm_mon + 1;
@@ -1102,6 +1102,7 @@ tm2timestamp(struct pg_tm * tm, fsec_t fsec, int *tzp, Timestamp *result)
 #ifdef HAVE_INT64_TIMESTAMP
 	int			date;
 	int64		time;
+
 #else
 	double		date,
 				time;
@@ -1139,6 +1140,7 @@ interval2tm(Interval span, struct pg_tm * tm, fsec_t *fsec)
 {
 #ifdef HAVE_INT64_TIMESTAMP
 	int64		time;
+
 #else
 	double		time;
 #endif
@@ -1252,8 +1254,8 @@ interval_finite(PG_FUNCTION_ARGS)
 void
 GetEpochTime(struct pg_tm * tm)
 {
-	struct pg_tm  *t0;
-	pg_time_t		epoch = 0;
+	struct pg_tm *t0;
+	pg_time_t	epoch = 0;
 
 	t0 = pg_gmtime(&epoch);
 
@@ -1272,7 +1274,7 @@ Timestamp
 SetEpochTimestamp(void)
 {
 	Timestamp	dt;
-	struct pg_tm	tt,
+	struct pg_tm tt,
 			   *tm = &tt;
 
 	GetEpochTime(tm);
@@ -1399,8 +1401,8 @@ Datum
 timestamp_eq_timestamptz(PG_FUNCTION_ARGS)
 {
 	Timestamp	timestampVal = PG_GETARG_TIMESTAMP(0);
-	TimestampTz	dt2 = PG_GETARG_TIMESTAMPTZ(1);
-	TimestampTz	dt1;
+	TimestampTz dt2 = PG_GETARG_TIMESTAMPTZ(1);
+	TimestampTz dt1;
 
 	dt1 = timestamp2timestamptz(timestampVal);
 
@@ -1411,8 +1413,8 @@ Datum
 timestamp_ne_timestamptz(PG_FUNCTION_ARGS)
 {
 	Timestamp	timestampVal = PG_GETARG_TIMESTAMP(0);
-	TimestampTz	dt2 = PG_GETARG_TIMESTAMPTZ(1);
-	TimestampTz	dt1;
+	TimestampTz dt2 = PG_GETARG_TIMESTAMPTZ(1);
+	TimestampTz dt1;
 
 	dt1 = timestamp2timestamptz(timestampVal);
 
@@ -1423,8 +1425,8 @@ Datum
 timestamp_lt_timestamptz(PG_FUNCTION_ARGS)
 {
 	Timestamp	timestampVal = PG_GETARG_TIMESTAMP(0);
-	TimestampTz	dt2 = PG_GETARG_TIMESTAMPTZ(1);
-	TimestampTz	dt1;
+	TimestampTz dt2 = PG_GETARG_TIMESTAMPTZ(1);
+	TimestampTz dt1;
 
 	dt1 = timestamp2timestamptz(timestampVal);
 
@@ -1435,8 +1437,8 @@ Datum
 timestamp_gt_timestamptz(PG_FUNCTION_ARGS)
 {
 	Timestamp	timestampVal = PG_GETARG_TIMESTAMP(0);
-	TimestampTz	dt2 = PG_GETARG_TIMESTAMPTZ(1);
-	TimestampTz	dt1;
+	TimestampTz dt2 = PG_GETARG_TIMESTAMPTZ(1);
+	TimestampTz dt1;
 
 	dt1 = timestamp2timestamptz(timestampVal);
 
@@ -1447,8 +1449,8 @@ Datum
 timestamp_le_timestamptz(PG_FUNCTION_ARGS)
 {
 	Timestamp	timestampVal = PG_GETARG_TIMESTAMP(0);
-	TimestampTz	dt2 = PG_GETARG_TIMESTAMPTZ(1);
-	TimestampTz	dt1;
+	TimestampTz dt2 = PG_GETARG_TIMESTAMPTZ(1);
+	TimestampTz dt1;
 
 	dt1 = timestamp2timestamptz(timestampVal);
 
@@ -1459,8 +1461,8 @@ Datum
 timestamp_ge_timestamptz(PG_FUNCTION_ARGS)
 {
 	Timestamp	timestampVal = PG_GETARG_TIMESTAMP(0);
-	TimestampTz	dt2 = PG_GETARG_TIMESTAMPTZ(1);
-	TimestampTz	dt1;
+	TimestampTz dt2 = PG_GETARG_TIMESTAMPTZ(1);
+	TimestampTz dt1;
 
 	dt1 = timestamp2timestamptz(timestampVal);
 
@@ -1471,8 +1473,8 @@ Datum
 timestamp_cmp_timestamptz(PG_FUNCTION_ARGS)
 {
 	Timestamp	timestampVal = PG_GETARG_TIMESTAMP(0);
-	TimestampTz	dt2 = PG_GETARG_TIMESTAMPTZ(1);
-	TimestampTz	dt1;
+	TimestampTz dt2 = PG_GETARG_TIMESTAMPTZ(1);
+	TimestampTz dt1;
 
 	dt1 = timestamp2timestamptz(timestampVal);
 
@@ -1482,9 +1484,9 @@ timestamp_cmp_timestamptz(PG_FUNCTION_ARGS)
 Datum
 timestamptz_eq_timestamp(PG_FUNCTION_ARGS)
 {
-	TimestampTz	dt1 = PG_GETARG_TIMESTAMPTZ(0);
+	TimestampTz dt1 = PG_GETARG_TIMESTAMPTZ(0);
 	Timestamp	timestampVal = PG_GETARG_TIMESTAMP(1);
-	TimestampTz	dt2;
+	TimestampTz dt2;
 
 	dt2 = timestamp2timestamptz(timestampVal);
 
@@ -1494,9 +1496,9 @@ timestamptz_eq_timestamp(PG_FUNCTION_ARGS)
 Datum
 timestamptz_ne_timestamp(PG_FUNCTION_ARGS)
 {
-	TimestampTz	dt1 = PG_GETARG_TIMESTAMPTZ(0);
+	TimestampTz dt1 = PG_GETARG_TIMESTAMPTZ(0);
 	Timestamp	timestampVal = PG_GETARG_TIMESTAMP(1);
-	TimestampTz	dt2;
+	TimestampTz dt2;
 
 	dt2 = timestamp2timestamptz(timestampVal);
 
@@ -1506,9 +1508,9 @@ timestamptz_ne_timestamp(PG_FUNCTION_ARGS)
 Datum
 timestamptz_lt_timestamp(PG_FUNCTION_ARGS)
 {
-	TimestampTz	dt1 = PG_GETARG_TIMESTAMPTZ(0);
+	TimestampTz dt1 = PG_GETARG_TIMESTAMPTZ(0);
 	Timestamp	timestampVal = PG_GETARG_TIMESTAMP(1);
-	TimestampTz	dt2;
+	TimestampTz dt2;
 
 	dt2 = timestamp2timestamptz(timestampVal);
 
@@ -1518,9 +1520,9 @@ timestamptz_lt_timestamp(PG_FUNCTION_ARGS)
 Datum
 timestamptz_gt_timestamp(PG_FUNCTION_ARGS)
 {
-	TimestampTz	dt1 = PG_GETARG_TIMESTAMPTZ(0);
+	TimestampTz dt1 = PG_GETARG_TIMESTAMPTZ(0);
 	Timestamp	timestampVal = PG_GETARG_TIMESTAMP(1);
-	TimestampTz	dt2;
+	TimestampTz dt2;
 
 	dt2 = timestamp2timestamptz(timestampVal);
 
@@ -1530,9 +1532,9 @@ timestamptz_gt_timestamp(PG_FUNCTION_ARGS)
 Datum
 timestamptz_le_timestamp(PG_FUNCTION_ARGS)
 {
-	TimestampTz	dt1 = PG_GETARG_TIMESTAMPTZ(0);
+	TimestampTz dt1 = PG_GETARG_TIMESTAMPTZ(0);
 	Timestamp	timestampVal = PG_GETARG_TIMESTAMP(1);
-	TimestampTz	dt2;
+	TimestampTz dt2;
 
 	dt2 = timestamp2timestamptz(timestampVal);
 
@@ -1542,9 +1544,9 @@ timestamptz_le_timestamp(PG_FUNCTION_ARGS)
 Datum
 timestamptz_ge_timestamp(PG_FUNCTION_ARGS)
 {
-	TimestampTz	dt1 = PG_GETARG_TIMESTAMPTZ(0);
+	TimestampTz dt1 = PG_GETARG_TIMESTAMPTZ(0);
 	Timestamp	timestampVal = PG_GETARG_TIMESTAMP(1);
-	TimestampTz	dt2;
+	TimestampTz dt2;
 
 	dt2 = timestamp2timestamptz(timestampVal);
 
@@ -1554,9 +1556,9 @@ timestamptz_ge_timestamp(PG_FUNCTION_ARGS)
 Datum
 timestamptz_cmp_timestamp(PG_FUNCTION_ARGS)
 {
-	TimestampTz	dt1 = PG_GETARG_TIMESTAMPTZ(0);
+	TimestampTz dt1 = PG_GETARG_TIMESTAMPTZ(0);
 	Timestamp	timestampVal = PG_GETARG_TIMESTAMP(1);
-	TimestampTz	dt2;
+	TimestampTz dt2;
 
 	dt2 = timestamp2timestamptz(timestampVal);
 
@@ -1892,7 +1894,7 @@ timestamp_pl_interval(PG_FUNCTION_ARGS)
 	{
 		if (span->month != 0)
 		{
-			struct pg_tm	tt,
+			struct pg_tm tt,
 					   *tm = &tt;
 			fsec_t		fsec;
 
@@ -1970,7 +1972,7 @@ timestamptz_pl_interval(PG_FUNCTION_ARGS)
 	{
 		if (span->month != 0)
 		{
-			struct pg_tm	tt,
+			struct pg_tm tt,
 					   *tm = &tt;
 			fsec_t		fsec;
 
@@ -2292,11 +2294,11 @@ timestamp_age(PG_FUNCTION_ARGS)
 	fsec_t		fsec,
 				fsec1,
 				fsec2;
-	struct pg_tm	tt,
+	struct pg_tm tt,
 			   *tm = &tt;
-	struct pg_tm	tt1,
+	struct pg_tm tt1,
 			   *tm1 = &tt1;
-	struct pg_tm	tt2,
+	struct pg_tm tt2,
 			   *tm2 = &tt2;
 
 	result = (Interval *) palloc(sizeof(Interval));
@@ -2403,11 +2405,11 @@ timestamptz_age(PG_FUNCTION_ARGS)
 	fsec_t		fsec,
 				fsec1,
 				fsec2;
-	struct pg_tm	tt,
+	struct pg_tm tt,
 			   *tm = &tt;
-	struct pg_tm	tt1,
+	struct pg_tm tt1,
 			   *tm1 = &tt1;
-	struct pg_tm	tt2,
+	struct pg_tm tt2,
 			   *tm2 = &tt2;
 
 	result = (Interval *) palloc(sizeof(Interval));
@@ -2698,7 +2700,7 @@ timestamp_trunc(PG_FUNCTION_ARGS)
 				val;
 	char	   *lowunits;
 	fsec_t		fsec;
-	struct pg_tm	tt,
+	struct pg_tm tt,
 			   *tm = &tt;
 
 	if (TIMESTAMP_NOT_FINITE(timestamp))
@@ -2720,7 +2722,7 @@ timestamp_trunc(PG_FUNCTION_ARGS)
 		switch (val)
 		{
 			case DTK_WEEK:
-				isoweek2date( date2isoweek( tm->tm_year, tm->tm_mon, tm->tm_mday ), &(tm->tm_year), &(tm->tm_mon), &(tm->tm_mday) );
+				isoweek2date(date2isoweek(tm->tm_year, tm->tm_mon, tm->tm_mday), &(tm->tm_year), &(tm->tm_mon), &(tm->tm_mday));
 				tm->tm_hour = 0;
 				tm->tm_min = 0;
 				tm->tm_sec = 0;
@@ -2729,15 +2731,15 @@ timestamp_trunc(PG_FUNCTION_ARGS)
 			case DTK_MILLENNIUM:
 				/* see comments in timestamptz_trunc */
 				if (tm->tm_year > 0)
-					tm->tm_year = ((tm->tm_year+999) / 1000) * 1000 - 999;
+					tm->tm_year = ((tm->tm_year + 999) / 1000) * 1000 - 999;
 				else
-					tm->tm_year = - ((999 - (tm->tm_year-1))/1000) * 1000 + 1;
+					tm->tm_year = -((999 - (tm->tm_year - 1)) / 1000) * 1000 + 1;
 			case DTK_CENTURY:
 				/* see comments in timestamptz_trunc */
 				if (tm->tm_year > 0)
-					tm->tm_year = ((tm->tm_year+99) / 100) * 100 - 99;
+					tm->tm_year = ((tm->tm_year + 99) / 100) * 100 - 99;
 				else
-					tm->tm_year = - ((99 - (tm->tm_year-1))/100) * 100 + 1;
+					tm->tm_year = -((99 - (tm->tm_year - 1)) / 100) * 100 + 1;
 			case DTK_DECADE:
 				/* see comments in timestamptz_trunc */
 				if (val != DTK_MILLENNIUM && val != DTK_CENTURY)
@@ -2745,7 +2747,7 @@ timestamp_trunc(PG_FUNCTION_ARGS)
 					if (tm->tm_year > 0)
 						tm->tm_year = (tm->tm_year / 10) * 10;
 					else
-						tm->tm_year = - ((8-(tm->tm_year-1)) / 10) * 10;
+						tm->tm_year = -((8 - (tm->tm_year - 1)) / 10) * 10;
 				}
 			case DTK_YEAR:
 				tm->tm_mon = 1;
@@ -2817,7 +2819,7 @@ timestamptz_trunc(PG_FUNCTION_ARGS)
 	char	   *lowunits;
 	fsec_t		fsec;
 	char	   *tzn;
-	struct pg_tm	tt,
+	struct pg_tm tt,
 			   *tm = &tt;
 
 	if (TIMESTAMP_NOT_FINITE(timestamp))
@@ -2839,7 +2841,7 @@ timestamptz_trunc(PG_FUNCTION_ARGS)
 		switch (val)
 		{
 			case DTK_WEEK:
-				isoweek2date( date2isoweek( tm->tm_year, tm->tm_mon, tm->tm_mday ), &(tm->tm_year), &(tm->tm_mon), &(tm->tm_mday) );
+				isoweek2date(date2isoweek(tm->tm_year, tm->tm_mon, tm->tm_mday), &(tm->tm_year), &(tm->tm_mon), &(tm->tm_mday));
 				tm->tm_hour = 0;
 				tm->tm_min = 0;
 				tm->tm_sec = 0;
@@ -2847,22 +2849,26 @@ timestamptz_trunc(PG_FUNCTION_ARGS)
 				break;
 				/* one may consider DTK_THOUSAND and DTK_HUNDRED... */
 			case DTK_MILLENNIUM:
-				/* truncating to the millennium? what is this supposed to mean?
-				 * let us put the first year of the millennium... 
+
+				/*
+				 * truncating to the millennium? what is this supposed to
+				 * mean? let us put the first year of the millennium...
 				 * i.e. -1000, 1, 1001, 2001...
 				 */
 				if (tm->tm_year > 0)
-					tm->tm_year = ((tm->tm_year+999) / 1000) * 1000 - 999;
+					tm->tm_year = ((tm->tm_year + 999) / 1000) * 1000 - 999;
 				else
-					tm->tm_year = - ((999 - (tm->tm_year-1))/1000) * 1000 + 1;
+					tm->tm_year = -((999 - (tm->tm_year - 1)) / 1000) * 1000 + 1;
 			case DTK_CENTURY:
 				/* truncating to the century? as above: -100, 1, 101... */
 				if (tm->tm_year > 0)
-					tm->tm_year = ((tm->tm_year+99) / 100) * 100 - 99 ;
+					tm->tm_year = ((tm->tm_year + 99) / 100) * 100 - 99;
 				else
-					tm->tm_year = - ((99 - (tm->tm_year-1))/100) * 100 + 1;
+					tm->tm_year = -((99 - (tm->tm_year - 1)) / 100) * 100 + 1;
 			case DTK_DECADE:
-				/* truncating to the decade? first year of the decade.
+
+				/*
+				 * truncating to the decade? first year of the decade.
 				 * must not be applied if year was truncated before!
 				 */
 				if (val != DTK_MILLENNIUM && val != DTK_CENTURY)
@@ -2870,7 +2876,7 @@ timestamptz_trunc(PG_FUNCTION_ARGS)
 					if (tm->tm_year > 0)
 						tm->tm_year = (tm->tm_year / 10) * 10;
 					else
-						tm->tm_year = - ((8-(tm->tm_year-1)) / 10) * 10;
+						tm->tm_year = -((8 - (tm->tm_year - 1)) / 10) * 10;
 				}
 			case DTK_YEAR:
 				tm->tm_mon = 1;
@@ -2941,7 +2947,7 @@ interval_trunc(PG_FUNCTION_ARGS)
 				val;
 	char	   *lowunits;
 	fsec_t		fsec;
-	struct pg_tm	tt,
+	struct pg_tm tt,
 			   *tm = &tt;
 
 	result = (Interval *) palloc(sizeof(Interval));
@@ -3039,7 +3045,7 @@ isoweek2date(int woy, int *year, int *mon, int *mday)
 	if (!*year)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-		 errmsg("cannot calculate week number without year information")));
+		errmsg("cannot calculate week number without year information")));
 
 	/* fourth day of current year */
 	day4 = date2j(*year, 1, 4);
@@ -3113,10 +3119,10 @@ date2isoweek(int year, int mon, int mday)
 int
 date2isoyear(int year, int mon, int mday)
 {
-	float8	result;
-	int	day0,
-		day4,
-		dayn;
+	float8		result;
+	int			day0,
+				day4,
+				dayn;
 
 	/* current day */
 	dayn = date2j(year, mon, mday);
@@ -3155,9 +3161,7 @@ date2isoyear(int year, int mon, int mday)
 		day0 = j2day(day4 - 1);
 
 		if (dayn >= (day4 - day0))
-		{
 			year++;
-		}
 	}
 
 	return year;
@@ -3177,7 +3181,7 @@ timestamp_part(PG_FUNCTION_ARGS)
 				val;
 	char	   *lowunits;
 	fsec_t		fsec;
-	struct pg_tm	tt,
+	struct pg_tm tt,
 			   *tm = &tt;
 
 	if (TIMESTAMP_NOT_FINITE(timestamp))
@@ -3255,39 +3259,43 @@ timestamp_part(PG_FUNCTION_ARGS)
 				if (tm->tm_year > 0)
 					result = tm->tm_year;
 				else
-					/* there is no year 0, just 1 BC and 1 AD*/
-					result = tm->tm_year - 1;	
+					/* there is no year 0, just 1 BC and 1 AD */
+					result = tm->tm_year - 1;
 				break;
 
 			case DTK_DECADE:
-				/* what is a decade wrt dates?
-				 * let us assume that decade 199 is 1990 thru 1999...
-				 * decade 0 starts on year 1 BC, and -1 is 11 BC thru 2 BC...
+
+				/*
+				 * what is a decade wrt dates? let us assume that decade
+				 * 199 is 1990 thru 1999... decade 0 starts on year 1 BC,
+				 * and -1 is 11 BC thru 2 BC...
 				 */
-				if (tm->tm_year>=0)
+				if (tm->tm_year >= 0)
 					result = (tm->tm_year / 10);
 				else
-					result = -((8-(tm->tm_year-1)) / 10);
+					result = -((8 - (tm->tm_year - 1)) / 10);
 				break;
 
 			case DTK_CENTURY:
-				/* centuries AD, c>0: year in [ (c-1)*100+1 :     c*100   ]
-				 * centuries BC, c<0: year in [     c*100   : (c+1)*100-1 ]
-				 * there is no number 0 century.
+
+				/*
+				 * centuries AD, c>0: year in [ (c-1)*100+1 :	  c*100
+				 * ] centuries BC, c<0: year in [	  c*100   :
+				 * (c+1)*100-1 ] there is no number 0 century.
 				 */
 				if (tm->tm_year > 0)
-					result = ((tm->tm_year+99) / 100);
+					result = ((tm->tm_year + 99) / 100);
 				else
 					/* caution: C division may have negative remainder */
-					result = - ((99 - (tm->tm_year-1))/100);
+					result = -((99 - (tm->tm_year - 1)) / 100);
 				break;
 
 			case DTK_MILLENNIUM:
 				/* see comments above. */
 				if (tm->tm_year > 0)
-					result = ((tm->tm_year+999) / 1000);
+					result = ((tm->tm_year + 999) / 1000);
 				else
-					result = - ((999 - (tm->tm_year-1))/1000);
+					result = -((999 - (tm->tm_year - 1)) / 1000);
 				break;
 
 			case DTK_JULIAN:
@@ -3397,7 +3405,7 @@ timestamptz_part(PG_FUNCTION_ARGS)
 	double		dummy;
 	fsec_t		fsec;
 	char	   *tzn;
-	struct pg_tm	tt,
+	struct pg_tm tt,
 			   *tm = &tt;
 
 	if (TIMESTAMP_NOT_FINITE(timestamp))
@@ -3492,26 +3500,26 @@ timestamptz_part(PG_FUNCTION_ARGS)
 
 			case DTK_DECADE:
 				/* see comments in timestamp_part */
-				if (tm->tm_year>0)
+				if (tm->tm_year > 0)
 					result = (tm->tm_year / 10);
 				else
-					result = - ((8-(tm->tm_year-1)) / 10);
+					result = -((8 - (tm->tm_year - 1)) / 10);
 				break;
 
 			case DTK_CENTURY:
 				/* see comments in timestamp_part */
 				if (tm->tm_year > 0)
-					result = ((tm->tm_year+99) / 100);
+					result = ((tm->tm_year + 99) / 100);
 				else
-					result = - ((99 - (tm->tm_year-1))/100);
+					result = -((99 - (tm->tm_year - 1)) / 100);
 				break;
 
 			case DTK_MILLENNIUM:
 				/* see comments in timestamp_part */
 				if (tm->tm_year > 0)
-					result = ((tm->tm_year+999) / 1000);
+					result = ((tm->tm_year + 999) / 1000);
 				else
-					result = - ((999 - (tm->tm_year-1))/1000);
+					result = -((999 - (tm->tm_year - 1)) / 1000);
 				break;
 
 			case DTK_JULIAN:
@@ -3598,7 +3606,7 @@ interval_part(PG_FUNCTION_ARGS)
 				val;
 	char	   *lowunits;
 	fsec_t		fsec;
-	struct pg_tm	tt,
+	struct pg_tm tt,
 			   *tm = &tt;
 
 	lowunits = downcase_truncate_identifier(VARDATA(units),
@@ -3812,7 +3820,7 @@ static TimestampTz
 timestamp2timestamptz(Timestamp timestamp)
 {
 	TimestampTz result;
-	struct pg_tm	tt,
+	struct pg_tm tt,
 			   *tm = &tt;
 	fsec_t		fsec;
 	int			tz;
@@ -3845,7 +3853,7 @@ timestamptz_timestamp(PG_FUNCTION_ARGS)
 {
 	TimestampTz timestamp = PG_GETARG_TIMESTAMPTZ(0);
 	Timestamp	result;
-	struct pg_tm	tt,
+	struct pg_tm tt,
 			   *tm = &tt;
 	fsec_t		fsec;
 	char	   *tzn;

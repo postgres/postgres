@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.242 2004/08/29 04:12:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.243 2004/08/29 05:06:43 momjian Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -138,7 +138,7 @@ _outToken(StringInfo str, char *s)
 static void
 _outList(StringInfo str, List *node)
 {
-	ListCell *lc;
+	ListCell   *lc;
 
 	appendStringInfoChar(str, '(');
 
@@ -147,12 +147,12 @@ _outList(StringInfo str, List *node)
 	else if (IsA(node, OidList))
 		appendStringInfoChar(str, 'o');
 
-	foreach (lc, node)
+	foreach(lc, node)
 	{
 		/*
 		 * For the sake of backward compatibility, we emit a slightly
-		 * different whitespace format for lists of nodes vs. other
-		 * types of lists. XXX: is this necessary?
+		 * different whitespace format for lists of nodes vs. other types
+		 * of lists. XXX: is this necessary?
 		 */
 		if (IsA(node, List))
 		{
@@ -165,8 +165,8 @@ _outList(StringInfo str, List *node)
 		else if (IsA(node, OidList))
 			appendStringInfo(str, " %u", lfirst_oid(lc));
 		else
- 			elog(ERROR, "unrecognized list node type: %d",
- 				 (int) node->type);
+			elog(ERROR, "unrecognized list node type: %d",
+				 (int) node->type);
 	}
 
 	appendStringInfoChar(str, ')');
@@ -1450,6 +1450,7 @@ _outValue(StringInfo str, Value *value)
 			appendStringInfo(str, "%ld", value->val.ival);
 			break;
 		case T_Float:
+
 			/*
 			 * We assume the value is a valid numeric literal and so does
 			 * not need quoting.
@@ -1595,7 +1596,7 @@ _outNode(StringInfo str, void *obj)
 {
 	if (obj == NULL)
 		appendStringInfo(str, "<>");
-	else if (IsA(obj, List) || IsA(obj, IntList) || IsA(obj, OidList))
+	else if (IsA(obj, List) ||IsA(obj, IntList) || IsA(obj, OidList))
 		_outList(str, obj);
 	else if (IsA(obj, Integer) ||
 			 IsA(obj, Float) ||

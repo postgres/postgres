@@ -41,11 +41,11 @@
  *
  * Since the index will never be used unless it is completely built,
  * from a crash-recovery point of view there is no need to WAL-log the
- * steps of the build.  After completing the index build, we can just sync
+ * steps of the build.	After completing the index build, we can just sync
  * the whole file to disk using smgrimmedsync() before exiting this module.
  * This can be seen to be sufficient for crash recovery by considering that
  * it's effectively equivalent to what would happen if a CHECKPOINT occurred
- * just after the index build.  However, it is clearly not sufficient if the
+ * just after the index build.	However, it is clearly not sufficient if the
  * DBA is using the WAL log for PITR or replication purposes, since another
  * machine would not be able to reconstruct the index from WAL.  Therefore,
  * we log the completed index pages to WAL if and only if WAL archiving is
@@ -56,7 +56,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsort.c,v 1.87 2004/08/29 04:12:21 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsort.c,v 1.88 2004/08/29 05:06:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,7 +98,7 @@ struct BTSpool
 typedef struct BTPageState
 {
 	Page		btps_page;		/* workspace for page building */
-	BlockNumber	btps_blkno;		/* block # to write this page at */
+	BlockNumber btps_blkno;		/* block # to write this page at */
 	BTItem		btps_minkey;	/* copy of minimum key (first item) on
 								 * page */
 	OffsetNumber btps_lastoff;	/* last item offset loaded */
@@ -114,10 +114,10 @@ typedef struct BTPageState
 typedef struct BTWriteState
 {
 	Relation	index;
-	bool		btws_use_wal;		/* dump pages to WAL? */
-	BlockNumber	btws_pages_alloced;	/* # pages allocated */
-	BlockNumber	btws_pages_written;	/* # pages written out */
-	Page		btws_zeropage;		/* workspace for filling zeroes */
+	bool		btws_use_wal;	/* dump pages to WAL? */
+	BlockNumber btws_pages_alloced;		/* # pages allocated */
+	BlockNumber btws_pages_written;		/* # pages written out */
+	Page		btws_zeropage;	/* workspace for filling zeroes */
 } BTWriteState;
 
 
@@ -136,7 +136,7 @@ static void _bt_sortaddtup(Page page, Size itemsize,
 static void _bt_buildadd(BTWriteState *wstate, BTPageState *state, BTItem bti);
 static void _bt_uppershutdown(BTWriteState *wstate, BTPageState *state);
 static void _bt_load(BTWriteState *wstate,
-					 BTSpool *btspool, BTSpool *btspool2);
+		 BTSpool *btspool, BTSpool *btspool2);
 
 
 /*
@@ -157,12 +157,12 @@ _bt_spoolinit(Relation index, bool isunique, bool isdead)
 	btspool->isunique = isunique;
 
 	/*
-	 * We size the sort area as maintenance_work_mem rather than work_mem to
-	 * speed index creation.  This should be OK since a single backend can't
-	 * run multiple index creations in parallel.  Note that creation of a
-	 * unique index actually requires two BTSpool objects.  We expect that the
-	 * second one (for dead tuples) won't get very full, so we give it only
-	 * work_mem.
+	 * We size the sort area as maintenance_work_mem rather than work_mem
+	 * to speed index creation.  This should be OK since a single backend
+	 * can't run multiple index creations in parallel.  Note that creation
+	 * of a unique index actually requires two BTSpool objects.  We expect
+	 * that the second one (for dead tuples) won't get very full, so we
+	 * give it only work_mem.
 	 */
 	btKbytes = isdead ? work_mem : maintenance_work_mem;
 	btspool->sortstate = tuplesort_begin_index(index, isunique,
@@ -205,7 +205,7 @@ _bt_spool(BTItem btitem, BTSpool *btspool)
 void
 _bt_leafbuild(BTSpool *btspool, BTSpool *btspool2)
 {
-	BTWriteState	wstate;
+	BTWriteState wstate;
 
 #ifdef BTREE_BUILD_STATS
 	if (log_btree_build_stats)
@@ -220,6 +220,7 @@ _bt_leafbuild(BTSpool *btspool, BTSpool *btspool2)
 		tuplesort_performsort(btspool2->sortstate);
 
 	wstate.index = btspool->index;
+
 	/*
 	 * We need to log index creation in WAL iff WAL archiving is enabled
 	 * AND it's not a temp index.
@@ -229,7 +230,7 @@ _bt_leafbuild(BTSpool *btspool, BTSpool *btspool2)
 	/* reserve the metapage */
 	wstate.btws_pages_alloced = BTREE_METAPAGE + 1;
 	wstate.btws_pages_written = 0;
-	wstate.btws_zeropage = NULL;	 /* until needed */
+	wstate.btws_zeropage = NULL;	/* until needed */
 
 	_bt_load(&wstate, btspool, btspool2);
 }
@@ -246,7 +247,7 @@ _bt_leafbuild(BTSpool *btspool, BTSpool *btspool2)
 static Page
 _bt_blnewpage(uint32 level)
 {
-	Page	page;
+	Page		page;
 	BTPageOpaque opaque;
 
 	page = (Page) palloc(BLCKSZ);
@@ -313,8 +314,8 @@ _bt_blwritepage(BTWriteState *wstate, Page page, BlockNumber blkno)
 	 * If we have to write pages nonsequentially, fill in the space with
 	 * zeroes until we come back and overwrite.  This is not logically
 	 * necessary on standard Unix filesystems (unwritten space will read
-	 * as zeroes anyway), but it should help to avoid fragmentation.
-	 * The dummy pages aren't WAL-logged though.
+	 * as zeroes anyway), but it should help to avoid fragmentation. The
+	 * dummy pages aren't WAL-logged though.
 	 */
 	while (blkno > wstate->btws_pages_written)
 	{
@@ -326,9 +327,9 @@ _bt_blwritepage(BTWriteState *wstate, Page page, BlockNumber blkno)
 	}
 
 	/*
-	 * Now write the page.  We say isTemp = true even if it's not a
-	 * temp index, because there's no need for smgr to schedule an fsync
-	 * for this write; we'll do it ourselves before ending the build.
+	 * Now write the page.	We say isTemp = true even if it's not a temp
+	 * index, because there's no need for smgr to schedule an fsync for
+	 * this write; we'll do it ourselves before ending the build.
 	 */
 	smgrwrite(wstate->index->rd_smgr, blkno, (char *) page, true);
 
@@ -468,7 +469,7 @@ static void
 _bt_buildadd(BTWriteState *wstate, BTPageState *state, BTItem bti)
 {
 	Page		npage;
-	BlockNumber	nblkno;
+	BlockNumber nblkno;
 	OffsetNumber last_off;
 	Size		pgspc;
 	Size		btisz;
@@ -506,7 +507,7 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, BTItem bti)
 		 * already.  Finish off the page and write it out.
 		 */
 		Page		opage = npage;
-		BlockNumber	oblkno = nblkno;
+		BlockNumber oblkno = nblkno;
 		ItemId		ii;
 		ItemId		hii;
 		BTItem		obti;
@@ -539,8 +540,8 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, BTItem bti)
 		((PageHeader) opage)->pd_lower -= sizeof(ItemIdData);
 
 		/*
-		 * Link the old page into its parent, using its minimum key. If
-		 * we don't have a parent, we have to create one; this adds a new
+		 * Link the old page into its parent, using its minimum key. If we
+		 * don't have a parent, we have to create one; this adds a new
 		 * btree level.
 		 */
 		if (state->btps_next == NULL)
@@ -572,8 +573,8 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, BTItem bti)
 		}
 
 		/*
-		 * Write out the old page.	We never need to touch it again,
-		 * so we can free the opage workspace too.
+		 * Write out the old page.	We never need to touch it again, so we
+		 * can free the opage workspace too.
 		 */
 		_bt_blwritepage(wstate, opage, oblkno);
 
@@ -613,7 +614,7 @@ static void
 _bt_uppershutdown(BTWriteState *wstate, BTPageState *state)
 {
 	BTPageState *s;
-	BlockNumber	rootblkno = P_NONE;
+	BlockNumber rootblkno = P_NONE;
 	uint32		rootlevel = 0;
 	Page		metapage;
 
@@ -663,9 +664,9 @@ _bt_uppershutdown(BTWriteState *wstate, BTPageState *state)
 
 	/*
 	 * As the last step in the process, construct the metapage and make it
-	 * point to the new root (unless we had no data at all, in which case it's
-	 * set to point to "P_NONE").  This changes the index to the "valid"
-	 * state by filling in a valid magic number in the metapage.
+	 * point to the new root (unless we had no data at all, in which case
+	 * it's set to point to "P_NONE").  This changes the index to the
+	 * "valid" state by filling in a valid magic number in the metapage.
 	 */
 	metapage = (Page) palloc(BLCKSZ);
 	_bt_initmetapage(metapage, rootblkno, rootlevel);
@@ -744,7 +745,7 @@ _bt_load(BTWriteState *wstate, BTSpool *btspool, BTSpool *btspool2)
 
 						compare = DatumGetInt32(FunctionCall2(&entry->sk_func,
 															  attrDatum1,
-															  attrDatum2));
+															attrDatum2));
 						if (compare > 0)
 						{
 							load1 = false;
@@ -768,7 +769,7 @@ _bt_load(BTWriteState *wstate, BTSpool *btspool, BTSpool *btspool2)
 				if (should_free)
 					pfree((void *) bti);
 				bti = (BTItem) tuplesort_getindextuple(btspool->sortstate,
-													   true, &should_free);
+													 true, &should_free);
 			}
 			else
 			{
@@ -776,7 +777,7 @@ _bt_load(BTWriteState *wstate, BTSpool *btspool, BTSpool *btspool2)
 				if (should_free2)
 					pfree((void *) bti2);
 				bti2 = (BTItem) tuplesort_getindextuple(btspool2->sortstate,
-														true, &should_free2);
+													true, &should_free2);
 			}
 		}
 		_bt_freeskey(indexScanKey);
@@ -785,7 +786,7 @@ _bt_load(BTWriteState *wstate, BTSpool *btspool, BTSpool *btspool2)
 	{
 		/* merge is unnecessary */
 		while ((bti = (BTItem) tuplesort_getindextuple(btspool->sortstate,
-												true, &should_free)) != NULL)
+											true, &should_free)) != NULL)
 		{
 			/* When we see first tuple, create first index page */
 			if (state == NULL)
@@ -802,18 +803,18 @@ _bt_load(BTWriteState *wstate, BTSpool *btspool, BTSpool *btspool2)
 
 	/*
 	 * If the index isn't temp, we must fsync it down to disk before it's
-	 * safe to commit the transaction.  (For a temp index we don't care
+	 * safe to commit the transaction.	(For a temp index we don't care
 	 * since the index will be uninteresting after a crash anyway.)
 	 *
-	 * It's obvious that we must do this when not WAL-logging the build.
-	 * It's less obvious that we have to do it even if we did WAL-log the
-	 * index pages.  The reason is that since we're building outside
-	 * shared buffers, a CHECKPOINT occurring during the build has no way
-	 * to flush the previously written data to disk (indeed it won't know
-	 * the index even exists).  A crash later on would replay WAL from the
+	 * It's obvious that we must do this when not WAL-logging the build. It's
+	 * less obvious that we have to do it even if we did WAL-log the index
+	 * pages.  The reason is that since we're building outside shared
+	 * buffers, a CHECKPOINT occurring during the build has no way to
+	 * flush the previously written data to disk (indeed it won't know the
+	 * index even exists).	A crash later on would replay WAL from the
 	 * checkpoint, therefore it wouldn't replay our earlier WAL entries.
-	 * If we do not fsync those pages here, they might still not be on disk
-	 * when the crash occurs.
+	 * If we do not fsync those pages here, they might still not be on
+	 * disk when the crash occurs.
 	 */
 	if (!wstate->index->rd_istemp)
 		smgrimmedsync(wstate->index->rd_smgr);

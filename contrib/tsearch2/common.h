@@ -21,13 +21,14 @@ int			text_cmp(text *a, text *b);
 
 void		ts_error(int state, const char *format,...);
 
-extern Oid TSNSP_FunctionOid; /* oid of called function, needed only for determ namespace, no more */
-char* get_namespace(Oid funcoid);
-Oid get_oidnamespace(Oid funcoid);
+extern Oid	TSNSP_FunctionOid;	/* oid of called function, needed only for
+								 * determ namespace, no more */
+char	   *get_namespace(Oid funcoid);
+Oid			get_oidnamespace(Oid funcoid);
 
-#define SET_FUNCOID()   do {                                            \
-        if ( fcinfo->flinfo && fcinfo->flinfo->fn_oid != InvalidOid )   \
-                TSNSP_FunctionOid = fcinfo->flinfo->fn_oid;                   \
+#define SET_FUNCOID()	do {											\
+		if ( fcinfo->flinfo && fcinfo->flinfo->fn_oid != InvalidOid )	\
+				TSNSP_FunctionOid = fcinfo->flinfo->fn_oid;					  \
 } while(0)
 
 #endif

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/var.c,v 1.61 2004/08/29 04:12:34 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/var.c,v 1.62 2004/08/29 05:06:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -473,7 +473,7 @@ pull_var_clause_walker(Node *node, pull_var_clause_context *context)
  * flatten_join_alias_vars
  *	  Replace Vars that reference JOIN outputs with references to the original
  *	  relation variables instead.  This allows quals involving such vars to be
- *	  pushed down.  Whole-row Vars that reference JOIN relations are expanded
+ *	  pushed down.	Whole-row Vars that reference JOIN relations are expanded
  *	  into RowExpr constructs that name the individual output Vars.  This
  *	  is necessary since we will not scan the JOIN as a base relation, which
  *	  is the only way that the executor can directly handle whole-row Vars.
@@ -513,10 +513,10 @@ flatten_join_alias_vars_mutator(Node *node,
 		if (var->varattno == InvalidAttrNumber)
 		{
 			/* Must expand whole-row reference */
-			RowExpr		*rowexpr;
-			List		*fields = NIL;
+			RowExpr    *rowexpr;
+			List	   *fields = NIL;
 			AttrNumber	attnum;
-			ListCell	*l;
+			ListCell   *l;
 
 			attnum = 0;
 			foreach(l, rte->joinaliasvars)
@@ -528,6 +528,7 @@ flatten_join_alias_vars_mutator(Node *node,
 												 var->varno,
 												 attnum))
 					continue;
+
 				/*
 				 * If we are expanding an alias carried down from an upper
 				 * query, must adjust its varlevelsup fields.

@@ -326,10 +326,11 @@ unionkey(BITVECP sbase, GISTTYPE * add)
 Datum
 gtxtidx_union(PG_FUNCTION_ARGS)
 {
-	GistEntryVector	   *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
+	GistEntryVector *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
 	int		   *size = (int *) PG_GETARG_POINTER(1);
 	BITVEC		base;
-	int4		i,len;
+	int4		i,
+				len;
 	int4		flag = 0;
 	GISTTYPE   *result;
 
@@ -512,7 +513,7 @@ comparecost(const void *a, const void *b)
 Datum
 gtxtidx_picksplit(PG_FUNCTION_ARGS)
 {
-	GistEntryVector	   *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
+	GistEntryVector *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
 	GIST_SPLITVEC *v = (GIST_SPLITVEC *) PG_GETARG_POINTER(1);
 	OffsetNumber k,
 				j;

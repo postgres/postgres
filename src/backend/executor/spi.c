@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.124 2004/08/29 04:12:31 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.125 2004/08/29 05:06:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,17 +29,17 @@ int			SPI_result;
 
 static _SPI_connection *_SPI_stack = NULL;
 static _SPI_connection *_SPI_current = NULL;
-static int	_SPI_stack_depth = 0; /* allocated size of _SPI_stack */
+static int	_SPI_stack_depth = 0;		/* allocated size of _SPI_stack */
 static int	_SPI_connected = -1;
 static int	_SPI_curid = -1;
 
 static int	_SPI_execute(const char *src, int tcount, _SPI_plan *plan);
-static int	_SPI_pquery(QueryDesc *queryDesc, bool runit,
-						bool useCurrentSnapshot, int tcount);
+static int _SPI_pquery(QueryDesc *queryDesc, bool runit,
+			bool useCurrentSnapshot, int tcount);
 
 static int _SPI_execute_plan(_SPI_plan *plan,
-							 Datum *Values, const char *Nulls,
-							 bool useCurrentSnapshot, int tcount);
+				  Datum *Values, const char *Nulls,
+				  bool useCurrentSnapshot, int tcount);
 
 static void _SPI_error_callback(void *arg);
 
@@ -60,7 +60,7 @@ static bool _SPI_checktuples(void);
 int
 SPI_connect(void)
 {
-	int		newdepth;
+	int			newdepth;
 
 	/*
 	 * When procedure called by Executor _SPI_curid expected to be equal
@@ -107,9 +107,9 @@ SPI_connect(void)
 	/*
 	 * Create memory contexts for this procedure
 	 *
-	 * XXX it would be better to use PortalContext as the parent context,
-	 * but we may not be inside a portal (consider deferred-trigger
-	 * execution).  Perhaps CurTransactionContext would do?  For now it
+	 * XXX it would be better to use PortalContext as the parent context, but
+	 * we may not be inside a portal (consider deferred-trigger
+	 * execution).	Perhaps CurTransactionContext would do?  For now it
 	 * doesn't matter because we clean up explicitly in AtEOSubXact_SPI().
 	 */
 	_SPI_current->procCxt = AllocSetContextCreate(TopTransactionContext,
@@ -201,7 +201,7 @@ AtEOXact_SPI(bool isCommit)
 void
 AtEOSubXact_SPI(bool isCommit, TransactionId childXid)
 {
-	bool	found = false;
+	bool		found = false;
 
 	while (_SPI_connected >= 0)
 	{
@@ -213,10 +213,10 @@ AtEOSubXact_SPI(bool isCommit, TransactionId childXid)
 		found = true;
 
 		/*
-		 * Pop the stack entry and reset global variables.  Unlike
+		 * Pop the stack entry and reset global variables.	Unlike
 		 * SPI_finish(), we don't risk switching to memory contexts that
-		 * might be already gone, or deleting memory contexts that have been
-		 * or will be thrown away anyway.
+		 * might be already gone, or deleting memory contexts that have
+		 * been or will be thrown away anyway.
 		 */
 		_SPI_connected--;
 		_SPI_curid = _SPI_connected;
@@ -418,7 +418,7 @@ HeapTupleHeader
 SPI_returntuple(HeapTuple tuple, TupleDesc tupdesc)
 {
 	MemoryContext oldcxt = NULL;
-	HeapTupleHeader	dtup;
+	HeapTupleHeader dtup;
 
 	if (tuple == NULL || tupdesc == NULL)
 	{
@@ -936,7 +936,7 @@ SPI_cursor_close(Portal portal)
 Oid
 SPI_getargtypeid(void *plan, int argIndex)
 {
-	if (plan == NULL || argIndex < 0 || argIndex >= ((_SPI_plan*)plan)->nargs)
+	if (plan == NULL || argIndex < 0 || argIndex >= ((_SPI_plan *) plan)->nargs)
 	{
 		SPI_result = SPI_ERROR_ARGUMENT;
 		return InvalidOid;
@@ -965,13 +965,13 @@ SPI_getargcount(void *plan)
  * if the command can be used with SPI_cursor_open
  *
  * Parameters
- *    plan A plan previously prepared using SPI_prepare
+ *	  plan A plan previously prepared using SPI_prepare
  */
 bool
 SPI_is_cursor_plan(void *plan)
 {
-	_SPI_plan *spiplan = (_SPI_plan *) plan;
-	List *qtlist;
+	_SPI_plan  *spiplan = (_SPI_plan *) plan;
+	List	   *qtlist;
 
 	if (spiplan == NULL)
 	{
@@ -982,7 +982,7 @@ SPI_is_cursor_plan(void *plan)
 	qtlist = spiplan->qtlist;
 	if (list_length(spiplan->ptlist) == 1 && list_length(qtlist) == 1)
 	{
-		Query *queryTree = (Query *) linitial((List *) linitial(qtlist));
+		Query	   *queryTree = (Query *) linitial((List *) linitial(qtlist));
 
 		if (queryTree->commandType == CMD_SELECT && queryTree->into == NULL)
 			return true;
@@ -993,7 +993,7 @@ SPI_is_cursor_plan(void *plan)
 /*
  * SPI_result_code_string --- convert any SPI return code to a string
  *
- * This is often useful in error messages.  Most callers will probably
+ * This is often useful in error messages.	Most callers will probably
  * only pass negative (error-case) codes, but for generality we recognize
  * the success codes too.
  */
@@ -1483,8 +1483,8 @@ _SPI_error_callback(void *arg)
 	int			syntaxerrposition;
 
 	/*
-	 * If there is a syntax error position, convert to internal syntax error;
-	 * otherwise treat the query as an item of context stack
+	 * If there is a syntax error position, convert to internal syntax
+	 * error; otherwise treat the query as an item of context stack
 	 */
 	syntaxerrposition = geterrposition();
 	if (syntaxerrposition > 0)
@@ -1632,7 +1632,8 @@ _SPI_copy_plan(_SPI_plan *plan, int location)
 		parentcxt = _SPI_current->procCxt;
 	else if (location == _SPI_CPLAN_TOPCXT)
 		parentcxt = TopMemoryContext;
-	else				/* (this case not currently used) */
+	else
+/* (this case not currently used) */
 		parentcxt = CurrentMemoryContext;
 
 	/*

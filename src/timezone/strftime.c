@@ -15,7 +15,7 @@
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/strftime.c,v 1.4 2004/06/03 02:08:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/strftime.c,v 1.5 2004/08/29 05:07:02 momjian Exp $
  */
 
 #include "postgres.h"
@@ -65,17 +65,17 @@ static const struct lc_time_T C_time_locale = {
 	/*
 	 * x_fmt
 	 *
-	 * C99 requires this format. Using just numbers (as here)
-	 * makes Quakers happier; it's also compatible with SVR4.
+	 * C99 requires this format. Using just numbers (as here) makes Quakers
+	 * happier; it's also compatible with SVR4.
 	 */
 	"%m/%d/%y",
 
 	/*
 	 * c_fmt
 	 *
-	 * C99 requires this format. Previously this code used "%D %X", but we now
-	 * conform to C99. Note that "%a %b %d %H:%M:%S %Y" is used by Solaris
-	 * 2.3.
+	 * C99 requires this format. Previously this code used "%D %X", but we
+	 * now conform to C99. Note that "%a %b %d %H:%M:%S %Y" is used by
+	 * Solaris 2.3.
 	 */
 	"%a %b %e %T %Y",
 
@@ -92,7 +92,7 @@ static const struct lc_time_T C_time_locale = {
 static char *_add(const char *, char *, const char *);
 static char *_conv(int, const char *, char *, const char *);
 static char *_fmt(const char *, const struct pg_tm *, char *,
-				  const char *, int *);
+	 const char *, int *);
 
 #define IN_NONE 0
 #define IN_SOME 1
@@ -102,7 +102,7 @@ static char *_fmt(const char *, const struct pg_tm *, char *,
 
 size_t
 pg_strftime(char *s, size_t maxsize, const char *format,
-			const struct pg_tm *t)
+			const struct pg_tm * t)
 {
 	char	   *p;
 	int			warn;
@@ -185,10 +185,10 @@ _fmt(const char *format, const struct pg_tm * t, char *pt, const char *ptlim,
 				case 'O':
 
 					/*
-					 * C99 locale modifiers. The sequences  %Ec %EC
-					 * %Ex %EX %Ey %EY  %Od %oe %OH %OI %Om %OM  %OS
-					 * %Ou %OU %OV %Ow %OW %Oy are supposed to provide
-					 * alternate representations.
+					 * C99 locale modifiers. The sequences	%Ec %EC %Ex
+					 * %EX %Ey %EY	%Od %oe %OH %OI %Om %OM  %OS %Ou %OU
+					 * %OV %Ow %OW %Oy are supposed to provide alternate
+					 * representations.
 					 */
 					goto label;
 				case 'e':
@@ -211,11 +211,11 @@ _fmt(const char *format, const struct pg_tm * t, char *pt, const char *ptlim,
 				case 'k':
 
 					/*
-					 * This used to be...  _conv(t->tm_hour % 12 ?  t->tm_hour
-					 * % 12 : 12, 2, ' '); ...and has been changed to the
-					 * below to match SunOS 4.1.1 and Arnold Robbins' strftime
-					 * version 3.0.  That is, "%k" and "%l" have been
-					 * swapped. (ado, 1993-05-24)
+					 * This used to be...  _conv(t->tm_hour % 12 ?
+					 * t->tm_hour % 12 : 12, 2, ' '); ...and has been
+					 * changed to the below to match SunOS 4.1.1 and
+					 * Arnold Robbins' strftime version 3.0.  That is,
+					 * "%k" and "%l" have been swapped. (ado, 1993-05-24)
 					 */
 					pt = _conv(t->tm_hour, "%2d", pt, ptlim);
 					continue;
@@ -232,10 +232,10 @@ _fmt(const char *format, const struct pg_tm * t, char *pt, const char *ptlim,
 
 					/*
 					 * This used to be...  _conv(t->tm_hour, 2, ' ');
-					 * ...and has been changed to the below to match
-					 * SunOS 4.1.1 and Arnold Robbin's strftime version
-					 * 3.0.  That is, "%k" and "%l" have been swapped.
-					 * (ado, 1993-05-24)
+					 * ...and has been changed to the below to match SunOS
+					 * 4.1.1 and Arnold Robbin's strftime version 3.0.
+					 * That is, "%k" and "%l" have been swapped. (ado,
+					 * 1993-05-24)
 					 */
 					pt = _conv((t->tm_hour % 12) ?
 							   (t->tm_hour % 12) : 12,
@@ -279,8 +279,8 @@ _fmt(const char *format, const struct pg_tm * t, char *pt, const char *ptlim,
 				case 'u':
 
 					/*
-					 * From Arnold Robbins' strftime version 3.0: "ISO 8601:
-					 * Weekday as a decimal number [1 (Monday) - 7]"
+					 * From Arnold Robbins' strftime version 3.0: "ISO
+					 * 8601: Weekday as a decimal number [1 (Monday) - 7]"
 					 * (ado, 1993-05-24)
 					 */
 					pt = _conv((t->tm_wday == 0) ?
@@ -335,8 +335,7 @@ _fmt(const char *format, const struct pg_tm * t, char *pt, const char *ptlim,
 								   DAYSPERWEEK) - 3;
 
 							/*
-							 * What yday does the NEXT ISO year begin
-							 * on?
+							 * What yday does the NEXT ISO year begin on?
 							 */
 							top = bot -
 								(len % DAYSPERWEEK);
@@ -377,8 +376,8 @@ _fmt(const char *format, const struct pg_tm * t, char *pt, const char *ptlim,
 				case 'v':
 
 					/*
-					 * From Arnold Robbins' strftime version 3.0:
-					 * "date as dd-bbb-YYYY" (ado, 1993-05-24)
+					 * From Arnold Robbins' strftime version 3.0: "date as
+					 * dd-bbb-YYYY" (ado, 1993-05-24)
 					 */
 					pt = _fmt("%e-%b-%Y", t, pt, ptlim, warnp);
 					continue;

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/freespace/freespace.c,v 1.33 2004/08/29 04:12:47 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/freespace/freespace.c,v 1.34 2004/08/29 05:06:47 momjian Exp $
  *
  *
  * NOTES:
@@ -217,7 +217,8 @@ int			MaxFSMRelations;	/* these are set by guc.c */
 int			MaxFSMPages;
 
 static FSMHeader *FreeSpaceMap; /* points to FSMHeader in shared memory */
-static HTAB	*FreeSpaceMapRelHash; /* points to (what used to be) FSMHeader->relHash */
+static HTAB *FreeSpaceMapRelHash;		/* points to (what used to be)
+										 * FSMHeader->relHash */
 
 
 static FSMRelation *lookup_fsm_rel(RelFileNode *rel);
@@ -265,10 +266,10 @@ InitFreeSpaceMap(void)
 {
 	HASHCTL		info;
 	int			nchunks;
-	bool found;
+	bool		found;
 
 	/* Create table header */
-	FreeSpaceMap = (FSMHeader *) ShmemInitStruct("Free Space Map Header",sizeof(FSMHeader),&found);
+	FreeSpaceMap = (FSMHeader *) ShmemInitStruct("Free Space Map Header", sizeof(FSMHeader), &found);
 	if (FreeSpaceMap == NULL)
 		ereport(FATAL,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
@@ -282,10 +283,10 @@ InitFreeSpaceMap(void)
 	info.hash = tag_hash;
 
 	FreeSpaceMapRelHash = ShmemInitHash("Free Space Map Hash",
-										  MaxFSMRelations / 10,
-										  MaxFSMRelations,
-										  &info,
-										  (HASH_ELEM | HASH_FUNCTION));
+										MaxFSMRelations / 10,
+										MaxFSMRelations,
+										&info,
+										(HASH_ELEM | HASH_FUNCTION));
 
 	if (!FreeSpaceMapRelHash)
 		ereport(FATAL,
@@ -1440,24 +1441,25 @@ compact_fsm_storage(void)
 
 		/*
 		 * It's possible that we have to move data down, not up, if the
-		 * allocations of previous rels expanded.  This normally means that
-		 * our allocation expanded too (or at least got no worse), and
-		 * ditto for later rels.  So there should be room to move all our
-		 * data down without dropping any --- but we might have to push down
-		 * following rels to acquire the room.  We don't want to do the push
-		 * more than once, so pack everything against the end of the arena
-		 * if so.
+		 * allocations of previous rels expanded.  This normally means
+		 * that our allocation expanded too (or at least got no worse),
+		 * and ditto for later rels.  So there should be room to move all
+		 * our data down without dropping any --- but we might have to
+		 * push down following rels to acquire the room.  We don't want to
+		 * do the push more than once, so pack everything against the end
+		 * of the arena if so.
 		 *
 		 * In corner cases where we are on the short end of a roundoff choice
 		 * that we were formerly on the long end of, it's possible that we
-		 * have to move down and compress our data too.  In fact, even after
-		 * pushing down the following rels, there might not be as much space
-		 * as we computed for this rel above --- that would imply that some
-		 * following rel(s) are also on the losing end of roundoff choices.
-		 * We could handle this fairly by doing the per-rel compactions
-		 * out-of-order, but that seems like way too much complexity to deal
-		 * with a very infrequent corner case.  Instead, we simply drop pages
-		 * from the end of the current rel's data until it fits.
+		 * have to move down and compress our data too.  In fact, even
+		 * after pushing down the following rels, there might not be as
+		 * much space as we computed for this rel above --- that would
+		 * imply that some following rel(s) are also on the losing end of
+		 * roundoff choices. We could handle this fairly by doing the
+		 * per-rel compactions out-of-order, but that seems like way too
+		 * much complexity to deal with a very infrequent corner case.
+		 * Instead, we simply drop pages from the end of the current rel's
+		 * data until it fits.
 		 */
 		if (newChunkIndex > oldChunkIndex)
 		{
@@ -1491,12 +1493,14 @@ compact_fsm_storage(void)
 				{
 					/* uh-oh, forcibly cut the allocation to fit */
 					newAlloc = limitChunkIndex - newChunkIndex;
+
 					/*
-					 * If newAlloc < 0 at this point, we are moving the rel's
-					 * firstChunk into territory currently assigned to a later
-					 * rel.  This is okay so long as we do not copy any data.
-					 * The rels will be back in nondecreasing firstChunk order
-					 * at completion of the compaction pass.
+					 * If newAlloc < 0 at this point, we are moving the
+					 * rel's firstChunk into territory currently assigned
+					 * to a later rel.	This is okay so long as we do not
+					 * copy any data. The rels will be back in
+					 * nondecreasing firstChunk order at completion of the
+					 * compaction pass.
 					 */
 					if (newAlloc < 0)
 						newAlloc = 0;
@@ -1846,7 +1850,7 @@ DumpFreeSpace(void)
 		relNum++;
 		fprintf(stderr, "Map %d: rel %u/%u/%u isIndex %d avgRequest %u lastPageCount %d nextPage %d\nMap= ",
 				relNum,
-				fsmrel->key.spcNode, fsmrel->key.dbNode, fsmrel->key.relNode,
+			fsmrel->key.spcNode, fsmrel->key.dbNode, fsmrel->key.relNode,
 				(int) fsmrel->isIndex, fsmrel->avgRequest,
 				fsmrel->lastPageCount, fsmrel->nextPage);
 		if (fsmrel->isIndex)

@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/droplang.c,v 1.12 2004/08/29 04:13:03 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/droplang.c,v 1.13 2004/08/29 05:06:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -165,8 +165,8 @@ main(int argc, char *argv[])
 	conn = connectDatabase(dbname, host, port, username, password, progname);
 
 	/*
-	 * Make sure the language is installed and find the OIDs of the handler
-	 * and validator functions
+	 * Make sure the language is installed and find the OIDs of the
+	 * handler and validator functions
 	 */
 	printfPQExpBuffer(&sql, "SELECT lanplcallfoid, lanvalidator FROM pg_language WHERE lanname = '%s' AND lanispl;", langname);
 	result = executeQuery(conn, sql.data, progname, echo);

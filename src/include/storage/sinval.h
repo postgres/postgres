@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/sinval.h,v 1.37 2004/08/29 04:13:10 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/storage/sinval.h,v 1.38 2004/08/29 05:06:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,7 +71,8 @@ typedef struct
 	int16		id;				/* type field --- must be first */
 	Oid			dbId;			/* database ID, or 0 if a shared relation */
 	Oid			relId;			/* relation ID */
-	RelFileNode	physId;			/* physical file ID */
+	RelFileNode physId;			/* physical file ID */
+
 	/*
 	 * Note: it is likely that RelFileNode will someday be changed to
 	 * include database ID.  In that case the dbId field will be redundant
@@ -101,11 +102,12 @@ extern bool IsBackendPid(int pid);
 extern TransactionId GetOldestXmin(bool allDbs);
 extern int	CountActiveBackends(void);
 extern int	CountEmptyBackendSlots(void);
+
 /* Use "struct PGPROC", not PGPROC, to avoid including proc.h here */
 extern struct PGPROC *BackendIdGetProc(BackendId procId);
 
 extern void XidCacheRemoveRunningXids(TransactionId xid,
-									  int nxids, TransactionId *xids);
+						  int nxids, TransactionId *xids);
 
 /* signal handler for catchup events (SIGUSR1) */
 extern void CatchupInterruptHandler(SIGNAL_ARGS);

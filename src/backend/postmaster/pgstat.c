@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2004, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.79 2004/08/29 04:12:46 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.80 2004/08/29 05:06:46 momjian Exp $
  * ----------
  */
 #include "postgres.h"
@@ -70,8 +70,8 @@
 
 #define PGSTAT_DESTROY_DELAY	10000	/* How long to keep destroyed
 										 * objects known, to give delayed
-										 * UDP packets time to arrive;
-										 * in milliseconds. */
+										 * UDP packets time to arrive; in
+										 * milliseconds. */
 
 #define PGSTAT_DESTROY_COUNT	(PGSTAT_DESTROY_DELAY / PGSTAT_STAT_INTERVAL)
 
@@ -108,7 +108,7 @@ bool		pgstat_collect_blocklevel = false;
  * Local data
  * ----------
  */
-NON_EXEC_STATIC int	pgStatSock = -1;
+NON_EXEC_STATIC int pgStatSock = -1;
 static int	pgStatPipe[2];
 static struct sockaddr_storage pgStatAddr;
 
@@ -147,11 +147,10 @@ typedef enum STATS_PROCESS_TYPE
 {
 	STAT_PROC_BUFFER,
 	STAT_PROC_COLLECTOR
-} STATS_PROCESS_TYPE;
+}	STATS_PROCESS_TYPE;
 
 static pid_t pgstat_forkexec(STATS_PROCESS_TYPE procType);
 static void pgstat_parseArgs(int argc, char *argv[]);
-
 #endif
 
 NON_EXEC_STATIC void PgstatBufferMain(int argc, char *argv[]);
@@ -203,10 +202,10 @@ pgstat_init(void)
 			   *addr,
 				hints;
 	int			ret;
-	fd_set      rset;
+	fd_set		rset;
 	struct timeval tv;
-	char        test_byte;
-	int         sel_res;
+	char		test_byte;
+	int			sel_res;
 
 #define TESTBYTEVAL ((char) 199)
 
@@ -219,10 +218,11 @@ pgstat_init(void)
 		pgstat_collect_startcollector = true;
 
 	/*
-	 * Initialize the filename for the status reports.  (In the EXEC_BACKEND
-	 * case, this only sets the value in the postmaster.  The collector
-	 * subprocess will recompute the value for itself, and individual
-	 * backends must do so also if they want to access the file.)
+	 * Initialize the filename for the status reports.	(In the
+	 * EXEC_BACKEND case, this only sets the value in the postmaster.  The
+	 * collector subprocess will recompute the value for itself, and
+	 * individual backends must do so also if they want to access the
+	 * file.)
 	 */
 	snprintf(pgStat_fname, MAXPGPATH, PGSTAT_STAT_FILENAME, DataDir);
 
@@ -261,11 +261,11 @@ pgstat_init(void)
 
 	/*
 	 * On some platforms, getaddrinfo_all() may return multiple addresses
-	 * only one of which will actually work (eg, both IPv6 and IPv4 addresses
-	 * when kernel will reject IPv6).  Worse, the failure may occur at the
-	 * bind() or perhaps even connect() stage.  So we must loop through the
-	 * results till we find a working combination.  We will generate LOG
-	 * messages, but no error, for bogus combinations.
+	 * only one of which will actually work (eg, both IPv6 and IPv4
+	 * addresses when kernel will reject IPv6).  Worse, the failure may
+	 * occur at the bind() or perhaps even connect() stage.  So we must
+	 * loop through the results till we find a working combination.  We
+	 * will generate LOG messages, but no error, for bogus combinations.
 	 */
 	for (addr = addrs; addr; addr = addr->ai_next)
 	{
@@ -274,6 +274,7 @@ pgstat_init(void)
 		if (addr->ai_family == AF_UNIX)
 			continue;
 #endif
+
 		/*
 		 * Create the socket.
 		 */
@@ -286,8 +287,8 @@ pgstat_init(void)
 		}
 
 		/*
-		 * Bind it to a kernel assigned port on localhost and get the assigned
-		 * port via getsockname().
+		 * Bind it to a kernel assigned port on localhost and get the
+		 * assigned port via getsockname().
 		 */
 		if (bind(pgStatSock, addr->ai_addr, addr->ai_addrlen) < 0)
 		{
@@ -300,7 +301,7 @@ pgstat_init(void)
 		}
 
 		alen = sizeof(pgStatAddr);
-		if (getsockname(pgStatSock, (struct sockaddr *) &pgStatAddr, &alen) < 0)
+		if (getsockname(pgStatSock, (struct sockaddr *) & pgStatAddr, &alen) < 0)
 		{
 			ereport(LOG,
 					(errcode_for_socket_access(),
@@ -311,12 +312,12 @@ pgstat_init(void)
 		}
 
 		/*
-		 * Connect the socket to its own address.  This saves a few cycles by
-		 * not having to respecify the target address on every send. This also
-		 * provides a kernel-level check that only packets from this same
-		 * address will be received.
+		 * Connect the socket to its own address.  This saves a few cycles
+		 * by not having to respecify the target address on every send.
+		 * This also provides a kernel-level check that only packets from
+		 * this same address will be received.
 		 */
-		if (connect(pgStatSock, (struct sockaddr *) &pgStatAddr, alen) < 0)
+		if (connect(pgStatSock, (struct sockaddr *) & pgStatAddr, alen) < 0)
 		{
 			ereport(LOG,
 					(errcode_for_socket_access(),
@@ -329,8 +330,8 @@ pgstat_init(void)
 		/*
 		 * Try to send and receive a one-byte test message on the socket.
 		 * This is to catch situations where the socket can be created but
-		 * will not actually pass data (for instance, because kernel packet
-		 * filtering rules prevent it).
+		 * will not actually pass data (for instance, because kernel
+		 * packet filtering rules prevent it).
 		 */
 		test_byte = TESTBYTEVAL;
 		if (send(pgStatSock, &test_byte, 1, 0) != 1)
@@ -344,9 +345,9 @@ pgstat_init(void)
 		}
 
 		/*
-		 * There could possibly be a little delay before the message can be
-		 * received.  We arbitrarily allow up to half a second before deciding
-		 * it's broken.
+		 * There could possibly be a little delay before the message can
+		 * be received.  We arbitrarily allow up to half a second before
+		 * deciding it's broken.
 		 */
 		for (;;)				/* need a loop to handle EINTR */
 		{
@@ -354,7 +355,7 @@ pgstat_init(void)
 			FD_SET(pgStatSock, &rset);
 			tv.tv_sec = 0;
 			tv.tv_usec = 500000;
-			sel_res = select(pgStatSock+1, &rset, NULL, NULL, &tv);
+			sel_res = select(pgStatSock + 1, &rset, NULL, NULL, &tv);
 			if (sel_res >= 0 || errno != EINTR)
 				break;
 		}
@@ -362,7 +363,7 @@ pgstat_init(void)
 		{
 			ereport(LOG,
 					(errcode_for_socket_access(),
-					 errmsg("select() failed in statistics collector: %m")));
+				 errmsg("select() failed in statistics collector: %m")));
 			closesocket(pgStatSock);
 			pgStatSock = -1;
 			continue;
@@ -370,8 +371,8 @@ pgstat_init(void)
 		if (sel_res == 0 || !FD_ISSET(pgStatSock, &rset))
 		{
 			/*
-			 * This is the case we actually think is likely, so take pains to
-			 * give a specific message for it.
+			 * This is the case we actually think is likely, so take pains
+			 * to give a specific message for it.
 			 *
 			 * errno will not be set meaningfully here, so don't use it.
 			 */
@@ -395,7 +396,7 @@ pgstat_init(void)
 			continue;
 		}
 
-		if (test_byte != TESTBYTEVAL) /* strictly paranoia ... */
+		if (test_byte != TESTBYTEVAL)	/* strictly paranoia ... */
 		{
 			ereport(LOG,
 					(ERRCODE_INTERNAL_ERROR,
@@ -428,7 +429,7 @@ pgstat_init(void)
 	{
 		ereport(LOG,
 				(errcode_for_socket_access(),
-		errmsg("could not set statistics collector socket to nonblocking mode: %m")));
+				 errmsg("could not set statistics collector socket to nonblocking mode: %m")));
 		goto startup_failed;
 	}
 
@@ -463,9 +464,11 @@ startup_failed:
 static pid_t
 pgstat_forkexec(STATS_PROCESS_TYPE procType)
 {
-	char *av[10];
-	int ac = 0, bufc = 0, i;
-	char pgstatBuf[2][32];
+	char	   *av[10];
+	int			ac = 0,
+				bufc = 0,
+				i;
+	char		pgstatBuf[2][32];
 
 	av[ac++] = "postgres";
 
@@ -489,8 +492,8 @@ pgstat_forkexec(STATS_PROCESS_TYPE procType)
 	av[ac++] = postgres_exec_path;
 
 	/* Pipe file ids (those not passed by write_backend_variables) */
-	snprintf(pgstatBuf[bufc++],32,"%d",pgStatPipe[0]);
-	snprintf(pgstatBuf[bufc++],32,"%d",pgStatPipe[1]);
+	snprintf(pgstatBuf[bufc++], 32, "%d", pgStatPipe[0]);
+	snprintf(pgstatBuf[bufc++], 32, "%d", pgStatPipe[1]);
 
 	/* Add to the arg list */
 	Assert(bufc <= lengthof(pgstatBuf));
@@ -516,12 +519,11 @@ pgstat_parseArgs(int argc, char *argv[])
 	Assert(argc == 6);
 
 	argc = 3;
-	StrNCpy(postgres_exec_path,	argv[argc++], MAXPGPATH);
-	pgStatPipe[0]	= atoi(argv[argc++]);
-	pgStatPipe[1]	= atoi(argv[argc++]);
+	StrNCpy(postgres_exec_path, argv[argc++], MAXPGPATH);
+	pgStatPipe[0] = atoi(argv[argc++]);
+	pgStatPipe[1] = atoi(argv[argc++]);
 }
-
-#endif /* EXEC_BACKEND */
+#endif   /* EXEC_BACKEND */
 
 
 /* ----------
@@ -1072,7 +1074,7 @@ pgstat_initstats(PgStat_Info *stats, Relation rel)
 	{
 		tsmsg = pgStatTabstatMessages[mb];
 
-		for (i = tsmsg->m_nentries; --i >= 0; )
+		for (i = tsmsg->m_nentries; --i >= 0;)
 		{
 			if (tsmsg->m_entry[i].t_id == rel_id)
 			{
@@ -1387,7 +1389,7 @@ PgstatBufferMain(int argc, char *argv[])
 	/* unblock will happen in pgstat_recvbuffer */
 
 #ifdef EXEC_BACKEND
-	pgstat_parseArgs(argc,argv);
+	pgstat_parseArgs(argc, argv);
 #endif
 
 	/*
@@ -1464,9 +1466,9 @@ PgstatCollectorMain(int argc, char *argv[])
 
 	/*
 	 * Reset signal handling.  With the exception of restoring default
-	 * SIGCHLD and SIGQUIT handling, this is a no-op in the non-EXEC_BACKEND
-	 * case because we'll have inherited these settings from the buffer
-	 * process; but it's not a no-op for EXEC_BACKEND.
+	 * SIGCHLD and SIGQUIT handling, this is a no-op in the
+	 * non-EXEC_BACKEND case because we'll have inherited these settings
+	 * from the buffer process; but it's not a no-op for EXEC_BACKEND.
 	 */
 	pqsignal(SIGHUP, SIG_IGN);
 	pqsignal(SIGINT, SIG_IGN);
@@ -1484,7 +1486,7 @@ PgstatCollectorMain(int argc, char *argv[])
 	PG_SETMASK(&UnBlockSig);
 
 #ifdef EXEC_BACKEND
-	pgstat_parseArgs(argc,argv);
+	pgstat_parseArgs(argc, argv);
 #endif
 
 	/* Close unwanted files */
@@ -1532,7 +1534,7 @@ PgstatCollectorMain(int argc, char *argv[])
 		/* assume the problem is out-of-memory */
 		ereport(LOG,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory in statistics collector --- abort")));
+			 errmsg("out of memory in statistics collector --- abort")));
 		exit(1);
 	}
 
@@ -1545,7 +1547,7 @@ PgstatCollectorMain(int argc, char *argv[])
 	{
 		ereport(LOG,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory in statistics collector --- abort")));
+			 errmsg("out of memory in statistics collector --- abort")));
 		exit(1);
 	}
 	memset(pgStatBeTable, 0, sizeof(PgStat_StatBeEntry) * MaxBackends);
@@ -1597,7 +1599,7 @@ PgstatCollectorMain(int argc, char *argv[])
 		/*
 		 * Now wait for something to do.
 		 */
-		nready = select(readPipe+1, &rfds, NULL, NULL,
+		nready = select(readPipe + 1, &rfds, NULL, NULL,
 						(need_statwrite) ? &timeout : NULL);
 		if (nready < 0)
 		{
@@ -1605,7 +1607,7 @@ PgstatCollectorMain(int argc, char *argv[])
 				continue;
 			ereport(LOG,
 					(errcode_for_socket_access(),
-				   errmsg("select() failed in statistics collector: %m")));
+				 errmsg("select() failed in statistics collector: %m")));
 			exit(1);
 		}
 
@@ -1640,7 +1642,7 @@ PgstatCollectorMain(int argc, char *argv[])
 			while (nread < targetlen)
 			{
 				len = piperead(readPipe, ((char *) &msg) + nread,
-								targetlen - nread);
+							   targetlen - nread);
 				if (len < 0)
 				{
 					if (errno == EINTR)
@@ -1816,7 +1818,7 @@ pgstat_recvbuffer(void)
 	{
 		ereport(LOG,
 				(errcode_for_socket_access(),
-		  errmsg("could not set statistics collector pipe to nonblocking mode: %m")));
+				 errmsg("could not set statistics collector pipe to nonblocking mode: %m")));
 		exit(1);
 	}
 
@@ -1986,8 +1988,8 @@ pgstat_recvbuffer(void)
 			continue;
 
 		/*
-		 * If the postmaster has terminated, we die too.  (This is no longer
-		 * the normal exit path, however.)
+		 * If the postmaster has terminated, we die too.  (This is no
+		 * longer the normal exit path, however.)
 		 */
 		if (!PostmasterIsAlive(true))
 			exit(0);
@@ -2000,8 +2002,8 @@ pgstat_exit(SIGNAL_ARGS)
 {
 	/*
 	 * For now, we just nail the doors shut and get out of town.  It might
-	 * be cleaner to allow any pending messages to be sent, but that creates
-	 * a tradeoff against speed of exit.
+	 * be cleaner to allow any pending messages to be sent, but that
+	 * creates a tradeoff against speed of exit.
 	 */
 	exit(0);
 }
@@ -2034,7 +2036,7 @@ pgstat_add_backend(PgStat_MsgHdr *msg)
 	if (msg->m_backendid < 1 || msg->m_backendid > MaxBackends)
 	{
 		ereport(LOG,
-				(errmsg("invalid server process ID %d", msg->m_backendid)));
+			 (errmsg("invalid server process ID %d", msg->m_backendid)));
 		return -1;
 	}
 
@@ -2229,8 +2231,8 @@ pgstat_write_statsfile(void)
 	{
 		ereport(LOG,
 				(errcode_for_file_access(),
-				 errmsg("could not open temporary statistics file \"%s\": %m",
-						pgStat_tmpfname)));
+			errmsg("could not open temporary statistics file \"%s\": %m",
+				   pgStat_tmpfname)));
 		return;
 	}
 
@@ -2342,8 +2344,8 @@ pgstat_write_statsfile(void)
 	{
 		ereport(LOG,
 				(errcode_for_file_access(),
-				 errmsg("could not close temporary statistics file \"%s\": %m",
-						pgStat_tmpfname)));
+		   errmsg("could not close temporary statistics file \"%s\": %m",
+				  pgStat_tmpfname)));
 	}
 	else
 	{
@@ -2373,8 +2375,8 @@ pgstat_write_statsfile(void)
 							HASH_REMOVE, NULL) == NULL)
 			{
 				ereport(LOG,
-						(errmsg("dead-server-process hash table corrupted "
-								"during cleanup --- abort")));
+					  (errmsg("dead-server-process hash table corrupted "
+							  "during cleanup --- abort")));
 				exit(1);
 			}
 		}
@@ -2743,7 +2745,7 @@ pgstat_read_statsfile(HTAB **dbhash, Oid onlydb,
 static void
 backend_read_statsfile(void)
 {
-	TransactionId	topXid = GetTopTransactionId();
+	TransactionId topXid = GetTopTransactionId();
 
 	if (!TransactionIdEquals(pgStatDBHashXact, topXid))
 	{

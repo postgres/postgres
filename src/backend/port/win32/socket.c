@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/win32/socket.c,v 1.3 2004/08/29 04:12:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/win32/socket.c,v 1.4 2004/08/29 05:06:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,19 +26,22 @@
  */
 
 /*
- * Convert the last socket error code into errno 
+ * Convert the last socket error code into errno
  */
-static void TranslateSocketError(void) {
-	switch (WSAGetLastError()) {
-		case WSANOTINITIALISED:
-		case WSAENETDOWN:
-		case WSAEINPROGRESS:
-		case WSAEINVAL:
-		case WSAESOCKTNOSUPPORT:
-		case WSAEFAULT:
-		case WSAEINVALIDPROVIDER:
-		case WSAEINVALIDPROCTABLE:
-		case WSAEMSGSIZE:
+static void
+TranslateSocketError(void)
+{
+	switch (WSAGetLastError())
+	{
+			case WSANOTINITIALISED:
+			case WSAENETDOWN:
+			case WSAEINPROGRESS:
+			case WSAEINVAL:
+			case WSAESOCKTNOSUPPORT:
+			case WSAEFAULT:
+			case WSAEINVALIDPROVIDER:
+			case WSAEINVALIDPROCTABLE:
+			case WSAEMSGSIZE:
 			errno = EINVAL;
 			break;
 		case WSAEAFNOSUPPORT:
@@ -78,17 +81,20 @@ static void TranslateSocketError(void) {
 		case WSAESHUTDOWN:
 		case WSAECONNABORTED:
 		case WSAEDISCON:
-			errno = ECONNREFUSED; /*ENOTCONN?*/
+			errno = ECONNREFUSED;		/* ENOTCONN? */
 			break;
 		default:
 			ereport(NOTICE,
-				 (errmsg_internal("Unknown win32 socket error code: %i",WSAGetLastError())));
+					(errmsg_internal("Unknown win32 socket error code: %i", WSAGetLastError())));
 			errno = EINVAL;
 	}
 }
 
-static int pgwin32_poll_signals(void) {
-	if (WaitForSingleObject(pgwin32_signal_event,0) == WAIT_OBJECT_0) {
+static int
+pgwin32_poll_signals(void)
+{
+	if (WaitForSingleObject(pgwin32_signal_event, 0) == WAIT_OBJECT_0)
+	{
 		pgwin32_dispatch_queued_signals();
 		errno = EINTR;
 		return 1;
@@ -96,25 +102,28 @@ static int pgwin32_poll_signals(void) {
 	return 0;
 }
 
-static int pgwin32_waitforsinglesocket(SOCKET s, int what) {
+static int
+pgwin32_waitforsinglesocket(SOCKET s, int what)
+{
 	static HANDLE waitevent = INVALID_HANDLE_VALUE;
-	HANDLE events[2];
-	int r;
+	HANDLE		events[2];
+	int			r;
 
-	if (waitevent == INVALID_HANDLE_VALUE) {
+	if (waitevent == INVALID_HANDLE_VALUE)
+	{
 		waitevent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
 		if (waitevent == INVALID_HANDLE_VALUE)
 			ereport(ERROR,
-					(errmsg_internal("Failed to create socket waiting event: %i",(int)GetLastError())));
+					(errmsg_internal("Failed to create socket waiting event: %i", (int) GetLastError())));
 	}
-	else
-		if (!ResetEvent(waitevent))
-			ereport(ERROR,
-					(errmsg_internal("Failed to reset socket waiting event: %i",(int)GetLastError())));
+	else if (!ResetEvent(waitevent))
+		ereport(ERROR,
+				(errmsg_internal("Failed to reset socket waiting event: %i", (int) GetLastError())));
 
-	
-	if (WSAEventSelect(s, waitevent, what) == SOCKET_ERROR) {
+
+	if (WSAEventSelect(s, waitevent, what) == SOCKET_ERROR)
+	{
 		TranslateSocketError();
 		return 0;
 	}
@@ -123,32 +132,37 @@ static int pgwin32_waitforsinglesocket(SOCKET s, int what) {
 	events[1] = waitevent;
 	r = WaitForMultipleObjects(2, events, FALSE, INFINITE);
 
-	if (r == WAIT_OBJECT_0) {
+	if (r == WAIT_OBJECT_0)
+	{
 		pgwin32_dispatch_queued_signals();
 		errno = EINTR;
 		return 0;
 	}
-	if (r == WAIT_OBJECT_0+1) 
+	if (r == WAIT_OBJECT_0 + 1)
 		return 1;
 	ereport(ERROR,
-			(errmsg_internal("Bad return from WaitForMultipleObjects: %i (%i)",r,(int)GetLastError())));
+			(errmsg_internal("Bad return from WaitForMultipleObjects: %i (%i)", r, (int) GetLastError())));
 	return 0;
 }
 
 /*
- * Create a socket, setting it to overlapped and non-blocking 
+ * Create a socket, setting it to overlapped and non-blocking
  */
-SOCKET pgwin32_socket(int af, int type, int protocol) {
-	SOCKET s;
+SOCKET
+pgwin32_socket(int af, int type, int protocol)
+{
+	SOCKET		s;
 	unsigned long on = 1;
 
 	s = WSASocket(af, type, protocol, NULL, 0, WSA_FLAG_OVERLAPPED);
-	if (s == INVALID_SOCKET) {
+	if (s == INVALID_SOCKET)
+	{
 		TranslateSocketError();
 		return INVALID_SOCKET;
 	}
-	
-	if (ioctlsocket(s, FIONBIO, &on)) {
+
+	if (ioctlsocket(s, FIONBIO, &on))
+	{
 		TranslateSocketError();
 		return INVALID_SOCKET;
 	}
@@ -158,15 +172,20 @@ SOCKET pgwin32_socket(int af, int type, int protocol) {
 }
 
 
-SOCKET pgwin32_accept(SOCKET s, struct sockaddr* addr, int* addrlen) {
-	SOCKET rs;
+SOCKET
+pgwin32_accept(SOCKET s, struct sockaddr * addr, int *addrlen)
+{
+	SOCKET		rs;
 
-	/* Poll for signals, but don't return with EINTR, since we don't
-	   handle that in pqcomm.c */
+	/*
+	 * Poll for signals, but don't return with EINTR, since we don't
+	 * handle that in pqcomm.c
+	 */
 	pgwin32_poll_signals();
 
 	rs = WSAAccept(s, addr, addrlen, NULL, 0);
-	if (rs == INVALID_SOCKET) {
+	if (rs == INVALID_SOCKET)
+	{
 		TranslateSocketError();
 		return INVALID_SOCKET;
 	}
@@ -175,30 +194,36 @@ SOCKET pgwin32_accept(SOCKET s, struct sockaddr* addr, int* addrlen) {
 
 
 /* No signal delivery during connect. */
-int pgwin32_connect(SOCKET s, const struct sockaddr *addr, int addrlen) {
-	int r;
+int
+pgwin32_connect(SOCKET s, const struct sockaddr * addr, int addrlen)
+{
+	int			r;
 
 	r = WSAConnect(s, addr, addrlen, NULL, NULL, NULL, NULL);
 	if (r == 0)
 		return 0;
 
-	if (WSAGetLastError() != WSAEWOULDBLOCK) {
+	if (WSAGetLastError() != WSAEWOULDBLOCK)
+	{
 		TranslateSocketError();
 		return -1;
 	}
 
-	while (pgwin32_waitforsinglesocket(s, FD_CONNECT) == 0) {
+	while (pgwin32_waitforsinglesocket(s, FD_CONNECT) == 0)
+	{
 		/* Loop endlessly as long as we are just delivering signals */
 	}
 
 	return 0;
 }
 
-int pgwin32_recv(SOCKET s, char *buf, int len, int f) {
-	WSABUF wbuf;
-	int r;
-	DWORD b;
-	DWORD flags = f;
+int
+pgwin32_recv(SOCKET s, char *buf, int len, int f)
+{
+	WSABUF		wbuf;
+	int			r;
+	DWORD		b;
+	DWORD		flags = f;
 
 	if (pgwin32_poll_signals())
 		return -1;
@@ -206,34 +231,38 @@ int pgwin32_recv(SOCKET s, char *buf, int len, int f) {
 	wbuf.len = len;
 	wbuf.buf = buf;
 
-	r =  WSARecv(s, &wbuf, 1, &b, &flags, NULL, NULL);
-	if (r != SOCKET_ERROR && b > 0) 
+	r = WSARecv(s, &wbuf, 1, &b, &flags, NULL, NULL);
+	if (r != SOCKET_ERROR && b > 0)
 		/* Read succeeded right away */
-		return b; 
+		return b;
 
 	if (r == SOCKET_ERROR &&
-		WSAGetLastError() != WSAEWOULDBLOCK) {
+		WSAGetLastError() != WSAEWOULDBLOCK)
+	{
 		TranslateSocketError();
 		return -1;
 	}
 
 	/* No error, zero bytes (win2000+) or error+WSAEWOULDBLOCK (<=nt4) */
 
-	if (pgwin32_waitforsinglesocket(s, FD_READ | FD_CLOSE | FD_ACCEPT) == 0) 
+	if (pgwin32_waitforsinglesocket(s, FD_READ | FD_CLOSE | FD_ACCEPT) == 0)
 		return -1;
 
 	r = WSARecv(s, &wbuf, 1, &b, &flags, NULL, NULL);
-	if (r == SOCKET_ERROR) {
+	if (r == SOCKET_ERROR)
+	{
 		TranslateSocketError();
 		return -1;
 	}
 	return b;
 }
 
-int pgwin32_send(SOCKET s, char *buf, int len, int flags) {
-	WSABUF wbuf;
-	int r;
-	DWORD b;
+int
+pgwin32_send(SOCKET s, char *buf, int len, int flags)
+{
+	WSABUF		wbuf;
+	int			r;
+	DWORD		b;
 
 	if (pgwin32_poll_signals())
 		return -1;
@@ -242,12 +271,13 @@ int pgwin32_send(SOCKET s, char *buf, int len, int flags) {
 	wbuf.buf = buf;
 
 	r = WSASend(s, &wbuf, 1, &b, flags, NULL, NULL);
-	if (r != SOCKET_ERROR && b > 0) 
+	if (r != SOCKET_ERROR && b > 0)
 		/* Write succeeded right away */
 		return b;
-	
+
 	if (r == SOCKET_ERROR &&
-		WSAGetLastError() != WSAEWOULDBLOCK) {
+		WSAGetLastError() != WSAEWOULDBLOCK)
+	{
 		TranslateSocketError();
 		return -1;
 	}
@@ -258,7 +288,8 @@ int pgwin32_send(SOCKET s, char *buf, int len, int flags) {
 		return -1;
 
 	r = WSASend(s, &wbuf, 1, &b, flags, NULL, NULL);
-	if (r == SOCKET_ERROR) {
+	if (r == SOCKET_ERROR)
+	{
 		TranslateSocketError();
 		return -1;
 	}
@@ -268,22 +299,25 @@ int pgwin32_send(SOCKET s, char *buf, int len, int flags) {
 
 /*
  * Wait for activity on one or more sockets.
- * While waiting, allow signals to run 
+ * While waiting, allow signals to run
  *
  * NOTE! Currently does not implement exceptfds check,
  * since it is not used in postgresql!
  */
-int pgwin32_select(int nfds, fd_set* readfds, fd_set* writefds, fd_set* exceptfds, const struct timeval* timeout) {
-	WSAEVENT events[FD_SETSIZE*2]; /* worst case is readfds totally different
-									* from writefds, so 2*FD_SETSIZE sockets */
-	SOCKET sockets[FD_SETSIZE*2];
-	int numevents=0;
-	int i;
-	int r;
-	DWORD timeoutval = WSA_INFINITE;
-	FD_SET outreadfds;
-	FD_SET outwritefds;
-	int nummatches = 0;
+int
+pgwin32_select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, const struct timeval * timeout)
+{
+	WSAEVENT	events[FD_SETSIZE * 2]; /* worst case is readfds totally
+										 * different from writefds, so
+										 * 2*FD_SETSIZE sockets */
+	SOCKET		sockets[FD_SETSIZE * 2];
+	int			numevents = 0;
+	int			i;
+	int			r;
+	DWORD		timeoutval = WSA_INFINITE;
+	FD_SET		outreadfds;
+	FD_SET		outwritefds;
+	int			nummatches = 0;
 
 	Assert(exceptfds == NULL);
 
@@ -293,55 +327,70 @@ int pgwin32_select(int nfds, fd_set* readfds, fd_set* writefds, fd_set* exceptfd
 	FD_ZERO(&outreadfds);
 	FD_ZERO(&outwritefds);
 
-	/* Write FDs are different in the way that it is only flagged by
-	 * WSASelectEvent() if we have tried to write to them first. So try
-	 * an empty write */
-	if (writefds) {
-		for (i = 0; i < writefds->fd_count; i++) {
-			char c;
-			WSABUF buf;
-			DWORD sent;
+	/*
+	 * Write FDs are different in the way that it is only flagged by
+	 * WSASelectEvent() if we have tried to write to them first. So try an
+	 * empty write
+	 */
+	if (writefds)
+	{
+		for (i = 0; i < writefds->fd_count; i++)
+		{
+			char		c;
+			WSABUF		buf;
+			DWORD		sent;
 
 			buf.buf = &c;
 			buf.len = 0;
 
 			r = WSASend(writefds->fd_array[i], &buf, 1, &sent, 0, NULL, NULL);
-			if (r == 0) /* Completed - means things are fine! */
+			if (r == 0)			/* Completed - means things are fine! */
 				FD_SET(writefds->fd_array[i], &outwritefds);
-			else { /* Not completed */
+			else
+			{					/* Not completed */
 				if (WSAGetLastError() != WSAEWOULDBLOCK)
-					/* Not completed, and not just "would block", so
-					 * an error occured */
+
+					/*
+					 * Not completed, and not just "would block", so an
+					 * error occured
+					 */
 					FD_SET(writefds->fd_array[i], &outwritefds);
 			}
 		}
-		if (outwritefds.fd_count > 0) {
-			memcpy(writefds,&outwritefds,sizeof(fd_set));
+		if (outwritefds.fd_count > 0)
+		{
+			memcpy(writefds, &outwritefds, sizeof(fd_set));
 			if (readfds)
 				FD_ZERO(readfds);
 			return outwritefds.fd_count;
 		}
 	}
-	
+
 
 	/* Now set up for an actual select */
 
-	if (timeout != NULL) {
+	if (timeout != NULL)
+	{
 		/* timeoutval is in milliseconds */
-		timeoutval = timeout->tv_sec*1000 + timeout->tv_usec / 1000;
+		timeoutval = timeout->tv_sec * 1000 + timeout->tv_usec / 1000;
 	}
 
-	if (readfds != NULL) {
-		for (i=0; i < readfds->fd_count; i++) {
+	if (readfds != NULL)
+	{
+		for (i = 0; i < readfds->fd_count; i++)
+		{
 			events[numevents] = WSACreateEvent();
 			sockets[numevents] = readfds->fd_array[i];
 			numevents++;
 		}
 	}
-	if (writefds != NULL) {
-		for (i=0; i < writefds->fd_count; i++) {
+	if (writefds != NULL)
+	{
+		for (i = 0; i < writefds->fd_count; i++)
+		{
 			if (!readfds ||
-				!FD_ISSET(writefds->fd_array[i], readfds)) {
+				!FD_ISSET(writefds->fd_array[i], readfds))
+			{
 				/* If the socket is not in the read list */
 				events[numevents] = WSACreateEvent();
 				sockets[numevents] = writefds->fd_array[i];
@@ -350,63 +399,74 @@ int pgwin32_select(int nfds, fd_set* readfds, fd_set* writefds, fd_set* exceptfd
 		}
 	}
 
-	for (i=0; i < numevents; i++) {
-		int flags = 0;
+	for (i = 0; i < numevents; i++)
+	{
+		int			flags = 0;
 
-		if (readfds && FD_ISSET(sockets[i],readfds)) 
+		if (readfds && FD_ISSET(sockets[i], readfds))
 			flags |= FD_READ | FD_ACCEPT | FD_CLOSE;
 
-		if (writefds && FD_ISSET(sockets[i],writefds))
+		if (writefds && FD_ISSET(sockets[i], writefds))
 			flags |= FD_WRITE | FD_CLOSE;
-		
-		if (WSAEventSelect(sockets[i], events[i], flags) == SOCKET_ERROR) {
+
+		if (WSAEventSelect(sockets[i], events[i], flags) == SOCKET_ERROR)
+		{
 			TranslateSocketError();
-			for (i = 0; i < numevents; i++) 
+			for (i = 0; i < numevents; i++)
 				WSACloseEvent(events[i]);
 			return -1;
 		}
 	}
 
 	events[numevents] = pgwin32_signal_event;
-	r = WaitForMultipleObjectsEx(numevents+1, events, FALSE, timeoutval, FALSE);
-	if (r != WSA_WAIT_TIMEOUT && r != (WAIT_OBJECT_0+numevents)) {
-		/* We scan all events, even those not signalled, in case more
-		 * than one event has been tagged but Wait.. can only return one.
+	r = WaitForMultipleObjectsEx(numevents + 1, events, FALSE, timeoutval, FALSE);
+	if (r != WSA_WAIT_TIMEOUT && r != (WAIT_OBJECT_0 + numevents))
+	{
+		/*
+		 * We scan all events, even those not signalled, in case more than
+		 * one event has been tagged but Wait.. can only return one.
 		 */
 		WSANETWORKEVENTS resEvents;
-		
-		for (i=0; i < numevents; i++) {
-			ZeroMemory(&resEvents,sizeof(resEvents));
-			if (WSAEnumNetworkEvents(sockets[i],events[i],&resEvents) == SOCKET_ERROR) 
+
+		for (i = 0; i < numevents; i++)
+		{
+			ZeroMemory(&resEvents, sizeof(resEvents));
+			if (WSAEnumNetworkEvents(sockets[i], events[i], &resEvents) == SOCKET_ERROR)
 				ereport(FATAL,
-						(errmsg_internal("failed to enumerate network events: %i",(int)GetLastError())));
+						(errmsg_internal("failed to enumerate network events: %i", (int) GetLastError())));
 			/* Read activity? */
-			if (readfds && FD_ISSET(sockets[i], readfds)) {
+			if (readfds && FD_ISSET(sockets[i], readfds))
+			{
 				if ((resEvents.lNetworkEvents & FD_READ) ||
 					(resEvents.lNetworkEvents & FD_ACCEPT) ||
-					(resEvents.lNetworkEvents & FD_CLOSE)) {
-					FD_SET(sockets[i],&outreadfds);
+					(resEvents.lNetworkEvents & FD_CLOSE))
+				{
+					FD_SET(sockets[i], &outreadfds);
 					nummatches++;
 				}
 			}
 			/* Write activity? */
-			if (writefds && FD_ISSET(sockets[i], writefds)) {
+			if (writefds && FD_ISSET(sockets[i], writefds))
+			{
 				if ((resEvents.lNetworkEvents & FD_WRITE) ||
-					(resEvents.lNetworkEvents & FD_CLOSE)) {
-					FD_SET(sockets[i],&outwritefds);
+					(resEvents.lNetworkEvents & FD_CLOSE))
+				{
+					FD_SET(sockets[i], &outwritefds);
 					nummatches++;
 				}
 			}
 		}
 	}
-		
+
 	/* Clean up all handles */
-	for (i = 0; i < numevents; i++) {
+	for (i = 0; i < numevents; i++)
+	{
 		WSAEventSelect(sockets[i], events[i], 0);
 		WSACloseEvent(events[i]);
 	}
-	
-	if (r == WSA_WAIT_TIMEOUT) {
+
+	if (r == WSA_WAIT_TIMEOUT)
+	{
 		if (readfds)
 			FD_ZERO(readfds);
 		if (writefds)
@@ -414,7 +474,8 @@ int pgwin32_select(int nfds, fd_set* readfds, fd_set* writefds, fd_set* exceptfd
 		return 0;
 	}
 
-	if (r == WAIT_OBJECT_0+numevents) {
+	if (r == WAIT_OBJECT_0 + numevents)
+	{
 		pgwin32_dispatch_queued_signals();
 		errno = EINTR;
 		if (readfds)
@@ -433,9 +494,9 @@ int pgwin32_select(int nfds, fd_set* readfds, fd_set* writefds, fd_set* exceptfd
 }
 
 
-/* 
+/*
  * Return win32 error string, since strerror can't
- * handle winsock codes 
+ * handle winsock codes
  */
 static char wserrbuf[256];
 const char *
@@ -443,11 +504,12 @@ pgwin32_socket_strerror(int err)
 {
 	static HANDLE handleDLL = INVALID_HANDLE_VALUE;
 
-	if (handleDLL == INVALID_HANDLE_VALUE) {
+	if (handleDLL == INVALID_HANDLE_VALUE)
+	{
 		handleDLL = LoadLibraryEx("netmsg.dll", NULL, DONT_RESOLVE_DLL_REFERENCES | LOAD_LIBRARY_AS_DATAFILE);
-		if (handleDLL ==  NULL)
+		if (handleDLL == NULL)
 			ereport(FATAL,
-					(errmsg_internal("Failed to load netmsg.dll: %i",(int)GetLastError())));
+					(errmsg_internal("Failed to load netmsg.dll: %i", (int) GetLastError())));
 	}
 
 	ZeroMemory(&wserrbuf, sizeof(wserrbuf));
@@ -456,11 +518,11 @@ pgwin32_socket_strerror(int err)
 					  err,
 					  MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
 					  wserrbuf,
-					  sizeof(wserrbuf)-1,
-					  NULL) == 0) {
+					  sizeof(wserrbuf) - 1,
+					  NULL) == 0)
+	{
 		/* Failed to get id */
-		sprintf(wserrbuf,"Unknown winsock error %i",err);
+		sprintf(wserrbuf, "Unknown winsock error %i", err);
 	}
 	return wserrbuf;
 }
-

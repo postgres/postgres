@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/port.h,v 1.55 2004/08/29 04:13:03 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/port.h,v 1.56 2004/08/29 05:06:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,7 @@
 #include <ctype.h>
 
 /* non-blocking */
-bool set_noblock(int sock);
+bool		set_noblock(int sock);
 
 /* Portable path handling for Unix/Win32 */
 
@@ -55,7 +55,7 @@ extern bool get_home_path(char *ret_path);
 /*
  *	is_absolute_path
  *
- * 	This capability is needed by libpq and initdb.c
+ *	This capability is needed by libpq and initdb.c
  *	On Win32, you can't reference the same object file that is
  *	in two different libraries (pgport and libpq), so a macro is best.
  */
@@ -76,9 +76,10 @@ extern bool get_home_path(char *ret_path);
 
 
 /* Portable way to find binaries */
-extern int find_my_exec(const char *argv0, char *retpath);
+extern int	find_my_exec(const char *argv0, char *retpath);
 extern int find_other_exec(const char *argv0, const char *target,
-						   const char *versionstr, char *retpath);
+				const char *versionstr, char *retpath);
+
 #if defined(WIN32) || defined(__CYGWIN__)
 #define EXE ".exe"
 #define DEVNULL "nul"
@@ -103,9 +104,9 @@ extern int find_other_exec(const char *argv0, const char *target,
 #endif
 
 #ifdef WIN32
-#define HOMEDIR	"USERPROFILE"
+#define HOMEDIR "USERPROFILE"
 #else
-#define HOMEDIR	"HOME"
+#define HOMEDIR "HOME"
 #endif
 
 /* Portable delay handling */
@@ -136,16 +137,17 @@ extern off_t ftello(FILE *stream);
 #define piperead(a,b,c)		read(a,b,c)
 #define pipewrite(a,b,c)	write(a,b,c)
 #else
-extern int pgpipe(int handles[2]);
-extern int piperead(int s, char* buf, int len);
+extern int	pgpipe(int handles[2]);
+extern int	piperead(int s, char *buf, int len);
+
 #define pipewrite(a,b,c)	send(a,b,c,0)
 
 #define PG_SIGNAL_COUNT 32
-#define kill(pid,sig)   pgkill(pid,sig)
-extern int pgkill(int pid, int sig);
+#define kill(pid,sig)	pgkill(pid,sig)
+extern int	pgkill(int pid, int sig);
 #endif
 
-extern int pclose_check(FILE *stream);
+extern int	pclose_check(FILE *stream);
 
 #if defined(WIN32) || defined(__CYGWIN__)
 /*
@@ -155,10 +157,10 @@ extern int pclose_check(FILE *stream);
 extern int	pgrename(const char *from, const char *to);
 extern int	pgunlink(const char *path);
 extern int	pgsymlink(const char *oldpath, const char *newpath);
+
 #define rename(from, to)		pgrename(from, to)
 #define unlink(path)			pgunlink(path)
 #define symlink(oldpath, newpath)	pgsymlink(oldpath, newpath)
-
 #endif
 
 extern bool rmtree(char *path, bool rmtopdir);
@@ -167,8 +169,9 @@ extern bool rmtree(char *path, bool rmtopdir);
 
 /* open() replacement to allow delete of held files */
 #if !defined(_MSC_VER) && !defined(__BORLANDC__)
-extern int	win32_open(const char*,int,...);
-#define 	open(a,b,...)	win32_open(a,b,##__VA_ARGS__)
+extern int	win32_open(const char *, int,...);
+
+#define		open(a,b,...)	win32_open(a,b,##__VA_ARGS__)
 #endif
 
 #ifndef __BORLANDC__
@@ -179,8 +182,8 @@ extern int	win32_open(const char*,int,...);
 extern int	copydir(char *fromdir, char *todir);
 
 /* Missing rand functions */
-extern long	lrand48(void);
-extern void	srand48(long seed);
+extern long lrand48(void);
+extern void srand48(long seed);
 
 /* Last parameter not used */
 extern int	gettimeofday(struct timeval * tp, struct timezone * tzp);
@@ -252,12 +255,11 @@ extern char *pqStrerror(int errnum, char *strerrbuf, size_t buflen);
 
 #ifndef WIN32
 extern int pqGetpwuid(uid_t uid, struct passwd * resultbuf, char *buffer,
-		   size_t buflen, struct passwd **result);
+		   size_t buflen, struct passwd ** result);
 #endif
 
 extern int pqGethostbyname(const char *name,
-				struct hostent *resultbuf,
+				struct hostent * resultbuf,
 				char *buffer, size_t buflen,
-				struct hostent **result,
+				struct hostent ** result,
 				int *herrno);
-

@@ -166,7 +166,7 @@ hashing(BITVECP sign, ltree * t)
 Datum
 ltree_union(PG_FUNCTION_ARGS)
 {
-	GistEntryVector	   *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
+	GistEntryVector *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
 	int		   *size = (int *) PG_GETARG_POINTER(1);
 	BITVEC		base;
 	int4		i,
@@ -277,14 +277,14 @@ treekey_cmp(const void *a, const void *b)
 	return ltree_compare(
 						 ((RIX *) a)->r,
 						 ((RIX *) b)->r
-	);
+		);
 }
 
 
 Datum
 ltree_picksplit(PG_FUNCTION_ARGS)
 {
-	GistEntryVector	   *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
+	GistEntryVector *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
 	GIST_SPLITVEC *v = (GIST_SPLITVEC *) PG_GETARG_POINTER(1);
 	OffsetNumber j;
 	int4		i;
@@ -602,21 +602,23 @@ gist_qtxt(ltree_gist * key, ltxtquery * query)
 }
 
 static bool
-arrq_cons(ltree_gist *key, ArrayType *_query) {
-        lquery  *query = (lquery *) ARR_DATA_PTR(_query);
-        int     num = ArrayGetNItems(ARR_NDIM(_query), ARR_DIMS(_query));
+arrq_cons(ltree_gist * key, ArrayType *_query)
+{
+	lquery	   *query = (lquery *) ARR_DATA_PTR(_query);
+	int			num = ArrayGetNItems(ARR_NDIM(_query), ARR_DIMS(_query));
 
-        if (ARR_NDIM(_query) != 1)
-			ereport(ERROR,
+	if (ARR_NDIM(_query) != 1)
+		ereport(ERROR,
 				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
 				 errmsg("array must be one-dimensional")));
 
-        while (num > 0) {
-		if ( gist_qe(key, query) && gist_between(key, query) ) 
-                        return true;
-                num--;
-                query = NEXTVAL(query);
-        }
+	while (num > 0)
+	{
+		if (gist_qe(key, query) && gist_between(key, query))
+			return true;
+		num--;
+		query = NEXTVAL(query);
+	}
 	return false;
 }
 
@@ -700,7 +702,7 @@ ltree_consistent(PG_FUNCTION_ARGS)
 			if (GIST_LEAF(entry))
 				res = DatumGetBool(DirectFunctionCall2(lt_q_regex,
 										  PointerGetDatum(LTG_NODE(key)),
-										PointerGetDatum((ArrayType *) query)
+									 PointerGetDatum((ArrayType *) query)
 													   ));
 			else
 				res = arrq_cons(key, (ArrayType *) query);

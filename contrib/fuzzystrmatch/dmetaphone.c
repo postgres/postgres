@@ -1,36 +1,36 @@
 /*
  * This is a port of the Double Metaphone algorithm for use in PostgreSQL.
- * 
+ *
  * Double Metaphone computes 2 "sounds like" strings - a primary and an
  * alternate. In most cases they are the same, but for foreign names
  * especially they can be a bit different, depending on pronunciation.
  *
  * Information on using Double Metaphone can be found at
- *   http://www.codeproject.com/useritems/dmetaphone1.asp
+ *	 http://www.codeproject.com/useritems/dmetaphone1.asp
  * and the original article describing it can be found at
- *   http://www.cuj.com/documents/s=8038/cuj0006philips/
+ *	 http://www.cuj.com/documents/s=8038/cuj0006philips/
  *
  * For PostgrSQL we provide 2 functions - one for the primary and one for
  * the alternate. That way the functions are pure text->text mappings that
  * are useful in functional indexes. These are 'dmetaphone' for the
  * primary and 'dmetaphone_alt' for the alternate.
  *
- * Assuming that dmetaphone.so is in $libdir, the SQL to set up the 
+ * Assuming that dmetaphone.so is in $libdir, the SQL to set up the
  * functions looks like this:
  *
- * CREATE FUNCTION dmetaphone (text) RETURNS text 
- *    LANGUAGE C IMMUTABLE STRICT
- *    AS '$libdir/dmetaphone', 'dmetaphone';
+ * CREATE FUNCTION dmetaphone (text) RETURNS text
+ *	  LANGUAGE C IMMUTABLE STRICT
+ *	  AS '$libdir/dmetaphone', 'dmetaphone';
  *
- * CREATE FUNCTION dmetaphone_alt (text) RETURNS text 
- *    LANGUAGE C IMMUTABLE STRICT
- *    AS '$libdir/dmetaphone', 'dmetaphone_alt';
+ * CREATE FUNCTION dmetaphone_alt (text) RETURNS text
+ *	  LANGUAGE C IMMUTABLE STRICT
+ *	  AS '$libdir/dmetaphone', 'dmetaphone_alt';
  *
  * Note that you have to declare the functions IMMUTABLE if you want to
  * use them in functional indexes, and you have to declare them as STRICT
- * as they do not check for NULL input, and will segfault if given NULL input. 
- * (See below for alternative ) Declaring them as STRICT means PostgreSQL 
- * will never call them with NULL, but instead assume the result is NULL,  
+ * as they do not check for NULL input, and will segfault if given NULL input.
+ * (See below for alternative ) Declaring them as STRICT means PostgreSQL
+ * will never call them with NULL, but instead assume the result is NULL,
  * which is what we (I) want.
  *
  * Alternatively, compile with -DDMETAPHONE_NOSTRICT and the functions
@@ -42,25 +42,25 @@
  * need. That's the way the perl module was written, because perl can handle
  * a list return more easily than we can in PostgreSQL. The result has been
  * fast enough for my needs, but it could maybe be optimized a bit to remove
- * that behaviour. 
+ * that behaviour.
  *
  */
 
 
 /*
- * $Revision: 1.2 $
- * $Id: dmetaphone.c,v 1.2 2004/08/20 19:48:14 momjian Exp $
+ * $Revision: 1.3 $
+ * $Id: dmetaphone.c,v 1.3 2004/08/29 05:06:35 momjian Exp $
  */
 
 
 /***************************** COPYRIGHT NOTICES ***********************
 
 Most of this code is directly from the Text::DoubleMetaphone perl module
-version 0.05 available from http://www.cpan.org. 
+version 0.05 available from http://www.cpan.org.
 It bears this copyright notice:
 
 
-  Copyright 2000, Maurice Aubrey <maurice@hevanet.com>. 
+  Copyright 2000, Maurice Aubrey <maurice@hevanet.com>.
   All rights reserved.
 
   This code is based heavily on the C++ implementation by
@@ -73,7 +73,7 @@ It bears this copyright notice:
 The remaining code is authored by Andrew Dunstan <amdunstan@ncshp.org> and
 <andrew@dunslane.net> and is covered this copyright:
 
-  Copyright 2003, North Carolina State Highway Patrol. 
+  Copyright 2003, North Carolina State Highway Patrol.
   All rights reserved.
 
   Permission to use, copy, modify, and distribute this software and its
@@ -81,14 +81,14 @@ The remaining code is authored by Andrew Dunstan <amdunstan@ncshp.org> and
   is hereby granted, provided that the above copyright notice and this
   paragraph and the following two paragraphs appear in all copies.
 
-  IN NO EVENT SHALL THE NORTH CAROLINA STATE HIGHWAY PATROL BE LIABLE TO ANY 
-  PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, 
+  IN NO EVENT SHALL THE NORTH CAROLINA STATE HIGHWAY PATROL BE LIABLE TO ANY
+  PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
   INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-  DOCUMENTATION, EVEN IF THE NORTH CAROLINA STATE HIGHWAY PATROL HAS BEEN 
+  DOCUMENTATION, EVEN IF THE NORTH CAROLINA STATE HIGHWAY PATROL HAS BEEN
   ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-  THE NORTH CAROLINA STATE HIGHWAY PATROL SPECIFICALLY DISCLAIMS ANY 
-  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF 
+  THE NORTH CAROLINA STATE HIGHWAY PATROL SPECIFICALLY DISCLAIMS ANY
+  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
   MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.  THE SOFTWARE PROVIDED
   HEREUNDER IS ON AN "AS IS" BASIS, AND THE NORTH CAROLINA STATE HIGHWAY PATROL
   HAS NO OBLIGATIONS TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR
@@ -109,7 +109,6 @@ The remaining code is authored by Andrew Dunstan <amdunstan@ncshp.org> and
 
 /* turn off assertions for embedded function */
 #define NDEBUG
-
 #endif
 
 #include <stdio.h>
@@ -124,7 +123,7 @@ extern Datum dmetaphone_alt(PG_FUNCTION_ARGS);
 
 /* prototype for the main function we got from the perl module */
 static void
-DoubleMetaphone(char *, char **);
+			DoubleMetaphone(char *, char **);
 
 #ifndef DMETAPHONE_MAIN
 
@@ -138,37 +137,41 @@ PG_FUNCTION_INFO_V1(dmetaphone);
 Datum
 dmetaphone(PG_FUNCTION_ARGS)
 {
-	text * arg, * result;
-	int alen, rsize;
-	char * aptr, *codes[2], * code, * rptr;
+	text	   *arg,
+			   *result;
+	int			alen,
+				rsize;
+	char	   *aptr,
+			   *codes[2],
+			   *code,
+			   *rptr;
 
 #ifdef DMETAPHONE_NOSTRICT
 	if (PG_ARGISNULL(0))
 		PG_RETURNNULL();
 #endif
 	arg = PG_GETARG_TEXT_P(0);
-        alen = VARSIZE(arg)-VARHDRSZ;
+	alen = VARSIZE(arg) - VARHDRSZ;
 
-	/* 
-	 * Postgres' string values might not have trailing nuls. 
-	 * The VARSIZE will not include the nul in any case 
-	 * so we copy things out and add a trailing nul. 
-	 * When we copy back we ignore the nul 
-	 * (and we don't make space for it). 
+	/*
+	 * Postgres' string values might not have trailing nuls. The VARSIZE
+	 * will not include the nul in any case so we copy things out and add
+	 * a trailing nul. When we copy back we ignore the nul (and we don't
+	 * make space for it).
 	 */
 
-	aptr = palloc(alen+1);
-        memcpy(aptr,VARDATA(arg),alen);
-	aptr[alen]=0;
-	DoubleMetaphone(aptr,codes);
+	aptr = palloc(alen + 1);
+	memcpy(aptr, VARDATA(arg), alen);
+	aptr[alen] = 0;
+	DoubleMetaphone(aptr, codes);
 	code = codes[0];
 	if (!code)
 		code = "";
-	rsize = VARHDRSZ + strlen(code) ;
+	rsize = VARHDRSZ + strlen(code);
 	result = (text *) palloc(rsize);
-	memset(result,0,rsize);
+	memset(result, 0, rsize);
 	rptr = VARDATA(result);
-	memcpy(rptr,code,strlen(code));
+	memcpy(rptr, code, strlen(code));
 	VARATT_SIZEP(result) = rsize;
 	PG_RETURN_TEXT_P(result);
 }
@@ -183,28 +186,33 @@ PG_FUNCTION_INFO_V1(dmetaphone_alt);
 Datum
 dmetaphone_alt(PG_FUNCTION_ARGS)
 {
-	text * arg, * result;
-	int alen, rsize;
-	char * aptr, * codes[2], * code, * rptr;
+	text	   *arg,
+			   *result;
+	int			alen,
+				rsize;
+	char	   *aptr,
+			   *codes[2],
+			   *code,
+			   *rptr;
 
 #ifdef DMETAPHONE_NOSTRICT
 	if (PG_ARGISNULL(0))
 		PG_RETURNNULL();
 #endif
 	arg = PG_GETARG_TEXT_P(0);
-    alen = VARSIZE(arg)-VARHDRSZ;
-	aptr = palloc(alen+1);
-    memcpy(aptr,VARDATA(arg),alen);
-	aptr[alen]=0;
-	DoubleMetaphone(aptr,codes);
+	alen = VARSIZE(arg) - VARHDRSZ;
+	aptr = palloc(alen + 1);
+	memcpy(aptr, VARDATA(arg), alen);
+	aptr[alen] = 0;
+	DoubleMetaphone(aptr, codes);
 	code = codes[1];
 	if (!code)
 		code = "";
-	rsize = VARHDRSZ + strlen(code) ;
+	rsize = VARHDRSZ + strlen(code);
 	result = (text *) palloc(rsize);
-	memset(result,0,rsize);
+	memset(result, 0, rsize);
 	rptr = VARDATA(result);
-	memcpy(rptr,code,strlen(code));
+	memcpy(rptr, code, strlen(code));
 	VARATT_SIZEP(result) = rsize;
 	PG_RETURN_TEXT_P(result);
 }
@@ -215,141 +223,139 @@ dmetaphone_alt(PG_FUNCTION_ARGS)
 /* all memory handling is done with these macros */
 
 #define META_MALLOC(v,n,t) \
-          (v = (t*)palloc(((n)*sizeof(t))))
+		  (v = (t*)palloc(((n)*sizeof(t))))
 
 #define META_REALLOC(v,n,t) \
-	                  (v = (t*)repalloc((v),((n)*sizeof(t))))
+					  (v = (t*)repalloc((v),((n)*sizeof(t))))
 
-/* 
+/*
  * Don't do pfree - it seems to cause a segv sometimes - which might have just
  * been caused by reloading the module in development.
  * So we rely on context cleanup - Tom Lane says pfree shouldn't be necessary
  * in a case like this.
  */
 
-#define META_FREE(x) /* pfree((x)) */
+#define META_FREE(x)			/* pfree((x)) */
 
-#else /* not defined DMETAPHONE_MAIN */
+#else							/* not defined DMETAPHONE_MAIN */
 
 /* use the standard malloc library when not running in PostgreSQL */
 
 #define META_MALLOC(v,n,t) \
-          (v = (t*)malloc(((n)*sizeof(t))))
+		  (v = (t*)malloc(((n)*sizeof(t))))
 
 #define META_REALLOC(v,n,t) \
-	                  (v = (t*)realloc((v),((n)*sizeof(t))))
+					  (v = (t*)realloc((v),((n)*sizeof(t))))
 
 #define META_FREE(x) free((x))
-
-#endif /* defined DMETAPHONE_MAIN */
-
+#endif   /* defined DMETAPHONE_MAIN */
 
 
-/* this typedef was orignally in the perl module's .h file */	 
+
+/* this typedef was orignally in the perl module's .h file */
 
 typedef struct
 {
-    char *str;
-    int length;
-    int bufsize;
-    int free_string_on_destroy;
+	char	   *str;
+	int			length;
+	int			bufsize;
+	int			free_string_on_destroy;
 }
-metastring; 
 
-/* 
+			metastring;
+
+/*
  * remaining perl module funcs unchanged except for declaring them static
  * and reformatting to PostgreSQL indentation and to fit in 80 cols.
  *
- */     
+ */
 
 static metastring *
 NewMetaString(char *init_str)
 {
-    metastring *s;
-    char empty_string[] = "";
+	metastring *s;
+	char		empty_string[] = "";
 
-    META_MALLOC(s, 1, metastring);
-    assert( s != NULL );
+	META_MALLOC(s, 1, metastring);
+	assert(s != NULL);
 
-    if (init_str == NULL)
+	if (init_str == NULL)
 		init_str = empty_string;
-    s->length  = strlen(init_str);
-    /* preallocate a bit more for potential growth */
-    s->bufsize = s->length + 7;
+	s->length = strlen(init_str);
+	/* preallocate a bit more for potential growth */
+	s->bufsize = s->length + 7;
 
-    META_MALLOC(s->str, s->bufsize, char);
-    assert( s->str != NULL );
-    
-    strncpy(s->str, init_str, s->length + 1);
-    s->free_string_on_destroy = 1;
+	META_MALLOC(s->str, s->bufsize, char);
+	assert(s->str != NULL);
 
-    return s;
+	strncpy(s->str, init_str, s->length + 1);
+	s->free_string_on_destroy = 1;
+
+	return s;
 }
 
 
 static void
 DestroyMetaString(metastring * s)
 {
-    if (s == NULL)
+	if (s == NULL)
 		return;
 
-    if (s->free_string_on_destroy && (s->str != NULL))
+	if (s->free_string_on_destroy && (s->str != NULL))
 		META_FREE(s->str);
 
-    META_FREE(s);
+	META_FREE(s);
 }
 
 
 static void
 IncreaseBuffer(metastring * s, int chars_needed)
 {
-    META_REALLOC(s->str, (s->bufsize + chars_needed + 10), char);
-    assert( s->str != NULL ); 
-    s->bufsize = s->bufsize + chars_needed + 10;
+	META_REALLOC(s->str, (s->bufsize + chars_needed + 10), char);
+	assert(s->str != NULL);
+	s->bufsize = s->bufsize + chars_needed + 10;
 }
 
 
 static void
 MakeUpper(metastring * s)
 {
-    char *i;
+	char	   *i;
 
-    for (i = s->str; *i; i++)
-	{
+	for (i = s->str; *i; i++)
 		*i = toupper(*i);
-	}
 }
 
 
 static int
 IsVowel(metastring * s, int pos)
 {
-    char c;
+	char		c;
 
-    if ((pos < 0) || (pos >= s->length))
+	if ((pos < 0) || (pos >= s->length))
 		return 0;
 
-    c = *(s->str + pos);
-    if ((c == 'A') || (c == 'E') || (c == 'I') || (c =='O') || 
-        (c =='U')  || (c == 'Y'))
+	c = *(s->str + pos);
+	if ((c == 'A') || (c == 'E') || (c == 'I') || (c == 'O') ||
+		(c == 'U') || (c == 'Y'))
 		return 1;
 
-    return 0;
+	return 0;
 }
 
 
 static int
 SlavoGermanic(metastring * s)
 {
-    if ((char *) strstr(s->str, "W"))
+	if ((char *) strstr(s->str, "W"))
 		return 1;
-    else if ((char *) strstr(s->str, "K"))
+	else if ((char *) strstr(s->str, "K"))
 		return 1;
-    else if ((char *) strstr(s->str, "CZ"))
+	else if ((char *) strstr(s->str, "CZ"))
 		return 1;
-    else if ((char *) strstr(s->str, "WITZ"))
+	else if ((char *) strstr(s->str, "WITZ"))
 		return 1;
-    else
+	else
 		return 0;
 }
 
@@ -357,117 +363,115 @@ SlavoGermanic(metastring * s)
 static char
 GetAt(metastring * s, int pos)
 {
-    if ((pos < 0) || (pos >= s->length))
+	if ((pos < 0) || (pos >= s->length))
 		return '\0';
 
-    return ((char) *(s->str + pos));
+	return ((char) *(s->str + pos));
 }
 
 
 static void
 SetAt(metastring * s, int pos, char c)
 {
-    if ((pos < 0) || (pos >= s->length))
+	if ((pos < 0) || (pos >= s->length))
 		return;
 
-    *(s->str + pos) = c;
+	*(s->str + pos) = c;
 }
 
 
-/* 
+/*
    Caveats: the START value is 0 based
 */
 static int
-StringAt(metastring * s, int start, int length, ...)
+StringAt(metastring * s, int start, int length,...)
 {
-    char *test;
-    char *pos;
-    va_list ap;
+	char	   *test;
+	char	   *pos;
+	va_list		ap;
 
-    if ((start < 0) || (start >= s->length))
-        return 0;
+	if ((start < 0) || (start >= s->length))
+		return 0;
 
-    pos = (s->str + start);
-    va_start(ap, length);
+	pos = (s->str + start);
+	va_start(ap, length);
 
-    do
+	do
 	{
 		test = va_arg(ap, char *);
 		if (*test && (strncmp(pos, test, length) == 0))
 			return 1;
 	}
-    while (strcmp(test, ""));
+	while (strcmp(test, ""));
 
-    va_end(ap);
+	va_end(ap);
 
-    return 0;
+	return 0;
 }
 
 
 static void
 MetaphAdd(metastring * s, char *new_str)
 {
-    int add_length;
+	int			add_length;
 
-    if (new_str == NULL)
+	if (new_str == NULL)
 		return;
 
-    add_length = strlen(new_str);
-    if ((s->length + add_length) > (s->bufsize - 1))
-	{
+	add_length = strlen(new_str);
+	if ((s->length + add_length) > (s->bufsize - 1))
 		IncreaseBuffer(s, add_length);
-	}
 
-    strcat(s->str, new_str);
-    s->length += add_length;
+	strcat(s->str, new_str);
+	s->length += add_length;
 }
 
 
 static void
 DoubleMetaphone(char *str, char **codes)
 {
-    int        length;
-    metastring *original;
-    metastring *primary;
-    metastring *secondary;
-    int        current;
-    int        last;
+	int			length;
+	metastring *original;
+	metastring *primary;
+	metastring *secondary;
+	int			current;
+	int			last;
 
-    current = 0;
-    /* we need the real length and last prior to padding */
-    length  = strlen(str); 
-    last    = length - 1; 
-    original = NewMetaString(str);
-    /* Pad original so we can index beyond end */
-    MetaphAdd(original, "     ");
+	current = 0;
+	/* we need the real length and last prior to padding */
+	length = strlen(str);
+	last = length - 1;
+	original = NewMetaString(str);
+	/* Pad original so we can index beyond end */
+	MetaphAdd(original, "     ");
 
-    primary = NewMetaString("");
-    secondary = NewMetaString("");
-    primary->free_string_on_destroy = 0;
-    secondary->free_string_on_destroy = 0;
+	primary = NewMetaString("");
+	secondary = NewMetaString("");
+	primary->free_string_on_destroy = 0;
+	secondary->free_string_on_destroy = 0;
 
-    MakeUpper(original);
+	MakeUpper(original);
 
-    /* skip these when at start of word */
-    if (StringAt(original, 0, 2, "GN", "KN", "PN", "WR", "PS", ""))
+	/* skip these when at start of word */
+	if (StringAt(original, 0, 2, "GN", "KN", "PN", "WR", "PS", ""))
 		current += 1;
 
-    /* Initial 'X' is pronounced 'Z' e.g. 'Xavier' */
-    if (GetAt(original, 0) == 'X')
+	/* Initial 'X' is pronounced 'Z' e.g. 'Xavier' */
+	if (GetAt(original, 0) == 'X')
 	{
 		MetaphAdd(primary, "S");	/* 'Z' maps to 'S' */
 		MetaphAdd(secondary, "S");
 		current += 1;
 	}
 
-    /* main loop */
-    while ((primary->length < 4) || (secondary->length < 4))  
+	/* main loop */
+	while ((primary->length < 4) || (secondary->length < 4))
 	{
 		if (current >= length)
 			break;
 
 		switch (GetAt(original, current))
-	    {
+		{
 			case 'A':
 			case 'E':
 			case 'I':
@@ -508,8 +512,8 @@ DoubleMetaphone(char *str, char **codes)
 					&& StringAt(original, (current - 1), 3, "ACH", "")
 					&& ((GetAt(original, current + 2) != 'I')
 						&& ((GetAt(original, current + 2) != 'E')
-							|| StringAt(original, (current - 2), 6, "BACHER",
-										"MACHER", ""))))
+						|| StringAt(original, (current - 2), 6, "BACHER",
+									"MACHER", ""))))
 				{
 					MetaphAdd(primary, "K");
 					MetaphAdd(secondary, "K");
@@ -550,7 +554,7 @@ DoubleMetaphone(char *str, char **codes)
 
 					/* greek roots e.g. 'chemistry', 'chorus' */
 					if ((current == 0)
-						&& (StringAt(original, (current + 1), 5, 
+						&& (StringAt(original, (current + 1), 5,
 									 "HARAC", "HARIS", "")
 							|| StringAt(original, (current + 1), 3, "HOR",
 										"HYM", "HIA", "HEM", ""))
@@ -566,19 +570,21 @@ DoubleMetaphone(char *str, char **codes)
 					if (
 						(StringAt(original, 0, 4, "VAN ", "VON ", "")
 						 || StringAt(original, 0, 3, "SCH", ""))
-						/*  'architect but not 'arch', 'orchestra', 'orchid' */
+					/* 'architect but not 'arch', 'orchestra', 'orchid' */
 						|| StringAt(original, (current - 2), 6, "ORCHES",
 									"ARCHIT", "ORCHID", "")
 						|| StringAt(original, (current + 2), 1, "T", "S",
 									"")
-						|| ((StringAt(original, (current - 1), 1, 
-									  "A", "O", "U", "E", "") 
+						|| ((StringAt(original, (current - 1), 1,
+									  "A", "O", "U", "E", "")
 							 || (current == 0))
-							/* e.g., 'wachtler', 'wechsler', 
-							   but not 'tichner' */
-							&& StringAt(original, (current + 2), 1, "L", "R",
-										"N", "M", "B", "H", "F", "V", "W", 
-										" ", "")))
+
+					/*
+					 * e.g., 'wachtler', 'wechsler', but not 'tichner'
+					 */
+						&& StringAt(original, (current + 2), 1, "L", "R",
+									"N", "M", "B", "H", "F", "V", "W",
+									" ", "")))
 					{
 						MetaphAdd(primary, "K");
 						MetaphAdd(secondary, "K");
@@ -633,14 +639,14 @@ DoubleMetaphone(char *str, char **codes)
 				{
 					/* 'bellocchio' but not 'bacchus' */
 					if (StringAt(original, (current + 2), 1, "I", "E", "H", "")
-						&& !StringAt(original, (current + 2), 2, "HU", ""))
+					  && !StringAt(original, (current + 2), 2, "HU", ""))
 					{
 						/* 'accident', 'accede' 'succeed' */
 						if (
 							((current == 1)
 							 && (GetAt(original, current - 1) == 'A'))
-							|| StringAt(original, (current - 1), 5, "UCCEE",
-										"UCCES", ""))
+						 || StringAt(original, (current - 1), 5, "UCCEE",
+									 "UCCES", ""))
 						{
 							MetaphAdd(primary, "KS");
 							MetaphAdd(secondary, "KS");
@@ -655,7 +661,7 @@ DoubleMetaphone(char *str, char **codes)
 						break;
 					}
 					else
-					{	  /* Pierce's rule */
+					{			/* Pierce's rule */
 						MetaphAdd(primary, "K");
 						MetaphAdd(secondary, "K");
 						current += 2;
@@ -696,19 +702,18 @@ DoubleMetaphone(char *str, char **codes)
 				/* name sent in 'mac caffrey', 'mac gregor */
 				if (StringAt(original, (current + 1), 2, " C", " Q", " G", ""))
 					current += 3;
+				else if (StringAt(original, (current + 1), 1, "C", "K", "Q", "")
+						 && !StringAt(original, (current + 1), 2,
+									  "CE", "CI", ""))
+					current += 2;
 				else
-					if (StringAt(original, (current + 1), 1, "C", "K", "Q", "")
-						&& !StringAt(original, (current + 1), 2, 
-									 "CE", "CI", ""))
-						current += 2;
-					else
-						current += 1;
+					current += 1;
 				break;
 
 			case 'D':
 				if (StringAt(original, current, 2, "DG", ""))
 				{
-					if (StringAt(original, (current + 2), 1, 
+					if (StringAt(original, (current + 2), 1,
 								 "I", "E", "Y", ""))
 					{
 						/* e.g. 'edge' */
@@ -780,19 +785,22 @@ DoubleMetaphone(char *str, char **codes)
 							break;
 						}
 					}
-					/* Parker's rule (with some further refinements) - 
-					   e.g., 'hugh' */
+
+					/*
+					 * Parker's rule (with some further refinements) -
+					 * e.g., 'hugh'
+					 */
 					if (
 						((current > 1)
-						 && StringAt(original, (current - 2), 1, 
+						 && StringAt(original, (current - 2), 1,
 									 "B", "H", "D", ""))
-						/* e.g., 'bough' */
+					/* e.g., 'bough' */
 						|| ((current > 2)
-							&& StringAt(original, (current - 3), 1, 
+							&& StringAt(original, (current - 3), 1,
 										"B", "H", "D", ""))
-						/* e.g., 'broughton' */
+					/* e.g., 'broughton' */
 						|| ((current > 3)
-							&& StringAt(original, (current - 4), 1, 
+							&& StringAt(original, (current - 4), 1,
 										"B", "H", "")))
 					{
 						current += 2;
@@ -800,8 +808,10 @@ DoubleMetaphone(char *str, char **codes)
 					}
 					else
 					{
-						/* e.g., 'laugh', 'McLaughlin', 'cough', 
-						   'gough', 'rough', 'tough' */
+						/*
+						 * e.g., 'laugh', 'McLaughlin', 'cough', 'gough',
+						 * 'rough', 'tough'
+						 */
 						if ((current > 2)
 							&& (GetAt(original, current - 1) == 'U')
 							&& StringAt(original, (current - 3), 1, "C",
@@ -837,15 +847,15 @@ DoubleMetaphone(char *str, char **codes)
 						if (!StringAt(original, (current + 2), 2, "EY", "")
 							&& (GetAt(original, current + 1) != 'Y')
 							&& !SlavoGermanic(original))
-						{
-							MetaphAdd(primary, "N");
-							MetaphAdd(secondary, "KN");
-						}
-						else
-                        {
-							MetaphAdd(primary, "KN");
-							MetaphAdd(secondary, "KN");
-                        }
+					{
+						MetaphAdd(primary, "N");
+						MetaphAdd(secondary, "KN");
+					}
+					else
+					{
+						MetaphAdd(primary, "KN");
+						MetaphAdd(secondary, "KN");
+					}
 					current += 2;
 					break;
 				}
@@ -863,9 +873,9 @@ DoubleMetaphone(char *str, char **codes)
 				/* -ges-,-gep-,-gel-, -gie- at beginning */
 				if ((current == 0)
 					&& ((GetAt(original, current + 1) == 'Y')
-						|| StringAt(original, (current + 1), 2, "ES", "EP",
-									"EB", "EL", "EY", "IB", "IL", "IN", "IE",
-									"EI", "ER", "")))
+					  || StringAt(original, (current + 1), 2, "ES", "EP",
+								"EB", "EL", "EY", "IB", "IL", "IN", "IE",
+								  "EI", "ER", "")))
 				{
 					MetaphAdd(primary, "K");
 					MetaphAdd(secondary, "J");
@@ -873,11 +883,11 @@ DoubleMetaphone(char *str, char **codes)
 					break;
 				}
 
-				/*  -ger-,  -gy- */
+				/* -ger-,  -gy- */
 				if (
 					(StringAt(original, (current + 1), 2, "ER", "")
 					 || (GetAt(original, current + 1) == 'Y'))
-					&& !StringAt(original, 0, 6, 
+					&& !StringAt(original, 0, 6,
 								 "DANGER", "RANGER", "MANGER", "")
 					&& !StringAt(original, (current - 1), 1, "E", "I", "")
 					&& !StringAt(original, (current - 1), 3, "RGY", "OGY",
@@ -889,9 +899,9 @@ DoubleMetaphone(char *str, char **codes)
 					break;
 				}
 
-				/*  italian e.g, 'biaggi' */
+				/* italian e.g, 'biaggi' */
 				if (StringAt(original, (current + 1), 1, "E", "I", "Y", "")
-					|| StringAt(original, (current - 1), 4, 
+					|| StringAt(original, (current - 1), 4,
 								"AGGI", "OGGI", ""))
 				{
 					/* obvious germanic */
@@ -939,7 +949,8 @@ DoubleMetaphone(char *str, char **codes)
 					MetaphAdd(secondary, "H");
 					current += 2;
 				}
-				else		/* also takes care of 'HH' */
+				else
+/* also takes care of 'HH' */
 					current += 1;
 				break;
 
@@ -991,9 +1002,9 @@ DoubleMetaphone(char *str, char **codes)
 						else
 						{
 							if (!StringAt(original, (current + 1), 1, "L", "T",
-										  "K", "S", "N", "M", "B", "Z", "")
+										"K", "S", "N", "M", "B", "Z", "")
 								&& !StringAt(original, (current - 1), 1,
-											 "S", "K", "L", "")) 
+											 "S", "K", "L", ""))
 							{
 								MetaphAdd(primary, "J");
 								MetaphAdd(secondary, "J");
@@ -1002,7 +1013,7 @@ DoubleMetaphone(char *str, char **codes)
 					}
 				}
 
-				if (GetAt(original, current + 1) == 'J') /* it could happen! */
+				if (GetAt(original, current + 1) == 'J')		/* it could happen! */
 					current += 2;
 				else
 					current += 1;
@@ -1024,10 +1035,10 @@ DoubleMetaphone(char *str, char **codes)
 					if (((current == (length - 3))
 						 && StringAt(original, (current - 1), 4, "ILLO",
 									 "ILLA", "ALLE", ""))
-						|| ((StringAt(original, (last - 1), 2, "AS", "OS", "")
-							 || StringAt(original, last, 1, "A", "O", ""))
-							&& StringAt(original, (current - 1), 4, 
-										"ALLE", "")))
+					|| ((StringAt(original, (last - 1), 2, "AS", "OS", "")
+						 || StringAt(original, last, 1, "A", "O", ""))
+						&& StringAt(original, (current - 1), 4,
+									"ALLE", "")))
 					{
 						MetaphAdd(primary, "L");
 						MetaphAdd(secondary, "");
@@ -1045,8 +1056,8 @@ DoubleMetaphone(char *str, char **codes)
 			case 'M':
 				if ((StringAt(original, (current - 1), 3, "UMB", "")
 					 && (((current + 1) == last)
-						 || StringAt(original, (current + 2), 2, "ER", "")))
-					/* 'dumb','thumb' */
+					  || StringAt(original, (current + 2), 2, "ER", "")))
+				/* 'dumb','thumb' */
 					|| (GetAt(original, current + 1) == 'M'))
 					current += 2;
 				else
@@ -1102,7 +1113,7 @@ DoubleMetaphone(char *str, char **codes)
 				if ((current == last)
 					&& !SlavoGermanic(original)
 					&& StringAt(original, (current - 2), 2, "IE", "")
-					&& !StringAt(original, (current - 4), 2, "ME", "MA", ""))
+				&& !StringAt(original, (current - 4), 2, "ME", "MA", ""))
 				{
 					MetaphAdd(primary, "");
 					MetaphAdd(secondary, "R");
@@ -1141,8 +1152,8 @@ DoubleMetaphone(char *str, char **codes)
 				{
 					/* germanic */
 					if (StringAt
-						(original, (current + 1), 4, "HEIM", "HOEK", "HOLM",
-						 "HOLZ", ""))
+					 (original, (current + 1), 4, "HEIM", "HOEK", "HOLM",
+					  "HOLZ", ""))
 					{
 						MetaphAdd(primary, "S");
 						MetaphAdd(secondary, "S");
@@ -1174,12 +1185,13 @@ DoubleMetaphone(char *str, char **codes)
 					break;
 				}
 
-				/* german & anglicisations, e.g. 'smith' match 'schmidt', 
-				   'snider' match 'schneider' 
-				   also, -sz- in slavic language altho in hungarian it is 
-				   pronounced 's' */
+				/*
+				 * german & anglicisations, e.g. 'smith' match 'schmidt',
+				 * 'snider' match 'schneider' also, -sz- in slavic
+				 * language altho in hungarian it is pronounced 's'
+				 */
 				if (((current == 0)
-					 && StringAt(original, (current + 1), 1, 
+					 && StringAt(original, (current + 1), 1,
 								 "M", "N", "L", "W", ""))
 					|| StringAt(original, (current + 1), 1, "Z", ""))
 				{
@@ -1198,12 +1210,12 @@ DoubleMetaphone(char *str, char **codes)
 					if (GetAt(original, current + 2) == 'H')
 					{
 						/* dutch origin, e.g. 'school', 'schooner' */
-						if (StringAt(original, (current + 3), 2, 
+						if (StringAt(original, (current + 3), 2,
 									 "OO", "ER", "EN",
 									 "UY", "ED", "EM", ""))
 						{
 							/* 'schermerhorn', 'schenker' */
-							if (StringAt(original, (current + 3), 2, 
+							if (StringAt(original, (current + 3), 2,
 										 "ER", "EN", ""))
 							{
 								MetaphAdd(primary, "X");
@@ -1235,7 +1247,7 @@ DoubleMetaphone(char *str, char **codes)
 						}
 					}
 
-					if (StringAt(original, (current + 2), 1, 
+					if (StringAt(original, (current + 2), 1,
 								 "I", "E", "Y", ""))
 					{
 						MetaphAdd(primary, "S");
@@ -1252,7 +1264,7 @@ DoubleMetaphone(char *str, char **codes)
 
 				/* french e.g. 'resnais', 'artois' */
 				if ((current == last)
-					&& StringAt(original, (current - 2), 2, "AI", "OI", ""))
+				 && StringAt(original, (current - 2), 2, "AI", "OI", ""))
 				{
 					MetaphAdd(primary, "");
 					MetaphAdd(secondary, "S");
@@ -1353,8 +1365,8 @@ DoubleMetaphone(char *str, char **codes)
 
 				/* Arnow should match Arnoff */
 				if (((current == last) && IsVowel(original, current - 1))
-					|| StringAt(original, (current - 1), 5, "EWSKI", "EWSKY",
-								"OWSKI", "OWSKY", "")
+				|| StringAt(original, (current - 1), 5, "EWSKI", "EWSKY",
+							"OWSKI", "OWSKY", "")
 					|| StringAt(original, 0, 3, "SCH", ""))
 				{
 					MetaphAdd(primary, "");
@@ -1379,15 +1391,15 @@ DoubleMetaphone(char *str, char **codes)
 			case 'X':
 				/* french e.g. breaux */
 				if (!((current == last)
-					  && (StringAt(original, (current - 3), 3, 
+					  && (StringAt(original, (current - 3), 3,
 								   "IAU", "EAU", "")
-						  || StringAt(original, (current - 2), 2, 
+						  || StringAt(original, (current - 2), 2,
 									  "AU", "OU", ""))))
 				{
 					MetaphAdd(primary, "KS");
 					MetaphAdd(secondary, "KS");
 				}
-                  
+
 
 				if (StringAt(original, (current + 1), 1, "C", "X", ""))
 					current += 2;
@@ -1404,7 +1416,7 @@ DoubleMetaphone(char *str, char **codes)
 					current += 2;
 					break;
 				}
-				else if (StringAt(original, (current + 1), 2, 
+				else if (StringAt(original, (current + 1), 2,
 								  "ZO", "ZI", "ZA", "")
 						 || (SlavoGermanic(original)
 							 && ((current > 0)
@@ -1427,38 +1439,42 @@ DoubleMetaphone(char *str, char **codes)
 
 			default:
 				current += 1;
-	    }
-        /* printf("PRIMARY: %s\n", primary->str);
-		   printf("SECONDARY: %s\n", secondary->str);  */
+		}
+
+		/*
+		 * printf("PRIMARY: %s\n", primary->str); printf("SECONDARY:
+		 * %s\n", secondary->str);
+		 */
 	}
 
 
-    if (primary->length > 4)
+	if (primary->length > 4)
 		SetAt(primary, 4, '\0');
 
-    if (secondary->length > 4)
+	if (secondary->length > 4)
 		SetAt(secondary, 4, '\0');
 
-    *codes = primary->str;
-    *++codes = secondary->str;
+	*codes = primary->str;
+	*++codes = secondary->str;
 
-    DestroyMetaString(original);
-    DestroyMetaString(primary);
-    DestroyMetaString(secondary);
+	DestroyMetaString(original);
+	DestroyMetaString(primary);
+	DestroyMetaString(secondary);
 }
 
 #ifdef DMETAPHONE_MAIN
 
 /* just for testing - not part of the perl code */
 
-main(int argc, char ** argv)
+main(int argc, char **argv)
 {
-	char * codes[2];
+	char	   *codes[2];
+
 	if (argc > 1)
 	{
-		DoubleMetaphone(argv[1],codes);
-		printf("%s|%s\n",codes[0],codes[1]);
-	}    
+		DoubleMetaphone(argv[1], codes);
+		printf("%s|%s\n", codes[0], codes[1]);
+	}
 }
 
 #endif

@@ -102,4 +102,4 @@ system(const char *command)
 	return (pid == -1 ? -1 : pstat);
 }
 
-#endif /* OS X < 10.3 */
+#endif   /* OS X < 10.3 */

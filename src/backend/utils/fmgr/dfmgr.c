@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.77 2004/08/29 04:12:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.78 2004/08/29 05:06:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,8 @@ typedef struct df_files
 {
 	struct df_files *next;		/* List link */
 	dev_t		device;			/* Device file is on */
-#ifndef WIN32 /* ensures we never again depend on this under win32 */
+#ifndef WIN32					/* ensures we never again depend on this
+								 * under win32 */
 	ino_t		inode;			/* Inode number of file */
 #endif
 	void	   *handle;			/* a handle for pg_dl* functions */
@@ -208,8 +209,8 @@ load_file(char *filename)
 				 errmsg("could not access file \"%s\": %m", fullname)));
 
 	/*
-	 * We have to zap all entries in the list that match on either filename
-	 * or inode, else load_external_function() won't do anything.
+	 * We have to zap all entries in the list that match on either
+	 * filename or inode, else load_external_function() won't do anything.
 	 */
 	prv = NULL;
 	for (file_scanner = file_list; file_scanner != NULL; file_scanner = nxt)
@@ -337,7 +338,7 @@ substitute_libpath_macro(const char *name)
 {
 	const char *sep_ptr;
 	char	   *ret;
-	
+
 	AssertArg(name != NULL);
 
 	if (name[0] != '$')
@@ -345,12 +346,12 @@ substitute_libpath_macro(const char *name)
 
 	if ((sep_ptr = first_dir_separator(name)) == NULL)
 		sep_ptr = name + strlen(name);
-		
+
 	if (strlen("$libdir") != sep_ptr - name ||
 		strncmp(name, "$libdir", strlen("$libdir")) != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_NAME),
-				 errmsg("invalid macro name in dynamic library path: %s", name)));
+		errmsg("invalid macro name in dynamic library path: %s", name)));
 
 	ret = palloc(strlen(pkglib_path) + strlen(sep_ptr) + 1);
 
@@ -391,15 +392,15 @@ find_in_dynamic_libpath(const char *basename)
 		char	   *full;
 
 		piece = first_path_separator(p);
-		if(piece == p)
+		if (piece == p)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_NAME),
-			   errmsg("zero-length component in parameter \"dynamic_library_path\"")));
+					 errmsg("zero-length component in parameter \"dynamic_library_path\"")));
 
-		if(piece == 0)
-		   len = strlen(p);
+		if (piece == 0)
+			len = strlen(p);
 		else
-		   len = piece - p;
+			len = piece - p;
 
 		piece = palloc(len + 1);
 		strncpy(piece, p, len);
@@ -414,7 +415,7 @@ find_in_dynamic_libpath(const char *basename)
 		if (!is_absolute_path(mangled))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_NAME),
-			  errmsg("component in parameter \"dynamic_library_path\" is not an absolute path")));
+					 errmsg("component in parameter \"dynamic_library_path\" is not an absolute path")));
 
 		full = palloc(strlen(mangled) + 1 + baselen + 1);
 		sprintf(full, "%s/%s", mangled, basename);

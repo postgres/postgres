@@ -15,7 +15,7 @@ Datum
 tsstat_in(PG_FUNCTION_ARGS)
 {
 	tsstat	   *stat = palloc(STATHDRSIZE);
-	
+
 	stat->len = STATHDRSIZE;
 	stat->size = 0;
 	stat->weight = 0;
@@ -34,12 +34,14 @@ tsstat_out(PG_FUNCTION_ARGS)
 }
 
 static int
-check_weight(tsvector *txt, WordEntry *wptr, int8 weight) {
-	int len = POSDATALEN(txt, wptr);
-	int num=0;
-	WordEntryPos	*ptr = POSDATAPTR(txt, wptr);
+check_weight(tsvector * txt, WordEntry * wptr, int8 weight)
+{
+	int			len = POSDATALEN(txt, wptr);
+	int			num = 0;
+	WordEntryPos *ptr = POSDATAPTR(txt, wptr);
 
-	while (len--) {
+	while (len--)
+	{
 		if (weight & (1 << ptr->weight))
 			num++;
 		ptr++;
@@ -123,9 +125,9 @@ formstat(tsstat * stat, tsvector * txt, WordEntry ** entry, uint32 len)
 		}
 		nptr = STATPTR(newstat) + (StopLow - STATPTR(stat));
 		memcpy(STATPTR(newstat), STATPTR(stat), sizeof(StatEntry) * (StopLow - STATPTR(stat)));
-		if ( (*ptr)->haspos ) {
-			nptr->nentry = ( stat->weight ) ? check_weight(txt, *ptr, stat->weight) : POSDATALEN(txt, *ptr);
-		} else 
+		if ((*ptr)->haspos)
+			nptr->nentry = (stat->weight) ? check_weight(txt, *ptr, stat->weight) : POSDATALEN(txt, *ptr);
+		else
 			nptr->nentry = 1;
 		nptr->ndoc = 1;
 		nptr->len = (*ptr)->len;
@@ -144,9 +146,9 @@ formstat(tsstat * stat, tsvector * txt, WordEntry ** entry, uint32 len)
 			}
 			else
 			{
-				if ( (*ptr)->haspos ) {
-					nptr->nentry = ( stat->weight ) ? check_weight(txt, *ptr, stat->weight) : POSDATALEN(txt, *ptr);
-				} else 
+				if ((*ptr)->haspos)
+					nptr->nentry = (stat->weight) ? check_weight(txt, *ptr, stat->weight) : POSDATALEN(txt, *ptr);
+				else
 					nptr->nentry = 1;
 				nptr->ndoc = 1;
 				nptr->len = (*ptr)->len;
@@ -162,9 +164,9 @@ formstat(tsstat * stat, tsvector * txt, WordEntry ** entry, uint32 len)
 
 		while (ptr - entry < len)
 		{
-			if ( (*ptr)->haspos ) {
-				nptr->nentry = ( stat->weight ) ? check_weight(txt, *ptr, stat->weight) : POSDATALEN(txt, *ptr);
-			} else 
+			if ((*ptr)->haspos)
+				nptr->nentry = (stat->weight) ? check_weight(txt, *ptr, stat->weight) : POSDATALEN(txt, *ptr);
+			else
 				nptr->nentry = 1;
 			nptr->ndoc = 1;
 			nptr->len = (*ptr)->len;
@@ -192,7 +194,7 @@ ts_accum(PG_FUNCTION_ARGS)
 				cur = 0;
 	StatEntry  *sptr;
 	WordEntry  *wptr;
-	int n=0;
+	int			n = 0;
 
 	if (stat == NULL || PG_ARGISNULL(0))
 	{							/* Init in first */
@@ -222,10 +224,13 @@ ts_accum(PG_FUNCTION_ARGS)
 				sptr++;
 			else if (cmp == 0)
 			{
-				if ( stat->weight == 0 ) {
+				if (stat->weight == 0)
+				{
 					sptr->ndoc++;
 					sptr->nentry += (wptr->haspos) ? POSDATALEN(txt, wptr) : 1;
-				} else if ( wptr->haspos && (n=check_weight(txt, wptr, stat->weight))!=0 ) {
+				}
+				else if (wptr->haspos && (n = check_weight(txt, wptr, stat->weight)) != 0)
+				{
 					sptr->ndoc++;
 					sptr->nentry += n;
 				}
@@ -234,7 +239,8 @@ ts_accum(PG_FUNCTION_ARGS)
 			}
 			else
 			{
-				if ( stat->weight == 0 || check_weight(txt, wptr, stat->weight)!=0 ) { 
+				if (stat->weight == 0 || check_weight(txt, wptr, stat->weight) != 0)
+				{
 					if (cur == len)
 						newentry = SEI_realloc(newentry, &len);
 					newentry[cur] = wptr;
@@ -246,7 +252,8 @@ ts_accum(PG_FUNCTION_ARGS)
 
 		while (wptr - ARRPTR(txt) < txt->size)
 		{
-			if ( stat->weight == 0 || check_weight(txt, wptr, stat->weight)!=0 ) { 
+			if (stat->weight == 0 || check_weight(txt, wptr, stat->weight) != 0)
+			{
 				if (cur == len)
 					newentry = SEI_realloc(newentry, &len);
 				newentry[cur] = wptr;
@@ -269,10 +276,13 @@ ts_accum(PG_FUNCTION_ARGS)
 				cmp = compareStatWord(sptr, wptr, stat, txt);
 				if (cmp == 0)
 				{
-					if ( stat->weight == 0 ) {
+					if (stat->weight == 0)
+					{
 						sptr->ndoc++;
 						sptr->nentry += (wptr->haspos) ? POSDATALEN(txt, wptr) : 1;
-					} else if ( wptr->haspos && (n=check_weight(txt, wptr, stat->weight))!=0 ) {
+					}
+					else if (wptr->haspos && (n = check_weight(txt, wptr, stat->weight)) != 0)
+					{
 						sptr->ndoc++;
 						sptr->nentry += n;
 					}
@@ -286,7 +296,8 @@ ts_accum(PG_FUNCTION_ARGS)
 
 			if (StopLow >= StopHigh)
 			{					/* not found */
-				if ( stat->weight == 0 || check_weight(txt, wptr, stat->weight)!=0 ) { 
+				if (stat->weight == 0 || check_weight(txt, wptr, stat->weight) != 0)
+				{
 					if (cur == len)
 						newentry = SEI_realloc(newentry, &len);
 					newentry[cur] = wptr;
@@ -454,11 +465,15 @@ ts_stat_sql(text *txt, text *ws)
 	stat->size = 0;
 	stat->weight = 0;
 
-	if ( ws ) {
-		char *buf;
+	if (ws)
+	{
+		char	   *buf;
+
 		buf = VARDATA(ws);
-		while( buf - VARDATA(ws) < VARSIZE(ws) - VARHDRSZ ) {
-			switch (tolower(*buf)) {
+		while (buf - VARDATA(ws) < VARSIZE(ws) - VARHDRSZ)
+		{
+			switch (tolower(*buf))
+			{
 				case 'a':
 					stat->weight |= 1 << 3;
 					break;
@@ -521,13 +536,14 @@ ts_stat(PG_FUNCTION_ARGS)
 	{
 		tsstat	   *stat;
 		text	   *txt = PG_GETARG_TEXT_P(0);
-		text	   *ws  = (PG_NARGS() > 1) ? PG_GETARG_TEXT_P(1) : NULL;
+		text	   *ws = (PG_NARGS() > 1) ? PG_GETARG_TEXT_P(1) : NULL;
 
 		funcctx = SRF_FIRSTCALL_INIT();
 		SPI_connect();
-		stat = ts_stat_sql(txt,ws);
+		stat = ts_stat_sql(txt, ws);
 		PG_FREE_IF_COPY(txt, 0);
-		if (PG_NARGS() > 1 ) PG_FREE_IF_COPY(ws, 1);
+		if (PG_NARGS() > 1)
+			PG_FREE_IF_COPY(ws, 1);
 		ts_setup_firstcall(funcctx, stat);
 		SPI_finish();
 	}

@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.37 2004/07/05 09:45:53 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.38 2004/08/29 05:06:59 momjian Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -70,7 +70,7 @@ quote_postgres(char *arg, int lineno)
 }
 
 void
-ECPGget_variable(va_list *ap, enum ECPGttype type, struct variable *var, bool indicator)
+ECPGget_variable(va_list *ap, enum ECPGttype type, struct variable * var, bool indicator)
 {
 	var->type = type;
 	var->pointer = va_arg(*ap, char *);
@@ -78,15 +78,14 @@ ECPGget_variable(va_list *ap, enum ECPGttype type, struct variable *var, bool in
 	var->varcharsize = va_arg(*ap, long);
 	var->arrsize = va_arg(*ap, long);
 	var->offset = va_arg(*ap, long);
-	
+
 	if (var->arrsize == 0 || var->varcharsize == 0)
 		var->value = *((char **) (var->pointer));
 	else
 		var->value = var->pointer;
 
 	/*
-	 * negative values are used to indicate an array without given
-	 * bounds
+	 * negative values are used to indicate an array without given bounds
 	 */
 	/* reset to zero for us */
 	if (var->arrsize < 0)
@@ -95,7 +94,7 @@ ECPGget_variable(va_list *ap, enum ECPGttype type, struct variable *var, bool in
 		var->varcharsize = 0;
 
 	var->next = NULL;
-	
+
 	if (indicator)
 	{
 		var->ind_type = va_arg(*ap, enum ECPGttype);
@@ -245,19 +244,19 @@ ECPGtypeinfocache_push(struct ECPGtype_information_cache ** cache, int oid, bool
 {
 	struct ECPGtype_information_cache *new_entry
 	= (struct ECPGtype_information_cache *) ECPGalloc(sizeof(struct ECPGtype_information_cache), lineno);
-	
+
 	new_entry->oid = oid;
 	new_entry->isarray = isarray;
 	new_entry->next = *cache;
 	*cache = new_entry;
 }
-		
+
 static enum ARRAY_TYPE
 ECPGis_type_an_array(int type, const struct statement * stmt, const struct variable * var)
 {
-	char	   	*array_query;
-	enum ARRAY_TYPE	isarray = ECPG_ARRAY_NOT_SET;
-	PGresult   	*query;
+	char	   *array_query;
+	enum ARRAY_TYPE isarray = ECPG_ARRAY_NOT_SET;
+	PGresult   *query;
 	struct ECPGtype_information_cache *cache_entry;
 
 	if ((stmt->connection->cache_head) == NULL)
@@ -319,14 +318,14 @@ ECPGis_type_an_array(int type, const struct statement * stmt, const struct varia
 		if (cache_entry->oid == type)
 			return cache_entry->isarray;
 	}
-	
+
 	array_query = (char *) ECPGalloc(strlen("select typlen from pg_type where oid= and typelem<>0") + 11, stmt->lineno);
 	sprintf(array_query, "select typlen from pg_type where oid=%d and typelem<>0", type);
 	query = PQexec(stmt->connection->connection, array_query);
 	ECPGfree(array_query);
-	if (PQresultStatus(query) == PGRES_TUPLES_OK )
+	if (PQresultStatus(query) == PGRES_TUPLES_OK)
 	{
-		if ( PQntuples(query) == 0 )
+		if (PQntuples(query) == 0)
 			isarray = ECPG_ARRAY_NONE;
 		else
 		{
@@ -343,7 +342,7 @@ ECPGis_type_an_array(int type, const struct statement * stmt, const struct varia
 	}
 	PQclear(query);
 	ECPGtypeinfocache_push(&(stmt->connection->cache_head), type, isarray, stmt->lineno);
-	ECPGlog("ECPGis_type_an_array line %d: TYPE database: %d C: %d array: %s\n", stmt->lineno, type, var->type, isarray?"Yes":"No");
+	ECPGlog("ECPGis_type_an_array line %d: TYPE database: %d C: %d array: %s\n", stmt->lineno, type, var->type, isarray ? "Yes" : "No");
 	return isarray;
 }
 
@@ -352,7 +351,7 @@ bool
 ECPGstore_result(const PGresult *results, int act_field,
 				 const struct statement * stmt, struct variable * var)
 {
-	enum ARRAY_TYPE		isarray;
+	enum ARRAY_TYPE isarray;
 	int			act_tuple,
 				ntuples = PQntuples(results);
 	bool		status = true;
@@ -368,7 +367,7 @@ ECPGstore_result(const PGresult *results, int act_field,
 		{
 			ECPGlog("ECPGstore_result line %d: Incorrect number of matches: %d don't fit into array of %d\n",
 					stmt->lineno, ntuples, var->arrsize);
-			ECPGraise(stmt->lineno, INFORMIX_MODE(stmt->compat)?ECPG_INFORMIX_SUBSELECT_NOT_ONE:ECPG_TOO_MANY_MATCHES, ECPG_SQLSTATE_CARDINALITY_VIOLATION, NULL);
+			ECPGraise(stmt->lineno, INFORMIX_MODE(stmt->compat) ? ECPG_INFORMIX_SUBSELECT_NOT_ONE : ECPG_TOO_MANY_MATCHES, ECPG_SQLSTATE_CARDINALITY_VIOLATION, NULL);
 			return false;
 		}
 	}
@@ -797,7 +796,7 @@ ECPGstore_input(const int lineno, const bool force_indicator, const struct varia
 			case ECPGt_unsigned_char:
 				{
 					/* set slen to string length if type is char * */
-					int slen = (var->varcharsize == 0) ? strlen((char *) var->value) : var->varcharsize;
+					int			slen = (var->varcharsize == 0) ? strlen((char *) var->value) : var->varcharsize;
 
 					if (!(newcopy = ECPGalloc(slen + 1, lineno)))
 						return false;
@@ -1036,7 +1035,7 @@ ECPGstore_input(const int lineno, const bool force_indicator, const struct varia
 					free(str);
 				}
 				break;
-				
+
 			case ECPGt_descriptor:
 				break;
 
@@ -1059,7 +1058,7 @@ ECPGexecute(struct statement * stmt)
 	PGresult   *results;
 	PGnotify   *notify;
 	struct variable *var;
-	int	   desc_counter = 0;
+	int			desc_counter = 0;
 
 	copiedquery = ECPGstrdup(stmt->command, stmt->lineno);
 
@@ -1074,32 +1073,39 @@ ECPGexecute(struct statement * stmt)
 	while (var)
 	{
 		char	   *newcopy = NULL;
-		const char *tobeinserted; 
+		const char *tobeinserted;
 		char	   *p;
-		bool	   malloced = FALSE;
-		int	   hostvarl = 0;
+		bool		malloced = FALSE;
+		int			hostvarl = 0;
 
 		tobeinserted = NULL;
-		
-		/* A descriptor is a special case since it contains many variables but is listed only once. */
+
+		/*
+		 * A descriptor is a special case since it contains many variables
+		 * but is listed only once.
+		 */
 		if (var->type == ECPGt_descriptor)
 		{
-			/* We create an additional variable list here, so the same logic applies. */
+			/*
+			 * We create an additional variable list here, so the same
+			 * logic applies.
+			 */
 			struct variable desc_inlist;
 			struct descriptor *desc;
 			struct descriptor_item *desc_item;
+
 			for (desc = all_descriptors; desc; desc = desc->next)
 			{
 				if (strcmp(var->pointer, desc->name) == 0)
 					break;
 			}
-			
+
 			if (desc == NULL)
 			{
 				ECPGraise(stmt->lineno, ECPG_UNKNOWN_DESCRIPTOR, ECPG_SQLSTATE_INVALID_SQL_DESCRIPTOR_NAME, var->pointer);
 				return false;
 			}
-			
+
 			desc_counter++;
 			if (desc->count < 0 || desc->count >= desc_counter)
 			{
@@ -1129,7 +1135,7 @@ ECPGexecute(struct statement * stmt)
 						}
 						if (!ECPGstore_input(stmt->lineno, stmt->force_indicator, &desc_inlist, &tobeinserted, &malloced))
 							return false;
-						
+
 						break;
 					}
 				}
@@ -1145,12 +1151,12 @@ ECPGexecute(struct statement * stmt)
 			if (!ECPGstore_input(stmt->lineno, stmt->force_indicator, var, &tobeinserted, &malloced))
 				return false;
 		}
-		
+
 		if (tobeinserted)
 		{
 			/*
-			 * Now tobeinserted points to an area that is to be inserted at
-			 * the first %s
+			 * Now tobeinserted points to an area that is to be inserted
+			 * at the first %s
 			 */
 			if (!(newcopy = (char *) ECPGalloc(strlen(copiedquery) + strlen(tobeinserted) + 1, stmt->lineno)))
 				return false;
@@ -1159,8 +1165,8 @@ ECPGexecute(struct statement * stmt)
 			if ((p = next_insert(newcopy + hostvarl)) == NULL)
 			{
 				/*
-				 * We have an argument but we dont have the matched up string
-				 * in the string
+				 * We have an argument but we dont have the matched up
+				 * string in the string
 				 */
 				ECPGraise(stmt->lineno, ECPG_TOO_MANY_ARGUMENTS, ECPG_SQLSTATE_USING_CLAUSE_DOES_NOT_MATCH_PARAMETERS, NULL);
 				return false;
@@ -1171,8 +1177,8 @@ ECPGexecute(struct statement * stmt)
 				hostvarl = strlen(newcopy);
 
 				/*
-				 * The strange thing in the second argument is the rest of the
-				 * string from the old string
+				 * The strange thing in the second argument is the rest of
+				 * the string from the old string
 				 */
 				strcat(newcopy,
 					   copiedquery
@@ -1181,9 +1187,9 @@ ECPGexecute(struct statement * stmt)
 			}
 
 			/*
-			 * Now everything is safely copied to the newcopy. Lets free the
-			 * oldcopy and let the copiedquery get the var->value from the
-			 * newcopy.
+			 * Now everything is safely copied to the newcopy. Lets free
+			 * the oldcopy and let the copiedquery get the var->value from
+			 * the newcopy.
 			 */
 			if (malloced)
 			{
@@ -1194,9 +1200,9 @@ ECPGexecute(struct statement * stmt)
 			ECPGfree(copiedquery);
 			copiedquery = newcopy;
 		}
-		
+
 		if (desc_counter == 0)
-	 		var = var->next;
+			var = var->next;
 	}
 
 	/* Check if there are unmatched things left. */

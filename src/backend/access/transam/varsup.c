@@ -6,7 +6,7 @@
  * Copyright (c) 2000-2004, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/varsup.c,v 1.58 2004/08/29 04:12:23 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/varsup.c,v 1.59 2004/08/29 05:06:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,9 +47,9 @@ GetNewTransactionId(bool isSubXact)
 	xid = ShmemVariableCache->nextXid;
 
 	/*
-	 * If we are allocating the first XID of a new page of the commit
-	 * log, zero out that commit-log page before returning. We must do
-	 * this while holding XidGenLock, else another xact could acquire and
+	 * If we are allocating the first XID of a new page of the commit log,
+	 * zero out that commit-log page before returning. We must do this
+	 * while holding XidGenLock, else another xact could acquire and
 	 * commit a later XID before we zero the page.	Fortunately, a page of
 	 * the commit log holds 32K or more transactions, so we don't have to
 	 * do this very often.
@@ -61,17 +61,18 @@ GetNewTransactionId(bool isSubXact)
 
 	/*
 	 * Now advance the nextXid counter.  This must not happen until after
-	 * we have successfully completed ExtendCLOG() --- if that routine fails,
-	 * we want the next incoming transaction to try it again.  We cannot
-	 * assign more XIDs until there is CLOG space for them.
+	 * we have successfully completed ExtendCLOG() --- if that routine
+	 * fails, we want the next incoming transaction to try it again.  We
+	 * cannot assign more XIDs until there is CLOG space for them.
 	 */
 	TransactionIdAdvance(ShmemVariableCache->nextXid);
 
 	/*
-	 * We must store the new XID into the shared PGPROC array before releasing
-	 * XidGenLock.  This ensures that when GetSnapshotData calls
+	 * We must store the new XID into the shared PGPROC array before
+	 * releasing XidGenLock.  This ensures that when GetSnapshotData calls
 	 * ReadNewTransactionId, all active XIDs before the returned value of
-	 * nextXid are already present in PGPROC.  Else we have a race condition.
+	 * nextXid are already present in PGPROC.  Else we have a race
+	 * condition.
 	 *
 	 * XXX by storing xid into MyProc without acquiring SInvalLock, we are
 	 * relying on fetch/store of an xid to be atomic, else other backends
@@ -86,19 +87,19 @@ GetNewTransactionId(bool isSubXact)
 	 *
 	 * A solution to the atomic-store problem would be to give each PGPROC
 	 * its own spinlock used only for fetching/storing that PGPROC's xid
-	 * and related fields.  (SInvalLock would then mean primarily that
+	 * and related fields.	(SInvalLock would then mean primarily that
 	 * PGPROCs couldn't be added/removed while holding the lock.)
 	 *
 	 * If there's no room to fit a subtransaction XID into PGPROC, set the
 	 * cache-overflowed flag instead.  This forces readers to look in
-	 * pg_subtrans to map subtransaction XIDs up to top-level XIDs.
-	 * There is a race-condition window, in that the new XID will not
-	 * appear as running until its parent link has been placed into
-	 * pg_subtrans.  However, that will happen before anyone could possibly
-	 * have a reason to inquire about the status of the XID, so it seems
-	 * OK.  (Snapshots taken during this window *will* include the parent
-	 * XID, so they will deliver the correct answer later on when someone
-	 * does have a reason to inquire.)
+	 * pg_subtrans to map subtransaction XIDs up to top-level XIDs. There
+	 * is a race-condition window, in that the new XID will not appear as
+	 * running until its parent link has been placed into pg_subtrans.
+	 * However, that will happen before anyone could possibly have a
+	 * reason to inquire about the status of the XID, so it seems OK.
+	 * (Snapshots taken during this window *will* include the parent XID,
+	 * so they will deliver the correct answer later on when someone does
+	 * have a reason to inquire.)
 	 */
 	if (MyProc != NULL)
 	{
@@ -112,9 +113,7 @@ GetNewTransactionId(bool isSubXact)
 				MyProc->subxids.nxids++;
 			}
 			else
-			{
 				MyProc->subxids.overflowed = true;
-			}
 		}
 	}
 

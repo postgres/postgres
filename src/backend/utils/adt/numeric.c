@@ -14,7 +14,7 @@
  * Copyright (c) 1998-2004, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.77 2004/08/29 04:12:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.78 2004/08/29 05:06:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -287,7 +287,7 @@ static void round_var(NumericVar *var, int rscale);
 static void trunc_var(NumericVar *var, int rscale);
 static void strip_var(NumericVar *var);
 static void compute_bucket(Numeric operand, Numeric bound1, Numeric bound2,
-						   NumericVar *count_var, NumericVar *result_var);
+			   NumericVar *count_var, NumericVar *result_var);
 
 
 /* ----------------------------------------------------------------------
@@ -415,7 +415,7 @@ numeric_recv(PG_FUNCTION_ARGS)
 		if (d < 0 || d >= NBASE)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
-					 errmsg("invalid digit in external \"numeric\" value")));
+				 errmsg("invalid digit in external \"numeric\" value")));
 		value.digits[i] = d;
 	}
 
@@ -831,8 +831,8 @@ width_bucket_numeric(PG_FUNCTION_ARGS)
 
 	if (count <= 0)
 		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_ARGUMENT_FOR_WIDTH_BUCKET_FUNCTION),
-				 errmsg("count must be greater than zero")));
+			(errcode(ERRCODE_INVALID_ARGUMENT_FOR_WIDTH_BUCKET_FUNCTION),
+			 errmsg("count must be greater than zero")));
 
 	init_var(&result_var);
 	init_var(&count_var);
@@ -844,10 +844,10 @@ width_bucket_numeric(PG_FUNCTION_ARGS)
 	{
 		case 0:
 			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_ARGUMENT_FOR_WIDTH_BUCKET_FUNCTION),
-					 errmsg("lower bound cannot equal upper bound")));
+			(errcode(ERRCODE_INVALID_ARGUMENT_FOR_WIDTH_BUCKET_FUNCTION),
+			 errmsg("lower bound cannot equal upper bound")));
 
-		/* bound1 < bound2 */
+			/* bound1 < bound2 */
 		case -1:
 			if (cmp_numerics(operand, bound1) < 0)
 				set_var_from_var(&const_zero, &result_var);
@@ -858,7 +858,7 @@ width_bucket_numeric(PG_FUNCTION_ARGS)
 							   &count_var, &result_var);
 			break;
 
-		/* bound1 > bound2 */
+			/* bound1 > bound2 */
 		case 1:
 			if (cmp_numerics(operand, bound1) > 0)
 				set_var_from_var(&const_zero, &result_var);
@@ -889,9 +889,9 @@ static void
 compute_bucket(Numeric operand, Numeric bound1, Numeric bound2,
 			   NumericVar *count_var, NumericVar *result_var)
 {
-	NumericVar bound1_var;
-	NumericVar bound2_var;
-	NumericVar operand_var;
+	NumericVar	bound1_var;
+	NumericVar	bound2_var;
+	NumericVar	operand_var;
 
 	init_var(&bound1_var);
 	init_var(&bound2_var);
@@ -924,7 +924,7 @@ compute_bucket(Numeric operand, Numeric bound1, Numeric bound2,
 	free_var(&bound1_var);
 	free_var(&bound2_var);
 	free_var(&operand_var);
-}	
+}
 
 /* ----------------------------------------------------------------------
  *
@@ -1692,8 +1692,8 @@ numeric_power(PG_FUNCTION_ARGS)
 	trunc_var(&arg2_trunc, 0);
 
 	/*
-	 * Return special SQLSTATE error codes for a few conditions
-	 * mandated by the standard.
+	 * Return special SQLSTATE error codes for a few conditions mandated
+	 * by the standard.
 	 */
 	if ((cmp_var(&arg1, &const_zero) == 0 &&
 		 cmp_var(&arg2, &const_zero) < 0) ||
@@ -1776,8 +1776,8 @@ numeric_int4(PG_FUNCTION_ARGS)
 static int32
 numericvar_to_int4(NumericVar *var)
 {
-	int32 result;
-	int64 val;
+	int32		result;
+	int64		val;
 
 	if (!numericvar_to_int8(var, &val))
 		ereport(ERROR,
@@ -2717,7 +2717,7 @@ set_var_from_str(const char *str, NumericVar *dest)
 	if (!isdigit((unsigned char) *cp))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-			   errmsg("invalid input syntax for type numeric: \"%s\"", str)));
+		  errmsg("invalid input syntax for type numeric: \"%s\"", str)));
 
 	decdigits = (unsigned char *) palloc(strlen(cp) + DEC_DIGITS * 2);
 
@@ -2740,8 +2740,8 @@ set_var_from_str(const char *str, NumericVar *dest)
 			if (have_dp)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-					   errmsg("invalid input syntax for type numeric: \"%s\"",
-							  str)));
+				  errmsg("invalid input syntax for type numeric: \"%s\"",
+						 str)));
 			have_dp = TRUE;
 			cp++;
 		}
@@ -2764,15 +2764,15 @@ set_var_from_str(const char *str, NumericVar *dest)
 		if (endptr == cp)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-					 errmsg("invalid input syntax for type numeric: \"%s\"",
-							str)));
+				  errmsg("invalid input syntax for type numeric: \"%s\"",
+						 str)));
 		cp = endptr;
 		if (exponent > NUMERIC_MAX_PRECISION ||
 			exponent < -NUMERIC_MAX_PRECISION)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-					 errmsg("invalid input syntax for type numeric: \"%s\"",
-							str)));
+				  errmsg("invalid input syntax for type numeric: \"%s\"",
+						 str)));
 		dweight += (int) exponent;
 		dscale -= (int) exponent;
 		if (dscale < 0)
@@ -2785,8 +2785,8 @@ set_var_from_str(const char *str, NumericVar *dest)
 		if (!isspace((unsigned char) *cp))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-					 errmsg("invalid input syntax for type numeric: \"%s\"",
-							str)));
+				  errmsg("invalid input syntax for type numeric: \"%s\"",
+						 str)));
 		cp++;
 	}
 
@@ -3295,8 +3295,8 @@ numeric_to_double_no_overflow(Numeric num)
 		/* shouldn't happen ... */
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				 errmsg("invalid input syntax for type double precision: \"%s\"",
-						tmp)));
+		 errmsg("invalid input syntax for type double precision: \"%s\"",
+				tmp)));
 	}
 
 	pfree(tmp);
@@ -3321,8 +3321,8 @@ numericvar_to_double_no_overflow(NumericVar *var)
 		/* shouldn't happen ... */
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				 errmsg("invalid input syntax for type double precision: \"%s\"",
-						tmp)));
+		 errmsg("invalid input syntax for type double precision: \"%s\"",
+				tmp)));
 	}
 
 	pfree(tmp);
@@ -4211,8 +4211,8 @@ sqrt_var(NumericVar *arg, NumericVar *result, int rscale)
 	}
 
 	/*
-	 * SQL2003 defines sqrt() in terms of power, so we need to emit
-	 * the right SQLSTATE error code if the operand is negative.
+	 * SQL2003 defines sqrt() in terms of power, so we need to emit the
+	 * right SQLSTATE error code if the operand is negative.
 	 */
 	if (stat < 0)
 		ereport(ERROR,

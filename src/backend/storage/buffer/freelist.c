@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/freelist.c,v 1.46 2004/08/29 04:12:47 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/freelist.c,v 1.47 2004/08/29 05:06:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,15 +26,15 @@
 
 
 /* GUC variable: time in seconds between statistics reports */
-int		DebugSharedBuffers = 0;
+int			DebugSharedBuffers = 0;
 
 /* Pointers to shared state */
-static BufferStrategyControl	*StrategyControl = NULL;
-static BufferStrategyCDB		*StrategyCDB = NULL;
+static BufferStrategyControl *StrategyControl = NULL;
+static BufferStrategyCDB *StrategyCDB = NULL;
 
 /* Backend-local state about whether currently vacuuming */
-static bool				strategy_hint_vacuum = false;
-static TransactionId	strategy_vacuum_xid;
+static bool strategy_hint_vacuum = false;
+static TransactionId strategy_vacuum_xid;
 
 
 #define T1_TARGET	(StrategyControl->target_T1_size)
@@ -47,7 +47,7 @@ static TransactionId	strategy_vacuum_xid;
 /*
  * Macro to remove a CDB from whichever list it currently is on
  */
-#define	STRAT_LIST_REMOVE(cdb) \
+#define STRAT_LIST_REMOVE(cdb) \
 do { \
 	Assert((cdb)->list >= 0 && (cdb)->list < STRAT_NUM_LISTS);	\
 	if ((cdb)->prev < 0)										\
@@ -71,7 +71,7 @@ do { \
 	if (StrategyControl->listTail[(l)] < 0)						\
 	{															\
 		(cdb)->prev = (cdb)->next = -1;							\
-		StrategyControl->listHead[(l)] = 						\
+		StrategyControl->listHead[(l)] =						\
 			StrategyControl->listTail[(l)] =					\
 			((cdb) - StrategyCDB);								\
 	}															\
@@ -79,9 +79,9 @@ do { \
 	{															\
 		(cdb)->next = -1;										\
 		(cdb)->prev = StrategyControl->listTail[(l)];			\
-		StrategyCDB[StrategyControl->listTail[(l)]].next = 		\
+		StrategyCDB[StrategyControl->listTail[(l)]].next =		\
 			((cdb) - StrategyCDB);								\
-		StrategyControl->listTail[(l)] = 						\
+		StrategyControl->listTail[(l)] =						\
 			((cdb) - StrategyCDB);								\
 	}															\
 	StrategyControl->listSize[(l)]++;							\
@@ -97,7 +97,7 @@ do { \
 	if (StrategyControl->listHead[(l)] < 0)						\
 	{															\
 		(cdb)->prev = (cdb)->next = -1;							\
-		StrategyControl->listHead[(l)] = 						\
+		StrategyControl->listHead[(l)] =						\
 			StrategyControl->listTail[(l)] =					\
 			((cdb) - StrategyCDB);								\
 	}															\
@@ -105,9 +105,9 @@ do { \
 	{															\
 		(cdb)->prev = -1;										\
 		(cdb)->next = StrategyControl->listHead[(l)];			\
-		StrategyCDB[StrategyControl->listHead[(l)]].prev = 		\
+		StrategyCDB[StrategyControl->listHead[(l)]].prev =		\
 			((cdb) - StrategyCDB);								\
-		StrategyControl->listHead[(l)] = 						\
+		StrategyControl->listHead[(l)] =						\
 			((cdb) - StrategyCDB);								\
 	}															\
 	StrategyControl->listSize[(l)]++;							\
@@ -125,9 +125,15 @@ StrategyStatsDump(void)
 
 	if (StrategyControl->stat_report + DebugSharedBuffers < now)
 	{
-		long	all_hit, b1_hit, t1_hit, t2_hit, b2_hit;
-		int		id, t1_clean, t2_clean;
-		ErrorContextCallback	*errcxtold;
+		long		all_hit,
+					b1_hit,
+					t1_hit,
+					t2_hit,
+					b2_hit;
+		int			id,
+					t1_clean,
+					t2_clean;
+		ErrorContextCallback *errcxtold;
 
 		id = StrategyControl->listHead[STRAT_LIST_T1];
 		t1_clean = 0;
@@ -149,9 +155,7 @@ StrategyStatsDump(void)
 		}
 
 		if (StrategyControl->num_lookup == 0)
-		{
 			all_hit = b1_hit = t1_hit = t2_hit = b2_hit = 0;
-		}
 		else
 		{
 			b1_hit = (StrategyControl->num_hit[STRAT_LIST_B1] * 100 /
@@ -202,7 +206,7 @@ BufferDesc *
 StrategyBufferLookup(BufferTag *tagPtr, bool recheck,
 					 int *cdb_found_index)
 {
-	BufferStrategyCDB  *cdb;
+	BufferStrategyCDB *cdb;
 
 	/* Optional stats printout */
 	if (DebugSharedBuffers > 0)
@@ -235,8 +239,8 @@ StrategyBufferLookup(BufferTag *tagPtr, bool recheck,
 	StrategyControl->num_hit[cdb->list]++;
 
 	/*
-	 * If this is a T2 hit, we simply move the CDB to the
-	 * T2 MRU position and return the found buffer.
+	 * If this is a T2 hit, we simply move the CDB to the T2 MRU position
+	 * and return the found buffer.
 	 *
 	 * A CDB in T2 cannot have t1_vacuum set, so we needn't check.  However,
 	 * if the current process is VACUUM then it doesn't promote to MRU.
@@ -253,12 +257,12 @@ StrategyBufferLookup(BufferTag *tagPtr, bool recheck,
 	}
 
 	/*
-	 * If this is a T1 hit, we move the buffer to the T2 MRU only if another
-	 * transaction had read it into T1, *and* neither transaction is a VACUUM.
-	 * This is required because any UPDATE or DELETE in PostgreSQL does
-	 * multiple ReadBuffer(), first during the scan, later during the
-	 * heap_update() or heap_delete().  Otherwise move to T1 MRU.  VACUUM
-	 * doesn't even get to make that happen.
+	 * If this is a T1 hit, we move the buffer to the T2 MRU only if
+	 * another transaction had read it into T1, *and* neither transaction
+	 * is a VACUUM. This is required because any UPDATE or DELETE in
+	 * PostgreSQL does multiple ReadBuffer(), first during the scan, later
+	 * during the heap_update() or heap_delete().  Otherwise move to T1
+	 * MRU.  VACUUM doesn't even get to make that happen.
 	 */
 	if (cdb->list == STRAT_LIST_T1)
 	{
@@ -274,10 +278,11 @@ StrategyBufferLookup(BufferTag *tagPtr, bool recheck,
 			{
 				STRAT_LIST_REMOVE(cdb);
 				STRAT_MRU_INSERT(cdb, STRAT_LIST_T1);
+
 				/*
-				 * If a non-VACUUM process references a page recently loaded
-				 * by VACUUM, clear the stigma; the state will now be the
-				 * same as if this process loaded it originally.
+				 * If a non-VACUUM process references a page recently
+				 * loaded by VACUUM, clear the stigma; the state will now
+				 * be the same as if this process loaded it originally.
 				 */
 				if (cdb->t1_vacuum)
 				{
@@ -297,9 +302,9 @@ StrategyBufferLookup(BufferTag *tagPtr, bool recheck,
 	 * adjust the T1target.
 	 *
 	 * Now for this really to end up as a B1 or B2 cache hit, we must have
-	 * been flushing for quite some time as the block not only must have been
-	 * read, but also traveled through the queue and evicted from the T cache
-	 * again already.
+	 * been flushing for quite some time as the block not only must have
+	 * been read, but also traveled through the queue and evicted from the
+	 * T cache again already.
 	 *
 	 * VACUUM re-reads shouldn't adjust the target either.
 	 */
@@ -307,26 +312,26 @@ StrategyBufferLookup(BufferTag *tagPtr, bool recheck,
 		return NULL;
 
 	/*
-	 * Adjust the target size of the T1 cache depending on if this is
-	 * a B1 or B2 hit.
+	 * Adjust the target size of the T1 cache depending on if this is a B1
+	 * or B2 hit.
 	 */
 	switch (cdb->list)
 	{
 		case STRAT_LIST_B1:
+
 			/*
-			 * B1 hit means that the T1 cache is probably too
-			 * small. Adjust the T1 target size and continue
-			 * below.
+			 * B1 hit means that the T1 cache is probably too small.
+			 * Adjust the T1 target size and continue below.
 			 */
 			T1_TARGET = Min(T1_TARGET + Max(B2_LENGTH / B1_LENGTH, 1),
 							NBuffers);
 			break;
 
 		case STRAT_LIST_B2:
-			/* 
-			 * B2 hit means that the T2 cache is probably too
-			 * small. Adjust the T1 target size and continue
-			 * below.
+
+			/*
+			 * B2 hit means that the T2 cache is probably too small.
+			 * Adjust the T1 target size and continue below.
 			 */
 			T1_TARGET = Max(T1_TARGET - Max(B1_LENGTH / B2_LENGTH, 1), 0);
 			break;
@@ -337,8 +342,8 @@ StrategyBufferLookup(BufferTag *tagPtr, bool recheck,
 	}
 
 	/*
-	 * Even though we had seen the block in the past, its data is
-	 * not currently in memory ... cache miss to the bufmgr.
+	 * Even though we had seen the block in the past, its data is not
+	 * currently in memory ... cache miss to the bufmgr.
 	 */
 	return NULL;
 }
@@ -349,7 +354,7 @@ StrategyBufferLookup(BufferTag *tagPtr, bool recheck,
  *
  *	Called by the bufmgr to get the next candidate buffer to use in
  *	BufferAlloc(). The only hard requirement BufferAlloc() has is that
- *	this buffer must not currently be pinned. 
+ *	this buffer must not currently be pinned.
  *
  *	*cdb_replace_index is set to the index of the candidate CDB, or -1 if
  *	none (meaning we are using a previously free buffer).  This is not
@@ -359,8 +364,8 @@ StrategyBufferLookup(BufferTag *tagPtr, bool recheck,
 BufferDesc *
 StrategyGetBuffer(int *cdb_replace_index)
 {
-	int				cdb_id;
-	BufferDesc	   *buf;
+	int			cdb_id;
+	BufferDesc *buf;
 
 	if (StrategyControl->listFreeBuffers < 0)
 	{
@@ -452,12 +457,12 @@ StrategyGetBuffer(int *cdb_replace_index)
 		/* There is a completely free buffer available - take it */
 
 		/*
-		 * Note: This code uses the side effect that a free buffer
-		 * can never be pinned or dirty and therefore the call to
+		 * Note: This code uses the side effect that a free buffer can
+		 * never be pinned or dirty and therefore the call to
 		 * StrategyReplaceBuffer() will happen without the bufmgr
-		 * releasing the bufmgr-lock in the meantime. That means,
-		 * that there will never be any reason to recheck. Otherwise
-		 * we would leak shared buffers here!
+		 * releasing the bufmgr-lock in the meantime. That means, that
+		 * there will never be any reason to recheck. Otherwise we would
+		 * leak shared buffers here!
 		 */
 		*cdb_replace_index = -1;
 		buf = &BufferDescriptors[StrategyControl->listFreeBuffers];
@@ -493,8 +498,8 @@ void
 StrategyReplaceBuffer(BufferDesc *buf, BufferTag *newTag,
 					  int cdb_found_index, int cdb_replace_index)
 {
-	BufferStrategyCDB	   *cdb_found;
-	BufferStrategyCDB	   *cdb_replace;
+	BufferStrategyCDB *cdb_found;
+	BufferStrategyCDB *cdb_replace;
 
 	if (cdb_found_index >= 0)
 	{
@@ -504,7 +509,7 @@ StrategyReplaceBuffer(BufferDesc *buf, BufferTag *newTag,
 		/* Assert that the buffer remembered in cdb_found is the one */
 		/* the buffer manager is currently faulting in */
 		Assert(BUFFERTAGS_EQUAL(cdb_found->buf_tag, *newTag));
-		
+
 		if (cdb_replace_index >= 0)
 		{
 			/* We are satisfying it with an evicted T buffer */
@@ -512,17 +517,18 @@ StrategyReplaceBuffer(BufferDesc *buf, BufferTag *newTag,
 
 			/* Assert that the buffer remembered in cdb_replace is */
 			/* the one the buffer manager has just evicted */
-			Assert(cdb_replace->list == STRAT_LIST_T1 || 
+			Assert(cdb_replace->list == STRAT_LIST_T1 ||
 				   cdb_replace->list == STRAT_LIST_T2);
 			Assert(cdb_replace->buf_id == buf->buf_id);
 			Assert(BUFFERTAGS_EQUAL(cdb_replace->buf_tag, buf->tag));
 
 			/*
-			 * Under normal circumstances we move the evicted T list entry to
-			 * the corresponding B list.  However, T1 entries that exist only
-			 * because of VACUUM are just thrown into the unused list instead.
-			 * We don't expect them to be touched again by the VACUUM, and if
-			 * we put them into B1 then VACUUM would skew T1_target adjusting.
+			 * Under normal circumstances we move the evicted T list entry
+			 * to the corresponding B list.  However, T1 entries that
+			 * exist only because of VACUUM are just thrown into the
+			 * unused list instead. We don't expect them to be touched
+			 * again by the VACUUM, and if we put them into B1 then VACUUM
+			 * would skew T1_target adjusting.
 			 */
 			if (cdb_replace->t1_vacuum)
 			{
@@ -560,8 +566,8 @@ StrategyReplaceBuffer(BufferDesc *buf, BufferTag *newTag,
 	else
 	{
 		/*
-		 * This was a complete cache miss, so we need to create
-		 * a new CDB. The goal is to keep T1len+B1len <= c.
+		 * This was a complete cache miss, so we need to create a new CDB.
+		 * The goal is to keep T1len+B1len <= c.
 		 */
 		if (B1_LENGTH > 0 && (T1_LENGTH + B1_LENGTH) >= NBuffers)
 		{
@@ -600,12 +606,12 @@ StrategyReplaceBuffer(BufferDesc *buf, BufferTag *newTag,
 		if (cdb_replace_index >= 0)
 		{
 			/*
-			 * The buffer was formerly in a T list, move its CDB
-			 * to the corresponding B list
+			 * The buffer was formerly in a T list, move its CDB to the
+			 * corresponding B list
 			 */
 			cdb_replace = &StrategyCDB[cdb_replace_index];
 
-			Assert(cdb_replace->list == STRAT_LIST_T1 || 
+			Assert(cdb_replace->list == STRAT_LIST_T1 ||
 				   cdb_replace->list == STRAT_LIST_T2);
 			Assert(cdb_replace->buf_id == buf->buf_id);
 			Assert(BUFFERTAGS_EQUAL(cdb_replace->buf_tag, buf->tag));
@@ -651,9 +657,9 @@ StrategyReplaceBuffer(BufferDesc *buf, BufferTag *newTag,
 			STRAT_MRU_INSERT(cdb_found, STRAT_LIST_T1);
 
 		/*
-		 * Remember the Xid when this buffer went onto T1 to avoid
-		 * a single UPDATE promoting a newcomer straight into T2.
-		 * Also remember if it was loaded for VACUUM.
+		 * Remember the Xid when this buffer went onto T1 to avoid a
+		 * single UPDATE promoting a newcomer straight into T2. Also
+		 * remember if it was loaded for VACUUM.
 		 */
 		cdb_found->t1_xid = GetCurrentTransactionId();
 		cdb_found->t1_vacuum = strategy_hint_vacuum;
@@ -671,8 +677,8 @@ StrategyReplaceBuffer(BufferDesc *buf, BufferTag *newTag,
 void
 StrategyInvalidateBuffer(BufferDesc *buf)
 {
-	int					cdb_id;
-	BufferStrategyCDB  *cdb;
+	int			cdb_id;
+	BufferStrategyCDB *cdb;
 
 	/* The buffer cannot be dirty or pinned */
 	Assert(!(buf->flags & BM_DIRTY) || !(buf->flags & BM_VALID));
@@ -687,15 +693,15 @@ StrategyInvalidateBuffer(BufferDesc *buf)
 	cdb = &StrategyCDB[cdb_id];
 
 	/*
-	 * Remove the CDB from the hashtable and the ARC queue it is
-	 * currently on.
+	 * Remove the CDB from the hashtable and the ARC queue it is currently
+	 * on.
 	 */
 	BufTableDelete(&(cdb->buf_tag));
 	STRAT_LIST_REMOVE(cdb);
 
 	/*
-	 * Clear out the CDB's buffer tag and association with the buffer
-	 * and add it to the list of unused CDB's
+	 * Clear out the CDB's buffer tag and association with the buffer and
+	 * add it to the list of unused CDB's
 	 */
 	CLEAR_BUFFERTAG(cdb->buf_tag);
 	cdb->buf_id = -1;
@@ -703,9 +709,9 @@ StrategyInvalidateBuffer(BufferDesc *buf)
 	StrategyControl->listUnusedCDB = cdb_id;
 
 	/*
-	 * Clear out the buffer's tag and add it to the list of
-	 * currently unused buffers.  We must do this to ensure that linear
-	 * scans of the buffer array don't think the buffer is valid.
+	 * Clear out the buffer's tag and add it to the list of currently
+	 * unused buffers.	We must do this to ensure that linear scans of the
+	 * buffer array don't think the buffer is valid.
 	 */
 	CLEAR_BUFFERTAG(buf->tag);
 	buf->flags &= ~(BM_VALID | BM_DIRTY);
@@ -743,17 +749,17 @@ int
 StrategyDirtyBufferList(BufferDesc **buffers, BufferTag *buftags,
 						int max_buffers)
 {
-	int					num_buffer_dirty = 0;
-	int					cdb_id_t1;
-	int					cdb_id_t2;
-	int					buf_id;
-	BufferDesc		   *buf;
+	int			num_buffer_dirty = 0;
+	int			cdb_id_t1;
+	int			cdb_id_t2;
+	int			buf_id;
+	BufferDesc *buf;
 
 	/*
-	 * Traverse the T1 and T2 list LRU to MRU in "parallel"
-	 * and add all dirty buffers found in that order to the list.
-	 * The ARC strategy keeps all used buffers including pinned ones
-	 * in the T1 or T2 list. So we cannot miss any dirty buffers.
+	 * Traverse the T1 and T2 list LRU to MRU in "parallel" and add all
+	 * dirty buffers found in that order to the list. The ARC strategy
+	 * keeps all used buffers including pinned ones in the T1 or T2 list.
+	 * So we cannot miss any dirty buffers.
 	 */
 	cdb_id_t1 = StrategyControl->listHead[STRAT_LIST_T1];
 	cdb_id_t2 = StrategyControl->listHead[STRAT_LIST_T2];
@@ -815,8 +821,8 @@ StrategyDirtyBufferList(BufferDesc **buffers, BufferTag *buftags,
 void
 StrategyInitialize(bool init)
 {
-	bool found;
-	int i;
+	bool		found;
+	int			i;
 
 	/*
 	 * Initialize the shared CDB lookup hashtable
@@ -841,14 +847,14 @@ StrategyInitialize(bool init)
 		Assert(init);
 
 		/*
-		 * Grab the whole linked list of free buffers for our strategy.
-		 * We assume it was previously set up by InitBufferPool().
+		 * Grab the whole linked list of free buffers for our strategy. We
+		 * assume it was previously set up by InitBufferPool().
 		 */
 		StrategyControl->listFreeBuffers = 0;
 
 		/*
-		 * We start off with a target T1 list size of
-		 * half the available cache blocks.
+		 * We start off with a target T1 list size of half the available
+		 * cache blocks.
 		 */
 		StrategyControl->target_T1_size = NBuffers / 2;
 
@@ -862,7 +868,7 @@ StrategyInitialize(bool init)
 			StrategyControl->listSize[i] = 0;
 			StrategyControl->num_hit[i] = 0;
 		}
-		StrategyControl->num_lookup  = 0;
+		StrategyControl->num_lookup = 0;
 		StrategyControl->stat_report = 0;
 
 		/*
@@ -879,7 +885,5 @@ StrategyInitialize(bool init)
 		StrategyControl->listUnusedCDB = 0;
 	}
 	else
-	{
 		Assert(!init);
-	}
 }

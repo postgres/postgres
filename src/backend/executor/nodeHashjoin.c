@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeHashjoin.c,v 1.63 2004/08/29 04:12:31 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeHashjoin.c,v 1.64 2004/08/29 05:06:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -559,7 +559,7 @@ ExecHashJoinGetSavedTuple(HashJoinState *hjstate,
 	if (nread != sizeof(HeapTupleData))
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not read from hash-join temporary file: %m")));
+			errmsg("could not read from hash-join temporary file: %m")));
 	heapTuple = palloc(HEAPTUPLESIZE + htup.t_len);
 	memcpy((char *) heapTuple, (char *) &htup, sizeof(HeapTupleData));
 	heapTuple->t_datamcxt = CurrentMemoryContext;
@@ -569,7 +569,7 @@ ExecHashJoinGetSavedTuple(HashJoinState *hjstate,
 	if (nread != (size_t) htup.t_len)
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not read from hash-join temporary file: %m")));
+			errmsg("could not read from hash-join temporary file: %m")));
 	return ExecStoreTuple(heapTuple, tupleSlot, InvalidBuffer, true);
 }
 
@@ -627,14 +627,14 @@ ExecHashJoinNewBatch(HashJoinState *hjstate)
 	if (BufFileSeek(hashtable->outerBatchFile[newbatch - 1], 0, 0L, SEEK_SET))
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not rewind hash-join temporary file: %m")));
+			   errmsg("could not rewind hash-join temporary file: %m")));
 
 	innerFile = hashtable->innerBatchFile[newbatch - 1];
 
 	if (BufFileSeek(innerFile, 0, 0L, SEEK_SET))
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not rewind hash-join temporary file: %m")));
+			   errmsg("could not rewind hash-join temporary file: %m")));
 
 	/*
 	 * Reload the hash table with the new inner batch
@@ -685,12 +685,12 @@ ExecHashJoinSaveTuple(HeapTuple heapTuple,
 	if (written != sizeof(HeapTupleData))
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not write to hash-join temporary file: %m")));
+			 errmsg("could not write to hash-join temporary file: %m")));
 	written = BufFileWrite(file, (void *) heapTuple->t_data, heapTuple->t_len);
 	if (written != (size_t) heapTuple->t_len)
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not write to hash-join temporary file: %m")));
+			 errmsg("could not write to hash-join temporary file: %m")));
 }
 
 void

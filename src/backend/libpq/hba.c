@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.128 2004/08/29 04:12:32 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.129 2004/08/29 05:06:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,10 +41,10 @@
 /* Max size of username ident server can return */
 #define IDENT_USERNAME_MAX 512
 
-/* Standard TCP port number for Ident service.  Assigned by IANA */
+/* Standard TCP port number for Ident service.	Assigned by IANA */
 #define IDENT_PORT 113
 
-/* Name of the config file  */
+/* Name of the config file	*/
 #define CONF_FILE "pg_hba.conf"
 
 /* Name of the usermap file */
@@ -66,17 +66,20 @@
  */
 
 /* pre-parsed content of CONF_FILE and corresponding line #s */
-static List *hba_lines			= NIL;
-static List *hba_line_nums		= NIL;
+static List *hba_lines = NIL;
+static List *hba_line_nums = NIL;
+
 /* pre-parsed content of USERMAP_FILE and corresponding line #s */
-static List *ident_lines		= NIL;
-static List *ident_line_nums	= NIL;
+static List *ident_lines = NIL;
+static List *ident_line_nums = NIL;
+
 /* pre-parsed content of group file and corresponding line #s */
-static List *group_lines		= NIL;
-static List *group_line_nums	= NIL;
+static List *group_lines = NIL;
+static List *group_line_nums = NIL;
+
 /* pre-parsed content of user passwd file and corresponding line #s */
-static List *user_lines			= NIL;
-static List *user_line_nums		= NIL;
+static List *user_lines = NIL;
+static List *user_line_nums = NIL;
 
 /* sorted entries so we can do binary search lookups */
 static List **user_sorted = NULL;		/* sorted user list, for bsearch() */
@@ -119,7 +122,7 @@ next_token(FILE *fp, char *buf, int bufsz)
 	char	   *end_buf = buf + (bufsz - 2);
 	bool		in_quote = false;
 	bool		was_quote = false;
-	bool        saw_quote = false;
+	bool		saw_quote = false;
 
 	Assert(end_buf > start_buf);
 
@@ -134,8 +137,8 @@ next_token(FILE *fp, char *buf, int bufsz)
 	}
 
 	/*
-	 * Build a token in buf of next characters up to EOF, EOL,
-	 * unquoted comma, or unquoted whitespace.
+	 * Build a token in buf of next characters up to EOF, EOL, unquoted
+	 * comma, or unquoted whitespace.
 	 */
 	while (c != EOF && c != '\n' &&
 		   (!pg_isblank(c) || in_quote == true))
@@ -156,8 +159,8 @@ next_token(FILE *fp, char *buf, int bufsz)
 			*buf = '\0';
 			ereport(LOG,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
-					 errmsg("authentication file token too long, skipping: \"%s\"",
-							start_buf)));
+			errmsg("authentication file token too long, skipping: \"%s\"",
+				   start_buf)));
 			/* Discard remainder of line */
 			while ((c = getc(fp)) != EOF && c != '\n')
 				;
@@ -195,10 +198,10 @@ next_token(FILE *fp, char *buf, int bufsz)
 
 	*buf = '\0';
 
-	if (!saw_quote && 
-	     (strcmp(start_buf, "all") == 0 ||
-		  strcmp(start_buf, "sameuser") == 0 ||
-		  strcmp(start_buf, "samegroup") == 0))
+	if (!saw_quote &&
+		(strcmp(start_buf, "all") == 0 ||
+		 strcmp(start_buf, "sameuser") == 0 ||
+		 strcmp(start_buf, "samegroup") == 0))
 	{
 		/* append newline to a magical keyword */
 		*buf++ = '\n';
@@ -270,10 +273,10 @@ free_lines(List **lines, List **line_nums)
 	if (*lines)
 	{
 		/*
-		 * "lines" is a list of lists; each of those sublists consists
-		 * of palloc'ed tokens, so we want to free each pointed-to
-		 * token in a sublist, followed by the sublist itself, and
-		 * finally the whole list.
+		 * "lines" is a list of lists; each of those sublists consists of
+		 * palloc'ed tokens, so we want to free each pointed-to token in a
+		 * sublist, followed by the sublist itself, and finally the whole
+		 * list.
 		 */
 		ListCell   *line;
 
@@ -338,8 +341,8 @@ tokenize_inc_file(const char *inc_filename)
 	/* Create comma-separate string from List */
 	foreach(line, inc_lines)
 	{
-		List		   *token_list = (List *) lfirst(line);
-		ListCell	   *token;
+		List	   *token_list = (List *) lfirst(line);
+		ListCell   *token;
 
 		foreach(token, token_list)
 		{
@@ -455,7 +458,7 @@ get_group_line(const char *group)
 /*
  * Lookup a user name in the pg_shadow file
  */
-List **
+List	  **
 get_user_line(const char *user)
 {
 	/* On some versions of Solaris, bsearch of zero items dumps core */
@@ -480,7 +483,7 @@ check_group(char *group, char *user)
 
 	if ((line = get_group_line(group)) != NULL)
 	{
-		ListCell *line_item;
+		ListCell   *line_item;
 
 		/* skip over the group name */
 		for_each_cell(line_item, lnext(list_head(*line)))
@@ -792,9 +795,9 @@ parse_hba(List *line, int line_num, hbaPort *port,
 		if (addr.ss_family != port->raddr.addr.ss_family)
 		{
 			/*
-			 * Wrong address family.  We allow only one case: if the
-			 * file has IPv4 and the port is IPv6, promote the file
-			 * address to IPv6 and try to match that way.
+			 * Wrong address family.  We allow only one case: if the file
+			 * has IPv4 and the port is IPv6, promote the file address to
+			 * IPv6 and try to match that way.
 			 */
 #ifdef HAVE_IPV6
 			if (addr.ss_family == AF_INET &&
@@ -804,7 +807,7 @@ parse_hba(List *line, int line_num, hbaPort *port,
 				promote_v4_to_v6_mask(&mask);
 			}
 			else
-#endif /* HAVE_IPV6 */
+#endif   /* HAVE_IPV6 */
 			{
 				/* Line doesn't match client port, so ignore it. */
 				return;
@@ -846,8 +849,8 @@ hba_syntax:
 	else
 		ereport(LOG,
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
-				 errmsg("missing field in pg_hba.conf file at end of line %d",
-						line_num)));
+			errmsg("missing field in pg_hba.conf file at end of line %d",
+				   line_num)));
 
 	/* Come here if suitable message already logged */
 hba_other_error:
@@ -1041,7 +1044,8 @@ load_hba(void)
 		conf_file = pstrdup(guc_hbafile);
 	else
 	{
-		char *confloc = (user_pgconfig_is_dir) ? user_pgconfig : DataDir;
+		char	   *confloc = (user_pgconfig_is_dir) ? user_pgconfig : DataDir;
+
 		/* put together the full pathname to the config file */
 		conf_file = palloc(strlen(confloc) + strlen(CONF_FILE) + 2);
 		sprintf(conf_file, "%s/%s", confloc, CONF_FILE);
@@ -1160,7 +1164,8 @@ check_ident_usermap(const char *usermap_name,
 	}
 	else
 	{
-		ListCell *line_cell, *num_cell;
+		ListCell   *line_cell,
+				   *num_cell;
 
 		forboth(line_cell, ident_lines, num_cell, ident_line_nums)
 		{
@@ -1184,6 +1189,7 @@ load_ident(void)
 	FILE	   *file;			/* The map file we have to read */
 	char	   *map_file;		/* The name of the map file we have to
 								 * read */
+
 	if (ident_lines || ident_line_nums)
 		free_lines(&ident_lines, &ident_line_nums);
 
@@ -1193,11 +1199,12 @@ load_ident(void)
 	else
 	{
 		/* put together the full pathname to the map file */
-		char *confloc = (user_pgconfig_is_dir) ? user_pgconfig : DataDir;
+		char	   *confloc = (user_pgconfig_is_dir) ? user_pgconfig : DataDir;
+
 		map_file = (char *) palloc(strlen(confloc) + strlen(USERMAP_FILE) + 2);
 		sprintf(map_file, "%s/%s", confloc, USERMAP_FILE);
 	}
-  
+
 	file = AllocateFile(map_file, "r");
 	if (file == NULL)
 	{
@@ -1225,7 +1232,7 @@ static bool
 interpret_ident_response(const char *ident_response,
 						 char *ident_user)
 {
-	const char   *cursor = ident_response;		/* Cursor into
+	const char *cursor = ident_response;		/* Cursor into
 												 * *ident_response */
 
 	/*
@@ -1353,7 +1360,8 @@ ident_inet(const SockAddr remote_addr,
 	hints.ai_addr = NULL;
 	hints.ai_next = NULL;
 	rc = getaddrinfo_all(remote_addr_s, ident_port, &hints, &ident_serv);
-	if (rc || !ident_serv) {
+	if (rc || !ident_serv)
+	{
 		if (ident_serv)
 			freeaddrinfo_all(hints.ai_family, ident_serv);
 		return false;			/* we don't expect this to happen */
@@ -1368,7 +1376,8 @@ ident_inet(const SockAddr remote_addr,
 	hints.ai_addr = NULL;
 	hints.ai_next = NULL;
 	rc = getaddrinfo_all(local_addr_s, NULL, &hints, &la);
-	if (rc || !la) {
+	if (rc || !la)
+	{
 		if (la)
 			freeaddrinfo_all(hints.ai_family, la);
 		return false;			/* we don't expect this to happen */
@@ -1453,8 +1462,8 @@ ident_inet(const SockAddr remote_addr,
 	ident_return = interpret_ident_response(ident_response, ident_user);
 	if (!ident_return)
 		ereport(LOG,
-				(errmsg("invalidly formatted response from Ident server: \"%s\"",
-						ident_response)));
+		(errmsg("invalidly formatted response from Ident server: \"%s\"",
+				ident_response)));
 
 ident_inet_done:
 	if (sock_fd >= 0)

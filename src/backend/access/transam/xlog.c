@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.165 2004/08/29 04:12:23 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.166 2004/08/29 05:06:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -128,26 +128,28 @@ TimeLineID	ThisTimeLineID = 0;
 
 /* Are we doing recovery from XLOG? */
 bool		InRecovery = false;
+
 /* Are we recovering using offline XLOG archives? */
-static bool	InArchiveRecovery = false;
+static bool InArchiveRecovery = false;
+
 /* Was the last xlog file restored from archive, or local? */
-static bool	restoredFromArchive = false;
+static bool restoredFromArchive = false;
 
 /* options taken from recovery.conf */
 static char *recoveryRestoreCommand = NULL;
 static bool recoveryTarget = false;
 static bool recoveryTargetExact = false;
 static bool recoveryTargetInclusive = true;
-static TransactionId   recoveryTargetXid;
-static time_t          recoveryTargetTime;
+static TransactionId recoveryTargetXid;
+static time_t recoveryTargetTime;
 
 /* if recoveryStopsHere returns true, it saves actual stop xid/time here */
-static TransactionId   recoveryStopXid;
-static time_t          recoveryStopTime;
-static bool			   recoveryStopAfter;
+static TransactionId recoveryStopXid;
+static time_t recoveryStopTime;
+static bool recoveryStopAfter;
 
 /* constraint set by read_backup_label */
-static XLogRecPtr		recoveryMinXlogOffset = { 0, 0 };
+static XLogRecPtr recoveryMinXlogOffset = {0, 0};
 
 /*
  * During normal operation, the only timeline we care about is ThisTimeLineID.
@@ -161,7 +163,7 @@ static XLogRecPtr		recoveryMinXlogOffset = { 0, 0 };
  *
  * expectedTLIs: an integer list of recoveryTargetTLI and the TLIs of
  * its known parents, newest first (so recoveryTargetTLI is always the
- * first list member).  Only these TLIs are expected to be seen in the WAL
+ * first list member).	Only these TLIs are expected to be seen in the WAL
  * segments we read, and indeed only these TLIs will be considered as
  * candidate WAL files to open at all.
  *
@@ -171,9 +173,9 @@ static XLogRecPtr		recoveryMinXlogOffset = { 0, 0 };
  * file was created.)  During a sequential scan we do not allow this value
  * to decrease.
  */
-static TimeLineID	recoveryTargetTLI;
-static List		   *expectedTLIs;
-static TimeLineID	curFileTLI;
+static TimeLineID recoveryTargetTLI;
+static List *expectedTLIs;
+static TimeLineID curFileTLI;
 
 /*
  * MyLastRecPtr points to the start of the last XLOG record inserted by the
@@ -373,7 +375,7 @@ static ControlFileData *ControlFile = NULL;
 
 
 /* File path names */
-char XLogDir[MAXPGPATH];
+char		XLogDir[MAXPGPATH];
 static char ControlFilePath[MAXPGPATH];
 
 /*
@@ -422,7 +424,7 @@ static bool XLogArchiveIsDone(const char *xlog);
 static void XLogArchiveCleanup(const char *xlog);
 static void readRecoveryCommandFile(void);
 static void exitArchiveRecovery(TimeLineID endTLI,
-								uint32 endLogId, uint32 endLogSeg);
+					uint32 endLogId, uint32 endLogSeg);
 static bool recoveryStopsHere(XLogRecord *record, bool *includeThis);
 
 static bool AdvanceXLInsertBuffer(void);
@@ -435,7 +437,7 @@ static bool InstallXLogFileSegment(uint32 log, uint32 seg, char *tmppath,
 static int	XLogFileOpen(uint32 log, uint32 seg);
 static int	XLogFileRead(uint32 log, uint32 seg, int emode);
 static bool RestoreArchivedFile(char *path, const char *xlogfname,
-								const char *recovername, off_t expectedSize);
+					const char *recovername, off_t expectedSize);
 static void PreallocXlogFiles(XLogRecPtr endptr);
 static void MoveOfflineLogs(uint32 log, uint32 seg, XLogRecPtr endptr);
 static XLogRecord *ReadRecord(XLogRecPtr *RecPtr, int emode, char *buffer);
@@ -447,12 +449,13 @@ static List *readTimeLineHistory(TimeLineID targetTLI);
 static bool existsTimeLineHistory(TimeLineID probeTLI);
 static TimeLineID findNewestTimeLine(TimeLineID startTLI);
 static void writeTimeLineHistory(TimeLineID newTLI, TimeLineID parentTLI,
-								 TimeLineID endTLI,
-								 uint32 endLogId, uint32 endLogSeg);
+					 TimeLineID endTLI,
+					 uint32 endLogId, uint32 endLogSeg);
 static void WriteControlFile(void);
 static void ReadControlFile(void);
 static char *str_time(time_t tnow);
 static void issue_xlog_fsync(void);
+
 #ifdef WAL_DEBUG
 static void xlog_outrec(char *buf, XLogRecord *record);
 #endif
@@ -514,7 +517,8 @@ XLogInsert(RmgrId rmid, uint8 info, XLogRecData *rdata)
 	if (IsBootstrapProcessingMode() && rmid != RM_XLOG_ID)
 	{
 		RecPtr.xlogid = 0;
-		RecPtr.xrecoff = SizeOfXLogLongPHD; /* start of 1st chkpt record */
+		RecPtr.xrecoff = SizeOfXLogLongPHD;		/* start of 1st chkpt
+												 * record */
 		return (RecPtr);
 	}
 
@@ -724,7 +728,8 @@ begin:;
 
 	/*
 	 * If there isn't enough space on the current XLOG page for a record
-	 * header, advance to the next page (leaving the unused space as zeroes).
+	 * header, advance to the next page (leaving the unused space as
+	 * zeroes).
 	 */
 	updrqst = false;
 	freespace = INSERT_FREESPACE(Insert);
@@ -895,19 +900,21 @@ static void
 XLogArchiveNotify(const char *xlog)
 {
 	char		archiveStatusPath[MAXPGPATH];
-	FILE	   	*fd;
+	FILE	   *fd;
 
 	/* insert an otherwise empty file called <XLOG>.ready */
 	StatusFilePath(archiveStatusPath, xlog, ".ready");
 	fd = AllocateFile(archiveStatusPath, "w");
-	if (fd == NULL) {
+	if (fd == NULL)
+	{
 		ereport(LOG,
 				(errcode_for_file_access(),
 				 errmsg("could not create archive status file \"%s\": %m",
 						archiveStatusPath)));
 		return;
 	}
-	if (FreeFile(fd)) {
+	if (FreeFile(fd))
+	{
 		ereport(LOG,
 				(errcode_for_file_access(),
 				 errmsg("could not write archive status file \"%s\": %m",
@@ -935,7 +942,7 @@ XLogArchiveNotifySeg(uint32 log, uint32 seg)
 /*
  * XLogArchiveIsDone
  *
- * Checks for a ".done" archive notification file.  This is called when we
+ * Checks for a ".done" archive notification file.	This is called when we
  * are ready to delete or recycle an old XLOG segment file.  If it is okay
  * to delete it then return true.
  *
@@ -958,7 +965,7 @@ XLogArchiveIsDone(const char *xlog)
 	/* check for .ready --- this means archiver is still busy with it */
 	StatusFilePath(archiveStatusPath, xlog, ".ready");
 	if (stat(archiveStatusPath, &stat_buf) == 0)
-			return false;
+		return false;
 
 	/* Race condition --- maybe archiver just finished, so recheck */
 	StatusFilePath(archiveStatusPath, xlog, ".done");
@@ -978,7 +985,7 @@ XLogArchiveIsDone(const char *xlog)
 static void
 XLogArchiveCleanup(const char *xlog)
 {
-	char	archiveStatusPath[MAXPGPATH];
+	char		archiveStatusPath[MAXPGPATH];
 
 	/* Remove the .done file */
 	StatusFilePath(archiveStatusPath, xlog, ".done");
@@ -1267,8 +1274,8 @@ XLogWrite(XLogwrtRqst WriteRqst)
 			issue_xlog_fsync();
 			LogwrtResult.Flush = LogwrtResult.Write;	/* end of current page */
 
-            if (XLogArchivingActive())
-                XLogArchiveNotifySeg(openLogId, openLogSeg);
+			if (XLogArchivingActive())
+				XLogArchiveNotifySeg(openLogId, openLogSeg);
 		}
 
 		if (ispartialpage)
@@ -1552,7 +1559,7 @@ XLogFileInit(uint32 log, uint32 seg,
 
 			ereport(PANIC,
 					(errcode_for_file_access(),
-					 errmsg("could not write to file \"%s\": %m", tmppath)));
+				 errmsg("could not write to file \"%s\": %m", tmppath)));
 		}
 	}
 
@@ -1591,8 +1598,8 @@ XLogFileInit(uint32 log, uint32 seg,
 	if (fd < 0)
 		ereport(PANIC,
 				(errcode_for_file_access(),
-			errmsg("could not open file \"%s\" (log file %u, segment %u): %m",
-				   path, log, seg)));
+		errmsg("could not open file \"%s\" (log file %u, segment %u): %m",
+			   path, log, seg)));
 
 	return (fd);
 }
@@ -1606,7 +1613,7 @@ XLogFileInit(uint32 log, uint32 seg,
  *		a different timeline)
  *
  * Currently this is only used during recovery, and so there are no locking
- * considerations.  But we should be just as tense as XLogFileInit to avoid
+ * considerations.	But we should be just as tense as XLogFileInit to avoid
  * emplacing a bogus file.
  */
 static void
@@ -1660,7 +1667,7 @@ XLogFileCopy(uint32 log, uint32 seg,
 						 errmsg("could not read file \"%s\": %m", path)));
 			else
 				ereport(PANIC,
-						(errmsg("insufficient data in file \"%s\"", path)));
+					 (errmsg("insufficient data in file \"%s\"", path)));
 		}
 		errno = 0;
 		if ((int) write(fd, buffer, sizeof(buffer)) != (int) sizeof(buffer))
@@ -1677,7 +1684,7 @@ XLogFileCopy(uint32 log, uint32 seg,
 
 			ereport(PANIC,
 					(errcode_for_file_access(),
-					 errmsg("could not write to file \"%s\": %m", tmppath)));
+				 errmsg("could not write to file \"%s\": %m", tmppath)));
 		}
 	}
 
@@ -1805,8 +1812,8 @@ XLogFileOpen(uint32 log, uint32 seg)
 	if (fd < 0)
 		ereport(PANIC,
 				(errcode_for_file_access(),
-			errmsg("could not open file \"%s\" (log file %u, segment %u): %m",
-				   path, log, seg)));
+		errmsg("could not open file \"%s\" (log file %u, segment %u): %m",
+			   path, log, seg)));
 
 	return fd;
 }
@@ -1823,11 +1830,11 @@ XLogFileRead(uint32 log, uint32 seg, int emode)
 	int			fd;
 
 	/*
-	 * Loop looking for a suitable timeline ID: we might need to
-	 * read any of the timelines listed in expectedTLIs.
+	 * Loop looking for a suitable timeline ID: we might need to read any
+	 * of the timelines listed in expectedTLIs.
 	 *
-	 * We expect curFileTLI on entry to be the TLI of the preceding file
-	 * in sequence, or 0 if there was no predecessor.  We do not allow
+	 * We expect curFileTLI on entry to be the TLI of the preceding file in
+	 * sequence, or 0 if there was no predecessor.	We do not allow
 	 * curFileTLI to go backwards; this prevents us from picking up the
 	 * wrong file when a parent timeline extends to higher segment numbers
 	 * than the child we want to read.
@@ -1868,8 +1875,8 @@ XLogFileRead(uint32 log, uint32 seg, int emode)
 	errno = ENOENT;
 	ereport(emode,
 			(errcode_for_file_access(),
-			 errmsg("could not open file \"%s\" (log file %u, segment %u): %m",
-					path, log, seg)));
+	   errmsg("could not open file \"%s\" (log file %u, segment %u): %m",
+			  path, log, seg)));
 	return -1;
 }
 
@@ -1891,36 +1898,37 @@ static bool
 RestoreArchivedFile(char *path, const char *xlogfname,
 					const char *recovername, off_t expectedSize)
 {
-	char xlogpath[MAXPGPATH];
-	char xlogRestoreCmd[MAXPGPATH];
-	char *dp;
-	char *endp;
+	char		xlogpath[MAXPGPATH];
+	char		xlogRestoreCmd[MAXPGPATH];
+	char	   *dp;
+	char	   *endp;
 	const char *sp;
-	int         rc;
+	int			rc;
 	struct stat stat_buf;
 
 	/*
 	 * When doing archive recovery, we always prefer an archived log file
 	 * even if a file of the same name exists in XLogDir.  The reason is
-	 * that the file in XLogDir could be an old, un-filled or partly-filled
-	 * version that was copied and restored as part of backing up $PGDATA.
+	 * that the file in XLogDir could be an old, un-filled or
+	 * partly-filled version that was copied and restored as part of
+	 * backing up $PGDATA.
 	 *
-	 * We could try to optimize this slightly by checking the local
-	 * copy lastchange timestamp against the archived copy,
-	 * but we have no API to do this, nor can we guarantee that the
-	 * lastchange timestamp was preserved correctly when we copied
-	 * to archive. Our aim is robustness, so we elect not to do this.
+	 * We could try to optimize this slightly by checking the local copy
+	 * lastchange timestamp against the archived copy, but we have no API
+	 * to do this, nor can we guarantee that the lastchange timestamp was
+	 * preserved correctly when we copied to archive. Our aim is
+	 * robustness, so we elect not to do this.
 	 *
-	 * If we cannot obtain the log file from the archive, however, we
-	 * will try to use the XLogDir file if it exists.  This is so that
-	 * we can make use of log segments that weren't yet transferred to
-	 * the archive.
+	 * If we cannot obtain the log file from the archive, however, we will
+	 * try to use the XLogDir file if it exists.  This is so that we can
+	 * make use of log segments that weren't yet transferred to the
+	 * archive.
 	 *
 	 * Notice that we don't actually overwrite any files when we copy back
 	 * from archive because the recoveryRestoreCommand may inadvertently
-	 * restore inappropriate xlogs, or they may be corrupt, so we may
-	 * wish to fallback to the segments remaining in current XLogDir later.
-	 * The copy-from-archive filename is always the same, ensuring that we
+	 * restore inappropriate xlogs, or they may be corrupt, so we may wish
+	 * to fallback to the segments remaining in current XLogDir later. The
+	 * copy-from-archive filename is always the same, ensuring that we
 	 * don't run out of disk space on long recoveries.
 	 */
 	snprintf(xlogpath, MAXPGPATH, "%s/%s", XLogDir, recovername);
@@ -1961,14 +1969,14 @@ RestoreArchivedFile(char *path, const char *xlogfname,
 				case 'p':
 					/* %p: full path of target file */
 					sp++;
-					StrNCpy(dp, xlogpath, endp-dp);
+					StrNCpy(dp, xlogpath, endp - dp);
 					make_native_path(dp);
 					dp += strlen(dp);
 					break;
 				case 'f':
 					/* %f: filename of desired file */
 					sp++;
-					StrNCpy(dp, xlogfname, endp-dp);
+					StrNCpy(dp, xlogfname, endp - dp);
 					dp += strlen(dp);
 					break;
 				case '%':
@@ -1993,7 +2001,7 @@ RestoreArchivedFile(char *path, const char *xlogfname,
 	*dp = '\0';
 
 	ereport(DEBUG3,
-            (errmsg_internal("executing restore command \"%s\"",
+			(errmsg_internal("executing restore command \"%s\"",
 							 xlogRestoreCmd)));
 
 	/*
@@ -2006,9 +2014,9 @@ RestoreArchivedFile(char *path, const char *xlogfname,
 		 * command apparently succeeded, but let's make sure the file is
 		 * really there now and has the correct size.
 		 *
-		 * XXX I made wrong-size a fatal error to ensure the DBA would
-		 * notice it, but is that too strong?  We could try to plow ahead
-		 * with a local copy of the file ... but the problem is that there
+		 * XXX I made wrong-size a fatal error to ensure the DBA would notice
+		 * it, but is that too strong?	We could try to plow ahead with a
+		 * local copy of the file ... but the problem is that there
 		 * probably isn't one, and we'd incorrectly conclude we've reached
 		 * the end of WAL and we're done recovering ...
 		 */
@@ -2041,23 +2049,23 @@ RestoreArchivedFile(char *path, const char *xlogfname,
 	}
 
 	/*
-	 * remember, we rollforward UNTIL the restore fails
-	 * so failure here is just part of the process...
-	 * that makes it difficult to determine whether the restore
-	 * failed because there isn't an archive to restore, or
-	 * because the administrator has specified the restore
+	 * remember, we rollforward UNTIL the restore fails so failure here is
+	 * just part of the process... that makes it difficult to determine
+	 * whether the restore failed because there isn't an archive to
+	 * restore, or because the administrator has specified the restore
 	 * program incorrectly.  We have to assume the former.
 	 */
 	ereport(DEBUG1,
-			(errmsg("could not restore \"%s\" from archive: return code %d",
-					xlogfname, rc)));
+		 (errmsg("could not restore \"%s\" from archive: return code %d",
+				 xlogfname, rc)));
 
 	/*
-	 * if an archived file is not available, there might still be a version
-	 * of this file in XLogDir, so return that as the filename to open.
+	 * if an archived file is not available, there might still be a
+	 * version of this file in XLogDir, so return that as the filename to
+	 * open.
 	 *
-	 * In many recovery scenarios we expect this to fail also, but
-	 * if so that just means we've reached the end of WAL.
+	 * In many recovery scenarios we expect this to fail also, but if so that
+	 * just means we've reached the end of WAL.
 	 */
 	snprintf(path, MAXPGPATH, "%s/%s", XLogDir, xlogfname);
 	return false;
@@ -2118,24 +2126,24 @@ MoveOfflineLogs(uint32 log, uint32 seg, XLogRecPtr endptr)
 	{
 		/*
 		 * We ignore the timeline part of the XLOG segment identifiers in
-		 * deciding whether a segment is still needed.  This ensures that
+		 * deciding whether a segment is still needed.	This ensures that
 		 * we won't prematurely remove a segment from a parent timeline.
 		 * We could probably be a little more proactive about removing
 		 * segments of non-parent timelines, but that would be a whole lot
 		 * more complicated.
 		 *
-		 * We use the alphanumeric sorting property of the filenames to decide
-		 * which ones are earlier than the lastoff segment.
+		 * We use the alphanumeric sorting property of the filenames to
+		 * decide which ones are earlier than the lastoff segment.
 		 */
 		if (strlen(xlde->d_name) == 24 &&
 			strspn(xlde->d_name, "0123456789ABCDEF") == 24 &&
 			strcmp(xlde->d_name + 8, lastoff + 8) <= 0)
 		{
-			bool        recycle;
+			bool		recycle;
 
 			if (XLogArchivingActive())
 				recycle = XLogArchiveIsDone(xlde->d_name);
-            else
+			else
 				recycle = true;
 
 			if (recycle)
@@ -2160,8 +2168,8 @@ MoveOfflineLogs(uint32 log, uint32 seg, XLogRecPtr endptr)
 				{
 					/* No need for any more future segments... */
 					ereport(LOG,
-							(errmsg("removing transaction log file \"%s\"",
-									xlde->d_name)));
+						  (errmsg("removing transaction log file \"%s\"",
+								  xlde->d_name)));
 					unlink(path);
 				}
 
@@ -2171,8 +2179,11 @@ MoveOfflineLogs(uint32 log, uint32 seg, XLogRecPtr endptr)
 		errno = 0;
 	}
 #ifdef WIN32
-	/* This fix is in mingw cvs (runtime/mingwex/dirent.c rev 1.4), but
-	   not in released version */
+
+	/*
+	 * This fix is in mingw cvs (runtime/mingwex/dirent.c rev 1.4), but
+	 * not in released version
+	 */
 	if (GetLastError() == ERROR_NO_MORE_FILES)
 		errno = 0;
 #endif
@@ -2263,8 +2274,8 @@ RecordIsValid(XLogRecord *record, XLogRecPtr recptr, int emode)
 	if (!EQ_CRC64(record->xl_crc, crc))
 	{
 		ereport(emode,
-		 (errmsg("incorrect resource manager data checksum in record at %X/%X",
-				 recptr.xlogid, recptr.xrecoff)));
+				(errmsg("incorrect resource manager data checksum in record at %X/%X",
+						recptr.xlogid, recptr.xrecoff)));
 		return (false);
 	}
 
@@ -2286,8 +2297,8 @@ RecordIsValid(XLogRecord *record, XLogRecPtr recptr, int emode)
 		if (!EQ_CRC64(cbuf, crc))
 		{
 			ereport(emode,
-			(errmsg("incorrect checksum of backup block %d in record at %X/%X",
-					i + 1, recptr.xlogid, recptr.xrecoff)));
+					(errmsg("incorrect checksum of backup block %d in record at %X/%X",
+							i + 1, recptr.xlogid, recptr.xrecoff)));
 			return (false);
 		}
 		blk += sizeof(BkpBlock) + BLCKSZ;
@@ -2361,12 +2372,13 @@ ReadRecord(XLogRecPtr *RecPtr, int emode, char *buffer)
 			ereport(PANIC,
 					(errmsg("invalid record offset at %X/%X",
 							RecPtr->xlogid, RecPtr->xrecoff)));
+
 		/*
 		 * Since we are going to a random position in WAL, forget any
-		 * prior state about what timeline we were in, and allow it
-		 * to be any timeline in expectedTLIs.  We also set a flag to
-		 * allow curFileTLI to go backwards (but we can't reset that
-		 * variable right here, since we might not change files at all).
+		 * prior state about what timeline we were in, and allow it to be
+		 * any timeline in expectedTLIs.  We also set a flag to allow
+		 * curFileTLI to go backwards (but we can't reset that variable
+		 * right here, since we might not change files at all).
 		 */
 		lastPageTLI = 0;		/* see comment in ValidXLOGHeader */
 		randAccess = true;		/* allow curFileTLI to go backwards too */
@@ -2418,9 +2430,9 @@ ReadRecord(XLogRecPtr *RecPtr, int emode, char *buffer)
 	if (targetRecOff == 0)
 	{
 		/*
-		 * Can only get here in the continuing-from-prev-page case, because
-		 * XRecOffIsValid eliminated the zero-page-offset case otherwise.
-		 * Need to skip over the new page's header.
+		 * Can only get here in the continuing-from-prev-page case,
+		 * because XRecOffIsValid eliminated the zero-page-offset case
+		 * otherwise. Need to skip over the new page's header.
 		 */
 		tmpRecPtr.xrecoff += pageHeaderSize;
 		targetRecOff = pageHeaderSize;
@@ -2631,15 +2643,15 @@ ValidXLOGHeader(XLogPageHeader hdr, int emode)
 					 ControlFile->system_identifier);
 			ereport(emode,
 					(errmsg("WAL file is from different system"),
-					 errdetail("WAL file SYSID is %s, pg_control SYSID is %s",
-							   fhdrident_str, sysident_str)));
+				errdetail("WAL file SYSID is %s, pg_control SYSID is %s",
+						  fhdrident_str, sysident_str)));
 			return false;
 		}
 		if (longhdr->xlp_seg_size != XLogSegSize)
 		{
 			ereport(emode,
 					(errmsg("WAL file is from different system"),
-					 errdetail("Incorrect XLOG_SEG_SIZE in page header.")));
+				  errdetail("Incorrect XLOG_SEG_SIZE in page header.")));
 			return false;
 		}
 	}
@@ -2671,9 +2683,9 @@ ValidXLOGHeader(XLogPageHeader hdr, int emode)
 	 * immediate parent's TLI, we should never see TLI go backwards across
 	 * successive pages of a consistent WAL sequence.
 	 *
-	 * Of course this check should only be applied when advancing sequentially
-	 * across pages; therefore ReadRecord resets lastPageTLI to zero when
-	 * going to a random page.
+	 * Of course this check should only be applied when advancing
+	 * sequentially across pages; therefore ReadRecord resets lastPageTLI
+	 * to zero when going to a random page.
 	 */
 	if (hdr->xlp_tli < lastPageTLI)
 	{
@@ -2691,7 +2703,7 @@ ValidXLOGHeader(XLogPageHeader hdr, int emode)
  * Try to read a timeline's history file.
  *
  * If successful, return the list of component TLIs (the given TLI followed by
- * its ancestor TLIs).  If we can't find the history file, assume that the
+ * its ancestor TLIs).	If we can't find the history file, assume that the
  * timeline has no parents, and return a list of just the specified timeline
  * ID.
  */
@@ -2702,7 +2714,7 @@ readTimeLineHistory(TimeLineID targetTLI)
 	char		path[MAXPGPATH];
 	char		histfname[MAXFNAMELEN];
 	char		fline[MAXPGPATH];
-    FILE     *fd;
+	FILE	   *fd;
 
 	if (InArchiveRecovery)
 	{
@@ -2712,7 +2724,7 @@ readTimeLineHistory(TimeLineID targetTLI)
 	else
 		TLHistoryFilePath(path, targetTLI);
 
-    fd = AllocateFile(path, "r");
+	fd = AllocateFile(path, "r");
 	if (fd == NULL)
 	{
 		if (errno != ENOENT)
@@ -2725,15 +2737,15 @@ readTimeLineHistory(TimeLineID targetTLI)
 
 	result = NIL;
 
-    /*
-     * Parse the file...
-     */
-    while (fgets(fline, MAXPGPATH, fd) != NULL)
+	/*
+	 * Parse the file...
+	 */
+	while (fgets(fline, MAXPGPATH, fd) != NULL)
 	{
 		/* skip leading whitespace and check for # comment */
-		char *ptr;
-		char *endptr;
-		TimeLineID tli;
+		char	   *ptr;
+		char	   *endptr;
+		TimeLineID	tli;
 
 		for (ptr = fline; *ptr; ptr++)
 		{
@@ -2754,7 +2766,7 @@ readTimeLineHistory(TimeLineID targetTLI)
 			tli <= (TimeLineID) linitial_int(result))
 			ereport(FATAL,
 					(errmsg("invalid data in history file: %s", fline),
-					 errhint("Timeline IDs must be in increasing sequence.")));
+			   errhint("Timeline IDs must be in increasing sequence.")));
 
 		/* Build list with newest item first */
 		result = lcons_int((int) tli, result);
@@ -2768,7 +2780,7 @@ readTimeLineHistory(TimeLineID targetTLI)
 		targetTLI <= (TimeLineID) linitial_int(result))
 		ereport(FATAL,
 				(errmsg("invalid data in history file \"%s\"", path),
-				 errhint("Timeline IDs must be less than child timeline's ID.")));
+		errhint("Timeline IDs must be less than child timeline's ID.")));
 
 	result = lcons_int((int) targetTLI, result);
 
@@ -2787,7 +2799,7 @@ existsTimeLineHistory(TimeLineID probeTLI)
 {
 	char		path[MAXPGPATH];
 	char		histfname[MAXFNAMELEN];
-    FILE     *fd;
+	FILE	   *fd;
 
 	if (InArchiveRecovery)
 	{
@@ -2827,12 +2839,12 @@ findNewestTimeLine(TimeLineID startTLI)
 	TimeLineID	probeTLI;
 
 	/*
-	 * The algorithm is just to probe for the existence of timeline history
-	 * files.  XXX is it useful to allow gaps in the sequence?
+	 * The algorithm is just to probe for the existence of timeline
+	 * history files.  XXX is it useful to allow gaps in the sequence?
 	 */
 	newestTLI = startTLI;
 
-	for (probeTLI = startTLI + 1; ; probeTLI++)
+	for (probeTLI = startTLI + 1;; probeTLI++)
 	{
 		if (existsTimeLineHistory(probeTLI))
 		{
@@ -2856,7 +2868,7 @@ findNewestTimeLine(TimeLineID startTLI)
  *	endTLI et al: ID of the last used WAL file, for annotation purposes
  *
  * Currently this is only used during recovery, and so there are no locking
- * considerations.  But we should be just as tense as XLogFileInit to avoid
+ * considerations.	But we should be just as tense as XLogFileInit to avoid
  * emplacing a bogus file.
  */
 static void
@@ -2872,7 +2884,7 @@ writeTimeLineHistory(TimeLineID newTLI, TimeLineID parentTLI,
 	int			fd;
 	int			nbytes;
 
-	Assert(newTLI > parentTLI);	/* else bad selection of newTLI */
+	Assert(newTLI > parentTLI); /* else bad selection of newTLI */
 
 	/*
 	 * Write into a temp file name.
@@ -2932,12 +2944,16 @@ writeTimeLineHistory(TimeLineID newTLI, TimeLineID parentTLI,
 				 * space
 				 */
 				unlink(tmppath);
-				/* if write didn't set errno, assume problem is no disk space */
+
+				/*
+				 * if write didn't set errno, assume problem is no disk
+				 * space
+				 */
 				errno = save_errno ? save_errno : ENOSPC;
 
 				ereport(PANIC,
 						(errcode_for_file_access(),
-						 errmsg("could not write to file \"%s\": %m", tmppath)));
+				 errmsg("could not write to file \"%s\": %m", tmppath)));
 			}
 		}
 		close(srcfd);
@@ -2946,8 +2962,8 @@ writeTimeLineHistory(TimeLineID newTLI, TimeLineID parentTLI,
 	/*
 	 * Append one line with the details of this timeline split.
 	 *
-	 * If we did have a parent file, insert an extra newline just in case
-	 * the parent file failed to end with one.
+	 * If we did have a parent file, insert an extra newline just in case the
+	 * parent file failed to end with one.
 	 */
 	XLogFileName(xlogfname, endTLI, endLogId, endLogSeg);
 
@@ -2967,8 +2983,7 @@ writeTimeLineHistory(TimeLineID newTLI, TimeLineID parentTLI,
 		int			save_errno = errno;
 
 		/*
-		 * If we fail to make the file, delete it to release disk
-		 * space
+		 * If we fail to make the file, delete it to release disk space
 		 */
 		unlink(tmppath);
 		/* if write didn't set errno, assume problem is no disk space */
@@ -3215,7 +3230,7 @@ ReadControlFile(void)
 		ereport(FATAL,
 				(errmsg("database files are incompatible with server"),
 				 errdetail("The database cluster was initialized with XLOG_SEG_SIZE %d,"
-					 " but the server was compiled with XLOG_SEG_SIZE %d.",
+				   " but the server was compiled with XLOG_SEG_SIZE %d.",
 						   ControlFile->xlog_seg_size, XLOG_SEG_SIZE),
 			 errhint("It looks like you need to recompile or initdb.")));
 	if (ControlFile->nameDataLen != NAMEDATALEN)
@@ -3336,7 +3351,8 @@ XLOGShmemSize(void)
 void
 XLOGShmemInit(void)
 {
-	bool		foundXLog, foundCFile;
+	bool		foundXLog,
+				foundCFile;
 
 	/* this must agree with space requested by XLOGShmemSize() */
 	if (XLOGbuffers < MinXLOGbuffers)
@@ -3414,16 +3430,17 @@ BootStrapXLOG(void)
 	crc64		crc;
 
 	/*
-	 * Select a hopefully-unique system identifier code for this installation.
-	 * We use the result of gettimeofday(), including the fractional seconds
-	 * field, as being about as unique as we can easily get.  (Think not to
-	 * use random(), since it hasn't been seeded and there's no portable way
-	 * to seed it other than the system clock value...)  The upper half of the
-	 * uint64 value is just the tv_sec part, while the lower half is the XOR
-	 * of tv_sec and tv_usec.  This is to ensure that we don't lose uniqueness
-	 * unnecessarily if "uint64" is really only 32 bits wide.  A person
-	 * knowing this encoding can determine the initialization time of the
-	 * installation, which could perhaps be useful sometimes.
+	 * Select a hopefully-unique system identifier code for this
+	 * installation. We use the result of gettimeofday(), including the
+	 * fractional seconds field, as being about as unique as we can easily
+	 * get.  (Think not to use random(), since it hasn't been seeded and
+	 * there's no portable way to seed it other than the system clock
+	 * value...)  The upper half of the uint64 value is just the tv_sec
+	 * part, while the lower half is the XOR of tv_sec and tv_usec.  This
+	 * is to ensure that we don't lose uniqueness unnecessarily if
+	 * "uint64" is really only 32 bits wide.  A person knowing this
+	 * encoding can determine the initialization time of the installation,
+	 * which could perhaps be useful sometimes.
 	 */
 	gettimeofday(&tv, NULL);
 	sysidentifier = ((uint64) tv.tv_sec) << 32;
@@ -3492,18 +3509,18 @@ BootStrapXLOG(void)
 			errno = ENOSPC;
 		ereport(PANIC,
 				(errcode_for_file_access(),
-				 errmsg("could not write bootstrap transaction log file: %m")));
+		  errmsg("could not write bootstrap transaction log file: %m")));
 	}
 
 	if (pg_fsync(openLogFile) != 0)
 		ereport(PANIC,
 				(errcode_for_file_access(),
-				 errmsg("could not fsync bootstrap transaction log file: %m")));
+		  errmsg("could not fsync bootstrap transaction log file: %m")));
 
 	if (close(openLogFile))
 		ereport(PANIC,
 				(errcode_for_file_access(),
-				 errmsg("could not close bootstrap transaction log file: %m")));
+		  errmsg("could not close bootstrap transaction log file: %m")));
 
 	openLogFile = -1;
 
@@ -3550,37 +3567,37 @@ str_time(time_t tnow)
 static void
 readRecoveryCommandFile(void)
 {
-	char recoveryCommandFile[MAXPGPATH];
-    FILE     *fd;
-    char    cmdline[MAXPGPATH];
-	TimeLineID rtli = 0;
-	bool	rtliGiven = false;
-    bool    syntaxError = false;
+	char		recoveryCommandFile[MAXPGPATH];
+	FILE	   *fd;
+	char		cmdline[MAXPGPATH];
+	TimeLineID	rtli = 0;
+	bool		rtliGiven = false;
+	bool		syntaxError = false;
 
-  	snprintf(recoveryCommandFile, MAXPGPATH, "%s/recovery.conf", DataDir);
-    fd = AllocateFile(recoveryCommandFile, "r");
+	snprintf(recoveryCommandFile, MAXPGPATH, "%s/recovery.conf", DataDir);
+	fd = AllocateFile(recoveryCommandFile, "r");
 	if (fd == NULL)
 	{
 		if (errno == ENOENT)
 			return;				/* not there, so no archive recovery */
 		ereport(FATAL,
-    			(errcode_for_file_access(),
+				(errcode_for_file_access(),
 				 errmsg("could not open recovery command file \"%s\": %m",
 						recoveryCommandFile)));
 	}
 
 	ereport(LOG,
-    		(errmsg("starting archive recovery")));
+			(errmsg("starting archive recovery")));
 
-    /*
-     * Parse the file...
-     */
-    while (fgets(cmdline, MAXPGPATH, fd) != NULL)
+	/*
+	 * Parse the file...
+	 */
+	while (fgets(cmdline, MAXPGPATH, fd) != NULL)
 	{
 		/* skip leading whitespace and check for # comment */
-		char *ptr;
-		char    *tok1;
-		char    *tok2;
+		char	   *ptr;
+		char	   *tok1;
+		char	   *tok2;
 
 		for (ptr = cmdline; *ptr; ptr++)
 		{
@@ -3591,13 +3608,13 @@ readRecoveryCommandFile(void)
 			continue;
 
 		/* identify the quoted parameter value */
-        tok1 = strtok(ptr, "'");
+		tok1 = strtok(ptr, "'");
 		if (!tok1)
 		{
 			syntaxError = true;
 			break;
 		}
-        tok2 = strtok(NULL, "'");
+		tok2 = strtok(NULL, "'");
 		if (!tok2)
 		{
 			syntaxError = true;
@@ -3611,13 +3628,15 @@ readRecoveryCommandFile(void)
 			break;
 		}
 
-		if (strcmp(tok1,"restore_command") == 0) {
+		if (strcmp(tok1, "restore_command") == 0)
+		{
 			recoveryRestoreCommand = pstrdup(tok2);
 			ereport(LOG,
 					(errmsg("restore_command = \"%s\"",
 							recoveryRestoreCommand)));
 		}
-		else if (strcmp(tok1,"recovery_target_timeline") == 0) {
+		else if (strcmp(tok1, "recovery_target_timeline") == 0)
+		{
 			rtliGiven = true;
 			if (strcmp(tok2, "latest") == 0)
 				rtli = 0;
@@ -3637,7 +3656,8 @@ readRecoveryCommandFile(void)
 				ereport(LOG,
 						(errmsg("recovery_target_timeline = latest")));
 		}
-		else if (strcmp(tok1,"recovery_target_xid") == 0) {
+		else if (strcmp(tok1, "recovery_target_xid") == 0)
+		{
 			errno = 0;
 			recoveryTargetXid = (TransactionId) strtoul(tok2, NULL, 0);
 			if (errno == EINVAL || errno == ERANGE)
@@ -3650,7 +3670,8 @@ readRecoveryCommandFile(void)
 			recoveryTarget = true;
 			recoveryTargetExact = true;
 		}
-		else if (strcmp(tok1,"recovery_target_time") == 0) {
+		else if (strcmp(tok1, "recovery_target_time") == 0)
+		{
 			/*
 			 * if recovery_target_xid specified, then this overrides
 			 * recovery_target_time
@@ -3659,20 +3680,22 @@ readRecoveryCommandFile(void)
 				continue;
 			recoveryTarget = true;
 			recoveryTargetExact = false;
+
 			/*
-			 * Convert the time string given by the user to the time_t format.
-			 * We use type abstime's input converter because we know abstime
-			 * has the same representation as time_t.
+			 * Convert the time string given by the user to the time_t
+			 * format. We use type abstime's input converter because we
+			 * know abstime has the same representation as time_t.
 			 */
 			recoveryTargetTime = (time_t)
 				DatumGetAbsoluteTime(DirectFunctionCall1(abstimein,
-														 CStringGetDatum(tok2)));
+												 CStringGetDatum(tok2)));
 			ereport(LOG,
 					(errmsg("recovery_target_time = %s",
-							DatumGetCString(DirectFunctionCall1(abstimeout,
-																AbsoluteTimeGetDatum((AbsoluteTime) recoveryTargetTime))))));
+						  DatumGetCString(DirectFunctionCall1(abstimeout,
+			AbsoluteTimeGetDatum((AbsoluteTime) recoveryTargetTime))))));
 		}
-		else if (strcmp(tok1,"recovery_target_inclusive") == 0) {
+		else if (strcmp(tok1, "recovery_target_inclusive") == 0)
+		{
 			/*
 			 * does nothing if a recovery_target is not also set
 			 */
@@ -3694,11 +3717,11 @@ readRecoveryCommandFile(void)
 
 	FreeFile(fd);
 
-    if (syntaxError)
-        ereport(FATAL,
+	if (syntaxError)
+		ereport(FATAL,
 				(errmsg("syntax error in recovery command file: %s",
 						cmdline),
-				 errhint("Lines should have the format parameter = 'value'.")));
+		  errhint("Lines should have the format parameter = 'value'.")));
 
 	/* Check that required parameters were supplied */
 	if (recoveryRestoreCommand == NULL)
@@ -3710,10 +3733,10 @@ readRecoveryCommandFile(void)
 	InArchiveRecovery = true;
 
 	/*
-	 * If user specified recovery_target_timeline, validate it or compute the
-	 * "latest" value.  We can't do this until after we've gotten the restore
-	 * command and set InArchiveRecovery, because we need to fetch timeline
-	 * history files from the archive.
+	 * If user specified recovery_target_timeline, validate it or compute
+	 * the "latest" value.	We can't do this until after we've gotten the
+	 * restore command and set InArchiveRecovery, because we need to fetch
+	 * timeline history files from the archive.
 	 */
 	if (rtliGiven)
 	{
@@ -3722,8 +3745,8 @@ readRecoveryCommandFile(void)
 			/* Timeline 1 does not have a history file, all else should */
 			if (rtli != 1 && !existsTimeLineHistory(rtli))
 				ereport(FATAL,
-						(errmsg("recovery_target_timeline %u does not exist",
-								rtli)));
+					(errmsg("recovery_target_timeline %u does not exist",
+							rtli)));
 			recoveryTargetTLI = rtli;
 		}
 		else
@@ -3740,10 +3763,10 @@ readRecoveryCommandFile(void)
 static void
 exitArchiveRecovery(TimeLineID endTLI, uint32 endLogId, uint32 endLogSeg)
 {
-	char recoveryPath[MAXPGPATH];
-	char xlogpath[MAXPGPATH];
-	char recoveryCommandFile[MAXPGPATH];
-	char recoveryCommandDone[MAXPGPATH];
+	char		recoveryPath[MAXPGPATH];
+	char		xlogpath[MAXPGPATH];
+	char		recoveryCommandFile[MAXPGPATH];
+	char		recoveryCommandDone[MAXPGPATH];
 
 	/*
 	 * We are no longer in archive recovery state.
@@ -3751,9 +3774,9 @@ exitArchiveRecovery(TimeLineID endTLI, uint32 endLogId, uint32 endLogSeg)
 	InArchiveRecovery = false;
 
 	/*
-	 * We should have the ending log segment currently open.  Verify,
-	 * and then close it (to avoid problems on Windows with trying to
-	 * rename or delete an open file).
+	 * We should have the ending log segment currently open.  Verify, and
+	 * then close it (to avoid problems on Windows with trying to rename
+	 * or delete an open file).
 	 */
 	Assert(readFile >= 0);
 	Assert(readId == endLogId);
@@ -3763,17 +3786,17 @@ exitArchiveRecovery(TimeLineID endTLI, uint32 endLogId, uint32 endLogSeg)
 	readFile = -1;
 
 	/*
-	 * If the segment was fetched from archival storage, we want to replace
-	 * the existing xlog segment (if any) with the archival version.  This
-	 * is because whatever is in XLogDir is very possibly older than what
-	 * we have from the archives, since it could have come from restoring
-	 * a PGDATA backup.  In any case, the archival version certainly is
-	 * more descriptive of what our current database state is, because that
-	 * is what we replayed from.
+	 * If the segment was fetched from archival storage, we want to
+	 * replace the existing xlog segment (if any) with the archival
+	 * version.  This is because whatever is in XLogDir is very possibly
+	 * older than what we have from the archives, since it could have come
+	 * from restoring a PGDATA backup.	In any case, the archival version
+	 * certainly is more descriptive of what our current database state
+	 * is, because that is what we replayed from.
 	 *
 	 * Note that if we are establishing a new timeline, ThisTimeLineID is
-	 * already set to the new value, and so we will create a new file instead
-	 * of overwriting any existing file.
+	 * already set to the new value, and so we will create a new file
+	 * instead of overwriting any existing file.
 	 */
 	snprintf(recoveryPath, MAXPGPATH, "%s/RECOVERYXLOG", XLogDir);
 	XLogFilePath(xlogpath, ThisTimeLineID, endLogId, endLogSeg);
@@ -3798,6 +3821,7 @@ exitArchiveRecovery(TimeLineID endTLI, uint32 endLogId, uint32 endLogSeg)
 		 * RECOVERYXLOG laying about, get rid of it.
 		 */
 		unlink(recoveryPath);	/* ignore any error */
+
 		/*
 		 * If we are establishing a new timeline, we have to copy data
 		 * from the last WAL segment of the old timeline to create a
@@ -3809,22 +3833,22 @@ exitArchiveRecovery(TimeLineID endTLI, uint32 endLogId, uint32 endLogSeg)
 	}
 
 	/*
-	 * Let's just make real sure there are not .ready or .done flags posted
-	 * for the new segment.
+	 * Let's just make real sure there are not .ready or .done flags
+	 * posted for the new segment.
 	 */
 	XLogFileName(xlogpath, ThisTimeLineID, endLogId, endLogSeg);
 	XLogArchiveCleanup(xlogpath);
 
 	/* Get rid of any remaining recovered timeline-history file, too */
 	snprintf(recoveryPath, MAXPGPATH, "%s/RECOVERYHISTORY", XLogDir);
-	unlink(recoveryPath);	/* ignore any error */
+	unlink(recoveryPath);		/* ignore any error */
 
 	/*
-	 * Rename the config file out of the way, so that we don't accidentally
-	 * re-enter archive recovery mode in a subsequent crash.
+	 * Rename the config file out of the way, so that we don't
+	 * accidentally re-enter archive recovery mode in a subsequent crash.
 	 */
-  	snprintf(recoveryCommandFile, MAXPGPATH, "%s/recovery.conf", DataDir);
-  	snprintf(recoveryCommandDone, MAXPGPATH, "%s/recovery.done", DataDir);
+	snprintf(recoveryCommandFile, MAXPGPATH, "%s/recovery.conf", DataDir);
+	snprintf(recoveryCommandDone, MAXPGPATH, "%s/recovery.done", DataDir);
 	unlink(recoveryCommandDone);
 	if (rename(recoveryCommandFile, recoveryCommandDone) != 0)
 		ereport(FATAL,
@@ -3849,8 +3873,8 @@ static bool
 recoveryStopsHere(XLogRecord *record, bool *includeThis)
 {
 	bool		stopsHere;
-	uint8	          record_info;
-	time_t            recordXtime;
+	uint8		record_info;
+	time_t		recordXtime;
 
 	/* Do we have a PITR target at all? */
 	if (!recoveryTarget)
@@ -3862,14 +3886,14 @@ recoveryStopsHere(XLogRecord *record, bool *includeThis)
 	record_info = record->xl_info & ~XLR_INFO_MASK;
 	if (record_info == XLOG_XACT_COMMIT)
 	{
-		xl_xact_commit    *recordXactCommitData;
+		xl_xact_commit *recordXactCommitData;
 
 		recordXactCommitData = (xl_xact_commit *) XLogRecGetData(record);
 		recordXtime = recordXactCommitData->xtime;
 	}
 	else if (record_info == XLOG_XACT_ABORT)
 	{
-		xl_xact_abort     *recordXactAbortData;
+		xl_xact_abort *recordXactAbortData;
 
 		recordXactAbortData = (xl_xact_abort *) XLogRecGetData(record);
 		recordXtime = recordXactAbortData->xtime;
@@ -3880,14 +3904,13 @@ recoveryStopsHere(XLogRecord *record, bool *includeThis)
 	if (recoveryTargetExact)
 	{
 		/*
-		 * there can be only one transaction end record
-		 * with this exact transactionid
+		 * there can be only one transaction end record with this exact
+		 * transactionid
 		 *
-		 * when testing for an xid, we MUST test for
-		 * equality only, since transactions are numbered
-		 * in the order they start, not the order they
-		 * complete. A higher numbered xid will complete
-		 * before you about 50% of the time...
+		 * when testing for an xid, we MUST test for equality only, since
+		 * transactions are numbered in the order they start, not the
+		 * order they complete. A higher numbered xid will complete before
+		 * you about 50% of the time...
 		 */
 		stopsHere = (record->xl_xid == recoveryTargetXid);
 		if (stopsHere)
@@ -3896,11 +3919,9 @@ recoveryStopsHere(XLogRecord *record, bool *includeThis)
 	else
 	{
 		/*
-		 * there can be many transactions that
-		 * share the same commit time, so
-		 * we stop after the last one, if we are
-		 * inclusive, or stop at the first one
-		 * if we are exclusive
+		 * there can be many transactions that share the same commit time,
+		 * so we stop after the last one, if we are inclusive, or stop at
+		 * the first one if we are exclusive
 		 */
 		if (recoveryTargetInclusive)
 			stopsHere = (recordXtime > recoveryTargetTime);
@@ -3921,22 +3942,22 @@ recoveryStopsHere(XLogRecord *record, bool *includeThis)
 			if (recoveryStopAfter)
 				ereport(LOG,
 						(errmsg("recovery stopping after commit of transaction %u, time %s",
-								recoveryStopXid, str_time(recoveryStopTime))));
+						  recoveryStopXid, str_time(recoveryStopTime))));
 			else
 				ereport(LOG,
 						(errmsg("recovery stopping before commit of transaction %u, time %s",
-								recoveryStopXid, str_time(recoveryStopTime))));
+						  recoveryStopXid, str_time(recoveryStopTime))));
 		}
 		else
 		{
 			if (recoveryStopAfter)
 				ereport(LOG,
 						(errmsg("recovery stopping after abort of transaction %u, time %s",
-								recoveryStopXid, str_time(recoveryStopTime))));
+						  recoveryStopXid, str_time(recoveryStopTime))));
 			else
 				ereport(LOG,
 						(errmsg("recovery stopping before abort of transaction %u, time %s",
-								recoveryStopXid, str_time(recoveryStopTime))));
+						  recoveryStopXid, str_time(recoveryStopTime))));
 		}
 	}
 
@@ -4009,14 +4030,14 @@ StartupXLOG(void)
 #endif
 
 	/*
-	 * Initialize on the assumption we want to recover to the same timeline
-	 * that's active according to pg_control.
+	 * Initialize on the assumption we want to recover to the same
+	 * timeline that's active according to pg_control.
 	 */
 	recoveryTargetTLI = ControlFile->checkPointCopy.ThisTimeLineID;
 
 	/*
-	 * Check for recovery control file, and if so set up state for
-	 * offline recovery
+	 * Check for recovery control file, and if so set up state for offline
+	 * recovery
 	 */
 	readRecoveryCommandFile();
 
@@ -4029,7 +4050,7 @@ StartupXLOG(void)
 	 * timeline.
 	 */
 	if (!list_member_int(expectedTLIs,
-						 (int) ControlFile->checkPointCopy.ThisTimeLineID))
+					   (int) ControlFile->checkPointCopy.ThisTimeLineID))
 		ereport(FATAL,
 				(errmsg("requested timeline %u is not a child of database system timeline %u",
 						recoveryTargetTLI,
@@ -4038,29 +4059,30 @@ StartupXLOG(void)
 	if (read_backup_label(&checkPointLoc))
 	{
 		/*
-		 * When a backup_label file is present, we want to roll forward from
-		 * the checkpoint it identifies, rather than using pg_control.
+		 * When a backup_label file is present, we want to roll forward
+		 * from the checkpoint it identifies, rather than using
+		 * pg_control.
 		 */
 		record = ReadCheckpointRecord(checkPointLoc, 0, buffer);
 		if (record != NULL)
 		{
 			ereport(LOG,
 					(errmsg("checkpoint record is at %X/%X",
-							checkPointLoc.xlogid, checkPointLoc.xrecoff)));
+						  checkPointLoc.xlogid, checkPointLoc.xrecoff)));
 			InRecovery = true;	/* force recovery even if SHUTDOWNED */
 		}
 		else
 		{
 			ereport(PANIC,
-					(errmsg("could not locate required checkpoint record"),
-					 errhint("If you are not restoring from a backup, try removing $PGDATA/backup_label.")));
+				  (errmsg("could not locate required checkpoint record"),
+				   errhint("If you are not restoring from a backup, try removing $PGDATA/backup_label.")));
 		}
 	}
 	else
 	{
 		/*
-		 * Get the last valid checkpoint record.  If the latest one according
-		 * to pg_control is broken, try the next-to-last one.
+		 * Get the last valid checkpoint record.  If the latest one
+		 * according to pg_control is broken, try the next-to-last one.
 		 */
 		checkPointLoc = ControlFile->checkPoint;
 		record = ReadCheckpointRecord(checkPointLoc, 1, buffer);
@@ -4068,7 +4090,7 @@ StartupXLOG(void)
 		{
 			ereport(LOG,
 					(errmsg("checkpoint record is at %X/%X",
-							checkPointLoc.xlogid, checkPointLoc.xrecoff)));
+						  checkPointLoc.xlogid, checkPointLoc.xrecoff)));
 		}
 		else
 		{
@@ -4077,13 +4099,14 @@ StartupXLOG(void)
 			if (record != NULL)
 			{
 				ereport(LOG,
-						(errmsg("using previous checkpoint record at %X/%X",
-								checkPointLoc.xlogid, checkPointLoc.xrecoff)));
-				InRecovery = true;	/* force recovery even if SHUTDOWNED */
+					 (errmsg("using previous checkpoint record at %X/%X",
+						  checkPointLoc.xlogid, checkPointLoc.xrecoff)));
+				InRecovery = true;		/* force recovery even if
+										 * SHUTDOWNED */
 			}
 			else
 				ereport(PANIC,
-						(errmsg("could not locate a valid checkpoint record")));
+				 (errmsg("could not locate a valid checkpoint record")));
 		}
 	}
 
@@ -4108,9 +4131,9 @@ StartupXLOG(void)
 	ShmemVariableCache->oidCount = 0;
 
 	/*
-	 * We must replay WAL entries using the same TimeLineID they were created
-	 * under, so temporarily adopt the TLI indicated by the checkpoint (see
-	 * also xlog_redo()).
+	 * We must replay WAL entries using the same TimeLineID they were
+	 * created under, so temporarily adopt the TLI indicated by the
+	 * checkpoint (see also xlog_redo()).
 	 */
 	ThisTimeLineID = checkPoint.ThisTimeLineID;
 
@@ -4123,8 +4146,8 @@ StartupXLOG(void)
 		checkPoint.undo = RecPtr;
 
 	/*
-	 * Check whether we need to force recovery from WAL.  If it appears
-	 * to have been a clean shutdown and we did not have a recovery.conf
+	 * Check whether we need to force recovery from WAL.  If it appears to
+	 * have been a clean shutdown and we did not have a recovery.conf
 	 * file, then assume no recovery needed.
 	 */
 	if (XLByteLT(checkPoint.undo, RecPtr) ||
@@ -4219,7 +4242,7 @@ StartupXLOG(void)
 				 */
 				if (recoveryStopsHere(record, &recoveryApply))
 				{
-					needNewTimeLine = true;	/* see below */
+					needNewTimeLine = true;		/* see below */
 					recoveryContinue = false;
 					if (!recoveryApply)
 						break;
@@ -4242,6 +4265,7 @@ StartupXLOG(void)
 
 				record = ReadRecord(NULL, LOG, buffer);
 			} while (record != NULL && recoveryContinue);
+
 			/*
 			 * end of main redo apply loop
 			 */
@@ -4276,7 +4300,8 @@ StartupXLOG(void)
 		if (needNewTimeLine)	/* stopped because of stop request */
 			ereport(FATAL,
 					(errmsg("requested recovery stop point is before end time of backup dump")));
-		else					/* ran off end of WAL */
+		else
+/* ran off end of WAL */
 			ereport(FATAL,
 					(errmsg("WAL ends before end time of backup dump")));
 	}
@@ -4284,10 +4309,10 @@ StartupXLOG(void)
 	/*
 	 * Consider whether we need to assign a new timeline ID.
 	 *
-	 * If we stopped short of the end of WAL during recovery, then we
-	 * are generating a new timeline and must assign it a unique new ID.
-	 * Otherwise, we can just extend the timeline we were in when we
-	 * ran out of WAL.
+	 * If we stopped short of the end of WAL during recovery, then we are
+	 * generating a new timeline and must assign it a unique new ID.
+	 * Otherwise, we can just extend the timeline we were in when we ran
+	 * out of WAL.
 	 */
 	if (needNewTimeLine)
 	{
@@ -4302,8 +4327,8 @@ StartupXLOG(void)
 	XLogCtl->ThisTimeLineID = ThisTimeLineID;
 
 	/*
-	 * We are now done reading the old WAL.  Turn off archive fetching
-	 * if it was active, and make a writable copy of the last WAL segment.
+	 * We are now done reading the old WAL.  Turn off archive fetching if
+	 * it was active, and make a writable copy of the last WAL segment.
 	 * (Note that we also have a copy of the last block of the old WAL in
 	 * readBuf; we will use that below.)
 	 */
@@ -4361,7 +4386,7 @@ StartupXLOG(void)
 		 * XLogWrite()).
 		 *
 		 * Note: it might seem we should do AdvanceXLInsertBuffer() here, but
-		 * this is sufficient.  The first actual attempt to insert a log
+		 * this is sufficient.	The first actual attempt to insert a log
 		 * record will advance the insert state.
 		 */
 		XLogCtl->Write.curridx = NextBufIdx(0);
@@ -4434,8 +4459,8 @@ StartupXLOG(void)
 		XLogCloseRelationCache();
 
 		/*
-		 * Now that we've checkpointed the recovery, it's safe to
-		 * flush old backup_label, if present.
+		 * Now that we've checkpointed the recovery, it's safe to flush
+		 * old backup_label, if present.
 		 */
 		remove_backup_label();
 	}
@@ -4504,7 +4529,7 @@ ReadCheckpointRecord(XLogRecPtr RecPtr,
 				break;
 			default:
 				ereport(LOG,
-						(errmsg("invalid checkpoint link in backup_label file")));
+				(errmsg("invalid checkpoint link in backup_label file")));
 				break;
 		}
 		return NULL;
@@ -4557,7 +4582,7 @@ ReadCheckpointRecord(XLogRecPtr RecPtr,
 		{
 			case 1:
 				ereport(LOG,
-						(errmsg("invalid xl_info in primary checkpoint record")));
+				(errmsg("invalid xl_info in primary checkpoint record")));
 				break;
 			case 2:
 				ereport(LOG,
@@ -4576,7 +4601,7 @@ ReadCheckpointRecord(XLogRecPtr RecPtr,
 		{
 			case 1:
 				ereport(LOG,
-						(errmsg("invalid length of primary checkpoint record")));
+				(errmsg("invalid length of primary checkpoint record")));
 				break;
 			case 2:
 				ereport(LOG,
@@ -4791,8 +4816,8 @@ CreateCheckPoint(bool shutdown, bool force)
 	 * so there's a risk of deadlock. Need to find a better solution.  See
 	 * pgsql-hackers discussion of 17-Dec-01.
 	 *
-	 * XXX actually, the whole UNDO code is dead code and unlikely to ever
-	 * be revived, so the lack of a good solution here is not troubling.
+	 * XXX actually, the whole UNDO code is dead code and unlikely to ever be
+	 * revived, so the lack of a good solution here is not troubling.
 	 */
 #ifdef NOT_USED
 	checkPoint.undo = GetUndoRecPtr();
@@ -4919,11 +4944,11 @@ CreateCheckPoint(bool shutdown, bool force)
 		PreallocXlogFiles(recptr);
 
 	/*
-	 * Truncate pg_subtrans if possible.  We can throw away all data before
-	 * the oldest XMIN of any running transaction.  No future transaction will
-	 * attempt to reference any pg_subtrans entry older than that (see Asserts
-	 * in subtrans.c).  During recovery, though, we mustn't do this because
-	 * StartupSUBTRANS hasn't been called yet.
+	 * Truncate pg_subtrans if possible.  We can throw away all data
+	 * before the oldest XMIN of any running transaction.  No future
+	 * transaction will attempt to reference any pg_subtrans entry older
+	 * than that (see Asserts in subtrans.c).  During recovery, though, we
+	 * mustn't do this because StartupSUBTRANS hasn't been called yet.
 	 */
 	if (!InRecovery)
 		TruncateSUBTRANS(GetOldestXmin(true));
@@ -4974,8 +4999,10 @@ xlog_redo(XLogRecPtr lsn, XLogRecord *record)
 		ShmemVariableCache->nextXid = checkPoint.nextXid;
 		ShmemVariableCache->nextOid = checkPoint.nextOid;
 		ShmemVariableCache->oidCount = 0;
+
 		/*
-		 * TLI may change in a shutdown checkpoint, but it shouldn't decrease
+		 * TLI may change in a shutdown checkpoint, but it shouldn't
+		 * decrease
 		 */
 		if (checkPoint.ThisTimeLineID != ThisTimeLineID)
 		{
@@ -4984,7 +5011,7 @@ xlog_redo(XLogRecPtr lsn, XLogRecord *record)
 								 (int) checkPoint.ThisTimeLineID))
 				ereport(PANIC,
 						(errmsg("unexpected timeline ID %u (after %u) in checkpoint record",
-								checkPoint.ThisTimeLineID, ThisTimeLineID)));
+							checkPoint.ThisTimeLineID, ThisTimeLineID)));
 			/* Following WAL records should be run with new TLI */
 			ThisTimeLineID = checkPoint.ThisTimeLineID;
 		}
@@ -5071,8 +5098,7 @@ xlog_outrec(char *buf, XLogRecord *record)
 	sprintf(buf + strlen(buf), ": %s",
 			RmgrTable[record->xl_rmid].rm_name);
 }
-
-#endif /* WAL_DEBUG */
+#endif   /* WAL_DEBUG */
 
 
 /*
@@ -5200,7 +5226,7 @@ pg_start_backup(PG_FUNCTION_ARGS)
 	char	   *backupidstr;
 	XLogRecPtr	checkpointloc;
 	XLogRecPtr	startpoint;
-	time_t stamp_time;
+	time_t		stamp_time;
 	char		strfbuf[128];
 	char		labelfilepath[MAXPGPATH];
 	char		xlogfilename[MAXFNAMELEN];
@@ -5209,24 +5235,26 @@ pg_start_backup(PG_FUNCTION_ARGS)
 	struct stat stat_buf;
 	FILE	   *fp;
 
-	if (!superuser()) 
+	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 (errmsg("must be superuser to run a backup"))));
 	backupidstr = DatumGetCString(DirectFunctionCall1(textout,
-													  PointerGetDatum(backupid)));
+											 PointerGetDatum(backupid)));
+
 	/*
-	 * Force a CHECKPOINT.  This is not strictly necessary, but it seems
-	 * like a good idea to minimize the amount of past WAL needed to use the
-	 * backup.  Also, this guarantees that two successive backup runs
-	 * will have different checkpoint positions and hence different history
-	 * file names, even if nothing happened in between.
+	 * Force a CHECKPOINT.	This is not strictly necessary, but it seems
+	 * like a good idea to minimize the amount of past WAL needed to use
+	 * the backup.	Also, this guarantees that two successive backup runs
+	 * will have different checkpoint positions and hence different
+	 * history file names, even if nothing happened in between.
 	 */
 	RequestCheckpoint(true);
+
 	/*
 	 * Now we need to fetch the checkpoint record location, and also its
-	 * REDO pointer.  The oldest point in WAL that would be needed to restore
-	 * starting from the checkpoint is precisely the REDO pointer.
+	 * REDO pointer.  The oldest point in WAL that would be needed to
+	 * restore starting from the checkpoint is precisely the REDO pointer.
 	 */
 	LWLockAcquire(ControlFileLock, LW_EXCLUSIVE);
 	checkpointloc = ControlFile->checkPoint;
@@ -5235,18 +5263,21 @@ pg_start_backup(PG_FUNCTION_ARGS)
 
 	XLByteToSeg(startpoint, _logId, _logSeg);
 	XLogFileName(xlogfilename, ThisTimeLineID, _logId, _logSeg);
+
 	/*
-	 * We deliberately use strftime/localtime not the src/timezone functions,
-	 * so that backup labels will consistently be recorded in the same
-	 * timezone regardless of TimeZone setting.  This matches elog.c's
-	 * practice.
+	 * We deliberately use strftime/localtime not the src/timezone
+	 * functions, so that backup labels will consistently be recorded in
+	 * the same timezone regardless of TimeZone setting.  This matches
+	 * elog.c's practice.
 	 */
 	stamp_time = time(NULL);
 	strftime(strfbuf, sizeof(strfbuf),
 			 "%Y-%m-%d %H:%M:%S %Z",
 			 localtime(&stamp_time));
+
 	/*
-	 * Check for existing backup label --- implies a backup is already running
+	 * Check for existing backup label --- implies a backup is already
+	 * running
 	 */
 	snprintf(labelfilepath, MAXPGPATH, "%s/backup_label", DataDir);
 	if (stat(labelfilepath, &stat_buf) != 0)
@@ -5263,6 +5294,7 @@ pg_start_backup(PG_FUNCTION_ARGS)
 				 errmsg("a backup is already in progress"),
 				 errhint("If you're sure there is no backup in progress, remove file \"%s\" and try again.",
 						 labelfilepath)));
+
 	/*
 	 * Okay, write the file
 	 */
@@ -5283,13 +5315,14 @@ pg_start_backup(PG_FUNCTION_ARGS)
 				(errcode_for_file_access(),
 				 errmsg("could not write file \"%s\": %m",
 						labelfilepath)));
+
 	/*
 	 * We're done.  As a convenience, return the starting WAL offset.
 	 */
 	snprintf(xlogfilename, sizeof(xlogfilename), "%X/%X",
 			 startpoint.xlogid, startpoint.xrecoff);
 	result = DatumGetTextP(DirectFunctionCall1(textin,
-											   CStringGetDatum(xlogfilename)));
+										 CStringGetDatum(xlogfilename)));
 	PG_RETURN_TEXT_P(result);
 }
 
@@ -5308,7 +5341,7 @@ pg_stop_backup(PG_FUNCTION_ARGS)
 	XLogCtlInsert *Insert = &XLogCtl->Insert;
 	XLogRecPtr	startpoint;
 	XLogRecPtr	stoppoint;
-	time_t stamp_time;
+	time_t		stamp_time;
 	char		strfbuf[128];
 	char		labelfilepath[MAXPGPATH];
 	char		histfilepath[MAXPGPATH];
@@ -5321,10 +5354,11 @@ pg_stop_backup(PG_FUNCTION_ARGS)
 	char		ch;
 	int			ich;
 
-	if (!superuser()) 
+	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 (errmsg("must be superuser to run a backup"))));
+
 	/*
 	 * Get the current end-of-WAL position; it will be unsafe to use this
 	 * dump to restore to a point in advance of this time.
@@ -5335,16 +5369,18 @@ pg_stop_backup(PG_FUNCTION_ARGS)
 
 	XLByteToSeg(stoppoint, _logId, _logSeg);
 	XLogFileName(stopxlogfilename, ThisTimeLineID, _logId, _logSeg);
+
 	/*
-	 * We deliberately use strftime/localtime not the src/timezone functions,
-	 * so that backup labels will consistently be recorded in the same
-	 * timezone regardless of TimeZone setting.  This matches elog.c's
-	 * practice.
+	 * We deliberately use strftime/localtime not the src/timezone
+	 * functions, so that backup labels will consistently be recorded in
+	 * the same timezone regardless of TimeZone setting.  This matches
+	 * elog.c's practice.
 	 */
 	stamp_time = time(NULL);
 	strftime(strfbuf, sizeof(strfbuf),
 			 "%Y-%m-%d %H:%M:%S %Z",
 			 localtime(&stamp_time));
+
 	/*
 	 * Open the existing label file
 	 */
@@ -5361,9 +5397,11 @@ pg_stop_backup(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("a backup is not in progress")));
 	}
+
 	/*
 	 * Read and parse the START WAL LOCATION line (this code is pretty
-	 * crude, but we are not expecting any variability in the file format).
+	 * crude, but we are not expecting any variability in the file
+	 * format).
 	 */
 	if (fscanf(lfp, "START WAL LOCATION: %X/%X (file %24s)%c",
 			   &startpoint.xlogid, &startpoint.xrecoff, startxlogfilename,
@@ -5371,6 +5409,7 @@ pg_stop_backup(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("invalid data in file \"%s\"", labelfilepath)));
+
 	/*
 	 * Write the backup history file
 	 */
@@ -5396,6 +5435,7 @@ pg_stop_backup(PG_FUNCTION_ARGS)
 				(errcode_for_file_access(),
 				 errmsg("could not write file \"%s\": %m",
 						histfilepath)));
+
 	/*
 	 * Close and remove the backup label file
 	 */
@@ -5409,6 +5449,7 @@ pg_stop_backup(PG_FUNCTION_ARGS)
 				(errcode_for_file_access(),
 				 errmsg("could not remove file \"%s\": %m",
 						labelfilepath)));
+
 	/*
 	 * Notify archiver that history file may be archived immediately
 	 */
@@ -5418,13 +5459,14 @@ pg_stop_backup(PG_FUNCTION_ARGS)
 							  startpoint.xrecoff % XLogSegSize);
 		XLogArchiveNotify(histfilepath);
 	}
+
 	/*
 	 * We're done.  As a convenience, return the ending WAL offset.
 	 */
 	snprintf(stopxlogfilename, sizeof(stopxlogfilename), "%X/%X",
 			 stoppoint.xlogid, stoppoint.xrecoff);
 	result = DatumGetTextP(DirectFunctionCall1(textin,
-											   CStringGetDatum(stopxlogfilename)));
+									 CStringGetDatum(stopxlogfilename)));
 	PG_RETURN_TEXT_P(result);
 }
 
@@ -5433,7 +5475,7 @@ pg_stop_backup(PG_FUNCTION_ARGS)
  *
  * If we see a backup_label during recovery, we assume that we are recovering
  * from a backup dump file, and we therefore roll forward from the checkpoint
- * identified by the label file, NOT what pg_control says.  This avoids the
+ * identified by the label file, NOT what pg_control says.	This avoids the
  * problem that pg_control might have been archived one or more checkpoints
  * later than the start of the dump, and so if we rely on it as the start
  * point, we will fail to restore a consistent database state.
@@ -5476,10 +5518,11 @@ read_backup_label(XLogRecPtr *checkPointLoc)
 							labelfilepath)));
 		return false;			/* it's not there, all is fine */
 	}
+
 	/*
-	 * Read and parse the START WAL LOCATION and CHECKPOINT lines (this code
-	 * is pretty crude, but we are not expecting any variability in the file
-	 * format).
+	 * Read and parse the START WAL LOCATION and CHECKPOINT lines (this
+	 * code is pretty crude, but we are not expecting any variability in
+	 * the file format).
 	 */
 	if (fscanf(lfp, "START WAL LOCATION: %X/%X (file %08X%16s)%c",
 			   &startpoint.xlogid, &startpoint.xrecoff, &tli,
@@ -5498,6 +5541,7 @@ read_backup_label(XLogRecPtr *checkPointLoc)
 				(errcode_for_file_access(),
 				 errmsg("could not read file \"%s\": %m",
 						labelfilepath)));
+
 	/*
 	 * Try to retrieve the backup history file (no error if we can't)
 	 */
@@ -5511,24 +5555,24 @@ read_backup_label(XLogRecPtr *checkPointLoc)
 		BackupHistoryFilePath(histfilepath, tli, _logId, _logSeg,
 							  startpoint.xrecoff % XLogSegSize);
 
-    fp = AllocateFile(histfilepath, "r");
+	fp = AllocateFile(histfilepath, "r");
 	if (fp)
 	{
 		/*
 		 * Parse history file to identify stop point.
 		 */
 		if (fscanf(fp, "START WAL LOCATION: %X/%X (file %24s)%c",
-				   &startpoint.xlogid, &startpoint.xrecoff, startxlogfilename,
+			  &startpoint.xlogid, &startpoint.xrecoff, startxlogfilename,
 				   &ch) != 4 || ch != '\n')
 			ereport(FATAL,
 					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-					 errmsg("invalid data in file \"%s\"", histfilename)));
+				   errmsg("invalid data in file \"%s\"", histfilename)));
 		if (fscanf(fp, "STOP WAL LOCATION: %X/%X (file %24s)%c",
-				   &stoppoint.xlogid, &stoppoint.xrecoff, stopxlogfilename,
+				 &stoppoint.xlogid, &stoppoint.xrecoff, stopxlogfilename,
 				   &ch) != 4 || ch != '\n')
 			ereport(FATAL,
 					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-					 errmsg("invalid data in file \"%s\"", histfilename)));
+				   errmsg("invalid data in file \"%s\"", histfilename)));
 		recoveryMinXlogOffset = stoppoint;
 		if (ferror(fp) || FreeFile(fp))
 			ereport(FATAL,

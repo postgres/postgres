@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_operator.h,v 1.127 2004/08/29 04:13:05 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_operator.h,v 1.128 2004/08/29 05:06:55 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -122,8 +122,8 @@ DATA(insert OID = 375 (  "||"	   PGNSP PGUID b f 2277 2277 2277	0 0 0 0 0 0 arra
 
 DATA(insert OID = 352 (  "="	   PGNSP PGUID b t	28	28	16 352	 0	 0	 0	 0	 0 xideq eqsel eqjoinsel ));
 DATA(insert OID = 353 (  "="	   PGNSP PGUID b f	28	23	16	 0	 0	 0	 0	 0	 0 xideqint4 eqsel eqjoinsel ));
-DATA(insert OID = 388 (  "!"	   PGNSP PGUID r f  20   0  1700   0   0   0   0  0   0 numeric_fac - - ));
-DATA(insert OID = 389 (  "!!"	   PGNSP PGUID l f   0  20  1700   0   0   0   0  0   0 numeric_fac - - ));
+DATA(insert OID = 388 (  "!"	   PGNSP PGUID r f	20	 0	1700   0   0   0   0  0   0 numeric_fac - - ));
+DATA(insert OID = 389 (  "!!"	   PGNSP PGUID l f	 0	20	1700   0   0   0   0  0   0 numeric_fac - - ));
 DATA(insert OID = 385 (  "="	   PGNSP PGUID b t	29	29	16 385	 0	 0	 0	 0	 0 cideq eqsel eqjoinsel ));
 DATA(insert OID = 386 (  "="	   PGNSP PGUID b t	22	22	16 386	 0	 0	 0	 0	 0 int2vectoreq eqsel eqjoinsel ));
 DATA(insert OID = 387 (  "="	   PGNSP PGUID b f	27	27	16 387	 0	 0	 0	 0	 0 tideq eqsel eqjoinsel ));

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.92 2004/08/29 04:13:02 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.93 2004/08/29 05:06:54 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -237,7 +237,7 @@ slashUsage(unsigned short int pager)
 	fprintf(output, _("  \\pset NAME [VALUE]\n"
 					  "                 set table output option\n"
 					  "                 (NAME := {format|border|expanded|fieldsep|footer|null|\n"
-			  "                 recordsep|tuples_only|title|tableattr|pager})\n"));
+	"                 recordsep|tuples_only|title|tableattr|pager})\n"));
 	fprintf(output, _("  \\t             show only rows (currently %s)\n"),
 			ON(pset.popt.topt.tuples_only));
 	fprintf(output, _("  \\T [STRING]    set HTML <table> tag attributes, or unset if none\n"));
@@ -250,7 +250,7 @@ slashUsage(unsigned short int pager)
 	fprintf(output, _("  \\lo_export LOBOID FILE\n"
 					  "  \\lo_import FILE [COMMENT] \n"
 					  "  \\lo_list\n"
-					  "  \\lo_unlink LOBOID    large object operations\n"));
+				   "  \\lo_unlink LOBOID    large object operations\n"));
 
 	if (output != stdout)
 	{
@@ -308,7 +308,7 @@ helpSQL(const char *topic, unsigned short int pager)
 		FILE	   *output;
 		size_t		len;
 		int			nl_count = 0;
-		char		*ch;
+		char	   *ch;
 
 		/* don't care about trailing spaces or semicolons */
 		len = strlen(topic);

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_pool.c,v 1.24 2004/08/29 04:12:33 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_pool.c,v 1.25 2004/08/29 05:06:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -96,8 +96,9 @@ random_init_pool(Pool *pool, GeqoEvalData *evaldata)
 	int			bad = 0;
 
 	/*
-	 * We immediately discard any invalid individuals (those that geqo_eval
-	 * returns DBL_MAX for), thereby not wasting pool space on them.
+	 * We immediately discard any invalid individuals (those that
+	 * geqo_eval returns DBL_MAX for), thereby not wasting pool space on
+	 * them.
 	 *
 	 * If we fail to make any valid individuals after 10000 tries, give up;
 	 * this probably means something is broken, and we shouldn't just let

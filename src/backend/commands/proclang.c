@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/proclang.c,v 1.54 2004/08/29 04:12:30 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/proclang.c,v 1.55 2004/08/29 05:06:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -101,8 +101,8 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("function %s must return type \"language_handler\"",
-							NameListToString(stmt->plhandler))));
+			  errmsg("function %s must return type \"language_handler\"",
+					 NameListToString(stmt->plhandler))));
 	}
 
 	/* validate the validator function */
@@ -126,12 +126,12 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 
 	i = 0;
 	namestrcpy(&langname, languageName);
-	values[i++] = NameGetDatum(&langname);			/* lanname */
-	values[i++] = BoolGetDatum(true);				/* lanispl */
-	values[i++] = BoolGetDatum(stmt->pltrusted);	/* lanpltrusted */
-	values[i++] = ObjectIdGetDatum(procOid);		/* lanplcallfoid */
-	values[i++] = ObjectIdGetDatum(valProcOid);		/* lanvalidator */
-	nulls[i] = 'n';									/* lanacl */
+	values[i++] = NameGetDatum(&langname);		/* lanname */
+	values[i++] = BoolGetDatum(true);	/* lanispl */
+	values[i++] = BoolGetDatum(stmt->pltrusted);		/* lanpltrusted */
+	values[i++] = ObjectIdGetDatum(procOid);	/* lanplcallfoid */
+	values[i++] = ObjectIdGetDatum(valProcOid); /* lanvalidator */
+	nulls[i] = 'n';				/* lanacl */
 
 	rel = heap_openr(LanguageRelationName, RowExclusiveLock);
 

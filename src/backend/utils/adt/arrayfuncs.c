@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.109 2004/08/29 04:12:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.110 2004/08/29 05:06:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -110,9 +110,9 @@ static void array_insert_slice(int ndim, int *dim, int *lb,
 				   int typlen, bool typbyval, char typalign);
 static int	array_cmp(FunctionCallInfo fcinfo);
 static Datum array_type_length_coerce_internal(ArrayType *src,
-											   int32 desttypmod,
-											   bool isExplicit,
-											   FmgrInfo *fmgr_info);
+								  int32 desttypmod,
+								  bool isExplicit,
+								  FmgrInfo *fmgr_info);
 
 
 /*---------------------------------------------------------------------
@@ -292,13 +292,13 @@ array_in(PG_FUNCTION_ARGS)
 		if (ndim_braces != ndim)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-					 errmsg("array dimensions incompatible with array literal")));
+			errmsg("array dimensions incompatible with array literal")));
 		for (i = 0; i < ndim; ++i)
 		{
 			if (dim[i] != dim_braces[i])
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-						errmsg("array dimensions incompatible with array literal")));
+						 errmsg("array dimensions incompatible with array literal")));
 		}
 	}
 
@@ -365,17 +365,17 @@ typedef enum
 static int
 ArrayCount(char *str, int *dim, char typdelim)
 {
-	int				nest_level = 0,
-					i;
-	int				ndim = 1,
-					temp[MAXDIM],
-					nelems[MAXDIM],
-					nelems_last[MAXDIM];
-	bool			scanning_string = false;
-	bool			eoArray = false;
-	bool			empty_array = true;
-	char		   *ptr;
-	ArrayParseState	parse_state = ARRAY_NO_LEVEL;
+	int			nest_level = 0,
+				i;
+	int			ndim = 1,
+				temp[MAXDIM],
+				nelems[MAXDIM],
+				nelems_last[MAXDIM];
+	bool		scanning_string = false;
+	bool		eoArray = false;
+	bool		empty_array = true;
+	char	   *ptr;
+	ArrayParseState parse_state = ARRAY_NO_LEVEL;
 
 	for (i = 0; i < MAXDIM; ++i)
 	{
@@ -397,7 +397,7 @@ ArrayCount(char *str, int *dim, char typdelim)
 			if (parse_state == ARRAY_ELEM_STARTED ||
 				parse_state == ARRAY_QUOTED_ELEM_STARTED)
 				empty_array = false;
-			
+
 			switch (*ptr)
 			{
 				case '\0':
@@ -407,18 +407,19 @@ ArrayCount(char *str, int *dim, char typdelim)
 						errmsg("malformed array literal: \"%s\"", str)));
 					break;
 				case '\\':
+
 					/*
 					 * An escape must be after a level start, after an
-					 * element start, or after an element delimiter. In any
-					 * case we now must be past an element start.
+					 * element start, or after an element delimiter. In
+					 * any case we now must be past an element start.
 					 */
 					if (parse_state != ARRAY_LEVEL_STARTED &&
 						parse_state != ARRAY_ELEM_STARTED &&
 						parse_state != ARRAY_QUOTED_ELEM_STARTED &&
 						parse_state != ARRAY_ELEM_DELIMITED)
 						ereport(ERROR,
-							(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-							errmsg("malformed array literal: \"%s\"", str)));
+						   (errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+						errmsg("malformed array literal: \"%s\"", str)));
 					if (parse_state != ARRAY_QUOTED_ELEM_STARTED)
 						parse_state = ARRAY_ELEM_STARTED;
 					/* skip the escaped character */
@@ -430,17 +431,18 @@ ArrayCount(char *str, int *dim, char typdelim)
 						errmsg("malformed array literal: \"%s\"", str)));
 					break;
 				case '\"':
+
 					/*
 					 * A quote must be after a level start, after a quoted
-					 * element start, or after an element delimiter. In any
-					 * case we now must be past an element start.
+					 * element start, or after an element delimiter. In
+					 * any case we now must be past an element start.
 					 */
 					if (parse_state != ARRAY_LEVEL_STARTED &&
 						parse_state != ARRAY_QUOTED_ELEM_STARTED &&
 						parse_state != ARRAY_ELEM_DELIMITED)
 						ereport(ERROR,
-							(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-							errmsg("malformed array literal: \"%s\"", str)));
+						   (errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+						errmsg("malformed array literal: \"%s\"", str)));
 					scanning_string = !scanning_string;
 					if (scanning_string)
 						parse_state = ARRAY_QUOTED_ELEM_STARTED;
@@ -452,15 +454,15 @@ ArrayCount(char *str, int *dim, char typdelim)
 					{
 						/*
 						 * A left brace can occur if no nesting has
-						 * occurred yet, after a level start, or
-						 * after a level delimiter.
+						 * occurred yet, after a level start, or after a
+						 * level delimiter.
 						 */
 						if (parse_state != ARRAY_NO_LEVEL &&
 							parse_state != ARRAY_LEVEL_STARTED &&
 							parse_state != ARRAY_LEVEL_DELIMITED)
 							ereport(ERROR,
-								(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-								errmsg("malformed array literal: \"%s\"", str)));
+							(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+							 errmsg("malformed array literal: \"%s\"", str)));
 						parse_state = ARRAY_LEVEL_STARTED;
 						if (nest_level >= MAXDIM)
 							ereport(ERROR,
@@ -478,17 +480,17 @@ ArrayCount(char *str, int *dim, char typdelim)
 					{
 						/*
 						 * A right brace can occur after an element start,
-						 * an element completion, a quoted element completion,
-						 * or a level completion.
+						 * an element completion, a quoted element
+						 * completion, or a level completion.
 						 */
 						if (parse_state != ARRAY_ELEM_STARTED &&
 							parse_state != ARRAY_ELEM_COMPLETED &&
 							parse_state != ARRAY_QUOTED_ELEM_COMPLETED &&
 							parse_state != ARRAY_LEVEL_COMPLETED &&
-							!(nest_level == 1 &&  parse_state == ARRAY_LEVEL_STARTED))
+							!(nest_level == 1 && parse_state == ARRAY_LEVEL_STARTED))
 							ereport(ERROR,
-								(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-								errmsg("malformed array literal: \"%s\"", str)));
+							(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+							 errmsg("malformed array literal: \"%s\"", str)));
 						parse_state = ARRAY_LEVEL_COMPLETED;
 						if (nest_level == 0)
 							ereport(ERROR,
@@ -497,12 +499,12 @@ ArrayCount(char *str, int *dim, char typdelim)
 						nest_level--;
 
 						if ((nelems_last[nest_level] != 1) &&
-							(nelems[nest_level] != nelems_last[nest_level]))
+						 (nelems[nest_level] != nelems_last[nest_level]))
 							ereport(ERROR,
-								(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-								 errmsg("multidimensional arrays must have "
-										"array expressions with matching "
-										"dimensions")));
+							(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+							 errmsg("multidimensional arrays must have "
+									"array expressions with matching "
+									"dimensions")));
 						nelems_last[nest_level] = nelems[nest_level];
 						nelems[nest_level] = 1;
 						if (nest_level == 0)
@@ -523,17 +525,17 @@ ArrayCount(char *str, int *dim, char typdelim)
 						if (*ptr == typdelim)
 						{
 							/*
-							* Delimiters can occur after an element start,
-							* an element completion, a quoted element
-							* completion, or a level completion.
-							*/
+							 * Delimiters can occur after an element
+							 * start, an element completion, a quoted
+							 * element completion, or a level completion.
+							 */
 							if (parse_state != ARRAY_ELEM_STARTED &&
 								parse_state != ARRAY_ELEM_COMPLETED &&
-								parse_state != ARRAY_QUOTED_ELEM_COMPLETED &&
+							parse_state != ARRAY_QUOTED_ELEM_COMPLETED &&
 								parse_state != ARRAY_LEVEL_COMPLETED)
 								ereport(ERROR,
-									(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-									errmsg("malformed array literal: \"%s\"", str)));
+										(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+										 errmsg("malformed array literal: \"%s\"", str)));
 							if (parse_state == ARRAY_LEVEL_COMPLETED)
 								parse_state = ARRAY_LEVEL_DELIMITED;
 							else
@@ -544,17 +546,17 @@ ArrayCount(char *str, int *dim, char typdelim)
 						else if (!isspace(*ptr))
 						{
 							/*
-							* Other non-space characters must be after a level
-							* start, after an element start, or after an element
-							* delimiter. In any case we now must be past an
-							* element start.
-							*/
+							 * Other non-space characters must be after a
+							 * level start, after an element start, or
+							 * after an element delimiter. In any case we
+							 * now must be past an element start.
+							 */
 							if (parse_state != ARRAY_LEVEL_STARTED &&
 								parse_state != ARRAY_ELEM_STARTED &&
 								parse_state != ARRAY_ELEM_DELIMITED)
 								ereport(ERROR,
-									(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-									errmsg("malformed array literal: \"%s\"", str)));
+										(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+										 errmsg("malformed array literal: \"%s\"", str)));
 							parse_state = ARRAY_ELEM_STARTED;
 						}
 					}
@@ -566,20 +568,20 @@ ArrayCount(char *str, int *dim, char typdelim)
 		temp[ndim - 1]++;
 		ptr++;
 	}
-	
+
 	/* only whitespace is allowed after the closing brace */
 	while (*ptr)
 	{
 		if (!isspace(*ptr++))
 			ereport(ERROR,
-				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				errmsg("malformed array literal: \"%s\"", str)));
+					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+					 errmsg("malformed array literal: \"%s\"", str)));
 	}
-	
+
 	/* special case for an empty array */
 	if (empty_array)
 		return 0;
-		
+
 	for (i = 0; i < ndim; ++i)
 		dim[i] = temp[i];
 
@@ -675,7 +677,11 @@ ReadArrayStr(char *arrayStr,
 						if (scanning_string)
 						{
 							itemquoted = true;
-							/* Crunch the string on top of the first quote. */
+
+							/*
+							 * Crunch the string on top of the first
+							 * quote.
+							 */
 							for (cptr = ptr; *cptr != '\0'; cptr++)
 								*cptr = *(cptr + 1);
 							/* Back up to not miss following character. */
@@ -874,11 +880,12 @@ array_out(PG_FUNCTION_ARGS)
 			   *tmp,
 			   *retval,
 			  **values,
-				/*
-				 * 33 per dim since we assume 15 digits per number + ':' +'[]'
-				 *
-				 * +2 allows for assignment operator + trailing null
-				 */
+
+	/*
+	 * 33 per dim since we assume 15 digits per number + ':' +'[]'
+	 *
+	 * +2 allows for assignment operator + trailing null
+	 */
 				dims_str[(MAXDIM * 33) + 2];
 	bool	   *needquotes,
 				needdims = false;
@@ -941,8 +948,8 @@ array_out(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * we will need to add explicit dimensions if any dimension
-	 * has a lower bound other than one
+	 * we will need to add explicit dimensions if any dimension has a
+	 * lower bound other than one
 	 */
 	for (i = 0; i < ndim; i++)
 	{
@@ -970,7 +977,7 @@ array_out(PG_FUNCTION_ARGS)
 		itemvalue = fetch_att(p, typbyval, typlen);
 		values[i] = DatumGetCString(FunctionCall3(&my_extra->proc,
 												  itemvalue,
-											   ObjectIdGetDatum(typioparam),
+											ObjectIdGetDatum(typioparam),
 												  Int32GetDatum(-1)));
 		p = att_addlength(p, typlen, PointerGetDatum(p));
 		p = (char *) att_align(p, typalign);
@@ -1012,7 +1019,7 @@ array_out(PG_FUNCTION_ARGS)
 	/* add explicit dimensions if required */
 	if (needdims)
 	{
-		char   *ptr = dims_str;
+		char	   *ptr = dims_str;
 
 		for (i = 0; i < ndim; i++)
 		{
@@ -1392,7 +1399,7 @@ array_send(PG_FUNCTION_ARGS)
 
 		outputbytes = DatumGetByteaP(FunctionCall2(&my_extra->proc,
 												   itemvalue,
-											 ObjectIdGetDatum(typioparam)));
+										  ObjectIdGetDatum(typioparam)));
 		/* We assume the result will not have been toasted */
 		pq_sendint(&buf, VARSIZE(outputbytes) - VARHDRSZ, 4);
 		pq_sendbytes(&buf, VARDATA(outputbytes),
@@ -2540,8 +2547,8 @@ array_eq(PG_FUNCTION_ARGS)
 		/*
 		 * We arrange to look up the equality function only once per
 		 * series of calls, assuming the element type doesn't change
-		 * underneath us.  The typcache is used so that we have no
-		 * memory leakage when being used as an index support function.
+		 * underneath us.  The typcache is used so that we have no memory
+		 * leakage when being used as an index support function.
 		 */
 		typentry = (TypeCacheEntry *) fcinfo->flinfo->fn_extra;
 		if (typentry == NULL ||
@@ -2688,10 +2695,10 @@ array_cmp(FunctionCallInfo fcinfo)
 			errmsg("cannot compare arrays of different element types")));
 
 	/*
-	 * We arrange to look up the comparison function only once per series of
-	 * calls, assuming the element type doesn't change underneath us.
-	 * The typcache is used so that we have no memory leakage when being used
-	 * as an index support function.
+	 * We arrange to look up the comparison function only once per series
+	 * of calls, assuming the element type doesn't change underneath us.
+	 * The typcache is used so that we have no memory leakage when being
+	 * used as an index support function.
 	 */
 	typentry = (TypeCacheEntry *) fcinfo->flinfo->fn_extra;
 	if (typentry == NULL ||
@@ -2702,8 +2709,8 @@ array_cmp(FunctionCallInfo fcinfo)
 		if (!OidIsValid(typentry->cmp_proc_finfo.fn_oid))
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_FUNCTION),
-					 errmsg("could not identify a comparison function for type %s",
-							format_type_be(element_type))));
+			errmsg("could not identify a comparison function for type %s",
+				   format_type_be(element_type))));
 		fcinfo->flinfo->fn_extra = (void *) typentry;
 	}
 	typlen = typentry->typlen;

@@ -5,7 +5,7 @@
  * to contain some useful information. Mechanism differs wildly across
  * platforms.
  *
- * $PostgreSQL: pgsql/src/backend/utils/misc/ps_status.c,v 1.20 2004/08/29 04:13:00 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/misc/ps_status.c,v 1.21 2004/08/29 05:06:51 momjian Exp $
  *
  * Copyright (c) 2000-2004, PostgreSQL Global Development Group
  * various details abducted from various places
@@ -102,11 +102,11 @@ static char **save_argv;
  * from being clobbered by subsequent ps_display actions.
  *
  * (The original argv[] will not be overwritten by this routine, but may be
- * overwritten during init_ps_display.  Also, the physical location of the
+ * overwritten during init_ps_display.	Also, the physical location of the
  * environment strings may be moved, so this should be called before any code
  * that might try to hang onto a getenv() result.)
  */
-char **
+char	  **
 save_ps_display_args(int argc, char **argv)
 {
 	save_argc = argc;
@@ -182,10 +182,11 @@ save_ps_display_args(int argc, char **argv)
 
 		new_argv = (char **) malloc((argc + 1) * sizeof(char *));
 		for (i = 0; i < argc; i++)
-				new_argv[i] = strdup(argv[i]);
+			new_argv[i] = strdup(argv[i]);
 		new_argv[argc] = NULL;
 
 #if defined(__darwin__)
+
 		/*
 		 * Darwin (and perhaps other NeXT-derived platforms?) has a static
 		 * copy of the argv pointer, which we may fix like so:
@@ -195,7 +196,8 @@ save_ps_display_args(int argc, char **argv)
 
 		argv = new_argv;
 	}
-#endif   /* PS_USE_CHANGE_ARGV or PS_USE_CLOBBER_ARGV */
+#endif   /* PS_USE_CHANGE_ARGV or
+								 * PS_USE_CLOBBER_ARGV */
 
 	return argv;
 }
@@ -237,7 +239,7 @@ init_ps_display(const char *username, const char *dbname,
 
 #ifdef PS_USE_CLOBBER_ARGV
 	{
-		int		i;
+		int			i;
 
 		/* make extra argv slots point at end_of_area (a NUL) */
 		for (i = 1; i < save_argc; i++)

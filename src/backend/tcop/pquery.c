@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.84 2004/08/29 04:12:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.85 2004/08/29 05:06:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,7 @@
  * ActivePortal is the currently executing Portal (the most closely nested,
  * if there are several).
  */
-Portal	ActivePortal = NULL;
+Portal		ActivePortal = NULL;
 
 
 static uint32 RunFromStore(Portal portal, ScanDirection direction, long count,
@@ -246,7 +246,8 @@ PortalStart(Portal portal, ParamListInfo params)
 	AssertState(portal->status == PORTAL_NEW);	/* else extra PortalStart */
 
 	/*
-	 * Set up global portal context pointers.  (Should we set QueryContext?)
+	 * Set up global portal context pointers.  (Should we set
+	 * QueryContext?)
 	 */
 	saveActivePortal = ActivePortal;
 	saveResourceOwner = CurrentResourceOwner;
@@ -280,11 +281,11 @@ PortalStart(Portal portal, ParamListInfo params)
 				SetQuerySnapshot();
 
 				/*
-				 * Create QueryDesc in portal's context; for the moment, set
-				 * the destination to None.
+				 * Create QueryDesc in portal's context; for the moment,
+				 * set the destination to None.
 				 */
 				queryDesc = CreateQueryDesc((Query *) linitial(portal->parseTrees),
-											(Plan *) linitial(portal->planTrees),
+									(Plan *) linitial(portal->planTrees),
 											None_Receiver,
 											params,
 											false);
@@ -308,7 +309,7 @@ PortalStart(Portal portal, ParamListInfo params)
 				 * Reset cursor position data to "start of query"
 				 */
 				portal->atStart = true;
-				portal->atEnd = false;		/* allow fetches */
+				portal->atEnd = false;	/* allow fetches */
 				portal->portalPos = 0;
 				portal->posOverflow = false;
 				break;
@@ -316,8 +317,8 @@ PortalStart(Portal portal, ParamListInfo params)
 			case PORTAL_UTIL_SELECT:
 
 				/*
-				 * We don't set query snapshot here, because PortalRunUtility
-				 * will take care of it.
+				 * We don't set query snapshot here, because
+				 * PortalRunUtility will take care of it.
 				 */
 				portal->tupDesc =
 					UtilityTupleDescriptor(((Query *) linitial(portal->parseTrees))->utilityStmt);
@@ -326,7 +327,7 @@ PortalStart(Portal portal, ParamListInfo params)
 				 * Reset cursor position data to "start of query"
 				 */
 				portal->atStart = true;
-				portal->atEnd = false;		/* allow fetches */
+				portal->atEnd = false;	/* allow fetches */
 				portal->portalPos = 0;
 				portal->posOverflow = false;
 				break;
@@ -450,11 +451,11 @@ PortalRun(Portal portal, long count,
 	if (log_executor_stats && portal->strategy != PORTAL_MULTI_QUERY)
 	{
 		ereport(DEBUG3,
-			(errmsg_internal("PortalRun")));
+				(errmsg_internal("PortalRun")));
 		/* PORTAL_MULTI_QUERY logs its own stats per query */
 		ResetUsage();
 	}
-	
+
 	/*
 	 * Check for improper portal use, and mark portal active.
 	 */
@@ -492,7 +493,8 @@ PortalRun(Portal portal, long count,
 				portal->status = PORTAL_READY;
 
 				/*
-				 * Since it's a forward fetch, say DONE iff atEnd is now true.
+				 * Since it's a forward fetch, say DONE iff atEnd is now
+				 * true.
 				 */
 				result = portal->atEnd;
 				break;
@@ -531,7 +533,8 @@ PortalRun(Portal portal, long count,
 				portal->status = PORTAL_READY;
 
 				/*
-				 * Since it's a forward fetch, say DONE iff atEnd is now true.
+				 * Since it's a forward fetch, say DONE iff atEnd is now
+				 * true.
 				 */
 				result = portal->atEnd;
 				break;
@@ -549,7 +552,7 @@ PortalRun(Portal portal, long count,
 			default:
 				elog(ERROR, "unrecognized portal strategy: %d",
 					 (int) portal->strategy);
-				result = false;		/* keep compiler quiet */
+				result = false; /* keep compiler quiet */
 				break;
 		}
 	}
@@ -1026,7 +1029,7 @@ PortalRunFetch(Portal portal,
 
 			default:
 				elog(ERROR, "unsupported portal strategy");
-				result = 0;			/* keep compiler quiet */
+				result = 0;		/* keep compiler quiet */
 				break;
 		}
 	}

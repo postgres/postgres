@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/vacuum.h,v 1.56 2004/08/29 04:13:06 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/commands/vacuum.h,v 1.57 2004/08/29 05:06:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,12 +32,12 @@
 
 /*----------
  * ANALYZE builds one of these structs for each attribute (column) that is
- * to be analyzed.  The struct and subsidiary data are in anl_context,
+ * to be analyzed.	The struct and subsidiary data are in anl_context,
  * so they live until the end of the ANALYZE operation.
  *
  * The type-specific typanalyze function is passed a pointer to this struct
  * and must return TRUE to continue analysis, FALSE to skip analysis of this
- * column.  In the TRUE case it must set the compute_stats and minrows fields,
+ * column.	In the TRUE case it must set the compute_stats and minrows fields,
  * and can optionally set extra_data to pass additional info to compute_stats.
  * minrows is its request for the minimum number of sample rows to be gathered
  * (but note this request might not be honored, eg if there are fewer rows
@@ -62,7 +62,7 @@
 typedef struct VacAttrStats *VacAttrStatsP;
 
 typedef Datum (*AnalyzeAttrFetchFunc) (VacAttrStatsP stats, int rownum,
-									   bool *isNull);
+												   bool *isNull);
 
 typedef struct VacAttrStats
 {
@@ -75,13 +75,13 @@ typedef struct VacAttrStats
 	MemoryContext anl_context;	/* where to save long-lived data */
 
 	/*
-	 * These fields must be filled in by the typanalyze routine,
-	 * unless it returns FALSE.
+	 * These fields must be filled in by the typanalyze routine, unless it
+	 * returns FALSE.
 	 */
-	void (*compute_stats) (VacAttrStatsP stats,
-						   AnalyzeAttrFetchFunc fetchfunc,
-						   int samplerows,
-						   double totalrows);
+	void		(*compute_stats) (VacAttrStatsP stats,
+										  AnalyzeAttrFetchFunc fetchfunc,
+											  int samplerows,
+											  double totalrows);
 	int			minrows;		/* Minimum # of rows wanted for stats */
 	void	   *extra_data;		/* for extra type-specific data */
 
@@ -101,8 +101,8 @@ typedef struct VacAttrStats
 	Datum	   *stavalues[STATISTIC_NUM_SLOTS];
 
 	/*
-	 * These fields are private to the main ANALYZE code and should not
-	 * be looked at by type-specific functions.
+	 * These fields are private to the main ANALYZE code and should not be
+	 * looked at by type-specific functions.
 	 */
 	int			tupattnum;		/* attribute number within tuples */
 	HeapTuple  *rows;			/* access info for std fetch function */
@@ -121,7 +121,7 @@ typedef struct VacRUsage
 } VacRUsage;
 
 /* Default statistics target (GUC parameter) */
-extern DLLIMPORT int	default_statistics_target;	/* DLLIMPORT for PostGIS */
+extern DLLIMPORT int default_statistics_target; /* DLLIMPORT for PostGIS */
 
 
 /* in commands/vacuum.c */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.85 2004/08/29 04:12:31 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.86 2004/08/29 05:06:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,7 +58,7 @@ typedef struct local_es
  */
 typedef struct
 {
-	Oid        *argtypes;       /* resolved types of arguments */
+	Oid		   *argtypes;		/* resolved types of arguments */
 	Oid			rettype;		/* actual return type */
 	int			typlen;			/* length of the return type */
 	bool		typbyval;		/* true if return type is pass by value */
@@ -94,7 +94,7 @@ init_execution_state(List *queryTree_list)
 {
 	execution_state *firstes = NULL;
 	execution_state *preves = NULL;
-	ListCell	    *qtl_item;
+	ListCell   *qtl_item;
 
 	foreach(qtl_item, queryTree_list)
 	{
@@ -180,8 +180,8 @@ init_sql_fcache(FmgrInfo *finfo)
 	typeStruct = (Form_pg_type) GETSTRUCT(typeTuple);
 
 	/*
-	 * get the type length and by-value flag from the type tuple; also
-	 * do a preliminary check for returnsTuple (this may prove inaccurate,
+	 * get the type length and by-value flag from the type tuple; also do
+	 * a preliminary check for returnsTuple (this may prove inaccurate,
 	 * see below).
 	 */
 	fcache->typlen = typeStruct->typlen;
@@ -190,8 +190,8 @@ init_sql_fcache(FmgrInfo *finfo)
 							rettype == RECORDOID);
 
 	/*
-	 * Parse and rewrite the queries.  We need the argument type info to pass
-	 * to the parser.
+	 * Parse and rewrite the queries.  We need the argument type info to
+	 * pass to the parser.
 	 */
 	nargs = procedureStruct->pronargs;
 	haspolyarg = false;
@@ -240,11 +240,11 @@ init_sql_fcache(FmgrInfo *finfo)
 	 * If the function has any arguments declared as polymorphic types,
 	 * then it wasn't type-checked at definition time; must do so now.
 	 *
-	 * Also, force a type-check if the declared return type is a rowtype;
-	 * we need to find out whether we are actually returning the whole
-	 * tuple result, or just regurgitating a rowtype expression result.
-	 * In the latter case we clear returnsTuple because we need not act
-	 * different from the scalar result case.
+	 * Also, force a type-check if the declared return type is a rowtype; we
+	 * need to find out whether we are actually returning the whole tuple
+	 * result, or just regurgitating a rowtype expression result. In the
+	 * latter case we clear returnsTuple because we need not act different
+	 * from the scalar result case.
 	 */
 	if (haspolyarg || fcache->returnsTuple)
 		fcache->returnsTuple = check_sql_fn_retval(rettype,
@@ -395,9 +395,9 @@ postquel_execute(execution_state *es,
 			 * XXX do we need to remove junk attrs from the result tuple?
 			 * Probably OK to leave them, as long as they are at the end.
 			 */
-			HeapTupleHeader	dtup;
-			Oid		dtuptype;
-			int32	dtuptypmod;
+			HeapTupleHeader dtup;
+			Oid			dtuptype;
+			int32		dtuptypmod;
 
 			dtup = (HeapTupleHeader) palloc(tup->t_len);
 			memcpy((char *) dtup, (char *) tup->t_data, tup->t_len);
@@ -433,8 +433,8 @@ postquel_execute(execution_state *es,
 		else
 		{
 			/*
-			 * Returning a scalar, which we have to extract from the
-			 * first column of the SELECT result, and then copy into current
+			 * Returning a scalar, which we have to extract from the first
+			 * column of the SELECT result, and then copy into current
 			 * execution context if needed.
 			 */
 			value = heap_getattr(tup, 1, tupDesc, &(fcinfo->isnull));
@@ -635,7 +635,8 @@ sql_exec_error_callback(void *arg)
 	fn_name = NameStr(functup->proname);
 
 	/*
-	 * If there is a syntax error position, convert to internal syntax error
+	 * If there is a syntax error position, convert to internal syntax
+	 * error
 	 */
 	syntaxerrposition = geterrposition();
 	if (syntaxerrposition > 0)

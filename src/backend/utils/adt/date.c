@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.101 2004/08/29 04:12:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.102 2004/08/29 05:06:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,7 +57,7 @@ date_in(PG_FUNCTION_ARGS)
 	char	   *str = PG_GETARG_CSTRING(0);
 	DateADT		date;
 	fsec_t		fsec;
-	struct pg_tm	tt,
+	struct pg_tm tt,
 			   *tm = &tt;
 	int			tzp;
 	int			dtype;
@@ -111,7 +111,7 @@ date_out(PG_FUNCTION_ARGS)
 {
 	DateADT		date = PG_GETARG_DATEADT(0);
 	char	   *result;
-	struct pg_tm	tt,
+	struct pg_tm tt,
 			   *tm = &tt;
 	char		buf[MAXDATELEN + 1];
 
@@ -292,7 +292,7 @@ static TimestampTz
 date2timestamptz(DateADT dateVal)
 {
 	TimestampTz result;
-	struct pg_tm	tt,
+	struct pg_tm tt,
 			   *tm = &tt;
 	int			tz;
 
@@ -407,8 +407,8 @@ Datum
 date_eq_timestamptz(PG_FUNCTION_ARGS)
 {
 	DateADT		dateVal = PG_GETARG_DATEADT(0);
-	TimestampTz	dt2 = PG_GETARG_TIMESTAMPTZ(1);
-	TimestampTz	dt1;
+	TimestampTz dt2 = PG_GETARG_TIMESTAMPTZ(1);
+	TimestampTz dt1;
 
 	dt1 = date2timestamptz(dateVal);
 
@@ -419,8 +419,8 @@ Datum
 date_ne_timestamptz(PG_FUNCTION_ARGS)
 {
 	DateADT		dateVal = PG_GETARG_DATEADT(0);
-	TimestampTz	dt2 = PG_GETARG_TIMESTAMPTZ(1);
-	TimestampTz	dt1;
+	TimestampTz dt2 = PG_GETARG_TIMESTAMPTZ(1);
+	TimestampTz dt1;
 
 	dt1 = date2timestamptz(dateVal);
 
@@ -431,8 +431,8 @@ Datum
 date_lt_timestamptz(PG_FUNCTION_ARGS)
 {
 	DateADT		dateVal = PG_GETARG_DATEADT(0);
-	TimestampTz	dt2 = PG_GETARG_TIMESTAMPTZ(1);
-	TimestampTz	dt1;
+	TimestampTz dt2 = PG_GETARG_TIMESTAMPTZ(1);
+	TimestampTz dt1;
 
 	dt1 = date2timestamptz(dateVal);
 
@@ -443,8 +443,8 @@ Datum
 date_gt_timestamptz(PG_FUNCTION_ARGS)
 {
 	DateADT		dateVal = PG_GETARG_DATEADT(0);
-	TimestampTz	dt2 = PG_GETARG_TIMESTAMPTZ(1);
-	TimestampTz	dt1;
+	TimestampTz dt2 = PG_GETARG_TIMESTAMPTZ(1);
+	TimestampTz dt1;
 
 	dt1 = date2timestamptz(dateVal);
 
@@ -455,8 +455,8 @@ Datum
 date_le_timestamptz(PG_FUNCTION_ARGS)
 {
 	DateADT		dateVal = PG_GETARG_DATEADT(0);
-	TimestampTz	dt2 = PG_GETARG_TIMESTAMPTZ(1);
-	TimestampTz	dt1;
+	TimestampTz dt2 = PG_GETARG_TIMESTAMPTZ(1);
+	TimestampTz dt1;
 
 	dt1 = date2timestamptz(dateVal);
 
@@ -467,8 +467,8 @@ Datum
 date_ge_timestamptz(PG_FUNCTION_ARGS)
 {
 	DateADT		dateVal = PG_GETARG_DATEADT(0);
-	TimestampTz	dt2 = PG_GETARG_TIMESTAMPTZ(1);
-	TimestampTz	dt1;
+	TimestampTz dt2 = PG_GETARG_TIMESTAMPTZ(1);
+	TimestampTz dt1;
 
 	dt1 = date2timestamptz(dateVal);
 
@@ -479,8 +479,8 @@ Datum
 date_cmp_timestamptz(PG_FUNCTION_ARGS)
 {
 	DateADT		dateVal = PG_GETARG_DATEADT(0);
-	TimestampTz	dt2 = PG_GETARG_TIMESTAMPTZ(1);
-	TimestampTz	dt1;
+	TimestampTz dt2 = PG_GETARG_TIMESTAMPTZ(1);
+	TimestampTz dt1;
 
 	dt1 = date2timestamptz(dateVal);
 
@@ -574,9 +574,9 @@ timestamp_cmp_date(PG_FUNCTION_ARGS)
 Datum
 timestamptz_eq_date(PG_FUNCTION_ARGS)
 {
-	TimestampTz	dt1 = PG_GETARG_TIMESTAMPTZ(0);
+	TimestampTz dt1 = PG_GETARG_TIMESTAMPTZ(0);
 	DateADT		dateVal = PG_GETARG_DATEADT(1);
-	TimestampTz	dt2;
+	TimestampTz dt2;
 
 	dt2 = date2timestamptz(dateVal);
 
@@ -586,9 +586,9 @@ timestamptz_eq_date(PG_FUNCTION_ARGS)
 Datum
 timestamptz_ne_date(PG_FUNCTION_ARGS)
 {
-	TimestampTz	dt1 = PG_GETARG_TIMESTAMPTZ(0);
+	TimestampTz dt1 = PG_GETARG_TIMESTAMPTZ(0);
 	DateADT		dateVal = PG_GETARG_DATEADT(1);
-	TimestampTz	dt2;
+	TimestampTz dt2;
 
 	dt2 = date2timestamptz(dateVal);
 
@@ -598,9 +598,9 @@ timestamptz_ne_date(PG_FUNCTION_ARGS)
 Datum
 timestamptz_lt_date(PG_FUNCTION_ARGS)
 {
-	TimestampTz	dt1 = PG_GETARG_TIMESTAMPTZ(0);
+	TimestampTz dt1 = PG_GETARG_TIMESTAMPTZ(0);
 	DateADT		dateVal = PG_GETARG_DATEADT(1);
-	TimestampTz	dt2;
+	TimestampTz dt2;
 
 	dt2 = date2timestamptz(dateVal);
 
@@ -610,9 +610,9 @@ timestamptz_lt_date(PG_FUNCTION_ARGS)
 Datum
 timestamptz_gt_date(PG_FUNCTION_ARGS)
 {
-	TimestampTz	dt1 = PG_GETARG_TIMESTAMPTZ(0);
+	TimestampTz dt1 = PG_GETARG_TIMESTAMPTZ(0);
 	DateADT		dateVal = PG_GETARG_DATEADT(1);
-	TimestampTz	dt2;
+	TimestampTz dt2;
 
 	dt2 = date2timestamptz(dateVal);
 
@@ -622,9 +622,9 @@ timestamptz_gt_date(PG_FUNCTION_ARGS)
 Datum
 timestamptz_le_date(PG_FUNCTION_ARGS)
 {
-	TimestampTz	dt1 = PG_GETARG_TIMESTAMPTZ(0);
+	TimestampTz dt1 = PG_GETARG_TIMESTAMPTZ(0);
 	DateADT		dateVal = PG_GETARG_DATEADT(1);
-	TimestampTz	dt2;
+	TimestampTz dt2;
 
 	dt2 = date2timestamptz(dateVal);
 
@@ -634,9 +634,9 @@ timestamptz_le_date(PG_FUNCTION_ARGS)
 Datum
 timestamptz_ge_date(PG_FUNCTION_ARGS)
 {
-	TimestampTz	dt1 = PG_GETARG_TIMESTAMPTZ(0);
+	TimestampTz dt1 = PG_GETARG_TIMESTAMPTZ(0);
 	DateADT		dateVal = PG_GETARG_DATEADT(1);
-	TimestampTz	dt2;
+	TimestampTz dt2;
 
 	dt2 = date2timestamptz(dateVal);
 
@@ -646,9 +646,9 @@ timestamptz_ge_date(PG_FUNCTION_ARGS)
 Datum
 timestamptz_cmp_date(PG_FUNCTION_ARGS)
 {
-	TimestampTz	dt1 = PG_GETARG_TIMESTAMPTZ(0);
+	TimestampTz dt1 = PG_GETARG_TIMESTAMPTZ(0);
 	DateADT		dateVal = PG_GETARG_DATEADT(1);
-	TimestampTz	dt2;
+	TimestampTz dt2;
 
 	dt2 = date2timestamptz(dateVal);
 
@@ -719,7 +719,7 @@ timestamp_date(PG_FUNCTION_ARGS)
 {
 	Timestamp	timestamp = PG_GETARG_TIMESTAMP(0);
 	DateADT		result;
-	struct pg_tm	tt,
+	struct pg_tm tt,
 			   *tm = &tt;
 	fsec_t		fsec;
 
@@ -760,7 +760,7 @@ timestamptz_date(PG_FUNCTION_ARGS)
 {
 	TimestampTz timestamp = PG_GETARG_TIMESTAMP(0);
 	DateADT		result;
-	struct pg_tm	tt,
+	struct pg_tm tt,
 			   *tm = &tt;
 	fsec_t		fsec;
 	int			tz;
@@ -788,7 +788,7 @@ abstime_date(PG_FUNCTION_ARGS)
 {
 	AbsoluteTime abstime = PG_GETARG_ABSOLUTETIME(0);
 	DateADT		result;
-	struct pg_tm	tt,
+	struct pg_tm tt,
 			   *tm = &tt;
 	int			tz;
 
@@ -889,7 +889,7 @@ time_in(PG_FUNCTION_ARGS)
 	int32		typmod = PG_GETARG_INT32(2);
 	TimeADT		result;
 	fsec_t		fsec;
-	struct pg_tm	tt,
+	struct pg_tm tt,
 			   *tm = &tt;
 	int			tz;
 	int			nf;
@@ -963,7 +963,7 @@ time_out(PG_FUNCTION_ARGS)
 {
 	TimeADT		time = PG_GETARG_TIMEADT(0);
 	char	   *result;
-	struct pg_tm	tt,
+	struct pg_tm tt,
 			   *tm = &tt;
 	fsec_t		fsec;
 	char		buf[MAXDATELEN + 1];
@@ -1324,7 +1324,7 @@ timestamp_time(PG_FUNCTION_ARGS)
 {
 	Timestamp	timestamp = PG_GETARG_TIMESTAMP(0);
 	TimeADT		result;
-	struct pg_tm	tt,
+	struct pg_tm tt,
 			   *tm = &tt;
 	fsec_t		fsec;
 
@@ -1359,7 +1359,7 @@ timestamptz_time(PG_FUNCTION_ARGS)
 {
 	TimestampTz timestamp = PG_GETARG_TIMESTAMP(0);
 	TimeADT		result;
-	struct pg_tm	tt,
+	struct pg_tm tt,
 			   *tm = &tt;
 	int			tz;
 	fsec_t		fsec;
@@ -1615,7 +1615,7 @@ time_part(PG_FUNCTION_ARGS)
 	if (type == UNITS)
 	{
 		fsec_t		fsec;
-		struct pg_tm	tt,
+		struct pg_tm tt,
 				   *tm = &tt;
 
 		time2tm(time, tm, &fsec);
@@ -1729,7 +1729,7 @@ timetz_in(PG_FUNCTION_ARGS)
 	int32		typmod = PG_GETARG_INT32(2);
 	TimeTzADT  *result;
 	fsec_t		fsec;
-	struct pg_tm	tt,
+	struct pg_tm tt,
 			   *tm = &tt;
 	int			tz;
 	int			nf;
@@ -1760,7 +1760,7 @@ timetz_out(PG_FUNCTION_ARGS)
 {
 	TimeTzADT  *time = PG_GETARG_TIMETZADT_P(0);
 	char	   *result;
-	struct pg_tm	tt,
+	struct pg_tm tt,
 			   *tm = &tt;
 	fsec_t		fsec;
 	int			tz;
@@ -2211,7 +2211,7 @@ time_timetz(PG_FUNCTION_ARGS)
 {
 	TimeADT		time = PG_GETARG_TIMEADT(0);
 	TimeTzADT  *result;
-	struct pg_tm	tt,
+	struct pg_tm tt,
 			   *tm = &tt;
 	fsec_t		fsec;
 	int			tz;
@@ -2237,7 +2237,7 @@ timestamptz_timetz(PG_FUNCTION_ARGS)
 {
 	TimestampTz timestamp = PG_GETARG_TIMESTAMP(0);
 	TimeTzADT  *result;
-	struct pg_tm	tt,
+	struct pg_tm tt,
 			   *tm = &tt;
 	int			tz;
 	fsec_t		fsec;
@@ -2327,8 +2327,8 @@ text_timetz(PG_FUNCTION_ARGS)
 	if (VARSIZE(str) - VARHDRSZ > MAXDATELEN)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-		   errmsg("invalid input syntax for type time with time zone: \"%s\"",
-				  VARDATA(str))));
+				 errmsg("invalid input syntax for type time with time zone: \"%s\"",
+						VARDATA(str))));
 
 	sp = VARDATA(str);
 	dp = dstr;
@@ -2368,7 +2368,7 @@ timetz_part(PG_FUNCTION_ARGS)
 		double		dummy;
 		int			tz;
 		fsec_t		fsec;
-		struct pg_tm	tt,
+		struct pg_tm tt,
 				   *tm = &tt;
 
 		timetz2tm(time, tm, &fsec, &tz);
@@ -2452,8 +2452,8 @@ timetz_part(PG_FUNCTION_ARGS)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("\"time with time zone\" units \"%s\" not recognized",
-						DatumGetCString(DirectFunctionCall1(textout,
+			errmsg("\"time with time zone\" units \"%s\" not recognized",
+				   DatumGetCString(DirectFunctionCall1(textout,
 											 PointerGetDatum(units))))));
 
 		result = 0;

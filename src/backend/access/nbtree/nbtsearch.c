@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.88 2004/08/29 04:12:21 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.89 2004/08/29 05:06:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -155,15 +155,16 @@ _bt_moveright(Relation rel,
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 
 	/*
-	 * When nextkey = false (normal case): if the scan key that brought us to
-	 * this page is > the high key stored on the page, then the page has split
-	 * and we need to move right.  (If the scan key is equal to the high key,
-	 * we might or might not need to move right; have to scan the page first
-	 * anyway.)
+	 * When nextkey = false (normal case): if the scan key that brought us
+	 * to this page is > the high key stored on the page, then the page
+	 * has split and we need to move right.  (If the scan key is equal to
+	 * the high key, we might or might not need to move right; have to
+	 * scan the page first anyway.)
 	 *
 	 * When nextkey = true: move right if the scan key is >= page's high key.
 	 *
-	 * The page could even have split more than once, so scan as far as needed.
+	 * The page could even have split more than once, so scan as far as
+	 * needed.
 	 *
 	 * We also have to move right if we followed a link that brought us to a
 	 * dead page.
@@ -253,13 +254,11 @@ _bt_binsrch(Relation rel,
 	 * Binary search to find the first key on the page >= scan key, or
 	 * first key > scankey when nextkey is true.
 	 *
-	 * For nextkey=false (cmpval=1), the loop invariant is: all slots
-	 * before 'low' are < scan key, all slots at or after 'high'
-	 * are >= scan key.
+	 * For nextkey=false (cmpval=1), the loop invariant is: all slots before
+	 * 'low' are < scan key, all slots at or after 'high' are >= scan key.
 	 *
-	 * For nextkey=true (cmpval=0), the loop invariant is: all slots
-	 * before 'low' are <= scan key, all slots at or after 'high'
-	 * are > scan key.
+	 * For nextkey=true (cmpval=0), the loop invariant is: all slots before
+	 * 'low' are <= scan key, all slots at or after 'high' are > scan key.
 	 *
 	 * We can fall out when high == low.
 	 */
@@ -285,15 +284,15 @@ _bt_binsrch(Relation rel,
 	 * At this point we have high == low, but be careful: they could point
 	 * past the last slot on the page.
 	 *
-	 * On a leaf page, we always return the first key >= scan key (resp.
-	 * > scan key), which could be the last slot + 1.
+	 * On a leaf page, we always return the first key >= scan key (resp. >
+	 * scan key), which could be the last slot + 1.
 	 */
 	if (P_ISLEAF(opaque))
 		return low;
 
 	/*
-	 * On a non-leaf page, return the last key < scan key (resp. <= scan key).
-	 * There must be one if _bt_compare() is playing by the rules.
+	 * On a non-leaf page, return the last key < scan key (resp. <= scan
+	 * key). There must be one if _bt_compare() is playing by the rules.
 	 */
 	Assert(low > P_FIRSTDATAKEY(opaque));
 
@@ -382,10 +381,10 @@ _bt_compare(Relation rel,
 		{
 			/*
 			 * The sk_func needs to be passed the index value as left arg
-			 * and the sk_argument as right arg (they might be of different
-			 * types).  Since it is convenient for callers to think of
-			 * _bt_compare as comparing the scankey to the index item,
-			 * we have to flip the sign of the comparison result.
+			 * and the sk_argument as right arg (they might be of
+			 * different types).  Since it is convenient for callers to
+			 * think of _bt_compare as comparing the scankey to the index
+			 * item, we have to flip the sign of the comparison result.
 			 *
 			 * Note: curious-looking coding is to avoid overflow if
 			 * comparison function returns INT_MIN.  There is no risk of
@@ -497,7 +496,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	bool		goback;
 	bool		continuescan;
 	ScanKey		scankeys;
-	ScanKey	   *startKeys = NULL;
+	ScanKey    *startKeys = NULL;
 	int			keysCount = 0;
 	int			i;
 	StrategyNumber strat_total;
@@ -521,7 +520,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	 * We want to identify the keys that can be used as starting boundaries;
 	 * these are =, >, or >= keys for a forward scan or =, <, <= keys for
 	 * a backwards scan.  We can use keys for multiple attributes so long as
-	 * the prior attributes had only =, >= (resp. =, <=) keys.  Once we accept
+	 * the prior attributes had only =, >= (resp. =, <=) keys.	Once we accept
 	 * a > or < boundary or find an attribute with no boundary (which can be
 	 * thought of as the same as "> -infinity"), we can't use keys for any
 	 * attributes to its right, because it would break our simplistic notion
@@ -554,13 +553,15 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 		ScanKey		cur;
 
 		startKeys = (ScanKey *) palloc(so->numberOfKeys * sizeof(ScanKey));
+
 		/*
-		 * chosen is the so-far-chosen key for the current attribute, if any.
-		 * We don't cast the decision in stone until we reach keys for the
-		 * next attribute.
+		 * chosen is the so-far-chosen key for the current attribute, if
+		 * any. We don't cast the decision in stone until we reach keys
+		 * for the next attribute.
 		 */
 		curattr = 1;
 		chosen = NULL;
+
 		/*
 		 * Loop iterates from 0 to numberOfKeys inclusive; we use the last
 		 * pass to handle after-last-key processing.  Actual exit from the
@@ -578,8 +579,10 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 				if (chosen == NULL)
 					break;
 				startKeys[keysCount++] = chosen;
+
 				/*
-				 * Adjust strat_total, and quit if we have stored a > or < key.
+				 * Adjust strat_total, and quit if we have stored a > or <
+				 * key.
 				 */
 				strat = chosen->sk_strategy;
 				if (strat != BTEqualStrategyNumber)
@@ -589,11 +592,13 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 						strat == BTLessStrategyNumber)
 						break;
 				}
+
 				/*
 				 * Done if that was the last attribute.
 				 */
 				if (i >= so->numberOfKeys)
 					break;
+
 				/*
 				 * Reset for next attr, which should be in sequence.
 				 */
@@ -646,8 +651,8 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 		ScanKey		cur = startKeys[i];
 
 		/*
-		 * _bt_preprocess_keys disallows it, but it's place to add some code
-		 * later
+		 * _bt_preprocess_keys disallows it, but it's place to add some
+		 * code later
 		 */
 		if (cur->sk_flags & SK_ISNULL)
 		{
@@ -656,10 +661,11 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 			elog(ERROR, "btree doesn't support is(not)null, yet");
 			return false;
 		}
+
 		/*
 		 * If scankey operator is of default subtype, we can use the
-		 * cached comparison procedure; otherwise gotta look it up in
-		 * the catalogs.
+		 * cached comparison procedure; otherwise gotta look it up in the
+		 * catalogs.
 		 */
 		if (cur->sk_subtype == InvalidOid)
 		{
@@ -695,43 +701,46 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 
 	/*
 	 * Examine the selected initial-positioning strategy to determine
-	 * exactly where we need to start the scan, and set flag variables
-	 * to control the code below.
+	 * exactly where we need to start the scan, and set flag variables to
+	 * control the code below.
 	 *
-	 * If nextkey = false, _bt_search and _bt_binsrch will locate the
-	 * first item >= scan key.  If nextkey = true, they will locate the
-	 * first item > scan key.
+	 * If nextkey = false, _bt_search and _bt_binsrch will locate the first
+	 * item >= scan key.  If nextkey = true, they will locate the first
+	 * item > scan key.
 	 *
-	 * If goback = true, we will then step back one item, while if
-	 * goback = false, we will start the scan on the located item.
+	 * If goback = true, we will then step back one item, while if goback =
+	 * false, we will start the scan on the located item.
 	 *
 	 * it's yet other place to add some code later for is(not)null ...
 	 */
 	switch (strat_total)
 	{
 		case BTLessStrategyNumber:
+
 			/*
-			 * Find first item >= scankey, then back up one to arrive at last
-			 * item < scankey.  (Note: this positioning strategy is only used
-			 * for a backward scan, so that is always the correct starting
-			 * position.)
+			 * Find first item >= scankey, then back up one to arrive at
+			 * last item < scankey.  (Note: this positioning strategy is
+			 * only used for a backward scan, so that is always the
+			 * correct starting position.)
 			 */
 			nextkey = false;
 			goback = true;
 			break;
 
 		case BTLessEqualStrategyNumber:
+
 			/*
-			 * Find first item > scankey, then back up one to arrive at last
-			 * item <= scankey.  (Note: this positioning strategy is only used
-			 * for a backward scan, so that is always the correct starting
-			 * position.)
+			 * Find first item > scankey, then back up one to arrive at
+			 * last item <= scankey.  (Note: this positioning strategy is
+			 * only used for a backward scan, so that is always the
+			 * correct starting position.)
 			 */
 			nextkey = true;
 			goback = true;
 			break;
 
 		case BTEqualStrategyNumber:
+
 			/*
 			 * If a backward scan was specified, need to start with last
 			 * equal item not first one.
@@ -739,8 +748,8 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 			if (ScanDirectionIsBackward(dir))
 			{
 				/*
-				 * This is the same as the <= strategy.  We will check
-				 * at the end whether the found item is actually =.
+				 * This is the same as the <= strategy.  We will check at
+				 * the end whether the found item is actually =.
 				 */
 				nextkey = true;
 				goback = true;
@@ -748,8 +757,8 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 			else
 			{
 				/*
-				 * This is the same as the >= strategy.  We will check
-				 * at the end whether the found item is actually =.
+				 * This is the same as the >= strategy.  We will check at
+				 * the end whether the found item is actually =.
 				 */
 				nextkey = false;
 				goback = false;
@@ -757,18 +766,20 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 			break;
 
 		case BTGreaterEqualStrategyNumber:
+
 			/*
-			 * Find first item >= scankey.  (This is only used for
-			 * forward scans.)
+			 * Find first item >= scankey.	(This is only used for forward
+			 * scans.)
 			 */
 			nextkey = false;
 			goback = false;
 			break;
 
 		case BTGreaterStrategyNumber:
+
 			/*
-			 * Find first item > scankey.  (This is only used for
-			 * forward scans.)
+			 * Find first item > scankey.  (This is only used for forward
+			 * scans.)
 			 */
 			nextkey = true;
 			goback = false;
@@ -814,23 +825,23 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	pfree(scankeys);
 
 	/*
-	 * If nextkey = false, we are positioned at the first item >= scan key,
-	 * or possibly at the end of a page on which all the existing items are
-	 * less than the scan key and we know that everything on later pages
-	 * is greater than or equal to scan key.
+	 * If nextkey = false, we are positioned at the first item >= scan
+	 * key, or possibly at the end of a page on which all the existing
+	 * items are less than the scan key and we know that everything on
+	 * later pages is greater than or equal to scan key.
 	 *
-	 * If nextkey = true, we are positioned at the first item > scan key,
-	 * or possibly at the end of a page on which all the existing items are
+	 * If nextkey = true, we are positioned at the first item > scan key, or
+	 * possibly at the end of a page on which all the existing items are
 	 * less than or equal to the scan key and we know that everything on
 	 * later pages is greater than scan key.
 	 *
 	 * The actually desired starting point is either this item or the prior
-	 * one, or in the end-of-page case it's the first item on the next page
-	 * or the last item on this page.  We apply _bt_step if needed to get to
-	 * the right place.
+	 * one, or in the end-of-page case it's the first item on the next
+	 * page or the last item on this page.	We apply _bt_step if needed to
+	 * get to the right place.
 	 *
-	 * If _bt_step fails (meaning we fell off the end of the index in
-	 * one direction or the other), then there are no matches so we just
+	 * If _bt_step fails (meaning we fell off the end of the index in one
+	 * direction or the other), then there are no matches so we just
 	 * return false.
 	 */
 	if (goback)
@@ -1292,7 +1303,8 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 	itup = &(btitem->bti_itup);
 
 	/*
-	 * Okay, we are on the first or last tuple.  Does it pass all the quals?
+	 * Okay, we are on the first or last tuple.  Does it pass all the
+	 * quals?
 	 */
 	if (_bt_checkkeys(scan, itup, dir, &continuescan))
 	{

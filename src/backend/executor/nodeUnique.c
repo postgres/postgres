@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeUnique.c,v 1.43 2004/08/29 04:12:31 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeUnique.c,v 1.44 2004/08/29 05:06:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,8 +109,9 @@ ExecUnique(UniqueState *node)
 	 * he next calls us.
 	 *
 	 * tgl 3/2004: the above concern is no longer valid; junkfilters used to
-	 * modify their input's return slot but don't anymore, and I don't think
-	 * anyplace else does either.  Not worth changing this code though.
+	 * modify their input's return slot but don't anymore, and I don't
+	 * think anyplace else does either.  Not worth changing this code
+	 * though.
 	 */
 	if (node->priorTuple != NULL)
 		heap_freetuple(node->priorTuple);

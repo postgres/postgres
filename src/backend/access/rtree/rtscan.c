@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/rtree/rtscan.c,v 1.54 2004/08/29 04:12:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/rtree/rtscan.c,v 1.55 2004/08/29 05:06:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -123,7 +123,7 @@ rtrescan(PG_FUNCTION_ARGS)
 			Oid			int_oper;
 			RegProcedure int_proc;
 
-			opclass = s->indexRelation->rd_index->indclass[attno-1];
+			opclass = s->indexRelation->rd_index->indclass[attno - 1];
 			int_strategy = RTMapToInternalOperator(s->keyData[i].sk_strategy);
 			int_oper = get_opclass_member(opclass,
 										  s->keyData[i].sk_subtype,
@@ -280,14 +280,14 @@ rtdropscan(IndexScanDesc s)
 void
 ReleaseResources_rtree(void)
 {
-	RTScanList l;
-	RTScanList prev;
-	RTScanList next;
+	RTScanList	l;
+	RTScanList	prev;
+	RTScanList	next;
 
 	/*
-	 * Note: this should be a no-op during normal query shutdown.
-	 * However, in an abort situation ExecutorEnd is not called and so
-	 * there may be open index scans to clean up.
+	 * Note: this should be a no-op during normal query shutdown. However,
+	 * in an abort situation ExecutorEnd is not called and so there may be
+	 * open index scans to clean up.
 	 */
 	prev = NULL;
 

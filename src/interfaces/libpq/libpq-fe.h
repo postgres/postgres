@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-fe.h,v 1.107 2004/08/29 04:13:12 momjian Exp $
+ * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-fe.h,v 1.108 2004/08/29 05:07:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -248,7 +248,7 @@ extern PGTransactionStatusType PQtransactionStatus(const PGconn *conn);
 extern const char *PQparameterStatus(const PGconn *conn,
 				  const char *paramName);
 extern int	PQprotocolVersion(const PGconn *conn);
-extern int  PQserverVersion(const PGconn *conn);
+extern int	PQserverVersion(const PGconn *conn);
 extern char *PQerrorMessage(const PGconn *conn);
 extern int	PQsocket(const PGconn *conn);
 extern int	PQbackendPID(const PGconn *conn);
@@ -276,15 +276,15 @@ extern PQnoticeProcessor PQsetNoticeProcessor(PGconn *conn,
 					 void *arg);
 
 /*
- *     Used to set callback that prevents concurrent access to
- *     non-thread safe functions that libpq needs.
- *     The default implementation uses a libpq internal mutex.
- *     Only required for multithreaded apps that use kerberos
- *     both within their app and for postgresql connections.
+ *	   Used to set callback that prevents concurrent access to
+ *	   non-thread safe functions that libpq needs.
+ *	   The default implementation uses a libpq internal mutex.
+ *	   Only required for multithreaded apps that use kerberos
+ *	   both within their app and for postgresql connections.
  */
-typedef void (pgthreadlock_t)(int acquire);
+typedef void (pgthreadlock_t) (int acquire);
 
-extern pgthreadlock_t * PQregisterThreadLock(pgthreadlock_t *newhandler);
+extern pgthreadlock_t *PQregisterThreadLock(pgthreadlock_t *newhandler);
 
 extern void PQinitSSL(int do_init);
 
@@ -301,12 +301,12 @@ extern PGresult *PQexecParams(PGconn *conn,
 			 const int *paramFormats,
 			 int resultFormat);
 extern PGresult *PQexecPrepared(PGconn *conn,
-			 const char *stmtName,
-			 int nParams,
-			 const char *const * paramValues,
-			 const int *paramLengths,
-			 const int *paramFormats,
-			 int resultFormat);
+			   const char *stmtName,
+			   int nParams,
+			   const char *const * paramValues,
+			   const int *paramLengths,
+			   const int *paramFormats,
+			   int resultFormat);
 
 /* Interface for multiple-result or asynchronous queries */
 extern int	PQsendQuery(PGconn *conn, const char *query);
@@ -319,12 +319,12 @@ extern int PQsendQueryParams(PGconn *conn,
 				  const int *paramFormats,
 				  int resultFormat);
 extern int PQsendQueryPrepared(PGconn *conn,
-				  const char *stmtName,
-				  int nParams,
-				  const char *const * paramValues,
-				  const int *paramLengths,
-				  const int *paramFormats,
-				  int resultFormat);
+					const char *stmtName,
+					int nParams,
+					const char *const * paramValues,
+					const int *paramLengths,
+					const int *paramFormats,
+					int resultFormat);
 extern PGresult *PQgetResult(PGconn *conn);
 
 /* Routines for managing an asynchronous query */
@@ -417,21 +417,24 @@ extern unsigned char *PQunescapeBytea(const unsigned char *strtext,
 
 /* === in fe-print.c === */
 
-extern void PQprint(FILE *fout,				/* output stream */
-					const PGresult *res,
-					const PQprintOpt *ps);	/* option structure */
+extern void
+PQprint(FILE *fout,				/* output stream */
+		const PGresult *res,
+		const PQprintOpt *ps);	/* option structure */
 
 /*
  * really old printing routines
  */
-extern void PQdisplayTuples(const PGresult *res,
+extern void
+PQdisplayTuples(const PGresult *res,
 				FILE *fp,		/* where to send the output */
 				int fillAlign,	/* pad the fields with spaces */
 				const char *fieldSep,	/* field separator */
 				int printHeader,	/* display headers? */
 				int quiet);
 
-extern void PQprintTuples(const PGresult *res,
+extern void
+PQprintTuples(const PGresult *res,
 			  FILE *fout,		/* output stream */
 			  int printAttName, /* print attribute names */
 			  int terseOutput,	/* delimiter bars */

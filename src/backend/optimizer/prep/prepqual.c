@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepqual.c,v 1.45 2004/08/29 04:12:34 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepqual.c,v 1.46 2004/08/29 05:06:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,8 +58,8 @@ canonicalize_qual(Expr *qual)
 
 	/*
 	 * Push down NOTs.	We do this only in the top-level boolean
-	 * expression, without examining arguments of operators/functions.
-	 * The main reason for doing this is to expose as much top-level AND/OR
+	 * expression, without examining arguments of operators/functions. The
+	 * main reason for doing this is to expose as much top-level AND/OR
 	 * structure as we can, so there's no point in descending further.
 	 */
 	newqual = find_nots(newqual);
@@ -129,7 +129,8 @@ flatten_andors_mutator(Node *node, void *context)
 				 * Note: we can destructively concat the subexpression's
 				 * arglist because we know the recursive invocation of
 				 * flatten_andors will have built a new arglist not shared
-				 * with any other expr. Otherwise we'd need a list_copy here.
+				 * with any other expr. Otherwise we'd need a list_copy
+				 * here.
 				 */
 				if (and_clause(subexpr))
 					out_list = list_concat(out_list,
@@ -152,7 +153,8 @@ flatten_andors_mutator(Node *node, void *context)
 				 * Note: we can destructively concat the subexpression's
 				 * arglist because we know the recursive invocation of
 				 * flatten_andors will have built a new arglist not shared
-				 * with any other expr. Otherwise we'd need a list_copy here.
+				 * with any other expr. Otherwise we'd need a list_copy
+				 * here.
 				 */
 				if (or_clause(subexpr))
 					out_list = list_concat(out_list,
@@ -192,7 +194,7 @@ pull_ands(List *andlist)
 		 */
 		if (and_clause(subexpr))
 			out_list = list_concat(out_list,
-								   pull_ands(((BoolExpr *) subexpr)->args));
+								pull_ands(((BoolExpr *) subexpr)->args));
 		else
 			out_list = lappend(out_list, subexpr);
 	}
@@ -224,7 +226,7 @@ pull_ors(List *orlist)
 		 */
 		if (or_clause(subexpr))
 			out_list = list_concat(out_list,
-								   pull_ors(((BoolExpr *) subexpr)->args));
+								 pull_ors(((BoolExpr *) subexpr)->args));
 		else
 			out_list = lappend(out_list, subexpr);
 	}
@@ -236,7 +238,7 @@ pull_ors(List *orlist)
  * find_nots
  *	  Traverse the qualification, looking for NOTs to take care of.
  *	  For NOT clauses, apply push_nots() to try to push down the NOT.
- *	  For AND and OR clause types, simply recurse.  Otherwise stop
+ *	  For AND and OR clause types, simply recurse.	Otherwise stop
  *	  recursing (we do not worry about structure below the top AND/OR tree).
  *
  * Returns the modified qualification.	AND/OR flatness is preserved.
@@ -287,8 +289,8 @@ push_nots(Expr *qual)
 
 	/*
 	 * Negate an operator clause if possible: (NOT (< A B)) => (> A B)
-	 * Otherwise, retain the clause as it is (the NOT can't be pushed
-	 * down any farther).
+	 * Otherwise, retain the clause as it is (the NOT can't be pushed down
+	 * any farther).
 	 */
 	if (is_opclause(qual))
 	{
@@ -332,16 +334,16 @@ push_nots(Expr *qual)
 	else if (not_clause((Node *) qual))
 	{
 		/*
-		 * Another NOT cancels this NOT, so eliminate the NOT and
-		 * stop negating this branch.
+		 * Another NOT cancels this NOT, so eliminate the NOT and stop
+		 * negating this branch.
 		 */
 		return get_notclausearg(qual);
 	}
 	else
 	{
 		/*
-		 * We don't know how to negate anything else, place a NOT at
-		 * this level.
+		 * We don't know how to negate anything else, place a NOT at this
+		 * level.
 		 */
 		return make_notclause(qual);
 	}
@@ -356,7 +358,7 @@ push_nots(Expr *qual)
  *
  * This may seem like a fairly useless activity, but it turns out to be
  * applicable to many machine-generated queries, and there are also queries
- * in some of the TPC benchmarks that need it.  This was in fact almost the
+ * in some of the TPC benchmarks that need it.	This was in fact almost the
  * sole useful side-effect of the old prepqual code that tried to force
  * the query into canonical AND-of-ORs form: the canonical equivalent of
  *		((A AND B) OR (A AND C))
@@ -375,7 +377,7 @@ push_nots(Expr *qual)
  *	  OR clauses to which the inverse OR distributive law might apply.
  *	  Only the top-level AND/OR structure is searched.
  *
- * Returns the modified qualification.  AND/OR flatness is preserved.
+ * Returns the modified qualification.	AND/OR flatness is preserved.
  */
 static Expr *
 find_duplicate_ors(Expr *qual)
@@ -391,6 +393,7 @@ find_duplicate_ors(Expr *qual)
 		/* Recurse */
 		foreach(temp, ((BoolExpr *) qual)->args)
 			orlist = lappend(orlist, find_duplicate_ors(lfirst(temp)));
+
 		/*
 		 * Don't need pull_ors() since this routine will never introduce
 		 * an OR where there wasn't one before.
@@ -433,14 +436,15 @@ process_duplicate_ors(List *orlist)
 
 	if (orlist == NIL)
 		return NULL;			/* probably can't happen */
-	if (list_length(orlist) == 1)	/* single-expression OR (can this happen?) */
+	if (list_length(orlist) == 1)		/* single-expression OR (can this
+										 * happen?) */
 		return linitial(orlist);
 
 	/*
 	 * Choose the shortest AND clause as the reference list --- obviously,
-	 * any subclause not in this clause isn't in all the clauses.
-	 * If we find a clause that's not an AND, we can treat it as a
-	 * one-element AND clause, which necessarily wins as shortest.
+	 * any subclause not in this clause isn't in all the clauses. If we
+	 * find a clause that's not an AND, we can treat it as a one-element
+	 * AND clause, which necessarily wins as shortest.
 	 */
 	foreach(temp, orlist)
 	{
@@ -471,7 +475,7 @@ process_duplicate_ors(List *orlist)
 
 	/*
 	 * Check each element of the reference list to see if it's in all the
-	 * OR clauses.  Build a new list of winning clauses.
+	 * OR clauses.	Build a new list of winning clauses.
 	 */
 	winners = NIL;
 	foreach(temp, reference)
@@ -515,12 +519,13 @@ process_duplicate_ors(List *orlist)
 	/*
 	 * Generate new OR list consisting of the remaining sub-clauses.
 	 *
-	 * If any clause degenerates to empty, then we have a situation like
-	 * (A AND B) OR (A), which can be reduced to just A --- that is, the
+	 * If any clause degenerates to empty, then we have a situation like (A
+	 * AND B) OR (A), which can be reduced to just A --- that is, the
 	 * additional conditions in other arms of the OR are irrelevant.
 	 *
 	 * Note that because we use list_difference, any multiple occurrences of
-	 * a winning clause in an AND sub-clause will be removed automatically.
+	 * a winning clause in an AND sub-clause will be removed
+	 * automatically.
 	 */
 	neworlist = NIL;
 	foreach(temp, orlist)
@@ -541,7 +546,7 @@ process_duplicate_ors(List *orlist)
 			}
 			else
 			{
-				neworlist = NIL;		/* degenerate case, see above */
+				neworlist = NIL;	/* degenerate case, see above */
 				break;
 			}
 		}
@@ -551,17 +556,17 @@ process_duplicate_ors(List *orlist)
 				neworlist = lappend(neworlist, clause);
 			else
 			{
-				neworlist = NIL;		/* degenerate case, see above */
+				neworlist = NIL;	/* degenerate case, see above */
 				break;
 			}
 		}
 	}
 
 	/*
-	 * Append reduced OR to the winners list, if it's not degenerate, handling
-	 * the special case of one element correctly (can that really happen?).
-	 * Also be careful to maintain AND/OR flatness in case we pulled up a
-	 * sub-sub-OR-clause.
+	 * Append reduced OR to the winners list, if it's not degenerate,
+	 * handling the special case of one element correctly (can that really
+	 * happen?). Also be careful to maintain AND/OR flatness in case we
+	 * pulled up a sub-sub-OR-clause.
 	 */
 	if (neworlist != NIL)
 	{

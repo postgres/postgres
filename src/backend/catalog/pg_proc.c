@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.118 2004/08/29 04:12:29 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.119 2004/08/29 05:06:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,12 +44,12 @@ Datum		fmgr_c_validator(PG_FUNCTION_ARGS);
 Datum		fmgr_sql_validator(PG_FUNCTION_ARGS);
 
 static Datum create_parameternames_array(int parameterCount,
-										 const char *parameterNames[]);
+							const char *parameterNames[]);
 static void sql_function_parse_error_callback(void *arg);
-static int	match_prosrc_to_query(const char *prosrc, const char *queryText,
-								  int cursorpos);
+static int match_prosrc_to_query(const char *prosrc, const char *queryText,
+					  int cursorpos);
 static bool match_prosrc_to_literal(const char *prosrc, const char *literal,
-									int cursorpos, int *newcursorpos);
+						int cursorpos, int *newcursorpos);
 
 
 /* ----------------------------------------------------------------
@@ -173,7 +173,7 @@ ProcedureCreate(const char *procedureName,
 	values[i++] = UInt16GetDatum(parameterCount);		/* pronargs */
 	values[i++] = ObjectIdGetDatum(returnType); /* prorettype */
 	values[i++] = PointerGetDatum(typev);		/* proargtypes */
-	values[i++] = namesarray;					/* proargnames */
+	values[i++] = namesarray;	/* proargnames */
 	if (namesarray == PointerGetDatum(NULL))
 		nulls[Anum_pg_proc_proargnames - 1] = 'n';
 	values[i++] = DirectFunctionCall1(textin,	/* prosrc */
@@ -329,7 +329,7 @@ create_parameternames_array(int parameterCount, const char *parameterNames[])
 	if (!parameterNames)
 		return PointerGetDatum(NULL);
 
-	for (i=0; i<parameterCount; i++)
+	for (i = 0; i < parameterCount; i++)
 	{
 		const char *s = parameterNames[i];
 
@@ -562,8 +562,9 @@ check_sql_fn_retval(Oid rettype, char fn_typtype, List *queryTreeList)
 		}
 
 		/*
-		 * Otherwise assume we are returning the whole tuple.  Crosschecking
-		 * against what the caller expects will happen at runtime.
+		 * Otherwise assume we are returning the whole tuple.
+		 * Crosschecking against what the caller expects will happen at
+		 * runtime.
 		 */
 		return true;
 	}
@@ -652,9 +653,10 @@ fmgr_c_validator(PG_FUNCTION_ARGS)
 	char	   *probin;
 
 	/*
-	 * It'd be most consistent to skip the check if !check_function_bodies,
-	 * but the purpose of that switch is to be helpful for pg_dump loading,
-	 * and for pg_dump loading it's much better if we *do* check.
+	 * It'd be most consistent to skip the check if
+	 * !check_function_bodies, but the purpose of that switch is to be
+	 * helpful for pg_dump loading, and for pg_dump loading it's much
+	 * better if we *do* check.
 	 */
 
 	tuple = SearchSysCache(PROCOID,
@@ -760,10 +762,10 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 		error_context_stack = &sqlerrcontext;
 
 		/*
-		 * We can't do full prechecking of the function definition if there
-		 * are any polymorphic input types, because actual datatypes of
-		 * expression results will be unresolvable.  The check will be done
-		 * at runtime instead.
+		 * We can't do full prechecking of the function definition if
+		 * there are any polymorphic input types, because actual datatypes
+		 * of expression results will be unresolvable.	The check will be
+		 * done at runtime instead.
 		 *
 		 * We can run the text through the raw parser though; this will at
 		 * least catch silly syntactic errors.
@@ -817,7 +819,7 @@ sql_function_parse_error_callback(void *arg)
 /*
  * Adjust a syntax error occurring inside the function body of a CREATE
  * FUNCTION command.  This can be used by any function validator, not only
- * for SQL-language functions.  It is assumed that the syntax error position
+ * for SQL-language functions.	It is assumed that the syntax error position
  * is initially relative to the function body string (as passed in).  If
  * possible, we adjust the position to reference the original CREATE command;
  * if we can't manage that, we set up an "internal query" syntax error instead.
@@ -832,11 +834,11 @@ function_parse_error_transpose(const char *prosrc)
 	const char *queryText;
 
 	/*
-	 * Nothing to do unless we are dealing with a syntax error that has
-	 * a cursor position.
+	 * Nothing to do unless we are dealing with a syntax error that has a
+	 * cursor position.
 	 *
-	 * Some PLs may prefer to report the error position as an internal
-	 * error to begin with, so check that too.
+	 * Some PLs may prefer to report the error position as an internal error
+	 * to begin with, so check that too.
 	 */
 	origerrposition = geterrposition();
 	if (origerrposition <= 0)
@@ -891,17 +893,17 @@ match_prosrc_to_query(const char *prosrc, const char *queryText,
 	 * (though not in any very probable scenarios), so fail if we find
 	 * more than one match.
 	 */
-	int		prosrclen = strlen(prosrc);
-	int		querylen = strlen(queryText);
-	int		matchpos = 0;
-	int		curpos;
-	int		newcursorpos;
+	int			prosrclen = strlen(prosrc);
+	int			querylen = strlen(queryText);
+	int			matchpos = 0;
+	int			curpos;
+	int			newcursorpos;
 
-	for (curpos = 0; curpos < querylen-prosrclen; curpos++)
+	for (curpos = 0; curpos < querylen - prosrclen; curpos++)
 	{
 		if (queryText[curpos] == '$' &&
-			strncmp(prosrc, &queryText[curpos+1], prosrclen) == 0 &&
-			queryText[curpos+1+prosrclen] == '$')
+			strncmp(prosrc, &queryText[curpos + 1], prosrclen) == 0 &&
+			queryText[curpos + 1 + prosrclen] == '$')
 		{
 			/*
 			 * Found a $foo$ match.  Since there are no embedded quoting
@@ -910,20 +912,21 @@ match_prosrc_to_query(const char *prosrc, const char *queryText,
 			 */
 			if (matchpos)
 				return 0;		/* multiple matches, fail */
-			matchpos = pg_mbstrlen_with_len(queryText, curpos+1)
+			matchpos = pg_mbstrlen_with_len(queryText, curpos + 1)
 				+ cursorpos;
 		}
 		else if (queryText[curpos] == '\'' &&
-				 match_prosrc_to_literal(prosrc, &queryText[curpos+1],
+				 match_prosrc_to_literal(prosrc, &queryText[curpos + 1],
 										 cursorpos, &newcursorpos))
 		{
 			/*
-			 * Found a 'foo' match.  match_prosrc_to_literal() has adjusted
-			 * for any quotes or backslashes embedded in the literal.
+			 * Found a 'foo' match.  match_prosrc_to_literal() has
+			 * adjusted for any quotes or backslashes embedded in the
+			 * literal.
 			 */
 			if (matchpos)
 				return 0;		/* multiple matches, fail */
-			matchpos = pg_mbstrlen_with_len(queryText, curpos+1)
+			matchpos = pg_mbstrlen_with_len(queryText, curpos + 1)
 				+ newcursorpos;
 		}
 	}
@@ -948,15 +951,16 @@ match_prosrc_to_literal(const char *prosrc, const char *literal,
 
 	/*
 	 * This implementation handles backslashes and doubled quotes in the
-	 * string literal.  It does not handle the SQL syntax for literals
+	 * string literal.	It does not handle the SQL syntax for literals
 	 * continued across line boundaries.
 	 *
-	 * We do the comparison a character at a time, not a byte at a time,
-	 * so that we can do the correct cursorpos math.
+	 * We do the comparison a character at a time, not a byte at a time, so
+	 * that we can do the correct cursorpos math.
 	 */
 	while (*prosrc)
 	{
 		cursorpos--;			/* characters left before cursor */
+
 		/*
 		 * Check for backslashes and doubled quotes in the literal; adjust
 		 * newcp when one is found before the cursor.

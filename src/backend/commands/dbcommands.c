@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.140 2004/08/29 04:12:30 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.141 2004/08/29 05:06:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,7 +78,7 @@ createdb(const CreatedbStmt *stmt)
 	Oid			dboid;
 	AclId		datdba;
 	ListCell   *option;
-	DefElem	   *dtablespacename = NULL;
+	DefElem    *dtablespacename = NULL;
 	DefElem    *downer = NULL;
 	DefElem    *dtemplate = NULL;
 	DefElem    *dencoding = NULL;
@@ -86,6 +86,7 @@ createdb(const CreatedbStmt *stmt)
 	char	   *dbowner = NULL;
 	char	   *dbtemplate = NULL;
 	int			encoding = -1;
+
 #ifndef WIN32
 	char		buf[2 * MAXPGPATH + 100];
 #endif
@@ -224,7 +225,7 @@ createdb(const CreatedbStmt *stmt)
 					 &src_vacuumxid, &src_frozenxid, &src_deftablespace))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
-				 errmsg("template database \"%s\" does not exist", dbtemplate)));
+		 errmsg("template database \"%s\" does not exist", dbtemplate)));
 
 	/*
 	 * Permission check: to copy a DB that's not marked datistemplate, you
@@ -265,7 +266,7 @@ createdb(const CreatedbStmt *stmt)
 	if (dtablespacename && dtablespacename->arg)
 	{
 		char	   *tablespacename;
-        AclResult   aclresult;
+		AclResult	aclresult;
 
 		tablespacename = strVal(dtablespacename->arg);
 		dst_deftablespace = get_tablespace_oid(tablespacename);
@@ -275,11 +276,11 @@ createdb(const CreatedbStmt *stmt)
 					 errmsg("tablespace \"%s\" does not exist",
 							tablespacename)));
 		/* check permissions */
-        aclresult = pg_tablespace_aclcheck(dst_deftablespace, GetUserId(),
+		aclresult = pg_tablespace_aclcheck(dst_deftablespace, GetUserId(),
 										   ACL_CREATE);
-        if (aclresult != ACLCHECK_OK)
-            aclcheck_error(aclresult, ACL_KIND_TABLESPACE,
-                           tablespacename);
+		if (aclresult != ACLCHECK_OK)
+			aclcheck_error(aclresult, ACL_KIND_TABLESPACE,
+						   tablespacename);
 	}
 	else
 	{
@@ -308,22 +309,22 @@ createdb(const CreatedbStmt *stmt)
 	closeAllVfds();
 
 	/*
-	 * Iterate through all tablespaces of the template database, and
-	 * copy each one to the new database.
+	 * Iterate through all tablespaces of the template database, and copy
+	 * each one to the new database.
 	 *
-	 * If we are trying to change the default tablespace of the template,
-	 * we require that the template not have any files in the new default
-	 * tablespace.  This avoids the need to merge two subdirectories.
-	 * This could probably be improved later.
+	 * If we are trying to change the default tablespace of the template, we
+	 * require that the template not have any files in the new default
+	 * tablespace.	This avoids the need to merge two subdirectories. This
+	 * could probably be improved later.
 	 */
 	rel = heap_openr(TableSpaceRelationName, AccessShareLock);
 	scan = heap_beginscan(rel, SnapshotNow, 0, NULL);
 	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
-		Oid		srctablespace = HeapTupleGetOid(tuple);
-		Oid		dsttablespace;
-		char   *srcpath;
-		char   *dstpath;
+		Oid			srctablespace = HeapTupleGetOid(tuple);
+		Oid			dsttablespace;
+		char	   *srcpath;
+		char	   *dstpath;
 		struct stat st;
 
 		/* No need to copy global tablespace */
@@ -351,10 +352,11 @@ createdb(const CreatedbStmt *stmt)
 			remove_dbtablespaces(dboid);
 			ereport(ERROR,
 					(errmsg("could not initialize database directory"),
-					 errdetail("Directory \"%s\" already exists.", dstpath)));
+				errdetail("Directory \"%s\" already exists.", dstpath)));
 		}
 
 #ifndef WIN32
+
 		/*
 		 * Copy this subdirectory to the new location
 		 *
@@ -374,7 +376,7 @@ createdb(const CreatedbStmt *stmt)
 					 errdetail("Failing system command was: %s", buf),
 					 errhint("Look in the postmaster's stderr log for more information.")));
 		}
-#else	/* WIN32 */
+#else							/* WIN32 */
 		if (copydir(srcpath, dstpath) != 0)
 		{
 			/* copydir should already have given details of its troubles */
@@ -382,7 +384,7 @@ createdb(const CreatedbStmt *stmt)
 			ereport(ERROR,
 					(errmsg("could not initialize database directory")));
 		}
-#endif	/* WIN32 */
+#endif   /* WIN32 */
 	}
 	heap_endscan(scan);
 	heap_close(rel, AccessShareLock);
@@ -772,7 +774,7 @@ AlterDatabaseOwner(const char *dbname, AclId newOwnerSysId)
 	Relation	rel;
 	ScanKeyData scankey;
 	SysScanDesc scan;
-	Form_pg_database	datForm;
+	Form_pg_database datForm;
 
 	rel = heap_openr(DatabaseRelationName, RowExclusiveLock);
 	ScanKeyInit(&scankey,
@@ -789,16 +791,17 @@ AlterDatabaseOwner(const char *dbname, AclId newOwnerSysId)
 
 	datForm = (Form_pg_database) GETSTRUCT(tuple);
 
-	/* 
+	/*
 	 * If the new owner is the same as the existing owner, consider the
-	 * command to have succeeded.  This is to be consistent with other objects.
+	 * command to have succeeded.  This is to be consistent with other
+	 * objects.
 	 */
 	if (datForm->datdba != newOwnerSysId)
 	{
 		Datum		repl_val[Natts_pg_database];
 		char		repl_null[Natts_pg_database];
 		char		repl_repl[Natts_pg_database];
-		Acl		*newAcl;
+		Acl		   *newAcl;
 		Datum		aclDatum;
 		bool		isNull;
 		HeapTuple	newtuple;
@@ -821,9 +824,9 @@ AlterDatabaseOwner(const char *dbname, AclId newOwnerSysId)
 		 * necessary when the ACL is non-null.
 		 */
 		aclDatum = heap_getattr(tuple,
-							Anum_pg_database_datacl,
-							RelationGetDescr(rel),
-							&isNull);
+								Anum_pg_database_datacl,
+								RelationGetDescr(rel),
+								&isNull);
 		if (!isNull)
 		{
 			newAcl = aclnewowner(DatumGetAclP(aclDatum),
@@ -941,16 +944,16 @@ have_createdb_privilege(void)
 static void
 remove_dbtablespaces(Oid db_id)
 {
-	Relation rel;
+	Relation	rel;
 	HeapScanDesc scan;
-	HeapTuple tuple;
+	HeapTuple	tuple;
 
 	rel = heap_openr(TableSpaceRelationName, AccessShareLock);
 	scan = heap_beginscan(rel, SnapshotNow, 0, NULL);
 	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
-		Oid		dsttablespace = HeapTupleGetOid(tuple);
-		char   *dstpath;
+		Oid			dsttablespace = HeapTupleGetOid(tuple);
+		char	   *dstpath;
 		struct stat st;
 
 		/* Don't mess with the global tablespace */
@@ -969,9 +972,9 @@ remove_dbtablespaces(Oid db_id)
 		if (!rmtree(dstpath, true))
 		{
 			ereport(WARNING,
-				(errmsg("could not remove database directory \"%s\"",
-						dstpath),
-				 errhint("Look in the postmaster's stderr log for more information.")));
+					(errmsg("could not remove database directory \"%s\"",
+							dstpath),
+					 errhint("Look in the postmaster's stderr log for more information.")));
 		}
 
 		pfree(dstpath);
