@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.88 1998/10/02 16:43:40 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.89 1998/10/06 03:08:59 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -1383,7 +1383,7 @@ getFuncs(int *numFuncs)
 TableInfo  *
 getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 {
-	PGresult   *res;
+	PGresult   *res, *viewres;
 	int			ntups;
 	int			i;
 	char		query[MAXQUERYLEN];
@@ -1414,6 +1414,8 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 	}
 	PQclear(res);
 
+/* NOTE, when outer joins are here, change this query to get the 
+view definition all in one go. */
 	sprintf(query,
 			"SELECT pg_class.oid, relname, relkind, relacl, usename, "
 			"relchecks, reltriggers "
@@ -1453,6 +1455,39 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 		tblinfo[i].usename = strdup(PQgetvalue(res, i, i_usename));
 		tblinfo[i].ncheck = atoi(PQgetvalue(res, i, i_relchecks));
 		tblinfo[i].ntrig = atoi(PQgetvalue(res, i, i_reltriggers));
+
+		/* NOTE that at such time as left outer joins become avaliable, 
+		then this will no longer be needed, and can be done in the 
+		above query. */
+
+		sprintf(query,
+			"select definition from pg_views where viewname = '%s';",
+			tblinfo[i].relname);
+
+		viewres = PQexec(g_conn, query);
+		if (!viewres ||
+			PQresultStatus(res) != PGRES_TUPLES_OK)
+		{
+			fprintf(stderr, "getTables(): SELECT for views failed\n");
+			exit_nicely(g_conn);
+		}
+
+		/* NOTE: Tryed to use isViewRule here, but it does it's own 
+		BEGIN and END so messed things up.
+		This also needs redone should we ever get outer joins.
+		*/
+		if ( PQntuples(viewres) > 0 )
+		{
+			if ( PQntuples(viewres) != 1 )
+			{
+				fprintf(stderr, "getTables(): failed to get view definition.\n");
+				exit_nicely(g_conn);
+			}
+
+			tblinfo[i].viewdef = strdup(PQgetvalue(viewres, 0, 0)); 
+		}
+
+		PQclear(viewres);
 
 		/* Get CHECK constraints */
 		if (tblinfo[i].ncheck > 0)
@@ -2468,95 +2503,102 @@ dumpTables(FILE *fout, TableInfo *tblinfo, int numTables,
 		if (!tablename || (!strcmp(tblinfo[i].relname, tablename)))
 		{
 
-			/* Skip VIEW relations */
+			/* Dump VIEW relations also !-) */
 			if (isViewRule(tblinfo[i].relname))
-				continue;
-
-			parentRels = tblinfo[i].parentRels;
-			numParents = tblinfo[i].numParents;
-
-			becomeUser(fout, tblinfo[i].usename);
-
-			sprintf(q, "CREATE TABLE %s (", fmtId(tblinfo[i].relname));
-			actual_atts = 0;
-			for (j = 0; j < tblinfo[i].numatts; j++)
 			{
-				if (tblinfo[i].inhAttrs[j] == 0)
+				becomeUser(fout, tblinfo[i].usename);
+
+				sprintf(q, "CREATE VIEW %s AS %s\n", 
+					fmtId(tblinfo[i].relname),
+					tblinfo[i].viewdef);
+			}
+			else
+			{
+				parentRels = tblinfo[i].parentRels;
+				numParents = tblinfo[i].numParents;
+
+				becomeUser(fout, tblinfo[i].usename);
+
+				sprintf(q, "CREATE TABLE %s (", fmtId(tblinfo[i].relname));
+				actual_atts = 0;
+				for (j = 0; j < tblinfo[i].numatts; j++)
 				{
-
-					/* Show lengths on bpchar and varchar */
-					if (!strcmp(tblinfo[i].typnames[j], "bpchar"))
+					if (tblinfo[i].inhAttrs[j] == 0)
 					{
-						sprintf(q, "%s%s%s char",
-								q,
-								(actual_atts > 0) ? ", " : "",
-								fmtId(tblinfo[i].attnames[j]));
 
-						sprintf(q, "%s(%d)",
-								q,
-								tblinfo[i].atttypmod[j] - VARHDRSZ);
-						actual_atts++;
-					}
-					else if (!strcmp(tblinfo[i].typnames[j], "varchar"))
-					{
-						sprintf(q, "%s%s%s %s",
-								q,
-								(actual_atts > 0) ? ", " : "",
-								fmtId(tblinfo[i].attnames[j]),
-								tblinfo[i].typnames[j]);
+						/* Show lengths on bpchar and varchar */
+						if (!strcmp(tblinfo[i].typnames[j], "bpchar"))
+						{
+							sprintf(q, "%s%s%s char", 
+									q, 
+									(actual_atts > 0) ? ", " : "",
+									fmtId(tblinfo[i].attnames[j]));
 
-						sprintf(q, "%s(%d)",
-								q,
-								tblinfo[i].atttypmod[j] - VARHDRSZ);
-						actual_atts++;
+							sprintf(q, "%s(%d)", 
+									q, 
+									tblinfo[i].atttypmod[j] - VARHDRSZ);
+							actual_atts++;
+						}
+						else if (!strcmp(tblinfo[i].typnames[j], "varchar"))
+						{
+							sprintf(q, "%s%s%s %s",
+									q,
+									(actual_atts > 0) ? ", " : "",
+									fmtId(tblinfo[i].attnames[j]),
+									tblinfo[i].typnames[j]);
+
+							sprintf(q, "%s(%d)",
+									q,
+									tblinfo[i].atttypmod[j] - VARHDRSZ);
+							actual_atts++;
+						}
+						else
+						{
+							strcpy(id1, fmtId(tblinfo[i].attnames[j]));
+							strcpy(id2, fmtId(tblinfo[i].typnames[j]));
+							sprintf(q, "%s%s%s %s",
+									q,
+									(actual_atts > 0) ? ", " : "",
+									id1,
+									id2);
+							actual_atts++;
+						}
+						if (tblinfo[i].adef_expr[j] != NULL)
+							sprintf(q, "%s DEFAULT %s", q, tblinfo[i].adef_expr[j]);
+						if (tblinfo[i].notnull[j])
+							sprintf(q, "%s NOT NULL", q);
 					}
-					else
-					{
-						strcpy(id1, fmtId(tblinfo[i].attnames[j]));
-						strcpy(id2, fmtId(tblinfo[i].typnames[j]));
-						sprintf(q, "%s%s%s %s",
-								q,
-								(actual_atts > 0) ? ", " : "",
-								id1,
-								id2);
-						actual_atts++;
-					}
-					if (tblinfo[i].adef_expr[j] != NULL)
-						sprintf(q, "%s DEFAULT %s", q, tblinfo[i].adef_expr[j]);
-					if (tblinfo[i].notnull[j])
-						sprintf(q, "%s NOT NULL", q);
 				}
-			}
 
-			/* put the CONSTRAINTS inside the table def */
-			for (k = 0; k < tblinfo[i].ncheck; k++)
-			{
-				sprintf(q, "%s%s %s",
-						q,
-						(actual_atts + k > 0) ? ", " : "",
-						tblinfo[i].check_expr[k]);
-			}
-
-			strcat(q, ")");
-
-			if (numParents > 0)
-			{
-				sprintf(q, "%s inherits ( ", q);
-				for (k = 0; k < numParents; k++)
+				/* put the CONSTRAINTS inside the table def */
+				for (k = 0; k < tblinfo[i].ncheck; k++)
 				{
-					sprintf(q, "%s%s%s",
+					sprintf(q, "%s%s %s",
 							q,
-							(k > 0) ? ", " : "",
-							fmtId(parentRels[k]));
+							(actual_atts + k > 0) ? ", " : "",
+							tblinfo[i].check_expr[k]);
 				}
-				strcat(q, ")");
-			}
 
-			strcat(q, ";\n");
+				strcat(q, ")");
+
+				if (numParents > 0)
+				{
+					sprintf(q, "%s inherits ( ", q);
+					for (k = 0; k < numParents; k++)
+					{
+						sprintf(q, "%s%s%s",
+								q,
+								(k > 0) ? ", " : "",
+								fmtId(parentRels[k]));
+					}
+					strcat(q, ")");
+				}
+				strcat(q, ";\n");
+			} /* end of if view ... else .... */
+
 			fputs(q, fout);
 			if (acls)
 				dumpACL(fout, tblinfo[i]);
-
 		}
 	}
 }
