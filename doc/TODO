@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Sep  6 23:55:43 EDT 1999
+Last updated:		Mon Sep 13 22:19:20 EDT 1999
 
 Current maintainer:	Bruce Momjian (maillist@candle.pha.pa.us)
 
@@ -99,6 +99,7 @@ TYPES
 * Add support for & operator
 * Allow LOCALE on a per-column basis, default to ASCII
 * Allow array on int8[]
+* Allow nulls in arrays
 * Remove Money type, add money formatting for decimal type
 * Declare typein/out functions in pg_proc with a special "C string" data type
 * Add non-large-object binary field
