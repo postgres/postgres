@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.69 2001/06/06 17:07:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.70 2001/06/13 19:52:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,7 +36,6 @@
 #ifdef CYR_RECODE
 unsigned char RecodeForwTable[128];
 unsigned char RecodeBackTable[128];
-
 #endif
 
 ProcessingMode Mode = InitProcessing;
@@ -82,7 +81,11 @@ IgnoreSystemIndexes(bool mode)
 void
 SetDatabasePath(const char *path)
 {
-	free(DatabasePath);
+	if (DatabasePath)
+	{
+		free(DatabasePath);
+		DatabasePath = NULL;
+	}
 	/* use strdup since this is done before memory contexts are set up */
 	if (path)
 	{
@@ -94,7 +97,12 @@ SetDatabasePath(const char *path)
 void
 SetDatabaseName(const char *name)
 {
-	free(DatabaseName);
+	if (DatabaseName)
+	{
+		free(DatabaseName);
+		DatabaseName = NULL;
+	}
+	/* use strdup since this is done before memory contexts are set up */
 	if (name)
 	{
 		DatabaseName = strdup(name);
@@ -112,8 +120,6 @@ SetDataDir(const char *dir)
 	char	   *new;
 
 	AssertArg(dir);
-	if (DataDir)
-		free(DataDir);
 
 	if (dir[0] != '/')
 	{
@@ -155,6 +161,8 @@ SetDataDir(const char *dir)
 			elog(FATAL, "out of memory");
 	}
 
+	if (DataDir)
+		free(DataDir);
 	DataDir = new;
 }
 
