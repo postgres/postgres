@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/error/assert.c,v 1.3 1996/11/11 11:49:40 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/error/assert.c,v 1.4 1997/04/17 20:38:26 scrappy Exp $
  *
  * NOTE
  *    This should eventually work with elog(), dlog(), etc.
@@ -46,7 +46,7 @@ ExceptionalCondition(char* conditionName,
     } else {
 	fprintf(stderr,
 		"%s(\"%s:%s\", File: \"%s\", Line: %d)\n",
-		exceptionP->message, conditionName, detail,
+		exceptionP->message, conditionName, detail == NULL ? "" : detail,
 		fileName, lineNumber);
     }
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.15 1997/04/16 06:25:13 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.16 1997/04/17 20:38:16 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -303,10 +303,10 @@ pq_getint(int b)
     	    status = ((n = fgetc(Pfin)) == EOF);
     	    break;
     	case 2:
-    	    pqGetShort(&n, Pfin);
+	    status = pqGetShort(&n, Pfin);
     	    break;
     	case 4:
-    	    pqGetLong(&n, Pfin);
+    	    status = pqGetLong(&n, Pfin);
     	    break;
     	default:
     	    fprintf(stderr, "** Unsupported size %d\n", b);
