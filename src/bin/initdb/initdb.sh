@@ -1,5 +1,4 @@
 #!/bin/sh
-set -x
 #-------------------------------------------------------------------------
 #
 # initdb.sh--
@@ -27,7 +26,7 @@ set -x
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.73 1999/12/18 03:21:21 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.74 1999/12/18 03:31:14 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
