@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.2 1996/07/16 06:37:28 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.3 1996/07/16 06:58:12 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -321,9 +321,9 @@ tableDesc (PGconn* conn, char* table)
     */
 
     printf ("\nTable    = %s\n", table);
-    printf ("+----------------------------------+----------------------------------+-------+\n");
-    printf ("|              Field               |              Type                | Length|\n");
-    printf ("+----------------------------------+----------------------------------+-------+\n");
+    printf ("+----------------------------------+----------------------------------+--------+\n");
+    printf ("|              Field               |              Type                | Length |\n");
+    printf ("+----------------------------------+----------------------------------+--------+\n");
 
     /* next, print out the instances */
     for (i=0; i < PQntuples(res); i++) {
@@ -355,13 +355,13 @@ tableDesc (PGconn* conn, char* table)
 	      free(newname);
 	  }
 	if (rsize > 0) 
-	    printf ("%-6i |", rsize);
+	    printf (" %-6i |", rsize);
 	else
-	    printf ("%-6s |", "var");
+	    printf (" %-6s |", "var");
       }
       printf("\n");
     }
-    printf ("+----------------------------------+----------------------------------+-------+\n");
+    printf ("+----------------------------------+----------------------------------+--------+\n");
 
     PQclear(res);
     return (0);
