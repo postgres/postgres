@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/stringutils.c,v 1.28 2001/02/27 08:13:27 ishii Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/stringutils.c,v 1.29 2002/07/02 05:49:18 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "stringutils.h"
@@ -195,4 +195,6 @@ unescape_quotes(char *source, int quote, int escape)
 	*tmp = '\0';
 
 	strcpy(source, destination);
+
+	free(destination);
 }
