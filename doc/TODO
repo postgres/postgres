@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Nov 12 21:10:17 EST 2002
+Last updated:		Tue Nov 19 15:35:02 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -283,7 +283,7 @@ Transactions
 ============
 
 * Overhaul bufmgr/lockmgr/transaction manager
-* Allow savepoints / nested transactions [transactions]
+* Allow savepoints / nested transactions [transactions] (Bruce)
 
 
 Exotic Features
