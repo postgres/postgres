@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.118 2002/07/04 15:24:01 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.119 2002/07/11 07:39:26 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,6 +78,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"committed", COMMITTED},
 	{"constraint", CONSTRAINT},
 	{"constraints", CONSTRAINTS},
+	{"conversion", CONVERSION_P},
 	{"copy", COPY},
 	{"create", CREATE},
 	{"createdb", CREATEDB},

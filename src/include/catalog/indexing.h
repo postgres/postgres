@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: indexing.h,v 1.67 2002/06/20 20:29:43 momjian Exp $
+ * $Id: indexing.h,v 1.68 2002/07/11 07:39:27 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,6 +27,7 @@
 #define Num_pg_attr_indices			2
 #define Num_pg_attrdef_indices		1
 #define Num_pg_class_indices		2
+#define Num_pg_conversion_indices	2
 #define Num_pg_database_indices		2
 #define Num_pg_description_indices	1
 #define Num_pg_group_indices		2
@@ -59,6 +60,8 @@
 #define AttributeRelidNumIndex		"pg_attribute_relid_attnum_index"
 #define ClassNameNspIndex			"pg_class_relname_nsp_index"
 #define ClassOidIndex				"pg_class_oid_index"
+#define ConversionDefaultIndex		"pg_conversion_default_index"
+#define ConversionNameNspIndex		"pg_conversion_name_nsp_index"
 #define DatabaseNameIndex			"pg_database_datname_index"
 #define DatabaseOidIndex			"pg_database_oid_index"
 #define DescriptionObjIndex			"pg_description_o_c_o_index"
@@ -99,6 +102,7 @@ extern char *Name_pg_amproc_indices[];
 extern char *Name_pg_attr_indices[];
 extern char *Name_pg_attrdef_indices[];
 extern char *Name_pg_class_indices[];
+extern char *Name_pg_conversion_indices[];
 extern char *Name_pg_database_indices[];
 extern char *Name_pg_description_indices[];
 extern char *Name_pg_group_indices[];
@@ -155,6 +159,9 @@ DECLARE_UNIQUE_INDEX(pg_attribute_relid_attnam_index on pg_attribute using btree
 DECLARE_UNIQUE_INDEX(pg_attribute_relid_attnum_index on pg_attribute using btree(attrelid oid_ops, attnum int2_ops));
 DECLARE_UNIQUE_INDEX(pg_class_oid_index on pg_class using btree(oid oid_ops));
 DECLARE_UNIQUE_INDEX(pg_class_relname_nsp_index on pg_class using btree(relname name_ops, relnamespace oid_ops));
+/* This following index is not used for a cache and is not unique */
+DECLARE_INDEX(pg_conversion_default_index on pg_conversion using btree(connamespace oid_ops, conforencoding int4_ops, contoencoding int4_ops));
+DECLARE_UNIQUE_INDEX(pg_conversion_name_nsp_index on pg_conversion using btree(conname name_ops, connamespace oid_ops));
 DECLARE_UNIQUE_INDEX(pg_database_datname_index on pg_database using btree(datname name_ops));
 DECLARE_UNIQUE_INDEX(pg_database_oid_index on pg_database using btree(oid oid_ops));
 DECLARE_UNIQUE_INDEX(pg_description_o_c_o_index on pg_description using btree(objoid oid_ops, classoid oid_ops, objsubid int4_ops));

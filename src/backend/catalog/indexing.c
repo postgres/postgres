@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.94 2002/06/20 20:29:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.95 2002/07/11 07:39:27 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,6 +45,8 @@ char	   *Name_pg_attrdef_indices[Num_pg_attrdef_indices] =
 {AttrDefaultIndex};
 char	   *Name_pg_class_indices[Num_pg_class_indices] =
 {ClassNameNspIndex, ClassOidIndex};
+char	   *Name_pg_conversion_indices[Num_pg_conversion_indices] =
+{ConversionNameNspIndex, ConversionDefaultIndex};
 char	   *Name_pg_database_indices[Num_pg_database_indices] =
 {DatabaseNameIndex, DatabaseOidIndex};
 char	   *Name_pg_group_indices[Num_pg_group_indices] =

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.337 2002/07/06 20:16:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.338 2002/07/11 07:39:25 ishii Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -157,7 +157,7 @@ static void doNegateFloat(Value *v);
 		SelectStmt, TransactionStmt, TruncateStmt,
 		UnlistenStmt, UpdateStmt, VacuumStmt,
 		VariableResetStmt, VariableSetStmt, VariableShowStmt,
-		ViewStmt, CheckPointStmt
+		ViewStmt, CheckPointStmt, CreateConversionStmt
 
 %type <node>	select_no_parens, select_with_parens, select_clause,
 				simple_select
@@ -246,7 +246,7 @@ static void doNegateFloat(Value *v);
 
 %type <boolean> opt_instead, opt_cursor
 %type <boolean> index_opt_unique, opt_verbose, opt_full
-%type <boolean> opt_freeze
+%type <boolean> opt_freeze, opt_default
 %type <defelt>	opt_binary, opt_oids, copy_delimiter
 
 %type <boolean> copy_from
@@ -335,7 +335,7 @@ static void doNegateFloat(Value *v);
 	CACHE, CALLED, CASCADE, CASE, CAST, CHAIN, CHAR_P,
 	CHARACTER, CHARACTERISTICS, CHECK, CHECKPOINT, CLOSE,
 	CLUSTER, COALESCE, COLLATE, COLUMN, COMMENT, COMMIT,
-	COMMITTED, CONSTRAINT, CONSTRAINTS, COPY, CREATE, CREATEDB,
+	COMMITTED, CONSTRAINT, CONSTRAINTS, CONVERSION_P, COPY, CREATE, CREATEDB,
 	CREATEUSER, CROSS, CURRENT_DATE, CURRENT_TIME,
 	CURRENT_TIMESTAMP, CURRENT_USER, CURSOR, CYCLE,
 
@@ -532,6 +532,7 @@ stmt :
 			| VariableResetStmt
 			| ConstraintsSetStmt
 			| CheckPointStmt
+			| CreateConversionStmt
 			| /*EMPTY*/
 				{ $$ = (Node *)NULL; }
 		;
@@ -2299,6 +2300,7 @@ drop_type:	TABLE									{ $$ = DROP_TABLE; }
 			| INDEX									{ $$ = DROP_INDEX; }
 			| TYPE_P								{ $$ = DROP_TYPE; }
 			| DOMAIN_P								{ $$ = DROP_DOMAIN; }
+			| CONVERSION_P								{ $$ = DROP_CONVERSION; }
 		;
 
 any_name_list:
@@ -3672,6 +3674,33 @@ opt_as:		AS										{}
 			| /* EMPTY */							{}
 		;
 
+
+/*****************************************************************************
+ *
+ * Manipulate a conversion
+ *
+ *		CREATE [DEFAULT] CONVERSION <conversion_name>
+ *		FOR <encoding_name> TO <encoding_name> FROM <func_name>
+ *
+ *****************************************************************************/
+
+CreateConversionStmt:
+			CREATE opt_default CONVERSION_P any_name FOR Sconst
+			TO Sconst FROM any_name
+			{
+			  CreateConversionStmt *n = makeNode(CreateConversionStmt);
+			  n->conversion_name = $4;
+			  n->for_encoding_name = $6;
+			  n->to_encoding_name = $8;
+			  n->func_name = $10;
+			  n->def = $2;
+			  $$ = (Node *)n;
+			}
+		;
+
+opt_default:	DEFAULT	{ $$ = TRUE; }
+			| /*EMPTY*/	{ $$ = FALSE; }
+		;
 
 /*****************************************************************************
  *

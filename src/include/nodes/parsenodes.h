@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.183 2002/07/01 15:27:56 tgl Exp $
+ * $Id: parsenodes.h,v 1.184 2002/07/11 07:39:27 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1109,6 +1109,7 @@ typedef struct CreateDomainStmt
 #define DROP_INDEX	  4
 #define DROP_TYPE     5
 #define DROP_DOMAIN	  6
+#define DROP_CONVERSION	  7
 
 typedef struct DropStmt
 {
@@ -1504,5 +1505,19 @@ typedef struct ReindexStmt
 	bool		force;
 	bool		all;
 } ReindexStmt;
+
+/* ----------------------
+ *		CREATE CONVERSION Statement
+ * ----------------------
+ */
+typedef struct CreateConversionStmt
+{
+	NodeTag		type;
+	List		*conversion_name;		/* Name of the conversion */
+	char		*for_encoding_name;		/* source encoding name */
+	char		*to_encoding_name;		/* destiname encoding name */
+	List		*func_name;				/* qualified conversion function name */
+	bool		def;				/* is this a default conversion? */
+} CreateConversionStmt;
 
 #endif   /* PARSENODES_H */

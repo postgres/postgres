@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.109 2002/06/20 20:29:51 momjian Exp $
+ * $Id: nodes.h,v 1.110 2002/07/11 07:39:27 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -198,6 +198,7 @@ typedef enum NodeTag
 	T_CreateSchemaStmt,
 	T_AlterDatabaseSetStmt,
 	T_AlterUserSetStmt,
+	T_CreateConversionStmt,
 
 	T_A_Expr = 700,
 	T_ColumnRef,

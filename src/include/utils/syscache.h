@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: syscache.h,v 1.48 2002/06/20 20:29:53 momjian Exp $
+ * $Id: syscache.h,v 1.49 2002/07/11 07:39:28 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,27 +38,27 @@
 #define ATTNUM			7
 #define CLAAMNAMENSP	8
 #define CLAOID			9
-#define GRONAME			10
-#define GROSYSID		11
-#define INDEXRELID		12
-#define INHRELID		13
-#define LANGNAME		14
-#define LANGOID			15
-#define NAMESPACENAME	16
-#define NAMESPACEOID	17
-#define OPERNAMENSP		18
-#define OPEROID			19
-#define PROCNAMENSP		20
-#define PROCOID			21
-#define RELNAMENSP		22
-#define RELOID			23
-#define RULERELNAME		24
-#define SHADOWNAME		25
-#define SHADOWSYSID		26
-#define STATRELATT		27
-#define TYPENAMENSP		28
-#define TYPEOID			29
-
+#define CONNAMESP		10
+#define GRONAME			11
+#define GROSYSID		12
+#define INDEXRELID		13
+#define INHRELID		14
+#define LANGNAME		15
+#define LANGOID			16
+#define NAMESPACENAME	17
+#define NAMESPACEOID	18
+#define OPERNAMENSP		19
+#define OPEROID			20
+#define PROCNAMENSP		21
+#define PROCOID			22
+#define RELNAMENSP		23
+#define RELOID			24
+#define RULERELNAME		25
+#define SHADOWNAME		26
+#define SHADOWSYSID		27
+#define STATRELATT		28
+#define TYPENAMENSP		29
+#define TYPEOID			30
 
 extern void InitCatalogCache(void);
 extern void InitCatalogCachePhase2(void);
