@@ -8,14 +8,12 @@
 	set formatstring for real numbers
 */
 
-#include <sys/types.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <string.h>
+#include "postgres_fe.h"
+
 #include <fcntl.h>
 #include <ctype.h>
 #include <time.h>
+#include <unistd.h>
 
 #include "dbf.h"
 
