@@ -5,9 +5,10 @@
 #include <ctype.h>
 
 #include <ecpgtype.h>
-#include <ecpg_informix.h>
+#include <compatlib.h>
 #include <pgtypes_error.h>
 #include <pgtypes_date.h>
+#include <pgtypes_numeric.h>
 #include <sqltypes.h>
 
 char	   *ECPGalloc(long, int);
@@ -886,7 +887,7 @@ rtypwidth(int sqltype, int sqllen)
 }
 
 int
-dtcvfmtasc(char *inbuf, char *fmtstr, dtime_t * dtvalue)
+dtcvfmtasc(char *inbuf, char *fmtstr, timestamp * dtvalue)
 {
 	return PGTYPEStimestamp_defmt_asc(inbuf, fmtstr, dtvalue);
 }

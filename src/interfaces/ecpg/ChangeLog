@@ -1661,6 +1661,10 @@ Fri Sep 26 17:14:07 CEST 2003
 
 	- Incorrect datatype with precision argument should not create a
 	  segfault.
+	  
+Fri Oct  3 12:04:57 CEST 2003
+
+	- Hide Informix datatypes in PostgreSQL built process.
 	- Set ecpg version to 3.0.0
 	- Set ecpg library to 4.0.0
 	- Set pgtypes library to 1.0.0

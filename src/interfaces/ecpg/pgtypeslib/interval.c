@@ -10,7 +10,6 @@
 #include "dt.h"
 #include "pgtypes_error.h"
 #include "pgtypes_interval.h"
-#include "datetime.h"
 
 /* TrimTrailingZeros()
  * ... resulting from printing numbers with full precision.
