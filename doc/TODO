@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sat Oct 24 22:41:11 EDT 1998
+Last updated:		Fri Oct 30 12:13:04 EST 1998
 
 Current maintainer:	Bruce Momjian (maillist@candle.pha.pa.us)
 
@@ -245,11 +245,13 @@ Prevent file descriptor leaks in failed COPY's(Bruce)
 Fix memory leak in libpgtcl's pg_select(Constantin)
 Fix problems with username/passwords over 8 characters(Tom)
 Fix problems with handling of asynchronous NOTIFY in backend(Tom)
+Fix of many bad system table entries(Tom)
 
 Enhancements
 ------------
 Upgrade ecpg and ecpglib,see src/interfaces/ecpc/ChangeLog(Michael)
-Show the index used in an explain(Zeugswetter)
+Show the index used in an EXPLAIN(Zeugswetter)
+EXPLAIN  invokes  rule system and shows plan(s) for rewritten queries(Jan)
 Multi-byte awareness of many data types and functions, via configure(Tatsuo)
 New configure --with-mb option(Tatsuo)
 New initdb --pgencoding option(Tatsuo)
@@ -370,7 +372,6 @@ Psql and libpq now compile under win32 using win32.mak(Magnus)
 Lo_read no longer stores trailing NULL(Bruce)
 Identifiers are now truncated to 31 characters internally(Bruce)
 Createuser options now availble on the command line
-PL/pgSQL backend programming language(Jan)
 Code for 64-bit integer supported added, configure tested, int8 type(Thomas)
 Prevent file descriptor leaf from failed COPY(Bruce)
 New pg_upgrade command(Bruce)
@@ -419,4 +420,5 @@ merged all OS-specific shared library defines into one file
 smarter TCL/TK configuration checking(Billy)
 smarter perl configuration(Brook)
 configure uses supplied install-sh if no install script found(Tom)
+new Makefile.shlib for shared library configuration(Tom)
 
