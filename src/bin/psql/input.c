@@ -3,15 +3,18 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/input.c,v 1.8 2000/01/29 16:58:48 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/input.c,v 1.9 2000/02/07 23:10:06 petere Exp $
  */
 #include <c.h>
 #include "input.h"
+
+#include <errno.h>
 
 #include <pqexpbuffer.h>
 
 #include "settings.h"
 #include "tab-complete.h"
+#include "common.h"
 
 /* Runtime options for turning off readline and history */
 /* (of course there is no runtime command for doing that :) */
@@ -32,7 +35,7 @@ static bool useHistory;
  * The result is malloced.
  */
 char *
-gets_interactive(const char *prompt)
+gets_interactive(char *prompt)
 {
 	char	   *s;
 #ifdef USE_HISTORY
@@ -42,7 +45,7 @@ gets_interactive(const char *prompt)
 
 #ifdef USE_READLINE
 	if (useReadline)
-		s = readline((char *) prompt);
+		s = readline(prompt);
 	else
 	{
 #endif
@@ -120,7 +123,6 @@ initializeInput(int flags)
 	if (flags == 1)
 	{
 		useReadline = true;
-		rl_readline_name = "psql";
         initialize_readline();
 	}
 #endif
@@ -152,14 +154,14 @@ initializeInput(int flags)
 
 
 bool
-saveHistory(const char *fname)
+saveHistory(char *fname)
 {
 #ifdef USE_HISTORY
-	if (useHistory)
+	if (useHistory && fname)
 	{
-		if (write_history((char *) fname) != 0)
+		if (write_history(fname) != 0)
 		{
-			perror(fname);
+			psql_error("could not save history to %s: %s", fname, strerror(errno));
 			return false;
 		}
 		return true;

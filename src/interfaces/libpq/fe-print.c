@@ -10,7 +10,7 @@
  * didn't really belong there.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.34 2000/02/05 12:33:22 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.35 2000/02/07 23:10:11 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,7 +59,7 @@ static char *do_header(FILE *fout, const PQprintOpt *po, const int nFields,
 static void output_row(FILE *fout, const PQprintOpt *po, const int nFields, char **fields,
 		   unsigned char *fieldNotNum, int *fieldMax, char *border,
 		   const int row_index);
-
+static void fill(int length, int max, char filler, FILE *fp);
 
 /*
  * PQprint()
@@ -440,7 +440,6 @@ do_header(FILE *fout, const PQprintOpt *po, const int nFields, int *fieldMax,
 		fputs("<tr>", fout);
 	else
 	{
-		int			j;			/* for loop index */
 		int			tot = 0;
 		int			n = 0;
 		char	   *p = NULL;
@@ -557,7 +556,6 @@ output_row(FILE *fout, const PQprintOpt *po, const int nFields, char **fields,
 
 
 
-#if 0
 /*
  * really old printing routines
  */
@@ -728,4 +726,17 @@ PQprintTuples(const PGresult *res,
 		}
 	}
 }
-#endif
+
+
+
+/* simply send out max-length number of filler characters to fp */
+ 
+static void
+fill(int length, int max, char filler, FILE *fp)
+{
+        int                     count;
+ 
+        count = max - length;
+        while (count-- >= 0)
+                putc(filler, fp);
+}

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.117 2000/02/05 12:33:22 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.118 2000/02/07 23:10:09 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2291,7 +2291,7 @@ conninfo_free()
 }
 
 /* =========== accessor functions for PGconn ========= */
-const char *
+char *
 PQdb(const PGconn *conn)
 {
 	if (!conn)
@@ -2299,7 +2299,7 @@ PQdb(const PGconn *conn)
 	return conn->dbName;
 }
 
-const char *
+char *
 PQuser(const PGconn *conn)
 {
 	if (!conn)
@@ -2307,7 +2307,7 @@ PQuser(const PGconn *conn)
 	return conn->pguser;
 }
 
-const char *
+char *
 PQpass(const PGconn *conn)
 {
 	if (!conn)
@@ -2315,7 +2315,7 @@ PQpass(const PGconn *conn)
 	return conn->pgpass;
 }
 
-const char *
+char *
 PQhost(const PGconn *conn)
 {
 	if (!conn)
@@ -2323,7 +2323,7 @@ PQhost(const PGconn *conn)
 	return conn->pghost;
 }
 
-const char *
+char *
 PQport(const PGconn *conn)
 {
 	if (!conn)
@@ -2331,7 +2331,7 @@ PQport(const PGconn *conn)
 	return conn->pgport;
 }
 
-const char *
+char *
 PQtty(const PGconn *conn)
 {
 	if (!conn)
@@ -2339,7 +2339,7 @@ PQtty(const PGconn *conn)
 	return conn->pgtty;
 }
 
-const char *
+char *
 PQoptions(const PGconn *conn)
 {
 	if (!conn)
@@ -2355,7 +2355,7 @@ PQstatus(const PGconn *conn)
 	return conn->status;
 }
 
-const char *
+char *
 PQerrorMessage(const PGconn *conn)
 {
 	static char noConn[] = "PQerrorMessage: conn pointer is NULL\n";
@@ -2478,6 +2478,7 @@ PQsetNoticeProcessor(PGconn *conn, PQnoticeProcessor proc, void *arg)
 static void
 defaultNoticeProcessor(void *arg, const char *message)
 {
+    (void)arg; /*not used*/
 	/* Note: we expect the supplied string to end with a newline already. */
 	fprintf(stderr, "%s", message);
 }

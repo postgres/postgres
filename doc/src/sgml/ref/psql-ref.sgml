@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.22 2000/01/29 16:58:27 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.23 2000/02/07 23:10:03 petere Exp $
 Postgres documentation
 -->
 
@@ -64,8 +64,8 @@ Postgres documentation
 
     <para>
     <application>psql</application> is a regular <productname>PostgreSQL</productname>
-    client application. In order to connect to a database you need to determine
-    name of you target database, the hostname and port number of the server
+    client application. In order to connect to a database you need to know the
+    name of your target database, the hostname and port number of the server
     and what user name you want to connect as. <application>psql</application> can be
     told about those parameters via command line options, namely <option>-d</option>,
     <option>-h</option>, <option>-p</option>, and <option>-U</option> respectively.
@@ -119,7 +119,7 @@ testdb=>
     Ordinarily, input lines are sent to the backend when a query-terminating
     semicolon is reached. An end of line does not terminate a query! Thus queries
     can be spread over serveral lines for clarity. If the query was sent and without
-    error the query results are displayed on the screen.
+    error, the query results are displayed on the screen.
     </para>
 
     <para>
@@ -155,31 +155,35 @@ testdb=>
     </para>
 
     <para>
-    To include whitespace into an argument you must quote it with either single
-    or double quotes. Anything contained in single quotes (except for a
-    backslash-escaped single quote itself) is taken literally as the argument.
-    Anything contained in double quotes is furthermore subject to C-like
-    substitutions for <literal>\n</literal> (new line), <literal>\t</literal> (tab),
-    <literal>\</literal><replaceable>digits</replaceable>,
+    To include whitespace into an argument you must quote it with a single
+    quote. To include a single quote into such an argument, preceed it by
+    a backslash. Anything contained in single quotes is furthermore subject to
+    C-like substitutions for <literal>\n</literal> (new line), <literal>\t</literal>
+     (tab), <literal>\</literal><replaceable>digits</replaceable>,
     <literal>\0</literal><replaceable>digits</replaceable>, and
     <literal>\0x</literal><replaceable>digits</replaceable>
     (the character with the given decimal, octal, or hexadecimal code).
     </para>
 
     <para>
-    If an unquoted argument begins with a dollar sign (<literal>$</literal>),
+    If an unquoted argument begins with a colon (<literal>:</literal>),
     it is taken as a variable and the value of the variable is taken as the
-    argument instead. Inside double quotes, variable values can be substituted
-    by enclosing the name in a <literal>${...}</literal> sequence. See also under
-    <quote><xref linkend="APP-PSQL-variables" endterm="APP-PSQL-variables-title"></quote>.
+    argument instead.
     </para>
 
     <para>
-    Arguments that are quoted in <quote>back-ticks</quote> (<literal>`</literal>)
-    are taken as a command line
-    that is passed to the shell. The output of the command (with a trailing
-    newline removed) is taken as the argument value. Back-ticks are subject to
-    the same substitution rules as double-quotes.
+    Arguments that are quoted in <quote>backticks</quote> (<literal>`</literal>)
+    are taken as a command line that is passed to the shell. The output of the
+    command (with a trailing newline removed) is taken as the argument value.
+    The above escape sequences also apply in backticks.
+    </para>
+
+    <para>
+    Some commands take the name of an <acronym>SQL</acronym> identifier (such as
+    a table name) as argument. These arguments follow the syntax rules of
+    <acronym>SQL</acronym> regarding double quotes: an identifier without
+    double quotes is coerced to lower-case. For all other commands
+    double quotes are not special and will become part of the argument.
     </para>
 
     <para>
@@ -189,7 +193,7 @@ testdb=>
     (two backslashes) marks the end of arguments and continues parsing
     <acronym>SQL</acronym> queries, if any. That way <acronym>SQL</acronym> and
     <application>psql</application> commands can be freely mixed on a line.
-    In any case, the arguments of a meta-command cannot continue beyond the end
+    But in any case, the arguments of a meta-command cannot continue beyond the end
     of the line. 
     </para>
 
@@ -246,7 +250,7 @@ testdb=>
 
 	<para>
 	If the connection attempt failed (wrong username, access denied, etc.) the
-	previous connection will be kept, if and only if <application>psql</application> is
+	previous connection will be kept if and only if <application>psql</application> is
 	in interactive mode. When executing a non-interactive script, processing
 	will immediately stop with an error. This distinction was chosen as a user
 	convenience against typos on the one hand, and a safety mechanism that
@@ -286,7 +290,7 @@ testdb=>
         <para>
 	This operation is not as efficient as the <acronym>SQL</acronym> 
 	<command>COPY</command> command because all data must pass through the
-	client/server IP or socket connection. For large amounts of data this other
+	client/server IP or socket connection. For large amounts of data the other
 	technique may be preferable.
         </para>
         </tip>
@@ -510,12 +514,15 @@ testdb=>
         <term><literal>\echo</literal> <replaceable class="parameter">text</replaceable> [ ... ]</term>
         <listitem>
 	<para>
-        Prints the arguments to the standard output. This can be useful to
+        Prints the arguments to the standard output, separated by one space and
+        followed by a newline. This can be useful to
         intersperse information in the output of scripts. For example:
 <programlisting>
 => <userinput>\echo `date`</userinput>
 Tue Oct 26 21:40:57 CEST 1999
 </programlisting>
+        If the first argument is an unquoted <literal>-n</literal> the the trailing
+        newline is not written.
 	</para>
 
 	<tip>
@@ -602,7 +609,7 @@ Tue Oct 26 21:40:57 CEST 1999
 	<note>
 	<para>
 	If you want to see the lines on the screen as they are read you must set
-	the variable <envar>echo</envar>.
+	the variable <envar>ECHO</envar> to <literal>full</literal>.
 	</para>
 	</note>
         </listitem>
@@ -658,7 +665,7 @@ Tue Oct 26 21:40:57 CEST 1999
 	Stores the file into a <productname>PostgreSQL</productname> <quote>large object</quote>.
 	Optionally, it associates the given comment with the object. Example:
 <programlisting>
-foo=> <userinput>\lo_import '/home/me/pictures/photo.xcf' 'a picture of me'</userinput>
+foo=> <userinput>\lo_import '/home/peter/pictures/photo.xcf' 'a picture of me'</userinput>
 lo_import 152801
 </programlisting>
 	The response indicates that the large object received object id 152801
@@ -1006,12 +1013,13 @@ lo_import 152801
 
 
       <varlistentry>
-        <term><literal>\set</literal> [ <replaceable class="parameter">name</replaceable> [ <replaceable class="parameter">value</replaceable> ]]</term>
+        <term><literal>\set</literal> [ <replaceable class="parameter">name</replaceable> [ <replaceable class="parameter">value</replaceable> [ ... ]]]</term>
 
 	<listitem>
 	<para>
 	Sets the internal variable <replaceable class="parameter">name</replaceable>
-	to <replaceable class="parameter">value</replaceable>. If no second argument
+	to <replaceable class="parameter">value</replaceable> or, if more than one
+        value is given, to the concatenation of all of them. If no second argument
 	is given, the variable is just set with not value. To unset a variable, use
         the <command>\unset</command> command.
 	</para>
@@ -1145,9 +1153,7 @@ Access permissions for database "test"
         <para>
         Escapes to a separate Unix shell or executes the Unix command
         <replaceable class="parameter">command</replaceable>. The arguments
-        are not further interpreted, the shell will see them as is. If you wish
-        to capture the output of a shell command and/or use <application>psql</application>'s
-        variable substitution features, use the backticks (<literal>`</literal>).
+        are not further interpreted, the shell will see them as is.
         </para>
         </listitem>
       </varlistentry>
@@ -1200,7 +1206,7 @@ Access permissions for database "test"
       <para>
       Specifies that <application>psql</application>
       is to execute one query string, <replaceable class="parameter">query</replaceable>,
-      and then exit.  This is useful for shell scripts.
+      and then exit.  This is useful in shell scripts.
       </para>
       <para>
       <replaceable class="parameter">query</replaceable> must be either a query string
@@ -1208,8 +1214,8 @@ Access permissions for database "test"
       specific features), or it is a single backslash command. Thus
       you cannot mix <acronym>SQL</acronym> and <application>psql</application>
       meta-commands. To achieve this you could pipe the string into
-      <application>psql</application> and finish it with a a <literal>\q</literal>,
-      like so: <literal>echo "select * from foo; \q" | psql</literal>.
+      <application>psql</application>, like so:
+      <literal>echo "\x \\ select * from foo;" | psql</literal>.
       </para>
       </listitem>
     </varlistentry>
@@ -1259,6 +1265,16 @@ Access permissions for database "test"
       as the source of queries instead of reading queries interactively.
       After the file is processed, <application>psql</application> terminates.
       This in many ways equivalent to the internal command <command>\i</command>.
+      </para>
+      <para>
+      Using this option is subtly different from writing
+      <literal>psql &lt; <replaceable class="parameter">filename</replaceable></literal>.
+      In general, both will do what you expect, but using <literal>-f</literal>
+      enables some nice features such as error messages with line numbers.
+      There is also a slight chance that using this option will reduce
+      the startup overhead. On the other hand, the variant using the shell's
+      input redirection is (in theory) guaranteed to yield exactly the same
+      output that you would have gotten had you entered everything by hand.
       </para>
       </listitem>
     </varlistentry>
@@ -1312,16 +1328,6 @@ Access permissions for database "test"
 
 
     <varlistentry>
-      <term>-n, --no-readline</term>
-      <listitem>
-      <para>
-      Do not use readline for line editing and do not use the history.
-      </para>
-      </listitem>
-    </varlistentry>
-
-
-    <varlistentry>
       <term>-o, --output <replaceable class="parameter">filename</replaceable></term>
       <listitem>
       <para>
@@ -1368,6 +1374,17 @@ Access permissions for database "test"
       If this option is used, none of this happens. This is useful with the
       <option>-c</option> option. Within <application>psql</application> you can
       also set the <envar>QUIET</envar> variable to achieve the same effect.
+      </para>
+      </listitem>
+    </varlistentry>
+
+
+    <varlistentry>
+      <term>-R, --record-separator <replaceable class="parameter">separator</replaceable></term>
+      <listitem>
+      <para>
+      Use <replaceable class="parameter">separator</replaceable> as the record separator.
+      This is equivalent to the <command>\pset recordsep</command> command.
       </para>
       </listitem>
     </varlistentry>
@@ -1492,7 +1509,7 @@ Access permissions for database "test"
       <para>
       As of version 7.0, <application>psql</application> automatically issues a
       password prompt whenever the backend requests password authentication.
-      Because this is currently based on a <quote>hack</quote> the automatic
+      Because this is currently based on a <quote>hack</quote>, the automatic
       recognition might mysteriously fail, hence this option to force a prompt.
       If no password prompt is issued and the backend requires password authentication
       the connection attempt will fail.
@@ -1539,46 +1556,39 @@ Access permissions for database "test"
 
     <para>
     <application>psql</application> provides variable substitution features
-    similar to common Unix command shells. Variables are simply name/value
+    similar to common Unix command shells. This feature is new and not very
+    sophisticated, yet, but there are plans to expand it in the future.
+    Variables are simply name/value
     pairs, where the value can be any string of any length. To set variables,
     use the <application>psql</application> meta-command <command>\set</command>:
 <programlisting>
 testdb=> <userinput>\set foo bar</userinput>
 </programlisting>
     sets the variable <quote>foo</quote> to the value <quote>bar</quote>. To retrieve
-    the content of the variable, precede the name with a dollar-sign and use it
+    the content of the variable, precede the name with a colon and use it
     as the argument of any slash command:
 <programlisting>
-testdb=> <userinput>\echo $foo</userinput>
+testdb=> <userinput>\echo :foo</userinput>
 bar
 </programlisting>
-    Alternatively, the value can also be interpolated into a double-quoted (or backtick-quoted)
-    string, like so:
-<programlisting>
-testdb=> <userinput>\echo "foo is now ${foo}."</userinput>
-foo is now bar.
-</programlisting>
-    (The curly braces are required.) No variable substitution
-    will be performed in single-quoted strings or in any of the backslash commands
-    that have special parsing rules (e.g., <command>\copy</command>).
     </para>
 
     <note>
     <para>
     The arguments of <command>\set</command> are subject to the same substitution
     rules as with other commands. Thus you can construct interesting references
-    such as <literal>\set "${foo}bar" 'something'</literal> and get <quote>soft
+    such as <literal>\set :foo 'something'</literal> and get <quote>soft
     links</quote> or <quote>variable variables</quote> of <productname>Perl</productname>
     or <productname><acronym>PHP</acronym></productname> fame, respectively.
     Unfortunately (or fortunately?), there is not way to do anything useful
-    with these constructs. (<literal>\echo ${${foo}}</literal> doesn't work.) On the
-    other hand, <literal>\set bar $foo</literal> is a perfectly valid way to copy
+    with these constructs. On the
+    other hand, <literal>\set bar :foo</literal> is a perfectly valid way to copy
     a variable.
     </para>
     </note>
 
     <para>
-    If you call <command>\set</command> without an argument, the variable is simply
+    If you call <command>\set</command> without a second argument, the variable is simply
     set, but has no value. To unset (or delete) a variable, use the command
     <command>\unset</command>.
     </para>
@@ -1830,7 +1840,7 @@ foo is now bar.
     <para>
     An additional useful feature of <application>psql</application> variables
     is that you can substitute (<quote>interpolate</quote>) them into
-    regular <acronym>SQL</acronym> statements. The syntax for this is to prepend
+    regular <acronym>SQL</acronym> statements. The syntax for this is again to prepend
     the variable name with a colon (<literal>:</literal>).
 <programlisting>
 testdb=> <userinput>\set foo 'my_table'</userinput>
@@ -1850,8 +1860,7 @@ testdb=> <userinput>SELECT * FROM :foo;</userinput>
     Another possible use of this mechanism is to copy the contents of a file
     into a field. First load the file into a variable and then proceed as above.
 <programlisting>
-testdb=> <userinput>\set content `cat my_file.txt`</userinput>
-testdb=> <userinput>\set content "'${content}'"</userinput>
+testdb=> <userinput>\set content '\'' `cat my_file.txt` '\''</userinput>
 testdb=> <userinput>INSERT INTO my_table VALUES (:content);</userinput>
 </programlisting>
     One possible problem with this approach is that <filename>my_file.txt</filename>
@@ -1877,11 +1886,12 @@ testdb=> <userinput>\set content `sed -e "s/'/\\\\\\'/g" < my_file.txt`</userinp
 
     <para>
     Since colons may legally appear in queries, the following rule applies: If the variable
-    is not set, the character sequence <quote>colon-name</quote> is not changed. In any
+    is not set, the character sequence <quote>colon name</quote> is not changed. In any
     case you can escape a colon with a backslash to protect it from interpretation.
     (The colon syntax for variables is standard <acronym>SQL</acronym> for embedded
     query languages, such as <application>ecpg</application>. The colon syntax for
-    array slices and type casts are <productname>PostgreSQL</productname> extensions.)
+    array slices and type casts are <productname>PostgreSQL</productname> extensions,
+    hence the conflict.)
     </para>
 
   </refsect2>
@@ -1975,7 +1985,7 @@ testdb=> <userinput>\set content `sed -e "s/'/\\\\\\'/g" < my_file.txt`</userinp
       </varlistentry>
 
       <varlistentry>
-        <term><literal>%$</literal><replaceable class="parameter">name</replaceable><literal>$</literal></term>
+        <term><literal>%:</literal><replaceable class="parameter">name</replaceable><literal>:</literal></term>
 	<listitem><para>
 	The value of the <application>psql</application>, <quote>magic</quote>, or environment
 	variable <replaceable class="parameter">name</replaceable>. See the section
@@ -2032,13 +2042,22 @@ testdb=> <userinput>\set content `sed -e "s/'/\\\\\\'/g" < my_file.txt`</userinp
 
     <para>
     <application>psql</application> supports the readline and history libraries for
-    convenienent line editing and retrieval. The command history is stored in a file
+    convenient line editing and retrieval. The command history is stored in a file
     named <filename>.psql_history</filename> in your home directory and is reloaded when
     <application>psql</application> starts up.
     Tab-completion is also supported, although
     the completion logic makes no claim to be an <acronym>SQL</acronym> parser.
     When available, <application>psql</application> is automatically built to use these
-    features.
+    features. If for some reason you do not like the tab completion, you can turn if off
+    by putting this in a file named <filename>.inputrc</filename> in your
+    home directory:
+<programlisting>
+$if psql
+set disable-completion on
+$endif
+</programlisting>
+    (This is not a <application>psql</application> but a <application>readline</application>
+    feature. Read its documentation for further details.)
     </para>
 
     <para>
@@ -2053,7 +2072,7 @@ testdb=> <userinput>\set content `sed -e "s/'/\\\\\\'/g" < my_file.txt`</userinp
     you have the library and header files installed in an obscure place you
     must tell <filename>configure</filename> about them, for example:
 <programlisting>
-$ ./configure --with-includes=/opt/gnu/include --with-libraries=/opt/gnu/lib  ...
+$ ./configure --with-includes=/opt/gnu/include --with-libs=/opt/gnu/lib  ...
 </programlisting>
     Then you have to recompile <application>psql</application> (not necessarily
     the entire code tree).
@@ -2105,7 +2124,7 @@ testdb=> <userinput>\d my_table</userinput>
   At this point you decide to change the prompt to something more
   interesting:
 <programlisting>
-testdb=> <userinput>\set prompt1 '%n@%m %~%R%# '</userinput>
+testdb=> <userinput>\set PROMPT1 '%n@%m %~%R%# '</userinput>
 peter@localhost testdb=>
 </programlisting>
   Let's assume you have filled the table with data and want to take a look at it:
@@ -2221,14 +2240,6 @@ Field separator is "oo".
       </para>
       </listitem>
 
-      <listitem>
-      <para>
-      The number of options for a backslash command is limited, probably to 16.
-      You can easily change this in the source code, and perhaps I will get around
-      to fixing this one day. Not that there is any command
-      that actually uses that many options though.
-      </para>
-      </listitem>
     </itemizedlist>
 
   </refsect2>

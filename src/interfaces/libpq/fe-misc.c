@@ -25,7 +25,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.38 2000/01/29 16:58:51 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.39 2000/02/07 23:10:11 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -782,6 +782,8 @@ PQenv2encoding(void)
 int
 PQmblen(const unsigned char *s, int encoding)
 {
+    (void)s;
+    (void)encoding;
 	return 1;
 }
 int

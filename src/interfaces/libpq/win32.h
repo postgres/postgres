@@ -11,9 +11,11 @@
  * Some compat functions
  */
 #define open(a,b,c) _open(a,b,c)
+#define close(a) _close(a)
 #define read(a,b,c) _read(a,b,c)
 #define write(a,b,c) _write(a,b,c)
-
+#define popen(a,b) _popen(a,b)
+#define pclose(a) _pclose(a)
 
 /*
  * crypt not available (yet)

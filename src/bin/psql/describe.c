@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.15 2000/01/29 16:58:48 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.16 2000/02/07 23:10:06 petere Exp $
  */
 #include <c.h>
 #include "describe.h"
@@ -56,7 +56,7 @@ describeAggregates(const char *name)
 
 	if (name)
 	{
-		strcat(buf, "  AND a.aggname ~* '");
+		strcat(buf, "  AND a.aggname ~* '^");
 		strncat(buf, name, REGEXP_CUTOFF);
 		strcat(buf, "'\n");
 	}
@@ -71,7 +71,7 @@ describeAggregates(const char *name)
 
 	if (name)
 	{
-		strcat(buf, "  AND a.aggname ~* '");
+		strcat(buf, "  AND a.aggname ~* '^");
 		strncat(buf, name, REGEXP_CUTOFF);
 		strcat(buf, "'\n");
 	}
@@ -125,7 +125,7 @@ describeFunctions(const char *name, bool verbose)
 
 	if (name)
 	{
-		strcat(buf, "  AND p.proname ~* '");
+		strcat(buf, "  AND p.proname ~* '^");
 		strncat(buf, name, REGEXP_CUTOFF);
 		strcat(buf, "'\n");
 	}
@@ -169,7 +169,7 @@ describeTypes(const char *name, bool verbose)
 
 	if (name)
 	{
-		strcat(buf, "  AND t.typname ~* '");
+		strcat(buf, "  AND t.typname ~* '^");
 		strncat(buf, name, REGEXP_CUTOFF);
 		strcat(buf, "' ");
 	}
@@ -215,7 +215,7 @@ describeOperators(const char *name)
 		   "       o.oprright = t2.oid\n");
 	if (name)
 	{
-		strcat(buf, "  AND o.oprname ~ '");
+		strcat(buf, "  AND o.oprname ~ '^");
 		strncat(buf, name, REGEXP_CUTOFF);
 		strcat(buf, "'\n");
 	}
@@ -233,7 +233,7 @@ describeOperators(const char *name)
 		   "       o.oprright = t1.oid\n");
 	if (name)
 	{
-		strcat(buf, "AND o.oprname ~ '");
+		strcat(buf, "AND o.oprname ~ '^");
 		strncat(buf, name, REGEXP_CUTOFF);
 		strcat(buf, "'\n");
 	}
@@ -251,7 +251,7 @@ describeOperators(const char *name)
 		   "       o.oprleft = t1.oid\n");
 	if (name)
 	{
-		strcat(buf, "AND o.oprname ~ '");
+		strcat(buf, "AND o.oprname ~ '^");
 		strncat(buf, name, REGEXP_CUTOFF);
 		strcat(buf, "'\n");
 	}
@@ -346,7 +346,7 @@ permissionsList(const char *name)
 		   "       relname !~ '^pg_'\n");
 	if (name)
 	{
-		strcat(descbuf, "  AND relname ~ '");
+		strcat(descbuf, "  AND relname ~ '^");
 		strncat(descbuf, name, REGEXP_CUTOFF);
 		strcat(descbuf, "'\n");
 	}
@@ -391,7 +391,7 @@ objectDescription(const char *object)
 		   "WHERE a.oid = d.objoid\n");
 	if (object)
 	{
-		strcat(descbuf, "  AND a.aggname ~* '");
+		strcat(descbuf, "  AND a.aggname ~* '^");
 		strncat(descbuf, object, REGEXP_CUTOFF);
 		strcat(descbuf, "'\n");
 	}
@@ -403,7 +403,7 @@ objectDescription(const char *object)
 		   "WHERE p.oid = d.objoid AND (p.pronargs = 0 or oidvectortypes(p.proargtypes) != '')\n");
 	if (object)
 	{
-		strcat(descbuf, "  AND p.proname ~* '");
+		strcat(descbuf, "  AND p.proname ~* '^");
 		strncat(descbuf, object, REGEXP_CUTOFF);
 		strcat(descbuf, "'\n");
 	}
@@ -416,7 +416,7 @@ objectDescription(const char *object)
 		   "WHERE RegprocToOid(o.oprcode) = d.objoid\n");
 	if (object)
 	{
-		strcat(descbuf, "  AND o.oprname ~ '");
+		strcat(descbuf, "  AND o.oprname ~ '^");
 		strncat(descbuf, object, REGEXP_CUTOFF);
 		strcat(descbuf, "'\n");
 	}
@@ -428,7 +428,7 @@ objectDescription(const char *object)
 		   "WHERE t.oid = d.objoid\n");
 	if (object)
 	{
-		strcat(descbuf, "  AND t.typname ~* '");
+		strcat(descbuf, "  AND t.typname ~* '^");
 		strncat(descbuf, object, REGEXP_CUTOFF);
 		strcat(descbuf, "'\n");
 	}
@@ -440,7 +440,7 @@ objectDescription(const char *object)
 		   "WHERE c.oid = d.objoid\n");
 	if (object)
 	{
-		strcat(descbuf, "  AND c.relname ~* '");
+		strcat(descbuf, "  AND c.relname ~* '^");
 		strncat(descbuf, object, REGEXP_CUTOFF);
 		strcat(descbuf, "'\n");
 	}
@@ -452,7 +452,7 @@ objectDescription(const char *object)
 		   "WHERE r.oid = d.objoid AND r.rulename !~ '^_RET'\n");
 	if (object)
 	{
-		strcat(descbuf, "  AND r.rulename ~* '");
+		strcat(descbuf, "  AND r.rulename ~* '^");
 		strncat(descbuf, object, REGEXP_CUTOFF);
 		strcat(descbuf, "'\n");
 	}
@@ -464,7 +464,7 @@ objectDescription(const char *object)
 		   "WHERE t.oid = d.objoid\n");
 	if (object)
 	{
-		strcat(descbuf, "  AND t.tgname ~* '");
+		strcat(descbuf, "  AND t.tgname ~* '^");
 		strncat(descbuf, object, REGEXP_CUTOFF);
 		strcat(descbuf, "'\n");
 	}
@@ -504,7 +504,7 @@ xmalloc(size_t size)
 	tmp = malloc(size);
 	if (!tmp)
 	{
-		psql_error("out of memory");
+		psql_error("out of memory\n");
 		exit(EXIT_FAILURE);
 	}
 	return tmp;
@@ -626,7 +626,7 @@ describeTableDetails(const char *name, bool desc)
         bool        isarray = false;
 
 		/* Name */
-		cells[i * cols + 0] = (char *)PQgetvalue(res, i, 0);	/* don't free this afterwards */
+		cells[i * cols + 0] = PQgetvalue(res, i, 0);	/* don't free this afterwards */
 
 		/* Type */
         if (attype[0] == '_')
@@ -701,7 +701,7 @@ describeTableDetails(const char *name, bool desc)
         
 		/* Description */
 		if (desc)
-			cells[i * cols + cols-1] = (char*)PQgetvalue(res, i, 7);
+			cells[i * cols + cols-1] = PQgetvalue(res, i, 7);
 	}
 
 	/* Make title */
@@ -960,7 +960,7 @@ listTables(const char *infotype, const char *name, bool desc)
 		strcat(buf, showSystem ? "  AND c.relname ~ '^pg_'\n" : "  AND c.relname !~ '^pg_'\n");
 		if (name)
 		{
-			strcat(buf, "  AND c.relname ~ '");
+			strcat(buf, "  AND c.relname ~ '^");
 			strncat(buf, name, REGEXP_CUTOFF);
 			strcat(buf, "'\n");
 		}
@@ -976,7 +976,7 @@ listTables(const char *infotype, const char *name, bool desc)
 		strcat(buf, showSystem ? "  AND c.relname ~ '^pg_'\n" : "  AND c.relname !~ '^pg_'\n");
 		if (name)
 		{
-			strcat(buf, "  AND c.relname ~ '");
+			strcat(buf, "  AND c.relname ~ '^");
 			strncat(buf, name, REGEXP_CUTOFF);
 			strcat(buf, "'\n");
 		}
@@ -997,7 +997,7 @@ listTables(const char *infotype, const char *name, bool desc)
 		strcat(buf, showSystem ? "  AND c.relname ~ '^pg_'\n" : "  AND c.relname !~ '^pg_'\n");
 		if (name)
 		{
-			strcat(buf, "  AND c.relname ~ '");
+			strcat(buf, "  AND c.relname ~ '^");
 			strncat(buf, name, REGEXP_CUTOFF);
 			strcat(buf, "'\n");
 		}
@@ -1013,7 +1013,7 @@ listTables(const char *infotype, const char *name, bool desc)
 		strcat(buf, showSystem ? "  AND c.relname ~ '^pg_'\n" : "  AND c.relname !~ '^pg_'\n");
 		if (name)
 		{
-			strcat(buf, "  AND c.relname ~ '");
+			strcat(buf, "  AND c.relname ~ '^");
 			strncat(buf, name, REGEXP_CUTOFF);
 			strcat(buf, "'\n");
 		}
@@ -1049,7 +1049,7 @@ listTables(const char *infotype, const char *name, bool desc)
 		strcat(buf, showSystem ? "  AND c.relname ~ '^pg_'\n" : "  AND c.relname !~ '^pg_'\n");
 		if (name)
 		{
-			strcat(buf, "  AND c.relname ~ '");
+			strcat(buf, "  AND c.relname ~ '^");
 			strncat(buf, name, REGEXP_CUTOFF);
 			strcat(buf, "'\n");
 		}
@@ -1079,7 +1079,7 @@ listTables(const char *infotype, const char *name, bool desc)
 		strcat(buf, showSystem ? "  AND c.relname ~ '^pg_'\n" : "  AND c.relname !~ '^pg_'\n");
 		if (name)
 		{
-			strcat(buf, "  AND c.relname ~ '");
+			strcat(buf, "  AND c.relname ~ '^");
 			strncat(buf, name, REGEXP_CUTOFF);
 			strcat(buf, "'\n");
 		}
@@ -1098,7 +1098,7 @@ listTables(const char *infotype, const char *name, bool desc)
 			   "WHERE c.relowner = u.usesysid AND c.relkind = 's'\n");
 		if (name)
 		{
-			strcat(buf, "  AND c.relname ~ '");
+			strcat(buf, "  AND c.relname ~ '^");
 			strncat(buf, name, REGEXP_CUTOFF);
 			strcat(buf, "'\n");
 		}
@@ -1112,7 +1112,7 @@ listTables(const char *infotype, const char *name, bool desc)
 	       "  AND not exists (select 1 from pg_user where usesysid = c.relowner)");
 		if (name)
 		{
-			strcat(buf, "  AND c.relname ~ '");
+			strcat(buf, "  AND c.relname ~ '^");
 			strncat(buf, name, REGEXP_CUTOFF);
 			strcat(buf, "'\n");
 		}
@@ -1127,10 +1127,10 @@ listTables(const char *infotype, const char *name, bool desc)
 
 	if (PQntuples(res) == 0 && !QUIET())
     {
-	if (name)
-	    fprintf(pset.queryFout, "No matching relations found.\n");
-	else
-	    fprintf(pset.queryFout, "No relations found.\n");
+        if (name)
+            fprintf(pset.queryFout, "No matching relations found.\n");
+        else
+            fprintf(pset.queryFout, "No relations found.\n");
     }
 	else
 	{

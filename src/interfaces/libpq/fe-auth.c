@@ -10,7 +10,7 @@
  * exceed INITIAL_EXPBUFFER_SIZE (currently 256 bytes).
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.36 2000/01/26 05:58:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.37 2000/02/07 23:10:08 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -474,6 +474,10 @@ int
 fe_sendauth(AuthRequest areq, PGconn *conn, const char *hostname,
 			const char *password, char *PQerrormsg)
 {
+#if !defined(KRB4) && !defined(KRB5)
+    (void)hostname; /*not used*/
+#endif
+
 	switch (areq)
 	{
 			case AUTH_REQ_OK:

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.15 2000/01/29 16:58:48 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.16 2000/02/07 23:10:06 petere Exp $
  */
 #include <c.h>
 #include "help.h"
@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
+#include <errno.h>
 
 #ifndef WIN32
 #include <sys/ioctl.h>			/* for ioctl() */
@@ -20,9 +21,7 @@
 #include <sys/types.h>			/* (ditto) */
 #include <unistd.h>				/* for getuid() */
 #else
-#define strcasecmp(x,y) stricmp(x,y)
-#define popen(x,y) _popen(x,y)
-#define pclose(x) _pclose(x)
+#include <win32.h>
 #endif
 
 #include <pqsignal.h>
@@ -48,7 +47,6 @@ usage(void)
 
 #ifndef WIN32
 	struct passwd *pw = NULL;
-
 #endif
 
 	/* Find default user, in case we need it. */
@@ -61,7 +59,7 @@ usage(void)
 			user = pw->pw_name;
 		else
 		{
-			perror("getpwuid()");
+			psql_error("could not get current user name: %s", strerror(errno));
 			exit(EXIT_FAILURE);
 		}
 #else
@@ -70,10 +68,11 @@ usage(void)
 	}
 
 /* If this " is the start of the string then it ought to end there to fit in 80 columns >> " */
-    puts(  "This is psql, the PostgreSQL interactive terminal.");
-	puts(  "\nUsage:");
-    puts(  "  psql [options] [dbname [username]]");
-    puts(  "\nOptions:");
+    puts(  "This is psql, the PostgreSQL interactive terminal.\n");
+	puts(  "Usage:");
+    puts(  "  psql [options] [dbname [username]]\n");
+    puts(  "Options:");
+/*	puts(  "  -a              Echo all input from script");*/
 	puts(  "  -A              Unaligned table output mode (-P format=unaligned)");
 	puts(  "  -c <query>      Run only single query (or slash command) and exit");
 
@@ -83,7 +82,7 @@ usage(void)
 		env = user;
 	printf("  -d <dbname>     Specify database name to connect to (default: %s)\n", env);
 
-	puts(  "  -e              Echo all input in non-interactive mode");
+    puts(  "  -e              Echo queries sent to backend");
 	puts(  "  -E              Display queries that internal commands generate");
 	puts(  "  -f <filename>   Execute queries from file, then exit");
 	puts(  "  -F <string>     Set field separator (default: \"" DEFAULT_FIELD_SEP "\") (-P fieldsep=)");
@@ -99,7 +98,6 @@ usage(void)
 
 	puts(  "  -H              HTML table output mode (-P format=html)");
 	puts(  "  -l              List available databases, then exit");
-	puts(  "  -n              Do not use readline or history");
 	puts(  "  -o <filename>   Send query output to filename (or |pipe)");
 
 	/* Display default port */
@@ -109,6 +107,7 @@ usage(void)
 
 	puts(  "  -P var[=arg]    Set printing option 'var' to 'arg' (see \\pset command)");
 	puts(  "  -q              Run quietly (no messages, only query output)");
+    puts(  "  -R <string>     Set record separator (default: newline) (-P recordsep=)");
 	puts(  "  -s              Single step mode (confirm each query)");
 	puts(  "  -S              Single line mode (newline terminates query)");
 	puts(  "  -t              Don't print headings and row count (-P tuples_only)");
@@ -118,7 +117,7 @@ usage(void)
 	env = getenv("PGUSER");
 	if (!env)
 		env = user;
-	printf("  -U <username>   Specifiy username, \"?\"=prompt (default user: %s)\n", env);
+	printf("  -U <username>   Specify database username (default: %s)\n", env);
 
 	puts(  "  -x              Turn on expanded table output (-P expanded)");
 	puts(  "  -v name=val     Set psql variable 'name' to 'value'");
@@ -190,10 +189,9 @@ slashUsage(void)
 		fout = stdout;
 
 	/* if you add/remove a line here, change the row test above */
-	fprintf(fout, " \\?             help\n");
-	fprintf(fout, " \\c[onnect] [dbname|- [user|?]]\n"
+	fprintf(fout, " \\c[onnect] [dbname|- [user]]\n"
 		  "                 connect to new database (currently '%s')\n", PQdb(pset.db));
-	fprintf(fout, " \\copy ...      perform SQL COPY with data stream to the client machine");
+	fprintf(fout, " \\copy ...      perform SQL COPY with data stream to the client machine\n");
 	fprintf(fout, " \\copyright     show PostgreSQL usage and distribution terms\n");
 	fprintf(fout, " \\d <table>     describe table (or view, index, sequence)\n");
 	fprintf(fout, " \\d{i|s|t|v|S}  list only indices/sequences/tables/views/system tables\n");
@@ -209,10 +207,11 @@ slashUsage(void)
 	fprintf(fout, " \\i <fname>     read and execute queries from filename\n");
 	fprintf(fout, " \\l             list all databases\n");
 	fprintf(fout, " \\lo_export, \\lo_import, \\lo_list, \\lo_unlink\n"
-		  "                 large object operations\n");
+            "                  large object operations\n");
 	fprintf(fout, " \\o [fname]     send all query results to <fname>, or |pipe\n");
 	fprintf(fout, " \\p             show the content of the current query buffer\n");
-	fprintf(fout, " \\pset [opt]    set table output options\n");
+	fprintf(fout, " \\pset {format|border|expanded|fieldsep|recordsep|tuples_only|title|tableattr\n"
+            "     |pager}    set table output options\n");
 	fprintf(fout, " \\q             quit psql\n");
 	fprintf(fout, " \\qecho <text>  write text to query output stream (see \\o)\n");
 	fprintf(fout, " \\r             reset (clear) the query buffer\n");
@@ -243,36 +242,24 @@ slashUsage(void)
 void
 helpSQL(const char *topic)
 {
+#define VALUE_OR_NULL(a) ((a) ? (a) : "")
+
 	if (!topic || strlen(topic) == 0)
 	{
-		char		left_center_right;	/* Which column we're displaying */
-		int			i;			/* Index into QL_HELP[] */
+		int			i;
+        int         items_per_column = (QL_HELP_COUNT + 2)/3;
 
 		puts("Available help:");
 
-		left_center_right = 'L';/* Start with left column */
-		i = 0;
-		while (QL_HELP[i].cmd != NULL)
+        for (i = 0; i < items_per_column; i++)
 		{
-			switch (left_center_right)
-			{
-				case 'L':
-					printf("    %-25s", QL_HELP[i].cmd);
-					left_center_right = 'C';
-					break;
-				case 'C':
-					printf("%-25s", QL_HELP[i].cmd);
-					left_center_right = 'R';
-					break;
-				case 'R':
-					printf("%-25s\n", QL_HELP[i].cmd);
-					left_center_right = 'L';
-					break;
-			}
-			i++;
+            printf("    %-25s%-25s%-25s\n",
+                   VALUE_OR_NULL(QL_HELP[i].cmd),
+                   VALUE_OR_NULL(QL_HELP[i + items_per_column].cmd),
+                   VALUE_OR_NULL(QL_HELP[i + 2*items_per_column].cmd)
+                   );
 		}
-		if (left_center_right != 'L')
-			puts("\n");
+        putc('\n', stdout);
 	}
 
 	else
@@ -286,8 +273,10 @@ helpSQL(const char *topic)
 				strcmp(topic, "*") == 0)
 			{
 				help_found = true;
-				printf("Command: %s\nDescription: %s\nSyntax:\n%s\n\n",
-					 QL_HELP[i].cmd, QL_HELP[i].help, QL_HELP[i].syntax);
+				printf("Command:     %s\n"
+                       "Description: %s\n"
+                       "Syntax:\n%s\n\n",
+                       QL_HELP[i].cmd, QL_HELP[i].help, QL_HELP[i].syntax);
 			}
 		}
 
@@ -298,28 +287,28 @@ helpSQL(const char *topic)
 
 
 
-
 void
 print_copyright(void)
 {
 	puts(
-		 "PostgreSQL Data Base Management System\n\n"
-	 "Portions Copyright (c) 1996-2000, PostgreSQL, Inc\n\n"
-		 "This software is based on Postgres95, formerly known as Postgres, which\n"
-		 "contains the following notice:\n\n"
-	 "Portions Copyright(c) 1994 - 7 Regents of the University of California\n\n"
-		 "Permission to use, copy, modify, and distribute this software and its\n"
-		 "documentation for any purpose, without fee, and without a written agreement\n"
-		 "is hereby granted, provided that the above copyright notice and this paragraph\n"
-		 "and the following two paragraphs appear in all copies.\n\n"
-		 "IN NO EVENT SHALL THE UNIVERSITY OF CALIFORNIA BE LIABLE TO ANY PARTY FOR\n"
-		 "DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING LOST\n"
-		 "PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN IF\n"
-		 "THE UNIVERSITY OF CALIFORNIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH\n"
-		 "DAMAGE.\n\n"
-		 "THE UNIVERSITY OF CALIFORNIA SPECIFICALLY DISCLAIMS ANY WARRANTIES, INCLUDING,\n"
-		 "BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A\n"
-		 "PARTICULAR PURPOSE.THE SOFTWARE PROVIDED HEREUNDER IS ON AN \"AS IS\" BASIS,\n"
-		 "AND THE UNIVERSITY OF CALIFORNIA HAS NO OBLIGATIONS TO PROVIDE MAINTENANCE,\n"
-		 "SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.");
+        "PostgreSQL Data Base Management System\n\n"
+        "Portions Copyright (c) 1996-2000, PostgreSQL, Inc\n\n"
+        "This software is based on Postgres95, formerly known as Postgres, which\n"
+        "contains the following notice:\n\n"
+        "Portions Copyright(c) 1994 - 7 Regents of the University of California\n\n"
+        "Permission to use, copy, modify, and distribute this software and its\n"
+        "documentation for any purpose, without fee, and without a written agreement\n"
+        "is hereby granted, provided that the above copyright notice and this paragraph\n"
+        "and the following two paragraphs appear in all copies.\n\n"
+        "IN NO EVENT SHALL THE UNIVERSITY OF CALIFORNIA BE LIABLE TO ANY PARTY FOR\n"
+        "DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING LOST\n"
+        "PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN IF\n"
+        "THE UNIVERSITY OF CALIFORNIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH\n"
+        "DAMAGE.\n\n"
+        "THE UNIVERSITY OF CALIFORNIA SPECIFICALLY DISCLAIMS ANY WARRANTIES, INCLUDING,\n"
+        "BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A\n"
+        "PARTICULAR PURPOSE.THE SOFTWARE PROVIDED HEREUNDER IS ON AN \"AS IS\" BASIS,\n"
+        "AND THE UNIVERSITY OF CALIFORNIA HAS NO OBLIGATIONS TO PROVIDE MAINTENANCE,\n"
+        "SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS."
+        );
 }

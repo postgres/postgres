@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.9 2000/01/29 16:58:49 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.10 2000/02/07 23:10:07 petere Exp $
  */
 
 /*-----------
@@ -121,9 +121,7 @@ pgsql_thing_t words_after_create[] = {
     { "TYPE",      "SELECT typname FROM pg_type WHERE substr(typname,1,%d)='%s'" },
     { "UNIQUE",    NULL }, /* for CREATE UNIQUE INDEX ... */
     { "USER",      "SELECT usename FROM pg_user WHERE substr(usename,1,%d)='%s'" },
-    { "VIEW",      NULL }, /* Telling a view from a table is not the easiest
-			      thing in the world, and the solutions I've seen
-			      don't really work, so I'll wait on this. */
+    { "VIEW",      "SELECT viewname FROM pg_views WHERE substr(viewname,1,%d)='%s'" },
     { NULL, NULL } /* end of list */
 };
 

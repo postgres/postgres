@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/prompt.c,v 1.7 2000/01/29 16:58:49 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/prompt.c,v 1.8 2000/02/07 23:10:06 petere Exp $
  */
 #include <c.h>
 #include "prompt.h"
@@ -19,8 +19,8 @@
 #include "variables.h"
 
 #ifdef WIN32
-#define popen(x,y) _popen(x,y)
-#define pclose(x) _pclose(x)
+#include <io.h>
+#include <win32.h>
 #endif
 
 
@@ -53,14 +53,14 @@
  *
  * %`command`	   - The result of executing command in /bin/sh with trailing
  *					 newline stripped.
- * %$name$		   - The value of the psql variable 'name'
+ * %:name:		   - The value of the psql variable 'name'
  * (those will not be rescanned for more escape sequences!)
  *
  * If the application-wide prompts became NULL somehow, the returned string
  * will be empty (not NULL!).
  *--------------------------
  */
-const char *
+char *
 get_prompt(promptStatus_t status)
 {
 #define MAX_PROMPT_SIZE 256
@@ -72,7 +72,7 @@ get_prompt(promptStatus_t status)
 
 	if (status == PROMPT_READY)
 		prompt_string = GetVariable(pset.vars, "PROMPT1");
-	else if (status == PROMPT_CONTINUE || status == PROMPT_SINGLEQUOTE || status == PROMPT_DOUBLEQUOTE || status == PROMPT_COMMENT)
+	else if (status == PROMPT_CONTINUE || status == PROMPT_SINGLEQUOTE || status == PROMPT_DOUBLEQUOTE || status == PROMPT_COMMENT || status == PROMPT_PAREN)
 		prompt_string = GetVariable(pset.vars, "PROMPT2");
 	else if (status == PROMPT_COPY)
 		prompt_string = GetVariable(pset.vars, "PROMPT3");
@@ -183,6 +183,9 @@ get_prompt(promptStatus_t status)
 						case PROMPT_COMMENT:
 							buf[0] = '*';
 							break;
+                        case PROMPT_PAREN:
+                            buf[0] = '(';
+                            break;
 						default:
 							buf[0] = '\0';
 							break;
@@ -226,14 +229,14 @@ get_prompt(promptStatus_t status)
 					}
 
 					/* interpolate variable */
-				case '$':
+				case ':':
 					{
 						char	   *name;
 						const char *val;
 						int			nameend;
 
 						name = strdup(p + 1);
-						nameend = strcspn(name, "$");
+						nameend = strcspn(name, ":");
 						name[nameend] = '\0';
 						val = GetVariable(pset.vars, name);
 						if (val)

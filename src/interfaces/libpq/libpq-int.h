@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-int.h,v 1.18 2000/01/26 05:58:46 momjian Exp $
+ * $Id: libpq-int.h,v 1.19 2000/02/07 23:10:11 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -243,6 +243,11 @@ struct pg_conn
 
 	int client_encoding;		/* encoding id */
 };
+
+/* String descriptions of the ExecStatusTypes.
+ * direct use of this array is deprecated; call PQresStatus() instead.
+ */
+extern char *const pgresStatus[];
 
 /* ----------------
  * Internal functions of libpq

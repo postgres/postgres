@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.59 2000/02/05 12:33:22 ishii Exp $
+ * $Id: libpq-fe.h,v 1.60 2000/02/07 23:10:11 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,11 +74,6 @@ extern		"C"
 		PGRES_FATAL_ERROR
 	} ExecStatusType;
 
-/* String descriptions of the ExecStatusTypes.
- * NB: direct use of this array is now deprecated; call PQresStatus() instead.
- */
-	extern const char *const pgresStatus[];
-
 /* PGconn encapsulates a connection to the backend.
  * The contents of this struct are not supposed to be known to applications.
  */
@@ -115,16 +110,17 @@ extern		"C"
 	typedef void (*PQnoticeProcessor) (void *arg, const char *message);
 
 /* Print options for PQprint() */
+    typedef char pqbool;
 
 	typedef struct _PQprintOpt
 	{
-		int	        header;		/* print output field headings and row
+		pqbool      header;		/* print output field headings and row
 								 * count */
-		int         align;		/* fill align the fields */
-		int         standard;	/* old brain dead format */
-		int         html3;		/* output html tables */
-		int         expanded;	/* expand tables */
-		int         pager;		/* use pager for output if needed */
+		pqbool      align;		/* fill align the fields */
+		pqbool      standard;	/* old brain dead format */
+		pqbool      html3;		/* output html tables */
+		pqbool      expanded;	/* expand tables */
+		pqbool      pager;		/* use pager for output if needed */
 		char	   *fieldSep;	/* field separator */
 		char	   *tableOpt;	/* insert to HTML <table ...> */
 		char	   *caption;	/* HTML <caption> */
@@ -207,15 +203,15 @@ extern		"C"
 	extern int	PQrequestCancel(PGconn *conn);
 
 	/* Accessor functions for PGconn objects */
-	extern const char *PQdb(const PGconn *conn);
-	extern const char *PQuser(const PGconn *conn);
-	extern const char *PQpass(const PGconn *conn);
-	extern const char *PQhost(const PGconn *conn);
-	extern const char *PQport(const PGconn *conn);
-	extern const char *PQtty(const PGconn *conn);
-	extern const char *PQoptions(const PGconn *conn);
+	extern char *PQdb(const PGconn *conn);
+	extern char *PQuser(const PGconn *conn);
+	extern char *PQpass(const PGconn *conn);
+	extern char *PQhost(const PGconn *conn);
+	extern char *PQport(const PGconn *conn);
+	extern char *PQtty(const PGconn *conn);
+	extern char *PQoptions(const PGconn *conn);
 	extern ConnStatusType PQstatus(const PGconn *conn);
-	extern const char *PQerrorMessage(const PGconn *conn);
+	extern char *PQerrorMessage(const PGconn *conn);
 	extern int	PQsocket(const PGconn *conn);
 	extern int	PQbackendPID(const PGconn *conn);
 	extern int	PQclientEncoding(const PGconn *conn);
@@ -279,21 +275,21 @@ extern		"C"
 
 	/* Accessor functions for PGresult objects */
 	extern ExecStatusType PQresultStatus(const PGresult *res);
-	extern const char *PQresStatus(ExecStatusType status);
-	extern const char *PQresultErrorMessage(const PGresult *res);
+	extern char *PQresStatus(ExecStatusType status);
+	extern char *PQresultErrorMessage(const PGresult *res);
 	extern int	PQntuples(const PGresult *res);
 	extern int	PQnfields(const PGresult *res);
 	extern int	PQbinaryTuples(const PGresult *res);
-	extern const char *PQfname(const PGresult *res, int field_num);
+	extern char *PQfname(const PGresult *res, int field_num);
 	extern int	PQfnumber(const PGresult *res, const char *field_name);
 	extern Oid	PQftype(const PGresult *res, int field_num);
 	extern int	PQfsize(const PGresult *res, int field_num);
 	extern int	PQfmod(const PGresult *res, int field_num);
-	extern const char *PQcmdStatus(const PGresult *res);
-    extern const char *PQoidStatus(const PGresult *res); /* old and ugly */
+	extern char *PQcmdStatus(PGresult *res);
+    extern char *PQoidStatus(const PGresult *res); /* old and ugly */
     extern Oid PQoidValue(const PGresult *res); /* new and improved */
-	extern const char *PQcmdTuples(const PGresult *res);
-	extern const char *PQgetvalue(const PGresult *res, int tup_num, int field_num);
+	extern char *PQcmdTuples(PGresult *res);
+	extern char *PQgetvalue(const PGresult *res, int tup_num, int field_num);
 	extern int	PQgetlength(const PGresult *res, int tup_num, int field_num);
 	extern int	PQgetisnull(const PGresult *res, int tup_num, int field_num);
 
@@ -313,7 +309,6 @@ extern		"C"
 			    const PGresult *res,
 			    const PQprintOpt *ps);	/* option structure */
 
-#if 0
     /*
      * really old printing routines
      */
@@ -330,7 +325,7 @@ extern		"C"
                               int terseOutput,      /* delimiter bars */
                               int width);   /* width of column, if
                                              * 0, use variable width */
-#endif
+
 
 /* === in fe-lobj.c === */
 
@@ -338,7 +333,7 @@ extern		"C"
 	extern int	lo_open(PGconn *conn, Oid lobjId, int mode);
 	extern int	lo_close(PGconn *conn, int fd);
 	extern int	lo_read(PGconn *conn, int fd, char *buf, size_t len);
-	extern int	lo_write(PGconn *conn, int fd, const char *buf, size_t len);
+	extern int	lo_write(PGconn *conn, int fd, char *buf, size_t len);
 	extern int	lo_lseek(PGconn *conn, int fd, int offset, int whence);
 	extern Oid	lo_creat(PGconn *conn, int mode);
 	extern int	lo_tell(PGconn *conn, int fd);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.89 2000/01/26 05:58:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.90 2000/02/07 23:10:10 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,7 @@
 #endif
 
 /* keep this in same order as ExecStatusType in libpq-fe.h */
-const char *const pgresStatus[] = {
+char * const pgresStatus[] = {
 	"PGRES_EMPTY_QUERY",
 	"PGRES_COMMAND_OK",
 	"PGRES_TUPLES_OK",
@@ -1760,15 +1760,15 @@ PQresultStatus(const PGresult *res)
 	return res->resultStatus;
 }
 
-const char *
+char *
 PQresStatus(ExecStatusType status)
 {
-	if ((int)status < 0 || (size_t)status >= sizeof pgresStatus / sizeof pgresStatus[0])
+	if (status < 0 || status >= sizeof pgresStatus / sizeof pgresStatus[0])
 		return "Invalid ExecStatusType code";
 	return pgresStatus[status];
 }
 
-const char *
+char *
 PQresultErrorMessage(const PGresult *res)
 {
 	if (!res || !res->errMsg)
@@ -1862,7 +1862,7 @@ check_tuple_field_number(const char *routineName, const PGresult *res,
 /*
    returns NULL if the field_num is invalid
 */
-const char *
+char *
 PQfname(const PGresult *res, int field_num)
 {
 	if (!check_field_number("PQfname", res, field_num))
@@ -1947,8 +1947,8 @@ PQfmod(const PGresult *res, int field_num)
 		return 0;
 }
 
-const char *
-PQcmdStatus(const PGresult *res)
+char *
+PQcmdStatus(PGresult *res)
 {
 	if (!res)
 		return NULL;
@@ -1960,7 +1960,7 @@ PQcmdStatus(const PGresult *res)
 	if the last command was an INSERT, return the oid string
 	if not, return ""
 */
-const char *
+char *
 PQoidStatus(const PGresult *res)
 {
         /* 
@@ -2011,8 +2011,8 @@ PQoidValue(const PGresult *res)
 	if the last command was an INSERT/UPDATE/DELETE, return number
 	of inserted/affected tuples, if not, return ""
 */
-const char *
-PQcmdTuples(const PGresult *res)
+char *
+PQcmdTuples(PGresult *res)
 {
 	char noticeBuf[128];
 
@@ -2023,7 +2023,7 @@ PQcmdTuples(const PGresult *res)
 		strncmp(res->cmdStatus, "DELETE", 6) == 0 ||
 		strncmp(res->cmdStatus, "UPDATE", 6) == 0)
 	{
-		const char	   *p = res->cmdStatus + 6;
+		char	   *p = res->cmdStatus + 6;
 
 		if (*p == 0)
 		{
@@ -2067,7 +2067,7 @@ PQcmdTuples(const PGresult *res)
 
 	if res is not binary, a null-terminated ASCII string is returned.
 */
-const char *
+char *
 PQgetvalue(const PGresult *res, int tup_num, int field_num)
 {
 	if (!check_tuple_field_number("PQgetvalue", res, tup_num, field_num))

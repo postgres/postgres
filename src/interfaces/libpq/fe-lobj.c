@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-lobj.c,v 1.27 2000/01/26 05:58:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-lobj.c,v 1.28 2000/02/07 23:10:11 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -168,7 +168,7 @@ lo_read(PGconn *conn, int fd, char *buf, size_t len)
  *
  */
 int
-lo_write(PGconn *conn, int fd, const char *buf, size_t len)
+lo_write(PGconn *conn, int fd, char *buf, size_t len)
 {
 	PQArgBlock	argv[2];
 	PGresult   *res;

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.11 2000/01/29 16:58:48 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.12 2000/02/07 23:10:06 petere Exp $
  */
 #include <c.h>
 #include "common.h"
@@ -24,6 +24,7 @@
 #include <unistd.h>				/* for write() */
 #else
 #include <io.h>                 /* for _write() */
+#include <win32.h>
 #endif
 
 #include <libpq-fe.h>
@@ -37,18 +38,10 @@
 #include "prompt.h"
 #include "print.h"
 
-#ifdef WIN32
-#define popen(x,y) _popen(x,y)
-#define pclose(x) _pclose(x)
-#define write(a,b,c) _write(a,b,c)
-#endif
 
 
-
-/* xstrdup()
- *
+/*
  * "Safe" wrapper around strdup()
- * (Using this also avoids writing #ifdef HAVE_STRDUP in every file :)
  */
 char *
 xstrdup(const char *string)
@@ -57,7 +50,8 @@ xstrdup(const char *string)
 
 	if (!string)
 	{
-		fprintf(stderr, "%s: xstrdup: cannot duplicate null pointer\n", pset.progname);
+		fprintf(stderr, "%s: xstrdup: cannot duplicate null pointer (internal error)\n",
+                pset.progname);
 		exit(EXIT_FAILURE);
 	}
 	tmp = strdup(string);
@@ -133,7 +127,7 @@ setQFout(const char *fname)
 
 /*
  * Error reporting for scripts. Errors should look like
- *   filename:lineno: message
+ *   psql:filename:lineno: message
  *
  */
 void
@@ -152,8 +146,11 @@ psql_error(const char *fmt, ...)
     va_end(ap);
 }
 
-/* for backend NOTICES */
 
+
+/*
+ * for backend NOTICES
+ */
 void
 NoticeProcessor(void * arg, const char * message)
 {
@@ -184,7 +181,6 @@ simple_prompt(const char *prompt, int maxlen, bool echo)
 #ifdef HAVE_TERMIOS_H
 	struct termios t_orig,
 				t;
-
 #endif
 
 	destination = (char *) malloc(maxlen + 2);
@@ -240,8 +236,8 @@ simple_prompt(const char *prompt, int maxlen, bool echo)
  * Before we start a query, we enable a SIGINT signal catcher that sends a
  * cancel request to the backend. Note that sending the cancel directly from
  * the signal handler is safe because PQrequestCancel() is written to make it
- * so. We have to be very careful what else we do in the signal handler. This
- * includes using write() for output.
+ * so. We use write() to print to stdout because it's better to use simple
+ * facilities in a signal handler.
  */
 
 static PGconn *cancelConn;
