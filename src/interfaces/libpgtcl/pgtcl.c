@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtcl.c,v 1.17 2000/01/26 05:58:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtcl.c,v 1.18 2000/11/27 13:29:32 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,6 +71,11 @@ Pgtcl_Init(Tcl_Interp *interp)
 					  (ClientData) NULL, (Tcl_CmdDeleteProc *) NULL);
 
 	Tcl_CreateCommand(interp,
+					  "pg_execute",
+					  Pg_execute,
+					  (ClientData) NULL, (Tcl_CmdDeleteProc *) NULL);
+
+	Tcl_CreateCommand(interp,
 					  "pg_lo_open",
 					  Pg_lo_open,
 					  (ClientData) NULL, (Tcl_CmdDeleteProc *) NULL);
@@ -80,6 +85,17 @@ Pgtcl_Init(Tcl_Interp *interp)
 					  Pg_lo_close,
 					  (ClientData) NULL, (Tcl_CmdDeleteProc *) NULL);
 
+#ifdef PGTCL_USE_TCLOBJ
+	Tcl_CreateObjCommand(interp,
+					  "pg_lo_read",
+					  Pg_lo_read,
+					  (ClientData) NULL, (Tcl_CmdDeleteProc *) NULL);
+
+	Tcl_CreateObjCommand(interp,
+					  "pg_lo_write",
+					  Pg_lo_write,
+					  (ClientData) NULL, (Tcl_CmdDeleteProc *) NULL);
+#else
 	Tcl_CreateCommand(interp,
 					  "pg_lo_read",
 					  Pg_lo_read,
@@ -89,6 +105,7 @@ Pgtcl_Init(Tcl_Interp *interp)
 					  "pg_lo_write",
 					  Pg_lo_write,
 					  (ClientData) NULL, (Tcl_CmdDeleteProc *) NULL);
+#endif
 
 	Tcl_CreateCommand(interp,
 					  "pg_lo_lseek",

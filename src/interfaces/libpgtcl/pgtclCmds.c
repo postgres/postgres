@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.49 2000/04/12 17:17:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.50 2000/11/27 13:29:32 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,10 +20,18 @@
 #include "pgtclId.h"
 #include "libpq/libpq-fs.h"		/* large-object interface */
 
+/*
+ * Local function forward declarations
+ */
+static int execute_put_values(Tcl_Interp *interp, char *array_varname,
+						PGresult *result, int tupno);
+
+
 #ifdef TCL_ARRAYS
 
 #define ISOCTAL(c)		(((c) >= '0') && ((c) <= '7'))
 #define DIGIT(c)		((c) - '0')
+
 
 /*
  * translate_escape()
@@ -772,6 +780,274 @@ Pg_result_errReturn:
 
 }
 
+
+/**********************************
+ * pg_execute
+ send a query string to the backend connection and process the result
+
+ syntax:
+ pg_execute ?-array name? ?-oid varname? connection query ?loop_body?
+
+ the return result is the number of tuples processed. If the query
+ returns tuples (i.e. a SELECT statement), the result is placed into
+ variables 
+ **********************************/
+
+int
+Pg_execute(ClientData cData, Tcl_Interp *interp, int argc, char *argv[])
+{
+	Pg_ConnectionId *connid;
+	PGconn	   *conn;
+	PGresult   *result;
+	int			i;
+	int			tupno;
+	int			ntup;
+	int			loop_rc;
+	char	   *oid_varname = NULL;
+	char	   *array_varname = NULL;
+	char		buf[64];
+
+	char	   *usage = "Wrong # of arguments\n"
+						"pg_execute ?-array arrayname? ?-oid varname? "
+						"connection queryString ?loop_body?";
+
+	/*
+	 * First we parse the options
+	 */
+	i = 1;
+	while (i < argc)
+	{
+	    if (argv[i][0] != '-')
+			break;
+
+		if (strcmp(argv[i], "-array") == 0)
+		{
+			/*
+			 * The rows should appear in an array vs. to single variables
+			 */
+		    i++;
+			if (i == argc)
+			{
+			    Tcl_SetResult(interp, usage, TCL_VOLATILE);
+				return TCL_ERROR;
+			}
+			array_varname = argv[i++];
+			continue;
+		}
+
+		if (strcmp(argv[i], "-oid") == 0)
+		{
+			/*
+			 * We should place PQoidValue() somewhere
+			 */
+		    i++;
+			if (i == argc)
+			{
+			    Tcl_SetResult(interp, usage, TCL_VOLATILE);
+				return TCL_ERROR;
+			}
+			oid_varname = argv[i++];
+			continue;
+		}
+
+		Tcl_AppendResult(interp, "Unknown option '", argv[i], "'", NULL);
+		return TCL_ERROR;
+	}
+
+	/* 
+	 * Check that after option parsing at least 'connection' and 'query'
+	 * are left
+	 */
+	if (argc - i < 2)
+	{
+		Tcl_SetResult(interp, usage, TCL_VOLATILE);
+		return TCL_ERROR;
+	}
+
+	/*
+	 * Get the connection and make sure no COPY command is pending
+	 */
+	conn = PgGetConnectionId(interp, argv[i++], &connid);
+	if (conn == (PGconn *) NULL)
+		return TCL_ERROR;
+
+	if (connid->res_copyStatus != RES_COPY_NONE)
+	{
+		Tcl_SetResult(interp, "Attempt to query while COPY in progress", TCL_STATIC);
+		return TCL_ERROR;
+	}
+
+	/*
+	 * Execute the query
+	 */
+	result = PQexec(conn, argv[i++]);
+
+	/*
+	 * Transfer any notify events from libpq to Tcl event queue.
+	 */
+	PgNotifyTransferEvents(connid);
+
+	/*
+	 * Check for errors
+	 */
+	if (result == NULL)
+	{
+		Tcl_SetResult(interp, PQerrorMessage(conn), TCL_VOLATILE);
+		return TCL_ERROR;
+	}
+
+	/*
+	 * Set the oid variable to the returned oid of an INSERT statement
+	 * if requested (or an empty string if it wasn't an INSERT)
+	 */
+	if (oid_varname != NULL)
+	{
+	    if (Tcl_SetVar(interp, oid_varname,
+				PQoidStatus(result), TCL_LEAVE_ERR_MSG) != TCL_OK)
+		{
+		    PQclear(result);
+			return TCL_ERROR;
+		}
+	}
+
+	/*
+	 * Decide how to go on based on the result status
+	 */
+	switch (PQresultStatus(result))
+	{
+		case PGRES_TUPLES_OK:
+			/* fall through if we have tuples */
+			break;
+
+	    case PGRES_EMPTY_QUERY:
+		case PGRES_COMMAND_OK:
+		case PGRES_COPY_IN:
+		case PGRES_COPY_OUT:
+			/* tell the number of affected tuples for non-SELECT queries */
+			Tcl_SetResult(interp, PQcmdTuples(result), TCL_VOLATILE);
+			PQclear(result);
+			return TCL_OK;
+
+		default:
+			/* anything else must be an error */
+			Tcl_ResetResult(interp);
+			Tcl_AppendElement(interp, PQresStatus(PQresultStatus(result)));
+			Tcl_AppendElement(interp, PQresultErrorMessage(result));
+			PQclear(result);
+			return TCL_ERROR;
+	}
+
+	/*
+	 * We reach here only for queries that returned tuples
+	 */
+	if (i == argc) {
+		/*
+		 * We don't have a loop body. If we have at least one
+		 * result row, we set all the variables to the first one
+		 * and return.
+		 */
+		if (PQntuples(result) > 0)
+		{
+			if (execute_put_values(interp, array_varname, result, 0) != TCL_OK)
+			{
+				PQclear(result);
+				return TCL_ERROR;
+			}
+		}
+	    
+		sprintf(buf, "%d", PQntuples(result));
+		Tcl_SetResult(interp, buf, TCL_VOLATILE);
+		PQclear(result);
+		return TCL_OK;
+	}
+
+	/*
+	 * We have a loop body. For each row in the result set put the
+	 * values into the Tcl variables and execute the body.
+	 */
+	ntup = PQntuples(result);
+	for (tupno = 0; tupno < ntup; tupno++)
+	{
+	    if (execute_put_values(interp, array_varname, result, tupno) != TCL_OK)
+		{
+		    PQclear(result);
+			return TCL_ERROR;
+		}
+
+		loop_rc = Tcl_Eval(interp, argv[i]);
+
+		/* The returncode of the loop body controls the loop execution */
+		if (loop_rc == TCL_OK || loop_rc == TCL_CONTINUE)
+			/* OK or CONTINUE means start next loop invocation */
+			continue;
+		if (loop_rc == TCL_RETURN)
+		{
+			/* RETURN means hand up the given interpreter result */
+			PQclear(result);
+			return TCL_RETURN;
+		}
+		if (loop_rc == TCL_BREAK)
+			/* BREAK means leave the loop */
+			break;
+
+		PQclear(result);
+		return TCL_ERROR;
+	}
+
+	/*
+	 * At the end of the loop we put the number of rows we
+	 * got into the interpreter result and clear the result set.
+	 */
+	sprintf(buf, "%d", ntup);
+	Tcl_SetResult(interp, buf, TCL_VOLATILE);
+    PQclear(result);
+	return TCL_OK;
+}
+
+
+/**********************************
+ * execute_put_values
+
+ Put the values of one tuple into Tcl variables named like the
+ column names, or into an array indexed by the column names.
+ **********************************/
+static int 
+execute_put_values(Tcl_Interp *interp, char *array_varname,
+						PGresult *result, int tupno)
+{
+	int		i;
+	int		n;
+	char   *fname;
+	char   *value;
+
+	/*
+	 * For each column get the column name and value
+	 * and put it into a Tcl variable (either scalar or
+	 * array item)
+	 */
+	n = PQnfields(result);
+	for (i = 0; i < n; i++)
+	{
+	    fname = PQfname(result, i);
+		value = PQgetvalue(result, tupno, i);
+
+		if (array_varname != NULL)
+		{
+		    if (Tcl_SetVar2(interp, array_varname, fname, value,
+								TCL_LEAVE_ERR_MSG) == NULL)
+		        return TCL_ERROR;
+		}
+		else
+		{
+		    if (Tcl_SetVar(interp, fname, value, TCL_LEAVE_ERR_MSG) == NULL)
+		        return TCL_ERROR;
+		}
+	}
+
+	return TCL_OK;
+}
+
+
 /**********************************
  * pg_lo_open
 	 open a large object
@@ -885,6 +1161,61 @@ Pg_lo_close(ClientData cData, Tcl_Interp *interp, int argc, char *argv[])
  bufVar is the name of a variable in which to store the contents of the read
 
 **********************/
+#ifdef PGTCL_USE_TCLOBJ
+int
+Pg_lo_read(ClientData cData, Tcl_Interp *interp, int objc, 
+		Tcl_Obj *CONST objv[])
+{
+	PGconn	   *conn;
+	int			fd;
+	int			nbytes = 0;
+	char	   *buf;
+	Tcl_Obj	   *bufVar;
+	Tcl_Obj	   *bufObj;
+	int			len;
+	int			rc = TCL_OK;
+
+	if (objc != 5)
+	{
+		Tcl_AppendResult(interp, "Wrong # of arguments\n",
+						 " pg_lo_read conn fd bufVar len", 0);
+		return TCL_ERROR;
+	}
+
+	conn = PgGetConnectionId(interp, Tcl_GetStringFromObj(objv[1], NULL), 
+			(Pg_ConnectionId **) NULL);
+	if (conn == (PGconn *) NULL)
+		return TCL_ERROR;
+
+	if (Tcl_GetIntFromObj(interp, objv[2], &fd) != TCL_OK)
+		return TCL_ERROR;
+
+	bufVar = objv[3];
+
+	if (Tcl_GetIntFromObj(interp, objv[4], &len) != TCL_OK)
+		return TCL_ERROR;
+
+	if (len <= 0)
+	{
+		Tcl_SetObjResult(interp, Tcl_NewIntObj(nbytes));
+		return TCL_OK;
+	}
+	buf = ckalloc(len + 1);
+
+	nbytes = lo_read(conn, fd, buf, len);
+	bufObj = Tcl_NewStringObj(buf, nbytes);
+
+	if (Tcl_ObjSetVar2(interp, bufVar, NULL, bufObj, 
+					TCL_LEAVE_ERR_MSG | TCL_PARSE_PART1) == NULL)
+		rc = TCL_ERROR;
+	else
+		Tcl_SetObjResult(interp, Tcl_NewIntObj(nbytes));
+	
+	ckfree(buf);
+	return rc;
+
+}
+#else
 int
 Pg_lo_read(ClientData cData, Tcl_Interp *interp, int argc, char *argv[])
 {
@@ -927,6 +1258,7 @@ Pg_lo_read(ClientData cData, Tcl_Interp *interp, int argc, char *argv[])
 	return TCL_OK;
 
 }
+#endif
 
 /***********************************
 Pg_lo_write
@@ -936,6 +1268,51 @@ Pg_lo_write
  pg_lo_write conn fd buf len
 
 ***********************************/
+#ifdef PGTCL_USE_TCLOBJ
+int
+Pg_lo_write(ClientData cData, Tcl_Interp *interp, int objc, 
+		Tcl_Obj *CONST objv[])
+{
+	PGconn	   *conn;
+	char	   *buf;
+	int			fd;
+	int			nbytes = 0;
+	int			len;
+
+	if (objc != 5)
+	{
+		Tcl_AppendResult(interp, "Wrong # of arguments\n",
+						 "pg_lo_write conn fd buf len", 0);
+		return TCL_ERROR;
+	}
+
+	conn = PgGetConnectionId(interp, Tcl_GetStringFromObj(objv[1], NULL), 
+			(Pg_ConnectionId **) NULL);
+	if (conn == (PGconn *) NULL)
+		return TCL_ERROR;
+
+	if (Tcl_GetIntFromObj(interp, objv[2], &fd) != TCL_OK)
+		return TCL_ERROR;
+
+	buf = Tcl_GetStringFromObj(objv[3], &nbytes);
+
+	if (Tcl_GetIntFromObj(interp, objv[4], &len) != TCL_OK)
+		return TCL_ERROR;
+
+	if (len > nbytes)
+		len = nbytes;
+
+	if (len <= 0)
+	{
+		Tcl_SetObjResult(interp, Tcl_NewIntObj(0));
+		return TCL_OK;
+	}
+
+	nbytes = lo_write(conn, fd, buf, len);
+	Tcl_SetObjResult(interp, Tcl_NewIntObj(nbytes));
+	return TCL_OK;
+}
+#else
 int
 Pg_lo_write(ClientData cData, Tcl_Interp *interp, int argc, char *argv[])
 {
@@ -972,6 +1349,7 @@ Pg_lo_write(ClientData cData, Tcl_Interp *interp, int argc, char *argv[])
 	sprintf(interp->result, "%d", nbytes);
 	return TCL_OK;
 }
+#endif
 
 /***********************************
 Pg_lo_lseek
