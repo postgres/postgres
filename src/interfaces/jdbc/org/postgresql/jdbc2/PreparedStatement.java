@@ -58,12 +58,15 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	{
 		super(connection);
 
+		this.sql = sql;
+		this.connection = connection;
+		parseSqlStmt (); // this allows Callable stmt to override
+	}
+
+	protected void parseSqlStmt () throws SQLException {
 		Vector v = new Vector();
 		boolean inQuotes = false;
 		int lastParmEnd = 0, i;
-
-		this.sql = sql;
-		this.connection = connection;
 
 		for (i = 0; i < sql.length(); ++i)
 		{
@@ -118,7 +121,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	 * This is identical to toString() except it throws an exception if a
 	 * parameter is unused.
 	 */
-	private synchronized String compileQuery()
+	protected synchronized String compileQuery()
 	throws SQLException
 	{
 		sbuf.setLength(0);
@@ -818,7 +821,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	 * @param s a string to be stored
 	 * @exception SQLException if something goes wrong
 	 */
-	private void set(int paramIndex, String s) throws SQLException
+	protected void set(int paramIndex, String s) throws SQLException
 	{
 		if (paramIndex < 1 || paramIndex > inStrings.length)
 			throw new PSQLException("postgresql.prep.range");

@@ -7,7 +7,7 @@ package org.postgresql.jdbc2;
 
 import java.sql.*;
 import java.math.*;
-
+import org.postgresql.util.*;
 /*
  * CallableStatement is used to execute SQL stored procedures.
  *
@@ -37,6 +37,7 @@ import java.math.*;
  *
  * @see Connection#prepareCall
  * @see ResultSet
+ * @author Paul Bethe (implementer)
  */
 
 public class CallableStatement extends org.postgresql.jdbc2.PreparedStatement implements java.sql.CallableStatement
@@ -46,8 +47,73 @@ public class CallableStatement extends org.postgresql.jdbc2.PreparedStatement im
 	 */
 	public CallableStatement(Connection c, String q) throws SQLException
 	{
-		super(c, q);
+		super(c, q); // don't parse yet..
 	}
+
+
+	/**
+	 * allows this class to tweak the standard JDBC call !see Usage
+	 * -> and replace with the pgsql function syntax
+	 * ie. select <function ([params])> as RESULT;
+	 */
+
+	protected void parseSqlStmt () throws SQLException {
+		modifyJdbcCall ();
+		super.parseSqlStmt ();
+	}
+	/** 
+	 * this method will turn a string of the form
+	 * {? = call <some_function> (?, [?,..]) }
+	 * into the PostgreSQL format which is 
+	 * select <some_function> (?, [?, ...]) as result
+	 * 
+	 */
+	private void modifyJdbcCall () throws SQLException {
+		// syntax checking is not complete only a few basics :(
+		originalSql = sql; // save for error msgs..
+		int index = sql.indexOf ("="); // is implied func or proc?
+		boolean isValid = true;
+		if (index != -1) {
+			isFunction = true;
+			isValid = sql.indexOf ("?") < index; // ? before =			
+		}
+		sql = sql.trim ();
+		if (sql.startsWith ("{") && sql.endsWith ("}")) {
+			sql = sql.substring (1, sql.length() -1);
+		} else isValid = false;
+		index = sql.indexOf ("call"); 
+		if (index == -1 || !isValid)
+			throw new PSQLException ("postgresql.call.malformed", 
+									 new Object[]{sql, JDBC_SYNTAX});
+		sql = sql.replace ('{', ' '); // replace these characters
+		sql = sql.replace ('}', ' ');
+		sql = sql.replace (';', ' ');
+		
+		// this removes the 'call' string and also puts a hidden '?'
+		// at the front of the line for functions, this will
+		// allow the registerOutParameter to work correctly
+                // because in the source sql there was one more ? for the return
+                // value that is not needed by the postgres syntax.  But to make 
+                // sure that the parameter numbers are the same as in the original
+                // sql we add a dummy parameter in this case
+		sql = (isFunction ? "?" : "") + sql.substring (index + 4);
+		
+		sql = "select " + sql + " as " + RESULT_COLUMN + ";";	  
+	}
+
+	// internals 
+	static final String JDBC_SYNTAX = "{[? =] call <some_function> ([? [,?]*]) }";
+	static final String RESULT_COLUMN = "result";
+	String originalSql = "";
+	boolean isFunction;
+	// functionReturnType contains the user supplied value to check
+	// testReturn contains a modified version to make it easier to 
+	// check the getXXX methods..
+	int functionReturnType;
+	int testReturn;
+	// returnTypeSet is true when a proper call to registerOutParameter has been made
+	boolean returnTypeSet;
+	Object result;
 
 	/*
 	 * Before executing a stored procedure call you must explicitly
@@ -58,6 +124,8 @@ public class CallableStatement extends org.postgresql.jdbc2.PreparedStatement im
 	 * the getXXX method whose Java type XXX corresponds to the
 	 * parameter's registered SQL type.
 	 *
+	 * ONLY 1 RETURN PARAMETER if {?= call ..} syntax is used
+	 *
 	 * @param parameterIndex the first parameter is 1, the second is 2,...
 	 * @param sqlType SQL type code defined by java.sql.Types; for
 	 * parameters of type Numeric or Decimal use the version of
@@ -65,7 +133,55 @@ public class CallableStatement extends org.postgresql.jdbc2.PreparedStatement im
 	 * @exception SQLException if a database-access error occurs.
 	 */
 	public void registerOutParameter(int parameterIndex, int sqlType) throws SQLException
-		{}
+		{
+			if (parameterIndex != 1)
+				throw new PSQLException ("postgresql.call.noinout");
+			if (!isFunction)
+				throw new PSQLException ("postgresql.call.procasfunc", originalSql);
+			
+			// functionReturnType contains the user supplied value to check
+			// testReturn contains a modified version to make it easier to 
+			// check the getXXX methods..
+			functionReturnType = sqlType;
+			testReturn = sqlType;
+			if (functionReturnType == Types.CHAR || 
+				functionReturnType == Types.LONGVARCHAR)
+				testReturn = Types.VARCHAR;
+			else if (functionReturnType == Types.FLOAT)
+				testReturn = Types.REAL; // changes to streamline later error checking
+			returnTypeSet = true;
+		}
+
+	/**
+	 * allow calls to execute update
+	 * @return 1 if succesful call otherwise 0
+	 */
+	public int executeUpdate() throws SQLException
+	{
+		java.sql.ResultSet rs = super.executeQuery (compileQuery());	
+		if (isFunction) {
+			if (!rs.next ())
+				throw new PSQLException ("postgresql.call.noreturnval");
+			result = rs.getObject(1);
+			int columnType = rs.getMetaData().getColumnType(1);
+			if (columnType != functionReturnType) 
+				throw new PSQLException ("postgresql.call.wrongrtntype",
+										 new Object[]{
+					getSqlTypeName (columnType), getSqlTypeName (functionReturnType) }); 
+		}
+		rs.close ();
+		return 1;
+	}
+
+
+	/**
+	 * allow calls to execute update
+	 * @return true if succesful
+	 */
+	public boolean execute() throws SQLException
+	{
+		return (executeUpdate() == 1);
+	}
 
 	/*
 	 * You must also specify the scale for numeric/decimal types:
@@ -82,12 +198,40 @@ public class CallableStatement extends org.postgresql.jdbc2.PreparedStatement im
 	 */
 	public void registerOutParameter(int parameterIndex, int sqlType,
 									 int scale) throws SQLException
-		{}
+		{
+			registerOutParameter (parameterIndex, sqlType); // ignore for now..
+		}
 
-	// Old api?
-	//public boolean isNull(int parameterIndex) throws SQLException {
-	//return true;
-	//}
+	/*
+	 * override this method to check for set @ 1 when declared function..
+	 *
+	 * @param paramIndex the index into the inString
+	 * @param s a string to be stored
+	 * @exception SQLException if something goes wrong
+	 */
+	protected void set(int paramIndex, String s) throws SQLException
+	{
+		if (paramIndex == 1 && isFunction) // need to registerOut instead
+			throw new PSQLException ("postgresql.call.funcover");
+		super.set (paramIndex, s); // else set as usual..
+	}
+
+		/*
+	 * Helper - this compiles the SQL query from the various parameters
+	 * This is identical to toString() except it throws an exception if a
+	 * parameter is unused.
+	 */
+	protected synchronized String compileQuery()
+	throws SQLException
+	{
+		if (isFunction && !returnTypeSet)
+			throw new PSQLException("postgresql.call.noreturntype");
+		if (isFunction) { // set entry 1 to dummy entry..
+			inStrings[0] = ""; // dummy entry which ensured that no one overrode
+			// and calls to setXXX (2,..) really went to first arg in a function call..
+		}
+		return super.compileQuery ();
+	}
 
 	/*
 	 * An OUT parameter may have the value of SQL NULL; wasNull
@@ -101,13 +245,8 @@ public class CallableStatement extends org.postgresql.jdbc2.PreparedStatement im
 	public boolean wasNull() throws SQLException
 	{
 		// check to see if the last access threw an exception
-		return false; // fake it for now
+		return (result == null);
 	}
-
-	// Old api?
-	//public String getChar(int parameterIndex) throws SQLException {
-	//return null;
-	//}
 
 	/*
 	 * Get the value of a CHAR, VARCHAR, or LONGVARCHAR parameter as a
@@ -119,7 +258,8 @@ public class CallableStatement extends org.postgresql.jdbc2.PreparedStatement im
 	 */
 	public String getString(int parameterIndex) throws SQLException
 	{
-		return null;
+		checkIndex (parameterIndex, Types.VARCHAR, "String");
+		return (String)result;
 	}
 	//public String getVarChar(int parameterIndex) throws SQLException {
 	//	 return null;
@@ -138,7 +278,9 @@ public class CallableStatement extends org.postgresql.jdbc2.PreparedStatement im
 	 */
 	public boolean getBoolean(int parameterIndex) throws SQLException
 	{
-		return false;
+		checkIndex (parameterIndex, Types.BIT, "Boolean");
+		if (result == null) return false;
+		return ((Boolean)result).booleanValue ();
 	}
 
 	/*
@@ -150,7 +292,9 @@ public class CallableStatement extends org.postgresql.jdbc2.PreparedStatement im
 	 */
 	public byte getByte(int parameterIndex) throws SQLException
 	{
-		return 0;
+		checkIndex (parameterIndex, Types.TINYINT, "Byte");
+		if (result == null) return 0;
+		return (byte)((Integer)result).intValue ();
 	}
 
 	/*
@@ -162,8 +306,11 @@ public class CallableStatement extends org.postgresql.jdbc2.PreparedStatement im
 	 */
 	public short getShort(int parameterIndex) throws SQLException
 	{
-		return 0;
+		checkIndex (parameterIndex, Types.SMALLINT, "Short");
+		if (result == null) return 0;
+		return (short)((Integer)result).intValue ();
 	}
+		
 
 	/*
 	 * Get the value of an INTEGER parameter as a Java int.
@@ -174,7 +321,9 @@ public class CallableStatement extends org.postgresql.jdbc2.PreparedStatement im
 	 */
 	public int getInt(int parameterIndex) throws SQLException
 	{
-		return 0;
+		checkIndex (parameterIndex, Types.INTEGER, "Int");
+		if (result == null) return 0;
+		return ((Integer)result).intValue ();
 	}
 
 	/*
@@ -186,7 +335,9 @@ public class CallableStatement extends org.postgresql.jdbc2.PreparedStatement im
 	 */
 	public long getLong(int parameterIndex) throws SQLException
 	{
-		return 0;
+		checkIndex (parameterIndex, Types.BIGINT, "Long");
+		if (result == null) return 0;
+		return ((Long)result).longValue ();
 	}
 
 	/*
@@ -198,7 +349,9 @@ public class CallableStatement extends org.postgresql.jdbc2.PreparedStatement im
 	 */
 	public float getFloat(int parameterIndex) throws SQLException
 	{
-		return (float) 0.0;
+		checkIndex (parameterIndex, Types.REAL, "Float");
+		if (result == null) return 0;
+		return ((Float)result).floatValue ();
 	}
 
 	/*
@@ -210,7 +363,9 @@ public class CallableStatement extends org.postgresql.jdbc2.PreparedStatement im
 	 */
 	public double getDouble(int parameterIndex) throws SQLException
 	{
-		return 0.0;
+		checkIndex (parameterIndex, Types.DOUBLE, "Double");
+		if (result == null) return 0;
+		return ((Double)result).doubleValue ();
 	}
 
 	/*
@@ -227,7 +382,8 @@ public class CallableStatement extends org.postgresql.jdbc2.PreparedStatement im
 	public BigDecimal getBigDecimal(int parameterIndex, int scale)
 	throws SQLException
 	{
-		return null;
+		checkIndex (parameterIndex, Types.NUMERIC, "BigDecimal");
+		return ((BigDecimal)result);
 	}
 
 	/*
@@ -240,7 +396,8 @@ public class CallableStatement extends org.postgresql.jdbc2.PreparedStatement im
 	 */
 	public byte[] getBytes(int parameterIndex) throws SQLException
 	{
-		return null;
+		checkIndex (parameterIndex, Types.VARBINARY, "Bytes");
+		return ((byte [])result);
 	}
 
 	// New API (JPM) (getLongVarBinary)
@@ -257,7 +414,8 @@ public class CallableStatement extends org.postgresql.jdbc2.PreparedStatement im
 	 */
 	public java.sql.Date getDate(int parameterIndex) throws SQLException
 	{
-		return null;
+		checkIndex (parameterIndex, Types.DATE, "Date");
+		return (java.sql.Date)result;
 	}
 
 	/*
@@ -269,7 +427,8 @@ public class CallableStatement extends org.postgresql.jdbc2.PreparedStatement im
 	 */
 	public java.sql.Time getTime(int parameterIndex) throws SQLException
 	{
-		return null;
+		checkIndex (parameterIndex, Types.TIME, "Time");
+		return (java.sql.Time)result;
 	}
 
 	/*
@@ -282,7 +441,8 @@ public class CallableStatement extends org.postgresql.jdbc2.PreparedStatement im
 	public java.sql.Timestamp getTimestamp(int parameterIndex)
 	throws SQLException
 	{
-		return null;
+		checkIndex (parameterIndex, Types.TIMESTAMP, "Timestamp");
+		return (java.sql.Timestamp)result;
 	}
 
 	//----------------------------------------------------------------------
@@ -317,7 +477,8 @@ public class CallableStatement extends org.postgresql.jdbc2.PreparedStatement im
 	public Object getObject(int parameterIndex)
 	throws SQLException
 	{
-		return null;
+		checkIndex (parameterIndex);		
+		return result;
 	}
 
 	// ** JDBC 2 Extensions **
@@ -327,9 +488,10 @@ public class CallableStatement extends org.postgresql.jdbc2.PreparedStatement im
 		throw org.postgresql.Driver.notImplemented();
 	}
 
-	public java.math.BigDecimal getBigDecimal(int i) throws SQLException
+	public java.math.BigDecimal getBigDecimal(int parameterIndex) throws SQLException
 	{
-		throw org.postgresql.Driver.notImplemented();
+		checkIndex (parameterIndex, Types.NUMERIC, "BigDecimal");
+		return ((BigDecimal)result);
 	}
 
 	public Blob getBlob(int i) throws SQLException
@@ -367,10 +529,76 @@ public class CallableStatement extends org.postgresql.jdbc2.PreparedStatement im
 		throw org.postgresql.Driver.notImplemented();
 	}
 
+	// no custom types allowed yet..
 	public void registerOutParameter(int parameterIndex, int sqlType, String typeName) throws SQLException
 	{
 		throw org.postgresql.Driver.notImplemented();
 	}
 
+
+
+	/** helperfunction for the getXXX calls to check isFunction and index == 1
+	 */
+	private void checkIndex (int parameterIndex, int type, String getName) 
+		throws SQLException {
+		checkIndex (parameterIndex);
+		if (type != this.testReturn) 
+			throw new PSQLException("postgresql.call.wrongget",
+									new Object[]{getSqlTypeName (testReturn),
+													 getName,
+													 getSqlTypeName (type)});
+	}
+	/** helperfunction for the getXXX calls to check isFunction and index == 1
+	 * @param parameterIndex index of getXXX (index)
+	 * check to make sure is a function and index == 1
+	 */
+	private void checkIndex (int parameterIndex) throws SQLException {
+		if (!isFunction)
+			throw new PSQLException("postgresql.call.noreturntype");
+		if (parameterIndex != 1)
+			throw new PSQLException("postgresql.call.noinout");
+	}
+		
+	/** helper function for creating msg with type names
+	 * @param sqlType a java.sql.Types.XX constant
+	 * @return String which is the name of the constant..
+	 */
+	private static String getSqlTypeName (int sqlType) {
+		switch (sqlType)
+			{
+			case Types.BIT:
+				return "BIT";
+			case Types.SMALLINT:
+				return "SMALLINT";
+			case Types.INTEGER:
+				return "INTEGER";
+			case Types.BIGINT:
+				return "BIGINT";
+			case Types.NUMERIC:
+				return "NUMERIC";
+			case Types.REAL:
+				return "REAL";
+			case Types.DOUBLE:
+				return "DOUBLE";
+			case Types.FLOAT:
+				return "FLOAT";
+			case Types.CHAR:
+				return "CHAR";
+			case Types.VARCHAR:
+				return "VARCHAR";
+			case Types.DATE:
+				return "DATE";
+			case Types.TIME:
+				return "TIME";
+			case Types.TIMESTAMP:
+				return "TIMESTAMP";
+			case Types.BINARY:
+				return "BINARY";
+			case Types.VARBINARY:
+				return "VARBINARY";
+			default:
+				return "UNKNOWN";
+			}
+	}
 }
 

@@ -226,8 +226,9 @@ public class JDBC2Tests extends TestSuite
 
 		// Fastpath/LargeObject
 		suite.addTestSuite(BlobTest.class);
-    suite.addTestSuite( UpdateableResultTest.class );
+		suite.addTestSuite( UpdateableResultTest.class );
 
+		suite.addTestSuite( CallableStmtTest.class );
 		// That's all folks
 		return suite;
 	}

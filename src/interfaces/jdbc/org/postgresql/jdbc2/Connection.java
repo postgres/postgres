@@ -17,7 +17,7 @@ import org.postgresql.largeobject.*;
 import org.postgresql.util.*;
 
 /*
- * $Id: Connection.java,v 1.19 2002/06/11 02:55:16 barry Exp $
+ * $Id: Connection.java,v 1.20 2002/06/24 06:16:27 barry Exp $
  *
  * A Connection represents a session with a specific database.	Within the
  * context of a Connection, SQL statements are executed and results are
@@ -135,11 +135,10 @@ public class Connection extends org.postgresql.Connection implements java.sql.Co
 
         public java.sql.CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency) throws SQLException
         {
-                throw new PSQLException("postgresql.con.call");
-                //CallableStatement s = new CallableStatement(this,sql);
-                //s.setResultSetType(resultSetType);
-                //s.setResultSetConcurrency(resultSetConcurrency);
-                //return s;
+			CallableStatement s = new CallableStatement(this,sql);
+			s.setResultSetType(resultSetType);
+			s.setResultSetConcurrency(resultSetConcurrency);
+			return s;
         }
 
         /*
