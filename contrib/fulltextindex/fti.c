@@ -351,10 +351,9 @@ is_stopword(char *text)
 	StopLow = &StopWords[0];	/* initialize stuff for binary search */
 	StopHigh = endof(StopWords);
 
-	if (lengthof(StopWords) == 0)
-		return false;
+	/* Loop invariant: *StopLow <= text < *StopHigh */
 
-	while (StopLow <= StopHigh)
+	while (StopLow < StopHigh)
 	{
 		StopMiddle = StopLow + (StopHigh - StopLow) / 2;
 		difference = strcmp(*StopMiddle, text);
@@ -363,7 +362,7 @@ is_stopword(char *text)
 		else if (difference < 0)
 			StopLow = StopMiddle + 1;
 		else
-			StopHigh = StopMiddle - 1;
+			StopHigh = StopMiddle;
 	}
 
 	return (false);
