@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.242 2002/08/19 19:33:34 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.243 2002/08/27 03:56:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -665,7 +665,7 @@ CreateIndexName(char *table_name, char *column_name,
 	 * indexes, only among the indexes we're about to create now; this
 	 * ought to be improved someday.
 	 */
-	strcpy(typename, label);
+	strncpy(typename, label, sizeof(typename));
 
 	for (;;)
 	{
@@ -685,7 +685,7 @@ CreateIndexName(char *table_name, char *column_name,
 
 		/* found a conflict, so try a new name component */
 		pfree(iname);
-		sprintf(typename, "%s%d", label, ++pass);
+		snprintf(typename, sizeof(typename), "%s%d", label, ++pass);
 	}
 
 	return iname;

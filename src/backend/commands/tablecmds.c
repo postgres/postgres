@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.33 2002/08/24 15:00:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.34 2002/08/27 03:56:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3370,8 +3370,8 @@ AlterTableCreateToastTable(Oid relOid, bool silent)
 	/*
 	 * Create the toast table and its index
 	 */
-	sprintf(toast_relname, "pg_toast_%u", relOid);
-	sprintf(toast_idxname, "pg_toast_%u_index", relOid);
+	snprintf(toast_relname, NAMEDATALEN, "pg_toast_%u", relOid);
+	snprintf(toast_idxname, NAMEDATALEN, "pg_toast_%u_index", relOid);
 
 	/* this is pretty painful...  need a tuple descriptor */
 	tupdesc = CreateTemplateTupleDesc(3, WITHOUTOID);

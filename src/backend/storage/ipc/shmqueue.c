@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmqueue.c,v 1.21 2002/06/20 20:29:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmqueue.c,v 1.22 2002/08/27 03:56:35 momjian Exp $
  *
  * NOTES
  *
@@ -214,11 +214,11 @@ dumpQ(SHM_QUEUE *q, char *s)
 	SHM_QUEUE  *start = q;
 	int			count = 0;
 
-	sprintf(buf, "q prevs: %lx", MAKE_OFFSET(q));
+	snprintf(buf, sizeof(buf), "q prevs: %lx", MAKE_OFFSET(q));
 	q = (SHM_QUEUE *) MAKE_PTR(q->prev);
 	while (q != start)
 	{
-		sprintf(elem, "--->%lx", MAKE_OFFSET(q));
+		snprintf(elem, sizeof(elem), "--->%lx", MAKE_OFFSET(q));
 		strcat(buf, elem);
 		q = (SHM_QUEUE *) MAKE_PTR(q->prev);
 		if (q->prev == MAKE_OFFSET(q))
@@ -229,16 +229,16 @@ dumpQ(SHM_QUEUE *q, char *s)
 			break;
 		}
 	}
-	sprintf(elem, "--->%lx", MAKE_OFFSET(q));
+	snprintf(elem, sizeof(elem), "--->%lx", MAKE_OFFSET(q));
 	strcat(buf, elem);
 	elog(SHMQUEUE_DEBUG_ELOG, "%s: %s", s, buf);
 
-	sprintf(buf, "q nexts: %lx", MAKE_OFFSET(q));
+	snprintf(buf, sizeof(buf), "q nexts: %lx", MAKE_OFFSET(q));
 	count = 0;
 	q = (SHM_QUEUE *) MAKE_PTR(q->next);
 	while (q != start)
 	{
-		sprintf(elem, "--->%lx", MAKE_OFFSET(q));
+		snprintf(elem, sizeof(elem), "--->%lx", MAKE_OFFSET(q));
 		strcat(buf, elem);
 		q = (SHM_QUEUE *) MAKE_PTR(q->next);
 		if (q->next == MAKE_OFFSET(q))
@@ -249,7 +249,7 @@ dumpQ(SHM_QUEUE *q, char *s)
 			break;
 		}
 	}
-	sprintf(elem, "--->%lx", MAKE_OFFSET(q));
+	snprintf(elem, sizeof(elem), "--->%lx", MAKE_OFFSET(q));
 	strcat(buf, elem);
 	elog(SHMQUEUE_DEBUG_ELOG, "%s: %s", s, buf);
 }
