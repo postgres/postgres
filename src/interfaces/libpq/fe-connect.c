@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.154 2000/12/07 02:04:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.155 2000/12/18 17:33:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2084,6 +2084,7 @@ PQresetPoll(PGconn *conn)
  * malloc/free are often non-reentrant, and anything that might call them is
  * just as dangerous.  We avoid sprintf here for that reason.  Building up
  * error messages with strcpy/strcat is tedious but should be quite safe.
+ * We also save/restore errno in case the signal handler support doesn't.
  *
  * NOTE: this routine must not generate any error message longer than
  * INITIAL_EXPBUFFER_SIZE (currently 256), since we dare not try to
@@ -2093,6 +2094,7 @@ PQresetPoll(PGconn *conn)
 int
 PQrequestCancel(PGconn *conn)
 {
+	int			save_errno = errno;
 	int			tmpsock = -1;
 	struct
 	{
@@ -2109,6 +2111,7 @@ PQrequestCancel(PGconn *conn)
 		strcpy(conn->errorMessage.data,
 			   "PQrequestCancel() -- connection is not open\n");
 		conn->errorMessage.len = strlen(conn->errorMessage.data);
+		errno = save_errno;
 		return FALSE;
 	}
 
@@ -2154,6 +2157,7 @@ PQrequestCancel(PGconn *conn)
 	close(tmpsock);
 #endif
 
+	errno = save_errno;
 	return TRUE;
 
 cancel_errReturn:
@@ -2168,6 +2172,7 @@ cancel_errReturn:
 		close(tmpsock);
 #endif
 	}
+	errno = save_errno;
 	return FALSE;
 }
 

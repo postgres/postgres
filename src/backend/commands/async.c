@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.73 2000/11/28 23:27:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.74 2000/12/18 17:33:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -589,6 +589,7 @@ AtAbort_Notify()
 void
 Async_NotifyHandler(SIGNAL_ARGS)
 {
+	int			save_errno = errno;
 
 	/*
 	 * Note: this is a SIGNAL HANDLER.	You must be very wary what you do
@@ -637,6 +638,8 @@ Async_NotifyHandler(SIGNAL_ARGS)
 		 */
 		notifyInterruptOccurred = 1;
 	}
+
+	errno = save_errno;
 }
 
 /*

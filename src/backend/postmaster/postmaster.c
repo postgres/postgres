@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.198 2000/12/03 20:45:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.199 2000/12/18 17:33:40 tgl Exp $
  *
  * NOTES
  *
@@ -217,7 +217,7 @@ static int	initMasks(fd_set *rmask, fd_set *wmask);
 static char *canAcceptConnections(void);
 static long PostmasterRandom(void);
 static void RandomSalt(char *salt);
-static void SignalChildren(SIGNAL_ARGS);
+static void SignalChildren(int signal);
 static int	CountChildren(void);
 static bool CreateOptsFile(int argc, char *argv[]);
 
@@ -1303,10 +1303,13 @@ reset_shared(unsigned short port)
 static void
 SIGHUP_handler(SIGNAL_ARGS)
 {
+	int			save_errno = errno;
+
 	if (Shutdown > SmartShutdown)
 		return;
 	got_SIGHUP = true;
 	SignalChildren(SIGHUP);
+	errno = save_errno;
 }
 
 
@@ -1317,6 +1320,8 @@ SIGHUP_handler(SIGNAL_ARGS)
 static void
 pmdie(SIGNAL_ARGS)
 {
+	int			save_errno = errno;
+
 	PG_SETMASK(&BlockSig);
 
 	if (DebugLvl >= 1)
@@ -1330,8 +1335,12 @@ pmdie(SIGNAL_ARGS)
 			 * Send SIGUSR2 to all children (AsyncNotifyHandler)
 			 */
 			if (Shutdown > SmartShutdown)
+			{
+				errno = save_errno;
 				return;
+			}
 			SignalChildren(SIGUSR2);
+			errno = save_errno;
 			return;
 
 		case SIGTERM:
@@ -1342,24 +1351,34 @@ pmdie(SIGNAL_ARGS)
 			 * let children to end their work and ShutdownDataBase.
 			 */
 			if (Shutdown >= SmartShutdown)
+			{
+				errno = save_errno;
 				return;
+			}
 			Shutdown = SmartShutdown;
 			tnow = time(NULL);
 			fprintf(stderr, "Smart Shutdown request at %s", ctime(&tnow));
 			fflush(stderr);
 			if (DLGetHead(BackendList)) /* let reaper() handle this */
+			{
+				errno = save_errno;
 				return;
+			}
 
 			/*
 			 * No children left. Shutdown data base system.
 			 */
 			if (StartupPID > 0 || FatalError)	/* let reaper() handle
 												 * this */
+			{
+				errno = save_errno;
 				return;
+			}
 			if (ShutdownPID > 0)
 				abort();
 
 			ShutdownPID = ShutdownDataBase();
+			errno = save_errno;
 			return;
 
 		case SIGINT:
@@ -1371,7 +1390,10 @@ pmdie(SIGNAL_ARGS)
 			 * and exit) and ShutdownDataBase.
 			 */
 			if (Shutdown >= FastShutdown)
+			{
+				errno = save_errno;
 				return;
+			}
 			tnow = time(NULL);
 			fprintf(stderr, "Fast Shutdown request at %s", ctime(&tnow));
 			fflush(stderr);
@@ -1384,11 +1406,13 @@ pmdie(SIGNAL_ARGS)
 					fflush(stderr);
 					SignalChildren(SIGTERM);
 				}
+				errno = save_errno;
 				return;
 			}
 			if (Shutdown > NoShutdown)
 			{
 				Shutdown = FastShutdown;
+				errno = save_errno;
 				return;
 			}
 			Shutdown = FastShutdown;
@@ -1398,11 +1422,15 @@ pmdie(SIGNAL_ARGS)
 			 */
 			if (StartupPID > 0 || FatalError)	/* let reaper() handle
 												 * this */
+			{
+				errno = save_errno;
 				return;
+			}
 			if (ShutdownPID > 0)
 				abort();
 
 			ShutdownPID = ShutdownDataBase();
+			errno = save_errno;
 			return;
 
 		case SIGQUIT:
@@ -1435,18 +1463,18 @@ pmdie(SIGNAL_ARGS)
 static void
 reaper(SIGNAL_ARGS)
 {
-/* GH: replace waitpid for !HAVE_WAITPID. Does this work ? */
+	int			save_errno = errno;
 #ifdef HAVE_WAITPID
 	int			status;			/* backend exit status */
-
 #else
 	union wait	status;			/* backend exit status */
-
 #endif
 	int			exitstatus;
 	int			pid;			/* process id of dead backend */
 
 	PG_SETMASK(&BlockSig);
+	/* It's not really necessary to reset the handler each time is it? */
+	pqsignal(SIGCHLD, reaper);
 
 	if (DebugLvl)
 		fprintf(stderr, "%s: reaping dead processes...\n",
@@ -1499,12 +1527,11 @@ reaper(SIGNAL_ARGS)
 			CheckPointPID = 0;
 			checkpointed = time(NULL);
 
-			pqsignal(SIGCHLD, reaper);
+			errno = save_errno;
 			return;
 		}
 		CleanupProc(pid, exitstatus);
 	}
-	pqsignal(SIGCHLD, reaper);
 
 	if (FatalError)
 	{
@@ -1513,9 +1540,15 @@ reaper(SIGNAL_ARGS)
 		 * Wait for all children exit, then reset shmem and StartupDataBase.
 		 */
 		if (DLGetHead(BackendList))
+		{
+			errno = save_errno;
 			return;
+		}
 		if (StartupPID > 0 || ShutdownPID > 0)
+		{
+			errno = save_errno;
 			return;
+		}
 		tnow = time(NULL);
 		fprintf(stderr, "Server processes were terminated at %s"
 				"Reinitializing shared memory and semaphores\n",
@@ -1526,18 +1559,26 @@ reaper(SIGNAL_ARGS)
 		reset_shared(PostPortNumber);
 
 		StartupPID = StartupDataBase();
+		errno = save_errno;
 		return;
 	}
 
 	if (Shutdown > NoShutdown)
 	{
 		if (DLGetHead(BackendList))
+		{
+			errno = save_errno;
 			return;
+		}
 		if (StartupPID > 0 || ShutdownPID > 0)
+		{
+			errno = save_errno;
 			return;
+		}
 		ShutdownPID = ShutdownDataBase();
 	}
 
+	errno = save_errno;
 }
 
 /*
@@ -2002,6 +2043,7 @@ ExitPostmaster(int status)
 static void
 dumpstatus(SIGNAL_ARGS)
 {
+	int			save_errno = errno;
 	Dlelem	   *curr;
 
 	PG_SETMASK(&BlockSig);
@@ -2015,6 +2057,7 @@ dumpstatus(SIGNAL_ARGS)
 		fprintf(stderr, "\tsock %d\n", port->sock);
 		curr = DLGetSucc(curr);
 	}
+	errno = save_errno;
 }
 
 /*

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.28 2000/12/15 17:54:43 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.29 2000/12/18 17:33:42 tgl Exp $
  */
 #include "postgres.h"
 #include "common.h"
@@ -258,6 +258,8 @@ volatile bool cancel_pressed;
 void
 handle_sigint(SIGNAL_ARGS)
 {
+	int			save_errno = errno;
+
 	/* Don't muck around if copying in or prompting for a password. */
 	if ((copy_in_state && pset.cur_cmd_interactive) || prompt_state)
 		return;
@@ -274,6 +276,7 @@ handle_sigint(SIGNAL_ARGS)
 		write_stderr("Could not send cancel request: ");
 		write_stderr(PQerrorMessage(cancelConn));
 	}
+	errno = save_errno;			/* just in case the write changed it */
 }
 
 #endif	 /* not WIN32 */

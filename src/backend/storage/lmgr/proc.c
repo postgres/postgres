@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.87 2000/12/18 00:44:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.88 2000/12/18 17:33:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,10 +48,11 @@
  *		This is so that we can support more backends. (system-wide semaphore
  *		sets run out pretty fast.)				  -ay 4/95
  *
- * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.87 2000/12/18 00:44:47 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.88 2000/12/18 17:33:41 tgl Exp $
  */
 #include "postgres.h"
 
+#include <errno.h>
 #include <sys/time.h>
 #include <unistd.h>
 #include <signal.h>
@@ -298,7 +299,7 @@ InitProcess(void)
 }
 
 /* -----------------------
- * get off the wait queue
+ * get process off any wait queue it might be on
  * -----------------------
  */
 static bool
@@ -623,9 +624,10 @@ ins:;
 	waitQueue->size++;
 
 	lock->waitMask |= myMask;
-	SpinRelease(spinlock);
 
 	MyProc->errType = NO_ERROR;		/* initialize result for success */
+
+	SpinRelease(spinlock);
 
 	/* --------------
 	 * Set timer so we can wake up after awhile and check for a deadlock.
@@ -826,6 +828,7 @@ ProcAddLock(SHM_QUEUE *elem)
 void
 HandleDeadLock(SIGNAL_ARGS)
 {
+	int			save_errno = errno;
 	LOCK	   *mywaitlock;
 
 	LockLockTable();
@@ -846,6 +849,7 @@ HandleDeadLock(SIGNAL_ARGS)
 		MyProc->links.next == INVALID_OFFSET)
 	{
 		UnlockLockTable();
+		errno = save_errno;
 		return;
 	}
 
@@ -858,6 +862,7 @@ HandleDeadLock(SIGNAL_ARGS)
 	{
 		/* No deadlock, so keep waiting */
 		UnlockLockTable();
+		errno = save_errno;
 		return;
 	}
 
@@ -891,6 +896,7 @@ HandleDeadLock(SIGNAL_ARGS)
 	 * conditions.	i don't claim to understand this...
 	 */
 	UnlockLockTable();
+	errno = save_errno;
 }
 
 void
