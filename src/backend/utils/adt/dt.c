@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.45 1997/12/04 23:30:52 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.46 1997/12/17 23:22:17 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,26 +31,24 @@
 #endif
 #include "utils/builtins.h"
 
-static int	DecodeDate(char *str, int fmask, int *tmask, struct tm * tm);
+static int DecodeDate(char *str, int fmask, int *tmask, struct tm * tm);
 static int
 DecodeNumber(int flen, char *field,
 			 int fmask, int *tmask, struct tm * tm, double *fsec);
 static int
 DecodeNumberField(int len, char *str,
 				  int fmask, int *tmask, struct tm * tm, double *fsec);
-static int	DecodeSpecial(int field, char *lowtoken, int *val);
+static int DecodeSpecial(int field, char *lowtoken, int *val);
 static int
 DecodeTime(char *str, int fmask, int *tmask,
 		   struct tm * tm, double *fsec);
-static int	DecodeTimezone(char *str, int *tzp);
-static int	DecodeUnits(int field, char *lowtoken, int *val);
-static int	EncodeSpecialDateTime(DateTime dt, char *str);
+static int DecodeTimezone(char *str, int *tzp);
+static int DecodeUnits(int field, char *lowtoken, int *val);
+static int EncodeSpecialDateTime(DateTime dt, char *str);
 static datetkn *datebsearch(char *key, datetkn *base, unsigned int nel);
 static DateTime dt2local(DateTime dt, int timezone);
 static void dt2time(DateTime dt, int *hour, int *min, double *sec);
-static int	j2day(int jd);
-static int	timespan2tm(TimeSpan span, struct tm * tm, float8 *fsec);
-static int	tm2timespan(struct tm * tm, double fsec, TimeSpan *span);
+static int j2day(int jd);
 
 #define USE_DATE_CACHE 1
 #define ROUND_ALL 0
@@ -297,8 +295,6 @@ datetime_finite(DateTime *datetime)
 	return (!DATETIME_NOT_FINITE(*datetime));
 } /* datetime_finite() */
 
-
-#ifdef NOT_USED
 bool
 timespan_finite(TimeSpan *timespan)
 {
@@ -308,7 +304,6 @@ timespan_finite(TimeSpan *timespan)
 	return (!TIMESPAN_NOT_FINITE(*timespan));
 } /* timespan_finite() */
 
-#endif
 
 /*----------------------------------------------------------
  *	Relational operators for datetime.
@@ -1368,8 +1363,7 @@ timespan_text(TimeSpan *timespan)
  * Text type may not be null terminated, so copy to temporary string
  *	then call the standard input routine.
  */
-#ifdef NOT_USED
-TimeSpan   *
+TimeSpan *
 text_timespan(text *str)
 {
 	TimeSpan   *result;
@@ -1391,8 +1385,6 @@ text_timespan(text *str)
 
 	return (result);
 } /* text_timespan() */
-
-#endif
 
 /* datetime_trunc()
  * Extract specified field from datetime.
@@ -2573,7 +2565,7 @@ tm2datetime(struct tm * tm, double fsec, int *tzp, DateTime *result)
 /* timespan2tm()
  * Convert a timespan data type to a tm structure.
  */
-static int
+int
 timespan2tm(TimeSpan span, struct tm * tm, float8 *fsec)
 {
 	double		time;
@@ -2610,7 +2602,7 @@ timespan2tm(TimeSpan span, struct tm * tm, float8 *fsec)
 	return 0;
 } /* timespan2tm() */
 
-static int
+int
 tm2timespan(struct tm * tm, double fsec, TimeSpan *span)
 {
 	span->month = ((tm->tm_year * 12) + tm->tm_mon);
@@ -4369,10 +4361,19 @@ EncodeTimeSpan(struct tm * tm, double fsec, int style, char *str)
 {
 	int			is_before = FALSE;
 	int			is_nonzero = FALSE;
-	char	   *cp;
+	char	   *cp = str;
 
-	strcpy(str, "@");
-	cp = str + strlen(str);
+	switch (style)
+	{
+		/* compatible with ISO date formats */
+		case USE_ISO_DATES:
+		break;
+
+		default:
+			strcpy(cp, "@");
+			cp += strlen(cp);
+			break;
+	}
 
 	if (tm->tm_year != 0)
 	{
@@ -4398,39 +4399,73 @@ EncodeTimeSpan(struct tm * tm, double fsec, int style, char *str)
 		cp += strlen(cp);
 	}
 
-	if (tm->tm_hour != 0)
+	switch (style)
 	{
-		is_nonzero = TRUE;
-		is_before |= (tm->tm_hour < 0);
-		sprintf(cp, " %d hour%s", abs(tm->tm_hour), ((abs(tm->tm_hour) != 1) ? "s" : ""));
-		cp += strlen(cp);
-	}
+		/* compatible with ISO date formats */
+		case USE_ISO_DATES:
+			if ((tm->tm_hour != 0) || (tm->tm_min != 0))
+				is_nonzero = TRUE;
+			is_before |= ((tm->tm_hour < 0) || (tm->tm_min < 0));
+			sprintf(cp, " %02d:%02d", abs(tm->tm_hour), abs(tm->tm_min));
+			cp += strlen(cp);
 
-	if (tm->tm_min != 0)
-	{
-		is_nonzero = TRUE;
-		is_before |= (tm->tm_min < 0);
-		sprintf(cp, " %d min%s", abs(tm->tm_min), ((abs(tm->tm_min) != 1) ? "s" : ""));
-		cp += strlen(cp);
-	}
+			/* fractional seconds? */
+			if (fsec != 0)
+			{
+				is_nonzero = TRUE;
+				fsec += tm->tm_sec;
+				is_before |= (fsec < 0);
+				sprintf(cp, ":%05.2f", fabs(fsec));
+				cp += strlen(cp);
 
-	/* fractional seconds? */
-	if (fsec != 0)
-	{
-		is_nonzero = TRUE;
-		fsec += tm->tm_sec;
-		is_before |= (fsec < 0);
-		sprintf(cp, " %.2f secs", fabs(fsec));
-		cp += strlen(cp);
+				/* otherwise, integer seconds only? */
+			}
+			else if (tm->tm_sec != 0)
+			{
+				is_nonzero = TRUE;
+				is_before |= (tm->tm_sec < 0);
+				sprintf(cp, ":%02d", abs(tm->tm_sec));
+				cp += strlen(cp);
+			}
+			break;
 
-		/* otherwise, integer seconds only? */
-	}
-	else if (tm->tm_sec != 0)
-	{
-		is_nonzero = TRUE;
-		is_before |= (tm->tm_sec < 0);
-		sprintf(cp, " %d sec%s", abs(tm->tm_sec), ((abs(tm->tm_sec) != 1) ? "s" : ""));
-		cp += strlen(cp);
+		case USE_POSTGRES_DATES:
+		default:
+			if (tm->tm_hour != 0)
+			{
+				is_nonzero = TRUE;
+				is_before |= (tm->tm_hour < 0);
+				sprintf(cp, " %d hour%s", abs(tm->tm_hour), ((abs(tm->tm_hour) != 1) ? "s" : ""));
+				cp += strlen(cp);
+			}
+
+			if (tm->tm_min != 0)
+			{
+				is_nonzero = TRUE;
+				is_before |= (tm->tm_min < 0);
+				sprintf(cp, " %d min%s", abs(tm->tm_min), ((abs(tm->tm_min) != 1) ? "s" : ""));
+				cp += strlen(cp);
+			}
+
+			/* fractional seconds? */
+			if (fsec != 0)
+			{
+				is_nonzero = TRUE;
+				fsec += tm->tm_sec;
+				is_before |= (fsec < 0);
+				sprintf(cp, " %.2f secs", fabs(fsec));
+				cp += strlen(cp);
+
+				/* otherwise, integer seconds only? */
+			}
+			else if (tm->tm_sec != 0)
+			{
+				is_nonzero = TRUE;
+				is_before |= (tm->tm_sec < 0);
+				sprintf(cp, " %d sec%s", abs(tm->tm_sec), ((abs(tm->tm_sec) != 1) ? "s" : ""));
+				cp += strlen(cp);
+			}
+			break;
 	}
 
 	/* identically zero? then put in a unitless zero... */
