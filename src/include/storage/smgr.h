@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: smgr.h,v 1.5 1996/11/10 03:06:05 momjian Exp $
+ * $Id: smgr.h,v 1.6 1996/11/27 07:33:42 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,6 +38,7 @@ extern int smgrflush(int16 which, Relation reln, BlockNumber blocknum,
 extern int smgrblindwrt(int16 which, char *dbname, char *relname, Oid dbid,
 			Oid relid, BlockNumber blkno, char *buffer);
 extern int smgrnblocks(int16 which, Relation reln);
+extern int smgrtruncate(int16 which, Relation reln, int nblocks);
 extern int smgrcommit(void);
 extern int smgrabort(void);
 extern bool smgriswo(int16 smgrno);
@@ -59,6 +60,7 @@ extern int mdflush(Relation reln, BlockNumber blocknum, char *buffer);
 extern int mdblindwrt(char *dbstr, char *relstr, Oid dbid, Oid relid,
 		      BlockNumber blkno, char *buffer);
 extern int mdnblocks(Relation reln);
+extern int mdtruncate(Relation reln, int nblocks);
 extern int mdcommit(void);
 extern int mdabort(void);
 
