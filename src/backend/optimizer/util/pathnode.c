@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.31 1999/02/11 21:05:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.32 1999/02/12 02:37:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -211,19 +211,25 @@ better_path(Path *new_path, List *unique_paths, bool *is_new)
 				  new_path->path_cost <= path->path_cost))
 			{
 				*is_new = false;
-				return new_path;
+				return path;
 			}
 
 							/* same keys, new is more expensive, stop */
-		    else if
-				((better_key == 0 && better_sort == 0 &&
-				  new_path->path_cost >= path->path_cost) ||
+			if ((better_key == 0 && better_sort == 0 &&
+				 new_path->path_cost >= path->path_cost) ||
 
 							/* old is better, and less expensive, stop */
 				(((better_key == 2 && better_sort != 1) ||
 				  (better_key != 1 && better_sort == 2)) &&
 				  new_path->path_cost >= path->path_cost))
 			{
+#ifdef OPTDB_DEBUG
+				printf("better key %d better sort %d\n", better_key, better_sort);
+				printf("new\n");
+				pprint(new_path);
+				printf("old\n");
+				pprint(path);
+#endif
 				*is_new = false;
 				return NULL;
 			}
