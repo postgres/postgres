@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.30 2000/10/27 23:59:39 petere Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.31 2000/10/31 19:55:18 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -52,9 +52,9 @@
 # Got that?  Look at src/interfaces/libpq/Makefile for an example.
 
 ifndef cplusplus
-COMPILER = $(CC)
+COMPILER = $(CC) $(CFLAGS)
 else
-COMPILER = $(CXX)
+COMPILER = $(CXX) $(CXXFLAGS)
 endif
 
 
@@ -101,6 +101,11 @@ endif
 ifeq ($(PORTNAME), aix)
   shlib			:= lib$(NAME)$(DLSUFFIX)
   SHLIB_LINK		+= -lc
+endif
+
+ifeq ($(PORTNAME), darwin)
+  shlib			:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+  LINK.shared		= $(COMPILER) $(CFLAGS_SL)
 endif
 
 ifeq ($(PORTNAME), openbsd)

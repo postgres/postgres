@@ -64,6 +64,7 @@ case $host_os in
     beos*) template=beos ;;
     bsdi*) template=bsdi ;;
   cygwin*) template=win ;;
+  darwin*) template=darwin ;;
     dgux*) template=dgux ;;
  freebsd*) template=freebsd ;;
     hpux*) template=hpux ;;

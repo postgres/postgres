@@ -1,0 +1,4 @@
+# regular cpp is broken in current development releases
+CC="$CC -traditional-cpp"
+# be on safe side while they sort out their compiler
+CFLAGS=-O0
