@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.10 1997/01/07 00:04:19 scrappy Exp $
+ * $Id: pg_dump.h,v 1.11 1997/04/02 04:17:27 vadim Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -55,6 +55,7 @@ typedef struct _tableInfo {
     char *oid;
     char *relname;
     char *relarch;
+    bool sequence;
     int numatts;            /* number of attributes */
     int *inhAttrs;          /* an array of flags, one for each attribute
 		              if the value is 1, then this attribute is

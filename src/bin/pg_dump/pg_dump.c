@@ -20,7 +20,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.25 1997/03/01 15:24:51 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.26 1997/04/02 04:17:21 vadim Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -61,6 +61,8 @@
 
 #include "pg_dump.h"
 
+static void dumpSequence (FILE* fout, TableInfo tbinfo);
+
 extern char *optarg;
 extern int optind, opterr;
 
@@ -71,6 +73,8 @@ FILE *g_fout;     /* the script file */
 PGconn *g_conn;   /* the database connection */
 int dumpData; /* dump data using proper insert strings */
 int attrNames; /* put attr names into insert strings */
+int schemaOnly;
+int dataOnly;
 
 char g_opaque_type[10]; /* name for the opaque type */
 
@@ -346,7 +350,23 @@ dumpClasses(const TableInfo tblinfo[], const int numTables, FILE *fout,
 	if (isViewRule(tblinfo[i].relname))
 		continue;
 
-        if (!onlytable || (!strcmp(classname,onlytable))) {
+        if (!onlytable || (!strcmp(classname,onlytable)))
+        {
+            if ( tblinfo[i].sequence )
+            {
+            	if ( dataOnly )		/* i.e. SCHEMA didn't dumped */
+            	{
+            	    if ( g_verbose )
+              	    	fprintf (stderr, "%s dumping out schema of sequence %s %s\n",
+				g_comment_start, classname, g_comment_end);
+		    dumpSequence (fout, tblinfo[i]);
+		}
+		else if ( g_verbose )
+              	    fprintf (stderr, "%s contents of sequence '%s' dumped in schema %s\n",
+				g_comment_start, classname, g_comment_end);
+		continue;
+	    }
+        
             if (g_verbose)
               fprintf(stderr, "%s dumping out the contents of Table %s %s\n",
                       g_comment_start, classname, g_comment_end);
@@ -372,8 +392,6 @@ main(int argc, char** argv)
     const char* progname;
     const char* filename;
     const char* dbname;
-    int schemaOnly;
-    int dataOnly;
     const char *pghost = NULL;
     const char *pgport = NULL;
     const char *tablename;
@@ -905,6 +923,7 @@ getTables(int *numTables)
     int i_oid;
     int i_relname;
     int i_relarch;
+    int i_relkind;
 
     /* find all the user-defined tables (no indices and no catalogs),
      ordering by oid is important so that we always process the parent
@@ -921,8 +940,8 @@ getTables(int *numTables)
     PQclear(res);
 
     sprintf(query, 
-            "SELECT oid, relname, relarch from pg_class "
-            "where relkind = 'r' and relname !~ '^pg_' "
+            "SELECT oid, relname, relarch, relkind from pg_class "
+            "where (relkind = 'r' or relkind = 'S') and relname !~ '^pg_' "
             "and relname !~ '^Xinv' order by oid;");
 
     res = PQexec(g_conn, query);
@@ -941,11 +960,13 @@ getTables(int *numTables)
     i_oid = PQfnumber(res,"oid");
     i_relname = PQfnumber(res,"relname");
     i_relarch = PQfnumber(res,"relarch");
+    i_relkind = PQfnumber(res,"relkind");
 
     for (i=0;i<ntups;i++) {
         tblinfo[i].oid = strdup(PQgetvalue(res,i,i_oid));
         tblinfo[i].relname = strdup(PQgetvalue(res,i,i_relname));
         tblinfo[i].relarch = strdup(PQgetvalue(res,i,i_relarch));
+        tblinfo[i].sequence = (strcmp (PQgetvalue(res,i,i_relkind), "S") == 0);
     }
 
     PQclear(res);
@@ -1040,6 +1061,9 @@ getTableAttrs(TableInfo* tblinfo, int numTables)
 
         /* skip archive tables */
         if (isArchiveName(tblinfo[i].relname))
+            continue;
+        
+        if ( tblinfo[i].sequence )
             continue;
 
         /* find all the user attributes and their types*/
@@ -1500,6 +1524,12 @@ void dumpTables(FILE* fout, TableInfo *tblinfo, int numTables,
             /* skip archive names*/
             if (isArchiveName(tblinfo[i].relname))
                 continue;
+            
+            if ( tblinfo[i].sequence )
+            {
+            	dumpSequence (fout, tblinfo[i]);
+            	continue;
+            }
 
             parentRels = tblinfo[i].parentRels;
             numParents = tblinfo[i].numParents;
@@ -1814,3 +1844,68 @@ checkForQuote(const char* s)
     return result;
     
 }
+
+
+static void dumpSequence (FILE* fout, TableInfo tbinfo)
+{
+    PGresult *res;
+    int4 last, incby, maxv, minv, cache;
+    char cycled, called, *t;
+    char query[MAXQUERYLEN];
+
+    sprintf (query, 
+            "SELECT sequence_name, last_value, increment_by, max_value, "
+            "min_value, cache_value, is_cycled, is_called from %s;",
+            tbinfo.relname);
+
+    res = PQexec (g_conn, query);
+    if ( !res || PQresultStatus(res) != PGRES_TUPLES_OK )
+    {
+        fprintf (stderr,"dumpSequence(%s): SELECT failed\n", tbinfo.relname);
+        exit_nicely (g_conn);
+    }
+
+    if ( PQntuples (res) != 1 )
+    {
+        fprintf (stderr,"dumpSequence(%s): %d (!= 1) tuples returned by SELECT\n",
+        	tbinfo.relname, PQntuples(res));
+        exit_nicely (g_conn);
+    }
+
+    if ( strcmp (PQgetvalue (res,0,0), tbinfo.relname) != 0 )
+    {
+        fprintf (stderr, "dumpSequence(%s): different sequence name "
+        		 "returned by SELECT: %s\n",
+        	tbinfo.relname, PQgetvalue (res,0,0));
+        exit_nicely (g_conn);
+    }
+
+
+    last = atoi (PQgetvalue (res,0,1));
+    incby = atoi (PQgetvalue (res,0,2));
+    maxv = atoi (PQgetvalue (res,0,3));
+    minv = atoi (PQgetvalue (res,0,4));
+    cache = atoi (PQgetvalue (res,0,5));
+    t = PQgetvalue (res,0,6);
+    cycled = *t;
+    t = PQgetvalue (res,0,7);
+    called = *t;
+
+    PQclear (res);
+    
+    sprintf (query, 
+            "CREATE SEQUENCE %s start %d increment %d maxvalue %d "
+            "minvalue %d  cache %d %s;\n",
+            tbinfo.relname, last, incby, maxv, minv, cache,
+            (cycled == 't') ? "cycle" : "");
+
+    fputs (query, fout);
+    
+    if ( called == 'f' )
+    	return;			/* nothing to do more */
+
+    sprintf (query, "SELECT nextval ('%s');\n", tbinfo.relname);
+    fputs (query, fout);
+
+}
+
