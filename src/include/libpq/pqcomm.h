@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqcomm.h,v 1.15 1997/09/12 22:26:13 momjian Exp $
+ * $Id: pqcomm.h,v 1.16 1997/11/07 20:52:06 momjian Exp $
  *
  * NOTES
  *	  Some of this should move to libpq.h
@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <netinet/in.h>
+#include <sys/un.h>
 
 
 /*
@@ -26,6 +27,10 @@
  */
 #define PATH_SIZE		64
 #define ARGV_SIZE		64
+
+#define UNIXSOCK_PATH(sun,port) \
+  sprintf(sun.sun_path,"/tmp/.s.PGSQL.%d",port) + sizeof(sun.sun_family) + 1;
+
 
 /* The various kinds of startup messages are for the various kinds of
    user authentication systems.  In the beginning, there was only
@@ -106,9 +111,10 @@ typedef struct Port
 	int			sock;			/* file descriptor */
 	int			mask;			/* select mask */
 	int			nBytes;			/* nBytes read in so far */
-	struct sockaddr_in laddr;	/* local addr (us) */
-	struct sockaddr_in raddr;	/* remote addr (them) */
-
+	/* local addr (us) */
+        union {  struct sockaddr_in in; struct sockaddr_un un; } laddr;
+        /* remote addr (them) */
+        union {  struct sockaddr_in in; struct sockaddr_un un; }  raddr;
 	/*
 	 * PacketBufId				id;
 *//* id of packet buf currently in use */

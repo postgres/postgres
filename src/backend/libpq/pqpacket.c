@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/pqpacket.c,v 1.8 1997/09/08 21:43:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/pqpacket.c,v 1.9 1997/11/07 20:51:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,7 +85,7 @@ PacketReceive(Port *port,		/* receive port */
 
 	/*
 	 * Assume port->nBytes is zero unless we were interrupted during
-	 * non-blocking I/O.  This first recvfrom() is to get the hdr
+	 * non-blocking I/O.  This first recv() is to get the hdr
 	 * information so we know how many bytes to read.  Life would be very
 	 * complicated if we read too much data (buffering).
 	 */
@@ -98,8 +98,7 @@ PacketReceive(Port *port,		/* receive port */
 	else
 	{
 		/* peeking into the incoming message */
-		cc = recvfrom(port->sock, (char *) &(buf->len), hdrLen, flag,
-					  (struct sockaddr *) & (port->raddr), &addrLen);
+		cc = recv(port->sock, (char *) &(buf->len), hdrLen, flag);
 		if (cc < hdrLen)
 		{
 			/* if cc is negative, the system call failed */
@@ -179,8 +178,7 @@ PacketReceive(Port *port,		/* receive port */
 	 */
 	while (packetLen)
 	{
-		cc = recvfrom(port->sock, tmp, packetLen, 0,
-					  (struct sockaddr *) & (port->raddr), &addrLen);
+		cc = read(port->sock, tmp, packetLen);
 		if (cc < 0)
 			return (STATUS_ERROR);
 
@@ -224,18 +222,13 @@ PacketSend(Port *port,
 		   PacketLen len,
 		   bool nonBlocking)
 {
-	PacketLen	totalLen;
-	int			addrLen = sizeof(struct sockaddr_in);
+	PacketLen	doneLen;
 
 	Assert(!nonBlocking);
 	Assert(buf);
 
-	totalLen = len;
-
-	len = sendto(port->sock, (Addr) buf, totalLen, /* flags */ 0,
-				 (struct sockaddr *) & (port->raddr), addrLen);
-
-	if (len < totalLen)
+	doneLen = write(port->sock,  buf, len);
+	if (doneLen < len)
 	{
 		sprintf(PQerrormsg,
 		  "FATAL: PacketSend: couldn't send complete packet: errno=%d\n",

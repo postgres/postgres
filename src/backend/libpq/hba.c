@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.22 1997/09/08 21:43:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.23 1997/11/07 20:51:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -855,8 +855,8 @@ authident(const char DataDir[],
 
 	/* The username returned by ident */
 
-	ident(port.raddr.sin_addr, port.laddr.sin_addr,
-		  port.raddr.sin_port, port.laddr.sin_port,
+	ident(port.raddr.in.sin_addr, port.laddr.in.sin_addr,
+		  port.raddr.in.sin_port, port.laddr.in.sin_port,
 		  &ident_failed, ident_username);
 
 	if (ident_failed)
@@ -906,10 +906,13 @@ hba_recvauth(const Port *port, const char database[], const char user[],
 	 */
 	int			retvalue;
 
+	/* UNIX socket always OK, for now */
+	if(port->raddr.in.sin_family == AF_UNIX)
+	  return STATUS_OK;
 	/* Our eventual return value */
+	
 
-
-	find_hba_entry(DataDir, port->raddr.sin_addr, database,
+	find_hba_entry(DataDir, port->raddr.in.sin_addr, database,
 				   &host_ok, &userauth, usermap_name,
 				   false		/* don't find password entries of type
 					   'password' */ );

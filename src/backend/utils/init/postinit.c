@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.15 1997/11/07 06:38:46 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.16 1997/11/07 20:51:58 momjian Exp $
  *
  * NOTES
  *		InitPostgres() is the function called from PostgresMain
@@ -309,9 +309,6 @@ InitCommunication()
 	if (PointerIsValid(postport))
 	{
 		SystemPortAddress address = atoi(postport);
-
-		if (address == 0)
-			elog(FATAL, "InitCommunication: invalid POSTPORT");
 
 		if (MyBackendTag == -1)
 			elog(FATAL, "InitCommunication: missing POSTID");

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.51 1997/11/02 15:25:45 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.52 1997/11/07 20:51:54 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -832,7 +832,6 @@ PostgresMain(int argc, char *argv[])
 
 	bool		multiplexedBackend;
 	char	   *hostName;		/* the host name of the backend server */
-	char		hostbuf[MAXHOSTNAMELEN];
 	int			serverSock;
 	int			serverPortnum = 0;
 	int			nSelected;		/* number of descriptors ready from
@@ -884,15 +883,10 @@ PostgresMain(int argc, char *argv[])
 #endif
 
 	/*
-	 * get hostname is either the environment variable PGHOST or
-	 * 'localhost'
+	 * get hostname is either the environment variable PGHOST or NULL
+	 * NULL means Unix-socket only
 	 */
-	if (!(hostName = getenv("PGHOST")))
-	{
-		if (gethostname(hostbuf, MAXHOSTNAMELEN) < 0)
-			strcpy(hostbuf, "localhost");
-		hostName = hostbuf;
-	}
+	hostName = getenv("PGHOST");
 
 	DataDir = getenv("PGDATA"); /* default */
 	multiplexedBackend = false; /* default */
@@ -1252,7 +1246,7 @@ PostgresMain(int argc, char *argv[])
 	if (multiplexedBackend)
 	{
 		if (serverPortnum == 0 ||
-			StreamServerPort(hostName, serverPortnum, &serverSock) != STATUS_OK)
+		    StreamServerPort(hostName, serverPortnum, &serverSock) != STATUS_OK)
 		{
 			fprintf(stderr, "Postgres: cannot create stream port %d\n", serverPortnum);
 			exit(1);
@@ -1343,7 +1337,7 @@ PostgresMain(int argc, char *argv[])
 	if (IsUnderPostmaster == false)
 	{
 		puts("\nPOSTGRES backend interactive interface");
-		puts("$Revision: 1.51 $ $Date: 1997/11/02 15:25:45 $");
+		puts("$Revision: 1.52 $ $Date: 1997/11/07 20:51:54 $");
 	}
 
 	/* ----------------

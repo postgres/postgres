@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.59 1997/10/25 01:09:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.60 1997/11/07 20:51:47 momjian Exp $
  *
  * NOTES
  *
@@ -131,7 +131,8 @@ static char *progname = (char *) NULL;
  */
 static char Execfile[MAXPATHLEN] = "";
 
-static int	ServerSock = INVALID_SOCK;	/* stream socket server */
+static int ServerSock_INET = INVALID_SOCK;	/* stream socket server */
+static int ServerSock_UNIX = INVALID_SOCK;	/* stream socket server */
 
 /*
  * Set by the -o option
@@ -148,6 +149,8 @@ static char ExtraOptions[ARGV_SIZE] = "";
 static int	Reinit = 1;
 static int	SendStop = 0;
 
+static int      NetServer = 0; /* if not zero, postmaster listen for
+				  non-local connections */
 static int	MultiplexedBackends = 0;
 static int	MultiplexedBackendPort;
 
@@ -244,8 +247,8 @@ PostmasterMain(int argc, char *argv[])
 	char	   *hostName;
 	int			status;
 	int			silentflag = 0;
-	char		hostbuf[MAXHOSTNAMELEN];
 	bool		DataDirOK;		/* We have a usable PGDATA value */
+	char		hostbuf[MAXHOSTNAMELEN];
 
 	progname = argv[0];
 
@@ -267,7 +270,7 @@ PostmasterMain(int argc, char *argv[])
 	DataDir = getenv("PGDATA"); /* default value */
 
 	opterr = 0;
-	while ((opt = getopt(argc, argv, "a:B:b:D:dm:Mno:p:Ss")) != EOF)
+	while ((opt = getopt(argc, argv, "a:B:b:D:dim:Mno:p:Ss")) != EOF)
 	{
 		switch (opt)
 		{
@@ -314,6 +317,9 @@ PostmasterMain(int argc, char *argv[])
 				}
 				else
 					DebugLvl = 1;
+				break;
+		        case 'i':
+			        NetServer = 1;
 				break;
 			case 'm':
 				MultiplexedBackends = 1;
@@ -387,11 +393,20 @@ PostmasterMain(int argc, char *argv[])
 		exit(1);
 	}
 
-
-	status = StreamServerPort(hostName, PostPortName, &ServerSock);
+	if (NetServer)
+	  {
+	    status = StreamServerPort(hostName, PostPortName, &ServerSock_INET);
+	    if (status != STATUS_OK)
+	      {
+		fprintf(stderr, "%s: cannot create INET stream port\n",
+			progname);
+		exit(1);
+	      }
+	  }
+	status = StreamServerPort(NULL, PostPortName, &ServerSock_UNIX);
 	if (status != STATUS_OK)
 	{
-		fprintf(stderr, "%s: cannot create stream port\n",
+		fprintf(stderr, "%s: cannot create UNIX stream port\n",
 				progname);
 		exit(1);
 	}
@@ -459,6 +474,7 @@ usage(const char *progname)
 	fprintf(stderr, "\t-b backend\tuse a specific backend server executable\n");
 	fprintf(stderr, "\t-d [1|2|3]\tset debugging level\n");
 	fprintf(stderr, "\t-D datadir\tset data directory\n");
+	fprintf(stderr, "\t-i \tlisten on TCP/IP sockets as well as Unix domain socket\n");
 	fprintf(stderr, "\t-m \tstart up multiplexing backends\n");
 	fprintf(stderr, "\t-n\t\tdon't reinitialize shared memory after abnormal exit\n");
 	fprintf(stderr, "\t-o option\tpass 'option' to each backend servers\n");
@@ -471,13 +487,11 @@ usage(const char *progname)
 static int
 ServerLoop(void)
 {
-	int			serverFd = ServerSock;
-	fd_set		rmask,
-				basemask;
+	fd_set		rmask, basemask;
 	int			nSockets,
 				nSelected,
 				status,
-				newFd;
+				oldFd, newFd;
 	Dlelem	   *next,
 			   *curr;
 
@@ -493,10 +507,16 @@ ServerLoop(void)
 	int			orgsigmask = sigblock(0);
 
 #endif
-
-	nSockets = ServerSock + 1;
 	FD_ZERO(&basemask);
-	FD_SET(ServerSock, &basemask);
+	FD_SET(ServerSock_UNIX, &basemask);
+	nSockets = ServerSock_UNIX;
+	if (ServerSock_INET != INVALID_SOCK)
+	  {
+	    FD_SET(ServerSock_INET, &basemask);
+	    if (ServerSock_INET > ServerSock_UNIX) 
+	      nSockets = ServerSock_INET;
+	  }
+	nSockets++;
 
 #ifdef HAVE_SIGPROCMASK
 	sigprocmask(0, 0, &oldsigmask);
@@ -542,15 +562,21 @@ ServerLoop(void)
 		}
 
 		/* new connection pending on our well-known port's socket */
-		if (FD_ISSET(ServerSock, &rmask))
+		oldFd = -1;
+		if (FD_ISSET(ServerSock_UNIX, &rmask)) 
+		  oldFd = ServerSock_UNIX;
+		else if (ServerSock_INET != INVALID_SOCK && 
+			 FD_ISSET(ServerSock_INET, &rmask))
+		  oldFd = ServerSock_INET;
+		if (oldFd >= 0)
 		{
-
+		  
 			/*
 			 * connect and make an addition to PortList.  If the
 			 * connection dies and we notice it, just forget about the
 			 * whole thing.
 			 */
-			if (ConnCreate(serverFd, &newFd) == STATUS_OK)
+			if (ConnCreate(oldFd, &newFd) == STATUS_OK)
 			{
 				if (newFd >= nSockets)
 					nSockets = newFd + 1;
@@ -560,8 +586,12 @@ ServerLoop(void)
 					fprintf(stderr, "%s: ServerLoop: connect on %d\n",
 							progname, newFd);
 			}
+			else if (DebugLvl)
+			  fprintf(stderr, 
+				  "%s: ServerLoop: connect failed: (%d) %s\n",
+				  progname, errno, strerror(errno));
 			--nSelected;
-			FD_CLR(ServerSock, &rmask);
+			FD_CLR(oldFd, &rmask);
 		}
 
 		if (DebugLvl > 1)
@@ -793,7 +823,7 @@ ConnStartup(Port *port, int *status,
 static void
 send_error_reply(Port *port, const char *errormsg)
 {
-	int			rc;				/* return code from sendto */
+	int			rc;	/* return code from write */
 	char	   *reply;
 
 	/*
@@ -812,7 +842,7 @@ send_error_reply(Port *port, const char *errormsg)
 
 	sprintf(reply, "E%s", errormsg);
 
-	rc = send(port->sock, (Addr) reply, strlen(reply) + 1, /* flags */ 0);
+	rc = write(port->sock, (Addr) reply, strlen(reply) + 1);
 	if (rc < 0)
 		fprintf(stderr,
 				"%s: ServerLoop:\t\t"
@@ -1269,8 +1299,8 @@ ExitPostmaster(int status)
 	 * Not sure of the semantics here.	When the Postmaster dies, should
 	 * the backends all be killed? probably not.
 	 */
-	if (ServerSock != INVALID_SOCK)
-		close(ServerSock);
+	if (ServerSock_INET != INVALID_SOCK) close(ServerSock_INET);
+	if (ServerSock_UNIX != INVALID_SOCK) close(ServerSock_UNIX);
 	exitpg(status);
 }
 
@@ -1285,9 +1315,10 @@ dumpstatus(SIGNAL_ARGS)
 
 		fprintf(stderr, "%s: dumpstatus:\n", progname);
 		fprintf(stderr, "\tsock %d: nBytes=%d, laddr=0x%lx, raddr=0x%lx\n",
-				port->sock, port->nBytes,
-				(long int) port->laddr.sin_addr.s_addr,
-				(long int) port->raddr.sin_addr.s_addr);
+			port->sock, port->nBytes,
+			(long int) port->laddr.in.sin_addr.s_addr,
+			(long int) port->raddr.in.sin_addr.s_addr);
 		curr = DLGetSucc(curr);
 	}
 }
+

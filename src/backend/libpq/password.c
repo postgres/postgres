@@ -26,7 +26,7 @@ verify_password(char *user, char *password, Port *port,
 			   *test_pw;
 	char		salt[3];
 
-	find_hba_entry(DataDir, port->raddr.sin_addr, database,
+	find_hba_entry(DataDir, port->raddr.in.sin_addr, database,
 				   &host_ok, &userauth, pw_file_name, true);
 
 	if (!host_ok)

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.42 1997/09/18 20:22:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.43 1997/11/07 20:52:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -86,7 +86,7 @@ static PQconninfoOption PQconninfoOptions[] = {
 	{"dbname", "PGDATABASE", NULL, NULL,
 	"Database-Name", "", 20},
 
-	{"host", "PGHOST", DefaultHost, NULL,
+	{"host", "PGHOST", NULL, NULL,
 	"Database-Host", "", 40},
 
 	{"port", "PGPORT", DEF_PGPORT, NULL,
@@ -340,11 +340,8 @@ PQsetdb(const char *pghost, const char *pgport, const char *pgoptions, const cha
 
 		if (!pghost || pghost[0] == '\0')
 		{
-			if (!(tmp = getenv("PGHOST")))
-			{
-				tmp = DefaultHost;
-			}
-			conn->pghost = strdup(tmp);
+		  conn->pghost = NULL;
+		  if (tmp = getenv("PGHOST")) conn->pghost = strdup(tmp);
 		}
 		else
 			conn->pghost = strdup(pghost);
@@ -473,7 +470,7 @@ connectDB(PGconn *conn)
 	MsgType		msgtype;
 	int			laddrlen = sizeof(struct sockaddr);
 	Port	   *port = conn->port;
-	int			portno;
+	int			portno, family, len;
 
 	/*
 	 * Initialize the startup packet.
@@ -501,7 +498,8 @@ connectDB(PGconn *conn)
 	port = (Port *) malloc(sizeof(Port));
 	MemSet((char *) port, 0, sizeof(Port));
 
-	if (!(hp = gethostbyname(conn->pghost)) || hp->h_addrtype != AF_INET)
+	if (conn->pghost && 
+	    (!(hp = gethostbyname(conn->pghost)) || hp->h_addrtype != AF_INET))
 	{
 		(void) sprintf(conn->errorMessage,
 					   "connectDB() --  unknown hostname: %s\n",
@@ -509,29 +507,37 @@ connectDB(PGconn *conn)
 		goto connect_errReturn;
 	}
 	MemSet((char *) &port->raddr, 0, sizeof(port->raddr));
-	memmove((char *) &(port->raddr.sin_addr),
-			(char *) hp->h_addr,
-			hp->h_length);
-	port->raddr.sin_family = AF_INET;
 	portno = atoi(conn->pgport);
-	port->raddr.sin_port = htons((unsigned short) (portno));
-
+	port->raddr.in.sin_family = family = conn->pghost ? AF_INET : AF_UNIX;
+	if (family == AF_INET)
+	  {
+	    memmove((char *) &(port->raddr.in.sin_addr),
+		    (char *) hp->h_addr,
+		    hp->h_length);
+	    port->raddr.in.sin_port = htons((unsigned short) (portno));
+	    len = sizeof(struct sockaddr_in);
+	  }
+	else
+	  {
+	    len = UNIXSOCK_PATH(port->raddr.un,portno);
+	  }
 	/* connect to the server  */
-	if ((port->sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+	if ((port->sock = socket(family, SOCK_STREAM, 0)) < 0)
 	{
 		(void) sprintf(conn->errorMessage,
 					   "connectDB() -- socket() failed: errno=%d\n%s\n",
 					   errno, strerror(errno));
 		goto connect_errReturn;
 	}
-	if (connect(port->sock, (struct sockaddr *) & port->raddr,
-				sizeof(port->raddr)) < 0)
+	if (connect(port->sock, (struct sockaddr *) &port->raddr, len) < 0)
 	{
 		(void) sprintf(conn->errorMessage,
-					   "connectDB() failed: Is the postmaster running at '%s' on port '%s'?\n",
-					   conn->pghost, conn->pgport);
+			       "connectDB() failed: Is the postmaster running at '%s' on port '%s'?\n",
+			       conn->pghost ? conn->pghost : "UNIX Socket", 
+			       conn->pgport);
 		goto connect_errReturn;
 	}
+	if (family == AF_INET)
 	{
 		struct protoent *pe;
 		int			on = 1;
@@ -773,19 +779,11 @@ packetSend(Port *port,
 		   PacketLen len,
 		   bool nonBlocking)
 {
-	PacketLen	totalLen;
-	int			addrLen = sizeof(struct sockaddr_in);
-
-	totalLen = len;
-
-	len = sendto(port->sock, (Addr) buf, totalLen, /* flags */ 0,
-				 (struct sockaddr *) & (port->raddr), addrLen);
-
-	if (len < totalLen)
+	PacketLen doneLen = write(port->sock,  buf, len);
+	if (doneLen < len)
 	{
 		return (STATUS_ERROR);
 	}
-
 	return (STATUS_OK);
 }
 
