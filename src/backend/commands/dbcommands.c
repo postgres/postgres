@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.88 2002/04/27 21:24:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.89 2002/05/17 01:19:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -458,9 +458,7 @@ AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 	char		repl_null[Natts_pg_database];
 	char		repl_repl[Natts_pg_database];
 
-	valuestr = (stmt->value
-				? ((A_Const *) lfirst(stmt->value))->val.val.str
-				: NULL);
+	valuestr = flatten_set_variable_args(stmt->variable, stmt->value);
 
 	rel = heap_openr(DatabaseRelationName, RowExclusiveLock);
 	ScanKeyEntryInitialize(&scankey, 0, Anum_pg_database_datname,
@@ -477,7 +475,7 @@ AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 	MemSet(repl_repl, ' ', sizeof(repl_repl));
 	repl_repl[Anum_pg_database_datconfig-1] = 'r';
 
-	if (strcmp(stmt->variable, "all")==0 && stmt->value == NULL)
+	if (strcmp(stmt->variable, "all")==0 && valuestr == NULL)
 	{
 		/* RESET ALL */
 		repl_null[Anum_pg_database_datconfig-1] = 'n';

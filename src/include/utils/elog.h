@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: elog.h,v 1.36 2002/04/21 00:22:52 ishii Exp $
+ * $Id: elog.h,v 1.37 2002/05/17 01:19:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,9 +60,9 @@ __attribute__((format(printf, 2, 3)));
 
 extern int	DebugFileOpen(void);
 
-extern bool check_server_min_messages(const char *lev);
-extern void assign_server_min_messages(const char *lev);
-extern bool check_client_min_messages(const char *lev);
-extern void assign_client_min_messages(const char *lev);
+extern const char *assign_server_min_messages(const char *newval,
+											  bool doit, bool interactive);
+extern const char *assign_client_min_messages(const char *newval,
+											  bool doit, bool interactive);
 
 #endif   /* ELOG_H */

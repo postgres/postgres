@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.134 2002/05/03 04:11:07 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.135 2002/05/17 01:19:16 tgl Exp $
 -->
 
 <appendix id="release">
@@ -24,6 +24,9 @@ CDATA means the content is "SGML-free", so you can write without
 worries about funny characters.
 -->
 <literallayout><![CDATA[
+Effects of SET within a transaction block now roll back if transaction aborts
+New SET LOCAL syntax sets a parameter for the life of the current transaction
+Datestyle, timezone, client_encoding can be set in postgresql.conf
 The last vestiges of support for type names datetime and timespan are gone; use timestamp and interval instead
 Rule names are now per-relation, not global; DROP RULE and COMMENT ON RULE syntax changes accordingly
 Readline and Zlib are now required by default and must be turned off explicitly if their use is not desired
@@ -36,8 +39,7 @@ Access privileges on functions
 Access privileges on procedural languages
 CREATE DATABASE has OWNER option so superuser can create DB for someone else
 Kerberos 5 support now works with Heimdal
-Database and user-specific session defaults of run-time configurations variables
-    (ALTER DATABASE ... SET and ALTER USER ... SET)
+Database and user-specific session defaults for run-time configuration variables (ALTER DATABASE ... SET and ALTER USER ... SET)
 ]]></literallayout>
 
  </sect1>

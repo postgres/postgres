@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.120 2002/04/01 03:34:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.121 2002/05/17 01:19:16 tgl Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -173,6 +173,7 @@
 #include "storage/proc.h"
 #include "storage/sinval.h"
 #include "storage/smgr.h"
+#include "utils/guc.h"
 #include "utils/inval.h"
 #include "utils/memutils.h"
 #include "utils/portal.h"
@@ -1002,6 +1003,7 @@ CommitTransaction(void)
 	RelationPurgeLocalRelation(true);
 	smgrDoPendingDeletes(true);
 
+	AtEOXact_GUC(true);
 	AtEOXact_SPI();
 	AtEOXact_gist();
 	AtEOXact_hash();
@@ -1104,6 +1106,7 @@ AbortTransaction(void)
 	RelationPurgeLocalRelation(false);
 	smgrDoPendingDeletes(false);
 
+	AtEOXact_GUC(false);
 	AtEOXact_SPI();
 	AtEOXact_gist();
 	AtEOXact_hash();

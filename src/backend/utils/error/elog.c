@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.97 2002/05/05 00:03:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.98 2002/05/17 01:19:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -841,105 +841,68 @@ elog_message_prefix(int lev)
 /*
  * GUC support routines
  */
-
-bool
-check_server_min_messages(const char *lev)
+const char *
+assign_server_min_messages(const char *newval,
+						   bool doit, bool interactive)
 {
-	if (strcasecmp(lev, "debug") == 0 ||
-		strcasecmp(lev, "debug5") == 0 ||
-		strcasecmp(lev, "debug4") == 0 ||
-		strcasecmp(lev, "debug3") == 0 ||
-		strcasecmp(lev, "debug2") == 0 ||
-		strcasecmp(lev, "debug1") == 0 ||
-		strcasecmp(lev, "info") == 0 ||
-		strcasecmp(lev, "notice") == 0 ||
-		strcasecmp(lev, "warning") == 0 ||
-		strcasecmp(lev, "error") == 0 ||
-		strcasecmp(lev, "log") == 0 ||
-		strcasecmp(lev, "fatal") == 0 ||
-		strcasecmp(lev, "panic") == 0)
-		return true;
-	return false;
-}
-
-void
-assign_server_min_messages(const char *lev)
-{
-	if (strcasecmp(lev, "debug") == 0)
-		server_min_messages = DEBUG5;
-	else if (strcasecmp(lev, "debug5") == 0)
-		server_min_messages = DEBUG5;
-	else if (strcasecmp(lev, "debug4") == 0)
-		server_min_messages = DEBUG4;
-	else if (strcasecmp(lev, "debug3") == 0)
-		server_min_messages = DEBUG3;
-	else if (strcasecmp(lev, "debug2") == 0)
-		server_min_messages = DEBUG2;
-	else if (strcasecmp(lev, "debug1") == 0)
-		server_min_messages = DEBUG1;
-	else if (strcasecmp(lev, "info") == 0)
-		server_min_messages = INFO;
-	else if (strcasecmp(lev, "notice") == 0)
-		server_min_messages = NOTICE;
-	else if (strcasecmp(lev, "warning") == 0)
-		server_min_messages = WARNING;
-	else if (strcasecmp(lev, "error") == 0)
-		server_min_messages = ERROR;
-	else if (strcasecmp(lev, "log") == 0)
-		server_min_messages = LOG;
-	else if (strcasecmp(lev, "fatal") == 0)
-		server_min_messages = FATAL;
-	else if (strcasecmp(lev, "panic") == 0)
-		server_min_messages = PANIC;
+	if (strcasecmp(newval, "debug") == 0)
+		{ if (doit) server_min_messages = DEBUG1; }
+	else if (strcasecmp(newval, "debug5") == 0)
+		{ if (doit) server_min_messages = DEBUG5; }
+	else if (strcasecmp(newval, "debug4") == 0)
+		{ if (doit) server_min_messages = DEBUG4; }
+	else if (strcasecmp(newval, "debug3") == 0)
+		{ if (doit) server_min_messages = DEBUG3; }
+	else if (strcasecmp(newval, "debug2") == 0)
+		{ if (doit) server_min_messages = DEBUG2; }
+	else if (strcasecmp(newval, "debug1") == 0)
+		{ if (doit) server_min_messages = DEBUG1; }
+	else if (strcasecmp(newval, "info") == 0)
+		{ if (doit) server_min_messages = INFO; }
+	else if (strcasecmp(newval, "notice") == 0)
+		{ if (doit) server_min_messages = NOTICE; }
+	else if (strcasecmp(newval, "warning") == 0)
+		{ if (doit) server_min_messages = WARNING; }
+	else if (strcasecmp(newval, "error") == 0)
+		{ if (doit) server_min_messages = ERROR; }
+	else if (strcasecmp(newval, "log") == 0)
+		{ if (doit) server_min_messages = LOG; }
+	else if (strcasecmp(newval, "fatal") == 0)
+		{ if (doit) server_min_messages = FATAL; }
+	else if (strcasecmp(newval, "panic") == 0)
+		{ if (doit) server_min_messages = PANIC; }
 	else
-		/* Can't get here unless guc.c screwed up */
-		elog(ERROR, "bogus server_min_messages %s", lev);
+		return NULL;			/* fail */
+	return newval;				/* OK */
 }
 
-bool
-check_client_min_messages(const char *lev)
+const char *
+assign_client_min_messages(const char *newval,
+						   bool doit, bool interactive)
 {
-	if (strcasecmp(lev, "debug") == 0 ||
-		strcasecmp(lev, "debug5") == 0 ||
-		strcasecmp(lev, "debug4") == 0 ||
-		strcasecmp(lev, "debug3") == 0 ||
-		strcasecmp(lev, "debug2") == 0 ||
-		strcasecmp(lev, "debug1") == 0 ||
-		strcasecmp(lev, "log") == 0 ||
-		strcasecmp(lev, "info") == 0 ||
-		strcasecmp(lev, "notice") == 0 ||
-		strcasecmp(lev, "warning") == 0 ||
-		strcasecmp(lev, "error") == 0)
-		return true;
-	return false;
-}
-
-void
-assign_client_min_messages(const char *lev)
-{
-	if (strcasecmp(lev, "debug") == 0)
-		client_min_messages = DEBUG5;
-	else if (strcasecmp(lev, "debug5") == 0)
-		client_min_messages = DEBUG5;
-	else if (strcasecmp(lev, "debug4") == 0)
-		client_min_messages = DEBUG4;
-	else if (strcasecmp(lev, "debug3") == 0)
-		client_min_messages = DEBUG3;
-	else if (strcasecmp(lev, "debug2") == 0)
-		client_min_messages = DEBUG2;
-	else if (strcasecmp(lev, "debug1") == 0)
-		client_min_messages = DEBUG1;
-	else if (strcasecmp(lev, "log") == 0)
-		client_min_messages = LOG;
-	else if (strcasecmp(lev, "info") == 0)
-		client_min_messages = INFO;
-	else if (strcasecmp(lev, "notice") == 0)
-		client_min_messages = NOTICE;
-	else if (strcasecmp(lev, "warning") == 0)
-		client_min_messages = WARNING;
-	else if (strcasecmp(lev, "error") == 0)
-		client_min_messages = ERROR;
+	if (strcasecmp(newval, "debug") == 0)
+		{ if (doit) client_min_messages = DEBUG1; }
+	else if (strcasecmp(newval, "debug5") == 0)
+		{ if (doit) client_min_messages = DEBUG5; }
+	else if (strcasecmp(newval, "debug4") == 0)
+		{ if (doit) client_min_messages = DEBUG4; }
+	else if (strcasecmp(newval, "debug3") == 0)
+		{ if (doit) client_min_messages = DEBUG3; }
+	else if (strcasecmp(newval, "debug2") == 0)
+		{ if (doit) client_min_messages = DEBUG2; }
+	else if (strcasecmp(newval, "debug1") == 0)
+		{ if (doit) client_min_messages = DEBUG1; }
+	else if (strcasecmp(newval, "log") == 0)
+		{ if (doit) client_min_messages = LOG; }
+	else if (strcasecmp(newval, "info") == 0)
+		{ if (doit) client_min_messages = INFO; }
+	else if (strcasecmp(newval, "notice") == 0)
+		{ if (doit) client_min_messages = NOTICE; }
+	else if (strcasecmp(newval, "warning") == 0)
+		{ if (doit) client_min_messages = WARNING; }
+	else if (strcasecmp(newval, "error") == 0)
+		{ if (doit) client_min_messages = ERROR; }
 	else
-		/* Can't get here unless guc.c screwed up */
-		elog(ERROR, "bogus client_min_messages %s", lev);
+		return NULL;			/* fail */
+	return newval;				/* OK */
 }

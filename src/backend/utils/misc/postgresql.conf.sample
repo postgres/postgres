@@ -192,7 +192,10 @@
 #
 #dynamic_library_path = '$libdir'
 #search_path = '$user,public'
+#datestyle = 'iso, us'
+#timezone = unknown		# actually, defaults to TZ environment setting
 #australian_timezones = false
+#client_encoding = sql_ascii	# actually, defaults to database encoding
 #authentication_timeout = 60	# min 1, max 600
 #deadlock_timeout = 1000
 #default_transaction_isolation = 'read committed'

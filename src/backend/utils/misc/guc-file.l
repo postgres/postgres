@@ -4,7 +4,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc-file.l,v 1.11 2002/03/02 21:39:33 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc-file.l,v 1.12 2002/05/17 01:19:18 tgl Exp $
  */
 
 %{
@@ -168,7 +168,7 @@ ProcessConfigFile(GucContext context)
 	head = tail = NULL;
 	opt_name = opt_value = NULL;
 
-    while((token = yylex()))
+    while ((token = yylex()))
         switch(parse_state)
         {
             case 0: /* no previous input */
@@ -188,23 +188,22 @@ ProcessConfigFile(GucContext context)
                     token = yylex();
 
                 if (token != GUC_ID && token != GUC_STRING && 
-			token != GUC_INTEGER && token != GUC_REAL && 
-			token != GUC_UNQUOTED_STRING)
+					token != GUC_INTEGER && token != GUC_REAL && 
+					token != GUC_UNQUOTED_STRING)
                     goto parse_error;
                 opt_value = strdup(yytext);
 				if (opt_value == NULL)
 					goto out_of_memory;
-		if (token == GUC_STRING)
-		{
-			/* remove the beginning and ending quote/apostrophe */
-			/* first: shift the whole shooting match down one
- 			character */
-			memmove(opt_value,opt_value+1,strlen(opt_value)-1);
-			/* second: null out the 2 characters we shifted */
-                        opt_value[strlen(opt_value)-2]='\0';
-			/* do the escape thing.  free()'s the strdup above */
-			opt_value=GUC_scanstr(opt_value);
-		}
+				if (token == GUC_STRING)
+				{
+					/* remove the beginning and ending quote/apostrophe */
+					/* first: shift the whole thing down one character */
+					memmove(opt_value,opt_value+1,strlen(opt_value)-1);
+					/* second: null out the 2 characters we shifted */
+					opt_value[strlen(opt_value)-2]='\0';
+					/* do the escape thing.  free()'s the strdup above */
+					opt_value=GUC_scanstr(opt_value);
+				}
                 parse_state = 2;
                 break;
 
@@ -241,14 +240,14 @@ ProcessConfigFile(GucContext context)
     for(item = head; item; item=item->next)
 	{
 		if (!set_config_option(item->name, item->value, context,
-							   false, PGC_S_INFINITY))
+							   PGC_S_FILE, false, false))
 			goto cleanup_exit;
 	}
 
     /* If we got here all the options parsed okay. */
 	for(item = head; item; item=item->next)
 		set_config_option(item->name, item->value, context,
-						  true, PGC_S_FILE);
+						  PGC_S_FILE, false, true);
 
  cleanup_exit:
 	free_name_value_list(head);

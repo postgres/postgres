@@ -12,7 +12,7 @@ import org.postgresql.util.*;
 import org.postgresql.core.*;
 
 /*
- * $Id: Connection.java,v 1.46 2002/05/14 03:00:35 barry Exp $
+ * $Id: Connection.java,v 1.47 2002/05/17 01:19:19 tgl Exp $
  *
  * This abstract class is used by org.postgresql.Driver to open either the JDBC1 or
  * JDBC2 versions of the Connection class.
@@ -951,7 +951,7 @@ public abstract class Connection
         public int getTransactionIsolation() throws SQLException
         {
                 clearWarnings();
-                ExecSQL("show xactisolevel");
+                ExecSQL("show transaction isolation level");
 
                 SQLWarning warning = getWarnings();
                 if (warning != null)

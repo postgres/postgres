@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_database.sgml,v 1.2 2002/04/23 02:07:15 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_database.sgml,v 1.3 2002/05/17 01:19:16 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -28,10 +28,9 @@ ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> RESET <replacea
    <command>ALTER DATABASE</command> is used to change the session
    default of a run-time configuration variable for a
    <productname>PostgreSQL</productname> database. Whenever a new
-   session is subsequently started in that database, <literal>SET
-   <replaceable>variable</replaceable> TO
-   <replaceable>value</replaceable></literal> is effectively executed
-   before the start of the session.  The database-specific default
+   session is subsequently started in that database, the specified
+   value becomes the session default value.
+   The database-specific default
    overrides whatever setting is present in <filename>postgresql.conf</>
    or has been received from the postmaster.
   </para>
@@ -64,7 +63,8 @@ ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> RESET <replacea
         configuration variable to the given value.  If
         <replaceable>value</replaceable> is <literal>DEFAULT</literal>
         or, equivalently, <literal>RESET</literal> is used, the
-        database-specific variable setting is removed and the default
+        database-specific variable setting is removed and the system-wide
+	default
         setting will be inherited in new sessions.  Use <literal>RESET
         ALL</literal> to clear all settings.
        </para>

@@ -2,7 +2,7 @@
  *
  * PostgreSQL locale utilities
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/pg_locale.c,v 1.16 2002/04/03 05:39:31 petere Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/pg_locale.c,v 1.17 2002/05/17 01:19:18 tgl Exp $
  *
  * Portions Copyright (c) 2002, PostgreSQL Global Development Group
  *
@@ -10,89 +10,73 @@
  */
 
 #include "postgres.h"
-#include "utils/pg_locale.h"
+
 #include <locale.h>
+
+#include "utils/pg_locale.h"
 
 
 /* GUC storage area */
 
-char * locale_messages;
-char * locale_monetary;
-char * locale_numeric;
-char * locale_time;
+char *locale_messages;
+char *locale_monetary;
+char *locale_numeric;
+char *locale_time;
 
-/* GUC parse hooks */
-
-bool locale_messages_check(const char *proposed)
-{
-#ifdef LC_MESSAGES
-	return chklocale(LC_MESSAGES, proposed);
-#else
-	/* We return true here so LC_MESSAGES can be set in the
-       configuration file on every system. */
-	return true;
-#endif
-}
-
-bool locale_monetary_check(const char *proposed)
-{
-	return chklocale(LC_MONETARY, proposed);
-}
-
-bool locale_numeric_check(const char *proposed)
-{
-	return chklocale(LC_NUMERIC, proposed);
-}
-
-bool locale_time_check(const char *proposed)
-{
-	return chklocale(LC_TIME, proposed);
-}
 
 /* GUC assign hooks */
 
-void locale_messages_assign(const char *value)
+static const char *
+locale_xxx_assign(int category, const char *value, bool doit, bool interactive)
 {
+	if (doit)
+	{
+		if (!setlocale(category, value))
+			return NULL;
+	}
+	else
+	{
+		char *save;
+
+		save = setlocale(category, NULL);
+		if (!save)
+			return NULL;
+
+		if (!setlocale(category, value))
+			return NULL;
+
+		setlocale(category, save);
+	}
+	return value;
+}
+
+const char *
+locale_messages_assign(const char *value, bool doit, bool interactive)
+{
+	/* LC_MESSAGES category does not exist everywhere, but accept it anyway */
 #ifdef LC_MESSAGES
-	setlocale(LC_MESSAGES, value);
+	return locale_xxx_assign(LC_MESSAGES, value, doit, interactive);
+#else
+	return value;
 #endif
 }
 
-void locale_monetary_assign(const char *value)
+const char *
+locale_monetary_assign(const char *value, bool doit, bool interactive)
 {
-	setlocale(LC_MONETARY, value);
+	return locale_xxx_assign(LC_MONETARY, value, doit, interactive);
 }
 
-void locale_numeric_assign(const char *value)
+const char *
+locale_numeric_assign(const char *value, bool doit, bool interactive)
 {
-	setlocale(LC_NUMERIC, value);
+	return locale_xxx_assign(LC_NUMERIC, value, doit, interactive);
 }
 
-void locale_time_assign(const char *value)
+const char *
+locale_time_assign(const char *value, bool doit, bool interactive)
 {
-	setlocale(LC_TIME, value);
-}
-
-
-/*
- * Returns true if the proposed string represents a valid locale of
- * the given category.  This is probably pretty slow, but it's not
- * called in critical places.
- */
-bool
-chklocale(int category, const char *proposed)
-{
-	char *save;
-
-	save = setlocale(category, NULL);
-	if (!save)
-		return false;
-
-	if (!setlocale(category, proposed))
-		return false;
-
-	setlocale(category, save);
-	return true;
+	return locale_xxx_assign(LC_TIME, value, doit, interactive);
 }
 
 
@@ -123,7 +107,6 @@ lc_collate_is_c(void)
 }
 
 
-
 /*
  * Return the POSIX lconv struct (contains number/money formatting
  * information) with locale information for all categories.
@@ -131,9 +114,10 @@ lc_collate_is_c(void)
 struct lconv *
 PGLC_localeconv(void)
 {
-	struct lconv *extlconv;
 	static bool CurrentLocaleConvValid = false;
 	static struct lconv CurrentLocaleConv;
+
+	struct lconv *extlconv;
 
 	/* Did we do it already? */
 	if (CurrentLocaleConvValid)

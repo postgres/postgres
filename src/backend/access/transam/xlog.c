@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.94 2002/05/09 13:30:24 petere Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.95 2002/05/17 01:19:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3272,31 +3272,10 @@ xlog_outrec(char *buf, XLogRecord *record)
 
 
 /*
- * GUC support routines
+ * GUC support
  */
-
-bool
-check_xlog_sync_method(const char *method)
-{
-	if (strcasecmp(method, "fsync") == 0)
-		return true;
-#ifdef HAVE_FDATASYNC
-	if (strcasecmp(method, "fdatasync") == 0)
-		return true;
-#endif
-#ifdef OPEN_SYNC_FLAG
-	if (strcasecmp(method, "open_sync") == 0)
-		return true;
-#endif
-#ifdef OPEN_DATASYNC_FLAG
-	if (strcasecmp(method, "open_datasync") == 0)
-		return true;
-#endif
-	return false;
-}
-
-void
-assign_xlog_sync_method(const char *method)
+const char *
+assign_xlog_sync_method(const char *method, bool doit, bool interactive)
 {
 	int			new_sync_method;
 	int			new_sync_bit;
@@ -3329,11 +3308,11 @@ assign_xlog_sync_method(const char *method)
 #endif
 	else
 	{
-		/* Can't get here unless guc.c screwed up */
-		elog(ERROR, "bogus wal_sync_method %s", method);
-		new_sync_method = 0;	/* keep compiler quiet */
-		new_sync_bit = 0;
+		return NULL;
 	}
+
+	if (!doit)
+		return method;
 
 	if (sync_method != new_sync_method || open_sync_bit != new_sync_bit)
 	{
@@ -3359,6 +3338,8 @@ assign_xlog_sync_method(const char *method)
 		sync_method = new_sync_method;
 		open_sync_bit = new_sync_bit;
 	}
+
+	return method;
 }
 
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.115 2002/05/09 13:30:24 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.116 2002/05/17 01:19:16 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -488,11 +488,13 @@ psql: could not connect to server: Connection refused
 # This is a comment
 log_connections = yes
 syslog = 2
+search_path = '$user, public'
 </programlisting>
     As you see, options are one per line. The equal sign between name
     and value is optional. Whitespace is insignificant and blank lines
     are ignored. Hash marks (<quote>#</quote>) introduce comments
-    anywhere.
+    anywhere.  Parameter values that are not simple identifiers or
+    numbers should be single-quoted.
    </para>
 
    <para>
@@ -526,7 +528,7 @@ postmaster -c log_connections=yes -c syslog=2
 <programlisting>
 env PGOPTIONS='-c geqo=off' psql
 </programlisting>
-    (This works for any client application, not just
+    (This works for any libpq-based client application, not just
     <application>psql</application>.) Note that this won't work for
     options that are fixed when the server is started, such as the port
     number.
@@ -539,11 +541,17 @@ env PGOPTIONS='-c geqo=off' psql
 =&gt; <userinput>SET ENABLE_SEQSCAN TO OFF;</userinput>
 </screen>
     See the SQL command language reference for details on the syntax.
+   </para>
+
+   <para>
     Furthermore, it is possible to assign a set of option settings to
     a user or a database.  Whenever a session is started, the default
     settings for the user and database involved are loaded.  The
     commands <literal>ALTER DATABASE</literal> and <literal>ALTER
-    USER</literal>, respectively, are used to configure these.
+    USER</literal>, respectively, are used to configure these settings.
+    Such per-database settings override anything received from the postmaster
+    or the configuration file, and in turn are overridden by per-user
+    settings.
    </para>
 
    <sect2 id="runtime-config-optimizer">
@@ -1092,6 +1100,34 @@ env PGOPTIONS='-c geqo=off' psql
      </varlistentry>
 
      <varlistentry>
+      <term><varname>CLIENT_ENCODING</varname> (<type>string</type>)</term>
+      <indexterm><primary>character set encoding</></>
+      <listitem>
+       <para>
+        Sets the client-side encoding for multibyte character sets.
+	The default is to use the database encoding.
+       </para>
+       <para>
+        This option is only available if
+        <productname>PostgreSQL</productname> was built with multibyte
+        support.
+      </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>DATESTYLE</varname> (<type>string</type>)</term>
+      <indexterm><primary>date style</></>
+      <listitem>
+       <para>
+        Sets the display format for dates, as well as the rules for
+	interpreting ambiguous input dates.
+        The default is <literal>ISO, US</>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <indexterm>
        <primary>deadlock</primary>
        <secondary>timeout</secondary>
@@ -1582,6 +1618,18 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
         Otherwise only local Unix domain socket connections are
         accepted. It is off by default. This option can only be set at
         server start.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>TIMEZONE</varname> (<type>string</type>)</term>
+      <indexterm><primary>time zone</></>
+      <listitem>
+       <para>
+        Sets the time zone for displaying and interpreting timestamps.
+	The default is to use whatever the system environment
+	specifies as the timezone.
        </para>
       </listitem>
      </varlistentry>

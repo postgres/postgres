@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.273 2002/05/05 00:03:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.274 2002/05/17 01:19:17 tgl Exp $
  *
  * NOTES
  *
@@ -404,12 +404,7 @@ PostmasterMain(int argc, char *argv[])
 	/*
 	 * Options setup
 	 */
-	ResetAllOptions(true);
-
-	/* PGPORT environment variable, if set, overrides GUC setting */
-	if (getenv("PGPORT"))
-		SetConfigOption("port", getenv("PGPORT"),
-						PGC_POSTMASTER, PGC_S_ARGV/*sortof*/);
+	InitializeGUCOptions();
 
 	potential_DataDir = getenv("PGDATA");		/* default value */
 
@@ -443,8 +438,8 @@ PostmasterMain(int argc, char *argv[])
 				/* Turn on debugging for the postmaster. */
 				char *debugstr = palloc(strlen("debug") + strlen(optarg) + 1);
 				sprintf(debugstr, "debug%s", optarg);
-				/* We use PGC_S_SESSION because we will reset in backend */
-				SetConfigOption("server_min_messages", debugstr, PGC_POSTMASTER, PGC_S_SESSION);
+				SetConfigOption("server_min_messages", debugstr,
+								PGC_POSTMASTER, PGC_S_ARGV);
 				pfree(debugstr);
 				break;
 			}

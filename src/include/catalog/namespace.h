@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: namespace.h,v 1.12 2002/05/01 23:06:41 tgl Exp $
+ * $Id: namespace.h,v 1.13 2002/05/17 01:19:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,8 +75,8 @@ extern bool isTempNamespace(Oid namespaceId);
 /* stuff for search_path GUC variable */
 extern char *namespace_search_path;
 
-extern bool check_search_path(const char *proposed);
-extern void assign_search_path(const char *newval);
+extern const char *assign_search_path(const char *newval,
+									  bool doit, bool interactive);
 extern void InitializeSearchPath(void);
 
 extern List *fetch_search_path(void);

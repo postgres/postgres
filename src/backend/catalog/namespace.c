@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.19 2002/05/12 20:10:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.20 2002/05/17 01:19:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1739,16 +1739,16 @@ RemoveTempRelationsCallback(void)
  * Routines for handling the GUC variable 'search_path'.
  */
 
-/* parse_hook: is proposed value valid? */
-bool
-check_search_path(const char *proposed)
+/* assign_hook: validate new search_path, do extra actions as needed */
+const char *
+assign_search_path(const char *newval, bool doit, bool interactive)
 {
 	char	   *rawname;
 	List	   *namelist;
 	List	   *l;
 
 	/* Need a modifiable copy of string */
-	rawname = pstrdup(proposed);
+	rawname = pstrdup(newval);
 
 	/* Parse string into list of identifiers */
 	if (!SplitIdentifierString(rawname, ',', &namelist))
@@ -1756,59 +1756,45 @@ check_search_path(const char *proposed)
 		/* syntax error in name list */
 		pfree(rawname);
 		freeList(namelist);
-		return false;
+		return NULL;
 	}
 
 	/*
 	 * If we aren't inside a transaction, we cannot do database access so
 	 * cannot verify the individual names.  Must accept the list on faith.
-	 * (This case can happen, for example, when the postmaster reads a
-	 * search_path setting from postgresql.conf.)
 	 */
-	if (!IsTransactionState())
+	if (interactive && IsTransactionState())
 	{
-		pfree(rawname);
-		freeList(namelist);
-		return true;
-	}
-
-	/*
-	 * Verify that all the names are either valid namespace names or "$user".
-	 * We do not require $user to correspond to a valid namespace.
-	 * We do not check for USAGE rights, either; should we?
-	 */
-	foreach(l, namelist)
-	{
-		char   *curname = (char *) lfirst(l);
-
-		if (strcmp(curname, "$user") == 0)
-			continue;
-		if (!SearchSysCacheExists(NAMESPACENAME,
-								  CStringGetDatum(curname),
-								  0, 0, 0))
+		/*
+		 * Verify that all the names are either valid namespace names or
+		 * "$user".  We do not require $user to correspond to a valid
+		 * namespace.  We do not check for USAGE rights, either; should we?
+		 */
+		foreach(l, namelist)
 		{
-			pfree(rawname);
-			freeList(namelist);
-			return false;
+			char   *curname = (char *) lfirst(l);
+
+			if (strcmp(curname, "$user") == 0)
+				continue;
+			if (!SearchSysCacheExists(NAMESPACENAME,
+									  CStringGetDatum(curname),
+									  0, 0, 0))
+				elog(ERROR, "Namespace \"%s\" does not exist", curname);
 		}
 	}
 
 	pfree(rawname);
 	freeList(namelist);
 
-	return true;
-}
-
-/* assign_hook: do extra actions needed when assigning to search_path */
-void
-assign_search_path(const char *newval)
-{
 	/*
 	 * We mark the path as needing recomputation, but don't do anything until
 	 * it's needed.  This avoids trying to do database access during GUC
 	 * initialization.
 	 */
-	namespaceSearchPathValid = false;
+	if (doit)
+		namespaceSearchPathValid = false;
+
+	return newval;
 }
 
 /*
@@ -1844,6 +1830,8 @@ InitializeSearchPath(void)
 		CacheRegisterSyscacheCallback(NAMESPACEOID,
 									  NamespaceCallback,
 									  (Datum) 0);
+		/* Force search path to be recomputed on next use */
+		namespaceSearchPathValid = false;
 	}
 }
 

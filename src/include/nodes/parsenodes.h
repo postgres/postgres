@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.176 2002/05/12 20:10:04 tgl Exp $
+ * $Id: parsenodes.h,v 1.177 2002/05/17 01:19:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1439,6 +1439,7 @@ typedef struct VariableSetStmt
 	NodeTag		type;
 	char	   *name;
 	List	   *args;
+	bool		is_local;		/* SET LOCAL */
 } VariableSetStmt;
 
 /* ----------------------

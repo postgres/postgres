@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/show.sgml,v 1.16 2002/03/06 06:48:05 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/show.sgml,v 1.17 2002/05/17 01:19:16 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -54,7 +54,7 @@ SHOW ALL
   <para>
    <command>SHOW</command> will display the current setting of a
    run-time parameter. These variables can be set using the
-   <command>SET</command> statement or are determined at server start.
+   <command>SET</command> statement or are determined at session start.
   </para>
  </refsect1>
 
@@ -69,25 +69,6 @@ SHOW ALL
        <para>
 	Message returned if <replaceable>variable</replaceable> does
 	not stand for an existing parameter.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><computeroutput>ERROR:  permission denied</computeroutput></term>
-      <listitem>
-       <para>
-        You must be a superuser to be allowed to see certain settings.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><computeroutput>WARNING:  Time zone is unknown</computeroutput></term>
-      <listitem>
-       <para>
-	If the <envar>TZ</envar> or <envar>PGTZ</envar> environment
-	variable is not set.
        </para>
       </listitem>
      </varlistentry>

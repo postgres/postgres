@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_user.sgml,v 1.21 2002/03/22 19:20:36 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_user.sgml,v 1.22 2002/05/17 01:19:16 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -48,14 +48,13 @@ ALTER USER <replaceable class="PARAMETER">username</replaceable> RESET <replacea
   </para>
 
   <para>
-   The second and the third variant change a user's session default of
+   The second and the third variant change a user's session default for
    a specified configuration variable.  Whenever the user subsequently
-   starts a new session, <literal>SET
-   <replaceable>variable</replaceable> TO
-   <replaceable>value</replaceable></literal> is effectively executed
-   before the start of the session.  Ordinary users can change their
-   own session defaults.  Superusers can change anyone's session
-   defaults.
+   starts a new session, the specified value becomes the session default,
+   overriding whatever setting is present in <filename>postgresql.conf</>
+   or has been received from the postmaster.
+   Ordinary users can change their own session defaults.
+   Superusers can change anyone's session defaults.
   </para>
 
   <refsect2>
@@ -135,12 +134,12 @@ ALTER USER <replaceable class="PARAMETER">username</replaceable> RESET <replacea
       <term><replaceable>value</replaceable></term>
       <listitem>
        <para>
-        Set this user's session default of the specified configuration
+        Set this user's session default for the specified configuration
         variable to the given value.  If
         <replaceable>value</replaceable> is <literal>DEFAULT</literal>
         or, equivalently, <literal>RESET</literal> is used, the
         user-specific variable setting is removed and the user will
-        inherit the default setting in new sessions.  Use
+        inherit the system-wide default setting in new sessions.  Use
         <literal>RESET ALL</literal> to clear all settings.
        </para>
 

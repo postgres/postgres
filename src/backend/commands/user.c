@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.100 2002/04/28 00:36:38 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.101 2002/05/17 01:19:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -851,9 +851,7 @@ AlterUserSet(AlterUserSetStmt *stmt)
 	char		repl_repl[Natts_pg_shadow];
 	int			i;
 
-	valuestr = (stmt->value
-				? ((A_Const *) lfirst(stmt->value))->val.val.str
-				: NULL);
+	valuestr = flatten_set_variable_args(stmt->variable, stmt->value);
 
 	/*
 	 * RowExclusiveLock is sufficient, because we don't need to update
@@ -874,7 +872,7 @@ AlterUserSet(AlterUserSetStmt *stmt)
 		repl_repl[i] = ' ';
 
 	repl_repl[Anum_pg_shadow_useconfig-1] = 'r';
-	if (strcmp(stmt->variable, "all")==0 && stmt->value == NULL)
+	if (strcmp(stmt->variable, "all")==0 && valuestr == NULL)
 		/* RESET ALL */
 		repl_null[Anum_pg_shadow_useconfig-1] = 'n';
 	else

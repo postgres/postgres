@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.50 2002/04/03 05:39:29 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.51 2002/05/17 01:19:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -125,7 +125,7 @@ main(int argc, char *argv[])
 	 * and COLLATE will be overridden later from pg_control if we are
 	 * in an already-initialized database.  We set them here so that
 	 * they will be available to fill pg_control during initdb.  The
-	 * other ones will get reset later in ResetAllOptions, but we set
+	 * other ones will get reset later in InitializeGUCOptions, but we set
 	 * them here to get already localized behavior during startup
 	 * (e.g., error messages).
 	 */

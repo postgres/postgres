@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/reset.sgml,v 1.13 2001/12/08 03:24:39 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/reset.sgml,v 1.14 2002/05/17 01:19:16 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -37,7 +37,7 @@ RESET ALL
       <term>ALL</term>
       <listitem>
        <para>
-        Resets all run-time parameters to default values.
+        Resets all settable run-time parameters to default values.
        </para>
       </listitem>
      </varlistentry>
@@ -53,11 +53,18 @@ RESET ALL
    <command>RESET</command> restores run-time parameters to their
    default values. Refer to
    <xref linkend="sql-set" endterm="sql-set-title">
-   for details. <command>RESET</command> is an alternate form for
+   for details. <command>RESET</command> is an alternate spelling for
 
    <synopsis>
 SET <replaceable class="parameter">variable</replaceable> TO DEFAULT
    </synopsis>
+
+   The default value is defined as the value that the variable would
+   have had, had no <command>SET</> ever been issued for it in the
+   current session.  The actual source of this value might be a
+   compiled-in default, the postmaster's configuration file or command-line
+   switches, or per-database or per-user default settings.  See the
+   <citetitle>Administrator's Guide</citetitle> for details.
   </para>
  </refsect1>
 

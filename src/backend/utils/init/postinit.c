@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.104 2002/05/05 00:03:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.105 2002/05/17 01:19:18 tgl Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -28,7 +28,6 @@
 #include "catalog/pg_database.h"
 #include "catalog/pg_shadow.h"
 #include "commands/trigger.h"
-#include "commands/variable.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "storage/backendid.h"
@@ -132,6 +131,9 @@ ReverifyMyDatabase(const char *name)
 	 */
 #ifdef MULTIBYTE
 	SetDatabaseEncoding(dbform->encoding);
+	/* If we have no other source of client_encoding, use server encoding */
+	SetConfigOption("client_encoding", GetDatabaseEncodingName(),
+					PGC_BACKEND, PGC_S_DEFAULT);
 #else
 	if (dbform->encoding != PG_SQL_ASCII)
 		elog(FATAL, "database was initialized with MULTIBYTE encoding %d,\n\tbut the backend was compiled without multibyte support.\n\tlooks like you need to initdb or recompile.",
@@ -387,11 +389,6 @@ InitPostgres(const char *dbname, const char *username)
 
 	/* set default namespace search path */
 	InitializeSearchPath();
-
-#ifdef MULTIBYTE
-	/* set default client encoding --- uses info from ReverifyMyDatabase */
-	set_default_client_encoding();
-#endif
 
 	/*
 	 * Set up process-exit callback to do pre-shutdown cleanup.  This should

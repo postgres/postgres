@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.90 2002/05/06 19:47:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.91 2002/05/17 01:19:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -614,6 +614,9 @@ InitializeSessionUserId(const char *username)
 
 	SetSessionUserId(usesysid);	/* sets CurrentUserId too */
 
+	/* Record username as a config option too */
+	SetConfigOption("session_authorization", username,
+					PGC_BACKEND, PGC_S_OVERRIDE);
 
 	/*
 	 * Set up user-specific configuration variables.  This is a good
@@ -653,23 +656,16 @@ InitializeSessionUserIdStandalone(void)
  * Change session auth ID while running
  *
  * Only a superuser may set auth ID to something other than himself.
- *
- * username == NULL implies reset to default (AuthenticatedUserId).
  */
 void
-SetSessionAuthorization(const char *username)
+SetSessionAuthorization(Oid userid)
 {
-	Oid		userid;
+	/* Must have authenticated already, else can't make permission check */
+	AssertState(OidIsValid(AuthenticatedUserId));
 
-	if (username == NULL)
-		userid = AuthenticatedUserId;
-	else
-	{
-		userid = get_usesysid(username);
-		if (userid != AuthenticatedUserId &&
-			!AuthenticatedUserIsSuperuser)
-			elog(ERROR, "permission denied");
-	}
+	if (userid != AuthenticatedUserId &&
+		!AuthenticatedUserIsSuperuser)
+		elog(ERROR, "permission denied");
 
 	SetSessionUserId(userid);
 	SetUserId(userid);

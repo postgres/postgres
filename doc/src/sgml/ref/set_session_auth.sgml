@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/set_session_auth.sgml,v 1.5 2002/05/06 19:47:30 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/set_session_auth.sgml,v 1.6 2002/05/17 01:19:16 tgl Exp $ -->
 <refentry id="SQL-SET-SESSION-AUTHORIZATION">
  <docinfo>
   <date>2001-04-21</date>
@@ -16,8 +16,8 @@
 
  <refsynopsisdiv>
 <synopsis>
-SET SESSION AUTHORIZATION <parameter>username</parameter>
-SET SESSION AUTHORIZATION DEFAULT
+SET [ SESSION | LOCAL ] SESSION AUTHORIZATION <parameter>username</parameter>
+SET [ SESSION | LOCAL ] SESSION AUTHORIZATION DEFAULT
 RESET SESSION AUTHORIZATION
 </synopsis>
  </refsynopsisdiv>
@@ -49,6 +49,12 @@ RESET SESSION AUTHORIZATION
    user (the <firstterm>authenticated user</firstterm>) had the
    superuser privilege.  Otherwise, the command is accepted only if it
    specifies the authenticated username.
+  </para>
+
+  <para>
+   The <option>SESSION</> and <option>LOCAL</> modifiers act the same
+   as for the regular <xref linkend="SQL-SET" endterm="SQL-SET-title">
+   command.
   </para>
 
   <para>

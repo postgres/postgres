@@ -4,12 +4,14 @@
  * External declarations pertaining to backend/utils/misc/guc.c and
  * backend/utils/misc/guc-file.l
  *
- * $Id: guc.h,v 1.16 2002/03/24 04:31:09 tgl Exp $
+ * $Id: guc.h,v 1.17 2002/05/17 01:19:19 tgl Exp $
  */
 #ifndef GUC_H
 #define GUC_H
 
+#include "nodes/pg_list.h"
 #include "utils/array.h"
+
 
 /*
  * Certain options can only be set at certain times. The rules are
@@ -52,29 +54,44 @@ typedef enum
  * The following type records the source of the current setting.  A
  * new setting can only take effect if the previous setting had the
  * same or lower level.  (E.g, changing the config file doesn't
- * override the postmaster command line.)
+ * override the postmaster command line.)  Tracking the source allows us
+ * to process sources in any convenient order without affecting results.
+ * Sources <= PGC_S_OVERRIDE will set the default used by RESET, as well
+ * as the current value.
  */
 typedef enum
 {
 	PGC_S_DEFAULT = 0,			/* wired-in default */
-	PGC_S_FILE = 1,				/* postgresql.conf */
-	PGC_S_ARGV = 2,				/* postmaster command line */
-	PGC_S_DATABASE = 3,			/* per-database setting */
-	PGC_S_USER = 4,				/* per-user setting */
-	PGC_S_CLIENT = 5,			/* from client (PGOPTIONS) */
-	PGC_S_SESSION = 6,			/* SET command */
-	PGC_S_INFINITY = 100		/* can be used to avoid checks */
+	PGC_S_ENV_VAR = 1,			/* postmaster environment variable */
+	PGC_S_FILE = 2,				/* postgresql.conf */
+	PGC_S_ARGV = 3,				/* postmaster command line */
+	PGC_S_DATABASE = 4,			/* per-database setting */
+	PGC_S_USER = 5,				/* per-user setting */
+	PGC_S_CLIENT = 6,			/* from client (PGOPTIONS) */
+	PGC_S_OVERRIDE = 7,			/* special case to forcibly set default */
+	PGC_S_SESSION = 8			/* SET command */
 } GucSource;
 
 extern void SetConfigOption(const char *name, const char *value,
 				GucContext context, GucSource source);
 extern const char *GetConfigOption(const char *name);
+extern const char *GetConfigOptionResetString(const char *name);
 extern void ProcessConfigFile(GucContext context);
-extern void ResetAllOptions(bool isStartup);
+extern void InitializeGUCOptions(void);
+extern void ResetAllOptions(void);
+extern void AtEOXact_GUC(bool isCommit);
 extern void ParseLongOption(const char *string, char **name, char **value);
 extern bool set_config_option(const char *name, const char *value,
-				  GucContext context, bool DoIt, GucSource source);
+							  GucContext context, GucSource source,
+							  bool isLocal, bool DoIt);
+extern void ShowGUCConfigOption(const char *name);
 extern void ShowAllGUCConfig(void);
+
+extern void SetPGVariable(const char *name, List *args, bool is_local);
+extern void GetPGVariable(const char *name);
+extern void ResetPGVariable(const char *name);
+
+extern char *flatten_set_variable_args(const char *name, List *args);
 
 extern void ProcessGUCArray(ArrayType *array, GucSource source);
 extern ArrayType *GUCArrayAdd(ArrayType *array, const char *name, const char *value);

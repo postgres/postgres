@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.59 2002/04/21 19:02:39 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.60 2002/05/17 01:19:16 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -14,14 +14,40 @@ PostgreSQL documentation
  </refnamediv>
  <refsynopsisdiv>
   <synopsis>
-SET <replaceable class="PARAMETER">variable</replaceable> { TO | = } { <replaceable class="PARAMETER">value</replaceable> | '<replaceable class="PARAMETER">value</replaceable>' | DEFAULT }
-SET TIME ZONE { '<replaceable class="PARAMETER">timezone</replaceable>' | LOCAL | DEFAULT }
+SET [ SESSION | LOCAL ] <replaceable class="PARAMETER">variable</replaceable> { TO | = } { <replaceable class="PARAMETER">value</replaceable> | '<replaceable class="PARAMETER">value</replaceable>' | DEFAULT }
+SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="PARAMETER">timezone</replaceable> | LOCAL | DEFAULT }
   </synopsis>
 
   <refsect2 id="R2-SQL-SET-1">
    <title>Inputs</title>
    <para>
     <variablelist>
+
+     <varlistentry>
+      <term><option>SESSION</></term>
+      <listitem>
+       <para>
+        Specifies that the command takes effect for the current session.
+	(This is the default if neither <option>SESSION</> nor
+	<option>LOCAL</> appears.)
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>LOCAL</></term>
+      <listitem>
+       <para>
+        Specifies that the command takes effect for only the current
+	transaction.  After <command>COMMIT</> or <command>ROLLBACK</>,
+	the session-level setting takes effect again.  Note that
+	<command>SET LOCAL</> will appear to have no effect if it's
+	executed outside a <command>BEGIN</> block, since the transaction
+	will end immediately.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry>
       <term><replaceable class="PARAMETER">variable</replaceable></term>
       <listitem>
@@ -30,6 +56,7 @@ SET TIME ZONE { '<replaceable class="PARAMETER">timezone</replaceable>' | LOCAL 
        </para>
       </listitem>
      </varlistentry>
+
      <varlistentry>
       <term><replaceable class="PARAMETER">value</replaceable></term>
       <listitem>
@@ -49,34 +76,49 @@ SET TIME ZONE { '<replaceable class="PARAMETER">timezone</replaceable>' | LOCAL 
  
  <refsect1 id="R1-SQL-SET-1">
   <title>Description</title>
+
   <para>
    The <command>SET</command> command changes run-time configuration
-   parameters. The following parameters can be altered:
+   parameters.  Many of the run-time parameters listed in the
+   <citetitle>Administrator's Guide</citetitle> can be changed on-the-fly
+   with <command>SET</command>.  (But some require superuser privileges
+   to change, and others cannot be changed after server or session start.)
+   Note that <command>SET</command> only affects the value used by the
+   current session.
+  </para>
+
+  <para>
+   If <command>SET</command> or <command>SET SESSION</command> is issued
+   within a transaction that is later aborted, the effects of the
+   <command>SET</command> command disappear when the transaction is rolled
+   back.  (This behavior represents a change from
+   <productname>PostgreSQL</productname> versions prior to 7.3, where
+   the effects of <command>SET</command> would not roll back after a later
+   error.)  Once the surrounding transaction is committed, the effects
+   will persist until the end of the session, unless overridden by another
+   <command>SET</command>.
+  </para>
+
+  <para>
+   The effects of <command>SET LOCAL</command> last only till the end of
+   the current transaction, whether committed or not.  A special case is
+   <command>SET</command> followed by <command>SET LOCAL</command> within
+   a single transaction: the <command>SET LOCAL</command> value will be
+   seen until the end of the transaction, but afterwards (if the transaction
+   is committed) the <command>SET</command> value will take effect.
+  </para>
+
+  <para>
+   Here are additional details about a few of the parameters that can be set:
 
    <variablelist>
-    <varlistentry>
-     <term>CLIENT_ENCODING</term>
-     <term>NAMES</term>
-     <listitem>
-      <para>
-       Sets the multibyte client encoding. The specified encoding
-       must be supported by the backend.
-      </para>
-
-      <para>
-       This option is only available if
-       <productname>PostgreSQL</productname> is build with multibyte
-       support.
-      </para>
-     </listitem>
-    </varlistentry>
 
     <varlistentry>
      <term>DATESTYLE</term>
      <listitem>
       <para>
        Choose the date/time representation style. Two separate
-       settings are made: the default date/time output and the
+       settings are involved: the default date/time output and the
        interpretation of ambiguous input.
       </para>
 
@@ -159,28 +201,47 @@ SET TIME ZONE { '<replaceable class="PARAMETER">timezone</replaceable>' | LOCAL 
       </para>
 
       <para>
-       Date format initialization may be done by:
-       <simplelist>
-	<member>
-	 Setting the <envar>PGDATESTYLE</envar> environment variable.
-	 If PGDATESTYLE is set in the frontend environment of a client
-	 based on libpq, libpq will automatically set DATESTYLE to the
-	 value of PGDATESTYLE during connection start-up.
-	</member>
-	<member>
-	 Running postmaster using the option <option>-o -e</option> to
-	 set dates to the <literal>European</literal> convention.
-	</member>
-       </simplelist>
-      </para>
-
-      <para>
        <command>SET DATESTYLE</command> affects interpretation of
        input and provides several standard output formats. For
        applications needing different variations or tighter control
        over input or output, consider using
        the <function>to_char</function> family of
        functions.
+      </para>
+
+      <para>
+       There are several now-deprecated means for setting the datestyle
+       in addition to the normal methods of setting it via <command>SET</> or
+       a configuration-file entry:
+       <simplelist>
+	<member>
+	 Setting the postmaster's <envar>PGDATESTYLE</envar> environment
+	 variable.  (This will be overridden by any of the other methods.)
+	</member>
+	<member>
+	 Running postmaster using the option <option>-o -e</option> to
+	 select the <literal>European</literal> conventions.
+	 (This overrides environment variables and configuration-file
+	 entries.)
+	</member>
+	<member>
+	 Setting the client's <envar>PGDATESTYLE</envar> environment variable.
+	 If PGDATESTYLE is set in the frontend environment of a client
+	 based on libpq, libpq will automatically set DATESTYLE to the
+	 value of PGDATESTYLE during connection start-up.  This is
+	 equivalent to a manually issued <command>SET</>.
+	</member>
+       </simplelist>
+      </para>
+
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>NAMES</term>
+     <listitem>
+      <para>
+       <command>SET NAMES</> is an alias for <command>SET CLIENT_ENCODING</>.
       </para>
      </listitem>
     </varlistentry>
@@ -199,22 +260,21 @@ SET TIME ZONE { '<replaceable class="PARAMETER">timezone</replaceable>' | LOCAL 
 	    The value for the seed to be used by the
 	    <function>random</function> function. Allowed
 	    values are floating-point numbers between 0 and 1, which
-	    are then multiplied by 2<superscript>31</>-1. This product will
-	    silently overflow if a number outside the range is used.
-	   </para>
-
-	   <para>
-	    The seed can also be set by invoking the
-	    <function>setseed</function> SQL function:
-
-	    <programlisting>
-SELECT setseed(<replaceable>value</replaceable>);
-	    </programlisting>
+	    are then multiplied by 2<superscript>31</>-1.
 	   </para>
 	  </listitem>
 	 </varlistentry>
 	</variablelist>
        </para>
+
+	<para>
+	 The seed can also be set by invoking the
+	 <function>setseed</function> SQL function:
+
+	 <programlisting>
+SELECT setseed(<replaceable>value</replaceable>);
+	 </programlisting>
+	</para>
 
       </listitem>
      </varlistentry>
@@ -223,13 +283,9 @@ SELECT setseed(<replaceable>value</replaceable>);
       <term>SERVER_ENCODING</term>
       <listitem>
        <para>
-	Sets the multibyte server encoding.
-       </para>
-
-       <para>
-	This option is only available if
-	<productname>PostgreSQL</productname> was built with multibyte
-	support.
+	Shows the server-side multibyte encoding.  (At present, this
+	parameter can be shown but not set, because the encoding is
+	determined at initdb time.)
        </para>
       </listitem>
      </varlistentry>
@@ -241,18 +297,18 @@ SELECT setseed(<replaceable>value</replaceable>);
       <para>
        Sets the default time zone for your session. Arguments can be
        an SQL time interval constant, an integer or double precision
-       constant, or a string representing a time zone supported by
-       the host operating system.
+       constant, or a string representing a time zone name recognized
+       by the host operating system.
       </para>
 
        <para>
-	The possible values for time zone depends on your operating
+	The available time zone names depend on your operating
 	system. For example, on Linux
 	<filename>/usr/share/zoneinfo</filename> contains the database
 	of time zones.
        </para>
        <para>
-	Here are some valid values for time zone:
+	Here are some typical values for time zone names:
 
        <variablelist>
 	 <varlistentry>
@@ -279,6 +335,14 @@ SELECT setseed(<replaceable>value</replaceable>);
 	   </para>
 	  </listitem>
 	 </varlistentry>
+	</variablelist>
+       </para>
+
+       <para>
+	In addition to time zone names, <productname>PostgreSQL</productname>
+	accepts these other methods of specifying a time zone:
+
+       <variablelist>
 	 <varlistentry>
 	  <term>7</term>
 	  <listitem>
@@ -310,7 +374,7 @@ SELECT setseed(<replaceable>value</replaceable>);
 	</variablelist>
        </para>
        <para>
-	If an invalid time zone is specified, the time zone
+	If an invalid time zone name is specified, the time zone
 	becomes GMT (on most systems anyway).
        </para>
        <para>
@@ -325,13 +389,8 @@ SELECT setseed(<replaceable>value</replaceable>);
    </para>
 
   <para>
-   An extended list of other run-time parameters can be found in the
-   <citetitle>Administrator's Guide</citetitle>.
-  </para>
-
-  <para>
    Use <xref linkend="SQL-SHOW" endterm="SQL-SHOW-title"> to show the
-   current setting of a parameters.
+   current setting of a parameter.
   </para>
   
  </refsect1>
@@ -363,7 +422,7 @@ SELECT setseed(<replaceable>value</replaceable>);
      <term><computeroutput>ERROR:  permission denied</computeroutput></term>
      <listitem>
       <para>
-       You must be a superuser to have access to certain settings.
+       You must be a superuser to alter certain settings.
       </para>
      </listitem>
     </varlistentry>
@@ -394,7 +453,7 @@ SET DATESTYLE TO PostgreSQL,European;
 
   <para>
    Set the time zone for Berkeley, California, using quotes to
-   preserve the uppercase attributes of the time zone specifier (note
+   preserve the uppercase spelling of the time zone name (note
    that the date style is <literal>PostgreSQL</literal> for this
    example): 
 
@@ -437,8 +496,8 @@ SELECT CURRENT_TIMESTAMP AS today;
     only numeric time zone offsets while
     <productname>PostgreSQL</productname> allows full time zone
     specifier strings as well. All other <literal>SET</literal>
-    features are a 
-    <productname>PostgreSQL</productname> extension.
+    features are
+    <productname>PostgreSQL</productname> extensions.
    </para>
   </refsect2>
  </refsect1>

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.264 2002/05/10 20:22:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.265 2002/05/17 01:19:18 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -37,7 +37,6 @@
 #include "access/xlog.h"
 #include "commands/async.h"
 #include "commands/trigger.h"
-#include "commands/variable.h"
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
 #include "libpq/pqsignal.h"
@@ -1184,12 +1183,9 @@ PostgresMain(int argc, char *argv[], const char *username)
 
 	if (!IsUnderPostmaster)
 	{
-		ResetAllOptions(true);
+		InitializeGUCOptions();
 		potential_DataDir = getenv("PGDATA");
 	}
-
-	/* Check for PGDATESTYLE environment variable */
-	set_default_datestyle();
 
 	/* ----------------
 	 *	parse command line arguments
@@ -1273,9 +1269,10 @@ PostgresMain(int argc, char *argv[], const char *username)
 					else
 						/*
 						 *	-d 0 allows user to prevent postmaster debug from
-						 *	propogating to backend.
+						 *	propagating to backend.
 						 */
-						SetConfigOption("server_min_messages", "notice", PGC_POSTMASTER, PGC_S_ARGV);
+						SetConfigOption("server_min_messages", "notice",
+										ctx, gucsource);
 				}
 				break;
 
@@ -1292,7 +1289,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 				/*
 				 * Use european date formats.
 				 */
-				EuroDates = true;
+				SetConfigOption("datestyle", "euro", ctx, gucsource);
 				break;
 
 			case 'F':
@@ -1691,7 +1688,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.264 $ $Date: 2002/05/10 20:22:13 $\n");
+		puts("$Revision: 1.265 $ $Date: 2002/05/17 01:19:18 $\n");
 	}
 
 	/*

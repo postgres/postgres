@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.315 2002/05/13 17:45:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.316 2002/05/17 01:19:17 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -128,6 +128,7 @@ static void doNegateFloat(Value *v);
 	PrivTarget			*privtarget;
 
 	InsertStmt			*istmt;
+	VariableSetStmt		*vsetstmt;
 }
 
 %type <node>	stmt, schema_stmt,
@@ -245,6 +246,8 @@ static void doNegateFloat(Value *v);
 %type <defelt>	OptSeqElem
 
 %type <istmt>	insert_rest
+
+%type <vsetstmt>	set_rest
 
 %type <node>	OptTableElement, ConstraintElem
 %type <node>	columnDef
@@ -563,12 +566,12 @@ AlterUserStmt:  ALTER USER UserId OptUserList
 		;
 
 
-AlterUserSetStmt: ALTER USER UserId VariableSetStmt
+AlterUserSetStmt: ALTER USER UserId SET set_rest
 				{
 					AlterUserSetStmt *n = makeNode(AlterUserSetStmt);
 					n->user = $3;
-					n->variable = ((VariableSetStmt *)$4)->name;
-					n->value = ((VariableSetStmt *)$4)->args;
+					n->variable = $5->name;
+					n->value = $5->args;
 					$$ = (Node *)n;
 				}
 				| ALTER USER UserId VariableResetStmt
@@ -576,7 +579,7 @@ AlterUserSetStmt: ALTER USER UserId VariableSetStmt
 					AlterUserSetStmt *n = makeNode(AlterUserSetStmt);
 					n->user = $3;
 					n->variable = ((VariableResetStmt *)$4)->name;
-					n->value = NULL;
+					n->value = NIL;
 					$$ = (Node *)n;
 				}
 		;
@@ -834,63 +837,83 @@ schema_stmt: CreateStmt
  *
  *****************************************************************************/
 
-VariableSetStmt:  SET ColId TO var_list_or_default
+VariableSetStmt:  SET set_rest
 				{
-					VariableSetStmt *n = makeNode(VariableSetStmt);
-					n->name  = $2;
-					n->args = $4;
+					VariableSetStmt *n = $2;
+					n->is_local = false;
 					$$ = (Node *) n;
 				}
-		| SET ColId '=' var_list_or_default
+		| SET LOCAL set_rest
 				{
-					VariableSetStmt *n = makeNode(VariableSetStmt);
-					n->name  = $2;
-					n->args = $4;
+					VariableSetStmt *n = $3;
+					n->is_local = true;
 					$$ = (Node *) n;
 				}
-		| SET TIME ZONE zone_value
+		| SET SESSION set_rest
 				{
-					VariableSetStmt *n = makeNode(VariableSetStmt);
-					n->name  = "timezone";
-					if ($4 != NULL)
-						n->args = makeList1($4);
+					VariableSetStmt *n = $3;
+					n->is_local = false;
 					$$ = (Node *) n;
 				}
-		| SET TRANSACTION ISOLATION LEVEL opt_level
+		;
+
+set_rest:  ColId TO var_list_or_default
 				{
 					VariableSetStmt *n = makeNode(VariableSetStmt);
-					n->name  = "XactIsoLevel";
-					n->args = makeList1(makeStringConst($5, NULL));
-					$$ = (Node *) n;
+					n->name = $1;
+					n->args = $3;
+					$$ = n;
 				}
-        | SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL opt_level
+		| ColId '=' var_list_or_default
 				{
 					VariableSetStmt *n = makeNode(VariableSetStmt);
-					n->name  = "default_transaction_isolation";
-					n->args = makeList1(makeStringConst($8, NULL));
-					$$ = (Node *) n;
+					n->name = $1;
+					n->args = $3;
+					$$ = n;
 				}
-		| SET NAMES opt_encoding
+		| TIME ZONE zone_value
 				{
 					VariableSetStmt *n = makeNode(VariableSetStmt);
-					n->name  = "client_encoding";
+					n->name = "timezone";
 					if ($3 != NULL)
-						n->args = makeList1(makeStringConst($3, NULL));
-					$$ = (Node *) n;
+						n->args = makeList1($3);
+					$$ = n;
 				}
-		| SET SESSION AUTHORIZATION ColId_or_Sconst
+		| TRANSACTION ISOLATION LEVEL opt_level
+				{
+					VariableSetStmt *n = makeNode(VariableSetStmt);
+					n->name = "TRANSACTION ISOLATION LEVEL";
+					n->args = makeList1(makeStringConst($4, NULL));
+					$$ = n;
+				}
+        | SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL opt_level
+				{
+					VariableSetStmt *n = makeNode(VariableSetStmt);
+					n->name = "default_transaction_isolation";
+					n->args = makeList1(makeStringConst($7, NULL));
+					$$ = n;
+				}
+		| NAMES opt_encoding
+				{
+					VariableSetStmt *n = makeNode(VariableSetStmt);
+					n->name = "client_encoding";
+					if ($2 != NULL)
+						n->args = makeList1(makeStringConst($2, NULL));
+					$$ = n;
+				}
+		| SESSION AUTHORIZATION ColId_or_Sconst
 				{
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->name = "session_authorization";
-					n->args = makeList1(makeStringConst($4, NULL));
-					$$ = (Node *) n;
+					n->args = makeList1(makeStringConst($3, NULL));
+					$$ = n;
 				}
-		| SET SESSION AUTHORIZATION DEFAULT
+		| SESSION AUTHORIZATION DEFAULT
 				{
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->name = "session_authorization";
 					n->args = NIL;
-					$$ = (Node *) n;
+					$$ = n;
 				}
 		;
 
@@ -926,10 +949,10 @@ opt_boolean:  TRUE_P						{ $$ = "true"; }
 
 /* Timezone values can be:
  * - a string such as 'pst8pdt'
- * - a column identifier such as "pst8pdt"
+ * - an identifier such as "pst8pdt"
  * - an integer or floating point number
  * - a time interval per SQL99
- * ConstInterval and ColId give shift/reduce errors,
+ * ColId gives reduce/reduce errors against ConstInterval and LOCAL,
  * so use IDENT and reject anything which is a reserved word.
  */
 zone_value:  Sconst
@@ -988,25 +1011,31 @@ ColId_or_Sconst: ColId						{ $$ = $1; }
 VariableShowStmt:  SHOW ColId
 				{
 					VariableShowStmt *n = makeNode(VariableShowStmt);
-					n->name  = $2;
+					n->name = $2;
 					$$ = (Node *) n;
 				}
 		| SHOW TIME ZONE
 				{
 					VariableShowStmt *n = makeNode(VariableShowStmt);
-					n->name  = "timezone";
-					$$ = (Node *) n;
-				}
-		| SHOW ALL
-				{
-					VariableShowStmt *n = makeNode(VariableShowStmt);
-					n->name  = "all";
+					n->name = "timezone";
 					$$ = (Node *) n;
 				}
 		| SHOW TRANSACTION ISOLATION LEVEL
 				{
 					VariableShowStmt *n = makeNode(VariableShowStmt);
-					n->name  = "XactIsoLevel";
+					n->name = "TRANSACTION ISOLATION LEVEL";
+					$$ = (Node *) n;
+				}
+		| SHOW SESSION AUTHORIZATION
+				{
+					VariableShowStmt *n = makeNode(VariableShowStmt);
+					n->name = "session_authorization";
+					$$ = (Node *) n;
+				}
+		| SHOW ALL
+				{
+					VariableShowStmt *n = makeNode(VariableShowStmt);
+					n->name = "all";
 					$$ = (Node *) n;
 				}
 		;
@@ -1014,19 +1043,19 @@ VariableShowStmt:  SHOW ColId
 VariableResetStmt:	RESET ColId
 				{
 					VariableResetStmt *n = makeNode(VariableResetStmt);
-					n->name  = $2;
+					n->name = $2;
 					$$ = (Node *) n;
 				}
 		| RESET TIME ZONE
 				{
 					VariableResetStmt *n = makeNode(VariableResetStmt);
-					n->name  = "timezone";
+					n->name = "timezone";
 					$$ = (Node *) n;
 				}
 		| RESET TRANSACTION ISOLATION LEVEL
 				{
 					VariableResetStmt *n = makeNode(VariableResetStmt);
-					n->name  = "XactIsoLevel";
+					n->name = "TRANSACTION ISOLATION LEVEL";
 					$$ = (Node *) n;
 				}
 		| RESET SESSION AUTHORIZATION
@@ -1038,7 +1067,7 @@ VariableResetStmt:	RESET ColId
 		| RESET ALL
 				{
 					VariableResetStmt *n = makeNode(VariableResetStmt);
-					n->name  = "all";
+					n->name = "all";
 					$$ = (Node *) n;
 				}
 		;
@@ -3329,12 +3358,12 @@ opt_equal: '='								{ $$ = TRUE; }
  *
  *****************************************************************************/
 
-AlterDatabaseSetStmt: ALTER DATABASE database_name VariableSetStmt
+AlterDatabaseSetStmt: ALTER DATABASE database_name SET set_rest
 				{
 					AlterDatabaseSetStmt *n = makeNode(AlterDatabaseSetStmt);
 					n->dbname = $3;
-					n->variable = ((VariableSetStmt *)$4)->name;
-					n->value = ((VariableSetStmt *)$4)->args;
+					n->variable = $5->name;
+					n->value = $5->args;
 					$$ = (Node *)n;
 				}
 				| ALTER DATABASE database_name VariableResetStmt
@@ -3342,7 +3371,7 @@ AlterDatabaseSetStmt: ALTER DATABASE database_name VariableSetStmt
 					AlterDatabaseSetStmt *n = makeNode(AlterDatabaseSetStmt);
 					n->dbname = $3;
 					n->variable = ((VariableResetStmt *)$4)->name;
-					n->value = NULL;
+					n->value = NIL;
 					$$ = (Node *)n;
 				}
 		;
