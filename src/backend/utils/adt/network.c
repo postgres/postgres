@@ -3,7 +3,7 @@
  *	is for IP V4 CIDR notation, but prepared for V6: just
  *	add the necessary bits where the comments indicate.
  *
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/network.c,v 1.23 2000/07/06 05:48:11 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/network.c,v 1.24 2000/08/03 23:07:46 tgl Exp $
  *
  *	Jon Postel RIP 16 Oct 1998
  */
@@ -17,16 +17,11 @@
 #include <arpa/inet.h>
 
 #include "utils/builtins.h"
-
-/*
- * inet is a pass-by-reference datatype.  It's not toastable, and we
- * don't try to hide the pass-by-refness, so these macros are simple.
- */
-#define PG_GETARG_INET_P(n)  ((inet *) PG_GETARG_POINTER(n))
-#define PG_RETURN_INET_P(x)  return PointerGetDatum(x)
+#include "utils/inet.h"
 
 
 static int	v4bitncmp(unsigned int a1, unsigned int a2, int bits);
+static int32 network_cmp_internal(inet *a1, inet *a2);
 
 /*
  *	Access macros.	Add IPV6 support.
@@ -54,12 +49,7 @@ network_in(char *src, int type)
 	int			bits;
 	inet	   *dst;
 
-	if (!src)
-		return NULL;
-
-	dst = palloc(VARHDRSZ + sizeof(inet_struct));
-	if (dst == NULL)
-		elog(ERROR, "unable to allocate memory in network_in()");
+	dst = (inet *) palloc(VARHDRSZ + sizeof(inet_struct));
 
 	/* First, try for an IP V4 address: */
 	ip_family(dst) = AF_INET;
@@ -74,32 +64,37 @@ network_in(char *src, int type)
 		+ ip_addrsize(dst);
 	ip_bits(dst) = bits;
 	ip_type(dst) = type;
+
 	return dst;
 }
 
 /* INET address reader.  */
-inet *
-inet_in(char *src)
+Datum
+inet_in(PG_FUNCTION_ARGS)
 {
-	return network_in(src, 0);
+	char	   *src = PG_GETARG_CSTRING(0);
+
+	PG_RETURN_INET_P(network_in(src, 0));
 }
 
 /* CIDR address reader.  */
-inet *
-cidr_in(char *src)
+Datum
+cidr_in(PG_FUNCTION_ARGS)
 {
-	return network_in(src, 1);
+	char	   *src = PG_GETARG_CSTRING(0);
+
+	PG_RETURN_INET_P(network_in(src, 1));
 }
 
 /*
  *	INET address output function.
  */
-
-char *
-inet_out(inet *src)
+Datum
+inet_out(PG_FUNCTION_ARGS)
 {
-	char	   *dst,
-				tmp[sizeof("255.255.255.255/32")];
+	inet	   *src = PG_GETARG_INET_P(0);
+	char		tmp[sizeof("255.255.255.255/32")];
+	char	   *dst;
 
 	if (ip_family(src) == AF_INET)
 	{
@@ -118,211 +113,201 @@ inet_out(inet *src)
 		/* Go for an IPV6 address here, before faulting out: */
 		elog(ERROR, "unknown address family (%d)", ip_family(src));
 
-	dst = palloc(strlen(tmp) + 1);
-	if (dst == NULL)
-		elog(ERROR, "unable to allocate memory in inet_out()");
-
-	strcpy(dst, tmp);
-	return dst;
+	PG_RETURN_CSTRING(pstrdup(tmp));
 }
 
 
-/* just a stub */
-char *
-cidr_out(inet *src)
+/* share code with INET case */
+Datum
+cidr_out(PG_FUNCTION_ARGS)
 {
-	return inet_out(src);
+	return inet_out(fcinfo);
+}
+
+
+/*
+ *	Basic comparison function for sorting and inet/cidr comparisons.
+ *
+ * XXX this ignores bits to the right of the mask.  That's probably
+ * correct for CIDR, almost certainly wrong for INET.  We need to have
+ * two sets of comparator routines, not just one.  Note that suggests
+ * that CIDR and INET should not be considered binary-equivalent by
+ * the parser?
+ */
+
+static int32
+network_cmp_internal(inet *a1, inet *a2)
+{
+	if (ip_family(a1) == AF_INET && ip_family(a2) == AF_INET)
+	{
+		int		order = v4bitncmp(ip_v4addr(a1), ip_v4addr(a2),
+								  Min(ip_bits(a1), ip_bits(a2)));
+
+		if (order != 0)
+			return order;
+		return ((int32) ip_bits(a1)) - ((int32) ip_bits(a2));
+	}
+	else
+	{
+		/* Go for an IPV6 address here, before faulting out: */
+		elog(ERROR, "cannot compare address families %d and %d",
+			 ip_family(a1), ip_family(a2));
+		return 0;				/* keep compiler quiet */
+	}
+}
+
+Datum
+network_cmp(PG_FUNCTION_ARGS)
+{
+	inet	   *a1 = PG_GETARG_INET_P(0);
+	inet	   *a2 = PG_GETARG_INET_P(1);
+
+	PG_RETURN_INT32(network_cmp_internal(a1, a2));
 }
 
 /*
- *	Boolean tests for magnitude.  Add V4/V6 testing!
+ *	Boolean ordering tests.
  */
-
-bool
-network_lt(inet *a1, inet *a2)
+Datum
+network_lt(PG_FUNCTION_ARGS)
 {
-	if (!PointerIsValid(a1) || !PointerIsValid(a2))
-		return FALSE;
+	inet	   *a1 = PG_GETARG_INET_P(0);
+	inet	   *a2 = PG_GETARG_INET_P(1);
+
+	PG_RETURN_BOOL(network_cmp_internal(a1, a2) < 0);
+}
+
+Datum
+network_le(PG_FUNCTION_ARGS)
+{
+	inet	   *a1 = PG_GETARG_INET_P(0);
+	inet	   *a2 = PG_GETARG_INET_P(1);
+
+	PG_RETURN_BOOL(network_cmp_internal(a1, a2) <= 0);
+}
+
+Datum
+network_eq(PG_FUNCTION_ARGS)
+{
+	inet	   *a1 = PG_GETARG_INET_P(0);
+	inet	   *a2 = PG_GETARG_INET_P(1);
+
+	PG_RETURN_BOOL(network_cmp_internal(a1, a2) == 0);
+}
+
+Datum
+network_ge(PG_FUNCTION_ARGS)
+{
+	inet	   *a1 = PG_GETARG_INET_P(0);
+	inet	   *a2 = PG_GETARG_INET_P(1);
+
+	PG_RETURN_BOOL(network_cmp_internal(a1, a2) >= 0);
+}
+
+Datum
+network_gt(PG_FUNCTION_ARGS)
+{
+	inet	   *a1 = PG_GETARG_INET_P(0);
+	inet	   *a2 = PG_GETARG_INET_P(1);
+
+	PG_RETURN_BOOL(network_cmp_internal(a1, a2) > 0);
+}
+
+Datum
+network_ne(PG_FUNCTION_ARGS)
+{
+	inet	   *a1 = PG_GETARG_INET_P(0);
+	inet	   *a2 = PG_GETARG_INET_P(1);
+
+	PG_RETURN_BOOL(network_cmp_internal(a1, a2) != 0);
+}
+
+/*
+ *	Boolean network-inclusion tests.
+ */
+Datum
+network_sub(PG_FUNCTION_ARGS)
+{
+	inet	   *a1 = PG_GETARG_INET_P(0);
+	inet	   *a2 = PG_GETARG_INET_P(1);
+
 	if ((ip_family(a1) == AF_INET) && (ip_family(a2) == AF_INET))
 	{
-		int			order = v4bitncmp(ip_v4addr(a1), ip_v4addr(a2), ip_bits(a2));
-
-		return ((order < 0) || ((order == 0) && (ip_bits(a1) < ip_bits(a2))));
+		PG_RETURN_BOOL(ip_bits(a1) > ip_bits(a2)
+			&& v4bitncmp(ip_v4addr(a1), ip_v4addr(a2), ip_bits(a2)) == 0);
 	}
 	else
 	{
 		/* Go for an IPV6 address here, before faulting out: */
 		elog(ERROR, "cannot compare address families %d and %d",
 			 ip_family(a1), ip_family(a2));
-		return FALSE;
+		PG_RETURN_BOOL(false);
 	}
 }
 
-bool
-network_le(inet *a1, inet *a2)
+Datum
+network_subeq(PG_FUNCTION_ARGS)
 {
-	if (!PointerIsValid(a1) || !PointerIsValid(a2))
-		return FALSE;
-	return (network_lt(a1, a2) || network_eq(a1, a2));
-}
+	inet	   *a1 = PG_GETARG_INET_P(0);
+	inet	   *a2 = PG_GETARG_INET_P(1);
 
-bool
-network_eq(inet *a1, inet *a2)
-{
-	if (!PointerIsValid(a1) || !PointerIsValid(a2))
-		return FALSE;
 	if ((ip_family(a1) == AF_INET) && (ip_family(a2) == AF_INET))
 	{
-		return ((ip_bits(a1) == ip_bits(a2))
-		 && (v4bitncmp(ip_v4addr(a1), ip_v4addr(a2), ip_bits(a1)) == 0));
+		PG_RETURN_BOOL(ip_bits(a1) >= ip_bits(a2)
+			&& v4bitncmp(ip_v4addr(a1), ip_v4addr(a2), ip_bits(a2)) == 0);
 	}
 	else
 	{
 		/* Go for an IPV6 address here, before faulting out: */
 		elog(ERROR, "cannot compare address families %d and %d",
 			 ip_family(a1), ip_family(a2));
-		return FALSE;
+		PG_RETURN_BOOL(false);
 	}
 }
 
-bool
-network_ge(inet *a1, inet *a2)
+Datum
+network_sup(PG_FUNCTION_ARGS)
 {
-	if (!PointerIsValid(a1) || !PointerIsValid(a2))
-		return FALSE;
-	return (network_gt(a1, a2) || network_eq(a1, a2));
-}
+	inet	   *a1 = PG_GETARG_INET_P(0);
+	inet	   *a2 = PG_GETARG_INET_P(1);
 
-bool
-network_gt(inet *a1, inet *a2)
-{
-	if (!PointerIsValid(a1) || !PointerIsValid(a2))
-		return FALSE;
 	if ((ip_family(a1) == AF_INET) && (ip_family(a2) == AF_INET))
 	{
-		int			order = v4bitncmp(ip_v4addr(a1), ip_v4addr(a2), ip_bits(a2));
-
-		return ((order > 0) || ((order == 0) && (ip_bits(a1) > ip_bits(a2))));
+		PG_RETURN_BOOL(ip_bits(a1) < ip_bits(a2)
+			&& v4bitncmp(ip_v4addr(a1), ip_v4addr(a2), ip_bits(a1)) == 0);
 	}
 	else
 	{
 		/* Go for an IPV6 address here, before faulting out: */
 		elog(ERROR, "cannot compare address families %d and %d",
 			 ip_family(a1), ip_family(a2));
-		return FALSE;
+		PG_RETURN_BOOL(false);
 	}
 }
 
-bool
-network_ne(inet *a1, inet *a2)
+Datum
+network_supeq(PG_FUNCTION_ARGS)
 {
-	if (!PointerIsValid(a1) || !PointerIsValid(a2))
-		return FALSE;
-	return (!network_eq(a1, a2));
-}
-
-bool
-network_sub(inet *a1, inet *a2)
-{
-	if (!PointerIsValid(a1) || !PointerIsValid(a2))
-		return FALSE;
+	inet	   *a1 = PG_GETARG_INET_P(0);
+	inet	   *a2 = PG_GETARG_INET_P(1);
 
 	if ((ip_family(a1) == AF_INET) && (ip_family(a2) == AF_INET))
 	{
-		return ((ip_bits(a1) > ip_bits(a2))
-		 && (v4bitncmp(ip_v4addr(a1), ip_v4addr(a2), ip_bits(a2)) == 0));
+		PG_RETURN_BOOL(ip_bits(a1) <= ip_bits(a2)
+			&& v4bitncmp(ip_v4addr(a1), ip_v4addr(a2), ip_bits(a1)) == 0);
 	}
 	else
 	{
 		/* Go for an IPV6 address here, before faulting out: */
 		elog(ERROR, "cannot compare address families %d and %d",
 			 ip_family(a1), ip_family(a2));
-		return FALSE;
-	}
-}
-
-bool
-network_subeq(inet *a1, inet *a2)
-{
-	if (!PointerIsValid(a1) || !PointerIsValid(a2))
-		return FALSE;
-
-	if ((ip_family(a1) == AF_INET) && (ip_family(a2) == AF_INET))
-	{
-		return ((ip_bits(a1) >= ip_bits(a2))
-		 && (v4bitncmp(ip_v4addr(a1), ip_v4addr(a2), ip_bits(a2)) == 0));
-	}
-	else
-	{
-		/* Go for an IPV6 address here, before faulting out: */
-		elog(ERROR, "cannot compare address families %d and %d",
-			 ip_family(a1), ip_family(a2));
-		return FALSE;
-	}
-}
-
-bool
-network_sup(inet *a1, inet *a2)
-{
-	if (!PointerIsValid(a1) || !PointerIsValid(a2))
-		return FALSE;
-
-	if ((ip_family(a1) == AF_INET) && (ip_family(a2) == AF_INET))
-	{
-		return ((ip_bits(a1) < ip_bits(a2))
-		 && (v4bitncmp(ip_v4addr(a1), ip_v4addr(a2), ip_bits(a1)) == 0));
-	}
-	else
-	{
-		/* Go for an IPV6 address here, before faulting out: */
-		elog(ERROR, "cannot compare address families %d and %d",
-			 ip_family(a1), ip_family(a2));
-		return FALSE;
-	}
-}
-
-bool
-network_supeq(inet *a1, inet *a2)
-{
-	if (!PointerIsValid(a1) || !PointerIsValid(a2))
-		return FALSE;
-
-	if ((ip_family(a1) == AF_INET) && (ip_family(a2) == AF_INET))
-	{
-		return ((ip_bits(a1) <= ip_bits(a2))
-		 && (v4bitncmp(ip_v4addr(a1), ip_v4addr(a2), ip_bits(a1)) == 0));
-	}
-	else
-	{
-		/* Go for an IPV6 address here, before faulting out: */
-		elog(ERROR, "cannot compare address families %d and %d",
-			 ip_family(a1), ip_family(a2));
-		return FALSE;
+		PG_RETURN_BOOL(false);
 	}
 }
 
 /*
- *	Comparison function for sorting.  Add V4/V6 testing!
+ * Extract data from a network datatype.
  */
-
-int4
-network_cmp(inet *a1, inet *a2)
-{
-	if (ntohl(ip_v4addr(a1)) < ntohl(ip_v4addr(a2)))
-		return (-1);
-
-	if (ntohl(ip_v4addr(a1)) > ntohl(ip_v4addr(a2)))
-		return (1);
-
-	if (ip_bits(a1) < ip_bits(a2))
-		return (-1);
-
-	if (ip_bits(a1) > ip_bits(a2))
-		return (1);
-
-	return 0;
-}
-
 Datum
 network_host(PG_FUNCTION_ARGS)
 {
@@ -357,13 +342,12 @@ network_host(PG_FUNCTION_ARGS)
 	PG_RETURN_TEXT_P(ret);
 }
 
-int4
-network_masklen(inet *ip)
+Datum
+network_masklen(PG_FUNCTION_ARGS)
 {
-	if (!PointerIsValid(ip))
-		return 0;
+	inet	   *ip = PG_GETARG_INET_P(0);
 
-	return ip_bits(ip);
+	PG_RETURN_INT32(ip_bits(ip));
 }
 
 Datum

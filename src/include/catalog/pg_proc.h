@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.156 2000/08/03 16:34:31 tgl Exp $
+ * $Id: pg_proc.h,v 1.157 2000/08/03 23:07:46 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2174,68 +2174,68 @@ DATA(insert OID = 1688 (  varbitsubstr		PGUID 11 f t t t 2 f 1562 "1562 1562" 10
 DESCR("bitwise field");
 
 /* for mac type support */
-DATA(insert OID = 436 (  macaddr_in			PGUID 11 f t t t 1 f 829 "0" 100 0 0 100	macaddr_in - ));
+DATA(insert OID = 436 (  macaddr_in			PGUID 12 f t t t 1 f 829 "0" 100 0 0 100	macaddr_in - ));
 DESCR("(internal)");
-DATA(insert OID = 437 (  macaddr_out		PGUID 11 f t t t 1 f 23 "0" 100 0 0 100  macaddr_out - ));
+DATA(insert OID = 437 (  macaddr_out		PGUID 12 f t t t 1 f 23 "0" 100 0 0 100  macaddr_out - ));
 DESCR("(internal)");
 
-DATA(insert OID = 830 (  macaddr_eq		   PGUID 11 f t t t 2 f 16 "829 829" 100 0 0 100	macaddr_eq - ));
+DATA(insert OID = 830 (  macaddr_eq		   PGUID 12 f t t t 2 f 16 "829 829" 100 0 0 100	macaddr_eq - ));
 DESCR("equal");
-DATA(insert OID = 831 (  macaddr_lt		   PGUID 11 f t t t 2 f 16 "829 829" 100 0 0 100	macaddr_lt - ));
+DATA(insert OID = 831 (  macaddr_lt		   PGUID 12 f t t t 2 f 16 "829 829" 100 0 0 100	macaddr_lt - ));
 DESCR("less-than");
-DATA(insert OID = 832 (  macaddr_le		   PGUID 11 f t t t 2 f 16 "829 829" 100 0 0 100	macaddr_le - ));
+DATA(insert OID = 832 (  macaddr_le		   PGUID 12 f t t t 2 f 16 "829 829" 100 0 0 100	macaddr_le - ));
 DESCR("less-than-or-equal");
-DATA(insert OID = 833 (  macaddr_gt		   PGUID 11 f t t t 2 f 16 "829 829" 100 0 0 100	macaddr_gt - ));
+DATA(insert OID = 833 (  macaddr_gt		   PGUID 12 f t t t 2 f 16 "829 829" 100 0 0 100	macaddr_gt - ));
 DESCR("greater-than");
-DATA(insert OID = 834 (  macaddr_ge		   PGUID 11 f t t t 2 f 16 "829 829" 100 0 0 100	macaddr_ge - ));
+DATA(insert OID = 834 (  macaddr_ge		   PGUID 12 f t t t 2 f 16 "829 829" 100 0 0 100	macaddr_ge - ));
 DESCR("greater-than-or-equal");
-DATA(insert OID = 835 (  macaddr_ne		   PGUID 11 f t t t 2 f 16 "829 829" 100 0 0 100	macaddr_ne - ));
+DATA(insert OID = 835 (  macaddr_ne		   PGUID 12 f t t t 2 f 16 "829 829" 100 0 0 100	macaddr_ne - ));
 DESCR("not equal");
-DATA(insert OID = 836 (  macaddr_cmp	   PGUID 11 f t t t 2 f 23 "829 829" 100 0 0 100	macaddr_cmp - ));
+DATA(insert OID = 836 (  macaddr_cmp	   PGUID 12 f t t t 2 f 23 "829 829" 100 0 0 100	macaddr_cmp - ));
 DESCR("less-equal-greater");
 DATA(insert OID = 837 (  macaddr_manuf	   PGUID 12 f t t t 1 f 25 "829" 100 0 0 100	macaddr_manuf - ));
 DESCR("MAC manufacturer");
 
 /* for inet type support */
-DATA(insert OID = 910 (  inet_in			PGUID 11 f t t t 1 f 869 "0" 100 0 0 100	inet_in - ));
+DATA(insert OID = 910 (  inet_in			PGUID 12 f t t t 1 f 869 "0" 100 0 0 100	inet_in - ));
 DESCR("(internal)");
-DATA(insert OID = 911 (  inet_out			PGUID 11 f t t t 1 f 23 "0" 100 0 0 100  inet_out - ));
+DATA(insert OID = 911 (  inet_out			PGUID 12 f t t t 1 f 23 "0" 100 0 0 100  inet_out - ));
 DESCR("(internal)");
 
 /* for cidr type support */
-DATA(insert OID = 1267 (  cidr_in			PGUID 11 f t t t 1 f 650 "0" 100 0 0 100	cidr_in - ));
+DATA(insert OID = 1267 (  cidr_in			PGUID 12 f t t t 1 f 650 "0" 100 0 0 100	cidr_in - ));
 DESCR("(internal)");
-DATA(insert OID = 1427 (  cidr_out			PGUID 11 f t t t 1 f 23 "0" 100 0 0 100  cidr_out - ));
+DATA(insert OID = 1427 (  cidr_out			PGUID 12 f t t t 1 f 23 "0" 100 0 0 100  cidr_out - ));
 DESCR("(internal)");
 
 /* these are used for both inet and cidr */
-DATA(insert OID = 920 (  network_eq		   PGUID 11 f t t t 2 f 16 "869 869" 100 0 0 100	network_eq - ));
+DATA(insert OID = 920 (  network_eq		   PGUID 12 f t t t 2 f 16 "869 869" 100 0 0 100	network_eq - ));
 DESCR("equal");
-DATA(insert OID = 921 (  network_lt		   PGUID 11 f t t t 2 f 16 "869 869" 100 0 0 100	network_lt - ));
+DATA(insert OID = 921 (  network_lt		   PGUID 12 f t t t 2 f 16 "869 869" 100 0 0 100	network_lt - ));
 DESCR("less-than");
-DATA(insert OID = 922 (  network_le		   PGUID 11 f t t t 2 f 16 "869 869" 100 0 0 100	network_le - ));
+DATA(insert OID = 922 (  network_le		   PGUID 12 f t t t 2 f 16 "869 869" 100 0 0 100	network_le - ));
 DESCR("less-than-or-equal");
-DATA(insert OID = 923 (  network_gt		   PGUID 11 f t t t 2 f 16 "869 869" 100 0 0 100	network_gt - ));
+DATA(insert OID = 923 (  network_gt		   PGUID 12 f t t t 2 f 16 "869 869" 100 0 0 100	network_gt - ));
 DESCR("greater-than");
-DATA(insert OID = 924 (  network_ge		   PGUID 11 f t t t 2 f 16 "869 869" 100 0 0 100	network_ge - ));
+DATA(insert OID = 924 (  network_ge		   PGUID 12 f t t t 2 f 16 "869 869" 100 0 0 100	network_ge - ));
 DESCR("greater-than-or-equal");
-DATA(insert OID = 925 (  network_ne		   PGUID 11 f t t t 2 f 16 "869 869" 100 0 0 100	network_ne - ));
+DATA(insert OID = 925 (  network_ne		   PGUID 12 f t t t 2 f 16 "869 869" 100 0 0 100	network_ne - ));
 DESCR("not equal");
-DATA(insert OID = 926 (  network_cmp		   PGUID 11 f t t t 2 f 23 "869 869" 100 0 0 100	network_cmp - ));
+DATA(insert OID = 926 (  network_cmp		   PGUID 12 f t t t 2 f 23 "869 869" 100 0 0 100	network_cmp - ));
 DESCR("less-equal-greater");
-DATA(insert OID = 927 (  network_sub		   PGUID 11 f t t t 2 f 16 "869 869" 100 0 0 100	network_sub - ));
+DATA(insert OID = 927 (  network_sub		   PGUID 12 f t t t 2 f 16 "869 869" 100 0 0 100	network_sub - ));
 DESCR("is-subnet");
-DATA(insert OID = 928 (  network_subeq		   PGUID 11 f t t t 2 f 16 "869 869" 100 0 0 100	network_subeq - ));
+DATA(insert OID = 928 (  network_subeq		   PGUID 12 f t t t 2 f 16 "869 869" 100 0 0 100	network_subeq - ));
 DESCR("is-subnet-or-equal");
-DATA(insert OID = 929 (  network_sup		   PGUID 11 f t t t 2 f 16 "869 869" 100 0 0 100	network_sup - ));
+DATA(insert OID = 929 (  network_sup		   PGUID 12 f t t t 2 f 16 "869 869" 100 0 0 100	network_sup - ));
 DESCR("is-supernet");
-DATA(insert OID = 930 (  network_supeq		   PGUID 11 f t t t 2 f 16 "869 869" 100 0 0 100	network_supeq - ));
+DATA(insert OID = 930 (  network_supeq		   PGUID 12 f t t t 2 f 16 "869 869" 100 0 0 100	network_supeq - ));
 DESCR("is-supernet-or-equal");
 
 /* inet/cidr versions */
 DATA(insert OID = 696 (  netmask				PGUID 12 f t t t 1 f 25 "869" 100 0 0 100  network_netmask - ));
 DESCR("netmask of address");
-DATA(insert OID = 697 (  masklen				PGUID 11 f t t t 1 f 23 "869" 100 0 0 100  network_masklen - ));
+DATA(insert OID = 697 (  masklen				PGUID 12 f t t t 1 f 23 "869" 100 0 0 100  network_masklen - ));
 DESCR("netmask length");
 DATA(insert OID = 698 (  broadcast				PGUID 12 f t t t 1 f 25 "869" 100 0 0 100  network_broadcast - ));
 DESCR("broadcast address");

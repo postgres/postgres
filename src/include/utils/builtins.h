@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.129 2000/08/03 16:34:50 tgl Exp $
+ * $Id: builtins.h,v 1.130 2000/08/03 23:07:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,6 @@
 
 #include "nodes/relation.h"		/* for amcostestimate parameters */
 #include "storage/itemptr.h"
-#include "utils/inet.h"
 #include "utils/numeric.h"
 
 /*
@@ -436,7 +435,6 @@ extern Datum textlike(PG_FUNCTION_ARGS);
 extern Datum textnlike(PG_FUNCTION_ARGS);
 
 /* oracle_compat.c */
-
 extern Datum lower(PG_FUNCTION_ARGS);
 extern Datum upper(PG_FUNCTION_ARGS);
 extern Datum initcap(PG_FUNCTION_ARGS);
@@ -450,48 +448,48 @@ extern Datum ichar(PG_FUNCTION_ARGS);
 extern Datum repeat(PG_FUNCTION_ARGS);
 extern Datum ascii(PG_FUNCTION_ARGS);
 
-/* acl.c */
-
 /* inet_net_ntop.c */
-extern char *inet_net_ntop(int af, const void *src, int bits, char *dst, size_t size);
-extern char *inet_cidr_ntop(int af, const void *src, int bits, char *dst, size_t size);
+extern char *inet_net_ntop(int af, const void *src, int bits,
+						   char *dst, size_t size);
+extern char *inet_cidr_ntop(int af, const void *src, int bits,
+							char *dst, size_t size);
 
 /* inet_net_pton.c */
-extern int	inet_net_pton(int af, const char *src, void *dst, size_t size);
+extern int	inet_net_pton(int af, const char *src,
+						  void *dst, size_t size);
 
 /* network.c */
-extern inet *inet_in(char *str);
-extern char *inet_out(inet *addr);
-extern inet *cidr_in(char *str);
-extern char *cidr_out(inet *addr);
-extern bool network_lt(inet *a1, inet *a2);
-extern bool network_le(inet *a1, inet *a2);
-extern bool network_eq(inet *a1, inet *a2);
-extern bool network_ge(inet *a1, inet *a2);
-extern bool network_gt(inet *a1, inet *a2);
-extern bool network_ne(inet *a1, inet *a2);
-extern bool network_sub(inet *a1, inet *a2);
-extern bool network_subeq(inet *a1, inet *a2);
-extern bool network_sup(inet *a1, inet *a2);
-extern bool network_supeq(inet *a1, inet *a2);
-extern int4 network_cmp(inet *a1, inet *a2);
-
+extern Datum inet_in(PG_FUNCTION_ARGS);
+extern Datum inet_out(PG_FUNCTION_ARGS);
+extern Datum cidr_in(PG_FUNCTION_ARGS);
+extern Datum cidr_out(PG_FUNCTION_ARGS);
+extern Datum network_cmp(PG_FUNCTION_ARGS);
+extern Datum network_lt(PG_FUNCTION_ARGS);
+extern Datum network_le(PG_FUNCTION_ARGS);
+extern Datum network_eq(PG_FUNCTION_ARGS);
+extern Datum network_ge(PG_FUNCTION_ARGS);
+extern Datum network_gt(PG_FUNCTION_ARGS);
+extern Datum network_ne(PG_FUNCTION_ARGS);
+extern Datum network_sub(PG_FUNCTION_ARGS);
+extern Datum network_subeq(PG_FUNCTION_ARGS);
+extern Datum network_sup(PG_FUNCTION_ARGS);
+extern Datum network_supeq(PG_FUNCTION_ARGS);
 extern Datum network_network(PG_FUNCTION_ARGS);
 extern Datum network_netmask(PG_FUNCTION_ARGS);
-extern int4 network_masklen(inet *addr);
+extern Datum network_masklen(PG_FUNCTION_ARGS);
 extern Datum network_broadcast(PG_FUNCTION_ARGS);
 extern Datum network_host(PG_FUNCTION_ARGS);
 
 /* mac.c */
-extern macaddr *macaddr_in(char *str);
-extern char *macaddr_out(macaddr *addr);
-extern bool macaddr_lt(macaddr *a1, macaddr *a2);
-extern bool macaddr_le(macaddr *a1, macaddr *a2);
-extern bool macaddr_eq(macaddr *a1, macaddr *a2);
-extern bool macaddr_ge(macaddr *a1, macaddr *a2);
-extern bool macaddr_gt(macaddr *a1, macaddr *a2);
-extern bool macaddr_ne(macaddr *a1, macaddr *a2);
-extern int4 macaddr_cmp(macaddr *a1, macaddr *a2);
+extern Datum macaddr_in(PG_FUNCTION_ARGS);
+extern Datum macaddr_out(PG_FUNCTION_ARGS);
+extern Datum macaddr_cmp(PG_FUNCTION_ARGS);
+extern Datum macaddr_lt(PG_FUNCTION_ARGS);
+extern Datum macaddr_le(PG_FUNCTION_ARGS);
+extern Datum macaddr_eq(PG_FUNCTION_ARGS);
+extern Datum macaddr_ge(PG_FUNCTION_ARGS);
+extern Datum macaddr_gt(PG_FUNCTION_ARGS);
+extern Datum macaddr_ne(PG_FUNCTION_ARGS);
 extern Datum macaddr_manuf(PG_FUNCTION_ARGS);
 
 /* numeric.c */

@@ -1,20 +1,18 @@
 /*
  *	PostgreSQL type definitions for MAC addresses.
  *
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/mac.c,v 1.16 2000/07/06 05:48:11 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/mac.c,v 1.17 2000/08/03 23:07:46 tgl Exp $
  */
 
 #include "postgres.h"
 
 #include "utils/builtins.h"
-
+#include "utils/inet.h"
 
 /*
- * macaddr is a pass-by-reference datatype.
+ * XXX this table of manufacturers is long out of date, and should never
+ * have been wired into the code in the first place.
  */
-#define PG_GETARG_MACADDR_P(n)  ((macaddr *) PG_GETARG_POINTER(n))
-#define PG_RETURN_MACADDR_P(x)  return PointerGetDatum(x)
-
 
 typedef struct manufacturer
 {
@@ -145,18 +143,18 @@ static manufacturer manufacturers[] = {
  */
 
 #define hibits(addr) \
-  ((unsigned long)((addr->a<<16)|(addr->b<<8)|(addr->c)))
+  ((unsigned long)(((addr)->a<<16)|((addr)->b<<8)|((addr)->c)))
 
 #define lobits(addr) \
-  ((unsigned long)((addr->d<<16)|(addr->e<<8)|(addr->f)))
+  ((unsigned long)(((addr)->d<<16)|((addr)->e<<8)|((addr)->f)))
 
 /*
  *	MAC address reader.  Accepts several common notations.
  */
-
-macaddr    *
-macaddr_in(char *str)
+Datum
+macaddr_in(PG_FUNCTION_ARGS)
 {
+	char	   *str = PG_GETARG_CSTRING(0);
 	int			a,
 				b,
 				c,
@@ -201,20 +199,17 @@ macaddr_in(char *str)
 	result->e = e;
 	result->f = f;
 
-	return (result);
+	PG_RETURN_MACADDR_P(result);
 }
 
 /*
  *	MAC address output function.  Fixed format.
  */
-
-char *
-macaddr_out(macaddr *addr)
+Datum
+macaddr_out(PG_FUNCTION_ARGS)
 {
+	macaddr	   *addr = PG_GETARG_MACADDR_P(0);
 	char	   *result;
-
-	if (addr == NULL)
-		return (NULL);
 
 	result = (char *) palloc(32);
 
@@ -225,73 +220,18 @@ macaddr_out(macaddr *addr)
 	}
 	else
 	{
-		result[0] = 0;			/* special case for missing address */
+		result[0] = '\0';		/* special case for missing address */
 	}
-	return (result);
-}
 
-/*
- *	Boolean tests.
- */
-
-bool
-macaddr_lt(macaddr *a1, macaddr *a2)
-{
-	if (!PointerIsValid(a1) || !PointerIsValid(a2))
-		return FALSE;
-	return ((hibits(a1) < hibits(a2)) ||
-			((hibits(a1) == hibits(a2)) && lobits(a1) < lobits(a2)));
-}
-
-bool
-macaddr_le(macaddr *a1, macaddr *a2)
-{
-	if (!PointerIsValid(a1) || !PointerIsValid(a2))
-		return FALSE;
-	return ((hibits(a1) < hibits(a2)) ||
-			((hibits(a1) == hibits(a2)) && lobits(a1) <= lobits(a2)));
-}
-
-bool
-macaddr_eq(macaddr *a1, macaddr *a2)
-{
-	if (!PointerIsValid(a1) || !PointerIsValid(a2))
-		return FALSE;
-	return ((hibits(a1) == hibits(a2)) && (lobits(a1) == lobits(a2)));
-}
-
-bool
-macaddr_ge(macaddr *a1, macaddr *a2)
-{
-	if (!PointerIsValid(a1) || !PointerIsValid(a2))
-		return FALSE;
-	return ((hibits(a1) > hibits(a2)) ||
-			((hibits(a1) == hibits(a2)) && lobits(a1) >= lobits(a2)));
-}
-
-bool
-macaddr_gt(macaddr *a1, macaddr *a2)
-{
-	if (!PointerIsValid(a1) || !PointerIsValid(a2))
-		return FALSE;
-	return ((hibits(a1) > hibits(a2)) ||
-			((hibits(a1) == hibits(a2)) && lobits(a1) > lobits(a2)));
-}
-
-bool
-macaddr_ne(macaddr *a1, macaddr *a2)
-{
-	if (!PointerIsValid(a1) || !PointerIsValid(a2))
-		return FALSE;
-	return ((hibits(a1) != hibits(a2)) || (lobits(a1) != lobits(a2)));
+	PG_RETURN_CSTRING(result);
 }
 
 /*
  *	Comparison function for sorting:
  */
 
-int4
-macaddr_cmp(macaddr *a1, macaddr *a2)
+static int32
+macaddr_cmp_internal(macaddr *a1, macaddr *a2)
 {
 	if (hibits(a1) < hibits(a2))
 		return -1;
@@ -303,6 +243,72 @@ macaddr_cmp(macaddr *a1, macaddr *a2)
 		return 1;
 	else
 		return 0;
+}
+
+Datum
+macaddr_cmp(PG_FUNCTION_ARGS)
+{
+	macaddr	   *a1 = PG_GETARG_MACADDR_P(0);
+	macaddr	   *a2 = PG_GETARG_MACADDR_P(1);
+
+	PG_RETURN_INT32(macaddr_cmp_internal(a1, a2));
+}
+
+/*
+ *	Boolean comparisons.
+ */
+Datum
+macaddr_lt(PG_FUNCTION_ARGS)
+{
+	macaddr	   *a1 = PG_GETARG_MACADDR_P(0);
+	macaddr	   *a2 = PG_GETARG_MACADDR_P(1);
+
+	PG_RETURN_BOOL(macaddr_cmp_internal(a1, a2) < 0);
+}
+
+Datum
+macaddr_le(PG_FUNCTION_ARGS)
+{
+	macaddr	   *a1 = PG_GETARG_MACADDR_P(0);
+	macaddr	   *a2 = PG_GETARG_MACADDR_P(1);
+
+	PG_RETURN_BOOL(macaddr_cmp_internal(a1, a2) <= 0);
+}
+
+Datum
+macaddr_eq(PG_FUNCTION_ARGS)
+{
+	macaddr	   *a1 = PG_GETARG_MACADDR_P(0);
+	macaddr	   *a2 = PG_GETARG_MACADDR_P(1);
+
+	PG_RETURN_BOOL(macaddr_cmp_internal(a1, a2) == 0);
+}
+
+Datum
+macaddr_ge(PG_FUNCTION_ARGS)
+{
+	macaddr	   *a1 = PG_GETARG_MACADDR_P(0);
+	macaddr	   *a2 = PG_GETARG_MACADDR_P(1);
+
+	PG_RETURN_BOOL(macaddr_cmp_internal(a1, a2) >= 0);
+}
+
+Datum
+macaddr_gt(PG_FUNCTION_ARGS)
+{
+	macaddr	   *a1 = PG_GETARG_MACADDR_P(0);
+	macaddr	   *a2 = PG_GETARG_MACADDR_P(1);
+
+	PG_RETURN_BOOL(macaddr_cmp_internal(a1, a2) > 0);
+}
+
+Datum
+macaddr_ne(PG_FUNCTION_ARGS)
+{
+	macaddr	   *a1 = PG_GETARG_MACADDR_P(0);
+	macaddr	   *a2 = PG_GETARG_MACADDR_P(1);
+
+	PG_RETURN_BOOL(macaddr_cmp_internal(a1, a2) != 0);
 }
 
 /*

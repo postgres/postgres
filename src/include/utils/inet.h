@@ -7,17 +7,17 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: inet.h,v 1.7 2000/07/06 05:48:31 tgl Exp $
+ * $Id: inet.h,v 1.8 2000/08/03 23:07:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
-#ifndef MAC_H
-#define MAC_H
+#ifndef INET_H
+#define INET_H
 
 /*
- *	This is the internal storage format for IP addresses:
+ *	This is the internal storage format for IP addresses
+ *	(both INET and CIDR datatypes):
  */
-
 typedef struct
 {
 	unsigned char family;
@@ -30,7 +30,16 @@ typedef struct
 	}			addr;
 } inet_struct;
 
+/*
+ * Both INET and CIDR addresses are represented within Postgres as varlena
+ * objects, ie, there is a varlena header (basically a length word) in front
+ * of the struct type depicted above.
+ *
+ * Although these types are variable-length, the maximum length
+ * is pretty short, so we make no provision for TOASTing them.
+ */
 typedef struct varlena inet;
+
 
 /*
  *	This is the internal storage format for MAC addresses:
@@ -45,4 +54,18 @@ typedef struct macaddr
 	unsigned char f;
 } macaddr;
 
-#endif	 /* MAC_H */
+/*
+ * fmgr interface macros
+ */
+#define DatumGetInetP(X)    ((inet *) DatumGetPointer(X))
+#define InetPGetDatum(X)    PointerGetDatum(X)
+#define PG_GETARG_INET_P(n) DatumGetInetP(PG_GETARG_DATUM(n))
+#define PG_RETURN_INET_P(x) return InetPGetDatum(x)
+/* macaddr is a fixed-length pass-by-reference datatype */
+#define DatumGetMacaddrP(X)    ((macaddr *) DatumGetPointer(X))
+#define MacaddrPGetDatum(X)    PointerGetDatum(X)
+#define PG_GETARG_MACADDR_P(n) DatumGetMacaddrP(PG_GETARG_DATUM(n))
+#define PG_RETURN_MACADDR_P(x) return MacaddrPGetDatum(x)
+
+
+#endif	 /* INET_H */
