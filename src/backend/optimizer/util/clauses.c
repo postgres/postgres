@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.154.2.1 2003/12/09 01:56:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.154.2.2 2004/01/28 00:05:25 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1655,6 +1655,7 @@ evaluate_function(Oid funcid, Oid result_type, List *args,
 	bool		has_null_input = false;
 	List	   *arg;
 	FuncExpr   *newexpr;
+	char		result_typtype;
 
 	/*
 	 * Can't simplify if it returns a set.
@@ -1689,6 +1690,15 @@ evaluate_function(Oid funcid, Oid result_type, List *args,
 	 */
 	if (funcform->provolatile != PROVOLATILE_IMMUTABLE ||
 		has_nonconst_input)
+		return NULL;
+
+	/*
+	 * Can't simplify functions returning composite types (mainly because
+	 * datumCopy() doesn't cope; FIXME someday when we have a saner
+	 * representation for whole-tuple results).
+	 */
+	result_typtype = get_typtype(funcform->prorettype);
+	if (result_typtype == 'c')
 		return NULL;
 
 	/*
