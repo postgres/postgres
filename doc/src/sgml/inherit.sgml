@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/inherit.sgml,v 1.8 2000/06/09 01:43:56 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/inherit.sgml,v 1.9 2000/06/14 13:12:52 thomas Exp $
 -->
 
  <chapter id="inherit">
@@ -40,6 +40,7 @@ CREATE TABLE capitals UNDER cities (
      The inheritance hierarchy is a actually a directed acyclic graph.
     </para>
    </note>
+  </para>
 
   <para>
    For example, the  following  query finds the  names  of  all  cities,
@@ -87,6 +88,7 @@ CREATE TABLE capitals UNDER cities (
    </programlisting>         
   </para>
 
+  <para>
    Here the <quote>ONLY</quote> before cities indicates that the query should
    be  run over only cities and not classes below cities in the
    inheritance hierarchy.  Many of the  commands  that  we

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/advanced.sgml,v 1.13 2000/06/09 01:43:55 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/advanced.sgml,v 1.14 2000/06/14 13:12:52 thomas Exp $
 -->
 
  <chapter id="advanced">
@@ -59,21 +59,22 @@ CREATE TABLE capitals (
       The inheritance hierarchy is a  directed  acyclic graph.
      </para>
     </note>
+   </para>
 
-  <para>
-   For example, the  following  query finds the  names  of  all  cities,
-   including  state capitals, that are located at an altitude 
-   over 500ft, the query is:
+   <para>
+    For example, the  following  query finds the  names  of  all  cities,
+    including  state capitals, that are located at an altitude 
+    over 500ft, the query is:
 
-   <programlisting>
-    SELECT c.name, c.altitude
+    <programlisting>
+SELECT c.name, c.altitude
     FROM cities c
     WHERE c.altitude > 500;
-   </programlisting>
+    </programlisting>
 
-   which returns:
+    which returns:
 
-   <programlisting>
+    <programlisting>
 +----------+----------+
 |name      | altitude |
 +----------+----------+
@@ -83,16 +84,16 @@ CREATE TABLE capitals (
 +----------+----------+
 |Madison   | 845      |
 +----------+----------+
-   </programlisting>
-  </para>
+    </programlisting>
+   </para>
 
-  <para>
-   On the other hand, the  following  query  finds
-   all  the cities, but not capital cities 
-   that are situated at an attitude of 500ft or higher:
+   <para>
+    On the other hand, the  following  query  finds
+    all  the cities, but not capital cities 
+    that are situated at an attitude of 500ft or higher:
 
-   <programlisting>
-    SELECT name, altitude
+    <programlisting>
+SELECT name, altitude
     FROM ONLY cities
     WHERE altitude &gt; 500;
 
@@ -103,30 +104,34 @@ CREATE TABLE capitals (
 +----------+----------+
 |Mariposa  | 1953     |
 +----------+----------+
-   </programlisting>         
-  </para>
+    </programlisting>         
+   </para>
 
+   <para>
+    Here the <quote>ONLY</quote> before cities indicates that the query should
+    be  run over only cities and not classes below cities in the
+    inheritance hierarchy.  Many of the  commands  that  we
+    have  already discussed -- <command>SELECT</command>,
+    <command>UPDATE</command> and <command>DELETE</command> --
+    support this <quote>ONLY</quote> notation.
+   </para>
 
-   Here the <quote>ONLY</quote> before cities indicates that the query should
-   be  run over only cities and not classes below cities in the
-   inheritance hierarchy.  Many of the  commands  that  we
-   have  already discussed -- <command>SELECT</command>,
-   <command>UPDATE</command> and <command>DELETE</command> --
-   support this <quote>ONLY</quote> notation.
-  </para>
-  <para>
-  Deprecated: In previous versions of postgres, the default was not to
-  get access to child classes. By experience this was found to be error
-  prone. Under the old syntax, to get the sub-classes you append "*"
-  to the table name. For example
-   <programlisting>
-   SELECT * from cities*;
-   </programlisting>     
-   This old behaviour is still available by using a SET command...    
-   <programlisting>
-   SET EXAMINE_SUBCLASS TO on;
-   </programlisting>     
-  </para>
+   <para>
+    Deprecated: In previous versions of postgres, the default was not to
+    get access to child classes. By experience this was found to be error
+    prone. Under the old syntax, to get the sub-classes you append "*"
+    to the table name. For example
+
+    <programlisting>
+SELECT * from cities*;
+    </programlisting>
+
+    This old behaviour is still available by using a SET command:
+
+    <programlisting>
+SET EXAMINE_SUBCLASS TO on;
+    </programlisting>     
+   </para>
   </sect1>
 
   <sect1>

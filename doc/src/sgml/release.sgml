@@ -1,87 +1,83 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.54 2000/06/05 10:57:57 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.55 2000/06/14 13:12:52 thomas Exp $
 -->
 
  <chapter id="release">
   <title>Release Notes</title>
 
-<sect1>
-<title>Release 7.0.2</title>
-<!--
-<docinfo>
-<authorgroup>
-<author>
-<firstname>Bruce</firstname>
-<surname>Momjian</surname>
-</author>
-</authorgroup>
-<date>2000-06-05</date>
-</docinfo>
--->
+  <sect1>
+   <title>Release 7.0.2</title>
+   <!--
+  <docinfo>
+  <authorgroup>
+  <author>
+  <firstname>Bruce</firstname>
+  <surname>Momjian</surname>
+  </author>
+  </authorgroup>
+  <date>2000-06-05</date>
+  </docinfo>
+   -->
 
-<para>
-2000-06-05
-</para>
-<para>
-This is a repackaging of 7.0.1 with added documentation.
-</para>
+   <para>
+    Release date 2000-06-05. This is a repackaging of 7.0.1 with added documentation.
+   </para>
 
 
-<sect2>
-<title>Migration to v7.0.2</title>
+   <sect2>
+    <title>Migration to v7.0.2</title>
 
-<para>
-A dump/restore is <emphasis>not</emphasis> required for those running
-7.*.
-</para>
-</sect2>
-<sect2>
-<title>Changes</title>
+    <para>
+     A dump/restore is <emphasis>not</emphasis> required for those running
+     v7.*.
+    </para>
+   </sect2>
 
-<para>
-<programlisting>
+   <sect2>
+    <title>Changes</title>
+
+    <para>
+     <programlisting>
 Added documentation to tarball.
-</programlisting>
-</para>
-</sect2>
-</sect1>
+     </programlisting>
+    </para>
+   </sect2>
+  </sect1>
 
 
-<sect1>
-<title>Release 7.0.1</title>
-<!--
-<docinfo>
-<authorgroup>
-<author>
-<firstname>Bruce</firstname>
-<surname>Momjian</surname>
-</author>
-</authorgroup>
-<date>2000-06-01</date>
-</docinfo>
--->
+  <sect1>
+   <title>Release 7.0.1</title>
+   <!--
+  <docinfo>
+  <authorgroup>
+  <author>
+  <firstname>Bruce</firstname>
+  <surname>Momjian</surname>
+  </author>
+  </authorgroup>
+  <date>2000-06-01</date>
+  </docinfo>
+   -->
 
-<para>
-2000-06-01
-</para>
-<para>
-This is basically a cleanup release for 7.0.
-</para>
+   <para>
+    Release date 2000-06-01.
+    This is a cleanup release for 7.0.
+   </para>
 
+   <sect2>
+    <title>Migration to v7.0.1</title>
 
-<sect2>
-<title>Migration to v7.0.1</title>
+    <para>
+     A dump/restore is <emphasis>not</emphasis> required for those running
+     v7.0.
+    </para>
+   </sect2>
 
-<para>
-A dump/restore is <emphasis>not</emphasis> required for those running
-7.0.
-</para>
-</sect2>
-<sect2>
-<title>Changes</title>
+   <sect2>
+    <title>Changes</title>
 
-<para>
-<programlisting>
+    <para>
+     <programlisting>
 Fix many CLUSTER failures (Tom)
 Allow ALTER TABLE RENAME works on indexes (Tom)
 Fix plpgsql to handle datetime->timestamp and timespan->interval (Bruce)
@@ -106,11 +102,10 @@ Fix too long syslog message (Tatsuo)
 Fix problem with quoted indexes that are too long (Tom)
 JDBC ResultSet.getTimestamp() fix (Gregory Krasnow & Floyd Marinescu)
 ecpg changes (Michael)
-</programlisting>
-</para>
-</sect2>
-</sect1>
-
+     </programlisting>
+    </para>
+   </sect2>
+  </sect1>
 
   <sect1>
    <title>Release 7.0</title>
@@ -126,9 +121,7 @@ ecpg changes (Michael)
   </docinfo>
    -->
    <para> 
-2000-05-08
-   </para>
-   <para>
+    Released 2000-05-08.
     This release contains improvements in many areas, demonstrating
     the continued growth of <productname>PostgreSQL</productname>.
     There are more improvements and fixes in 7.0 than in any previous
@@ -287,6 +280,8 @@ Ack! This isn't yet in the code?? - thomas 2000-04-30
    </sect2>
 
    <sect2>
+    <title>Changes</title>
+
     <para>
      <programlisting>
 Bug Fixes
@@ -611,87 +606,84 @@ New multibyte encodings
    </sect2>
   </sect1>
 
-<sect1>
-<title>Release 6.5.3</title>
-<!--
-<docinfo>
-<authorgroup>
-<author>
-<firstname>Bruce</firstname>
-<surname>Momjian</surname>
-</author>
-</authorgroup>
-<date>1999-10-13</date>
-</docinfo>
--->
+  <sect1>
+   <title>Release 6.5.3</title>
+   <!--
+  <docinfo>
+  <authorgroup>
+  <author>
+  <firstname>Bruce</firstname>
+  <surname>Momjian</surname>
+  </author>
+  </authorgroup>
+  <date>1999-10-13</date>
+  </docinfo>
+   -->
 
-<para>
-1999-10-13
-</para>
-<para>
-This is basically a cleanup release for 6.5.2.  We have added a new
-pgaccess that was missing in 6.5.2, and installed an NT-specific fix.
-</para>
+   <para>
+    Released 1999-10-13.
+    This is basically a cleanup release for 6.5.2.  We have added a new
+    pgaccess that was missing in 6.5.2, and installed an NT-specific fix.
+   </para>
 
 
-<sect2>
-<title>Migration to v6.5.3</title>
+   <sect2>
+    <title>Migration to v6.5.3</title>
 
-<para>
-A dump/restore is <emphasis>not</emphasis> required for those running
-6.5.*.
-</para>
-</sect2>
-<sect2>
-<title>Changes</title>
+    <para>
+     A dump/restore is <emphasis>not</emphasis> required for those running
+     6.5.*.
+    </para>
+   </sect2>
+   <sect2>
+    <title>Changes</title>
 
-<para>
-<programlisting>
+    <para>
+     <programlisting>
 Updated version of pgaccess 0.98
 NT-specific patch
 Fix dumping rules on inherited tables
-</programlisting>
-</para>
-</sect2>
-</sect1>
+     </programlisting>
+    </para>
+   </sect2>
+  </sect1>
 
 
-<sect1>
-<title>Release 6.5.2</title>
-<!--
-<docinfo>
-<authorgroup>
-<author>
-<firstname>Bruce</firstname>
-<surname>Momjian</surname>
-</author>
-</authorgroup>
-<date>1999-09-15</date>
-</docinfo>
--->
+  <sect1>
+   <title>Release 6.5.2</title>
+   <!--
+  <docinfo>
+  <authorgroup>
+  <author>
+  <firstname>Bruce</firstname>
+  <surname>Momjian</surname>
+  </author>
+  </authorgroup>
+  <date>1999-09-15</date>
+  </docinfo>
+   -->
 
-<para>
-1999-09-15
-</para>
-<para>
-This is basically a cleanup release for 6.5.1.  We have fixed a variety of
-problems reported by 6.5.1 users.
-</para>
+   <para>
+    Released 1999-09-15.
+    This is basically a cleanup release for 6.5.1.  We have fixed a variety of
+    problems reported by 6.5.1 users.
+   </para>
 
 
-<sect2>
-<title>Migration to v6.5.2</title>
+   <sect2>
+    <title>Migration to v6.5.2</title>
 
-<para>
-A dump/restore is <emphasis>not</emphasis> required for those running
-6.5.*.
-</para>
-</sect2>
-<sect2>
-<title>Changes</title>
+    <para>
+     A dump/restore is <emphasis>not</emphasis> required for those running
+     6.5.*.
+    </para>
+   </sect2>
 
-<para>
-<programlisting>
+   <sect2>
+    <title>Changes</title>
+
+    <para>
+     <programlisting>
 subselect+CASE fixes(Tom)
 Add SHLIB_LINK setting for solaris_i386 and solaris_sparc ports(Daren Sefcik)
 Fixes for CASE in WHERE join clauses(Tom)
@@ -716,48 +708,47 @@ Repair logic error in LIKE: should not return LIKE_ABORT
    when reach end of pattern before end of text(Tom)
 Repair incorrect cleanup of heap memory allocation during transaction abort(Tom)
 Updated version of pgaccess 0.98
-</programlisting>
-</para>
-</sect2>
-</sect1>
+     </programlisting>
+    </para>
+   </sect2>
+  </sect1>
 
+  <sect1>
+   <title>Release 6.5.1</title>
+   <!--
+  <docinfo>
+  <authorgroup>
+  <author>
+  <firstname>Bruce</firstname>
+  <surname>Momjian</surname>
+  </author>
+  </authorgroup>
+  <date>1999-07-15</date>
+  </docinfo>
+   -->
 
-<sect1>
-<title>Release 6.5.1</title>
-<!--
-<docinfo>
-<authorgroup>
-<author>
-<firstname>Bruce</firstname>
-<surname>Momjian</surname>
-</author>
-</authorgroup>
-<date>1999-07-15</date>
-</docinfo>
--->
+   <para>
+    Released 1999-07-15.
+   </para>
+   <para>
+    This is basically a cleanup release for 6.5.  We have fixed a variety of
+    problems reported by 6.5 users.
+   </para>
 
-<para>
-1999-07-15
-</para>
-<para>
-This is basically a cleanup release for 6.5.  We have fixed a variety of
-problems reported by 6.5 users.
-</para>
+   <sect2>
+    <title>Migration to v6.5.1</title>
 
+    <para>
+     A dump/restore is <emphasis>not</emphasis> required for those running
+     6.5.
+    </para>
+   </sect2>
 
-<sect2>
-<title>Migration to v6.5.1</title>
+   <sect2>
+    <title>Changes</title>
 
-<para>
-A dump/restore is <emphasis>not</emphasis> required for those running
-6.5.
-</para>
-</sect2>
-<sect2>
-<title>Changes</title>
-
-<para>
-<programlisting>
+    <para>
+     <programlisting>
 Add NT README file
 Portability fixes for linux_ppc, Irix, linux_alpha, OpenBSD, alpha
 Remove QUERY_LIMIT, use SELECT...LIMIT
@@ -781,30 +772,27 @@ Shared library dependencies fixed (Tom)
 Fixed glitches affecting GROUP BY in subselects(Tom)
 Fix some compiler warnings (Tomoaki Nishiyama)
 Add Win1250 (Czech) support (Pavel Behal)
-</programlisting>
-</para>
-</sect2>
-</sect1>
+     </programlisting>
+    </para>
+   </sect2>
+  </sect1>
 
-
-<sect1>
-<title>Release 6.5</title>
-<!--
-<docinfo>
-<authorgroup>
-<author>
-<firstname>Bruce</firstname>
-<surname>Momjian</surname>
-</author>
-</authorgroup>
-<date>1999-06-09</date>
-</docinfo>
--->
+  <sect1>
+   <title>Release 6.5</title>
+   <!--
+  <docinfo>
+  <authorgroup>
+  <author>
+  <firstname>Bruce</firstname>
+  <surname>Momjian</surname>
+  </author>
+  </authorgroup>
+  <date>1999-06-09</date>
+  </docinfo>
+   -->
 
    <para>
-1999-06-09
-</para>
-<para>
+    Released 1999-06-09.
     This release marks a major step in the development team's mastery of the source
     code we inherited from Berkeley.  You will see we are now easily adding
     major features, thanks to the increasing size and experience of our
@@ -1023,6 +1011,8 @@ Add Win1250 (Czech) support (Pavel Behal)
     </sect2>
 
    <sect2>
+    <title>Changes</title>
+
     <para>
      <programlisting>
 Bug Fixes
@@ -1412,10 +1402,12 @@ is required for those wishing to migrate data from any
 previous release of <productname>Postgres</productname>.
 </para>
 </sect2>
-<sect2>
 
-<para>
-<programlisting>
+   <sect2>
+<title>Changes</title>
+
+    <para>
+     <programlisting>
 Bug Fixes
 ---------
 Fix for a tiny memory leak in PQsetdb/PQfinish(Bryan)
@@ -1664,12 +1656,11 @@ For upgrades from pre-v6.3 installations,
 refer to the installation and migration instructions for v6.3.
 </para>
 
-<sect2>
+   <sect2>
+    <title>Changes</title>
 
-<para>
-<programlisting>
-Changes
--------
+    <para>
+     <programlisting>
 Configure detection improvements for tcl/tk(Brook Milligan, Alvin)
 Manual page improvements(Bruce)
 BETWEEN and LIKE fix(Thomas)
@@ -1688,29 +1679,28 @@ libreadline cleanup(Erwan MAS)
 Remove DISTDIR(Bruce)
 Makefile dependency cleanup(Jeroen van Vianen)
 ASSERT fixes(Bruce)
-</programlisting>
-</para>
-</sect2>
-</sect1>
-<sect1>
-<title>Release 6.3.1</title>
-<!--
-<docinfo>
-<authorgroup>
-<author>
-<firstname>Bruce</firstname>
-<surname>Momjian</surname>
-</author>
-</authorgroup>
-<date>1998-03-23</date>
-</docinfo>
--->
+     </programlisting>
+    </para>
+   </sect2>
+  </sect1>
 
-<para>
-1998-03-23
-</para>
-<para>
-Summary:
+  <sect1>
+   <title>Release 6.3.1</title>
+   <!--
+  <docinfo>
+  <authorgroup>
+  <author>
+  <firstname>Bruce</firstname>
+  <surname>Momjian</surname>
+  </author>
+  </authorgroup>
+  <date>1998-03-23</date>
+  </docinfo>
+   -->
+
+   <para>
+    Released 1998-03-23.
+    Summary:
 
 <itemizedlist>
 <listitem>
@@ -1750,12 +1740,11 @@ For upgrades from pre-v6.3 installations,
 refer to the installation and migration instructions for v6.3.
 </para>
 
-<sect2>
+   <sect2>
+    <title>Changes</title>
 
-<para>
-<programlisting>
-Changes
--------
+    <para>
+     <programlisting>
 ecpg cleanup/fixes, now version 1.1(Michael Meskes)
 pg_user cleanup(Bruce)
 large object fix for pg_dump and tclsh (alvin)
@@ -1783,59 +1772,58 @@ Fix Alpha port(Dwayne Bailey)
 Fix for text arrays containing quotes(Doug Gibson)
 Solaris compile fix(Albert Chin-A-Young)
 Better identify tcl and tk libs and includes(Bruce)
-</programlisting>
-</para>
-</sect2>
-</sect1>
-<sect1>
-<title>Release 6.3</title>
-<!--
-<docinfo>
-<authorgroup>
-<author>
-<firstname>Bruce</firstname>
-<surname>Momjian</surname>
-</author>
-</authorgroup>
-<date>1998-03-01</date>
-</docinfo>
--->
+     </programlisting>
+    </para>
+   </sect2>
+  </sect1>
 
-<para>
-1998-03-01
-</para>
-<para>
-There are <emphasis>many</emphasis> new features and improvements in this release.
-Here is a brief, incomplete summary:
+  <sect1>
+   <title>Release 6.3</title>
+   <!--
+  <docinfo>
+  <authorgroup>
+  <author>
+  <firstname>Bruce</firstname>
+  <surname>Momjian</surname>
+  </author>
+  </authorgroup>
+  <date>1998-03-01</date>
+  </docinfo>
+   -->
 
-<itemizedlist>
-<listitem>
-<para>
-Many new SQL features, including
-full <acronym>SQL92</acronym> subselect capability
-(everything is here but target-list subselects).
-</para>
-</listitem>
+   <para>
+    Released 1998-03-01.
+    There are <emphasis>many</emphasis> new features and improvements in this release.
+    Here is a brief, incomplete summary:
 
-<listitem>
-<para>
-Support for client-side environment variables to specify time zone and date style.
-</para>
-</listitem>
+    <itemizedlist>
+     <listitem>
+      <para>
+       Many new SQL features, including
+       full <acronym>SQL92</acronym> subselect capability
+       (everything is here but target-list subselects).
+      </para>
+     </listitem>
 
-<listitem>
-<para>
-Socket interface for client/server connection. This is the default now
-so you may need to start <application>postmaster</application> with the
-<option>-i</option> flag.
-</para>
-</listitem>
+     <listitem>
+      <para>
+       Support for client-side environment variables to specify time zone and date style.
+      </para>
+     </listitem>
 
-<listitem>
-<para>
-Better password authorization mechanisms. Default table permissions have changed.
-</para>
-</listitem>
+     <listitem>
+      <para>
+       Socket interface for client/server connection. This is the default now
+       so you may need to start <application>postmaster</application> with the
+       <option>-i</option> flag.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Better password authorization mechanisms. Default table permissions have changed.
+      </para>
+     </listitem>
 
      <listitem>
       <para>
@@ -1843,101 +1831,101 @@ Better password authorization mechanisms. Default table permissions have changed
        has been removed. Performance has been improved.
       </para>
      </listitem>
+    </itemizedlist>
+   </para>
 
-</itemizedlist>
-</para>
+   <note>
+    <para>
+     Bruce Momjian wrote the following notes to introduce the new release.
+    </para>
+   </note>
 
-<note>
-<para>
-Bruce Momjian wrote the following notes to introduce the new release.
-</para>
-</note>
+   <para>
+    There are some general 6.3 issues that I want to mention.  These are
+    only the big items that can not be described in one sentence.  A review
+    of the detailed changes list is still needed.
+   </para>
+   <para>
+    First, we now have subselects.  Now that we have them, I would like to
+    mention that without subselects, SQL is a very limited language.
+    Subselects are a major feature, and you should review your code for
+    places where subselects provide a better solution for your queries.  I
+    think you will find that there are more uses for subselects than you may
+    think.  Vadim has put us on the big SQL map with subselects, and fully
+    functional ones too.  The only thing you can't do with subselects is to
+    use them in the target list.
+   </para>
+   <para>
+    Second, 6.3 uses unix domain sockets rather than TCP/IP by default.  To
+    enable connections from other machines, you have to use the new
+    postmaster -i option, and of course edit pg_hba.conf.  Also, for this
+    reason, the format of pg_hba.conf has changed.
+   </para>
+   <para>
+    Third, char() fields will now allow faster access than varchar() or
+    text. Specifically, the text and varchar() have a penalty for access to
+    any columns after the first column of this type.  char() used to also
+    have this access penalty, but it no longer does.  This may suggest that
+    you redesign some of your tables, especially if you have short character
+    columns that you have defined as varchar() or text.  This and other
+    changes make 6.3 even faster than earlier releases.
+   </para>
+   <para>
+    We now have passwords definable independent of any Unix file.  There are
+    new SQL USER commands.  See the pg_hba.conf manual page for more
+    information.  There is a new table, pg_shadow, which is used to store
+    user information and user passwords, and it by default only SELECT-able
+    by the postgres super-user.  pg_user is now a view of pg_shadow, and is
+    SELECT-able by PUBLIC.  You should keep using pg_user in your
+    application without changes.
+   </para>
+   <para>
+    User-created tables now no longer have SELECT permission to PUBLIC by
+    default.  This was done because the ANSI standard requires it.  You can
+    of course GRANT any permissions you want after the table is created. 
+    System tables continue to be SELECT-able by PUBLIC.
+   </para>
+   <para>
+    We also have real deadlock detection code.  No more sixty-second
+    timeouts.  And the new locking code implements a FIFO better, so there
+    should be less resource starvation during heavy use.
+   </para>
+   <para>
+    Many complaints have been made about inadequate documenation in previous
+    releases.  Thomas has put much effort into many new manuals for this
+    release.  Check out the doc/ directory.
+   </para>
+   <para>
+    For performance reasons, time travel is gone, but can be implemented
+    using triggers (see pgsql/contrib/spi/README).  Please check out the new
+    \d command for types, operators, etc.  Also, views have their own
+    permissions now, not based on the underlying tables, so permissions on
+    them have to be set separately.  Check /pgsql/interfaces for some new
+    ways to talk to <productname>Postgres</productname>.
+   </para>
+   <para>
+    This is the first release that really required an explanation for
+    existing users.  In many ways, this was necessary because the new
+    release removes many limitations, and the work-arounds people were using
+    are no longer needed.
+   </para>
 
-<para>
-There are some general 6.3 issues that I want to mention.  These are
-only the big items that can not be described in one sentence.  A review
-of the detailed changes list is still needed.
-</para>
-<para>
-First, we now have subselects.  Now that we have them, I would like to
-mention that without subselects, SQL is a very limited language.
-Subselects are a major feature, and you should review your code for
-places where subselects provide a better solution for your queries.  I
-think you will find that there are more uses for subselects than you may
-think.  Vadim has put us on the big SQL map with subselects, and fully
-functional ones too.  The only thing you can't do with subselects is to
-use them in the target list.
-</para>
-<para>
-Second, 6.3 uses unix domain sockets rather than TCP/IP by default.  To
-enable connections from other machines, you have to use the new
-postmaster -i option, and of course edit pg_hba.conf.  Also, for this
-reason, the format of pg_hba.conf has changed.
-</para>
-<para>
-Third, char() fields will now allow faster access than varchar() or
-text. Specifically, the text and varchar() have a penalty for access to
-any columns after the first column of this type.  char() used to also
-have this access penalty, but it no longer does.  This may suggest that
-you redesign some of your tables, especially if you have short character
-columns that you have defined as varchar() or text.  This and other
-changes make 6.3 even faster than earlier releases.
-</para>
-<para>
-We now have passwords definable independent of any Unix file.  There are
-new SQL USER commands.  See the pg_hba.conf manual page for more
-information.  There is a new table, pg_shadow, which is used to store
-user information and user passwords, and it by default only SELECT-able
-by the postgres super-user.  pg_user is now a view of pg_shadow, and is
-SELECT-able by PUBLIC.  You should keep using pg_user in your
-application without changes.
-</para>
-<para>
-User-created tables now no longer have SELECT permission to PUBLIC by
-default.  This was done because the ANSI standard requires it.  You can
-of course GRANT any permissions you want after the table is created. 
-System tables continue to be SELECT-able by PUBLIC.
-</para>
-<para>
-We also have real deadlock detection code.  No more sixty-second
-timeouts.  And the new locking code implements a FIFO better, so there
-should be less resource starvation during heavy use.
-</para>
-<para>
-Many complaints have been made about inadequate documenation in previous
-releases.  Thomas has put much effort into many new manuals for this
-release.  Check out the doc/ directory.
-</para>
-<para>
-For performance reasons, time travel is gone, but can be implemented
-using triggers (see pgsql/contrib/spi/README).  Please check out the new
-\d command for types, operators, etc.  Also, views have their own
-permissions now, not based on the underlying tables, so permissions on
-them have to be set separately.  Check /pgsql/interfaces for some new
-ways to talk to <productname>Postgres</productname>.
-</para>
-<para>
-This is the first release that really required an explanation for
-existing users.  In many ways, this was necessary because the new
-release removes many limitations, and the work-arounds people were using
-are no longer needed.
-</para>
+   <sect2>
+    <title>Migration to v6.3</title>
 
-<sect2>
-<title>Migration to v6.3</title>
+    <para>
+     A dump/restore using <application>pg_dump</application> 
+     or <application>pg_dumpall</application>
+     is required for those wishing to migrate data from any
+     previous release of <productname>Postgres</productname>.
+    </para>
+   </sect2>
 
-<para>
-A dump/restore using <application>pg_dump</application> 
-or <application>pg_dumpall</application>
-is required for those wishing to migrate data from any
-previous release of <productname>Postgres</productname>.
-</para>
-</sect2>
+   <sect2>
+    <title>Changes</title>
 
-<sect2>
-
-<para>
-<programlisting>
+    <para>
+     <programlisting>
 Bug Fixes
 ---------
 Fix binary cursors broken by MOVE implementation(Vadim)
@@ -2176,12 +2164,12 @@ from psql to update the existing system table:
 This will need to be done to every existing database, including template1.
 </para>
 </sect2>
-<sect2>
 
-<para>
-<programlisting>
-Changes
--------
+   <sect2>
+    <title>Changes</title>
+
+    <para>
+     <programlisting>
 Allow TIME and TYPE column names(Thomas)
 Allow larger range of true/false as boolean values(Thomas)
 Support output of "now" and "current"(Thomas)
@@ -2193,10 +2181,10 @@ Fix avg(cash) computation(Thomas)
 Fix for specifying a column twice in ORDER/GROUP BY(Vadim)
 Documented new libpq function to return affected rows, PQcmdTuples(Bruce)
 Trigger function for inserting user names for INSERT/UPDATE(Brook Milligan)
-</programlisting>
-</para>
-</sect2>
-</sect1>
+     </programlisting>
+    </para>
+   </sect2>
+  </sect1>
 
 <sect1>
 <title>Release 6.2</title>
@@ -2243,10 +2231,11 @@ because the COPY output format was improved from the 1.02 release.
 </para>
 </sect2>
 
-<sect2>
+   <sect2>
+    <title>Changes</title>
 
-<para>
-<programlisting>
+    <para>
+     <programlisting>
 Bug Fixes
 ---------
 Fix problems with pg_dump for inheritance, sequences, archive tables(Bruce)
@@ -2388,12 +2377,11 @@ Refer to the release notes for v6.1 for more details.
 </para>
 </sect2>
 
-<sect2>
+   <sect2>
+    <title>Changes</title>
 
-<para>
-<programlisting>
-Changes
--------
+    <para>
+     <programlisting>
 fix for SET with options (Thomas)
 allow pg_dump/pg_dumpall to preserve ownership of all tables/objects(Bruce)
 new psql \connect option allows changing usernames without changing databases
@@ -2411,10 +2399,10 @@ major fix for endian handling of communication to server(Thomas, Tatsuo)
 Fix for Solaris assembler and include files(Yoshihiko Ichikawa)
 allow underscores in usernames(Bruce)
 pg_dumpall now returns proper status, portability fix(Bruce)
-</programlisting>
-</para>
-</sect2>
-</sect1>
+     </programlisting>
+    </para>
+   </sect2>
+  </sect1>
 
 <sect1>
 <title>Release 6.1</title>
@@ -2492,10 +2480,11 @@ because the COPY output format was improved from the 1.02 release.
 </para>
 </sect2>
 
-<sect2>
+   <sect2>
+    <title>Changes</title>
 
-<para>
-<programlisting>
+    <para>
+     <programlisting>
 Bug Fixes
 ---------
 packet length checking in library routines
@@ -2635,10 +2624,11 @@ because the COPY output format was improved from the 1.02 release.
 </para>
 </sect2>
 
-<sect2>
+   <sect2>
+    <title>Changes</title>
 
-<para>
-<programlisting>
+    <para>
+     <programlisting>
 Bug Fixes
 ---------
 ALTER TABLE bug - running postgress process needs to re-read table definition
