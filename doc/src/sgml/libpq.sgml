@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.43 2000/10/16 03:25:16 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.44 2000/10/17 14:27:50 momjian Exp $
 -->
 
  <chapter id="libpq-chapter">
@@ -174,17 +174,6 @@ PGconn *PQconnectdb(const char *conninfo)
      <listitem>
      <para>
       A file or tty for optional debug output from the backend.
-     </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term><literal>requiressl</literal></term>
-     <listitem>
-     <para>
-      Set to '1' to require SSL connection to the backend. Libpq
-      will then refuse to connect if the server does not support
-      SSL. Set to '0' (default) to negotiate with server.
      </para>
      </listitem>
     </varlistentry>
