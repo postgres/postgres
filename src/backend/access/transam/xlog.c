@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.129 2003/12/20 17:31:20 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.130 2004/01/06 17:26:23 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -86,11 +86,14 @@
 /* User-settable parameters */
 int			CheckPointSegments = 3;
 int			XLOGbuffers = 8;
-int			XLOG_DEBUG = 0;
 char	   *XLOG_sync_method = NULL;
 const char	XLOG_sync_method_default[] = DEFAULT_SYNC_METHOD_STR;
 char		XLOG_archive_dir[MAXPGPATH];		/* null string means
 												 * delete 'em */
+
+#ifdef WAL_DEBUG
+bool		XLOG_DEBUG = false;
+#endif
 
 /*
  * XLOGfileslop is used in the code as the allowed "fuzz" in the number of
@@ -766,6 +769,7 @@ begin:;
 		MyProc->logRec = RecPtr;
 	}
 
+#ifdef WAL_DEBUG
 	if (XLOG_DEBUG)
 	{
 		char		buf[8192];
@@ -779,6 +783,7 @@ begin:;
 		}
 		elog(LOG, "%s", buf);
 	}
+#endif
 
 	/* Record begin of record in appropriate places */
 	if (!no_tran)
@@ -1074,8 +1079,10 @@ XLogWrite(XLogwrtRqst WriteRqst)
 					 openLogSeg >= (RedoRecPtr.xrecoff / XLogSegSize) +
 					 (uint32) CheckPointSegments))
 				{
+#ifdef WAL_DEBUG
 					if (XLOG_DEBUG)
 						elog(LOG, "time for a checkpoint, signaling postmaster");
+#endif
 					SendPostmasterSignal(PMSIGNAL_DO_CHECKPOINT);
 				}
 			}
@@ -1214,11 +1221,13 @@ XLogFlush(XLogRecPtr record)
 	if (XLByteLE(record, LogwrtResult.Flush))
 		return;
 
+#ifdef WAL_DEBUG
 	if (XLOG_DEBUG)
 		elog(LOG, "xlog flush request %X/%X; write %X/%X; flush %X/%X",
 			 record.xlogid, record.xrecoff,
 			 LogwrtResult.Write.xlogid, LogwrtResult.Write.xrecoff,
 			 LogwrtResult.Flush.xlogid, LogwrtResult.Flush.xrecoff);
+#endif
 
 	START_CRIT_SECTION();
 
@@ -2613,8 +2622,10 @@ StartupXLOG(void)
 
 	/* This is just to allow attaching to startup process with a debugger */
 #ifdef XLOG_REPLAY_DELAY
+#ifdef WAL_DEBUG
 	if (XLOG_DEBUG && ControlFile->state != DB_SHUTDOWNED)
 		sleep(60);
+#endif
 #endif
 
 	/*
@@ -2742,6 +2753,8 @@ StartupXLOG(void)
 					ShmemVariableCache->nextXid = record->xl_xid;
 					TransactionIdAdvance(ShmemVariableCache->nextXid);
 				}
+
+#ifdef WAL_DEBUG
 				if (XLOG_DEBUG)
 				{
 					char		buf[8192];
@@ -2755,6 +2768,7 @@ StartupXLOG(void)
 								record->xl_info, XLogRecGetData(record));
 					elog(LOG, "%s", buf);
 				}
+#endif
 
 				if (record->xl_info & XLR_BKP_BLOCK_MASK)
 					RestoreBkpBlocks(record, EndRecPtr);

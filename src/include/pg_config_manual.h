@@ -6,7 +6,7 @@
  * for developers.	If you edit any of these, be sure to do a *full*
  * rebuild (and an initdb if noted).
  *
- * $PostgreSQL: pgsql/src/include/pg_config_manual.h,v 1.8 2003/11/29 22:40:53 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/pg_config_manual.h,v 1.9 2004/01/06 17:26:23 neilc Exp $
  *------------------------------------------------------------------------
  */
 
@@ -223,6 +223,12 @@
  * Enable debugging print statements for lock-related operations.
  */
 /* #define LOCK_DEBUG */
+
+/*
+ * Enable debugging print statements for WAL-related operations; see
+ * also the wal_debug GUC var.
+ */
+/* #define WAL_DEBUG */
 
 /*
  * Other debug #defines (documentation, anyone?)

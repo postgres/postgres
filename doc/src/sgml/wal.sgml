@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/wal.sgml,v 1.26 2003/11/29 19:51:38 pgsql Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/wal.sgml,v 1.27 2004/01/06 17:26:23 neilc Exp $ -->
 
 <chapter id="wal">
  <title>Write-Ahead Logging (<acronym>WAL</acronym>)</title>
@@ -19,10 +19,10 @@
    transaction processing. Briefly, <acronym>WAL</acronym>'s central
    concept is that changes to data files (where tables and indexes
    reside) must be written only after those changes have been logged,
-   that is, when log records have been flushed to permanent
-   storage. If we follow this procedure, we do not need to flush
-   data pages to disk on every transaction commit, because we know
-   that in the event of a crash we will be able to recover the
+   that is, when log records describing the changes have been flushed
+   to permanent storage. If we follow this procedure, we do not need
+   to flush data pages to disk on every transaction commit, because we
+   know that in the event of a crash we will be able to recover the
    database using the log: any changes that have not been applied to
    the data pages will first be redone from the log records (this is
    roll-forward recovery, also known as REDO) and then changes made by
@@ -187,7 +187,7 @@
   <para>
    There will be at least one 16 MB segment file, and will normally
    not be more than 2 * <varname>checkpoint_segments</varname> + 1
-   files.  You can use this to estimate space requirements for WAL.
+   files.  You can use this to estimate space requirements for <acronym>WAL</acronym>.
    Ordinarily, when old log segment files are no longer needed, they
    are recycled (renamed to become the next segments in the numbered
    sequence). If, due to a short-term peak of log output rate, there
@@ -254,7 +254,7 @@
   <para>
    The <varname>wal_sync_method</varname> parameter determines how
    <productname>PostgreSQL</productname> will ask the kernel to force
-    WAL updates out to disk. 
+    <acronym>WAL</acronym> updates out to disk. 
    All the options should be the same as far as reliability goes,
    but it's quite platform-specific which one will be the fastest.
    Note that this parameter is irrelevant if <varname>fsync</varname>
@@ -262,11 +262,10 @@
   </para>
 
   <para>
-   Setting the <varname>wal_debug</varname> parameter to any nonzero
-   value will result in each <function>LogInsert</function> and
+   Enabling the <varname>wal_debug</varname> configuration parameter
+   will result in each <function>LogInsert</function> and
    <function>LogFlush</function> <acronym>WAL</acronym> call being
-   logged to the server log.  At present, it makes no difference what
-   the nonzero value is.  This option may be replaced by a more
+   logged to the server log. This option may be replaced by a more
    general mechanism in the future.
   </para>
  </sect1>
