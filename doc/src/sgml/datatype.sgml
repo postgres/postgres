@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.149 2004/09/20 04:19:50 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.150 2004/09/20 22:48:25 tgl Exp $
 -->
 
  <chapter id="datatype">
@@ -508,6 +508,16 @@ NUMERIC
     </para>
 
     <para>
+     In addition to ordinary numeric values, the <type>numeric</type>
+     type allows the special value <literal>NaN</>, meaning 
+     <quote>not-a-number</quote>.  Any operation on <literal>NaN</>
+     yields another <literal>NaN</>.  When writing this value
+     as a constant in a SQL command, you must put quotes around it,
+     for example <literal>UPDATE table SET x = 'NaN'</>.  On input,
+     the string <literal>NaN</> is recognized in a case-insensitive manner.
+    </para>
+
+    <para>
      The types <type>decimal</type> and <type>numeric</type> are
      equivalent.  Both types are part of the <acronym>SQL</acronym>
      standard.
@@ -593,6 +603,24 @@ NUMERIC
      take place if the precision of an input number is too high.
      Numbers too close to zero that are not representable as distinct
      from zero will cause an underflow error.
+    </para>
+
+    <para>
+     In addition to ordinary numeric values, the floating-point types
+     have several special values:
+<literallayout>
+<literal>Infinity</literal>
+<literal>-Infinity</literal>
+<literal>NaN</literal>
+</literallayout>
+     These represent the IEEE 754 special values
+     <quote>infinity</quote>, <quote>negative infinity</quote>, and
+     <quote>not-a-number</quote>, respectively.  (On a machine whose
+     floating-point arithmetic does not follow IEEE 754, these values
+     will probably not work as expected.)  When writing these values
+     as constants in a SQL command, you must put quotes around them,
+     for example <literal>UPDATE table SET x = 'Infinity'</>.  On input,
+     these strings are recognized in a case-insensitive manner.
     </para>
 
     <para>

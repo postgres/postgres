@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.60 2004/09/16 04:16:08 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.61 2004/09/20 22:48:29 tgl Exp $
 -->
 
 <refentry id="SQL-CREATEFUNCTION">
@@ -264,16 +264,9 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
 
      <listitem>
       <para>
-       A string defining the function; the meaning depends on the
+       A string constant defining the function; the meaning depends on the
        language.  It may be an internal function name, the path to an
-       object file, an SQL command, or text in a procedural
-       language. When this string contains the text of a procedural
-       language function definition, it may be helpful to use dollar
-       quoting to specify this string, rather than the normal single
-       quote syntax (this avoids the need to escape any single quotes
-       that occur in the function definition itself). For more
-       information on dollar quoting, see <xref
-       linkend="sql-syntax-strings">.
+       object file, an SQL command, or text in a procedural language.
       </para>
      </listitem>
     </varlistentry>
@@ -378,10 +371,13 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
     functions.
    </para>
 
-  <para>
-   Unless dollar quoting is used, any single quotes or backslashes in
-   the function definition must be escaped by doubling them.
-  </para>
+   <para>
+    It is often helpful to use dollar quoting (see <xref
+    linkend="sql-syntax-dollar-quoting">) to write the function definition
+    string, rather than the normal single quote syntax.  Without dollar
+    quoting, any single quotes or backslashes in the function definition must
+    be escaped by doubling them.
+   </para>
 
    <para>
     To be able to define a function, the user must have the
@@ -410,9 +406,9 @@ CREATE FUNCTION add(integer, integer) RETURNS integer
 
 <programlisting>
 CREATE OR REPLACE FUNCTION increment(i integer) RETURNS integer AS '
-	BEGIN
-		RETURN i + 1;
-	END;' LANGUAGE plpgsql;
+        BEGIN
+                RETURN i + 1;
+        END;' LANGUAGE plpgsql;
 </programlisting>
   </para>
  </refsect1>

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.94 2004/06/16 01:26:38 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.95 2004/09/20 22:48:25 tgl Exp $
 -->
 
 <chapter id="sql-syntax">
@@ -223,8 +223,8 @@ UPDATE "my_table" SET "a" = 5;
     strings, bit strings, and numbers.
     Constants can also be specified with explicit types, which can
     enable more accurate representation and more efficient handling by
-    the system. The implicit constants are described below; explicit
-    constants are discussed afterwards.
+    the system. These alternatives are discussed in the following
+    subsections.
    </para>
 
    <sect3 id="sql-syntax-strings">
@@ -240,76 +240,21 @@ UPDATE "my_table" SET "a" = 5;
       <primary>quotation marks</primary>
       <secondary>escaping</secondary>
      </indexterm>
-     <indexterm>
-      <primary>dollar quoting</primary>
-     </indexterm>
-      <productname>PostgreSQL</productname> provides two ways to
-      specify a string constant. The first way is to enclose the
-      sequence of characters that constitute the string in single
-      quotes (<literal>'</literal>), e.g. <literal>'This is a
-      string'</literal>. This method of specifying a string constant
-      is defined by the SQL standard. The standard-compliant way of
-      embedding single-quotes these kinds of string constants is by
-      typing two adjacent single quotes, e.g. <literal>'Dianne''s
-      house'</literal>. In addition,
-      <productname>PostgreSQL</productname> allows single quotes
-      to be escaped with a backslash (<literal>\</literal>),
-      e.g. <literal>'Dianne\'s horse'</literal>.
-     </para>
-
-     <para>
-      While this syntax for specifying string constants is usually
-      convenient, it can be difficult to comprehend the content of the
-      string if it consists of many single quotes, each of which must
-      be doubled. To allows more readable queries in these situations,
-      <productname>PostgreSQL</productname> allows another way to
-      specify string constants known as <quote>dollar
-      quoting</quote>. A string constant specified via dollar quoting
-      consists of a dollar sign (<literal>$</literal>), an optional
-      <quote>tag</quote> of zero or more characters, another dollar
-      sign, an arbitrary sequence of characters that makes up the
-      string content, a dollar sign, the same tag that began this
-      dollar quote, and a dollar sign. For example, here are two
-      different ways to specify the previous example using dollar
-      quoting:
-<programlisting>
-$$Dianne's horse$$
-$SomeTag$Dianne's horse$SomeTag$
-</programlisting>
-      Note that inside the dollar-quoted string, single quotes can be
-      used without needing to be escaped.
-     </para>
-
-     <para>
-      Dollar quotes are case sensitive, so <literal>$tag$String
-      content$tag$</literal> is valid, but <literal>$TAG$String
-      content$tag$</literal> is not.  Also, dollar quotes can
-      nest. For example:
-<programlisting>
-CREATE OR REPLACE FUNCTION has_bad_chars(text) RETURNS boolean AS
-$function$
-BEGIN
-    RETURN ($1 ~ $q$[\t\r\n\v|\\]$q$);
-END;
-$function$ LANGUAGE plpgsql;
-</programlisting>
-      Note that nesting requires a different tag for each nested
-      dollar quote, as shown above. Furthermore, nested dollar quotes
-      can only be used when the content of the string that is being
-      quoted will be re-parsed by <productname>PostgreSQL</>.
-     </para>
-
-     <para>
-      Dollar quoting is not defined by the SQL standard, but it is
-      often a more convenient way to write long string literals (such
-      as procedural function definitions) than the standard-compliant
-      single quote syntax. Which quoting technique is most appropriate
-      for a particular circumstance is a decision that is left to the
-      user.
-     </para>
+     A string constant in SQL is an arbitrary sequence of characters
+     bounded by single quotes (<literal>'</literal>), for example
+     <literal>'This is a string'</literal>.  The standard-compliant way of
+     writing a single-quote character within a string constant is to
+     write two adjacent single quotes, e.g.
+     <literal>'Dianne''s horse'</literal>.
+     <productname>PostgreSQL</productname> also allows single quotes
+     to be escaped with a backslash (<literal>\</literal>), so for
+     example the same string could be written
+     <literal>'Dianne\'s horse'</literal>.
+    </para>
 
     <para>
-     C-style backslash escapes are also available:
+     Another <productname>PostgreSQL</productname> extension is that
+     C-style backslash escapes are available:
      <literal>\b</literal> is a backspace, <literal>\f</literal> is a
      form feed, <literal>\n</literal> is a newline,
      <literal>\r</literal> is a carriage return, <literal>\t</literal>
@@ -319,7 +264,7 @@ $function$ LANGUAGE plpgsql;
      that the byte sequences you create are valid characters in the
      server character set encoding.)  Any other character following a
      backslash is taken literally.  Thus, to include a backslash in a
-     string constant, type two backslashes.
+     string constant, write two backslashes.
     </para>
 
     <para>
@@ -349,6 +294,86 @@ SELECT 'foo'      'bar';
     </para>
    </sect3>
 
+   <sect3 id="sql-syntax-dollar-quoting">
+    <title>Dollar-Quoted String Constants</title>
+
+     <indexterm>
+      <primary>dollar quoting</primary>
+     </indexterm>
+
+    <para>
+     While the standard syntax for specifying string constants is usually
+     convenient, it can be difficult to understand when the desired string
+     contains many single quotes or backslashes, since each of those must
+     be doubled. To allow more readable queries in such situations,
+     <productname>PostgreSQL</productname> provides another way, called
+     <quote>dollar quoting</quote>, to write string constants.
+     A dollar-quoted string constant
+     consists of a dollar sign (<literal>$</literal>), an optional
+     <quote>tag</quote> of zero or more characters, another dollar
+     sign, an arbitrary sequence of characters that makes up the
+     string content, a dollar sign, the same tag that began this
+     dollar quote, and a dollar sign. For example, here are two
+     different ways to specify the string <quote>Dianne's horse</>
+     using dollar quoting:
+<programlisting>
+$$Dianne's horse$$
+$SomeTag$Dianne's horse$SomeTag$
+</programlisting>
+     Notice that inside the dollar-quoted string, single quotes can be
+     used without needing to be escaped.  Indeed, no characters inside
+     a dollar-quoted string are ever escaped: the string content is always
+     written literally.  Backslashes are not special, and neither are
+     dollar signs, unless they are part of a sequence matching the opening
+     tag.
+    </para>
+
+    <para>
+     It is possible to nest dollar-quoted string constants by choosing
+     different tags at each nesting level.  This is most commonly used in
+     writing function definitions.  For example:
+<programlisting>
+$function$
+BEGIN
+    RETURN ($1 ~ $q$[\t\r\n\v\\]$q$);
+END;
+$function$
+</programlisting>
+     Here, the sequence <literal>$q$[\t\r\n\v\\]$q$</> represents a
+     dollar-quoted literal string <literal>[\t\r\n\v\\]</>, which will
+     be recognized when the function body is executed by
+     <productname>PostgreSQL</>.  But since the sequence does not match
+     the outer dollar quoting delimiter <literal>$function$</>, it is
+     just some more characters within the constant so far as the outer
+     string is concerned.
+    </para>
+
+    <para>
+     The tag, if any, of a dollar-quoted string follows the same rules
+     as an unquoted identifier, except that it cannot contain a dollar sign.
+     Tags are case sensitive, so <literal>$tag$String content$tag$</literal>
+     is correct, but <literal>$TAG$String content$tag$</literal> is not.
+    </para>
+
+    <para>
+     A dollar-quoted string that follows a keyword or identifier must
+     be separated from it by whitespace; otherwise the dollar quoting
+     delimiter would be taken as part of the preceding identifier.
+    </para>
+
+    <para>
+     Dollar quoting is not part of the SQL standard, but it is often a more
+     convenient way to write complicated string literals than the
+     standard-compliant single quote syntax.  It is particularly useful when
+     representing string constants inside other constants, as is often needed
+     in procedural function definitions.  With single-quote syntax, each
+     backslash in the above example would have to be written as four
+     backslashes, which would be reduced to two backslashes in parsing the
+     original string constant, and then to one when the inner string constant
+     is re-parsed during function execution.
+    </para>
+   </sect3>
+
    <sect3 id="sql-syntax-bit-strings">
     <title>Bit-String Constants</title>
 
@@ -358,7 +383,7 @@ SELECT 'foo'      'bar';
     </indexterm>
 
     <para>
-     Bit-string constants look like string constants with a
+     Bit-string constants look like regular string constants with a
      <literal>B</literal> (upper or lower case) immediately before the
      opening quote (no intervening whitespace), e.g.,
      <literal>B'1001'</literal>.  The only characters allowed within
@@ -376,6 +401,7 @@ SELECT 'foo'      'bar';
     <para>
      Both forms of bit-string constant can be continued
      across lines in the same way as regular string constants.
+     Dollar quoting cannot be used in a bit-string constant.
     </para>
    </sect3>
 
@@ -418,23 +444,6 @@ SELECT 'foo'      'bar';
     </para>
 
     <para>
-     In addition, there are several special constant values that are
-     accepted as numeric constants. The <type>float4</type> and
-     <type>float8</type> types allow the following special constants:
-<literallayout>
-Infinity
--Infinity
-NaN
-</literallayout>
-     These represent the IEEE 754 special values
-     <quote>infinity</quote>, <quote>negative infinity</quote>, and
-     <quote>not-a-number</quote>, respectively. The
-     <type>numeric</type> type only allows <literal>NaN</>, whereas
-     the integral types do not allow any of these constants. Note that
-     these constants are recognized in a case-insensitive manner.
-    </para>
-
-    <para>
      <indexterm><primary>integer</primary></indexterm>
      <indexterm><primary>bigint</primary></indexterm>
      <indexterm><primary>numeric</primary></indexterm>
@@ -443,7 +452,7 @@ NaN
      value fits in type <type>integer</> (32 bits); otherwise it is
      presumed to be type <type>bigint</> if its
      value fits in type <type>bigint</> (64 bits); otherwise it is
-     taken to be type <type>numeric</>.  Constants that contain	decimal
+     taken to be type <type>numeric</>.  Constants that contain decimal
      points and/or exponents are always initially presumed to be type
      <type>numeric</>.
     </para>
@@ -462,8 +471,11 @@ NaN
 REAL '1.23'  -- string style
 1.23::REAL   -- PostgreSQL (historical) style
 </programlisting>
-     </para>
-    </sect3>
+
+     These are actually just special cases of the general casting
+     notations discussed next.
+    </para>
+   </sect3>
 
    <sect3 id="sql-syntax-constants-generic">
     <title>Constants of Other Types</title>
@@ -481,13 +493,17 @@ REAL '1.23'  -- string style
 '<replaceable>string</replaceable>'::<replaceable>type</replaceable>
 CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
 </synopsis>
-     The string's text is passed to the input conversion
+     The string constant's text is passed to the input conversion
      routine for the type called <replaceable>type</replaceable>. The
      result is a constant of the indicated type.  The explicit type
      cast may be omitted if there is no ambiguity as to the type the
-     constant must be (for example, when it is passed as an argument
-     to a non-overloaded function), in which case it is automatically
-     coerced.
+     constant must be (for example, when it is assigned directly to a
+     table column), in which case it is automatically coerced.
+    </para>
+
+    <para>
+     The string constant can be written using either regular SQL
+     notation or dollar-quoting.
     </para>
 
     <para>

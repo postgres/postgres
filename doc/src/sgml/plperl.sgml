@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.27 2004/08/18 03:37:56 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.28 2004/09/20 22:48:25 tgl Exp $
 -->
 
  <chapter id="plperl">
@@ -47,18 +47,23 @@ $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.27 2004/08/18 03:37:56 momjian E
   <para>
    To create a function in the PL/Perl language, use the standard syntax:
 <programlisting>
-CREATE FUNCTION <replaceable>funcname</replaceable>
-(<replaceable>argument-types</replaceable>) RETURNS <replaceable>return-type</replaceable> AS $$
+CREATE FUNCTION <replaceable>funcname</replaceable> (<replaceable>argument-types</replaceable>) RETURNS <replaceable>return-type</replaceable> AS $$
     # PL/Perl function body
 $$ LANGUAGE plperl;
 </programlisting>
-   The body of the function is ordinary Perl code. Since the body of
-   the function is treated as a string by
-   <productname>PostgreSQL</productname>, it can be specified using
-   dollar quoting (as shown above), or via the legacy single quote
-   syntax (see <xref linkend="sql-syntax-strings"> for more
-   information).
+   The body of the function is ordinary Perl code.
   </para>
+
+   <para>
+    The syntax of the <command>CREATE FUNCTION</command> command requires
+    the function body to be written as a string constant.  It is usually
+    most convenient to use dollar quoting (see <xref
+    linkend="sql-syntax-dollar-quoting">) for the string constant.
+    If you choose to use regular single-quoted string constant syntax,
+    you must escape single quote marks (<literal>'</>) and backslashes
+    (<literal>\</>) used in the body of the function, typically by
+    doubling them (see <xref linkend="sql-syntax-strings">).
+   </para>
 
   <para>
    Arguments and results are handled as in any other Perl subroutine:

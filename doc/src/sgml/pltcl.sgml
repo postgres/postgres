@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/pltcl.sgml,v 2.30 2004/05/16 23:22:07 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/pltcl.sgml,v 2.31 2004/09/20 22:48:25 tgl Exp $
 -->
 
  <chapter id="pltcl">
@@ -400,7 +400,7 @@ $$ LANGUAGE pltcl;
       <term><function>quote</> <replaceable>string</replaceable></term>
       <listitem>
        <para>
-	Duplicates all occurrences of single quote and backslash characters
+	Doubles all occurrences of single quote and backslash characters
 	in the given string.  This may be used to safely quote strings
 	that are to be inserted into SQL commands given
 	to <function>spi_exec</function> or
@@ -422,10 +422,10 @@ SELECT 'doesn't' AS ret
 	which would cause a parse error during
 	<function>spi_exec</function> or
 	<function>spi_prepare</function>.
-	The submitted command should contain
+	To work properly, the submitted command should contain
 
 <programlisting>
-SELECT $q$doesn't$q$ AS ret
+SELECT 'doesn''t' AS ret
 </programlisting>
 
 	which can be formed in PL/Tcl using

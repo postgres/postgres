@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.87 2004/09/13 20:05:25 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.88 2004/09/20 22:48:25 tgl Exp $
 -->
 
  <sect1 id="xfunc">
@@ -103,21 +103,28 @@ $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.87 2004/09/13 20:05:25 tgl Exp $
    </para>
 
    <para>
-    The body of an SQL function should be a list of one or more SQL
-    statements separated by semicolons.  Although dollar quoting
-    obviates this, note that because the syntax of the <command>CREATE
-    FUNCTION</command> command, if you choose not to use dollar
-    quoting, i.e. the body of the function is enclosed in single quotes,
-    you must escape single quote marks (<literal>'</>) used in the body of
-    the function, either by writing two single quotes (<literal>''</>) or
-    with a backslash (<literal>\'</>) where you desire each quote to be.
+    The body of an SQL function must be a list of SQL
+    statements separated by semicolons.  A semicolon after the last
+    statement is optional.  Unless the function is declared to return
+    <type>void</>, the last statement must be a <command>SELECT</>.
    </para>
 
    <para>
-    Arguments to the SQL function may be referenced in the function
-    body using the syntax <literal>$<replaceable>n</></>: <literal>$1</> refers to
-    the first argument, <literal>$2</> to the second, and so on.  If an argument
-    is of a composite type, then the dot notation,
+    The syntax of the <command>CREATE FUNCTION</command> command requires
+    the function body to be written as a string constant.  It is usually
+    most convenient to use dollar quoting (see <xref
+    linkend="sql-syntax-dollar-quoting">) for the string constant.
+    If you choose to use regular single-quoted string constant syntax,
+    you must escape single quote marks (<literal>'</>) and backslashes
+    (<literal>\</>) used in the body of the function, typically by
+    doubling them (see <xref linkend="sql-syntax-strings">).
+   </para>
+
+   <para>
+    Arguments to the SQL function are referenced in the function
+    body using the syntax <literal>$<replaceable>n</></>: <literal>$1</>
+    refers to the first argument, <literal>$2</> to the second, and so on.
+    If an argument is of a composite type, then the dot notation,
     e.g., <literal>$1.name</literal>, may be used to access attributes
     of the argument.
    </para>
@@ -664,7 +671,7 @@ DETAIL:  A function returning "anyarray" or "anyelement" must have at least one 
     create an alias for the <function>sqrt</function> function:
 <programlisting>
 CREATE FUNCTION square_root(double precision) RETURNS double precision
-    AS $$dsqrt$$
+    AS 'dsqrt'
     LANGUAGE internal
     STRICT;
 </programlisting>
