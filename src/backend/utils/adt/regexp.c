@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.1.1.1 1996/07/09 06:22:05 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.2 1996/07/09 06:39:19 scrappy Exp $
  *
  *      Alistair Crooks added the code for the regex caching
  *	agc - cached the regular expressions used - there's a good chance
@@ -240,6 +240,7 @@ char16regexne(char *s, struct varlena *p)
 bool 
 nameregexeq(NameData *n, struct varlena *p)
 {
+    if (!n) return FALSE;
     return (fixedlen_regexeq(n->data, p, NAMEDATALEN, REG_EXTENDED));
 }
 bool 
@@ -251,6 +252,7 @@ nameregexne(NameData *s, struct varlena *p)
 bool 
 textregexeq(struct varlena *s, struct varlena *p)
 {
+    if (!s) return (FALSE);
     return (fixedlen_regexeq(VARDATA(s), p, VARSIZE(s) - VARHDRSZ, REG_EXTENDED));
 }
 
@@ -319,6 +321,7 @@ char16icregexne(char *s, struct varlena *p)
 bool 
 texticregexeq(struct varlena *s, struct varlena *p)
 {
+    if (!s) return FALSE;
     return (fixedlen_regexeq(VARDATA(s), p, VARSIZE(s) - VARHDRSZ, 
 			     REG_ICASE | REG_EXTENDED));
 }
@@ -332,6 +335,7 @@ texticregexne(struct varlena *s, struct varlena *p)
 bool 
 nameicregexeq(NameData *n, struct varlena *p)
 {
+    if (!n) return FALSE;
     return (fixedlen_regexeq(n->data, p, NAMEDATALEN, 
 			     REG_ICASE | REG_EXTENDED));
 }

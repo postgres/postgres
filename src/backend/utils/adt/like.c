@@ -120,6 +120,7 @@ char16nlike(char *s, struct varlena *p)
 bool 
 namelike(NameData *n, struct varlena *p)
 {
+    if (!n) return FALSE;
     return (fixedlen_like(n->data, p, NAMEDATALEN));
 }
 
@@ -132,6 +133,7 @@ namenlike(NameData *s, struct varlena *p)
 bool 
 textlike(struct varlena *s, struct varlena *p)
 {
+    if (!s) return FALSE;
     return (fixedlen_like(VARDATA(s), p, VARSIZE(s) - VARHDRSZ));
 }
 
@@ -141,7 +143,7 @@ bool textnlike(struct varlena *s, struct varlena *p)
 }
 
 
-/*  $Revision: 1.1.1.1 $
+/*  $Revision: 1.2 $
 **  "like.c" A first attempt at a LIKE operator for Postgres95.
 **
 **  Originally written by Rich $alz, mirror!rs, Wed Nov 26 19:03:17 EST 1986.
