@@ -1,444 +1,104 @@
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.9 2001/03/06 18:55:57 petere Exp $ -->
+
 <refentry id="APP-PGRESTORE">
+ <docinfo>
+  <date>2001-03-06</date>
+ </docinfo>
+
  <refmeta>
-  <refentrytitle id="app-pgrestore-title">
-   <application>pg_restore</application>
+  <refentrytitle>
+   pg_restore
   </refentrytitle>
   <manvolnum>1</manvolnum>
   <refmiscinfo>Application</refmiscinfo>
  </refmeta>
+
  <refnamediv>
-  <refname>
-   <application>pg_restore</application>
-  </refname>
+  <refname>pg_restore</refname>
+
   <refpurpose>
    Restore a <PRODUCTNAME>Postgres</PRODUCTNAME> database from an archive file created by
-<APPLICATION>pg_dump</APPLICATION>
+<command>pg_dump</command>
   </refpurpose>
  </refnamediv>
+
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>2000-10-11</date>
-  </refsynopsisdivinfo>
-  <synopsis>
-pg_restore [ <replaceable class="parameter">archive-file</replaceable>  ]
-    [ -h  <replaceable class="parameter">host</replaceable>  ]
-    [ -p  <replaceable class="parameter">port</replaceable>  ]
-    [ -t  <replaceable class="parameter">table</replaceable>  ]
-    [ -a  ] [ -c  ] [-C] [-d <replaceable class="parameter">name</replaceable>]
-    [ -f <replaceable class="parameter">archive-file</replaceable>]
-    [ -F <replaceable class="parameter">format</replaceable>]
-    [ -i  <replaceable class="parameter">index</replaceable>  ]
-    [ -l ] [ -L <replaceable class="parameter">contents-file</replaceable> ]
-    [ -N  ] [ -o  ] [ -O ]
-    [ -P <replaceable class="parameter">function-name</replaceable> ] [ -r ] [ -R ]
-    [ -s  ] [ -S ] { -T  <replaceable class="parameter">trigger</replaceable> ] [ -u  ]
-    [ -v  ] [ -x ]
-  </synopsis>
-
-  <refsect2 id="R2-APP-PG-RESTORE-1">
-   <refsect2info>
-    <date>2000-10-11</date>
-   </refsect2info>
-   <title>
-    Inputs
-   </title>
-   <para>
-    <application>pg_restore</application> accepts the following command
-    line arguments:
-
-    <variablelist>
-     <varlistentry>
-      <term><replaceable class="parameter">archive-name</replaceable></term>
-      <listitem>
-       <para>
-       Specifies the location of the archive file to be restored.
-       If not specified, and no '-f' option is specified, then STDIN is used.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>-a</term>
-      <listitem>
-       <para>
-	Restore only the data, no schema (definitions).
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>-c</term>
-      <listitem>
-       <para>
-	Clean (drop) schema prior to create.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>-C</term>
-      <listitem>
-       <para>
-	Include SQL to create the schema.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>-d <replaceable class="parameter">dbname</replaceable></term>
-      <listitem>
-       <para>
-        Connect to database <replaceable class="parameter">dbname</replaceable> and restore
-        directly into the database. BLOBs can only be restored by using a direct database connection.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>-f</term>
-      <listitem>
-       <para>
-	  Specify output file for generated script. Default is STDOUT.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>-F <replaceable class="parameter">format</replaceable></term>
-      <listitem>
-       <para>
-	  Specify format of the archive.
-        It is not necessary to specify the format, since <APPLICATION>pg_restore</APPLICATION> will
-        determine the format automatically. If specified, it can be one of the following:
-       </para>
-
-       <variablelist>
-
-        <varlistentry>
-         <term>t</term>
-         <listitem>
-          <para>
-           archive is a TAR archive. Using this archive format allows reordering and/or
-           exclusion of schema elements at the time the database is restored. It is also possible to limit which
-           data is reloaded at restore time.
-          </para>
-         </listitem>
-        </varlistentry>
-
-        <varlistentry>
-         <term>c</term>
-         <listitem>
-          <para>
-           archive is in the custom format from pg_dump. This is the most flexible format
-           in that it allows reordering of data load as well as schema elements.
-           This format is also compressed by default.
-          </para>
-         </listitem>
-        </varlistentry>
-
-       </variablelist>
-
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>-i <replaceable class="parameter">index</replaceable></term>
-      <listitem>
-       <para>
-	Restore definition for named <replaceable class="parameter">index</replaceable> only.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>-l</term>
-      <listitem>
-       <para>
-        List the contents of the archive. The output of this command can be used with the '-U, --use-list' option
-        to restrict and reorder the items that are restored.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>-L <replaceable class="parameter">list-file</replaceable></term>
-      <listitem>
-       <para>
-	    Restore elements in <REPLACEABLE CLASS="PARAMETER">list-file</REPLACEABLE> only, and in the
-        order they appear in the file. Lines can be moved and may also be commented out by placing 
-        a ';' at the start of the line.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>-N</term>
-      <listitem>
-       <para>
-        Restore items in the original dump order. By default pg_dump will dump items in an order convenient
-        to pg_dump, then save the archive in a modified OID order. This option overrides the OID ordering.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>-o</term>
-      <listitem>
-       <para>
-        Restore items in the OID order. By default pg_dump will dump items in an order convenient
-        to pg_dump, then save the archive in a modified OID order. This option enforces strict OID ordering.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>-O</term>
-      <listitem>
-       <para>
-        Prevent any attempt to restore original object ownership. Objects will be owned by the username used
-        to attach to the database.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>-P <replaceable class="parameter">procedure-name</replaceable></term>
-      <listitem>
-       <para>
-        Specify a procedure or function to be restored.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>-r</term>
-      <listitem>
-       <para>
-        Restore items in modified OID order. By default pg_dump will dump items in an order convenient
-        to pg_dump, then save the archive in a modified OID order. Most objects
-        will be restored in OID order, but some things (eg. RULES & INDEXES) will be restored at the end of
-        the process irrespective of their OIDs. This option is the default.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>-R</term>
-      <listitem>
-       <para>
-	  Prohibit <APPLICATION>pg_restore</APPLICATION> from issuing any <PROGRAMLISTING>\connect</PROGRAMLISTING>
-        statements or reconnecting to the database if directly connected.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>-s</term>
-      <listitem>
-       <para>
-	Restore the schema (definitions), no data. Sequence values will be reset.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>-S <replaceable class="parameter">username</replaceable></term>
-      <listitem>
-       <para>
-        Specify the superuser username to use when disabling triggers and/or setting ownership of schema elements.
-        By default, <APPLICATION>pg_restore</APPLICATION> will use the current username if it is a superuser.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>-t <replaceable class="parameter">table</replaceable></term>
-      <listitem>
-       <para>
-	Restore schema/data for <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE> only.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>-T <replaceable class="parameter">trigger</replaceable></term>
-      <listitem>
-       <para>
-	  Restore definition of <REPLACEABLE CLASS="PARAMETER">trigger</REPLACEABLE> only.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>-u</term>
-      <listitem>
-       <para>
-	Use password authentication. Prompts for username and password.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>-v</term>
-      <listitem>
-       <para>
-	Specifies verbose mode.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>-x</term>
-      <listitem>
-       <para>
-	Prevent restoration of ACLs (grant/revoke commands).
-       </para>
-      </listitem>
-     </varlistentry>
-
-    </variablelist>
-   </para>
-   <para>
-    <application>pg_restore</application> also accepts
-    the following command line arguments for connection parameters:
-
-    <variablelist>
-     <varlistentry>
-      <term>-h <replaceable class="parameter">host</replaceable></term>
-      <listitem>
-       <para>
-	Specifies the hostname of the machine on which the
-	<application>postmaster</application>
-	is running.  If host begins with a slash, it is used 
-	as the directory for the unix domain socket.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>-p <replaceable class="parameter">port</replaceable></term>
-      <listitem>
-       <para>
-	Specifies the Internet TCP/IP port or local Unix domain socket file
-	extension on which the <application>postmaster</application>
-	is listening for connections.  The port number defaults to 5432,
-	or the value of the <envar>PGPORT</envar>
-	environment variable (if set).
-       </para>
-      </listitem>
-     </varlistentry>
-
-    </variablelist>
-   </para>
-  </refsect2>
-
-  <refsect2 id="R2-APP-PG-RESTORE-2">
-   <refsect2info>
-    <date>2000-10-11</date>
-   </refsect2info>
-   <title>
-    Outputs
-   </title>
-   <para>
-    <application>pg_restore</application> will create a script file,
-    write to <filename>stdout</filename>, or restore a database directly.
-
-    <variablelist>
-     <varlistentry>
-      <term><computeroutput>
-Connection to database 'template1' failed.
-connectDBStart() -- connect() failed: No such file or directory
-        Is the postmaster running locally
-        and accepting connections on Unix socket '/tmp/.s.PGSQL.5432'?
-       </computeroutput></term>
-      <listitem>
-       <para>
-	<application>pg_restore</application> could not attach to the
-	<application>postmaster</application>
-	process on the specified host and port.  If you see this message,
-	ensure that the <application>postmaster</application>
-	is running on the proper host and that you have specified the proper
-	port.  If your site uses an authentication system, ensure that you
-	have obtained the required authentication credentials.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><computeroutput>
-Connection to database '<replaceable class="parameter">dbname</replaceable>' failed.
-FATAL 1:  SetUserId: user '<replaceable class="parameter">username</replaceable>' is not in 'pg_shadow'
-       </computeroutput></term>
-      <listitem>
-       <para>
-	You do not have a valid entry in the relation <literal>pg_shadow</literal>
-	and and will not be allowed to access <productname>Postgres</productname>.
-	Contact your <productname>Postgres</productname> administrator.
-       </para>
-      </listitem>
-     </varlistentry>
-
-    </variablelist>
-   </para>
-
-   <note>
-    <para>
-     When a direct database connection is specified using the -d option, <application>pg_restore</application>
-     internally executes  <command>SQL</command> statements. If you  have problems running
-     <application>pg_restore</application>,
-     make sure you are able to select information from the database using, for
-     example, <application>psql</application>.
-    </para>
-   </note>
-  </refsect2>
+  <cmdsynopsis>
+   <command>pg_restore</command>
+   <arg> -a </arg>
+   <arg> -c </arg>
+   <arg> -C </arg>
+   <arg> -d <replaceable class="parameter">dbname</replaceable> </arg>
+   <arg> -f <replaceable class="parameter">archive-file</replaceable> </arg>
+   <arg> -F <replaceable class="parameter">format</replaceable> </arg>
+   <arg> -i  <replaceable class="parameter">index</replaceable> </arg>
+   <sbr>
+   <arg> -l </arg>
+   <arg> -L <replaceable class="parameter">contents-file</replaceable> </arg>
+   <group> <arg> -N </arg> <arg> -o </arg> <arg> -r </arg> </group>
+   <arg> -O </arg>
+   <arg> -P <replaceable class="parameter">function-name</replaceable> </arg>
+   <arg> -R </arg>
+   <arg> -s </arg>
+   <arg> -S </arg>
+   <arg> -t  <replaceable class="parameter">table</replaceable> </arg>
+   <arg> -T  <replaceable class="parameter">trigger</replaceable> </arg>
+   <arg> -v </arg>
+   <arg> -x </arg>
+   <sbr>
+   <arg> -h  <replaceable class="parameter">host</replaceable> </arg>
+   <arg> -p  <replaceable class="parameter">port</replaceable> </arg>
+   <arg> -u </arg>
+   <sbr>
+   <arg> <replaceable class="parameter">archive-file</replaceable> </arg>
+  </cmdsynopsis>
  </refsynopsisdiv>
 
- <refsect1 id="R1-APP-PG-RESTORE-1">
-  <refsect1info>
-   <date>2000-10-11</date>
-  </refsect1info>
+
+ <refsect1 id="app-pgrestore-description">
   <title>
    Description
   </title>
+
   <para>
-   <application>pg_restore</application> is a utility for restoring a
-      <productname>Postgres</productname> database dumped by <application>pg_dump</application>
-      from any one of the non-plain-text output formats.
+   <command>pg_restore</command> is a utility for restoring a
+   <productname>Postgres</productname> database dumped by
+   <xref linkend="app-pgdump"> in one of the non-plain-text formats.
   </para>
 
   <para>
-   The archive files, new with this relase, contain enough information for
-   <application>pg_restore</application> to rebuild the database, but also allow
-   <application>pg_restore</application> to be selective about what is restored,
-   or even to reorder the items prior to being restored. The archive files should
-   also be portable across architectures. <application>pg_dump</application> will
+   The archive files, new with the 7.1 release, contain enough information for
+   <command>pg_restore</command> to rebuild the database, but also allow
+   <command>pg_restore</command> to be selective about what is restored,
+   or even to reorder the items prior to being restored. The archive files are designed
+   to be portable across architectures. <command>pg_dump</command> will
    produce the queries necessary to re-generate all user-defined types, functions,
    tables, indices, aggregates, and operators.  In addition, all the data is copied
    out (in text format for scripts) so that it can be readily copied in again.
   </para>
 
   <para>
-   <application>pg_restore</application> reads the archive file and outputs the appropriate
+   <command>pg_restore</command> reads the archive file and outputs the appropriate
    SQL in the required order based on the command parameters. Obviously, it can not restore
    information that is not present in the dump file; so if the dump is made using the
-   'dump data as inserts' option, <application>pg_restore</application> will not be able to
+   <quote>dump data as <command>INSERT</command>s</quote> option, <command>pg_restore</command> will not be able to
    load the data using <command>COPY</command> statements.
   </para>
 
   <para>
-   The most flexible output file format is the new 'custom' format (-Fc). It allows for
-   selection and reordering of all archived items, and is compressed by default. The TAR
-   format (-Ft) is not compressed and it is not possible to reorder
+   The most flexible output file format is the <quote>custom</quote> format (<option>-Fc</option>). It allows for
+   selection and reordering of all archived items, and is compressed by default. The <filename>tar</filename>
+   format (<option>-Ft</option>) is not compressed and it is not possible to reorder
    data when loading, but it is otherwise quite flexible.
   </para>
 
   <para>
    To reorder the items, it is first necessary to dump the contents of the archive:
-   <programlisting>
-    $ pg_restore archive.file --list > archive.lis
-   </programlisting>
-   This file consists of a header and one line for each item, eg.
-   <programlisting>
+<screen>
+<prompt>$</prompt> <userinput>pg_restore archive.file -l &gt; archive.list</userinput>
+</screen>
+   This file consists of a header and one line for each item, e.g.,
+<programlisting>
 ;
 ; Archive created at Fri Jul 28 22:28:36 2000
 ;     dbname: birds
@@ -463,46 +123,404 @@ FATAL 1:  SetUserId: user '<replaceable class="parameter">username</replaceable>
 12; 145443 TABLE hs_old postgres
 13; 145443 ACL hs_old
 </programlisting>
+   Semi-colons are comment delimiters, and the numbers at the start of lines refer to the
+   internal archive ID assigned to each item.
+  </para>
 
-   Where semi-colons are comment delimiters, and the numbers at the start of lines refer to the
-   internal archive ID assigned to each item. Lines in the file can be commented out, deleted,
-   and/or reordered. For example,
-   <programlisting>
+  <para>
+   Lines in the file can be commented out, deleted, and reordered. For example,
+<programlisting>
 10; 145433 TABLE map_resolutions postgres
 ;2; 145344 TABLE species postgres
 ;4; 145359 TABLE nt_header postgres
 6; 145402 TABLE species_records postgres
 ;8; 145416 TABLE ss_old postgres
-   </programlisting>
-  </para>
-  <para>
-   Could be used as input to <application>pg_restore</application> and would only restore
+</programlisting>
+   could be used as input to <command>pg_restore</command> and would only restore
    items 10 and 6, in that order.
-   <programlisting>
-    $ pg_restore acrhive.file --use=archive.lis
-   </programlisting>
+<screen>
+<prompt>$</prompt> <userinput>pg_restore archive.file -L archive.list</userinput>
+</screen>
   </para>
+
+  <refsect2 id="app-pgrestore-options">
+   <title>
+    Options
+   </title>
+
+   <para>
+    <command>pg_restore</command> accepts the following command
+    line arguments.  (Long option forms are only available on some platforms.)
+
+    <variablelist>
+     <varlistentry>
+      <term><replaceable class="parameter">archive-name</replaceable></term>
+      <listitem>
+       <para>
+       Specifies the location of the archive file to be restored.
+       If not specified, and no <option>-f</option> option is specified, then the standard input is used.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>-a</term>
+      <term>--data-only</term>
+      <listitem>
+       <para>
+	Restore only the data, no schema (definitions).
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>-c</term>
+      <term>--clean</term>
+      <listitem>
+       <para>
+	Clean (drop) schema prior to create.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>-C</term>
+      <term>--create</term>
+      <listitem>
+       <para>
+	Include SQL to create the schema.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>-d <replaceable class="parameter">dbname</replaceable></term>
+      <term>--dbname=<replaceable class="parameter">dbname</replaceable></term>
+      <listitem>
+       <para>
+        Connect to database <replaceable class="parameter">dbname</replaceable> and restore
+        directly into the database. BLOBs can only be restored by using a direct database connection.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>-f <replaceable>filename</replaceable></term>
+      <term>--file=<replaceable>filename</replaceable></term>
+      <listitem>
+       <para>
+        Specify output file for generated script. (Use with the
+        <option>-l</option> option.) Default is the standard output.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>-F <replaceable class="parameter">format</replaceable></term>
+      <term>--format=<replaceable class="parameter">format</replaceable></term>
+      <listitem>
+       <para>
+	  Specify format of the archive.
+        It is not necessary to specify the format, since <COMMAND>pg_restore</COMMAND> will
+        determine the format automatically. If specified, it can be one of the following:
+       </para>
+
+       <variablelist>
+
+        <varlistentry>
+         <term>t</term>
+         <listitem>
+          <para>
+           Archive is a <filename>tar</filename> archive. Using this archive format allows reordering and/or
+           exclusion of schema elements at the time the database is restored. It is also possible to limit which
+           data is reloaded at restore time.
+          </para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry>
+         <term>c</term>
+         <listitem>
+          <para>
+           Archive is in the custom format of <command>pg_dump</command>. This is the most flexible format
+           in that it allows reordering of data load as well as schema elements.
+           This format is also compressed by default.
+          </para>
+         </listitem>
+        </varlistentry>
+
+       </variablelist>
+
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>-i <replaceable class="parameter">index</replaceable></term>
+      <term>--index=<replaceable class="parameter">index</replaceable></term>
+      <listitem>
+       <para>
+	Restore definition for named <replaceable class="parameter">index</replaceable> only.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>-l</term>
+      <term>--list</term>
+      <listitem>
+       <para>
+        List the contents of the archive. The output of this command can be used with the <option>-L</option> option
+        to restrict and reorder the items that are restored.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>-L <replaceable class="parameter">list-file</replaceable></term>
+      <term>--use-list=<replaceable class="parameter">list-file</replaceable></term>
+      <listitem>
+       <para>
+	  Restore elements in <REPLACEABLE CLASS="PARAMETER">list-file</REPLACEABLE> only, and in the
+        order they appear in the file. Lines can be moved and may also be commented out by placing a ';' at the
+        start of the line.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>-N</term>
+      <term>--orig-order</term>
+      <listitem>
+       <para>
+        Restore items in the original dump order. By default <command>pg_dump</command> will dump items in an order convenient
+        to <command>pg_dump</command>, then save the archive in a modified OID order. This option overrides the OID ordering.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>-o</term>
+      <term>--oid-order</term>
+      <listitem>
+       <para>
+        Restore items in the OID order. By default <command>pg_dump</command> will dump items in an order convenient
+        to <command>pg_dump</command>, then save the archive in a modified OID order. This option enforces strict OID ordering.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>-O</term>
+      <term>--no-owner</term>
+      <listitem>
+       <para>
+        Prevent any attempt to restore original object ownership. Objects will be owned by the user name used
+        to attach to the database.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>-P <replaceable class="parameter">function-name</replaceable></term>
+      <term>--function=<replaceable class="parameter">function-name</replaceable></term>
+      <listitem>
+       <para>
+        Specify a procedure or function to be restored.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>-r</term>
+      <term>--rearrange</term>
+      <listitem>
+       <para>
+        Restore items in modified OID order. By default <command>pg_dump</command> will dump items in an order convenient
+        to <command>pg_dump</command>, then save the archive in a modified OID order. Most objects
+        will be restored in OID order, but some things (e.g., rules and indices) will be restored at the end of
+        the process irrespective of their OIDs. This option is the default.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>-R</term>
+      <term>--no-reconnect</term>
+      <listitem>
+       <para>
+	  Prohibit <COMMAND>pg_restore</COMMAND> from issuing any <PROGRAMLISTING>\connect</PROGRAMLISTING>
+        statements or reconnecting to the database if directly connected.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>-s</term>
+      <term>--schema-only</term>
+      <listitem>
+       <para>
+	Restore the schema (definitions), no data. Sequence values will be reset.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>-S <replaceable class="parameter">username</replaceable></term>
+      <term>--superuser=<replaceable class="parameter">username</replaceable></term>
+      <listitem>
+       <para>
+        Specify the superuser user name to use when disabling triggers and/or setting ownership of schema elements.
+        By default, <COMMAND>pg_restore</COMMAND> will use the current user name if it is a superuser.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>-t <replaceable class="parameter">table</replaceable></term>
+      <term>--table=<replaceable class="parameter">table</replaceable></term>
+      <listitem>
+       <para>
+	Restore schema/data for <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE> only.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>-T <replaceable class="parameter">trigger</replaceable></term>
+      <term>--trigger=<replaceable class="parameter">trigger</replaceable></term>
+      <listitem>
+       <para>
+	  Restore definition of <REPLACEABLE CLASS="PARAMETER">trigger</REPLACEABLE> only.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>-v</term>
+      <term>--verbose</term>
+      <listitem>
+       <para>
+	Specifies verbose mode.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>-x</term>
+      <term>--no-acl</term>
+      <listitem>
+       <para>
+	Prevent restoration of ACLs (grant/revoke commands).
+       </para>
+      </listitem>
+     </varlistentry>
+
+    </variablelist>
+   </para>
+
+   <para>
+    <command>pg_restore</command> also accepts
+    the following command line arguments for connection parameters:
+
+    <variablelist>
+     <varlistentry>
+      <term>-h <replaceable class="parameter">host</replaceable></term>
+      <term>--host=<replaceable class="parameter">host</replaceable></term>
+      <listitem>
+       <para>
+	Specifies the host name of the machine on which the
+	<command>postmaster</command>
+	is running.  If host begins with a slash, it is used 
+	as the directory for the Unix domain socket.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>-p <replaceable class="parameter">port</replaceable></term>
+      <term>--port=<replaceable class="parameter">port</replaceable></term>
+      <listitem>
+       <para>
+	Specifies the Internet TCP/IP port or local Unix domain socket file
+	extension on which the <command>postmaster</command>
+	is listening for connections.  The port number defaults to 5432,
+	or the value of the <envar>PGPORT</envar>
+	environment variable (if set).
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>-u</term>
+      <listitem>
+       <para>
+	Use password authentication. Prompts for user name and password.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+  </refsect2>
 
  </refsect1>
 
- <refsect1 id="R1-APP-PG-RESTORE-2">
-  <refsect1info>
-   <date>2000-10-11</date>
-  </refsect1info>
+
+ <refsect1 id="app-pgrestore-diagnostics">
+  <title>Diagnostics</title>
+
+  <msgset>
+   <msgentry>
+    <msg>
+     <msgmain>
+      <msgtext>
+<screen><computeroutput>
+Connection to database 'template1' failed.
+connectDBStart() -- connect() failed: No such file or directory
+        Is the postmaster running locally
+        and accepting connections on Unix socket '/tmp/.s.PGSQL.5432'?
+</computeroutput></screen>
+      </msgtext>
+     </msgmain>
+    </msg>
+
+    <msgexplan>
+       <para>
+	<command>pg_restore</command> could not attach to the
+	<command>postmaster</command>
+	process on the specified host and port.  If you see this message,
+	ensure that the <command>postmaster</command>
+	is running on the proper host and that you have specified the proper
+	port.  If your site uses an authentication system, ensure that you
+	have obtained the required authentication credentials.
+       </para>
+    </msgexplan>
+   </msgentry>
+  </msgset>  
+
+   <note>
+    <para>
+     When a direct database connection is specified using the -d option, <command>pg_restore</command>
+     internally executes  <command>SQL</command> statements. If you  have problems running
+     <command>pg_restore</command>,
+     make sure you are able to select information from the database using, for
+     example, <command>psql</command>.
+    </para>
+   </note>
+ </refsect1>
+
+
+ <refsect1 id="app-pgrestore-notes">
   <title>
    Notes
   </title>
+
   <para>
-   See the <application>pg_dump</application> section for details on limitation of
-   <application>pg_dump</application>.
-  </para>
-  <para>
-   The limitations of pg_restore are detailed below.
+   The limitations of <command>pg_restore</command> are detailed below.
 
    <itemizedlist>
     <listitem>
      <para>
-      When restoring data to a table, <application>pg_restore</application> emits queries
+      When restoring data to a table, <command>pg_restore</command> emits queries
       to disable triggers on user tables before inserting the data then emits queries to
       re-enable them after the data has been inserted.  If the restore is stopped in the
       middle, the system catalogs may be left in the wrong state.
@@ -511,55 +529,70 @@ FATAL 1:  SetUserId: user '<replaceable class="parameter">username</replaceable>
 
     <listitem>
      <para>
-      <application>pg_restore</application> will not restore BLOBs for a single table. If
+      <command>pg_restore</command> will not restore BLOBs for a single table. If
       an archive contains BLOBs, then all BLOBs will be restored.
      </para>
     </listitem>
 
    </itemizedlist>
   </para>
+
+  <para>
+   See the <xref linkend="app-pgdump"> documentation for details on
+   limitation of <command>pg_dump</command>.
+  </para>
  </refsect1>
 
- <refsect1 id="R1-APP-PG-RESTORE-3">
-  <refsect1info>
-   <date>2000-10-11</date>
-  </refsect1info>
-  <title>
-   Usage
-  </title>
-  <para>
-   To create a custom archive for a database of the same name as the user:
 
-   <programlisting>
-$ pg_dump -Fc > db.out
-   </programlisting>
+ <refsect1 id="app-pgrestore-examples">
+  <title>
+   Examples
+  </title>
+
+  <para>
+   To dump a database:
+<screen>
+<prompt>$</prompt> <userinput>pg_dump mydb &gt; db.out</userinput>
+</screen>
   </para>
 
   <para>
    To reload this database:
-
-   <programlisting>
-$ pg_restore db.out | psql -e database
-   </programlisting>
+<screen>
+<prompt>$</prompt> <userinput>psql -d database -f db.out</userinput>
+</screen>
   </para>
 
   <para>
-   To dump a database called mydb that contains BLOBs to a TAR file:
+   To dump a database called mydb that contains
+   <acronym>BLOB</acronym>s to a <filename>tar</filename> file:
 
-   <programlisting>
-$ pg_dump -Ft mydb --blobs > db.tar
-   </programlisting>
+<screen>
+<prompt>$</prompt> <userinput>pg_dump -Ft -b mydb &gt; db.tar</userinput>
+</screen>
   </para>
 
   <para>
-   To reload this database (with BLOBs) to an existing db called newdb:
+   To reload this database (with <acronym>BLOB</acronym>s) to an
+   existing database called newdb:
 
-   <programlisting>
-$ pg_restore db.tar --db=newdb
-   </programlisting>
+<screen>
+<prompt>$</prompt> <userinput>pg_restore -d newdb db.tar</userinput>
+</screen>
   </para>
 
+ </refsect1>
 
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="app-pgdump"></member>
+   <member><xref linkend="app-pg-dumpall"></member>
+   <member><xref linkend="app-psql"></member>
+   <member><citetitle>PostgreSQL Administrator's Guide</citetitle></member>
+  </simplelist>
  </refsect1>
 </refentry>
 
