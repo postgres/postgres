@@ -691,7 +691,7 @@ ECPGexecute(struct statement * stmt)
 					if (PQresultStatus(query) == PGRES_TUPLES_OK) {
 						isarray = atol((char *)PQgetvalue(query, 0, 0));
 						if (ECPGDynamicType(PQftype(results, act_field)) == SQL3_CHARACTER ||
-						    (PQftype(results, act_field)) == SQL3_CHARACTER_VARYING)
+						    ECPGDynamicType(PQftype(results, act_field)) == SQL3_CHARACTER_VARYING)
 						{
 							/* arrays of character strings are not yet implemented */
 							isarray = false;
@@ -1091,7 +1091,7 @@ ECPGlog(const char *format,...)
  *
  * Copyright (c) 2000, Christof Petig <christof.petig@wtal.de>
  *
- * $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/ecpglib.c,v 1.61 2000/03/01 12:49:42 meskes Exp $
+ * $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/ecpglib.c,v 1.62 2000/03/03 14:39:26 meskes Exp $
  */
 
 PGconn *ECPG_internal_get_connection(char *name);
