@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conv.c,v 1.40 2002/07/19 00:22:24 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conv.c,v 1.41 2002/07/19 11:09:25 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -322,6 +322,7 @@ mic2latin4(unsigned char *mic, unsigned char *p, int len)
 {
 	mic2latin(mic, p, len, LC_ISO8859_4);
 }
+#endif
 
 /*
  * ASCII ---> MIC
@@ -357,6 +358,7 @@ pg_mic2ascii(unsigned char *mic, unsigned char *p, int len)
 	*p = '\0';
 }
 
+#ifdef NOT_USED
 /*
  * Cyrillic support
  * currently supported Cyrillic encodings:
