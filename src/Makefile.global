@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.100 1997/01/25 19:23:43 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.101 1997/01/25 19:25:05 scrappy Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the 
@@ -219,7 +219,7 @@ TK_LIB= -ltk4.1
 
 X11_INCDIR= /usr/include
 X11_LIBDIR= /usr/lib
-X11_LIB= -lX11 -lsocket -lnsl
+X11_LIB= -lX11 
 
 ##############################################################################
 #
