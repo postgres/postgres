@@ -14,7 +14,7 @@ import org.postgresql.largeobject.LargeObjectManager;
 import org.postgresql.util.*;
 
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Connection.java,v 1.10 2002/10/01 00:39:01 davec Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Connection.java,v 1.11 2002/10/17 05:33:52 barry Exp $
  * This class defines methods of the jdbc1 specification.  This class is
  * extended by org.postgresql.jdbc2.AbstractJdbc2Connection which adds the jdbc2
  * methods.  The real Connection class (for jdbc1) is org.postgresql.jdbc1.Jdbc1Connection
@@ -362,6 +362,29 @@ public abstract class AbstractJdbc1Connection implements org.postgresql.PGConnec
 
 		String dbEncoding = resultSet.getString(2);
 		encoding = Encoding.getEncoding(dbEncoding, info.getProperty("charSet"));
+		//In 7.3 we are forced to do a second roundtrip to handle the case 
+		//where a database may not be running in autocommit mode
+		//jdbc by default assumes autocommit is on until setAutoCommit(false)
+		//is called.  Therefore we need to ensure a new connection is 
+		//initialized to autocommit on.
+		if (haveMinimumServerVersion("7.3")) 
+		{
+			java.sql.ResultSet acRset =
+				ExecSQL("show autocommit");
+
+			if (!acRset.next())
+			{
+				throw new PSQLException("postgresql.con.failed", "failed getting autocommit status");
+			}
+			//if autocommit is currently off we need to turn it on
+			//note that we will be in a transaction because the select above
+			//will have initiated the transaction so we need a commit
+			//to make the setting permanent
+			if (acRset.getString(1).equals("off"))
+			{
+				ExecSQL("set autocommit = on; commit;");
+			}
+		}
 
 		// Initialise object handling
 		initObjectTypes();
@@ -896,10 +919,26 @@ public abstract class AbstractJdbc1Connection implements org.postgresql.PGConnec
 		if (this.autoCommit == autoCommit)
 			return ;
 		if (autoCommit)
-			ExecSQL("end");
+		{
+			if (haveMinimumServerVersion("7.3"))
+			{
+                //We do the select to ensure a transaction is in process
+				//before we do the commit to avoid warning messages
+				//from issuing a commit without a transaction in process
+				ExecSQL("select 1; commit; set autocommit = on;");
+			}
+			else
+			{
+				ExecSQL("end");				
+			}
+		}
 		else
 		{
-			if (haveMinimumServerVersion("7.1"))
+			if (haveMinimumServerVersion("7.3"))
+			{
+				ExecSQL("set autocommit = off; " + getIsolationLevelSQL());
+			}
+			else if (haveMinimumServerVersion("7.1"))
 			{
 				ExecSQL("begin;" + getIsolationLevelSQL());
 			}
@@ -938,7 +977,11 @@ public abstract class AbstractJdbc1Connection implements org.postgresql.PGConnec
 	{
 		if (autoCommit)
 			return ;
-		if (haveMinimumServerVersion("7.1"))
+		if (haveMinimumServerVersion("7.3"))
+		{
+			ExecSQL("commit; " + getIsolationLevelSQL());
+		}
+		else if (haveMinimumServerVersion("7.1"))
 		{
 			ExecSQL("commit;begin;" + getIsolationLevelSQL());
 		}
@@ -962,7 +1005,14 @@ public abstract class AbstractJdbc1Connection implements org.postgresql.PGConnec
 	{
 		if (autoCommit)
 			return ;
-		if (haveMinimumServerVersion("7.1"))
+		if (haveMinimumServerVersion("7.3"))
+		{
+			//we don't automatically start a transaction 
+			//but let the server functionality automatically start
+			//one when the first statement is executed
+			ExecSQL("rollback; " + getIsolationLevelSQL());
+		}
+		else if (haveMinimumServerVersion("7.1"))
 		{
 			ExecSQL("rollback; begin;" + getIsolationLevelSQL());
 		}

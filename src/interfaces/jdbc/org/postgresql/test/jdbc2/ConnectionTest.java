@@ -10,7 +10,7 @@ import java.sql.*;
  *
  * PS: Do you know how difficult it is to type on a train? ;-)
  *
- * $Id: ConnectionTest.java,v 1.9 2002/08/14 20:35:40 barry Exp $
+ * $Id: ConnectionTest.java,v 1.10 2002/10/17 05:33:52 barry Exp $
  */
 
 public class ConnectionTest extends TestCase
@@ -244,18 +244,28 @@ public class ConnectionTest extends TestCase
 			assertEquals(Connection.TRANSACTION_READ_COMMITTED,
 						 con.getTransactionIsolation());
 
+
+			// Note the behavior on when a transaction starts is different
+			// under 7.3 than previous versions.  In 7.3 a transaction 
+			// starts with the first sql command, whereas previously 
+			// you were always in a transaction in autocommit=false
+            // so we issue a select to ensure we are in a transaction
+            Statement stmt = con.createStatement();
+            stmt.executeQuery("select 1");
+
 			// Now change the default for future transactions
 			con.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
 
 			// Since the call to setTransactionIsolation() above was made
-			// inside the transaction, the isolation level of the current
-			// transaction did not change. It affects only future transactions.
-			// This behaviour is recommended by the JDBC spec.
-			assertEquals(Connection.TRANSACTION_READ_COMMITTED,
+		   	// inside the transaction, the isolation level of the current
+		   	// transaction did not change. It affects only future ones.
+		   	// This behaviour is recommended by the JDBC spec.
+		   	assertEquals(Connection.TRANSACTION_READ_COMMITTED,
 						 con.getTransactionIsolation());
 
-			// Begin a new transaction
-			con.commit();
+		   	// Begin a new transaction
+		   	con.commit();
+            stmt.executeQuery("select 1");
 
 			// Now we should see the new isolation level
 			assertEquals(Connection.TRANSACTION_SERIALIZABLE,
