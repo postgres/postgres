@@ -34,12 +34,20 @@
 #else
 #if BYTE_ORDER == BIG_ENDIAN
 
+/*
 #define ntoh_s(n)	(uint16)(((u_char *)&n)[1] << 8 \
 			  | ((u_char *)&n)[0])
 #define ntoh_l(n)	(uint32)(((u_char *)&n)[3] << 24 \
 			  | ((u_char *)&n)[2] << 16 \
 			  | ((u_char *)&n)[1] <<  8 \
 			  | ((u_char *)&n)[0])
+*/
+#define ntoh_s(n)	(uint16)((((uint16)n & 0x00ff) <<  8) | \
+				 (((uint16)n & 0xff00) >>  8))
+#define ntoh_l(n)	(uint32)((((uint32)n & 0x000000ff) << 24) | \
+				 (((uint32)n & 0x0000ff00) <<  8) | \
+				 (((uint32)n & 0x00ff0000) >>  8) | \
+				 (((uint32)n & 0xff000000) >> 24))
 #define hton_s(n)	(ntoh_s(n))
 #define hton_l(n)	(ntoh_l(n))
 
