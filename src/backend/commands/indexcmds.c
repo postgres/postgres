@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.53 2001/07/17 21:53:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.54 2001/08/06 18:09:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -146,10 +146,12 @@ DefineIndex(char *heapRelationName,
 	/*
 	 * Convert the partial-index predicate from parsetree form to
 	 * an implicit-AND qual expression, for easier evaluation at runtime.
+	 * While we are at it, we reduce it to a canonical (CNF or DNF) form
+	 * to simplify the task of proving implications.
 	 */
 	if (predicate != NULL && rangetable != NIL)
 	{
-		cnfPred = cnfify((Expr *) copyObject(predicate), true);
+		cnfPred = canonicalize_qual((Expr *) copyObject(predicate), true);
 		fix_opids((Node *) cnfPred);
 		CheckPredicate(cnfPred, rangetable, relationId);
 	}

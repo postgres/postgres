@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.109 2001/07/16 05:06:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.110 2001/08/06 18:09:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,10 +79,10 @@ static bool match_clause_to_indexkey(RelOptInfo *rel, IndexOptInfo *index,
 						 Expr *clause, bool join);
 static bool pred_test(List *predicate_list, List *restrictinfo_list,
 		  List *joininfo_list);
-static bool one_pred_test(Expr *predicate, List *restrictinfo_list);
-static bool one_pred_clause_expr_test(Expr *predicate, Node *clause);
-static bool one_pred_clause_test(Expr *predicate, Node *clause);
-static bool clause_pred_clause_test(Expr *predicate, Node *clause);
+static bool pred_test_restrict_list(Expr *predicate, List *restrictinfo_list);
+static bool pred_test_recurse_clause(Expr *predicate, Node *clause);
+static bool pred_test_recurse_pred(Expr *predicate, Node *clause);
+static bool pred_test_simple_clause(Expr *predicate, Node *clause);
 static void indexable_joinclauses(RelOptInfo *rel, IndexOptInfo *index,
 					  List *joininfo_list, List *restrictinfo_list,
 					  List **clausegroups, List **outerrelids);
@@ -197,7 +197,8 @@ create_index_paths(Query *root, RelOptInfo *rel)
 		 * merging or final output ordering.
 		 *
 		 * If there is a predicate, consider it anyway since the index
-		 * predicate has already been found to match the query.
+		 * predicate has already been found to match the query.  The
+		 * selectivity of the predicate might alone make the index useful.
 		 */
 		if (restrictclauses != NIL ||
 			useful_pathkeys != NIL ||
@@ -959,15 +960,13 @@ indexable_operator(Expr *clause, Oid opclass, Oid relam,
  *	  ANDs in the predicate first, then reduces the qualification
  *	  clauses down to their constituent terms, and iterates over ORs
  *	  in the predicate last.  This order is important to make the test
- *	  succeed whenever possible (assuming the predicate has been
- *	  successfully cnfify()-ed). --Nels, Jan '93
+ *	  succeed whenever possible (assuming the predicate has been converted
+ *	  to CNF format). --Nels, Jan '93
  */
 static bool
 pred_test(List *predicate_list, List *restrictinfo_list, List *joininfo_list)
 {
-	List	   *pred,
-			   *items,
-			   *item;
+	List	   *pred;
 
 	/*
 	 * Note: if Postgres tried to optimize queries by forming equivalence
@@ -977,6 +976,9 @@ pred_test(List *predicate_list, List *restrictinfo_list, List *joininfo_list)
 	 * here with joininfo_list to do more complete tests for the usability
 	 * of a partial index.	For now, the test only uses restriction
 	 * clauses (those in restrictinfo_list). --Nels, Dec '92
+	 *
+	 * XXX as of 7.1, equivalence class info *is* available.  Consider
+	 * improving this code as foreseen by Nels.
 	 */
 
 	if (predicate_list == NIL)
@@ -989,19 +991,10 @@ pred_test(List *predicate_list, List *restrictinfo_list, List *joininfo_list)
 	{
 		/*
 		 * if any clause is not implied, the whole predicate is not
-		 * implied.  Note that checking for sub-ANDs here is redundant
-		 * if the predicate has been cnfify()-ed.
+		 * implied.  Note we assume that any sub-ANDs have been flattened
+		 * when the predicate was fed through canonicalize_qual().
 		 */
-		if (and_clause(lfirst(pred)))
-		{
-			items = ((Expr *) lfirst(pred))->args;
-			foreach(item, items)
-			{
-				if (!one_pred_test(lfirst(item), restrictinfo_list))
-					return false;
-			}
-		}
-		else if (!one_pred_test(lfirst(pred), restrictinfo_list))
+		if (!pred_test_restrict_list(lfirst(pred), restrictinfo_list))
 			return false;
 	}
 	return true;
@@ -1009,23 +1002,22 @@ pred_test(List *predicate_list, List *restrictinfo_list, List *joininfo_list)
 
 
 /*
- * one_pred_test
+ * pred_test_restrict_list
  *	  Does the "predicate inclusion test" for one conjunct of a predicate
  *	  expression.
  */
 static bool
-one_pred_test(Expr *predicate, List *restrictinfo_list)
+pred_test_restrict_list(Expr *predicate, List *restrictinfo_list)
 {
 	List	   *item;
 
-	Assert(predicate != NULL);
 	foreach(item, restrictinfo_list)
 	{
 		RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(item);
 
 		/* if any clause implies the predicate, return true */
-		if (one_pred_clause_expr_test(predicate,
-									  (Node *) restrictinfo->clause))
+		if (pred_test_recurse_clause(predicate,
+									 (Node *) restrictinfo->clause))
 			return true;
 	}
 	return false;
@@ -1033,25 +1025,25 @@ one_pred_test(Expr *predicate, List *restrictinfo_list)
 
 
 /*
- * one_pred_clause_expr_test
+ * pred_test_recurse_clause
  *	  Does the "predicate inclusion test" for a general restriction-clause
- *	  expression.
+ *	  expression.  Here we recursively deal with the possibility that the
+ *	  restriction clause is itself an AND or OR structure.
  */
 static bool
-one_pred_clause_expr_test(Expr *predicate, Node *clause)
+pred_test_recurse_clause(Expr *predicate, Node *clause)
 {
 	List	   *items,
 			   *item;
 
-	if (is_opclause(clause))
-		return one_pred_clause_test(predicate, clause);
-	else if (or_clause(clause))
+	Assert(clause != NULL);
+	if (or_clause(clause))
 	{
 		items = ((Expr *) clause)->args;
 		foreach(item, items)
 		{
 			/* if any OR item doesn't imply the predicate, clause doesn't */
-			if (!one_pred_clause_expr_test(predicate, lfirst(item)))
+			if (!pred_test_recurse_clause(predicate, lfirst(item)))
 				return false;
 		}
 		return true;
@@ -1065,39 +1057,37 @@ one_pred_clause_expr_test(Expr *predicate, Node *clause)
 			 * if any AND item implies the predicate, the whole clause
 			 * does
 			 */
-			if (one_pred_clause_expr_test(predicate, lfirst(item)))
+			if (pred_test_recurse_clause(predicate, lfirst(item)))
 				return true;
 		}
 		return false;
 	}
 	else
-	{
-		/* unknown clause type never implies the predicate */
-		return false;
-	}
+		return pred_test_recurse_pred(predicate, clause);
 }
 
 
 /*
- * one_pred_clause_test
+ * pred_test_recurse_pred
  *	  Does the "predicate inclusion test" for one conjunct of a predicate
- *	  expression for a simple restriction clause.
+ *	  expression for a simple restriction clause.  Here we recursively deal
+ *	  with the possibility that the predicate conjunct is itself an AND or
+ *	  OR structure.
  */
 static bool
-one_pred_clause_test(Expr *predicate, Node *clause)
+pred_test_recurse_pred(Expr *predicate, Node *clause)
 {
 	List	   *items,
 			   *item;
 
-	if (is_opclause((Node *) predicate))
-		return clause_pred_clause_test(predicate, clause);
-	else if (or_clause((Node *) predicate))
+	Assert(predicate != NULL);
+	if (or_clause((Node *) predicate))
 	{
 		items = predicate->args;
 		foreach(item, items)
 		{
 			/* if any item is implied, the whole predicate is implied */
-			if (one_pred_clause_test(lfirst(item), clause))
+			if (pred_test_recurse_pred(lfirst(item), clause))
 				return true;
 		}
 		return false;
@@ -1111,16 +1101,13 @@ one_pred_clause_test(Expr *predicate, Node *clause)
 			 * if any item is not implied, the whole predicate is not
 			 * implied
 			 */
-			if (!one_pred_clause_test(lfirst(item), clause))
+			if (!pred_test_recurse_pred(lfirst(item), clause))
 				return false;
 		}
 		return true;
 	}
 	else
-	{
-		elog(DEBUG, "Unsupported predicate type, index will not be used");
-		return false;
-	}
+		return pred_test_simple_clause(predicate, clause);
 }
 
 
@@ -1156,17 +1143,26 @@ static const StrategyNumber
 
 
 /*
- * clause_pred_clause_test
- *	  Use operator class info to check whether clause implies predicate.
- *
+ * pred_test_simple_clause
  *	  Does the "predicate inclusion test" for a "simple clause" predicate
- *	  for a single "simple clause" restriction.  Currently, this only handles
- *	  (binary boolean) operators that are in some btree operator class.
+ *	  and a "simple clause" restriction.
+ *
+ *	  We have two strategies for determining whether one simple clause
+ *	  implies another.  A simple and general way is to see if they are
+ *	  equal(); this works for any kind of expression.  (Actually, there
+ *	  is an implied assumption that the functions in the expression are
+ *	  cachable, ie dependent only on their input arguments --- but this
+ *	  was checked for the predicate by CheckPredicate().)
+ *
+ *	  Our other way works only for (binary boolean) operators that are
+ *	  in some btree operator class.  We use the above operator implication
+ *	  table to be able to derive implications between nonidentical clauses.
+ *
  *	  Eventually, rtree operators could also be handled by defining an
  *	  appropriate "RT_implic_table" array.
  */
 static bool
-clause_pred_clause_test(Expr *predicate, Node *clause)
+pred_test_simple_clause(Expr *predicate, Node *clause)
 {
 	Var		   *pred_var,
 			   *clause_var;
@@ -1190,13 +1186,21 @@ clause_pred_clause_test(Expr *predicate, Node *clause)
 	Form_pg_amop aform;
 	ExprContext *econtext;
 
-	/* Check the basic form; for now, only allow the simplest case */
-	/* Note caller already verified is_opclause(predicate) */
-	if (!is_opclause(clause))
-		return false;
+	/* First try the equal() test */
+	if (equal((Node *) predicate, clause))
+		return true;
 
+	/*
+	 * Can't do anything more unless they are both binary opclauses with
+	 * a Var on the left and a Const on the right.
+	 */
+	if (!is_opclause((Node *) predicate))
+		return false;
 	pred_var = (Var *) get_leftop(predicate);
 	pred_const = (Const *) get_rightop(predicate);
+
+	if (!is_opclause(clause))
+		return false;
 	clause_var = (Var *) get_leftop((Expr *) clause);
 	clause_const = (Const *) get_rightop((Expr *) clause);
 
@@ -1212,7 +1216,8 @@ clause_pred_clause_test(Expr *predicate, Node *clause)
 	 * The implication can't be determined unless the predicate and the
 	 * clause refer to the same attribute.
 	 */
-	if (clause_var->varattno != pred_var->varattno)
+	if (clause_var->varno != pred_var->varno ||
+		clause_var->varattno != pred_var->varattno)
 		return false;
 
 	/* Get the operators for the two clauses we're comparing */
@@ -1250,15 +1255,16 @@ clause_pred_clause_test(Expr *predicate, Node *clause)
 	tuple = heap_getnext(scan, 0);
 	if (!HeapTupleIsValid(tuple))
 	{
-		elog(DEBUG, "clause_pred_clause_test: unknown pred_op");
+		/* predicate operator isn't btree-indexable */
 		heap_endscan(scan);
 		heap_close(relation, AccessShareLock);
 		return false;
 	}
 	aform = (Form_pg_amop) GETSTRUCT(tuple);
 
-	/* Get the predicate operator's strategy number (1 to 5) */
+	/* Get the predicate operator's btree strategy number (1 to 5) */
 	pred_strategy = (StrategyNumber) aform->amopstrategy;
+	Assert(pred_strategy >= 1 && pred_strategy <= 5);
 
 	/* Remember which operator class this strategy number came from */
 	opclass_id = aform->amopclaid;
@@ -1282,7 +1288,7 @@ clause_pred_clause_test(Expr *predicate, Node *clause)
 	tuple = heap_getnext(scan, 0);
 	if (!HeapTupleIsValid(tuple))
 	{
-		elog(DEBUG, "clause_pred_clause_test: unknown clause_op");
+		/* clause operator isn't btree-indexable, or isn't in this opclass */
 		heap_endscan(scan);
 		heap_close(relation, AccessShareLock);
 		return false;
@@ -1291,6 +1297,7 @@ clause_pred_clause_test(Expr *predicate, Node *clause)
 
 	/* Get the restriction clause operator's strategy number (1 to 5) */
 	clause_strategy = (StrategyNumber) aform->amopstrategy;
+	Assert(clause_strategy >= 1 && clause_strategy <= 5);
 
 	heap_endscan(scan);
 
@@ -1316,7 +1323,8 @@ clause_pred_clause_test(Expr *predicate, Node *clause)
 	tuple = heap_getnext(scan, 0);
 	if (!HeapTupleIsValid(tuple))
 	{
-		elog(DEBUG, "clause_pred_clause_test: unknown test_op");
+		/* this probably shouldn't fail? */
+		elog(DEBUG, "pred_test_simple_clause: unknown test_op");
 		heap_endscan(scan);
 		heap_close(relation, AccessShareLock);
 		return false;
@@ -1342,12 +1350,13 @@ clause_pred_clause_test(Expr *predicate, Node *clause)
 							  (Var *) pred_const);
 
 	econtext = MakeExprContext(NULL, TransactionCommandContext);
-	test_result = ExecEvalExpr((Node *) test_expr, econtext, &isNull, NULL);
+	test_result = ExecEvalExprSwitchContext((Node *) test_expr, econtext,
+											&isNull, NULL);
 	FreeExprContext(econtext);
 
 	if (isNull)
 	{
-		elog(DEBUG, "clause_pred_clause_test: null test result");
+		elog(DEBUG, "pred_test_simple_clause: null test result");
 		return false;
 	}
 	return DatumGetBool(test_result);

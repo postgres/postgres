@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_index.sgml,v 1.20 2001/07/16 05:06:57 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_index.sgml,v 1.21 2001/08/06 18:09:45 tgl Exp $
 Postgres documentation
 -->
 
@@ -256,21 +256,26 @@ ERROR: Cannot create index: 'index_name' already exists.
     billed and unbilled orders where the unbilled orders take up a small
     fraction of the total table and yet that is an often used section, you
     can improve performance by creating an index on just that portion.
+    Another possible application is to use <command>WHERE</command> with
+    <command>UNIQUE</command> to enforce uniqueness over a subset of a
+    table.
   </para>
 
   <para>
     The expression used in the <command>WHERE</command> clause may refer
     only to columns of the underlying table (but it can use all columns,
-    not only the one(s) being indexed).  Currently, the
-    <productname>PostgreSQL</productname> planner can only devise query
-    plans that make use of a partial index when the predicate is built from
-    <command>AND</command> and <command>OR</command> combinations of
-    elements of the form
-    <firstterm>column</firstterm>
-    <firstterm>operator</firstterm>
-    <firstterm>constant</firstterm>.
-    However, more general predicates may still be useful in conjunction
-    with UNIQUE indexes, to enforce uniqueness over a subset of a table.
+    not only the one(s) being indexed).  Presently, sub-SELECTs and
+    aggregate expressions are also forbidden in <command>WHERE</command>.
+  </para>
+
+  <para>
+   All functions and operators used in an index definition must be
+   <firstterm>cachable</>, that is, their results must depend only on
+   their input arguments and never on any outside influence (such as
+   the contents of another table or the current time).  This restriction
+   ensures that the behavior of the index is well-defined.  To use a
+   user-defined function in an index, remember to mark the function cachable
+   when you create it.
   </para>
 
   <para>
