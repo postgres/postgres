@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.18 1997/12/04 00:28:01 scrappy Exp $
+ * $Id: nodes.h,v 1.19 1997/12/04 23:43:59 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -199,13 +199,13 @@ typedef enum NodeTag
 	T_A_Indices,
 	T_ResTarget,
 	T_ParamString,
-	T_TimeRange,
 	T_RelExpr,
 	T_SortGroupBy,
 	T_RangeVar,
 	T_TypeName,
 	T_IndexElem,
 	T_ColumnDef,
+	T_Constraint,
 	T_DefElem,
 	T_TargetEntry,
 	T_RangeTblEntry,
