@@ -1,31 +1,30 @@
 #-------------------------------------------------------------------------
 #
-# Makefile.inc--
+# Makefile.in--
 #    Makefile for bin/pg_version
 #
-# Copyright (c) 1994, Regents of the University of California
-#
+# Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+# Portions Copyright (c) 1994, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pg_version/Attic/Makefile.in,v 1.6 1999/01/17 06:19:14 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pg_version/Attic/Makefile.in,v 1.7 2000/02/27 01:33:43 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR= ../..
-include ../../Makefile.global
-
-OBJS= pg_version.o ../../utils/version.o @STRERROR2@
+include $(SRCDIR)/Makefile.global
 
 CFLAGS+= -I$(SRCDIR)/include
 
+OBJS= pg_version.o $(SRCDIR)/utils/version.o @STRERROR2@
+
 all: pg_version
 
-pg_version: submake $(OBJS)
+pg_version: $(OBJS)
 	$(CC) -o pg_version $(OBJS) $(LDFLAGS)
 
-.PHONY: submake
-submake:
-	$(MAKE) -C ../../utils version.o
+$(SRCDIR)/utils/version.o: $(SRCDIR)/utils/version.c $(SRCDIR)/include/version.h
+	$(MAKE) -C $(SRCDIR)/utils version.o
 
 install: pg_version
 	$(INSTALL) $(INSTL_EXE_OPTS) pg_version$(X) $(BINDIR)/pg_version$(X)
