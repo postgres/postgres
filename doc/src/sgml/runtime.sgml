@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.185 2003/06/12 15:31:02 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.186 2003/06/12 15:58:19 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -2785,10 +2785,12 @@ kernel.shmmax = 134217728
         Linux has poor default memory overcommit behavior.  Rather than
         failing if it can not reserve enough memory, it returns success, 
         but later fails when the memory can't be mapped and terminates 
-        the application.  To prevent unpredictable process termination, use:
+        the application with <literal>kill -9</>.  To prevent unpredictable 
+        process termination, use:
 <programlisting>
 sysctl -w vm.overcommit_memory=3
 </programlisting>
+        Note, you will need enough swap space to cover all your memory needs.
        </para>
       </listitem>
      </varlistentry>
