@@ -734,11 +734,11 @@ are several operators for this type.
 </sect1>
 
 <Sect1>
-<title id="cidr-opers">IP V4 Operators</title>
+<title id="cidr-opers">IP V4 CIDR Operators</title>
 
 <Para>
 <TABLE TOCENTRY="1">
-<TITLE><ProductName>Postgres</ProductName>IP V4 Operators</TITLE>
+<TITLE><ProductName>Postgres</ProductName>IP V4 CIDR Operators</TITLE>
 <TITLEABBREV>Operators</TITLEABBREV>
 <TGROUP COLS="3">
 <THEAD>
@@ -806,11 +806,11 @@ are several operators for this type.
 </Sect1>
 
 <Sect1>
-<title id="inet-opers">IP V4 Operators</title>
+<title id="inet-opers">IP V4 INET Operators</title>
 
 <Para>
 <TABLE TOCENTRY="1">
-<TITLE><ProductName>Postgres</ProductName>IP V4 Operators</TITLE>
+<TITLE><ProductName>Postgres</ProductName>IP V4 INET Operators</TITLE>
 <TITLEABBREV>Operators</TITLEABBREV>
 <TGROUP COLS="3">
 <THEAD>
