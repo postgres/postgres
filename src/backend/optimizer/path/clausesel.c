@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.32 2000/03/23 00:58:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.33 2000/03/23 23:35:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -186,20 +186,32 @@ clauselist_selectivity(Query *root,
 			/* Successfully matched a pair of range clauses */
 			Selectivity	s2 = rqlist->hibound + rqlist->lobound - 1.0;
 
-			if (s2 > 0.0)
+			/*
+			 * A zero or slightly negative s2 should be converted into a
+			 * small positive value; we probably are dealing with a very
+			 * tight range and got a bogus result due to roundoff errors.
+			 * However, if s2 is very negative, then we probably have
+			 * default selectivity estimates on one or both sides of the
+			 * range.  In that case, insert a not-so-wildly-optimistic
+			 * default estimate.
+			 */
+			if (s2 <= 0.0)
 			{
-				/* All our hard work has paid off! */
-				s1 *= s2;
+				if (s2 < -0.01)
+				{
+					/* No data available --- use a default estimate that
+					 * is small, but not real small.
+					 */
+					s2 = 0.01;
+				}
+				else
+				{
+					/* It's just roundoff error; use a small positive value */
+					s2 = 1.0e-10;
+				}
 			}
-			else
-			{
-				/* One or both is probably a default estimate,
-				 * so supply a default estimate for the selectivity
-				 * of the range query.  We rather optimistically assume
-				 * that the range is tight...
-				 */
-				s1 *= 0.01;
-			}
+			/* Merge in the selectivity of the pair of clauses */
+			s1 *= s2;
 		}
 		else
 		{
