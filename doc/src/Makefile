@@ -1,5 +1,5 @@
 # Postgres documentation makefile
-# $Header: /cvsroot/pgsql/doc/src/Makefile,v 1.22 2001/09/18 12:08:26 petere Exp $
+# $Header: /cvsroot/pgsql/doc/src/Makefile,v 1.23 2001/09/30 16:01:12 petere Exp $
 
 subdir = doc/src
 top_builddir = ../..
@@ -36,7 +36,7 @@ $(addsuffix .tar, $(BOOKS)):
 	$(MAKE) -C sgml clean
 	$(MAKE) -C sgml $(basename $@).html
 	$(MAKE) -C sgml $(basename $@).html JADEFLAGS='-V html-manifest'
-	cd sgml && $(TAR) -c -f ../$@ -T HTML.manifest *.gif *.css
+	cd sgml && $(TAR) -c -f ../$@ -T HTML.manifest `echo *.gif | grep -v '\*'` *.css
 
 man.tar:
 	$(MAKE) -C sgml man
