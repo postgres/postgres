@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tcopprot.h,v 1.28 2000/05/31 00:28:39 petere Exp $
+ * $Id: tcopprot.h,v 1.29 2000/06/08 22:37:56 momjian Exp $
  *
  * OLD COMMENTS
  *	  This file was created so that other c files could get the two
@@ -37,7 +37,6 @@ extern List *pg_parse_and_rewrite(char *query_string,
 					 Oid *typev, int nargs,
 					 bool aclOverride);
 extern Plan *pg_plan_query(Query *querytree);
-extern void pg_exec_query_acl_override(char *query_string);
 extern void pg_exec_query_dest(char *query_string,
 				   CommandDest dest,
 				   bool aclOverride);
@@ -45,9 +44,7 @@ extern void pg_exec_query_dest(char *query_string,
 #endif	 /* BOOTSTRAP_INCLUDE */
 
 extern void handle_warn(SIGNAL_ARGS);
-extern void quickdie(SIGNAL_ARGS);
 extern void die(SIGNAL_ARGS);
-extern void FloatExceptionHandler(SIGNAL_ARGS);
 extern void CancelQuery(void);
 extern int PostgresMain(int argc, char *argv[],
 			 int real_argc, char *real_argv[]);

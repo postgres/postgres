@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: timestamp.h,v 1.4 2000/04/12 17:16:56 momjian Exp $
+ * $Id: timestamp.h,v 1.5 2000/06/08 22:37:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -158,11 +158,6 @@ extern int	tm2timestamp(struct tm * tm, double fsec, int *tzp, Timestamp *dt);
 extern int	timestamp2tm(Timestamp dt, int *tzp, struct tm * tm, double *fsec, char **tzn);
 
 extern Timestamp SetTimestamp(Timestamp timestamp);
-extern Timestamp dt2local(Timestamp dt, int timezone);
-extern void dt2time(Timestamp dt, int *hour, int *min, double *sec);
-extern int	EncodeSpecialTimestamp(Timestamp dt, char *str);
-extern int	interval2tm(Interval span, struct tm * tm, float8 *fsec);
-extern int	tm2interval(struct tm * tm, double fsec, Interval *span);
 extern Timestamp *now(void);
 
 #endif	 /* TIMESTAMP_H */

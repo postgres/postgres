@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.45 2000/05/30 00:49:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.46 2000/06/08 22:37:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,8 @@
 #include "nodes/makefuncs.h"
 #include "optimizer/tlist.h"
 #include "optimizer/var.h"
+
+static TargetEntry *tlistentry_member(Node *node, List *targetlist);
 
 /*****************************************************************************
  *	---------- RELATION node target list routines ----------
@@ -27,7 +29,7 @@
  *	  Finds the (first) member of the given tlist whose expression is
  *	  equal() to the given expression.	Result is NULL if no such member.
  */
-TargetEntry *
+static TargetEntry *
 tlistentry_member(Node *node, List *targetlist)
 {
 	List	   *temp;
@@ -42,6 +44,7 @@ tlistentry_member(Node *node, List *targetlist)
 	return NULL;
 }
 
+#ifdef NOT_USED
 /*
  * matching_tlist_expr
  *	  Same as tlistentry_member(), except returns the tlist expression
@@ -58,6 +61,7 @@ matching_tlist_expr(Node *node, List *targetlist)
 
 	return (Node *) NULL;
 }
+#endif
 
 /*
  * tlist_member

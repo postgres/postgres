@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: trigger.h,v 1.20 2000/05/29 01:59:11 tgl Exp $
+ * $Id: trigger.h,v 1.21 2000/06/08 22:37:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -136,9 +136,6 @@ extern void DeferredTriggerEndXact(void);
 extern void DeferredTriggerAbortXact(void);
 
 extern void DeferredTriggerSetState(ConstraintsSetStmt *stmt);
-
-extern void DeferredTriggerSaveEvent(Relation rel, int event,
-						 HeapTuple oldtup, HeapTuple newtup);
 
 
 /*

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.64 2000/06/07 04:09:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.65 2000/06/08 22:37:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -193,14 +193,11 @@ Async_Listen(char *relname, int pid)
 {
 	Relation	lRel;
 	TupleDesc	tdesc;
-	HeapScanDesc scan;
 	HeapTuple	tuple,
 				newtup;
 	Datum		values[Natts_pg_listener];
 	char		nulls[Natts_pg_listener];
-	Datum		d;
 	int			i;
-	bool		isnull;
 	TupleDesc	tupDesc;
 
 	if (Trace_notify)

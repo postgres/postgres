@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.37 2000/05/31 15:38:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.38 2000/06/08 22:37:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,6 +40,9 @@ typedef struct RangeQueryClause
 
 static void addRangeClause(RangeQueryClause **rqlist, Node *clause,
 			   int flag, bool isLTsel, Selectivity s2);
+static Selectivity clause_selectivity(Query *root,
+				   Node *clause,
+				   int varRelid);
 
 
 /****************************************************************************
@@ -357,7 +360,7 @@ addRangeClause(RangeQueryClause **rqlist, Node *clause,
  * When varRelid is 0, all variables are treated as variables.	This
  * is appropriate for ordinary join clauses and restriction clauses.
  */
-Selectivity
+static Selectivity
 clause_selectivity(Query *root,
 				   Node *clause,
 				   int varRelid)

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/file/buffile.c,v 1.5 2000/04/12 17:15:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/file/buffile.c,v 1.6 2000/06/08 22:37:22 momjian Exp $
  *
  * NOTES:
  *
@@ -149,6 +149,7 @@ BufFileCreateTemp(void)
 	return file;
 }
 
+#ifdef NOT_USED
 /*
  * Create a BufFile and attach it to an already-opened virtual File.
  *
@@ -161,6 +162,7 @@ BufFileCreate(File file)
 {
 	return makeBufFile(file);
 }
+#endif
 
 /*
  * Close a BufFile
@@ -529,12 +531,14 @@ BufFileSeek(BufFile *file, int fileno, long offset, int whence)
 	return 0;
 }
 
+#ifdef NOT_USED
 void
 BufFileTell(BufFile *file, int *fileno, long *offset)
 {
 	*fileno = file->curFile;
 	*offset = file->curOffset + file->pos;
 }
+#endif
 
 /*
  * BufFileSeekBlock --- block-oriented seek
@@ -556,6 +560,7 @@ BufFileSeekBlock(BufFile *file, long blknum)
 					   SEEK_SET);
 }
 
+#ifdef NOT_USED
 /*
  * BufFileTellBlock --- block-oriented tell
  *
@@ -570,3 +575,5 @@ BufFileTellBlock(BufFile *file)
 	blknum += file->curFile * RELSEG_SIZE;
 	return blknum;
 }
+#endif
+

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: index.h,v 1.23 2000/04/12 17:16:27 momjian Exp $
+ * $Id: index.h,v 1.24 2000/06/08 22:37:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,7 +64,6 @@ extern void index_build(Relation heapRelation, Relation indexRelation,
 extern bool IndexIsUnique(Oid indexId);
 extern bool IndexIsUniqueNoCache(Oid indexId);
 
-extern bool activate_index(Oid indexId, bool activate);
 extern bool reindex_index(Oid indexId, bool force);
 extern bool activate_indexes_of_a_table(Oid relid, bool activate);
 extern bool reindex_relation(Oid relid, bool force);

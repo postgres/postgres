@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: xact.h,v 1.25 2000/06/05 07:28:57 tgl Exp $
+ * $Id: xact.h,v 1.26 2000/06/08 22:37:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -102,7 +102,6 @@ extern bool CommandIdIsCurrentCommandId(CommandId cid);
 extern bool CommandIdGEScanCommandId(CommandId cid);
 extern void CommandCounterIncrement(void);
 extern void InitializeTransactionSystem(void);
-extern bool CurrentXactInProgress(void);
 extern void StartTransactionCommand(void);
 extern void CommitTransactionCommand(void);
 extern void AbortCurrentTransaction(void);

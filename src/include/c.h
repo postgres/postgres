@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.73 2000/06/02 16:40:09 momjian Exp $
+ * $Id: c.h,v 1.74 2000/06/08 22:37:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -750,8 +750,6 @@ extern int	assert_enabled;
 
 #define LogAssertState(condition, printArgs) \
 		LogTrap(!(condition), BadState, printArgs)
-
-extern int	assertEnable(int val);
 
 #ifdef ASSERT_CHECKING_TEST
 extern int	assertTest(int val);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.31 2000/06/06 16:50:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.32 2000/06/08 22:37:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -199,6 +199,7 @@ typeTypeRelid(Type typ)
 	return typtup->typrelid;
 }
 
+#ifdef NOT_USED
 Oid
 typeTypElem(Type typ)
 {
@@ -208,10 +209,11 @@ typeTypElem(Type typ)
 
 	return typtup->typelem;
 }
+#endif
 
+#ifdef NOT_USED
 /* Given the attribute type of an array return the attribute type of
    an element of the array */
-
 Oid
 GetArrayElementType(Oid typearray)
 {
@@ -237,7 +239,9 @@ GetArrayElementType(Oid typearray)
 
 	return type_struct_array->typelem;
 }
+#endif
 
+#ifdef NOT_USED
 /* Given a type structure, return the in-conversion function of the type */
 Oid
 typeInfunc(Type typ)
@@ -248,7 +252,9 @@ typeInfunc(Type typ)
 
 	return typtup->typinput;
 }
+#endif
 
+#ifdef NOT_USED
 /* Given a type structure, return the out-conversion function of the type */
 Oid
 typeOutfunc(Type typ)
@@ -259,3 +265,4 @@ typeOutfunc(Type typ)
 
 	return typtup->typoutput;
 }
+#endif

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.58 2000/06/05 07:28:51 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.59 2000/06/08 22:37:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,6 +66,8 @@
 #endif
 #include "fmgr.h"
 #include "utils/builtins.h"
+
+static void CheckFloat8Val(double val);
 
 #ifndef NAN
 #define NAN		(0.0/0.0)
@@ -154,7 +156,7 @@ CheckFloat4Val(double val)
 
    raise an elog warning if it is
 */
-void
+static void
 CheckFloat8Val(double val)
 {
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeTidscan.h,v 1.3 2000/04/12 17:16:33 momjian Exp $
+ * $Id: nodeTidscan.h,v 1.4 2000/06/08 22:37:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,6 @@ extern TupleTableSlot *ExecTidScan(TidScan *node);
 extern void ExecTidReScan(TidScan *node, ExprContext *exprCtxt, Plan *parent);
 extern void ExecEndTidScan(TidScan *node);
 extern void ExecTidMarkPos(TidScan *node);
-extern void ExecTidRestrPos(TidScan *node);
 extern bool ExecInitTidScan(TidScan *node, EState *estate, Plan *parent);
 extern int	ExecCountSlotsTidScan(TidScan *node);
 extern void ExecTidReScan(TidScan *node, ExprContext *exprCtxt, Plan *parent);

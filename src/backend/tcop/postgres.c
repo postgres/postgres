@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.158 2000/06/04 01:44:33 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.159 2000/06/08 22:37:26 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -136,6 +136,8 @@ static int	SocketBackend(StringInfo inBuf);
 static int	ReadCommand(StringInfo inBuf);
 static void pg_exec_query(char *query_string);
 static void SigHupHandler(SIGNAL_ARGS);
+static void FloatExceptionHandler(SIGNAL_ARGS);
+static void quickdie(SIGNAL_ARGS);
 
 /*
  * Flag to mark SIGHUP. Whenever the main loop comes around it
@@ -537,11 +539,13 @@ pg_exec_query(char *query_string)
 	pg_exec_query_dest(query_string, whereToSendOutput, FALSE);
 }
 
+#ifdef NOT_USED
 void
 pg_exec_query_acl_override(char *query_string)
 {
 	pg_exec_query_dest(query_string, whereToSendOutput, TRUE);
 }
+#endif
 
 void
 pg_exec_query_dest(char *query_string,	/* string to execute */
@@ -681,7 +685,7 @@ handle_warn(SIGNAL_ARGS)
 	siglongjmp(Warn_restart, 1);
 }
 
-void
+static void
 quickdie(SIGNAL_ARGS)
 {
 	PG_SETMASK(&BlockSig);
@@ -722,7 +726,7 @@ die(SIGNAL_ARGS)
 }
 
 /* signal handler for floating point exception */
-void
+static void
 FloatExceptionHandler(SIGNAL_ARGS)
 {
 	elog(ERROR, "floating point exception!"
@@ -752,7 +756,7 @@ CancelQuery(void)
 static void
 SigHupHandler(SIGNAL_ARGS)
 {
-    got_SIGHUP = true;
+	got_SIGHUP = true;
 }
 
 
@@ -1153,8 +1157,8 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (Show_query_stats &&
 		(Show_parser_stats || Show_planner_stats || Show_executor_stats))
 	{
-        elog(NOTICE, "Query statistics are disabled because parser, planner, or executor statistics are on.");
-        Show_query_stats = false;
+		elog(NOTICE, "Query statistics are disabled because parser, planner, or executor statistics are on.");
+		Show_query_stats = false;
 	}
 
 	if (!DataDir)
@@ -1379,7 +1383,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.158 $ $Date: 2000/06/04 01:44:33 $\n");
+		puts("$Revision: 1.159 $ $Date: 2000/06/08 22:37:26 $\n");
 	}
 
 	/*
@@ -1530,10 +1534,10 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 					DeferredTriggerEndQuery();
 
 					if (Show_query_stats)
-                    {
-                        fprintf(StatFp, "QUERY STATISTICS\n");
+					{
+						fprintf(StatFp, "QUERY STATISTICS\n");
 						ShowUsage();
-                    }
+					}
 				}
 				break;
 
@@ -1696,8 +1700,8 @@ ShowUsage(void)
 /*	   DisplayTupleCount(StatFp); */
 }
 
-#ifdef USE_ASSERT_CHECKING
-int
+#ifdef NOT_USED
+static int
 assertEnable(int val)
 {
 	assert_enabled = val;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.47 2000/06/02 15:57:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.48 2000/06/08 22:37:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,8 @@
 #include "catalog/pg_shadow.h"
 #include "miscadmin.h"
 #include "utils/syscache.h"
+
+static char *GetPidFname(void);
 
 
 #ifdef CYR_RECODE
@@ -406,7 +408,7 @@ SetPidFname(char *datadir)
 /*
  * Get path to the pid file
  */
-char *
+static char *
 GetPidFname(void)
 {
 	return (PidFile);

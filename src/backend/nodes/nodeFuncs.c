@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/nodeFuncs.c,v 1.11 2000/01/26 05:56:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/nodeFuncs.c,v 1.12 2000/06/08 22:37:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,6 +98,7 @@ replace_opid(Oper *oper)
  *		constant (CONST, PARAM) nodes
  *****************************************************************************/
 
+#ifdef NOT_USED
 /*
  * non_null -
  *		Returns t if the node is a non-null constant, e.g., if the node has a
@@ -113,3 +114,5 @@ non_null(Expr *c)
 	else
 		return false;
 }
+#endif
+

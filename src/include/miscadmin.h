@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.57 2000/05/31 00:28:36 petere Exp $
+ * $Id: miscadmin.h,v 1.58 2000/06/08 22:37:35 momjian Exp $
  *
  * NOTES
  *	  some of the information in this file will be moved to
@@ -142,7 +142,6 @@ extern char *getpgusername(void);
 extern void SetPgUserName(void);
 extern int	GetUserId(void);
 extern void SetUserId(void);
-extern int	ValidateBinary(char *path);
 extern int	FindExec(char *backend, char *argv0, char *binary_name);
 extern int	CheckPathAccess(char *path, char *name, int open_mode);
 
@@ -233,7 +232,6 @@ extern void SetWaitingForLock(bool);
 #define PIDFNAME	"postmaster.pid"
 
 extern void SetPidFname(char *datadir);
-extern char *GetPidFname(void);
 extern void UnlinkPidFile(void);
 extern int	SetPidFile(pid_t pid);
 

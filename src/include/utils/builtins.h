@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.113 2000/06/05 07:29:07 tgl Exp $
+ * $Id: builtins.h,v 1.114 2000/06/08 22:37:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -209,7 +209,6 @@ extern char *filename_in(char *file);
 extern char *filename_out(char *s);
 
 /* float.c */
-extern void CheckFloat8Val(double val); /* used by lex */
 extern float32 float4in(char *num);
 extern char *float4out(float32 num);
 extern float64 float8in(char *num);
@@ -408,9 +407,6 @@ extern char *make_greater_string(const char *str, Oid datatype);
 extern ItemPointer tidin(const char *str);
 extern char *tidout(ItemPointer itemPtr);
 extern bool tideq(ItemPointer, ItemPointer);
-extern bool tidne(ItemPointer, ItemPointer);
-extern text *tid_text(ItemPointer);
-extern ItemPointer text_tid(const text *);
 extern ItemPointer currtid_byreloid(Oid relOid, ItemPointer);
 extern ItemPointer currtid_byrelname(const text *relName, ItemPointer);
 

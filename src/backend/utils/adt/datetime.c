@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.48 2000/05/29 19:16:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.49 2000/06/08 22:37:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,6 +31,17 @@
 #include "miscadmin.h"
 #include "utils/datetime.h"
 
+static int DecodeNumber(int flen, char *field,
+			 int fmask, int *tmask,
+			 struct tm * tm, double *fsec, int *is2digits);
+static int DecodeNumberField(int len, char *str,
+				  int fmask, int *tmask,
+				  struct tm * tm, double *fsec, int *is2digits);
+static int DecodeTime(char *str, int fmask, int *tmask,
+		   struct tm * tm, double *fsec);
+static int	DecodeTimezone(char *str, int *tzp);
+static datetkn *datebsearch(char *key, datetkn *base, unsigned int nel);
+static int DecodeDate(char *str, int fmask, int *tmask, struct tm * tm);
 
 #define USE_DATE_CACHE 1
 #define ROUND_ALL 0
@@ -1155,12 +1166,11 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 	return 0;
 }	/* DecodeTimeOnly() */
 
-
 /* DecodeDate()
  * Decode date string which includes delimiters.
  * Insist on a complete set of fields.
  */
-int
+static int
 DecodeDate(char *str, int fmask, int *tmask, struct tm * tm)
 {
 	double		fsec;
@@ -1288,7 +1298,7 @@ DecodeDate(char *str, int fmask, int *tmask, struct tm * tm)
  * Only check the lower limit on hours, since this same code
  *	can be used to represent time spans.
  */
-int
+static int
 DecodeTime(char *str, int fmask, int *tmask, struct tm * tm, double *fsec)
 {
 	char	   *cp;
@@ -1341,7 +1351,7 @@ DecodeTime(char *str, int fmask, int *tmask, struct tm * tm, double *fsec)
 /* DecodeNumber()
  * Interpret numeric field as a date value in context.
  */
-int
+static int
 DecodeNumber(int flen, char *str, int fmask,
 			 int *tmask, struct tm * tm, double *fsec, int *is2digits)
 {
@@ -1445,7 +1455,7 @@ DecodeNumber(int flen, char *str, int fmask,
 /* DecodeNumberField()
  * Interpret numeric string as a concatenated date field.
  */
-int
+static int
 DecodeNumberField(int len, char *str, int fmask,
 				int *tmask, struct tm * tm, double *fsec, int *is2digits)
 {
@@ -1513,13 +1523,13 @@ DecodeNumberField(int len, char *str, int fmask,
 		return -1;
 
 	return 0;
-}	/* DecodeNumberField() */
+}	/*  DecodeNumberField() */
 
 
 /* DecodeTimezone()
  * Interpret string as a numeric timezone.
  */
-int
+static int
 DecodeTimezone(char *str, int *tzp)
 {
 	int			tz;
@@ -1908,7 +1918,7 @@ DecodeUnits(int field, char *lowtoken, int *val)
  * Binary search -- from Knuth (6.2.1) Algorithm B.  Special case like this
  * is WAY faster than the generic bsearch().
  */
-datetkn    *
+static datetkn    *
 datebsearch(char *key, datetkn *base, unsigned int nel)
 {
 	datetkn    *last = base + nel - 1,

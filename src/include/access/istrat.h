@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: istrat.h,v 1.16 2000/01/26 05:57:50 momjian Exp $
+ * $Id: istrat.h,v 1.17 2000/06/08 22:37:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,9 +55,6 @@ extern Size AttributeNumberGetIndexStrategySize(AttrNumber maxAttributeNumber,
 extern StrategyNumber RelationGetStrategy(Relation relation,
 			   AttrNumber attributeNumber, StrategyEvaluation evaluation,
 					RegProcedure procedure);
-extern bool RelationInvokeStrategy(Relation relation,
-			   StrategyEvaluation evaluation, AttrNumber attributeNumber,
-					   StrategyNumber strategy, Datum left, Datum right);
 extern void IndexSupportInitialize(IndexStrategy indexStrategy,
 					   RegProcedure *indexSupport, Oid indexObjectId,
 			  Oid accessMethodObjectId, StrategyNumber maxStrategyNumber,

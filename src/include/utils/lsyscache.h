@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lsyscache.h,v 1.23 2000/04/12 17:16:55 momjian Exp $
+ * $Id: lsyscache.h,v 1.24 2000/06/08 22:37:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,6 @@ extern Oid	get_negator(Oid opid);
 extern RegProcedure get_oprrest(Oid opid);
 extern RegProcedure get_oprjoin(Oid opid);
 extern Oid	get_func_rettype(Oid funcid);
-extern int	get_relnatts(Oid relid);
 extern char *get_rel_name(Oid relid);
 extern struct varlena *get_relstub(Oid relid, int no, bool *islast);
 extern Oid	get_ruleid(char *rulename);

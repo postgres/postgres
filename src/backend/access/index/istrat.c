@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.44 2000/05/30 04:24:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.45 2000/06/08 22:36:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -207,6 +207,7 @@ StrategyEvaluationIsValid(StrategyEvaluation evaluation)
 
 #endif
 
+#ifdef NOT_USED
 /* ----------------
  *		StrategyTermEvaluate
  * ----------------
@@ -262,7 +263,7 @@ StrategyTermEvaluate(StrategyTerm term,
 
 	return result;
 }
-
+#endif
 
 /* ----------------
  *		RelationGetStrategy
@@ -340,6 +341,7 @@ RelationGetStrategy(Relation relation,
 	return strategy;
 }
 
+#ifdef NOT_USED
 /* ----------------
  *		RelationInvokeStrategy
  * ----------------
@@ -463,6 +465,7 @@ RelationInvokeStrategy(Relation relation,
 
 
 }
+#endif
 
 /* ----------------
  *		OperatorRelationFillScanKeyEntry

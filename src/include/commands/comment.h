@@ -23,9 +23,8 @@
  *------------------------------------------------------------------
  */
 
-void		CreateComments(Oid oid, char *comment);
-void		DeleteComments(Oid oid);
-void CommentObject(int objtype, char *objname, char *objproperty,
-			  List *objlist, char *comment);
+extern void	DeleteComments(Oid oid);
+extern void CommentObject(int objtype, char *objname, char *objproperty,
+				List *objlist, char *comment);
 
 #endif	 /* COMMENT_H */

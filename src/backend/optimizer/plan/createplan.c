@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.90 2000/05/23 16:56:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.91 2000/06/08 22:37:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,6 +74,7 @@ static Material *make_material(List *tlist, Oid nonameid, Plan *lefttree,
 			  int keycount);
 static void copy_path_costsize(Plan *dest, Path *src);
 static void copy_plan_costsize(Plan *dest, Plan *src);
+static SeqScan *make_seqscan(List *qptlist, List *qpqual, Index scanrelid);
 
 /*
  * create_plan
@@ -1119,7 +1120,7 @@ make_noname(List *tlist,
 }
 
 
-SeqScan    *
+static SeqScan    *
 make_seqscan(List *qptlist,
 			 List *qpqual,
 			 Index scanrelid)

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.62 2000/05/30 00:49:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.63 2000/06/08 22:37:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,7 +35,7 @@ static char *clauseText[] = {"ORDER BY", "GROUP BY", "DISTINCT ON"};
 static TargetEntry *findTargetlistEntry(ParseState *pstate, Node *node,
 					List *tlist, int clause);
 static void parseFromClause(ParseState *pstate, List *frmList);
-RangeTblEntry *transformTableEntry(ParseState *pstate, RangeVar *r);
+static RangeTblEntry *transformTableEntry(ParseState *pstate, RangeVar *r);
 static List *addTargetToSortList(TargetEntry *tle, List *sortlist,
 					List *targetlist, char *opname);
 static bool exprIsInSortList(Node *expr, List *sortList, List *targetList);
@@ -245,13 +245,11 @@ makeAttrList(Attr *attr)
 
 	return result;
 }
-
+#ifdef NOT_USED
 /* ExpandAttrs()
  * Take an existing attribute node and return a list of attribute nodes
  * with one attribute name per node.
  */
-List *
-			ExpandAttrs(Attr *attr);
 List *
 ExpandAttrs(Attr *attr)
 {
@@ -273,6 +271,7 @@ ExpandAttrs(Attr *attr)
 
 	return rlist;
 }
+#endif
 
 /* transformUsingClause()
  * Take an ON or USING clause from a join expression and expand if necessary.
@@ -335,7 +334,7 @@ transformUsingClause(ParseState *pstate, List *usingList,
 #endif
 
 
-RangeTblEntry *
+static RangeTblEntry *
 transformTableEntry(ParseState *pstate, RangeVar *r)
 {
 	RelExpr    *baserel = r->relExpr;

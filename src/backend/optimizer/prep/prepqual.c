@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepqual.c,v 1.25 2000/04/14 00:19:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepqual.c,v 1.26 2000/06/08 22:37:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -223,6 +223,7 @@ cnfify(Expr *qual, bool removeAndFlag)
 	return (List *) newqual;
 }
 
+#ifdef NOT_USED
 /*
  * dnfify
  *	  Convert a qualification to disjunctive normal form by applying
@@ -233,7 +234,7 @@ cnfify(Expr *qual, bool removeAndFlag)
  * We do not offer a 'removeOrFlag' in this case; the usages are
  * different.
  */
-Expr *
+static Expr *
 dnfify(Expr *qual)
 {
 	Expr	   *newqual;
@@ -259,6 +260,7 @@ dnfify(Expr *qual)
 
 	return newqual;
 }
+#endif
 
 /*--------------------
  * The parser regards AND and OR as purely binary operators, so a qual like

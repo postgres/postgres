@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tlist.h,v 1.25 2000/04/12 17:16:42 momjian Exp $
+ * $Id: tlist.h,v 1.26 2000/06/08 22:37:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,8 +16,6 @@
 
 #include "nodes/relation.h"
 
-extern TargetEntry *tlistentry_member(Node *node, List *targetlist);
-extern Node *matching_tlist_expr(Node *node, List *targetlist);
 extern Resdom *tlist_member(Node *node, List *targetlist);
 
 extern void add_var_to_tlist(RelOptInfo *rel, Var *var);

@@ -27,7 +27,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dllist.h,v 1.12 2000/04/12 17:16:34 momjian Exp $
+ * $Id: dllist.h,v 1.13 2000/06/08 22:37:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,7 +61,6 @@ extern void DLFreeElem(Dlelem *);
 extern Dlelem *DLGetHead(Dllist *);
 extern Dlelem *DLGetTail(Dllist *);
 extern Dlelem *DLRemTail(Dllist *l);
-extern Dlelem *DLGetPred(Dlelem *);		/* get predecessor */
 extern Dlelem *DLGetSucc(Dlelem *);		/* get successor */
 extern void DLRemove(Dlelem *); /* removes node from list */
 extern void DLAddHead(Dllist *list, Dlelem *node);

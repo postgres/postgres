@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.68 2000/05/30 00:49:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.69 2000/06/08 22:37:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,6 +37,9 @@ static HeapTuple GetTupleForTrigger(EState *estate, ItemPointer tid,
 				   TupleTableSlot **newSlot);
 static HeapTuple ExecCallTriggerFunc(Trigger *trigger,
 									 TriggerData *trigdata);
+
+static void DeferredTriggerSaveEvent(Relation rel, int event,
+						 HeapTuple oldtup, HeapTuple newtup);
 
 
 void
@@ -1776,7 +1779,7 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
  *	Called by ExecAR...Triggers() to add the event to the queue.
  * ----------
  */
-void
+static void
 DeferredTriggerSaveEvent(Relation rel, int event,
 						 HeapTuple oldtup, HeapTuple newtup)
 {

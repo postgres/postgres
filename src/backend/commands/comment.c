@@ -49,6 +49,7 @@ static void CommentAggregate(char *aggregate, char *aggtype, char *comment);
 static void CommentProc(char *function, List *arguments, char *comment);
 static void CommentOperator(char *opname, List *arguments, char *comment);
 static void CommentTrigger(char *trigger, char *relation, char *comments);
+static void	CreateComments(Oid oid, char *comment);
 
 /*------------------------------------------------------------------
  * CommentObject --
@@ -120,7 +121,7 @@ CommentObject(int objtype, char *objname, char *objproperty,
  *------------------------------------------------------------------
  */
 
-void
+static void
 CreateComments(Oid oid, char *comment)
 {
 

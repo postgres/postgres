@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.27 2000/05/29 01:59:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.28 2000/06/08 22:37:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,6 +35,11 @@
 
 
 static double time2t(const int hour, const int min, const double sec);
+static int	EncodeSpecialTimestamp(Timestamp dt, char *str);
+static Timestamp dt2local(Timestamp dt, int timezone);
+static void dt2time(Timestamp dt, int *hour, int *min, double *sec);
+static int	interval2tm(Interval span, struct tm * tm, float8 *fsec);
+static int	tm2interval(struct tm * tm, double fsec, Interval *span);
 
 
 /*****************************************************************************
@@ -120,15 +125,9 @@ timestamp_out(Timestamp *dt)
 		return NULL;
 
 	if (TIMESTAMP_IS_RESERVED(*dt))
-	{
 		EncodeSpecialTimestamp(*dt, buf);
-
-	}
 	else if (timestamp2tm(*dt, &tz, tm, &fsec, &tzn) == 0)
-	{
 		EncodeDateTime(tm, fsec, &tz, &tzn, DateStyle, buf);
-
-	}
 	else
 		EncodeSpecialTimestamp(DT_INVALID, buf);
 
@@ -228,7 +227,7 @@ interval_out(Interval *span)
 /* EncodeSpecialTimestamp()
  * Convert reserved timestamp data type to string.
  */
-int
+static int
 EncodeSpecialTimestamp(Timestamp dt, char *str)
 {
 	if (TIMESTAMP_IS_RESERVED(dt))
@@ -266,7 +265,7 @@ now(void)
 	return result;
 }
 
-void
+static void
 dt2time(Timestamp jd, int *hour, int *min, double *sec)
 {
 	double		time;
@@ -434,7 +433,7 @@ tm2timestamp(struct tm * tm, double fsec, int *tzp, Timestamp *result)
 /* interval2tm()
  * Convert a interval data type to a tm structure.
  */
-int
+static int
 interval2tm(Interval span, struct tm * tm, float8 *fsec)
 {
 	double		time;
@@ -466,7 +465,7 @@ interval2tm(Interval span, struct tm * tm, float8 *fsec)
 	return 0;
 }	/* interval2tm() */
 
-int
+static int
 tm2interval(struct tm * tm, double fsec, Interval *span)
 {
 	span->month = ((tm->tm_year * 12) + tm->tm_mon);
@@ -485,7 +484,7 @@ time2t(const int hour, const int min, const double sec)
 	return (((hour * 60) + min) * 60) + sec;
 }	/* time2t() */
 
-Timestamp
+static Timestamp
 dt2local(Timestamp dt, int tz)
 {
 	dt -= tz;

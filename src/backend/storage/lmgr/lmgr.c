@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.40 2000/05/31 00:28:30 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.41 2000/06/08 22:37:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -227,6 +227,7 @@ XactLockTableInsert(TransactionId xid)
 		elog(ERROR, "XactLockTableInsert: LockAcquire failed");
 }
 
+#ifdef NOT_USED
 void
 XactLockTableDelete(TransactionId xid)
 {
@@ -242,6 +243,7 @@ XactLockTableDelete(TransactionId xid)
 
 	LockRelease(LockTableId, &tag, ExclusiveLock);
 }
+#endif
 
 void
 XactLockTableWait(TransactionId xid)

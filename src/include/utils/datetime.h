@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: datetime.h,v 1.14 2000/05/29 19:16:56 tgl Exp $
+ * $Id: datetime.h,v 1.15 2000/06/08 22:37:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -255,19 +255,8 @@ extern int	EncodeTimeOnly(struct tm * tm, double fsec, int *tzp, int style, char
 extern int	EncodeDateTime(struct tm * tm, double fsec, int *tzp, char **tzn, int style, char *str);
 extern int	EncodeTimeSpan(struct tm * tm, double fsec, int style, char *str);
 
-extern int	DecodeDate(char *str, int fmask, int *tmask, struct tm * tm);
-extern int DecodeNumber(int flen, char *field,
-			 int fmask, int *tmask,
-			 struct tm * tm, double *fsec, int *is2digits);
-extern int DecodeNumberField(int len, char *str,
-				  int fmask, int *tmask,
-				  struct tm * tm, double *fsec, int *is2digits);
 extern int	DecodeSpecial(int field, char *lowtoken, int *val);
-extern int DecodeTime(char *str, int fmask, int *tmask,
-		   struct tm * tm, double *fsec);
-extern int	DecodeTimezone(char *str, int *tzp);
 extern int	DecodeUnits(int field, char *lowtoken, int *val);
-extern datetkn *datebsearch(char *key, datetkn *base, unsigned int nel);
 
 extern int	j2day(int jd);
 

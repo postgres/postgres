@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: buffile.h,v 1.4 2000/04/12 17:16:51 momjian Exp $
+ * $Id: buffile.h,v 1.5 2000/06/08 22:37:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,13 +37,10 @@ typedef struct BufFile BufFile;
  */
 
 extern BufFile *BufFileCreateTemp(void);
-extern BufFile *BufFileCreate(File file);
 extern void BufFileClose(BufFile *file);
 extern size_t BufFileRead(BufFile *file, void *ptr, size_t size);
 extern size_t BufFileWrite(BufFile *file, void *ptr, size_t size);
 extern int	BufFileSeek(BufFile *file, int fileno, long offset, int whence);
-extern void BufFileTell(BufFile *file, int *fileno, long *offset);
 extern int	BufFileSeekBlock(BufFile *file, long blknum);
-extern long BufFileTellBlock(BufFile *file);
 
 #endif	 /* BUFFILE_H */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.41 2000/06/03 04:41:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.42 2000/06/08 22:37:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,6 +65,7 @@ static char *attnum_type[SPECIALS] = {
 	"cid",
 };
 
+#ifdef NOT_USED
 /* refnameRangeTableEntries()
  * Given refname, return a list of range table entries
  * This is possible with JOIN syntax, where tables in a join
@@ -75,10 +76,8 @@ static char *attnum_type[SPECIALS] = {
  * to support outer joins in place yet.
  * - thomas 2000-03-04
  */
-List *
-			refnameRangeTableEntries(ParseState *pstate, char *refname);
 
-List *
+static List *
 refnameRangeTableEntries(ParseState *pstate, char *refname)
 {
 	List	   *rteList = NULL;
@@ -97,6 +96,7 @@ refnameRangeTableEntries(ParseState *pstate, char *refname)
 	}
 	return rteList;
 }
+#endif
 
 /* given refname, return a pointer to the range table entry */
 RangeTblEntry *
@@ -466,6 +466,7 @@ specialAttNum(char *a)
 }
 
 
+#ifdef NOT_USED
 /*
  * Given range variable, return whether attribute of this name
  * is a set.
@@ -491,7 +492,9 @@ attnameIsSet(Relation rd, char *name)
 	}
 	return get_attisset(RelationGetRelid(rd), name);
 }
+#endif
 
+#ifdef NOT_USED
 /*
  *	This should only be used if the relation is already
  *	heap_open()'ed.  Use the cache version
@@ -502,6 +505,7 @@ attnumAttNelems(Relation rd, int attid)
 {
 	return rd->rd_att->attrs[attid - 1]->attnelems;
 }
+#endif
 
 /* given attribute id, return type of that attribute */
 /*

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_relation.h,v 1.17 2000/06/03 04:41:33 momjian Exp $
+ * $Id: parse_relation.h,v 1.18 2000/06/08 22:37:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,8 +32,6 @@ extern List *expandAll(ParseState *pstate, char *relname, Attr *ref,
 		  int *this_resno);
 extern int	attnameAttNum(Relation rd, char *a);
 extern int	specialAttNum(char *a);
-extern bool attnameIsSet(Relation rd, char *name);
-extern int	attnumAttNelems(Relation rd, int attid);
 extern Oid	attnumTypeId(Relation rd, int attid);
 extern void warnAutoRange(ParseState *pstate, char *refname);
 

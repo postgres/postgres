@@ -16,7 +16,7 @@ find . -name '[a-z]*.o' -type f -print | while read FILE
 do
 	nm $FILE | cut -c10-100 |awk '{printf "%s\t%s\t%s\n", "'"$FILE"'",$1,$2}'
 done >/tmp/$$
-destroydb debug
+dropdb debug
 createdb debug
 echo "
 	create table debug (file text, scope char, func text);
@@ -43,6 +43,7 @@ echo "
 
 	select 	*
 	from 	debug2
-	where	scope = 'T';
+	where	scope = 'T'
+        order by file, func;
 " |psql debug
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.41 2000/04/12 17:15:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.42 2000/06/08 22:37:30 momjian Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -513,6 +513,7 @@ get_func_rettype(Oid funcid)
 
 /*				---------- RELATION CACHE ----------					 */
 
+#ifdef NOT_USED
 /*
  * get_relnatts -
  *
@@ -536,6 +537,7 @@ get_relnatts(Oid relid)
 	else
 		return InvalidAttrNumber;
 }
+#endif
 
 /*
  * get_rel_name -

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.65 2000/05/30 00:49:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.66 2000/06/08 22:36:54 momjian Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -901,6 +901,7 @@ StartTransaction()
 
 }
 
+#ifdef NOT_USED
 /* ---------------
  * Tell me if we are currently in progress
  * ---------------
@@ -910,6 +911,7 @@ CurrentXactInProgress()
 {
 	return CurrentTransactionState->state == TRANS_INPROGRESS;
 }
+#endif
 
 /* --------------------------------
  *		CommitTransaction

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/lib/dllist.c,v 1.17 2000/04/12 17:15:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/lib/dllist.c,v 1.18 2000/06/08 22:37:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,11 +109,13 @@ DLGetTailVal(Dllist *l)
 
 #endif
 
+#ifdef NOT_USED
 Dlelem *
 DLGetPred(Dlelem *e)			/* get predecessor */
 {
 	return e ? e->dle_prev : 0;
 }
+#endif
 
 Dlelem *
 DLGetSucc(Dlelem *e)			/* get successor */

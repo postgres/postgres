@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: prep.h,v 1.21 2000/01/26 05:58:21 momjian Exp $
+ * $Id: prep.h,v 1.22 2000/06/08 22:37:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,6 @@
  */
 extern List *canonicalize_qual(Expr *qual, bool removeAndFlag);
 extern List *cnfify(Expr *qual, bool removeAndFlag);
-extern Expr *dnfify(Expr *qual);
 
 /*
  * prototypes for preptlist.c

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.81 2000/05/19 03:22:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.82 2000/06/08 22:37:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,7 +75,6 @@ static void WaitIO(BufferDesc *buf, SPINLOCK spinlock);
 static void StartBufferIO(BufferDesc *buf, bool forInput);
 static void TerminateBufferIO(BufferDesc *buf);
 static void ContinueBufferIO(BufferDesc *buf, bool forInput);
-extern void InitBufferIO(void);
 extern void AbortBufferIO(void);
 
 /*
@@ -2488,11 +2487,13 @@ ContinueBufferIO(BufferDesc *buf, bool forInput)
 	IsForInput = forInput;
 }
 
+#ifdef NOT_USED
 void
 InitBufferIO(void)
 {
 	InProgressBuf = (BufferDesc *) 0;
 }
+#endif
 
 /*
  *	This function is called from ProcReleaseSpins().
