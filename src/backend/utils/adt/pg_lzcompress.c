@@ -1,7 +1,7 @@
 /* ----------
  * pg_lzcompress.c -
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/pg_lzcompress.c,v 1.13 2001/10/25 05:49:45 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/pg_lzcompress.c,v 1.14 2001/11/17 06:09:30 tgl Exp $
  *
  *		This is an implementation of LZ compression for PostgreSQL.
  *		It uses a simple history table and generates 2-3 byte tags
@@ -89,7 +89,7 @@
  *			This limits the offset to 1-4095 (12 bits) and the length
  *			to 3-18 (4 bits) because 3 is allways added to it. To emit
  *			a tag of 2 bytes with a length of 2 only saves one control
- *			bit. But we loose one byte in the possible length of a tag.
+ *			bit. But we lose one byte in the possible length of a tag.
  *
  *			In the actual implementation, the 2 byte tag's length is
  *			limited to 3-17, because the value 0xF in the length nibble
@@ -116,16 +116,17 @@
  *			1K and 1M. For smaller items there's not that much chance of
  *			redundancy in the character sequence (except for large areas
  *			of identical bytes like trailing spaces) and for bigger ones
- *			the allocation of the history table is expensive (it needs
- *			8 times the size of the input!).
+ *			our 4K maximum look-back distance is too small.
  *
  *			The compressor creates a table for 8192 lists of positions.
  *			For each input position (except the last 3), a hash key is
- *			built from the 4 next input bytes and the posiiton remembered
+ *			built from the 4 next input bytes and the position remembered
  *			in the appropriate list. Thus, the table points to linked
  *			lists of likely to be at least in the first 4 characters
  *			matching strings. This is done on the fly while the input
- *			is compressed into the output area.
+ *			is compressed into the output area.  Table entries are only
+ *			kept for the last 4096 input positions, since we cannot use
+ *			back-pointers larger than that anyway.
  *
  *			For each byte in the input, it's hash key (built from this
  *			byte and the next 3) is used to find the appropriate list
@@ -170,14 +171,12 @@
  *			Jan Wieck
  * ----------
  */
-#include <stdio.h>
-#include <stdlib.h>
+#include "postgres.h"
+
 #include <unistd.h>
 #include <fcntl.h>
-#include <string.h>
 #include <errno.h>
 
-#include "postgres.h"
 #include "utils/pg_lzcompress.h"
 
 
@@ -185,8 +184,8 @@
  * Local definitions
  * ----------
  */
-#define PGLZ_HISTORY_LISTS		8192
-#define PGLZ_HISTORY_MASK		0x1fff
+#define PGLZ_HISTORY_LISTS		8192 /* must be power of 2 */
+#define PGLZ_HISTORY_MASK		(PGLZ_HISTORY_LISTS - 1)
 #define PGLZ_HISTORY_SIZE		4096
 #define PGLZ_MAX_MATCH			273
 
@@ -195,13 +194,18 @@
  * PGLZ_HistEntry -
  *
  *		Linked list for the backward history lookup
+ *
+ * All the entries sharing a hash key are linked in a doubly linked list.
+ * This makes it easy to remove an entry when it's time to recycle it
+ * (because it's more than 4K positions old).
  * ----------
  */
 typedef struct PGLZ_HistEntry
 {
-	struct PGLZ_HistEntry *next;
+	struct PGLZ_HistEntry *next; /* links for my hash key's list */
 	struct PGLZ_HistEntry *prev;
-	char	   *pos;
+	int			hindex;			/* my current hash key */
+	char	   *pos;			/* my input position */
 } PGLZ_HistEntry;
 
 
@@ -249,7 +253,7 @@ static PGLZ_Strategy strategy_never_data = {
 PGLZ_Strategy *PGLZ_strategy_never = &strategy_never_data;
 
 /* ----------
- * Global arrays for history
+ * Statically allocated work arrays for history
  * ----------
  */
 static PGLZ_HistEntry *hist_start[PGLZ_HISTORY_LISTS];
@@ -261,48 +265,55 @@ static PGLZ_HistEntry hist_entries[PGLZ_HISTORY_SIZE];
  *
  *		Computes the history table slot for the lookup by the next 4
  *		characters in the input.
+ *
+ * NB: because we use the next 4 characters, we are not guaranteed to
+ * find 3-character matches; they very possibly will be in the wrong
+ * hash list.  This seems an acceptable tradeoff for spreading out the
+ * hash keys more.
  * ----------
  */
-#if 1
 #define pglz_hist_idx(_s,_e) (												\
-			(((_e) - (_s)) < 4) ? 0 :										\
-			((((_s)[0] << 9) ^ ((_s)[1] << 6) ^								\
-			((_s)[2] << 3) ^ (_s)[3]) & (PGLZ_HISTORY_MASK))				\
+			((((_e) - (_s)) < 4) ? (int) (_s)[0] :							\
+			 (((_s)[0] << 9) ^ ((_s)[1] << 6) ^								\
+			  ((_s)[2] << 3) ^ (_s)[3])) & (PGLZ_HISTORY_MASK)				\
 		)
-#else
-#define pglz_hist_idx(_s,_e) (												\
-			(((_e) - (_s)) < 2) ? 0 :										\
-			((((_s)[0] << 8) ^ (_s)[1]) & (PGLZ_HISTORY_MASK))				\
-		)
-#endif
 
 
 /* ----------
  * pglz_hist_add -
  *
  *		Adds a new entry to the history table.
+ *
+ * If _recycle is true, then we are recycling a previously used entry,
+ * and must first delink it from its old hashcode's linked list.
+ *
+ * NOTE: beware of multiple evaluations of macro's arguments, and note that
+ * _hn and _recycle are modified in the macro.
  * ----------
  */
-#define pglz_hist_add(_hs,_he,_hn,_s,_e) \
+#define pglz_hist_add(_hs,_he,_hn,_recycle,_s,_e) \
 do {									\
 			int __hindex = pglz_hist_idx((_s),(_e));						\
-			if ((_he)[(_hn)].prev == NULL) {								\
-				(_hs)[__hindex] = (_he)[(_hn)].next;						\
-			} else {														\
-				(_he)[(_hn)].prev->next = (_he)[(_hn)].next;				\
+			PGLZ_HistEntry **__myhsp = &(_hs)[__hindex];					\
+			PGLZ_HistEntry *__myhe = &(_he)[_hn];							\
+			if (_recycle) {													\
+				if (__myhe->prev == NULL)									\
+					(_hs)[__myhe->hindex] = __myhe->next;					\
+				else														\
+					__myhe->prev->next = __myhe->next;						\
+				if (__myhe->next != NULL)									\
+					__myhe->next->prev = __myhe->prev;						\
 			}																\
-			if ((_he)[(_hn)].next != NULL) {								\
-				(_he)[(_hn)].next->prev = (_he)[(_hn)].prev;				\
-			}																\
-			(_he)[(_hn)].next = (_hs)[__hindex];							\
-			(_he)[(_hn)].prev = NULL;										\
-			(_he)[(_hn)].pos  = (_s);										\
-			if ((_hs)[__hindex] != NULL) {									\
-				(_hs)[__hindex]->prev = &((_he)[(_hn)]);					\
-			}																\
-			(_hs)[__hindex] = &((_he)[(_hn)]);								\
+			__myhe->next = *__myhsp;										\
+			__myhe->prev = NULL;											\
+			__myhe->hindex = __hindex;										\
+			__myhe->pos  = (_s);											\
+			if (*__myhsp != NULL)											\
+				(*__myhsp)->prev = __myhe;									\
+			*__myhsp = __myhe;												\
 			if (++(_hn) >= PGLZ_HISTORY_SIZE) {								\
 				(_hn) = 0;													\
+				(_recycle) = true;											\
 			}																\
 } while (0)
 
@@ -382,27 +393,23 @@ pglz_find_match(PGLZ_HistEntry **hstart, char *input, char *end,
 	PGLZ_HistEntry *hent;
 	int32		len = 0;
 	int32		off = 0;
-	int32		thislen;
-	int32		thisoff;
-	char	   *ip;
-	char	   *hp;
 
 	/*
 	 * Traverse the linked history list until a good enough match is
 	 * found.
 	 */
 	hent = hstart[pglz_hist_idx(input, end)];
-	while (hent && len < good_match)
+	while (hent)
 	{
-		/*
-		 * Be happy with lesser good matches the more entries we visited.
-		 */
-		good_match -= (good_match * good_drop) / 100;
+		char	   *ip = input;
+		char	   *hp = hent->pos;
+		int32		thisoff;
+		int32		thislen;
 
 		/*
 		 * Stop if the offset does not fit into our tag anymore.
 		 */
-		thisoff = (ip = input) - (hp = hent->pos);
+		thisoff = ip - hp;
 		if (thisoff >= 0x0fff)
 			break;
 
@@ -411,27 +418,33 @@ pglz_find_match(PGLZ_HistEntry **hstart, char *input, char *end,
 		 * the best so far. And if we already have a match of 16 or more
 		 * bytes, it's worth the call overhead to use memcmp() to check if
 		 * this match is equal for the same size. After that we must
-		 * fallback to character by character comparision to know the
+		 * fallback to character by character comparison to know the
 		 * exact position where the diff occured.
 		 */
+		thislen = 0;
 		if (len >= 16)
 		{
-			if (memcmp(ip, hp, len) != 0)
+			if (memcmp(ip, hp, len) == 0)
 			{
-				hent = hent->next;
-				continue;
+				thislen = len;
+				ip += len;
+				hp += len;
+				while (ip < end && *ip == *hp && thislen < PGLZ_MAX_MATCH)
+				{
+					thislen++;
+					ip++;
+					hp++;
+				}
 			}
-			thislen = len;
-			ip += len;
-			hp += len;
 		}
 		else
-			thislen = 0;
-		while (ip < end && *ip == *hp && thislen < PGLZ_MAX_MATCH)
 		{
-			thislen++;
-			ip++;
-			hp++;
+			while (ip < end && *ip == *hp && thislen < PGLZ_MAX_MATCH)
+			{
+				thislen++;
+				ip++;
+				hp++;
+			}
 		}
 
 		/*
@@ -447,6 +460,17 @@ pglz_find_match(PGLZ_HistEntry **hstart, char *input, char *end,
 		 * Advance to the next history entry
 		 */
 		hent = hent->next;
+
+		/*
+		 * Be happy with lesser good matches the more entries we visited.
+		 * But no point in doing calculation if we're at end of list.
+		 */
+		if (hent)
+		{
+			if (len >= good_match)
+				break;
+			good_match -= (good_match * good_drop) / 100;
+		}
 	}
 
 	/*
@@ -473,10 +497,10 @@ pglz_find_match(PGLZ_HistEntry **hstart, char *input, char *end,
 int
 pglz_compress(char *source, int32 slen, PGLZ_Header *dest, PGLZ_Strategy *strategy)
 {
-	int			hist_next = 0;
-
 	unsigned char *bp = ((unsigned char *) dest) + sizeof(PGLZ_Header);
 	unsigned char *bstart = bp;
+	int			hist_next = 0;
+	bool		hist_recycle = false;
 	char	   *dp = source;
 	char	   *dend = source + slen;
 	unsigned char ctrl_dummy = 0;
@@ -535,12 +559,11 @@ pglz_compress(char *source, int32 slen, PGLZ_Header *dest, PGLZ_Strategy *strate
 		good_drop = 100;
 
 	/*
-	 * Initialize the history tables. For inputs smaller than
-	 * PGLZ_HISTORY_SIZE, we already have a big enough history table on
-	 * the stack frame.
+	 * Initialize the history lists to empty.  We do not need to zero
+	 * the hist_entries[] array; its entries are initialized as they
+	 * are used.
 	 */
 	memset((void *) hist_start, 0, sizeof(hist_start));
-	memset((void *) hist_entries, 0, sizeof(hist_entries));
 
 	/*
 	 * Compute the maximum result size allowed by the strategy. If the
@@ -588,7 +611,9 @@ pglz_compress(char *source, int32 slen, PGLZ_Header *dest, PGLZ_Strategy *strate
 			pglz_out_tag(ctrlp, ctrlb, ctrl, bp, match_len, match_off);
 			while (match_len--)
 			{
-				pglz_hist_add(hist_start, hist_entries, hist_next, dp, dend);
+				pglz_hist_add(hist_start, hist_entries,
+							  hist_next, hist_recycle,
+							  dp, dend);
 				dp++;			/* Do not do this ++ in the line above!		*/
 				/* The macro would do it four times - Jan.	*/
 			}
@@ -599,7 +624,9 @@ pglz_compress(char *source, int32 slen, PGLZ_Header *dest, PGLZ_Strategy *strate
 			 * No match found. Copy one literal byte.
 			 */
 			pglz_out_literal(ctrlp, ctrlb, ctrl, bp, *dp);
-			pglz_hist_add(hist_start, hist_entries, hist_next, dp, dend);
+			pglz_hist_add(hist_start, hist_entries,
+						  hist_next, hist_recycle,
+						  dp, dend);
 			dp++;				/* Do not do this ++ in the line above!		*/
 			/* The macro would do it four times - Jan.	*/
 		}
