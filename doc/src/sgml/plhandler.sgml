@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plhandler.sgml,v 1.2 2003/11/29 19:51:37 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plhandler.sgml,v 1.3 2004/12/30 21:45:36 tgl Exp $
 -->
 
  <chapter id="plhandler">
@@ -152,6 +152,12 @@ CREATE FUNCTION plsample_call_handler() RETURNS language_handler
 CREATE LANGUAGE plsample
     HANDLER plsample_call_handler;
 </programlisting>
+   </para>
+
+   <para>
+    The procedural languages included in the standard distribution
+    are good references when trying to write your own call handler.
+    Look into the <filename>src/pl</> subdirectory of the source tree.
    </para>
 
  </chapter>

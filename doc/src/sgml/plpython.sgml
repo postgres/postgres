@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpython.sgml,v 1.25 2004/12/17 02:14:44 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpython.sgml,v 1.26 2004/12/30 21:45:36 tgl Exp $ -->
 
 <chapter id="plpython">
  <title>PL/Python - Python Procedural Language</title>
@@ -46,15 +46,16 @@
   <title>PL/Python Functions</title>
 
   <para>
-   The Python code you write gets transformed into a Python function.
-   For example,
+   Functions in PL/Python are declared in the usual way, for example
 <programlisting>
 CREATE FUNCTION myfunc(text) RETURNS text
     AS 'return args[0]'
     LANGUAGE plpythonu;
 </programlisting>
 
-   gets transformed into
+   The Python code that is given as the body of the function definition
+   gets transformed into a Python function.
+   For example, the above results in
 
 <programlisting>
 def __plpython_procedure_myfunc_23456():
@@ -151,19 +152,23 @@ def __plpython_procedure_myfunc_23456():
    <literal>plpy.notice(<replaceable>msg</>)</literal>,
    <literal>plpy.warning(<replaceable>msg</>)</literal>,
    <literal>plpy.error(<replaceable>msg</>)</literal>, and
-   <literal>plpy.fatal(<replaceable>msg</>)</literal>.
-   These are mostly equivalent to calling
-   <literal>elog(<replaceable>level</>, <replaceable>msg</>)</literal>
-   from C code.<indexterm><primary>elog</><secondary>in
-   PL/Python</></indexterm>  <function>plpy.error</function> and
+   <literal>plpy.fatal(<replaceable>msg</>)</literal>.<indexterm><primary>elog</><secondary>in PL/Python</></indexterm>
+   <function>plpy.error</function> and 
    <function>plpy.fatal</function> actually raise a Python exception
-   which, if uncaught, causes the PL/Python module to call
-   <literal>elog(ERROR, msg)</literal> when the function handler
-   returns from the Python interpreter.  <literal>raise
-   plpy.ERROR(<replaceable>msg</>)</literal> and <literal>raise
-   plpy.FATAL(<replaceable>msg</>)</literal> are equivalent to calling
+   which, if uncaught, propagates out to the calling query, causing
+   the current transaction or subtransaction to be aborted. 
+   <literal>raise plpy.ERROR(<replaceable>msg</>)</literal> and
+   <literal>raise plpy.FATAL(<replaceable>msg</>)</literal> are
+   equivalent to calling
    <function>plpy.error</function> and
    <function>plpy.fatal</function>, respectively.
+   The other functions only generate messages of different
+   priority levels.
+   Whether messages of a particular priority are reported to the client,
+   written to the server log, or both is controlled by the
+   <xref linkend="guc-log-min-messages"> and
+   <xref linkend="guc-client-min-messages"> configuration
+   variables. See <xref linkend="runtime-config"> for more information.
   </para>
 
   <para>

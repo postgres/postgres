@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.91 2004/12/30 03:13:56 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.92 2004/12/30 21:45:37 tgl Exp $
 -->
 
  <sect1 id="xfunc">
@@ -823,23 +823,15 @@ CREATE FUNCTION test(int, int) RETURNS int
    <title>Procedural Language Functions</title>
 
    <para>
+    <productname>PostgreSQL</productname> allows user-defined functions
+    to be written in other languages besides SQL and C.  These other
+    languages are generically called <firstterm>procedural
+    languages</firstterm> (<acronym>PL</>s).
     Procedural languages aren't built into the
     <productname>PostgreSQL</productname> server; they are offered
-    by loadable modules. Please refer to the documentation of the
-    procedural language in question for details about the syntax and how the
-    function body is interpreted for each language.
-   </para>
-
-   <para>
-    There are currently four procedural languages available in the
-    standard <productname>PostgreSQL</productname> distribution:
-    <application>PL/pgSQL</application>, <application>PL/Tcl</application>,
-    <application>PL/Perl</application>, and
-    <application>PL/Python</application>.
-    Refer to <xref linkend="xplang"> for more information.
-    Other languages can be defined by users.
-    The basics of developing a new procedural language are covered in <xref
-    linkend="plhandler">.
+    by loadable modules.
+    See <xref linkend="xplang"> and following chapters for more
+    information.
    </para>
   </sect1>
 

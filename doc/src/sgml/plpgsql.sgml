@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.53 2004/12/19 22:10:41 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.54 2004/12/30 21:45:36 tgl Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -150,7 +150,7 @@ $$ LANGUAGE plpgsql;
 
     <para>
      <acronym>SQL</acronym> is the language <productname>PostgreSQL</>
-     (and most other relational databases) use as query language. It's
+     and most other relational databases use as query language. It's
      portable and easy to learn. But every <acronym>SQL</acronym>
      statement must be executed individually by the database server.
     </para>
@@ -214,6 +214,15 @@ $$ LANGUAGE plpgsql;
      Finally, a <application>PL/pgSQL</> function may be declared to return
      <type>void</> if it has no useful return value.
     </para>
+
+    <para>
+     <application>PL/pgSQL</> does not currently have full support for
+     domain types: it treats a domain the same as the underlying scalar
+     type.  This means that constraints associated with the domain will
+     not be enforced.  This is not an issue for function arguments, but
+     it is a hazard if you declare a <application>PL/pgSQL</> function
+     as returning a domain type.
+    </para>
   </sect2>
  </sect1>
 
@@ -267,7 +276,8 @@ $$ LANGUAGE plpgsql;
     the code can become downright incomprehensible, because you can
     easily find yourself needing half a dozen or more adjacent quote marks.
     It's recommended that you instead write the function body as a
-    <quote>dollar-quoted</> string literal.  In the dollar-quoting
+    <quote>dollar-quoted</> string literal (see <xref
+    linkend="sql-syntax-dollar-quoting">).  In the dollar-quoting
     approach, you never double any quote marks, but instead take care to
     choose a different dollar-quoting delimiter for each level of
     nesting you need.  For example, you might write the <command>CREATE
@@ -437,8 +447,10 @@ END;
 
     <para>
      Each declaration and each statement within a block is terminated
-     by a semicolon, although the final <literal>END</literal> that
-     concludes a function body does not require one.
+     by a semicolon.  A block that appears within another block must
+     have a semicolon after <literal>END</literal>, as shown above;
+     however the final <literal>END</literal> that
+     concludes a function body does not require a semicolon.
     </para>
 
     <para>
@@ -503,7 +515,7 @@ $$ LANGUAGE plpgsql;
      transaction, since there would be no context for them to execute in.
      However, a block containing an <literal>EXCEPTION</> clause effectively
      forms a subtransaction that can be rolled back without affecting the
-     outer transaction.  For more details see <xref
+     outer transaction.  For more about that see <xref
      linkend="plpgsql-error-trapping">.
     </para>
   </sect1>
@@ -556,7 +568,7 @@ arow RECORD;
 
      <para>
       The default value is evaluated every time the block is entered. So,
-      for example, assigning <literal>'now'</literal> to a variable of type
+      for example, assigning <literal>now()</literal> to a variable of type
       <type>timestamp</type> causes the variable to have the
       time of the current function call, not the time when the function was
       precompiled.
@@ -581,6 +593,9 @@ user_id CONSTANT integer := 10;
       <literal>$<replaceable>n</replaceable></literal>
       parameter names for increased readability.  Either the alias or the
       numeric identifier can then be used to refer to the parameter value.
+     </para>
+
+     <para>
       There are two ways to create an alias.  The preferred way is to give a
       name to the parameter in the <command>CREATE FUNCTION</command> command,
       for example:
@@ -827,17 +842,11 @@ RENAME this_var TO that_var;
     <para>
      All expressions used in <application>PL/pgSQL</application>
      statements are processed using the server's regular
-     <acronym>SQL</acronym> executor. Expressions that appear to
-     contain constants may in fact require run-time evaluation
-     (e.g., <literal>'now'</literal> for the <type>timestamp</type>
-     type) so it is impossible for the
-     <application>PL/pgSQL</application> parser to identify real
-     constant values other than the key word <literal>NULL</>. All expressions are
-     evaluated internally by executing a query
+     <acronym>SQL</acronym> executor.  In effect, a query like
 <synopsis>
 SELECT <replaceable>expression</replaceable>
 </synopsis>
-     using the <acronym>SPI</acronym> manager. For evaluation,
+     is executed using the <acronym>SPI</acronym> manager. Before evaluation,
      occurrences of <application>PL/pgSQL</application> variable
      identifiers are replaced by parameters, and the actual values from
      the variables are passed to the executor in the parameter array.
@@ -1014,6 +1023,14 @@ SELECT INTO <replaceable>target</replaceable> <replaceable>select_expressions</r
     </para>
 
     <para>
+     The <literal>INTO</> clause can appear almost anywhere in the
+     <command>SELECT</command> statement.  Customarily it is written
+     either just after <literal>SELECT</> as shown above, or
+     just before <literal>FROM</> &mdash; that is, either just before
+     or just after the list of <replaceable>select_expressions</replaceable>.
+    </para>
+
+    <para>
      If the query returns zero rows, null values are assigned to the
      target(s).  If the query returns multiple rows, the first
      row is assigned to the target(s) and the rest are discarded.
@@ -1022,14 +1039,11 @@ SELECT INTO <replaceable>target</replaceable> <replaceable>select_expressions</r
     </para>
 
     <para>
-     The <literal>INTO</> clause can appear almost anywhere in the <command>SELECT</command>
-     statement.
-    </para>
-
-    <para>
-     You can use <literal>FOUND</literal> immediately after a <command>SELECT
-     INTO</command> statement to determine whether the assignment was successful
-     (that is, at least one row was was returned by the query). For example:
+     You can check the special <literal>FOUND</literal> variable (see
+     <xref linkend="plpgsql-statements-diagnostics">) after a
+     <command>SELECT INTO</command> statement to determine whether the
+     assignment was successful, that is, at least one row was was returned by
+     the query. For example:
 
 <programlisting>
 SELECT INTO myrec * FROM emp WHERE empname = myname;
@@ -1176,21 +1190,12 @@ EXECUTE <replaceable class="command">command-string</replaceable>;
     </para>
 
     <para>
-    When working with dynamic commands you will often have to handle escaping
-    of single quotes.  The recommended method for quoting fixed text in your
-    function body is dollar quoting.  If you have legacy code that does
-    not use dollar quoting, please refer to the
-    overview in <xref linkend="plpgsql-quote-tips">, which can save you
-    some effort when translating said code to a more reasonable scheme.
-    </para>
-
-    <para>
      Unlike all other commands in <application>PL/pgSQL</>, a command
      run by an <command>EXECUTE</command> statement is not prepared
      and saved just once during the life of the session.  Instead, the
      command is prepared each time the statement is run. The command
      string can be dynamically created within the function to perform
-     actions on variable tables and columns.
+     actions on different tables and columns.
     </para>
 
     <para>
@@ -1207,6 +1212,18 @@ EXECUTE <replaceable class="command">command-string</replaceable>;
     </para>
 
     <para>
+     When working with dynamic commands you will often have to handle escaping
+     of single quotes.  The recommended method for quoting fixed text in your
+     function body is dollar quoting.  (If you have legacy code that does
+     not use dollar quoting, please refer to the
+     overview in <xref linkend="plpgsql-quote-tips">, which can save you
+     some effort when translating said code to a more reasonable scheme.)
+    </para>
+
+    <para>
+     Dynamic values that are to be inserted into the constructed
+     query require special handling since they might themselves contain
+     quote characters.
      An example (this assumes that you are using dollar quoting for the
      function as a whole, so the quote marks need not be doubled):
 <programlisting>
@@ -1333,17 +1350,18 @@ GET DIAGNOSTICS integer_var = ROW_COUNT;
                 all three variants of the <command>FOR</> statement (integer
                 <command>FOR</> loops, record-set <command>FOR</> loops, and
                 dynamic record-set <command>FOR</>
-                loops). <literal>FOUND</literal> is only set when the
-                <command>FOR</> loop exits: inside the execution of the loop,
+                loops). <literal>FOUND</literal> is set this way when the
+                <command>FOR</> loop exits; inside the execution of the loop,
                 <literal>FOUND</literal> is not modified by the
                 <command>FOR</> statement, although it may be changed by the
                 execution of other statements within the loop body.
            </para>
           </listitem>
          </itemizedlist>
-     <literal>FOUND</literal> is a local variable; any changes
-     to it affect only the current <application>PL/pgSQL</application>
-     function.
+
+     <literal>FOUND</literal> is a local variable within each
+     <application>PL/pgSQL</application> function; so any changes
+     to it affect only the current function.
     </para>
 
    </sect2>
@@ -1434,15 +1452,14 @@ RETURN NEXT <replaceable>expression</replaceable>;
 SELECT * FROM some_func();
 </programlisting>
 
-      That is, the function is used as a table source in a <literal>FROM</literal>
-      clause.
+      That is, the function must be used as a table source in a
+      <literal>FROM</literal> clause.
      </para>
 
      <para>
       <command>RETURN NEXT</command> does not actually return from the
-      function; it simply saves away the value of the expression (or
-      record or row variable, as appropriate for the data type being
-      returned).  Execution then continues with the next statement in
+      function; it simply saves away the value of the expression.
+      Execution then continues with the next statement in
       the <application>PL/pgSQL</> function.  As successive
       <command>RETURN NEXT</command> commands are executed, the result
       set is built up.  A final <command>RETURN</command>, which should
@@ -1727,7 +1744,7 @@ END LOOP;
 BEGIN
     -- some computations
     IF stocks &gt; 100000 THEN
-        EXIT;  -- invalid; cannot use EXIT outside of LOOP
+        EXIT;  -- causes exit from the BEGIN block
     END IF;
 END;
 </programlisting>
@@ -1821,8 +1838,9 @@ FOR <replaceable>record_or_row</replaceable> IN <replaceable>query</replaceable>
 END LOOP;
 </synopsis>
      The record or row variable is successively assigned each row
-     resulting from the query (which must be a <command>SELECT</command>
-     command) and the loop body is executed for each row. Here is an example:
+     resulting from the <replaceable>query</replaceable> (which must be a
+     <command>SELECT</command> command) and the loop body is executed for each
+     row. Here is an example:
 <programlisting>
 CREATE FUNCTION cs_refresh_mviews() RETURNS integer AS $$
 DECLARE
@@ -1874,7 +1892,7 @@ END LOOP;
      <literal>IN</> and <literal>LOOP</>.  If <literal>..</> is not seen then
      the loop is presumed to be a loop over rows.  Mistyping the <literal>..</>
      is thus likely to lead to a complaint along the lines of
-     <quote>loop variable of loop over rows must be a record or row</>,
+     <quote>loop variable of loop over rows must be a record or row variable</>,
      rather than the simple syntax error one might expect to get.
     </para>
     </note>
@@ -1902,7 +1920,7 @@ EXCEPTION
         <replaceable>handler_statements</replaceable>
     <optional> WHEN <replaceable>condition</replaceable> <optional> OR <replaceable>condition</replaceable> ... </optional> THEN
           <replaceable>handler_statements</replaceable>
-    ... </optional>
+      ... </optional>
 END;
 </synopsis>
     </para>
@@ -2060,7 +2078,7 @@ DECLARE
      <title><command>OPEN FOR SELECT</command></title>
 
 <synopsis>
-OPEN <replaceable>unbound-cursor</replaceable> FOR SELECT ...;
+OPEN <replaceable>unbound_cursor</replaceable> FOR SELECT ...;
 </synopsis>
 
        <para>
@@ -2086,7 +2104,7 @@ OPEN curs1 FOR SELECT * FROM foo WHERE key = mykey;
      <title><command>OPEN FOR EXECUTE</command></title>
 
 <synopsis>
-OPEN <replaceable>unbound-cursor</replaceable> FOR EXECUTE <replaceable class="command">query-string</replaceable>;
+OPEN <replaceable>unbound_cursor</replaceable> FOR EXECUTE <replaceable class="command">query_string</replaceable>;
 </synopsis>
 
          <para>
@@ -2111,7 +2129,7 @@ OPEN curs1 FOR EXECUTE 'SELECT * FROM ' || quote_ident($1);
      <title>Opening a Bound Cursor</title>
 
 <synopsis>
-OPEN <replaceable>bound-cursor</replaceable> <optional> ( <replaceable>argument_values</replaceable> ) </optional>;
+OPEN <replaceable>bound_cursor</replaceable> <optional> ( <replaceable>argument_values</replaceable> ) </optional>;
 </synopsis>
 
          <para>
@@ -2312,8 +2330,8 @@ RAISE <replaceable class="parameter">level</replaceable> '<replaceable class="pa
     priority levels.
     Whether messages of a particular priority are reported to the client,
     written to the server log, or both is controlled by the
-    <varname>log_min_messages</varname> and
-    <varname>client_min_messages</varname> configuration
+    <xref linkend="guc-log-min-messages"> and
+    <xref linkend="guc-client-min-messages"> configuration
     variables. See <xref linkend="runtime-config"> for more
     information.
    </para>
@@ -2573,11 +2591,8 @@ CREATE TRIGGER emp_stamp BEFORE INSERT OR UPDATE ON emp
 
    <para>
     Another way to log changes to a table involves creating a new table that
-    holds a row for each insert, update, delete that occurs. This approach can
-    be thought of as auditing changes to a table.
-   </para>
-
-   <para>
+    holds a row for each insert, update, or delete that occurs. This approach
+    can be thought of as auditing changes to a table.
     <xref linkend="plpgsql-trigger-audit-example"> shows an example of an
     audit trigger procedure in <application>PL/pgSQL</application>.
    </para>
@@ -2606,7 +2621,7 @@ CREATE TABLE emp_audit(
     salary integer
 );
 
-CREATE OR REPLACE  FUNCTION process_emp_audit() RETURNS TRIGGER AS $emp_audit$
+CREATE OR REPLACE FUNCTION process_emp_audit() RETURNS TRIGGER AS $emp_audit$
     BEGIN
         --
         -- Create a row in emp_audit to reflect the operation performed on emp,
@@ -2622,14 +2637,13 @@ CREATE OR REPLACE  FUNCTION process_emp_audit() RETURNS TRIGGER AS $emp_audit$
             INSERT INTO emp_audit SELECT 'I', now(), user, NEW.*;
             RETURN NEW;
         END IF;
+        RETURN NULL; -- result is ignored since this is an AFTER trigger
     END;
 $emp_audit$ language plpgsql;
 
-
 CREATE TRIGGER emp_audit
 AFTER INSERT OR UPDATE OR DELETE ON emp
-    FOR EACH ROW EXECUTE PROCEDURE process_emp_audit() 
-;
+    FOR EACH ROW EXECUTE PROCEDURE process_emp_audit();
 </programlisting>
    </example>
   </sect1>

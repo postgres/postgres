@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.34 2004/12/13 18:05:08 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.35 2004/12/30 21:45:36 tgl Exp $
 -->
 
  <chapter id="plperl">
@@ -132,9 +132,66 @@ CREATE FUNCTION empcomp(employee) RETURNS integer AS $$
     return $emp-&gt;{basesalary} + $emp-&gt;{bonus};
 $$ LANGUAGE plperl;
 
-SELECT name, empcomp(employee) FROM employee;
+SELECT name, empcomp(employee.*) FROM employee;
 </programlisting>
   </para>
+
+  <para>
+   A PL/Perl function can return a composite-type result using the same
+   approach: return a reference to a hash that has the required attributes.
+   For example,
+
+<programlisting>
+CREATE TYPE testrowperl AS (f1 integer, f2 text, f3 text);
+
+CREATE OR REPLACE FUNCTION perl_row() RETURNS testrowperl AS $$
+    return {f2 =&gt; 'hello', f1 =&gt; 1, f3 =&gt; 'world'};
+$$ LANGUAGE plperl;
+
+SELECT * FROM perl_row();
+</programlisting>
+
+   Any columns in the declared result data type that are not present in the
+   hash will be returned as NULLs.
+  </para>
+
+  <para>
+   PL/Perl functions can also return sets of either scalar or composite
+   types.  To do this, return a reference to an array that contains
+   either scalars or references to hashes, respectively.  Here are
+   some simple examples:
+
+<programlisting>
+CREATE OR REPLACE FUNCTION perl_set_int(int) RETURNS SETOF INTEGER AS $$
+return [0..$_[0]];
+$$ LANGUAGE plperl;
+
+SELECT * FROM perl_set_int(5);
+
+
+CREATE OR REPLACE FUNCTION perl_set() RETURNS SETOF testrowperl AS $$
+    return [
+        { f1 =&gt; 1, f2 =&gt; 'Hello', f3 =&gt; 'World' },
+        { f1 =&gt; 2, f2 =&gt; 'Hello', f3 =&gt; 'PostgreSQL' },
+        { f1 =&gt; 3, f2 =&gt; 'Hello', f3 =&gt; 'PL/Perl' }
+    ];
+$$  LANGUAGE plperl;
+
+SELECT * FROM perl_set();
+</programlisting>
+
+   Note that when you do this, Perl will have to build the entire array in
+   memory; therefore the technique does not scale to very large result sets.
+  </para>
+
+    <para>
+     <application>PL/Perl</> does not currently have full support for
+     domain types: it treats a domain the same as the underlying scalar
+     type.  This means that constraints associated with the domain will
+     not be enforced.  This is not an issue for function arguments, but
+     it is a hazard if you declare a <application>PL/Perl</> function
+     as returning a domain type.
+    </para>
  </sect1>
 
  <sect1 id="plperl-database">
@@ -204,53 +261,9 @@ $res = $rv-&gt;{status};
 $nrows = $rv-&gt;{processed};
 </programlisting>
       </para>
-     </listitem>
-    </varlistentry>
 
-    <varlistentry>
-     <indexterm>
-      <primary>elog</primary>
-      <secondary>in PL/Perl</secondary>
-     </indexterm>
-
-     <term><literal><function>elog</>(<replaceable>level</replaceable>, <replaceable>msg</replaceable>)</literal></term>
-     <listitem>
       <para>
-       Emit a log or error message. Possible levels are
-       <literal>DEBUG</>, <literal>LOG</>, <literal>INFO</>,
-       <literal>NOTICE</>, <literal>WARNING</>, and <literal>ERROR</>.
-       <literal>ERROR</>
-        raises an error condition; if this is not trapped by the surrounding
-        Perl code, the error propagates out to the calling query, causing
-        the current transaction or subtransaction to be aborted.  This
-        is effectively the same as the Perl <literal>die</> command.
-        The other levels simply report the message to the system log
-        and/or client.
-      </para>
-     </listitem>
-    </varlistentry>
-   </variablelist>
-  </para>
- </sect1>
-
- <sect1 id="plperl-data">
-  <title>Data Values in PL/Perl</title>
-
-  <para>
-   The argument values supplied to a PL/Perl function's code are
-   simply the input arguments converted to text form (just as if they
-   had been displayed by a <command>SELECT</command> statement).
-   Conversely, the <literal>return</> command will accept any string
-   that is acceptable input format for the function's declared return
-   type.  So, the PL/Perl programmer can manipulate data values as if
-   they were just text.
-  </para>
-
-  <para>
-   PL/Perl can also return row sets and composite types, and row sets
-   of composite types.  Here is an example of a PL/Perl function
-   returning a row set of a row type.  Note that a composite type is
-   always represented as a hash reference.
+       Here is a complete example:
 <programlisting>
 CREATE TABLE test (
     i int,
@@ -278,36 +291,53 @@ $$ LANGUAGE plperl;
 
 SELECT * FROM test_munge();
 </programlisting>
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <indexterm>
+      <primary>elog</primary>
+      <secondary>in PL/Perl</secondary>
+     </indexterm>
+
+     <term><literal><function>elog</>(<replaceable>level</replaceable>, <replaceable>msg</replaceable>)</literal></term>
+     <listitem>
+      <para>
+       Emit a log or error message. Possible levels are
+       <literal>DEBUG</>, <literal>LOG</>, <literal>INFO</>,
+       <literal>NOTICE</>, <literal>WARNING</>, and <literal>ERROR</>.
+       <literal>ERROR</>
+        raises an error condition; if this is not trapped by the surrounding
+        Perl code, the error propagates out to the calling query, causing
+        the current transaction or subtransaction to be aborted.  This
+        is effectively the same as the Perl <literal>die</> command.
+        The other levels only generate messages of different
+        priority levels.
+        Whether messages of a particular priority are reported to the client,
+        written to the server log, or both is controlled by the
+        <xref linkend="guc-log-min-messages"> and
+        <xref linkend="guc-client-min-messages"> configuration
+        variables. See <xref linkend="runtime-config"> for more
+        information.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
   </para>
+ </sect1>
+
+ <sect1 id="plperl-data">
+  <title>Data Values in PL/Perl</title>
 
   <para>
-   Here is an example of a PL/Perl function returning a composite
-   type:
-<programlisting>
-CREATE TYPE testrowperl AS (f1 integer, f2 text, f3 text);
-
-CREATE OR REPLACE FUNCTION perl_row() RETURNS testrowperl AS $$
-    return {f2 =&gt; 'hello', f1 =&gt; 1, f3 =&gt; 'world'};
-$$ LANGUAGE plperl;
-</programlisting>
-  </para>
-
-  <para>
-   Here is an example of a PL/Perl function returning a row set of a
-   composite type.  Since a row set is always a reference to an array
-   and a composite type is always a reference to a hash, a row set of a
-   composite type is a reference to an array of hash references.
-<programlisting>
-CREATE TYPE testsetperl AS (f1 integer, f2 text, f3 text);
-
-CREATE OR REPLACE FUNCTION perl_set() RETURNS SETOF testsetperl AS $$
-    return [
-        { f1 =&gt; 1, f2 =&gt; 'Hello', f3 =&gt;  'World' },
-        { f1 =&gt; 2, f2 =&gt; 'Hello', f3 =&gt;  'PostgreSQL' },
-        { f1 =&gt; 3, f2 =&gt; 'Hello', f3 =&gt;  'PL/Perl' }
-    ];
-$$  LANGUAGE plperl;
-</programlisting>
+   The argument values supplied to a PL/Perl function's code are
+   simply the input arguments converted to text form (just as if they
+   had been displayed by a <command>SELECT</command> statement).
+   Conversely, the <literal>return</> command will accept any string
+   that is acceptable input format for the function's declared return
+   type.  So, within the PL/Perl function,
+   all values are just text strings.
   </para>
  </sect1>
 
@@ -317,8 +347,7 @@ $$  LANGUAGE plperl;
   <para>
     You can use the global hash <varname>%_SHARED</varname> to store
     data, including code references, between function calls for the
-    lifetime of the current session, which is bounded from below by
-    the lifetime of the current transaction.
+    lifetime of the current session.
   </para>
 
   <para>
@@ -360,12 +389,12 @@ SELECT myfuncs(); /* initializes the function */
 CREATE OR REPLACE FUNCTION use_quote(TEXT) RETURNS text AS $$
     my $text_to_quote = shift;
     my $qfunc = $_SHARED{myquote};
-    return &$qfunc($text_to_quote);
+    return &amp;$qfunc($text_to_quote);
 $$ LANGUAGE plperl;
 </programlisting>
 
    (You could have replaced the above with the one-liner
-   <literal>return $_SHARED{myquote}->($_[0]);</literal>
+   <literal>return $_SHARED{myquote}-&gt;($_[0]);</literal>
    at the expense of readability.)
   </para>
  </sect1>
@@ -619,9 +648,7 @@ CREATE TRIGGER test_valid_id_trig
      <para>
       In the current implementation, if you are fetching or returning
       very large data sets, you should be aware that these will all go
-      into memory.  Future features will help with this.  In the
-      meantime, we suggest that you not use PL/Perl if you will fetch
-      or return very large result sets.
+      into memory.
      </para>
     </listitem>
    </itemizedlist>

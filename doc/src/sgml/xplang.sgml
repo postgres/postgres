@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/xplang.sgml,v 1.27 2004/12/30 03:13:56 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/xplang.sgml,v 1.28 2004/12/30 21:45:37 tgl Exp $
 -->
 
  <chapter id="xplang">
@@ -10,27 +10,32 @@ $PostgreSQL: pgsql/doc/src/sgml/xplang.sgml,v 1.27 2004/12/30 03:13:56 tgl Exp $
   </indexterm>
 
   <para>
-   <productname>PostgreSQL</productname> allows users to add new
-   programming languages to be available for writing functions and
-   procedures.  These are called <firstterm>procedural
-   languages</firstterm> (PL).  In the case of a function or trigger
-   procedure written in a procedural language, the database server has
+   <productname>PostgreSQL</productname> allows user-defined functions
+   to be written in other languages besides SQL and C.  These other
+   languages are generically called <firstterm>procedural
+   languages</firstterm> (<acronym>PL</>s).  For a function
+   written in a procedural language, the database server has
    no built-in knowledge about how to interpret the function's source
    text. Instead, the task is passed to a special handler that knows
    the details of the language.  The handler could either do all the
    work of parsing, syntax analysis, execution, etc. itself, or it
    could serve as <quote>glue</quote> between
    <productname>PostgreSQL</productname> and an existing implementation
-   of a programming language.  The handler itself is a special
+   of a programming language.  The handler itself is a
    C language function compiled into a shared object and
-   loaded on demand.
+   loaded on demand, just like any other C function.
   </para>
 
   <para>
-   Writing a handler for a new procedural language is described in
-   <xref linkend="plhandler">.  Several procedural languages are
-   available in the core <productname>PostgreSQL</productname>
-   distribution, which can serve as examples.
+   There are currently four procedural languages available in the
+   standard <productname>PostgreSQL</productname> distribution:
+   <application>PL/pgSQL</application> (<xref linkend="plpgsql">),
+   <application>PL/Tcl</application> (<xref linkend="pltcl">),
+   <application>PL/Perl</application> (<xref linkend="plperl">), and
+   <application>PL/Python</application> (<xref linkend="plpython">).
+   Other languages can be defined by users.
+   The basics of developing a new procedural language are covered in <xref
+   linkend="plhandler">.
   </para>
 
   <para>
@@ -46,14 +51,16 @@ $PostgreSQL: pgsql/doc/src/sgml/xplang.sgml,v 1.27 2004/12/30 03:13:56 tgl Exp $
     A procedural language must be <quote>installed</quote> into each
     database where it is to be used.  But procedural languages installed in
     the database <literal>template1</> are automatically available in all
-    subsequently created databases. So the database administrator can
+    subsequently created databases, since their entries in
+    <literal>template1</> will be copied by <command>CREATE DATABASE</>.
+    So the database administrator can
     decide which languages are available in which databases and can make
     some languages available by default if he chooses.
    </para>
 
    <para>
     For the languages supplied with the standard distribution, the
-    program <command>createlang</command> may be used to install the
+    program <xref linkend="app-createlang"> may be used to install the
     language instead of carrying out the details by hand.  For
     example, to install the language
     <application>PL/pgSQL</application> into the database
@@ -72,23 +79,24 @@ createlang plpgsql template1
     </title>
 
     <para>
-     A procedural language is installed in a database in three steps,
+     A procedural language is installed in a database in four steps,
      which must be carried out by a database superuser.  The
-     <command>createlang</command> program automates <xref
-     linkend="xplang-install-cr1"> and <xref
-     linkend="xplang-install-cr2">.
+     <command>createlang</command> program automates all but <xref
+     linkend="xplang-install-cr1">.
     </para>
 
-    <step performance="required">
+    <step performance="required" id="xplang-install-cr1">
      <para>
       The shared object for the language handler must be compiled and
       installed into an appropriate library directory.  This works in the same
       way as building and installing modules with regular user-defined C
-      functions does; see <xref linkend="dfunc">.
+      functions does; see <xref linkend="dfunc">.  Often, the language
+      handler will depend on an external library that provides the actual
+      programming language engine; if so, that must be installed as well.
      </para>
     </step>
 
-    <step performance="required" id="xplang-install-cr1">
+    <step performance="required" id="xplang-install-cr2">
      <para>
       The handler must be declared with the command
 <synopsis>
@@ -104,12 +112,29 @@ CREATE FUNCTION <replaceable>handler_function_name</replaceable>()
      </para>
     </step>
 
-    <step performance="required" id="xplang-install-cr2">
+    <step performance="optional" id="xplang-install-cr3">
+     <para>
+      Optionally, the language handler may provide a <quote>validator</>
+      function that checks a function definition for correctness without
+      actually executing it.  The validator function is called by
+      <command>CREATE FUNCTION</> if it exists.  If a validator function
+      is provided by the handler, declare it with a command like
+<synopsis>
+CREATE FUNCTION <replaceable>validator_function_name</replaceable>(oid)
+    RETURNS void
+    AS '<replaceable>path-to-shared-object</replaceable>'
+    LANGUAGE C;
+</synopsis>
+     </para>
+    </step>
+
+    <step performance="required" id="xplang-install-cr4">
      <para>
       The PL must be declared with the command
 <synopsis>
 CREATE <optional>TRUSTED</optional> <optional>PROCEDURAL</optional> LANGUAGE <replaceable>language-name</replaceable>
-    HANDLER <replaceable>handler_function_name</replaceable>;
+    HANDLER <replaceable>handler_function_name</replaceable>
+    <optional>VALIDATOR <replaceable>validator_function_name</replaceable></optional> ;
 </synopsis>
       The optional key word <literal>TRUSTED</literal> specifies that
       ordinary database users that have no superuser privileges should
@@ -151,12 +176,23 @@ CREATE FUNCTION plpgsql_call_handler() RETURNS language_handler AS
      </para>
 
      <para>
+      <application>PL/pgSQL</application> has a validator function,
+      so we declare that too:
+
+<programlisting>
+CREATE FUNCTION plpgsql_validator(oid) RETURNS void AS
+    '$libdir/plpgsql' LANGUAGE C;
+</programlisting>
+     </para>
+
+     <para>
       The command
 <programlisting>
 CREATE TRUSTED PROCEDURAL LANGUAGE plpgsql
-    HANDLER plpgsql_call_handler;
+    HANDLER plpgsql_call_handler
+    VALIDATOR plpgsql_validator;
 </programlisting>
-      then defines that the previously declared call handler function
+      then defines that the previously declared functions
       should be invoked for functions and trigger procedures where the
       language attribute is <literal>plpgsql</literal>.
      </para>
@@ -166,7 +202,7 @@ CREATE TRUSTED PROCEDURAL LANGUAGE plpgsql
     In a default <productname>PostgreSQL</productname> installation,
     the handler for the <application>PL/pgSQL</application> language
     is built and installed into the <quote>library</quote>
-    directory. If <application>Tcl/Tk</> support is configured in, the handlers for
+    directory. If <application>Tcl</> support is configured in, the handlers for
     <application>PL/Tcl</> and <application>PL/TclU</> are also built and installed in the same
     location.  Likewise, the <application>PL/Perl</> and <application>PL/PerlU</> handlers are built
     and installed if Perl support is configured, and <application>PL/PythonU</> is
