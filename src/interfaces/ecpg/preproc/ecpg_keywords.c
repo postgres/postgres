@@ -9,9 +9,8 @@
 #include <string.h>
 
 #include "postgres.h"
-#include "type.h"
 #include "extern.h"
-#include "y.tab.h"
+#include "preproc.h"
 
 /*
  * List of (keyword-name, keyword-token-value) pairs.
@@ -21,25 +20,38 @@
  */
 static ScanKeyword ScanKeywords[] = {
 	/* name					value			*/
+	{"bool", SQL_BOOL},
 	{"break", SQL_BREAK},
 	{"call", SQL_CALL},
 	{"connect", SQL_CONNECT},
 	{"connection", SQL_CONNECTION},
 	{"continue", SQL_CONTINUE},
+	{"deallocate", SQL_DEALLOCATE},
 	{"disconnect", SQL_DISCONNECT},
+	{"enum", SQL_ENUM},
 	{"found", SQL_FOUND},
+	{"free", SQL_FREE},
 	{"go", SQL_GO},
 	{"goto", SQL_GOTO},
 	{"identified", SQL_IDENTIFIED},
 	{"immediate", SQL_IMMEDIATE},
 	{"indicator", SQL_INDICATOR},
+	{"int", SQL_INT},
+	{"long", SQL_LONG},
 	{"open", SQL_OPEN},
+	{"prepare", SQL_PREPARE},
+	{"reference", SQL_REFERENCE},
 	{"release", SQL_RELEASE},
 	{"section", SQL_SECTION},
+	{"short", SQL_SHORT},
+	{"signed", SQL_SIGNED},
 	{"sqlerror", SQL_SQLERROR},
 	{"sqlprint", SQL_SQLPRINT},
 	{"sqlwarning", SQL_SQLWARNING},
 	{"stop", SQL_STOP},
+	{"struct", SQL_STRUCT},
+	{"unsigned", SQL_UNSIGNED},
+	{"var", SQL_VAR},
 	{"whenever", SQL_WHENEVER},
 };
 

@@ -9,9 +9,8 @@
 #include <string.h>
 
 #include "postgres.h"
-#include "type.h"
-#include "y.tab.h"
 #include "extern.h"
+#include "preproc.h"
 
 /*
  * List of (keyword-name, keyword-token-value) pairs.

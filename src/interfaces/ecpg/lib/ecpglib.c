@@ -75,11 +75,18 @@ struct variable
 
 struct statement
 {
-	int			lineno;
+	int	    lineno;
 	char	   *command;
 	struct variable *inlist;
 	struct variable *outlist;
 };
+
+struct prepared_statement
+{
+	char 				*name;
+	struct statement 		*stmt;
+	struct prepared_statement	*next;
+}	*prep_stmts = NULL;
 
 static int	simple_debug = 0;
 static FILE *debugstream = NULL;
@@ -196,6 +203,41 @@ quote_postgres(char *arg, int lineno)
 	return res;
 }
 
+/* This function returns a newly malloced string that has the \
+   in the strings inside the argument quoted with another \.
+ */
+static
+char *
+quote_strings(char *arg, int lineno)
+{
+	char	   *res = (char *) ecpg_alloc(2 * strlen(arg) + 1, lineno);
+	int			i,
+				ri;
+	bool 			string = false;
+
+	if (!res)
+		return (res);
+
+	for (i = 0, ri = 0; arg[i]; i++, ri++)
+	{
+		switch (arg[i])
+		{
+			case '\'':
+				string = string ? false : true;
+				break;
+			case '\\':
+				res[ri++] = '\\';
+			default:
+				;
+		}
+
+		res[ri] = arg[i];
+	}
+	res[ri] = '\0';
+
+	return res;
+}
+
 /* create a list of variables */
 static bool
 create_statement(int lineno, struct statement ** stmt, char *query, va_list ap)
@@ -236,6 +278,14 @@ create_statement(int lineno, struct statement ** stmt, char *query, va_list ap)
 			var->ind_arrsize = va_arg(ap, long);
 			var->ind_offset = va_arg(ap, long);
 			var->next = NULL;
+			
+			if (var->value == NULL)
+			{
+				ECPGlog("create_statement: invalid statement name\n");
+				register_error(ECPG_INVALID_STMT, "Invalid statement name in line %d", lineno);
+				free(var);
+				return false;
+			}
 
 			for (ptr = *list; ptr && ptr->next; ptr = ptr->next);
 
@@ -249,6 +299,19 @@ create_statement(int lineno, struct statement ** stmt, char *query, va_list ap)
 	}
 
 	return (true);
+}
+
+static char *
+next_insert(char *text)
+{
+	char *ptr = text;
+	bool string = false;
+	
+	for (; ptr[1] != '\0' && (ptr[0] != ';' || ptr[1] != ';' || string); ptr++)
+		if (ptr[0] == '\'')
+			string = string ? false : true;
+			
+	return (ptr[1] == '\0') ? NULL : ptr;
 }
 
 static bool
@@ -379,7 +442,30 @@ ECPGexecute(struct statement * stmt)
 						tobeinserted = mallocedval;
 					}
 					break;
+				case ECPGt_char_variable:
+					{
+						/* set slen to string length if type is char * */
+						int			slen = (var->varcharsize == 0) ? strlen((char *) var->value) : var->varcharsize;
+						char	   *tmp;
 
+						if (!(newcopy = ecpg_alloc(slen + 1, stmt->lineno)))
+							return false;
+
+						strncpy(newcopy, (char *) var->value, slen);
+						newcopy[slen] = '\0';
+						if (!(mallocedval = (char *) ecpg_alloc(2 * strlen(newcopy) + 1, stmt->lineno)))
+							return false;
+
+						tmp = quote_strings(newcopy, stmt->lineno);
+						if (!tmp)
+							return false;
+
+						strcat(mallocedval, tmp);
+						free(newcopy);
+
+						tobeinserted = mallocedval;
+					}
+					break;
 				case ECPGt_varchar:
 					{
 						struct ECPGgeneric_varchar *variable =
@@ -428,7 +514,7 @@ ECPGexecute(struct statement * stmt)
 			return false;
 
 		strcpy(newcopy, copiedquery);
-		if ((p = strstr(newcopy, ";;")) == NULL)
+		if ((p = next_insert(newcopy)) == NULL)
 		{
 
 			/*
@@ -449,7 +535,7 @@ ECPGexecute(struct statement * stmt)
 			strcat(newcopy,
 				   copiedquery
 				   + (p - newcopy)
-				   + 2 /* Length of ;; */ );
+				   + sizeof(";;") - 1 /* don't count the '\0' */);
 		}
 
 		/*
@@ -470,7 +556,7 @@ ECPGexecute(struct statement * stmt)
 	}
 
 	/* Check if there are unmatched things left. */
-	if (strstr(copiedquery, ";;") != NULL)
+	if (next_insert(copiedquery) != NULL)
 	{
 		register_error(ECPG_TOO_FEW_ARGUMENTS, "Too few arguments line %d.", stmt->lineno);
 		return false;
@@ -898,7 +984,21 @@ ECPGtrans(int lineno, const char *transaction)
 		PQclear(res);
 	}
 	if (strcmp(transaction, "commit") == 0 || strcmp(transaction, "rollback") == 0)
+	{
+		struct prepared_statement *this;
+			
 		committed = 1;
+
+		/* deallocate all prepared statements */
+		for (this = prep_stmts; this != NULL; this = this->next)
+		{
+			bool b = ECPGdeallocate(lineno, this->name);
+		
+			if (!b) 
+				return false;
+		}
+	}
+
 	return TRUE;
 }
 
@@ -1033,3 +1133,109 @@ sqlprint(void)
 	sqlca.sqlerrm.sqlerrmc[sqlca.sqlerrm.sqlerrml] = '\0';
 	printf("sql error %s\n", sqlca.sqlerrm.sqlerrmc);
 }
+
+static void
+replace_variables(char *text)
+{
+	char *ptr = text;
+	bool string = false;
+	
+	for (; *ptr != '\0'; ptr++)
+	{
+		if (*ptr == '\'')
+			string = string ? false : true;
+			
+		if (!string && *ptr == ':')
+		{
+			ptr[0] = ptr[1] = ';';
+			for (ptr += 2; *ptr && *ptr != ' '; ptr++)
+				*ptr = ' ';
+		}
+	}
+}
+
+/* handle the EXEC SQL PREPARE statement */
+bool
+ECPGprepare(int lineno, char *name, char *variable)
+{
+	struct statement *stmt;
+	struct prepared_statement *this;
+
+	/* check if we already have prepared this statement */
+	for (this = prep_stmts; this != NULL && strcmp(this->name, name) != 0; this = this->next);		
+	if (this)
+	{
+		bool b = ECPGdeallocate(lineno, name);
+		
+		if (!b) 
+			return false;
+	}
+	
+	this = (struct prepared_statement *) ecpg_alloc(sizeof(struct prepared_statement), lineno);
+	if (!this)
+		return false;
+		
+	stmt = (struct statement *) ecpg_alloc(sizeof(struct statement), lineno);
+	if (!stmt)
+	{
+		free(this);
+		return false;
+	}
+
+	/* create statement */
+	stmt->lineno = lineno;
+        stmt->command = ecpg_strdup(variable, lineno);
+        stmt->inlist = stmt->outlist = NULL;
+        
+        /* if we have C variables in our statment replace them with ';;' */
+        replace_variables(stmt->command);                	
+        
+	/* add prepared statement to our list */
+	this->name = ecpg_strdup(name, lineno);
+	this->stmt = stmt;
+
+	if (prep_stmts == NULL)
+		this->next = NULL;
+	else
+		this->next = prep_stmts;
+
+	prep_stmts = this;
+	return true;
+}
+
+/* handle the EXEC SQL DEALLOCATE PREPARE statement */
+bool
+ECPGdeallocate(int lineno, char *name)
+{
+	struct prepared_statement *this, *prev;
+
+	/* check if we really have prepared this statement */
+	for (this = prep_stmts, prev = NULL; this != NULL && strcmp(this->name, name) != 0; prev = this, this = this->next);		
+	if (this)
+	{
+		/* okay, free all the resources */
+		free(this->name);
+		free(this->stmt->command);
+		free(this->stmt);
+		if (prev != NULL)
+			prev->next = this->next;
+		else
+			prep_stmts = this->next;
+		
+		return true;
+	}
+	ECPGlog("deallocate_prepare: invalid statement name %s\n", name);
+	register_error(ECPG_INVALID_STMT, "Invalid statement name %s in line %d", name, lineno);
+	return false;
+}
+
+/* return the prepared statement */
+char *
+ECPGprepared_statement(char *name)
+{
+	struct prepared_statement *this;
+	
+	for (this = prep_stmts; this != NULL && strcmp(this->name, name) != 0; this = this->next);
+	return (this) ? this->stmt->command : NULL;
+}
+

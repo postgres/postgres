@@ -11,10 +11,10 @@ DESCRIPTOR statement will be ignored.
 
 it would be nice to be able to use :var[:index] as cvariable
 
+'at DB connection' is missing for several commands (is this standard?)
+
+support for unions
+
 Missing statements:
- - exec sql type
- - exec sql prepare
  - exec sql allocate
- - exqc sql free
  - SQLSTATE
- - exec sql whenever sqlwarning

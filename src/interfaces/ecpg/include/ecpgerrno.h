@@ -28,6 +28,8 @@
 #define ECPG_NO_CONN		-220
 #define ECPG_NOT_CONN		-221
 
+#define ECPG_INVALID_STMT	-230
+
 /* finally the backend error messages, they start at 400 */
 #define ECPG_PGSQL		-400
 #define ECPG_TRANS		-401

@@ -2,7 +2,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "type.h"
 #include "extern.h"
 
 /* malloc + error check */
@@ -36,8 +35,8 @@ mm_strdup(const char *string)
 }
 
 /* duplicate memberlist */
-static struct ECPGstruct_member *
-struct_member_dup(struct ECPGstruct_member * rm)
+struct ECPGstruct_member *
+ECPGstruct_member_dup(struct ECPGstruct_member * rm)
 {
 	struct ECPGstruct_member *new = NULL;
 
@@ -71,7 +70,8 @@ void
 ECPGmake_struct_member(char *name, struct ECPGtype * type, struct ECPGstruct_member ** start)
 {
 	struct ECPGstruct_member *ptr,
-			   *ne = (struct ECPGstruct_member *) mm_alloc(sizeof(struct ECPGstruct_member));
+			   *ne =
+	(struct ECPGstruct_member *) mm_alloc(sizeof(struct ECPGstruct_member));
 
 	ne->name = strdup(name);
 	ne->typ = type;
@@ -112,7 +112,7 @@ ECPGmake_struct_type(struct ECPGstruct_member * rm)
 {
 	struct ECPGtype *ne = ECPGmake_simple_type(ECPGt_struct, 1);
 
-	ne->u.members = struct_member_dup(rm);
+	ne->u.members = ECPGstruct_member_dup(rm);
 
 	return ne;
 }
@@ -160,6 +160,9 @@ get_type(enum ECPGttype typ)
 		case ECPGt_NO_INDICATOR:		/* no indicator */
 			return ("ECPGt_NO_INDICATOR");
 			break;
+		case ECPGt_char_variable:			/* string that should not be quoted */
+			return ("ECPGt_char_variable");
+			break;
 		default:
 			abort();
 	}
@@ -202,23 +205,30 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * typ, const char *in
 			{
 				ECPGdump_a_simple(o, name, typ->u.element->typ,
 						  typ->u.element->size, typ->size, NULL, prefix);
-				if (ind_typ == &ecpg_no_indicator)
+				if (ind_typ->typ == ECPGt_NO_INDICATOR)
 					ECPGdump_a_simple(o, ind_name, ind_typ->typ, ind_typ->size, -1, NULL, ind_prefix);
 				else
+				{
+					if (ind_typ->typ != ECPGt_array)
+					{
+						fprintf(stderr, "Indicator for an array has to be array too.\n");
+					        exit(INDICATOR_NOT_ARRAY);
+					}                	
 					ECPGdump_a_simple(o, ind_name, ind_typ->u.element->typ,
 									  ind_typ->u.element->size, ind_typ->size, NULL, prefix);
+				}
 			}
 			else if (typ->u.element->typ == ECPGt_array)
 			{
-				yyerror("No nested arrays allowed (except strings)");	/* Array of array, */
+				yyerror("No nested arrays allowed (except strings)");	/* array of array */
 			}
 			else if (typ->u.element->typ == ECPGt_struct)
 			{
-				/* Array of structs. */
+				/* Array of structs */
 				ECPGdump_a_struct(o, name, ind_name, typ->size, typ->u.element, ind_typ->u.element, NULL, prefix, ind_prefix);
 			}
 			else
-				yyerror("Internal error: unknown datatype, pleqase inform pgsql-bugs@postgresql.org");
+				yyerror("Internal error: unknown datatype, please inform pgsql-bugs@postgresql.org");
 			break;
 		case ECPGt_struct:
 			ECPGdump_a_struct(o, name, ind_name, 1, typ, ind_typ, NULL, prefix, ind_prefix);
@@ -260,6 +270,7 @@ ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype typ,
 				break;
 			case ECPGt_char:
 			case ECPGt_unsigned_char:
+			case ECPGt_char_variable:
 				sprintf(offset, "%ld*sizeof(char)", varcharsize);
 				break;
 			default:

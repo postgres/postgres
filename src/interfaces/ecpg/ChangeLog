@@ -400,3 +400,60 @@ Tue Feb  2 07:40:52 CET 1999
 	- Brought preproc.y in sync again with gram.y.
 	- Set ecpg version to 2.4.9
 
+Wed Feb  3 18:28:46 CET 1999
+
+	- Started working on PREPARE statement.
+	- Fixed typo in preproc that cause CREATE statement to not work
+	  anymore.
+
+Thu Feb  4 19:43:39 CET 1999
+
+	- Some parts of the PREPARE statement work now.
+	- Added EXECUTE command
+	- Added DEALLOCATE PREPARE command
+
+Fri Feb  5 18:25:07 CET 1999
+
+	- PREPARE seems to be working okay now.
+	- Fixed some minor bugs.
+	- Renamed y.tab.* to preproc.*
+
+Mon Feb  8 07:57:29 CET 1999
+
+	- Synced preproc.y with gram.y again.
+	- Allow ':<name>' as positional variable in prepare statement also.
+	  You can still specify ';;' instead of course.
+	- Added TYPE statement.
+	- Set library version to 2.7.0
+
+Tue Feb  9 07:07:11 CET 1999
+
+	- Synced preproc.y with gram.y.
+
+Tue Feb  9 20:21:44 CET 1999
+
+	- Added FREE statement.
+
+Wed Feb 10 07:51:09 CET 1999
+
+	- Synced keyword.c.
+
+Sat Feb 13 10:44:43 CET 1999
+
+	- Added DECLARE STATEMENT for compatibility with Oracle. De facto
+	  this statement does nothing.
+	- Added VAR statement.
+
+Son Feb 14 11:36:04 CET 1999
+
+	- Added type 'enum' to TYPE and VAR statement. 
+	- Allow ecpg keywords as datatypes.
+
+Thu Feb 18 08:35:35 CET 1999
+
+	- Make sure indicator for array is array too.
+
+Fri Feb 19 18:38:45 CET 1999
+
+	- Finished type aliasing for structures.
+	- Set ecpg version to 2.5.0

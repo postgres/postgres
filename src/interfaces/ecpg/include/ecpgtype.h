@@ -45,7 +45,8 @@ extern		"C"
 		ECPGt_struct,
 		ECPGt_EOIT,				/* End of insert types. */
 		ECPGt_EORT,				/* End of result types. */
-		ECPGt_NO_INDICATOR		/* no indicator */
+		ECPGt_NO_INDICATOR,		/* no indicator */
+		ECPGt_char_variable
 	};
 
 #define IS_SIMPLE_TYPE(type) ((type) >= ECPGt_char && (type) <= ECPGt_varchar2)

@@ -25,6 +25,7 @@ extern char *optarg;
 struct _include_path *include_paths;
 int			no_auto_trans = 0;
 struct cursor *cur = NULL;
+struct typedefs *types = NULL;
 
 static void
 usage(char *progname)
@@ -155,22 +156,22 @@ main(int argc, char *const argv[])
 			{
 				struct cursor *ptr;
 				struct _defines *defptr;
-
+				struct typedefs *typeptr;
+				
 				/* remove old cursor definitions if any are still there */
 				for (ptr = cur; ptr != NULL;)
 				{
 					struct cursor *this = ptr;
-					struct arguments *l1,
-							   *l2;
+					struct arguments *l1, *l2;
 
 					free(ptr->command);
 					free(ptr->name);
-					for (l1 = argsinsert; l1; l1 = l2)
+					for (l1 = ptr->argsinsert; l1; l1 = l2)
 					{
 						l2 = l1->next;
 						free(l1);
 					}
-					for (l1 = argsresult; l1; l1 = l2)
+					for (l1 = ptr->argsresult; l1; l1 = l2)
 					{
 						l2 = l1->next;
 						free(l1);
@@ -189,7 +190,19 @@ main(int argc, char *const argv[])
 					defptr = defptr->next;
 					free(this);
 				}
+				
+				/* and old typedefs */
+				for (typeptr = types; typeptr != NULL;)
+				{
+					struct typedefs *this = typeptr;
 
+					free(typeptr->name);
+					free(typeptr->type);
+					ECPGfree_struct_member(typeptr->struct_member_list);
+					typeptr = typeptr->next;
+					free(this);
+				}
+				
 				/* initialize lex */
 				lex_init();
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.10 1999/02/13 23:22:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.11 1999/02/20 07:01:00 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,7 @@
 #include "nodes/parsenodes.h"
 #include "nodes/pg_list.h"
 #include "type.h"
-#include "y.tab.h"
+#include "preproc.h"
 #include "parser/keywords.h"
 #include "utils/elog.h"
 
@@ -69,9 +69,6 @@ static ScanKeyword ScanKeywords[] = {
 	{"createdb", CREATEDB},
 	{"createuser", CREATEUSER},
 	{"cross", CROSS},
-	{"current", CURRENT},		/* 6.4 to 6.5 is migration time! CURRENT
-								 * will be removed in 6.5! Use OLD keyword
-								 * in rules. Jan */
 	{"current_date", CURRENT_DATE},
 	{"current_time", CURRENT_TIME},
 	{"current_timestamp", CURRENT_TIMESTAMP},
@@ -96,6 +93,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"end", END_TRANS},
 	/***S*I***/
 	{"except", EXCEPT},
+
 	{"execute", EXECUTE},
 	{"exists", EXISTS},
 	{"explain", EXPLAIN},
@@ -125,6 +123,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"instead", INSTEAD},
 	/***S*I***/
 	{"intersect", INTERSECT},
+
 	{"interval", INTERVAL},
 	{"into", INTO},
 	{"is", IS},
@@ -138,6 +137,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"left", LEFT},
 	{"level", LEVEL},
 	{"like", LIKE},
+	{"limit", LIMIT},
 	{"listen", LISTEN},
 	{"load", LOAD},
 	{"local", LOCAL},
@@ -167,6 +167,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"nullif", NULLIF},
 	{"numeric", NUMERIC},
 	{"of", OF},
+	{"offset", OFFSET},
 	{"oids", OIDS},
 	{"old", CURRENT},
 	{"on", ON},

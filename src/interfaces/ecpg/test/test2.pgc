@@ -2,26 +2,31 @@
 
 exec sql include header_test;
 
+exec sql type c is char reference;
+typedef char* c;
+
 int
 main ()
 {
+	typedef struct { long born; short age; } birthinfo;
+	exec sql type birthinfo is struct { long born; short age; };
 exec sql begin declare section;
 	struct personal_struct	{	varchar name[8];
-					struct birth_struct {	long born;
-								short age;
-					} birth;
+					birthinfo birth;
 				} personal;
-	struct personal_indicator {	short ind_name;
-					struct birth_indicator {	short ind_born;
-									int ind_age;
-					} ind_birth;
+	struct personal_indicator {	int ind_name;
+					birthinfo ind_birth;
 				  } ind_personal;
-	long ind_married;
+	int ind_married;
 	char married[9];
+	c testname="Petra";
+	char *query="select name, born, age, married from meskes where name = :var1";
 exec sql end declare section;
 
-exec sql declare cur cursor for
-       select name, born, age, married from meskes;
+	exec sql var ind_married is long;
+
+	exec sql declare cur cursor for
+	       select name, born, age, married from meskes;
 
 	char msg[128], command[128];
 	FILE *dbgs;
@@ -36,11 +41,11 @@ exec sql declare cur cursor for
 	exec sql create table meskes(name char(8), born integer, age smallint, married char(8));
 
 	strcpy(msg, "insert");
-	exec sql insert into meskes(name, born, age, married) values ('Petra', 19661202, 32, '19900404');
+	exec sql insert into meskes(name, married) values ('Petra', '19900404');
 	exec sql insert into meskes(name, born, age, married) values ('Michael', 19660117, 33, '19900404');
-	exec sql insert into meskes(name, born, age) values ('Carsten', 19910103, 7);
-	exec sql insert into meskes(name, born, age) values ('Marc', 19930907, 4);
-	exec sql insert into meskes(name, born, age) values ('Chris', 19970923, 0);
+	exec sql insert into meskes(name, born, age) values ('Carsten', 19910103, 8);
+	exec sql insert into meskes(name, born, age) values ('Marc', 19930907, 5);
+	exec sql insert into meskes(name, born, age) values ('Chris', 19970923, 1);
 
 	strcpy(msg, "commit");
 	exec sql commit;
@@ -53,11 +58,43 @@ exec sql declare cur cursor for
 	while (1) {
 		strcpy(msg, "fetch");
 		exec sql fetch in cur into :personal:ind_personal, :married:ind_married;
-                printf ("%8.8s was born %d (age = %d) %s%s\n", personal.name.arr, personal.birth.born, personal.birth.age, ind_married ? "" : "and married ", ind_married ? "" : married);
+		printf("%8.8s", personal.name.arr);
+		if (!ind_personal.ind_birth.born)
+			printf(", born %d", personal.birth.born);
+		if (!ind_personal.ind_birth.age)
+			printf(", age = %d", personal.birth.age);
+		if (!ind_married)
+			printf(", married %s", married);
+		putchar('\n');
 	}
 
 	strcpy(msg, "close");
 	exec sql close cur;
+
+	/* and now the same query with prepare */
+	exec sql prepare MM from :query;
+	exec sql declare prep cursor for MM;
+
+	strcpy(msg, "open");
+	exec sql open prep using :testname;
+
+	exec sql whenever not found do break;
+
+	while (1) {
+		strcpy(msg, "fetch");
+		exec sql fetch in prep into :personal:ind_personal, :married:ind_married;
+		printf("%8.8s", personal.name.arr);
+		if (!ind_personal.ind_birth.born)
+			printf(", born %d", personal.birth.born);
+		if (!ind_personal.ind_birth.age)
+			printf(", age = %d", personal.birth.age);
+		if (!ind_married)
+			printf(", married %s", married);
+		putchar('\n');
+	}
+
+	strcpy(msg, "close");
+	exec sql close prep;
 
 	strcpy(msg, "drop");
 	exec sql drop table meskes;

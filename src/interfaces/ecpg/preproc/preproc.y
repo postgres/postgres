@@ -6,7 +6,6 @@
 #include "catalog/catname.h"
 #include "utils/numeric.h"
 
-#include "type.h"
 #include "extern.h"
 
 #ifdef MULTIBYTE
@@ -18,10 +17,10 @@
 /*
  * Variables containing simple states.
  */
-static int	struct_level = 0;
+int	struct_level = 0;
 static char	errortext[128];
 static int      QueryIsRule = 0, ForUpdateNotAllowed = 0;
-static enum ECPGttype actual_type[STRUCT_DEPTH];
+static struct this_type actual_type[STRUCT_DEPTH];
 static char     *actual_storage[STRUCT_DEPTH];
 
 /* temporarily store struct members while creating the data structure */
@@ -29,6 +28,8 @@ struct ECPGstruct_member *struct_member_list[STRUCT_DEPTH] = { NULL };
 
 struct ECPGtype ecpg_no_indicator = {ECPGt_NO_INDICATOR, 0L, {NULL}};
 struct variable no_indicator = {"no_indicator", &ecpg_no_indicator, 0, NULL};
+
+struct ECPGtype ecpg_query = {ECPGt_char_variable, 0L, {NULL}};
 
 /*
  * Handle the filename and line numbering.
@@ -505,6 +506,98 @@ output_statement(char * stmt, int mode)
 	free(stmt);
 }
 
+static struct typedefs *
+get_typedef(char *name)
+{
+	struct typedefs *this;
+
+	for (this = types; this && strcmp(this->name, name); this = this->next);
+	if (!this)
+	{
+		sprintf(errortext, "invalid datatype '%s'", name);
+		yyerror(errortext);
+	}
+
+	return(this);
+}
+
+static void
+adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dimension, int type_index, bool pointer)
+{
+	if (type_index >= 0) 
+	{
+		if (*length >= 0)
+                      	yyerror("No multi-dimensional array support");
+
+		*length = type_index;
+	}
+		       
+	if (type_dimension >= 0)
+	{
+		if (*dimension >= 0 && *length >= 0)
+			yyerror("No multi-dimensional array support");
+
+		if (*dimension >= 0)
+			*length = *dimension;
+
+		*dimension = type_dimension;
+	}
+
+	switch (type_enum)
+	{
+	   case ECPGt_struct:
+	        /* pointer has to get dimension 0 */
+                if (pointer)
+	        {
+		    *length = *dimension;
+                    *dimension = 0;
+	        }
+
+                if (*length >= 0)
+                   yyerror("No multi-dimensional array support for structures");
+
+                break;
+           case ECPGt_varchar:
+	        /* pointer has to get length 0 */
+                if (pointer)
+                    *length=0;
+
+                /* one index is the string length */
+                if (*length < 0)
+                {
+                   *length = *dimension;
+                   *dimension = -1;
+                }
+
+                break;
+           case ECPGt_char:
+           case ECPGt_unsigned_char:
+	        /* pointer has to get length 0 */
+                if (pointer)
+                    *length=0;
+
+                /* one index is the string length */
+                if (*length < 0)
+                {
+                   *length = (*dimension < 0) ? 1 : *dimension;
+                   *dimension = -1;
+                }
+
+                break;
+           default:
+ 	        /* a pointer has dimension = 0 */
+                if (pointer) {
+                    *length = *dimension;
+		    *dimension = 0;
+	        }
+
+                if (*length >= 0)
+                   yyerror("No multi-dimensional array support for simple data types");
+
+                break;
+	}
+}
+
 %}
 
 %union {
@@ -519,12 +612,15 @@ output_statement(char * stmt, int mode)
 }
 
 /* special embedded SQL token */
-%token		SQL_BREAK SQL_CALL SQL_CONNECT SQL_CONNECTION SQL_CONTINUE
-%token		SQL_DISCONNECT SQL_FOUND SQL_GO SQL_GOTO
-%token		SQL_IDENTIFIED SQL_IMMEDIATE SQL_INDICATOR SQL_OPEN 
-%token		SQL_PREPARE SQL_RELEASE
-%token		SQL_SECTION SQL_SEMI SQL_SQLERROR SQL_SQLPRINT SQL_START
-%token		SQL_STOP SQL_WHENEVER SQL_SQLWARNING
+%token		SQL_BOOL SQL_BREAK 
+%token		SQL_CALL SQL_CONNECT SQL_CONNECTION SQL_CONTINUE
+%token		SQL_DEALLOCATE SQL_DISCONNECT SQL_ENUM 
+%token		SQL_FOUND SQL_FREE SQL_GO SQL_GOTO
+%token		SQL_IDENTIFIED SQL_IMMEDIATE SQL_INDICATOR SQL_INT SQL_LONG
+%token		SQL_OPEN SQL_PREPARE SQL_RELEASE SQL_REFERENCE
+%token		SQL_SECTION SQL_SEMI SQL_SHORT SQL_SIGNED SQL_SQLERROR SQL_SQLPRINT
+%token		SQL_SQLWARNING SQL_START SQL_STOP SQL_STRUCT SQL_UNSIGNED
+%token		SQL_VAR SQL_WHENEVER
 
 /* C token */
 %token		S_ANYTHING S_AUTO S_BOOL S_CHAR S_CONST S_DOUBLE S_ENUM S_EXTERN
@@ -577,9 +673,9 @@ output_statement(char * stmt, int mode)
                 DATABASE, DELIMITERS, DO, EACH, ENCODING, EXPLAIN, EXTEND,
                 FORWARD, FUNCTION, HANDLER,
                 INCREMENT, INDEX, INHERITS, INSTEAD, ISNULL,
-                LANCOMPILER, LISTEN, UNLISTEN, LOAD, LOCATION, LOCK_P, MAXVALUE, MINVALUE, MOVE,
+                LANCOMPILER, LIMIT, LISTEN, UNLISTEN, LOAD, LOCATION, LOCK_P, MAXVALUE, MINVALUE, MOVE,
                 NEW,  NOCREATEDB, NOCREATEUSER, NONE, NOTHING, NOTIFY, NOTNULL,
-		OIDS, OPERATOR, PASSWORD, PROCEDURAL,
+		OFFSET, OIDS, OPERATOR, PASSWORD, PROCEDURAL,
                 RECIPE, RENAME, RESET, RETURNS, ROW, RULE,
                 SERIAL, SEQUENCE, SETOF, SHOW, START, STATEMENT, STDIN, STDOUT, TRUSTED,
                 UNLISTEN, UNTIL, VACUUM, VALID, VERBOSE, VERSION
@@ -654,8 +750,9 @@ output_statement(char * stmt, int mode)
 %type  <str>    index_opt_unique IndexStmt set_opt func_return def_rest
 %type  <str>    func_args_list func_args opt_with ProcedureStmt def_arg
 %type  <str>    def_elem def_list definition def_name def_type DefineStmt
-%type  <str>    opt_instead event event_object OptStmtMulti OptStmtBlock
-%type  <str>    OptStmtList RuleStmt opt_column opt_name oper_argtypes
+%type  <str>    opt_instead event event_object RuleActionList,
+%type  <str>	RuleActionBlock RuleActionMulti 
+%type  <str>    RuleStmt opt_column opt_name oper_argtypes
 %type  <str>    MathOp RemoveFuncStmt aggr_argtype for_update_clause
 %type  <str>    RemoveAggrStmt remove_type RemoveStmt ExtendStmt RecipeStmt
 %type  <str>    RemoveOperStmt RenameStmt all_Op user_valid_clause
@@ -665,7 +762,7 @@ output_statement(char * stmt, int mode)
 %type  <str>    user_createuser_clause user_group_list user_group_clause
 %type  <str>    CreateUserStmt AlterUserStmt CreateSeqStmt OptSeqList
 %type  <str>    OptSeqElem TriggerForSpec TriggerForOpt TriggerForType
-%type  <str>	DropTrigStmt TriggerOneEvent TriggerEvents
+%type  <str>	DropTrigStmt TriggerOneEvent TriggerEvents RuleActionStmt
 %type  <str>    TriggerActionTime CreateTrigStmt DropPLangStmt PLangTrusted
 %type  <str>    CreatePLangStmt IntegerOnly TriggerFuncArgs TriggerFuncArg
 %type  <str>    ViewStmt LoadStmt CreatedbStmt opt_database1 opt_database2 location
@@ -673,27 +770,32 @@ output_statement(char * stmt, int mode)
 %type  <str>	GrantStmt privileges operation_commalist operation
 %type  <str>	cursor_clause opt_cursor opt_readonly opt_of opt_lmode
 %type  <str>	case_expr when_clause_list case_default case_arg when_clause
-%type  <str>    select_w_o_sort 
+%type  <str>    select_w_o_sort opt_select_limit select_limit_value,
+%type  <str>    select_offset_value
 
-%type  <str>	ECPGWhenever ECPGConnect connection_target ECPGOpen open_opts
-%type  <str>	indicator ECPGExecute ecpg_expr dotext
+%type  <str>	ECPGWhenever ECPGConnect connection_target ECPGOpen opt_using
+%type  <str>	indicator ECPGExecute ecpg_expr dotext ECPGPrepare
 %type  <str>    storage_clause opt_initializer vartext c_anything blockstart
 %type  <str>    blockend variable_list variable var_anything do_anything
 %type  <str>	opt_pointer cvariable ECPGDisconnect dis_name
 %type  <str>	stmt symbol opt_symbol ECPGRelease execstring server_name
-%type  <str>	connection_object opt_server opt_port c_thing
+%type  <str>	connection_object opt_server opt_port c_thing opt_reference
 %type  <str>    user_name opt_user char_variable ora_user ident
 %type  <str>    db_prefix server opt_options opt_connection_name
-%type  <str>	ECPGSetConnection c_line cpp_line s_enum
-%type  <str>	enum_type
+%type  <str>	ECPGSetConnection c_line cpp_line s_enum ECPGTypedef
+%type  <str>	enum_type civariableonly ECPGCursorStmt ECPGDeallocate
+%type  <str>	ECPGFree ECPGDeclare ECPGVar sql_variable_declarations
+%type  <str>	sql_declaration sql_variable_list sql_variable
+%type  <str>    struct_type s_struct declaration variable_declarations
 
-%type  <type_enum> simple_type
+%type  <type_enum> simple_type varchar_type
 
-%type  <type>	type
+%type  <type>	type ctype
 
 %type  <action> action
 
-%type  <index>	opt_array_bounds nest_array_bounds
+%type  <index>	opt_array_bounds nest_array_bounds opt_type_array_bounds
+%type  <index>  nest_type_array_bounds
 
 %%
 prog: statements;
@@ -769,13 +871,29 @@ stmt:  AddAttrStmt			{ output_statement($1, 0); }
 						whenever_action(0);
 						free($1);
 					} 
+		| ECPGCursorStmt	{
+						fputs($1, yyout);
+                                                free($1); 
+					}
+		| ECPGDeallocate	{
+						fputs($1, yyout);
+						whenever_action(0);
+						free($1);
+					}
+		| ECPGDeclare		{
+						fputs($1, yyout);
+						free($1);
+					}
 		| ECPGDisconnect	{
 						fprintf(yyout, "ECPGdisconnect(__LINE__, \"%s\");", $1); 
 						whenever_action(0);
 						free($1);
 					} 
 		| ECPGExecute		{
-						fprintf(yyout, "ECPGdo(__LINE__, %s, ECPGt_EOIT, ECPGt_EORT);", $1);
+						output_statement($1, 0);
+					}
+		| ECPGFree		{
+						fprintf(yyout, "ECPGdeallocate(__LINE__, \"%s\");", $1); 
 						whenever_action(0);
 						free($1);
 					}
@@ -797,9 +915,15 @@ stmt:  AddAttrStmt			{ output_statement($1, 0); }
 						fprintf(yyout, "ECPGdo(__LINE__, \"%s\",", ptr->command);
 						/* dump variables to C file*/
 						dump_variables(ptr->argsinsert, 0);
+						dump_variables(argsinsert, 0);
 						fputs("ECPGt_EOIT, ", yyout);
 						dump_variables(ptr->argsresult, 0);
 						fputs("ECPGt_EORT);", yyout);
+						whenever_action(0);
+						free($1);
+					}
+		| ECPGPrepare		{
+						fprintf(yyout, "ECPGprepare(__LINE__, %s);", $1); 
 						whenever_action(0);
 						free($1);
 					}
@@ -809,14 +933,21 @@ stmt:  AddAttrStmt			{ output_statement($1, 0); }
 						whenever_action(0);
                                        		free($1);
 					}
+		| ECPGTypedef		{
+						fputs($1, yyout);
+                                                free($1);
+					}
+		| ECPGVar		{
+						fputs($1, yyout);
+                                                free($1);
+					}
 		| ECPGWhenever		{
 						fputs($1, yyout);
 						output_line_number();
 						free($1);
 					}
-		| ECPGPrepare		{
-						yyerror("PREPARE is not supported yet.");
-					}
+		;
+
 
 /*
  * We start with a lot of stuff that's very similar to the backend's parsing
@@ -1098,7 +1229,7 @@ copy_delimiter:  USING DELIMITERS Sconst		{ $$ = cat2_str(make1_str("using delim
 CreateStmt:  CREATE OptTemp TABLE relation_name '(' OptTableElementList ')'
 				OptInherit
 				{
-					$$ = cat5_str(make1_str("create"), $2, make1_str("table"), make3_str(make1_str("("), $6, make1_str(")")), $8);
+					$$ = cat3_str(cat4_str(make1_str("create"), $2, make1_str("table"), $4), make3_str(make1_str("("), $6, make1_str(")")), $8);
 				}
 		;
 
@@ -2127,39 +2258,36 @@ opt_column:  COLUMN					{ $$ = make1_str("colmunn"); }
 RuleStmt:  CREATE RULE name AS
 		   { QueryIsRule=1; }
 		   ON event TO event_object where_clause
-		   DO opt_instead OptStmtList
+		   DO opt_instead RuleActionList
 				{
 					$$ = cat2_str(cat5_str(cat5_str(make1_str("create rule"), $3, make1_str("as on"), $7, make1_str("to")), $9, $10, make1_str("do"), $12), $13);
 				}
 		;
 
-OptStmtList:  NOTHING					{ $$ = make1_str("nothing"); }
-		| OptimizableStmt			{ $$ = $1; }
-		| '[' OptStmtBlock ']'			{ $$ = cat3_str(make1_str("["), $2, make1_str("]")); }
-/***S*I*D***/
-/* We comment this out because it produces a shift / reduce conflict 
- * with the select_w_o_sort rule */
-/*		| '(' OptStmtBlock ')'			{ $$ = cat3_str(make1_str("("), $2, make1_str(")")); }*/
+RuleActionList:  NOTHING                               { $$ = make1_str("nothing"); }
+               | SelectStmt                            { $$ = $1; }
+               | RuleActionStmt                        { $$ = $1; }
+               | '[' RuleActionBlock ']'               { $$ = cat3_str(make1_str("["), $2, make1_str("]")); }
+               | '(' RuleActionBlock ')'               { $$ = cat3_str(make1_str("("), $2, make1_str(")")); }
+                ;
+
+RuleActionBlock:  RuleActionMulti              {  $$ = $1; }
+               | RuleActionStmt                {  $$ = $1; }
 		;
 
-OptStmtBlock:  OptStmtMulti
-				{  $$ = $1; }
-		| OptimizableStmt
-				{ $$ = $1; }
-		;
-
-OptStmtMulti:  OptStmtMulti OptimizableStmt ';'
+RuleActionMulti:  RuleActionMulti RuleActionStmt
+                                {  $$ = cat2_str($1, $2); }
+		| RuleActionMulti RuleActionStmt ';'
 				{  $$ = cat3_str($1, $2, make1_str(";")); }
-/***S*I***/
-/* We comment the next rule because it seems to be redundant
- * and produces 16 shift/reduce conflicts with the new SelectStmt rule
- * needed for EXCEPT and INTERSECT. So far I did not notice any
- * violations by removing the rule! */
-/*		| OptStmtMulti OptimizableStmt
-				{  $$ = cat2_str($1, $2); }*/
-		| OptimizableStmt ';'
+		| RuleActionStmt ';'
 				{ $$ = cat2_str($1, make1_str(";")); }
 		;
+
+RuleActionStmt:        InsertStmt
+                | UpdateStmt
+                | DeleteStmt
+		| NotifyStmt
+                ;
 
 event_object:  relation_name '.' attr_name
 				{
@@ -2588,7 +2716,7 @@ CursorStmt:  DECLARE name opt_cursor CURSOR FOR SelectStmt cursor_clause
 					{
 						if (strcmp($2, ptr->name) == 0)
 						{
-						        /* re-definition is a bug*/
+						        /* re-definition is a bug */
 							sprintf(errortext, "cursor %s already defined", $2);
 							yyerror(errortext);
 				                }
@@ -2642,13 +2770,13 @@ opt_of:  OF columnList { $$ = make2_str(make1_str("of"), $2); }
 /* The new 'SelectStmt' rule adapted for the optional use of INTERSECT EXCEPT a nd UNION
  * accepts the use of '(' and ')' to select an order of set operations.
  */
-SelectStmt:  select_w_o_sort sort_clause for_update_clause
+SelectStmt:  select_w_o_sort sort_clause for_update_clause opt_select_limit
 				{
 					if (strlen($3) > 0 && ForUpdateNotAllowed != 0)
 							yyerror("SELECT FOR UPDATE is not allowed in this context");
 
 					ForUpdateNotAllowed = 0;
-					$$ = cat3_str($1, $2, $3);
+					$$ = cat4_str($1, $2, $3, $4);
 				}
 
 /***S*I***/ 
@@ -2735,6 +2863,29 @@ OptUseOp:  USING Op				{ $$ = cat2_str(make1_str("using"), $2); }
 		| DESC				{ $$ = make1_str("desc"); }
 		| /*EMPTY*/			{ $$ = make1_str(""); }
 		;
+
+opt_select_limit:      LIMIT select_limit_value ',' select_offset_value
+                       { $$ = cat4_str(make1_str("limit"), $2, make1_str(","), $4); }
+               | LIMIT select_limit_value OFFSET select_offset_value
+                       { $$ = cat4_str(make1_str("limit"), $2, make1_str("offset"), $4); }
+               | LIMIT select_limit_value
+                       { $$ = cat2_str(make1_str("limit"), $2);; }
+               | OFFSET select_offset_value LIMIT select_limit_value
+                       { $$ = cat4_str(make1_str("offset"), $2, make1_str("limit"), $4); }
+               | OFFSET select_offset_value
+                       { $$ = cat2_str(make1_str("offset"), $2); }
+               | /* EMPTY */
+                       { $$ = make1_str(""); }
+               ;
+
+select_limit_value:	Iconst	{ $$ = $1; }
+	          	| ALL	{ $$ = make1_str("all"); }
+			| PARAM { $$ = make_name(); }
+               ;
+
+select_offset_value:  	Iconst	{ $$ = $1; }
+			| PARAM { $$ = make_name(); }
+               ;
 
 /*
  *	jimmy bell-style recursive queries aren't supported in the
@@ -2952,6 +3103,36 @@ Generic:  generic
 
 generic:  ident					{ $$ = $1; }
 		| TYPE_P			{ $$ = make1_str("type"); }
+		| SQL_BOOL			{ $$ = make1_str("bool"); }
+		| SQL_BREAK			{ $$ = make1_str("break"); }
+		| SQL_CALL			{ $$ = make1_str("call"); }
+		| SQL_CONNECT			{ $$ = make1_str("connect"); }
+		| SQL_CONNECTION		{ $$ = make1_str("connection"); }
+		| SQL_CONTINUE			{ $$ = make1_str("continue"); }
+		| SQL_DEALLOCATE		{ $$ = make1_str("deallocate"); }
+		| SQL_DISCONNECT		{ $$ = make1_str("disconnect"); }
+		| SQL_FOUND			{ $$ = make1_str("found"); }
+		| SQL_GO			{ $$ = make1_str("go"); }
+		| SQL_GOTO			{ $$ = make1_str("goto"); }
+		| SQL_IDENTIFIED		{ $$ = make1_str("identified"); }
+		| SQL_IMMEDIATE			{ $$ = make1_str("immediate"); }
+		| SQL_INDICATOR			{ $$ = make1_str("indicator"); }
+		| SQL_INT			{ $$ = make1_str("int"); }
+		| SQL_LONG			{ $$ = make1_str("long"); }
+		| SQL_OPEN			{ $$ = make1_str("open"); }
+		| SQL_PREPARE			{ $$ = make1_str("prepare"); }
+		| SQL_RELEASE			{ $$ = make1_str("release"); }
+		| SQL_SECTION			{ $$ = make1_str("section"); }
+		| SQL_SHORT			{ $$ = make1_str("short"); }
+		| SQL_SIGNED			{ $$ = make1_str("signed"); }
+		| SQL_SQLERROR			{ $$ = make1_str("sqlerror"); }
+		| SQL_SQLPRINT			{ $$ = make1_str("sqlprint"); }
+		| SQL_SQLWARNING		{ $$ = make1_str("sqlwarning"); }
+		| SQL_STOP			{ $$ = make1_str("stop"); }
+		| SQL_STRUCT			{ $$ = make1_str("struct"); }
+		| SQL_UNSIGNED			{ $$ = make1_str("unsigned"); }
+		| SQL_VAR			{ $$ = make1_str("var"); }
+		| SQL_WHENEVER			{ $$ = make1_str("whenever"); }
 		;
 
 /* SQL92 numeric data types
@@ -3638,7 +3819,7 @@ b_expr:  attr opt_indirection
 					$$ = make3_str(make1_str("trim("), $3, make1_str(")"));
 				}
 		| civariableonly
-			        { $$ = make1_str(";;"); }
+			        { 	$$ = $1; }
 		;
 
 opt_indirection:  '[' ecpg_expr ']' opt_indirection
@@ -4125,6 +4306,36 @@ ColId:  ident					{ $$ = $1; }
 		| VALID				{ $$ = make1_str("valid"); }
 		| VERSION			{ $$ = make1_str("version"); }
 		| ZONE				{ $$ = make1_str("zone"); }
+		| SQL_BOOL			{ $$ = make1_str("bool"); }
+		| SQL_BREAK			{ $$ = make1_str("break"); }
+		| SQL_CALL			{ $$ = make1_str("call"); }
+		| SQL_CONNECT			{ $$ = make1_str("connect"); }
+		| SQL_CONNECTION		{ $$ = make1_str("connection"); }
+		| SQL_CONTINUE			{ $$ = make1_str("continue"); }
+		| SQL_DEALLOCATE		{ $$ = make1_str("deallocate"); }
+		| SQL_DISCONNECT		{ $$ = make1_str("disconnect"); }
+		| SQL_FOUND			{ $$ = make1_str("found"); }
+		| SQL_GO			{ $$ = make1_str("go"); }
+		| SQL_GOTO			{ $$ = make1_str("goto"); }
+		| SQL_IDENTIFIED		{ $$ = make1_str("identified"); }
+		| SQL_IMMEDIATE			{ $$ = make1_str("immediate"); }
+		| SQL_INDICATOR			{ $$ = make1_str("indicator"); }
+		| SQL_INT			{ $$ = make1_str("int"); }
+		| SQL_LONG			{ $$ = make1_str("long"); }
+		| SQL_OPEN			{ $$ = make1_str("open"); }
+		| SQL_PREPARE			{ $$ = make1_str("prepare"); }
+		| SQL_RELEASE			{ $$ = make1_str("release"); }
+		| SQL_SECTION			{ $$ = make1_str("section"); }
+		| SQL_SHORT			{ $$ = make1_str("short"); }
+		| SQL_SIGNED			{ $$ = make1_str("signed"); }
+		| SQL_SQLERROR			{ $$ = make1_str("sqlerror"); }
+		| SQL_SQLPRINT			{ $$ = make1_str("sqlprint"); }
+		| SQL_SQLWARNING		{ $$ = make1_str("sqlwarning"); }
+		| SQL_STOP			{ $$ = make1_str("stop"); }
+		| SQL_STRUCT			{ $$ = make1_str("struct"); }
+		| SQL_UNSIGNED			{ $$ = make1_str("unsigned"); }
+		| SQL_VAR			{ $$ = make1_str("var"); }
+		| SQL_WHENEVER			{ $$ = make1_str("whenever"); }
 		;
 /* Column label
  * Allowed labels in "AS" clauses.
@@ -4196,223 +4407,6 @@ SpecialRuleRelation:  CURRENT
 /*
  * and now special embedded SQL stuff
  */
-
-/*
- * variable declaration inside the exec sql declare block
- */
-ECPGDeclaration: sql_startdeclare variable_declarations sql_enddeclare {}
-
-sql_startdeclare : ecpgstart BEGIN_TRANS DECLARE SQL_SECTION SQL_SEMI {
-	fputs("/* exec sql begin declare section */\n", yyout);
-	output_line_number();
- }
-
-sql_enddeclare: ecpgstart END_TRANS DECLARE SQL_SECTION SQL_SEMI {
-    fputs("/* exec sql end declare section */\n", yyout); 
-    output_line_number();
-}
-
-variable_declarations: /* empty */
-	| declaration variable_declarations;
-
-declaration: storage_clause type
-	{
-		actual_storage[struct_level] = $1;
-		actual_type[struct_level] = $2.type_enum;
-		if ($2.type_enum != ECPGt_varchar && $2.type_enum != ECPGt_struct)
-			fprintf(yyout, "%s %s", $1, $2.type_str);
-		free($2.type_str);
-	}
-	variable_list ';' { fputc(';', yyout); }
-
-storage_clause : S_EXTERN	{ $$ = "extern"; }
-       | S_STATIC		{ $$ = "static"; }
-       | S_SIGNED		{ $$ = "signed"; }
-       | S_CONST		{ $$ = "const"; }
-       | S_REGISTER		{ $$ = "register"; }
-       | S_AUTO			{ $$ = "auto"; }
-       | /* empty */		{ $$ = ""; }
-
-type: simple_type
-		{
-			$$.type_enum = $1;
-			$$.type_str = mm_strdup(ECPGtype_name($1));
-		}
-	| struct_type
-		{
-			$$.type_enum = ECPGt_struct;
-			$$.type_str = make1_str("");
-		}
-	| enum_type
-		{
-			$$.type_str = $1;
-			$$.type_enum = ECPGt_int;
-		}
-
-enum_type: s_enum '{' c_line '}'
-	{
-		$$ = cat4_str($1, make1_str("{"), $3, make1_str("}"));
-	}
-	
-s_enum: S_ENUM opt_symbol	{ $$ = cat2_str(make1_str("enum"), $2); }
-
-struct_type: s_struct '{' variable_declarations '}'
-	{
-	    ECPGfree_struct_member(struct_member_list[struct_level]);
-	    free(actual_storage[struct_level--]);
-	    fputs("} ", yyout);
-	}
-
-s_struct : S_STRUCT opt_symbol
-        {
-            struct_member_list[struct_level++] = NULL;
-            if (struct_level >= STRUCT_DEPTH)
-                 yyerror("Too many levels in nested structure definition");
-	    fprintf(yyout, "struct %s {", $2);
-	    free($2);
-	}
-
-opt_symbol: /* empty */ 	{ $$ = make1_str(""); }
-	| symbol		{ $$ = $1; }
-
-simple_type: S_SHORT		{ $$ = ECPGt_short; }
-           | S_UNSIGNED S_SHORT { $$ = ECPGt_unsigned_short; }
-	   | S_INT 		{ $$ = ECPGt_int; }
-           | S_UNSIGNED S_INT	{ $$ = ECPGt_unsigned_int; }
-	   | S_LONG		{ $$ = ECPGt_long; }
-           | S_UNSIGNED S_LONG	{ $$ = ECPGt_unsigned_long; }
-           | S_FLOAT		{ $$ = ECPGt_float; }
-           | S_DOUBLE		{ $$ = ECPGt_double; }
-	   | S_BOOL		{ $$ = ECPGt_bool; };
-	   | S_CHAR		{ $$ = ECPGt_char; }
-           | S_UNSIGNED S_CHAR	{ $$ = ECPGt_unsigned_char; }
-	   | S_VARCHAR		{ $$ = ECPGt_varchar; }
-
-variable_list: variable 
-	| variable_list ','
-	{
-		if (actual_type[struct_level] != ECPGt_varchar)
-			fputs(", ", yyout);
-		else
-			fputs(";\n ", yyout);
-	} variable
-
-variable: opt_pointer symbol opt_array_bounds opt_initializer
-		{
-			struct ECPGtype * type;
-                        int dimension = $3.index1; /* dimension of array */
-                        int length = $3.index2;    /* lenght of string */
-                        char dim[14L];
-
-			switch (actual_type[struct_level])
-			{
-			   case ECPGt_struct:
-			       /* pointer has to get dimension 0 */
-        	               if (strlen($1) > 0)
-			       {
-				    length = dimension;
-                	            dimension = 0;
-			       }
-
-                               if (length >= 0)
-                                   yyerror("No multi-dimensional array support for structures");
-
-                               if (dimension == 1 || dimension < 0)
-                                   type = ECPGmake_struct_type(struct_member_list[struct_level]);
-                               else
-                                   type = ECPGmake_array_type(ECPGmake_struct_type(struct_member_list[struct_level]), dimension); 
-
-                               fprintf(yyout, "%s%s%s%s", $1, $2, $3.str, $4);
-                               break;
-                           case ECPGt_varchar:
-			       /* pointer has to get length 0 */
-        	               if (strlen($1) > 0)
-                	            length=0;
-
-                               /* one index is the string length */
-                               if (length < 0)
-                               {
-                                   length = dimension;
-                                   dimension = 1;
-                               }
-
-                               if (dimension == 1)
-                                   type = ECPGmake_simple_type(actual_type[struct_level], length);
-                               else
-                                   type = ECPGmake_array_type(ECPGmake_simple_type(actual_type[struct_level], length), dimension);
-
-                               switch(dimension)
-                               {
-                                  case 0:
-                                      strcpy(dim, "[]");
-                                      break;
-                                  case 1:
-                                      *dim = '\0';
-                                      break;
-                                  default:
-                                      sprintf(dim, "[%d]", dimension);
-                                      break;
-                                }
-                               if (length > 0)
-                                   fprintf(yyout, "%s struct varchar_%s { int len; char arr[%d]; } %s%s", actual_storage[struct_level], $2, length, $2, dim);
-                               else
-                                   fprintf(yyout, "%s struct varchar_%s { int len; char *arr; } %s%s", actual_storage[struct_level], $2, $2, dim);
-                               break;
-                           case ECPGt_char:
-                           case ECPGt_unsigned_char:
-			       /* pointer has to get length 0 */
-        	               if (strlen($1) > 0)
-                	            length=0;
-
-                               /* one index is the string length */
-                               if (length < 0)
-                               {
-                                   length = (dimension < 0) ? 1 : dimension;
-                                   dimension = 1;
-                               }
-
-                               if (dimension == 1)
-                                   type = ECPGmake_simple_type(actual_type[struct_level], length);
-                               else
-                                   type = ECPGmake_array_type(ECPGmake_simple_type(actual_type[struct_level], length), dimension);
-
-                               fprintf(yyout, "%s%s%s%s", $1, $2, $3.str, $4);
-                               break;
-                           default:
-			       /* a pointer has dimension = 0 */
-        	               if (strlen($1) > 0) {
-                	            length = dimension;
-				    dimension = 0;
-			       }
-
-                               if (length >= 0)
-                                   yyerror("No multi-dimensional array support for simple data types");
-
-                               if (dimension == 1 || dimension < 0)
-                                   type = ECPGmake_simple_type(actual_type[struct_level], 1);
-                               else
-                                   type = ECPGmake_array_type(ECPGmake_simple_type(actual_type[struct_level], 1), dimension);
-
-                               fprintf(yyout, "%s%s%s%s", $1, $2, $3.str, $4);
-                               break;
-			}
-
-			if (struct_level == 0)
-				new_variable($2, type);
-			else
-				ECPGmake_struct_member($2, type, &(struct_member_list[struct_level - 1]));
-
-			free($1);
-			free($2);
-			free($3.str);
-			free($4);
-		}
-
-opt_initializer: /* empty */		{ $$ = make1_str(""); }
-	| '=' vartext			{ $$ = make2_str(make1_str("="), $2); }
-
-opt_pointer: /* empty */	{ $$ = make1_str(""); }
-	| '*'			{ $$ = make1_str("*"); }
 
 /*
  * the exec sql connect statement: connect to the given database 
@@ -4585,6 +4579,280 @@ opt_options: Op ColId
 	| /* empty */ { $$ = make1_str(""); }
 
 /*
+ * Declare a prepared cursor. The syntax is different from the standard
+ * declare statement, so we create a new rule.
+ */
+ECPGCursorStmt:  DECLARE name opt_cursor CURSOR FOR ident cursor_clause
+				{
+					struct cursor *ptr, *this;
+					struct variable *thisquery = (struct variable *)mm_alloc(sizeof(struct variable));
+
+					for (ptr = cur; ptr != NULL; ptr = ptr->next)
+					{
+						if (strcmp($2, ptr->name) == 0)
+						{
+						        /* re-definition is a bug */
+							sprintf(errortext, "cursor %s already defined", $2);
+							yyerror(errortext);
+				                }
+        				}
+
+        				this = (struct cursor *) mm_alloc(sizeof(struct cursor));
+
+			        	/* initial definition */
+				        this->next = cur;
+				        this->name = $2;
+				        this->command =  cat5_str(make1_str("declare"), mm_strdup($2), $3, make1_str("cursor for ;;"), $7);
+					this->argsresult = NULL;
+
+					thisquery->type = &ecpg_query;
+					thisquery->brace_level = 0;
+					thisquery->next = NULL;
+					thisquery->name = (char *) mm_alloc(sizeof("ECPGprepared_statement(\"\")") + strlen($6));
+					sprintf(thisquery->name, "ECPGprepared_statement(\"%s\")", $6);
+
+					this->argsinsert = NULL;
+					add_variable(&(this->argsinsert), thisquery, &no_indicator); 
+
+			        	cur = this;
+					
+					$$ = cat3_str(make1_str("/*"), mm_strdup(this->command), make1_str("*/"));
+				}
+		;
+
+/*
+ * the exec sql deallocate prepare command to deallocate a previously
+ * prepared statement
+ */
+ECPGDeallocate:	SQL_DEALLOCATE SQL_PREPARE ident	{ $$ = make3_str(make1_str("ECPGdeallocate(__LINE__, \""), $3, make1_str("\");")); }
+
+/*
+ * variable declaration inside the exec sql declare block
+ */
+ECPGDeclaration: sql_startdeclare
+	{
+		fputs("/* exec sql begin declare section */", yyout);
+	        output_line_number();
+	}
+	variable_declarations sql_enddeclare
+	{
+		fprintf(yyout, "%s/* exec sql end declare section */", $3);
+		free($3);
+		output_line_number();
+	}
+
+sql_startdeclare : ecpgstart BEGIN_TRANS DECLARE SQL_SECTION SQL_SEMI {}
+
+sql_enddeclare: ecpgstart END_TRANS DECLARE SQL_SECTION SQL_SEMI {}
+
+variable_declarations: /* empty */
+	{
+		$$ = make1_str("");
+	}
+	| declaration variable_declarations
+	{
+		$$ = cat2_str($1, $2);
+	}
+
+declaration: storage_clause
+	{
+		actual_storage[struct_level] = mm_strdup($1);
+	}
+	type
+	{
+		actual_type[struct_level].type_enum = $3.type_enum;
+		actual_type[struct_level].type_dimension = $3.type_dimension;
+		actual_type[struct_level].type_index = $3.type_index;
+	}
+	variable_list ';'
+	{
+ 		$$ = cat4_str($1, $3.type_str, $5, make1_str(";\n"));
+	}
+
+storage_clause : S_EXTERN	{ $$ = make1_str("extern"); }
+       | S_STATIC		{ $$ = make1_str("static"); }
+       | S_SIGNED		{ $$ = make1_str("signed"); }
+       | S_CONST		{ $$ = make1_str("const"); }
+       | S_REGISTER		{ $$ = make1_str("register"); }
+       | S_AUTO			{ $$ = make1_str("auto"); }
+       | /* empty */		{ $$ = make1_str(""); }
+
+type: simple_type
+		{
+			$$.type_enum = $1;
+			$$.type_str = mm_strdup(ECPGtype_name($1));
+			$$.type_dimension = -1;
+  			$$.type_index = -1;
+		}
+	| varchar_type
+		{
+			$$.type_enum = ECPGt_varchar;
+			$$.type_str = make1_str("");
+			$$.type_dimension = -1;
+  			$$.type_index = -1;
+		}
+	| struct_type
+		{
+			$$.type_enum = ECPGt_struct;
+			$$.type_str = $1;
+			$$.type_dimension = -1;
+  			$$.type_index = -1;
+		}
+	| enum_type
+		{
+			$$.type_str = $1;
+			$$.type_enum = ECPGt_int;
+			$$.type_dimension = -1;
+  			$$.type_index = -1;
+		}
+	| symbol
+		{
+			/* this is for typedef'ed types */
+			struct typedefs *this = get_typedef($1);
+
+			$$.type_str = mm_strdup(this->name);
+                        $$.type_enum = this->type->type_enum;
+			$$.type_dimension = this->type->type_dimension;
+  			$$.type_index = this->type->type_index;
+			struct_member_list[struct_level] = ECPGstruct_member_dup(this->struct_member_list);
+		}
+
+enum_type: s_enum '{' c_line '}'
+	{
+		$$ = cat4_str($1, make1_str("{"), $3, make1_str("}"));
+	}
+	
+s_enum: S_ENUM opt_symbol	{ $$ = cat2_str(make1_str("enum"), $2); }
+
+struct_type: s_struct '{' variable_declarations '}'
+	{
+	    ECPGfree_struct_member(struct_member_list[struct_level]);
+	    free(actual_storage[struct_level--]);
+	    $$ = cat4_str($1, make1_str("{"), $3, make1_str("}"));
+	}
+
+s_struct : S_STRUCT opt_symbol
+        {
+            struct_member_list[struct_level++] = NULL;
+            if (struct_level >= STRUCT_DEPTH)
+                 yyerror("Too many levels in nested structure definition");
+	    $$ = cat2_str(make1_str("struct"), $2);
+	}
+
+opt_symbol: /* empty */ 	{ $$ = make1_str(""); }
+	| symbol		{ $$ = $1; }
+
+simple_type: S_SHORT		{ $$ = ECPGt_short; }
+           | S_UNSIGNED S_SHORT { $$ = ECPGt_unsigned_short; }
+	   | S_INT 		{ $$ = ECPGt_int; }
+           | S_UNSIGNED S_INT	{ $$ = ECPGt_unsigned_int; }
+	   | S_LONG		{ $$ = ECPGt_long; }
+           | S_UNSIGNED S_LONG	{ $$ = ECPGt_unsigned_long; }
+           | S_FLOAT		{ $$ = ECPGt_float; }
+           | S_DOUBLE		{ $$ = ECPGt_double; }
+	   | S_BOOL		{ $$ = ECPGt_bool; };
+	   | S_CHAR		{ $$ = ECPGt_char; }
+           | S_UNSIGNED S_CHAR	{ $$ = ECPGt_unsigned_char; }
+
+varchar_type:  S_VARCHAR		{ $$ = ECPGt_varchar; }
+
+variable_list: variable 
+	{
+		$$ = $1;
+	}
+	| variable_list ',' variable
+	{
+		$$ = cat3_str($1, make1_str(","), $3);
+	}
+
+variable: opt_pointer symbol opt_array_bounds opt_initializer
+		{
+			struct ECPGtype * type;
+                        int dimension = $3.index1; /* dimension of array */
+                        int length = $3.index2;    /* lenght of string */
+                        char dim[14L], ascii_len[12];
+
+			adjust_array(actual_type[struct_level].type_enum, &dimension, &length, actual_type[struct_level].type_dimension, actual_type[struct_level].type_index, strlen($1));
+
+			switch (actual_type[struct_level].type_enum)
+			{
+			   case ECPGt_struct:
+                               if (dimension < 0)
+                                   type = ECPGmake_struct_type(struct_member_list[struct_level]);
+                               else
+                                   type = ECPGmake_array_type(ECPGmake_struct_type(struct_member_list[struct_level]), dimension); 
+
+                               $$ = make4_str($1, mm_strdup($2), $3.str, $4);
+                               break;
+                           case ECPGt_varchar:
+                               if (dimension == -1)
+                                   type = ECPGmake_simple_type(actual_type[struct_level].type_enum, length);
+                               else
+                                   type = ECPGmake_array_type(ECPGmake_simple_type(actual_type[struct_level].type_enum, length), dimension);
+
+                               switch(dimension)
+                               {
+                                  case 0:
+                                      strcpy(dim, "[]");
+                                      break;
+				  case -1:
+                                  case 1:
+                                      *dim = '\0';
+                                      break;
+                                  default:
+                                      sprintf(dim, "[%d]", dimension);
+                                      break;
+                               }
+			       sprintf(ascii_len, "%d", length);
+
+                               if (length > 0)
+                                   $$ = make4_str(make5_str(mm_strdup(actual_storage[struct_level]), make1_str(" struct varchar_"), mm_strdup($2), make1_str(" { int len; char arr["), mm_strdup(ascii_len)), make1_str("]; } "), mm_strdup($2), mm_strdup(dim));
+                               else
+                                   $$ = make4_str(make3_str(mm_strdup(actual_storage[struct_level]), make1_str(" struct varchar_"), mm_strdup($2)), make1_str(" { int len; char *arr; } "), mm_strdup($2), mm_strdup(dim));
+                               break;
+                           case ECPGt_char:
+                           case ECPGt_unsigned_char:
+                               if (dimension == -1)
+                                   type = ECPGmake_simple_type(actual_type[struct_level].type_enum, length);
+                               else
+                                   type = ECPGmake_array_type(ECPGmake_simple_type(actual_type[struct_level].type_enum, length), dimension);
+
+			       $$ = make4_str($1, mm_strdup($2), $3.str, $4);
+                               break;
+                           default:
+                               if (dimension < 0)
+                                   type = ECPGmake_simple_type(actual_type[struct_level].type_enum, 1);
+                               else
+                                   type = ECPGmake_array_type(ECPGmake_simple_type(actual_type[struct_level].type_enum, 1), dimension);
+
+			       $$ = make4_str($1, mm_strdup($2), $3.str, $4);
+                               break;
+			}
+
+			if (struct_level == 0)
+				new_variable($2, type);
+			else
+				ECPGmake_struct_member($2, type, &(struct_member_list[struct_level - 1]));
+
+			free($2);
+		}
+
+opt_initializer: /* empty */		{ $$ = make1_str(""); }
+	| '=' vartext			{ $$ = make2_str(make1_str("="), $2); }
+
+opt_pointer: /* empty */	{ $$ = make1_str(""); }
+	| '*'			{ $$ = make1_str("*"); }
+
+/*
+ * As long as the prepare statement is not supported by the backend, we will
+ * try to simulate it here so we get dynamic SQL 
+ */
+ECPGDeclare: DECLARE STATEMENT ident
+	{
+		/* this is only supported for compatibility */
+		$$ = cat3_str(make1_str("/* declare statement"), $3, make1_str("*/"));
+	}
+/*
  * the exec sql disconnect statement: disconnect from the given database 
  */
 ECPGDisconnect: SQL_DISCONNECT dis_name { $$ = $2; }
@@ -4600,22 +4868,67 @@ connection_object: connection_target { $$ = $1; }
 /*
  * execute a given string as sql command
  */
-ECPGExecute : EXECUTE SQL_IMMEDIATE execstring { $$ = $3; };
+ECPGExecute : EXECUTE SQL_IMMEDIATE execstring
+	{ 
+		struct variable *thisquery = (struct variable *)mm_alloc(sizeof(struct variable));
 
-execstring: cvariable |
+		thisquery->type = &ecpg_query;
+		thisquery->brace_level = 0;
+		thisquery->next = NULL;
+		thisquery->name = $3;
+
+		add_variable(&argsinsert, thisquery, &no_indicator); 
+
+		$$ = make1_str(";;");
+	}
+	| EXECUTE ident 
+	{
+		struct variable *thisquery = (struct variable *)mm_alloc(sizeof(struct variable));
+
+		thisquery->type = &ecpg_query;
+		thisquery->brace_level = 0;
+		thisquery->next = NULL;
+		thisquery->name = (char *) mm_alloc(sizeof("ECPGprepared_statement(\"\")") + strlen($2));
+		sprintf(thisquery->name, "ECPGprepared_statement(\"%s\")", $2);
+
+		add_variable(&argsinsert, thisquery, &no_indicator); 
+	} opt_using
+	{
+		$$ = make1_str(";;");
+	}
+
+execstring: char_variable |
 	CSTRING	 { $$ = make3_str(make1_str("\""), $1, make1_str("\"")); };
+
+/*
+ * the exec sql free command to deallocate a previously
+ * prepared statement
+ */
+ECPGFree:	SQL_FREE ident	{ $$ = $2; }
 
 /*
  * open is an open cursor, at the moment this has to be removed
  */
-ECPGOpen: SQL_OPEN name open_opts {
+ECPGOpen: SQL_OPEN name opt_using {
 		$$ = $2;
 };
 
-open_opts: /* empty */		{ $$ = make1_str(""); }
-	| USING cvariable	{
-					yyerror ("open cursor with variables not implemented yet");
+opt_using: /* empty */		{ $$ = make1_str(""); }
+	| USING variablelist	{
+					/* yyerror ("open cursor with variables not implemented yet"); */
+					$$ = make1_str("");
 				}
+
+variablelist: cinputvariable | cinputvariable ',' variablelist
+
+/*
+ * As long as the prepare statement is not supported by the backend, we will
+ * try to simulate it here so we get dynamic SQL 
+ */
+ECPGPrepare: SQL_PREPARE ident FROM char_variable
+	{
+		$$ = make4_str(make1_str("\""), $2, make1_str("\", "), $4);
+	}
 
 /*
  * for compatibility with ORACLE we will also allow the keyword RELEASE
@@ -4642,6 +4955,378 @@ ECPGSetConnection:  SET SQL_CONNECTION connection_object
            		{
 				$$ = $3;
                         }
+
+/*
+ * define a new type for embedded SQL
+ */
+ECPGTypedef: TYPE_P symbol IS ctype opt_type_array_bounds opt_reference
+	{
+		/* add entry to list */
+		struct typedefs *ptr, *this;
+		int dimension = $5.index1;
+		int length = $5.index2;
+
+		for (ptr = types; ptr != NULL; ptr = ptr->next)
+		{
+			if (strcmp($2, ptr->name) == 0)
+			{
+			        /* re-definition is a bug */
+				sprintf(errortext, "type %s already defined", $2);
+				yyerror(errortext);
+	                }
+		}
+
+		adjust_array($4.type_enum, &dimension, &length, $4.type_dimension, $4.type_index, strlen($6));
+
+        	this = (struct typedefs *) mm_alloc(sizeof(struct typedefs));
+
+        	/* initial definition */
+	        this->next = types;
+	        this->name = $2;
+		this->type = (struct this_type *) mm_alloc(sizeof(struct this_type));
+		this->type->type_enum = $4.type_enum;
+		this->type->type_str = mm_strdup($2);
+		this->type->type_dimension = dimension; /* dimension of array */
+		this->type->type_index = length;    /* lenght of string */
+		this->struct_member_list = struct_member_list[struct_level];
+
+		if ($4.type_enum != ECPGt_varchar &&
+		    $4.type_enum != ECPGt_char &&
+	            $4.type_enum != ECPGt_unsigned_char &&
+		    this->type->type_index >= 0)
+                            yyerror("No multi-dimensional array support for simple data types");
+
+        	types = this;
+
+		$$ = cat5_str(cat3_str(make1_str("/* exec sql type"), mm_strdup($2), make1_str("is")), mm_strdup($4.type_str), mm_strdup($5.str), $6, make1_str("*/"));
+	}
+
+opt_type_array_bounds:  '[' ']' nest_type_array_bounds
+			{
+                            $$.index1 = 0;
+                            $$.index2 = $3.index1;
+                            $$.str = cat2_str(make1_str("[]"), $3.str);
+                        }
+		| '(' ')' nest_type_array_bounds
+			{
+                            $$.index1 = 0;
+                            $$.index2 = $3.index1;
+                            $$.str = cat2_str(make1_str("[]"), $3.str);
+                        }
+		| '[' Iconst ']' nest_type_array_bounds
+			{
+                            $$.index1 = atol($2);
+                            $$.index2 = $4.index1;
+                            $$.str = cat4_str(make1_str("["), $2, make1_str("]"), $4.str);
+                        }
+		| '(' Iconst ')' nest_type_array_bounds
+			{
+                            $$.index1 = atol($2);
+                            $$.index2 = $4.index1;
+                            $$.str = cat4_str(make1_str("["), $2, make1_str("]"), $4.str);
+                        }
+		| /* EMPTY */
+			{
+                            $$.index1 = -1;
+                            $$.index2 = -1;
+                            $$.str= make1_str("");
+                        }
+		;
+
+nest_type_array_bounds:	'[' ']' nest_type_array_bounds
+                        {
+                            $$.index1 = 0;
+                            $$.index2 = $3.index1;
+                            $$.str = cat2_str(make1_str("[]"), $3.str);
+                        }
+		| '(' ')' nest_type_array_bounds
+                        {
+                            $$.index1 = 0;
+                            $$.index2 = $3.index1;
+                            $$.str = cat2_str(make1_str("[]"), $3.str);
+                        }
+		| '[' Iconst ']' nest_type_array_bounds
+			{
+                            $$.index1 = atol($2);
+                            $$.index2 = $4.index1;
+                            $$.str = cat4_str(make1_str("["), $2, make1_str("]"), $4.str);
+                        }
+		| '(' Iconst ')' nest_type_array_bounds
+			{
+                            $$.index1 = atol($2);
+                            $$.index2 = $4.index1;
+                            $$.str = cat4_str(make1_str("["), $2, make1_str("]"), $4.str);
+                        }
+		| /* EMPTY */
+			{
+                            $$.index1 = -1;
+                            $$.index2 = -1;
+                            $$.str= make1_str("");
+                        }
+                ;
+opt_reference: SQL_REFERENCE { $$ = make1_str("reference"); }
+	| /* empty */ 	     { $$ = make1_str(""); }
+
+ctype: CHAR
+	{
+		$$.type_str = make1_str("char");
+                $$.type_enum = ECPGt_char;
+		$$.type_index = -1;
+		$$.type_dimension = -1;
+	}
+	| VARCHAR
+	{
+		$$.type_str = make1_str("varchar");
+                $$.type_enum = ECPGt_varchar;
+		$$.type_index = -1;
+		$$.type_dimension = -1;
+	}
+	| FLOAT
+	{
+		$$.type_str = make1_str("float");
+                $$.type_enum = ECPGt_float;
+		$$.type_index = -1;
+		$$.type_dimension = -1;
+	}
+	| DOUBLE
+	{
+		$$.type_str = make1_str("double");
+                $$.type_enum = ECPGt_double;
+		$$.type_index = -1;
+		$$.type_dimension = -1;
+	}
+	| opt_signed SQL_INT
+	{
+		$$.type_str = make1_str("int");
+       	        $$.type_enum = ECPGt_int;
+		$$.type_index = -1;
+		$$.type_dimension = -1;
+	}
+	| SQL_ENUM
+	{
+		$$.type_str = make1_str("int");
+       	        $$.type_enum = ECPGt_int;
+		$$.type_index = -1;
+		$$.type_dimension = -1;
+	}
+	| opt_signed SQL_SHORT
+	{
+		$$.type_str = make1_str("short");
+       	        $$.type_enum = ECPGt_short;
+		$$.type_index = -1;
+		$$.type_dimension = -1;
+	}
+	| opt_signed SQL_LONG
+	{
+		$$.type_str = make1_str("long");
+       	        $$.type_enum = ECPGt_long;
+		$$.type_index = -1;
+		$$.type_dimension = -1;
+	}
+	| SQL_BOOL
+	{
+		$$.type_str = make1_str("bool");
+       	        $$.type_enum = ECPGt_bool;
+		$$.type_index = -1;
+		$$.type_dimension = -1;
+	}
+	| SQL_UNSIGNED SQL_INT
+	{
+		$$.type_str = make1_str("unsigned int");
+       	        $$.type_enum = ECPGt_unsigned_int;
+		$$.type_index = -1;
+		$$.type_dimension = -1;
+	}
+	| SQL_UNSIGNED SQL_SHORT
+	{
+		$$.type_str = make1_str("unsigned short");
+       	        $$.type_enum = ECPGt_unsigned_short;
+		$$.type_index = -1;
+		$$.type_dimension = -1;
+	}
+	| SQL_UNSIGNED SQL_LONG
+	{
+		$$.type_str = make1_str("unsigned long");
+       	        $$.type_enum = ECPGt_unsigned_long;
+		$$.type_index = -1;
+		$$.type_dimension = -1;
+	}
+	| SQL_STRUCT
+	{
+		struct_member_list[struct_level++] = NULL;
+		if (struct_level >= STRUCT_DEPTH)
+        		yyerror("Too many levels in nested structure definition");
+	} '{' sql_variable_declarations '}'
+	{
+		ECPGfree_struct_member(struct_member_list[struct_level--]);
+		$$.type_str = cat3_str(make1_str("struct {"), $4, make1_str("}"));
+		$$.type_enum = ECPGt_struct;
+                $$.type_index = -1;
+                $$.type_dimension = -1;
+	}
+	| symbol
+	{
+		struct typedefs *this = get_typedef($1);
+
+		$$.type_str = mm_strdup($1);
+		$$.type_enum = this->type->type_enum;
+		$$.type_dimension = this->type->type_dimension;
+		$$.type_index = this->type->type_index;
+		struct_member_list[struct_level] = this->struct_member_list;
+	}
+
+opt_signed: SQL_SIGNED | /* empty */
+
+sql_variable_declarations: /* empty */
+	{
+		$$ = make1_str("");
+	}
+	| sql_declaration sql_variable_declarations
+	{
+		$$ = cat2_str($1, $2);
+	}
+	;
+
+sql_declaration: ctype
+	{
+		actual_type[struct_level].type_enum = $1.type_enum;
+		actual_type[struct_level].type_dimension = $1.type_dimension;
+		actual_type[struct_level].type_index = $1.type_index;
+	}
+	sql_variable_list SQL_SEMI
+	{
+		$$ = cat3_str($1.type_str, $3, make1_str(";"));
+	}
+
+sql_variable_list: sql_variable 
+	{
+		$$ = $1;
+	}
+	| sql_variable_list ',' sql_variable
+	{
+		$$ = make3_str($1, make1_str(","), $3);
+	}
+
+sql_variable: opt_pointer symbol opt_array_bounds
+		{
+			int dimension = $3.index1;
+			int length = $3.index2;
+			struct ECPGtype * type;
+                        char dim[14L];
+
+			adjust_array(actual_type[struct_level].type_enum, &dimension, &length, actual_type[struct_level].type_dimension, actual_type[struct_level].type_index, strlen($1));
+
+			switch (actual_type[struct_level].type_enum)
+			{
+			   case ECPGt_struct:
+                               if (dimension < 0)
+                                   type = ECPGmake_struct_type(struct_member_list[struct_level]);
+                               else
+                                   type = ECPGmake_array_type(ECPGmake_struct_type(struct_member_list[struct_level]), dimension); 
+
+                               break;
+                           case ECPGt_varchar:
+                               if (dimension == -1)
+                                   type = ECPGmake_simple_type(actual_type[struct_level].type_enum, length);
+                               else
+                                   type = ECPGmake_array_type(ECPGmake_simple_type(actual_type[struct_level].type_enum, length), dimension);
+
+                               switch(dimension)
+                               {
+                                  case 0:
+                                      strcpy(dim, "[]");
+                                      break;
+				  case -1:
+                                  case 1:
+                                      *dim = '\0';
+                                      break;
+                                  default:
+                                      sprintf(dim, "[%d]", dimension);
+                                      break;
+                                }
+
+                               break;
+                           case ECPGt_char:
+                           case ECPGt_unsigned_char:
+                               if (dimension == -1)
+                                   type = ECPGmake_simple_type(actual_type[struct_level].type_enum, length);
+                               else
+                                   type = ECPGmake_array_type(ECPGmake_simple_type(actual_type[struct_level].type_enum, length), dimension);
+
+                               break;
+                           default:
+			       if (length >= 0)
+                	            yyerror("No multi-dimensional array support for simple data types");
+
+                               if (dimension < 0)
+                                   type = ECPGmake_simple_type(actual_type[struct_level].type_enum, 1);
+                               else
+                                   type = ECPGmake_array_type(ECPGmake_simple_type(actual_type[struct_level].type_enum, 1), dimension);
+
+                               break;
+			}
+
+			if (struct_level == 0)
+				new_variable($2, type);
+			else
+				ECPGmake_struct_member($2, type, &(struct_member_list[struct_level - 1]));
+
+			$$ = cat3_str($1, $2, $3.str);
+		}
+
+/*
+ * define the type of one variable for embedded SQL
+ */
+ECPGVar: SQL_VAR symbol IS ctype opt_type_array_bounds opt_reference
+	{
+		struct variable *p = find_variable($2);
+		int dimension = $5.index1;
+		int length = $5.index2;
+		struct ECPGtype * type;
+
+		adjust_array($4.type_enum, &dimension, &length, $4.type_dimension, $4.type_index, strlen($6));
+
+		switch ($4.type_enum)
+		{
+		   case ECPGt_struct:
+                        if (dimension < 0)
+                            type = ECPGmake_struct_type(struct_member_list[struct_level]);
+                        else
+                            type = ECPGmake_array_type(ECPGmake_struct_type(struct_member_list[struct_level]), dimension); 
+                        break;
+                   case ECPGt_varchar:
+                        if (dimension == -1)
+                            type = ECPGmake_simple_type($4.type_enum, length);
+                        else
+                            type = ECPGmake_array_type(ECPGmake_simple_type($4.type_enum, length), dimension);
+
+			break;
+                   case ECPGt_char:
+                   case ECPGt_unsigned_char:
+                        if (dimension == -1)
+                            type = ECPGmake_simple_type($4.type_enum, length);
+                        else
+                            type = ECPGmake_array_type(ECPGmake_simple_type($4.type_enum, length), dimension);
+
+			break;
+		   default:
+			if (length >= 0)
+                	    yyerror("No multi-dimensional array support for simple data types");
+
+                        if (dimension < 0)
+                            type = ECPGmake_simple_type($4.type_enum, 1);
+                        else
+                            type = ECPGmake_array_type(ECPGmake_simple_type($4.type_enum, 1), dimension);
+
+			break;
+		}	
+
+		ECPGfree_type(p->type);
+		p->type = type;
+
+		$$ = cat5_str(cat3_str(make1_str("/* exec sql var"), mm_strdup($2), make1_str("is")), mm_strdup($4.type_str), mm_strdup($5.str), $6, make1_str("*/"));
+	}
+
 /*
  * whenever statement: decide what to do in case of error/no data found
  * according to SQL standards we lack: SQLSTATE, CONSTRAINT and SQLEXCEPTION
@@ -4702,14 +5387,6 @@ action : SQL_CONTINUE {
 	$<action>$.command = make4_str($2, make1_str("("), $4, make1_str(")"));
 	$<action>$.str = cat2_str(make1_str("call"), mm_strdup($<action>$.command));
 }
-
-/*
- * As long as the prepare statement in not supported by the backend, we will
- * try to simulate it here so we get dynamic SQL 
- */
-ECPGPrepare: SQL_PREPARE name FROM name
-	{
-	}
 
 /* some other stuff for ecpg */
 ecpg_expr:  attr opt_indirection
@@ -4987,7 +5664,7 @@ ecpg_expr:  attr opt_indirection
 		| NOT ecpg_expr
 				{	$$ = cat2_str(make1_str("not"), $2); }
 		| civariableonly
-			        { $$ = make1_str(";;"); }
+			        { 	$$ = $1; }
 		;
 
 into_list : coutputvariable | into_list ',' coutputvariable;
@@ -5010,6 +5687,7 @@ cinputvariable : cvariable indicator {
 
 civariableonly : cvariable {
 		add_variable(&argsinsert, find_variable($1), &no_indicator); 
+		$$ = make1_str(";;");
 }
 
 cvariable: CVARIABLE			{ $$ = $1; }

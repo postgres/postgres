@@ -11,7 +11,10 @@ extern		"C"
 	bool		ECPGdo(int, char *,...);
 	bool		ECPGtrans(int, const char *);
 	bool		ECPGdisconnect(int, const char *);
-
+	bool		ECPGprepare(int, char *, char *);
+	bool		ECPGdeallocate(int, char *);
+	char		*ECPGprepared_statement(char *);
+		
 	void		ECPGlog(const char *format,...);
 
 #ifdef LIBPQ_FE_H

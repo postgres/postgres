@@ -24,9 +24,8 @@
 #include "nodes/parsenodes.h"
 #include "parser/gramparse.h"
 #include "parser/scansup.h"
-#include "type.h"
 #include "extern.h"
-#include "y.tab.h"
+#include "preproc.h"
 #include "utils/builtins.h"
 
 /* some versions of lex define this as a macro */
@@ -241,7 +240,7 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 				}
 <xq>{xqstop}	{
 					BEGIN(SQL);
-					yylval.str = strdup(scanstr(literal));
+					yylval.str = mm_strdup(scanstr(literal));
 					return SCONST;
 				}
 <xq>{xqdouble}	|
@@ -276,7 +275,7 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 				}
 <xd>{xdstop}	{
 					BEGIN(SQL);
-					yylval.str = strdup(literal);
+					yylval.str = mm_strdup(literal);
 					return CSTRING;
 				}
 <xd>{xdinside}	{
@@ -292,7 +291,7 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 				}
 <xdc>{xdstop}	{
 					BEGIN(C);
-					yylval.str = strdup(literal);
+					yylval.str = mm_strdup(literal);
 					return CSTRING;
 				}
 <xdc>{xdinside}	{
@@ -316,14 +315,14 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 				}
 <SQL>{self}				{ 	return yytext[0]; }
 <SQL>{operator}/-[\.0-9]	{
-					yylval.str = strdup((char*)yytext);
+					yylval.str = mm_strdup((char*)yytext);
 					return Op;
 				}
 <SQL>{operator}		{
 					if (strcmp((char*)yytext,"!=") == 0)
-						yylval.str = strdup("<>"); /* compatability */
+						yylval.str = mm_strdup("<>"); /* compatability */
 					else
-						yylval.str = strdup((char*)yytext);
+						yylval.str = mm_strdup((char*)yytext);
 					return Op;
 				}
 <SQL>{param}			{
@@ -342,7 +341,6 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 						if (isascii((unsigned char)lower_text[i]) && isupper(lower_text[i]))
 							lower_text[i] = tolower(lower_text[i]);
 
-printf("yyt= %s, lt = %s\n", yytext, lower_text);
 					keyword = ScanKeywordLookup((char*)lower_text);
 					if (keyword != NULL) {
 						return keyword->value;
@@ -367,7 +365,7 @@ printf("yyt= %s, lt = %s\n", yytext, lower_text);
 
 						                        yb->buffer =  YY_CURRENT_BUFFER;
 						                        yb->lineno = yylineno;
-						                        yb->filename = strdup(input_filename);
+						                        yb->filename = mm_strdup(input_filename);
 						                        yb->next = yy_buffer;
 
 						                        yy_buffer = yb;
@@ -378,7 +376,7 @@ printf("yyt= %s, lt = %s\n", yytext, lower_text);
 							}
 							if (ptr == NULL) 
 							{
-								yylval.str = strdup((char*)yytext);
+								yylval.str = mm_strdup((char*)yytext);
 								return IDENT;
 							}
 						}
@@ -470,7 +468,7 @@ printf("yyt= %s, lt = %s\n", yytext, lower_text);
 					return ICONST;
 				}
 <SQL>:{identifier}(("->"|\.){identifier})*	{
-					yylval.str = strdup((char*)yytext+1);
+					yylval.str = mm_strdup((char*)yytext+1);
 					return(CVARIABLE);
 			}
 <SQL>{identifier}	{
@@ -484,7 +482,6 @@ printf("yyt= %s, lt = %s\n", yytext, lower_text);
 						if (isascii((unsigned char)lower_text[i]) && isupper(lower_text[i]))
 							lower_text[i] = tolower(lower_text[i]);
 
-printf("yyt= %s, lt = %s\n", yytext, lower_text);
 					keyword = ScanKeywordLookup((char*)lower_text);
 					if (keyword != NULL) {
 						return keyword->value;
@@ -509,7 +506,7 @@ printf("yyt= %s, lt = %s\n", yytext, lower_text);
 
 						                        yb->buffer =  YY_CURRENT_BUFFER;
 						                        yb->lineno = yylineno;
-						                        yb->filename = strdup(input_filename);
+						                        yb->filename = mm_strdup(input_filename);
 						                        yb->next = yy_buffer;
 
 						                        yy_buffer = yb;
@@ -520,19 +517,26 @@ printf("yyt= %s, lt = %s\n", yytext, lower_text);
 							}
 							if (ptr == NULL) 
 							{
-								yylval.str = strdup((char*)yytext);
+								yylval.str = mm_strdup((char*)yytext);
 								return IDENT;
 							}
 						}
 					}
 				}
 <SQL>{space}			{ /* ignore */ }
-<SQL>";"	                { BEGIN C; return SQL_SEMI; }
+<SQL>";"	                { /* 
+				   * We may find a ';' inside a structure
+				   * definition in a TYPE or VAR statement.
+				   * This is not a EOL marker.
+				   */
+				  if (struct_level == 0)
+					 BEGIN C;
+				  return SQL_SEMI; }
 <SQL>{other}			{ return yytext[0]; }
 <C>{exec}{space}{sql}		{ BEGIN SQL; return SQL_START; }
 <C>{ccomment}			{ /* ignore */ } 
 <C>{cppline}			{
-					yylval.str = strdup((char*)yytext);
+					yylval.str = mm_strdup((char*)yytext);
 					return(CPP_LINE);
 				}
 <C>{identifier}	{
@@ -556,7 +560,7 @@ printf("yyt= %s, lt = %s\n", yytext, lower_text);
 
 					                        yb->buffer =  YY_CURRENT_BUFFER;
 					                        yb->lineno = yylineno;
-					                        yb->filename = strdup(input_filename);
+					                        yb->filename = mm_strdup(input_filename);
 					                        yb->next = yy_buffer;
 
 					                        yy_buffer = yb;
@@ -567,7 +571,7 @@ printf("yyt= %s, lt = %s\n", yytext, lower_text);
 						}
 						if (ptr == NULL) 
 						{
-							yylval.str = strdup((char*)yytext);
+							yylval.str = mm_strdup((char*)yytext);
 							return IDENT;
 						}
 					}
@@ -585,7 +589,7 @@ printf("yyt= %s, lt = %s\n", yytext, lower_text);
 <C>{exec}{space}{sql}{space}{define}	{BEGIN(def_ident);}
 <def_ident>{space}	{}
 <def_ident>{identifier}	{
-				old = strdup(yytext);
+				old = mm_strdup(yytext);
 				BEGIN(def);
 				llen = 0;
 				*literal = '\0';
@@ -599,7 +603,7 @@ printf("yyt= %s, lt = %s\n", yytext, lower_text);
                                      if (strcmp(old, ptr->old) == 0)
                                      {
 					free(ptr->new);
-					ptr->new = strdup(scanstr(literal));
+					ptr->new = mm_strdup(scanstr(literal));
                                      }
                                 }
 				if (ptr == NULL)
@@ -608,7 +612,7 @@ printf("yyt= %s, lt = %s\n", yytext, lower_text);
 
                                         /* initial definition */
                                         this->old = old;
-                                        this->new = strdup(scanstr(literal));
+                                        this->new = mm_strdup(scanstr(literal));
 					this->next = defines;
 					defines = this;
 				}
@@ -666,7 +670,7 @@ printf("yyt= %s, lt = %s\n", yytext, lower_text);
 				exit(NO_INCLUDE_FILE); 
 			  }
 
-			  input_filename = strdup(inc_file);
+			  input_filename = mm_strdup(inc_file);
 			  yy_switch_to_buffer(yy_create_buffer(yyin,YY_BUF_SIZE ));
 			  yylineno = 0;
 

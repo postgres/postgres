@@ -4,16 +4,25 @@ exec sql whenever sqlerror sqlprint;
 
 exec sql include sqlca;
 
-exec sql define AMOUNT 5;
+exec sql define AMOUNT 8;
+
+exec sql type intarray is int[AMOUNT];
+exec sql type string is char(6); 
+
+typedef int intarray[AMOUNT];
 
 int
 main ()
 {
 exec sql begin declare section;
-        int amount[AMOUNT];
-        char name[AMOUNT][8];
+        intarray amount;
+	int increment=100;
+        char name[AMOUNT][6];
+	char letter[AMOUNT][1];
+	char command[128];
 exec sql end declare section;
-	char msg[128], command[128];
+	exec sql var name is string(AMOUNT);
+	char msg[128];
         FILE *dbgs;
         int i,j;
 
@@ -24,30 +33,40 @@ exec sql end declare section;
 	exec sql connect to mm;
 
 	strcpy(msg, "create");
-	exec sql create table test(name char(8), amount int);
+	exec sql create table test(name char(6), amount int, letter char(1));
+
+	strcpy(msg, "commit");
+	exec sql commit;
 
 	strcpy(msg, "execute insert 1");
-        sprintf(command, "insert into test(name, amount) values ('foobar', 1)");
+        sprintf(command, "insert into test(name, amount, letter) values ('foobar', 1, 'f')");
         exec sql execute immediate :command;
 
-        strcpy(msg, "excute insert 2");
-        sprintf(command, "insert into test(name, amount) select name, amount+1 from test");
+        strcpy(msg, "execute insert 2");
+        sprintf(command, "insert into test(name, amount, letter) select name, amount+1, letter from test");
         exec sql execute immediate :command;
 
-        strcpy(msg, "excute insert 3");
-        sprintf(command, "insert into test(name, amount) select name, amount+10 from test");
+        strcpy(msg, "execute insert 3");
+        sprintf(command, "insert into test(name, amount, letter) select name, amount+10, letter from test");
         exec sql execute immediate :command;
         
 	printf("Inserted %d tuples via execute immediate\n", sqlca.sqlerrd[2]);
+
+        strcpy(msg, "execute insert 4");
+        sprintf(command, "insert into test(name, amount, letter) select name, amount+;;, letter from test");
+	exec sql prepare I from :command;
+        exec sql execute I using :increment;
+        
+	printf("Inserted %d tuples via prepared execute\n", sqlca.sqlerrd[2]);
 
 	strcpy(msg, "commit");
 	exec sql commit;
 
         strcpy(msg, "select");
-        exec sql select name, amount into :name, :amount from test;
+        exec sql select name, amount, letter into :name, :amount, :letter from test;
 
         for (i=0, j=sqlca.sqlerrd[2]; i<j; i++)
-            printf("name[%d]=%8.8s, amount[%d]=%d\n", i, name[i], i, amount[i]);
+            printf("name[%d]=%6.6s\tamount[%d]=%d\tletter[%d]=%c\n", i, name[i], i, amount[i],i, letter[i][0]);
         
 	strcpy(msg, "drop");
 	exec sql drop table test;
