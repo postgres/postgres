@@ -1,9 +1,131 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.329 2005/03/31 03:54:38 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.330 2005/04/02 02:42:01 momjian Exp $
 -->
 
 <appendix id="release">
  <title>Release Notes</title>
+
+  <sect1 id="release-8-0-2">
+   <title>Release 8.0.2</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2005-04-07</simpara>
+   </note>
+
+   <para>
+    This release contains a variety of fixes from 8.0.1.
+   </para>
+
+   <sect2>
+    <title>Migration to version 8.0.2</title>
+
+    <para>
+     A dump/restore is not required for those running 8.0.*.
+     This release does update the major version number of the
+     <productname>PostgreSQL</productname> libraries so it might be
+     necessary to re-link some user applications if they cannot
+     find the properly-numbered shared library.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+<itemizedlist>
+<listitem><para>Use the proper default mask length for <type>INET</> data types with class 
+ <literal>D</> addresses (Tom)</para></listitem>
+<listitem><para>Allow plpgsql to assign a value to an array that is initially 
+ <literal>NULL</> (Tom)</para></listitem>
+<listitem><para>Fix <command>CLUSTER</> failure after <command>ALTER TABLE 
+ SET WITHOUT OIDS</> (Tom)</para></listitem>
+<listitem><para>Fix ecpg bugs in parsing of <command>CREATE</> statement 
+ (Michael)</para></listitem>
+<listitem><para>Reduce memory usage of <command>ALTER TABLE ADD COLUMN</> 
+ (Neil)</para></listitem>
+<listitem><para>Allow SPI to handle utility commands like <command>EXPLAIN</> 
+ that return rows (Tom)</para></listitem>
+<listitem><para>Fix <command>ALTER LANGUAGE RENAME</> (Tom)</para></listitem>
+<listitem><para>Document the Win32 <literal>register</> and <literal>
+ unregister</> 
+ <application>pg_ctl</> options (Magnus)</para></listitem>
+<listitem><para>Several <filename>/contrib/btree_gist</> fixes (Teodor)
+ </para></listitem>
+<listitem><para>New cache replacement policy <acronym>2Q</> replaces 
+ <acronym>ARC</> (Tom)</para>
+<para>
+ This was done to void a pending US patent on <acronym>ARC</>.  The 
+ <acronym>2Q</> code might be a few percentage points slower than 
+ <acronym>ARC</> for busy sites.  Another new cache replacement 
+ policy will appear in 8.1.
+</para></listitem>
+<listitem><para>Change the Win32 default for config variable 
+ <varname>log_destination</> to <option>eventlog</> (Magnus)</para>
+<para>
+ This, by default, will send all Win32 server log output to the Win32 event
+ logger rather than standard error.
+</para></listitem>
+<listitem><para>Fix crash of some <filename>/contrib/pgcrypto</> 
+ functions on some platforms (Neil)</para></listitem>
+<listitem><para>Allow <command>ALTER DATABASE RENAME</> by superusers 
+ who can't create databases (Tom)</para></listitem>
+<listitem><para>Increment the major version number of all interface 
+ libraries (Bruce)</para>
+<para>
+ This should have been done in 8.0.0.  It is required so 7.4.X versions 
+ of PostgreSQL client applications, like <application>psql</>,
+ can be used on the same machine as 8.0.X applications.  This might require 
+ re-linking user applications that use these libraries.
+</para></listitem>
+<listitem><para>Do not use locale-aware versions of <function>upper()</>, 
+ <function>lower()</>, and <function>initcap()</> when the locale is <literal>C</>.  
+ (Bruce)</para>
+<para>
+  This allows these functions to work on platforms that sometimes
+  generate errors with a locale of <literal>C</> and a non-<literal>SQL_ASCII</>
+  encoding.
+</para></listitem>
+<listitem><para>Enable the <varname>wal_sync_method</> variable value of
+ <option>open_datasync</> on Win32, and make it the default for that 
+  platform.  (Magnus, Bruce)</para>
+<para>
+  This makes Win32 behave like other supported platforms that require the 
+  administrator to make sure that data is guarantted to be written to permanent
+  storage after a sync operation.  To turn off the write cache on Win32, 
+  from the <application>Device Manager</>, chose the drive properties, 
+  then <literal>Policies</>.
+</para></listitem>
+<listitem><para>Add Win32-only <varname>wal_sync_method</> value of <option>
+ fsync_writethrough</> to write through any write cache between the 
+ operating system and the drive when doing a sync.
+ (Magnus, Bruce)</para></listitem>
+<listitem><para>Fix crash from a backend exiting an open transaction 
+ with a <command>CREATE</> and a <command>FETCH</> (Tom)</para></listitem>
+<listitem><para>Work around gcc bug on powerpc and amd64 causing problems in 
+ ecpg (Christof Petig)</para></listitem>
+<listitem><para>Modify WAL log entries for <command>CREATE</> and <command>
+ DROP DATABASE</> to not specify absolute paths</para>
+ <para>This allows point-in-time recovery on a different machine.  (Tom)
+</para></listitem>
+<listitem><para>Fix <filename>/contrib/intagg</> for 64-bit platforms 
+ (Tom)</para></listitem>
+<listitem><para>Convert plpython function bodies containing <literal>\r\n</> 
+ and <literal>\r</> to <literal>\n</> (Michael Fuhr)</para></listitem>
+<listitem><para>Allow Kerberos to work on Win32 (Magnus)</para></listitem>
+<listitem><para>Fix <function>to_date()</> to behave reasonably when 
+ <literal>CC</> and <literal>YY</> fields are both used (Karel)</para></listitem>
+<listitem><para>Prevent <function>to_char(interval)</> from failing 
+ when given a zero-month interval (Tom)</para></listitem>
+<listitem><para>Fix wrong week returned by <function>date_trunc('week')</para>
+<para>
+ This was a problem for early January dates.  <function>date_trunc('week')</>
+ returned the wrong year for <literal> 2005-01-01</> and <literal>2006-01-01</> 
+ (Bruce)
+</para></listitem>
+</itemizedlist>
+
+  </sect2>
+ </sect1>
 
   <sect1 id="release-8-0-1">
    <title>Release 8.0.1</title>
@@ -2275,7 +2397,7 @@ typedefs (Michael)</para></listitem>
       backend executables too (Bruce)
      </para>
      <para>
-      Unixware can not mix threaded and non-threaded object files in the
+      Unixware cannot mix threaded and non-threaded object files in the
       same executable, so everything must be compiled as threaded.
      </para>
     </listitem>
@@ -6545,7 +6667,7 @@ since <productname>PostgreSQL</productname> 7.1.
 <listitem><para>Make ALTER TABLE / RENAME COLUMN update column names of indexes (Brent Verner)</para></listitem>
 <listitem><para>Fix for ALTER TABLE / ADD CONSTRAINT ... CHECK with inherited tables (Stephan Szabo)</para></listitem>
 <listitem><para>ALTER TABLE RENAME update foreign-key trigger arguments correctly (Brent Verner)</para></listitem>
-<listitem><para>DROP AGGREGATE and COMMENT ON AGGREGATE now accept an aggtype (Tom)</para></listitem>
+<listitem><para>DROP AGGREGATE and COMMENT ON AGGREGATE now accepts an aggtype (Tom)</para></listitem>
 <listitem><para>Add automatic return type data casting for SQL functions (Tom)</para></listitem>
 <listitem><para>Allow GiST indexes to handle NULLs and multikey indexes (Oleg Bartunov, Teodor Sigaev, Tom)</para></listitem>
 <listitem><para>Enable partial indexes (Martijn van Oosterhout)</para></listitem>
@@ -9028,7 +9150,7 @@ Better identify tcl and tk libs and includes(Bruce)
 
    <para>
     There are some general 6.3 issues that I want to mention.  These are
-    only the big items that can not be described in one sentence.  A review
+    only the big items that cannot be described in one sentence.  A review
     of the detailed changes list is still needed.
    </para>
    <para>
