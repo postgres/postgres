@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Jul 27 14:41:53 EDT 2000
+Last updated:		Thu Jul 27 14:46:45 EDT 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -20,7 +20,7 @@ PARSER
 
 * SELECT pg_class FROM pg_class generates strange error
 * Alter TABLE ADD COLUMN does not honor DEFAULT, add CONSTRAINT
-* Creating index of TIMESTAMP & RELTIME fails, or rename to DATETIME(Thomas)
+* -Creating index of TIMESTAMP & RELTIME fails, or rename to DATETIME(Thomas)
 * SELECT foo UNION SELECT foo is incorrectly simplified to SELECT foo
 * Unique index on base column not honored on inserts from inherited table
   INSERT INTO inherit_table (unique_index_col) VALUES (dup) should fail
@@ -49,7 +49,6 @@ MISC
 * Modification  of  pg_class  can  happen while table in use by
   another backend.  Might  lead  to  MVCC  inside  of  syscache
 * Permission to UPDATE table allows DELETE also
-* Some database schema's are not dumpable;  do dumps in oid order
 
 ENHANCEMENTS
 ------------
@@ -62,12 +61,12 @@ URGENT
 
 ADMIN
 
-* -More access control over who can create tables and use locks(Karal)
-* Test syslog functionality
+* -More access control over who can create tables and use locks(Karel)
+* -Test syslog functionality
 * Allow elog() to return error codes, not just messages
 * Allow international error message support and add error codes
-* Unify configuration into one configuration file (Peter E)
-* use setproctitle() if it exists for 'ps' display of status
+* -Unify configuration into one configuration file (Peter E)
+* -use setproctitle() if it exists for 'ps' display of status
 
 TYPES
 
@@ -91,7 +90,7 @@ TYPES
 * Declare typein/out functions in pg_proc with a special "C string" data type
 * Add non-large-object binary field
 * Functions returning sets don't really work right[function]
-* Add hash for int8
+* -Add hash for int8
 * SELECT col FROM tab WHERE numeric_col = 10.1 fails
 * Get BIT type working
 * Allow better handling of numeric constants, type conversion [typeconv]
@@ -118,7 +117,8 @@ INDEXES
 COMMANDS
 
 * ALTER TABLE ADD COLUMN to inherited table put column in wrong place [inherit]
-* Add ALTER TABLE DROP/ALTER COLUMN feature(Peter E) [drop]
+* -Add ALTER TABLE ALTER COLUMN feature(Peter E)
+* Add ALTER TABLE DROP COLUMN feature [drop]
 * Add ALTER TABLE command to change table ownership
 * Allow CLUSTER on all tables at once, and improve CLUSTER, loses NOT
 	NULL specification, indexes, permissions, etc on table
@@ -131,7 +131,7 @@ COMMANDS
   supplied ESCAPE [like]
 * Allow RULE recompilation
 * Support UNION/INTERSECT/EXCEPT in sub-selects
-* Allow DELETE and UPDATE to use inheritance using tablename*
+* -Allow DELETE and UPDATE to use inheritance
 * Allow INSERT INTO my_table VALUES (a, b, c, DEFAULT, x, y, z, ...)
 * Allow BINARY option to SELECT, like we do with DECLARE
 * Prevent truncate on table with a referential integrity trigger
@@ -247,7 +247,7 @@ MISC
 * Gather more accurate statistics using indexes
 * Improve statistics storage in pg_class [performance]
 * Improve VACUUM speed with indexes [vacuum]
-* BSD/OS does not support locale because there is no LC_MESSAGES
+* -BSD/OS does not support locale because there is no LC_MESSAGES
 
 SOURCE CODE
 -----------
