@@ -573,10 +573,10 @@ main() {
 	AC_MSG_RESULT(no),
 	AC_MSG_RESULT(assuming not on target machine))
 
-AC_MSG_CHECKING(whether 'long long int' is 64 bits using %Ld)
+AC_MSG_CHECKING(whether 'long long int' is 64 bits using %lld)
 AC_TRY_RUN([#include <stdio.h>
 typedef long long int int64;
-#define INT64_FORMAT "%Ld"
+#define INT64_FORMAT "%lld"
 
 int64 a = 20000001;
 int64 b = 40000005;
@@ -606,7 +606,7 @@ int does_int64_work()
 main() {
   exit(! does_int64_work());
 }],
-	[AC_DEFINE(HAVE_LONG_LONG_INT_64_Ld) AC_MSG_RESULT(yes)],
+	[AC_DEFINE(HAVE_LONG_LONG_INT_64_lld) AC_MSG_RESULT(yes)],
 	AC_MSG_RESULT(no),
 	AC_MSG_RESULT(assuming not on target machine))
 
