@@ -6,7 +6,7 @@
  * Copyright (c) 2002, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/backend/utils/adt/lockfuncs.c,v 1.8 2003/02/18 02:13:24 momjian Exp $
+ *		$Header: /cvsroot/pgsql/src/backend/utils/adt/lockfuncs.c,v 1.9 2003/02/19 04:02:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,18 +53,20 @@ pg_lock_status(PG_FUNCTION_ARGS)
 
 		/* build tupdesc for result tuples */
 		/* this had better match pg_locks view in initdb.sh */
-		tupdesc = CreateTemplateTupleDesc(6, false);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "relation",
+		tupdesc = CreateTemplateTupleDesc(7, false);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "object",
 						   OIDOID, -1, 0, false);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "database",
+		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "class",
 						   OIDOID, -1, 0, false);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 3, "transaction",
+		TupleDescInitEntry(tupdesc, (AttrNumber) 3, "database",
+						   OIDOID, -1, 0, false);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 4, "transaction",
 						   XIDOID, -1, 0, false);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 4, "pid",
+		TupleDescInitEntry(tupdesc, (AttrNumber) 5, "pid",
 						   INT4OID, -1, 0, false);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 5, "mode",
+		TupleDescInitEntry(tupdesc, (AttrNumber) 6, "mode",
 						   TEXTOID, -1, 0, false);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 6, "granted",
+		TupleDescInitEntry(tupdesc, (AttrNumber) 7, "granted",
 						   BOOLOID, -1, 0, false);
 
 		funcctx->slot = TupleDescGetSlot(tupdesc);
@@ -93,8 +95,8 @@ pg_lock_status(PG_FUNCTION_ARGS)
 		PGPROC	   *proc;
 		bool		granted;
 		LOCKMODE	mode;
-		Datum		values[6];
-		char		nulls[6];
+		Datum		values[7];
+		char		nulls[7];
 		HeapTuple	tuple;
 		Datum		result;
 
@@ -152,26 +154,30 @@ pg_lock_status(PG_FUNCTION_ARGS)
 		MemSet(values, 0, sizeof(values));
 		MemSet(nulls, ' ', sizeof(nulls));
 
-		if (lock->tag.relId == XactLockTableId && lock->tag.dbId == 0)
+		if (lock->tag.objId == InvalidOid
+			&& lock->tag.classId == XactLockTableId
+			&& lock->tag.dbId == InvalidOid)
 		{
 			/* Lock is for transaction ID */
 			nulls[0] = 'n';
 			nulls[1] = 'n';
-			values[2] = TransactionIdGetDatum(lock->tag.objId.xid);
+			nulls[2] = 'n';
+			values[3] = TransactionIdGetDatum(lock->tag.objsubId.xid);
 		}
 		else
 		{
 			/* Lock is for a relation */
-			values[0] = ObjectIdGetDatum(lock->tag.relId);
-			values[1] = ObjectIdGetDatum(lock->tag.dbId);
-			nulls[2] = 'n';
+			values[0] = ObjectIdGetDatum(lock->tag.objId);
+			values[1] = ObjectIdGetDatum(lock->tag.classId);
+			values[2] = ObjectIdGetDatum(lock->tag.dbId);
+			nulls[3] = 'n';
 
 		}
 
-		values[3] = Int32GetDatum(proc->pid);
-		values[4] = DirectFunctionCall1(textin,
+		values[4] = Int32GetDatum(proc->pid);
+		values[5] = DirectFunctionCall1(textin,
 								 CStringGetDatum(GetLockmodeName(mode)));
-		values[5] = BoolGetDatum(granted);
+		values[6] = BoolGetDatum(granted);
 
 		tuple = heap_formtuple(funcctx->slot->ttc_tupleDescriptor,
 							   values, nulls);

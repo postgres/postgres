@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lock.h,v 1.69 2003/02/18 02:13:24 momjian Exp $
+ * $Id: lock.h,v 1.70 2003/02/19 04:02:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -100,13 +100,14 @@ typedef struct LOCKMETHODTABLE
  */
 typedef struct LOCKTAG
 {
-	Oid			relId;
+	Oid			objId;
+	Oid			classId;
 	Oid			dbId;
 	union
 	{
 		BlockNumber blkno;
 		TransactionId xid;
-	}			objId;
+	}			objsubId;
 
 	/*
 	 * offnum should be part of objId.tupleId above, but would increase

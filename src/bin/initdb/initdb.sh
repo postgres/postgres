@@ -27,7 +27,7 @@
 # Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.182 2003/01/23 23:39:01 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.183 2003/02/19 04:02:54 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -974,7 +974,7 @@ CREATE VIEW pg_stat_database AS \
 
 CREATE VIEW pg_locks AS \
     SELECT * \
-    FROM pg_lock_status() AS L(relation oid, database oid, \
+    FROM pg_lock_status() AS L(object oid, class oid, database oid, \
 	transaction xid, pid int4, mode text, granted boolean);
 
 CREATE VIEW pg_settings AS \
