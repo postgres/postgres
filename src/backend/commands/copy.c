@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.232 2004/09/13 20:06:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.233 2004/10/29 19:18:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1401,29 +1401,26 @@ copy_in_error_callback(void *arg)
 		else
 		{
 			/* error is relevant to a particular line */
-			if (!line_buf_converted)
+			if (line_buf_converted ||
+				client_encoding == server_encoding)
 			{
-				/* didn't convert the encoding yet... */
-				line_buf_converted = true;
-				if (client_encoding != server_encoding)
-				{
-					char	   *cvt;
-
-					cvt = (char *) pg_client_to_server((unsigned char *) line_buf.data,
-													   line_buf.len);
-					if (cvt != line_buf.data)
-					{
-						/* transfer converted data back to line_buf */
-						line_buf.len = 0;
-						line_buf.data[0] = '\0';
-						appendBinaryStringInfo(&line_buf, cvt, strlen(cvt));
-					}
-				}
+				limit_printout_length(&line_buf);
+				errcontext("COPY %s, line %d: \"%s\"",
+						   copy_relname, copy_lineno,
+						   line_buf.data);
 			}
-			limit_printout_length(&line_buf);
-			errcontext("COPY %s, line %d: \"%s\"",
-					   copy_relname, copy_lineno,
-					   line_buf.data);
+			else
+			{
+				/*
+				 * Here, the line buffer is still in a foreign encoding,
+				 * and indeed it's quite likely that the error is precisely
+				 * a failure to do encoding conversion (ie, bad data).  We
+				 * dare not try to convert it, and at present there's no way
+				 * to regurgitate it without conversion.  So we have to punt
+				 * and just report the line number.
+				 */
+				errcontext("COPY %s, line %d", copy_relname, copy_lineno);
+			}
 		}
 	}
 }
@@ -2175,16 +2172,7 @@ CopyReadLine(void)
 
 	/*
 	 * Done reading the line.  Convert it to server encoding.
-	 *
-	 * Note: set line_buf_converted to true *before* attempting conversion;
-	 * this prevents infinite recursion during error reporting should
-	 * pg_client_to_server() issue an error, due to copy_in_error_callback
-	 * again attempting the same conversion.  We'll end up issuing the
-	 * message without conversion, which is bad but better than nothing
-	 * ...
 	 */
-	line_buf_converted = true;
-
 	if (change_encoding)
 	{
 		cvt = (char *) pg_client_to_server((unsigned char *) line_buf.data,
@@ -2197,6 +2185,9 @@ CopyReadLine(void)
 			appendBinaryStringInfo(&line_buf, cvt, strlen(cvt));
 		}
 	}
+
+	/* Now it's safe to use the buffer in error messages */
+	line_buf_converted = true;
 
 	return result;
 }
