@@ -5,7 +5,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Thu Oct 14 15:26:35 EDT 2004
+Last updated:		Thu Oct 14 18:17:50 EDT 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -449,6 +449,10 @@ Clients
     
 * Add a libpq function to support Parse/DescribeStatement capability
 * Prevent libpq's PQfnumber() from lowercasing the column name (?)
+* Allow libpq to access SQLSTATE so pg_ctl can test for connection failure
+
+  This would be used for checking if the server is up.
+
 * Have psql show current values for a sequence
 * Move psql backslash database information into the backend, use mnemonic
   commands? [psql]
