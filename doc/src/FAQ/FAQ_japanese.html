@@ -8,12 +8,12 @@
 <H1>
 PostgreSQL(ポストグレス・キュー・エル)についてよくある質問とその解答(FAQ)</H1>
 <P>
-原文最終更新日:		Mon Mar 17 11:32:59 EST 2003</P>
+原文最終更新日:		Mon May 30 22:24:56 EST 2003</P>
 <P>
 現在の維持管理者:	Bruce Momjian (<A
 HREF="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
 Maintainer of Japanese Translation:	Jun Kuwamura (<A
-HREF="mailto:juk@PostgreSQL.jp">juk@PostgreSQL.jp</A>)<BR><P>
+HREF="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</A>)<BR><P>
 <P>
 この文書の最新版は
 <A HREF="http://www.PostgreSQL.org/docs/faqs/FAQ.html">
@@ -23,7 +23,7 @@ http://www.PostgreSQL.org/docs/faqs/FAQ.html</A>
 
 プラットホームに特有の質問については:
  <A HREF="http://www.PostgreSQL.org/docs/index.html">
- http://www.PostgreSQL.org/users-lounge/docs/index.html</A>
+ http://www.PostgreSQL.org/docs/index.html</A>
 <BR>に回答があります。
 <P>
 
@@ -40,9 +40,9 @@ http://www.PostgreSQL.org/docs/faqs/FAQ.html</A>
 		<A HREF="http://www.rccm.co.jp/~juk/pgsql/">http://www.rccm.co.jp/~juk/pgsql/</A>
 		<A HREF="http://www.linux.or.jp/JF/">http://www.linux.or.jp/JF/</A>
 
-	この和訳についてお気づきの点は(<A HREF="mailto:juk@PostgreSQL.jp">juk@PostgreSQL.jp</A>)までメールでお寄せ下さい。
+	この和訳についてお気づきの点は(<A HREF="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</A>)までメールでお寄せ下さい。
 
-						2003年04月10日    桑村 潤
+						2003年06月30日    桑村 潤
 ]
 </PRE></SMALL>
 
@@ -98,9 +98,9 @@ http://www.PostgreSQL.org/docs/faqs/FAQ.html</A>
 <H2 align="center">操作上の質問</H2>
 
 <A HREF="#4.1">4.1</A>)	バイナリ・カーソルと通常カーソルとの違いは何ですか？<BR>
-<A HREF="#4.2">4.2</A>)	最初の数ロウのみを <SMALL>select</SMALL> するにはどうしますか？<BR>
+<A HREF="#4.2">4.2</A>)	最初の数ロウのみを <SMALL>select</SMALL> するにはどうしますか？ ランダムな行？ <BR>
 <A HREF="#4.3">4.3</A>)	テーブルやその他の情報のリストを <I>psql</I> で見るにはどうしますか？<BR>
-<A HREF="#4.4">4.4</A>)	テーブルからカラムの削除はどのようにしますか？<BR>
+<A HREF="#4.4">4.4</A>)	テーブルからカラムの削除、あるいは、データ型を変更するにはどうしますか？<BR>
 <A HREF="#4.5">4.5</A>)	ロウ、テーブル、データベースの最大サイズは？<BR>
 <A HREF="#4.6">4.6</A>)	一般的なテキストファイルからデータを保存するには、データベースのディスク容量はどのくらい必要ですか？<BR>
 <A HREF="#4.7">4.7</A>)	定義されたテーブル、インデックス、データベース、および、ユーザをどのようにして見つけ出しますか？<BR>
@@ -232,8 +232,10 @@ MODIFICATIONS.</P>
 <P> Win32 <I>libpq</I> ライブラリと psql を作るために、<I>win32.mak</I> が配布に含まれてます。PostgreSQLは <SMALL>ODBC</SMALL> クライアントとも通信できます。</P>
 
 <P><STRONG>サーバ</STRONG></P>
-<P> 現在、Cygnus Unix/NT 移植ライブラリの Cygwin を使って、PostgreSQL データベースサーバは Windows NT と Win2k 上で稼働しています。配布に含まれる<I>pgsql/doc/FAQ_MSWIN</I>、あるいは、<A href="http://www.PostgreSQL.org/docs/faqs/faq-mswin.html">http://www.PostgreSQL.org/docs/faqs/faq-mswin.html</A>にある MS Windows FAQ をご覧下さい。</P>
-<P>MS Win NT/2000/XP ネイティブ版への移植が現在進行中です。</P>
+<P> 現在、Cygnus Unix/NT 移植ライブラリの Cygwin を使って、PostgreSQL データベースサーバは Windows NT と Win2k 上で稼働しています。配布に含まれる<I>pgsql/doc/FAQ_MSWIN</I>、あるいは、
+<A href="http://www.PostgreSQL.org/docs/faqs/text/FAQ_MSWIN">http://www.PostgreSQL.org/docs/faqs/text/FAQ_MSWIN</A>にある MS Windows FAQ をご覧下さい。</P>
+<P>MS Win NT/2000/XP ネイティブ版への移植が現在進行中です。もっと詳しいWindows版PostgreSQLの近況は、<a href="http://techdocs.postgresql.org/guides/Windows">http://techdocs.postgresql.org/guides/Windows</a>を見てください。
+</p>
 
 <BR>
 [訳注：
@@ -320,13 +322,14 @@ HREF="mailto:bugs-request@PostgreSQL.org">bugs-request@PostgreSQL.org</A>
 		<A HREF="http://www.PostgreSQL.org">http://www.PostgreSQL.org</A>
 </BLOCKQUOTE>
 </P>
-<P>EFNet に <I>#PostgreSQL</I> という IRC チャンネルもあります。
-UNIX コマンドで<tt>irc -c '#PostgreSQL' "$USER" <A HREF="http://irc.phoenix.net">irc.phoenix.net</A> を使います。</P>
+<P>EFNet と OpenProjects に <I>#PostgreSQL</I> という IRC チャンネルもあります。
+UNIX コマンドで<tt>irc -c '#PostgreSQL' "$USER" <A HREF="http://irc.phoenix.net">irc.phoenix.net</A> を使っています。</P>
 <P>
 <SMALL><PRE>
     [訳注:
-	  1999年7月23日、日本PostgreSQLユーザー会(にほん ぽすとぐれす ゆーざー かい)、略称JPUGが設立されました。
-	JPUG は非営利組織で、PostgreSQLを利用する人達の相互協力の場です。
+	  1999年7月23日、日本PostgreSQLユーザー会(にほん ぽすとぐれす ゆーざー かい)、略称JPUG
+	が設立されました。JPUG は非営利組織で、PostgreSQLを利用する人達の相互協力の場となっています。  
+	2003年5月17日の総会を以って、「日本PostgreSQLユーザ会」に名称を改めました。
 	正会員の会費は無料ですが、協賛会員の会費と会員の積極的な貢献が会の運営を助けています。
 	詳しくは、JPUG のWeb サイト:
 		<A HREF="http://www.PostgreSQL.jp/">http://www.PostgreSQL.jp/</A>
@@ -360,14 +363,11 @@ PostgreSQL の最新版はバージョン 7.3.2 です。</P>
 
 <H4><A NAME="1.8">1.8</A>)	どのような文書がありますか？</H4>
 
-<P> 配付の中に、いくつかのマニュアルとオンライン・マニュアル(マニュアル・ページ)およびいくつかの小さなテスト例題が含まれます。<I>/doc</I> ディレクトリをご覧下さい。また、マニュアルは、<A
-HREF="http://www.ca.PostgreSQL.org/users-lounge/docs/">
-http://www.ca.PostgreSQL.org/users-lounge/docs/</A>
-でオンラインでも閲覧できます。</P>
+<P> 配付の中に、いくつかのマニュアルとオンライン・マニュアル(マニュアル・ページ)およびいくつかの小さなテスト例題が含まれます。<I>/doc</I> ディレクトリをご覧下さい。また、マニュアルは、<A HREF="http://www.ca.PostgreSQL.org/docs/">http://www.ca.PostgreSQL.org/docs/</A>でオンラインでも閲覧できます。</P>
 
 <SMALL><PRE>
     [訳注:
-	（株）SRAと日本ポストグレスユーザー会で翻訳され、
+	（株）SRAと日本PostgreSQLユーザ会で翻訳され、
 	<A HREF="http://osb.sra.co.jp/PostgreSQL/Manual/">「PostgreSQL オフィシャルマニュアル」</A>
 	として出版されています。
     ]
@@ -548,6 +548,8 @@ href="https://store.pgsql.com/shopping/">https://store.pgsql.com/shopping/</A>か
 
 <HR>
 
+<P>さらに、もし、PostgreSQLでの成功例をお持ちであれば、ぜひ、われわれの事例サイト <a href="http://advocacy.postgresql.org">http://advocacy.postgresql.org</a>へお送りください。
+
 <H2 align="center">ユーザー・クライアントの質問</H2>
 <P>
 
@@ -688,7 +690,8 @@ href="http://www.PostgreSQL.org/interfaces.html">http://www.PostgreSQL.org/inter
 </H4>
 
 <P> カーネルが共有メモリーを持つ設定になっていなかったか、でなければ、カーネルに対して使える共有メモリーの大きさを大きく設定する必要があります。具体的な大きさは、使っているアーキテクチャと<I>postmaster</I> を走らせるときに設定するバッファの数とバックエンドプロセスに依存します。ほとんどのシステムでは、既定値のバッファサイズのままで、少なくとも約1MBが必要です。
-PostgreSQL Administrator's Gide に共有メモリーとセマフォについての情報の詳細があります。</P>
+<A ref=http://www.PostgreSQL.org/docs/view.php?version=current&idoc=1&file=kernel-resources.html">PostgreSQL Administrator's Gide</a>に共有メモリーとセマフォについての情報の詳細がありますのでご覧ください。</P>
+
 
 <P>
 <H4><A NAME="3.4">3.4</A>)	<I>postmasterを</I>走らせようとすると、<I>IpcSemaphoreCreate</I> エラーが出ます。なぜですか？
@@ -816,13 +819,21 @@ PostgreSQLチームはマイナーリリースでは小さな変更しか行ないませんので、7.2 から 7
 <P> 詳述は、オンラインマニュアルで <SMALL>DECLARE</SMALL> を見て下さい。
 
 <P>
-<H4><A NAME="4.2">4.2</A>)	最初の数ロウのみを <SMALL>SELECT</SMALL> するにはどうしますか？
+<H4><A NAME="4.2">4.2</A>)	最初の数ロウのみを <SMALL>SELECT</SMALL>するにはどうしますか？ランダムな行？
 </H4>
 
 <P> オンラインマニュアルで<SMALL>FETCH</SMALL>を見てください。あるいは、SELECT ... LIMIT....を使ってみて下さい。
 
 <P>たとえ、欲しいのは最初の数ロウだけでも、すべての問い合わせを評価しなくてはならないかもしれません。<SMALL>ORDER BY</SMALL> を持った問い合わせを使うことを考えてみて下さい。
 もし、<SMALL>ORDER BY</SMALL>に合ったインデックスがあるとすると PostgreSQLは要求された最初の数ロウだけで評価できるかもしれませんが、でなれば、PostgreSQL は意図したロウが生成されるまですべてのロウを評価しなければならないかもしれません。
+
+   <P>ランダムな行を<SMALL>SELECT</SMALL>するには、次の文を使います： 
+<PRE>
+    SELECT col
+    FROM tab
+    ORDER BY random()
+    LIMIT 1;
+</PRE>
 
 <P>
 <H4><A NAME="4.3">4.3</A>)	テーブルやその他の情報のリストを <I>psql</I> で見るにはどうしますか？
@@ -834,11 +845,11 @@ PostgreSQLチームはマイナーリリースでは小さな変更しか行ないませんので、7.2 から 7
 <P>
 
 
-<H4><A NAME="4.4">4.4</A>)	テーブルからカラムの削除はどのようにしますか？
+<H4><A NAME="4.4">4.4</A>)	テーブルからカラムの削除、あるいは、データ型を変更するにはどうしますか？
 </H4>
 
-<P> この機能は、<SMALL>ALTER TABLE DROP COLUMN</SMALL> としてリリース7.3
-から加えられました。それまでのバージョンでは、その代わりにこうします:
+<P> <SMALL>DROP COLUMN</SMALL>機能が、<SMALL>ALTER TABLE DROP COLUMN</SMALL> としてリリース7.3
+に加えられました。それまでのバージョンでは、その代わりにこうします:
 
 <PRE>
 	BEGIN;
@@ -851,8 +862,17 @@ PostgreSQLチームはマイナーリリースでは小さな変更しか行ないませんので、7.2 から 7
 	COMMIT;
 </PRE>
 
-[訳注：カラムの追加は ALTER TABLE ADD COLUMN で行えます。]
+<P>カラムのデータタイプは次の文で変えられます： 
 
+<PRE>
+    BEGIN;
+    ALTER TABLE tab ADD COLUMN new_col <i>new_data_type</i>;
+    UPDATE tab SET new_col = CAST(old_col AS <i>new_data_type</i>);
+    ALTER TABLE DROP COLUMN old_col;
+    COMMIT;
+</PRE>
+
+<P>これを行なったときは、抹消された行が使っているディスク空間を回収するために<I>VACUUM FULL tab</I>をしたほうが良いかもしれません。
 
 <P>
 <H4><A NAME="4.5">4.5</A>)	ロウ、テーブル、データベースの最大サイズは？
@@ -1100,9 +1120,15 @@ BYTEA           bytea           可変長のバイト配列(null-byte safe)
 		name TEXT 
 	);
 	CREATE UNIQUE INDEX person_id_key ON person ( id );
+
+    [訳注：
+	CREATE UNIQUE INDEX person_id_key ON person ( id );
+	は、 7.3 からは自動的には行なわれなくなりました。
+    ]
 </PRE>
+
 通番についてのもっと詳しい情報は、オンラインマニュアルで <I>create_sequence</I> をご覧下さい。
-<P> また、各ロウの<I>OID</I>フィールドを一意値として使うこともできます。しかしながら、もしもデータベースをダンプしてりロードする必要がある場合は、<SMALL>OID</SMALL>を温存するために<I>pg_dump</I> で <I>-o</I>オプションを使うか、または、<SMALL>COPY WITH OIDS</I>オプションを使う必要があります。
+<P> また、各ロウの<I>OID</I>フィールドを一意値として使うこともできます。しかしながら、もしもデータベースをダンプしてりロードする必要がある場合は、<SMALL>OID</SMALL>を温存するために<I>pg_dump</I> で <I>-o</I>オプションを使うか、または、<SMALL>COPY WITH OIDS</small>オプションを使う必要があります。
 
  Bruce Momjian の<A HREF="http://www.PostgreSQL.org/docs/aw_pgsql_book">(http://www.PostgreSQL.org/docs/aw_pgsql_book)の Numbering Rows</A>の章にありあます。
 
@@ -1295,10 +1321,8 @@ PostgreSQL は SQL 標準構文を使う外部結合(アウタージョイン)をサポートします。ここ
 <P>
 <H4><A NAME="4.25">4.25</A>) 関数で複数のロウまたはカラムを返すにはどうしますか？<BR></H4>
 
-     <P>もし、PL/pgSQL 関数で<i>refcursors</i>を使うと結果の組を返すことができます。<A
-href="http://www.PostgreSQL.org/idocs/index.php?plpgsql-cursors.html">
-http://www.PostgreSQL.org/idocs/index.php?plpgsql-cursors.html</A> の
-23.7.3.3 節をご覧下さい。</P>
+<P>7.3では関数から、複数行のや複数カラムを簡単に返せます。
+<a href="http://techdocs.postgresql.org/guides/SetReturningFunctions">http://techdocs.postgresql.org/guides/SetReturningFunctions</a>。
 
 
 <P>
@@ -1381,8 +1405,8 @@ http://gborg.PostgreSQL.org/project/pgreplication/projdisplay.php</a>
 [訳注：
   日本語版の製作については以下の通りです。
 
-  最終更新日:	2003年04月10日
-  翻訳者:	桑村 潤 (<A HREF="mailto:juk@PostgreSQL.jp">Jun Kuwamura &lt;juk@PostgreSQL.jp&gt;</A>)
+  最終更新日:	2003年06月30日
+  翻訳者:	桑村 潤 (<A HREF="mailto:juk at PostgreSQL.jp">Jun Kuwamura &lt;juk at PostgreSQL.jp&gt;</A>)
 
   このFAQの和訳の作成にあたり協力をしてくださった方々(敬称は略させていただきます):
 
@@ -1399,20 +1423,19 @@ http://gborg.PostgreSQL.org/project/pgreplication/projdisplay.php</a>
 		本田 茂広(<A HREF="mailto:fwif0083 at mb.infoweb.ne.jp">Shigehiro HONDA &lt;fwif0083 at mb.infoweb.ne.jp&gt;</A>)
 		せせ じゅん(<A HREF="mailto:sesejun at linet.gr.jp">Jun SESE &lt;sesejun at linet.gr.jp&gt;</A>)
 		神谷 英孝(<A HREF="mailto:hkamiya at catvmics.ne.jp">Hidetaka KAMIYA &lt;hkamiya at catvmics.ne.jp&gt;</A>)
-		菅原 敦(<A HREF="mailto:asugawar at f3.dion.ne.jp">
-Atsushi SUGAWARA &lt;asugawar at f3.dion.ne.jp&gt;</A>)
+		菅原 敦(<A HREF="mailto:asugawar at f3.dion.ne.jp">Atsushi SUGAWARA &lt;asugawar at f3.dion.ne.jp&gt;</A>)
+		稲葉 香理(<A HREF="mailto:i-kaori at sra.co.jp">Kaori Inaba &lt;i-kaori at sra.co.jp&gt;</A>)
 
   をはじめ、ポストグレスに関する話題豊富な<A HREF="http://www.sra.co.jp/people/t-ishii/PostgreSQL/ML/info.html">日本語ポストグレス・メーリングリスト</A>、
-  和訳のきっかけを作ってくれた <A HREF="http://jf.linux.or.jp/">JF(Linux Japanese FAQ Mailing List)プロジェクト</A>、その他、
-  直接あるいは間接的にかかわっているすべてのオープンソースコミュニティーの
-  皆さんに感謝します。
+和訳のきっかけを作ってくれた <A HREF="http://jf.linux.or.jp/">JF(Linux Japanese FAQ Mailing List)プロジェクト</A>、その他、
+直接あるいは間接的にかかわっているすべてのオープンソースコミュニティーの皆さんに感謝します。
 
   日本語版のこの文書は、以下からもたどれます。
 	<A HREF="http://www.rccm.co.jp/~juk/pgsql/">http://www.rccm.co.jp/~juk/pgsql/</A>(FAQ和訳 PostgreSQL についてよくある質問)
 	<A HREF="http://www.PostgreSQL.jp/subcommittee/jpugdoc/">http://www.PostgreSQL.jp/subcommittee/jpugdoc/</A>JPUG文書・書籍関連分科会
 	<A HREF="http://www.linux.or.jp/JF/">http://www.linux.or.jp/JF/</A>Linux JFプロジェクト
 
-  なお、この和訳に関するご意見は(<A HREF="mailto:juk@PostgreSQL.jp">juk@PostgreSQL.jp</A>)までお寄せ下さい。
+  なお、この和訳に関するご意見は(<A HREF="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</A>)までお寄せ下さい。
 ]
 </PRE></SMALL>
 
