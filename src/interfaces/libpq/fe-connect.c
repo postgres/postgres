@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.262 2003/10/02 19:52:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.263 2003/10/18 05:02:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2003,8 +2003,11 @@ makeEmptyPGconn(void)
 static void
 freePGconn(PGconn *conn)
 {
+	pgParameterStatus *pstatus;
+
 	if (!conn)
 		return;
+
 	pqClearAsyncResult(conn);	/* deallocate result and curTuple */
 	if (conn->sock >= 0)
 	{
@@ -2037,6 +2040,14 @@ freePGconn(PGconn *conn)
 	if (conn->notifyList)
 		DLFreeList(conn->notifyList);
 	freeaddrinfo_all(conn->addrlist_family, conn->addrlist);
+	pstatus = conn->pstatus;
+	while (pstatus != NULL)
+	{
+		pgParameterStatus *prev = pstatus;
+
+		pstatus = pstatus->next;
+		free(prev);
+	}
 	if (conn->lobjfuncs)
 		free(conn->lobjfuncs);
 	if (conn->inBuffer)
