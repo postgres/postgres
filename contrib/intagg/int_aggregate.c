@@ -11,7 +11,8 @@
  * This file is the property of the Digital Music Network (DMN).
  * It is being made available to users of the PostgreSQL system
  * under the BSD license.
- *
+ * 
+ * NOTE: This module requires sizeof(void *) to be the same as sizeof(int)
  */
 #include "postgres.h"
 
@@ -36,6 +37,9 @@
 #include "utils/memutils.h"
 #include "utils/lsyscache.h"
 
+
+/* Uncomment this define if you are compiling for postgres 7.2.x */
+/* #define PG_7_2 */
 
 /* This is actually a postgres version of a one dimensional array */
 
@@ -96,7 +100,9 @@ static PGARRAY * GetPGArray(int4 state, int fAdd)
 		p->a.size = cb;
 		p->a.ndim = 0;
 		p->a.flags = 0;
+#ifndef PG_7_2
 		p->a.elemtype = INT4OID;
+#endif
 		p->items = 0;
 		p->lower= START_NUM;
 	}
@@ -149,7 +155,9 @@ static PGARRAY *ShrinkPGArray(PGARRAY *p)
 			pnew->a.size = cb;
 			pnew->a.ndim=1;
 			pnew->a.flags = 0;
+#ifndef PG_7_2
 			pnew->a.elemtype = INT4OID;
+#endif
 			pnew->lower = 0;
 		}
 		else
