@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Mon Aug 23 12:16:36 EDT 2004
+   Last updated: Mon Aug 23 17:51:33 EDT 2004
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -186,27 +186,10 @@
    
     1.4) What non-Unix ports are available?
     
-   Client
-   
-   It is possible to compile the libpq C library, psql, and other
-   interfaces and client applications to run on MS Windows platforms. In
-   this case, the client is running on MS Windows, and communicates via
-   TCP/IP to a server running on one of our supported Unix platforms. A
-   file win32.mak is included in the distribution for making a Win32
-   libpq library and psql. PostgreSQL also communicates with ODBC
-   clients.
-   
-   Server
-   
-   The database server can run on Windows NT and Win2k using Cygwin, the
-   Cygnus Unix/NT porting library. See pgsql/doc/FAQ_MSWIN in the
-   distribution or the MS Windows FAQ at
-   http://www.PostgreSQL.org/docs/faqs/text/FAQ_MSWIN.
-   
-   A native port to MS Win NT/2000/XP is currently being worked on. For
-   more details on the current status of PostgreSQL on Windows see
-   http://techdocs.postgresql.org/guides/Windows and
-   http://momjian.postgresql.org/main/writings/pgsql/win32.html.
+   Starting with version 8.0, PostgreSQL now runs natively on Microsoft
+   Windows NT-based operating systems like Win2000, WinXP, and Win2003. A
+   prepackaged installer is available at
+   http://pgfoundry.org/projects/pginstaller.
    
    There is also a Novell Netware 6 port at http://forge.novell.com.
    

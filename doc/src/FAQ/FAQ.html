@@ -10,7 +10,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Mon Aug 23 12:16:36 EDT 2004</P>
+    <P>Last updated: Mon Aug 23 17:51:33 EDT 2004</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -238,30 +238,11 @@
 
     <H4><A name="1.4">1.4</A>) What non-Unix ports are available?</H4>
 
-    <P><STRONG>Client</STRONG></P>
-
-    <P>It is possible to compile the <I>libpq</I> C library, psql, and
-    other interfaces and client applications to run on MS Windows platforms.
-    In this case, the client is running on MS Windows, and communicates
-    via TCP/IP to a server running on one of our supported Unix
-    platforms. A file <I>win32.mak</I> is included in the distribution
-    for making a Win32 <I>libpq</I> library and <I>psql</I>. PostgreSQL
-    also communicates with <SMALL>ODBC</SMALL> clients.</P>
-
-    <P><STRONG>Server</STRONG></P>
-
-    <P>The database server can run on Windows NT and Win2k using
-    Cygwin, the Cygnus Unix/NT porting library. See
-    <I>pgsql/doc/FAQ_MSWIN</I> in the distribution or the MS Windows FAQ
-    at <A href="http://www.PostgreSQL.org/docs/faqs/text/FAQ_MSWIN">
-    http://www.PostgreSQL.org/docs/faqs/text/FAQ_MSWIN</A>.</P>
-
-    <p>A native port to MS Win NT/2000/XP is currently being worked
-    on. For more details on the current status of PostgreSQL on Windows see
-    <a href="http://techdocs.postgresql.org/guides/Windows">
-    http://techdocs.postgresql.org/guides/Windows</a> and
-    <a href="http://momjian.postgresql.org/main/writings/pgsql/win32.html">
-    http://momjian.postgresql.org/main/writings/pgsql/win32.html</a>.</p>
+    <P>Starting with version 8.0, PostgreSQL now runs natively on
+    Microsoft Windows NT-based operating systems like Win2000, WinXP,
+    and Win2003.  A prepackaged installer is available at <a href=
+    "http://pgfoundry.org/projects/pginstaller">
+    http://pgfoundry.org/projects/pginstaller</a>.
 
     <p>There is also a Novell Netware 6 port at
     <a href="http://forge.novell.com">http://forge.novell.com</a>.</p>
