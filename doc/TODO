@@ -6,7 +6,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Wed Nov 10 00:47:03 EST 2004
+Last updated:		Wed Nov 10 22:59:04 EST 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -40,7 +40,7 @@ Administration
 
 * Allow major upgrades without dump/reload, perhaps using pg_upgrade
 * Have SHOW ALL and pg_settings show descriptions for server-side variables
-* Allow GRANT/REVOKE permissions to be given to all schema objects with one 
+* Allow GRANT/REVOKE permissions to be applied to all schema objects with one
   command
 * Remove unreferenced table files created by transactions that were
   in-progress when the server terminated abruptly
@@ -57,10 +57,10 @@ Administration
   tablespace t2
 
   All objects in the default database tablespace must have default tablespace
-  specifications.  This is because new databases are created by copying 
+  specifications.  This is because new databases are created by copying
   directories.  If you mix default tablespace tables and tablespace-specified
   tables in the same directory, creating a new database from such a mixed
-  directory would create a new database with tables that had incorrect 
+  directory would create a new database with tables that had incorrect
   explicit tablespaces.  To fix this would require modifying pg_class in the
   newly copied database, which we don't currently do.
 
@@ -69,7 +69,7 @@ Administration
 
   It could start with a random tablespace from a supplied list and cycle
   through the list.
-  
+
 * Add "include file" functionality in postgresql.conf
 * Add session start time and last statement time to pg_stat_activity
 * Allow server logs to be remotely read using SQL commands
@@ -82,13 +82,13 @@ Administration
 
 * Un-comment all variables in postgresql.conf
 
-  By not showing commented-out variables, we discourage people from 
+  By not showing commented-out variables, we discourage people from
   thinking that re-commenting a variable returns it to its default.
   This has to address environment variables that are then overridden
   by config file values.  Another option is to allow commented values
   to return to their default values.
 
-* Allow point-in-time recovery to archive partially filled write-ahead 
+* Allow point-in-time recovery to archive partially filled write-ahead
   logs
 
   Currently only full WAL files are archived. This means that the most
@@ -99,7 +99,7 @@ Administration
   transaction id for point-in-time recovery
 * Set proper permissions on non-system schemas during db creation
 
-  Currently all schemas are owned by the super-user because they are 
+  Currently all schemas are owned by the super-user because they are
   copied from the template1 database.
 
 * Add a function that returns the 'uptime' of the postmaster
@@ -125,7 +125,7 @@ Data Types
 * Remove Money type, add money formatting for decimal type
 * Change NUMERIC to enforce the maximum precision, and increase it
 * Add function to return compressed length of TOAST data values
-* Allow INET subnet tests with non-constants to be indexed
+* Allow INET subnet tests using non-constants to be indexed
 * Add transaction_timestamp(), statement_timestamp(), clock_timestamp()
   functionality
 
@@ -140,10 +140,10 @@ Data Types
 * Allow infinite dates just like infinite timestamps
 * Have initdb set DateStyle based on locale?
 * Add pg_get_acldef(), pg_get_typedefault(), and pg_get_attrdef()
-* Allow to_char to print localized month names
-* Allow functions to have a search path specified at creation time
+* Allow to_char() to print localized month names
+* Allow functions to have a schema search path specified at creation time
 * Allow substring/replace() to get/set bit values
-* Add GUC variable to allow output of interval values in ISO8601 format
+* Add a GUC variable to allow output of interval values in ISO8601 format
 * Fix data types where equality comparison isn't intuitive, e.g. box
 * Merge hardwired timezone names with the TZ database; allow either kind
   everywhere a TZ name is currently taken
@@ -151,14 +151,14 @@ Data Types
   present australian_timezones hack)
 * Allow TIMESTAMP WITH TIME ZONE to store the original timezone
   information, either by name or offset from UTC
-* Prevent inet cast to cidr if the unmasked bits are not zero, or
-  zero bits
+* Prevent INET cast to CIDR if the unmasked bits are not zero, or
+  zero the bits
 
 * ARRAYS
-	o Allow nulls in arrays
+	o Allow NULLs in arrays
 	o Allow MIN()/MAX() on arrays
-	o Delay resolution of array expression type so assignment coercion 
-	  can be performed on empty array expressions
+	o Delay resolution of array expression's data type so assignment
+	  coercion can be performed on empty array expressions
 	o Modify array literal representation to handle array index lower bound
 	  of other than one
 
@@ -215,10 +215,10 @@ Indexes
 =======
 
 * Allow inherited tables to inherit index, UNIQUE constraint, and primary
-  key, foreign key  [inheritance]
-* UNIQUE INDEX on base column not honored on inserts/updates from
+  key, foreign key
+* UNIQUE INDEX on base column not honored on INSERTs/UPDATEs from
   inherited table:  INSERT INTO inherit_table (unique_index_col) VALUES
-  (dup) should fail [inheritance]
+  (dup) should fail
 
   The main difficulty with this item is the problem of creating an index
   that can span more than one table.
@@ -243,7 +243,7 @@ Indexes
   Uniqueness (index) checks are done when updating a column even if the
   column is not modified by the UPDATE.
 
-* Fetch heap pages matching index entries in sequential order [performance]
+* Fetch heap pages matching index entries in sequential order
 
   Rather than randomly accessing heap pages based on index entries, mark
   heap pages needing access in a bitmap and do the lookups in sequential
@@ -304,7 +304,7 @@ Commands
 * Allow additional tables to be specified in DELETE for joins
 
   UPDATE already allows this (UPDATE...FROM) but we need similar
-  functionality in DELETE.  It's been agreed that the keyword should 
+  functionality in DELETE.  It's been agreed that the keyword should
   be USING, to avoid anything as confusing as DELETE FROM a FROM b.
 
 * Add CORRESPONDING BY to UNION/INTERSECT/EXCEPT
@@ -315,7 +315,7 @@ Commands
 * Allow SET CONSTRAINTS to be qualified by schema/table name
 * Allow TRUNCATE ... CASCADE/RESTRICT
 * Allow PREPARE of cursors
-* Allow PREPARE to automatically determine parameter types based on the SQL 
+* Allow PREPARE to automatically determine parameter types based on the SQL
   statement
 * Allow finer control over the caching of prepared query plans
 
@@ -337,30 +337,27 @@ Commands
   message, perhaps indicating the row modified or other custom
   information.
 
-* Allow CREATE TABLE foo (f1 INT CHECK (f1 > 0) CHECK (f1 < 10)) to work
-  by searching for non-conflicting constraint names, and prefix with
-  table name?
 * Use more reliable method for CREATE DATABASE to get a consistent copy
   of db?
 
   Currently the system uses the operating system COPY command to create
-  new database.
+  a new database.
 
 * Add C code to copy directories for use in creating new databases
-* Ignore temporary tables from other sessions when processing
-  inheritance?
 * Have pg_ctl look at PGHOST in case it is a socket directory?
 * Allow column-level GRANT/REVOKE privileges
-* Add a session mode to warn about non-standard SQL usage in queries
-* Add MERGE command that does UPDATE/DELETE, or on failure, INSERT (rules, triggers?)
+* Add a GUC variable to warn about non-standard SQL usage in queries
+* Add MERGE command that does UPDATE/DELETE, or on failure, INSERT (rules,
+  triggers?)
 * Add ON COMMIT capability to CREATE TABLE AS SELECT
-* Add NOVICE output level for helpful messages like automatic sequence/index creation
-* Add COMMENT ON for all cluster global objects (users, groups,
-  databases and tablespaces)
+* Add NOVICE output level for helpful messages like automatic sequence/index
+  creation
+* Add COMMENT ON for all cluster global objects (users, groups, databases
+  and tablespaces)
 * Add an option to automatically use savepoints for each statement in a
   multi-statement transaction.
 
-  When enabled, this would allow errors in multi-statement transactions 
+  When enabled, this would allow errors in multi-statement transactions
   to be automatically ignored.
 
 * Make row-wise comparisons work per SQL spec
@@ -414,7 +411,7 @@ Commands
 
 	o Allow COPY to understand \x as a hex byte
 	o Have COPY return the number of rows loaded/unloaded (?)
-	o Allow COPY to optionally include column headings as the first line
+	o Allow COPY to optionally include column headings in the first line
 
 * CURSOR
 	o Allow UPDATE/DELETE WHERE CURRENT OF cursor
@@ -447,7 +444,7 @@ Commands
 	o Add SET PATH for schemas (?)
 
 	  This is basically the same as SET search_path.
-	 
+
 	o Prevent conflicting SET options from being set
 
 	  This requires a checking function to be called after the server
@@ -459,14 +456,13 @@ Commands
 	  Currently only constants are supported.
 
 	o Change PL/PgSQL to use palloc() instead of malloc()
-	o Handle references to temporary tables that are created, destroyed, 
+	o Handle references to temporary tables that are created, destroyed,
 	  then recreated during a session, and EXECUTE is not used
-	  
+
 	  This requires the cached PL/PgSQL byte code to be invalidated when
 	  an object referenced in the function is changed.
 
 	o Fix PL/pgSQL RENAME to work on variables other than OLD/NEW
-	o Improve PL/PgSQL exception handling using savepoints
 	o Allow function parameters to be passed by name,
 	  get_employee_salary(emp_id => 12345, tax_year => 2001)
 	o Add Oracle-style packages
@@ -485,7 +481,7 @@ Clients
   We already allow XML to be stored in the database, and XPath queries
   can be used on that data using /contrib/xml2. It also supports XSLT
   transformations.
-    
+
 * Add a libpq function to support Parse/DescribeStatement capability
 * Prevent libpq's PQfnumber() from lowercasing the column name (?)
 * Allow libpq to access SQLSTATE so pg_ctl can test for connection failure
@@ -500,7 +496,6 @@ Clients
   the database as psql.
 
 * Consistently display privilege information for all objects in psql
-
 * pg_dump
 	o Have pg_dump use multi-statement transactions for INSERT dumps
 	o Allow pg_dump to use multiple -t and -n switches
@@ -515,9 +510,9 @@ Clients
 	o Stop dumping CASCADE on DROP TYPE commands in clean mode
 	o Add full object name to the tag field.  eg. for operators we need
 	  '=(integer, integer)', instead of just '='.
-	o Add pg_dumpall custom format dumps. 
+	o Add pg_dumpall custom format dumps.
 
-	  This is probably best done by combining pg_dump and pg_dumpall 
+	  This is probably best done by combining pg_dump and pg_dumpall
 	  into a single binary.
 
 	o Add CSV output format
@@ -529,7 +524,6 @@ Clients
 	  information about the Informix-compatibility module.
 
 	o Solve cardinality > 1 for input descriptors / variables (?)
-	o Improve error handling (?)
 	o Add a semantic check level, e.g. check if a table really exists
 	o fix handling of DB attributes that are arrays
 	o Use backend PREPARE/EXECUTE facility for ecpg where possible
@@ -552,7 +546,7 @@ Referential Integrity
 
 * Implement dirty reads or shared row locks and use them in RI triggers
 
-  Adding shared locks requires recording the table/rows numbers in a 
+  Adding shared locks requires recording the table/rows numbers in a
   shared area, and this could potentially be a large amount of data.
   One idea is to store the table/row numbers in a separate table and set
   a bit on the row indicating looking in this new table is required to
@@ -640,7 +634,7 @@ Cache
 * Allow free-behind capability for large sequential scans, perhaps using
   posix_fadvise()
 
-  Posix_fadvise() can control both sequential/random file caching and 
+  Posix_fadvise() can control both sequential/random file caching and
   free-behind behavior, but it is unclear how the setting affects other
   backends that also have the file open, and the feature is not supported
   on all operating systems.
@@ -700,7 +694,7 @@ Locking
   contention, improving concurrency.
 
 * Add code to detect an SMP machine and handle spinlocks accordingly
-  from distributted.net, http://www1.distributed.net/source, 
+  from distributted.net, http://www1.distributed.net/source,
   in client/common/cpucheck.cpp
 
   On SMP machines, it is possible that locks might be released shortly,
@@ -726,7 +720,7 @@ Startup Time
   database startup overhead, but a few operating systems (WIn32,
   Solaris) might benefit from threading.
 
-* Add connection pooling [pool]
+* Add connection pooling
 
   It is unclear if this should be done inside the backend code or done
   by something external like pgpool. The passing of file descriptors to
@@ -752,11 +746,10 @@ Write-Ahead Log
 * Add WAL index reliability improvement to non-btree indexes
 * Allow the pg_xlog directory location to be specified during initdb
   with a symlink back to the /data location
-
 * Allow WAL information to recover corrupted pg_controldata
 * Find a way to reduce rotational delay when repeatedly writing
   last WAL page
-  
+
   Currently fsync of WAL requires the disk platter to perform a full
   rotation to fsync again. One idea is to write the WAL to different
   offsets that might reduce the rotational delay.
@@ -765,7 +758,7 @@ Write-Ahead Log
 
   Instead of guaranteeing recovery of all committed transactions, this
   would provide improved performance by delaying WAL writes and fsync
-  so an abrupt operating system restart might lose a few seconds of 
+  so an abrupt operating system restart might lose a few seconds of
   committed transactions but still be consistent.  We could perhaps
   remove the 'fsync' parameter (which results in an an inconsistent
   database) in favor of this capability.
@@ -782,17 +775,15 @@ Optimizer / Executor
   table. Instead a sequential scan could get the matching value.
 
 * Precompile SQL functions to avoid overhead
-* Add utility to compute accurate random_page_cost value
+* Create utility to compute accurate random_page_cost value
 * Improve ability to display optimizer analysis using OPTIMIZER_DEBUG
-* Allow sorting, temp files, temp tables to use multiple work directories
-
-  This allows the I/O load to be spread across multiple disk drives.
 * Have EXPLAIN ANALYZE highlight poor optimizer estimates
 * Use CHECK constraints to influence optimizer decisions
 
   CHECK constraints contain information about the distribution of values
   within the table. This is also useful for implementing subtables where
   a tables content is distributed across several subtables.
+
 * Consider using hash buckets to do DISTINCT, rather than sorting
 
   This would be beneficial when there are few distinct values.
@@ -805,33 +796,33 @@ Miscellaneous
 
   Async I/O allows multiple I/O requests to be sent to the disk with
   results coming back asynchronously.
-    
-* Use mmap() rather than SYSV shared memory or to write WAL files (?) [mmap]
+
+* Use mmap() rather than SYSV shared memory or to write WAL files (?)
 
   This would remove the requirement for SYSV SHM but would introduce
-  portability issues. Anonymous mmap (or mmap to /dev/zero) is required 
-  to prevent I/O overhead.  
+  portability issues. Anonymous mmap (or mmap to /dev/zero) is required
+  to prevent I/O overhead.
 
 * Consider mmap()'ing files into a backend?
 
-  Doing I/O to large tables would consume a lot of address space or 
-  require frequent mapping/unmapping.  Extending the file also causes 
-  mapping problems that might require mapping only individual pages, 
+  Doing I/O to large tables would consume a lot of address space or
+  require frequent mapping/unmapping.  Extending the file also causes
+  mapping problems that might require mapping only individual pages,
   leading to thousands of mappings.  Another problem is that there is no
-  way to _prevent_ I/O to disk from the dirty shared buffers so changes 
+  way to _prevent_ I/O to disk from the dirty shared buffers so changes
   could hit disk before WAL is written.
 
 * Add a script to ask system configuration questions and tune postgresql.conf
 * Use a phantom command counter for nested subtransactions to reduce
-  tuple overhead
+  per-tuple overhead
 * Consider parallel processing a single query
 
-  This would involve using multiple threads or processes to do optimization, 
-  sorting, or execution of single query.  The major advantage of such a 
-  feature would be to allow multiple CPUs to work together to process a 
+  This would involve using multiple threads or processes to do optimization,
+  sorting, or execution of single query.  The major advantage of such a
+  feature would be to allow multiple CPUs to work together to process a
   single query.
 
-* Research the use of larger pages sizes
+* Research the use of larger page sizes
 
 
 Source Code
@@ -840,26 +831,21 @@ Source Code
 * Add use of 'const' for variables in source tree
 * Rename some /contrib modules from pg* to pg_*
 * Move some things from /contrib into main tree
+* Move some /contrib modules out to their own project sites
 * Remove warnings created by -Wcast-align
 * Move platform-specific ps status display info from ps_status.c to ports
-* Improve access-permissions check on data directory in Cygwin (Tom)
 * Add optional CRC checksum to heap and index pages
-* Clarify use of 'application' and 'command' tags in SGML docs
-* Better document ability to build only certain interfaces (Marc)
+* Improve documentation to build only interfaces (Marc)
 * Remove or relicense modules that are not under the BSD license, if possible
 * Remove memory/file descriptor freeing before ereport(ERROR)
 * Acquire lock on a relation before building a relcache entry for it
-* Research interaction of setitimer() and sleep() used by statement_timeout
-* Rename /scripts directory because they are all C programs now
 * Promote debug_query_string into a server-side function current_query()
 * Allow the identifier length to be increased via a configure option
-* Allow binaries to be statically linked so they are more easily relocated
-* Move some /contrib modules out to their own project sites
 * Remove Win32 rename/unlink looping if unnecessary
 * Remove kerberos4 from source tree?
 
 * Win32
-	o Remove per-backend parameter file and move into shared memory?
+	o Remove per-backend parameter file and move into shared memory
 	o Remove configure.in check for link failure when cause is found
 	o Remove readdir() errno patch when runtime/mingwex/dirent.c rev
 	  1.4 is released
@@ -874,8 +860,8 @@ Source Code
 	o Allow dynamic character set handling
 	o Add decoded type, length, precision
 	o Use compression?
-	o Update clients to use data types, typmod, schema.table.column names of
-	  result sets using new query protocol
+	o Update clients to use data types, typmod, schema.table.column names
+	  of result sets using new query protocol
 
 
 ---------------------------------------------------------------------------
@@ -897,7 +883,6 @@ Developers who have claimed items are:
 * Jan is Jan Wieck <JanWieck@Yahoo.com> of Afilias, Inc.
 * Joe is Joe Conway <mail@joeconway.com>
 * Karel is Karel Zak <zakkr@zf.jcu.cz>
-* Kris is Kris Jurka 
 * Magnus is Magnus Hagander <mha@sollentuna.net>
 * Marc is Marc Fournier <scrappy@hub.org> of PostgreSQL, Inc.
 * Matthew T. O'Connor <matthew@zeut.net>
@@ -907,8 +892,7 @@ Developers who have claimed items are:
 * Peter is Peter Eisentraut <peter_e@gmx.net>
 * Philip is Philip Warner <pjw@rhyme.com.au> of Albatross Consulting Pty. Ltd.
 * Rod is Rod Taylor <pg@rbt.ca>
-* Simon is Simon Riggs
+* Simon is Simon Riggs <simon@2ndquadrant.com>
 * Stephan is Stephan Szabo <sszabo@megazone23.bigpanda.com>
 * Tatsuo is Tatsuo Ishii <t-ishii@sra.co.jp> of Software Research Assoc.
-* Teodor is 
 * Tom is Tom Lane <tgl@sss.pgh.pa.us> of Red Hat
