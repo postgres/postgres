@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.12 1996/11/11 12:16:57 scrappy Exp $
+ * $Id: libpq-fe.h,v 1.13 1996/11/22 04:39:53 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 extern "C" {
 #endif
 
+#include <stdio.h>
 /* ----------------
  *	include stuff common to fe and be
  * ----------------
