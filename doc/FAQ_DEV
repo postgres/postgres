@@ -1,7 +1,7 @@
 
           Developer's Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sat Dec 29 23:31:26 EST 2001
+   Last updated: Thu Jan 3 03:13:44 EST 2002
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -632,11 +632,11 @@ List *i, *list;
   2.5) Why do we use palloc() and pfree() to allocate memory?
   
    palloc() and pfree() are used in place of malloc() and free() because
-   we automatically free all memory allocated when a transaction
-   completes. This makes it easier to make sure we free memory that gets
-   allocated in one place, but only freed much later. There are several
-   contexts that memory can be allocated in, and this controls when the
-   allocated memory is automatically freed by the backend.
+   we find it easier to automatically free all memory allocated when a
+   query completes. This assures us that all memory that was allocated
+   gets freed even if we have lost track of where we allocated it. There
+   are special non-query contexts that memory can be allocated in. These
+   affect when the allocated memory is freed by the backend.
    
   2.6) What is elog()?
   
