@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.46 2002/07/02 05:48:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.47 2002/08/06 19:41:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,7 +73,6 @@ PageAddItem(Page page,
 			ItemIdFlags flags)
 {
 	PageHeader	phdr = (PageHeader) page;
-	int			i;
 	Size		alignedSize;
 	int			lower;
 	int			upper;
@@ -91,24 +90,20 @@ PageAddItem(Page page,
 		phdr->pd_lower > phdr->pd_upper ||
 		phdr->pd_upper > phdr->pd_special ||
 		phdr->pd_special > BLCKSZ)
-		elog(ERROR, "PageAddItem: corrupted page pointers: lower = %u, upper = %u, special = %u",
+		elog(PANIC, "PageAddItem: corrupted page pointers: lower = %u, upper = %u, special = %u",
 			 phdr->pd_lower, phdr->pd_upper, phdr->pd_special);
 
 	/*
-	 * Find first unallocated offsetNumber
+	 * Select offsetNumber to place the new item at
 	 */
 	limit = OffsetNumberNext(PageGetMaxOffsetNumber(page));
 
 	/* was offsetNumber passed in? */
 	if (OffsetNumberIsValid(offsetNumber))
 	{
+		/* yes, check it */
 		if (overwritemode)
 		{
-			if (offsetNumber > limit)
-			{
-				elog(WARNING, "PageAddItem: tried overwrite after maxoff");
-				return InvalidOffsetNumber;
-			}
 			if (offsetNumber < limit)
 			{
 				itemId = PageGetItemId(phdr, offsetNumber);
@@ -122,16 +117,13 @@ PageAddItem(Page page,
 		}
 		else
 		{
-			/*
-			 * Don't actually do the shuffle till we've checked free
-			 * space!
-			 */
-			needshuffle = true; /* need to increase "lower" */
+			if (offsetNumber < limit)
+				needshuffle = true; /* need to move existing linp's */
 		}
 	}
 	else
 	{
-		/* offsetNumber was not passed in, so find one */
+		/* offsetNumber was not passed in, so find a free slot */
 		/* look for "recyclable" (unused & deallocated) ItemId */
 		for (offsetNumber = 1; offsetNumber < limit; offsetNumber++)
 		{
@@ -140,6 +132,13 @@ PageAddItem(Page page,
 				((*itemId).lp_len == 0))
 				break;
 		}
+		/* if no free slot, we'll put it at limit (1st open slot) */
+	}
+
+	if (offsetNumber > limit)
+	{
+		elog(WARNING, "PageAddItem: specified offset after maxoff");
+		return InvalidOffsetNumber;
 	}
 
 	/*
@@ -148,9 +147,7 @@ PageAddItem(Page page,
 	 * Note: do arithmetic as signed ints, to avoid mistakes if, say,
 	 * alignedSize > pd_upper.
 	 */
-	if (offsetNumber > limit)
-		lower = (char *) PageGetItemId(phdr, offsetNumber + 1) - (char *) page;
-	else if (offsetNumber == limit || needshuffle)
+	if (offsetNumber == limit || needshuffle)
 		lower = phdr->pd_lower + sizeof(ItemIdData);
 	else
 		lower = phdr->pd_lower;
@@ -166,27 +163,21 @@ PageAddItem(Page page,
 	 * OK to insert the item.  First, shuffle the existing pointers if
 	 * needed.
 	 */
-	if (needshuffle)
-	{
-		/* shuffle ItemId's (Do the PageManager Shuffle...) */
-		for (i = (int) limit - 1; i >= (int) offsetNumber; i--)
-		{
-			ItemId		fromitemId,
-						toitemId;
-
-			fromitemId = PageGetItemId(phdr, i);
-			toitemId =  PageGetItemId(phdr, i + 1);
-			*toitemId = *fromitemId;
-		}
-	}
-
 	itemId = PageGetItemId(phdr, offsetNumber);
+
+	if (needshuffle)
+		memmove(itemId + 1, itemId,
+				(limit - offsetNumber) * sizeof(ItemIdData));
+
+	/* set the item pointer */
 	(*itemId).lp_off = upper;
 	(*itemId).lp_len = size;
 	(*itemId).lp_flags = flags;
 
-	memmove((char *) page + upper, item, size);
+	/* copy the item's data onto the page */
+	memcpy((char *) page + upper, item, size);
 
+	/* adjust page header */
 	phdr->pd_lower = (LocationIndex) lower;
 	phdr->pd_upper = (LocationIndex) upper;
 
@@ -235,7 +226,7 @@ PageRestoreTempPage(Page tempPage, Page oldPage)
 	Size		pageSize;
 
 	pageSize = PageGetPageSize(tempPage);
-	memmove((char *) oldPage, (char *) tempPage, pageSize);
+	memcpy((char *) oldPage, (char *) tempPage, pageSize);
 
 	pfree(tempPage);
 }
@@ -457,9 +448,10 @@ PageIndexTupleDelete(Page page, OffsetNumber offnum)
 	nbytes = phdr->pd_lower -
 		((char *) &phdr->pd_linp[offidx + 1] - (char *) phdr);
 
-	memmove((char *) &(phdr->pd_linp[offidx]),
-			(char *) &(phdr->pd_linp[offidx + 1]),
-			nbytes);
+	if (nbytes > 0)
+		memmove((char *) &(phdr->pd_linp[offidx]),
+				(char *) &(phdr->pd_linp[offidx + 1]),
+				nbytes);
 
 	/*
 	 * Now move everything between the old upper bound (beginning of tuple
