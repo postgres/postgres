@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/query.sgml,v 1.37 2004/08/08 21:33:11 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/query.sgml,v 1.38 2004/08/30 21:25:27 tgl Exp $
 -->
 
  <chapter id="tutorial-sql">
@@ -28,9 +28,18 @@ $PostgreSQL: pgsql/doc/src/sgml/query.sgml,v 1.37 2004/08/08 21:33:11 tgl Exp $
    <para>
     Examples in this manual can also be found in the
     <productname>PostgreSQL</productname> source distribution
-    in the directory <filename>src/tutorial/</filename>.  Refer to the
-    <filename>README</filename> file in that directory for how to use
-    them.  To start the tutorial, do the following:
+    in the directory <filename>src/tutorial/</filename>.  To use those
+    files, first change to that directory and run <application>make</>:
+
+<screen>
+<prompt>$</prompt> <userinput>cd <replaceable>....</replaceable>/src/tutorial</userinput>
+<prompt>$</prompt> <userinput>make</userinput>
+</screen>
+
+    This creates the scripts and compiles the C files containing user-defined
+    functions and types.  (You must use GNU make for this --- it may be named
+    something different on your system, often <application>gmake</>.)
+    Then, to start the tutorial, do the following:
 
 <screen>
 <prompt>$</prompt> <userinput>cd <replaceable>....</replaceable>/src/tutorial</userinput>
