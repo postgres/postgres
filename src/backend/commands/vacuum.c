@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.13 1997/01/10 09:57:16 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.14 1997/01/13 03:43:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,12 +46,7 @@
 #endif /* NEED_RUSAGE */
 
 bool VacuumRunning =	false;
-
-#ifdef VACUUM_QUIET
-static int MESSLEV = DEBUG;
-#else
-static int MESSLEV = NOTICE;
-#endif
+static int MESSLEV;	/* message level */
 
 typedef struct {
     FuncIndexInfo	finfo;
@@ -90,9 +85,14 @@ static bool _vc_enough_space (VPageDescr vpd, Size len);
 
 
 void
-vacuum(char *vacrel)
+vacuum(char *vacrel, bool verbose)
 {
     NameData VacRel;
+
+    if (verbose)
+	MESSLEV = NOTICE;
+    else
+	MESSLEV = DEBUG;
 
     /* vacrel gets de-allocated on transaction commit */
     	

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.9 1996/11/13 20:49:50 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.10 1997/01/13 03:44:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -580,7 +580,8 @@ ProcessUtility(Node *parsetree,
     case T_VacuumStmt:
 	commandTag = "VACUUM";
 	CHECK_IF_ABORTED();
-	vacuum(((VacuumStmt *) parsetree)->vacrel);
+	vacuum( ((VacuumStmt *) parsetree)->vacrel,
+		((VacuumStmt *) parsetree)->verbose);
 	break;
 
     case T_ExplainStmt:

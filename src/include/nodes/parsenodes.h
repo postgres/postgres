@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.8 1996/12/17 01:53:43 momjian Exp $
+ * $Id: parsenodes.h,v 1.9 1997/01/13 03:45:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -397,6 +397,7 @@ typedef struct ClusterStmt {
  */
 typedef struct VacuumStmt {
     NodeTag		type;
+    bool		verbose;	/* print status info */
     char		*vacrel;	/* table to vacuum */
 } VacuumStmt;
 

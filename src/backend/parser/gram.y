@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.23 1996/12/20 20:33:12 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.24 1997/01/13 03:44:18 momjian Exp $
  *
  * HISTORY
  *    AUTHOR		DATE		MAJOR EVENT
@@ -133,7 +133,8 @@ static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr);
 	expr_list, attrs, res_target_list, res_target_list2,
 	def_list, opt_indirection, group_clause, groupby_list, explain_options
 
-%type <boolean>	opt_inh_star, opt_binary, opt_instead, opt_with_copy, index_opt_unique
+%type <boolean>	opt_inh_star, opt_binary, opt_instead, opt_with_copy,
+		index_opt_unique, opt_verbose
 
 %type <ival>	copy_dirn, archive_type, OptArchiveType, OptArchiveLocation, 
 	def_type, opt_direction, remove_type, opt_column, event
@@ -187,7 +188,7 @@ static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr);
         RENAME, REPLACE, RETRIEVE, RETURNS, REVOKE, ROLLBACK, RULE, 
         SELECT, SET, SETOF, STDIN, STDOUT, STORE, 
 	TABLE, TO, TRANSACTION, UNIQUE, UPDATE, USING, VACUUM, VALUES
-	VERSION, VIEW, WHERE, WITH, WORK
+	VERBOSE, VERSION, VIEW, WHERE, WITH, WORK
 %token	EXECUTE, RECIPE, EXPLAIN, LIKE 
 
 /* Special keywords, not in the query language - see the "lex" file */
@@ -1200,18 +1201,25 @@ ClusterStmt:  CLUSTER index_name ON relation_name
  *
  *****************************************************************************/
 
-VacuumStmt:  VACUUM
-               {
-                   $$ = (Node *)makeNode(VacuumStmt);
-               }
-         | VACUUM relation_name
+VacuumStmt:  VACUUM opt_verbose
                {
                    VacuumStmt *n = makeNode(VacuumStmt);
-                   n->vacrel = $2;
+                   n->verbose = $2;
+                   $$ = (Node *)n;
+               }
+         | VACUUM opt_verbose relation_name
+               {
+                   VacuumStmt *n = makeNode(VacuumStmt);
+                   n->verbose = $2;
+                   n->vacrel = $3;
                    $$ = (Node *)n;
                }
        ;
 
+opt_verbose:  VERBOSE			{ $$ = TRUE; }
+	| /* EMPTY */			{ $$ = FALSE; }
+	;
+       
 /*****************************************************************************
  *
  *	QUERY:

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.5 1996/11/30 03:38:07 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.6 1997/01/13 03:44:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -136,6 +136,7 @@ static ScanKeyword ScanKeywords[] = {
 	{ "using",		USING		},
 	{ "vacuum",		VACUUM		},
 	{ "values",		VALUES		},
+	{ "verbose",		VERBOSE		},
 	{ "version",		VERSION		},
 	{ "view",		VIEW		},
 	{ "where",		WHERE		},

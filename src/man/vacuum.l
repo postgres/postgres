@@ -1,12 +1,12 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/vacuum.l,v 1.2 1996/12/11 00:28:15 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/vacuum.l,v 1.3 1997/01/13 03:45:33 momjian Exp $
 .TH VACUUM SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 vacuum \(em vacuum a database
 .SH SYNOPSIS
 .nf
-\fBvacuum [table]\fP
+\fBvacuum [verbose] [\fPtable\fB]\fP
 .fi
 .SH DESCRIPTION
 .BR Vacuum
@@ -17,6 +17,8 @@ system catalogs.  The statistics maintained include the number of
 tuples and number of pages stored in all classes.  Running
 .BR vacuum
 periodically will increase Postgres's speed in processing user queries.
+.PP
+\fBverbose\fP prints a detailed vacuum activity report for each table.
 .PP
 The open database is the one that is vacuumed.  
 .PP

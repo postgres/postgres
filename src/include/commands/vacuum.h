@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: vacuum.h,v 1.4 1996/11/29 10:29:45 vadim Exp $
+ * $Id: vacuum.h,v 1.5 1997/01/13 03:44:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,7 +54,7 @@ typedef VRelListData	*VRelList;
 extern bool VacuumRunning;
 
 extern void vc_abort(void);
-extern void vacuum(char *vacrel);
+extern void vacuum(char *vacrel, bool verbose);
 
 
 #endif	/* VACUUM_H */
