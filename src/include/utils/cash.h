@@ -44,6 +44,6 @@ extern Datum cash_div_int2(PG_FUNCTION_ARGS);
 extern Cash *cashlarger(Cash *c1, Cash *c2);
 extern Cash *cashsmaller(Cash *c1, Cash *c2);
 
-extern Datum cash_words_out(PG_FUNCTION_ARGS);
+extern Datum cash_words(PG_FUNCTION_ARGS);
 
 #endif	 /* CASH_H */

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.143 2000/07/06 05:48:22 tgl Exp $
+ * $Id: pg_proc.h,v 1.144 2000/07/07 18:49:54 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -1124,7 +1124,7 @@ DATA(insert OID =  886 (  cash_in		   PGUID 11 f t t t 1 f 790 "0" 100 0 0 100  
 DESCR("(internal)");
 DATA(insert OID =  887 (  cash_out		   PGUID 11 f t t t 1 f  23 "0" 100 0 0 100  cash_out - ));
 DESCR("(internal)");
-DATA(insert OID =  1273 (  cash_words_out  PGUID 12 f t t t 1 f  25 "790" 100 0 0 100  cash_words_out - ));
+DATA(insert OID =  1273 (  cash_words  PGUID 12 f t t t 1 f  25 "790" 100 0 0 100  cash_words - ));
 DESCR("output amount as words");
 DATA(insert OID =  888 (  cash_eq		   PGUID 11 f t t t 2 f  16 "790 790" 100 0 0 100  cash_eq - ));
 DESCR("equal");

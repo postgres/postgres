@@ -9,7 +9,7 @@
  * workings can be found in the book "Software Solutions in C" by
  * Dale Schumacher, Academic Press, ISBN: 0-12-632360-7.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.42 2000/07/06 05:48:11 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.43 2000/07/07 18:49:52 momjian Exp $
  */
 
 #include <limits.h>
@@ -673,12 +673,12 @@ cashsmaller(Cash *c1, Cash *c2)
 }	/* cashsmaller() */
 
 
-/* cash_words_out()
+/* cash_words()
  * This converts a int4 as well but to a representation using words
  * Obviously way North American centric - sorry
  */
 Datum
-cash_words_out(PG_FUNCTION_ARGS)
+cash_words(PG_FUNCTION_ARGS)
 {
 	Cash		value = PG_GETARG_CASH(0);
 	char		buf[128];
