@@ -64,6 +64,7 @@ CLEAN :
 	-@erase "$(INTDIR)\fe-print.obj"
 	-@erase "$(INTDIR)\pqexpbuffer.obj"
 	-@erase "$(OUTDIR)\libpqdll.obj"
+	-@erase "$(OUTDIR)\win32.obj"
 	-@erase "$(OUTDIR)\libpq.lib"
 	-@erase "$(OUTDIR)\libpq.dll"
 	-@erase "$(OUTDIR)\libpq.res"
@@ -96,6 +97,7 @@ CPP_SBRS=.
 LIB32=link.exe -lib
 LIB32_FLAGS=/nologo /out:"$(OUTDIR)\libpq.lib" 
 LIB32_OBJS= \
+	"$(OUTDIR)\win32.obj" \
 	"$(INTDIR)\dllist.obj" \
 	"$(INTDIR)\md5.obj" \
 	"$(INTDIR)\fe-auth.obj" \
@@ -113,9 +115,8 @@ LIB32_OBJS = $(LIB32_OBJS) "$(INTDIR)\wchar.obj" "$(INTDIR)\encnames.obj"
 RSC_PROJ=/l 0x409 /fo"$(INTDIR)\libpq.res"
 
 LINK32=link.exe
-LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib\
- advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib wsock32.lib\
- odbccp32.lib /nologo /subsystem:windows /dll /incremental:no\
+LINK32_FLAGS=kernel32.lib user32.lib advapi32.lib wsock32.lib\
+ /nologo /subsystem:windows /dll /incremental:no\
  /pdb:"$(OUTDIR)\libpqdll.pdb" /machine:I386 /out:"$(OUTDIR)\libpq.dll"\
  /implib:"$(OUTDIR)\libpqdll.lib"  /def:libpqdll.def
 LINK32_OBJS= \

@@ -25,7 +25,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.69 2002/04/15 23:34:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.70 2002/04/24 02:26:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,8 +37,6 @@
 #include <time.h>
 
 #ifdef WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
 #include "win32.h"
 #else
 #include <unistd.h>
@@ -894,46 +892,3 @@ libpq_gettext(const char *msgid)
 	return dgettext("libpq", msgid);
 }
 #endif   /* ENABLE_NLS */
-
-#ifdef WIN32
-/*
- * strerror replacement for windows:
- *
- * This works on WIN2000 and newer, but we don't know where to find WinSock
- * error strings on older Windows flavors.  If you know, clue us in.
- */
-const char *
-winsock_strerror(int eno)
-{
-	static char	err_buf[512];
-#define WSSE_MAXLEN (sizeof(err_buf)-1-13)	/* 13 for " (0x00000000)" */
-	int			length;
-
-	/* First try the "system table", this works on Win2k and up */
-
-	if (FormatMessage(
-				FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_FROM_SYSTEM,
-					  0,
-					  eno,
-					  MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-					  err_buf,
-					  WSSE_MAXLEN,
-					  NULL))
-		goto WSSE_GOODEXIT;
-
-	/* Insert other possible lookup methods here ... */
-
-	/* Everything failed, just tell the user that we don't know the desc */
-
-	strcpy(err_buf, "Socket error, no description available.");
-
-WSSE_GOODEXIT:
-
-	length = strlen(err_buf);
-	sprintf(err_buf + (length < WSSE_MAXLEN ? length : WSSE_MAXLEN),
-			" (0x%08X)", eno);
-
-	return err_buf;
-}
-
-#endif

@@ -28,7 +28,7 @@
 #define HAVE_NAMESPACE_STD
 
 /* use _snprintf instead of snprintf */
-#define	HAVE_SNPRINTF_DECL
+#define	HAVE_DECL_SNPRINTF 1
 #define snprintf	_snprintf
 
 /* defines for dynamic linking on Win32 platform */
