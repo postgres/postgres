@@ -801,6 +801,10 @@ build_tuplestore_recursively(char *key_fld,
 		char		current_level[INT32_STRLEN];
 		char	   *current_branch;
 		char	  **values;
+		StringInfo	branchstr = NULL;
+
+		/* start a new branch */
+		branchstr = makeStringInfo();
 
 		if (show_branch)
 			values = (char **) palloc(CONNECTBY_NCOLS * sizeof(char *));
@@ -852,14 +856,8 @@ build_tuplestore_recursively(char *key_fld,
 
 		for (i = 0; i < proc; i++)
 		{
-			StringInfo	branchstr = NULL;
-
-			/* start a new branch */
-			if (show_branch)
-			{
-				branchstr = makeStringInfo();
-				appendStringInfo(branchstr, "%s", branch);
-			}
+			/* initialize branch for this pass */
+			appendStringInfo(branchstr, "%s", branch);
 
 			/* get the next sql result tuple */
 			spi_tuple = tuptable->vals[i];
@@ -868,17 +866,16 @@ build_tuplestore_recursively(char *key_fld,
 			current_key = SPI_getvalue(spi_tuple, spi_tupdesc, 1);
 			current_key_parent = pstrdup(SPI_getvalue(spi_tuple, spi_tupdesc, 2));
 
+			/* check to see if this key is also an ancestor */
+			if (strstr(branchstr->data, current_key))
+				elog(ERROR, "infinite recursion detected");
+
 			/* get the current level */
 			sprintf(current_level, "%d", level);
 
 			/* extend the branch */
-			if (show_branch)
-			{
-				appendStringInfo(branchstr, "%s%s", branch_delim, current_key);
-				current_branch = branchstr->data;
-			}
-			else
-				current_branch = NULL;
+			appendStringInfo(branchstr, "%s%s", branch_delim, current_key);
+			current_branch = branchstr->data;
 
 			/* build a tuple */
 			values[0] = pstrdup(current_key);
@@ -916,6 +913,10 @@ build_tuplestore_recursively(char *key_fld,
 													per_query_ctx,
 													attinmeta,
 													tupstore);
+
+			/* reset branch for next pass */
+			xpfree(branchstr->data);
+			initStringInfo(branchstr);
 		}
 	}
 
