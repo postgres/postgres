@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.80 1998/06/04 17:26:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.81 1998/06/08 04:27:59 momjian Exp $
  *
  * NOTES
  *
@@ -198,6 +198,12 @@ static	sigset_t	oldsigmask,
 static	int			orgsigmask = sigblock(0);
 #endif
 
+static unsigned int random_seed = 0;
+
+extern char *optarg;
+extern int	optind,
+			opterr;
+
 								 
 /*
  * postmaster.c - function prototypes
@@ -216,17 +222,13 @@ static int ServerLoop(void);
 static int BackendStartup(Port *port);
 static void readStartupPacket(char *arg, PacketLen len, char *pkt);
 static int initMasks(fd_set *rmask, fd_set *wmask);
+static long PostmasterRandom(void);
 static void RandomSalt(char *salt);
 
 #ifdef CYR_RECODE
-void		GetCharSetByHost(char *, int, char *);
+void GetCharSetByHost(char *, int, char *);
 
 #endif
-
-extern char *optarg;
-extern int	optind,
-			opterr;
-
 
 
 static void
@@ -563,6 +565,10 @@ ServerLoop(void)
 				writemask;
 	int			nSockets;
 	Dlelem	   *curr;
+	struct timeval now, later;
+	struct timezone tz;
+
+	gettimeofday(&now, &tz);
 
 	nSockets = initMasks(&readmask, &writemask);
 
@@ -596,6 +602,19 @@ ServerLoop(void)
 			return (STATUS_ERROR);
 		}
 
+		if (random_seed == 0)
+		{
+			gettimeofday(&later, &tz);
+	
+			/*
+			 *	We are not sure how much precision is in tv_usec, so we
+			 *	swap the nibbles of 'later' and XOR them with 'now'
+			 */
+			random_seed = now.tv_usec ^
+					((later.tv_usec << 16) |
+					((unsigned int)(later.tv_usec & 0xffff0000) >> 16));
+		}
+				
 		/*
 		 * [TRH] To avoid race conditions, block SIGCHLD signals while we
 		 * are handling the request. (both reaper() and ConnCreate()
@@ -1346,18 +1365,27 @@ CharRemap(long int ch)
 static void
 RandomSalt(char *salt)
 {
+	long rand = PostmasterRandom();
+	
+	*salt = CharRemap(rand % 62);
+	*(salt + 1) = CharRemap(rand / 62);
+}
+
+/*
+ * PostmasterRandom
+ */
+static long
+PostmasterRandom(void)
+{
 
 	static bool initialized = false;
 
 	if (!initialized)
 	{
-		time_t		now;
-
-		now = time(NULL);
-		srandom((unsigned int) now);
+		Assert(random_seed != 0 && !IsUnderPostmaster);
+		srandom(random_seed);
 		initialized = true;
 	}
 
-	*salt = CharRemap(random());
-	*(salt + 1) = CharRemap(random());
+	return ramdom() ^ random_seed;
 }
