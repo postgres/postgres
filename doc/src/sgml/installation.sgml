@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.187 2003/11/29 19:51:37 pgsql Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.188 2003/12/11 19:56:54 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -423,7 +423,7 @@ JAVACMD=$JAVA_HOME/bin/java
      old one then shut down the old server, at the latest before you
      install the new files:
 <screen>
-<userinput>kill -INT `cat /usr/local/pgsql/data/postmaster.pid`</>
+<userinput>kill -INT `cat /usr/local/pgsql/data/postmaster.pid | sed 1q`</>
 </screen>
      Versions prior to 7.0 do not have this
      <filename>postmaster.pid</> file. If you are using such a version
