@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Mar  7 23:33:25 EST 2002
+Last updated:		Sun Mar 10 01:11:31 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -123,7 +123,7 @@ VIEWS / RULES
 * Allow temporary views
 * Move psql backslash information into views
 * Allow RULE recompilation
-* Remove brackets as multi-statement rule grouping, must use parens (Bruce)
+* -Remove brackets as multi-statement rule grouping, must use parens (Bruce)
 * Prevent aggregates from being used in rule WHERE clauses
 
 INDEXES
@@ -455,7 +455,6 @@ SOURCE CODE
 * Make one version of simple_prompt() in code (Bruce, Tom)
 * Compile in syslog functionaility by default (?)
 * Modify regression tests to prevent failures do to minor numeric rounding
-* Remove USING clause from pg_get_indexdef() if index is btree (Bruce)
 * Use our own getopt() for FreeBSD/OpenBSD to allow --xxx flags (Bruce)
 * Add OpenBSD's getpeereid() call for local socket authentication (Bruce)
 * Improve access-permissions check on data directory in Cygwin (Tom)
