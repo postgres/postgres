@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.184 2001/01/19 22:08:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.185 2001/01/23 23:32:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1904,7 +1904,6 @@ failed to add item with len = %lu to page %u (free space %lu, nusd %u, noff %u)"
 
 			buf = ReadBuffer(onerel, vacpage->blkno);
 			LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
-			START_CRIT_SECTION();
 			page = BufferGetPage(buf);
 			num_tuples = 0;
 			for (offnum = FirstOffsetNumber;
@@ -1932,6 +1931,7 @@ failed to add item with len = %lu to page %u (free space %lu, nusd %u, noff %u)"
 
 			}
 			Assert(vacpage->offsets_free == num_tuples);
+			START_CRIT_SECTION();
 			uncnt = PageRepairFragmentation(page, unused);
 			{
 				XLogRecPtr	recptr;
