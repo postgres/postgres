@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.222 2005/01/06 10:12:22 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.223 2005/01/07 10:21:02 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1518,9 +1518,9 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
        </row>
        <row>
         <entry><systemitem class="osname">Debian GNU/Linux</></entry>
-        <entry><systemitem>arm41</></entry>
-        <entry>7.4</entry>
-        <entry>No&egrave;l K&ouml;the (<email>noel@debian.org</email>), 2003-10-25</entry>
+        <entry><systemitem>ARM</></entry>
+        <entry>8.0.0</entry>
+        <entry>Jim Buttafuoco (<email>jim@contactbda.com</email>), 2005-01-06</entry>
         <entry></entry>
        </row>
        <row>
@@ -1549,14 +1549,14 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
         <entry><systemitem>PA-RISC</></entry>
         <entry>8.0.0</entry>
         <entry>No&egrave;l K&ouml;the (<email>noel@debian.org</email>), 2004-12-07</entry>
-        <entry></entry>
+        <entry>sid</entry>
      </row>
        <row>
         <entry><systemitem class="osname">Debian GNU/Linux</></entry>
         <entry><systemitem>PowerPC</></entry>
         <entry>8.0.0</entry>
         <entry>No&egrave;l K&ouml;the (<email>noel@debian.org</email>), 2004-12-15</entry>
-        <entry></entry>
+        <entry>sid</entry>
        </row>
        <row>
         <entry><systemitem class="osname">Debian GNU/Linux</></entry>
@@ -1617,13 +1617,17 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
        </row>
        <row>
         <entry><systemitem class="osname">HP-UX</></entry>
+        <entry><systemitem>Itanium</></entry>
+        <entry>8.0.0</entry>
+        <entry>Tom Lane (<email>tgl@sss.pgh.pa.us</email>), 2005-01-06</entry>
+        <entry>11.23, <command>gcc</> and <command>cc</>; see also <filename>doc/FAQ_HPUX</filename></entry>
+       </row>
+       <row>
+        <entry><systemitem class="osname">HP-UX</></entry>
         <entry><systemitem>PA-RISC</></entry>
-        <entry>7.4</entry>
-        <entry>
-         Tom Lane (<email>tgl@sss.pgh.pa.us</email>), 2003-10-31 (10.20);
-         Peter Eisentraut (<email>peter_e@gmx.net</email>), 2003-11-04 (11.00)
-        </entry>
-        <entry><command>gcc</> and <command>cc</>; see also <filename>doc/FAQ_HPUX</filename></entry>
+        <entry>8.0.0</entry>
+        <entry>Tom Lane (<email>tgl@sss.pgh.pa.us</email>), 2005-01-06</entry>
+        <entry>10.20 and 11.11, <command>gcc</> and <command>cc</>; see also <filename>doc/FAQ_HPUX</filename></entry>
        </row>
        <row>
         <entry><systemitem class="osname">IRIX</></entry>
@@ -1652,6 +1656,13 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
         <entry>7.4</entry>
         <entry>Patrick Welche (<email>prlw1@newn.cam.ac.uk</email>), 2003-11-12</entry>
         <entry>1.6ZE/acorn32</entry>
+       </row>
+       <row>
+        <entry><systemitem class="osname">NetBSD</></entry>
+        <entry><systemitem>m68k</></entry>
+        <entry>8.0.0</entry>
+        <entry>R&eacute;mi Zara (<email>remi_zara@mac.com</email>), 2004-12-14</entry>
+        <entry>2.0</entry>
        </row>
        <row>
         <entry><systemitem class="osname">NetBSD</></entry>
@@ -1765,14 +1776,14 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
         <entry><systemitem>x86</></entry>
         <entry>8.0.0</entry>
         <entry>Dave Page (<email>dpage@vale-housing.co.uk</email>), 2004-12-07</entry>
-        <entry>see <filename>doc/FAQ_MINGW</filename></entry>
+        <entry>XP Pro; see <filename>doc/FAQ_MINGW</filename></entry>
        </row>
        <row>
         <entry><systemitem class="osname">Windows with <application>Cygwin</application></></entry>
         <entry><systemitem>x86</></entry>
         <entry>8.0.0</entry>
         <entry>Build farm <systemitem class="systemname">gibbon</systemitem>, snapshot 2004-12-11 01:33:01</entry>
-        <entry>XP Pro; see <filename>doc/FAQ_CYGWIN</filename></entry>
+        <entry>see <filename>doc/FAQ_CYGWIN</filename></entry>
        </row>
       </tbody>
      </tgroup>
