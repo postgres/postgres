@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_index.sgml,v 1.46 2004/04/20 04:25:47 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_index.sgml,v 1.47 2004/04/20 12:53:28 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -77,7 +77,7 @@ CREATE [ UNIQUE ] INDEX <replaceable class="parameter">name</replaceable> ON <re
   </para>
 
   <para>
-   Indexes can not be used with <literal>IS NULL</> clauses by default.
+   Indexes are not used for <literal>IS NULL</> clauses by default.
    The best way to use indexes in such cases is to create a partial index 
    using an <literal>IS NULL</> comparison.
   </para>
