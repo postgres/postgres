@@ -212,7 +212,7 @@ installed successfully and works as designed in your environment.  The
 regression tests can be found in src/test/regress. (see
 src/test/regress/README for more details)
 
-     % cd /usr/src/pgsql/test/regress
+     % cd /usr/src/pgsql/src/test/regress
      % gmake all runtest
 
 This will run a whole slew of regression tests and might take an hour
