@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.155 2000/12/27 23:59:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.156 2001/01/01 21:33:31 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -590,8 +590,11 @@ AddNewAttributeTuples(Oid new_rel_oid,
 	dpp = tupdesc->attrs;
 	for (i = 0; i < natts; i++)
 	{
+		/* Fill in the correct relation OID */
 		(*dpp)->attrelid = new_rel_oid;
+		/* Make sure these are OK, too */
 		(*dpp)->attdispersion = 0;
+		(*dpp)->attcacheoff = -1;
 
 		tup = heap_addheader(Natts_pg_attribute,
 							 ATTRIBUTE_TUPLE_SIZE,
@@ -613,8 +616,12 @@ AddNewAttributeTuples(Oid new_rel_oid,
 	dpp = HeapAtt;
 	for (i = 0; i < -1 - FirstLowInvalidHeapAttributeNumber; i++)
 	{
+		/* Fill in the correct relation OID */
+		/* HACK: we are writing on static data here */
 		(*dpp)->attrelid = new_rel_oid;
-		/* (*dpp)->attdispersion = 0;	   unneeded */
+		/* Unneeded since they should be OK in the constant data anyway */
+		/* (*dpp)->attdispersion = 0; */
+		/* (*dpp)->attcacheoff = -1; */
 
 		tup = heap_addheader(Natts_pg_attribute,
 							 ATTRIBUTE_TUPLE_SIZE,
