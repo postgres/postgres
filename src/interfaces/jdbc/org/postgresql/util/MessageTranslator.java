@@ -6,7 +6,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/util/Attic/MessageTranslator.java,v 1.4 2003/03/07 18:39:46 barry Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/util/Attic/MessageTranslator.java,v 1.5 2003/09/08 17:30:22 barry Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,6 +53,14 @@ public class MessageTranslator
 
 		MessageTranslator translator = MessageTranslator.getInstance();
 
+		return translator._translate(id, args);
+	}
+
+	public final static String translate(String id, Object arg)
+	{
+		MessageTranslator translator = MessageTranslator.getInstance();
+		Object[] args = new Object[1];
+		args[0] = arg;
 		return translator._translate(id, args);
 	}
 

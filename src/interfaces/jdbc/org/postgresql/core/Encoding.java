@@ -6,7 +6,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/core/Attic/Encoding.java,v 1.11 2003/05/29 03:21:32 barry Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/core/Attic/Encoding.java,v 1.12 2003/09/08 17:30:22 barry Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@ import java.io.UnsupportedEncodingException;
 import java.sql.SQLException;
 import java.util.Hashtable;
 import org.postgresql.util.PSQLException;
+import org.postgresql.util.PSQLState;
 
 public class Encoding
 {
@@ -160,7 +161,7 @@ public class Encoding
 		}
 		catch (UnsupportedEncodingException e)
 		{
-			throw new PSQLException("postgresql.stream.encoding", e);
+			throw new PSQLException("postgresql.stream.encoding", PSQLState.DATA_ERROR, e);
 		}
 	}
 
@@ -185,7 +186,7 @@ public class Encoding
 		}
 		catch (UnsupportedEncodingException e)
 		{
-			throw new PSQLException("postgresql.stream.encoding", e);
+			throw new PSQLException("postgresql.stream.encoding", PSQLState.DATA_ERROR, e);
 		}
 	}
 
@@ -215,7 +216,7 @@ public class Encoding
 		}
 		catch (UnsupportedEncodingException e)
 		{
-			throw new PSQLException("postgresql.res.encoding", e);
+			throw new PSQLException("postgresql.res.encoding", PSQLState.DATA_ERROR, e);
 		}
 	}
 

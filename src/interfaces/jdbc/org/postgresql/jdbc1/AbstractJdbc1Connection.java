@@ -9,7 +9,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Connection.java,v 1.23 2003/08/15 18:36:58 barry Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Connection.java,v 1.24 2003/09/08 17:30:22 barry Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,6 +34,7 @@ import org.postgresql.largeobject.LargeObjectManager;
 import org.postgresql.util.MD5Digest;
 import org.postgresql.util.PGobject;
 import org.postgresql.util.PSQLException;
+import org.postgresql.util.PSQLState;
 import org.postgresql.util.UnixCrypt;
 
 public abstract class AbstractJdbc1Connection implements BaseConnection
@@ -126,7 +127,7 @@ public abstract class AbstractJdbc1Connection implements BaseConnection
 		// This occasionally occurs when the client uses the properties version
 		// of getConnection(), and is a common question on the email lists
 		if (info.getProperty("user") == null)
-			throw new PSQLException("postgresql.con.user");
+			throw new PSQLException("postgresql.con.user", PSQLState.CONNECTION_REJECTED);
 
 		this_driver = (Driver)d;
 		this_url = url;
@@ -200,11 +201,11 @@ public abstract class AbstractJdbc1Connection implements BaseConnection
 			// Added by Peter Mount <peter@retep.org.uk>
 			// ConnectException is thrown when the connection cannot be made.
 			// we trap this an return a more meaningful message for the end user
-			throw new PSQLException ("postgresql.con.refused");
+			throw new PSQLException ("postgresql.con.refused", PSQLState.CONNECTION_REJECTED);
 		}
 		catch (IOException e)
 		{
-			throw new PSQLException ("postgresql.con.failed", e);
+			throw new PSQLException ("postgresql.con.failed", PSQLState.CONNECTION_UNABLE_TO_CONNECT, e);
 		}
 
 	    //Now do the protocol work
@@ -247,7 +248,7 @@ public abstract class AbstractJdbc1Connection implements BaseConnection
 						// The most common one to be thrown here is:
 						// "User authentication failed"
 						//
-						throw new PSQLException("postgresql.con.misc", pgStream.ReceiveString(encoding));
+						throw new PSQLException("postgresql.con.misc", PSQLState.CONNECTION_REJECTED, pgStream.ReceiveString(encoding));
 						
 					case 'N':
 						// Server does not support ssl
@@ -267,7 +268,7 @@ public abstract class AbstractJdbc1Connection implements BaseConnection
 		}
 		catch (IOException e)
 		{
-			throw new PSQLException("postgresql.con.failed", e);
+			throw new PSQLException("postgresql.con.failed", PSQLState.CONNECTION_UNABLE_TO_CONNECT, e);
 		}
 
 
@@ -313,16 +314,16 @@ public abstract class AbstractJdbc1Connection implements BaseConnection
 								// Added by Peter Mount <peter@retep.org.uk>
 								// ConnectException is thrown when the connection cannot be made.
 								// we trap this an return a more meaningful message for the end user
-								throw new PSQLException ("postgresql.con.refused");
+								throw new PSQLException ("postgresql.con.refused", PSQLState.CONNECTION_REJECTED);
 							}
 							catch (IOException e)
 							{
-								throw new PSQLException ("postgresql.con.failed", e);
+								throw new PSQLException ("postgresql.con.failed", PSQLState.CONNECTION_UNABLE_TO_CONNECT, e);
 							}
 							openConnectionV2(p_host, p_port, p_info, p_database, p_url, p_d, p_password);
 							return;
 						}
-						throw new PSQLException("postgresql.con.misc",encoding.decode(pgStream.Receive(l_elen-4)));
+						throw new PSQLException("postgresql.con.misc", PSQLState.CONNECTION_REJECTED, PSQLException.parseServerError(encoding.decode(pgStream.Receive(l_elen-4))));
 
 					case 'R':
 						// Get the message length
@@ -362,12 +363,12 @@ public abstract class AbstractJdbc1Connection implements BaseConnection
 							case AUTH_REQ_KRB4:
 								if (Driver.logDebug)
 									Driver.debug("postgresql: KRB4");
-								throw new PSQLException("postgresql.con.kerb4");
+								throw new PSQLException("postgresql.con.kerb4", PSQLState.CONNECTION_REJECTED);
 
 							case AUTH_REQ_KRB5:
 								if (Driver.logDebug)
 									Driver.debug("postgresql: KRB5");
-								throw new PSQLException("postgresql.con.kerb5");
+								throw new PSQLException("postgresql.con.kerb5", PSQLState.CONNECTION_REJECTED);
 
 							case AUTH_REQ_SCM:
 								if (Driver.logDebug)
@@ -408,12 +409,12 @@ public abstract class AbstractJdbc1Connection implements BaseConnection
 								break;
 
 							default:
-								throw new PSQLException("postgresql.con.auth", new Integer(areq));
+								throw new PSQLException("postgresql.con.auth", PSQLState.CONNECTION_REJECTED, new Integer(areq));
 						}
 						break;
 
 					default:
-						throw new PSQLException("postgresql.con.authfail");
+						throw new PSQLException("postgresql.con.authfail", PSQLState.CONNECTION_REJECTED);
 				}
 			}
 			while (areq != AUTH_REQ_OK);
@@ -421,7 +422,7 @@ public abstract class AbstractJdbc1Connection implements BaseConnection
 		}
 		catch (IOException e)
 		{
-			throw new PSQLException("postgresql.con.failed", e);
+			throw new PSQLException("postgresql.con.failed", PSQLState.CONNECTION_UNABLE_TO_CONNECT, e);
 		}
 
 		int beresp;
@@ -435,13 +436,13 @@ public abstract class AbstractJdbc1Connection implements BaseConnection
 					break;
 				case 'K':
 					int l_msgLen = pgStream.ReceiveIntegerR(4);
-					if (l_msgLen != 12) throw new PSQLException("postgresql.con.setup");
+					if (l_msgLen != 12) throw new PSQLException("postgresql.con.setup", PSQLState.CONNECTION_UNABLE_TO_CONNECT);
 					pid = pgStream.ReceiveIntegerR(4);
 					ckey = pgStream.ReceiveIntegerR(4);
 					break;
 				case 'E':
 					int l_elen = pgStream.ReceiveIntegerR(4);
-					throw new PSQLException("postgresql.con.backend",encoding.decode(pgStream.Receive(l_elen-4)));
+					throw new PSQLException("postgresql.con.backend", PSQLState.CONNECTION_UNABLE_TO_CONNECT, PSQLException.parseServerError(encoding.decode(pgStream.Receive(l_elen-4))));
 				case 'N':
 					int l_nlen = pgStream.ReceiveIntegerR(4);
 					addWarning(encoding.decode(pgStream.Receive(l_nlen-4)));
@@ -456,12 +457,12 @@ public abstract class AbstractJdbc1Connection implements BaseConnection
 				default:
 					if (Driver.logDebug)
 						Driver.debug("invalid state="+ (char)beresp);
-					throw new PSQLException("postgresql.con.setup");
+					throw new PSQLException("postgresql.con.setup", PSQLState.CONNECTION_UNABLE_TO_CONNECT);
 			}
 		}
 		while (beresp != 'Z');
 		// read ReadyForQuery
-		if (pgStream.ReceiveIntegerR(4) != 5) throw new PSQLException("postgresql.con.setup"); 
+		if (pgStream.ReceiveIntegerR(4) != 5) throw new PSQLException("postgresql.con.setup", PSQLState.CONNECTION_UNABLE_TO_CONNECT); 
 		//TODO: handle transaction status
 		char l_tStatus = (char)pgStream.ReceiveChar();
 
@@ -490,7 +491,7 @@ public abstract class AbstractJdbc1Connection implements BaseConnection
 		
 		if (! resultSet.next())
 		{
-			throw new PSQLException("postgresql.con.failed", "failed getting backend encoding");
+			throw new PSQLException("postgresql.con.failed.bad.encoding", PSQLState.CONNECTION_UNABLE_TO_CONNECT);
 		}
 		String version = resultSet.getString(1);
 		dbVersionNumber = extractVersionNumber(version);
@@ -554,7 +555,7 @@ public abstract class AbstractJdbc1Connection implements BaseConnection
 						// The most common one to be thrown here is:
 						// "User authentication failed"
 						//
-						throw new PSQLException("postgresql.con.misc", pgStream.ReceiveString(encoding));
+						throw new PSQLException("postgresql.con.misc", PSQLState.CONNECTION_REJECTED, pgStream.ReceiveString(encoding));
 						
 					case 'N':
 						// Server does not support ssl
@@ -574,7 +575,7 @@ public abstract class AbstractJdbc1Connection implements BaseConnection
 		}
 		catch (IOException e)
 		{
-			throw new PSQLException("postgresql.con.failed", e);
+			throw new PSQLException("postgresql.con.failed", PSQLState.CONNECTION_UNABLE_TO_CONNECT, e);
 		}
 
 
@@ -606,7 +607,7 @@ public abstract class AbstractJdbc1Connection implements BaseConnection
 						// The most common one to be thrown here is:
 						// "User authentication failed"
 						//
-						throw new PSQLException("postgresql.con.misc", pgStream.ReceiveString(encoding));
+						throw new PSQLException("postgresql.con.misc", PSQLState.CONNECTION_REJECTED, pgStream.ReceiveString(encoding));
 
 					case 'R':
 						// Get the type of request
@@ -644,12 +645,12 @@ public abstract class AbstractJdbc1Connection implements BaseConnection
 							case AUTH_REQ_KRB4:
 								if (Driver.logDebug)
 									Driver.debug("postgresql: KRB4");
-								throw new PSQLException("postgresql.con.kerb4");
+								throw new PSQLException("postgresql.con.kerb4", PSQLState.CONNECTION_REJECTED);
 
 							case AUTH_REQ_KRB5:
 								if (Driver.logDebug)
 									Driver.debug("postgresql: KRB5");
-								throw new PSQLException("postgresql.con.kerb5");
+								throw new PSQLException("postgresql.con.kerb5", PSQLState.CONNECTION_REJECTED);
 
 							case AUTH_REQ_PASSWORD:
 								if (Driver.logDebug)
@@ -681,12 +682,12 @@ public abstract class AbstractJdbc1Connection implements BaseConnection
 								break;
 
 							default:
-								throw new PSQLException("postgresql.con.auth", new Integer(areq));
+								throw new PSQLException("postgresql.con.auth", PSQLState.CONNECTION_REJECTED, new Integer(areq));
 						}
 						break;
 
 					default:
-						throw new PSQLException("postgresql.con.authfail");
+						throw new PSQLException("postgresql.con.authfail", PSQLState.CONNECTION_REJECTED);
 				}
 			}
 			while (areq != AUTH_REQ_OK);
@@ -694,7 +695,8 @@ public abstract class AbstractJdbc1Connection implements BaseConnection
 		}
 		catch (IOException e)
 		{
-			throw new PSQLException("postgresql.con.failed", e);
+			//Should be passing exception as arg.
+			throw new PSQLException("postgresql.con.failed", PSQLState.CONNECTION_UNABLE_TO_CONNECT, e);
 		}
 
 
@@ -710,12 +712,12 @@ public abstract class AbstractJdbc1Connection implements BaseConnection
 					ckey = pgStream.ReceiveIntegerR(4);
 					break;
 				case 'E':
-					throw new PSQLException("postgresql.con.backend", pgStream.ReceiveString(encoding));
+					throw new PSQLException("postgresql.con.backend", PSQLState.CONNECTION_UNABLE_TO_CONNECT, pgStream.ReceiveString(encoding));
 				case 'N':
 					addWarning(pgStream.ReceiveString(encoding));
 					break;
 				default:
-					throw new PSQLException("postgresql.con.setup");
+					throw new PSQLException("postgresql.con.setup", PSQLState.CONNECTION_UNABLE_TO_CONNECT);
 			}
 		}
 		while (beresp == 'N');
@@ -732,9 +734,9 @@ public abstract class AbstractJdbc1Connection implements BaseConnection
 					addWarning(pgStream.ReceiveString(encoding));
 					break;
 				case 'E':
-					throw new PSQLException("postgresql.con.backend", pgStream.ReceiveString(encoding));
+					throw new PSQLException("postgresql.con.backend", PSQLState.CONNECTION_UNABLE_TO_CONNECT, pgStream.ReceiveString(encoding));
 				default:
-					throw new PSQLException("postgresql.con.setup");
+					throw new PSQLException("postgresql.con.setup", PSQLState.CONNECTION_UNABLE_TO_CONNECT);
 			}
 		}
 		while (beresp == 'N');
@@ -763,7 +765,7 @@ public abstract class AbstractJdbc1Connection implements BaseConnection
 		
 		if (! resultSet.next())
 		{
-			throw new PSQLException("postgresql.con.failed", "failed getting backend encoding");
+			throw new PSQLException("postgresql.con.failed.bad.encoding", PSQLState.CONNECTION_UNABLE_TO_CONNECT);
 		}
 		String version = resultSet.getString(1);
 		dbVersionNumber = extractVersionNumber(version);
@@ -799,7 +801,7 @@ public abstract class AbstractJdbc1Connection implements BaseConnection
 
 			if (!acRset.next())
 			{
-				throw new PSQLException("postgresql.con.failed", "failed getting autocommit status");
+				throw new PSQLException("postgresql.con.failed.bad.autocommit", PSQLState.CONNECTION_UNABLE_TO_CONNECT);
 			}
 			//if autocommit is currently off we need to turn it on
 			//note that we will be in a transaction because the select above
@@ -1036,7 +1038,7 @@ public abstract class AbstractJdbc1Connection implements BaseConnection
 		}
 		catch (Exception ex)
 		{
-			throw new PSQLException("postgresql.con.creobj", type, ex);
+			throw new PSQLException("postgresql.con.creobj", PSQLState.CONNECTION_FAILURE, type, ex);
 		}
 
 		// should never be reached
@@ -1409,7 +1411,7 @@ public abstract class AbstractJdbc1Connection implements BaseConnection
 					isolationLevelSQL += "SERIALIZABLE";
 					break;
 				default:
-					throw new PSQLException("postgresql.con.isolevel",
+					throw new PSQLException("postgresql.con.isolevel", PSQLState.TRANSACTION_STATE_INVALID,
 											new Integer(isolationLevel));
 			}
 		}
@@ -1446,7 +1448,7 @@ public abstract class AbstractJdbc1Connection implements BaseConnection
 				break;
 
 			default:
-				throw new PSQLException("postgresql.con.isolevel", new Integer(isolationLevel));
+				throw new PSQLException("postgresql.con.isolevel", PSQLState.TRANSACTION_STATE_INVALID, new Integer(isolationLevel));
 		}
 		return sb.toString();
 	}
@@ -1785,11 +1787,11 @@ public abstract class AbstractJdbc1Connection implements BaseConnection
 			// Added by Peter Mount <peter@retep.org.uk>
 			// ConnectException is thrown when the connection cannot be made.
 			// we trap this an return a more meaningful message for the end user
-			throw new PSQLException ("postgresql.con.refused");
+			throw new PSQLException ("postgresql.con.refused", PSQLState.CONNECTION_REJECTED);
 		}
 		catch (IOException e)
 		{
-			throw new PSQLException ("postgresql.con.failed", e);
+			throw new PSQLException ("postgresql.con.failed", PSQLState.CONNECTION_UNABLE_TO_CONNECT, e);
 		}
 
 		// Now we need to construct and send a cancel packet
@@ -1803,7 +1805,7 @@ public abstract class AbstractJdbc1Connection implements BaseConnection
 		}
 		catch (IOException e)
 		{
-			throw new PSQLException("postgresql.con.failed", e);
+			throw new PSQLException("postgresql.con.failed", PSQLState.CONNECTION_UNABLE_TO_CONNECT, e);
 		}
 		finally
 		{

@@ -9,7 +9,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1ResultSet.java,v 1.15 2003/08/24 22:10:09 barry Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1ResultSet.java,v 1.16 2003/09/08 17:30:22 barry Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,6 +32,7 @@ import org.postgresql.largeobject.*;
 import org.postgresql.util.PGbytea;
 import org.postgresql.util.PGtokenizer;
 import org.postgresql.util.PSQLException;
+import org.postgresql.util.PSQLState;
 
 public abstract class AbstractJdbc1ResultSet implements BaseResultSet
 {
@@ -115,7 +116,7 @@ public abstract class AbstractJdbc1ResultSet implements BaseResultSet
 	public boolean next() throws SQLException
 	{
 		if (rows == null)
-			throw new PSQLException("postgresql.con.closed");
+			throw new PSQLException("postgresql.con.closed", PSQLState.CONNECTION_DOES_NOT_EXIST);
 
 		if (++current_row >= rows.size())
 		{
@@ -1139,7 +1140,7 @@ public abstract class AbstractJdbc1ResultSet implements BaseResultSet
 			}
 			catch (ParseException e)
 			{
-				throw new PSQLException("postgresql.res.badtimestamp", new Integer(e.getErrorOffset()), s);
+				throw new PSQLException("postgresql.res.badtimestamp", PSQLState.UNKNOWN_STATE, new Integer(e.getErrorOffset()), s);
 			}
 		}
 	}

@@ -6,7 +6,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/core/Attic/QueryExecutor.java,v 1.23 2003/08/11 21:18:47 barry Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/core/Attic/QueryExecutor.java,v 1.24 2003/09/08 17:30:22 barry Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.sql.*;
 import org.postgresql.Driver;
 import org.postgresql.util.PSQLException;
+import org.postgresql.util.PSQLState;
 
 public class QueryExecutor
 {
@@ -108,11 +109,11 @@ public class QueryExecutor
 	private BaseResultSet executeV3() throws SQLException
 	{
 
-		StringBuffer errorMessage = null;
+		PSQLException error = null;
 
 		if (pgStream == null) 
 		{
-			throw new PSQLException("postgresql.con.closed");
+			throw new PSQLException("postgresql.con.closed", PSQLState.CONNECTION_DOES_NOT_EXIST);
 		}
 
 		synchronized (pgStream)
@@ -148,11 +149,16 @@ public class QueryExecutor
 						// so, append messages to a string buffer and keep processing
 						// check at the bottom to see if we need to throw an exception
 
-						if ( errorMessage == null )
-							errorMessage = new StringBuffer();
+						int l_elen = pgStream.ReceiveIntegerR(4);
+						String totalMessage = connection.getEncoding().decode(pgStream.Receive(l_elen-4));
+						PSQLException l_error = PSQLException.parseServerError(totalMessage);
 
-							int l_elen = pgStream.ReceiveIntegerR(4);
-							errorMessage.append(connection.getEncoding().decode(pgStream.Receive(l_elen-4)));
+						if (error != null) {
+							error.setNextException(l_error);
+						} else {
+							error = l_error;
+						}
+
 						// keep processing
 						break;
 					case 'I':	// Empty Query
@@ -178,22 +184,20 @@ public class QueryExecutor
 					case 'Z':
 						// read ReadyForQuery
 						//TODO: use size better
-						if (pgStream.ReceiveIntegerR(4) != 5) throw new PSQLException("postgresql.con.setup"); 
+						if (pgStream.ReceiveIntegerR(4) != 5) throw new PSQLException("postgresql.con.setup", PSQLState.CONNECTION_UNABLE_TO_CONNECT); 
 						//TODO: handle transaction status
 						char l_tStatus = (char)pgStream.ReceiveChar();
 						l_endQuery = true;
 						break;
 					default:
-						throw new PSQLException("postgresql.con.type",
-												new Character((char) c));
+						throw new PSQLException("postgresql.con.type", PSQLState.CONNECTION_FAILURE, new Character((char) c));
 				}
 
 			}
 
 			// did we get an error during this query?
-			if ( errorMessage != null )
-				throw new SQLException( errorMessage.toString().trim() );
-
+			if ( error != null )
+				throw error;
 
 			//if an existing result set was passed in reuse it, else
 			//create a new one
@@ -216,7 +220,7 @@ public class QueryExecutor
 
 		if (pgStream == null) 
 		{
-			throw new PSQLException("postgresql.con.closed");
+			throw new PSQLException("postgresql.con.closed", PSQLState.CONNECTION_DOES_NOT_EXIST);
 		}
 
 		synchronized (pgStream)
@@ -275,8 +279,7 @@ public class QueryExecutor
 						l_endQuery = true;
 						break;
 					default:
-						throw new PSQLException("postgresql.con.type",
-												new Character((char) c));
+						throw new PSQLException("postgresql.con.type", PSQLState.CONNECTION_FAILURE, new Character((char) c));
 				}
 
 			}
@@ -308,7 +311,7 @@ public class QueryExecutor
 		for ( int i = 0; i < m_binds.length ; i++ )
 		{
 			if ( m_binds[i] == null )
-				throw new PSQLException("postgresql.prep.param", new Integer(i + 1));
+				throw new PSQLException("postgresql.prep.param", PSQLState.PARAMETER_ERROR, new Integer(i + 1));
 		}
 		try
 		{
@@ -349,7 +352,7 @@ public class QueryExecutor
 		for ( int i = 0; i < m_binds.length ; i++ )
 		{
 			if ( m_binds[i] == null )
-				throw new PSQLException("postgresql.prep.param", new Integer(i + 1));
+				throw new PSQLException("postgresql.prep.param", PSQLState.PARAMETER_ERROR, new Integer(i + 1));
 		}
 		try
 		{
@@ -379,7 +382,7 @@ public class QueryExecutor
 	private void receiveTupleV3(boolean isBinary) throws SQLException
 	{
 		if (fields == null)
-			throw new PSQLException("postgresql.con.tuple");
+			throw new PSQLException("postgresql.con.tuple", PSQLState.CONNECTION_FAILURE);
 		Object tuple = pgStream.ReceiveTupleV3(fields.length, isBinary);
 		if (isBinary)
 			binaryCursor = true;
@@ -395,7 +398,7 @@ public class QueryExecutor
 	private void receiveTupleV2(boolean isBinary) throws SQLException
 	{
 		if (fields == null)
-			throw new PSQLException("postgresql.con.tuple");
+			throw new PSQLException("postgresql.con.tuple", PSQLState.CONNECTION_FAILURE);
 		Object tuple = pgStream.ReceiveTupleV2(fields.length, isBinary);
 		if (isBinary)
 			binaryCursor = true;
@@ -429,7 +432,7 @@ public class QueryExecutor
 		}
 		catch (NumberFormatException nfe)
 		{
-			throw new PSQLException("postgresql.con.fathom", status);
+			throw new PSQLException("postgresql.con.fathom", PSQLState.CONNECTION_FAILURE, status);
 		}
 	}
 	/*
@@ -455,7 +458,7 @@ public class QueryExecutor
 		}
 		catch (NumberFormatException nfe)
 		{
-			throw new PSQLException("postgresql.con.fathom", status);
+			throw new PSQLException("postgresql.con.fathom", PSQLState.CONNECTION_FAILURE, status);
 		}
 	}
 
@@ -467,7 +470,7 @@ public class QueryExecutor
 		//TODO: use the msgSize
 		//TODO: use the tableOid, and tablePosition
 		if (fields != null)
-			throw new PSQLException("postgresql.con.multres");
+			throw new PSQLException("postgresql.con.multres", PSQLState.CONNECTION_FAILURE);
 		int l_msgSize = pgStream.ReceiveIntegerR(4);
 		int size = pgStream.ReceiveIntegerR(2);
 		fields = new Field[size];
@@ -491,7 +494,7 @@ public class QueryExecutor
 	private void receiveFieldsV2() throws SQLException
 	{
 		if (fields != null)
-			throw new PSQLException("postgresql.con.multres");
+			throw new PSQLException("postgresql.con.multres", PSQLState.CONNECTION_FAILURE);
 
 		int size = pgStream.ReceiveIntegerR(2);
 		fields = new Field[size];

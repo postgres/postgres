@@ -6,7 +6,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/fastpath/Attic/Fastpath.java,v 1.14 2003/05/29 04:39:51 barry Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/fastpath/Attic/Fastpath.java,v 1.15 2003/09/08 17:30:22 barry Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,7 @@ import org.postgresql.Driver;
 import org.postgresql.core.BaseConnection;
 import org.postgresql.core.PGStream;
 import org.postgresql.util.PSQLException;
+import org.postgresql.util.PSQLState;
 
 /*
  * This class implements the Fastpath api.
@@ -100,14 +101,14 @@ public class Fastpath
 			}
 			catch (IOException ioe)
 			{
-				throw new PSQLException("postgresql.fp.send", new Integer(fnid), ioe);
+				throw new PSQLException("postgresql.fp.send", PSQLState.COMMUNICATION_ERROR, new Integer(fnid), ioe);
 			}
 
 			// Now handle the result
 
 			// Now loop, reading the results
 			Object result = null; // our result
-			StringBuffer errorMessage = null;
+			PSQLException error = null;
 			int c;
 			boolean l_endQuery = false;
 			while (!l_endQuery)
@@ -124,11 +125,16 @@ public class Fastpath
 						//------------------------------
 						// Error message returned
 					case 'E':
-						if ( errorMessage == null )
-							errorMessage = new StringBuffer();
-
 						int l_elen = stream.ReceiveIntegerR(4);
-						errorMessage.append(conn.getEncoding().decode(stream.Receive(l_elen-4)));
+						String totalMessage = conn.getEncoding().decode(stream.Receive(l_elen-4));
+						PSQLException l_error = PSQLException.parseServerError(totalMessage);
+
+						if (error != null) {
+							error.setNextException(l_error);
+						} else {
+							error = l_error;
+						}
+
 						break;
 						//------------------------------
 						// Notice from backend
@@ -165,7 +171,7 @@ public class Fastpath
 
 					case 'Z':
 						//TODO: use size better
-						if (stream.ReceiveIntegerR(4) != 5) throw new PSQLException("postgresql.con.setup"); 
+						if (stream.ReceiveIntegerR(4) != 5) throw new PSQLException("postgresql.con.setup", PSQLState.CONNECTION_UNABLE_TO_CONNECT); 
 						//TODO: handle transaction status
 						char l_tStatus = (char)stream.ReceiveChar();
 						l_endQuery = true;
@@ -176,8 +182,8 @@ public class Fastpath
 				}
 			}
 
-			if ( errorMessage != null )
-				throw new PSQLException("postgresql.fp.error", errorMessage.toString());
+			if ( error != null )
+				throw error;
 
 			return result;
 		}
@@ -208,7 +214,8 @@ public class Fastpath
 			}
 			catch (IOException ioe)
 			{
-				throw new PSQLException("postgresql.fp.send", new Integer(fnid), ioe);
+				//Should be sending exception as second arg.
+				throw new PSQLException("postgresql.fp.send", PSQLState.COMMUNICATION_ERROR, new Integer(fnid), ioe);
 			}
 
 			// Now handle the result

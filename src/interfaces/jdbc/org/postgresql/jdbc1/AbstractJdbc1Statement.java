@@ -10,6 +10,7 @@ import org.postgresql.largeobject.LargeObjectManager;
 import org.postgresql.util.PGbytea;
 import org.postgresql.util.PGobject;
 import org.postgresql.util.PSQLException;
+import org.postgresql.util.PSQLState;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -25,7 +26,7 @@ import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.Vector;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.33 2003/08/26 06:50:39 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.34 2003/09/08 17:30:22 barry Exp $
  * This class defines methods of the jdbc1 specification.  This class is
  * extended by org.postgresql.jdbc2.AbstractJdbc2Statement which adds the jdbc2
  * methods.  The real Statement class (for jdbc1) is org.postgresql.jdbc1.Jdbc1Statement
@@ -676,7 +677,7 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 	 */
 	public void cancel() throws SQLException
 	{
-		throw new PSQLException("postgresql.unimplemented");
+		throw new PSQLException("postgresql.unimplemented", PSQLState.NOT_IMPLEMENTED);
 	}
 
 	/*
@@ -1558,7 +1559,7 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 				}
 				else
 				{
-					throw new PSQLException("postgresql.prep.type");
+					throw new PSQLException("postgresql.prep.type", PSQLState.INVALID_PARAMETER_TYPE);
 				}
 				break;
 			case Types.BINARY:
@@ -1570,7 +1571,7 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 				setString(parameterIndex, ((PGobject)x).getValue(), PG_TEXT);
 				break;
 			default:
-				throw new PSQLException("postgresql.prep.type");
+				throw new PSQLException("postgresql.prep.type", PSQLState.INVALID_PARAMETER_TYPE);
 		}
 	}
 
@@ -1954,7 +1955,7 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 	private void bind(int paramIndex, Object s, String type) throws SQLException
 	{
 		if (paramIndex < 1 || paramIndex > m_binds.length)
-			throw new PSQLException("postgresql.prep.range");
+			throw new PSQLException("postgresql.prep.range", PSQLState.PARAMETER_ERROR);
 		if (paramIndex == 1 && isFunction) // need to registerOut instead
 			throw new PSQLException ("postgresql.call.funcover");
 		m_binds[paramIndex - 1] = s;
@@ -2096,7 +2097,7 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 		}
 		catch (Exception e)
 		{
-			throw new PSQLException("postgresql.format.baddate",s , "yyyy-MM-dd[-tz]");
+			throw new PSQLException("postgresql.format.baddate", PSQLState.UNKNOWN_STATE, s , "yyyy-MM-dd[-tz]");
 		}
 		timezone = 0;
 		if (timezoneLocation>7 && timezoneLocation+3 == s.length())
@@ -2127,7 +2128,7 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 		}
 		catch (Exception e)
 		{
-			throw new PSQLException("postgresql.format.badtime",s, "HH:mm:ss[-tz]");
+			throw new PSQLException("postgresql.format.badtime", PSQLState.UNKNOWN_STATE, s, "HH:mm:ss[-tz]");
 		}
 		timezone = 0;
 		if (timezoneLocation != -1 && timezoneLocation+3 == s.length())
@@ -2166,7 +2167,7 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 		}
 		catch (Exception e)
 		{
-			throw new PSQLException("postgresql.format.badtimestamp", s, "yyyy-MM-dd HH:mm:ss[.xxxxxx][-tz]");
+			throw new PSQLException("postgresql.format.badtimestamp", PSQLState.UNKNOWN_STATE, s, "yyyy-MM-dd HH:mm:ss[.xxxxxx][-tz]");
 		}
 		timezone = 0;
 		if (nanospos != -1)
