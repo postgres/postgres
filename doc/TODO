@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sat Jan 15 21:31:39 EST 2000
+Last updated:		Sun Jan 16 00:16:44 EST 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -276,7 +276,7 @@ MISC
   allocation [memory]
 * -fix memory leak in cache code when non-existant table is referenced
   In WHERE tab1.x=3 AND tab1.x=tab2.y, add tab2.y=3
-* pass atttypmod through parser in more cases [atttypmod]
+* -pass atttypmod through parser in more cases [atttypmod]
 * -remove duplicate type in/out functions for disk and net
 * Allow persistent backends [persistent]
 * others [performance]
