@@ -1,13 +1,13 @@
 /*
  *	Edmund Mergl <E.Mergl@bawue.de>
  *
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/oracle_compat.c,v 1.29 2000/12/03 20:45:36 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/oracle_compat.c,v 1.30 2000/12/07 23:22:56 tgl Exp $
  *
  */
 
-#include <ctype.h>
-
 #include "postgres.h"
+
+#include <ctype.h>
 
 #include "utils/builtins.h"
 
@@ -140,7 +140,8 @@ initcap(PG_FUNCTION_ARGS)
  * Purpose:
  *
  *	 Returns string1, left-padded to length len with the sequence of
- *	 characters in string2.
+ *	 characters in string2.  If len is less than the length of string1,
+ *	 instead truncate (on the right) to len.
  *
  ********************************************************************/
 
@@ -153,31 +154,49 @@ lpad(PG_FUNCTION_ARGS)
 	text	   *ret;
 	char	   *ptr1,
 			   *ptr2,
+			   *ptr2end,
 			   *ptr_ret;
 	int			m,
-				n;
+				s1len,
+				s2len;
 
-	if (((VARSIZE(string1) - VARHDRSZ) < 0) ||
-		((m = len - (VARSIZE(string1) - VARHDRSZ)) <= 0) ||
-		((VARSIZE(string2) - VARHDRSZ) <= 0))
-		PG_RETURN_TEXT_P(string1);
+	/* Negative len is silently taken as zero */
+	if (len < 0)
+		len = 0;
+
+	s1len = VARSIZE(string1) - VARHDRSZ;
+	if (s1len < 0)
+		s1len = 0;				/* shouldn't happen */
+
+	s2len = VARSIZE(string2) - VARHDRSZ;
+	if (s2len < 0)
+		s2len = 0;				/* shouldn't happen */
+
+	if (s1len > len)
+		s1len = len;			/* truncate string1 to len chars */
+
+	if (s2len <= 0)
+		len = s1len;			/* nothing to pad with, so don't pad */
 
 	ret = (text *) palloc(VARHDRSZ + len);
 	VARATT_SIZEP(ret) = VARHDRSZ + len;
 
+	m = len - s1len;
+
 	ptr2 = VARDATA(string2);
+	ptr2end = ptr2 + s2len;
 	ptr_ret = VARDATA(ret);
 
 	while (m--)
 	{
-		*ptr_ret++ = *ptr2;
-		ptr2 = (ptr2 == VARDATA(string2) + VARSIZE(string2) - VARHDRSZ - 1) ? VARDATA(string2) : ++ptr2;
+		*ptr_ret++ = *ptr2++;
+		if (ptr2 == ptr2end)	/* wrap around at end of s2 */
+			ptr2 = VARDATA(string2);
 	}
 
-	n = VARSIZE(string1) - VARHDRSZ;
 	ptr1 = VARDATA(string1);
 
-	while (n--)
+	while (s1len--)
 		*ptr_ret++ = *ptr1++;
 
 	PG_RETURN_TEXT_P(ret);
@@ -195,7 +214,8 @@ lpad(PG_FUNCTION_ARGS)
  * Purpose:
  *
  *	 Returns string1, right-padded to length len with the sequence of
- *	 characters in string2.
+ *	 characters in string2.  If len is less than the length of string1,
+ *	 instead truncate (on the right) to len.
  *
  ********************************************************************/
 
@@ -208,31 +228,49 @@ rpad(PG_FUNCTION_ARGS)
 	text	   *ret;
 	char	   *ptr1,
 			   *ptr2,
+			   *ptr2end,
 			   *ptr_ret;
 	int			m,
-				n;
+				s1len,
+				s2len;
 
-	if (((VARSIZE(string1) - VARHDRSZ) < 0) ||
-		((m = len - (VARSIZE(string1) - VARHDRSZ)) <= 0) ||
-		((VARSIZE(string2) - VARHDRSZ) <= 0))
-		PG_RETURN_TEXT_P(string1);
+	/* Negative len is silently taken as zero */
+	if (len < 0)
+		len = 0;
+
+	s1len = VARSIZE(string1) - VARHDRSZ;
+	if (s1len < 0)
+		s1len = 0;				/* shouldn't happen */
+
+	s2len = VARSIZE(string2) - VARHDRSZ;
+	if (s2len < 0)
+		s2len = 0;				/* shouldn't happen */
+
+	if (s1len > len)
+		s1len = len;			/* truncate string1 to len chars */
+
+	if (s2len <= 0)
+		len = s1len;			/* nothing to pad with, so don't pad */
 
 	ret = (text *) palloc(VARHDRSZ + len);
 	VARATT_SIZEP(ret) = VARHDRSZ + len;
 
-	n = VARSIZE(string1) - VARHDRSZ;
+	m = len - s1len;
+
 	ptr1 = VARDATA(string1);
 	ptr_ret = VARDATA(ret);
 
-	while (n--)
+	while (s1len--)
 		*ptr_ret++ = *ptr1++;
 
 	ptr2 = VARDATA(string2);
+	ptr2end = ptr2 + s2len;
 
 	while (m--)
 	{
-		*ptr_ret++ = *ptr2;
-		ptr2 = (ptr2 == VARDATA(string2) + VARSIZE(string2) - VARHDRSZ - 1) ? VARDATA(string2) : ++ptr2;
+		*ptr_ret++ = *ptr2++;
+		if (ptr2 == ptr2end)	/* wrap around at end of s2 */
+			ptr2 = VARDATA(string2);
 	}
 
 	PG_RETURN_TEXT_P(ret);
