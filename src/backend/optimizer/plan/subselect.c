@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.55 2002/09/04 20:31:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.56 2002/11/26 03:01:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,24 +44,32 @@ int			PlannerPlanId = 0;	/* to assign unique ID to subquery plans */
  * and update the list elements when we enter or exit a subplan
  * recursion level.  But we must pay attention not to confuse this
  * meaning with the normal meaning of varlevelsup.
+ *
+ * We also need to create Param slots that don't correspond to any outer Var.
+ * For these, we set varno = 0 and varlevelsup = 0, so that they can't
+ * accidentally match an outer Var.
  *--------------------
  */
+
+
+static void convert_sublink_opers(SubLink *slink, List *targetlist,
+								  List **setParams);
 
 
 /*
  * Create a new entry in the PlannerParamVar list, and return its index.
  *
- * var contains the data to be copied, except for varlevelsup which
- * is set from the absolute level value given by varlevel.
+ * var contains the data to use, except for varlevelsup which
+ * is set from the absolute level value given by varlevel.  NOTE that
+ * the passed var is scribbled on and placed directly into the list!
+ * Generally, caller should have just created or copied it.
  */
 static int
 new_param(Var *var, Index varlevel)
 {
-	Var		   *paramVar = (Var *) copyObject(var);
+	var->varlevelsup = varlevel;
 
-	paramVar->varlevelsup = varlevel;
-
-	PlannerParamVar = lappend(PlannerParamVar, paramVar);
+	PlannerParamVar = lappend(PlannerParamVar, var);
 
 	return length(PlannerParamVar) - 1;
 }
@@ -107,13 +115,29 @@ replace_var(Var *var)
 	if (!ppv)
 	{
 		/* Nope, so make a new one */
-		i = new_param(var, varlevel);
+		i = new_param((Var *) copyObject(var), varlevel);
 	}
 
 	retval = makeNode(Param);
 	retval->paramkind = PARAM_EXEC;
 	retval->paramid = (AttrNumber) i;
 	retval->paramtype = var->vartype;
+
+	return retval;
+}
+
+/*
+ * Generate a new Param node that will not conflict with any other.
+ */
+static Param *
+generate_new_param(Oid paramtype, int32 paramtypmod)
+{
+	Var		   *var = makeVar(0, 0, paramtype, paramtypmod, 0);
+	Param	   *retval = makeNode(Param);
+
+	retval->paramkind = PARAM_EXEC;
+	retval->paramid = (AttrNumber) new_param(var, 0);
+	retval->paramtype = paramtype;
 
 	return retval;
 }
@@ -216,13 +240,9 @@ make_subplan(SubLink *slink)
 	 */
 	if (node->parParam == NIL && slink->subLinkType == EXISTS_SUBLINK)
 	{
-		Var		   *var = makeVar(0, 0, BOOLOID, -1, 0);
-		Param	   *prm = makeNode(Param);
+		Param	   *prm;
 
-		prm->paramkind = PARAM_EXEC;
-		prm->paramid = (AttrNumber) new_param(var, PlannerQueryLevel);
-		prm->paramtype = var->vartype;
-		pfree(var);				/* var is only needed for new_param */
+		prm = generate_new_param(BOOLOID, -1);
 		node->setParam = lappendi(node->setParam, prm->paramid);
 		PlannerInitPlan = lappend(PlannerInitPlan, node);
 		result = (Node *) prm;
@@ -230,89 +250,27 @@ make_subplan(SubLink *slink)
 	else if (node->parParam == NIL && slink->subLinkType == EXPR_SUBLINK)
 	{
 		TargetEntry *te = lfirst(plan->targetlist);
+		Param	   *prm;
 
-		/* need a var node just to pass to new_param()... */
-		Var		   *var = makeVar(0, 0, te->resdom->restype,
-								  te->resdom->restypmod, 0);
-		Param	   *prm = makeNode(Param);
-
-		prm->paramkind = PARAM_EXEC;
-		prm->paramid = (AttrNumber) new_param(var, PlannerQueryLevel);
-		prm->paramtype = var->vartype;
-		pfree(var);				/* var is only needed for new_param */
+		prm = generate_new_param(te->resdom->restype, te->resdom->restypmod);
 		node->setParam = lappendi(node->setParam, prm->paramid);
 		PlannerInitPlan = lappend(PlannerInitPlan, node);
 		result = (Node *) prm;
 	}
 	else if (node->parParam == NIL && slink->subLinkType == MULTIEXPR_SUBLINK)
 	{
-		List	   *newoper = NIL;
-		int			i = 0;
-
-		/*
-		 * Convert oper list of Opers into a list of Exprs, using lefthand
-		 * arguments and Params representing inside results.
-		 */
-		foreach(lst, slink->oper)
-		{
-			Oper	   *oper = (Oper *) lfirst(lst);
-			Node	   *lefthand = nth(i, slink->lefthand);
-			TargetEntry *te = nth(i, plan->targetlist);
-
-			/* need a var node just to pass to new_param()... */
-			Var		   *var = makeVar(0, 0, te->resdom->restype,
-									  te->resdom->restypmod, 0);
-			Param	   *prm = makeNode(Param);
-			Operator	tup;
-			Form_pg_operator opform;
-			Node	   *left,
-					   *right;
-
-			prm->paramkind = PARAM_EXEC;
-			prm->paramid = (AttrNumber) new_param(var, PlannerQueryLevel);
-			prm->paramtype = var->vartype;
-			pfree(var);			/* var is only needed for new_param */
-
-			Assert(IsA(oper, Oper));
-			tup = SearchSysCache(OPEROID,
-								 ObjectIdGetDatum(oper->opno),
-								 0, 0, 0);
-			if (!HeapTupleIsValid(tup))
-				elog(ERROR, "cache lookup failed for operator %u", oper->opno);
-			opform = (Form_pg_operator) GETSTRUCT(tup);
-
-			/*
-			 * Note: we use make_operand in case runtime type conversion
-			 * function calls must be inserted for this operator!
-			 */
-			left = make_operand(lefthand,
-								exprType(lefthand), opform->oprleft);
-			right = make_operand((Node *) prm,
-								 prm->paramtype, opform->oprright);
-			ReleaseSysCache(tup);
-
-			newoper = lappend(newoper,
-							  make_opclause(oper,
-											(Var *) left,
-											(Var *) right));
-			node->setParam = lappendi(node->setParam, prm->paramid);
-			i++;
-		}
-		slink->oper = newoper;
-		slink->lefthand = NIL;
+		convert_sublink_opers(slink, plan->targetlist, &node->setParam);
 		PlannerInitPlan = lappend(PlannerInitPlan, node);
-		if (i > 1)
-			result = (Node *) ((slink->useor) ? make_orclause(newoper) :
-							   make_andclause(newoper));
+		if (length(slink->oper) > 1)
+			result = (Node *) ((slink->useor) ? make_orclause(slink->oper) :
+							   make_andclause(slink->oper));
 		else
-			result = (Node *) lfirst(newoper);
+			result = (Node *) lfirst(slink->oper);
 	}
 	else
 	{
 		Expr	   *expr = makeNode(Expr);
 		List	   *args = NIL;
-		List	   *newoper = NIL;
-		int			i = 0;
 
 		/*
 		 * We can't convert subplans of ALL_SUBLINK or ANY_SUBLINK types
@@ -379,6 +337,9 @@ make_subplan(SubLink *slink)
 			}
 		}
 
+		/* Fix the SubLink's oper list */
+		convert_sublink_opers(slink, plan->targetlist, NULL);
+
 		/*
 		 * Make expression of SUBPLAN type
 		 */
@@ -405,53 +366,82 @@ make_subplan(SubLink *slink)
 		}
 		expr->args = args;
 
-		/*
-		 * Convert oper list of Opers into a list of Exprs, using lefthand
-		 * arguments and Consts representing inside results.
-		 */
-		foreach(lst, slink->oper)
-		{
-			Oper	   *oper = (Oper *) lfirst(lst);
-			Node	   *lefthand = nth(i, slink->lefthand);
-			TargetEntry *te = nth(i, plan->targetlist);
-			Const	   *con;
-			Operator	tup;
-			Form_pg_operator opform;
-			Node	   *left,
-					   *right;
-
-			con = makeNullConst(te->resdom->restype);
-
-			Assert(IsA(oper, Oper));
-			tup = SearchSysCache(OPEROID,
-								 ObjectIdGetDatum(oper->opno),
-								 0, 0, 0);
-			if (!HeapTupleIsValid(tup))
-				elog(ERROR, "cache lookup failed for operator %u", oper->opno);
-			opform = (Form_pg_operator) GETSTRUCT(tup);
-
-			/*
-			 * Note: we use make_operand in case runtime type conversion
-			 * function calls must be inserted for this operator!
-			 */
-			left = make_operand(lefthand,
-								exprType(lefthand), opform->oprleft);
-			right = make_operand((Node *) con,
-								 con->consttype, opform->oprright);
-			ReleaseSysCache(tup);
-
-			newoper = lappend(newoper,
-							  make_opclause(oper,
-											(Var *) left,
-											(Var *) right));
-			i++;
-		}
-		slink->oper = newoper;
-		slink->lefthand = NIL;
 		result = (Node *) expr;
 	}
 
 	return result;
+}
+
+/*
+ * convert_sublink_opers: convert a SubLink's oper list from the
+ * parser/rewriter format into the executor's format.
+ *
+ * The oper list is initially just a list of Oper nodes.  We replace it
+ * with a list of actually executable expressions, in which the specified
+ * operators are applied to corresponding elements of the lefthand list
+ * and Params representing the results of the subplan.  lefthand is then
+ * set to NIL.
+ *
+ * If setParams is not NULL, the paramids of the Params created are added
+ * to the *setParams list.
+ */
+static void
+convert_sublink_opers(SubLink *slink, List *targetlist,
+					  List **setParams)
+{
+	List	   *newoper = NIL;
+	List	   *leftlist = slink->lefthand;
+	List	   *lst;
+
+	foreach(lst, slink->oper)
+	{
+		Oper	   *oper = (Oper *) lfirst(lst);
+		Node	   *lefthand = lfirst(leftlist);
+		TargetEntry *te = lfirst(targetlist);
+		Param	   *prm;
+		Operator	tup;
+		Form_pg_operator opform;
+		Node	   *left,
+				   *right;
+
+		/* Make the Param node representing the subplan's result */
+		prm = generate_new_param(te->resdom->restype,
+								 te->resdom->restypmod);
+
+		/* Record its ID if needed */
+		if (setParams)
+			*setParams = lappendi(*setParams, prm->paramid);
+
+		/* Look up the operator to check its declared input types */
+		Assert(IsA(oper, Oper));
+		tup = SearchSysCache(OPEROID,
+							 ObjectIdGetDatum(oper->opno),
+							 0, 0, 0);
+		if (!HeapTupleIsValid(tup))
+			elog(ERROR, "cache lookup failed for operator %u", oper->opno);
+		opform = (Form_pg_operator) GETSTRUCT(tup);
+
+		/*
+		 * Make the expression node.
+		 *
+		 * Note: we use make_operand in case runtime type conversion
+		 * function calls must be inserted for this operator!
+		 */
+		left = make_operand(lefthand, exprType(lefthand), opform->oprleft);
+		right = make_operand((Node *) prm, prm->paramtype, opform->oprright);
+		newoper = lappend(newoper,
+						  make_opclause(oper,
+										(Var *) left,
+										(Var *) right));
+
+		ReleaseSysCache(tup);
+
+		leftlist = lnext(leftlist);
+		targetlist = lnext(targetlist);
+	}
+
+	slink->oper = newoper;
+	slink->lefthand = NIL;
 }
 
 /*

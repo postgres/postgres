@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.112 2002/11/25 21:29:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.113 2002/11/26 03:01:58 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1135,14 +1135,6 @@ CommuteClause(Expr *clause)
  *
  * We assume that the tree has already been type-checked and contains
  * only operators and functions that are reasonable to try to execute.
- *
- * This routine should be invoked before converting sublinks to subplans
- * (subselect.c's SS_process_sublinks()).  The converted form contains
- * bogus "Const" nodes that are actually placeholders where the executor
- * will insert values from the inner plan, and obviously we mustn't try
- * to reduce the expression as though these were really constants.
- * As a safeguard, if we happen to find an already-converted SubPlan node,
- * we will return it unchanged rather than recursing into it.
  *--------------------
  */
 Node *
@@ -1411,11 +1403,13 @@ eval_const_expressions_mutator(Node *node, void *context)
 			case SUBPLAN_EXPR:
 
 				/*
-				 * Safety measure per notes at head of this routine:
-				 * return a SubPlan unchanged.	Too late to do anything
+				 * Return a SubPlan unchanged --- too late to do anything
 				 * with it.  The arglist simplification above was wasted
 				 * work (the list probably only contains Var nodes
 				 * anyway).
+				 *
+				 * XXX should we elog() here instead?  Probably this routine
+				 * should never be invoked after SubPlan creation.
 				 */
 				return (Node *) expr;
 			default:
@@ -1629,7 +1623,6 @@ simplify_op_or_func(Expr *expr, List *args)
 	 *
 	 * Note we take the result type from the Oper or Func node, not the
 	 * pg_proc tuple; probably necessary for binary-compatibility cases.
-	 *
 	 */
 	if (expr->opType == OP_EXPR)
 	{

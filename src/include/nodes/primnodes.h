@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.69 2002/11/25 21:29:42 tgl Exp $
+ * $Id: primnodes.h,v 1.70 2002/11/26 03:01:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -357,7 +357,7 @@ typedef struct Aggref
  * 3. Finally, the planner converts the oper list to a list of normal Expr
  *	  nodes representing the application of the operator(s) to the lefthand
  *	  expressions and values from the inner targetlist.  The inner
- *	  targetlist items are represented by placeholder Param or Const nodes.
+ *	  targetlist items are represented by placeholder Param nodes.
  *	  The lefthand field is set to NIL, since its expressions are now in
  *	  the Expr list.  This representation is passed to the executor.
  *

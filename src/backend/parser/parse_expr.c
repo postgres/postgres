@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.130 2002/11/15 02:50:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.131 2002/11/26 03:01:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -122,7 +122,6 @@ transformExpr(ParseState *pstate, Node *expr, ConstraintTestValue *domVal)
 				param = makeNode(Param);
 				param->paramkind = PARAM_NUM;
 				param->paramid = (AttrNumber) paramno;
-				param->paramname = "<unnamed>";
 				param->paramtype = paramtyp;
 				result = (Node *) param;
 				/* handle qualification, if any */

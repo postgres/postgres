@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.182 2002/11/25 21:29:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.183 2002/11/26 03:01:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -749,7 +749,6 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 	FmgrInfo   *in_functions;
 	Oid		   *elements;
 	Node	  **constraintexprs;
-	Const	  **constraintconsts;
 	bool		hasConstraints = false;
 	int			i;
 	List	   *cur;
@@ -805,7 +804,6 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 	defmap = (int *) palloc(num_phys_attrs * sizeof(int));
 	defexprs = (Node **) palloc(num_phys_attrs * sizeof(Node *));
 	constraintexprs = (Node **) palloc0(num_phys_attrs * sizeof(Node *));
-	constraintconsts = (Const **) palloc(num_phys_attrs * sizeof(Const *));
 
 	for (i = 0; i < num_phys_attrs; i++)
 	{
@@ -840,7 +838,7 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 		/* If it's a domain type, get info on domain constraints */
 		if (get_typtype(attr[i]->atttypid) == 'd')
 		{
-			Const	   *con;
+			Param	   *prm;
 			Node	   *node;
 
 			/*
@@ -848,28 +846,21 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 			 * an expression that checks the constraints.  (At present,
 			 * the expression might contain a length-coercion-function call
 			 * and/or ConstraintTest nodes.)  The bottom of the expression
-			 * is a Const node that we fill in with the actual datum during
+			 * is a Param node so that we can fill in the actual datum during
 			 * the data input loop.
-			 *
-			 * XXX to prevent premature constant folding in parse_coerce,
-			 * pass in a NULL constant to start with.  See the comments in
-			 * coerce_type; this should be changed someday to use some sort
-			 * of Param node instead of a Const.
 			 */
-			con = makeConst(attr[i]->atttypid,
-							attr[i]->attlen,
-							(Datum) 0,
-							true,		 /* is null */
-							attr[i]->attbyval);
+			prm = makeNode(Param);
+			prm->paramkind = PARAM_EXEC;
+			prm->paramid = 0;
+			prm->paramtype = attr[i]->atttypid;
 
-			node = coerce_type_constraints((Node *) con, attr[i]->atttypid,
+			node = coerce_type_constraints((Node *) prm, attr[i]->atttypid,
 										   COERCE_IMPLICIT_CAST);
 
 			/* check whether any constraints actually found */
-			if (node != (Node *) con)
+			if (node != (Node *) prm)
 			{
 				constraintexprs[i] = node;
-				constraintconsts[i] = con;
 				hasConstraints = true;
 			}
 		}
@@ -930,6 +921,11 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 	fe_eof = false;
 
 	econtext = GetPerTupleExprContext(estate);
+
+	/* Make room for a PARAM_EXEC value for domain constraint checks */
+	if (hasConstraints)
+		econtext->ecxt_param_exec_vals = (ParamExecData *)
+			palloc0(sizeof(ParamExecData));
 
 	while (!done)
 	{
@@ -1153,19 +1149,19 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 		 */
 		if (hasConstraints)
 		{
+			ParamExecData *prmdata = &econtext->ecxt_param_exec_vals[0];
+
 			for (i = 0; i < num_phys_attrs; i++)
 			{
 				Node	   *node = constraintexprs[i];
-				Const	   *con;
 				bool		isnull;
 
 				if (node == NULL)
 					continue;	/* no constraint for this attr */
 
-				/* Insert current row's value into the Const node */
-				con = constraintconsts[i];
-				con->constvalue = values[i];
-				con->constisnull = (nulls[i] == 'n');
+				/* Insert current row's value into the Param value */
+				prmdata->value = values[i];
+				prmdata->isnull = (nulls[i] == 'n');
 
 				/*
 				 * Execute the constraint expression.  Allow the expression

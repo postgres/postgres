@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.126 2002/11/25 21:29:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.127 2002/11/26 03:01:58 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1921,7 +1921,6 @@ get_rule_expr(Node *node, deparse_context *context,
 	 * same expression tree.
 	 *
 	 * There might be some work left here to support additional node types.
-	 * Can we ever see Param nodes here?
 	 */
 	switch (nodeTag(node))
 	{

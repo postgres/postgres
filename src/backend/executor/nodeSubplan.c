@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubplan.c,v 1.33 2002/06/20 20:29:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubplan.c,v 1.34 2002/11/26 03:01:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -150,37 +150,44 @@ ExecSubPlan(SubPlan *node, List *pvar, ExprContext *econtext, bool *isNull)
 		foreach(lst, sublink->oper)
 		{
 			Expr	   *expr = (Expr *) lfirst(lst);
-			Const	   *con = lsecond(expr->args);
+			Param	   *prm = lsecond(expr->args);
+			ParamExecData *prmdata;
 			Datum		expresult;
 			bool		expnull;
 
 			/*
 			 * The righthand side of the expression should be either a
-			 * Const or a function call or RelabelType node taking a Const
+			 * Param or a function call or RelabelType node taking a Param
 			 * as arg (these nodes represent run-time type coercions
 			 * inserted by the parser to get to the input type needed by
-			 * the operator). Find the Const node and insert the actual
-			 * righthand-side value into it.
+			 * the operator). Find the Param node and insert the actual
+			 * righthand-side value into the param's econtext slot.
+			 *
+			 * XXX possible improvement: could make a list of the ParamIDs
+			 * at startup time, instead of repeating this check at each row.
 			 */
-			if (!IsA(con, Const))
+			if (!IsA(prm, Param))
 			{
-				switch (con->type)
+				switch (nodeTag(prm))
 				{
 					case T_Expr:
-						con = lfirst(((Expr *) con)->args);
+						prm = lfirst(((Expr *) prm)->args);
 						break;
 					case T_RelabelType:
-						con = (Const *) (((RelabelType *) con)->arg);
+						prm = (Param *) (((RelabelType *) prm)->arg);
 						break;
 					default:
 						/* will fail below */
 						break;
 				}
-				if (!IsA(con, Const))
+				if (!IsA(prm, Param))
 					elog(ERROR, "ExecSubPlan: failed to find placeholder for subplan result");
 			}
-			con->constvalue = heap_getattr(tup, col, tdesc,
-										   &(con->constisnull));
+			Assert(prm->paramkind == PARAM_EXEC);
+			prmdata = &(econtext->ecxt_param_exec_vals[prm->paramid]);
+			Assert(prmdata->execPlan == NULL);
+			prmdata->value = heap_getattr(tup, col, tdesc,
+										  &(prmdata->isnull));
 
 			/*
 			 * Now we can eval the combining operator for this column.

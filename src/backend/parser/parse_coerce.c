@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.87 2002/11/25 21:29:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.88 2002/11/26 03:01:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -241,14 +241,8 @@ coerce_type(Node *node, Oid inputTypeId, Oid targetTypeId,
 			 *
 			 * Note that no folding will occur if the conversion function is
 			 * not marked 'immutable'.
-			 *
-			 * HACK: if constant is NULL, don't fold it here.  This is needed
-			 * by make_subplan(), which calls this routine on placeholder
-			 * Const nodes that mustn't be collapsed.  (It'd be a lot
-			 * cleaner to make a separate node type for that purpose...)
 			 */
-			if (IsA(node, Const) &&
-				!((Const *) node)->constisnull)
+			if (IsA(node, Const))
 				result = eval_const_expressions(result);
 		}
 		else

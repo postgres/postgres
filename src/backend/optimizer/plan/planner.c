@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.130 2002/11/21 00:42:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.131 2002/11/26 03:01:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -720,8 +720,6 @@ preprocess_expression(Query *parse, Node *expr, int kind)
 	 *
 	 * Note that at this point quals have not yet been converted to
 	 * implicit-AND form, so we can apply eval_const_expressions directly.
-	 * Also note that we need to do this before SS_process_sublinks,
-	 * because that routine inserts bogus "Const" nodes.
 	 */
 	expr = eval_const_expressions(expr);
 
