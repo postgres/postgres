@@ -1,5 +1,5 @@
 AROPT:crs
-CFLAGS:-I$(SRCDIR)/backend/port/sparc_solaris
+CFLAGS:
 SHARED_LIB:-fPIC
 ALL:
 SRCH_INC:
