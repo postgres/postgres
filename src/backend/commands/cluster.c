@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.31 1998/09/01 04:27:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.32 1998/09/23 04:22:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -282,7 +282,7 @@ copy_index(Oid OIDOldIndex, Oid OIDNewHeap)
 	 * got to be sure.
 	 */
 	for (attnumP = &(Old_pg_index_Form->indkey[0]), natts = 0;
-		 *attnumP != InvalidAttrNumber;
+		 natts < INDEX_MAX_KEYS && *attnumP != InvalidAttrNumber;
 		 attnumP++, natts++);
 
 	/*

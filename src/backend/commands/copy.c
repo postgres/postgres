@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.61 1998/09/08 22:15:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.62 1998/09/23 04:22:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -453,7 +453,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 				Assert(pgIndexTup);
 				pgIndexP[i] = (Form_pg_index) GETSTRUCT(pgIndexTup);
 				for (attnumP = &(pgIndexP[i]->indkey[0]), natts = 0;
-					 *attnumP != InvalidAttrNumber;
+					 natts < INDEX_MAX_KEYS && *attnumP != InvalidAttrNumber;
 					 attnumP++, natts++);
 				if (pgIndexP[i]->indproc != InvalidOid)
 				{

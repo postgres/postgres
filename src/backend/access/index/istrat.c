@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.28 1998/09/01 04:26:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.29 1998/09/23 04:21:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -583,7 +583,7 @@ IndexSupportInitialize(IndexStrategy indexStrategy,
 
 		if (!OidIsValid(iform->indkey[attributeIndex]))
 		{
-			if (attributeIndex == 0)
+			if (attributeIndex == InvalidAttrNumber)
 				elog(ERROR, "IndexSupportInitialize: no pg_index tuple");
 			break;
 		}

@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.85 1998/09/20 03:18:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.86 1998/09/23 04:22:14 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -2649,7 +2649,7 @@ dumpIndices(FILE *fout, IndInfo *indinfo, int numIndices,
 			char	   *attname;
 
 			indkey = atoi(indinfo[i].indkey[k]);
-			if (indkey == 0)
+			if (indkey == InvalidAttrNumber)
 				break;
 			indkey--;
 			if (indkey == ObjectIdAttributeNumber - 1)

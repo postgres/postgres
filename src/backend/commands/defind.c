@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/defind.c,v 1.26 1998/09/01 04:27:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/defind.c,v 1.27 1998/09/23 04:22:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -274,7 +274,7 @@ ExtendIndex(char *indexRelationName, Expr *predicate, List *rangetable)
 	indproc = index->indproc;
 
 	for (i = 0; i < INDEX_MAX_KEYS; i++)
-		if (index->indkey[i] == 0)
+		if (index->indkey[i] == InvalidAttrNumber)
 			break;
 	numberOfAttributes = i;
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.38 1998/09/01 04:28:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.39 1998/09/23 04:22:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -629,7 +629,8 @@ ExecGetIndexKeyInfo(Form_pg_index indexTuple,
 	 * ----------------
 	 */
 	numKeys = 0;
-	for (i = 0; i < 8 && indexTuple->indkey[i] != 0; i++)
+	for (i = 0; i < INDEX_MAX_KEYS &&
+				indexTuple->indkey[i] != InvalidAttrNumber; i++)
 		numKeys++;
 
 	/* ----------------
@@ -663,8 +664,7 @@ ExecGetIndexKeyInfo(Form_pg_index indexTuple,
 	 */
 	CXT1_printf("ExecGetIndexKeyInfo: context is %d\n", CurrentMemoryContext);
 
-	attKeys = (AttrNumber *)
-		palloc(numKeys * sizeof(AttrNumber));
+	attKeys = (AttrNumber *)palloc(numKeys * sizeof(AttrNumber));
 
 	for (i = 0; i < numKeys; i++)
 		attKeys[i] = indexTuple->indkey[i];
