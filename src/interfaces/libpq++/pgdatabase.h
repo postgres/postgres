@@ -13,7 +13,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  *
- *  $Id: pgdatabase.h,v 1.2 1999/05/23 01:04:01 momjian Exp $
+ *  $Id: pgdatabase.h,v 1.3 1999/09/21 21:19:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,6 +48,8 @@ public:
   short FieldSize(const char* field_name);
   const char* GetValue(int tup_num, int field_num);
   const char* GetValue(int tup_num, const char* field_name);
+  int GetIsNull(int tup_num, int field_num);
+  int GetIsNull(int tup_num, const char* field_name);
   int GetLength(int tup_num, int field_num);
   int GetLength(int tup_num, const char* field_name);
   void DisplayTuples(FILE *out = 0, int fillAlign = 1, 
