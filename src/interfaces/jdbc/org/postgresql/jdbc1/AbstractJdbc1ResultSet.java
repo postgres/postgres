@@ -9,7 +9,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1ResultSet.java,v 1.22 2003/10/29 02:39:09 davec Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1ResultSet.java,v 1.22.2.1 2003/12/12 17:59:08 davec Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -833,7 +833,7 @@ public abstract class AbstractJdbc1ResultSet implements BaseResultSet
 
 			try
 			{
-				if (Double.parseDouble(s)==1)
+				if (Double.valueOf(s).doubleValue()==1)
 					return true;
 			}
 			catch (NumberFormatException e)
