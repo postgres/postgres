@@ -8,7 +8,7 @@
  * or in pg_config.h afterwards.  Of course, if you edit pg_config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: pg_config.h.in,v 1.31 2002/09/04 22:54:18 petere Exp $
+ * $Id: pg_config.h.in,v 1.32 2002/09/05 00:43:07 tgl Exp $
  */
 
 #ifndef PG_CONFIG_H
@@ -319,6 +319,23 @@
 
 /* Define as empty if the C compiler doesn't understand "volatile". */
 #undef volatile
+
+/* Define to 1 to make fseeko visible on some hosts. */
+#undef _LARGEFILE_SOURCE
+
+/* Define for large files, on AIX-style hosts. */
+#undef _LARGE_FILES
+
+/* Number of bits in a file offset, on hosts where this is settable. */
+#undef _FILE_OFFSET_BITS
+
+/* Define to 1 if fseeko (and presumably ftello) exists and is declared. */
+#undef HAVE_FSEEKO
+
+#ifndef HAVE_FSEEKO
+#define fseeko(a, b, c) fseek((a), (b), (c))
+#define ftello(a) ftell((a))
+#endif
 
 /* Define if your cpp understands the ANSI stringizing operators in macros */
 #undef HAVE_STRINGIZE
@@ -693,23 +710,6 @@ extern int fdatasync(int fildes);
 
 /* Define exactly one of these symbols to select shared-mem implementation */
 #undef USE_SYSV_SHARED_MEMORY
-
-/* Define to 1 to make fseeko visible on some hosts. */
-#undef _LARGEFILE_SOURCE
-
-/* Define to 1 if fseeko (and presumably ftello) exists and is declared. */
-#undef HAVE_FSEEKO
-
-#ifndef HAVE_FSEEKO
-#define fseeko(a, b, c) fseek((a), (b), (c))
-#define ftello(a) ftell((a))
-#endif
-
-/* Number of bits in a file offset, on hosts where this is settable. */
-#undef _FILE_OFFSET_BITS
-
-/* Define for large files, on AIX-style hosts. */
-#undef _LARGE_FILES
 
 
 /*

@@ -7,11 +7,11 @@
 #define YYSTYPE char *
 #define YYDEBUG 1
 
-#include <string.h>
+#include "postgres.h"
+
 #include "cubedata.h"
 #include "buffer.h"
 
-#include "postgres.h"
 #include "utils/palloc.h"
 #include "utils/elog.h"
 

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_selection.c,v 1.13 2002/06/20 20:29:29 momjian Exp $
+ * $Id: geqo_selection.c,v 1.14 2002/09/05 00:43:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,9 +34,10 @@
 /*															 */
 /*************************************************************/
 
+#include "postgres.h"
+
 #include <math.h>
 
-#include "postgres.h"
 #include "optimizer/geqo_copy.h"
 #include "optimizer/geqo_random.h"
 #include "optimizer/geqo_selection.h"

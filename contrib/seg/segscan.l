@@ -3,8 +3,8 @@
 ** A scanner for EMP-style numeric ranges 
 */
 
-#include <string.h>
-#include <stdio.h>
+#include "postgres.h"
+
 #include "segparse.h"
 #include "buffer.h"
 

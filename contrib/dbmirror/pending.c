@@ -1,6 +1,6 @@
 /****************************************************************************
  * pending.c
- * $Id: pending.c,v 1.3 2002/09/04 22:49:22 petere Exp $
+ * $Id: pending.c,v 1.4 2002/09/05 00:43:06 tgl Exp $
  *
  * This file contains a trigger for Postgresql-7.x to record changes to tables
  * to a pending table for mirroring.
@@ -18,9 +18,10 @@
  *
  *
  ***************************************************************************/
+#include <postgres.h>
+
 #include <executor/spi.h>
 #include <commands/trigger.h>
-#include <postgres.h>
 
 enum FieldUsage
 {

@@ -9,13 +9,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/tidpath.c,v 1.10 2002/06/20 20:29:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/tidpath.c,v 1.11 2002/09/05 00:43:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <math.h>
-
 #include "postgres.h"
+
+#include <math.h>
 
 #include "catalog/pg_operator.h"
 #include "optimizer/clauses.h"

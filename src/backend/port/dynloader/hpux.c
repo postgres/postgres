@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/hpux.c,v 1.20 2002/06/20 20:29:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/hpux.c,v 1.21 2002/09/05 00:43:07 tgl Exp $
  *
  *	NOTES
  *		all functions are defined here -- it's impossible to trace the
@@ -16,10 +16,10 @@
  *
  *-------------------------------------------------------------------------
  */
+#include "postgres.h"
+
 /* System includes */
 #include <a.out.h>
-
-#include "postgres.h"
 
 #include "dl.h"
 #include "dynloader.h"

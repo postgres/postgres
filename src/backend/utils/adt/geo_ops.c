@@ -8,16 +8,16 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.65 2002/09/04 20:31:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.66 2002/09/05 00:43:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
+#include "postgres.h"
+
 #include <math.h>
 #include <limits.h>
 #include <float.h>
 #include <ctype.h>
-
-#include "postgres.h"
 
 #include "utils/geo_decls.h"
 

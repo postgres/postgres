@@ -9,14 +9,14 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scansup.c,v 1.22 2002/06/20 20:29:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scansup.c,v 1.23 2002/09/05 00:43:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
+#include "postgres.h"
 
 #include <ctype.h>
 
-#include "postgres.h"
 #include "miscadmin.h"
 #include "parser/scansup.h"
 

@@ -1,10 +1,10 @@
 %{
-#include <string.h>
+#include "postgres.h"
+
 #include "deflex.h"
 #include "parser.h"
 
 /* postgres allocation function */
-#include "postgres.h"
 #define free    pfree
 #define malloc  palloc
 #define realloc repalloc

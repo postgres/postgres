@@ -6,7 +6,8 @@
 #define YYSTYPE char *
 #define yylval cube_yylval
 
-#include <stdio.h>
+#include "postgres.h"
+
 #include "cubeparse.h"
 #include "buffer.h"
 

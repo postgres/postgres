@@ -26,9 +26,8 @@
  * PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  */
-
-#include <string.h>
 #include "postgres.h"
+
 #include "libpq-fe.h"
 #include "libpq-int.h"
 #include "fmgr.h"

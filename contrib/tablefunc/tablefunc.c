@@ -25,10 +25,9 @@
  * PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  */
-#include <stdlib.h>
-#include <math.h>
-
 #include "postgres.h"
+
+#include <math.h>
 
 #include "fmgr.h"
 #include "funcapi.h"

@@ -42,11 +42,10 @@
 #ifndef FUZZYSTRMATCH_H
 #define FUZZYSTRMATCH_H
 
-#include <stdio.h>
-#include <string.h>
+#include "postgres.h"
+
 #include <ctype.h>
 
-#include "postgres.h"
 #include "fmgr.h"
 #include "utils/builtins.h"
 

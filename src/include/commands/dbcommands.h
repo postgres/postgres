@@ -7,14 +7,14 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dbcommands.h,v 1.25 2002/08/09 16:45:16 tgl Exp $
+ * $Id: dbcommands.h,v 1.26 2002/09/05 00:43:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef DBCOMMANDS_H
 #define DBCOMMANDS_H
 
-#include <nodes/parsenodes.h>
+#include "nodes/parsenodes.h"
 
 extern void createdb(const CreatedbStmt *stmt);
 extern void dropdb(const char *dbname);
