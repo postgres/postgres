@@ -40,12 +40,12 @@ struct options
 
 /* function prototypes */
 void		get_opts(int, char **, struct options *);
-PGconn	   *sql_conn(char *, struct options *);
+PGconn	   *sql_conn(const char *, struct options *);
 void		sql_exec_error(int);
-int			sql_exec(PGconn *, char *, int);
+int			sql_exec(PGconn *, const char *, int);
 void		sql_exec_dumpdb(PGconn *);
 void		sql_exec_dumptable(PGconn *, int);
-void		sql_exec_searchtable(PGconn *, char *);
+void		sql_exec_searchtable(PGconn *, const char *);
 void		sql_exec_searchoid(PGconn *, int);
 
 /* fuction to parse command line options and check for some usage errors. */
@@ -143,7 +143,6 @@ get_opts(int argc, char **argv, struct options * my_opts)
 
 				/* display system tables */
 			case 'x':
-
 				my_opts->systables = 1;
 				break;
 
@@ -170,7 +169,7 @@ Usage: pg_oid2name [-d database [-x] ] [-t table | -o oid] \n\
 
 /* establish connection with database. */
 PGconn *
-sql_conn(char *dbName, struct options * my_opts)
+sql_conn(const char *dbName, struct options * my_opts)
 {
 	char	   *pghost,
 			   *pgport;
@@ -183,11 +182,9 @@ sql_conn(char *dbName, struct options * my_opts)
 
 	pghost = NULL;
 	pgport = NULL;
-
 	pgoptions = NULL;			/* special options to start up the backend
 								 * server */
 	pgtty = NULL;				/* debugging tty for the backend server */
-
 	pguser = NULL;
 	pgpass = NULL;
 
@@ -225,11 +222,19 @@ sql_conn(char *dbName, struct options * my_opts)
 		fprintf(stderr, "Connection to database '%s' failed.\n", dbName);
 		fprintf(stderr, "%s", PQerrorMessage(conn));
 
-
 		PQfinish(conn);
 		exit(1);
-
 	}
+
+	/* free data structures: not strictly necessary */
+	if (pghost != NULL)
+		free(pghost);
+	if (pgport != NULL)
+		free(pgport);
+	if (pguser != NULL)
+		free(pguser);
+	if (pgpass != NULL)
+		free(pgpass);
 
 	/* return the conn if good */
 	return conn;
@@ -266,7 +271,7 @@ sql_exec_error(int error_number)
 
 /* actual code to make call to the database and print the output data */
 int
-sql_exec(PGconn *conn, char *todo, int match)
+sql_exec(PGconn *conn, const char *todo, int match)
 {
 	PGresult   *res;
 
@@ -316,13 +321,11 @@ sql_exec(PGconn *conn, char *todo, int match)
 	return 0;
 }
 
-/* dump all databases know by the system table */
+/* dump all databases known by the system table */
 void
 sql_exec_dumpdb(PGconn *conn)
 {
-	char	   *todo;
-
-	todo = (char *) malloc(1024);
+	char		todo[1024];
 
 	/* get the oid and database name from the system pg_database table */
 	sprintf(todo, "select oid,datname from pg_database");
@@ -335,9 +338,7 @@ sql_exec_dumpdb(PGconn *conn)
 void
 sql_exec_dumptable(PGconn *conn, int systables)
 {
-	char	   *todo;
-
-	todo = (char *) malloc(1024);
+	char		todo[1024];
 
 	/* don't exclude the systables if this is set */
 	if (systables == 1)
@@ -351,12 +352,10 @@ sql_exec_dumptable(PGconn *conn, int systables)
 /* display the oid for a given tablename for whatever db we are connected
    to.	do we want to allow %bar% in the search?  Not now. */
 void
-sql_exec_searchtable(PGconn *conn, char *tablename)
+sql_exec_searchtable(PGconn *conn, const char *tablename)
 {
 	int			returnvalue;
-	char	   *todo;
-
-	todo = (char *) malloc(1024);
+	char		todo[1024];
 
 	/* get the oid and tablename where the name matches tablename */
 	sprintf(todo, "select relfilenode,relname from pg_class where relname = '%s'", tablename);
@@ -376,9 +375,7 @@ void
 sql_exec_searchoid(PGconn *conn, int oid)
 {
 	int			returnvalue;
-	char	   *todo;
-
-	todo = (char *) malloc(1024);
+	char		todo[1024];
 
 	sprintf(todo, "select relfilenode,relname from pg_class where oid = %i", oid);
 
