@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.8 1996/11/13 20:46:59 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.9 1996/12/26 17:44:46 momjian Exp $
  *
  * INTERFACE ROUTINES
  *	index_open 	- open an index relation by relationId
@@ -101,13 +101,13 @@ Assert(RelationIsValid(relation)); \
 	 Assert(PointerIsValid(scan->relation->rd_am))
      
 #define GET_REL_PROCEDURE(x,y) \
-	 CppConcat(procedure = relation->rd_am->,y); \
+	 procedure = relation->rd_am->y; \
 	 if (! RegProcedureIsValid(procedure)) \
 	 elog(WARN, "index_%s: invalid %s regproc", \
 	      CppAsString(x), CppAsString(y))
      
 #define GET_SCAN_PROCEDURE(x,y) \
-	 CppConcat(procedure = scan->relation->rd_am->,y); \
+	 procedure = scan->relation->rd_am->y; \
 	 if (! RegProcedureIsValid(procedure)) \
 	 elog(WARN, "index_%s: invalid %s regproc", \
 	      CppAsString(x), CppAsString(y))
