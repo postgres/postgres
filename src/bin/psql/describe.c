@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.25 2000/10/24 01:38:38 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.26 2000/10/25 20:36:52 tgl Exp $
  */
 #include "postgres.h"
 #include "describe.h"
@@ -336,7 +336,7 @@ permissionsList(const char *name)
 	strcat(descbuf, "SELECT relname as \"Relation\",\n"
 		   "       relacl as \"Access permissions\"\n"
 		   "FROM   pg_class\n"
-		   "WHERE  ( relkind = 'r' OR relkind = 'S') AND\n"
+		   "WHERE  relkind in ('r', 'v', 'S') AND\n"
 		   "       relname !~ '^pg_'\n");
 	if (name)
 	{
@@ -570,7 +570,7 @@ describeTableDetails(const char *name, bool desc)
 	headers[1] = "Type";
 	cols = 2;
 
-	if (tableinfo.relkind == 'r')
+	if (tableinfo.relkind == 'r' || tableinfo.relkind == 'v')
 	{
 		cols++;
 		headers[cols - 1] = "Modifier";
@@ -634,7 +634,7 @@ describeTableDetails(const char *name, bool desc)
 
 		/* Extra: not null and default */
 		/* (I'm cutting off the 'default' string at 128) */
-		if (tableinfo.relkind == 'r')
+		if (tableinfo.relkind == 'r' || tableinfo.relkind == 'v')
 		{
 			cells[i * cols + 2] = xmalloc(128 + 128);
 			cells[i * cols + 2][0] = '\0';
@@ -677,10 +677,10 @@ describeTableDetails(const char *name, bool desc)
 	switch (tableinfo.relkind)
 	{
 		case 'r':
-			if (view_def)
-				sprintf(title, "View \"%s\"", name);
-			else
-				sprintf(title, "Table \"%s\"", name);
+			sprintf(title, "Table \"%s\"", name);
+			break;
+		case 'v':
+			sprintf(title, "View \"%s\"", name);
 			break;
 		case 'S':
 			sprintf(title, "Sequence \"%s\"", name);
@@ -692,7 +692,8 @@ describeTableDetails(const char *name, bool desc)
 			sprintf(title, "Special relation \"%s\"", name);
 			break;
 		default:
-			sprintf(title, "?%c?", tableinfo.relkind);
+			sprintf(title, "?%c? \"%s\"", tableinfo.relkind, name);
+			break;
 	}
 
 	/* Make footers */
@@ -723,7 +724,7 @@ describeTableDetails(const char *name, bool desc)
 		}
 	}
 	/* Information about the view */
-	else if (tableinfo.relkind == 'r' && view_def)
+	else if (view_def)
 	{
 		footers = xmalloc(2 * sizeof(*footers));
 		footers[0] = xmalloc(20 + strlen(view_def));
@@ -874,7 +875,7 @@ describeTableDetails(const char *name, bool desc)
 
 	for (i = 0; i < PQntuples(res); i++)
 	{
-		if (tableinfo.relkind == 'r')
+		if (tableinfo.relkind == 'r' || tableinfo.relkind == 'v')
 			free(cells[i * cols + 2]);
 	}
 	free(cells);
@@ -933,8 +934,7 @@ listTables(const char *infotype, const char *name, bool desc)
 		if (desc)
 			strcat(buf, ", obj_description(c.oid) as \"Description\"");
 		strcat(buf, "\nFROM pg_class c, pg_user u\n"
-			   "WHERE c.relowner = u.usesysid AND c.relkind = 'r'\n"
-			   "  AND not exists (select 1 from pg_views where viewname = c.relname)\n");
+			   "WHERE c.relowner = u.usesysid AND c.relkind = 'r'\n");
 		strcat(buf, showSystem ? "  AND c.relname ~ '^pg_'\n" : "  AND c.relname !~ '^pg_'\n");
 		if (name)
 		{
@@ -949,7 +949,6 @@ listTables(const char *infotype, const char *name, bool desc)
 			strcat(buf, ", obj_description(c.oid) as \"Description\"");
 		strcat(buf, "\nFROM pg_class c\n"
 			   "WHERE c.relkind = 'r'\n"
-			   "  AND not exists (select 1 from pg_views where viewname = c.relname)\n"
 			   "  AND not exists (select 1 from pg_user where usesysid = c.relowner)\n");
 		strcat(buf, showSystem ? "  AND c.relname ~ '^pg_'\n" : "  AND c.relname !~ '^pg_'\n");
 		if (name)
@@ -970,8 +969,7 @@ listTables(const char *infotype, const char *name, bool desc)
 		if (desc)
 			strcat(buf, ", obj_description(c.oid) as \"Description\"");
 		strcat(buf, "\nFROM pg_class c, pg_user u\n"
-			   "WHERE c.relowner = u.usesysid AND c.relkind = 'r'\n"
-			   "  AND exists (select 1 from pg_views where viewname = c.relname)\n");
+			   "WHERE c.relowner = u.usesysid AND c.relkind = 'v'\n");
 		strcat(buf, showSystem ? "  AND c.relname ~ '^pg_'\n" : "  AND c.relname !~ '^pg_'\n");
 		if (name)
 		{
@@ -985,8 +983,7 @@ listTables(const char *infotype, const char *name, bool desc)
 		if (desc)
 			strcat(buf, ", obj_description(c.oid) as \"Description\"");
 		strcat(buf, "\nFROM pg_class c\n"
-			   "WHERE c.relkind = 'r'\n"
-			   "  AND exists (select 1 from pg_views where viewname = c.relname)\n"
+			   "WHERE c.relkind = 'v'\n"
 			   "  AND not exists (select 1 from pg_user where usesysid = c.relowner)\n");
 		strcat(buf, showSystem ? "  AND c.relname ~ '^pg_'\n" : "  AND c.relname !~ '^pg_'\n");
 		if (name)
