@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sat Jan 27 00:40:39 EST 2001
+Last updated:		Sat Jan 27 00:49:01 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -135,6 +135,7 @@ VIEWS
 * -Change elog for complex view ins|upd|del to "cannot {ins|upd|del}
 * Add the functionality for "with check option" clause of create view
 * Allow NOTIFY in rules involving conditionals
+* Evaluate INSERT rules at end of query, rather than beginning
 
 INDEXES
 
