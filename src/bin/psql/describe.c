@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.70 2002/10/15 02:24:16 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.71 2002/10/19 20:50:44 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -119,9 +119,10 @@ describeFunctions(const char *pattern, bool verbose)
 	initPQExpBuffer(&buf);
 
 	printfPQExpBuffer(&buf,
-		 "SELECT pg_catalog.format_type(p.prorettype, NULL) as \"%s\",\n"
-					  "  n.nspname as \"%s\",\n"
-					  "  p.proname as \"%s\",\n"
+		 "SELECT CASE WHEN p.proretset THEN 'setof ' ELSE '' END ||\n"
+				  "  pg_catalog.format_type(p.prorettype, NULL) as \"%s\",\n"
+				  "  n.nspname as \"%s\",\n"
+				  "  p.proname as \"%s\",\n"
 				  "  pg_catalog.oidvectortypes(p.proargtypes) as \"%s\"",
 					  _("Result data type"), _("Schema"), _("Name"),
 					  _("Argument data types"));
