@@ -1,7 +1,7 @@
 /****************************************************************************
  * pending.c
- * $Id: pending.c,v 1.17 2004/04/22 03:48:38 momjian Exp $
- * $PostgreSQL: pgsql/contrib/dbmirror/pending.c,v 1.17 2004/04/22 03:48:38 momjian Exp $
+ * $Id: pending.c,v 1.18 2004/05/26 00:08:26 wieck Exp $
+ * $PostgreSQL: pgsql/contrib/dbmirror/pending.c,v 1.18 2004/05/26 00:08:26 wieck Exp $
  *
  * This file contains a trigger for Postgresql-7.x to record changes to tables
  * to a pending table for mirroring.
@@ -76,7 +76,7 @@ PG_FUNCTION_INFO_V1(recordchange);
 #else
 #define debug_msg2(x,y) 
 #define debug_msg(x)
-#define debug_msg(x,y,z)
+#define debug_msg3(x,y,z)
 
 #endif
 
