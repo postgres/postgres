@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/src/interfaces/perl5/Attic/GNUmakefile,v 1.7 2002/05/28 16:57:53 petere Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/perl5/Attic/GNUmakefile,v 1.8 2002/06/02 21:37:26 momjian Exp $
 
 subdir = src/interfaces/perl5
 top_builddir = ../../..
@@ -53,7 +53,7 @@ Pg.bs:
 	touch $@
 
 Pg.$(perl_man3ext): Pg.pm
-	$(POD2MAN) $< $@
+	$(POD2MAN) --section=$(perl_man3ext) $< > Pg.$(perl_man3ext)
 
 
 # During install, we must guard against the likelihood that we don't
