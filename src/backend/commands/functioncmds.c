@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/functioncmds.c,v 1.10 2002/07/20 05:16:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/functioncmds.c,v 1.11 2002/07/20 05:37:45 momjian Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -728,7 +728,7 @@ CreateCast(CreateCastStmt *stmt)
 	}
 
 	myself.classId = get_system_catalog_relid(CastRelationName);
-	myself.objectId = tuple->t_data->t_oid;
+	myself.objectId = HeapTupleGetOid(tuple);
 	myself.objectSubId = 0;
 
 	/* dependency on source type */
@@ -809,7 +809,7 @@ DropCast(DropCastStmt *stmt)
 	 * Do the deletion
 	 */
 	object.classId = get_system_catalog_relid(CastRelationName);
-	object.objectId = tuple->t_data->t_oid;
+	object.objectId = HeapTupleGetOid(tuple);
 	object.objectSubId = 0;
 
 	performDeletion(&object, stmt->behavior);
