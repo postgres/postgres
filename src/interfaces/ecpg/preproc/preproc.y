@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.263.2.17 2004/06/27 12:32:47 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.263.2.18 2004/11/01 13:35:54 davec Exp $ */
 
 /* Copyright comment */
 %{
@@ -1953,7 +1953,7 @@ GrantStmt:	GRANT privileges ON privilege_target TO grantee_list opt_grant_grant_
 
 RevokeStmt:  REVOKE opt_revoke_grant_option privileges ON privilege_target FROM grantee_list opt_drop_behavior
 			{
-			  $$ = cat_str(9, make_str("revoke"), $2, $3, make_str("on"), $5, make_str("from"), $7, $8);
+			  $$ = cat_str(8, make_str("revoke"), $2, $3, make_str("on"), $5, make_str("from"), $7, $8);
 			}
 			  
 		;
