@@ -1,40 +1,26 @@
-PostgreSQL Data Base Management System (formerly known as Postgres, then
-as Postgres95).
+PostgreSQL Database Management System
+=====================================
   
-This directory contains the development version of 7.2 of the
-PostgreSQL database server.  The server is not 100% ANSI SQL compliant,
-but it gets closer with every release.  After you unzip and untar the
-distribution file, look at file INSTALL for the installation notes and
-file HISTORY for the changes.
+This directory contains the source code distribution of the PostgreSQL
+database management system.
+
+PostgreSQL is an advanced object-relational database management system
+that supports an extended subset of the SQL standard, including
+transactions, foreign keys, subqueries, triggers, user-defined types
+and functions.  This distribution also contains several language
+bindings, including C, C++, Perl, Python, and Tcl, as well as drivers
+for JDBC and ODBC.
+
+See the file INSTALL for instructions on how to build and install
+PostgreSQL.  That file also lists supported operating systems and
+hardware platforms and contains information regarding any other
+software packages that are required to build or run the PostgreSQL
+system.  Changes between all PostgreSQL releases are recorded in the
+file HISTORY.  Copyright and license information can be found in the
+file COPYRIGHT.  A comprehensive documentation set is included in this
+distribution; it can be read as described in the installation
+instructions.
 
 The latest version of this software may be obtained at
-ftp://ftp.postgresql.org/pub/.  For more information look at our WWW
-home page located at http://www.postgreSQL.org/.
-
-PostgreSQL is not public domain software.  It is copyrighted by the
-University of California but may be used according to the licensing
-terms of the copyright below:
-
-------------------------------------------------------------------------
-
-POSTGRES95 Data Base Management System (formerly known as Postgres, then
-as Postgres95).
-
-Copyright (c) 1994-7 Regents of the University of California
-
-Permission to use, copy, modify, and distribute this software and its
-documentation for any purpose, without fee, and without a written agreement
-is hereby granted, provided that the above copyright notice and this
-paragraph and the following two paragraphs appear in all copies.
-
-IN NO EVENT SHALL THE UNIVERSITY OF CALIFORNIA BE LIABLE TO ANY PARTY FOR
-DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING
-LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-DOCUMENTATION, EVEN IF THE UNIVERSITY OF CALIFORNIA HAS BEEN ADVISED OF THE
-POSSIBILITY OF SUCH DAMAGE.
-
-THE UNIVERSITY OF CALIFORNIA SPECIFICALLY DISCLAIMS ANY WARRANTIES,
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-AND FITNESS FOR A PARTICULAR PURPOSE.  THE SOFTWARE PROVIDED HEREUNDER IS
-ON AN "AS IS" BASIS, AND THE UNIVERSITY OF CALIFORNIA HAS NO OBLIGATIONS TO
-PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+ftp://ftp.postgresql.org/pub/.  For more information look at our web
+site located at http://www.postgresql.org/.
