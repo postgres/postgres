@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.77 2001/01/12 21:54:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.78 2001/01/14 22:21:54 tgl Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -219,23 +219,17 @@ InitPostgres(const char *dbname, const char *username)
 
 		/* Verify if DataDir is ok */
 		if (access(DataDir, F_OK) == -1)
-			elog(FATAL, "Database system not found. Data directory '%s' does not exist.",
+			elog(FATAL, "Database system not found.\n\t"
+				 "Data directory '%s' does not exist.",
 				 DataDir);
 
 		ValidatePgVersion(DataDir);
 
-		/*-----------------
-		 * Find oid and path of the database we're about to open. Since we're
-		 * not yet up and running we have to use the hackish GetRawDatabaseInfo.
-		 *
-		 * OLD COMMENTS:
-		 *		The database's oid forms half of the unique key for the system
-		 *		caches and lock tables.  We therefore want it initialized before
-		 *		we open any relations, since opening relations puts things in the
-		 *		cache.	To get around this problem, this code opens and scans the
-		 *		pg_database relation by hand.
+		/*
+		 * Find oid and path of the database we're about to open.
+		 * Since we're not yet up and running we have to use the hackish
+		 * GetRawDatabaseInfo.
 		 */
-
 		GetRawDatabaseInfo(dbname, &MyDatabaseId, datpath);
 
 		if (!OidIsValid(MyDatabaseId))
@@ -248,13 +242,14 @@ InitPostgres(const char *dbname, const char *username)
 		/* Verify the database path */
 
 		if (access(fullpath, F_OK) == -1)
-			elog(FATAL, "Database \"%s\" does not exist. The data directory '%s' is missing.",
+			elog(FATAL, "Database \"%s\" does not exist.\n\t"
+				 "The database subdirectory '%s' is missing.",
 				 dbname, fullpath);
 
 		ValidatePgVersion(fullpath);
 
 		if (chdir(fullpath) == -1)
-			elog(FATAL, "Unable to change directory to '%s': %s", fullpath, strerror(errno));
+			elog(FATAL, "Unable to change directory to '%s': %m", fullpath);
 
 		SetDatabasePath(fullpath);
 	}
