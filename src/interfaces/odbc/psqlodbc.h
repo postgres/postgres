@@ -6,6 +6,7 @@
  *
  * Comments:        See "notice.txt" for copyright and license information.
  *
+ * $Id: psqlodbc.h,v 1.28 2001/01/26 22:25:36 tgl Exp $
  */
 
 #ifndef __PSQLODBC_H__
@@ -85,7 +86,7 @@ typedef UInt4 Oid;
 #define MAX_KEYPARTS		20
 #define MAX_KEYLEN			512			/*	max key of the form "date+outlet+invoice" */
 #define MAX_ROW_SIZE		0 /* Unlimited rowsize with the Tuple Toaster */
-#define MAX_STATEMENT_LEN	0 /* Unlimited statement size with 7.0
+#define MAX_STATEMENT_LEN	0 /* Unlimited statement size with 7.0 */
 
 /* Previously, numerous query strings were defined of length MAX_STATEMENT_LEN */
 /* Now that's 0, lets use this instead. DJP 24-1-2001 */
