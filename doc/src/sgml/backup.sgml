@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.36 2004/02/17 09:07:16 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.37 2004/02/17 23:56:07 neilc Exp $
 -->
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -269,22 +269,6 @@ pg_dump -Fc <replaceable class="parameter">dbname</replaceable> > <replaceable c
 
   <sect2 id="backup-dump-caveats">
    <title>Caveats</title>
-
-   <para>
-    <application>pg_dump</> (and by implication
-    <application>pg_dumpall</>) has a few limitations which stem from
-    the difficulty of reconstructing certain information from the system
-    catalogs.
-   </para>
-
-   <para>
-    Specifically, the order in which <application>pg_dump</> writes
-    the objects is not very sophisticated. This can lead to problems
-    for example when functions are used as column default values. The
-    only answer is to manually reorder the dump. If you created
-    circular dependencies in your schema then you will have more work
-    to do.
-   </para>
 
    <para>
     For reasons of backward compatibility, <application>pg_dump</>
