@@ -119,6 +119,7 @@ struct _defines
 {
 	char	   *old;
 	char	   *new;
+	int	   pertinent;
 	struct _defines *next;
 };
 

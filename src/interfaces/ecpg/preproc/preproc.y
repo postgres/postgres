@@ -27,6 +27,7 @@ static char	*connection = NULL;
 static int      QueryIsRule = 0, ForUpdateNotAllowed = 0, FoundInto = 0;
 static struct this_type actual_type[STRUCT_DEPTH];
 static char     *actual_storage[STRUCT_DEPTH];
+static char     *actual_startline[STRUCT_DEPTH];
 
 /* temporarily store struct members while creating the data structure */
 struct ECPGstruct_member *struct_member_list[STRUCT_DEPTH] = { NULL };
@@ -69,7 +70,7 @@ void
 output_line_number()
 {
     if (input_filename)
-       fprintf(yyout, "\n#line %d \"%s\"\n", yylineno + 1, input_filename);
+       fprintf(yyout, "\n#line %d \"%s\"\n", yylineno, input_filename);
 }
 
 static void
@@ -479,6 +480,20 @@ make_name(void)
 	return(name);
 }
 
+static char *
+hashline_number()
+{
+    if (input_filename)
+    {
+	char* line = mm_alloc(strlen("\n#line %d \"%s\"\n") + 21 + strlen(input_filename));
+	sprintf(line, "\n#line %d \"%s\"\n", yylineno, input_filename);
+
+	return line;
+    }
+
+    return EMPTY;
+}
+
 static void
 output_statement(char * stmt, int mode)
 {
@@ -757,7 +772,7 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 %type  <str>    columnList DeleteStmt LockStmt UpdateStmt CursorStmt
 %type  <str>    NotifyStmt columnElem copy_dirn UnlistenStmt copy_null
 %type  <str>    copy_delimiter ListenStmt CopyStmt copy_file_name opt_binary
-%type  <str>    opt_with_copy FetchStmt opt_direction fetch_how_many opt_portal_name
+%type  <str>    opt_with_copy FetchStmt direction fetch_how_many portal_name
 %type  <str>    ClosePortalStmt DropStmt VacuumStmt opt_verbose
 %type  <str>    opt_analyze opt_va_list va_list ExplainStmt index_params
 %type  <str>    index_list func_index index_elem opt_type opt_class access_method_clause
@@ -807,7 +822,7 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 %type  <str>	enum_type civariableonly ECPGCursorStmt ECPGDeallocate
 %type  <str>	ECPGFree ECPGDeclare ECPGVar sql_variable_declarations
 %type  <str>	sql_declaration sql_variable_list sql_variable opt_at
-%type  <str>    struct_type s_struct declaration variable_declarations
+%type  <str>    struct_type s_struct declaration declarations variable_declarations
 %type  <str>    s_struct s_union union_type ECPGSetAutocommit on_off
 
 %type  <type_enum> simple_type varchar_type
@@ -1870,20 +1885,36 @@ TruncateStmt:  TRUNCATE TABLE relation_name
  *
  *****************************************************************************/
 
-FetchStmt:	FETCH opt_direction fetch_how_many opt_portal_name INTO into_list
+FetchStmt:	FETCH direction fetch_how_many portal_name INTO into_list
 				{
 					if (strcmp($2, "relative") == 0 && atol($3) == 0L)
 						mmerror(ET_ERROR, "FETCH/RELATIVE at current position is not supported");
 
 					$$ = cat_str(4, make_str("fetch"), $2, $3, $4);
 				}
-		|	MOVE opt_direction fetch_how_many opt_portal_name
+		|	FETCH fetch_how_many portal_name INTO into_list
+  				{
+					$$ = cat_str(3, make_str("fetch"), $2, $3);
+				}
+		|	FETCH portal_name INTO into_list
 				{
-					$$ = cat_str(4, make_str("fetch"), $2, $3, $4);
+					$$ = cat_str(2, make_str("fetch"), $2);
+				}
+		|	MOVE direction fetch_how_many portal_name
+				{
+					$$ = cat_str(4, make_str("move"), $2, $3, $4);
+				}
+		|	MOVE fetch_how_many portal_name
+				{
+					$$ = cat_str(3, make_str("move"), $2, $3);
+				}
+		|	MOVE portal_name
+				{
+					$$ = cat_str(2, make_str("move"), $2);
 				}
 		;
 
-opt_direction:	FORWARD		{ $$ = make_str("forward"); }
+direction:	FORWARD		{ $$ = make_str("forward"); }
 		| BACKWARD	{ $$ = make_str("backward"); }
 		| RELATIVE      { $$ = make_str("relative"); }
                 | ABSOLUTE
@@ -1891,7 +1922,6 @@ opt_direction:	FORWARD		{ $$ = make_str("forward"); }
 					mmerror(ET_WARN, "FETCH/ABSOLUTE not supported, backend will use RELATIVE");
 					$$ = make_str("absolute");
 				}
-		| /*EMPTY*/	{ $$ = EMPTY; /* default */ }
 		;
 
 fetch_how_many:   Iconst        { $$ = $1; }
@@ -1899,13 +1929,11 @@ fetch_how_many:   Iconst        { $$ = $1; }
 		| ALL		{ $$ = make_str("all"); }
 		| NEXT		{ $$ = make_str("next"); }
 		| PRIOR		{ $$ = make_str("prior"); }
-		| /*EMPTY*/	{ $$ = EMPTY; /*default*/ }
 		;
 
-opt_portal_name:  IN name		{ $$ = cat2_str(make_str("in"), $2); }
+portal_name:      IN name		{ $$ = cat2_str(make_str("in"), $2); }
 		| FROM name		{ $$ = cat2_str(make_str("from"), $2); }
-/*		| name			{ $$ = cat2_str(make_str("in"), $1); */
-		| /*EMPTY*/		{ $$ = EMPTY; }
+		| name			{ $$ = cat2_str(make_str("in"), $1); }
 		;
 
 /*****************************************************************************
@@ -4475,7 +4503,6 @@ ECPGDeallocate:	SQL_DEALLOCATE SQL_PREPARE ident	{ $$ = cat_str(3, make_str("ECP
 ECPGDeclaration: sql_startdeclare
 	{
 		fputs("/* exec sql begin declare section */", yyout);
-	        output_line_number();
 	}
 	variable_declarations sql_enddeclare
 	{
@@ -4488,18 +4515,16 @@ sql_startdeclare : ecpgstart BEGIN_TRANS DECLARE SQL_SECTION ';' {}
 
 sql_enddeclare: ecpgstart END_TRANS DECLARE SQL_SECTION ';' {}
 
-variable_declarations: /* empty */
-	{
-		$$ = EMPTY;
-	}
-	| declaration variable_declarations
-	{
-		$$ = cat2_str($1, $2);
-	}
+variable_declarations:  /* empty */ { $$ = EMPTY; }
+			| declarations { $$ = $1; }
+
+declarations:  declaration { $$ = $1; }
+			| declarations declaration { $$ = cat2_str($1, $2); }
 
 declaration: storage_clause
 	{
 		actual_storage[struct_level] = mm_strdup($1);
+		actual_startline[struct_level] = hashline_number();
 	}
 	type
 	{
@@ -4509,7 +4534,7 @@ declaration: storage_clause
 	}
 	variable_list ';'
 	{
- 		$$ = cat_str(4, $1, $3.type_str, $5, make_str(";\n"));
+ 		$$ = cat_str(5, actual_startline[struct_level], $1, $3.type_str, $5, make_str(";\n"));
 	}
 
 storage_clause : S_EXTERN	{ $$ = make_str("extern"); }
@@ -5416,7 +5441,7 @@ c_stuff: c_anything 	{ $$ = $1; }
 			}
 
 c_list: c_term			{ $$ = $1; }
-	| c_term ',' c_list	{ $$ = cat_str(3, $1, make_str(","), $3); }
+	| c_list ',' c_term	{ $$ = cat_str(3, $1, make_str(","), $3); }
 
 c_term:  c_stuff 		{ $$ = $1; }
 	| '{' c_list '}'	{ $$ = cat_str(3, make_str("{"), $2, make_str("}")); }

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.46 1999/10/25 03:07:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.47 1999/12/21 17:42:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,8 +59,15 @@ struct _yy_buffer { YY_BUFFER_STATE 	buffer;
 		    struct _yy_buffer * next;
 		  } *yy_buffer = NULL;
 
-struct _defines *defines = NULL;
 static char *old;
+
+#define MAX_NESTED_IF 128
+static short preproc_tos;
+static short ifcond;
+static struct _if_value {
+    short condition;
+    short else_branch;
+} stacked_if_value[MAX_NESTED_IF];
 
 %}
 %option yylineno
@@ -94,6 +101,9 @@ static char *old;
 %x xdc
 %x xh
 %x xq
+%x xpre
+%x xcond
+%x xskip
 
 /* Binary number
  */
@@ -142,15 +152,15 @@ xdcinside		({xdcqq}|{xdcqdq}|{xdcother})
 /* Comments
  * Ignored by the scanner and parser.
  */
-xcline			[\/][\*].*[\*][\/]{space}*\n*
+xcline			[\/][\*].*[\*][\/]{line_end}+
 xcstart			[\/][\*]{op_and_self}*
-xcstop			{op_and_self}*[\*][\/]({space}*|\n)
+xcstop			{op_and_self}*[\*][\/]{space_or_nl}*
 xcinside		[^*]*
 xcstar			[^/]
 
 digit			[0-9]
 letter			[\200-\377_A-Za-z]
-letter_or_digit	[\200-\377_A-Za-z0-9]
+letter_or_digit		[\200-\377_A-Za-z0-9]
 
 identifier		{letter}{letter_or_digit}*
 
@@ -167,23 +177,34 @@ operator		{op_and_self}+
 
 integer			{digit}+
 decimal			(({digit}*\.{digit}+)|({digit}+\.{digit}*))
-real				((({digit}*\.{digit}+)|({digit}+\.{digit}*)|({digit}+))([Ee][-+]?{digit}+))
+real			((({digit}*\.{digit}+)|({digit}+\.{digit}*)|({digit}+))([Ee][-+]?{digit}+))
 
 param			\${integer}
 
 comment			("--"|"//").*
 ccomment		"//".*\n
 
-space			[ \t\n\r\f]
+space			[ \t\r\f]
+space_or_nl		[ \t\r\f\n]
+line_end		{space}*\n
 other			.
 
 /* some stuff needed for ecpg */
 exec    [eE][xX][eE][cC]
+sql     [sS][qQ][lL]
 define	[dD][eE][fF][iI][nN][eE]
 include [iI][nN][cC][lL][uU][dD][eE]
-sql     [sS][qQ][lL]
 
-cppline		{space}*#.*(\\{space}*\n)*\n*
+ifdef	[iI][fF][dD][eE][fF]
+ifndef	[iI][fF][nN][dD][eE][fF]
+else	[eE][lL][sS][eE]
+elif	[eE][lL][iI][fF]
+endif	[eE][nN][dD][iI][fF]
+
+exec_sql		{exec}{space_or_nl}*{sql}{space_or_nl}*
+
+/* Take care of cpp continuation lines */
+cppline			{space}*#(.*\\{line_end})*.*
 
 /* DO NOT PUT ANY COMMENTS IN THE FOLLOWING SECTION.
  * AT&T lex does not properly handle C-style comments in this second lex block.
@@ -267,7 +288,6 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 				}
 <xq>{xqcat}		{
 				}
-
 
 <SQL>{xdstart}		{
 					BEGIN(xd);
@@ -406,9 +426,9 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 						}
 					}
 				}
-<SQL>{space}			{ /* ignore */ }
+<SQL>{space_or_nl}		{ /* ignore */ }
 <SQL>{other}			{ return yytext[0]; }
-<C>{exec}{space}*{sql}		{ BEGIN SQL; return SQL_START; }
+<C>{exec_sql}			{ BEGIN SQL; return SQL_START; }
 <C>{ccomment}			{ /* ignore */ } 
 <C>{xch}			{
 					char* endptr;
@@ -473,22 +493,106 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 <C>"-"	      	        { return('-'); }
 <C>"("	      	        { return('('); }
 <C>")"	      	        { return(')'); }
-<C>{space}		{ ECHO; }
+<C>{space_or_nl}	{ ECHO; }
 <C>\{			{ return('{'); }
 <C>\}			{ return('}'); }
 <C>\[			{ return('['); }
 <C>\]			{ return(']'); }
 <C>\=			{ return('='); }
 <C>{other}		{ return S_ANYTHING; }
-<C>{exec}{space}{sql}{space}{define}	{BEGIN(def_ident);}
-<def_ident>{space}	{}
+
+<C>{exec_sql}{define}{space_or_nl}*	{ BEGIN(def_ident); }
+<C>{exec_sql}{include}{space_or_nl}*	{ BEGIN(incl); }
+
+<C,xskip>{exec_sql}{ifdef}{space_or_nl}* 	{ ifcond = TRUE; BEGIN(xcond); }
+<C,xskip>{exec_sql}{ifndef}{space_or_nl}*	{ ifcond = FALSE; BEGIN(xcond); }
+
+<C,xskip>{exec_sql}{elif}{space_or_nl}*	{	/* pop stack */
+						if ( preproc_tos == 0 ) {
+						    yyerror("ERROR: missing matching 'EXEC SQL IFDEF / EXEC SQL IFNDEF'");
+						}
+						else if ( stacked_if_value[preproc_tos].else_branch ) {
+						    yyerror("ERROR: missing 'EXEC SQL ENDIF;'");
+						}
+						else {
+						    preproc_tos--;
+						}
+
+						ifcond = TRUE; BEGIN(xcond);
+					}
+
+<C,xskip>{exec_sql}{else}{space_or_nl}*";" {	/* only exec sql endif pops the stack, so take care of duplicated 'else' */
+						if ( stacked_if_value[preproc_tos].else_branch ) {
+						    yyerror("ERROR: duplicated 'EXEC SQL ELSE;'");
+						}
+						else {
+						    stacked_if_value[preproc_tos].else_branch = TRUE;
+						    stacked_if_value[preproc_tos].condition = 
+							(stacked_if_value[preproc_tos-1].condition &&
+							 ! stacked_if_value[preproc_tos].condition);
+
+						    if ( stacked_if_value[preproc_tos].condition ) {
+							BEGIN(C);
+						    }
+						    else {
+							BEGIN(xskip);
+						    }
+						}
+					}
+<C,xskip>{exec_sql}{endif}{space_or_nl}*";" { 
+						if ( preproc_tos == 0 ) {
+						    yyerror("ERROR: unmatched 'EXEC SQL ENDIF;'");
+						}
+						else {
+						    preproc_tos--;
+						}
+
+						if ( stacked_if_value[preproc_tos].condition ) {
+						   BEGIN(C);
+						}
+						else {
+						   BEGIN(xskip);
+						}
+					}
+
+<xskip>{other}			{ /* ignore */ }
+
+<xcond>{identifier}{space_or_nl}*";" {
+					if ( preproc_tos >= MAX_NESTED_IF-1 ) {
+					    yyerror("ERROR: too many nested 'EXEC SQL IFDEF' conditions");
+					}
+					else {
+					    struct _defines *defptr;
+					    unsigned int i;
+
+					    /* skip the ";" and trailing whitespace. Note that yytext contains
+					       at least one non-space character plus the ";" */
+					    for ( i = strlen(yytext)-2; i > 0 && isspace(yytext[i]); i-- ) {}
+					    yytext[i+1] = '\0';
+
+					    for ( defptr = defines; defptr != NULL &&
+						      ( strcmp((char*)yytext, defptr->old) != 0 ); defptr = defptr->next );
+
+					    preproc_tos++;
+					    stacked_if_value[preproc_tos].else_branch = FALSE;
+					    stacked_if_value[preproc_tos].condition = 
+						( (defptr ? ifcond : !ifcond) && stacked_if_value[preproc_tos-1].condition );
+					}
+
+					if ( stacked_if_value[preproc_tos].condition ) {
+					   BEGIN C;
+					}
+					else {
+					   BEGIN(xskip);
+					}
+				}
+
 <def_ident>{identifier}	{
 				old = mm_strdup(yytext);
 				BEGIN(def);
 				startlit();
 			}
-<def>{space}		/* eat the whitespace */
-<def>";"		{
+<def>{space_or_nl}*";"	{
 				struct _defines *ptr, *this;
         
                                 for (ptr = defines; ptr != NULL; ptr = ptr->next)
@@ -517,12 +621,12 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 <def>[^";"]		{
 				addlit(yytext, yyleng);
 			}
-<C>{exec}{space}{sql}{space}{include}	{ BEGIN(incl); }
-<incl>{space}		/* eat the whitespace */
-<incl>[^ \t\n]+ 	{ /* got the include file name */
+
+<incl>[^";"]+";" 	{ /* got the include file name */
 			  struct _yy_buffer *yb;
 			  struct _include_path *ip;
 			  char inc_file[MAXPGPATH];
+			  unsigned int i;
 
 			  yb = mm_alloc(sizeof(struct _yy_buffer));
 
@@ -533,8 +637,10 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 
 			  yy_buffer = yb;
 
-			  if (yytext[strlen(yytext) - 1] == ';')
-				yytext[strlen(yytext) - 1] = '\0';
+			  /* skip the ";" and trailing whitespace. Note that yytext contains
+			     at least one non-space character plus the ";" */
+			  for ( i = strlen(yytext)-2; i > 0 && isspace(yytext[i]); i-- ) {}
+			  yytext[i+1] = '\0';
 
 			  yyin = NULL;
 			  for (ip = include_paths; yyin == NULL && ip != NULL; ip = ip->next)
@@ -564,13 +670,20 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 
 			  input_filename = mm_strdup(inc_file);
 			  yy_switch_to_buffer(yy_create_buffer(yyin,YY_BUF_SIZE ));
-			  yylineno = 0;
+			  yylineno = 1;
 			  output_line_number();
 
 			  BEGIN C;
 			}
-<incl>";"		{ BEGIN C; }
-<<EOF>>			{ if (yy_buffer == NULL)
+
+<<EOF>>			{
+			  if ( preproc_tos > 0 ) {
+			      preproc_tos = 0;
+
+			      yyerror("ERROR: missing 'EXEC SQL ENDIF;'");
+			  }
+
+			  if (yy_buffer == NULL)
 				yyterminate();
 			  else
 			  {
@@ -596,7 +709,12 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 void
 lex_init(void)
 {
-    braces_open = 0;
+	braces_open = 0;
+
+	preproc_tos = 0;
+	ifcond = TRUE;
+	stacked_if_value[preproc_tos].condition = ifcond;
+	stacked_if_value[preproc_tos].else_branch = FALSE;
 
 	/* initialize literal buffer to a reasonable but expansible size */
 	if (literalbuf == NULL)
@@ -626,6 +744,6 @@ addlit(char *ytext, int yleng)
 }
 
 int yywrap(void) 
-{ 
+{
     return 1;
 }
