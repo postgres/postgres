@@ -1,0 +1,234 @@
+2001-01-27 14:36  momjian
+
+	* src/bin/pgaccess/lib/languages/: euskara, japanese, nederlands:
+	Add missing pgaccess files.
+
+2001-01-27 06:19  petere
+
+	* doc/src/sgml/ref/checkpoint.sgml: Add permission check for
+	CHECKPOINT.
+
+2001-01-24 23:45  tgl
+
+	* src/backend/storage/lmgr/deadlock.c: Whoops, forgot to do
+	ProcLockWakeup() after deadlock checker rearranges wait queues.
+
+2001-01-24 23:31  tgl
+
+	* src/backend/storage/lmgr/deadlock.c: Re-implement deadlock
+	detection and resolution, per design notes posted to pghackers on
+	18-Jan-01.
+
+2001-01-24 20:02  momjian
+
+	* src/interfaces/jdbc/org/postgresql/core/BytePoolDim1.java: This
+	patch fixes an arrayindexoutofbounds exception that was just
+	introduced into the code.  The fix is a fix to
+	org.postgresql.core.ByteArrayDim1.java.
+	
+	Barry Lind
+
+2001-01-24 19:15  petere
+
+	* doc/src/sgml/wal.sgml: WAL documentation, from Oliver Elphick and
+	Vadim Mikheev.
+
+2001-01-24 17:56  petere
+
+	* doc/src/sgml/ref/checkpoint.sgml: Update based on documentation
+	written by Vadim Mikheev and Oliver Elphick.
+
+2001-01-24 01:49  momjian
+
+	* contrib/oid2name/oid2name: Oops, got binary in there too.
+
+2001-01-24 01:06  momjian
+
+	* contrib/oid2name/oid2name.o: Oops, had .o file in there.
+
+2001-01-23 23:46  momjian
+
+	* contrib/pgcrypto/: encode.c, encode.h: I would like to do a
+	interface change in pgcrypto.  (Good timing, I know :))  At the
+	moment the digest() function returns hexadecimal coded hash, but I
+	want it to return pure binary.	I have also included functions
+	encode() and decode() which support 'base64' and 'hex' encodings,
+	so if anyone needs digest() in hex he can do encode(digest(...),
+	'hex').
+	
+	Main reason for it is "to do one thing and do it well" :)
+	
+	Another reason is if someone needs really lot of digesting, in the
+	end he wants to store the binary not the hexadecimal result.  It is
+	really silly to convert it to hex then back to binary again.  As I
+	said if someone needs hex he can get it.
+	
+	Well, and the real reason that I am doing encrypt()/decrypt()
+	functions and _they_ return binary.  For testing I like to see it
+	in hex occasionally, but it is really wrong to let them return hex.
+	 Only now it caught my eye that hex-coding in digest() is wrong. 
+	When doing digest() I thought about 'common case' but hacking with
+	psql is probably _not_ the common case :)
+	
+	Marko Kreen
+
+2001-01-23 23:40  momjian
+
+	* contrib/oid2name/: Makefile, oid2name.c: Update
+
+2001-01-23 20:41  momjian
+
+	* contrib/oid2name/: Makefile, README.oid2name, oid2name,
+	oid2name.c, oid2name.o: Add oid2name.  Add streaming option later.
+
+2001-01-23 06:22  peter
+
+	* contrib/retep/: CHANGELOG, build.xml, retep.jpx, data/cds.dtd,
+	data/cds.xml, uk/org/retep/xml/core/XMLFactory.java,
+	uk/org/retep/xml/core/XMLFactoryException.java,
+	uk/org/retep/xml/jdbc/XMLDatabase.java,
+	uk/org/retep/xml/jdbc/XMLResultSet.java,
+	uk/org/retep/xml/parser/TagHandler.java,
+	uk/org/retep/xml/test/XMLExport.java: Some more additions to
+	contrib for JDBC
+
+2001-01-22 19:34  petere
+
+	* doc/src/sgml/queries.sgml: Rip out table expression section from
+	SQL syntax chapter and develop it into new chapter on query
+	(SELECT) syntax.  In the end this should become a narrative and
+	example-filled counterpart to the SELECT reference page.
+
+2001-01-18 13:38  peter
+
+	*
+	src/interfaces/jdbc/org/postgresql/jdbc2/UpdateableResultSet.java:
+	Forgot to cvs add UpdateableResultSet.java ;-)
+
+2001-01-18 13:37  peter
+
+	* src/interfaces/jdbc/jdbc.jpx: Thu Jan 18 17:37:00 GMT 2001
+	peter@retep.org.uk	   - Added new error message into
+	errors.properties "postgresql.notsensitive"	      This is used
+	by jdbc2.ResultSet when a method is called that should		
+	fetch the current value of a row from the database refreshRow() for
+		  example.	    - These methods no longer throw the not
+	implemented but the new noupdate	    error. This is in
+	preparation for the Updateable ResultSet support	    which
+	will overide these methods by extending the existing class to	   
+	     implement that functionality, but needed to show something
+	other than	      notimplemented:		  
+	moveToCurrentRow()		moveToInsertRow()	      
+	rowDeleted()		  rowInserted() 	     all update*()
+	methods, except those that took the column as a String		   
+	as they were already implemented to convert the String to an int.  
+	       - getFetchDirection() and setFetchDirection() now throws    
+	       "postgresql.notimp" as we only support one direction.	   
+	    The CursorResultSet will overide this when its implemented.    
+	     - Created a new class under jdbc2 UpdateableResultSet which
+	extends 	   ResultSet and overides the relevent update
+	methods.	    This allows us to implement them easily at a
+	later date.	     - In jdbc2.Connection, the following methods
+	are now implemented:		 
+	createStatement(type,concurrency);		getTypeMap();	   
+	       setTypeMap(Map); 	 - The JDBC2 type mapping scheme
+	almost complete, just needs SQLInput &		  SQLOutput to be
+	implemented.	      - Removed some Statement methods that somehow
+	appeared in Connection. 	 - In jdbc2.Statement() 	   
+	 getResultSetConcurrency()		getResultSetType()	   
+	    setResultSetConcurrency()		   setResultSetType()	   
+	   - Finally removed the old 6.5.x driver.
+
+2001-01-18 10:50  peter
+
+	* build.xml, contrib/retep/CHANGELOG, contrib/retep/Implementation,
+	contrib/retep/README, contrib/retep/build.xml,
+	contrib/retep/retep.jpx,
+	contrib/retep/uk/org/retep/xml/parser/TagHandler.java,
+	contrib/retep/uk/org/retep/xml/parser/TagListener.java,
+	src/interfaces/jdbc/jdbc.jpx,
+	src/interfaces/jdbc/org/postgresql/core/BytePoolDim1.java,
+	src/interfaces/jdbc/org/postgresql/core/BytePoolDim2.java,
+	src/interfaces/jdbc/org/postgresql/core/MemoryPool.java,
+	src/interfaces/jdbc/org/postgresql/core/ObjectPool.java,
+	src/interfaces/jdbc/org/postgresql/core/SimpleObjectPool.java: Thu
+	Jan 18 12:24:00 GMT 2001 peter@retep.org.uk	    - These methods
+	in org.postgresql.jdbc2.ResultSet are now implemented:		  
+	getBigDecimal(int) ie: without a scale (why did this get missed?)  
+		  getBlob(int)		   getCharacterStream(int)	   
+	   getConcurrency()		getDate(int,Calendar)		 
+	getFetchDirection()		getFetchSize()		  
+	getTime(int,Calendar)		  getTimestamp(int,Calendar)	   
+	     getType()		 NB: Where int represents the column name,
+	the associated version		     taking a String were already
+	implemented by calling the int		     version.	       -
+	These methods no longer throw the not implemented but the new
+	noupdate	    error. This is in preparation for the
+	Updateable ResultSet support		which will overide these
+	methods by extending the existing class to	      implement
+	that functionality, but needed to show something other than	   
+	   notimplemented:		cancelRowUpdates()	       
+	deleteRow()	     - Added new error message into
+	errors.properties "postgresql.noupdate" 	   This is used by
+	jdbc2.ResultSet when an update method is called and	       the
+	ResultSet is not updateable. A new method notUpdateable() has been 
+		  added to that class to throw this exception, keeping the
+	binary size	       down.	      - Added new error message
+	into errors.properties "postgresql.psqlnotimp"		  This is
+	used instead of unimplemented when it's a feature in the	   
+	backend that is preventing this method from being implemented.	   
+	    - Removed getKeysetSize() as its not part of the ResultSet API
+	
+	Thu Jan 18 09:46:00 GMT 2001 peter@retep.org.uk 	- Applied
+	modified patch from Richard Bullington-McGuire		
+	<rbulling@microstate.com>. I had to modify it as some of the code  
+		patched now exists in different classes, and some of it
+	actually	   patched obsolete code.
+	
+	Wed Jan 17 10:19:00 GMT 2001 peter@retep.org.uk 	- Updated
+	Implementation to include both ANT & JBuilder	      - Updated
+	README to reflect the changes since 7.0       - Created jdbc.jpr
+	file which allows JBuilder to be used to edit the	    source.
+	JBuilder _CAN_NOT_ be used to compile. You must use ANT for	   
+	  that. It's only to allow JBuilders syntax checking to improve the
+		  drivers source. Refer to Implementation for more details
+
+2001-01-12 23:11  petere
+
+	* doc/src/sgml/ref/checkpoint.sgml: New shell for the to be written
+	CHECKPOINT documentation, so the summary shows up in psql now.
+
+2001-01-12 22:18  petere
+
+	* contrib/intarray/Makefile: Clean up garbage.
+
+2001-01-12 22:14  petere
+
+	* contrib/intarray/README: Surely one README file is enough.
+
+2001-01-12 20:57  scrappy
+
+	* ChangeLogs/ChangeLog-7.1beta1-to-7.1beta3: 
+	okay, this appears to work ...
+	
+	onlly changes aer adding some white space ...
+
+2001-01-12 18:36  petere
+
+	* contrib/intarray/Makefile.703: Surely we don't need a 7.0.3
+	makefile in 7.1.
+
+2001-01-12 01:37  momjian
+
+	* contrib/intarray/README: Add to DROP todo.
+
+2001-01-11 20:16  scrappy
+
+	* contrib/intarray/: Makefile, Makefile.703, README.intarray,
+	_int.c, _int.sql.in, bench/bench.pl, bench/create_test.pl,
+	data/test__int.data, expected/_int.out, sql/_int.sql: 
+	commit Oleg and Teodor's RD-tree implementation ... this provides
+	the regression tests for the GiST changes ... this should be
+	integrated into the regular regression tests similar to Vadim's SPI
+	contrib stuff ...
+
