@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.5 1997/05/06 07:27:51 thomas Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.6 1997/05/11 15:11:41 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2639,7 +2639,7 @@ poly_path(POLYGON *poly)
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.5 1997/05/06 07:27:51 thomas Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.6 1997/05/11 15:11:41 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2722,7 +2722,7 @@ CIRCLE *circle_in(char *str)
     if (*s == DELIM) s++;
     while (isspace( *s)) s++;
 
-    if (! single_decode( s, &circle->radius, &s))
+    if ((! single_decode( s, &circle->radius, &s)) || (circle->radius < 0))
       elog (WARN, "Bad circle external representation '%s'",str);
 
     while (depth > 0) {

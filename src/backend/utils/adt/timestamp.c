@@ -184,7 +184,8 @@ timestamp_datetime(time_t timestamp)
     tm->tm_year += 1900;
     tm->tm_mon += 1;
 
-    *result = tm2datetime(tm, fsec, NULL);
+    if (tm2datetime(tm, fsec, NULL, result) != 0)
+	elog(WARN,"Unable to convert timestamp to datetime",timestamp_out(timestamp));
 
     return(result);
 } /* timestamp_datetime() */

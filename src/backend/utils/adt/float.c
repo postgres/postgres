@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.13 1997/03/12 21:09:11 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.14 1997/05/11 15:11:38 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,7 @@
  *	 float4eq, float4ne, float4lt, float4le, float4gt, float4ge
  *	 float8eq, float8ne, float8lt, float8le, float8gt, float8ge
  *	Conversion routines:
- *	 ftod, dtof
+ *	 ftod, dtof, itod, dtoi, i2tod, dtoi2, itof, ftoi, i2tof, ftoi2
  *
  *	Random float8 ops:
  * 	 dround, dtrunc, dsqrt, dcbrt, dpow, dexp, dlog1
@@ -39,6 +39,11 @@
  *	 routines, but then you pay the overhead of converting...)
  *
  * XXX GLUESOME STUFF. FIX IT! -AY '94
+ *
+ *	Added some additional conversion routines and cleaned up
+ *	 a bit of the existing code. Need to change the error checking
+ *	 for calls to pow(), exp() since on some machines (my Linux box
+ *	 included) these routines do not set errno. - tgl 97/05/10
  */
 #include <stdio.h>		/* for sprintf() */
 #include <string.h>
@@ -51,10 +56,20 @@
 #include <math.h>
 
 #include "postgres.h"
+#ifdef HAVE_LIMITS_H
+# include <limits.h>
+#endif
 #include "fmgr.h"
 #include "utils/builtins.h"	/* for ftod() prototype */
 #include "utils/palloc.h"
 
+
+#ifndef SHRT_MAX
+#define SHRT_MAX 32767
+#endif
+#ifndef SHRT_MIN
+#define SHRT_MIN (-32768)
+#endif
 
 #define FORMAT 		'g'	/* use "g" output format as standard format */
 /* not sure what the following should be, but better to make it over-sufficient */
@@ -289,7 +304,7 @@ float32 float4um(float32 arg1)
     if (!arg1)
 	return (float32)NULL;
     
-    val = -(*arg1);
+    val = ((*arg1 != 0) ? -(*arg1): *arg1);
     CheckFloat4Val(val);
 
     result = (float32) palloc(sizeof(float32data));
@@ -360,7 +375,7 @@ float64 float8um(float64 arg1)
     if (!arg1)
 	return (float64)NULL;
     
-    val = -(*arg1);
+    val = ((*arg1 != 0)? -(*arg1): *arg1);
     
     CheckFloat8Val(val);
     result = (float64) palloc(sizeof(float64data));
@@ -585,50 +600,50 @@ float64 float8inc(float64 arg1)
 /*
  *	float4{eq,ne,lt,le,gt,ge}	- float4/float4 comparison operations
  */
-long float4eq(float32 arg1, float32 arg2)
+bool float4eq(float32 arg1, float32 arg2)
 {
     if (!arg1 || !arg2)
-	return (long)NULL;
-    
+	return 0;
+
     return(*arg1 == *arg2);
 }
 
-long float4ne(float32 arg1, float32 arg2)
+bool float4ne(float32 arg1, float32 arg2)
 {
     if (!arg1 || !arg2)
-	return (long)NULL;
+	return 0;
     
     return(*arg1 != *arg2);
 }
 
-long float4lt(float32 arg1, float32 arg2)
+bool float4lt(float32 arg1, float32 arg2)
 {
     if (!arg1 || !arg2)
-	return (long)NULL;
+	return 0;
     
     return(*arg1 < *arg2);
 }
 
-long float4le(float32 arg1, float32 arg2)
+bool float4le(float32 arg1, float32 arg2)
 {
     if (!arg1 || !arg2)
-	return (long)NULL;
+	return 0;
     
     return(*arg1 <= *arg2);
 }
 
-long float4gt(float32 arg1, float32 arg2)
+bool float4gt(float32 arg1, float32 arg2)
 {
     if (!arg1 || !arg2)
-	return (long)NULL;
+	return 0;
     
     return(*arg1 > *arg2);
 }
 
-long float4ge(float32 arg1, float32 arg2)
+bool float4ge(float32 arg1, float32 arg2)
 {
     if (!arg1 || !arg2)
-	return (long)NULL;
+	return 0;
     
     return(*arg1 >= *arg2);
 }
@@ -636,50 +651,50 @@ long float4ge(float32 arg1, float32 arg2)
 /*
  *	float8{eq,ne,lt,le,gt,ge}	- float8/float8 comparison operations
  */
-long float8eq(float64 arg1, float64 arg2)
+bool float8eq(float64 arg1, float64 arg2)
 {
     if (!arg1 || !arg2)
-	return (long)NULL;
+	return 0;
     
     return(*arg1 == *arg2);
 }
 
-long float8ne(float64 arg1, float64 arg2)
+bool float8ne(float64 arg1, float64 arg2)
 {
     if (!arg1 || !arg2)
-	return (long)NULL;
+	return 0;
     
     return(*arg1 != *arg2);
 }
 
-long float8lt(float64 arg1, float64 arg2)
+bool float8lt(float64 arg1, float64 arg2)
 {
     if (!arg1 || !arg2)
-	return (long)NULL;
+	return 0;
     
     return(*arg1 < *arg2);
 }
 
-long float8le(float64 arg1, float64 arg2)
+bool float8le(float64 arg1, float64 arg2)
 {
     if (!arg1 || !arg2)
-	return (long)NULL;
+	return 0;
     
     return(*arg1 <= *arg2);
 }
 
-long float8gt(float64 arg1, float64 arg2)
+bool float8gt(float64 arg1, float64 arg2)
 {
     if (!arg1 || !arg2)
-	return (long)NULL;
+	return 0;
     
     return(*arg1 > *arg2);
 }
 
-long float8ge(float64 arg1, float64 arg2)
+bool float8ge(float64 arg1, float64 arg2)
 {
     if (!arg1 || !arg2)
-	return (long)NULL;
+	return 0;
     
     return(*arg1 >= *arg2);
 }
@@ -700,7 +715,7 @@ float64 ftod(float32 num)
     
     if (!num)
 	return (float64)NULL;
-    
+
     result = (float64) palloc(sizeof(float64data));
     
     *result = *num;
@@ -717,10 +732,140 @@ float32 dtof(float64 num)
     
     if (!num)
 	return (float32)NULL;
+
+    CheckFloat4Val(*num);
+
+    result = (float32) palloc(sizeof(float32data));
+
+    *result = *num;
+    return(result);
+}
+
+
+/*
+ *	dtoi		- converts a float8 number to an int4 number
+ */
+int32 dtoi(float64 num)
+{
+    int32	result;
+    
+    if (!num)
+	elog(WARN,"dtoi:  unable to convert null",NULL);
+
+    if ((*num < INT_MIN) || (*num > INT_MAX))
+	elog(WARN,"dtoi:  integer out of range",NULL);
+
+    result = rint(*num);
+    return(result);
+}
+
+
+/*
+ *	dtoi2		- converts a float8 number to an int2 number
+ */
+int16 dtoi2(float64 num)
+{
+    int16	result;
+    
+    if (!num)
+	elog(WARN,"dtoi2:  unable to convert null",NULL);
+
+    if ((*num < SHRT_MIN) || (*num > SHRT_MAX))
+	elog(WARN,"dtoi2:  integer out of range",NULL);
+
+    result = rint(*num);
+    return(result);
+}
+
+
+/*
+ *	itod		- converts an int4 number to a float8 number
+ */
+float64 itod(int32 num)
+{
+    float64	result;
+    
+    result = (float64) palloc(sizeof(float64data));
+    
+    *result = num;
+    return(result);
+}
+
+
+/*
+ *	i2tod		- converts an int2 number to a float8 number
+ */
+float64 i2tod(int16 num)
+{
+    float64	result;
+    
+    result = (float64) palloc(sizeof(float64data));
+    
+    *result = num;
+    return(result);
+}
+
+
+/*
+ *	ftoi		- converts a float8 number to an int4 number
+ */
+int32 ftoi(float32 num)
+{
+    int32	result;
+    
+    if (!num)
+	elog(WARN,"ftoi:  unable to convert null",NULL);
+
+    if ((*num < INT_MIN) || (*num > INT_MAX))
+	elog(WARN,"ftoi:  integer out of range",NULL);
+
+    result = rint(*num);
+    return(result);
+}
+
+
+/*
+ *	ftoi2		- converts a float8 number to an int2 number
+ */
+int16 ftoi2(float32 num)
+{
+    int16	result;
+    
+    if (!num)
+	elog(WARN,"ftoi2:  unable to convert null",NULL);
+
+    if ((*num < SHRT_MIN) || (*num > SHRT_MAX))
+	elog(WARN,"ftoi2:  integer out of range",NULL);
+
+    result = rint(*num);
+    return(result);
+}
+
+
+/*
+ *	itof		- converts an int4 number to a float8 number
+ */
+float32 itof(int32 num)
+{
+    float32	result;
     
     result = (float32) palloc(sizeof(float32data));
     
-    *result = *num;
+    *result = num;
+    return(result);
+}
+
+
+/*
+ *	i2tof		- converts an int2 number to a float8 number
+ */
+float32 i2tof(int16 num)
+{
+    float32	result;
+    
+    result = (float32) palloc(sizeof(float32data));
+    
+    *result = num;
     return(result);
 }
 
@@ -1035,50 +1180,50 @@ float64 float84div(float64 arg1, float32 arg2)
 /*
  *	float48{eq,ne,lt,le,gt,ge}	- float4/float8 comparison operations
  */
-long float48eq(float32 arg1, float64 arg2)
+bool float48eq(float32 arg1, float64 arg2)
 {
     if (!arg1 || !arg2)
-	return (long)NULL;
+	return 0;
     
     return(*arg1 == (float)*arg2);
 }
 
-long float48ne(float32 arg1, float64 arg2)
+bool float48ne(float32 arg1, float64 arg2)
 {
     if (!arg1 || !arg2)
-	return (long)NULL;
+	return 0;
     
     return(*arg1 != (float)*arg2);
 }
 
-long float48lt(float32 arg1, float64 arg2)
+bool float48lt(float32 arg1, float64 arg2)
 {
     if (!arg1 || !arg2)
-	return (long)NULL;
+	return 0;
     
     return(*arg1 < (float)*arg2);
 }
 
-long float48le(float32 arg1, float64 arg2)
+bool float48le(float32 arg1, float64 arg2)
 {
     if (!arg1 || !arg2)
-	return (long)NULL;
+	return 0;
     
     return(*arg1 <= (float)*arg2);
 }
 
-long float48gt(float32 arg1, float64 arg2)
+bool float48gt(float32 arg1, float64 arg2)
 {
     if (!arg1 || !arg2)
-	return (long)NULL;
+	return 0;
     
     return(*arg1 > (float)*arg2);
 }
 
-long float48ge(float32 arg1, float64 arg2)
+bool float48ge(float32 arg1, float64 arg2)
 {
     if (!arg1 || !arg2)
-	return (long)NULL;
+	return 0;
     
     return(*arg1 >= (float)*arg2);
 }
@@ -1086,50 +1231,50 @@ long float48ge(float32 arg1, float64 arg2)
 /*
  *	float84{eq,ne,lt,le,gt,ge}	- float4/float8 comparison operations
  */
-long float84eq(float64 arg1, float32 arg2)
+bool float84eq(float64 arg1, float32 arg2)
 {
     if (!arg1 || !arg2)
-	return (long)NULL;
+	return 0;
     
     return((float)*arg1 == *arg2);
 }
 
-long float84ne(float64 arg1, float32 arg2)
+bool float84ne(float64 arg1, float32 arg2)
 {
     if (!arg1 || !arg2)
-	return (long)NULL;
+	return 0;
     
     return((float)*arg1 != *arg2);
 }
 
-long float84lt(float64 arg1, float32 arg2)
+bool float84lt(float64 arg1, float32 arg2)
 {
     if (!arg1 || !arg2)
-	return (long)NULL;
+	return 0;
     
     return((float)*arg1 < *arg2);
 }
 
-long float84le(float64 arg1, float32 arg2)
+bool float84le(float64 arg1, float32 arg2)
 {
     if (!arg1 || !arg2)
-	return (long)NULL;
+	return 0;
     
     return((float)*arg1 <= *arg2);
 }
 
-long float84gt(float64 arg1, float32 arg2)
+bool float84gt(float64 arg1, float32 arg2)
 {
     if (!arg1 || !arg2)
-	return (long)NULL;
+	return 0;
     
     return((float)*arg1 > *arg2);
 }
 
-long float84ge(float64 arg1, float32 arg2)
+bool float84ge(float64 arg1, float32 arg2)
 {
     if (!arg1 || !arg2)
-	return (long)NULL;
+	return 0;
     
     return((float)*arg1 >= *arg2);
 }

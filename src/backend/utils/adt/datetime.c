@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.4 1997/04/17 13:50:34 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.5 1997/05/11 15:11:31 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -558,7 +558,8 @@ abstime_date(AbsoluteTime abstime)
 #if FALSE
 	GetCurrentTime(tm);
 #endif
-	abstime = GetCurrentTransactionStartTime() + CTimeZone;
+	abstime = GetCurrentTransactionStartTime();
+	abstime2tm(abstime, &CTimeZone, tm);
 	date->year = tm->tm_year;
 	date->month = tm->tm_mon;
 	date->day = tm->tm_mday;
