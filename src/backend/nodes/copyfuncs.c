@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.136 2001/01/05 06:34:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.137 2001/01/17 17:26:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,11 +58,11 @@ listCopy(List *list)
 	if (list == NIL)
 		return NIL;
 
-	newlist = nl = lcons(lfirst(list), NIL);
+	newlist = nl = makeList1(lfirst(list));
 
 	foreach(l, lnext(list))
 	{
-		lnext(nl) = lcons(lfirst(l), NIL);
+		lnext(nl) = makeList1(lfirst(l));
 		nl = lnext(nl);
 	}
 	return newlist;
@@ -2745,12 +2745,12 @@ copyObject(void *from)
 
 				/* rather ugly coding for speed... */
 				/* Note the input list cannot be NIL if we got here. */
-				nl = lcons(copyObject(lfirst(list)), NIL);
+				nl = makeList1(copyObject(lfirst(list)));
 				retval = nl;
 
 				foreach(l, lnext(list))
 				{
-					lnext(nl) = lcons(copyObject(lfirst(l)), NIL);
+					lnext(nl) = makeList1(copyObject(lfirst(l)));
 					nl = lnext(nl);
 				}
 			}

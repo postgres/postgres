@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.58 2000/12/14 22:30:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.59 2001/01/17 17:26:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -467,7 +467,7 @@ List *
 find_all_inheritors(Oid parentrel)
 {
 	List	   *examined_relids = NIL;
-	List	   *unexamined_relids = lconsi(parentrel, NIL);
+	List	   *unexamined_relids = makeListi1(parentrel);
 
 	/*
 	 * While the queue of unexamined relids is nonempty, remove the first

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execJunk.c,v 1.22 2000/01/26 05:56:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execJunk.c,v 1.23 2001/01/17 17:26:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -124,7 +124,7 @@ ExecInitJunkFilter(List *targetList, TupleDesc tupType)
 			Fjoin	   *fjNode = (Fjoin *) tl_node(fjList);
 
 			cleanFjoin = (Fjoin) copyObject((Node) fjNode);
-			cleanFjList = lcons(cleanFjoin, NIL);
+			cleanFjList = makeList1(cleanFjoin);
 
 			resdom = (Resdom) lfirst(get_fj_innerNode(fjNode));
 			expr = lsecond(get_fj_innerNode(fjNode));

@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.28 2000/12/14 22:30:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.29 2001/01/17 17:26:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -119,7 +119,7 @@ add_equijoined_keys(Query *root, RestrictInfo *restrictinfo)
 
 			/* Build the new set only when we know we must */
 			if (newset == NIL)
-				newset = lcons(item1, lcons(item2, NIL));
+				newset = makeList2(item1, item2);
 
 			/* Found a set to merge into our new set */
 			newset = set_union(newset, curset);
@@ -135,7 +135,7 @@ add_equijoined_keys(Query *root, RestrictInfo *restrictinfo)
 
 	/* Build the new set only when we know we must */
 	if (newset == NIL)
-		newset = lcons(item1, lcons(item2, NIL));
+		newset = makeList2(item1, item2);
 
 	root->equi_key_list = lcons(newset, root->equi_key_list);
 }
@@ -534,7 +534,7 @@ build_index_pathkeys(Query *root,
 		/* Make a one-sublist pathkeys list for the function expression */
 		item = makePathKeyItem((Node *) make_funcclause(funcnode, funcargs),
 							   sortop);
-		retval = lcons(make_canonical_pathkey(root, item), NIL);
+		retval = makeList1(make_canonical_pathkey(root, item));
 	}
 	else
 	{
@@ -678,7 +678,7 @@ make_pathkeys_for_sortclauses(List *sortclauses,
 		 * canonicalize_pathkeys() might replace it with a longer sublist
 		 * later.
 		 */
-		pathkeys = lappend(pathkeys, lcons(pathkey, NIL));
+		pathkeys = lappend(pathkeys, makeList1(pathkey));
 	}
 	return pathkeys;
 }

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_eval.c,v 1.55 2000/09/19 18:42:33 tgl Exp $
+ * $Id: geqo_eval.c,v 1.56 2001/01/17 17:26:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -122,7 +122,7 @@ gimme_tree(Query *root, List *initial_rels,
 		else
 		{
 			/* tree main part */
-			List	   *acceptable_rels = lcons(inner_rel, NIL);
+			List	   *acceptable_rels = makeList1(inner_rel);
 			List	   *new_rels;
 			RelOptInfo *new_rel;
 

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.33 2000/11/21 21:15:59 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.34 2001/01/17 17:26:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -254,7 +254,7 @@ Boot_BuildIndsStmt:
 
 boot_index_params:
 		boot_index_params COMMA boot_index_param	{ $$ = lappend($1, $3); }
-		| boot_index_param							{ $$ = lcons($1, NIL); }
+		| boot_index_param							{ $$ = makeList1($1); }
 		;
 
 boot_index_param:

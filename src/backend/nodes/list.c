@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.36 2000/10/31 10:22:10 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.37 2001/01/17 17:26:44 momjian Exp $
  *
  * NOTES
  *	  XXX a few of the following functions are duplicated to handle
@@ -127,7 +127,7 @@ lconsi(int datum, List *list)
 List *
 lappend(List *list, void *obj)
 {
-	return nconc(list, lcons(obj, NIL));
+	return nconc(list, makeList1(obj));
 }
 
 /*
@@ -138,7 +138,7 @@ lappend(List *list, void *obj)
 List *
 lappendi(List *list, int datum)
 {
-	return nconc(list, lconsi(datum, NIL));
+	return nconc(list, makeListi1(datum));
 }
 
 /*

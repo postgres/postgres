@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/makefuncs.c,v 1.23 2000/11/16 22:30:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/makefuncs.c,v 1.24 2001/01/17 17:26:44 momjian Exp $
  *
  * NOTES
  *	  Creator functions in POSTGRES 4.2 are generated automatically. Most of
@@ -178,7 +178,7 @@ makeAttr(char *relname, char *attname)
 	a->relname = pstrdup(relname);
 	a->paramNo = NULL;
 	if (attname != NULL)
-		a->attrs = lcons(makeString(pstrdup(attname)), NIL);
+		a->attrs = makeList1(makeString(pstrdup(attname)));
 	a->indirection = NULL;
 
 	return a;

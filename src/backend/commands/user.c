@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.70 2000/11/16 22:30:19 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.71 2001/01/17 17:26:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -311,7 +311,8 @@ CreateUser(CreateUserStmt *stmt)
 		ags.name = strVal(lfirst(item));		/* the group name to add
 												 * this in */
 		ags.action = +1;
-		ags.listUsers = lcons((void *) makeInteger(havesysid ? stmt->sysid : max_id + 1), NIL);
+		ags.listUsers = makeList1(makeInteger(havesysid ?
+							stmt->sysid : max_id + 1));
 		AlterGroup(&ags, "CREATE USER");
 	}
 
@@ -600,7 +601,7 @@ DropUser(DropUserStmt *stmt)
 			datum = heap_getattr(tmp_tuple, Anum_pg_group_groname, pg_dsc, &null);
 			ags.name = DatumGetCString(DirectFunctionCall1(nameout, datum));
 			ags.action = -1;
-			ags.listUsers = lcons((void *) makeInteger(usesysid), NIL);
+			ags.listUsers = makeList1(makeInteger(usesysid));
 			AlterGroup(&ags, "DROP USER");
 		}
 		heap_endscan(scan);

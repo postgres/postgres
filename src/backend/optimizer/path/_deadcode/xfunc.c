@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/_deadcode/Attic/xfunc.c,v 1.13 2000/01/26 05:56:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/_deadcode/Attic/xfunc.c,v 1.14 2001/01/17 17:26:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -300,7 +300,7 @@ xfunc_pullup(Query *queryInfo,
 										get_clause(cinfo), LispNil);
 	xfunc_copyrel(get_parent(newkid), &newrel);
 	set_parent(newkid, newrel);
-	set_pathlist(newrel, lcons(newkid, NIL));
+	set_pathlist(newrel, makeList1(newkid));
 	set_unorderedpath(newrel, (PathPtr) newkid);
 	set_cheapestpath(newrel, (PathPtr) newkid);
 	set_size(newrel,

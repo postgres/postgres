@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.52 2000/12/17 04:32:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.53 2001/01/17 17:26:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -128,7 +128,7 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
 		FuncCall   *n = makeNode(FuncCall);
 
 		n->funcname = typeidTypeName(targetTypeId);
-		n->args = lcons(node, NIL);
+		n->args = makeList1(node);
 		n->agg_star = false;
 		n->agg_distinct = false;
 
@@ -304,7 +304,7 @@ coerce_type_typmod(ParseState *pstate, Node *node,
 		cons->val.val.ival = atttypmod;
 
 		func->funcname = funcname;
-		func->args = lappend(lcons(node, NIL), cons);
+		func->args = makeList2(node, cons);
 		func->agg_star = false;
 		func->agg_distinct = false;
 
