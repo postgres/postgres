@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.116 1997/11/24 14:15:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.117 1997/11/26 02:34:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -777,7 +777,8 @@ objectDescription(PsqlSettings *pset, char *object, FILE *fout)
 					strcat(descbuf, "WHERE pg_operator.oprname = '");
 					strcat(descbuf, object);
 					strcat(descbuf, "'" );
-					strcat(descbuf, " and pg_operator.oid = pg_description.objoid " );
+					/* operator descriptions are attached to the proc */
+					strcat(descbuf, " and RegprocToOid(pg_operator.oprcode) = pg_description.objoid " );
 					if (!(res = PSQLexec(pset, descbuf)))
 						return -1;
 					else if (PQntuples(res) <= 0)
