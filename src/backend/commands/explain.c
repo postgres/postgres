@@ -5,12 +5,14 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.73 2002/03/22 02:56:31 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.74 2002/03/24 04:31:07 tgl Exp $
  *
  */
 
 #include "postgres.h"
 
+#include "access/heapam.h"
+#include "catalog/pg_type.h"
 #include "commands/explain.h"
 #include "executor/instrument.h"
 #include "lib/stringinfo.h"
@@ -22,6 +24,7 @@
 #include "rewrite/rewriteHandler.h"
 #include "tcop/pquery.h"
 #include "utils/builtins.h"
+#include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/relcache.h"
 
@@ -35,9 +38,15 @@ typedef struct ExplainState
 	List	   *rtable;			/* range table */
 } ExplainState;
 
+typedef struct TextOutputState
+{
+	TupleDesc	tupdesc;
+	DestReceiver *destfunc;
+} TextOutputState;
+
 static StringInfo Explain_PlanToString(Plan *plan, ExplainState *es);
-static void ExplainOneQuery(Query *query, bool verbose, bool analyze,
-							CommandDest dest);
+static void ExplainOneQuery(Query *query, ExplainStmt *stmt,
+							TextOutputState *tstate);
 static void explain_outNode(StringInfo str, Plan *plan, Plan *outer_plan,
 							int indent, ExplainState *es);
 static void show_scan_qual(List *qual, bool is_or_qual, const char *qlabel,
@@ -48,6 +57,10 @@ static void show_upper_qual(List *qual, const char *qlabel,
 							const char *inner_name, int inner_varno, Plan *inner_plan,
 							StringInfo str, int indent, ExplainState *es);
 static Node *make_ors_ands_explicit(List *orclauses);
+static TextOutputState *begin_text_output(CommandDest dest, char *title);
+static void do_text_output(TextOutputState *tstate, char *aline);
+static void do_text_output_multiline(TextOutputState *tstate, char *text);
+static void end_text_output(TextOutputState *tstate);
 
 /* Convert a null string pointer into "<>" */
 #define stringStringInfo(s) (((s) == NULL) ? "<>" : (s))
@@ -55,42 +68,47 @@ static Node *make_ors_ands_explicit(List *orclauses);
 
 /*
  * ExplainQuery -
- *	  print out the execution plan for a given query
+ *	  execute an EXPLAIN command
  */
 void
-ExplainQuery(Query *query, bool verbose, bool analyze, CommandDest dest)
+ExplainQuery(ExplainStmt *stmt, CommandDest dest)
 {
+	Query	   *query = stmt->query;
+	TextOutputState *tstate;
 	List	   *rewritten;
 	List	   *l;
 
-	/* rewriter and planner may not work in aborted state? */
-	if (IsAbortedTransactionBlockState())
-	{
-		elog(WARNING, "(transaction aborted): %s",
-			 "queries ignored until END");
-		return;
-	}
+	tstate = begin_text_output(dest, "QUERY PLAN");
 
-	/* rewriter will not cope with utility statements */
 	if (query->commandType == CMD_UTILITY)
 	{
-		elog(NOTICE, "Utility statements have no plan structure");
-		return;
+		/* rewriter will not cope with utility statements */
+		do_text_output(tstate, "Utility statements have no plan structure");
 	}
-
-	/* Rewrite through rule system */
-	rewritten = QueryRewrite(query);
-
-	/* In the case of an INSTEAD NOTHING, tell at least that */
-	if (rewritten == NIL)
+	else
 	{
-		elog(NOTICE, "Query rewrites to nothing");
-		return;
+		/* Rewrite through rule system */
+		rewritten = QueryRewrite(query);
+
+		if (rewritten == NIL)
+		{
+			/* In the case of an INSTEAD NOTHING, tell at least that */
+			do_text_output(tstate, "Query rewrites to nothing");
+		}
+		else
+		{
+			/* Explain every plan */
+			foreach(l, rewritten)
+			{
+				ExplainOneQuery(lfirst(l), stmt, tstate);
+				/* put a blank line between plans */
+				if (lnext(l) != NIL)
+					do_text_output(tstate, "");
+			}
+		}
 	}
 
-	/* Explain every plan */
-	foreach(l, rewritten)
-		ExplainOneQuery(lfirst(l), verbose, analyze, dest);
+	end_text_output(tstate);
 }
 
 /*
@@ -98,7 +116,7 @@ ExplainQuery(Query *query, bool verbose, bool analyze, CommandDest dest)
  *	  print out the execution plan for one query
  */
 static void
-ExplainOneQuery(Query *query, bool verbose, bool analyze, CommandDest dest)
+ExplainOneQuery(Query *query, ExplainStmt *stmt, TextOutputState *tstate)
 {
 	Plan	   *plan;
 	ExplainState *es;
@@ -108,9 +126,9 @@ ExplainOneQuery(Query *query, bool verbose, bool analyze, CommandDest dest)
 	if (query->commandType == CMD_UTILITY)
 	{
 		if (query->utilityStmt && IsA(query->utilityStmt, NotifyStmt))
-			elog(INFO, "QUERY PLAN:\n\nNOTIFY\n");
+			do_text_output(tstate, "NOTIFY");
 		else
-			elog(INFO, "QUERY PLAN:\n\nUTILITY\n");
+			do_text_output(tstate, "UTILITY");
 		return;
 	}
 
@@ -122,7 +140,7 @@ ExplainOneQuery(Query *query, bool verbose, bool analyze, CommandDest dest)
 		return;
 
 	/* Execute the plan for statistics if asked for */
-	if (analyze)
+	if (stmt->analyze)
 	{
 		struct timeval starttime;
 		struct timeval endtime;
@@ -154,7 +172,7 @@ ExplainOneQuery(Query *query, bool verbose, bool analyze, CommandDest dest)
 
 	es->printCost = true;		/* default */
 
-	if (verbose)
+	if (stmt->verbose)
 		es->printNodes = true;
 
 	es->rtable = query->rtable;
@@ -162,12 +180,20 @@ ExplainOneQuery(Query *query, bool verbose, bool analyze, CommandDest dest)
 	if (es->printNodes)
 	{
 		char	   *s;
+		char	   *f;
 
 		s = nodeToString(plan);
 		if (s)
 		{
-			elog(INFO, "QUERY DUMP:\n\n%s", s);
+			if (Explain_pretty_print)
+				f = pretty_format_node_dump(s);
+			else
+				f = format_node_dump(s);
 			pfree(s);
+			do_text_output_multiline(tstate, f);
+			pfree(f);
+			if (es->printCost)
+				do_text_output(tstate, "");	/* separator line */
 		}
 	}
 
@@ -176,16 +202,13 @@ ExplainOneQuery(Query *query, bool verbose, bool analyze, CommandDest dest)
 		StringInfo	str;
 
 		str = Explain_PlanToString(plan, es);
-		if (analyze)
+		if (stmt->analyze)
 			appendStringInfo(str, "Total runtime: %.2f msec\n",
 							 1000.0 * totaltime);
-		elog(INFO, "QUERY PLAN:\n\n%s", str->data);
+		do_text_output_multiline(tstate, str->data);
 		pfree(str->data);
 		pfree(str);
 	}
-
-	if (es->printNodes)
-		pprint(plan);			/* display in postmaster log file */
 
 	pfree(es);
 }
@@ -708,4 +731,79 @@ make_ors_ands_explicit(List *orclauses)
 
 		return (Node *) make_orclause(args);
 	}
+}
+
+
+/*
+ * Functions for sending text to the frontend (or other specified destination)
+ * as though it is a SELECT result.
+ *
+ * We tell the frontend that the table structure is a single TEXT column.
+ */
+
+static TextOutputState *
+begin_text_output(CommandDest dest, char *title)
+{
+	TextOutputState *tstate;
+	TupleDesc	tupdesc;
+
+	tstate = (TextOutputState *) palloc(sizeof(TextOutputState));
+
+	/* need a tuple descriptor representing a single TEXT column */
+	tupdesc = CreateTemplateTupleDesc(1);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 1, title,
+					   TEXTOID, -1, 0, false);
+
+	tstate->tupdesc = tupdesc;
+	tstate->destfunc = DestToFunction(dest);
+
+	(*tstate->destfunc->setup) (tstate->destfunc, (int) CMD_SELECT,
+								NULL, tupdesc);
+
+	return tstate;
+}
+
+/* write a single line of text */
+static void
+do_text_output(TextOutputState *tstate, char *aline)
+{
+	HeapTuple	tuple;
+	Datum		values[1];
+	char		nulls[1];
+
+	/* form a tuple and send it to the receiver */
+	values[0] = DirectFunctionCall1(textin, CStringGetDatum(aline));
+	nulls[0] = ' ';
+	tuple = heap_formtuple(tstate->tupdesc, values, nulls);
+	(*tstate->destfunc->receiveTuple) (tuple,
+									   tstate->tupdesc,
+									   tstate->destfunc);
+	pfree(DatumGetPointer(values[0]));
+	heap_freetuple(tuple);
+}
+
+/* write a chunk of text, breaking at newline characters */
+/* NB: scribbles on its input! */
+static void
+do_text_output_multiline(TextOutputState *tstate, char *text)
+{
+	while (*text)
+	{
+		char   *eol;
+
+		eol = strchr(text, '\n');
+		if (eol)
+			*eol++ = '\0';
+		else
+			eol = text + strlen(text);
+		do_text_output(tstate, text);
+		text = eol;
+	}
+}
+
+static void
+end_text_output(TextOutputState *tstate)
+{
+	(*tstate->destfunc->cleanup) (tstate->destfunc);
+	pfree(tstate);
 }

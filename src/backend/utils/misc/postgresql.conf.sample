@@ -136,6 +136,8 @@
 #debug_print_plan = false
 #debug_pretty_print = false
 
+#explain_pretty_print = true
+
 # requires USE_ASSERT_CHECKING
 #debug_assertions = true
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.259 2002/03/22 02:56:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.260 2002/03/24 04:31:07 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -426,15 +426,8 @@ pg_analyze_and_rewrite(Node *parsetree)
 		querytree = (Query *) lfirst(list_item);
 
 		if (Debug_print_parse)
-		{
-			if (Debug_pretty_print)
-			{
-				elog(LOG, "parse tree:");
-				nodeDisplay(querytree);
-			}
-			else
-				elog(LOG, "parse tree: %s", nodeToString(querytree));
-		}
+			elog_node_display(LOG, "parse tree", querytree,
+							  Debug_pretty_print);
 
 		if (querytree->commandType == CMD_UTILITY)
 		{
@@ -470,27 +463,8 @@ pg_analyze_and_rewrite(Node *parsetree)
 #endif
 
 	if (Debug_print_rewritten)
-	{
-		if (Debug_pretty_print)
-		{
-			elog(LOG, "rewritten parse tree:");
-			foreach(list_item, querytree_list)
-			{
-				querytree = (Query *) lfirst(list_item);
-				nodeDisplay(querytree);
-				printf("\n");
-			}
-		}
-		else
-		{
-			elog(LOG, "rewritten parse tree:");
-			foreach(list_item, querytree_list)
-			{
-				querytree = (Query *) lfirst(list_item);
-				elog(LOG, "%s", nodeToString(querytree));
-			}
-		}
-	}
+		elog_node_display(LOG, "rewritten parse tree", querytree_list,
+						  Debug_pretty_print);
 
 	return querytree_list;
 }
@@ -538,15 +512,7 @@ pg_plan_query(Query *querytree)
 	 * Print plan if debugging.
 	 */
 	if (Debug_print_plan)
-	{
-		if (Debug_pretty_print)
-		{
-			elog(LOG, "plan:");
-			nodeDisplay(plan);
-		}
-		else
-			elog(LOG, "plan: %s", nodeToString(plan));
-	}
+		elog_node_display(LOG, "plan", plan, Debug_pretty_print);
 
 	return plan;
 }
@@ -1722,7 +1688,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.259 $ $Date: 2002/03/22 02:56:35 $\n");
+		puts("$Revision: 1.260 $ $Date: 2002/03/24 04:31:07 $\n");
 	}
 
 	/*

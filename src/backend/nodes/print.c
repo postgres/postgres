@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.53 2002/03/22 02:56:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.54 2002/03/24 04:31:07 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -21,6 +21,7 @@
 
 #include "access/printtup.h"
 #include "catalog/pg_type.h"
+#include "lib/stringinfo.h"
 #include "nodes/print.h"
 #include "optimizer/clauses.h"
 #include "parser/parsetree.h"
@@ -37,31 +38,129 @@ void
 print(void *obj)
 {
 	char	   *s;
+	char	   *f;
 
 	s = nodeToString(obj);
-	printf("%s\n", s);
-	fflush(stdout);
+	f = format_node_dump(s);
 	pfree(s);
+	printf("%s\n", f);
+	fflush(stdout);
+	pfree(f);
 }
 
 /*
- * pretty print hack extraordinaire.  -ay 10/94
+ * pprint
+ *	  pretty-print contents of Node to stdout
  */
 void
 pprint(void *obj)
 {
-#define INDENTSTOP	3
-#define MAXINDENT	60
-#define LINELEN		80
 	char	   *s;
-	int			i;
-	char		line[LINELEN];
-	int			indentLev;
-	int			indentDist;
-	int			j;
+	char	   *f;
 
 	s = nodeToString(obj);
+	f = pretty_format_node_dump(s);
+	pfree(s);
+	printf("%s\n", f);
+	fflush(stdout);
+	pfree(f);
+}
 
+/*
+ * elog_node_display
+ *	  send pretty-printed contents of Node to postmaster log
+ */
+void
+elog_node_display(int lev, const char *title, void *obj, bool pretty)
+{
+	char	   *s;
+	char	   *f;
+
+	s = nodeToString(obj);
+	if (pretty)
+		f = pretty_format_node_dump(s);
+	else
+		f = format_node_dump(s);
+	pfree(s);
+	elog(lev, "%s:\n%s", title, f);
+	pfree(f);
+}
+
+/*
+ * Format a nodeToString output for display on a terminal.
+ *
+ * The result is a palloc'd string.
+ *
+ * This version just tries to break at whitespace.
+ */
+char *
+format_node_dump(const char *dump)
+{
+#define LINELEN		78
+	char		line[LINELEN+1];
+	StringInfoData str;
+	int			i;
+	int			j;
+	int			k;
+
+	initStringInfo(&str);
+	i = 0;
+	for (;;)
+	{
+		for (j = 0; j < LINELEN && dump[i] != '\0'; i++, j++)
+			line[j] = dump[i];
+		if (dump[i] == '\0')
+			break;
+		if (dump[i] == ' ')
+		{
+			/* ok to break at adjacent space */
+			i++;
+		}
+		else
+		{
+			for (k = j-1; k > 0; k--)
+				if (line[k] == ' ')
+					break;
+			if (k > 0)
+			{
+				/* back up; will reprint all after space */
+				i -= (j-k-1);
+				j = k;
+			}
+		}
+		line[j] = '\0';
+		appendStringInfo(&str, "%s\n", line);
+	}
+	if (j > 0)
+	{
+		line[j] = '\0';
+		appendStringInfo(&str, "%s\n", line);
+	}
+	return str.data;
+#undef LINELEN
+}
+
+/*
+ * Format a nodeToString output for display on a terminal.
+ *
+ * The result is a palloc'd string.
+ *
+ * This version tries to indent intelligently.
+ */
+char *
+pretty_format_node_dump(const char *dump)
+{
+#define INDENTSTOP	3
+#define MAXINDENT	60
+#define LINELEN		78
+	char		line[LINELEN+1];
+	StringInfoData str;
+	int			indentLev;
+	int			indentDist;
+	int			i;
+	int			j;
+
+	initStringInfo(&str);
 	indentLev = 0;				/* logical indent level */
 	indentDist = 0;				/* physical indent distance */
 	i = 0;
@@ -69,9 +168,9 @@ pprint(void *obj)
 	{
 		for (j = 0; j < indentDist; j++)
 			line[j] = ' ';
-		for (; j < LINELEN-1 && s[i] != '\0'; i++, j++)
+		for (; j < LINELEN && dump[i] != '\0'; i++, j++)
 		{
-			line[j] = s[i];
+			line[j] = dump[i];
 			switch (line[j])
 			{
 				case '}':
@@ -79,11 +178,12 @@ pprint(void *obj)
 					{
 						/* print data before the } */
 						line[j] = '\0';
-						printf("%s\n", line);
+						appendStringInfo(&str, "%s\n", line);
 					}
 					/* print the } at indentDist */
-					line[indentDist] = '\0';
-					printf("%s}\n", line);
+					line[indentDist] = '}';
+					line[indentDist+1] = '\0';
+					appendStringInfo(&str, "%s\n", line);
 					/* outdent */
 					if (indentLev > 0)
 					{
@@ -96,7 +196,7 @@ pprint(void *obj)
 				case ')':
 					/* force line break after ')' */
 					line[j + 1] = '\0';
-					printf("%s\n", line);
+					appendStringInfo(&str, "%s\n", line);
 					j = indentDist - 1;
 					break;
 				case '{':
@@ -104,36 +204,38 @@ pprint(void *obj)
 					if (j != indentDist)
 					{
 						line[j] = '\0';
-						printf("%s\n", line);
+						appendStringInfo(&str, "%s\n", line);
 					}
 					/* indent */
 					indentLev++;
 					indentDist = Min(indentLev * INDENTSTOP, MAXINDENT);
 					for (j = 0; j < indentDist; j++)
 						line[j] = ' ';
-					line[j] = s[i];
+					line[j] = dump[i];
 					break;
 				case ':':
 					/* force line break before : */
 					if (j != indentDist)
 					{
 						line[j] = '\0';
-						printf("%s\n", line);
+						appendStringInfo(&str, "%s\n", line);
 					}
 					j = indentDist;
-					line[j] = s[i];
+					line[j] = dump[i];
 					break;
 			}
 		}
 		line[j] = '\0';
-		if (s[i] == '\0')
+		if (dump[i] == '\0')
 			break;
-		printf("%s\n", line);
+		appendStringInfo(&str, "%s\n", line);
 	}
-	if (j != 0)
-		printf("%s\n", line);
-	fflush(stdout);
-	pfree(s);
+	if (j > 0)
+		appendStringInfo(&str, "%s\n", line);
+	return str.data;
+#undef INDENTSTOP
+#undef MAXINDENT
+#undef LINELEN
 }
 
 /*

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/explain.sgml,v 1.16 2002/03/22 19:20:40 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/explain.sgml,v 1.17 2002/03/24 04:31:07 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -49,7 +49,7 @@ EXPLAIN [ ANALYZE ] [ VERBOSE ] <replaceable class="PARAMETER">query</replaceabl
       <term>VERBOSE</term>
       <listitem>
        <para>
-	Flag to show detailed query plan.
+	Flag to show detailed query plan dump.
        </para>
       </listitem>
      </varlistentry>
@@ -76,28 +76,24 @@ EXPLAIN [ ANALYZE ] [ VERBOSE ] <replaceable class="PARAMETER">query</replaceabl
 
     <variablelist>
      <varlistentry>
-      <term><computeroutput>
-INFO:  QUERY PLAN:
-<replaceable>plan</replaceable>
-      </computeroutput></term>
+      <term>Query plan</term>
       <listitem>
        <para>
-	Explicit query plan from the <productname>PostgreSQL</productname> backend.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><computeroutput>
-EXPLAIN
-       </computeroutput></term>
-      <listitem>
-       <para>
-	Flag sent after query plan is shown.
+	Explicit query plan from the <productname>PostgreSQL</productname>
+	planner.
        </para>
       </listitem>
      </varlistentry>
     </variablelist>
    </para>
+
+   <note>
+    <para>
+     Prior to <application>PostgreSQL</application> 7.3, the query plan
+     was emitted in the form of a NOTICE message.  Now it appears as a
+     query result (formatted like a table with a single text column).
+    </para>
+   </note>
   </refsect2>
  </refsynopsisdiv>
 
@@ -141,13 +137,6 @@ EXPLAIN
    are close to reality.
   </para>
 
-  <para>
-   The VERBOSE option emits the full internal representation of the plan tree,
-   rather than just a summary (and sends it to the postmaster log file, too).
-   Usually this option is only useful for debugging
-   <application>PostgreSQL</application>. 
-  </para>
-
   <caution>
    <para>
     Keep in mind that the query is actually executed when ANALYZE is used.
@@ -164,6 +153,15 @@ ROLLBACK;
       </programlisting>
    </para>
   </caution>
+
+  <para>
+   The VERBOSE option emits the full internal representation of the plan tree,
+   rather than just a summary.
+   Usually this option is only useful for debugging
+   <application>PostgreSQL</application>.   The VERBOSE dump is either
+   pretty-printed or not, depending on the setting of the
+   <option>EXPLAIN_PRETTY_PRINT</option> configuration parameter.
+  </para>
 
   <refsect2 id="R2-SQL-EXPLAIN-3">
    <refsect2info>
@@ -188,50 +186,48 @@ ROLLBACK;
 
   <para>
    To show a query plan for a simple query on a table with a single
-   <type>int4</type> column and 128 rows:
+   <type>int4</type> column and 10000 rows:
 
    <programlisting>
 EXPLAIN SELECT * FROM foo;
     <computeroutput>
-INFO:  QUERY PLAN:
-
-Seq Scan on foo  (cost=0.00..2.28 rows=128 width=4)
-
-EXPLAIN
+                       QUERY PLAN
+---------------------------------------------------------
+ Seq Scan on foo  (cost=0.00..155.00 rows=10000 width=4)
+(1 row)
     </computeroutput>
    </programlisting>
   </para>
 
   <para>
-   For the same table with an index to support an
-   <firstterm>equijoin</firstterm> condition on the query,
+   If there is an index and we use a query with an indexable WHERE condition,
    <command>EXPLAIN</command> will show a different plan:
 
    <programlisting>
 EXPLAIN SELECT * FROM foo WHERE i = 4;
     <computeroutput>
-INFO:  QUERY PLAN:
-
-Index Scan using fi on foo  (cost=0.00..0.42 rows=1 width=4)
-
-EXPLAIN
+                         QUERY PLAN
+--------------------------------------------------------------
+ Index Scan using fi on foo  (cost=0.00..5.98 rows=1 width=4)
+   Index Filter: (i = 4)
+(2 rows)
     </computeroutput>
    </programlisting>
   </para>
 
   <para>
-   And finally, for the same table with an index to support an
-   <firstterm>equijoin</firstterm> condition on the query,
-   <command>EXPLAIN</command> will show the following for a query
+   And here is an example of a query plan for a query
    using an aggregate function:
 
    <programlisting>
-EXPLAIN SELECT sum(i) FROM foo WHERE i = 4;
+EXPLAIN SELECT sum(i) FROM foo WHERE i < 4;
     <computeroutput>
-INFO:  QUERY PLAN:
-
-Aggregate  (cost=0.42..0.42 rows=1 width=4)
-  ->  Index Scan using fi on foo  (cost=0.00..0.42 rows=1 width=4)
+                             QUERY PLAN
+---------------------------------------------------------------------
+ Aggregate  (cost=23.93..23.93 rows=1 width=4)
+   ->  Index Scan using fi on foo  (cost=0.00..23.92 rows=6 width=4)
+         Index Filter: (i < 10)
+(3 rows)
     </computeroutput>
    </programlisting>
   </para>

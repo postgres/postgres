@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.18 2002/03/22 19:20:17 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.19 2002/03/24 04:31:05 tgl Exp $
 -->
 
  <chapter id="performance-tips">
@@ -47,8 +47,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.18 2002/03/22 19:20:17 pet
 
      <listitem>
       <para>
-       Estimated number of rows output by this plan node (again, without
-       regard for any LIMIT).
+       Estimated number of rows output by this plan node (again, only if
+       executed to completion).
       </para>
      </listitem>
 
@@ -92,13 +92,13 @@ $Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.18 2002/03/22 19:20:17 pet
 
    <para>
     Here are some examples (using the regress test database after a
-    vacuum analyze, and 7.2 development sources):
+    vacuum analyze, and 7.3 development sources):
 
     <programlisting>
 regression=# EXPLAIN SELECT * FROM tenk1;
-INFO:  QUERY PLAN:
-
-Seq Scan on tenk1  (cost=0.00..333.00 rows=10000 width=148)
+                         QUERY PLAN
+-------------------------------------------------------------
+ Seq Scan on tenk1  (cost=0.00..333.00 rows=10000 width=148)
     </programlisting>
    </para>
 
@@ -120,9 +120,10 @@ SELECT * FROM pg_class WHERE relname = 'tenk1';
 
     <programlisting>
 regression=# EXPLAIN SELECT * FROM tenk1 WHERE unique1 &lt; 1000;
-INFO:  QUERY PLAN:
-
-Seq Scan on tenk1  (cost=0.00..358.00 rows=1007 width=148)
+                         QUERY PLAN
+------------------------------------------------------------
+ Seq Scan on tenk1  (cost=0.00..358.00 rows=1033 width=148)
+   Filter: (unique1 &lt; 1000)
     </programlisting>
 
     The estimate of output rows has gone down because of the WHERE clause.
@@ -145,9 +146,10 @@ Seq Scan on tenk1  (cost=0.00..358.00 rows=1007 width=148)
 
     <programlisting>
 regression=# EXPLAIN SELECT * FROM tenk1 WHERE unique1 &lt; 50;
-INFO:  QUERY PLAN:
-
-Index Scan using tenk1_unique1 on tenk1  (cost=0.00..181.09 rows=49 width=148)
+                                   QUERY PLAN
+-------------------------------------------------------------------------------
+ Index Scan using tenk1_unique1 on tenk1  (cost=0.00..179.33 rows=49 width=148)
+   Index Filter: (unique1 &lt; 50)
     </programlisting>
 
     and you will see that if we make the WHERE condition selective
@@ -164,13 +166,20 @@ Index Scan using tenk1_unique1 on tenk1  (cost=0.00..181.09 rows=49 width=148)
     <programlisting>
 regression=# EXPLAIN SELECT * FROM tenk1 WHERE unique1 &lt; 50 AND
 regression-# stringu1 = 'xxx';
-INFO:  QUERY PLAN:
-
-Index Scan using tenk1_unique1 on tenk1  (cost=0.00..181.22 rows=1 width=148)
+                                  QUERY PLAN
+-------------------------------------------------------------------------------
+ Index Scan using tenk1_unique1 on tenk1  (cost=0.00..179.45 rows=1 width=148)
+   Index Filter: (unique1 &lt; 50)
+   Filter: (stringu1 = 'xxx'::name)
     </programlisting>
 
-    The added clause <literal>stringu1 = 'xxx'</literal> reduces the output-rows estimate,
-    but not the cost because we still have to visit the same set of tuples.
+    The added clause <literal>stringu1 = 'xxx'</literal> reduces the
+    output-rows estimate, but not the cost because we still have to visit the
+    same set of tuples.  Notice that the <literal>stringu1</> clause
+    cannot be applied as an index condition (since this index is only on
+    the <literal>unique1</> column).  Instead it is applied as a filter on
+    the rows retrieved by the index.  Thus the cost has actually gone up
+    a little bit to reflect this extra checking.
    </para>
 
    <para>
@@ -179,13 +188,15 @@ Index Scan using tenk1_unique1 on tenk1  (cost=0.00..181.22 rows=1 width=148)
     <programlisting>
 regression=# EXPLAIN SELECT * FROM tenk1 t1, tenk2 t2 WHERE t1.unique1 &lt; 50
 regression-# AND t1.unique2 = t2.unique2;
-INFO:  QUERY PLAN:
-
-Nested Loop  (cost=0.00..330.41 rows=49 width=296)
-  -&gt;  Index Scan using tenk1_unique1 on tenk1 t1
-               (cost=0.00..181.09 rows=49 width=148)
-  -&gt;  Index Scan using tenk2_unique2 on tenk2 t2
-               (cost=0.00..3.01 rows=1 width=148)
+                               QUERY PLAN
+----------------------------------------------------------------------------
+ Nested Loop  (cost=0.00..327.02 rows=49 width=296)
+   -&gt;  Index Scan using tenk1_unique1 on tenk1 t1
+                                      (cost=0.00..179.33 rows=49 width=148)
+         Index Filter: (unique1 &lt; 50)
+   -&gt;  Index Scan using tenk2_unique2 on tenk2 t2
+                                      (cost=0.00..3.01 rows=1 width=148)
+         Index Filter: ("outer".unique2 = t2.unique2)
     </programlisting>
    </para>
 
@@ -227,14 +238,15 @@ regression=# set enable_nestloop = off;
 SET VARIABLE
 regression=# EXPLAIN SELECT * FROM tenk1 t1, tenk2 t2 WHERE t1.unique1 &lt; 50
 regression-# AND t1.unique2 = t2.unique2;
-INFO:  QUERY PLAN:
-
-Hash Join  (cost=181.22..564.83 rows=49 width=296)
-  -&gt;  Seq Scan on tenk2 t2
-               (cost=0.00..333.00 rows=10000 width=148)
-  -&gt;  Hash  (cost=181.09..181.09 rows=49 width=148)
-        -&gt;  Index Scan using tenk1_unique1 on tenk1 t1
-               (cost=0.00..181.09 rows=49 width=148)
+                               QUERY PLAN
+--------------------------------------------------------------------------
+ Hash Join  (cost=179.45..563.06 rows=49 width=296)
+   Hash Cond: ("outer".unique2 = "inner".unique2)
+   -&gt;  Seq Scan on tenk2 t2  (cost=0.00..333.00 rows=10000 width=148)
+   -&gt;  Hash  (cost=179.33..179.33 rows=49 width=148)
+         -&gt;  Index Scan using tenk1_unique1 on tenk1 t1
+                                    (cost=0.00..179.33 rows=49 width=148)
+               Index Filter: (unique1 &lt; 50)
     </programlisting>
 
     This plan proposes to extract the 50 interesting rows of <classname>tenk1</classname>
@@ -245,7 +257,7 @@ Hash Join  (cost=181.22..564.83 rows=49 width=296)
     cost for the hash join, since we won't get any tuples out until we can
     start reading <classname>tenk2</classname>.  The total time estimate for the join also
     includes a hefty charge for CPU time to probe the hash table
-    10000 times.  Note, however, that we are NOT charging 10000 times 181.09;
+    10000 times.  Note, however, that we are NOT charging 10000 times 179.33;
     the hash table setup is only done once in this plan type.
    </para>
 
@@ -260,14 +272,19 @@ Hash Join  (cost=181.22..564.83 rows=49 width=296)
 regression=# EXPLAIN ANALYZE
 regression-# SELECT * FROM tenk1 t1, tenk2 t2
 regression-# WHERE t1.unique1 &lt; 50 AND t1.unique2 = t2.unique2;
-INFO:  QUERY PLAN:
-
-Nested Loop  (cost=0.00..330.41 rows=49 width=296) (actual time=1.31..28.90 rows=50 loops=1)
-  -&gt;  Index Scan using tenk1_unique1 on tenk1 t1
-               (cost=0.00..181.09 rows=49 width=148) (actual time=0.69..8.84 rows=50 loops=1)
-  -&gt;  Index Scan using tenk2_unique2 on tenk2 t2
-               (cost=0.00..3.01 rows=1 width=148) (actual time=0.28..0.31 rows=1 loops=50)
-Total runtime: 30.67 msec
+                                   QUERY PLAN
+-------------------------------------------------------------------------------
+ Nested Loop  (cost=0.00..327.02 rows=49 width=296)
+                                 (actual time=1.18..29.82 rows=50 loops=1)
+   -&gt;  Index Scan using tenk1_unique1 on tenk1 t1
+                  (cost=0.00..179.33 rows=49 width=148)
+                                 (actual time=0.63..8.91 rows=50 loops=1)
+         Index Filter: (unique1 &lt; 50)
+   -&gt;  Index Scan using tenk2_unique2 on tenk2 t2
+                  (cost=0.00..3.01 rows=1 width=148)
+                                 (actual time=0.29..0.32 rows=1 loops=50)
+         Index Filter: ("outer".unique2 = t2.unique2)
+ Total runtime: 31.60 msec
 </screen>
 
     Note that the <quote>actual time</quote> values are in milliseconds of
@@ -296,7 +313,7 @@ Total runtime: 30.67 msec
     little larger than the total time reported for the top-level plan node.
     For INSERT, UPDATE, and DELETE queries, the total run time may be
     considerably larger, because it includes the time spent processing the
-    output tuples.  In these queries, the time for the top plan node
+    result tuples.  In these queries, the time for the top plan node
     essentially is the time spent computing the new tuples and/or locating
     the old ones, but it doesn't include the time spent making the changes.
    </para>

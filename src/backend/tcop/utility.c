@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.138 2002/03/22 02:56:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.139 2002/03/24 04:31:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -650,11 +650,7 @@ ProcessUtility(Node *parsetree,
 			break;
 
 		case T_ExplainStmt:
-			{
-				ExplainStmt *stmt = (ExplainStmt *) parsetree;
-
-				ExplainQuery(stmt->query, stmt->verbose, stmt->analyze, dest);
-			}
+			ExplainQuery((ExplainStmt *) parsetree, dest);
 			break;
 
 #ifdef NOT_USED

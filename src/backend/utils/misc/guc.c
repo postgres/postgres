@@ -4,7 +4,7 @@
  * Support for grand unified configuration scheme, including SET
  * command, configuration file, and command line options.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.62 2002/03/06 06:10:27 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.63 2002/03/24 04:31:08 tgl Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -81,6 +81,8 @@ bool		Show_executor_stats = false;
 bool		Show_query_stats = false;	/* this is sort of all three above
 										 * together */
 bool		Show_btree_build_stats = false;
+
+bool		Explain_pretty_print = true;
 
 bool		SQL_inheritance = true;
 
@@ -292,6 +294,10 @@ static struct config_bool
 		"show_btree_build_stats", PGC_SUSET, PGC_S_DEFAULT, &Show_btree_build_stats, false, NULL
 	},
 #endif
+
+	{
+		"explain_pretty_print", PGC_USERSET, PGC_S_DEFAULT, &Explain_pretty_print, true, NULL
+	},
 
 	{
 		"stats_start_collector", PGC_POSTMASTER, PGC_S_DEFAULT, &pgstat_collect_startcollector, true, NULL

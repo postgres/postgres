@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.109 2002/03/22 19:20:28 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.110 2002/03/24 04:31:06 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -866,6 +866,16 @@ env PGOPTIONS='-c geqo=off' psql
 	the resulting parse tree, the query rewriter output, or the execution
 	plan. <option>DEBUG_PRETTY_PRINT</option> indents these displays
 	to produce a more readable but much longer output format.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>EXPLAIN_PRETTY_PRINT</varname> (<type>boolean</type>)</term>
+      <listitem>
+       <para>
+        Determines whether <command>EXPLAIN VERBOSE</> uses the indented
+	or non-indented format for displaying detailed querytree dumps.
        </para>
       </listitem>
      </varlistentry>
