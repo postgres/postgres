@@ -51,7 +51,7 @@ MISC
 * Modification  of  pg_class  can  happen while table in use by
   another backend.  Might  lead  to  MVCC  inside  of  syscache
 * Permission to UPDATE table allows DELETE also
-
+* Some database schema's are not dumpable;  do dumps in oid order
 ENHANCEMENTS
 ------------
 
