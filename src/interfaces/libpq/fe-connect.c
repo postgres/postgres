@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.127 2000/05/21 21:19:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.127.2.1 2000/11/17 04:25:29 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1505,10 +1505,11 @@ keep_going:						/* We will come back to here until there
 			{
 				const char *env;
 
-				/* query server encoding */
 				env = getenv(envname);
 				if (!env || *env == '\0')
 				{
+					/* query server encoding if PGCLIENTENCODING
+					   is not specified */
 					if (!PQsendQuery(conn,
 									 "select getdatabaseencoding()"))
 						goto error_return;
@@ -1516,6 +1517,19 @@ keep_going:						/* We will come back to here until there
 					conn->setenv_state = SETENV_STATE_ENCODINGS_WAIT;
 					return PGRES_POLLING_READING;
 				}
+				else
+				{
+					/* otherwise set client encoding in pg_conn struct */
+					int encoding = pg_char_to_encoding(env);
+					if (encoding < 0)
+					{
+						strcpy(conn->errorMessage.data,
+							   "PGCLIENTENCODING has no valid encoding name.\n");
+						goto error_return;
+					}
+					conn->client_encoding = encoding;
+				}
+					
 			}
 
 		case SETENV_STATE_ENCODINGS_WAIT:
