@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.113 2002/04/12 20:38:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.114 2002/04/19 16:36:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,14 +90,15 @@ CreateTrigger(CreateTrigStmt *stmt)
 		elog(ERROR, "permission denied");
 
 	/*
-	 * If trigger is a constraint, user trigger name as constraint name
+	 * If trigger is an RI constraint, use trigger name as constraint name
 	 * and build a unique trigger name instead.
 	 */
 	if (stmt->isconstraint)
 	{
 		constrname = stmt->trigname;
+		snprintf(constrtrigname, sizeof(constrtrigname),
+				 "RI_ConstraintTrigger_%u", newoid());
 		stmt->trigname = constrtrigname;
-		sprintf(constrtrigname, "RI_ConstraintTrigger_%u", newoid());
 
 		if (stmt->constrrel != NULL)
 			constrrelid = RangeVarGetRelid(stmt->constrrel, false);
@@ -139,15 +140,20 @@ CreateTrigger(CreateTrigStmt *stmt)
 	}
 
 	/*
-	 * Scan pg_trigger for existing triggers on relation.  NOTE that this
-	 * is cool only because we have AccessExclusiveLock on the relation,
-	 * so the trigger set won't be changing underneath us.
+	 * Scan pg_trigger for existing triggers on relation.  We do this mainly
+	 * because we must count them; a secondary benefit is to give a nice
+	 * error message if there's already a trigger of the same name.  (The
+	 * unique index on tgrelid/tgname would complain anyway.)
+	 *
+	 * NOTE that this is cool only because we have AccessExclusiveLock on the
+	 * relation, so the trigger set won't be changing underneath us.
 	 */
 	tgrel = heap_openr(TriggerRelationName, RowExclusiveLock);
-	ScanKeyEntryInitialize(&key, 0, Anum_pg_trigger_tgrelid,
+	ScanKeyEntryInitialize(&key, 0,
+						   Anum_pg_trigger_tgrelid,
 						   F_OIDEQ,
 						   ObjectIdGetDatum(RelationGetRelid(rel)));
-	tgscan = systable_beginscan(tgrel, TriggerRelidIndex, true,
+	tgscan = systable_beginscan(tgrel, TriggerRelidNameIndex, true,
 								SnapshotNow, 1, &key);
 	while (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
 	{
@@ -336,15 +342,20 @@ DropTrigger(Oid relid, const char *trigname)
 
 	/*
 	 * Search pg_trigger, delete target trigger, count remaining triggers
-	 * for relation.  Note this is OK only because we have
-	 * AccessExclusiveLock on the rel, so no one else is creating/deleting
-	 * triggers on this rel at the same time.
+	 * for relation.  (Although we could fetch and delete the target
+	 * trigger directly, we'd still have to scan the remaining triggers,
+	 * so we may as well do both in one indexscan.)
+	 *
+	 * Note this is OK only because we have AccessExclusiveLock on the rel,
+	 * so no one else is creating/deleting triggers on this rel at the same
+	 * time.
 	 */
 	tgrel = heap_openr(TriggerRelationName, RowExclusiveLock);
-	ScanKeyEntryInitialize(&key, 0, Anum_pg_trigger_tgrelid,
+	ScanKeyEntryInitialize(&key, 0,
+						   Anum_pg_trigger_tgrelid,
 						   F_OIDEQ,
 						   ObjectIdGetDatum(relid));
-	tgscan = systable_beginscan(tgrel, TriggerRelidIndex, true,
+	tgscan = systable_beginscan(tgrel, TriggerRelidNameIndex, true,
 								SnapshotNow, 1, &key);
 	while (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
 	{
@@ -409,10 +420,11 @@ RelationRemoveTriggers(Relation rel)
 	bool		found = false;
 
 	tgrel = heap_openr(TriggerRelationName, RowExclusiveLock);
-	ScanKeyEntryInitialize(&key, 0, Anum_pg_trigger_tgrelid,
+	ScanKeyEntryInitialize(&key, 0,
+						   Anum_pg_trigger_tgrelid,
 						   F_OIDEQ,
 						   ObjectIdGetDatum(RelationGetRelid(rel)));
-	tgscan = systable_beginscan(tgrel, TriggerRelidIndex, true,
+	tgscan = systable_beginscan(tgrel, TriggerRelidNameIndex, true,
 								SnapshotNow, 1, &key);
 
 	while (HeapTupleIsValid(tup = systable_getnext(tgscan)))
@@ -462,7 +474,8 @@ RelationRemoveTriggers(Relation rel)
 	/*
 	 * Also drop all constraint triggers referencing this relation
 	 */
-	ScanKeyEntryInitialize(&key, 0, Anum_pg_trigger_tgconstrrelid,
+	ScanKeyEntryInitialize(&key, 0,
+						   Anum_pg_trigger_tgconstrrelid,
 						   F_OIDEQ,
 						   ObjectIdGetDatum(RelationGetRelid(rel)));
 	tgscan = systable_beginscan(tgrel, TriggerConstrRelidIndex, true,
@@ -502,7 +515,7 @@ RelationBuildTriggers(Relation relation)
 {
 	TriggerDesc *trigdesc;
 	int			ntrigs = relation->rd_rel->reltriggers;
-	Trigger    *triggers = NULL;
+	Trigger    *triggers;
 	int			found = 0;
 	Relation	tgrel;
 	ScanKeyData skey;
@@ -511,6 +524,15 @@ RelationBuildTriggers(Relation relation)
 	struct varlena *val;
 	bool		isnull;
 
+	triggers = (Trigger *) MemoryContextAlloc(CacheMemoryContext,
+											  ntrigs * sizeof(Trigger));
+
+	/*
+	 * Note: since we scan the triggers using TriggerRelidNameIndex,
+	 * we will be reading the triggers in name order, except possibly
+	 * during emergency-recovery operations (ie, IsIgnoringSystemIndexes).
+	 * This in turn ensures that triggers will be fired in name order.
+	 */
 	ScanKeyEntryInitialize(&skey,
 						   (bits16) 0x0,
 						   (AttrNumber) Anum_pg_trigger_tgrelid,
@@ -518,7 +540,7 @@ RelationBuildTriggers(Relation relation)
 						   ObjectIdGetDatum(RelationGetRelid(relation)));
 
 	tgrel = heap_openr(TriggerRelationName, AccessShareLock);
-	tgscan = systable_beginscan(tgrel, TriggerRelidIndex, true,
+	tgscan = systable_beginscan(tgrel, TriggerRelidNameIndex, true,
 								SnapshotNow, 1, &skey);
 
 	while (HeapTupleIsValid(htup = systable_getnext(tgscan)))
@@ -526,16 +548,9 @@ RelationBuildTriggers(Relation relation)
 		Form_pg_trigger pg_trigger = (Form_pg_trigger) GETSTRUCT(htup);
 		Trigger    *build;
 
-		if (found == ntrigs)
+		if (found >= ntrigs)
 			elog(ERROR, "RelationBuildTriggers: unexpected record found for rel %s",
 				 RelationGetRelationName(relation));
-
-		if (triggers == NULL)
-			triggers = (Trigger *) MemoryContextAlloc(CacheMemoryContext,
-													  sizeof(Trigger));
-		else
-			triggers = (Trigger *) repalloc(triggers,
-										  (found + 1) * sizeof(Trigger));
 		build = &(triggers[found]);
 
 		build->tgoid = htup->t_data->t_oid;
@@ -730,6 +745,9 @@ equalTriggerDescs(TriggerDesc *trigdesc1, TriggerDesc *trigdesc2)
 	 * We need not examine the "index" data, just the trigger array
 	 * itself; if we have the same triggers with the same types, the
 	 * derived index data should match.
+	 *
+	 * As of 7.3 we assume trigger set ordering is significant in the
+	 * comparison; so we just compare corresponding slots of the two sets.
 	 */
 	if (trigdesc1 != NULL)
 	{
@@ -740,21 +758,9 @@ equalTriggerDescs(TriggerDesc *trigdesc1, TriggerDesc *trigdesc2)
 		for (i = 0; i < trigdesc1->numtriggers; i++)
 		{
 			Trigger    *trig1 = trigdesc1->triggers + i;
-			Trigger    *trig2 = NULL;
+			Trigger    *trig2 = trigdesc2->triggers + i;
 
-			/*
-			 * We can't assume that the triggers are always read from
-			 * pg_trigger in the same order; so use the trigger OIDs to
-			 * identify the triggers to compare.  (We assume here that the
-			 * same OID won't appear twice in either trigger set.)
-			 */
-			for (j = 0; j < trigdesc2->numtriggers; j++)
-			{
-				trig2 = trigdesc2->triggers + j;
-				if (trig1->tgoid == trig2->tgoid)
-					break;
-			}
-			if (j >= trigdesc2->numtriggers)
+			if (trig1->tgoid != trig2->tgoid)
 				return false;
 			if (strcmp(trig1->tgname, trig2->tgname) != 0)
 				return false;

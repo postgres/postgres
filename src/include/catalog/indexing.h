@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: indexing.h,v 1.65 2002/04/18 20:01:10 tgl Exp $
+ * $Id: indexing.h,v 1.66 2002/04/19 16:36:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -86,7 +86,7 @@
 #define StatisticRelidAttnumIndex	"pg_statistic_relid_att_index"
 #define TriggerConstrNameIndex		"pg_trigger_tgconstrname_index"
 #define TriggerConstrRelidIndex		"pg_trigger_tgconstrrelid_index"
-#define TriggerRelidIndex			"pg_trigger_tgrelid_index"
+#define TriggerRelidNameIndex		"pg_trigger_tgrelid_tgname_index"
 #define TriggerOidIndex				"pg_trigger_oid_index"
 #define TypeNameNspIndex			"pg_type_typname_nsp_index"
 #define TypeOidIndex				"pg_type_oid_index"
@@ -182,9 +182,11 @@ DECLARE_UNIQUE_INDEX(pg_rewrite_rel_rulename_index on pg_rewrite using btree(ev_
 DECLARE_UNIQUE_INDEX(pg_shadow_usename_index on pg_shadow using btree(usename name_ops));
 DECLARE_UNIQUE_INDEX(pg_shadow_usesysid_index on pg_shadow using btree(usesysid int4_ops));
 DECLARE_UNIQUE_INDEX(pg_statistic_relid_att_index on pg_statistic using btree(starelid oid_ops, staattnum int2_ops));
+/* This following index is not used for a cache and is not unique */
 DECLARE_INDEX(pg_trigger_tgconstrname_index on pg_trigger using btree(tgconstrname name_ops));
+/* This following index is not used for a cache and is not unique */
 DECLARE_INDEX(pg_trigger_tgconstrrelid_index on pg_trigger using btree(tgconstrrelid oid_ops));
-DECLARE_INDEX(pg_trigger_tgrelid_index on pg_trigger using btree(tgrelid oid_ops));
+DECLARE_UNIQUE_INDEX(pg_trigger_tgrelid_tgname_index on pg_trigger using btree(tgrelid oid_ops, tgname name_ops));
 DECLARE_UNIQUE_INDEX(pg_trigger_oid_index on pg_trigger using btree(oid oid_ops));
 DECLARE_UNIQUE_INDEX(pg_type_oid_index on pg_type using btree(oid oid_ops));
 DECLARE_UNIQUE_INDEX(pg_type_typname_nsp_index on pg_type using btree(typname name_ops, typnamespace oid_ops));

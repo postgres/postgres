@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.33 2002/03/22 19:20:39 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.34 2002/04/19 16:36:08 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -22,7 +22,7 @@ PostgreSQL documentation
   </refsynopsisdivinfo>
   <synopsis>
 CREATE RULE <replaceable class="parameter">name</replaceable> AS ON <replaceable class="parameter">event</replaceable>
-    TO <replaceable class="parameter">object</replaceable> [ WHERE <replaceable class="parameter">condition</replaceable> ]
+    TO <replaceable class="parameter">table</replaceable> [ WHERE <replaceable class="parameter">condition</replaceable> ]
     DO [ INSTEAD ] <replaceable class="parameter">action</replaceable>
 
 where <replaceable class="PARAMETER">action</replaceable> can be:
@@ -48,7 +48,8 @@ NOTHING
       <term><replaceable class="parameter">name</replaceable></term>
       <listitem>
        <para>
-	The name of a rule to create.
+	The name of a rule to create.  This must be distinct from the name
+	of any other rule for the same table.
        </para>
       </listitem>
      </varlistentry>
@@ -63,14 +64,11 @@ NOTHING
       </listitem>
      </varlistentry>
      <varlistentry>
-      <term><replaceable class="parameter">object</replaceable></term>
+      <term><replaceable class="parameter">table</replaceable></term>
       <listitem>
        <para>
-	Object is either <replaceable class="parameter">table</replaceable>
-	or <replaceable class="parameter">table</replaceable>.<replaceable
-	 class="parameter">column</replaceable>.  (Currently, only the
-	 <replaceable class="parameter">table</replaceable> form is
-	 actually implemented.)
+	The name (optionally schema-qualified) of the table or view the rule
+	applies to.
        </para>
       </listitem>
      </varlistentry>
@@ -103,8 +101,7 @@ NOTHING
     Within the <replaceable class="parameter">condition</replaceable>
     and <replaceable class="PARAMETER">action</replaceable>, the special
     table names <literal>new</literal> and <literal>old</literal> may be
-    used to refer to values in the referenced table (the
-    <replaceable class="parameter">object</replaceable>).
+    used to refer to values in the referenced table.
     <literal>new</literal> is valid in ON INSERT and ON UPDATE rules
     to refer to the new row being inserted or updated.
     <literal>old</literal> is valid in ON UPDATE and ON DELETE
@@ -159,7 +156,7 @@ CREATE
    accessed, inserted, updated, or deleted, there is an old instance (for
    selects, updates and deletes) and a new instance (for inserts and
    updates).  All the rules for the given event type and the given target
-   object (table) are examined, in an unspecified order.  If the
+   table are examined successively (in order by name).  If the
    <replaceable class="parameter">condition</replaceable> specified in the
    WHERE clause (if any) is true, the 
    <replaceable class="parameter">action</replaceable> part of the rule is
@@ -178,8 +175,7 @@ CREATE
    The <replaceable class="parameter">action</replaceable> part of the
    rule can consist of one or more queries. To write multiple queries,
    surround them with parentheses. Such queries will be performed in the
-   specified order (whereas there are no guarantees about the execution
-   order of multiple rules for an object). The <replaceable
+   specified order. The <replaceable
    class="parameter">action</replaceable> can also be NOTHING indicating
    no action. Thus, a DO INSTEAD NOTHING rule suppresses the original
    query from executing (when its condition is true); a DO NOTHING rule
@@ -190,6 +186,20 @@ CREATE
    The <replaceable class="parameter">action</replaceable> part of the rule
    executes with the same command and transaction identifier as the user
    command that caused activation.
+  </para>
+
+  <para>
+   It is important to realize that a rule is really a query transformation
+   mechanism, or query macro.  The entire query is processed to convert it
+   into a series of queries that include the rule actions.  This occurs
+   before evaluation of the query starts.  So, conditional rules are
+   handled by adding the rule condition to the WHERE clause of the action(s)
+   derived from the rule.  The above description of a rule as an operation
+   that executes for each row is thus somewhat misleading.  If you actually
+   want an operation that fires independently for each physical row, you
+   probably want to use a trigger not a rule.  Rules are most useful for
+   situations that call for transforming entire queries independently of
+   the specific data being handled.
   </para>
   
   <refsect2 id="R2-SQL-CREATERULE-3">
@@ -202,7 +212,7 @@ CREATE
    <para>
     Presently, ON SELECT rules must be unconditional INSTEAD rules and must
     have actions that consist of a single SELECT query.  Thus, an ON SELECT
-    rule effectively turns the object table into a view, whose visible
+    rule effectively turns the table into a view, whose visible
     contents are the rows returned by the rule's SELECT query rather than
     whatever had been stored in the table (if anything).  It is considered
     better style to write a CREATE VIEW command than to create a real table

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/trigger.sgml,v 1.22 2002/04/01 22:36:06 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/trigger.sgml,v 1.23 2002/04/19 16:36:08 tgl Exp $
 -->
 
  <chapter id="triggers">
@@ -14,8 +14,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/trigger.sgml,v 1.22 2002/04/01 22:36:06 tgl
    AFTER on INSERT, DELETE or UPDATE of a tuple as a trigger event.
   </para>
 
-  <sect1 id="trigger-create">
-   <title>Trigger Creation</title>
+  <sect1 id="trigger-definition">
+   <title>Trigger Definition</title>
 
    <para>
     If a trigger event occurs, the trigger manager (called by the Executor)
@@ -24,13 +24,17 @@ $Header: /cvsroot/pgsql/doc/src/sgml/trigger.sgml,v 1.22 2002/04/01 22:36:06 tgl
    </para>
 
    <para>
-    The trigger function must be defined before the trigger is created as a
-    function taking no arguments and returning opaque.  If the function is
-    written in C, it must use the <quote>version 1</> function manager interface.
+    The trigger function must be defined before the trigger itself can be
+    created.  The trigger function must be declared as a 
+    function taking no arguments and returning type <literal>opaque</>.
+    (The trigger function receives its input through a TriggerData
+    structure, not in the form of ordinary function arguments.)
+    If the function is written in C, it must use the <quote>version 1</>
+    function manager interface.
    </para>
 
    <para>
-    The syntax for creating triggers is as follows:
+    The syntax for creating triggers is:
 
     <programlisting>
 CREATE TRIGGER <replaceable>trigger</replaceable> [ BEFORE | AFTER ] [ INSERT | DELETE | UPDATE [ OR ... ] ]
@@ -48,9 +52,9 @@ CREATE TRIGGER <replaceable>trigger</replaceable> [ BEFORE | AFTER ] [ INSERT | 
       </term>
       <listitem>
        <para>
-	The name of the trigger is
-	used if you ever have to delete the trigger.
-	It is used as an argument to the <command>DROP TRIGGER</command> command.
+        The trigger must have a name distinct from all other triggers on
+	the same table.  The name is needed
+	if you ever have to delete the trigger.
        </para>
       </listitem>
      </varlistentry>
@@ -72,7 +76,7 @@ CREATE TRIGGER <replaceable>trigger</replaceable> [ BEFORE | AFTER ] [ INSERT | 
       <term>UPDATE</term>
       <listitem>
        <para>
-	The next element of the command determines on what event(s) will trigger
+	The next element of the command determines what event(s) will trigger
 	the function.  Multiple events can be specified separated by OR.
        </para>
       </listitem>
@@ -82,7 +86,7 @@ CREATE TRIGGER <replaceable>trigger</replaceable> [ BEFORE | AFTER ] [ INSERT | 
       <term><replaceable>relation</replaceable></term>
       <listitem>
        <para>
-	The relation name determines which table the event applies to.
+	The relation name indicates which table the event applies to.
        </para>
       </listitem>
      </varlistentry>
@@ -94,6 +98,7 @@ CREATE TRIGGER <replaceable>trigger</replaceable> [ BEFORE | AFTER ] [ INSERT | 
        <para>
 	The FOR EACH clause determines whether the trigger is fired for each
 	affected row or before (or after) the entire statement has completed.
+	Currently only the ROW case is supported.
        </para>
       </listitem>
      </varlistentry>
@@ -102,7 +107,7 @@ CREATE TRIGGER <replaceable>trigger</replaceable> [ BEFORE | AFTER ] [ INSERT | 
       <term><replaceable>procedure</replaceable></term>
       <listitem>
        <para>
-	The procedure name is the function called.
+	The procedure name is the function to be called.
        </para>
       </listitem>
      </varlistentry>
@@ -112,23 +117,23 @@ CREATE TRIGGER <replaceable>trigger</replaceable> [ BEFORE | AFTER ] [ INSERT | 
       <listitem>
        <para>
 	The arguments passed to the function in the TriggerData structure.
-	The purpose of passing arguments to the function is to allow different
+	This is either empty or a list of one or more simple literal
+	constants (which will be passed to the function as strings).
+       </para>
+
+       <para>
+	The purpose of including arguments in the trigger definition
+	is to allow different
 	triggers with similar requirements to call the same function.
-       </para>
-
-       <para>
-	Also, <replaceable>procedure</replaceable>
-	may be used for triggering different relations (these
-	functions are named as <firstterm>general trigger functions</>).
-       </para>
-
-       <para>
-	As example of using both features above, there could be a general
-	function that takes as its arguments two field names and puts the current
-	user in one and the current timestamp in the other. This allows triggers to
-	be written on INSERT events to automatically track creation of records in a
-	transaction table for example. It could also be used as a <quote>last updated</>
-	function if used in an UPDATE event.
+	As an example, there could be a generalized trigger
+	function that takes as its arguments two field names and puts the
+	current user in one and the current timestamp in the other.
+	Properly written, this trigger function would be independent of
+	the specific table it is triggering on.  So the same function
+	could be used for INSERT events on any table with suitable fields,
+	to automatically track creation of records in a transaction table for
+	example. It could also be used to track last-update events if
+	defined as an UPDATE trigger.
        </para>
       </listitem>
      </varlistentry>
@@ -136,8 +141,8 @@ CREATE TRIGGER <replaceable>trigger</replaceable> [ BEFORE | AFTER ] [ INSERT | 
    </para>
 
    <para>
-    Trigger functions return HeapTuple to the calling Executor.  This
-    is ignored for triggers fired after an INSERT, DELETE or UPDATE operation
+    Trigger functions return a HeapTuple to the calling Executor.  The return
+    value is ignored for triggers fired AFTER an operation,
     but it allows BEFORE triggers to:
 
     <itemizedlist>
@@ -150,33 +155,41 @@ CREATE TRIGGER <replaceable>trigger</replaceable> [ BEFORE | AFTER ] [ INSERT | 
 
      <listitem>
       <para>
-       Return a pointer to another tuple (INSERT and UPDATE only) which will
-       be inserted (as the new version of the updated tuple if UPDATE) instead
-       of original tuple.
+       For INSERT and UPDATE triggers only, the returned tuple becomes the
+       tuple which will be inserted or will replace the tuple being updated.
+       This allows the trigger function to modify the row being inserted or
+       updated.
       </para>
      </listitem>
     </itemizedlist>
+
+    A BEFORE trigger that does not intend to cause either of these behaviors
+    must be careful to return the same NEW tuple it is passed.
    </para>
 
    <para>
     Note that there is no initialization performed by the CREATE TRIGGER
-    handler.  This will be changed in the future.  Also, if more than one trigger
-    is defined for the same event on the same relation, the order of trigger
-    firing is unpredictable. This may be changed in the future.
+    handler.  This may be changed in the future.
+   </para>
+
+   <para>
+    If more than one trigger
+    is defined for the same event on the same relation, the triggers will
+    be fired in alphabetical order by name.  In the case of BEFORE triggers,
+    the possibly-modified tuple returned by each trigger becomes the input
+    to the next trigger.  If any BEFORE trigger returns NULL, the operation
+    is abandoned and subsequent triggers are not fired.
    </para>
 
    <para>
     If a trigger function executes SQL-queries (using SPI) then these queries
     may fire triggers again. This is known as cascading triggers.  There is no
-    explicit limitation on the number of cascade levels.
-   </para>
-
-   <para>
-    If a trigger is fired by INSERT and inserts a new tuple in the same
-    relation then this trigger will be fired again.  Currently, there is nothing
-    provided for synchronization (etc) of these cases but this may change.  At
-    the moment, there is function funny_dup17() in the regress tests which uses
-    some techniques to stop recursion (cascading) on itself...
+    direct limitation on the number of cascade levels.  It is possible for
+    cascades to cause recursive invocation of the same trigger --- for
+    example, an INSERT trigger might execute a query that inserts an
+    additional tuple into the same table, causing the INSERT trigger to be
+    fired again.  It is the trigger programmer's
+    responsibility to avoid infinite recursion in such scenarios.
    </para>
   </sect1>
 
@@ -326,7 +339,7 @@ typedef struct TriggerData
        <para>
 	is a pointer to structure describing the triggered relation. Look at
 	src/include/utils/rel.h for details about this structure.  The most
-	interest things are tg_relation->rd_att (descriptor of the relation
+	interesting things are tg_relation->rd_att (descriptor of the relation
 	tuples) and tg_relation->rd_rel->relname (relation's name. This is not
 	char*, but NameData.  Use SPI_getrelname(tg_relation) to get char* if
 	you need a copy of name).

@@ -7,7 +7,7 @@
  * Copyright (c) 1999-2001, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.42 2002/04/18 20:01:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.43 2002/04/19 16:36:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -753,7 +753,7 @@ CommentTrigger(List *qualname, char *comment)
 	Relation	pg_trigger,
 				relation;
 	HeapTuple	triggertuple;
-	HeapScanDesc scan;
+	SysScanDesc	scan;
 	ScanKeyData entry[2];
 	Oid			oid;
 
@@ -774,17 +774,22 @@ CommentTrigger(List *qualname, char *comment)
 		elog(ERROR, "you are not permitted to comment on trigger '%s' for relation '%s'",
 			 trigname, RelationGetRelationName(relation));
 
-	/* Fetch the trigger oid from pg_trigger  */
-
+	/*
+	 * Fetch the trigger tuple from pg_trigger.  There can be only one
+	 * because of the unique index.
+	 */
 	pg_trigger = heap_openr(TriggerRelationName, AccessShareLock);
-	ScanKeyEntryInitialize(&entry[0], 0x0, Anum_pg_trigger_tgrelid,
+	ScanKeyEntryInitialize(&entry[0], 0x0,
+						   Anum_pg_trigger_tgrelid,
 						   F_OIDEQ,
 						   ObjectIdGetDatum(RelationGetRelid(relation)));
-	ScanKeyEntryInitialize(&entry[1], 0x0, Anum_pg_trigger_tgname,
+	ScanKeyEntryInitialize(&entry[1], 0x0,
+						   Anum_pg_trigger_tgname,
 						   F_NAMEEQ,
 						   CStringGetDatum(trigname));
-	scan = heap_beginscan(pg_trigger, 0, SnapshotNow, 2, entry);
-	triggertuple = heap_getnext(scan, 0);
+	scan = systable_beginscan(pg_trigger, TriggerRelidNameIndex, true,
+							  SnapshotNow, 2, entry);
+	triggertuple = systable_getnext(scan);
 
 	/* If no trigger exists for the relation specified, notify user */
 
@@ -794,7 +799,7 @@ CommentTrigger(List *qualname, char *comment)
 
 	oid = triggertuple->t_data->t_oid;
 
-	heap_endscan(scan);
+	systable_endscan(scan);
 
 	/* Create the comments with the pg_trigger oid */
 

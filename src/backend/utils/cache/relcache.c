@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.161 2002/04/18 20:01:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.162 2002/04/19 16:36:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -635,10 +635,10 @@ RelationBuildRuleLock(Relation relation)
 {
 	MemoryContext rulescxt;
 	MemoryContext oldcxt;
-	HeapTuple	pg_rewrite_tuple;
-	Relation	pg_rewrite_desc;
-	TupleDesc	pg_rewrite_tupdesc;
-	SysScanDesc pg_rewrite_scan;
+	HeapTuple	rewrite_tuple;
+	Relation	rewrite_desc;
+	TupleDesc	rewrite_tupdesc;
+	SysScanDesc rewrite_scan;
 	ScanKeyData key;
 	RuleLock   *rulelock;
 	int			numlocks;
@@ -657,7 +657,7 @@ RelationBuildRuleLock(Relation relation)
 	relation->rd_rulescxt = rulescxt;
 
 	/*
-	 * form an array to hold the rewrite rules (the array is extended if
+	 * allocate an array to hold the rewrite rules (the array is extended if
 	 * necessary)
 	 */
 	maxlocks = 4;
@@ -675,18 +675,22 @@ RelationBuildRuleLock(Relation relation)
 
 	/*
 	 * open pg_rewrite and begin a scan
+	 *
+	 * Note: since we scan the rules using RewriteRelRulenameIndex,
+	 * we will be reading the rules in name order, except possibly
+	 * during emergency-recovery operations (ie, IsIgnoringSystemIndexes).
+	 * This in turn ensures that rules will be fired in name order.
 	 */
-	pg_rewrite_desc = heap_openr(RewriteRelationName, AccessShareLock);
-	pg_rewrite_tupdesc = RelationGetDescr(pg_rewrite_desc);
-	pg_rewrite_scan = systable_beginscan(pg_rewrite_desc, 
-										 RewriteRelRulenameIndex,
-										 criticalRelcachesBuilt,
-										 SnapshotNow,
-										 1, &key);
+	rewrite_desc = heap_openr(RewriteRelationName, AccessShareLock);
+	rewrite_tupdesc = RelationGetDescr(rewrite_desc);
+	rewrite_scan = systable_beginscan(rewrite_desc, 
+									  RewriteRelRulenameIndex,
+									  true, SnapshotNow,
+									  1, &key);
 
-	while (HeapTupleIsValid(pg_rewrite_tuple = systable_getnext(pg_rewrite_scan)))
+	while (HeapTupleIsValid(rewrite_tuple = systable_getnext(rewrite_scan)))
 	{
-		Form_pg_rewrite rewrite_form = (Form_pg_rewrite) GETSTRUCT(pg_rewrite_tuple);
+		Form_pg_rewrite rewrite_form = (Form_pg_rewrite) GETSTRUCT(rewrite_tuple);
 		bool		isnull;
 		Datum		ruleaction;
 		Datum		rule_evqual;
@@ -697,7 +701,7 @@ RelationBuildRuleLock(Relation relation)
 		rule = (RewriteRule *) MemoryContextAlloc(rulescxt,
 												  sizeof(RewriteRule));
 
-		rule->ruleId = pg_rewrite_tuple->t_data->t_oid;
+		rule->ruleId = rewrite_tuple->t_data->t_oid;
 
 		rule->event = rewrite_form->ev_type - '0';
 		rule->attrno = rewrite_form->ev_attr;
@@ -705,9 +709,9 @@ RelationBuildRuleLock(Relation relation)
 
 		/* Must use heap_getattr to fetch ev_qual and ev_action */
 
-		ruleaction = heap_getattr(pg_rewrite_tuple,
+		ruleaction = heap_getattr(rewrite_tuple,
 								  Anum_pg_rewrite_ev_action,
-								  pg_rewrite_tupdesc,
+								  rewrite_tupdesc,
 								  &isnull);
 		Assert(!isnull);
 		ruleaction_str = DatumGetCString(DirectFunctionCall1(textout,
@@ -717,13 +721,13 @@ RelationBuildRuleLock(Relation relation)
 		MemoryContextSwitchTo(oldcxt);
 		pfree(ruleaction_str);
 
-		rule_evqual = heap_getattr(pg_rewrite_tuple,
+		rule_evqual = heap_getattr(rewrite_tuple,
 								   Anum_pg_rewrite_ev_qual,
-								   pg_rewrite_tupdesc,
+								   rewrite_tupdesc,
 								   &isnull);
 		Assert(!isnull);
 		rule_evqual_str = DatumGetCString(DirectFunctionCall1(textout,
-														   rule_evqual));
+															  rule_evqual));
 		oldcxt = MemoryContextSwitchTo(rulescxt);
 		rule->qual = (Node *) stringToNode(rule_evqual_str);
 		MemoryContextSwitchTo(oldcxt);
@@ -741,8 +745,8 @@ RelationBuildRuleLock(Relation relation)
 	/*
 	 * end the scan and close the attribute relation
 	 */
-	systable_endscan(pg_rewrite_scan);
-	heap_close(pg_rewrite_desc, AccessShareLock);
+	systable_endscan(rewrite_scan);
+	heap_close(rewrite_desc, AccessShareLock);
 
 	/*
 	 * form a RuleLock and insert into relation
@@ -764,9 +768,13 @@ RelationBuildRuleLock(Relation relation)
 static bool
 equalRuleLocks(RuleLock *rlock1, RuleLock *rlock2)
 {
-	int			i,
-				j;
+	int			i;
 
+	/*
+	 * As of 7.3 we assume the rule ordering is repeatable,
+	 * because RelationBuildRuleLock should read 'em in a
+	 * consistent order.  So just compare corresponding slots.
+	 */
 	if (rlock1 != NULL)
 	{
 		if (rlock2 == NULL)
@@ -776,21 +784,9 @@ equalRuleLocks(RuleLock *rlock1, RuleLock *rlock2)
 		for (i = 0; i < rlock1->numLocks; i++)
 		{
 			RewriteRule *rule1 = rlock1->rules[i];
-			RewriteRule *rule2 = NULL;
+			RewriteRule *rule2 = rlock2->rules[i];
 
-			/*
-			 * We can't assume that the rules are always read from
-			 * pg_rewrite in the same order; so use the rule OIDs to
-			 * identify the rules to compare.  (We assume here that the
-			 * same OID won't appear twice in either ruleset.)
-			 */
-			for (j = 0; j < rlock2->numLocks; j++)
-			{
-				rule2 = rlock2->rules[j];
-				if (rule1->ruleId == rule2->ruleId)
-					break;
-			}
-			if (j >= rlock2->numLocks)
+			if (rule1->ruleId != rule2->ruleId)
 				return false;
 			if (rule1->event != rule2->event)
 				return false;

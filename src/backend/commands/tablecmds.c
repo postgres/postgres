@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.3 2002/04/18 20:01:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.4 2002/04/19 16:36:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2909,10 +2909,10 @@ update_ri_trigger_args(Oid relid,
 	if (fk_scan)
 		irel = index_openr(TriggerConstrRelidIndex);
 	else
-		irel = index_openr(TriggerRelidIndex);
+		irel = index_openr(TriggerRelidNameIndex);
 
 	ScanKeyEntryInitialize(&skey[0], 0x0,
-						   1,	/* always column 1 of index */
+						   1,	/* column 1 of index in either case */
 						   F_OIDEQ,
 						   ObjectIdGetDatum(relid));
 	idxtgscan = index_beginscan(irel, false, 1, skey);

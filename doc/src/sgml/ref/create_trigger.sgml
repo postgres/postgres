@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_trigger.sgml,v 1.22 2002/01/20 22:19:56 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_trigger.sgml,v 1.23 2002/04/19 16:36:08 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -44,15 +44,8 @@ CREATE TRIGGER <replaceable class="PARAMETER">name</replaceable> { BEFORE | AFTE
       <term><replaceable class="parameter">name</replaceable></term>
       <listitem>
        <para>
-	The name to give the new trigger.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><replaceable class="parameter">table</replaceable></term>
-      <listitem>
-       <para>
-	The name of an existing table.
+	The name to give the new trigger.  This must be distinct from the name
+	of any other trigger for the same table.
        </para>
       </listitem>
      </varlistentry>
@@ -65,10 +58,31 @@ CREATE TRIGGER <replaceable class="PARAMETER">name</replaceable> { BEFORE | AFTE
       </listitem>
      </varlistentry>
      <varlistentry>
+      <term><replaceable class="parameter">table</replaceable></term>
+      <listitem>
+       <para>
+	The name (optionally schema-qualified) of the table the trigger is for.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
       <term><replaceable class="parameter">func</replaceable></term>
       <listitem>
        <para>
-	A user-supplied function.
+	A user-supplied function that is declared as taking no arguments
+	and returning type <literal>opaque</>.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><replaceable class="parameter">arguments</replaceable></term>
+      <listitem>
+       <para>
+        An optional comma-separated list of arguments to be provided to the
+	function when the trigger is executed, along with the standard trigger
+	data such as old and new tuple contents.  The arguments are literal
+	string constants.  Simple names and numeric constants may be written
+	here too, but they will all be converted to strings.
        </para>
       </listitem>
      </varlistentry>
@@ -130,6 +144,12 @@ CREATE
    after the event, all changes, including the last insertion, update,
    or deletion, are <quote>visible</quote> to the trigger.
   </para>
+
+  <para>
+   If multiple triggers of the same kind are defined for the same event,
+   they will be fired in alphabetical order by name.
+  </para>
+
   <para>
   <command>SELECT</command> does not modify any rows so you can not
   create <command>SELECT</command> triggers. Rules and views are more
@@ -261,6 +281,12 @@ CREATE TABLE distributors (
         </para>
        </listitem>
       </itemizedlist>
+     </para>
+
+     <para>
+      SQL99 specifies that multiple triggers should be fired in
+      time-of-creation order.  <productname>PostgreSQL</productname>
+      uses name order, which was judged more convenient to work with.
      </para>
     </listitem>
    </varlistentry>
