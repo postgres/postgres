@@ -10,7 +10,7 @@
  *	Win32 (NT, Win2k, XP).	replace() doesn't work on Win95/98/Me.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/dirmod.c,v 1.28 2004/10/11 22:50:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/dirmod.c,v 1.29 2004/10/17 23:39:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,7 +68,7 @@ pgrename(const char *from, const char *to)
 {
 	int			loops = 0;
 
-	/* Is this looped even necessary?  */
+	/* Is this loop even necessary?  */
 #if defined(WIN32) && !defined(__CYGWIN__)
 	while (!MoveFileEx(from, to, MOVEFILE_REPLACE_EXISTING))
 #endif
@@ -114,7 +114,7 @@ pgunlink(const char *path)
 {
 	int			loops = 0;
 
-	/* Is this looped even necessary?  */
+	/* Is this loop even necessary?  */
 	while (unlink(path))
 	{
 		if (errno != EACCES)
