@@ -965,3 +965,139 @@ TIP 5: Have you checked our extensive FAQ?
 
 http://www.postgresql.org/users-lounge/docs/faq.html
 
+From pgsql-general-owner+M18147=candle.pha.pa.us=pgman@postgresql.org Mon Dec  3 13:53:24 2001
+Return-path: <pgsql-general-owner+M18147=candle.pha.pa.us=pgman@postgresql.org>
+Received: from west.navpoint.com (west.navpoint.com [207.106.42.13])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id fB3IrNS29264
+	for <pgman@candle.pha.pa.us>; Mon, 3 Dec 2001 13:53:24 -0500 (EST)
+Received: from rs.postgresql.org (server1.pgsql.org [64.39.15.238] (may be forged))
+	by west.navpoint.com (8.11.6/8.10.1) with ESMTP id fB3IrO213373
+	for <pgman@candle.pha.pa.us>; Mon, 3 Dec 2001 13:53:24 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by rs.postgresql.org (8.11.6/8.11.6) with ESMTP id fB3Iq1N35610
+	for <pgman@candle.pha.pa.us>; Mon, 3 Dec 2001 12:52:02 -0600 (CST)
+	(envelope-from pgsql-general-owner+M18147=candle.pha.pa.us=pgman@postgresql.org)
+Received: from tiger.tigrasoft (fw.tigrasoft.hu [195.70.42.161])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id fAU95km73601
+	for <pgsql-general@postgresql.org>; Fri, 30 Nov 2001 04:05:46 -0500 (EST)
+	(envelope-from hornyakl@freemail.hu)
+Received: from freemail.hu ([192.168.0.200])
+	by tiger.tigrasoft (8.9.3/8.9.3/Debian 8.9.3-21) with ESMTP id KAA11457
+	for <pgsql-general@postgresql.org>; Fri, 30 Nov 2001 10:05:45 +0100
+X-Authentication-Warning: tiger.tigrasoft: Host [192.168.0.200] claimed to be freemail.hu
+Message-ID: <3C074DE4.9040905@freemail.hu>
+Date: Fri, 30 Nov 2001 10:14:12 +0100
+From: Laszlo Hornyak <hornyakl@freemail.hu>
+Reply-To: hornyakl@users.sourceforge.net
+User-Agent: Mozilla/5.0 (X11; U; Linux i686; en-US; rv:0.9.4) Gecko/20010913
+X-Accept-Language: hu, en-us
+MIME-Version: 1.0
+To: pgsql-general@postgresql.org
+Subject: [GENERAL] java stored procedures
+Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Transfer-Encoding: 7bit
+Precedence: bulk
+Sender: pgsql-general-owner@postgresql.org
+Status: OR
+
+Hi!
+
+A few months ago I asked if anyone started working on PL/JAVA, the 
+ansver was no. Now I started to write a java stored procedure language 
+and environment for PostgreSQL. Some code is already working, and it is 
+geting interresting. So, I would like to ask you to write me your ideas, 
+suggestions, etc for this environment.
+The source code will be available under GPL when it is worth for 
+distributing it (this will take for a while).
+thanks.
+
+Laszlo Hornyak
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 4: Don't 'kill -9' the postmaster
+
+From pgsql-general-owner+M18182=candle.pha.pa.us=pgman@postgresql.org Tue Dec  4 13:14:09 2001
+Return-path: <pgsql-general-owner+M18182=candle.pha.pa.us=pgman@postgresql.org>
+Received: from west.navpoint.com (west.navpoint.com [207.106.42.13])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id fB4IE3r15972
+	for <pgman@candle.pha.pa.us>; Tue, 4 Dec 2001 13:14:04 -0500 (EST)
+Received: from rs.postgresql.org (server1.pgsql.org [64.39.15.238] (may be forged))
+	by west.navpoint.com (8.11.6/8.10.1) with ESMTP id fB4IE2Y07122
+	for <pgman@candle.pha.pa.us>; Tue, 4 Dec 2001 13:14:02 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by rs.postgresql.org (8.11.6/8.11.6) with ESMTP id fB4I9HN76662
+	for <pgman@candle.pha.pa.us>; Tue, 4 Dec 2001 12:09:17 -0600 (CST)
+	(envelope-from pgsql-general-owner+M18182=candle.pha.pa.us=pgman@postgresql.org)
+Received: from belphigor.mcnaught.org ([216.151.155.121])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id fB4Hwsm96365;
+	Tue, 4 Dec 2001 12:58:59 -0500 (EST)
+	(envelope-from doug@wireboard.com)
+Received: (from doug@localhost)
+	by belphigor.mcnaught.org (8.11.6/8.9.3) id fB4Hwlo07786;
+	Tue, 4 Dec 2001 12:58:47 -0500
+X-Authentication-Warning: belphigor.mcnaught.org: doug set sender to doug@wireboard.com using -f
+To: Barry Lind <barry@xythos.com>
+cc: Laszlo Hornyak <hornyakl@freemail.hu>, pgsql-general@postgresql.org,
+   pgsql-jdbc@postgresql.org
+Subject: Re: [GENERAL] java stored procedures
+References: <3C074DE4.9040905@freemail.hu> <3C0BE325.3020809@xythos.com>
+	<3C0C937E.9000405@freemail.hu> <3C0CFD82.1030600@xythos.com>
+From: Doug McNaught <doug@wireboard.com>
+Date: 04 Dec 2001 12:58:47 -0500
+In-Reply-To: Barry Lind's message of "Tue, 04 Dec 2001 08:44:50 -0800"
+Message-ID: <m3itbmeujs.fsf@belphigor.mcnaught.org>
+Lines: 42
+User-Agent: Gnus/5.0806 (Gnus v5.8.6) XEmacs/21.1 (20 Minutes to Nikko)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Precedence: bulk
+Sender: pgsql-general-owner@postgresql.org
+Status: OR
+
+Barry Lind <barry@xythos.com> writes:
+
+> Having one jvm that all the postgres backend processes communicate with makes
+> the whole feature much more complicated, but is necessary in my opinion.
+
+Agreed.  Also, the JVM is a multithreaded app, and running it inside a
+non-threaded program (the backend) might cause problems. 
+
+> Then the question becomes how does the jvm process interact with the database
+> since they are two different processes.  You will need some sort of
+> interprocess communication between the two to execute sql statements.  This
+> could be accomplished by using the existing jdbc driver.  But the bigest
+> problem here is getting the transaction semantics right.  How does a sql
+> statement being run by a java stored procedure get access to the same
+> connection/transaction as the original client?  What you don't want happening
+> is that sql issued in a stored java procedure executes in a different
+> transaction as the caller, what would rollback of the stored function call
+> mean in that case?
+
+I think you would have to to expose the SPI layer to Java running in a
+separate process, either using an RMI server written in C or a custom
+protocol over a TCP socket (Java of course can't do Unix sockets).
+This raises some thorny issues of authentication and security but I
+don't think they're insurmountable.  You could, for example, create a
+cryptographically strong "cookie" in the backend when a Java function
+is called.  The cookie would be passed to the Java function when it
+gets invoked, and then must be passed back to the SPI layer in order
+for the latter to accept the call.  A bit clunky but should be safe as
+far as I can see.
+
+The cookie would be needed anyhow, I think, in order for the SPI layer 
+to be able to find the transaction that the Java function was
+originally invoked in.
+
+You could make the SPI layer stuff look like a normal JDBC driver to
+user code--PL/Perl does this kind of thing with the Perl DBI
+interface.
+
+-Doug
+-- 
+Let us cross over the river, and rest under the shade of the trees.
+   --T. J. Jackson, 1863
+
+---------------------------(end of broadcast)---------------------------
+TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
+
