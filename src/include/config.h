@@ -4,6 +4,9 @@
    eventual use of autoconf to build the server 
 */
 
+#define BLCKSZ	8192
+
+
 #if defined(win32)
 #  define WIN32
 #  define NO_UNISTD_H
@@ -29,7 +32,6 @@
 #if defined(irix5)
 #  define NO_VFORK
 #endif
-
 
 /*  Debug and various "defines" that should be documented */
 
