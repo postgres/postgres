@@ -1021,7 +1021,7 @@ echo "$ac_t""$CPP" 1>&6
 
 HAVECXX='HAVE_Cplusplus=false'
 
-for ac_prog in ginstall installbsd install bsdinst
+for ac_prog in ginstall installbsd bsdinst scoinst install
 do
 # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -1036,7 +1036,7 @@ else
   ;;
   *)
   IFS="${IFS= 	}"; ac_save_ifs="$IFS"; IFS="${IFS}:"
-  for ac_dir in NONE$ac_dummy; do
+  for ac_dir in $PATH$ac_dummy; do
     test -z "$ac_dir" && ac_dir=.
     if test -f $ac_dir/$ac_word; then
       ac_cv_path_INSTALL="$ac_dir/$ac_word"
@@ -1056,7 +1056,7 @@ fi
 
 test -n "$INSTALL" && break
 done
-test -n "$INSTALL" || INSTALL="scoinst"
+test -n "$INSTALL" || INSTALL="NONE"
 
 if test $INSTALL = "NONE"
 then
