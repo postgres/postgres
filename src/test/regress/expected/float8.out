@@ -7,14 +7,14 @@ INSERT INTO FLOAT8_TBL(f1) VALUES ('1004.30  ');
 INSERT INTO FLOAT8_TBL(f1) VALUES ('   -34.84');
 INSERT INTO FLOAT8_TBL(f1) VALUES ('1.2345678901234e+200');
 INSERT INTO FLOAT8_TBL(f1) VALUES ('1.2345678901234e-200');
--- test for underflow and overflow
-INSERT INTO FLOAT8_TBL(f1) VALUES ('10e400');
+-- test for underflow and overflow handling
+SELECT '10e400'::float8;
 ERROR:  "10e400" is out of range for type double precision
-INSERT INTO FLOAT8_TBL(f1) VALUES ('-10e400');
+SELECT '-10e400'::float8;
 ERROR:  "-10e400" is out of range for type double precision
-INSERT INTO FLOAT8_TBL(f1) VALUES ('10e-400');
+SELECT '10e-400'::float8;
 ERROR:  "10e-400" is out of range for type double precision
-INSERT INTO FLOAT8_TBL(f1) VALUES ('-10e-400');
+SELECT '-10e-400'::float8;
 ERROR:  "-10e-400" is out of range for type double precision
 -- bad input
 INSERT INTO FLOAT8_TBL(f1) VALUES ('     ');
