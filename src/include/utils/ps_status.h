@@ -19,15 +19,14 @@ extern char Ps_status_buffer[];
 
 #define PS_INIT_STATUS(argc, argv, execname, username, hostname, dbname) \
         do { \
-                Assert(argc >= 5); \
-                setproctitle("%s %s %s %s %s", execname, hostname, username, dbname, Ps_status_buffer); \
+                sprintf(Ps_status_buffer, "%s %s %s %s", execname, hostname, username, dbname); \
         } while (0)
 
 #define PS_CLEAR_STATUS() \
-        do { /*Ps_status_buffer[0] = '\0';*/ } while (0)
+        do { setproctitle("%s", Ps_status_buffer); } while (0)
 
 #define PS_SET_STATUS(status) \
-        do { /*strcpy(Ps_status_buffer, (status));*/ } while (0)
+        do { setproctitle("%s %s", Ps_status_buffer, (status)); } while (0)
 
 #define PS_STATUS (Ps_status_buffer)
 
