@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.242 2005/03/25 16:08:39 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.243 2005/03/30 04:52:49 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -7341,8 +7341,8 @@ SELECT col FROM sometable ORDER BY col ASC LIMIT 1;
    </para>
 
    <para>
-    Unfortunately, there is no similarly trivial query that can be
-    used to improve the performance of <function>count()</function>
+    Unfortunately, there is no similarly trivial workaround that can
+    be used to improve the performance of <function>count()</function>
     when applied to the entire table.
    </para>
   </note>
