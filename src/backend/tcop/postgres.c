@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.73 1998/06/04 17:26:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.74 1998/06/08 22:28:27 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1167,7 +1167,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	SetCharSet();
 #endif
 
-	if (FindBackend(pg_pathname, argv[0]) < 0)
+	if (FindExec(pg_pathname, argv[0]) < 0)
 		elog(FATAL, "%s: could not locate executable, bailing out...",
 			 argv[0]);
 
@@ -1314,7 +1314,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface");
-		puts("$Revision: 1.73 $ $Date: 1998/06/04 17:26:45 $");
+		puts("$Revision: 1.74 $ $Date: 1998/06/08 22:28:27 $");
 	}
 
 	/* ----------------

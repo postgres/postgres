@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.83 1998/06/08 19:36:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.84 1998/06/08 22:28:26 momjian Exp $
  *
  * NOTES
  *
@@ -315,9 +315,19 @@ PostmasterMain(int argc, char *argv[])
 		for (; i < 4; i++)
 			new_argv[i] = "";
 		new_argv[4] = NULL;
+
+		if (!Execfile[0] && FindExec(Execfile, argv[0]) < 0)
+		{
+			fprintf(stderr, "%s: could not find postmaster to execute...\n",
+					argv[0]);
+			exit(1);
+		}
+		new_argv[0] = Execfile;
+		
 		execv(new_argv[0], new_argv);
-		perror(new_argv[0]);
+
 		/* How did we get here, error! */
+		perror(new_argv[0]);
 		fprintf(stderr, "PostmasterMain execv failed on %s\n", argv[0]);
 		exit(1);
 	}
@@ -461,7 +471,7 @@ PostmasterMain(int argc, char *argv[])
 		exit(2);
 	}
 
-	if (!Execfile[0] && FindBackend(Execfile, argv[0]) < 0)
+	if (!Execfile[0] && FindExec(Execfile, argv[0]) < 0)
 	{
 		fprintf(stderr, "%s: could not find backend to execute...\n",
 				argv[0]);

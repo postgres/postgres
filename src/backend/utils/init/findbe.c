@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/findbe.c,v 1.7 1997/09/08 02:31:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/findbe.c,v 1.8 1998/06/08 22:28:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -144,14 +144,14 @@ ValidateBackend(char *path)
 }
 
 /*
- * FindBackend -- find an absolute path to a valid backend executable
+ * FindExec -- find an absolute path to a valid backend executable
  *
  * The reason we have to work so hard to find an absolute path is that
  * we need to feed the backend server the location of its actual
  * executable file -- otherwise, we can't do dynamic loading.
  */
 int
-FindBackend(char *backend, char *argv0)
+FindExec(char *backend, char *argv0)
 {
 	char		buf[MAXPGPATH + 2];
 	char	   *p;
@@ -188,11 +188,11 @@ FindBackend(char *backend, char *argv0)
 		{
 			strncpy(backend, buf, MAXPGPATH);
 			if (DebugLvl)
-				fprintf(stderr, "FindBackend: found \"%s\" using argv[0]\n",
+				fprintf(stderr, "FindExec: found \"%s\" using argv[0]\n",
 						backend);
 			return (0);
 		}
-		fprintf(stderr, "FindBackend: invalid backend \"%s\"\n",
+		fprintf(stderr, "FindExec: invalid backend \"%s\"\n",
 				buf);
 		return (-1);
 	}
@@ -204,7 +204,7 @@ FindBackend(char *backend, char *argv0)
 	if ((p = getenv("PATH")) && *p)
 	{
 		if (DebugLvl)
-			fprintf(stderr, "FindBackend: searching PATH ...\n");
+			fprintf(stderr, "FindExec: searching PATH ...\n");
 		pathlen = strlen(p);
 		path = malloc(pathlen + 1);
 		strcpy(path, p);
@@ -225,14 +225,14 @@ FindBackend(char *backend, char *argv0)
 				case 0: /* found ok */
 					strncpy(backend, buf, MAXPGPATH);
 					if (DebugLvl)
-						fprintf(stderr, "FindBackend: found \"%s\" using PATH\n",
+						fprintf(stderr, "FindExec: found \"%s\" using PATH\n",
 								backend);
 					free(path);
 					return (0);
 				case -1:		/* wasn't even a candidate, keep looking */
 					break;
 				case -2:		/* found but disqualified */
-					fprintf(stderr, "FindBackend: could not read backend \"%s\"\n",
+					fprintf(stderr, "FindExec: could not read backend \"%s\"\n",
 							buf);
 					free(path);
 					return (-1);
@@ -243,6 +243,6 @@ FindBackend(char *backend, char *argv0)
 		free(path);
 	}
 
-	fprintf(stderr, "FindBackend: could not find a backend to execute...\n");
+	fprintf(stderr, "FindExec: could not find a backend to execute...\n");
 	return (-1);
 }
