@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.110 2000/03/09 05:15:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.111 2000/04/07 00:59:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,6 +73,7 @@ static void ExecDelete(TupleTableSlot *slot, ItemPointer tupleid,
 static void ExecReplace(TupleTableSlot *slot, ItemPointer tupleid,
 			EState *estate);
 static TupleTableSlot *EvalPlanQualNext(EState *estate);
+static void EndEvalPlanQual(EState *estate);
 static void ExecCheckQueryPerms(CmdType operation, Query *parseTree,
 								Plan *plan);
 static void ExecCheckPlanPerms(Plan *plan, CmdType operation,
@@ -924,6 +925,12 @@ EndPlan(Plan *plan, EState *estate)
 	 */
 	resultRelationInfo = estate->es_result_relation_info;
 	intoRelationDesc = estate->es_into_relation_descriptor;
+
+	/*
+	 * shut down any PlanQual processing we were doing
+	 */
+	if (estate->es_evalPlanQual != NULL)
+		EndEvalPlanQual(estate);
 
 	/*
 	 * shut down the query
@@ -2006,4 +2013,37 @@ lpqnext:;
 	}
 
 	return (slot);
+}
+
+static void
+EndEvalPlanQual(EState *estate)
+{
+	evalPlanQual *epq = (evalPlanQual *) estate->es_evalPlanQual;
+	EState	   *epqstate = &(epq->estate);
+	evalPlanQual *oldepq;
+
+	if (epq->rti == 0)			/* still live? */
+		return;
+
+	for (;;)
+	{
+		ExecEndNode(epq->plan, epq->plan);
+	    epqstate->es_tupleTable->next = 0;
+		heap_freetuple(epqstate->es_evTuple[epq->rti - 1]);
+		epqstate->es_evTuple[epq->rti - 1] = NULL;
+		/* pop old PQ from the stack */
+		oldepq = (evalPlanQual *) epqstate->es_evalPlanQual;
+		if (oldepq == (evalPlanQual *) NULL)
+		{
+			epq->rti = 0;					/* this is the first (oldest) */
+			estate->es_useEvalPlan = false;	/* PQ - mark as free */
+			break;
+		}
+		Assert(oldepq->rti != 0);
+		/* push current PQ to freePQ stack */
+		oldepq->free = epq;
+		epq = oldepq;
+		epqstate = &(epq->estate);
+		estate->es_evalPlanQual = (Pointer) epq;
+	}
 }
