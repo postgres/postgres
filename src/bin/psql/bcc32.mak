@@ -103,8 +103,9 @@ CLEAN :
 USERDEFINES = WIN32;_CONSOLE;_MBCS;HAVE_STRDUP
 
 # ---------------------------------------------------------------------------
-CPP_PROJ = -I$(BCB)\include;..\..\include;..\..\interfaces\libpq -c -D$(USERDEFINES) -DFRONTEND \
-           -tWM -tWC -q -5 -a8 -pc -X -w-use -w-par -w-pia -w-csu -w-aus -w-ccc
+CPP_PROJ = -I$(BCB)\include;..\..\include;..\..\interfaces\libpq;..\..\include\port\win32 \
+           -c -D$(USERDEFINES) -DFRONTEND -tWM -tWC -q -5 -a8 -pc -X -w-use -w-par -w-pia \
+	   -w-csu -w-aus -w-ccc
 
 !IFDEF DEBUG
 CPP_PROJ  	= $(CPP_PROJ) -Od -r- -k -v -y -vi- -D_DEBUG

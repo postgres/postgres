@@ -10,12 +10,21 @@ CPP=cl.exe
 PERL=perl.exe
 FLEX=flex.exe
 
+!IFDEF DEBUG
+OPT=/Od /Zi /MDd
+LOPT=/DEBUG
+DEBUGDEF=/D _DEBUG
+OUTDIR=.\Debug
+INTDIR=.\Debug
+!ELSE
+OPT=/O2 /MD
+LOPT=
+DEBUGDEF=/D NDEBUG
 OUTDIR=.\Release
 INTDIR=.\Release
+!ENDIF
+
 REFDOCDIR= ../../../doc/src/sgml/ref
-# Begin Custom Macros
-OutDir=.\Release
-# End Custom Macros
 
 ALL : sql_help.h psqlscan.c "..\..\port\pg_config_paths.h" "$(OUTDIR)\psql.exe"
 
@@ -60,18 +69,19 @@ CLEAN :
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
-CPP_PROJ=/nologo /MD /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D\
+CPP_PROJ=/nologo $(OPT) /W3 /GX /D "WIN32" $(DEBUGDEF) /D "_CONSOLE" /D\
  "_MBCS" /Fp"$(INTDIR)\psql.pch" /YX /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c \
- /I ..\..\include /I ..\..\interfaces\libpq /D "HAVE_STRDUP" /D "FRONTEND"
+ /I ..\..\include /I ..\..\interfaces\libpq /I ..\..\include\port\win32 \
+ /D "HAVE_STRDUP" /D "FRONTEND"
 
-CPP_OBJS=.\Release/
+CPP_OBJS=$(INTDIR)/
 CPP_SBRS=.
 
 LINK32=link.exe
 LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib\
  advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib\
  odbccp32.lib wsock32.lib /nologo /subsystem:console /incremental:no\
- /pdb:"$(OUTDIR)\psql.pdb" /machine:I386 /out:"$(OUTDIR)\psql.exe" 
+ /pdb:"$(OUTDIR)\psql.pdb" /machine:I386 $(LOPT) /out:"$(OUTDIR)\psql.exe" 
 LINK32_OBJS= \
 	"$(INTDIR)\command.obj" \
 	"$(INTDIR)\common.obj" \
@@ -95,7 +105,11 @@ LINK32_OBJS= \
 	"$(INTDIR)\path.obj" \
 	"$(INTDIR)\pgstrcasecmp.obj" \
 	"$(INTDIR)\sprompt.obj" \
+!IFDEF DEBUG
+	"..\..\interfaces\libpq\Debug\libpqddll.lib"
+!ELSE
 	"..\..\interfaces\libpq\Release\libpqdll.lib"
+!ENDIF
 
 "$(OUTDIR)\psql.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
     $(LINK32) @<<
