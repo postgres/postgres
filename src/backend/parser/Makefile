@@ -4,7 +4,7 @@
 #    Makefile for parser
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/parser/Makefile,v 1.8 1997/04/18 08:57:39 vadim Exp $
+#    $Header: /cvsroot/pgsql/src/backend/parser/Makefile,v 1.9 1997/11/14 15:48:19 thomas Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -51,8 +51,11 @@ analyze.o keywords.o scan.o: parse.h
 dep: gram.c scan.c
 	$(CC) -MM $(INCLUDE_OPT) *.c >depend
 
+# Remove scan.c from the clean since we want to avoid rebuilding when using
+# the original source distribution. This should help Solaris machines whose
+# lex has trouble with exclusive states.
 clean: 
-	rm -f SUBSYS.o $(OBJS) gram.c parse.h scan.c
+	rm -f SUBSYS.o $(OBJS) gram.c parse.h # scan.c
 # And the garbage that might have been left behind by partial build:
 	rm -f y.tab.c y.tab.h lex.yy.c
 
