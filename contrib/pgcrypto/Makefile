@@ -1,5 +1,5 @@
 #
-# $Header: /cvsroot/pgsql/contrib/pgcrypto/Makefile,v 1.2 2001/01/24 03:46:16 momjian Exp $
+# $Header: /cvsroot/pgsql/contrib/pgcrypto/Makefile,v 1.3 2001/02/20 15:34:14 momjian Exp $
 #
 
 subdir = contrib/pgcrypto
@@ -12,34 +12,37 @@ cryptolib = builtin
 ##########################
 
 ifeq ($(cryptolib), builtin)
-SRCS= md5.c sha1.c internal.c
+CRYPTO_CFLAGS =
+CRYPTO_LDFLAGS =
+SRCS = md5.c sha1.c internal.c
 endif
 
 ifeq ($(cryptolib), openssl)
-cryptoinc := -I/usr/include/openssl
-cryptolib := -lcrypto
+CRYPTO_CFLAGS = -I/usr/include/openssl
+CRYPTO_LDFLAGS = -lcrypto
 SRCS = openssl.c
 endif
 
 ifeq ($(cryptolib), mhash)
-cryptoinc=
-cryptolib=-lmhash
-SRCS=mhash.c
+CRYPTO_CFLAGS = -I/usr/local/include
+CRYPTO_LDFLAGS = -L/usr/local/lib -lmhash
+SRCS = mhash.c
 endif
 
 ifeq ($(cryptolib), krb5)
-cryptoinc=-I/usr/include
-cryptolib=-ldes
-SRCS=krb.c
+CRYPTO_CFLAGS = -I/usr/include
+CRYPTO_LDFLAGS = -ldes
+SRCS = krb.c
 endif
 
 NAME	:= pgcrypto
 SRCS	+= pgcrypto.c encode.c
 OBJS	:= $(SRCS:.c=.o)
+SHLIB_LINK := $(CRYPTO_LDFLAGS)
 SO_MAJOR_VERSION = 0
 SO_MINOR_VERSION = 1
 
-override CPPFLAGS	+= -I$(srcdir) $(cryptoinc)
+override CPPFLAGS	+= $(CRYPTO_CFLAGS) -I$(srcdir) 
 
 all: all-lib $(NAME).sql
 
