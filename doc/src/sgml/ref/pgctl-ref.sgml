@@ -1,0 +1,419 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pgctl-ref.sgml,v 1.1 2000/04/08 02:16:26 thomas Exp $
+Postgres documentation
+-->
+
+<refentry id="app-pgctl">
+ <refmeta>
+  <refentrytitle id="app-pgctl-title">
+   <application>pg_ctl</application>
+  </refentrytitle>
+  <refmiscinfo>Application</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>
+   <application>pg_ctl</application>
+  </refname>
+  <refpurpose>
+   Starts, stops, and restarts postmaster
+  </refpurpose>
+ </refnamediv>
+
+ <refsynopsisdiv>
+  <refsynopsisdivinfo>
+   <date>2000-04-05</date>
+  </refsynopsisdivinfo>
+
+  <synopsis>
+pg_ctl [-w] [-D <replaceable class="parameter">datadir</replaceable>][-p <replaceable class="parameter">path</replaceable>] [-o "<replaceable class="parameter">options</replaceable>"] start
+pg_ctl [-w] [-D <replaceable class="parameter">datadir</replaceable>] [-m [s[mart]|f[ast]|i[mmediate]]] stop
+pg_ctl [-w] [-D <replaceable class="parameter">datadir</replaceable>] [-m [s[mart]|f[ast]|i[mmediate]] [-o "<replaceable class="parameter">options</replaceable>"] restart
+pg_ctl [-D <replaceable class="parameter">datadir</replaceable>] status
+  </synopsis>
+
+  <refsect2 id="R2-APP-PGCTL-1">
+   <title>
+    Inputs
+   </title>
+   <para>
+
+    <variablelist>
+     <varlistentry>
+      <term>-w</term>
+      <listitem>
+       <para>
+	Wait for the database server comes up, by
+	watching for creation of the pid file (PGDATA/postmaster.pid).
+	Times out after 60 seconds.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>-D <replaceable class="parameter">datadir</replaceable></term>
+      <listitem>
+       <para>
+	Specifies the database location for this database installation.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>-p <replaceable class="parameter">path</replaceable></term>
+      <listitem>
+       <para>
+	Specifies the path to the postmaster image.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>-o "<replaceable class="parameter">options</replaceable>"</term>
+      <listitem>
+       <para>
+        Specifies options to be passed directly to
+	<application>postmaster</application>.
+       </para>
+       <para>
+	The parameters are usually surrounded by single- or double
+	quotes to ensure that they are passed through as a group.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>-m <replaceable class="parameter">mode</replaceable></term>
+      <listitem>
+       <para>
+	Specifies the shutdown mode.
+
+	<variablelist>
+	 <varlistentry>
+	  <term>smart</term>
+	  <term>s</term>
+	  <listitem>
+	   <para>
+	    smart mode waits for all
+	    the clients to logout. This is the default.
+	   </para>
+	  </listitem>
+	 </varlistentry>
+
+	 <varlistentry>
+	  <term>f[ast]</term>
+	  <term>f</term>
+	  <listitem>
+	   <para>
+	    Fast mode sends SIGTERM to the backends, that means
+	    active transactions get rolled back.
+	   </para>
+	  </listitem>
+	 </varlistentry>
+
+	 <varlistentry>
+	  <term>immediate</term>
+	  <term>i</term>
+	  <listitem>
+	   <para>
+	    Immediate mode sends SIGUSR1
+	    to the backends and lets them abort. In this case, database recovery
+	    will be neccessary on the next startup.
+	   </para>
+	  </listitem>
+	 </varlistentry>
+	</variablelist>
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>start</term>
+      <listitem>
+       <para>
+	Start up <application>postmaster</application>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>stop</term>
+      <listitem>
+       <para>
+	Shut down <application>postmaster</application>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>restart</term>
+      <listitem>
+       <para>
+	Restart the <application>postmaster</application>, performing
+	a stop/start sequence.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>status</term>
+      <listitem>
+       <para>
+	Show the current state of <application>postmaster</application>.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+  </refsect2>
+
+  <refsect2 id="R2-APP-PGCTL-2">
+   <refsect2info>
+    <date>1999-11-07</date>
+   </refsect2info>
+   <title>
+    Outputs
+   </title>
+   <para>
+    <variablelist>
+     <varlistentry>
+      <term><computeroutput>pg_ctl: postmaster is <replaceable>state</replaceable> (pid: <replaceable>#</replaceable>)</computeroutput></term>
+      <listitem>
+       <para>
+	Postmaster status.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+
+    If there is an error condition, the backend error message will be displayed.
+   </para>
+  </refsect2>
+ </refsynopsisdiv>
+
+ <refsect1 id="R1-APP-PGCTL-1">
+  <title>
+   Description
+  </title>
+  <para>
+   <application>pg_ctl</application> is a utility for starting,
+   stopping or restarting <application>postmaster</application>.
+  </para>
+ </refsect1>
+
+ <refsect1 id="R1-APP-PGCTL-2">
+  <title>
+   Usage
+  </title>
+
+  <refsect2 id="R2-APP-PGCTL-3">
+   <title>
+    Starting postmaster
+   </title>
+
+   <para>
+    To start up <application>postmaster</application>:
+
+    <programlisting>
+&gt; pg_ctl start
+    </programlisting>
+   </para>
+
+   <para>
+    If -w is supplied, pg_ctl waits for the database server comes up, by
+    watching for creation of the pid file (PGDATA/postmaster.pid), for up
+    to 60 seconds.
+   </para>
+
+   <para>
+    Parameters to invoke <application>postmaster</application> are
+    taken from the following sources:
+
+    <itemizedlist>
+     <listitem>
+      <para>
+       Path to postmaster: found in the command search path.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Database directory: <envar>PGDATA</envar> environment variable.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Other parameters:
+       <filename><envar>PGDATA</envar>/postmaster.opts.default</filename>.
+      </para>
+     </listitem>
+    </itemizedlist>
+   </para>
+
+   <para>
+    <filename>postmaster.opts.default</filename> contains parameters
+    for <application>postmaster</application>. With a
+    default installation, the <option>-S</option> option is enabled.
+    So <command>pg_ctl start</command> implies:
+
+    <programlisting>
+postmaster -S
+    </programlisting>
+   </para>
+
+   <para>
+    Note that <filename>postmaster.opts.default</filename> is
+    installed by <application>initdb</application> from
+    <filename>lib/postmaster.opts.default.sample</filename>
+    under the <productname>Postgres</productname> installation
+    directory (<filename>lib/postmaster.opts.default.sample</filename>
+    is copied from
+    <filename>src/bin/pg_ctl/postmaster.opts.default.sample</filename>
+    while installing <productname>Postgres</productname>).
+   </para>
+
+   <para>
+    To override the default parameters you can use <option>-D</option>,
+    <option>-p</option> and <option>-o</option> options.
+   </para>
+
+   <para>
+    An example of starting the
+    <application>postmaster</application>, blocking until
+    postmaster comes up is:
+    <programlisting>
+&gt; pg_ctl -w start
+    </programlisting>
+   </para>
+
+   <para>
+    To specify the <application>postmaster</application> binary path,
+    try:
+
+    <programlisting>
+&gt; pg_ctl -p /usr/local/pgsq/bin/postmaster start
+    </programlisting>
+   </para>
+
+   <para>
+    For a <application>postmaster</application> using port 5433, and
+    running without <function>fsync</function>, use:
+
+    <programlisting>
+&gt; pg_ctl -o "-o -F -p 5433" start
+    </programlisting>
+   </para>
+  </refsect2>
+
+  <refsect2 id="R2-APP-PGCTL-4">
+   <title>
+    Stopping postmaster
+   </title>
+   <para>
+
+    <programlisting>
+&gt; pg_ctl stop
+    </programlisting>
+
+    stops postmaster. Using the <option>-m</option> switch allows one
+    to control <emphasis>how</emphasis> the backend shuts down.
+    <option>-w</option>
+    waits for postmaster to shut down.
+    <option>-m</option> specifies the shut down mode.
+   </para>
+  </refsect2>
+
+  <refsect2 id="R2-APP-PGCTL-5">
+   <title>
+    Restarting postmaster
+   </title>
+
+   <para>
+    This is almost equivalent to stopping the
+    <application>postmaster</application> then starting it
+    again except that the parameters used before stopping
+    it would be used too. This is done by saving them in
+    $<envar>PGDATA</envar>/postmaster.opts file.
+    <option>-w</option>, <option>-D</option>, <option>-m</option>,
+    <option>-fast</option>, <option>-immediate</option> and
+    <option>-o</option> 
+    can also be used in the restarting mode and they have same meanings as
+    described above.
+   </para>
+
+   <para>
+    To restart <application>postmaster</application> in the simplest
+    form:
+
+    <programlisting>
+&gt; pg_ctl restart
+    </programlisting>
+   </para>
+
+   <para>
+    To restart <application>postmaster</application>,
+    waiting for it to shut down and to come up:
+
+    <programlisting>
+&gt; pg_ctl -w restart
+    </programlisting>
+   </para>
+
+   <para>
+    To restart using port 5433 and disabling fsync after restarting:
+
+    <programlisting>
+&gt; pg_ctl -o "-o -F -p 5433" restart
+    </programlisting>
+   </para>
+  </refsect2>
+
+  <refsect2 id="R2-APP-PGCTL-6">
+   <title>
+    postmaster status
+   </title>
+
+   <para>
+    To get status information from postmaster:
+
+    <programlisting>
+&gt; pg_ctl status
+    </programlisting>
+   </para>
+
+   <para>
+    Here is a sample output from <application>pg_ctl</application>:
+
+    <programlisting>
+pg_ctl: postmaster is running (pid: 13718)
+options are:
+/usr/local/src/pgsql/current/bin/postmaster
+-p 5433
+-D /usr/local/src/pgsql/current/data
+-B 64
+-b /usr/local/src/pgsql/current/bin/postgres
+-N 32
+-o '-F'
+    </programlisting>
+   </para>
+  </refsect2>
+ </refsect1>
+</refentry>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode:sgml
+sgml-omittag:nil
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+sgml-parent-document:nil
+sgml-default-dtd-file:"../reference.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:("/usr/lib/sgml/catalog")
+sgml-local-ecat-files:nil
+End:
+-->

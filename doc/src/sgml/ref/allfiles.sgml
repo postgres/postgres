@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/allfiles.sgml,v 1.15 2000/01/14 22:11:32 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/allfiles.sgml,v 1.16 2000/04/08 02:16:26 thomas Exp $
 Postgres documentation
 Complete list of usable sgml source files in this directory.
 -->
@@ -114,6 +114,7 @@ Complete list of usable sgml source files in this directory.
 <!entity ipcclean           system "ipcclean.sgml">
 <!entity pgAccess           system "pgaccess-ref.sgml">
 <!entity pgAdmin            system "pgadmin-ref.sgml">
+<!entity pgCtl              system "pgctl-ref.sgml">
 <!entity pgDump             system "pg_dump.sgml">
 <!entity pgDumpall          system "pg_dumpall.sgml">
 <!entity pgPasswd           system "pg_passwd.sgml">
