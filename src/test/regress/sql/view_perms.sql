@@ -54,8 +54,8 @@ CREATE VIEW viewperms_v7 AS SELECT * FROM viewperms_v2;
 --     v2	pgslq
 --     v3	tuser
 --     v4	tuser
---     v5	pgsql
---     v6	pgsql
+--     v5	postgres
+--     v6	postgres
 --     v7	tuser
 --
 UPDATE pg_class SET relowner = viewperms_testid() 
@@ -71,31 +71,31 @@ UPDATE pg_class SET relowner = viewperms_testid()
 -- Now for the tests.
 --
 
--- View v1 owner pgsql has access to t1 owned by tuser
+-- View v1 owner postgres has access to t1 owned by tuser
 SELECT * FROM viewperms_v1;
 
--- View v2 owner pgsql has access to t2 owned by pgsql (of cause)
+-- View v2 owner postgres has access to t2 owned by postgres (of cause)
 SELECT * FROM viewperms_v2;
 
 -- View v3 owner tuser has access to t1 owned by tuser
 SELECT * FROM viewperms_v3;
 
--- View v4 owner tuser has NO access to t2 owned by pgsql
+-- View v4 owner tuser has NO access to t2 owned by postgres
 -- MUST fail with permission denied
 SELECT * FROM viewperms_v4;
 
--- v5 (pgsql) can access v2 (pgsql) can access t1 (tuser)
+-- v5 (postgres) can access v2 (postgres) can access t1 (tuser)
 SELECT * FROM viewperms_v5;
 
--- v6 (pgsql) can access v4 (tuser) CANNOT access t2 (pgsql)
+-- v6 (postgres) can access v4 (tuser) CANNOT access t2 (postgres)
 SELECT * FROM viewperms_v6;
 
--- v7 (tuser) CANNOT access v2 (pgsql) wanna access t2 (pgslq)
+-- v7 (tuser) CANNOT access v2 (postgres) wanna access t2 (pgslq)
 SELECT * FROM viewperms_v7;
 
 GRANT SELECT ON viewperms_v2 TO PUBLIC;
 -- but now
--- v7 (tuser) can access v2 (pgsql via grant) can access t2 (pgsql)
+-- v7 (tuser) can access v2 (postgres via grant) can access t2 (postgres)
 SELECT * FROM viewperms_v7;
 
 --
