@@ -1,7 +1,7 @@
 --
 --	PostgreSQL code for LargeObjects
 --
---	$Id: lo.sql.in,v 1.8 2002/10/18 18:41:20 momjian Exp $
+--	$Id: lo.sql.in,v 1.9 2002/12/31 10:22:03 inoue Exp $
 --
 --
 --	Create the data type
@@ -17,13 +17,13 @@ SET autocommit TO 'on';
 CREATE FUNCTION lo_in(cstring)
 RETURNS lo
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C';
+LANGUAGE 'C' IMMUTABLE;
 
 -- used by the lo type, it returns the oid of the object
 CREATE FUNCTION lo_out(lo)
 RETURNS cstring
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C';
+LANGUAGE 'C' IMMUTABLE;
 
 -- finally the type itself
 CREATE TYPE lo (
@@ -37,7 +37,7 @@ CREATE TYPE lo (
 CREATE FUNCTION lo_oid(lo)
 RETURNS oid
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C';
+LANGUAGE 'C' IMMUTABLE;
 
 -- same function, named to allow it to be used as a type coercion, eg:
 --    CREATE TABLE a (image lo);
@@ -46,14 +46,16 @@ LANGUAGE 'C';
 CREATE FUNCTION oid(lo)
 RETURNS oid
 AS 'MODULE_PATHNAME', 'lo_oid'
-LANGUAGE 'C';
+LANGUAGE 'C' IMMUTABLE;
+CREATE CAST (lo as oid) WITH FUNCTION oid(lo) AS IMPLICIT;
 
 -- this allows us to convert an oid to a managed lo object
 -- ie: insert into test values (lo_import('/fullpath/file')::lo);
 CREATE FUNCTION lo(oid)
 RETURNS lo
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C';
+LANGUAGE 'C' IMMUTABLE;
+CREATE CAST (oid as lo) WITH FUNCTION lo(oid) AS IMPLICIT;
 
 -- This is used in triggers
 CREATE FUNCTION lo_manage()
