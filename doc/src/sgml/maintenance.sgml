@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.31 2004/03/15 14:15:45 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.32 2004/03/15 14:21:30 momjian Exp $
 -->
 
 <chapter id="maintenance">
@@ -470,7 +470,7 @@ VACUUM
    On many systems, however, <application>syslog</> is not very reliable,
    particularly with large log messages; it may truncate or drop messages
    just when you need them the most.  Also, on <productname>linux</>,
-   <appication>syslog</> will sync each message to disk, yielding poor
+   <application>syslog</> will sync each message to disk, yielding poor
    performance.  Use a <literal>-</> at the start of the file name
    in the <application>syslog</> config file to disable this behavior.
   </para>
