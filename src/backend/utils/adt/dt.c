@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.52 1998/02/26 04:37:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.53 1998/05/09 22:38:18 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1241,17 +1241,6 @@ datetime_age(DateTime *datetime1, DateTime *datetime2)
 			elog(ERROR, "Unable to decode datetime", NULL);
 		}
 
-#if FALSE
-		result->time = (fsec2 - fsec1);
-		result->time += (tm2->tm_sec - tm1->tm_sec);
-		result->time += 60 * (tm2->tm_min - tm1->tm_min);
-		result->time += 3600 * (tm2->tm_hour - tm1->tm_hour);
-		result->time += 86400 * (tm2->tm_mday - tm1->tm_mday);
-
-		result->month = 12 * (tm2->tm_year - tm1->tm_year);
-		result->month += (tm2->tm_mon - tm1->tm_mon);
-#endif
-
 	}
 	else
 	{
@@ -1419,12 +1408,6 @@ datetime_trunc(text *units, DateTime *datetime)
 	*lp = '\0';
 
 	type = DecodeUnits(0, lowunits, &val);
-#if FALSE
-	if (type == IGNORE)
-	{
-		type = DecodeSpecial(0, lowunits, &val);
-	}
-#endif
 
 #ifdef DATEDEBUG
 	if (type == IGNORE)
@@ -1564,12 +1547,6 @@ timespan_trunc(text *units, TimeSpan *timespan)
 	*lp = '\0';
 
 	type = DecodeUnits(0, lowunits, &val);
-#if FALSE
-	if (type == IGNORE)
-	{
-		type = DecodeSpecial(0, lowunits, &val);
-	}
-#endif
 
 #ifdef DATEDEBUG
 	if (type == IGNORE)
@@ -1676,6 +1653,7 @@ datetime_part(text *units, DateTime *datetime)
 	char	   *up,
 			   *lp,
 				lowunits[MAXDATELEN + 1];
+	double		dummy;
 	double		fsec;
 	char	   *tzn;
 	struct tm	tt,
@@ -1723,6 +1701,16 @@ datetime_part(text *units, DateTime *datetime)
 			{
 				case DTK_TZ:
 					*result = tz;
+					break;
+
+				case DTK_TZ_MINUTE:
+					*result = tz / 60;
+					TMODULO(*result, dummy, 60e0);
+					break;
+
+				case DTK_TZ_HOUR:
+					dummy = tz;
+					TMODULO(dummy, *result, 3600e0);
 					break;
 
 				case DTK_MICROSEC:
@@ -2248,8 +2236,7 @@ static datetkn deltatktbl[] = {
 	{"mils", UNITS, DTK_MILLENIUM},		/* "millenia" relative time units */
 	{"millenia", UNITS, DTK_MILLENIUM}, /* "millenia" relative time units */
 	{DMILLENIUM, UNITS, DTK_MILLENIUM}, /* "millenium" relative time units */
-	{"millisecon", UNITS, DTK_MILLISEC},		/* "millisecond" relative
-												 * time units */
+	{"millisecon", UNITS, DTK_MILLISEC},	/* relative time units */
 	{"min", UNITS, DTK_MINUTE}, /* "minute" relative time units */
 	{"mins", UNITS, DTK_MINUTE},/* "minutes" relative time units */
 	{"mins", UNITS, DTK_MINUTE},/* "minutes" relative time units */
@@ -2258,29 +2245,25 @@ static datetkn deltatktbl[] = {
 	{"mon", UNITS, DTK_MONTH},	/* "months" relative time units */
 	{"mons", UNITS, DTK_MONTH}, /* "months" relative time units */
 	{DMONTH, UNITS, DTK_MONTH}, /* "month" relative time units */
-	{"months", UNITS, DTK_MONTH},		/* "months" relative time units */
-	{"ms", UNITS, DTK_MILLISEC},/* "millisecond" relative time units */
-	{"msec", UNITS, DTK_MILLISEC},		/* "millisecond" relative time
-										 * units */
-	{DMILLISEC, UNITS, DTK_MILLISEC},	/* "millisecond" relative time
-										 * units */
-	{"mseconds", UNITS, DTK_MILLISEC},	/* "milliseconds" relative time
-										 * units */
-	{"msecs", UNITS, DTK_MILLISEC},		/* "milliseconds" relative time
-										 * units */
-	{"qtr", UNITS, DTK_QUARTER},/* "quarter" relative time units */
-	{DQUARTER, UNITS, DTK_QUARTER},		/* "quarter" relative time units */
-	{"reltime", IGNORE, 0},		/* "reltime" for pre-v6.1 "Undefined
-								 * Reltime" */
-	{"s", UNITS, DTK_SECOND},	/* "second" relative time units */
-	{"sec", UNITS, DTK_SECOND}, /* "second" relative time units */
-	{DSECOND, UNITS, DTK_SECOND},		/* "second" relative time units */
-	{"seconds", UNITS, DTK_SECOND},		/* "seconds" relative time units */
-	{"secs", UNITS, DTK_SECOND},/* "seconds" relative time units */
-	{DTIMEZONE, UNITS, DTK_TZ}, /* "timezone" time offset */
-	{"tz", UNITS, DTK_TZ},		/* "timezone" time offset */
-	{"undefined", RESERV, DTK_INVALID}, /* "undefined" pre-v6.1 invalid
-										 * time */
+	{"months", UNITS, DTK_MONTH},
+	{"ms", UNITS, DTK_MILLISEC},
+	{"msec", UNITS, DTK_MILLISEC},
+	{DMILLISEC, UNITS, DTK_MILLISEC},
+	{"mseconds", UNITS, DTK_MILLISEC},
+	{"msecs", UNITS, DTK_MILLISEC},
+	{"qtr", UNITS, DTK_QUARTER},		/* "quarter" relative time */
+	{DQUARTER, UNITS, DTK_QUARTER},		/* "quarter" relative time */
+	{"reltime", IGNORE, 0},				/* for pre-v6.1 "Undefined Reltime" */
+	{"s", UNITS, DTK_SECOND},
+	{"sec", UNITS, DTK_SECOND},
+	{DSECOND, UNITS, DTK_SECOND},
+	{"seconds", UNITS, DTK_SECOND},
+	{"secs", UNITS, DTK_SECOND},
+	{DTIMEZONE, UNITS, DTK_TZ},			/* "timezone" time offset */
+	{"tz", UNITS, DTK_TZ},				/* "timezone" time offset */
+	{"tz_hour", UNITS, DTK_TZ_HOUR},	/* timezone hour units */
+	{"tz_minute", UNITS, DTK_TZ_MINUTE},	/* timezone minutes units */
+	{"undefined", RESERV, DTK_INVALID}, /* pre-v6.1 invalid time */
 	{"us", UNITS, DTK_MICROSEC},/* "microsecond" relative time units */
 	{"usec", UNITS, DTK_MICROSEC},		/* "microsecond" relative time
 										 * units */
@@ -2444,7 +2427,7 @@ datetime2tm(DateTime dt, int *tzp, struct tm * tm, double *fsec, char **tzn)
 #endif
 
 	*fsec = JROUND(sec);
-	TMODULO(*fsec, tm->tm_sec, 1);
+	TMODULO(*fsec, tm->tm_sec, 1e0);
 
 #ifdef DATEDEBUG
 	printf("datetime2tm- time is %02d:%02d:%02d %.7f\n", tm->tm_hour, tm->tm_min, tm->tm_sec, *fsec);
@@ -2455,10 +2438,6 @@ datetime2tm(DateTime dt, int *tzp, struct tm * tm, double *fsec, char **tzn)
 		if (IS_VALID_UTIME(tm->tm_year, tm->tm_mon, tm->tm_mday))
 		{
 			utime = (dt + (date0 - date2j(1970, 1, 1)) * 86400);
-#if FALSE
-			if (utime < -1)
-				utime++;
-#endif
 
 #ifdef USE_POSIX_TIME
 			tx = localtime(&utime);
@@ -2607,7 +2586,7 @@ timespan2tm(TimeSpan span, struct tm * tm, float8 *fsec)
 	TMODULO(time, tm->tm_mday, 86400e0);
 	TMODULO(time, tm->tm_hour, 3600e0);
 	TMODULO(time, tm->tm_min, 60e0);
-	TMODULO(time, tm->tm_sec, 1);
+	TMODULO(time, tm->tm_sec, 1e0);
 	*fsec = time;
 
 #ifdef DATEDEBUG
@@ -3719,26 +3698,19 @@ DecodeSpecial(int field, char *lowtoken, int *val)
  * Allow "date" field DTK_DATE since this could be just
  *	an unsigned floating point number. - thomas 1997-11-16
  *
- * If code is changed to read fields from first to last,
- *	then use READ_FORWARD-bracketed code to allow sign
- *	to persist to subsequent unsigned fields.
+ * Allow ISO-style time span, with implicit units on number of days
+ *  preceeding an hh:mm:ss field. - thomas 1998-04-30
  */
 int
 DecodeDateDelta(char *field[], int ftype[], int nf, int *dtype, struct tm * tm, double *fsec)
 {
 	int			is_before = FALSE;
 
-#if READ_FORWARD
-	int			is_neg = FALSE;
-
-#endif
-
 	char	   *cp;
 	int			fmask = 0,
 				tmask,
 				type;
-	int			i,
-				ii;
+	int			i;
 	int			flen,
 				val;
 	double		fval;
@@ -3755,30 +3727,8 @@ DecodeDateDelta(char *field[], int ftype[], int nf, int *dtype, struct tm * tm, 
 	tm->tm_sec = 0;
 	*fsec = 0;
 
-	/* read through list forwards to pick up initial time fields, if any */
-	for (ii = 0; ii < nf; ii++)
-	{
-#ifdef DATEDEBUG
-		printf("DecodeDateDelta- field[%d] is %s (type %d)\n", ii, field[ii], ftype[ii]);
-#endif
-		if (ftype[ii] == DTK_TIME)
-		{
-			if (DecodeTime(field[ii], fmask, &tmask, tm, fsec) != 0)
-				return -1;
-			fmask |= tmask;
-
-		}
-		else
-		{
-			break;
-		}
-	}
-
-	/*
-	 * read through remaining list backwards to pick up units before
-	 * values
-	 */
-	for (i = nf - 1; i >= ii; i--)
+	/* read through list backwards to pick up units before values */
+	for (i = nf - 1; i >= 0; i--)
 	{
 #ifdef DATEDEBUG
 		printf("DecodeDateDelta- field[%d] is %s (type %d)\n", i, field[i], ftype[i]);
@@ -3786,27 +3736,18 @@ DecodeDateDelta(char *field[], int ftype[], int nf, int *dtype, struct tm * tm, 
 		switch (ftype[i])
 		{
 			case DTK_TIME:
-				/* already read in forward-scan above so return error */
-#if FALSE
 				if (DecodeTime(field[i], fmask, &tmask, tm, fsec) != 0)
 					return -1;
-#endif
-				return -1;
+				type = DTK_DAY;
 				break;
 
-			case DTK_TZ:		/* timezone is a token with a leading sign
-								 * character */
-#if READ_FORWARD
-				is_neg = (*field[i] == '-');
-#endif
-
+			case DTK_TZ:
+				/* Timezone is a token with a leading sign character
+				 * and otherwise the same as a non-signed numeric field
+				 */
 			case DTK_DATE:
 			case DTK_NUMBER:
 				val = strtol(field[i], &cp, 10);
-#if READ_FORWARD
-				if (is_neg && (val > 0))
-					val = -val;
-#endif
 				if (*cp == '.')
 				{
 					fval = strtod(cp, &cp);
@@ -3815,11 +3756,6 @@ DecodeDateDelta(char *field[], int ftype[], int nf, int *dtype, struct tm * tm, 
 
 					if (val < 0)
 						fval = -(fval);
-#if FALSE
-					*fsec = strtod(cp, NULL);
-					if (val < 0)
-						*fsec = -(*fsec);
-#endif
 				}
 				else if (*cp == '\0')
 					fval = 0;
@@ -3963,7 +3899,7 @@ DecodeDateDelta(char *field[], int ftype[], int nf, int *dtype, struct tm * tm, 
 
 	if (*fsec != 0)
 	{
-		TMODULO(*fsec, sec, 1);
+		TMODULO(*fsec, sec, 1e0);
 		tm->tm_sec += sec;
 	}
 
@@ -4380,8 +4316,10 @@ EncodeDateTime(struct tm * tm, double fsec, int *tzp, char **tzn, int style, cha
 /* EncodeTimeSpan()
  * Interpret time structure as a delta time and convert to string.
  *
- * Pass a flag to specify the style of string, but only implement
- *	the traditional Postgres style for now. - tgl 97/03/27
+ * Support "traditional Postgres" and ISO-8601 styles.
+ * Actually, afaik ISO does not address time interval formatting,
+ *  but this looks similar to the spec for absolute date/time.
+ * - thomas 1998-04-30
  */
 int
 EncodeTimeSpan(struct tm * tm, double fsec, int style, char *str)
@@ -4392,105 +4330,118 @@ EncodeTimeSpan(struct tm * tm, double fsec, int style, char *str)
 
 	switch (style)
 	{
-			/* compatible with ISO date formats */
+		/* compatible with ISO date formats */
 		case USE_ISO_DATES:
 			break;
 
 		default:
-			strcpy(cp, "@");
+			strcpy(cp, "@ ");
 			cp += strlen(cp);
 			break;
 	}
 
 	if (tm->tm_year != 0)
 	{
-		is_nonzero = TRUE;
 		is_before |= (tm->tm_year < 0);
-		sprintf(cp, " %d year%s", abs(tm->tm_year), ((abs(tm->tm_year) != 1) ? "s" : ""));
+		sprintf(cp, "%d year%s",
+		 abs(tm->tm_year), ((abs(tm->tm_year) != 1) ? "s" : ""));
 		cp += strlen(cp);
+		is_nonzero = TRUE;
 	}
 
 	if (tm->tm_mon != 0)
 	{
-		is_nonzero = TRUE;
 		is_before |= (tm->tm_mon < 0);
-		sprintf(cp, " %d mon%s", abs(tm->tm_mon), ((abs(tm->tm_mon) != 1) ? "s" : ""));
+		sprintf(cp, "%s%d mon%s", (is_nonzero? " ": ""),
+		 abs(tm->tm_mon), ((abs(tm->tm_mon) != 1) ? "s" : ""));
 		cp += strlen(cp);
-	}
-
-	if (tm->tm_mday != 0)
-	{
 		is_nonzero = TRUE;
-		is_before |= (tm->tm_mday < 0);
-		sprintf(cp, " %d day%s", abs(tm->tm_mday), ((abs(tm->tm_mday) != 1) ? "s" : ""));
-		cp += strlen(cp);
 	}
 
 	switch (style)
 	{
-			/* compatible with ISO date formats */
+		/* compatible with ISO date formats */
 		case USE_ISO_DATES:
+			if (tm->tm_mday != 0)
+			{
+				is_before |= (tm->tm_mday < 0);
+				sprintf(cp, "%s%d", (is_nonzero? " ": ""), abs(tm->tm_mday));
+				cp += strlen(cp);
+				is_nonzero = TRUE;
+			}
+			is_before |= ((tm->tm_hour < 0) || (tm->tm_min < 0));
+			sprintf(cp, "%s%02d:%02d", (is_nonzero? " ": ""),
+			 abs(tm->tm_hour), abs(tm->tm_min));
+			cp += strlen(cp);
 			if ((tm->tm_hour != 0) || (tm->tm_min != 0))
 				is_nonzero = TRUE;
-			is_before |= ((tm->tm_hour < 0) || (tm->tm_min < 0));
-			sprintf(cp, " %02d:%02d", abs(tm->tm_hour), abs(tm->tm_min));
-			cp += strlen(cp);
 
 			/* fractional seconds? */
 			if (fsec != 0)
 			{
-				is_nonzero = TRUE;
 				fsec += tm->tm_sec;
 				is_before |= (fsec < 0);
 				sprintf(cp, ":%05.2f", fabs(fsec));
 				cp += strlen(cp);
+				is_nonzero = TRUE;
 
 				/* otherwise, integer seconds only? */
 			}
 			else if (tm->tm_sec != 0)
 			{
-				is_nonzero = TRUE;
 				is_before |= (tm->tm_sec < 0);
 				sprintf(cp, ":%02d", abs(tm->tm_sec));
 				cp += strlen(cp);
+				is_nonzero = TRUE;
 			}
 			break;
 
 		case USE_POSTGRES_DATES:
 		default:
+			if (tm->tm_mday != 0)
+			{
+				is_before |= (tm->tm_mday < 0);
+				sprintf(cp, "%s%d day%s", (is_nonzero? " ": ""),
+				 abs(tm->tm_mday), ((abs(tm->tm_mday) != 1) ? "s" : ""));
+				cp += strlen(cp);
+				is_nonzero = TRUE;
+			}
 			if (tm->tm_hour != 0)
 			{
-				is_nonzero = TRUE;
 				is_before |= (tm->tm_hour < 0);
-				sprintf(cp, " %d hour%s", abs(tm->tm_hour), ((abs(tm->tm_hour) != 1) ? "s" : ""));
+				sprintf(cp, "%s%d hour%s", (is_nonzero? " ": ""),
+				 abs(tm->tm_hour), ((abs(tm->tm_hour) != 1) ? "s" : ""));
 				cp += strlen(cp);
+				is_nonzero = TRUE;
 			}
 
 			if (tm->tm_min != 0)
 			{
-				is_nonzero = TRUE;
 				is_before |= (tm->tm_min < 0);
-				sprintf(cp, " %d min%s", abs(tm->tm_min), ((abs(tm->tm_min) != 1) ? "s" : ""));
+				sprintf(cp, "%s%d min%s", (is_nonzero? " ": ""),
+				 abs(tm->tm_min), ((abs(tm->tm_min) != 1) ? "s" : ""));
 				cp += strlen(cp);
+				is_nonzero = TRUE;
 			}
 
 			/* fractional seconds? */
 			if (fsec != 0)
 			{
-				is_nonzero = TRUE;
 				fsec += tm->tm_sec;
 				is_before |= (fsec < 0);
-				sprintf(cp, " %.2f secs", fabs(fsec));
+				sprintf(cp, "%s%.2f secs", (is_nonzero? " ": ""), fabs(fsec));
 				cp += strlen(cp);
+				is_nonzero = TRUE;
 
 				/* otherwise, integer seconds only? */
 			}
 			else if (tm->tm_sec != 0)
 			{
-				is_nonzero = TRUE;
 				is_before |= (tm->tm_sec < 0);
-				sprintf(cp, " %d sec%s", abs(tm->tm_sec), ((abs(tm->tm_sec) != 1) ? "s" : ""));
+				sprintf(cp, "%s%d sec%s", (is_nonzero? " ": ""),
+				 abs(tm->tm_sec), ((abs(tm->tm_sec) != 1) ? "s" : ""));
 				cp += strlen(cp);
+				is_nonzero = TRUE;
 			}
 			break;
 	}
@@ -4498,7 +4449,7 @@ EncodeTimeSpan(struct tm * tm, double fsec, int style, char *str)
 	/* identically zero? then put in a unitless zero... */
 	if (!is_nonzero)
 	{
-		strcat(cp, " 0");
+		strcat(cp, "0");
 		cp += strlen(cp);
 	}
 
