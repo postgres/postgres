@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.53 1999/01/21 22:48:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.54 1999/01/26 14:38:52 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -404,7 +404,7 @@ ProcessUtility(Node *parsetree,
 							stmt->indexParams,	/* parameters */
 							stmt->withClause,
 							stmt->unique,
-							0,		/* CREATE INDEX can't be primary */
+							stmt->primary,
 							(Expr *) stmt->whereClause,
 							stmt->rangetable);
 			}
