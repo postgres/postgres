@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.144 2001/10/12 00:07:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.145 2001/10/23 17:39:02 tgl Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -1347,9 +1347,7 @@ AlterTableAddConstraint(char *relationName,
                             bool  istemp = is_temp_rel_name(relationName);
                             List	   *indexoidlist;
                             List     *indexoidscan;
-                            Form_pg_attribute *rel_attrs;
-                            int num_keys = 0;
-                            int keys_matched = 0;
+                            int num_keys;
                             bool index_found = false;
                             bool index_found_unique = false;
                             bool index_found_primary = false;
@@ -1394,15 +1392,9 @@ AlterTableAddConstraint(char *relationName,
                              * constraint
                              */
 
-                            rel_attrs = rel->rd_att->attrs;
-
-                            /* Retrieve the oids of all indices on the relation */
-                            indexoidlist = RelationGetIndexList(rel);
-                            index_found = false;
-                            index_found_unique = false;
-                            index_found_primary = false;
-
                             /* Loop over all indices on the relation */
+                            indexoidlist = RelationGetIndexList(rel);
+
                             foreach(indexoidscan, indexoidlist)
                             {
                                Oid			indexoid = lfirsti(indexoidscan);
@@ -1424,43 +1416,41 @@ AlterTableAddConstraint(char *relationName,
                                * Make sure this index has the same number of
                                * keys as the constraint -- It obviously won't match otherwise.
                                */
-                               for (i = 0; i < INDEX_MAX_KEYS && indexStruct->indkey[i] != 0; i++);
+                               for (i = 0; i < INDEX_MAX_KEYS && indexStruct->indkey[i] != 0; i++)
+								   ;
                                num_keys = length(constr->keys);
-                               keys_matched = 0;
 
                                if (i == num_keys)
                                {
                                   /* Loop over each key in the constraint and check that there is a
                                      corresponding key in the index. */
+								   int keys_matched = 0;
+
                                   i = 0;
                                   foreach(keyl, constr->keys)
                                   {
                                      Ident    *key = lfirst(keyl);
+									 int	   keyno = indexStruct->indkey[i];
 
                                      /* Look at key[i] in the index and check that it is over the same column
                                         as key[i] in the constraint.  This is to differentiate between (a,b)
                                         and (b,a) */
-                                     if (i < INDEX_MAX_KEYS && indexStruct->indkey[i] != 0)
-                                     {
-                                        int	   keyno = indexStruct->indkey[i];
-
-                                        if (keyno > 0)
-                                        {
-                                           char  *name = NameStr(rel_attrs[keyno - 1]->attname);
-                                           if (strcmp(name, key->name) == 0) keys_matched++;
-                                        }
-                                     }
-                                     else elog(ERROR, "ALTER TABLE/ADD CONSTRAINT: Key \"%u[%u]\" not found", indexoid, i);
+									 if (namestrcmp(attnumAttName(rel, keyno),
+													key->name) == 0)
+										 keys_matched++;
+									 else
+										 break;
                                      i++;
                                   }
                                   if (keys_matched == num_keys) {
                                      index_found = true;
                                      index_found_unique = indexStruct->indisunique;
                                      index_found_primary = indexStruct->indisprimary;
-                                     if (index_found_unique || index_found_primary) break;
                                   }
                                }
                                ReleaseSysCache(indexTuple);
+							   if (index_found_unique || index_found_primary)
+								   break;
                             }
 
                             freeList(indexoidlist);
@@ -1504,19 +1494,7 @@ AlterTableAddConstraint(char *relationName,
 				Trigger		trig;
 				List	   *list;
 				int			count;
-				List	   *indexoidlist,
-						   *indexoidscan;
-				Form_pg_attribute *rel_attrs = NULL;
-				int			i;
-				bool		found = false;
-
-				Oid     fktypoid[INDEX_MAX_KEYS];
-				Oid     pktypoid[INDEX_MAX_KEYS];
-				int     attloc;
  
-				for (i=0; i<INDEX_MAX_KEYS; i++) 
-					fktypoid[i]=pktypoid[i]=0;
-
 				if (is_temp_rel_name(fkconstraint->pktable_name) &&
 					!is_temp_rel_name(relationName))
 					elog(ERROR, "ALTER TABLE / ADD CONSTRAINT: Unable to reference temporary table from permanent table constraint.");
@@ -1530,139 +1508,20 @@ AlterTableAddConstraint(char *relationName,
 				if (pkrel->rd_rel->relkind != RELKIND_RELATION)
 					elog(ERROR, "referenced table \"%s\" not a relation",
 						 fkconstraint->pktable_name);
+				heap_close(pkrel, NoLock);
 
 				/*
+				 * First we check for limited correctness of the constraint.
+				 *
+				 * NOTE: we assume parser has already checked for existence
+				 * of an appropriate unique index on the referenced relation,
+				 * and that the column datatypes are comparable.
+				 *
 				 * Scan through each tuple, calling the RI_FKey_Match_Ins
 				 * (insert trigger) as if that tuple had just been
 				 * inserted.  If any of those fail, it should elog(ERROR)
 				 * and that's that.
 				 */
-
-				/*
-				 * First we check for limited correctness of the
-				 * constraint
-				 */
-
-				rel_attrs = pkrel->rd_att->attrs;
-				indexoidlist = RelationGetIndexList(pkrel);
-
-				foreach(indexoidscan, indexoidlist)
-				{
-					Oid			indexoid = lfirsti(indexoidscan);
-					HeapTuple	indexTuple;
-					Form_pg_index indexStruct;
-
-					indexTuple = SearchSysCache(INDEXRELID,
-											  ObjectIdGetDatum(indexoid),
-												0, 0, 0);
-					if (!HeapTupleIsValid(indexTuple))
-						elog(ERROR, "transformFkeyGetPrimaryKey: index %u not found",
-							 indexoid);
-					indexStruct = (Form_pg_index) GETSTRUCT(indexTuple);
-
-					if (indexStruct->indisunique)
-					{
-						List	   *attrl;
-
-						/*
-						 * Make sure this index has the same number of
-						 * keys -- It obviously won't match otherwise.
-						 */
-						for (i = 0; i < INDEX_MAX_KEYS && indexStruct->indkey[i] != 0; i++);
-						if (i != length(fkconstraint->pk_attrs))
-							found = false;
-						else
-						{
-							attloc=0;
-							/* go through the fkconstraint->pk_attrs list */
-							foreach(attrl, fkconstraint->pk_attrs)
-							{
-								Ident	   *attr = lfirst(attrl);
-
-								found = false;
-								for (i = 0; i < INDEX_MAX_KEYS && indexStruct->indkey[i] != 0; i++)
-								{
-									int			pkattno = indexStruct->indkey[i];
-
-									if (pkattno > 0)
-									{
-										char	   *name = NameStr(rel_attrs[pkattno - 1]->attname);
-
-										if (strcmp(name, attr->name) == 0)
-										{
-											/* We get the type of this attribute here and
-											 * store it so we can use it later for making
-											 * sure the types are comparable.
-											 */
-											pktypoid[attloc++]=rel_attrs[pkattno-1]->atttypid;
-											found = true;
-											break;
-										}
-									}
-								}
-								if (!found)
-									break;
-							}
-						}
-					}
-					ReleaseSysCache(indexTuple);
-					if (found)
-						break;
-				}
-
-				if (!found)
-					elog(ERROR, "UNIQUE constraint matching given keys for referenced table \"%s\" not found",
-						 fkconstraint->pktable_name);
-
-				freeList(indexoidlist);
-				heap_close(pkrel, NoLock);
-
-				rel_attrs = rel->rd_att->attrs;
-				if (fkconstraint->fk_attrs != NIL)
-				{
-					List	   *fkattrs;
-					Ident	   *fkattr;
-
-					found = false;
-					attloc = 0;
-					foreach(fkattrs, fkconstraint->fk_attrs)
-					{
-						int			count;
-
-						found = false;
-						fkattr = lfirst(fkattrs);
-						for (count = 0; count < rel->rd_att->natts; count++)
-						{
-							char	   *name = NameStr(rel->rd_att->attrs[count]->attname);
-
-							if (strcmp(name, fkattr->name) == 0)
-							{
-								/*
-								 * Here once again we get the types, this
-								 * time for the fk table's attributes
-								 */
-								fktypoid[attloc++]=rel->rd_att->attrs[count]->atttypid;
-								found = true;
-								break;
-							}
-						}
-						if (!found)
-							break;
-					}
-					if (!found)
-						elog(ERROR, "columns referenced in foreign key constraint not found.");
-				}
-
-				for (i=0; i < INDEX_MAX_KEYS && fktypoid[i] !=0; i++) {
-					/*
-					 * fktypoid[i] is the foreign key table's i'th element's type oid
-					 * pktypoid[i] is the primary key table's i'th element's type oid
-					 * We let oper() do our work for us, including elog(ERROR) if the
-					 * types can't compare with =
-					 */
-					Operator o=oper("=", fktypoid[i], pktypoid[i], false);
-					ReleaseSysCache(o);
-				}
 
 				trig.tgoid = 0;
 				if (fkconstraint->constr_name)
@@ -1706,7 +1565,6 @@ AlterTableAddConstraint(char *relationName,
 				trig.tgnargs = count - 1;
 
 				scan = heap_beginscan(rel, false, SnapshotNow, 0, NULL);
-				AssertState(scan != NULL);
 
 				while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
 				{

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.57 2001/10/22 22:47:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.58 2001/10/23 17:39:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -938,7 +938,7 @@ attnameAttNum(Relation rd, char *a)
 	int			i;
 
 	for (i = 0; i < rd->rd_rel->relnatts; i++)
-		if (!namestrcmp(&(rd->rd_att->attrs[i]->attname), a))
+		if (namestrcmp(&(rd->rd_att->attrs[i]->attname), a) == 0)
 			return i + 1;
 
 	if ((i = specialAttNum(a)) != InvalidAttrNumber)
@@ -975,6 +975,28 @@ specialAttNum(char *a)
 
 
 /*
+ * given attribute id, return name of that attribute
+ *
+ *	This should only be used if the relation is already
+ *	heap_open()'ed.  Use the cache version get_atttype()
+ *	for access to non-opened relations.
+ */
+Name
+attnumAttName(Relation rd, int attid)
+{
+	if (attid <= 0)
+	{
+		Form_pg_attribute sysatt;
+
+		sysatt = SystemAttributeDefinition(attid, rd->rd_rel->relhasoids);
+		return &sysatt->attname;
+	}
+	if (attid > rd->rd_att->natts)
+		elog(ERROR, "attnumAttName: invalid attribute number %d", attid);
+	return &rd->rd_att->attrs[attid - 1]->attname;
+}
+
+/*
  * given attribute id, return type of that attribute
  *
  *	This should only be used if the relation is already
@@ -991,10 +1013,8 @@ attnumTypeId(Relation rd, int attid)
 		sysatt = SystemAttributeDefinition(attid, rd->rd_rel->relhasoids);
 		return sysatt->atttypid;
 	}
-
-	/*
-	 * -1 because attid is 1-based
-	 */
+	if (attid > rd->rd_att->natts)
+		elog(ERROR, "attnumTypeId: invalid attribute number %d", attid);
 	return rd->rd_att->attrs[attid - 1]->atttypid;
 }
 

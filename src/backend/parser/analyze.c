@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.202 2001/10/22 22:49:02 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.203 2001/10/23 17:39:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2428,7 +2428,6 @@ getSetColTypes(ParseState *pstate, Node *node)
 /*
  * transformUpdateStmt -
  *	  transforms an update statement
- *
  */
 static Query *
 transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
@@ -2802,17 +2801,15 @@ static void
 transformFkeyCheckAttrs(FkConstraint *fkconstraint, Oid *pktypoid)
 {
 	Relation	pkrel;
-	Form_pg_attribute *pkrel_attrs;
 	List	   *indexoidlist,
 			   *indexoidscan;
 	int			i;
 	bool		found = false;
 
 	/*
-	 * Open the referenced table and get the attributes list
+	 * Open the referenced table
 	 */
 	pkrel = heap_openr(fkconstraint->pktable_name, AccessShareLock);
-	pkrel_attrs = pkrel->rd_att->attrs;
 
 	/*
 	 * Get the list of index OIDs for the table from the relcache, and
@@ -2827,6 +2824,7 @@ transformFkeyCheckAttrs(FkConstraint *fkconstraint, Oid *pktypoid)
 		HeapTuple	indexTuple;
 		Form_pg_index indexStruct;
 
+		found = false;
 		indexTuple = SearchSysCache(INDEXRELID,
 									ObjectIdGetDatum(indexoid),
 									0, 0, 0);
@@ -2837,16 +2835,14 @@ transformFkeyCheckAttrs(FkConstraint *fkconstraint, Oid *pktypoid)
 
 		if (indexStruct->indisunique)
 		{
-			List	   *attrl;
-			int	   attnum=0;
-
 			for (i = 0; i < INDEX_MAX_KEYS && indexStruct->indkey[i] != 0; i++)
 				;
-			if (i != length(fkconstraint->pk_attrs))
-				found = false;
-			else
+			if (i == length(fkconstraint->pk_attrs))
 			{
 				/* go through the fkconstraint->pk_attrs list */
+				List	   *attrl;
+				int	   attnum = 0;
+
 				foreach(attrl, fkconstraint->pk_attrs)
 				{
 					Ident	   *attr = lfirst(attrl);
@@ -2856,16 +2852,12 @@ transformFkeyCheckAttrs(FkConstraint *fkconstraint, Oid *pktypoid)
 					{
 						int			pkattno = indexStruct->indkey[i];
 
-						if (pkattno > 0)
+						if (namestrcmp(attnumAttName(pkrel, pkattno),
+									   attr->name) == 0)
 						{
-							char	   *name = NameStr(pkrel_attrs[pkattno - 1]->attname);
-
-							if (strcmp(name, attr->name) == 0)
-							{
-								pktypoid[attnum++]=pkrel_attrs[pkattno-1]->atttypid;
-								found = true;
-								break;
-							}
+							pktypoid[attnum++] = attnumTypeId(pkrel, pkattno);
+							found = true;
+							break;
 						}
 					}
 					if (!found)
@@ -2896,7 +2888,6 @@ static void
 transformFkeyGetPrimaryKey(FkConstraint *fkconstraint, Oid *pktypoid)
 {
 	Relation	pkrel;
-	Form_pg_attribute *pkrel_attrs;
 	List	   *indexoidlist,
 			   *indexoidscan;
 	HeapTuple	indexTuple = NULL;
@@ -2905,10 +2896,9 @@ transformFkeyGetPrimaryKey(FkConstraint *fkconstraint, Oid *pktypoid)
 	int		attnum=0;
 
 	/*
-	 * Open the referenced table and get the attributes list
+	 * Open the referenced table
 	 */
 	pkrel = heap_openr(fkconstraint->pktable_name, AccessShareLock);
-	pkrel_attrs = pkrel->rd_att->attrs;
 
 	/*
 	 * Get the list of index OIDs for the table from the relcache, and
@@ -2952,10 +2942,10 @@ transformFkeyGetPrimaryKey(FkConstraint *fkconstraint, Oid *pktypoid)
 		int			pkattno = indexStruct->indkey[i];
 		Ident	   *pkattr = makeNode(Ident);
 
-		pkattr->name = pstrdup(NameStr(pkrel_attrs[pkattno-1]->attname));
+		pkattr->name = pstrdup(NameStr(*attnumAttName(pkrel, pkattno)));
 		pkattr->indirection = NIL;
 		pkattr->isRel = false;
-		pktypoid[attnum++] = pkrel_attrs[pkattno-1]->atttypid;
+		pktypoid[attnum++] = attnumTypeId(pkrel, pkattno);
 
 		fkconstraint->pk_attrs = lappend(fkconstraint->pk_attrs, pkattr);
 	}
@@ -3023,6 +3013,7 @@ transformFkeyGetColType(CreateStmtContext *cxt, char *colname)
 	List	   *cols;
 	List	   *inher;
 	Oid			result;
+	Form_pg_attribute sysatt;
 
 	/* First look for column among the newly-created columns */
 	foreach(cols, cxt->columns)
@@ -3040,6 +3031,10 @@ transformFkeyGetColType(CreateStmtContext *cxt, char *colname)
 			return result;
 		}
 	}
+	/* Perhaps it's a system column name */
+	sysatt = SystemAttributeByName(colname, cxt->hasoids);
+	if (sysatt)
+		return sysatt->atttypid;
 	/* Look for column among inherited columns (if CREATE TABLE case) */
 	foreach(inher, cxt->inhRelnames)
 	{
