@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.292 2003/04/08 23:20:03 tgl Exp $
+ * $Id: pg_proc.h,v 1.293 2003/04/17 04:50:20 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -1698,7 +1698,7 @@ DESCR("less-equal-greater");
 DATA(insert OID = 1359 (  timestamptz	   PGNSP PGUID 12 f f t f i 2 1184 "1082 1266"	datetimetz_timestamptz - _null_ ));
 DESCR("convert date and time with time zone to timestamp with time zone");
 
-DATA(insert OID = 1364 (  time			   PGNSP PGUID 14 f f t f i 1 1083 "702"  "select time(cast($1 as timestamp without time zone))" - _null_ ));
+DATA(insert OID = 1364 (  time			   PGNSP PGUID 14 f f t f s 1 1083 "702"  "select cast(cast($1 as timestamp without time zone) as time)" - _null_ ));
 DESCR("convert abstime to time");
 
 DATA(insert OID = 1367 (  character_length	PGNSP PGUID 12 f f t f i 1	23 "1042"  bpcharlen - _null_ ));
