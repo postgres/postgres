@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.72 1999/05/03 19:09:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.73 1999/05/11 03:28:42 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -3715,10 +3715,10 @@ a_expr:  attr opt_indirection
 		| a_expr '>' a_expr
 				{	$$ = makeA_Expr(OP, ">", $1, $3); }
 
-		/* We allow this for standards-broken SQL products, like MS stuff */
   		| a_expr '=' NULL_P
   				{	$$ = makeA_Expr(ISNULL, NULL, $1, NULL); }
-  		| NULL_P '=' a_expr /* we need to fix the shift/reduce */
+		/* We allow this for standards-broken SQL products, like MS stuff */
+  		| NULL_P '=' a_expr
   				{	$$ = makeA_Expr(ISNULL, NULL, $3, NULL); }
 
 		| a_expr '=' a_expr
