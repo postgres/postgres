@@ -2,7 +2,7 @@
 5/18/1999 - vv
 ---------
 
-*	Rewrote libpq++.H
+*	Rewrote libpq++.h
 *	Incremented shared library version to 3.0
 *	Cleaned up makefiles
 *	Made examples use the installed versions of the library and header

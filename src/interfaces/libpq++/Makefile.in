@@ -6,7 +6,7 @@
 # Copyright (c) 1994, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile.in,v 1.17 1999/09/07 18:10:49 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile.in,v 1.18 1999/12/03 17:35:05 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -75,7 +75,7 @@ install: install-headers install-lib $(install-shlib-dep)
 
 LIBPGXXDIR = libpq++
 LIBPGXXHEADERDIR = $(HEADERDIR)/$(LIBPGXXDIR)
-MAINHEADER = libpq++.H
+MAINHEADER = libpq++.h
 LIBPGXXHEADERS = pgconnection.h \
 		 pgdatabase.h \
 		 pgtransdb.h \

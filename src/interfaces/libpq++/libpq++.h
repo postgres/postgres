@@ -1,7 +1,7 @@
 
 /*-------------------------------------------------------------------------
  *
- * libpq++.H
+ * libpq++.h
  *    
  *
  *   DESCRIPTION
@@ -30,7 +30,7 @@ extern "C" {
 #include "libpq-fe.h"
 }
 
-static char rcsid[] = "$Id: libpq++.H,v 1.7 1999/10/22 19:05:02 momjian Exp $";
+static char rcsid[] = "$Id: libpq++.h,v 1.3 1999/12/03 17:35:05 momjian Exp $";
 
 
 // ****************************************************************
