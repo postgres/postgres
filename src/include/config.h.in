@@ -71,6 +71,15 @@
 /* Set to 1 if you have getrusage() */
 #undef HAVE_GETRUSAGE
 
+/* Set to 1 if you have waitpid() */
+#undef HAVE_WAITPID
+
+/* Set to 1 if you have setsid() */
+#undef HAVE_SETSID
+
+/* Set to 1 if you have sigprocmask() */
+#undef HAVE_SIGPROCMASK
+
 /* Set to 1 if you have libreadline.a */
 #undef HAVE_LIBREADLINE
 
