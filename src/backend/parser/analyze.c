@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: analyze.c,v 1.109 1999/05/25 22:04:25 momjian Exp $
+ *	$Id: analyze.c,v 1.110 1999/06/05 20:22:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -410,39 +410,79 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 }
 
 /*
- *	makeTableName()
- *	Create a table name from a list of fields.
+ *	makeObjectName()
+ *
+ *	Create a name for an implicitly created index, sequence, constraint, etc.
+ *
+ *	The parameters are: the original table name, the original field name, and
+ *	a "type" string (such as "seq" or "pkey").  The field name and/or type
+ *	can be NULL if not relevant.
+ *
+ *	The result is a palloc'd string.
+ *
+ *	The basic result we want is "name1_name2_type", omitting "_name2" or
+ *	"_type" when those parameters are NULL.  However, we must generate
+ *	a name with less than NAMEDATALEN characters!  So, we truncate one or
+ *	both names if necessary to make a short-enough string.  The type part
+ *	is never truncated (so it had better be reasonably short).
+ *
+ *	To reduce the probability of collisions, we might someday add more
+ *	smarts to this routine, like including some "hash" characters computed
+ *	from the truncated characters.  Currently it seems best to keep it simple,
+ *	so that the generated names are easily predictable by a person.
  */
 static char *
-makeTableName(void *elem,...)
+makeObjectName(char *name1, char *name2, char *typename)
 {
-	va_list		args;
-
 	char	   *name;
-	char		buf[NAMEDATALEN + 1];
+	int			overhead = 0;	/* chars needed for type and underscores */
+	int			availchars;		/* chars available for name(s) */
+	int			name1chars;		/* chars allocated to name1 */
+	int			name2chars;		/* chars allocated to name2 */
+	int			ndx;
 
-	buf[0] = '\0';
-
-	va_start(args, elem);
-
-	name = elem;
-	while (name != NULL)
+	name1chars = strlen(name1);
+	if (name2)
 	{
-		/* not enough room for next part? then return nothing */
-		if ((strlen(buf) + strlen(name)) >= (sizeof(buf) - 1))
-			return NULL;
+		name2chars = strlen(name2);
+		overhead++;				/* allow for separating underscore */
+	}
+	else
+		name2chars = 0;
+	if (typename)
+		overhead += strlen(typename) + 1;
 
-		if (strlen(buf) > 0)
-			strcat(buf, "_");
-		strcat(buf, name);
+	availchars = NAMEDATALEN-1 - overhead;
 
-		name = va_arg(args, void *);
+	/* If we must truncate,  preferentially truncate the longer name.
+	 * This logic could be expressed without a loop, but it's simple and
+	 * obvious as a loop.
+	 */
+	while (name1chars + name2chars > availchars)
+	{
+		if (name1chars > name2chars)
+			name1chars--;
+		else
+			name2chars--;
 	}
 
-	va_end(args);
-
-	name = palloc(strlen(buf) + 1);
-	strcpy(name, buf);
+	/* Now construct the string using the chosen lengths */
+	name = palloc(name1chars + name2chars + overhead + 1);
+	strncpy(name, name1, name1chars);
+	ndx = name1chars;
+	if (name2)
+	{
+		name[ndx++] = '_';
+		strncpy(name+ndx, name2, name2chars);
+		ndx += name2chars;
+	}
+	if (typename)
+	{
+		name[ndx++] = '_';
+		strcpy(name+ndx, typename);
+	}
+	else
+		name[ndx] = '\0';
 
 	return name;
 }
@@ -453,26 +493,24 @@ CreateIndexName(char *table_name, char *column_name, char *label, List *indices)
 	int			pass = 0;
 	char	   *iname = NULL;
 	List	   *ilist;
-	IndexStmt  *index;
-	char		name2[NAMEDATALEN + 1];
+	char		typename[NAMEDATALEN];
 
-	/* use working storage, since we might be trying several possibilities */
-	strcpy(name2, column_name);
-	while (iname == NULL)
+	/* The type name for makeObjectName is label, or labelN if that's
+	 * necessary to prevent collisions among multiple indexes for the same
+	 * table.  Note there is no check for collisions with already-existing
+	 * indexes; this ought to be rethought someday.
+	 */
+	strcpy(typename, label);
+
+	for (;;)
 	{
-		iname = makeTableName(table_name, name2, label, NULL);
-		/* unable to make a name at all? then quit */
-		if (iname == NULL)
-			break;
+		iname = makeObjectName(table_name, column_name, typename);
 
-		ilist = indices;
-		while (ilist != NIL)
+		foreach(ilist, indices)
 		{
-			index = lfirst(ilist);
+			IndexStmt  *index = lfirst(ilist);
 			if (strcasecmp(iname, index->idxname) == 0)
 				break;
-
-			ilist = lnext(ilist);
 		}
 		/* ran through entire list? then no name conflict found so done */
 		if (ilist == NIL)
@@ -480,9 +518,7 @@ CreateIndexName(char *table_name, char *column_name, char *label, List *indices)
 
 		/* the last one conflicted, so try a new name component */
 		pfree(iname);
-		iname = NULL;
-		pass++;
-		sprintf(name2, "%s_%d", column_name, (pass + 1));
+		sprintf(typename, "%s%d", label, ++pass);
 	}
 
 	return iname;
@@ -542,12 +578,8 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 					char	   *cstring;
 					CreateSeqStmt *sequence;
 
-					sname = makeTableName(stmt->relname, column->colname, "seq", NULL);
-					if (sname == NULL)
-						elog(ERROR, "CREATE TABLE/SERIAL implicit sequence name must be less than %d characters"
-							 "\n\tSum of lengths of '%s' and '%s' must be less than %d",
-							 NAMEDATALEN, stmt->relname, column->colname, (NAMEDATALEN - 5));
-
+					sname = makeObjectName(stmt->relname, column->colname,
+										   "seq");
 					constraint = makeNode(Constraint);
 					constraint->contype = CONSTR_DEFAULT;
 					constraint->name = sname;
@@ -562,11 +594,9 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 
 					constraint = makeNode(Constraint);
 					constraint->contype = CONSTR_UNIQUE;
-					constraint->name = makeTableName(stmt->relname, column->colname, "key", NULL);
-					if (constraint->name == NULL)
-						elog(ERROR, "CREATE TABLE/SERIAL implicit index name must be less than %d characters"
-							 "\n\tSum of lengths of '%s' and '%s' must be less than %d",
-							 NAMEDATALEN, stmt->relname, column->colname, (NAMEDATALEN - 5));
+					constraint->name = makeObjectName(stmt->relname,
+													  column->colname,
+													  "key");
 					column->constraints = lappend(column->constraints, constraint);
 
 					sequence = makeNode(CreateSeqStmt);
@@ -616,11 +646,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 
 							case CONSTR_PRIMARY:
 								if (constraint->name == NULL)
-									constraint->name = makeTableName(stmt->relname, "pkey", NULL);
-								if (constraint->name == NULL)
-									elog(ERROR, "CREATE TABLE/PRIMARY KEY implicit index name must be less than %d characters"
-										 "\n\tLength of '%s' must be less than %d",
-										 NAMEDATALEN, stmt->relname, (NAMEDATALEN - 6));
+									constraint->name = makeObjectName(stmt->relname, NULL, "pkey");
 								if (constraint->keys == NIL)
 									constraint->keys = lappend(constraint->keys, column);
 								dlist = lappend(dlist, constraint);
@@ -628,11 +654,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 
 							case CONSTR_UNIQUE:
 								if (constraint->name == NULL)
-									constraint->name = makeTableName(stmt->relname, column->colname, "key", NULL);
-								if (constraint->name == NULL)
-									elog(ERROR, "CREATE TABLE/UNIQUE implicit index name must be less than %d characters"
-										 "\n\tLength of '%s' must be less than %d",
-										 NAMEDATALEN, stmt->relname, (NAMEDATALEN - 5));
+									constraint->name = makeObjectName(stmt->relname, column->colname, "key");
 								if (constraint->keys == NIL)
 									constraint->keys = lappend(constraint->keys, column);
 								dlist = lappend(dlist, constraint);
@@ -641,11 +663,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 							case CONSTR_CHECK:
 								constraints = lappend(constraints, constraint);
 								if (constraint->name == NULL)
-									constraint->name = makeTableName(stmt->relname, column->colname, NULL);
-								if (constraint->name == NULL)
-									elog(ERROR, "CREATE TABLE/CHECK implicit constraint name must be less than %d characters"
-										 "\n\tSum of lengths of '%s' and '%s' must be less than %d",
-										 NAMEDATALEN, stmt->relname, column->colname, (NAMEDATALEN - 1));
+									constraint->name = makeObjectName(stmt->relname, column->colname, NULL);
 								break;
 
 							default:
@@ -663,11 +681,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 				{
 					case CONSTR_PRIMARY:
 						if (constraint->name == NULL)
-							constraint->name = makeTableName(stmt->relname, "pkey", NULL);
-						if (constraint->name == NULL)
-							elog(ERROR, "CREATE TABLE/PRIMARY KEY implicit index name must be less than %d characters"
-							   "\n\tLength of '%s' must be less than %d",
-								 NAMEDATALEN, stmt->relname, (NAMEDATALEN - 5));
+							constraint->name = makeObjectName(stmt->relname, NULL, "pkey");
 						dlist = lappend(dlist, constraint);
 						break;
 
@@ -728,15 +742,9 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 		}
 
 		if (constraint->name != NULL)
-			index->idxname = constraint->name;
+			index->idxname = pstrdup(constraint->name);
 		else if (constraint->contype == CONSTR_PRIMARY)
-		{
-			index->idxname = makeTableName(stmt->relname, "pkey", NULL);
-			if (index->idxname == NULL)
-				elog(ERROR, "CREATE TABLE/PRIMARY KEY implicit index name must be less than %d characters"
-					 "\n\tLength of '%s' must be less than %d",
-					 NAMEDATALEN, stmt->relname, (NAMEDATALEN - 5));
-		}
+			index->idxname = makeObjectName(stmt->relname, NULL, "pkey");
 		else
 			index->idxname = NULL;
 
@@ -767,7 +775,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 			if (constraint->contype == CONSTR_PRIMARY)
 				column->is_not_null = TRUE;
 			iparam = makeNode(IndexElem);
-			iparam->name = strcpy(palloc(strlen(column->colname) + 1), column->colname);
+			iparam->name = pstrdup(column->colname);
 			iparam->args = NIL;
 			iparam->class = NULL;
 			iparam->typename = NULL;
@@ -779,9 +787,8 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 			keys = lnext(keys);
 		}
 
-		if (index->idxname == NULL)
-			elog(ERROR, "CREATE TABLE unable to construct implicit index for table '%s'"
-				 "; name too long", stmt->relname);
+		if (index->idxname == NULL)	/* should not happen */
+			elog(ERROR, "CREATE TABLE: failed to make implicit index name");
 
 		ilist = lappend(ilist, index);
 		dlist = lnext(dlist);
