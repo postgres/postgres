@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Jul 30 15:43:03 EDT 2002
+Last updated:		Tue Jul 30 15:46:56 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -194,7 +194,7 @@ Commands
 	o -ALTER TABLE ADD UNIQUE (Tom)
 	o -ALTER TABLE ALTER COLUMN SET/DROP NOT NULL (Christopher Kings-Lynne)
 	o ALTER TABLE ADD COLUMN column SERIAL doesn't create sequence
-	o ALTER TABLE ADD COLUMN column SET DEFAULT should fill existing
+	o ALTER TABLE ADD COLUMN column DEFAULT should fill existing
 	  rows with DEFAULT value
 	o -Have ALTER TABLE OWNER change all dependant objects like indexes
 
