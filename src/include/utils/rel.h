@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rel.h,v 1.14 1997/11/21 19:12:32 momjian Exp $
+ * $Id: rel.h,v 1.15 1998/01/15 19:46:37 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,8 +24,7 @@ typedef struct Trigger
 {
 	char	   *tgname;
 	Oid			tgfoid;
-	func_ptr	tgfunc;
-	func_ptr	tgplfunc;
+	FmgrInfo	tgfunc;
 	int16		tgtype;
 	int16		tgnargs;
 	int16		tgattr[8];

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.24 1998/01/07 21:01:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.25 1998/01/15 19:42:10 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1487,8 +1487,7 @@ _bt_isequal(TupleDesc itupdesc, Page page, OffsetNumber offnum,
 		if (entry->sk_flags & SK_ISNULL || null)
 			return (false);
 
-		result = (long) FMGR_PTR2(entry->sk_func, entry->sk_procedure,
-								  entry->sk_argument, datum);
+		result = (long) FMGR_PTR2(&entry->sk_func, entry->sk_argument, datum);
 		if (result != 0)
 			return (false);
 	}

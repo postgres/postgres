@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.29 1998/01/07 21:01:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.30 1998/01/15 19:42:13 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -677,8 +677,7 @@ _bt_compare(Relation rel,
 		}
 		else
 		{
-			tmpres = (long) FMGR_PTR2(entry->sk_func, entry->sk_procedure,
-									  entry->sk_argument, datum);
+			tmpres = (long) FMGR_PTR2(&entry->sk_func, entry->sk_argument, datum);
 		}
 		result = tmpres;
 

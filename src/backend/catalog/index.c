@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.34 1998/01/13 04:03:45 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.35 1998/01/15 19:42:27 pgsql Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1373,8 +1373,8 @@ UpdateStats(Oid relid, long reltuples, bool hasindex)
 	char		nulls[Natts_pg_class];
 	char		replace[Natts_pg_class];
 
-	fmgr_info(ObjectIdEqualRegProcedure, (func_ptr *) &key[0].sk_func,
-			  &key[0].sk_nargs);
+	fmgr_info(ObjectIdEqualRegProcedure, &key[0].sk_func);
+	key[0].sk_nargs = key[0].sk_func.fn_nargs;
 
 	/* ----------------
 	 * This routine handles updates for both the heap and index relation

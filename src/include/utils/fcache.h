@@ -6,19 +6,21 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fcache.h,v 1.5 1997/09/08 21:54:57 momjian Exp $
+ * $Id: fcache.h,v 1.6 1998/01/15 19:46:36 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef FCACHE_H
 #define FCACHE_H
 
+#include <fmgr.h>
+
 
 typedef struct
 {
 	int			typlen;			/* length of the return type */
 	int			typbyval;		/* true if return type is pass by value */
-	func_ptr	func;			/* address of function to call (for c
+	FmgrInfo	func;			/* address of function to call (for c
 								 * funcs) */
 	Oid			foid;			/* oid of the function in pg_proc */
 	Oid			language;		/* oid of the language in pg_language */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.9 1998/01/07 21:06:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.10 1998/01/15 19:45:58 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,78 +32,64 @@
 #include "commands/trigger.h"
 
 
-char	   *
-fmgr_pl(Oid func_id,
-		int n_arguments,
-		FmgrValues * values,
-		bool * isNull)
+static        FmgrInfo        *fmgr_pl_finfo;
+
+static char      * 
+fmgr_pl(char *arg0, ...)
 {
-	HeapTuple	procedureTuple;
-	HeapTuple	languageTuple;
-	Form_pg_proc procedureStruct;
-	Form_pg_language languageStruct;
-	func_ptr	plcall_fn;
-	int			plcall_nargs;
+	va_list         pvar;
+	FmgrValues      values;
+	bool            isNull = false;
+	int             i;
 
-	/* Fetch the pg_proc tuple from the syscache */
-	procedureTuple = SearchSysCacheTuple(PROOID,
-										 ObjectIdGetDatum(func_id),
-										 0, 0, 0);
-	if (!HeapTupleIsValid(procedureTuple))
-	{
-		elog(ERROR, "fmgr_pl(): Cache lookup of procedure %ld failed.",
-			 ObjectIdGetDatum(func_id));
-	}
-	procedureStruct = (Form_pg_proc) GETSTRUCT(procedureTuple);
+	memset(&values, 0, sizeof(values));
 
-	/* Fetch the pg_language tuple from the syscache */
-	languageTuple = SearchSysCacheTuple(LANOID,
-							  ObjectIdGetDatum(procedureStruct->prolang),
-										0, 0, 0);
-	if (!HeapTupleIsValid(languageTuple))
-	{
-		elog(ERROR, "fmgr_pl(): Cache lookup of language %ld for procedure %ld failed.",
-			 ObjectIdGetDatum(procedureStruct->prolang),
-			 ObjectIdGetDatum(func_id));
-	}
-	languageStruct = (Form_pg_language) GETSTRUCT(languageTuple);
-
-	/* Get the function pointer for the PL call handler */
-	fmgr_info(languageStruct->lanplcallfoid, &plcall_fn, &plcall_nargs);
-	if (plcall_fn == NULL)
-	{
-		elog(ERROR, "fmgr_pl(): failed to load PL handler for procedure %ld.",
-			 ObjectIdGetDatum(func_id));
+	if (fmgr_pl_finfo->fn_nargs > 0) {
+		values.data[0] = arg0;
+		if (fmgr_pl_finfo->fn_nargs > 1) {
+			va_start(pvar, arg0);
+			for (i = 1; i < fmgr_pl_finfo->fn_nargs; i++) {
+				values.data[i] = va_arg(pvar, char *);
+			}
+			va_end(pvar);
+		}
 	}
 
 	/* Call the PL handler */
 	CurrentTriggerData = NULL;
-	return (*plcall_fn) (func_id,
-						 n_arguments,
-						 values,
-						 isNull);
-}
+	return (*(fmgr_pl_finfo->fn_plhandler)) (fmgr_pl_finfo,
+						&values,
+						&isNull);
+}     
 
 
-char	   *
-fmgr_c(func_ptr user_fn,
-	   Oid func_id,
-	   int n_arguments,
-	   FmgrValues * values,
-	   bool * isNull)
-{
-	char	   *returnValue = (char *) NULL;
-
-
+char     *
+fmgr_c(FmgrInfo *finfo,
+	FmgrValues * values,
+	bool * isNull)
+{  
+	char       *returnValue = (char *) NULL;
+	int        n_arguments = finfo->fn_nargs;
+	func_ptr   user_fn = fmgr_faddr(finfo);
+        
+        
 	if (user_fn == (func_ptr) NULL)
 	{
 
 		/*
 		 * a NULL func_ptr denotet untrusted function (in postgres 4.2).
-		 * Untrusted functions have very limited use and is clumsy. We now
-		 * use this feature for procedural languages.
+		 * Untrusted functions have very limited use and is clumsy. We
+		 * just get rid of it.
 		 */
-		return fmgr_pl(func_id, n_arguments, values, isNull);
+		elog(WARN, "internal error: untrusted function not supported.");
+	}
+
+	/*
+	 * If finfo contains a PL handler for this function,
+	 * call that instead.
+	 */
+	if (finfo->fn_plhandler != NULL) {
+	    return (*(finfo->fn_plhandler))(finfo, values, isNull);
 	}
 
 	switch (n_arguments)
@@ -164,14 +150,14 @@ fmgr_c(func_ptr user_fn,
 			break;
 		default:
 			elog(ERROR, "fmgr_c: function %d: too many arguments (%d > %d)",
-				 func_id, n_arguments, MAXFMGRARGS);
+				 finfo->fn_oid, n_arguments, MAXFMGRARGS);
 			break;
 	}
 	return (returnValue);
 }
 
 void
-fmgr_info(Oid procedureId, func_ptr * function, int *nargs)
+fmgr_info(Oid procedureId, FmgrInfo *finfo)
 {
 	func_ptr	user_fn = NULL;
 	FmgrCall   *fcp;
@@ -180,6 +166,10 @@ fmgr_info(Oid procedureId, func_ptr * function, int *nargs)
 	HeapTuple	languageTuple;
 	Form_pg_language languageStruct;
 	Oid			language;
+
+	finfo->fn_addr = NULL;
+	finfo->fn_plhandler = NULL;
+	finfo->fn_oid = procedureId;
 
 	if (!(fcp = fmgr_isbuiltin(procedureId)))
 	{
@@ -191,29 +181,29 @@ fmgr_info(Oid procedureId, func_ptr * function, int *nargs)
 			elog(ERROR, "fmgr_info: function %d: cache lookup failed\n",
 				 procedureId);
 		}
-		procedureStruct = (FormData_pg_proc *)
-			GETSTRUCT(procedureTuple);
+		procedureStruct = (FormData_pg_proc *) GETSTRUCT(procedureTuple);
 		if (!procedureStruct->proistrusted)
 		{
-			*function = (func_ptr) NULL;
-			*nargs = procedureStruct->pronargs;
+			finfo->fn_addr = (func_ptr) NULL;
+			finfo->fn_nargs = procedureStruct->pronargs;
 			return;
 		}
 		language = procedureStruct->prolang;
 		switch (language)
 		{
 			case INTERNALlanguageId:
-				user_fn = fmgr_lookupByName(procedureStruct->proname.data);
-				if (!user_fn)
-					elog(ERROR, "fmgr_info: function %s: not in internal table",
-						 procedureStruct->proname.data);
+				finfo->fn_addr = 
+							fmgr_lookupByName(procedureStruct->proname.data);
+				if (!finfo->fn_addr)
+					elog(WARN, "fmgr_info: function %s: not in internal table",
+								procedureStruct->proname.data);
 				break;
 			case ClanguageId:
-				user_fn = fmgr_dynamic(procedureId, nargs);
+				finfo->fn_addr = fmgr_dynamic(procedureId, &(finfo->fn_nargs));
 				break;
 			case SQLlanguageId:
-				user_fn = (func_ptr) NULL;
-				*nargs = procedureStruct->pronargs;
+				finfo->fn_addr = (func_ptr) NULL;
+				finfo->fn_nargs = procedureStruct->pronargs;
 				break;
 			default:
 
@@ -236,8 +226,12 @@ fmgr_info(Oid procedureId, func_ptr * function, int *nargs)
 					GETSTRUCT(languageTuple);
 				if (languageStruct->lanispl)
 				{
-					user_fn = (func_ptr) NULL;
-					*nargs = procedureStruct->pronargs;
+					FmgrInfo	plfinfo;
+
+					fmgr_info(((Form_pg_language)GETSTRUCT(languageTuple))->lanplcallfoid, &plfinfo);
+					finfo->fn_addr = (func_ptr) fmgr_pl;
+					finfo->fn_plhandler = plfinfo.fn_addr;
+					finfo->fn_nargs = procedureStruct->pronargs;
 				}
 				else
 				{
@@ -249,10 +243,16 @@ fmgr_info(Oid procedureId, func_ptr * function, int *nargs)
 	}
 	else
 	{
-		user_fn = fcp->func;
-		*nargs = fcp->nargs;
+		finfo->fn_addr = fcp->func;
+		finfo->fn_nargs = fcp->nargs;
 	}
-	*function = user_fn;
+}
+
+func_ptr
+fmgr_faddr(FmgrInfo *finfo)
+{
+    fmgr_pl_finfo = finfo;
+    return finfo->fn_addr;
 }
 
 /*
@@ -273,12 +273,13 @@ fmgr(Oid procedureId,...)
 	register	i;
 	int			pronargs;
 	FmgrValues	values;
-	func_ptr	user_fn;
+	FmgrInfo	finfo;
 	bool		isNull = false;
 
 	va_start(pvar, procedureId);
 
-	fmgr_info(procedureId, &user_fn, &pronargs);
+	fmgr_info(procedureId, &finfo);
+	pronargs = finfo.fn_nargs;
 
 	if (pronargs > MAXFMGRARGS)
 	{
@@ -290,8 +291,7 @@ fmgr(Oid procedureId,...)
 	va_end(pvar);
 
 	/* XXX see WAY_COOL_ORTHOGONAL_FUNCTIONS */
-	return (fmgr_c(user_fn, procedureId, pronargs, &values,
-				   &isNull));
+	return (fmgr_c(&finfo, &values, &isNull));
 }
 
 /*
@@ -301,20 +301,26 @@ fmgr(Oid procedureId,...)
  * the pointer, but it's available for use with macros in fmgr.h if you
  * want this routine to do sanity-checking for you.
  *
- * func_ptr, func_id, n_arguments, args...
+ * funcinfo, n_arguments, args...
  */
 #ifdef NOT_USED
 char	   *
-fmgr_ptr(func_ptr user_fn, Oid func_id,...)
+fmgr_ptr(FmgrInfo *finfo, ...)
 {
 	va_list		pvar;
 	register	i;
 	int			n_arguments;
+	FmgrInfo	local_finfo;
 	FmgrValues	values;
 	bool		isNull = false;
 
-	va_start(pvar, func_id);
+        local_finfo->fn_addr = finfo->fn_addr;
+	local_finfo->fn_plhandler = finfo->fn_plhandler;
+	local_finfo->fn_oid = finfo->fn_oid;
+
+	va_start(pvar, finfo);
 	n_arguments = va_arg(pvar, int);
+	local_finfo->fn_nargs = n_arguments;
 	if (n_arguments > MAXFMGRARGS)
 	{
 		elog(ERROR, "fmgr_ptr: function %d: too many arguments (%d > %d)",
@@ -325,8 +331,7 @@ fmgr_ptr(func_ptr user_fn, Oid func_id,...)
 	va_end(pvar);
 
 	/* XXX see WAY_COOL_ORTHOGONAL_FUNCTIONS */
-	return (fmgr_c(user_fn, func_id, n_arguments, &values,
-				   &isNull));
+	return (fmgr_c(&local_finfo, &values, &isNull));
 }
 
 #endif
@@ -339,16 +344,14 @@ fmgr_ptr(func_ptr user_fn, Oid func_id,...)
 char	   *
 fmgr_array_args(Oid procedureId, int nargs, char *args[], bool * isNull)
 {
-	func_ptr	user_fn;
-	int			true_arguments;
+	FmgrInfo	finfo;
 
-	fmgr_info(procedureId, &user_fn, &true_arguments);
+	fmgr_info(procedureId, &finfo);
+	finfo.fn_nargs = nargs;
 
 	/* XXX see WAY_COOL_ORTHOGONAL_FUNCTIONS */
 	return
-		(fmgr_c(user_fn,
-				procedureId,
-				true_arguments,
+		(fmgr_c(&finfo,
 				(FmgrValues *) args,
 				isNull));
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/Attic/indexvalid.c,v 1.16 1997/09/08 02:19:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/Attic/indexvalid.c,v 1.17 1998/01/15 19:41:44 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,13 +66,13 @@ index_keytest(IndexTuple tuple,
 
 		if (key[0].sk_flags & SK_COMMUTE)
 		{
-			test = (*(key[0].sk_func))
+			test = (*(fmgr_faddr(&key[0].sk_func)))
 				(DatumGetPointer(key[0].sk_argument),
 				 datum) ? 1 : 0;
 		}
 		else
 		{
-			test = (*(key[0].sk_func))
+			test = (*(fmgr_faddr(&key[0].sk_func)))
 				(datum,
 				 DatumGetPointer(key[0].sk_argument)) ? 1 : 0;
 		}

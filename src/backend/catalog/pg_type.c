@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.17 1998/01/06 19:42:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.18 1998/01/15 19:42:30 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,8 +62,8 @@ TypeGetWithOpenRelation(Relation pg_type_desc,
 	 *	initialize the scan key and begin a scan of pg_type
 	 * ----------------
 	 */
-	fmgr_info(NameEqualRegProcedure,
-			  &typeKey[0].sk_func, &typeKey[0].sk_nargs);
+	fmgr_info(NameEqualRegProcedure, &typeKey[0].sk_func);
+	typeKey[0].sk_nargs = typeKey[0].sk_func.fn_nargs;
 	typeKey[0].sk_argument = PointerGetDatum(typeName);
 
 	scan = heap_beginscan(pg_type_desc,
@@ -324,8 +324,8 @@ TypeCreate(char *typeName,
 		{0, Anum_pg_type_typname, NameEqualRegProcedure}
 	};
 
-	fmgr_info(NameEqualRegProcedure,
-			  &typeKey[0].sk_func, &typeKey[0].sk_nargs);
+	fmgr_info(NameEqualRegProcedure, &typeKey[0].sk_func);
+	typeKey[0].sk_nargs = typeKey[0].sk_func.fn_nargs;
 
 	/* ----------------
 	 *	check that the type is not already defined.

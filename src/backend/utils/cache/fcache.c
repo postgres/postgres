@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.9 1998/01/07 21:06:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.10 1998/01/15 19:45:29 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,6 +98,7 @@ init_fcache(Oid foid,
 	 * ----------------
 	 */
 	retval = (FunctionCachePtr) palloc(sizeof(FunctionCache));
+	memset(retval, 0, sizeof(FunctionCache));
 
 	if (!use_syscache)
 		elog(ERROR, "what the ????, init the fcache without the catalogs?");
@@ -281,10 +282,12 @@ init_fcache(Oid foid,
 
 
 
-	if (retval->language != SQLlanguageId)
-		fmgr_info(foid, &(retval->func), &(retval->nargs));
-	else
-		retval->func = (func_ptr) NULL;
+	if (retval->language != SQLlanguageId) {
+		fmgr_info(foid, &(retval->func));
+		retval->nargs = retval->func.fn_nargs;
+	} else {
+		retval->func.fn_addr = (func_ptr) NULL;
+	}
 
 
 	return (retval);

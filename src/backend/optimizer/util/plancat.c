@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.13 1998/01/07 21:04:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.14 1998/01/15 19:44:41 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -416,7 +416,8 @@ find_inheritance_children(Oid inhparent)
 	List	   *list = NIL;
 	Oid			inhrelid;
 
-	fmgr_info(F_OIDEQ, &key[0].sk_func, &key[0].sk_nargs);
+	fmgr_info(F_OIDEQ, &key[0].sk_func);
+	key[0].sk_nargs = key[0].sk_func.fn_nargs;
 
 	key[0].sk_argument = ObjectIdGetDatum((Oid) inhparent);
 	relation = heap_openr(InheritsRelationName);
@@ -452,7 +453,8 @@ VersionGetParents(Oid verrelid)
 	Oid			verbaseid;
 	List	   *list = NIL;
 
-	fmgr_info(F_OIDEQ, &key[0].sk_func, &key[0].sk_nargs);
+	fmgr_info(F_OIDEQ, &key[0].sk_func);
+	key[0].sk_nargs = key[0].sk_func.fn_nargs;
 	relation = heap_openr(VersionRelationName);
 	key[0].sk_argument = ObjectIdGetDatum(verrelid);
 	scan = heap_beginscan(relation, 0, false, 1, key);

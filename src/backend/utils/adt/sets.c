@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.11 1998/01/05 16:40:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.12 1998/01/15 19:45:09 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -117,8 +117,8 @@ SetDefine(char *querystr, char *typename)
 		procrel = heap_openr(ProcedureRelationName);
 		RelationSetLockForWrite(procrel);
 		fmgr_info(ObjectIdEqualRegProcedure,
-				  &oidKey[0].sk_func,
-				  &oidKey[0].sk_nargs);
+				  &oidKey[0].sk_func);
+		oidKey[0].sk_nargs = oidKey[0].sk_func.fn_nargs;
 		oidKey[0].sk_argument = ObjectIdGetDatum(setoid);
 		pg_proc_scan = heap_beginscan(procrel,
 									  0,

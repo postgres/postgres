@@ -4,7 +4,7 @@
 #    Makefile for access/common
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/access/common/Makefile,v 1.8 1997/12/20 00:22:11 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/access/common/Makefile,v 1.9 1998/01/15 19:41:42 pgsql Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -23,7 +23,7 @@ all: SUBSYS.o
 SUBSYS.o: $(OBJS)
 	$(LD) -r -o SUBSYS.o $(OBJS)
 
-heapvalid.o tupdesc.o: ../../fmgr.h
+heaptuple.o heapvalid.o tupdesc.o: ../../fmgr.h
 
 ../../fmgr.h:
 	$(MAKE) -C ../.. fmgr.h

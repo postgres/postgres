@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: skey.h,v 1.6 1997/09/08 21:51:01 momjian Exp $
+ * $Id: skey.h,v 1.7 1998/01/15 19:46:18 pgsql Exp $
  *
  *
  * Note:
@@ -17,13 +17,14 @@
 #define SKEY_H
 
 #include <access/attnum.h>
+#include <fmgr.h>
 
 typedef struct ScanKeyData
 {
 	bits16		sk_flags;		/* flags */
 	AttrNumber	sk_attno;		/* domain number */
 	RegProcedure sk_procedure;	/* procedure OID */
-	func_ptr	sk_func;
+	FmgrInfo	sk_func;
 	int32		sk_nargs;
 	Datum		sk_argument;	/* data to compare */
 } ScanKeyData;

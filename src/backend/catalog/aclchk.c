@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.2 1998/01/06 18:52:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.3 1998/01/15 19:42:26 pgsql Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -122,7 +122,8 @@ ChangeAcl(char *relname,
 	if (!RelationIsValid(relation))
 		elog(ERROR, "ChangeAcl: could not open '%s'??",
 			 RelationRelationName);
-	fmgr_info(NameEqualRegProcedure, &relkey[0].sk_func, &relkey[0].sk_nargs);
+	fmgr_info(NameEqualRegProcedure, &relkey[0].sk_func);
+	relkey[0].sk_nargs = relkey[0].sk_func.fn_nargs;
 	relkey[0].sk_argument = NameGetDatum(relname);
 	hsdp = heap_beginscan(relation,
 						  0,

@@ -39,12 +39,9 @@ typedef struct AggFuncInfo
 	Oid			xfn1_oid;
 	Oid			xfn2_oid;
 	Oid			finalfn_oid;
-	func_ptr	xfn1;
-	func_ptr	xfn2;
-	func_ptr	finalfn;
-	int			xfn1_nargs;
-	int			xfn2_nargs;
-	int			finalfn_nargs;
+	FmgrInfo	xfn1;
+	FmgrInfo	xfn2;
+	FmgrInfo	finalfn;
 } AggFuncInfo;
 
 static Datum aggGetAttr(TupleTableSlot *tuple, Aggreg *agg, bool *isNull);
@@ -160,12 +157,6 @@ ExecAgg(Agg *node)
 		Oid			xfn1_oid,
 					xfn2_oid,
 					finalfn_oid;
-		func_ptr	xfn1_ptr,
-					xfn2_ptr,
-					finalfn_ptr;
-		int			xfn1_nargs,
-					xfn2_nargs,
-					finalfn_nargs;
 
 		agg = aggregates[i];
 
@@ -191,18 +182,14 @@ ExecAgg(Agg *node)
 
 		if (OidIsValid(finalfn_oid))
 		{
-			fmgr_info(finalfn_oid, &finalfn_ptr, &finalfn_nargs);
+			fmgr_info(finalfn_oid, &aggFuncInfo[i].finalfn);
 			aggFuncInfo[i].finalfn_oid = finalfn_oid;
-			aggFuncInfo[i].finalfn = finalfn_ptr;
-			aggFuncInfo[i].finalfn_nargs = finalfn_nargs;
 		}
 
 		if (OidIsValid(xfn2_oid))
 		{
-			fmgr_info(xfn2_oid, &xfn2_ptr, &xfn2_nargs);
+			fmgr_info(xfn2_oid, &aggFuncInfo[i].xfn2);
 			aggFuncInfo[i].xfn2_oid = xfn2_oid;
-			aggFuncInfo[i].xfn2 = xfn2_ptr;
-			aggFuncInfo[i].xfn2_nargs = xfn2_nargs;
 			value2[i] = (Datum) AggNameGetInitVal((char *) aggname,
 												  aggp->aggbasetype,
 												  2,
@@ -219,10 +206,8 @@ ExecAgg(Agg *node)
 
 		if (OidIsValid(xfn1_oid))
 		{
-			fmgr_info(xfn1_oid, &xfn1_ptr, &xfn1_nargs);
+			fmgr_info(xfn1_oid, &aggFuncInfo[i].xfn1);
 			aggFuncInfo[i].xfn1_oid = xfn1_oid;
-			aggFuncInfo[i].xfn1 = xfn1_ptr;
-			aggFuncInfo[i].xfn1_nargs = xfn1_nargs;
 			value1[i] = (Datum) AggNameGetInitVal((char *) aggname,
 												  aggp->aggbasetype,
 												  1,
@@ -321,7 +306,7 @@ ExecAgg(Agg *node)
 			if (isNull && !aggregates[i]->usenulls)
 				continue;		/* ignore this tuple for this agg */
 
-			if (aggfns->xfn1)
+			if (aggfns->xfn1.fn_addr != NULL)
 			{
 				if (noInitValue[i])
 				{
@@ -389,20 +374,19 @@ ExecAgg(Agg *node)
 					args[0] = value1[i];
 					args[1] = newVal;
 					value1[i] =
-						(Datum) fmgr_c(aggfns->xfn1, aggfns->xfn1_oid,
-								 aggfns->xfn1_nargs, (FmgrValues *) args,
+						(Datum) fmgr_c(&aggfns->xfn1, 
+								 (FmgrValues *) args,
 									   &isNull1);
 					Assert(!isNull1);
 				}
 			}
 
-			if (aggfns->xfn2)
+			if (aggfns->xfn2.fn_addr != NULL)
 			{
 				Datum		xfn2_val = value2[i];
 
 				value2[i] =
-					(Datum) fmgr_c(aggfns->xfn2, aggfns->xfn2_oid,
-								   aggfns->xfn2_nargs,
+					(Datum) fmgr_c(&aggfns->xfn2,
 								   (FmgrValues *) &xfn2_val, &isNull2);
 				Assert(!isNull2);
 			}
@@ -437,29 +421,27 @@ ExecAgg(Agg *node)
 			 * seems to fix behavior for avg() aggregate. -tgl 12/96
 			 */
 		}
-		else if (aggfns->finalfn && nTuplesAgged > 0)
+		else if (aggfns->finalfn.fn_addr != NULL && nTuplesAgged > 0)
 		{
-			if (aggfns->finalfn_nargs > 1)
+			if (aggfns->finalfn.fn_nargs > 1)
 			{
 				args[0] = (char *) value1[i];
 				args[1] = (char *) value2[i];
 			}
-			else if (aggfns->xfn1)
+			else if (aggfns->xfn1.fn_addr != NULL)
 			{
 				args[0] = (char *) value1[i];
 			}
-			else if (aggfns->xfn2)
+			else if (aggfns->xfn2.fn_addr != NULL)
 			{
 				args[0] = (char *) value2[i];
 			}
 			else
-				elog(ERROR, "ExecAgg: no valid transition functions??");
-			value1[i] =
-				(Datum) fmgr_c(aggfns->finalfn, aggfns->finalfn_oid,
-							   aggfns->finalfn_nargs, (FmgrValues *) args,
-							   &(nulls[i]));
+				elog(WARN, "ExecAgg: no valid transition functions??");
+			value1[i] = (Datum) fmgr_c(&aggfns->finalfn,
+						(FmgrValues *) args, &(nulls[i]));
 		}
-		else if (aggfns->xfn1)
+		else if (aggfns->xfn1.fn_addr != NULL)
 		{
 
 			/*
@@ -467,7 +449,7 @@ ExecAgg(Agg *node)
 			 * fix the else part. -ay 2/95)
 			 */
 		}
-		else if (aggfns->xfn2)
+		else if (aggfns->xfn2.fn_addr != NULL)
 		{
 			value1[i] = value2[i];
 		}

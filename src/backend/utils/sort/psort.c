@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.31 1998/01/13 04:04:57 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.32 1998/01/15 19:46:10 pgsql Exp $
  *
  * NOTES
  *		Sorts the first relation into the second relation.
@@ -1115,11 +1115,11 @@ _psort_cmp (HeapTuple *ltup, HeapTuple *rtup)
 		
 		if (PsortKeys[nkey].sk_flags & SK_COMMUTE)
 		{
-	    	if (!(result = -(long) (*PsortKeys[nkey].sk_func) (rattr, lattr)))
-			result = (long) (*PsortKeys[nkey].sk_func) (lattr, rattr);
+	    	if (!(result = -(long) (*fmgr_faddr(&PsortKeys[nkey].sk_func)) (rattr, lattr)))
+			result = (long) (*fmgr_faddr(&PsortKeys[nkey].sk_func)) (lattr, rattr);
 		}
-		else if (!(result = -(long) (*PsortKeys[nkey].sk_func) (lattr, rattr)))
-		    result = (long) (*PsortKeys[nkey].sk_func) (rattr, lattr);
+		else if (!(result = -(long) (*fmgr_faddr(&PsortKeys[nkey].sk_func)) (lattr, rattr)))
+		    result = (long) (*fmgr_faddr(&PsortKeys[nkey].sk_func)) (rattr, lattr);
 		nkey++;
     }
     return (result);

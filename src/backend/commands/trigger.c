@@ -43,7 +43,6 @@ static HeapTuple
 GetTupleForTrigger(Relation relation, ItemPointer tid,
 				   bool before);
 
-extern void fmgr_info(Oid procedureId, func_ptr * function, int *nargs);
 extern GlobalMemory CacheCxt;
 
 void
@@ -413,8 +412,7 @@ RelationBuildTriggers(Relation relation)
 
 		build->tgname = nameout(&(pg_trigger->tgname));
 		build->tgfoid = pg_trigger->tgfoid;
-		build->tgfunc = NULL;
-		build->tgplfunc = NULL;
+		build->tgfunc.fn_addr = NULL;
 		build->tgtype = pg_trigger->tgtype;
 		build->tgnargs = pg_trigger->tgnargs;
 		memcpy(build->tgattr, &(pg_trigger->tgattr), 8 * sizeof(int16));
@@ -598,48 +596,17 @@ static HeapTuple
 ExecCallTriggerFunc(Trigger * trigger)
 {
 
-	if (trigger->tgfunc != NULL)
+	if (trigger->tgfunc.fn_addr == NULL)
 	{
-		return (HeapTuple) ((*(trigger->tgfunc)) ());
+		fmgr_info(trigger->tgfoid, &trigger->tgfunc);
 	}
 
-	if (trigger->tgplfunc == NULL)
-	{
-		HeapTuple	procTuple;
-		HeapTuple	langTuple;
-		Form_pg_proc procStruct;
-		Form_pg_language langStruct;
-		int			nargs;
-
-		procTuple = SearchSysCacheTuple(PROOID,
-										ObjectIdGetDatum(trigger->tgfoid),
-										0, 0, 0);
-		if (!HeapTupleIsValid(procTuple))
-		{
-			elog(ERROR, "ExecCallTriggerFunc(): Cache lookup for proc %ld failed",
-				 ObjectIdGetDatum(trigger->tgfoid));
-		}
-		procStruct = (Form_pg_proc) GETSTRUCT(procTuple);
-
-		langTuple = SearchSysCacheTuple(LANOID,
-								   ObjectIdGetDatum(procStruct->prolang),
-										0, 0, 0);
-		if (!HeapTupleIsValid(langTuple))
-		{
-			elog(ERROR, "ExecCallTriggerFunc(): Cache lookup for language %ld failed",
-				 ObjectIdGetDatum(procStruct->prolang));
-		}
-		langStruct = (Form_pg_language) GETSTRUCT(langTuple);
-
-		if (langStruct->lanispl == false)
-		{
-			fmgr_info(trigger->tgfoid, &(trigger->tgfunc), &nargs);
-			return (HeapTuple) ((*(trigger->tgfunc)) ());
-		}
-		fmgr_info(langStruct->lanplcallfoid, &(trigger->tgplfunc), &nargs);
+	if (trigger->tgfunc.fn_plhandler != NULL) {
+		return (HeapTuple) (*(trigger->tgfunc.fn_plhandler))
+							(&trigger->tgfunc);
 	}
 
-	return (HeapTuple) ((*(trigger->tgplfunc)) (trigger->tgfoid));
+	return (HeapTuple) ((*fmgr_faddr(&trigger->tgfunc)) ());
 }
 
 HeapTuple

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.17 1998/01/07 21:02:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.18 1998/01/15 19:42:15 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -263,8 +263,7 @@ _bt_orderkeys(Relation relation, BTScanOpaque so)
 		{
 			/* yup, use the appropriate value */
 			test =
-				(long) FMGR_PTR2(cur->sk_func, cur->sk_procedure,
-								 cur->sk_argument, xform[j].sk_argument);
+				(long) FMGR_PTR2(&cur->sk_func, cur->sk_argument, xform[j].sk_argument);
 			if (test)
 				xform[j].sk_argument = cur->sk_argument;
 			else if (j == (BTEqualStrategyNumber - 1))
@@ -381,13 +380,13 @@ _bt_checkkeys(IndexScanDesc scan, IndexTuple tuple, Size *keysok)
 
 		if (key[0].sk_flags & SK_COMMUTE)
 		{
-			test = (int) (*(key[0].sk_func))
+			test = (int) (*fmgr_faddr(&key[0].sk_func))
 				(DatumGetPointer(key[0].sk_argument),
 				 datum);
 		}
 		else
 		{
-			test = (int) (*(key[0].sk_func))
+			test = (int) (*fmgr_faddr(&key[0].sk_func))
 				(datum,
 				 DatumGetPointer(key[0].sk_argument));
 		}

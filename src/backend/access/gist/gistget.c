@@ -283,13 +283,13 @@ gistindex_keytest(IndexTuple tuple,
 
 		if (key[0].sk_flags & SK_COMMUTE)
 		{
-			test = (*(key[0].sk_func))
+			test = (*fmgr_faddr(&key[0].sk_func))
 				(DatumGetPointer(key[0].sk_argument),
 				 &de, key[0].sk_procedure) ? 1 : 0;
 		}
 		else
 		{
-			test = (*(key[0].sk_func))
+			test = (*fmgr_faddr(&key[0].sk_func))
 				(&de,
 				 DatumGetPointer(key[0].sk_argument),
 				 key[0].sk_procedure) ? 1 : 0;

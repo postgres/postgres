@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh.in,v 1.5 1997/10/28 15:02:24 vadim Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh.in,v 1.6 1998/01/15 19:44:50 pgsql Exp $
 #
 # NOTES
 #    Passes any -D options on to cpp prior to generating the list
@@ -81,7 +81,7 @@ cat > $HFILE <<FuNkYfMgRsTuFf
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: Gen_fmgrtab.sh.in,v 1.5 1997/10/28 15:02:24 vadim Exp $
+ * $Id: Gen_fmgrtab.sh.in,v 1.6 1998/01/15 19:44:50 pgsql Exp $
  *
  * NOTES
  *	******************************
@@ -111,16 +111,21 @@ typedef struct {
     char *data[MAXFMGRARGS];
 } FmgrValues;
 
+typedef struct {
+    func_ptr	fn_addr;
+    func_ptr	fn_plhandler;
+    Oid		fn_oid;
+    int		fn_nargs;
+} FmgrInfo;
+
 /*
  * defined in fmgr.c
  */
-extern char *fmgr_pl(Oid func_id, int n_arguments, FmgrValues *values,
-	bool *isNull);
-extern char *fmgr_c(func_ptr user_fn, Oid func_id, int n_arguments,
-	FmgrValues *values, bool *isNull);
-extern void fmgr_info(Oid procedureId, func_ptr *function, int *nargs);
+extern char *fmgr_c(FmgrInfo *finfo, FmgrValues *values, bool *isNull);
+extern void fmgr_info(Oid procedureId, FmgrInfo *finfo);
+extern func_ptr fmgr_faddr(FmgrInfo *finfo);
 extern char *fmgr(Oid procedureId, ... );
-extern char *fmgr_ptr(func_ptr user_fn, Oid func_id, ... );
+extern char *fmgr_ptr(FmgrInfo *finfo, ... );
 extern char *fmgr_array_args(Oid procedureId, int nargs, 
 			     char *args[], bool *isNull);
 
@@ -139,11 +144,11 @@ extern void load_file(char *filename);
  *	we must).
  */
 #ifdef TRACE_FMGR_PTR
-#define	FMGR_PTR2(FP, FID, ARG1, ARG2) \
-	fmgr_ptr(FP, FID, 2, ARG1, ARG2)
+#define	FMGR_PTR2(FINFO, ARG1, ARG2) \
+	fmgr_ptr(FINFO, 2, ARG1, ARG2)
 #else
-#define	FMGR_PTR2(FP, FID, ARG1, ARG2) \
-	((FP) ? (*((func_ptr)(FP)))(ARG1, ARG2) : fmgr(FID, ARG1, ARG2))
+#define	FMGR_PTR2(FINFO, ARG1, ARG2) \
+	(((FINFO)->fn_addr) ? (*(fmgr_faddr(FINFO)))(ARG1, ARG2) : fmgr((FINFO)->fn_oid, ARG1, ARG2))
 #endif
 
 /*
@@ -177,7 +182,7 @@ cat > $TABCFILE <<FuNkYfMgRtAbStUfF
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh.in,v 1.5 1997/10/28 15:02:24 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh.in,v 1.6 1998/01/15 19:44:50 pgsql Exp $
  *
  * NOTES
  *

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.57 1998/01/05 16:39:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.58 1998/01/15 19:42:40 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,9 +67,9 @@ static int	MESSAGE_LEVEL;		/* message level */
 #define swapLong(a,b)	{long tmp; tmp=a; a=b; b=tmp;}
 #define swapInt(a,b)	{int tmp; tmp=a; a=b; b=tmp;}
 #define swapDatum(a,b)	{Datum tmp; tmp=a; a=b; b=tmp;}
-#define VacAttrStatsEqValid(stats) ( stats->f_cmpeq != NULL )
-#define VacAttrStatsLtGtValid(stats) ( stats->f_cmplt != NULL && \
-								   stats->f_cmpgt != NULL && \
+#define VacAttrStatsEqValid(stats) ( stats->f_cmpeq.fn_addr != NULL )
+#define VacAttrStatsLtGtValid(stats) ( stats->f_cmplt.fn_addr != NULL && \
+								   stats->f_cmpgt.fn_addr != NULL && \
 								   RegProcedureIsValid(stats->outfunc) )
 
 
@@ -484,35 +484,29 @@ vc_vacone(Oid relid, bool analyze, List *va_cols)
 			func_operator = oper("=", stats->attr->atttypid, stats->attr->atttypid, true);
 			if (func_operator != NULL)
 			{
-				int			nargs;
-
 				pgopform = (OperatorTupleForm) GETSTRUCT(func_operator);
-				fmgr_info(pgopform->oprcode, &(stats->f_cmpeq), &nargs);
+				fmgr_info(pgopform->oprcode, &(stats->f_cmpeq));
 			}
 			else
-				stats->f_cmpeq = NULL;
+				stats->f_cmpeq.fn_addr = NULL;
 
 			func_operator = oper("<", stats->attr->atttypid, stats->attr->atttypid, true);
 			if (func_operator != NULL)
 			{
-				int			nargs;
-
 				pgopform = (OperatorTupleForm) GETSTRUCT(func_operator);
-				fmgr_info(pgopform->oprcode, &(stats->f_cmplt), &nargs);
+				fmgr_info(pgopform->oprcode, &(stats->f_cmplt));
 			}
 			else
-				stats->f_cmplt = NULL;
+				stats->f_cmplt.fn_addr = NULL;
 
 			func_operator = oper(">", stats->attr->atttypid, stats->attr->atttypid, true);
 			if (func_operator != NULL)
 			{
-				int			nargs;
-
 				pgopform = (OperatorTupleForm) GETSTRUCT(func_operator);
-				fmgr_info(pgopform->oprcode, &(stats->f_cmpgt), &nargs);
+				fmgr_info(pgopform->oprcode, &(stats->f_cmpgt));
 			}
 			else
-				stats->f_cmpgt = NULL;
+				stats->f_cmpgt.fn_addr = NULL;
 
 			pgttup = SearchSysCacheTuple(TYPOID,
 								 ObjectIdGetDatum(stats->attr->atttypid),
@@ -1671,29 +1665,29 @@ vc_attrstats(Relation onerel, VRelStats *vacrelstats, HeapTuple htup)
 			}
 			if (VacAttrStatsLtGtValid(stats))
 			{
-				if ((*(stats->f_cmplt)) (value, stats->min))
+				if ((*fmgr_faddr(&stats->f_cmplt)) (value, stats->min))
 				{
 					vc_bucketcpy(stats->attr, value, &stats->min, &stats->min_len);
 					stats->min_cnt = 0;
 				}
-				if ((*(stats->f_cmpgt)) (value, stats->max))
+				if ((*fmgr_faddr(&stats->f_cmpgt)) (value, stats->max))
 				{
 					vc_bucketcpy(stats->attr, value, &stats->max, &stats->max_len);
 					stats->max_cnt = 0;
 				}
-				if ((*(stats->f_cmpeq)) (value, stats->min))
+				if ((*fmgr_faddr(&stats->f_cmpeq)) (value, stats->min))
 					stats->min_cnt++;
-				else if ((*(stats->f_cmpeq)) (value, stats->max))
+				else if ((*fmgr_faddr(&stats->f_cmpeq)) (value, stats->max))
 					stats->max_cnt++;
 			}
-			if ((*(stats->f_cmpeq)) (value, stats->best))
+			if ((*fmgr_faddr(&stats->f_cmpeq)) (value, stats->best))
 				stats->best_cnt++;
-			else if ((*(stats->f_cmpeq)) (value, stats->guess1))
+			else if ((*fmgr_faddr(&stats->f_cmpeq)) (value, stats->guess1))
 			{
 				stats->guess1_cnt++;
 				stats->guess1_hits++;
 			}
-			else if ((*(stats->f_cmpeq)) (value, stats->guess2))
+			else if ((*fmgr_faddr(&stats->f_cmpeq)) (value, stats->guess2))
 				stats->guess2_hits++;
 			else
 				value_hit = false;
@@ -1880,9 +1874,8 @@ vc_updstats(Oid relid, int npages, int ntups, bool hasindex, VRelStats *vacrelst
 																		 *
 					 pgcform->relname.data) */ )
 				{
-					func_ptr	out_function;
+					FmgrInfo	out_function;
 					char	   *out_string;
-					int			dummy;
 
 					for (i = 0; i < Natts_pg_statistic; ++i)
 						nulls[i] = ' ';
@@ -1895,11 +1888,11 @@ vc_updstats(Oid relid, int npages, int ntups, bool hasindex, VRelStats *vacrelst
 					values[i++] = (Datum) relid;		/* 1 */
 					values[i++] = (Datum) attp->attnum; /* 2 */
 					values[i++] = (Datum) InvalidOid;	/* 3 */
-					fmgr_info(stats->outfunc, &out_function, &dummy);
-					out_string = (*out_function) (stats->min, stats->attr->atttypid);
+					fmgr_info(stats->outfunc, &out_function);
+					out_string = (*fmgr_faddr(&out_function)) (stats->min, stats->attr->atttypid);
 					values[i++] = (Datum) fmgr(TextInRegProcedure, out_string);
 					pfree(out_string);
-					out_string = (char *) (*out_function) (stats->max, stats->attr->atttypid);
+					out_string = (char *) (*fmgr_faddr(&out_function)) (stats->max, stats->attr->atttypid);
 					values[i++] = (Datum) fmgr(TextInRegProcedure, out_string);
 					pfree(out_string);
 

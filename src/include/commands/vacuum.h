@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: vacuum.h,v 1.11 1997/11/26 01:26:08 momjian Exp $
+ * $Id: vacuum.h,v 1.12 1998/01/15 19:46:24 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,7 +78,7 @@ typedef struct
 				nonnull_cnt;
 	int32		max_cnt,
 				min_cnt;
-	func_ptr	f_cmpeq,
+	FmgrInfo	f_cmpeq,
 				f_cmplt,
 				f_cmpgt;
 	regproc		outfunc;

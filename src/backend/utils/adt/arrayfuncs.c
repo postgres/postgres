@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.23 1998/01/05 16:39:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.24 1998/01/15 19:45:01 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,7 @@
 static int	_ArrayCount(char *str, int dim[], int typdelim);
 static char *
 _ReadArrayStr(char *arrayStr, int nitems, int ndim, int dim[],
-			  func_ptr inputproc, Oid typelem, char typdelim,
+			  FmgrInfo *inputproc, Oid typelem, char typdelim,
 			  int typlen, bool typbyval, char typalign,
 			  int *nbytes);
 
@@ -105,10 +105,9 @@ array_in(char *string,			/* input array in external form */
 			   *p,
 			   *q,
 			   *r;
-	func_ptr	inputproc;
+	FmgrInfo	inputproc;
 	int			i,
-				nitems,
-				dummy;
+				nitems;
 	int32		nbytes;
 	char	   *dataPtr;
 	ArrayType  *retval = NULL;
@@ -120,7 +119,7 @@ array_in(char *string,			/* input array in external form */
 	system_cache_lookup(element_type, true, &typlen, &typbyval, &typdelim,
 						&typelem, &typinput, &typalign);
 
-	fmgr_info(typinput, &inputproc, &dummy);
+	fmgr_info(typinput, &inputproc);
 
 	string_save = (char *) palloc(strlen(string) + 3);
 	strcpy(string_save, string);
@@ -208,7 +207,7 @@ array_in(char *string,			/* input array in external form */
 	{
 		/* array not a large object */
 		dataPtr =
-			(char *) _ReadArrayStr(p, nitems, ndim, dim, inputproc, typelem,
+			(char *) _ReadArrayStr(p, nitems, ndim, dim, &inputproc, typelem,
 								   typdelim, typlen, typbyval, typalign,
 								   &nbytes);
 		nbytes += ARR_OVERHEAD(ndim);
@@ -367,7 +366,7 @@ _ReadArrayStr(char *arrayStr,
 			  int nitems,
 			  int ndim,
 			  int dim[],
-			  func_ptr inputproc,		/* function used for the
+			  FmgrInfo *inputproc,		/* function used for the
 										 * conversion */
 			  Oid typelem,
 			  char typdelim,
@@ -461,7 +460,7 @@ _ReadArrayStr(char *arrayStr,
 		*q = '\0';
 		if (i >= nitems)
 			elog(ERROR, "array_in: illformed array constant");
-		values[i] = (*inputproc) (p, typelem);
+		values[i] = (*fmgr_faddr(inputproc)) (p, typelem);
 		p = ++q;
 		if (!eoArray)
 
@@ -620,7 +619,7 @@ array_out(ArrayType *v, Oid element_type)
 	char		typdelim;
 	Oid			typoutput,
 				typelem;
-	func_ptr	outputproc;
+	FmgrInfo	outputproc;
 	char		typalign;
 
 	char	   *p,
@@ -634,7 +633,6 @@ array_out(ArrayType *v, Oid element_type)
 				k,
 				indx[MAXDIM];
 	bool		dummy_bool;
-	int			dummy_int;
 	int			ndim,
 			   *dim;
 
@@ -662,7 +660,7 @@ array_out(ArrayType *v, Oid element_type)
 
 	system_cache_lookup(element_type, false, &typlen, &typbyval,
 						&typdelim, &typelem, &typoutput, &typalign);
-	fmgr_info(typoutput, &outputproc, &dummy_int);
+	fmgr_info(typoutput, &outputproc);
 	sprintf(delim, "%c", typdelim);
 	ndim = ARR_NDIM(v);
 	dim = ARR_DIMS(v);
@@ -688,21 +686,21 @@ array_out(ArrayType *v, Oid element_type)
 			switch (typlen)
 			{
 				case 1:
-					values[i] = (*outputproc) (*p, typelem);
+					values[i] = (*fmgr_faddr(&outputproc)) (*p, typelem);
 					break;
 				case 2:
-					values[i] = (*outputproc) (*(int16 *) p, typelem);
+					values[i] = (*fmgr_faddr(&outputproc)) (*(int16 *) p, typelem);
 					break;
 				case 3:
 				case 4:
-					values[i] = (*outputproc) (*(int32 *) p, typelem);
+					values[i] = (*fmgr_faddr(&outputproc)) (*(int32 *) p, typelem);
 					break;
 			}
 			p += typlen;
 		}
 		else
 		{
-			values[i] = (*outputproc) (p, typelem);
+			values[i] = (*fmgr_faddr(&outputproc)) (p, typelem);
 			if (typlen > 0)
 				p += typlen;
 			else

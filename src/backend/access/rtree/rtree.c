@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.21 1998/01/07 21:02:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.22 1998/01/15 19:42:19 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,9 +44,9 @@ typedef struct SPLITVEC
 
 typedef struct RTSTATE
 {
-	func_ptr	unionFn;		/* union function */
-	func_ptr	sizeFn;			/* size function */
-	func_ptr	interFn;		/* intersection function */
+	FmgrInfo	unionFn;		/* union function */
+	FmgrInfo	sizeFn;			/* size function */
+	FmgrInfo	interFn;		/* intersection function */
 } RTSTATE;
 
 /* non-export function prototypes */
@@ -430,10 +430,10 @@ rttighten(Relation r,
 	oldud = (char *) PageGetItem(p, PageGetItemId(p, stk->rts_child));
 	oldud += sizeof(IndexTupleData);
 
-	(*rtstate->sizeFn) (oldud, &old_size);
-	datum = (char *) (*rtstate->unionFn) (oldud, datum);
+	(*fmgr_faddr(&rtstate->sizeFn)) (oldud, &old_size);
+	datum = (char *) (*fmgr_faddr(&rtstate->unionFn)) (oldud, datum);
 
-	(*rtstate->sizeFn) (datum, &newd_size);
+	(*fmgr_faddr(&rtstate->sizeFn)) (datum, &newd_size);
 
 	if (newd_size != old_size)
 	{
@@ -462,7 +462,7 @@ rttighten(Relation r,
 		 * union proc, which is guaranteed to return a rectangle.
 		 */
 
-		tdatum = (char *) (*rtstate->unionFn) (datum, datum);
+		tdatum = (char *) (*fmgr_faddr(&rtstate->unionFn)) (datum, datum);
 		rttighten(r, stk->rts_parent, tdatum, att_size, rtstate);
 		pfree(tdatum);
 	}
@@ -686,7 +686,7 @@ rtintinsert(Relation r,
 		WriteBuffer(b);
 		ldatum = (((char *) ltup) + sizeof(IndexTupleData));
 		rdatum = (((char *) rtup) + sizeof(IndexTupleData));
-		newdatum = (char *) (*rtstate->unionFn) (ldatum, rdatum);
+		newdatum = (char *) (*fmgr_faddr(&rtstate->unionFn)) (ldatum, rdatum);
 
 		rttighten(r, stk->rts_parent, newdatum,
 			   (IndexTupleSize(rtup) - sizeof(IndexTupleData)), rtstate);
@@ -765,10 +765,10 @@ picksplit(Relation r,
 			datum_beta = ((char *) item_2) + sizeof(IndexTupleData);
 
 			/* compute the wasted space by unioning these guys */
-			union_d = (char *) (rtstate->unionFn) (datum_alpha, datum_beta);
-			(rtstate->sizeFn) (union_d, &size_union);
-			inter_d = (char *) (rtstate->interFn) (datum_alpha, datum_beta);
-			(rtstate->sizeFn) (inter_d, &size_inter);
+			union_d = (char *) (*fmgr_faddr(&rtstate->unionFn)) (datum_alpha, datum_beta);
+			(*fmgr_faddr(&rtstate->sizeFn)) (union_d, &size_union);
+			inter_d = (char *) (*fmgr_faddr(&rtstate->interFn)) (datum_alpha, datum_beta);
+			(*fmgr_faddr(&rtstate->sizeFn)) (inter_d, &size_inter);
 			size_waste = size_union - size_inter;
 
 			pfree(union_d);
@@ -798,12 +798,12 @@ picksplit(Relation r,
 
 	item_1 = (IndexTuple) PageGetItem(page, PageGetItemId(page, seed_1));
 	datum_alpha = ((char *) item_1) + sizeof(IndexTupleData);
-	datum_l = (char *) (*rtstate->unionFn) (datum_alpha, datum_alpha);
-	(*rtstate->sizeFn) (datum_l, &size_l);
+	datum_l = (char *) (*fmgr_faddr(&rtstate->unionFn)) (datum_alpha, datum_alpha);
+	(*fmgr_faddr(&rtstate->sizeFn)) (datum_l, &size_l);
 	item_2 = (IndexTuple) PageGetItem(page, PageGetItemId(page, seed_2));
 	datum_beta = ((char *) item_2) + sizeof(IndexTupleData);
-	datum_r = (char *) (*rtstate->unionFn) (datum_beta, datum_beta);
-	(*rtstate->sizeFn) (datum_r, &size_r);
+	datum_r = (char *) (*fmgr_faddr(&rtstate->unionFn)) (datum_beta, datum_beta);
+	(*fmgr_faddr(&rtstate->sizeFn)) (datum_r, &size_r);
 
 	/*
 	 * Now split up the regions between the two seeds.	An important
@@ -851,10 +851,10 @@ picksplit(Relation r,
 		}
 
 		datum_alpha = ((char *) item_1) + sizeof(IndexTupleData);
-		union_dl = (char *) (*rtstate->unionFn) (datum_l, datum_alpha);
-		union_dr = (char *) (*rtstate->unionFn) (datum_r, datum_alpha);
-		(*rtstate->sizeFn) (union_dl, &size_alpha);
-		(*rtstate->sizeFn) (union_dr, &size_beta);
+		union_dl = (char *) (*fmgr_faddr(&rtstate->unionFn)) (datum_l, datum_alpha);
+		union_dr = (char *) (*fmgr_faddr(&rtstate->unionFn)) (datum_r, datum_alpha);
+		(*fmgr_faddr(&rtstate->sizeFn)) (union_dl, &size_alpha);
+		(*fmgr_faddr(&rtstate->sizeFn)) (union_dr, &size_beta);
 
 		/* pick which page to add it to */
 		if (size_alpha - size_l < size_beta - size_r)
@@ -921,9 +921,9 @@ choose(Relation r, Page p, IndexTuple it, RTSTATE *rtstate)
 	{
 		datum = (char *) PageGetItem(p, PageGetItemId(p, i));
 		datum += sizeof(IndexTupleData);
-		(*rtstate->sizeFn) (datum, &dsize);
-		ud = (char *) (*rtstate->unionFn) (datum, id);
-		(*rtstate->sizeFn) (ud, &usize);
+		(*fmgr_faddr(&rtstate->sizeFn)) (datum, &dsize);
+		ud = (char *) (*fmgr_faddr(&rtstate->unionFn)) (datum, id);
+		(*fmgr_faddr(&rtstate->sizeFn)) (ud, &usize);
 		pfree(ud);
 		if (which_grow < 0 || usize - dsize < which_grow)
 		{
@@ -991,18 +991,13 @@ initRtstate(RTSTATE *rtstate, Relation index)
 	RegProcedure union_proc,
 				size_proc,
 				inter_proc;
-	func_ptr	user_fn;
-	int			pronargs;
 
 	union_proc = index_getprocid(index, 1, RT_UNION_PROC);
 	size_proc = index_getprocid(index, 1, RT_SIZE_PROC);
 	inter_proc = index_getprocid(index, 1, RT_INTER_PROC);
-	fmgr_info(union_proc, &user_fn, &pronargs);
-	rtstate->unionFn = user_fn;
-	fmgr_info(size_proc, &user_fn, &pronargs);
-	rtstate->sizeFn = user_fn;
-	fmgr_info(inter_proc, &user_fn, &pronargs);
-	rtstate->interFn = user_fn;
+	fmgr_info(union_proc, &rtstate->unionFn);
+	fmgr_info(size_proc, &rtstate->sizeFn);
+	fmgr_info(inter_proc, &rtstate->interFn);
 	return;
 }
 

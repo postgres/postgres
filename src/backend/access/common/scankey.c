@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/scankey.c,v 1.10 1997/09/07 04:37:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/scankey.c,v 1.11 1998/01/15 19:41:46 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,7 +61,8 @@ ScanKeyEntryInitialize(ScanKey entry,
 	entry->sk_attno = attributeNumber;
 	entry->sk_procedure = procedure;
 	entry->sk_argument = argument;
-	fmgr_info(procedure, &entry->sk_func, &entry->sk_nargs);
+	fmgr_info(procedure, &entry->sk_func);
+	entry->sk_nargs = entry->sk_func.fn_nargs;
 
 	Assert(ScanKeyEntryIsLegal(entry));
 }

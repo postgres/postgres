@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/lselect.c,v 1.9 1997/09/18 05:37:30 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/lselect.c,v 1.10 1998/01/15 19:46:08 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -212,14 +212,14 @@ tuplecmp(HeapTuple ltup, HeapTuple rtup, LeftistContext context)
 		if (context->scanKeys[nkey].sk_flags & SK_COMMUTE)
 		{
 			if (!(result =
-			   (long) (*context->scanKeys[nkey].sk_func) (rattr, lattr)))
+			   (long) (*fmgr_faddr(&context->scanKeys[nkey].sk_func)) (rattr, lattr)))
 				result =
-					-(long) (*context->scanKeys[nkey].sk_func) (lattr, rattr);
+					-(long) (*fmgr_faddr(&context->scanKeys[nkey].sk_func)) (lattr, rattr);
 		}
 		else if (!(result =
-			   (long) (*context->scanKeys[nkey].sk_func) (lattr, rattr)))
+			   (long) (*fmgr_faddr(&context->scanKeys[nkey].sk_func)) (lattr, rattr)))
 			result =
-				-(long) (*context->scanKeys[nkey].sk_func) (rattr, lattr);
+				-(long) (*fmgr_faddr(&context->scanKeys[nkey].sk_func)) (rattr, lattr);
 		nkey++;
 	}
 	return (result == 1);

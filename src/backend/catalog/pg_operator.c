@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.19 1998/01/06 19:42:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.20 1998/01/15 19:42:30 pgsql Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
@@ -97,12 +97,12 @@ OperatorGetWithOpenRelation(Relation pg_operator_desc,
 		{0, Anum_pg_operator_oprright, ObjectIdEqualRegProcedure},
 	};
 
-	fmgr_info(NameEqualRegProcedure,
-			  &opKey[0].sk_func, &opKey[0].sk_nargs);
-	fmgr_info(ObjectIdEqualRegProcedure,
-			  &opKey[1].sk_func, &opKey[1].sk_nargs);
-	fmgr_info(ObjectIdEqualRegProcedure,
-			  &opKey[2].sk_func, &opKey[2].sk_nargs);
+	fmgr_info(NameEqualRegProcedure, &opKey[0].sk_func);
+	fmgr_info(ObjectIdEqualRegProcedure, &opKey[1].sk_func);
+	fmgr_info(ObjectIdEqualRegProcedure, &opKey[2].sk_func);
+	opKey[0].sk_nargs = opKey[0].sk_func.fn_nargs;
+	opKey[1].sk_nargs = opKey[1].sk_func.fn_nargs;
+	opKey[2].sk_nargs = opKey[2].sk_func.fn_nargs;
 
 	/* ----------------
 	 *	form scan key
@@ -482,12 +482,12 @@ OperatorDef(char *operatorName,
 		{0, Anum_pg_operator_oprright, ObjectIdEqualRegProcedure},
 	};
 
-	fmgr_info(NameEqualRegProcedure,
-			  &opKey[0].sk_func, &opKey[0].sk_nargs);
-	fmgr_info(ObjectIdEqualRegProcedure,
-			  &opKey[1].sk_func, &opKey[1].sk_nargs);
-	fmgr_info(ObjectIdEqualRegProcedure,
-			  &opKey[2].sk_func, &opKey[2].sk_nargs);
+	fmgr_info(NameEqualRegProcedure, &opKey[0].sk_func);
+	fmgr_info(ObjectIdEqualRegProcedure, &opKey[1].sk_func);
+	fmgr_info(ObjectIdEqualRegProcedure, &opKey[2].sk_func);
+	opKey[0].sk_nargs = opKey[0].sk_func.fn_nargs;
+	opKey[1].sk_nargs = opKey[1].sk_func.fn_nargs;
+	opKey[2].sk_nargs = opKey[2].sk_func.fn_nargs;
 
 	operatorObjectId = OperatorGet(operatorName,
 								   leftTypeName,
@@ -781,8 +781,8 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 		{0, ObjectIdAttributeNumber, ObjectIdEqualRegProcedure},
 	};
 
-	fmgr_info(ObjectIdEqualRegProcedure,
-			  &opKey[0].sk_func, &opKey[0].sk_nargs);
+	fmgr_info(ObjectIdEqualRegProcedure, &opKey[0].sk_func);
+        opKey[0].sk_nargs = opKey[0].sk_func.fn_nargs;
 
 	for (i = 0; i < Natts_pg_operator; ++i)
 	{

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: valid.h,v 1.11 1997/11/24 05:09:41 momjian Exp $
+ * $Id: valid.h,v 1.12 1998/01/15 19:46:18 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,13 +71,13 @@ do \
 			break; \
 		} \
  \
-		if (__cur_keys->sk_func == (func_ptr) oideq)	/* optimization */ \
+		if (__cur_keys->sk_func.fn_addr == (func_ptr) oideq)	/* optimization */ \
 			__test = (__cur_keys->sk_argument == __atp); \
 		else if (__cur_keys->sk_flags & SK_COMMUTE) \
-			__test = (long) FMGR_PTR2(__cur_keys->sk_func, __cur_keys->sk_procedure, \
+			__test = (long) FMGR_PTR2(&__cur_keys->sk_func, \
 									__cur_keys->sk_argument, __atp); \
 		else \
-			__test = (long) FMGR_PTR2(__cur_keys->sk_func, __cur_keys->sk_procedure, \
+			__test = (long) FMGR_PTR2(&__cur_keys->sk_func, \
 									__atp, __cur_keys->sk_argument); \
  \
 		if (!__test == !(__cur_keys->sk_flags & SK_NEGATE)) \

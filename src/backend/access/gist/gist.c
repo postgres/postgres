@@ -565,10 +565,10 @@ gistAdjustKeys(Relation r,
 	ev1p = &((GISTENTRY *) VARDATA(evec))[1];
 
 	/* form union of decompressed entries */
-	datum = (char *) (giststate->unionFn) (evec, &datumsize);
+	datum = (*fmgr_faddr(&giststate->unionFn)) (evec, &datumsize);
 
 	/* did union leave decompressed version of oldud unchanged? */
-	(giststate->equalFn) (ev0p->pred, datum, &result);
+	(*fmgr_faddr(&giststate->equalFn)) (ev0p->pred, datum, &result);
 	if (!result)
 	{
 		TupleDesc	td = RelationGetTupleDescriptor(r);
@@ -743,7 +743,7 @@ gistSplit(Relation r,
 	VARSIZE(entryvec) = (maxoff + 2) * sizeof(GISTENTRY) + VARHDRSZ;
 
 	/* now let the user-defined picksplit function set up the split vector */
-	(giststate->picksplitFn) (entryvec, &v);
+	(*fmgr_faddr(&giststate->picksplitFn)) (entryvec, &v);
 
 	/* compress ldatum and rdatum */
 	gistcentryinit(giststate, &tmpentry, v.spl_ldatum, (Relation) NULL,
@@ -1072,7 +1072,7 @@ gistchoose(Relation r, Page p, IndexTuple it,	/* it has compressed entry */
 		size = IndexTupleSize(datum) - sizeof(IndexTupleData);
 		datum += sizeof(IndexTupleData);
 		gistdentryinit(giststate, &entry, datum, r, p, i, size, FALSE);
-		(giststate->penaltyFn) (&entry, &identry, &usize);
+		(*fmgr_faddr(&giststate->penaltyFn)) (&entry, &identry, &usize);
 		if (which_grow < 0 || usize < which_grow)
 		{
 			which = i;
@@ -1150,8 +1150,6 @@ initGISTstate(GISTSTATE *giststate, Relation index)
 	RegProcedure penalty_proc,
 				picksplit_proc,
 				equal_proc;
-	func_ptr	user_fn;
-	int			pronargs;
 	HeapTuple	htup;
 	IndexTupleForm itupform;
 
@@ -1162,20 +1160,13 @@ initGISTstate(GISTSTATE *giststate, Relation index)
 	penalty_proc = index_getprocid(index, 1, GIST_PENALTY_PROC);
 	picksplit_proc = index_getprocid(index, 1, GIST_PICKSPLIT_PROC);
 	equal_proc = index_getprocid(index, 1, GIST_EQUAL_PROC);
-	fmgr_info(consistent_proc, &user_fn, &pronargs);
-	giststate->consistentFn = user_fn;
-	fmgr_info(union_proc, &user_fn, &pronargs);
-	giststate->unionFn = user_fn;
-	fmgr_info(compress_proc, &user_fn, &pronargs);
-	giststate->compressFn = user_fn;
-	fmgr_info(decompress_proc, &user_fn, &pronargs);
-	giststate->decompressFn = user_fn;
-	fmgr_info(penalty_proc, &user_fn, &pronargs);
-	giststate->penaltyFn = user_fn;
-	fmgr_info(picksplit_proc, &user_fn, &pronargs);
-	giststate->picksplitFn = user_fn;
-	fmgr_info(equal_proc, &user_fn, &pronargs);
-	giststate->equalFn = user_fn;
+	fmgr_info(consistent_proc, &giststate->consistentFn);
+	fmgr_info(union_proc, &giststate->unionFn);
+	fmgr_info(compress_proc, &giststate->compressFn);
+	fmgr_info(decompress_proc, &giststate->decompressFn);
+	fmgr_info(penalty_proc, &giststate->penaltyFn);
+	fmgr_info(picksplit_proc, &giststate->picksplitFn);
+	fmgr_info(equal_proc, &giststate->equalFn);
 
 	/* see if key type is different from type of attribute being indexed */
 	htup = SearchSysCacheTuple(INDEXRELID, ObjectIdGetDatum(index->rd_id),
@@ -1259,7 +1250,7 @@ gistdentryinit(GISTSTATE *giststate, GISTENTRY *e, char *pr, Relation r,
 	gistentryinit(*e, pr, r, pg, o, b, l);
 	if (giststate->haskeytype)
 	{
-		dep = (GISTENTRY *) ((giststate->decompressFn) (e));
+		dep = (GISTENTRY *) ((*fmgr_faddr(&giststate->decompressFn)) (e));
 		gistentryinit(*e, dep->pred, dep->rel, dep->page, dep->offset, dep->bytes,
 					  dep->leafkey);
 		if (dep != e)
@@ -1280,7 +1271,7 @@ gistcentryinit(GISTSTATE *giststate, GISTENTRY *e, char *pr, Relation r,
 	gistentryinit(*e, pr, r, pg, o, b, l);
 	if (giststate->haskeytype)
 	{
-		cep = (GISTENTRY *) ((giststate->compressFn) (e));
+		cep = (GISTENTRY *) ((*fmgr_faddr(&giststate->compressFn)) (e));
 		gistentryinit(*e, cep->pred, cep->rel, cep->page, cep->offset, cep->bytes,
 					  cep->leafkey);
 		if (cep != e)

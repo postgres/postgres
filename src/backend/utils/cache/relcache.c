@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.33 1998/01/14 15:48:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.34 1998/01/15 19:45:31 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2014,7 +2014,8 @@ init_irels(void)
 		/* have to reinit the function pointers in the strategy maps */
 		for (i = 0; i < am->amstrategies; i++)
 			fmgr_info(SMD(i).sk_procedure,
-					  &(SMD(i).sk_func), &(SMD(i).sk_nargs));
+					  &(SMD(i).sk_func));
+			SMD(i).sk_nargs = SMD(i).sk_func.fn_nargs;
 
 
 		/*

@@ -21,6 +21,8 @@
 #include <utils/rel.h>
 #include <storage/off.h>
 
+#include <fmgr.h>
+
 /*
 ** You can have as many strategies as you please in GiSTs, as
 ** long as your consistent method can handle them
@@ -71,13 +73,13 @@ typedef struct GISTSTACK
 
 typedef struct GISTSTATE
 {
-	func_ptr	consistentFn;
-	func_ptr	unionFn;
-	func_ptr	compressFn;
-	func_ptr	decompressFn;
-	func_ptr	penaltyFn;
-	func_ptr	picksplitFn;
-	func_ptr	equalFn;
+	FmgrInfo	consistentFn;
+	FmgrInfo	unionFn;
+	FmgrInfo	compressFn;
+	FmgrInfo	decompressFn;
+	FmgrInfo	penaltyFn;
+	FmgrInfo	picksplitFn;
+	FmgrInfo	equalFn;
 	bool		haskeytype;
 	bool		keytypbyval;
 } GISTSTATE;

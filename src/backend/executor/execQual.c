@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.22 1998/01/07 21:02:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.23 1998/01/15 19:44:24 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -826,8 +826,7 @@ ExecMakeFunctionResult(Node *node,
 			if (fcache->nullVect[i] == true)
 				*isNull = true;
 
-		return ((Datum) fmgr_c(fcache->func, fcache->foid, fcache->nargs,
-							   (FmgrValues *) argv, isNull));
+		return ((Datum) fmgr_c(&fcache->func, (FmgrValues *) argv, isNull));
 	}
 }
 

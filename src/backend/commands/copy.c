@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.37 1998/01/05 16:38:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.38 1998/01/15 19:42:36 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -202,8 +202,7 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 	int32		attr_count,
 				i;
 	AttributeTupleForm *attr;
-	func_ptr   *out_functions;
-	int			dummy;
+	FmgrInfo   *out_functions;
 	Oid			out_func_oid;
 	Oid		   *elements;
 	Datum		value;
@@ -229,12 +228,12 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 
 	if (!binary)
 	{
-		out_functions = (func_ptr *) palloc(attr_count * sizeof(func_ptr));
+		out_functions = (FmgrInfo *) palloc(attr_count * sizeof(FmgrInfo));
 		elements = (Oid *) palloc(attr_count * sizeof(Oid));
 		for (i = 0; i < attr_count; i++)
 		{
 			out_func_oid = (Oid) GetOutputFunction(attr[i]->atttypid);
-			fmgr_info(out_func_oid, &out_functions[i], &dummy);
+			fmgr_info(out_func_oid, &out_functions[i]);
 			elements[i] = GetTypeElement(attr[i]->atttypid);
 		}
 		nulls = NULL;			/* meaningless, but compiler doesn't know
@@ -272,7 +271,7 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 			{
 				if (!isnull)
 				{
-					string = (char *) (out_functions[i]) (value, elements[i]);
+					string = (char *) (*fmgr_faddr(&out_functions[i])) (value, elements[i]);
 					CopyAttributeOut(fp, string, delim);
 					pfree(string);
 				}
@@ -357,9 +356,8 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 	HeapTuple	tuple;
 	AttrNumber	attr_count;
 	AttributeTupleForm *attr;
-	func_ptr   *in_functions;
-	int			i,
-				dummy;
+	FmgrInfo   *in_functions;
+	int			i;
 	Oid			in_func_oid;
 	Datum	   *values;
 	char	   *nulls,
@@ -498,12 +496,12 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 
 	if (!binary)
 	{
-		in_functions = (func_ptr *) palloc(attr_count * sizeof(func_ptr));
+		in_functions = (FmgrInfo *) palloc(attr_count * sizeof(FmgrInfo));
 		elements = (Oid *) palloc(attr_count * sizeof(Oid));
 		for (i = 0; i < attr_count; i++)
 		{
 			in_func_oid = (Oid) GetInputFunction(attr[i]->atttypid);
-			fmgr_info(in_func_oid, &in_functions[i], &dummy);
+			fmgr_info(in_func_oid, &in_functions[i]);
 			elements[i] = GetTypeElement(attr[i]->atttypid);
 		}
 	}
@@ -574,7 +572,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 				else
 				{
 					values[i] =
-						(Datum) (in_functions[i]) (string,
+						(Datum) (*fmgr_faddr(&in_functions[i])) (string,
 												   elements[i],
 												   attr[i]->attlen);
 
