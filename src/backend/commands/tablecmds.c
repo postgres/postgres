@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.69 2003/03/20 18:52:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.70 2003/03/21 15:43:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3835,6 +3835,7 @@ AlterTableClusterOn(Oid relOid, const char *indexName)
 	{
 		elog(NOTICE, "ALTER TABLE: table \"%s\" is already being clustered on index \"%s\"",
 				NameStr(rel->rd_rel->relname), indexName);
+		ReleaseSysCache(indexTuple);
 		heap_close(rel, AccessExclusiveLock);
 		return;
 	}
