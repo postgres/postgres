@@ -207,7 +207,7 @@ gettoken_txtidx(TI_IN_STATE * state)
 Datum
 txtidx_in(PG_FUNCTION_ARGS)
 {
-	char	   *buf = (char *) PG_GETARG_POINTER(0);
+	char	   *buf = PG_GETARG_CSTRING(0);
 	TI_IN_STATE state;
 	WordEntry  *arr;
 	int4		len = 0,
@@ -276,7 +276,7 @@ txtidx_in(PG_FUNCTION_ARGS)
 Datum
 txtidxsize(PG_FUNCTION_ARGS)
 {
-	txtidx	   *in = (txtidx *) DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_DATUM(0)));
+	txtidx	   *in = (txtidx *) PG_DETOAST_DATUM(PG_GETARG_DATUM(0));
 	int4		ret = in->size;
 
 	PG_FREE_IF_COPY(in, 0);
@@ -286,7 +286,7 @@ txtidxsize(PG_FUNCTION_ARGS)
 Datum
 txtidx_out(PG_FUNCTION_ARGS)
 {
-	txtidx	   *out = (txtidx *) DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_DATUM(0)));
+	txtidx	   *out = (txtidx *) PG_DETOAST_DATUM(PG_GETARG_DATUM(0));
 	char	   *outbuf;
 	int4		i,
 				j,
@@ -475,7 +475,7 @@ makevalue(PRSTEXT * prs)
 Datum
 txt2txtidx(PG_FUNCTION_ARGS)
 {
-	text	   *in = (text *) DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_DATUM(0)));
+	text	   *in = PG_GETARG_TEXT_P(0);
 	PRSTEXT		prs;
 	txtidx	   *out = NULL;
 
@@ -511,7 +511,6 @@ tsearch(PG_FUNCTION_ARGS)
 	PRSTEXT		prs;
 	Datum		datum = (Datum) 0;
 
-
 	if (!CALLED_AS_TRIGGER(fcinfo))
 		elog(ERROR, "TSearch: Not fired by trigger manager");
 
@@ -535,7 +534,7 @@ tsearch(PG_FUNCTION_ARGS)
 		elog(ERROR, "TSearch: format tsearch(txtidx_field, text_field1,...)");
 
 	numidxattr = SPI_fnumber(rel->rd_att, trigger->tgargs[0]);
-	if (numidxattr < 0)
+	if (numidxattr == SPI_ERROR_NOATTRIBUTE)
 		elog(ERROR, "TSearch: Can not find txtidx_field");
 
 	prs.lenwords = 32;
@@ -546,27 +545,35 @@ tsearch(PG_FUNCTION_ARGS)
 	/* find all words in indexable column */
 	for (i = 1; i < trigger->tgnargs; i++)
 	{
-		int4		numattr;
-		text	   *txt_toasted,
-				   *txt;
-		bool		isnull;
+		int			numattr;
 		Oid			oidtype;
+		Datum		txt_datum;
+		bool		isnull;
+		text	   *txt;
 
 		numattr = SPI_fnumber(rel->rd_att, trigger->tgargs[i]);
-		oidtype = SPI_gettypeid(rel->rd_att, numattr);
-		if (numattr < 0 || (!(oidtype == TEXTOID || oidtype == VARCHAROID)))
+		if (numattr == SPI_ERROR_NOATTRIBUTE)
 		{
-			elog(WARNING, "TSearch: can not find field '%s'", trigger->tgargs[i]);
+			elog(WARNING, "TSearch: can not find field '%s'",
+				 trigger->tgargs[i]);
 			continue;
 		}
-		txt_toasted = (text *) DatumGetPointer(SPI_getbinval(rettuple, rel->rd_att, numattr, &isnull));
+		oidtype = SPI_gettypeid(rel->rd_att, numattr);
+		/* We assume char() and varchar() are binary-equivalent to text */
+		if (!(oidtype == TEXTOID ||
+			  oidtype == VARCHAROID ||
+			  oidtype == BPCHAROID))
+		{
+			elog(WARNING, "TSearch: '%s' is not of character type",
+				 trigger->tgargs[i]);
+			continue;
+		}
+		txt_datum = SPI_getbinval(rettuple, rel->rd_att, numattr, &isnull);
 		if (isnull)
 			continue;
-		txt = (text *) DatumGetPointer(PG_DETOAST_DATUM(PointerGetDatum(txt_toasted)));
+		txt = DatumGetTextP(txt_datum);
 
 		parsetext(&prs, VARDATA(txt), VARSIZE(txt) - VARHDRSZ);
-		if (txt != txt_toasted)
-			pfree(txt);
 	}
 
 	/* make txtidx value */
