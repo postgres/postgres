@@ -266,7 +266,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
       case Types.DOUBLE:
 	return 16;
       default:
-	throw new SQLException("no precision for non-numeric data types.");
+	return 0;
       }
   }
   
@@ -295,7 +295,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
       case Types.DOUBLE:
 	return 16;
       default:
-	throw new SQLException("no scale for non-numeric data types");
+	return 0;
       }
   }
   

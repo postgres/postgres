@@ -97,6 +97,6 @@ public class PGobject implements Serializable,Cloneable
    */
   public String toString()
   {
-    return value;
+    return getValue();
   }
 }

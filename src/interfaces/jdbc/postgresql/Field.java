@@ -58,7 +58,8 @@ public class Field
       if (result.getColumnCount() != 1 || result.getTupleCount() != 1)
 	throw new SQLException("Unexpected return from query for type");
       result.next();
-      sql_type = getSQLType(result.getString(1));
+      type_name = result.getString(1);
+      sql_type = getSQLType(type_name);
       result.close();
     }
     return sql_type;
