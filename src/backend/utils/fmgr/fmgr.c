@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.34 2000/01/10 17:14:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.35 2000/01/10 18:18:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -233,6 +233,238 @@ fmgr_c(FmgrInfo *finfo,
 									  values->data[14], values->data[15]);
 			break;
 		case 17:
+			returnValue = (*user_fn) (values->data[0], values->data[1],
+									  values->data[2], values->data[3],
+									  values->data[4], values->data[5],
+									  values->data[6], values->data[7],
+									  values->data[8], values->data[9],
+									  values->data[10], values->data[11],
+									  values->data[12], values->data[13],
+									  values->data[14], values->data[15],
+									  values->data[16]);
+			break;
+		case 18:
+			returnValue = (*user_fn) (values->data[0], values->data[1],
+									  values->data[2], values->data[3],
+									  values->data[4], values->data[5],
+									  values->data[6], values->data[7],
+									  values->data[8], values->data[9],
+									  values->data[10], values->data[11],
+									  values->data[12], values->data[13],
+									  values->data[14], values->data[15],
+									  values->data[16], values->data[17]);
+			break;
+		case 19:
+			returnValue = (*user_fn) (values->data[0], values->data[1],
+									  values->data[2], values->data[3],
+									  values->data[4], values->data[5],
+									  values->data[6], values->data[7],
+									  values->data[8], values->data[9],
+									  values->data[10], values->data[11],
+									  values->data[12], values->data[13],
+									  values->data[14], values->data[15],
+									  values->data[16], values->data[17],
+									  values->data[18]);
+			break;
+		case 20:
+			returnValue = (*user_fn) (values->data[0], values->data[1],
+									  values->data[2], values->data[3],
+									  values->data[4], values->data[5],
+									  values->data[6], values->data[7],
+									  values->data[8], values->data[9],
+									  values->data[10], values->data[11],
+									  values->data[12], values->data[13],
+									  values->data[14], values->data[15],
+									  values->data[16], values->data[17],
+									  values->data[18], values->data[19]);
+			break;
+		case 21:
+			returnValue = (*user_fn) (values->data[0], values->data[1],
+									  values->data[2], values->data[3],
+									  values->data[4], values->data[5],
+									  values->data[6], values->data[7],
+									  values->data[8], values->data[9],
+									  values->data[10], values->data[11],
+									  values->data[12], values->data[13],
+									  values->data[14], values->data[15],
+									  values->data[16], values->data[17],
+									  values->data[18], values->data[19],
+									  values->data[20]);
+			break;
+		case 22:
+			returnValue = (*user_fn) (values->data[0], values->data[1],
+									  values->data[2], values->data[3],
+									  values->data[4], values->data[5],
+									  values->data[6], values->data[7],
+									  values->data[8], values->data[9],
+									  values->data[10], values->data[11],
+									  values->data[12], values->data[13],
+									  values->data[14], values->data[15],
+									  values->data[16], values->data[17],
+									  values->data[18], values->data[19],
+									  values->data[20], values->data[21]);
+			break;
+		case 23:
+			returnValue = (*user_fn) (values->data[0], values->data[1],
+									  values->data[2], values->data[3],
+									  values->data[4], values->data[5],
+									  values->data[6], values->data[7],
+									  values->data[8], values->data[9],
+									  values->data[10], values->data[11],
+									  values->data[12], values->data[13],
+									  values->data[14], values->data[15],
+									  values->data[16], values->data[17],
+									  values->data[18], values->data[19],
+									  values->data[20], values->data[21],
+									  values->data[22]);
+			break;
+		case 24:
+			returnValue = (*user_fn) (values->data[0], values->data[1],
+									  values->data[2], values->data[3],
+									  values->data[4], values->data[5],
+									  values->data[6], values->data[7],
+									  values->data[8], values->data[9],
+									  values->data[10], values->data[11],
+									  values->data[12], values->data[13],
+									  values->data[14], values->data[15],
+									  values->data[16], values->data[17],
+									  values->data[18], values->data[19],
+									  values->data[20], values->data[21],
+									  values->data[22], values->data[23]);
+			break;
+		case 25:
+			returnValue = (*user_fn) (values->data[0], values->data[1],
+									  values->data[2], values->data[3],
+									  values->data[4], values->data[5],
+									  values->data[6], values->data[7],
+									  values->data[8], values->data[9],
+									  values->data[10], values->data[11],
+									  values->data[12], values->data[13],
+									  values->data[14], values->data[15],
+									  values->data[16], values->data[17],
+									  values->data[18], values->data[19],
+									  values->data[20], values->data[21],
+									  values->data[22], values->data[23],
+									  values->data[24]);
+			break;
+		case 26:
+			returnValue = (*user_fn) (values->data[0], values->data[1],
+									  values->data[2], values->data[3],
+									  values->data[4], values->data[5],
+									  values->data[6], values->data[7],
+									  values->data[8], values->data[9],
+									  values->data[10], values->data[11],
+									  values->data[12], values->data[13],
+									  values->data[14], values->data[15],
+									  values->data[16], values->data[17],
+									  values->data[18], values->data[19],
+									  values->data[20], values->data[21],
+									  values->data[22], values->data[23],
+									  values->data[24], values->data[25]);
+			break;
+		case 27:
+			returnValue = (*user_fn) (values->data[0], values->data[1],
+									  values->data[2], values->data[3],
+									  values->data[4], values->data[5],
+									  values->data[6], values->data[7],
+									  values->data[8], values->data[9],
+									  values->data[10], values->data[11],
+									  values->data[12], values->data[13],
+									  values->data[14], values->data[15],
+									  values->data[16], values->data[17],
+									  values->data[18], values->data[19],
+									  values->data[20], values->data[21],
+									  values->data[22], values->data[23],
+									  values->data[24], values->data[25],
+									  values->data[26]);
+			break;
+		case 28:
+			returnValue = (*user_fn) (values->data[0], values->data[1],
+									  values->data[2], values->data[3],
+									  values->data[4], values->data[5],
+									  values->data[6], values->data[7],
+									  values->data[8], values->data[9],
+									  values->data[10], values->data[11],
+									  values->data[12], values->data[13],
+									  values->data[14], values->data[15],
+									  values->data[16], values->data[17],
+									  values->data[18], values->data[19],
+									  values->data[20], values->data[21],
+									  values->data[22], values->data[23],
+									  values->data[24], values->data[25],
+									  values->data[26], values->data[27]);
+			break;
+		case 29:
+			returnValue = (*user_fn) (values->data[0], values->data[1],
+									  values->data[2], values->data[3],
+									  values->data[4], values->data[5],
+									  values->data[6], values->data[7],
+									  values->data[8], values->data[9],
+									  values->data[10], values->data[11],
+									  values->data[12], values->data[13],
+									  values->data[14], values->data[15],
+									  values->data[16], values->data[17],
+									  values->data[18], values->data[19],
+									  values->data[20], values->data[21],
+									  values->data[22], values->data[23],
+									  values->data[24], values->data[25],
+									  values->data[26], values->data[27],
+									  values->data[28]);
+			break;
+		case 30:
+			returnValue = (*user_fn) (values->data[0], values->data[1],
+									  values->data[2], values->data[3],
+									  values->data[4], values->data[5],
+									  values->data[6], values->data[7],
+									  values->data[8], values->data[9],
+									  values->data[10], values->data[11],
+									  values->data[12], values->data[13],
+									  values->data[14], values->data[15],
+									  values->data[16], values->data[17],
+									  values->data[18], values->data[19],
+									  values->data[20], values->data[21],
+									  values->data[22], values->data[23],
+									  values->data[24], values->data[25],
+									  values->data[26], values->data[27],
+									  values->data[28], values->data[29]);
+			break;
+		case 31:
+			returnValue = (*user_fn) (values->data[0], values->data[1],
+									  values->data[2], values->data[3],
+									  values->data[4], values->data[5],
+									  values->data[6], values->data[7],
+									  values->data[8], values->data[9],
+									  values->data[10], values->data[11],
+									  values->data[12], values->data[13],
+									  values->data[14], values->data[15],
+									  values->data[16], values->data[17],
+									  values->data[18], values->data[19],
+									  values->data[20], values->data[21],
+									  values->data[22], values->data[23],
+									  values->data[24], values->data[25],
+									  values->data[26], values->data[27],
+									  values->data[28], values->data[29],
+									  values->data[30]);
+			break;
+		case 32:
+			returnValue = (*user_fn) (values->data[0], values->data[1],
+									  values->data[2], values->data[3],
+									  values->data[4], values->data[5],
+									  values->data[6], values->data[7],
+									  values->data[8], values->data[9],
+									  values->data[10], values->data[11],
+									  values->data[12], values->data[13],
+									  values->data[14], values->data[15],
+									  values->data[16], values->data[17],
+									  values->data[18], values->data[19],
+									  values->data[20], values->data[21],
+									  values->data[22], values->data[23],
+									  values->data[24], values->data[25],
+									  values->data[26], values->data[27],
+									  values->data[28], values->data[29],
+									  values->data[30], values->data[31]);
+			break;
+		default:
 
 			/*
 			 * XXX Note that functions with >FUNC_MAX_ARGS arguments can only be
@@ -247,7 +479,15 @@ fmgr_c(FmgrInfo *finfo,
 									  values->data[8], values->data[9],
 									  values->data[10], values->data[11],
 									  values->data[12], values->data[13],
-									  values->data[14], values->data[15]);
+									  values->data[14], values->data[15],
+									  values->data[16], values->data[17],
+									  values->data[18], values->data[19],
+									  values->data[20], values->data[21],
+									  values->data[22], values->data[23],
+									  values->data[24], values->data[25],
+									  values->data[26], values->data[27],
+									  values->data[28], values->data[29],
+									  values->data[30], values->data[31]);
 			break;
 		default:
 			elog(ERROR, "fmgr_c: function %u: too many arguments (%d > %d)",
