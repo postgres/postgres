@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/format_type.c,v 1.19 2001/10/08 19:55:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/format_type.c,v 1.20 2001/10/23 20:12:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,12 +20,14 @@
 #include "fmgr.h"
 #include "catalog/pg_type.h"
 #include "utils/builtins.h"
+#include "utils/datetime.h"
 #include "utils/numeric.h"
 #include "utils/syscache.h"
 #ifdef MULTIBYTE
 #include "mb/pg_wchar.h"
 #endif
 
+#define MASK(b) (1 << (b))
 
 #define MAX_INT32_LEN 11
 #define _textin(str) DirectFunctionCall1(textin, CStringGetDatum(str))
@@ -132,7 +134,8 @@ format_type_internal(Oid type_oid, int32 typemod, bool allow_invalid)
 		if (allow_invalid)
 			return pstrdup("???");
 		else
-			elog(ERROR, "could not locate data type with oid %u in catalog", type_oid);
+			elog(ERROR, "could not locate data type with oid %u in catalog",
+				 type_oid);
 	}
 
 	array_base_type = ((Form_pg_type) GETSTRUCT(tuple))->typelem;
@@ -149,7 +152,8 @@ format_type_internal(Oid type_oid, int32 typemod, bool allow_invalid)
 			if (allow_invalid)
 				return pstrdup("???[]");
 			else
-				elog(ERROR, "could not locate data type with oid %u in catalog", type_oid);
+				elog(ERROR, "could not locate data type with oid %u in catalog",
+					 type_oid);
 		}
 		is_array = true;
 		type_oid = array_base_type;
@@ -207,6 +211,73 @@ format_type_internal(Oid type_oid, int32 typemod, bool allow_invalid)
 								(typemod - VARHDRSZ) & 0xffff);
 			else
 				buf = pstrdup("numeric");
+			break;
+
+		case INTERVALOID:
+			if (with_typemod)
+			{
+				int	fields = typemod >> 16;
+				int precision = typemod & 0xFFFF;
+				const char *fieldstr;
+
+				switch (fields)
+				{
+					case MASK(YEAR):
+						fieldstr = " year";
+						break;
+					case MASK(MONTH):
+						fieldstr = " month";
+						break;
+					case MASK(DAY):
+						fieldstr = " day";
+						break;
+					case MASK(HOUR):
+						fieldstr = " hour";
+						break;
+					case MASK(MINUTE):
+						fieldstr = " minute";
+						break;
+					case MASK(SECOND):
+						fieldstr = " second";
+						break;
+					case MASK(YEAR) | MASK(MONTH):
+						fieldstr = " year to month";
+						break;
+					case MASK(DAY) | MASK(HOUR):
+						fieldstr = " day to hour";
+						break;
+					case MASK(DAY) | MASK(HOUR) | MASK(MINUTE):
+						fieldstr = " day to minute";
+						break;
+					case MASK(DAY) | MASK(HOUR) | MASK(MINUTE) | MASK(SECOND):
+						fieldstr = " day to second";
+						break;
+					case MASK(HOUR) | MASK(MINUTE):
+						fieldstr = " hour to minute";
+						break;
+					case MASK(HOUR) | MASK(MINUTE) | MASK(SECOND):
+						fieldstr = " hour to second";
+						break;
+					case MASK(MINUTE) | MASK(SECOND):
+						fieldstr = " minute to second";
+						break;
+					case 0x7FFF:
+						fieldstr = "";
+						break;
+					default:
+						elog(DEBUG, "Invalid INTERVAL typmod 0x%x", typemod);
+						fieldstr = "";
+						break;
+				}
+				if (precision != 0xFFFF)
+					buf = psnprintf(100, "interval(%d)%s",
+									precision, fieldstr);
+				else
+					buf = psnprintf(100, "interval%s",
+									fieldstr);
+			}
+			else
+				buf = pstrdup("interval");
 			break;
 
 		case TIMEOID:
@@ -300,7 +371,7 @@ format_type_internal(Oid type_oid, int32 typemod, bool allow_invalid)
 int32
 type_maximum_size(Oid type_oid, int32 typemod)
 {
-	if (typemod <= 0)
+	if (typemod < 0)
 		return -1;
 
 	switch (type_oid)
