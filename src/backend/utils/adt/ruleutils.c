@@ -3,7 +3,7 @@
  *			  out of its tuple
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.56 2000/07/06 05:48:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.57 2000/07/06 23:03:37 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -818,7 +818,8 @@ make_viewdef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc)
 
 	query = (Query *) lfirst(actions);
 
-	if (ev_type != '1' || ev_attr >= 0 || !is_instead || strcmp(ev_qual, "<>"))
+	if (ev_type != '1' || ev_attr >= 0 || !is_instead ||
+		strcmp(ev_qual, "<>") != 0)
 	{
 		appendStringInfo(buf, "Not a view");
 		return;
@@ -929,9 +930,9 @@ get_select_query_def(Query *query, deparse_context *context)
 		rte = (RangeTblEntry *) lfirst(l);
 		if (rte->ref == NULL)
 			continue;
-		if (!strcmp(rte->ref->relname, "*NEW*"))
+		if (strcmp(rte->ref->relname, "*NEW*") == 0)
 			continue;
-		if (!strcmp(rte->ref->relname, "*OLD*"))
+		if (strcmp(rte->ref->relname, "*OLD*") == 0)
 			continue;
 
 		rt_constonly = FALSE;
@@ -948,7 +949,7 @@ get_select_query_def(Query *query, deparse_context *context)
 	sep = " ";
 	foreach(l, query->targetList)
 	{
-		bool		tell_as = FALSE;
+		bool		tell_as = false;
 
 		tle = (TargetEntry *) lfirst(l);
 		appendStringInfo(buf, sep);
@@ -959,7 +960,7 @@ get_select_query_def(Query *query, deparse_context *context)
 
 		/* Check if we must say AS ... */
 		if (!IsA(tle->expr, Var))
-			tell_as = strcmp(tle->resdom->resname, "?column?");
+			tell_as = (strcmp(tle->resdom->resname, "?column?") != 0);
 		else
 		{
 			Var		   *var = (Var *) (tle->expr);
@@ -967,8 +968,7 @@ get_select_query_def(Query *query, deparse_context *context)
 
 			rte = get_rte_for_var(var, context);
 			attname = get_attribute_name(rte->relid, var->varattno);
-			if (strcmp(attname, tle->resdom->resname))
-				tell_as = TRUE;
+			tell_as = (strcmp(attname, tle->resdom->resname) != 0);
 		}
 
 		/* and do if so */
@@ -990,9 +990,9 @@ get_select_query_def(Query *query, deparse_context *context)
 
 				if (rte->ref == NULL)
 					continue;
-				if (!strcmp(rte->ref->relname, "*NEW*"))
+				if (strcmp(rte->ref->relname, "*NEW*") == 0)
 					continue;
-				if (!strcmp(rte->ref->relname, "*OLD*"))
+				if (strcmp(rte->ref->relname, "*OLD*") == 0)
 					continue;
 
 				appendStringInfo(buf, sep);
@@ -1107,9 +1107,9 @@ get_insert_query_def(Query *query, deparse_context *context)
 		rte = (RangeTblEntry *) lfirst(l);
 		if (rte->ref == NULL)
 			continue;
-		if (!strcmp(rte->ref->relname, "*NEW*"))
+		if (strcmp(rte->ref->relname, "*NEW*") == 0)
 			continue;
-		if (!strcmp(rte->ref->relname, "*OLD*"))
+		if (strcmp(rte->ref->relname, "*OLD*") == 0)
 			continue;
 
 		rt_constonly = FALSE;
@@ -1280,9 +1280,9 @@ get_rule_expr(Node *node, deparse_context *context)
 					if (rte->ref == NULL)
 						appendStringInfo(buf, "%s.",
 										 quote_identifier(rte->relname));
-					else if (!strcmp(rte->ref->relname, "*NEW*"))
+					else if (strcmp(rte->ref->relname, "*NEW*") == 0)
 						appendStringInfo(buf, "new.");
-					else if (!strcmp(rte->ref->relname, "*OLD*"))
+					else if (strcmp(rte->ref->relname, "*OLD*") == 0)
 						appendStringInfo(buf, "old.");
 					else
 						appendStringInfo(buf, "%s.",
@@ -1520,14 +1520,14 @@ get_func_expr(Expr *expr, deparse_context *context)
 	 */
 	if (procStruct->pronargs == 1 && procStruct->proargtypes[0] == InvalidOid)
 	{
-		if (!strcmp(proname, "nullvalue"))
+		if (strcmp(proname, "nullvalue") == 0)
 		{
 			appendStringInfoChar(buf, '(');
 			get_rule_expr((Node *) lfirst(expr->args), context);
 			appendStringInfo(buf, " ISNULL)");
 			return;
 		}
-		if (!strcmp(proname, "nonnullvalue"))
+		if (strcmp(proname, "nonnullvalue") == 0)
 		{
 			appendStringInfoChar(buf, '(');
 			get_rule_expr((Node *) lfirst(expr->args), context);
