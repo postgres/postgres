@@ -2,7 +2,7 @@
 TODO list for PostgreSQL
 ========================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Tue Mar 22 21:14:11 EST 2005
+Last updated:		Tue Mar 22 21:21:04 EST 2005
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -554,7 +554,6 @@ Clients
 	  into a single binary.
 
 	o Add CSV output format
-	o Update to use the newer COPY syntax
 
 * ECPG
 	o Docs
