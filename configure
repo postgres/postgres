@@ -6887,7 +6887,8 @@ done
 
 
 
-for ac_header in crypt.h dld.h endian.h fp_class.h getopt.h ieeefp.h pwd.h sys/ipc.h sys/pstat.h sys/select.h sys/sem.h sys/socket.h sys/shm.h sys/un.h termios.h kernel/OS.h kernel/image.h SupportDefs.h
+
+for ac_header in crypt.h dld.h endian.h fp_class.h getopt.h ieeefp.h pwd.h sys/ipc.h sys/pstat.h sys/select.h sys/sem.h sys/socket.h sys/shm.h sys/un.h termios.h utime.h kernel/OS.h kernel/image.h SupportDefs.h
 do
 as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
 if eval "test \"\${$as_ac_Header+set}\" = set"; then
@@ -9819,7 +9820,9 @@ test $ac_cv_func_memcmp_working = no && LIBOBJS="$LIBOBJS memcmp.$ac_objext"
 
 
 
-for ac_func in cbrt fcvt getpeereid memmove pstat setproctitle setsid sigprocmask sysconf waitpid dlopen fdatasync
+
+
+for ac_func in cbrt fcvt getpeereid memmove pstat setproctitle setsid sigprocmask sysconf waitpid dlopen fdatasync utime utimes
 do
 as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
 echo "$as_me:$LINENO: checking for $ac_func" >&5

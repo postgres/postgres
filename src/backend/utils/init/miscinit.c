@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.98 2002/12/05 04:04:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.99 2003/01/25 05:19:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,8 +16,9 @@
 
 #include <sys/param.h>
 #include <signal.h>
-#include <sys/stat.h>
 #include <sys/file.h>
+#include <sys/stat.h>
+#include <sys/time.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <grp.h>
@@ -25,6 +26,9 @@
 #include <errno.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#ifdef HAVE_UTIME_H
+#include <utime.h>
+#endif
 
 #include "catalog/catname.h"
 #include "catalog/pg_shadow.h"
@@ -872,27 +876,42 @@ CreateSocketLockFile(const char *socketfile, bool amPostmaster)
 }
 
 /*
- * Re-read the socket lock file.  This should be called every so often
- * to ensure that the lock file has a recent access date.  That saves it
+ * TouchSocketLockFile -- mark socket lock file as recently accessed
+ *
+ * This routine should be called every so often to ensure that the lock file
+ * has a recent mod or access date.  That saves it
  * from being removed by overenthusiastic /tmp-directory-cleaner daemons.
  * (Another reason we should never have put the socket file in /tmp...)
  */
 void
 TouchSocketLockFile(void)
 {
-	int			fd;
-	char		buffer[1];
-
 	/* Do nothing if we did not create a socket... */
 	if (socketLockFile[0] != '\0')
 	{
-		/* XXX any need to complain about errors here? */
+		/*
+		 * utime() is POSIX standard, utimes() is a common alternative;
+		 * if we have neither, fall back to actually reading the file
+		 * (which only sets the access time not mod time, but that should
+		 * be enough in most cases).  In all paths, we ignore errors.
+		 */
+#ifdef HAVE_UTIME
+		utime(socketLockFile, NULL);
+#else /* !HAVE_UTIME */
+#ifdef HAVE_UTIMES
+		utimes(socketLockFile, NULL);
+#else /* !HAVE_UTIMES */
+		int			fd;
+		char		buffer[1];
+
 		fd = open(socketLockFile, O_RDONLY | PG_BINARY, 0);
 		if (fd >= 0)
 		{
 			read(fd, buffer, sizeof(buffer));
 			close(fd);
 		}
+#endif /* HAVE_UTIMES */
+#endif /* HAVE_UTIME */
 	}
 }
 

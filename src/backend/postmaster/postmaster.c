@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.305 2003/01/16 00:26:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.306 2003/01/25 05:19:46 tgl Exp $
  *
  * NOTES
  *
@@ -2678,6 +2678,7 @@ SSDataBase(int xlop)
 		 * do other actions that should happen every now and then on no
 		 * particular schedule.  Such as...
 		 */
+		TouchSocketFile();
 		TouchSocketLockFile();
 	}
 

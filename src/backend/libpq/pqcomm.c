@@ -29,7 +29,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqcomm.c,v 1.146 2003/01/14 22:52:57 momjian Exp $
+ *	$Id: pqcomm.c,v 1.147 2003/01/25 05:19:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,6 +41,7 @@
  *		StreamServerPort	- Open postmaster's server port
  *		StreamConnection	- Create new connection with client
  *		StreamClose			- Close a client/backend connection
+ *		TouchSocketFile		- Protect socket file against /tmp cleaners
  *		pq_init			- initialize libpq at backend startup
  *		pq_close		- shutdown libpq at backend exit
  *
@@ -66,15 +67,19 @@
 #include <fcntl.h>
 #include <grp.h>
 #include <unistd.h>
-#include <sys/stat.h>
+#include <sys/file.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/time.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #ifdef HAVE_NETINET_TCP_H
 #include <netinet/tcp.h>
 #endif
 #include <arpa/inet.h>
-#include <sys/file.h>
+#ifdef HAVE_UTIME_H
+#include <utime.h>
+#endif
 
 #include "libpq/libpq.h"
 #include "miscadmin.h"
@@ -87,8 +92,8 @@ extern ssize_t secure_write(Port *, const void *, size_t);
 static void pq_close(void);
 
 #ifdef HAVE_UNIX_SOCKETS
-int 	Lock_AF_UNIX(unsigned short portNumber, char *unixSocketName);
-int		Setup_AF_UNIX(void);
+static int	Lock_AF_UNIX(unsigned short portNumber, char *unixSocketName);
+static int	Setup_AF_UNIX(void);
 #endif   /* HAVE_UNIX_SOCKETS */
 
 #ifdef HAVE_IPV6
@@ -175,12 +180,14 @@ static char sock_path[MAXPGPATH];
  * Shutdown routine for backend connection
  * If a Unix socket is used for communication, explicitly close it.
  */
+#ifdef HAVE_UNIX_SOCKETS
 static void
 StreamDoUnlink(void)
 {
 	Assert(sock_path[0]);
 	unlink(sock_path);
 }
+#endif   /* HAVE_UNIX_SOCKETS */
 
 /*
  * StreamServerPort -- open a sock stream "listening" port.
@@ -345,12 +352,13 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 
 }
 
+
+#ifdef HAVE_UNIX_SOCKETS
+
 /*
  * Lock_AF_UNIX -- configure unix socket file path
  */
-
-#ifdef HAVE_UNIX_SOCKETS
-int
+static int
 Lock_AF_UNIX(unsigned short portNumber, char *unixSocketName)
 {
 	SockAddr	saddr;	/* just used to get socket path */
@@ -377,7 +385,7 @@ Lock_AF_UNIX(unsigned short portNumber, char *unixSocketName)
 /*
  * Setup_AF_UNIX -- configure unix socket permissions
  */
-int
+static int
 Setup_AF_UNIX(void)
 {
 	/* Arrange to unlink the socket file at exit */
@@ -429,6 +437,7 @@ Setup_AF_UNIX(void)
 	}
 	return STATUS_OK;
 }
+
 #endif   /* HAVE_UNIX_SOCKETS */
 
 
@@ -504,6 +513,38 @@ void
 StreamClose(int sock)
 {
 	close(sock);
+}
+
+/*
+ * TouchSocketFile -- mark socket file as recently accessed
+ *
+ * This routine should be called every so often to ensure that the socket
+ * file has a recent mod date (ordinary operations on sockets usually won't
+ * change the mod date).  That saves it from being removed by
+ * overenthusiastic /tmp-directory-cleaner daemons.  (Another reason we should
+ * never have put the socket file in /tmp...)
+ */
+void
+TouchSocketFile(void)
+{
+	/* Do nothing if we did not create a socket... */
+	if (sock_path[0] != '\0')
+	{
+		/*
+		 * utime() is POSIX standard, utimes() is a common alternative.
+		 * If we have neither, there's no way to affect the mod or access
+		 * time of the socket :-(
+		 *
+		 * In either path, we ignore errors; there's no point in complaining.
+		 */
+#ifdef HAVE_UTIME
+		utime(sock_path, NULL);
+#else /* !HAVE_UTIME */
+#ifdef HAVE_UTIMES
+		utimes(sock_path, NULL);
+#endif /* HAVE_UTIMES */
+#endif /* HAVE_UTIME */
+	}
 }
 
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq.h,v 1.55 2003/01/06 03:18:27 momjian Exp $
+ * $Id: libpq.h,v 1.56 2003/01/25 05:19:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,6 +49,7 @@ extern int StreamServerPort(int family, char *hostName,
 			  unsigned short portNumber, char *unixSocketName, int *fdP);
 extern int	StreamConnection(int server_fd, Port *port);
 extern void StreamClose(int sock);
+extern void TouchSocketFile(void);
 extern void pq_init(void);
 extern int	pq_getbytes(char *s, size_t len);
 extern int	pq_getstring(StringInfo s, int maxlen);

@@ -8,7 +8,7 @@
  * or in pg_config.h afterwards.  Of course, if you edit pg_config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: pg_config.h.in,v 1.37 2003/01/06 06:07:20 momjian Exp $
+ * $Id: pg_config.h.in,v 1.38 2003/01/25 05:19:47 tgl Exp $
  */
 
 #ifndef PG_CONFIG_H
@@ -383,6 +383,9 @@
 /* Set to 1 if you have <termios.h> */
 #undef HAVE_TERMIOS_H
 
+/* Set to 1 if you have <utime.h> */
+#undef HAVE_UTIME_H
+
 /* Set to 1 if you have <sys/pstat.h> */
 #undef HAVE_SYS_PSTAT_H
 
@@ -519,6 +522,12 @@
 
 /* Define if you have fdatasync() */
 #undef HAVE_FDATASYNC
+
+/* Define if you have utime() */
+#undef HAVE_UTIME
+
+/* Define if you have utimes() */
+#undef HAVE_UTIMES
 
 /* Define if the standard header unistd.h declares fdatasync() */
 #undef HAVE_DECL_FDATASYNC
