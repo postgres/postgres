@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.114 2003/11/29 19:51:52 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.115 2004/02/13 01:08:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -159,7 +159,8 @@ transformTargetList(ParseState *pstate, List *targetlist)
 							if (strcmp(name1, get_database_name(MyDatabaseId)) != 0)
 								ereport(ERROR,
 										(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-										 errmsg("cross-database references are not implemented")));
+										 errmsg("cross-database references are not implemented: %s",
+												NameListToString(fields))));
 							schemaname = strVal(lsecond(fields));
 							relname = strVal(lthird(fields));
 							break;
