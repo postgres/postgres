@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeTidscan.c,v 1.21 2001/10/28 06:25:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeTidscan.c,v 1.22 2002/02/11 20:10:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -107,6 +107,11 @@ TidNext(TidScan *node)
 		ExecClearTuple(slot);
 		if (estate->es_evTupleNull[node->scan.scanrelid - 1])
 			return slot;		/* return empty slot */
+
+		/*
+		 * XXX shouldn't we check here to make sure tuple matches TID list?
+		 * In runtime-key case this is not certain, is it?
+		 */
 
 		ExecStoreTuple(estate->es_evTuple[node->scan.scanrelid - 1],
 					   slot, InvalidBuffer, false);
@@ -250,15 +255,21 @@ ExecTidReScan(TidScan *node, ExprContext *exprCtxt, Plan *parent)
 	TidScanState *tidstate;
 	ItemPointerData *tidList;
 
-	tidstate = node->tidstate;
 	estate = node->scan.plan.state;
-	tidstate->tss_TidPtr = -1;
+	tidstate = node->tidstate;
 	tidList = tidstate->tss_TidList;
 
 	/* If we are being passed an outer tuple, save it for runtime key calc */
 	if (exprCtxt != NULL)
 		node->scan.scanstate->cstate.cs_ExprContext->ecxt_outertuple =
 			exprCtxt->ecxt_outertuple;
+
+	/* do runtime calc of target TIDs, if needed */
+	if (node->needRescan)
+		tidstate->tss_NumTids =
+			TidListCreate(node->tideval,
+						  node->scan.scanstate->cstate.cs_ExprContext,
+						  tidList);
 
 	/* If this is re-scanning of PlanQual ... */
 	if (estate->es_evTuple != NULL &&
@@ -268,9 +279,7 @@ ExecTidReScan(TidScan *node, ExprContext *exprCtxt, Plan *parent)
 		return;
 	}
 
-	tidstate->tss_NumTids = TidListCreate(node->tideval,
-							 node->scan.scanstate->cstate.cs_ExprContext,
-										  tidList);
+	tidstate->tss_TidPtr = -1;
 
 	/*
 	 * perhaps return something meaningful
@@ -432,7 +441,9 @@ ExecInitTidScan(TidScan *node, EState *estate, Plan *parent)
 	tidList = (ItemPointerData *) palloc(length(node->tideval) * sizeof(ItemPointerData));
 	numTids = 0;
 	if (!node->needRescan)
-		numTids = TidListCreate(node->tideval, scanstate->cstate.cs_ExprContext, tidList);
+		numTids = TidListCreate(node->tideval,
+								scanstate->cstate.cs_ExprContext,
+								tidList);
 	tidPtr = -1;
 
 	CXT1_printf("ExecInitTidScan: context is %d\n", CurrentMemoryContext);

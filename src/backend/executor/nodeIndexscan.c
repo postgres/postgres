@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.65 2001/11/12 17:18:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.66 2002/02/11 20:10:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -301,24 +301,13 @@ ExecIndexReScan(IndexScan *node, ExprContext *exprCtxt, Plan *parent)
 	IndexScanState *indexstate;
 	ExprContext *econtext;
 	ScanDirection direction;
+	int			numIndices;
 	IndexScanDescPtr scanDescs;
 	ScanKey    *scanKeys;
-	IndexScanDesc scan;
-	ScanKey		skey;
-	int			numIndices;
-	int			i;
 	int		  **runtimeKeyInfo;
 	int		   *numScanKeys;
-	List	   *indxqual;
-	List	   *qual;
-	int			n_keys;
-	ScanKey		scan_keys;
-	int		   *run_keys;
+	int			i;
 	int			j;
-	Expr	   *clause;
-	Node	   *scanexpr;
-	Datum		scanvalue;
-	bool		isNull;
 
 	estate = node->scan.plan.state;
 	indexstate = node->indxstate;
@@ -330,10 +319,6 @@ ExecIndexReScan(IndexScan *node, ExprContext *exprCtxt, Plan *parent)
 	scanKeys = indexstate->iss_ScanKeys;
 	runtimeKeyInfo = indexstate->iss_RuntimeKeyInfo;
 	numScanKeys = indexstate->iss_NumScanKeys;
-	if (ScanDirectionIsBackward(node->indxorderdir))
-		indexstate->iss_IndexPtr = numIndices;
-	else
-		indexstate->iss_IndexPtr = -1;
 
 	if (econtext)
 	{
@@ -359,28 +344,27 @@ ExecIndexReScan(IndexScan *node, ExprContext *exprCtxt, Plan *parent)
 		ResetExprContext(econtext);
 	}
 
-	/* If this is re-scanning of PlanQual ... */
-	if (estate->es_evTuple != NULL &&
-		estate->es_evTuple[node->scan.scanrelid - 1] != NULL)
-	{
-		estate->es_evTupleNull[node->scan.scanrelid - 1] = false;
-		return;
-	}
-
 	/*
-	 * get the index qualifications and recalculate the appropriate values
+	 * If we are doing runtime key calculations (ie, the index keys depend
+	 * on data from an outer scan), compute the new key values
 	 */
-	indxqual = node->indxqual;
-	for (i = 0; i < numIndices; i++)
+	if (runtimeKeyInfo)
 	{
-		qual = lfirst(indxqual);
-		indxqual = lnext(indxqual);
-		n_keys = numScanKeys[i];
-		scan_keys = (ScanKey) scanKeys[i];
+		List	   *indxqual;
 
-		if (runtimeKeyInfo)
+		indxqual = node->indxqual;
+		for (i = 0; i < numIndices; i++)
 		{
+			List	   *qual = lfirst(indxqual);
+			int			n_keys;
+			ScanKey		scan_keys;
+			int		   *run_keys;
+
+			indxqual = lnext(indxqual);
+			n_keys = numScanKeys[i];
+			scan_keys = scanKeys[i];
 			run_keys = runtimeKeyInfo[i];
+
 			for (j = 0; j < n_keys; j++)
 			{
 				/*
@@ -398,7 +382,11 @@ ExecIndexReScan(IndexScan *node, ExprContext *exprCtxt, Plan *parent)
 				 */
 				if (run_keys[j] != NO_OP)
 				{
-					clause = nth(j, qual);
+					Expr	   *clause = nth(j, qual);
+					Node	   *scanexpr;
+					Datum		scanvalue;
+					bool		isNull;
+
 					scanexpr = (run_keys[j] == RIGHT_OP) ?
 						(Node *) get_rightop(clause) :
 						(Node *) get_leftop(clause);
@@ -415,13 +403,31 @@ ExecIndexReScan(IndexScan *node, ExprContext *exprCtxt, Plan *parent)
 				}
 			}
 		}
-		scan = scanDescs[i];
-		skey = scanKeys[i];
-		index_rescan(scan, direction, skey);
+
+		indexstate->iss_RuntimeKeysReady = true;
 	}
 
-	if (runtimeKeyInfo)
-		indexstate->iss_RuntimeKeysReady = true;
+	/* If this is re-scanning of PlanQual ... */
+	if (estate->es_evTuple != NULL &&
+		estate->es_evTuple[node->scan.scanrelid - 1] != NULL)
+	{
+		estate->es_evTupleNull[node->scan.scanrelid - 1] = false;
+		return;
+	}
+
+	/* reset index scans */
+	if (ScanDirectionIsBackward(node->indxorderdir))
+		indexstate->iss_IndexPtr = numIndices;
+	else
+		indexstate->iss_IndexPtr = -1;
+
+	for (i = 0; i < numIndices; i++)
+	{
+		IndexScanDesc scan = scanDescs[i];
+		ScanKey		skey = scanKeys[i];
+
+		index_rescan(scan, direction, skey);
+	}
 }
 
 /* ----------------------------------------------------------------
