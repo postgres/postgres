@@ -48,8 +48,8 @@
 
 
 /*
- * $Revision: 1.1 $
- * $Id: dmetaphone.c,v 1.1 2004/07/01 03:25:48 joe Exp $
+ * $Revision: 1.2 $
+ * $Id: dmetaphone.c,v 1.2 2004/08/20 19:48:14 momjian Exp $
  */
 
 
@@ -138,12 +138,16 @@ PG_FUNCTION_INFO_V1(dmetaphone);
 Datum
 dmetaphone(PG_FUNCTION_ARGS)
 {
+	text * arg, * result;
+	int alen, rsize;
+	char * aptr, *codes[2], * code, * rptr;
+
 #ifdef DMETAPHONE_NOSTRICT
 	if (PG_ARGISNULL(0))
 		PG_RETURNNULL();
 #endif
-	text * arg = PG_GETARG_TEXT_P(0);
-        int alen = VARSIZE(arg)-VARHDRSZ;
+	arg = PG_GETARG_TEXT_P(0);
+        alen = VARSIZE(arg)-VARHDRSZ;
 
 	/* 
 	 * Postgres' string values might not have trailing nuls. 
@@ -153,18 +157,17 @@ dmetaphone(PG_FUNCTION_ARGS)
 	 * (and we don't make space for it). 
 	 */
 
-	char * aptr = palloc(alen+1);
+	aptr = palloc(alen+1);
         memcpy(aptr,VARDATA(arg),alen);
 	aptr[alen]=0;
-	char * codes[2];
 	DoubleMetaphone(aptr,codes);
-	char * code = codes[0];
+	code = codes[0];
 	if (!code)
 		code = "";
-	int rsize = VARHDRSZ + strlen(code) ;
-	text * result = (text *) palloc(rsize);
+	rsize = VARHDRSZ + strlen(code) ;
+	result = (text *) palloc(rsize);
 	memset(result,0,rsize);
-	char * rptr = VARDATA(result);
+	rptr = VARDATA(result);
 	memcpy(rptr,code,strlen(code));
 	VARATT_SIZEP(result) = rsize;
 	PG_RETURN_TEXT_P(result);
@@ -180,24 +183,27 @@ PG_FUNCTION_INFO_V1(dmetaphone_alt);
 Datum
 dmetaphone_alt(PG_FUNCTION_ARGS)
 {
+	text * arg, * result;
+	int alen, rsize;
+	char * aptr, * codes[2], * code, * rptr;
+
 #ifdef DMETAPHONE_NOSTRICT
 	if (PG_ARGISNULL(0))
 		PG_RETURNNULL();
 #endif
-	text * arg = PG_GETARG_TEXT_P(0);
-        int alen = VARSIZE(arg)-VARHDRSZ;
-	char * aptr = palloc(alen+1);
-        memcpy(aptr,VARDATA(arg),alen);
+	arg = PG_GETARG_TEXT_P(0);
+    alen = VARSIZE(arg)-VARHDRSZ;
+	aptr = palloc(alen+1);
+    memcpy(aptr,VARDATA(arg),alen);
 	aptr[alen]=0;
-	char * codes[2];
 	DoubleMetaphone(aptr,codes);
-	char * code = codes[1];
+	code = codes[1];
 	if (!code)
 		code = "";
-	int rsize = VARHDRSZ + strlen(code) ;
-	text * result = (text *) palloc(rsize);
+	rsize = VARHDRSZ + strlen(code) ;
+	result = (text *) palloc(rsize);
 	memset(result,0,rsize);
-	char * rptr = VARDATA(result);
+	rptr = VARDATA(result);
 	memcpy(rptr,code,strlen(code));
 	VARATT_SIZEP(result) = rsize;
 	PG_RETURN_TEXT_P(result);
