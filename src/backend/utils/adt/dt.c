@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.23 1997/05/30 15:02:51 thomas Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.24 1997/06/03 06:32:56 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1719,7 +1719,7 @@ printf( "tm2datetime- time is %f %02d:%02d:%02d %f\n", time, tm->tm_hour, tm->tm
 int
 timespan2tm(TimeSpan span, struct tm *tm, float8 *fsec)
 {
-    double time, iunit, funit;
+    double time;
 
     if (span.month != 0) {
 	tm->tm_year = span.month / 12;
