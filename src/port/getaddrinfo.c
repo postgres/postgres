@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/port/getaddrinfo.c,v 1.7 2003/06/12 08:15:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/port/getaddrinfo.c,v 1.8 2003/06/14 18:20:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -84,8 +84,16 @@ getaddrinfo(const char *node, const char *service,
 		else
 		{
 			struct hostent *hp;
+#ifdef FRONTEND
+			struct hostent hpstr;
+			char buf[BUFSIZ];
+			int herrno = 0;
 
+			pqGethostbyname(node, &hpstr, buf, sizeof(buf),
+			                &hp, &herrno);
+#else
 			hp = gethostbyname(node);
+#endif
 			if (hp == NULL)
 			{
 				switch (h_errno)

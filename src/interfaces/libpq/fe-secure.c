@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-secure.c,v 1.24 2003/06/14 17:49:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-secure.c,v 1.25 2003/06/14 18:20:32 momjian Exp $
  *
  * NOTES
  *	  The client *requires* a valid server certificate.  Since
@@ -453,8 +453,17 @@ verify_peer(PGconn *conn)
 	if (addr.sa_family == AF_UNIX)
 		return 0;
 
+	{
+		struct hostent hpstr;
+		char buf[BUFSIZ];
+		int herrno = 0;
+
+		pqGethostbyname(conn->peer_cn, &hpstr, buf, sizeof(buf),
+		                &h, &herrno);
+	}
+	
 	/* what do we know about the peer's common name? */
-	if ((h = gethostbyname(conn->peer_cn)) == NULL)
+	if ((h == NULL)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
 		libpq_gettext("could not get information about host (%s): %s\n"),
