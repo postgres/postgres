@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.9 1997/06/23 14:47:26 thomas Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.10 1997/07/01 00:22:40 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -114,15 +114,24 @@ char *
 date_out(DateADT date)
 {
     char *result;
+    struct tm tt, *tm = &tt;
     char buf[MAXDATELEN+1];
+
+#if FALSE
     int year, month, day;
+#endif
 
-    j2date( (date + date2j(2000,1,1)), &year, &month, &day);
+    j2date( (date + date2j(2000,1,1)),
+      &(tm->tm_year), &(tm->tm_mon), &(tm->tm_mday));
 
+    EncodeDateOnly( tm, DateStyle, buf);
+
+#if FALSE
     if (EuroDates == 1) /* Output European-format dates */
         sprintf(buf, "%02d-%02d-%04d", day, month, year);
     else
         sprintf(buf, "%02d-%02d-%04d", month, day, year);
+#endif
 
     result = PALLOC(strlen(buf)+1);
 
@@ -445,19 +454,25 @@ char *
 time_out(TimeADT *time)
 {
     char *result;
+    struct tm tt, *tm = &tt;
+#if FALSE
     int hour, min, sec;
+#endif
     double fsec;
-    char buf[32];
+    char buf[MAXDATELEN+1];
 
     if (!PointerIsValid(time))
 	return NULL;
 
-    hour = (*time / (60*60));
-    min = (((int) (*time / 60)) % 60);
-    sec = (((int) *time) % 60);
+    tm->tm_hour = (*time / (60*60));
+    tm->tm_min = (((int) (*time / 60)) % 60);
+    tm->tm_sec = (((int) *time) % 60);
 
     fsec = 0;
 
+    EncodeTimeOnly( tm, fsec, DateStyle, buf);
+
+#if FALSE
     if (sec == 0.0) {
 	sprintf(buf, "%02d:%02d", hour, min);
 
@@ -468,6 +483,7 @@ time_out(TimeADT *time)
 	    sprintf(buf, "%02d:%02d:%05.2f", hour, min, (sec+fsec));
 	};
     };
+#endif
 
     result = PALLOC(strlen(buf)+1);
 

@@ -3,8 +3,10 @@
 #include <time.h>
 #include <ctype.h>
 #include "postgres.h"
+#include "miscadmin.h"
 #include "utils/builtins.h"
 
+#if FALSE
 /* copy the next part of the string into a buffer */
 static const char *
 cpstr(const char *s, char *buf)
@@ -29,13 +31,16 @@ cpstr(const char *s, char *buf)
 	buf[in] = 0;
 	return s;
 }
+#endif
 
 /* assumes dd/mm/yyyy unless first item is month in word form */
 time_t
 timestamp_in(const char *timestamp_str)
 {
-    struct tm input_time;
     int4 result;
+
+#if FALSE
+    struct tm input_time;
 	char buf[18];
 	const char *p;
 	static const char *mstr[] = {
@@ -105,6 +110,9 @@ timestamp_in(const char *timestamp_str)
 
     /* use mktime(), but make this GMT, not local time */
     result = mktime(&input_time);
+#endif
+
+    result = nabstimein( (char *) timestamp_str);
 
     return result;
 }
@@ -113,14 +121,24 @@ char *
 timestamp_out(time_t timestamp)
 {
     char *result;
-    struct tm *time;
+    int tz;
+    double fsec = 0;
+    struct tm tt, *tm = &tt;
+    char buf[MAXDATELEN+1];
+    char zone[MAXDATELEN+1], *tzn = zone;
 
+#if FALSE
     time = localtime(&timestamp);
-    result = palloc(20);
+
     sprintf(result, "%04d-%02d-%02d %02d:%02d:%02d",
 	    time->tm_year+1900, time->tm_mon+1, time->tm_mday,
 	    time->tm_hour, time->tm_min, time->tm_sec);
+#endif
+    abstime2tm( timestamp, &tz, tm, tzn);
+    EncodeDateTime( tm, fsec, &tz, &tzn, USE_ISO_DATES, buf);
 
+    result = palloc(strlen(buf)+1);
+    strcpy( result, buf);
     return result;
 }
 
