@@ -362,6 +362,20 @@ AC_ARG_WITH(
 )
 export USE_ODBC
 
+AC_MSG_CHECKING(setproctitle)
+AC_ARG_WITH(
+   setproctitle,
+   [  --with-setproctitle     use setproctitle() (EXPERIMENTAL) ],
+   [
+        case "$withval" in
+        y | ye | yes)           USE_SETPROCTITLE=true; AC_MSG_RESULT(enabled) ;;
+        *)                      USE_SETPROCTITLE=false; AC_MSG_RESULT(disabled) ;;
+        esac
+   ],
+   [ USE_SETPROCTITLE=false; AC_MSG_RESULT(disabled) ]
+)
+export USE_SETPROCTITLE
+
 dnl Allow for overriding the default location of the odbcinst.ini
 dnl file which is normally ${prefix}/share or ${prefix} if this is
 dnl being compiled inside the postgres distribution.
@@ -779,7 +793,13 @@ AC_FUNC_MEMCMP
 AC_TYPE_SIGNAL
 AC_FUNC_VPRINTF
 AC_CHECK_FUNCS(memmove sysconf)
-AC_CHECK_FUNCS(sigprocmask waitpid setsid fcvt setproctitle)
+AC_CHECK_FUNCS(sigprocmask waitpid setsid fcvt)
+
+if test "X$USE_SETPROCTITLE" = "Xtrue"
+then
+AC_CHECK_FUNCS(setproctitle)
+fi
+
 AC_CHECK_FUNCS(fpclass fp_class fp_class_d class)
 dnl We use our snprintf.c emulation if either snprintf() or vsnprintf()
 dnl is missing.  Yes, there are machines that have only one.
