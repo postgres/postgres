@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sat Aug 24 07:24:53 EDT 2002
+Last updated:		Sun Aug 25 16:30:25 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -34,6 +34,7 @@ Reporting
 * Allow elog() to return error codes, module name, file name, line
   number, not just messages (Peter E)
 * Add error codes (Peter E)
+* Make error messages more consistent [error]
 * -Change DEBUG startup tag to LOG (Bruce)
 * Show location of syntax error in query [yacc]
 * -Add getpid() function to backend
