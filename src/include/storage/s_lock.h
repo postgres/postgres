@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.46 1998/09/11 16:56:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.47 1998/09/12 16:07:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -266,10 +266,11 @@ static const slock_t clear_lock =
  * assembly from his NECEWS SVR4 port, but we probably ought to retain this
  * for the R3000 chips out there.
  */
-#define TAS(lock)	(!acquire_lock(lock))
-#define S_UNLOCK(lock)	release_lock(lock)
-#define S_INIT_LOCK(lock)	init_lock(lock)
-#define S_LOCK_FREE(lock)	(stat_lock(lock) == UNLOCKED)
+#include <mutex.h>
+#define TAS(lock)	(test_and_set(lock,1))
+#define S_UNLOCK(lock)	(test_then_and(lock,0))
+#define S_INIT_LOCK(lock)	(test_then_and(lock,0))
+#define S_LOCK_FREE(lock)	(test_then_add(lock,0) == 0)
 #endif	 /* __sgi */
 
 
