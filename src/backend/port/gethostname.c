@@ -1,3 +1,5 @@
+/* $Id: gethostname.c,v 1.2 1997/12/19 13:34:26 scrappy Exp $ */
+
 #include <sys/types.h>
 #include <string.h>
 

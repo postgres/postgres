@@ -1,4 +1,4 @@
-/*
+/* $Id: inet_aton.c,v 1.11 1997/12/19 13:34:28 scrappy Exp $
  *
  *	This inet_aton() function was taken from the GNU C library and
  *	incorporated into Postgres for those systems which do not have this

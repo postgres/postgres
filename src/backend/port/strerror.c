@@ -1,3 +1,5 @@
+/* $Id: strerror.c,v 1.4 1997/12/19 13:34:32 scrappy Exp $ */
+
 /*
  * strerror - map error number to descriptive string
  *

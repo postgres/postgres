@@ -1,3 +1,5 @@
+/* $Id: strcasecmp.c,v 1.2 1997/12/19 13:34:32 scrappy Exp $ */
+
 /*
  * Copyright (c) 1987 Regents of the University of California.
  * All rights reserved.
