@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initlocation/Attic/initlocation.sh,v 1.7 2000/03/26 18:32:30 petere Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initlocation/Attic/initlocation.sh,v 1.8 2000/05/26 03:15:18 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -91,7 +91,7 @@ fi
 # You can call initlocation $ENVAR, which will of course be resolved
 # by the shell, or initlocation some/path (containing at least one slash).
 # Then you just take that path.
-# This should appease users who are confused by the above behaviour.
+# This should appease users who are confused by the above behavour.
 #
 
 echo "$Location" | grep '/' >/dev/null 2>&1
