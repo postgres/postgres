@@ -1,13 +1,12 @@
-From: ZEUGSWETTER Andreas IZ5 <Andreas.Zeugswetter@telecom.at>
-Mon Apr 17 14:01:23 EDT 2000
+From: Zeugswetter Andreas <ZeugswetterA@wien.spardat.at>
+Wed Nov  8 11:16:35 MEZ 2000
 
 AIX 4.3.2 with native IBM compiler xlc 3.6.4 passes all regression tests.
 Other versions of OS and compiler should also work. If you don't have 
 a powerpc there might be differences in the geometry regression test.
 
-Use the following configure flags in addition to your own:
-./configure --without-CXX
-and if you have readline there:
+Use the following configure flags in addition to your own
+if you have readline or libz there:
 --with-includes=/usr/local/include --with-libraries=/usr/local/lib
 
 libpq++ does not work because xlC does not have the string and bool classes.
@@ -16,6 +15,5 @@ compiling the few files, that fail, with g++ does work.
 Compiling PostgreSQL with gcc (2.95.2) on AIX does work if you use the
 configure option: --with-template=aix_gcc 
 
-With the current compiler flags the redefines of int8 - int64, that prior
-versions had a problem with, are not a problem any more.
-
+There will probably be warnings about int8 - int64 redefines and 0.0/0.0
+devision warnings, which you can safely ignore.

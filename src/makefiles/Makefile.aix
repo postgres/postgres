@@ -26,12 +26,20 @@ MKLDEXPORT=$(top_srcdir)/src/backend/port/aix/mkldexport.sh
 
 $(POSTGRES_IMP):
 	@echo Making $@
+ifeq ($(host_os), aix3.2.5)
 	$(MKLDEXPORT) postgres $(bindir) > $@
+else
+  ifeq ($(host_os), aix4.1)
+	$(MKLDEXPORT) postgres $(bindir) > $@
+  else
+	$(MKLDEXPORT) postgres . > $@
+  endif
+endif
 	$(CC) -Wl,-bE:$(top_builddir)/src/backend/$@ -o postgres $(OBJS) $(LDFLAGS)
 
 %$(EXPSUFF): %.o
-	$(MKLDEXPORT) $*.o `pwd` > $*$(EXPSUFF)
+	$(MKLDEXPORT) $*.o > $*$(EXPSUFF)
 
 %$(DLSUFFIX): %.o %$(EXPSUFF)
-	@echo Making shared library $@ from $*.o, $*$(EXPSUFF), and installed postgres.imp
-	$(CC) -Wl,-H512 -Wl,-bM:SRE -Wl,-bI:$(libdir)/$(POSTGRES_IMP) -Wl,-bE:$*$(EXPSUFF) -o $@ $*.o $(LDFLAGS) $(LDFLAGS_SL) -lc
+	@echo Making shared library $@ from $*.o, $*$(EXPSUFF) and postgres.imp
+	$(CC) -Wl,-H512 -Wl,-bM:SRE -Wl,-bI:$(top_builddir)/src/backend/$(POSTGRES_IMP) -Wl,-bE:$*$(EXPSUFF) -o $@ $*.o $(LDFLAGS) $(LDFLAGS_SL)
