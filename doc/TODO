@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Nov  8 13:24:37 EST 2001
+Last updated:		Mon Nov 12 00:35:44 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -218,7 +218,7 @@ CLIENTS
 * Add XML interface:  psql, pg_dump, COPY, separate server (?)
 * -Fix libpq to properly handle socket failures under native MS Win32
 * Fix ecpg variable handling in EXEC SQL AT statement
-* Add MD5 to ODBC
+* -Add MD5 to ODBC (Bruce)
 * JDBC
 	o Comprehensive test suite. This may be available already.
 	o Updateable resultSet (must be done in backend code)
