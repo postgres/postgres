@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/cvs.sgml,v 1.27 2003/11/29 19:51:36 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/cvs.sgml,v 1.28 2004/09/27 05:54:58 neilc Exp $
 -->
 
 <appendix id="cvs">
@@ -428,6 +428,23 @@ pgsql
 # pgsql-src
 
    </programlisting>
+   </para>
+
+   <para>
+    If you specify <option>repository</> instead of <option>pgsql</>
+    in the above setup, you will get a complete copy of the entire
+    repository at cvsup.postgresql.org, including its
+    <filename>CVSROOT</filename> directory. If you do that, you will
+    probably want to exclude those files in that directory that you
+    want to modify locally, using a refuse file. For example, for the
+    above setup you might put this in
+    <filename>/home/cvs/sup/repository/refuse</>:
+<programlisting>
+CVSROOT/config*
+CVSROOT/commitinfo*
+CVSROOT/loginfo*
+</programlisting>
+    See the <productname>CVSup</> manual pages for how to use refuse files.
    </para>
 
    <para>
