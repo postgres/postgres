@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/datum.c,v 1.3 1996/11/08 05:59:41 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/datum.c,v 1.4 1996/12/14 07:56:05 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,7 +54,7 @@ datumGetSize(Datum value, Oid type, bool byVal, Size len)
     Size size = 0;
     
     if (byVal) {
-	if (len >= 0 && len <= sizeof(Datum)) {
+	if (len <= sizeof(Datum)) {
 	    size = len;
 	} else {
 	    elog(WARN,
