@@ -1,5 +1,5 @@
 #! /bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/pg_regress.sh,v 1.12 2000/11/21 23:40:28 petere Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/pg_regress.sh,v 1.13 2000/11/22 01:47:47 petere Exp $
 
 me=`basename $0`
 : ${TMPDIR=/tmp}
@@ -445,7 +445,7 @@ cat /dev/null >"$diff_file"
 lno=0
 (
     [ "$enable_shared" != yes ] && echo "ignore: plpgsql"
-    cat $schedule
+    cat $schedule </dev/null
     for x in $extra_tests; do
         echo "test: $x"
     done
