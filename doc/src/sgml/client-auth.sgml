@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.9 2000/11/21 20:44:31 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.10 2001/03/15 20:01:32 tgl Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -56,7 +56,7 @@
    of a set of records, one per line. Blank lines and lines beginning
    with a hash character (<quote>#</quote>) are ignored. A record is
    made up of a number of fields which are separated by spaces and/or
-   tabs and cannot be continued across several lines.
+   tabs.  Records cannot be continued across lines.
   </para>
 
   <para>
@@ -85,7 +85,7 @@ hostssl <replaceable>database</replaceable> <replaceable>IP-address</replaceable
       <para>
        This record pertains to connection attempts over TCP/IP
        networks. Note that TCP/IP connections are completely disabled
-       unless the server is started with the <option>-i</option> or
+       unless the server is started with the <option>-i</option> switch or
        the equivalent configuration parameter is set.
       </para>
      </listitem>
@@ -234,6 +234,7 @@ hostssl <replaceable>database</replaceable> <replaceable>IP-address</replaceable
           of the connecting user. <productname>Postgres</productname>
           then verifies whether the so identified operating system user
           is allowed to connect as the database user that is requested.
+	  This is only available for TCP/IP connections.
           The <replaceable>authentication option</replaceable> following
           the <literal>ident</> keyword specifies the name of an
           <firstterm>ident map</firstterm> that specifies which operating
@@ -507,7 +508,7 @@ host         all        192.168.0.0    255.255.0.0        ident     omicron
    <para>
     The <quote>Identification Protocol</quote> is described in
     <citetitle>RFC 1413</citetitle>. Virtually every Unix-like
-    operating systems ships with an ident server that listens on TCP
+    operating system ships with an ident server that listens on TCP
     port 113 by default. The basic functionality of an ident server
     is to answer questions like <quote>What user initiated the
     connection that goes out of your port <replaceable>X</replaceable>
@@ -628,14 +629,14 @@ Password authentication failed for user 'joeblow'
 
    <para>
 <ProgramListing>
-FATAL 1:  SetUserId: user 'joeblow' is not in 'pg_shadow'
+FATAL 1:  user "joeblow" does not exist
 </ProgramListing>
-    This is the fancy way of saying that the user doesn't exist at all.
+    The indicated user name was not found in pg_shadow.
    </para>
 
    <para>
 <ProgramListing>
-FATAL 1:  Database testdb does not exist in pg_database
+FATAL 1:  Database "testdb" does not exist in the system catalog.
 </ProgramListing>
     The database you're trying to connect to doesn't exist. Note that
     if you don't specify a database name, it defaults to the database
