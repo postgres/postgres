@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.144 2003/03/20 03:34:55 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.145 2003/03/20 18:58:02 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -6796,6 +6796,10 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
    </indexterm>
 
    <indexterm zone="functions-misc">
+    <primary>pg_get_triggerdef</primary>
+   </indexterm>
+
+   <indexterm zone="functions-misc">
     <primary>pg_get_constraintdef</primary>
    </indexterm>
 
@@ -6808,13 +6812,13 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
    extract information from the system catalogs.
    <function>pg_get_viewdef</function>,
    <function>pg_get_ruledef</function>,
-   <function>pg_get_indexdef</function>, and
+   <function>pg_get_indexdef()</function>,
+   <function>pg_get_triggerdef()</function>, and
    <function>pg_get_constraintdef</function> respectively
    reconstruct the creating command for a view, rule, index, or
    constraint.  (Note that this is a decompiled reconstruction, not
-   the verbatim text of the command.)  At present
-   <function>pg_get_constraintdef</function> only works for
-   foreign-key constraints.  <function>pg_get_userbyid</function>
+   the verbatim text of the command.)
+   <function>pg_get_userbyid</function>
    extracts a user's name given a user ID number.
   </para>
 
@@ -6845,6 +6849,11 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
        <entry><literal><function>pg_get_indexdef</function>(<parameter>index_oid</parameter>)</literal></entry>
        <entry><type>text</type></entry>
        <entry>get <command>CREATE INDEX</> command for index</entry>
+      </row>
+      <row>
+       <entry><function>pg_get_triggerdef</function>(<parameter>triggerOID</parameter>)</entry>
+       <entry><type>text</type></entry>
+       <entry>Get <command>CREATE [ CONSTRAINT ] TRIGGER</> command for trigger</entry>
       </row>
       <row>
        <entry><literal><function>pg_get_constraintdef</function>(<parameter>constraint_oid</parameter>)</literal></entry>

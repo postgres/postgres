@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.208 2003/02/13 05:24:04 momjian Exp $
+ * $Id: builtins.h,v 1.209 2003/03/20 18:58:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -399,6 +399,7 @@ extern Datum pg_get_ruledef(PG_FUNCTION_ARGS);
 extern Datum pg_get_viewdef(PG_FUNCTION_ARGS);
 extern Datum pg_get_viewdef_name(PG_FUNCTION_ARGS);
 extern Datum pg_get_indexdef(PG_FUNCTION_ARGS);
+extern Datum pg_get_triggerdef(PG_FUNCTION_ARGS);
 extern Datum pg_get_constraintdef(PG_FUNCTION_ARGS);
 extern Datum pg_get_userbyid(PG_FUNCTION_ARGS);
 extern Datum pg_get_expr(PG_FUNCTION_ARGS);

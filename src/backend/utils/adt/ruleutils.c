@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.136 2003/02/16 02:30:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.137 2003/03/20 18:58:02 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -49,6 +49,7 @@
 #include "catalog/pg_cast.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_index.h"
+#include "catalog/pg_trigger.h"
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_shadow.h"
@@ -369,6 +370,188 @@ pg_do_getviewdef(Oid viewoid)
 	return ruledef;
 }
 
+/* ----------
+ * get_triggerdef			- Get the definition of a trigger
+ * ----------
+ */
+Datum
+pg_get_triggerdef(PG_FUNCTION_ARGS)
+{
+	Oid			trigid = PG_GETARG_OID(0);
+	text	   *trigdef;
+	HeapTuple	ht_trig;
+	HeapTuple	ht_proc;
+	Form_pg_trigger trigrec;
+	int			len;
+	StringInfoData buf;
+        Relation        tgrel;
+        ScanKeyData skey[1];
+        SysScanDesc tgscan;
+	int		findx = 0;
+	const char *tgargs;
+	const char *p;
+	char 		*tgfname;
+	char 		*tgname;
+
+	/*
+	 * Fetch the pg_trigger tuple by the Oid of the trigger
+	 */
+        tgrel = heap_openr(TriggerRelationName, AccessShareLock);
+
+        /*
+         * Find the trigger
+         */
+        ScanKeyEntryInitialize(&skey[0], 0x0,
+                                                   ObjectIdAttributeNumber, F_OIDEQ,
+                                                   ObjectIdGetDatum(trigid));
+
+        tgscan = systable_beginscan(tgrel, TriggerOidIndex, true,
+                                                                SnapshotNow, 1, skey);
+
+        ht_trig = systable_getnext(tgscan);
+
+        if (!HeapTupleIsValid(ht_trig))
+                elog(ERROR, "pg_get_triggerdef: there is no trigger with oid %u",
+                         trigid);
+
+	trigrec = (Form_pg_trigger) GETSTRUCT(ht_trig);
+	systable_endscan(tgscan);
+
+	/*
+	 * Fetch the pg_proc tuple of the trigger's function
+	 */
+	ht_proc = SearchSysCache(PROCOID,
+						   ObjectIdGetDatum(trigrec->tgfoid),
+						   0, 0, 0);
+	if (!HeapTupleIsValid(ht_proc))
+		elog(ERROR, "syscache lookup for function %u failed", trigrec->tgfoid);
+
+	tgfname = NameStr(((Form_pg_proc) GETSTRUCT(ht_proc))->proname);
+
+	/*
+	 * Start the trigger definition. Note that the trigger's name should
+	 * never be schema-qualified, but the trigger rel's name may be.
+	 */
+	initStringInfo(&buf);
+
+	tgname = NameStr(trigrec->tgname);
+	appendStringInfo(&buf, "CREATE %sTRIGGER %s ",
+					 trigrec->tgisconstraint ? "CONSTRAINT " : "",
+					 quote_identifier(tgname));
+
+	if (TRIGGER_FOR_BEFORE(trigrec->tgtype))
+		appendStringInfo(&buf, "BEFORE");
+	else
+		appendStringInfo(&buf, "AFTER");
+	if (TRIGGER_FOR_INSERT(trigrec->tgtype))
+	{
+		appendStringInfo(&buf, " INSERT");
+		findx++;
+	}
+	if (TRIGGER_FOR_DELETE(trigrec->tgtype))
+	{
+		if (findx > 0)
+			appendStringInfo(&buf, " OR DELETE");
+		else
+			appendStringInfo(&buf, " DELETE");
+		findx++;
+	}
+	if (TRIGGER_FOR_UPDATE(trigrec->tgtype))
+	{
+		if (findx > 0)
+			appendStringInfo(&buf, " OR UPDATE");
+		else
+			appendStringInfo(&buf, " UPDATE");
+	}
+	appendStringInfo(&buf, " ON %s ",
+					generate_relation_name(trigrec->tgrelid));
+
+
+	if (trigrec->tgisconstraint)
+	{
+		if (trigrec->tgconstrrelid != 0)
+		{
+			appendStringInfo(&buf, "FROM %s ",
+					generate_relation_name(trigrec->tgconstrrelid));
+		}
+		if (!trigrec->tgdeferrable)
+			appendStringInfo(&buf, "NOT ");
+		appendStringInfo(&buf, "DEFERRABLE INITIALLY ");
+		if (trigrec->tginitdeferred)
+			appendStringInfo(&buf, "DEFERRED ");
+		else
+			appendStringInfo(&buf, "IMMEDIATE ");
+
+	}
+
+	if (TRIGGER_FOR_ROW(trigrec->tgtype))
+		appendStringInfo(&buf, "FOR EACH ROW ");
+	else
+		appendStringInfo(&buf, "FOR EACH STATEMENT ");
+
+	appendStringInfo(&buf, "EXECUTE PROCEDURE %s(",
+					quote_identifier(tgfname));
+
+	/* Get args string */
+	tgargs = DatumGetCString(DirectFunctionCall1(byteaout,
+								PointerGetDatum(&trigrec->tgargs)));
+	/* If it's NULL, fail */
+	if (tgargs == NULL)
+		elog(ERROR, "pg_get_triggerdef: tgargs is NULL");
+
+	for (findx = 0; findx < trigrec->tgnargs; findx++)
+	{
+		const char *s;
+
+		for (p = tgargs;;)
+		{
+			p = strchr(p, '\\');
+			if (p == NULL)
+			{
+				elog(ERROR, "pg_get_triggerdef: bad argument string for trigger");
+			}
+			p++;
+			if (*p == '\\')
+			{
+				p++;
+				continue;
+			}
+			if (p[0] == '0' && p[1] == '0' && p[2] == '0')
+				break;
+		}
+		p--;
+		appendStringInfoChar(&buf, '\'');
+		for (s = tgargs; s < p;)
+		{
+			/* If character is an apostrophe, escape it */
+			if (*s == '\'')
+				appendStringInfoChar(&buf, '\\');
+			appendStringInfoChar(&buf, *s++);
+		}
+		appendStringInfoChar(&buf, '\'');
+		appendStringInfo(&buf, (findx < trigrec->tgnargs - 1) ? ", " : "");
+		tgargs = p + 4;
+	}
+
+	/* Deliberately omit semi-colon */
+	appendStringInfo(&buf, ")");
+
+	/*
+	 * Create the result as a TEXT datum, and free working data
+	 */
+	len = buf.len + VARHDRSZ;
+	trigdef = (text *) palloc(len);
+	VARATT_SIZEP(trigdef) = len;
+	memcpy(VARDATA(trigdef), buf.data, buf.len);
+
+	pfree(buf.data);
+
+	ReleaseSysCache(ht_trig);
+	ReleaseSysCache(ht_proc);
+	heap_close(tgrel, AccessShareLock);
+
+	PG_RETURN_TEXT_P(trigdef);
+}
 
 /* ----------
  * get_indexdef			- Get the definition of an index
