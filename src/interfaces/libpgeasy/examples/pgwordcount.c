@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <libpq-fe.h>
 #include "../halt.h"
-#include "libpgeasy.h"
+#include <libpgeasy.h>
 
 int
 main(int argc, char **argv)

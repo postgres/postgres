@@ -77,7 +77,9 @@ disconnectdb()
 PGresult   *
 doquery(char *query)
 {
-	if (res != NULL && in_result_block == FALSE && was_get_unset_result == FALSE)
+	if (res != NULL &&
+		in_result_block == FALSE &&
+		was_get_unset_result == FALSE)
 		PQclear(res);
 
 	was_get_unset_result = FALSE;

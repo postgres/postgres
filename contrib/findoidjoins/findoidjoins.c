@@ -8,7 +8,7 @@
 #include "libpq-fe.h"
 
 #include "halt.h"
-#include "libpgeasy.h"
+#include <libpgeasy.h>
 
 PGresult   *attres,
 		   *relres;
