@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.70 2001/12/19 18:49:56 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.71 2001/12/21 03:54:02 thomas Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1372,9 +1372,10 @@ gunzip -c user.ps.gz \
 	<entry><systemitem class="osname">AIX</></entry>
 	<entry><systemitem>RS6000</></entry>
 	<entry>7.2</entry>
-	<entry>2001-11-28,
-	 Andreas Zeugswetter (<email>ZeugswetterA@spardat.at</email>)</entry>
-        <entry>4.3; see also <filename>doc/FAQ_AIX</filename></entry>
+	<entry>2001-12-19,
+	 Andreas Zeugswetter (<email>ZeugswetterA@spardat.at</email>),
+	 Tatsuo Ishii (<email>t-ishii@sra.co.jp</email>)</entry>
+        <entry>see also <filename>doc/FAQ_AIX</filename></entry>
        </row>
        <row>
 	<entry><systemitem class="osname">BeOS</></entry>
@@ -1391,6 +1392,14 @@ gunzip -c user.ps.gz \
 	<entry>2001-11-27,
 	 Bruce Momjian (<email>pgman@candle.pha.pa.us</email>)</entry>
         <entry>4.2</entry>
+       </row>
+       <row>
+	<entry><systemitem class="osname">FreeBSD</></entry>
+	<entry><systemitem>Alpha</></entry>
+	<entry>7.2</entry>
+	<entry>2001-12-18,
+	 Chris Kings-Lynne (<email>chriskl@familyhealth.com.au</email>)</entry>
+        <entry></entry>
        </row>
        <row>
 	<entry><systemitem class="osname">FreeBSD</></entry>
@@ -1428,9 +1437,9 @@ gunzip -c user.ps.gz \
        <row>
 	<entry><systemitem class="osname">Linux</></entry>
 	<entry><systemitem>armv4l</></entry>
-	<entry>7.1</entry>
-	<entry>2001-02-22,
-	 Mark Knox (<email>markk@pixin.net</email>)</entry>
+	<entry>7.2</entry>
+	<entry>2001-12-10,
+	 Mark Knox (<email>segfault@hardline.org</email>)</entry>
 	<entry>2.2.x</entry>
        </row>
        <row>
@@ -1443,6 +1452,14 @@ gunzip -c user.ps.gz \
        </row>
        <row>
 	<entry><systemitem class="osname">Linux</></entry>
+	<entry><systemitem>PlayStation2</></entry>
+	<entry>7.2</entry>
+	<entry>2001-12-12,
+	 Permaine Cheung <email>pcheung@redhat.com</email>)</entry>
+	<entry>#undef HAS_TEST_AND_SET, slock_t</entry>
+       </row>
+       <row>
+	<entry><systemitem class="osname">Linux</></entry>
 	<entry><systemitem>PPC74xx</></entry>
 	<entry>7.2</entry>
 	<entry>2001-11-16,
@@ -1452,9 +1469,9 @@ gunzip -c user.ps.gz \
        <row>
 	<entry><systemitem class="osname">Linux</></entry>
 	<entry><systemitem>S/390</></entry>
-	<entry>7.1</entry>
-	<entry>2000-11-17,
-	 Neale Ferguson (<email>Neale.Ferguson@softwareAG-usa.com</email>)</entry>
+	<entry>7.2</entry>
+	<entry>2001-12-12,
+	 Permaine Cheung <email>pcheung@redhat.com</email>)</entry>
 	<entry></entry>
        </row>
        <row>
@@ -1565,11 +1582,20 @@ gunzip -c user.ps.gz \
      <row>
       <entry><systemitem class="osname">QNX 4.25</></entry>
       <entry><systemitem>x86</></entry>
-      <entry>7.1</entry>
-      <entry>2001-05-24,
+      <entry>7.2</entry>
+      <entry>2001-12-10,
        Bernd Tegge (<email>tegge@repas-aeg.de</email>)
       </entry>
       <entry>see also <filename>doc/FAQ_QNX4</filename></entry>
+     </row>
+     <row>
+      <entry><systemitem class="osname">QNX 6</></entry>
+      <entry><systemitem>x86</></entry>
+      <entry>7.2</entry>
+      <entry>2001-12-10,
+       Igor Kovalenko (<email>Igor.Kovalenko@motorola.com</email>)
+      </entry>
+      <entry>Requires patches for Posix semaphores; see archives</entry>
      </row>
        <row>
 	<entry><systemitem class="osname">Solaris</></entry>
@@ -1587,22 +1613,43 @@ gunzip -c user.ps.gz \
 	 Martin Renters (<email>martin@datafax.com</email>)</entry>
 	<entry>2.8; see also <filename>doc/FAQ_Solaris</filename></entry>
        </row>
+      <row>
+       <entry><systemitem class="osname">SunOS</></entry>
+       <entry><systemitem>Sparc</></entry>
+       <entry>7.2</entry>
+       <entry>2001-12-04, Tatsuo Ishii (<email>t-ishii@sra.co.jp</email>)</entry>
+       <entry></entry>
+      </row>
        <row>
 	<entry><systemitem class="osname">Tru64 UNIX</></entry>
 	<entry><systemitem>Alpha</></entry>
 	<entry>7.2</entry>
 	<entry>2001-11-26,
-	 Alessio Bragadini (<email>alessio@albourne.com</email>)</entry>
-        <entry>4.0g, with cc and gcc</entry>
+	 Alessio Bragadini (<email>alessio@albourne.com</email>),
+         Bernd Tegge (<email>tegge@repas-aeg.de</email>)</entry>
+        <entry>5.0; 4.0g with cc and gcc</entry>
        </row>
        <row>
-	<entry><systemitem class="osname">Windows NT/2000</></entry>
+	<entry><systemitem class="osname">Windows</></entry>
 	<entry><systemitem>x86</></entry>
-	<entry>7.1</entry>
-	<entry>2001-03-16,
+	<entry>7.2</entry>
+	<entry>2001-12-13,
+	 Dave Page (<email>dpage@vale-housing.co.uk</email>),
 	 Jason Tishler (<email>jason@tishler.net</email>)</entry>
-        <entry>with <application>Cygwin</application> tool set, see <filename>doc/FAQ_MSWIN</filename></entry>
+        <entry>with <application>Cygwin</application>; see <filename>doc/FAQ_MSWIN</filename></entry>
        </row>
+      <row>
+       <entry><systemitem class="osname">Windows</></entry>
+       <entry><systemitem>x86</></entry>
+       <entry>7.2</entry>
+       <entry>2001-12-10,
+	Dave Page (<email>dpage@vale-housing.co.uk</email>)</entry>
+       <entry>
+	native is client-side only;
+<![%standalone-include[see Administrator's Guide]]>
+<![%standalone-ignore[see <xref linkend="install-win32">]]>
+       </entry>
+      </row>
       </tbody>
      </tgroup>
     </informaltable>
@@ -1668,14 +1715,7 @@ Obsolete platform? This distro was merged into PPC afaik. - thomas 2001-12-07
       <entry><systemitem>x86</></entry>
       <entry>6.5</entry>
       <entry>1999-05-25, Andrew Merrill (<email>andrew@compclass.com</>)</entry>
-      <entry>7.2 should work, but no reports; see also <filename>doc/FAQ_SCO</filename></entry>
-     </row>
-     <row>
-      <entry><systemitem class="osname">SunOS</></entry>
-      <entry><systemitem>Sparc</></entry>
-      <entry>7.2</entry>
-      <entry>2001-12-04, Tatsuo Ishii (<email>t-ishii@sra.co.jp</email>)</entry>
-      <entry><function>memcmp()</> does not work correctly, so probably not reliable</entry>
+      <entry>&version; should work, but no reports; see also <filename>doc/FAQ_SCO</filename></entry>
      </row>
      <row>
       <entry><systemitem class="osname">System V R4</></entry>
@@ -1703,24 +1743,11 @@ Obsolete platform? This distro was merged into PPC afaik. - thomas 2001-12-07
       <entry><systemitem>VAX</></entry>
       <entry>6.x</entry>
       <entry>1998-03-01</entry>
-      <entry>no recent reports</entry>
-     </row>
-     <row>
-      <entry><systemitem class="osname">Windows 9x, ME, NT, 2000</> (native)</entry>
-      <entry><systemitem>x86</></entry>
-      <entry>7.1</entry>
-      <entry>2001-03-26, Magnus Hagander (<email>mha@sollentuna.net</email>)</entry>
-      <entry>
-       client-side libraries (<application>libpq</> and <application>psql</>) or ODBC or JDBC, no server-side;
-<![%standalone-include[see <citetitle>Administrator's Guide</>]]>
-<![%standalone-ignore[see <xref linkend="install-win32">]]>
-       for instructions
-      </entry>
+      <entry></entry>
      </row>
     </tbody>
    </tgroup>
   </informaltable>
-
  </sect1>
 
 </chapter>

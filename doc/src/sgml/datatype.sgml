@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.78 2001/12/08 03:24:22 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.79 2001/12/21 03:54:02 thomas Exp $
 -->
 
  <chapter id="datatype">
@@ -1328,21 +1328,20 @@ SELECT b, char_length(b) FROM test2;
 
    <para>
     <type>time</type> and <type>timestamp</type> both accept an
-    option precision field <replaceable>p</replaceable> which
+    optional precision field <replaceable>p</replaceable> which
     determines the number of digits retained beyond the seconds
     decimal point. By default, there is no explicit bound on precision
     and the actual precision is determined by the underlying double
     precision floating point number used to store values in seconds
     for <type>interval</type> and
-    since 2000-01-01 in the case of <type>timestamp</type>.
+    in seconds since 2000-01-01 for <type>timestamp</type>.
    </para>
 
    <para>
     Time zones, and time-zone conventions, are influenced by
-    political decisions, not just physical effects. Time zones have
-    become somewhat standardized around the world during the 1900's,
-    but continue to 
-    be prone to arbitrary changes.
+    political decisions, not just geometry. Time zones around the
+    world became somewhat standardized during the 1900's,
+    but continue to be prone to arbitrary changes.
     <productname>PostgreSQL</productname> uses your operating
     system's underlying features to provide time-zone
     support, and these systems usually contain information for only
@@ -1354,13 +1353,15 @@ SELECT b, char_length(b) FROM test2;
    </para>
 
    <para>
-    To ensure compatibility to earlier versions of <productname>PostgreSQL</productname>
+    To ensure compatibility to earlier versions of
+    <productname>PostgreSQL</productname> 
     we continue to provide <type>datetime</type>
     (equivalent to <type>timestamp</type>) and
     <type>timespan</type> (equivalent to <type>interval</type>),
     however support for these is now restricted to having an
     implicit translation to <type>timestamp</type> and
-    <type>interval</type>.
+    <type>interval</type>, and these name mappings will be removed in
+    the next version.
     The types <type>abstime</type>
     and <type>reltime</type> are lower precision types which are used internally.
     You are discouraged from using any of these types in new
@@ -1376,9 +1377,12 @@ SELECT b, char_length(b) FROM test2;
      Date and time input is accepted in almost any reasonable format, including
      <acronym>ISO 8601</acronym>, <acronym>SQL</acronym>-compatible, 
      traditional <productname>PostgreSQL</productname>, and others.
-     The ordering of month and day in date input can be ambiguous, therefore a setting
-     exists to specify how it should be interpreted in ambiguous cases. The command
-     <literal>SET DateStyle TO 'US'</literal> or <literal>SET DateStyle TO 'NonEuropean'</literal>
+     For some formats, ordering of month and day in date input can be
+     ambiguous and there is support for specifying the expected
+     ordering of these fields.
+     The command
+     <literal>SET DateStyle TO 'US'</literal> 
+     or <literal>SET DateStyle TO 'NonEuropean'</literal>
      specifies the variant <quote>month before day</quote>, the command
      <literal>SET DateStyle TO 'European'</literal> sets the variant
      <quote>day before month</quote>. The <literal>ISO</literal> style
@@ -1386,24 +1390,29 @@ SELECT b, char_length(b) FROM test2;
     </para>
 
     <para>
+     <productname>PostgreSQL</productname> is more flexible in
+     handling date/time than the
+     <acronym>SQL</acronym> standard requires.
      See <xref linkend="datetime-appendix">
-     for the exact parsing rules of date/time input and for the recognized time zones.
+     for the exact parsing rules of date/time input and for the
+     recognized time zones. 
     </para>
 
     <para>
-     Remember that any date or time input needs to be enclosed into
-     single quotes, like text strings.  Refer to <xref
-     linkend="sql-syntax-constants-generic"> for more information.
+     Remember that any date or time literal input needs to be enclosed
+     in single quotes, like text strings.  Refer to 
+     <xref linkend="sql-syntax-constants-generic"> for more
+     information.
      <acronym>SQL9x</acronym> requires the following syntax
 <synopsis>
 <replaceable>type</replaceable> [ (<replaceable>p</replaceable>) ] '<replaceable>value</replaceable>'
 </synopsis>
-     where <replaceable>p</replaceable> is an integer specifying the
-     number of fractional digits in the seconds field, and is allowed
-     for <type>time</type>, <type>timestamp</type>, and <type>interval</type> types.
-     <productname>PostgreSQL</productname> is more flexible in
-     handling date/time than the
-     <acronym>SQL</acronym> standard requires.
+     where <replaceable>p</replaceable> in the optional precision
+     specification is an integer corresponding to the
+     number of fractional digits in the seconds field. Precision can
+     be specified 
+     for <type>time</type>, <type>timestamp</type>, and
+     <type>interval</type> types.
     </para>
 
     <sect3>
