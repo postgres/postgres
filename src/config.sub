@@ -73,7 +73,7 @@ esac
 # Here we must recognize all the valid KERNEL-OS combinations.
 maybe_os=`echo $1 | sed 's/^\(.*\)-\([^-]*-[^-]*\)$/\2/'`
 case $maybe_os in
-  linux-gnu*)
+  nto-qnx* | linux-gnu*)
     os=-$maybe_os
     basic_machine=`echo $1 | sed 's/^\(.*\)-\([^-]*-[^-]*\)$/\1/'`
     ;;
@@ -174,6 +174,7 @@ case $basic_machine in
 	tahoe | i860 | ia64 | m32r | m68k | m68000 | m88k | ns32k | arc | arm \
 		| arme[lb] | pyramid | mn10200 | mn10300 | tron | a29k \
 		| 580 | i960 | h8300 \
+		| x86 | ppcbe | mipsbe | mipsle | shbe | shle | armbe | armle \
 		| hppa | hppa1.0 | hppa1.1 | hppa2.0 | hppa2.0w | hppa2.0n \
 		| alpha | alphaev[4-8] | alphaev56 | alphapca5[67] \
 		| alphaev6[78] \
@@ -207,6 +208,7 @@ case $basic_machine in
 	      | mips-* | pyramid-* | tron-* | a29k-* | romp-* | rs6000-* \
 	      | power-* | none-* | 580-* | cray2-* | h8300-* | h8500-* | i960-* \
 	      | xmp-* | ymp-* \
+	      | x86-* | ppcbe-* | mipsbe-* | mipsle-* | shbe-* | shle-* | armbe-* | armle-* \
 	      | hppa-* | hppa1.0-* | hppa1.1-* | hppa2.0-* | hppa2.0w-* | hppa2.0n-* \
 	      | alpha-* | alphaev[4-8]-* | alphaev56-* | alphapca5[67]-* \
 	      | alphaev6[78]-* \
@@ -471,9 +473,6 @@ case $basic_machine in
 		basic_machine=i386-unknown
 		os=-mingw32
 		;;
-	i386-qnx | qnx)
-		basic_machine=i386-qnx
-		;;
 	iris | iris4d)
 		basic_machine=mips-sgi
 		case $os in
@@ -595,6 +594,9 @@ case $basic_machine in
 		;;
 	np1)
 		basic_machine=np1-gould
+		;;
+	nsr-tandem)
+		basic_machine=nsr-tandem
 		;;
 	op50n-* | op60c-*)
 		basic_machine=hppa1.1-oki
@@ -936,6 +938,18 @@ case $os in
 	      | -interix* | -uwin* | -rhapsody* | -opened* | -openstep* | -oskit*)
 	# Remember, each alternative MUST END IN *, to match a version number.
 		;;
+	-qnx*)
+		case $basic_machine in
+		    x86-* | i[34567]86-*)
+			;;
+		    *)
+			os=-nto$os
+			;;
+		esac
+		;;
+	-nto*)
+		os=-nto-qnx
+		;;
 	-sim | -es1800* | -hms* | -xray | -os68k* | -none* | -v88r* \
 	      | -windows* | -osx | -abug | -netware* | -os9* | -beos* \
 	      | -macos* | -mpw* | -magic* | -mmixware* | -mon960* | -lnews*)
@@ -982,6 +996,9 @@ case $os in
 	-ns2 )
 	        os=-nextstep2
 		;;
+	-nsk)
+		os=-nsk
+		;;
 	# Preserve the version number of sinix5.
 	-sinix5.*)
 		os=`echo $os | sed -e 's|sinix|sysv|'`
@@ -994,9 +1011,6 @@ case $os in
 		;;
 	-oss*)
 		os=-sysv3
-		;;
-        -qnx)
-		os=-qnx4
 		;;
 	-svr4)
 		os=-sysv4
@@ -1022,9 +1036,6 @@ case $os in
         -*mint | -*MiNT)
 	        os=-mint
 		;;
-        -neutrino* | -nto*)
-                os=-neutrino
-                ;;
 	-none)
 		;;
 	*)
@@ -1245,9 +1256,6 @@ case $basic_machine in
 			-*mint | -*MiNT)
 				vendor=atari
 				;;
-			-neutrino* | -nto*)
-				vendor=qnx
-                                ;;
 		esac
 		basic_machine=`echo $basic_machine | sed "s/unknown/$vendor/"`
 		;;

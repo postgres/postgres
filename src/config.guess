@@ -266,7 +266,7 @@ EOF
 	exit 0 ;;
     # The situation for MiNT is a little confusing.  The machine name
     # can be virtually everything (everything which is not
-    # "atarist" or "atariste" at least should have a processor 
+    # "atarist" or "atariste" at least should have a processor
     # > m68000).  The system name ranges from "MiNT" over "FreeMiNT"
     # to the lowercase version "mint" (or "freemint").  Finally
     # the system name "TOS" denotes a system which is actually not
@@ -588,7 +588,7 @@ EOF
 	echo alpha-cray-unicosmk${UNAME_RELEASE} | sed -e 's/\.[^.]*$/.X/'
 	exit 0 ;;
     CRAY*SV1:*:*:*)
-	echo sv1-cray-unicos${UNAME_RELEASE} | sed -e 's/\.[^.]*$/.X/'    
+	echo sv1-cray-unicos${UNAME_RELEASE} | sed -e 's/\.[^.]*$/.X/'
 	exit 0 ;;
     CRAY-2:*:*:*)
 	echo cray2-cray-unicos
@@ -604,7 +604,7 @@ EOF
     hp300:OpenBSD:*:*)
 	echo m68k-unknown-openbsd${UNAME_RELEASE}
 	exit 0 ;;
-    i?86:BSD/386:*:* | i?86:BSD/OS:*:*)
+    i?86:BSD/386:*:* | i?86:BSD/OS:*:* | *:Ascend\ Embedded/OS:*:*)
 	echo ${UNAME_MACHINE}-pc-bsdi${UNAME_RELEASE}
 	exit 0 ;;
     sparc*:BSD/OS:*:*)
@@ -721,7 +721,7 @@ EOF
 			if test "$?" = 0 ; then
 				LIBC="libc1"
 			fi
-		fi	
+		fi
 		rm -f $dummy.c $dummy
 		echo powerpc-unknown-linux-gnu${LIBC}
 		exit 0
@@ -1024,8 +1024,17 @@ EOF
     *:Mac*OS:*:*)
 	echo ${UNAME_MACHINE}-apple-macos${UNAME_RELEASE}
 	exit 0 ;;
+    *:procnto*:*:* | *:QNX:[0123456789]*:*)
+	if test "${UNAME_MACHINE}" = "x86pc"; then
+		UNAME_MACHINE=pc
+	fi
+	echo `uname -p`-${UNAME_MACHINE}-nto-qnx
+	exit 0;;
     *:QNX:*:4*)
-	echo i386-qnx-qnx${UNAME_VERSION}
+	echo i386-pc-qnx
+	exit 0 ;;
+    NSR-W:NONSTOP_KERNEL:*:*)
+	echo nsr-tandem-nsk${UNAME_RELEASE}
 	exit 0 ;;
 esac
 
