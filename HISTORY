@@ -4,9 +4,8 @@
                            7.4 Development Branch
                                       
 
-Valid as of 2003-08-01.  Update release.sgml later.
-
-
+Valid as of 2003-09-29.  Update release.sgml later.
+                                      
 Server Operation
 
 Allow IPv6 server connections (Nigel Kukard, Johan Jordaan, Bruce, Tom, Kurt
@@ -57,6 +56,10 @@ Use faster regex code from TCL (Henry Spencer, Tom)
 Use bit-mapped relation sets in the optimizer (Tom)
 Improve backend startup time (Tom)
 Improve trigger/constraint performance (Stephan)
+Improve speed of col IN (const, const, const, ...) (Tom)
+Fix hash indexes which were broken in rare cases (Tom)
+Improve hash index concurrency and speed (Tom)
+Align shared buffers on 32-byte boundary for copy speed improvement
 
      _________________________________________________________________
 
@@ -81,6 +84,7 @@ postgres --help-config now dumps server config variables (Aizaz Ahmed)
 Make default shared_buffers 1000 and max_connections 100, if possible (Tom)
 Add new columns in pg_settings: context, type, source , min_val, max_val (Joe)
 New pg_hba.conf 'hostnossl' to prevent SSL connections (Jon Jensen)
+Remove geqo_random_seed server parameter (Tom)
 
      _________________________________________________________________
 
@@ -161,6 +165,10 @@ Functional indexes now support indexes on column expressions (Tom)
 Syntax errors now reported as 'syntax error' rather than 'parse error' (Tom)
 Have SHOW TRANSACTION_ISOLATION match input to SET TRANSACTION_ISOLATION (Tom)
 Have COMMENT ON DATABASE on non-local database generate a warning (Rod)
+Improve reliability of LISTEN/NOTIFY (Tom)
+Allow REINDEX to reliabily reindex all indexes, except global ones (Tom)
+pg_dump --use-set-session-authorization and --no-reconnect now do nothing,
+  all dumps use SET SESSION AUTHORIZATION
 
      _________________________________________________________________
 
@@ -214,6 +222,7 @@ Add new DateStyle values MDY, DMY, and YMD, honor US and European for
 Assume NaN value to be larger than any other value in MIN()/MAX() (Tom)
 Prevent interval from supressing ':00' seconds display
 New pg_get_triggerdef(prettyprint) and pg_constraint_is_visible() functions
+Allow time to be specified as '040506' or '0405' (Tom)
 
      _________________________________________________________________
 
@@ -229,6 +238,7 @@ Improved compiled function caching mechanism in PL/pgSQL with full
   support for polymorphism (Joe)
 Add new $0 parameter in PL/pgSQL representing the function's actual
   return type (Joe)
+Allow pltcl and plpython use the same trigger on multiple tables (Tom)
 
      _________________________________________________________________
 
@@ -238,7 +248,7 @@ Add "\pset pager always" to always use pager (Greg)
 Improve tab completion (Rod, Ross Reedstrom, Ian Barwick)
 Reorder \? help into groupings (Harald Armin Massa, Bruce)
 Add schema, cast, and conversion backslash commands (Christopher)
-\encoding now tracks client_encoding server variable (Tom)
+\encoding now changes based on client_encoding server variable (Tom)
 Save edit history into readline history (Ross)
 Improve \d display (Christopher)
 Enhance HTML mode to be more standards-compliant (Greg)
@@ -265,6 +275,8 @@ Allow new error codes and levels of text (Tom)
 Allow access to the underlying table and column of a query result (Tom)
 Allow access to the current transaction status (Tom)
 Add ability to pass binary data directly to the backend (Tom)
+Add PQexecPrepared() and PQsendQueryPrepared() functions which
+  perform Bind/Execute of previously prepared statements (Tom)
 
      _________________________________________________________________
 
@@ -309,6 +321,8 @@ New ereport() function for error reporting (Tom)
 Support Intel Linux compiler (Peter)
 Improve Linux startup scripts (Slawomir Sudnik, Darko Prenosil)
 Add support for AMD Opteron and Itanium (Jeffrey W. Baker, Bruce)
+Remove configure --enable-recode
+Generate a compile error if spinlock code isn't found (Bruce)
 
      _________________________________________________________________
 
@@ -334,7 +348,8 @@ Improve pgstattuple (Rod)
 Fix bug in metaphone() in fuzzystrmatch
 Improve adddepend (Rod)
 Update spi/timetravel (B?jthe Zolt?n)
-Fix dbase -s option (Thomas Behr)
+Fix dbase -s option and improve non-ASCII handling (Thomas Behr,M?rcio Smiderle)
+Remove array module because features now included by default (Joe)
 
      _________________________________________________________________
 
