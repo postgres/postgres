@@ -11,7 +11,7 @@
  *	  SQL aggregates. (Do not expect POSTQUEL semantics.)	 -- ay 2/95
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.56 1999/09/28 02:03:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.57 1999/10/08 03:49:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -136,12 +136,11 @@ copyDatum(Datum val, int typLen, bool typByVal)
  *	  sfunc1 is never applied when the current tuple's aggregated_value
  *	  is NULL.  sfunc2 is applied for each tuple if the aggref is marked
  *	  'usenulls', otherwise it is only applied when aggregated_value is
- *	  not NULL.  (usenulls is normally set only for the case of COUNT(*),
- *	  since according to the SQL92 standard that is the only aggregate
- *	  that considers nulls in its input.  SQL92 requires COUNT(*) and
- *	  COUNT(field) to behave differently --- the latter doesn't count nulls
- *	  --- so we can't make this flag a column of pg_aggregate but must
- *	  set it according to usage.  Ugh.)
+ *	  not NULL.  (usenulls was formerly used for COUNT(*), but is no longer
+ *	  needed for that purpose; as of 10/1999 the support for usenulls is
+ *	  dead code.  I have not removed it because it seems like a potentially
+ *	  useful feature for user-defined aggregates.  We'd just need to add a
+ *	  flag column to pg_aggregate and a parameter to CREATE AGGREGATE...)
  *
  *	  If the outer subplan is a Group node, ExecAgg returns as many tuples
  *	  as there are groups.
@@ -534,27 +533,14 @@ ExecInitAgg(Agg *node, EState *estate, Plan *parent)
 	outerPlan = outerPlan(node);
 	ExecInitNode(outerPlan, estate, (Plan *) node);
 
-	/*
-	 * Result runs in its own context, but make it use our aggregates fix
-	 * for 'select sum(2+2)'
-	 */
-	if (IsA(outerPlan, Result))
-	{
-		((Result *) outerPlan)->resstate->cstate.cs_ProjInfo->pi_exprContext->ecxt_aggvalues =
-			econtext->ecxt_aggvalues;
-		((Result *) outerPlan)->resstate->cstate.cs_ProjInfo->pi_exprContext->ecxt_aggnulls =
-			econtext->ecxt_aggnulls;
-	}
-
 	/* ----------------
-	 *	initialize tuple type.
+	 *	initialize source tuple type.
 	 * ----------------
 	 */
 	ExecAssignScanTypeFromOuterPlan((Plan *) node, &aggstate->csstate);
 
 	/*
-	 * Initialize tuple type for both result and scan. This node does no
-	 * projection
+	 * Initialize result tuple type and projection info.
 	 */
 	ExecAssignResultTypeFromTL((Plan *) node, &aggstate->csstate.cstate);
 	ExecAssignProjectionInfo((Plan *) node, &aggstate->csstate.cstate);

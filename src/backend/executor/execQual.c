@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.62 1999/09/26 21:21:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.63 1999/10/08 03:49:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -209,6 +209,9 @@ ExecEvalArrayRef(ArrayRef *arrayRef,
 static Datum
 ExecEvalAggref(Aggref *aggref, ExprContext *econtext, bool *isNull)
 {
+	if (econtext->ecxt_aggvalues == NULL) /* safety check */
+		elog(ERROR, "ExecEvalAggref: no aggregates in this expression context");
+
 	*isNull = econtext->ecxt_aggnulls[aggref->aggno];
 	return econtext->ecxt_aggvalues[aggref->aggno];
 }
