@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.127 2002/11/06 22:31:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.128 2002/11/14 19:00:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1257,6 +1257,9 @@ grouping_planner(Query *parse, double tuple_fraction)
 					  sorted_path->parent->rows, sorted_path->parent->width);
 			sort_path.startup_cost += cheapest_path->total_cost;
 			sort_path.total_cost += cheapest_path->total_cost;
+			/* Convert absolute-count tuple_fraction into a fraction */
+			if (tuple_fraction >= 1.0)
+				tuple_fraction /= sorted_path->parent->rows;
 			if (compare_fractional_path_costs(sorted_path, &sort_path,
 											  tuple_fraction) <= 0)
 			{
