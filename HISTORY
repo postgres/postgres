@@ -132,8 +132,7 @@ New postgresql.conf parameter to control memory usage by VACUUM (Tom)
 New postgresql.conf time out parameter for client authentication (Tom)
 New pg_ctl 'reload' option (Tom)
 Add /contrib/intarray boolean queries, fixes (Oleg Bartunov)
-Measure transaction times in milliseconds (Thomas)
-'NOW' returns time in milliseconds 
+New postgresql.conf to set maximum open files (Tom)
 
 Types
 -----
@@ -147,7 +146,12 @@ Bytea comparison improvements, \### now requires three octal digits (Joe Conway)
 Make trim/ltrim/rtrim/btrim/lpad/rpad/translate() multibyte aware (Tatsuo)
 Add pg_database_encoding_max_length() (Tatsuo)
 Make mic2ascii() non-ASCII aware (Tatsuo)
-
+Measure transaction times in milliseconds (Thomas)
+now() returns time in milliseconds (Thomas)
+New TIMEZONE WITHOUT TIMEZONE data types (Thomas)
+Add ISO date/time specification with 'T', yyyy-mm-ddThh:mm:ss (Thomas)
+New xid/int comparison functions (Hiroshi)
+Fix TID sequential scans (H
 Performance
 -----------
 Optimizer improvements (Tom)
@@ -156,6 +160,9 @@ Reuse write-ahead log files rather than discarding them (Tom)
 Cache improvements (Tom)
 IS NULL, IS NOT NULL optimizer improvement (Tom)
 Load pg_hba.conf only on startup and SIGHUP (Bruce)
+Rtree performance improvements (Kenneth Been)
+Improve lock manager to reduce lock contention (Tom)
+Btree splits more efficient (Tom)
 
 Interfaces
 ----------
@@ -174,6 +181,7 @@ JDBC
 	Encoding fixes (Anders Bengtsson)
 	Get/setCatalog methods (Jason Davies)
 	Databasemetadata.getColumns() now returns column defaults (Jason Davies)
+	Databasemetadata.getColumn() performance improvement (Jeroen van Vianen)
 	Jdbc1 and jdbc2 merging (Anders Bengtsson)
 	Transaction performance improvements (Barry Lind)
 	Array fixes (Greg Zoller)
