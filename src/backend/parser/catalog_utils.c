@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/catalog_utils.c,v 1.13 1996/12/11 03:17:49 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/catalog_utils.c,v 1.14 1996/12/26 17:47:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1397,7 +1397,7 @@ typeid_get_retinfunc(Oid type_id)
 				    0,0,0);
     if ( !HeapTupleIsValid ( typeTuple ))
 	elog(WARN,
-	     "typeid_get_retinfunc: Invalid type - oid = %ud",
+	     "typeid_get_retinfunc: Invalid type - oid = %u",
 	     type_id);
     
     type = (TypeTupleForm) GETSTRUCT(typeTuple);
@@ -1415,7 +1415,7 @@ typeid_get_relid(Oid type_id)
 				    ObjectIdGetDatum(type_id),
 				    0,0,0);
     if ( !HeapTupleIsValid ( typeTuple ))
-	elog(WARN, "typeid_get_relid: Invalid type - oid = %ud ", type_id);
+	elog(WARN, "typeid_get_relid: Invalid type - oid = %u ", type_id);
     
     type = (TypeTupleForm) GETSTRUCT(typeTuple);
     infunc = type->typrelid;
@@ -1441,7 +1441,7 @@ get_typelem(Oid type_id)
     if (!(typeTuple = SearchSysCacheTuple(TYPOID,
 					  ObjectIdGetDatum(type_id),
 					  0,0,0))) {
-	elog (WARN , "type id lookup of %ud failed", type_id);
+	elog (WARN , "type id lookup of %u failed", type_id);
     }
     type = (TypeTupleForm) GETSTRUCT(typeTuple);
     

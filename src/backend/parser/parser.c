@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.15 1996/12/07 04:38:11 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.16 1996/12/26 17:47:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -357,7 +357,7 @@ parser_typecast2(Node *expr, Oid exprType, Type tp, int typlen)
 	const_string = (char *) textout((struct varlena *)const_string);
         break;
     default:
-	elog(WARN,"unknown type %ud ",exprType);
+	elog(WARN,"unknown type %u ",exprType);
     }
     
     if (!exprType) {
@@ -405,7 +405,7 @@ parser_typecast2(Node *expr, Oid exprType, Type tp, int typlen)
 		    0 /*was omitted*/,
 		    0 /* not a set */);
     /*
-      printf("adt %s : %ud %d %d\n",CString(expr),typeid(tp) ,
+      printf("adt %s : %u %d %d\n",CString(expr),typeid(tp) ,
       len,cp);
       */
     if (string_palloced) pfree(const_string);
