@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.38 1998/10/26 01:01:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.39 1998/10/29 18:11:28 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2733,18 +2733,6 @@ on_pb(Point *pt, BOX *box)
 bool
 on_ppath(Point *pt, PATH *path)
 {
-#if FALSE
-	int			above,
-				next,			/* is the seg above the ray? */
-				inter,			/* # of times path crosses ray */
-				hi;				/* index inc of higher seg (0,1) */
-	double		x,
-				yh,
-				yl,
-				xh,
-				xl;
-
-#endif
 	int			i,
 				n;
 	double		a,
@@ -2753,8 +2741,9 @@ on_ppath(Point *pt, PATH *path)
 	if (!PointerIsValid(pt) || !PointerIsValid(path))
 		return FALSE;
 
+	/*-- OPEN --*/
 	if (!path->closed)
-	{							/*-- OPEN --*/
+	{
 		n = path->npts - 1;
 		a = point_dt(pt, &path->p[0]);
 		for (i = 0; i < n; i++)
@@ -2768,58 +2757,8 @@ on_ppath(Point *pt, PATH *path)
 		return FALSE;
 	}
 
+	/*-- CLOSED --*/
 	return point_inside(pt, path->npts, path->p);
-#if FALSE
-	inter = 0;					/*-- CLOSED --*/
-	above = FPgt(path->p[0].y, pt->y) ? ABOVE :
-		FPlt(path->p[0].y, pt->y) ? BELOW : UNDEF;
-
-	for (i = 0; i < path->npts; i++)
-	{
-		hi = path->p[i].y < path->p[NEXT(i)].y;
-
-		/*
-		 * must take care of wrap around to original vertex for closed
-		 * paths
-		 */
-		yh = (i + hi < path->npts) ? path->p[i + hi].y : path->p[0].y;
-		yl = (i + !hi < path->npts) ? path->p[i + !hi].y : path->p[0].y;
-		hi = path->p[i].x < path->p[NEXT(i)].x;
-		xh = (i + hi < path->npts) ? path->p[i + hi].x : path->p[0].x;
-		xl = (i + !hi < path->npts) ? path->p[i + !hi].x : path->p[0].x;
-		/* skip seg if it doesn't touch the ray */
-
-		if (FPeq(yh, yl))		/* horizontal seg? */
-			if (FPge(pt->x, xl) && FPle(pt->x, xh) &&
-				FPeq(pt->y, yh))
-				return TRUE;	/* pt lies on seg */
-			else
-				continue;		/* skip other hz segs */
-		if (FPlt(yh, pt->y) ||	/* pt is strictly below seg */
-			FPgt(yl, pt->y))	/* strictly above */
-			continue;
-
-		/* seg touches the ray, find out where */
-
-		x = FPeq(xh, xl)		/* vertical seg? */
-			? path->p[i].x
-			: (pt->y - path->p[i].y) /
-			point_sl(&path->p[i],
-					 &path->p[NEXT(i)]) +
-			path->p[i].x;
-		if (FPeq(x, pt->x))		/* pt lies on this seg */
-			return TRUE;
-
-		/* does the seg actually cross the ray? */
-
-		next = FPgt(path->p[NEXT(i)].y, pt->y) ? ABOVE :
-			FPlt(path->p[NEXT(i)].y, pt->y) ? BELOW : above;
-		inter += FPge(x, pt->x) && next != above;
-		above = next;
-	}
-	return (above == UNDEF ||	/* path is horizontal */
-			inter % 2);			/* odd # of intersections */
-#endif
 }	/* on_ppath() */
 
 
@@ -3577,9 +3516,13 @@ path_contain_pt(PATH *path, Point *p)
 	if (!PointerIsValid(path) || !PointerIsValid(p))
 		return FALSE;
 
-	return (path->closed ? (point_inside(p, path->npts, &(path->p[0])) != 0) : FALSE);
+	return (on_ppath(p, path));
 }	/* path_contain_pt() */
 
+/* pt_contained_path
+ * Point in or on path? This is the same as on_ppath.
+ * - thomas 1998-10-29
+ */
 bool
 pt_contained_path(Point *p, PATH *path)
 {
