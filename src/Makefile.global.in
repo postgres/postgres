@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.83 2000/07/01 15:02:16 petere Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.84 2000/07/01 21:16:42 petere Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the
@@ -183,6 +183,7 @@ LN_S= @LN_S@
 TAR= @tar@
 GZCAT= @GZCAT@
 PERL = @PERL@
+AWK = @AWK@
 CXX=@CXX@
 CXXFLAGS=@CXXFLAGS@ @INCLUDES@
 

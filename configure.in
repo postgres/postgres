@@ -1198,7 +1198,6 @@ AC_OUTPUT(
 	src/Makefile.global
 	src/backend/port/Makefile
 	src/backend/catalog/genbki.sh
-	src/backend/utils/Gen_fmgrtab.sh
 	src/include/version.h
 	src/test/regress/GNUmakefile
 )

@@ -9,17 +9,17 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh.in,v 1.25 2000/06/07 16:26:48 petere Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh,v 1.15 2000/07/01 21:16:44 petere Exp $
 #
 #-------------------------------------------------------------------------
 
 CMDNAME=`basename $0`
 
-AWK="@AWK@"
-CPP="@CPP@"
+: ${AWK='awk'}
+: ${CPP='cc -E'}
 
 cleanup(){
-    [ x"$noclean" != x"t" ] && rm -f "$CPPTMPFILE" "$RAWFILE" "$OIDSFILE.tmp" "$TABLEFILE.tmp"
+    [ x"$noclean" != x"t" ] && rm -f "$CPPTMPFILE" "$RAWFILE"
 }
 
 BKIOPTS=
@@ -45,6 +45,10 @@ do
             echo
             echo "Usage:"
             echo "  $CMDNAME [ -D define [...] ]"
+            echo
+            echo "The environment variables CPP and AWK determine which C"
+            echo "preprocessor and Awk program to use. The defaults are"
+            echo "\`cc -E' and \`awk'."
             echo
             echo "Report bugs to <pgsql-bugs@postgresql.org>."
             exit 0
@@ -119,7 +123,7 @@ cpp_define=`echo $OIDSFILE | tr abcdefghijklmnopqrstuvwxyz ABCDEFGHIJKLMNOPQRSTU
 #
 # Generate fmgroids.h
 #
-cat > "${OIDSFILE}.tmp" <<FuNkYfMgRsTuFf
+cat > "$OIDSFILE" <<FuNkYfMgRsTuFf
 /*-------------------------------------------------------------------------
  *
  * $OIDSFILE
@@ -160,7 +164,7 @@ FuNkYfMgRsTuFf
 tr 'abcdefghijklmnopqrstuvwxyz' 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' < $RAWFILE | \
 $AWK '
 BEGIN	{ OFS = ""; }
-	{ if (seenit[$(NF-1)]++ == 0) print "#define F_", $(NF-1), " ", $1; }' >> "${OIDSFILE}.tmp"
+	{ if (seenit[$(NF-1)]++ == 0) print "#define F_", $(NF-1), " ", $1; }' >> "$OIDSFILE"
 
 if [ $? -ne 0 ]; then
     cleanup
@@ -168,7 +172,7 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-cat >> "${OIDSFILE}.tmp" <<FuNkYfMgRsTuFf
+cat >> "$OIDSFILE" <<FuNkYfMgRsTuFf
 
 #endif	/* $cpp_define */
 FuNkYfMgRsTuFf
@@ -182,7 +186,7 @@ FuNkYfMgRsTuFf
 # this table definition as a separate C file that won't need to include any
 # "real" declarations for those functions!
 #
-cat > "${TABLEFILE}.tmp" <<FuNkYfMgRtAbStUfF
+cat > "$TABLEFILE" <<FuNkYfMgRtAbStUfF
 /*-------------------------------------------------------------------------
  *
  * $TABLEFILE
@@ -213,7 +217,7 @@ cat > "${TABLEFILE}.tmp" <<FuNkYfMgRtAbStUfF
 
 FuNkYfMgRtAbStUfF
 
-$AWK '{ print "extern Datum", $(NF-1), "(PG_FUNCTION_ARGS);"; }' $RAWFILE >> "${TABLEFILE}.tmp"
+$AWK '{ print "extern Datum", $(NF-1), "(PG_FUNCTION_ARGS);"; }' $RAWFILE >> "$TABLEFILE"
 
 if [ $? -ne 0 ]; then
     cleanup
@@ -222,7 +226,7 @@ if [ $? -ne 0 ]; then
 fi
 
 
-cat >> "${TABLEFILE}.tmp" <<FuNkYfMgRtAbStUfF
+cat >> "$TABLEFILE" <<FuNkYfMgRtAbStUfF
 
 const FmgrBuiltin fmgr_builtins[] = {
 FuNkYfMgRtAbStUfF
@@ -239,7 +243,7 @@ $AWK 'BEGIN {
 }
 { printf ("  { %d, \"%s\", %d, %s, %s, %s },\n"), \
 	$1, $(NF-1), $9, Strict[$8], OldStyle[$4], $(NF-1)
-}' $RAWFILE >> "${TABLEFILE}.tmp"
+}' $RAWFILE >> "$TABLEFILE"
 
 if [ $? -ne 0 ]; then
     cleanup
@@ -247,7 +251,7 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-cat >> "${TABLEFILE}.tmp" <<FuNkYfMgRtAbStUfF
+cat >> "$TABLEFILE" <<FuNkYfMgRtAbStUfF
   /* dummy entry is easier than getting rid of comma after last real one */
   /* (not that there has ever been anything wrong with *having* a
      comma after the last field in an array initializer) */
@@ -258,23 +262,6 @@ cat >> "${TABLEFILE}.tmp" <<FuNkYfMgRtAbStUfF
 const int fmgr_nbuiltins = (sizeof(fmgr_builtins) / sizeof(FmgrBuiltin)) - 1;
 
 FuNkYfMgRtAbStUfF
-
-
-
-# Now we check if the files fmgroids.h and fmgrtab.c already exist and
-# are identical to what we would make them. In that case we avoid
-# writing our new version, so as to not cause unnecessary recompilation
-# because of changed timestamps.
-
-for file in "$OIDSFILE" "$TABLEFILE" ; do
-    if test -f "$file" && cmp -s "$file" "${file}.tmp" ; then
-        echo "$file unchanged"
-        rm -f "${file}.tmp"
-    else
-        mv "${file}.tmp" "$file"
-    fi
-done
-
 
 cleanup
 exit 0

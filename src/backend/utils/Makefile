@@ -4,7 +4,7 @@
 #    Makefile for utils
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/Makefile,v 1.15 2000/06/17 00:09:43 petere Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/Makefile,v 1.16 2000/07/01 21:16:44 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -34,7 +34,7 @@ submake:
 
 
 fmgroids.h fmgrtab.c: Gen_fmgrtab.sh $(SRCDIR)/include/catalog/pg_proc.h
-	$(SHELL) $(SHOPTS) Gen_fmgrtab.sh $(SRCDIR)/include/catalog/pg_proc.h
+	CPP='$(CPP)' AWK='$(AWK)' $(SHELL) $< $(SRCDIR)/include/catalog/pg_proc.h
 
 
 clean:
