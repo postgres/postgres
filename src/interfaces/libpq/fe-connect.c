@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.107 1999/11/30 03:08:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.108 1999/12/02 00:26:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1064,7 +1064,7 @@ PQconnectPoll(PGconn *conn)
 		{
 			SOCKET_SIZE_TYPE laddrlen;
 			int optval;
-			socklen_t optlen = sizeof(int);
+			int optlen = sizeof(int);
 
 			/* Write ready, since we've made it here, so the connection
 			 * has been made. */
