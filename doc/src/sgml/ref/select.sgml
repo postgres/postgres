@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.37 2001/01/13 23:58:55 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.38 2001/02/04 12:18:08 petere Exp $
 Postgres documentation
 -->
 
@@ -334,7 +334,7 @@ where <replaceable class="PARAMETER">from_item</replaceable> can be:
    The ORDER BY clause causes the returned rows to be sorted in a specified
    order.  If ORDER BY is not given, the rows are returned in whatever order
    the system finds cheapest to produce.
-   (See <xref linkend="sql-orderby-title" endterm="sql-orderby-title">.)
+   (See <xref linkend="sql-orderby" endterm="sql-orderby-title">.)
   </para>
    
   <para>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.40 2001/01/12 05:06:40 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.41 2001/02/04 12:18:08 petere Exp $
 Postgres documentation
 -->
 
@@ -238,7 +238,7 @@ ERROR:  Relation '<replaceable class="parameter">table</replaceable>' already ex
    may be a simple type, a complex type (set) or an array type.
    Each attribute may be specified to be non-null and
    each may have a default value, specified by the
-   <xref linkend="R1-SQL-DEFAULTCLAUSE-1-TITLE" endterm="R1-SQL-DEFAULTCLAUSE-1-TITLE">.
+   <xref linkend="R1-SQL-DEFAULTCLAUSE-1" endterm="R1-SQL-DEFAULTCLAUSE-1-TITLE">.
   </para>
 
   <para>
