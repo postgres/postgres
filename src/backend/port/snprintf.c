@@ -75,7 +75,7 @@ typedef long long long_long;
  * causing nast effects.
  **************************************************************/
 
-/*static char _id[] = "$Id: snprintf.c,v 1.9 1998/10/07 17:12:52 momjian Exp $";*/
+/*static char _id[] = "$Id: snprintf.c,v 1.10 1998/10/08 00:34:47 momjian Exp $";*/
 static char *end;
 static int	SnprfOverflow;
 
@@ -130,7 +130,11 @@ static void
 dopr(char *buffer, const char *format,...)
 {
 	int			ch;
+#ifdef HAVE_LONG_INT_64
+	long_long	value;
+#else
 	long		value;
+#endif
 	int			longflag = 0;
 	int			longlongflag = 0;
 	int			pointflag = 0;
@@ -204,7 +208,14 @@ dopr(char *buffer, const char *format,...)
 					case 'U':
 						/* fmtnum(value,base,dosign,ljust,len,zpad) */
 						if (longflag)
-							value = va_arg(args, long);
+						{
+#ifdef HAVE_LONG_INT_64
+							if (longlongflag)
+								value = va_arg(args, long_long);
+							else
+#endif
+								value = va_arg(args, long);
+						}
 						else
 							value = va_arg(args, int);
 						fmtnum(value, 10, 0, ljust, len, zpad);
@@ -213,7 +224,14 @@ dopr(char *buffer, const char *format,...)
 					case 'O':
 						/* fmtnum(value,base,dosign,ljust,len,zpad) */
 						if (longflag)
+						{
+#ifdef HAVE_LONG_INT_64
+							if (longlongflag)
+								value = va_arg(args, long_long);
+							else
+#endif
 							value = va_arg(args, long);
+						}
 						else
 							value = va_arg(args, int);
 						fmtnum(value, 8, 0, ljust, len, zpad);
@@ -235,14 +253,28 @@ dopr(char *buffer, const char *format,...)
 						break;
 					case 'x':
 						if (longflag)
+						{
+#ifdef HAVE_LONG_INT_64
+							if (longlongflag)
+								value = va_arg(args, long_long);
+							else
+#endif
 							value = va_arg(args, long);
+						}
 						else
 							value = va_arg(args, int);
 						fmtnum(value, 16, 0, ljust, len, zpad);
 						break;
 					case 'X':
 						if (longflag)
-							value = va_arg(args, long);
+						{
+#ifdef HAVE_LONG_INT_64
+							if (longlongflag)
+								value = va_arg(args, long_long);
+							else
+#endif
+								value = va_arg(args, long);
+						}
 						else
 							value = va_arg(args, int);
 						fmtnum(value, -16, 0, ljust, len, zpad);
@@ -312,7 +344,11 @@ int			ljust,
 
 static void
 fmtnum(value, base, dosign, ljust, len, zpad)
-long		value;
+#ifdef HAVE_LONG_INT_64
+	long_long	value;
+#else
+	long		value;
+#endif
 int			base,
 			dosign,
 			ljust,
@@ -320,7 +356,11 @@ int			base,
 			zpad;
 {
 	int			signvalue = 0;
+#ifdef HAVE_LONG_INT_64
+	unsigned long long uvalue;
+#else
 	unsigned long uvalue;
+#endif
 	char		convert[20];
 	int			place = 0;
 	int			padlen = 0;		/* amount to pad */
