@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.82 2000/11/02 23:20:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.83 2000/11/16 22:47:44 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -289,7 +289,7 @@ other			.
 					if (literalbuf[strspn(literalbuf + 1, "01") + 1] != '\0')
 						elog(ERROR, "invalid bit string input: '%s'",
 							 literalbuf);
-					yylval.str = literalbuf;
+					yylval.str = pstrdup(literalbuf);
 					return BITCONST;
 				}
 <xh>{xhinside}	|
