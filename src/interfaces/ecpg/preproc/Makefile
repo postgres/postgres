@@ -25,7 +25,7 @@ uninstall:
 
 # Rule that really do something.
 ecpg: $(OBJ)
-	$(CC) -o ecpg $(OBJ) $(LEXLIB)
+	$(CC) -o ecpg $(OBJ) $(LEXLIB) $(LDFLAGS)
 
 y.tab.h y.tab.c: preproc.y
 	$(YACC) $(YFLAGS) $<

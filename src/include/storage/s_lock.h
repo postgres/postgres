@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.49 1998/09/18 17:18:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.50 1998/09/21 02:25:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -273,6 +273,19 @@ static const slock_t clear_lock =
 #define S_LOCK_FREE(lock)	(test_then_add(lock,0) == 0)
 #endif	 /* __sgi */
 
+#if defined(sinix)
+/*
+ * SINIX / Reliant UNIX 
+ * slock_t is defined as a struct abilock_t, which has a single unsigned long
+ * member. (Basically same as SGI)
+ *
+ */
+#define TAS(lock)	(!acquire_lock(lock))
+#define S_UNLOCK(lock)	release_lock(lock)
+#define S_INIT_LOCK(lock)	init_lock(lock)
+#define S_LOCK_FREE(lock)	(stat_lock(lock) == UNLOCKED)
+#endif	 /* sinix */
+ 
 
 #if defined(_AIX)
 /*

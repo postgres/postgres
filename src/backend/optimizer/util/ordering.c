@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/ordering.c,v 1.7 1998/09/01 03:23:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/ordering.c,v 1.8 1998/09/21 02:25:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,14 +38,11 @@ equal_path_path_ordering(PathOrder *path_ordering1,
 	if (path_ordering1->ordtype == MERGE_ORDER &&
 		path_ordering2->ordtype == MERGE_ORDER)
 	{
-
 		return equal(path_ordering1->ord.merge, path_ordering2->ord.merge);
-
 	}
 	else if (path_ordering1->ordtype == SORTOP_ORDER &&
 			 path_ordering2->ordtype == SORTOP_ORDER)
 	{
-
 		return
 			(equal_sortops_order(path_ordering1->ord.sortop,
 								 path_ordering2->ord.sortop));
@@ -53,14 +50,12 @@ equal_path_path_ordering(PathOrder *path_ordering1,
 	else if (path_ordering1->ordtype == MERGE_ORDER &&
 			 path_ordering2->ordtype == SORTOP_ORDER)
 	{
-
 		return (path_ordering2->ord.sortop &&
 				(path_ordering1->ord.merge->left_operator ==
 				 path_ordering2->ord.sortop[0]));
 	}
 	else
 	{
-
 		return (path_ordering1->ord.sortop &&
 				(path_ordering1->ord.sortop[0] ==
 				 path_ordering2->ord.merge->left_operator));

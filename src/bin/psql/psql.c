@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.160 1998/09/03 05:08:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.161 1998/09/21 02:25:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -156,6 +156,7 @@ static int tableList(PsqlSettings *pset, bool deep_tablelist,
 static int	tableDesc(PsqlSettings *pset, char *table, FILE *fout);
 static int	objectDescription(PsqlSettings *pset, char *object);
 static int	rightsList(PsqlSettings *pset);
+static void emitNtimes (FILE *fout, const char *str, int N);
 static void prompt_for_password(char *username, char *password);
 
 static char *gets_noreadline(char *prompt, FILE *source);
@@ -244,7 +245,7 @@ slashUsage(PsqlSettings *pset)
 
 	/* if you add/remove a line here, change the row test above */
 	fprintf(fout, " \\?           -- help\n");
-	fprintf(fout, " \\a           -- toggle field-alignment (currenty %s)\n", on(pset->opt.align));
+	fprintf(fout, " \\a           -- toggle field-alignment (currently %s)\n", on(pset->opt.align));
 	fprintf(fout, " \\C [<captn>] -- set html3 caption (currently '%s')\n", pset->opt.caption ? pset->opt.caption : "");
 	fprintf(fout, " \\connect <dbname|-> <user> -- connect to new database (currently '%s')\n", PQdb(pset->db));
 	fprintf(fout, " \\copy table {from | to} <fname>\n");
@@ -540,6 +541,8 @@ rightsList(PsqlSettings *pset)
 	char		listbuf[512];
 	int			nColumns;
 	int			i;
+	int			maxCol1Len;
+	int			maxCol2Len;
 	int			usePipe = 0;
 	char	   *pagerenv;
 	FILE	   *fout;
@@ -583,21 +586,50 @@ rightsList(PsqlSettings *pset)
 		else
 			fout = stdout;
 
+		/* choose column widths */
+		maxCol1Len = strlen("Relation");
+        maxCol2Len = strlen("Grant/Revoke Permissions");
+		for (i = 0; i < PQntuples(res); i++)
+		{
+			int l = strlen(PQgetvalue(res, i, 0));
+			if (l > maxCol1Len)
+				maxCol1Len = l;
+			l = strlen(PQgetvalue(res, i, 1));
+			if (l > maxCol2Len)
+				maxCol2Len = l;
+		}
+
 		/* Display the information */
 
 		fprintf(fout, "\nDatabase    = %s\n", PQdb(pset->db));
-		fprintf(fout, " +------------------+----------------------------------------------------+\n");
-		fprintf(fout, " |  Relation        |             Grant/Revoke Permissions               |\n");
-		fprintf(fout, " +------------------+----------------------------------------------------+\n");
+		fprintf(fout, " +");
+		emitNtimes(fout, "-", maxCol1Len+2);
+		fprintf(fout, "+");
+		emitNtimes(fout, "-", maxCol2Len+2);
+		fprintf(fout, "+\n");
+		fprintf(fout, " | %-*s | %-*s |\n",
+				maxCol1Len, "Relation",
+				maxCol2Len, "Grant/Revoke Permissions");
+		fprintf(fout, " +");
+		emitNtimes(fout, "-", maxCol1Len+2);
+		fprintf(fout, "+");
+		emitNtimes(fout, "-", maxCol2Len+2);
+		fprintf(fout, "+\n");
 
 		/* next, print out the instances */
 		for (i = 0; i < PQntuples(res); i++)
 		{
-			fprintf(fout, " | %-16.16s", PQgetvalue(res, i, 0));
-			fprintf(fout, " | %-50.50s | ", PQgetvalue(res, i, 1));
-			fprintf(fout, "\n");
+			fprintf(fout, " | %-*s | %-*s |\n",
+					maxCol1Len, PQgetvalue(res, i, 0),
+					maxCol2Len, PQgetvalue(res, i, 1));
 		}
-		fprintf(fout, " +------------------+----------------------------------------------------+\n");
+
+		fprintf(fout, " +");
+		emitNtimes(fout, "-", maxCol1Len+2);
+		fprintf(fout, "+");
+		emitNtimes(fout, "-", maxCol2Len+2);
+		fprintf(fout, "+\n");
+
 		PQclear(res);
 		if (usePipe)
 		{
@@ -611,6 +643,14 @@ rightsList(PsqlSettings *pset)
 		PQclear(res);
 		fprintf(stderr, "Couldn't find any tables!\n");
 		return -1;
+	}
+}
+
+static void emitNtimes (FILE *fout, const char *str, int N)
+{
+	int i;
+	for (i = 0; i < N; i++) {
+		fputs(str, fout);
 	}
 }
 
