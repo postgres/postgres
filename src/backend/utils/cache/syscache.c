@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.62 2001/06/12 05:55:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.63 2001/06/18 03:35:07 tgl Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -54,7 +54,12 @@
 
 	Add your entry to the cacheinfo[] array below.	All cache lists are
 	alphabetical, so add it in the proper place.  Specify the relation
-	name, index name, number of keys, and key attribute numbers.
+	name, index name, number of keys, and key attribute numbers.  If the
+	relation contains tuples that are associated with a particular relation
+	(for example, its attributes, rules, triggers, etc) then specify the
+	attribute number that contains the OID of the associated relation.
+	This is used by CatalogCacheFlushRelation() to remove the correct
+	tuples during a table drop or relcache invalidation event.
 
 	In include/catalog/indexing.h, add a define for the number of indexes
 	on the relation, add define(s) for the index name(s), add an extern
@@ -76,12 +81,12 @@
 
 /*
  *		struct cachedesc: information defining a single syscache
- *
  */
 struct cachedesc
 {
 	char	   *name;			/* name of the relation being cached */
 	char	   *indname;		/* name of index relation for this cache */
+	int			reloidattr;		/* attr number of rel OID reference, or 0 */
 	int			nkeys;			/* # of keys needed for cache lookup */
 	int			key[4];			/* attribute numbers of key attrs */
 };
@@ -89,6 +94,7 @@ struct cachedesc
 static struct cachedesc cacheinfo[] = {
 	{AggregateRelationName,		/* AGGNAME */
 		AggregateNameTypeIndex,
+		0,
 		2,
 		{
 			Anum_pg_aggregate_aggname,
@@ -98,6 +104,7 @@ static struct cachedesc cacheinfo[] = {
 	}},
 	{AccessMethodRelationName,	/* AMNAME */
 		AmNameIndex,
+		0,
 		1,
 		{
 			Anum_pg_am_amname,
@@ -107,6 +114,7 @@ static struct cachedesc cacheinfo[] = {
 	}},
 	{AccessMethodOperatorRelationName,	/* AMOPOPID */
 		AccessMethodOpidIndex,
+		0,
 		3,
 		{
 			Anum_pg_amop_amopclaid,
@@ -116,6 +124,7 @@ static struct cachedesc cacheinfo[] = {
 	}},
 	{AccessMethodOperatorRelationName,	/* AMOPSTRATEGY */
 		AccessMethodStrategyIndex,
+		0,
 		3,
 		{
 			Anum_pg_amop_amopid,
@@ -125,6 +134,7 @@ static struct cachedesc cacheinfo[] = {
 	}},
 	{AttributeRelationName,		/* ATTNAME */
 		AttributeRelidNameIndex,
+		Anum_pg_attribute_attrelid,
 		2,
 		{
 			Anum_pg_attribute_attrelid,
@@ -134,6 +144,7 @@ static struct cachedesc cacheinfo[] = {
 	}},
 	{AttributeRelationName,		/* ATTNUM */
 		AttributeRelidNumIndex,
+		Anum_pg_attribute_attrelid,
 		2,
 		{
 			Anum_pg_attribute_attrelid,
@@ -143,6 +154,7 @@ static struct cachedesc cacheinfo[] = {
 	}},
 	{OperatorClassRelationName, /* CLADEFTYPE */
 		OpclassDeftypeIndex,
+		0,
 		1,
 		{
 			Anum_pg_opclass_opcdeftype,
@@ -152,6 +164,7 @@ static struct cachedesc cacheinfo[] = {
 	}},
 	{OperatorClassRelationName, /* CLANAME */
 		OpclassNameIndex,
+		0,
 		1,
 		{
 			Anum_pg_opclass_opcname,
@@ -161,6 +174,7 @@ static struct cachedesc cacheinfo[] = {
 	}},
 	{GroupRelationName,			/* GRONAME */
 		GroupNameIndex,
+		0,
 		1,
 		{
 			Anum_pg_group_groname,
@@ -170,6 +184,7 @@ static struct cachedesc cacheinfo[] = {
 	}},
 	{GroupRelationName,			/* GROSYSID */
 		GroupSysidIndex,
+		0,
 		1,
 		{
 			Anum_pg_group_grosysid,
@@ -179,6 +194,7 @@ static struct cachedesc cacheinfo[] = {
 	}},
 	{IndexRelationName,			/* INDEXRELID */
 		IndexRelidIndex,
+		Anum_pg_index_indrelid,
 		1,
 		{
 			Anum_pg_index_indexrelid,
@@ -188,6 +204,7 @@ static struct cachedesc cacheinfo[] = {
 	}},
 	{InheritsRelationName,		/* INHRELID */
 		InheritsRelidSeqnoIndex,
+		Anum_pg_inherits_inhrelid,
 		2,
 		{
 			Anum_pg_inherits_inhrelid,
@@ -197,6 +214,7 @@ static struct cachedesc cacheinfo[] = {
 	}},
 	{LanguageRelationName,		/* LANGNAME */
 		LanguageNameIndex,
+		0,
 		1,
 		{
 			Anum_pg_language_lanname,
@@ -206,6 +224,7 @@ static struct cachedesc cacheinfo[] = {
 	}},
 	{LanguageRelationName,		/* LANGOID */
 		LanguageOidIndex,
+		0,
 		1,
 		{
 			ObjectIdAttributeNumber,
@@ -215,6 +234,7 @@ static struct cachedesc cacheinfo[] = {
 	}},
 	{OperatorRelationName,		/* OPERNAME */
 		OperatorNameIndex,
+		0,
 		4,
 		{
 			Anum_pg_operator_oprname,
@@ -224,6 +244,7 @@ static struct cachedesc cacheinfo[] = {
 	}},
 	{OperatorRelationName,		/* OPEROID */
 		OperatorOidIndex,
+		0,
 		1,
 		{
 			ObjectIdAttributeNumber,
@@ -233,6 +254,7 @@ static struct cachedesc cacheinfo[] = {
 	}},
 	{ProcedureRelationName,		/* PROCNAME */
 		ProcedureNameIndex,
+		0,
 		3,
 		{
 			Anum_pg_proc_proname,
@@ -242,6 +264,7 @@ static struct cachedesc cacheinfo[] = {
 	}},
 	{ProcedureRelationName,		/* PROCOID */
 		ProcedureOidIndex,
+		0,
 		1,
 		{
 			ObjectIdAttributeNumber,
@@ -251,6 +274,7 @@ static struct cachedesc cacheinfo[] = {
 	}},
 	{RelationRelationName,		/* RELNAME */
 		ClassNameIndex,
+		ObjectIdAttributeNumber,
 		1,
 		{
 			Anum_pg_class_relname,
@@ -260,6 +284,7 @@ static struct cachedesc cacheinfo[] = {
 	}},
 	{RelationRelationName,		/* RELOID */
 		ClassOidIndex,
+		ObjectIdAttributeNumber,
 		1,
 		{
 			ObjectIdAttributeNumber,
@@ -269,6 +294,7 @@ static struct cachedesc cacheinfo[] = {
 	}},
 	{RewriteRelationName,		/* RULENAME */
 		RewriteRulenameIndex,
+		Anum_pg_rewrite_ev_class,
 		1,
 		{
 			Anum_pg_rewrite_rulename,
@@ -278,6 +304,7 @@ static struct cachedesc cacheinfo[] = {
 	}},
 	{ShadowRelationName,		/* SHADOWNAME */
 		ShadowNameIndex,
+		0,
 		1,
 		{
 			Anum_pg_shadow_usename,
@@ -287,6 +314,7 @@ static struct cachedesc cacheinfo[] = {
 	}},
 	{ShadowRelationName,		/* SHADOWSYSID */
 		ShadowSysidIndex,
+		0,
 		1,
 		{
 			Anum_pg_shadow_usesysid,
@@ -296,6 +324,7 @@ static struct cachedesc cacheinfo[] = {
 	}},
 	{StatisticRelationName,		/* STATRELATT */
 		StatisticRelidAttnumIndex,
+		Anum_pg_statistic_starelid,
 		2,
 		{
 			Anum_pg_statistic_starelid,
@@ -305,6 +334,7 @@ static struct cachedesc cacheinfo[] = {
 	}},
 	{TypeRelationName,			/* TYPENAME */
 		TypeNameIndex,
+		Anum_pg_type_typrelid,
 		1,
 		{
 			Anum_pg_type_typname,
@@ -314,6 +344,7 @@ static struct cachedesc cacheinfo[] = {
 	}},
 	{TypeRelationName,			/* TYPEOID */
 		TypeOidIndex,
+		Anum_pg_type_typrelid,
 		1,
 		{
 			ObjectIdAttributeNumber,
@@ -323,8 +354,7 @@ static struct cachedesc cacheinfo[] = {
 	}}
 };
 
-static CatCache *SysCache[
-						  lengthof(cacheinfo)];
+static CatCache *SysCache[lengthof(cacheinfo)];
 static int	SysCacheSize = lengthof(cacheinfo);
 static bool CacheInitialized = false;
 
@@ -358,6 +388,7 @@ InitCatalogCache(void)
 		SysCache[cacheId] = InitCatCache(cacheId,
 										 cacheinfo[cacheId].name,
 										 cacheinfo[cacheId].indname,
+										 cacheinfo[cacheId].reloidattr,
 										 cacheinfo[cacheId].nkeys,
 										 cacheinfo[cacheId].key);
 		if (!PointerIsValid(SysCache[cacheId]))

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.137 2001/06/12 05:55:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.138 2001/06/18 03:35:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1657,7 +1657,7 @@ RelationClearRelation(Relation relation, bool rebuildIt)
 	MemoryContextSwitchTo(oldcxt);
 
 	/* Clear out catcache's entries for this relation */
-	SystemCacheRelationFlushed(RelationGetRelid(relation));
+	CatalogCacheFlushRelation(RelationGetRelid(relation));
 
 	/*
 	 * Free all the subsidiary data structures of the relcache entry. We

@@ -34,7 +34,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.43 2001/06/01 20:23:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.44 2001/06/18 03:35:07 tgl Exp $
  *
  * Note - this code is real crufty... badly needs a rewrite to improve
  * readability and portability.  (Shouldn't assume Oid == Index, for example)
@@ -478,16 +478,20 @@ CacheIdInvalidate(Index cacheId,
 }
 
 /*
- *		ResetSystemCaches
+ *		InvalidateSystemCaches
  *
  *		This blows away all tuples in the system catalog caches and
  *		all the cached relation descriptors (and closes their files too).
  *		Relation descriptors that have positive refcounts are then rebuilt.
+ *
+ *		We call this when we see a shared-inval-queue overflow signal,
+ *		since that tells us we've lost some shared-inval messages and hence
+ *		don't know what needs to be invalidated.
  */
 static void
-ResetSystemCaches(void)
+InvalidateSystemCaches(void)
 {
-	ResetSystemCache();
+	ResetCatalogCaches();
 	RelationCacheInvalidate();
 }
 
@@ -643,7 +647,7 @@ DiscardInvalid(void)
 	elog(DEBUG, "DiscardInvalid called");
 #endif	 /* defined(INVALIDDEBUG) */
 
-	InvalidateSharedInvalid(CacheIdInvalidate, ResetSystemCaches);
+	InvalidateSharedInvalid(CacheIdInvalidate, InvalidateSystemCaches);
 }
 
 /*

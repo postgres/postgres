@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.78 2001/06/01 02:41:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.79 2001/06/18 03:35:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,17 +29,15 @@
 #include "utils/syscache.h"
 
 
-static void CatCacheRemoveCTup(CatCache *cache, CatCTup *ct);
-static Index CatalogCacheComputeHashIndex(CatCache *cache,
-							 ScanKey cur_skey);
-static Index CatalogCacheComputeTupleHashIndex(CatCache *cache,
-								  HeapTuple tuple);
-static void CatalogCacheInitializeCache(CatCache *cache);
-static Datum cc_hashname(PG_FUNCTION_ARGS);
+/* #define CACHEDEBUG */		/* turns DEBUG elogs on */
+
+/* voodoo constants */
+#define NCCBUCKETS 257			/* Hash buckets per CatCache (prime!) */
+#define MAXCCTUPLES 5000		/* Maximum # of tuples in all caches */
+
 
 /*
  *		variables, macros and other stuff
- *
  */
 
 #ifdef CACHEDEBUG
@@ -58,8 +56,8 @@ static Datum cc_hashname(PG_FUNCTION_ARGS);
 #define CACHE6_elog(a,b,c,d,e,f,g)
 #endif
 
-static CatCache *Caches = NULL; /* head of list of caches */
-
+/* Cache management header --- pointer is NULL until created */
+static CatCacheHeader *CacheHdr = NULL;
 
 /*
  *		EQPROC is used in CatalogCacheInitializeCache to find the equality
@@ -68,7 +66,6 @@ static CatCache *Caches = NULL; /* head of list of caches */
  *
  *		XXX this should be replaced by catalog lookups,
  *		but that seems to pose considerable risk of circularity...
- *
  */
 static const Oid eqproc[] = {
 	F_BOOLEQ, InvalidOid, F_CHAREQ, F_NAMEEQ, InvalidOid,
@@ -78,9 +75,18 @@ static const Oid eqproc[] = {
 
 #define EQPROC(SYSTEMTYPEOID)	eqproc[(SYSTEMTYPEOID)-BOOLOID]
 
+
+static void CatCacheRemoveCTup(CatCache *cache, CatCTup *ct);
+static Index CatalogCacheComputeHashIndex(CatCache *cache,
+							 ScanKey cur_skey);
+static Index CatalogCacheComputeTupleHashIndex(CatCache *cache,
+								  HeapTuple tuple);
+static void CatalogCacheInitializeCache(CatCache *cache);
+static Datum cc_hashname(PG_FUNCTION_ARGS);
+
+
 /*
  *					internal support functions
- *
  */
 
 static PGFunction
@@ -88,8 +94,8 @@ GetCCHashFunc(Oid keytype)
 {
 	switch (keytype)
 	{
-			case BOOLOID:
-			case CHAROID:
+		case BOOLOID:
+		case CHAROID:
 			return hashchar;
 		case NAMEOID:
 			return cc_hashname;
@@ -116,7 +122,6 @@ GetCCHashFunc(Oid keytype)
 static Datum
 cc_hashname(PG_FUNCTION_ARGS)
 {
-
 	/*
 	 * We need our own variant of hashname because we want to accept
 	 * null-terminated C strings as search values for name fields. So, we
@@ -141,7 +146,6 @@ cc_hashname(PG_FUNCTION_ARGS)
 void
 CreateCacheMemoryContext(void)
 {
-
 	/*
 	 * Purely for paranoia, check that context doesn't exist; caller
 	 * probably did so already.
@@ -161,7 +165,6 @@ CreateCacheMemoryContext(void)
  * This function does final initialization of a catcache: obtain the tuple
  * descriptor and set up the hash and equality function links.	We assume
  * that the relcache entry can be opened at this point!
- *
  */
 #ifdef CACHEDEBUG
 #define CatalogCacheInitializeCache_DEBUG1 \
@@ -191,7 +194,7 @@ CatalogCacheInitializeCache(CatCache *cache)
 	Relation	relation;
 	MemoryContext oldcxt;
 	TupleDesc	tupdesc;
-	short		i;
+	int			i;
 
 	CatalogCacheInitializeCache_DEBUG1;
 
@@ -206,8 +209,7 @@ CatalogCacheInitializeCache(CatCache *cache)
 	 * switch to the cache context so our allocations do not vanish at the
 	 * end of a transaction
 	 */
-	if (!CacheMemoryContext)
-		CreateCacheMemoryContext();
+	Assert(CacheMemoryContext != NULL);
 
 	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 
@@ -286,7 +288,6 @@ CatalogCacheInitializeCache(CatCache *cache)
 
 /*
  *		CatalogCacheComputeHashIndex
- *
  */
 static Index
 CatalogCacheComputeHashIndex(CatCache *cache, ScanKey cur_skey)
@@ -330,7 +331,6 @@ CatalogCacheComputeHashIndex(CatCache *cache, ScanKey cur_skey)
 
 /*
  *		CatalogCacheComputeTupleHashIndex
- *
  */
 static Index
 CatalogCacheComputeTupleHashIndex(CatCache *cache,
@@ -396,12 +396,12 @@ CatalogCacheComputeTupleHashIndex(CatCache *cache,
 
 /*
  *		CatCacheRemoveCTup
- *
  */
 static void
 CatCacheRemoveCTup(CatCache *cache, CatCTup *ct)
 {
 	Assert(ct->refcount == 0);
+	Assert(ct->my_cache == cache);
 
 	/* delink from linked lists */
 	DLRemove(&ct->lrulist_elem);
@@ -413,6 +413,7 @@ CatCacheRemoveCTup(CatCache *cache, CatCTup *ct)
 	pfree(ct);
 
 	--cache->cc_ntup;
+	--CacheHdr->ch_ntup;
 }
 
 /*
@@ -422,7 +423,6 @@ CatCacheRemoveCTup(CatCache *cache, CatCTup *ct)
  *	be found (whether the cache has opened its relation or not).  Of course,
  *	if the cache has yet to open its relation, there will be no tuples so
  *	no problem.
- *
  */
 void
 CatalogCacheIdInvalidate(int cacheId,
@@ -433,17 +433,14 @@ CatalogCacheIdInvalidate(int cacheId,
 
 	/*
 	 * sanity checks
-	 *
 	 */
-	Assert(hashIndex < NCCBUCK);
 	Assert(ItemPointerIsValid(pointer));
 	CACHE1_elog(DEBUG, "CatalogCacheIdInvalidate: called");
 
 	/*
 	 * inspect caches to find the proper cache
-	 *
 	 */
-	for (ccp = Caches; ccp; ccp = ccp->cc_next)
+	for (ccp = CacheHdr->ch_caches; ccp; ccp = ccp->cc_next)
 	{
 		Dlelem	   *elt,
 				   *nextelt;
@@ -451,11 +448,12 @@ CatalogCacheIdInvalidate(int cacheId,
 		if (cacheId != ccp->id)
 			continue;
 
+		Assert(hashIndex < ccp->cc_size);
+
 		/*
 		 * inspect the hash bucket until we find a match or exhaust
-		 *
 		 */
-		for (elt = DLGetHead(&ccp->cc_cache[hashIndex]); elt; elt = nextelt)
+		for (elt = DLGetHead(&ccp->cc_bucket[hashIndex]); elt; elt = nextelt)
 		{
 			CatCTup    *ct = (CatCTup *) DLE_VAL(elt);
 
@@ -479,7 +477,7 @@ CatalogCacheIdInvalidate(int cacheId,
  *					   public functions
  *
  *		AtEOXact_CatCache
- *		ResetSystemCache
+ *		ResetCatalogCaches
  *		InitCatCache
  *		SearchCatCache
  *		ReleaseCatCache
@@ -497,68 +495,55 @@ CatalogCacheIdInvalidate(int cacheId,
  * necessary in the abort case, since elog() may have interrupted routines.
  * In the commit case, any nonzero counts indicate failure to call
  * ReleaseSysCache, so we put out a notice for debugging purposes.
- *
  */
 void
 AtEOXact_CatCache(bool isCommit)
 {
-	CatCache   *cache;
+	Dlelem	   *elt,
+			   *nextelt;
 
-	for (cache = Caches; cache; cache = cache->cc_next)
+	for (elt = DLGetHead(&CacheHdr->ch_lrulist); elt; elt = nextelt)
 	{
-		Dlelem	   *elt,
-				   *nextelt;
+		CatCTup    *ct = (CatCTup *) DLE_VAL(elt);
 
-		for (elt = DLGetHead(&cache->cc_lrulist); elt; elt = nextelt)
+		nextelt = DLGetSucc(elt);
+
+		if (ct->refcount != 0)
 		{
-			CatCTup    *ct = (CatCTup *) DLE_VAL(elt);
-
-			nextelt = DLGetSucc(elt);
-
-			if (ct->refcount != 0)
-			{
-				if (isCommit)
-					elog(NOTICE, "Cache reference leak: cache %s (%d), tuple %u has count %d",
-						 cache->cc_relname, cache->id,
-						 ct->tuple.t_data->t_oid,
-						 ct->refcount);
-				ct->refcount = 0;
-			}
-
-			/* Clean up any now-deletable dead entries */
-			if (ct->dead)
-				CatCacheRemoveCTup(cache, ct);
+			if (isCommit)
+				elog(NOTICE, "Cache reference leak: cache %s (%d), tuple %u has count %d",
+					 ct->my_cache->cc_relname, ct->my_cache->id,
+					 ct->tuple.t_data->t_oid,
+					 ct->refcount);
+			ct->refcount = 0;
 		}
+
+		/* Clean up any now-deletable dead entries */
+		if (ct->dead)
+			CatCacheRemoveCTup(ct->my_cache, ct);
 	}
 }
 
 /*
- *		ResetSystemCache
+ *		ResetCatalogCache
  *
- * Reset caches when a shared cache inval event forces it
+ * Reset one catalog cache to empty.
  *
+ * This is not very efficient if the target cache is nearly empty.
+ * However, it shouldn't need to be efficient; we don't invoke it often.
  */
-void
-ResetSystemCache(void)
+static void
+ResetCatalogCache(CatCache *cache)
 {
-	CatCache   *cache;
+	int			i;
 
-	CACHE1_elog(DEBUG, "ResetSystemCache called");
-
-	/* ----------------
-	 *	here we purge the contents of all the caches
-	 *
-	 *	for each system cache
-	 *		for each tuple
-	 *			remove the tuple, or at least mark it dead
-	 * ----------------
-	 */
-	for (cache = Caches; cache; cache = cache->cc_next)
+	/* Remove each tuple in this cache, or at least mark it dead */
+	for (i = 0; i < cache->cc_size; i++)
 	{
 		Dlelem	   *elt,
 				   *nextelt;
 
-		for (elt = DLGetHead(&cache->cc_lrulist); elt; elt = nextelt)
+		for (elt = DLGetHead(&cache->cc_bucket[i]); elt; elt = nextelt)
 		{
 			CatCTup    *ct = (CatCTup *) DLE_VAL(elt);
 
@@ -570,12 +555,28 @@ ResetSystemCache(void)
 				CatCacheRemoveCTup(cache, ct);
 		}
 	}
-
-	CACHE1_elog(DEBUG, "end of ResetSystemCache call");
 }
 
 /*
- *		SystemCacheRelationFlushed
+ *		ResetCatalogCaches
+ *
+ * Reset all caches when a shared cache inval event forces it
+ */
+void
+ResetCatalogCaches(void)
+{
+	CatCache   *cache;
+
+	CACHE1_elog(DEBUG, "ResetCatalogCaches called");
+
+	for (cache = CacheHdr->ch_caches; cache; cache = cache->cc_next)
+		ResetCatalogCache(cache);
+
+	CACHE1_elog(DEBUG, "end of ResetCatalogCaches call");
+}
+
+/*
+ *		CatalogCacheFlushRelation
  *
  *	This is called by RelationFlushRelation() to clear out cached information
  *	about a relation being dropped.  (This could be a DROP TABLE command,
@@ -586,26 +587,80 @@ ResetSystemCache(void)
  *	A special case occurs when relId is itself one of the cacheable system
  *	tables --- although those'll never be dropped, they can get flushed from
  *	the relcache (VACUUM causes this, for example).  In that case we need
- *	to flush all cache entries from that table.  The brute-force method
- *	currently used takes care of that quite handily.  (At one point we
+ *	to flush all cache entries that came from that table.  (At one point we
  *	also tried to force re-execution of CatalogCacheInitializeCache for
  *	the cache(s) on that table.  This is a bad idea since it leads to all
  *	kinds of trouble if a cache flush occurs while loading cache entries.
  *	We now avoid the need to do it by copying cc_tupdesc out of the relcache,
  *	rather than relying on the relcache to keep a tupdesc for us.  Of course
  *	this assumes the tupdesc of a cachable system table will not change...)
- *
  */
 void
-SystemCacheRelationFlushed(Oid relId)
+CatalogCacheFlushRelation(Oid relId)
 {
+	CatCache   *cache;
 
-	/*
-	 * XXX Ideally we'd search the caches and just zap entries that
-	 * actually refer to or come from the indicated relation.  For now, we
-	 * take the brute-force approach: just flush the caches entirely.
-	 */
-	ResetSystemCache();
+	CACHE2_elog(DEBUG, "CatalogCacheFlushRelation called for %u", relId);
+
+	for (cache = CacheHdr->ch_caches; cache; cache = cache->cc_next)
+	{
+		int			i;
+
+		/* We can ignore uninitialized caches, since they must be empty */
+		if (cache->cc_tupdesc == NULL)
+			continue;
+
+		/* Does this cache store tuples of the target relation itself? */
+		if (cache->cc_tupdesc->attrs[0]->attrelid == relId)
+		{
+			/* Yes, so flush all its contents */
+			ResetCatalogCache(cache);
+			continue;
+		}
+
+		/* Does this cache store tuples associated with relations at all? */
+		if (cache->cc_reloidattr == 0)
+			continue;			/* nope, leave it alone */
+
+		/* Yes, scan the tuples and remove those related to relId */
+		for (i = 0; i < cache->cc_size; i++)
+		{
+			Dlelem	   *elt,
+					   *nextelt;
+
+			for (elt = DLGetHead(&cache->cc_bucket[i]); elt; elt = nextelt)
+			{
+				CatCTup    *ct = (CatCTup *) DLE_VAL(elt);
+				Oid			tupRelid;
+
+				nextelt = DLGetSucc(elt);
+
+				if (cache->cc_reloidattr == ObjectIdAttributeNumber)
+					tupRelid = ct->tuple.t_data->t_oid;
+				else
+				{
+					bool	isNull;
+
+					tupRelid = DatumGetObjectId(
+						fastgetattr(&ct->tuple,
+									cache->cc_reloidattr,
+									cache->cc_tupdesc,
+									&isNull));
+					Assert(!isNull);
+				}
+
+				if (tupRelid == relId)
+				{
+					if (ct->refcount > 0)
+						ct->dead = true;
+					else
+						CatCacheRemoveCTup(cache, ct);
+				}
+			}
+		}
+	}
+
+	CACHE1_elog(DEBUG, "end of CatalogCacheFlushRelation call");
 }
 
 /*
@@ -615,7 +670,6 @@ SystemCacheRelationFlushed(Oid relId)
  *	Actually, the cache is only partially initialized to avoid opening the
  *	relation.  The relation will be opened and the rest of the cache
  *	structure initialized on the first access.
- *
  */
 #ifdef CACHEDEBUG
 #define InitCatCache_DEBUG1 \
@@ -628,10 +682,11 @@ do { \
 #define InitCatCache_DEBUG1
 #endif
 
-CatCache   *
+CatCache *
 InitCatCache(int id,
 			 char *relname,
 			 char *indname,
+			 int reloidattr,
 			 int nkeys,
 			 int *key)
 {
@@ -642,7 +697,6 @@ InitCatCache(int id,
 	/*
 	 * first switch to the cache context so our allocations do not vanish
 	 * at the end of a transaction
-	 *
 	 */
 	if (!CacheMemoryContext)
 		CreateCacheMemoryContext();
@@ -650,55 +704,60 @@ InitCatCache(int id,
 	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 
 	/*
+	 * if first time through, initialize the cache group header,
+	 * including global LRU list header
+	 */
+	if (CacheHdr == NULL)
+	{
+		CacheHdr = (CatCacheHeader *) palloc(sizeof(CatCacheHeader));
+		CacheHdr->ch_caches = NULL;
+		CacheHdr->ch_ntup = 0;
+		CacheHdr->ch_maxtup = MAXCCTUPLES;
+		DLInitList(&CacheHdr->ch_lrulist);
+	}
+
+	/*
 	 * allocate a new cache structure
-	 *
 	 */
-	cp = (CatCache *) palloc(sizeof(CatCache));
-	MemSet((char *) cp, 0, sizeof(CatCache));
+	cp = (CatCache *) palloc(sizeof(CatCache) + NCCBUCKETS * sizeof(Dllist));
+	MemSet((char *) cp, 0, sizeof(CatCache) + NCCBUCKETS * sizeof(Dllist));
 
 	/*
-	 * initialize the cache buckets (each bucket is a list header) and the
-	 * LRU tuple list
-	 *
+	 * initialize the cache buckets (each bucket is a list header)
 	 */
-	DLInitList(&cp->cc_lrulist);
-	for (i = 0; i < NCCBUCK; ++i)
-		DLInitList(&cp->cc_cache[i]);
-
-	/*
-	 * Caches is the pointer to the head of the list of all the system
-	 * caches.	here we add the new cache to the top of the list.
-	 *
-	 */
-	cp->cc_next = Caches;		/* list of caches (single link) */
-	Caches = cp;
+	for (i = 0; i < NCCBUCKETS; ++i)
+		DLInitList(&cp->cc_bucket[i]);
 
 	/*
 	 * initialize the cache's relation information for the relation
 	 * corresponding to this cache, and initialize some of the new cache's
 	 * other internal fields.  But don't open the relation yet.
-	 *
 	 */
+	cp->id = id;
 	cp->cc_relname = relname;
 	cp->cc_indname = indname;
+	cp->cc_reloidattr = reloidattr;
 	cp->cc_tupdesc = (TupleDesc) NULL;
-	cp->id = id;
-	cp->cc_maxtup = MAXTUP;
-	cp->cc_size = NCCBUCK;
+	cp->cc_ntup = 0;
+	cp->cc_size = NCCBUCKETS;
 	cp->cc_nkeys = nkeys;
 	for (i = 0; i < nkeys; ++i)
 		cp->cc_key[i] = key[i];
 
 	/*
-	 * all done.  new cache is initialized.  print some debugging
-	 * information, if appropriate.
-	 *
+	 * new cache is initialized as far as we can go for now.
+	 * print some debugging information, if appropriate.
 	 */
 	InitCatCache_DEBUG1;
 
 	/*
+	 * add completed cache to top of group header's list
+	 */
+	cp->cc_next = CacheHdr->ch_caches;
+	CacheHdr->ch_caches = cp;
+
+	/*
 	 * back to the old context before we return...
-	 *
 	 */
 	MemoryContextSwitchTo(oldcxt);
 
@@ -766,7 +825,6 @@ IndexScanOK(CatCache *cache, ScanKey cur_skey)
  *
  *		This call searches a system cache for a tuple, opening the relation
  *		if necessary (the first access to a particular cache).
- *
  */
 HeapTuple
 SearchCatCache(CatCache *cache,
@@ -785,14 +843,12 @@ SearchCatCache(CatCache *cache,
 
 	/*
 	 * one-time startup overhead
-	 *
 	 */
 	if (cache->cc_tupdesc == NULL)
 		CatalogCacheInitializeCache(cache);
 
 	/*
 	 * initialize the search key information
-	 *
 	 */
 	memcpy(cur_skey, cache->cc_skey, sizeof(cur_skey));
 	cur_skey[0].sk_argument = v1;
@@ -802,15 +858,13 @@ SearchCatCache(CatCache *cache,
 
 	/*
 	 * find the hash bucket in which to look for the tuple
-	 *
 	 */
 	hash = CatalogCacheComputeHashIndex(cache, cur_skey);
 
 	/*
 	 * scan the hash bucket until we find a match or exhaust our tuples
-	 *
 	 */
-	for (elt = DLGetHead(&cache->cc_cache[hash]);
+	for (elt = DLGetHead(&cache->cc_bucket[hash]);
 		 elt;
 		 elt = DLGetSucc(elt))
 	{
@@ -824,7 +878,6 @@ SearchCatCache(CatCache *cache,
 		/*
 		 * see if the cached tuple matches our key. (should we be worried
 		 * about time ranges? -cim 10/2/90)
-		 *
 		 */
 		HeapKeyTest(&ct->tuple,
 					cache->cc_tupdesc,
@@ -841,7 +894,6 @@ SearchCatCache(CatCache *cache,
 		 * subsequent searches.  (The most frequently accessed elements in
 		 * any hashbucket will tend to be near the front of the
 		 * hashbucket's list.)
-		 *
 		 */
 		ct->refcount++;
 
@@ -869,19 +921,16 @@ SearchCatCache(CatCache *cache,
 	 * will never be referenced again, and will eventually age out of the
 	 * cache, so there's no functional problem.  This case is rare enough
 	 * that it's not worth expending extra cycles to detect.
-	 *
 	 */
 
 	/*
 	 * open the relation associated with the cache
-	 *
 	 */
 	relation = heap_openr(cache->cc_relname, AccessShareLock);
 
 	/*
 	 * Scan the relation to find the tuple.  If there's an index, and if
 	 * it's safe to do so, use the index.  Else do a heap scan.
-	 *
 	 */
 	ct = NULL;
 
@@ -958,13 +1007,11 @@ SearchCatCache(CatCache *cache,
 
 	/*
 	 * close the relation
-	 *
 	 */
 	heap_close(relation, AccessShareLock);
 
 	/*
 	 * scan is complete.  if tup was found, we can add it to the cache.
-	 *
 	 */
 	if (ct == NULL)
 		return NULL;
@@ -972,27 +1019,27 @@ SearchCatCache(CatCache *cache,
 	/*
 	 * Finish initializing the CatCTup header, and add it to the linked
 	 * lists.
-	 *
 	 */
 	CACHE1_elog(DEBUG, "SearchCatCache: found tuple");
 
 	ct->ct_magic = CT_MAGIC;
+	ct->my_cache = cache;
 	DLInitElem(&ct->lrulist_elem, (void *) ct);
 	DLInitElem(&ct->cache_elem, (void *) ct);
 	ct->refcount = 1;			/* count this first reference */
 	ct->dead = false;
 
-	DLAddHead(&cache->cc_lrulist, &ct->lrulist_elem);
-	DLAddHead(&cache->cc_cache[hash], &ct->cache_elem);
+	DLAddHead(&CacheHdr->ch_lrulist, &ct->lrulist_elem);
+	DLAddHead(&cache->cc_bucket[hash], &ct->cache_elem);
 
 	/*
-	 * If we've exceeded the desired size of this cache, try to throw away
+	 * If we've exceeded the desired size of the caches, try to throw away
 	 * the least recently used entry.
-	 *
 	 */
-	if (++cache->cc_ntup > cache->cc_maxtup)
+	++cache->cc_ntup;
+	if (++CacheHdr->ch_ntup > CacheHdr->ch_maxtup)
 	{
-		for (elt = DLGetTail(&cache->cc_lrulist);
+		for (elt = DLGetTail(&CacheHdr->ch_lrulist);
 			 elt;
 			 elt = DLGetPred(elt))
 		{
@@ -1002,14 +1049,14 @@ SearchCatCache(CatCache *cache,
 			{
 				CACHE2_elog(DEBUG, "SearchCatCache(%s): Overflow, LRU removal",
 							cache->cc_relname);
-				CatCacheRemoveCTup(cache, oldct);
+				CatCacheRemoveCTup(oldct->my_cache, oldct);
 				break;
 			}
 		}
 	}
 
 	CACHE4_elog(DEBUG, "SearchCatCache(%s): Contains %d/%d tuples",
-				cache->cc_relname, cache->cc_ntup, cache->cc_maxtup);
+				cache->cc_relname, cache->cc_ntup, CacheHdr->ch_ntup);
 	CACHE3_elog(DEBUG, "SearchCatCache(%s): put in bucket %d",
 				cache->cc_relname, hash);
 
@@ -1026,7 +1073,6 @@ SearchCatCache(CatCache *cache,
  *	will be freed as soon as their refcount goes to zero.  In combination
  *	with aset.c's CLOBBER_FREED_MEMORY option, this provides a good test
  *	to catch references to already-released catcache entries.
- *
  */
 void
 ReleaseCatCache(HeapTuple tuple)
@@ -1046,12 +1092,7 @@ ReleaseCatCache(HeapTuple tuple)
 #endif
 		)
 	{
-		/* We can find the associated cache using the dllist pointers */
-		Dllist	   *lru = DLGetListHdr(&ct->lrulist_elem);
-		CatCache   *cache = (CatCache *) (((char *) lru) -
-										  offsetof(CatCache, cc_lrulist));
-
-		CatCacheRemoveCTup(cache, ct);
+		CatCacheRemoveCTup(ct->my_cache, ct);
 	}
 }
 
@@ -1061,7 +1102,7 @@ ReleaseCatCache(HeapTuple tuple)
  *	This is part of a rather subtle chain of events, so pay attention:
  *
  *	When a tuple is updated or deleted, it cannot be flushed from the
- *	catcaches immediately, for reasons explained at the top of inval.c.
+ *	catcaches immediately, for reasons explained at the top of cache/inval.c.
  *	Instead we have to add entry(s) for the tuple to a list of pending tuple
  *	invalidations that will be done at the end of the command or transaction.
  *
@@ -1081,7 +1122,6 @@ ReleaseCatCache(HeapTuple tuple)
  *	specified relation.  inval.c doesn't know exactly which rels have
  *	catcaches --- it will call this routine for any tuple that's in a
  *	system relation.
- *
  */
 void
 PrepareToInvalidateCacheTuple(Relation relation,
@@ -1090,14 +1130,15 @@ PrepareToInvalidateCacheTuple(Relation relation,
 {
 	CatCache   *ccp;
 
+	CACHE1_elog(DEBUG, "PrepareToInvalidateCacheTuple: called");
+
 	/*
 	 * sanity checks
-	 *
 	 */
 	Assert(RelationIsValid(relation));
 	Assert(HeapTupleIsValid(tuple));
 	Assert(PointerIsValid(function));
-	CACHE1_elog(DEBUG, "PrepareToInvalidateCacheTuple: called");
+	Assert(CacheHdr != NULL);
 
 	/* ----------------
 	 *	for each cache
@@ -1107,7 +1148,7 @@ PrepareToInvalidateCacheTuple(Relation relation,
 	 * ----------------
 	 */
 
-	for (ccp = Caches; ccp; ccp = ccp->cc_next)
+	for (ccp = CacheHdr->ch_caches; ccp; ccp = ccp->cc_next)
 	{
 		if (strcmp(ccp->cc_relname, RelationGetRelationName(relation)) != 0)
 			continue;
