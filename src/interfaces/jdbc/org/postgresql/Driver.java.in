@@ -24,10 +24,10 @@ import org.postgresql.util.PSQLException;
  * @see org.postgresql.Connection
  * @see java.sql.Driver
  */
-public class Driver implements java.sql.Driver 
+public class Driver implements java.sql.Driver
 {
-    
-  static 
+
+  static
   {
     try {
       // moved the registerDriver from the constructor to here
@@ -39,7 +39,7 @@ public class Driver implements java.sql.Driver
       e.printStackTrace();
     }
   }
-  
+
   /**
    * Construct a new driver and register it with DriverManager
    *
@@ -54,7 +54,7 @@ public class Driver implements java.sql.Driver
       //} else {
       //connectClass = "postgresql.jdbc2.Connection";
       //}
-      
+
       // Ok, when the above code was introduced in 6.5 it's intention was to allow
       // the driver to automatically detect which version of JDBC was being used
       // and to detect the version of the JVM accordingly.
@@ -71,7 +71,7 @@ public class Driver implements java.sql.Driver
       // For this to work, the Makefile creates a pseudo class which contains the class
       // name that will actually make the connection.
   }
-  
+
   /**
    * Try to make a database connection to the given URL.  The driver
    * should return "null" if it realizes it is the wrong kind of
@@ -85,12 +85,12 @@ public class Driver implements java.sql.Driver
    *
    * <p>The java.util.Properties argument can be used to pass arbitrary
    * string tag/value pairs as connection arguments.  Normally, at least
-   * "user" and "password" properties should be included in the 
-   * properties.  In addition, the "charSet" property can be used to 
-   * set a character set encoding (e.g. "utf-8") other than the platform 
-   * default (typically Latin1).  This is necessary in particular if storing 
+   * "user" and "password" properties should be included in the
+   * properties.  In addition, the "charSet" property can be used to
+   * set a character set encoding (e.g. "utf-8") other than the platform
+   * default (typically Latin1).  This is necessary in particular if storing
    * multibyte characters in the database.  For a list of supported
-   * character encoding , see 
+   * character encoding , see
    * http://java.sun.com/products/jdk/1.2/docs/guide/internat/encoding.doc.html
    * Note that you will probably want to have set up the Postgres database
    * itself to use the same encoding, with the "-E <encoding>" argument
@@ -112,7 +112,7 @@ public class Driver implements java.sql.Driver
   {
     if((props = parseURL(url,info))==null)
       return null;
-    
+
     try {
 	org.postgresql.Connection con = (org.postgresql.Connection)(Class.forName("@JDBCCONNECTCLASS@").newInstance());
 	con.openConnection (host(), port(), props, database(), url, this);
@@ -127,7 +127,7 @@ public class Driver implements java.sql.Driver
 	throw new PSQLException("postgresql.unusual",ex2);
     }
   }
-  
+
   /**
    * Returns true if the driver thinks it can open a connection to the
    * given URL.  Typically, drivers will return true if they understand
@@ -146,7 +146,7 @@ public class Driver implements java.sql.Driver
       return false;
     return true;
   }
-  
+
   /**
    * The getPropertyInfo method is intended to allow a generic GUI
    * tool to discover what properties it should prompt a human for
@@ -168,12 +168,12 @@ public class Driver implements java.sql.Driver
   public DriverPropertyInfo[] getPropertyInfo(String url, Properties info) throws SQLException
   {
     Properties p = parseURL(url,info);
-    
+
     // naughty, but its best for speed. If anyone adds a property here, then
     // this _MUST_ be increased to accomodate them.
     DriverPropertyInfo d,dpi[] = new DriverPropertyInfo[0];
     //int i=0;
-    
+
     //dpi[i++] = d = new DriverPropertyInfo("auth",p.getProperty("auth","default"));
     //d.description = "determines if password authentication is used";
     //d.choices = new String[4];
@@ -181,10 +181,10 @@ public class Driver implements java.sql.Driver
     //d.choices[1]="trust";	// No password authentication
     //d.choices[2]="password";	// Password authentication
     //d.choices[3]="ident";	// Ident (RFC 1413) protocol
-    
+
     return dpi;
   }
-  
+
   /**
    * Gets the drivers major version number
    *
@@ -194,7 +194,7 @@ public class Driver implements java.sql.Driver
   {
     return @MAJORVERSION@;
   }
-  
+
   /**
    * Get the drivers minor version number
    *
@@ -204,7 +204,7 @@ public class Driver implements java.sql.Driver
   {
     return @MINORVERSION@;
   }
-  
+
     /**
      * Returns the VERSION variable from Makefile.global
      */
@@ -212,13 +212,13 @@ public class Driver implements java.sql.Driver
     {
 	return "@VERSION@";
     }
-    
+
   /**
    * Report whether the driver is a genuine JDBC compliant driver.  A
    * driver may only report "true" here if it passes the JDBC compliance
    * tests, otherwise it is required to return false.  JDBC compliance
    * requires full support for the JDBC API and full support for SQL 92
-   * Entry Level.  
+   * Entry Level.
    *
    * <p>For PostgreSQL, this is not yet possible, as we are not SQL92
    * compliant (yet).
@@ -227,11 +227,11 @@ public class Driver implements java.sql.Driver
   {
     return false;
   }
-  
+
   private Properties props;
-  
+
   static private String[] protocols = { "jdbc","postgresql" };
-  
+
   /**
    * Constructs a new DriverURL, splitting the specified URL into its
    * component parts
@@ -246,17 +246,17 @@ public class Driver implements java.sql.Driver
     Properties urlProps = new Properties(defaults);
     String key = "";
     String value = "";
-    
+
     StringTokenizer st = new StringTokenizer(url, ":/;=&?", true);
     for (int count = 0; (st.hasMoreTokens()); count++) {
       String token = st.nextToken();
-      
+
       // PM June 29 1997
       // Added this, to help me understand how this works.
       // Unless you want each token to be processed, leave this commented out
       // but don't delete it.
       //DriverManager.println("wellFormedURL: state="+state+" count="+count+" token='"+token+"'");
-      
+
       // PM Aug 2 1997 - Modified to allow multiple backends
       if (count <= 3) {
 	if ((count % 2) == 1 && token.equals(":"))
@@ -273,7 +273,7 @@ public class Driver implements java.sql.Driver
 	      }
 	    }
 	  }
-	  
+
 	  if(found == false)
 	    return null;
 	} else return null;
@@ -322,18 +322,18 @@ public class Driver implements java.sql.Driver
 	}
       }
     }
-    
+
     // PM June 29 1997
     // This now outputs the properties only if we are logging
     // PM Sep 13 1999 Commented out, as it throws a Deprecation warning
     // when compiled under JDK1.2.
     //if(DriverManager.getLogStream() != null)
     //  urlProps.list(DriverManager.getLogStream());
-    
+
     return urlProps;
-    
+
   }
-  
+
   /**
    * @return the hostname portion of the URL
    */
@@ -341,7 +341,7 @@ public class Driver implements java.sql.Driver
   {
     return props.getProperty("PGHOST","localhost");
   }
-  
+
   /**
    * @return the port number portion of the URL or -1 if no port was specified
    */
@@ -349,7 +349,7 @@ public class Driver implements java.sql.Driver
   {
     return Integer.parseInt(props.getProperty("PGPORT","5432"));
   }
-  
+
   /**
    * @return the database name of the URL
    */
@@ -357,7 +357,7 @@ public class Driver implements java.sql.Driver
   {
     return props.getProperty("PGDBNAME");
   }
-  
+
   /**
    * @return the value of any property specified in the URL or properties
    * passed to connect(), or null if not found.
@@ -366,7 +366,7 @@ public class Driver implements java.sql.Driver
   {
     return props.getProperty(name);
   }
-    
+
     /**
      * This method was added in v6.5, and simply throws an SQLException
      * for an unimplemented method. I decided to do it this way while

@@ -1,3 +1,8 @@
+Thu Jan 25 09:11:00 GMT 2001 peter@retep.org.uk
+        - Added an alternative constructor to PGSQLException so that debugging
+          some more osteric bugs is easier. If only 1 arg is supplied and it's
+          of type Exception, then that Exception's stacktrace is now included.
+
 Wed Jan 24 09:18:00 GMT 2001 peter@retep.org.uk
 	- Removed the 8k limit by setting it to 64k
 

@@ -1,5 +1,6 @@
 package org.postgresql.util;
 
+import java.io.*;
 import java.sql.*;
 import java.text.*;
 import java.util.*;
@@ -42,6 +43,34 @@ public class PSQLException extends SQLException
 	super();
 	Object[] argv = new Object[1];
 	argv[0] = arg;
+	translate(error,argv);
+    }
+
+    /**
+     * Helper version for 1 arg. This is used for debug purposes only with
+     * some unusual Exception's. It allows the originiating Exceptions stack
+     * trace to be returned.
+     */
+    public PSQLException(String error,Exception ex)
+    {
+	super();
+
+        Object[] argv = new Object[1];
+
+        try {
+          ByteArrayOutputStream baos = new  ByteArrayOutputStream();
+          PrintWriter pw = new PrintWriter(baos);
+          pw.println("Exception: "+ex.toString()+"\nStack Trace:\n");
+          ex.printStackTrace(pw);
+          pw.println("End of Stack Trace");
+          pw.flush();
+	  argv[0] = baos.toString();
+          pw.close();
+          baos.close();
+        } catch(Exception ioe) {
+          argv[0] = ex.toString()+"\nIO Error on stack trace generation! "+ioe.toString();
+        }
+
 	translate(error,argv);
     }
 
