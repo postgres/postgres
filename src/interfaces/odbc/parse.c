@@ -658,7 +658,8 @@ RETCODE result;
 		else if (fi[i]->name[0] == '*') {
 
 			char do_all_tables;
-			int total_cols, old_size, need, cols;
+			int total_cols, old_alloc, new_size, cols;
+			int increased_cols;
 
 			mylog("expanding field %d\n", i);
 
@@ -674,36 +675,37 @@ RETCODE result;
 					total_cols += QR_get_num_tuples(ti[k]->col_info->result);
 				}
 			}
-			total_cols--;		/* makes up for the star  */
+			increased_cols = total_cols - 1;
 
 			/*	Allocate some more field pointers if necessary */
 			/*------------------------------------------------------------- */
-			old_size = (stmt->nfld / FLD_INCR * FLD_INCR + FLD_INCR);
-			need = total_cols - (old_size - stmt->nfld);
+			old_alloc = ((stmt->nfld  - 1) / FLD_INCR + 1) * FLD_INCR;
+			new_size = stmt->nfld + increased_cols;
 
-			mylog("k=%d, total_cols=%d, old_size=%d, need=%d\n", k,total_cols,old_size,need);
+			mylog("k=%d, increased_cols=%d, old_alloc=%d, new_size=%d\n", k,increased_cols,old_alloc,new_size);
 
-			if (need > 0) {
-				int new_size = need / FLD_INCR * FLD_INCR + FLD_INCR;
-				mylog("need more cols: new_size = %d\n", new_size);
-				fi = (FIELD_INFO **) realloc(fi, (old_size + new_size) * sizeof(FIELD_INFO *));
+			if (new_size > old_alloc) {
+				int new_alloc = ((new_size / FLD_INCR) + 1) * FLD_INCR;
+				mylog("need more cols: new_alloc = %d\n", new_alloc);
+				fi = (FIELD_INFO **) realloc(fi, new_alloc * sizeof(FIELD_INFO *));
 				if ( ! fi) {
 					stmt->parse_status = STMT_PARSE_FATAL;
 					return FALSE;
 				}
+				stmt->fi = fi;
 			}
 
 			/*------------------------------------------------------------- */
 			/*	copy any other fields (if there are any) up past the expansion */
 			for (j = stmt->nfld - 1; j > i; j--) {
-				mylog("copying field %d to %d\n", j, total_cols + j);
-				fi[total_cols + j] = fi[j];
+				mylog("copying field %d to %d\n", j, increased_cols + j);
+				fi[increased_cols + j] = fi[j];
 			}
 			mylog("done copying fields\n");
 
 			/*------------------------------------------------------------- */
 			/*	Set the new number of fields */
-			stmt->nfld += total_cols;
+			stmt->nfld += increased_cols;
 			mylog("stmt->nfld now at %d\n", stmt->nfld);
 
 
