@@ -15,7 +15,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqformat.c,v 1.7 1999/07/17 20:17:03 momjian Exp $
+ *	$Id: pqformat.c,v 1.8 1999/08/31 04:26:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -290,37 +290,30 @@ pq_getint(int *result, int b)
 /* --------------------------------
  *		pq_getstr - get a null terminated string from connection
  *
- *		FIXME: we ought to use an expansible StringInfo buffer,
- *		rather than dropping data if the message is too long.
+ *		The return value is placed in an expansible StringInfo.
+ *		Note that space allocation comes from the current memory context!
  *
  *		returns 0 if OK, EOF if trouble
  * --------------------------------
  */
 int
-pq_getstr(char *s, int maxlen)
+pq_getstr(StringInfo s)
 {
 	int			c;
-
 #ifdef MULTIBYTE
 	char	   *p;
-
 #endif
 
-	c = pq_getstring(s, maxlen);
+	c = pq_getstring(s);
 
 #ifdef MULTIBYTE
-	p = (char *) pg_client_to_server((unsigned char *) s, strlen(s));
-	if (p != s)					/* actual conversion has been done? */
+	p = (char *) pg_client_to_server((unsigned char *) s->data, s->len);
+	if (p != s->data)			/* actual conversion has been done? */
 	{
-		int			newlen = strlen(p);
-
-		if (newlen < maxlen)
-			strcpy(s, p);
-		else
-		{
-			strncpy(s, p, maxlen);
-			s[maxlen - 1] = '\0';
-		}
+		/* reset s to empty, and append the new string p */
+		s->len = 0;
+		s->data[0] = '\0';
+		appendBinaryStringInfo(s, p, strlen(p));
 	}
 #endif
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.127 1999/07/22 02:40:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.128 1999/08/31 04:26:40 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -158,9 +158,9 @@ int			_exec_repeat_ = 1;
  *		decls for routines only used in this file
  * ----------------------------------------------------------------
  */
-static int InteractiveBackend(char *inBuf);
-static int SocketBackend(char *inBuf);
-static int ReadCommand(char *inBuf);
+static int InteractiveBackend(StringInfo inBuf);
+static int SocketBackend(StringInfo inBuf);
+static int ReadCommand(StringInfo inBuf);
 static void pg_exec_query(char *query_string);
 
 
@@ -178,9 +178,8 @@ static void pg_exec_query(char *query_string);
  */
 
 static int
-InteractiveBackend(char *inBuf)
+InteractiveBackend(StringInfo inBuf)
 {
-	char	   *stuff = inBuf;	/* current place in input buffer */
 	int			c;				/* character read from getc() */
 	bool		end = false;	/* end-of-input flag */
 	bool		backslashSeen = false;	/* have we seen a \ ? */
@@ -191,6 +190,10 @@ InteractiveBackend(char *inBuf)
 	 */
 	printf("backend> ");
 	fflush(stdout);
+
+	/* Reset inBuf to empty */
+	inBuf->len = 0;
+	inBuf->data[0] = '\0';
 
 	for (;;)
 	{
@@ -207,14 +210,15 @@ InteractiveBackend(char *inBuf)
 				{
 					if (backslashSeen)
 					{
-						stuff--;
+						/* discard backslash from inBuf */
+						inBuf->data[--inBuf->len] = '\0';
+						backslashSeen = false;
 						continue;
 					}
 					else
 					{
 						/* keep the newline character */
-						*stuff++ = '\n';
-						*stuff++ = '\0';
+						appendStringInfoChar(inBuf, '\n');
 						break;
 					}
 				}
@@ -223,7 +227,7 @@ InteractiveBackend(char *inBuf)
 				else
 					backslashSeen = false;
 
-				*stuff++ = (char) c;
+				appendStringInfoChar(inBuf, (char) c);
 			}
 
 			if (c == EOF)
@@ -236,9 +240,9 @@ InteractiveBackend(char *inBuf)
 			 * ----------------
 			 */
 			while ((c = getc(stdin)) != EOF)
-				*stuff++ = (char) c;
+				appendStringInfoChar(inBuf, (char) c);
 
-			if (stuff == inBuf)
+			if (inBuf->len == 0)
 				end = true;
 		}
 
@@ -261,7 +265,7 @@ InteractiveBackend(char *inBuf)
 	 * ----------------
 	 */
 	if (EchoQuery)
-		printf("query: %s\n", inBuf);
+		printf("query: %s\n", inBuf->data);
 	fflush(stdout);
 
 	return 'Q';
@@ -274,7 +278,7 @@ InteractiveBackend(char *inBuf)
  *	the user is placed in its parameter inBuf.
  *
  *	If the input is a fastpath function call (case 'F') then
- *	the function call is processed in HandleFunctionRequest().
+ *	the function call is processed in HandleFunctionRequest()
  *	(now called from PostgresMain()).
  *
  *  EOF is returned if the connection is lost.
@@ -282,7 +286,7 @@ InteractiveBackend(char *inBuf)
  */
 
 static int
-SocketBackend(char *inBuf)
+SocketBackend(StringInfo inBuf)
 {
 	char		qtype;
 	char		result = '\0';
@@ -302,7 +306,7 @@ SocketBackend(char *inBuf)
 			 * ----------------
 			 */
 		case 'Q':
-			if (pq_getstr(inBuf, MAX_PARSE_BUFFER))
+			if (pq_getstr(inBuf))
 				return EOF;
 			result = 'Q';
 			break;
@@ -312,7 +316,7 @@ SocketBackend(char *inBuf)
 			 * ----------------
 			 */
 		case 'F':
-			if (pq_getstr(inBuf, MAX_PARSE_BUFFER))
+			if (pq_getstr(inBuf))
 				return EOF;		/* ignore "string" at start of F message */
 			result = 'F';
 			break;
@@ -347,12 +351,21 @@ SocketBackend(char *inBuf)
  * ----------------
  */
 static int
-ReadCommand(char *inBuf)
+ReadCommand(StringInfo inBuf)
 {
+	MemoryContext	oldcontext;
+	int				result;
+
+	/* Make sure any expansion of inBuf happens in permanent memory context,
+	 * so that we can keep using it for future command cycles.
+	 */
+	oldcontext = MemoryContextSwitchTo(TopMemoryContext);
 	if (IsUnderPostmaster)
-		return SocketBackend(inBuf);
+		result = SocketBackend(inBuf);
 	else
-		return InteractiveBackend(inBuf);
+		result = InteractiveBackend(inBuf);
+	MemoryContextSwitchTo(oldcontext);
+	return result;
 }
 
 List *
@@ -374,45 +387,7 @@ pg_parse_and_plan(char *query_string,	/* string to execute */
 
 	if (DebugPrintQuery)
 	{
-		if (DebugPrintQuery > 3)
-		{
-			/* Print the query string as is if query debug level > 3 */
-			TPRINTF(TRACE_QUERY, "query: %s", query_string);
-		}
-		else
-		{
-			/* Print condensed query string to fit in one log line */
-			char		buff[MAX_QUERY_SIZE + 1];
-			char		c,
-					   *s,
-					   *d;
-			int			n,
-						is_space = 1;
-
-			for (s = query_string, d = buff, n = 0; (c = *s) && (n < MAX_QUERY_SIZE); s++)
-			{
-				switch (c)
-				{
-					case '\r':
-					case '\n':
-					case '\t':
-						c = ' ';
-						/* fall through */
-					case ' ':
-						if (is_space)
-							continue;
-						is_space = 1;
-						break;
-					default:
-						is_space = 0;
-						break;
-				}
-				*d++ = c;
-				n++;
-			}
-			*d = '\0';
-			TPRINTF(TRACE_QUERY, "query: %s", buff);
-		}
+		TPRINTF(TRACE_QUERY, "query: %s", query_string);
 	}
 
 	/* ----------------
@@ -889,7 +864,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	int			errs = 0;
 
 	int			firstchar;
-	char		parser_input[MAX_PARSE_BUFFER];
+	StringInfo	parser_input;
 	char	   *userName;
 
 	/* Used if verbose is set, must be initialized */
@@ -1452,6 +1427,8 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 
 	on_shmem_exit(remove_all_temp_relations, NULL);
 
+	parser_input = makeStringInfo(); /* initialize input buffer */
+
 	/* ----------------
 	 *	Set up handler for cancel-request signal, and
 	 *	send this backend's cancellation info to the frontend.
@@ -1492,7 +1469,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.127 $ $Date: 1999/07/22 02:40:07 $\n");
+		puts("$Revision: 1.128 $ $Date: 1999/08/31 04:26:40 $\n");
 	}
 
 	/* ----------------
@@ -1548,8 +1525,6 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 		 *	 (3) read a command.
 		 * ----------------
 		 */
-		MemSet(parser_input, 0, MAX_PARSE_BUFFER);
-
 		firstchar = ReadCommand(parser_input);
 
 		QueryCancel = false;	/* forget any earlier CANCEL signal */
@@ -1592,7 +1567,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 				 * ----------------
 				 */
 			case 'Q':
-				if (strspn(parser_input, " \t\n") == strlen(parser_input))
+				if (strspn(parser_input->data, " \t\n") == parser_input->len)
 				{
 					/* ----------------
 					 *	if there is nothing in the input buffer, don't bother
@@ -1616,7 +1591,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 						TPRINTF(TRACE_VERBOSE, "StartTransactionCommand");
 					StartTransactionCommand();
 
-					pg_exec_query(parser_input);
+					pg_exec_query(parser_input->data);
 
 					if (ShowStats)
 						ShowUsage();

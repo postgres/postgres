@@ -28,7 +28,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqcomm.c,v 1.81 1999/07/23 03:00:10 tgl Exp $
+ *	$Id: pqcomm.c,v 1.82 1999/08/31 04:26:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -526,37 +526,31 @@ pq_getbytes(char *s, size_t len)
 /* --------------------------------
  *		pq_getstring	- get a null terminated string from connection
  *
+ *		The return value is placed in an expansible StringInfo.
+ *		Note that space allocation comes from the current memory context!
+ *
  *		NOTE: this routine does not do any MULTIBYTE conversion,
  *		even though it is presumably useful only for text, because
  *		no code in this module should depend on MULTIBYTE mode.
  *		See pq_getstr in pqformat.c for that.
  *
- *		FIXME: we ought to use an expansible StringInfo buffer,
- *		rather than dropping data if the message is too long.
- *
  *		returns 0 if OK, EOF if trouble
  * --------------------------------
  */
 int
-pq_getstring(char *s, size_t len)
+pq_getstring(StringInfo s)
 {
 	int			c;
 
-	/*
-	 * Keep on reading until we get the terminating '\0', discarding any
-	 * bytes we don't have room for.
-	 */
+	/* Reset string to empty */
+	s->len = 0;
+	s->data[0] = '\0';
 
+	/* Read until we get the terminating '\0' */
 	while ((c = pq_getbyte()) != EOF && c != '\0')
 	{
-		if (len > 1)
-		{
-			*s++ = c;
-			len--;
-		}
+		appendStringInfoChar(s, c);
 	}
-
-	*s = '\0';
 
 	if (c == EOF)
 		return EOF;

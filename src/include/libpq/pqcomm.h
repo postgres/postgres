@@ -8,7 +8,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqcomm.h,v 1.38 1999/07/17 20:18:29 momjian Exp $
+ * $Id: pqcomm.h,v 1.39 1999/08/31 04:26:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,11 +25,6 @@
 #include <sys/un.h>
 #include <netinet/in.h>
 #endif
-
-/*
- * Internal send/receive buffers in libpq.
- */
-#define PQ_BUFFER_SIZE 8192
 
 /* Define a generic socket address type. */
 

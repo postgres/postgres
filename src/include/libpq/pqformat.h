@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqformat.h,v 1.5 1999/07/15 15:21:16 momjian Exp $
+ * $Id: pqformat.h,v 1.6 1999/08/31 04:26:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,6 @@ extern void pq_endmessage(StringInfo buf);
 extern int	pq_puttextmessage(char msgtype, const char *str);
 
 extern int	pq_getint(int *result, int b);
-extern int	pq_getstr(char *s, int maxlen);
+extern int	pq_getstr(StringInfo s);
 
 #endif	 /* PQFORMAT_H */

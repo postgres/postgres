@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq.h,v 1.32 1999/07/15 15:21:15 momjian Exp $
+ * $Id: libpq.h,v 1.33 1999/08/31 04:26:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 
 #include <netinet/in.h>
 
+#include "lib/stringinfo.h"
 #include "libpq/libpq-be.h"
 #include "tcop/dest.h"
 #include "utils/exc.h"
@@ -241,7 +242,7 @@ extern void pq_init(void);
 extern int	pq_getport(void);
 extern void pq_close(void);
 extern int	pq_getbytes(char *s, size_t len);
-extern int	pq_getstring(char *s, size_t len);
+extern int	pq_getstring(StringInfo s);
 extern int	pq_peekbyte(void);
 extern int	pq_putbytes(const char *s, size_t len);
 extern int	pq_flush(void);
