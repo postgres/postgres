@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.315 2005/02/19 19:33:08 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.316 2005/03/10 23:21:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1854,7 +1854,6 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 
 	/*
 	 * Initial processing of HAVING clause is just like WHERE clause.
-	 * Additional work will be done in optimizer/plan/planner.c.
 	 */
 	qry->havingQual = transformWhereClause(pstate, stmt->havingClause,
 										   "HAVING");
@@ -1888,7 +1887,7 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 
 	qry->hasSubLinks = pstate->p_hasSubLinks;
 	qry->hasAggs = pstate->p_hasAggs;
-	if (pstate->p_hasAggs || qry->groupClause)
+	if (pstate->p_hasAggs || qry->groupClause || qry->havingQual)
 		parseCheckAggregates(pstate, qry);
 
 	if (stmt->forUpdate != NIL)
@@ -2104,7 +2103,7 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 
 	qry->hasSubLinks = pstate->p_hasSubLinks;
 	qry->hasAggs = pstate->p_hasAggs;
-	if (pstate->p_hasAggs || qry->groupClause)
+	if (pstate->p_hasAggs || qry->groupClause || qry->havingQual)
 		parseCheckAggregates(pstate, qry);
 
 	if (forUpdate != NIL)
@@ -2751,6 +2750,10 @@ CheckSelectForUpdate(Query *qry)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 		errmsg("SELECT FOR UPDATE is not allowed with GROUP BY clause")));
+	if (qry->havingQual != NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+		errmsg("SELECT FOR UPDATE is not allowed with HAVING clause")));
 	if (qry->hasAggs)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),

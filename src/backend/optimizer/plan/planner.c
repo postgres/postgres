@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.178 2005/01/28 19:34:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.179 2005/03/10 23:21:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -236,6 +236,13 @@ subquery_planner(Query *parse, double tuple_fraction)
 	}
 
 	/*
+	 * Set hasHavingQual to remember if HAVING clause is present.  Needed
+	 * because preprocess_expression will reduce a constant-true condition
+	 * to an empty qual list ... but "HAVING TRUE" is not a semantic no-op.
+	 */
+	parse->hasHavingQual = (parse->havingQual != NULL);
+
+	/*
 	 * Do expression preprocessing on targetlist and quals.
 	 */
 	parse->targetList = (List *)
@@ -267,17 +274,25 @@ subquery_planner(Query *parse, double tuple_fraction)
 	}
 
 	/*
-	 * A HAVING clause without aggregates is equivalent to a WHERE clause
-	 * (except it can only refer to grouped fields).  Transfer any
-	 * agg-free clauses of the HAVING qual into WHERE.	This may seem like
-	 * wasting cycles to cater to stupidly-written queries, but there are
-	 * other reasons for doing it.	Firstly, if the query contains no aggs
-	 * at all, then we aren't going to generate an Agg plan node, and so
-	 * there'll be no place to execute HAVING conditions; without this
-	 * transfer, we'd lose the HAVING condition entirely, which is wrong.
-	 * Secondly, when we push down a qual condition into a sub-query, it's
-	 * easiest to push the qual into HAVING always, in case it contains
-	 * aggs, and then let this code sort it out.
+	 * In some cases we may want to transfer a HAVING clause into WHERE.
+	 * We cannot do so if the HAVING clause contains aggregates (obviously)
+	 * or volatile functions (since a HAVING clause is supposed to be executed
+	 * only once per group).  Also, it may be that the clause is so expensive
+	 * to execute that we're better off doing it only once per group, despite
+	 * the loss of selectivity.  This is hard to estimate short of doing the
+	 * entire planning process twice, so we use a heuristic: clauses
+	 * containing subplans are left in HAVING.  Otherwise, we move or copy
+	 * the HAVING clause into WHERE, in hopes of eliminating tuples before
+	 * aggregation instead of after.
+	 *
+	 * If the query has explicit grouping then we can simply move such a
+	 * clause into WHERE; any group that fails the clause will not be
+	 * in the output because none of its tuples will reach the grouping
+	 * or aggregation stage.  Otherwise we must have a degenerate
+	 * (variable-free) HAVING clause, which we put in WHERE so that
+	 * query_planner() can use it in a gating Result node, but also keep
+	 * in HAVING to ensure that we don't emit a bogus aggregated row.
+	 * (This could be done better, but it seems not worth optimizing.)
 	 *
 	 * Note that both havingQual and parse->jointree->quals are in
 	 * implicitly-ANDed-list form at this point, even though they are
@@ -288,11 +303,27 @@ subquery_planner(Query *parse, double tuple_fraction)
 	{
 		Node	   *havingclause = (Node *) lfirst(l);
 
-		if (contain_agg_clause(havingclause))
+		if (contain_agg_clause(havingclause) ||
+			contain_volatile_functions(havingclause) ||
+			contain_subplans(havingclause))
+		{
+			/* keep it in HAVING */
 			newHaving = lappend(newHaving, havingclause);
-		else
+		}
+		else if (parse->groupClause)
+		{
+			/* move it to WHERE */
 			parse->jointree->quals = (Node *)
 				lappend((List *) parse->jointree->quals, havingclause);
+		}
+		else
+		{
+			/* put a copy in WHERE, keep it in HAVING */
+			parse->jointree->quals = (Node *)
+				lappend((List *) parse->jointree->quals,
+						copyObject(havingclause));
+			newHaving = lappend(newHaving, havingclause);
+		}
 	}
 	parse->havingQual = (Node *) newHaving;
 
@@ -1195,7 +1226,7 @@ grouping_planner(Query *parse, double tuple_fraction)
 		 * Insert AGG or GROUP node if needed, plus an explicit sort step
 		 * if necessary.
 		 *
-		 * HAVING clause, if any, becomes qual of the Agg node
+		 * HAVING clause, if any, becomes qual of the Agg or Group node.
 		 */
 		if (use_hashed_grouping)
 		{
@@ -1252,42 +1283,50 @@ grouping_planner(Query *parse, double tuple_fraction)
 											agg_counts.numAggs,
 											result_plan);
 		}
-		else
+		else if (parse->groupClause)
 		{
 			/*
-			 * If there are no Aggs, we shouldn't have any HAVING qual
-			 * anymore
-			 */
-			Assert(parse->havingQual == NULL);
-
-			/*
-			 * If we have a GROUP BY clause, insert a group node (plus the
+			 * GROUP BY without aggregation, so insert a group node (plus the
 			 * appropriate sort node, if necessary).
+			 *
+			 * Add an explicit sort if we couldn't make the path come
+			 * out the way the GROUP node needs it.
 			 */
-			if (parse->groupClause)
+			if (!pathkeys_contained_in(group_pathkeys, current_pathkeys))
 			{
-				/*
-				 * Add an explicit sort if we couldn't make the path come
-				 * out the way the GROUP node needs it.
-				 */
-				if (!pathkeys_contained_in(group_pathkeys, current_pathkeys))
-				{
-					result_plan = (Plan *)
-						make_sort_from_groupcols(parse,
-												 parse->groupClause,
-												 groupColIdx,
-												 result_plan);
-					current_pathkeys = group_pathkeys;
-				}
-
-				result_plan = (Plan *) make_group(parse,
-												  tlist,
-												  numGroupCols,
-												  groupColIdx,
-												  dNumGroups,
-												  result_plan);
-				/* The Group node won't change sort ordering */
+				result_plan = (Plan *)
+					make_sort_from_groupcols(parse,
+											 parse->groupClause,
+											 groupColIdx,
+											 result_plan);
+				current_pathkeys = group_pathkeys;
 			}
+
+			result_plan = (Plan *) make_group(parse,
+											  tlist,
+											  (List *) parse->havingQual,
+											  numGroupCols,
+											  groupColIdx,
+											  dNumGroups,
+											  result_plan);
+			/* The Group node won't change sort ordering */
+		}
+		else if (parse->hasHavingQual)
+		{
+			/*
+			 * No aggregates, and no GROUP BY, but we have a HAVING qual.
+			 * This is a degenerate case in which we are supposed to emit
+			 * either 0 or 1 row depending on whether HAVING succeeds.
+			 * Furthermore, there cannot be any variables in either HAVING
+			 * or the targetlist, so we actually do not need the FROM table
+			 * at all!  We can just throw away the plan-so-far and generate
+			 * a Result node.  This is a sufficiently unusual corner case
+			 * that it's not worth contorting the structure of this routine
+			 * to avoid having to generate the plan in the first place.
+			 */
+			result_plan = (Plan *) make_result(tlist,
+											   parse->havingQual,
+											   NULL);
 		}
 	}							/* end of if (setOperations) */
 
@@ -1320,7 +1359,7 @@ grouping_planner(Query *parse, double tuple_fraction)
 		 * it's reasonable to assume the UNIQUE filter has effects
 		 * comparable to GROUP BY.
 		 */
-		if (!parse->groupClause && !parse->hasAggs)
+		if (!parse->groupClause && !parse->hasHavingQual && !parse->hasAggs)
 		{
 			List	   *distinctExprs;
 
@@ -1384,19 +1423,18 @@ hash_safe_grouping(Query *parse)
  * make_subplanTargetList
  *	  Generate appropriate target list when grouping is required.
  *
- * When grouping_planner inserts Aggregate or Group plan nodes above
- * the result of query_planner, we typically want to pass a different
+ * When grouping_planner inserts Aggregate, Group, or Result plan nodes
+ * above the result of query_planner, we typically want to pass a different
  * target list to query_planner than the outer plan nodes should have.
  * This routine generates the correct target list for the subplan.
  *
  * The initial target list passed from the parser already contains entries
  * for all ORDER BY and GROUP BY expressions, but it will not have entries
  * for variables used only in HAVING clauses; so we need to add those
- * variables to the subplan target list.  Also, if we are doing either
- * grouping or aggregation, we flatten all expressions except GROUP BY items
- * into their component variables; the other expressions will be computed by
- * the inserted nodes rather than by the subplan.  For example,
- * given a query like
+ * variables to the subplan target list.  Also, we flatten all expressions
+ * except GROUP BY items into their component variables; the other expressions
+ * will be computed by the inserted nodes rather than by the subplan.
+ * For example, given a query like
  *		SELECT a+b,SUM(c+d) FROM table GROUP BY a+b;
  * we want to pass this targetlist to the subplan:
  *		a,b,c,d,a+b
@@ -1436,10 +1474,10 @@ make_subplanTargetList(Query *parse,
 	*groupColIdx = NULL;
 
 	/*
-	 * If we're not grouping or aggregating, nothing to do here;
+	 * If we're not grouping or aggregating, there's nothing to do here;
 	 * query_planner should receive the unmodified target list.
 	 */
-	if (!parse->hasAggs && !parse->groupClause)
+	if (!parse->hasAggs && !parse->groupClause && !parse->hasHavingQual)
 	{
 		*need_tlist_eval = true;
 		return tlist;

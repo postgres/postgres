@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.89 2004/12/31 22:00:46 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.90 2005/03/10 23:21:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,8 +37,7 @@ static Relids adjust_relid_set(Relids relids, int oldrelid, int newrelid);
 
 /*
  * checkExprHasAggs -
- *	Queries marked hasAggs might not have them any longer after
- *	rewriting. Check it.
+ *	Check if an expression contains an aggregate function call.
  *
  * The objective of this routine is to detect whether there are aggregates
  * belonging to the initial query level.  Aggregates belonging to subqueries
@@ -93,8 +92,7 @@ checkExprHasAggs_walker(Node *node, checkExprHasAggs_context *context)
 
 /*
  * checkExprHasSubLink -
- *	Queries marked hasSubLinks might not have them any longer after
- *	rewriting. Check it.
+ *	Check if an expression contains a SubLink.
  */
 bool
 checkExprHasSubLink(Node *node)
@@ -756,68 +754,14 @@ AddQual(Query *parsetree, Node *qual)
 											   copy);
 
 	/*
-	 * Make sure query is marked correctly if added qual has sublinks or
-	 * aggregates (not sure it can ever have aggs, but sublinks
-	 * definitely).  Need not search qual when query is already marked.
+	 * We had better not have stuck an aggregate into the WHERE clause.
 	 */
-	if (!parsetree->hasAggs)
-		parsetree->hasAggs = checkExprHasAggs(copy);
-	if (!parsetree->hasSubLinks)
-		parsetree->hasSubLinks = checkExprHasSubLink(copy);
-}
-
-/*
- * Add the given havingQual to the one already contained in the parsetree
- * just as AddQual does for the normal 'where' qual
- */
-void
-AddHavingQual(Query *parsetree, Node *havingQual)
-{
-	Node	   *copy;
-
-	if (havingQual == NULL)
-		return;
-
-	if (parsetree->commandType == CMD_UTILITY)
-	{
-		/*
-		 * There's noplace to put the qual on a utility statement.
-		 *
-		 * See comments in AddQual for motivation.
-		 */
-		if (parsetree->utilityStmt && IsA(parsetree->utilityStmt, NotifyStmt))
-			return;
-		else
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("conditional utility statements are not implemented")));
-	}
-
-	if (parsetree->setOperations != NULL)
-	{
-		/*
-		 * There's noplace to put the qual on a setop statement, either.
-		 * (This could be fixed, but right now the planner simply ignores
-		 * any qual condition on a setop query.)
-		 */
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("conditional UNION/INTERSECT/EXCEPT statements are not implemented")));
-	}
-
-	/* INTERSECT want's the original, but we need to copy - Jan */
-	copy = copyObject(havingQual);
-
-	parsetree->havingQual = make_and_qual(parsetree->havingQual,
-										  copy);
+	Assert(!checkExprHasAggs(copy));
 
 	/*
-	 * Make sure query is marked correctly if added qual has sublinks or
-	 * aggregates (not sure it can ever have aggs, but sublinks
-	 * definitely).  Need not search qual when query is already marked.
+	 * Make sure query is marked correctly if added qual has sublinks.
+	 * Need not search qual when query is already marked.
 	 */
-	if (!parsetree->hasAggs)
-		parsetree->hasAggs = checkExprHasAggs(copy);
 	if (!parsetree->hasSubLinks)
 		parsetree->hasSubLinks = checkExprHasSubLink(copy);
 }

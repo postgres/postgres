@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.147 2004/12/31 22:00:45 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.148 2005/03/10 23:21:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -180,18 +180,6 @@ rewriteRuleAction(Query *parsetree,
 				list_concat(newjointree, sub_action->jointree->fromlist);
 		}
 	}
-
-	/*
-	 * We copy the qualifications of the parsetree to the action and vice
-	 * versa. So force hasSubLinks if one of them has it. If this is not
-	 * right, the flag will get cleared later, but we mustn't risk having
-	 * it not set when it needs to be.	(XXX this should probably be
-	 * handled by AddQual and friends, not here...)
-	 */
-	if (parsetree->hasSubLinks)
-		sub_action->hasSubLinks = TRUE;
-	else if (sub_action->hasSubLinks)
-		parsetree->hasSubLinks = TRUE;
 
 	/*
 	 * Event Qualification forces copying of parsetree and splitting into
@@ -995,23 +983,6 @@ fireRIRrules(Query *parsetree, List *activeRIRs)
 	if (parsetree->hasSubLinks)
 		query_tree_walker(parsetree, fireRIRonSubLink, (void *) activeRIRs,
 						  QTW_IGNORE_RT_SUBQUERIES);
-
-	/*
-	 * If the query was marked having aggregates, check if this is still
-	 * true after rewriting.  Ditto for sublinks.  Note there should be no
-	 * aggs in the qual at this point.	(Does this code still do anything
-	 * useful?	The view-becomes-subselect-in-FROM approach doesn't look
-	 * like it could remove aggs or sublinks...)
-	 */
-	if (parsetree->hasAggs)
-	{
-		parsetree->hasAggs = checkExprHasAggs((Node *) parsetree);
-		if (parsetree->hasAggs)
-			if (checkExprHasAggs((Node *) parsetree->jointree))
-				elog(ERROR, "failed to remove aggregates from qual");
-	}
-	if (parsetree->hasSubLinks)
-		parsetree->hasSubLinks = checkExprHasSubLink((Node *) parsetree);
 
 	return parsetree;
 }

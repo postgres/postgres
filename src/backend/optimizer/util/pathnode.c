@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.111 2004/12/31 22:00:23 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.112 2005/03/10 23:21:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -795,6 +795,15 @@ is_distinct_query(Query *query)
 				break;
 		}
 		if (!gl)				/* got to the end? */
+			return true;
+	}
+	else
+	{
+		/*
+		 * If we have no GROUP BY, but do have aggregates or HAVING, then
+		 * the result is at most one row so it's surely unique.
+		 */
+		if (query->hasAggs || query->havingQual)
 			return true;
 	}
 

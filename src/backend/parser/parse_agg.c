@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_agg.c,v 1.66 2004/12/31 22:00:27 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_agg.c,v 1.67 2005/03/10 23:21:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,7 +104,7 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 	Node	   *clause;
 
 	/* This should only be called if we found aggregates or grouping */
-	Assert(pstate->p_hasAggs || qry->groupClause);
+	Assert(pstate->p_hasAggs || qry->groupClause || qry->havingQual);
 
 	/*
 	 * Aggregates must never appear in WHERE or JOIN/ON clauses.

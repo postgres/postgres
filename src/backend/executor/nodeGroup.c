@@ -15,7 +15,7 @@
  *	  locate group boundaries.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeGroup.c,v 1.59 2004/12/31 21:59:45 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeGroup.c,v 1.60 2005/03/10 23:21:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,23 +35,19 @@
 TupleTableSlot *
 ExecGroup(GroupState *node)
 {
-	EState	   *estate;
 	ExprContext *econtext;
 	TupleDesc	tupdesc;
 	int			numCols;
 	AttrNumber *grpColIdx;
-	HeapTuple	outerTuple = NULL;
+	HeapTuple	outerTuple;
 	HeapTuple	firsttuple;
 	TupleTableSlot *outerslot;
-	ProjectionInfo *projInfo;
-	TupleTableSlot *resultSlot;
 
 	/*
 	 * get state info from node
 	 */
 	if (node->grp_done)
 		return NULL;
-	estate = node->ss.ps.state;
 	econtext = node->ss.ps.ps_ExprContext;
 	tupdesc = ExecGetScanType(&node->ss);
 	numCols = ((Group *) node->ss.ps.plan)->numCols;
@@ -62,67 +58,101 @@ ExecGroup(GroupState *node)
 	 * reset the per-tuple memory context once per input tuple.
 	 */
 
-	/* If we don't already have first tuple of group, fetch it */
-	/* this should occur on the first call only */
+	/*
+	 * If first time through, acquire first input tuple and determine
+	 * whether to return it or not.
+	 */
 	firsttuple = node->grp_firstTuple;
 	if (firsttuple == NULL)
 	{
 		outerslot = ExecProcNode(outerPlanState(node));
 		if (TupIsNull(outerslot))
 		{
+			/* empty input, so return nothing */
 			node->grp_done = TRUE;
 			return NULL;
 		}
-		node->grp_firstTuple = firsttuple =
-			heap_copytuple(outerslot->val);
+		node->grp_firstTuple = firsttuple = heap_copytuple(outerslot->val);
+		/* Set up tuple as input for qual test and projection */
+		ExecStoreTuple(firsttuple,
+					   node->ss.ss_ScanTupleSlot,
+					   InvalidBuffer,
+					   false);
+		econtext->ecxt_scantuple = node->ss.ss_ScanTupleSlot;
+		/*
+		 * Check the qual (HAVING clause); if the group does not match,
+		 * ignore it and fall into scan loop.
+		 */
+		if (ExecQual(node->ss.ps.qual, econtext, false))
+		{
+			/*
+			 * Form and return a projection tuple using the first input
+			 * tuple.
+			 */
+			return ExecProject(node->ss.ps.ps_ProjInfo, NULL);
+		}
 	}
 
 	/*
-	 * Scan over all tuples that belong to this group
+	 * This loop iterates once per input tuple group.  At the head of the
+	 * loop, we have finished processing the first tuple of the group and
+	 * now need to scan over all the other group members.
 	 */
 	for (;;)
 	{
-		outerslot = ExecProcNode(outerPlanState(node));
-		if (TupIsNull(outerslot))
-		{
-			node->grp_done = TRUE;
-			outerTuple = NULL;
-			break;
-		}
-		outerTuple = outerslot->val;
-
 		/*
-		 * Compare with first tuple and see if this tuple is of the same
-		 * group.
+		 * Scan over all remaining tuples that belong to this group
 		 */
-		if (!execTuplesMatch(firsttuple, outerTuple,
-							 tupdesc,
-							 numCols, grpColIdx,
-							 node->eqfunctions,
-							 econtext->ecxt_per_tuple_memory))
-			break;
-	}
+		for (;;)
+		{
+			outerslot = ExecProcNode(outerPlanState(node));
+			if (TupIsNull(outerslot))
+			{
+				/* no more groups, so we're done */
+				node->grp_done = TRUE;
+				return NULL;
+			}
+			outerTuple = outerslot->val;
 
-	/*
-	 * form a projection tuple based on the (copied) first tuple of the
-	 * group, and store it in the result tuple slot.
-	 */
-	ExecStoreTuple(firsttuple,
-				   node->ss.ss_ScanTupleSlot,
-				   InvalidBuffer,
-				   false);
-	econtext->ecxt_scantuple = node->ss.ss_ScanTupleSlot;
-	projInfo = node->ss.ps.ps_ProjInfo;
-	resultSlot = ExecProject(projInfo, NULL);
-
-	/* save first tuple of next group, if we are not done yet */
-	if (!node->grp_done)
-	{
+			/*
+			 * Compare with first tuple and see if this tuple is of the same
+			 * group.  If so, ignore it and keep scanning.
+			 */
+			if (!execTuplesMatch(firsttuple, outerTuple,
+								 tupdesc,
+								 numCols, grpColIdx,
+								 node->eqfunctions,
+								 econtext->ecxt_per_tuple_memory))
+				break;
+		}
+		/*
+		 * We have the first tuple of the next input group.  See if we
+		 * want to return it.
+		 */
 		heap_freetuple(firsttuple);
-		node->grp_firstTuple = heap_copytuple(outerTuple);
+		node->grp_firstTuple = firsttuple = heap_copytuple(outerTuple);
+		/* Set up tuple as input for qual test and projection */
+		ExecStoreTuple(firsttuple,
+					   node->ss.ss_ScanTupleSlot,
+					   InvalidBuffer,
+					   false);
+		econtext->ecxt_scantuple = node->ss.ss_ScanTupleSlot;
+		/*
+		 * Check the qual (HAVING clause); if the group does not match,
+		 * ignore it and loop back to scan the rest of the group.
+		 */
+		if (ExecQual(node->ss.ps.qual, econtext, false))
+		{
+			/*
+			 * Form and return a projection tuple using the first input
+			 * tuple.
+			 */
+			return ExecProject(node->ss.ps.ps_ProjInfo, NULL);
+		}
 	}
 
-	return resultSlot;
+	/* NOTREACHED */
+	return NULL;
 }
 
 /* -----------------

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.81 2005/01/22 23:22:19 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.82 2005/03/10 23:21:20 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -451,6 +451,17 @@ HAVING <replaceable class="parameter">condition</replaceable>
     <replaceable class="parameter">condition</replaceable> must
     unambiguously reference a grouping column, unless the reference
     appears within an aggregate function.
+   </para>
+    
+   <para>
+    The presence of <literal>HAVING</literal> turns a query into a grouped
+    query even if there is no <literal>GROUP BY</> clause.  This is the
+    same as what happens when the query contains aggregate functions but
+    no <literal>GROUP BY</> clause.  All the selected rows are considered to
+    form a single group, and the <command>SELECT</command> list and
+    <literal>HAVING</literal> clause can only reference table columns from
+    within aggregate functions.  Such a query will emit a single row if the
+    <literal>HAVING</literal> condition is true, zero rows if it is not true.
    </para>
   </refsect2>
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/planmain.h,v 1.79 2004/12/31 22:03:36 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/planmain.h,v 1.80 2005/03/10 23:21:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +39,7 @@ extern Agg *make_agg(Query *root, List *tlist, List *qual,
 		 int numGroupCols, AttrNumber *grpColIdx,
 		 long numGroups, int numAggs,
 		 Plan *lefttree);
-extern Group *make_group(Query *root, List *tlist,
+extern Group *make_group(Query *root, List *tlist, List *qual,
 		   int numGroupCols, AttrNumber *grpColIdx,
 		   double numGroups,
 		   Plan *lefttree);

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.175 2004/12/31 22:00:08 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.176 2005/03/10 23:21:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2158,6 +2158,7 @@ make_agg(Query *root, List *tlist, List *qual,
 Group *
 make_group(Query *root,
 		   List *tlist,
+		   List *qual,
 		   int numGroupCols,
 		   AttrNumber *grpColIdx,
 		   double numGroups,
@@ -2184,7 +2185,8 @@ make_group(Query *root,
 	plan->plan_rows = numGroups;
 
 	/*
-	 * We also need to account for the cost of evaluation of the tlist.
+	 * We also need to account for the cost of evaluation of the qual (ie,
+	 * the HAVING clause) and the tlist.
 	 *
 	 * XXX this double-counts the cost of evaluation of any expressions used
 	 * for grouping, since in reality those will have been evaluated at a
@@ -2194,12 +2196,19 @@ make_group(Query *root,
 	 * See notes in grouping_planner about why this routine and make_agg are
 	 * the only ones in this file that worry about tlist eval cost.
 	 */
+	if (qual)
+	{
+		cost_qual_eval(&qual_cost, qual);
+		plan->startup_cost += qual_cost.startup;
+		plan->total_cost += qual_cost.startup;
+		plan->total_cost += qual_cost.per_tuple * plan->plan_rows;
+	}
 	cost_qual_eval(&qual_cost, tlist);
 	plan->startup_cost += qual_cost.startup;
 	plan->total_cost += qual_cost.startup;
 	plan->total_cost += qual_cost.per_tuple * plan->plan_rows;
 
-	plan->qual = NIL;
+	plan->qual = qual;
 	plan->targetlist = tlist;
 	plan->lefttree = lefttree;
 	plan->righttree = NULL;

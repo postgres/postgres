@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.123 2004/12/31 22:00:00 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.124 2005/03/10 23:21:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -334,13 +334,10 @@ set_subquery_pathlist(Query *root, RelOptInfo *rel,
 
 	/*
 	 * If there are any restriction clauses that have been attached to the
-	 * subquery relation, consider pushing them down to become HAVING
-	 * quals of the subquery itself.  (Not WHERE clauses, since they may
-	 * refer to subquery outputs that are aggregate results.  But
-	 * planner.c will transfer them into the subquery's WHERE if they do
-	 * not.)  This transformation is useful because it may allow us to
-	 * generate a better plan for the subquery than evaluating all the
-	 * subquery output rows and then filtering them.
+	 * subquery relation, consider pushing them down to become WHERE or
+	 * HAVING quals of the subquery itself.  This transformation is useful
+	 * because it may allow us to generate a better plan for the subquery
+	 * than evaluating all the subquery output rows and then filtering them.
 	 *
 	 * There are several cases where we cannot push down clauses.
 	 * Restrictions involving the subquery are checked by
@@ -795,8 +792,17 @@ subquery_push_qual(Query *subquery, List *rtable, Index rti, Node *qual)
 		qual = ResolveNew(qual, rti, 0, rtable,
 						  subquery->targetList,
 						  CMD_SELECT, 0);
-		subquery->havingQual = make_and_qual(subquery->havingQual,
-											 qual);
+
+		/*
+		 * Now attach the qual to the proper place: normally WHERE, but
+		 * if the subquery uses grouping or aggregation, put it in HAVING
+		 * (since the qual really refers to the group-result rows).
+		 */
+		if (subquery->hasAggs || subquery->groupClause || subquery->havingQual)
+			subquery->havingQual = make_and_qual(subquery->havingQual, qual);
+		else
+			subquery->jointree->quals =
+				make_and_qual(subquery->jointree->quals, qual);
 
 		/*
 		 * We need not change the subquery's hasAggs or hasSublinks flags,
