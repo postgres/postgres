@@ -5,7 +5,7 @@
  *
  *	1998 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.24 2000/01/20 02:21:44 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.25 2000/02/24 02:05:30 tgl Exp $
  *
  * ----------
  */
@@ -357,7 +357,7 @@ numeric(Numeric num, int32 typmod)
 
 /* ----------------------------------------------------------------------
  *
- * Rounding and the like
+ * Sign manipulation, rounding and the like
  *
  * ----------------------------------------------------------------------
  */
@@ -390,6 +390,51 @@ numeric_abs(Numeric num)
 	memcpy(res, num, num->varlen);
 
 	res->n_sign_dscale = NUMERIC_POS | NUMERIC_DSCALE(num);
+
+	return res;
+}
+
+
+Numeric
+numeric_uminus(Numeric num)
+{
+	Numeric		res;
+
+	/* ----------
+	 * Handle NULL
+	 * ----------
+	 */
+	if (num == NULL)
+		return NULL;
+
+	/* ----------
+	 * Handle NaN
+	 * ----------
+	 */
+	if (NUMERIC_IS_NAN(num))
+		return make_result(&const_nan);
+
+	/* ----------
+	 * Do it the easy way directly on the packed format
+	 * ----------
+	 */
+	res = (Numeric) palloc(num->varlen);
+	memcpy(res, num, num->varlen);
+
+	/* ----------
+	 * The packed format is known to be totally zero digit trimmed
+	 * always. So we can identify a ZERO by the fact that there
+	 * are no digits at all.  Do nothing to a zero.
+	 * ----------
+	 */
+	if (num->varlen != NUMERIC_HDRSZ)
+	{
+		/* Else, flip the sign */
+		if (NUMERIC_SIGN(num) == NUMERIC_POS)
+			res->n_sign_dscale = NUMERIC_NEG | NUMERIC_DSCALE(num);
+		else
+			res->n_sign_dscale = NUMERIC_POS | NUMERIC_DSCALE(num);
+	}
 
 	return res;
 }
@@ -1465,7 +1510,7 @@ numeric_ln(Numeric num)
 
 
 /* ----------
- * numeric_ln() -
+ * numeric_log() -
  *
  *	Compute the logarithm of x in a given base
  * ----------
@@ -1596,6 +1641,8 @@ numeric_power(Numeric num1, Numeric num2)
  *
  * ----------------------------------------------------------------------
  */
+
+
 Numeric
 int4_numeric(int32 val)
 {
@@ -1627,7 +1674,7 @@ numeric_int4(Numeric num)
 		return 0;
 
 	if (NUMERIC_IS_NAN(num))
-		return 0;
+		elog(ERROR, "Cannot convert NaN to int4");
 
 	/* ----------
 	 * Get the number in the variable format so we can round to integer.
@@ -1641,6 +1688,108 @@ numeric_int4(Numeric num)
 	free_var(&x);
 
 	result = int4in(str);
+	pfree(str);
+
+	return result;
+}
+
+
+Numeric
+int8_numeric(int64 *val)
+{
+	Numeric		res;
+	NumericVar	result;
+	char	   *tmp;
+
+	init_var(&result);
+
+	tmp = int8out(val);
+	set_var_from_str(tmp, &result);
+	res = make_result(&result);
+
+	free_var(&result);
+	pfree(tmp);
+
+	return res;
+}
+
+
+int64 *
+numeric_int8(Numeric num)
+{
+	NumericVar	x;
+	char	   *str;
+	int64	   *result;
+
+	if (num == NULL)
+		return NULL;
+
+	if (NUMERIC_IS_NAN(num))
+		elog(ERROR, "Cannot convert NaN to int8");
+
+	/* ----------
+	 * Get the number in the variable format so we can round to integer.
+	 * ----------
+	 */
+	init_var(&x);
+	set_var_from_num(num, &x);
+
+	str = get_str_from_var(&x, 0); /* dscale = 0 produces rounding */
+
+	free_var(&x);
+
+	result = int8in(str);
+	pfree(str);
+
+	return result;
+}
+
+
+Numeric
+int2_numeric(int16 val)
+{
+	Numeric		res;
+	NumericVar	result;
+	char	   *tmp;
+
+	init_var(&result);
+
+	tmp = int2out(val);
+	set_var_from_str(tmp, &result);
+	res = make_result(&result);
+
+	free_var(&result);
+	pfree(tmp);
+
+	return res;
+}
+
+
+int16
+numeric_int2(Numeric num)
+{
+	NumericVar	x;
+	char	   *str;
+	int16		result;
+
+	if (num == NULL)
+		return 0;
+
+	if (NUMERIC_IS_NAN(num))
+		elog(ERROR, "Cannot convert NaN to int2");
+
+	/* ----------
+	 * Get the number in the variable format so we can round to integer.
+	 * ----------
+	 */
+	init_var(&x);
+	set_var_from_num(num, &x);
+
+	str = get_str_from_var(&x, 0); /* dscale = 0 produces rounding */
+
+	free_var(&x);
+
+	result = int2in(str);
 	pfree(str);
 
 	return result;

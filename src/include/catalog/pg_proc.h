@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.124 2000/02/21 03:36:55 tgl Exp $
+ * $Id: pg_proc.h,v 1.125 2000/02/24 02:05:27 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -430,7 +430,7 @@ DESCR("addition");
 DATA(insert OID = 205 (  float4mi		   PGUID 11 f t t 2 f 700 "700 700" 100 0 0 100  float4mi - ));
 DESCR("subtract");
 DATA(insert OID = 206 (  float4um		   PGUID 11 f t t 1 f 700 "700" 100 0 0 100  float4um - ));
-DESCR("subtract");
+DESCR("negate");
 DATA(insert OID = 207 (  float4abs		   PGUID 11 f t t 1 f 700 "700" 100 0 0 100  float4abs - ));
 DESCR("absolute value");
 DATA(insert OID = 208 (  float4inc		   PGUID 11 f t t 1 f 700 "700" 100 0 0 100  float4inc - ));
@@ -441,9 +441,9 @@ DATA(insert OID = 211 (  float4smaller	   PGUID 11 f t t 2 f 700 "700 700" 100 0
 DESCR("smaller of two");
 
 DATA(insert OID = 212 (  int4um			   PGUID 11 f t t 1 f 23 "23" 100 0 0 100  int4um - ));
-DESCR("subtract");
+DESCR("negate");
 DATA(insert OID = 213 (  int2um			   PGUID 11 f t t 1 f 21 "21" 100 0 0 100  int2um - ));
-DESCR("subtract");
+DESCR("negate");
 
 DATA(insert OID = 214 (  float8in		   PGUID 11 f t t 1 f 701 "0" 100 0 0 100  float8in - ));
 DESCR("(internal)");
@@ -458,7 +458,7 @@ DESCR("addition");
 DATA(insert OID = 219 (  float8mi		   PGUID 11 f t t 2 f 701 "701 701" 100 0 0 100  float8mi - ));
 DESCR("subtract");
 DATA(insert OID = 220 (  float8um		   PGUID 11 f t t 1 f 701 "701" 100 0 0 100  float8um - ));
-DESCR("subtract");
+DESCR("negate");
 DATA(insert OID = 221 (  float8abs		   PGUID 11 f t t 1 f 701 "701" 100 0 0 100  float8abs - ));
 DESCR("absolute value");
 DATA(insert OID = 222 (  float8inc		   PGUID 11 f t t 1 f 701 "701" 100 0 0 100  float8inc - ));
@@ -847,7 +847,7 @@ DESCR("(internal)");
 DATA(insert OID = 461 (  int8out		   PGUID 11 f t t 1 f 23 "0" 100 0 0 100  int8out - ));
 DESCR("(internal)");
 DATA(insert OID = 462 (  int8um			   PGUID 11 f t t 1 f 20 "20" 100 0 0 100  int8um - ));
-DESCR("unary minus");
+DESCR("negate");
 DATA(insert OID = 463 (  int8pl			   PGUID 11 f t t 2 f 20 "20 20" 100 0 0 100  int8pl - ));
 DESCR("addition");
 DATA(insert OID = 464 (  int8mi			   PGUID 11 f t t 2 f 20 "20 20" 100 0 0 100  int8mi - ));
@@ -2333,6 +2333,24 @@ DATA(insert OID = 1767 ( numeric_larger			PGUID 11 f t t 2 f 1700 "1700 1700" 10
 DESCR("larger of two numbers");
 DATA(insert OID = 1769 ( numeric_cmp			PGUID 11 f t t 2 f 23 "1700 1700" 100 0 0 100  numeric_cmp - ));
 DESCR("compare two numbers");
+DATA(insert OID = 1771 ( numeric_uminus			PGUID 11 f t t 1 f 1700 "1700" 100 0 0 100	numeric_uminus - ));
+DESCR("negate");
+DATA(insert OID = 1779 ( int8_numeric			PGUID 11 f t t 1 f 1700 "20" 100 0 0 100  int8_numeric - ));
+DESCR("(internal)");
+DATA(insert OID = 1781 ( numeric				PGUID 11 f t t 1 f 1700 "20" 100 0 0 100  int8_numeric - ));
+DESCR("(internal)");
+DATA(insert OID = 1782 ( numeric_int8			PGUID 11 f t t 1 f 20 "1700" 100 0 0 100  numeric_int8 - ));
+DESCR("(internal)");
+DATA(insert OID = 1783 ( int8					PGUID 11 f t t 1 f 20 "1700" 100 0 0 100  numeric_int8 - ));
+DESCR("(internal)");
+DATA(insert OID = 1784 ( int2_numeric			PGUID 11 f t t 1 f 1700 "21" 100 0 0 100  int2_numeric - ));
+DESCR("(internal)");
+DATA(insert OID = 1785 ( numeric				PGUID 11 f t t 1 f 1700 "21" 100 0 0 100  int2_numeric - ));
+DESCR("(internal)");
+DATA(insert OID = 1786 ( numeric_int2			PGUID 11 f t t 1 f 21 "1700" 100 0 0 100  numeric_int2 - ));
+DESCR("(internal)");
+DATA(insert OID = 1787 ( int2					PGUID 11 f t t 1 f 21 "1700" 100 0 0 100  numeric_int2 - ));
+DESCR("(internal)");
 
 /* formatting */
 DATA(insert OID = 1770 ( to_char			PGUID 11 f t f 2 f  25 "1184 25" 100 0 0 100  timestamp_to_char - ));
@@ -2349,7 +2367,7 @@ DATA(insert OID = 1776 ( to_char			PGUID 11 f t f 2 f  25 "701 25" 100 0 0 100  
 DESCR("convert / formatting float8 to text");
 DATA(insert OID = 1777 ( to_number			PGUID 11 f t f 2 f  1700 "25 25" 100 0 0 100  numeric_to_number - ));
 DESCR("convert text to numeric");
-DATA(insert OID = 1778 ( to_timestamp			PGUID 11 f t f 2 f  1184 "25 25" 100 0 0 100  to_timestamp - ));
+DATA(insert OID = 1778 ( to_timestamp		PGUID 11 f t f 2 f  1184 "25 25" 100 0 0 100  to_timestamp - ));
 DESCR("convert text to timestamp");
 DATA(insert OID = 1780 ( to_date			PGUID 11 f t f 2 f  1082 "25 25" 100 0 0 100  to_date - ));
 DESCR("convert text to date");

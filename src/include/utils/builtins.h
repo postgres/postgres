@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.103 2000/02/21 03:36:59 tgl Exp $
+ * $Id: builtins.h,v 1.104 2000/02/24 02:05:24 tgl Exp $
  *
  * NOTES
  *	  This should normally only be included by fmgr.h.
@@ -474,97 +474,102 @@ extern text *translate(text *string, char from, char to);
 /* acl.c */
 
 /* inet_net_ntop.c */
-char	   *inet_net_ntop(int af, const void *src, int bits, char *dst, size_t size);
-char	   *inet_cidr_ntop(int af, const void *src, int bits, char *dst, size_t size);
+extern char *inet_net_ntop(int af, const void *src, int bits, char *dst, size_t size);
+extern char *inet_cidr_ntop(int af, const void *src, int bits, char *dst, size_t size);
 
 /* inet_net_pton.c */
-int			inet_net_pton(int af, const char *src, void *dst, size_t size);
+extern int inet_net_pton(int af, const char *src, void *dst, size_t size);
 
 /* network.c */
-inet	   *inet_in(char *str);
-char	   *inet_out(inet *addr);
-inet	   *cidr_in(char *str);
-char	   *cidr_out(inet *addr);
-bool		network_lt(inet *a1, inet *a2);
-bool		network_le(inet *a1, inet *a2);
-bool		network_eq(inet *a1, inet *a2);
-bool		network_ge(inet *a1, inet *a2);
-bool		network_gt(inet *a1, inet *a2);
-bool		network_ne(inet *a1, inet *a2);
-bool		network_sub(inet *a1, inet *a2);
-bool		network_subeq(inet *a1, inet *a2);
-bool		network_sup(inet *a1, inet *a2);
-bool		network_supeq(inet *a1, inet *a2);
-int4		network_cmp(inet *a1, inet *a2);
+extern inet	   *inet_in(char *str);
+extern char	   *inet_out(inet *addr);
+extern inet	   *cidr_in(char *str);
+extern char	   *cidr_out(inet *addr);
+extern bool		network_lt(inet *a1, inet *a2);
+extern bool		network_le(inet *a1, inet *a2);
+extern bool		network_eq(inet *a1, inet *a2);
+extern bool		network_ge(inet *a1, inet *a2);
+extern bool		network_gt(inet *a1, inet *a2);
+extern bool		network_ne(inet *a1, inet *a2);
+extern bool		network_sub(inet *a1, inet *a2);
+extern bool		network_subeq(inet *a1, inet *a2);
+extern bool		network_sup(inet *a1, inet *a2);
+extern bool		network_supeq(inet *a1, inet *a2);
+extern int4		network_cmp(inet *a1, inet *a2);
 
-text	   *network_network(inet *addr);
-text	   *network_netmask(inet *addr);
-int4		network_masklen(inet *addr);
-text	   *network_broadcast(inet *addr);
-text	   *network_host(inet *addr);
+extern text	   *network_network(inet *addr);
+extern text	   *network_netmask(inet *addr);
+extern int4		network_masklen(inet *addr);
+extern text	   *network_broadcast(inet *addr);
+extern text	   *network_host(inet *addr);
 
 /* mac.c */
-macaddr    *macaddr_in(char *str);
-char	   *macaddr_out(macaddr *addr);
-bool		macaddr_lt(macaddr *a1, macaddr *a2);
-bool		macaddr_le(macaddr *a1, macaddr *a2);
-bool		macaddr_eq(macaddr *a1, macaddr *a2);
-bool		macaddr_ge(macaddr *a1, macaddr *a2);
-bool		macaddr_gt(macaddr *a1, macaddr *a2);
-bool		macaddr_ne(macaddr *a1, macaddr *a2);
-int4		macaddr_cmp(macaddr *a1, macaddr *a2);
-text	   *macaddr_manuf(macaddr *addr);
+extern macaddr *macaddr_in(char *str);
+extern char	   *macaddr_out(macaddr *addr);
+extern bool		macaddr_lt(macaddr *a1, macaddr *a2);
+extern bool		macaddr_le(macaddr *a1, macaddr *a2);
+extern bool		macaddr_eq(macaddr *a1, macaddr *a2);
+extern bool		macaddr_ge(macaddr *a1, macaddr *a2);
+extern bool		macaddr_gt(macaddr *a1, macaddr *a2);
+extern bool		macaddr_ne(macaddr *a1, macaddr *a2);
+extern int4		macaddr_cmp(macaddr *a1, macaddr *a2);
+extern text	   *macaddr_manuf(macaddr *addr);
 
 /* numeric.c */
-Numeric		numeric_in(char *str, int dummy, int32 typmod);
-char	   *numeric_out(Numeric num);
-Numeric		numeric(Numeric num, int32 typmod);
-Numeric		numeric_abs(Numeric num);
-Numeric		numeric_sign(Numeric num);
-Numeric		numeric_round(Numeric num, int32 scale);
-Numeric		numeric_trunc(Numeric num, int32 scale);
-Numeric		numeric_ceil(Numeric num);
-Numeric		numeric_floor(Numeric num);
-int32		numeric_cmp(Numeric num1, Numeric num2);
-bool		numeric_eq(Numeric num1, Numeric num2);
-bool		numeric_ne(Numeric num1, Numeric num2);
-bool		numeric_gt(Numeric num1, Numeric num2);
-bool		numeric_ge(Numeric num1, Numeric num2);
-bool		numeric_lt(Numeric num1, Numeric num2);
-bool		numeric_le(Numeric num1, Numeric num2);
-Numeric		numeric_add(Numeric num1, Numeric num2);
-Numeric		numeric_sub(Numeric num1, Numeric num2);
-Numeric		numeric_mul(Numeric num1, Numeric num2);
-Numeric		numeric_div(Numeric num1, Numeric num2);
-Numeric		numeric_mod(Numeric num1, Numeric num2);
-Numeric		numeric_inc(Numeric num);
-Numeric		numeric_dec(Numeric num);
-Numeric		numeric_smaller(Numeric num1, Numeric num2);
-Numeric		numeric_larger(Numeric num1, Numeric num2);
-Numeric		numeric_sqrt(Numeric num);
-Numeric		numeric_exp(Numeric num);
-Numeric		numeric_ln(Numeric num);
-Numeric		numeric_log(Numeric num1, Numeric num2);
-Numeric		numeric_power(Numeric num1, Numeric num2);
-Numeric		int4_numeric(int32 val);
-int32		numeric_int4(Numeric num);
-Numeric		float4_numeric(float32 val);
-float32		numeric_float4(Numeric num);
-Numeric		float8_numeric(float64 val);
-float64		numeric_float8(Numeric num);
+extern Numeric	numeric_in(char *str, int dummy, int32 typmod);
+extern char	   *numeric_out(Numeric num);
+extern Numeric	numeric(Numeric num, int32 typmod);
+extern Numeric	numeric_abs(Numeric num);
+extern Numeric	numeric_uminus(Numeric num);
+extern Numeric	numeric_sign(Numeric num);
+extern Numeric	numeric_round(Numeric num, int32 scale);
+extern Numeric	numeric_trunc(Numeric num, int32 scale);
+extern Numeric	numeric_ceil(Numeric num);
+extern Numeric	numeric_floor(Numeric num);
+extern int32	numeric_cmp(Numeric num1, Numeric num2);
+extern bool		numeric_eq(Numeric num1, Numeric num2);
+extern bool		numeric_ne(Numeric num1, Numeric num2);
+extern bool		numeric_gt(Numeric num1, Numeric num2);
+extern bool		numeric_ge(Numeric num1, Numeric num2);
+extern bool		numeric_lt(Numeric num1, Numeric num2);
+extern bool		numeric_le(Numeric num1, Numeric num2);
+extern Numeric	numeric_add(Numeric num1, Numeric num2);
+extern Numeric	numeric_sub(Numeric num1, Numeric num2);
+extern Numeric	numeric_mul(Numeric num1, Numeric num2);
+extern Numeric	numeric_div(Numeric num1, Numeric num2);
+extern Numeric	numeric_mod(Numeric num1, Numeric num2);
+extern Numeric	numeric_inc(Numeric num);
+extern Numeric	numeric_dec(Numeric num);
+extern Numeric	numeric_smaller(Numeric num1, Numeric num2);
+extern Numeric	numeric_larger(Numeric num1, Numeric num2);
+extern Numeric	numeric_sqrt(Numeric num);
+extern Numeric	numeric_exp(Numeric num);
+extern Numeric	numeric_ln(Numeric num);
+extern Numeric	numeric_log(Numeric num1, Numeric num2);
+extern Numeric	numeric_power(Numeric num1, Numeric num2);
+extern Numeric	int4_numeric(int32 val);
+extern int32	numeric_int4(Numeric num);
+extern Numeric	int8_numeric(int64 *val);
+extern int64   *numeric_int8(Numeric num);
+extern Numeric	int2_numeric(int16 val);
+extern int16	numeric_int2(Numeric num);
+extern Numeric	float4_numeric(float32 val);
+extern float32	numeric_float4(Numeric num);
+extern Numeric	float8_numeric(float64 val);
+extern float64	numeric_float8(Numeric num);
 
 /* ri_triggers.c */
-HeapTuple	RI_FKey_check_ins(FmgrInfo *proinfo);
-HeapTuple	RI_FKey_check_upd(FmgrInfo *proinfo);
-HeapTuple	RI_FKey_noaction_del(FmgrInfo *proinfo);
-HeapTuple	RI_FKey_noaction_upd(FmgrInfo *proinfo);
-HeapTuple	RI_FKey_cascade_del(FmgrInfo *proinfo);
-HeapTuple	RI_FKey_cascade_upd(FmgrInfo *proinfo);
-HeapTuple	RI_FKey_restrict_del(FmgrInfo *proinfo);
-HeapTuple	RI_FKey_restrict_upd(FmgrInfo *proinfo);
-HeapTuple	RI_FKey_setnull_del(FmgrInfo *proinfo);
-HeapTuple	RI_FKey_setnull_upd(FmgrInfo *proinfo);
-HeapTuple	RI_FKey_setdefault_del(FmgrInfo *proinfo);
-HeapTuple	RI_FKey_setdefault_upd(FmgrInfo *proinfo);
+extern HeapTuple	RI_FKey_check_ins(FmgrInfo *proinfo);
+extern HeapTuple	RI_FKey_check_upd(FmgrInfo *proinfo);
+extern HeapTuple	RI_FKey_noaction_del(FmgrInfo *proinfo);
+extern HeapTuple	RI_FKey_noaction_upd(FmgrInfo *proinfo);
+extern HeapTuple	RI_FKey_cascade_del(FmgrInfo *proinfo);
+extern HeapTuple	RI_FKey_cascade_upd(FmgrInfo *proinfo);
+extern HeapTuple	RI_FKey_restrict_del(FmgrInfo *proinfo);
+extern HeapTuple	RI_FKey_restrict_upd(FmgrInfo *proinfo);
+extern HeapTuple	RI_FKey_setnull_del(FmgrInfo *proinfo);
+extern HeapTuple	RI_FKey_setnull_upd(FmgrInfo *proinfo);
+extern HeapTuple	RI_FKey_setdefault_del(FmgrInfo *proinfo);
+extern HeapTuple	RI_FKey_setdefault_upd(FmgrInfo *proinfo);
 
 #endif	 /* BUILTINS_H */
