@@ -74,7 +74,7 @@ SELECT 1 AS two UNION SELECT 2.2;
  2.2
 (2 rows)
 
-SELECT 1 AS one UNION SELECT 1.0;
+SELECT 1 AS one UNION SELECT 1.0::float8;
  one 
 -----
    1
@@ -87,10 +87,10 @@ SELECT 1.1 AS two UNION ALL SELECT 2;
    2
 (2 rows)
 
-SELECT 1.0 AS two UNION ALL SELECT 1;
+SELECT 1.0::float8 AS two UNION ALL SELECT 1;
  two 
 -----
- 1.0
+   1
    1
 (2 rows)
 
@@ -102,7 +102,7 @@ SELECT 1.1 AS three UNION SELECT 2 UNION SELECT 3;
      3
 (3 rows)
 
-SELECT 1.1 AS two UNION SELECT 2 UNION SELECT 2.0;
+SELECT 1.1::float8 AS two UNION SELECT 2 UNION SELECT 2.0::float8;
  two 
 -----
  1.1
