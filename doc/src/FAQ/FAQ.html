@@ -12,8 +12,9 @@ Last updated:		Fri Jun  2 11:32:13 EDT 2000
 Current maintainer:	Bruce Momjian (<A
 HREF="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR><P>
 
-The most recent version of this document can be viewed at the PostgreSQL
-Web site, <A HREF="http://www.Postgresql.org">http://www.PostgreSQL.org</A>.<P>
+The most recent version of this document can be viewed at 
+<A HREF="http://www.Postgresql.org/docs/faq-english.html">
+http://www.PostgreSQL.org/docs/faq-english.html</A>.<P>
 
 Linux-specific questions are answered in <A
 HREF="http://www.PostgreSQL.org/docs/faq-linux.html">http://www.PostgreSQL.org/docs/faq-linux.html</A>.<P>
@@ -36,9 +37,9 @@ HREF="http://www.PostgreSQL.org/docs/faq-irix.html">http://www.PostgreSQL.org/do
 <A HREF="#1.3">1.3</A>) What Unix platforms does PostgreSQL run on?<BR>
 <A HREF="#1.4">1.4</A>) What non-unix ports are available?<BR>
 <A HREF="#1.5">1.5</A>) Where can I get PostgreSQL?<BR>
-<A HREF="#1.6">1.6</A>) Where can I get support for PostgreSQL?<BR>
-<A HREF="#1.7">1.7</A>) What is the latest release of PostgreSQL?<BR>
-<A HREF="#1.8">1.8</A>) What documentation is available for PostgreSQL?<BR>
+<A HREF="#1.6">1.6</A>) Where can I get support?<BR>
+<A HREF="#1.7">1.7</A>) What is the latest release?<BR>
+<A HREF="#1.8">1.8</A>) What documentation is available?<BR>
 <A HREF="#1.9">1.9</A>) How do I find out about known bugs or missing features?<BR>
 <A HREF="#1.10">1.10</A>) How can I learn SQL?<BR>
 <A HREF="#1.11">1.11</A>) Is PostgreSQL Y2K compliant?<BR>
@@ -61,13 +62,13 @@ with PostgreSQL?<BR>
 
 <H2><CENTER>Administrative Questions</CENTER></H2>
 
-<A HREF="#3.1">3.1</A>) Why does initdb fail?<BR>
+<A HREF="#3.1">3.1</A>) Why does <I>initdb</I> fail?<BR>
 <A HREF="#3.2">3.2</A>) How do I install PostgreSQL somewhere other than
 /usr/local/pgsql?<BR>
 <A HREF="#3.3">3.3</A>) When I start the postmaster, I get a
 <I>Bad System Call</I> or core dumped message.  Why?<BR>
 <A HREF="#3.4">3.4</A>) When I try to start the postmaster, I get
-<I>IpcMemoryCreate</I> errors3.  Why?<BR>
+<I>IpcMemoryCreate</I> errors.  Why?<BR>
 <A HREF="#3.5">3.5</A>) When I try to start the postmaster, I get
 <I>IpcSemaphoreCreate</I> errors.  Why?<BR>
 <A HREF="#3.6">3.6</A>) How do I prevent other hosts from accessing my
@@ -80,30 +81,29 @@ another machine?<BR>
 table access.  Why?<BR>
 <A HREF="#3.10">3.10</A>) How do I tune the database engine for
 better performance?<BR>
-<A HREF="#3.11">3.11</A>) What debugging features are available in
-PostgreSQL?<BR>
-<A HREF="#3.12">3.12</A>) I get 'Sorry, too many clients' when trying to
+<A HREF="#3.11">3.11</A>) What debugging features are available?<BR>
+<A HREF="#3.12">3.12</A>) I get <I>"Sorry, too many clients"</I> when trying to
 connect.  Why?<BR>
-<A HREF="#3.13">3.13</A>) What are the pg_psort.XXX files in my
+<A HREF="#3.13">3.13</A>) What are the <I>pg_sorttempNNN.NN</I> files in my
 database directory?<BR>
 
 <H2><CENTER>Operational Questions</CENTER></H2>
 
-<A HREF="#4.1">4.1</A>) The system seems to be confused about commas,
+<A HREF="#4.1">4.1</A>) Why is the system confused about commas,
 decimal points, and date formats.<BR>
 <A HREF="#4.2">4.2</A>) What is the exact difference between
 binary cursors and normal cursors?<BR>
-<A HREF="#4.3">4.3</A>) How do I <I>select</I> only the first few rows of
+<A HREF="#4.3">4.3</A>) How do I <small>SELECT</small> only the first few rows of
 a query?<BR>
 
-<A HREF="#4.4">4.4</A>) How do I get a list of tables, or other
+<A HREF="#4.4">4.4</A>) How do I get a list of tables or other
 things I can see in <I>psql?</I><BR>
 <A HREF="#4.5">4.5</A>) How do you remove a column from a table?<BR>
 
 <A HREF="#4.6">4.6</A>) What is the maximum size for a
 row, table, database?<BR>
 <A HREF="#4.7">4.7</A>) How much database disk space is required
-to store data from a typical flat file?<BR>
+to store data from a typical text file?<BR>
 
 <A HREF="#4.8">4.8</A>) How do I find out what indices or
 operations are defined in the database?<BR>
@@ -148,7 +148,7 @@ it in <I>psql,</I> why does it dump core?<BR>
 <A HREF="#5.2">5.2</A>) What does the message:
 <I>NOTICE:PortalHeapMemoryFree: 0x402251d0 not in alloc set!</I> mean?<BR>
 <A HREF="#5.3">5.3</A>) How can I contribute some nifty new types and functions
-for PostgreSQL?<BR>
+to PostgreSQL?<BR>
 <A HREF="#5.4">5.4</A>) How do I write a C function to return a
 tuple?<BR>
 <A HREF="#5.5">5.5</A>) I have changed a source file.  Why does the
@@ -171,8 +171,8 @@ PostgreSQL development is being performed by a team of Internet
 developers who all subscribe to the PostgreSQL development mailing list.
 The current coordinator is Marc G. Fournier (<A
 HREF="mailto:scrappy@PostgreSQL.org">scrappy@PostgreSQL.org</A>). (See
-below on how to join). This team is now responsible for all current and
-future development of PostgreSQL.<P>
+below on how to join). This team is now responsible for all development 
+of PostgreSQL.<P>
 
 The authors of PostgreSQL 1.01 were Andrew Yu and Jolly Chen. Many
 others have contributed to the porting, testing, debugging and
@@ -259,7 +259,7 @@ A file <I>win31.mak</I> is included in the distribution for making a
 Win32 libpq library and psql.<P>
 
 The database server is now working on Windows NT using the Cygnus
-Unix/NT porting library.  See pgsql/doc/README.NT in the distribution.<P>
+Unix/NT porting library.  See <I>pgsql/doc/FAQ_NT</I> in the distribution.<P>
 
 
 <H4><A NAME="1.5">1.5</A>) Where can I get PostgreSQL?</H4><P>
@@ -268,7 +268,7 @@ The primary anonymous ftp site for PostgreSQL is
 HREF="ftp://ftp.PostgreSQL.org/pub">ftp://ftp.PostgreSQL.org/pub</A>.
 For mirror sites, see our main web site.
 
-<H4><A NAME="1.6">1.6</A>) Where can I get support for PostgreSQL?</H4><P>
+<H4><A NAME="1.6">1.6</A>) Where can I get support?</H4><P>
 
 There is no official support for PostgreSQL from the  University of
 California, Berkeley.  It is maintained through volunteer effort.<P>
@@ -334,31 +334,30 @@ Commercial support for PostgreSQL is available at <A
 HREF="http://www.pgsql.com">http://www.pgsql.com/</A>.<P>
 
 
-<H4><A NAME="1.7">1.7</A>) What is the latest release of PostgreSQL?</H4><P>
+<H4><A NAME="1.7">1.7</A>) What is the latest release?</H4><P>
 
 The latest release of PostgreSQL is version 7.0.2.<P>
 
 We plan to have major releases every four months.<P>
 
 
-<H4><A NAME="1.8">1.8</A>) What documentation is available for PostgreSQL?</H4><P>
+<H4><A NAME="1.8">1.8</A>) What documentation is available?</H4><P>
 
 Several manuals, manual pages, and some small test examples are 
 included in the distribution. See the /doc directory.  You can also
 browse the manual on-line at <A
 HREF="http://www.PostgreSQL.org/docs/postgres">
-http://www.PostgreSQL.org/docs/postgres.</A>
-in the distribution.
+http://www.PostgreSQL.org/docs/postgres</A>.
 <P>
 
 There is a PostgreSQL book available at <A
 HREF="http://www.PostgreSQL.org/docs/awbook.html">
-http://www.PostgreSQL.org/docs/awbook.html</A><P>
+http://www.PostgreSQL.org/docs/awbook.html</A>.<P>
 
 <I>psql</I> has some nice \d commands to show information about types,
 operators, functions, aggregates, etc.<P>
 
-The web site contains even more documentation.<P>
+Our web site contains even more documentation.<P>
 
 <H4><A NAME="1.9">1.9</A>) How do I find out about known bugs or missing features?
 </H4><P>
@@ -401,7 +400,7 @@ Second, subscribe to the pgsql-hackers and pgsql-patches mailing lists.
 Third, submit high-quality patches to pgsql-patches.<P>
 
 There are about a dozen people who have commit privileges to
-the PostgreSQL CVS archive. All of them have submitted so many
+the PostgreSQL CVS archive. They each have submitted so many
 high-quality patches that it was a pain for the existing
 committers to keep up, and we had confidence that patches they
 committed were likely to be of high quality.
@@ -445,8 +444,7 @@ default modes. In <I>no-fsync</I> mode, we are usually faster than
 commercial databases, though in this mode, an OS crash could cause data
 corruption. We are working to provide an intermediate mode that suffers
 less performance overhead than full fsync mode, and will allow data
-integrity within 30 seconds of an OS crash. The mode is select-able by
-the database administrator.<BR><BR>
+integrity within 30 seconds of an OS crash.<BR><BR>
 
 In comparison to MySQL or leaner database systems, we are slower on
 inserts/updates because we have transaction overhead. Of course, MySQL
@@ -502,8 +500,8 @@ in our BSD-style license stated above.<BR><BR>
 There are two ODBC drivers available, PsqlODBC and OpenLink ODBC.<P>
 
 PsqlODBC is included in the distribution. More information about it can
-be gotten from: <A HREF="ftp://ftp.PostgreSQL.org/pub/odbc/index.html">
-ftp://ftp.PostgreSQL.org/pub/odbc/index.html</A><P>
+be gotten from <A HREF="ftp://ftp.PostgreSQL.org/pub/odbc/">
+ftp://ftp.PostgreSQL.org/pub/odbc/</A>.<P>
 
 OpenLink ODBC can be gotten from <A HREF="http://www.openlinksw.com/">
 http://www.openlinksw.com</A>. It works with their standard ODBC client
@@ -528,7 +526,7 @@ HREF="http://www.webtools.com">http://www.webtools.com</A><P>
 There is also one at <A HREF="http://www.phone.net/home/mwm/hotlist/">
 http://www.phone.net/home/mwm/hotlist/.</A><P>
 
-For web integration, PHP is an excellent interface.  It is at:
+For web integration, PHP is an excellent interface.  It is at
 <A HREF="http://www.php.net">http://www.php.net</A><P>
 
 PHP is great for simple stuff, but for more complex cases, many
@@ -570,7 +568,7 @@ We have:
 <H2><CENTER>Administrative Questions</CENTER></H2><P>
 
 
-<H4><A NAME="3.1">3.1</A>) Why does initdb fail?</H4><P>
+<H4><A NAME="3.1">3.1</A>) Why does <I>initdb</I> fail?</H4><P>
 
 Try these:
 <UL>
@@ -600,7 +598,7 @@ kernel support for shared memory and semaphores.<P>
 <H4><A NAME="3.4">3.4</A>) When I try to start the postmaster, I
 get <I>IpcMemoryCreate</I> errors.  Why?</H4><P>
 
-You either do not have shared memory configured properly in kernel or
+You either do not have shared memory configured properly in your kernel or
 you need to enlarge the shared memory available in the kernel.  The
 exact amount you need depends on your architecture  and how many buffers
 and backend processes you configure postmaster to run with.
@@ -639,8 +637,7 @@ The default configuration allows only unix domain socket connections
 from the local machine.  To enable TCP/IP connections, make sure the
 postmaster has been started with the <I>-i</I> option, and add an
 appropriate host entry to the file
-<I>pgsql/data/pg_hba.conf</I>.  See the <I>pg_hba.conf</I> manual page.<P>
-
+<I>pgsql/data/pg_hba.conf</I>.
 
 <H4><A NAME="3.8">3.8</A>) Why can't I access the database as the <I>root</I>
 user?</H4><P>
@@ -666,7 +663,7 @@ allows you to see how PostgreSQL is interpreting your query, and which
 indices are being used.<P>
 
 If you are doing a lot of <SMALL>INSERTs</SMALL>, consider doing them in a large
-batch using the <SMALL>COPY</SMALL> command.  This is much faster than single
+batch using the <SMALL>COPY</SMALL> command.  This is much faster than
 individual <SMALL>INSERTS.</SMALL>  Second, statements not in a <SMALL>BEGIN
 WORK/COMMIT</SMALL> transaction block are considered to be in their
 own transaction.  Consider performing several statements in a single
@@ -675,12 +672,12 @@ consider dropping and recreating indices when making large data
 changes.<P>
 
 There are several tuning things that can be done.  You can disable
-fsync() by starting the postmaster with a  <I>-o -F</I> option.  This will
+<I>fsync()</I> by starting the postmaster with a  <I>-o -F</I> option.  This will
 prevent <I>fsync()'s</I> from flushing to disk after every transaction.<P>
 
 You can also use the postmaster -B option to increase the number of
 shared memory buffers used by the backend processes.  If you make this
-parameter too high, the postmaster may not start up because you've exceeded
+parameter too high, the postmaster may not start because you've exceeded
 your kernel's limit on shared memory space.
 Each buffer is 8K and the default is 64 buffers.<P>
 
@@ -688,12 +685,11 @@ You can also use the backend -S option to increase the maximum amount
 of memory used by the backend process for temporary sorts.  The -S value
 is measured in kilobytes, and the default is 512 (ie, 512K).<P>
 
-You can also use the <SMALL>CLUSTER</SMALL> command to group data in base tables to
+You can also use the <SMALL>CLUSTER</SMALL> command to group data in tables to
 match an index.  See the cluster(l) manual page for more details.<P>
 
 
-<H4><A NAME="3.11">3.11</A>) What debugging features are available in
-PostgreSQL?</H4><P>
+<H4><A NAME="3.11">3.11</A>) What debugging features are available?</H4><P>
 
 PostgreSQL has several features that report status information that can
 be valuable for debugging purposes.<P>
@@ -702,8 +698,8 @@ First, by running configure with the --enable-cassert option, many
 <I>assert()'s</I> monitor the progress of the backend and halt the program when
 something unexpected occurs.<P>
 
-Both postmaster and postgres have several debug options available.
-First, whenever you start the postmaster, make sure you send the
+Both <I>postmaster</I> and <I>postgres</I> have several debug options available.
+First, whenever you start the <I>postmaster,</I> make sure you send the
 standard output and error to a log file, like:
 <PRE>
 	cd /usr/local/pgsql
@@ -712,17 +708,17 @@ standard output and error to a log file, like:
 
 This will put a server.log file in the top-level PostgreSQL directory.
 This file contains useful information about problems or errors
-encountered by the server.  Postmaster has a -d option that allows even
-more detailed information to be reported.  The -d option takes a number
+encountered by the server.  <I>Postmaster</I> has a -d option that allows even
+more detailed information to be reported.  The <I>-d</I> option takes a number
 that specifies the debug level.  Be warned that high debug level values
 generate large log files.<P>
 
 If the <i>postmaster</i> is not running, you can actually run the
-postgres backend from the command line, and type your SQL statement
+<I>postgres</I> backend from the command line, and type your SQL statement
 directly. This is recommended <B>only</B> for debugging purposes. Note
 that a newline terminates the query, not a semicolon. If you have
 compiled with debugging symbols, you can use a debugger to see what is
-happening. Because the backend was not started from the postmaster, it
+happening. Because the backend was not started from the <I>postmaster,</I> it
 is not running in an identical environment and locking/backend
 interaction problems may not be duplicated.<P>
 
@@ -735,12 +731,12 @@ you can set PGOPTIONS="-W n", then start <i>psql.</i> This will cause
 startup to delay for <i>n</i> seconds so you can attach with the
 debugger and trace through the startup sequence.<P>
 
-The postgres program has -s, -A, and -t options that can be very useful
+The <I>postgres</I> program has <I>-s, -A,</I> and <I>-t</I> options that can be very useful
 for debugging and performance measurements.<P>
 
 You can also compile with profiling to see what functions are taking
 execution time.  The backend profile files will be deposited in the
-pgsql/data/base/dbname directory.  The client profile file will be put
+<I>pgsql/data/base/dbname</I> directory.  The client profile file will be put
 in the client's current directory.<P>
 
 
@@ -753,7 +749,7 @@ processes it can start.<P>
 In PostgreSQL 6.5 and up, the default limit is 32 processes. You can
 increase it by restarting the postmaster with a suitable <I>-N</I>
 value. With the default configuration you can set <I>-N</I> as large as
-1024; if you need more, increase <SMALL>MAXBACKENDS</SMALL> in
+1024.  If you need more, increase <SMALL>MAXBACKENDS</SMALL> in
 <I>include/config.h</I> and rebuild. You can set the default value of
 <I>-N</I> at configuration time, if you like, using configure's
 <I>--with-maxbackends</I> switch.<P>
@@ -769,23 +765,23 @@ check include the maximum size of shared memory blocks,
 processes, <SMALL>NPROC,</SMALL> the maximum number of processes per
 user, <SMALL>MAXUPRC,</SMALL> and the maximum number of open files,
 <SMALL>NFILE</SMALL> and <SMALL>NINODE.</SMALL> The reason that PostgreSQL
-has a limit on the number of allowed backend processes is so that you
-can ensure that your system won't run out of resources.<P>
+has a limit on the number of allowed backend processes is so 
+your system won't run out of resources.<P>
 
 In PostgreSQL versions prior to 6.5, the maximum number of backends was
 64, and changing it required a rebuild after altering the MaxBackendId
 constant in <I>include/storage/sinvaladt.h.</I><P>
 
-<H4><A NAME="3.13">3.13</A>) What are the pg_tempNNN.NN files in my
+<H4><A NAME="3.13">3.13</A>) What are the <I>pg_sorttempNNN.NN</I> files in my
 database directory?</H4><P>
 
 They are temporary files generated by the query executor. For
 example, if a sort needs to be done to satisfy an <SMALL>ORDER BY,</SMALL> and
-the sort requires more space than the backend's -S parameter allows,
+the sort requires more space than the backend's <I>-S</I> parameter allows,
 then temp files are created to hold the extra data.<P>
 
-The temp files should go away automatically, but might not if a backend
-crashes during a sort.  If you have no transactions running at the time,
+The temp files should be deleted automatically, but might not if a backend
+crashes during a sort.  If you have no backends running at the time,
 it is safe to delete the pg_tempNNN.NN files.<P>
 
 <HR>
@@ -793,10 +789,10 @@ it is safe to delete the pg_tempNNN.NN files.<P>
 <H2><CENTER>Operational Questions</CENTER></H2><P>
 
 
-<H4><A NAME="4.1">4.1</A>) The system seems to be confused about
+<H4><A NAME="4.1">4.1</A>) Why is system confused about
 commas, decimal points, and date formats.</H4><P>
 
-Check your locale configuration. PostgreSQL uses the locale settings of
+Check your locale configuration. PostgreSQL uses the locale setting of
 the user that ran the postmaster process.  There are postgres and psql
 SET commands to control the date format.  Set those accordingly for
 your operating environment.<P>
@@ -819,13 +815,13 @@ PostgreSQL may be able to evaluate only the first few records requested,
 or the entire query may have to be evaluated until the desired rows have
 been generated.<P>
 
-<H4><A NAME="4.4">4.4</A>) How do I get a list of tables, or other
-information I see in <I>psql?</I><BR></H4><P>
+<H4><A NAME="4.4">4.4</A>) How do I get a list of tables or other
+things I can see in <I>psql?</I><BR></H4><P>
 
-You can read the source code for <I>psql,</I> file
-pgsql/src/bin/psql/psql.c. It contains SQL commands that generate the
+You can read the source code for <I>psql</I> in file
+<I>pgsql/src/bin/psql/psql.c.</I> It contains SQL commands that generate the
 output for psql's backslash commands.  You can also start <I>psql</I>
-with the <I>-E</I> option so that it will print out the queries it uses
+with the <I>-E</I> option so it will print out the queries it uses
 to execute the commands you give.<P>
 
 
@@ -870,9 +866,9 @@ Row length limit will be removed in 7.1.<P>
 
 
 <H4><A NAME="4.7">4.7</A>)How much database disk space is required to
-store data from a typical flat file?<BR></H4><P>
+store data from a typical text file?<BR></H4><P>
 
-A PostgreSQL database can require about six and a half times the disk space
+A PostgreSQL database may need six and a half times the disk space
 required to store the data in a flat file.<P>
 
 Consider a file of 300,000 lines with two integers on each line. The
@@ -899,7 +895,7 @@ this data can be estimated at 14MB:
 1755 database pages * 8192 bytes per page  =  14,376,960 bytes (14MB)
 </PRE></P>
 
-Indexes do not contain as much overhead, but do contain the data that is
+Indexes do not require as much overhead, but do contain the data that is
 being indexed, so they can be large also.<P>
 
 <H4><A NAME="4.8">4.8</A>) How do I find out what indices or
@@ -916,8 +912,8 @@ the database system tables.<P>
 <H4><A NAME="4.9">4.9</A>) My queries are slow or don't make
 use of the indexes.  Why?</H4><P>
 
-PostgreSQL does not automatically maintain statistics.  One has to make
-an explicit <SMALL>VACUUM</SMALL> call to update the statistics.   After
+PostgreSQL does not automatically maintain statistics.  V<SMALL>ACUUM</SMALL>
+must be run to update the statistics.   After
 statistics are updated, the optimizer knows how many rows in the table,
 and can better decide if it should use indices.  Note that the optimizer
 does not use indices in cases when the table is small because a
@@ -972,14 +968,10 @@ documentation on how to do it.<P>
 <H4><A NAME="4.12">4.12</A>) What is Genetic Query
 Optimization?</H4><P>
 
-The GEQO module in PostgreSQL is intended to solve the query
-optimization problem of joining many tables by means of a Genetic
+The GEQO module speeds query
+optimization when joining many tables by means of a Genetic
 Algorithm (GA). It allows the handling of large join queries through
 non-exhaustive search.<P>
-
-For further information see the documentation.
-
-
 
 <H4><A NAME="4.13">4.13</A>) How do I do regular expression searches and
 case-insensitive regular expression searching?</H4><P>
@@ -1026,7 +1018,7 @@ first column of this type.<P>
 <H4><A NAME="4.16.1">4.16.1</A>) How do I create a
 serial/auto-incrementing field?</H4><P>
 
-PostgreSQL supports <SMALL>SERIAL</SMALL> data type.  It auto-creates a
+PostgreSQL supports a <SMALL>SERIAL</SMALL> data type.  It auto-creates a
 sequence and index on the column.  For example, this:
 <PRE>
 	CREATE TABLE person ( 
@@ -1052,14 +1044,14 @@ option or <SMALL>COPY WITH OIDS</SMALL> option to preserve the oids.<P>
 <A HREF="http://www.PostgreSQL.org/docs/aw_pgsql_book">Numbering Rows.</A>
 
 <H4><A NAME="4.16.2">4.16.2</A>) How do I get the back the generated SERIAL value after an insert?</H4><P>
-Probably the simplest approach is to to retrieve the next SERIAL value from the sequence object with the <I>nextval()</I> function <I>before</I> inserting and then insert it explicitly.  Using the example table in <A HREF="#4.16.1">4.16.1</A>, that might look like this:
+One approach is to to retrieve the next SERIAL value from the sequence object with the <I>nextval()</I> function <I>before</I> inserting and then insert it explicitly.  Using the example table in <A HREF="#4.16.1">4.16.1</A>, that might look like this:
 <PRE>
 	$newSerialID = nextval('person_id_seq');
 	INSERT INTO person (id, name) VALUES ($newSerialID, 'Blaise Pascal');
 </PRE>
 You would then also have the new value stored in <CODE>$newSerialID</CODE> for use in other queries (e.g., as a foreign key to the <CODE>person</CODE> table).  Note that the name of the automatically-created SEQUENCE object will be named &lt<I>table</I>&gt_&lt<I>serialcolumn</I>&gt_<I>seq</I>, where <I>table</I> and <I>serialcolumn</I> are the names of your table and your SERIAL column, respectively.  
 <P>
-Similarly, you could retrieve the just-assigned SERIAL value with the <I>currval</I>() function <I>after</I> it was inserted by default, e.g.,
+Alternatively, you could retrieve the just-assigned SERIAL value with the <I>currval</I>() function <I>after</I> it was inserted by default, e.g.,
 <PRE>
 	INSERT INTO person (name) VALUES ('Blaise Pascal');
 	$newID = currval('person_id_seq');
@@ -1068,37 +1060,36 @@ Finally, you could use the <A HREF="#4.17">oid</A> returned from the
 INSERT statement to lookup the default value, though this is probably
 the least portable approach. In perl, using DBI with Edmund Mergl's
 DBD::Pg module, the oid value is made available via
-$sth-&gt;{pg_oid_status} after $sth-&gt;execute().
+<I>$sth-&gt;{pg_oid_status} after $sth-&gt;execute().</I>
 
 <H4><A NAME="4.16.3">4.16.3</A>) Don't currval() and nextval() lead to a race condition with other
 concurrent backend processes?</H4><P>
 
-No.  That has been handled by the backends.
+No.  This is handled by the backends.
 
 
 <H4><A NAME="4.17">4.17</A>) What is an oid?  What is a tid?</H4><P>
 
-Oids are PostgreSQL's answer to unique row ids.  Every row that is
-created in PostgreSQL gets a unique oid.  All oids generated during
-initdb are less than 16384 (from <I>backend/access/transam.h</I>).  All
-user-created oids are equal or greater that this.  By default, all these
-oids are unique not only within a table, or database, but unique within
+<small>OID</small>s are PostgreSQL's answer to unique row ids.  Every row that is
+created in PostgreSQL gets a unique <small>oid</small>.  All <small>oid</small>s generated during
+<I>initdb</I> are less than 16384 (from <I>backend/access/transam.h</I>).  All
+user-created <small>oid</small>s are equal or greater that this.  By default, all these
+<small>oid</small>s are unique not only within a table, or database, but unique within
 the entire PostgreSQL installation.<P>
 
-PostgreSQL uses oids in its internal system tables to link rows between
-tables.  These oids can be used to identify specific user rows and used
-in joins.  It is recommended you use column type oid to store oid
-values.  See the <I>sql(l)</I> manual page to see the other internal columns.
-You can create an index on the oid field for faster access.<P>
+PostgreSQL uses <small>oid</small>s in its internal system tables to link rows between
+tables.  These <small>oid</small>s can be used to identify specific user rows and used
+in joins.  It is recommended you use column type <small>oid</small> to store <small>oid</small>
+values.  You can create an index on the <small>oid</small> field for faster access.<P>
 
-Oids are assigned to all new rows from a central area that is used by
-all databases.  If you want to change the oid to something else, or if
-you want to make a copy of the table, with the original oid's, there is
+<small>Oid</small>s are assigned to all new rows from a central area that is used by
+all databases.  If you want to change the <small>oid</small> to something else, or if
+you want to make a copy of the table, with the original <small>oid</small>'s, there is
 no reason you can't do it:
 
 <PRE>
         CREATE TABLE new_table(old_oid oid, mycol int);
-        SELECT INTO new SELECT old_oid, mycol FROM old;
+        SELECT old_oid, mycol INTO new FROM old;
         COPY new TO '/tmp/pgtable';
         DELETE FROM new;
         COPY new WITH OIDS FROM '/tmp/pgtable';
@@ -1162,13 +1153,11 @@ You need to put <CODE>BEGIN WORK</CODE> and <CODE>COMMIT
 </CODE> around any use of a large object handle, that is,
 surrounding <CODE>lo_open</CODE> ... <CODE>lo_close.</CODE><P>
 
-Current PostgreSQL enforces the rule by closing large object handles at
-transaction commit, which will be instantly upon completion of the
-<I>lo_open</I> command if you are not inside a transaction.  So the
-first attempt to do anything with the handle will draw <I>invalid large
-obj descriptor.</I>  So code that used to work (at least most of the
-time) will now generate that error message if you fail to use a
-transaction.<P>
+Currently PostgreSQL enforces the rule by closing large object handles
+at transaction commit. So the first attempt to do anything with the
+handle will draw <I>invalid large obj descriptor.</I> So code that used
+to work (at least most of the time) will now generate that error message
+if you fail to use a transaction.<P>
 
 If you are using a client interface like ODBC you may need to set
 <CODE>auto-commit off.</CODE><P>
@@ -1234,7 +1223,7 @@ Beware of mixing <I>malloc/free</I> and <I>palloc/pfree.</I>
 
 
 <H4><A NAME="5.3">5.3</A>) How can I contribute some nifty new types and
-functions for PostgreSQL?</H4><P>
+functions to PostgreSQL?</H4><P>
 
 
 Send your extensions to the pgsql-hackers mailing list, and they will
