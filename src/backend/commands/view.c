@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: view.c,v 1.49 2000/09/29 18:21:26 tgl Exp $
+ *	$Id: view.c,v 1.50 2000/10/26 17:04:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,6 +24,10 @@
 #include "rewrite/rewriteDefine.h"
 #include "rewrite/rewriteManip.h"
 #include "rewrite/rewriteRemove.h"
+
+#ifdef MULTIBYTE
+#include "mb/pg_wchar.h"
+#endif
 
 /*---------------------------------------------------------------------
  * DefineVirtualRelation
