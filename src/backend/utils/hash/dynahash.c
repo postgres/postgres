@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.19 1999/02/22 06:16:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.20 1999/03/06 21:17:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -373,18 +373,23 @@ hash_estimate_size(long num_entries, long keysize, long datasize)
 	long	size = 0;
 	long	nBuckets,
 			nSegments,
+			nDirEntries,
 			nRecordAllocs,
 			recordSize;
 
 	/* estimate number of buckets wanted */
 	nBuckets = 1L << my_log2((num_entries - 1) / DEF_FFACTOR + 1);
 	/* # of segments needed for nBuckets */
-	nSegments = (nBuckets - 1) / DEF_SEGSIZE + 1;
+	nSegments = 1L << my_log2((nBuckets - 1) / DEF_SEGSIZE + 1);
+	/* directory entries */
+	nDirEntries = DEF_DIRSIZE;
+	while (nDirEntries < nSegments)
+		nDirEntries <<= 1;		/* dir_alloc doubles dsize at each call */
 
 	/* fixed control info */
 	size += MAXALIGN(sizeof(HHDR));	/* but not HTAB, per above */
-	/* directory, assumed to be of size DEF_DIRSIZE */
-	size += MAXALIGN(DEF_DIRSIZE * sizeof(SEG_OFFSET));
+	/* directory */
+	size += MAXALIGN(nDirEntries * sizeof(SEG_OFFSET));
 	/* segments */
 	size += nSegments * MAXALIGN(DEF_SEGSIZE * sizeof(BUCKET_INDEX));
 	/* records --- allocated in groups of BUCKET_ALLOC_INCR */
@@ -408,9 +413,6 @@ hash_estimate_size(long num_entries, long keysize, long datasize)
 void
 hash_destroy(HTAB *hashp)
 {
-	/* cannot destroy a shared memory hash table */
-	Assert(!hashp->segbase);
-
 	if (hashp != NULL)
 	{
 		SEG_OFFSET	segNum;
@@ -421,6 +423,13 @@ hash_destroy(HTAB *hashp)
 					p,
 					q;
 		ELEMENT    *curr;
+
+		/* cannot destroy a shared memory hash table */
+		Assert(!hashp->segbase);
+		/* allocation method must be one we know how to free, too */
+		Assert(hashp->alloc == (dhalloc_ptr) MEM_ALLOC);
+
+		hash_stats("destroy", hashp);
 
 		for (segNum = 0; nsegs > 0; nsegs--, segNum++)
 		{
@@ -435,11 +444,10 @@ hash_destroy(HTAB *hashp)
 					MEM_FREE((char *) curr);
 				}
 			}
-			free((char *) segp);
+			MEM_FREE((char *) segp);
 		}
 		MEM_FREE((char *) hashp->dir);
 		MEM_FREE((char *) hashp->hctl);
-		hash_stats("destroy", hashp);
 		MEM_FREE((char *) hashp);
 	}
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.45 1999/02/22 06:16:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.46 1999/03/06 21:17:44 tgl Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -339,8 +339,8 @@ LockMethodTableInit(char *tabName,
 	 * to find the different locks.
 	 * ----------------------
 	 */
-	info.keysize = sizeof(LOCKTAG);
-	info.datasize = sizeof(LOCK);
+	info.keysize = SHMEM_LOCKTAB_KEYSIZE;
+	info.datasize = SHMEM_LOCKTAB_DATASIZE;
 	info.hash = tag_hash;
 	hash_flags = (HASH_ELEM | HASH_FUNCTION);
 
@@ -361,8 +361,8 @@ LockMethodTableInit(char *tabName,
 	 * the same lock, additional information must be saved (locks per tx).
 	 * -------------------------
 	 */
-	info.keysize = XID_TAGSIZE;
-	info.datasize = sizeof(XIDLookupEnt);
+	info.keysize = SHMEM_XIDTAB_KEYSIZE;
+	info.datasize = SHMEM_XIDTAB_DATASIZE;
 	info.hash = tag_hash;
 	hash_flags = (HASH_ELEM | HASH_FUNCTION);
 
@@ -1488,13 +1488,18 @@ LockShmemSize(int maxBackends)
 
 	/* lockHash table */
 	size += hash_estimate_size(NLOCKENTS(maxBackends),
-							   sizeof(LOCKTAG),
-							   sizeof(LOCK));
+							   SHMEM_LOCKTAB_KEYSIZE,
+							   SHMEM_LOCKTAB_DATASIZE);
 
 	/* xidHash table */
 	size += hash_estimate_size(maxBackends,
-							   XID_TAGSIZE,
-							   sizeof(XIDLookupEnt));
+							   SHMEM_XIDTAB_KEYSIZE,
+							   SHMEM_XIDTAB_DATASIZE);
+
+	/* Since the lockHash entry count above is only an estimate,
+	 * add 10% safety margin.
+	 */
+	size += size / 10;
 
 	return size;
 }

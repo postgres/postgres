@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/Attic/mm.c,v 1.14 1999/02/22 06:16:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/Attic/mm.c,v 1.15 1999/03/06 21:17:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -110,7 +110,7 @@ mminit()
 	}
 
 	info.keysize = sizeof(MMCacheTag);
-	info.datasize = sizeof(int);
+	info.datasize = sizeof(MMHashEntry) - sizeof(MMCacheTag);
 	info.hash = tag_hash;
 
 	MMCacheHT = (HTAB *) ShmemInitHash("Main memory store HT",
@@ -124,7 +124,7 @@ mminit()
 	}
 
 	info.keysize = sizeof(MMRelTag);
-	info.datasize = sizeof(int);
+	info.datasize = sizeof(MMRelHashEntry) - sizeof(MMRelTag);
 	info.hash = tag_hash;
 
 	MMRelCacheHT = (HTAB *) ShmemInitHash("Main memory rel HT",

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.22 1999/02/22 06:16:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.23 1999/03/06 21:17:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,14 +77,12 @@ CreateSharedMemoryAndSemaphores(IPCKey key, int maxBackends)
 	 * Size of the primary shared-memory block is estimated via
 	 * moderately-accurate estimates for the big hogs, plus 100K for
 	 * the stuff that's too small to bother with estimating.
-	 * Then we add 10% for a safety margin.
 	 */
 	size = BufferShmemSize() + LockShmemSize(maxBackends);
 #ifdef STABLE_MEMORY_STORAGE
 	size += MMShmemSize();
 #endif
 	size += 100000;
-	size += size / 10;
 
 	if (DebugLvl > 1)
 	{
