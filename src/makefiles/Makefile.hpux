@@ -28,7 +28,9 @@ LDFLAGS += -Wl,+b -Wl,$(libdir)
 # catch null pointer dereferences
 LDFLAGS += -Wl,-z
 
+# set up appropriate options for shared library builds
 export_dynamic = -Wl,-E
+shlib_symbolic = -Bsymbolic
 
 INSTALL_SHLIB_OPTS = -m 555
 
