@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.32 1999/07/17 20:16:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.33 1999/09/27 18:20:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -101,6 +101,7 @@ _bt_orderkeys(Relation relation, BTScanOpaque so)
 	uint16		numberOfKeys = so->numberOfKeys;
 	uint16		new_numberOfKeys = 0;
 	AttrNumber	attno = 1;
+	bool		equalStrategyEnd, underEqualStrategy;
 
 	if (numberOfKeys < 1)
 		return;
@@ -136,6 +137,8 @@ _bt_orderkeys(Relation relation, BTScanOpaque so)
 	for (j = 0; j <= BTMaxStrategyNumber; j++)
 		init[j] = 0;
 
+	equalStrategyEnd = false;
+	underEqualStrategy = true;
 	/* check each key passed in */
 	for (i = 0;;)
 	{
@@ -150,6 +153,7 @@ _bt_orderkeys(Relation relation, BTScanOpaque so)
 			if (cur->sk_attno != attno + 1 && i < numberOfKeys)
 				elog(ERROR, "_bt_orderkeys: key(s) for attribute %d missed", attno + 1);
 
+			underEqualStrategy = (!equalStrategyEnd);
 			/*
 			 * If = has been specified, no other key will be used. In case
 			 * of key < 2 && key == 1 and so on we have to set qual_ok to
@@ -175,6 +179,8 @@ _bt_orderkeys(Relation relation, BTScanOpaque so)
 				init[BTGreaterEqualStrategyNumber - 1] = 0;
 				init[BTGreaterStrategyNumber - 1] = 0;
 			}
+			else
+				equalStrategyEnd = true;
 
 			/* only one of <, <= */
 			if (init[BTLessStrategyNumber - 1]
@@ -223,7 +229,7 @@ _bt_orderkeys(Relation relation, BTScanOpaque so)
 				if (init[j])
 					key[new_numberOfKeys++] = xform[j];
 
-			if (attno == 1)
+			if (underEqualStrategy)
 				so->numberOfFirstKeys = new_numberOfKeys;
 
 			if (i == numberOfKeys)

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.53 1999/07/17 20:16:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.54 1999/09/27 18:20:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -727,11 +727,15 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	RegProcedure proc;
 	int			result;
 	BTScanOpaque so;
-	ScanKeyData skdata;
 	Size		keysok;
-	int			i;
-	int			nKeyIndex = -1;
 
+	bool		strategyCheck;
+	ScanKey		scankeys = 0;
+	int		keysCount = 0;
+	int		*nKeyIs = 0;
+	int		i, j;
+	StrategyNumber	strat_total;
+       
 	rel = scan->relation;
 	so = (BTScanOpaque) scan->opaque;
 
@@ -742,38 +746,57 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	so->numberOfFirstKeys = 0;	/* may be changed by _bt_orderkeys */
 	so->qual_ok = 1;			/* may be changed by _bt_orderkeys */
 	scan->scanFromEnd = false;
+	strategyCheck = false;
 	if (so->numberOfKeys > 0)
 	{
 		_bt_orderkeys(rel, so);
 
-		if (ScanDirectionIsBackward(dir))
+		if (so->qual_ok)
+		     strategyCheck = true;
+ 	}
+	strat_total = BTEqualStrategyNumber;
+	if (strategyCheck)
+	{
+		AttrNumber	attno;
+
+		nKeyIs = (int *)palloc(so->numberOfKeys*sizeof(int));
+		for (i=0; i < so->numberOfKeys; i++)
 		{
-			for (i = 0; i < so->numberOfKeys; i++)
+			attno = so->keyData[i].sk_attno;
+			if (attno == keysCount)
+				continue;
+			if (attno > keysCount + 1)
+				break;
+			strat = _bt_getstrat(rel, attno,
+					so->keyData[i].sk_procedure);
+			if (strat == strat_total ||
+			    strat == BTEqualStrategyNumber)
 			{
-				if (so->keyData[i].sk_attno != 1)
+				nKeyIs[keysCount++] = i;
+				continue;
+			}
+			if (ScanDirectionIsBackward(dir) &&
+			    (strat == BTLessStrategyNumber ||
+			     strat == BTLessEqualStrategyNumber) )
+			{
+				nKeyIs[keysCount++] = i;
+				strat_total = strat;
+				if (strat == BTLessStrategyNumber)
 					break;
-				strat = _bt_getstrat(rel, so->keyData[i].sk_attno,
-									 so->keyData[i].sk_procedure);
-				if (strat == BTLessStrategyNumber ||
-					strat == BTLessEqualStrategyNumber ||
-					strat == BTEqualStrategyNumber)
-				{
-					nKeyIndex = i;
+				continue;
+			}
+			if (ScanDirectionIsForward(dir) &&
+			    (strat == BTGreaterStrategyNumber ||
+			     strat == BTGreaterEqualStrategyNumber) )
+			{
+				nKeyIs[keysCount++] = i;
+				strat_total = strat;
+				if (strat == BTGreaterStrategyNumber)
 					break;
-				}
+				continue;
 			}
 		}
-		else
-		{
-			strat = _bt_getstrat(rel, 1, so->keyData[0].sk_procedure);
-
-			if (strat == BTLessStrategyNumber ||
-				strat == BTLessEqualStrategyNumber)
-				;
-			else
-				nKeyIndex = 0;
-		}
-		if (nKeyIndex < 0)
+		if (!keysCount)
 			scan->scanFromEnd = true;
 	}
 	else
@@ -784,7 +807,11 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 
 	/* if we just need to walk down one edge of the tree, do that */
 	if (scan->scanFromEnd)
+	{
+		if (nKeyIs)
+			pfree(nKeyIs);
 		return _bt_endpoint(scan, dir);
+	}
 
 	itupdesc = RelationGetDescr(rel);
 	current = &(scan->currentItemData);
@@ -796,16 +823,24 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	 * at the right place in the scan.
 	 */
 	/* _bt_orderkeys disallows it, but it's place to add some code latter */
-	if (so->keyData[0].sk_flags & SK_ISNULL)
+	scankeys = (ScanKey)palloc(keysCount*sizeof(ScanKeyData));
+	for (i=0; i < keysCount; i++)
 	{
-		elog(ERROR, "_bt_first: btree doesn't support is(not)null, yet");
-		return (RetrieveIndexResult) NULL;
+		j = nKeyIs[i];
+		if (so->keyData[j].sk_flags & SK_ISNULL)
+		{
+			pfree(nKeyIs);
+			pfree(scankeys);
+			elog(ERROR, "_bt_first: btree doesn't support is(not)null, yet");
+			return ((RetrieveIndexResult) NULL);
+		} 
+		proc = index_getprocid(rel, i+1, BTORDER_PROC);
+		ScanKeyEntryInitialize(scankeys+i, so->keyData[j].sk_flags,
+				i+1, proc, so->keyData[j].sk_argument);
 	}
-	proc = index_getprocid(rel, 1, BTORDER_PROC);
-	ScanKeyEntryInitialize(&skdata, so->keyData[nKeyIndex].sk_flags,
-						   1, proc, so->keyData[nKeyIndex].sk_argument);
+	if   (nKeyIs)	pfree(nKeyIs);
 
-	stack = _bt_search(rel, 1, &skdata, &buf);
+	stack = _bt_search(rel, keysCount, scankeys, &buf);
 	_bt_freestack(stack);
 
 	blkno = BufferGetBlockNumber(buf);
@@ -823,6 +858,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 		ItemPointerSetInvalid(current);
 		so->btso_curbuf = InvalidBuffer;
 		_bt_relbuf(rel, buf, BT_READ);
+		pfree(scankeys);
 		return (RetrieveIndexResult) NULL;
 	}
 	maxoff = PageGetMaxOffsetNumber(page);
@@ -835,7 +871,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	 */
 
 	while (maxoff == P_HIKEY && !P_RIGHTMOST(pop) &&
-		   _bt_skeycmp(rel, 1, &skdata, page,
+		   _bt_skeycmp(rel, keysCount, scankeys, page,
 					   PageGetItemId(page, P_HIKEY),
 					   BTGreaterEqualStrategyNumber))
 	{
@@ -849,6 +885,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 			ItemPointerSetInvalid(current);
 			so->btso_curbuf = InvalidBuffer;
 			_bt_relbuf(rel, buf, BT_READ);
+			pfree(scankeys);
 			return (RetrieveIndexResult) NULL;
 		}
 		maxoff = PageGetMaxOffsetNumber(page);
@@ -857,7 +894,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 
 
 	/* find the nearest match to the manufactured scan key on the page */
-	offnum = _bt_binsrch(rel, buf, 1, &skdata, BT_DESCENT);
+	offnum = _bt_binsrch(rel, buf, keysCount, scankeys, BT_DESCENT);
 
 	if (offnum > maxoff)
 	{
@@ -872,12 +909,11 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	 * we're looking for minus the value we're looking at in the index.
 	 */
 
-	result = _bt_compare(rel, itupdesc, page, 1, &skdata, offnum);
+	result = _bt_compare(rel, itupdesc, page, keysCount, scankeys, offnum);
 
 	/* it's yet other place to add some code latter for is(not)null */
 
-	strat = _bt_getstrat(rel, 1, so->keyData[nKeyIndex].sk_procedure);
-
+	strat = strat_total;
 	switch (strat)
 	{
 		case BTLessStrategyNumber:
@@ -890,7 +926,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 
 					offnum = ItemPointerGetOffsetNumber(current);
 					page = BufferGetPage(buf);
-					result = _bt_compare(rel, itupdesc, page, 1, &skdata, offnum);
+					result = _bt_compare(rel, itupdesc, page, keysCount, scankeys, offnum);
 				} while (result <= 0);
 
 			}
@@ -906,12 +942,11 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 
 					offnum = ItemPointerGetOffsetNumber(current);
 					page = BufferGetPage(buf);
-					result = _bt_compare(rel, itupdesc, page, 1, &skdata, offnum);
+					result = _bt_compare(rel, itupdesc, page, keysCount, scankeys, offnum);
 				} while (result >= 0);
-
-				if (result < 0)
-					_bt_twostep(scan, &buf, BackwardScanDirection);
 			}
+			if (result < 0)
+				_bt_twostep(scan, &buf, BackwardScanDirection);
 			break;
 
 		case BTEqualStrategyNumber:
@@ -920,6 +955,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 				_bt_relbuf(scan->relation, buf, BT_READ);
 				so->btso_curbuf = InvalidBuffer;
 				ItemPointerSetInvalid(&(scan->currentItemData));
+				pfree(scankeys);
 				return (RetrieveIndexResult) NULL;
 			}
 			else if (ScanDirectionIsBackward(dir))
@@ -931,7 +967,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 
 					offnum = ItemPointerGetOffsetNumber(current);
 					page = BufferGetPage(buf);
-					result = _bt_compare(rel, itupdesc, page, 1, &skdata, offnum);
+					result = _bt_compare(rel, itupdesc, page, keysCount, scankeys, offnum);
 				} while (result == 0);
 
 				if (result < 0)
@@ -950,6 +986,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 						_bt_relbuf(scan->relation, buf, BT_READ);
 						so->btso_curbuf = InvalidBuffer;
 						ItemPointerSetInvalid(&(scan->currentItemData));
+						pfree(scankeys);
 						return (RetrieveIndexResult) NULL;
 					}
 				}
@@ -974,7 +1011,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 
 					page = BufferGetPage(buf);
 					offnum = ItemPointerGetOffsetNumber(current);
-					result = _bt_compare(rel, itupdesc, page, 1, &skdata, offnum);
+					result = _bt_compare(rel, itupdesc, page, keysCount, scankeys, offnum);
 				} while (result < 0);
 
 				if (result > 0)
@@ -993,12 +1030,13 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 
 					offnum = ItemPointerGetOffsetNumber(current);
 					page = BufferGetPage(buf);
-					result = _bt_compare(rel, itupdesc, page, 1, &skdata, offnum);
+					result = _bt_compare(rel, itupdesc, page, keysCount, scankeys, offnum);
 				} while (result >= 0);
 			}
 			break;
 	}
 
+	pfree(scankeys);
 	/* okay, current item pointer for the scan is right */
 	offnum = ItemPointerGetOffsetNumber(current);
 	page = BufferGetPage(buf);
