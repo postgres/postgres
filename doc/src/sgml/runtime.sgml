@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.90 2001/10/11 21:16:26 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.91 2001/10/31 20:35:02 petere Exp $
 -->
 
 <Chapter Id="runtime">
@@ -2157,7 +2157,7 @@ set semsys:seminfo_semmsl=32
 
        <para>
         See also <ulink
-        url="http://www.sunworld.com/swol-09-1997/swol-09-insidesolaris.html">http://www.sunworld.com/swol-09-1997/swol-09-insidesolaris.html</>
+        url="http://www.sunworld.com/swol-09-1997/swol-09-insidesolaris.html"></>
         for information on shared memory under
         <productname>Solaris</>.
        </para>

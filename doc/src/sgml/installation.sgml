@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.62 2001/10/13 04:23:50 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.63 2001/10/31 20:35:02 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -141,9 +141,9 @@ su - postgres
   <para>
    If you need to get a <acronym>GNU</acronym> package, you can find
    it at your local <acronym>GNU</acronym> mirror site (see <ulink
-   url="http://www.gnu.org/order/ftp.html">http://www.gnu.org/order/ftp.html</>
+   url="http://www.gnu.org/order/ftp.html"></>
    for a list) or at <ulink
-   url="ftp://ftp.gnu.org/gnu/">ftp://ftp.gnu.org/gnu/</ulink>.
+   url="ftp://ftp.gnu.org/gnu/"></ulink>.
   </para>
 
   <para>
@@ -163,8 +163,7 @@ su - postgres
 
   <para>
    The <productname>PostgreSQL</> &version; sources can by obtained from <ulink
-   url="ftp://ftp.postgresql.org/pub/postgresql-&version;.tar.gz"
-   >ftp://ftp.postgresql.org/pub/postgresql-&version;.tar.gz</ulink>.
+   url="ftp://ftp.postgresql.org/pub/postgresql-&version;.tar.gz"></ulink>.
    Use a mirror if possible. Then unpack it:
 <screen>
 <userinput>gunzip postgresql-&version;.tar.gz</userinput>
@@ -576,7 +575,7 @@ su - postgres
          (e.g., <systemitem class="osname">Linux</>, <systemitem class="osname">NetBSD</>, <systemitem class="osname">Solaris</>), for other systems you can download
          an add-on package from here:  <ulink
          url="http://www.postgresql.org/~petere/gettext.html"
-         ><systemitem class="resource">http://www.postgresql.org/~petere/gettext.html</></ulink>.  If
+         ></ulink>.  If
          you are using the <application>gettext</> implementation in the GNU C library
          then you will additionally need the <productname>GNU gettext</productname> package for
          some utility programs.  For any of the other implementations
@@ -1050,7 +1049,7 @@ setenv LD_LIBRARY_PATH /usr/local/pgsql/lib
     <filename>/etc/profile</> or <filename>~/.bash_profile</>.  Some
     good information about the caveats associated with the method can
     be found at <ulink
-    url="http://www.visi.com/~barr/ldpath.html">http://www.visi.com/~barr/ldpath.html</ulink>.
+    url="http://www.visi.com/~barr/ldpath.html"></ulink>.
    </para>
 
    <para>
@@ -1346,7 +1345,7 @@ gunzip -c user.ps.gz \
   </note>
 
     <informaltable>
-     <tgroup cols="4">
+     <tgroup cols="5">
       <thead>
        <row>
 	<entry><acronym>OS</acronym></entry>
@@ -1580,7 +1579,7 @@ gunzip -c user.ps.gz \
   </formalpara>
 
   <informaltable>
-   <tgroup cols="4">
+   <tgroup cols="5">
     <thead>
      <row>
       <entry><acronym>OS</acronym></entry>

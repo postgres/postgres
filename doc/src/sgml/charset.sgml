@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/charset.sgml,v 2.12 2001/10/09 18:45:59 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/charset.sgml,v 2.13 2001/10/31 20:35:01 petere Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -620,8 +620,7 @@ RESET CLIENT_ENCODING;
 
      <variablelist>
       <varlistentry>
-       <term><ulink url="ftp://ftp.ora.com/pub/examples/nutshell/ujip/doc/cjk.inf"
-        >ftp://ftp.ora.com/pub/examples/nutshell/ujip/doc/cjk.inf</ulink></term>
+       <term><ulink url="ftp://ftp.ora.com/pub/examples/nutshell/ujip/doc/cjk.inf"></ulink></term>
 
        <listitem>
         <para>
@@ -633,7 +632,7 @@ RESET CLIENT_ENCODING;
       </varlistentry>
 
       <varlistentry>
-       <term><ulink url="http://www.unicode.org/">http://www.unicode.org/</ulink></term>
+       <term><ulink url="http://www.unicode.org/"></ulink></term>
 
        <listitem>
         <para>
