@@ -1587,6 +1587,10 @@ Thu Jul 17 09:15:59 CEST 2003
 Fri Jul 18 16:31:10 CEST 2003
 
 	- Added some more compatibility features to the parser.
+	
+Thu Jul 24 10:33:51 CEST 2003
+
+	- Fixed mdy functions to use correct offset.
 	- Set ecpg version to 3.0.0
 	- Set ecpg library to 4.0.0
 	- Set pgtypes library to 1.0.0

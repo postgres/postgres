@@ -100,7 +100,7 @@ PGTYPESdate_julmdy(Date jd, int* mdy)
 {
 	int y, m, d;
 	
-	j2date((int) jd, &y, &m, &d);
+	j2date((int) (jd + date2j(2000, 1, 1)), &y, &m, &d);
 	mdy[0] = m;
 	mdy[1] = d;
 	mdy[2] = y;
@@ -113,7 +113,7 @@ PGTYPESdate_mdyjul(int* mdy, Date *jdate)
 	/* day   is mdy[1] */
 	/* year  is mdy[2] */
 
-	*jdate = (Date) date2j(mdy[2], mdy[0], mdy[1]);
+	*jdate = (Date) (date2j(mdy[2], mdy[0], mdy[1]) - date2j(2000, 1, 1));
 }
 
 int

@@ -36,7 +36,7 @@ int main()
 	
 	while (1)
 	{
-		$fetch in c into :i, :j;
+		$fetch forward c into :i, :j;
 		if (sqlca.sqlcode == 100) break;
 		else if (sqlca.sqlcode != 0) printf ("Error: %ld\n", sqlca.sqlcode);
 
