@@ -1,12 +1,12 @@
 \set ECHO none
-psql:ltree.sql:9: WARNING:  ProcedureCreate: type ltree is not yet defined
-psql:ltree.sql:14: WARNING:  Argument type "ltree" is only a shell
-psql:ltree.sql:281: WARNING:  ProcedureCreate: type lquery is not yet defined
-psql:ltree.sql:286: WARNING:  Argument type "lquery" is only a shell
-psql:ltree.sql:345: WARNING:  ProcedureCreate: type ltxtquery is not yet defined
-psql:ltree.sql:350: WARNING:  Argument type "ltxtquery" is only a shell
-psql:ltree.sql:412: WARNING:  ProcedureCreate: type ltree_gist is not yet defined
-psql:ltree.sql:417: WARNING:  Argument type "ltree_gist" is only a shell
+psql:ltree.sql:9: NOTICE:  ProcedureCreate: type ltree is not yet defined
+psql:ltree.sql:14: NOTICE:  Argument type "ltree" is only a shell
+psql:ltree.sql:281: NOTICE:  ProcedureCreate: type lquery is not yet defined
+psql:ltree.sql:286: NOTICE:  Argument type "lquery" is only a shell
+psql:ltree.sql:345: NOTICE:  ProcedureCreate: type ltxtquery is not yet defined
+psql:ltree.sql:350: NOTICE:  Argument type "ltxtquery" is only a shell
+psql:ltree.sql:412: NOTICE:  ProcedureCreate: type ltree_gist is not yet defined
+psql:ltree.sql:417: NOTICE:  Argument type "ltree_gist" is only a shell
 SELECT ''::ltree;
  ltree 
 -------

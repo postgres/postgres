@@ -3,10 +3,10 @@
 -- does not depend on contents of seg.sql.
 --
 \set ECHO none
-psql:btree_gist.sql:10: WARNING:  ProcedureCreate: type int4key is not yet defined
-psql:btree_gist.sql:15: WARNING:  Argument type "int4key" is only a shell
-psql:btree_gist.sql:98: WARNING:  ProcedureCreate: type tskey is not yet defined
-psql:btree_gist.sql:103: WARNING:  Argument type "tskey" is only a shell
+psql:btree_gist.sql:10: NOTICE:  ProcedureCreate: type int4key is not yet defined
+psql:btree_gist.sql:15: NOTICE:  Argument type "int4key" is only a shell
+psql:btree_gist.sql:98: NOTICE:  ProcedureCreate: type tskey is not yet defined
+psql:btree_gist.sql:103: NOTICE:  Argument type "tskey" is only a shell
 CREATE TABLE inttmp (b int4);
 \copy inttmp from 'data/test_btree.data'
 CREATE TABLE tstmp ( t timestamp without time zone );
