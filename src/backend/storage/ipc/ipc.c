@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.70 2001/10/01 18:16:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.71 2001/10/01 23:26:55 tgl Exp $
  *
  * NOTES
  *
@@ -299,12 +299,18 @@ InternalIpcSemaphoreCreate(IpcSemaphoreKey semKey,
 
 		if (errno == ENOSPC)
 			fprintf(stderr,
-					"\nThis error does *not* mean that you have run out of disk space.\n\n"
-					"It occurs because either the system limit for the maximum number of\n"
+					"\nThis error does *not* mean that you have run out of disk space.\n"
+					"\n"
+					"It occurs when either the system limit for the maximum number of\n"
 					"semaphore sets (SEMMNI), or the system wide maximum number of\n"
 					"semaphores (SEMMNS), would be exceeded.  You need to raise the\n"
-					"respective kernel parameter.  Look into the PostgreSQL documentation\n"
-					"for details.\n\n");
+					"respective kernel parameter.  Alternatively, reduce PostgreSQL's\n"
+					"consumption of semaphores by reducing its max_connections parameter\n"
+					"(currently %d).\n"
+					"\n"
+					"The PostgreSQL Administrator's Guide contains more information about\n"
+					"configuring your system for PostgreSQL.\n\n",
+					MaxBackends);
 
 		proc_exit(1);
 	}
@@ -583,27 +589,48 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, uint32 size, int permission)
 
 		if (errno == EINVAL)
 			fprintf(stderr,
-				 "\nThis error can be caused by one of three things:\n\n"
-					"1. The maximum size for shared memory segments on your system was\n"
-					"   exceeded.  You need to raise the SHMMAX parameter in your kernel\n"
-					"   to be at least %u bytes.\n\n"
-					"2. The requested shared memory segment was too small for your system.\n"
-					"   You need to lower the SHMMIN parameter in your kernel.\n\n"
-					"3. The requested shared memory segment already exists but is of the\n"
-					"   wrong size.  This can occur if some other application on your system\n"
-					"   is also using shared memory.\n\n"
+					"\nThis error usually means that PostgreSQL's request for a shared memory\n"
+					"segment exceeded your kernel's SHMMAX parameter.  You can either\n"
+					"reduce the request size or reconfigure the kernel with larger SHMMAX.\n"
+					"To reduce the request size (currently %u bytes), reduce\n"
+					"PostgreSQL's shared_buffers parameter (currently %d) and/or\n"
+					"its max_connections parameter (currently %d).\n"
+					"\n"
+					"If the request size is already small, it's possible that it is less than\n"
+					"your kernel's SHMMIN parameter, in which case raising the request size or\n"
+					"reconfiguring SHMMIN is called for.\n"
+					"\n"
 					"The PostgreSQL Administrator's Guide contains more information about\n"
 					"shared memory configuration.\n\n",
-					size);
+					size, NBuffers, MaxBackends);
+
+		else if (errno == ENOMEM)
+			fprintf(stderr,
+					"\nThis error usually means that PostgreSQL's request for a shared\n"
+					"memory segment exceeded available memory or swap space.\n"
+					"To reduce the request size (currently %u bytes), reduce\n"
+					"PostgreSQL's shared_buffers parameter (currently %d) and/or\n"
+					"its max_connections parameter (currently %d).\n"
+					"\n"
+					"The PostgreSQL Administrator's Guide contains more information about\n"
+					"shared memory configuration.\n\n",
+					size, NBuffers, MaxBackends);
 
 		else if (errno == ENOSPC)
 			fprintf(stderr,
-					"\nThis error does *not* mean that you have run out of disk space.\n\n"
-					"It occurs either if all available shared memory ids have been taken,\n"
+					"\nThis error does *not* mean that you have run out of disk space.\n"
+					"\n"
+					"It occurs either if all available shared memory IDs have been taken,\n"
 					"in which case you need to raise the SHMMNI parameter in your kernel,\n"
 					"or because the system's overall limit for shared memory has been\n"
-					"reached.  The PostgreSQL Administrator's Guide contains more\n"
-					"information about shared memory configuration.\n\n");
+					"reached.  If you cannot increase the shared memory limit,\n"
+					"reduce PostgreSQL's shared memory request (currently %u bytes),\n"
+					"by reducing its shared_buffers parameter (currently %d) and/or\n"
+					"its max_connections parameter (currently %d).\n"
+					"\n"
+					"The PostgreSQL Administrator's Guide contains more information about\n"
+					"shared memory configuration.\n\n",
+					size, NBuffers, MaxBackends);
 
 		proc_exit(1);
 	}
