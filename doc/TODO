@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sat Apr  6 20:53:21 EST 2002
+Last updated:		Mon Apr  8 23:55:25 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -242,6 +242,7 @@ COMMANDS
 	o Allow Java server-side programming (?) [java]
 	o Fix problems with complex temporary table creation/destruction
 	  without using PL/PgSQL EXECUTE
+	o Fix PL/pgSQL RENAME to work on on variable names
 
 CLIENTS
 -------
