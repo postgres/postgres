@@ -6,19 +6,23 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.54 1999/07/17 20:17:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.55 1999/08/25 23:21:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include "access/heapam.h"
+#include "catalog/pg_operator.h"
 #include "catalog/pg_type.h"
 #include "miscadmin.h"
+#include "nodes/makefuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/prep.h"
 #include "parser/analyze.h"
+#include "parser/parse_expr.h"
 #include "parser/parse_relation.h"
+#include "parser/parse_oper.h"
 #include "parser/parse_target.h"
 #include "parser/parse_type.h"
 #include "parser/parsetree.h"
@@ -643,9 +647,6 @@ modifyAggrefUplevel(Node *node)
 									(Node *) (sub->lefthand));
 
 				modifyAggrefUplevel(
-									(Node *) (sub->oper));
-
-				modifyAggrefUplevel(
 									(Node *) (sub->subselect));
 			}
 			break;
@@ -817,12 +818,6 @@ modifyAggrefChangeVarnodes(Node **nodePtr, int rt_index, int new_index, int subl
 										   sublevels_up);
 
 				modifyAggrefChangeVarnodes(
-										   (Node **) (&(sub->oper)),
-										   rt_index,
-										   new_index,
-										   sublevels_up);
-
-				modifyAggrefChangeVarnodes(
 										   (Node **) (&(sub->subselect)),
 										   rt_index,
 										   new_index,
@@ -989,6 +984,7 @@ modifyAggrefDropQual(Node **nodePtr, Node *orignode, Expr *expr)
 				SubLink    *sub = (SubLink *) node;
 				SubLink    *osub = (SubLink *) orignode;
 
+				/* what about the lefthand? */
 				modifyAggrefDropQual(
 									 (Node **) (&(sub->subselect)),
 									 (Node *) (osub->subselect),
@@ -1046,19 +1042,21 @@ modifyAggrefMakeSublink(Expr *origexp, Query *parsetree)
 		if (nodeTag(nth(1, exp->args)) == T_Aggref)
 			elog(ERROR, "rewrite: comparision of 2 aggregate columns not supported");
 		else
-			elog(ERROR, "rewrite: aggregate column of view must be at rigth side in qual");
+			elog(ERROR, "rewrite: aggregate column of view must be at right side in qual");
 	}
 
 	aggref = (Aggref *) nth(1, exp->args);
 	target = (Var *) (aggref->target);
+	/* XXX bogus --- agg's target might not be a Var! */
 	rte = (RangeTblEntry *) nth(target->varno - 1, parsetree->rtable);
+
 	tle = makeNode(TargetEntry);
 	resdom = makeNode(Resdom);
 
-	aggref->usenulls = TRUE;
+	aggref->usenulls = TRUE;	/* XXX safe for all aggs?? */
 
 	resdom->resno = 1;
-	resdom->restype = ((Oper *) (exp->oper))->opresulttype;
+	resdom->restype = aggref->aggtype;
 	resdom->restypmod = -1;
 	resdom->resname = pstrdup("<noname>");
 	resdom->reskey = 0;
@@ -1074,9 +1072,8 @@ modifyAggrefMakeSublink(Expr *origexp, Query *parsetree)
 	sublink = makeNode(SubLink);
 	sublink->subLinkType = EXPR_SUBLINK;
 	sublink->useor = FALSE;
-	sublink->lefthand = lappend(NIL, copyObject(lfirst(exp->args)));
-	sublink->oper = lappend(NIL, copyObject(exp));
-	sublink->subselect = NULL;
+	sublink->lefthand = lcons(lfirst(exp->args), NIL);
+	sublink->oper = lcons(exp->oper, NIL);
 
 	subquery = makeNode(Query);
 	sublink->subselect = (Node *) subquery;
@@ -1104,8 +1101,6 @@ modifyAggrefMakeSublink(Expr *origexp, Query *parsetree)
 	modifyAggrefUplevel((Node *) sublink);
 
 	modifyAggrefChangeVarnodes((Node **) &(sublink->lefthand), target->varno,
-							   1, target->varlevelsup);
-	modifyAggrefChangeVarnodes((Node **) &(sublink->oper), target->varno,
 							   1, target->varlevelsup);
 	modifyAggrefChangeVarnodes((Node **) &(sublink->subselect), target->varno,
 							   1, target->varlevelsup);
@@ -1249,6 +1244,7 @@ modifyAggrefQual(Node **nodePtr, Query *parsetree)
 			{
 				SubLink    *sub = (SubLink *) node;
 
+				/* lefthand ??? */
 				modifyAggrefQual(
 								 (Node **) (&(sub->subselect)),
 								 (Query *) (sub->subselect));
@@ -1318,9 +1314,6 @@ checkQueryHasSubLink_walker(Node *node, void *context)
 		return false;
 	if (IsA(node, SubLink))
 		return true;			/* abort the tree traversal and return true */
-	/* Note: we assume the tree has not yet been rewritten by subselect.c,
-	 * therefore we will find bare SubLink nodes and not SUBPLAN nodes.
-	 */
 	return expression_tree_walker(node, checkQueryHasSubLink_walker, context);
 }
 
@@ -1654,8 +1647,6 @@ apply_RIR_view(Node **nodePtr, int rt_index, RangeTblEntry *rte, List *tlist, in
 		case T_SubLink:
 			{
 				SubLink    *sub = (SubLink *) node;
-				List	   *tmp_lefthand,
-						   *tmp_oper;
 
 				apply_RIR_view(
 							   (Node **) (&(sub->lefthand)),
@@ -1672,14 +1663,6 @@ apply_RIR_view(Node **nodePtr, int rt_index, RangeTblEntry *rte, List *tlist, in
 							   tlist,
 							   modified,
 							   sublevels_up + 1);
-
-				tmp_lefthand = sub->lefthand;
-				foreach(tmp_oper, sub->oper)
-				{
-					lfirst(((Expr *) lfirst(tmp_oper))->args) =
-						lfirst(tmp_lefthand);
-					tmp_lefthand = lnext(tmp_lefthand);
-				}
 			}
 			break;
 
@@ -3014,31 +2997,47 @@ Except_Intersect_Rewrite(Query *parsetree)
 			 * of the targetlist must be (IN) or must not be (NOT IN) the
 			 * subselect
 			 */
+			n->lefthand = NIL;
 			foreach(elist, intersect_node->targetList)
 			{
-				Node	   *expr = lfirst(elist);
-				TargetEntry *tent = (TargetEntry *) expr;
+				TargetEntry *tent = (TargetEntry *) lfirst(elist);
 
 				n->lefthand = lappend(n->lefthand, tent->expr);
 			}
 
 			/*
-			 * The first arguments of oper also have to be created for the
-			 * sublink (they are the same as the lefthand side!)
+			 * Also prepare the list of Opers that must be used for the
+			 * comparisons (they depend on the specific datatypes involved!)
 			 */
 			left_expr = n->lefthand;
 			right_expr = ((Query *) (n->subselect))->targetList;
+			n->oper = NIL;
 
 			foreach(elist, left_expr)
 			{
 				Node	   *lexpr = lfirst(elist);
-				Node	   *rexpr = lfirst(right_expr);
-				TargetEntry *tent = (TargetEntry *) rexpr;
-				Expr	   *op_expr;
+				TargetEntry *tent = (TargetEntry *) lfirst(right_expr);
+				Operator	optup;
+				Form_pg_operator opform;
+				Oper	   *newop;
 
-				op_expr = make_op(op, lexpr, tent->expr);
+				optup = oper(op,
+							 exprType(lexpr),
+							 exprType(tent->expr),
+							 FALSE);
+				opform = (Form_pg_operator) GETSTRUCT(optup);
 
-				n->oper = lappend(n->oper, op_expr);
+				if (opform->oprresult != BOOLOID)
+					elog(ERROR, "parser: '%s' must return 'bool' to be used with quantified predicate subquery", op);
+
+				newop = makeOper(oprid(optup),/* opno */
+								 InvalidOid, /* opid */
+								 opform->oprresult,
+								 0,
+								 NULL);
+
+				n->oper = lappend(n->oper, newop);
+
 				right_expr = lnext(right_expr);
 			}
 

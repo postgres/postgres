@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.48 1999/08/22 20:14:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.49 1999/08/25 23:21:41 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -817,8 +817,8 @@ CommuteClause(Expr *clause)
  * the args and slink->oper lists (which belong to the outer plan), but it
  * will *not* visit the inner plan, since that's typically what expression
  * tree walkers want.  A walker that wants to visit the subplan can force
- * appropriate behavior by recognizing subplan nodes and doing the right
- * thing.
+ * appropriate behavior by recognizing subplan expression nodes and doing
+ * the right thing.
  *
  * Bare SubLink nodes (without a SUBPLAN_EXPR) are handled by recursing into
  * the "lefthand" argument list only.  (A bare SubLink should be seen only if
@@ -854,26 +854,18 @@ expression_tree_walker(Node *node, bool (*walker) (), void *context)
 		case T_Expr:
 			{
 				Expr   *expr = (Expr *) node;
+
 				if (expr->opType == SUBPLAN_EXPR)
 				{
-					/* examine args list (params to be passed to subplan) */
-					if (expression_tree_walker((Node *) expr->args,
-											   walker, context))
-						return true;
-					/* examine oper list as well */
-					if (expression_tree_walker(
-						(Node *) ((SubPlan *) expr->oper)->sublink->oper,
-						walker, context))
-						return true;
-					/* but not the subplan itself */
-				}
-				else
-				{
-					/* for other Expr node types, just examine args list */
-					if (expression_tree_walker((Node *) expr->args,
-											   walker, context))
+					/* recurse to the SubLink node (skipping SubPlan!) */
+					if (walker((Node *) ((SubPlan *) expr->oper)->sublink,
+							   context))
 						return true;
 				}
+				/* for all Expr node types, examine args list */
+				if (expression_tree_walker((Node *) expr->args,
+										   walker, context))
+					return true;
 			}
 			break;
 		case T_Aggref:
@@ -918,11 +910,20 @@ expression_tree_walker(Node *node, bool (*walker) (), void *context)
 			}
 			break;
 		case T_SubLink:
-			/* A "bare" SubLink (note we will not come here if we found
-			 * a SUBPLAN_EXPR node above it).  Examine the lefthand side,
-			 * but not the oper list nor the subquery.
-			 */
-			return walker(((SubLink *) node)->lefthand, context);
+			{
+				SubLink   *sublink = (SubLink *) node;
+
+				/* If the SubLink has already been processed by subselect.c,
+				 * it will have lefthand=NIL, and we only need to look at
+				 * the oper list.  Otherwise we only need to look at lefthand
+				 * (the Oper nodes in the oper list are deemed uninteresting).
+				 */
+				if (sublink->lefthand)
+					return walker((Node *) sublink->lefthand, context);
+				else
+					return walker((Node *) sublink->oper, context);
+			}
+			break;
 		case T_List:
 			foreach(temp, (List *) node)
 			{
@@ -988,8 +989,8 @@ expression_tree_walker(Node *node, bool (*walker) (), void *context)
  * the args and slink->oper lists (which belong to the outer plan), but it
  * will simply copy the link to the inner plan, since that's typically what
  * expression tree mutators want.  A mutator that wants to modify the subplan
- * can force appropriate behavior by recognizing subplan nodes and doing the
- * right thing.
+ * can force appropriate behavior by recognizing subplan expression nodes
+ * and doing the right thing.
  *
  * Bare SubLink nodes (without a SUBPLAN_EXPR) are handled by recursing into
  * the "lefthand" argument list only.  (A bare SubLink should be seen only if

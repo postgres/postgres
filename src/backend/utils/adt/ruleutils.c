@@ -3,7 +3,7 @@
  *			  out of it's tuple
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.22 1999/08/21 03:48:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.23 1999/08/25 23:21:35 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1586,7 +1586,7 @@ get_sublink_expr(QryHier *qh, int rt_index, Node *node, bool varprefix)
 {
 	SubLink    *sublink = (SubLink *) node;
 	Query	   *query = (Query *) (sublink->subselect);
-	Expr	   *expr;
+	Oper	   *oper;
 	List	   *l;
 	char	   *sep;
 	char		buf[BUFSIZE];
@@ -1620,20 +1620,20 @@ get_sublink_expr(QryHier *qh, int rt_index, Node *node, bool varprefix)
 			break;
 
 		case ANY_SUBLINK:
-			expr = (Expr *) lfirst(sublink->oper);
-			strcat(buf, get_opname(((Oper *) (expr->oper))->opno));
+			oper = (Oper *) lfirst(sublink->oper);
+			strcat(buf, get_opname(oper->opno));
 			strcat(buf, " ANY ");
 			break;
 
 		case ALL_SUBLINK:
-			expr = (Expr *) lfirst(sublink->oper);
-			strcat(buf, get_opname(((Oper *) (expr->oper))->opno));
+			oper = (Oper *) lfirst(sublink->oper);
+			strcat(buf, get_opname(oper->opno));
 			strcat(buf, " ALL ");
 			break;
 
 		case EXPR_SUBLINK:
-			expr = (Expr *) lfirst(sublink->oper);
-			strcat(buf, get_opname(((Oper *) (expr->oper))->opno));
+			oper = (Oper *) lfirst(sublink->oper);
+			strcat(buf, get_opname(oper->opno));
 			strcat(buf, " ");
 			break;
 
@@ -1766,6 +1766,7 @@ check_if_rte_used(int rt_index, Node *node, int sup)
 
 				if (check_if_rte_used(rt_index, (Node *) (query->qual), sup + 1))
 					return TRUE;
+				/* why aren't we looking at query->targetlist, havingQual? */
 
 				if (check_if_rte_used(rt_index, (Node *) (sublink->lefthand), sup))
 					return TRUE;

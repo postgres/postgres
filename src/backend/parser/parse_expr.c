@@ -7,12 +7,14 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.56 1999/08/05 02:33:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.57 1999/08/25 23:21:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
+
+#include "catalog/pg_operator.h"
 #include "nodes/makefuncs.h"
 #include "nodes/params.h"
 #include "nodes/relation.h"
@@ -22,6 +24,7 @@
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_func.h"
+#include "parser/parse_oper.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_target.h"
 #include "utils/builtins.h"
@@ -209,7 +212,15 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 					elog(ERROR, "parser: bad query in subselect");
 				sublink->subselect = (Node *) qtree;
 
-				if (sublink->subLinkType != EXISTS_SUBLINK)
+				if (sublink->subLinkType == EXISTS_SUBLINK)
+				{
+					/* EXISTS needs no lefthand or combining operator.
+					 * These fields should be NIL already, but make sure.
+					 */
+					sublink->lefthand = NIL;
+					sublink->oper = NIL;
+				}
+				else
 				{
 					char	   *op = lfirst(sublink->oper);
 					List	   *left_list = sublink->lefthand;
@@ -236,27 +247,39 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 					{
 						TargetEntry *tent = (TargetEntry *) lfirst(right_list);
 						Node	   *lexpr;
-						Expr	   *op_expr;
+						Operator	optup;
+						Form_pg_operator opform;
+						Oper	   *newop;
 
-						if (! tent->resdom->resjunk)
-						{
-							if (left_list == NIL)
-								elog(ERROR, "parser: Subselect has too many fields.");
-							lexpr = lfirst(left_list);
-							left_list = lnext(left_list);
-							op_expr = make_op(op, lexpr, tent->expr);
-							if (op_expr->typeOid != BOOLOID &&
-								sublink->subLinkType != EXPR_SUBLINK)
-								elog(ERROR, "parser: '%s' must return 'bool' to be used with quantified predicate subquery", op);
-							sublink->oper = lappend(sublink->oper, op_expr);
-						}
 						right_list = lnext(right_list);
+						if (tent->resdom->resjunk)
+							continue;
+
+						if (left_list == NIL)
+							elog(ERROR, "parser: Subselect has too many fields.");
+						lexpr = lfirst(left_list);
+						left_list = lnext(left_list);
+
+						optup = oper(op,
+									 exprType(lexpr),
+									 exprType(tent->expr),
+									 FALSE);
+						opform = (Form_pg_operator) GETSTRUCT(optup);
+
+						if (opform->oprresult != BOOLOID &&
+							sublink->subLinkType != EXPR_SUBLINK)
+							elog(ERROR, "parser: '%s' must return 'bool' to be used with quantified predicate subquery", op);
+
+						newop = makeOper(oprid(optup),/* opno */
+										 InvalidOid, /* opid */
+										 opform->oprresult,
+										 0,
+										 NULL);
+						sublink->oper = lappend(sublink->oper, newop);
 					}
 					if (left_list != NIL)
 						elog(ERROR, "parser: Subselect has too few fields.");
 				}
-				else
-					sublink->oper = NIL;
 				result = (Node *) expr;
 				break;
 			}
@@ -565,10 +588,13 @@ exprType(Node *expr)
 
 				if (sublink->subLinkType == EXPR_SUBLINK)
 				{
-					/* return the result type of the combining operator */
-					Expr	   *op_expr = (Expr *) lfirst(sublink->oper);
+					/* return the result type of the combining operator;
+					 * should only be one...
+					 */
+					Oper	   *op = (Oper *) lfirst(sublink->oper);
 
-					type = op_expr->typeOid;
+					Assert(IsA(op, Oper));
+					type = op->opresulttype;
 				}
 				else
 				{

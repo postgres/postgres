@@ -6,18 +6,24 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.23 1999/08/22 20:14:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.24 1999/08/25 23:21:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+#include "catalog/pg_operator.h"
 #include "catalog/pg_type.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/planner.h"
 #include "optimizer/subselect.h"
+#include "parser/parse_expr.h"
+#include "parser/parse_node.h"
+#include "parser/parse_oper.h"
+#include "utils/lsyscache.h"
+
 
 int			PlannerQueryLevel;	/* level of current query */
 List	   *PlannerInitPlan;	/* init subplans for current query */
@@ -46,7 +52,7 @@ int			PlannerPlanId;		/* to assign unique ID to subquery plans */
  * is set from the absolute level value given by varlevel.
  */
 static int
-_new_param(Var *var, int varlevel)
+new_param(Var *var, int varlevel)
 {
 	Var		   *paramVar = (Var *) copyObject(var);
 
@@ -62,7 +68,7 @@ _new_param(Var *var, int varlevel)
  * which is expected to have varlevelsup > 0 (ie, it is not local).
  */
 static Param *
-_replace_var(Var *var)
+replace_var(Var *var)
 {
 	List	   *ppv;
 	Param	   *retval;
@@ -98,7 +104,7 @@ _replace_var(Var *var)
 	if (! ppv)
 	{
 		/* Nope, so make a new one */
-		i = _new_param(var, varlevel);
+		i = new_param(var, varlevel);
 	}
 
 	retval = makeNode(Param);
@@ -109,8 +115,11 @@ _replace_var(Var *var)
 	return retval;
 }
 
+/*
+ * Convert a bare SubLink (as created by the parser) into a SubPlan.
+ */
 static Node *
-_make_subplan(SubLink *slink)
+make_subplan(SubLink *slink)
 {
 	SubPlan    *node = makeNode(SubPlan);
 	Plan	   *plan;
@@ -126,7 +135,7 @@ _make_subplan(SubLink *slink)
 
 	/*
 	 * Assign subPlan, extParam and locParam to plan nodes. At the moment,
-	 * SS_finalize_plan doesn't handle initPlan-s and so we assigne them
+	 * SS_finalize_plan doesn't handle initPlan-s and so we assign them
 	 * to the topmost plan node and take care about its extParam too.
 	 */
 	(void) SS_finalize_plan(plan);
@@ -169,31 +178,58 @@ _make_subplan(SubLink *slink)
 	 */
 	if (node->parParam == NULL && slink->subLinkType == EXPR_SUBLINK)
 	{
+		List	   *newoper = NIL;
 		int			i = 0;
 
-		/* transform right side of all sublink Oper-s into Param */
+		/*
+		 * Convert oper list of Opers into a list of Exprs, using
+		 * lefthand arguments and Params representing inside results.
+		 */
 		foreach(lst, slink->oper)
 		{
-			List	   *rside = lnext(((Expr *) lfirst(lst))->args);
+			Oper	   *oper = (Oper *) lfirst(lst);
+			Node	   *lefthand = nth(i, slink->lefthand);
 			TargetEntry *te = nth(i, plan->targetlist);
+			/* need a var node just to pass to new_param()... */
 			Var		   *var = makeVar(0, 0, te->resdom->restype,
 									  te->resdom->restypmod, 0);
 			Param	   *prm = makeNode(Param);
+			Operator	tup;
+			Form_pg_operator opform;
+			Node	   *left,
+					   *right;
 
 			prm->paramkind = PARAM_EXEC;
-			prm->paramid = (AttrNumber) _new_param(var, PlannerQueryLevel);
+			prm->paramid = (AttrNumber) new_param(var, PlannerQueryLevel);
 			prm->paramtype = var->vartype;
-			lfirst(rside) = prm;
+
+			Assert(IsA(oper, Oper));
+			tup = get_operator_tuple(oper->opno);
+			Assert(HeapTupleIsValid(tup));
+			opform = (Form_pg_operator) GETSTRUCT(tup);
+			/* Note: we use make_operand in case runtime type conversion
+			 * function calls must be inserted for this operator!
+			 */
+			left = make_operand("", lefthand,
+								exprType(lefthand), opform->oprleft);
+			right = make_operand("", (Node *) prm,
+								 prm->paramtype, opform->oprright);
+			newoper = lappend(newoper,
+							  make_opclause(oper,
+											(Var *) left,
+											(Var *) right));
 			node->setParam = lappendi(node->setParam, prm->paramid);
 			pfree(var);
 			i++;
 		}
+		slink->oper = newoper;
+		slink->lefthand = NIL;
 		PlannerInitPlan = lappend(PlannerInitPlan, node);
 		if (i > 1)
-			result = (Node *) ((slink->useor) ? make_orclause(slink->oper) :
-							   make_andclause(slink->oper));
+			result = (Node *) ((slink->useor) ? make_orclause(newoper) :
+							   make_andclause(newoper));
 		else
-			result = (Node *) lfirst(slink->oper);
+			result = (Node *) lfirst(newoper);
 	}
 	else if (node->parParam == NULL && slink->subLinkType == EXISTS_SUBLINK)
 	{
@@ -201,7 +237,7 @@ _make_subplan(SubLink *slink)
 		Param	   *prm = makeNode(Param);
 
 		prm->paramkind = PARAM_EXEC;
-		prm->paramid = (AttrNumber) _new_param(var, PlannerQueryLevel);
+		prm->paramid = (AttrNumber) new_param(var, PlannerQueryLevel);
 		prm->paramtype = var->vartype;
 		node->setParam = lappendi(node->setParam, prm->paramid);
 		pfree(var);
@@ -213,16 +249,15 @@ _make_subplan(SubLink *slink)
 		/* make expression of SUBPLAN type */
 		Expr	   *expr = makeNode(Expr);
 		List	   *args = NIL;
+		List	   *newoper = NIL;
 		int			i = 0;
 
-		expr->typeOid = BOOLOID;
+		expr->typeOid = BOOLOID; /* bogus, but we don't really care */
 		expr->opType = SUBPLAN_EXPR;
 		expr->oper = (Node *) node;
 
 		/*
-		 * Make expr->args from parParam. Left sides of sublink Oper-s are
-		 * handled by optimizer directly... Also, transform right side of
-		 * sublink Oper-s into Const.
+		 * Make expr->args from parParam.
 		 */
 		foreach(lst, node->parParam)
 		{
@@ -236,22 +271,54 @@ _make_subplan(SubLink *slink)
 			var->varlevelsup = 0;
 			args = lappend(args, var);
 		}
+		expr->args = args;
+		/*
+		 * Convert oper list of Opers into a list of Exprs, using
+		 * lefthand arguments and Consts representing inside results.
+		 */
 		foreach(lst, slink->oper)
 		{
-			List	   *rside = lnext(((Expr *) lfirst(lst))->args);
+			Oper	   *oper = (Oper *) lfirst(lst);
+			Node	   *lefthand = nth(i, slink->lefthand);
 			TargetEntry *te = nth(i, plan->targetlist);
-			Const	   *con = makeConst(te->resdom->restype,
-										0, 0, true, 0, 0, 0);
+			Const	   *con;
+			Operator	tup;
+			Form_pg_operator opform;
+			Node	   *left,
+					   *right;
 
-			lfirst(rside) = con;
+			/*
+			 * XXX really ought to fill in constlen and constbyval correctly,
+			 * but right now ExecEvalExpr won't look at them...
+			 */
+			con = makeConst(te->resdom->restype, 0, 0, true, 0, 0, 0);
+
+			Assert(IsA(oper, Oper));
+			tup = get_operator_tuple(oper->opno);
+			Assert(HeapTupleIsValid(tup));
+			opform = (Form_pg_operator) GETSTRUCT(tup);
+			/* Note: we use make_operand in case runtime type conversion
+			 * function calls must be inserted for this operator!
+			 */
+			left = make_operand("", lefthand,
+								exprType(lefthand), opform->oprleft);
+			right = make_operand("", (Node *) con,
+								 con->consttype, opform->oprright);
+			newoper = lappend(newoper,
+							  make_opclause(oper,
+											(Var *) left,
+											(Var *) right));
 			i++;
 		}
-		expr->args = args;
+		slink->oper = newoper;
+		slink->lefthand = NIL;
 		result = (Node *) expr;
 	}
 
 	return result;
 }
+
+/* this oughta be merged with LispUnioni */
 
 static List *
 set_unioni(List *l1, List *l2)
@@ -263,6 +330,11 @@ set_unioni(List *l1, List *l2)
 
 	return nconc(l1, set_differencei(l2, l1));
 }
+
+/*
+ * finalize_primnode: build lists of subplans and params appearing
+ * in the given expression tree.
+ */
 
 typedef struct finalize_primnode_results {
 	List	*subplans;			/* List of subplans found in expr */
@@ -315,165 +387,83 @@ finalize_primnode_walker(Node *node,
 				! intMember(paramid, results->paramids))
 				results->paramids = lconsi(paramid, results->paramids);
 		}
-		/* XXX We do NOT allow expression_tree_walker to examine the args
-		 * passed to the subplan.  Is that correct???  It's what the
-		 * old code did, but it seems mighty bogus...  tgl 7/14/99
-		 */
-		return false;			/* don't recurse into subplan args */
+		/* fall through to recurse into subplan args */
 	}
 	return expression_tree_walker(node, finalize_primnode_walker,
 								  (void *) results);
 }
 
-/* Replace correlation vars (uplevel vars) with Params. */
-
-/* XXX should replace this with use of a generalized tree rebuilder,
- * designed along the same lines as expression_tree_walker.
- * Not done yet.
+/*
+ * Replace correlation vars (uplevel vars) with Params.
  */
+
+static Node *replace_correlation_vars_mutator(Node *node, void *context);
+
 Node *
 SS_replace_correlation_vars(Node *expr)
 {
-	if (expr == NULL)
-		return NULL;
-	if (IsA(expr, Var))
-	{
-		if (((Var *) expr)->varlevelsup > 0)
-			expr = (Node *) _replace_var((Var *) expr);
-	}
-	else if (single_node(expr))
-		return expr;
-	else if (IsA(expr, List))
-	{
-		List	   *le;
-
-		foreach(le, (List *) expr)
-			lfirst(le) = SS_replace_correlation_vars((Node *) lfirst(le));
-	}
-	else if (IsA(expr, Expr))
-	{
-		/* XXX do we need to do anything special with subplans? */
-		((Expr *) expr)->args = (List *)
-			SS_replace_correlation_vars((Node *) ((Expr *) expr)->args);
-	}
-	else if (IsA(expr, Aggref))
-		((Aggref *) expr)->target = SS_replace_correlation_vars(((Aggref *) expr)->target);
-	else if (IsA(expr, Iter))
-		((Iter *) expr)->iterexpr = SS_replace_correlation_vars(((Iter *) expr)->iterexpr);
-	else if (IsA(expr, ArrayRef))
-	{
-		((ArrayRef *) expr)->refupperindexpr = (List *)
-			SS_replace_correlation_vars((Node *) ((ArrayRef *) expr)->refupperindexpr);
-		((ArrayRef *) expr)->reflowerindexpr = (List *)
-			SS_replace_correlation_vars((Node *) ((ArrayRef *) expr)->reflowerindexpr);
-		((ArrayRef *) expr)->refexpr = SS_replace_correlation_vars(((ArrayRef *) expr)->refexpr);
-		((ArrayRef *) expr)->refassgnexpr = SS_replace_correlation_vars(((ArrayRef *) expr)->refassgnexpr);
-	}
-	else if (IsA(expr, CaseExpr))
-	{
-		CaseExpr   *caseexpr = (CaseExpr *) expr;
-		List	   *le;
-
-		foreach(le, caseexpr->args)
-		{
-			CaseWhen   *when = (CaseWhen *) lfirst(le);
-			Assert(IsA(when, CaseWhen));
-			when->expr = SS_replace_correlation_vars(when->expr);
-			when->result = SS_replace_correlation_vars(when->result);
-		}
-		/* caseexpr->arg should be null, but we'll check it anyway */
-		caseexpr->arg = SS_replace_correlation_vars(caseexpr->arg);
-		caseexpr->defresult = SS_replace_correlation_vars(caseexpr->defresult);
-	}
-	else if (IsA(expr, TargetEntry))
-		((TargetEntry *) expr)->expr = SS_replace_correlation_vars(((TargetEntry *) expr)->expr);
-	else if (IsA(expr, SubLink))
-	{
-		List	   *le;
-
-		foreach(le, ((SubLink *) expr)->oper)	/* left sides only */
-		{
-			List	   *oparg = ((Expr *) lfirst(le))->args;
-
-			lfirst(oparg) = (List *)
-				SS_replace_correlation_vars((Node *) lfirst(oparg));
-		}
-		((SubLink *) expr)->lefthand = (List *)
-			SS_replace_correlation_vars((Node *) ((SubLink *) expr)->lefthand);
-	}
-	else
-		elog(ERROR, "SS_replace_correlation_vars: can't handle node %d",
-			 nodeTag(expr));
-
-	return expr;
+	/* No setup needed for tree walk, so away we go */
+	return replace_correlation_vars_mutator(expr, NULL);
 }
 
-/* Replace sublinks by subplans in the given expression */
+static Node *
+replace_correlation_vars_mutator(Node *node, void *context)
+{
+	if (node == NULL)
+		return NULL;
+	if (IsA(node, Var))
+	{
+		if (((Var *) node)->varlevelsup > 0)
+			return (Node *) replace_var((Var *) node);
+	}
+	return expression_tree_mutator(node,
+								   replace_correlation_vars_mutator,
+								   context);
+}
 
-/* XXX should replace this with use of a generalized tree rebuilder,
- * designed along the same lines as expression_tree_walker.
- * Not done yet.
+/*
+ * Expand SubLinks to SubPlans in the given expression.
  */
+
+static Node *process_sublinks_mutator(Node *node, void *context);
+
 Node *
 SS_process_sublinks(Node *expr)
 {
-	if (expr == NULL)
+	/* No setup needed for tree walk, so away we go */
+    return process_sublinks_mutator(expr, NULL);
+}
+
+static Node *
+process_sublinks_mutator(Node *node, void *context)
+{
+	if (node == NULL)
 		return NULL;
-	if (IsA(expr, SubLink))
+	if (IsA(node, SubLink))
 	{
-		expr = _make_subplan((SubLink *) expr);
-	}
-	else if (single_node(expr))
-		return expr;
-	else if (IsA(expr, List))
-	{
-		List	   *le;
+		SubLink	   *sublink = (SubLink *) node;
 
-		foreach(le, (List *) expr)
-			lfirst(le) = SS_process_sublinks((Node *) lfirst(le));
-	}
-	else if (IsA(expr, Expr))
-	{
-		/* We should never see a subplan node here, since this is the
-		 * routine that makes 'em in the first place.  No need to check.
+		/* First, scan the lefthand-side expressions.
+		 * This is a tad klugy since we modify the input SubLink node,
+		 * but that should be OK (make_subplan does it too!)
 		 */
-		((Expr *) expr)->args = (List *)
-			SS_process_sublinks((Node *) ((Expr *) expr)->args);
+		sublink->lefthand = (List *)
+			process_sublinks_mutator((Node *) sublink->lefthand, context);
+		/* Now build the SubPlan node and make the expr to return */
+		return make_subplan(sublink);
 	}
-	else if (IsA(expr, Aggref))
-		((Aggref *) expr)->target = SS_process_sublinks(((Aggref *) expr)->target);
-	else if (IsA(expr, Iter))
-		((Iter *) expr)->iterexpr = SS_process_sublinks(((Iter *) expr)->iterexpr);
-	else if (IsA(expr, ArrayRef))
-	{
-		((ArrayRef *) expr)->refupperindexpr = (List *)
-			SS_process_sublinks((Node *) ((ArrayRef *) expr)->refupperindexpr);
-		((ArrayRef *) expr)->reflowerindexpr = (List *)
-			SS_process_sublinks((Node *) ((ArrayRef *) expr)->reflowerindexpr);
-		((ArrayRef *) expr)->refexpr = SS_process_sublinks(((ArrayRef *) expr)->refexpr);
-		((ArrayRef *) expr)->refassgnexpr = SS_process_sublinks(((ArrayRef *) expr)->refassgnexpr);
-	}
-	else if (IsA(expr, CaseExpr))
-	{
-		CaseExpr   *caseexpr = (CaseExpr *) expr;
-		List	   *le;
+	/*
+	 * Note that we will never see a SubPlan expression in the input
+	 * (since this is the very routine that creates 'em to begin with).
+	 * So the code in expression_tree_mutator() that might do
+	 * inappropriate things with SubPlans or SubLinks will not be
+	 * exercised.
+	 */
+	Assert(! is_subplan(node));
 
-		foreach(le, caseexpr->args)
-		{
-			CaseWhen   *when = (CaseWhen *) lfirst(le);
-			Assert(IsA(when, CaseWhen));
-			when->expr = SS_process_sublinks(when->expr);
-			when->result = SS_process_sublinks(when->result);
-		}
-		/* caseexpr->arg should be null, but we'll check it anyway */
-		caseexpr->arg = SS_process_sublinks(caseexpr->arg);
-		caseexpr->defresult = SS_process_sublinks(caseexpr->defresult);
-	}
-	else
-		elog(ERROR, "SS_process_sublinks: can't handle node %d",
-			 nodeTag(expr));
-
-	return expr;
+	return expression_tree_mutator(node,
+								   process_sublinks_mutator,
+								   context);
 }
 
 List *
@@ -585,7 +575,9 @@ SS_finalize_plan(Plan *plan)
 	return results.paramids;
 }
 
-/* Construct a list of all subplans found within the given node tree */
+/*
+ * Construct a list of all subplans found within the given node tree.
+ */
 
 static bool SS_pull_subplan_walker(Node *node, List **listptr);
 
@@ -606,8 +598,7 @@ SS_pull_subplan_walker(Node *node, List **listptr)
 	if (is_subplan(node))
 	{
 		*listptr = lappend(*listptr, ((Expr *) node)->oper);
-		/* XXX original code did not examine args to subplan, is this right? */
-		return false;
+		/* fall through to check args to subplan */
 	}
 	return expression_tree_walker(node, SS_pull_subplan_walker,
 								  (void *) listptr);

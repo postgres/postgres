@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.39 1999/08/21 03:49:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.40 1999/08/25 23:21:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -137,13 +137,7 @@ OffsetVarNodes(Node *node, int offset, int sublevels_up)
 		case T_SubLink:
 			{
 				SubLink    *sub = (SubLink *) node;
-				List	   *tmp_oper,
-						   *tmp_lefthand;
 
-				/*
-				 * We also have to adapt the variables used in
-				 * sub->lefthand and sub->oper
-				 */
 				OffsetVarNodes(
 							   (Node *) (sub->lefthand),
 							   offset,
@@ -153,20 +147,6 @@ OffsetVarNodes(Node *node, int offset, int sublevels_up)
 							   (Node *) (sub->subselect),
 							   offset,
 							   sublevels_up + 1);
-
-				/*
-				 * Make sure the first argument of sub->oper points to the
-				 * same var as sub->lefthand does otherwise we will run
-				 * into troubles using aggregates (aggno will not be set
-				 * correctly)
-				 */
-				tmp_lefthand = sub->lefthand;
-				foreach(tmp_oper, sub->oper)
-				{
-					lfirst(((Expr *) lfirst(tmp_oper))->args) =
-						lfirst(tmp_lefthand);
-					tmp_lefthand = lnext(tmp_lefthand);
-				}
 			}
 			break;
 
@@ -357,8 +337,6 @@ ChangeVarNodes(Node *node, int rt_index, int new_index, int sublevels_up)
 		case T_SubLink:
 			{
 				SubLink    *sub = (SubLink *) node;
-				List	   *tmp_oper,
-						   *tmp_lefthand;
 
 				ChangeVarNodes(
 							   (Node *) (sub->lefthand),
@@ -371,20 +349,6 @@ ChangeVarNodes(Node *node, int rt_index, int new_index, int sublevels_up)
 							   rt_index,
 							   new_index,
 							   sublevels_up + 1);
-
-				/*
-				 * Make sure the first argument of sub->oper points to the
-				 * same var as sub->lefthand does otherwise we will run
-				 * into troubles using aggregates (aggno will not be set
-				 * correctly)
-				 */
-				tmp_lefthand = sub->lefthand;
-				foreach(tmp_oper, sub->oper)
-				{
-					lfirst(((Expr *) lfirst(tmp_oper))->args) =
-						lfirst(tmp_lefthand);
-					tmp_lefthand = lnext(tmp_lefthand);
-				}
 			}
 			break;
 
@@ -732,6 +696,7 @@ ResolveNew(RewriteInfo *info, List *targetlist, Node **nodePtr,
 				SubLink    *sublink = (SubLink *) node;
 				Query	   *query = (Query *) sublink->subselect;
 
+				/* XXX what about lefthand?  What about rest of subquery? */
 				ResolveNew(info, targetlist, (Node **) &(query->qual), sublevels_up + 1);
 			}
 			break;
@@ -888,6 +853,7 @@ nodeHandleRIRAttributeRule(Node **nodePtr,
 				SubLink    *sublink = (SubLink *) node;
 				Query	   *query = (Query *) sublink->subselect;
 
+				/* XXX what about lefthand?  What about rest of subquery? */
 				nodeHandleRIRAttributeRule((Node **) &(query->qual), rtable, targetlist,
 									rt_index, attr_num, modified, badsql,
 										   sublevels_up + 1);
@@ -1062,9 +1028,6 @@ nodeHandleViewRule(Node **nodePtr,
 			{
 				SubLink    *sublink = (SubLink *) node;
 				Query	   *query = (Query *) sublink->subselect;
-				List	   *tmp_lefthand,
-						   *tmp_oper;
-
 
 				nodeHandleViewRule((Node **) &(query->qual), rtable, targetlist,
 								   rt_index, modified, sublevels_up + 1);
@@ -1078,30 +1041,10 @@ nodeHandleViewRule(Node **nodePtr,
 
 				/*
 				 * We also have to adapt the variables used in
-				 * sublink->lefthand and sublink->oper
+				 * sublink->lefthand
 				 */
 				nodeHandleViewRule((Node **) &(sublink->lefthand), rtable,
 						   targetlist, rt_index, modified, sublevels_up);
-
-				/*
-				 * Make sure the first argument of sublink->oper points to
-				 * the same var as sublink->lefthand does otherwise we
-				 * will run into troubles using aggregates (aggno will not
-				 * be set correctly
-				 */
-				pfree(lfirst(((Expr *) lfirst(sublink->oper))->args));
-				lfirst(((Expr *) lfirst(sublink->oper))->args) =
-					lfirst(sublink->lefthand);
-
-
-				/* INTERSECT want's this - Jan */
-
-				/*
-				 * tmp_lefthand = sublink->lefthand; foreach(tmp_oper,
-				 * sublink->oper) { lfirst(((Expr *)
-				 * lfirst(tmp_oper))->args) = lfirst(tmp_lefthand);
-				 * tmp_lefthand = lnext(tmp_lefthand); }
-				 */
 			}
 			break;
 		default:

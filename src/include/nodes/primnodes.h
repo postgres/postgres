@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.35 1999/08/22 20:15:00 tgl Exp $
+ * $Id: primnodes.h,v 1.36 1999/08/25 23:21:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -319,10 +319,36 @@ typedef struct Aggref
 /* ----------------
  * SubLink
  *		subLinkType		- EXISTS, ALL, ANY, EXPR
- *		useor			- TRUE for <>
- *		lefthand		- list of Var/Const nodes on the left
+ *		useor			- TRUE for <> (combine op results with "or" not "and")
+ *		lefthand		- list of outer-query expressions on the left
  *		oper			- list of Oper nodes
  *		subselect		- subselect as Query* or parsetree
+ *
+ * NOTE: lefthand and oper have varying meanings depending on where you look
+ * in the parse/plan pipeline:
+ * 1. gram.y delivers a list of the (untransformed) lefthand expressions in
+ *    lefthand, and sets oper to a one-element list containing the string
+ *    name of the operator.
+ * 2. The parser's expression transformation transforms lefthand normally,
+ *    and replaces oper with a list of Oper nodes, one per lefthand
+ *    expression.  These nodes represent the parser's resolution of exactly
+ *    which operator to apply to each pair of lefthand and targetlist
+ *    expressions.  However, we have not constructed actual Expr trees for
+ *    these operators yet.  This is the representation seen in saved rules
+ *    and in the rewriter.
+ * 3. Finally, the planner converts the oper list to a list of normal Expr
+ *    nodes representing the application of the operator(s) to the lefthand
+ *    expressions and values from the inner targetlist.  The inner
+ *    targetlist items are represented by placeholder Param or Const nodes.
+ *    The lefthand field is set to NIL, since its expressions are now in
+ *    the Expr list.  This representation is passed to the executor.
+ *
+ * Planner routines that might see either representation 2 or 3 can tell
+ * the difference by checking whether lefthand is NIL or not.  Also,
+ * representation 2 appears in a "bare" SubLink, while representation 3 is
+ * found in SubLinks that are children of SubPlan nodes.
+ *
+ * In an EXISTS SubLink, both lefthand and oper are unused and are always NIL.
  * ----------------
  */
 typedef enum SubLinkType

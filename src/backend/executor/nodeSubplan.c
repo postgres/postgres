@@ -94,8 +94,25 @@ ExecSubPlan(SubPlan *node, List *pvar, ExprContext *econtext)
 			Const	   *con = lsecond(expr->args);
 			bool		isnull;
 
+			/*
+			 * The righthand side of the expression should be either a Const
+			 * or a function call taking a Const as arg (the function would
+			 * be a run-time type coercion inserted by the parser to get to
+			 * the input type needed by the operator).  Find the Const node
+			 * and insert the actual righthand side value into it.
+			 */
+			if (! IsA(con, Const))
+			{
+				Assert(IsA(con, Expr));
+				con = lfirst(((Expr *) con)->args);
+				Assert(IsA(con, Const));
+			}
 			con->constvalue = heap_getattr(tup, i, tdesc, &(con->constisnull));
-			result = ExecEvalExpr((Node *) expr, econtext, &isnull, (bool *) NULL);
+			/*
+			 * Now we can eval the expression.
+			 */
+			result = ExecEvalExpr((Node *) expr, econtext, &isnull,
+								  (bool *) NULL);
 			if (isnull)
 			{
 				if (subLinkType == EXPR_SUBLINK)
