@@ -67,6 +67,7 @@ extern		"C"
 		ECPGd_ret_octet,
 		ECPGd_scale,
 		ECPGd_type,
+		ECPGd_cardinality,
 		ECPGd_EODT				/* End of descriptor types. */
 	};
 
