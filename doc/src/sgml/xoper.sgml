@@ -1,52 +1,116 @@
-<Chapter Id="xoper">
-<Title>Extending <Acronym>SQL</Acronym>: Operators</Title>
+ <Chapter Id="xoper">
+  <Title>Extending <Acronym>SQL</Acronym>: Operators</Title>
 
-<Para>
-     <ProductName>Postgres</ProductName> supports left unary, right  unary  and  binary
-     operators.   Operators  can  be  overloaded, or re-used
-     with different numbers  and  types  of  arguments.   If
-     there  is  an ambiguous situation and the system cannot
-     determine the correct operator to use, it  will  return
-     an  error  and you may have to typecast the left and/or
-     right operands to help it understand which operator you
-     meant to use.
-     To  create  an  operator for adding two complex numbers
-     can be done as follows.  First  we  need  to  create  a
-     function  to add the new types. Then, we can create the
-     operator with the function.
+  <Para>
+   <ProductName>Postgres</ProductName> supports left unary,
+   right  unary  and  binary
+   operators.   Operators  can  be  overloaded, or re-used
+   with different numbers  and  types  of  arguments.   If
+   there  is  an ambiguous situation and the system cannot
+   determine the correct operator to use, it  will  return
+   an  error  and you may have to typecast the left and/or
+   right operands to help it understand which operator you
+   meant to use.
+   To  create  an  operator for adding two complex numbers
+   can be done as follows.  First  we  need  to  create  a
+   function  to add the new types. Then, we can create the
+   operator with the function.
 
-<ProgramListing>
-         CREATE FUNCTION complex_add(complex, complex)
-            RETURNS complex
-            AS '$PWD/obj/complex.so'
-            LANGUAGE 'c';
+   <ProgramListing>
+CREATE FUNCTION complex_add(complex, complex)
+    RETURNS complex
+    AS '$PWD/obj/complex.so'
+    LANGUAGE 'c';
 
-         CREATE OPERATOR + (
-            leftarg = complex,
-            rightarg = complex,
-            procedure = complex_add,
-            commutator = +
-         );
-</ProgramListing>
-</Para>
+CREATE OPERATOR + (
+    leftarg = complex,
+    rightarg = complex,
+    procedure = complex_add,
+    commutator = +
+);
+   </ProgramListing>
+  </Para>
 
-<Para>
-     We've shown how to create a binary  operator  here.  To
-     create  unary  operators, just omit one of leftarg (for
-     left unary) or rightarg (for right unary).
-     If we give the system enough type information,  it  can
-     automatically figure out which operators to use.
+  <Para>
+   We've shown how to create a binary  operator  here.  To
+   create  unary  operators, just omit one of leftarg (for
+   left unary) or rightarg (for right unary).
+   If we give the system enough type information,  it  can
+   automatically figure out which operators to use.
      
-<ProgramListing>
-         SELECT (a + b) AS c FROM test_complex;
+   <ProgramListing>
+SELECT (a + b) AS c FROM test_complex;
 
-         +----------------+
-         |c               |
-         +----------------+
-         |(5.2,6.05)      |
-         +----------------+
-         |(133.42,144.95) |
-         +----------------+
-</ProgramListing>
-</Para>
-</Chapter>
++----------------+
+|c               |
++----------------+
+|(5.2,6.05)      |
++----------------+
+|(133.42,144.95) |
++----------------+
+   </ProgramListing>
+  </Para>
+
+  <sect1>
+   <title>Hash Join Operators</title>
+
+   <note>
+    <title>Author</title>
+    <para>
+     Written by Tom Lane.
+    </para>
+   </note>
+
+   <para>
+    The assumption underlying hash join is that two values that will be
+    considered equal by the comparison operator will always have the same
+    hash value.  If two values get put in different hash buckets, the join
+    will never compare them at all, so they are necessarily treated as
+    unequal.
+   </para>
+
+   <para>
+    But we have a number of datatypes for which the "=" operator is not
+    a straight bitwise comparison.  For example, intervaleq is not bitwise
+    at all; it considers two time intervals equal if they have the same
+    duration, whether or not their endpoints are identical.  What this means
+    is that a join using "=" between interval fields will yield different
+    results if implemented as a hash join than if implemented another way,
+    because a large fraction of the pairs that should match will hash to
+    different values and will never be compared.
+   </para>
+
+   <para>
+    I believe the same problem exists for float data; for example, on
+    IEEE-compliant machines, minus zero and plus zero have different bit
+    patterns (hence different hash values) but should be considered equal.
+    A hashjoin will get it wrong.
+   </para>
+
+   <para>
+    I will go through pg_operator and remove the hashable flag from
+    operators that are not safely hashable, but I see no way to
+    automatically check for this sort of mistake.  The only long-term
+    answer is to raise the consciousness of datatype creators about what
+    it means to set the oprcanhash flag.  Don't do it unless your equality
+    operator can be implemented as memcmp()!
+   </para>
+  </sect1>
+ </Chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:nil
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+sgml-parent-document:nil
+sgml-default-dtd-file:"./reference.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:"/usr/lib/sgml/CATALOG"
+sgml-local-ecat-files:nil
+End:
+-->
