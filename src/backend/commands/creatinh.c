@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.6 1997/04/02 03:57:06 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.7 1997/08/02 19:09:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@ static void StoreCatalogInheritance(Oid relationId, List *supers);
 void
 DefineRelation(CreateStmt *stmt)
 {
-    char *relname = stmt->relname;
+    char *relname = palloc(NAMEDATALEN+1);
     List *schema = stmt->tableElts;
     int			numberOfAttributes;
     Oid			relationId;
@@ -58,9 +58,10 @@ DefineRelation(CreateStmt *stmt)
     
     char*   typename = NULL;  /* the typename of this relation. not useod for now */
 
-    if ( strlen(relname) > NAMEDATALEN)
-	elog(WARN, "the relation name %s is > %d characters long", relname,
+    if ( strlen(stmt->relname) > NAMEDATALEN)
+	elog(WARN, "the relation name %s is > %d characters long", stmt->relname,
 	     NAMEDATALEN);
+    strncpy(relname,stmt->relname,NAMEDATALEN+1);  /* make full length for copy */
     
     /* ----------------
      * 	Handle parameters
