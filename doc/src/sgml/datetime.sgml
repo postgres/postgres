@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.19 2001/06/18 19:05:11 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.20 2001/09/09 17:21:58 petere Exp $
 Date/time details
 -->
 
@@ -225,7 +225,7 @@ Date/time details
       <row>
        <entry>DNT</entry>
        <entry>+1:00 </entry>
-       <entry>Dansk Normal Tid</entry>
+       <entry><foreignphrase>Dansk Normal Tid</foreignphrase></entry>
       </row>
       <row>
        <entry>FST</entry>

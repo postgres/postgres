@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/history.sgml,v 1.13 2001/02/03 19:03:26 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/history.sgml,v 1.14 2001/09/09 17:21:59 petere Exp $
 -->
 
 <sect1 id="history">
@@ -13,7 +13,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/history.sgml,v 1.13 2001/02/03 19:03:26 pet
   California at Berkeley.  With over a decade of
   development behind it, <productname>PostgreSQL</productname> 
   is the most advanced open-source database available anywhere,
-  offering multi-version concurrency control, supporting almost
+  offering multiversion concurrency control, supporting almost
   all SQL constructs (including subselects, transactions, and
   user-defined types and functions), and having a wide range of
   language bindings available (including C, C++, Java, Perl, Tcl, and Python).
@@ -72,7 +72,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/history.sgml,v 1.13 2001/02/03 19:03:26 pet
    Finally,  
    <ulink url="http://www.illustra.com/">Illustra  Information  Technologies</ulink>
    (since merged into
-   <ulink url="http://www.informix.com/">Informix</ulink>)
+   <ulink url="http://www.informix.com/"><productname>Informix</productname></ulink>)
    picked up
    the code and commercialized it.
    <productname>Postgres</productname>  became  the  primary  data  manager
@@ -141,7 +141,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/history.sgml,v 1.13 2001/02/03 19:03:26 pet
      <para>
       A new  front-end  library,  <filename>libpgtcl</filename>,
       supported  <acronym>Tcl</acronym>-based  clients.   A sample shell, 
-      pgtclsh, provided new Tcl  commands  to  interface
+      <command>pgtclsh</command>, provided new Tcl  commands  to  interface
       <application>tcl</application>
       programs with the <productname>Postgres95</productname> backend.
      </para>
@@ -211,7 +211,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/history.sgml,v 1.13 2001/02/03 19:03:26 pet
   <itemizedlist>
    <listitem>
     <para>
-     Table-level locking has been replaced with multi-version concurrency control,
+     Table-level locking has been replaced with multiversion concurrency control,
      which allows readers to continue reading consistent data during writer activity
      and enables hot backups from pg_dump while the database stays available for
      queries.

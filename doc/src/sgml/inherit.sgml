@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/inherit.sgml,v 1.13 2001/01/13 23:58:55 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/inherit.sgml,v 1.14 2001/09/09 17:21:59 petere Exp $
 -->
 
  <chapter id="inherit">
@@ -37,7 +37,7 @@ CREATE TABLE capitals (
 
    <note>
     <para>
-     The inheritance hierarchy is a actually a directed acyclic graph.
+     The inheritance hierarchy is actually a directed acyclic graph.
     </para>
    </note>
   </para>
@@ -100,7 +100,7 @@ SELECT name, altitude
   <para>
   In some cases you may wish to know which table a particular tuple
   originated from. There is a system column called
-  <quote>TABLEOID</quote> in each table which can tell you the
+  <structfield>TABLEOID</structfield> in each table which can tell you the
   originating table:
 
    <programlisting>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.16 2001/07/09 22:18:33 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.17 2001/09/09 17:21:59 petere Exp $
 -->
 
  <chapter id="mvcc">
@@ -593,7 +593,7 @@ ERROR:  Can't serialize access due to concurrent update
     <variablelist>
      <varlistentry>
       <term>
-       GiST and R-Tree indexes
+       <acronym>GiST</acronym> and R-Tree indexes
       </term>
       <listitem>
        <para>

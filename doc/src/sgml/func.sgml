@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.69 2001/09/06 03:22:41 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.70 2001/09/09 17:21:58 petere Exp $ -->
 
 <chapter id="functions">
  <title>Functions and Operators</title>
@@ -496,163 +496,163 @@
 
     <tbody>
      <row>
-      <entry>abs(<replaceable>x</replaceable>)</entry>
+      <entry><function>abs</function>(<replaceable>x</replaceable>)</entry>
       <entry>(same as x)</entry>
       <entry>absolute value</entry>
-      <entry>abs(-17.4)</entry>
+      <entry><literal>abs(-17.4)</literal></entry>
       <entry>17.4</entry>
      </row>
 
      <row>
-      <entry>cbrt(<type>dp</type>)</entry>
+      <entry><function>cbrt</function>(<type>dp</type>)</entry>
       <entry><type>dp</type></entry>
       <entry>cube root</entry>
-      <entry>cbrt(27.0)</entry>
+      <entry><literal>cbrt(27.0)</literal></entry>
       <entry>3</entry>
      </row>
 
      <row>
-      <entry>ceil(<type>numeric</type>)</entry>
+      <entry><function>ceil</function>(<type>numeric</type>)</entry>
       <entry><type>numeric</type></entry>
       <entry>smallest integer not less than argument</entry>
-      <entry>ceil(-42.8)</entry>
+      <entry><literal>ceil(-42.8)</literal></entry>
       <entry>-42</entry>
      </row>
 
      <row>
-      <entry>degrees(<type>dp</type>)</entry>
+      <entry><function>degrees</function>(<type>dp</type>)</entry>
       <entry><type>dp</type></entry>
       <entry>radians to degrees</entry>
-      <entry>degrees(0.5)</entry>
+      <entry><literal>degrees(0.5)</literal></entry>
       <entry>28.6478897565412</entry>
      </row>
 
      <row>
-      <entry>exp(<type>dp</type>)</entry>
+      <entry><function>exp</function>(<type>dp</type>)</entry>
       <entry><type>dp</type></entry>
       <entry>exponential</entry>
-      <entry>exp(1.0)</entry>
+      <entry><literal>exp(1.0)</literal></entry>
       <entry>2.71828182845905</entry>
      </row>
 
      <row>
-      <entry>floor(<type>numeric</type>)</entry>
+      <entry><function>floor</function>(<type>numeric</type>)</entry>
       <entry><type>numeric</type></entry>
       <entry>largest integer not greater than argument</entry>
-      <entry>floor(-42.8)</entry>
+      <entry><literal>floor(-42.8)</literal></entry>
       <entry>-43</entry>
      </row>
 
      <row>
-      <entry>ln(<type>dp</type>)</entry>
+      <entry><function>ln</function>(<type>dp</type>)</entry>
       <entry><type>dp</type></entry>
       <entry>natural logarithm</entry>
-      <entry>ln(2.0)</entry>
+      <entry><literal>ln(2.0)</literal></entry>
       <entry>0.693147180559945</entry>
      </row>
 
      <row>
-      <entry>log(<type>dp</type>)</entry>
+      <entry><function>log</function>(<type>dp</type>)</entry>
       <entry><type>dp</type></entry>
       <entry>base 10 logarithm</entry>
-      <entry>log(100.0)</entry>
+      <entry><literal>log(100.0)</literal></entry>
       <entry>2</entry>
      </row>
 
      <row>
-      <entry>log(<parameter>b</parameter> <type>numeric</type>,
+      <entry><function>log</function>(<parameter>b</parameter> <type>numeric</type>,
        <parameter>x</parameter> <type>numeric</type>)</entry>
       <entry><type>numeric</type></entry>
       <entry>logarithm to base <parameter>b</parameter></entry>
-      <entry>log(2.0, 64.0)</entry>
+      <entry><literal>log(2.0, 64.0)</literal></entry>
       <entry>6.0000000000</entry>
      </row>
 
      <row>
-      <entry>mod(<parameter>y</parameter>, <parameter>x</parameter>)</entry>
+      <entry><function>mod</function>(<parameter>y</parameter>, <parameter>x</parameter>)</entry>
       <entry>(same as argument types)</entry>
       <entry>remainder of <parameter>y</parameter>/<parameter>x</parameter></entry>
-      <entry>mod(9,4)</entry>
+      <entry><literal>mod(9,4)</literal></entry>
       <entry>1</entry>
      </row>
 
      <row>
-      <entry>pi()</entry>
+      <entry><function>pi</function>()</entry>
       <entry><type>dp</type></entry>
       <entry><quote>Pi</quote> constant</entry>
-      <entry>pi()</entry>
+      <entry><literal>pi()</literal></entry>
       <entry>3.14159265358979</entry>
      </row>
 
      <row>
-      <entry>pow(<parameter>e</parameter> <type>dp</type>,
+      <entry><function>pow</function>(<parameter>e</parameter> <type>dp</type>,
        <parameter>n</parameter> <type>dp</type>)</entry>
       <entry><type>dp</type></entry>
       <entry>raise a number to exponent <parameter>e</parameter></entry>
-      <entry>pow(9.0, 3.0)</entry>
+      <entry><literal>pow(9.0, 3.0)</literal></entry>
       <entry>729</entry>
      </row>
 
      <row>
-      <entry>radians(<type>dp</type>)</entry>
+      <entry><function>radians</function>(<type>dp</type>)</entry>
       <entry><type>dp</type></entry>
       <entry>degrees to radians</entry>
-      <entry>radians(45.0)</entry>
+      <entry><literal>radians(45.0)</literal></entry>
       <entry>0.785398163397448</entry>
      </row>
 
      <row>
-      <entry>random()</entry>
+      <entry><function>random</function>()</entry>
       <entry><type>dp</type></entry>
       <entry>value between 0.0 to 1.0</entry>
-      <entry>random()</entry>
+      <entry><literal>random()</literal></entry>
       <entry></entry>
      </row>
 
      <row>
-      <entry>round(<type>dp</type>)</entry>
+      <entry><function>round</function>(<type>dp</type>)</entry>
       <entry><type>dp</type></entry>
       <entry>round to nearest integer</entry>
-      <entry>round(42.4)</entry>
+      <entry><literal>round(42.4)</literal></entry>
       <entry>42</entry>
      </row>
 
      <row>
-      <entry>round(<parameter>v</parameter> <type>numeric</type>, <parameter>s</parameter> <type>integer</type>)</entry>
+      <entry><function>round</function>(<parameter>v</parameter> <type>numeric</type>, <parameter>s</parameter> <type>integer</type>)</entry>
       <entry><type>numeric</type></entry>
       <entry>round to <parameter>s</parameter> decimal places</entry>
-      <entry>round(42.4382, 2)</entry>
+      <entry><literal>round(42.4382, 2)</literal></entry>
       <entry>42.44</entry>
      </row>
 <!--
      <row>
-      <entry>setseed(<replaceable>new-seed</replaceable>)</entry>
+      <entry><function>setseed</function>(<replaceable>new-seed</replaceable>)</entry>
       <entry>set seed for subsequent random() calls</entry>
-      <entry>setseed(0.54823)</entry>
+      <entry><literal>setseed(0.54823)</literal></entry>
       <entry></entry>
      </row>
 -->
      <row>
-      <entry>sqrt(<type>dp</type>)</entry>
+      <entry><function>sqrt</function>(<type>dp</type>)</entry>
       <entry><type>dp</type></entry>
       <entry>square root</entry>
-      <entry>sqrt(2.0)</entry>
+      <entry><literal>sqrt(2.0)</literal></entry>
       <entry>1.4142135623731</entry>
      </row>
 
      <row>
-      <entry>trunc(<type>dp</type>)</entry>
+      <entry><function>trunc</function>(<type>dp</type>)</entry>
       <entry><type>dp</type></entry>
       <entry>truncate toward zero</entry>
-      <entry>trunc(42.8)</entry>
+      <entry><literal>trunc(42.8)</literal></entry>
       <entry>42</entry>
      </row>
 
      <row>
-      <entry>trunc(<type>numeric</type>, <parameter>s</parameter> <type>integer</type>)</entry>
+      <entry><function>trunc</function>(<type>numeric</type>, <parameter>s</parameter> <type>integer</type>)</entry>
       <entry><type>numeric</type></entry>
       <entry>truncate to <parameter>s</parameter> decimal places</entry>
-      <entry>trunc(42.4382, 2)</entry>
+      <entry><literal>trunc(42.4382, 2)</literal></entry>
       <entry>42.43</entry>
      </row>
 
@@ -661,7 +661,7 @@
   </table>
 
   <para>
-   In the table above, "<literal>dp</literal>" indicates <type>double precision</type>.
+   In the table above, <literal>dp</literal> indicates <type>double precision</type>.
    The functions <function>exp</function>, <function>ln</function>,
    <function>log</function>, <function>pow</function>,
    <function>round</function> (1 argument), <function>sqrt</function>,
@@ -688,42 +688,42 @@
 
     <tbody>
      <row>
-      <entry>acos(<replaceable>x</replaceable>)</entry>
+      <entry><function>acos</function>(<replaceable>x</replaceable>)</entry>
       <entry>inverse cosine</entry>
      </row>
 
      <row>
-      <entry>asin(<replaceable>x</replaceable>)</entry>
+      <entry><function>asin</function>(<replaceable>x</replaceable>)</entry>
       <entry>inverse sine</entry>
      </row>
 
      <row>
-      <entry>atan(<replaceable>x</replaceable>)</entry>
+      <entry><function>atan</function>(<replaceable>x</replaceable>)</entry>
       <entry>inverse tangent</entry>
      </row>
 
      <row>
-      <entry>atan2(<replaceable>x</replaceable>, <replaceable>y</replaceable>)</entry>
+      <entry><function>atan2</function>(<replaceable>x</replaceable>, <replaceable>y</replaceable>)</entry>
       <entry>inverse tangent of <replaceable>y</replaceable>/<replaceable>x</replaceable></entry>
      </row>
 
      <row>
-      <entry>cos(<replaceable>x</replaceable>)</entry>
+      <entry><function>cos</function>(<replaceable>x</replaceable>)</entry>
       <entry>cosine</entry>
      </row>
 
      <row>
-      <entry>cot(<replaceable>x</replaceable>)</entry>
+      <entry><function>cot</function>(<replaceable>x</replaceable>)</entry>
       <entry>cotangent</entry>
      </row>
 
      <row>
-      <entry>sin(<replaceable>x</replaceable>)</entry>
+      <entry><function>sin</function>(<replaceable>x</replaceable>)</entry>
       <entry>sine</entry>
      </row>
 
      <row>
-      <entry>tan(<replaceable>x</replaceable>)</entry>
+      <entry><function>tan</function>(<replaceable>x</replaceable>)</entry>
       <entry>tangent</entry>
      </row>
     </tbody>
@@ -786,20 +786,20 @@
 	<secondary>concatenation</secondary>
        </indexterm>
       </entry>
-      <entry>'Postgre' || 'SQL'</entry>
-      <entry>PostgreSQL</entry>
+      <entry><literal>'Postgre' || 'SQL'</></entry>
+      <entry><literal>PostgreSQL</></entry>
      </row>
 
      <row>
-      <entry>bit_length(<parameter>string</parameter>)</entry>
+      <entry><function>bit_length</function>(<parameter>string</parameter>)</entry>
       <entry><type>integer</type></entry>
       <entry>number of bits in string</entry>
-      <entry>bit_length('jose')</entry>
-      <entry>32</entry>
+      <entry><literal>bit_length('jose')</literal></entry>
+      <entry><literal>32</literal></entry>
      </row>
 
      <row>
-      <entry>char_length(<parameter>string</parameter>) or character_length(<parameter>string</parameter>)</entry>
+      <entry><function>char_length</function>(<parameter>string</parameter>) or character_length(<parameter>string</parameter>)</entry>
       <entry><type>integer</type></entry>
       <entry>
        length of string
@@ -813,36 +813,36 @@
 	<see>character strings, length</see>
        </indexterm>
       </entry>
-      <entry>char_length('jose')</entry>
-      <entry>4</entry>
+      <entry><literal>char_length('jose')</></entry>
+      <entry><literal>4</></entry>
      </row>
 
      <row>
-      <entry>lower(<parameter>string</parameter>)</entry>
+      <entry><function>lower</function>(<parameter>string</parameter>)</entry>
       <entry><type>text</type></entry>
       <entry>Convert string to lower case.</entry>
-      <entry>lower('TOM')</entry>
-      <entry>tom</entry>
+      <entry><literal>lower('TOM')</literal></entry>
+      <entry><literal>tom</literal></entry>
      </row>
 
      <row>
-      <entry>octet_length(<parameter>string</parameter>)</entry>
+      <entry><function>octet_length</function>(<parameter>string</parameter>)</entry>
       <entry><type>integer</type></entry>
       <entry>number of bytes in string</entry>
-      <entry>octet_length('jose')</entry>
-      <entry>4</entry>
+      <entry><literal>octet_length('jose')</literal></entry>
+      <entry><literal>4</literal></entry>
      </row>
 
      <row>
-      <entry>position(<parameter>substring</parameter> in <parameter>string</parameter>)</entry>
+      <entry><function>position</function>(<parameter>substring</parameter> in <parameter>string</parameter>)</entry>
       <entry><type>integer</type></entry>
       <entry>location of specified substring</entry>
-      <entry>position('om' in 'Thomas')</entry>
-      <entry>3</entry>
+      <entry><literal>position('om' in 'Thomas')</literal></entry>
+      <entry><literal>3</literal></entry>
      </row>
 
      <row>
-      <entry>substring(<parameter>string</parameter> <optional>from <type>integer</type></optional> <optional>for <type>integer</type></optional>)</entry>
+      <entry><function>substring</function>(<parameter>string</parameter> <optional>from <type>integer</type></optional> <optional>for <type>integer</type></optional>)</entry>
       <entry><type>text</type></entry>
       <entry>
        extract substring
@@ -850,13 +850,13 @@
         <primary>substring</primary>
        </indexterm>
       </entry>
-      <entry>substring('Thomas' from 2 for 3)</entry>
-      <entry>hom</entry>
+      <entry><literal>substring('Thomas' from 2 for 3)</literal></entry>
+      <entry><literal>hom</literal></entry>
      </row>
 
      <row>
       <entry>
-       trim(<optional>leading | trailing | both</optional>
+       <function>trim</function>(<optional>leading | trailing | both</optional>
        <optional><parameter>characters</parameter></optional> from
        <parameter>string</parameter>)
       </entry>
@@ -866,16 +866,16 @@
        <parameter>characters</parameter> (a space by default) from the
        beginning/end/both ends of the <parameter>string</parameter>.
       </entry>
-      <entry>trim(both 'x' from 'xTomx')</entry>
-      <entry>Tom</entry>
+      <entry><literal>trim(both 'x' from 'xTomx')</literal></entry>
+      <entry><literal>Tom</literal></entry>
      </row>
 
      <row>
-      <entry>upper(<parameter>string</parameter>)</entry>
+      <entry><function>upper</function>(<parameter>string</parameter>)</entry>
       <entry><type>text</type></entry>
       <entry>Convert string to upper case.</entry>
-      <entry>upper('tom')</entry>
-      <entry>TOM</entry>
+      <entry><literal>upper('tom')</literal></entry>
+      <entry><literal>TOM</literal></entry>
      </row>
     </tbody>
    </tgroup>
@@ -902,58 +902,62 @@
 
     <tbody>
      <row>
-      <entry>ascii(<type>text</type>)</entry>
+      <entry><function>ascii</function>(<type>text</type>)</entry>
       <entry>integer</entry>
       <entry>Returns the <acronym>ASCII</acronym> code of the first character of the argument.</entry>
-      <entry>ascii('x')</entry>
-      <entry>120</entry>
+      <entry><literal>ascii('x')</literal></entry>
+      <entry><literal>120</literal></entry>
      </row>
 
      <row>
-      <entry>btrim(<parameter>string</parameter> <type>text</type>, <parameter>trim</parameter> <type>text</type>)</entry>
+      <entry><function>btrim</function>(<parameter>string</parameter> <type>text</type>, <parameter>trim</parameter> <type>text</type>)</entry>
       <entry><type>text</type></entry>
       <entry>
        Remove (trim) the longest string consisting only of characters
        in <parameter>trim</parameter> from the start and end of
        <parameter>string</parameter>.
       </entry>
-      <entry>btrim('xyxtrimyyx','xy')</entry>
-      <entry>trim</entry>
+      <entry><literal>btrim('xyxtrimyyx','xy')</literal></entry>
+      <entry><literal>trim</literal></entry>
      </row>
 
      <row>
-      <entry>chr(<type>integer</type>)</entry>
+      <entry><function>chr</function>(<type>integer</type>)</entry>
       <entry><type>text</type></entry>
       <entry>Returns the character with the given <acronym>ASCII</acronym> code.</entry>
-      <entry>chr(65)</entry>
-      <entry>A</entry>
-     </row>
-
-     <row>
-      <entry>convert(<parameter>string</parameter> <type>text</type>,
-      [<parameter>src_encoding</parameter> <type>name</type>,]
-      <parameter>dest_encoding</parameter> <type>name</type>)</entry>
-      <entry><type>text</type></entry>
-      <entry>Converts string using <parameter>dest_encoding</parameter>.
-      The original encoding is specified by <parameter>src_encoding</parameter>.
-      If <parameter>src_encoding</parameter> is omitted, database encoding
-      is assumed.
-      </entry>
-      <entry>convert('text_in_unicode','UNICODE','LATIN1')</entry>
-      <entry>text_in_unicode (represented in ISO-8859-1)</entry>
-     </row>
-
-     <row>
-      <entry>initcap(<type>text</type>)</entry>
-      <entry><type>text</type></entry>
-      <entry>Converts first letter of each word (whitespace separated) to upper case.</entry>
-      <entry>initcap('hi thomas')</entry>
-      <entry>Hi Thomas</entry>
+      <entry><literal>chr(65)</literal></entry>
+      <entry><literal>A</literal></entry>
      </row>
 
      <row>
       <entry>
-       lpad(<parameter>string</parameter> <type>text</type>,
+       <function>convert</function>(<parameter>string</parameter> <type>text</type>,
+       <optional><parameter>src_encoding</parameter> <type>name</type>,</optional>
+       <parameter>dest_encoding</parameter> <type>name</type>)
+      </entry>
+      <entry><type>text</type></entry>
+      <entry>
+       Converts string using <parameter>dest_encoding</parameter>.
+       The original encoding is specified by
+       <parameter>src_encoding</parameter>.  If
+       <parameter>src_encoding</parameter> is omitted, database
+       encoding is assumed.
+      </entry>
+      <entry><literal>convert('text_in_unicode', 'UNICODE', 'LATIN1')</literal></entry>
+      <entry><literal>text_in_unicode</literal> represented in ISO 8859-1</entry>
+     </row>
+
+     <row>
+      <entry><function>initcap</function>(<type>text</type>)</entry>
+      <entry><type>text</type></entry>
+      <entry>Converts first letter of each word (whitespace separated) to upper case.</entry>
+      <entry><literal>initcap('hi thomas')</literal></entry>
+      <entry><literal>Hi Thomas</literal></entry>
+     </row>
+
+     <row>
+      <entry>
+       <function>lpad</function>(<parameter>string</parameter> <type>text</type>,
        <parameter>length</parameter> <type>integer</type>
        <optional>, <parameter>fill</parameter> <type>text</type></optional>)
       </entry>
@@ -966,32 +970,32 @@
        <parameter>length</parameter> then it is truncated (on the
        right).
       </entry>
-      <entry>lpad('hi', 5, 'xy')</entry>
-      <entry>xyxhi</entry>
+      <entry><literal>lpad('hi', 5, 'xy')</literal></entry>
+      <entry><literal>xyxhi</literal></entry>
      </row>
 
      <row>
-      <entry>ltrim(<parameter>string</parameter> <type>text</type>, <parameter>trim</parameter> <type>text</type>)</entry>
+      <entry><function>ltrim</function>(<parameter>string</parameter> <type>text</type>, <parameter>trim</parameter> <type>text</type>)</entry>
       <entry><type>text</type></entry>
       <entry>
        Removes the longest string containing only characters from
        <parameter>trim</parameter> from the start of the string.
       </entry>
-      <entry>ltrim('zzzytrim','xyz')</entry>
-      <entry>trim</entry>
+      <entry><literal>ltrim('zzzytrim','xyz')</literal></entry>
+      <entry><literal>trim</literal></entry>
      </row>
 
      <row>
-      <entry>repeat(<type>text</type>, <type>integer</type>)</entry>
+      <entry><function>repeat</function>(<type>text</type>, <type>integer</type>)</entry>
       <entry><type>text</type></entry>
       <entry>Repeat text a number of times.</entry>
-      <entry>repeat('Pg', 4)</entry>
-      <entry>PgPgPgPg</entry>
+      <entry><literal>repeat('Pg', 4)</literal></entry>
+      <entry><literal>PgPgPgPg</literal></entry>
      </row>
 
      <row>
       <entry>
-       rpad(<parameter>string</parameter> <type>text</type>,
+       <function>rpad</function>(<parameter>string</parameter> <type>text</type>,
        <parameter>length</parameter> <type>integer</type>
        <optional>, <parameter>fill</parameter> <type>text</type></optional>)
       </entry>
@@ -1003,23 +1007,23 @@
        <parameter>string</parameter> is already longer than
        <parameter>length</parameter> then it is truncated.
       </entry>
-      <entry>rpad('hi', 5, 'xy')</entry>
-      <entry>hixyx</entry>
+      <entry><literal>rpad('hi', 5, 'xy')</literal></entry>
+      <entry><literal>hixyx</literal></entry>
      </row>
 
      <row>
-      <entry>rtrim(<parameter>string</parameter> text, <parameter>trim</parameter> text)</entry>
+      <entry><function>rtrim</function>(<parameter>string</parameter> text, <parameter>trim</parameter> text)</entry>
       <entry><type>text</type></entry>
       <entry>
        Removes the longest string containing only characters from
        <parameter>trim</parameter> from the end of the string.
       </entry>
-      <entry>rtrim('trimxxxx','x')</entry>
-      <entry>trim</entry>
+      <entry><literal>rtrim('trimxxxx','x')</literal></entry>
+      <entry><literal>trim</literal></entry>
      </row>
 
      <row>
-      <entry>strpos(<parameter>string</parameter>, <parameter>substring</parameter>)</entry>
+      <entry><function>strpos</function>(<parameter>string</parameter>, <parameter>substring</parameter>)</entry>
       <entry><type>text</type></entry>
       <entry>
        Locates specified substring. (same as
@@ -1027,31 +1031,31 @@
        <parameter>string</parameter>)</literal>, but note the reversed
        argument order)
       </entry>
-      <entry>strpos('high','ig')</entry>
-      <entry>2</entry>
+      <entry><literal>strpos('high','ig')</literal></entry>
+      <entry><literal>2</literal></entry>
      </row>
 
      <row>
-      <entry>substr(<parameter>string</parameter>, <parameter>from</parameter> <optional>, <parameter>count</parameter></optional>)</entry>
+      <entry><function>substr</function>(<parameter>string</parameter>, <parameter>from</parameter> <optional>, <parameter>count</parameter></optional>)</entry>
       <entry><type>text</type></entry>
       <entry>
        Extracts specified substring. (same as <literal>substring(<parameter>string</parameter> from <parameter>from</parameter> for <parameter>count</parameter>)</literal>)
       </entry>
-      <entry>substr('alphabet', 3, 2)</entry>
-      <entry>ph</entry>
+      <entry><literal>substr('alphabet', 3, 2)</literal></entry>
+      <entry><literal>ph</literal></entry>
      </row>
 
      <row>
-      <entry>to_ascii(<type>text</type> <optional>, <parameter>encoding</parameter></optional>)</entry>
+      <entry><function>to_ascii</function>(<type>text</type> <optional>, <parameter>encoding</parameter></optional>)</entry>
       <entry><type>text</type></entry>
       <entry>Converts text from multibyte encoding to <acronym>ASCII</acronym>.</entry>
-      <entry>to_ascii('Karel')</entry>
-      <entry>Karel</entry>
+      <entry><literal>to_ascii('Karel')</literal></entry>
+      <entry><literal>Karel</literal></entry>
      </row>
 
      <row>
       <entry>
-       translate(<parameter>string</parameter> <type>text</type>,
+       <function>translate</function>(<parameter>string</parameter> <type>text</type>,
        <parameter>from</parameter> <type>text</type>,
        <parameter>to</parameter> <type>text</type>)
       </entry>
@@ -1062,27 +1066,27 @@
        the corresponding character in the <parameter>to</parameter>
        set.
       </entry>
-      <entry>translate('12345', '14', 'ax')</entry>
-      <entry>a23x5</entry>
+      <entry><literal>translate('12345', '14', 'ax')</literal></entry>
+      <entry><literal>a23x5</literal></entry>
      </row>       
      
      <row>
       <entry>
-       encode(<parameter>data</parameter> <type>bytea</type>,
+       <function>encode</function>(<parameter>data</parameter> <type>bytea</type>,
               <parameter>type</parameter> <type>text</type>)
       </entry>
       <entry><type>text</type></entry>
       <entry>
-       Encodes binary data to ascii-only representation.  Supported
+       Encodes binary data to <acronym>ASCII</acronym>-only representation.  Supported
        types are: 'base64', 'hex'.
       </entry>
-      <entry>encode('123\\000\\001', 'base64')</entry>
-      <entry>MTIzAAE=</entry>
+      <entry><literal>encode('123\\000\\001', 'base64')</literal></entry>
+      <entry><literal>MTIzAAE=</literal></entry>
      </row>       
 
      <row>
       <entry>
-       decode(<parameter>string</parameter> <type>text</type>,
+       <function>decode</function>(<parameter>string</parameter> <type>text</type>,
               <parameter>type</parameter> <type>text</type>)
       </entry>
       <entry><type>bytea</type></entry>
@@ -1090,8 +1094,8 @@
        Decodes binary data from <parameter>string</parameter> previously 
        encoded with encode().  Parameter type is same as in encode().
       </entry>
-      <entry>decode('MTIzAAE=', 'base64')</entry>
-      <entry>123\000\001</entry>
+      <entry><literal>decode('MTIzAAE=', 'base64')</literal></entry>
+      <entry><literal>123\000\001</literal></entry>
      </row>       
 
     </tbody>
@@ -1235,22 +1239,22 @@
        <ROW>
 	<ENTRY> <literal>~</literal> </ENTRY>
 	<ENTRY>Matches regular expression, case sensitive</ENTRY>
-	<ENTRY>'thomas' ~ '.*thomas.*'</ENTRY>
+	<ENTRY><literal>'thomas' ~ '.*thomas.*'</literal></ENTRY>
        </ROW>
        <ROW>
 	<ENTRY> <literal>~*</literal> </ENTRY>
 	<ENTRY>Matches regular expression, case insensitive</ENTRY>
-	<ENTRY>'thomas' ~* '.*Thomas.*'</ENTRY>
+	<ENTRY><literal>'thomas' ~* '.*Thomas.*'</literal></ENTRY>
        </ROW>
        <ROW>
 	<ENTRY> <literal>!~</literal> </ENTRY>
 	<ENTRY>Does not match regular expression, case sensitive</ENTRY>
-	<ENTRY>'thomas' !~ '.*Thomas.*'</ENTRY>
+	<ENTRY><literal>'thomas' !~ '.*Thomas.*'</literal></ENTRY>
        </ROW>
        <ROW>
 	<ENTRY> <literal>!~*</literal> </ENTRY>
 	<ENTRY>Does not match regular expression, case insensitive</ENTRY>
-	<ENTRY>'thomas' !~* '.*vadim.*'</ENTRY>
+	<ENTRY><literal>'thomas' !~* '.*vadim.*'</literal></ENTRY>
        </ROW>
      </tbody>
     </tgroup>
@@ -1402,12 +1406,12 @@
 
    <para>
     Within a bracket expression, a collating element (a character, a
-    multi-character sequence that collates as if it were a single
+    multiple-character sequence that collates as if it were a single
     character, or a collating-sequence name for either) enclosed in
     <literal>[.</literal> and <literal>.]</literal> stands for the
     sequence of characters of that collating element.  The sequence is
     a single element of the bracket expression's list.  A bracket
-    expression containing a multi-character collating element can thus
+    expression containing a multiple-character collating element can thus
     match more than one character, e.g. if the collating sequence
     includes a <literal>ch</literal> collating element, then the RE
     <literal>[[.ch.]]*c</literal> matches the first five characters of
@@ -1454,7 +1458,7 @@
     characters.  A word character is an alnum character (as defined by
     <citerefentry><refentrytitle>ctype</refentrytitle><manvolnum>3</manvolnum></citerefentry>)
     or an underscore.  This is an extension, compatible with but not
-    specified by POSIX 1003.2, and should be used with caution in
+    specified by <acronym>POSIX</acronym> 1003.2, and should be used with caution in
     software intended to be portable to other systems.
    </para>
 
@@ -1559,52 +1563,52 @@
       </thead>
       <tbody>
        <row>
-	<entry>to_char(timestamp, text)</entry>
-	<entry>text</entry>
-	<entry>convert timestamp to string</entry>
-	<entry>to_char(timestamp 'now','HH12:MI:SS')</entry>
+	<entry><function>to_char</function>(<type>timestamp</type>, <type>text</type>)</entry>
+	<entry><type>text</type></entry>
+	<entry>convert time stamp to string</entry>
+	<entry><literal>to_char(timestamp 'now','HH12:MI:SS')</literal></entry>
        </row>
        <row>
-	<entry>to_char(interval, text)</entry>
-	<entry>text</entry>
+	<entry><function>to_char</function>(<type>interval</type>, <type>text</type>)</entry>
+	<entry><type>text</type></entry>
 	<entry>convert interval to string</entry>
-	<entry>to_char(interval '15h 2m 12s','HH24:MI:SS')</entry>
+	<entry><literal>to_char(interval '15h 2m 12s','HH24:MI:SS')</literal></entry>
        </row>
        <row>
-	<entry>to_char(int, text)</entry>
-	<entry>text</entry>
+	<entry><function>to_char</function>(<type>int</type>, <type>text</type>)</entry>
+	<entry><type>text</type></entry>
 	<entry>convert int4/int8 to string</entry>
-	<entry>to_char(125, '999')</entry>
+	<entry><literal>to_char(125, '999')</literal></entry>
        </row>
        <row>
-	<entry>to_char(double precision, text)</entry>
-	<entry>text</entry>
+	<entry><function>to_char</function>(<type>double precision</type>, <type>text</type>)</entry>
+	<entry><type>text</type></entry>
 	<entry>convert real/double precision to string</entry>
-	<entry>to_char(125.8, '999D9')</entry>
+	<entry><literal>to_char(125.8, '999D9')</literal></entry>
        </row>
        <row>
-	<entry>to_char(numeric, text)</entry>
-	<entry>text</entry>
+	<entry><function>to_char</function>(<type>numeric</type>, <type>text</type>)</entry>
+	<entry><type>text</type></entry>
 	<entry>convert numeric to string</entry>
-	<entry>to_char(numeric '-125.8', '999D99S')</entry>
+	<entry><literal>to_char(numeric '-125.8', '999D99S')</literal></entry>
        </row>
        <row>
-	<entry>to_date(text, text)</entry>
-	<entry>date</entry>
+	<entry><function>to_date</function>(<type>text</type>, <type>text</type>)</entry>
+	<entry><type>date</type></entry>
 	<entry>convert string to date</entry>
-	<entry>to_date('05 Dec 2000', 'DD Mon YYYY')</entry>
+	<entry><literal>to_date('05 Dec 2000', 'DD Mon YYYY')</literal></entry>
        </row>
        <row>
-	<entry>to_timestamp(text, text)</entry>
-	<entry>timestamp</entry>
-	<entry>convert string to timestamp</entry>
-	<entry>to_timestamp('05 Dec 2000', 'DD Mon YYYY')</entry>
+	<entry><function>to_timestamp</function>(<type>text</type>, <type>text</type>)</entry>
+	<entry><type>timestamp</type></entry>
+	<entry>convert string to time stamp</entry>
+	<entry><literal>to_timestamp('05 Dec 2000', 'DD Mon YYYY')</literal></entry>
        </row>
        <row>
-	<entry>to_number(text, text)</entry>
-	<entry>numeric</entry>
+	<entry><function>to_number</function>(<type>text</type>, <type>text</type>)</entry>
+	<entry><type>numeric</type></entry>
 	<entry>convert string to numeric</entry>
-	<entry>to_number('12,454.8-', '99G999D9S')</entry>
+	<entry><literal>to_number('12,454.8-', '99G999D9S')</literal></entry>
        </row>
       </tbody>
      </tgroup>
@@ -1632,175 +1636,175 @@
       </thead>
       <tbody>
        <row>
-	<entry>HH</entry>
+	<entry><literal>HH</literal></entry>
 	<entry>hour of day (01-12)</entry>
        </row>
        <row>
-	<entry>HH12</entry>
+	<entry><literal>HH12</literal></entry>
 	<entry>hour of day (01-12)</entry>
        </row>       
        <row>
-	<entry>HH24</entry>
+	<entry><literal>HH24</literal></entry>
 	<entry>hour of day (00-23)</entry>
        </row>       
        <row>
-	<entry>MI</entry>
+	<entry><literal>MI</literal></entry>
 	<entry>minute (00-59)</entry>
        </row>   
        <row>
-	<entry>SS</entry>
+	<entry><literal>SS</literal></entry>
 	<entry>second (00-59)</entry>
        </row>
        <row>
-	<entry>MS</entry>
+	<entry><literal>MS</literal></entry>
 	<entry>millisecond (000-999)</entry>
        </row>
        <row>
-	<entry>US</entry>
+	<entry><literal>US</literal></entry>
 	<entry>microsecond (000000-999999)</entry>
        </row>
        <row>
-	<entry>SSSS</entry>
+	<entry><literal>SSSS</literal></entry>
 	<entry>seconds past midnight (0-86399)</entry>
        </row>
        <row>
-	<entry>AM or A.M. or PM or P.M.</entry>
+	<entry><literal>AM</literal> or <literal>A.M.</literal> or <literal>PM</literal> or <literal>P.M.</literal></entry>
 	<entry>meridian indicator (upper case)</entry>
        </row>
        <row>
-	<entry>am or a.m. or pm or p.m.</entry>
+	<entry><literal>am</literal> or <literal>a.m.</literal> or <literal>pm</literal> or <literal>p.m.</literal></entry>
 	<entry>meridian indicator (lower case)</entry>
        </row>
        <row>
-	<entry>Y,YYY</entry>
+	<entry><literal>Y,YYY</literal></entry>
 	<entry>year (4 and more digits) with comma</entry>
        </row>
        <row>
-	<entry>YYYY</entry>
+	<entry><literal>YYYY</literal></entry>
 	<entry>year (4 and more digits)</entry>
        </row>
        <row>
-	<entry>YYY</entry>
+	<entry><literal>YYY</literal></entry>
 	<entry>last 3 digits of year</entry>
        </row>
        <row>
-	<entry>YY</entry>
+	<entry><literal>YY</literal></entry>
 	<entry>last 2 digits of year</entry>
        </row>
        <row>
-	<entry>Y</entry>
+	<entry><literal>Y</literal></entry>
 	<entry>last digit of year</entry>
        </row>
        <row>
-	<entry>BC or B.C. or AD or A.D.</entry>
-	<entry>year indicator (upper case)</entry>
+	<entry><literal>BC</literal> or <literal>B.C.</literal> or <literal>AD</literal> or <literal>A.D.</literal></entry>
+	<entry>era indicator (upper case)</entry>
        </row>
        <row>
-	<entry>bc or b.c. or ad or a.d.</entry>
-	<entry>year indicator (lower case)</entry>
+	<entry><literal>bc</literal> or <literal>b.c.</literal> or <literal>ad</literal> or <literal>a.d.</literal></entry>
+	<entry>era indicator (lower case)</entry>
        </row>
        <row>
-	<entry>MONTH</entry>
+	<entry><literal>MONTH</literal></entry>
 	<entry>full upper case month name (blank-padded to 9 chars)</entry>
        </row>
        <row>
-	<entry>Month</entry>
+	<entry><literal>Month</literal></entry>
 	<entry>full mixed case month name (blank-padded to 9 chars)</entry>
        </row>
        <row>
-	<entry>month</entry>
+	<entry><literal>month</literal></entry>
 	<entry>full lower case month name (blank-padded to 9 chars)</entry>
        </row>
        <row>
-	<entry>MON</entry>
+	<entry><literal>MON</literal></entry>
 	<entry>abbreviated upper case month name (3 chars)</entry>
        </row>
        <row>
-	<entry>Mon</entry>
+	<entry><literal>Mon</literal></entry>
 	<entry>abbreviated mixed case month name (3 chars)</entry>
        </row>
        <row>
-	<entry>mon</entry>
+	<entry><literal>mon</literal></entry>
 	<entry>abbreviated lower case month name (3 chars)</entry>
        </row>
        <row>
-	<entry>MM</entry>
+	<entry><literal>MM</literal></entry>
 	<entry>month number (01-12)</entry>
        </row>
        <row>
-	<entry>DAY</entry>
+	<entry><literal>DAY</literal></entry>
 	<entry>full upper case day name (blank-padded to 9 chars)</entry>
        </row>
        <row>
-	<entry>Day</entry>
+	<entry><literal>Day</literal></entry>
 	<entry>full mixed case day name (blank-padded to 9 chars)</entry>
        </row>
        <row>
-	<entry>day</entry>
+	<entry><literal>day</literal></entry>
 	<entry>full lower case day name (blank-padded to 9 chars)</entry>
        </row>
        <row>
-	<entry>DY</entry>
+	<entry><literal>DY</literal></entry>
 	<entry>abbreviated upper case day name (3 chars)</entry>
        </row>
        <row>
-	<entry>Dy</entry>
+	<entry><literal>Dy</literal></entry>
 	<entry>abbreviated mixed case day name (3 chars)</entry>
        </row>
        <row>
-	<entry>dy</entry>
+	<entry><literal>dy</literal></entry>
 	<entry>abbreviated lower case day name (3 chars)</entry>
        </row>
        <row>
-	<entry>DDD</entry>
+	<entry><literal>DDD</literal></entry>
 	<entry>day of year (001-366)</entry>
        </row>
        <row>
-	<entry>DD</entry>
+	<entry><literal>DD</literal></entry>
 	<entry>day of month (01-31)</entry>
        </row>
        <row>
-	<entry>D</entry>
+	<entry><literal>D</literal></entry>
 	<entry>day of week (1-7; SUN=1)</entry>
        </row>
        <row>
-	<entry>W</entry>
+	<entry><literal>W</literal></entry>
 	<entry>week of month (1-5) where first week start on the first day of the month</entry>
        </row> 
        <row>
-	<entry>WW</entry>
+	<entry><literal>WW</literal></entry>
 	<entry>week number of year (1-53) where first week start on the first day of the year</entry>
        </row>
        <row>
-	<entry>IW</entry>
+	<entry><literal>IW</literal></entry>
 	<entry>ISO week number of year (The first Thursday of the new year is in week 1.)</entry>
        </row>
        <row>
-	<entry>CC</entry>
+	<entry><literal>CC</literal></entry>
 	<entry>century (2 digits)</entry>
        </row>
        <row>
-	<entry>J</entry>
+	<entry><literal>J</literal></entry>
 	<entry>Julian Day (days since January 1, 4712 BC)</entry>
        </row>
        <row>
-	<entry>Q</entry>
+	<entry><literal>Q</literal></entry>
 	<entry>quarter</entry>
        </row>
        <row>
-	<entry>RM</entry>
+	<entry><literal>RM</literal></entry>
 	<entry>month in Roman Numerals (I-XII; I=January) - upper case</entry>
        </row>
        <row>
-	<entry>rm</entry>
+	<entry><literal>rm</literal></entry>
 	<entry>month in Roman Numerals (I-XII; I=January) - lower case</entry>
        </row>
        <row>
-	<entry>TZ</entry>
+	<entry><literal>TZ</literal></entry>
 	<entry>timezone name - upper case</entry>
        </row>
        <row>
-	<entry>tz</entry>
+	<entry><literal>tz</literal></entry>
 	<entry>timezone name - lower case</entry>
        </row>
       </tbody>
@@ -1830,27 +1834,27 @@
        <row>
 	<entry><literal>FM</literal> prefix</entry>
 	<entry>fill mode (suppress padding blanks and zeroes)</entry>
-	<entry>FMMonth</entry>
+	<entry><literal>FMMonth</literal></entry>
        </row>
        <row>
 	<entry><literal>TH</literal> suffix</entry>
 	<entry>add upper-case ordinal number suffix</entry>
-	<entry>DDTH</entry>
+	<entry><literal>DDTH</literal></entry>
        </row>	
        <row>
 	<entry><literal>th</literal> suffix</entry>
 	<entry>add lower-case ordinal number suffix</entry>
-	<entry>DDth</entry>
+	<entry><literal>DDth</literal></entry>
        </row>
        <row>
 	<entry><literal>FX</literal> prefix</entry>
-	<entry>FiXed format global option (see below)</entry>
-	<entry>FX Month DD Day</entry>
+	<entry>Fixed format global option (see below)</entry>
+	<entry><literal>FX Month DD Day</literal></entry>
        </row>	
        <row>
 	<entry><literal>SP</literal> suffix</entry>
 	<entry>spell mode (not yet implemented)</entry>
-	<entry>DDSP</entry>
+	<entry><literal>DDSP</literal></entry>
        </row>       
       </tbody>
      </tgroup>
@@ -1913,8 +1917,8 @@
 
      <listitem>
       <para>
-       <literal>YYYY</literal> conversion from string to timestamp or
-       date is restricted if you use a year with more than 4 digits. You must
+       <literal>YYYY</literal> conversion from string to <type>timestamp</type> or
+       <type>date</type> is restricted if you use a year with more than 4 digits. You must
        use some non-digit character or template after <literal>YYYY</literal>,
        otherwise the year is always interpreted as 4 digits. For example
        (with year 20000):
@@ -1928,14 +1932,14 @@
 
      <listitem>
       <para>
-       Millisecond <literal>MS</literal> and microcesond <literal>US</literal>
-       values are in conversion from string to timestamp used as part of
+       Millisecond <literal>MS</literal> and microsecond <literal>US</literal>
+       values are in conversion from string to time stamp used as part of
        second after decimal point. For example 
        <literal>to_timestamp('12:3', 'SS:MS')</literal> is not 3 milliseconds,
        but 300, because the conversion count it as <literal>12 + 0.3</literal>.
        It means for format 'SS:MS' is '12:3' or '12:30' or '12:300' same
-       number of miliceconds. For the three milliseconds must be used
-       '12:003' that the counversion count as
+       number of milliseconds. For the three milliseconds must be used
+       '12:003' that the conversion count as
        <literal> 12 + 0.003 = 12.003 seconds </literal>. Here is a more 
        complex example: 
        <literal>to_timestamp('15:12:02.020.001230','HH:MI:SS.MS.US')</literal>
@@ -1957,68 +1961,68 @@
       </thead>
       <tbody>
        <row>
-	<entry>9</entry>
+	<entry><literal>9</literal></entry>
 	<entry>value with the specified number of digits</entry>
        </row>
        <row>
-	<entry>0</entry>
+	<entry><literal>0</literal></entry>
 	<entry>value with leading zeros</entry>
        </row>
        <row>
-	<entry>. (period)</entry>
+	<entry><literal>.</literal> (period)</entry>
 	<entry>decimal point</entry>
        </row>       
        <row>
-	<entry>, (comma)</entry>
+	<entry><literal>,</literal> (comma)</entry>
 	<entry>group (thousand) separator</entry>
        </row>
        <row>
-	<entry>PR</entry>
+	<entry><literal>PR</literal></entry>
 	<entry>negative value in angle brackets</entry>
        </row>
        <row>
-	<entry>S</entry>
+	<entry><literal>S</literal></entry>
 	<entry>negative value with minus sign (uses locale)</entry>
        </row>
        <row>
-	<entry>L</entry>
+	<entry><literal>L</literal></entry>
 	<entry>currency symbol (uses locale)</entry>
        </row>
        <row>
-	<entry>D</entry>
+	<entry><literal>D</literal></entry>
 	<entry>decimal point (uses locale)</entry>
        </row>
        <row>
-	<entry>G</entry>
+	<entry><literal>G</literal></entry>
 	<entry>group separator (uses locale)</entry>
        </row>
        <row>
-	<entry>MI</entry>
+	<entry><literal>MI</literal></entry>
 	<entry>minus sign in specified position (if number < 0)</entry>
        </row>
        <row>
-	<entry>PL</entry>
+	<entry><literal>PL</literal></entry>
 	<entry>plus sign in specified position (if number > 0)</entry>
        </row>
        <row>
-	<entry>SG</entry>
+	<entry><literal>SG</literal></entry>
 	<entry>plus/minus sign in specified position</entry>
        </row>
        <row>
-	<entry>RN</entry>
+	<entry><literal>RN</literal></entry>
 	<entry>roman numeral (input between 1 and 3999)</entry>
        </row>
        <row>
-	<entry>TH or th</entry>
+	<entry><literal>TH</literal> or <literal>th</literal></entry>
 	<entry>convert to ordinal number</entry>
        </row>
        <row>
-	<entry>V</entry>
+	<entry><literal>V</literal></entry>
 	<entry>shift <replaceable>n</replaceable> digits (see
 	 notes)</entry>
        </row>
        <row>
-	<entry>EEEE</entry>
+	<entry><literal>EEEE</literal></entry>
 	<entry>scientific numbers (not supported yet)</entry>
        </row>
       </tbody>
@@ -2093,135 +2097,135 @@
       </thead>
       <tbody>
        <row>
-        <entry>to_char(now(),'Day, DD  HH12:MI:SS')</entry>
+        <entry><literal>to_char(now(),'Day, DD  HH12:MI:SS')</literal></entry>
         <entry><literal>'Tuesday  , 06  05:39:18'</literal></entry>
        </row>
        <row>
-        <entry>to_char(now(),'FMDay, FMDD  HH12:MI:SS')</entry>
+        <entry><literal>to_char(now(),'FMDay, FMDD  HH12:MI:SS')</literal></entry>
         <entry><literal>'Tuesday, 6  05:39:18'</literal></entry>
        </row>          
        <row>
-        <entry>to_char(-0.1,'99.99')</entry>
+        <entry><literal>to_char(-0.1,'99.99')</literal></entry>
         <entry><literal>' -.10'</literal></entry>
        </row>
        <row>
-        <entry>to_char(-0.1,'FM9.99')</entry>
+        <entry><literal>to_char(-0.1,'FM9.99')</literal></entry>
         <entry><literal>'-.1'</literal></entry>
        </row>
        <row>
-        <entry>to_char(0.1,'0.9')</entry>
+        <entry><literal>to_char(0.1,'0.9')</literal></entry>
         <entry><literal>' 0.1'</literal></entry>
        </row>
        <row>
-        <entry>to_char(12,'9990999.9')</entry>
+        <entry><literal>to_char(12,'9990999.9')</literal></entry>
         <entry><literal>'    0012.0'</literal></entry>
        </row>
        <row>
-        <entry>to_char(12,'FM9990999.9')</entry>
+        <entry><literal>to_char(12,'FM9990999.9')</literal></entry>
         <entry><literal>'0012'</literal></entry>
        </row>
        <row>
-        <entry>to_char(485,'999')</entry>
+        <entry><literal>to_char(485,'999')</literal></entry>
         <entry><literal>' 485'</literal></entry>
        </row>
        <row>
-        <entry>to_char(-485,'999')</entry>
+        <entry><literal>to_char(-485,'999')</literal></entry>
         <entry><literal>'-485'</literal></entry>
        </row>
        <row>
-        <entry>to_char(485,'9 9 9')</entry>
+        <entry><literal>to_char(485,'9 9 9')</literal></entry>
         <entry><literal>' 4 8 5'</literal></entry>
        </row>
        <row>
-        <entry>to_char(1485,'9,999')</entry>
+        <entry><literal>to_char(1485,'9,999')</literal></entry>
         <entry><literal>' 1,485'</literal></entry>
        </row>
        <row>
-        <entry>to_char(1485,'9G999')</entry>
+        <entry><literal>to_char(1485,'9G999')</literal></entry>
         <entry><literal>' 1 485'</literal></entry>
        </row>
        <row>
-        <entry>to_char(148.5,'999.999')</entry>
+        <entry><literal>to_char(148.5,'999.999')</literal></entry>
         <entry><literal>' 148.500'</literal></entry>
        </row>
        <row>
-        <entry>to_char(148.5,'999D999')</entry>
+        <entry><literal>to_char(148.5,'999D999')</literal></entry>
         <entry><literal>' 148,500'</literal></entry>	 
        </row>
        <row>
-        <entry>to_char(3148.5,'9G999D999')</entry>
+        <entry><literal>to_char(3148.5,'9G999D999')</literal></entry>
         <entry><literal>' 3 148,500'</literal></entry>
        </row>
        <row>
-        <entry>to_char(-485,'999S')</entry>
+        <entry><literal>to_char(-485,'999S')</literal></entry>
         <entry><literal>'485-'</literal></entry>
        </row>
        <row>		
-        <entry>to_char(-485,'999MI')</entry>
+        <entry><literal>to_char(-485,'999MI')</literal></entry>
         <entry><literal>'485-'</literal></entry>	
        </row>
        <row>
-        <entry>to_char(485,'999MI')</entry>
+        <entry><literal>to_char(485,'999MI')</literal></entry>
         <entry><literal>'485'</literal></entry>		
        </row>
        <row>
-        <entry>to_char(485,'PL999')</entry>
+        <entry><literal>to_char(485,'PL999')</literal></entry>
         <entry><literal>'+485'</literal></entry>	
        </row>
        <row>		
-        <entry>to_char(485,'SG999')</entry>
+        <entry><literal>to_char(485,'SG999')</literal></entry>
         <entry><literal>'+485'</literal></entry>	
        </row>
        <row>
-        <entry>to_char(-485,'SG999')</entry>
+        <entry><literal>to_char(-485,'SG999')</literal></entry>
         <entry><literal>'-485'</literal></entry>	
        </row>
        <row>
-        <entry>to_char(-485,'9SG99')</entry>
+        <entry><literal>to_char(-485,'9SG99')</literal></entry>
         <entry><literal>'4-85'</literal></entry>	
        </row>
        <row>
-        <entry>to_char(-485,'999PR')</entry>
+        <entry><literal>to_char(-485,'999PR')</literal></entry>
         <entry><literal>'&lt;485&gt;'</literal></entry>		
        </row>
        <row>
-        <entry>to_char(485,'L999')</entry>
+        <entry><literal>to_char(485,'L999')</literal></entry>
         <entry><literal>'DM 485</literal></entry>	 
        </row>
        <row>
-        <entry>to_char(485,'RN')</entry>		
+        <entry><literal>to_char(485,'RN')</literal></entry>		
         <entry><literal>'        CDLXXXV'</literal></entry>
        </row>
        <row>
-        <entry>to_char(485,'FMRN')</entry>	
+        <entry><literal>to_char(485,'FMRN')</literal></entry>	
         <entry><literal>'CDLXXXV'</literal></entry>
        </row>
        <row>
-        <entry>to_char(5.2,'FMRN')</entry>
+        <entry><literal>to_char(5.2,'FMRN')</literal></entry>
         <entry><literal>V</literal></entry>		
        </row>
        <row>
-        <entry>to_char(482,'999th')</entry>
+        <entry><literal>to_char(482,'999th')</literal></entry>
         <entry><literal>' 482nd'</literal></entry>				
        </row>
        <row>
-        <entry>to_char(485, '"Good number:"999')</entry>
+        <entry><literal>to_char(485, '"Good number:"999')</literal></entry>
         <entry><literal>'Good number: 485'</literal></entry>
        </row>
        <row>
-        <entry>to_char(485.8,'"Pre:"999" Post:" .999')</entry>
+        <entry><literal>to_char(485.8,'"Pre:"999" Post:" .999')</literal></entry>
         <entry><literal>'Pre: 485 Post: .800'</literal></entry>
        </row>
        <row>
-        <entry>to_char(12,'99V999')</entry>		
+        <entry><literal>to_char(12,'99V999')</literal></entry>		
         <entry><literal>' 12000'</literal></entry>
        </row>
        <row>
-        <entry>to_char(12.4,'99V999')</entry>
+        <entry><literal>to_char(12.4,'99V999')</literal></entry>
         <entry><literal>' 12400'</literal></entry>
        </row>
        <row>		
-        <entry>to_char(12.45, '99V9')</entry>
+        <entry><literal>to_char(12.45, '99V9')</literal></entry>
         <entry><literal>' 125'</literal></entry>
        </row>
       </tbody>
@@ -2259,24 +2263,24 @@
 
       <tbody>
        <row>
-	<entry>age(timestamp)</entry>
-	<entry>interval</entry>
+	<entry><function>age</function>(<type>timestamp</type>)</entry>
+	<entry><type>interval</type></entry>
 	<entry>Subtract from today</entry>
-	<entry>age(timestamp '1957-06-13')</entry>
-	<entry>43 years 8 mons 3 days</entry>
+	<entry><literal>age(timestamp '1957-06-13')</literal></entry>
+	<entry><literal>43 years 8 mons 3 days</literal></entry>
        </row>
 
        <row>
-	<entry>age(timestamp, timestamp)</entry>
-	<entry>interval</entry>
+	<entry><function>age</function>(<type>timestamp</type>, <type>timestamp</type>)</entry>
+	<entry><type>interval</type></entry>
 	<entry>Subtract arguments</entry>
-	<entry>age('2001-04-10', timestamp '1957-06-13')</entry>
-	<entry>43 years 9 mons 27 days</entry>
+	<entry><literal>age('2001-04-10', timestamp '1957-06-13')</literal></entry>
+	<entry><literal>43 years 9 mons 27 days</literal></entry>
        </row>
 
        <row>
-	<entry>current_date</entry>
-	<entry>date</entry>
+	<entry><function>current_date</function></entry>
+	<entry><type>date</type></entry>
 	<entry>Today's date; see <link
 	 linkend="functions-datetime-current">below</link>
 	</entry>
@@ -2285,8 +2289,8 @@
        </row>
 
        <row>
-	<entry>current_time</entry>
-	<entry>time</entry>
+	<entry><function>current_time</function></entry>
+	<entry><type>time</type></entry>
 	<entry>Time of day; see <link
 	 linkend="functions-datetime-current">below</link>
 	</entry>
@@ -2295,8 +2299,8 @@
        </row>
 
        <row>
-	<entry>current_timestamp</entry>
-	<entry>timestamp</entry>
+	<entry><function>current_timestamp</function></entry>
+	<entry><type>timestamp</type></entry>
 	<entry>date and time; see also <link
 	 linkend="functions-datetime-current">below</link>
 	</entry>
@@ -2305,76 +2309,76 @@
        </row>
 
        <row>
-	<entry>date_part(text, timestamp)</entry>
-	<entry>double precision</entry>
+	<entry><function>date_part</function>(<type>text</type>, <type>timestamp</type>)</entry>
+	<entry><type>double precision</type></entry>
 	<entry>Get subfield (equivalent to
 	 <function>extract</function>); see also <link
 	 linkend="functions-datetime-datepart">below</link>
         </entry>
-	<entry>date_part('hour', timestamp '2001-02-16 20:38:40')</entry>
-	<entry>20</entry>
+	<entry><literal>date_part('hour', timestamp '2001-02-16 20:38:40')</literal></entry>
+	<entry><literal>20</literal></entry>
        </row>
 
        <row>
-	<entry>date_part(text, interval)</entry>
-	<entry>double precision</entry>
+	<entry><function>date_part</function>(<type>text</type>, <type>interval</type>)</entry>
+	<entry><type>double precision</type></entry>
 	<entry>Get subfield (equivalent to
 	 <function>extract</function>); see also <link
 	 linkend="functions-datetime-datepart">below</link>
         </entry>
-	<entry>date_part('month', interval '2 years 3 months')</entry>
-	<entry>3</entry>
+	<entry><literal>date_part('month', interval '2 years 3 months')</literal></entry>
+	<entry><literal>3</literal></entry>
        </row>
 
        <row>
-	<entry>date_trunc(text, timestamp)</entry>
-	<entry>timestamp</entry>
+	<entry><function>date_trunc</function>(<type>text</type>, <type>timestamp</type>)</entry>
+	<entry><type>timestamp</type></entry>
 	<entry>Truncate to specified precision; see also <link
          linkend="functions-datetime-trunc">below</link>
         </entry>
-	<entry>date_trunc('hour', timestamp '2001-02-16 20:38:40')</entry>
-	<entry>2001-02-16 20:00:00+00</entry>
+	<entry><literal>date_trunc('hour', timestamp '2001-02-16 20:38:40')</literal></entry>
+	<entry><literal>2001-02-16 20:00:00+00</literal></entry>
        </row>
 
        <row>
-	<entry>extract(<parameter>field</parameter> from timestamp)</entry>
-	<entry>double precision</entry>
+	<entry><function>extract</function>(<parameter>field</parameter> from <type>timestamp</type>)</entry>
+	<entry><type>double precision</type></entry>
 	<entry>Get subfield; see also <link
          linkend="functions-datetime-extract">below</link>
         </entry>
-	<entry>extract(hour from timestamp '2001-02-16 20:38:40')</entry>
-	<entry>20</entry>
+	<entry><literal>extract(hour from timestamp '2001-02-16 20:38:40')</literal></entry>
+	<entry><literal>20</literal></entry>
        </row>
 
        <row>
-	<entry>extract(<parameter>field</parameter> from interval)</entry>
-	<entry>double precision</entry>
+	<entry><function>extract</function>(<parameter>field</parameter> from <type>interval</type>)</entry>
+	<entry><type>double precision</type></entry>
 	<entry>Get subfield; see also <link
          linkend="functions-datetime-extract">below</link>
         </entry>
-	<entry>extract(month from interval '2 years 3 months')</entry>
-	<entry>3</entry>
+	<entry><literal>extract(month from interval '2 years 3 months')</literal></entry>
+	<entry><literal>3</literal></entry>
        </row>
 
        <row>
-	<entry>isfinite(timestamp)</entry>
-	<entry>boolean</entry>
+	<entry><function>isfinite</function>(<type>timestamp</type>)</entry>
+	<entry><type>boolean</type></entry>
 	<entry>Test for finite time stamp (neither invalid nor infinity)</entry>
-	<entry>isfinite(timestamp '2001-02-16 21:28:30')</entry>
-	<entry>true</entry>
+	<entry><literal>isfinite(timestamp '2001-02-16 21:28:30')</literal></entry>
+	<entry><literal>true</literal></entry>
        </row>
 
        <row>
-	<entry>isfinite(interval)</entry>
-	<entry>boolean</entry>
+	<entry><function>isfinite</function>(<type>interval</type>)</entry>
+	<entry><type>boolean</type></entry>
 	<entry>Test for finite interval</entry>
-	<entry>isfinite(interval '4 hours')</entry>
-	<entry>true</entry>
+	<entry><literal>isfinite(interval '4 hours')</literal></entry>
+	<entry><literal>true</literal></entry>
        </row>
 
        <row>
-	<entry>now()</entry>
-	<entry>timestamp</entry>
+	<entry><function>now</function>()</entry>
+	<entry><type>timestamp</type></entry>
 	<entry>Current date and time (equivalent to
 	 <function>current_timestamp</function>); see also <link
 	 linkend="functions-datetime-current">below</link>
@@ -2384,29 +2388,29 @@
        </row>
 
        <row>
-	<entry>timeofday()</entry>
-	<entry>text</entry>
+	<entry><function>timeofday()</function></entry>
+	<entry><type>text</type></entry>
 	<entry>High-precision date and time; see also <link
 	 linkend="functions-datetime-current">below</link>
 	</entry>
-	<entry>timeofday()</entry>
-	<entry>Wed Feb 21 17:01:13.000126 2001 EST</entry>
+	<entry><literal>timeofday()</literal></entry>
+	<entry><literal>Wed Feb 21 17:01:13.000126 2001 EST</literal></entry>
        </row>
 
        <row>
-	<entry>timestamp(date)</entry>
-	<entry>timestamp</entry>
-	<entry>Date to timestamp</entry>
-	<entry>timestamp(date '2000-12-25')</entry>
-	<entry>2000-12-25 00:00:00</entry>
+	<entry><function>timestamp</function>(<type>date</type>)</entry>
+	<entry><type>timestamp</type></entry>
+	<entry><type>date</type> to <type>timestamp</type></entry>
+	<entry><literal>timestamp(date '2000-12-25')</literal></entry>
+	<entry><literal>2000-12-25 00:00:00</literal></entry>
        </row>
 
        <row>
-	<entry>timestamp(date, time)</entry>
-	<entry>timestamp</entry>
-	<entry>Date and time to a timestamp</entry>
-	<entry>timestamp(date '1998-02-24',time '23:07')</entry>
-	<entry>1998-02-24 23:07:00</entry>
+	<entry><function>timestamp</function>(<type>date</type>, <type>time</type>)</entry>
+	<entry><type>timestamp</type></entry>
+	<entry><type>date</type> and <type>time</type> to <type>timestamp</type></entry>
+	<entry><literal>timestamp(date '1998-02-24',time '23:07')</literal></entry>
+	<entry><literal>1998-02-24 23:07:00</literal></entry>
        </row>
       </tbody>
      </tgroup>
@@ -2436,7 +2440,7 @@ EXTRACT (<replaceable>field</replaceable> FROM <replaceable>source</replaceable>
     <!-- alphabetical -->
     <variablelist>
      <varlistentry>
-      <term>century</term>
+      <term><literal>century</literal></term>
       <listitem>
        <para>
         The year field divided by 100
@@ -2458,7 +2462,7 @@ SELECT EXTRACT(CENTURY FROM TIMESTAMP '2001-02-16 20:38:40');
      </varlistentry>
 
      <varlistentry>
-      <term>day</term>
+      <term><literal>day</literal></term>
       <listitem>
        <para>
         The day (of the month) field (1 - 31)
@@ -2474,7 +2478,7 @@ SELECT EXTRACT(DAY FROM TIMESTAMP '2001-02-16 20:38:40');
      </varlistentry>
 
      <varlistentry>
-      <term>decade</term>
+      <term><literal>decade</literal></term>
       <listitem>
        <para>
         The year field divided by 10
@@ -2490,7 +2494,7 @@ SELECT EXTRACT(DECADE FROM TIMESTAMP '2001-02-16 20:38:40');
      </varlistentry>
 
      <varlistentry>
-      <term>dow</term>
+      <term><literal>dow</literal></term>
       <listitem>
        <para>
         The day of the week (0 - 6; Sunday is 0) (for
@@ -2507,7 +2511,7 @@ SELECT EXTRACT(DOW FROM TIMESTAMP '2001-02-16 20:38:40');
      </varlistentry>
 
      <varlistentry>
-      <term>doy</term>
+      <term><literal>doy</literal></term>
       <listitem>
        <para>
         The day of the year (1 - 365/366) (for <type>timestamp</type> values only)
@@ -2522,7 +2526,7 @@ SELECT EXTRACT(DOY FROM TIMESTAMP '2001-02-16 20:38:40');
      </varlistentry>
 
      <varlistentry>
-      <term>epoch</term>
+      <term><literal>epoch</literal></term>
       <listitem>
        <para>
         For <type>date</type> and <type>timestamp</type> values, the
@@ -2544,7 +2548,7 @@ SELECT EXTRACT(EPOCH FROM INTERVAL '5 days 3 hours');
      </varlistentry>
 
      <varlistentry>
-      <term>hour</term>
+      <term><literal>hour</literal></term>
       <listitem>
        <para>
         The hour field (0 - 23)
@@ -2560,7 +2564,7 @@ SELECT EXTRACT(HOUR FROM TIMESTAMP '2001-02-16 20:38:40');
      </varlistentry>
 
      <varlistentry>
-      <term>microseconds</term>
+      <term><literal>microseconds</literal></term>
       <listitem>
        <para>
         The seconds field, including fractional parts, multiplied by 1
@@ -2577,7 +2581,7 @@ SELECT EXTRACT(MICROSECONDS FROM TIME '17:12:28.5');
      </varlistentry>
 
      <varlistentry>
-      <term>millennium</term>
+      <term><literal>millennium</literal></term>
       <listitem>
        <para>
         The year field divided by 1000
@@ -2599,7 +2603,7 @@ SELECT EXTRACT(MILLENNIUM FROM TIMESTAMP '2001-02-16 20:38:40');
      </varlistentry>
 
      <varlistentry>
-      <term>milliseconds</term>
+      <term><literal>milliseconds</literal></term>
       <listitem>
        <para>
         The seconds field, including fractional parts, multiplied by
@@ -2616,7 +2620,7 @@ SELECT EXTRACT(MILLISECONDS FROM TIME '17:12:28.5');
      </varlistentry>
 
      <varlistentry>
-      <term>minute</term>
+      <term><literal>minute</literal></term>
       <listitem>
        <para>
         The minutes field (0 - 59)
@@ -2632,7 +2636,7 @@ SELECT EXTRACT(MINUTE FROM TIMESTAMP '2001-02-16 20:38:40');
      </varlistentry>
 
      <varlistentry>
-      <term>month</term>
+      <term><literal>month</literal></term>
       <listitem>
        <para>
         For <type>timestamp</type> values, the number of the month
@@ -2656,7 +2660,7 @@ SELECT EXTRACT(MONTH FROM INTERVAL '2 years 13 months');
      </varlistentry>
 
      <varlistentry>
-      <term>quarter</term>
+      <term><literal>quarter</literal></term>
       <listitem>
        <para>
         The quarter of the year (1 - 4) that the day is in (for
@@ -2673,7 +2677,7 @@ SELECT EXTRACT(QUARTER FROM TIMESTAMP '2001-02-16 20:38:40');
      </varlistentry>
 
      <varlistentry>
-      <term>second</term>
+      <term><literal>second</literal></term>
       <listitem>
        <para>
         The seconds field, including fractional parts (0 -
@@ -2694,7 +2698,7 @@ SELECT EXTRACT(SECOND FROM TIME '17:12:28.5');
      </varlistentry>
 
      <varlistentry>
-      <term>week</term>
+      <term><literal>week</literal></term>
       <listitem>
        <para>
         From a <type>timestamp</type> value, calculate the number of
@@ -2715,7 +2719,7 @@ SELECT EXTRACT(WEEK FROM TIMESTAMP '2001-02-16 20:38:40');
      </varlistentry>
 
      <varlistentry>
-      <term>year</term>
+      <term><literal>year</literal></term>
       <listitem>
        <para>
         The year field
@@ -2887,7 +2891,7 @@ SELECT timeofday();
     good as microseconds (depending on your platform); the other functions
     rely on <function>time(2)</function> which is restricted to one-second
     resolution.  For historical reasons, <function>timeofday()</function>
-    returns its result as a text string rather than a timestamp value.
+    returns its result as a text string rather than a <type>timestamp</type> value.
    </para>
 
    <para>
@@ -2899,7 +2903,7 @@ SELECT timeofday();
    </para>
 
    <para>
-    All the date/time datatypes also accept the special literal value
+    All the date/time data types also accept the special literal value
     <literal>now</> to specify the current date and time.  Thus,
     the following three all return the same result:
 <programlisting>
@@ -2911,7 +2915,7 @@ SELECT TIMESTAMP 'now';
      <para>
       You do not want to use the third form when specifying a DEFAULT
       value while creating a table.  The system will convert <literal>now</>
-      to a timestamp as soon as the constant is parsed, so that when
+      to a <type>timestamp</type> as soon as the constant is parsed, so that when
       the default value is needed,
       the time of the table creation would be used!  The first two
       forms will not be evaluated until the default value is used,
@@ -2928,8 +2932,10 @@ SELECT TIMESTAMP 'now';
    <title>Geometric Functions and Operators</title>
 
    <para>
-    The geometric types point, box, lseg, line, path, polygon, and
-    circle have a large set of native support functions and operators.
+    The geometric types <type>point</type>, <type>box</type>,
+    <type>lseg</type>, <type>line</type>, <type>path</type>,
+    <type>polygon</type>, and <type>circle</type> have a large set of
+    native support functions and operators.
    </para>
 
    <table>
@@ -2946,122 +2952,122 @@ SELECT TIMESTAMP 'now';
        <ROW>
 	<ENTRY> + </ENTRY>
 	<ENTRY>Translation</ENTRY>
-	<ENTRY>box '((0,0),(1,1))' + point '(2.0,0)'</ENTRY>
+	<ENTRY><literal>box '((0,0),(1,1))' + point '(2.0,0)'</literal></ENTRY>
        </ROW>
        <ROW>
 	<ENTRY> - </ENTRY>
 	<ENTRY>Translation</ENTRY>
-	<ENTRY>box '((0,0),(1,1))' - point '(2.0,0)'</ENTRY>
+	<ENTRY><literal>box '((0,0),(1,1))' - point '(2.0,0)'</literal></ENTRY>
        </ROW>
        <ROW>
 	<ENTRY> * </ENTRY>
 	<ENTRY>Scaling/rotation</ENTRY>
-	<ENTRY>box '((0,0),(1,1))' * point '(2.0,0)'</ENTRY>
+	<ENTRY><literal>box '((0,0),(1,1))' * point '(2.0,0)'</literal></ENTRY>
        </ROW>
        <ROW>
 	<ENTRY> / </ENTRY>
 	<ENTRY>Scaling/rotation</ENTRY>
-	<ENTRY>box '((0,0),(2,2))' / point '(2.0,0)'</ENTRY>
+	<ENTRY><literal>box '((0,0),(2,2))' / point '(2.0,0)'</literal></ENTRY>
        </ROW>
        <ROW>
 	<ENTRY> # </ENTRY>
 	<ENTRY>Intersection</ENTRY>
-	<ENTRY>'((1,-1),(-1,1))' # '((1,1),(-1,-1))'</ENTRY>
+	<ENTRY><literal>'((1,-1),(-1,1))' # '((1,1),(-1,-1))'</literal></ENTRY>
        </ROW>
        <ROW>
 	<ENTRY> # </ENTRY>
 	<ENTRY>Number of points in polygon</ENTRY>
-	<ENTRY># '((1,0),(0,1),(-1,0))'</ENTRY>
+	<ENTRY><literal># '((1,0),(0,1),(-1,0))'</literal></ENTRY>
        </ROW>
        <ROW>
 	<ENTRY> ## </ENTRY>
 	<ENTRY>Point of closest proximity</ENTRY>
-	<ENTRY>point '(0,0)' ## lseg '((2,0),(0,2))'</ENTRY>
+	<ENTRY><literal>point '(0,0)' ## lseg '((2,0),(0,2))'</literal></ENTRY>
        </ROW>
        <ROW>
 	<ENTRY> &amp;&amp; </ENTRY>
 	<ENTRY>Overlaps?</ENTRY>
-	<ENTRY>box '((0,0),(1,1))' &amp;&amp; box '((0,0),(2,2))'</ENTRY>
+	<ENTRY><literal>box '((0,0),(1,1))' &amp;&amp; box '((0,0),(2,2))'</literal></ENTRY>
        </ROW>
        <ROW>
 	<ENTRY> &amp;&lt; </ENTRY>
 	<ENTRY>Overlaps to left?</ENTRY>
-	<ENTRY>box '((0,0),(1,1))' &amp;&lt; box '((0,0),(2,2))'</ENTRY>
+	<ENTRY><literal>box '((0,0),(1,1))' &amp;&lt; box '((0,0),(2,2))'</literal></ENTRY>
        </ROW>
        <ROW>
 	<ENTRY> &amp;&gt; </ENTRY>
 	<ENTRY>Overlaps to right?</ENTRY>
-	<ENTRY>box '((0,0),(3,3))' &amp;&gt; box '((0,0),(2,2))'</ENTRY>
+	<ENTRY><literal>box '((0,0),(3,3))' &amp;&gt; box '((0,0),(2,2))'</literal></ENTRY>
        </ROW>
        <ROW>
 	<ENTRY> &lt;-&gt; </ENTRY>
 	<ENTRY>Distance between</ENTRY>
-	<ENTRY>circle '((0,0),1)' &lt;-&gt; circle '((5,0),1)'</ENTRY>
+	<ENTRY><literal>circle '((0,0),1)' &lt;-&gt; circle '((5,0),1)'</literal></ENTRY>
        </ROW>
        <ROW>
 	<ENTRY> &lt;&lt; </ENTRY>
 	<ENTRY>Left of?</ENTRY>
-	<ENTRY>circle '((0,0),1)' &lt;&lt; circle '((5,0),1)'</ENTRY>
+	<ENTRY><literal>circle '((0,0),1)' &lt;&lt; circle '((5,0),1)'</literal></ENTRY>
        </ROW>
        <ROW>
 	<ENTRY> &lt;^ </ENTRY>
 	<ENTRY>Is below?</ENTRY>
-	<ENTRY>circle '((0,0),1)' &lt;^ circle '((0,5),1)'</ENTRY>
+	<ENTRY><literal>circle '((0,0),1)' &lt;^ circle '((0,5),1)'</literal></ENTRY>
        </ROW>
        <ROW>
 	<ENTRY> &gt;&gt; </ENTRY>
 	<ENTRY>Is right of?</ENTRY>
-	<ENTRY>circle '((5,0),1)' &gt;&gt; circle '((0,0),1)'</ENTRY>
+	<ENTRY><literal>circle '((5,0),1)' &gt;&gt; circle '((0,0),1)'</literal></ENTRY>
        </ROW>
        <ROW>
 	<ENTRY> &gt;^ </ENTRY>
 	<ENTRY>Is above?</ENTRY>
-	<ENTRY>circle '((0,5),1)' >^ circle '((0,0),1)'</ENTRY>
+	<ENTRY><literal>circle '((0,5),1)' >^ circle '((0,0),1)'</literal></ENTRY>
        </ROW>
        <ROW>
 	<ENTRY> ?# </ENTRY>
 	<ENTRY>Intersects or overlaps</ENTRY>
-	<ENTRY>lseg '((-1,0),(1,0))' ?# box '((-2,-2),(2,2))';</ENTRY>
+	<ENTRY><literal>lseg '((-1,0),(1,0))' ?# box '((-2,-2),(2,2))'</literal></ENTRY>
        </ROW>
        <ROW>
 	<ENTRY> ?- </ENTRY>
 	<ENTRY>Is horizontal?</ENTRY>
-	<ENTRY>point '(1,0)' ?- point '(0,0)'</ENTRY>
+	<ENTRY><literal>point '(1,0)' ?- point '(0,0)'</literal></ENTRY>
        </ROW>
        <ROW>
 	<ENTRY> ?-| </ENTRY>
 	<ENTRY>Is perpendicular?</ENTRY>
-	<ENTRY>lseg '((0,0),(0,1))' ?-| lseg '((0,0),(1,0))'</ENTRY>
+	<ENTRY><literal>lseg '((0,0),(0,1))' ?-| lseg '((0,0),(1,0))'</literal></ENTRY>
        </ROW>
        <ROW>
 	<ENTRY> @-@  </ENTRY>
 	<ENTRY>Length or circumference</ENTRY>
-	<ENTRY>@-@ path '((0,0),(1,0))'</ENTRY>
+	<ENTRY><literal>@-@ path '((0,0),(1,0))'</literal></ENTRY>
        </ROW>
        <ROW>
 	<ENTRY> ?| </ENTRY>
 	<ENTRY>Is vertical?</ENTRY>
-	<ENTRY>point '(0,1)' ?| point '(0,0)'</ENTRY>
+	<ENTRY><literal>point '(0,1)' ?| point '(0,0)'</literal></ENTRY>
        </ROW>
        <ROW>
 	<ENTRY> ?|| </ENTRY>
 	<ENTRY>Is parallel?</ENTRY>
-	<ENTRY>lseg '((-1,0),(1,0))' ?|| lseg '((-1,2),(1,2))'</ENTRY>
+	<ENTRY><literal>lseg '((-1,0),(1,0))' ?|| lseg '((-1,2),(1,2))'</literal></ENTRY>
        </ROW>
        <ROW>
 	<ENTRY> @ </ENTRY>
 	<ENTRY>Contained or on</ENTRY>
-	<ENTRY>point '(1,1)' @ circle '((0,0),2)'</ENTRY>
+	<ENTRY><literal>point '(1,1)' @ circle '((0,0),2)'</literal></ENTRY>
        </ROW>
        <ROW>
 	<ENTRY> @@ </ENTRY>
 	<ENTRY>Center of</ENTRY>
-	<ENTRY>@@ circle '((0,0),10)'</ENTRY>
+	<ENTRY><literal>@@ circle '((0,0),10)'</literal></ENTRY>
        </ROW>
        <ROW>
 	<ENTRY> ~= </ENTRY>
 	<ENTRY>Same as</ENTRY>
-	<ENTRY>polygon '((0,0),(1,1))' ~= polygon '((1,1),(0,0))'</ENTRY>
+	<ENTRY><literal>polygon '((0,0),(1,1))' ~= polygon '((1,1),(0,0))'</literal></ENTRY>
        </ROW>
       </TBODY>
      </TGROUP>
@@ -3080,91 +3086,91 @@ SELECT TIMESTAMP 'now';
       </thead>
       <tbody>
        <row>
-	<entry>area(object)</entry>
-	<entry>double precision</entry>
+	<entry><function>area</function>(object)</entry>
+	<entry><type>double precision</type></entry>
 	<entry>area of item</entry>
-	<entry>area(box '((0,0),(1,1))')</entry>
+	<entry><literal>area(box '((0,0),(1,1))')</literal></entry>
        </row>
        <row>
-	<entry>box(box, box)</entry>
-	<entry>box</entry>
+	<entry><function>box</function>(box, box)</entry>
+	<entry><type>box</type></entry>
 	<entry>intersection box</entry>
-	<entry>box(box '((0,0),(1,1))',box '((0.5,0.5),(2,2))')</entry>
+	<entry><literal>box(box '((0,0),(1,1))',box '((0.5,0.5),(2,2))')</literal></entry>
        </row>
        <row>
-	<entry>center(object)</entry>
-	<entry>point</entry>
+	<entry><function>center</function>(object)</entry>
+	<entry><type>point</type></entry>
 	<entry>center of item</entry>
-	<entry>center(box '((0,0),(1,2))')</entry>
+	<entry><literal>center(box '((0,0),(1,2))')</literal></entry>
        </row>
        <row>
-	<entry>diameter(circle)</entry>
-	<entry>double precision</entry>
+	<entry><function>diameter</function>(circle)</entry>
+	<entry><type>double precision</type></entry>
 	<entry>diameter of circle</entry>
-	<entry>diameter(circle '((0,0),2.0)')</entry>
+	<entry><literal>diameter(circle '((0,0),2.0)')</literal></entry>
        </row>
        <row>
-	<entry>height(box)</entry>
-	<entry>double precision</entry>
+	<entry><function>height</function>(box)</entry>
+	<entry><type>double precision</type></entry>
 	<entry>vertical size of box</entry>
-	<entry>height(box '((0,0),(1,1))')</entry>
+	<entry><literal>height(box '((0,0),(1,1))')</literal></entry>
        </row>
        <row>
-	<entry>isclosed(path)</entry>
-	<entry>boolean</entry>
+	<entry><function>isclosed</function>(path)</entry>
+	<entry><type>boolean</type></entry>
 	<entry>a closed path?</entry>
-	<entry>isclosed(path '((0,0),(1,1),(2,0))')</entry>
+	<entry><literal>isclosed(path '((0,0),(1,1),(2,0))')</literal></entry>
        </row>
        <row>
-	<entry>isopen(path)</entry>
-	<entry>boolean</entry>
+	<entry><function>isopen</function>(path)</entry>
+	<entry><type>boolean</type></entry>
 	<entry>an open path?</entry>
-	<entry>isopen(path '[(0,0),(1,1),(2,0)]')</entry>
+	<entry><literal>isopen(path '[(0,0),(1,1),(2,0)]')</literal></entry>
        </row>
        <row>
-	<entry>length(object)</entry>
-	<entry>double precision</entry>
+	<entry><function>length</function>(object)</entry>
+	<entry><type>double precision</type></entry>
 	<entry>length of item</entry>
-	<entry>length(path '((-1,0),(1,0))')</entry>
+	<entry><literal>length(path '((-1,0),(1,0))')</literal></entry>
        </row>
        <row>
-	<entry>pclose(path)</entry>
-	<entry>path</entry>
+	<entry><function>pclose</function>(path)</entry>
+	<entry><type>path</type></entry>
 	<entry>convert path to closed</entry>
-	<entry>popen(path '[(0,0),(1,1),(2,0)]')</entry>
+	<entry><literal>popen(path '[(0,0),(1,1),(2,0)]')</literal></entry>
        </row>
-<!--
-Not defined by this name. Implements the intersection operator '#'
+<![IGNORE[
+<!-- Not defined by this name. Implements the intersection operator '#' -->
        <row>
-	<entry>point(lseg,lseg)</entry>
-	<entry>point</entry>
+	<entry><function>point</function>(lseg,lseg)</entry>
+	<entry><type>point</type></entry>
 	<entry>intersection</entry>
-	<entry>point(lseg '((-1,0),(1,0))',lseg '((-2,-2),(2,2))')</entry>
+	<entry><literal>point(lseg '((-1,0),(1,0))',lseg '((-2,-2),(2,2))')</literal></entry>
        </row>
--->
+]]>
        <row>
-	<entry>npoint(path)</entry>
-	<entry>int4</entry>
+	<entry><function>npoint</function>(path)</entry>
+	<entry><type>integer</type></entry>
 	<entry>number of points</entry>
-	<entry>npoints(path '[(0,0),(1,1),(2,0)]')</entry>
+	<entry><literal>npoints(path '[(0,0),(1,1),(2,0)]')</literal></entry>
        </row>
        <row>
-	<entry>popen(path)</entry>
-	<entry>path</entry>
+	<entry><function>popen</function>(path)</entry>
+	<entry><type>path</type></entry>
 	<entry>convert path to open path</entry>
-	<entry>popen(path '((0,0),(1,1),(2,0))')</entry>
+	<entry><literal>popen(path '((0,0),(1,1),(2,0))')</literal></entry>
        </row>
        <row>
-	<entry>radius(circle)</entry>
-	<entry>double precision</entry>
+	<entry><function>radius</function>(circle)</entry>
+	<entry><type>double precision</type></entry>
 	<entry>radius of circle</entry>
-	<entry>radius(circle '((0,0),2.0)')</entry>
+	<entry><literal>radius(circle '((0,0),2.0)')</literal></entry>
        </row>
        <row>
-	<entry>width(box)</entry>
-	<entry>double precision</entry>
+	<entry><function>width</function>(box)</entry>
+	<entry><type>double precision</type></entry>
 	<entry>horizontal size</entry>
-	<entry>width(box '((0,0),(1,1))')</entry>
+	<entry><literal>width(box '((0,0),(1,1))')</literal></entry>
        </row>
       </tbody>
      </tgroup>
@@ -3184,94 +3190,94 @@ Not defined by this name. Implements the intersection operator '#'
       </thead>
       <tbody>
        <row>
-	<entry>box(circle)</entry>
-	<entry>box</entry>
+	<entry><function>box</function>(<type>circle</type>)</entry>
+	<entry><type>box</type></entry>
 	<entry>circle to box</entry>
-	<entry>box(circle '((0,0),2.0)')</entry>
+	<entry><literal>box(circle '((0,0),2.0)')</literal></entry>
        </row>
        <row>
-	<entry>box(point, point)</entry>
-	<entry>box</entry>
+	<entry><function>box</function>(<type>point</type>, <type>point</type>)</entry>
+	<entry><type>box</type></entry>
 	<entry>points to box</entry>
-	<entry>box(point '(0,0)', point '(1,1)')</entry>
+	<entry><literal>box(point '(0,0)', point '(1,1)')</literal></entry>
        </row>
        <row>
-	<entry>box(polygon)</entry>
-	<entry>box</entry>
+	<entry><function>box</function>(<type>polygon</type>)</entry>
+	<entry><type>box</type></entry>
 	<entry>polygon to box</entry>
-	<entry>box(polygon '((0,0),(1,1),(2,0))')</entry>
+	<entry><literal>box(polygon '((0,0),(1,1),(2,0))')</literal></entry>
        </row>
        <row>
-	<entry>circle(box)</entry>
-	<entry>circle</entry>
+	<entry><function>circle</function>(<type>box</type>)</entry>
+	<entry><type>circle</type></entry>
 	<entry>to circle</entry>
-	<entry>circle(box '((0,0),(1,1))')</entry>
+	<entry><literal>circle(box '((0,0),(1,1))')</literal></entry>
        </row>
        <row>
-	<entry>circle(point, double precision)</entry>
-	<entry>circle</entry>
+	<entry><function>circle</function>(<type>point</type>, <type>double precision</type>)</entry>
+	<entry><type>circle</type></entry>
 	<entry>point to circle</entry>
-	<entry>circle(point '(0,0)', 2.0)</entry>
+	<entry><literal>circle(point '(0,0)', 2.0)</literal></entry>
        </row>
        <row>
-	<entry>lseg(box)</entry>
-	<entry>lseg</entry>
+	<entry><function>lseg</function>(<type>box</type>)</entry>
+	<entry><type>lseg</type></entry>
 	<entry>box diagonal to lseg</entry>
-	<entry>lseg(box '((-1,0),(1,0))')</entry>
+	<entry><literal>lseg(box '((-1,0),(1,0))')</literal></entry>
        </row>
        <row>
-	<entry>lseg(point, point)</entry>
-	<entry>lseg</entry>
+	<entry><function>lseg</function>(<type>point</type>, <type>point</type>)</entry>
+	<entry><type>lseg</type></entry>
 	<entry>points to lseg</entry>
-	<entry>lseg(point '(-1,0)', point '(1,0)')</entry>
+	<entry><literal>lseg(point '(-1,0)', point '(1,0)')</literal></entry>
        </row>
        <row>
-	<entry>path(polygon)</entry>
-	<entry>point</entry>
+	<entry><function>path</function>(<type>polygon</type>)</entry>
+	<entry><type>point</type></entry>
 	<entry>polygon to path</entry>
-	<entry>path(polygon '((0,0),(1,1),(2,0))')</entry>
+	<entry><literal>path(polygon '((0,0),(1,1),(2,0))')</literal></entry>
        </row>
        <row>
-	<entry>point(circle)</entry>
-	<entry>point</entry>
+	<entry><function>point</function>(<type>circle</type>)</entry>
+	<entry><type>point</type></entry>
 	<entry>center</entry>
-	<entry>point(circle '((0,0),2.0)')</entry>
+	<entry><literal>point(circle '((0,0),2.0)')</literal></entry>
        </row>
        <row>
-	<entry>point(lseg, lseg)</entry>
-	<entry>point</entry>
+	<entry><function>point</function>(<type>lseg</type>, <type>lseg</type>)</entry>
+	<entry><type>point</type></entry>
 	<entry>intersection</entry>
-	<entry>point(lseg '((-1,0),(1,0))', lseg '((-2,-2),(2,2))')</entry>
+	<entry><literal>point(lseg '((-1,0),(1,0))', lseg '((-2,-2),(2,2))')</literal></entry>
        </row>
        <row>
-	<entry>point(polygon)</entry>
-	<entry>point</entry>
+	<entry><function>point</function>(<type>polygon</type>)</entry>
+	<entry><type>point</type></entry>
 	<entry>center</entry>
-	<entry>point(polygon '((0,0),(1,1),(2,0))')</entry>
+	<entry><literal>point(polygon '((0,0),(1,1),(2,0))')</literal></entry>
        </row>
        <row>
-	<entry>polygon(box)</entry>
-	<entry>polygon</entry>
+	<entry><function>polygon</function>(<type>box</type>)</entry>
+	<entry><type>polygon</type></entry>
 	<entry>12 point polygon</entry>
-	<entry>polygon(box '((0,0),(1,1))')</entry>
+	<entry><literal>polygon(box '((0,0),(1,1))')</literal></entry>
        </row>
        <row>
-	<entry>polygon(circle)</entry>
-	<entry>polygon</entry>
+	<entry><function>polygon</function>(<type>circle</type>)</entry>
+	<entry><type>polygon</type></entry>
 	<entry>12-point polygon</entry>
-	<entry>polygon(circle '((0,0),2.0)')</entry>
+	<entry><literal>polygon(circle '((0,0),2.0)')</literal></entry>
        </row>
        <row>
-	<entry>polygon(<replaceable class="parameter">npts</replaceable>, circle)</entry>
-	<entry>polygon</entry>
+	<entry><function>polygon</function>(<replaceable class="parameter">npts</replaceable>, <type>circle</type>)</entry>
+	<entry><type>polygon</type></entry>
 	<entry><replaceable class="parameter">npts</replaceable> polygon</entry>
-	<entry>polygon(12, circle '((0,0),2.0)')</entry>
+	<entry><literal>polygon(12, circle '((0,0),2.0)')</literal></entry>
        </row>
        <row>
-	<entry>polygon(path)</entry>
-	<entry>polygon</entry>
+	<entry><function>polygon</function>(<type>path</type>)</entry>
+	<entry><type>polygon</type></entry>
 	<entry>path to polygon</entry>
-	<entry>polygon(path '((0,0),(1,1),(2,0))')</entry>
+	<entry><literal>polygon(path '((0,0),(1,1),(2,0))')</literal></entry>
        </row>
       </tbody>
      </tgroup>
@@ -3298,52 +3304,52 @@ Not defined by this name. Implements the intersection operator '#'
        <ROW>
 	<ENTRY> &lt; </ENTRY>
 	<ENTRY>Less than</ENTRY>
-	<ENTRY>inet '192.168.1.5' &lt; inet '192.168.1.6'</ENTRY>
+	<ENTRY><literal>inet '192.168.1.5' &lt; inet '192.168.1.6'</literal></ENTRY>
        </ROW>
        <ROW>
 	<ENTRY> &lt;= </ENTRY>
 	<ENTRY>Less than or equal</ENTRY>
-	<ENTRY>inet '192.168.1.5' &lt;= inet '192.168.1.5'</ENTRY>
+	<ENTRY><literal>inet '192.168.1.5' &lt;= inet '192.168.1.5'</literal></ENTRY>
        </ROW>
        <ROW>
 	<ENTRY> = </ENTRY>
 	<ENTRY>Equals</ENTRY>
-	<ENTRY>inet '192.168.1.5' = inet '192.168.1.5'</ENTRY>
+	<ENTRY><literal>inet '192.168.1.5' = inet '192.168.1.5'</literal></ENTRY>
        </ROW>
        <ROW>
 	<ENTRY> &gt;= </ENTRY>
 	<ENTRY>Greater or equal</ENTRY>
-	<ENTRY>inet '192.168.1.5' &gt;= inet '192.168.1.5'</ENTRY>
+	<ENTRY><literal>inet '192.168.1.5' &gt;= inet '192.168.1.5'</literal></ENTRY>
        </ROW>
        <ROW>
 	<ENTRY> &gt; </ENTRY>
 	<ENTRY>Greater</ENTRY>
-	<ENTRY>inet '192.168.1.5' &gt; inet '192.168.1.4'</ENTRY>
+	<ENTRY><literal>inet '192.168.1.5' &gt; inet '192.168.1.4'</literal></ENTRY>
        </ROW>
        <ROW>
 	<ENTRY> &lt;&gt; </ENTRY>
 	<ENTRY>Not equal</ENTRY>
-	<ENTRY>inet '192.168.1.5' &lt;&gt; inet '192.168.1.4'</ENTRY>
+	<ENTRY><literal>inet '192.168.1.5' &lt;&gt; inet '192.168.1.4'</literal></ENTRY>
        </ROW>
        <ROW>
 	<ENTRY> &lt;&lt; </ENTRY>
 	<ENTRY>is contained within</ENTRY>
-	<ENTRY>inet '192.168.1.5' &lt;&lt; inet '192.168.1/24'</ENTRY>
+	<ENTRY><literal>inet '192.168.1.5' &lt;&lt; inet '192.168.1/24'</literal></ENTRY>
        </ROW>
        <ROW>
 	<ENTRY> &lt;&lt;= </ENTRY>
 	<ENTRY>is contained within or equals</ENTRY>
-	<ENTRY>inet '192.168.1/24' &lt;&lt;= inet '192.168.1/24'</ENTRY>
+	<ENTRY><literal>inet '192.168.1/24' &lt;&lt;= inet '192.168.1/24'</literal></ENTRY>
        </ROW>
        <ROW>
 	<ENTRY> &gt;&gt; </ENTRY>
 	<ENTRY>contains</ENTRY>
-	<ENTRY>inet'192.168.1/24' &gt;&gt; inet '192.168.1.5'</ENTRY>
+	<ENTRY><literal>inet'192.168.1/24' &gt;&gt; inet '192.168.1.5'</literal></ENTRY>
        </ROW>
        <ROW>
 	<ENTRY> &gt;&gt;= </ENTRY>
 	<ENTRY>contains or equals</ENTRY>
-	<ENTRY>inet '192.168.1/24' &gt;&gt;= inet '192.168.1/24'</ENTRY>
+	<ENTRY><literal>inet '192.168.1/24' &gt;&gt;= inet '192.168.1/24'</literal></ENTRY>
        </ROW>
       </TBODY>
      </TGROUP>
@@ -3374,60 +3380,60 @@ Not defined by this name. Implements the intersection operator '#'
       </thead>
       <tbody>
        <row>
-	<entry>broadcast(inet)</entry>
-	<entry>inet</entry>
+	<entry><function>broadcast</function>(<type>inet</type>)</entry>
+	<entry><type>inet</type></entry>
 	<entry>broadcast address for network</entry>
-	<entry>broadcast('192.168.1.5/24')</entry>
-	<entry>192.168.1.255/24</entry>
+	<entry><literal>broadcast('192.168.1.5/24')</literal></entry>
+	<entry><literal>192.168.1.255/24</literal></entry>
        </row>
        <row>
-	<entry>host(inet)</entry>
-	<entry>text</entry>
+	<entry><function>host</function>(<type>inet</type>)</entry>
+	<entry><type>text</type></entry>
 	<entry>extract IP address as text</entry>
-	<entry>host('192.168.1.5/24')</entry>
-	<entry>192.168.1.5</entry>
+	<entry><literal>host('192.168.1.5/24')</literal></entry>
+	<entry><literal>192.168.1.5</literal></entry>
        </row>
        <row>
-	<entry>masklen(inet)</entry>
-	<entry>integer</entry>
+	<entry><function>masklen</function>(<type>inet</type>)</entry>
+	<entry><type>integer</type></entry>
 	<entry>extract netmask length</entry>
-	<entry>masklen('192.168.1.5/24')</entry>
-	<entry>24</entry>
+	<entry><literal>masklen('192.168.1.5/24')</literal></entry>
+	<entry><literal>24</literal></entry>
        </row>
        <row>
-	<entry>set_masklen(inet,integer)</entry>
-	<entry>inet</entry>
+	<entry><function>set_masklen</function>(<type>inet</type>,<type>integer</type>)</entry>
+	<entry><type>inet</type></entry>
 	<entry>set netmask length for inet value</entry>
-	<entry>set_masklen('192.168.1.5/24',16)</entry>
-	<entry>192.168.1.5/16</entry>
+	<entry><literal>set_masklen('192.168.1.5/24',16)</literal></entry>
+	<entry><literal>192.168.1.5/16</literal></entry>
        </row>
        <row>
-	<entry>netmask(inet)</entry>
-	<entry>inet</entry>
+	<entry><function>netmask</function>(<type>inet</type>)</entry>
+	<entry><type>inet</type></entry>
 	<entry>construct netmask for network</entry>
-	<entry>netmask('192.168.1.5/24')</entry>
-	<entry>255.255.255.0</entry>
+	<entry><literal>netmask('192.168.1.5/24')</literal></entry>
+	<entry><literal>255.255.255.0</literal></entry>
        </row>
        <row>
-	<entry>network(inet)</entry>
-	<entry>cidr</entry>
+	<entry><function>network</function>(<type>inet</type>)</entry>
+	<entry><type>cidr</type></entry>
 	<entry>extract network part of address</entry>
-	<entry>network('192.168.1.5/24')</entry>
-	<entry>192.168.1.0/24</entry>
+	<entry><literal>network('192.168.1.5/24')</literal></entry>
+	<entry><literal>192.168.1.0/24</literal></entry>
        </row>
        <row>
-	<entry>text(inet)</entry>
-	<entry>text</entry>
+	<entry><function>text</function>(<type>inet</type>)</entry>
+	<entry><type>text</type></entry>
 	<entry>extract IP address and masklen as text</entry>
-	<entry>text(inet '192.168.1.5')</entry>
-	<entry>192.168.1.5/32</entry>
+	<entry><literal>text(inet '192.168.1.5')</literal></entry>
+	<entry><literal>192.168.1.5/32</literal></entry>
        </row>
        <row>
-	<entry>abbrev(inet)</entry>
-	<entry>text</entry>
+	<entry><function>abbrev</function>(<type>inet</type>)</entry>
+	<entry><type>text</type></entry>
 	<entry>extract abbreviated display as text</entry>
-	<entry>abbrev(cidr '10.1.0.0/16')</entry>
-	<entry>10.1/16</entry>
+	<entry><literal>abbrev(cidr '10.1.0.0/16')</literal></entry>
+	<entry><literal>10.1/16</literal></entry>
        </row>
       </tbody>
      </tgroup>
@@ -3438,8 +3444,8 @@ Not defined by this name. Implements the intersection operator '#'
     <type>cidr</type> values as well.  The <function>host</>(),
     <function>text</>(), and <function>abbrev</>() functions are primarily
     intended to offer alternative display formats. You can cast a text
-    field to inet using normal casting syntax: inet(fieldname) or 
-    fieldname::inet.
+    field to inet using normal casting syntax: <literal>inet(expression)</literal> or 
+    <literal>colname::inet</literal>.
    </para>
 
    <para>
@@ -3457,11 +3463,11 @@ Not defined by this name. Implements the intersection operator '#'
       </thead>
       <tbody>
        <row>
-	<entry>trunc(macaddr)</entry>
-	<entry>macaddr</entry>
+	<entry><function>trunc</function>(<type>macaddr</type>)</entry>
+	<entry><type>macaddr</type></entry>
 	<entry>set last 3 bytes to zero</entry>
-	<entry>trunc(macaddr '12:34:56:78:90:ab')</entry>
-	<entry>12:34:56:00:00:00</entry>
+	<entry><literal>trunc(macaddr '12:34:56:78:90:ab')</literal></entry>
+	<entry><literal>12:34:56:00:00:00</literal></entry>
        </row>
       </tbody>
      </tgroup>
@@ -3722,18 +3728,18 @@ SELECT NULLIF(value, '(none)') ...
 
      <tbody>
       <row>
-       <entry>has_table_privilege(<parameter>user</parameter>,
+       <entry><function>has_table_privilege</function>(<parameter>user</parameter>,
                                   <parameter>table</parameter>,
                                   <parameter>access</parameter>)
        </entry>
-       <entry>boolean</>
+       <entry><type>boolean</type></>
        <entry>does user have access to table</>
       </row>
       <row>
-       <entry>has_table_privilege(<parameter>table</parameter>,
+       <entry><function>has_table_privilege</function>(<parameter>table</parameter>,
                                   <parameter>access</parameter>)
        </entry>
-       <entry>boolean</>
+       <entry><type>boolean</type></>
        <entry>does current user have access to table</>
       </row>
      </tbody>
@@ -3747,7 +3753,7 @@ SELECT NULLIF(value, '(none)') ...
    <para>
     <function>has_table_privilege</> determines whether a user
     can access a table in a particular way.  The user can be
-    specified by name or by usesysid, or if the argument is omitted
+    specified by name or by ID (<classname>pg_user</>.<structfield>usesysid</>) or if the argument is omitted
     <function>current_user</> is assumed.  The table can be specified
     by name or by OID.  (Thus, there are actually six variants of
     <function>has_table_privilege</>, which can be distinguished by
@@ -3811,13 +3817,13 @@ SELECT NULLIF(value, '(none)') ...
      </row>
 
      <row>
-      <entry>COUNT(*)</entry>
+      <entry><function>count</function>(*)</entry>
       <entry>number of input values</entry>
       <entry>The return value is of type <type>bigint</type>.</entry>
      </row>
 
      <row>
-      <entry>COUNT(<replaceable class="parameter">expression</replaceable>)</entry>
+      <entry><function>count</function>(<replaceable class="parameter">expression</replaceable>)</entry>
       <entry>
        Counts the input values for which the value of <replaceable
        class="parameter">expression</replaceable> is not NULL.
@@ -3826,7 +3832,7 @@ SELECT NULLIF(value, '(none)') ...
      </row>
 
      <row>
-      <entry>MAX(<replaceable class="parameter">expression</replaceable>)</entry>
+      <entry><function>max</function>(<replaceable class="parameter">expression</replaceable>)</entry>
       <entry>the maximum value of <replaceable class="parameter">expression</replaceable> across all input values</entry>
       <entry>
        Available for all numeric, string, and date/time types.  The
@@ -3835,7 +3841,7 @@ SELECT NULLIF(value, '(none)') ...
      </row>
 
      <row>
-      <entry>MIN(<replaceable class="parameter">expression</replaceable>)</entry>
+      <entry><function>min</function>(<replaceable class="parameter">expression</replaceable>)</entry>
       <entry>the minimum value of <replaceable class="parameter">expression</replaceable> across all input values</entry>
       <entry>
        Available for all numeric, string, and date/time types.  The
@@ -3844,7 +3850,7 @@ SELECT NULLIF(value, '(none)') ...
      </row>
 
      <row>
-      <entry>STDDEV(<replaceable class="parameter">expression</replaceable>)</entry>
+      <entry><function>stddev</function>(<replaceable class="parameter">expression</replaceable>)</entry>
       <entry>the sample standard deviation of the input values</entry>
       <entry>
        <indexterm>
@@ -3860,7 +3866,7 @@ SELECT NULLIF(value, '(none)') ...
      </row>
 
      <row>
-      <entry>SUM(<replaceable class="parameter">expression</replaceable>)</entry>
+      <entry><function>sum</function>(<replaceable class="parameter">expression</replaceable>)</entry>
       <entry>sum of <replaceable class="parameter">expression</replaceable> across all input values</entry>
       <entry>
        Summation is available on the following data types:
@@ -3876,7 +3882,7 @@ SELECT NULLIF(value, '(none)') ...
      </row>
 
      <row>
-      <entry>VARIANCE(<replaceable class="parameter">expression</replaceable>)</entry>
+      <entry><function>variance</function>(<replaceable class="parameter">expression</replaceable>)</entry>
       <entry>the sample variance of the input values</entry>
       <entry>
        <indexterm>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.45 2001/08/26 21:17:12 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.46 2001/09/09 17:21:59 petere Exp $
 -->
 
 <chapter id="sql-syntax">
@@ -462,7 +462,7 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
      <listitem>
       <para>
        "$" (dollar) cannot be a single-character operator, although it
-       can be part of a multi-character operator name.
+       can be part of a multiple-character operator name.
       </para>
      </listitem>
 
@@ -476,7 +476,7 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
 
      <listitem>
       <para>
-       A multi-character operator name cannot end in "+" or "-",
+       A multiple-character operator name cannot end in "+" or "-",
        unless the name also contains at least one of these characters:
 <literallayout>
 ~ ! @ # % ^ &amp; | ` ? $
@@ -600,7 +600,7 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
    <para>
     Alternatively, C-style block comments can be used:
 <programlisting>
-/* multi-line comment
+/* multiline comment
  * with nesting: /* nested block comment */
  */
 </programlisting>
@@ -634,7 +634,7 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
 
      <variablelist>
       <varlistentry>
-       <term>oid</term>
+       <term><structfield>oid</></term>
        <listitem>
 	<para>
 	 <indexterm>
@@ -649,20 +649,22 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
       </varlistentry>
 
       <varlistentry>
-      <term>tableoid</term>
+      <term><structfield>tableoid</></term>
        <listitem>
 	<para>
 	 The OID of the table containing this row.  This attribute is
 	 particularly handy for queries that select from inheritance
 	 hierarchies, since without it, it's difficult to tell which
-	 individual table a row came from.  The tableoid can be joined
-	 against the OID attribute of pg_class to obtain the table name.
+	 individual table a row came from.  The
+	 <structfield>tableoid</structfield> can be joined against the
+	 <structfield>oid</structfield> column of
+	 <classname>pg_class</classname> to obtain the table name.
 	</para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
-       <term>xmin</term>
+       <term><structfield>xmin</></term>
        <listitem>
 	<para>
 	 The identity (transaction ID) of the inserting transaction for
@@ -673,7 +675,7 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
       </varlistentry>
 
       <varlistentry>
-      <term>cmin</term>
+      <term><structfield>cmin</></term>
        <listitem>
 	<para>
 	 The command identifier (starting at zero) within the inserting
@@ -683,7 +685,7 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
       </varlistentry>
 
       <varlistentry>
-      <term>xmax</term>
+      <term><structfield>xmax</></term>
        <listitem>
 	<para>
 	 The identity (transaction ID) of the deleting transaction,
@@ -696,7 +698,7 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
       </varlistentry>
 
       <varlistentry>
-      <term>cmax</term>
+      <term><structfield>cmax</></term>
        <listitem>
 	<para>
 	 The command identifier within the deleting transaction, or zero.
@@ -705,16 +707,16 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
       </varlistentry>
 
       <varlistentry>
-      <term>ctid</term>
+      <term><structfield>ctid</></term>
        <listitem>
 	<para>
 	 The tuple ID of the tuple within its table.  This is a pair
 	 (block number, tuple index within block) that identifies the
-	 physical location of the tuple.  Note that although the ctid
-	 can be used to locate the tuple very quickly, a row's ctid
+	 physical location of the tuple.  Note that although the <structfield>ctid</structfield>
+	 can be used to locate the tuple very quickly, a row's <structfield>ctid</structfield>
 	 will change each time it is updated or moved by <command>VACUUM
 	 FULL</>.
-	 Therefore ctid is useless as a long-term row identifier.
+	 Therefore <structfield>ctid</structfield> is useless as a long-term row identifier.
 	 The OID, or even better a user-defined serial number, should
 	 be used to identify logical rows.
 	</para>
@@ -731,9 +733,9 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
      Recommended practice when using OIDs for row identification is to create
      a unique index on the OID column of each table for which the OID will be
      used.  Never assume that OIDs are unique across tables; use the
-     combination of tableoid and row OID if you need a database-wide
+     combination of <structfield>tableoid</> and row OID if you need a database-wide
      identifier.  (Future releases of Postgres are likely to use a separate
-     OID counter for each table, so that tableoid <emphasis>must</> be
+     OID counter for each table, so that <structfield>tableoid</> <emphasis>must</> be
      included to arrive at a globally unique identifier.)
     </para>
 

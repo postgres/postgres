@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.61 2001/09/04 03:17:54 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.62 2001/09/09 17:21:51 petere Exp $
 -->
 
  <chapter id="datatype">
@@ -361,59 +361,59 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.61 2001/09/04 03:17:54 mo
 
       <tbody>
        <row>
-	<entry>smallint</entry>
+	<entry><type>smallint</></entry>
 	<entry>2 bytes</entry>
 	<entry>Fixed-precision</entry>
 	<entry>-32768 to +32767</entry>
        </row>
        <row>
-	<entry>integer</entry>
+	<entry><type>integer</></entry>
 	<entry>4 bytes</entry>
 	<entry>Usual choice for fixed-precision</entry>
 	<entry>-2147483648 to +2147483647</entry>
        </row>
        <row>
-	<entry>bigint</entry>
+	<entry><type>bigint</></entry>
 	<entry>8 bytes</entry>
 	<entry>Very large range fixed-precision</entry>
 	<entry>about 18 decimal digits</entry>
        </row>
 
        <row>
-	<entry>decimal</entry>
+	<entry><type>decimal</></entry>
 	<entry>variable</entry>
 	<entry>user-specified precision, exact</entry>
 	<entry>no limit</entry>
        </row>
        <row>
-	<entry>numeric</entry>
+	<entry><type>numeric</></entry>
 	<entry>variable</entry>
 	<entry>user-specified precision, exact</entry>
 	<entry>no limit</entry>
        </row>
 
        <row>
-	<entry>real</entry>
+	<entry><type>real</></entry>
 	<entry>4 bytes</entry>
 	<entry>variable-precision, inexact</entry>
 	<entry>6 decimal digits precision</entry>
        </row>
        <row>
-	<entry>double precision</entry>
+	<entry><type>double precision</></entry>
 	<entry>8 bytes</entry>
 	<entry>variable-precision, inexact</entry>
 	<entry>15 decimal digits precision</entry>
        </row>
 
        <row>
-	<entry>serial</entry>
+	<entry><type>serial</></entry>
 	<entry>4 bytes</entry>
 	<entry>autoincrementing integer</entry>
 	<entry>1 to 2147483647</entry>
        </row>
 
        <row>
-	<entry>bigserial</entry>
+	<entry><type>bigserial</type></entry>
 	<entry>8 bytes</entry>
 	<entry>autoincrementing integer</entry>
 	<entry>1 to 9223372036854775807</entry>
@@ -557,7 +557,7 @@ NUMERIC
     <para>
      The data types <type>real</type> and <type>double
      precision</type> are inexact, variable precision numeric types.
-     In practice, these types are usually implementations of IEEE 754
+     In practice, these types are usually implementations of <acronym>IEEE</acronym> 754
      binary floating point (single and double precision,
      respectively), to the extent that the underlying processor,
      operating system, and compiler support it.
@@ -636,7 +636,7 @@ NUMERIC
     </indexterm>
 
     <para>
-     The <type>serial</type> datatypes are not truly types, but are a
+     The <type>serial</type> data types are not truly types, but are a
      notational convenience for setting up unique identifier columns
      in tables.
      In the current implementation, specifying
@@ -777,20 +777,16 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
       </thead>
       <tbody>
        <row>
-	<entry>character(<replaceable>n</>), char(<replaceable>n</>)</entry>
+	<entry><type>character(<replaceable>n</>)</type>, <type>char(<replaceable>n</>)</type></entry>
 	<entry>Fixed-length blank padded</entry>
        </row>
        <row>
-	<entry>character varying(<replaceable>n</>), varchar(<replaceable>n</>)</entry>
+	<entry><type>character varying(<replaceable>n</>)</type>, <type>varchar(<replaceable>n</>)</type></entry>
 	<entry>Variable-length with limit</entry>
        </row>
        <row>
-	<entry>text</entry>
+	<entry><type>text</type></entry>
 	<entry>Variable unlimited length</entry>
-       </row>
-        <row>
-	<entry>bytea</entry>
-	<entry>binary data</entry>
        </row>
      </tbody>
      </tgroup>
@@ -840,19 +836,6 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
    </para>
 
    <para>
-    The <type>bytea</type> data type allows storage of binary data,
-    specifically allowing storage of NULLs which are entered as
-    <literal>'\\000'</>. The first backslash is interpreted by the
-    single quotes, and the second is recognized by <type>bytea</> and
-    preceeds a three digit octal value. For a similar reason, a
-    backslash must be entered into a field as <literal>'\\\\'</> or
-    <literal>'\\134'</>. You may also have to escape line feeds and
-    carriage return if your interface automatically translates these. It
-    can store values of any length. <type>Bytea</> is a non-standard
-    data type.
-   </para>
-
-   <para>
     The storage requirement for data of these types is 4 bytes plus
     the actual string, and in case of <type>character</type> plus the
     padding.  Long strings will actually be compressed by the system
@@ -860,7 +843,7 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
     that can be stored is about 1 GB.  (The maximum value that will be
     allowed for <replaceable>n</> in the data type declaration is
     actually larger than that.  It wouldn't be very useful to change
-    this because with multi-byte character encodings the number of
+    this because with multibyte character encodings the number of
     characters and bytes can be quite different anyway.)
    </para>
 
@@ -955,6 +938,23 @@ SELECT b, char_length(b) FROM test2;
      </tgroup>
     </table>
 
+  </sect1>
+
+  <sect1 id="datatype-binary">
+   <title>Binary Data</title>
+
+   <para>
+    The <type>bytea</type> data type allows storage of binary data,
+    specifically allowing storage of NULLs which are entered as
+    <literal>'\\000'</>. The first backslash is interpreted by the
+    single quotes, and the second is recognized by <type>bytea</> and
+    precedes a three digit octal value. For a similar reason, a
+    backslash must be entered into a field as <literal>'\\\\'</> or
+    <literal>'\\134'</>. You may also have to escape line feeds and
+    carriage return if your interface automatically translates these. It
+    can store values of any length. <type>Bytea</> is a non-standard
+    data type.
+   </para>
   </sect1>
 
   <sect1 id="datatype-datetime">
@@ -1083,7 +1083,7 @@ SELECT b, char_length(b) FROM test2;
     </para>
 
     <sect3>
-    <title>date</title>
+    <title><type>date</type></title>
 
     <indexterm>
      <primary>date</primary>
@@ -1260,7 +1260,7 @@ SELECT b, char_length(b) FROM test2;
     </sect3>
 
     <sect3>
-     <title>time [ without time zone ]</title>
+     <title><type>time [ without time zone ]</type></title>
 
      <indexterm>
       <primary>time</primary>
@@ -1328,7 +1328,7 @@ SELECT b, char_length(b) FROM test2;
     </sect3>
 
     <sect3>
-     <title>time with time zone</title>
+     <title><type>time with time zone</type></title>
 
      <para>
       This type is defined by SQL92, but the definition exhibits
@@ -1382,7 +1382,7 @@ SELECT b, char_length(b) FROM test2;
     </sect3>
 
     <sect3>
-    <title>timestamp</title>
+    <title><type>timestamp</type></title>
 
     <indexterm>
      <primary>timestamp</primary>
@@ -1442,7 +1442,7 @@ January 8 04:05:06 1999 PST
     </sect3>
 
     <sect3>
-     <title>interval</title>
+     <title><type>interval</type></title>
 
      <indexterm>
       <primary>interval</primary>
@@ -1664,7 +1664,7 @@ January 8 04:05:06 1999 PST
       </listitem>
       <listitem>
        <para>
-	The <envar>PGDATESTYLE</envar> environment variable used by the frontend libpq 
+	The <envar>PGDATESTYLE</envar> environment variable used by the frontend <application>libpq</application>
 	on session start-up.
        </para>
       </listitem>
@@ -1753,13 +1753,13 @@ January 8 04:05:06 1999 PST
      <itemizedlist spacing="compact" mark="bullet">
       <listitem>
        <para>
-	The TZ environment variable is used by the backend directly
+	The <envar>TZ</envar> environment variable is used by the backend directly
 	on postmaster start-up as the default time zone.
        </para>
       </listitem>
       <listitem>
        <para>
-	The PGTZ environment variable, if set at the client, is used by libpq 
+	The <envar>PGTZ</envar> environment variable, if set at the client, is used by libpq 
 	to send a <command>SET TIME ZONE</command> command to the backend upon
 	connection.
        </para>
@@ -1796,7 +1796,7 @@ January 8 04:05:06 1999 PST
       <para>
        If the runtime option <literal>AUSTRALIAN_TIMEZONES</literal> is set 
        then <literal>CST</literal> and <literal>EST</literal> refer to
-       Australian timezones, not American ones.
+       Australian time zones, not American ones.
       </para>
      </note>
     </para>
@@ -1939,49 +1939,49 @@ SELECT * FROM test1 WHERE a;
       </thead>
       <tbody>
        <row>
-	<entry>point</entry>
+	<entry><type>point</type></entry>
 	<entry>16 bytes</entry>
 	<entry>(x,y)</entry>
 	<entry>Point in space</entry>
        </row>
        <row>
-	<entry>line</entry>
+	<entry><type>line</type></entry>
 	<entry>32 bytes</entry>
 	<entry>((x1,y1),(x2,y2))</entry>
 	<entry>Infinite line</entry>
        </row>
        <row>
-	<entry>lseg</entry>
+	<entry><type>lseg</type></entry>
 	<entry>32 bytes</entry>
 	<entry>((x1,y1),(x2,y2))</entry>
 	<entry>Finite line segment</entry>
        </row>
        <row>
-	<entry>box</entry>
+	<entry><type>box</type></entry>
 	<entry>32 bytes</entry>
 	<entry>((x1,y1),(x2,y2))</entry>
 	<entry>Rectangular box</entry>
        </row>
        <row>
-	<entry>path</entry>
+	<entry><type>path</type></entry>
 	<entry>4+32n bytes</entry>
 	<entry>((x1,y1),...)</entry>
 	<entry>Closed path (similar to polygon)</entry>
        </row>
        <row>
-	<entry>path</entry>
+	<entry><type>path</type></entry>
 	<entry>4+32n bytes</entry>
 	<entry>[(x1,y1),...]</entry>
 	<entry>Open path</entry>
        </row>
        <row>
-	<entry>polygon</entry>
+	<entry><type>polygon</type></entry>
 	<entry>4+32n bytes</entry>
 	<entry>((x1,y1),...)</entry>
 	<entry>Polygon (similar to closed path)</entry>
        </row>
        <row>
-	<entry>circle</entry>
+	<entry><type>circle</type></entry>
 	<entry>24 bytes</entry>
 	<entry><(x,y),r></entry>
 	<entry>Circle (center and radius)</entry>
@@ -2296,21 +2296,21 @@ SELECT * FROM test1 WHERE a;
       <tbody>
 
        <row>
-	<entry>cidr</entry>
+	<entry><type>cidr</type></entry>
 	<entry>12 bytes</entry>
 	<entry>IP networks</entry>
 	<entry>valid IPv4 networks</entry>
        </row>
 
        <row>
-	<entry>inet</entry>
+	<entry><type>inet</type></entry>
 	<entry>12 bytes</entry>
 	<entry>IP hosts and networks</entry>
 	<entry>valid IPv4 hosts or networks</entry>
        </row>
 
        <row>
-	<entry>macaddr</entry>
+	<entry><type>macaddr</type></entry>
 	<entry>6 bytes</entry>
 	<entry>MAC addresses</entry>
 	<entry>customary formats</entry>
@@ -2386,9 +2386,9 @@ SELECT * FROM test1 WHERE a;
       <tgroup cols="3">
        <thead> 
 	<row> 
-	 <entry>CIDR Input</entry>
-	 <entry>CIDR Displayed</entry>
-	 <entry>abbrev(CIDR)</entry>
+	 <entry><type>CIDR</type> Input</entry>
+	 <entry><type>CIDR</type> Displayed</entry>
+	 <entry><function>abbrev</function>(<type>CIDR</type>)</entry>
 	</row>
        </thead>
        <tbody>

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/array.sgml,v 1.11 2001/05/12 22:51:34 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/array.sgml,v 1.12 2001/09/09 17:21:44 petere Exp $ -->
 
 <chapter id="arrays">
  <title>Arrays</title>
@@ -9,7 +9,7 @@
 
  <para>
   <productname>Postgres</productname> allows columns of a table to be
-  defined as variable-length multi-dimensional arrays. Arrays of any
+  defined as variable-length multidimensional arrays. Arrays of any
   built-in type or user-defined type can be created.  To illustrate
   their use, we create this table:
 <programlisting>

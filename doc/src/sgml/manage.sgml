@@ -1,17 +1,15 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/manage.sgml,v 1.13 2001/02/04 15:28:18 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/manage.sgml,v 1.14 2001/09/09 17:21:59 petere Exp $
 -->
 
  <Chapter Id="manage">
   <Title>Managing a Database</Title>
 
-  <Note>
-   <Para>
-    This section is currently a thinly disguised copy of the
-    Tutorial. Needs to be augmented.
+  <comment>
+   This section is currently a thinly disguised copy of the
+   Tutorial. Needs to be augmented.
     - thomas 1998-01-12
-   </Para>
-  </Note>
+  </comment>
 
   <Para>
    Although the <FirstTerm>site administrator</FirstTerm> is responsible for overall management 
@@ -89,9 +87,9 @@ ERROR:  CREATE DATABASE: Permission denied.
     Alternate database locations are created and referenced by an environment variable 
     which gives the absolute path to the intended storage location.  
     This environment variable must have been defined before the postmaster was started 
-    and the location it points to must be writable by the postgres administrator account.
+    and the location it points to must be writable by the administrator account.
     Consult with the site administrator
-    regarding preconfigured alternate database locations.  
+    regarding preconfigured alternative database locations.  
     Any valid environment variable name may be used to reference an alternate location, 
     although using variable names with a prefix of <envar>PGDATA</envar> is recommended 
     to avoid confusion 
@@ -101,7 +99,7 @@ ERROR:  CREATE DATABASE: Permission denied.
    <Note>
     <Para>
      In previous versions of <ProductName>Postgres</ProductName>, 
-     it was also permissable to use an absolute path name to specify 
+     it was also permissible to use an absolute path name to specify 
      an alternate storage location.  
      Although the environment variable style of specification
      is to be preferred since it allows the site administrator more flexibility in
@@ -181,7 +179,7 @@ enter, edit, and execute <Acronym>SQL</Acronym> commands.
 </ListItem>
 <ListItem>
 <Para>
-      writing a  C  program  using  the  LIBPQ  subroutine
+      writing a  C  program  using  the  <application>LIBPQ</application> subroutine
         library.   This  allows  you  to submit <Acronym>SQL</Acronym> commands
         from C and get answers and status messages  back  to
         your  program.   This interface is discussed further
@@ -213,7 +211,7 @@ mydb=>
 </Para>
 
 <Para>
-This prompt indicates that psql is listening
+This prompt indicates that <command>psql</command> is listening
   to you and that you can type <Acronym>SQL</Acronym> queries into a
      workspace maintained by the terminal monitor.
      The <Application>psql</Application> program responds to escape  codes  that  begin
@@ -235,7 +233,7 @@ mydb=> \g
      terminate your query with a semicolon, the  "<literal>\g</literal>" is  not
      necessary.   
 <Application>psql</Application> will automatically process semicolon terminated queries.
-     To read queries from a file,  say  myFile,  instead  of
+     To read queries from a file,  say  <filename>myFile</filename>,  instead  of
      entering them interactively, type:
 <ProgramListing>
 mydb=> \i fileName
@@ -247,7 +245,7 @@ mydb=> \q
 </ProgramListing>
 
      and  <Application>psql</Application>  will  quit  and  return  you to your command
-     shell. (For more escape codes, type <Command>\?</Command> at  the  psql
+     shell. (For more escape codes, type <Command>\?</Command> at  the  <command>psql</command>
      prompt.)
      White  space  (i.e.,  spaces, tabs and newlines) may be
      used freely in <Acronym>SQL</Acronym> queries.  Single-line comments  are  denoted  by

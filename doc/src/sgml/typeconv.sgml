@@ -150,8 +150,8 @@ extended user-defined types to use these same features transparently.
 <para>
 An additional heuristic is provided in the parser to allow better guesses
 at proper behavior for <acronym>SQL</acronym> standard types. There are
-several basic <firstterm>type categories</firstterm> defined: boolean,
-numeric, string, bitstring, datetime, timespan, geometric, network,
+several basic <firstterm>type categories</firstterm> defined: <type>boolean</type>,
+<type>numeric</type>, <type>string</type>, <type>bitstring</type>, <type>datetime</type>, <type>timespan</type>, <type>geometric</type>, <type>network</type>,
 and user-defined. Each category, with the exception of user-defined, has
 a <firstterm>preferred type</firstterm> which is preferentially selected
 when there is ambiguity.
@@ -273,7 +273,7 @@ If only one candidate remains, use it; else continue to the next step.
 </step>
 <step performance="required">
 <para>
-If any input arguments are "unknown", check the type categories accepted
+If any input arguments are <quote>unknown</quote>, check the type categories accepted
 at those argument positions by the remaining candidates.  At each position,
 select "string"
 category if any candidate accepts that category (this bias towards string
@@ -281,7 +281,7 @@ is appropriate since an unknown-type literal does look like a string).
 Otherwise, if all the remaining candidates accept the same type category,
 select that category; otherwise fail because
 the correct choice cannot be deduced without more clues.  Also note whether
-any of the candidates accept a preferred datatype within the selected category.
+any of the candidates accept a preferred data type within the selected category.
 Now discard operator candidates that do not accept the selected type category;
 furthermore, if any candidate accepts a preferred type at a given argument
 position, discard candidates that accept non-preferred types for that
@@ -391,7 +391,7 @@ tgl=> SELECT 'abc' || 'def' AS "Unspecified";
 In this case there is no initial hint for which type to use, since no types
 are specified in the query. So, the parser looks for all candidate operators
 and finds that there are candidates accepting both string-category and
-bitstring-category inputs.  Since string category is preferred when available,
+bit-string-category inputs.  Since string category is preferred when available,
 that category is selected, and then the 
 "preferred type" for strings, <type>text</type>, is used as the specific
 type to resolve the unknown literals to.
@@ -440,7 +440,7 @@ will try to oblige.
 
 <step performance="required">
 <para>
-Check for an exact match in the pg_proc system catalog.
+Check for an exact match in the <classname>pg_proc</classname> system catalog.
 (Cases involving <type>unknown</type> will never find a match at
 this step.)
 </para></step>
@@ -491,7 +491,7 @@ is appropriate since an unknown-type literal does look like a string).
 Otherwise, if all the remaining candidates accept the same type category,
 select that category; otherwise fail because
 the correct choice cannot be deduced without more clues.  Also note whether
-any of the candidates accept a preferred datatype within the selected category.
+any of the candidates accept a preferred data type within the selected category.
 Now discard operator candidates that do not accept the selected type category;
 furthermore, if any candidate accepts a preferred type at a given argument
 position, discard candidates that accept non-preferred types for that
@@ -512,10 +512,10 @@ then fail.
 If no best match could be identified, see whether the function call appears
 to be a trivial type coercion request.  This happens if the function call
 has just one argument and the function name is the same as the (internal)
-name of some datatype.  Furthermore, the function argument must be either
+name of some data type.  Furthermore, the function argument must be either
 an unknown-type literal or a type that is binary-compatible with the named
-datatype.  When these conditions are met, the function argument is coerced
-to the named datatype.
+data type.  When these conditions are met, the function argument is coerced
+to the named data type.
 </para>
 </step>
 </procedure>
@@ -527,7 +527,7 @@ to the named datatype.
 <title>Factorial Function</title>
 
 <para>
-There is only one factorial function defined in the pg_proc catalog.
+There is only one factorial function defined in the <classname>pg_proc</classname> catalog.
 So the following query automatically converts the <type>int2</type> argument
 to <type>int4</type>:
 
@@ -554,7 +554,7 @@ tgl=> select int4fac(int4(int2 '4'));
 <title>Substring Function</title>
 
 <para>
-There are two <function>substr</function> functions declared in pg_proc. However,
+There are two <function>substr</function> functions declared in <classname>pg_proc</classname>. However,
 only one takes two arguments, of types <type>text</type> and <type>int4</type>.
 </para>
 
@@ -679,8 +679,8 @@ tgl=> SELECT * FROM vv;
 What's really happened here is that the two unknown literals are resolved
 to text by default, allowing the <literal>||</literal> operator to be
 resolved as text concatenation.  Then the text result of the operator
-is coerced to varchar to match the target column type.  (But, since the
-parser knows that text and varchar are binary-compatible, this coercion
+is coerced to <type>varchar</type> to match the target column type.  (But, since the
+parser knows that text and <type>varchar</type> are binary-compatible, this coercion
 is implicit and does not insert any real function call.)  Finally, the
 sizing function <literal>varchar(varchar,int4)</literal> is found in the system
 catalogs and applied to the operator's result and the stored column length.

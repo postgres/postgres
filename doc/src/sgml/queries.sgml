@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/queries.sgml,v 1.8 2001/08/30 08:16:42 ishii Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/queries.sgml,v 1.9 2001/09/09 17:21:59 petere Exp $ -->
 
 <chapter id="queries">
  <title>Queries</title>
@@ -85,7 +85,7 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
     A table reference may be a table name or a derived table such as a
     subquery, a table join, or complex combinations of these.  If more
     than one table reference is listed in the FROM clause they are
-    CROSS JOINed (see below) to form the derived table that may then
+    cross-joined (see below) to form the derived table that may then
     be subject to transformations by the WHERE, GROUP BY, and HAVING
     clauses and is finally the result of the overall table expression.
    </para>
@@ -150,7 +150,7 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
      </varlistentry>
 
      <varlistentry>
-      <term>Qualified JOINs</term>
+      <term>Qualified joins</term>
       <listitem>
 
        <indexterm>
@@ -166,7 +166,7 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
         
        <para>
         The words <token>INNER</token> and <token>OUTER</token> are
-        optional for all JOINs.  <token>INNER</token> is the default;
+        optional for all joins.  <token>INNER</token> is the default;
         <token>LEFT</token>, <token>RIGHT</token>, and
         <token>FULL</token> imply an OUTER JOIN.
        </para>
@@ -281,7 +281,7 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
     <para>
      Joins of all types can be chained together or nested: either
      or both of <replaceable>T1</replaceable> and
-     <replaceable>T2</replaceable> may be JOINed tables.  Parentheses
+     <replaceable>T2</replaceable> may be joined tables.  Parentheses
      may be used around JOIN clauses to control the join order.  In the
      absence of parentheses, JOIN clauses nest left-to-right.
     </para>
@@ -479,7 +479,7 @@ FROM a NATURAL JOIN b WHERE b.val &gt; 5
      Which one of these you use is mainly a matter of style.  The JOIN
      syntax in the FROM clause is probably not as portable to other
      products.  For outer joins there is no choice in any case:  they
-     must be done in the FROM clause.  An outer join's ON/USING clause
+     must be done in the FROM clause.  A ON/USING clause of an outer join
      is <emphasis>not</> equivalent to a WHERE condition, because it
      determines the addition of rows (for unmatched input rows) as well
      as the removal of rows from the final result.
@@ -505,16 +505,18 @@ FROM FDT WHERE
 </programlisting>
 
    <para>
-    In the examples above, FDT is the table derived in the FROM
-    clause. Rows that do not meet the search condition of the where
-    clause are eliminated from FDT. Notice the use of scalar
-    subqueries as value expressions.  Just like
-    any other query, the subqueries can employ complex table
-    expressions.  Notice how FDT is referenced in the subqueries.
-    Qualifying C1 as FDT.C1 is only necessary if C1 is also the name of a
-    column in the derived input table of the subquery.  Qualifying the
-    column name adds clarity even when it is not needed.  This shows how
-    the column naming scope of an outer query extends into its inner queries.
+    In the examples above, <literal>FDT</literal> is the table derived
+    in the FROM clause. Rows that do not meet the search condition of
+    the where clause are eliminated from
+    <literal>FDT</literal>. Notice the use of scalar subqueries as
+    value expressions.  Just like any other query, the subqueries can
+    employ complex table expressions.  Notice how
+    <literal>FDT</literal> is referenced in the subqueries.
+    Qualifying <literal>C1</> as <literal>FDT.C1</> is only necessary
+    if <literal>C1</> is also the name of a column in the derived
+    input table of the subquery.  Qualifying the column name adds
+    clarity even when it is not needed.  This shows how the column
+    naming scope of an outer query extends into its inner queries.
    </para>
   </sect2>
 
@@ -569,7 +571,7 @@ SELECT pid, p.name, (sum(s.units) * p.price) AS sales
   FROM products p LEFT JOIN sales s USING ( pid )
   GROUP BY pid, p.name, p.price;
 </programlisting>
-    In this example, the columns pid, p.name, and p.price must be in
+    In this example, the columns <literal>pid</literal>, <literal>p.name</literal>, and <literal>p.price</literal> must be in
     the GROUP BY clause since they are referenced in the query select
     list.  The column s.units does not have to be in the GROUP BY list
     since it is only used in an aggregate expression
@@ -868,12 +870,12 @@ SELECT a, b FROM table1 ORDER BY a + b;
 SELECT a AS b FROM table1 ORDER BY a;
 </programlisting>
    But these extensions do not work in queries involving UNION, INTERSECT,
-   or EXCEPT, and are not portable to other DBMSes.
+   or EXCEPT, and are not portable to other <acronym>DBMS</acronym>.
   </para>
 
   <para>
-   Each column specification may be followed by an optional ASC or
-   DESC to set the sort direction.  ASC is default.  Ascending order
+   Each column specification may be followed by an optional <token>ASC</token> or
+   <token>DESC</token> to set the sort direction.  <token>ASC</token> is default.  Ascending order
    puts smaller values first, where <quote>smaller</quote> is defined
    in terms of the <literal>&lt;</literal> operator.  Similarly,
    descending order is determined with the <literal>&gt;</literal>

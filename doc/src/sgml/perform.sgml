@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.7 2001/06/22 18:53:36 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.8 2001/09/09 17:21:59 petere Exp $
 -->
 
  <chapter id="performance-tips">
@@ -109,9 +109,9 @@ Seq Scan on tenk1  (cost=0.00..333.00 rows=10000 width=148)
 select * from pg_class where relname = 'tenk1';
     </programlisting>
 
-    you'll find out that tenk1 has 233 disk
+    you will find out that <classname>tenk1</classname> has 233 disk
     pages and 10000 tuples.  So the cost is estimated at 233 page
-    reads, defined as 1.0 apiece, plus 10000 * cpu_tuple_cost which is
+    reads, defined as 1.0 apiece, plus 10000 * <varname>cpu_tuple_cost</varname> which is
     currently 0.01 (try <command>show cpu_tuple_cost</command>).
    </para>
 
@@ -152,7 +152,7 @@ Index Scan using tenk1_unique1 on tenk1  (cost=0.00..173.32 rows=47 width=148)
 
     and you will see that if we make the WHERE condition selective
     enough, the planner will
-    eventually decide that an indexscan is cheaper than a sequential scan.
+    eventually decide that an index scan is cheaper than a sequential scan.
     This plan will only have to visit 50 tuples because of the index,
     so it wins despite the fact that each individual fetch is more expensive
     than reading a whole disk page sequentially.
@@ -169,7 +169,7 @@ NOTICE:  QUERY PLAN:
 Index Scan using tenk1_unique1 on tenk1  (cost=0.00..173.44 rows=1 width=148)
     </programlisting>
 
-    The added clause "stringu1 = 'xxx'" reduces the output-rows estimate,
+    The added clause <literal>stringu1 = 'xxx'</literal> reduces the output-rows estimate,
     but not the cost because we still have to visit the same set of tuples.
    </para>
 
@@ -190,18 +190,18 @@ Nested Loop  (cost=0.00..269.11 rows=47 width=296)
    </para>
 
    <para>
-    In this nested-loop join, the outer scan is the same indexscan we had
+    In this nested-loop join, the outer scan is the same index scan we had
     in the example before last, and so its cost and row count are the same
     because we are applying the "unique1 &lt; 50" WHERE clause at that node.
     The "t1.unique2 = t2.unique2" clause isn't relevant yet, so it doesn't
-    affect the outer scan's row count.  For the inner scan, the
+    affect row count of the outer scan.  For the inner scan, the unique2 value of the
     current
-    outer-scan tuple's unique2 value is plugged into the inner indexscan
-    to produce an indexqual like
+    outer-scan tuple is plugged into the inner index scan
+    to produce an index qualification like
     "t2.unique2 = <replaceable>constant</replaceable>".  So we get the
-     same inner-scan plan and costs that we'd get from, say, "explain select
-     * from tenk2 where unique2 = 42".  The loop node's costs are then set
-     on the basis of the outer scan's cost, plus one repetition of the
+     same inner-scan plan and costs that we'd get from, say, <literal>explain select
+     * from tenk2 where unique2 = 42</literal>.  The costs of the loop node are then set
+     on the basis of the cost of the outer scan, plus one repetition of the
      inner scan for each outer tuple (47 * 2.01, here), plus a little CPU
      time for join processing.
    </para>
@@ -212,7 +212,7 @@ Nested Loop  (cost=0.00..269.11 rows=47 width=296)
     in general you can have WHERE clauses that mention both relations and
     so can only be applied at the join point, not to either input scan.
     For example, if we added "WHERE ... AND t1.hundred &lt; t2.hundred",
-    that'd decrease the output row count of the join node, but not change
+    that would decrease the output row count of the join node, but not change
     either input scan.
    </para>
 
@@ -237,13 +237,13 @@ Hash Join  (cost=173.44..557.03 rows=47 width=296)
                (cost=0.00..173.32 rows=47 width=148)
     </programlisting>
 
-    This plan proposes to extract the 50 interesting rows of tenk1
-    using ye same olde indexscan, stash them into an in-memory hash table,
-    and then do a sequential scan of tenk2, probing into the hash table
-    for possible matches of "t1.unique2 = t2.unique2" at each tenk2 tuple.
-    The cost to read tenk1 and set up the hash table is entirely start-up
+    This plan proposes to extract the 50 interesting rows of <classname>tenk1</classname>
+    using ye same olde index scan, stash them into an in-memory hash table,
+    and then do a sequential scan of <classname>tenk2</classname>, probing into the hash table
+    for possible matches of "t1.unique2 = t2.unique2" at each <classname>tenk2</classname> tuple.
+    The cost to read <classname>tenk1</classname> and set up the hash table is entirely start-up
     cost for the hash join, since we won't get any tuples out until we can
-    start reading tenk2.  The total time estimate for the join also
+    start reading <classname>tenk2</classname>.  The total time estimate for the join also
     includes a hefty charge for CPU time to probe the hash table
     10000 times.  Note, however, that we are NOT charging 10000 times 173.32;
     the hash table setup is only done once in this plan type.
@@ -302,8 +302,8 @@ SELECT * FROM a,b,c WHERE a.id = b.id AND b.ref = c.id;
    annoyingly long time.  When there are too many input tables, the
    <productname>Postgres</productname> planner will switch from exhaustive
    search to a <firstterm>genetic</firstterm> probabilistic search
-   through a limited number of possibilities.  (The switchover threshold is
-   set by the GEQO_THRESHOLD run-time
+   through a limited number of possibilities.  (The switch-over threshold is
+   set by the <varname>GEQO_THRESHOLD</varname> run-time
    parameter described in the <citetitle>Administrator's Guide</citetitle>.)
    The genetic search takes less time, but it won't
    necessarily find the best possible plan.

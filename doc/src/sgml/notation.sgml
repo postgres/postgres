@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/notation.sgml,v 1.14 2001/02/03 19:03:27 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/notation.sgml,v 1.15 2001/09/09 17:21:59 petere Exp $
 -->
 
 <sect1 id="notation">
@@ -38,10 +38,10 @@ $Header: /cvsroot/pgsql/doc/src/sgml/notation.sgml,v 1.14 2001/02/03 19:03:27 pe
 
  <para>
   Examples will show commands executed from various accounts and programs.
-  Commands executed from a Unix shell may be preceeded with a dollar sign
+  Commands executed from a Unix shell may be preceded with a dollar sign
   (<quote><literal>$</literal></quote>).  Commands executed from particular user
-  accounts such as root or postgres are specially flagged and explained.
-  <acronym>SQL</acronym> commands may be preceeded with
+  accounts such as <systemitem>root</> or <systemitem>postgres</> are specially flagged and explained.
+  <acronym>SQL</acronym> commands may be preceded with
   <quote><literal>=&gt;</literal></quote>
   or will have no leading prompt, depending on the context.
  </para>
@@ -49,7 +49,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/notation.sgml,v 1.14 2001/02/03 19:03:27 pe
  <note>
   <para>
    The notation for
-   flagging commands is not universally consistant throughout the
+   flagging commands is not universally consistent throughout the
    documentation set.
    Please report problems to the documentation mailing list
    <email>pgsql-docs@postgresql.org</email>.

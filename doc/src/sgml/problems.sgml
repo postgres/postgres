@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/problems.sgml,v 2.7 2001/03/24 03:40:44 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/problems.sgml,v 2.8 2001/09/09 17:21:59 petere Exp $
 -->
 
 <sect1 id="bug-reporting">
@@ -137,10 +137,10 @@ $Header: /cvsroot/pgsql/doc/src/sgml/problems.sgml,v 2.7 2001/03/24 03:40:44 tgl
       query.
       You are encouraged to
       minimize the size of your example, but this is not absolutely necessary.
-      If the bug is reproduceable, we will find it either way.
+      If the bug is reproducible, we will find it either way.
      </para>
      <para>
-      If your application uses some other client interface, such as PHP, then
+      If your application uses some other client interface, such as <applicatioN>PHP</>, then
       please try to isolate the offending queries. We will probably not set up a
       web server to reproduce your problem. In any case remember to provide
       the exact input files, do not guess that the problem happens for
@@ -174,7 +174,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/problems.sgml,v 2.7 2001/03/24 03:40:44 tgl
       The output you expected is very important to state. If you just write
       "This command gives me that output." or "This is not
       what I expected.", we might run it ourselves, scan the output, and
-      think it looks okay and is exactly what we expected. We should not have to
+      think it looks OK and is exactly what we expected. We should not have to
       spend the time to decode the exact semantics behind your commands.
       Especially refrain from merely saying that "This is not what SQL says/Oracle
       does." Digging out the correct behavior from <acronym>SQL</acronym>
@@ -188,7 +188,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/problems.sgml,v 2.7 2001/03/24 03:40:44 tgl
      <para>
       Any command line options and other start-up options, including concerned
       environment variables or configuration files that you changed from the
-      default. Again, be exact. If you are using a pre-packaged
+      default. Again, be exact. If you are using a prepackaged
       distribution that starts the database server at boot time, you should try
       to find out how that is done.
      </para>
@@ -212,7 +212,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/problems.sgml,v 2.7 2001/03/24 03:40:44 tgl
       old enough.  You can also look into the <filename>README</filename> file
       in the source directory or at the
       name of your distribution file or package name.
-      If you run a pre-packaged version, such as RPMs, say so, including any
+      If you run a prepackaged version, such as RPMs, say so, including any
       subversion the package may have. If you are talking about a CVS
       snapshot, mention that, including its date and time.
      </para>
