@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.71 2003/11/01 01:56:29 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.72 2003/11/04 00:34:45 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -40,11 +40,6 @@ where <replaceable class="parameter">from_item</replaceable> can be one of:
     <replaceable class="parameter">function_name</replaceable> ( [ <replaceable class="parameter">argument</replaceable> [, ...] ] ) AS ( <replaceable class="parameter">column_definition</replaceable> [, ...] )
     <replaceable class="parameter">from_item</replaceable> [ NATURAL ] <replaceable class="parameter">join_type</replaceable> <replaceable class="parameter">from_item</replaceable> [ ON <replaceable class="parameter">join_condition</replaceable> | USING ( <replaceable class="parameter">join_column</replaceable> [, ...] ) ]
 </synopsis>
-
-<comment>FIXME: This last syntax is incorrect if the join type is an
-INNER or OUTER join (in which case one of NATURAL, ON ..., or USING
-... is mandatory, not optional). What's the best way to fix
-this?</comment>
 
  </refsynopsisdiv>
 
@@ -107,7 +102,7 @@ this?</comment>
 
     <listitem>
      <para>
-      The actual output rows are computed the
+      The actual output rows are computed using the
       <command>SELECT</command> output expressions for each selected
       row.  (See
       <xref linkend="sql-select-list" endterm="sql-select-list-title">
@@ -127,21 +122,21 @@ this?</comment>
 
     <listitem>
      <para>
-      If the <literal>LIMIT</literal> or <literal>OFFSET</literal>
-      clause is specified, the <command>SELECT</command> statement
-      only returns a subset of the result rows. (See <xref
-      linkend="sql-limit" endterm="sql-limit-title"> below.)
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
       <literal>DISTINCT</literal> eliminates duplicate rows from the
       result.  <literal>DISTINCT ON</literal> eliminates rows that
       match on all the specified expressions.  <literal>ALL</literal>
       (the default) will return all candidate rows, including
       duplicates.  (See <xref linkend="sql-distinct"
       endterm="sql-distinct-title"> below.)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      If the <literal>LIMIT</literal> or <literal>OFFSET</literal>
+      clause is specified, the <command>SELECT</command> statement
+      only returns a subset of the result rows. (See <xref
+      linkend="sql-limit" endterm="sql-limit-title"> below.)
      </para>
     </listitem>
 
@@ -291,17 +286,21 @@ this?</comment>
        </para>
 
        <para>
-        A <literal>JOIN</literal> clause, combines two
-        <literal>FROM</> items.  (Use parentheses if necessary to
-        determine the order of nesting.)
+        A <literal>JOIN</literal> clause combines two
+        <literal>FROM</> items.  Use parentheses if necessary to
+        determine the order of nesting.  In the absence of parentheses,
+	<literal>JOIN</literal>s nest left-to-right.  In any case
+	<literal>JOIN</literal> binds more tightly than the commas
+	separating <literal>FROM</> items.
        </para>
 
        <para>
         <literal>CROSS JOIN</> and <literal>INNER JOIN</literal>
-        produce a simple Cartesian product, the same as you get from
-        listing the two items at the top level of <literal>FROM</>.
+        produce a simple Cartesian product, the same result as you get from
+        listing the two items at the top level of <literal>FROM</>,
+	but restricted by the join condition (if any).
         <literal>CROSS JOIN</> is equivalent to <literal>INNER JOIN ON
-        (true)</>, that is, no rows are removed by qualification.
+        (TRUE)</>, that is, no rows are removed by qualification.
         These join types are just a notational convenience, since they
         do nothing you couldn't do with plain <literal>FROM</> and
         <literal>WHERE</>.
@@ -315,7 +314,7 @@ this?</comment>
         condition.  This left-hand row is extended to the full width
         of the joined table by inserting null values for the
         right-hand columns.  Note that only the <literal>JOIN</>
-        clauses own condition is considered while deciding which rows
+        clause's own condition is considered while deciding which rows
         have matches.  Outer conditions are applied afterwards.
        </para>
 
@@ -410,7 +409,7 @@ GROUP BY <replaceable class="parameter">expression</replaceable> [, ...]
     expressions.  <replaceable
     class="parameter">expression</replaceable> can be an input column
     name, or the name or ordinal number of an output column
-    (<command>SELECT</command> list), or it can be an arbitrary
+    (<command>SELECT</command> list item), or an arbitrary
     expression formed from input-column values.  In case of ambiguity,
     a <literal>GROUP BY</literal> name will be interpreted as an
     input-column name rather than an output column name.
@@ -497,7 +496,7 @@ HAVING <replaceable class="parameter">condition</replaceable>
     
    <para>
     Currently, <literal>FOR UPDATE</> may not be specified either for
-    a <literal>UNION</> result or for the inputs of <literal>UNION</>.
+    a <literal>UNION</> result or for any input of a <literal>UNION</>.
    </para>
   </refsect2>
 
@@ -613,7 +612,7 @@ ORDER BY <replaceable class="parameter">expression</replaceable> [ ASC | DESC | 
 </synopsis>
     <replaceable class="parameter">expression</replaceable> can be the
     name or ordinal number of an output column
-    (<command>SELECT</command> list), or it can be an arbitrary
+    (<command>SELECT</command> list item), or it can be an arbitrary
     expression formed from input-column values.
    </para>
 
@@ -623,7 +622,7 @@ ORDER BY <replaceable class="parameter">expression</replaceable> [ ASC | DESC | 
     equal according to the leftmost expression, the are compared
     according to the next expression and so on.  If they are equal
     according to all specified expressions, they are returned in
-    random order.
+    an implementation-dependent order.
    </para>
 
    <para>
@@ -660,7 +659,7 @@ SELECT name FROM distributors ORDER BY code;
     
    <para>
     Optionally one may add the key word <literal>ASC</> (ascending) or
-    <literal>DESC</> (descending) after each expression in the
+    <literal>DESC</> (descending) after any expression in the
     <literal>ORDER BY</> clause.  If not specified, <literal>ASC</> is
     assumed by default.  Alternatively, a specific ordering operator
     name may be specified in the <literal>USING</> clause.
@@ -689,15 +688,18 @@ SELECT name FROM distributors ORDER BY code;
 
    <para>
     The <literal>LIMIT</literal> clause consists of two independent
-    clauses:
+    sub-clauses:
 <synopsis>
 LIMIT { <replaceable class="parameter">count</replaceable> | ALL }
 OFFSET <replaceable class="parameter">start</replaceable>
 </synopsis>
     <replaceable class="parameter">count</replaceable> specifies the
-    maximum number of rows to return, and <replaceable
+    maximum number of rows to return, while <replaceable
     class="parameter">start</replaceable> specifies the number of rows
-    to skip before starting to return rows.
+    to skip before starting to return rows.  When both are specified,
+    <replaceable class="parameter">start</replaceable> rows are skipped
+    before starting to count the <replaceable
+    class="parameter">count</replaceable> rows to be returned.
    </para>
 
    <para>
@@ -753,6 +755,13 @@ SELECT DISTINCT ON (location) location, time, report
     if we had not used <literal>ORDER BY</> to force descending order
     of time values for each location, we'd have gotten a report from
     an unpredictable time for each location.
+   </para>
+
+   <para>
+    The <literal>DISTINCT ON</> expression(s) must match the leftmost
+    <literal>ORDER BY</> expression(s).  The <literal>ORDER BY</> clause
+    will normally contain additional expression(s) that determine the
+    desired precedence of rows within each <literal>DISTINCT ON</> group.
    </para>
   </refsect2>
 
@@ -889,10 +898,10 @@ SELECT * FROM distributors ORDER BY 2;
   </para>
 
   <para>
-   This example shows how to obtain the union of the tables
+   The next example shows how to obtain the union of the tables
    <literal>distributors</literal> and
    <literal>actors</literal>, restricting the results to those that begin
-   with letter W in each table.  Only distinct rows are wanted, so the
+   with the letter W in each table.  Only distinct rows are wanted, so the
    key word <literal>ALL</literal> is omitted.
 
 <programlisting>
@@ -925,7 +934,7 @@ SELECT actors.name
 
   <para>
    This example shows how to use a function in the <literal>FROM</>
-   clause, both with and without a column definition list.
+   clause, both with and without a column definition list:
 
 <programlisting>
 CREATE FUNCTION distributors(int) RETURNS SETOF distributors AS '
@@ -1048,7 +1057,8 @@ SELECT distributors.* FROM distributors d, distributors distributors;
    </para>
 
    <para>
-    SQL99 uses a slightly different definition which is not upward compatible
+    SQL99 uses a slightly different definition which is not entirely upward
+    compatible 
     with SQL92.  In most cases, however, <productname>PostgreSQL</productname>
     will interpret an <literal>ORDER BY</literal> or <literal>GROUP
     BY</literal> expression the same way SQL99 does.
