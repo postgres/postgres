@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqcomm.h,v 1.87 2003/06/23 23:51:59 momjian Exp $
+ * $Id: pqcomm.h,v 1.88 2003/06/24 01:49:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,6 +46,10 @@
 #define	_SS_PAD1SIZE	(_SS_ALIGNSIZE - sizeof (sa_family_t))
 #define	_SS_PAD2SIZE	(_SS_MAXSIZE - (sizeof (sa_family_t) + \
 				_SS_PAD1SIZE + _SS_ALIGNSIZE))
+
+#ifdef __CYGWIN__
+typedef unsigned short sa_family_t;
+#endif
 
 struct sockaddr_storage {
 #ifdef SALEN
