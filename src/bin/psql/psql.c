@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.102 1997/11/13 03:22:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.103 1997/11/13 03:36:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -225,7 +225,7 @@ slashUsage(PsqlSettings *pset)
 	fprintf(fout, " \\connect <dbname|-> <user> -- connect to new database (currently '%s')\n", PQdb(pset->db));
 	fprintf(fout, " \\copy table {from | to} <fname>\n");
 	fprintf(fout, " \\d [<table>] -- list tables and indices in database or columns in <table>, * for all\n");
-	fprintf(fout, " \\dc [<object>]- list comment for table, field, type, function, or operator.\n");
+	fprintf(fout, " \\dd [<object>]- list comment for table, field, type, function, or operator.\n");
 	fprintf(fout, " \\di          -- list only indices in database\n");
 	fprintf(fout, " \\ds          -- list only sequences in database\n");
 	fprintf(fout, " \\dt          -- list only tables in database\n");
@@ -1698,7 +1698,7 @@ HandleSlashCmds(PsqlSettings *pset,
 			break;
 		case 'd':				/* \d describe tables or columns in a
 								 * table */
-			if (strncmp(cmd, "dc", 2) == 0)
+			if (strncmp(cmd, "dd", 2) == 0)
 								/* descriptions */
 				objectDescription(pset, optarg+1, NULL);
 			else if (strncmp(cmd, "di", 2) == 0)
