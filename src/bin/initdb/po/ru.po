@@ -1,7 +1,7 @@
 # ru.po
 # INITDB Translated Messages into the Russian Language (KOI8-R)
 #
-# $PostgreSQL: pgsql/src/bin/initdb/po/ru.po,v 1.1 2004/04/05 09:13:43 petere Exp $
+# $PostgreSQL: pgsql/src/bin/initdb/po/ru.po,v 1.2 2004/04/15 08:04:05 petere Exp $
 #
 # ChangeLog:
 #   - March 27, 2004: Initial Translation, Serguei A. Mokhov <mokhov@cs.concordia.ca>
@@ -9,8 +9,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.5.x\n"
-"POT-Creation-Date: 2004-03-27 14:11-0400\n"
-"PO-Revision-Date: 2004-03-27 14:03-0500\n"
+"POT-Creation-Date: 2004-04-06 11:05-0300\n"
+"PO-Revision-Date: 2004-04-06 12:05-0500\n"
 "Last-Translator: Serguei A. Mokhov <mokhov@cs.concordia.ca>\n"
 "Language-Team: pgsql-rus <pgsql-rus@yahoogroups.com>\n"
 "MIME-Version: 1.0\n"
@@ -26,12 +26,12 @@ msgstr "%s: нехватка памяти\n"
 #: initdb.c:366
 #, c-format
 msgid "%s: could not open file \"%s\" for reading: %s\n"
-msgstr ""
+msgstr "%s: не удалось открыть файл \"%s\" для чтения: %s\n"
 
 #: initdb.c:424
 #, c-format
 msgid "%s: could not open file \"%s\" for writing: %s\n"
-msgstr ""
+msgstr "%s: не удалось открыть файл \"%s\" для записи: %s\n"
 
 #: initdb.c:456
 #, c-format
@@ -58,17 +58,17 @@ msgstr "%s: ошибка\n"
 #: initdb.c:593
 #, c-format
 msgid "%s: removing data directory \"%s\"\n"
-msgstr ""
+msgstr "%s: удаление директории данных \"%s\"\n"
 
 #: initdb.c:601
 #, c-format
 msgid "%s: removing contents of data directory \"%s\"\n"
-msgstr ""
+msgstr "%s: удаление содержимого директории данных \"%s\"\n"
 
 #: initdb.c:612
 #, c-format
 msgid "%s: data directory \"%s\" not removed at user's request\n"
-msgstr ""
+msgstr "%s: директория данных \"%s\" не удалена по запросу пользователя\n"
 
 #: initdb.c:638
 #, c-format
@@ -77,11 +77,14 @@ msgid ""
 "Please log in (using, e.g., \"su\") as the (unprivileged) user that will\n"
 "own the server process.\n"
 msgstr ""
+"%s: нельзя запускать под root'ом\n"
+"Пожалуйста зайдите (например, используя \"su\") как (непривелигированный) пользователь, под которым\n"
+"процесс сервера будет выполнятья.\n"
 
 #: initdb.c:682
 #, c-format
 msgid "%s: \"%s\" is not a valid server encoding name\n"
-msgstr ""
+msgstr "%s: \"%s\" не является верной кодировкой сервера\n"
 
 #: initdb.c:806
 #, c-format
@@ -90,14 +93,17 @@ msgid ""
 "This means you have a corrupted installation or identified\n"
 "the wrong directory with the invocation option -L.\n"
 msgstr ""
+"%s: файл \"%s\" не существует\n"
+"Это либо означает что у вас повреждённая инсталляция или указана\n"
+"неправильная директория в опции запуска -L.\n"
 
 #: initdb.c:1058
 msgid "selecting default max_connections ... "
-msgstr ""
+msgstr "производится выборка значения по умолчанию max_connections ... "
 
 #: initdb.c:1094
 msgid "selecting default shared_buffers ... "
-msgstr ""
+msgstr "производится выборка значения по умолчанию shared_buffers ..."
 
 #: initdb.c:1127
 msgid "creating configuration files ... "
@@ -199,6 +205,8 @@ msgid ""
 "%s initializes a PostgreSQL database cluster.\n"
 "\n"
 msgstr ""
+"%s инициализирует кластер PostgreSQL.\n"
+"\n"
 
 #: initdb.c:1972
 msgid "Usage:\n"
@@ -207,7 +215,7 @@ msgstr "Использование:\n"
 #: initdb.c:1973
 #, c-format
 msgid "  %s [OPTION]... [DATADIR]\n"
-msgstr ""
+msgstr "  %s [ОПЦИЯ]... [ДИРДАННЫХ]\n"
 
 #: initdb.c:1974
 msgid ""
@@ -292,10 +300,12 @@ msgid ""
 "\n"
 "Report bugs to <pgsql-bugs@postgresql.org>.\n"
 msgstr ""
+"\n"
+"Сообщения об ошибках: <pgsql-bugs@postgresql.org>.\n"
 
 #: initdb.c:2118
 msgid "Running in debug mode.\n"
-msgstr ""
+msgstr "Выполнение в режиме отладки.\n"
 
 #: initdb.c:2122
 msgid "Running in noclean mode.  Mistakes will not be cleaned up.\n"

@@ -1,18 +1,19 @@
 # ru.po
 # PG_CONTROLDATA Translated Messages into the Russian Language (KOI8-R)
 #
-# $PostgreSQL: pgsql/src/bin/pg_controldata/po/ru.po,v 1.6 2003/11/29 19:52:04 pgsql Exp $
+# $PostgreSQL: pgsql/src/bin/pg_controldata/po/ru.po,v 1.7 2004/04/15 08:04:05 petere Exp $
 #
 # ChangeLog:
+#   - March 27, 2004: Update for 7.5.*; <mokhov@cs.concordia.ca>
 #   - July 24 - August 23, 2003: Update for 7.4.*; <mokhov@cs.concordia.ca>
 #   - September 7, 2002: Complete post 7.3beta1 Translation, Serguei A. Mokhov <mokhov@cs.concordia.ca>
 #   - August 31, 2002: Initial Translation, Serguei A. Mokhov <mokhov@cs.concordia.ca>
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 7.4.x\n"
-"POT-Creation-Date: 2003-08-23 04:18-0300\n"
-"PO-Revision-Date: 2003-08-23 13:28-0500\n"
+"Project-Id-Version: PostgreSQL 7.5.x\n"
+"POT-Creation-Date: 2004-03-27 14:11-0400\n"
+"PO-Revision-Date: 2004-03-27 14:05-0500\n"
 "Last-Translator: Serguei A. Mokhov <mokhov@cs.concordia.ca>\n"
 "Language-Team: pgsql-rus <pgsql-rus@yahoogroups.com>\n"
 "MIME-Version: 1.0\n"
@@ -88,27 +89,27 @@ msgstr "в производстве"
 msgid "unrecognized status code"
 msgstr "не распознанный код статуса"
 
-#: pg_controldata.c:107
+#: pg_controldata.c:108
 #, c-format
 msgid "%s: no data directory specified\n"
 msgstr "%s: директория данных не указана\n"
 
-#: pg_controldata.c:108
+#: pg_controldata.c:109
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Наберите \"%s --help\" для более подробной информации.\n"
 
-#: pg_controldata.c:116
+#: pg_controldata.c:117
 #, c-format
 msgid "%s: could not open file \"%s\" for reading: %s\n"
 msgstr "%s: не получилось открыть файл \"%s\" для чтения: %s\n"
 
-#: pg_controldata.c:123
+#: pg_controldata.c:124
 #, c-format
 msgid "%s: could not read file \"%s\": %s\n"
 msgstr "%s: не получилось считать файл \"%s\": %s\n"
 
-#: pg_controldata.c:137
+#: pg_controldata.c:138
 msgid ""
 "WARNING: Calculated CRC checksum does not match value stored in file.\n"
 "Either the file is corrupt, or it has a different layout than this program\n"
@@ -120,120 +121,130 @@ msgstr ""
 "Не стоит доверять результатам представленным ниже.\n"
 "\n"
 
-#: pg_controldata.c:150
+#: pg_controldata.c:157
 #, c-format
 msgid "pg_control version number:            %u\n"
 msgstr "Номер версии pg_control:              %u\n"
 
-#: pg_controldata.c:151
+#: pg_controldata.c:158
 #, c-format
 msgid "Catalog version number:               %u\n"
 msgstr "Номер версии каталога:                %u\n"
 
-#: pg_controldata.c:152
+#: pg_controldata.c:159
+#, c-format
+msgid "Database system identifier:           %s\n"
+msgstr "Идентификатор системы баз данных:     %s\n"
+
+#: pg_controldata.c:160
 #, c-format
 msgid "Database cluster state:               %s\n"
 msgstr "Состояние кластера базы:              %s\n"
 
-#: pg_controldata.c:153
+#: pg_controldata.c:161
 #, c-format
 msgid "pg_control last modified:             %s\n"
 msgstr "Последнее обновление pg_control:      %s\n"
 
-#: pg_controldata.c:154
+#: pg_controldata.c:162
 #, c-format
 msgid "Current log file ID:                  %u\n"
 msgstr "Текущий ID файла журнала:             %u\n"
 
-#: pg_controldata.c:155
+#: pg_controldata.c:163
 #, c-format
 msgid "Next log file segment:                %u\n"
 msgstr "Следующий сегмент файла журнала:      %u\n"
 
-#: pg_controldata.c:156
+#: pg_controldata.c:164
 #, c-format
 msgid "Latest checkpoint location:           %X/%X\n"
 msgstr "Последняя checkpoint:                 %X/%X\n"
 
-#: pg_controldata.c:158
+#: pg_controldata.c:166
 #, c-format
 msgid "Prior checkpoint location:            %X/%X\n"
 msgstr "Предыдущая checkpoint:                %X/%X\n"
 
-#: pg_controldata.c:160
+#: pg_controldata.c:168
 #, c-format
 msgid "Latest checkpoint's REDO location:    %X/%X\n"
 msgstr "REDO последней checkpoint:            %X/%X\n"
 
-#: pg_controldata.c:162
+#: pg_controldata.c:170
 #, c-format
 msgid "Latest checkpoint's UNDO location:    %X/%X\n"
 msgstr "UNDO последней checkpoint:            %X/%X\n"
 
-#: pg_controldata.c:164
+#: pg_controldata.c:172
 #, c-format
 msgid "Latest checkpoint's StartUpID:        %u\n"
 msgstr "StartUpID последней checkpoint:       %u\n"
 
-#: pg_controldata.c:165
+#: pg_controldata.c:173
 #, c-format
 msgid "Latest checkpoint's NextXID:          %u\n"
 msgstr "NextXID последней checkpoint:         %u\n"
 
-#: pg_controldata.c:166
+#: pg_controldata.c:174
 #, c-format
 msgid "Latest checkpoint's NextOID:          %u\n"
 msgstr "NextOID последней checkpoint:         %u\n"
 
-#: pg_controldata.c:167
+#: pg_controldata.c:175
 #, c-format
 msgid "Time of latest checkpoint:            %s\n"
 msgstr "Время последней checkpoint:           %s\n"
 
-#: pg_controldata.c:168
+#: pg_controldata.c:176
 #, c-format
 msgid "Database block size:                  %u\n"
 msgstr "Размер блока базы:                    %u\n"
 
-#: pg_controldata.c:169
+#: pg_controldata.c:177
 #, c-format
 msgid "Blocks per segment of large relation: %u\n"
 msgstr "Блоков на сегмент большой связи:      %u\n"
 
-#: pg_controldata.c:170
+#: pg_controldata.c:178
+#, c-format
+msgid "Bytes per WAL segment:                %u\n"
+msgstr "Количество байт на сегмент WAL:       %u\n"
+
+#: pg_controldata.c:179
 #, c-format
 msgid "Maximum length of identifiers:        %u\n"
 msgstr "Максимальная длина идентификаторов:   %u\n"
 
-#: pg_controldata.c:171
+#: pg_controldata.c:180
 #, c-format
 msgid "Maximum number of function arguments: %u\n"
 msgstr "Максимальное число аргументов функции: %u\n"
 
-#: pg_controldata.c:172
+#: pg_controldata.c:181
 #, c-format
 msgid "Date/time type storage:               %s\n"
 msgstr "Формат хранения даты/времени:         %s\n"
 
-#: pg_controldata.c:173
+#: pg_controldata.c:182
 msgid "64-bit integers"
 msgstr "64-битные целые"
 
-#: pg_controldata.c:173
+#: pg_controldata.c:182
 msgid "floating-point numbers"
 msgstr "числа с плавающей запятой"
 
-#: pg_controldata.c:174
+#: pg_controldata.c:183
 #, c-format
 msgid "Maximum length of locale name:        %u\n"
 msgstr "Максимальная длина имени локали:      %u\n"
 
-#: pg_controldata.c:175
+#: pg_controldata.c:184
 #, c-format
 msgid "LC_COLLATE:                           %s\n"
 msgstr "LC_COLLATE:                           %s\n"
 
-#: pg_controldata.c:176
+#: pg_controldata.c:185
 #, c-format
 msgid "LC_CTYPE:                             %s\n"
 msgstr "LC_CTYPE:                             %s\n"
