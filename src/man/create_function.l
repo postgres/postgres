@@ -1,13 +1,13 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/create_function.l,v 1.2 1996/12/11 00:27:13 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/create_function.l,v 1.3 1997/09/10 20:19:23 momjian Exp $
 .TH "CREATE FUNCTION" SQL 11/05/95 PostgreSQL PostgreSQL
 .SH "NAME"
 create function \(em define a new function
 .SH "SYNOPSIS"
 .nf
-\fBcreate function\fP function_name \fB(\fP
-	([type1 {, type-n}])
+\fBcreate function\fP function_name 
+	\fB(\fP[type1 {, type-n}]\fB)\fP
 	\fBreturns\fP type-r
 	\fBas\fP {'/full/path/to/objectfile' | 'sql-queries'}
 	\fBlanguage\fP {'c' \ 'sql' \ 'internal'}
@@ -284,7 +284,7 @@ The body of a SQL function following
 should be a list of queries separated by whitespace characters and
 bracketed within quotation marks.  Note that quotation marks used in
 the queries must be escaped, by preceding them with two backslashes
-(i.e. \e\e").
+(i.e. \e').
 .PP
 Arguments to the SQL function may be referenced in the queries using
 a $n syntax: $1 refers to the first argument, $2 to the second, and so
