@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.44 2000/05/30 04:24:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.45 2000/06/13 07:34:35 tgl Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relationId
@@ -195,13 +195,12 @@ index_insert(Relation relation,
 	 * ----------------
 	 */
 	specificResult = (InsertIndexResult)
-		DatumGetPointer(OidFunctionCall6(procedure,
+		DatumGetPointer(OidFunctionCall5(procedure,
 										 PointerGetDatum(relation),
 										 PointerGetDatum(datum),
 										 PointerGetDatum(nulls),
 										 PointerGetDatum(heap_t_ctid),
-										 PointerGetDatum(heapRel),
-										 PointerGetDatum(NULL)));
+										 PointerGetDatum(heapRel)));
 
 	/* must be pfree'ed */
 	return specificResult;

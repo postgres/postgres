@@ -33,4 +33,4 @@ CREATE FUNCTION ttdummy ()
 CREATE FUNCTION set_ttdummy (int4)
         RETURNS int4
         AS '_OBJWD_/regress_DLSUFFIX_'
-        LANGUAGE 'c';
+        LANGUAGE 'newC';

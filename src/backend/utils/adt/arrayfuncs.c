@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.56 2000/06/09 01:11:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.57 2000/06/13 07:35:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,7 +68,7 @@ static void _LOArrayRange(int *st, int *endp, int bsize, int srcfd,
 			  int destfd, ArrayType *array, int isSrcLO, bool *isNull);
 static void _ReadArray(int *st, int *endp, int bsize, int srcfd, int destfd,
 		   ArrayType *array, int isDestLO, bool *isNull);
-static int	ArrayCastAndSet(char *src, bool typbyval, int typlen, char *dest);
+static int	ArrayCastAndSet(Datum src, bool typbyval, int typlen, char *dest);
 static int	SanityCheckInput(int ndim, int n, int *dim, int *lb, int *indx);
 static int	array_read(char *destptr, int eltsize, int nitems, char *srcptr);
 static char *array_seek(char *ptr, int eltsize, int nitems);
@@ -76,16 +76,17 @@ static char *array_seek(char *ptr, int eltsize, int nitems);
 /*---------------------------------------------------------------------
  * array_in :
  *		  converts an array from the external format in "string" to
- *		  it internal format.
+ *		  its internal format.
  * return value :
  *		  the internal representation of the input array
  *--------------------------------------------------------------------
  */
-char *
-array_in(char *string,			/* input array in external form */
-		 Oid element_type,		/* type OID of an array element */
-		 int32 typmod)
+Datum
+array_in(PG_FUNCTION_ARGS)
 {
+	char	   *string = PG_GETARG_CSTRING(0); /* external form */
+	Oid			element_type = PG_GETARG_OID(1); /* type of an array element */
+	int32		typmod = PG_GETARG_INT32(2); /* typmod for array elements */
 	int			typlen;
 	bool		typbyval,
 				done;
@@ -101,7 +102,7 @@ array_in(char *string,			/* input array in external form */
 				nitems;
 	int32		nbytes;
 	char	   *dataPtr;
-	ArrayType  *retval = NULL;
+	ArrayType  *retval;
 	int			ndim,
 				dim[MAXDIM],
 				lBound[MAXDIM];
@@ -183,11 +184,10 @@ array_in(char *string,			/* input array in external form */
 	nitems = getNitems(ndim, dim);
 	if (nitems == 0)
 	{
-		char	   *emptyArray = palloc(sizeof(ArrayType));
-
-		MemSet(emptyArray, 0, sizeof(ArrayType));
-		*(int32 *) emptyArray = sizeof(ArrayType);
-		return emptyArray;
+		retval = (ArrayType *) palloc(sizeof(ArrayType));
+		MemSet(retval, 0, sizeof(ArrayType));
+		*(int32 *) retval = sizeof(ArrayType);
+		return PointerGetDatum(retval);
 	}
 
 	if (*p == '{')
@@ -235,9 +235,10 @@ array_in(char *string,			/* input array in external form */
 		memmove(ARR_DATA_PTR(retval), dataPtr, bytes);
 #endif
 		elog(ERROR, "large object arrays not supported");
+		PG_RETURN_NULL();
 	}
 	pfree(string_save);
-	return (char *) retval;
+	return PointerGetDatum(retval);
 }
 
 /*-----------------------------------------------------------------------------
@@ -578,7 +579,7 @@ _CopyArrayEls(char **values,
 	{
 		int			inc;
 
-		inc = ArrayCastAndSet(values[i], typbyval, typlen, p);
+		inc = ArrayCastAndSet((Datum) values[i], typbyval, typlen, p);
 		p += inc;
 		if (!typbyval)
 			pfree(values[i]);
@@ -592,9 +593,11 @@ _CopyArrayEls(char **values,
  *		  containing the array in its external format.
  *-------------------------------------------------------------------------
  */
-char *
-array_out(ArrayType *v, Oid element_type)
+Datum
+array_out(PG_FUNCTION_ARGS)
 {
+	ArrayType  *v = (ArrayType *) PG_GETARG_VARLENA_P(0);
+	Oid			element_type = PG_GETARG_OID(1);
 	int			typlen;
 	bool		typbyval;
 	char		typdelim;
@@ -602,7 +605,6 @@ array_out(ArrayType *v, Oid element_type)
 				typelem;
 	FmgrInfo	outputproc;
 	char		typalign;
-
 	char	   *p,
 			   *tmp,
 			   *retval,
@@ -617,30 +619,31 @@ array_out(ArrayType *v, Oid element_type)
 				l,
 #endif
 				indx[MAXDIM];
-	bool		dummy_bool;
 	int			ndim,
 			   *dim;
 
 	if (v == (ArrayType *) NULL)
-		return (char *) NULL;
+		PG_RETURN_CSTRING((char *) NULL);
 
 	if (ARR_IS_LO(v) == true)
 	{
-		char	   *p,
-				   *save_p;
-		int			nbytes;
+		text	   *p;
+		int			plen,
+					nbytes;
+
+		p = (text *) DatumGetPointer(DirectFunctionCall1(array_dims,
+														 PointerGetDatum(v)));
+		plen = VARSIZE(p) - VARHDRSZ;
 
 		/* get a wide string to print to */
-		p = array_dims(v, &dummy_bool);
-		nbytes = strlen(ARR_DATA_PTR(v)) + VARHDRSZ + *(int *) p;
+		nbytes = strlen(ARR_DATA_PTR(v)) + strlen(ASSGN) + plen + 1;
+		retval = (char *) palloc(nbytes);
 
-		save_p = (char *) palloc(nbytes);
-
-		strcpy(save_p, p + sizeof(int));
-		strcat(save_p, ASSGN);
-		strcat(save_p, ARR_DATA_PTR(v));
+		memcpy(retval, VARDATA(p), plen);
+		strcpy(retval + plen, ASSGN);
+		strcat(retval, ARR_DATA_PTR(v));
 		pfree(p);
-		return save_p;
+		PG_RETURN_CSTRING(retval);
 	}
 
 	system_cache_lookup(element_type, false, &typlen, &typbyval,
@@ -653,12 +656,11 @@ array_out(ArrayType *v, Oid element_type)
 
 	if (nitems == 0)
 	{
-		char	   *emptyArray = palloc(3);
-
-		emptyArray[0] = '{';
-		emptyArray[1] = '}';
-		emptyArray[2] = '\0';
-		return emptyArray;
+		retval = (char *) palloc(3);
+		retval[0] = '{';
+		retval[1] = '}';
+		retval[2] = '\0';
+		PG_RETURN_CSTRING(retval);
 	}
 
 	p = ARR_DATA_PTR(v);
@@ -776,58 +778,61 @@ array_out(ArrayType *v, Oid element_type)
 	} while (j != -1);
 
 	pfree(values);
-	return retval;
+	PG_RETURN_CSTRING(retval);
 }
 
 /*-----------------------------------------------------------------------------
  * array_dims :
- *		  returns the dimension of the array pointed to by "v"
+ *		  returns the dimensions of the array pointed to by "v", as a "text"
  *----------------------------------------------------------------------------
  */
-char *
-array_dims(ArrayType *v, bool *isNull)
+Datum
+array_dims(PG_FUNCTION_ARGS)
 {
-	char	   *p,
-			   *save_p;
+	ArrayType  *v = (ArrayType *) PG_GETARG_VARLENA_P(0);
+	text	   *result;
+	char	   *p;
 	int			nbytes,
 				i;
 	int		   *dimv,
 			   *lb;
 
-	if (v == (ArrayType *) NULL)
-		RETURN_NULL;
-	nbytes = ARR_NDIM(v) * 33;
-
+	nbytes = ARR_NDIM(v) * 33 + 1;
 	/*
 	 * 33 since we assume 15 digits per number + ':' +'[]'
+	 *
+	 * +1 allows for temp trailing null
 	 */
-	save_p = p = (char *) palloc(nbytes + VARHDRSZ);
-	MemSet(save_p, 0, nbytes + VARHDRSZ);
+
+	result = (text *) palloc(nbytes + VARHDRSZ);
+	MemSet(result, 0, nbytes + VARHDRSZ);
+	p = VARDATA(result);
+
 	dimv = ARR_DIMS(v);
 	lb = ARR_LBOUND(v);
-	p += VARHDRSZ;
+
 	for (i = 0; i < ARR_NDIM(v); i++)
 	{
 		sprintf(p, "[%d:%d]", lb[i], dimv[i] + lb[i] - 1);
 		p += strlen(p);
 	}
-	nbytes = strlen(save_p + VARHDRSZ) + VARHDRSZ;
-	memmove(save_p, &nbytes, VARHDRSZ);
-	return save_p;
+	VARSIZE(result) = strlen(VARDATA(result)) + VARHDRSZ;
+
+	PG_RETURN_TEXT_P(result);
 }
 
 /*---------------------------------------------------------------------------
  * array_ref :
- *	  This routing takes an array pointer and an index array and returns
+ *	  This routine takes an array pointer and an index array and returns
  *	  a pointer to the referred element if element is passed by
  *	  reference otherwise returns the value of the referred element.
  *---------------------------------------------------------------------------
  */
 Datum
 array_ref(ArrayType *array,
-		  int n,
+		  int nSubscripts,
 		  int *indx,
-		  int reftype,
+		  bool elmbyval,
 		  int elmlen,
 		  int arraylen,
 		  bool *isNull)
@@ -839,10 +844,11 @@ array_ref(ArrayType *array,
 				offset,
 				nbytes;
 	struct varlena *v = NULL;
-	char	   *retval = NULL;
+	Datum		result;
+	char	   *retval;
 
 	if (array == (ArrayType *) NULL)
-		RETURN_NULL;
+		RETURN_NULL(Datum);
 	if (arraylen > 0)
 	{
 
@@ -852,17 +858,17 @@ array_ref(ArrayType *array,
 		if (indx[0] * elmlen > arraylen)
 			elog(ERROR, "array_ref: array bound exceeded");
 		retval = (char *) array + indx[0] * elmlen;
-		return _ArrayCast(retval, reftype, elmlen);
+		return _ArrayCast(retval, elmbyval, elmlen);
 	}
 	dim = ARR_DIMS(array);
 	lb = ARR_LBOUND(array);
 	ndim = ARR_NDIM(array);
 	nbytes = (*(int32 *) array) - ARR_OVERHEAD(ndim);
 
-	if (!SanityCheckInput(ndim, n, dim, lb, indx))
-		RETURN_NULL;
+	if (!SanityCheckInput(ndim, nSubscripts, dim, lb, indx))
+		RETURN_NULL(Datum);
 
-	offset = GetOffset(n, dim, lb, indx);
+	offset = GetOffset(nSubscripts, dim, lb, indx);
 
 	if (ARR_IS_LO(array))
 	{
@@ -874,7 +880,7 @@ array_ref(ArrayType *array,
 		lo_name = (char *) ARR_DATA_PTR(array);
 #ifdef LOARRAY
 		if ((fd = LOopen(lo_name, ARR_IS_INV(array) ? INV_READ : O_RDONLY)) < 0)
-			RETURN_NULL;
+			RETURN_NULL(Datum);
 #endif
 		if (ARR_IS_CHUNKED(array))
 			v = _ReadChunkArray1El(indx, elmlen, fd, array, isNull);
@@ -884,7 +890,7 @@ array_ref(ArrayType *array,
 							  Int32GetDatum(fd),
 							  Int32GetDatum(offset),
 							  Int32GetDatum(SEEK_SET))) < 0)
-				RETURN_NULL;
+				RETURN_NULL(Datum);
 #ifdef LOARRAY
 			v = (struct varlena *)
 				DatumGetPointer(DirectFunctionCall2(loread,
@@ -893,20 +899,20 @@ array_ref(ArrayType *array,
 #endif
 		}
 		if (*isNull)
-			RETURN_NULL;
+			RETURN_NULL(Datum);
 		if (VARSIZE(v) - VARHDRSZ < elmlen)
-			RETURN_NULL;
+			RETURN_NULL(Datum);
 		DirectFunctionCall1(lo_close, Int32GetDatum(fd));
-		retval = (char *) _ArrayCast((char *) VARDATA(v), reftype, elmlen);
-		if (reftype == 0)
+		result = _ArrayCast((char *) VARDATA(v), elmbyval, elmlen);
+		if (! elmbyval)
 		{						/* not by value */
 			char	   *tempdata = palloc(elmlen);
 
-			memmove(tempdata, retval, elmlen);
-			retval = tempdata;
+			memmove(tempdata, DatumGetPointer(result), elmlen);
+			result = PointerGetDatum(tempdata);
 		}
 		pfree(v);
-		return (Datum) retval;
+		return result;
 	}
 
 	if (elmlen > 0)
@@ -914,32 +920,25 @@ array_ref(ArrayType *array,
 		offset = offset * elmlen;
 		/* off the end of the array */
 		if (nbytes - offset < 1)
-			RETURN_NULL;
+			RETURN_NULL(Datum);
 		retval = ARR_DATA_PTR(array) + offset;
-		return _ArrayCast(retval, reftype, elmlen);
+		return _ArrayCast(retval, elmbyval, elmlen);
 	}
 	else
 	{
-		bool		done = false;
-		char	   *temp;
 		int			bytes = nbytes;
 
-		temp = ARR_DATA_PTR(array);
+		retval = ARR_DATA_PTR(array);
 		i = 0;
-		while (bytes > 0 && !done)
+		while (bytes > 0)
 		{
 			if (i == offset)
-			{
-				retval = temp;
-				done = true;
-			}
-			bytes -= INTALIGN(*(int32 *) temp);
-			temp += INTALIGN(*(int32 *) temp);
+				return PointerGetDatum(retval);
+			bytes -= INTALIGN(*(int32 *) retval);
+			retval += INTALIGN(*(int32 *) retval);
 			i++;
 		}
-		if (!done)
-			RETURN_NULL;
-		return (Datum) retval;
+		RETURN_NULL(Datum);
 	}
 }
 
@@ -950,13 +949,13 @@ array_ref(ArrayType *array,
  *		   and returns a pointer to it.
  *-----------------------------------------------------------------------------
  */
-Datum
+ArrayType *
 array_clip(ArrayType *array,
-		   int n,
+		   int nSubscripts,
 		   int *upperIndx,
 		   int *lowerIndx,
-		   int reftype,
-		   int len,
+		   bool elmbyval,
+		   int elmlen,
 		   bool *isNull)
 {
 	int			i,
@@ -970,22 +969,20 @@ array_clip(ArrayType *array,
 
 	/* timer_start(); */
 	if (array == (ArrayType *) NULL)
-		RETURN_NULL;
+		RETURN_NULL(ArrayType *);
 	dim = ARR_DIMS(array);
 	lb = ARR_LBOUND(array);
 	ndim = ARR_NDIM(array);
 	nbytes = (*(int32 *) array) - ARR_OVERHEAD(ndim);
 
-	if (!SanityCheckInput(ndim, n, dim, lb, upperIndx))
-		RETURN_NULL;
+	if (!SanityCheckInput(ndim, nSubscripts, dim, lb, upperIndx) ||
+		!SanityCheckInput(ndim, nSubscripts, dim, lb, lowerIndx))
+		RETURN_NULL(ArrayType *);
 
-	if (!SanityCheckInput(ndim, n, dim, lb, lowerIndx))
-		RETURN_NULL;
-
-	for (i = 0; i < n; i++)
+	for (i = 0; i < nSubscripts; i++)
 		if (lowerIndx[i] > upperIndx[i])
 			elog(ERROR, "lowerIndex cannot be larger than upperIndx");
-	mda_get_range(n, span, lowerIndx, upperIndx);
+	mda_get_range(nSubscripts, span, lowerIndx, upperIndx);
 
 	if (ARR_IS_LO(array))
 	{
@@ -999,23 +996,23 @@ array_clip(ArrayType *array,
 					isDestLO = true,
 					rsize;
 
-		if (len < 0)
-			elog(ERROR, "array_clip: array of variable length objects not supported");
+		if (elmlen < 0)
+			elog(ERROR, "array_clip: array of variable length objects not implemented");
 #ifdef LOARRAY
 		lo_name = (char *) ARR_DATA_PTR(array);
 		if ((fd = LOopen(lo_name, ARR_IS_INV(array) ? INV_READ : O_RDONLY)) < 0)
-			RETURN_NULL;
+			RETURN_NULL(ArrayType *);
 		newname = _array_newLO(&newfd, Unix);
 #endif
-		bytes = strlen(newname) + 1 + ARR_OVERHEAD(n);
+		bytes = strlen(newname) + 1 + ARR_OVERHEAD(nSubscripts);
 		newArr = (ArrayType *) palloc(bytes);
 		memmove(newArr, array, sizeof(ArrayType));
 		memmove(newArr, &bytes, sizeof(int));
-		memmove(ARR_DIMS(newArr), span, n * sizeof(int));
-		memmove(ARR_LBOUND(newArr), lowerIndx, n * sizeof(int));
+		memmove(ARR_DIMS(newArr), span, nSubscripts * sizeof(int));
+		memmove(ARR_LBOUND(newArr), lowerIndx, nSubscripts * sizeof(int));
 		strcpy(ARR_DATA_PTR(newArr), newname);
 
-		rsize = compute_size(lowerIndx, upperIndx, n, len);
+		rsize = compute_size(lowerIndx, upperIndx, nSubscripts, elmlen);
 		if (rsize < MAX_BUFF_SIZE)
 		{
 			char	   *buff;
@@ -1026,12 +1023,12 @@ array_clip(ArrayType *array,
 				isDestLO = false;
 			if (ARR_IS_CHUNKED(array))
 			{
-				_ReadChunkArray(lowerIndx, upperIndx, len, fd, &(buff[VARHDRSZ]),
+				_ReadChunkArray(lowerIndx, upperIndx, elmlen, fd, &(buff[VARHDRSZ]),
 								array, 0, isNull);
 			}
 			else
 			{
-				_ReadArray(lowerIndx, upperIndx, len, fd, (int) &(buff[VARHDRSZ]),
+				_ReadArray(lowerIndx, upperIndx, elmlen, fd, (int) &(buff[VARHDRSZ]),
 						   array,
 						   0, isNull);
 			}
@@ -1048,11 +1045,11 @@ array_clip(ArrayType *array,
 		{
 			if (ARR_IS_CHUNKED(array))
 			{
-				_ReadChunkArray(lowerIndx, upperIndx, len, fd, (char *) newfd, array,
+				_ReadChunkArray(lowerIndx, upperIndx, elmlen, fd, (char *) newfd, array,
 								1, isNull);
 			}
 			else
-				_ReadArray(lowerIndx, upperIndx, len, fd, newfd, array, 1, isNull);
+				_ReadArray(lowerIndx, upperIndx, elmlen, fd, newfd, array, 1, isNull);
 		}
 #ifdef LOARRAY
 		LOclose(fd);
@@ -1064,42 +1061,42 @@ array_clip(ArrayType *array,
 			newArr = NULL;
 		}
 		/* timer_end(); */
-		return (Datum) newArr;
+		return newArr;
 	}
 
-	if (len > 0)
+	if (elmlen > 0)
 	{
-		bytes = getNitems(n, span);
-		bytes = bytes * len + ARR_OVERHEAD(n);
+		bytes = getNitems(nSubscripts, span);
+		bytes = bytes * elmlen + ARR_OVERHEAD(nSubscripts);
 	}
 	else
 	{
 		bytes = _ArrayClipCount(lowerIndx, upperIndx, array);
-		bytes += ARR_OVERHEAD(n);
+		bytes += ARR_OVERHEAD(nSubscripts);
 	}
 	newArr = (ArrayType *) palloc(bytes);
 	memmove(newArr, array, sizeof(ArrayType));
 	memmove(newArr, &bytes, sizeof(int));
-	memmove(ARR_DIMS(newArr), span, n * sizeof(int));
-	memmove(ARR_LBOUND(newArr), lowerIndx, n * sizeof(int));
-	_ArrayRange(lowerIndx, upperIndx, len, ARR_DATA_PTR(newArr), array, 1);
-	return (Datum) newArr;
+	memmove(ARR_DIMS(newArr), span, nSubscripts * sizeof(int));
+	memmove(ARR_LBOUND(newArr), lowerIndx, nSubscripts * sizeof(int));
+	_ArrayRange(lowerIndx, upperIndx, elmlen, ARR_DATA_PTR(newArr), array, 1);
+	return newArr;
 }
 
 /*-----------------------------------------------------------------------------
  * array_set  :
- *		  This routine sets the value of an array location (specified by an index array)
- *		  to a new value specified by "dataPtr".
+ *		  This routine sets the value of an array location (specified by
+ *		  an index array) to a new value specified by "dataValue".
  * result :
  *		  returns a pointer to the modified array.
  *-----------------------------------------------------------------------------
  */
-char *
+ArrayType *
 array_set(ArrayType *array,
-		  int n,
+		  int nSubscripts,
 		  int *indx,
-		  char *dataPtr,
-		  int reftype,
+		  Datum dataValue,
+		  bool elmbyval,
 		  int elmlen,
 		  int arraylen,
 		  bool *isNull)
@@ -1112,7 +1109,7 @@ array_set(ArrayType *array,
 	char	   *pos;
 
 	if (array == (ArrayType *) NULL)
-		RETURN_NULL;
+		RETURN_NULL(ArrayType *);
 	if (arraylen > 0)
 	{
 
@@ -1122,20 +1119,20 @@ array_set(ArrayType *array,
 		if (indx[0] * elmlen > arraylen)
 			elog(ERROR, "array_ref: array bound exceeded");
 		pos = (char *) array + indx[0] * elmlen;
-		ArrayCastAndSet(dataPtr, (bool) reftype, elmlen, pos);
-		return (char *) array;
+		ArrayCastAndSet(dataValue, elmbyval, elmlen, pos);
+		return array;
 	}
 	dim = ARR_DIMS(array);
 	lb = ARR_LBOUND(array);
 	ndim = ARR_NDIM(array);
 	nbytes = (*(int32 *) array) - ARR_OVERHEAD(ndim);
 
-	if (!SanityCheckInput(ndim, n, dim, lb, indx))
+	if (!SanityCheckInput(ndim, nSubscripts, dim, lb, indx))
 	{
 		elog(ERROR, "array_set: array bound exceeded");
-		return (char *) array;
+		return array;
 	}
-	offset = GetOffset(n, dim, lb, indx);
+	offset = GetOffset(nSubscripts, dim, lb, indx);
 
 	if (ARR_IS_LO(array))
 	{
@@ -1149,35 +1146,33 @@ array_set(ArrayType *array,
 
 		lo_name = ARR_DATA_PTR(array);
 		if ((fd = LOopen(lo_name, ARR_IS_INV(array) ? INV_WRITE : O_WRONLY)) < 0)
-			return (char *) array;
+			return array;
 #endif
 		if (DatumGetInt32(DirectFunctionCall3(lo_lseek,
 							  Int32GetDatum(fd),
 							  Int32GetDatum(offset),
 							  Int32GetDatum(SEEK_SET))) < 0)
-			return (char *) array;
+			return array;
 		v = (struct varlena *) palloc(elmlen + VARHDRSZ);
 		VARSIZE(v) = elmlen + VARHDRSZ;
-		ArrayCastAndSet(dataPtr, (bool) reftype, elmlen, VARDATA(v));
+		ArrayCastAndSet(dataValue, elmbyval, elmlen, VARDATA(v));
 #ifdef LOARRAY
-		n = DatumGetInt32(DirectFunctionCall2(lowrite,
+		if (DatumGetInt32(DirectFunctionCall2(lowrite,
 											  Int32GetDatum(fd),
-											  PointerGetDatum(v)));
+											  PointerGetDatum(v)))
+			!= elmlen)
+			RETURN_NULL(ArrayType *);
 #endif
-
-		/*
-		 * if (n < VARSIZE(v) - VARHDRSZ) RETURN_NULL;
-		 */
 		pfree(v);
 		DirectFunctionCall1(lo_close, Int32GetDatum(fd));
-		return (char *) array;
+		return array;
 	}
 	if (elmlen > 0)
 	{
 		offset = offset * elmlen;
 		/* off the end of the array */
 		if (nbytes - offset < 1)
-			return (char *) array;
+			return array;
 		pos = ARR_DATA_PTR(array) + offset;
 	}
 	else
@@ -1194,18 +1189,18 @@ array_set(ArrayType *array,
 
 		elt_ptr = array_seek(ARR_DATA_PTR(array), -1, offset);
 		oldlen = INTALIGN(*(int32 *) elt_ptr);
-		newlen = INTALIGN(*(int32 *) dataPtr);
+		newlen = INTALIGN(*(int32 *) DatumGetPointer(dataValue));
 
 		if (oldlen == newlen)
 		{
 			/* new element with same size, overwrite old data */
-			ArrayCastAndSet(dataPtr, (bool) reftype, elmlen, elt_ptr);
-			return (char *) array;
+			ArrayCastAndSet(dataValue, elmbyval, elmlen, elt_ptr);
+			return array;
 		}
 
 		/* new element with different size, reallocate the array */
 		oldsize = array->size;
-		lth0 = ARR_OVERHEAD(n);
+		lth0 = ARR_OVERHEAD(nSubscripts);
 		lth1 = (int) (elt_ptr - ARR_DATA_PTR(array));
 		lth2 = (int) (oldsize - lth0 - lth1 - oldlen);
 		newsize = lth0 + lth1 + newlen + lth2;
@@ -1213,16 +1208,16 @@ array_set(ArrayType *array,
 		newarray = (ArrayType *) palloc(newsize);
 		memmove((char *) newarray, (char *) array, lth0 + lth1);
 		newarray->size = newsize;
-		newlen = ArrayCastAndSet(dataPtr, (bool) reftype, elmlen,
+		newlen = ArrayCastAndSet(dataValue, elmbyval, elmlen,
 								 (char *) newarray + lth0 + lth1);
 		memmove((char *) newarray + lth0 + lth1 + newlen,
 				(char *) array + lth0 + lth1 + oldlen, lth2);
 
 		/* ??? who should free this storage ??? */
-		return (char *) newarray;
+		return newarray;
 	}
-	ArrayCastAndSet(dataPtr, (bool) reftype, elmlen, pos);
-	return (char *) array;
+	ArrayCastAndSet(dataValue, elmbyval, elmlen, pos);
+	return array;
 }
 
 /*----------------------------------------------------------------------------
@@ -1234,14 +1229,14 @@ array_set(ArrayType *array,
  *		  returns a pointer to the modified array.
  *----------------------------------------------------------------------------
  */
-char *
+ArrayType *
 array_assgn(ArrayType *array,
-			int n,
+			int nSubscripts,
 			int *upperIndx,
 			int *lowerIndx,
 			ArrayType *newArr,
-			int reftype,
-			int len,
+			bool elmbyval,
+			int elmlen,
 			bool *isNull)
 {
 	int			i,
@@ -1250,19 +1245,19 @@ array_assgn(ArrayType *array,
 			   *lb;
 
 	if (array == (ArrayType *) NULL)
-		RETURN_NULL;
-	if (len < 0)
-		elog(ERROR, "array_assgn:updates on arrays of variable length elements not allowed");
+		RETURN_NULL(ArrayType *);
+	if (elmlen < 0)
+		elog(ERROR, "array_assgn: updates on arrays of variable length elements not implemented");
 
 	dim = ARR_DIMS(array);
 	lb = ARR_LBOUND(array);
 	ndim = ARR_NDIM(array);
 
-	if (!SanityCheckInput(ndim, n, dim, lb, upperIndx) ||
-		!SanityCheckInput(ndim, n, dim, lb, lowerIndx))
-		return (char *) array;
+	if (!SanityCheckInput(ndim, nSubscripts, dim, lb, upperIndx) ||
+		!SanityCheckInput(ndim, nSubscripts, dim, lb, lowerIndx))
+		RETURN_NULL(ArrayType *);
 
-	for (i = 0; i < n; i++)
+	for (i = 0; i < nSubscripts; i++)
 		if (lowerIndx[i] > upperIndx[i])
 			elog(ERROR, "lowerIndex larger than upperIndx");
 
@@ -1276,28 +1271,28 @@ array_assgn(ArrayType *array,
 
 		lo_name = (char *) ARR_DATA_PTR(array);
 		if ((fd = LOopen(lo_name, ARR_IS_INV(array) ? INV_WRITE : O_WRONLY)) < 0)
-			return (char *) array;
+			return array;
 #endif
 		if (ARR_IS_LO(newArr))
 		{
 #ifdef LOARRAY
 			lo_name = (char *) ARR_DATA_PTR(newArr);
 			if ((newfd = LOopen(lo_name, ARR_IS_INV(newArr) ? INV_READ : O_RDONLY)) < 0)
-				return (char *) array;
+				return array;
 #endif
-			_LOArrayRange(lowerIndx, upperIndx, len, fd, newfd, array, 1, isNull);
+			_LOArrayRange(lowerIndx, upperIndx, elmlen, fd, newfd, array, 1, isNull);
 			DirectFunctionCall1(lo_close, Int32GetDatum(newfd));
 		}
 		else
 		{
-			_LOArrayRange(lowerIndx, upperIndx, len, fd, (int) ARR_DATA_PTR(newArr),
+			_LOArrayRange(lowerIndx, upperIndx, elmlen, fd, (int) ARR_DATA_PTR(newArr),
 						  array, 0, isNull);
 		}
 		DirectFunctionCall1(lo_close, Int32GetDatum(fd));
-		return (char *) array;
+		return array;
 	}
-	_ArrayRange(lowerIndx, upperIndx, len, ARR_DATA_PTR(newArr), array, 0);
-	return (char *) array;
+	_ArrayRange(lowerIndx, upperIndx, elmlen, ARR_DATA_PTR(newArr), array, 0);
+	return array;
 }
 
 /*
@@ -1353,7 +1348,7 @@ array_map(FunctionCallInfo fcinfo, Oid inpType, Oid retType)
 		elog(ERROR, "array_map: invalid nargs: %d", fcinfo->nargs);
 	if (PG_ARGISNULL(0))
 		elog(ERROR, "array_map: null input array");
-	v = (ArrayType *) PG_GETARG_POINTER(0);
+	v = (ArrayType *) PG_GETARG_VARLENA_P(0);
 
 	/* Large objects not yet supported */
 	if (ARR_IS_LO(v) == true)
@@ -1466,19 +1461,20 @@ array_map(FunctionCallInfo fcinfo, Oid inpType, Oid retType)
  * array_eq :
  *		  compares two arrays for equality
  * result :
- *		  returns 1 if the arrays are equal, 0 otherwise.
+ *		  returns true if the arrays are equal, false otherwise.
  *-----------------------------------------------------------------------------
  */
-int
-array_eq(ArrayType *array1, ArrayType *array2)
+Datum
+array_eq(PG_FUNCTION_ARGS)
 {
-	if ((array1 == NULL) || (array2 == NULL))
-		return 0;
-	if (*(int *) array1 != *(int *) array2)
-		return 0;
-	if (memcmp(array1, array2, *(int *) array1))
-		return 0;
-	return 1;
+	ArrayType  *array1 = (ArrayType *) PG_GETARG_VARLENA_P(0);
+	ArrayType  *array2 = (ArrayType *) PG_GETARG_VARLENA_P(1);
+
+	if (*(int32 *) array1 != *(int32 *) array2)
+		PG_RETURN_BOOL(false);
+	if (memcmp(array1, array2, *(int32 *) array1) != 0)
+		PG_RETURN_BOOL(false);
+	PG_RETURN_BOOL(true);
 }
 
 /***************************************************************************/
@@ -1545,7 +1541,7 @@ _ArrayCast(char *value, bool byval, int len)
 
 
 static int
-ArrayCastAndSet(char *src,
+ArrayCastAndSet(Datum src,
 				bool typbyval,
 				int typlen,
 				char *dest)
@@ -1565,18 +1561,18 @@ ArrayCastAndSet(char *src,
 					*(int16 *) dest = DatumGetInt16(src);
 					break;
 				case 4:
-					*(int32 *) dest = (int32) src;
+					*(int32 *) dest = DatumGetInt32(src);
 					break;
 			}
 		}
 		else
-			memmove(dest, src, typlen);
+			memmove(dest, DatumGetPointer(src), typlen);
 		inc = typlen;
 	}
 	else
 	{
-		memmove(dest, src, *(int32 *) src);
-		inc = (INTALIGN(*(int32 *) src));
+		memmove(dest, DatumGetPointer(src), *(int32 *) DatumGetPointer(src));
+		inc = (INTALIGN(*(int32 *) DatumGetPointer(src)));
 	}
 	return inc;
 }

@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.58 2000/06/08 22:37:35 momjian Exp $
+ * $Id: miscadmin.h,v 1.59 2000/06/13 07:35:24 tgl Exp $
  *
  * NOTES
  *	  some of the information in this file will be moved to
@@ -130,13 +130,6 @@ extern char *ExpandDatabasePath(const char *path);
 /* now in utils/init/miscinit.c */
 extern void SetDatabaseName(const char *name);
 extern void SetDatabasePath(const char *path);
-
-/* even if MULTIBYTE is not enabled, this function is neccesary
- * since pg_proc.h does have.
- */
-extern const char *getdatabaseencoding(void);
-extern const char *pg_encoding_to_char(int);
-extern int	pg_char_to_encoding(const char *);
 
 extern char *getpgusername(void);
 extern void SetPgUserName(void);

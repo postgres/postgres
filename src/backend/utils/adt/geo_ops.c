@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.50 2000/04/12 17:15:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.51 2000/06/13 07:35:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4361,22 +4361,21 @@ box_circle(BOX *box)
 }	/* box_circle() */
 
 
-POLYGON    *
-circle_poly(int npts, CIRCLE *circle)
+Datum
+circle_poly(PG_FUNCTION_ARGS)
 {
+	int32		npts = PG_GETARG_INT32(0);
+	CIRCLE	   *circle = PG_GETARG_CIRCLE_P(1);
 	POLYGON    *poly;
 	int			size;
 	int			i;
 	double		angle;
 
-	if (!PointerIsValid(circle))
-		return NULL;
-
 	if (FPzero(circle->radius) || (npts < 2))
 		elog(ERROR, "Unable to convert circle to polygon");
 
 	size = offsetof(POLYGON, p[0]) +(sizeof(poly->p[0]) * npts);
-	poly = palloc(size);
+	poly = (POLYGON *) palloc(size);
 
 	MemSet((char *) poly, 0, size);		/* zero any holes */
 	poly->size = size;
@@ -4391,7 +4390,7 @@ circle_poly(int npts, CIRCLE *circle)
 
 	make_bound_box(poly);
 
-	return poly;
+	PG_RETURN_POLYGON_P(poly);
 }
 
 /*		poly_circle		- convert polygon to circle

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: int8.h,v 1.21 2000/05/28 17:56:20 tgl Exp $
+ * $Id: int8.h,v 1.22 2000/06/13 07:35:30 tgl Exp $
  *
  * NOTES
  * These data types are supported on all 64-bit architectures, and may
@@ -24,64 +24,61 @@
 #ifndef INT8_H
 #define INT8_H
 
+#include "fmgr.h"
 
-extern int64 *int8in(char *str);
-extern char *int8out(int64 *val);
 
-extern bool int8eq(int64 *val1, int64 *val2);
-extern bool int8ne(int64 *val1, int64 *val2);
-extern bool int8lt(int64 *val1, int64 *val2);
-extern bool int8gt(int64 *val1, int64 *val2);
-extern bool int8le(int64 *val1, int64 *val2);
-extern bool int8ge(int64 *val1, int64 *val2);
+extern Datum int8in(PG_FUNCTION_ARGS);
+extern Datum int8out(PG_FUNCTION_ARGS);
 
-extern bool int84eq(int64 *val1, int32 val2);
-extern bool int84ne(int64 *val1, int32 val2);
-extern bool int84lt(int64 *val1, int32 val2);
-extern bool int84gt(int64 *val1, int32 val2);
-extern bool int84le(int64 *val1, int32 val2);
-extern bool int84ge(int64 *val1, int32 val2);
+extern Datum int8eq(PG_FUNCTION_ARGS);
+extern Datum int8ne(PG_FUNCTION_ARGS);
+extern Datum int8lt(PG_FUNCTION_ARGS);
+extern Datum int8gt(PG_FUNCTION_ARGS);
+extern Datum int8le(PG_FUNCTION_ARGS);
+extern Datum int8ge(PG_FUNCTION_ARGS);
 
-extern bool int48eq(int32 val1, int64 *val2);
-extern bool int48ne(int32 val1, int64 *val2);
-extern bool int48lt(int32 val1, int64 *val2);
-extern bool int48gt(int32 val1, int64 *val2);
-extern bool int48le(int32 val1, int64 *val2);
-extern bool int48ge(int32 val1, int64 *val2);
+extern Datum int84eq(PG_FUNCTION_ARGS);
+extern Datum int84ne(PG_FUNCTION_ARGS);
+extern Datum int84lt(PG_FUNCTION_ARGS);
+extern Datum int84gt(PG_FUNCTION_ARGS);
+extern Datum int84le(PG_FUNCTION_ARGS);
+extern Datum int84ge(PG_FUNCTION_ARGS);
 
-extern int64 *int8um(int64 *val);
-extern int64 *int8pl(int64 *val1, int64 *val2);
-extern int64 *int8mi(int64 *val1, int64 *val2);
-extern int64 *int8mul(int64 *val1, int64 *val2);
-extern int64 *int8div(int64 *val1, int64 *val2);
-extern int64 *int8abs(int64 *val1);
-extern int64 *int8fac(int64 *val1);
-extern int64 *int8mod(int64 *val1, int64 *val2);
-extern int64 *int8larger(int64 *val1, int64 *val2);
-extern int64 *int8smaller(int64 *val1, int64 *val2);
+extern Datum int48eq(PG_FUNCTION_ARGS);
+extern Datum int48ne(PG_FUNCTION_ARGS);
+extern Datum int48lt(PG_FUNCTION_ARGS);
+extern Datum int48gt(PG_FUNCTION_ARGS);
+extern Datum int48le(PG_FUNCTION_ARGS);
+extern Datum int48ge(PG_FUNCTION_ARGS);
 
-extern int64 *int84pl(int64 *val1, int32 val2);
-extern int64 *int84mi(int64 *val1, int32 val2);
-extern int64 *int84mul(int64 *val1, int32 val2);
-extern int64 *int84div(int64 *val1, int32 val2);
+extern Datum int8um(PG_FUNCTION_ARGS);
+extern Datum int8pl(PG_FUNCTION_ARGS);
+extern Datum int8mi(PG_FUNCTION_ARGS);
+extern Datum int8mul(PG_FUNCTION_ARGS);
+extern Datum int8div(PG_FUNCTION_ARGS);
+extern Datum int8abs(PG_FUNCTION_ARGS);
+extern Datum int8fac(PG_FUNCTION_ARGS);
+extern Datum int8mod(PG_FUNCTION_ARGS);
+extern Datum int8larger(PG_FUNCTION_ARGS);
+extern Datum int8smaller(PG_FUNCTION_ARGS);
 
-extern int64 *int48pl(int32 val1, int64 *val2);
-extern int64 *int48mi(int32 val1, int64 *val2);
-extern int64 *int48mul(int32 val1, int64 *val2);
-extern int64 *int48div(int32 val1, int64 *val2);
+extern Datum int84pl(PG_FUNCTION_ARGS);
+extern Datum int84mi(PG_FUNCTION_ARGS);
+extern Datum int84mul(PG_FUNCTION_ARGS);
+extern Datum int84div(PG_FUNCTION_ARGS);
 
-extern int64 *int48(int32 val);
-extern int32 int84(int64 *val);
+extern Datum int48pl(PG_FUNCTION_ARGS);
+extern Datum int48mi(PG_FUNCTION_ARGS);
+extern Datum int48mul(PG_FUNCTION_ARGS);
+extern Datum int48div(PG_FUNCTION_ARGS);
 
-#ifdef NOT_USED
-extern int16 int82(int64 *val);
+extern Datum int48(PG_FUNCTION_ARGS);
+extern Datum int84(PG_FUNCTION_ARGS);
 
-#endif
+extern Datum i8tod(PG_FUNCTION_ARGS);
+extern Datum dtoi8(PG_FUNCTION_ARGS);
 
-extern float64 i8tod(int64 *val);
-extern int64 *dtoi8(float64 val);
-
-extern text *int8_text(int64 *val);
-extern int64 *text_int8(text *str);
+extern Datum int8_text(PG_FUNCTION_ARGS);
+extern Datum text_int8(PG_FUNCTION_ARGS);
 
 #endif	 /* INT8_H */

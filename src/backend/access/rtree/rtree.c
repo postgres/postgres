@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.47 2000/05/30 04:24:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.48 2000/06/13 07:34:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,17 +59,20 @@ static int	nospace(Page p, IndexTuple it);
 static void initRtstate(RTSTATE *rtstate, Relation index);
 
 
-void
-rtbuild(Relation heap,
-		Relation index,
-		int natts,
-		AttrNumber *attnum,
-		IndexStrategy istrat,
-		uint16 pcount,
-		Datum *params,
-		FuncIndexInfo *finfo,
-		PredInfo *predInfo)
+Datum
+rtbuild(PG_FUNCTION_ARGS)
 {
+	Relation		heap = (Relation) PG_GETARG_POINTER(0);
+	Relation		index = (Relation) PG_GETARG_POINTER(1);
+	int32			natts = PG_GETARG_INT32(2);
+	AttrNumber	   *attnum = (AttrNumber *) PG_GETARG_POINTER(3);
+#ifdef NOT_USED
+	IndexStrategy	istrat = (IndexStrategy) PG_GETARG_POINTER(4);
+	uint16			pcount = PG_GETARG_UINT16(5);
+	Datum		   *params = (Datum *) PG_GETARG_POINTER(6);
+#endif
+	FuncIndexInfo  *finfo = (FuncIndexInfo *) PG_GETARG_POINTER(7);
+	PredInfo	   *predInfo = (PredInfo *) PG_GETARG_POINTER(8);
 	HeapScanDesc scan;
 	AttrNumber	i;
 	HeapTuple	htup;
@@ -277,6 +280,8 @@ rtbuild(Relation heap,
 	/* be tidy */
 	pfree(nulls);
 	pfree(d);
+
+	PG_RETURN_POINTER(NULL);	/* no real return value */
 }
 
 /*
@@ -285,9 +290,16 @@ rtbuild(Relation heap,
  *	  This is the public interface routine for tuple insertion in rtrees.
  *	  It doesn't do any work; just locks the relation and passes the buck.
  */
-InsertIndexResult
-rtinsert(Relation r, Datum *datum, char *nulls, ItemPointer ht_ctid, Relation heapRel)
+Datum
+rtinsert(PG_FUNCTION_ARGS)
 {
+	Relation		r = (Relation) PG_GETARG_POINTER(0);
+	Datum		   *datum = (Datum *) PG_GETARG_POINTER(1);
+	char		   *nulls = (char *) PG_GETARG_POINTER(2);
+	ItemPointer		ht_ctid = (ItemPointer) PG_GETARG_POINTER(3);
+#ifdef NOT_USED
+	Relation		heapRel = (Relation) PG_GETARG_POINTER(4);
+#endif
 	InsertIndexResult res;
 	IndexTuple	itup;
 	RTSTATE		rtState;
@@ -305,7 +317,7 @@ rtinsert(Relation r, Datum *datum, char *nulls, ItemPointer ht_ctid, Relation he
 
 	res = rtdoinsert(r, itup, &rtState);
 
-	return res;
+	PG_RETURN_POINTER(res);
 }
 
 static InsertIndexResult
@@ -982,9 +994,11 @@ freestack(RTSTACK *s)
 	}
 }
 
-char *
-rtdelete(Relation r, ItemPointer tid)
+Datum
+rtdelete(PG_FUNCTION_ARGS)
 {
+	Relation		r = (Relation) PG_GETARG_POINTER(0);
+	ItemPointer		tid = (ItemPointer) PG_GETARG_POINTER(1);
 	BlockNumber blkno;
 	OffsetNumber offnum;
 	Buffer		buf;
@@ -1011,7 +1025,7 @@ rtdelete(Relation r, ItemPointer tid)
 
 	WriteBuffer(buf);
 
-	return (char *) NULL;
+	PG_RETURN_POINTER(NULL);	/* no real return value */
 }
 
 static void

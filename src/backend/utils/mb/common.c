@@ -2,7 +2,7 @@
  * This file contains some public functions
  * usable for both the backend and the frontend.
  * Tatsuo Ishii
- * $Id: common.c,v 1.8 2000/01/18 05:14:24 ishii Exp $ */
+ * $Id: common.c,v 1.9 2000/06/13 07:35:15 tgl Exp $ */
 
 #include <stdlib.h>
 #include <string.h>
@@ -14,8 +14,10 @@
 #endif
 
 #include "postgres.h"
+
 #include "miscadmin.h"
 #include "mb/pg_wchar.h"
+#include "utils/builtins.h"
 
 /*
  * convert encoding char to encoding symbol value.
@@ -36,6 +38,15 @@ pg_char_to_encoding(const char *s)
 			break;
 	}
 	return (p->encoding);
+}
+
+/* Same, as an fmgr-callable function */
+Datum
+PG_char_to_encoding(PG_FUNCTION_ARGS)
+{
+	Name		s = PG_GETARG_NAME(0);
+
+	PG_RETURN_INT32(pg_char_to_encoding(NameStr(*s)));
 }
 
 /*
@@ -75,6 +86,15 @@ pg_encoding_to_char(int encoding)
 	if (!p)
 		return ("");
 	return (p->name);
+}
+
+/* Same, as an fmgr-callable function */
+Datum
+PG_encoding_to_char(PG_FUNCTION_ARGS)
+{
+	int32		encoding = PG_GETARG_INT32(0);
+
+	PG_RETURN_NAME(pg_encoding_to_char(encoding));
 }
 
 /* returns the byte length of a multi-byte word for an encoding */

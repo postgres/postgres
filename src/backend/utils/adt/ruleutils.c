@@ -3,7 +3,7 @@
  *			  out of its tuple
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.53 2000/06/12 19:40:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.54 2000/06/13 07:35:08 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -551,18 +551,19 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
  *				  fallback to 'unknown (UID=n)'
  * ----------
  */
-NameData   *
-pg_get_userbyid(int32 uid)
+Datum
+pg_get_userbyid(PG_FUNCTION_ARGS)
 {
+	int32		uid = PG_GETARG_INT32(0);
+	Name		result;
 	HeapTuple	usertup;
 	Form_pg_shadow user_rec;
-	NameData   *result;
 
 	/* ----------
 	 * Allocate space for the result
 	 * ----------
 	 */
-	result = (NameData *) palloc(NAMEDATALEN);
+	result = (Name) palloc(NAMEDATALEN);
 	memset(NameStr(*result), 0, NAMEDATALEN);
 
 	/* ----------
@@ -570,16 +571,17 @@ pg_get_userbyid(int32 uid)
 	 * ----------
 	 */
 	usertup = SearchSysCacheTuple(SHADOWSYSID,
-								  ObjectIdGetDatum(uid), 0, 0, 0);
+								  ObjectIdGetDatum(uid),
+								  0, 0, 0);
 	if (HeapTupleIsValid(usertup))
 	{
 		user_rec = (Form_pg_shadow) GETSTRUCT(usertup);
 		StrNCpy(NameStr(*result), NameStr(user_rec->usename), NAMEDATALEN);
 	}
 	else
-		sprintf((char *) result, "unknown (UID=%d)", uid);
+		sprintf(NameStr(*result), "unknown (UID=%d)", uid);
 
-	return result;
+	PG_RETURN_NAME(result);
 }
 
 /* ----------

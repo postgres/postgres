@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/chunk.c,v 1.26 2000/06/09 01:11:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/chunk.c,v 1.27 2000/06/13 07:35:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -517,7 +517,7 @@ _ReadChunkArray(int *st,
 										  Int32GetDatum(fp),
 										  Int32GetDatum(srcOff),
 										  Int32GetDatum(SEEK_SET))) < 0)
-		RETURN_NULL;
+		RETURN_NULL(int);
 
 	jj = n - 1;
 	for (i = 0; i < n; chunk_off[i++] = 0)
@@ -541,7 +541,7 @@ _ReadChunkArray(int *st,
 							  Int32GetDatum((int32) destfp),
 							  Int32GetDatum(bptr),
 							  Int32GetDatum(SEEK_SET))) < 0)
-				RETURN_NULL;
+				RETURN_NULL(int);
 		}
 		else
 			destfp = baseDestFp + bptr;
@@ -556,7 +556,7 @@ _ReadChunkArray(int *st,
 							  Int32GetDatum(fp),
 							  Int32GetDatum(srcOff),
 							  Int32GetDatum(SEEK_SET))) < 0)
-				RETURN_NULL;
+				RETURN_NULL(int);
 		}
 		for (i = n - 1, to_read = bsize; i >= 0;
 			 to_read *= min(C[i], array_span[i]), i--)
@@ -571,7 +571,7 @@ _ReadChunkArray(int *st,
 								  Int32GetDatum(fp),
 								  Int32GetDatum(srcOff),
 								  Int32GetDatum(SEEK_SET))) < 0)
-					RETURN_NULL;
+					RETURN_NULL(int);
 			}
 			block_seek += cdist[j];
 			bptr += adist[j] * bsize;
@@ -581,13 +581,13 @@ _ReadChunkArray(int *st,
 								  Int32GetDatum((int32) destfp),
 								  Int32GetDatum(bptr),
 								  Int32GetDatum(SEEK_SET))) < 0)
-					RETURN_NULL;
+					RETURN_NULL(int);
 			}
 			else
 				destfp = baseDestFp + bptr;
 			temp = _LOtransfer((char **) &destfp, to_read, 1, (char **) &fp, 1, isDestLO);
 			if (temp < to_read)
-				RETURN_NULL;
+				RETURN_NULL(int);
 			srcOff += to_read;
 			words_read += to_read;
 			bptr += to_read;
@@ -702,7 +702,7 @@ _ReadChunkArray1El(int *st,
 					  Int32GetDatum(fp),
 					  Int32GetDatum(srcOff),
 					  Int32GetDatum(SEEK_SET))) < 0)
-		RETURN_NULL;
+		RETURN_NULL(struct varlena *);
 #ifdef LOARRAY
 	return (struct varlena *)
 		DatumGetPointer(DirectFunctionCall2(loread,

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nbtree.h,v 1.36 2000/06/08 22:37:38 momjian Exp $
+ * $Id: nbtree.h,v 1.37 2000/06/13 07:35:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -227,21 +227,16 @@ extern void _bt_pagedel(Relation rel, ItemPointer tid);
  */
 extern bool BuildingBtree;		/* in nbtree.c */
 
-extern void btbuild(Relation heap, Relation index, int natts,
-		AttrNumber *attnum, IndexStrategy istrat, uint16 pcount,
-		Datum *params, FuncIndexInfo *finfo, PredInfo *predInfo);
-extern InsertIndexResult btinsert(Relation rel, Datum *datum, char *nulls,
-		 ItemPointer ht_ctid, Relation heapRel);
-extern char *btgettuple(IndexScanDesc scan, ScanDirection dir);
-extern char *btbeginscan(Relation rel, bool fromEnd, uint16 keysz,
-			ScanKey scankey);
-
-extern void btrescan(IndexScanDesc scan, bool fromEnd, ScanKey scankey);
+extern Datum btbuild(PG_FUNCTION_ARGS);
+extern Datum btinsert(PG_FUNCTION_ARGS);
+extern Datum btgettuple(PG_FUNCTION_ARGS);
+extern Datum btbeginscan(PG_FUNCTION_ARGS);
+extern Datum btrescan(PG_FUNCTION_ARGS);
 extern void btmovescan(IndexScanDesc scan, Datum v);
-extern void btendscan(IndexScanDesc scan);
-extern void btmarkpos(IndexScanDesc scan);
-extern void btrestrpos(IndexScanDesc scan);
-extern void btdelete(Relation rel, ItemPointer tid);
+extern Datum btendscan(PG_FUNCTION_ARGS);
+extern Datum btmarkpos(PG_FUNCTION_ARGS);
+extern Datum btrestrpos(PG_FUNCTION_ARGS);
+extern Datum btdelete(PG_FUNCTION_ARGS);
 
 /*
  * prototypes for functions in nbtscan.c

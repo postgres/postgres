@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.58 2000/04/12 17:15:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.59 2000/06/13 07:35:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -323,20 +323,18 @@ textcat(text *t1, text *t2)
  * Formerly returned the entire string; now returns a portion.
  * - Thomas Lockhart 1998-12-10
  */
-text *
-text_substr(text *string, int32 m, int32 n)
+Datum
+text_substr(PG_FUNCTION_ARGS)
 {
+	text	   *string = PG_GETARG_TEXT_P(0);
+	int32		m = PG_GETARG_INT32(1);
+	int32		n = PG_GETARG_INT32(2);
 	text	   *ret;
 	int			len;
-
 #ifdef MULTIBYTE
 	int			i;
 	char	   *p;
-
 #endif
-
-	if (string == (text *) NULL)
-		return string;
 
 	len = VARSIZE(string) - VARHDRSZ;
 #ifdef MULTIBYTE
@@ -374,13 +372,14 @@ text_substr(text *string, int32 m, int32 n)
 		p += pg_mblen(p);
 	n = p - (VARDATA(string) + m);
 #endif
+
 	ret = (text *) palloc(VARHDRSZ + n);
 	VARSIZE(ret) = VARHDRSZ + n;
 
 	memcpy(VARDATA(ret), VARDATA(string) + m, n);
 
-	return ret;
-}	/* text_substr() */
+	PG_RETURN_TEXT_P(ret);
+}
 
 /*
  * textpos -
@@ -636,18 +635,16 @@ byteaoctetlen(bytea *v)
  * byteaGetByte
  *
  * this routine treats "bytea" as an array of bytes.
- * It returns the Nth byte (a number between 0 and 255) or
- * it dies if the length of this array is less than n.
+ * It returns the Nth byte (a number between 0 and 255).
  *-------------------------------------------------------------
  */
-int32
-byteaGetByte(bytea *v, int32 n)
+Datum
+byteaGetByte(PG_FUNCTION_ARGS)
 {
+	bytea	   *v = PG_GETARG_BYTEA_P(0);
+	int32		n = PG_GETARG_INT32(1);
 	int			len;
 	int			byte;
-
-	if (!PointerIsValid(v))
-		return 0;
 
 	len = VARSIZE(v) - VARHDRSZ;
 
@@ -657,7 +654,7 @@ byteaGetByte(bytea *v, int32 n)
 
 	byte = ((unsigned char *) VARDATA(v))[n];
 
-	return (int32) byte;
+	PG_RETURN_INT32(byte);
 }
 
 /*-------------------------------------------------------------
@@ -665,20 +662,18 @@ byteaGetByte(bytea *v, int32 n)
  *
  * This routine treats a "bytea" type like an array of bits.
  * It returns the value of the Nth bit (0 or 1).
- * If 'n' is out of range, it dies!
  *
  *-------------------------------------------------------------
  */
-int32
-byteaGetBit(bytea *v, int32 n)
+Datum
+byteaGetBit(PG_FUNCTION_ARGS)
 {
+	bytea	   *v = PG_GETARG_BYTEA_P(0);
+	int32		n = PG_GETARG_INT32(1);
 	int			byteNo,
 				bitNo;
 	int			len;
 	int			byte;
-
-	if (!PointerIsValid(v))
-		return 0;
 
 	len = VARSIZE(v) - VARHDRSZ;
 
@@ -692,9 +687,9 @@ byteaGetBit(bytea *v, int32 n)
 	byte = ((unsigned char *) VARDATA(v))[byteNo];
 
 	if (byte & (1 << bitNo))
-		return (int32) 1;
+		PG_RETURN_INT32(1);
 	else
-		return (int32) 0;
+		PG_RETURN_INT32(0);
 }
 
 /*-------------------------------------------------------------
@@ -705,14 +700,14 @@ byteaGetBit(bytea *v, int32 n)
  *
  *-------------------------------------------------------------
  */
-bytea *
-byteaSetByte(bytea *v, int32 n, int32 newByte)
+Datum
+byteaSetByte(PG_FUNCTION_ARGS)
 {
+	bytea	   *v = PG_GETARG_BYTEA_P(0);
+	int32		n = PG_GETARG_INT32(1);
+	int32		newByte = PG_GETARG_INT32(2);
 	int			len;
 	bytea	   *res;
-
-	if (!PointerIsValid(v))
-		return 0;
 
 	len = VARSIZE(v) - VARHDRSZ;
 
@@ -731,7 +726,7 @@ byteaSetByte(bytea *v, int32 n, int32 newByte)
 	 */
 	((unsigned char *) VARDATA(res))[n] = newByte;
 
-	return res;
+	PG_RETURN_BYTEA_P(res);
 }
 
 /*-------------------------------------------------------------
@@ -742,18 +737,18 @@ byteaSetByte(bytea *v, int32 n, int32 newByte)
  *
  *-------------------------------------------------------------
  */
-bytea *
-byteaSetBit(bytea *v, int32 n, int32 newBit)
+Datum
+byteaSetBit(PG_FUNCTION_ARGS)
 {
+	bytea	   *v = PG_GETARG_BYTEA_P(0);
+	int32		n = PG_GETARG_INT32(1);
+	int32		newBit = PG_GETARG_INT32(2);
 	bytea	   *res;
 	int			len;
 	int			oldByte,
 				newByte;
 	int			byteNo,
 				bitNo;
-
-	if (!PointerIsValid(v))
-		return NULL;
 
 	len = VARSIZE(v) - VARHDRSZ;
 
@@ -771,24 +766,24 @@ byteaSetBit(bytea *v, int32 n, int32 newBit)
 		elog(ERROR, "byteaSetBit: new bit must be 0 or 1");
 
 	/*
-	 * get the byte where the bit we want is stored.
+	 * Make a copy of the original varlena.
 	 */
-	oldByte = byteaGetByte(v, byteNo);
+	res = (bytea *) palloc(VARSIZE(v));
+	memcpy((char *) res, (char *) v, VARSIZE(v));
 
 	/*
-	 * calculate the new value for that byte
+	 * Update the byte.
 	 */
+	oldByte = ((unsigned char *) VARDATA(res))[byteNo];
+
 	if (newBit == 0)
 		newByte = oldByte & (~(1 << bitNo));
 	else
 		newByte = oldByte | (1 << bitNo);
 
-	/*
-	 * NOTE: 'byteaSetByte' creates a copy of 'v' & sets the byte.
-	 */
-	res = byteaSetByte(v, byteNo, newByte);
+	((unsigned char *) VARDATA(res))[byteNo] = newByte;
 
-	return res;
+	PG_RETURN_BYTEA_P(res);
 }
 
 

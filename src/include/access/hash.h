@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hash.h,v 1.32 2000/06/05 07:28:57 tgl Exp $
+ * $Id: hash.h,v 1.33 2000/06/13 07:35:17 tgl Exp $
  *
  * NOTES
  *		modeled after Margo Seltzer's hash implementation for unix.
@@ -248,19 +248,15 @@ typedef HashItemData *HashItem;
 
 /* public routines */
 
-extern void hashbuild(Relation heap, Relation index, int natts,
-		  AttrNumber *attnum, IndexStrategy istrat, uint16 pcount,
-		  Datum *params, FuncIndexInfo *finfo, PredInfo *predInfo);
-extern InsertIndexResult hashinsert(Relation rel, Datum *datum, char *nulls,
-		   ItemPointer ht_ctid, Relation heapRel);
-extern char *hashgettuple(IndexScanDesc scan, ScanDirection dir);
-extern char *hashbeginscan(Relation rel, bool fromEnd, uint16 keysz,
-			  ScanKey scankey);
-extern void hashrescan(IndexScanDesc scan, bool fromEnd, ScanKey scankey);
-extern void hashendscan(IndexScanDesc scan);
-extern void hashmarkpos(IndexScanDesc scan);
-extern void hashrestrpos(IndexScanDesc scan);
-extern void hashdelete(Relation rel, ItemPointer tid);
+extern Datum hashbuild(PG_FUNCTION_ARGS);
+extern Datum hashinsert(PG_FUNCTION_ARGS);
+extern Datum hashgettuple(PG_FUNCTION_ARGS);
+extern Datum hashbeginscan(PG_FUNCTION_ARGS);
+extern Datum hashrescan(PG_FUNCTION_ARGS);
+extern Datum hashendscan(PG_FUNCTION_ARGS);
+extern Datum hashmarkpos(PG_FUNCTION_ARGS);
+extern Datum hashrestrpos(PG_FUNCTION_ARGS);
+extern Datum hashdelete(PG_FUNCTION_ARGS);
 
 /*
  * Datatype-specific hash functions in hashfunc.c.

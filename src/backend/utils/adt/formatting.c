@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.11 2000/06/09 03:18:34 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.12 2000/06/13 07:35:04 tgl Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2000, PostgreSQL, Inc
@@ -3848,13 +3848,11 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
  * ----------
  */
 #define NUM_TOCHAR_prepare {							\
-	if (!PointerIsValid(fmt))					\
-		return NULL;						\
 									\
 	len = VARSIZE(fmt) - VARHDRSZ;					\
 									\
-	if (!len)							\
-		return textin("");					\
+	if (len <= 0)							\
+		return PointerGetDatum(textin(""));					\
 									\
 	result	= (text *) palloc( (len * NUM_MAX_ITEM_SIZ) + 1 + VARHDRSZ);	\
 	format	= NUM_cache(len, &Num, VARDATA(fmt), &flag);		\
@@ -3891,26 +3889,24 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
  * NUMERIC to_number() (convert string to numeric)
  * -------------------
  */
-Numeric
-numeric_to_number(text *value, text *fmt)
+Datum
+numeric_to_number(PG_FUNCTION_ARGS)
 {
+	text	   *value = PG_GETARG_TEXT_P(0);
+	text	   *fmt = PG_GETARG_TEXT_P(1);
 	NUMDesc		Num;
-	Numeric		result;
+	Datum		result;
 	FormatNode *format;
 	char	   *numstr;
 	int			flag = 0;
 	int			len = 0;
-
 	int			scale,
 				precision;
 
-	if ((!PointerIsValid(value)) || (!PointerIsValid(fmt)))
-		return NULL;
-
 	len = VARSIZE(fmt) - VARHDRSZ;
 
-	if (!len)
-		return numeric_in(NULL, 0, 0);
+	if (len <= 0)
+		PG_RETURN_NULL();
 
 	format = NUM_cache(len, &Num, VARDATA(fmt), &flag);
 
@@ -3925,7 +3921,10 @@ numeric_to_number(text *value, text *fmt)
 	if (flag)
 		pfree(format);
 
-	result = numeric_in(numstr, 0, ((precision << 16) | scale) + VARHDRSZ);
+	result = DirectFunctionCall3(numeric_in,
+								 CStringGetDatum(numstr),
+								 ObjectIdGetDatum(InvalidOid),
+								 Int32GetDatum(((precision << 16) | scale) + VARHDRSZ));
 	pfree(numstr);
 	return result;
 }
@@ -3934,9 +3933,11 @@ numeric_to_number(text *value, text *fmt)
  * NUMERIC to_char()
  * ------------------
  */
-text *
-numeric_to_char(Numeric value, text *fmt)
+Datum
+numeric_to_char(PG_FUNCTION_ARGS)
 {
+	Numeric		value = PG_GETARG_NUMERIC(0);
+	text	   *fmt = PG_GETARG_TEXT_P(1);
 	NUMDesc		Num;
 	FormatNode *format;
 	text	   *result,
@@ -3948,7 +3949,7 @@ numeric_to_char(Numeric value, text *fmt)
 	char	   *numstr,
 			   *orgnum,
 			   *p;
-	Numeric		x = NULL;
+	Numeric		x;
 
 	NUM_TOCHAR_prepare;
 
@@ -3958,10 +3959,11 @@ numeric_to_char(Numeric value, text *fmt)
 	 */
 	if (IS_ROMAN(&Num))
 	{
-		x = numeric_round(value, 0);
+		x = DatumGetNumeric(DirectFunctionCall2(numeric_round,
+												NumericGetDatum(value),
+												Int32GetDatum(0)));
 		numstr = orgnum = int_to_roman(numeric_int4(x));
 		pfree(x);
-
 	}
 	else
 	{
@@ -3969,8 +3971,10 @@ numeric_to_char(Numeric value, text *fmt)
 
 		if (IS_MULTI(&Num))
 		{
-			Numeric		a = int4_numeric(10);
-			Numeric		b = int4_numeric(Num.multi);
+			Numeric		a = DatumGetNumeric(DirectFunctionCall1(int4_numeric,
+											Int32GetDatum(10)));
+			Numeric		b = DatumGetNumeric(DirectFunctionCall1(int4_numeric,
+											Int32GetDatum(Num.multi)));
 
 			x = numeric_power(a, b);
 			val = numeric_mul(value, x);
@@ -3980,8 +3984,11 @@ numeric_to_char(Numeric value, text *fmt)
 			Num.pre += Num.multi;
 		}
 
-		x = numeric_round(val, Num.post);
-		orgnum = numeric_out(x);
+		x = DatumGetNumeric(DirectFunctionCall2(numeric_round,
+												NumericGetDatum(val),
+												Int32GetDatum(Num.post)));
+		orgnum = DatumGetCString(DirectFunctionCall1(numeric_out,
+													 NumericGetDatum(x)));
 		pfree(x);
 
 		if (*orgnum == '-')
@@ -4014,16 +4021,18 @@ numeric_to_char(Numeric value, text *fmt)
 	}
 
 	NUM_TOCHAR_finish;
-	return result;
+	PG_RETURN_TEXT_P(result);
 }
 
 /* ---------------
  * INT4 to_char()
  * ---------------
  */
-text *
-int4_to_char(int32 value, text *fmt)
+Datum
+int4_to_char(PG_FUNCTION_ARGS)
 {
+	int32		value = PG_GETARG_INT32(0);
+	text	   *fmt = PG_GETARG_TEXT_P(1);
 	NUMDesc		Num;
 	FormatNode *format;
 	text	   *result,
@@ -4044,7 +4053,6 @@ int4_to_char(int32 value, text *fmt)
 	if (IS_ROMAN(&Num))
 	{
 		numstr = orgnum = int_to_roman(value);
-
 	}
 	else
 	{
@@ -4097,16 +4105,18 @@ int4_to_char(int32 value, text *fmt)
 	}
 
 	NUM_TOCHAR_finish;
-	return result;
+	PG_RETURN_TEXT_P(result);
 }
 
 /* ---------------
  * INT8 to_char()
  * ---------------
  */
-text *
-int8_to_char(int64 *value, text *fmt)
+Datum
+int8_to_char(PG_FUNCTION_ARGS)
 {
+	int64		value = PG_GETARG_INT64(0);
+	text	   *fmt = PG_GETARG_TEXT_P(1);
 	NUMDesc		Num;
 	FormatNode *format;
 	text	   *result,
@@ -4126,8 +4136,9 @@ int8_to_char(int64 *value, text *fmt)
 	 */
 	if (IS_ROMAN(&Num))
 	{
-		numstr = orgnum = int_to_roman(int84(value));
-
+		/* Currently don't support int8 conversion to roman... */
+		numstr = orgnum = int_to_roman(DatumGetInt32(
+			DirectFunctionCall1(int84, Int64GetDatum(value))));
 	}
 	else
 	{
@@ -4135,11 +4146,15 @@ int8_to_char(int64 *value, text *fmt)
 		{
 			double		multi = pow((double) 10, (double) Num.multi);
 
-			orgnum = int8out(int8mul(value, dtoi8((float64) &multi)));
+			value = DatumGetInt64(DirectFunctionCall2(int8mul,
+								  Int64GetDatum(value),
+								  DirectFunctionCall1(dtoi8,
+													  Float8GetDatum(multi))));
 			Num.pre += Num.multi;
 		}
-		else
-			orgnum = int8out(value);
+
+		orgnum = DatumGetCString(DirectFunctionCall1(int8out,
+													 Int64GetDatum(value)));
 		len = strlen(orgnum);
 
 		if (*orgnum == '-')
@@ -4178,16 +4193,18 @@ int8_to_char(int64 *value, text *fmt)
 	}
 
 	NUM_TOCHAR_finish;
-	return result;
+	PG_RETURN_TEXT_P(result);
 }
 
 /* -----------------
  * FLOAT4 to_char()
  * -----------------
  */
-text *
-float4_to_char(float32 value, text *fmt)
+Datum
+float4_to_char(PG_FUNCTION_ARGS)
 {
+	float4		value = PG_GETARG_FLOAT4(0);
+	text	   *fmt = PG_GETARG_TEXT_P(1);
 	NUMDesc		Num;
 	FormatNode *format;
 	text	   *result,
@@ -4204,30 +4221,30 @@ float4_to_char(float32 value, text *fmt)
 
 	if (IS_ROMAN(&Num))
 	{
-		numstr = orgnum = int_to_roman((int) rint(*value));
+		numstr = orgnum = int_to_roman((int) rint(value));
 
 	}
 	else
 	{
-		float32		val = value;
+		float4		val = value;
 
 		if (IS_MULTI(&Num))
 		{
 			float		multi = pow((double) 10, (double) Num.multi);
 
-			val = float4mul(value, (float32) &multi);
+			val = value * multi;
 			Num.pre += Num.multi;
 		}
 
 		orgnum = (char *) palloc(MAXFLOATWIDTH + 1);
-		len = sprintf(orgnum, "%.0f", fabs(*val));
+		len = sprintf(orgnum, "%.0f", fabs(val));
 		if (Num.pre > len)
 			plen = Num.pre - len;
 		if (len >= FLT_DIG)
 			Num.post = 0;
 		else if (Num.post + len > FLT_DIG)
 			Num.post = FLT_DIG - len;
-		sprintf(orgnum, "%.*f", Num.post, *val);
+		sprintf(orgnum, "%.*f", Num.post, val);
 
 		if (*orgnum == '-')
 		{						/* < 0 */
@@ -4256,16 +4273,18 @@ float4_to_char(float32 value, text *fmt)
 	}
 
 	NUM_TOCHAR_finish;
-	return result;
+	PG_RETURN_TEXT_P(result);
 }
 
 /* -----------------
  * FLOAT8 to_char()
  * -----------------
  */
-text *
-float8_to_char(float64 value, text *fmt)
+Datum
+float8_to_char(PG_FUNCTION_ARGS)
 {
+	float8		value = PG_GETARG_FLOAT8(0);
+	text	   *fmt = PG_GETARG_TEXT_P(1);
 	NUMDesc		Num;
 	FormatNode *format;
 	text	   *result,
@@ -4282,29 +4301,29 @@ float8_to_char(float64 value, text *fmt)
 
 	if (IS_ROMAN(&Num))
 	{
-		numstr = orgnum = int_to_roman((int) rint(*value));
+		numstr = orgnum = int_to_roman((int) rint(value));
 
 	}
 	else
 	{
-		float64		val = value;
+		float8		val = value;
 
 		if (IS_MULTI(&Num))
 		{
 			double		multi = pow((double) 10, (double) Num.multi);
 
-			val = float8mul(value, (float64) &multi);
+			val = value * multi;
 			Num.pre += Num.multi;
 		}
 		orgnum = (char *) palloc(MAXDOUBLEWIDTH + 1);
-		len = sprintf(orgnum, "%.0f", fabs(*val));
+		len = sprintf(orgnum, "%.0f", fabs(val));
 		if (Num.pre > len)
 			plen = Num.pre - len;
 		if (len >= DBL_DIG)
 			Num.post = 0;
 		else if (Num.post + len > DBL_DIG)
 			Num.post = DBL_DIG - len;
-		sprintf(orgnum, "%.*f", Num.post, *val);
+		sprintf(orgnum, "%.*f", Num.post, val);
 
 		if (*orgnum == '-')
 		{						/* < 0 */
@@ -4333,5 +4352,5 @@ float8_to_char(float64 value, text *fmt)
 	}
 
 	NUM_TOCHAR_finish;
-	return result;
+	PG_RETURN_TEXT_P(result);
 }

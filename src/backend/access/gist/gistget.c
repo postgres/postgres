@@ -29,21 +29,23 @@ static bool gistindex_keytest(IndexTuple tuple, TupleDesc tupdesc,
 				  Relation r, Page p, OffsetNumber offset);
 
 
-RetrieveIndexResult
-gistgettuple(IndexScanDesc s, ScanDirection dir)
+Datum
+gistgettuple(PG_FUNCTION_ARGS)
 {
+	IndexScanDesc		s = (IndexScanDesc) PG_GETARG_POINTER(0);
+	ScanDirection		dir = (ScanDirection) PG_GETARG_INT32(1);
 	RetrieveIndexResult res;
 
 	/* if we have it cached in the scan desc, just return the value */
 	if ((res = gistscancache(s, dir)) != (RetrieveIndexResult) NULL)
-		return res;
+		PG_RETURN_POINTER(res);
 
 	/* not cached, so we'll have to do some work */
 	if (ItemPointerIsValid(&(s->currentItemData)))
 		res = gistnext(s, dir);
 	else
 		res = gistfirst(s, dir);
-	return res;
+	PG_RETURN_POINTER(res);
 }
 
 static RetrieveIndexResult

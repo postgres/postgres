@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1995, Regents of the University of California
  *
- * $Id: postgres.h,v 1.40 2000/06/02 15:57:40 momjian Exp $
+ * $Id: postgres.h,v 1.41 2000/06/13 07:35:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,7 +49,7 @@
 
 typedef int4 aclitem;
 
-#define InvalidOid		0
+#define InvalidOid		((Oid) 0)
 #define OidIsValid(objectId)  ((bool) ((objectId) != InvalidOid))
 
 /* unfortunately, both regproc and RegProcedure are used */
@@ -76,12 +76,15 @@ struct varlena
 #define VARDATA(PTR)	(((struct varlena *)(PTR))->vl_dat)
 #define VARHDRSZ		((int32) sizeof(int32))
 
+/*
+ * These widely-used datatypes are just a varlena header and the data bytes.
+ * There is no terminating null or anything like that --- the data length is
+ * always VARSIZE(ptr) - VARHDRSZ.
+ */
 typedef struct varlena bytea;
 typedef struct varlena text;
-
-typedef int2 int2vector[INDEX_MAX_KEYS];
-typedef Oid oidvector[INDEX_MAX_KEYS];
-
+typedef struct varlena BpChar;	/* blank-padded char, ie SQL char(n) */
+typedef struct varlena VarChar;	/* var-length char, ie SQL varchar(n) */
 
 /*
  * Proposed new layout for variable length attributes
@@ -155,6 +158,11 @@ extern varattrib *heap_tuple_untoast_attr(varattrib * attr);
 #endif	 /* TUPLE_TOASTER_ACTIVE */
 
 
+/* fixed-length array types (these are not varlena's!) */
+
+typedef int2 int2vector[INDEX_MAX_KEYS];
+typedef Oid oidvector[INDEX_MAX_KEYS];
+
 /* We want NameData to have length NAMEDATALEN and int alignment,
  * because that's how the data type 'name' is defined in pg_type.
  * Use a union to make sure the compiler agrees.
@@ -176,6 +184,7 @@ typedef NameData *Name;
 typedef uint32 TransactionId;
 
 #define InvalidTransactionId	0
+
 typedef uint32 CommandId;
 
 #define FirstCommandId	0
@@ -228,7 +237,7 @@ typedef uint32 CommandId;
  * ---------------
  */
 #ifdef CYR_RECODE
-extern void SetCharSet();
+extern void SetCharSet(void);
 #endif	 /* CYR_RECODE */
 
 #endif	 /* POSTGRES_H */

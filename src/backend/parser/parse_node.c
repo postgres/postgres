@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.40 2000/05/28 17:56:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.41 2000/06/13 07:35:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -450,7 +450,10 @@ make_const(Value *value)
 			}
 			else
 			{
-				val = PointerGetDatum(numeric_in(strVal(value), 0, -1));
+				val = DirectFunctionCall3(numeric_in,
+										  CStringGetDatum(strVal(value)),
+										  ObjectIdGetDatum(InvalidOid),
+										  Int32GetDatum(-1));
 
 				typeid = NUMERICOID;
 				typelen = -1;	/* variable len */

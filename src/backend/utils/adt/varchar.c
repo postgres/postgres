@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.63 2000/06/05 07:28:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.64 2000/06/13 07:35:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,19 +61,20 @@ extern char *convertstr(char *, int, int);
 /*
  * bpcharin -
  *	  converts a string of char() type to the internal representation.
- *	  len is the length specified in () plus VARHDRSZ bytes. (XXX dummy is here
- *	  because we pass typelem as the second argument for array_in.)
+ *	  len is the length specified in () plus VARHDRSZ bytes.
  */
-char *
-bpcharin(char *s, int dummy, int32 atttypmod)
+Datum
+bpcharin(PG_FUNCTION_ARGS)
 {
-	char	   *result,
-			   *r;
+	char	   *s = PG_GETARG_CSTRING(0);
+#ifdef NOT_USED
+	Oid			typelem = PG_GETARG_OID(1);
+#endif
+	int32		atttypmod = PG_GETARG_INT32(2);
+	BpChar	   *result;
+	char	   *r;
 	int			len;
 	int			i;
-
-	if (s == NULL)
-		return (char *) NULL;
 
 	if (atttypmod < (int32) VARHDRSZ)
 	{
@@ -84,7 +85,7 @@ bpcharin(char *s, int dummy, int32 atttypmod)
 	else
 		len = atttypmod - VARHDRSZ;
 
-	result = (char *) palloc(atttypmod);
+	result = (BpChar *) palloc(atttypmod);
 	VARSIZE(result) = atttypmod;
 	r = VARDATA(result);
 	for (i = 0; i < len; i++, r++, s++)
@@ -95,85 +96,78 @@ bpcharin(char *s, int dummy, int32 atttypmod)
 	}
 
 #ifdef CYR_RECODE
-	convertstr(result + VARHDRSZ, len, 0);
+	convertstr(VARDATA(result), len, 0);
 #endif
 
 	/* blank pad the string if necessary */
 	for (; i < len; i++)
 		*r++ = ' ';
-	return result;
+
+	PG_RETURN_BPCHAR_P(result);
 }
 
-char *
-bpcharout(char *s)
+Datum
+bpcharout(PG_FUNCTION_ARGS)
 {
+	BpChar	   *s = PG_GETARG_BPCHAR_P(0);
 	char	   *result;
 	int			len;
 
-	if (s == NULL)
-	{
-		result = (char *) palloc(2);
-		result[0] = '-';
-		result[1] = '\0';
-	}
-	else
-	{
-		len = VARSIZE(s) - VARHDRSZ;
-		result = (char *) palloc(len + 1);
-		StrNCpy(result, VARDATA(s), len + 1);	/* these are blank-padded */
-	}
+	len = VARSIZE(s) - VARHDRSZ;
+	result = (char *) palloc(len + 1);
+	StrNCpy(result, VARDATA(s), len + 1); /* copy and add null term */
 
 #ifdef CYR_RECODE
 	convertstr(result, len, 1);
 #endif
 
-	return result;
+	PG_RETURN_CSTRING(result);
 }
 
 /* bpchar()
  * Converts a char() type to a specific internal length.
  * len is the length specified in () plus VARHDRSZ bytes.
  */
-char *
-bpchar(char *s, int32 len)
+Datum
+bpchar(PG_FUNCTION_ARGS)
 {
-	char	   *result,
-			   *r;
+	BpChar	   *str = PG_GETARG_BPCHAR_P(0);
+	int32		len = PG_GETARG_INT32(1);
+	BpChar	   *result;
+	char	   *r,
+			   *s;
 	int			rlen,
 				slen;
 	int			i;
 
-	if (s == NULL)
-		return (char *) NULL;
-
 	/* No work if typmod is invalid or supplied data matches it already */
-	if (len < (int32) VARHDRSZ || len == VARSIZE(s))
-		return s;
+	if (len < (int32) VARHDRSZ || len == VARSIZE(str))
+		PG_RETURN_BPCHAR_P(str);
 
 	rlen = len - VARHDRSZ;
 
 #ifdef STRINGDEBUG
 	printf("bpchar- convert string length %d (%d) ->%d (%d)\n",
-		   VARSIZE(s) - VARHDRSZ, VARSIZE(s), rlen, len);
+		   VARSIZE(str) - VARHDRSZ, VARSIZE(str), rlen, len);
 #endif
 
-	result = (char *) palloc(len);
+	result = (BpChar *) palloc(len);
 	VARSIZE(result) = len;
 	r = VARDATA(result);
-#ifdef MULTIBYTE
 
+#ifdef MULTIBYTE
 	/*
 	 * truncate multi-byte string in a way not to break multi-byte
 	 * boundary
 	 */
-	if (VARSIZE(s) > len)
-		slen = pg_mbcliplen(VARDATA(s), VARSIZE(s) - VARHDRSZ, rlen);
+	if (VARSIZE(str) > len)
+		slen = pg_mbcliplen(VARDATA(str), VARSIZE(str) - VARHDRSZ, rlen);
 	else
-		slen = VARSIZE(s) - VARHDRSZ;
+		slen = VARSIZE(str) - VARHDRSZ;
 #else
-	slen = VARSIZE(s) - VARHDRSZ;
+	slen = VARSIZE(str) - VARHDRSZ;
 #endif
-	s = VARDATA(s);
+	s = VARDATA(str);
 
 #ifdef STRINGDEBUG
 	printf("bpchar- string is '");
@@ -181,13 +175,9 @@ bpchar(char *s, int32 len)
 
 	for (i = 0; (i < rlen) && (i < slen); i++)
 	{
-		if (*s == '\0')
-			break;
-
 #ifdef STRINGDEBUG
 		printf("%c", *s);
 #endif
-
 		*r++ = *s++;
 	}
 
@@ -199,19 +189,21 @@ bpchar(char *s, int32 len)
 	for (; i < rlen; i++)
 		*r++ = ' ';
 
-	return result;
-}	/* bpchar() */
+	PG_RETURN_BPCHAR_P(result);
+}
 
 /* _bpchar()
- * Converts an array of char() type to a specific internal length.
+ * Converts an array of char() elements to a specific internal length.
  * len is the length specified in () plus VARHDRSZ bytes.
  */
-ArrayType  *
-_bpchar(ArrayType *v, int32 len)
+Datum
+_bpchar(PG_FUNCTION_ARGS)
 {
+	ArrayType  *v = (ArrayType *) PG_GETARG_VARLENA_P(0);
+	int32		len = PG_GETARG_INT32(1);
 	FunctionCallInfoData	locfcinfo;
-	Datum					result;
-	/* Since bpchar() is a built-in function, we should only need to
+	/*
+	 * Since bpchar() is a built-in function, we should only need to
 	 * look it up once per run.
 	 */
 	static FmgrInfo			bpchar_finfo;
@@ -226,9 +218,7 @@ _bpchar(ArrayType *v, int32 len)
 	locfcinfo.arg[0] = PointerGetDatum(v);
 	locfcinfo.arg[1] = Int32GetDatum(len);
 
-	result = array_map(&locfcinfo, BPCHAROID, BPCHAROID);
-
-	return (ArrayType *) DatumGetPointer(result);
+	return array_map(&locfcinfo, BPCHAROID, BPCHAROID);
 }
 
 
@@ -240,7 +230,7 @@ _bpchar(ArrayType *v, int32 len)
 Datum
 bpchar_char(PG_FUNCTION_ARGS)
 {
-	struct varlena *s = PG_GETARG_BPCHAR_P(0);
+	BpChar	   *s = PG_GETARG_BPCHAR_P(0);
 
 	PG_RETURN_CHAR(*VARDATA(s));
 }
@@ -252,9 +242,9 @@ Datum
 char_bpchar(PG_FUNCTION_ARGS)
 {
 	char		c = PG_GETARG_CHAR(0);
-	struct varlena *result;
+	BpChar	   *result;
 
-	result = (struct varlena *) palloc(VARHDRSZ + 1);
+	result = (BpChar *) palloc(VARHDRSZ + 1);
 
 	VARSIZE(result) = VARHDRSZ + 1;
 	*(VARDATA(result)) = c;
@@ -338,75 +328,67 @@ name_bpchar(NameData *s)
 /*
  * varcharin -
  *	  converts a string of varchar() type to the internal representation.
- *	  len is the length specified in () plus VARHDRSZ bytes. (XXX dummy is here
- *	  because we pass typelem as the second argument for array_in.)
+ *	  len is the length specified in () plus VARHDRSZ bytes.
  */
-char *
-varcharin(char *s, int dummy, int32 atttypmod)
+Datum
+varcharin(PG_FUNCTION_ARGS)
 {
-	char	   *result;
+	char	   *s = PG_GETARG_CSTRING(0);
+#ifdef NOT_USED
+	Oid			typelem = PG_GETARG_OID(1);
+#endif
+	int32		atttypmod = PG_GETARG_INT32(2);
+	VarChar	   *result;
 	int			len;
-
-	if (s == NULL)
-		return (char *) NULL;
 
 	len = strlen(s) + VARHDRSZ;
 	if (atttypmod >= (int32) VARHDRSZ && len > atttypmod)
 		len = atttypmod;		/* clip the string at max length */
 
-	result = (char *) palloc(len);
+	result = (VarChar *) palloc(len);
 	VARSIZE(result) = len;
-	strncpy(VARDATA(result), s, len - VARHDRSZ);
+	memcpy(VARDATA(result), s, len - VARHDRSZ);
 
 #ifdef CYR_RECODE
-	convertstr(result + VARHDRSZ, len, 0);
+	convertstr(VARDATA(result), len, 0);
 #endif
 
-	return result;
+	PG_RETURN_VARCHAR_P(result);
 }
 
-char *
-varcharout(char *s)
+Datum
+varcharout(PG_FUNCTION_ARGS)
 {
+	VarChar	   *s = PG_GETARG_VARCHAR_P(0);
 	char	   *result;
 	int			len;
 
-	if (s == NULL)
-	{
-		result = (char *) palloc(2);
-		result[0] = '-';
-		result[1] = '\0';
-	}
-	else
-	{
-		len = VARSIZE(s) - VARHDRSZ;
-		result = (char *) palloc(len + 1);
-		StrNCpy(result, VARDATA(s), len + 1);
-	}
+	len = VARSIZE(s) - VARHDRSZ;
+	result = (char *) palloc(len + 1);
+	StrNCpy(result, VARDATA(s), len + 1); /* copy and add null term */
 
 #ifdef CYR_RECODE
 	convertstr(result, len, 1);
 #endif
 
-	return result;
+	PG_RETURN_CSTRING(result);
 }
 
 /* varchar()
  * Converts a varchar() type to the specified size.
  * slen is the length specified in () plus VARHDRSZ bytes.
  */
-char *
-varchar(char *s, int32 slen)
+Datum
+varchar(PG_FUNCTION_ARGS)
 {
-	char	   *result;
+	VarChar	   *s = PG_GETARG_VARCHAR_P(0);
+	int32		slen = PG_GETARG_INT32(1);
+	VarChar	   *result;
 	int			len;
-
-	if (s == NULL)
-		return (char *) NULL;
 
 	len = VARSIZE(s);
 	if (slen < (int32) VARHDRSZ || len <= slen)
-		return (char *) s;
+		PG_RETURN_VARCHAR_P(s);
 
 	/* only reach here if we need to truncate string... */
 
@@ -422,23 +404,25 @@ varchar(char *s, int32 slen)
 	len = slen - VARHDRSZ;
 #endif
 
-	result = (char *) palloc(slen);
+	result = (VarChar *) palloc(slen);
 	VARSIZE(result) = slen;
-	strncpy(VARDATA(result), VARDATA(s), len);
+	memcpy(VARDATA(result), VARDATA(s), len);
 
-	return result;
-}	/* varchar() */
+	PG_RETURN_VARCHAR_P(result);
+}
 
 /* _varchar()
- * Converts an array of varchar() type to the specified size.
+ * Converts an array of varchar() elements to the specified size.
  * len is the length specified in () plus VARHDRSZ bytes.
  */
-ArrayType  *
-_varchar(ArrayType *v, int32 len)
+Datum
+_varchar(PG_FUNCTION_ARGS)
 {
+	ArrayType  *v = (ArrayType *) PG_GETARG_VARLENA_P(0);
+	int32		len = PG_GETARG_INT32(1);
 	FunctionCallInfoData	locfcinfo;
-	Datum					result;
-	/* Since varchar() is a built-in function, we should only need to
+	/*
+	 * Since varchar() is a built-in function, we should only need to
 	 * look it up once per run.
 	 */
 	static FmgrInfo			varchar_finfo;
@@ -453,9 +437,7 @@ _varchar(ArrayType *v, int32 len)
 	locfcinfo.arg[0] = PointerGetDatum(v);
 	locfcinfo.arg[1] = Int32GetDatum(len);
 
-	result = array_map(&locfcinfo, VARCHAROID, VARCHAROID);
-
-	return (ArrayType *) DatumGetPointer(result);
+	return array_map(&locfcinfo, VARCHAROID, VARCHAROID);
 }
 
 

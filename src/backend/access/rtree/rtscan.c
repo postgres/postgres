@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtscan.c,v 1.32 2000/04/12 17:14:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtscan.c,v 1.33 2000/06/13 07:34:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,12 +51,13 @@ typedef RTScanListData *RTScanList;
 /* pointer to list of local scans on rtrees */
 static RTScanList RTScans = (RTScanList) NULL;
 
-IndexScanDesc
-rtbeginscan(Relation r,
-			bool fromEnd,
-			uint16 nkeys,
-			ScanKey key)
+Datum
+rtbeginscan(PG_FUNCTION_ARGS)
 {
+	Relation	r = (Relation) PG_GETARG_POINTER(0);
+	bool		fromEnd = PG_GETARG_BOOL(1);
+	uint16		nkeys = PG_GETARG_UINT16(2);
+	ScanKey		key = (ScanKey) PG_GETARG_POINTER(3);
 	IndexScanDesc s;
 
 	/*
@@ -68,21 +69,18 @@ rtbeginscan(Relation r,
 	s = RelationGetIndexScan(r, fromEnd, nkeys, key);
 	rtregscan(s);
 
-	return s;
+	PG_RETURN_POINTER(s);
 }
 
-void
-rtrescan(IndexScanDesc s, bool fromEnd, ScanKey key)
+Datum
+rtrescan(PG_FUNCTION_ARGS)
 {
+	IndexScanDesc	s = (IndexScanDesc) PG_GETARG_POINTER(0);
+	bool			fromEnd = PG_GETARG_BOOL(1);
+	ScanKey			key = (ScanKey) PG_GETARG_POINTER(2);
 	RTreeScanOpaque p;
 	RegProcedure internal_proc;
 	int			i;
-
-	if (!IndexScanIsValid(s))
-	{
-		elog(ERROR, "rtrescan: invalid scan.");
-		return;
-	}
 
 	/*
 	 * Clear all the pointers.
@@ -157,11 +155,14 @@ rtrescan(IndexScanDesc s, bool fromEnd, ScanKey key)
 			}
 		}
 	}
+
+	PG_RETURN_POINTER(NULL);	/* no real return value */
 }
 
-void
-rtmarkpos(IndexScanDesc s)
+Datum
+rtmarkpos(PG_FUNCTION_ARGS)
 {
+	IndexScanDesc	s = (IndexScanDesc) PG_GETARG_POINTER(0);
 	RTreeScanOpaque p;
 	RTSTACK    *o,
 			   *n,
@@ -190,11 +191,14 @@ rtmarkpos(IndexScanDesc s)
 
 	freestack(p->s_markstk);
 	p->s_markstk = o;
+
+	PG_RETURN_POINTER(NULL);	/* no real return value */
 }
 
-void
-rtrestrpos(IndexScanDesc s)
+Datum
+rtrestrpos(PG_FUNCTION_ARGS)
 {
+	IndexScanDesc	s = (IndexScanDesc) PG_GETARG_POINTER(0);
 	RTreeScanOpaque p;
 	RTSTACK    *o,
 			   *n,
@@ -223,11 +227,14 @@ rtrestrpos(IndexScanDesc s)
 
 	freestack(p->s_stack);
 	p->s_stack = o;
+
+	PG_RETURN_POINTER(NULL);	/* no real return value */
 }
 
-void
-rtendscan(IndexScanDesc s)
+Datum
+rtendscan(PG_FUNCTION_ARGS)
 {
+	IndexScanDesc	s = (IndexScanDesc) PG_GETARG_POINTER(0);
 	RTreeScanOpaque p;
 
 	p = (RTreeScanOpaque) s->opaque;
@@ -241,6 +248,8 @@ rtendscan(IndexScanDesc s)
 
 	rtdropscan(s);
 	/* XXX don't unset read lock -- two-phase locking */
+
+	PG_RETURN_POINTER(NULL);	/* no real return value */
 }
 
 static void

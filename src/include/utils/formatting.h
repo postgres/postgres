@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------
  * formatting.h
  *
- * $Id: formatting.h,v 1.5 2000/06/09 01:11:15 tgl Exp $
+ * $Id: formatting.h,v 1.6 2000/06/13 07:35:30 tgl Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2000, PostgreSQL, Inc
@@ -24,11 +24,11 @@
 extern Datum timestamp_to_char(PG_FUNCTION_ARGS);
 extern Datum to_timestamp(PG_FUNCTION_ARGS);
 extern Datum to_date(PG_FUNCTION_ARGS);
-extern Numeric numeric_to_number(text *value, text *fmt);
-extern text *numeric_to_char(Numeric value, text *fmt);
-extern text *int4_to_char(int32 value, text *fmt);
-extern text *int8_to_char(int64 *value, text *fmt);
-extern text *float4_to_char(float32 value, text *fmt);
-extern text *float8_to_char(float64 value, text *fmt);
+extern Datum numeric_to_number(PG_FUNCTION_ARGS);
+extern Datum numeric_to_char(PG_FUNCTION_ARGS);
+extern Datum int4_to_char(PG_FUNCTION_ARGS);
+extern Datum int8_to_char(PG_FUNCTION_ARGS);
+extern Datum float4_to_char(PG_FUNCTION_ARGS);
+extern Datum float8_to_char(PG_FUNCTION_ARGS);
 
 #endif

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.48 2000/06/08 22:37:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.49 2000/06/13 07:35:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,6 +28,7 @@
 #include "catalog/catname.h"
 #include "catalog/pg_shadow.h"
 #include "miscadmin.h"
+#include "utils/builtins.h"
 #include "utils/syscache.h"
 
 static char *GetPidFname(void);
@@ -98,25 +99,26 @@ SetDatabaseName(const char *name)
 }
 
 #ifndef MULTIBYTE
-/* even if MULTIBYTE is not enabled, this function is neccesary
- * since pg_proc.h has entries for them.
+/* even if MULTIBYTE is not enabled, these functions are necessary
+ * since pg_proc.h has references to them.
  */
-const char *
-getdatabaseencoding()
+
+Datum
+getdatabaseencoding(PG_FUNCTION_ARGS)
 {
-	return ("SQL_ASCII");
+	PG_RETURN_NAME("SQL_ASCII");
 }
 
-const char *
-pg_encoding_to_char(int encoding)
+Datum
+PG_encoding_to_char(PG_FUNCTION_ARGS)
 {
-	return ("SQL_ASCII");
+	PG_RETURN_NAME("SQL_ASCII");
 }
 
-int
-pg_char_to_encoding(const char *encoding_string)
+Datum
+PG_char_to_encoding(PG_FUNCTION_ARGS)
 {
-	return (0);
+	PG_RETURN_INT32(0);
 }
 
 #endif

@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fmgr.h,v 1.4 2000/06/05 07:29:02 tgl Exp $
+ * $Id: fmgr.h,v 1.5 2000/06/13 07:35:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -99,37 +99,49 @@ extern void fmgr_info(Oid functionId, FmgrInfo *finfo);
  */
 #define PG_ARGISNULL(n)  (fcinfo->argnull[n])
 
+#if 1
+/* VERY TEMPORARY until some TOAST support is committed ... */
+#define PG_DETOAST_DATUM(datum)  \
+	 ((struct varlena *) DatumGetPointer(datum))
+#else
+/* Eventually it will look more like this... */
+#define PG_DETOAST_DATUM(datum)  \
+	(VARATT_IS_EXTENDED(DatumGetPointer(datum)) ?  \
+	 (struct varlena *) heap_tuple_untoast_attr((varattrib *) DatumGetPointer(datum)) :  \
+	 (struct varlena *) DatumGetPointer(datum))
+#endif
+
 /* Macros for fetching arguments of standard types */
 
 #define PG_GETARG_DATUM(n)   (fcinfo->arg[n])
-#define PG_GETARG_INT32(n)   DatumGetInt32(fcinfo->arg[n])
-#define PG_GETARG_UINT32(n)  DatumGetUInt32(fcinfo->arg[n])
-#define PG_GETARG_INT16(n)   DatumGetInt16(fcinfo->arg[n])
-#define PG_GETARG_CHAR(n)    DatumGetChar(fcinfo->arg[n])
-#define PG_GETARG_BOOL(n)    DatumGetBool(fcinfo->arg[n])
-#define PG_GETARG_OID(n)     DatumGetObjectId(fcinfo->arg[n])
-#define PG_GETARG_POINTER(n) DatumGetPointer(fcinfo->arg[n])
-#define PG_GETARG_CSTRING(n) DatumGetCString(fcinfo->arg[n])
-#define PG_GETARG_NAME(n)    DatumGetName(fcinfo->arg[n])
+#define PG_GETARG_INT32(n)   DatumGetInt32(PG_GETARG_DATUM(n))
+#define PG_GETARG_UINT32(n)  DatumGetUInt32(PG_GETARG_DATUM(n))
+#define PG_GETARG_INT16(n)   DatumGetInt16(PG_GETARG_DATUM(n))
+#define PG_GETARG_UINT16(n)  DatumGetUInt16(PG_GETARG_DATUM(n))
+#define PG_GETARG_CHAR(n)    DatumGetChar(PG_GETARG_DATUM(n))
+#define PG_GETARG_BOOL(n)    DatumGetBool(PG_GETARG_DATUM(n))
+#define PG_GETARG_OID(n)     DatumGetObjectId(PG_GETARG_DATUM(n))
+#define PG_GETARG_POINTER(n) DatumGetPointer(PG_GETARG_DATUM(n))
+#define PG_GETARG_CSTRING(n) DatumGetCString(PG_GETARG_DATUM(n))
+#define PG_GETARG_NAME(n)    DatumGetName(PG_GETARG_DATUM(n))
 /* these macros hide the pass-by-reference-ness of the datatype: */
-#define PG_GETARG_FLOAT4(n)  DatumGetFloat4(fcinfo->arg[n])
-#define PG_GETARG_FLOAT8(n)  DatumGetFloat8(fcinfo->arg[n])
-#define PG_GETARG_INT64(n)   DatumGetInt64(fcinfo->arg[n])
+#define PG_GETARG_FLOAT4(n)  DatumGetFloat4(PG_GETARG_DATUM(n))
+#define PG_GETARG_FLOAT8(n)  DatumGetFloat8(PG_GETARG_DATUM(n))
+#define PG_GETARG_INT64(n)   DatumGetInt64(PG_GETARG_DATUM(n))
 /* use this if you want the raw, possibly-toasted input datum: */
 #define PG_GETARG_RAW_VARLENA_P(n)  ((struct varlena *) PG_GETARG_POINTER(n))
 /* use this if you want the input datum de-toasted: */
-#if 1
-/* VERY TEMPORARY until some TOAST support is committed ... */
-#define PG_GETARG_VARLENA_P(n)  PG_GETARG_RAW_VARLENA_P(n)
-#else
-/* Eventually it will look more like this... */
-#define PG_GETARG_VARLENA_P(n)  \
-	(VARATT_IS_EXTENDED(PG_GETARG_RAW_VARLENA_P(n)) ?  \
-	 (struct varlena *) heap_tuple_untoast_attr((varattrib *) PG_GETARG_RAW_VARLENA_P(n)) :  \
-	 PG_GETARG_RAW_VARLENA_P(n))
-#endif
+#define PG_GETARG_VARLENA_P(n) PG_DETOAST_DATUM(PG_GETARG_DATUM(n))
+/* DatumGetFoo macros for varlena types will typically look like this: */
+#define DatumGetByteaP(X)    ((bytea *) PG_DETOAST_DATUM(X))
+#define DatumGetTextP(X)     ((text *) PG_DETOAST_DATUM(X))
+#define DatumGetBpCharP(X)   ((BpChar *) PG_DETOAST_DATUM(X))
+#define DatumGetVarCharP(X)  ((VarChar *) PG_DETOAST_DATUM(X))
 /* GETARG macros for varlena types will typically look like this: */
-#define PG_GETARG_TEXT_P(n) ((text *) PG_GETARG_VARLENA_P(n))
+#define PG_GETARG_BYTEA_P(n)   DatumGetByteaP(PG_GETARG_DATUM(n))
+#define PG_GETARG_TEXT_P(n)    DatumGetTextP(PG_GETARG_DATUM(n))
+#define PG_GETARG_BPCHAR_P(n)  DatumGetBpCharP(PG_GETARG_DATUM(n))
+#define PG_GETARG_VARCHAR_P(n) DatumGetVarCharP(PG_GETARG_DATUM(n))
 
 /* To return a NULL do this: */
 #define PG_RETURN_NULL()  \
@@ -151,7 +163,10 @@ extern void fmgr_info(Oid functionId, FmgrInfo *finfo);
 #define PG_RETURN_FLOAT8(x)  return Float8GetDatum(x)
 #define PG_RETURN_INT64(x)   return Int64GetDatum(x)
 /* RETURN macros for other pass-by-ref types will typically look like this: */
-#define PG_RETURN_TEXT_P(x)  PG_RETURN_POINTER(x)
+#define PG_RETURN_BYTEA_P(x)   PG_RETURN_POINTER(x)
+#define PG_RETURN_TEXT_P(x)    PG_RETURN_POINTER(x)
+#define PG_RETURN_BPCHAR_P(x)  PG_RETURN_POINTER(x)
+#define PG_RETURN_VARCHAR_P(x) PG_RETURN_POINTER(x)
 
 
 /*-------------------------------------------------------------------------

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.37 2000/04/12 17:14:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.38 2000/06/13 07:34:28 tgl Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -36,17 +36,20 @@ bool		BuildingHash = false;
  *		since the index won't be visible until this transaction commits
  *		and since building is guaranteed to be single-threaded.
  */
-void
-hashbuild(Relation heap,
-		  Relation index,
-		  int natts,
-		  AttrNumber *attnum,
-		  IndexStrategy istrat,
-		  uint16 pcount,
-		  Datum *params,
-		  FuncIndexInfo *finfo,
-		  PredInfo *predInfo)
+Datum
+hashbuild(PG_FUNCTION_ARGS)
 {
+	Relation		heap = (Relation) PG_GETARG_POINTER(0);
+	Relation		index = (Relation) PG_GETARG_POINTER(1);
+	int32			natts = PG_GETARG_INT32(2);
+	AttrNumber	   *attnum = (AttrNumber *) PG_GETARG_POINTER(3);
+#ifdef NOT_USED
+	IndexStrategy	istrat = (IndexStrategy) PG_GETARG_POINTER(4);
+	uint16			pcount = PG_GETARG_UINT16(5);
+	Datum		   *params = (Datum *) PG_GETARG_POINTER(6);
+#endif
+	FuncIndexInfo  *finfo = (FuncIndexInfo *) PG_GETARG_POINTER(7);
+	PredInfo	   *predInfo = (PredInfo *) PG_GETARG_POINTER(8);
 	HeapScanDesc hscan;
 	HeapTuple	htup;
 	IndexTuple	itup;
@@ -262,6 +265,8 @@ hashbuild(Relation heap,
 
 	/* all done */
 	BuildingHash = false;
+
+	PG_RETURN_POINTER(NULL);	/* no real return value */
 }
 
 /*
@@ -271,20 +276,26 @@ hashbuild(Relation heap,
  *	for the new tuple, put it there, and return an InsertIndexResult
  *	to the caller.
  */
-InsertIndexResult
-hashinsert(Relation rel, Datum *datum, char *nulls, ItemPointer ht_ctid, Relation heapRel)
+Datum
+hashinsert(PG_FUNCTION_ARGS)
 {
+	Relation		rel = (Relation) PG_GETARG_POINTER(0);
+	Datum		   *datum = (Datum *) PG_GETARG_POINTER(1);
+	char		   *nulls = (char *) PG_GETARG_POINTER(2);
+	ItemPointer		ht_ctid = (ItemPointer) PG_GETARG_POINTER(3);
+#ifdef NOT_USED
+	Relation		heapRel = (Relation) PG_GETARG_POINTER(4);
+#endif
+	InsertIndexResult res;
 	HashItem	hitem;
 	IndexTuple	itup;
-	InsertIndexResult res;
-
 
 	/* generate an index tuple */
 	itup = index_formtuple(RelationGetDescr(rel), datum, nulls);
 	itup->t_tid = *ht_ctid;
 
 	if (itup->t_info & INDEX_NULL_MASK)
-		return (InsertIndexResult) NULL;
+		PG_RETURN_POINTER((InsertIndexResult) NULL);
 
 	hitem = _hash_formitem(itup);
 
@@ -293,16 +304,18 @@ hashinsert(Relation rel, Datum *datum, char *nulls, ItemPointer ht_ctid, Relatio
 	pfree(hitem);
 	pfree(itup);
 
-	return res;
+	PG_RETURN_POINTER(res);
 }
 
 
 /*
  *	hashgettuple() -- Get the next tuple in the scan.
  */
-char *
-hashgettuple(IndexScanDesc scan, ScanDirection dir)
+Datum
+hashgettuple(PG_FUNCTION_ARGS)
 {
+	IndexScanDesc		scan = (IndexScanDesc) PG_GETARG_POINTER(0);
+	ScanDirection		dir = (ScanDirection) PG_GETARG_INT32(1);
 	RetrieveIndexResult res;
 
 	/*
@@ -316,19 +329,20 @@ hashgettuple(IndexScanDesc scan, ScanDirection dir)
 	else
 		res = _hash_first(scan, dir);
 
-	return (char *) res;
+	PG_RETURN_POINTER(res);
 }
 
 
 /*
  *	hashbeginscan() -- start a scan on a hash index
  */
-char *
-hashbeginscan(Relation rel,
-			  bool fromEnd,
-			  uint16 keysz,
-			  ScanKey scankey)
+Datum
+hashbeginscan(PG_FUNCTION_ARGS)
 {
+	Relation	rel = (Relation) PG_GETARG_POINTER(0);
+	bool		fromEnd = PG_GETARG_BOOL(1);
+	uint16		keysz = PG_GETARG_UINT16(2);
+	ScanKey		scankey = (ScanKey) PG_GETARG_POINTER(3);
 	IndexScanDesc scan;
 	HashScanOpaque so;
 
@@ -341,15 +355,20 @@ hashbeginscan(Relation rel,
 	/* register scan in case we change pages it's using */
 	_hash_regscan(scan);
 
-	return (char *) scan;
+	PG_RETURN_POINTER(scan);
 }
 
 /*
  *	hashrescan() -- rescan an index relation
  */
-void
-hashrescan(IndexScanDesc scan, bool fromEnd, ScanKey scankey)
+Datum
+hashrescan(PG_FUNCTION_ARGS)
 {
+	IndexScanDesc	scan = (IndexScanDesc) PG_GETARG_POINTER(0);
+#ifdef NOT_USED					/* XXX surely it's wrong to ignore this? */
+	bool			fromEnd = PG_GETARG_BOOL(1);
+#endif
+	ScanKey			scankey = (ScanKey) PG_GETARG_POINTER(2);
 	ItemPointer iptr;
 	HashScanOpaque so;
 
@@ -376,15 +395,17 @@ hashrescan(IndexScanDesc scan, bool fromEnd, ScanKey scankey)
 				scankey,
 				scan->numberOfKeys * sizeof(ScanKeyData));
 	}
+
+	PG_RETURN_POINTER(NULL);	/* no real return value */
 }
 
 /*
  *	hashendscan() -- close down a scan
  */
-void
-hashendscan(IndexScanDesc scan)
+Datum
+hashendscan(PG_FUNCTION_ARGS)
 {
-
+	IndexScanDesc	scan = (IndexScanDesc) PG_GETARG_POINTER(0);
 	ItemPointer iptr;
 	HashScanOpaque so;
 
@@ -411,25 +432,20 @@ hashendscan(IndexScanDesc scan)
 
 	/* be tidy */
 	pfree(scan->opaque);
+
+	PG_RETURN_POINTER(NULL);	/* no real return value */
 }
 
 /*
  *	hashmarkpos() -- save current scan position
  *
  */
-void
-hashmarkpos(IndexScanDesc scan)
+Datum
+hashmarkpos(PG_FUNCTION_ARGS)
 {
+	IndexScanDesc	scan = (IndexScanDesc) PG_GETARG_POINTER(0);
 	ItemPointer iptr;
 	HashScanOpaque so;
-
-	/*
-	 * see if we ever call this code. if we do, then so_mrkbuf a useful
-	 * element in the scan->opaque structure. if this procedure is never
-	 * called, so_mrkbuf should be removed from the scan->opaque
-	 * structure.
-	 */
-	elog(NOTICE, "Hashmarkpos() called.");
 
 	so = (HashScanOpaque) scan->opaque;
 
@@ -449,24 +465,19 @@ hashmarkpos(IndexScanDesc scan)
 										 HASH_READ);
 		scan->currentMarkData = scan->currentItemData;
 	}
+
+	PG_RETURN_POINTER(NULL);	/* no real return value */
 }
 
 /*
  *	hashrestrpos() -- restore scan to last saved position
  */
-void
-hashrestrpos(IndexScanDesc scan)
+Datum
+hashrestrpos(PG_FUNCTION_ARGS)
 {
+	IndexScanDesc	scan = (IndexScanDesc) PG_GETARG_POINTER(0);
 	ItemPointer iptr;
 	HashScanOpaque so;
-
-	/*
-	 * see if we ever call this code. if we do, then so_mrkbuf a useful
-	 * element in the scan->opaque structure. if this procedure is never
-	 * called, so_mrkbuf should be removed from the scan->opaque
-	 * structure.
-	 */
-	elog(NOTICE, "Hashrestrpos() called.");
 
 	so = (HashScanOpaque) scan->opaque;
 
@@ -487,15 +498,22 @@ hashrestrpos(IndexScanDesc scan)
 
 		scan->currentItemData = scan->currentMarkData;
 	}
+
+	PG_RETURN_POINTER(NULL);	/* no real return value */
 }
 
 /* stubs */
-void
-hashdelete(Relation rel, ItemPointer tid)
+Datum
+hashdelete(PG_FUNCTION_ARGS)
 {
+	Relation		rel = (Relation) PG_GETARG_POINTER(0);
+	ItemPointer		tid = (ItemPointer) PG_GETARG_POINTER(1);
+
 	/* adjust any active scans that will be affected by this deletion */
 	_hash_adjscans(rel, tid);
 
 	/* delete the data from the page */
 	_hash_pagedel(rel, tid);
+
+	PG_RETURN_POINTER(NULL);	/* no real return value */
 }

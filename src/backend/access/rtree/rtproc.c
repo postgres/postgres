@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtproc.c,v 1.25 2000/01/26 05:56:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtproc.c,v 1.26 2000/06/13 07:34:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -102,13 +102,15 @@ rt_poly_union(POLYGON *a, POLYGON *b)
 	return p;
 }
 
-void
-rt_poly_size(POLYGON *a, float *size)
+Datum
+rt_poly_size(PG_FUNCTION_ARGS)
 {
+	POLYGON	   *a = PG_GETARG_POLYGON_P(0);
+	/* NB: size is an output argument */
+	float	   *size = (float *) PG_GETARG_POINTER(1);
 	double		xdim,
 				ydim;
 
-	size = (float *) palloc(sizeof(float));
 	if (a == (POLYGON *) NULL ||
 		a->boundbox.high.x <= a->boundbox.low.x ||
 		a->boundbox.high.y <= a->boundbox.low.y)
@@ -121,7 +123,7 @@ rt_poly_size(POLYGON *a, float *size)
 		*size = (float) (xdim * ydim);
 	}
 
-	return;
+	PG_RETURN_POINTER(NULL);	/* no real return value */
 }
 
 POLYGON    *

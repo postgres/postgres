@@ -5,7 +5,7 @@
  *
  *	1998 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/include/utils/numeric.h,v 1.9 2000/04/12 17:16:55 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/include/utils/numeric.h,v 1.10 2000/06/13 07:35:31 tgl Exp $
  *
  * ----------
  */
@@ -70,5 +70,14 @@ typedef NumericData *Numeric;
 
 #define NUMERIC_HDRSZ	(sizeof(int32) + sizeof(uint16) * 3)
 
+
+/*
+ * fmgr interface macros
+ */
+
+#define DatumGetNumeric(X)    ((Numeric) PG_DETOAST_DATUM(X))
+#define NumericGetDatum(X)    PointerGetDatum(X)
+#define PG_GETARG_NUMERIC(n)  DatumGetNumeric(PG_GETARG_DATUM(n))
+#define PG_RETURN_NUMERIC(x)  return NumericGetDatum(x)
 
 #endif	 /* _PG_NUMERIC_H_ */

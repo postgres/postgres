@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.55 2000/05/30 04:24:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.56 2000/06/13 07:34:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,6 @@ static BlockNumber gistChooseSubtree(Relation r, IndexTuple itup, int level,
 static OffsetNumber gistchoose(Relation r, Page p, IndexTuple it,
 		   GISTSTATE *giststate);
 static int	gistnospace(Page p, IndexTuple it);
-void		gistdelete(Relation r, ItemPointer tid);
 static IndexTuple gist_tuple_replacekey(Relation r, GISTENTRY entry, IndexTuple t);
 static void gistcentryinit(GISTSTATE *giststate, GISTENTRY *e, char *pr,
 			   Relation r, Page pg, OffsetNumber o, int b, bool l);
@@ -60,17 +59,20 @@ static char *int_range_out(INTRANGE *r);
 /*
 ** routine to build an index.  Basically calls insert over and over
 */
-void
-gistbuild(Relation heap,
-		  Relation index,
-		  int natts,
-		  AttrNumber *attnum,
-		  IndexStrategy istrat,
-		  uint16 pint,
-		  Datum *params,
-		  FuncIndexInfo *finfo,
-		  PredInfo *predInfo)
+Datum
+gistbuild(PG_FUNCTION_ARGS)
 {
+	Relation		heap = (Relation) PG_GETARG_POINTER(0);
+	Relation		index = (Relation) PG_GETARG_POINTER(1);
+	int32			natts = PG_GETARG_INT32(2);
+	AttrNumber	   *attnum = (AttrNumber *) PG_GETARG_POINTER(3);
+#ifdef NOT_USED
+	IndexStrategy	istrat = (IndexStrategy) PG_GETARG_POINTER(4);
+	uint16			pcount = PG_GETARG_UINT16(5);
+	Datum		   *params = (Datum *) PG_GETARG_POINTER(6);
+#endif
+	FuncIndexInfo  *finfo = (FuncIndexInfo *) PG_GETARG_POINTER(7);
+	PredInfo	   *predInfo = (PredInfo *) PG_GETARG_POINTER(8);
 	HeapScanDesc scan;
 	AttrNumber	i;
 	HeapTuple	htup;
@@ -83,12 +85,10 @@ gistbuild(Relation heap,
 	int			nb,
 				nh,
 				ni;
-
 #ifndef OMIT_PARTIAL_INDEX
 	ExprContext *econtext;
 	TupleTable	tupleTable;
 	TupleTableSlot *slot;
-
 #endif
 	Node	   *pred,
 			   *oldPred;
@@ -302,6 +302,8 @@ gistbuild(Relation heap,
 	/* be tidy */
 	pfree(nulls);
 	pfree(d);
+
+	PG_RETURN_POINTER(NULL);	/* no real return value */
 }
 
 /*
@@ -310,9 +312,16 @@ gistbuild(Relation heap,
  *	  This is the public interface routine for tuple insertion in GiSTs.
  *	  It doesn't do any work; just locks the relation and passes the buck.
  */
-InsertIndexResult
-gistinsert(Relation r, Datum *datum, char *nulls, ItemPointer ht_ctid, Relation heapRel)
+Datum
+gistinsert(PG_FUNCTION_ARGS)
 {
+	Relation		r = (Relation) PG_GETARG_POINTER(0);
+	Datum		   *datum = (Datum *) PG_GETARG_POINTER(1);
+	char		   *nulls = (char *) PG_GETARG_POINTER(2);
+	ItemPointer		ht_ctid = (ItemPointer) PG_GETARG_POINTER(3);
+#ifdef NOT_USED
+	Relation		heapRel = (Relation) PG_GETARG_POINTER(4);
+#endif
 	InsertIndexResult res;
 	IndexTuple	itup;
 	GISTSTATE	giststate;
@@ -351,7 +360,7 @@ gistinsert(Relation r, Datum *datum, char *nulls, ItemPointer ht_ctid, Relation 
 	pfree(itup);
 	pfree(compvec);
 
-	return res;
+	PG_RETURN_POINTER(res);
 }
 
 /*
@@ -596,7 +605,9 @@ gistAdjustKeys(Relation r,
 
 			/* delete old tuple */
 			ItemPointerSet(&oldtid, stk->gs_blk, stk->gs_child);
-			gistdelete(r, (ItemPointer) &oldtid);
+			DirectFunctionCall2(gistdelete,
+								PointerGetDatum(r),
+								PointerGetDatum(&oldtid));
 
 			/* generate and insert new tuple */
 			tupDesc = r->rd_att;
@@ -890,7 +901,9 @@ gistintinsert(Relation r,
 
 	/* remove old left pointer, insert the 2 new entries */
 	ItemPointerSet(&ltid, stk->gs_blk, stk->gs_child);
-	gistdelete(r, (ItemPointer) &ltid);
+	DirectFunctionCall2(gistdelete,
+						PointerGetDatum(r),
+						PointerGetDatum(&ltid));
 	gistentryinserttwo(r, stk, ltup, rtup, giststate);
 }
 
@@ -1105,9 +1118,11 @@ gistfreestack(GISTSTACK *s)
 /*
 ** remove an entry from a page
 */
-void
-gistdelete(Relation r, ItemPointer tid)
+Datum
+gistdelete(PG_FUNCTION_ARGS)
 {
+	Relation		r = (Relation) PG_GETARG_POINTER(0);
+	ItemPointer		tid = (ItemPointer) PG_GETARG_POINTER(1);
 	BlockNumber blkno;
 	OffsetNumber offnum;
 	Buffer		buf;
@@ -1134,6 +1149,7 @@ gistdelete(Relation r, ItemPointer tid)
 
 	WriteBuffer(buf);
 
+	PG_RETURN_POINTER(NULL);	/* no real return value */
 }
 
 void

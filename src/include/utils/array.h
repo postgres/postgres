@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: array.h,v 1.24 2000/05/29 21:02:32 tgl Exp $
+ * $Id: array.h,v 1.25 2000/06/13 07:35:30 tgl Exp $
  *
  * NOTES
  *	  XXX the data array should be MAXALIGN'd -- notice that the array
@@ -99,7 +99,8 @@ typedef struct
  *------------------------------------------------------------------------
  */
 
-#define RETURN_NULL do {*isNull = true; return(0); } while (0)
+#define RETURN_NULL(type)  do { *isNull = true; return (type) 0; } while (0)
+
 #define NAME_LEN	30
 #define MAX_BUFF_SIZE BLCKSZ
 
@@ -112,23 +113,29 @@ typedef struct
 /*
  * prototypes for functions defined in arrayfuncs.c
  */
-extern char *array_in(char *string, Oid element_type, int32 typmod);
-extern char *array_out(ArrayType *v, Oid element_type);
-extern char *array_dims(ArrayType *v, bool *isNull);
-extern Datum array_ref(ArrayType *array, int n, int *indx, int reftype,
-		  int elmlen, int arraylen, bool *isNull);
-extern Datum array_clip(ArrayType *array, int n, int *upperIndx,
-		   int *lowerIndx, int reftype, int len, bool *isNull);
-extern char *array_set(ArrayType *array, int n, int *indx, char *dataPtr,
-		  int reftype, int elmlen, int arraylen, bool *isNull);
-extern char *array_assgn(ArrayType *array, int n, int *upperIndx,
-			int *lowerIndx, ArrayType *newArr, int reftype,
-			int len, bool *isNull);
+extern Datum array_in(PG_FUNCTION_ARGS);
+extern Datum array_out(PG_FUNCTION_ARGS);
+extern Datum array_eq(PG_FUNCTION_ARGS);
+extern Datum array_dims(PG_FUNCTION_ARGS);
+
+extern Datum array_ref(ArrayType *array, int nSubscripts, int *indx,
+					   bool elmbyval, int elmlen,
+					   int arraylen, bool *isNull);
+extern ArrayType *array_set(ArrayType *array, int nSubscripts, int *indx,
+							Datum dataValue,
+							bool elmbyval, int elmlen,
+							int arraylen, bool *isNull);
+extern ArrayType *array_clip(ArrayType *array, int nSubscripts,
+							 int *upperIndx, int *lowerIndx,
+							 bool elmbyval, int elmlen, bool *isNull);
+extern ArrayType *array_assgn(ArrayType *array, int nSubscripts,
+							  int *upperIndx, int *lowerIndx,
+							  ArrayType *newArr,
+							  bool elmbyval, int elmlen, bool *isNull);
 extern Datum array_map(FunctionCallInfo fcinfo, Oid inpType, Oid retType);
-extern int	array_eq(ArrayType *array1, ArrayType *array2);
+
 extern int _LOtransfer(char **destfd, int size, int nitems, char **srcfd,
 			int isSrcLO, int isDestLO);
-
 extern char *_array_newLO(int *fd, int flag);
 
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.115 2000/06/09 01:11:14 tgl Exp $
+ * $Id: builtins.h,v 1.116 2000/06/13 07:35:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -190,7 +190,7 @@ extern BOX *rt_box_union(BOX *a, BOX *b);
 extern BOX *rt_box_inter(BOX *a, BOX *b);
 extern void rt_box_size(BOX *a, float *size);
 extern void rt_bigbox_size(BOX *a, float *size);
-extern void rt_poly_size(POLYGON *a, float *size);
+extern Datum rt_poly_size(PG_FUNCTION_ARGS);
 extern POLYGON *rt_poly_union(POLYGON *a, POLYGON *b);
 extern POLYGON *rt_poly_inter(POLYGON *a, POLYGON *b);
 
@@ -244,12 +244,12 @@ extern bool float8le(float64 arg1, float64 arg2);
 extern bool float8gt(float64 arg1, float64 arg2);
 extern bool float8ge(float64 arg1, float64 arg2);
 extern float64 ftod(float32 num);
-extern float64 i4tod(int32 num);
+extern Datum i4tod(PG_FUNCTION_ARGS);
 extern Datum i2tod(PG_FUNCTION_ARGS);
 extern float32 dtof(float64 num);
 extern int32 dtoi4(float64 num);
 extern Datum dtoi2(PG_FUNCTION_ARGS);
-extern float32 i4tof(int32 num);
+extern Datum i4tof(PG_FUNCTION_ARGS);
 extern Datum i2tof(PG_FUNCTION_ARGS);
 extern int32 ftoi4(float32 num);
 extern Datum ftoi2(PG_FUNCTION_ARGS);
@@ -354,7 +354,7 @@ extern Datum regproctooid(PG_FUNCTION_ARGS);
 extern text *pg_get_ruledef(NameData *rname);
 extern text *pg_get_viewdef(NameData *rname);
 extern Datum pg_get_indexdef(PG_FUNCTION_ARGS);
-extern NameData *pg_get_userbyid(int32 uid);
+extern Datum pg_get_userbyid(PG_FUNCTION_ARGS);
 extern char *deparse_expression(Node *expr, List *rangetables,
 				   bool forceprefix);
 
@@ -412,16 +412,10 @@ extern Datum currtid_byrelname(PG_FUNCTION_ARGS);
 
 /* varchar.c */
 
-/* bpchar and varchar are just a varlena header and some characters */
-#define PG_GETARG_BPCHAR_P(n)  ((struct varlena *) PG_GETARG_VARLENA_P(n))
-#define PG_RETURN_BPCHAR_P(x)  PG_RETURN_POINTER(x)
-#define PG_GETARG_VARCHAR_P(n)  ((struct varlena *) PG_GETARG_VARLENA_P(n))
-#define PG_RETURN_VARCHAR_P(x)  PG_RETURN_POINTER(x)
-
-extern char *bpcharin(char *s, int dummy, int32 atttypmod);
-extern char *bpcharout(char *s);
-extern char *bpchar(char *s, int32 slen);
-extern ArrayType *_bpchar(ArrayType *v, int32 slen);
+extern Datum bpcharin(PG_FUNCTION_ARGS);
+extern Datum bpcharout(PG_FUNCTION_ARGS);
+extern Datum bpchar(PG_FUNCTION_ARGS);
+extern Datum _bpchar(PG_FUNCTION_ARGS);
 extern Datum char_bpchar(PG_FUNCTION_ARGS);
 extern Datum bpchar_char(PG_FUNCTION_ARGS);
 extern char *name_bpchar(NameData *s);
@@ -437,10 +431,10 @@ extern int32 bpcharlen(char *arg);
 extern int32 bpcharoctetlen(char *arg);
 extern uint32 hashbpchar(struct varlena * key);
 
-extern char *varcharin(char *s, int dummy, int32 atttypmod);
-extern char *varcharout(char *s);
-extern char *varchar(char *s, int32 slen);
-extern ArrayType *_varchar(ArrayType *v, int32 slen);
+extern Datum varcharin(PG_FUNCTION_ARGS);
+extern Datum varcharout(PG_FUNCTION_ARGS);
+extern Datum varchar(PG_FUNCTION_ARGS);
+extern Datum _varchar(PG_FUNCTION_ARGS);
 extern bool varchareq(char *arg1, char *arg2);
 extern bool varcharne(char *arg1, char *arg2);
 extern bool varcharlt(char *arg1, char *arg2);
@@ -468,17 +462,17 @@ extern text *text_smaller(text *arg1, text *arg2);
 extern int32 textlen(text *arg);
 extern int32 textoctetlen(text *arg);
 extern int32 textpos(text *arg1, text *arg2);
-extern text *text_substr(text *string, int32 m, int32 n);
+extern Datum text_substr(PG_FUNCTION_ARGS);
 extern text *name_text(NameData *s);
 extern NameData *text_name(text *s);
 
 extern bytea *byteain(char *inputText);
 extern char *byteaout(bytea *vlena);
 extern int32 byteaoctetlen(bytea *v);
-extern int32 byteaGetByte(bytea *v, int32 n);
-extern int32 byteaGetBit(bytea *v, int32 n);
-extern bytea *byteaSetByte(bytea *v, int32 n, int32 newByte);
-extern bytea *byteaSetBit(bytea *v, int32 n, int32 newBit);
+extern Datum byteaGetByte(PG_FUNCTION_ARGS);
+extern Datum byteaGetBit(PG_FUNCTION_ARGS);
+extern Datum byteaSetByte(PG_FUNCTION_ARGS);
+extern Datum byteaSetBit(PG_FUNCTION_ARGS);
 
 /* like.c */
 extern bool namelike(NameData *n, struct varlena * p);
@@ -491,15 +485,14 @@ extern bool textnlike(struct varlena * s, struct varlena * p);
 extern text *lower(text *string);
 extern text *upper(text *string);
 extern text *initcap(text *string);
-extern text *lpad(text *string1, int4 len, text *string2);
-extern text *rpad(text *string1, int4 len, text *string2);
+extern Datum lpad(PG_FUNCTION_ARGS);
+extern Datum rpad(PG_FUNCTION_ARGS);
 extern text *btrim(text *string, text *set);
 extern text *ltrim(text *string, text *set);
 extern text *rtrim(text *string, text *set);
-extern text *substr(text *string, int4 m, int4 n);
 extern text *translate(text *string, text *from, text *to);
-extern text *ichar(int4 arg1);
-extern text *repeat(text *string, int4 count);
+extern Datum ichar(PG_FUNCTION_ARGS);
+extern Datum repeat(PG_FUNCTION_ARGS);
 extern int4 ascii(text *string);
 
 /* acl.c */
@@ -547,14 +540,14 @@ extern int4 macaddr_cmp(macaddr *a1, macaddr *a2);
 extern text *macaddr_manuf(macaddr *addr);
 
 /* numeric.c */
-extern Numeric numeric_in(char *str, int dummy, int32 typmod);
-extern char *numeric_out(Numeric num);
-extern Numeric numeric(Numeric num, int32 typmod);
+extern Datum numeric_in(PG_FUNCTION_ARGS);
+extern Datum numeric_out(PG_FUNCTION_ARGS);
+extern Datum numeric(PG_FUNCTION_ARGS);
 extern Numeric numeric_abs(Numeric num);
 extern Numeric numeric_uminus(Numeric num);
 extern Numeric numeric_sign(Numeric num);
-extern Numeric numeric_round(Numeric num, int32 scale);
-extern Numeric numeric_trunc(Numeric num, int32 scale);
+extern Datum numeric_round(PG_FUNCTION_ARGS);
+extern Datum numeric_trunc(PG_FUNCTION_ARGS);
 extern Numeric numeric_ceil(Numeric num);
 extern Numeric numeric_floor(Numeric num);
 extern int32 numeric_cmp(Numeric num1, Numeric num2);
@@ -578,7 +571,7 @@ extern Numeric numeric_exp(Numeric num);
 extern Numeric numeric_ln(Numeric num);
 extern Numeric numeric_log(Numeric num1, Numeric num2);
 extern Numeric numeric_power(Numeric num1, Numeric num2);
-extern Numeric int4_numeric(int32 val);
+extern Datum int4_numeric(PG_FUNCTION_ARGS);
 extern int32 numeric_int4(Numeric num);
 extern Numeric int8_numeric(int64 *val);
 extern int64 *numeric_int8(Numeric num);
@@ -617,5 +610,12 @@ extern Datum RI_FKey_setnull_del(PG_FUNCTION_ARGS);
 extern Datum RI_FKey_setnull_upd(PG_FUNCTION_ARGS);
 extern Datum RI_FKey_setdefault_del(PG_FUNCTION_ARGS);
 extern Datum RI_FKey_setdefault_upd(PG_FUNCTION_ARGS);
+
+/* even if MULTIBYTE is not enabled, these functions are necessary
+ * since pg_proc.h has references to them.
+ */
+extern Datum getdatabaseencoding(PG_FUNCTION_ARGS);
+extern Datum PG_encoding_to_char(PG_FUNCTION_ARGS);
+extern Datum PG_char_to_encoding(PG_FUNCTION_ARGS);
 
 #endif	 /* BUILTINS_H */

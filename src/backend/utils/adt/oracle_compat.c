@@ -1,7 +1,7 @@
 /*
  *	Edmund Mergl <E.Mergl@bawue.de>
  *
- *	$Id: oracle_compat.c,v 1.24 2000/04/12 17:15:51 momjian Exp $
+ *	$Id: oracle_compat.c,v 1.25 2000/06/13 07:35:07 tgl Exp $
  *
  */
 
@@ -150,9 +150,12 @@ initcap(text *string)
  *
  ********************************************************************/
 
-text *
-lpad(text *string1, int4 len, text *string2)
+Datum
+lpad(PG_FUNCTION_ARGS)
 {
+	text	   *string1 = PG_GETARG_TEXT_P(0);
+	int32		len = PG_GETARG_INT32(1);
+	text	   *string2 = PG_GETARG_TEXT_P(2);
 	text	   *ret;
 	char	   *ptr1,
 			   *ptr2,
@@ -160,12 +163,10 @@ lpad(text *string1, int4 len, text *string2)
 	int			m,
 				n;
 
-	if ((string1 == (text *) NULL) ||
-		(len <= (VARSIZE(string1) - VARHDRSZ)) ||
-		((m = len - VARSIZE(string1) + VARHDRSZ) <= 0) ||
-		(string2 == (text *) NULL) ||
+	if (((VARSIZE(string1) - VARHDRSZ) < 0) ||
+		((m = len - (VARSIZE(string1) - VARHDRSZ)) <= 0) ||
 		((VARSIZE(string2) - VARHDRSZ) <= 0))
-		return string1;
+		PG_RETURN_TEXT_P(string1);
 
 	ret = (text *) palloc(VARHDRSZ + len);
 	VARSIZE(ret) = VARHDRSZ + len;
@@ -176,7 +177,7 @@ lpad(text *string1, int4 len, text *string2)
 	while (m--)
 	{
 		*ptr_ret++ = *ptr2;
-		ptr2 = ptr2 == VARDATA(string2) + VARSIZE(string2) - VARHDRSZ - 1 ? VARDATA(string2) : ++ptr2;
+		ptr2 = (ptr2 == VARDATA(string2) + VARSIZE(string2) - VARHDRSZ - 1) ? VARDATA(string2) : ++ptr2;
 	}
 
 	n = VARSIZE(string1) - VARHDRSZ;
@@ -185,7 +186,7 @@ lpad(text *string1, int4 len, text *string2)
 	while (n--)
 		*ptr_ret++ = *ptr1++;
 
-	return ret;
+	PG_RETURN_TEXT_P(ret);
 }
 
 
@@ -204,9 +205,12 @@ lpad(text *string1, int4 len, text *string2)
  *
  ********************************************************************/
 
-text *
-rpad(text *string1, int4 len, text *string2)
+Datum
+rpad(PG_FUNCTION_ARGS)
 {
+	text	   *string1 = PG_GETARG_TEXT_P(0);
+	int32		len = PG_GETARG_INT32(1);
+	text	   *string2 = PG_GETARG_TEXT_P(2);
 	text	   *ret;
 	char	   *ptr1,
 			   *ptr2,
@@ -214,12 +218,10 @@ rpad(text *string1, int4 len, text *string2)
 	int			m,
 				n;
 
-	if ((string1 == (text *) NULL) ||
-		(len <= (VARSIZE(string1) - VARHDRSZ)) ||
-		((m = len - VARSIZE(string1) + VARHDRSZ) <= 0) ||
-		(string2 == (text *) NULL) ||
+	if (((VARSIZE(string1) - VARHDRSZ) < 0) ||
+		((m = len - (VARSIZE(string1) - VARHDRSZ)) <= 0) ||
 		((VARSIZE(string2) - VARHDRSZ) <= 0))
-		return string1;
+		PG_RETURN_TEXT_P(string1);
 
 	ret = (text *) palloc(VARHDRSZ + len);
 	VARSIZE(ret) = VARHDRSZ + len;
@@ -236,10 +238,10 @@ rpad(text *string1, int4 len, text *string2)
 	while (m--)
 	{
 		*ptr_ret++ = *ptr2;
-		ptr2 = ptr2 == VARDATA(string2) + VARSIZE(string2) - VARHDRSZ - 1 ? VARDATA(string2) : ++ptr2;
+		ptr2 = (ptr2 == VARDATA(string2) + VARSIZE(string2) - VARHDRSZ - 1) ? VARDATA(string2) : ++ptr2;
 	}
 
-	return ret;
+	PG_RETURN_TEXT_P(ret);
 }
 
 
@@ -551,22 +553,25 @@ ascii(text *string)
 }	/* ascii() */
 
 
-text *
-ichar(int4 cvalue)
+Datum
+ichar(PG_FUNCTION_ARGS)
 {
+	int32		cvalue = PG_GETARG_INT32(0);
 	text	   *result;
 
 	result = (text *) palloc(VARHDRSZ + 1);
 	VARSIZE(result) = VARHDRSZ + 1;
 	*VARDATA(result) = (char) cvalue;
 
-	return result;
-}	/* ichar() */
+	PG_RETURN_TEXT_P(result);
+}
 
 
-text *
-repeat(text *string, int4 count)
+Datum
+repeat(PG_FUNCTION_ARGS)
 {
+	text	   *string = PG_GETARG_TEXT_P(0);
+	int32		count = PG_GETARG_INT32(1);
 	text	   *result;
 	int			slen,
 				tlen;
@@ -589,5 +594,5 @@ repeat(text *string, int4 count)
 		cp += slen;
 	}
 
-	return result;
-}	/* repeat() */
+	PG_RETURN_TEXT_P(result);
+}

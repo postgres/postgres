@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.39 2000/06/11 20:07:44 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.40 2000/06/13 07:35:34 tgl Exp $
  */
 
 #include <float.h>				/* faked on sunos */
@@ -23,7 +23,7 @@ extern PATH *poly2path(POLYGON *poly);
 extern Point *interpt_pp(PATH *p1, PATH *p2);
 extern void regress_lseg_construct(LSEG *lseg, Point *pt1, Point *pt2);
 extern Datum overpaid(PG_FUNCTION_ARGS);
-extern int	boxarea(BOX *box);
+extern Datum boxarea(PG_FUNCTION_ARGS);
 extern char *reverse_name(char *string);
 
 /*
@@ -203,7 +203,7 @@ typedef struct
 
 WIDGET	   *widget_in(char *str);
 char	   *widget_out(WIDGET * widget);
-int			pt_in_widget(Point *point, WIDGET * widget);
+extern Datum pt_in_widget(PG_FUNCTION_ARGS);
 
 #define NARGS	3
 
@@ -249,30 +249,27 @@ WIDGET	   *widget;
 	return result;
 }
 
-int
-pt_in_widget(point, widget)
-Point	   *point;
-WIDGET	   *widget;
+Datum
+pt_in_widget(PG_FUNCTION_ARGS)
 {
-	extern double point_dt();
+	Point	   *point = PG_GETARG_POINT_P(0);
+	WIDGET	   *widget = (WIDGET *) PG_GETARG_POINTER(1);
 
-	return point_dt(point, &widget->center) < widget->radius;
+	PG_RETURN_BOOL(point_dt(point, &widget->center) < widget->radius);
 }
 
-#define ABS(X) ((X) > 0 ? (X) : -(X))
+#define ABS(X) ((X) >= 0 ? (X) : -(X))
 
-int
-boxarea(box)
-
-BOX		   *box;
-
+Datum
+boxarea(PG_FUNCTION_ARGS)
 {
-	int			width,
+	BOX		   *box = PG_GETARG_BOX_P(0);
+	double		width,
 				height;
 
 	width = ABS(box->high.x - box->low.x);
 	height = ABS(box->high.y - box->low.y);
-	return width * height;
+	PG_RETURN_FLOAT8(width * height);
 }
 
 char *
@@ -419,7 +416,7 @@ funny_dup17(PG_FUNCTION_ARGS)
 }
 
 extern Datum ttdummy(PG_FUNCTION_ARGS);
-int32		set_ttdummy(int32 on);
+extern Datum set_ttdummy(PG_FUNCTION_ARGS);
 
 #define TTDUMMY_INFINITY	999999
 
@@ -622,27 +619,27 @@ ttdummy(PG_FUNCTION_ARGS)
 	return PointerGetDatum(rettuple);
 }
 
-int32
-set_ttdummy(int32 on)
+Datum
+set_ttdummy(PG_FUNCTION_ARGS)
 {
+	int32		on = PG_GETARG_INT32(0);
 
 	if (ttoff)					/* OFF currently */
 	{
 		if (on == 0)
-			return 0;
+			PG_RETURN_INT32(0);
 
 		/* turn ON */
 		ttoff = false;
-		return 0;
+		PG_RETURN_INT32(0);
 	}
 
 	/* ON currently */
 	if (on != 0)
-		return 1;
+		PG_RETURN_INT32(1);
 
 	/* turn OFF */
 	ttoff = true;
 
-	return 1;
-
+	PG_RETURN_INT32(1);
 }

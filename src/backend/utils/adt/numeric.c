@@ -5,7 +5,7 @@
  *
  *	1998 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.28 2000/06/05 07:28:52 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.29 2000/06/13 07:35:07 tgl Exp $
  *
  * ----------
  */
@@ -33,9 +33,6 @@
  * Local definitions
  * ----------
  */
-#define PG_GETARG_NUMERIC(n)  ((Numeric) DatumGetPointer(fcinfo->arg[n]))
-#define PG_RETURN_NUMERIC(x)  return PointerGetDatum(x)
-
 #ifndef MIN
 #define MIN(a,b) (((a)<(b)) ? (a) : (b))
 #endif
@@ -189,28 +186,23 @@ static void sub_abs(NumericVar *var1, NumericVar *var2, NumericVar *result);
  *	Input function for numeric data type
  * ----------
  */
-Numeric
-numeric_in(char *str, int dummy, int32 typmod)
+Datum
+numeric_in(PG_FUNCTION_ARGS)
 {
+	char	   *str = PG_GETARG_CSTRING(0);
+#ifdef NOT_USED
+	Oid			typelem = PG_GETARG_OID(1);
+#endif
+	int32		typmod = PG_GETARG_INT32(2);
 	NumericVar	value;
 	Numeric		res;
-
-	/* ----------
-	 * Check for NULL
-	 * ----------
-	 */
-	if (str == NULL)
-		return NULL;
-
-	if (strcmp(str, "NULL") == 0)
-		return NULL;
 
 	/* ----------
 	 * Check for NaN
 	 * ----------
 	 */
 	if (strcmp(str, "NaN") == 0)
-		return make_result(&const_nan);
+		PG_RETURN_NUMERIC(make_result(&const_nan));
 
 	/* ----------
 	 * Use set_var_from_str() to parse the input string
@@ -225,7 +217,7 @@ numeric_in(char *str, int dummy, int32 typmod)
 	res = make_result(&value);
 	free_var(&value);
 
-	return res;
+	PG_RETURN_NUMERIC(res);
 }
 
 
@@ -235,25 +227,19 @@ numeric_in(char *str, int dummy, int32 typmod)
  *	Output function for numeric data type
  * ----------
  */
-char *
-numeric_out(Numeric num)
+Datum
+numeric_out(PG_FUNCTION_ARGS)
 {
+	Numeric		num = PG_GETARG_NUMERIC(0);
 	NumericVar	x;
 	char	   *str;
-
-	/* ----------
-	 * Handle NULL
-	 * ----------
-	 */
-	if (num == NULL)
-		return pstrdup("NULL");
 
 	/* ----------
 	 * Handle NaN
 	 * ----------
 	 */
 	if (NUMERIC_IS_NAN(num))
-		return pstrdup("NaN");
+		PG_RETURN_CSTRING(pstrdup("NaN"));
 
 	/* ----------
 	 * Get the number in the variable format.
@@ -271,7 +257,7 @@ numeric_out(Numeric num)
 
 	free_var(&x);
 
-	return str;
+	PG_RETURN_CSTRING(str);
 }
 
 
@@ -283,9 +269,11 @@ numeric_out(Numeric num)
  *	scale of the attribute have to be applied on the value.
  * ----------
  */
-Numeric
-numeric(Numeric num, int32 typmod)
+Datum
+numeric(PG_FUNCTION_ARGS)
 {
+	Numeric		num = PG_GETARG_NUMERIC(0);
+	int32		typmod = PG_GETARG_INT32(1);
 	Numeric		new;
 	int32		tmp_typmod;
 	int			precision;
@@ -294,18 +282,11 @@ numeric(Numeric num, int32 typmod)
 	NumericVar	var;
 
 	/* ----------
-	 * Handle NULL
-	 * ----------
-	 */
-	if (num == NULL)
-		return NULL;
-
-	/* ----------
 	 * Handle NaN
 	 * ----------
 	 */
 	if (NUMERIC_IS_NAN(num))
-		return make_result(&const_nan);
+		PG_RETURN_NUMERIC(make_result(&const_nan));
 
 	/* ----------
 	 * If the value isn't a valid type modifier, simply return a
@@ -316,7 +297,7 @@ numeric(Numeric num, int32 typmod)
 	{
 		new = (Numeric) palloc(num->varlen);
 		memcpy(new, num, num->varlen);
-		return new;
+		PG_RETURN_NUMERIC(new);
 	}
 
 	/* ----------
@@ -341,7 +322,7 @@ numeric(Numeric num, int32 typmod)
 		new->n_rscale = scale;
 		new->n_sign_dscale = NUMERIC_SIGN(new) |
 			((uint16) scale & NUMERIC_DSCALE_MASK);
-		return new;
+		PG_RETURN_NUMERIC(new);
 	}
 
 	/* ----------
@@ -357,7 +338,7 @@ numeric(Numeric num, int32 typmod)
 
 	free_var(&var);
 
-	return new;
+	PG_RETURN_NUMERIC(new);
 }
 
 
@@ -502,26 +483,21 @@ numeric_sign(Numeric num)
  *	point --- Oracle interprets rounding that way.
  * ----------
  */
-Numeric
-numeric_round(Numeric num, int32 scale)
+Datum
+numeric_round(PG_FUNCTION_ARGS)
 {
+	Numeric		num = PG_GETARG_NUMERIC(0);
+	int32		scale = PG_GETARG_INT32(1);
 	Numeric		res;
 	NumericVar	arg;
 	int			i;
-
-	/* ----------
-	 * Handle NULL
-	 * ----------
-	 */
-	if (num == NULL)
-		return NULL;
 
 	/* ----------
 	 * Handle NaN
 	 * ----------
 	 */
 	if (NUMERIC_IS_NAN(num))
-		return make_result(&const_nan);
+		PG_RETURN_NUMERIC(make_result(&const_nan));
 
 	/* ----------
 	 * Limit the scale value to avoid possible overflow in calculations below.
@@ -587,7 +563,7 @@ numeric_round(Numeric num, int32 scale)
 	res = make_result(&arg);
 
 	free_var(&arg);
-	return res;
+	PG_RETURN_NUMERIC(res);
 }
 
 
@@ -599,25 +575,20 @@ numeric_round(Numeric num, int32 scale)
  *	point --- Oracle interprets truncation that way.
  * ----------
  */
-Numeric
-numeric_trunc(Numeric num, int32 scale)
+Datum
+numeric_trunc(PG_FUNCTION_ARGS)
 {
+	Numeric		num = PG_GETARG_NUMERIC(0);
+	int32		scale = PG_GETARG_INT32(1);
 	Numeric		res;
 	NumericVar	arg;
-
-	/* ----------
-	 * Handle NULL
-	 * ----------
-	 */
-	if (num == NULL)
-		return NULL;
 
 	/* ----------
 	 * Handle NaN
 	 * ----------
 	 */
 	if (NUMERIC_IS_NAN(num))
-		return make_result(&const_nan);
+		PG_RETURN_NUMERIC(make_result(&const_nan));
 
 	/* ----------
 	 * Limit the scale value to avoid possible overflow in calculations below.
@@ -650,7 +621,7 @@ numeric_trunc(Numeric num, int32 scale)
 	res = make_result(&arg);
 
 	free_var(&arg);
-	return res;
+	PG_RETURN_NUMERIC(res);
 }
 
 
@@ -1708,9 +1679,10 @@ numeric_power(Numeric num1, Numeric num2)
  */
 
 
-Numeric
-int4_numeric(int32 val)
+Datum
+int4_numeric(PG_FUNCTION_ARGS)
 {
+	int32		val = PG_GETARG_INT32(0);
 	Numeric		res;
 	NumericVar	result;
 	char	   *tmp;
@@ -1725,7 +1697,7 @@ int4_numeric(int32 val)
 	free_var(&result);
 	pfree(tmp);
 
-	return res;
+	PG_RETURN_NUMERIC(res);
 }
 
 
@@ -1769,7 +1741,8 @@ int8_numeric(int64 *val)
 
 	init_var(&result);
 
-	tmp = int8out(val);
+	tmp = DatumGetCString(DirectFunctionCall1(int8out,
+											  PointerGetDatum(val)));
 	set_var_from_str(tmp, &result);
 	res = make_result(&result);
 
@@ -1785,7 +1758,7 @@ numeric_int8(Numeric num)
 {
 	NumericVar	x;
 	char	   *str;
-	int64	   *result;
+	Datum		result;
 
 	if (num == NULL)
 		return NULL;
@@ -1804,10 +1777,11 @@ numeric_int8(Numeric num)
 
 	free_var(&x);
 
-	result = int8in(str);
+	result = DirectFunctionCall1(int8in, CStringGetDatum(str));
+
 	pfree(str);
 
-	return result;
+	return (int64 *) (result);
 }
 
 
@@ -1904,7 +1878,8 @@ numeric_float8(Numeric num)
 		return result;
 	}
 
-	tmp = numeric_out(num);
+	tmp = DatumGetCString(DirectFunctionCall1(numeric_out,
+											  NumericGetDatum(num)));
 	result = float8in(tmp);
 	pfree(tmp);
 
@@ -1954,7 +1929,8 @@ numeric_float4(Numeric num)
 		return result;
 	}
 
-	tmp = numeric_out(num);
+	tmp = DatumGetCString(DirectFunctionCall1(numeric_out,
+											  NumericGetDatum(num)));
 	result = float4in(tmp);
 	pfree(tmp);
 

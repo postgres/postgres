@@ -9,7 +9,7 @@
  * workings can be found in the book "Software Solutions in C" by
  * Dale Schumacher, Academic Press, ISBN: 0-12-632360-7.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.37 2000/06/05 07:28:51 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.38 2000/06/13 07:35:03 tgl Exp $
  */
 
 #include <limits.h>
@@ -535,31 +535,31 @@ cash_div_flt4(Cash *c, float4 *f)
 /* cash_mul_int4()
  * Multiply cash by int4.
  */
-Cash *
-cash_mul_int4(Cash *c, int4 i)
+Datum
+cash_mul_int4(PG_FUNCTION_ARGS)
 {
-	Cash	   *result;
+	Cash		c = PG_GETARG_CASH(0);
+	int32		i = PG_GETARG_INT32(1);
+	Cash		result;
 
-	if (!PointerIsValid(c))
-		return NULL;
-
-	if (!PointerIsValid(result = palloc(sizeof(Cash))))
-		elog(ERROR, "Memory allocation failed, can't multiply cash");
-
-	*result = ((i) * (*c));
-
-	return result;
-}	/* cash_mul_int4() */
+	result = c * i;
+	PG_RETURN_CASH(result);
+}
 
 
 /* int4_mul_cash()
  * Multiply int4 by cash.
  */
-Cash *
-int4_mul_cash(int4 i, Cash *c)
+Datum
+int4_mul_cash(PG_FUNCTION_ARGS)
 {
-	return cash_mul_int4(c, i);
-}	/* int4_mul_cash() */
+	int32		i = PG_GETARG_INT32(0);
+	Cash		c = PG_GETARG_CASH(1);
+	Cash		result;
+
+	result = i * c;
+	PG_RETURN_CASH(result);
+}
 
 
 /* cash_div_int4()
@@ -568,24 +568,20 @@ int4_mul_cash(int4 i, Cash *c)
  * XXX Don't know if rounding or truncating is correct behavior.
  * Round for now. - tgl 97/04/15
  */
-Cash *
-cash_div_int4(Cash *c, int4 i)
+Datum
+cash_div_int4(PG_FUNCTION_ARGS)
 {
-	Cash	   *result;
-
-	if (!PointerIsValid(c))
-		return NULL;
-
-	if (!PointerIsValid(result = palloc(sizeof(Cash))))
-		elog(ERROR, "Memory allocation failed, can't divide cash");
+	Cash		c = PG_GETARG_CASH(0);
+	int32		i = PG_GETARG_INT32(1);
+	Cash		result;
 
 	if (i == 0)
-		elog(ERROR, "cash_idiv:  divide by 0 error");
+		elog(ERROR, "cash_div_int4: divide by 0 error");
 
-	*result = rint(*c / i);
+	result = rint(c / i);
 
-	return result;
-}	/* cash_div_int4() */
+	PG_RETURN_CASH(result);
+}
 
 
 /* cash_mul_int2()

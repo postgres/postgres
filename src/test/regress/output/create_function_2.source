@@ -21,17 +21,17 @@ CREATE FUNCTION user_relns()
              relkind <> ''i'' '
    LANGUAGE 'sql';
 CREATE FUNCTION pt_in_widget(point, widget)
-   RETURNS int4
+   RETURNS bool
    AS '_OBJWD_/regress_DLSUFFIX_'
-   LANGUAGE 'c';
+   LANGUAGE 'newC';
 CREATE FUNCTION overpaid(emp)
    RETURNS bool
    AS '_OBJWD_/regress_DLSUFFIX_'
    LANGUAGE 'newC';
 CREATE FUNCTION boxarea(box)
-   RETURNS int4
+   RETURNS float8
    AS '_OBJWD_/regress_DLSUFFIX_'
-   LANGUAGE 'c';
+   LANGUAGE 'newC';
 CREATE FUNCTION interpt_pp(path, path)
    RETURNS point
    AS '_OBJWD_/regress_DLSUFFIX_'

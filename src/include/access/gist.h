@@ -182,14 +182,9 @@ typedef struct intrange
 	int			flag;
 } INTRANGE;
 
-extern void gistbuild(Relation heap,
-		  Relation index, int natts,
-		  AttrNumber *attnum, IndexStrategy istrat,
-		  uint16 pint, Datum *params,
-		  FuncIndexInfo *finfo,
-		  PredInfo *predInfo);
-extern InsertIndexResult gistinsert(Relation r, Datum *datum,
-		   char *nulls, ItemPointer ht_ctid, Relation heapRel);
+extern Datum gistbuild(PG_FUNCTION_ARGS);
+extern Datum gistinsert(PG_FUNCTION_ARGS);
+extern Datum gistdelete(PG_FUNCTION_ARGS);
 extern void _gistdump(Relation r);
 extern void gistfreestack(GISTSTACK *s);
 extern void initGISTstate(GISTSTATE *giststate, Relation index);
@@ -198,6 +193,6 @@ extern void gistdentryinit(GISTSTATE *giststate, GISTENTRY *e, char *pr,
 extern StrategyNumber RelationGetGISTStrategy(Relation, AttrNumber, RegProcedure);
 
 /* gistget.c */
-extern RetrieveIndexResult gistgettuple(IndexScanDesc s, ScanDirection dir);
+extern Datum gistgettuple(PG_FUNCTION_ARGS);
 
 #endif	 /* GIST_H */

@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.55 2000/05/31 00:28:14 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.56 2000/06/13 07:34:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,17 +42,20 @@ static void _bt_restscan(IndexScanDesc scan);
  *		since the index won't be visible until this transaction commits
  *		and since building is guaranteed to be single-threaded.
  */
-void
-btbuild(Relation heap,
-		Relation index,
-		int natts,
-		AttrNumber *attnum,
-		IndexStrategy istrat,
-		uint16 pcount,
-		Datum *params,
-		FuncIndexInfo *finfo,
-		PredInfo *predInfo)
+Datum
+btbuild(PG_FUNCTION_ARGS)
 {
+	Relation		heap = (Relation) PG_GETARG_POINTER(0);
+	Relation		index = (Relation) PG_GETARG_POINTER(1);
+	int32			natts = PG_GETARG_INT32(2);
+	AttrNumber	   *attnum = (AttrNumber *) PG_GETARG_POINTER(3);
+#ifdef NOT_USED
+	IndexStrategy	istrat = (IndexStrategy) PG_GETARG_POINTER(4);
+	uint16			pcount = PG_GETARG_UINT16(5);
+	Datum		   *params = (Datum *) PG_GETARG_POINTER(6);
+#endif
+	FuncIndexInfo  *finfo = (FuncIndexInfo *) PG_GETARG_POINTER(7);
+	PredInfo	   *predInfo = (PredInfo *) PG_GETARG_POINTER(8);
 	HeapScanDesc hscan;
 	HeapTuple	htup;
 	IndexTuple	itup;
@@ -332,6 +335,8 @@ btbuild(Relation heap,
 
 	/* all done */
 	BuildingBtree = false;
+
+	PG_RETURN_POINTER(NULL);	/* no real return value */
 }
 
 /*
@@ -341,12 +346,17 @@ btbuild(Relation heap,
  *		new tuple, put it there, set its unique OID as appropriate, and
  *		return an InsertIndexResult to the caller.
  */
-InsertIndexResult
-btinsert(Relation rel, Datum *datum, char *nulls, ItemPointer ht_ctid, Relation heapRel)
+Datum
+btinsert(PG_FUNCTION_ARGS)
 {
+	Relation		rel = (Relation) PG_GETARG_POINTER(0);
+	Datum		   *datum = (Datum *) PG_GETARG_POINTER(1);
+	char		   *nulls = (char *) PG_GETARG_POINTER(2);
+	ItemPointer		ht_ctid = (ItemPointer) PG_GETARG_POINTER(3);
+	Relation		heapRel = (Relation) PG_GETARG_POINTER(4);
+	InsertIndexResult res;
 	BTItem		btitem;
 	IndexTuple	itup;
-	InsertIndexResult res;
 
 	/* generate an index tuple */
 	itup = index_formtuple(RelationGetDescr(rel), datum, nulls);
@@ -355,7 +365,8 @@ btinsert(Relation rel, Datum *datum, char *nulls, ItemPointer ht_ctid, Relation 
 	/*
 	 * See comments in btbuild.
 	 *
-	 * if (itup->t_info & INDEX_NULL_MASK) return (InsertIndexResult) NULL;
+	 * if (itup->t_info & INDEX_NULL_MASK)
+	 *		PG_RETURN_POINTER((InsertIndexResult) NULL);
 	 */
 
 	btitem = _bt_formitem(itup);
@@ -366,15 +377,17 @@ btinsert(Relation rel, Datum *datum, char *nulls, ItemPointer ht_ctid, Relation 
 	pfree(btitem);
 	pfree(itup);
 
-	return res;
+	PG_RETURN_POINTER(res);
 }
 
 /*
  *	btgettuple() -- Get the next tuple in the scan.
  */
-char *
-btgettuple(IndexScanDesc scan, ScanDirection dir)
+Datum
+btgettuple(PG_FUNCTION_ARGS)
 {
+	IndexScanDesc		scan = (IndexScanDesc) PG_GETARG_POINTER(0);
+	ScanDirection		dir = (ScanDirection) PG_GETARG_INT32(1);
 	RetrieveIndexResult res;
 
 	/*
@@ -403,18 +416,23 @@ btgettuple(IndexScanDesc scan, ScanDirection dir)
 	if (res)
 	{
 		((BTScanOpaque) scan->opaque)->curHeapIptr = res->heap_iptr;
-		LockBuffer(((BTScanOpaque) scan->opaque)->btso_curbuf, BUFFER_LOCK_UNLOCK);
+		LockBuffer(((BTScanOpaque) scan->opaque)->btso_curbuf,
+				   BUFFER_LOCK_UNLOCK);
 	}
 
-	return (char *) res;
+	PG_RETURN_POINTER(res);
 }
 
 /*
  *	btbeginscan() -- start a scan on a btree index
  */
-char *
-btbeginscan(Relation rel, bool fromEnd, uint16 keysz, ScanKey scankey)
+Datum
+btbeginscan(PG_FUNCTION_ARGS)
 {
+	Relation	rel = (Relation) PG_GETARG_POINTER(0);
+	bool		fromEnd = PG_GETARG_BOOL(1);
+	uint16		keysz = PG_GETARG_UINT16(2);
+	ScanKey		scankey = (ScanKey) PG_GETARG_POINTER(3);
 	IndexScanDesc scan;
 
 	/* get the scan */
@@ -423,15 +441,20 @@ btbeginscan(Relation rel, bool fromEnd, uint16 keysz, ScanKey scankey)
 	/* register scan in case we change pages it's using */
 	_bt_regscan(scan);
 
-	return (char *) scan;
+	PG_RETURN_POINTER(scan);
 }
 
 /*
  *	btrescan() -- rescan an index relation
  */
-void
-btrescan(IndexScanDesc scan, bool fromEnd, ScanKey scankey)
+Datum
+btrescan(PG_FUNCTION_ARGS)
 {
+	IndexScanDesc	scan = (IndexScanDesc) PG_GETARG_POINTER(0);
+#ifdef NOT_USED					/* XXX surely it's wrong to ignore this? */
+	bool			fromEnd = PG_GETARG_BOOL(1);
+#endif
+	ScanKey			scankey = (ScanKey) PG_GETARG_POINTER(2);
 	ItemPointer iptr;
 	BTScanOpaque so;
 
@@ -479,6 +502,7 @@ btrescan(IndexScanDesc scan, bool fromEnd, ScanKey scankey)
 				so->numberOfKeys * sizeof(ScanKeyData));
 	}
 
+	PG_RETURN_POINTER(NULL);	/* no real return value */
 }
 
 void
@@ -504,9 +528,10 @@ btmovescan(IndexScanDesc scan, Datum v)
 /*
  *	btendscan() -- close down a scan
  */
-void
-btendscan(IndexScanDesc scan)
+Datum
+btendscan(PG_FUNCTION_ARGS)
 {
+	IndexScanDesc	scan = (IndexScanDesc) PG_GETARG_POINTER(0);
 	ItemPointer iptr;
 	BTScanOpaque so;
 
@@ -534,14 +559,17 @@ btendscan(IndexScanDesc scan)
 	pfree(so);
 
 	_bt_dropscan(scan);
+
+	PG_RETURN_POINTER(NULL);	/* no real return value */
 }
 
 /*
  *	btmarkpos() -- save current scan position
  */
-void
-btmarkpos(IndexScanDesc scan)
+Datum
+btmarkpos(PG_FUNCTION_ARGS)
 {
+	IndexScanDesc	scan = (IndexScanDesc) PG_GETARG_POINTER(0);
 	ItemPointer iptr;
 	BTScanOpaque so;
 
@@ -563,14 +591,17 @@ btmarkpos(IndexScanDesc scan)
 		scan->currentMarkData = scan->currentItemData;
 		so->mrkHeapIptr = so->curHeapIptr;
 	}
+
+	PG_RETURN_POINTER(NULL);	/* no real return value */
 }
 
 /*
  *	btrestrpos() -- restore scan to last saved position
  */
-void
-btrestrpos(IndexScanDesc scan)
+Datum
+btrestrpos(PG_FUNCTION_ARGS)
 {
+	IndexScanDesc	scan = (IndexScanDesc) PG_GETARG_POINTER(0);
 	ItemPointer iptr;
 	BTScanOpaque so;
 
@@ -593,17 +624,24 @@ btrestrpos(IndexScanDesc scan)
 		scan->currentItemData = scan->currentMarkData;
 		so->curHeapIptr = so->mrkHeapIptr;
 	}
+
+	PG_RETURN_POINTER(NULL);	/* no real return value */
 }
 
 /* stubs */
-void
-btdelete(Relation rel, ItemPointer tid)
+Datum
+btdelete(PG_FUNCTION_ARGS)
 {
+	Relation		rel = (Relation) PG_GETARG_POINTER(0);
+	ItemPointer		tid = (ItemPointer) PG_GETARG_POINTER(1);
+
 	/* adjust any active scans that will be affected by this deletion */
 	_bt_adjscans(rel, tid);
 
 	/* delete the data from the page */
 	_bt_pagedel(rel, tid);
+
+	PG_RETURN_POINTER(NULL);	/* no real return value */
 }
 
 static void

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.59 2000/06/08 22:37:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.60 2000/06/13 07:35:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,12 +48,11 @@
  */
 #include <ctype.h>
 #include <errno.h>
-
 #include <float.h>				/* faked on sunos4 */
-
 #include <math.h>
 
 #include "postgres.h"
+
 #ifdef HAVE_LIMITS_H
 #include <limits.h>
 #ifndef MAXINT
@@ -64,6 +63,7 @@
 #include <values.h>
 #endif
 #endif
+
 #include "fmgr.h"
 #include "utils/builtins.h"
 
@@ -844,15 +844,14 @@ dtoi2(PG_FUNCTION_ARGS)
 /*
  *		i4tod			- converts an int4 number to a float8 number
  */
-float64
-i4tod(int32 num)
+Datum
+i4tod(PG_FUNCTION_ARGS)
 {
-	float64		result;
+	int32		num = PG_GETARG_INT32(0);
+	float8		result;
 
-	result = (float64) palloc(sizeof(float64data));
-
-	*result = num;
-	return result;
+	result = num;
+	PG_RETURN_FLOAT8(result);
 }
 
 
@@ -909,15 +908,14 @@ ftoi2(PG_FUNCTION_ARGS)
 /*
  *		i4tof			- converts an int4 number to a float8 number
  */
-float32
-i4tof(int32 num)
+Datum
+i4tof(PG_FUNCTION_ARGS)
 {
-	float32		result;
+	int32		num = PG_GETARG_INT32(0);
+	float4		result;
 
-	result = (float32) palloc(sizeof(float32data));
-
-	*result = num;
-	return result;
+	result = num;
+	PG_RETURN_FLOAT4(result);
 }
 
 

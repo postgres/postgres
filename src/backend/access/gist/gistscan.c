@@ -48,12 +48,13 @@ typedef GISTScanListData *GISTScanList;
 /* pointer to list of local scans on GiSTs */
 static GISTScanList GISTScans = (GISTScanList) NULL;
 
-IndexScanDesc
-gistbeginscan(Relation r,
-			  bool fromEnd,
-			  uint16 nkeys,
-			  ScanKey key)
+Datum
+gistbeginscan(PG_FUNCTION_ARGS)
 {
+	Relation	r = (Relation) PG_GETARG_POINTER(0);
+	bool		fromEnd = PG_GETARG_BOOL(1);
+	uint16		nkeys = PG_GETARG_UINT16(2);
+	ScanKey		key = (ScanKey) PG_GETARG_POINTER(3);
 	IndexScanDesc s;
 
 	/*
@@ -65,20 +66,17 @@ gistbeginscan(Relation r,
 	s = RelationGetIndexScan(r, fromEnd, nkeys, key);
 	gistregscan(s);
 
-	return s;
+	PG_RETURN_POINTER(s);
 }
 
-void
-gistrescan(IndexScanDesc s, bool fromEnd, ScanKey key)
+Datum
+gistrescan(PG_FUNCTION_ARGS)
 {
+	IndexScanDesc	s = (IndexScanDesc) PG_GETARG_POINTER(0);
+	bool			fromEnd = PG_GETARG_BOOL(1);
+	ScanKey			key = (ScanKey) PG_GETARG_POINTER(2);
 	GISTScanOpaque p;
 	int			i;
-
-	if (!IndexScanIsValid(s))
-	{
-		elog(ERROR, "gistrescan: invalid scan.");
-		return;
-	}
 
 	/*
 	 * Clear all the pointers.
@@ -155,11 +153,14 @@ gistrescan(IndexScanDesc s, bool fromEnd, ScanKey key)
 				s->keyData[i].sk_func = p->giststate->consistentFn;
 			}
 	}
+
+	PG_RETURN_POINTER(NULL);	/* no real return value */
 }
 
-void
-gistmarkpos(IndexScanDesc s)
+Datum
+gistmarkpos(PG_FUNCTION_ARGS)
 {
+	IndexScanDesc	s = (IndexScanDesc) PG_GETARG_POINTER(0);
 	GISTScanOpaque p;
 	GISTSTACK  *o,
 			   *n,
@@ -188,11 +189,14 @@ gistmarkpos(IndexScanDesc s)
 
 	gistfreestack(p->s_markstk);
 	p->s_markstk = o;
+
+	PG_RETURN_POINTER(NULL);	/* no real return value */
 }
 
-void
-gistrestrpos(IndexScanDesc s)
+Datum
+gistrestrpos(PG_FUNCTION_ARGS)
 {
+	IndexScanDesc	s = (IndexScanDesc) PG_GETARG_POINTER(0);
 	GISTScanOpaque p;
 	GISTSTACK  *o,
 			   *n,
@@ -221,12 +225,15 @@ gistrestrpos(IndexScanDesc s)
 
 	gistfreestack(p->s_stack);
 	p->s_stack = o;
+
+	PG_RETURN_POINTER(NULL);	/* no real return value */
 }
 
-void
-gistendscan(IndexScanDesc s)
+Datum
+gistendscan(PG_FUNCTION_ARGS)
 {
-	GISTScanOpaque p;
+	IndexScanDesc	s = (IndexScanDesc) PG_GETARG_POINTER(0);
+	GISTScanOpaque	p;
 
 	p = (GISTScanOpaque) s->opaque;
 
@@ -239,6 +246,8 @@ gistendscan(IndexScanDesc s)
 
 	gistdropscan(s);
 	/* XXX don't unset read lock -- two-phase locking */
+
+	PG_RETURN_POINTER(NULL);	/* no real return value */
 }
 
 static void

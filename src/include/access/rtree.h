@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rtree.h,v 1.17 2000/01/26 05:57:51 momjian Exp $
+ * $Id: rtree.h,v 1.18 2000/06/13 07:35:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,28 +104,21 @@ typedef RTreeScanOpaqueData *RTreeScanOpaque;
 /* defined in rtree.c */
 extern void freestack(RTSTACK *s);
 
-/* rget.c */
-extern RetrieveIndexResult rtgettuple(IndexScanDesc s, ScanDirection dir);
-
 /*
  *		RTree code.
  *		Defined in access/index-rtree/
  */
-extern InsertIndexResult rtinsert(Relation r, Datum *datum, char *nulls,
-		 ItemPointer ht_ctid, Relation heapRel);
-extern char *rtdelete(Relation r, ItemPointer tid);
+extern Datum rtinsert(PG_FUNCTION_ARGS);
+extern Datum rtdelete(PG_FUNCTION_ARGS);
 
-extern RetrieveIndexResult rtgettuple(IndexScanDesc s, ScanDirection dir);
-extern IndexScanDesc rtbeginscan(Relation r, bool fromEnd, uint16 nkeys,
-			ScanKey key);
+extern Datum rtgettuple(PG_FUNCTION_ARGS);
+extern Datum rtbeginscan(PG_FUNCTION_ARGS);
 
-extern void rtendscan(IndexScanDesc s);
-extern void rtmarkpos(IndexScanDesc s);
-extern void rtrestrpos(IndexScanDesc s);
-extern void rtrescan(IndexScanDesc s, bool fromEnd, ScanKey key);
-extern void rtbuild(Relation heap, Relation index, int natts,
-		AttrNumber *attnum, IndexStrategy istrat, uint16 pcount,
-		Datum *params, FuncIndexInfo *finfo, PredInfo *predInfo);
+extern Datum rtendscan(PG_FUNCTION_ARGS);
+extern Datum rtmarkpos(PG_FUNCTION_ARGS);
+extern Datum rtrestrpos(PG_FUNCTION_ARGS);
+extern Datum rtrescan(PG_FUNCTION_ARGS);
+extern Datum rtbuild(PG_FUNCTION_ARGS);
 extern void _rtdump(Relation r);
 
 /* rtscan.c */

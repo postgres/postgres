@@ -33,9 +33,9 @@ extern Cash *cash_mul_flt4(Cash *c, float4 *f);
 extern Cash *cash_div_flt4(Cash *c, float4 *f);
 extern Cash *flt4_mul_cash(float4 *f, Cash *c);
 
-extern Cash *cash_mul_int4(Cash *c, int4 i);
-extern Cash *cash_div_int4(Cash *c, int4 i);
-extern Cash *int4_mul_cash(int4 i, Cash *c);
+extern Datum cash_mul_int4(PG_FUNCTION_ARGS);
+extern Datum cash_div_int4(PG_FUNCTION_ARGS);
+extern Datum int4_mul_cash(PG_FUNCTION_ARGS);
 
 extern Datum cash_mul_int2(PG_FUNCTION_ARGS);
 extern Datum int2_mul_cash(PG_FUNCTION_ARGS);

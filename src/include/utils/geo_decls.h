@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geo_decls.h,v 1.28 2000/06/05 07:29:07 tgl Exp $
+ * $Id: geo_decls.h,v 1.29 2000/06/13 07:35:30 tgl Exp $
  *
  * NOTE
  *	  These routines do *not* use the float types from adt/.
@@ -134,6 +134,49 @@ typedef struct
 	Point		center;
 	double		radius;
 } CIRCLE;
+
+/*
+ * fmgr interface macros
+ *
+ * Path and Polygon are toastable varlena types, the others are just
+ * fixed-size pass-by-reference types.
+ */
+
+#define DatumGetPointP(X)    ((Point *) DatumGetPointer(X))
+#define PointPGetDatum(X)    PointerGetDatum(X)
+#define PG_GETARG_POINT_P(n) DatumGetPointP(PG_GETARG_DATUM(n))
+#define PG_RETURN_POINT_P(x) return PointPGetDatum(x)
+
+#define DatumGetLsegP(X)    ((LSEG *) DatumGetPointer(X))
+#define LsegPGetDatum(X)    PointerGetDatum(X)
+#define PG_GETARG_LSEG_P(n) DatumGetLsegP(PG_GETARG_DATUM(n))
+#define PG_RETURN_LSEG_P(x) return LsegPGetDatum(x)
+
+#define DatumGetPathP(X)    ((PATH *) PG_DETOAST_DATUM(X))
+#define PathPGetDatum(X)    PointerGetDatum(X)
+#define PG_GETARG_PATH_P(n) DatumGetPathP(PG_GETARG_DATUM(n))
+#define PG_RETURN_PATH_P(x) return PathPGetDatum(x)
+
+#define DatumGetLineP(X)    ((LINE *) DatumGetPointer(X))
+#define LinePGetDatum(X)    PointerGetDatum(X)
+#define PG_GETARG_LINE_P(n) DatumGetLineP(PG_GETARG_DATUM(n))
+#define PG_RETURN_LINE_P(x) return LinePGetDatum(x)
+
+#define DatumGetBoxP(X)    ((BOX *) DatumGetPointer(X))
+#define BoxPGetDatum(X)    PointerGetDatum(X)
+#define PG_GETARG_BOX_P(n) DatumGetBoxP(PG_GETARG_DATUM(n))
+#define PG_RETURN_BOX_P(x) return BoxPGetDatum(x)
+
+#define DatumGetPolygonP(X)    ((POLYGON *) PG_DETOAST_DATUM(X))
+#define PolygonPGetDatum(X)    PointerGetDatum(X)
+#define PG_GETARG_POLYGON_P(n) DatumGetPolygonP(PG_GETARG_DATUM(n))
+#define PG_RETURN_POLYGON_P(x) return PolygonPGetDatum(x)
+
+#define DatumGetCircleP(X)    ((CIRCLE *) DatumGetPointer(X))
+#define CirclePGetDatum(X)    PointerGetDatum(X)
+#define PG_GETARG_CIRCLE_P(n) DatumGetCircleP(PG_GETARG_DATUM(n))
+#define PG_RETURN_CIRCLE_P(x) return CirclePGetDatum(x)
+
 
 /*
  * in geo_ops.h
@@ -354,7 +397,7 @@ extern CIRCLE *circle(Point *center, float8 *radius);
 extern CIRCLE *box_circle(BOX *box);
 extern BOX *circle_box(CIRCLE *circle);
 extern CIRCLE *poly_circle(POLYGON *poly);
-extern POLYGON *circle_poly(int npts, CIRCLE *circle);
+extern Datum circle_poly(PG_FUNCTION_ARGS);
 
 /* private routines */
 extern double *circle_area(CIRCLE *circle);

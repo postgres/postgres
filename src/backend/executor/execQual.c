@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.70 2000/05/28 17:55:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.71 2000/06/13 07:34:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -105,6 +105,7 @@ ExecEvalArrayRef(ArrayRef *arrayRef,
 												   econtext,
 												   isNull,
 												   isDone);
+		/* If refexpr yields NULL, result is always NULL, for now anyway */
 		if (*isNull)
 			return (Datum) NULL;
 	}
@@ -132,6 +133,7 @@ ExecEvalArrayRef(ArrayRef *arrayRef,
 											   econtext,
 											   isNull,
 											   &dummy);
+		/* If any index expr yields NULL, result is NULL */
 		if (*isNull)
 			return (Datum) NULL;
 	}
@@ -148,6 +150,7 @@ ExecEvalArrayRef(ArrayRef *arrayRef,
 												   econtext,
 												   isNull,
 												   &dummy);
+			/* If any index expr yields NULL, result is NULL */
 			if (*isNull)
 				return (Datum) NULL;
 		}
@@ -165,7 +168,7 @@ ExecEvalArrayRef(ArrayRef *arrayRef,
 											  econtext,
 											  isNull,
 											  &dummy);
-
+		/* For now, can't cope with inserting NULL into an array */
 		if (*isNull)
 			return (Datum) NULL;
 
@@ -175,30 +178,43 @@ ExecEvalArrayRef(ArrayRef *arrayRef,
 		if (array_scanner == NULL)
 			return sourceData;	/* XXX do something else? */
 
+		/*
+		 * XXX shouldn't we copy the array value before modifying it??
+		 *
+		 * Or perhaps these array routines should deliver a modified copy
+		 * instead of changing the source in-place.
+		 */
 		if (lIndex == NULL)
-			return (Datum) array_set(array_scanner, i, upper.indx,
-									 (char *) sourceData,
-									 arrayRef->refelembyval,
-									 arrayRef->refelemlength,
-									 arrayRef->refattrlength, isNull);
-		return (Datum) array_assgn(array_scanner, i, upper.indx,
-								   lower.indx,
-								   (ArrayType *) sourceData,
-								   arrayRef->refelembyval,
-								   arrayRef->refelemlength, isNull);
+			return PointerGetDatum(array_set(array_scanner, i,
+											 upper.indx,
+											 sourceData,
+											 arrayRef->refelembyval,
+											 arrayRef->refelemlength,
+											 arrayRef->refattrlength,
+											 isNull));
+		return PointerGetDatum(array_assgn(array_scanner, i,
+										   upper.indx, lower.indx,
+										   (ArrayType *) DatumGetPointer(sourceData),
+										   arrayRef->refelembyval,
+										   arrayRef->refelemlength,
+										   isNull));
 	}
 
 	execConstByVal = arrayRef->refelembyval;
 	execConstLen = arrayRef->refelemlength;
 
 	if (lIndex == NULL)
-		return (Datum) array_ref(array_scanner, i, upper.indx,
-								 arrayRef->refelembyval,
-								 arrayRef->refelemlength,
-								 arrayRef->refattrlength, isNull);
-	return (Datum) array_clip(array_scanner, i, upper.indx, lower.indx,
-							  arrayRef->refelembyval,
-							  arrayRef->refelemlength, isNull);
+		return array_ref(array_scanner, i,
+						 upper.indx,
+						 arrayRef->refelembyval,
+						 arrayRef->refelemlength,
+						 arrayRef->refattrlength,
+						 isNull);
+	return PointerGetDatum(array_clip(array_scanner, i,
+									  upper.indx, lower.indx,
+									  arrayRef->refelembyval,
+									  arrayRef->refelemlength,
+									  isNull));
 }
 
 

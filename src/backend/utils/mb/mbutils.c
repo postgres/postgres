@@ -3,12 +3,14 @@
  * client encoding and server internal encoding.
  * (currently mule internal code (mic) is used)
  * Tatsuo Ishii
- * $Id: mbutils.c,v 1.9 1999/09/11 22:28:00 tgl Exp $ */
+ * $Id: mbutils.c,v 1.10 2000/06/13 07:35:12 tgl Exp $ */
 
 
 #include "postgres.h"
+
 #include "miscadmin.h"
 #include "mb/pg_wchar.h"
+#include "utils/builtins.h"
 
 static int	client_encoding = -1;
 static void (*client_to_mic) ();/* something to MIC */
@@ -266,10 +268,10 @@ GetDatabaseEncoding()
 }
 
 /* for builtin-function */
-const char *
-getdatabaseencoding()
+Datum
+getdatabaseencoding(PG_FUNCTION_ARGS)
 {
-	return (pg_encoding_to_char(DatabaseEncoding));
+	PG_RETURN_NAME(pg_encoding_to_char(DatabaseEncoding));
 }
 
 /* set and get template1 database encoding */

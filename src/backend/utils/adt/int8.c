@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int8.c,v 1.19 2000/05/28 17:56:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int8.c,v 1.20 2000/06/13 07:35:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,16 +57,14 @@
 
 /* int8in()
  */
-int64 *
-int8in(char *str)
+Datum
+int8in(PG_FUNCTION_ARGS)
 {
-	int64	   *result = palloc(sizeof(int64));
+	char	   *str = PG_GETARG_CSTRING(0);
+	int64		result;
 	char	   *ptr = str;
 	int64		tmp = 0;
 	int			sign = 1;
-
-	if (!PointerIsValid(str))
-		elog(ERROR, "Bad (null) int8 external representation");
 
 	/*
 	 * Do our own scan, rather than relying on sscanf which might be
@@ -91,34 +89,28 @@ int8in(char *str)
 	if (*ptr)					/* trailing junk? */
 		elog(ERROR, "Bad int8 external representation \"%s\"", str);
 
-	*result = (sign < 0) ? -tmp : tmp;
+	result = (sign < 0) ? -tmp : tmp;
 
-	return result;
-}	/* int8in() */
+	PG_RETURN_INT64(result);
+}
 
 
 /* int8out()
  */
-char *
-int8out(int64 *val)
+Datum
+int8out(PG_FUNCTION_ARGS)
 {
+	int64		val = PG_GETARG_INT64(0);
 	char	   *result;
-
 	int			len;
 	char		buf[MAXINT8LEN + 1];
 
-	if (!PointerIsValid(val))
-		return NULL;
-
-	if ((len = snprintf(buf, MAXINT8LEN, INT64_FORMAT, *val)) < 0)
+	if ((len = snprintf(buf, MAXINT8LEN, INT64_FORMAT, val)) < 0)
 		elog(ERROR, "Unable to format int8");
 
-	result = palloc(len + 1);
-
-	strcpy(result, buf);
-
-	return result;
-}	/* int8out() */
+	result = pstrdup(buf);
+	PG_RETURN_CSTRING(result);
+}
 
 
 /*----------------------------------------------------------
@@ -128,511 +120,403 @@ int8out(int64 *val)
 /* int8relop()
  * Is val1 relop val2?
  */
-bool
-int8eq(int64 *val1, int64 *val2)
+Datum
+int8eq(PG_FUNCTION_ARGS)
 {
-	if (!val1 || !val2)
-		return 0;
+	int64		val1 = PG_GETARG_INT64(0);
+	int64		val2 = PG_GETARG_INT64(1);
 
-	return *val1 == *val2;
-}	/* int8eq() */
+	PG_RETURN_BOOL(val1 == val2);
+}
 
-bool
-int8ne(int64 *val1, int64 *val2)
+Datum
+int8ne(PG_FUNCTION_ARGS)
 {
-	if (!val1 || !val2)
-		return 0;
+	int64		val1 = PG_GETARG_INT64(0);
+	int64		val2 = PG_GETARG_INT64(1);
 
-	return *val1 != *val2;
-}	/* int8ne() */
+	PG_RETURN_BOOL(val1 != val2);
+}
 
-bool
-int8lt(int64 *val1, int64 *val2)
+Datum
+int8lt(PG_FUNCTION_ARGS)
 {
-	if (!val1 || !val2)
-		return 0;
+	int64		val1 = PG_GETARG_INT64(0);
+	int64		val2 = PG_GETARG_INT64(1);
 
-	return *val1 < *val2;
-}	/* int8lt() */
+	PG_RETURN_BOOL(val1 < val2);
+}
 
-bool
-int8gt(int64 *val1, int64 *val2)
+Datum
+int8gt(PG_FUNCTION_ARGS)
 {
-	if (!val1 || !val2)
-		return 0;
+	int64		val1 = PG_GETARG_INT64(0);
+	int64		val2 = PG_GETARG_INT64(1);
 
-	return *val1 > *val2;
-}	/* int8gt() */
+	PG_RETURN_BOOL(val1 > val2);
+}
 
-bool
-int8le(int64 *val1, int64 *val2)
+Datum
+int8le(PG_FUNCTION_ARGS)
 {
-	if (!val1 || !val2)
-		return 0;
+	int64		val1 = PG_GETARG_INT64(0);
+	int64		val2 = PG_GETARG_INT64(1);
 
-	return *val1 <= *val2;
-}	/* int8le() */
+	PG_RETURN_BOOL(val1 <= val2);
+}
 
-bool
-int8ge(int64 *val1, int64 *val2)
+Datum
+int8ge(PG_FUNCTION_ARGS)
 {
-	if (!val1 || !val2)
-		return 0;
+	int64		val1 = PG_GETARG_INT64(0);
+	int64		val2 = PG_GETARG_INT64(1);
 
-	return *val1 >= *val2;
-}	/* int8ge() */
-
+	PG_RETURN_BOOL(val1 >= val2);
+}
 
 /* int84relop()
  * Is 64-bit val1 relop 32-bit val2?
  */
-bool
-int84eq(int64 *val1, int32 val2)
+Datum
+int84eq(PG_FUNCTION_ARGS)
 {
-	if (!val1)
-		return 0;
+	int64		val1 = PG_GETARG_INT64(0);
+	int32		val2 = PG_GETARG_INT32(1);
 
-	return *val1 == val2;
-}	/* int84eq() */
+	PG_RETURN_BOOL(val1 == val2);
+}
 
-bool
-int84ne(int64 *val1, int32 val2)
+Datum
+int84ne(PG_FUNCTION_ARGS)
 {
-	if (!val1)
-		return 0;
+	int64		val1 = PG_GETARG_INT64(0);
+	int32		val2 = PG_GETARG_INT32(1);
 
-	return *val1 != val2;
-}	/* int84ne() */
+	PG_RETURN_BOOL(val1 != val2);
+}
 
-bool
-int84lt(int64 *val1, int32 val2)
+Datum
+int84lt(PG_FUNCTION_ARGS)
 {
-	if (!val1)
-		return 0;
+	int64		val1 = PG_GETARG_INT64(0);
+	int32		val2 = PG_GETARG_INT32(1);
 
-	return *val1 < val2;
-}	/* int84lt() */
+	PG_RETURN_BOOL(val1 < val2);
+}
 
-bool
-int84gt(int64 *val1, int32 val2)
+Datum
+int84gt(PG_FUNCTION_ARGS)
 {
-	if (!val1)
-		return 0;
+	int64		val1 = PG_GETARG_INT64(0);
+	int32		val2 = PG_GETARG_INT32(1);
 
-	return *val1 > val2;
-}	/* int84gt() */
+	PG_RETURN_BOOL(val1 > val2);
+}
 
-bool
-int84le(int64 *val1, int32 val2)
+Datum
+int84le(PG_FUNCTION_ARGS)
 {
-	if (!val1)
-		return 0;
+	int64		val1 = PG_GETARG_INT64(0);
+	int32		val2 = PG_GETARG_INT32(1);
 
-	return *val1 <= val2;
-}	/* int84le() */
+	PG_RETURN_BOOL(val1 <= val2);
+}
 
-bool
-int84ge(int64 *val1, int32 val2)
+Datum
+int84ge(PG_FUNCTION_ARGS)
 {
-	if (!val1)
-		return 0;
+	int64		val1 = PG_GETARG_INT64(0);
+	int32		val2 = PG_GETARG_INT32(1);
 
-	return *val1 >= val2;
-}	/* int84ge() */
-
+	PG_RETURN_BOOL(val1 >= val2);
+}
 
 /* int48relop()
  * Is 32-bit val1 relop 64-bit val2?
  */
-bool
-int48eq(int32 val1, int64 *val2)
+Datum
+int48eq(PG_FUNCTION_ARGS)
 {
-	if (!val2)
-		return 0;
+	int32		val1 = PG_GETARG_INT32(0);
+	int64		val2 = PG_GETARG_INT64(1);
 
-	return val1 == *val2;
-}	/* int48eq() */
+	PG_RETURN_BOOL(val1 == val2);
+}
 
-bool
-int48ne(int32 val1, int64 *val2)
+Datum
+int48ne(PG_FUNCTION_ARGS)
 {
-	if (!val2)
-		return 0;
+	int32		val1 = PG_GETARG_INT32(0);
+	int64		val2 = PG_GETARG_INT64(1);
 
-	return val1 != *val2;
-}	/* int48ne() */
+	PG_RETURN_BOOL(val1 != val2);
+}
 
-bool
-int48lt(int32 val1, int64 *val2)
+Datum
+int48lt(PG_FUNCTION_ARGS)
 {
-	if (!val2)
-		return 0;
+	int32		val1 = PG_GETARG_INT32(0);
+	int64		val2 = PG_GETARG_INT64(1);
 
-	return val1 < *val2;
-}	/* int48lt() */
+	PG_RETURN_BOOL(val1 < val2);
+}
 
-bool
-int48gt(int32 val1, int64 *val2)
+Datum
+int48gt(PG_FUNCTION_ARGS)
 {
-	if (!val2)
-		return 0;
+	int32		val1 = PG_GETARG_INT32(0);
+	int64		val2 = PG_GETARG_INT64(1);
 
-	return val1 > *val2;
-}	/* int48gt() */
+	PG_RETURN_BOOL(val1 > val2);
+}
 
-bool
-int48le(int32 val1, int64 *val2)
+Datum
+int48le(PG_FUNCTION_ARGS)
 {
-	if (!val2)
-		return 0;
+	int32		val1 = PG_GETARG_INT32(0);
+	int64		val2 = PG_GETARG_INT64(1);
 
-	return val1 <= *val2;
-}	/* int48le() */
+	PG_RETURN_BOOL(val1 <= val2);
+}
 
-bool
-int48ge(int32 val1, int64 *val2)
+Datum
+int48ge(PG_FUNCTION_ARGS)
 {
-	if (!val2)
-		return 0;
+	int32		val1 = PG_GETARG_INT32(0);
+	int64		val2 = PG_GETARG_INT64(1);
 
-	return val1 >= *val2;
-}	/* int48ge() */
+	PG_RETURN_BOOL(val1 >= val2);
+}
 
 
 /*----------------------------------------------------------
  *	Arithmetic operators on 64-bit integers.
  *---------------------------------------------------------*/
 
-int64 *
-int8um(int64 *val)
+Datum
+int8um(PG_FUNCTION_ARGS)
 {
-	int64		temp = 0;
-	int64	   *result = palloc(sizeof(int64));
+	int64		val = PG_GETARG_INT64(0);
 
-	if (!PointerIsValid(val))
-		return NULL;
+	PG_RETURN_INT64(- val);
+}
 
-	result = int8mi(&temp, val);
-
-	return result;
-}	/* int8um() */
-
-
-int64 *
-int8pl(int64 *val1, int64 *val2)
+Datum
+int8pl(PG_FUNCTION_ARGS)
 {
-	int64	   *result = palloc(sizeof(int64));
+	int64		val1 = PG_GETARG_INT64(0);
+	int64		val2 = PG_GETARG_INT64(1);
 
-	if ((!PointerIsValid(val1)) || (!PointerIsValid(val2)))
-		return NULL;
+	PG_RETURN_INT64(val1 + val2);
+}
 
-	*result = *val1 + *val2;
-
-	return result;
-}	/* int8pl() */
-
-int64 *
-int8mi(int64 *val1, int64 *val2)
+Datum
+int8mi(PG_FUNCTION_ARGS)
 {
-	int64	   *result = palloc(sizeof(int64));
+	int64		val1 = PG_GETARG_INT64(0);
+	int64		val2 = PG_GETARG_INT64(1);
 
-	if ((!PointerIsValid(val1)) || (!PointerIsValid(val2)))
-		return NULL;
+	PG_RETURN_INT64(val1 - val2);
+}
 
-	*result = *val1 - *val2;
-
-	return result;
-}	/* int8mi() */
-
-int64 *
-int8mul(int64 *val1, int64 *val2)
+Datum
+int8mul(PG_FUNCTION_ARGS)
 {
-	int64	   *result = palloc(sizeof(int64));
+	int64		val1 = PG_GETARG_INT64(0);
+	int64		val2 = PG_GETARG_INT64(1);
 
-	if ((!PointerIsValid(val1)) || (!PointerIsValid(val2)))
-		return NULL;
+	PG_RETURN_INT64(val1 * val2);
+}
 
-	*result = *val1 * *val2;
-
-	return result;
-}	/* int8mul() */
-
-int64 *
-int8div(int64 *val1, int64 *val2)
+Datum
+int8div(PG_FUNCTION_ARGS)
 {
-	int64	   *result = palloc(sizeof(int64));
+	int64		val1 = PG_GETARG_INT64(0);
+	int64		val2 = PG_GETARG_INT64(1);
 
-	if ((!PointerIsValid(val1)) || (!PointerIsValid(val2)))
-		return NULL;
-
-	*result = *val1 / *val2;
-
-	return result;
-}	/* int8div() */
+	PG_RETURN_INT64(val1 / val2);
+}
 
 /* int8abs()
  * Absolute value
  */
-int64 *
-int8abs(int64 *arg1)
+Datum
+int8abs(PG_FUNCTION_ARGS)
 {
-	int64	   *result;
+	int64		arg1 = PG_GETARG_INT64(0);
 
-	if (!PointerIsValid(arg1))
-		return NULL;
-
-	result = palloc(sizeof(*result));
-
-	*result = ((*arg1 < 0) ? -*arg1 : *arg1);
-
-	return result;
+	PG_RETURN_INT64((arg1 < 0) ? -arg1 : arg1);
 }
 
 /* int8mod()
  * Modulo operation.
  */
-int64 *
-int8mod(int64 *val1, int64 *val2)
+Datum
+int8mod(PG_FUNCTION_ARGS)
 {
-	int64	   *result;
+	int64		val1 = PG_GETARG_INT64(0);
+	int64		val2 = PG_GETARG_INT64(1);
+	int64		result;
 
-	/* use the divide operation to check params and allocate storage */
-	result = int8div(val1, val2);
-	*result *= *val2;
-	*result = *val1 - *result;
+	result = val1 / val2;
+	result *= val2;
+	result = val1 - result;
 
-	return result;
-}	/* int8mod() */
+	PG_RETURN_INT64(result);
+}
 
 /* int8fac()
  * Factorial
  */
-int64 *
-int8fac(int64 *arg1)
+Datum
+int8fac(PG_FUNCTION_ARGS)
 {
-	int64	   *result;
+	int64		arg1 = PG_GETARG_INT64(0);
+	int64		result;
 	int64		i;
 
-	if (!PointerIsValid(arg1))
-		return NULL;
-
-	result = palloc(sizeof(*result));
-
-	if (*arg1 < 1)
-		*result = 0;
+	if (arg1 < 1)
+		result = 0;
 	else
-		for (i = *arg1, *result = 1; i > 0; --i)
-			*result *= i;
+		for (i = arg1, result = 1; i > 0; --i)
+			result *= i;
 
-	return result;
+	PG_RETURN_INT64(result);
 }
 
-int64 *
-int8larger(int64 *val1, int64 *val2)
+Datum
+int8larger(PG_FUNCTION_ARGS)
 {
-	int64	   *result = palloc(sizeof(int64));
+	int64		val1 = PG_GETARG_INT64(0);
+	int64		val2 = PG_GETARG_INT64(1);
+	int64		result;
 
-	if ((!PointerIsValid(val1)) || (!PointerIsValid(val2)))
-		return NULL;
+	result = ((val1 > val2) ? val1 : val2);
 
-	*result = ((*val1 > *val2) ? *val1 : *val2);
+	PG_RETURN_INT64(result);
+}
 
-	return result;
-}	/* int8larger() */
-
-int64 *
-int8smaller(int64 *val1, int64 *val2)
+Datum
+int8smaller(PG_FUNCTION_ARGS)
 {
-	int64	   *result = palloc(sizeof(int64));
+	int64		val1 = PG_GETARG_INT64(0);
+	int64		val2 = PG_GETARG_INT64(1);
+	int64		result;
 
-	if ((!PointerIsValid(val1)) || (!PointerIsValid(val2)))
-		return NULL;
+	result = ((val1 < val2) ? val1 : val2);
 
-	*result = ((*val1 < *val2) ? *val1 : *val2);
+	PG_RETURN_INT64(result);
+}
 
-	return result;
-}	/* int8smaller() */
-
-
-int64 *
-int84pl(int64 *val1, int32 val2)
+Datum
+int84pl(PG_FUNCTION_ARGS)
 {
-	int64	   *result = palloc(sizeof(int64));
+	int64		val1 = PG_GETARG_INT64(0);
+	int32		val2 = PG_GETARG_INT32(1);
 
-	if (!PointerIsValid(val1))
-		return NULL;
+	PG_RETURN_INT64(val1 + val2);
+}
 
-	*result = *val1 + (int64) val2;
-
-	return result;
-}	/* int84pl() */
-
-int64 *
-int84mi(int64 *val1, int32 val2)
+Datum
+int84mi(PG_FUNCTION_ARGS)
 {
-	int64	   *result = palloc(sizeof(int64));
+	int64		val1 = PG_GETARG_INT64(0);
+	int32		val2 = PG_GETARG_INT32(1);
 
-	if (!PointerIsValid(val1))
-		return NULL;
+	PG_RETURN_INT64(val1 - val2);
+}
 
-	*result = *val1 - (int64) val2;
-
-	return result;
-}	/* int84mi() */
-
-int64 *
-int84mul(int64 *val1, int32 val2)
+Datum
+int84mul(PG_FUNCTION_ARGS)
 {
-	int64	   *result = palloc(sizeof(int64));
+	int64		val1 = PG_GETARG_INT64(0);
+	int32		val2 = PG_GETARG_INT32(1);
 
-	if (!PointerIsValid(val1))
-		return NULL;
+	PG_RETURN_INT64(val1 * val2);
+}
 
-	*result = *val1 * (int64) val2;
-
-	return result;
-}	/* int84mul() */
-
-int64 *
-int84div(int64 *val1, int32 val2)
+Datum
+int84div(PG_FUNCTION_ARGS)
 {
-	int64	   *result = palloc(sizeof(int64));
+	int64		val1 = PG_GETARG_INT64(0);
+	int32		val2 = PG_GETARG_INT32(1);
 
-	if (!PointerIsValid(val1))
-		return NULL;
+	PG_RETURN_INT64(val1 / val2);
+}
 
-	*result = *val1 / (int64) val2;
-
-	return result;
-}	/* int84div() */
-
-
-int64 *
-int48pl(int32 val1, int64 *val2)
+Datum
+int48pl(PG_FUNCTION_ARGS)
 {
-	int64	   *result = palloc(sizeof(int64));
+	int32		val1 = PG_GETARG_INT32(0);
+	int64		val2 = PG_GETARG_INT64(1);
 
-	if (!PointerIsValid(val2))
-		return NULL;
+	PG_RETURN_INT64(val1 + val2);
+}
 
-	*result = (int64) val1 + *val2;
-
-	return result;
-}	/* int48pl() */
-
-int64 *
-int48mi(int32 val1, int64 *val2)
+Datum
+int48mi(PG_FUNCTION_ARGS)
 {
-	int64	   *result = palloc(sizeof(int64));
+	int32		val1 = PG_GETARG_INT32(0);
+	int64		val2 = PG_GETARG_INT64(1);
 
-	if (!PointerIsValid(val2))
-		return NULL;
+	PG_RETURN_INT64(val1 - val2);
+}
 
-	*result = (int64) val1 - *val2;
-
-	return result;
-}	/* int48mi() */
-
-int64 *
-int48mul(int32 val1, int64 *val2)
+Datum
+int48mul(PG_FUNCTION_ARGS)
 {
-	int64	   *result = palloc(sizeof(int64));
+	int32		val1 = PG_GETARG_INT32(0);
+	int64		val2 = PG_GETARG_INT64(1);
 
-	if (!PointerIsValid(val2))
-		return NULL;
+	PG_RETURN_INT64(val1 * val2);
+}
 
-	*result = (int64) val1 **val2;
-
-	return result;
-}	/* int48mul() */
-
-int64 *
-int48div(int32 val1, int64 *val2)
+Datum
+int48div(PG_FUNCTION_ARGS)
 {
-	int64	   *result = palloc(sizeof(int64));
+	int32		val1 = PG_GETARG_INT32(0);
+	int64		val2 = PG_GETARG_INT64(1);
 
-	if (!PointerIsValid(val2))
-		return NULL;
-
-	*result = (int64) val1 / *val2;
-
-	return result;
-}	/* int48div() */
+	PG_RETURN_INT64(val1 / val2);
+}
 
 
 /*----------------------------------------------------------
  *	Conversion operators.
  *---------------------------------------------------------*/
 
-int64 *
-int48(int32 val)
+Datum
+int48(PG_FUNCTION_ARGS)
 {
-	int64	   *result = palloc(sizeof(int64));
+	int32		val = PG_GETARG_INT32(0);
 
-	*result = val;
+	PG_RETURN_INT64((int64) val);
+}
 
-	return result;
-}	/* int48() */
-
-int32
-int84(int64 *val)
+Datum
+int84(PG_FUNCTION_ARGS)
 {
+	int64		val = PG_GETARG_INT64(0);
 	int32		result;
 
-	if (!PointerIsValid(val))
-		elog(ERROR, "Invalid (null) int64, can't convert int8 to int4");
-
-	if ((*val < INT_MIN) || (*val > INT_MAX))
+	if ((val < INT_MIN) || (val > INT_MAX))
 		elog(ERROR, "int8 conversion to int4 is out of range");
 
-	result = *val;
+	result = (int32) val;
 
-	return result;
-}	/* int84() */
+	PG_RETURN_INT32(result);
+}
 
-#if NOT_USED
-int64 *
-int2vector	(int16 val)
+Datum
+i8tod(PG_FUNCTION_ARGS)
 {
-	int64	   *result;
+	int64		val = PG_GETARG_INT64(0);
+	float8		result;
 
-	result = palloc(sizeof(int64));
+	result = val;
 
-	*result = val;
-
-	return result;
-}	/* int2vector() */
-
-int16
-int82(int64 *val)
-{
-	int16		result;
-
-	if (!PointerIsValid(val))
-		elog(ERROR, "Invalid (null) int8, can't convert to int2");
-
-	if ((*val < SHRT_MIN) || (*val > SHRT_MAX))
-		elog(ERROR, "int8 conversion to int2 is out of range");
-
-	result = *val;
-
-	return result;
-}	/* int82() */
-
-#endif
-
-float64
-i8tod(int64 *val)
-{
-	float64		result = palloc(sizeof(float64data));
-
-	if (!PointerIsValid(val))
-		elog(ERROR, "Invalid (null) int8, can't convert to float8");
-
-	*result = *val;
-
-	return result;
-}	/* i8tod() */
+	PG_RETURN_FLOAT8(result);
+}
 
 /* dtoi8()
  * Convert double float to 8-byte integer.
@@ -644,62 +528,63 @@ i8tod(int64 *val)
  *	does the right thing on my i686/linux-rh4.2 box.
  * - thomas 1998-06-16
  */
-int64 *
-dtoi8(float64 val)
+Datum
+dtoi8(PG_FUNCTION_ARGS)
 {
-	int64	   *result = palloc(sizeof(int64));
+	float8		val = PG_GETARG_FLOAT8(0);
+	int64		result;
 
-	if (!PointerIsValid(val))
-		elog(ERROR, "Invalid (null) float8, can't convert to int8");
-
-	if ((*val < (-pow(2, 63) + 1)) || (*val > (pow(2, 63) - 1)))
+	if ((val < (-pow(2.0, 63.0) + 1)) || (val > (pow(2.0, 63.0) - 1)))
 		elog(ERROR, "Floating point conversion to int64 is out of range");
 
-	*result = *val;
+	result = (int64) val;
 
-	return result;
-}	/* dtoi8() */
+	PG_RETURN_INT64(result);
+}
 
 /* text_int8()
  */
-int64 *
-text_int8(text *str)
+Datum
+text_int8(PG_FUNCTION_ARGS)
 {
+	text	   *str = PG_GETARG_TEXT_P(0);
 	int			len;
 	char	   *s;
-
-	if (!PointerIsValid(str))
-		elog(ERROR, "Bad (null) int8 external representation");
+	Datum		result;
 
 	len = (VARSIZE(str) - VARHDRSZ);
 	s = palloc(len + 1);
-	memmove(s, VARDATA(str), len);
+	memcpy(s, VARDATA(str), len);
 	*(s + len) = '\0';
 
-	return int8in(s);
-}	/* text_int8() */
+	result = DirectFunctionCall1(int8in, CStringGetDatum(s));
+
+	pfree(s);
+
+	return result;
+}
 
 
 /* int8_text()
  */
-text *
-int8_text(int64 *val)
+Datum
+int8_text(PG_FUNCTION_ARGS)
 {
+	/* val is int64, but easier to leave it as Datum */
+	Datum		val = PG_GETARG_DATUM(0);
+	char	   *s;
+	int			len;
 	text	   *result;
 
-	int			len;
-	char	   *s;
-
-	if (!PointerIsValid(val))
-		return NULL;
-
-	s = int8out(val);
+	s = DatumGetCString(DirectFunctionCall1(int8out, val));
 	len = strlen(s);
 
-	result = palloc(VARHDRSZ + len);
+	result = (text *) palloc(VARHDRSZ + len);
 
 	VARSIZE(result) = len + VARHDRSZ;
-	memmove(VARDATA(result), s, len);
+	memcpy(VARDATA(result), s, len);
 
-	return result;
-}	/* int8_text() */
+	pfree(s);
+
+	PG_RETURN_TEXT_P(result);
+}
