@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Oct  1 11:45:36 EDT 1999
+Last updated:		Sun Oct  3 13:21:20 EDT 1999
 
 Current maintainer:	Bruce Momjian (maillist@candle.pha.pa.us)
 
@@ -276,7 +276,7 @@ SOURCE CODE
 * Make configure --enable-debug add -g on compile line
 * Does Mariposa source contain any other bug fixes?
 * Remove SET KSQO option if OR processing is improved(Tom)
-
+* Make configure --enable-debug add -g on compile line
 ---------------------------------------------------------------------------
 
 
