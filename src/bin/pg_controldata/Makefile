@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1998-2002, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/bin/pg_controldata/Makefile,v 1.9 2004/05/26 17:24:01 tgl Exp $
+# $PostgreSQL: pgsql/src/bin/pg_controldata/Makefile,v 1.10 2004/10/04 13:43:55 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -14,7 +14,7 @@ include $(top_builddir)/src/Makefile.global
 
 override CPPFLAGS += -DFRONTEND
 
-OBJS= pg_controldata.o pg_crc.o exec.o
+OBJS= pg_controldata.o pg_crc.o
 
 all: submake-libpgport pg_controldata
 
@@ -22,9 +22,6 @@ pg_controldata: $(OBJS)
 	$(CC) $(CFLAGS) $^ $(LDFLAGS) $(LIBS) -o $@$(X)
 
 pg_crc.c: $(top_srcdir)/src/backend/utils/hash/pg_crc.c
-	rm -f $@ && $(LN_S) $< .
-
-exec.c: % : $(top_srcdir)/src/port/%
 	rm -f $@ && $(LN_S) $< .
 
 install: all installdirs
@@ -37,4 +34,4 @@ uninstall:
 	rm -f $(DESTDIR)$(bindir)/pg_controldata$(X)
 
 clean distclean maintainer-clean:
-	rm -f pg_controldata$(X) $(OBJS) pg_crc.c exec.c
+	rm -f pg_controldata$(X) $(OBJS) pg_crc.c

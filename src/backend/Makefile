@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/backend/Makefile,v 1.104 2004/08/01 18:07:42 tgl Exp $
+# $PostgreSQL: pgsql/src/backend/Makefile,v 1.105 2004/10/04 13:43:54 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -26,6 +26,8 @@ ifeq ($(PORTNAME), qnx4)
 OBJS+= bootstrap/bootstrap.o
 endif
 
+# Use server version of port library
+LIBS := $(patsubst -lpgport,-lpgport_srv, $(LIBS))
 
 ##########################################################################
 
