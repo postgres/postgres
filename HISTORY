@@ -35,7 +35,7 @@ aggregates, UNION, LIMIT, cursors, subqueries, and inherited tables
 now work properly. Inherited tables are now accessed by default. 
 Subqueries in FROM are now supported.
 
-Migration to v7.0
+Migration to v7.1
 
    A dump/restore using pg_dump is required for those wishing to migrate
    data from any previous release.
