@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.87 2003/05/09 21:19:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.88 2003/05/25 05:30:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,24 +70,9 @@
 #include "utils/builtins.h"
 
 
-#if !(NeXT && NX_CURRENT_COMPILER_RELEASE > NX_COMPILER_RELEASE_3_2)
- /* NS3.3 has conflicting declarations of these in <math.h> */
-
-#ifndef atof
-extern double atof(const char *p);
-#endif
-
 #ifndef HAVE_CBRT
-#define cbrt my_cbrt
 static double cbrt(double x);
-
-#else
-#if !defined(nextstep)
-extern double cbrt(double x);
-#endif
 #endif   /* HAVE_CBRT */
-#endif   /* NeXT check */
-
 
 #ifndef M_PI
 /* from my RH5.2 gcc math.h file - thomas 2000-04-03 */
@@ -1983,7 +1968,7 @@ float84ge(PG_FUNCTION_ARGS)
 /* ========== PRIVATE ROUTINES ========== */
 
 #ifndef HAVE_CBRT
-
+/* I doubt this is still needed by any platform.  2003-05-25 */
 static double
 cbrt(double x)
 {
