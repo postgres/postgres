@@ -25,7 +25,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.73 2002/06/14 04:23:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.74 2002/06/15 20:01:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -351,6 +351,7 @@ pqPutInt(int value, size_t bytes, PGconn *conn)
 
 /*
  * pqReadReady: is select() saying the file is ready to read?
+ * JAB: -or- if SSL is enabled and used, is it buffering bytes?
  * Returns -1 on failure, 0 if not ready, 1 if ready.
  */
 int
@@ -361,6 +362,15 @@ pqReadReady(PGconn *conn)
 
 	if (!conn || conn->sock < 0)
 		return -1;
+
+/* JAB: Check for SSL library buffering read bytes */
+#ifdef USE_SSL
+	if (conn->ssl && SSL_pending(conn->ssl) > 0)
+	{
+		/* short-circuit the select */
+		return 1;
+	}
+#endif
 
 retry1:
 	FD_ZERO(&input_mask);
@@ -760,6 +770,9 @@ pqFlush(PGconn *conn)
 /*
  * pqWait: wait until we can read or write the connection socket
  *
+ * JAB: If SSL enabled and used and forRead, buffered bytes short-circuit the
+ * call to select().
+ *
  * We also stop waiting and return if the kernel flags an exception condition
  * on the socket.  The actual error condition will be detected and reported
  * when the caller tries to read or write the socket.
@@ -777,6 +790,15 @@ pqWait(int forRead, int forWrite, PGconn *conn)
 						  libpq_gettext("connection not open\n"));
 		return EOF;
 	}
+
+/* JAB: Check for SSL library buffering read bytes */
+#ifdef USE_SSL
+	if (forRead && conn->ssl && SSL_pending(conn->ssl) > 0)
+	{
+		/* short-circuit the select */
+		return 0;
+	}
+#endif
 
 	if (forRead || forWrite)
 	{
