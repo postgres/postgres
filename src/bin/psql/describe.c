@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.32 2001/05/27 21:50:50 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.33 2001/05/28 02:01:22 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -735,14 +735,18 @@ describeTableDetails(const char *name, bool desc)
 	/* Information about the table */
 	else if (tableinfo.relkind == 'r')
 	{
-		PGresult   *result1 = NULL,
-				   *result2 = NULL,
-				   *result3 = NULL,
-				   *result4 = NULL;
+		PGresult		*result1 = NULL,
+						*result2 = NULL,
+						*result3 = NULL,
+						*result4 = NULL,
+						*result5 = NULL,
+						*result6 = NULL;
 		int			index_count = 0,
-					constr_count = 0,
-					rule_count = 0,
-					trigger_count = 0;
+						primary_count = 0,
+						unique_count = 0,
+						constr_count = 0,
+						rule_count = 0,
+						trigger_count = 0;
 		int			count_footers = 0;
 
 		/* count indices */
@@ -751,7 +755,7 @@ describeTableDetails(const char *name, bool desc)
 			sprintf(buf, "SELECT c2.relname\n"
 					"FROM pg_class c, pg_class c2, pg_index i\n"
 					"WHERE c.relname = '%s' AND c.oid = i.indrelid AND i.indexrelid = c2.oid\n"
-					"ORDER BY c2.relname",
+               "AND NOT i.indisunique ORDER BY c2.relname",
 					name);
 			result1 = PSQLexec(buf);
 			if (!result1)
@@ -760,10 +764,40 @@ describeTableDetails(const char *name, bool desc)
 				index_count = PQntuples(result1);
 		}
 
+		/* count primary keys */
+		if (!error && tableinfo.hasindex)
+		{
+			sprintf(buf, "SELECT c2.relname\n"
+					"FROM pg_class c, pg_class c2, pg_index i\n"
+					"WHERE c.relname = '%s' AND c.oid = i.indrelid AND i.indexrelid = c2.oid\n"
+               "AND i.indisprimary AND i.indisunique ORDER BY c2.relname",
+					name);
+			result5 = PSQLexec(buf);
+			if (!result5)
+				error = true;
+			else
+				primary_count = PQntuples(result5);
+		}
+
+		/* count unique constraints */
+		if (!error && tableinfo.hasindex)
+		{
+			sprintf(buf, "SELECT c2.relname\n"
+					"FROM pg_class c, pg_class c2, pg_index i\n"
+					"WHERE c.relname = '%s' AND c.oid = i.indrelid AND i.indexrelid = c2.oid\n"
+               "AND NOT i.indisprimary AND i.indisunique ORDER BY c2.relname",
+					name);
+			result6 = PSQLexec(buf);
+			if (!result6)
+				error = true;
+			else
+				unique_count = PQntuples(result6);
+		}
+
 		/* count table (and column) constraints */
 		if (!error && tableinfo.checks)
 		{
-			sprintf(buf, "SELECT rcsrc\n"
+			sprintf(buf, "SELECT rcsrc, rcname\n"
 					"FROM pg_relcheck r, pg_class c\n"
 					"WHERE c.relname='%s' AND c.oid = r.rcrelid",
 					name);
@@ -804,8 +838,9 @@ describeTableDetails(const char *name, bool desc)
 				trigger_count = PQntuples(result4);
 		}
 
-		footers = xmalloc((index_count + constr_count + rule_count + trigger_count + 1)
-						  * sizeof(*footers));
+		footers = xmalloc((index_count + primary_count + unique_count +
+									constr_count + rule_count + trigger_count + 1)
+									* sizeof(*footers));
 
 		/* print indices */
 		for (i = 0; i < index_count; i++)
@@ -820,12 +855,39 @@ describeTableDetails(const char *name, bool desc)
 			footers[count_footers++] = xstrdup(buf);
 		}
 
-		/* print contraints */
-		for (i = 0; i < constr_count; i++)
+		/* print primary keys */
+		for (i = 0; i < primary_count; i++)
 		{
 			sprintf(buf, "%s %s",
+					primary_count == 1 ? "Primary Key:" : (i == 0 ? "Primary Keys:" : "             "),
+					PQgetvalue(result5, i, 0)
+				);
+			if (i < primary_count - 1)
+				strcat(buf, ",");
+
+			footers[count_footers++] = xstrdup(buf);
+		}
+
+		/* print unique constraints */
+		for (i = 0; i < unique_count; i++)
+		{
+			sprintf(buf, "%s %s",
+					unique_count == 1 ? "Unique Key:" : (i == 0 ? "Unique Keys:" : "            "),
+					PQgetvalue(result6, i, 0)
+				);
+			if (i < unique_count - 1)
+				strcat(buf, ",");
+
+			footers[count_footers++] = xstrdup(buf);
+		}
+
+		/* print constraints */
+		for (i = 0; i < constr_count; i++)
+		{
+			sprintf(buf, "%s \"%s\" %s",
 					constr_count == 1 ? "Constraint:" : (i == 0 ? "Constraints:" : "            "),
-					PQgetvalue(result2, i, 0)
+					PQgetvalue(result2, i, 1),
+               PQgetvalue(result2, i, 0)
 				);
 			footers[count_footers++] = xstrdup(buf);
 		}
@@ -863,6 +925,8 @@ describeTableDetails(const char *name, bool desc)
 		PQclear(result2);
 		PQclear(result3);
 		PQclear(result4);
+		PQclear(result5);
+		PQclear(result6);
 	}
 
 	if (!error)
