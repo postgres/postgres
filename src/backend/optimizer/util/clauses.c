@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.188 2005/02/02 21:49:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.189 2005/03/27 19:18:02 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -21,6 +21,7 @@
 
 #include "catalog/pg_aggregate.h"
 #include "catalog/pg_language.h"
+#include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "executor/executor.h"
@@ -74,6 +75,7 @@ static List *simplify_or_arguments(List *args,
 					  bool *haveNull, bool *forceTrue);
 static List *simplify_and_arguments(List *args,
 					   bool *haveNull, bool *forceFalse);
+static Expr *simplify_boolean_equality(List *args);
 static Expr *simplify_function(Oid funcid, Oid result_type, List *args,
 				  bool allow_inline,
 				  eval_const_expressions_context *context);
@@ -1342,6 +1344,17 @@ eval_const_expressions_mutator(Node *node,
 			return (Node *) simple;
 
 		/*
+		 * If the operator is boolean equality, we know how to simplify
+		 * cases involving one constant and one non-constant argument.
+		 */
+		if (expr->opno == BooleanEqualOperator)
+		{
+			simple = simplify_boolean_equality(args);
+			if (simple)			/* successfully simplified it */
+				return (Node *) simple;
+		}
+
+		/*
 		 * The expression cannot be simplified any further, so build and
 		 * return a replacement OpExpr node using the possibly-simplified
 		 * arguments.
@@ -1964,6 +1977,49 @@ simplify_and_arguments(List *args, bool *haveNull, bool *forceFalse)
 	}
 
 	return newargs;
+}
+
+/*
+ * Subroutine for eval_const_expressions: try to simplify boolean equality
+ *
+ * Input is the list of simplified arguments to the operator.
+ * Returns a simplified expression if successful, or NULL if cannot
+ * simplify the expression.
+ *
+ * The idea here is to reduce "x = true" to "x" and "x = false" to "NOT x".
+ * This is only marginally useful in itself, but doing it in constant folding
+ * ensures that we will recognize the two forms as being equivalent in, for
+ * example, partial index matching.
+ *
+ * We come here only if simplify_function has failed; therefore we cannot
+ * see two constant inputs, nor a constant-NULL input.
+ */
+static Expr *
+simplify_boolean_equality(List *args)
+{
+	Expr	   *leftop;
+	Expr	   *rightop;
+
+	Assert(list_length(args) == 2);
+	leftop = linitial(args);
+	rightop = lsecond(args);
+	if (leftop && IsA(leftop, Const))
+	{
+		Assert(!((Const *) leftop)->constisnull);
+		if (DatumGetBool(((Const *) leftop)->constvalue))
+			return rightop;						/* true = foo */
+		else
+			return make_notclause(rightop);		/* false = foo */
+	}
+	if (rightop && IsA(rightop, Const))
+	{
+		Assert(!((Const *) rightop)->constisnull);
+		if (DatumGetBool(((Const *) rightop)->constvalue))
+			return leftop;						/* foo = true */
+		else
+			return make_notclause(leftop);		/* foo = false */
+	}
+	return NULL;
 }
 
 /*
