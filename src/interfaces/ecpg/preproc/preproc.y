@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.190 2002/06/11 13:40:52 wieck Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.191 2002/06/30 09:34:14 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -179,7 +179,7 @@ make_name(void)
 /* ordinary key words in alphabetical order */
 %token <keyword> ABORT_TRANS, ABSOLUTE, ACCESS, ACTION, ADD, AFTER,
         AGGREGATE, ALL, ALTER, ANALYSE, ANALYZE, AND, ANY, AS, ASC, ASSERTION,
-        AT, AUTHORIZATION,
+        ASSIGNMENT, AT, AUTHORIZATION,
 
         BACKWARD, BEFORE, BEGIN_TRANS, BETWEEN, BIGINT, BINARY, BIT, BOTH,
         BOOLEAN, BY,
@@ -191,14 +191,14 @@ make_name(void)
         CURRENT_TIMESTAMP, CURRENT_USER, CURSOR, CYCLE,
 
         DATABASE, DAY_P, DEC, DECIMAL, DECLARE, DEFAULT, DEFERRABLE, DEFERRED,
-        DEFINER, DELETE_P, DELIMITERS, DESC, DISTINCT, DO, DOMAIN_P, DOUBLE, DROP,
+        DEFINER, DELETE_P, DELIMITER, DELIMITERS, DESC, DISTINCT, DO, DOMAIN_P, DOUBLE, DROP,
         EACH, ELSE, ENCODING, ENCRYPTED, END_TRANS, ESCAPE, EXCEPT, EXCLUSIVE,
         EXECUTE, EXISTS, EXPLAIN, EXTERNAL, EXTRACT,
 
         FALSE_P, FETCH, FLOAT_P, FOR, FORCE, FOREIGN, FORWARD, FREEZE, FROM,
         FULL, FUNCTION,
 
-	GLOBAL, GRANT, GROUP_P,
+	GET, GLOBAL, GRANT, GROUP_P,
         HANDLER, HAVING, HOUR_P,
 
 	ILIKE, IMMEDIATE, IMMUTABLE, IMPLICIT, IN_P, INCREMENT, INDEX, INHERITS,
@@ -209,7 +209,7 @@ make_name(void)
         KEY,
 
 	LANCOMPILER, LANGUAGE, LEADING, LEFT, LEVEL, LIKE, LIMIT, LISTEN,
-        LOAD, LOCAL, LOCATION, LOCK_P,
+        LOAD, LOCAL, LOCALTIME, LOCALTIMESTAMP, LOCATION, LOCK_P,
 
 	MATCH, MAXVALUE, MINUTE_P, MINVALUE, MODE, MONTH_P, MOVE,
 
@@ -218,16 +218,17 @@ make_name(void)
         NUMERIC,
 
 	OF, OFF, OFFSET, OIDS, OLD, ON, ONLY, OPERATOR, OPTION, OR, ORDER,
-        OUT_P, OUTER_P, OVERLAPS, OWNER,
+        OUT_P, OUTER_P, OVERLAPS, OVERLAY, OWNER,
 
-	PARTIAL, PASSWORD, PATH_P, PENDANT, POSITION, PRECISION, PRIMARY,
+	PARTIAL, PASSWORD, PATH_P, PENDANT, PLACING, POSITION, PRECISION, PRIMARY,
 	PRIOR, PRIVILEGES, PROCEDURE, PROCEDURAL,
 
 	READ, REAL, REFERENCES, REINDEX, RELATIVE, RENAME, REPLACE, RESET,
         RESTRICT, RETURNS, REVOKE, RIGHT, ROLLBACK, ROW, RULE,
 
 	SCHEMA, SCROLL, SECOND_P, SECURITY, SELECT, SEQUENCE, SERIALIZABLE,
-        SESSION, SESSION_USER, SET, SETOF, SHARE, SHOW, SMALLINT, SOME,
+        SESSION, SESSION_USER, SET, SETOF, SHARE, SHOW, SIMILAR, SIMPLE,
+	SMALLINT, SOME,
         STABLE, START, STATEMENT, STATISTICS, STDIN, STDOUT, STORAGE, STRICT,
         SUBSTRING, SYSID,
 
@@ -236,8 +237,8 @@ make_name(void)
         UNENCRYPTED, UNION, UNIQUE, UNKNOWN, UNLISTEN, UNTIL, UPDATE, USAGE,
         USER, USING,
 
-        VACUUM, VALID, VALUES, VARCHAR, VARYING, VERBOSE, VERSION, VIEW, VOLATILE,
-	WHEN, WHERE, WITH, WITHOUT, WORK,
+        VACUUM, VALID, VALIDATOR, VALUES, VARCHAR, VARYING, VERBOSE, VERSION, VIEW, VOLATILE,
+	WHEN, WHERE, WITH, WITHOUT, WORK, WRITE
         YEAR_P,
         ZONE
 
@@ -264,7 +265,7 @@ make_name(void)
 %right		NOT
 %right		'='
 %nonassoc	'<' '>'
-%nonassoc	LIKE ILIKE
+%nonassoc	LIKE ILIKE SIMILAR
 %nonassoc	ESCAPE
 %nonassoc	OVERLAPS
 %nonassoc	BETWEEN
@@ -282,6 +283,7 @@ make_name(void)
 %right		UMINUS
 %left		'[' ']'
 %left		'(' ')'
+%left		COLLATE
 %left		TYPECAST
 %left		'.'
 
@@ -294,46 +296,46 @@ make_name(void)
 %type  <str>	ConstraintElem key_actions ColQualList type_name DropSchemaStmt
 %type  <str>	target_list target_el update_target_list alias_clause
 %type  <str>	update_target_el opt_id qualified_name database_name
-%type  <str>	access_method attr_name index_name name func_name
-%type  <str>	file_name AexprConst c_expr ConstTypename var_list
+%type  <str>	access_method attr_name index_name name func_name opt_mode
+%type  <str>	file_name AexprConst c_expr ConstTypename var_list copy_from
 %type  <str>	in_expr_nodes a_expr b_expr TruncateStmt CommentStmt
-%type  <str>	opt_indirection expr_list extract_list extract_arg
+%type  <str>	opt_indirection expr_list extract_list extract_arg copy_opt_item
 %type  <str>	position_list substr_list substr_from alter_column_default
-%type  <str>	trim_list in_expr substr_for attrs drop_behavior
+%type  <str>	trim_list in_expr substr_for attrs drop_behavior TableLikeClause
 %type  <str>	Typename SimpleTypename Generic Numeric opt_float opt_numeric
 %type  <str>	opt_decimal Character character opt_varying opt_charset
-%type  <str>	opt_collate opt_timezone opt_interval table_ref
+%type  <str>	opt_collate opt_timezone opt_interval table_ref copy_opt_list
 %type  <str>	row_expr row_descriptor row_list ConstDatetime opt_chain
 %type  <str>	SelectStmt into_clause OptTemp ConstraintAttributeSpec
 %type  <str>	opt_table opt_all sort_clause sortby_list ConstraintAttr
 %type  <str>	sortby OptUseOp qualified_name_list name_list ColId_or_Sconst
-%type  <str>	group_clause having_clause from_clause opt_distinct
+%type  <str>	group_clause having_clause from_clause opt_distinct opt_oids
 %type  <str>	join_outer where_clause relation_expr sub_type opt_arg
 %type  <str>	opt_column_list insert_rest InsertStmt OptimizableStmt
 %type  <str>	columnList DeleteStmt LockStmt UpdateStmt CursorStmt
-%type  <str>	NotifyStmt columnElem copy_dirn UnlistenStmt copy_null
+%type  <str>	NotifyStmt columnElem UnlistenStmt 
 %type  <str>	copy_delimiter ListenStmt CopyStmt copy_file_name opt_binary
-%type  <str>	opt_with_copy FetchStmt direction fetch_how_many from_in
+%type  <str>	FetchStmt direction fetch_how_many from_in
 %type  <str>	ClosePortalStmt DropStmt VacuumStmt AnalyzeStmt opt_verbose
 %type  <str>	opt_full func_arg OptWithOids opt_freeze opt_ecpg_into
 %type  <str>	analyze_keyword opt_name_list ExplainStmt index_params
 %type  <str>	index_list func_index index_elem opt_class access_method_clause
 %type  <str>	index_opt_unique IndexStmt func_return ConstInterval
-%type  <str>	func_args_list func_args opt_with def_arg
+%type  <str>	func_args_list func_args opt_with def_arg add_drop overlay_list
 %type  <str>	def_elem def_list definition DefineStmt select_with_parens
 %type  <str>	opt_instead event RuleActionList opt_using CreateAssertStmt
 %type  <str>	RuleActionStmtOrEmpty RuleActionMulti func_as reindex_type
 %type  <str>	RuleStmt opt_column opt_name oper_argtypes NumConst
 %type  <str>	MathOp RemoveFuncStmt aggr_argtype for_update_clause
-%type  <str>	RemoveAggrStmt opt_procedural select_no_parens
-%type  <str>	RemoveOperStmt RenameStmt all_Op opt_Trusted opt_lancompiler
+%type  <str>	RemoveAggrStmt opt_procedural select_no_parens opt_validator
+%type  <str>	RemoveOperStmt RenameStmt all_Op opt_trusted opt_lancompiler
 %type  <str>	VariableSetStmt var_value zone_value VariableShowStmt
-%type  <str>	VariableResetStmt AlterTableStmt from_list
+%type  <str>	VariableResetStmt AlterTableStmt from_list overlay_placing
 %type  <str>	opt_trans user_list OptUserList OptUserElem relation_name
 %type  <str>	CreateUserStmt AlterUserStmt CreateSeqStmt OptSeqList
 %type  <str>	OptSeqElem TriggerForSpec TriggerForOpt TriggerForType
 %type  <str>	DropTrigStmt TriggerOneEvent TriggerEvents RuleActionStmt
-%type  <str>	TriggerActionTime CreateTrigStmt DropPLangStmt
+%type  <str>	TriggerActionTime CreateTrigStmt DropPLangStmt opt_assignment
 %type  <str>	CreatePLangStmt TriggerFuncArgs TriggerFuncArg simple_select
 %type  <str>	ViewStmt LoadStmt CreatedbStmt createdb_opt_item
 %type  <str>	createdb_opt_list opt_encoding OptInherit opt_equal
@@ -350,7 +352,7 @@ make_name(void)
 %type  <str>	join_qual update_list AlterSchemaStmt joined_table
 %type  <str>	opt_level opt_lock lock_type OptGroupList OptGroupElem
 %type  <str>	OptConstrFromTable OptTempTableName StringConst
-%type  <str>	constraints_set_mode comment_type opt_empty_parentheses
+%type  <str>	constraints_set_mode comment_type opt_definition
 %type  <str>	CreateGroupStmt AlterGroupStmt DropGroupStmt key_delete
 %type  <str>	opt_force key_update CreateSchemaStmt PosIntStringConst
 %type  <str>	IntConst PosIntConst grantee_list func_type opt_or_replace
@@ -379,7 +381,7 @@ make_name(void)
 %type  <str>	struct_type s_struct vt_declarations variable_declarations
 %type  <str>	var_declaration type_declaration 
 %type  <str>	s_union union_type ECPGSetAutocommit on_off
-%type  <str>	ECPGAllocateDescr ECPGDeallocateDescr symbol opt_symbol
+%type  <str>	ECPGAllocateDescr ECPGDeallocateDescr opt_symbol
 %type  <str>	ECPGGetDescriptorHeader ECPGColLabel
 %type  <str>	reserved_keyword unreserved_keyword
 %type  <str>	col_name_keyword func_name_keyword
@@ -398,8 +400,6 @@ make_name(void)
 %type  <index>	opt_array_bounds opt_type_array_bounds
 
 %type  <ival>	Iresult
-
-%token YYERROR_VERBOSE
 %%
 prog: statements;
 
@@ -659,11 +659,13 @@ stmt:  AlterDatabaseSetStmt { output_statement($1, 0, connection); }
  *
  *****************************************************************************/
 
-CreateUserStmt: CREATE USER UserId OptUserList
-			{ $$ = cat_str(3, make_str("create user"), $3, $4); }
-		| CREATE USER UserId WITH OptUserList
-			{ $$ = cat_str(4, make_str("create user"), $3, make_str("with"), $5); }
+CreateUserStmt: CREATE USER UserId opt_with OptUserList
+			{ $$ = cat_str(4, make_str("create user"), $3, $4, $5); }
 		;
+
+opt_with: WITH		{ $$ = make_str("with"); }
+	| /* EMPTY */	{ $$ = EMPTY; }
+	;
 
 /*****************************************************************************
  *
@@ -672,10 +674,8 @@ CreateUserStmt: CREATE USER UserId OptUserList
  *
  *****************************************************************************/
 
-AlterUserStmt: ALTER USER UserId OptUserList
-			{ $$ = cat_str(3, make_str("alter user"), $3, $4); }
-		| ALTER USER UserId WITH OptUserList
-			{ $$ = cat_str(4, make_str("alter user"), $3, make_str("with"), $5); }
+AlterUserStmt: ALTER USER UserId opt_with OptUserList
+			{ $$ = cat_str(4, make_str("alter user"), $3, $4, $5); }
 		;
 
 AlterUserSetStmt: ALTER USER UserId SET set_rest 
@@ -702,7 +702,11 @@ OptUserList: OptUserList OptUserElem	{ $$ = cat2_str($1, $2); }
 		;
 
 OptUserElem:  PASSWORD Sconst
-		{ $$ = cat2_str(make_str("password"), $2); }
+			{ $$ = cat2_str(make_str("password"), $2); }
+		| ENCRYPTED PASSWORD Sconst
+			{ $$ = cat2_str(make_str("encrypted password"), $3); }
+		| UNENCRYPTED PASSWORD Sconst
+			{ $$ = cat2_str(make_str("unencrypted password"), $3); }
 		| SYSID Iconst
 			{ $$ = cat2_str(make_str("sysid"), $2); }
 		| CREATEDB
@@ -731,10 +735,8 @@ user_list:	user_list ',' UserId
  *
  *
  ****************************************************************************/
-CreateGroupStmt:  CREATE GROUP_P UserId OptGroupList
-			{ $$ = cat_str(3, make_str("create group"), $3, $4); }
-		| CREATE GROUP_P UserId WITH OptGroupList
-			{ $$ = cat_str(4, make_str("create group"), $3, make_str("with"), $5); }
+CreateGroupStmt:  CREATE GROUP_P UserId opt_with OptGroupList
+			{ $$ = cat_str(4, make_str("create group"), $3, $4, $5); }
 		;
 
 /*
@@ -757,11 +759,13 @@ OptGroupElem:  USER user_list
  *
  *
  *****************************************************************************/
-AlterGroupStmt: ALTER GROUP_P UserId ADD USER user_list
-			{ $$ = cat_str(4, make_str("alter group"), $3, make_str("add user"), $6); }
-		| ALTER GROUP_P UserId DROP USER user_list
-			{ $$ = cat_str(4, make_str("alter group"), $3, make_str("drop user"), $6); }
+AlterGroupStmt: ALTER GROUP_P UserId add_drop USER user_list
+			{ $$ = cat_str(4, make_str("alter group"), $3, $4, make_str("user"), $6); }
 		;
+
+add_drop: ADD	{ $$ = make_str("add"); }
+	| DROP	{ $$ = make_str("drop"); }
+	;
 
 /*****************************************************************************
  *
@@ -835,8 +839,8 @@ set_rest:	ColId TO var_list_or_default
                         { $$ = cat_str(3, $1, make_str("="), $3); }
 		| TIME ZONE zone_value
 			{ $$ = cat2_str(make_str("time zone"), $3); }
-		| TRANSACTION ISOLATION LEVEL opt_level
-			{ $$ = cat2_str(make_str("transaction isolation level"), $4); }
+		| TRANSACTION ISOLATION LEVEL opt_level opt_mode
+			{ $$ = cat_str(3, make_str("transaction isolation level"), $4, $5); }
 		| SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL opt_level
 			{ $$ = cat2_str(make_str("session characteristics as transaction isolation level"), $7); }
 		| NAMES opt_encoding
@@ -863,6 +867,13 @@ opt_level:	READ COMMITTED	{ $$ = make_str("read committed"); }
 		| SERIALIZABLE		{ $$ = make_str("serializable"); }
 		;
 
+opt_mode:	READ WRITE	{ $$ = make_str("read write"); }
+		| READ ONLY	{ 
+					mmerror(PARSE_ERROR, ET_WARNING, "Currently unsupported SET TRANSACTION/READ ONLY will be passed to backend");
+					$$ = make_str("read copy");
+				}
+		| /* EMPTY */		{ $$ = EMPTY; }
+		;
 
 var_value:	opt_boolean		{ $$ = $1; }
 		| AllConst		{ $$ = $1; }
@@ -1021,16 +1032,19 @@ opt_id:  ColId					{ $$ = $1; }
 /*****************************************************************************
  *
  *		QUERY :
- *				COPY [BINARY] <relname> FROM/TO
- *				[USING DELIMITERS <delimiter>]
+ *                             COPY <relname> FROM/TO [WITH options]
+ *
+ *                             BINARY, OIDS, and DELIMITERS kept in old locations
+ *                             for backward compatibility.  2002-06-18
  *
  *****************************************************************************/
 
-CopyStmt:  COPY opt_binary qualified_name opt_with_copy copy_dirn copy_file_name copy_delimiter copy_null
-			{ $$ = cat_str(8, make_str("copy"), $2, $3, $4, $5, $6, $7, $8); }
+CopyStmt:  COPY opt_binary qualified_name opt_oids copy_from
+		copy_file_name copy_delimiter opt_with copy_opt_list
+			{ $$ = cat_str(9, make_str("copy"), $2, $3, $4, $5, $6, $7, $8i, $9); }
 		;
 
-copy_dirn:	TO					{ $$ = make_str("to"); }
+copy_from:	TO					{ $$ = make_str("to"); }
 		| FROM					{ $$ = make_str("from"); }
 		;
 
@@ -1043,18 +1057,24 @@ copy_file_name:  StringConst	{ $$ = $1; }
 		| STDIN					{ $$ = make_str("stdin"); }
 		| STDOUT				{ $$ = make_str("stdout"); }
 		;
-
-opt_binary:  BINARY				{ $$ = make_str("binary"); }
-		| /*EMPTY*/				{ $$ = EMPTY; }
+		
+copy_opt_list:  copy_opt_list copy_opt_item	{ $$ = cat2_str($1, $2); }
+		| /*EMPTY*/                             { $$ = EMPTY; }
+		;
+		
+copy_opt_item:  BINARY				{ $$ = make_str("binary"); }
+		| OIDS               		{ $$ = make_str("oids"); }
+		| DELIMITER opt_as Sconst 	{ $$ = cat_str(3, make_str("delimiter"), $2, $3); }
+		| NULL_P opt_as Sconst         { $$ = cat_str(3, make_str("null"), $2, $3); }
 		;
 
-opt_with_copy:	WITH OIDS		{ $$ = make_str("with oids"); }
-		| /*EMPTY*/				{ $$ = EMPTY; }
+opt_binary:	BINARY			{ $$ = make_str("binary"); }
+		| /*EMPTY*/		{ $$ = EMPTY; }
+		;
+opt_oids:	WITH OIDS		{ $$ = make_str("with oids"); }
+		| /*EMPTY*/		{ $$ = EMPTY; }
 		;
 
-/*
- * the default copy delimiter is tab but the user can configure it
- */
 copy_delimiter:  opt_using DELIMITERS StringConst
 			{ $$ = cat_str(3, $1, make_str("delimiters"), $3); }
 		| /*EMPTY*/
@@ -1063,12 +1083,6 @@ copy_delimiter:  opt_using DELIMITERS StringConst
 
 opt_using:	USING		{ $$ = make_str("using"); }
 		| /* EMPTY */	{ $$ = EMPTY; }
-		;
-
-copy_null:	WITH NULL_P AS StringConst
-			{ $$ = cat2_str(make_str("with null as"), $4); }
-		| /* EMPTY */
-			{ $$ = EMPTY; }
 		;
 
 /*****************************************************************************
@@ -1114,6 +1128,7 @@ OptTableElementList:  OptTableElementList ',' OptTableElement
 		;
 
 OptTableElement:  columnDef		{ $$ = $1; }
+		| TableLikeClause		{ $$ = $1; }
 		| TableConstraint		{ $$ = $1; }
 		;
 
@@ -1182,6 +1197,9 @@ ConstraintAttr: DEFERRABLE		{ $$ = make_str("deferrable"); }
 		| INITIALLY IMMEDIATE	{ $$ = make_str("initially immediate"); }
 		;
 
+TableLikeClause:  LIKE any_name	{ $$ = cat2_str(make_str("like"), $2); }
+		;
+
 /* ConstraintElem specifies constraint syntax which is not embedded into
  *	a column definition. ColConstraintElem specifies the embedded form.
  * - thomas 1997-12-03
@@ -1223,6 +1241,8 @@ key_match:	MATCH FULL
 			mmerror(PARSE_ERROR, ET_WARNING, "Currently unsupported FOREIGN KEY/MATCH PARTIAL will be passed to backend");
 			$$ = make_str("match partial");
 		}
+		| MATCH SIMPLE
+			{ $$ = make_str("match simple"); }
 		| /*EMPTY*/
 			{ $$ = EMPTY; }
 		;
@@ -1329,12 +1349,12 @@ OptSeqElem:  CACHE NumConst
  *
  *****************************************************************************/
 
-CreatePLangStmt:  CREATE opt_Trusted opt_procedural LANGUAGE ColId_or_Sconst
-			HANDLER handler_name opt_lancompiler
+CreatePLangStmt:  CREATE opt_trusted opt_procedural LANGUAGE ColId_or_Sconst
+			HANDLER handler_name opt_validator opt_lancompiler
 			{ $$ = cat_str(8, make_str("create"), $2, $3, make_str("language"), $5, make_str("handler"), $7, $8); }
 		;
 
-opt_Trusted:	TRUSTED { $$ = make_str("trusted"); }
+opt_trusted:	TRUSTED { $$ = make_str("trusted"); }
 		| /*EMPTY*/		{ $$ = EMPTY; }
 		;
 
@@ -1354,6 +1374,10 @@ opt_lancompiler: LANCOMPILER StringConst
 			{ $$ = ""; }
 		;
 
+opt_validator: VALIDATOR handler_name	{ $$ = cat2_str(make_str("validator"), $2); }
+	| /* EMPTY */ 			{ $$ = EMPTY; }
+	;
+	
 DropPLangStmt:	DROP opt_procedural LANGUAGE StringConst
 			{ $$ = cat_str(4, make_str("drop"), $2, make_str("language"), $4); }
 		;
@@ -1444,6 +1468,7 @@ ConstraintAttributeSpec: ConstraintDeferrabilitySpec	{ $$ = $1; }
 
 			$$ = cat2_str($1, $2);
 		}
+		| /*EMPTY*/ { $$ = EMPTY; }
 		;
 
 ConstraintDeferrabilitySpec: NOT DEFERRABLE 
@@ -1819,18 +1844,32 @@ RecipeStmt:  EXECUTE RECIPE recipe_name
  *****************************************************************************/
 
 CreateFunctionStmt:	CREATE opt_or_replace FUNCTION func_name func_args
-					RETURNS func_return createfunc_opt_list opt_with
+					RETURNS func_return createfunc_opt_list opt_definition
 			{ $$ = cat_str(8, make_str("create"), $2, make_str("function"), $4, $5, make_str("returns"), $7, $8); }
+			|  CREATE opt_or_replace CAST '(' func_type AS func_type ')'
+	                        WITH FUNCTION func_name func_args opt_assignment opt_definition
+			{ $$ = cat_str(11, make_str("create"), $2, make_str("cast ("), $5, make_str("as"), $7, make_str(") with function"), $11, $12, $13, $14); }
+			| CREATE opt_or_replace CAST '(' func_type AS func_type ')'
+			        WITH FUNCTION func_name func_args AS Sconst opt_definition
+			{ $$ = cat_str(12, make_str("create"), $2, make_str("cast ("), $5, make_str("as"), $7, make_str(") with function"), $11, $12, make_str("as)", $14, $15); }
+			| CREATE opt_or_replace CAST '(' func_type AS func_type ')'
+	                        createfunc_opt_list opt_definition
+			{ $$ = cat_str(i9, make_str("create"), $2, make_str("cast ("), $5, make_str("as"), $7, make_str(")"), $9, $10); }
+				
 		;
 
 opt_or_replace:  OR REPLACE		{ $$ = make_str("or replace"); }
-		| /*EMPTY*/				{ $$ = EMPTY; }
+		| /*EMPTY*/		{ $$ = EMPTY; }
 		;
 
-opt_with:  WITH definition		{ $$ = cat2_str(make_str("with"), $2); }
-		| /*EMPTY*/				{ $$ = EMPTY; }
+opt_definition:  WITH definition	{ $$ = cat2_str(make_str("with"), $2); }
+		| /*EMPTY*/		{ $$ = EMPTY; }
 		;
-
+		
+opt_assignment:  AS ASSIGNMENT          { $$ = make_str("as assignment"); }
+                | /*EMPTY*/		{ $$ = EMPTY; }
+		;
+		
 func_args:	'(' func_args_list ')'
 			{ $$ = cat_str(3, make_str("("), $2, make_str(")")); }
 		| '(' ')'
@@ -1936,8 +1975,16 @@ createfunc_opt_item: AS func_as
  *
  *****************************************************************************/
 
-RemoveFuncStmt:  DROP FUNCTION func_name func_args
-			{ $$ = cat_str(3, make_str("drop function"), $3, $4); }
+RemoveFuncStmt:  DROP FUNCTION func_name func_args opt_drop_behavior
+			{
+			  if (strcmp($5, "restrict") != 0)
+				mmerror(PARSE_ERROR, ET_WARNING, "Unsupported DROP FUNCTION/CASCADE will be passed to backend");
+			  $$ = cat_str(4, make_str("drop function"), $3, $4, $5);
+			}
+		| DROP CAST '(' func_type AS func_type ')' opt_drop_behavior
+			{
+			  $$ = cat_str(6, make_str("drop cast ("), $4, make_Str("as"), $6, make_str(")", $8);
+			}
 		;
 
 RemoveAggrStmt:  DROP AGGREGATE func_name '(' aggr_argtype ')'
@@ -2147,16 +2194,14 @@ LoadStmt:  LOAD file_name
  *
  *****************************************************************************/
 
-CreatedbStmt:  CREATE DATABASE database_name WITH createdb_opt_list
-			{ $$ = cat_str(4, make_str("create database"), $3, make_str("with"), $5); }
-		| CREATE DATABASE database_name
-			{ $$ = cat2_str(make_str("create database"), $3); }
+CreatedbStmt:  CREATE DATABASE database_name opt_with createdb_opt_list
+			{ $$ = cat_str(4, make_str("create database"), $3, $4, $5); }
 		;
 
-createdb_opt_list:	createdb_opt_item
-			{ $$ = $1; }
-		| createdb_opt_list createdb_opt_item
+createdb_opt_list:  createdb_opt_list createdb_opt_item
 			{ $$ = cat2_str($1, $2); }
+		| /* EMPTY */
+			{ $$ = EMPTY; }
 		;
 
 createdb_opt_item:	LOCATION opt_equal StringConst
@@ -3038,6 +3083,8 @@ a_expr:  c_expr
 			{ $$ = $1; }
 		| a_expr TYPECAST Typename
 			{ $$ = cat_str(3, $1, make_str("::"), $3); }
+		| a_expr COLLATE Typename
+			{ $$ = cat_str(3, $1, make_str("collate"), $3); }
 		| a_expr AT TIME ZONE c_expr
 			{ $$ = cat_str(3, $1, make_str("at time zone"), $5); }
 		/*
@@ -3107,6 +3154,14 @@ a_expr:  c_expr
 			{ $$ = cat_str(3, $1, make_str("not ilike"), $4); }
 		| a_expr NOT ILIKE a_expr ESCAPE a_expr
 			{ $$ = cat_str(5, $1, make_str("not ilike"), $4, make_str("escape"), $6); }
+		| a_expr SIMILAR TO a_expr %prec SIMILAR
+			{ $$ = cat_str(3, $1, make_str("similar to"), $4); }
+		| a_expr SIMILAR TO a_expr ESCAPE a_expr
+			{ $$ = cat_str(5, $1, make_str("similar to"), $4, make_str("escape"), $6); }
+		| a_expr NOT SIMILAR TO a_expr %prec SIMILAR
+			{ $$ = cat_str(3, $1, make_str("not similar to"), $5); }
+		| a_expr NOT SIMILAR TO a_expr ESCAPE a_expr
+			{ $$ = cat_str(5, $1, make_str("not similar to"), $5, make_str("escape"), $7); }
 		| a_expr ISNULL
 			{ $$ = cat2_str($1, make_str("isnull")); }
 		| a_expr IS NULL_P
@@ -3232,22 +3287,32 @@ c_expr: columnref
 			{ $$ = cat2_str($1, make_str("(*)")); }
 		| CURRENT_DATE
 			{ $$ = make_str("current_date"); }
-		| CURRENT_TIME opt_empty_parentheses
-			{ $$ = cat2_str(make_str("current_time"), $2); }
+		| CURRENT_TIME 
+			{ $$ = make_str("current_time"); }
 		| CURRENT_TIME '(' PosIntConst ')'
 			{ $$ = make_str("current_time"); }
-		| CURRENT_TIMESTAMP opt_empty_parentheses
-			{ $$ = cat2_str(make_str("current_timestamp"), $2); }
+		| CURRENT_TIMESTAMP 
+			{ $$ = make_str("current_timestamp"); }
 		| CURRENT_TIMESTAMP '(' PosIntConst ')'
 			{ $$ = make_str("current_timestamp"); }
-		| CURRENT_USER opt_empty_parentheses
-			{ $$ = cat2_str(make_str("current_user"), $2); }
-		| SESSION_USER opt_empty_parentheses
-			{ $$ = cat2_str(make_str("session_user"), $2); }
-		| USER opt_empty_parentheses
-			{ $$ = cat2_str(make_str("user"), $2); }
+		| LOCALTIME
+			{ $$ = make_str("localtime"); }
+		| LOCALTIME '(' Iconst ')'
+			{ $$ = cat_str(3, make_str("localtime ("), $3, make_str(")")); }
+		| LOCALTIMESTAMP
+			{ $$ = make_str("localtimestamp"); }
+		| LOCALTIMESTAMP '(' Iconst ')'
+			{ $$ = cat_str(3, make_str("localtime ("), $3, make_str(")")); }
+		| CURRENT_USER 
+			{ $$ = make_str("current_user"); }
+		| SESSION_USER 
+			{ $$ = make_str("session_user"); }
+		| USER
+			{ $$ = make_str("user"); }
 		| EXTRACT '(' extract_list ')'
 			{ $$ = cat_str(3, make_str("extract("), $3, make_str(")")); }
+		| OVERLAY '(' overlay_list ')'
+			{ $$ = cat_str(3, make_str("overlay("), $3, make_str(")")); }
 		| POSITION '(' position_list ')'
 			{ $$ = cat_str(3, make_str("position("), $3, make_str(")")); }
 		| SUBSTRING '(' substr_list ')'
@@ -3304,6 +3369,15 @@ extract_arg:  IDENT				{ $$ = $1; }
 		| MINUTE_P				{ $$ = make_str("minute"); }
 		| SECOND_P				{ $$ = make_str("second"); }
 		| StringConst			{ $$ = $1; }
+		;
+
+overlay_list: a_expr overlay_placing substr_from substr_for
+		{ $$ = cat_str(4, $1, $2, $3, $4); }
+	| a_expr overlay_placing substr_from
+		{ $$ = cat_str(3, $1, $2, $3); }
+	;
+
+overlay_placing: PLACING a_expr	{ $$ = cat2_str(make_str("placing"), $2); }
 		;
 
 /* position_list uses b_expr not a_expr to avoid conflict with general IN */
@@ -3415,11 +3489,6 @@ attrs: '.' attr_name
 		| '.' attr_name attrs
 			{ $$ = cat_str(3, make_str("."), $2, $3); }
 		;
-
-opt_empty_parentheses: '(' ')'	{ $$ = make_str("()"); }
-		| /*EMPTY*/				{ $$ = EMPTY; }
-		;
-
 
 /*****************************************************************************
  *
@@ -4077,7 +4146,7 @@ type: simple_type
 
 enum_type: SQL_ENUM opt_symbol enum_definition
 			{ $$ = cat_str(3, make_str("enum"), $2, $3); }
-		|  SQL_ENUM symbol
+		|  SQL_ENUM ColLabel
 			{ $$ = cat2_str(make_str("enum"), $2); }
 		;
 
@@ -4799,11 +4868,8 @@ ECPGTypeName:  SQL_BOOL				{ $$ = make_str("bool"); }
 		| SQL_UNSIGNED			{ $$ = make_str("unsigned"); }
 		;
 
-opt_symbol: symbol				{ $$ = $1; }
+opt_symbol: ColLabel
 		| /*EMPTY*/				{ $$ = EMPTY; }
-		;
-
-symbol: ColLabel				{ $$ = $1; }
 		;
 
 /*
@@ -4881,7 +4947,8 @@ unreserved_keyword:
 		| AFTER							{ $$ = make_str("after"); }
 		| AGGREGATE						{ $$ = make_str("aggregate"); }
 		| ALTER							{ $$ = make_str("alter"); }
-		| ASSERTION							{ $$ = make_str("assertion"); }
+		| ASSERTION						{ $$ = make_str("assertion"); }
+		| ASSIGNMENT						{ $$ = make_str("assignment"); }
 		| AT							{ $$ = make_str("at"); }
 		| BACKWARD						{ $$ = make_str("backward"); }
 		| BEFORE						{ $$ = make_str("before"); }
@@ -4908,6 +4975,7 @@ unreserved_keyword:
 		| DECLARE						{ $$ = make_str("declare"); }
 		| DEFERRED						{ $$ = make_str("deferred"); }
 		| DELETE_P						{ $$ = make_str("delete"); }
+		| DELIMITER					{ $$ = make_str("delimiter"); }
 		| DELIMITERS					{ $$ = make_str("delimiters"); }
 		| DOMAIN_P					{ $$ = make_str("domain"); }
 		| DOUBLE						{ $$ = make_str("double"); }
@@ -4923,6 +4991,7 @@ unreserved_keyword:
 		| FORCE							{ $$ = make_str("force"); }
 		| FORWARD						{ $$ = make_str("forward"); }
 		| FUNCTION						{ $$ = make_str("function"); }
+		| GET     						{ $$ = make_str("get"); }
 		| GLOBAL						{ $$ = make_str("global"); }
 		| HANDLER						{ $$ = make_str("handler"); }
 		| HOUR_P						{ $$ = make_str("hour"); }
@@ -4995,6 +5064,8 @@ unreserved_keyword:
 		| SET							{ $$ = make_str("set"); }
 		| SHARE							{ $$ = make_str("share"); }
 		| SHOW							{ $$ = make_str("show"); }
+		| SIMPLE						{ $$ = make_str("simple"); }
+		| STABLE						{ $$ = make_str("stable"); }
 		| START							{ $$ = make_str("start"); }
 		| STATEMENT						{ $$ = make_str("statement"); }
 		| STATISTICS					{ $$ = make_str("statistics"); }
@@ -5019,12 +5090,14 @@ unreserved_keyword:
 		| USAGE							{ $$ = make_str("usage"); }
 		| VACUUM						{ $$ = make_str("vacuum"); }
 		| VALID							{ $$ = make_str("valid"); }
+		| VALIDATOR							{ $$ = make_str("validator"); }
 		| VALUES						{ $$ = make_str("values"); }
 		| VARYING						{ $$ = make_str("varying"); }
 		| VERSION						{ $$ = make_str("version"); }
 		| VIEW							{ $$ = make_str("view"); }
 		| WITH							{ $$ = make_str("with"); }
 		| WITHOUT						{ $$ = make_str("without"); }
+		| WRITE 						{ $$ = make_str("write"); }
 		| WORK							{ $$ = make_str("work"); }
 		| YEAR_P						{ $$ = make_str("year"); }
 		| ZONE							{ $$ = make_str("zone"); }
@@ -5062,6 +5135,7 @@ col_name_keyword:
 		| NONE			{ $$ = make_str("none"); }
 		| NULLIF		{ $$ = make_str("nullif"); }
 		| NUMERIC		{ $$ = make_str("numeric"); }
+		| OVERLAY		{ $$ = make_str("overlay"); }
 		| POSITION		{ $$ = make_str("position"); }
 		| REAL			{ $$ = make_str("real"); }
 		| SETOF			{ $$ = make_str("setof"); }
@@ -5103,6 +5177,7 @@ func_name_keyword:
 		| OUTER_P						{ $$ = make_str("outer"); }
 		| OVERLAPS						{ $$ = make_str("overlaps"); }
 		| RIGHT							{ $$ = make_str("right"); }
+		| SIMILAR						{ $$ = make_str("similar"); }
 		| VERBOSE						{ $$ = make_str("verbose"); }
 		;
 
@@ -5152,6 +5227,8 @@ reserved_keyword:
 		| INTO							{ $$ = make_str("into"); }
 		| LEADING						{ $$ = make_str("leading"); }
 		| LIMIT							{ $$ = make_str("limit"); }
+		| LOCALTIME						{ $$ = make_str("localtime"); }
+		| LOCALTIMESTAMP						{ $$ = make_str("localtimestamp"); }
 		| NEW							{ $$ = make_str("new"); }
 		| NOT							{ $$ = make_str("not"); }
 		| NULL_P						{ $$ = make_str("null"); }
@@ -5162,6 +5239,7 @@ reserved_keyword:
 		| ONLY							{ $$ = make_str("only"); }
 		| OR							{ $$ = make_str("or"); }
 		| ORDER							{ $$ = make_str("order"); }
+		| PLACING						{ $$ = make_str("playcing"); }
 		| PRIMARY						{ $$ = make_str("primary"); }
 		| REFERENCES					{ $$ = make_str("references"); }
 		| SELECT						{ $$ = make_str("select"); }

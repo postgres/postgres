@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.50 2002/06/20 20:29:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.51 2002/06/30 09:34:13 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,6 +44,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"as", AS},
 	{"asc", ASC},
 	{"assertion", ASSERTION},
+	{"assignment", ASSIGNMENT},
 	{"at", AT},
 	{"authorization", AUTHORIZATION},
 	{"backward", BACKWARD},
@@ -98,6 +99,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"deferred", DEFERRED},
 	{"definer", DEFINER},
 	{"delete", DELETE_P},
+	{"delimiter", DELIMITER},
 	{"delimiters", DELIMITERS},
 	{"desc", DESC},
 	{"distinct", DISTINCT},
@@ -171,6 +173,8 @@ static ScanKeyword ScanKeywords[] = {
 	{"listen", LISTEN},
 	{"load", LOAD},
 	{"local", LOCAL},
+	{"localtime", LOCALTIME},
+	{"localtimestamp", LOCALTIMESTAMP},
 	{"location", LOCATION},
 	{"lock", LOCK_P},
 	{"match", MATCH},
@@ -211,11 +215,13 @@ static ScanKeyword ScanKeywords[] = {
 	{"out", OUT_P},
 	{"outer", OUTER_P},
 	{"overlaps", OVERLAPS},
+	{"overlay", OVERLAY},
 	{"owner", OWNER},
 	{"partial", PARTIAL},
 	{"password", PASSWORD},
 	{"path", PATH_P},
 	{"pendant", PENDANT},
+	{"placing", PLACING},
 	{"position", POSITION},
 	{"precision", PRECISION},
 	{"primary", PRIMARY},
@@ -251,6 +257,8 @@ static ScanKeyword ScanKeywords[] = {
 	{"setof", SETOF},
 	{"share", SHARE},
 	{"show", SHOW},
+	{"similar", SIMILAR},
+	{"simple", SIMPLE},
 	{"smallint", SMALLINT},
 	{"some", SOME},
 	{"stable", STABLE},
@@ -292,6 +300,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"using", USING},
 	{"vacuum", VACUUM},
 	{"valid", VALID},
+	{"validator", VALIDATOR},
 	{"values", VALUES},
 	{"varchar", VARCHAR},
 	{"varying", VARYING},
@@ -304,6 +313,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"with", WITH},
 	{"without", WITHOUT},
 	{"work", WORK},
+	{"write", WRITE},
 	{"year", YEAR_P},
 	{"zone", ZONE},
 };
