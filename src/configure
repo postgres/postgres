@@ -7815,10 +7815,9 @@ trap 'rm -fr `echo "GNUmakefile
 	backend/utils/Gen_fmgrtab.sh
 	bin/pg_dump/Makefile
 	bin/pg_version/Makefile
-	bin/pgaccess/Makefile
-	bin/psql/Makefile
 	bin/pgtclsh/mkMakefile.tcldefs.sh
 	bin/pgtclsh/mkMakefile.tkdefs.sh
+	bin/psql/Makefile
 	include/version.h
 	interfaces/libpq/Makefile
 	interfaces/ecpg/lib/Makefile
@@ -7990,10 +7989,9 @@ CONFIG_FILES=\${CONFIG_FILES-"GNUmakefile
 	backend/utils/Gen_fmgrtab.sh
 	bin/pg_dump/Makefile
 	bin/pg_version/Makefile
-	bin/pgaccess/Makefile
-	bin/psql/Makefile
 	bin/pgtclsh/mkMakefile.tcldefs.sh
 	bin/pgtclsh/mkMakefile.tkdefs.sh
+	bin/psql/Makefile
 	include/version.h
 	interfaces/libpq/Makefile
 	interfaces/ecpg/lib/Makefile
