@@ -42,6 +42,7 @@ public class Jdbc2TestSuite extends TestSuite
 		suite.addTestSuite(TimestampTest.class);
 
 		// PreparedStatement
+		suite.addTestSuite(PreparedStatementTest.class);
 
 		// ServerSide Prepared Statements
 		suite.addTestSuite(ServerPreparedStmtTest.class);

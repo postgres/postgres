@@ -26,7 +26,7 @@ import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.Vector;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.41.2.2 2003/12/12 18:39:00 davec Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.41.2.3 2004/02/03 05:13:55 jurka Exp $
  * This class defines methods of the jdbc1 specification.  This class is
  * extended by org.postgresql.jdbc2.AbstractJdbc2Statement which adds the jdbc2
  * methods.  The real Statement class (for jdbc1) is org.postgresql.jdbc1.Jdbc1Statement
@@ -1342,6 +1342,50 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 		}
 	}
 
+	private void setCharacterStreamPost71(int parameterIndex, InputStream x, int length, String encoding) throws SQLException
+	{
+
+		if (x == null)
+		{
+			setNull(parameterIndex, Types.VARCHAR);
+				return;
+		}
+
+		//Version 7.2 supports AsciiStream for all PG text types (char, varchar, text)
+		//As the spec/javadoc for this method indicate this is to be used for
+		//large String values (i.e. LONGVARCHAR)  PG doesn't have a separate
+		//long varchar datatype, but with toast all text datatypes are capable of
+		//handling very large values.  Thus the implementation ends up calling
+		//setString() since there is no current way to stream the value to the server
+		try
+		{
+			InputStreamReader l_inStream = new InputStreamReader(x, encoding);
+			char[] l_chars = new char[length];
+			int l_charsRead = 0;
+			while (true)
+			{
+				int n = l_inStream.read(l_chars, l_charsRead, length - l_charsRead);
+				if (n == -1)
+					break;
+
+				l_charsRead += n;
+
+				if (l_charsRead == length)
+					break;
+			}
+
+			setString(parameterIndex, new String(l_chars, 0, l_charsRead), PG_TEXT);
+		}
+		catch (UnsupportedEncodingException l_uee)
+		{
+			throw new PSQLException("postgresql.unusual", PSQLState.UNEXPECTED_ERROR, l_uee);
+		}
+		catch (IOException l_ioe)
+		{
+			throw new PSQLException("postgresql.unusual", PSQLState.UNEXPECTED_ERROR, l_ioe);
+		}
+	}
+
 	/*
 	 * When a very large ASCII value is input to a LONGVARCHAR parameter,
 	 * it may be more practical to send it via a java.io.InputStream.
@@ -1362,27 +1406,7 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 	{
 		if (connection.haveMinimumCompatibleVersion("7.2"))
 		{
-			//Version 7.2 supports AsciiStream for all PG text types (char, varchar, text)
-			//As the spec/javadoc for this method indicate this is to be used for
-			//large String values (i.e. LONGVARCHAR)  PG doesn't have a separate
-			//long varchar datatype, but with toast all text datatypes are capable of
-			//handling very large values.  Thus the implementation ends up calling
-			//setString() since there is no current way to stream the value to the server
-			try
-			{
-				InputStreamReader l_inStream = new InputStreamReader(x, "ASCII");
-				char[] l_chars = new char[length];
-				int l_charsRead = l_inStream.read(l_chars, 0, length);
-				setString(parameterIndex, new String(l_chars, 0, l_charsRead), PG_TEXT);
-			}
-			catch (UnsupportedEncodingException l_uee)
-			{
-				throw new PSQLException("postgresql.unusual", PSQLState.UNEXPECTED_ERROR, l_uee);
-			}
-			catch (IOException l_ioe)
-			{
-				throw new PSQLException("postgresql.unusual", PSQLState.UNEXPECTED_ERROR, l_ioe);
-			}
+			setCharacterStreamPost71(parameterIndex, x, length, "ASCII");
 		}
 		else
 		{
@@ -1411,27 +1435,7 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 	{
 		if (connection.haveMinimumCompatibleVersion("7.2"))
 		{
-			//Version 7.2 supports AsciiStream for all PG text types (char, varchar, text)
-			//As the spec/javadoc for this method indicate this is to be used for
-			//large String values (i.e. LONGVARCHAR)  PG doesn't have a separate
-			//long varchar datatype, but with toast all text datatypes are capable of
-			//handling very large values.  Thus the implementation ends up calling
-			//setString() since there is no current way to stream the value to the server
-			try
-			{
-				InputStreamReader l_inStream = new InputStreamReader(x, "UTF-8");
-				char[] l_chars = new char[length];
-				int l_charsRead = l_inStream.read(l_chars, 0, length);
-				setString(parameterIndex, new String(l_chars, 0, l_charsRead), PG_TEXT);
-			}
-			catch (UnsupportedEncodingException l_uee)
-			{
-				throw new PSQLException("postgresql.unusual", PSQLState.UNEXPECTED_ERROR, l_uee);
-			}
-			catch (IOException l_ioe)
-			{
-				throw new PSQLException("postgresql.unusual", PSQLState.UNEXPECTED_ERROR, l_ioe);
-			}
+			setCharacterStreamPost71(parameterIndex, x, length, "UTF-8");
 		}
 		else
 		{
@@ -1459,6 +1463,12 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 	{
 		if (connection.haveMinimumCompatibleVersion("7.2"))
 		{
+			if (x == null)
+			{
+				setNull(parameterIndex, Types.VARBINARY);
+				return;
+			}
+
 			//Version 7.2 supports BinaryStream for for the PG bytea type
 			//As the spec/javadoc for this method indicate this is to be used for
 			//large binary values (i.e. LONGVARBINARY)	PG doesn't have a separate
@@ -1466,10 +1476,21 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 			//handling very large values.  Thus the implementation ends up calling
 			//setBytes() since there is no current way to stream the value to the server
 			byte[] l_bytes = new byte[length];
-			int l_bytesRead;
+			int l_bytesRead = 0;
 			try
 			{
-				l_bytesRead = x.read(l_bytes, 0, length);
+				while (true)
+				{
+					int n = x.read(l_bytes, l_bytesRead, length - l_bytesRead);
+					if (n == -1)
+						break;
+
+					l_bytesRead += n;
+
+					if (l_bytesRead == length)
+						break;
+
+				}
 			}
 			catch (IOException l_ioe)
 			{
@@ -1478,11 +1499,6 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 			if (l_bytesRead == length)
 			{
 				setBytes(parameterIndex, l_bytes);
-			}
-			// x.read will return -1 not 0 on an empty InputStream
-			else if (l_bytesRead == -1)
-			{
-				setBytes(parameterIndex, new byte[0]);
 			}
 			else
 			{
