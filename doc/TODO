@@ -5,7 +5,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Mon Oct 18 12:16:12 EDT 2004
+Last updated:		Tue Oct 26 15:41:15 EDT 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -147,6 +147,8 @@ Data Types
   everywhere a TZ name is currently taken
 * Allow customization of the known set of TZ names (generalize the
   present australian_timezones hack)
+* Allow TIMESTAMP WITH TIME ZONE to store the original timezone
+  information, either by name or offset from UTC
 * Prevent inet cast to cidr if the unmasked bits are not zero, or
   zero bits
 
