@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.100 2002/03/22 02:56:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.101 2002/04/05 05:47:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,13 +22,15 @@
 #include "optimizer/prep.h"
 #include "optimizer/var.h"
 #include "parser/analyze.h"
+#include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_oper.h"
 #include "parser/parse_target.h"
-#include "parser/parsetree.h"
 #include "parser/parse_type.h"
+#include "parser/parsetree.h"
 #include "rewrite/rewriteHandler.h"
 #include "rewrite/rewriteManip.h"
+#include "utils/builtins.h"
 #include "utils/lsyscache.h"
 
 
@@ -38,6 +40,10 @@ static Query *rewriteRuleAction(Query *parsetree,
 				  int rt_index,
 				  CmdType event);
 static List *adjustJoinTreeList(Query *parsetree, bool removert, int rt_index);
+static void rewriteTargetList(Query *parsetree, Relation target_relation);
+static TargetEntry *process_matched_tle(TargetEntry *src_tle,
+										TargetEntry *prior_tle);
+static Node *build_column_default(Relation rel, int attrno);
 static void markQueryForUpdate(Query *qry, bool skipOldNew);
 static List *matchLocks(CmdType event, RuleLock *rulelocks,
 		   int varno, Query *parsetree);
@@ -209,6 +215,289 @@ adjustJoinTreeList(Query *parsetree, bool removert, int rt_index)
 		}
 	}
 	return newjointree;
+}
+
+
+/*
+ * rewriteTargetList - rewrite INSERT/UPDATE targetlist into standard form
+ *
+ * This has the following responsibilities:
+ *
+ * 1. For an INSERT, add tlist entries to compute default values for any
+ * attributes that have defaults and are not assigned to in the given tlist.
+ * (We do not insert anything for default-less attributes, however.  The
+ * planner will later insert NULLs for them, but there's no reason to slow
+ * down rewriter processing with extra tlist nodes.)
+ *
+ * 2. Merge multiple entries for the same target attribute, or declare error
+ * if we can't.  Presently, multiple entries are only allowed for UPDATE of
+ * an array field, for example "UPDATE table SET foo[2] = 42, foo[4] = 43".
+ * We can merge such operations into a single assignment op.  Essentially,
+ * the expression we want to produce in this case is like
+ *		foo = array_set(array_set(foo, 2, 42), 4, 43)
+ *
+ * 3. Sort the tlist into standard order: non-junk fields in order by resno,
+ * then junk fields (these in no particular order).
+ *
+ * We must do items 1 and 2 before firing rewrite rules, else rewritten
+ * references to NEW.foo will produce wrong or incomplete results.  Item 3
+ * is not needed for rewriting, but will be needed by the planner, and we
+ * can do it essentially for free while handling items 1 and 2.
+ */
+static void
+rewriteTargetList(Query *parsetree, Relation target_relation)
+{
+	CmdType		commandType = parsetree->commandType;
+	List	   *tlist = parsetree->targetList;
+	List	   *new_tlist = NIL;
+	int			attrno,
+				numattrs;
+	List	   *temp;
+
+	/*
+	 * Scan the tuple description in the relation's relcache entry to make
+	 * sure we have all the user attributes in the right order.
+	 */
+	numattrs = RelationGetNumberOfAttributes(target_relation);
+
+	for (attrno = 1; attrno <= numattrs; attrno++)
+	{
+		Form_pg_attribute att_tup = target_relation->rd_att->attrs[attrno-1];
+		TargetEntry *new_tle = NULL;
+
+		/*
+		 * Look for targetlist entries matching this attr.  We match by
+		 * resno, but the resname should match too.
+		 *
+		 * Junk attributes are not candidates to be matched.
+		 */
+		foreach(temp, tlist)
+		{
+			TargetEntry *old_tle = (TargetEntry *) lfirst(temp);
+			Resdom	   *resdom = old_tle->resdom;
+
+			if (!resdom->resjunk && resdom->resno == attrno)
+			{
+				Assert(strcmp(resdom->resname,
+							  NameStr(att_tup->attname)) == 0);
+				new_tle = process_matched_tle(old_tle, new_tle);
+				/* keep scanning to detect multiple assignments to attr */
+			}
+		}
+
+		if (new_tle == NULL && commandType == CMD_INSERT)
+		{
+			/*
+			 * Didn't find a matching tlist entry; if it's an INSERT,
+			 * look for a default value, and add a tlist entry computing
+			 * the default if we find one.
+			 */
+			Node	   *new_expr;
+
+			new_expr = build_column_default(target_relation, attrno);
+
+			if (new_expr)
+				new_tle = makeTargetEntry(makeResdom(attrno,
+													 att_tup->atttypid,
+													 att_tup->atttypmod,
+													 pstrdup(NameStr(att_tup->attname)),
+													 false),
+										  new_expr);
+		}
+
+		if (new_tle)
+			new_tlist = lappend(new_tlist, new_tle);
+	}
+
+	/*
+	 * Copy all resjunk tlist entries to the end of the new tlist, and
+	 * assign them resnos above the last real resno.
+	 *
+	 * Typical junk entries include ORDER BY or GROUP BY expressions (are
+	 * these actually possible in an INSERT or UPDATE?), system attribute
+	 * references, etc.
+	 */
+	foreach(temp, tlist)
+	{
+		TargetEntry *old_tle = (TargetEntry *) lfirst(temp);
+		Resdom	   *resdom = old_tle->resdom;
+
+		if (resdom->resjunk)
+		{
+			/* Get the resno right, but don't copy unnecessarily */
+			if (resdom->resno != attrno)
+			{
+				resdom = (Resdom *) copyObject((Node *) resdom);
+				resdom->resno = attrno;
+				old_tle = makeTargetEntry(resdom, old_tle->expr);
+			}
+			new_tlist = lappend(new_tlist, old_tle);
+			attrno++;
+		}
+		else
+		{
+			/* Let's just make sure we processed all the non-junk items */
+			if (resdom->resno < 1 || resdom->resno > numattrs)
+				elog(ERROR, "rewriteTargetList: bogus resno %d in targetlist",
+					 resdom->resno);
+		}
+	}
+
+	parsetree->targetList = new_tlist;
+}
+
+
+/*
+ * Convert a matched TLE from the original tlist into a correct new TLE.
+ *
+ * This routine detects and handles multiple assignments to the same target
+ * attribute.
+ */
+static TargetEntry *
+process_matched_tle(TargetEntry *src_tle,
+					TargetEntry *prior_tle)
+{
+	Resdom	   *resdom = src_tle->resdom;
+	Node	   *priorbottom;
+	ArrayRef   *newexpr;
+
+	if (prior_tle == NULL)
+	{
+		/*
+		 * Normal case where this is the first assignment to the
+		 * attribute.
+		 */
+		return src_tle;
+	}
+
+	/*
+	 * Multiple assignments to same attribute.	Allow only if all are
+	 * array-assign operators with same bottom array object.
+	 */
+	if (src_tle->expr == NULL || !IsA(src_tle->expr, ArrayRef) ||
+		((ArrayRef *) src_tle->expr)->refassgnexpr == NULL ||
+		prior_tle->expr == NULL || !IsA(prior_tle->expr, ArrayRef) ||
+		((ArrayRef *) prior_tle->expr)->refassgnexpr == NULL ||
+		((ArrayRef *) src_tle->expr)->refelemtype !=
+		((ArrayRef *) prior_tle->expr)->refelemtype)
+		elog(ERROR, "Multiple assignments to same attribute \"%s\"",
+			 resdom->resname);
+
+	/*
+	 * Prior TLE could be a nest of ArrayRefs if we do this more than
+	 * once.
+	 */
+	priorbottom = ((ArrayRef *) prior_tle->expr)->refexpr;
+	while (priorbottom != NULL && IsA(priorbottom, ArrayRef) &&
+		   ((ArrayRef *) priorbottom)->refassgnexpr != NULL)
+		priorbottom = ((ArrayRef *) priorbottom)->refexpr;
+	if (!equal(priorbottom, ((ArrayRef *) src_tle->expr)->refexpr))
+		elog(ERROR, "Multiple assignments to same attribute \"%s\"",
+			 resdom->resname);
+
+	/*
+	 * Looks OK to nest 'em.
+	 */
+	newexpr = makeNode(ArrayRef);
+	memcpy(newexpr, src_tle->expr, sizeof(ArrayRef));
+	newexpr->refexpr = prior_tle->expr;
+
+	return makeTargetEntry(resdom, (Node *) newexpr);
+}
+
+
+/*
+ * Make an expression tree for the default value for a column.
+ *
+ * If there is no default, return a NULL instead.
+ */
+static Node *
+build_column_default(Relation rel, int attrno)
+{
+	TupleDesc	rd_att = rel->rd_att;
+	Form_pg_attribute att_tup = rd_att->attrs[attrno - 1];
+	Oid			atttype = att_tup->atttypid;
+	int32		atttypmod = att_tup->atttypmod;
+	Node	   *expr = NULL;
+	Oid			exprtype;
+
+	/*
+	 * Scan to see if relation has a default for this column.
+	 */
+	if (rd_att->constr && rd_att->constr->num_defval > 0)
+	{
+		AttrDefault *defval = rd_att->constr->defval;
+		int			ndef = rd_att->constr->num_defval;
+
+		while (--ndef >= 0)
+		{
+			if (attrno == defval[ndef].adnum)
+			{
+				/*
+				 * Found it, convert string representation to node tree.
+				 */
+				expr = stringToNode(defval[ndef].adbin);
+				break;
+			}
+		}
+	}
+
+	if (expr == NULL)
+	{
+		/*
+		 * No per-column default, so look for a default for the type itself.
+		 */
+		if (att_tup->attisset)
+		{
+			/*
+			 * Set attributes are represented as OIDs no matter what the set
+			 * element type is, and the element type's default is irrelevant
+			 * too.
+			 */
+		}
+		else
+		{
+			expr = get_typdefault(atttype);
+		}
+	}
+
+	if (expr == NULL)
+		return NULL;			/* No default anywhere */
+
+	/*
+	 * Make sure the value is coerced to the target column
+	 * type (might not be right type yet if it's not a
+	 * constant!)  This should match the parser's processing of
+	 * non-defaulted expressions --- see
+	 * updateTargetListEntry().
+	 */
+	exprtype = exprType(expr);
+
+	if (exprtype != atttype)
+	{
+		expr = CoerceTargetExpr(NULL, expr, exprtype,
+								atttype, atttypmod);
+
+		/*
+		 * This really shouldn't fail; should have checked the
+		 * default's type when it was created ...
+		 */
+		if (expr == NULL)
+			elog(ERROR, "Column \"%s\" is of type %s"
+				 " but default expression is of type %s"
+				 "\n\tYou will need to rewrite or cast the expression",
+				 NameStr(att_tup->attname),
+				 format_type_be(atttype),
+				 format_type_be(exprtype));
+	}
+
+	/*
+	 * If the column is a fixed-length type, it may need a
+	 * length coercion as well as a type coercion.
+	 */
+	expr = coerce_type_typmod(NULL, expr, atttype, atttypmod);
+
+	return expr;
 }
 
 
@@ -763,6 +1052,14 @@ RewriteQuery(Query *parsetree, bool *instead_flag, List **qual_products)
 	 * and planner against schema changes mid-query.
 	 */
 	rt_entry_relation = heap_open(rt_entry->relid, RowExclusiveLock);
+
+	/*
+	 * If it's an INSERT or UPDATE, rewrite the targetlist into standard
+	 * form.  This will be needed by the planner anyway, and doing it now
+	 * ensures that any references to NEW.field will behave sanely.
+	 */
+	if (event == CMD_INSERT || event == CMD_UPDATE)
+		rewriteTargetList(parsetree, rt_entry_relation);
 
 	/*
 	 * Collect and apply the appropriate rules.
