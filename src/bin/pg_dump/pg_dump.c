@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.371 2004/05/25 01:00:24 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.372 2004/05/26 18:24:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -7722,7 +7722,15 @@ static char *
 myFormatType(const char *typname, int32 typmod)
 {
 	char	   *result;
+	bool	isarray = false;
 	PQExpBuffer buf = createPQExpBuffer();
+
+	/* Handle array types */
+	if (typname[0] == '_')
+	{
+		isarray = true;
+		typname++;
+	}
 
 	/* Show lengths on bpchar and varchar */
 	if (!strcmp(typname, "bpchar"))
@@ -7766,6 +7774,10 @@ myFormatType(const char *typname, int32 typmod)
 		appendPQExpBuffer(buf, "\"char\"");
 	else
 		appendPQExpBuffer(buf, "%s", fmtId(typname));
+
+	/* Append array qualifier for array types */
+	if (isarray)
+		appendPQExpBuffer(buf, "[]");
 
 	result = strdup(buf->data);
 	destroyPQExpBuffer(buf);
