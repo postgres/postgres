@@ -1,21 +1,15 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sat Jan 26 23:20:24 EST 2002
+Last updated:		Sat Jan 26 23:22:17 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
 The most recent version of this document can be viewed at
 the PostgreSQL web site, http://www.PostgreSQL.org.
 
-A dash (-) marks changes that will appear in the upcoming 7.2 release.
+A dash (-) marks changes that will appear in the upcoming 7.3 release.
 
 Bracketed items "[]" have more detailed.
-
-
-RELIABILITY
------------
-
-* -SELECT pg_class FROM pg_class generates strange error (Bruce)
 
 
 ENHANCEMENTS
@@ -40,11 +34,9 @@ REPORTING
 * Allow elog() to return error codes, module name, file name, line
   number, not just messages (Peter E)
 * Add error codes (Peter E)
-* -Allow international error message support (Peter E)
 * Change DEBUG startup tag to NOTICE;  change NOTICE to output to client
   only if client exists (Bruce)
 * Show location of syntax error in query [yacc]
-* -Populate backend status area and write program to dump status data (Jan)
 
 PERMISSIONS
 
@@ -55,9 +47,6 @@ PERMISSIONS
   user/host/password combinations
 * Remove PGPASSWORD because is insecure on some OS's
 * Make single-user local access permissions the default (Peter E)
-* -Allow single-user access without passwords using Unix socket permissions
-* -Better document pg_hba.conf host-based authentication (Bruce)
-* -Add MD5 to ODBC (Bruce)
 * Use thread-safe crypt() in libpq, if available
 
 ADMIN
@@ -66,17 +55,12 @@ ADMIN
 * Make it easier to create a database owned by someone who can't createdb,
   perhaps CREATE DATABASE dbname WITH OWNER = "user" (Gavin)
 * Make equals sign optional in CREATE DATABASE WITH param = 'val'
-* -Permission to DELETE table also allows UPDATE (Peter E)
-* -Remove unused sort files on postmaster startup (Bruce)
 * Remove unreferenced table files and temp tables during database vacuum
   or postmaster startup (Bruce)
-* -Remove unreferenced sort files during postmaster startup (Bruce)
 * Add table name mapping for numeric file names (Bruce)
-* -Encrypt passwords in pg_shadow table using MD5 (Bruce, Vince)
 * Remove behavior of postmaster -o after making postmaster/postgres
   flags unique
 * Allow logging of query durations
-* -Put sort files in their own directory (Bruce)
 
 DATA TYPES
 
@@ -86,13 +70,10 @@ DATA TYPES
 * SELECT cash_out(2) crashes because of opaque
 * Declare typein/out functions in pg_proc with a special "C string" data type
 * Functions returning sets do not totally work
-* -Add SQL standard function bit_length() (Peter E)
-* -Make oid use unsigned int more reliably (Tom)
 * Change factorial to return a numeric
 * Add function to return compressed length of TOAST data values (Tom)
 
 * CONVERSION
-	o -Add conversion function from text to inet
 	o Store binary-compatible type information in the system
 	o Allow better handling of numeric constants, type conversion 
 	  [typeconv]
@@ -105,8 +86,6 @@ DATA TYPES
 	o Support construction of array result values in expressions
 
 * BINARY DATA
-	o -Add non-large-object binary field (already exists -- bytea)
-	o -Make binary interface for TOAST columns (base64)
 	o Improve vacuum of large objects, like /contrib/vacuumlo
 	o Add security checking for large objects
 	o Make file in/out interface for TOAST columns, similar to large object
@@ -118,13 +97,9 @@ MULTI-LANGUAGE SUPPORT
 * Add NCHAR (as distinguished from ordinary varchar),
 * Allow LOCALE on a per-column basis, default to ASCII
 * Support multiple simultaneous character sets, per SQL92
-* -Reject character sequences those are not valid in their charset (Tatsuo)
-* -Make functions more multi-byte aware, e.g. trim() (Tatsuo)
-* -Make n of CHAR(n)/VARCHAR(n) the number of letters, not bytes (Tatsuo)
 * Allow setting database character set without multibyte enabled
 * Improve Unicode combined character handling
 * Optimize locale to have minimal performance impact when not used (Peter E)
-* -Optimize textlength(), etc. for single-byte encodings (Tatsuo)
 * Add octet_length_server() and octet_length_client() (Thomas, Tatsuo)
 * Make octet_length_client the same as octet_length() (?)
 
@@ -133,7 +108,6 @@ VIEWS / RULES
 * Automatically create rules on views so they are updateable, per SQL92 [view]
 * Add the functionality for WITH CHECK OPTION clause of CREATE VIEW
 * Allow NOTIFY in rules involving conditionals
-* -Evaluate INSERT rules at end of query, rather than beginning (Jan)
 * Allow temporary views
 * Move psql backslash information into views
 * Allow RULE recompilation
@@ -144,8 +118,6 @@ INDEXES
 * Allow CREATE INDEX zman_index ON test (date_trunc( 'day', zman ) datetime_ops)
   fails index can't store constant parameters
 * Order duplicate index entries by tid for faster heap lookups
-* -Re-enable partial indexes
-* -Prevent pg_attribute from having duplicate oids for indexes (Tom)
 * Allow inherited tables to inherit index, UNIQUE constraint, and primary
   key, foreign key  [inheritance]
 * UNIQUE INDEX on base column not honored on inserts from inherited table
@@ -163,35 +135,21 @@ INDEXES
 * Use index to restrict rows returned by multi-key index when used with
   non-consecutive keys or OR clauses, so fewer heap accesses
 * Be smarter about insertion of already-ordered data into btree index
-* -Gather more accurate dispersion statistics using indexes (Tom)
 * Add deleted bit to index tuples to reduce heap access
 * Prevent index uniqueness checks when UPDATE does not modifying column
 * Add bitmap indexes [performance]
 * Improve handling of index scans for NULL
 * Allow SELECT * FROM tab WHERE int2col = 4 to use int2col index, int8,
   float4, numeric/decimal too [optimizer]
-* -Use indexes with CIDR '<<' (contains) operator
 * Improve concurrency in GIST
 * Add FILLFACTOR to index creation
-
-SYSTEM TABLES
-
-* -Add unique indexes to pg_shadow.usename and pg_shadow.usesysid or
-  switch to pg_shadow.oid as user id (Tom)
-* -Add unique indexes on pg_database (Tom)
-* -Check all system tables and add unique indexes as needed (Tom)
-* -Remove pg_listener index (Tom)
-* -Remove unused pg_variable, pg_inheritproc, pg_ipl tables (Bruce)
 
 COMMANDS
 
 * Add SIMILAR TO to allow character classes, 'pg_[a-c]%'
 * Add BETWEEN ASYMMETRIC/SYMMETRIC
-* -Allow LOCK TABLE tab1, tab2, tab3 so all tables locked in unison
 * Remove LIMIT #,# and force use LIMIT and OFFSET clauses in 7.3 (Bruce)
 * Allow LIMIT/OFFSET to use expressions
-* -Allow GRANT/REVOKE to handle multiple user/group names (Vince)
-* -Allow CREATEUSER/CREATEDB ordering in CREATE/ALTER USER (Vince)
 * Disallow TRUNCATE on tables that are involved in referential constraints
 * Add OR REPLACE clauses to non-FUNCTION object creation
 * CREATE TABLE AS can not determine column lengths from expressions [atttypmod]
@@ -206,7 +164,6 @@ COMMANDS
 	o Add ALTER TABLE DROP COLUMN feature [drop] (Bruce)
 	o Add ALTER FUNCTION
 	o Add ALTER TABLE DROP non-CHECK CONSTRAINT
-	o -Add ALTER TABLE DROP CHECK CONSTRAINT (Christopher Kings-Lynne)
 	o ALTER TABLE ADD PRIMARY KEY (Christopher Kings-Lynne)
 	o ALTER TABLE ADD UNIQUE (Christopher Kings-Lynne)
 	o ALTER TABLE ADD COLUMN column SERIAL doesn't create sequence
@@ -218,7 +175,6 @@ COMMANDS
 	o cluster all tables at once
 	o prevent lose of indexes, permissions, inheritance (Bruce)
 	o Automatically maintain clustering on a table
-	o -Keep statistics about clustering (Tom) [optimizer]
 
 * COPY
 	o Allow specification of column names
@@ -246,8 +202,6 @@ COMMANDS
 
 * SHOW/SET
 	o Add SHOW command to display locks
-	o -Add SHOW command to show all settings
-	o -Add a global RESET command for use with connection pooling
 	o Add SET or BEGIN timeout parameter to cancel query
 	o Add SET REAL_FORMAT and SET DOUBLE_PRECISION_FORMAT using printf args
 	o Remove SET KSQO option now that OR processing is improved (Tom)
@@ -265,26 +219,20 @@ COMMANDS
 
 CLIENTS
 
-* -Make NULL's come out at the beginning or end depending on the
-  ORDER BY direction (Tom)
 * Have pg_dump use LEFT OUTER JOIN in multi-table SELECTs
   or multiple SELECTS to avoid bad system catalog entries
 * Have pg_dump -C dump database location and encoding information
 * Allow psql \d to show foreign keys
 * Allow psql \d to show temporary table structure
 * Add XML interface:  psql, pg_dump, COPY, separate server (?)
-* -Fix libpq to properly handle socket failures under native MS Win32
 * Add config file check for $ODBCINI, $HOME/.odbc.ini, installpath/etc/odbc.ini
 
 * JDBC
 	o Comprehensive test suite. This may be available already.
 	o Updateable resultSet (must be done in backend code)
-	o -Improved DatabaseMetaData [java]
 	o JDBC-standard BLOB support
 	o Error Codes (pending backend implementation)
-	o -Support for binary data/bytea
 	o Support both 'make' and 'ant'
-	o -Add MD5 capability
 	o Fix LargeObject API to handle OIDs as unsigned ints
 	o Implement cancel() method on Statement
 	o Use cursors implicitly to avoid large results (see setCursorName())
@@ -293,17 +241,13 @@ CLIENTS
 * ECPG
 	o Implement set descriptor, using descriptor
 	o Make casts work in variable initializations
-	o -Allow variable to specify the connection name
-	o -Fix variable handling in EXEC SQL AT statement
 	o Implement SQLDA
-	o -Allow SELECT of array of strings into a auto-sized variable
 	o Solve cardinality > 1 for input descriptors / variables
 	o Understand structure definitions outside a declare section
 	o sqlwarn[6] should be 'W' if the PRECISION or SCALE value specified
 	o Improve error handling
 	o Allow :var[:index] or :var[<integer>] as cvariable for an array var
 	o Add a semantic check level, e.g. check if a table really exists
-	o -Remove space_or_nl and line_end from pgc.l
 	o Fix nested C comments
 	o Add SQLSTATE
 	o fix handling of DB attributes that are arrays
@@ -311,14 +255,11 @@ CLIENTS
 REFERENTIAL INTEGRITY
 
 * Add MATCH PARTIAL referential integrity [foreign]
-* -Check that primary key exists at foreign key definition time
 * Add deferred trigger queue file (Jan)
 * Allow oid to act as a foreign key
 * Implement dirty reads and use them in RI triggers
 * Make triggers refer to columns by number, not name
 * Enforce referential integrity for system tables
-* -INSERT & UPDATE/DELETE in transaction of primary key fails with
-  deferredTriggerGetPreviousEvent or "change violation"
 * Allow user to control trigger firing order
 * Change foreign key constraint for array -> element to mean element
   in array
@@ -343,7 +284,6 @@ TRANSACTIONS
 * Allow autocommit so always in a transaction block
 * Overhaul bufmgr/lockmgr/transaction manager
 * Allow savepoints / nested transactions [transactions]
-* -Handle transaction rollover (Tom) [transactions]
 
 EXOTIC FEATURES
 
@@ -381,8 +321,6 @@ VACUUM
 * Improve speed with indexes (perhaps recreate index instead) [vacuum]
 * Reduce lock time by moving tuples with read lock, then write
   lock and truncate table [vacuum]
-* -Make ANALYZE a separate command (Tom)
-* -Allow ANALYZE to ESTIMATE based on certain random percentage of rows (Tom)
 * Add LAZY VACUUM (Vadim) [performance]
 
 LOCKING
@@ -392,7 +330,6 @@ LOCKING
   from distributted.net, http://www1.distributed.net/source, 
   in client/common/cpucheck.cpp
 * Research use of sched_yield() for spinlock acquisition failure
-* -Improve spinlock code [performance] (Tom)
 
 STARTUP TIME
 
@@ -436,24 +373,16 @@ OPTIMIZER/EXECUTOR
 
 MISCELLANEOUS
 
-* -Allow compression of log and meta data (Tom)
 * Do async I/O for faster random read-ahead of data
 * Get faster regex() code from Henry Spencer <henry@zoo.utoronto.ca>
   when it is available
 * Use mmap() rather than SYSV shared memory or to write WAL files (?) [mmap]
-* -Allow GUC configuration of maximum number of open files (Tom)
-* -Improve statistics storage in pg_class [performance] (Tom)
-* -Read pg_hba.conf only on postmaster startup or SIGHUP (Bruce)
 
 
 SOURCE CODE
 -----------
 * Add use of 'const' for variables in source tree
-* -Convert remaining fprintf(stderr,...)/perror() to elog() (Peter E)
 * Fix problems with libpq non-blocking/async code [async]
-* -Merge global and template BKI files (Tom)
-* -Fix username/password length limits in all areas, e.g. pg_passwd
-* -Remove compile-time upper limit on number of backends (MAXBACKENDS) (Tom)
 * Make sure all block numbers are unsigned to increase maximum table size
 * Use BlockNumber rather than int where appropriate
 * Merge LockMethodCtl and LockMethodTable into one shared structure (Bruce)
@@ -465,8 +394,6 @@ SOURCE CODE
 * Remove warnings created by -Wcast-align
 * Move platform-specific ps status display info from ps_status.c to ports
 * Allow ps status display to work on Solaris/SVr4-based systems
-* -Decide on spelling of indexes/indices (Peter E)
-* -Add mention of VACUUM, log rotation to Administrator's Guide (Tom, Bruce)
 * Make one version of simple_prompt() in code (Bruce, Tom)
 * Compile in syslog functionaility by default (?)
 * Modify regression tests to prevent failures do to minor numeric rounding
