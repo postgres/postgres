@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.39 2001/09/06 03:22:42 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.40 2001/09/12 04:01:57 momjian Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2000, PostgreSQL Global Development Group
@@ -45,8 +45,9 @@
  *	Karel Zak
  *
  * TODO 
- *	- check last used entry in the cache_search
- *	- better number building (formatting)
+ *	- better number building (formatting) / parsing, now it isn't 
+ *        ideal code
+ *	- use Assert()
  *	- add support for abstime
  *	- add support for roman number to standard number conversion
  *	- add support for number spelling
@@ -3824,6 +3825,10 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 	++Np->num_curr;
 }
 
+/*
+ * Note: 'plen' is used in FROM_CHAR conversion and it's length of
+ * input (inout). In TO_CHAR conversion it's space before first number.
+ */
 static char *
 NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 			  int plen, int sign, int type)
@@ -4117,9 +4122,9 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 						Np->inout_p += strlen(Np->inout_p) - 1;
 					}
 					else
-						Np->inout_p += snprintf(Np->inout_p, plen - (Np->inout_p - Np->inout), "%15s", Np->number_p) - 1;
+						Np->inout_p += sprintf(Np->inout_p, "%15s", Np->number_p) - 1;
 					break;
-
+					
 				case NUM_rn:
 					if (IS_FILLMODE(Np->Num))
 					{
@@ -4127,7 +4132,7 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 						Np->inout_p += strlen(Np->inout_p) - 1;
 					}
 					else
-						Np->inout_p += snprintf(Np->inout_p, plen - (Np->inout_p - Np->inout), "%15s", str_tolower(Np->number_p)) - 1;
+						Np->inout_p += sprintf(Np->inout_p, "%15s", str_tolower(Np->number_p)) - 1;
 					break;
 
 				case NUM_th:
