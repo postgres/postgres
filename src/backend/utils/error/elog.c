@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.32 1998/08/25 21:34:08 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.33 1998/08/31 04:48:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,7 +91,7 @@ elog(int lev, const char *fmt,...)
 				i = 0;
 			if (i > 30)
 				i = i % 30;
-			cp = "DEBUG: ";
+			cp = "DEBUG:  ";
 			break;
 		case DEBUG:
 			i = ElogDebugIndentLevel;
@@ -99,16 +99,16 @@ elog(int lev, const char *fmt,...)
 				i = 0;
 			if (i > 30)
 				i = i % 30;
-			cp = "DEBUG: ";
+			cp = "DEBUG:  ";
 			break;
 		case NOTICE:
-			cp = "NOTICE: ";
+			cp = "NOTICE:  ";
 			break;
 		case ERROR:
-			cp = "ERROR: ";
+			cp = "ERROR:  ";
 			break;
 		default:
-			sprintf(line, "FATAL %d: ", lev);
+			sprintf(line, "FATAL %d:  ", lev);
 			cp = line;
 	}
 #ifdef ELOG_TIMESTAMPS
