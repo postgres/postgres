@@ -18,8 +18,8 @@ path
 polygon
 circle
 geometry
-timespan
-datetime
+interval
+timestamp
 reltime
 abstime
 tinterval

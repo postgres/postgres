@@ -29,8 +29,8 @@ parallel	group2
  	test	path
  	test	polygon
  	test	circle
- 	test	timespan
- 	test	datetime
+ 	test	interval
+ 	test	timestamp
  	test	reltime
 	test	tinterval
 	test	inet
@@ -42,7 +42,7 @@ endparallel
 
 test	abstime		# Depends on the reltime test
 test	geometry	# Depends on point, lseg, box, path, polygon and circle
-test	horology	# Depends on timespan, datetime, reltime and abstime
+test	horology	# Depends on interval, timestamp, reltime and abstime
 
 # ----------
 # These four each depend on the previous one

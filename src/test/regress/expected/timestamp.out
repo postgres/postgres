@@ -4,174 +4,178 @@
 -- Shorthand values
 -- Not directly usable for regression testing since these are not constants.
 -- So, just try to test parser and hope for the best - tgl 97/04/26
-SELECT (datetime 'today' = (datetime 'yesterday' + timespan '1 day')) as "True";
+SELECT (timestamp 'today' = (timestamp 'yesterday' + interval '1 day')) as "True";
  True 
 ------
  t
 (1 row)
 
-SELECT (datetime 'today' = (datetime 'tomorrow' - timespan '1 day')) as "True";
+SELECT (timestamp 'today' = (timestamp 'tomorrow' - interval '1 day')) as "True";
  True 
 ------
  t
 (1 row)
 
-SELECT (datetime 'tomorrow' = (datetime 'yesterday' + timespan '2 days')) as "True";
+SELECT (timestamp 'tomorrow' = (timestamp 'yesterday' + interval '2 days')) as "True";
  True 
 ------
  t
 (1 row)
 
-SELECT (datetime 'current' = 'now') as "True";
+SELECT (timestamp 'current' = 'now') as "True";
  True 
 ------
  t
 (1 row)
 
-SELECT (datetime 'now' - 'current') AS "ZeroSecs";
+SELECT (timestamp 'now' - 'current') AS "ZeroSecs";
  ZeroSecs 
 ----------
  @ 0
 (1 row)
 
 SET DateStyle = 'Postgres,noneuropean';
-SELECT datetime('1994-01-01', '11:00') AS "Jan_01_1994_11am";
+SELECT timestamp('1994-01-01', '11:00') AS "Jan_01_1994_11am";
        Jan_01_1994_11am       
 ------------------------------
  Sat Jan 01 11:00:00 1994 PST
 (1 row)
 
-CREATE TABLE DATETIME_TBL( d1 datetime);
-INSERT INTO DATETIME_TBL VALUES ('current');
-INSERT INTO DATETIME_TBL VALUES ('today');
-INSERT INTO DATETIME_TBL VALUES ('yesterday');
-INSERT INTO DATETIME_TBL VALUES ('tomorrow');
-INSERT INTO DATETIME_TBL VALUES ('tomorrow EST');
-INSERT INTO DATETIME_TBL VALUES ('tomorrow zulu');
-SELECT count(*) AS one FROM DATETIME_TBL WHERE d1 = datetime 'today';
+CREATE TABLE TIMESTAMP_TBL ( d1 timestamp);
+INSERT INTO TIMESTAMP_TBL VALUES ('current');
+INSERT INTO TIMESTAMP_TBL VALUES ('today');
+INSERT INTO TIMESTAMP_TBL VALUES ('yesterday');
+INSERT INTO TIMESTAMP_TBL VALUES ('tomorrow');
+INSERT INTO TIMESTAMP_TBL VALUES ('tomorrow EST');
+INSERT INTO TIMESTAMP_TBL VALUES ('tomorrow zulu');
+SELECT count(*) AS one FROM TIMESTAMP_TBL WHERE d1 = timestamp 'today';
  one 
 -----
    1
 (1 row)
 
-SELECT count(*) AS one FROM DATETIME_TBL WHERE d1 = datetime 'tomorrow';
+SELECT count(*) AS one FROM TIMESTAMP_TBL WHERE d1 = timestamp 'tomorrow';
  one 
 -----
    1
 (1 row)
 
-SELECT count(*) AS one FROM DATETIME_TBL WHERE d1 = datetime 'yesterday';
+SELECT count(*) AS one FROM TIMESTAMP_TBL WHERE d1 = timestamp 'yesterday';
  one 
 -----
    1
 (1 row)
 
-SELECT count(*) AS one FROM DATETIME_TBL WHERE d1 = datetime 'today' + timespan '1 day';
+SELECT count(*) AS one FROM TIMESTAMP_TBL WHERE d1 = timestamp 'today' + interval '1 day';
  one 
 -----
    1
 (1 row)
 
-SELECT count(*) AS one FROM DATETIME_TBL WHERE d1 = datetime 'today' - timespan '1 day';
+SELECT count(*) AS one FROM TIMESTAMP_TBL WHERE d1 = timestamp 'today' - interval '1 day';
  one 
 -----
    1
 (1 row)
 
-SELECT count(*) AS one FROM DATETIME_TBL WHERE d1 = datetime 'now';
+SELECT count(*) AS one FROM TIMESTAMP_TBL WHERE d1 = timestamp 'now';
  one 
 -----
    1
 (1 row)
 
-DELETE FROM DATETIME_TBL;
+DELETE FROM TIMESTAMP_TBL;
 -- verify uniform transaction time within transaction block
-INSERT INTO DATETIME_TBL VALUES ('current');
+INSERT INTO TIMESTAMP_TBL VALUES ('current');
 BEGIN;
-INSERT INTO DATETIME_TBL VALUES ('now');
-SELECT count(*) AS two FROM DATETIME_TBL WHERE d1 = datetime 'now';
+INSERT INTO TIMESTAMP_TBL VALUES ('now');
+SELECT count(*) AS two FROM TIMESTAMP_TBL WHERE d1 = timestamp 'now';
  two 
 -----
    2
 (1 row)
 
 END;
-DELETE FROM DATETIME_TBL;
+DELETE FROM TIMESTAMP_TBL;
 -- Special values
-INSERT INTO DATETIME_TBL VALUES ('invalid');
-INSERT INTO DATETIME_TBL VALUES ('-infinity');
-INSERT INTO DATETIME_TBL VALUES ('infinity');
-INSERT INTO DATETIME_TBL VALUES ('epoch');
+INSERT INTO TIMESTAMP_TBL VALUES ('invalid');
+INSERT INTO TIMESTAMP_TBL VALUES ('-infinity');
+INSERT INTO TIMESTAMP_TBL VALUES ('infinity');
+INSERT INTO TIMESTAMP_TBL VALUES ('epoch');
 -- Postgres v6.0 standard output format
-INSERT INTO DATETIME_TBL VALUES ('Mon Feb 10 17:32:01 1997 PST');
-INSERT INTO DATETIME_TBL VALUES ('Invalid Abstime');
-INSERT INTO DATETIME_TBL VALUES ('Undefined Abstime');
+INSERT INTO TIMESTAMP_TBL VALUES ('Mon Feb 10 17:32:01 1997 PST');
+INSERT INTO TIMESTAMP_TBL VALUES ('Invalid Abstime');
+INSERT INTO TIMESTAMP_TBL VALUES ('Undefined Abstime');
 -- Variations on Postgres v6.1 standard output format
-INSERT INTO DATETIME_TBL VALUES ('Mon Feb 10 17:32:01.000001 1997 PST');
-INSERT INTO DATETIME_TBL VALUES ('Mon Feb 10 17:32:01.999999 1997 PST');
-INSERT INTO DATETIME_TBL VALUES ('Mon Feb 10 17:32:01.4 1997 PST');
-INSERT INTO DATETIME_TBL VALUES ('Mon Feb 10 17:32:01.5 1997 PST');
-INSERT INTO DATETIME_TBL VALUES ('Mon Feb 10 17:32:01.6 1997 PST');
+INSERT INTO TIMESTAMP_TBL VALUES ('Mon Feb 10 17:32:01.000001 1997 PST');
+INSERT INTO TIMESTAMP_TBL VALUES ('Mon Feb 10 17:32:01.999999 1997 PST');
+INSERT INTO TIMESTAMP_TBL VALUES ('Mon Feb 10 17:32:01.4 1997 PST');
+INSERT INTO TIMESTAMP_TBL VALUES ('Mon Feb 10 17:32:01.5 1997 PST');
+INSERT INTO TIMESTAMP_TBL VALUES ('Mon Feb 10 17:32:01.6 1997 PST');
 -- ISO 8601 format
-INSERT INTO DATETIME_TBL VALUES ('1997-01-02');
-INSERT INTO DATETIME_TBL VALUES ('1997-01-02 03:04:05');
-INSERT INTO DATETIME_TBL VALUES ('1997-02-10 17:32:01-08');
-INSERT INTO DATETIME_TBL VALUES ('1997-02-10 17:32:01-0800');
-INSERT INTO DATETIME_TBL VALUES ('1997-02-10 17:32:01 -08:00');
-INSERT INTO DATETIME_TBL VALUES ('19970210 173201 -0800');
-INSERT INTO DATETIME_TBL VALUES ('1997-06-10 17:32:01 -07:00');
+INSERT INTO TIMESTAMP_TBL VALUES ('1997-01-02');
+INSERT INTO TIMESTAMP_TBL VALUES ('1997-01-02 03:04:05');
+INSERT INTO TIMESTAMP_TBL VALUES ('1997-02-10 17:32:01-08');
+INSERT INTO TIMESTAMP_TBL VALUES ('1997-02-10 17:32:01-0800');
+INSERT INTO TIMESTAMP_TBL VALUES ('1997-02-10 17:32:01 -08:00');
+INSERT INTO TIMESTAMP_TBL VALUES ('19970210 173201 -0800');
+INSERT INTO TIMESTAMP_TBL VALUES ('1997-06-10 17:32:01 -07:00');
+-- POSIX format
+INSERT INTO TIMESTAMP_TBL VALUES ('2000-02-15 23:14:30 GMT+8');
+INSERT INTO TIMESTAMP_TBL VALUES ('2000-02-15 23:14:30 EST+3');
+ERROR:  Bad timestamp external representation '2000-02-15 23:14:30 EST+3'
 -- Variations for acceptable input formats
-INSERT INTO DATETIME_TBL VALUES ('Feb 10 17:32:01 1997 -0800');
-INSERT INTO DATETIME_TBL VALUES ('Feb 10 17:32:01 1997');
-INSERT INTO DATETIME_TBL VALUES ('Feb 10 5:32PM 1997');
-INSERT INTO DATETIME_TBL VALUES ('1997/02/10 17:32:01-0800');
-INSERT INTO DATETIME_TBL VALUES ('1997-02-10 17:32:01 PST');
-INSERT INTO DATETIME_TBL VALUES ('Feb-10-1997 17:32:01 PST');
-INSERT INTO DATETIME_TBL VALUES ('02-10-1997 17:32:01 PST');
-INSERT INTO DATETIME_TBL VALUES ('19970210 173201 PST');
-INSERT INTO DATETIME_TBL VALUES ('97FEB10 5:32:01PM UTC');
-INSERT INTO DATETIME_TBL VALUES ('97/02/10 17:32:01 UTC');
-INSERT INTO DATETIME_TBL VALUES ('97.041 17:32:01 UTC');
+INSERT INTO TIMESTAMP_TBL VALUES ('Feb 10 17:32:01 1997 -0800');
+INSERT INTO TIMESTAMP_TBL VALUES ('Feb 10 17:32:01 1997');
+INSERT INTO TIMESTAMP_TBL VALUES ('Feb 10 5:32PM 1997');
+INSERT INTO TIMESTAMP_TBL VALUES ('1997/02/10 17:32:01-0800');
+INSERT INTO TIMESTAMP_TBL VALUES ('1997-02-10 17:32:01 PST');
+INSERT INTO TIMESTAMP_TBL VALUES ('Feb-10-1997 17:32:01 PST');
+INSERT INTO TIMESTAMP_TBL VALUES ('02-10-1997 17:32:01 PST');
+INSERT INTO TIMESTAMP_TBL VALUES ('19970210 173201 PST');
+INSERT INTO TIMESTAMP_TBL VALUES ('97FEB10 5:32:01PM UTC');
+INSERT INTO TIMESTAMP_TBL VALUES ('97/02/10 17:32:01 UTC');
+INSERT INTO TIMESTAMP_TBL VALUES ('97.041 17:32:01 UTC');
 -- Check date conversion and date arithmetic
-INSERT INTO DATETIME_TBL VALUES ('1997-06-10 18:32:01 PDT');
-INSERT INTO DATETIME_TBL VALUES ('Feb 10 17:32:01 1997');
-INSERT INTO DATETIME_TBL VALUES ('Feb 11 17:32:01 1997');
-INSERT INTO DATETIME_TBL VALUES ('Feb 12 17:32:01 1997');
-INSERT INTO DATETIME_TBL VALUES ('Feb 13 17:32:01 1997');
-INSERT INTO DATETIME_TBL VALUES ('Feb 14 17:32:01 1997');
-INSERT INTO DATETIME_TBL VALUES ('Feb 15 17:32:01 1997');
-INSERT INTO DATETIME_TBL VALUES ('Feb 16 17:32:01 1997');
-INSERT INTO DATETIME_TBL VALUES ('Feb 16 17:32:01 0097 BC');
-INSERT INTO DATETIME_TBL VALUES ('Feb 16 17:32:01 0097');
-INSERT INTO DATETIME_TBL VALUES ('Feb 16 17:32:01 0597');
-INSERT INTO DATETIME_TBL VALUES ('Feb 16 17:32:01 1097');
-INSERT INTO DATETIME_TBL VALUES ('Feb 16 17:32:01 1697');
-INSERT INTO DATETIME_TBL VALUES ('Feb 16 17:32:01 1797');
-INSERT INTO DATETIME_TBL VALUES ('Feb 16 17:32:01 1897');
-INSERT INTO DATETIME_TBL VALUES ('Feb 16 17:32:01 1997');
-INSERT INTO DATETIME_TBL VALUES ('Feb 16 17:32:01 2097');
-INSERT INTO DATETIME_TBL VALUES ('Feb 28 17:32:01 1996');
-INSERT INTO DATETIME_TBL VALUES ('Feb 29 17:32:01 1996');
-INSERT INTO DATETIME_TBL VALUES ('Mar 01 17:32:01 1996');
-INSERT INTO DATETIME_TBL VALUES ('Dec 30 17:32:01 1996');
-INSERT INTO DATETIME_TBL VALUES ('Dec 31 17:32:01 1996');
-INSERT INTO DATETIME_TBL VALUES ('Jan 01 17:32:01 1997');
-INSERT INTO DATETIME_TBL VALUES ('Feb 28 17:32:01 1997');
-INSERT INTO DATETIME_TBL VALUES ('Feb 29 17:32:01 1997');
-ERROR:  Bad datetime external representation 'Feb 29 17:32:01 1997'
-INSERT INTO DATETIME_TBL VALUES ('Mar 01 17:32:01 1997');
-INSERT INTO DATETIME_TBL VALUES ('Dec 30 17:32:01 1997');
-INSERT INTO DATETIME_TBL VALUES ('Dec 31 17:32:01 1997');
-INSERT INTO DATETIME_TBL VALUES ('Dec 31 17:32:01 1999');
-INSERT INTO DATETIME_TBL VALUES ('Jan 01 17:32:01 2000');
-INSERT INTO DATETIME_TBL VALUES ('Dec 31 17:32:01 2000');
-INSERT INTO DATETIME_TBL VALUES ('Jan 01 17:32:01 2001');
+INSERT INTO TIMESTAMP_TBL VALUES ('1997-06-10 18:32:01 PDT');
+INSERT INTO TIMESTAMP_TBL VALUES ('Feb 10 17:32:01 1997');
+INSERT INTO TIMESTAMP_TBL VALUES ('Feb 11 17:32:01 1997');
+INSERT INTO TIMESTAMP_TBL VALUES ('Feb 12 17:32:01 1997');
+INSERT INTO TIMESTAMP_TBL VALUES ('Feb 13 17:32:01 1997');
+INSERT INTO TIMESTAMP_TBL VALUES ('Feb 14 17:32:01 1997');
+INSERT INTO TIMESTAMP_TBL VALUES ('Feb 15 17:32:01 1997');
+INSERT INTO TIMESTAMP_TBL VALUES ('Feb 16 17:32:01 1997');
+INSERT INTO TIMESTAMP_TBL VALUES ('Feb 16 17:32:01 0097 BC');
+INSERT INTO TIMESTAMP_TBL VALUES ('Feb 16 17:32:01 0097');
+INSERT INTO TIMESTAMP_TBL VALUES ('Feb 16 17:32:01 0597');
+INSERT INTO TIMESTAMP_TBL VALUES ('Feb 16 17:32:01 1097');
+INSERT INTO TIMESTAMP_TBL VALUES ('Feb 16 17:32:01 1697');
+INSERT INTO TIMESTAMP_TBL VALUES ('Feb 16 17:32:01 1797');
+INSERT INTO TIMESTAMP_TBL VALUES ('Feb 16 17:32:01 1897');
+INSERT INTO TIMESTAMP_TBL VALUES ('Feb 16 17:32:01 1997');
+INSERT INTO TIMESTAMP_TBL VALUES ('Feb 16 17:32:01 2097');
+INSERT INTO TIMESTAMP_TBL VALUES ('Feb 28 17:32:01 1996');
+INSERT INTO TIMESTAMP_TBL VALUES ('Feb 29 17:32:01 1996');
+INSERT INTO TIMESTAMP_TBL VALUES ('Mar 01 17:32:01 1996');
+INSERT INTO TIMESTAMP_TBL VALUES ('Dec 30 17:32:01 1996');
+INSERT INTO TIMESTAMP_TBL VALUES ('Dec 31 17:32:01 1996');
+INSERT INTO TIMESTAMP_TBL VALUES ('Jan 01 17:32:01 1997');
+INSERT INTO TIMESTAMP_TBL VALUES ('Feb 28 17:32:01 1997');
+INSERT INTO TIMESTAMP_TBL VALUES ('Feb 29 17:32:01 1997');
+ERROR:  Bad timestamp external representation 'Feb 29 17:32:01 1997'
+INSERT INTO TIMESTAMP_TBL VALUES ('Mar 01 17:32:01 1997');
+INSERT INTO TIMESTAMP_TBL VALUES ('Dec 30 17:32:01 1997');
+INSERT INTO TIMESTAMP_TBL VALUES ('Dec 31 17:32:01 1997');
+INSERT INTO TIMESTAMP_TBL VALUES ('Dec 31 17:32:01 1999');
+INSERT INTO TIMESTAMP_TBL VALUES ('Jan 01 17:32:01 2000');
+INSERT INTO TIMESTAMP_TBL VALUES ('Dec 31 17:32:01 2000');
+INSERT INTO TIMESTAMP_TBL VALUES ('Jan 01 17:32:01 2001');
 -- Currently unsupported syntax and ranges
-INSERT INTO DATETIME_TBL VALUES ('Feb 16 17:32:01 -0097');
-ERROR:  Bad datetime external representation 'Feb 16 17:32:01 -0097'
-INSERT INTO DATETIME_TBL VALUES ('Feb 16 17:32:01 5097 BC');
-ERROR:  Datetime out of range 'Feb 16 17:32:01 5097 BC'
-SELECT '' AS sixtythree, d1 FROM DATETIME_TBL; 
+INSERT INTO TIMESTAMP_TBL VALUES ('Feb 16 17:32:01 -0097');
+ERROR:  Bad timestamp external representation 'Feb 16 17:32:01 -0097'
+INSERT INTO TIMESTAMP_TBL VALUES ('Feb 16 17:32:01 5097 BC');
+ERROR:  Timestamp out of range 'Feb 16 17:32:01 5097 BC'
+SELECT '' AS sixtythree, d1 FROM TIMESTAMP_TBL; 
  sixtythree |               d1                
 ------------+---------------------------------
             | invalid
@@ -193,6 +197,7 @@ SELECT '' AS sixtythree, d1 FROM DATETIME_TBL;
             | Mon Feb 10 17:32:01 1997 PST
             | Mon Feb 10 17:32:01 1997 PST
             | Tue Jun 10 17:32:01 1997 PDT
+            | Tue Feb 15 23:14:30 2000 PST
             | Mon Feb 10 17:32:01 1997 PST
             | Mon Feb 10 17:32:01 1997 PST
             | Mon Feb 10 17:32:00 1997 PST
@@ -235,11 +240,11 @@ SELECT '' AS sixtythree, d1 FROM DATETIME_TBL;
             | Sat Jan 01 17:32:01 2000 PST
             | Sun Dec 31 17:32:01 2000 PST
             | Mon Jan 01 17:32:01 2001 PST
-(61 rows)
+(62 rows)
 
 -- Demonstrate functions and operators
-SELECT '' AS fortythree, d1 FROM DATETIME_TBL
-   WHERE d1 > datetime '1997-01-02' and d1 != datetime 'current';
+SELECT '' AS fortythree, d1 FROM TIMESTAMP_TBL
+   WHERE d1 > timestamp '1997-01-02' and d1 != timestamp 'current';
  fortythree |               d1                
 ------------+---------------------------------
             | infinity
@@ -255,6 +260,7 @@ SELECT '' AS fortythree, d1 FROM DATETIME_TBL
             | Mon Feb 10 17:32:01 1997 PST
             | Mon Feb 10 17:32:01 1997 PST
             | Tue Jun 10 17:32:01 1997 PDT
+            | Tue Feb 15 23:14:30 2000 PST
             | Mon Feb 10 17:32:01 1997 PST
             | Mon Feb 10 17:32:01 1997 PST
             | Mon Feb 10 17:32:00 1997 PST
@@ -284,10 +290,10 @@ SELECT '' AS fortythree, d1 FROM DATETIME_TBL
             | Sat Jan 01 17:32:01 2000 PST
             | Sun Dec 31 17:32:01 2000 PST
             | Mon Jan 01 17:32:01 2001 PST
-(42 rows)
+(43 rows)
 
-SELECT '' AS fifteen, d1 FROM DATETIME_TBL
-   WHERE d1 < datetime '1997-01-02' and d1 != datetime 'current';
+SELECT '' AS fifteen, d1 FROM TIMESTAMP_TBL
+   WHERE d1 < timestamp '1997-01-02' and d1 != timestamp 'current';
  fifteen |              d1              
 ---------+------------------------------
          | -infinity
@@ -307,15 +313,15 @@ SELECT '' AS fifteen, d1 FROM DATETIME_TBL
          | Wed Jan 01 17:32:01 1997 PST
 (15 rows)
 
-SELECT '' AS one, d1 FROM DATETIME_TBL
-   WHERE d1 = datetime '1997-01-02' and d1 != datetime 'current';
+SELECT '' AS one, d1 FROM TIMESTAMP_TBL
+   WHERE d1 = timestamp '1997-01-02' and d1 != timestamp 'current';
  one |              d1              
 -----+------------------------------
      | Thu Jan 02 00:00:00 1997 PST
 (1 row)
 
-SELECT '' AS fiftyeight, d1 FROM DATETIME_TBL
-   WHERE d1 != datetime '1997-01-02' and d1 != datetime 'current';
+SELECT '' AS fiftyeight, d1 FROM TIMESTAMP_TBL
+   WHERE d1 != timestamp '1997-01-02' and d1 != timestamp 'current';
  fiftyeight |               d1                
 ------------+---------------------------------
             | -infinity
@@ -333,6 +339,7 @@ SELECT '' AS fiftyeight, d1 FROM DATETIME_TBL
             | Mon Feb 10 17:32:01 1997 PST
             | Mon Feb 10 17:32:01 1997 PST
             | Tue Jun 10 17:32:01 1997 PDT
+            | Tue Feb 15 23:14:30 2000 PST
             | Mon Feb 10 17:32:01 1997 PST
             | Mon Feb 10 17:32:01 1997 PST
             | Mon Feb 10 17:32:00 1997 PST
@@ -375,10 +382,10 @@ SELECT '' AS fiftyeight, d1 FROM DATETIME_TBL
             | Sat Jan 01 17:32:01 2000 PST
             | Sun Dec 31 17:32:01 2000 PST
             | Mon Jan 01 17:32:01 2001 PST
-(57 rows)
+(58 rows)
 
-SELECT '' AS sixteen, d1 FROM DATETIME_TBL
-   WHERE d1 <= datetime '1997-01-02' and d1 != datetime 'current';
+SELECT '' AS sixteen, d1 FROM TIMESTAMP_TBL
+   WHERE d1 <= timestamp '1997-01-02' and d1 != timestamp 'current';
  sixteen |              d1              
 ---------+------------------------------
          | -infinity
@@ -399,8 +406,8 @@ SELECT '' AS sixteen, d1 FROM DATETIME_TBL
          | Wed Jan 01 17:32:01 1997 PST
 (16 rows)
 
-SELECT '' AS fortyfour, d1 FROM DATETIME_TBL
-   WHERE d1 >= datetime '1997-01-02' and d1 != datetime 'current';
+SELECT '' AS fortyfour, d1 FROM TIMESTAMP_TBL
+   WHERE d1 >= timestamp '1997-01-02' and d1 != timestamp 'current';
  fortyfour |               d1                
 -----------+---------------------------------
            | infinity
@@ -417,6 +424,7 @@ SELECT '' AS fortyfour, d1 FROM DATETIME_TBL
            | Mon Feb 10 17:32:01 1997 PST
            | Mon Feb 10 17:32:01 1997 PST
            | Tue Jun 10 17:32:01 1997 PDT
+           | Tue Feb 15 23:14:30 2000 PST
            | Mon Feb 10 17:32:01 1997 PST
            | Mon Feb 10 17:32:01 1997 PST
            | Mon Feb 10 17:32:00 1997 PST
@@ -446,9 +454,9 @@ SELECT '' AS fortyfour, d1 FROM DATETIME_TBL
            | Sat Jan 01 17:32:01 2000 PST
            | Sun Dec 31 17:32:01 2000 PST
            | Mon Jan 01 17:32:01 2001 PST
-(43 rows)
+(44 rows)
 
-SELECT '' AS sixtythree, d1 + timespan '1 year' AS one_year FROM DATETIME_TBL;
+SELECT '' AS sixtythree, d1 + interval '1 year' AS one_year FROM TIMESTAMP_TBL;
  sixtythree |            one_year             
 ------------+---------------------------------
             | invalid
@@ -470,6 +478,7 @@ SELECT '' AS sixtythree, d1 + timespan '1 year' AS one_year FROM DATETIME_TBL;
             | Tue Feb 10 17:32:01 1998 PST
             | Tue Feb 10 17:32:01 1998 PST
             | Wed Jun 10 17:32:01 1998 PDT
+            | Thu Feb 15 23:14:30 2001 PST
             | Tue Feb 10 17:32:01 1998 PST
             | Tue Feb 10 17:32:01 1998 PST
             | Tue Feb 10 17:32:00 1998 PST
@@ -512,9 +521,9 @@ SELECT '' AS sixtythree, d1 + timespan '1 year' AS one_year FROM DATETIME_TBL;
             | Mon Jan 01 17:32:01 2001 PST
             | Mon Dec 31 17:32:01 2001 PST
             | Tue Jan 01 17:32:01 2002 PST
-(61 rows)
+(62 rows)
 
-SELECT '' AS sixtythree, d1 - timespan '1 year' AS one_year FROM DATETIME_TBL;
+SELECT '' AS sixtythree, d1 - interval '1 year' AS one_year FROM TIMESTAMP_TBL;
  sixtythree |            one_year             
 ------------+---------------------------------
             | invalid
@@ -536,6 +545,7 @@ SELECT '' AS sixtythree, d1 - timespan '1 year' AS one_year FROM DATETIME_TBL;
             | Sat Feb 10 17:32:01 1996 PST
             | Sat Feb 10 17:32:01 1996 PST
             | Mon Jun 10 17:32:01 1996 PDT
+            | Mon Feb 15 23:14:30 1999 PST
             | Sat Feb 10 17:32:01 1996 PST
             | Sat Feb 10 17:32:01 1996 PST
             | Sat Feb 10 17:32:00 1996 PST
@@ -578,13 +588,13 @@ SELECT '' AS sixtythree, d1 - timespan '1 year' AS one_year FROM DATETIME_TBL;
             | Fri Jan 01 17:32:01 1999 PST
             | Fri Dec 31 17:32:01 1999 PST
             | Sat Jan 01 17:32:01 2000 PST
-(61 rows)
+(62 rows)
 
 -- Casting within a BETWEEN qualifier should probably be allowed by the parser. - tgl 97/04/26
---SELECT '' AS fifty, d1 - datetime '1997-01-02' AS diff
---   FROM DATETIME_TBL WHERE d1 BETWEEN datetime '1902-01-01' AND datetime '2038-01-01';
-SELECT '' AS fifty, d1 - datetime '1997-01-02' AS diff
-   FROM DATETIME_TBL WHERE d1 BETWEEN '1902-01-01' AND '2038-01-01';
+--SELECT '' AS fifty, d1 - timestamp '1997-01-02' AS diff
+--   FROM TIMESTAMP_TBL WHERE d1 BETWEEN timestamp '1902-01-01' AND timestamp '2038-01-01';
+SELECT '' AS fifty, d1 - timestamp '1997-01-02' AS diff
+   FROM TIMESTAMP_TBL WHERE d1 BETWEEN '1902-01-01' AND '2038-01-01';
  fifty |                  diff                  
 -------+----------------------------------------
        | @ 9863 days 8 hours ago
@@ -601,6 +611,7 @@ SELECT '' AS fifty, d1 - datetime '1997-01-02' AS diff
        | @ 39 days 17 hours 32 mins 1 sec
        | @ 39 days 17 hours 32 mins 1 sec
        | @ 159 days 16 hours 32 mins 1 sec
+       | @ 1139 days 23 hours 14 mins 30 secs
        | @ 39 days 17 hours 32 mins 1 sec
        | @ 39 days 17 hours 32 mins 1 sec
        | @ 39 days 17 hours 32 mins
@@ -635,12 +646,12 @@ SELECT '' AS fifty, d1 - datetime '1997-01-02' AS diff
        | @ 1094 days 17 hours 32 mins 1 sec
        | @ 1459 days 17 hours 32 mins 1 sec
        | @ 1460 days 17 hours 32 mins 1 sec
-(48 rows)
+(49 rows)
 
 SELECT '' AS fortynine, date_part( 'year', d1) AS year, date_part( 'month', d1) AS month,
    date_part( 'day', d1) AS day, date_part( 'hour', d1) AS hour,
    date_part( 'minute', d1) AS minute, date_part( 'second', d1) AS second
-   FROM DATETIME_TBL WHERE d1 BETWEEN '1902-01-01' AND '2038-01-01';
+   FROM TIMESTAMP_TBL WHERE d1 BETWEEN '1902-01-01' AND '2038-01-01';
  fortynine | year | month | day | hour | minute |  second  
 -----------+------+-------+-----+------+--------+----------
            | 1969 |    12 |  31 |   16 |      0 |        0
@@ -657,6 +668,7 @@ SELECT '' AS fortynine, date_part( 'year', d1) AS year, date_part( 'month', d1) 
            | 1997 |     2 |  10 |   17 |     32 |        1
            | 1997 |     2 |  10 |   17 |     32 |        1
            | 1997 |     6 |  10 |   17 |     32 |        1
+           | 2000 |     2 |  15 |   23 |     14 |       30
            | 1997 |     2 |  10 |   17 |     32 |        1
            | 1997 |     2 |  10 |   17 |     32 |        1
            | 1997 |     2 |  10 |   17 |     32 |        0
@@ -691,11 +703,11 @@ SELECT '' AS fortynine, date_part( 'year', d1) AS year, date_part( 'month', d1) 
            | 2000 |     1 |   1 |   17 |     32 |        1
            | 2000 |    12 |  31 |   17 |     32 |        1
            | 2001 |     1 |   1 |   17 |     32 |        1
-(48 rows)
+(49 rows)
 
 SELECT '' AS fortynine, date_part( 'quarter', d1) AS quarter, date_part( 'msec', d1) AS msec,
    date_part( 'usec', d1) AS usec
-   FROM DATETIME_TBL WHERE d1 BETWEEN '1902-01-01' AND '2038-01-01';
+   FROM TIMESTAMP_TBL WHERE d1 BETWEEN '1902-01-01' AND '2038-01-01';
  fortynine | quarter |         msec         |       usec        
 -----------+---------+----------------------+-------------------
            |       4 |                    0 |                 0
@@ -723,6 +735,7 @@ SELECT '' AS fortynine, date_part( 'quarter', d1) AS quarter, date_part( 'msec',
            |       1 |                    0 |                 0
            |       1 |                    0 |                 0
            |       1 |                    0 |                 0
+           |       1 |                    0 |                 0
            |       2 |                    0 |                 0
            |       1 |                    0 |                 0
            |       1 |                    0 |                 0
@@ -746,5 +759,5 @@ SELECT '' AS fortynine, date_part( 'quarter', d1) AS quarter, date_part( 'msec',
            |       1 |                    0 |                 0
            |       4 |                    0 |                 0
            |       1 |                    0 |                 0
-(48 rows)
+(49 rows)
 

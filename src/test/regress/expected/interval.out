@@ -1,24 +1,24 @@
 --
--- TIMESPAN
+-- INTERVAL
 --
-CREATE TABLE TIMESPAN_TBL (f1 timespan);
-INSERT INTO TIMESPAN_TBL (f1) VALUES ('@ 1 minute');
-INSERT INTO TIMESPAN_TBL (f1) VALUES ('@ 5 hour');
-INSERT INTO TIMESPAN_TBL (f1) VALUES ('@ 10 day');
-INSERT INTO TIMESPAN_TBL (f1) VALUES ('@ 34 year');
-INSERT INTO TIMESPAN_TBL (f1) VALUES ('@ 3 months');
-INSERT INTO TIMESPAN_TBL (f1) VALUES ('@ 14 seconds ago');
-INSERT INTO TIMESPAN_TBL (f1) VALUES ('1 day 2 hours 3 minutes 4 seconds');
-INSERT INTO TIMESPAN_TBL (f1) VALUES ('6 years');
-INSERT INTO TIMESPAN_TBL (f1) VALUES ('5 months');
-INSERT INTO TIMESPAN_TBL (f1) VALUES ('5 months 12 hours');
--- badly formatted timespan
-INSERT INTO TIMESPAN_TBL (f1) VALUES ('badly formatted timespan');
-ERROR:  Bad timespan external representation 'badly formatted timespan'
-INSERT INTO TIMESPAN_TBL (f1) VALUES ('@ 30 eons ago');
-ERROR:  Bad timespan external representation '@ 30 eons ago'
--- test timespan operators
-SELECT '' AS ten, TIMESPAN_TBL.*;
+CREATE TABLE INTERVAL_TBL (f1 interval);
+INSERT INTO INTERVAL_TBL (f1) VALUES ('@ 1 minute');
+INSERT INTO INTERVAL_TBL (f1) VALUES ('@ 5 hour');
+INSERT INTO INTERVAL_TBL (f1) VALUES ('@ 10 day');
+INSERT INTO INTERVAL_TBL (f1) VALUES ('@ 34 year');
+INSERT INTO INTERVAL_TBL (f1) VALUES ('@ 3 months');
+INSERT INTO INTERVAL_TBL (f1) VALUES ('@ 14 seconds ago');
+INSERT INTO INTERVAL_TBL (f1) VALUES ('1 day 2 hours 3 minutes 4 seconds');
+INSERT INTO INTERVAL_TBL (f1) VALUES ('6 years');
+INSERT INTO INTERVAL_TBL (f1) VALUES ('5 months');
+INSERT INTO INTERVAL_TBL (f1) VALUES ('5 months 12 hours');
+-- badly formatted interval
+INSERT INTO INTERVAL_TBL (f1) VALUES ('badly formatted interval');
+ERROR:  Bad interval external representation 'badly formatted interval'
+INSERT INTO INTERVAL_TBL (f1) VALUES ('@ 30 eons ago');
+ERROR:  Bad interval external representation '@ 30 eons ago'
+-- test interval operators
+SELECT '' AS ten, INTERVAL_TBL.*;
  ten |              f1               
 -----+-------------------------------
      | @ 1 min
@@ -33,8 +33,8 @@ SELECT '' AS ten, TIMESPAN_TBL.*;
      | @ 5 mons 12 hours
 (10 rows)
 
-SELECT '' AS nine, TIMESPAN_TBL.*
-   WHERE TIMESPAN_TBL.f1 <> timespan '@ 10 days';
+SELECT '' AS nine, INTERVAL_TBL.*
+   WHERE INTERVAL_TBL.f1 <> interval '@ 10 days';
  nine |              f1               
 ------+-------------------------------
       | @ 1 min
@@ -48,8 +48,8 @@ SELECT '' AS nine, TIMESPAN_TBL.*
       | @ 5 mons 12 hours
 (9 rows)
 
-SELECT '' AS three, TIMESPAN_TBL.*
-   WHERE TIMESPAN_TBL.f1 <= timespan '@ 5 hours';
+SELECT '' AS three, INTERVAL_TBL.*
+   WHERE INTERVAL_TBL.f1 <= interval '@ 5 hours';
  three |      f1       
 -------+---------------
        | @ 1 min
@@ -57,8 +57,8 @@ SELECT '' AS three, TIMESPAN_TBL.*
        | @ 14 secs ago
 (3 rows)
 
-SELECT '' AS three, TIMESPAN_TBL.*
-   WHERE TIMESPAN_TBL.f1 < timespan '@ 1 day';
+SELECT '' AS three, INTERVAL_TBL.*
+   WHERE INTERVAL_TBL.f1 < interval '@ 1 day';
  three |      f1       
 -------+---------------
        | @ 1 min
@@ -66,15 +66,15 @@ SELECT '' AS three, TIMESPAN_TBL.*
        | @ 14 secs ago
 (3 rows)
 
-SELECT '' AS one, TIMESPAN_TBL.*
-   WHERE TIMESPAN_TBL.f1 = timespan '@ 34 years';
+SELECT '' AS one, INTERVAL_TBL.*
+   WHERE INTERVAL_TBL.f1 = interval '@ 34 years';
  one |     f1     
 -----+------------
      | @ 34 years
 (1 row)
 
-SELECT '' AS five, TIMESPAN_TBL.* 
-   WHERE TIMESPAN_TBL.f1 >= timespan '@ 1 month';
+SELECT '' AS five, INTERVAL_TBL.* 
+   WHERE INTERVAL_TBL.f1 >= interval '@ 1 month';
  five |        f1         
 ------+-------------------
       | @ 34 years
@@ -84,8 +84,8 @@ SELECT '' AS five, TIMESPAN_TBL.*
       | @ 5 mons 12 hours
 (5 rows)
 
-SELECT '' AS nine, TIMESPAN_TBL.*
-   WHERE TIMESPAN_TBL.f1 > timespan '@ 3 seconds ago';
+SELECT '' AS nine, INTERVAL_TBL.*
+   WHERE INTERVAL_TBL.f1 > interval '@ 3 seconds ago';
  nine |              f1               
 ------+-------------------------------
       | @ 1 min
@@ -100,7 +100,7 @@ SELECT '' AS nine, TIMESPAN_TBL.*
 (9 rows)
 
 SELECT '' AS fortyfive, r1.*, r2.*
-   FROM TIMESPAN_TBL r1, TIMESPAN_TBL r2
+   FROM INTERVAL_TBL r1, INTERVAL_TBL r2
    WHERE r1.f1 > r2.f1
    ORDER BY r1.f1, r2.f1;
  fortyfive |              f1               |              f1               
