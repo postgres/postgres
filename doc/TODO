@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Jan 22 17:14:43 EST 2002
+Last updated:		Tue Jan 22 17:22:16 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -387,7 +387,8 @@ LOCKING
 
 * Make locking of shared data structures more fine-grained
 * Add code to detect an SMP machine and handle spinlocks accordingly
-  http://www1.distributed.net/source, in client/common/cpucheck.cpp
+  from distributted.net, http://www1.distributed.net/source, 
+  in client/common/cpucheck.cpp
 * Research use of sched_yield() for spinlock acquisition failure
 * -Improve spinlock code [performance] (Tom)
 
