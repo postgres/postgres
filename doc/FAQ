@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Mon Jan 31 19:18:44 EST 2005
+   Last updated: Mon Jan 31 20:35:58 EST 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -445,16 +445,12 @@
     PostgreSQL releases?
     
    The PostgreSQL team makes only small changes between minor releases,
-   so upgrading from 7.2 to 7.2.1 does not require a dump and restore.
-   However, major releases (e.g. from 7.2 to 7.3) often change the
+   so upgrading from 7.4 to 7.4.1 does not require a dump and restore.
+   However, major releases (e.g. from 7.3 to 7.4) often change the
    internal format of system tables and data files. These changes are
-   often complex, so we don't maintain backward compatability for data
+   often complex, so we don't maintain backward compatibility for data
    files. A dump outputs data in a generic format that can then be loaded
    in using the new internal format.
-   
-   In releases where the on-disk format does not change, the pg_upgrade
-   script can be used to upgrade without a dump/restore. The release
-   notes mention whether pg_upgrade is available for the release.
    
     3.8) What computer hardware should I use?
     
@@ -471,13 +467,10 @@
                                       
     4.1) How do I SELECT only the first few rows of a query? A random row?
     
-   See the FETCH manual page, or use SELECT ... LIMIT....
-   
-   The entire query may have to be evaluated, even if you only want the
-   first few rows. Consider using a query that has an ORDER BY. If there
-   is an index that matches the ORDER BY, PostgreSQL may be able to
-   evaluate only the first few records requested, or the entire query may
-   have to be evaluated until the desired rows have been generated.
+   To retrieve only a few rows, if you know at the number of rows needed
+   at the time of the SELECT use LIMIT . If an index matches the ORDER BY
+   it is possible the entire query does not have to be executed. If you
+   don't know the number of rows at SELECT time, use a cursor and FETCH.
    
    To SELECT a random row, use:
     SELECT col

@@ -10,7 +10,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Mon Jan 31 19:18:44 EST 2005</P>
+    <P>Last updated: Mon Jan 31 20:35:58 EST 2005</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)
@@ -590,17 +590,12 @@
     to upgrade between major PostgreSQL releases?</H4>
 
     <P>The PostgreSQL team makes only small changes between minor releases,
-    so upgrading from 7.2 to 7.2.1 does not require a dump and restore.
-    However, major releases (e.g. from 7.2 to 7.3) often change the internal
+    so upgrading from 7.4 to 7.4.1 does not require a dump and restore.
+    However, major releases (e.g. from 7.3 to 7.4) often change the internal
     format of system tables and data files. These changes are often complex,
-    so we don't maintain backward compatability for data files. A dump outputs
+    so we don't maintain backward compatibility for data files. A dump outputs
     data in a generic format that can then be loaded in using the new internal
     format.</P>
-
-    <P>In releases where the on-disk format does not change, the
-    <I>pg_upgrade</I> script can be used to upgrade without a dump/restore.
-    The release notes mention whether <I>pg_upgrade</I> is available for the
-    release.</P>
 
     <H4><A name="3.8">3.8</A>) What computer hardware should I use?</H4>
 
@@ -619,15 +614,13 @@
     <H4><A name="4.1">4.1</A>) How do I <SMALL>SELECT</SMALL> only the
     first few rows of a query?  A random row?</H4>
 
-    <P>See the <SMALL>FETCH</SMALL> manual page, or use
-    <SMALL>SELECT</SMALL> ... <SMALL>LIMIT</SMALL>....</P>
-
-    <P>The entire query may have to be evaluated, even if you only want
-    the first few rows. Consider using a query that has an <SMALL>ORDER
-    BY</SMALL>. If there is an index that matches the <SMALL>ORDER
-    BY</SMALL>, PostgreSQL may be able to evaluate only the first few
-    records requested, or the entire query may have to be evaluated
-    until the desired rows have been generated.</P>
+    <P>To retrieve only a few rows, if you know at the number of rows
+    needed at the time of the <SMALL>SELECT</SMALL> use
+    <SMALL>LIMIT</SMALL> . If an index matches the <SMALL>ORDER
+    BY</SMALL> it is possible the entire query does not have to be
+    executed. If you don't know the number of rows at
+    <SMALL>SELECT</SMALL> time, use a cursor and
+    <SMALL>FETCH</SMALL>.</P>
 
     <P>To <SMALL>SELECT</SMALL> a random row, use:
 <PRE>
