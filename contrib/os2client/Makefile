@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/contrib/os2client/Attic/Makefile,v 1.1 1998/10/31 04:10:52 scrappy Exp $
+#    $Header: /cvsroot/pgsql/contrib/os2client/Attic/Makefile,v 1.2 2000/03/19 21:59:30 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -39,7 +39,7 @@ OBJS= fe-auth.o fe-connect.o fe-exec.o fe-misc.o fe-lobj.o fe-print.o \
 
 EXEOBJS= psql.o stringutils.o
 
-all: libpq.a c.h psql
+all: libpq.a psql
 
 fe-auth.o: $(INTERFACES)/fe-auth.c
 	$(CC) $(CFLAGS) -c $(INTERFACES)/fe-auth.c
@@ -81,11 +81,6 @@ psql.o: $(SRCDIR)/bin/psql/psql.c
 stringutils.o: $(SRCDIR)/bin/psql/stringutils.c
 	$(CC) $(CFLAGS) -I$(INTERFACES) -c $(SRCDIR)/bin/psql/stringutils.c
 
-c.h: $(SRCDIR)/include/c.h
-	rm -f c.h
-	$(CP) portname c.h
-	cat $(SRCDIR)/include/c.h >> c.h
-
 clean:
-	rm -f libpq.a $(OBJS) $(EXEOBJS) psql.exe c.h dllist.c pqcomprim.c
+	rm -f libpq.a $(OBJS) $(EXEOBJS) psql.exe dllist.c pqcomprim.c
 
