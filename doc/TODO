@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Jul 20 10:29:50 EDT 2001
+Last updated:		Fri Jul 20 10:31:21 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -191,11 +191,11 @@ CLIENTS
 
 * -Make NULL's come out at the beginning or end depending on the
   ORDER BY direction (Tom)
-* have pg_dump use LEFT OUTER JOIN in multi-table SELECTs
+* Have pg_dump use LEFT OUTER JOIN in multi-table SELECTs
   or multiple SELECTS to avoid bad system catalog entries
-* allow psql \d to show foreign keys
-* allow psql \d to show temporary table structure
-* add XML interface capability
+* Allow psql \d to show foreign keys
+* Allow psql \d to show temporary table structure
+* Add XML interface:  psql, pg_dump, COPY, separate server (?)
 * Fix libpq to properly handle socket failures under native MS Win32 [libpq]
 * JDBC
 	o Comprehensive test suite. This may be available already.
