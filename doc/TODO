@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Jan 26 17:17:42 EST 2001
+Last updated:		Fri Jan 26 23:42:46 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -324,8 +324,9 @@ SOURCE CODE
 * Remove unused pg_variable, pg_inheritproc, pg_ipl tables
 * Experiment with multi-threaded backend [thread]
 * Fix problems with libpq non-blocking/async code [async]
-* Merge global and template BKI files
+* Merge global and template BKI files (Peter)
 * Fix username/password length limits in all areas
+* Remove compile-time upper limit on number of backends (MAXBACKENDS) (Tom)
 
 ---------------------------------------------------------------------------
 
