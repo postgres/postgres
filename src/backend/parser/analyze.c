@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.290 2003/10/02 06:32:45 petere Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.291 2003/11/05 22:00:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2821,6 +2821,12 @@ CheckSelectForUpdate(Query *qry)
 			 errmsg("SELECT FOR UPDATE is not allowed with aggregate functions")));
 }
 
+/*
+ * Convert FOR UPDATE name list into rowMarks list of integer relids
+ *
+ * NB: if you need to change this, see also markQueryForUpdate()
+ * in rewriteHandler.c.
+ */
 static void
 transformForUpdate(Query *qry, List *forUpdate)
 {
@@ -2833,23 +2839,30 @@ transformForUpdate(Query *qry, List *forUpdate)
 
 	if (lfirst(forUpdate) == NULL)
 	{
-		/* all tables used in query */
+		/* all regular tables used in query */
 		i = 0;
 		foreach(rt, qry->rtable)
 		{
 			RangeTblEntry *rte = (RangeTblEntry *) lfirst(rt);
 
 			++i;
-			if (rte->rtekind == RTE_SUBQUERY)
+			switch (rte->rtekind)
 			{
-				/* FOR UPDATE of subquery is propagated to subquery's rels */
-				transformForUpdate(rte->subquery, makeList1(NULL));
-			}
-			else
-			{
-				if (!intMember(i, rowMarks))	/* avoid duplicates */
-					rowMarks = lappendi(rowMarks, i);
-				rte->checkForWrite = true;
+				case RTE_RELATION:
+					if (!intMember(i, rowMarks))	/* avoid duplicates */
+						rowMarks = lappendi(rowMarks, i);
+					rte->checkForWrite = true;
+					break;
+				case RTE_SUBQUERY:
+					/*
+					 * FOR UPDATE of subquery is propagated to subquery's
+					 * rels
+					 */
+					transformForUpdate(rte->subquery, makeList1(NULL));
+					break;
+				default:
+					/* ignore JOIN, SPECIAL, FUNCTION RTEs */
+					break;
 			}
 		}
 	}
@@ -2868,18 +2881,41 @@ transformForUpdate(Query *qry, List *forUpdate)
 				++i;
 				if (strcmp(rte->eref->aliasname, relname) == 0)
 				{
-					if (rte->rtekind == RTE_SUBQUERY)
+					switch (rte->rtekind)
 					{
-						/* propagate to subquery */
-						transformForUpdate(rte->subquery, makeList1(NULL));
+						case RTE_RELATION:
+							if (!intMember(i, rowMarks)) /* avoid duplicates */
+								rowMarks = lappendi(rowMarks, i);
+							rte->checkForWrite = true;
+							break;
+						case RTE_SUBQUERY:
+							/*
+							 * FOR UPDATE of subquery is propagated to
+							 * subquery's rels
+							 */
+							transformForUpdate(rte->subquery, makeList1(NULL));
+							break;
+						case RTE_JOIN:
+							ereport(ERROR,
+									(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+									 errmsg("SELECT FOR UPDATE cannot be applied to a join")));
+							break;
+						case RTE_SPECIAL:
+							ereport(ERROR,
+									(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+									 errmsg("SELECT FOR UPDATE cannot be applied to NEW or OLD")));
+							break;
+						case RTE_FUNCTION:
+							ereport(ERROR,
+									(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+									 errmsg("SELECT FOR UPDATE cannot be applied to a function")));
+							break;
+						default:
+							elog(ERROR, "unrecognized RTE type: %d",
+								 (int) rte->rtekind);
+							break;
 					}
-					else
-					{
-						if (!intMember(i, rowMarks))	/* avoid duplicates */
-							rowMarks = lappendi(rowMarks, i);
-						rte->checkForWrite = true;
-					}
-					break;
+					break;		/* out of foreach loop */
 				}
 			}
 			if (rt == NIL)

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.91 2003/09/25 06:58:00 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.92 2003/11/05 22:00:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,14 +91,6 @@ add_base_rels_to_query(Query *root, Node *jtnode)
 
 		add_base_rels_to_query(root, j->larg);
 		add_base_rels_to_query(root, j->rarg);
-
-		/*
-		 * Safety check: join RTEs should not be SELECT FOR UPDATE targets
-		 */
-		if (intMember(j->rtindex, root->rowMarks))
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			   errmsg("SELECT FOR UPDATE cannot be applied to a join")));
 	}
 	else
 		elog(ERROR, "unrecognized node type: %d",
