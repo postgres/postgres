@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.5 1996/10/20 22:04:41 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.6 1996/10/21 07:18:08 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -156,7 +156,7 @@ fastgetiattr(IndexTuple tup,
 	     bool *isnull)
 {
     register char		*tp;		/* ptr to att in tuple */
-    register char		*bp;		/* ptr to att in tuple */
+    register char		*bp = NULL;	/* ptr to att in tuple */
     int 			slow;		/* do we have to walk nulls? */
     register int		data_off;	/* tuple data offset */
     
