@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/run_check.sh,v 1.23 2000/07/09 13:19:24 petere Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/run_check.sh,v 1.24 2000/07/13 16:08:01 petere Exp $
 
 # ----------
 # Check call syntax
@@ -43,7 +43,7 @@ export PGPORT
 # otherwise feel free to cover your platform here as well.
 if [ "$LD_LIBRARY_PATH" ]; then
 	old_LD_LIBRARY_PATH="$LD_LIBRARY_PATH"
-	LD_LIBRARY_PATH="$LIBDIR:$old_LD_LIBARY_PATH"
+	LD_LIBRARY_PATH="$LIBDIR:$old_LD_LIBRARY_PATH"
 else
 	LD_LIBRARY_PATH="$LIBDIR"
 fi
