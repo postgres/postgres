@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/dropuser,v 1.10 2000/11/25 19:05:44 petere Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/dropuser,v 1.11 2001/01/21 05:16:45 momjian Exp $
 #
 # Note - this should NOT be setuid.
 #
@@ -134,7 +134,7 @@ if [ "$forcedel" = f ]; then
 fi
 
 
-DelUser=`echo $DelUser | sed 's/\"/\\\"/g'`
+DelUser=`echo "$DelUser" | sed 's/\"/\\\"/g'`
 
 ${PATHNAME}psql $PSQLOPT -d template1 -c "DROP USER \"$DelUser\""
 

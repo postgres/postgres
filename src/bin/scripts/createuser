@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createuser,v 1.15 2000/11/25 19:05:44 petere Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createuser,v 1.16 2001/01/21 05:16:45 momjian Exp $
 #
 # Note - this should NOT be setuid.
 #
@@ -97,13 +97,13 @@ do
 		CanAddUser=f
 		;;
         --sysid|-i)
-                SysID=$2
+                SysID="$2"
                 shift;;
         --sysid=*)
-                SysID=`echo $1 | sed 's/^--sysid=//'`
+                SysID=`echo "$1" | sed 's/^--sysid=//'`
                 ;;
         -i*)
-                SysID=`echo $1 | sed 's/^-i//'`
+                SysID=`echo "$1" | sed 's/^-i//'`
                 ;;
 	--pwprompt|--pw|-P)
 		PwPrompt=t
@@ -114,7 +114,7 @@ do
 		exit 1
 		;;
          *)
-		NewUser=$1
+		NewUser="$1"
 		;;
     esac
     shift;
@@ -182,14 +182,14 @@ if [ "$PwPrompt" ]; then
             echo "Passwords didn't match." 1>&2
             exit 1
         fi
-	Password=$FirstPw
+	Password="$FirstPw"
 fi
 
 if [ -z "$CanCreateDb" ]; then
 	$ECHO_N "Shall the new user be allowed to create databases? (y/n) "$ECHO_C
 	read REPLY
 	[ $? -ne 0 ] && exit 1
-	if [ $REPLY = "y" -o $REPLY = "Y" ]; then
+	if [ "$REPLY" = "y" -o "$REPLY" = "Y" ]; then
 		CanCreateDb=t
 	else
 		CanCreateDb=f
@@ -200,7 +200,7 @@ if [ -z "$CanAddUser" ]; then
 	$ECHO_N "Shall the new user be allowed to create more new users? (y/n) "$ECHO_C
 	read REPLY
 	[ $? -ne 0 ] && exit 1
-	if [ $REPLY = "y" -o $REPLY = "Y" ]; then
+	if [ "$REPLY" = "y" -o "$REPLY" = "Y" ]; then
 		CanAddUser=t
 	else
 		CanAddUser=f
@@ -211,8 +211,8 @@ fi
 #
 # build SQL command
 #
-NewUser=`echo $NewUser | sed 's/\"/\\\"/g'`
-Password=`echo $Password | sed 's/\"/\\\"/g'`
+NewUser=`echo "$NewUser" | sed 's/\"/\\\"/g'`
+Password=`echo "$Password" | sed 's/\"/\\\"/g'`
 
 QUERY="CREATE USER \"$NewUser\""
 

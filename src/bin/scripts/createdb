@@ -11,7 +11,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createdb,v 1.12 2000/11/25 19:05:44 petere Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createdb,v 1.13 2001/01/21 05:16:45 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -73,19 +73,19 @@ do
 		dbpath="$2"
 		shift;;
         -D*)
-                dbpath=`echo $1 | sed 's/^-D//'`
+                dbpath=`echo "$1" | sed 's/^-D//'`
                 ;;
         --location=*)
-                dbpath=`echo $1 | sed 's/^--location=//'`
+                dbpath=`echo "$1" | sed 's/^--location=//'`
                 ;;
 	--encoding|-E)
-		MB=$2
+		MB="$2"
 		shift;;
         -E*)
-                MB=`echo $1 | sed 's/^-E//'`
+                MB=`echo "$1" | sed 's/^-E//'`
                 ;;
         --encoding=*)
-                MB=`echo $1 | sed 's/^--encoding=//'`
+                MB=`echo "$1" | sed 's/^--encoding=//'`
                 ;;
 	-*)
 		echo "$CMDNAME: invalid option: $1" 1>&2
@@ -138,7 +138,7 @@ fi
 
 if [ -z "$dbname" ]; then
         if [ "$PGUSER" ]; then
-                dbname=$PGUSER
+                dbname="$PGUSER"
         else
                 dbname=`${PATHNAME}pg_id -u -n`
         fi
@@ -147,8 +147,8 @@ fi
 
 
 # escape the quotes
-dbpath=`echo $dbpath | sed "s/'/\\\\\'/g"`
-dbname=`echo $dbname | sed 's/\"/\\\"/g'`
+dbpath=`echo "$dbpath" | sed "s/'/\\\\\'/g"`
+dbname=`echo "$dbname" | sed 's/\"/\\\"/g'`
 
 withstring=
 [ "$dbpath" ] &&     withstring="$withstring LOCATION = '$dbpath'"
@@ -164,7 +164,7 @@ fi
 # Insert comment as well, if requested
 [ -z "$dbcomment" ] && exit 0
 
-dbcomment=`echo $dbcomment | sed "s/'/\\\\\'/g"`
+dbcomment=`echo "$dbcomment" | sed "s/'/\\\\\'/g"`
 
 ${PATHNAME}psql $PSQLOPT -d template1 -c "COMMENT ON DATABASE \"$dbname\" IS '$dbcomment'"
 if [ $? -ne 0 ]; then

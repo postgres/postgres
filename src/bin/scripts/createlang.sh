@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createlang.sh,v 1.21 2000/11/25 19:05:44 petere Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createlang.sh,v 1.22 2001/01/21 05:16:45 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -81,20 +81,20 @@ do
 		dbname="$2"
 		shift;;
         -d*)
-                dbname=`echo $1 | sed 's/^-d//'`
+                dbname=`echo "$1" | sed 's/^-d//'`
                 ;;
         --dbname=*)
-                dbname=`echo $1 | sed 's/^--dbname=//'`
+                dbname=`echo "$1" | sed 's/^--dbname=//'`
                 ;;
 # misc options
 	--pglib|-L)
                 PGLIB="$2"
                 shift;;
         -L*)
-                PGLIB=`echo $1 | sed 's/^-L//'`
+                PGLIB=`echo "$1" | sed 's/^-L//'`
                 ;;
         --pglib=*)
-                PGLIB=`echo $1 | sed 's/^--pglib=//'`
+                PGLIB=`echo "$1" | sed 's/^--pglib=//'`
                 ;;
 
 	-*)
