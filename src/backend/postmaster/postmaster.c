@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.154 2000/07/09 13:14:05 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.155 2000/07/12 17:38:42 petere Exp $
  *
  * NOTES
  *
@@ -280,11 +280,6 @@ void		GetCharSetByHost(char *, int, char *);
 
 #endif
 
-#ifdef USE_ASSERT_CHECKING
-
-int			assert_enabled = 1;
-
-#endif
 
 static void
 checkDataDir(const char *DataDir)
@@ -387,13 +382,46 @@ PostmasterMain(int argc, char *argv[])
 	 * will occur.
 	 */
 	opterr = 1;
-	while ((opt = getopt(argc, argv, "A:a:B:b:D:d:Film:MN:no:p:Ss-:")) != EOF)
+	while ((opt = getopt(argc, argv, "A:a:B:b:D:d:Film:MN:no:p:Ss-:?")) != EOF)
 	{
-		if (opt == 'D')
+		switch(opt)
 		{
-			if (DataDir)
-				free(DataDir);
-			DataDir = strdup(optarg);
+			case 'D':
+				if (DataDir)
+					free(DataDir);
+				DataDir = strdup(optarg);
+				break;
+
+			case '-':
+			{
+				char *name, *value;
+			
+				ParseLongOption(optarg, &name, &value);
+				if (strcmp(name, "help")==0)
+				{
+					usage(progname);
+					exit(0);
+				}
+				else if (strcmp(name, "version")==0)
+				{
+					puts("postmaster (PostgreSQL) " PG_VERSION);
+					exit(0);
+				}
+				break;
+			}
+
+			case '?':
+				if (strcmp(argv[optind - 1], "-?") == 0)
+				{
+					usage(progname);
+					exit(0);
+				}
+				else
+				{
+					fprintf(stderr, "Try -? for help.\n");
+					exit(1);
+				}
+				break;
 		}
 	}
 
@@ -403,21 +431,15 @@ PostmasterMain(int argc, char *argv[])
 	ProcessConfigFile(PGC_POSTMASTER);
 
 	IgnoreSystemIndexes(false);
-	while ((opt = getopt(argc, argv, "A:a:B:b:D:d:Film:MN:no:p:Ss-:")) != EOF)
+	while ((opt = getopt(argc, argv, "A:a:B:b:D:d:Film:MN:no:p:Ss-:?")) != EOF)
 	{
 		switch (opt)
 		{
 			case 'A':
 #ifndef USE_ASSERT_CHECKING
-				fprintf(stderr, "Assert checking is not enabled\n");
+				fprintf(stderr, "Assert checking is not compiled in\n");
 #else
-
-				/*
-				 * Pass this option also to each backend.
-				 */
 				assert_enabled = atoi(optarg);
-				strcat(ExtraOptions, " -A ");
-				strcat(ExtraOptions, optarg);
 #endif
 				break;
 			case 'a':
@@ -525,11 +547,21 @@ PostmasterMain(int argc, char *argv[])
 					free(value);
 				break;
 			}
+
 			default:
-				/* usage() never returns */
-				usage(progname);
-				break;
+				/* shouldn't get here */
+				fprintf(stderr, "Try -? for help.\n");
+				exit(1);
 		}
+	}
+
+	/*
+	 * Non-option switch arguments don't exist.
+	 */
+	if (optind < argc)
+	{
+		fprintf(stderr, "%s: invalid argument -- %s\n", progname, argv[optind]);
+		exit(1);
 	}
 
 	/*
@@ -543,7 +575,7 @@ PostmasterMain(int argc, char *argv[])
 		 * for lack of buffers.  The specific choices here are somewhat
 		 * arbitrary.
 		 */
-		fprintf(stderr, "%s: -B must be at least twice -N and at least 16.\n",
+		fprintf(stderr, "%s: The number of buffers (-B) must be at least twice the number of allowed connections (-N) and at least 16.\n",
 				progname);
 		exit(1);
 	}
@@ -717,30 +749,43 @@ pmdaemonize(int argc, char *argv[])
 	on_proc_exit(UnlinkPidFile, NULL);
 }
 
+
+
+/*
+ * Print out help message
+ */
 static void
 usage(const char *progname)
 {
-	fprintf(stderr, "usage: %s [options]\n", progname);
+	printf("%s is the PostgreSQL server.\n\n", progname);
+	printf("Usage:\n  %s [options]\n\n", progname);
+	printf("Options:\n");
 #ifdef USE_ASSERT_CHECKING
-	fprintf(stderr, "\t-A [1|0]\tenable/disable runtime assert checking\n");
+	printf("  -A 1|0          enable/disable runtime assert checking\n");
 #endif
-	fprintf(stderr, "\t-B nbufs\tset number of shared buffers\n");
-	fprintf(stderr, "\t-D datadir\tset data directory\n");
-	fprintf(stderr, "\t-S \t\tsilent mode (disassociate from tty)\n");
-	fprintf(stderr, "\t-a system\tuse this authentication system\n");
-	fprintf(stderr, "\t-b backend\tuse a specific backend server executable\n");
-	fprintf(stderr, "\t-d [1-5]\tset debugging level\n");
-	fprintf(stderr, "\t-i \t\tlisten on TCP/IP sockets as well as Unix domain socket\n");
+	printf("  -B <buffers>    number of shared buffers\n");
+	printf("  -d 1-5          debugging level\n");
+	printf("  -D <directory>  database directory\n");
+	printf("  -F              turn fsync off\n");
+	printf("  -i              listen on TCP/IP sockets\n");
 #ifdef USE_SSL
-	fprintf(stderr, " \t-l \t\tfor TCP/IP sockets, listen only on SSL connections\n");
+	printf("  -l              listen only on SSL connections (EXPERIMENTAL)\n");
 #endif
-	fprintf(stderr, "\t-N nprocs\tset max number of backends (1..%d, default %d)\n",
+	printf("  -N <number>     maximum number of allowed connections (1..%d, default %d)\n",
 			MAXBACKENDS, DEF_MAXBACKENDS);
-	fprintf(stderr, "\t-n \t\tdon't reinitialize shared memory after abnormal exit\n");
-	fprintf(stderr, "\t-o option\tpass 'option' to each backend servers\n");
-	fprintf(stderr, "\t-p port\tspecify port for postmaster to listen on\n");
-	fprintf(stderr, "\t-s \t\tsend SIGSTOP to all backend servers if one dies\n");
-	exit(1);
+	printf("  -o <option>     pass `option' to each backend server\n");
+	printf("  -p <port>       port number to listen on\n");
+	printf("  -S              silent mode (dissociate from tty)\n");
+
+	printf("\nDeveloper options:\n");
+	printf("  -n              don't reinitialize shared memory after abnormal exit\n");
+	printf("  -s              send SIGSTOP to all backend servers if one dies\n");
+
+	printf("\nPlease read the documentation for the complete list of runtime\n"
+		   "configuration settings and how to set them on the command line or in\n"
+		   "the configuration file.\n\n");
+
+	printf("Report bugs to <pgsql-bugs@postgresql.org>.\n");
 }
 
 static int
@@ -1231,7 +1276,7 @@ reset_shared(int port)
 
 
 /*
- * set flag is SIGHUP was detected so config file can be reread in
+ * Set flag if SIGHUP was detected so config file can be reread in
  * main loop
  */
 static void

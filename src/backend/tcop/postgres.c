@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.168 2000/07/11 14:30:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.169 2000/07/12 17:38:45 petere Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -907,14 +907,10 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 		switch (flag)
 		{
 			case 'A':
-				/* ----------------
-				 *	enable/disable assert checking.
-				 * ----------------
-				 */
 #ifdef USE_ASSERT_CHECKING
 				assert_enabled = atoi(optarg);
 #else
-				fprintf(stderr, "Assert checking is not enabled\n");
+				fprintf(stderr, "Assert checking is not compiled in\n");
 #endif
 				break;
 
@@ -1415,7 +1411,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.168 $ $Date: 2000/07/11 14:30:27 $\n");
+		puts("$Revision: 1.169 $ $Date: 2000/07/12 17:38:45 $\n");
 	}
 
 	/*

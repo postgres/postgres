@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.76 2000/07/07 21:12:47 tgl Exp $
+ * $Id: c.h,v 1.77 2000/07/12 17:38:53 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -706,7 +706,7 @@ typedef struct Exception
 #define AssertState(condition) \
 		Trap(!(condition), BadState)
 
-extern int	assert_enabled;
+extern bool	assert_enabled;
 
 #endif	 /* USE_ASSERT_CHECKING */
 

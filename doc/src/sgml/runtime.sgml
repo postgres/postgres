@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.12 2000/06/22 22:31:15 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.13 2000/07/12 17:38:41 petere Exp $
 -->
 
 <Chapter Id="runtime">
@@ -672,6 +672,19 @@ env PGOPTIONS='--geqo=off' psql
    <para>
     <variablelist>
      <varlistentry>
+      <term>DEBUG_ASSERTIONS (<type>boolean</type>)</term>
+      <listitem>
+       <para>
+        Turns on various assertion checks. This is a debugging aid. If
+        you are experiencing strange problems or crashes you might
+        want to turn this on, as it might expose programming mistakes.
+        To use this option, the macro <literal>USE_ASSERT_CHECKING</>
+        must be defined when Postgres is built.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term>DEBUG_LEVEL (<type>integer</type>)</term>
       <listitem>
        <para>
@@ -843,13 +856,13 @@ env PGOPTIONS='--geqo=off' psql
      </varlistentry>
 
      <varlistentry>
-      <term>MAX_BACKENDS (<type>integer</type>)</term>
+      <term>MAX_CONNECTIONS (<type>integer</type>)</term>
       <listitem>
        <para>
         Determines how many concurrent connections the database server
-        will allow. The default is 32. Note that there is also a
-        compiled-in hard limit on this option, which is currently
-        1024. This parameter can only be set at server start.
+        will allow. The default is 32. There is also a compiled-in
+        hard upper limit on this option, which is currently 1024. This
+        parameter can only be set at server start.
        </para>
       </listitem>
      </varlistentry>
@@ -868,7 +881,7 @@ env PGOPTIONS='--geqo=off' psql
      </varlistentry>
 
      <varlistentry>
-      <term>NET_SERVER (<type>boolean</type>)</term>
+      <term>TCPIP_SOCKET (<type>boolean</type>)</term>
       <listitem>
        <para>
         If this is true, then the server will accept TCP/IP
@@ -922,12 +935,12 @@ env PGOPTIONS='--geqo=off' psql
         This controls the inheritance semantics, in particular whether
         subtables are included into the consideration of various
         commands by default. This was not the case in versions prior
-        to 7.1. If you need this behaviour you can set this variable
-        to off, but in the long run you are encouraged to change your
-        applications to use the <literal>ONLY</literal> keyword to
-        exclude subtables. See the SQL language reference and the
-        <citetitle>User's Guide</citetitle> for more information about
-        inheritance.
+        to 7.1. If you need the old behaviour you can set this
+        variable to off, but in the long run you are encouraged to
+        change your applications to use the <literal>ONLY</literal>
+        keyword to exclude subtables. See the SQL language reference
+        and the <citetitle>User's Guide</citetitle> for more
+        information about inheritance.
        </para>
       </listitem>
      </varlistentry>
@@ -971,12 +984,12 @@ env PGOPTIONS='--geqo=off' psql
        </row>
        <row>
         <entry>-i</entry>
-        <entry>net_server = on</entry>
+        <entry>tcpip_socket = on</entry>
         <entry></entry>
        </row>
        <row>
         <entry>-N <replaceable>x</replaceable></entry>
-        <entry>max_backends = <replaceable>x</replaceable></entry>
+        <entry>max_connections = <replaceable>x</replaceable></entry>
         <entry></entry>
        </row>
        <row>
