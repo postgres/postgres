@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.21 1996/11/26 07:38:55 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.22 1996/11/28 03:32:12 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,20 +34,6 @@
 #include "strdup.h"
 #endif
 
-#if defined(ultrix4) || defined(next)
-  /* ultrix is lame and doesn't have strdup in libc for some reason */
- /* [TRH] So doesn't NEXTSTEP.  But whaddaya expect for a non-ANSI  
-standard function? (My, my. Touchy today, are we?) */
-char *
-strdup(const char *string)
-{
-    char *nstr;
-
-  if ((nstr = malloc(strlen(string)+1)) != NULL)
-      strcpy(nstr, string);
-    return nstr;
-}
-#endif
 
 /* use a local version instead of the one found in pqpacket.c */
 static ConnStatusType connectDB(PGconn *conn);

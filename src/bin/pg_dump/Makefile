@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pg_dump/Makefile,v 1.10 1996/11/26 07:38:16 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pg_dump/Makefile,v 1.11 1996/11/28 03:31:27 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -27,7 +27,7 @@ pg_dump: $(OBJS) $(LIBPQDIR)/libpq.a
 	$(CC) $(LDFLAGS) -o pg_dump -L$(LIBPQDIR) $(OBJS) -lpq $(LD_ADD)
 
 ../../utils/strdup.o:
-	$(MAKE) -C ../../utils/strdup.o
+	$(MAKE) -C ../../utils strdup.o
 
 .PHONY: submake
 submake:
