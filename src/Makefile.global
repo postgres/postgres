@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.85 1997/01/10 18:54:49 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.86 1997/01/10 19:30:08 momjian Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the 
@@ -548,6 +548,8 @@ RANLIB= touch
 #you will see it is not intended for end user use.  It chowns the files
 #it installs to root.
 INSTALL= /usr/bin/X11/bsdinst
+
+IPCSDIR= /usr/sbin
 
 INSTLOPTS=      -m 444
 INSTL_EXE_OPTS= -m 555
