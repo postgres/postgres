@@ -1,4 +1,4 @@
-AROPT = cr
+AROPT = crs
 AWK= awk
  
 DLSUFFIX = .so
