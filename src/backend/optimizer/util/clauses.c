@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.187 2005/01/28 19:34:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.188 2005/02/02 21:49:07 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -49,6 +49,7 @@
 typedef struct
 {
 	List	   *active_fns;
+	Node	   *case_val;
 	bool		estimate;
 } eval_const_expressions_context;
 
@@ -1195,6 +1196,7 @@ eval_const_expressions(Node *node)
 	eval_const_expressions_context context;
 
 	context.active_fns = NIL;	/* nothing being recursively simplified */
+	context.case_val = NULL;	/* no CASE being examined */
 	context.estimate = false;	/* safe transformations only */
 	return eval_const_expressions_mutator(node, &context);
 }
@@ -1219,6 +1221,7 @@ estimate_expression_value(Node *node)
 	eval_const_expressions_context context;
 
 	context.active_fns = NIL;	/* nothing being recursively simplified */
+	context.case_val = NULL;	/* no CASE being examined */
 	context.estimate = true;	/* unsafe transformations OK */
 	return eval_const_expressions_mutator(node, &context);
 }
@@ -1592,71 +1595,98 @@ eval_const_expressions_mutator(Node *node,
 		 * If there are no non-FALSE alternatives, we simplify the entire
 		 * CASE to the default result (ELSE result).
 		 *
-		 * If we have a simple-form CASE with constant test expression and
-		 * one or more constant comparison expressions, we could run the
-		 * implied comparisons and potentially reduce those arms to constants.
-		 * This is not yet implemented, however.  At present, the
-		 * CaseTestExpr placeholder will always act as a non-constant node
-		 * and prevent the comparison boolean expressions from being reduced
-		 * to Const nodes.
+		 * If we have a simple-form CASE with constant test expression,
+		 * we substitute the constant value for contained CaseTestExpr
+		 * placeholder nodes, so that we have the opportunity to reduce
+		 * constant test conditions.  For example this allows
+		 *		CASE 0 WHEN 0 THEN 1 ELSE 1/0 END
+		 * to reduce to 1 rather than drawing a divide-by-0 error.
 		 *----------
 		 */
 		CaseExpr   *caseexpr = (CaseExpr *) node;
 		CaseExpr   *newcase;
+		Node	   *save_case_val;
 		Node	   *newarg;
 		List	   *newargs;
-		Node	   *defresult;
-		Const	   *const_input;
+		bool		const_true_cond;
+		Node	   *defresult = NULL;
 		ListCell   *arg;
 
 		/* Simplify the test expression, if any */
 		newarg = eval_const_expressions_mutator((Node *) caseexpr->arg,
 												context);
 
+		/* Set up for contained CaseTestExpr nodes */
+		save_case_val = context->case_val;
+		if (newarg && IsA(newarg, Const))
+			context->case_val = newarg;
+		else
+			context->case_val = NULL;
+
 		/* Simplify the WHEN clauses */
 		newargs = NIL;
+		const_true_cond = false;
 		foreach(arg, caseexpr->args)
 		{
-			/* Simplify this alternative's condition and result */
-			CaseWhen   *casewhen = (CaseWhen *)
-			expression_tree_mutator((Node *) lfirst(arg),
-									eval_const_expressions_mutator,
-									(void *) context);
+			CaseWhen   *oldcasewhen = (CaseWhen *) lfirst(arg);
+			Node	   *casecond;
+			Node	   *caseresult;
 
-			Assert(IsA(casewhen, CaseWhen));
-			if (casewhen->expr == NULL ||
-				!IsA(casewhen->expr, Const))
+			Assert(IsA(oldcasewhen, CaseWhen));
+
+			/* Simplify this alternative's test condition */
+			casecond =
+				eval_const_expressions_mutator((Node *) oldcasewhen->expr,
+											   context);
+
+			/*
+			 * If the test condition is constant FALSE (or NULL), then drop
+			 * this WHEN clause completely, without processing the result.
+			 */
+			if (casecond && IsA(casecond, Const))
 			{
-				newargs = lappend(newargs, casewhen);
+				Const	   *const_input = (Const *) casecond;
+
+				if (const_input->constisnull ||
+					!DatumGetBool(const_input->constvalue))
+					continue;	/* drop alternative with FALSE condition */
+				/* Else it's constant TRUE */
+				const_true_cond = true;
+			}
+
+			/* Simplify this alternative's result value */
+			caseresult =
+				eval_const_expressions_mutator((Node *) oldcasewhen->result,
+											   context);
+
+			/* If non-constant test condition, emit a new WHEN node */
+			if (!const_true_cond)
+			{
+				CaseWhen   *newcasewhen = makeNode(CaseWhen);
+
+				newcasewhen->expr = (Expr *) casecond;
+				newcasewhen->result = (Expr *) caseresult;
+				newargs = lappend(newargs, newcasewhen);
 				continue;
 			}
-			const_input = (Const *) casewhen->expr;
-			if (const_input->constisnull ||
-				!DatumGetBool(const_input->constvalue))
-				continue;		/* drop alternative with FALSE condition */
-
+  
 			/*
-			 * Found a TRUE condition.	If it's the first (un-dropped)
-			 * alternative, the CASE reduces to just this alternative.
+			 * Found a TRUE condition, so none of the remaining alternatives
+			 * can be reached.  We treat the result as the default result.
 			 */
-			if (newargs == NIL)
-				return (Node *) casewhen->result;
-
-			/*
-			 * Otherwise, add it to the list, and drop all the rest.
-			 */
-			newargs = lappend(newargs, casewhen);
+			defresult = caseresult;
 			break;
 		}
 
-		/* Simplify the default result */
-		defresult = eval_const_expressions_mutator((Node *) caseexpr->defresult,
-												   context);
+		/* Simplify the default result, unless we replaced it above */
+		if (!const_true_cond)
+			defresult =
+				eval_const_expressions_mutator((Node *) caseexpr->defresult,
+											   context);
 
-		/*
-		 * If no non-FALSE alternatives, CASE reduces to the default
-		 * result
-		 */
+		context->case_val = save_case_val;
+
+		/* If no non-FALSE alternatives, CASE reduces to the default result */
 		if (newargs == NIL)
 			return defresult;
 		/* Otherwise we need a new CASE node */
@@ -1666,6 +1696,18 @@ eval_const_expressions_mutator(Node *node,
 		newcase->args = newargs;
 		newcase->defresult = (Expr *) defresult;
 		return (Node *) newcase;
+	}
+	if (IsA(node, CaseTestExpr))
+	{
+		/*
+		 * If we know a constant test value for the current CASE
+		 * construct, substitute it for the placeholder.  Else just
+		 * return the placeholder as-is.
+		 */
+		if (context->case_val)
+			return copyObject(context->case_val);
+		else
+			return copyObject(node);
 	}
 	if (IsA(node, ArrayExpr))
 	{
