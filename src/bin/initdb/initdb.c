@@ -39,7 +39,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.47 2004/08/09 20:20:47 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.48 2004/08/11 11:06:23 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -619,7 +619,7 @@ get_encoding_id(char *encoding_name)
 	exit(1);
 }
 
-#ifdef HAVE_LANGINFO_H
+#if defined(HAVE_LANGINFO_H) && defined(CODESET)
 /*
  * Checks whether the encoding selected for PostgreSQL and the
  * encoding used by the system locale match.
@@ -802,7 +802,7 @@ find_matching_encoding(const char *ctype)
 	free(sys);
 	return -1;
 }
-#endif /* HAVE_LANGINFO_H */
+#endif /* HAVE_LANGINFO_H && CODESET */
 
 /*
  * get short version of VERSION
@@ -2322,7 +2322,7 @@ main(int argc, char *argv[])
 			   lc_time);
 	}
 
-#ifdef HAVE_LANGINFO_H
+#if defined(HAVE_LANGINFO_H) && defined(CODESET)
 	if (strcmp(lc_ctype, "C") != 0 && strcmp(lc_ctype, "POSIX") != 0)
 	{
 		if (strlen(encoding) == 0)
@@ -2346,7 +2346,7 @@ main(int argc, char *argv[])
 		else
 			check_encodings_match(atoi(encodingid), lc_ctype);
 	}
-#endif /* HAVE_LANGINFO_H */
+#endif /* HAVE_LANGINFO_H && CODESET */
 
 	printf("\n");
 
