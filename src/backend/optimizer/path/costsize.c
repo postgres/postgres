@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.11 1997/01/24 18:00:10 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.12 1997/01/26 16:06:42 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,9 @@
 #else
 # ifdef HAVE_LIMITS_H
 #  include <limits.h>
-#  define MAXINT	INT_MAX
+#  ifndef MAXINT
+#   define MAXINT	INT_MAX
+#  endif
 # else
 #  ifdef HAVE_VALUES_H
 #   include <values.h>
