@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.54 2002/11/13 00:39:48 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.55 2003/03/20 04:52:35 momjian Exp $
  */
 
 #include "postgres.h"
@@ -30,8 +30,8 @@ extern Datum int44in(PG_FUNCTION_ARGS);
 extern Datum int44out(PG_FUNCTION_ARGS);
 
 /*
-** Distance from a point to a path
-*/
+ * Distance from a point to a path
+ */
 PG_FUNCTION_INFO_V1(regress_dist_ptpath);
 
 Datum
@@ -72,8 +72,10 @@ regress_dist_ptpath(PG_FUNCTION_ARGS)
 	PG_RETURN_FLOAT8(result);
 }
 
-/* this essentially does a cartesian product of the lsegs in the
-   two paths, and finds the min distance between any two lsegs */
+/*
+ * this essentially does a cartesian product of the lsegs in the
+ * two paths, and finds the min distance between any two lsegs
+ */
 PG_FUNCTION_INFO_V1(regress_path_dist);
 
 Datum
@@ -114,8 +116,7 @@ regress_path_dist(PG_FUNCTION_ARGS)
 }
 
 PATH *
-poly2path(poly)
-POLYGON    *poly;
+poly2path(POLYGON *poly)
 {
 	int			i;
 	char	   *output = (char *) palloc(2 * (P_MAXDIG + 1) * poly->npts + 64);
@@ -125,11 +126,12 @@ POLYGON    *poly;
 
 	for (i = 0; i < poly->npts; i++)
 	{
-		sprintf(buf, ",%*g,%*g", P_MAXDIG, poly->p[i].x, P_MAXDIG, poly->p[i].y);
+		snprintf(buf, sizeof(buf), ",%*g,%*g",
+				 P_MAXDIG, poly->p[i].x, P_MAXDIG, poly->p[i].y);
 		strcat(output, buf);
 	}
 
-	sprintf(buf, "%c", RDELIM);
+	snprintf(buf, sizeof(buf), "%c", RDELIM);
 	strcat(output, buf);
 	return DatumGetPathP(DirectFunctionCall1(path_in,
 											 CStringGetDatum(output)));
@@ -180,10 +182,7 @@ interpt_pp(PG_FUNCTION_ARGS)
 
 /* like lseg_construct, but assume space already allocated */
 void
-regress_lseg_construct(lseg, pt1, pt2)
-LSEG	   *lseg;
-Point	   *pt1;
-Point	   *pt2;
+regress_lseg_construct(LSEG *lseg, Point *pt1, Point *pt2)
 {
 	lseg->p[0].x = pt1->x;
 	lseg->p[0].y = pt1->y;
@@ -219,14 +218,13 @@ typedef struct
 }	WIDGET;
 
 WIDGET	   *widget_in(char *str);
-char	   *widget_out(WIDGET * widget);
+char	   *widget_out(WIDGET *widget);
 extern Datum pt_in_widget(PG_FUNCTION_ARGS);
 
 #define NARGS	3
 
 WIDGET *
-widget_in(str)
-char	   *str;
+widget_in(char *str)
 {
 	char	   *p,
 			   *coord[NARGS],
@@ -246,14 +244,13 @@ char	   *str;
 	result->center.y = atof(coord[1]);
 	result->radius = atof(coord[2]);
 
-	sprintf(buf2, "widget_in: read (%f, %f, %f)\n", result->center.x,
-			result->center.y, result->radius);
+	snprintf(buf2, sizeof(buf2), "widget_in: read (%f, %f, %f)\n",
+			 result->center.x, result->center.y, result->radius);
 	return result;
 }
 
 char *
-widget_out(widget)
-WIDGET	   *widget;
+widget_out(WIDGET *widget)
 {
 	char	   *result;
 
@@ -315,7 +312,8 @@ reverse_name(char *string)
 	return new_string;
 }
 
-/* This rather silly function is just to test that oldstyle functions
+/*
+ * This rather silly function is just to test that oldstyle functions
  * work correctly on toast-able inputs.
  */
 int
