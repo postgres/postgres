@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.28 2003/03/25 16:15:37 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.29 2003/06/24 23:19:10 momjian Exp $
 -->
 
  <chapter id="performance-tips">
@@ -66,7 +66,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.28 2003/03/25 16:15:37 pet
     estimates are converted into disk-page units using some
     fairly arbitrary fudge factors. If you want to experiment with these
     factors, see the list of run-time configuration parameters in
-    <xref linkend="runtime-config">.)
+    <xref linkend="runtime-config-optimizer">.)
    </para>
 
    <para>
@@ -435,6 +435,12 @@ SELECT attname, n_distinct, most_common_vals FROM pg_stats WHERE tablename = 'ro
     </thead>
 
     <tbody>
+     <row>
+      <entry><literal>schemaname</literal></entry>
+      <entry><type>name</type></entry>
+      <entry>Name of the schema containing the table.</entry>
+     </row>
+
      <row>
       <entry><literal>tablename</literal></entry>
       <entry><type>name</type></entry>
