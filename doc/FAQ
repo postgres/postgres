@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Mon Jan 31 15:40:24 EST 2005
+   Last updated: Mon Jan 31 17:57:02 EST 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -383,24 +383,20 @@
           
     3.4) What debugging features are available?
     
-   PostgreSQL has several features that report status information that
-   can be valuable for debugging purposes.
+   There are many log_* server configuration variables that enable
+   printing of query and process statistics which can be very useful for
+   debugging and performance measurements.
    
-   First, by running configure with the --enable-cassert option, many
-   assert()s monitor the progress of the backend and halt the program
-   when something unexpected occurs.
+   The following detailed debug instructions are to be used to provide
+   more detailed information for server developers debugging a problem
    
-   Both postmaster and postgres have several debug options available.
-   First, whenever you start postmaster, make sure you send the standard
-   output and error to a log file, like:
-    cd /usr/local/pgsql
-    ./bin/postmaster >server.log 2>&1 &
-
-   This will put a server.log file in the top-level PostgreSQL directory.
-   This file contains useful information about problems or errors
-   encountered by the server. Postmaster has a -d option that allows even
-   more detailed information to be reported. The -d option takes a number
-   that specifies the debug level. Be warned that high debug level values
+   It is also possible to debug the server if it isn't operating
+   properly. First, by running configure with the --enable-cassert
+   option, many assert()s monitor the progress of the backend and halt
+   the program when something unexpected occurs.
+   The postmaster has a -d option that allows even more detailed
+   information to be reported. The -d option takes a number that
+   specifies the debug level. Be warned that high debug level values
    generate large log files.
    
    If postmaster is not running, you can actually run the postgres
@@ -420,10 +416,6 @@
    will cause startup to delay for n seconds so you can attach to the
    process with the debugger, set any breakpoints, and continue through
    the startup sequence.
-   
-   There are several log_* server configuration variables that enable
-   printing of process statistics which can be very useful for debugging
-   and performance measurements.
    
    You can also compile with profiling to see what functions are taking
    execution time. The backend profile files will be deposited in the

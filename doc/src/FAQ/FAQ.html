@@ -10,7 +10,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Mon Jan 31 15:40:24 EST 2005</P>
+    <P>Last updated: Mon Jan 31 17:57:02 EST 2005</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)
@@ -519,29 +519,23 @@
     <H4><A name="3.4">3.4</A>) What debugging features are
     available?</H4>
 
-    <P>PostgreSQL has several features that report status information
-    that can be valuable for debugging purposes.</P>
+    <P>There are many <CODE>log_*</CODE> server configuration variables
+    that enable printing of query and process statistics which can be
+    very useful for debugging and performance measurements.</P>
 
-    <P>First, by running <I>configure</I> with the --enable-cassert
+    <P><B>The following detailed debug instructions are to be used to
+    provide more detailed information for server developers debugging a
+    problem<B></P>
+
+    <P>It is also possible to debug the server if it isn't operating
+    properly.  First, by running <I>configure</I> with the --enable-cassert
     option, many <I>assert()</I>s monitor the progress of the backend
     and halt the program when something unexpected occurs.</P>
 
-    <P>Both <I>postmaster</I> and <I>postgres</I> have several debug
-    options available. First, whenever you start <I>postmaster</I>,
-    make sure you send the standard output and error to a log file,
-    like:</P>
-<PRE>
-    cd /usr/local/pgsql
-    ./bin/postmaster &gt;server.log 2&gt;&amp;1 &amp;
-</PRE>
-
-    <P>This will put a server.log file in the top-level PostgreSQL
-    directory. This file contains useful information about problems or
-    errors encountered by the server. <I>Postmaster</I> has a <I>-d</I>
-    option that allows even more detailed information to be reported.
-    The <I>-d</I> option takes a number that specifies the debug level.
-    Be warned that high debug level values generate large log
-    files.</P>
+    The <I>postmaster</I> has a <I>-d</I> option that allows even more
+    detailed information to be reported. The <I>-d</I> option takes a
+    number that specifies the debug level. Be warned that high debug
+    level values generate large log files.</P>
 
     <P>If <I>postmaster</I> is not running, you can actually run the
     <I>postgres</I> backend from the command line, and type your
@@ -564,10 +558,6 @@
     to delay for <I>n</I> seconds so you can attach to the process with
     the debugger, set any breakpoints, and continue through the startup
     sequence.</P>
-
-    <P>There are several <CODE>log_*</CODE> server configuration variables
-    that enable printing of process statistics which can be very useful
-    for debugging and performance measurements.</P>
 
     <P>You can also compile with profiling to see what functions are
     taking execution time. The backend profile files will be deposited
