@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.147 2000/10/05 19:48:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.148 2000/10/11 21:28:18 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -131,11 +131,11 @@ static FormData_pg_attribute a6 = {
 	MaxCommandIdAttributeNumber, 0, -1, -1, '\001', 'p', '\0', 'i', '\0', '\0'
 };
 
-/* 
+/*
    We decide to call this attribute "tableoid" rather than say
 "classoid" on the basis that in the future there may be more than one
 table of a particular class/type. In any case table is still the word
-used in SQL. 
+used in SQL.
 */
 static FormData_pg_attribute a7 = {
 	0xffffffff, {"tableoid"}, OIDOID, 0, sizeof(Oid),
@@ -1489,7 +1489,7 @@ heap_drop_with_catalog(const char *relname,
 	RelationForgetRelation(rid);
 
 	if (istemp)
-		remove_temp_relation(rid);
+		remove_temp_rel_by_relid(rid);
 
 	if (has_toasttable)
 	{

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/temprel.c,v 1.27 2000/07/12 18:04:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/temprel.c,v 1.28 2000/10/11 21:28:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,35 +91,24 @@ create_temp_relation(const char *relname, HeapTuple pg_class_tuple)
 void
 remove_all_temp_relations(void)
 {
-	List	   *l,
-			   *next;
-
-	if (temp_rels == NIL)
-		return;
-
 	AbortOutOfAnyTransaction();
 	StartTransactionCommand();
 
-	l = temp_rels;
-	while (l != NIL)
+	while (temp_rels != NIL)
 	{
-		TempTable  *temp_rel = (TempTable *) lfirst(l);
+		char		relname[NAMEDATALEN];
+		TempTable  *temp_rel = (TempTable *) lfirst(temp_rels);
 
-		next = lnext(l);		/* do this first, l is deallocated */
-
-		/* Indexes are dropped during heap drop */
 		if (temp_rel->relkind != RELKIND_INDEX)
 		{
-			char		relname[NAMEDATALEN];
-
 			/* safe from deallocation */
 			strcpy(relname, temp_rel->user_relname);
 			heap_drop_with_catalog(relname, allowSystemTableMods);
 		}
-
-		l = next;
+		else
+			index_drop(temp_rel->relid);
+		CommandCounterIncrement();
 	}
-	temp_rels = NIL;
 	CommitTransactionCommand();
 }
 
@@ -129,7 +118,7 @@ remove_all_temp_relations(void)
  * we don't have the relname for indexes, so we just pass the oid
  */
 void
-remove_temp_relation(Oid relid)
+remove_temp_rel_by_relid(Oid relid)
 {
 	MemoryContext oldcxt;
 	List	   *l,
@@ -179,7 +168,7 @@ remove_temp_relation(Oid relid)
  * We just have to delete the map entry.
  */
 void
-invalidate_temp_relations(void)
+remove_temp_rel_in_myxid(void)
 {
 	MemoryContext oldcxt;
 	List	   *l,

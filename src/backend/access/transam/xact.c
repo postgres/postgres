@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.71 2000/09/27 10:41:55 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.72 2000/10/11 21:28:17 momjian Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -1119,7 +1119,7 @@ AbortTransaction()
 	AtEOXact_portals();
 	RecordTransactionAbort();
 	RelationPurgeLocalRelation(false);
-	invalidate_temp_relations();
+	remove_temp_rel_in_myxid();
 	AtEOXact_SPI();
 	AtEOXact_nbtree();
 	AtAbort_Cache();
