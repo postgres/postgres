@@ -15,7 +15,7 @@ import org.postgresql.util.PSQLException;
 /*
  * This class provides information about the database as a whole.
  *
- * $Id: DatabaseMetaData.java,v 1.48 2002/01/18 17:21:31 davec Exp $
+ * $Id: DatabaseMetaData.java,v 1.49 2002/02/22 02:17:13 davec Exp $
  *
  * <p>Many of the methods here return lists of information in ResultSets.  You
  * can use the normal ResultSet methods such as getString and getInt to
@@ -2919,6 +2919,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 			{
 				columnOrdinals[o++] = Integer.parseInt(stok.nextToken());
 			}
+
+			java.sql.ResultSet columnNameRS = connection.ExecSQL("select a.attname FROM pg_attribute a WHERE a.attrelid = " + r.getInt(9));
 			for (int i = 0; i < columnOrdinals.length; i++)
 			{
 				byte [] [] tuple = new byte [13] [];
@@ -2934,12 +2936,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 						   Integer.toString(tableIndexHashed).getBytes() :
 						   Integer.toString(tableIndexOther).getBytes();
 				tuple[7] = Integer.toString(i + 1).getBytes();
-				java.sql.ResultSet columnNameRS = connection.ExecSQL("select a.attname FROM pg_attribute a WHERE (a.attnum = " + columnOrdinals[i] + ") AND (a.attrelid = " + r.getInt(9) + ")");
 				if (columnNameRS.next())
 					tuple[8] = columnNameRS.getBytes(1);
 				else
 					tuple[8] = "".getBytes();
-				tuple[8] = columnNameRS.getBytes(1);
+
 				tuple[9] = null;  // sort sequence ???
 				tuple[10] = r.getBytes(7);	// inexact
 				tuple[11] = r.getBytes(8);
