@@ -1,8 +1,9 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.5 2003/06/25 10:44:21 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.6 2003/06/25 11:51:18 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
 
+#include <limits.h>
 #include <unistd.h>
 #ifdef USE_THREADS
 #include <pthread.h>
