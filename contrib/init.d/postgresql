@@ -19,7 +19,7 @@ PM_ARGS="-i -F"
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 
 # What to use to start up the postmster, and a few names.
-DAEMON=/home/postgres/bin/pg_ctl
+DAEMON=/usr/local/pgsql/bin/pg_ctl
 NAME=postmaster
 FILE=postgresql
 DESC="PostgreSQL RDBMS"

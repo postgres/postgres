@@ -330,3 +330,51 @@ threads or processes or both...
 -Alfred Perlstein - [bright@wintelcom.net|alfred@freebsd.org]
 "I have the heart of a child; I keep it in a jar on my desk."
 
+From pgsql-hackers-owner+M4275@postgresql.org Mon Feb  5 21:45:00 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id VAA09262
+	for <pgman@candle.pha.pa.us>; Mon, 5 Feb 2001 21:44:59 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id f162ixx00920;
+	Mon, 5 Feb 2001 21:44:59 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M4275@postgresql.org)
+Received: from goldengate.kojoworldwide.com. ([216.133.4.130])
+	by mail.postgresql.org (8.11.1/8.11.1) with ESMTP id f162fSx00595
+	for <pgsql-hackers@postgresql.org>; Mon, 5 Feb 2001 21:41:29 -0500 (EST)
+	(envelope-from mscott@sacadia.com)
+Received: from localhost (localhost [127.0.0.1])
+	by goldengate.kojoworldwide.com. (8.9.1b+Sun/8.9.2) with ESMTP id SAA03298
+	for <pgsql-hackers@postgresql.org>; Mon, 5 Feb 2001 18:25:05 -0800 (PST)
+Date: Mon, 5 Feb 2001 18:25:05 -0800 (PST)
+From: Myron Scott <mscott@sacadia.com>
+X-Sender: mscott@goldengate.kojoworldwide.com.
+To: pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Using Threads?
+Message-ID: <Pine.GSO.4.10.10102051823210.3289-100000@goldengate.kojoworldwide.com.>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+I have put a new version of my multi-threaded
+postgresql experiment at
+
+http://www.sacadia.com/mtpg.html
+
+This one actually works.  I have added a server
+based on omniORB, a CORBA 2.3 ORB from ATT.  It
+   is much smaller than TAO and uses the thread per
+connection model.  I haven't added the java side
+of the JNI interface yet but the C++ side is there.
+
+It's still not stable but it is much better than
+the last.
+
+Myron Scott
+mkscott@sacadia.com
+
+
+
+
+
