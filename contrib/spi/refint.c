@@ -423,7 +423,7 @@ check_foreign_key()
 				sprintf(sql, "update %s set ", relname);
 				for (i = 1; i <= nkeys; i++)
 				{
-					sprintf(sql + strlen(sql), "%s null%s",
+					sprintf(sql + strlen(sql), "%s = null%s",
 							args2[i], (i < nkeys) ? ", " : "");
 				}
 				strcat(sql, " where ");
