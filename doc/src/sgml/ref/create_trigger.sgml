@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_trigger.sgml,v 1.15 2001/09/03 12:57:49 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_trigger.sgml,v 1.16 2001/09/13 15:55:24 petere Exp $
 Postgres documentation
 -->
 
@@ -126,7 +126,7 @@ CREATE
    being  inserted  (for  <command>INSERT</command> and
    <command>UPDATE</command> operations only).  If
    the trigger fires after the event,  all  changes,  including  the
-   last insertion, update, or deletion, are "visible" to the trigger.
+   last insertion, update, or deletion, are <quote>visible</quote> to the trigger.
   </para>
 
   <para>

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/protocol.sgml,v 1.19 2001/08/15 18:42:14 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/protocol.sgml,v 1.20 2001/09/13 15:55:23 petere Exp $ -->
 
 <chapter id="protocol">
  <title>Frontend/Backend Protocol</title>
@@ -628,8 +628,8 @@ This section describes the base data types used in messages.
 </Term>
 <ListItem>
 <Para>
-                A character array of exactly <Replaceable>n</Replaceable> bytes interpreted as a '\0'
-                terminated string.  The '\0' is omitted if there is
+                A character array of exactly <Replaceable>n</Replaceable> bytes interpreted as a
+                null-terminated string.  The zero-byte is omitted if there is
                 insufficient room.  If <Replaceable>s</Replaceable> is specified it is the literal value.
                 Eg. LimString32, LimString64("user").
 </Para>
@@ -641,7 +641,7 @@ This section describes the base data types used in messages.
 </Term>
 <ListItem>
 <Para>
-                A conventional C '\0' terminated string with no length
+                A conventional C null-terminated string with no length
                 limitation.
                 If <Replaceable>s</Replaceable> is specified it is the literal value.
                 Eg. String, String("user").
@@ -739,7 +739,7 @@ AsciiRow (B)
                         Specifies the value of the field itself in <Acronym>ASCII</Acronym>
                         characters.  <Replaceable>n</Replaceable> is the above
                         size minus 4.
-                        There is no trailing '\0' in the field data; the front
+                        There is no trailing zero-byte in the field data; the front
                         end must add one if it wants one.
 </Para>
 </ListItem>
@@ -1073,7 +1073,7 @@ CancelRequest (F)
 <ListItem>
 <Para>
                 The cancel request code.  The value is chosen to contain
-                "1234" in the most significant 16 bits, and "5678" in the
+                <literal>1234</> in the most significant 16 bits, and <literal>5678</> in the
                 least 16 significant bits.  (To avoid confusion, this code
                 must not be the same as any protocol version number.)
 </Para>
@@ -1226,7 +1226,7 @@ CursorResponse (B)
 </Term>
 <ListItem>
 <Para>
-                The name of the cursor.  This will be "blank" if the cursor is
+                The name of the cursor.  This will be <quote>blank</> if the cursor is
                 implicit.
 </Para>
 </ListItem>

@@ -178,7 +178,7 @@ Implicit conversions should never have surprising or unpredictable outcomes.
 <listitem>
 <para>
 User-defined types, of which the parser has no a-priori knowledge, should be
-"higher" in the type hierarchy. In mixed-type expressions, native types shall always
+<quote>higher</quote> in the type hierarchy. In mixed-type expressions, native types shall always
 be converted to a user-defined type (of course, only if conversion is necessary).
 </para>
 </listitem>
@@ -393,7 +393,7 @@ are specified in the query. So, the parser looks for all candidate operators
 and finds that there are candidates accepting both string-category and
 bit-string-category inputs.  Since string category is preferred when available,
 that category is selected, and then the 
-"preferred type" for strings, <type>text</type>, is used as the specific
+<quote>preferred type</quote> for strings, <type>text</type>, is used as the specific
 type to resolve the unknown literals to.
 </para>
 </sect3>
@@ -483,9 +483,9 @@ If only one candidate remains, use it; else continue to the next step.
 </step>
 <step performance="required">
 <para>
-If any input arguments are "unknown", check the type categories accepted
+If any input arguments are <type>unknown</type>, check the type categories accepted
 at those argument positions by the remaining candidates.  At each position,
-select "string"
+select <type>string</type>
 category if any candidate accepts that category (this bias towards string
 is appropriate since an unknown-type literal does look like a string).
 Otherwise, if all the remaining candidates accept the same type category,
@@ -592,7 +592,7 @@ tgl=> select substr(text(varchar '1234'), 3);
 <note>
 <para>
 Actually, the parser is aware that <type>text</type> and <type>varchar</type>
-are "binary compatible", meaning that one can be passed to a function that
+are <firstterm>binary compatible</>, meaning that one can be passed to a function that
 accepts the other without doing any physical conversion.  Therefore, no
 explicit type conversion call is really inserted in this case.
 </para>
@@ -746,7 +746,7 @@ tgl=> SELECT text 'a' AS "Text" UNION SELECT 'b';
  b
 (2 rows)
 </programlisting>
-Here, the unknown-type literal 'b' will be resolved as type text.
+Here, the unknown-type literal <literal>'b'</literal> will be resolved as type text.
 </para>
 </sect3>
 

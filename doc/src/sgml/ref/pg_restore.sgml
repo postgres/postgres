@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.15 2001/09/03 12:57:50 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.16 2001/09/13 15:55:24 petere Exp $ -->
 
 <refentry id="APP-PGRESTORE">
  <docinfo>
@@ -295,7 +295,7 @@
       <listitem>
        <para>
 	  Restore elements in <REPLACEABLE CLASS="PARAMETER">list-file</REPLACEABLE> only, and in the
-        order they appear in the file. Lines can be moved and may also be commented out by placing a ';' at the
+        order they appear in the file. Lines can be moved and may also be commented out by placing a <literal>;</literal> at the
         start of the line.
        </para>
       </listitem>

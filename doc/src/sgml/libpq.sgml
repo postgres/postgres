@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.71 2001/09/10 21:58:46 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.72 2001/09/13 15:55:23 petere Exp $
 -->
 
  <chapter id="libpq">
@@ -189,16 +189,16 @@ PGconn *PQconnectdb(const char *conninfo)
      <term><literal>requiressl</literal></term>
      <listitem>
      <para>
-      Set to '1' to require SSL connection to the backend. <application>Libpq</>
+      Set to 1 to require SSL connection to the backend. <application>Libpq</>
       will then refuse to connect if the server does not support
-      SSL. Set to '0' (default) to negotiate with server.
+      SSL. Set to 0 (default) to negotiate with server.
      </para>
      </listitem>
     </varlistentry>
    </variablelist>
 
    If  any  parameter is unspecified, then the corresponding
-   environment variable (see "Environment Variables" section)
+   environment variable (see <xref linkend="libpq-envars">)
    is checked. If the  environment  variable is not set either,
    then hardwired defaults are used.
    The return value is a pointer to an abstract struct
@@ -1158,7 +1158,7 @@ Oid PQoidValue(const PGresult *res);
 <function>PQoidStatus</function>
           Returns a string with the object id of the tuple inserted, if the
 	  <acronym>SQL</acronym> command was an INSERT.
-	  (The string will be "0" if the INSERT did not insert exactly one
+	  (The string will be <literal>0</> if the INSERT did not insert exactly one
 	  row, or if the target table does not have OIDs.)  If the command
 	  was not an INSERT, returns an empty string.
 <synopsis>
@@ -1328,7 +1328,7 @@ functions:
 <synopsis>
 int PQconsumeInput(PGconn *conn);
 </synopsis>
-<function>PQconsumeInput</function> normally returns 1 indicating "no error",
+<function>PQconsumeInput</function> normally returns 1 indicating <quote>no error</quote>,
 but returns 0 if there was some kind of trouble (in which case
 <function>PQerrorMessage</function> is set).  Note that the result does not say
 whether any input data was actually collected. After calling
@@ -1416,8 +1416,7 @@ When the main loop detects input ready, it should call
 <function>PQconsumeInput</function> to read the input.  It can then call
 <function>PQisBusy</function>, followed by <function>PQgetResult</function>
 if <function>PQisBusy</function> returns false (0).  It can also call
-<function>PQnotifies</function> to detect NOTIFY messages (see "Asynchronous
-Notification", below).
+<function>PQnotifies</function> to detect NOTIFY messages (see <xref linkend="libpq-notify">).
 </para>
 
 <para>
@@ -1653,12 +1652,12 @@ terminating newline has not yet been read.
 </para>
 <para>
 Notice that the application must check to see if a
-new line consists of  the  two characters  "\.",
+new line consists of  the  two characters  <literal>\.</literal>,
 which  indicates  that the backend server has finished sending
 the results  of  the  copy  command.
 If  the  application might
 receive lines that are more than length-1  characters  long,
-care is needed to be sure one recognizes the "\." line correctly
+care is needed to be sure one recognizes the <literal>\.</literal> line correctly
 (and does not, for example, mistake the end of a long data line
 for a terminator line).
 The code in
@@ -1703,7 +1702,7 @@ The data returned will not extend beyond a newline character.  If possible
 a whole line will be returned at one time.  But if the buffer offered by
 the caller is too small to hold a line sent by the backend, then a partial
 data line will be returned.  This can be detected by testing whether the
-last returned byte is "<literal>\n</literal>" or not.
+last returned byte is <literal>\n</literal> or not.
 The returned string is not null-terminated.  (If you want to add a
 terminating null, be sure to pass a <parameter>bufsize</parameter> one smaller than the room
 actually available.)
@@ -1720,7 +1719,7 @@ int PQputline(PGconn *conn,
               const char *string);
 </synopsis>
 Note the application must explicitly  send  the  two
-characters  "<literal>\.</literal>" on a final line  to indicate to
+characters  <literal>\.</literal> on a final line  to indicate to
 the backend that it has finished sending its data.
 </para>
 </listitem>
@@ -1750,7 +1749,7 @@ specified directly.
  sent  to  the  backend using <function>PQputline</function> or when the
  last string has been  received  from  the  backend
  using <function>PGgetline</function>.  It must be issued or the backend
- may get "out of sync"  with  the  frontend.   Upon
+ may get <quote>out of sync</quote> with  the  frontend.   Upon
  return from this function, the backend is ready to
  receive the next query.
  The return value is 0  on  successful  completion,
@@ -1853,7 +1852,7 @@ PQsetNoticeProcessor(PGconn *conn,
 </para>
 
 <para>
-By default, <application>libpq</application> prints "notice"
+By default, <application>libpq</application> prints notice
 messages from the backend on <filename>stderr</filename>,
 as well as a few error messages that it generates by itself.
 This behavior can be overridden by supplying a callback function that

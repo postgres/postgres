@@ -22,7 +22,7 @@
    <para>
     The trigger function must be created before the trigger is created as a
     function taking no arguments and returning opaque.  If the function is
-    written in C, it must use the "version 1" function manager interface.
+    written in C, it must use the <quote>version 1</> function manager interface.
    </para>
 
    <para>
@@ -115,7 +115,7 @@ CREATE TRIGGER <replaceable>trigger</replaceable> [ BEFORE | AFTER ] [ INSERT | 
        <para>
 	Also, <replaceable>procedure</replaceable>
 	may be used for triggering different relations (these
-	functions are named as "general trigger functions").
+	functions are named as <firstterm>general trigger functions</>).
        </para>
 
        <para>
@@ -123,7 +123,7 @@ CREATE TRIGGER <replaceable>trigger</replaceable> [ BEFORE | AFTER ] [ INSERT | 
 	function that takes as its arguments two field names and puts the current
 	user in one and the current timestamp in the other. This allows triggers to
 	be written on INSERT events to automatically track creation of records in a
-	transaction table for example. It could also be used as a "last updated"
+	transaction table for example. It could also be used as a <quote>last updated</>
 	function if used in an UPDATE event.
        </para>
       </listitem>
@@ -197,7 +197,7 @@ CREATE TRIGGER <replaceable>trigger</replaceable> [ BEFORE | AFTER ] [ INSERT | 
 
    <para>
     When a function is called by the trigger manager, it is not passed any
-    normal parameters, but it is passed a "context" pointer pointing to a
+    normal parameters, but it is passed a <quote>context</> pointer pointing to a
     TriggerData structure.  C functions can check whether they were called
     from the trigger manager or not by executing the macro
     <literal>CALLED_AS_TRIGGER(fcinfo)</literal>, which expands to

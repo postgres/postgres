@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.44 2001/09/03 12:57:50 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.45 2001/09/13 15:55:24 petere Exp $
 Postgres documentation
 -->
 
@@ -268,7 +268,7 @@ where <replaceable class="PARAMETER">from_item</replaceable> can be:
    specified expressions, keeping only the first row of each set of
    duplicates.  The DISTINCT ON expressions are interpreted using the
    same rules as for ORDER BY items; see below.
-   Note that "the first row" of each set is unpredictable
+   Note that the <quote>first row</quote> of each set is unpredictable
    unless <command>ORDER BY</command> is used to ensure that the desired
    row appears first.  For example,
    <programlisting>
@@ -997,13 +997,13 @@ contains an explicit FROM clause.
      SELECT Clause
     </title>
     <para>
-     In the <acronym>SQL92</acronym> standard, the optional keyword "AS"
+     In the <acronym>SQL92</acronym> standard, the optional keyword <literal>AS</>
      is just noise and can be 
      omitted without affecting the meaning.
      The <productname>Postgres</productname> parser requires this keyword when
      renaming output columns because the type extensibility features lead to
      parsing ambiguities
-     in this context.  "AS" is optional in FROM items, however.</para>
+     in this context.  <literal>AS</literal> is optional in FROM items, however.</para>
      
     <para>
      The DISTINCT ON phrase is not part of <acronym>SQL92</acronym>.

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/pltcl.sgml,v 2.13 2001/09/10 21:58:47 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/pltcl.sgml,v 2.14 2001/09/13 15:55:23 petere Exp $
 -->
 
  <chapter id="pltcl">
@@ -365,31 +365,31 @@ CREATE TRIGGER trig_mytab_modcount BEFORE INSERT OR UPDATE ON mytab
 	<function>spi_execp</function>).
 	Think about a query string like
 
-	<programlisting>
+<programlisting>
 "SELECT '$val' AS ret"
-	</programlisting>
+</programlisting>
 
-	where the Tcl variable val actually contains "doesn't". This would result
+	where the Tcl variable val actually contains <literal>doesn't</literal>. This would result
 	in the final query string
 
-	<programlisting>
-"SELECT 'doesn't' AS ret"
-	</programlisting>
+<programlisting>
+SELECT 'doesn't' AS ret
+</programlisting>
 
 	which would cause a parse error during
 	<function>spi_exec</function> or
 	<function>spi_prepare</function>.
 	It should contain
 
-	<programlisting>
-"SELECT 'doesn''t' AS ret"
-	</programlisting>
+<programlisting>
+SELECT 'doesn''t' AS ret
+</programlisting>
 
 	and has to be written as
 
-	<programlisting>
-"SELECT '[ quote $val ]' AS ret"
-	</programlisting>
+<programlisting>
+SELECT '[ quote $val ]' AS ret
+</programlisting>
        </para>
       </listitem>
      </varlistentry>

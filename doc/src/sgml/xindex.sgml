@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xindex.sgml,v 1.18 2001/09/10 21:58:47 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xindex.sgml,v 1.19 2001/09/13 15:55:23 petere Exp $
 Postgres documentation
 -->
 
@@ -123,7 +123,7 @@ SELECT oid FROM pg_am WHERE amname = 'btree';
    impose a strict ordering on keys, lesser to greater.  Since
    <productname>Postgres</productname> allows the user to define operators,
    <productname>Postgres</productname> cannot look at the name of an operator
-   (e.g., "&gt;" or "&lt;") and tell what kind of comparison it is.  In fact,
+   (e.g., <literal>&gt;</> or <literal>&lt;</>) and tell what kind of comparison it is.  In fact,
    some  access methods don't impose any ordering at all.  For example,
    <acronym>R-tree</acronym>s express a rectangle-containment relationship,
    whereas a hashed data structure expresses only bitwise similarity based
@@ -131,7 +131,7 @@ SELECT oid FROM pg_am WHERE amname = 'btree';
    needs some consistent way of taking a qualification in your query,
    looking at the operator and then deciding if a usable index exists.  This
    implies that <productname>Postgres</productname> needs to know, for
-   example, that the  "&lt;="  and  "&gt;" operators partition a
+   example, that the  <literal>&lt;=</>  and  <literal>&gt;</> operators partition a
    <acronym>B-tree</acronym>.  <productname>Postgres</productname>
    uses strategies to express these relationships  between
    operators and the way they can be used to scan indexes.
@@ -240,7 +240,7 @@ SELECT oid FROM pg_am WHERE amname = 'btree';
    does, <filename>amorderstrategy</filename> is the number of the strategy
    routine that corresponds to the ordering operator.  For example, B-tree
    has <filename>amorderstrategy</filename> = 1 which is its
-   "less than" strategy number.
+   <quote>less than</quote> strategy number.
   </para>
 
   <para>
@@ -388,7 +388,7 @@ CREATE FUNCTION complex_abs_eq(complex, complex)
 
   <para>
    The final routine in the
-   file is the "support routine" mentioned when we discussed the amsupport
+   file is the <quote>support routine</quote> mentioned when we discussed the amsupport
    column of the <filename>pg_am</filename> table.  We will use this
    later on.  For now, ignore it.
   </para>
@@ -463,10 +463,11 @@ CREATE OPERATOR = (
             c.oprname = '&lt;';
    </programlisting>
 
-   Now do this for the other operators substituting for the "1" in the
-   second line above and the "&lt;" in the last line.  Note the order:
-   "less than" is 1, "less than or equal" is 2, "equal" is 3, "greater
-   than or equal" is 4, and "greater than" is 5.
+   Now do this for the other operators substituting for the <literal>1</> in the
+   second line above and the <literal>&lt;</> in the last line.  Note the order:
+   <quote>less than</> is 1, <quote>less than or equal</> is 2,
+   <quote>equal</> is 3, <quote>greater than or equal</quote> is 4, and
+   <quote>greater than</quote> is 5.
   </para>
 
   <para>
@@ -475,7 +476,7 @@ CREATE OPERATOR = (
   </para>
 
   <para>
-   The final step is registration of the "support routine" previously
+   The final step is registration of the <quote>support routine</quote> previously
    described in our discussion of <filename>pg_am</filename>.  The
    <filename>oid</filename> of this support routine is stored in the
    <filename>pg_amproc</filename> table, keyed by the operator class

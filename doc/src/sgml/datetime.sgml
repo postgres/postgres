@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.20 2001/09/09 17:21:58 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.21 2001/09/13 15:55:22 petere Exp $
 Date/time details
 -->
 
@@ -426,7 +426,7 @@ Date/time details
     interpreted as Australian timezone names.  Without this option,
     <literal>CST</literal> and <literal>EST</literal> are taken as
     American timezone names, while <literal>SAT</literal> is interpreted as a
-    noise word indicating "<literal>Saturday</literal>".
+    noise word indicating <literal>Saturday</literal>.
 
     <table tocentry="1">
      <title><productname>Postgres</productname> Australian Time Zones</title>
@@ -494,7 +494,7 @@ Date/time details
       <step>
        <para>
 	If the token is numeric only, then it is either a single field
-	or an ISO-8601 concatenated date (e.g. "19990113" for January 13, 1999)
+	or an ISO-8601 concatenated date (e.g. <literal>19990113</literal> for January 13, 1999)
 	or time (e.g. 141516 for 14:15:16).
        </para>
       </step>
@@ -553,7 +553,7 @@ Date/time details
        <para>
 	If there are more than 4 digits, 
 	and if no other date fields have been previously read, then interpret 
-	as a "concatenated date" (e.g. <literal>19990118</literal>). 8
+	as a <quote>concatenated date</quote> (e.g. <literal>19990118</literal>). 8
 	and 6 digits are interpreted as year, month, and day, while 7
 	and 5 digits are interpreted as year, day of year, respectively.
        </para>
@@ -658,7 +658,7 @@ Date/time details
   </para>
 
   <para>
-   "Julian Day" is different from "Julian Date".
+   <quote>Julian Day</quote> is different from <quote>Julian Date</quote>.
 
    The Julian calendar was introduced by Julius Caesar in 45 BC. It was
    in common use until the 1582, when countries started changing to the

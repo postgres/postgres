@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.38 2001/09/10 21:58:47 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.39 2001/09/13 15:55:23 petere Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -739,7 +739,7 @@ EXECUTE <replaceable class="command">query-string</replaceable>
     <para>
     When working with dynamic queries you will have to face
     escaping of single quotes in <application>PL/pgSQL</>. Please refer to the
-    table available at the "Porting from Oracle PL/SQL" chapter
+    table available at the <xref linkend="plpgsql-porting">
     for a detailed explanation that will save you some effort.
     </para>
      
@@ -961,7 +961,7 @@ END IF;
 
       <listitem>
        <para>
-        When you use the "ELSE IF" statement, you are actually
+        When you use the <literal>ELSE IF</> statement, you are actually
         nesting an IF statement inside the ELSE
         statement. Thus you need one END IF statement for each
         nested IF and one for the parent IF-ELSE.
@@ -1221,7 +1221,7 @@ SELECT  INTO <replaceable>target</replaceable> <replaceable>expressions</replace
 
     <para>
      Once a record or row has been assigned to a RECORD variable,
-     you can use the "." (dot) notation to access fields in that
+     you can use the <literal>.</> (dot) notation to access fields in that
      record:
 <programlisting>
 DECLARE

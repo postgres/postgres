@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/lobj.sgml,v 1.19 2001/09/10 21:58:47 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/lobj.sgml,v 1.20 2001/09/13 15:55:23 petere Exp $
 -->
 
  <chapter id="largeObjects">
@@ -49,7 +49,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/lobj.sgml,v 1.19 2001/09/10 21:58:47 petere
 
    <para>
     The Inversion large object implementation breaks  large
-    objects  up  into  "chunks"  and  stores  the chunks in
+    objects  up  into  <quote>chunks</quote>  and  stores  the chunks in
     tuples in the database.  A B-tree index guarantees fast
     searches for the correct chunk number when doing random
     access reads and writes.

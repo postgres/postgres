@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_sequence.sgml,v 1.19 2001/09/03 12:57:49 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_sequence.sgml,v 1.20 2001/09/13 15:55:24 petere Exp $
 Postgres documentation
 -->
 
@@ -270,7 +270,7 @@ SELECT last_value FROM <replaceable>seqname</replaceable>;
    that obtain numbers from the same sequence, a nextval operation
    is never rolled back; that is, once a value has been fetched it is
    considered used, even if the transaction that did the nextval later
-   aborts.  This means that aborted transactions may leave unused "holes"
+   aborts.  This means that aborted transactions may leave unused <quote>holes</quote>
    in the sequence of assigned values.  setval operations are never
    rolled back, either.
   </para>
@@ -315,7 +315,7 @@ SELECT last_value FROM <replaceable>seqname</replaceable>;
    <para>
     Each backend uses its own cache to store preallocated numbers.
     Numbers that are cached but not used in the current session will be
-    lost, resulting in "holes" in the sequence.
+    lost, resulting in <quote>holes</quote> in the sequence.
    </para>
   </refsect2>
  </refsect1>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.23 2001/09/10 21:58:47 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.24 2001/09/13 15:55:23 petere Exp $
 -->
 
  <chapter id="odbc">
@@ -451,7 +451,7 @@ TextAsLongVarchar=0
      </step>
      <step performance="required">
       <para>
-       The 'Ready' message will appear in the lower left corner of the data
+       The <literal>Ready</literal> message will appear in the lower left corner of the data
        window.  This indicates that you can now enter queries.
       </para>
      </step>
@@ -663,13 +663,13 @@ can't load library 'libodbc.so'\n", 61) = -1 EIO (I/O error)
 
        <step performance="required">
 	<para>
-	 Search for 'null_clause = "NULL"
+	 Search for <literal>null_clause = "NULL"</literal>.
 	</para>
        </step>
 
        <step performance="required">
 	<para>
-	 Change this to null_clause = ""
+	 Change this to <literal>null_clause = ""</literal>.
 	</para>
        </step>
 
@@ -713,7 +713,7 @@ can't load library 'libodbc.so'\n", 61) = -1 EIO (I/O error)
 
      <step performance="required">
       <para>
-       Enter the value "<literal>sqldemo</literal>", then click <command>OK</command>.
+       Enter the value <literal>sqldemo</literal>, then click <command>OK</command>.
       </para>
 
       <para>

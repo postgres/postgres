@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/declare.sgml,v 1.13 2001/09/03 12:57:49 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/declare.sgml,v 1.14 2001/09/13 15:55:24 petere Exp $
 Postgres documentation
 -->
 
@@ -210,9 +210,9 @@ ERROR:  DECLARE CURSOR may only be used in begin/end transaction blocks
 
   <para>
    As an example, if a query returns a value of one from an integer column,
-   you would get a string of '1' with a default cursor
+   you would get a string of <literal>1</> with a default cursor
    whereas with a binary cursor you would get
-   a 4-byte value equal to control-A ('^A').
+   a 4-byte value equal to control-A (<literal>^A</literal>).
   </para>
 
   <para>
@@ -227,7 +227,7 @@ ERROR:  DECLARE CURSOR may only be used in begin/end transaction blocks
    <emphasis><productname>Postgres</productname> does not resolve
     byte ordering or representation issues for binary cursors</emphasis>.
    Therefore, if your client machine and server machine use different
-   representations (e.g., "big-endian" versus "little-endian"),
+   representations (e.g., <quote>big-endian</quote> versus <quote>little-endian</quote>),
    you will probably not want your data returned in
    binary format.
    However, binary cursors may be a

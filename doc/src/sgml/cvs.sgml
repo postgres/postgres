@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/cvs.sgml,v 1.15 2001/09/07 21:36:46 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/cvs.sgml,v 1.16 2001/09/13 15:55:22 petere Exp $
 CVS code repository
 Thomas Lockhart
 -->
@@ -206,8 +206,8 @@ $ cvs checkout -r REL6_4 tc
 
   <para>
    When you tag more than one file with the same tag you can think
-   about the tag as "a curve drawn through a matrix of filename vs.
-   revision number".  Say we have 5 files with the following revisions:
+   about the tag as <quote>a curve drawn through a matrix of filename vs.
+   revision number</quote>.  Say we have 5 files with the following revisions:
    
    <programlisting>
              file1   file2   file3   file4   file5
@@ -220,7 +220,7 @@ $ cvs checkout -r REL6_4 tc
                              1.6
    </programlisting>
 
-   then the tag "<literal>TAG</literal>" will reference
+   then the tag <literal>TAG</literal> will reference
    file1-1.2, file2-1.3, etc.
 
    <note>
@@ -487,7 +487,7 @@ pgsql
       <para>
        <productname>CVSup</productname> was originally developed as a
        tool for distributing the <productname>FreeBSD</productname>
-       source tree. It is available as a "port", and for those running 
+       source tree. It is available as a <quote>port</quote>, and for those running 
        FreeBSD, if this is not sufficient to tell how to obtain and
        install it then please contribute a procedure here.
       </para>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/notation.sgml,v 1.15 2001/09/09 17:21:59 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/notation.sgml,v 1.16 2001/09/13 15:55:23 petere Exp $
 -->
 
 <sect1 id="notation">
@@ -29,10 +29,10 @@ $Header: /cvsroot/pgsql/doc/src/sgml/notation.sgml,v 1.15 2001/09/09 17:21:59 pe
 
  <para>
   In a command synopsis, brackets
-  ("<literal>[</literal>" and "<literal>]</literal>") indicate an optional phrase or keyword.
+  (<literal>[</literal> and <literal>]</literal>) indicate an optional phrase or keyword.
   Anything in braces
-  ("<literal>{</literal>" and "<literal>}</literal>") and containing vertical bars
-  ("<literal>|</literal>")
+  (<literal>{</literal> and <literal>}</literal>) and containing vertical bars
+  (<literal>|</literal>)
   indicates that you must choose one.
  </para>
 

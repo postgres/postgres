@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/docguide.sgml,v 1.32 2001/04/20 15:52:33 thomas Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/docguide.sgml,v 1.33 2001/09/13 15:55:22 petere Exp $ -->
 
 <appendix label="DG2" id="docguide">
  <title>Documentation</title>
@@ -626,7 +626,7 @@ gmake man
    <acronym>SGML</acronym> source code to <acronym>RTF</acronym>, then
    importing into <productname>ApplixWare-4.4.1</productname>. 
    After a little cleanup (see the following
-   section) the output is "printed" to a postscript file.
+   section) the output is <quote>printed</quote> to a postscript file.
   </para>
 
 <!--
@@ -828,7 +828,7 @@ exit
 	  <para>
 	   Not all documents have figures.
 	   You can grep the <acronym>SGML</acronym> source files for
-	   the string "<literal>graphic</literal>" to identify those parts of the
+	   the string <literal>graphic</literal> to identify those parts of the
 	   documentation that may have figures. A few figures are replicated in
 	   various parts of the documentation.
 	  </para>
@@ -866,7 +866,7 @@ exit
 
     <step performance="required">
      <para>
-      "Print" the document
+      <quote>Print</quote> the document
       to a file in Postscript format.
      </para>
     </step>
@@ -987,14 +987,14 @@ exit
 
     <step performance="required">
      <para>
-      Export the result as "ASCII Layout".
+      Export the result as <literal>ASCII Layout</literal>.
      </para>
     </step>
 
     <step performance="required">
      <para>
       Using emacs or vi, clean up the tabular information in
-      <filename>INSTALL</filename>. Remove the "mailto"
+      <filename>INSTALL</filename>. Remove the <literal>mailto</literal>
       <acronym>URLs</acronym> for the porting contributors to shrink
       the column heights.
      </para>

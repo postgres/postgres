@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.46 2001/09/09 17:21:59 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.47 2001/09/13 15:55:23 petere Exp $
 -->
 
 <chapter id="sql-syntax">
@@ -414,7 +414,7 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
      where <replaceable>delim</replaceable> is the delimiter character
      for the type, as recorded in its <literal>pg_type</literal>
      entry.  (For all built-in types, this is the comma character
-     ",".)  Each <replaceable>val</replaceable> is either a constant
+     <quote><literal>,</literal></>.)  Each <replaceable>val</replaceable> is either a constant
      of the array element type, or a sub-array.  An example of an
      array constant is
 <programlisting>
@@ -461,7 +461,7 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
     <itemizedlist>
      <listitem>
       <para>
-       "$" (dollar) cannot be a single-character operator, although it
+       <literal>$</> (dollar) cannot be a single-character operator, although it
        can be part of a multiple-character operator name.
       </para>
      </listitem>
@@ -476,7 +476,7 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
 
      <listitem>
       <para>
-       A multiple-character operator name cannot end in "+" or "-",
+       A multiple-character operator name cannot end in <literal>+</> or <literal>-</>,
        unless the name also contains at least one of these characters:
 <literallayout>
 ~ ! @ # % ^ &amp; | ` ? $
@@ -493,7 +493,7 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
    <para>
     When working with non-SQL-standard operator names, you will usually
     need to separate adjacent operators with spaces to avoid ambiguity.
-    For example, if you have defined a left-unary operator named "@",
+    For example, if you have defined a left-unary operator named <literal>@</literal>,
     you cannot write <literal>X*@Y</literal>; you must write
     <literal>X* @Y</literal> to ensure that
     <productname>Postgres</productname> reads it as two operator names
@@ -1016,8 +1016,8 @@ sqrt(2)
     The precedence and associativity of the operators is hard-wired
     into the parser.  Most operators have the same precedence and are
     left-associative.  This may lead to non-intuitive behavior; for
-    example the Boolean operators "&lt;" and "&gt;" have a different
-    precedence than the Boolean operators "&lt;=" and "&gt;=".  Also,
+    example the Boolean operators <literal>&lt;</> and <literal>&gt;</> have a different
+    precedence than the Boolean operators <literal>&lt;=</> and <literal>&gt;=</>.  Also,
     you will sometimes need to add parentheses when using combinations
     of binary and unary operators.  For instance
 <programlisting>

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/rules.sgml,v 1.16 2001/09/12 01:22:25 ishii Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/rules.sgml,v 1.17 2001/09/13 15:55:23 petere Exp $ -->
 
 <Chapter Id="rules">
 <Title>The <ProductName>Postgres</ProductName> Rule System</Title>
@@ -30,7 +30,7 @@
 </Para>
 
 <Para>
-     The query rewrite rule system (the "rule system" from now on) 
+     The query rewrite rule system (the <firstterm>rule system</> from now on) 
      is totally different from stored procedures and triggers.
      It modifies  queries  to
      take rules into consideration, and then passes the modified 
@@ -495,7 +495,7 @@
 
     It's the simplest SELECT Al can do on our views, so we take this
     to explain the basics of view rules.
-    The 'SELECT * FROM shoelace' was interpreted by the parser and
+    The <literal>SELECT * FROM shoelace</literal> was interpreted by the parser and
     produced the parsetree
 
 <ProgramListing>
@@ -664,7 +664,7 @@
 </ProgramListing>
 
     It turns out that the planner will collapse this tree into a two-level
-    query tree: the bottommost selects will be "pulled up" into the middle
+    query tree: the bottommost selects will be <quote>pulled up</quote> into the middle
     select since there's no need to process them separately.  But the
     middle select will remain separate from the top, because it contains
     aggregate functions.  If we pulled those up it would change the behavior
@@ -912,7 +912,7 @@
 </ProgramListing>
 
     in mind.
-    In the following, "update rules" means rules that are defined
+    In the following, <firstterm>update rules</> means rules that are defined
     ON INSERT, UPDATE or DELETE.
 </Para>
 
@@ -1111,7 +1111,7 @@
      WHERE bpchareq(shoelace_data.sl_name, 'sl7');</FirstTerm>
 </ProgramListing>
 
-    There is a rule 'log_shoelace' that is ON UPDATE with the rule
+    There is a rule <literal>log_shoelace</literal> that is ON UPDATE with the rule
     qualification expression
 
 <ProgramListing>
@@ -1451,7 +1451,7 @@
       FROM shoelace_arrive shoelace_arrive, shoelace_ok shoelace_ok;
 </ProgramListing>
 
-    Now the first rule 'shoelace_ok_ins' is applied and turns it
+    Now the first rule <literal>shoelace_ok_ins</literal> is applied and turns it
     into
 
 <ProgramListing>
@@ -1765,7 +1765,7 @@ Merge Join
     hole, but in fact it isn't. If this would not work, the secretary
     could setup a table with the same columns as phone_number and
     copy the data to there once per day. Then it's his own data and
-    he can grant access to everyone he wants. A GRANT means "I trust you".
+    he can grant access to everyone he wants. A GRANT means <quote>I trust you</quote>.
     If someone you trust does the thing above, it's time to
     think it over and then REVOKE.
 </Para>

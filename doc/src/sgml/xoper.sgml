@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xoper.sgml,v 1.13 2001/09/10 21:58:47 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xoper.sgml,v 1.14 2001/09/13 15:55:23 petere Exp $
 -->
 
  <Chapter Id="xoper">
@@ -19,7 +19,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/xoper.sgml,v 1.13 2001/09/10 21:58:47 peter
   </Para>
 
   <Para>
-   Every operator is "syntactic sugar" for a call to an
+   Every operator is <quote>syntactic sugar</quote> for a call to an
    underlying function that does the real work; so you must
    first create the underlying function before you can create
    the operator.  However, an operator is <emphasis>not</emphasis>
@@ -113,9 +113,9 @@ SELECT (a + b) AS c FROM test_complex;
      commutator of the operator being defined.  We say that operator A is the
      commutator of operator B if (x A y) equals (y B x) for all possible input
      values x,y.  Notice that B is also the commutator of A.  For example,
-     operators '<' and '>' for a particular data type are usually each others'
-     commutators, and operator '+' is usually commutative with itself.
-     But operator '-' is usually not commutative with anything.
+     operators <literal>&lt;</> and <literal>&gt;</> for a particular data type are usually each others'
+     commutators, and operator <literal>+</> is usually commutative with itself.
+     But operator <literal>-</> is usually not commutative with anything.
     </para>
 
     <para>
@@ -176,7 +176,7 @@ SELECT (a + b) AS c FROM test_complex;
      is the negator of operator B if both return boolean results and
      (x A y) equals NOT (x B y) for all possible inputs x,y.
      Notice that B is also the negator of A.
-     For example, '<' and '>=' are a negator pair for most data types.
+     For example, <literal>&lt;</> and <literal>&gt;=</> are a negator pair for most data types.
      An operator can never be validly be its own negator.
     </para>
 
@@ -239,16 +239,16 @@ SELECT (a + b) AS c FROM test_complex;
 	scalargtsel	for &gt; or &gt;=
    </ProgramListing>
     It might seem a little odd that these are the categories, but they
-    make sense if you think about it.  '=' will typically accept only
-    a small fraction of the rows in a table; '&lt;&gt;' will typically reject
-    only a small fraction.  '&lt;' will accept a fraction that depends on
+    make sense if you think about it.  <literal>=</> will typically accept only
+    a small fraction of the rows in a table; <literal>&lt;&gt;</> will typically reject
+    only a small fraction.  <literal>&lt;</> will accept a fraction that depends on
     where the given constant falls in the range of values for that table
     column (which, it just so happens, is information collected by
     <command>ANALYZE</command> and made available to the selectivity estimator).
-    '&lt;=' will accept a slightly larger fraction than '&lt;' for the same
+    <literal>&lt;=</> will accept a slightly larger fraction than <literal>&lt;</> for the same
     comparison constant, but they're close enough to not be worth
     distinguishing, especially since we're not likely to do better than a
-    rough guess anyhow.  Similar remarks apply to '&gt;' and '&gt;='.
+    rough guess anyhow.  Similar remarks apply to <literal>&gt;</> and <literal>&gt;=</>.
    </para>
 
    <para>
@@ -339,7 +339,7 @@ SELECT (a + b) AS c FROM test_complex;
      time intervals is not bitwise equality; the interval equality operator
      considers two time intervals equal if they have the same
      duration, whether or not their endpoints are identical.  What this means
-     is that a join using "=" between interval fields would yield different
+     is that a join using <literal>=</literal> between interval fields would yield different
      results if implemented as a hash join than if implemented another way,
      because a large fraction of the pairs that should match will hash to
      different values and will never be compared by the hash join.  But
@@ -386,7 +386,7 @@ SELECT (a + b) AS c FROM test_complex;
      Merge join is based on the idea of sorting the left and righthand tables
      into order and then scanning them in parallel.  So, both data types must
      be capable of being fully ordered, and the join operator must be one
-     that can only succeed for pairs of values that fall at the "same place"
+     that can only succeed for pairs of values that fall at the <quote>same place</>
      in the sort order.  In practice this means that the join operator must
      behave like equality.  But unlike hashjoin, where the left and right
      data types had better be the same (or at least bitwise equivalent),
@@ -410,8 +410,8 @@ SELECT (a + b) AS c FROM test_complex;
     </para>
 
     <para>
-     In practice you should only write SORT clauses for an '=' operator,
-     and the two referenced operators should always be named '<'.  Trying
+     In practice you should only write SORT clauses for an <literal>=</> operator,
+     and the two referenced operators should always be named <literal>&lt;</>.  Trying
      to use merge join with operators named anything else will result in
      hopeless confusion, for reasons we'll see in a moment.
     </para>
@@ -433,9 +433,9 @@ SELECT (a + b) AS c FROM test_complex;
 
       <listitem>
        <para>
-	There must be '<' and '>' ordering operators having the same left and
+	There must be <literal>&lt;</> and <literal>&gt;</> ordering operators having the same left and
 	right input data types as the mergejoinable operator itself.  These
-	operators <emphasis>must</emphasis> be named '<' and '>'; you do
+	operators <emphasis>must</emphasis> be named <literal>&lt;</> and <literal>&gt;</>; you do
 	not have any choice in the matter, since there is no provision for
 	specifying them explicitly.  Note that if the left and right data types
 	are different, neither of these operators is the same as either

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/manage.sgml,v 1.15 2001/09/10 05:20:23 ishii Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/manage.sgml,v 1.16 2001/09/13 15:55:23 petere Exp $
 -->
 
  <Chapter Id="manage">
@@ -225,7 +225,7 @@ This prompt indicates that <command>psql</command> is listening
   to you and that you can type <Acronym>SQL</Acronym> queries into a
      workspace maintained by the terminal monitor.
      The <Application>psql</Application> program responds to escape  codes  that  begin
-     with  the  backslash  character, "<literal>\</literal>".  For example, you
+     with  the  backslash  character, <literal>\</literal>.  For example, you
      can get help on the syntax of various
  <ProductName>PostgreSQL</ProductName> <Acronym>SQL</Acronym> commands by typing:
 <ProgramListing>
@@ -240,7 +240,7 @@ mydb=> \g
 </ProgramListing>
 
      This  tells  the  server  to process the query.  If you
-     terminate your query with a semicolon, the  "<literal>\g</literal>" is  not
+     terminate your query with a semicolon, the  <literal>\g</literal> is  not
      necessary.   
 <Application>psql</Application> will automatically process semicolon terminated queries.
      To read queries from a file,  say  <filename>myFile</filename>,  instead  of
@@ -259,9 +259,9 @@ mydb=> \q
      prompt.)
      White  space  (i.e.,  spaces, tabs and newlines) may be
      used freely in <Acronym>SQL</Acronym> queries.  Single-line comments  are  denoted  by
-     "<literal>--</literal>".   Everything  after the dashes up to the end of the
+     <literal>--</literal>.   Everything  after the dashes up to the end of the
      line is ignored. Multiple-line comments, and comments within a line,
-     are denoted by "<literal>/* ... */</literal>".
+     are denoted by <literal>/* ... */</literal>.
 </Para>
 
 </Sect1>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.17 2001/09/09 17:21:59 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.18 2001/09/13 15:55:23 petere Exp $
 -->
 
  <chapter id="mvcc">
@@ -331,7 +331,7 @@ ERROR:  Can't serialize access due to concurrent update
     the row still exists at the time it is returned (i.e. sometime after the
     current transaction began); the row might have been modified or deleted
     by an already-committed transaction that committed after this one started.
-    Even if the row is still valid "now", it could be changed or deleted
+    Even if the row is still valid <quote>now</quote>, it could be changed or deleted
     before the current transaction does a commit or rollback.
    </para>
 
@@ -339,7 +339,7 @@ ERROR:  Can't serialize access due to concurrent update
     Another way to think about it is that each
     transaction sees a snapshot of the database contents, and concurrently
     executing transactions may very well see different snapshots.  So the
-    whole concept of "now" is somewhat suspect anyway.  This is not normally
+    whole concept of <quote>now</quote> is somewhat suspect anyway.  This is not normally
     a big problem if the client applications are isolated from each other,
     but if the clients can communicate via channels outside the database
     then serious confusion may ensue.

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.22 2001/09/10 21:58:46 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.23 2001/09/13 15:55:22 petere Exp $
 -->
 
  <chapter id="ecpg">
@@ -114,7 +114,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.22 2001/09/10 21:58:46 petere
     </para>
 
     <para>
-     The library has some methods that are "hidden" but may prove
+     The library has some methods that are <quote>hidden</quote> but may prove
      useful.
 
      <itemizedlist>
@@ -316,7 +316,7 @@ struct sqlca
 	<para>
 	 This means the host variable is of type <type>bool</type> and
 	 the field in the <productname>Postgres</productname> database
-	 is neither 't' nor 'f'.
+	 is neither <literal>'t'</> nor <literal>'f'</>.
 	</para>
        </listitem>
       </varlistentry>
@@ -393,7 +393,7 @@ struct sqlca
        <term><computeroutput>100, Data not found line %d.</computeroutput></term>
        <listitem>
 	<para>
-	 This is a "normal" error that tells you that what you are querying cannot
+	 This is a <quote>normal</quote> error that tells you that what you are querying cannot
 	 be found or you are at the end of the cursor.
 	</para>
        </listitem>
@@ -421,7 +421,7 @@ struct sqlca
        <para>
 	Oracle version 7.0 on <systemitem class="osname">AIX</> 3 uses OS-supported locks in shared
 	memory that allow an application designer to link an application
-	in a "single tasking" way. Instead of starting one client
+	in a <quote>single tasking</quote> way. Instead of starting one client
 	process per application process, both the database part and the
 	application part run in the same process. In later versions of
 	Oracle this is no longer supported.
@@ -555,7 +555,7 @@ struct sqlca
        <term>message 'no data found'</term>
        <listitem>
 	<para>
-	 The error message for "no data" in:
+	 The error message for <quote>no data</quote> in:
 	 <programlisting>
 exec sql insert select from statement
 	</programlisting>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/inherit.sgml,v 1.14 2001/09/09 17:21:59 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/inherit.sgml,v 1.15 2001/09/13 15:55:22 petere Exp $
 -->
 
  <chapter id="inherit">
@@ -153,13 +153,13 @@ SELECT name, altitude
      In previous versions of <productname>Postgres</productname>, the
      default was not to get access to child tables. This was found to
      be error prone and is also in violation of SQL99. Under the old
-     syntax, to get the sub-tables you append "*" to the table name.
+     syntax, to get the sub-tables you append <literal>*</literal> to the table name.
      For example
 <programlisting>
 SELECT * from cities*;
 </programlisting>
      You can still explicitly specify scanning child tables by appending
-     "*", as well as explicitly specify not scanning child tables by
+     <literal>*</literal>, as well as explicitly specify not scanning child tables by
      writing <quote>ONLY</quote>.  But beginning in version 7.1, the default
      behavior for an undecorated table name is to scan its child tables
      too, whereas before the default was not to do so.  To get the old

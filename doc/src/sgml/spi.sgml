@@ -955,8 +955,8 @@ char *<REPLACEABLE CLASS="PARAMETER">nulls</REPLACEABLE>
 <PARA>
 Array describing what parameters get NULLs
 <SimpleList>
-<Member>'n' indicates NULL allowed</Member>
-<Member>' ' indicates NULL not allowed</Member>
+<Member><literal>n</literal> indicates NULL allowed</Member>
+<Member>A space indicates NULL not allowed</Member>
 </SimpleList>
 </PARA>
 </LISTITEM>

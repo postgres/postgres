@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/notify.sgml,v 1.14 2001/09/03 12:57:50 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/notify.sgml,v 1.15 2001/09/13 15:55:24 petere Exp $
 Postgres documentation
 -->
 
@@ -103,8 +103,8 @@ NOTIFY
   </para>
   <para>
    Commonly, the notify condition name is the same as the name of some table in
-   the database, and the notify event essentially means "I changed this table,
-   take a look at it to see what's new".  But no such association is enforced by
+   the database, and the notify event essentially means <quote>I changed this table,
+   take a look at it to see what's new</quote>.  But no such association is enforced by
    the <command>NOTIFY</command> and <command>LISTEN</command> commands.  For
    example, a database designer could use several different condition names
    to signal different sorts of changes to a single table.
@@ -137,7 +137,7 @@ NOTIFY
    after the transaction is completed (either committed or aborted).  Again, the
    reasoning is that if a notify were delivered within a transaction that was
    later aborted, one would want the notification to be undone somehow---but
-   the backend cannot "take back" a notify once it has sent it to the frontend.
+   the backend cannot <quote>take back</quote> a notify once it has sent it to the frontend.
    So notify events are only delivered between transactions.  The upshot of this
    is that applications using <command>NOTIFY</command> for real-time signaling
    should try to keep their transactions short.

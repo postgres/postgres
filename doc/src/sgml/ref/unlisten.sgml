@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/unlisten.sgml,v 1.15 2001/09/03 12:57:50 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/unlisten.sgml,v 1.16 2001/09/13 15:55:24 petere Exp $
 Postgres documentation
 -->
 
@@ -95,7 +95,7 @@ UNLISTEN { <replaceable class="PARAMETER">notifyname</replaceable> | * }
    UNLISTEN cancels any existing registration of the current
    <productname>Postgres</productname> session as a listener on the notify
    condition <replaceable class="PARAMETER">notifyname</replaceable>.
-   The special condition wildcard "*" cancels all listener registrations
+   The special condition wildcard <literal>*</literal> cancels all listener registrations
    for the current session.
   </para>
 

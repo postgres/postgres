@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_operator.sgml,v 1.20 2001/09/03 12:57:49 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_operator.sgml,v 1.21 2001/09/13 15:55:24 petere Exp $
 Postgres documentation
 -->
 
@@ -185,19 +185,20 @@ CREATE
    <itemizedlist>
     <listitem>
      <para>
-     "$" cannot be defined as a single-character operator,
+     <literal>$</literal> cannot be defined as a single-character operator,
      although it can be part of a multi-character operator name.
      </para>
     </listitem>
     <listitem>
      <para>
-     "--" and "/*" cannot appear anywhere in an operator name,
+     <literal>--</literal> and <literal>/*</literal> cannot appear anywhere in an operator name,
      since they will be taken as the start of a comment.
      </para>
     </listitem>
     <listitem>
      <para>
-     A multi-character operator name cannot end in "+" or "-",
+     A multi-character operator name cannot end in <literal>+</literal> or
+     <literal>-</literal>,
      unless the name also contains at least one of these characters:
      <literallayout>
 ~ ! @ # % ^ &amp; | ` ? $
@@ -214,7 +215,7 @@ CREATE
     <para>
      When working with non-SQL-standard operator names, you will usually
      need to separate adjacent operators with spaces to avoid ambiguity.
-     For example, if you have defined a left-unary operator named "@",
+     For example, if you have defined a left-unary operator named <literal>@</literal>,
      you cannot write <literal>X*@Y</literal>; you must write
      <literal>X* @Y</literal> to ensure that
      <productname>Postgres</productname> reads it as two operator names
@@ -223,7 +224,7 @@ CREATE
    </note>   
   </para>
   <para>
-   The operator "!=" is mapped to "&lt;&gt;" on input, so these two names
+   The operator <literal>!=</literal> is mapped to <literal>&lt;&gt;</literal> on input, so these two names
    are always equivalent.
   </para>
   <para>

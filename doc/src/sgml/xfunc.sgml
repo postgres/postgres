@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.35 2001/09/10 21:58:47 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.36 2001/09/13 15:55:23 petere Exp $
 -->
 
  <chapter id="xfunc">
@@ -71,7 +71,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.35 2001/09/10 21:58:47 peter
     Arguments to the SQL function may be referenced in the queries using
     a $n syntax: $1 refers to the first argument, $2 to the second, and so
     on.  If an argument is complex, then a <firstterm>dot</firstterm>
-    notation (e.g. "$1.emp") may be
+    notation (e.g. <literal>$1.emp</literal>) may be
     used to access attributes of the argument or
     to invoke functions.
    </para>
@@ -381,11 +381,11 @@ SELECT clean_EMP();
 
    <para>
     Two different calling conventions are currently used for C functions.
-    The newer "version 1" calling convention is indicated by writing
+    The newer <quote>version 1</quote> calling convention is indicated by writing
     a <literal>PG_FUNCTION_INFO_V1()</literal> macro call for the function,
     as illustrated below.  Lack of such a macro indicates an old-style
-    ("version 0") function.  The language name specified in CREATE FUNCTION
-    is 'C' in either case.  Old-style functions are now deprecated
+    ("version 0") function.  The language name specified in <command>CREATE FUNCTION</command>
+    is <literal>C</literal> in either case.  Old-style functions are now deprecated
     because of portability problems and lack of functionality, but they
     are still supported for compatibility reasons.
    </para>
@@ -496,7 +496,7 @@ SELECT clean_EMP();
 
     <para>
      The following table gives the C type required for parameters in the C
-     functions that will be loaded into Postgres.  The "Defined In"
+     functions that will be loaded into Postgres.  The <quote>Defined In</quote>
      column gives the actual header file (in the
      <filename>.../src/backend/</filename>
      directory) that the equivalent C type is defined.  Note that you should
@@ -654,7 +654,7 @@ SELECT clean_EMP();
 
     <para>
      Internally, <productname>Postgres</productname> regards a
-     base type as a "blob  of memory."   The  user-defined  
+     base type as a <quote>blob  of memory</quote>.   The  user-defined  
      functions that you define over a type in turn define the 
      way  that  <productname>Postgres</productname> can operate  
      on  it.  That is, <productname>Postgres</productname> will 
@@ -894,7 +894,7 @@ CREATE FUNCTION concat_text(text, text) RETURNS text
     </para>
 
     <para>
-     Notice that we have specified the functions as "strict", meaning that
+     Notice that we have specified the functions as <quote>strict</quote>, meaning that
      the system should automatically assume a NULL result if any input
      value is NULL.  By doing this, we avoid having to check for NULL inputs
      in the function code.  Without this, we'd have to check for NULLs
@@ -929,7 +929,7 @@ PG_FUNCTION_INFO_V1(funcname);
 </programlisting>
      must appear in the same source file (conventionally it's written
      just before the function itself).  This macro call is not needed
-     for "internal"-language functions, since Postgres currently assumes
+     for <literal>internal</>-language functions, since Postgres currently assumes
      all internal functions are version-1.  However, it is
      <emphasis>required</emphasis> for dynamically-loaded functions.
     </para>
@@ -1045,7 +1045,7 @@ concat_text(PG_FUNCTION_ARGS)
      An example is that in coding add_one_float8, we no longer need to
      be aware that float8 is a pass-by-reference type.  Another
      example is that the GETARG macros for variable-length types hide
-     the need to deal with fetching "toasted" (compressed or
+     the need to deal with fetching <quote>toasted</quote> (compressed or
      out-of-line) values.  The old-style <function>copytext</function>
      and <function>concat_text</function> functions shown above are
      actually wrong in the presence of toasted values, because they

@@ -73,9 +73,9 @@ From that  point  on,  the  frontend process and the backend
      "superuser."  
 Note that the <ProductName>Postgres</ProductName> superuser does not
 have  to  be  a special user (e.g., a user named 
-"postgres"), although many systems are installed that way.
+<literal>postgres</literal>), although many systems are installed that way.
 Furthermore,  the  <ProductName>Postgres</ProductName>  superuser should
-     definitely  not  be the Unix superuser, "root"!  In any
+     definitely  not  be the Unix superuser, <literal>root</literal>!  In any
      case, all files relating to a database should belong to
      this <ProductName>Postgres</ProductName> superuser.
 </Para>

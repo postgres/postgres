@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.45 2001/09/03 12:57:49 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.46 2001/09/13 15:55:24 petere Exp $
 Postgres documentation
 -->
 
@@ -236,7 +236,7 @@ ERROR:  Relation '<replaceable class="parameter">table</replaceable>' already ex
 
   <para>
    <command>CREATE TABLE</command> will enter a new, initially empty table
-   into the current database. The table will be "owned" by the user issuing the
+   into the current database. The table will be owned by the user issuing the
    command.
   </para>
 
@@ -1253,8 +1253,8 @@ ERROR:  <replaceable class="parameter">name</replaceable> referential integrity 
    
    <para>
     A table constraint is an integrity constraint defined on one or
-    more columns of a table. The four variations of "Table
-    Constraint" are:
+    more columns of a table. The four variations of <quote>Table
+    Constraint</quote> are:
     <simplelist columns="1">
      <member>UNIQUE</member>
      <member>CHECK</member>
@@ -1898,7 +1898,7 @@ CREATE GLOBAL TEMPORARY TABLE <replaceable class="parameter">table</replaceable>
      NULL clause
     </title>
     <para>
-	The NULL "constraint" (actually a non-constraint) is a
+	The NULL <quote>constraint</quote> (actually a non-constraint) is a
 	<productname>Postgres</productname> extension to SQL92 that is
 	included for symmetry with the NOT NULL clause (and for compatibility
 	with some other RDBMSes). Since it is the
@@ -1927,7 +1927,7 @@ CREATE GLOBAL TEMPORARY TABLE <replaceable class="parameter">table</replaceable>
 <!--
 I can't figure out why DEFAULT clause is different from what we already have.
 Perhaps because CURRENT_USER and CURRENT_DATE have specific types (currently
-the "name" type), if you aren't careful then the types won't match up with
+the <type>name</type> type), if you aren't careful then the types won't match up with
 the column. Not our problem...
 - Thomas 1998-08-16
 

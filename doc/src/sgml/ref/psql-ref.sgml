@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.59 2001/09/11 05:11:59 ishii Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.60 2001/09/13 15:55:24 petere Exp $
 Postgres documentation
 -->
 
@@ -103,7 +103,7 @@ Postgres documentation
     <para>
     In normal operation, <application>psql</application> provides a prompt with
     the name of the database to which <application>psql</application> is currently
-    connected, followed by the string "=>". For example,
+    connected, followed by the string <literal>=&gt;</literal>. For example,
 <programlisting>
 $ <userinput>psql testdb</userinput>
 Welcome to psql, the PostgreSQL interactive terminal.
@@ -1152,7 +1152,7 @@ lo_import 152801
 
 	<para>
 <programlisting>
-test=> <userinput>\z</userinput>
+test=&gt; <userinput>\z</userinput>
 Access permissions for database "test"
  Relation |           Access permissions
 ----------+-------------------------------------

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_aggregate.sgml,v 1.14 2001/09/03 12:57:49 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_aggregate.sgml,v 1.15 2001/09/13 15:55:24 petere Exp $
 Postgres documentation
 -->
 
@@ -206,7 +206,7 @@ CREATE
   </para>
   
   <para>
-   If the state transition function is declared "strict" in pg_proc,
+   If the state transition function is declared <quote>strict</quote>,
    then it cannot be called with NULL inputs.  With such a transition
    function, aggregate execution behaves as follows.  NULL input values
    are ignored (the function is not called and the previous state value
@@ -230,7 +230,7 @@ CREATE
   </para>
   
   <para>
-   If the final function is declared "strict", then it will not
+   If the final function is declared <quote>strict</quote>, then it will not
    be called when the ending state value is NULL; instead a NULL result
    will be output automatically.  (Of course this is just the normal
    behavior of strict functions.)  In any case the final function has

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_type.sgml,v 1.21 2001/09/03 12:57:49 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_type.sgml,v 1.22 2001/09/13 15:55:24 petere Exp $
 Postgres documentation
 -->
 
@@ -153,9 +153,9 @@ CREATE TYPE <replaceable class="parameter">typename</replaceable> ( INPUT = <rep
       <listitem>
        <para>
         Storage alignment requirement of the data type.  If specified, must
-	be '<literal>char</literal>', '<literal>int2</literal>',
-	'<literal>int4</literal>', or '<literal>double</literal>';
-	the default is '<literal>int4</literal>'.
+	be <literal>char</literal>, <literal>int2</literal>,
+	<literal>int4</literal>, or <literal>double</literal>;
+	the default is <literal>int4</literal>.
        </para>
       </listitem>
      </varlistentry>
@@ -165,9 +165,9 @@ CREATE TYPE <replaceable class="parameter">typename</replaceable> ( INPUT = <rep
       <listitem>
        <para>
         Storage technique for the data type.  If specified, must
-	be '<literal>plain</literal>', '<literal>external</literal>',
-	'<literal>extended</literal>', or '<literal>main</literal>';
-	the default is '<literal>plain</literal>'.
+	be <literal>plain</literal>, <literal>external</literal>,
+	<literal>extended</literal>, or <literal>main</literal>;
+	the default is <literal>plain</literal>.
        </para>
       </listitem>
      </varlistentry>
@@ -228,7 +228,7 @@ CREATE
    <replaceable class="parameter">output_function</replaceable>
    performs the reverse transformation.  Both
    the input and output functions must be  declared  to  take
-   one or two arguments of type "<literal>opaque</literal>".
+   one or two arguments of type <type>opaque</type>.
   </para>
 
   <para>
@@ -237,7 +237,7 @@ CREATE
    positive integer, or variable  length,
    in  which  case Postgres assumes that the new type has the
    same format
-   as the Postgres-supplied  data  type, "<literal>text</literal>".
+   as the Postgres-supplied  data  type, <type>text</type>.
    To  indicate that a type is variable length, set
    <replaceable class="parameter">internallength</replaceable>
    to <option>VARIABLE</option>.
@@ -264,7 +264,7 @@ CREATE
 
   <para>
    A default value is optionally available  in  case  a  user
-   wants  some  specific  bit  pattern to mean "data not present."
+   wants  some  specific  bit  pattern to mean <quote>data not present</quote>.
    Specify the default with the <literal>DEFAULT</literal> keyword.
    <comment>How does the user specify that bit pattern and associate
     it with the fact that the data is not present></comment>

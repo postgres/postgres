@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.11 2001/09/10 21:58:46 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.12 2001/09/13 15:55:22 petere Exp $
 -->
 
  <chapter id="extend">
@@ -67,7 +67,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.11 2001/09/10 21:58:46 pete
     or shared library) that implements a new type or  function 
     and <productname>Postgres</productname> will load it as required.  Code written 
     in <acronym>SQL</acronym> are even more trivial to add to the  server.
-    This ability to modify its operation "on the fly" makes
+    This ability to modify its operation <quote>on the fly</quote> makes
     <productname>Postgres</productname> uniquely suited for rapid prototyping  of  new
     applications and storage structures.
    </para>
@@ -82,7 +82,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.11 2001/09/10 21:58:46 pete
     Types are divided into base types and composite  types.
     Base  types  are those, like <firstterm>int4</firstterm>, that are implemented
     in a language such as <productname>C</productname>.  They generally correspond  to
-    what are often known as "abstract data types"; <productname>Postgres</productname>
+    what are often known as <firstterm>abstract data types</firstterm>; <productname>Postgres</productname>
     can only operate on such types through methods provided
     by  the  user and only understands the behavior of such
     types to the extent that the user describes them.  
@@ -94,7 +94,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.11 2001/09/10 21:58:46 pete
     <productname>Postgres</productname>  stores  these  types
     in only one way (within the
     file that stores all rows of a table)  but  the
-    user can "look inside" at the attributes of these types
+    user can <quote>look inside</quote> at the attributes of these types
     from the query language and optimize their retrieval by
     (for example) defining indexes on the attributes.
     <productname>Postgres</productname>  base  types are further

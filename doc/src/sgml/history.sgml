@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/history.sgml,v 1.14 2001/09/09 17:21:59 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/history.sgml,v 1.15 2001/09/13 15:55:22 petere Exp $
 -->
 
 <sect1 id="history">
@@ -40,7 +40,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/history.sgml,v 1.14 2001/09/09 17:21:59 pet
 
   <para>
    <productname>Postgres</productname> has undergone  several  major  releases  since
-   then.   The  first "demoware" system became operational
+   then.   The  first <quote>demoware</quote> system became operational
    in 1987 and was shown at the  1988  <acronym>ACM-SIGMOD</acronym>  
    Conference.   We  released Version 1, described in 
    <xref endterm="STON90a-full" linkend="STON90a">,
@@ -186,7 +186,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/history.sgml,v 1.14 2001/09/09 17:21:59 pet
   <title><productname>PostgreSQL</productname></title>
 
   <para>
-   By 1996, it became clear that the name "Postgres95" would
+   By 1996, it became clear that the name <quote>Postgres95</quote> would
    not stand the test of time. We chose a new name,
    <productname>PostgreSQL</productname>, to reflect the relationship
    between the original <productname>Postgres</productname> and the more

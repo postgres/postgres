@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.8 2001/09/09 17:21:59 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.9 2001/09/13 15:55:23 petere Exp $
 -->
 
  <chapter id="performance-tips">
@@ -192,13 +192,13 @@ Nested Loop  (cost=0.00..269.11 rows=47 width=296)
    <para>
     In this nested-loop join, the outer scan is the same index scan we had
     in the example before last, and so its cost and row count are the same
-    because we are applying the "unique1 &lt; 50" WHERE clause at that node.
-    The "t1.unique2 = t2.unique2" clause isn't relevant yet, so it doesn't
+    because we are applying the <literal>unique1 &lt; 50</literal> WHERE clause at that node.
+    The <literal>t1.unique2 = t2.unique2</literal> clause is not relevant yet, so it doesn't
     affect row count of the outer scan.  For the inner scan, the unique2 value of the
     current
     outer-scan tuple is plugged into the inner index scan
     to produce an index qualification like
-    "t2.unique2 = <replaceable>constant</replaceable>".  So we get the
+    <literal>t2.unique2 = <replaceable>constant</replaceable></literal>.  So we get the
      same inner-scan plan and costs that we'd get from, say, <literal>explain select
      * from tenk2 where unique2 = 42</literal>.  The costs of the loop node are then set
      on the basis of the cost of the outer scan, plus one repetition of the
@@ -211,7 +211,7 @@ Nested Loop  (cost=0.00..269.11 rows=47 width=296)
     of the two scans' row counts, but that's not true in general, because
     in general you can have WHERE clauses that mention both relations and
     so can only be applied at the join point, not to either input scan.
-    For example, if we added "WHERE ... AND t1.hundred &lt; t2.hundred",
+    For example, if we added <literal>WHERE ... AND t1.hundred &lt; t2.hundred</literal>,
     that would decrease the output row count of the join node, but not change
     either input scan.
    </para>
@@ -240,7 +240,7 @@ Hash Join  (cost=173.44..557.03 rows=47 width=296)
     This plan proposes to extract the 50 interesting rows of <classname>tenk1</classname>
     using ye same olde index scan, stash them into an in-memory hash table,
     and then do a sequential scan of <classname>tenk2</classname>, probing into the hash table
-    for possible matches of "t1.unique2 = t2.unique2" at each <classname>tenk2</classname> tuple.
+    for possible matches of <literal>t1.unique2 = t2.unique2</literal> at each <classname>tenk2</classname> tuple.
     The cost to read <classname>tenk1</classname> and set up the hash table is entirely start-up
     cost for the hash join, since we won't get any tuples out until we can
     start reading <classname>tenk2</classname>.  The total time estimate for the join also

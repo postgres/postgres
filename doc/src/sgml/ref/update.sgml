@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/update.sgml,v 1.16 2001/09/03 12:57:50 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/update.sgml,v 1.17 2001/09/13 15:55:24 petere Exp $
 Postgres documentation
 -->
 
@@ -152,7 +152,7 @@ UPDATE <replaceable class="parameter">#</replaceable>
   </title>
 
   <para>
-   Change word "Drama" with "Dramatic" on column kind:
+   Change word <literal>Drama</> with <literal>Dramatic</> on column <structfield>kind</>:
 
 <programlisting>
 UPDATE films 

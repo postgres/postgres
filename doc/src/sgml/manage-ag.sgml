@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/manage-ag.sgml,v 2.14 2001/09/09 23:52:12 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/manage-ag.sgml,v 2.15 2001/09/13 15:55:23 petere Exp $
 -->
 
 <chapter id="managing-databases">
@@ -237,7 +237,7 @@ Type:  \copyright for distribution terms
     workspace maintained by the terminal monitor.
     The <application>psql</application> program responds to escape
     codes  that  begin
-    with  the  backslash  character, "\".  For example, you
+    with  the  backslash  character, <literal>\</literal>.  For example, you
     can get help on the syntax of various 
     <productname>Postgres</productname> <acronym>SQL</acronym> commands by typing:
 
@@ -278,7 +278,7 @@ Type:  \copyright for distribution terms
     Single-line comments  are  denoted  by two dashes
     ("<literal>--</literal>").   Everything  after the dashes up to the end of the
     line is ignored. Multiple-line comments, and comments within a line,
-    are denoted by "<literal>/* ... */</literal>", a convention borrowed
+    are denoted by <literal>/* ... */</literal>, a convention borrowed
     from <productname>Ingres</productname>.
    </para>
  </sect1>

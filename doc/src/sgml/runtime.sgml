@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.78 2001/09/12 14:06:37 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.79 2001/09/13 15:55:23 petere Exp $
 -->
 
 <Chapter Id="runtime">
@@ -132,7 +132,7 @@ NOTICE:  Initializing database with en_US collation order.
    will cause indexes to be sorted in an order that prevents them from
    being used for LIKE and regular-expression searches.  If you need
    good performance of such searches, you should set your current locale
-   to "C" and re-run <command>initdb</command>.  On most systems, setting the
+   to <literal>C</> and re-run <command>initdb</command>.  On most systems, setting the
    current locale is done by changing the value of the environment variable
    <literal>LC_ALL</literal> or <literal>LANG</literal>.  The sort order used
    within a particular database cluster is set by <command>initdb</command>

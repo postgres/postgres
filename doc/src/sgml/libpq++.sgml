@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.31 2001/09/10 21:58:46 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.32 2001/09/13 15:55:23 petere Exp $
 -->
 
  <chapter id="libpqplusplus">
@@ -779,7 +779,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.31 2001/09/10 21:58:
        <function>PgDatabase::PutLine</function>
        or when the last string has been received from the backend using
        <function>PgDatabase::GetLine</function>.
-       It must be issued or the backend may get "out of sync" with
+       It must be issued or the backend may get <quote>out of sync</quote> with
        the frontend.  Upon return from this function, the backend is ready to
        receive the next query.
       </para>	    

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/copy.sgml,v 1.23 2001/09/03 12:57:49 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/copy.sgml,v 1.24 2001/09/13 15:55:24 petere Exp $
 Postgres documentation
 -->
 
@@ -380,7 +380,7 @@ ERROR: <replaceable>reason</replaceable>
       <term>Signature</term>
       <listitem>
        <para>
-12-byte sequence "PGBCOPY\n\377\r\n\0" --- note that the null
+12-byte sequence <literal>PGBCOPY\n\377\r\n\0</> --- note that the null
 is a required part of the signature.  (The signature is designed to allow
 easy identification of files that have been munged by a non-8-bit-clean
 transfer.  This signature will be changed by newline-translation

@@ -921,7 +921,7 @@ given chunk of code for each tuple in the result.
 <TITLE>Usage
 </TITLE>
 <PARA>
-This would work if table "table" has fields "control" and "name"
+This would work if table <classname>table</> has fields <structfield>control</> and <structfield>name</>
 (and, perhaps, other fields):
 <ProgramListing>
 	pg_select $pgconn "SELECT * from table" array {
@@ -1136,7 +1136,7 @@ The oid of the large object created.
 </TITLE>
 <PARA>
 mode can be any OR'ing together of INV_READ and INV_WRITE. 
-The OR delimiter character is "|".
+The OR delimiter character is <literal>|</literal>.
 <ProgramListing>
 [pg_lo_creat $conn "INV_READ|INV_WRITE"]
 </ProgramListing>
@@ -1237,7 +1237,7 @@ A file descriptor for use in later pg_lo* routines.
 <TITLE>Usage
 </TITLE>
 <PARA>
-Mode can be either "r", "w", or "rw".
+Mode can be either <literal>r</>, <literal>w</>, or <literal>rw</>.
 </PARA>
 </REFSECT1>
 </REFENTRY>
@@ -1583,7 +1583,7 @@ File descriptor for the large object from pg_lo_open.
   <REPLACEABLE CLASS="PARAMETER">whence</REPLACEABLE>
 </TERM>
 <LISTITEM>
-<PARA> whence can be "SEEK_CUR", "SEEK_END", or "SEEK_SET" </PARA>
+<PARA> whence can be <literal>SEEK_CUR</>, <literal>SEEK_END</>, or <literal>SEEK_SET</> </PARA>
 </LISTITEM>
 </VARLISTENTRY>
 </VARIABLELIST>
@@ -1614,7 +1614,7 @@ to <REPLACEABLE CLASS="PARAMETER">offset</REPLACEABLE> bytes from the beginning 
 </TITLE>
 <PARA>
 <REPLACEABLE CLASS="PARAMETER">whence</REPLACEABLE> 
-can be "SEEK_CUR", "SEEK_END", or "SEEK_SET".
+can be <literal>SEEK_CUR</literal>, <literal>SEEK_END</>, or <literal>SEEK_SET</literal>.
 </PARA>
 </REFSECT1>
 </REFENTRY>

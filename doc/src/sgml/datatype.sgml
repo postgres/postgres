@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.62 2001/09/09 17:21:51 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.63 2001/09/13 15:55:22 petere Exp $
 -->
 
  <chapter id="datatype">
@@ -1060,9 +1060,9 @@ SELECT b, char_length(b) FROM test2;
      The ordering of month and day in date input can be ambiguous, therefore a setting
      exists to specify how it should be interpreted in ambiguous cases. The command
      <literal>SET DateStyle TO 'US'</literal> or <literal>SET DateStyle TO 'NonEuropean'</literal>
-     specifies the variant "month before day", the command
+     specifies the variant <quote>month before day</quote>, the command
      <literal>SET DateStyle TO 'European'</literal> sets the variant
-     "day before month". The <literal>ISO</literal> style
+     <quote>day before month</quote>. The <literal>ISO</literal> style
      is the default but this default can be changed at compile time or at run time.
     </para>
 
@@ -2129,8 +2129,9 @@ SELECT * FROM test1 WHERE a;
     </indexterm>
 
     <para>
-     Paths are represented by connected sets of points. Paths can be "open", where
-     the first and last points in the set are not connected, and "closed",
+     Paths are represented by connected sets of points. Paths can be
+     <firstterm>open</firstterm>, where
+     the first and last points in the set are not connected, and <firstterm>closed</firstterm>,
      where the first and last point are connected. Functions
      <function>popen(p)</function>
      and

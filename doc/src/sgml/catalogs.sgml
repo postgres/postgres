@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.24 2001/09/10 05:46:41 ishii Exp $
+ $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.25 2001/09/13 15:55:22 petere Exp $
  -->
 
 <chapter id="catalogs">
@@ -1737,7 +1737,7 @@
    to assume very much about what sort of statistics it stores.  Only
    extremely general statistics (such as NULL-ness) are given dedicated
    columns in <structname>pg_statistic</structname>.  Everything else
-   is stored in "slots", which are groups of associated columns whose
+   is stored in <quote>slots</quote>, which are groups of associated columns whose
    content is identified by a code number in one of the slot's columns.
    For more information see
    <filename>src/include/catalog/pg_statistic.h</filename>.
@@ -1803,7 +1803,7 @@
       <entry><type>int2</type></entry>
       <entry></entry>
       <entry>A code number indicating the kind of statistics stored in the Nth
-      "slot" of the <structname>pg_statistic</structname> row.
+      <quote>slot</quote> of the <structname>pg_statistic</structname> row.
       </entry>
      </row>
 
@@ -1812,7 +1812,7 @@
       <entry><type>oid</type></entry>
       <entry>pg_operator.oid</entry>
       <entry>An operator used to derive the statistics stored in the
-      Nth "slot".  For example, a histogram slot would show the "&lt;"
+      Nth <quote>slot</quote>.  For example, a histogram slot would show the <literal>&lt;</literal>
       operator that defines the sort order of the data.
       </entry>
      </row>
@@ -1822,7 +1822,7 @@
       <entry><type>float4[]</type></entry>
       <entry></entry>
       <entry>Numerical statistics of the appropriate kind for the Nth
-      "slot", or NULL if the slot kind does not involve numerical values.
+      <quote>slot</quote>, or NULL if the slot kind does not involve numerical values.
       </entry>
      </row>
 
@@ -1831,7 +1831,7 @@
       <entry><type>text[]</type></entry>
       <entry></entry>
       <entry>Column data values of the appropriate kind for the Nth
-      "slot", or NULL if the slot kind does not store any data values.
+      <quote>slot</quote>, or NULL if the slot kind does not store any data values.
       For datatype independence, all column data values are converted
       to external textual form and stored as TEXT datums.
       </entry>

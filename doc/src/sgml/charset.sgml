@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/charset.sgml,v 2.9 2001/09/09 23:52:12 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/charset.sgml,v 2.10 2001/09/13 15:55:22 petere Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -396,7 +396,7 @@ perl: warning: Falling back to the standard locale ("C").
      </programlisting>
 
      sets the default encoding to <literal>EUC_JP</literal> (Extended Unix Code for Japanese).
-     Note that you can use "--encoding" instead of "-E" if you prefer
+     Note that you can use <option>--encoding</option> instead of <option>-E</option> if you prefer
      to type longer option strings. 
      If no -E or --encoding option is given, the encoding
      specified at configure time is used.
@@ -529,7 +529,7 @@ int PQsetClientEncoding(PGconn *<replaceable>conn</replaceable>, const char *<re
 int PQclientEncoding(const PGconn *<replaceable>conn</replaceable>)
 	</programlisting>
 
-	Note that it returns the "encoding id," not the encoding symbol string
+	Note that it returns the encoding id, not the encoding symbol string
 	such as <literal>EUC_JP</literal>. To convert an encoding id to an encoding symbol, you
 	can use:
 
@@ -549,7 +549,7 @@ char *pg_encoding_to_char(int <replaceable>encoding_id</replaceable>)
 SET CLIENT_ENCODING TO 'encoding';
 	</programlisting>
 
-	Also you can use SQL92 syntax "SET NAMES" for this purpose:
+	Also you can use SQL92 syntax <literal>SET NAMES</literal> for this purpose:
 
 	<programlisting>
 SET NAMES 'encoding';
@@ -801,7 +801,7 @@ Sorry for my Eglish and C code, I'm not native :-)
 
       <listitem>
        <para>
-	A locale such as "<literal>ch</literal>" is correctly sorted
+	A locale such as <literal>ch</literal> is correctly sorted
 	only if your system
 	supports that locale; older systems may not do so but new ones
 	(e.g. RH6.0) do.
