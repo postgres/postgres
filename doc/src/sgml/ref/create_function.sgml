@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.9 1999/07/22 15:09:07 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.10 1999/09/28 04:34:39 momjian Exp $
 Postgres documentation
 -->
 
@@ -25,8 +25,14 @@ Postgres documentation
   <synopsis>
 CREATE FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceable class="parameter">ftype</replaceable> [, ...] ] )
     RETURNS <replaceable class="parameter">rtype</replaceable>
-    AS <replaceable class="parameter">definition</replaceable>
+    AS <replaceable class="parameter">definition</replaceable>   
     LANGUAGE '<replaceable class="parameter">langname</replaceable>'
+
+
+CREATE FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceable class="parameter">ftype</replaceable> [, ...] ] )
+    RETURNS <replaceable class="parameter">rtype</replaceable>
+    AS <replaceable class="parameter">obj_file</replaceable> , <replaceable class="parameter">link_symbol</replaceable>  
+    LANGUAGE 'c'
   </synopsis>
   
   <refsect2 id="R2-SQL-CREATEFUNCTION-1">
@@ -80,6 +86,22 @@ CREATE FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceab
 	A string defining the function; the meaning depends on the language.
 	It may be an internal function name, the path to an object file,
 	an SQL query, or text in a procedural language.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><replaceable class="parameter">obj_file</replaceable> , <replaceable class="parameter">link_symbol</replaceable></term>
+      <listitem>
+       <para>
+	This form of the <command>AS</command> clause is used for
+	dynamically-linked, C language functions when the function name in
+	the C language source code is not the same as the name of the SQL
+	function. The string <replaceable
+	class="parameter">obj_file</replaceable> is the name of the file
+	containing the dynamically loadable object, and <replaceable
+	class="parameter">link_symbol</replaceable>, is the object's link
+	symbol which is the same as the name of the function in the C
+	language source code.
        </para>
       </listitem>
      </varlistentry>
@@ -165,10 +187,10 @@ CREATE
    <para>
     <productname>Postgres</productname> allows function "overloading";
     that is, the same name can be used for several different functions
-    so long as they have distinct argument types.  This facility must be
-    used with caution for <literal>internal</literal>
-    and C-language functions, however.
-   </para>
+    so long as they have distinct argument types.  This facility must
+    be used with caution for <literal>internal</literal> and
+    C-language functions, however.    
+	</para>
 
    <para>
     Two <literal>internal</literal>
@@ -181,17 +203,14 @@ CREATE
    </para>
 
    <para>
-    For dynamically-loaded C functions, the SQL name of the function must
-    be the same as the C function name, because the AS clause is used to
-    give the path name of the object file containing the C code.  In this
-    situation it is best not to try to overload SQL function names.  It
-    might work to load a C function that has the same C name as an internal
-    function or another dynamically-loaded function --- or it might not.
-    On some platforms the dynamic loader may botch the load in interesting
-    ways if there is a conflict of C function names.  So, even if it works
-    for you today, you might regret overloading names later when you try
-    to run the code somewhere else.
+    When overloading SQL functions with C-language functions, give
+    each C-language instance of the function a distinct name, and use
+    the alternative form of the <command>AS</command> clause in the
+    <command>CREATE FUNCTION</command> syntax to ensure that
+    overloaded SQL functions names are resolved to the correct
+    dynamically linked objects.
    </para>
+
 
    <para>
     A C function cannot return a set of values.
@@ -227,7 +246,6 @@ SELECT one() AS answer;
    is correct. It is intended for use in a CHECK contraint.
   </para>
   <programlisting>
-   <userinput>
 CREATE FUNCTION ean_checkdigit(bpchar, bpchar) RETURNS bool
     AS '/usr1/proj/bray/sql/funcs.so' LANGUAGE 'c';
     
@@ -238,8 +256,41 @@ CREATE TABLE product (
     eancode   char(6) CHECK (eancode ~ '[0-9]{6}'),
     CONSTRAINT ean    CHECK (ean_checkdigit(eanprefix, eancode))
 );
-   </userinput>
   </programlisting>
+
+
+  <para>
+   This example creates a function that does type conversion between the
+   user defined type complex, and the internal type point.  The
+   function is implemented by a dynamically loaded object that was
+   compiled from C source. For <productname>Postgres</productname> to
+   find a type conversion function automatically, the sql function has
+   to have the same name as the return type, and overloading is
+   unavoidable.  The function name is overloaded by using the second
+   form of the <command>AS</command> clause in the SQL definition
+  </para>
+  <programlisting>
+CREATE FUNCTION point(complex) RETURNS point
+    AS '/home/bernie/pgsql/lib/complex.so', 'complex_to_point'
+    LANGUAGE 'c';
+  </programlisting>
+  <para>
+  The C decalaration of the function is:
+  </para>
+  <programlisting>
+Point * complex_to_point (Complex *z)
+{
+	Point *p;
+
+	p = (Point *) palloc(sizeof(Point));
+	p->x = z->x;
+	p->y = z->y;
+		
+	return p;
+}
+  </programlisting>
+
+    
  </refsect1>
  
  <refsect1 id="R1-SQL-CREATEFUNCTION-4">
@@ -283,8 +334,7 @@ CREATE TABLE product (
     SQL/PSM <command>CREATE FUNCTION</command> has the following syntax:
     <synopsis>
 CREATE FUNCTION <replaceable class="parameter">name</replaceable>
-    ( [ [ IN | OUT | INOUT ] <replaceable class="parameter">eter</replaceable>eable>eable> <replaceable
-      class="parameter">type</replaceable> [, ...] ] )
+    ( [ [ IN | OUT | INOUT ] <replaceable class="parameter">type</replaceable> [, ...] ] )
      RETURNS <replaceable class="parameter">rtype</replaceable>
      LANGUAGE '<replaceable class="parameter">langname</replaceable>'
      ESPECIFIC <replaceable class="parameter">routine</replaceable>

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.99 1999/09/23 17:02:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.100 1999/09/28 04:34:44 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -163,7 +163,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
 %type <list>	stmtblock, stmtmulti,
 		result, relation_name_list, OptTableElementList,
 		OptInherit, definition,
-		opt_with, func_args, func_args_list,
+		opt_with, func_args, func_args_list, func_as,
 		oper_argtypes, RuleActionList, RuleActionBlock, RuleActionMulti,
 		opt_column_list, columnList, opt_va_list, va_list,
 		sort_clause, sortby_list, index_params, index_list, name_list,
@@ -1923,7 +1923,7 @@ RecipeStmt:  EXECUTE RECIPE recipe_name
  *****************************************************************************/
 
 ProcedureStmt:	CREATE FUNCTION func_name func_args
-			 RETURNS func_return opt_with AS Sconst LANGUAGE Sconst
+			 RETURNS func_return opt_with AS func_as LANGUAGE Sconst
 				{
 					ProcedureStmt *n = makeNode(ProcedureStmt);
 					n->funcname = $3;
@@ -1947,6 +1947,12 @@ func_args_list:  TypeId
 				{	$$ = lcons(makeString($1),NIL); }
 		| func_args_list ',' TypeId
 				{	$$ = lappend($1,makeString($3)); }
+		;
+
+func_as: Sconst	
+				{   $$ = lcons(makeString($1),NIL); }
+		| Sconst ',' Sconst
+				{ 	$$ = lappend(lcons(makeString($1),NIL), makeString($3)); }
 		;
 
 func_return:  set_opt TypeId

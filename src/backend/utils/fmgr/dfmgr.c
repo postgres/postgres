@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.32 1999/09/18 19:08:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.33 1999/09/28 04:34:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,8 +42,11 @@ fmgr_dynamic(Oid procedureId, int *pronargs)
 	HeapTuple	procedureTuple;
 	Form_pg_proc procedureStruct;
 	char	   *proname,
-			   *probinstring;
+			   *probinstring,
+			   *prosrcstring,
+			   *linksymbol;
 	Datum		probinattr;
+	Datum		prosrcattr;
 	func_ptr	user_fn;
 	Relation	rel;
 	bool		isnull;
@@ -90,7 +93,32 @@ fmgr_dynamic(Oid procedureId, int *pronargs)
 
 	heap_close(rel, AccessShareLock);
 
-	user_fn = handle_load(probinstring, proname);
+	prosrcattr = heap_getattr(procedureTuple,
+							  Anum_pg_proc_prosrc,
+							  RelationGetDescr(rel), &isnull);
+
+	if (isnull)
+	{							/* Use the proname for the link symbol */
+		linksymbol = proname;
+	}
+	else if (!PointerIsValid(prosrcattr))
+	{							/* pg_proc must be messed up! */
+		heap_close(rel);
+		elog(ERROR, "fmgr: Could not extract prosrc for %u from %s",
+			 procedureId, ProcedureRelationName);
+		return (func_ptr) NULL;
+	}
+	else
+	{							/* The text in prosrcattr is either "-" or
+								 * a link symbol */
+		prosrcstring = textout((struct varlena *) prosrcattr);
+		if (strcmp(prosrcstring, "-") == 0)
+			linksymbol = proname;
+		else
+			linksymbol = prosrcstring;
+	}
+
+	user_fn = handle_load(probinstring, linksymbol);
 
 	pfree(probinstring);
 

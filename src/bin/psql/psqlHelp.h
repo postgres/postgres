@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: psqlHelp.h,v 1.75 1999/09/27 20:27:20 momjian Exp $
+ * $Id: psqlHelp.h,v 1.76 1999/09/28 04:34:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,8 +88,14 @@ static struct _helpStruct QL_HELP[] = {
 		"create a user-defined function",
 	"\
 \tCREATE FUNCTION function_name ([type1, ...typeN]) RETURNS return_type\n\
-\tAS 'object_filename'|'sql-queries'|'builtin_function_name'\n\
-\tLANGUAGE 'c'|'sql'|'internal';"},
+\tAS 'sql-queries'|'builtin_function_name'|'object_filename'\n\
+\tLANGUAGE 'sql'|'internal'|'c';\n\
+\n\
+OR\n\
+\n\
+\tCREATE FUNCTION function_name ([type1, ...typeN]) RETURNS return_type\n\
+\tAS 'object_filename', 'link_symbol'\n\
+\tLANGUAGE 'c';"},
 	{"create index",
 		"construct an index",
 	"\

@@ -357,25 +357,43 @@ WARN::function declared to return type EMP does not retrieve (EMP.*)
    <title>Compiled (C) Language Functions</title>
 
    <para>
-    Functions written in C can be defined to Postgres, which will dynamically
-    load them into its address space.  The AS
-    clause gives the full path name of the object file that contains the
-    function.  This file is loaded either using
-    load(l)
-    or automatically the first time the function is necessary for
-    execution. Repeated execution of a function will cause negligible
-    additional overhead, as the function will remain in a main memory
-    cache.
+    Functions written in C can be compiled into dynamically loadable
+    objects, and used to implement user-defined SQL functions.  The
+    first time the user defined function is called inside the backend,
+    the dynamic loader loads the function's object code into memory,
+    and links the function with the running
+    <productname>Postgres</productname> executable.  The SQL syntax
+    for the <xref linkend="sql-createfunction-title"
+    endterm="sql-createfunction-title"> command links the SQL function
+    to the C source function in one of two ways. If the SQL function
+    has the same name as the C source function the first form of the
+    statement is used. The string argument in the AS clause is the
+    full pathname of the file that contains the dynamically loadable
+    compiled object.  If the name of C function is different from the
+    name of the SQL function, then the second form is used. In this
+    form the AS clause takes two string arguments, the first is the
+    full pathname of the dynamically loadable object file, and the
+    second is the link symbol that the dynamic loader should search
+    for. This link symbol is just the function name in the C source
+    code.
+
+	After it is used for the first time, a dynamically loaded, user
+	function is retained in memory, and future calls to the function
+	only incur the small overhead of a symbol table lookup.
    </para>
 
    <para>
-    The string which specifies the object file (the string in the AS clause)
-    should be the <emphasis>full path</emphasis>
-    of the object code file for the function, bracketed by quotation
-    marks.  (<productname>Postgres</productname> will not compile a
-    function automatically; it must
-    be compiled before it is used in a CREATE FUNCTION
-    command.  See below for additional information.)
+    The string which specifies the object file (the string in the AS
+    clause) should be the <emphasis>full path</emphasis> of the object
+    code file for the function, bracketed by quotation marks.  If a
+    link symbol is used in the AS clause, the link symbol should also be
+    bracketed by single quotation marks, and should be exactly the
+    same as the name of function in the C source code. On UNIX systems
+    the command <command>nm</command> will print all of the link
+    symbols in a dynamically loadable object.
+    (<productname>Postgres</productname> will not compile a function
+    automatically; it must be compiled before it is used in a CREATE
+    FUNCTION command.  See below for additional information.)
    </para>
 
    <sect2>
@@ -960,10 +978,13 @@ memmove(destination-&gt;data, buffer, 40);
     <title>Name Space Conflicts</title>
 
     <para>
-     As of <productname>Postgres</productname> v6.5,
-     <command>CREATE FUNCTION</command> can decouple a C language
-     function name from the name of the entry point. This is now the
-     preferred technique to accomplish function overloading.
+     As of <productname>Postgres</productname> v6.6, the alternative
+	 form of the AS clause for the SQL <command>CREATE
+	 FUNCTION</command> command described in <xref
+	 linkend="sql-createfunction-title" endterm="sql-createfunction-title">
+	 decouples the SQL function name from the function name in the C
+	 source code. This is now the preferred technique to accomplish
+	 function overloading.
     </para>
 
     <sect3>

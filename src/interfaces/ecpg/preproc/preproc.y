@@ -799,7 +799,7 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 %type  <str>    opt_analyze opt_va_list va_list ExplainStmt index_params
 %type  <str>    index_list func_index index_elem opt_type opt_class access_method_clause
 %type  <str>    index_opt_unique IndexStmt set_opt func_return def_rest
-%type  <str>    func_args_list func_args opt_with ProcedureStmt def_arg
+%type  <str>    func_as func_args_list func_args opt_with ProcedureStmt def_arg
 %type  <str>    def_elem def_list definition def_name def_type DefineStmt
 %type  <str>    opt_instead event event_object RuleActionList,
 %type  <str>	RuleActionBlock RuleActionMulti join_list
@@ -2208,11 +2208,12 @@ RecipeStmt:  EXECUTE RECIPE recipe_name
  *						[, iscachable])
  *						[arg is (<type-1> { , <type-n>})]
  *						as <filename or code in language as appropriate>
+ *                      [, <link name for dynamic loader>]
  *
  *****************************************************************************/
 
 ProcedureStmt:	CREATE FUNCTION func_name func_args
-			 RETURNS func_return opt_with AS Sconst LANGUAGE Sconst
+			 RETURNS func_return opt_with AS func_as LANGUAGE Sconst
 				{
 					$$ = cat2_str(cat5_str(cat5_str(make1_str("create function"), $3, $4, make1_str("returns"), $6), $7, make1_str("as"), $9, make1_str("language")), $11);
 				}
@@ -2228,6 +2229,12 @@ func_args:  '(' func_args_list ')'		{ $$ = make3_str(make1_str("("), $2, make1_s
 func_args_list:  TypeId				{ $$ = $1; }
 		| func_args_list ',' TypeId
 				{	$$ = cat3_str($1, make1_str(","), $3); }
+		;
+
+func_as:  Sconst 
+                { $$ = $1; }
+        | Sconst ',' Sconst
+				{ $$ = cat3_str($1, make1_str(","), $3); }
 		;
 
 func_return:  set_opt TypeId

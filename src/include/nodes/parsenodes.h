@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.79 1999/09/23 17:03:22 momjian Exp $
+ * $Id: parsenodes.h,v 1.80 1999/09/28 04:34:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,7 +70,7 @@ typedef struct Query
 	/* internal to planner */
 	List	   *base_rel_list;	/* list of base-relation RelOptInfos */
 	List	   *join_rel_list;	/* list of join-relation RelOptInfos */
-	List	   *query_pathkeys;	/* pathkeys for query_planner()'s result */
+	List	   *query_pathkeys; /* pathkeys for query_planner()'s result */
 } Query;
 
 
@@ -361,7 +361,7 @@ typedef struct ProcedureStmt
 	Node	   *returnType;		/* the return type (as a string or a
 								 * TypeName (ie.setof) */
 	List	   *withClause;		/* a list of ParamString */
-	char	   *as;				/* the SQL statement or filename */
+	List	   *as;				/* the SQL statement or filename */
 	char	   *language;		/* C or SQL */
 } ProcedureStmt;
 
@@ -836,8 +836,10 @@ typedef struct ResTarget
 {
 	NodeTag		type;
 	char	   *name;			/* column name or NULL */
-	List	   *indirection;	/* subscripts for destination column, or NIL */
-	Node	   *val;			/* the value expression to compute or assign */
+	List	   *indirection;	/* subscripts for destination column, or
+								 * NIL */
+	Node	   *val;			/* the value expression to compute or
+								 * assign */
 } ResTarget;
 
 /*
@@ -970,7 +972,7 @@ typedef struct RangeTblEntry
 typedef struct SortClause
 {
 	NodeTag		type;
-	Index		tleSortGroupRef; /* reference into targetlist */
+	Index		tleSortGroupRef;/* reference into targetlist */
 	Oid			sortop;			/* the sort operator to use */
 } SortClause;
 
