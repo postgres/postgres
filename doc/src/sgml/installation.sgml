@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.160 2003/10/26 00:26:13 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.161 2003/10/26 00:31:48 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1529,9 +1529,9 @@ gunzip -c postgres.ps.gz \
        <row>
 	<entry><systemitem class="osname">AIX</></entry>
 	<entry><systemitem>RS6000</></entry>
-	<entry>7.3</entry>
-	<entry>2002-11-12,
-	 Andreas Zeugswetter (<email>ZeugswetterA@spardat.at</email>)</entry>
+	<entry>7.4</entry>
+	<entry>2003-10-25,
+	  Hans-J?rgen Sch?nig (<email>hs@cybertec.at</email>)</entry>
         <entry>see also <filename>doc/FAQ_AIX</filename></entry>
        </row>
        <row>
