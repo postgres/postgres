@@ -1,7 +1,7 @@
 #
 # PostgreSQL top level makefile
 #
-# $Header: /cvsroot/pgsql/GNUmakefile.in,v 1.14 2000/10/02 22:21:21 petere Exp $
+# $Header: /cvsroot/pgsql/GNUmakefile.in,v 1.15 2000/12/04 00:34:40 tgl Exp $
 #
 
 subdir =
@@ -18,14 +18,22 @@ install:
 	$(MAKE) -C src install
 	@cat $(srcdir)/register.txt
 
-installdirs uninstall clean distprep:
+installdirs uninstall distprep:
 	$(MAKE) -C doc $@
 	$(MAKE) -C src $@
 
-# Important: distclean `doc' before `src', otherwise Makefile.global
+# clean, distclean, etc should apply to contrib too, even though
+# it's not built by default
+clean:
+	$(MAKE) -C doc $@
+	$(MAKE) -C contrib $@
+	$(MAKE) -C src $@
+
+# Important: distclean `src' last, otherwise Makefile.global
 # will be gone too soon.
 distclean maintainer-clean:
 	-$(MAKE) -C doc $@
+	-$(MAKE) -C contrib $@
 	-$(MAKE) -C src $@
 	-rm -f config.cache config.log config.status GNUmakefile
 
