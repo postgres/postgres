@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.41 1998/02/10 04:00:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.42 1998/02/13 03:26:38 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -110,7 +110,14 @@ ExecutorStart(QueryDesc *queryDesc, EState *estate)
 
 	/* sanity checks */
 	Assert(queryDesc != NULL);
-
+	
+	if (queryDesc->plantree->nParamExec > 0)
+	{
+		estate->es_param_exec_vals = (ParamExecData*) 
+			palloc (queryDesc->plantree->nParamExec * sizeof (ParamExecData));
+		memset (estate->es_param_exec_vals, 0 , queryDesc->plantree->nParamExec * sizeof (ParamExecData));
+	}
+	
 	result = InitPlan(queryDesc->operation,
 					  queryDesc->parsetree,
 					  queryDesc->plantree,
@@ -176,31 +183,6 @@ ExecutorRun(QueryDesc *queryDesc, EState *estate, int feature, int count)
 	destination = (void (*) ()) DestToFunction(dest);
 	estate->es_processed = 0;
 	estate->es_lastoid = InvalidOid;
-
-#if 0
-
-	/*
-	 * It doesn't work in common case (i.g. if function has a aggregate).
-	 * Now we store parameter values before ExecutorStart. - vadim
-	 * 01/22/97
-	 */
-#ifdef INDEXSCAN_PATCH
-
-	/*
-	 * If the plan is an index scan and some of the scan key are function
-	 * arguments rescan the indices after the parameter values have been
-	 * stored in the execution state.  DZ - 27-8-1996
-	 */
-	if ((nodeTag(plan) == T_IndexScan) &&
-		(((IndexScan *) plan)->indxstate->iss_RuntimeKeyInfo != NULL))
-	{
-		ExprContext *econtext;
-
-		econtext = ((IndexScan *) plan)->scan.scanstate->cstate.cs_ExprContext;
-		ExecIndexReScan((IndexScan *) plan, econtext, plan);
-	}
-#endif
-#endif
 
 	switch (feature)
 	{
@@ -1246,7 +1228,8 @@ ExecAttrDefault(Relation rel, HeapTuple tuple)
 	econtext->ecxt_outertuple = NULL;	/* outer tuple slot */
 	econtext->ecxt_relation = NULL;		/* relation */
 	econtext->ecxt_relid = 0;	/* relid */
-	econtext->ecxt_param_list_info = NULL;		/* param list info */
+	econtext->ecxt_param_list_info = NULL;	/* param list info */
+	econtext->ecxt_param_exec_vals = NULL;	/* exec param values */
 	econtext->ecxt_range_table = NULL;	/* range table */
 	for (i = 0; i < ndef; i++)
 	{
@@ -1322,6 +1305,7 @@ ExecRelCheck(Relation rel, HeapTuple tuple)
 	econtext->ecxt_relation = rel;		/* relation */
 	econtext->ecxt_relid = 0;	/* relid */
 	econtext->ecxt_param_list_info = NULL;		/* param list info */
+	econtext->ecxt_param_exec_vals = NULL;		/* exec param values */
 	econtext->ecxt_range_table = rtlist;		/* range table */
 
 	for (i = 0; i < ncheck; i++)

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.9 1998/01/13 04:03:58 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.10 1998/02/13 03:26:47 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -154,6 +154,9 @@ ExecHashJoin(HashJoin *node)
 		curbatch = 0;
 		node->hashdone = true;
 	}
+	else if (hashtable == NULL)
+		return (NULL);
+	
 	nbatch = hashtable->nbatch;
 	outerbatches = hjstate->hj_OuterBatches;
 	if (nbatch > 0 && outerbatches == NULL)
@@ -209,14 +212,12 @@ ExecHashJoin(HashJoin *node)
 
 		while (curbatch <= nbatch && TupIsNull(outerTupleSlot))
 		{
-
 			/*
 			 * if the current batch runs out, switch to new batch
 			 */
 			curbatch = ExecHashJoinNewBatch(hjstate);
 			if (curbatch > nbatch)
 			{
-
 				/*
 				 * when the last batch runs out, clean up
 				 */
@@ -349,7 +350,6 @@ ExecHashJoin(HashJoin *node)
 			curbatch = ExecHashJoinNewBatch(hjstate);
 			if (curbatch > nbatch)
 			{
-
 				/*
 				 * when the last batch runs out, clean up
 				 */
@@ -840,4 +840,46 @@ ExecHashJoinSaveTuple(HeapTuple heapTuple,
 	*pageend = position - buffer;
 
 	return position;
+}
+
+void
+ExecReScanHashJoin(HashJoin *node, ExprContext *exprCtxt, Plan *parent)
+{
+	HashJoinState  *hjstate = node->hashjoinstate;
+
+	if (!node->hashdone)
+		return;
+	
+	node->hashdone = false;
+	
+	/* 
+	 * Unfortunately, currently we have to destroy hashtable 
+	 * in all cases...
+	 */
+	if (hjstate->hj_HashTable)
+	{
+		ExecHashTableDestroy(hjstate->hj_HashTable);
+		hjstate->hj_HashTable = NULL;
+	}
+	hjstate->hj_CurBucket = (HashBucket) NULL;
+	hjstate->hj_CurTuple = (HeapTuple) NULL;
+	hjstate->hj_CurOTuple = (OverflowTuple) NULL;
+	hjstate->hj_InnerHashKey = (Var *) NULL;
+	hjstate->hj_OuterBatches = (File *) NULL;
+	hjstate->hj_InnerBatches = (File *) NULL;
+	hjstate->hj_OuterReadPos = (char *) NULL;
+	hjstate->hj_OuterReadBlk = (int) 0;
+
+	hjstate->jstate.cs_OuterTupleSlot = (TupleTableSlot *) NULL;
+	hjstate->jstate.cs_TupFromTlist = (bool) false;
+	
+	/* 
+	 * if chgParam of subnodes is not null then plans
+	 * will be re-scanned by first ExecProcNode.
+	 */
+	if (((Plan*) node)->lefttree->chgParam == NULL)
+		ExecReScan (((Plan*) node)->lefttree, exprCtxt, (Plan *) node);
+	if (((Plan*) node)->righttree->chgParam == NULL)
+		ExecReScan (((Plan*) node)->righttree, exprCtxt, (Plan *) node);
+	
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.24 1998/01/31 04:38:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.25 1998/02/13 03:26:42 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,6 +46,7 @@
 #include "executor/execdebug.h"
 #include "executor/execFlatten.h"
 #include "executor/functions.h"
+#include "executor/nodeSubplan.h"
 #include "access/heapam.h"
 #include "utils/memutils.h"
 #include "utils/builtins.h"
@@ -374,14 +375,23 @@ ExecEvalParam(Param *expression, ExprContext *econtext, bool *isNull)
 {
 
 	char	   *thisParameterName;
-	int			thisParameterKind;
-	AttrNumber	thisParameterId;
+	int			thisParameterKind = expression->paramkind;
+	AttrNumber	thisParameterId = expression->paramid;
 	int			matchFound;
 	ParamListInfo paramList;
-
+	
+	if ( thisParameterKind == PARAM_EXEC )
+	{
+		ParamExecData   *prm = &(econtext->ecxt_param_exec_vals[thisParameterId]);
+		
+		if ( prm->execPlan != NULL )
+			ExecSetParamPlan (prm->execPlan);
+		Assert (prm->execPlan == NULL);
+		*isNull = prm->isnull;
+		return (prm->value);
+	}
+	
 	thisParameterName = expression->paramname;
-	thisParameterKind = expression->paramkind;
-	thisParameterId = expression->paramid;
 	paramList = econtext->ecxt_param_list_info;
 
 	*isNull = false;
@@ -1227,14 +1237,17 @@ ExecEvalExpr(Node *expression,
 					case NOT_EXPR:
 						retDatum = (Datum) ExecEvalNot(expr, econtext, isNull);
 						break;
+					case SUBPLAN_EXPR:
+						retDatum = (Datum) ExecSubPlan((SubPlan*) expr->oper, expr->args, econtext);
+						break;
 					default:
-						elog(ERROR, "ExecEvalExpr: unknown expression type");
+						elog(ERROR, "ExecEvalExpr: unknown expression type %d", expr->opType);
 						break;
 				}
 				break;
 			}
 		default:
-			elog(ERROR, "ExecEvalExpr: unknown expression type");
+			elog(ERROR, "ExecEvalExpr: unknown expression type %d", nodeTag(expression));
 			break;
 	}
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.28 1998/02/10 04:00:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.29 1998/02/13 03:26:43 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -180,11 +180,6 @@ void
 ExecAssignExprContext(EState *estate, CommonState *commonstate)
 {
 	ExprContext *econtext;
-	ParamListInfo paraminfo;
-	List	   *rangeTable;
-
-	paraminfo = estate->es_param_list_info;
-	rangeTable = estate->es_range_table;
 
 	econtext = makeNode(ExprContext);
 	econtext->ecxt_scantuple = NULL;	/* scan tuple slot */
@@ -192,8 +187,9 @@ ExecAssignExprContext(EState *estate, CommonState *commonstate)
 	econtext->ecxt_outertuple = NULL;	/* outer tuple slot */
 	econtext->ecxt_relation = NULL;		/* relation */
 	econtext->ecxt_relid = 0;	/* relid */
-	econtext->ecxt_param_list_info = paraminfo; /* param list info */
-	econtext->ecxt_range_table = rangeTable;	/* range table */
+	econtext->ecxt_param_list_info = estate->es_param_list_info;
+	econtext->ecxt_param_exec_vals = estate->es_param_exec_vals;
+	econtext->ecxt_range_table = estate->es_range_table;	/* range table */
 
 	commonstate->cs_ExprContext = econtext;
 }
@@ -1178,4 +1174,26 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
 	}
 	if (econtext != NULL)
 		pfree(econtext);
+}
+
+void 
+SetChangedParamList (Plan *node, List *newchg)
+{
+	List   *nl;
+	
+	foreach (nl, newchg)
+	{
+		int	paramId = lfirsti(nl);
+		
+		/* if this node doesn't depend on a param ... */
+		if ( !intMember (paramId, node->extParam) &&
+				!intMember (paramId, node->locParam) )
+			continue;
+		/* if this param is already in list of changed ones ... */
+		if ( intMember (paramId, node->chgParam) )
+			continue;
+		/* else - add this param to the list */
+		node->chgParam = lappendi (node->chgParam, paramId);
+	}
+
 }

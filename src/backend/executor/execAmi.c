@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execAmi.c,v 1.16 1998/01/16 23:19:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execAmi.c,v 1.17 1998/02/13 03:26:36 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,6 +37,13 @@
 #include "executor/nodeIndexscan.h"
 #include "executor/nodeSort.h"
 #include "executor/nodeTee.h"
+#include "executor/nodeMaterial.h"
+#include "executor/nodeNestloop.h"
+#include "executor/nodeHashjoin.h"
+#include "executor/nodeHash.h"
+#include "executor/nodeAgg.h"
+#include "executor/nodeResult.h"
+#include "executor/nodeSubplan.h"
 #include "executor/execdebug.h"
 #include "optimizer/internal.h" /* for _TEMP_RELATION_ID_ */
 #include "access/genam.h"
@@ -287,34 +294,81 @@ ExecCloseR(Plan *node)
 void
 ExecReScan(Plan *node, ExprContext *exprCtxt, Plan *parent)
 {
+
+	if ( node->chgParam != NULL )	/* Wow! */
+	{
+		List   *lst;
+		
+		foreach (lst, node->initPlan)
+		{
+			Plan   *splan = ((SubPlan*) lfirst (lst))->plan;
+			if ( splan->extParam != NULL )	/* don't care about child locParam */
+				SetChangedParamList (splan, node->chgParam);
+			if ( splan->chgParam != NULL )
+				ExecReScanSetParamPlan ((SubPlan*) lfirst (lst), node);
+		}
+		foreach (lst, node->subPlan)
+		{
+			Plan   *splan = ((SubPlan*) lfirst (lst))->plan;
+			if ( splan->extParam != NULL )
+				SetChangedParamList (splan, node->chgParam);
+		}
+		/* Well. Now set chgParam for left/right trees. */
+		if ( node->lefttree != NULL )
+			SetChangedParamList (node->lefttree, node->chgParam);
+		if ( node->righttree != NULL )
+			SetChangedParamList (node->righttree, node->chgParam);
+	}
+
 	switch (nodeTag(node))
 	{
-			case T_SeqScan:
+		case T_SeqScan:
 			ExecSeqReScan((SeqScan *) node, exprCtxt, parent);
-			return;
+			break;
 
 		case T_IndexScan:
 			ExecIndexReScan((IndexScan *) node, exprCtxt, parent);
-			return;
+			break;
 
 		case T_Material:
+			ExecMaterialReScan((Material*) node, exprCtxt, parent);
+			break;
 
-			/*
-			 * the first call to ExecReScan should have no effect because
-			 * everything is initialized properly already.	the following
-			 * calls will be handled by ExecSeqReScan() because the nodes
-			 * below the Material node have already been materialized into
-			 * a temp relation.
-			 */
-			return;
+		case T_NestLoop:
+			ExecReScanNestLoop((NestLoop*) node, exprCtxt, parent);
+			break;
 
+		case T_HashJoin:
+			ExecReScanHashJoin((HashJoin*) node, exprCtxt, parent);
+			break;
+
+		case T_Hash:
+			ExecReScanHash((Hash*) node, exprCtxt, parent);
+			break;
+
+		case T_Agg:
+			ExecReScanAgg((Agg*) node, exprCtxt, parent);
+			break;
+
+		case T_Result:
+			ExecReScanResult((Result*) node, exprCtxt, parent);
+			break;
+
+/* 
+ * Tee is never used
 		case T_Tee:
 			ExecTeeReScan((Tee *) node, exprCtxt, parent);
 			break;
-
+ */
 		default:
-			elog(ERROR, "ExecReScan: not a seqscan or indexscan node.");
+			elog(ERROR, "ExecReScan: node type %u not supported", nodeTag(node));
 			return;
+	}
+	
+	if ( node->chgParam != NULL )
+	{
+		freeList (node->chgParam);
+		node->chgParam = NULL;
 	}
 }
 
@@ -352,7 +406,7 @@ ExecMarkPos(Plan *node)
 {
 	switch (nodeTag(node))
 	{
-			case T_SeqScan:
+		case T_SeqScan:
 			ExecSeqMarkPos((SeqScan *) node);
 			break;
 
@@ -365,7 +419,7 @@ ExecMarkPos(Plan *node)
 			break;
 
 		default:
-			/* elog(DEBUG, "ExecMarkPos: unsupported node type"); */
+			elog(DEBUG, "ExecMarkPos: node type %u not supported", nodeTag(node));
 			break;
 	}
 	return;
@@ -382,7 +436,7 @@ ExecRestrPos(Plan *node)
 {
 	switch (nodeTag(node))
 	{
-			case T_SeqScan:
+		case T_SeqScan:
 			ExecSeqRestrPos((SeqScan *) node);
 			return;
 
@@ -395,7 +449,7 @@ ExecRestrPos(Plan *node)
 			return;
 
 		default:
-			/* elog(DEBUG, "ExecRestrPos: node type not supported"); */
+			elog(DEBUG, "ExecRestrPos: node type %u not supported", nodeTag(node));
 			return;
 	}
 }

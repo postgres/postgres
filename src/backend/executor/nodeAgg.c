@@ -676,3 +676,21 @@ aggGetAttr(TupleTableSlot *slot,
 
 	return result;
 }
+
+void
+ExecReScanAgg(Agg *node, ExprContext *exprCtxt, Plan *parent)
+{
+	AggState	   *aggstate = node->aggstate;
+	ExprContext	   *econtext = aggstate->csstate.cstate.cs_ExprContext;
+
+	aggstate->agg_done = FALSE;
+	MemSet(econtext->ecxt_values, 0, sizeof(Datum) * length(node->aggs));
+	MemSet(econtext->ecxt_nulls, 0, length(node->aggs));
+	/* 
+	 * if chgParam of subnode is not null then plan
+	 * will be re-scanned by first ExecProcNode.
+	 */
+	if (((Plan*) node)->lefttree->chgParam == NULL)
+		ExecReScan (((Plan*) node)->lefttree, exprCtxt, (Plan *) node);
+	
+}

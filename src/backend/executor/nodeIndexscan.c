@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.13 1998/01/07 21:02:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.14 1998/02/13 03:26:49 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -247,7 +247,6 @@ ExecIndexReScan(IndexScan *node, ExprContext *exprCtxt, Plan *parent)
 	indexstate = node->indxstate;
 	estate = node->scan.plan.state;
 	direction = estate->es_direction;
-	indexstate = node->indxstate;
 	numIndices = indexstate->iss_NumIndices;
 	scanDescs = indexstate->iss_ScanDescs;
 	scanKeys = indexstate->iss_ScanKeys;
@@ -268,7 +267,11 @@ ExecIndexReScan(IndexScan *node, ExprContext *exprCtxt, Plan *parent)
 		n_keys = numScanKeys[indexPtr];
 		run_keys = (int *) runtimeKeyInfo[indexPtr];
 		scan_keys = (ScanKey) scanKeys[indexPtr];
-
+		
+		/* it's possible in subselects */
+		if (exprCtxt == NULL)
+			exprCtxt = node->scan.scanstate->cstate.cs_ExprContext;
+		
 		for (j = 0; j < n_keys; j++)
 		{
 
@@ -485,6 +488,8 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 	HeapScanDesc currentScanDesc;
 	ScanDirection direction;
 	int			baseid;
+	
+	List	   *execParam = NULL;
 
 	/* ----------------
 	 *	assign execution state to node
@@ -696,7 +701,6 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 				 */
 				run_keys[j] = NO_OP;
 				scanvalue = ((Const *) leftop)->constvalue;
-#ifdef INDEXSCAN_PATCH
 			}
 			else if (IsA(leftop, Param))
 			{
@@ -707,13 +711,24 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 				 *	it identifies the value to place in our scan key.
 				 * ----------------
 				 */
-				run_keys[j] = NO_OP;
-				scanvalue = ExecEvalParam((Param *) leftop,
-										scanstate->cstate.cs_ExprContext,
-										  &isnull);
-				if (isnull)
-					flags |= SK_ISNULL;
-#endif
+				
+				/* Life was so easy before ... subselects */
+				if ( ((Param *) leftop)->paramkind == PARAM_EXEC )
+				{
+					have_runtime_keys = true;
+					run_keys[j] = LEFT_OP;
+					execParam = lappendi (execParam, ((Param*) leftop)->paramid);
+				}
+				else
+				{
+					scanvalue = ExecEvalParam((Param *) leftop,
+											  scanstate->cstate.cs_ExprContext,
+											  &isnull);
+					if (isnull)
+						flags |= SK_ISNULL;
+					
+					run_keys[j] = NO_OP;
+				}
 			}
 			else if (leftop != NULL &&
 					 is_funcclause(leftop) &&
@@ -779,7 +794,6 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 				 */
 				run_keys[j] = NO_OP;
 				scanvalue = ((Const *) rightop)->constvalue;
-#ifdef INDEXSCAN_PATCH
 			}
 			else if (IsA(rightop, Param))
 			{
@@ -790,13 +804,24 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 				 *	it identifies the value to place in our scan key.
 				 * ----------------
 				 */
-				run_keys[j] = NO_OP;
-				scanvalue = ExecEvalParam((Param *) rightop,
-										scanstate->cstate.cs_ExprContext,
-										  &isnull);
-				if (isnull)
-					flags |= SK_ISNULL;
-#endif
+				
+				/* Life was so easy before ... subselects */
+				if ( ((Param *) rightop)->paramkind == PARAM_EXEC )
+				{
+					have_runtime_keys = true;
+					run_keys[j] = RIGHT_OP;
+					execParam = lappendi (execParam, ((Param*) rightop)->paramid);
+				}
+				else
+				{
+					scanvalue = ExecEvalParam((Param *) rightop,
+											  scanstate->cstate.cs_ExprContext,
+											  &isnull);
+					if (isnull)
+						flags |= SK_ISNULL;
+					
+					run_keys[j] = NO_OP;
+				}
 			}
 			else if (rightop != NULL &&
 					 is_funcclause(rightop) &&
@@ -964,7 +989,13 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 	indexstate->iss_ScanDescs = scanDescs;
 
 	indexstate->cstate.cs_TupFromTlist = false;
-
+	
+	/* 
+	 * if there are some PARAM_EXEC in skankeys then
+	 * force index rescan on first scan.
+	 */
+	((Plan*) node)->chgParam = execParam;
+	
 	/* ----------------
 	 *	all done.
 	 * ----------------

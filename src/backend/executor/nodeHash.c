@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHash.c,v 1.18 1998/02/11 19:10:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHash.c,v 1.19 1998/02/13 03:26:46 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -889,4 +889,24 @@ mk_hj_temp(char *tempname)
 {
 	sprintf(tempname, "HJ%d.%d", (int) MyProcPid, hjtmpcnt);
 	hjtmpcnt = (hjtmpcnt + 1) % 1000;
+}
+
+void
+ExecReScanHash(Hash *node, ExprContext *exprCtxt, Plan *parent)
+{
+	HashState  *hashstate = node->hashstate;
+
+	if (hashstate->hashBatches != NULL)
+	{
+		pfree(hashstate->hashBatches);
+		hashstate->hashBatches = NULL;
+	}
+	
+	/* 
+	 * if chgParam of subnode is not null then plan
+	 * will be re-scanned by first ExecProcNode.
+	 */
+	if (((Plan*) node)->lefttree->chgParam == NULL)
+		ExecReScan (((Plan*) node)->lefttree, exprCtxt, (Plan *) node);
+	
 }

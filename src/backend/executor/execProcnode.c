@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execProcnode.c,v 1.7 1998/01/07 21:02:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execProcnode.c,v 1.8 1998/02/13 03:26:40 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -89,6 +89,7 @@
 #include "executor/nodeHash.h"
 #include "executor/nodeHashjoin.h"
 #include "executor/nodeTee.h"
+#include "executor/nodeSubplan.h"
 
 /* ------------------------------------------------------------------------
  *		ExecInitNode
@@ -106,6 +107,7 @@ bool
 ExecInitNode(Plan *node, EState *estate, Plan *parent)
 {
 	bool		result;
+	List	   *subp;
 
 	/* ----------------
 	 *	do nothing when we get to the end
@@ -114,7 +116,14 @@ ExecInitNode(Plan *node, EState *estate, Plan *parent)
 	 */
 	if (node == NULL)
 		return FALSE;
-
+	
+	foreach (subp, node->initPlan)
+	{
+		result = ExecInitSubPlan ((SubPlan*) lfirst (subp), estate, node);
+		if ( result == FALSE )
+			return (FALSE);
+	}
+	
 	switch (nodeTag(node))
 	{
 			/* ----------------
@@ -190,9 +199,18 @@ ExecInitNode(Plan *node, EState *estate, Plan *parent)
 			break;
 
 		default:
-			elog(DEBUG, "ExecInitNode: node not yet supported: %d",
-				 nodeTag(node));
+			elog(ERROR, "ExecInitNode: node %d unsupported", nodeTag(node));
 			result = FALSE;
+	}
+	
+	if ( result != FALSE )
+	{
+		foreach (subp, node->subPlan)
+		{
+			result = ExecInitSubPlan ((SubPlan*) lfirst (subp), estate, node);
+			if ( result == FALSE )
+				return (FALSE);
+		}
 	}
 
 	return result;
@@ -217,7 +235,10 @@ ExecProcNode(Plan *node, Plan *parent)
 	 */
 	if (node == NULL)
 		return NULL;
-
+	
+	if ( node->chgParam != NULL )				/* something changed */
+		ExecReScan (node, NULL, parent);		/* let ReScan handle this */
+	
 	switch (nodeTag(node))
 	{
 			/* ----------------
@@ -293,9 +314,8 @@ ExecProcNode(Plan *node, Plan *parent)
 			break;
 
 		default:
-			elog(DEBUG, "ExecProcNode: node not yet supported: %d",
-				 nodeTag(node));
-			result = FALSE;
+			elog(ERROR, "ExecProcNode: node %d unsupported", nodeTag(node));
+			result = NULL;
 	}
 
 	return result;
@@ -389,6 +409,8 @@ ExecCountSlotsNode(Plan *node)
 void
 ExecEndNode(Plan *node, Plan *parent)
 {
+	List	   *subp;
+	
 	/* ----------------
 	 *	do nothing when we get to the end
 	 *	of a leaf on tree.
@@ -396,6 +418,20 @@ ExecEndNode(Plan *node, Plan *parent)
 	 */
 	if (node == NULL)
 		return;
+	
+	foreach (subp, node->initPlan)
+	{
+		ExecEndSubPlan ((SubPlan*) lfirst (subp));
+	}
+	foreach (subp, node->subPlan)
+	{
+		ExecEndSubPlan ((SubPlan*) lfirst (subp));
+	}
+	if ( node->chgParam != NULL )
+	{
+		freeList (node->chgParam);
+		node->chgParam = NULL;
+	}
 
 	switch (nodeTag(node))
 	{
@@ -476,8 +512,7 @@ ExecEndNode(Plan *node, Plan *parent)
 			break;
 
 		default:
-			elog(DEBUG, "ExecEndNode: node not yet supported",
-				 nodeTag(node));
+			elog(ERROR, "ExecEndNode: node %d unsupported", nodeTag(node));
 			break;
 	}
 }

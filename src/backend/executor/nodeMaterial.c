@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMaterial.c,v 1.11 1997/11/28 17:27:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMaterial.c,v 1.12 1998/02/13 03:26:50 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -339,6 +339,27 @@ ExecEndMaterial(Material *node)
 	 * ----------------
 	 */
 	ExecClearTuple(matstate->csstate.css_ScanTupleSlot);
+}
+
+/* ----------------------------------------------------------------
+ *		ExecMaterialReScan
+ *
+ *		Rescans the temporary relation.
+ * ----------------------------------------------------------------
+ */
+void
+ExecMaterialReScan(Material *node, ExprContext *exprCtxt, Plan *parent)
+{
+	MaterialState  *matstate = node->matstate;
+
+	if (matstate->mat_Flag == false)
+		return;
+	
+	matstate->csstate.css_currentScanDesc = 
+					ExecReScanR (matstate->csstate.css_currentRelation, 
+								 matstate->csstate.css_currentScanDesc, 
+								 node->plan.state->es_direction, 0, NULL);
+	
 }
 
 #ifdef NOT_USED					/* not used */

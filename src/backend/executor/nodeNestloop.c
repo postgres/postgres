@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeNestloop.c,v 1.7 1997/09/08 21:43:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeNestloop.c,v 1.8 1998/02/13 03:26:51 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -86,7 +86,8 @@ ExecNestLoop(NestLoop *node, Plan *parent)
 	 */
 	econtext = nlstate->jstate.cs_ExprContext;
 
-	/* ----------------			* get the current outer tuple
+	/* ----------------
+	 * get the current outer tuple
 	 * ----------------
 	 */
 	outerTupleSlot = nlstate->jstate.cs_OuterTupleSlot;
@@ -118,16 +119,9 @@ ExecNestLoop(NestLoop *node, Plan *parent)
 		 */
 		needNewOuterTuple = false;
 
-		/* ----------------
-		 *	If outer tuple is not null then that means
-		 *	we are in the middle of a scan and we should
-		 *	restore our previously saved scan position.
-		 * ----------------
-		 */
 		if (!TupIsNull(outerTupleSlot))
 		{
-			ENL1_printf("have outer tuple, restoring outer plan");
-			ExecRestrPos(outerPlan);
+			ENL1_printf("have outer tuple, deal with it");
 		}
 		else
 		{
@@ -179,14 +173,7 @@ ExecNestLoop(NestLoop *node, Plan *parent)
 				return NULL;
 			}
 
-			/* ----------------
-			 *	we have a new outer tuple so we mark our position
-			 *	in the outer scan and save the outer tuple in the
-			 *	NestLoop state
-			 * ----------------
-			 */
 			ENL1_printf("saving new outer tuple information");
-			ExecMarkPos(outerPlan);
 			nlstate->jstate.cs_OuterTupleSlot = outerTupleSlot;
 
 			/* ----------------
@@ -384,4 +371,31 @@ ExecEndNestLoop(NestLoop *node)
 
 	NL1_printf("ExecEndNestLoop: %s\n",
 			   "node processing ended");
+}
+
+/* ----------------------------------------------------------------
+ *		ExecReScanNestLoop
+ * ----------------------------------------------------------------
+ */
+void
+ExecReScanNestLoop(NestLoop *node, ExprContext *exprCtxt, Plan *parent)
+{
+	NestLoopState	   *nlstate = node->nlstate;
+	Plan			   *outerPlan = outerPlan((Plan*) node);
+
+	/*
+	 * If outerPlan->chgParam is not null then plan will be
+	 * automatically re-scanned by first ExecProcNode.
+	 * innerPlan is re-scanned for each new outer tuple and MUST NOT 
+	 * be re-scanned from here or you'll get troubles from inner 
+	 * index scans when outer Vars are used as run-time keys...
+	 */
+	if (outerPlan->chgParam == NULL)
+		ExecReScan (outerPlan, exprCtxt, (Plan *) node);
+
+	/* let outerPlan to free its result typle ... */
+	nlstate->jstate.cs_OuterTupleSlot = NULL;
+	nlstate->jstate.cs_TupFromTlist = false;
+
+	return;
 }

@@ -27,7 +27,7 @@
  *				   SeqScan (emp.all)
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeResult.c,v 1.5 1997/09/08 21:43:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeResult.c,v 1.6 1998/02/13 03:26:52 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,8 +58,6 @@ ExecResult(Result *node)
 	TupleTableSlot *resultSlot;
 	Plan	   *outerPlan;
 	ExprContext *econtext;
-	Node	   *qual;
-	bool		qualResult;
 	bool		isDone;
 	ProjectionInfo *projInfo;
 
@@ -79,26 +77,16 @@ ExecResult(Result *node)
 	 *	 check tautological qualifications like (2 > 1)
 	 * ----------------
 	 */
-	qual = node->resconstantqual;
-	if (qual != NULL)
+	if (resstate->rs_checkqual)
 	{
-		qualResult = ExecQual((List *) qual, econtext);
-		/* ----------------
-		 *	if we failed the constant qual, then there
-		 *	is no need to continue processing because regardless of
-		 *	what happens, the constant qual will be false..
-		 * ----------------
-		 */
+		bool	qualResult = ExecQual((List *) node->resconstantqual, econtext);
+		
+		resstate->rs_checkqual = false;
 		if (qualResult == false)
+		{
+			resstate->rs_done = true;
 			return NULL;
-
-		/* ----------------
-		 *	our constant qualification succeeded so now we
-		 *	throw away the qual because we know it will always
-		 *	succeed.
-		 * ----------------
-		 */
-		node->resconstantqual = NULL;
+		}
 	}
 
 	if (resstate->cstate.cs_TupFromTlist)
@@ -204,9 +192,10 @@ ExecInitResult(Result *node, EState *estate, Plan *parent)
 	 * ----------------
 	 */
 	resstate = makeNode(ResultState);
-	resstate->rs_done = 0;
+	resstate->rs_done = false;
+	resstate->rs_checkqual = (node->resconstantqual == NULL) ? false : true;
 	node->resstate = resstate;
-
+	
 	/* ----------------
 	 *	Miscellanious initialization
 	 *
@@ -242,12 +231,6 @@ ExecInitResult(Result *node, EState *estate, Plan *parent)
 	 */
 	ExecAssignResultTypeFromTL((Plan *) node, &resstate->cstate);
 	ExecAssignProjectionInfo((Plan *) node, &resstate->cstate);
-
-	/* ----------------
-	 *	set "are we done yet" to false
-	 * ----------------
-	 */
-	resstate->rs_done = 0;
 
 	return TRUE;
 }
@@ -293,4 +276,22 @@ ExecEndResult(Result *node)
 	 * ----------------
 	 */
 	ExecClearTuple(resstate->cstate.cs_ResultTupleSlot);
+}
+
+void
+ExecReScanResult(Result *node, ExprContext *exprCtxt, Plan *parent)
+{
+	ResultState	   *resstate = node->resstate;
+
+	resstate->rs_done = false;
+	resstate->cstate.cs_TupFromTlist = false;
+	resstate->rs_checkqual = (node->resconstantqual == NULL) ? false : true;
+	
+	/* 
+	 * if chgParam of subnode is not null then plan
+	 * will be re-scanned by first ExecProcNode.
+	 */
+	if (((Plan*) node)->lefttree->chgParam == NULL)
+		ExecReScan (((Plan*) node)->lefttree, exprCtxt, (Plan *) node);
+	
 }
