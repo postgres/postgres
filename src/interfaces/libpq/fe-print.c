@@ -10,7 +10,7 @@
  * didn't really belong there.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-print.c,v 1.54 2004/08/29 05:07:00 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-print.c,v 1.55 2004/11/09 15:57:57 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -110,17 +110,17 @@ PQprint(FILE *fout,
 		nTups = PQntuples(res);
 		if (!(fieldNames = (const char **) calloc(nFields, sizeof(char *))))
 		{
-			perror("calloc");
+			fprintf(stderr, libpq_gettext("out of memory\n"));
 			exit(1);
 		}
 		if (!(fieldNotNum = (unsigned char *) calloc(nFields, 1)))
 		{
-			perror("calloc");
+			fprintf(stderr, libpq_gettext("out of memory\n"));
 			exit(1);
 		}
 		if (!(fieldMax = (int *) calloc(nFields, sizeof(int))))
 		{
-			perror("calloc");
+			fprintf(stderr, libpq_gettext("out of memory\n"));
 			exit(1);
 		}
 		for (numFieldName = 0;
@@ -205,7 +205,7 @@ PQprint(FILE *fout,
 		{
 			if (!(fields = (char **) calloc(nFields * (nTups + 1), sizeof(char *))))
 			{
-				perror("calloc");
+				fprintf(stderr, libpq_gettext("out of memory\n"));
 				exit(1);
 			}
 		}
@@ -392,7 +392,7 @@ do_field(const PQprintOpt *po, const PGresult *res,
 				fieldMax[j] = plen;
 			if (!(fields[i * nFields + j] = (char *) malloc(plen + 1)))
 			{
-				perror("malloc");
+				fprintf(stderr, libpq_gettext("out of memory\n"));
 				exit(1);
 			}
 			strcpy(fields[i * nFields + j], pval);
@@ -463,7 +463,7 @@ do_header(FILE *fout, const PQprintOpt *po, const int nFields, int *fieldMax,
 		border = malloc(tot + 1);
 		if (!border)
 		{
-			perror("malloc");
+			fprintf(stderr, libpq_gettext("out of memory\n"));
 			exit(1);
 		}
 		p = border;

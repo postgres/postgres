@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.90 2004/08/29 05:07:00 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.91 2004/11/09 15:57:55 petere Exp $ */
 
 /* New main for ecpg, the PostgreSQL embedded SQL precompiler. */
 /* (C) Michael Meskes <meskes@postgresql.org> Feb 5th, 1998 */
@@ -154,7 +154,8 @@ main(int argc, char *const argv[])
 					yyout = fopen(optarg, PG_BINARY_W);
 
 				if (yyout == NULL)
-					perror(optarg);
+					fprintf(stderr, "%s: could not open file \"%s\": %s\n",
+							progname, optarg, strerror(errno));
 				else
 					out_option = 1;
 				break;
@@ -304,7 +305,8 @@ main(int argc, char *const argv[])
 					yyout = fopen(output_filename, PG_BINARY_W);
 					if (yyout == NULL)
 					{
-						perror(output_filename);
+						fprintf(stderr, "%s: could not open file \"%s\": %s\n",
+								progname, output_filename, strerror(errno));
 						free(output_filename);
 						free(input_filename);
 						continue;
@@ -313,7 +315,8 @@ main(int argc, char *const argv[])
 			}
 
 			if (yyin == NULL)
-				perror(argv[fnr]);
+				fprintf(stderr, "%s: could not open file \"%s\": %s\n",
+						progname, argv[fnr], strerror(errno));
 			else
 			{
 				struct cursor *ptr;

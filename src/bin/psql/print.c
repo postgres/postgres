@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.52 2004/09/27 23:24:35 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.53 2004/11/09 15:57:53 petere Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -227,14 +227,14 @@ print_aligned_text(const char *title, const char *const * headers,
 		widths = calloc(col_count, sizeof(*widths));
 		if (!widths)
 		{
-			perror("calloc");
+			fprintf(stderr, gettext("out of memory\n"));
 			exit(EXIT_FAILURE);
 		}
 
 		head_w = calloc(col_count, sizeof(*head_w));
 		if (!head_w)
 		{
-			perror("calloc");
+			fprintf(stderr, gettext("out of memory\n"));
 			exit(EXIT_FAILURE);
 		}
 	}
@@ -253,7 +253,7 @@ print_aligned_text(const char *title, const char *const * headers,
 		cell_w = calloc(cell_count, sizeof(*cell_w));
 		if (!cell_w)
 		{
-			perror("calloc");
+			fprintf(stderr, gettext("out of memory\n"));
 			exit(EXIT_FAILURE);
 		}
 	}
@@ -437,7 +437,7 @@ print_aligned_vertical(const char *title, const char *const * headers,
 		head_w = calloc(col_count, sizeof(*head_w));
 		if (!head_w)
 		{
-			perror("calloc");
+			fprintf(stderr, gettext("out of memory\n"));
 			exit(EXIT_FAILURE);
 		}
 	}
@@ -461,7 +461,7 @@ print_aligned_vertical(const char *title, const char *const * headers,
 		cell_w = calloc(cell_count, sizeof(*cell_w));
 		if (!cell_w)
 		{
-			perror("calloc");
+			fprintf(stderr, gettext("out of memory\n"));
 			exit(EXIT_FAILURE);
 		}
 	}
@@ -485,7 +485,7 @@ print_aligned_vertical(const char *title, const char *const * headers,
 	divider = malloc(hwidth + dwidth + 10);
 	if (!divider)
 	{
-		perror("malloc");
+		fprintf(stderr, gettext("out of memory\n"));
 		exit(EXIT_FAILURE);
 	}
 	divider[0] = '\0';
@@ -514,7 +514,7 @@ print_aligned_vertical(const char *title, const char *const * headers,
 
 				if (!record_str)
 				{
-					perror("malloc");
+					fprintf(stderr, gettext("out of memory\n"));
 					exit(EXIT_FAILURE);
 				}
 
@@ -532,7 +532,7 @@ print_aligned_vertical(const char *title, const char *const * headers,
 
 					if (!div_copy)
 					{
-						perror("malloc");
+						fprintf(stderr, gettext("out of memory\n"));
 						exit(EXIT_FAILURE);
 					}
 
@@ -1153,7 +1153,7 @@ printQuery(const PGresult *result, const printQueryOpt *opt, FILE *fout)
 	headers = calloc(nfields + 1, sizeof(*headers));
 	if (!headers)
 	{
-		perror("calloc");
+		fprintf(stderr, gettext("out of memory\n"));
 		exit(EXIT_FAILURE);
 	}
 
@@ -1165,7 +1165,7 @@ printQuery(const PGresult *result, const printQueryOpt *opt, FILE *fout)
 	cells = calloc(ncells + 1, sizeof(*cells));
 	if (!cells)
 	{
-		perror("calloc");
+		fprintf(stderr, gettext("out of memory\n"));
 		exit(EXIT_FAILURE);
 	}
 
@@ -1186,14 +1186,14 @@ printQuery(const PGresult *result, const printQueryOpt *opt, FILE *fout)
 		footers = calloc(2, sizeof(*footers));
 		if (!footers)
 		{
-			perror("calloc");
+			fprintf(stderr, gettext("out of memory\n"));
 			exit(EXIT_FAILURE);
 		}
 
 		footers[0] = malloc(100);
 		if (!footers[0])
 		{
-			perror("malloc");
+			fprintf(stderr, gettext("out of memory\n"));
 			exit(EXIT_FAILURE);
 		}
 		if (PQntuples(result) == 1)
@@ -1208,7 +1208,7 @@ printQuery(const PGresult *result, const printQueryOpt *opt, FILE *fout)
 	align = calloc(nfields + 1, sizeof(*align));
 	if (!align)
 	{
-		perror("calloc");
+		fprintf(stderr, gettext("out of memory\n"));
 		exit(EXIT_FAILURE);
 	}
 

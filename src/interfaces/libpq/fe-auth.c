@@ -10,7 +10,7 @@
  * exceed INITIAL_EXPBUFFER_SIZE (currently 256 bytes).
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.94 2004/10/16 03:10:17 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.95 2004/11/09 15:57:57 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -527,7 +527,7 @@ pg_password_sendauth(PGconn *conn, const char *password, AuthRequest areq)
 				if (!(crypt_pwd = malloc(MD5_PASSWD_LEN + 1)) ||
 					!(crypt_pwd2 = malloc(MD5_PASSWD_LEN + 1)))
 				{
-					perror("malloc");
+					fprintf(stderr, libpq_gettext("out of memory\n"));
 					return STATUS_ERROR;
 				}
 				if (!EncryptMD5(password, conn->pguser,
