@@ -106,7 +106,7 @@ set temp {}
 switch $activetab {
 	Tables {
 		if {[tk_messageBox -title "FINAL WARNING" -message "You are going to delete table:\n\n$objtodelete\n\nProceed ?" -type yesno -default no]=="yes"} {
-			sql_exec noquiet "drop table $objtodelete"
+			sql_exec noquiet "drop table \"$objtodelete\""
 			sql_exec quiet "delete from pga_layout where tablename='$objtodelete'"
 			cmd_Tables
 		}
@@ -1193,7 +1193,7 @@ if {$mw(row_edited)==$mw(last_rownum)} {
     set msg "Updating record ..."
     after 1000 {set msg ""}
     regsub -all ' $fldval  \\' sqlfldval
-    set retval [sql_exec noquiet "update $tablename set $fld='$sqlfldval' where oid=$oid"]
+    set retval [sql_exec noquiet "update \"$tablename\" set $fld='$sqlfldval' where oid=$oid"]
 }
 cursor_arrow .mw
 if {!$retval} {
@@ -1267,7 +1267,7 @@ if {$mw(newrec_fields)==""} {return 1}
 set msg "Saving new record ..."
 after 1000 {set msg ""}
 set retval [catch {
-	set sqlcmd "insert into $tablename ([join $mw(newrec_fields) ,]) values ([join $mw(newrec_values) ,])"
+	set sqlcmd "insert into \"$tablename\" ([join $mw(newrec_fields) ,]) values ([join $mw(newrec_values) ,])"
 	set pgres [pg_exec $dbc $sqlcmd]
 	} errmsg]
 if {$retval} {
@@ -1596,13 +1596,13 @@ if {$how=="design"} {
     .qb.text1 insert end $qcmd
 } else {
     if {$qtype=="S"} then {
+        set mw(query) [subst $qcmd]
+        set mw(updatable) 0
+        set mw(isaquery) 1
         Window show .mw
 		wm title .mw "Query result: $queryname"
         mw_load_layout $queryname
-        set mw(query) $qcmd
-        set mw(updatable) 0
-        set mw(isaquery) 1
-        mw_select_records $qcmd
+        mw_select_records $mw(query)
     } else {
         set answ [tk_messageBox -title Warning -type yesno -message "This query is an action query!\n\n[string range $qcmd 0 30] ...\n\nDo you want to execute it?"]
         if {$answ} {
@@ -1646,7 +1646,7 @@ set filter {}
 Window show .mw
 set tablename $objname
 mw_load_layout $objname
-set mw(query) "select oid,$tablename.* from $objname"
+set mw(query) "select oid,\"$tablename\".* from \"$objname\""
 set mw(updatable) 1
 set mw(isaquery) 0
 mw_select_records $mw(query)
@@ -1663,6 +1663,23 @@ set mw(isaquery) 0
 set mw(updatable) 0
 mw_load_layout $vn
 mw_select_records $mw(query)
+}
+
+proc {parameter} {msg} {
+global gpw
+Window show .gpw
+focus .gpw.e1
+set gpw(var) ""
+set gpw(flag) 0
+set gpw(msg) $msg
+bind .gpw <Destroy> "set gpw(flag) 1"
+grab .gpw
+tkwait variable gpw(flag)
+if {$gpw(result)} {
+    return $gpw(var)
+} else {
+    return ""
+}
 }
 
 proc {ql_add_new_table} {} {
@@ -1704,7 +1721,7 @@ set tables {}
 for {set i 0} {$i<$qlvar(ntables)} {incr i} {
     set thename {}
     catch {set thename $qlvar(tablename$i)}
-    if {$thename!=""} {lappend tables "$qlvar(tablename$i) $qlvar(tablealias$i)"}
+    if {$thename!=""} {lappend tables "\"$qlvar(tablename$i)\" $qlvar(tablealias$i)"}
 }
 set sqlcmd "$sqlcmd from [join $tables ,] "
 set sup1 {}
@@ -1767,10 +1784,10 @@ if {[ql_get_tag_info $obj res]=="f"} {
 # Is object a table ?
 set tablealias [ql_get_tag_info $obj tab]
 set tablename $qlvar(ali_$tablealias)
-if {$tablename==""} return
+if {"$tablename"==""} return
 if {[tk_messageBox -title WARNING -icon question -message "Remove table $tablename from query ?" -type yesno -default no]=="no"} return
 for {set i [expr [llength $qlvar(restables)]-1]} {$i>=0} {incr i -1} {
-    if {$tablename==[lindex $qlvar(restables) $i]} {
+    if {"$tablename"==[lindex $qlvar(restables) $i]} {
        set qlvar(resfields) [lreplace $qlvar(resfields) $i $i]
        set qlvar(restables) [lreplace $qlvar(restables) $i $i]
        set qlvar(rescriteria) [lreplace $qlvar(rescriteria) $i $i]
@@ -2004,7 +2021,7 @@ set allbox [.ql.c bbox rect]
 if {$allbox==""} {set posx 10} else {set posx [expr 20+[lindex $allbox 2]]}
 set tablename $qlvar(tablename$it)
 set tablealias $qlvar(tablealias$it)
-.ql.c create text $posx $posy -text $tablename -anchor nw -tags [subst {tab$tablealias f-oid mov tableheader}] -font -Adobe-Helvetica-Bold-R-Normal-*-*-120-*-*-*-*-*
+.ql.c create text $posx $posy -text "$tablename" -anchor nw -tags [subst {tab$tablealias f-oid mov tableheader}] -font -Adobe-Helvetica-Bold-R-Normal-*-*-120-*-*-*-*-*
 incr posy 16
 foreach fld $qlvar(tablestruct$it) {
    .ql.c create text $posx $posy -text $fld -fill #010101 -anchor nw -tags [subst {f-$fld tab$tablealias mov}] -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*
@@ -2382,7 +2399,7 @@ incr py [expr $rbvar(y_pghdr)-$rbvar(y_rpthdr)]
 set di [lsearch $rbvar(regions) detail]
 set y_hi $rbvar(y_detail)
 set y_lo $rbvar(y_[lindex $rbvar(regions) [expr $di-1]])
-pg_select $dbc "select * from $rbvar(tablename)" rec {
+pg_select $dbc "select * from \"$rbvar(tablename)\"" rec {
     foreach {field x y objid objtype} $fields {
         if {($y>=$y_lo) && ($y<=$y_hi)} then {
         if {$objtype=="t_f"} {
@@ -2406,7 +2423,7 @@ tk_messageBox -title Information -message "The printed image in Postscript is in
 
 proc {rb_save_report} {} {
 global rbvar
-set prog "set rbvar(tablename) $rbvar(tablename)"
+set prog "set rbvar(tablename) \"$rbvar(tablename)\""
 foreach region $rbvar(regions) {
     set prog "$prog ; set rbvar(y_$region) $rbvar(y_$region)"
 }
@@ -2652,7 +2669,7 @@ proc vTclWindow.about {base} {
     label $base.l2  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*  -relief groove  -text {A Tcl/Tk interface to
 PostgreSQL
 by Constantin Teodorescu} 
-    label $base.l3  -borderwidth 0  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*  -relief sunken -text {vers 0.88}
+    label $base.l3  -borderwidth 0  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*  -relief sunken -text {vers 0.90}
     label $base.l4  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*  -relief groove  -text {You will always get the latest version at:
 http://www.flex.ro/pgaccess
 
@@ -3261,7 +3278,7 @@ proc vTclWindow.nt {base} {
     show_error "Your table has no fields!"
     focus .nt.e2
 } else {
-    set temp "create table $newtablename ([join [.nt.lb get 0 end] ,])"
+    set temp "create table \"$newtablename\" ([join [.nt.lb get 0 end] ,])"
     if {$fathername!=""} then {set temp "$temp inherits ($fathername)"}
     cursor_watch .nt
     set retval [catch {
@@ -3539,13 +3556,13 @@ if {[lindex [split [string toupper $qcmd]] 0]!="SELECT"} {
 		sql_exec noquiet $qcmd
 	}
 } else {
+	set mw(query) [subst $qcmd]
+	set mw(updatable) 0
+	set mw(isaquery) 1
 	Window show .mw
 	set mw(layout_name) $queryname
 	mw_load_layout $queryname
-	set mw(query) $qcmd
-	set mw(updatable) 0
-	set mw(isaquery) 1
-	mw_select_records $qcmd
+	mw_select_records $mw(query)
 }
 }  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9  -pady 3 -text {Execute query} 
     button $base.termbtn  -borderwidth 1  -command {.qb.cbv configure -state normal
@@ -3612,14 +3629,15 @@ Window destroy .ql}  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -p
     bind $base.entt <Key-Return> {
         ql_add_new_table
     }
-    button $base.execbtn  -borderwidth 1  -command {Window show .mw
+    button $base.execbtn  -borderwidth 1  -command {
 set qcmd [ql_compute_sql]
 set mw(layout_name) nolayoutneeded
-mw_load_layout $mw(layout_name)
-set mw(query) $qcmd
+set mw(query) [subst $qcmd]
 set mw(updatable) 0
 set mw(isaquery) 1
-mw_select_records $qcmd}  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9  -pady 3 -text {Execute SQL} 
+Window show .mw
+mw_load_layout $mw(layout_name)
+mw_select_records $mw(query)}  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9  -pady 3 -text {Execute SQL} 
     button $base.stoqb  -borderwidth 1  -command {Window show .qb
 .qb.text1 delete 1.0 end
 .qb.text1 insert end [ql_compute_sql]
@@ -3675,7 +3693,7 @@ proc vTclWindow.rf {base} {
 			if {$newobjname==""} {
 				show_error "You must give object a new name!"
 			} elseif {$activetab=="Tables"} {
-				set retval [sql_exec noquiet "alter table $oldobjname rename to $newobjname"]
+				set retval [sql_exec noquiet "alter table \"$oldobjname\" rename to \"$newobjname\""]
 				if {$retval} {
 					sql_exec quiet "update pga_layout set tablename='$newobjname' where tablename='$oldobjname'"
 					cmd_Tables
@@ -4518,6 +4536,65 @@ catch {Window destroy .$fdvar(forminame)}
         -x 5 -y 25 -anchor nw -bordermode ignore 
     place $base.e2 \
         -x 175 -y 25 -width 60 -height 17 -anchor nw -bordermode ignore 
+}
+
+proc vTclWindow.gpw {base} {
+    if {$base == ""} {
+        set base .gpw
+    }
+    if {[winfo exists $base]} {
+        wm deiconify $base; return
+    }
+    ###################
+    # CREATING WIDGETS
+    ###################
+    toplevel $base -class Toplevel
+    wm focusmodel $base passive
+    set sw [winfo screenwidth .]
+    set sh [winfo screenheight .]
+    set x [expr ($sw - 297)/2]
+    set y [expr ($sh - 98)/2]
+    wm geometry $base 297x98+$x+$y
+    wm maxsize $base 1009 738
+    wm minsize $base 1 1
+    wm overrideredirect $base 0
+    wm resizable $base 0 0
+    wm deiconify $base
+    wm title $base "Input parameter"
+    label $base.l1 \
+        -anchor nw -borderwidth 1 \
+        -font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* \
+        -justify left -relief sunken -textvariable gpw(msg) -wraplength 200 
+    entry $base.e1 \
+        -background #fefefe -borderwidth 1 -highlightthickness 0 \
+        -textvariable gpw(var) 
+    bind $base.e1 <Key-KP_Enter> {
+        set gpw(result) 1
+destroy .gpw
+    }
+    bind $base.e1 <Key-Return> {
+        set gpw(result) 1
+destroy .gpw
+    }
+    button $base.bok \
+        -borderwidth 1 -command {set gpw(result) 1
+destroy .gpw} -padx 9 \
+        -pady 3 -text Ok 
+    button $base.bcanc \
+        -borderwidth 1 -command {set gpw(result) 0
+destroy .gpw} -padx 9 \
+        -pady 3 -text Cancel 
+    ###################
+    # SETTING GEOMETRY
+    ###################
+    place $base.l1 \
+        -x 10 -y 5 -width 201 -height 53 -anchor nw -bordermode ignore 
+    place $base.e1 \
+        -x 10 -y 65 -width 200 -height 24 -anchor nw -bordermode ignore 
+    place $base.bok \
+        -x 225 -y 5 -width 61 -height 26 -anchor nw -bordermode ignore 
+    place $base.bcanc \
+        -x 225 -y 35 -width 61 -height 26 -anchor nw -bordermode ignore 
 }
 
 proc vTclWindow.fdtb {base} {

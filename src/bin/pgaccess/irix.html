@@ -1,0 +1,133 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML>
+<HEAD>
+   <TITLE>PgAccess on Irix</TITLE>
+   <META NAME="GENERATOR" CONTENT="Mozilla/3.04Gold (X11; I; Linux 2.0.33 i586) [Netscape]">
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFFF" LINK="#0000EF" VLINK="#51188E" ALINK="#FF0000">
+
+<H1>INSTALLING PgAccess UNDER IRIX 5.3.
+<HR WIDTH="100%"></H1>
+
+<P><B><FONT COLOR="#000080">This HOWO-TO make PgAccess working under Irix
+is written by Stuart Rison</FONT></B></P>
+
+<P>These are the steps that I had to follow to get pgaccess to run on an
+INDIGO2 running postgreSQL 6.3.2 under IRIX 5.3. I make no guarantee whatsoever
+that the same step will work for others but at least it should point you
+in the right direction. Also, I am a biologist by training so I only got
+pgaccess working by fudging (that is, trial and error) this means that
+some of the steps may be unnecessary (e.g. compiling $postgreSQL_source/src/interfaces/libpgtcl
+as both a shared and static library) and they certainly haven't been optimised
+(I know nothing about compiler switches etc.).</P>
+
+<P><B>1) Requirements:</B></P>
+
+<UL>
+<P>You will need:</P>
+
+<UL>
+<LI>postgreSQL source (http://www.postgresql.org)</LI>
+
+<LI>tcl8.0 source (http://www.tclconsortium.org/)</LI>
+
+<LI>tk8.0 source (http://www.tclconsortium.org/)</LI>
+
+<LI>pgaccess source (http://www.flex.ro/pgaccess)</LI>
+</UL>
+</UL>
+
+<P><B>2) Installation:</B></P>
+
+<P>a) tcl/tk:</P>
+
+<UL>
+<P>You must first install tcl and then tk (in that order). I just used
+./configure, no switches and gmake. Their installation should be trouble
+free. Then you must move headers and libraries to the right places so:</P>
+
+<P>Header files: both tcl and tk have a header file (tcl.h and tk.h). The
+tcl.h file is in $tcl_source_dir/generic and the tk.h file is in $tk_source_dir/generic;
+both should be copied to /usr/local/include.</P>
+
+<P>Libraries: compilation (with cc) of tcl and tk yield libraries libtcl8.0.a
+and libtk8.0.a in $source_dir/unix. Both should be copied to /usr/local/lib.</P>
+</UL>
+
+<P>b) postgreSQL:</P>
+
+<UL>
+<P>Make sure you have a fully patched postgreSQL source. If your ./configure
+says it can't load 'IRIX' settings then you most probably will need to
+patch ./configure.</P>
+
+<P>Configure using ./configure with the following switches: ./configure
+--with-includes=/usr/local/include</P>
+
+<P>--with-libraries=/usr/local/lib --with-tcl [this and previous line as
+one]</P>
+
+<P>Then make, make install as usual</P>
+</UL>
+
+<P>c) Compiling libpgtcl:</P>
+
+<UL>
+<P>The source for libpgtcl is in $postgreSQL_directory/src/interfaces/libpgsql.</P>
+
+<P>I do this twice. Once with just gmake. This produces a static library
+libpgtcl.a which I leave where it is (I don't know what to do with it but
+it may just come in handy). The I modify Makefile manually with a text
+editor. Essentially I modify two line:</P>
+
+<P>before:</P>
+
+<P># Shared library stuff</P>
+
+<P>install-shlib-dep := shlib :=</P>
+
+<P>after:</P>
+
+<P># Shared library stuff</P>
+
+<P>install-shlib-dep := install-shlib shlib := libpgtcl.so.1</P>
+
+<P>Then gmake -f Makefile_modified. This creates two shared (.so) libraries:
+libpgtcl.so and libpgtcl.so.1. I can't tell the difference between them
+so I copied them both to /usr/lib/.</P>
+</UL>
+
+<P>d) running pgaccess:</P>
+
+<UL>
+<P>Uncompress pgaccess (usually with gunzip and tar). So long as 'wish'
+(a binary produced when compiling tk8.0) is somewhere in your path, you
+should be able to run pgaccess with:</P>
+
+<P>wish -f $pgaccess_dir/pgaccess.tcl [postgreSQL_database_name]</P>
+</UL>
+
+<P>e) et voila!</P>
+
+<P><B>3) Concluding remarks:</B></P>
+
+<UL>
+<P>As I stated at the start of this document, following the procedure indicated
+above worked for me. I am sure, however, that a few of the steps are unnecessary/non-optimised/stupid
+etc. If any Unix (IRIX) boffin is reading this and you spot anything you
+would like to comment/correct etc. please e-mail me (stuart@ludwig.ucl.ac.uk).
+Also, if you just have questions and think I might help, please contact
+me at the same e-mail.</P>
+
+<P>Finally, I can accept no responsibility if these steps don't work for
+you or if it all goes horribly wrong and you 'damage' your computer trying
+them. Let common sense prevail!</P>
+</UL>
+
+<P>Good luck</P>
+
+<P>Stuart Rison LICR University College London London W1P 8BT<BR>
+<A HREF="mailto:stuart@ludwig.ucl.ac.uk">stuart@ludwig.ucl.ac.uk</A></P>
+
+</BODY>
+</HTML>

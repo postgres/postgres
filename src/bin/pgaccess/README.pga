@@ -22,7 +22,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 ---------------------------------------------------------------------------
 
 
-PGACCESS 0.88 7 June 1998
+PGACCESS 0.90 18 September 1998
 ================================
 I dedicate this program to my little daughters Ana-Maria and Emilia and to my
 wife for their understanding. I hope they will forgive me for spending so many
@@ -44,7 +44,7 @@ four days of hard work to get it as you see it now.
 2.How to INSTALL ?
 
 You will need Tcl/Tk package, I am using now Tcl 7.6 and Tk 4.2.
-PgAccess is running also on Tcl/Tk 8.0
+PgAccess is running fine also on Tcl/Tk 8.0
 
 Also, you will need the PostgreSQL to Tcl interface library, lined as a
 Tcl/Tk 'load'-able module.  It is called libpgtcl and the source is
@@ -101,7 +101,7 @@ Queries
 - define, edit and store "user defined queries"
 - save view layout
 - can store queries as views
-- execution of queries
+- execution of queries  with optional user input parameters ( select * from invoices where year=[parameter "Year of selection"] )
 - viewing of select type queries result
 - running action queries (insert, update, delete)
 - visual query builder with drag & drop support, table aliasing
@@ -152,10 +152,10 @@ Some information about table structure, no. of fields, records would
 be also good.
 
 ===========================================================================
-You would find always the last version at   http://www.flex.ro/pgaccess
+You would find always the latest version at   http://www.flex.ro/pgaccess
 
 Please feel free to e-mail me with any suggestion or bug description
-that will help to improve this.
+that will help to improve it.
 
 Constantin Teodorescu <teo@flex.ro>
 
