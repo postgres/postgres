@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.365 2004/02/08 22:28:56 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.366 2004/02/11 22:25:02 tgl Exp $
  *
  * NOTES
  *
@@ -1079,7 +1079,8 @@ ServerLoop(void)
 		timeout.tv_usec = 0;
 
 		if (CheckPointPID == 0 && checkpointed &&
-			Shutdown == NoShutdown && !FatalError && random_seed != 0)
+			StartupPID == 0 && Shutdown == NoShutdown &&
+			!FatalError && random_seed != 0)
 		{
 			time_t		now = time(NULL);
 
@@ -1113,7 +1114,8 @@ ServerLoop(void)
 		 * this fails, we'll just try again later.
 		 */
 		if (BgWriterPID == 0 && BgWriterPercent > 0 &&
-				Shutdown == NoShutdown && !FatalError && random_seed != 0)
+			StartupPID == 0 && Shutdown == NoShutdown &&
+			!FatalError && random_seed != 0)
 		{
 			BgWriterPID = StartBackgroundWriter();
 		}
@@ -1772,13 +1774,16 @@ pmdie(SIGNAL_ARGS)
 			 *
 			 * Wait for children to end their work and ShutdownDataBase.
 			 */
-			if (BgWriterPID != 0)
-				kill(BgWriterPID, SIGTERM);
 			if (Shutdown >= SmartShutdown)
 				break;
 			Shutdown = SmartShutdown;
 			ereport(LOG,
 					(errmsg("received smart shutdown request")));
+
+			/* Must tell bgwriter to quit, or it never will... */
+			if (BgWriterPID != 0)
+				kill(BgWriterPID, SIGTERM);
+
 			if (DLGetHead(BackendList)) /* let reaper() handle this */
 				break;
 
@@ -1803,47 +1808,39 @@ pmdie(SIGNAL_ARGS)
 			/*
 			 * Fast Shutdown:
 			 *
-			 * abort all children with SIGTERM (rollback active transactions
+			 * Abort all children with SIGTERM (rollback active transactions
 			 * and exit) and ShutdownDataBase when they are gone.
 			 */
-			if (BgWriterPID != 0)
-				kill(BgWriterPID, SIGTERM);
 			if (Shutdown >= FastShutdown)
 				break;
+			Shutdown = FastShutdown;
 			ereport(LOG,
 					(errmsg("received fast shutdown request")));
-			if (DLGetHead(BackendList)) /* let reaper() handle this */
+
+			if (DLGetHead(BackendList))
 			{
-				Shutdown = FastShutdown;
 				if (!FatalError)
 				{
 					ereport(LOG,
 							(errmsg("aborting any active transactions")));
 					SignalChildren(SIGTERM);
+					/* reaper() does the rest */
 				}
 				break;
 			}
-			if (Shutdown > NoShutdown)
-			{
-				Shutdown = FastShutdown;
-				break;
-			}
-			Shutdown = FastShutdown;
 
 			/*
 			 * No children left. Shutdown data base system.
+			 *
+			 * Unlike the previous case, it is not an error for the shutdown
+			 * process to be running already (we could get SIGTERM followed
+			 * shortly later by SIGINT).
 			 */
 			if (StartupPID > 0 || FatalError)	/* let reaper() handle
 												 * this */
 				break;
-			if (ShutdownPID > 0)
-			{
-				elog(PANIC, "shutdown process %d already running",
-					 (int) ShutdownPID);
-				abort();
-			}
-
-			ShutdownPID = ShutdownDataBase();
+			if (ShutdownPID == 0)
+				ShutdownPID = ShutdownDataBase();
 			break;
 
 		case SIGQUIT:
@@ -1854,8 +1851,6 @@ pmdie(SIGNAL_ARGS)
 			 * abort all children with SIGQUIT and exit without attempt to
 			 * properly shutdown data base system.
 			 */
-			if (BgWriterPID != 0)
-				kill(BgWriterPID, SIGQUIT);
 			ereport(LOG,
 					(errmsg("received immediate shutdown request")));
 			if (ShutdownPID > 0)
@@ -1972,12 +1967,6 @@ reaper(SIGNAL_ARGS)
 			 */
 			CheckPointPID = 0;
 			checkpointed = time(NULL);
-
-			if (BgWriterPID == 0 && BgWriterPercent > 0 &&
-				Shutdown == NoShutdown && !FatalError && random_seed != 0)
-			{
-				BgWriterPID = StartBackgroundWriter();
-			}
 
 			/*
 			 * Go to shutdown mode if a shutdown request was pending.
@@ -2101,8 +2090,8 @@ CleanupProc(int pid,
 	if (!FatalError)
 	{
 		LogChildExit(LOG,
-				 (pid == CheckPointPID) ? gettext("checkpoint process") :
-				 (pid == BgWriterPID) ? gettext("bgwriter process") :
+					 (pid == CheckPointPID) ? gettext("checkpoint process") :
+					 (pid == BgWriterPID) ? gettext("bgwriter process") :
 					 gettext("server process"),
 					 pid, exitstatus);
 		ereport(LOG,
@@ -2844,7 +2833,8 @@ sigusr1_handler(SIGNAL_ARGS)
 		 * is currently disabled
 		 */
 		if (CheckPointPID == 0 && checkpointed &&
-			Shutdown == NoShutdown && !FatalError && random_seed != 0)
+			StartupPID == 0 && Shutdown == NoShutdown &&
+			!FatalError && random_seed != 0)
 		{
 			CheckPointPID = CheckPointDataBase();
 			/* note: if fork fails, CheckPointPID stays 0; nothing happens */
@@ -2975,6 +2965,7 @@ CountChildren(void)
 		if (bp->pid != MyProcPid)
 			cnt++;
 	}
+	/* Checkpoint and bgwriter will be in the list, discount them */
 	if (CheckPointPID != 0)
 		cnt--;
 	if (BgWriterPID != 0)
@@ -2983,10 +2974,10 @@ CountChildren(void)
 }
 
 /*
- * Fire off a subprocess for startup/shutdown/checkpoint.
+ * Fire off a subprocess for startup/shutdown/checkpoint/bgwriter.
  *
  * Return value of SSDataBase is subprocess' PID, or 0 if failed to start subprocess
- * (0 is returned only for checkpoint case).
+ * (0 is returned only for checkpoint/bgwriter cases).
  *
  * note: in the EXEC_BACKEND case, we delay the fork until argument list has been
  *	established
