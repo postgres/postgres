@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.35 1997/05/20 03:38:49 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.36 1997/06/01 15:38:52 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -588,6 +588,7 @@ freePGconn(PGconn *conn)
   if (conn->dbName) free(conn->dbName);
   if (conn->pguser) free(conn->pguser);
   if (conn->notifyList) DLFreeList(conn->notifyList);
+  if (conn->port) free(conn->port);
   free(conn);
 }
 

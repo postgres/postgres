@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.31 1997/06/01 04:59:25 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.32 1997/06/01 15:39:08 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,6 +58,9 @@ static void addTuple(PGresult *res, PGresAttValue *tup);
 static PGresAttValue* getTuple(PGconn *conn, PGresult *res, int binary);
 static PGresult* makeEmptyPGresult(PGconn *conn, ExecStatusType status);
 static void fill(int length, int max, char filler, FILE *fp);
+static char* do_header(FILE *fout, PQprintOpt *po, const int nFields, 
+            int fieldMax[], char *fieldNames[], unsigned char fieldNotNum[],
+            const int fs_len, PGresult *res);
 
 /*
  * PQclear -
@@ -78,16 +81,16 @@ PQclear(PGresult* res)
             if (res->tuples[i][j].value)
                 free(res->tuples[i][j].value);
         }
-        free(res->tuples[i]);
+        if (res->tuples[i]) free(res->tuples[i]);
     }
-    free(res->tuples);
+    if (res->tuples) free(res->tuples);
 
     /* free all the attributes */
     for (i=0;i<res->numAttributes;i++) {
         if (res->attDescs[i].name) 
             free(res->attDescs[i].name);
     }
-    free(res->attDescs);
+    if (res->attDescs) free(res->attDescs);
         
     /* free the structure itself */
     free(res);
@@ -590,8 +593,6 @@ PQexec(PGconn* conn, const char* query)
   return(result);
 }
 
-
-
 /*
  * PQnotifies
  *    returns a PGnotify* structure of the latest async notification
@@ -663,7 +664,6 @@ PQgetline(PGconn *conn, char *s, int maxlen)
     return(1);                  /* returning a full buffer */
 }
 
-
 /*
  * PQputline -- sends a string to the backend.
  * 
@@ -733,7 +733,6 @@ fill (int length, int max, char filler, FILE *fp)
       fprintf(fp, "%s", filltmp);
     }
  }
-
 
 /*
  * PQdisplayTuples()
@@ -973,12 +972,13 @@ do_field(PQprintOpt *po, PGresult *res,
 }
 
 
-static void
+static char*
 do_header(FILE *fout, PQprintOpt *po, const int nFields, int fieldMax[], 
           char *fieldNames[], unsigned char fieldNotNum[],
-          const int fs_len, char *border, PGresult *res) {
+          const int fs_len, PGresult *res) {
 
     int j;   /* for loop index */
+    char *border=NULL;
 
     if (po->html3)
       fputs("<tr>", fout);
@@ -986,15 +986,17 @@ do_header(FILE *fout, PQprintOpt *po, const int nFields, int fieldMax[],
         int j;  /* for loop index */
         int tot=0;
         int n=0;
-        char *p;
+        char *p=NULL;
         for (; n < nFields; n++)
           tot+=fieldMax[n]+fs_len+(po->standard? 2: 0);
         if (po->standard)
           tot+=fs_len*2+2;
-        if (!(p=border=malloc(tot+1))) {
+	border=malloc(tot+1);
+        if (!border) {
             perror("malloc");
             exit(1);
         }
+	p=border;
         if (po->standard) {
             char *fs=po->fieldSep;
             while (*fs++)
@@ -1038,6 +1040,7 @@ do_header(FILE *fout, PQprintOpt *po, const int nFields, int fieldMax[],
       fputs("</tr>\n", fout);
     else
       fprintf(fout, "\n%s\n", border);
+    return border;
 }
 
 
@@ -1262,12 +1265,14 @@ PQprint(FILE *fout,
                   fprintf(fout, "<table %s>", po->tableOpt? po->tableOpt: "");
             }
             if (po->header) 
-              do_header(fout, po, nFields, fieldMax, fieldNames, fieldNotNum,
-                        fs_len, border, res);
+              border = do_header(fout, po, nFields, fieldMax, fieldNames, 
+                                 fieldNotNum, fs_len, res);
             for (i = 0; i < nTups; i++) 
                 output_row(fout, po, nFields, fields, 
                            fieldNotNum, fieldMax, border, i);
             free(fields);
+            if (border)
+                free(border);
         }
         if (po->header && !po->html3)
           fprintf (fout, "(%d row%s)\n\n",PQntuples(res),
@@ -1279,8 +1284,6 @@ PQprint(FILE *fout,
             pclose(fout);
             pqsignal(SIGPIPE, SIG_DFL);
         }
-        if (border)
-          free(border);
         if (po->html3 && !po->expanded)
           fputs("</table>\n", fout);
     }

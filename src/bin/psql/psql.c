@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.66 1997/05/24 14:38:05 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.67 1997/06/01 15:38:42 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -612,6 +612,7 @@ SendQuery(bool * success_p, PsqlSettings * settings, const char *query,
 		    notify->relname, notify->be_pid);
 	    free(notify);
 	}
+	PQclear(results);
     }
 }
 
