@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.6 1998/10/03 02:33:36 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.7 1998/12/22 18:50:55 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,12 +52,14 @@ static ScanKeyword ScanKeywords[] = {
 	{"by", BY},
 	{"cache", CACHE},
 	{"cascade", CASCADE},
+	{"case", CASE},
 	{"cast", CAST},
 	{"char", CHAR},
 	{"character", CHARACTER},
 	{"check", CHECK},
 	{"close", CLOSE},
 	{"cluster", CLUSTER},
+	{"coalesce", COALESCE},
 	{"collate", COLLATE},
 	{"column", COLUMN},
 	{"commit", COMMIT},
@@ -89,6 +91,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"double", DOUBLE},
 	{"drop", DROP},
 	{"each", EACH},
+	{"else", ELSE},
 	{"encoding", ENCODING},
 	{"end", END_TRANS},
 	{"execute", EXECUTE},
@@ -115,8 +118,8 @@ static ScanKeyword ScanKeywords[] = {
 	{"index", INDEX},
 	{"inherits", INHERITS},
 	{"inner", INNER_P},
-	{"insert", INSERT},
 	{"insensitive", INSENSITIVE},
+	{"insert", INSERT},
 	{"instead", INSTEAD},
 	{"interval", INTERVAL},
 	{"into", INTO},
@@ -155,6 +158,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"notify", NOTIFY},
 	{"notnull", NOTNULL},
 	{"null", NULL_P},
+	{"nullif", NULLIF},
 	{"numeric", NUMERIC},
 	{"of", OF},
 	{"oids", OIDS},
@@ -202,6 +206,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"stdout", STDOUT},
 	{"substring", SUBSTRING},
 	{"table", TABLE},
+	{"then", THEN},
 	{"time", TIME},
 	{"timestamp", TIMESTAMP},
 	{"timezone_hour", TIMEZONE_HOUR},
@@ -229,6 +234,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"verbose", VERBOSE},
 	{"version", VERSION},
 	{"view", VIEW},
+	{"when", WHEN},
 	{"where", WHERE},
 	{"with", WITH},
 	{"work", WORK},

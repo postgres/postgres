@@ -356,3 +356,13 @@ Thu Okt 15 10:05:04 CEST 1998
 
 	- Synced preproc.y with gram.y yet again.
         - Set version to 2.4.4
+
+Wed Dec  9 11:24:54 MEZ 1998
+
+	- Synced preproc.y with gram.y and the keywords.c files to add CASE
+	  statement.
+
+Tue Dec 22 14:16:11 CET 1998
+
+	- Synced preproc.y with gram.y for locking statements.
+	- Set version to 2.4.5

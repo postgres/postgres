@@ -530,26 +530,27 @@ output_statement(char * stmt, int mode)
 /* Keywords (in SQL92 reserved words) */
 %token  ABSOLUTE, ACTION, ADD, ALL, ALTER, AND, ANY, AS, ASC,
                 BEGIN_TRANS, BETWEEN, BOTH, BY,
-                CASCADE, CAST, CHAR, CHARACTER, CHECK, CLOSE, COLLATE, COLUMN, COMMIT, 
+                CASCADE, CASE, CAST, CHAR, CHARACTER, CHECK, CLOSE,
+		COALESCE, COLLATE, COLUMN, COMMIT, 
                 CONSTRAINT, CREATE, CROSS, CURRENT, CURRENT_DATE, CURRENT_TIME, 
                 CURRENT_TIMESTAMP, CURRENT_USER, CURSOR,
                 DAY_P, DECIMAL, DECLARE, DEFAULT, DELETE, DESC, DISTINCT, DOUBLE, DROP,
-                END_TRANS, EXECUTE, EXISTS, EXTRACT,
+                ELSE, END_TRANS, EXECUTE, EXISTS, EXTRACT,
                 FALSE_P, FETCH, FLOAT, FOR, FOREIGN, FROM, FULL,
                 GRANT, GROUP, HAVING, HOUR_P,
-                IN, INNER_P, INSENSITIVE, INSERT, INTERVAL, INTO, IS,
-                JOIN, KEY, LANGUAGE, LEADING, LEFT, LIKE, LOCAL,
+                IN, INNER_P, INSENSITIVE, INSERT, INTERVAL, INTO, IS, ISOLATION,
+                JOIN, KEY, LANGUAGE, LEADING, LEFT, LEVEL, LIKE, LOCAL,
                 MATCH, MINUTE_P, MONTH_P, NAMES,
-                NATIONAL, NATURAL, NCHAR, NEXT, NO, NOT, NULL_P, NUMERIC,
+                NATIONAL, NATURAL, NCHAR, NEXT, NO, NOT, NULLIF, NULL_P, NUMERIC,
                 OF, ON, ONLY, OPTION, OR, ORDER, OUTER_P,
                 PARTIAL, POSITION, PRECISION, PRIMARY, PRIOR, PRIVILEGES, PROCEDURE, PUBLIC,
                 READ, REFERENCES, RELATIVE, REVOKE, RIGHT, ROLLBACK,
                 SCROLL, SECOND_P, SELECT, SET, SUBSTRING,
-                TABLE, TIME, TIMESTAMP, TIMEZONE_HOUR, TIMEZONE_MINUTE,
+                TABLE, THEN, TIME, TIMESTAMP, TIMEZONE_HOUR, TIMEZONE_MINUTE,
 		TO, TRAILING, TRANSACTION, TRIM, TRUE_P,
                 UNION, UNIQUE, UPDATE, USER, USING,
                 VALUES, VARCHAR, VARYING, VIEW,
-                WHERE, WITH, WORK, YEAR_P, ZONE
+                WHEN, WHERE, WITH, WORK, YEAR_P, ZONE
 
 /* Keywords (in SQL3 reserved words) */
 %token  TRIGGER
@@ -662,7 +663,8 @@ output_statement(char * stmt, int mode)
 %type  <str>    ViewStmt LoadStmt CreatedbStmt opt_database1 opt_database2 location
 %type  <str>    DestroydbStmt ClusterStmt grantee RevokeStmt encoding
 %type  <str>	GrantStmt privileges operation_commalist operation
-%type  <str>	cursor_clause, opt_cursor, opt_readonly, opt_of
+%type  <str>	cursor_clause opt_cursor opt_readonly opt_of opt_lmode
+%type  <str>	case_expr when_clause_list case_default case_arg when_clause
 
 %type  <str>	ECPGWhenever ECPGConnect connection_target ECPGOpen open_opts
 %type  <str>	indicator ECPGExecute ecpg_expr dotext
@@ -914,6 +916,26 @@ VariableSetStmt:  SET ColId TO var_value
 				{
 					$$ = cat2_str(make1_str("set time zone"), $4);
 				}
+		| SET TRANSACTION ISOLATION LEVEL READ ColId
+				{
+					if (strcasecmp($6, "COMMITTED"))
+					{
+                                                sprintf(errortext, "syntax error at or near \"%s\"", $6);
+						yyerror(errortext);
+					}
+
+					$$ = cat2_str(make1_str("set transaction isolation level read"), $6);
+				}
+		| SET TRANSACTION ISOLATION LEVEL ColId
+				{
+					if (strcasecmp($5, "SERIALIZABLE"))
+					{
+                                                sprintf(errortext, "syntax error at or near \"%s\"", $5);
+                                                yyerror(errortext);
+					}
+
+					$$ = cat2_str(make1_str("set transaction isolation level read"), $5);
+				}
 		| SET NAMES encoding
                                 {
 #ifdef MB
@@ -941,6 +963,10 @@ VariableShowStmt:  SHOW ColId
 				{
 					$$ = make1_str("show time zone");
 				}
+		| SHOW TRANSACTION ISOLATION LEVEL
+				{
+					$$ = make1_str("show transaction isolation level");
+				}
 		;
 
 VariableResetStmt:	RESET ColId
@@ -950,6 +976,10 @@ VariableResetStmt:	RESET ColId
 		| RESET TIME ZONE
 				{
 					$$ = make1_str("reset time zone");
+				}
+		| RESET TRANSACTION ISOLATION LEVEL
+				{
+					$$ = make1_str("reset transaction isolation level");
 				}
 		;
 
@@ -2413,16 +2443,83 @@ DeleteStmt:  DELETE FROM relation_name
 				}
 		;
 
-/*
- *	Total hack to just lock a table inside a transaction.
- *	Is it worth making this a separate command, with
- *	its own node type and file.  I don't think so. bjm 1998/1/22
- */
 LockStmt:  LOCK_P opt_table relation_name
 				{
 					$$ = cat3_str(make1_str("lock"), $2, $3);
 				}
+		|       LOCK_P opt_table relation_name IN opt_lmode ROW IDENT IDENT
+				{
+					if (strcasecmp($8, "MODE"))
+					{
+                                                sprintf(errortext, "syntax error at or near \"%s\"", $8);
+						yyerror(errortext);
+					}
+					if ($5 != NULL)
+                                        {
+                                                if (strcasecmp($5, "SHARE"))
+						{
+                                                        sprintf(errortext, "syntax error at or near \"%s\"", $5);
+	                                                yyerror(errortext);
+						}
+                                                if (strcasecmp($7, "EXCLUSIVE"))
+						{
+							sprintf(errortext, "syntax error at or near \"%s\"", $7);
+	                                                yyerror(errortext);
+						}
+					}
+                                        else
+                                        {
+                                                if (strcasecmp($7, "SHARE") && strcasecmp($7, "EXCLUSIVE"))
+						{
+                                               		sprintf(errortext, "syntax error at or near \"%s\"", $7);
+	                                                yyerror(errortext);
+						}
+                                        }
+
+					$$=cat4_str(cat5_str(make1_str("lock"), $2, $3, make1_str("in"), $5), make1_str("row"), $7, $8);
+				}
+		|       LOCK_P opt_table relation_name IN IDENT IDENT IDENT
+				{
+					if (strcasecmp($7, "MODE"))
+					{
+                                                sprintf(errortext, "syntax error at or near \"%s\"", $7);
+                                                yyerror(errortext);
+					}                                
+                                        if (strcasecmp($5, "ACCESS"))
+					{
+                                                sprintf(errortext, "syntax error at or near \"%s\"", $5);
+                                                yyerror(errortext);
+					}
+                                        if (strcasecmp($6, "SHARE") && strcasecmp($6, "EXCLUSIVE"))
+					{
+                                                sprintf(errortext, "syntax error at or near \"%s\"", $6);
+                                                yyerror(errortext);
+					}
+
+					$$=cat3_str(cat5_str(make1_str("lock"), $2, $3, make1_str("in"), $5), $6, $7);
+				}
+		|       LOCK_P opt_table relation_name IN IDENT IDENT
+				{
+					if (strcasecmp($6, "MODE"))
+					{
+                                                sprintf(errortext, "syntax error at or near \"%s\"", $6);
+						yyerror(errortext);
+					}
+                                        if (strcasecmp($5, "SHARE") && strcasecmp($5, "EXCLUSIVE"))
+					{
+                                                sprintf(errortext, "syntax error at or near \"%s\"", $5);
+                                                yyerror(errortext);
+					}
+
+					$$=cat2_str(cat5_str(make1_str("lock"), $2, $3, make1_str("in"), $5), $6);
+				}
 		;
+
+opt_lmode:      IDENT           { $$ = $1; }
+                | /*EMPTY*/     { $$ = make1_str(""); }
+                ;
+
+
 
 
 /*****************************************************************************
@@ -3074,12 +3171,13 @@ row_list:  row_list ',' a_expr
 				}
 		;
 
-/*
+/* General expressions
  * This is the heart of the expression syntax.
  * Note that the BETWEEN clause looks similar to a boolean expression
  *  and so we must define b_expr which is almost the same as a_expr
  *  but without the boolean expressions.
- * All operations are allowed in a BETWEEN clause if surrounded by parens.
+ * All operations/expressions are allowed in a BETWEEN clause
+ *  if surrounded by parens.
  */
 
 a_expr:  attr opt_indirection
@@ -3362,16 +3460,17 @@ a_expr:  attr opt_indirection
 				{	$$ = cat3_str($1, make1_str("or"), $3); }
 		| NOT a_expr
 				{	$$ = cat2_str(make1_str("not"), $2); }
+		| case_expr
+				{       $$ = $1; }
 		| cinputvariable
 			        { $$ = make1_str(";;"); }
 		;
 
-/*
+/* Restricted expressions
  * b_expr is a subset of the complete expression syntax
  *  defined by a_expr. b_expr is used in BETWEEN clauses
  *  to eliminate parser ambiguities stemming from the AND keyword.
  */
-
 b_expr:  attr opt_indirection
 				{
 					$$ = cat2_str($1, $2);
@@ -3656,6 +3755,65 @@ not_in_expr_nodes:  AexprConst
 				{	$$ = cat3_str($1, make1_str(","), $3);}
 		;
 
+/* Case clause
+ * Define SQL92-style case clause.
+ * Allow all four forms described in the standard:
+ * - Full specification
+ *  CASE WHEN a = b THEN c ... ELSE d END
+ * - Implicit argument
+ *  CASE a WHEN b THEN c ... ELSE d END
+ * - Conditional NULL
+ *  NULLIF(x,y)
+ *  same as CASE WHEN x = y THEN NULL ELSE x END
+ * - Conditional substitution from list, use first non-null argument
+ *  COALESCE(a,b,...)
+ * same as CASE WHEN a IS NOT NULL THEN a WHEN b IS NOT NULL THEN b ... END
+ * - thomas 1998-11-09
+ */
+case_expr:  CASE case_arg when_clause_list case_default END_TRANS
+                                { $$ = cat5_str(make1_str("case"), $2, $3, $4, make1_str("end")); }
+                | NULLIF '(' a_expr ',' a_expr ')'
+                                {
+					$$ = cat5_str(make1_str("nullif("), $3, make1_str(","), $5, make1_str(")"));
+
+					fprintf(stderr, "NULLIF() not yet fully implemented");
+                                }
+                | COALESCE '(' expr_list ')'
+                                {
+					$$ = cat3_str(make1_str("coalesce("), $3, make1_str(")"));
+
+					fprintf(stderr, "COALESCE() not yet fully implemented");
+				}
+		;
+
+when_clause_list:  when_clause_list when_clause
+                               { $$ = cat2_str($1, $2); }
+               | when_clause
+                               { $$ = $1; }
+               ;
+
+when_clause:  WHEN a_expr THEN a_expr_or_null
+                               {
+					$$ = cat4_str(make1_str("when"), $2, make1_str("then"), $4);
+                               }
+               ;
+
+case_default:  ELSE a_expr_or_null	{ $$ = cat2_str(make1_str("else"), $2); }
+               | /*EMPTY*/        	{ $$ = make1_str(""); }
+               ;
+
+case_arg:  attr opt_indirection
+                               {
+                                       $$ = cat2_str($1, $2);
+                               }
+               | ColId
+                               {
+                                       $$ = $1;
+                               }
+               | /*EMPTY*/
+                               {       $$ = make1_str(""); }
+               ;
+
 attr:  relation_name '.' attrs
 				{
 					$$ = make3_str($1, make1_str("."), $3);
@@ -3924,12 +4082,16 @@ ColLabel:  ColId						{ $$ = $1; }
 		| ABORT_TRANS                                   { $$ = make1_str("abort"); }
 		| ANALYZE                                       { $$ = make1_str("analyze"); }
 		| BINARY                                        { $$ = make1_str("binary"); }
+		| CASE                                        { $$ = make1_str("case"); }
 		| CLUSTER						{ $$ = make1_str("cluster"); }
+		| COALESCE                                        { $$ = make1_str("coalesce"); }
 		| CONSTRAINT					{ $$ = make1_str("constraint"); }
 		| COPY							{ $$ = make1_str("copy"); }
 		| CROSS							{ $$ = make1_str("cross"); }
 		| CURRENT							{ $$ = make1_str("current"); }
 		| DO							{ $$ = make1_str("do"); }
+		| ELSE                                        { $$ = make1_str("else"); }
+		| END_TRANS                                        { $$ = make1_str("end"); }
 		| EXPLAIN							{ $$ = make1_str("explain"); }
 		| EXTEND							{ $$ = make1_str("extend"); }
 		| FALSE_P							{ $$ = make1_str("false"); }
@@ -3941,6 +4103,7 @@ ColLabel:  ColId						{ $$ = $1; }
 		| MOVE							{ $$ = make1_str("move"); }
 		| NEW							{ $$ = make1_str("new"); }
 		| NONE							{ $$ = make1_str("none"); }
+		| NULLIF                                        { $$ = make1_str("nullif"); }
 		| ORDER							{ $$ = make1_str("order"); }
 		| POSITION						{ $$ = make1_str("position"); }
 		| PRECISION						{ $$ = make1_str("precision"); }
@@ -3948,10 +4111,12 @@ ColLabel:  ColId						{ $$ = $1; }
 		| SETOF							{ $$ = make1_str("setof"); }
 		| SHOW							{ $$ = make1_str("show"); }
 		| TABLE							{ $$ = make1_str("table"); }
+		| THEN                                        { $$ = make1_str("then"); }
 		| TRANSACTION					{ $$ = make1_str("transaction"); }
 		| TRUE_P						{ $$ = make1_str("true"); }
 		| VACUUM					{ $$ = make1_str("vacuum"); }
 		| VERBOSE						{ $$ = make1_str("verbose"); }
+		| WHEN                                        { $$ = make1_str("when"); }
 		;
 
 SpecialRuleRelation:  CURRENT

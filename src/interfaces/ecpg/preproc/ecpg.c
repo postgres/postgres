@@ -181,7 +181,7 @@ main(int argc, char *const argv[])
 				/* initialize lex */
 				lex_init();
 
-				/* we need two includes and a constant */
+				/* we need two includes */
 				fprintf(yyout, "/* Processed by ecpg (%d.%d.%d) */\n/* These two include files are added by the preprocessor */\n#include <ecpgtype.h>\n#include <ecpglib.h>\n\n", MAJOR_VERSION, MINOR_VERSION, PATCHLEVEL);
 
 				/* and parse the source */

@@ -57,7 +57,7 @@ struct ECPGtemp_type
 extern const char *ECPGtype_name(enum ECPGttype typ);
 
 /* some stuff for whenever statements */
-enum WHEN
+enum WHEN_TYPE
 {
 	W_NOTHING,
 	W_CONTINUE,
@@ -70,7 +70,7 @@ enum WHEN
 
 struct when
 {
-	enum WHEN	code;
+	enum WHEN_TYPE	code;
 	char	   *command;
 	char	   *str;
 };
