@@ -13,7 +13,6 @@
 #include "extern.h"
 #include "pgtypes_error.h"
 #include "pgtypes_timestamp.h"
-#include "pgtypes_interval.h"
 #include "datetime.h"
 
 #ifdef HAVE_INT64_TIMESTAMP
@@ -288,14 +287,14 @@ PGTYPEStimestamp_atot(char *str, char **endptr)
 	errno = 0;
 	if (strlen(str) >= sizeof(lowstr))
 	{
-		errno = PGTYPES_BAD_TIMESTAMP;
+		errno = PGTYPES_TS_BAD_TIMESTAMP;
 		return (noresult);
 	}
 
 	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf, ptr) != 0)
 	  || (DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tz, 0) != 0))
 	{
-                errno = PGTYPES_BAD_TIMESTAMP;
+                errno = PGTYPES_TS_BAD_TIMESTAMP;
                 return (noresult);
         }
 	
@@ -304,7 +303,7 @@ PGTYPEStimestamp_atot(char *str, char **endptr)
 		case DTK_DATE:
 			if (tm2timestamp(tm, fsec, NULL, &result) != 0)
 			{
-				errno = PGTYPES_BAD_TIMESTAMP;
+				errno = PGTYPES_TS_BAD_TIMESTAMP;
 				return (noresult);;
 			}
 			break;
@@ -322,11 +321,11 @@ PGTYPEStimestamp_atot(char *str, char **endptr)
 			break;
 
 		case DTK_INVALID:
-			errno = PGTYPES_BAD_TIMESTAMP;
+			errno = PGTYPES_TS_BAD_TIMESTAMP;
 			return (noresult);
 
 		default:
-			errno = PGTYPES_BAD_TIMESTAMP;
+			errno = PGTYPES_TS_BAD_TIMESTAMP;
 			return (noresult);
 	}
 
@@ -350,67 +349,8 @@ PGTYPEStimestamp_ttoa(Timestamp tstamp)
                 EncodeDateTime(tm, fsec, NULL, &tzn, DateStyle, buf, 0);
         else
 	{
-		errno = PGTYPES_BAD_TIMESTAMP;
+		errno = PGTYPES_TS_BAD_TIMESTAMP;
 		return NULL;
 	}
         return pgtypes_strdup(buf);
 }
-
-void
-dtcurrent (Timestamp *ts)
-{
-	return;
-}
-
-int
-dtcvasc (char *str, Timestamp *ts)
-{
-	return 0;
-}
-
-int
-dtsub (Timestamp *ts1, Timestamp *ts2, Interval *iv)
-{
-	return 0;
-}
-
-int
-dttoasc (Timestamp *ts, char *output)
-{
-	return 0;
-}
-
-int
-dttofmtasc (Timestamp *ts, char *output, int str_len, char *fmtstr)
-{
-	return 0;
-}
-
-int
-intoasc(Interval *i, char *str)
-{
-	return 0;
-}
-
-Interval *
-PGTYPESinterval_atoi(char *str, char **endptr)
-{
-	Interval	*result = NULL;
-	
-	return result;
-}
-
-char *
-PGTYPESinterval_itoa(Interval *intvl)
-{
-        char            buf[MAXDATELEN + 1];
-
-        return pgtypes_strdup(buf);
-}
-
-int 
-PGTYPESinterval_copy(Interval *intvlsrc, Interval *intrcldest)
-{
-		return 0;
-}
-

@@ -1,46 +1,153 @@
 #include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 #include <pgtypes_date.h>
 #include <pgtypes_timestamp.h>
+#include <pgtypes_interval.h>
 
 int
 main()
 {
 	exec sql begin declare section;
-	date date1;
-	timestamp ts1;
-	char *text;
+		date date1;
+		timestamp ts1;
+		interval iv1;
+		char *text;
 	exec sql end declare section;
-#if 0
 	Date date2;
-	short int mdy[3] = { 4, 19, 1998 };
-#endif
+	int mdy[3] = { 4, 19, 1998 };
+	char *fmt, *out, *in;
+	
 	FILE *dbgs;
 
         if ((dbgs = fopen("log", "w")) != NULL)
                  ECPGdebug(1, dbgs);
         exec sql whenever sqlerror do sqlprint();
         exec sql connect to mm;
-        exec sql create table date_test (d date, ts timestamp);
+        exec sql create table date_test (d date, ts timestamp, iv interval);
 
-	exec sql insert into date_test(d, ts) values ('Mon Jan 17 1966', '2000-7-12 17:34:29');
+	exec sql insert into date_test(d, ts, iv) values ('Mon Jan 17 1966', '2000-7-12 17:34:29', now()-'Mon Jan 17 1966');
 
-	exec sql select * into :date1, :ts1 from date_test;
+	exec sql select * into :date1, :ts1 , :iv1 from date_test;
 	
 	text = PGTYPESdate_dtoa(date1);
 	printf ("Date: %s\n", text);
-	ts1 = PGTYPEStimestamp_atot("2000-7-12 17:34:29", NULL);
+	
 	text = PGTYPEStimestamp_ttoa(ts1);
 	printf ("timestamp: %s\n", text);
-#if 0
+	
+	text = PGTYPESinterval_itoa(&iv1);
+	printf ("interval: %s\n", text);
+	
 	PGTYPESdate_mdyjul(mdy, &date2);
 	printf("m: %d, d: %d, y: %d\n", mdy[0], mdy[1], mdy[2]);
 	/* reset */
 	mdy[0] = mdy[1] = mdy[2] = 0;
 
+	printf("date seems to get encoded to julian %ld\n", date2);
+	
 	PGTYPESdate_julmdy(date2, mdy);
 	printf("m: %d, d: %d, y: %d\n", mdy[0], mdy[1], mdy[2]);
-#endif
-        exec sql rollback;
+       
+	ts1 = PGTYPEStimestamp_atot("2003-12-04 17:34:29", NULL);
+	text = PGTYPEStimestamp_ttoa(ts1);
+
+	printf("date_day of %s is %d\n", text, PGTYPESdate_dayofweek(ts1));
+
+	PGTYPESdate_today(&date1);
+	text = PGTYPESdate_dtoa(date1);
+	printf("today is %s\n", text);
+
+	fmt = "(ddd), mmm. dd, yyyy, repeat: (ddd), mmm. dd, yyyy. end";
+	out = (char*) malloc(strlen(fmt) + 1);
+
+	PGTYPESdate_fmtdate(date1, fmt, out);
+	printf("Today in format \"%s\" is \"%s\"\n", fmt, out);
+	free(out);
+
+	/* rdefmtdate() */
+
+	date1 = 0; text = "";
+	fmt = "yy/mm/dd";
+	in = "In the year 1995, the month of December, it is the 25th day";
+	/*    0123456789012345678901234567890123456789012345678901234567890
+	 *    0         1         2         3         4         5         6
+	 */
+	PGTYPESdate_defmtdate(&date1, fmt, in);
+	text = PGTYPESdate_dtoa(date1);
+	printf("defmtdate1: %s\n", text);
+
+	date1 = 0; text = "";
+	fmt = "mmmm. dd. yyyy";
+	in = "12/25/95";
+	PGTYPESdate_defmtdate(&date1, fmt, in);
+	text = PGTYPESdate_dtoa(date1);
+	printf("defmtdate2: %s\n", text);
+
+	date1 = 0; text = "";
+	fmt = "yy/mm/dd";
+	in = "95/12/25";
+	PGTYPESdate_defmtdate(&date1, fmt, in);
+	text = PGTYPESdate_dtoa(date1);
+	printf("defmtdate3: %s\n", text);
+
+	date1 = 0; text = "";
+	fmt = "yy/mm/dd";
+	in = "1995, December 25th";
+	PGTYPESdate_defmtdate(&date1, fmt, in);
+	text = PGTYPESdate_dtoa(date1);
+	printf("defmtdate4: %s\n", text);
+
+	date1 = 0; text = "";
+	fmt = "dd-mm-yy";
+	in = "This is 25th day of December, 1995";
+	PGTYPESdate_defmtdate(&date1, fmt, in);
+	text = PGTYPESdate_dtoa(date1);
+	printf("defmtdate5: %s\n", text);
+
+	date1 = 0; text = "";
+	fmt = "mmddyy";
+	in = "Dec. 25th, 1995";
+	PGTYPESdate_defmtdate(&date1, fmt, in);
+	text = PGTYPESdate_dtoa(date1);
+	printf("defmtdate6: %s\n", text);
+
+	date1 = 0; text = "";
+	fmt = "mmm. dd. yyyy";
+	in = "dec 25th 1995";
+	PGTYPESdate_defmtdate(&date1, fmt, in);
+	text = PGTYPESdate_dtoa(date1);
+	printf("defmtdate7: %s\n", text);
+
+	date1 = 0; text = "";
+	fmt = "mmm. dd. yyyy";
+	in = "DEC-25-1995";
+	PGTYPESdate_defmtdate(&date1, fmt, in);
+	text = PGTYPESdate_dtoa(date1);
+	printf("defmtdate8: %s\n", text);
+
+	date1 = 0; text = "";
+	fmt = "mm yy   dd.";
+	in = "12199525";
+	PGTYPESdate_defmtdate(&date1, fmt, in);
+	text = PGTYPESdate_dtoa(date1);
+	printf("defmtdate9: %s\n", text);
+
+	date1 = 0; text = "";
+	fmt = "yyyy fierj mm   dd.";
+	in = "19951225";
+	PGTYPESdate_defmtdate(&date1, fmt, in);
+	text = PGTYPESdate_dtoa(date1);
+	printf("defmtdate10: %s\n", text);
+
+	date1 = 0; text = "";
+	fmt = "mm/dd/yy";
+	in = "122595";
+	PGTYPESdate_defmtdate(&date1, fmt, in);
+	text = PGTYPESdate_dtoa(date1);
+	printf("defmtdate12: %s\n", text);
+
+	exec sql rollback;
         exec sql disconnect;
 
 	if (dbgs != NULL)

@@ -426,9 +426,80 @@ static datetkn datetktbl[] = {
 	{ZULU, TZ, POS(0)},			/* UTC */
 };
 
+static datetkn deltatktbl[] = {
+	/* text, token, lexval */
+	{"@", IGNORE_DTF, 0},		/* postgres relative prefix */
+	{DAGO, AGO, 0},				/* "ago" indicates negative time offset */
+	{"c", UNITS, DTK_CENTURY},	/* "century" relative */
+	{"cent", UNITS, DTK_CENTURY},		/* "century" relative */
+	{"centuries", UNITS, DTK_CENTURY},	/* "centuries" relative */
+	{DCENTURY, UNITS, DTK_CENTURY},		/* "century" relative */
+	{"d", UNITS, DTK_DAY},		/* "day" relative */
+	{DDAY, UNITS, DTK_DAY},		/* "day" relative */
+	{"days", UNITS, DTK_DAY},	/* "days" relative */
+	{"dec", UNITS, DTK_DECADE}, /* "decade" relative */
+	{DDECADE, UNITS, DTK_DECADE},		/* "decade" relative */
+	{"decades", UNITS, DTK_DECADE},		/* "decades" relative */
+	{"decs", UNITS, DTK_DECADE},	/* "decades" relative */
+	{"h", UNITS, DTK_HOUR},		/* "hour" relative */
+	{DHOUR, UNITS, DTK_HOUR},	/* "hour" relative */
+	{"hours", UNITS, DTK_HOUR}, /* "hours" relative */
+	{"hr", UNITS, DTK_HOUR},	/* "hour" relative */
+	{"hrs", UNITS, DTK_HOUR},	/* "hours" relative */
+	{INVALID, RESERV, DTK_INVALID},		/* reserved for invalid time */
+	{"m", UNITS, DTK_MINUTE},	/* "minute" relative */
+	{"microsecon", UNITS, DTK_MICROSEC},		/* "microsecond" relative */
+	{"mil", UNITS, DTK_MILLENNIUM},		/* "millennium" relative */
+	{"millennia", UNITS, DTK_MILLENNIUM},		/* "millennia" relative */
+	{DMILLENNIUM, UNITS, DTK_MILLENNIUM},		/* "millennium" relative */
+	{"millisecon", UNITS, DTK_MILLISEC},		/* relative */
+	{"mils", UNITS, DTK_MILLENNIUM},	/* "millennia" relative */
+	{"min", UNITS, DTK_MINUTE}, /* "minute" relative */
+	{"mins", UNITS, DTK_MINUTE},	/* "minutes" relative */
+	{DMINUTE, UNITS, DTK_MINUTE},		/* "minute" relative */
+	{"minutes", UNITS, DTK_MINUTE},		/* "minutes" relative */
+	{"mon", UNITS, DTK_MONTH},	/* "months" relative */
+	{"mons", UNITS, DTK_MONTH}, /* "months" relative */
+	{DMONTH, UNITS, DTK_MONTH}, /* "month" relative */
+	{"months", UNITS, DTK_MONTH},
+	{"ms", UNITS, DTK_MILLISEC},
+	{"msec", UNITS, DTK_MILLISEC},
+	{DMILLISEC, UNITS, DTK_MILLISEC},
+	{"mseconds", UNITS, DTK_MILLISEC},
+	{"msecs", UNITS, DTK_MILLISEC},
+	{"qtr", UNITS, DTK_QUARTER},	/* "quarter" relative */
+	{DQUARTER, UNITS, DTK_QUARTER},		/* "quarter" relative */
+	{"reltime", IGNORE_DTF, 0}, /* pre-v6.1 "Undefined Reltime" */
+	{"s", UNITS, DTK_SECOND},
+	{"sec", UNITS, DTK_SECOND},
+	{DSECOND, UNITS, DTK_SECOND},
+	{"seconds", UNITS, DTK_SECOND},
+	{"secs", UNITS, DTK_SECOND},
+	{DTIMEZONE, UNITS, DTK_TZ}, /* "timezone" time offset */
+	{"timezone_h", UNITS, DTK_TZ_HOUR}, /* timezone hour units */
+	{"timezone_m", UNITS, DTK_TZ_MINUTE},		/* timezone minutes units */
+	{"undefined", RESERV, DTK_INVALID}, /* pre-v6.1 invalid time */
+	{"us", UNITS, DTK_MICROSEC},	/* "microsecond" relative */
+	{"usec", UNITS, DTK_MICROSEC},		/* "microsecond" relative */
+	{DMICROSEC, UNITS, DTK_MICROSEC},	/* "microsecond" relative */
+	{"useconds", UNITS, DTK_MICROSEC},	/* "microseconds" relative */
+	{"usecs", UNITS, DTK_MICROSEC},		/* "microseconds" relative */
+	{"w", UNITS, DTK_WEEK},		/* "week" relative */
+	{DWEEK, UNITS, DTK_WEEK},	/* "week" relative */
+	{"weeks", UNITS, DTK_WEEK}, /* "weeks" relative */
+	{"y", UNITS, DTK_YEAR},		/* "year" relative */
+	{DYEAR, UNITS, DTK_YEAR},	/* "year" relative */
+	{"years", UNITS, DTK_YEAR}, /* "years" relative */
+	{"yr", UNITS, DTK_YEAR},	/* "year" relative */
+	{"yrs", UNITS, DTK_YEAR},	/* "years" relative */
+};
+
 static unsigned int szdatetktbl = sizeof datetktbl / sizeof datetktbl[0];
+static unsigned int szdeltatktbl = sizeof deltatktbl / sizeof deltatktbl[0];
 
 static datetkn    *datecache[MAXDATEFIELDS] = {NULL};
+
+static datetkn    *deltacache[MAXDATEFIELDS] = {NULL};
 
 char       *months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", NULL};
 
@@ -560,6 +631,39 @@ datebsearch(char *key, datetkn *base, unsigned int nel)
            }
            return NULL;
 }
+
+/* DecodeUnits()
+ * Decode text string using lookup table.
+ * This routine supports time interval decoding.
+ */
+int
+DecodeUnits(int field, char *lowtoken, int *val)
+{
+	int			type;
+	datetkn    *tp;
+
+	if ((deltacache[field] != NULL)
+		&& (strncmp(lowtoken, deltacache[field]->token, TOKMAXLEN) == 0))
+		tp = deltacache[field];
+	else
+		tp = datebsearch(lowtoken, deltatktbl, szdeltatktbl);
+	deltacache[field] = tp;
+	if (tp == NULL)
+	{
+		type = UNKNOWN_FIELD;
+		*val = 0;
+	}
+	else
+	{
+		type = tp->type;
+		if ((type == TZ) || (type == DTZ))
+			*val = FROMVAL(tp);
+		else
+			*val = tp->value;
+	}
+
+	return type;
+}	/* DecodeUnits() */
 
 /*
  * Calendar time to Julian date conversions.
@@ -1088,7 +1192,7 @@ abstime2tm(AbsoluteTime _time, int *tzp, struct tm * tm, char **tzn)
 #endif
 }
 
-static void
+void
 GetCurrentDateTime(struct tm * tm)
 {
 	int			tz;

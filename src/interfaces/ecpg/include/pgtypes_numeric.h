@@ -23,7 +23,7 @@ typedef struct
 Numeric *PGTYPESnew(void);
 void PGTYPESnumeric_free(Numeric *);
 Numeric *PGTYPESnumeric_aton(char *, char **);
-char *PGTYPESnumeric_ntoa(Numeric *);
+char *PGTYPESnumeric_ntoa(Numeric *, int);
 int PGTYPESnumeric_add(Numeric *, Numeric *, Numeric *);
 int PGTYPESnumeric_sub(Numeric *, Numeric *, Numeric *);
 int PGTYPESnumeric_mul(Numeric *, Numeric *, Numeric *);

@@ -2,6 +2,9 @@
  * This file contains stuff needed to be as compatible to Informix as possible.
  */
 
+#include <decimal.h>
+#include <datetime.h>
+
 #define SQLNOTFOUND 100
 
 #ifndef Date

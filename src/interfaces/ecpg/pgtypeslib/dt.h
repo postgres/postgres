@@ -296,6 +296,7 @@ extern void GetEpochTime(struct tm *);
 extern int ParseDateTime(char *, char *, char **, int *, int, int *, char **);
 extern int DecodeDateTime(char **, int *, int, int *, struct tm *, fsec_t *, int *, bool);
 extern void j2date(int, int *, int *, int *);
+extern void GetCurrentDateTime(struct tm*);
 extern int date2j(int, int, int);
 extern double rint(double x);
 

@@ -1376,7 +1376,17 @@ Thu Mar 27 15:23:58 CET 2003
 	- Some more updates to pgtypeslib.
 	- Set optimization to -O1 until I find the reason why code is broken
 	  with -O2.
+
+Sat Mar 29 22:03:16 CET 2003
+
+	- Moved Informix compatibility stuff its own library.
+	- Added interval datetypes.
+
+Sun Mar 30 13:43:13 CEST 2003
+
+	- Interval datetype now fully functional.
 	- Set ecpg version to 2.12.0.
 	- Set ecpg library to 3.4.2.
 	- Set pgtypes library to 1.0.0
+	- Set compat library to 1.0.0
 

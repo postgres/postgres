@@ -9,7 +9,6 @@
 #include "c.h"
 #include "extern.h"
 #include "pgtypes_error.h"
-#include "decimal.h"
 
 #define Max(x, y)               ((x) > (y) ? (x) : (y))
 #define Min(x, y)               ((x) < (y) ? (x) : (y))
@@ -96,7 +95,7 @@ apply_typmod(Numeric *var, long typmod)
 
 		if (tweight >= maxweight && i < var->ndigits)
 		{
-			errno = PGTYPES_OVERFLOW;
+			errno = PGTYPES_NUM_OVERFLOW;
 			return -1;
 		}
 	}
@@ -188,7 +187,7 @@ set_var_from_str(char *str, char **ptr, Numeric *dest)
 
 	if (!isdigit((unsigned char) *(*ptr)))
 	{
-		errno=PGTYPES_BAD_NUMERIC;
+		errno=PGTYPES_NUM_BAD_NUMERIC;
 		return -1;
 	}
 
@@ -206,7 +205,7 @@ set_var_from_str(char *str, char **ptr, Numeric *dest)
 		{
 			if (have_dp)
 			{
-				errno = PGTYPES_BAD_NUMERIC;
+				errno = PGTYPES_NUM_BAD_NUMERIC;
 				return -1;
 			}
 			have_dp = TRUE;
@@ -227,14 +226,14 @@ set_var_from_str(char *str, char **ptr, Numeric *dest)
 		exponent = strtol((*ptr), &endptr, 10);
 		if (endptr == (*ptr))
 		{
-			errno = PGTYPES_BAD_NUMERIC;
+			errno = PGTYPES_NUM_BAD_NUMERIC;
 			return -1;
 		}
 		(*ptr) = endptr;
 		if (exponent > NUMERIC_MAX_PRECISION ||
 			exponent < -NUMERIC_MAX_PRECISION)
 		{
-			errno = PGTYPES_BAD_NUMERIC;
+			errno = PGTYPES_NUM_BAD_NUMERIC;
 			return -1;
 		}
 		dest->weight += (int) exponent;
@@ -248,7 +247,7 @@ set_var_from_str(char *str, char **ptr, Numeric *dest)
 	{
 		if (!isspace((unsigned char) *(*ptr)))
 		{
-			errno = PGTYPES_BAD_NUMERIC;
+			errno = PGTYPES_NUM_BAD_NUMERIC;
 			return -1;
 		}
 		(*ptr)++;
@@ -402,9 +401,12 @@ PGTYPESnumeric_aton(char *str, char **endptr)
  * ----------
  */
 char *
-PGTYPESnumeric_ntoa(Numeric *num)
+PGTYPESnumeric_ntoa(Numeric *num, int dscale)
 {
-	return(get_str_from_var(num, num->dscale));
+	if (dscale <= 0)
+		dscale = num->dscale;
+
+	return(get_str_from_var(num, dscale));
 }
 
 /* ----------
@@ -1117,7 +1119,7 @@ PGTYPESnumeric_div(Numeric *var1, Numeric *var2, Numeric *result)
 	ndigits_tmp = var2->ndigits + 1;
 	if (ndigits_tmp == 1)
 	{
-		errno= PGTYPES_DIVIDE_ZERO;
+		errno= PGTYPES_NUM_DIVIDE_ZERO;
 		return -1;
 	}
 
@@ -1320,7 +1322,7 @@ PGTYPESnumeric_cmp(Numeric *var1, Numeric *var2) {
 		return -1;
 	}
 
-	errno = PGTYPES_BAD_NUMERIC;
+	errno = PGTYPES_NUM_BAD_NUMERIC;
 	return INT_MAX;
 
 }
@@ -1438,7 +1440,7 @@ numericvar_to_double_no_overflow(Numeric *var, double *dp)
 	{
 		/* shouldn't happen ... */
 		free(tmp);
-		errno = PGTYPES_BAD_NUMERIC;
+		errno = PGTYPES_NUM_BAD_NUMERIC;
 		return -1;
 	} 
 	*dp = val;
@@ -1466,7 +1468,7 @@ PGTYPESnumeric_ntoi(Numeric* nv, int* ip) {
 		return i;
 
 	if (l < -INT_MAX || l > INT_MAX) {
-		errno = PGTYPES_OVERFLOW;
+		errno = PGTYPES_NUM_OVERFLOW;
 		return -1;
 	} 
 
@@ -1488,7 +1490,7 @@ PGTYPESnumeric_ntol(Numeric* nv, long* lp) {
 		l++;
 	}
 	if (l > LONG_MAX || l < 0) {
-		errno = PGTYPES_OVERFLOW;
+		errno = PGTYPES_NUM_OVERFLOW;
 		return -1;
 	}
 	
@@ -1497,198 +1499,5 @@ PGTYPESnumeric_ntol(Numeric* nv, long* lp) {
 	}
 	*lp = l;
 	return 0;
-}
-
-/* Finally we need some wrappers for the INFORMIX functions */
-int
-decadd(Numeric *arg1, Numeric *arg2, Numeric *sum)
-{
-	int i = PGTYPESnumeric_add(arg1, arg2, sum);
-
-	if (i == 0) /* No error */
-		return 0;
-	if (errno == PGTYPES_OVERFLOW)
-		return -1200;
-
-	return -1201;	
-}
-
-int
-deccmp(Numeric *arg1, Numeric *arg2)
-{
-	int i = PGTYPESnumeric_cmp(arg1, arg2);
-	
-	/* TODO: Need to return DECUNKNOWN instead of PGTYPES_BAD_NUMERIC */
-	return (i);
-}
-
-void
-deccopy(Numeric *src, Numeric *target)
-{
-	PGTYPESnumeric_copy(src, target);
-}
-
-static char *
-strndup(char *str, int len)
-{
-	int real_len = strlen(str);
-	int use_len = (real_len > len) ? len : real_len;
-	
-	char *new = pgtypes_alloc(use_len + 1);
-
-	if (new)
-	{
-		memcpy(str, new, use_len);
-		new[use_len] = '\0';
-	}
-
-	return new;
-}
-
-int
-deccvasc(char *cp, int len, Numeric *np)
-{
-	char *str = strndup(cp, len); /* Numeric_in always converts the complete string */
-	int ret = 0;
-	
-	if (!str)
-		ret = -1201;
-	else
-	{
-		np = PGTYPESnumeric_aton(str, NULL);
-		if (!np)
-		{
-			switch (errno)
-			{
-				case PGTYPES_OVERFLOW:    ret = -1200;
-						          break;
-				case PGTYPES_BAD_NUMERIC: ret = -1213;
-							  break;
-				default:		  ret = -1216;
-							  break;
-			}
-		}
-	}
-	
-	return ret;
-}
-
-int
-deccvdbl(double dbl, Numeric *np)
-{
-	return(PGTYPESnumeric_dton(dbl, np));
-}
-
-int
-deccvint(int in, Numeric *np)
-{
-	return(PGTYPESnumeric_iton(in, np));
-}
-
-int
-deccvlong(long lng, Numeric *np)
-{
-	return(PGTYPESnumeric_lton(lng, np));	
-}
-
-int
-decdiv(Numeric *n1, Numeric *n2, Numeric *n3)
-{
-	int i = PGTYPESnumeric_div(n1, n2, n3), ret = 0;
-
-	if (i != 0)
-		switch (errno)
-		{
-			case PGTYPES_DIVIDE_ZERO: ret = -1202;
-						  break;
-			case PGTYPES_OVERFLOW:    ret = -1200;
-						  break;
-			default:		  ret = -1201;
-						  break;
-		}
-
-	return ret;
-}
-
-int 
-decmul(Numeric *n1, Numeric *n2, Numeric *n3)
-{
-	int i = PGTYPESnumeric_mul(n1, n2, n3), ret = 0;
-
-	if (i != 0)
-		switch (errno)
-		{
-			case PGTYPES_OVERFLOW:    ret = -1200;
-						  break;
-			default:		  ret = -1201;
-						  break;
-		}
-
-	return ret;
-}
-
-int
-decsub(Numeric *n1, Numeric *n2, Numeric *n3)
-{
-	int i = PGTYPESnumeric_sub(n1, n2, n3), ret = 0;
-
-	if (i != 0)
-		switch (errno)
-		{
-			case PGTYPES_OVERFLOW:    ret = -1200;
-						  break;
-			default:		  ret = -1201;
-						  break;
-		}
-
-	return ret;
-}
-
-int
-dectoasc(Numeric *np, char *cp, int len, int right)
-{
-	char *str;
-	
-	if (right >= 0)
-		str = get_str_from_var(np, right);
-	else
-		str = get_str_from_var(np, np->dscale);
-
-	if (!str)
-		return -1;
-	
-	/* TODO: have to take care of len here and create exponatial notion if necessary */
-	strncpy(cp, str, len);
-	free (str);
-
-	return 0;
-}
-
-int
-dectodbl(Numeric *np, double *dblp)
-{
-	return(PGTYPESnumeric_ntod(np, dblp));
-}
-
-int
-dectoint(Numeric *np, int *ip)
-{
-	int ret = PGTYPESnumeric_ntoi(np, ip);
-
-	if (ret == PGTYPES_OVERFLOW)
-		ret = -1200;
-	
-	return ret;
-}
-
-int
-dectolong(Numeric *np, long *lngp)	
-{
-	int ret = PGTYPESnumeric_ntol(np, lngp);
-
-	if (ret == PGTYPES_OVERFLOW)
-		ret = -1200;
-	
-	return ret;
 }
 
