@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Feb 18 20:30:27 EST 2003
+Last updated:		Wed Mar  5 21:29:28 EST 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -16,14 +16,14 @@ Urgent
 ======
 
 * Add replication of distributed databases [replication]
-	o automatic failover
-	o load balancing
-	o master/slave replication
-	o multi-master replication
-	o partition data across servers
-	o sample implementation in contrib/rserv
-	o queries across databases or servers (two-phase commit)
-	o allow replication over unreliable or non-persistent links
+	o Automatic failover
+	o Load balancing
+	o Master/slave replication
+	o Multi-master replication
+	o Partition data across servers
+	o Sample implementation in contrib/rserv
+	o Queries across databases or servers (two-phase commit)
+	o Allow replication over unreliable or non-persistent links
 	o http://gborg.postgresql.org/project/pgreplication/projdisplay.php
 * Point-in-time data recovery using backup and write-ahead log
 * Create native Win32 port [win32]
@@ -179,7 +179,8 @@ Commands
 	o ALTER TABLE ADD COLUMN column SERIAL doesn't create sequence because
           of the item above
 	o -Add ALTER TABLE tab SET WITHOUT OIDS (Rod)
-	* Add ALTER SEQUENCE to modify min/max/increment/cache/cycle values
+	o Add ALTER SEQUENCE to modify min/max/increment/cache/cycle values
+	o Have ALTER TABLE rename SERIAL sequences
 
 * CLUSTER
 	o Automatically maintain clustering on a table
@@ -271,7 +272,7 @@ Clients
 	o fix handling of DB attributes that are arrays
 
 * Python
-	o Allow users to register their own types with _pg
+	o Allow users to register their own types with pg_
 	o Allow SELECT to return a dictionary of dictionaries
 	o Allow COPY BINARY FROM
 
