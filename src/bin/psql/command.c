@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.129 2004/10/16 03:10:16 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.130 2004/11/04 22:25:14 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -23,6 +23,10 @@
 #include <io.h>
 #include <fcntl.h>
 #include <direct.h>
+#ifndef WIN32_CLIENT_ONLY
+#include <sys/types.h>			/* for umask() */
+#include <sys/stat.h>			/* for stat() */
+#endif
 #endif
 
 #include "libpq-fe.h"
@@ -1097,7 +1101,7 @@ editFile(const char *fname)
 #ifndef WIN32
 			"exec "
 #endif
-			"%s '%s'", editorName, fname);
+			"%s\"%s\" \"%s\"%s", SYSTEMQUOTE, editorName, fname, SYSTEMQUOTE);
 	result = system(sys);
 	if (result == -1)
 		psql_error("could not start editor \"%s\"\n", editorName);
@@ -1119,7 +1123,7 @@ do_edit(const char *filename_arg, PQExpBuffer query_buf)
 	bool		error = false;
 	int			fd;
 
-#ifndef WIN32
+#ifndef WIN32_CLIENT_ONLY
 	struct stat before,
 				after;
 #endif
@@ -1130,13 +1134,35 @@ do_edit(const char *filename_arg, PQExpBuffer query_buf)
 	{
 		/* make a temp file to edit */
 #ifndef WIN32
-		const char *tmpdirenv = getenv("TMPDIR");
+		const char *tmpdir = getenv("TMPDIR");
 
-		snprintf(fnametmp, sizeof(fnametmp), "%s/psql.edit.%d.%d",
-				 tmpdirenv ? tmpdirenv : "/tmp", geteuid(), (int)getpid());
+		if (!tmpdir)
+			tmpdir = "/tmp";
 #else
-		GetTempFileName(".", "psql", 0, fnametmp);
+		char tmpdir[MAXPGPATH];
+		int ret;
+
+		ret = GetTempPath(MAXPGPATH, tmpdir);
+		if (ret == 0 || ret > MAXPGPATH)
+		{
+			psql_error("Can not locate temporary directory: %s",
+						!ret ? strerror(errno) : "");
+			return false;
+		}
+		/*
+		 *	No canonicalize_path() here.
+		 *	EDIT.EXE run from CMD.EXE prepends the current directory to the
+		 *	supplied path unless we use only backslashes, so we do that.
+		 */
 #endif
+		snprintf(fnametmp, sizeof(fnametmp), "%s%spsql.edit.%d", tmpdir,
+#ifndef WIN32
+				"/",
+#else
+				"",	/* trailing separator already present */
+#endif
+				(int)getpid());
+
 		fname = (const char *) fnametmp;
 
 		fd = open(fname, O_WRONLY | O_CREAT | O_EXCL, 0600);
@@ -1174,7 +1200,7 @@ do_edit(const char *filename_arg, PQExpBuffer query_buf)
 		}
 	}
 
-#ifndef WIN32
+#ifndef WIN32_CLIENT_ONLY
 	if (!error && stat(fname, &before) != 0)
 	{
 		psql_error("%s: %s\n", fname, strerror(errno));
@@ -1186,7 +1212,7 @@ do_edit(const char *filename_arg, PQExpBuffer query_buf)
 	if (!error)
 		error = !editFile(fname);
 
-#ifndef WIN32
+#ifndef WIN32_CLIENT_ONLY
 	if (!error && stat(fname, &after) != 0)
 	{
 		psql_error("%s: %s\n", fname, strerror(errno));
@@ -1509,9 +1535,13 @@ do_shell(const char *command)
 	if (!command)
 	{
 		char	   *sys;
-		const char *shellName;
+		const char *shellName = NULL;
 
-		shellName = getenv("SHELL");
+#ifdef WIN32
+		shellName = getenv("COMSPEC");
+#endif
+		if (shellName == NULL)
+			shellName = getenv("SHELL");
 		if (shellName == NULL)
 			shellName = DEFAULT_SHELL;
 
@@ -1520,7 +1550,7 @@ do_shell(const char *command)
 #ifndef WIN32
 				"exec "
 #endif
-				"%s", shellName);
+				"%s\"%s\"%s", SYSTEMQUOTE, shellName, SYSTEMQUOTE);
 		result = system(sys);
 		free(sys);
 	}

@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.44 2004/10/27 19:44:14 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.45 2004/11/04 22:25:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -335,7 +335,7 @@ start_postmaster(void)
 	 * http://dev.remotenetworktechnology.com/cmd/cmdfaq.htm
 	 */
 	if (log_file != NULL)
-#if !defined(WIN32)	/* Cygwin doesn't have START */
+#ifndef WIN32	/* Cygwin doesn't have START */
 		snprintf(cmd, MAXPGPATH, "%s\"%s\" %s%s < \"%s\" >> \"%s\" 2>&1 &%s",
 #else
 		snprintf(cmd, MAXPGPATH, "%sSTART /B \"\" \"%s\" %s%s < \"%s\" >> \"%s\" 2>&1%s",
@@ -343,7 +343,7 @@ start_postmaster(void)
 				 SYSTEMQUOTE, postgres_path, pgdata_opt, post_opts,
 				 DEVNULL, log_file, SYSTEMQUOTE);
 	else
-#if !defined(WIN32)	/* Cygwin doesn't have START */
+#ifndef WIN32	/* Cygwin doesn't have START */
 		snprintf(cmd, MAXPGPATH, "%s\"%s\" %s%s < \"%s\" 2>&1 &%s",
 #else
 		snprintf(cmd, MAXPGPATH, "%sSTART /B \"\" \"%s\" %s%s < \"%s\" 2>&1%s",
