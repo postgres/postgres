@@ -37,6 +37,9 @@
  * Modifications - 27-Jan-2001 - pjw@rhyme.com.au
  *	  - When dropping the schema, reconnect as owner of each object.
  *
+ * Modifications - 6-Mar-2001 - pjw@rhyme.com.au
+ *	  - Only disable triggers in DataOnly (or implied data-only) restores.
+ *
  *-------------------------------------------------------------------------
  */
 
@@ -65,8 +68,8 @@ static void		_reconnectAsOwner(ArchiveHandle* AH, const char *dbname, TocEntry* 
 static void		_reconnectAsUser(ArchiveHandle* AH, const char *dbname, char *user);
 
 static int		_tocEntryRequired(TocEntry* te, RestoreOptions *ropt);
-static void		_disableTriggers(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt);
-static void		_enableTriggers(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt);
+static void		_disableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt);
+static void		_enableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt);
 static TocEntry*	_getTocEntry(ArchiveHandle* AH, int id);
 static void		_moveAfter(ArchiveHandle* AH, TocEntry* pos, TocEntry* te);
 static void		_moveBefore(ArchiveHandle* AH, TocEntry* pos, TocEntry* te);
@@ -128,8 +131,9 @@ void RestoreArchive(Archive* AHX, RestoreOptions *ropt)
 {
     ArchiveHandle*	AH = (ArchiveHandle*) AHX;
     TocEntry		*te = AH->toc->next;
-    int			reqs;
+    int				reqs;
     OutputContext	sav;
+	int				impliedDataOnly;
 
 	AH->ropt = ropt;
 
@@ -158,6 +162,33 @@ void RestoreArchive(Archive* AHX, RestoreOptions *ropt)
 		}
 
 	}
+
+	/*
+	 * Work out if we have an implied data-only retore. This can happen if 
+	 * the dump was data only or if the user has used a toc list to exclude
+     * all of the schema data. All we do is look for schema entries - if none
+	 * are found then we set the dataOnly flag. 
+	 *
+	 * We could scan for wanted TABLE entries, but that is not the same as 
+	 * dataOnly. At this stage, it seems unnecessary (6-Mar-2001).
+     */
+    if (!ropt->dataOnly) {
+		te = AH->toc->next;
+		impliedDataOnly = 1;
+		while (te != AH->toc) {
+			reqs = _tocEntryRequired(te, ropt);
+			if ( (reqs & 1) != 0 ) {  /* It's schema, and it's wanted */
+				impliedDataOnly = 0;
+				break;
+			}
+			te = te->next;
+		}
+		if (impliedDataOnly)
+		{
+			ropt->dataOnly = impliedDataOnly;
+			ahlog(AH, 1, "Implied data-only restore\n", te->desc, te->name);
+		}
+    }
 
 	if (!ropt->superuser)
 		fprintf(stderr, "\n%s: ******** WARNING ******** \n"
@@ -244,7 +275,7 @@ void RestoreArchive(Archive* AHX, RestoreOptions *ropt)
 
 			} else {
 
-				_disableTriggers(AH, te, ropt);
+				_disableTriggersIfNecessary(AH, te, ropt);
 
 				/* Reconnect if necessary (_disableTriggers may have reconnected) */
 				_reconnectAsOwner(AH, "-", te);
@@ -263,7 +294,7 @@ void RestoreArchive(Archive* AHX, RestoreOptions *ropt)
 
 				(*AH->PrintTocDataPtr)(AH, te, ropt);
 
-				_enableTriggers(AH, te, ropt);
+				_enableTriggersIfNecessary(AH, te, ropt);
 			}
 		}
 		te = te->next;
@@ -275,7 +306,7 @@ void RestoreArchive(Archive* AHX, RestoreOptions *ropt)
 	if (_canRestoreBlobs(AH) && AH->createdBlobXref)
 	{
 		/* NULL parameter means disable ALL user triggers */
-		_disableTriggers(AH, NULL, ropt);
+		_disableTriggersIfNecessary(AH, NULL, ropt);
 
 		te = AH->toc->next;
 		while (te != AH->toc) {
@@ -302,7 +333,7 @@ void RestoreArchive(Archive* AHX, RestoreOptions *ropt)
 		}
 
 		/* NULL parameter means enable ALL user triggers */
-		_enableTriggers(AH, NULL, ropt);
+		_enableTriggersIfNecessary(AH, NULL, ropt);
 	}
 
 	/*
@@ -349,12 +380,13 @@ static int _canRestoreBlobs(ArchiveHandle *AH)
 	return _restoringToDB(AH);
 }
 
-static void _disableTriggers(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt)
+static void _disableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt)
 {
 	char	*oldUser = NULL;
 
 	/* Can't do much if we're connected & don't have a superuser */
-	if (_restoringToDB(AH) && !ropt->superuser)
+    /* Also, don't bother with triggers unless a data-only retore. */
+	if ( !ropt->dataOnly || (_restoringToDB(AH) && !ropt->superuser) )
 		return;
 
 	/*
@@ -404,12 +436,13 @@ static void _disableTriggers(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ro
 	}
 }
 
-static void _enableTriggers(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt)
+static void _enableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt)
 {
 	char		*oldUser = NULL;
 
 	/* Can't do much if we're connected & don't have a superuser */
-	if (_restoringToDB(AH) && !ropt->superuser)
+	/* Also, don't bother with triggers unless a data-only retore. */
+	if ( !ropt->dataOnly || (_restoringToDB(AH) && !ropt->superuser) )
 		return;
 
 	/*

@@ -47,6 +47,9 @@
  *		Cleaned up code for reconnecting to database.
  *		Force a reconnect as superuser before enabling/disabling triggers.
  *
+ * Modifications - 6-Mar-2001 - pjw@rhyme.com.au
+ *		Change -U option to -L to allow -U to specify username in future.
+ *
  *-------------------------------------------------------------------------
  */
 
@@ -100,7 +103,7 @@ struct option cmdopts[] = {
 				{ "superuser", 1, NULL, 'S' },
 				{ "table", 2, NULL, 't'},
 				{ "trigger", 2, NULL, 'T' },
-				{ "use-list", 1, NULL, 'U'},
+				{ "use-list", 1, NULL, 'L'},
 				{ "verbose", 0, NULL, 'v' },
 				{ NULL, 0, NULL, 0}
 			    };
@@ -135,9 +138,9 @@ int main(int argc, char **argv)
 	}
 
 #ifdef HAVE_GETOPT_LONG
-	while ((c = getopt_long(argc, argv, "acCd:f:F:h:i:lNoOp:P:rRsS:t:T:uU:vx", cmdopts, NULL)) != EOF)
+	while ((c = getopt_long(argc, argv, "acCd:f:F:h:i:lL:NoOp:P:rRsS:t:T:uvx", cmdopts, NULL)) != EOF)
 #else
-	while ((c = getopt(argc, argv, "acCd:f:F:h:i:lNoOp:P:rRsS:t:T:uU:vx")) != -1)
+	while ((c = getopt(argc, argv, "acCd:f:F:h:i:lL:NoOp:P:rRsS:t:T:uvx")) != -1)
 #endif
 	{
 		switch (c)
@@ -173,6 +176,15 @@ int main(int argc, char **argv)
 			case 'i':
 				opts->ignoreVersion = 1;
 				break;
+
+			case 'l':			/* Dump the TOC summary */
+				opts->tocSummary = 1;
+				break;
+
+			case 'L':			/* input TOC summary file name */
+				opts->tocFile = strdup(optarg);
+				break;
+
 			case 'N':
 				opts->origOrder = 1;
 				break;
@@ -219,16 +231,9 @@ int main(int argc, char **argv)
 				opts->selTable = 1;
 				opts->tableNames = _cleanupName(optarg);
 				break;
-			case 'l':			/* Dump the TOC summary */
-				opts->tocSummary = 1;
-				break;
 
 			case 'u':
 				opts->requirePassword = 1;
-				break;
-
-			case 'U':			/* input TOC summary file name */
-				opts->tocFile = strdup(optarg);
 				break;
 
 			case 'v':			/* verbose */
@@ -251,29 +256,29 @@ int main(int argc, char **argv)
 
     if (opts->formatName) { 
 
-	switch (opts->formatName[0]) {
+		switch (opts->formatName[0]) {
 
-	    case 'c':
-	    case 'C':
-			opts->format = archCustom;
-			break;
+			case 'c':
+			case 'C':
+				opts->format = archCustom;
+				break;
 
-	    case 'f':
-	    case 'F':
-			opts->format = archFiles;
-			break;
+			case 'f':
+			case 'F':
+				opts->format = archFiles;
+				break;
 
-		case 't':
-		case 'T':
-			opts->format = archTar;
-			break;
+			case 't':
+			case 'T':
+				opts->format = archTar;
+				break;
 
-	    default:
-			fprintf(stderr, "%s: Unknown archive format '%s', please specify 't' or 'c'\n",
-						progname, opts->formatName);
-			exit (1);
-	}
-    }
+			default:
+				fprintf(stderr, "%s: Unknown archive format '%s', please specify 't' or 'c'\n",
+							progname, opts->formatName);
+				exit (1);
+		}
+    } 
 
     AH = OpenArchive(fileSpec, opts->format);
 
@@ -329,6 +334,8 @@ static void usage(const char *progname)
 		"  -h, --host HOSTNAME      server host name\n"
 	    "  -i, --index[=NAME]       dump indexes or named index\n"
 	    "  -l, --list               dump summarized TOC for this file\n"
+		"  -L, --use-list=FILENAME  use specified table of contents for ordering\n"
+		"                           output from this file\n"
 		"  -N, --orig-order         dump in original dump order\n"
 	    "  -o, --oid-order          dump in oid order\n"
 		"  -O, --no-owner           do not output reconnect to database to match\n"
@@ -343,8 +350,6 @@ static void usage(const char *progname)
 	    "  -t [TABLE], --table[=TABLE]  dump for this table only\n"
 	    "  -T, --trigger[=NAME]     dump triggers or named trigger\n"
 		"  -u, --password           use password authentication\n"
-	    "  -U, --use-list=FILENAME  use specified table of contents for ordering\n"
-		"                           output from this file\n"
 	    "  -v, --verbose            verbose\n"
 	    "  -x, --no-acl             skip dumping of ACLs (grant/revoke)\n");
 
@@ -360,6 +365,8 @@ static void usage(const char *progname)
 		"  -h HOSTNAME              server host name\n"
 	    "  -i NAME                  dump indexes or named index\n"
 	    "  -l                       dump summarized TOC for this file\n"
+		"  -L FILENAME              use specified table of contents for ordering\n"
+		"                           output from this file\n"
 		"  -N                       dump in original dump order\n"
 	    "  -o                       dump in oid order\n"
 		"  -O                       do not output reconnect to database to match\n"
@@ -374,8 +381,6 @@ static void usage(const char *progname)
 	    "  -t NAME                  dump for this table only\n"
 	    "  -T NAME                  dump triggers or named trigger\n"
 		"  -u                       use password authentication\n"
-	    "  -U FILENAME              use specified table of contents for ordering\n"
-		"                           output from this file\n"
 	    "  -v                       verbose\n"
 	    "  -x                       skip dumping of ACLs (grant/revoke)\n");
 #endif
