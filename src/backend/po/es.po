@@ -977,7 +977,7 @@ msgstr "hay múltiples asignaciones a la misma columna «%s»"
 #: /home/alvherre/CVS/pgsql/source/00orig/src/backend/catalog/heap.c:1812
 #, c-format
 msgid "column \"%s\" is of type %s but default expression is of type %s"
-msgstr "la columna «%s» es de tipo %s pero valor por omisión es de tipo %s"
+msgstr "la columna «%s» es de tipo %s pero el valor por omisión es de tipo %s"
 
 #: /home/alvherre/CVS/pgsql/source/00orig/src/backend/rewrite/rewriteHandler.c:652
 #: /home/alvherre/CVS/pgsql/source/00orig/src/backend/parser/analyze.c:2701
@@ -4844,7 +4844,7 @@ msgstr ""
 #: /home/alvherre/CVS/pgsql/source/00orig/src/backend/utils/misc/guc.c:2502
 #, c-format
 msgid "%s cannot access the server configuration file \"%s\": %s\n"
-msgstr "%s no se pudo examinar el archivo de configuración «%s»: %s\n"
+msgstr "%s no pudo examinar el archivo de configuración «%s»: %s\n"
 
 #: /home/alvherre/CVS/pgsql/source/00orig/src/backend/utils/misc/guc.c:2522
 #, c-format

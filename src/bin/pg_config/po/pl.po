@@ -7,10 +7,10 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_config\n"
-"POT-Creation-Date: 2005-01-08 13:03+0000\n"
-"PO-Revision-Date: 2005-01-09 02:35+0000\n"
+"POT-Creation-Date: 2005-01-11 19:05+0000\n"
+"PO-Revision-Date: 2005-01-12 16:0+0100\n"
 "Last-Translator: toczek <xxxtoczekxxx@wp.pl>\n"
-"Language-Team:  none <none@none.com>\n"
+"Language-Team:\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-2\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -45,51 +45,51 @@ msgstr "Opcje:\n"
 
 #: pg_config.c:40
 msgid "  --bindir              show location of user executables\n"
-msgstr "  --bindir				poka¿ lokalizacjê plików u¿ytkownika\n"
+msgstr "  --bindir              poka¿ lokalizacjê plików u¿ytkownika\n"
 
 #: pg_config.c:41
 msgid ""
 "  --includedir          show location of C header files of the client\n"
 "                        interfaces\n"
 msgstr ""
-"  --includedir			 poka¿ lokalizacjê nag³ówków C interfejsu \n"
-"						 u¿ytkownika\n"
+"  --includedir          poka¿ lokalizacjê nag³ówków C interfejsu \n"
+"                        u¿ytkownika\n"
+
 #: pg_config.c:43
 msgid ""
 "  --includedir-server   show location of C header files for the server\n"
-msgstr ""
-"  --includedir-server	 poka¿ lokalizacjê nag³ówków C dla serwera\n"
+msgstr "  --includedir-server   poka¿ lokalizacjê nag³ówków C dla serwera\n"
 
 #: pg_config.c:44
 msgid "  --libdir              show location of object code libraries\n"
-msgstr "  --libdir				poka¿ lokalizacjê bibliotek obiektów\n"
+msgstr "  --libdir              poka¿ lokalizacjê bibliotek obiektów\n"
 
 #: pg_config.c:45
 msgid "  --pkglibdir           show location of dynamically loadable modules\n"
-msgstr "  --pkglibdir			poka¿ lokalizacjê dynamicznych modu³ów\n"
+msgstr "  --pkglibdir           poka¿ lokalizacjê dynamicznych modu³ów\n"
 
 #: pg_config.c:46
 msgid "  --pgxs                show location of extension makefile\n"
-msgstr "  --pgxs				poka¿ lokalizacjê makefile\n"
+msgstr "  --pgxs                poka¿ lokalizacjê makefile\n"
 
 #: pg_config.c:47
 msgid ""
 "  --configure           show options given to \"configure\" script when\n"
 "                        PostgreSQL was built\n"
 msgstr ""
-"  --configure			 poka¿ opcje u¿yte przy skrypcie \"configure\" \n"
-"						 podczas budowania PostgreSQL\n"
+"  --configure           poka¿ opcje u¿yte przy skrypcie \"configure\" \n"
+"                        podczas budowania PostgreSQL\n"
 
 #: pg_config.c:49
 msgid "  --version             show the PostgreSQL version, then exit\n"
-msgstr "  --version				poka¿ wersjê PostgreSQL i zakoñcz\n"
+msgstr "  --version             poka¿ wersjê PostgreSQL i zakoñcz\n"
 
 #: pg_config.c:50
 msgid ""
 "  --help                show this help, then exit\n"
 "\n"
 msgstr ""
-"  --help				 poka¿ pomoc i zakoñcz\n"
+"  --help                poka¿ pomoc i zakoñcz\n"
 "\n"
 
 #: pg_config.c:51
@@ -103,7 +103,7 @@ msgid ""
 "Try \"%s --help\" for more information\n"
 msgstr ""
 "\n"
-"Spróbuj \"%s --help\" aby uzykaæ wiecej informacji.\n"
+"Spróbuj \"%s --help\" aby uzykaæ wiêcej informacji.\n"
 
 #: pg_config.c:75
 #, c-format
