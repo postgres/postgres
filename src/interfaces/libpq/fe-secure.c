@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-secure.c,v 1.14 2002/09/26 04:41:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-secure.c,v 1.15 2002/09/26 05:37:58 momjian Exp $
  *
  * NOTES
  *	  The client *requires* a valid server certificate.  Since
@@ -123,7 +123,9 @@
 
 #ifdef USE_SSL
 static int	verify_cb(int ok, X509_STORE_CTX *ctx);
+#ifdef NOT_USED
 static int	verify_peer(PGconn *);
+#endif
 static DH  *load_dh_file(int keylength);
 static DH  *load_dh_buffer(const char *, size_t);
 static DH  *tmp_dh_cb(SSL *s, int is_export, int keylength);
@@ -362,6 +364,7 @@ verify_cb(int ok, X509_STORE_CTX *ctx)
 	return ok;
 }
 
+#ifdef NOT_USED
 /*
  *	Verify that common name resolves to peer.
  *	This function is not thread-safe due to gethostbyname().
@@ -448,6 +451,7 @@ verify_peer(PGconn *conn)
 
 	return -1;
 }
+#endif
 
 /*
  *	Load precomputed DH parameters.
@@ -777,7 +781,9 @@ destroy_SSL(void)
 static int
 open_client_SSL(PGconn *conn)
 {
+#ifdef NOT_USED
 	int			r;
+#endif
 
 	if (!(conn->ssl = SSL_new(SSL_context)) ||
 		!SSL_set_app_data(conn->ssl, conn) ||
