@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.67 2001/08/21 15:21:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.68 2001/08/21 15:49:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -954,12 +954,12 @@ ident_unix(int sock, char *ident_user)
 
 	cred = (Cred *)CMSG_DATA(cmsg);
 
-	pw = getpwuid(cred->fc_uid);
+	pw = getpwuid(cred->cruid);
 	if (pw == NULL)
 	{
 		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 			 "ident_unix: unknown local user with uid %d\n",
-			 cred->fc_uid);
+			 cred->cruid);
 		fputs(PQerrormsg, stderr);
 		pqdebug("%s", PQerrormsg);
 		return false;

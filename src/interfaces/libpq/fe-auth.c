@@ -10,7 +10,7 @@
  * exceed INITIAL_EXPBUFFER_SIZE (currently 256 bytes).
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.57 2001/08/21 15:21:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.58 2001/08/21 15:49:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -468,9 +468,9 @@ pg_local_sendauth(char *PQerrormsg, PGconn *conn)
 	msg.msg_control = cmsg;
 	msg.msg_controllen = sizeof(cmsgmem);
 	memset(cmsg, 0, sizeof(cmsgmem));
-	cmsg.hdr.cmsg_len = sizeof(cmsgmem);
-	cmsg.hdr.cmsg_level = SOL_SOCKET;
-	cmsg.hdr.cmsg_type = SCM_CREDS;
+	cmsg->cmsg_len = sizeof(cmsgmem);
+	cmsg->cmsg_level = SOL_SOCKET;
+	cmsg->cmsg_type = SCM_CREDS;
 #endif
 
 	if (sendmsg(conn->sock, &msg, 0) == -1)
