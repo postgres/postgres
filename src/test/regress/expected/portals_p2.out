@@ -1,4 +1,3 @@
-QUERY: EXTEND INDEX onek2_u1_prtl WHERE onek2.unique1 <= 60;
 QUERY: BEGIN;
 QUERY: DECLARE foo13 CURSOR FOR
    SELECT * FROM onek WHERE unique1 = 50;
