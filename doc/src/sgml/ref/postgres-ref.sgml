@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/postgres-ref.sgml,v 1.7 2000/03/27 17:14:43 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/postgres-ref.sgml,v 1.8 2000/05/03 07:33:44 inoue Exp $
 Postgres documentation
 -->
 
@@ -25,7 +25,7 @@ Postgres documentation
   <synopsis>
 postgres [ <replaceable class="parameter">dbname</replaceable> ]
 postgres [ -B <replaceable class="parameter">nBuffers</replaceable> ] [ -C ] [ -D <replaceable class="parameter">DataDir</replaceable> ] [ -E ] [ -F ]
-   [ -O ] [ -Q ] [ -S <replaceable class="parameter">SortSize</replaceable> ] [ -d [ <replaceable class="parameter">DebugLevel</replaceable> ] ] [ -e ]
+   [ -O ] [ -P ] [ -Q ] [ -S <replaceable class="parameter">SortSize</replaceable> ] [ -d [ <replaceable class="parameter">DebugLevel</replaceable> ] ] [ -e ]
    [ -o ] [ <replaceable class="parameter">OutputFile</replaceable> ] [ -s ] [ -v <replaceable class="parameter">protocol</replaceable> ] [ <replaceable class="parameter">dbname</replaceable> ]
   </synopsis>
 
@@ -126,6 +126,17 @@ postgres [ -B <replaceable class="parameter">nBuffers</replaceable> ] [ -C ] [ -
        <para>
 	Override restrictions, so system table structures can be modified.
 	These tables are typically those with a leading "pg_" in the table name.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>-P</term>
+      <listitem>
+       <para>
+	Ignore system indexes to scan/update system tuples. Reindex command
+	for system table/indexes requires this option. System tables are
+	typically those with a leading "pg_" in the table name.
        </para>
       </listitem>
      </varlistentry>
