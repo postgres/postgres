@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.94 2003/03/20 07:02:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.95 2003/03/21 03:55:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -96,11 +96,11 @@ DefineSequence(CreateSeqStmt *seq)
 	NameData	name;
 
 	/* Values are NULL (or false) by default */
-	new.last_value = NULL;
-	new.increment_by = NULL;
-	new.max_value = NULL; 
-	new.min_value = NULL;
-	new.cache_value = NULL;
+	new.last_value = 0;
+	new.increment_by = 0;
+	new.max_value = 0; 
+	new.min_value = 0;
+	new.cache_value = 0;
 	new.is_cycled = false; 
 
 	/* Check and set values */
@@ -879,8 +879,8 @@ init_params(char *caller, List *options, Form_pg_sequence new)
 		 * start is for a new sequence
 		 * restart is for alter
 		 */
-		else if ((new->last_value == NULL && strcmp(defel->defname, "start") == 0)
-			|| (new->last_value != NULL && strcmp(defel->defname, "restart") == 0))
+		else if ((new->last_value == 0L && strcmp(defel->defname, "start") == 0)
+			|| (new->last_value != 0 && strcmp(defel->defname, "restart") == 0))
 		{
 			if (last_value)
 				elog(ERROR, "%s: LAST VALUE defined twice", caller);
@@ -917,7 +917,7 @@ init_params(char *caller, List *options, Form_pg_sequence new)
 	}
 
 	/* INCREMENT BY */
-	if (new->increment_by == NULL && increment_by == (DefElem *) NULL)
+	if (new->increment_by == 0 && increment_by == (DefElem *) NULL)
 		new->increment_by = 1;
 	else if (increment_by != (DefElem *) NULL)
 	{
@@ -928,7 +928,7 @@ init_params(char *caller, List *options, Form_pg_sequence new)
 	}
 
 	/* MAXVALUE */
-	if ((new->max_value == NULL && max_value == (DefElem *) NULL)
+	if ((new->max_value == 0 && max_value == (DefElem *) NULL)
 		|| (max_value != (DefElem *) NULL && !max_value->arg))
 	{
 		if (new->increment_by > 0)
@@ -940,7 +940,7 @@ init_params(char *caller, List *options, Form_pg_sequence new)
 		new->max_value = defGetInt64(max_value);
 
 	/* MINVALUE */
-	if ((new->min_value == NULL && min_value == (DefElem *) NULL)
+	if ((new->min_value == 0 && min_value == (DefElem *) NULL)
 		|| (min_value != (DefElem *) NULL && !min_value->arg))
 	{
 		if (new->increment_by > 0)
@@ -963,7 +963,7 @@ init_params(char *caller, List *options, Form_pg_sequence new)
 	}
 
 	/* START WITH */
-	if (new->last_value == NULL && last_value == (DefElem *) NULL) 
+	if (new->last_value == 0 && last_value == (DefElem *) NULL) 
 	{
 		if (new->increment_by > 0)
 			new->last_value = new->min_value;	/* ascending seq */
