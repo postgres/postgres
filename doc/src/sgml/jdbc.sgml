@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.44 2003/04/07 01:29:25 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.45 2003/06/30 16:39:42 barry Exp $
 -->
 
  <chapter id="jdbc">
@@ -33,7 +33,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.44 2003/04/07 01:29:25 
 
   <para>
    This section describes the steps you need to take before you can
-   write or run programs that use the JDBC interface.
+   write or run programs that use the <acronym>JDBC</> interface.
   </para>
 
   <sect2 id="jdbc-build">
@@ -49,15 +49,17 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.44 2003/04/07 01:29:25 
    <para>
     Alternatively you can build the driver from source, but you should
     only need to do this if you are making changes to the source code.
-    For details, refer to the <productname>PostgreSQL</> installation
-    instructions.  After installation, the driver should be found in
+    For details, refer to the <productname>PostgreSQL</>
+    <link linkend="installation">installation instructions</link>.
+    After installation, the driver should be found in
     <filename><replaceable>PREFIX</>/share/java/postgresql.jar</filename>.
     The resulting driver will be built for the version of Java you are
     running.  If you build with a 1.1 <acronym>JDK</> you will build a
-    version that supports the JDBC 1 specification, if you build with
-    a Java 2 <acronym>JDK</> (e.g., <acronym>JDK</> 1.2 or
-    <acronym>JDK</> 1.3) you will build a version that supports the
-    JDBC 2 specification.
+    version that supports the <acronym>JDBC</> 1 specification, if you build
+    with a 1.2 or 1.3 <acronym>JDK</> you will build a version that supports
+    the <acronym>JDBC</> 2 specification, and finally if you build with a
+    1.4 <acronym>JDK</acronym> you will build a version that supports the
+    <acronym>JDBC</> 3 specification.
    </para>
   </sect2>
 
@@ -67,12 +69,12 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.44 2003/04/07 01:29:25 
    <para>
     To use the driver, the JAR archive (named
     <filename>postgresql.jar</filename> if you built from source, otherwise
-    it will likely be named <filename>jdbc&majorversion;-1.1.jar</filename> or 
-    <filename>jdbc&majorversion;-1.2.jar</filename> for the JDBC 1 and JDBC 2 versions
-    respectively)
-    needs to be included in the
-    class path, either by putting it in the <envar>CLASSPATH</envar>
-    environment variable, or by using flags on the
+    it will likely be named <filename>pg&majorversion;jdbc1.jar</filename>,
+    <filename>pg&majorversion;jdbc2.jar</filename>, or
+    <filename>pg&majorversion;jdbc3.jar</filename> for the <acronym>JDBC</> 1,
+    <acronym>JDBC</> 2, and <acronym>JDBC</> 3 versions respectively)
+    needs to be included in the class path, either by putting it in the
+    <envar>CLASSPATH</envar> environment variable, or by using flags on the
     <command>java</command> command line.
    </para>
 
@@ -81,7 +83,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.44 2003/04/07 01:29:25 
     <acronym>JDBC</acronym> driver to access a database, and that
     application is installed as
     <filename>/usr/local/lib/myapp.jar</filename>.  The PostgreSQL
-    JDBC driver installed as
+    <acronym>JDBC</> driver installed as
     <filename>/usr/local/pgsql/share/java/postgresql.jar</>.  To run
     the application, we would use:
 <programlisting>
@@ -113,8 +115,9 @@ java MyApp
     Also, the client authentication setup in the
     <filename>pg_hba.conf</filename> file may need to be configured.
     Refer to <xref linkend="client-authentication"> for details.  The
-    <acronym>JDBC</acronym> driver supports the trust, ident,
-    password, md5, and crypt authentication methods.
+    <acronym>JDBC</acronym> driver supports the <literal>trust</>,
+    <literal>ident</>, <literal>password</>, <literal>md5</>, and
+    <literal>crypt</> authentication methods.
    </para>
   </sect2>
  </sect1>
@@ -123,8 +126,8 @@ java MyApp
   <title>Initializing the Driver</title>
 
   <para>
-   This section describes how to load and initialize the JDBC driver
-   in your programs.
+   This section describes how to load and initialize the <acronym>JDBC</>
+   driver in your programs.
   </para>
 
   <sect2 id="jdbc-import">
@@ -252,7 +255,10 @@ jdbc:postgresql://<replaceable class="parameter">host</replaceable>:<replaceable
       </term>
       <listitem>
        <para>
-        The host name of the server. Defaults to <literal>localhost</literal>.
+        The host name of the server. Defaults to <literal>localhost</literal>.  To specify an IPv6 address your must enclose the <replaceable class="parameter">host</replaceable> parameter with square brackets, for example:
+<programlisting>
+jdbc:postgresql://[::1]:5740/accounting
+</programlisting>
        </para>
       </listitem>
      </varlistentry>
@@ -451,16 +457,6 @@ st.close();
        </para>
       </listitem>
 
-      <listitem>
-       <para>
-        <classname>ResultSet</classname> is currently read only.
-        You can not update data through the <classname>ResultSet</classname>.
-        If you want to update data you need to do it the normal way
-        by using the <acronym>SQL</acronym> statement <command>UPDATE</command>.  This is 
-        in conformance with the <acronym>JDBC</acronym> specification 
-        which does not require drivers to provide updatable result sets.
-       </para>
-      </listitem>
      </itemizedlist>
     </para>
    </sect2>
@@ -606,11 +602,11 @@ st.close();
 
   <para>
    <xref linkend="jdbc-binary-data-example"> contains some examples on
-   how to process binary data using the PostgreSQL JDBC driver.
+   how to process binary data using the PostgreSQL <acronym>JDBC</> driver.
   </para>
 
   <example id="jdbc-binary-data-example">
-   <title>Processing Binary Data in JDBC</title>
+   <title>Processing Binary Data in <acronym>JDBC</></title>
 
    <para>
     For example, suppose you have a table containing the file names of
@@ -2490,12 +2486,13 @@ public void unlink(int oid) throws SQLException
   <title>Connection Pools and Data Sources</title>
 
   <para>
-    JDBC 2 introduced standard connection pooling features in an
-    add-on API known as the <acronym>JDBC</acronym> 2.0 Optional
+    <acronym>JDBC</> 2 introduced standard connection pooling features in an
+    add-on <acronym>API</> known as the <acronym>JDBC</acronym> 2.0 Optional
     Package (also known as the <acronym>JDBC</acronym> 2.0
     Standard Extension).  These features have since been included in
-    the core JDBC 3 API.  The <productname>PostgreSQL</productname>
-    <acronym>JDBC</acronym> drivers support these features if it has been compiled with
+    the core <acronym>JDBC</> 3 <acronym>API</>.  The
+    <productname>PostgreSQL</productname> <acronym>JDBC</acronym> drivers
+    support these features if it has been compiled with
     <acronym>JDK</acronym> 1.3.x in combination with the
     <acronym>JDBC</acronym> 2.0 Optional Package
     (<acronym>JDBC</acronym> 2), or with <acronym>JDK</acronym> 1.4 or higher
@@ -2510,7 +2507,7 @@ public void unlink(int oid) throws SQLException
    <title>Overview</title>
 
     <para>
-     The <acronym>JDBC</acronym> API provides a client
+     The <acronym>JDBC</acronym> <acronym>API</> provides a client
      and a server interface for connection pooling.  The client
      interface is <literal>javax.sql.DataSource</literal>,
      which is what application code will typically use to
