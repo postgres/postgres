@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.104 2004/05/17 14:35:34 momjian Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.105 2004/05/18 20:18:58 momjian Exp $
 
 subdir = src/interfaces/ecpg/preproc
 top_builddir = ../../../..
@@ -19,16 +19,12 @@ endif
 override CFLAGS += $(PTHREAD_CFLAGS)
 
 OBJS=	preproc.o type.o ecpg.o ecpg_keywords.o output.o\
-	keywords.o c_keywords.o ../ecpglib/typename.o descriptor.o variable.o \
-	$(filter exec.o, $(LIBOBJS))
+	keywords.o c_keywords.o ../ecpglib/typename.o descriptor.o variable.o
 
 all: submake-libpgport ecpg
 
 ecpg: $(OBJS)
 	$(CC) $(CFLAGS) $(LDFLAGS) $^ $(LIBS) $(PTHREAD_LIBS) -o $@$(X)
-
-exec.c: % : $(top_srcdir)/src/port/%
-	rm -f $@ && $(LN_S) $< .
 
 # pgc is compiled as part of preproc
 preproc.o: $(srcdir)/pgc.c
@@ -66,7 +62,7 @@ uninstall:
 	rm -f $(DESTDIR)$(bindir)/ecpg$(X)
 
 clean distclean:
-	rm -f *.o ecpg$(X) exec.c
+	rm -f *.o ecpg$(X)
 # garbage from partial builds
 	@rm -f y.tab.c y.tab.h
 # garbage from development

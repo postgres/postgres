@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.7 2004/05/18 03:36:45 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.8 2004/05/18 20:18:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,10 @@
 #include <pwd.h>
 #include <sys/stat.h>
 #include <unistd.h>
+
+#include <sys/wait.h>
+
+#define _(x) gettext((x))
 
 #include "miscadmin.h"
 
@@ -42,13 +46,6 @@
 #define S_IROTH		 ((S_IRUSR)>>6)
 #define S_IWOTH		 ((S_IWUSR)>>6)
 #define S_IXOTH		 ((S_IXUSR)>>6)
-#endif
-
-#ifndef FRONTEND
-/* We use only 3-parameter elog calls in this file, for simplicity */
-#define log_debug(str, param)	elog(DEBUG2, str, param)
-#else
-#define log_debug(str, param)	{}	/* do nothing */
 #endif
 
 static void win32_make_absolute(char *path);
@@ -96,13 +93,13 @@ validate_exec(char *path)
 	 */
 	if (stat(path, &buf) < 0)
 	{
-		log_debug("could not stat \"%s\": %m", path);
+		fprintf(stderr, "could not stat \"%s\": %m", path);
 		return -1;
 	}
 
 	if ((buf.st_mode & S_IFMT) != S_IFREG)
 	{
-		log_debug("\"%s\" is not a regular file", path);
+		fprintf(stderr, "\"%s\" is not a regular file", path);
 		return -1;
 	}
 
@@ -127,7 +124,7 @@ validate_exec(char *path)
 		is_r = buf.st_mode & S_IRUSR;
 		is_x = buf.st_mode & S_IXUSR;
 		if (!(is_r && is_x))
-			log_debug("\"%s\" is not user read/execute", path);
+			fprintf(stderr, "\"%s\" is not user read/execute", path);
 		return is_x ? (is_r ? 0 : -2) : -1;
 	}
 
@@ -156,7 +153,7 @@ validate_exec(char *path)
 			is_r = buf.st_mode & S_IRGRP;
 			is_x = buf.st_mode & S_IXGRP;
 			if (!(is_r && is_x))
-				log_debug("\"%s\" is not group read/execute", path);
+				fprintf(stderr, "\"%s\" is not group read/execute", path);
 			return is_x ? (is_r ? 0 : -2) : -1;
 		}
 	}
@@ -165,7 +162,7 @@ validate_exec(char *path)
 	is_r = buf.st_mode & S_IROTH;
 	is_x = buf.st_mode & S_IXOTH;
 	if (!(is_r && is_x))
-		log_debug("\"%s\" is not other read/execute", path);
+		fprintf(stderr, "\"%s\" is not other read/execute", path);
 	return is_x ? (is_r ? 0 : -2) : -1;
 
 #endif
@@ -207,7 +204,7 @@ find_my_exec(const char *argv0, char *full_path)
 	{
 		if (*++p == '\0')
 		{
-			log_debug("argv[0] ends with a path separator \"%s\"", argv0);
+			fprintf(stderr, "argv[0] ends with a path separator \"%s\"", argv0);
 			return -1;
 		}
 		if (is_absolute_path(argv0) || !getcwd(buf, MAXPGPATH))
@@ -219,11 +216,13 @@ find_my_exec(const char *argv0, char *full_path)
 		{
 			strncpy(full_path, buf, MAXPGPATH);
 			win32_make_absolute(full_path);
-			log_debug("found \"%s\" using argv[0]", full_path);
 			return 0;
 		}
-		log_debug("invalid binary \"%s\"", buf);
-		return -1;
+		else
+		{
+			fprintf(stderr, "invalid binary \"%s\"", buf);
+			return -1;
+		}
 	}
 
 	/*
@@ -232,7 +231,6 @@ find_my_exec(const char *argv0, char *full_path)
 	 */
 	if ((p = getenv("PATH")) && *p)
 	{
-		log_debug("searching PATH for executable%s", "");
 		path = strdup(p);		/* make a modifiable copy */
 		for (startp = path, endp = strchr(path, PATHSEP);
 			 startp && *startp;
@@ -254,13 +252,12 @@ find_my_exec(const char *argv0, char *full_path)
 				case 0: /* found ok */
 					strncpy(full_path, buf, MAXPGPATH);
 					win32_make_absolute(full_path);
-					log_debug("found \"%s\" using PATH", full_path);
 					free(path);
 					return 0;
 				case -1:		/* wasn't even a candidate, keep looking */
 					break;
 				case -2:		/* found but disqualified */
-					log_debug("could not read binary \"%s\"", buf);
+					fprintf(stderr, "could not read binary \"%s\"", buf);
 					free(path);
 					return -1;
 			}
@@ -270,7 +267,7 @@ find_my_exec(const char *argv0, char *full_path)
 		free(path);
 	}
 
-	log_debug("could not find a \"%s\" to execute", argv0);
+	fprintf(stderr, "could not find a \"%s\" to execute", argv0);
 	return -1;
 
 #if 0
@@ -331,6 +328,46 @@ int find_other_exec(const char *argv0, char const *target,
 
 
 /*
+ * pclose() plus useful error reporting
+ * Is this necessary?  bjm 2004-05-11
+ * It is better here because pipe.c has win32 backend linkage.
+ */
+int
+pclose_check(FILE *stream)
+{
+	int		exitstatus;
+
+	exitstatus = pclose(stream);
+
+	if (exitstatus == 0)
+		return 0;					/* all is well */
+
+	if (exitstatus == -1)
+	{
+		/* pclose() itself failed, and hopefully set errno */
+		perror("pclose failed");
+	}
+	else if (WIFEXITED(exitstatus))
+	{
+		fprintf(stderr, _("child process exited with exit code %d\n"),
+				WEXITSTATUS(exitstatus));
+	}
+	else if (WIFSIGNALED(exitstatus))
+	{
+		fprintf(stderr, _("child process was terminated by signal %d\n"),
+				WTERMSIG(exitstatus));
+	}
+	else
+	{
+		fprintf(stderr, _("child process exited with unrecognized status %d\n"),
+				exitstatus);
+	}
+
+	return -1;
+}
+
+
+/*
  * Windows doesn't like relative paths to executables (other things work fine)
  * so we call its builtin function to expand them. Elsewhere this is a NOOP
  *
@@ -344,7 +381,7 @@ win32_make_absolute(char *path)
 
 	if (_fullpath(abspath, path, MAXPGPATH) == NULL)
 	{
-		log_debug("Win32 path expansion failed:  %s", strerror(errno));
+		fprintf(stderr, "Win32 path expansion failed:  %s", strerror(errno));
 		StrNCpy(abspath, path, MAXPGPATH);
 	}
 	canonicalize_path(abspath);
@@ -353,4 +390,5 @@ win32_make_absolute(char *path)
 #endif
 	return;
 }
+
 

@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/bin/psql/Makefile,v 1.44 2004/05/17 14:35:33 momjian Exp $
+# $PostgreSQL: pgsql/src/bin/psql/Makefile,v 1.45 2004/05/18 20:18:58 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -19,8 +19,7 @@ override CPPFLAGS := -I$(libpq_srcdir) $(CPPFLAGS) -DFRONTEND
 
 OBJS=	command.o common.o help.o input.o stringutils.o mainloop.o copy.o \
 	startup.o prompt.o variables.o large_obj.o print.o describe.o \
-	psqlscan.o tab-complete.o mbprint.o \
-	$(filter exec.o, $(LIBOBJS))
+	psqlscan.o tab-complete.o mbprint.o
 
 FLEXFLAGS = -Cfe
 
@@ -29,9 +28,6 @@ all: submake-libpq submake-libpgport psql
 
 psql: $(OBJS) $(libpq_builddir)/libpq.a
 	$(CC) $(CFLAGS) $(OBJS) $(libpq) $(LDFLAGS) $(LIBS) -o $@$(X)
-
-exec.c: % : $(top_srcdir)/src/port/%
-	rm -f $@ && $(LN_S) $< .
 
 help.o: $(srcdir)/sql_help.h
 
@@ -64,7 +60,7 @@ uninstall:
 
 # psqlscan.c is in the distribution tarball, so is not cleaned here
 clean distclean:
-	rm -f psql$(X) $(OBJS) exec.c
+	rm -f psql$(X) $(OBJS)
 
 maintainer-clean: distclean
 	rm -f $(srcdir)/sql_help.h $(srcdir)/psqlscan.c

@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/bin/initdb/Makefile,v 1.38 2004/05/17 14:35:33 momjian Exp $
+# $PostgreSQL: pgsql/src/bin/initdb/Makefile,v 1.39 2004/05/18 20:18:58 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -15,16 +15,12 @@ include $(top_builddir)/src/Makefile.global
 
 override CPPFLAGS := -DFRONTEND -I$(libpq_srcdir) $(CPPFLAGS)
 
-OBJS=	initdb.o \
-	$(filter exec.o, $(LIBOBJS))
+OBJS=	initdb.o
 
 all: submake-libpq submake-libpgport initdb
 
 initdb: $(OBJS) $(libpq_builddir)/libpq.a
 	$(CC) $(CFLAGS) $(OBJS) $(libpq) $(LDFLAGS) $(LIBS) -o $@$(X)
-
-exec.c: % : $(top_srcdir)/src/port/%
-	rm -f $@ && $(LN_S) $< .
 
 install: all installdirs
 	$(INSTALL_PROGRAM) initdb$(X) $(DESTDIR)$(bindir)/initdb$(X)
@@ -36,7 +32,7 @@ uninstall:
 	rm -f $(DESTDIR)$(bindir)/initdb$(X)
 
 clean distclean maintainer-clean:
-	rm -f initdb$(X) $(OBJS) exec.c
+	rm -f initdb$(X) $(OBJS)
 
 
 # ensure that changes in datadir propagate into object file
