@@ -8,7 +8,7 @@ SELECT avg(a) AS avg_32 FROM aggtest WHERE a < 100;
 
 SELECT avg(b) AS avg_107_943 FROM aggtest;
 
-SELECT avg(gpa) AS avg_3_4 FROM student;
+SELECT avg(gpa) AS avg_3_4 FROM ONLY student;
 
 
 SELECT sum(four) AS sum_1500 FROM onek;
@@ -17,7 +17,7 @@ SELECT sum(a) AS sum_198 FROM aggtest;
 
 SELECT sum(b) AS avg_431_773 FROM aggtest;
 
-SELECT sum(gpa) AS avg_6_8 FROM student;
+SELECT sum(gpa) AS avg_6_8 FROM ONLY student;
 
 
 SELECT max(four) AS max_3 FROM onek;

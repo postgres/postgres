@@ -1168,7 +1168,7 @@ SELECT viewname, definition FROM pg_views ORDER BY viewname;
  pg_indexes         | SELECT c.relname AS tablename, i.relname AS indexname, pg_get_indexdef(x.indexrelid) AS indexdef FROM pg_index x, pg_class c, pg_class i WHERE ((c.oid = x.indrelid) AND (i.oid = x.indexrelid));
  pg_rules           | SELECT c.relname AS tablename, r.rulename, pg_get_ruledef(r.rulename) AS definition FROM pg_rewrite r, pg_class c WHERE ((r.rulename !~ '^_RET'::text) AND (c.oid = r.ev_class));
  pg_tables          | SELECT c.relname AS tablename, pg_get_userbyid(c.relowner) AS tableowner, c.relhasindex AS hasindexes, c.relhasrules AS hasrules, (c.reltriggers > 0) AS hastriggers FROM pg_class c WHERE (((c.relkind = 'r'::"char") OR (c.relkind = 's'::"char")) AND (NOT (EXISTS (SELECT pg_rewrite.rulename FROM pg_rewrite WHERE ((pg_rewrite.ev_class = c.oid) AND (pg_rewrite.ev_type = '1'::"char"))))));
- pg_user            | SELECT pg_shadow.usename, pg_shadow.usesysid, pg_shadow.usecreatedb, pg_shadow.usetrace, pg_shadow.usesuper, pg_shadow.usecatupd, '********'::text AS passwd, pg_shadow.valuntil FROM pg_shadow;
+ pg_user            | SELECT pg_shadow.usename, pg_shadow.usesysid, pg_shadow.usecreatedb, pg_shadow.usecreatetable, pg_shadow.uselocktable, pg_shadow.usetrace, pg_shadow.usesuper, pg_shadow.usecatupd, '********'::text AS passwd, pg_shadow.valuntil FROM pg_shadow;
  pg_views           | SELECT c.relname AS viewname, pg_get_userbyid(c.relowner) AS viewowner, pg_get_viewdef(c.relname) AS definition FROM pg_class c WHERE (c.relhasrules AND (EXISTS (SELECT r.rulename FROM pg_rewrite r WHERE ((r.ev_class = c.oid) AND (r.ev_type = '1'::"char")))));
  rtest_v1           | SELECT rtest_t1.a, rtest_t1.b FROM rtest_t1;
  rtest_vcomp        | SELECT x.part, (x.size * y.factor) AS size_in_cm FROM rtest_comp x, rtest_unitfact y WHERE (x.unit = y.unit);
@@ -1182,7 +1182,7 @@ SELECT viewname, definition FROM pg_views ORDER BY viewname;
  shoelace           | SELECT s.sl_name, s.sl_avail, s.sl_color, s.sl_len, s.sl_unit, (s.sl_len * u.un_fact) AS sl_len_cm FROM shoelace_data s, unit u WHERE (s.sl_unit = u.un_name);
  shoelace_candelete | SELECT shoelace_obsolete.sl_name, shoelace_obsolete.sl_avail, shoelace_obsolete.sl_color, shoelace_obsolete.sl_len, shoelace_obsolete.sl_unit, shoelace_obsolete.sl_len_cm FROM shoelace_obsolete WHERE (shoelace_obsolete.sl_avail = 0);
  shoelace_obsolete  | SELECT shoelace.sl_name, shoelace.sl_avail, shoelace.sl_color, shoelace.sl_len, shoelace.sl_unit, shoelace.sl_len_cm FROM shoelace WHERE (NOT (EXISTS (SELECT shoe.shoename FROM shoe WHERE (shoe.slcolor = shoelace.sl_color))));
- street             | SELECT r.name, r.thepath, c.cname FROM road r, real_city c WHERE (c.outline ## r.thepath);
+ street             | SELECT r.name, r.thepath, c.cname FROM ONLY road r, real_city c WHERE (c.outline ## r.thepath);
  toyemp             | SELECT emp.name, emp.age, emp."location", (12 * emp.salary) AS annualsal FROM emp;
 (20 rows)
 

@@ -124,10 +124,13 @@ SELECT class, aa
    FROM a_star* x
    WHERE aa ISNULL;
 
+-- As of Postgres 7.1, ALTER implicitly recurses,
+-- so this should be same as ALTER a_star*
+
 ALTER TABLE a_star RENAME COLUMN aa TO foo;
 
 SELECT class, foo
-   FROM a_star x
+   FROM a_star* x
    WHERE x.foo >= 2;
 
 ALTER TABLE a_star RENAME COLUMN foo TO aa;
@@ -167,7 +170,7 @@ SELECT class, aa, a FROM a_star*;
 -- joe and sally play basketball, and
 -- everyone else does nothing.
 --
-SELECT p.name, p.hobbies.name FROM person p;
+SELECT p.name, p.hobbies.name FROM ONLY person p;
 
 --
 -- as above, but jeff also does post_hacking.
@@ -187,7 +190,7 @@ SELECT hobbies_r.name, hobbies_r.equipment.name FROM hobbies_r;
 -- joe and sally need hightops, and
 -- everyone else is fine.
 --
-SELECT p.name, p.hobbies.name, p.hobbies.equipment.name FROM person p;
+SELECT p.name, p.hobbies.name, p.hobbies.equipment.name FROM ONLY person p;
 
 --
 -- as above, but jeff needs advil and peet's coffee as well.
@@ -198,11 +201,11 @@ SELECT p.name, p.hobbies.name, p.hobbies.equipment.name FROM person* p;
 -- just like the last two, but make sure that the target list fixup and
 -- unflattening is being done correctly.
 --
-SELECT p.hobbies.equipment.name, p.name, p.hobbies.name FROM person p;
+SELECT p.hobbies.equipment.name, p.name, p.hobbies.name FROM ONLY person p;
 
 SELECT p.hobbies.equipment.name, p.name, p.hobbies.name FROM person* p;
 
-SELECT p.hobbies.equipment.name, p.hobbies.name, p.name FROM person p;
+SELECT p.hobbies.equipment.name, p.hobbies.name, p.name FROM ONLY person p;
 
 SELECT p.hobbies.equipment.name, p.hobbies.name, p.name FROM person* p;
 

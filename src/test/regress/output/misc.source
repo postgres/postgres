@@ -271,14 +271,40 @@ SELECT class, aa
  f     |   
 (24 rows)
 
+-- As of Postgres 7.1, ALTER implicitly recurses,
+-- so this should be same as ALTER a_star*
 ALTER TABLE a_star RENAME COLUMN aa TO foo;
 SELECT class, foo
-   FROM a_star x
+   FROM a_star* x
    WHERE x.foo >= 2;
  class | foo 
 -------+-----
  a     |   2
-(1 row)
+ b     |   3
+ b     |   4
+ c     |   5
+ c     |   6
+ d     |   7
+ d     |   8
+ d     |   9
+ d     |  10
+ d     |  11
+ d     |  12
+ d     |  13
+ d     |  14
+ e     |  15
+ e     |  16
+ e     |  17
+ e     |  18
+ f     |  19
+ f     |  20
+ f     |  21
+ f     |  22
+ f     |  24
+ f     |  25
+ f     |  26
+ f     |  27
+(25 rows)
 
 ALTER TABLE a_star RENAME COLUMN foo TO aa;
 SELECT * 
@@ -416,7 +442,7 @@ SELECT class, aa, a FROM a_star*;
 -- joe and sally play basketball, and
 -- everyone else does nothing.
 --
-SELECT p.name, p.hobbies.name FROM person p;
+SELECT p.name, p.hobbies.name FROM ONLY person p;
  name  |    name     
 -------+-------------
  mike  | posthacking
@@ -466,7 +492,7 @@ SELECT hobbies_r.name, hobbies_r.equipment.name FROM hobbies_r;
 -- joe and sally need hightops, and
 -- everyone else is fine.
 --
-SELECT p.name, p.hobbies.name, p.hobbies.equipment.name FROM person p;
+SELECT p.name, p.hobbies.name, p.hobbies.equipment.name FROM ONLY person p;
  name  |    name     |     name      
 -------+-------------+---------------
  mike  | posthacking | advil
@@ -493,7 +519,7 @@ SELECT p.name, p.hobbies.name, p.hobbies.equipment.name FROM person* p;
 -- just like the last two, but make sure that the target list fixup and
 -- unflattening is being done correctly.
 --
-SELECT p.hobbies.equipment.name, p.name, p.hobbies.name FROM person p;
+SELECT p.hobbies.equipment.name, p.name, p.hobbies.name FROM ONLY person p;
      name      | name  |    name     
 ---------------+-------+-------------
  advil         | mike  | posthacking
@@ -513,7 +539,7 @@ SELECT p.hobbies.equipment.name, p.name, p.hobbies.name FROM person* p;
  peet's coffee | jeff  | posthacking
 (6 rows)
 
-SELECT p.hobbies.equipment.name, p.hobbies.name, p.name FROM person p;
+SELECT p.hobbies.equipment.name, p.hobbies.name, p.name FROM ONLY person p;
      name      |    name     | name  
 ---------------+-------------+-------
  advil         | posthacking | mike
@@ -537,10 +563,12 @@ SELECT user_relns() AS user_relns
    ORDER BY user_relns;
      user_relns      
 ---------------------
+ a
  a_star
  abstime_tbl
  aggtest
  arrtest
+ b
  b_star
  box_tbl
  bprime
@@ -548,6 +576,7 @@ SELECT user_relns() AS user_relns
  bt_i4_heap
  bt_name_heap
  bt_txt_heap
+ c
  c_star
  char_tbl
  check2_tbl
@@ -556,6 +585,7 @@ SELECT user_relns() AS user_relns
  circle_tbl
  city
  copy_tbl
+ d
  d_star
  default_seq
  default_tbl
@@ -623,7 +653,7 @@ SELECT user_relns() AS user_relns
  toyemp
  varchar_tbl
  xacttest
-(86 rows)
+(90 rows)
 
 --SELECT name(equipment(hobby_construct(text 'skywalking', text 'mer'))) AS equip_name;
 --

@@ -19,7 +19,7 @@ SELECT avg(b) AS avg_107_943 FROM aggtest;
      107.943
 (1 row)
 
-SELECT avg(gpa) AS avg_3_4 FROM student;
+SELECT avg(gpa) AS avg_3_4 FROM ONLY student;
  avg_3_4 
 ---------
      3.4
@@ -43,7 +43,7 @@ SELECT sum(b) AS avg_431_773 FROM aggtest;
      431.773
 (1 row)
 
-SELECT sum(gpa) AS avg_6_8 FROM student;
+SELECT sum(gpa) AS avg_6_8 FROM ONLY student;
  avg_6_8 
 ---------
      6.8
