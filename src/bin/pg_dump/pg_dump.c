@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.354 2003/10/21 04:46:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.355 2003/10/28 21:05:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3539,25 +3539,6 @@ dumpProcLangs(Archive *fout, FuncInfo finfo[], int numFuncs)
 			lanacl = "{=U}";
 		}
 
-		fidx = findFuncByOid(finfo, numFuncs, lanplcallfoid);
-		if (fidx < 0)
-		{
-			write_msg(NULL, "handler procedure for procedural language \"%s\" not found\n",
-					  lanname);
-			exit_nicely();
-		}
-
-		if (strcmp(lanvalidator, "0") != 0)
-		{
-			vidx = findFuncByOid(finfo, numFuncs, lanvalidator);
-			if (vidx < 0)
-			{
-				write_msg(NULL, "validator procedure for procedural language \"%s\" not found\n",
-						  lanname);
-				exit_nicely();
-			}
-		}
-
 		/*
 		 * Current theory is to dump PLs iff their underlying functions
 		 * will be dumped (are in a dumpable namespace, or have a
@@ -3565,9 +3546,26 @@ dumpProcLangs(Archive *fout, FuncInfo finfo[], int numFuncs)
 		 * PL itself as being in the underlying function's namespace,
 		 * though it isn't really.  This avoids searchpath problems for
 		 * the HANDLER clause.
+		 *
+		 * If the underlying function is in the pg_catalog namespace,
+		 * we won't have loaded it into finfo[] at all; therefore,
+		 * treat failure to find it in finfo[] as indicating we shouldn't
+		 * dump it, not as an error condition.  Ditto for the validator.
 		 */
+
+		fidx = findFuncByOid(finfo, numFuncs, lanplcallfoid);
+		if (fidx < 0)
+			continue;
+
 		if (!finfo[fidx].pronamespace->dump)
 			continue;
+
+		if (strcmp(lanvalidator, "0") != 0)
+		{
+			vidx = findFuncByOid(finfo, numFuncs, lanvalidator);
+			if (vidx < 0)
+				continue;
+		}
 
 		resetPQExpBuffer(defqry);
 		resetPQExpBuffer(delqry);
