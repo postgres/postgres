@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.61 2000/01/16 20:04:58 petere Exp $
+ * $Id: nodes.h,v 1.62 2000/01/17 00:14:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -202,7 +202,7 @@ typedef enum NodeTag
 	T_FuncCall,
 	T_A_Indices,
 	T_ResTarget,
-	T_ParamString,		/* not used anymore */
+	T_TypeCast,
 	T_RelExpr,
 	T_SortGroupBy,
 	T_RangeVar,

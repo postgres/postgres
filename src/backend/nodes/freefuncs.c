@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.30 2000/01/09 00:26:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.31 2000/01/17 00:14:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1047,6 +1047,15 @@ _freeTypeName(TypeName *node)
 }
 
 static void
+_freeTypeCast(TypeCast *node)
+{
+	freeObject(node->arg);
+	freeObject(node->typename);
+
+	pfree(node);
+}
+
+static void
 _freeQuery(Query *node)
 {
 	if (node->utilityStmt && nodeTag(node->utilityStmt) == T_NotifyStmt)
@@ -1293,6 +1302,9 @@ freeObject(void *node)
 			break;
 		case T_TypeName:
 			_freeTypeName(node);
+			break;
+		case T_TypeCast:
+			_freeTypeCast(node);
 			break;
 
 			/*

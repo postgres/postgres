@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.51 2000/01/10 17:14:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.52 2000/01/17 00:14:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,8 +24,6 @@
 #include "utils/syscache.h"
 
 
-static Node *SizeTargetExpr(ParseState *pstate, Node *expr,
-							Oid attrtype, int32 attrtypmod);
 static List *ExpandAllTables(ParseState *pstate);
 static char *FigureColname(Node *expr, Node *resval);
 
@@ -245,9 +243,7 @@ updateTargetListEntry(ParseState *pstate,
 			 * If the target is a fixed-length type, it may need a length
 			 * coercion as well as a type coercion.
 			 */
-			if (attrtypmod > 0 &&
-				attrtypmod != exprTypmod(tle->expr))
-				tle->expr = SizeTargetExpr(pstate, tle->expr,
+			tle->expr = coerce_type_typmod(pstate, tle->expr,
 										   attrtype, attrtypmod);
 		}
 	}
@@ -295,61 +291,6 @@ CoerceTargetExpr(ParseState *pstate,
 
 	else
 		expr = NULL;
-
-	return expr;
-}
-
-
-/*
- * SizeTargetExpr()
- *
- * If the target column type possesses a function named for the type
- * and having parameter signature (columntype, int4), we assume that
- * the type requires coercion to its own length and that the said
- * function should be invoked to do that.
- *
- * Currently, "bpchar" (ie, char(N)) is the only such type, but try
- * to be more general than a hard-wired test...
- */
-static Node *
-SizeTargetExpr(ParseState *pstate,
-			   Node *expr,
-			   Oid attrtype,
-			   int32 attrtypmod)
-{
-	char	   *funcname;
-	Oid			oid_array[FUNC_MAX_ARGS];
-	HeapTuple	ftup;
-	int			i;
-
-	funcname = typeidTypeName(attrtype);
-	oid_array[0] = attrtype;
-	oid_array[1] = INT4OID;
-	for (i = 2; i < FUNC_MAX_ARGS; i++)
-		oid_array[i] = InvalidOid;
-
-	/* attempt to find with arguments exactly as specified... */
-	ftup = SearchSysCacheTuple(PROCNAME,
-							   PointerGetDatum(funcname),
-							   Int32GetDatum(2),
-							   PointerGetDatum(oid_array),
-							   0);
-
-	if (HeapTupleIsValid(ftup))
-	{
-		A_Const    *cons = makeNode(A_Const);
-		FuncCall   *func = makeNode(FuncCall);
-
-		cons->val.type = T_Integer;
-		cons->val.val.ival = attrtypmod;
-
-		func->funcname = funcname;
-		func->args = lappend(lcons(expr, NIL), cons);
-		func->agg_star = false;
-		func->agg_distinct = false;
-
-		expr = transformExpr(pstate, (Node *) func, EXPR_COLUMN_FIRST);
-	}
 
 	return expr;
 }

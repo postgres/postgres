@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.64 2000/01/16 05:18:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.65 2000/01/17 00:14:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,9 @@
 #include "parser/parse_target.h"
 #include "utils/builtins.h"
 
-static Node *parser_typecast(Value *expr, TypeName *typename, int32 atttypmod);
+static Node *parser_typecast_constant(Value *expr, TypeName *typename);
+static Node *parser_typecast_expression(ParseState *pstate,
+										Node *expr, TypeName *typename);
 static Node *transformAttr(ParseState *pstate, Attr *att, int precedence);
 static Node *transformIdent(ParseState *pstate, Ident *ident, int precedence);
 static Node *transformIndirection(ParseState *pstate, Node *basenode,
@@ -63,7 +65,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 				Value	   *val = &con->val;
 
 				if (con->typename != NULL)
-					result = parser_typecast(val, con->typename, con->typename->typmod);
+					result = parser_typecast_constant(val, con->typename);
 				else
 					result = (Node *) make_const(val);
 				break;
@@ -85,6 +87,15 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 				param->param_tlist = (List *) NULL;
 				result = transformIndirection(pstate, (Node *) param,
 											  pno->indirection);
+				/* XXX what about cast (typename) applied to Param ??? */
+				break;
+			}
+		case T_TypeCast:
+			{
+				TypeCast   *tc = (TypeCast *) expr;
+				Node	   *arg = transformExpr(pstate, tc->arg, precedence);
+
+				result = parser_typecast_expression(pstate, arg, tc->typename);
 				break;
 			}
 		case T_A_Expr:
@@ -689,7 +700,7 @@ exprTypmod(Node *expr)
  * by the parser and an explicit type name to cast to.
  */
 static Node *
-parser_typecast(Value *expr, TypeName *typename, int32 atttypmod)
+parser_typecast_constant(Value *expr, TypeName *typename)
 {
 	Const	   *con;
 	Type		tp;
@@ -716,7 +727,7 @@ parser_typecast(Value *expr, TypeName *typename, int32 atttypmod)
 			break;
 		default:
 			elog(ERROR,
-				 "parser_typecast: cannot cast this expression to type '%s'",
+				 "parser_typecast_constant: cannot cast this expression to type '%s'",
 				 typename->name);
 	}
 
@@ -733,7 +744,7 @@ parser_typecast(Value *expr, TypeName *typename, int32 atttypmod)
 	if (isNull)
 		datum = (Datum) NULL;
 	else
-		datum = stringTypeDatum(tp, const_string, atttypmod);
+		datum = stringTypeDatum(tp, const_string, typename->typmod);
 
 	con = makeConst(typeTypeId(tp),
 					typeLen(tp),
@@ -747,4 +758,53 @@ parser_typecast(Value *expr, TypeName *typename, int32 atttypmod)
 		pfree(const_string);
 
 	return (Node *) con;
+}
+
+/*
+ * Handle an explicit CAST applied to a non-constant expression.
+ * (Actually, this works for constants too, but gram.y won't generate
+ * a TypeCast node if the argument is just a constant.)
+ *
+ * The given expr has already been transformed, but we need to lookup
+ * the type name and then apply any necessary coercion function(s).
+ */
+static Node *
+parser_typecast_expression(ParseState *pstate,
+						   Node *expr, TypeName *typename)
+{
+	Oid			inputType = exprType(expr);
+	Type		tp;
+	Oid			targetType;
+
+	if (typename->arrayBounds != NIL)
+	{
+		char		type_string[NAMEDATALEN+2];
+
+		sprintf(type_string, "_%s", typename->name);
+		tp = (Type) typenameType(type_string);
+	}
+	else
+		tp = (Type) typenameType(typename->name);
+	targetType = typeTypeId(tp);
+
+	if (inputType == InvalidOid)
+		return expr;			/* do nothing if NULL input */
+
+	if (inputType != targetType)
+	{
+		expr = CoerceTargetExpr(pstate, expr,
+								inputType, targetType);
+		if (expr == NULL)
+			elog(ERROR, "Cannot cast type '%s' to '%s'",
+				 typeidTypeName(inputType),
+				 typeidTypeName(targetType));
+	}
+	/*
+	 * If the target is a fixed-length type, it may need a length
+	 * coercion as well as a type coercion.
+	 */
+	expr = coerce_type_typmod(pstate, expr,
+							  targetType, typename->typmod);
+
+	return expr;
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.27 2000/01/10 17:14:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.28 2000/01/17 00:14:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,8 +32,8 @@ static Oid	PreferredType(CATEGORY category, Oid type);
  * Convert a function argument to a different type.
  */
 Node *
-coerce_type(ParseState *pstate, Node *node, Oid inputTypeId, Oid targetTypeId,
-			int32 atttypmod)
+coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
+			Oid targetTypeId, int32 atttypmod)
 {
 	Node	   *result = NULL;
 
@@ -198,6 +198,70 @@ can_coerce_type(int nargs, Oid *input_typeids, Oid *func_typeids)
 	}
 
 	return true;
+}
+
+/* coerce_type_typmod()
+ * Force a value to a particular typmod, if meaningful and possible.
+ *
+ * This is applied to values that are going to be stored in a relation
+ * (where we have an atttypmod for the column) as well as values being
+ * explicitly CASTed (where the typmod comes from the target type spec).
+ *
+ * The caller must have already ensured that the value is of the correct
+ * type, typically by applying coerce_type.
+ *
+ * If the target column type possesses a function named for the type
+ * and having parameter signature (columntype, int4), we assume that
+ * the type requires coercion to its own length and that the said
+ * function should be invoked to do that.
+ *
+ * "bpchar" (ie, char(N)) and "numeric" are examples of such types.
+ */
+Node *
+coerce_type_typmod(ParseState *pstate, Node *node,
+				   Oid targetTypeId, int32 atttypmod)
+{
+	char	   *funcname;
+	Oid			oid_array[FUNC_MAX_ARGS];
+	HeapTuple	ftup;
+
+	/*
+	 * We assume that only typmod values greater than 0 indicate a forced
+	 * conversion is necessary.
+	 */
+	if (atttypmod <= 0 ||
+		atttypmod == exprTypmod(node))
+		return node;
+
+	funcname = typeidTypeName(targetTypeId);
+	MemSet(oid_array, 0, FUNC_MAX_ARGS * sizeof(Oid));
+	oid_array[0] = targetTypeId;
+	oid_array[1] = INT4OID;
+
+	/* attempt to find with arguments exactly as specified... */
+	ftup = SearchSysCacheTuple(PROCNAME,
+							   PointerGetDatum(funcname),
+							   Int32GetDatum(2),
+							   PointerGetDatum(oid_array),
+							   0);
+
+	if (HeapTupleIsValid(ftup))
+	{
+		A_Const    *cons = makeNode(A_Const);
+		FuncCall   *func = makeNode(FuncCall);
+
+		cons->val.type = T_Integer;
+		cons->val.val.ival = atttypmod;
+
+		func->funcname = funcname;
+		func->args = lappend(lcons(node, NIL), cons);
+		func->agg_star = false;
+		func->agg_distinct = false;
+
+		node = transformExpr(pstate, (Node *) func, EXPR_COLUMN_FIRST);
+	}
+
+	return node;
 }
 
 

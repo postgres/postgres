@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.102 2000/01/14 00:53:21 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.103 2000/01/17 00:14:47 tgl Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -188,6 +188,15 @@ _outTypeName(StringInfo str, TypeName *node)
 					 node->setof ? "true" : "false",
 					 node->typmod);
 	_outNode(str, node->arrayBounds);
+}
+
+static void
+_outTypeCast(StringInfo str, TypeCast *node)
+{
+	appendStringInfo(str, " TYPECAST :arg ");
+	_outNode(str, node->arg);
+	appendStringInfo(str, " :typename ");
+	_outNode(str, node->typename);
 }
 
 static void
@@ -1292,6 +1301,8 @@ _outAConst(StringInfo str, A_Const *node)
 {
 	appendStringInfo(str, "CONST ");
 	_outValue(str, &(node->val));
+	appendStringInfo(str, " :typename ");
+	_outNode(str, node->typename);
 }
 
 static void
@@ -1399,6 +1410,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_TypeName:
 				_outTypeName(str, obj);
+				break;
+			case T_TypeCast:
+				_outTypeCast(str, obj);
 				break;
 			case T_IndexElem:
 				_outIndexElem(str, obj);

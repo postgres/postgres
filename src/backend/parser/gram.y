@@ -1,4 +1,4 @@
-%{ /* -*-text-*- */
+%{
 
 /*#define YYDEBUG 1*/
 /*-------------------------------------------------------------------------
@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.127 2000/01/16 20:04:55 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.128 2000/01/17 00:14:48 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -71,6 +71,7 @@ static int	pfunc_num_args;
 static char *xlateSqlFunc(char *);
 static char *xlateSqlType(char *);
 static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr);
+static Node *makeTypeCast(Node *arg, TypeName *typename);
 static Node *makeRowExpr(char *opr, List *largs, List *rargs);
 static void mapTargetColumns(List *source, List *target);
 static void param_type_init(Oid *typev, int nargs);
@@ -274,6 +275,8 @@ static Node *doNegate(Node *n);
  * This gets annoying when trying to also retain Postgres' nice
  *  type-extensible features, but we don't really have a choice.
  * - thomas 1997-10-11
+ * NOTE: Whenever possible, try to add new keywords to the ColId list,
+ * or failing that, at least to the ColLabel list.
  */
 
 /* Keywords (in SQL92 reserved words) */
@@ -3902,23 +3905,7 @@ MathOp:	'+'				{ $$ = "+"; }
 a_expr:  com_expr
 				{	$$ = $1;  }
 		| a_expr TYPECAST Typename
-				{
-					$$ = (Node *)$1;
-					/* AexprConst can be either A_Const or ParamNo */
-					if (nodeTag($1) == T_A_Const) {
-						((A_Const *)$1)->typename = $3;
-					} else if (nodeTag($1) == T_ParamNo) {
-						((ParamNo *)$1)->typename = $3;
-					/* otherwise, try to transform to a function call */
-					} else {
-						FuncCall *n = makeNode(FuncCall);
-						n->funcname = $3->name;
-						n->args = lcons($1,NIL);
-						n->agg_star = false;
-						n->agg_distinct = false;
-						$$ = (Node *)n;
-					}
-				}
+				{	$$ = makeTypeCast($1, $3); }
 		/*
 		 * Can't collapse this into prior rule by using a_expr_or_null;
 		 * that creates reduce/reduce conflicts.  Grumble.
@@ -4149,23 +4136,7 @@ a_expr:  com_expr
 b_expr:  com_expr
 				{	$$ = $1;  }
 		| b_expr TYPECAST Typename
-				{
-					$$ = (Node *)$1;
-					/* AexprConst can be either A_Const or ParamNo */
-					if (nodeTag($1) == T_A_Const) {
-						((A_Const *)$1)->typename = $3;
-					} else if (nodeTag($1) == T_ParamNo) {
-						((ParamNo *)$1)->typename = $3;
-					/* otherwise, try to transform to a function call */
-					} else {
-						FuncCall *n = makeNode(FuncCall);
-						n->funcname = $3->name;
-						n->args = lcons($1,NIL);
-						n->agg_star = false;
-						n->agg_distinct = false;
-						$$ = (Node *)n;
-					}
-				}
+				{	$$ = makeTypeCast($1, $3); }
 		| NULL_P TYPECAST Typename
 				{
 					A_Const *n = makeNode(A_Const);
@@ -4243,23 +4214,7 @@ com_expr:  attr
 		| '(' a_expr_or_null ')'
 				{	$$ = $2; }
 		| CAST '(' a_expr_or_null AS Typename ')'
-				{
-					$$ = (Node *)$3;
-					/* AexprConst can be either A_Const or ParamNo */
-					if (nodeTag($3) == T_A_Const) {
-						((A_Const *)$3)->typename = $5;
-					} else if (nodeTag($3) == T_ParamNo) {
-						((ParamNo *)$3)->typename = $5;
-					/* otherwise, try to transform to a function call */
-					} else {
-						FuncCall *n = makeNode(FuncCall);
-						n->funcname = $5->name;
-						n->args = lcons($3,NIL);
-						n->agg_star = false;
-						n->agg_distinct = false;
-						$$ = (Node *)n;
-					}
-				}
+				{	$$ = makeTypeCast($3, $5); }
 		| case_expr
 				{	$$ = $1; }
 		| func_name '(' ')'
@@ -5078,6 +5033,7 @@ ColLabel:  ColId						{ $$ = $1; }
 		| CONSTRAINT					{ $$ = "constraint"; }
 		| COPY							{ $$ = "copy"; }
 		| CURRENT						{ $$ = "current"; }
+		| DECIMAL						{ $$ = "decimal"; }
 		| DO							{ $$ = "do"; }
 		| ELSE							{ $$ = "else"; }
 		| END_TRANS						{ $$ = "end"; }
@@ -5095,6 +5051,7 @@ ColLabel:  ColId						{ $$ = $1; }
 		| NEW							{ $$ = "new"; }
 		| NONE							{ $$ = "none"; }
 		| NULLIF						{ $$ = "nullif"; }
+		| NUMERIC						{ $$ = "numeric"; }
 		| ORDER							{ $$ = "order"; }
 		| POSITION						{ $$ = "position"; }
 		| PRECISION						{ $$ = "precision"; }
@@ -5137,6 +5094,36 @@ makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr)
 	a->lexpr = lexpr;
 	a->rexpr = rexpr;
 	return (Node *)a;
+}
+
+static Node *
+makeTypeCast(Node *arg, TypeName *typename)
+{
+	/*
+	 * If arg is an A_Const or ParamNo, just stick the typename into the
+	 * field reserved for it --- unless there's something there already!
+	 * (We don't want to collapse x::type1::type2 into just x::type2.)
+	 * Otherwise, generate a TypeCast node.
+	 */
+	if (IsA(arg, A_Const) &&
+		((A_Const *) arg)->typename == NULL)
+	{
+		((A_Const *) arg)->typename = typename;
+		return arg;
+	}
+	else if (IsA(arg, ParamNo) &&
+			 ((ParamNo *) arg)->typename == NULL)
+	{
+		((ParamNo *) arg)->typename = typename;
+		return arg;
+	}
+	else
+	{
+		TypeCast *n = makeNode(TypeCast);
+		n->arg = arg;
+		n->typename = typename;
+		return (Node *) n;
+	}
 }
 
 /* makeRowExpr()

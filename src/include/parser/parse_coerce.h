@@ -2,11 +2,11 @@
  *
  * parse_coerce.h
  *
- *
+ *	Routines for type coercion.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_coerce.h,v 1.15 1999/07/16 17:07:36 momjian Exp $
+ * $Id: parse_coerce.h,v 1.16 2000/01/17 00:14:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -125,6 +125,8 @@ extern CATEGORY TypeCategory(Oid type);
 
 extern bool can_coerce_type(int nargs, Oid *input_typeids, Oid *func_typeids);
 extern Node *coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
-			Oid targetTypeId, int32 atttypmod);
+						 Oid targetTypeId, int32 atttypmod);
+extern Node *coerce_type_typmod(ParseState *pstate, Node *node,
+								Oid targetTypeId, int32 atttypmod);
 
 #endif	 /* PARSE_COERCE_H */
