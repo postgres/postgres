@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.45 2004/03/19 18:58:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.46 2004/06/03 22:56:43 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -58,8 +58,7 @@ enum
 	PLPGSQL_NSTYPE_LABEL,
 	PLPGSQL_NSTYPE_VAR,
 	PLPGSQL_NSTYPE_ROW,
-	PLPGSQL_NSTYPE_REC,
-	PLPGSQL_NSTYPE_RECFIELD
+	PLPGSQL_NSTYPE_REC
 };
 
 /* ----------
@@ -75,6 +74,18 @@ enum
 	PLPGSQL_DTYPE_ARRAYELEM,
 	PLPGSQL_DTYPE_EXPR,
 	PLPGSQL_DTYPE_TRIGARG
+};
+
+/* ----------
+ * Variants distinguished in PLpgSQL_type structs
+ * ----------
+ */
+enum
+{
+	PLPGSQL_TTYPE_SCALAR,		/* scalar types and domains */
+	PLPGSQL_TTYPE_ROW,			/* composite types */
+	PLPGSQL_TTYPE_REC,			/* RECORD pseudotype */
+	PLPGSQL_TTYPE_PSEUDO		/* other pseudotypes */
 };
 
 /* ----------
@@ -142,9 +153,10 @@ typedef struct
 
 
 typedef struct
-{								/* Postgres data type		*/
-	char	   *typname;
+{								/* Postgres data type */
+	char	   *typname;		/* (simple) name of the type */
 	Oid			typoid;			/* OID of the data type */
+	int			ttype;			/* PLPGSQL_TTYPE_ code */
 	int16		typlen;			/* stuff copied from its pg_type entry */
 	bool		typbyval;
 	Oid			typrelid;
@@ -165,6 +177,17 @@ typedef struct
 	int			dno;
 }	PLpgSQL_datum;
 
+/*
+ * The variants PLpgSQL_var, PLpgSQL_row, and PLpgSQL_rec share these
+ * fields
+ */
+typedef struct
+{								/* Scalar or composite variable */
+	int			dtype;
+	int			dno;
+	char	   *refname;
+	int			lineno;
+}	PLpgSQL_variable;
 
 typedef struct PLpgSQL_expr
 {								/* SQL Query to plan and execute	*/
@@ -186,7 +209,7 @@ typedef struct PLpgSQL_expr
 
 
 typedef struct
-{								/* Local variable			*/
+{								/* Scalar variable */
 	int			dtype;
 	int			varno;
 	char	   *refname;
@@ -206,11 +229,12 @@ typedef struct
 
 
 typedef struct
-{								/* Rowtype				*/
+{								/* Row variable */
 	int			dtype;
 	int			rowno;
 	char	   *refname;
 	int			lineno;
+
 	TupleDesc	rowtupdesc;
 
 	/*
@@ -227,7 +251,7 @@ typedef struct
 
 
 typedef struct
-{								/* Record of non-fixed structure */
+{								/* Record variable (non-fixed structure) */
 	int			dtype;
 	int			recno;
 	char	   *refname;
@@ -630,9 +654,12 @@ extern int	plpgsql_parse_dblwordtype(char *word);
 extern int	plpgsql_parse_tripwordtype(char *word);
 extern int	plpgsql_parse_wordrowtype(char *word);
 extern int	plpgsql_parse_dblwordrowtype(char *word);
-extern PLpgSQL_type *plpgsql_parse_datatype(char *string);
-extern PLpgSQL_row *plpgsql_build_rowtype(Oid classOid);
-extern void plpgsql_adddatum(PLpgSQL_datum * new);
+extern PLpgSQL_type *plpgsql_parse_datatype(const char *string);
+extern PLpgSQL_type *plpgsql_build_datatype(Oid typeOid, int32 typmod);
+extern PLpgSQL_variable *plpgsql_build_variable(char *refname, int lineno,
+												PLpgSQL_type *dtype,
+												bool add2namespace);
+extern void plpgsql_adddatum(PLpgSQL_datum *new);
 extern int	plpgsql_add_initdatums(int **varnos);
 extern void plpgsql_HashTableInit(void);
 

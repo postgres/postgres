@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.75 2004/03/21 22:29:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.76 2004/06/03 22:56:43 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -56,6 +56,7 @@
 #include "tcop/tcopprot.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
+#include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
 
@@ -105,6 +106,7 @@ static PLpgSQL_function *do_compile(FunctionCallInfo fcinfo,
 		   bool forValidator);
 static void plpgsql_compile_error_callback(void *arg);
 static char **fetchArgNames(HeapTuple procTup, int nargs);
+static PLpgSQL_row *build_row_var(Oid classOid);
 static PLpgSQL_type *build_datatype(HeapTuple typeTup, int32 typmod);
 static void compute_function_hashkey(FunctionCallInfo fcinfo,
 						 Form_pg_proc procStruct,
@@ -249,8 +251,7 @@ do_compile(FunctionCallInfo fcinfo,
 	char	   *proc_source;
 	HeapTuple	typeTup;
 	Form_pg_type typeStruct;
-	PLpgSQL_var *var;
-	PLpgSQL_row *row;
+	PLpgSQL_variable *var;
 	PLpgSQL_rec *rec;
 	int			i;
 	int			arg_varnos[FUNC_MAX_ARGS];
@@ -392,33 +393,9 @@ do_compile(FunctionCallInfo fcinfo,
 				if (procStruct->prorettype == ANYARRAYOID ||
 					procStruct->prorettype == ANYELEMENTOID)
 				{
-					char		buf[32];
-
-					/* name for variable */
-					snprintf(buf, sizeof(buf), "$%d", 0);
-
-					/*
-					 * Normal return values get a var node
-					 */
-					var = malloc(sizeof(PLpgSQL_var));
-					memset(var, 0, sizeof(PLpgSQL_var));
-
-					var->dtype = PLPGSQL_DTYPE_VAR;
-					var->refname = strdup(buf);
-					var->lineno = 0;
-					var->datatype = build_datatype(typeTup, -1);
-					var->isconst = false;
-					var->notnull = false;
-					var->default_val = NULL;
-
-					/* preset to NULL */
-					var->value = 0;
-					var->isnull = true;
-					var->freeval = false;
-
-					plpgsql_adddatum((PLpgSQL_datum *) var);
-					plpgsql_ns_additem(PLPGSQL_NSTYPE_VAR, var->varno,
-									   var->refname);
+					(void) plpgsql_build_variable(strdup("$0"), 0,
+												  build_datatype(typeTup, -1),
+												  true);
 				}
 			}
 			ReleaseSysCache(typeTup);
@@ -432,7 +409,8 @@ do_compile(FunctionCallInfo fcinfo,
 			{
 				char		buf[32];
 				Oid			argtypeid;
-				PLpgSQL_datum *argdatum;
+				PLpgSQL_type *argdtype;
+				PLpgSQL_variable *argvariable;
 				int			argitemtype;
 
 				/* Create $n name for variable */
@@ -444,70 +422,44 @@ do_compile(FunctionCallInfo fcinfo,
 				 * the hashkey, we can just use those results.
 				 */
 				argtypeid = hashkey->argtypes[i];
-
-				/*
-				 * Get the parameter type
-				 */
-				typeTup = SearchSysCache(TYPEOID,
-										 ObjectIdGetDatum(argtypeid),
-										 0, 0, 0);
-				if (!HeapTupleIsValid(typeTup))
-					elog(ERROR, "cache lookup failed for type %u", argtypeid);
-				typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
+				argdtype = plpgsql_build_datatype(argtypeid, -1);
 
 				/* Disallow pseudotype argument */
 				/* (note we already replaced ANYARRAY/ANYELEMENT) */
-				if (typeStruct->typtype == 'p')
+				/* (build_variable would do this, but wrong message) */
+				if (argdtype->ttype != PLPGSQL_TTYPE_SCALAR &&
+					argdtype->ttype != PLPGSQL_TTYPE_ROW)
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						  errmsg("plpgsql functions cannot take type %s",
-								 format_type_be(argtypeid))));
+							 errmsg("plpgsql functions cannot take type %s",
+									format_type_be(argtypeid))));
 
-				if (typeStruct->typrelid != InvalidOid)
+				/* Build variable and add to datum list */
+				argvariable = plpgsql_build_variable(strdup(buf), 0,
+													 argdtype, false);
+
+				if (argvariable->dtype == PLPGSQL_DTYPE_VAR)
 				{
-					/*
-					 * For tuple type parameters, we set up a record of
-					 * that type
-					 */
-					row = plpgsql_build_rowtype(typeStruct->typrelid);
-					row->refname = strdup(buf);
-
-					argdatum = (PLpgSQL_datum *) row;
-					argitemtype = PLPGSQL_NSTYPE_ROW;
+					/* argument vars are forced to be CONSTANT (why?) */
+					((PLpgSQL_var *) argvariable)->isconst = true;
+					argitemtype = PLPGSQL_NSTYPE_VAR;
 				}
 				else
 				{
-					/*
-					 * Normal parameters get a var node
-					 */
-					var = malloc(sizeof(PLpgSQL_var));
-					memset(var, 0, sizeof(PLpgSQL_var));
-
-					var->dtype = PLPGSQL_DTYPE_VAR;
-					var->refname = strdup(buf);
-					var->lineno = 0;
-					var->datatype = build_datatype(typeTup, -1);
-					var->isconst = true;
-					var->notnull = false;
-					var->default_val = NULL;
-
-					argdatum = (PLpgSQL_datum *) var;
-					argitemtype = PLPGSQL_NSTYPE_VAR;
+					Assert(argvariable->dtype == PLPGSQL_DTYPE_ROW);
+					argitemtype = PLPGSQL_NSTYPE_ROW;
 				}
 
-				/* Add it to datum list, and remember datum number */
-				plpgsql_adddatum(argdatum);
-				arg_varnos[i] = argdatum->dno;
+				/* Remember datum number */
+				arg_varnos[i] = argvariable->dno;
 
 				/* Add to namespace under the $n name */
-				plpgsql_ns_additem(argitemtype, argdatum->dno, buf);
+				plpgsql_ns_additem(argitemtype, argvariable->dno, buf);
 
 				/* If there's a name for the argument, make an alias */
 				if (argnames && argnames[i] && argnames[i][0])
-					plpgsql_ns_additem(argitemtype, argdatum->dno,
+					plpgsql_ns_additem(argitemtype, argvariable->dno,
 									   argnames[i]);
-
-				ReleaseSysCache(typeTup);
 			}
 			break;
 
@@ -552,128 +504,58 @@ do_compile(FunctionCallInfo fcinfo,
 			/*
 			 * Add the variable tg_name
 			 */
-			var = malloc(sizeof(PLpgSQL_var));
-			memset(var, 0, sizeof(PLpgSQL_var));
-
-			var->dtype = PLPGSQL_DTYPE_VAR;
-			var->refname = strdup("tg_name");
-			var->lineno = 0;
-			var->datatype = plpgsql_parse_datatype("name");
-			var->isconst = false;
-			var->notnull = false;
-			var->default_val = NULL;
-
-			plpgsql_adddatum((PLpgSQL_datum *) var);
-			plpgsql_ns_additem(PLPGSQL_NSTYPE_VAR, var->varno, var->refname);
-			function->tg_name_varno = var->varno;
+			var = plpgsql_build_variable(strdup("tg_name"), 0,
+										 plpgsql_build_datatype(NAMEOID, -1),
+										 true);
+			function->tg_name_varno = var->dno;
 
 			/*
 			 * Add the variable tg_when
 			 */
-			var = malloc(sizeof(PLpgSQL_var));
-			memset(var, 0, sizeof(PLpgSQL_var));
-
-			var->dtype = PLPGSQL_DTYPE_VAR;
-			var->refname = strdup("tg_when");
-			var->lineno = 0;
-			var->datatype = plpgsql_parse_datatype("text");
-			var->isconst = false;
-			var->notnull = false;
-			var->default_val = NULL;
-
-			plpgsql_adddatum((PLpgSQL_datum *) var);
-			plpgsql_ns_additem(PLPGSQL_NSTYPE_VAR, var->varno, var->refname);
-			function->tg_when_varno = var->varno;
+			var = plpgsql_build_variable(strdup("tg_when"), 0,
+										 plpgsql_build_datatype(TEXTOID, -1),
+										 true);
+			function->tg_when_varno = var->dno;
 
 			/*
 			 * Add the variable tg_level
 			 */
-			var = malloc(sizeof(PLpgSQL_var));
-			memset(var, 0, sizeof(PLpgSQL_var));
-
-			var->dtype = PLPGSQL_DTYPE_VAR;
-			var->refname = strdup("tg_level");
-			var->lineno = 0;
-			var->datatype = plpgsql_parse_datatype("text");
-			var->isconst = false;
-			var->notnull = false;
-			var->default_val = NULL;
-
-			plpgsql_adddatum((PLpgSQL_datum *) var);
-			plpgsql_ns_additem(PLPGSQL_NSTYPE_VAR, var->varno, var->refname);
-			function->tg_level_varno = var->varno;
+			var = plpgsql_build_variable(strdup("tg_level"), 0,
+										 plpgsql_build_datatype(TEXTOID, -1),
+										 true);
+			function->tg_level_varno = var->dno;
 
 			/*
 			 * Add the variable tg_op
 			 */
-			var = malloc(sizeof(PLpgSQL_var));
-			memset(var, 0, sizeof(PLpgSQL_var));
-
-			var->dtype = PLPGSQL_DTYPE_VAR;
-			var->refname = strdup("tg_op");
-			var->lineno = 0;
-			var->datatype = plpgsql_parse_datatype("text");
-			var->isconst = false;
-			var->notnull = false;
-			var->default_val = NULL;
-
-			plpgsql_adddatum((PLpgSQL_datum *) var);
-			plpgsql_ns_additem(PLPGSQL_NSTYPE_VAR, var->varno, var->refname);
-			function->tg_op_varno = var->varno;
+			var = plpgsql_build_variable(strdup("tg_op"), 0,
+										 plpgsql_build_datatype(TEXTOID, -1),
+										 true);
+			function->tg_op_varno = var->dno;
 
 			/*
 			 * Add the variable tg_relid
 			 */
-			var = malloc(sizeof(PLpgSQL_var));
-			memset(var, 0, sizeof(PLpgSQL_var));
-
-			var->dtype = PLPGSQL_DTYPE_VAR;
-			var->refname = strdup("tg_relid");
-			var->lineno = 0;
-			var->datatype = plpgsql_parse_datatype("oid");
-			var->isconst = false;
-			var->notnull = false;
-			var->default_val = NULL;
-
-			plpgsql_adddatum((PLpgSQL_datum *) var);
-			plpgsql_ns_additem(PLPGSQL_NSTYPE_VAR, var->varno, var->refname);
-			function->tg_relid_varno = var->varno;
+			var = plpgsql_build_variable(strdup("tg_relid"), 0,
+										 plpgsql_build_datatype(OIDOID, -1),
+										 true);
+			function->tg_relid_varno = var->dno;
 
 			/*
 			 * Add the variable tg_relname
 			 */
-			var = malloc(sizeof(PLpgSQL_var));
-			memset(var, 0, sizeof(PLpgSQL_var));
-
-			var->dtype = PLPGSQL_DTYPE_VAR;
-			var->refname = strdup("tg_relname");
-			var->lineno = 0;
-			var->datatype = plpgsql_parse_datatype("name");
-			var->isconst = false;
-			var->notnull = false;
-			var->default_val = NULL;
-
-			plpgsql_adddatum((PLpgSQL_datum *) var);
-			plpgsql_ns_additem(PLPGSQL_NSTYPE_VAR, var->varno, var->refname);
-			function->tg_relname_varno = var->varno;
+			var = plpgsql_build_variable(strdup("tg_relname"), 0,
+										 plpgsql_build_datatype(NAMEOID, -1),
+										 true);
+			function->tg_relname_varno = var->dno;
 
 			/*
 			 * Add the variable tg_nargs
 			 */
-			var = malloc(sizeof(PLpgSQL_var));
-			memset(var, 0, sizeof(PLpgSQL_var));
-
-			var->dtype = PLPGSQL_DTYPE_VAR;
-			var->refname = strdup("tg_nargs");
-			var->lineno = 0;
-			var->datatype = plpgsql_parse_datatype("int4");
-			var->isconst = false;
-			var->notnull = false;
-			var->default_val = NULL;
-
-			plpgsql_adddatum((PLpgSQL_datum *) var);
-			plpgsql_ns_additem(PLPGSQL_NSTYPE_VAR, var->varno, var->refname);
-			function->tg_nargs_varno = var->varno;
+			var = plpgsql_build_variable(strdup("tg_nargs"), 0,
+										 plpgsql_build_datatype(INT4OID, -1),
+										 true);
+			function->tg_nargs_varno = var->dno;
 
 			break;
 
@@ -685,20 +567,10 @@ do_compile(FunctionCallInfo fcinfo,
 	/*
 	 * Create the magic FOUND variable.
 	 */
-	var = malloc(sizeof(PLpgSQL_var));
-	memset(var, 0, sizeof(PLpgSQL_var));
-
-	var->dtype = PLPGSQL_DTYPE_VAR;
-	var->refname = strdup("found");
-	var->lineno = 0;
-	var->datatype = plpgsql_parse_datatype("bool");
-	var->isconst = false;
-	var->notnull = false;
-	var->default_val = NULL;
-
-	plpgsql_adddatum((PLpgSQL_datum *) var);
-	plpgsql_ns_additem(PLPGSQL_NSTYPE_VAR, var->varno, var->refname);
-	function->found_varno = var->varno;
+	var = plpgsql_build_variable(strdup("found"), 0,
+								 plpgsql_build_datatype(BOOLOID, -1),
+								 true);
+	function->found_varno = var->dno;
 
 	/*
 	 * Forget about the above created variables
@@ -848,11 +720,11 @@ plpgsql_parse_word(char *word)
 			trigarg->argnum = plpgsql_read_expression(']', "]");
 
 			plpgsql_adddatum((PLpgSQL_datum *) trigarg);
-			plpgsql_yylval.variable = (PLpgSQL_datum *) trigarg;
+			plpgsql_yylval.scalar = (PLpgSQL_datum *) trigarg;
 
 			plpgsql_SpaceScanned = save_spacescanned;
 			pfree(cp[0]);
-			return T_VARIABLE;
+			return T_SCALAR;
 		}
 	}
 
@@ -869,8 +741,8 @@ plpgsql_parse_word(char *word)
 				return T_LABEL;
 
 			case PLPGSQL_NSTYPE_VAR:
-				plpgsql_yylval.var = (PLpgSQL_var *) (plpgsql_Datums[nse->itemno]);
-				return T_VARIABLE;
+				plpgsql_yylval.scalar = plpgsql_Datums[nse->itemno];
+				return T_SCALAR;
 
 			case PLPGSQL_NSTYPE_REC:
 				plpgsql_yylval.rec = (PLpgSQL_rec *) (plpgsql_Datums[nse->itemno]);
@@ -937,8 +809,8 @@ plpgsql_parse_dblword(char *word)
 			switch (ns->itemtype)
 			{
 				case PLPGSQL_NSTYPE_VAR:
-					plpgsql_yylval.var = (PLpgSQL_var *) (plpgsql_Datums[ns->itemno]);
-					return T_VARIABLE;
+					plpgsql_yylval.scalar = plpgsql_Datums[ns->itemno];
+					return T_SCALAR;
 
 				case PLPGSQL_NSTYPE_REC:
 					plpgsql_yylval.rec = (PLpgSQL_rec *) (plpgsql_Datums[ns->itemno]);
@@ -968,11 +840,11 @@ plpgsql_parse_dblword(char *word)
 
 				plpgsql_adddatum((PLpgSQL_datum *) new);
 
-				plpgsql_yylval.variable = (PLpgSQL_datum *) new;
+				plpgsql_yylval.scalar = (PLpgSQL_datum *) new;
 
 				pfree(cp[0]);
 				pfree(cp[1]);
-				return T_VARIABLE;
+				return T_SCALAR;
 			}
 
 		case PLPGSQL_NSTYPE_ROW:
@@ -990,10 +862,10 @@ plpgsql_parse_dblword(char *word)
 					if (row->fieldnames[i] &&
 						strcmp(row->fieldnames[i], cp[1]) == 0)
 					{
-						plpgsql_yylval.var = (PLpgSQL_var *) (plpgsql_Datums[row->varnos[i]]);
+						plpgsql_yylval.scalar = plpgsql_Datums[row->varnos[i]];
 						pfree(cp[0]);
 						pfree(cp[1]);
-						return T_VARIABLE;
+						return T_SCALAR;
 					}
 				}
 				ereport(ERROR,
@@ -1074,12 +946,13 @@ plpgsql_parse_tripword(char *word)
 
 				plpgsql_adddatum((PLpgSQL_datum *) new);
 
-				plpgsql_yylval.variable = (PLpgSQL_datum *) new;
+				plpgsql_yylval.scalar = (PLpgSQL_datum *) new;
 
 				pfree(cp[0]);
 				pfree(cp[1]);
 				pfree(cp[2]);
-				return T_VARIABLE;
+
+				return T_SCALAR;
 			}
 
 		case PLPGSQL_NSTYPE_ROW:
@@ -1097,11 +970,13 @@ plpgsql_parse_tripword(char *word)
 					if (row->fieldnames[i] &&
 						strcmp(row->fieldnames[i], cp[2]) == 0)
 					{
-						plpgsql_yylval.var = (PLpgSQL_var *) (plpgsql_Datums[row->varnos[i]]);
+						plpgsql_yylval.scalar = plpgsql_Datums[row->varnos[i]];
+
 						pfree(cp[0]);
 						pfree(cp[1]);
 						pfree(cp[2]);
-						return T_VARIABLE;
+
+						return T_SCALAR;
 					}
 				}
 				ereport(ERROR,
@@ -1160,6 +1035,8 @@ plpgsql_parse_wordtype(char *word)
 			case PLPGSQL_NSTYPE_VAR:
 				plpgsql_yylval.dtype = ((PLpgSQL_var *) (plpgsql_Datums[nse->itemno]))->datatype;
 				return T_DTYPE;
+
+			/* XXX perhaps allow REC here? */
 
 			default:
 				return T_ERROR;
@@ -1451,6 +1328,7 @@ plpgsql_parse_tripwordtype(char *word)
 	ReleaseSysCache(typetup);
 	pfree(cp[0]);
 	pfree(cp[1]);
+
 	return T_DTYPE;
 }
 
@@ -1482,21 +1360,20 @@ plpgsql_parse_wordrowtype(char *word)
 				 errmsg("relation \"%s\" does not exist", cp[0])));
 
 	/*
-	 * Build and return the complete row definition
+	 * Build and return the row type struct
 	 */
-	plpgsql_yylval.row = plpgsql_build_rowtype(classOid);
-
-	plpgsql_adddatum((PLpgSQL_datum *) plpgsql_yylval.row);
+	plpgsql_yylval.dtype = plpgsql_build_datatype(get_rel_type_id(classOid),
+												  -1);
 
 	pfree(cp[0]);
 	pfree(cp[1]);
 
-	return T_ROW;
+	return T_DTYPE;
 }
 
 /* ----------
  * plpgsql_parse_dblwordrowtype		Scanner found word.word%ROWTYPE.
- *			So word must be namespace qualified a table name.
+ *			So word must be a namespace qualified table name.
  * ----------
  */
 #define ROWTYPE_JUNK_LEN	8
@@ -1527,22 +1404,120 @@ plpgsql_parse_dblwordrowtype(char *word)
 				 errmsg("relation \"%s\" does not exist", cp)));
 
 	/*
-	 * Build and return the complete row definition
+	 * Build and return the row type struct
 	 */
-	plpgsql_yylval.row = plpgsql_build_rowtype(classOid);
-
-	plpgsql_adddatum((PLpgSQL_datum *) plpgsql_yylval.row);
+	plpgsql_yylval.dtype = plpgsql_build_datatype(get_rel_type_id(classOid),
+												  -1);
 
 	pfree(cp);
 
-	return T_ROW;
+	return T_DTYPE;
 }
 
 /*
- * Build a rowtype data structure given the pg_class OID.
+ * plpgsql_build_variable - build a datum-array entry of a given datatype
+ *
+ * The returned struct may be a PLpgSQL_var, PLpgSQL_row, or PLpgSQL_rec
+ * depending on the given datatype.  The struct is automatically added
+ * to the current datum array, and optionally to the current namespace.
  */
-PLpgSQL_row *
-plpgsql_build_rowtype(Oid classOid)
+PLpgSQL_variable *
+plpgsql_build_variable(char *refname, int lineno, PLpgSQL_type *dtype,
+					bool add2namespace)
+{
+	PLpgSQL_variable *result;
+
+	switch (dtype->ttype)
+	{
+		case PLPGSQL_TTYPE_SCALAR:
+		{
+			/* Ordinary scalar datatype */
+			PLpgSQL_var		*var;
+
+			var = malloc(sizeof(PLpgSQL_var));
+			memset(var, 0, sizeof(PLpgSQL_var));
+
+			var->dtype		= PLPGSQL_DTYPE_VAR;
+			var->refname	= refname;
+			var->lineno		= lineno;
+			var->datatype	= dtype;
+			/* other fields might be filled by caller */
+
+			/* preset to NULL */
+			var->value = 0;
+			var->isnull = true;
+			var->freeval = false;
+
+			plpgsql_adddatum((PLpgSQL_datum *) var);
+			if (add2namespace)
+				plpgsql_ns_additem(PLPGSQL_NSTYPE_VAR,
+								   var->varno,
+								   refname);
+			result = (PLpgSQL_variable *) var;
+			break;
+		}
+		case PLPGSQL_TTYPE_ROW:
+		{
+			/* Composite type -- build a row variable */
+			PLpgSQL_row	   *row;
+
+			row = build_row_var(dtype->typrelid);
+
+			row->dtype		= PLPGSQL_DTYPE_ROW;
+			row->refname	= refname;
+			row->lineno		= lineno;
+
+			plpgsql_adddatum((PLpgSQL_datum *) row);
+			if (add2namespace)
+				plpgsql_ns_additem(PLPGSQL_NSTYPE_ROW,
+								   row->rowno,
+								   refname);
+			result = (PLpgSQL_variable *) row;
+			break;
+		}
+		case PLPGSQL_TTYPE_REC:
+		{
+			/* "record" type -- build a variable-contents record variable */
+			PLpgSQL_rec		*rec;
+
+			rec = malloc(sizeof(PLpgSQL_rec));
+			memset(rec, 0, sizeof(PLpgSQL_rec));
+
+			rec->dtype		= PLPGSQL_DTYPE_REC;
+			rec->refname	= refname;
+			rec->lineno		= lineno;
+
+			plpgsql_adddatum((PLpgSQL_datum *) rec);
+			if (add2namespace)
+				plpgsql_ns_additem(PLPGSQL_NSTYPE_REC,
+								   rec->recno,
+								   refname);
+			result = (PLpgSQL_variable *) rec;
+			break;
+		}
+		case PLPGSQL_TTYPE_PSEUDO:
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("variable \"%s\" has pseudo-type %s",
+							refname, format_type_be(dtype->typoid))));
+			result = NULL;		/* keep compiler quiet */
+			break;
+		}
+		default:
+			elog(ERROR, "unrecognized ttype: %d", dtype->ttype);
+			result = NULL;		/* keep compiler quiet */
+			break;
+	}
+
+	return result;
+}
+
+/*
+ * Build a row-variable data structure given the pg_class OID.
+ */
+static PLpgSQL_row *
+build_row_var(Oid classOid)
 {
 	PLpgSQL_row *row;
 	Relation	rel;
@@ -1601,17 +1576,14 @@ plpgsql_build_rowtype(Oid classOid)
 		if (!attrStruct->attisdropped)
 		{
 			const char *attname;
-			HeapTuple	typetup;
-			PLpgSQL_var *var;
+			char	*refname;
+			PLpgSQL_variable *var;
 
 			attname = NameStr(attrStruct->attname);
-
-			typetup = SearchSysCache(TYPEOID,
-									 ObjectIdGetDatum(attrStruct->atttypid),
-									 0, 0, 0);
-			if (!HeapTupleIsValid(typetup))
-				elog(ERROR, "cache lookup failed for type %u",
-					 attrStruct->atttypid);
+			refname = malloc(strlen(relname) + strlen(attname) + 2);
+			strcpy(refname, relname);
+			strcat(refname, ".");
+			strcat(refname, attname);
 
 			/*
 			 * Create the internal variable for the field
@@ -1623,30 +1595,16 @@ plpgsql_build_rowtype(Oid classOid)
 			 * the variables due to entering a block at execution time. Thus
 			 * we ignore this information for now.
 			 */
-			var = malloc(sizeof(PLpgSQL_var));
-			MemSet(var, 0, sizeof(PLpgSQL_var));
-			var->dtype = PLPGSQL_DTYPE_VAR;
-			var->refname = malloc(strlen(relname) + strlen(attname) + 2);
-			strcpy(var->refname, relname);
-			strcat(var->refname, ".");
-			strcat(var->refname, attname);
-			var->datatype = build_datatype(typetup, attrStruct->atttypmod);
-			var->isconst = false;
-			var->notnull = false;
-			var->default_val = NULL;
-			var->value = (Datum) 0;
-			var->isnull = true;
-			var->freeval = false;
-
-			plpgsql_adddatum((PLpgSQL_datum *) var);
+			var = plpgsql_build_variable(refname, 0,
+							  plpgsql_build_datatype(attrStruct->atttypid,
+													 attrStruct->atttypmod),
+										 false);
 
 			/*
 			 * Add the variable to the row.
 			 */
 			row->fieldnames[i] = strdup(attname);
-			row->varnos[i] = var->varno;
-
-			ReleaseSysCache(typetup);
+			row->varnos[i] = var->dno;
 		}
 		else
 		{
@@ -1668,22 +1626,33 @@ plpgsql_build_rowtype(Oid classOid)
  * ----------
  */
 PLpgSQL_type *
-plpgsql_parse_datatype(char *string)
+plpgsql_parse_datatype(const char *string)
 {
 	Oid			type_id;
 	int32		typmod;
-	HeapTuple	typeTup;
-	PLpgSQL_type *typ;
 
 	/* Let the main parser try to parse it under standard SQL rules */
 	parseTypeString(string, &type_id, &typmod);
 
 	/* Okay, build a PLpgSQL_type data structure for it */
+	return plpgsql_build_datatype(type_id, typmod);
+}
+
+/*
+ * plpgsql_build_datatype
+ *		Build PLpgSQL_type struct given type OID and typmod.
+ */
+PLpgSQL_type *
+plpgsql_build_datatype(Oid typeOid, int32 typmod)
+{
+	HeapTuple	typeTup;
+	PLpgSQL_type *typ;
+
 	typeTup = SearchSysCache(TYPEOID,
-							 ObjectIdGetDatum(type_id),
+							 ObjectIdGetDatum(typeOid),
 							 0, 0, 0);
 	if (!HeapTupleIsValid(typeTup))
-		elog(ERROR, "cache lookup failed for type %u", type_id);
+		elog(ERROR, "cache lookup failed for type %u", typeOid);
 
 	typ = build_datatype(typeTup, typmod);
 
@@ -1701,10 +1670,37 @@ build_datatype(HeapTuple typeTup, int32 typmod)
 	Form_pg_type typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
 	PLpgSQL_type *typ;
 
+	if (!typeStruct->typisdefined)
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("type \"%s\" is only a shell",
+						NameStr(typeStruct->typname))));
+
 	typ = (PLpgSQL_type *) malloc(sizeof(PLpgSQL_type));
 
 	typ->typname = strdup(NameStr(typeStruct->typname));
 	typ->typoid = HeapTupleGetOid(typeTup);
+	switch (typeStruct->typtype)
+	{
+		case 'b':				/* base type */
+		case 'd':				/* domain */
+			typ->ttype = PLPGSQL_TTYPE_SCALAR;
+			break;
+		case 'c':				/* composite, ie, rowtype */
+			Assert(OidIsValid(typeStruct->typrelid));
+			typ->ttype = PLPGSQL_TTYPE_ROW;
+			break;
+		case 'p':				/* pseudo */
+			if (typ->typoid == RECORDOID)
+				typ->ttype = PLPGSQL_TTYPE_REC;
+			else
+				typ->ttype = PLPGSQL_TTYPE_PSEUDO;
+			break;
+		default:
+			elog(ERROR, "unrecognized typtype: %d",
+				 (int) typeStruct->typtype);
+			break;
+	}
 	typ->typlen = typeStruct->typlen;
 	typ->typbyval = typeStruct->typbyval;
 	typ->typrelid = typeStruct->typrelid;

@@ -4,7 +4,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *    $PostgreSQL: pgsql/src/pl/plpgsql/src/scan.l,v 1.34 2004/03/21 22:29:11 tgl Exp $
+ *    $PostgreSQL: pgsql/src/pl/plpgsql/src/scan.l,v 1.35 2004/06/03 22:56:43 tgl Exp $
  *
  *    This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -167,7 +167,6 @@ null			{ return K_NULL;			}
 open			{ return K_OPEN;			}
 perform			{ return K_PERFORM;			}
 raise			{ return K_RAISE;			}
-record			{ return K_RECORD;			}
 rename			{ return K_RENAME;			}
 result_oid		{ return K_RESULT_OID;		}
 return			{ return K_RETURN;			}

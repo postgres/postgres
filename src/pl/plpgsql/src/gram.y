@@ -4,7 +4,7 @@
  *						  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.53 2004/04/15 13:01:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.54 2004/06/03 22:56:43 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -83,7 +83,8 @@ static	void check_assignable(PLpgSQL_datum *datum);
 			int  *initvarnos;
 		}						declhdr;
 		PLpgSQL_type			*dtype;
-		PLpgSQL_datum			*variable; /* a VAR, RECFIELD, or TRIGARG */
+		PLpgSQL_datum			*scalar;	/* a VAR, RECFIELD, or TRIGARG */
+		PLpgSQL_variable		*variable;	/* a VAR, REC, or ROW */
 		PLpgSQL_var				*var;
 		PLpgSQL_row				*row;
 		PLpgSQL_rec				*rec;
@@ -100,7 +101,7 @@ static	void check_assignable(PLpgSQL_datum *datum);
 %type <ival>	decl_const decl_notnull
 %type <expr>	decl_defval decl_cursor_query
 %type <dtype>	decl_datatype
-%type <row>		decl_rowtype decl_cursor_args decl_cursor_arglist
+%type <row>		decl_cursor_args decl_cursor_arglist
 %type <nsitem>	decl_aliasitem
 %type <str>		decl_stmts decl_stmt
 
@@ -109,7 +110,8 @@ static	void check_assignable(PLpgSQL_datum *datum);
 %type <expr>	opt_exitcond
 
 %type <ival>	assign_var cursor_variable
-%type <var>		fori_var cursor_varptr decl_cursor_arg
+%type <var>		fori_var cursor_varptr
+%type <variable>	decl_cursor_arg
 %type <varname> fori_varname
 %type <forilow> fori_lower
 %type <rec>		fors_target
@@ -174,7 +176,6 @@ static	void check_assignable(PLpgSQL_datum *datum);
 %token	K_PERFORM
 %token	K_ROW_COUNT
 %token	K_RAISE
-%token	K_RECORD
 %token	K_RENAME
 %token	K_RESULT_OID
 %token	K_RETURN
@@ -195,7 +196,7 @@ static	void check_assignable(PLpgSQL_datum *datum);
 %token	T_TRIGGER
 %token	T_STRING
 %token	T_NUMBER
-%token	T_VARIABLE				/* a VAR, RECFIELD, or TRIGARG */
+%token	T_SCALAR				/* a VAR, RECFIELD, or TRIGARG */
 %token	T_ROW
 %token	T_RECORD
 %token	T_DTYPE
@@ -306,86 +307,42 @@ decl_stmt		: '<' '<' opt_lblname '>' '>'
 
 decl_statement	: decl_varname decl_const decl_datatype decl_notnull decl_defval
 					{
-						if (!OidIsValid($3->typrelid))
+						PLpgSQL_variable	*var;
+
+						var = plpgsql_build_variable($1.name, $1.lineno,
+													 $3, true);
+						if ($2)
 						{
-							/* Ordinary scalar datatype */
-							PLpgSQL_var		*var;
-
-							var = malloc(sizeof(PLpgSQL_var));
-							memset(var, 0, sizeof(PLpgSQL_var));
-
-							var->dtype		= PLPGSQL_DTYPE_VAR;
-							var->refname	= $1.name;
-							var->lineno		= $1.lineno;
-
-							var->datatype	= $3;
-							var->isconst	= $2;
-							var->notnull	= $4;
-							var->default_val = $5;
-
-							plpgsql_adddatum((PLpgSQL_datum *)var);
-							plpgsql_ns_additem(PLPGSQL_NSTYPE_VAR,
-											   var->varno,
-											   $1.name);
+							if (var->dtype == PLPGSQL_DTYPE_VAR)
+								((PLpgSQL_var *) var)->isconst = $2;
+							else
+								ereport(ERROR,
+										(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+										 errmsg("row or record variable cannot be CONSTANT")));
 						}
-						else
+						if ($4)
 						{
-							/* Composite type --- treat as rowtype */
-							PLpgSQL_row	   *row;
-
-							row = plpgsql_build_rowtype($3->typrelid);
-							row->dtype		= PLPGSQL_DTYPE_ROW;
-							row->refname	= $1.name;
-							row->lineno		= $1.lineno;
-
-							if ($2)
+							if (var->dtype == PLPGSQL_DTYPE_VAR)
+								((PLpgSQL_var *) var)->notnull = $4;
+							else
 								ereport(ERROR,
 										(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-										 errmsg("rowtype variable cannot be CONSTANT")));
-							if ($4)
-								ereport(ERROR,
-										(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-										 errmsg("rowtype variable cannot be NOT NULL")));
-							if ($5 != NULL)
-								ereport(ERROR,
-										(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-										 errmsg("default value for rowtype variable is not supported")));
-
-							plpgsql_adddatum((PLpgSQL_datum *)row);
-							plpgsql_ns_additem(PLPGSQL_NSTYPE_ROW,
-											   row->rowno,
-											   $1.name);
-
+										 errmsg("row or record variable cannot be NOT NULL")));
 						}
-					}
-				| decl_varname K_RECORD ';'
-					{
-						PLpgSQL_rec		*var;
-
-						var = malloc(sizeof(PLpgSQL_rec));
-
-						var->dtype		= PLPGSQL_DTYPE_REC;
-						var->refname	= $1.name;
-						var->lineno		= $1.lineno;
-
-						plpgsql_adddatum((PLpgSQL_datum *)var);
-						plpgsql_ns_additem(PLPGSQL_NSTYPE_REC, var->recno,
-												$1.name);
-					}
-				| decl_varname decl_rowtype ';'
-					{
-						$2->dtype		= PLPGSQL_DTYPE_ROW;
-						$2->refname		= $1.name;
-						$2->lineno		= $1.lineno;
-
-						plpgsql_adddatum((PLpgSQL_datum *)$2);
-						plpgsql_ns_additem(PLPGSQL_NSTYPE_ROW, $2->rowno,
-												$1.name);
+						if ($5 != NULL)
+						{
+							if (var->dtype == PLPGSQL_DTYPE_VAR)
+								((PLpgSQL_var *) var)->default_val = $5;
+							else
+								ereport(ERROR,
+										(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+										 errmsg("default value for row or record variable is not supported")));
+						}
 					}
 				| decl_varname K_ALIAS K_FOR decl_aliasitem ';'
 					{
 						plpgsql_ns_additem($4->itemtype,
-										$4->itemno, $1.name);
+										   $4->itemno, $1.name);
 					}
 				| K_RENAME decl_renname K_TO decl_renname ';'
 					{
@@ -404,15 +361,14 @@ decl_statement	: decl_varname decl_const decl_datatype decl_notnull decl_defval
 						/* pop local namespace for cursor args */
 						plpgsql_ns_pop();
 
-						new = malloc(sizeof(PLpgSQL_var));
-						memset(new, 0, sizeof(PLpgSQL_var));
+						new = (PLpgSQL_var *)
+							plpgsql_build_variable($1.name, $1.lineno,
+												   plpgsql_build_datatype(REFCURSOROID,
+																		  -1),
+												   true);
 
 						curname_def = malloc(sizeof(PLpgSQL_expr));
 						memset(curname_def, 0, sizeof(PLpgSQL_expr));
-
-						new->dtype		= PLPGSQL_DTYPE_VAR;
-						new->refname	= $1.name;
-						new->lineno		= $1.lineno;
 
 						curname_def->dtype = PLPGSQL_DTYPE_EXPR;
 						strcpy(buf, "SELECT '");
@@ -428,17 +384,11 @@ decl_statement	: decl_varname decl_const decl_datatype decl_notnull decl_defval
 						curname_def->query = strdup(buf);
 						new->default_val = curname_def;
 
-						new->datatype = plpgsql_parse_datatype("refcursor");
-
 						new->cursor_explicit_expr = $6;
 						if ($4 == NULL)
 							new->cursor_explicit_argrow = -1;
 						else
 							new->cursor_explicit_argrow = $4->rowno;
-
-						plpgsql_adddatum((PLpgSQL_datum *)new);
-						plpgsql_ns_additem(PLPGSQL_NSTYPE_VAR, new->varno,
-										   $1.name);
 					}
 				;
 
@@ -504,7 +454,7 @@ decl_cursor_arglist : decl_cursor_arg
 						new->nfields = 1;
 
 						new->fieldnames[0] = $1->refname;
-						new->varnos[0] = $1->varno;
+						new->varnos[0] = $1->dno;
 
 						$$ = new;
 					}
@@ -513,7 +463,7 @@ decl_cursor_arglist : decl_cursor_arg
 						int i = $1->nfields++;
 
 						$1->fieldnames[i] = $3->refname;
-						$1->varnos[i] = $3->varno;
+						$1->varnos[i] = $3->dno;
 
 						$$ = $1;
 					}
@@ -521,24 +471,8 @@ decl_cursor_arglist : decl_cursor_arg
 
 decl_cursor_arg : decl_varname decl_datatype
 					{
-						PLpgSQL_var *new;
-
-						new = malloc(sizeof(PLpgSQL_var));
-						memset(new, 0, sizeof(PLpgSQL_var));
-
-						new->dtype		= PLPGSQL_DTYPE_VAR;
-						new->refname	= $1.name;
-						new->lineno		= $1.lineno;
-
-						new->datatype	= $2;
-						new->isconst	= false;
-						new->notnull	= false;
-
-						plpgsql_adddatum((PLpgSQL_datum *)new);
-						plpgsql_ns_additem(PLPGSQL_NSTYPE_VAR, new->varno,
-										   $1.name);
-						
-						$$ = new;
+						$$ = plpgsql_build_variable($1.name, $1.lineno,
+													$2, true);
 					}
 				;
 
@@ -570,12 +504,6 @@ decl_aliasitem	: T_WORD
 						pfree(name);
 
 						$$ = nsi;
-					}
-				;
-
-decl_rowtype	: T_ROW
-					{
-						$$ = yylval.row;
 					}
 				;
 
@@ -803,18 +731,18 @@ getdiag_item : K_ROW_COUNT
 					}
 				;
 
-getdiag_target	: T_VARIABLE
+getdiag_target	: T_SCALAR
 					{
-						check_assignable(yylval.variable);
-						$$ = yylval.variable->dno;
+						check_assignable(yylval.scalar);
+						$$ = yylval.scalar->dno;
 					}
 				;
 
 
-assign_var		: T_VARIABLE
+assign_var		: T_SCALAR
 					{
-						check_assignable(yylval.variable);
-						$$ = yylval.variable->dno;
+						check_assignable(yylval.scalar);
+						$$ = yylval.scalar->dno;
 					}
 				| assign_var '[' expr_until_rightbracket
 					{
@@ -970,21 +898,11 @@ fori_var		: fori_varname
 					{
 						PLpgSQL_var		*new;
 
-						new = malloc(sizeof(PLpgSQL_var));
-						memset(new, 0, sizeof(PLpgSQL_var));
-
-						new->dtype		= PLPGSQL_DTYPE_VAR;
-						new->refname	= $1.name;
-						new->lineno		= $1.lineno;
-
-						new->datatype	= plpgsql_parse_datatype("integer");
-						new->isconst	= false;
-						new->notnull	= false;
-						new->default_val = NULL;
-
-						plpgsql_adddatum((PLpgSQL_datum *)new);
-						plpgsql_ns_additem(PLPGSQL_NSTYPE_VAR, new->varno,
-												$1.name);
+						new = (PLpgSQL_var *)
+							plpgsql_build_variable($1.name, $1.lineno,
+												   plpgsql_build_datatype(INT4OID,
+																		  -1),
+												   true);
 
 						plpgsql_add_initdatums(NULL);
 
@@ -992,7 +910,7 @@ fori_var		: fori_varname
 					}
 				;
 
-fori_varname	: T_VARIABLE
+fori_varname	: T_SCALAR
 					{
 						char	*name;
 
@@ -1297,9 +1215,9 @@ raise_params	: raise_params raise_param
 					}
 				;
 
-raise_param		: ',' T_VARIABLE
+raise_param		: ',' T_SCALAR
 					{
-						$$ = yylval.variable->dno;
+						$$ = yylval.scalar->dno;
 					}
 				;
 
@@ -1491,37 +1409,37 @@ stmt_close		: K_CLOSE lno cursor_variable ';'
 					}
 				;
 
-cursor_varptr	: T_VARIABLE
+cursor_varptr	: T_SCALAR
 					{
-						if (yylval.variable->dtype != PLPGSQL_DTYPE_VAR)
+						if (yylval.scalar->dtype != PLPGSQL_DTYPE_VAR)
 							yyerror("cursor variable must be a simple variable");
 
-						if (((PLpgSQL_var *) yylval.variable)->datatype->typoid != REFCURSOROID)
+						if (((PLpgSQL_var *) yylval.scalar)->datatype->typoid != REFCURSOROID)
 						{
 							plpgsql_error_lineno = plpgsql_scanner_lineno();
 							ereport(ERROR,
 									(errcode(ERRCODE_DATATYPE_MISMATCH),
 									 errmsg("\"%s\" must be of type cursor or refcursor",
-											((PLpgSQL_var *) yylval.variable)->refname)));
+											((PLpgSQL_var *) yylval.scalar)->refname)));
 						}
-						$$ = (PLpgSQL_var *) yylval.variable;
+						$$ = (PLpgSQL_var *) yylval.scalar;
 					}
 				;
 
-cursor_variable	: T_VARIABLE
+cursor_variable	: T_SCALAR
 					{
-						if (yylval.variable->dtype != PLPGSQL_DTYPE_VAR)
+						if (yylval.scalar->dtype != PLPGSQL_DTYPE_VAR)
 							yyerror("cursor variable must be a simple variable");
 
-						if (((PLpgSQL_var *) yylval.variable)->datatype->typoid != REFCURSOROID)
+						if (((PLpgSQL_var *) yylval.scalar)->datatype->typoid != REFCURSOROID)
 						{
 							plpgsql_error_lineno = plpgsql_scanner_lineno();
 							ereport(ERROR,
 									(errcode(ERRCODE_DATATYPE_MISMATCH),
 									 errmsg("\"%s\" must be of type refcursor",
-											((PLpgSQL_var *) yylval.variable)->refname)));
+											((PLpgSQL_var *) yylval.scalar)->refname)));
 						}
-						$$ = yylval.variable->dno;
+						$$ = yylval.scalar->dno;
 					}
 				;
 
@@ -1664,8 +1582,8 @@ read_sql_construct(int until,
 			plpgsql_dstring_append(&ds, " ");
 		switch (tok)
 		{
-			case T_VARIABLE:
-				params[nparams] = yylval.variable->dno;
+			case T_SCALAR:
+				params[nparams] = yylval.scalar->dno;
 				snprintf(buf, sizeof(buf), " $%d ", ++nparams);
 				plpgsql_dstring_append(&ds, buf);
 				break;
@@ -1821,25 +1739,25 @@ make_select_stmt(void)
 					have_into = 1;
 					break;
 
-				case T_VARIABLE:
+				case T_SCALAR:
 				{
 					int				nfields = 1;
 					char			*fieldnames[1024];
 					int				varnos[1024];
 
-					check_assignable(yylval.variable);
+					check_assignable(yylval.scalar);
 					fieldnames[0] = strdup(yytext);
-					varnos[0]	  = yylval.variable->dno;
+					varnos[0]	  = yylval.scalar->dno;
 
 					while ((tok = yylex()) == ',')
 					{
 						tok = yylex();
 						switch(tok)
 						{
-							case T_VARIABLE:
-								check_assignable(yylval.variable);
+							case T_SCALAR:
+								check_assignable(yylval.scalar);
 								fieldnames[nfields] = strdup(yytext);
-								varnos[nfields++]	= yylval.variable->dno;
+								varnos[nfields++]	= yylval.scalar->dno;
 								break;
 
 							default:
@@ -1885,8 +1803,8 @@ make_select_stmt(void)
 			plpgsql_dstring_append(&ds, " ");
 		switch (tok)
 		{
-			case T_VARIABLE:
-				params[nparams] = yylval.variable->dno;
+			case T_SCALAR:
+				params[nparams] = yylval.scalar->dno;
 				snprintf(buf, sizeof(buf), " $%d ", ++nparams);
 				plpgsql_dstring_append(&ds, buf);
 				break;
@@ -1968,25 +1886,25 @@ make_fetch_stmt(void)
 			rec = yylval.rec;
 			break;
 
-		case T_VARIABLE:
+		case T_SCALAR:
 			{
 				int				nfields = 1;
 				char			*fieldnames[1024];
 				int				varnos[1024];
 
-				check_assignable(yylval.variable);
+				check_assignable(yylval.scalar);
 				fieldnames[0] = strdup(yytext);
-				varnos[0]	  = yylval.variable->dno;
+				varnos[0]	  = yylval.scalar->dno;
 
 				while ((tok = yylex()) == ',')
 				{
 					tok = yylex();
 					switch(tok)
 					{
-						case T_VARIABLE:
-							check_assignable(yylval.variable);
+						case T_SCALAR:
+							check_assignable(yylval.scalar);
 							fieldnames[nfields] = strdup(yytext);
-							varnos[nfields++]	= yylval.variable->dno;
+							varnos[nfields++]	= yylval.scalar->dno;
 							break;
 
 						default:
