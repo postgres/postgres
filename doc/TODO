@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Nov  6 20:33:37 EST 2001
+Last updated:		Wed Nov  7 00:27:22 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -216,8 +216,8 @@ CLIENTS
 * Allow psql \d to show temporary table structure
 * Add XML interface:  psql, pg_dump, COPY, separate server (?)
 * -Fix libpq to properly handle socket failures under native MS Win32
-* Add MD5 to ODBC
 * Fix ecpg variable handling in EXEC SQL AT statement
+* Add MD5 to ODBC
 * JDBC
 	o Comprehensive test suite. This may be available already.
 	o Updateable resultSet (must be done in backend code)
@@ -226,6 +226,7 @@ CLIENTS
 	o Error Codes (pending backend implementation)
 	o -Support for binary data/bytea
 	o Move to using 'make' rather than 'ant'(?)
+	o Add MD5 capability
 * ECPG
 	o Implement set descriptor, using descriptor
 	o Make casts work in variable initializations
