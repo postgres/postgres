@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.115 2003/07/27 21:49:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.116 2003/08/03 23:44:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -318,12 +318,19 @@ errfinish(int dummy, ...)
 	MemoryContext oldcontext;
 	ErrorContextCallback *econtext;
 
+	recursion_depth++;
 	CHECK_STACK_DEPTH();
 
 	/*
-	 * Call any context callback functions.  We can treat ereports occuring
-	 * in callback functions as re-entrant rather than recursive case, so
-	 * don't increment recursion_depth yet.
+	 * Do processing in ErrorContext, which we hope has enough reserved space
+	 * to report an error.
+	 */
+	oldcontext = MemoryContextSwitchTo(ErrorContext);
+
+	/*
+	 * Call any context callback functions.  Errors occurring in callback
+	 * functions will be treated as recursive errors --- this ensures we
+	 * will avoid infinite recursion (see errstart).
 	 */
 	for (econtext = error_context_stack;
 		 econtext != NULL;
@@ -331,15 +338,6 @@ errfinish(int dummy, ...)
 	{
 		(*econtext->callback) (econtext->arg);
 	}
-
-	/* Now we are ready to process the error. */
-	recursion_depth++;
-
-	/*
-	 * Do processing in ErrorContext, which we hope has enough reserved space
-	 * to report an error.
-	 */
-	oldcontext = MemoryContextSwitchTo(ErrorContext);
 
 	/* Send to server log, if enabled */
 	if (edata->output_to_server)
