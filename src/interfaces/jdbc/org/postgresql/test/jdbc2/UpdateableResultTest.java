@@ -15,25 +15,79 @@ import org.postgresql.test.TestUtil;
 
 public class UpdateableResultTest extends TestCase
 {
+	private Connection con;
 
 	public UpdateableResultTest( String name )
 	{
 		super( name );
 	}
 
+	protected void setUp() throws Exception
+	{
+		con = TestUtil.openDB();
+		TestUtil.createTable(con, "updateable", "id int primary key, name text, notselected text");
+		TestUtil.createTable(con, "second", "id1 int primary key, name1 text");
+
+		// put some dummy data into second
+		Statement st2 = con.createStatement();
+		st2.execute( "insert into second values (1,'anyvalue' )");
+		st2.close();
+		
+	}
+
+	protected void tearDown() throws Exception
+	{
+		TestUtil.dropTable(con, "updateable");
+		TestUtil.dropTable(con, "second");
+		TestUtil.closeDB(con);
+	}
+
+	public void testCancelRowUpdates() throws Exception
+	{
+		Statement st = con.createStatement( ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE );
+		ResultSet rs = st.executeQuery( "select * from second");
+
+		// make sure we're dealing with the correct row.
+		rs.first();
+		assertEquals(1,rs.getInt(1));
+		assertEquals("anyvalue",rs.getString(2));
+
+		// update, cancel and make sure nothings changed.
+		rs.updateInt(1,99);
+		rs.cancelRowUpdates();
+		assertEquals(1,rs.getInt(1));
+		assertEquals("anyvalue",rs.getString(2));
+
+		// real update
+		rs.updateInt(1,999);
+		rs.updateRow();
+		assertEquals(999,rs.getInt(1));
+		assertEquals("anyvalue",rs.getString(2));
+
+		// scroll some and make sure the update is still there
+		rs.beforeFirst();
+		rs.next();
+		assertEquals(999,rs.getInt(1));
+		assertEquals("anyvalue",rs.getString(2));
+
+
+		// make sure the update got to the db and the driver isn't lying to us.
+		rs.close();
+		rs = st.executeQuery( "select * from second");
+		rs.first();
+		assertEquals(999,rs.getInt(1));
+		assertEquals("anyvalue",rs.getString(2));
+
+		rs.close();
+		st.close();
+	}
+
+
+
 	public void testUpdateable()
 	{
 		try
 		{
-			Connection con = TestUtil.openDB();
-			TestUtil.createTable(con, "updateable", "id int primary key, name text, notselected text");
-			TestUtil.createTable(con, "second", "id1 int primary key, name1 text");
-
-			// put some dummy data into second
-			Statement st2 = con.createStatement();
-			st2.execute( "insert into second values (1,'anyvalue' )");
-			st2.close();
-
 			Statement st = con.createStatement( ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE );
 			ResultSet rs = st.executeQuery( "select * from updateable");
 			assertNotNull( rs );
@@ -123,12 +177,10 @@ public class UpdateableResultTest extends TestCase
 
 			st.close();
 
-			TestUtil.dropTable( con, "updateable" );
-			TestUtil.dropTable( con, "second" );
-			TestUtil.closeDB( con );
 		}
 		catch (Exception ex)
 		{
+			ex.printStackTrace();
 			fail(ex.getMessage());
 		}
 	}
