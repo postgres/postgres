@@ -1,4 +1,4 @@
-pgbench README		2001/10/24 Tatsuo Ishii (t-ishii@sra.co.jp)
+pgbench README		2002/02/24 Tatsuo Ishii (t-ishii@sra.co.jp)
 
 o What is pgbench?
 
@@ -122,6 +122,9 @@ o options
 	-S
 		Perform select only transactions instead of TPC-B.
 
+	-N
+		Skip updation of "branches" and "tellers" table. This
+		would result in lower contention of updates.
         -C
 		Establish connection for each transaction, rather than
 		doing it just once at begining of pgbench in the normal
@@ -152,6 +155,10 @@ o License?
 Basically it is same as BSD license. See pgbench.c for more details.
 
 o History
+
+2002/02/24
+	* disable CHECKPOINT
+	* add -N option
 
 2001/10/24
 	* "time"->"mtime"

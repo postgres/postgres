@@ -1,10 +1,10 @@
 /*
- * $Header: /cvsroot/pgsql/contrib/pgbench/pgbench.c,v 1.15 2002/02/18 05:46:41 momjian Exp $
+ * $Header: /cvsroot/pgsql/contrib/pgbench/pgbench.c,v 1.16 2002/02/24 00:17:57 ishii Exp $
  *
  * pgbench: a simple TPC-B like benchmark program for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2000  Tatsuo Ishii
+ * Copyright (c) 2000-2002  Tatsuo Ishii
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -95,7 +95,7 @@ typedef struct
 static void
 usage()
 {
-	fprintf(stderr, "usage: pgbench [-h hostname][-p port][-c nclients][-t ntransactions][-s scaling_factor][-n][-C][-v][-S][-U login][-P password][-d][dbname]\n");
+	fprintf(stderr, "usage: pgbench [-h hostname][-p port][-c nclients][-t ntransactions][-s scaling_factor][-n][-C][-v][-S][-N][-U login][-P password][-d][dbname]\n");
 	fprintf(stderr, "(initialize mode): pgbench -i [-h hostname][-p port][-s scaling_factor][-U login][-P password][-d][dbname]\n");
 }
 
@@ -168,7 +168,7 @@ check(CState * state, PGresult *res, int n, int good)
 
 /* process a transaction */
 static void
-doOne(CState * state, int n, int debug)
+doOne(CState * state, int n, int debug, int ttype)
 {
 	char		sql[256];
 	PGresult   *res;
@@ -295,12 +295,18 @@ doOne(CState * state, int n, int debug)
 			sprintf(sql, "select abalance from accounts where aid = %d", st->aid);
 			break;
 		case 3:
-			sprintf(sql, "update tellers set tbalance = tbalance + %d where tid = %d\n",
-					st->delta, st->tid);
-			break;
+			if (ttype == 0)
+			{
+			    sprintf(sql, "update tellers set tbalance = tbalance + %d where tid = %d\n",
+				    st->delta, st->tid);
+			    break;
+			}
 		case 4:
-			sprintf(sql, "update branches set bbalance = bbalance + %d where bid = %d", st->delta, st->bid);
-			break;
+			if (ttype == 0)
+			{
+			    sprintf(sql, "update branches set bbalance = bbalance + %d where bid = %d", st->delta, st->bid);
+			    break;
+			}
 		case 5:
 			sprintf(sql, "insert into history(tid,bid,aid,delta,mtime) values(%d,%d,%d,%d,'now')",
 					st->tid, st->bid, st->aid, st->delta);
@@ -548,6 +554,18 @@ init()
 				fprintf(stderr, "PQendcopy failed\n");
 				exit(1);
 			}
+
+#ifdef NOT_USED
+			/*
+			 * do a checkpoint to purge the old WAL logs
+			 */
+			res = PQexec(con, "checkpoint");
+			if (PQresultStatus(res) != PGRES_COMMAND_OK)
+			{
+				fprintf(stderr, "%s", PQerrorMessage(con));
+				exit(1);
+			}
+#endif /* NOT_USED */
 		}
 	}
 
@@ -575,6 +593,7 @@ printResults(
 				t2;
 	int			i;
 	int			normal_xacts = 0;
+	char	*s;
 
 	for (i = 0; i < nclients; i++)
 		normal_xacts += state[i].cnt;
@@ -585,7 +604,14 @@ printResults(
 	t2 = (tv3->tv_sec - tv2->tv_sec) * 1000000.0 + (tv3->tv_usec - tv2->tv_usec);
 	t2 = normal_xacts * 1000000.0 / t2;
 
-	printf("transaction type: %s\n", ttype == 0 ? "TPC-B (sort of)" : "SELECT only");
+	if (ttype == 0)
+	    s = "TPC-B (sort of)";
+	else if (ttype == 2)
+	    s = "Update only accounts";
+	else
+	    s = "SELECT only";
+
+	printf("transaction type: %s\n", s);
 	printf("scaling factor: %d\n", tps);
 	printf("number of clients: %d\n", nclients);
 	printf("number of transactions per client: %d\n", nxacts);
@@ -609,7 +635,8 @@ main(int argc, char **argv)
 	int			is_full_vacuum = 0;		/* do full vacuum before testing? */
 	int			debug = 0;		/* debug flag */
 	int			ttype = 0;		/* transaction type. 0: TPC-B, 1: SELECT
-								 * only */
+								 * only 
+				 2: skip updation of branches and tellers */
 
 	static CState state[MAXCLIENTS];	/* clients status */
 
@@ -631,7 +658,7 @@ main(int argc, char **argv)
 	PGconn	   *con;
 	PGresult   *res;
 
-	while ((c = getopt(argc, argv, "ih:nvp:dc:t:s:U:P:CS")) != -1)
+	while ((c = getopt(argc, argv, "ih:nvp:dc:t:s:U:P:CNS")) != -1)
 	{
 		switch (c)
 		{
@@ -655,6 +682,9 @@ main(int argc, char **argv)
 				break;
 			case 'S':
 				ttype = 1;
+				break;
+			case 'N':
+				ttype = 2;
 				break;
 			case 'c':
 				nclients = atoi(optarg);
@@ -841,8 +871,8 @@ main(int argc, char **argv)
 	/* send start up quries in async manner */
 	for (i = 0; i < nclients; i++)
 	{
-		if (ttype == 0)
-			doOne(state, i, debug);
+		if (ttype == 0 || ttype == 2)
+			doOne(state, i, debug, ttype);
 		else if (ttype == 1)
 			doSelectOnly(state, i, debug);
 	}
@@ -905,8 +935,8 @@ main(int argc, char **argv)
 		{
 			if (state[i].con && FD_ISSET(PQsocket(state[i].con), &input_mask))
 			{
-				if (ttype == 0)
-					doOne(state, i, debug);
+				if (ttype == 0 || ttype == 2)
+					doOne(state, i, debug, ttype);
 				else if (ttype == 1)
 					doSelectOnly(state, i, debug);
 			}
