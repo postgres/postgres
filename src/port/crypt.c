@@ -53,7 +53,10 @@ __RCSID("$NetBSD: crypt.c,v 1.18 2001/03/01 14:37:35 wiz Exp $");
 #include <unistd.h>
 #include <windows.h>
 
-#include "crypt.h"
+static int des_setkey(const char *key);
+static int des_cipher(const char *in, char *out, long salt, int num_iter);
+static int setkey(const char *key);
+static int encrypt(char *block, int flag);
 
 /*
  * UNIX password, and DES, encryption.
@@ -473,7 +476,6 @@ static C_block	CF6464[64/CHUNKBITS][1<<CHUNKBITS];
 
 
 static C_block	constdatablock;			/* encryption constant */
-POWERGRES_TLS
 static char	cryptresult[1+4+4+11+1];	/* encrypted result */
 
 extern char *__md5crypt(const char *, const char *);	/* XXX */
@@ -604,7 +606,7 @@ static volatile int des_ready = 0;
 /*
  * Set up the key schedule from the key.
  */
-int
+static int
 des_setkey(key)
 	const char *key;
 {
@@ -636,7 +638,7 @@ des_setkey(key)
  * NOTE: the performance of this routine is critically dependent on your
  * compiler and machine architecture.
  */
-int
+static int
 des_cipher(in, out, salt, num_iter)
 	const char *in;
 	char *out;
@@ -958,7 +960,7 @@ setkey(key)
 /*
  * "encrypt" routine (for backwards compatibility)
  */
-int
+static int
 encrypt(block, flag)
 	char *block;
 	int flag;

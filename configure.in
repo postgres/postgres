@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $Header: /cvsroot/pgsql/configure.in,v 1.248 2003/05/09 16:52:10 momjian Exp $
+dnl $Header: /cvsroot/pgsql/configure.in,v 1.249 2003/05/10 04:03:37 momjian Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -866,22 +866,6 @@ case $host_os in win32*)
 AC_LIBOBJ(dirmod)
 AC_LIBOBJ(opendir) ;;
 esac
-
-# Now that rint() is /port, I am not sure this still works, bjm 2003-05-09
-# On HPUX 9, rint() is not in regular libm.a but in /lib/pa1.1/libm.a;
-# this hackery with HPUXMATHLIB allows us to cope.
-HPUXMATHLIB=""
-case $host_cpu in
-  hppa1.1)
-	if test -r /lib/pa1.1/libm.a ; then
-	    HPUXMATHLIB="-L /lib/pa1.1 -lm"
-	fi ;;
-esac
-AC_SUBST(HPUXMATHLIB)
-
-AC_CHECK_FUNCS(rint, [],
-               [AC_CHECK_LIB(m, rint, AC_DEFINE(HAVE_RINT), , $HPUXMATHLIB)])
-
 
 if test "$with_readline" = yes; then
   PGAC_VAR_RL_COMPLETION_APPEND_CHARACTER
