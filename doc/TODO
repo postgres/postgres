@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Jun 13 22:56:20 EDT 2000
+Last updated:		Thu Jun 15 09:53:19 EDT 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -99,6 +99,9 @@ TYPES
 * Get BIT type working
 * Allow better handling of numeric constants, type conversion [typeconv]
 * Support multiple simultaneous character sets, per SQL92
+* Reject character sequences those are not valid in their charset
+* Make functions more multi-byte aware, i.e. trim()
+* Make n of CHAR(n)/VARCHAR(n) the number of letters, not bytes
 
 VIEWS
 
