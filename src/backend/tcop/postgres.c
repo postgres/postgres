@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.152 2000/04/23 00:13:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.153 2000/04/28 05:07:34 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -129,7 +129,7 @@ extern int	NBuffers;
 static bool EchoQuery = false;	/* default don't echo */
 time_t		tim;
 char		pg_pathname[MAXPGPATH];
-FILE	   *StatFp;
+FILE	   *StatFp = NULL;
 
 /* ----------------
  *		people who want to use EOF should #define DONTUSENEWLINE in
@@ -1105,7 +1105,6 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 				 * ----------------
 				 */
 				ShowStats = 1;
-				StatFp = stderr;
 				break;
 
 			case 'T':
@@ -1127,7 +1126,6 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 				 *	caution: -s can not be used together with -t.
 				 * ----------------
 				 */
-				StatFp = stderr;
 				switch (optarg[0])
 				{
 					case 'p':
@@ -1455,7 +1453,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.152 $ $Date: 2000/04/23 00:13:16 $\n");
+		puts("$Revision: 1.153 $ $Date: 2000/04/28 05:07:34 $\n");
 	}
 
 	/*
@@ -1693,6 +1691,12 @@ ShowUsage(void)
 		r.ru_stime.tv_sec--;
 		r.ru_stime.tv_usec += 1000000;
 	}
+
+	/*
+	 * Set output destination if not otherwise set
+	 */
+	if (StatFp == NULL)
+		StatFp = stderr;
 
 	/*
 	 * the only stats we don't show here are for memory usage -- i can't
