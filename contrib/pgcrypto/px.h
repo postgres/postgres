@@ -26,12 +26,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: px.h,v 1.6 2001/11/29 19:40:37 momjian Exp $
+ * $Id: px.h,v 1.7 2001/11/30 17:39:20 momjian Exp $
  */
 
 #ifndef __PX_H
 #define __PX_H
 
+#include <sys/types.h>
 #ifdef HAVE_ENDIAN_H
 #include <endian.h>
 #endif
