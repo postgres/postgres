@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.39 2002/09/04 20:31:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.40 2002/10/12 22:24:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,8 @@ static List *new_join_tlist(List *tlist, int first_resdomno);
 static List *build_joinrel_restrictlist(Query *root,
 						   RelOptInfo *joinrel,
 						   RelOptInfo *outer_rel,
-						   RelOptInfo *inner_rel);
+						   RelOptInfo *inner_rel,
+						   JoinType jointype);
 static void build_joinrel_joinlist(RelOptInfo *joinrel,
 					   RelOptInfo *outer_rel,
 					   RelOptInfo *inner_rel);
@@ -334,7 +335,8 @@ build_join_rel(Query *root,
 			*restrictlist_ptr = build_joinrel_restrictlist(root,
 														   joinrel,
 														   outer_rel,
-														   inner_rel);
+														   inner_rel,
+														   jointype);
 		return joinrel;
 	}
 
@@ -419,7 +421,8 @@ build_join_rel(Query *root,
 	restrictlist = build_joinrel_restrictlist(root,
 											  joinrel,
 											  outer_rel,
-											  inner_rel);
+											  inner_rel,
+											  jointype);
 	if (restrictlist_ptr)
 		*restrictlist_ptr = restrictlist;
 	build_joinrel_joinlist(joinrel, outer_rel, inner_rel);
@@ -508,6 +511,7 @@ new_join_tlist(List *tlist,
  * 'joinrel' is a join relation node
  * 'outer_rel' and 'inner_rel' are a pair of relations that can be joined
  *		to form joinrel.
+ * 'jointype' is the type of join used.
  *
  * build_joinrel_restrictlist() returns a list of relevant restrictinfos,
  * whereas build_joinrel_joinlist() stores its results in the joinrel's
@@ -522,7 +526,8 @@ static List *
 build_joinrel_restrictlist(Query *root,
 						   RelOptInfo *joinrel,
 						   RelOptInfo *outer_rel,
-						   RelOptInfo *inner_rel)
+						   RelOptInfo *inner_rel,
+						   JoinType jointype)
 {
 	List	   *result = NIL;
 	List	   *rlist;
@@ -553,6 +558,11 @@ build_joinrel_restrictlist(Query *root,
 	 * one clause that checks equality between any set member on the left
 	 * and any member on the right; by transitivity, all the rest are then
 	 * equal.
+	 *
+	 * Weird special case: if we have two clauses that seem redundant
+	 * except one is pushed down into an outer join and the other isn't,
+	 * then they're not really redundant, because one constrains the
+	 * joined rows after addition of null fill rows, and the other doesn't.
 	 */
 	foreach(item, rlist)
 	{
@@ -576,7 +586,9 @@ build_joinrel_restrictlist(Query *root,
 
 				if (oldrinfo->mergejoinoperator != InvalidOid &&
 					rinfo->left_pathkey == oldrinfo->left_pathkey &&
-					rinfo->right_pathkey == oldrinfo->right_pathkey)
+					rinfo->right_pathkey == oldrinfo->right_pathkey &&
+					(rinfo->ispusheddown == oldrinfo->ispusheddown ||
+					 !IS_OUTER_JOIN(jointype)))
 				{
 					redundant = true;
 					break;
