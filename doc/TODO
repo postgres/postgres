@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue May 22 09:20:25 EDT 2001
+Last updated:		Tue May 22 15:38:00 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -19,7 +19,6 @@ RELIABILITY
 PARSER
 
 * -SELECT pg_class FROM pg_class generates strange error
-* ALTER TABLE ADD COLUMN does not honor DEFAULT or add CONSTRAINT
 
 MISC
 
@@ -143,6 +142,7 @@ COMMANDS
 * Change LIMIT val,val to offset,limit to match MySQL
 * Allow PL/PgSQL's RAISE function to take expressions
 * ALTER
+	* ALTER TABLE ADD COLUMN does not honor DEFAULT or add CONSTRAINT
 	* ALTER TABLE ADD COLUMN to inherited table put column in wrong place
 	  [inheritance]
 	* Add ALTER TABLE DROP COLUMN feature [drop]
