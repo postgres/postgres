@@ -4,8 +4,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.3\n"
-"POT-Creation-Date: 2002-10-03 04:18-0400\n"
-"PO-Revision-Date: 2002-10-04 08:23+0200\n"
+"POT-Creation-Date: 2002-10-25 04:16-0400\n"
+"PO-Revision-Date: 2002-10-26 07:22+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -312,7 +312,7 @@ msgstr ""
 msgid "simple_heap_delete: tuple concurrently updated"
 msgstr ""
 
-#: access/heap/heapam.c:1448 executor/execMain.c:1333
+#: access/heap/heapam.c:1448 executor/execMain.c:1334
 #, c-format
 msgid "Unknown status %u from heap_delete"
 msgstr ""
@@ -333,7 +333,7 @@ msgstr ""
 msgid "simple_heap_update: tuple concurrently updated"
 msgstr ""
 
-#: access/heap/heapam.c:1782 executor/execMain.c:1472
+#: access/heap/heapam.c:1782 executor/execMain.c:1473
 #, c-format
 msgid "Unknown status %u from heap_update"
 msgstr ""
@@ -726,99 +726,99 @@ msgstr ""
 msgid "bt_getroot[%s]: fixing root page"
 msgstr ""
 
-#: access/nbtree/nbtree.c:787
+#: access/nbtree/nbtree.c:806
 #, c-format
 msgid ""
 "_bt_restscan: my bits moved right off the end of the world!\n"
 "\tRecreate index %s."
 msgstr ""
 
-#: access/nbtree/nbtree.c:817
+#: access/nbtree/nbtree.c:836
 msgid "_bt_restore_page: can't add item to page"
 msgstr ""
 
-#: access/nbtree/nbtree.c:840
+#: access/nbtree/nbtree.c:859
 msgid "btree_delete_redo: block unfound"
 msgstr ""
 
-#: access/nbtree/nbtree.c:843
+#: access/nbtree/nbtree.c:862
 msgid "btree_delete_redo: uninitialized page"
 msgstr ""
 
-#: access/nbtree/nbtree.c:879
+#: access/nbtree/nbtree.c:898
 #, c-format
 msgid "btree_insert_%sdo: block unfound"
 msgstr ""
 
-#: access/nbtree/nbtree.c:882
+#: access/nbtree/nbtree.c:901
 #, c-format
 msgid "btree_insert_%sdo: uninitialized page"
 msgstr ""
 
-#: access/nbtree/nbtree.c:896
+#: access/nbtree/nbtree.c:915
 msgid "btree_insert_redo: failed to add item"
 msgstr ""
 
-#: access/nbtree/nbtree.c:905
+#: access/nbtree/nbtree.c:924
 msgid "btree_insert_undo: bad page LSN"
 msgstr ""
 
-#: access/nbtree/nbtree.c:913
+#: access/nbtree/nbtree.c:932
 msgid "btree_insert_undo: unimplemented"
 msgstr ""
 
-#: access/nbtree/nbtree.c:940
+#: access/nbtree/nbtree.c:959
 #, c-format
 msgid "btree_split_%s: lost left sibling"
 msgstr ""
 
-#: access/nbtree/nbtree.c:946
+#: access/nbtree/nbtree.c:965
 msgid "btree_split_undo: uninitialized left sibling"
 msgstr ""
 
-#: access/nbtree/nbtree.c:969
+#: access/nbtree/nbtree.c:988
 msgid "btree_split_undo: bad left sibling LSN"
 msgstr ""
 
-#: access/nbtree/nbtree.c:970 access/nbtree/nbtree.c:1009
+#: access/nbtree/nbtree.c:989 access/nbtree/nbtree.c:1028
 msgid "btree_split_undo: unimplemented"
 msgstr ""
 
-#: access/nbtree/nbtree.c:978
+#: access/nbtree/nbtree.c:997
 #, c-format
 msgid "btree_split_%s: lost right sibling"
 msgstr ""
 
-#: access/nbtree/nbtree.c:984
+#: access/nbtree/nbtree.c:1003
 msgid "btree_split_undo: uninitialized right sibling"
 msgstr ""
 
-#: access/nbtree/nbtree.c:1008
+#: access/nbtree/nbtree.c:1027
 msgid "btree_split_undo: bad right sibling LSN"
 msgstr ""
 
-#: access/nbtree/nbtree.c:1022
+#: access/nbtree/nbtree.c:1041
 msgid "btree_split_redo: lost next right page"
 msgstr ""
 
-#: access/nbtree/nbtree.c:1026
+#: access/nbtree/nbtree.c:1045
 msgid "btree_split_redo: uninitialized next right page"
 msgstr ""
 
-#: access/nbtree/nbtree.c:1063
+#: access/nbtree/nbtree.c:1082
 msgid "btree_newroot_redo: no root page"
 msgstr ""
 
-#: access/nbtree/nbtree.c:1066
+#: access/nbtree/nbtree.c:1085
 msgid "btree_newroot_redo: no metapage"
 msgstr ""
 
-#: access/nbtree/nbtree.c:1120
+#: access/nbtree/nbtree.c:1139
 #, c-format
 msgid "btree_redo: unknown op code %u"
 msgstr ""
 
-#: access/nbtree/nbtree.c:1140
+#: access/nbtree/nbtree.c:1159
 #, c-format
 msgid "btree_undo: unknown op code %u"
 msgstr ""
@@ -930,7 +930,7 @@ msgstr ""
 msgid "read of clog file %u, offset %u failed: %m"
 msgstr ""
 
-#: access/transam/clog.c:602 access/transam/xlog.c:1375
+#: access/transam/clog.c:602 access/transam/xlog.c:1380
 #, c-format
 msgid "creation of file %s failed: %m"
 msgstr ""
@@ -959,65 +959,87 @@ msgstr ""
 msgid "could not read transaction-commit log directory (%s): %m"
 msgstr ""
 
-#: access/transam/xact.c:424
+#: access/transam/xact.c:425
 msgid "You may only have 2^32-1 commands per transaction"
 msgstr ""
 
-#: access/transam/xact.c:714
+#: access/transam/xact.c:715
 #, c-format
 msgid "RecordTransactionAbort: xact %u already committed"
 msgstr ""
 
-#: access/transam/xact.c:943
+#: access/transam/xact.c:944
 msgid "CommitTransaction and not in in-progress state"
 msgstr ""
 
-#: access/transam/xact.c:1066
+#: access/transam/xact.c:1079
 msgid "AbortTransaction and not in in-progress state"
 msgstr ""
 
-#: access/transam/xact.c:1143
+#: access/transam/xact.c:1164
 msgid "CleanupTransaction and not in abort state"
 msgstr ""
 
-#: access/transam/xact.c:1175
+#: access/transam/xact.c:1196
 msgid "StartTransactionCommand: can't prevent chain"
 msgstr ""
 
-#: access/transam/xact.c:1194
+#: access/transam/xact.c:1215
 msgid "StartTransactionCommand: unexpected TBLOCK_BEGIN"
 msgstr ""
 
-#: access/transam/xact.c:1215
+#: access/transam/xact.c:1236
 msgid "StartTransactionCommand: unexpected TBLOCK_END"
 msgstr ""
 
-#: access/transam/xact.c:1238
+#: access/transam/xact.c:1259
 msgid "StartTransactionCommand: unexpected TBLOCK_ENDABORT"
 msgstr ""
 
-#: access/transam/xact.c:1440
+#. translator: %s represents an SQL statement name
+#: access/transam/xact.c:1475
+#, c-format
+msgid "%s cannot run inside a transaction block"
+msgstr ""
+
+#. translator: %s represents an SQL statement name
+#: access/transam/xact.c:1485
+#, c-format
+msgid "%s cannot be executed from a function"
+msgstr ""
+
+#: access/transam/xact.c:1489
+msgid "PreventTransactionChain: can't prevent chain"
+msgstr ""
+
+#. translator: %s represents an SQL statement name
+#: access/transam/xact.c:1496
+#, c-format
+msgid "%s will be committed automatically"
+msgstr ""
+
+#: access/transam/xact.c:1518
 msgid "BEGIN: already a transaction in progress"
 msgstr ""
 
-#: access/transam/xact.c:1504
+#: access/transam/xact.c:1582
 msgid "COMMIT: no transaction in progress"
 msgstr "COMMIT: ingen transaktion pågår"
 
-#: access/transam/xact.c:1541 access/transam/xact.c:1588
+#: access/transam/xact.c:1619 access/transam/xact.c:1666
 msgid "ROLLBACK: no transaction in progress"
 msgstr "ROLLBACK: ingen transaktion pågår"
 
-#: access/transam/xact.c:1662 access/transam/xact.c:1673
+#: access/transam/xact.c:1740 access/transam/xact.c:1751
 #, c-format
 msgid "xact_redo: unknown op code %u"
 msgstr ""
 
-#: access/transam/xact.c:1671
+#: access/transam/xact.c:1749
 msgid "xact_undo: can't undo committed xaction"
 msgstr ""
 
-#: access/transam/xact.c:1708
+#: access/transam/xact.c:1786
 msgid "XactPushRollback: already installed"
 msgstr ""
 
@@ -1036,7 +1058,7 @@ msgstr ""
 msgid "XLogInsert: invalid record length %u"
 msgstr ""
 
-#: access/transam/xlog.c:786 access/transam/xlog.c:2622 utils/adt/name.c:52
+#: access/transam/xlog.c:786 access/transam/xlog.c:2627 utils/adt/name.c:52
 #: utils/adt/varchar.c:83 utils/adt/varchar.c:357 utils/adt/varlena.c:225
 #, c-format
 msgid "%s"
@@ -1048,7 +1070,7 @@ msgid "XLogWrite: write request %X/%X is past end of log %X/%X"
 msgstr ""
 
 #: access/transam/xlog.c:1047 access/transam/xlog.c:1157
-#: access/transam/xlog.c:3326
+#: access/transam/xlog.c:3331
 #, c-format
 msgid "close of log file %u, segment %u failed: %m"
 msgstr ""
@@ -1072,190 +1094,190 @@ msgstr ""
 msgid "XLogFlush%s%s: request %X/%X; write %X/%X; flush %X/%X\n"
 msgstr ""
 
-#: access/transam/xlog.c:1310
+#: access/transam/xlog.c:1315
 #, c-format
 msgid "XLogFlush: request %X/%X is not satisfied --- flushed only to %X/%X"
 msgstr ""
 
-#: access/transam/xlog.c:1353 access/transam/xlog.c:1434
-#: access/transam/xlog.c:1544 access/transam/xlog.c:1548
+#: access/transam/xlog.c:1358 access/transam/xlog.c:1439
+#: access/transam/xlog.c:1549 access/transam/xlog.c:1553
 #, c-format
 msgid "open of %s (log file %u, segment %u) failed: %m"
 msgstr ""
 
-#: access/transam/xlog.c:1402
+#: access/transam/xlog.c:1407
 #, c-format
 msgid "ZeroFill failed to write %s: %m"
 msgstr ""
 
-#: access/transam/xlog.c:1407
+#: access/transam/xlog.c:1412
 #, c-format
 msgid "fsync of file %s failed: %m"
-msgstr ""
-
-#: access/transam/xlog.c:1512
-#, c-format
-msgid ""
-"link from %s to %s (initialization of log file %u, segment %u) failed: %m"
 msgstr ""
 
 #: access/transam/xlog.c:1517
 #, c-format
 msgid ""
+"link from %s to %s (initialization of log file %u, segment %u) failed: %m"
+msgstr ""
+
+#: access/transam/xlog.c:1522
+#, c-format
+msgid ""
 "rename from %s to %s (initialization of log file %u, segment %u) failed: %m"
 msgstr ""
 
-#: access/transam/xlog.c:1598
+#: access/transam/xlog.c:1603
 #, c-format
 msgid "could not open transaction log directory (%s): %m"
 msgstr ""
 
-#: access/transam/xlog.c:1613
+#: access/transam/xlog.c:1618
 #, c-format
 msgid "archiving transaction log file %s"
 msgstr ""
 
-#: access/transam/xlog.c:1615
+#: access/transam/xlog.c:1620
 msgid "archiving log files is not implemented!"
 msgstr ""
 
-#: access/transam/xlog.c:1629
+#: access/transam/xlog.c:1634
 #, c-format
 msgid "recycled transaction log file %s"
 msgstr ""
 
-#: access/transam/xlog.c:1635
+#: access/transam/xlog.c:1640
 #, c-format
 msgid "removing transaction log file %s"
 msgstr ""
 
-#: access/transam/xlog.c:1644
+#: access/transam/xlog.c:1649
 #, c-format
 msgid "could not read transaction log directory (%s): %m"
 msgstr ""
 
-#: access/transam/xlog.c:1717
+#: access/transam/xlog.c:1722
 #, c-format
 msgid "ReadRecord: bad resource manager data checksum in record at %X/%X"
 msgstr ""
 
-#: access/transam/xlog.c:1739
+#: access/transam/xlog.c:1744
 #, c-format
 msgid "ReadRecord: bad checksum of backup block %d in record at %X/%X"
 msgstr ""
 
-#: access/transam/xlog.c:1808
+#: access/transam/xlog.c:1813
 #, c-format
 msgid "ReadRecord: invalid record offset at %X/%X"
 msgstr ""
 
-#: access/transam/xlog.c:1831
+#: access/transam/xlog.c:1836
 #, c-format
 msgid "ReadRecord: lseek of log file %u, segment %u, offset %u failed: %m"
 msgstr ""
 
-#: access/transam/xlog.c:1837 access/transam/xlog.c:1921
+#: access/transam/xlog.c:1842 access/transam/xlog.c:1926
 #, c-format
 msgid "ReadRecord: read of log file %u, segment %u, offset %u failed: %m"
 msgstr ""
 
-#: access/transam/xlog.c:1847
+#: access/transam/xlog.c:1852
 #, c-format
 msgid "ReadRecord: contrecord is requested by %X/%X"
 msgstr ""
 
-#: access/transam/xlog.c:1861
+#: access/transam/xlog.c:1866
 #, c-format
 msgid "ReadRecord: record with zero length at %X/%X"
 msgstr ""
 
-#: access/transam/xlog.c:1885
+#: access/transam/xlog.c:1890
 #, c-format
 msgid "ReadRecord: record length %u at %X/%X too long"
 msgstr ""
 
-#: access/transam/xlog.c:1891
+#: access/transam/xlog.c:1896
 #, c-format
 msgid "ReadRecord: invalid resource manager id %u at %X/%X"
 msgstr ""
 
-#: access/transam/xlog.c:1929
+#: access/transam/xlog.c:1934
 #, c-format
 msgid ""
 "ReadRecord: there is no ContRecord flag in log file %u, segment %u, offset %u"
 msgstr ""
 
-#: access/transam/xlog.c:1937
+#: access/transam/xlog.c:1942
 #, c-format
 msgid ""
 "ReadRecord: invalid ContRecord length %u in log file %u, segment %u, offset %"
 "u"
 msgstr ""
 
-#: access/transam/xlog.c:2001
+#: access/transam/xlog.c:2006
 #, c-format
 msgid ""
 "ReadRecord: invalid magic number %04X in log file %u, segment %u, offset %u"
 msgstr ""
 
-#: access/transam/xlog.c:2007
+#: access/transam/xlog.c:2012
 #, c-format
 msgid ""
 "ReadRecord: invalid info bits %04X in log file %u, segment %u, offset %u"
 msgstr ""
 
-#: access/transam/xlog.c:2015
+#: access/transam/xlog.c:2020
 #, c-format
 msgid ""
 "ReadRecord: unexpected pageaddr %X/%X in log file %u, segment %u, offset %u"
 msgstr ""
 
 #. translator: SUI = startup id
-#: access/transam/xlog.c:2037
+#: access/transam/xlog.c:2042
 #, c-format
 msgid ""
 "ReadRecord: out-of-sequence SUI %u (after %u) in log file %u, segment %u, "
 "offset %u"
 msgstr ""
 
-#: access/transam/xlog.c:2096
+#: access/transam/xlog.c:2101
 msgid "invalid LC_COLLATE setting"
 msgstr ""
 
-#: access/transam/xlog.c:2100
+#: access/transam/xlog.c:2105
 msgid "invalid LC_CTYPE setting"
 msgstr ""
 
-#: access/transam/xlog.c:2118
+#: access/transam/xlog.c:2123
 msgid "sizeof(ControlFileData) is larger than BLCKSZ; fix either one"
 msgstr ""
 
-#: access/transam/xlog.c:2126
+#: access/transam/xlog.c:2131
 #, c-format
 msgid "WriteControlFile: could not create control file (%s): %m"
 msgstr ""
 
-#: access/transam/xlog.c:2135
+#: access/transam/xlog.c:2140
 #, c-format
 msgid "WriteControlFile: write to control file failed: %m"
 msgstr ""
 
-#: access/transam/xlog.c:2139
+#: access/transam/xlog.c:2144
 #, c-format
 msgid "WriteControlFile: fsync of control file failed: %m"
 msgstr ""
 
-#: access/transam/xlog.c:2155 access/transam/xlog.c:2278
+#: access/transam/xlog.c:2160 access/transam/xlog.c:2283
 #, c-format
 msgid "could not open control file (%s): %m"
 msgstr ""
 
-#: access/transam/xlog.c:2158
+#: access/transam/xlog.c:2163
 #, c-format
 msgid "read from control file failed: %m"
 msgstr ""
 
-#: access/transam/xlog.c:2170
+#: access/transam/xlog.c:2175
 #, c-format
 msgid ""
 "The database cluster was initialized with PG_CONTROL_VERSION %d,\n"
@@ -1263,11 +1285,11 @@ msgid ""
 "\tIt looks like you need to initdb."
 msgstr ""
 
-#: access/transam/xlog.c:2183
+#: access/transam/xlog.c:2188
 msgid "invalid checksum in control file"
 msgstr ""
 
-#: access/transam/xlog.c:2199
+#: access/transam/xlog.c:2204
 #, c-format
 msgid ""
 "The database cluster was initialized with CATALOG_VERSION_NO %d,\n"
@@ -1275,7 +1297,7 @@ msgid ""
 "\tIt looks like you need to initdb."
 msgstr ""
 
-#: access/transam/xlog.c:2205
+#: access/transam/xlog.c:2210
 #, c-format
 msgid ""
 "The database cluster was initialized with BLCKSZ %d,\n"
@@ -1283,7 +1305,7 @@ msgid ""
 "\tIt looks like you need to initdb."
 msgstr ""
 
-#: access/transam/xlog.c:2211
+#: access/transam/xlog.c:2216
 #, c-format
 msgid ""
 "The database cluster was initialized with RELSEG_SIZE %d,\n"
@@ -1291,7 +1313,7 @@ msgid ""
 "\tIt looks like you need to recompile or initdb."
 msgstr ""
 
-#: access/transam/xlog.c:2218
+#: access/transam/xlog.c:2223
 #, c-format
 msgid ""
 "The database cluster was initialized with NAMEDATALEN %d,\n"
@@ -1299,7 +1321,7 @@ msgid ""
 "\tIt looks like you need to recompile or initdb."
 msgstr ""
 
-#: access/transam/xlog.c:2225
+#: access/transam/xlog.c:2230
 #, c-format
 msgid ""
 "The database cluster was initialized with FUNC_MAX_ARGS %d,\n"
@@ -1307,21 +1329,21 @@ msgid ""
 "\tIt looks like you need to recompile or initdb."
 msgstr ""
 
-#: access/transam/xlog.c:2233
+#: access/transam/xlog.c:2238
 msgid ""
 "The database cluster was initialized without HAVE_INT64_TIMESTAMP\n"
 "\tbut the backend was compiled with HAVE_INT64_TIMESTAMP.\n"
 "\tIt looks like you need to recompile or initdb."
 msgstr ""
 
-#: access/transam/xlog.c:2239
+#: access/transam/xlog.c:2244
 msgid ""
 "The database cluster was initialized with HAVE_INT64_TIMESTAMP\n"
 "\tbut the backend was compiled without HAVE_INT64_TIMESTAMP.\n"
 "\tIt looks like you need to recompile or initdb."
 msgstr ""
 
-#: access/transam/xlog.c:2246
+#: access/transam/xlog.c:2251
 #, c-format
 msgid ""
 "The database cluster was initialized with LOCALE_NAME_BUFLEN %d,\n"
@@ -1329,7 +1351,7 @@ msgid ""
 "\tIt looks like you need to initdb."
 msgstr ""
 
-#: access/transam/xlog.c:2253
+#: access/transam/xlog.c:2258
 #, c-format
 msgid ""
 "The database cluster was initialized with LC_COLLATE '%s',\n"
@@ -1337,7 +1359,7 @@ msgid ""
 "\tIt looks like you need to initdb."
 msgstr ""
 
-#: access/transam/xlog.c:2259
+#: access/transam/xlog.c:2264
 #, c-format
 msgid ""
 "The database cluster was initialized with LC_CTYPE '%s',\n"
@@ -1345,41 +1367,41 @@ msgid ""
 "\tIt looks like you need to initdb."
 msgstr ""
 
-#: access/transam/xlog.c:2286
+#: access/transam/xlog.c:2291
 #, c-format
 msgid "write to control file failed: %m"
 msgstr ""
 
-#: access/transam/xlog.c:2290
+#: access/transam/xlog.c:2295
 #, c-format
 msgid "fsync of control file failed: %m"
 msgstr ""
 
-#: access/transam/xlog.c:2430
+#: access/transam/xlog.c:2435
 #, c-format
 msgid "BootStrapXLOG failed to write log file: %m"
 msgstr ""
 
-#: access/transam/xlog.c:2434
+#: access/transam/xlog.c:2439
 #, c-format
 msgid "BootStrapXLOG failed to fsync log file: %m"
 msgstr ""
 
-#: access/transam/xlog.c:2500
+#: access/transam/xlog.c:2505
 msgid "control file context is broken"
 msgstr ""
 
-#: access/transam/xlog.c:2503
+#: access/transam/xlog.c:2508
 #, c-format
 msgid "database system was shut down at %s"
 msgstr ""
 
-#: access/transam/xlog.c:2506
+#: access/transam/xlog.c:2511
 #, c-format
 msgid "database system shutdown was interrupted at %s"
 msgstr ""
 
-#: access/transam/xlog.c:2509
+#: access/transam/xlog.c:2514
 #, c-format
 msgid ""
 "database system was interrupted being in recovery at %s\n"
@@ -1387,156 +1409,156 @@ msgid ""
 "\tand you will have to use the last backup for recovery."
 msgstr ""
 
-#: access/transam/xlog.c:2514
+#: access/transam/xlog.c:2519
 #, c-format
 msgid "database system was interrupted at %s"
 msgstr ""
 
-#: access/transam/xlog.c:2525
+#: access/transam/xlog.c:2530
 #, c-format
 msgid "checkpoint record is at %X/%X"
 msgstr ""
 
-#: access/transam/xlog.c:2534
+#: access/transam/xlog.c:2539
 #, c-format
 msgid "using previous checkpoint record at %X/%X"
 msgstr ""
 
-#: access/transam/xlog.c:2539
+#: access/transam/xlog.c:2544
 msgid "unable to locate a valid checkpoint record"
 msgstr ""
 
-#: access/transam/xlog.c:2545
+#: access/transam/xlog.c:2550
 #, c-format
 msgid "redo record is at %X/%X; undo record is at %X/%X; shutdown %s"
 msgstr ""
 
-#: access/transam/xlog.c:2549
+#: access/transam/xlog.c:2554
 #, c-format
 msgid "next transaction id: %u; next oid: %u"
 msgstr "nästa transaktions-id: %u; nästa oid: %u"
 
-#: access/transam/xlog.c:2552
+#: access/transam/xlog.c:2557
 msgid "invalid next transaction id"
 msgstr "nästa transaktions-id ogiltig"
 
-#: access/transam/xlog.c:2563
+#: access/transam/xlog.c:2568
 msgid "invalid redo in checkpoint record"
 msgstr "ogiltig redo i checkpoint-post"
 
-#: access/transam/xlog.c:2571
+#: access/transam/xlog.c:2576
 msgid "invalid redo/undo record in shutdown checkpoint"
 msgstr ""
 
-#: access/transam/xlog.c:2580
+#: access/transam/xlog.c:2585
 msgid ""
 "database system was not properly shut down; automatic recovery in progress"
 msgstr ""
 
-#: access/transam/xlog.c:2600
+#: access/transam/xlog.c:2605
 #, c-format
 msgid "redo starts at %X/%X"
 msgstr ""
 
-#: access/transam/xlog.c:2631
+#: access/transam/xlog.c:2636
 #, c-format
 msgid "redo done at %X/%X"
 msgstr ""
 
-#: access/transam/xlog.c:2637
+#: access/transam/xlog.c:2642
 msgid "redo is not required"
 msgstr ""
 
-#: access/transam/xlog.c:2719
+#: access/transam/xlog.c:2724
 #, c-format
 msgid "undo starts at %X/%X"
 msgstr ""
 
-#: access/transam/xlog.c:2729
+#: access/transam/xlog.c:2734
 #, c-format
 msgid "undo done at %X/%X"
 msgstr ""
 
-#: access/transam/xlog.c:2733
+#: access/transam/xlog.c:2738
 msgid "undo is not required"
 msgstr ""
 
-#: access/transam/xlog.c:2767
+#: access/transam/xlog.c:2772
 msgid "database system is ready"
 msgstr "databassystemet är redo"
 
-#: access/transam/xlog.c:2799
+#: access/transam/xlog.c:2804
 msgid "invalid primary checkpoint link in control file"
 msgstr ""
 
-#: access/transam/xlog.c:2800
+#: access/transam/xlog.c:2805
 msgid "invalid secondary checkpoint link in control file"
 msgstr ""
 
-#: access/transam/xlog.c:2809
+#: access/transam/xlog.c:2814
 msgid "invalid primary checkpoint record"
 msgstr ""
 
-#: access/transam/xlog.c:2810
+#: access/transam/xlog.c:2815
 msgid "invalid secondary checkpoint record"
 msgstr ""
 
-#: access/transam/xlog.c:2816
+#: access/transam/xlog.c:2821
 msgid "invalid resource manager id in primary checkpoint record"
 msgstr ""
 
-#: access/transam/xlog.c:2817
+#: access/transam/xlog.c:2822
 msgid "invalid resource manager id in secondary checkpoint record"
 msgstr ""
 
-#: access/transam/xlog.c:2824
+#: access/transam/xlog.c:2829
 msgid "invalid xl_info in primary checkpoint record"
 msgstr ""
 
-#: access/transam/xlog.c:2825
+#: access/transam/xlog.c:2830
 msgid "invalid xl_info in secondary checkpoint record"
 msgstr ""
 
-#: access/transam/xlog.c:2831
+#: access/transam/xlog.c:2836
 msgid "invalid length of primary checkpoint record"
 msgstr ""
 
-#: access/transam/xlog.c:2832
+#: access/transam/xlog.c:2837
 msgid "invalid length of secondary checkpoint record"
 msgstr ""
 
-#: access/transam/xlog.c:2895
+#: access/transam/xlog.c:2900
 msgid "shutting down"
 msgstr "stänger ner"
 
-#: access/transam/xlog.c:2908
+#: access/transam/xlog.c:2913
 msgid "database system is shut down"
 msgstr "databassystemet är nedstängt"
 
-#: access/transam/xlog.c:2929
+#: access/transam/xlog.c:2934
 msgid "CreateCheckPoint: cannot be called inside transaction block"
 msgstr ""
 
-#: access/transam/xlog.c:3044
+#: access/transam/xlog.c:3049
 msgid "active transaction while database system is shutting down"
 msgstr ""
 
-#: access/transam/xlog.c:3090
+#: access/transam/xlog.c:3095
 msgid ""
 "concurrent transaction log activity while database system is shutting down"
 msgstr ""
 
-#: access/transam/xlog.c:3321 access/transam/xlog.c:3349
+#: access/transam/xlog.c:3326 access/transam/xlog.c:3354
 #, c-format
 msgid "fsync of log file %u, segment %u failed: %m"
 msgstr ""
 
-#: access/transam/xlog.c:3355
+#: access/transam/xlog.c:3360
 #, c-format
 msgid "fdatasync of log file %u, segment %u failed: %m"
 msgstr ""
 
-#: access/transam/xlog.c:3363
+#: access/transam/xlog.c:3368
 #, c-format
 msgid "bogus wal_sync_method %d"
 msgstr ""
@@ -1729,7 +1751,7 @@ msgid "database \"%s\" not found"
 msgstr "hittar inte databasen \"%s\""
 
 #: catalog/aclchk.c:302 catalog/aclchk.c:474 catalog/pg_conversion.c:180
-#: commands/dbcommands.c:517 commands/user.c:851 tcop/utility.c:835
+#: commands/dbcommands.c:515 commands/user.c:911 tcop/utility.c:827
 #: utils/init/miscinit.c:616
 msgid "permission denied"
 msgstr "rättighet saknas"
@@ -1739,7 +1761,7 @@ msgstr "rättighet saknas"
 msgid "invalid privilege type %s for function object"
 msgstr ""
 
-#: catalog/aclchk.c:389 parser/parse_func.c:867 parser/parse_func.c:1315
+#: catalog/aclchk.c:389 parser/parse_func.c:891 parser/parse_func.c:1339
 #, c-format
 msgid "function %u not found"
 msgstr ""
@@ -1816,7 +1838,7 @@ msgstr ""
 msgid "aclcheck: bogus ACL id type: %d"
 msgstr ""
 
-#: catalog/aclchk.c:879 commands/user.c:1232
+#: catalog/aclchk.c:879 commands/user.c:1299
 #, c-format
 msgid "%s: permission denied"
 msgstr "%s: rättighet saknas"
@@ -2122,7 +2144,7 @@ msgstr ""
 msgid "cache lookup of attribute %d in relation %u failed"
 msgstr ""
 
-#: catalog/heap.c:1493 commands/tablecmds.c:2567 commands/tablecmds.c:2603
+#: catalog/heap.c:1493 commands/tablecmds.c:2603 commands/tablecmds.c:2639
 #, c-format
 msgid "constraint \"%s\" already exists for relation \"%s\""
 msgstr ""
@@ -2137,11 +2159,11 @@ msgstr ""
 msgid "Only relation \"%s\" can be referenced in CHECK constraint expression"
 msgstr ""
 
-#: catalog/heap.c:1573 commands/tablecmds.c:2684
+#: catalog/heap.c:1573 commands/tablecmds.c:2720
 msgid "cannot use subselect in CHECK constraint expression"
 msgstr ""
 
-#: catalog/heap.c:1575 commands/tablecmds.c:2686
+#: catalog/heap.c:1575 commands/tablecmds.c:2722
 msgid "cannot use aggregate function in CHECK constraint expression"
 msgstr ""
 
@@ -2166,10 +2188,6 @@ msgstr ""
 msgid ""
 "Column \"%s\" is of type %s but default expression is of type %s\n"
 "\tYou will need to rewrite or cast the expression"
-msgstr ""
-
-#: catalog/heap.c:1931
-msgid "TRUNCATE TABLE cannot run inside a transaction block"
 msgstr ""
 
 #: catalog/index.c:125
@@ -2261,24 +2279,20 @@ msgstr ""
 msgid "IndexGetRelation: can't find index id %u"
 msgstr ""
 
-#: catalog/index.c:1751
-msgid "REINDEX cannot run inside a transaction block"
-msgstr ""
-
-#: catalog/index.c:1765
+#: catalog/index.c:1755
 msgid "reindex_index: can't open index relation"
 msgstr ""
 
-#: catalog/index.c:1776
+#: catalog/index.c:1766
 msgid "reindex_index: can't open heap relation"
 msgstr ""
 
-#: catalog/index.c:1790 catalog/index.c:1913
+#: catalog/index.c:1780 catalog/index.c:1903
 #, c-format
 msgid "the target relation %u is shared"
 msgstr ""
 
-#: catalog/index.c:1796
+#: catalog/index.c:1786
 #, c-format
 msgid "the target relation %u is nailed"
 msgstr ""
@@ -2470,7 +2484,7 @@ msgstr ""
 msgid "OperatorDef: can't create operator shell \"%s\""
 msgstr ""
 
-#: catalog/pg_proc.c:86 commands/functioncmds.c:140 parser/parse_func.c:1376
+#: catalog/pg_proc.c:86 commands/functioncmds.c:140 parser/parse_func.c:1400
 #, c-format
 msgid "functions cannot have more than %d arguments"
 msgstr ""
@@ -2800,9 +2814,9 @@ msgstr "relation \"%s\" är inte en vy"
 msgid "CommentAttribute: must specify relation.attribute"
 msgstr ""
 
-#: commands/comment.c:374 commands/tablecmds.c:1887 commands/tablecmds.c:2021
-#: commands/tablecmds.c:2139 commands/tablecmds.c:2356
-#: optimizer/prep/prepunion.c:804 parser/parse_func.c:1159
+#: commands/comment.c:374 commands/tablecmds.c:1923 commands/tablecmds.c:2057
+#: commands/tablecmds.c:2175 commands/tablecmds.c:2392
+#: optimizer/prep/prepunion.c:804 parser/parse_func.c:1183
 #: parser/parse_relation.c:1551 parser/parse_relation.c:1614
 #: parser/parse_relation.c:1770 parser/parse_type.c:88
 #, c-format
@@ -2813,7 +2827,7 @@ msgstr ""
 msgid "CommentDatabase: database name may not be qualified"
 msgstr ""
 
-#: commands/comment.c:409 commands/dbcommands.c:513 utils/adt/acl.c:1039
+#: commands/comment.c:409 commands/dbcommands.c:511 utils/adt/acl.c:1039
 #, c-format
 msgid "database \"%s\" does not exist"
 msgstr "databaseen \"%s\" existerar inte"
@@ -2886,197 +2900,197 @@ msgstr ""
 msgid "Function %s does not exist"
 msgstr "Funktion %s existerar inte"
 
-#: commands/copy.c:125
+#: commands/copy.c:126
 #, c-format
 msgid "CopySendData: %m"
 msgstr ""
 
-#: commands/copy.c:300
+#: commands/copy.c:301
 msgid "COPY: BINARY option appears more than once"
 msgstr ""
 
-#: commands/copy.c:307
+#: commands/copy.c:308
 msgid "COPY: OIDS option appears more than once"
 msgstr ""
 
-#: commands/copy.c:314
+#: commands/copy.c:315
 msgid "COPY: DELIMITER string may only be defined once in query"
 msgstr ""
 
-#: commands/copy.c:321
+#: commands/copy.c:322
 msgid "COPY: NULL representation may only be defined once in query"
 msgstr ""
 
-#: commands/copy.c:326
+#: commands/copy.c:327
 #, c-format
 msgid "COPY: option \"%s\" not recognized"
 msgstr ""
 
-#: commands/copy.c:331
+#: commands/copy.c:332
 msgid "You can not specify the DELIMITER in BINARY mode."
 msgstr ""
 
-#: commands/copy.c:334
+#: commands/copy.c:335
 msgid "You can not specify NULL in BINARY mode."
 msgstr ""
 
-#: commands/copy.c:354
+#: commands/copy.c:355
 msgid ""
 "You must have Postgres superuser privilege to do a COPY directly to or from "
 "a file.  Anyone can COPY to stdout or from stdin.  Psql's \\copy command "
 "also works for anyone."
 msgstr ""
 
-#: commands/copy.c:363
+#: commands/copy.c:364
 msgid "COPY BINARY is not supported to stdout or from stdin"
 msgstr ""
 
-#: commands/copy.c:369
+#: commands/copy.c:370
 msgid "COPY delimiter must be a single character"
 msgstr ""
 
-#: commands/copy.c:375
+#: commands/copy.c:376
 #, c-format
 msgid "COPY: table \"%s\" does not have OIDs"
 msgstr ""
 
-#: commands/copy.c:396 commands/copy.c:441
+#: commands/copy.c:397 commands/copy.c:442
 #, c-format
 msgid "You cannot copy view %s"
 msgstr ""
 
-#: commands/copy.c:399
+#: commands/copy.c:400
 #, c-format
 msgid "You cannot change sequence relation %s"
 msgstr ""
 
-#: commands/copy.c:402 commands/copy.c:447
+#: commands/copy.c:403 commands/copy.c:448
 #, c-format
 msgid "You cannot copy object %s"
 msgstr ""
 
-#: commands/copy.c:422
+#: commands/copy.c:423
 #, c-format
 msgid ""
 "COPY command, running in backend with effective uid %d, could not open file "
 "'%s' for reading.  Errno = %s (%d)."
 msgstr ""
 
-#: commands/copy.c:431 commands/copy.c:487
+#: commands/copy.c:432 commands/copy.c:488
 #, c-format
 msgid "COPY: %s is a directory"
 msgstr ""
 
-#: commands/copy.c:444
+#: commands/copy.c:445
 #, c-format
 msgid "You cannot copy sequence %s"
 msgstr ""
 
-#: commands/copy.c:471
+#: commands/copy.c:472
 msgid "Relative path not allowed for server side COPY command"
 msgstr ""
 
-#: commands/copy.c:479
+#: commands/copy.c:480
 #, c-format
 msgid ""
 "COPY command, running in backend with effective uid %d, could not open file "
 "'%s' for writing.  Errno = %s (%d)."
 msgstr ""
 
-#: commands/copy.c:556
+#: commands/copy.c:557
 #, c-format
 msgid "COPY: couldn't lookup info for type %u"
 msgstr ""
 
-#: commands/copy.c:560 commands/copy.c:826
+#: commands/copy.c:561 commands/copy.c:827
 msgid "COPY BINARY: cstring not supported"
 msgstr ""
 
-#: commands/copy.c:893
+#: commands/copy.c:894
 msgid "COPY BINARY: file signature not recognized"
 msgstr ""
 
-#: commands/copy.c:897
+#: commands/copy.c:898
 msgid "COPY BINARY: incompatible integer layout"
 msgstr ""
 
-#: commands/copy.c:901
+#: commands/copy.c:902
 msgid "COPY BINARY: bogus file header (missing flags)"
 msgstr ""
 
-#: commands/copy.c:905
+#: commands/copy.c:906
 msgid "COPY BINARY: unrecognized critical flags in header"
 msgstr ""
 
-#: commands/copy.c:909
+#: commands/copy.c:910
 msgid "COPY BINARY: bogus file header (missing length)"
 msgstr ""
 
-#: commands/copy.c:915
+#: commands/copy.c:916
 msgid "COPY BINARY: bogus file header (wrong length)"
 msgstr ""
 
-#: commands/copy.c:964
+#: commands/copy.c:965
 msgid "NULL Oid"
 msgstr "NULL Oid"
 
-#: commands/copy.c:970
+#: commands/copy.c:971
 msgid "Invalid Oid"
 msgstr "Ogiltig Oid"
 
-#: commands/copy.c:987
+#: commands/copy.c:988
 #, c-format
 msgid "Missing data for column \"%s\""
 msgstr "Saknar data för kolumn \"%s\""
 
-#: commands/copy.c:1019
+#: commands/copy.c:1020
 msgid "Extra data after last expected column"
 msgstr ""
 
-#: commands/copy.c:1043
+#: commands/copy.c:1044
 #, c-format
 msgid "COPY BINARY: tuple field count is %d, expected %d"
 msgstr ""
 
-#: commands/copy.c:1050 commands/copy.c:1056 commands/copy.c:1071
-#: commands/copy.c:1085 commands/copy.c:1094 commands/copy.c:1106
-#: commands/copy.c:1121
+#: commands/copy.c:1051 commands/copy.c:1057 commands/copy.c:1072
+#: commands/copy.c:1086 commands/copy.c:1095 commands/copy.c:1107
+#: commands/copy.c:1122
 msgid "COPY BINARY: unexpected EOF"
 msgstr "COPY BINARY: oväntad EOF"
 
-#: commands/copy.c:1052
+#: commands/copy.c:1053
 #, c-format
 msgid "COPY BINARY: sizeof(Oid) is %d, expected %d"
 msgstr ""
 
-#: commands/copy.c:1058
+#: commands/copy.c:1059
 msgid "COPY BINARY: Invalid Oid"
 msgstr ""
 
-#: commands/copy.c:1075
+#: commands/copy.c:1076
 #, c-format
 msgid "COPY BINARY: sizeof(field %d) is %d, expected %d"
 msgstr ""
 
-#: commands/copy.c:1087
+#: commands/copy.c:1088
 msgid "COPY BINARY: bogus varlena length"
 msgstr ""
 
-#: commands/copy.c:1263
+#: commands/copy.c:1264
 #, c-format
 msgid "GetInputFunction: Cache lookup of type %u failed"
 msgstr ""
 
-#: commands/copy.c:1279
+#: commands/copy.c:1280
 #, c-format
 msgid "GetTypeElement: Cache lookup of type %u failed"
 msgstr ""
 
-#: commands/copy.c:1421
+#: commands/copy.c:1422
 msgid "CopyReadAttribute: end of record marker corrupted"
 msgstr ""
 
-#: commands/copy.c:1581
+#: commands/copy.c:1582
 #, c-format
 msgid "Attribute \"%s\" specified more than once"
 msgstr "Attributet \"%s\" angivet mer än en gång"
@@ -3095,131 +3109,125 @@ msgstr "CREATE DATABASE: flagga \"%s\" känns inte igen"
 msgid "CREATE DATABASE: permission denied"
 msgstr "CREATE DATABASE: rättighet saknas"
 
-#: commands/dbcommands.c:156
-msgid "CREATE DATABASE: may not be called in a transaction block"
-msgstr "CREATE DATABASE: kan inte anropas i ett transaktionsblock"
-
-#: commands/dbcommands.c:167 commands/dbcommands.c:307
+#: commands/dbcommands.c:166 commands/dbcommands.c:306
 #, c-format
 msgid "CREATE DATABASE: database \"%s\" already exists"
 msgstr "CREATE DATABASE: databasen \"%s\" existerar redan"
 
-#: commands/dbcommands.c:179
+#: commands/dbcommands.c:178
 #, c-format
 msgid "CREATE DATABASE: template \"%s\" does not exist"
 msgstr "CREATE DATABASE: mallen \"%s\" existerar inte"
 
-#: commands/dbcommands.c:189
+#: commands/dbcommands.c:188
 #, c-format
 msgid "CREATE DATABASE: permission to copy \"%s\" denied"
 msgstr "CREATE DATABASE: rättighet att kopiera \"%s\" saknas"
 
-#: commands/dbcommands.c:208
+#: commands/dbcommands.c:207
 #, c-format
 msgid ""
 "CREATE DATABASE: source database \"%s\" is being accessed by other users"
 msgstr "CREATE DATABASE: källdatabas \"%s\" används av andra användare"
 
-#: commands/dbcommands.c:216
+#: commands/dbcommands.c:215
 msgid "CREATE DATABASE: invalid backend encoding"
 msgstr ""
 
-#: commands/dbcommands.c:244 commands/dbcommands.c:246
-#: commands/dbcommands.c:248
+#: commands/dbcommands.c:243 commands/dbcommands.c:245
+#: commands/dbcommands.c:247
 msgid "database path may not contain single quotes"
 msgstr ""
 
-#: commands/dbcommands.c:271
+#: commands/dbcommands.c:270
 #, c-format
 msgid "CREATE DATABASE: unable to create database directory '%s': %m"
 msgstr ""
 
-#: commands/dbcommands.c:274
+#: commands/dbcommands.c:273
 #, c-format
 msgid "CREATE DATABASE: unable to remove temp directory '%s': %m"
 msgstr "CREATE DATABASE: kan inte ta bort temporär katalog \"%s\": %m"
 
-#: commands/dbcommands.c:281
+#: commands/dbcommands.c:280
 #, c-format
 msgid "CREATE DATABASE: could not link '%s' to '%s': %m"
 msgstr "CREATE DATABASE: kunde inte länka \"%s\" till \"%s\": %m"
 
-#: commands/dbcommands.c:291
+#: commands/dbcommands.c:290
 msgid "CREATE DATABASE: could not initialize database directory"
 msgstr "CREATE DATABASE: kunde inte initialisera databaskatalogen"
 
-#: commands/dbcommands.c:293
+#: commands/dbcommands.c:292
 msgid ""
 "CREATE DATABASE: could not initialize database directory; delete failed as "
 "well"
-msgstr "CREATE DATABASE: kunde inte initialisera databaskatalogen; borttagning misslyckades med"
+msgstr ""
+"CREATE DATABASE: kunde inte initialisera databaskatalogen; borttagning "
+"misslyckades med"
 
-#: commands/dbcommands.c:383
+#: commands/dbcommands.c:382
 msgid "DROP DATABASE: cannot be executed on the currently open database"
 msgstr ""
 
-#: commands/dbcommands.c:386
-msgid "DROP DATABASE: may not be called in a transaction block"
-msgstr ""
-
-#: commands/dbcommands.c:401
+#: commands/dbcommands.c:399
 #, c-format
 msgid "DROP DATABASE: database \"%s\" does not exist"
 msgstr "DROP DATABASE: databasen \"%s\" existerar inte"
 
-#: commands/dbcommands.c:404
+#: commands/dbcommands.c:402
 msgid "DROP DATABASE: permission denied"
 msgstr "DROP DATABASE: rättighet saknas"
 
-#: commands/dbcommands.c:412
+#: commands/dbcommands.c:410
 msgid "DROP DATABASE: database is marked as a template"
 msgstr "DROP DATABASE: databasen är markerad som en mall"
 
-#: commands/dbcommands.c:421
+#: commands/dbcommands.c:419
 #, c-format
 msgid "DROP DATABASE: database \"%s\" is being accessed by other users"
 msgstr "DROP DATABASE: databasen \"%s\" används av andra användare"
 
-#: commands/dbcommands.c:438
+#: commands/dbcommands.c:436
 #, c-format
 msgid ""
 "DROP DATABASE: Database \"%s\" doesn't exist despite earlier reports to the "
 "contrary"
 msgstr ""
 
-#: commands/dbcommands.c:679
+#: commands/dbcommands.c:677
 msgid "Relative paths are not allowed as database locations"
 msgstr ""
 
-#: commands/dbcommands.c:681
+#: commands/dbcommands.c:679
 msgid "Absolute paths are not allowed as database locations"
 msgstr ""
 
-#: commands/dbcommands.c:691
+#: commands/dbcommands.c:689
 #, c-format
 msgid "Postmaster environment variable '%s' not set"
 msgstr ""
 
-#: commands/dbcommands.c:693
+#: commands/dbcommands.c:691
 #, c-format
 msgid "Postmaster environment variable '%s' must be absolute path"
 msgstr ""
 
-#: commands/dbcommands.c:699
+#: commands/dbcommands.c:697
 msgid "Alternate path is too long"
 msgstr ""
 
-#: commands/dbcommands.c:728
+#: commands/dbcommands.c:726
 #, c-format
 msgid "could not remove '%s': %m"
 msgstr "kunde inte ta bort \"%s\": %m"
 
-#: commands/dbcommands.c:737
+#: commands/dbcommands.c:735
 #, c-format
 msgid "database directory '%s' could not be removed"
 msgstr "databaskatalogen \"%s\" kunde inte tas bort"
 
-#: commands/dbcommands.c:809 commands/vacuum.c:582
+#: commands/dbcommands.c:807 commands/vacuum.c:581
 #, c-format
 msgid "database %u does not exist"
 msgstr ""
@@ -3261,7 +3269,7 @@ msgstr ""
 msgid "Define: invalid argument for \"%s\": \"%s\""
 msgstr ""
 
-#: commands/explain.c:809
+#: commands/explain.c:815
 #, c-format
 msgid "show_sort_keys: no tlist entry for key %d"
 msgstr ""
@@ -3278,7 +3286,7 @@ msgstr ""
 
 #: commands/functioncmds.c:103 commands/functioncmds.c:159
 #: commands/typecmds.c:322 commands/typecmds.c:329 commands/typecmds.c:647
-#: parser/parse_func.c:1386 parser/parse_oper.c:98 parser/parse_oper.c:107
+#: parser/parse_func.c:1410 parser/parse_oper.c:98 parser/parse_oper.c:107
 #: parser/parse_type.c:191 parser/parse_type.c:213 parser/parse_type.c:219
 #, c-format
 msgid "Type \"%s\" does not exist"
@@ -3392,12 +3400,12 @@ msgstr ""
 msgid "SetFunctionArgType: function %u doesn't take OPAQUE"
 msgstr ""
 
-#: commands/functioncmds.c:693 commands/functioncmds.c:857
+#: commands/functioncmds.c:693 commands/functioncmds.c:884
 #, c-format
 msgid "source data type %s does not exist"
 msgstr ""
 
-#: commands/functioncmds.c:698 commands/functioncmds.c:862
+#: commands/functioncmds.c:698 commands/functioncmds.c:889
 #, c-format
 msgid "target data type %s does not exist"
 msgstr ""
@@ -3426,7 +3434,7 @@ msgstr ""
 msgid "target data type %s is a pseudo-type"
 msgstr ""
 
-#: commands/functioncmds.c:723 commands/functioncmds.c:877
+#: commands/functioncmds.c:723 commands/functioncmds.c:904
 #, c-format
 msgid "must be owner of type %s or type %s"
 msgstr ""
@@ -3455,22 +3463,30 @@ msgstr ""
 msgid "cast function must not return a set"
 msgstr ""
 
-#: commands/functioncmds.c:776
+#: commands/functioncmds.c:774
+msgid "Must be superuser to create a cast WITHOUT FUNCTION"
+msgstr ""
+
+#: commands/functioncmds.c:787
+msgid "source and target datatypes are not physically compatible"
+msgstr ""
+
+#: commands/functioncmds.c:803
 #, c-format
 msgid "CreateCast: bogus CoercionContext %c"
 msgstr ""
 
-#: commands/functioncmds.c:793
+#: commands/functioncmds.c:820
 #, c-format
 msgid "cast from data type %s to data type %s already exists"
 msgstr ""
 
-#: commands/functioncmds.c:870
+#: commands/functioncmds.c:897
 #, c-format
 msgid "cast from type %s to type %s does not exist"
 msgstr ""
 
-#: commands/functioncmds.c:913
+#: commands/functioncmds.c:940
 #, c-format
 msgid "could not find tuple for cast %u"
 msgstr ""
@@ -3584,65 +3600,57 @@ msgstr ""
 msgid "pg_opclass contains multiple default opclasses for data type %s"
 msgstr ""
 
-#: commands/indexcmds.c:544 commands/indexcmds.c:581 commands/indexcmds.c:626
+#: commands/indexcmds.c:544 commands/indexcmds.c:576 commands/indexcmds.c:619
 #, c-format
 msgid "relation \"%s\" is of type \"%c\""
 msgstr ""
 
-#: commands/indexcmds.c:571 commands/indexcmds.c:620
-msgid "REINDEX cannot run inside a BEGIN/END block"
-msgstr ""
-
-#: commands/indexcmds.c:578
+#: commands/indexcmds.c:573
 #, c-format
 msgid "index \"%s\" does not exist"
 msgstr "index \"%s\" existerar inte"
 
-#: commands/indexcmds.c:589
+#: commands/indexcmds.c:584
 #, c-format
 msgid ""
 "\"%s\" is a system index. call REINDEX under standalone postgres with -O -P "
 "options"
 msgstr ""
 
-#: commands/indexcmds.c:592
+#: commands/indexcmds.c:587
 #, c-format
 msgid ""
 "\"%s\" is a system index. call REINDEX under standalone postgres with -P -O "
 "options"
 msgstr ""
 
-#: commands/indexcmds.c:601
+#: commands/indexcmds.c:602
 #, c-format
 msgid "index \"%s\" wasn't reindexed"
 msgstr ""
 
-#: commands/indexcmds.c:630
+#: commands/indexcmds.c:634
 #, c-format
 msgid "table \"%s\" wasn't reindexed"
 msgstr ""
 
-#: commands/indexcmds.c:654
+#: commands/indexcmds.c:658
 msgid "REINDEX DATABASE: Can be executed only on the currently open database."
 msgstr ""
 
-#: commands/indexcmds.c:657
+#: commands/indexcmds.c:661
 msgid "REINDEX DATABASE: Permission denied."
 msgstr "REINDEX DATABASE: rättighet saknas."
 
-#: commands/indexcmds.c:660
+#: commands/indexcmds.c:664
 msgid "must be called under standalone postgres with -O -P options"
 msgstr ""
 
-#: commands/indexcmds.c:662
+#: commands/indexcmds.c:666
 msgid "must be called under standalone postgres with -P -O options"
 msgstr ""
 
-#: commands/indexcmds.c:670
-msgid "REINDEX DATABASE cannot run inside a BEGIN/END block"
-msgstr ""
-
-#: commands/indexcmds.c:728
+#: commands/indexcmds.c:732
 #, c-format
 msgid "relation %u was reindexed"
 msgstr ""
@@ -3657,69 +3665,73 @@ msgstr ""
 msgid "DefineOpClass: access method \"%s\" not found"
 msgstr ""
 
-#: commands/opclasscmds.c:136
+#: commands/opclasscmds.c:107
+msgid "Must be superuser to create an operator class"
+msgstr ""
+
+#: commands/opclasscmds.c:149
 #, c-format
 msgid "DefineOpClass: invalid operator number %d, must be between 1 and %d"
 msgstr ""
 
-#: commands/opclasscmds.c:140
+#: commands/opclasscmds.c:153
 #, c-format
 msgid "DefineOpClass: operator number %d appears more than once"
 msgstr ""
 
-#: commands/opclasscmds.c:157
+#: commands/opclasscmds.c:170
 #, c-format
 msgid "DefineOpClass: Operator '%s' for types '%s' and '%s' does not exist"
 msgstr ""
 
-#: commands/opclasscmds.c:173
+#: commands/opclasscmds.c:186
 #, c-format
 msgid "DefineOpClass: invalid procedure number %d, must be between 1 and %d"
 msgstr ""
 
-#: commands/opclasscmds.c:177
+#: commands/opclasscmds.c:190
 #, c-format
 msgid "DefineOpClass: procedure number %d appears more than once"
 msgstr ""
 
-#: commands/opclasscmds.c:190
+#: commands/opclasscmds.c:203
 msgid "DefineOpClass: storage type specified more than once"
 msgstr ""
 
-#: commands/opclasscmds.c:194
+#: commands/opclasscmds.c:207
 #, c-format
 msgid "DefineOpClass: bogus item type %d"
 msgstr ""
 
-#: commands/opclasscmds.c:216
+#: commands/opclasscmds.c:229
 #, c-format
 msgid "Storage type may not be different from datatype for access method %s"
 msgstr ""
 
-#: commands/opclasscmds.c:232
+#: commands/opclasscmds.c:245
 #, c-format
 msgid "Operator class \"%s\" already exists for access method \"%s\""
 msgstr ""
 
-#: commands/opclasscmds.c:256
+#: commands/opclasscmds.c:269
 #, c-format
 msgid ""
 "Can't add class \"%s\" as default for type %s\n"
 "\tclass \"%s\" already is the default"
 msgstr ""
 
-#: commands/opclasscmds.c:464
+#: commands/opclasscmds.c:477
 #, c-format
 msgid "RemoveOpClass: access method \"%s\" not found"
 msgstr ""
 
-#: commands/opclasscmds.c:491 commands/opclasscmds.c:499
+#: commands/opclasscmds.c:504 commands/opclasscmds.c:512
 #, c-format
 msgid ""
 "RemoveOpClass: operator class \"%s\" not supported by access method \"%s\""
 msgstr ""
 
-#: commands/opclasscmds.c:543
+#: commands/opclasscmds.c:556
 #, c-format
 msgid "RemoveOpClassById: couldn't find pg_class entry %u"
 msgstr ""
@@ -3980,537 +3992,557 @@ msgstr ""
 msgid "TRUNCATE cannot be used on system tables. '%s' is a system table"
 msgstr ""
 
-#: commands/tablecmds.c:383
+#: commands/tablecmds.c:393
 msgid "TRUNCATE cannot be used on temp tables of other processes"
 msgstr ""
 
-#: commands/tablecmds.c:407
+#: commands/tablecmds.c:417
 #, c-format
 msgid ""
 "TRUNCATE cannot be used as table %s references this one via foreign key "
 "constraint %s"
 msgstr ""
 
-#: commands/tablecmds.c:517
+#: commands/tablecmds.c:527
 #, c-format
 msgid "CREATE TABLE: attribute \"%s\" duplicated"
 msgstr ""
 
-#: commands/tablecmds.c:540
+#: commands/tablecmds.c:550
 #, c-format
 msgid "CREATE TABLE: inherited relation \"%s\" is not a table"
 msgstr ""
 
-#: commands/tablecmds.c:544
+#: commands/tablecmds.c:554
 #, c-format
 msgid "CREATE TABLE: cannot inherit from temp relation \"%s\""
 msgstr ""
 
-#: commands/tablecmds.c:559
+#: commands/tablecmds.c:569
 #, c-format
 msgid "CREATE TABLE: inherited relation \"%s\" duplicated"
 msgstr ""
 
-#: commands/tablecmds.c:611
+#: commands/tablecmds.c:621
 #, c-format
 msgid ""
 "CREATE TABLE: merging multiple inherited definitions of attribute \"%s\""
 msgstr ""
 
-#: commands/tablecmds.c:616
+#: commands/tablecmds.c:626
 #, c-format
 msgid "CREATE TABLE: inherited attribute \"%s\" type conflict (%s and %s)"
 msgstr ""
 
-#: commands/tablecmds.c:762
+#: commands/tablecmds.c:772
 #, c-format
 msgid "CREATE TABLE: merging attribute \"%s\" with inherited definition"
 msgstr ""
 
-#: commands/tablecmds.c:767
+#: commands/tablecmds.c:777
 #, c-format
 msgid "CREATE TABLE: attribute \"%s\" type conflict (%s and %s)"
 msgstr ""
 
-#: commands/tablecmds.c:805
+#: commands/tablecmds.c:815
 #, c-format
 msgid ""
 "CREATE TABLE: attribute \"%s\" inherits conflicting default values\n"
 "\tTo resolve the conflict, specify a default explicitly"
 msgstr ""
 
-#: commands/tablecmds.c:1049
+#: commands/tablecmds.c:1059
 #, c-format
 msgid "setRelhassubclassInRelation: cache lookup failed for relation %u"
 msgstr ""
 
-#: commands/tablecmds.c:1104
+#: commands/tablecmds.c:1114
 #, c-format
 msgid "renameatt: class \"%s\" is a system catalog"
 msgstr ""
 
-#: commands/tablecmds.c:1150
+#: commands/tablecmds.c:1160
 #, c-format
 msgid "Inherited attribute \"%s\" must be renamed in child tables too"
 msgstr ""
 
-#: commands/tablecmds.c:1158
+#: commands/tablecmds.c:1168
 #, c-format
 msgid "renameatt: attribute \"%s\" does not exist"
 msgstr ""
 
-#: commands/tablecmds.c:1163
+#: commands/tablecmds.c:1173
 #, c-format
 msgid "renameatt: system attribute \"%s\" may not be renamed"
 msgstr ""
 
-#: commands/tablecmds.c:1171
+#: commands/tablecmds.c:1181
 #, c-format
 msgid "renameatt: inherited attribute \"%s\" may not be renamed"
 msgstr ""
 
-#: commands/tablecmds.c:1180
+#: commands/tablecmds.c:1190
 #, c-format
 msgid "renameatt: attribute \"%s\" exists"
 msgstr ""
 
-#: commands/tablecmds.c:1210
+#: commands/tablecmds.c:1220
 #, c-format
 msgid "renameatt: can't find index id %u"
 msgstr ""
 
-#: commands/tablecmds.c:1295
+#: commands/tablecmds.c:1305
 #, c-format
 msgid "renamerel: system relation \"%s\" may not be renamed"
 msgstr ""
 
-#: commands/tablecmds.c:1311
+#: commands/tablecmds.c:1321
 #, c-format
 msgid "renamerel: relation \"%s\" does not exist"
 msgstr ""
 
-#: commands/tablecmds.c:1315
+#: commands/tablecmds.c:1325
 #, c-format
 msgid "renamerel: relation \"%s\" exists"
 msgstr ""
 
-#: commands/tablecmds.c:1614 commands/tablecmds.c:1842
-#: commands/tablecmds.c:1976 commands/tablecmds.c:2191
-#: commands/tablecmds.c:2340 commands/tablecmds.c:2510
-#: commands/tablecmds.c:3472 commands/tablecmds.c:3647
+#: commands/tablecmds.c:1623 commands/tablecmds.c:1878
+#: commands/tablecmds.c:2012 commands/tablecmds.c:2227
+#: commands/tablecmds.c:2376 commands/tablecmds.c:2546
+#: commands/tablecmds.c:3508 commands/tablecmds.c:3683
 #, c-format
 msgid "ALTER TABLE: relation \"%s\" is not a table"
 msgstr ""
 
-#: commands/tablecmds.c:1625 commands/tablecmds.c:1847
-#: commands/tablecmds.c:1981 commands/tablecmds.c:2099
-#: commands/tablecmds.c:2198 commands/tablecmds.c:2345
-#: commands/tablecmds.c:2515 commands/tablecmds.c:3477
+#: commands/tablecmds.c:1634 commands/tablecmds.c:1883
+#: commands/tablecmds.c:2017 commands/tablecmds.c:2135
+#: commands/tablecmds.c:2234 commands/tablecmds.c:2381
+#: commands/tablecmds.c:2551 commands/tablecmds.c:3513
 #, c-format
 msgid "ALTER TABLE: relation \"%s\" is a system catalog"
 msgstr ""
 
-#: commands/tablecmds.c:1672
-msgid "Attribute must be added to child tables too"
-msgstr ""
+#: commands/tablecmds.c:1682
+#, c-format
+msgid "ALTER TABLE: child table %u has different type for column \"%s\""
+msgstr "ALTER TABLE: barntabell %u har en annan typ på kolumn \"%s\""
 
-#: commands/tablecmds.c:1689
+#: commands/tablecmds.c:1691
+#, c-format
+msgid "ALTER TABLE: merging definition of column \"%s\" for child %s"
+msgstr "ALTER TABLE: slår samman definition av kolumn \"%s\" för barn %s"
+
+#: commands/tablecmds.c:1708
+msgid "Attribute must be added to child tables too"
+msgstr "Attributet måste läggas till barntabellerna också"
+
+#: commands/tablecmds.c:1725
 msgid ""
 "Adding columns with defaults is not implemented.\n"
 "\tAdd the column, then use ALTER TABLE SET DEFAULT."
 msgstr ""
 
-#: commands/tablecmds.c:1693
+#: commands/tablecmds.c:1729
 msgid ""
 "Adding NOT NULL columns is not implemented.\n"
 "\tAdd the column, then use ALTER TABLE ... SET NOT NULL."
 msgstr ""
 
-#: commands/tablecmds.c:1702 commands/tablecmds.c:3787
+#: commands/tablecmds.c:1738 commands/tablecmds.c:3823
 #, c-format
 msgid "ALTER TABLE: relation \"%s\" not found"
-msgstr ""
+msgstr "ALTER TABLE: relation \"%s\" hittades inte"
 
-#: commands/tablecmds.c:1714
+#: commands/tablecmds.c:1750
 #, c-format
 msgid "ALTER TABLE: column name \"%s\" already exists in table \"%s\""
-msgstr ""
+msgstr "ALTER TABLE: kolumnnamn \"%s\" finns redan i tabell \"%s\""
 
-#: commands/tablecmds.c:1720
+#: commands/tablecmds.c:1756
 #, c-format
 msgid "ALTER TABLE: relations limited to %d columns"
-msgstr ""
+msgstr "ALTER TABLE: relationer är begränsade till %d kolumner"
 
-#: commands/tablecmds.c:1892 commands/tablecmds.c:2026
-#: commands/tablecmds.c:2144
+#: commands/tablecmds.c:1928 commands/tablecmds.c:2062
+#: commands/tablecmds.c:2180
 #, c-format
 msgid "ALTER TABLE: Cannot alter system attribute \"%s\""
 msgstr ""
 
-#: commands/tablecmds.c:1913
+#: commands/tablecmds.c:1949
 #, c-format
 msgid "ALTER TABLE: Index %u not found"
-msgstr ""
+msgstr "ALTER TABLE: Index %u hittades inte"
 
-#: commands/tablecmds.c:1928
+#: commands/tablecmds.c:1964
 #, c-format
 msgid "ALTER TABLE: Attribute \"%s\" is in a primary key"
 msgstr "ALTER TABLE: Attributet \"%s\" är del av primärnyckel"
 
-#: commands/tablecmds.c:1944 commands/tablecmds.c:2058
-#: commands/tablecmds.c:2286
+#: commands/tablecmds.c:1980 commands/tablecmds.c:2094
+#: commands/tablecmds.c:2322
 #, c-format
 msgid "ALTER TABLE: relation \"%s\" has no column \"%s\""
 msgstr "ALTER TABLE: relationen \"%s\" har ingen kolumn \"%s\""
 
-#: commands/tablecmds.c:2045
+#: commands/tablecmds.c:2081
 #, c-format
 msgid "ALTER TABLE: Attribute \"%s\" contains NULL values"
-msgstr ""
+msgstr "ALTER TABLE: Attributet \"%s\" innehåller NULL-värden"
 
-#: commands/tablecmds.c:2094
+#: commands/tablecmds.c:2130
 #, c-format
 msgid "ALTER TABLE: relation \"%s\" is not a table or view"
 msgstr ""
 
-#: commands/tablecmds.c:2218
+#: commands/tablecmds.c:2254
 #, c-format
 msgid "ALTER TABLE: statistics target %d is too low"
 msgstr ""
 
-#: commands/tablecmds.c:2223
+#: commands/tablecmds.c:2259
 msgid "ALTER TABLE: lowering statistics target to 1000"
 msgstr ""
 
-#: commands/tablecmds.c:2244
+#: commands/tablecmds.c:2280
 #, c-format
 msgid "ALTER TABLE: \"%s\" storage not recognized"
 msgstr ""
 
-#: commands/tablecmds.c:2249
+#: commands/tablecmds.c:2285
 #, c-format
 msgid "ALTER TABLE: Invalid column flag: %c"
-msgstr ""
+msgstr "ALTER TABLE: Ogiltig kolumnflagga: %c"
 
-#: commands/tablecmds.c:2291
+#: commands/tablecmds.c:2327
 #, c-format
 msgid "ALTER TABLE: cannot change system attribute \"%s\""
 msgstr ""
 
-#: commands/tablecmds.c:2308
+#: commands/tablecmds.c:2344
 #, c-format
 msgid "ALTER TABLE: Column datatype %s can only have storage \"plain\""
 msgstr ""
 
-#: commands/tablecmds.c:2362
+#: commands/tablecmds.c:2398
 #, c-format
 msgid "ALTER TABLE: Cannot drop system attribute \"%s\""
 msgstr ""
 
-#: commands/tablecmds.c:2368
+#: commands/tablecmds.c:2404
 #, c-format
 msgid "ALTER TABLE: Cannot drop inherited column \"%s\""
 msgstr ""
 
-#: commands/tablecmds.c:2397 commands/tablecmds.c:2448
+#: commands/tablecmds.c:2433 commands/tablecmds.c:2484
 #, c-format
 msgid "ALTER TABLE: relation %u has no column \"%s\""
 msgstr ""
 
-#: commands/tablecmds.c:2402 commands/tablecmds.c:2453
+#: commands/tablecmds.c:2438 commands/tablecmds.c:2489
 #, c-format
 msgid "ALTER TABLE: relation %u has non-inherited column \"%s\""
 msgstr ""
 
-#: commands/tablecmds.c:2587
+#: commands/tablecmds.c:2623
 msgid ""
 "ALTER TABLE / ADD CONSTRAINT is not implemented for that constraint type."
 msgstr ""
 
-#: commands/tablecmds.c:2617
+#: commands/tablecmds.c:2653
 msgid ""
 "ALTER TABLE / ADD CONSTRAINT unable to determine type of constraint passed"
 msgstr ""
 
-#: commands/tablecmds.c:2677
+#: commands/tablecmds.c:2713
 #, c-format
 msgid "Only relation '%s' can be referenced in CHECK"
 msgstr ""
 
-#: commands/tablecmds.c:2726
+#: commands/tablecmds.c:2762
 #, c-format
 msgid "AlterTableAddConstraint: rejected due to CHECK constraint %s"
 msgstr ""
 
-#: commands/tablecmds.c:2782
+#: commands/tablecmds.c:2818
 #, c-format
 msgid "referenced relation \"%s\" is not a table"
 msgstr "refererad relation \"%s\" är inte en tabell"
 
-#: commands/tablecmds.c:2787
+#: commands/tablecmds.c:2823
 #, c-format
 msgid "%s: relation \"%s\" is a system catalog"
 msgstr "%s: relation \"%s\" är en systemkatalog"
 
-#: commands/tablecmds.c:2802
+#: commands/tablecmds.c:2838
 #, c-format
 msgid "%s: Unable to reference temporary table from permanent table constraint"
 msgstr ""
 
-#: commands/tablecmds.c:2844
+#: commands/tablecmds.c:2880
 #, c-format
 msgid ""
 "%s: number of referencing and referenced attributes for foreign key disagree"
 msgstr ""
 
-#: commands/tablecmds.c:2925
+#: commands/tablecmds.c:2961
 #, c-format
 msgid "%s: column \"%s\" referenced in foreign key constraint does not exist"
-msgstr ""
+msgstr "%s: kolumn \"%s\" som refereras till i främmande nyckel existerar inte"
 
-#: commands/tablecmds.c:2928
+#: commands/tablecmds.c:2964
 #, c-format
 msgid "Can only have %d keys in a foreign key"
 msgstr "Kan bara ha %d nycklar i en främmande nyckel"
 
-#: commands/tablecmds.c:2972
+#: commands/tablecmds.c:3008
 #, c-format
 msgid "transformFkeyGetPrimaryKey: index %u not found"
 msgstr ""
 
-#: commands/tablecmds.c:2990
+#: commands/tablecmds.c:3026
 #, c-format
 msgid "PRIMARY KEY for referenced table \"%s\" not found"
-msgstr ""
+msgstr "hittar inte PRIMÄRNYCKELN för refererad tabell \"%s\""
 
-#: commands/tablecmds.c:3046
+#: commands/tablecmds.c:3082
 #, c-format
 msgid "transformFkeyCheckAttrs: index %u not found"
 msgstr ""
 
-#: commands/tablecmds.c:3104
+#: commands/tablecmds.c:3140
 #, c-format
 msgid ""
 "UNIQUE constraint matching given keys for referenced table \"%s\" not found"
 msgstr ""
 
-#: commands/tablecmds.c:3271
+#: commands/tablecmds.c:3307
 #, c-format
 msgid ""
 "number of key attributes in referenced table must be equal to foreign key\n"
 "\tIllegal FOREIGN KEY definition references \"%s\""
 msgstr ""
 
-#: commands/tablecmds.c:3331
+#: commands/tablecmds.c:3367
 msgid "Unrecognized ON DELETE action for FOREIGN KEY constraint"
 msgstr ""
 
-#: commands/tablecmds.c:3402
+#: commands/tablecmds.c:3438
 msgid "Unrecognized ON UPDATE action for FOREIGN KEY constraint"
 msgstr ""
 
-#: commands/tablecmds.c:3447
+#: commands/tablecmds.c:3483
 #, c-format
 msgid "fkMatchTypeToString: Unknown MATCH TYPE '%c'"
 msgstr ""
 
-#: commands/tablecmds.c:3523
+#: commands/tablecmds.c:3559
 #, c-format
 msgid "ALTER TABLE / DROP CONSTRAINT: %s does not exist"
 msgstr "ALTER TABLE / DROP CONSTRAINT: %s existerar inte"
 
-#: commands/tablecmds.c:3527
+#: commands/tablecmds.c:3563
 msgid "Multiple constraints dropped"
 msgstr ""
 
-#: commands/tablecmds.c:3552
+#: commands/tablecmds.c:3588
 #, c-format
 msgid "ALTER TABLE: relation %u not found"
 msgstr ""
 
-#: commands/tablecmds.c:3614
+#: commands/tablecmds.c:3650
 #, c-format
 msgid ""
 "ALTER TABLE: relation \"%s\" is not a table, TOAST table, index, view, or "
 "sequence"
-msgstr ""
+msgstr "ALTER TABLE: relationen \"%s\" är inte en tabell, TOAST-tabell, index, vy eller sekvens"
 
-#: commands/tablecmds.c:3664
+#: commands/tablecmds.c:3700
 msgid "Shared relations cannot be toasted after initdb"
 msgstr ""
 
-#: commands/tablecmds.c:3677
+#: commands/tablecmds.c:3713
 #, c-format
 msgid "ALTER TABLE: relation \"%s\" already has a toast table"
 msgstr ""
 
-#: commands/tablecmds.c:3692
+#: commands/tablecmds.c:3728
 #, c-format
 msgid "ALTER TABLE: relation \"%s\" does not need a toast table"
 msgstr ""
 
-#: commands/trigger.c:98
+#: commands/trigger.c:132
+#, c-format
+msgid "Unable to find table for constraint \"%s\""
+msgstr ""
+
+#: commands/trigger.c:137
 #, c-format
 msgid "CreateTrigger: relation \"%s\" is not a table"
 msgstr ""
 
-#: commands/trigger.c:102
+#: commands/trigger.c:141
 #, c-format
 msgid "CreateTrigger: can't create trigger for system relation %s"
 msgstr ""
 
-#: commands/trigger.c:160
+#: commands/trigger.c:199
 msgid "CreateTrigger: STATEMENT triggers are unimplemented, yet"
 msgstr ""
 
-#: commands/trigger.c:168
+#: commands/trigger.c:207
 msgid "CreateTrigger: double INSERT event specified"
 msgstr ""
 
-#: commands/trigger.c:173
+#: commands/trigger.c:212
 msgid "CreateTrigger: double DELETE event specified"
 msgstr ""
 
-#: commands/trigger.c:178
+#: commands/trigger.c:217
 msgid "CreateTrigger: double UPDATE event specified"
 msgstr ""
 
-#: commands/trigger.c:182
+#: commands/trigger.c:221
 msgid "CreateTrigger: unknown event specified"
 msgstr ""
 
-#: commands/trigger.c:208
+#: commands/trigger.c:247
 #, c-format
 msgid "CreateTrigger: trigger %s already defined on relation %s"
 msgstr ""
 
-#: commands/trigger.c:220
+#: commands/trigger.c:259
 #, c-format
 msgid "CreateTrigger: function %s() does not exist"
 msgstr "CreateTrigger: funktion %s() existerar inte"
 
-#: commands/trigger.c:231
+#: commands/trigger.c:270
 #, c-format
 msgid ""
 "CreateTrigger: changing return type of function %s() from OPAQUE to TRIGGER"
 msgstr ""
 
-#: commands/trigger.c:236
+#: commands/trigger.c:275
 #, c-format
 msgid "CreateTrigger: function %s() must return TRIGGER"
 msgstr ""
 
-#: commands/trigger.c:336
+#: commands/trigger.c:375
 #, c-format
 msgid "CreateTrigger: relation %s not found in pg_class"
 msgstr ""
 
-#: commands/trigger.c:421
+#: commands/trigger.c:460
 #, c-format
 msgid "DropTrigger: there is no trigger %s on relation %s"
 msgstr ""
 
-#: commands/trigger.c:470
+#: commands/trigger.c:509
 #, c-format
 msgid "RemoveTriggerById: Trigger %u does not exist"
 msgstr ""
 
-#: commands/trigger.c:481
+#: commands/trigger.c:520
 #, c-format
 msgid "DropTrigger: relation \"%s\" is not a table"
 msgstr ""
 
-#: commands/trigger.c:485
+#: commands/trigger.c:524
 #, c-format
 msgid "DropTrigger: can't drop trigger for system relation %s"
 msgstr ""
 
-#: commands/trigger.c:510
+#: commands/trigger.c:549
 #, c-format
 msgid "DropTrigger: relation %s not found in pg_class"
 msgstr ""
 
-#: commands/trigger.c:515
+#: commands/trigger.c:554
 #, c-format
 msgid "DropTrigger: relation %s has reltriggers = 0"
 msgstr ""
 
-#: commands/trigger.c:586
+#: commands/trigger.c:625
 #, c-format
 msgid "renametrig: trigger %s already defined on relation %s"
 msgstr ""
 
-#: commands/trigger.c:627
+#: commands/trigger.c:666
 #, c-format
 msgid "renametrig: trigger %s not defined on relation %s"
 msgstr ""
 
-#: commands/trigger.c:685
+#: commands/trigger.c:729
 #, c-format
 msgid "RelationBuildTriggers: unexpected record found for rel %s"
 msgstr ""
 
-#: commands/trigger.c:714
+#: commands/trigger.c:757
 #, c-format
 msgid "RelationBuildTriggers: tgargs IS NULL for rel %s"
 msgstr ""
 
-#: commands/trigger.c:737
+#: commands/trigger.c:777
 #, c-format
 msgid "RelationBuildTriggers: %d record(s) not found for rel %s"
 msgstr ""
 
-#: commands/trigger.c:983
+#: commands/trigger.c:1129
 #, c-format
 msgid "ExecCallTriggerFunc: function %u returned NULL"
 msgstr ""
 
-#: commands/trigger.c:1222 executor/execMain.c:1043 executor/execMain.c:1317
-#: executor/execMain.c:1452
+#: commands/trigger.c:1368 executor/execMain.c:1044 executor/execMain.c:1318
+#: executor/execMain.c:1453
 msgid "Can't serialize access due to concurrent update"
 msgstr ""
 
-#: commands/trigger.c:1245 executor/execMain.c:1064
+#: commands/trigger.c:1391 executor/execMain.c:1065
 #, c-format
 msgid "Unknown status %u from heap_mark4update"
 msgstr ""
 
-#: commands/trigger.c:1257
+#: commands/trigger.c:1403
 msgid "GetTupleForTrigger: failed ReadBuffer"
 msgstr ""
 
-#: commands/trigger.c:1445
+#: commands/trigger.c:1591
 msgid "DeferredTriggerExecute: failed to fetch old tuple"
 msgstr ""
 
-#: commands/trigger.c:1452
+#: commands/trigger.c:1598
 msgid "DeferredTriggerExecute: failed to fetch new tuple"
 msgstr ""
 
-#: commands/trigger.c:1473
+#: commands/trigger.c:1619
 #, c-format
 msgid "DeferredTriggerExecute: can't find trigger %u"
 msgstr ""
 
-#: commands/trigger.c:1718
+#: commands/trigger.c:1765
+#, c-format
+msgid "deferredTriggerInvokeEvents: relation %u has no triggers"
+msgstr ""
+
+#: commands/trigger.c:1876
 msgid "DeferredTriggerBeginXact() called while inside transaction"
 msgstr ""
 
-#: commands/trigger.c:1896
+#: commands/trigger.c:2052
 msgid "unnamed constraints cannot be set explicitly"
 msgstr ""
 
-#: commands/trigger.c:1927
+#: commands/trigger.c:2083
 #, c-format
 msgid "Constraint '%s' is not deferrable"
 msgstr ""
 
-#: commands/trigger.c:1941
+#: commands/trigger.c:2097
 #, c-format
 msgid "Constraint '%s' does not exist"
 msgstr "Integritetsvillkor '%s' existerar inte"
 
-#: commands/trigger.c:2018
+#: commands/trigger.c:2174
 msgid "DeferredTriggerSaveEvent() called outside of transaction"
 msgstr ""
 
@@ -4620,7 +4652,7 @@ msgstr ""
 #: commands/typecmds.c:667
 #, c-format
 msgid "%s is not a domain"
-msgstr ""
+msgstr "%s är inte en domän"
 
 #: commands/typecmds.c:736
 #, c-format
@@ -4637,250 +4669,232 @@ msgstr ""
 msgid "attempted to define composite type relation with no attrs"
 msgstr ""
 
-#: commands/user.c:141
+#: commands/user.c:147
 #, c-format
 msgid "write_group_file: unable to write %s: %m"
 msgstr ""
 
-#: commands/user.c:171
+#: commands/user.c:181
 #, c-format
 msgid "Invalid group name '%s'"
 msgstr "Ogiltigt gruppnamn \"%s\""
 
-#: commands/user.c:201 commands/user.c:331
+#: commands/user.c:211 commands/user.c:335
 #, c-format
 msgid "Invalid user name '%s'"
 msgstr "Ogiltigt användarnamn \"%s\""
 
-#: commands/user.c:232 commands/user.c:355
+#: commands/user.c:242 commands/user.c:364
 #, c-format
 msgid "%s: %m"
 msgstr "%s: %m"
 
-#: commands/user.c:240 commands/user.c:363
+#: commands/user.c:250 commands/user.c:372
 #, c-format
 msgid "rename %s to %s: %m"
 msgstr "döp om %s till %s: %m"
 
-#: commands/user.c:287
+#: commands/user.c:286
 #, c-format
-msgid "write_password_file: unable to write %s: %m"
+msgid "write_user_file: unable to write %s: %m"
 msgstr ""
 
-#: commands/user.c:334
+#: commands/user.c:341
 #, c-format
 msgid "Invalid user password '%s'"
 msgstr "Ogiltigt användarlösenord \"%s\""
 
-#: commands/user.c:443 commands/user.c:453 commands/user.c:459
-#: commands/user.c:465 commands/user.c:471 commands/user.c:477
+#: commands/user.c:505 commands/user.c:515 commands/user.c:521
+#: commands/user.c:527 commands/user.c:533 commands/user.c:539
 msgid "CREATE USER: conflicting options"
 msgstr ""
 
-#: commands/user.c:481
+#: commands/user.c:543
 #, c-format
 msgid "CREATE USER: option \"%s\" not recognized"
 msgstr ""
 
-#: commands/user.c:493
+#: commands/user.c:555
 msgid "user id must be positive"
 msgstr "användar-id måste vara positivt"
 
-#: commands/user.c:508
+#: commands/user.c:570
 msgid "CREATE USER: permission denied"
 msgstr "CREATE USER: rättighet saknas"
 
-#: commands/user.c:511
+#: commands/user.c:573
 #, c-format
 msgid "CREATE USER: user name \"%s\" is reserved"
 msgstr "CREATE USER: användarnamn \"%s\" är reserverat"
 
-#: commands/user.c:546
+#: commands/user.c:608
 #, c-format
 msgid "CREATE USER: user name \"%s\" already exists"
 msgstr "CREATE USER: användarnamn \"%s\" finns redan"
 
-#: commands/user.c:549
+#: commands/user.c:611
 #, c-format
 msgid "CREATE USER: sysid %d is already assigned"
 msgstr "CREATE USER: användarid %d är redan använd"
 
-#: commands/user.c:580 commands/user.c:784
+#: commands/user.c:642 commands/user.c:843
 msgid "CREATE USER: password encryption failed"
 msgstr ""
 
-#: commands/user.c:670 commands/user.c:680 commands/user.c:686
-#: commands/user.c:692
+#: commands/user.c:733 commands/user.c:743 commands/user.c:749
+#: commands/user.c:755
 msgid "ALTER USER: conflicting options"
 msgstr ""
 
-#: commands/user.c:696
+#: commands/user.c:759
 #, c-format
 msgid "ALTER USER: option \"%s\" not recognized"
 msgstr ""
 
-#: commands/user.c:719
+#: commands/user.c:782
 msgid "ALTER USER: permission denied"
 msgstr "ALTER USER: rättighet saknas"
 
-#: commands/user.c:723
-msgid "ALTER USER: password changes cannot be rolled back"
-msgstr ""
-
-#: commands/user.c:737
+#: commands/user.c:796
 #, c-format
 msgid "ALTER USER: user \"%s\" does not exist"
 msgstr "ALTER USER: användare \"%s\" existerar inte"
 
-#: commands/user.c:847 commands/variable.c:549 utils/cache/lsyscache.c:1507
+#: commands/user.c:907 commands/variable.c:549 utils/cache/lsyscache.c:1507
 #: utils/init/miscinit.c:556
 #, c-format
 msgid "user \"%s\" does not exist"
 msgstr "användare \"%s\" existerar inte"
 
-#: commands/user.c:903
+#: commands/user.c:963
 msgid "DROP USER: permission denied"
 msgstr "DROP USER: rättighet saknas"
 
-#: commands/user.c:906
-msgid "DROP USER cannot be rolled back completely"
-msgstr ""
-
-#: commands/user.c:933
+#: commands/user.c:990
 #, c-format
 msgid "DROP USER: user \"%s\" does not exist (no users removed)"
 msgstr "DROP USER: användare \"%s\" existerar inte (inga användare borttagna)"
 
-#: commands/user.c:935
+#: commands/user.c:992
 #, c-format
 msgid "DROP USER: user \"%s\" does not exist"
 msgstr "DROP USER: användare \"%s\" existerar inte"
 
-#: commands/user.c:941
+#: commands/user.c:998
 msgid "current user cannot be dropped"
 msgstr ""
 
-#: commands/user.c:943
+#: commands/user.c:1000
 msgid "session user cannot be dropped"
 msgstr ""
 
-#: commands/user.c:967
+#: commands/user.c:1024
 #, c-format
 msgid "DROP USER: user \"%s\" owns database \"%s\", cannot be removed%s"
 msgstr "DROP USER: användare \"%s\" äger databas \"%s\", kan inte tas bort%s"
 
-#: commands/user.c:1046
+#: commands/user.c:1104
 #, c-format
 msgid "CheckPgUserAclNotNull: \"%s\" not found"
 msgstr ""
 
-#: commands/user.c:1051
+#: commands/user.c:1109
 #, c-format
 msgid ""
 "To use passwords, you have to revoke permissions on %s so normal users "
 "cannot read the passwords. Try 'REVOKE ALL ON \"%s\" FROM PUBLIC'."
 msgstr ""
 
-#: commands/user.c:1093 commands/user.c:1099
+#: commands/user.c:1151 commands/user.c:1157
 msgid "CREATE GROUP: conflicting options"
 msgstr ""
 
-#: commands/user.c:1103
+#: commands/user.c:1161
 #, c-format
 msgid "CREATE GROUP: option \"%s\" not recognized"
 msgstr ""
 
-#: commands/user.c:1111
+#: commands/user.c:1169
 msgid "group id must be positive"
 msgstr ""
 
-#: commands/user.c:1122
+#: commands/user.c:1180
 msgid "CREATE GROUP: permission denied"
 msgstr "CREATE GROUP: rättighet saknas"
 
-#: commands/user.c:1125
+#: commands/user.c:1183
 #, c-format
 msgid "CREATE GROUP: group name \"%s\" is reserved"
 msgstr ""
 
-#: commands/user.c:1154
+#: commands/user.c:1218
 #, c-format
 msgid "CREATE GROUP: group name \"%s\" already exists"
 msgstr ""
 
-#: commands/user.c:1157
+#: commands/user.c:1221
 #, c-format
 msgid "CREATE GROUP: group sysid %d is already assigned"
 msgstr ""
 
-#: commands/user.c:1244
+#: commands/user.c:1314
 #, c-format
 msgid "%s: group \"%s\" does not exist"
 msgstr "%s: gruppen \"%s\" existerar inte"
 
-#: commands/user.c:1285
+#: commands/user.c:1355
 #, c-format
 msgid "AlterGroup: unknown tag %s"
 msgstr ""
 
-#: commands/user.c:1297
+#: commands/user.c:1367
 #, c-format
 msgid "%s: user \"%s\" is already in group \"%s\""
 msgstr ""
 
-#: commands/user.c:1312
+#: commands/user.c:1382
 #, c-format
 msgid "ALTER GROUP: group \"%s\" does not have any members"
 msgstr ""
 
-#: commands/user.c:1337
+#: commands/user.c:1407
 #, c-format
 msgid "ALTER GROUP: user \"%s\" is not in group \"%s\""
 msgstr ""
 
-#: commands/user.c:1465
+#: commands/user.c:1536
 msgid "DROP GROUP: permission denied"
 msgstr "DROP GROUP: rättighet saknas"
 
-#: commands/user.c:1476
+#: commands/user.c:1549
 #, c-format
 msgid "DROP GROUP: group \"%s\" does not exist"
 msgstr "DROP GROUP: gruppen \"%s\" existerar inte"
 
-#: commands/vacuum.c:181
-#, c-format
-msgid "%s cannot run inside a BEGIN/END block"
-msgstr ""
-
-#: commands/vacuum.c:185
-#, c-format
-msgid "%s cannot be executed from a function"
-msgstr ""
-
-#: commands/vacuum.c:460
+#: commands/vacuum.c:459
 msgid ""
 "oldest Xmin is far in the past --- close open transactions soon to avoid "
 "wraparound problems"
 msgstr ""
 
-#: commands/vacuum.c:506 commands/vacuum.c:513
+#: commands/vacuum.c:505 commands/vacuum.c:512
 #, c-format
 msgid "pg_class entry for relid %u vanished during vacuuming"
 msgstr ""
 
-#: commands/vacuum.c:666
+#: commands/vacuum.c:665
 msgid ""
 "Some databases have not been vacuumed in over 2 billion transactions.\n"
 "\tYou may have already suffered transaction-wraparound data loss."
 msgstr ""
 
-#: commands/vacuum.c:677
+#: commands/vacuum.c:676
 msgid ""
 "Some databases have not been vacuumed in over 1 billion transactions.\n"
 "\tBetter vacuum them soon, or you may have a wraparound failure."
 msgstr ""
 
-#: commands/vacuum.c:684
+#: commands/vacuum.c:683
 #, c-format
 msgid ""
 "Some databases have not been vacuumed in %d transactions.\n"
@@ -5204,48 +5218,48 @@ msgstr ""
 msgid "You can't change view relation %s"
 msgstr ""
 
-#: executor/execMain.c:991
+#: executor/execMain.c:992
 msgid "ExecutePlan: NO (junk) `ctid' was found!"
 msgstr ""
 
-#: executor/execMain.c:995
+#: executor/execMain.c:996
 msgid "ExecutePlan: (junk) `ctid' is NULL!"
 msgstr ""
 
-#: executor/execMain.c:1020
+#: executor/execMain.c:1021
 #, c-format
 msgid "ExecutePlan: NO (junk) `%s' was found!"
 msgstr ""
 
-#: executor/execMain.c:1025
+#: executor/execMain.c:1026
 #, c-format
 msgid "ExecutePlan: (junk) `%s' is NULL!"
 msgstr ""
 
-#: executor/execMain.c:1114
+#: executor/execMain.c:1115
 msgid "ExecutePlan: unknown operation in queryDesc"
 msgstr ""
 
-#: executor/execMain.c:1382
+#: executor/execMain.c:1383
 msgid "ExecUpdate: UPDATE can't run without transactions"
 msgstr ""
 
-#: executor/execMain.c:1582
+#: executor/execMain.c:1583
 #, c-format
 msgid "%s: Fail to add null value in not null attribute %s"
 msgstr ""
 
-#: executor/execMain.c:1592
+#: executor/execMain.c:1593
 #, c-format
 msgid "%s: rejected due to CHECK constraint \"%s\" on \"%s\""
 msgstr ""
 
-#: executor/execMain.c:1636
+#: executor/execMain.c:1637
 #, c-format
 msgid "EvalPlanQual: can't find RTE %d"
 msgstr ""
 
-#: executor/execMain.c:1654
+#: executor/execMain.c:1655
 msgid "EvalPlanQual: t_xmin is uncommitted ?!"
 msgstr ""
 
@@ -5415,33 +5429,33 @@ msgstr ""
 msgid "InstrStopNode without start"
 msgstr ""
 
-#: executor/nodeAgg.c:764
+#: executor/nodeAgg.c:774
 msgid "ExecInitAgg: could not find any aggregate functions"
 msgstr ""
 
-#: executor/nodeAgg.c:862
+#: executor/nodeAgg.c:872
 #, c-format
 msgid "ExecAgg: cache lookup failed for aggregate %u"
 msgstr ""
 
-#: executor/nodeAgg.c:917
+#: executor/nodeAgg.c:927
 #, c-format
 msgid "Aggregate %u needs to have compatible input type and transition type"
 msgstr ""
 
-#: executor/nodeAgg.c:940 executor/nodeGroup.c:496
+#: executor/nodeAgg.c:950 executor/nodeGroup.c:496
 #, c-format
 msgid "Unable to identify an equality operator for type %s"
 msgstr ""
 
-#: executor/nodeAgg.c:968
+#: executor/nodeAgg.c:978
 #, c-format
 msgid ""
 "GetAggInitVal: cache lookup failed on aggregate transition function return "
 "type %u"
 msgstr ""
 
-#: executor/nodeAgg.c:1050
+#: executor/nodeAgg.c:1060
 #, c-format
 msgid "Aggregate function %u called as normal function"
 msgstr ""
@@ -5581,62 +5595,62 @@ msgstr ""
 msgid "Memory exhausted in SPI_connect"
 msgstr ""
 
-#: executor/spi.c:149
+#: executor/spi.c:148
 msgid "Memory exhausted in SPI_finish"
 msgstr ""
 
-#: executor/spi.c:315 executor/spi.c:342 executor/spi.c:371 executor/spi.c:409
-#: executor/spi.c:653 executor/spi.c:1331
+#: executor/spi.c:313 executor/spi.c:340 executor/spi.c:369 executor/spi.c:407
+#: executor/spi.c:651 executor/spi.c:1427
 msgid "SPI: stack corrupted"
 msgstr ""
 
-#: executor/spi.c:720
+#: executor/spi.c:718
 msgid "cannot open multi-query plan as cursor"
 msgstr ""
 
-#: executor/spi.c:725
+#: executor/spi.c:723
 msgid "plan in SPI_cursor_open() is not a SELECT"
 msgstr ""
 
-#: executor/spi.c:727
+#: executor/spi.c:725
 msgid "plan in SPI_cursor_open() must NOT be a DECLARE already"
 msgstr ""
 
-#: executor/spi.c:729
+#: executor/spi.c:727
 msgid "plan in SPI_cursor_open() must NOT be a SELECT INTO"
 msgstr ""
 
-#: executor/spi.c:760
+#: executor/spi.c:758
 #, c-format
 msgid "cursor \"%s\" already in use"
 msgstr ""
 
-#: executor/spi.c:766
+#: executor/spi.c:764
 #, c-format
 msgid "failed to create portal \"%s\""
 msgstr ""
 
-#: executor/spi.c:879 executor/spi.c:1237
+#: executor/spi.c:877 executor/spi.c:1333
 msgid "invalid portal in SPI cursor operation"
 msgstr ""
 
-#: executor/spi.c:904
+#: executor/spi.c:902
 msgid "SPI: improper call to spi_printtup"
 msgstr ""
 
-#: executor/spi.c:906
+#: executor/spi.c:904
 msgid "SPI: stack corrupted in spi_printtup"
 msgstr ""
 
-#: executor/spi.c:1188
+#: executor/spi.c:1284
 msgid "SPI_select: retrieve into portal not implemented"
 msgstr ""
 
-#: executor/spi.c:1198
+#: executor/spi.c:1294
 msgid "SPI_select: # of processed tuples check failed"
 msgstr ""
 
-#: executor/spi.c:1297
+#: executor/spi.c:1393
 msgid "SPI_fetch: # of processed tuples check failed"
 msgstr ""
 
@@ -6223,12 +6237,12 @@ msgstr ""
 msgid "_equalParam: Invalid paramkind value: %d"
 msgstr ""
 
-#: nodes/equalfuncs.c:1986
+#: nodes/equalfuncs.c:1987
 #, c-format
 msgid "_equalValue: unknown node type %d"
 msgstr ""
 
-#: nodes/equalfuncs.c:2437
+#: nodes/equalfuncs.c:2438
 #, c-format
 msgid "equal: don't know whether nodes of type %d are equal"
 msgstr ""
@@ -6245,17 +6259,17 @@ msgstr ""
 msgid "llasti: empty list"
 msgstr ""
 
-#: nodes/outfuncs.c:1023 nodes/readfuncs.c:1691
+#: nodes/outfuncs.c:1026 nodes/readfuncs.c:1694
 #, c-format
 msgid "bogus rte kind %d"
 msgstr ""
 
-#: nodes/outfuncs.c:1321
+#: nodes/outfuncs.c:1324
 #, c-format
 msgid "_outValue: don't know how to print type %d "
 msgstr ""
 
-#: nodes/outfuncs.c:1779
+#: nodes/outfuncs.c:1782
 #, c-format
 msgid "_outNode: don't know how to print type %d "
 msgstr ""
@@ -6291,22 +6305,22 @@ msgstr ""
 msgid "toOidList: unexpected datatype"
 msgstr ""
 
-#: nodes/readfuncs.c:820
+#: nodes/readfuncs.c:823
 #, c-format
 msgid "_readExpr: unknown opType \"%.*s\""
 msgstr ""
 
-#: nodes/readfuncs.c:2273
+#: nodes/readfuncs.c:2276
 #, c-format
 msgid "badly formatted planstring \"%.10s\"..."
 msgstr ""
 
-#: nodes/readfuncs.c:2306 nodes/readfuncs.c:2338
+#: nodes/readfuncs.c:2309 nodes/readfuncs.c:2341
 #, c-format
 msgid "readDatum: expected '%s', got '%s'; length = %lu"
 msgstr ""
 
-#: nodes/readfuncs.c:2313
+#: nodes/readfuncs.c:2316
 #, c-format
 msgid "readDatum: byval & length = %lu"
 msgstr ""
@@ -6399,7 +6413,7 @@ msgstr ""
 msgid "recurse_push_qual: unexpected node %d"
 msgstr ""
 
-#: optimizer/path/clausesel.c:522
+#: optimizer/path/clausesel.c:533
 #, c-format
 msgid "clause_selectivity: s1 %f"
 msgstr ""
@@ -6599,8 +6613,8 @@ msgstr ""
 msgid "preprocess_qual_conditions: unexpected node type %d"
 msgstr ""
 
-#: optimizer/plan/planner.c:908 parser/analyze.c:1780 parser/analyze.c:1963
-#: parser/analyze.c:2460
+#: optimizer/plan/planner.c:908 parser/analyze.c:1774 parser/analyze.c:1947
+#: parser/analyze.c:2444
 msgid "SELECT FOR UPDATE is not allowed with UNION/INTERSECT/EXCEPT"
 msgstr ""
 
@@ -6737,24 +6751,24 @@ msgstr ""
 msgid "has_subclass: Relation %u not found"
 msgstr ""
 
-#: optimizer/util/relnode.c:59
+#: optimizer/util/relnode.c:60
 msgid "build_base_rel: rel already exists"
 msgstr ""
 
-#: optimizer/util/relnode.c:68
+#: optimizer/util/relnode.c:69
 msgid "build_base_rel: rel already exists as 'other' rel"
 msgstr ""
 
-#: optimizer/util/relnode.c:106
+#: optimizer/util/relnode.c:107
 msgid "build_other_rel: rel already exists as base rel"
 msgstr ""
 
-#: optimizer/util/relnode.c:179
+#: optimizer/util/relnode.c:180
 #, c-format
 msgid "make_base_rel: unsupported RTE kind %d"
 msgstr ""
 
-#: optimizer/util/relnode.c:215
+#: optimizer/util/relnode.c:216
 #, c-format
 msgid "find_base_rel: no relation entry for relid %d"
 msgstr ""
@@ -6856,7 +6870,7 @@ msgstr ""
 msgid "%s will create implicit trigger(s) for FOREIGN KEY check(s)"
 msgstr ""
 
-#: parser/analyze.c:1446 parser/analyze.c:1564
+#: parser/analyze.c:1446 parser/analyze.c:1568
 #, c-format
 msgid "transformRuleStmt: unexpected event type %d"
 msgstr ""
@@ -6865,165 +6879,165 @@ msgstr ""
 msgid "Rule WHERE condition may not contain references to other relations"
 msgstr ""
 
-#: parser/analyze.c:1524
+#: parser/analyze.c:1459
+msgid "Rule WHERE condition may not contain aggregate functions"
+msgstr ""
+
+#: parser/analyze.c:1528
 msgid ""
 "Rules with WHERE conditions may only have SELECT, INSERT, UPDATE, or DELETE "
 "actions"
 msgstr ""
 
-#: parser/analyze.c:1548
+#: parser/analyze.c:1552
 msgid "ON SELECT rule may not use OLD"
 msgstr ""
 
-#: parser/analyze.c:1550
+#: parser/analyze.c:1554
 msgid "ON SELECT rule may not use NEW"
 msgstr ""
 
-#: parser/analyze.c:1557
+#: parser/analyze.c:1561
 msgid "ON INSERT rule may not use OLD"
 msgstr ""
 
-#: parser/analyze.c:1561
+#: parser/analyze.c:1565
 msgid "ON DELETE rule may not use NEW"
 msgstr ""
 
-#: parser/analyze.c:1626 parser/analyze.c:1844
+#: parser/analyze.c:1630 parser/analyze.c:1838
 msgid "DECLARE CURSOR must not specify INTO"
 msgstr ""
 
-#: parser/analyze.c:1628 parser/analyze.c:1846
+#: parser/analyze.c:1632 parser/analyze.c:1840
 msgid ""
 "DECLARE/UPDATE is not supported\n"
 "\tCursors must be READ ONLY"
 msgstr ""
 
-#: parser/analyze.c:1638 parser/analyze.c:1856
-msgid "DECLARE CURSOR may only be used in begin/end transaction blocks"
-msgstr ""
-
-#: parser/analyze.c:1924
+#: parser/analyze.c:1908
 msgid ""
 "ORDER BY on a UNION/INTERSECT/EXCEPT result must be on one of the result "
 "columns"
 msgstr ""
 
-#: parser/analyze.c:1958
+#: parser/analyze.c:1942
 msgid "INTO is only allowed on first SELECT of UNION/INTERSECT/EXCEPT"
 msgstr ""
 
-#: parser/analyze.c:1960
+#: parser/analyze.c:1944
 msgid "Portal may not appear in UNION/INTERSECT/EXCEPT"
 msgstr ""
 
-#: parser/analyze.c:2054
+#: parser/analyze.c:2038
 #, c-format
 msgid "Each %s query must have the same number of columns"
 msgstr ""
 
-#: parser/analyze.c:2112
+#: parser/analyze.c:2096
 #, c-format
 msgid "getSetColTypes: unexpected node %d"
 msgstr ""
 
-#: parser/analyze.c:2123
+#: parser/analyze.c:2107
 msgid "CREATE TABLE AS specifies too many column names"
 msgstr ""
 
-#: parser/analyze.c:2206 parser/analyze.c:2215
+#: parser/analyze.c:2190 parser/analyze.c:2199
 msgid "UPDATE target count mismatch --- internal error"
 msgstr ""
 
-#: parser/analyze.c:2301
+#: parser/analyze.c:2285
 msgid "Unexpected node type in ALTER TABLE ADD CONSTRAINT"
 msgstr ""
 
-#: parser/analyze.c:2384
+#: parser/analyze.c:2368
 msgid "transformPrepareStmt: internal error"
 msgstr ""
 
-#: parser/analyze.c:2411
+#: parser/analyze.c:2395
 #, c-format
 msgid "Wrong number of parameters, expected %d but got %d"
 msgstr ""
 
-#: parser/analyze.c:2424
+#: parser/analyze.c:2408
 msgid "Cannot use subselects in EXECUTE parameters"
 msgstr ""
 
-#: parser/analyze.c:2426
+#: parser/analyze.c:2410
 msgid "Cannot use aggregates in EXECUTE parameters"
 msgstr ""
 
-#: parser/analyze.c:2437
+#: parser/analyze.c:2421
 #, c-format
 msgid ""
 "Parameter $%d of type %s cannot be coerced into the expected type %s\n"
 "\tYou will need to rewrite or cast the expression"
 msgstr ""
 
-#: parser/analyze.c:2462
+#: parser/analyze.c:2446
 msgid "SELECT FOR UPDATE is not allowed with DISTINCT clause"
 msgstr ""
 
-#: parser/analyze.c:2464
+#: parser/analyze.c:2448
 msgid "SELECT FOR UPDATE is not allowed with GROUP BY clause"
 msgstr ""
 
-#: parser/analyze.c:2466
+#: parser/analyze.c:2450
 msgid "SELECT FOR UPDATE is not allowed with AGGREGATE"
 msgstr ""
 
-#: parser/analyze.c:2531
+#: parser/analyze.c:2515
 #, c-format
 msgid "FOR UPDATE: relation \"%s\" not found in FROM clause"
 msgstr ""
 
-#: parser/analyze.c:2571
+#: parser/analyze.c:2555
 #, c-format
 msgid "relationHasPrimaryKey: index %u not found"
 msgstr ""
 
-#: parser/analyze.c:2622
+#: parser/analyze.c:2606
 msgid "Misplaced DEFERRABLE clause"
 msgstr ""
 
-#: parser/analyze.c:2624 parser/analyze.c:2633
+#: parser/analyze.c:2608 parser/analyze.c:2617
 msgid "Multiple DEFERRABLE/NOT DEFERRABLE clauses not allowed"
 msgstr ""
 
-#: parser/analyze.c:2631
+#: parser/analyze.c:2615
 msgid "Misplaced NOT DEFERRABLE clause"
 msgstr ""
 
-#: parser/analyze.c:2638 parser/analyze.c:2656
+#: parser/analyze.c:2622 parser/analyze.c:2640
 msgid "INITIALLY DEFERRED constraint must be DEFERRABLE"
 msgstr ""
 
-#: parser/analyze.c:2643
+#: parser/analyze.c:2627
 msgid "Misplaced INITIALLY DEFERRED clause"
 msgstr ""
 
-#: parser/analyze.c:2645 parser/analyze.c:2663
+#: parser/analyze.c:2629 parser/analyze.c:2647
 msgid "Multiple INITIALLY IMMEDIATE/DEFERRED clauses not allowed"
 msgstr ""
 
-#: parser/analyze.c:2661
+#: parser/analyze.c:2645
 msgid "Misplaced INITIALLY IMMEDIATE clause"
 msgstr ""
 
-#: parser/analyze.c:2770
+#: parser/analyze.c:2754
 #, c-format
 msgid ""
 "New table specifies a schema (%s) different from the one being created (%s)"
 msgstr ""
 
-#: parser/analyze.c:2789
+#: parser/analyze.c:2773
 #, c-format
 msgid ""
 "New view specifies a schema (%s) different from the one being created (%s)"
 msgstr ""
 
-#: parser/analyze.c:2806
+#: parser/analyze.c:2790
 msgid "parser: unsupported schema node (internal error)"
 msgstr ""
 
@@ -7156,39 +7170,39 @@ msgid ""
 "transformDistinctClause: failed to add DISTINCT ON clause to target list"
 msgstr ""
 
-#: parser/parse_coerce.c:291
+#: parser/parse_coerce.c:288
 #, c-format
 msgid "coerce_type: no conversion function from %s to %s"
 msgstr ""
 
-#: parser/parse_coerce.c:417
+#: parser/parse_coerce.c:414
 #, c-format
 msgid "coerce_type_constraints: failed to lookup type %u"
 msgstr ""
 
 #. translator: first %s is name of a SQL construct, eg WHERE
-#: parser/parse_coerce.c:568
+#: parser/parse_coerce.c:565
 #, c-format
 msgid "Argument of %s must be type boolean, not type %s"
 msgstr ""
 
 #. translator: %s is name of a SQL construct, eg WHERE
-#: parser/parse_coerce.c:576
+#: parser/parse_coerce.c:573
 #, c-format
 msgid "Argument of %s must not be a set function"
 msgstr ""
 
-#: parser/parse_coerce.c:623
+#: parser/parse_coerce.c:620
 #, c-format
 msgid "%s types '%s' and '%s' not matched"
 msgstr ""
 
-#: parser/parse_coerce.c:675
+#: parser/parse_coerce.c:672
 #, c-format
 msgid "%s unable to convert to type %s"
 msgstr "%s kan inte konvertera till typ %s"
 
-#: parser/parse_coerce.c:957
+#: parser/parse_coerce.c:954
 #, c-format
 msgid "find_coercion_pathway: bogus castcontext %c"
 msgstr ""
@@ -7288,71 +7302,71 @@ msgstr ""
 msgid "Cannot find type OID for relation %u"
 msgstr ""
 
-#: parser/parse_func.c:208
+#: parser/parse_func.c:232
 #, c-format
 msgid "Cannot pass result of sub-select or join %s to a function"
 msgstr ""
 
-#: parser/parse_func.c:253
+#: parser/parse_func.c:270
 #, c-format
 msgid "%s(*) specified, but %s is not an aggregate function"
 msgstr ""
 
-#: parser/parse_func.c:256
+#: parser/parse_func.c:273
 #, c-format
 msgid "DISTINCT specified, but %s is not an aggregate function"
 msgstr ""
 
-#: parser/parse_func.c:279
+#: parser/parse_func.c:296
 #, c-format
 msgid "Attribute notation .%s applied to type %s, which is not a complex type"
 msgstr ""
 
-#: parser/parse_func.c:282
+#: parser/parse_func.c:299
 #, c-format
 msgid "Attribute \"%s\" not found in datatype %s"
 msgstr ""
 
-#: parser/parse_func.c:331
+#: parser/parse_func.c:348
 msgid "Aggregates may not return sets"
 msgstr ""
 
-#: parser/parse_func.c:1240
+#: parser/parse_func.c:1264
 #, c-format
 msgid "No such attribute %s.%s.%s"
 msgstr ""
 
-#: parser/parse_func.c:1243
+#: parser/parse_func.c:1267
 #, c-format
 msgid "No such attribute %s.%s"
 msgstr ""
 
-#: parser/parse_func.c:1270
+#: parser/parse_func.c:1294
 #, c-format
 msgid "Function %s(%s) does not exist%s%s"
 msgstr ""
 
-#: parser/parse_func.c:1276
+#: parser/parse_func.c:1300
 #, c-format
 msgid "%s: function %s(%s) does not exist%s%s"
 msgstr ""
 
-#: parser/parse_func.c:1302
+#: parser/parse_func.c:1326
 #, c-format
 msgid "%s: aggregate %s(*) does not exist"
 msgstr ""
 
-#: parser/parse_func.c:1305
+#: parser/parse_func.c:1329
 #, c-format
 msgid "%s: aggregate %s(%s) does not exist"
 msgstr ""
 
-#: parser/parse_func.c:1321
+#: parser/parse_func.c:1345
 #, c-format
 msgid "%s: function %s(*) is not an aggregate"
 msgstr ""
 
-#: parser/parse_func.c:1324
+#: parser/parse_func.c:1348
 #, c-format
 msgid "%s: function %s(%s) is not an aggregate"
 msgstr ""
@@ -7710,25 +7724,25 @@ msgstr ""
 msgid "error while unloading add-on"
 msgstr ""
 
-#: port/dynloader/bsdi.c:59 port/dynloader/linux.c:67
+#: port/dynloader/bsdi.c:59 port/dynloader/linux.c:71
 msgid "dld: Cannot link C library!"
 msgstr ""
 
-#: port/dynloader/bsdi.c:66 port/dynloader/linux.c:74
+#: port/dynloader/bsdi.c:66 port/dynloader/linux.c:78
 msgid "dld: Cannot link math library!"
 msgstr ""
 
-#: port/dynloader/bsdi.c:75 port/dynloader/linux.c:83
+#: port/dynloader/bsdi.c:75 port/dynloader/linux.c:87
 msgid "dld: Undefined:"
 msgstr ""
 
-#: port/dynloader/bsdi.c:78 port/dynloader/linux.c:86
+#: port/dynloader/bsdi.c:78 port/dynloader/linux.c:90
 #: port/dynloader/ultrix4.c:61
 #, c-format
 msgid "  %s"
 msgstr ""
 
-#: port/dynloader/linux.c:31
+#: port/dynloader/linux.c:35
 msgid "dynamic load not supported"
 msgstr ""
 
@@ -7761,7 +7775,7 @@ msgstr ""
 msgid "PGSTAT: fcntl() failed: %m"
 msgstr ""
 
-#: postmaster/pgstat.c:230 postmaster/pgstat.c:1166
+#: postmaster/pgstat.c:230 postmaster/pgstat.c:1158
 #, c-format
 msgid "PGSTAT: pipe() failed: %m"
 msgstr ""
@@ -7770,25 +7784,25 @@ msgstr ""
 msgid "PGSTAT: statistics collector startup skipped"
 msgstr ""
 
-#: postmaster/pgstat.c:296 postmaster/pgstat.c:1173
+#: postmaster/pgstat.c:296 postmaster/pgstat.c:1165
 #, c-format
 msgid "PGSTAT: fork() failed: %m"
 msgstr ""
 
-#: postmaster/pgstat.c:705
+#: postmaster/pgstat.c:697
 msgid "Only database superusers can reset statistic counters"
 msgstr ""
 
-#: postmaster/pgstat.c:772 postmaster/pgstat.c:781 postmaster/pgstat.c:828
-#: postmaster/pgstat.c:838
+#: postmaster/pgstat.c:764 postmaster/pgstat.c:773 postmaster/pgstat.c:820
+#: postmaster/pgstat.c:830
 msgid "PGSTATBE: malloc() failed"
 msgstr ""
 
-#: postmaster/pgstat.c:1227
+#: postmaster/pgstat.c:1219
 msgid "PGSTAT: Creation of dead backend hash table failed"
 msgstr ""
 
-#: postmaster/pgstat.c:1238
+#: postmaster/pgstat.c:1230
 msgid "PGSTAT: Allocation of backend table failed"
 msgstr ""
 
@@ -7939,12 +7953,12 @@ msgstr ""
 msgid "Assert checking is not compiled in."
 msgstr ""
 
-#: postmaster/postmaster.c:539 tcop/postgres.c:1493
+#: postmaster/postmaster.c:539 tcop/postgres.c:1574
 #, c-format
 msgid "--%s requires argument"
 msgstr ""
 
-#: postmaster/postmaster.c:541 tcop/postgres.c:1495
+#: postmaster/postmaster.c:541 tcop/postgres.c:1576
 #, c-format
 msgid "-c %s requires argument"
 msgstr ""
@@ -7979,12 +7993,12 @@ msgstr ""
 msgid "-----------------------------------------"
 msgstr ""
 
-#: postmaster/postmaster.c:610 postmaster/postmaster.c:2283
+#: postmaster/postmaster.c:610 postmaster/postmaster.c:2285
 #, c-format
 msgid "\t%s"
 msgstr ""
 
-#: postmaster/postmaster.c:618 tcop/postgres.c:1639
+#: postmaster/postmaster.c:618 tcop/postgres.c:1720
 #, c-format
 msgid "%s: could not locate executable, bailing out..."
 msgstr ""
@@ -8022,11 +8036,11 @@ msgstr ""
 #, c-format
 msgid ""
 "Usage:\n"
-"  %s [options...]\n"
+"  %s [OPTION]...\n"
 "\n"
 msgstr ""
 "Användning:\n"
-"  %s [flaggor...]\n"
+"  %s [FLAGGA]...\n"
 "\n"
 
 #: postmaster/postmaster.c:850
@@ -8035,24 +8049,24 @@ msgstr "Flaggor:\n"
 
 #: postmaster/postmaster.c:852
 msgid "  -A 1|0          enable/disable run-time assert checking\n"
-msgstr ""
+msgstr "  -A 1|0          slå på/av körningskontroller (assert)\n"
 
 #: postmaster/postmaster.c:854
 #, c-format
 msgid "  -B NBUFFERS     number of shared buffers (default %d)\n"
-msgstr ""
+msgstr "  -B ANBUFFER     antal delade buffertar (standard %d)\n"
 
 #: postmaster/postmaster.c:855
 msgid "  -c NAME=VALUE   set run-time parameter\n"
-msgstr ""
+msgstr "  -c NAMN=VÄRDE   sätt körningsparameter\n"
 
 #: postmaster/postmaster.c:856
 msgid "  -d 1-5          debugging level\n"
-msgstr ""
+msgstr "  -d 1-5          debug-nivå\n"
 
 #: postmaster/postmaster.c:857
 msgid "  -D DATADIR      database directory\n"
-msgstr ""
+msgstr "  -D DATAKAT      databaskatalog\n"
 
 #: postmaster/postmaster.c:858
 msgid "  -F              turn fsync off\n"
@@ -8060,11 +8074,11 @@ msgstr "  -F              slå av fsync\n"
 
 #: postmaster/postmaster.c:859
 msgid "  -h HOSTNAME     host name or IP address to listen on\n"
-msgstr ""
+msgstr "  -h VÄRDNAMN     värdnamn eller IP-adress att lyssna på\n"
 
 #: postmaster/postmaster.c:860
 msgid "  -i              enable TCP/IP connections\n"
-msgstr ""
+msgstr "  -i              slå på TCP/IP-uppkopplingar\n"
 
 #: postmaster/postmaster.c:861
 msgid "  -k DIRECTORY    Unix-domain socket location\n"
@@ -8077,38 +8091,48 @@ msgstr "  -l              slå på SSL-anslutningar\n"
 #: postmaster/postmaster.c:865
 #, c-format
 msgid "  -N MAX-CONNECT  maximum number of allowed connections (default %d)\n"
-msgstr ""
+msgstr "  -N MAX-CONNECT  maximalt antal tillåtna uppkopplingar (standard %d)\n"
 
 #: postmaster/postmaster.c:867
 msgid "  -o OPTIONS      pass 'OPTIONS' to each backend server\n"
-msgstr ""
+msgstr "  -o FLAGGOR      skicka \"FLAGGOR\" till varje backend-server\n"
 
 #: postmaster/postmaster.c:868
 #, c-format
 msgid "  -p PORT         port number to listen on (default %d)\n"
-msgstr ""
+msgstr "  -p PORT         portnummer att lyssna på (standard %d)\n"
 
 #: postmaster/postmaster.c:869
 msgid ""
 "  -S              silent mode (start in background without logging output)\n"
-msgstr ""
+msgstr "  -S              tyst läge (starta i bakgrunden och logga inte utdata)\n"
+
+#: postmaster/postmaster.c:870
+msgid "  --help          show this help, then exit\n"
+msgstr "  --help          visa den här hjälpen, avsluta sedan\n"
 
 #: postmaster/postmaster.c:871
+msgid "  --version       output version information, then exit\n"
+msgstr "  --version       visa versionsinformation, avsluta sedan\n"
+
+#: postmaster/postmaster.c:873
 msgid ""
 "\n"
 "Developer options:\n"
-msgstr "\nUtvecklarflaggor:\n"
+msgstr ""
+"\n"
+"Utvecklarflaggor:\n"
 
-#: postmaster/postmaster.c:872
+#: postmaster/postmaster.c:874
 msgid ""
 "  -n              do not reinitialize shared memory after abnormal exit\n"
-msgstr ""
-
-#: postmaster/postmaster.c:873
-msgid "  -s              send SIGSTOP to all backend servers if one dies\n"
-msgstr ""
+msgstr "  -n              återinitiera inte delat minne efter onormalt avslutande\n"
 
 #: postmaster/postmaster.c:875
+msgid "  -s              send SIGSTOP to all backend servers if one dies\n"
+msgstr "  -s              skicka SIGSTOP till alla backend-servrar om en dör\n"
+
+#: postmaster/postmaster.c:877
 msgid ""
 "\n"
 "Please read the documentation for the complete list of run-time\n"
@@ -8123,256 +8147,256 @@ msgstr ""
 "\n"
 "Rapportera buggar till <pgsql-bugs@postgresql.org>.\n"
 
-#: postmaster/postmaster.c:957
+#: postmaster/postmaster.c:959
 #, c-format
 msgid "ServerLoop: select failed: %m"
 msgstr ""
 
-#: postmaster/postmaster.c:1083 postmaster/postmaster.c:1100
+#: postmaster/postmaster.c:1085 postmaster/postmaster.c:1102
 msgid "incomplete startup packet"
 msgstr ""
 
-#: postmaster/postmaster.c:1091
+#: postmaster/postmaster.c:1093
 msgid "invalid length of startup packet"
 msgstr ""
 
-#: postmaster/postmaster.c:1133
+#: postmaster/postmaster.c:1135
 #, c-format
 msgid "failed to send SSL negotiation response: %m"
 msgstr ""
 
-#: postmaster/postmaster.c:1155
+#: postmaster/postmaster.c:1157
 msgid "unsupported frontend protocol"
 msgstr ""
 
-#: postmaster/postmaster.c:1182
+#: postmaster/postmaster.c:1184
 msgid "no PostgreSQL user name specified in startup packet"
 msgstr ""
 
-#: postmaster/postmaster.c:1215
+#: postmaster/postmaster.c:1217
 msgid "The database system is starting up"
 msgstr ""
 
-#: postmaster/postmaster.c:1218
+#: postmaster/postmaster.c:1220
 msgid "The database system is shutting down"
 msgstr ""
 
-#: postmaster/postmaster.c:1221
+#: postmaster/postmaster.c:1223
 msgid "The database system is in recovery mode"
 msgstr ""
 
-#: postmaster/postmaster.c:1224 storage/ipc/sinval.c:52
+#: postmaster/postmaster.c:1226 storage/ipc/sinval.c:52
 #: storage/lmgr/proc.c:211
 msgid "Sorry, too many clients already"
 msgstr "Ledsen, för många klienter"
 
-#: postmaster/postmaster.c:1254
+#: postmaster/postmaster.c:1256
 #, c-format
 msgid "processCancelRequest: CheckPointPID in cancel request for process %d"
 msgstr ""
 
-#: postmaster/postmaster.c:1268
+#: postmaster/postmaster.c:1270
 #, c-format
 msgid "processing cancel request: sending SIGINT to process %d"
 msgstr ""
 
-#: postmaster/postmaster.c:1274
+#: postmaster/postmaster.c:1276
 #, c-format
 msgid "bad key in cancel request for process %d"
 msgstr ""
 
-#: postmaster/postmaster.c:1281
+#: postmaster/postmaster.c:1283
 #, c-format
 msgid "bad pid in cancel request for process %d"
 msgstr ""
 
-#: postmaster/postmaster.c:1324
+#: postmaster/postmaster.c:1326
 msgid "ConnCreate: malloc failed"
 msgstr ""
 
-#: postmaster/postmaster.c:1419
+#: postmaster/postmaster.c:1421
 msgid "Received SIGHUP, reloading configuration files"
 msgstr ""
 
-#: postmaster/postmaster.c:1443
+#: postmaster/postmaster.c:1445
 #, c-format
 msgid "pmdie %d"
 msgstr ""
 
-#: postmaster/postmaster.c:1457
+#: postmaster/postmaster.c:1459
 msgid "smart shutdown request"
 msgstr ""
 
-#: postmaster/postmaster.c:1469 postmaster/postmaster.c:1513
+#: postmaster/postmaster.c:1471 postmaster/postmaster.c:1515
 #, c-format
 msgid "shutdown process %d already running"
 msgstr ""
 
-#: postmaster/postmaster.c:1487
+#: postmaster/postmaster.c:1489
 msgid "fast shutdown request"
 msgstr ""
 
-#: postmaster/postmaster.c:1493
+#: postmaster/postmaster.c:1495
 msgid "aborting any active transactions"
 msgstr ""
 
-#: postmaster/postmaster.c:1529
+#: postmaster/postmaster.c:1531
 msgid "immediate shutdown request"
 msgstr ""
 
-#: postmaster/postmaster.c:1564
+#: postmaster/postmaster.c:1566
 msgid "reaping dead processes"
 msgstr ""
 
-#: postmaster/postmaster.c:1581
+#: postmaster/postmaster.c:1583
 msgid "statistics collector process"
 msgstr ""
 
-#: postmaster/postmaster.c:1594
+#: postmaster/postmaster.c:1596
 msgid "shutdown process"
 msgstr "stäng ner process"
 
-#: postmaster/postmaster.c:1605
+#: postmaster/postmaster.c:1607
 msgid "startup process"
 msgstr "starta process"
 
-#: postmaster/postmaster.c:1607
+#: postmaster/postmaster.c:1609
 msgid "aborting startup due to startup process failure"
 msgstr ""
 
-#: postmaster/postmaster.c:1616
+#: postmaster/postmaster.c:1618
 #, c-format
 msgid "startup process %d died while shutdown process %d already running"
 msgstr ""
 
-#: postmaster/postmaster.c:1648
+#: postmaster/postmaster.c:1650
 msgid ""
 "all server processes terminated; reinitializing shared memory and semaphores"
 msgstr ""
 
-#: postmaster/postmaster.c:1686
+#: postmaster/postmaster.c:1688
 msgid "child process"
 msgstr ""
 
-#: postmaster/postmaster.c:1731
+#: postmaster/postmaster.c:1733
 msgid "server process"
 msgstr ""
 
-#: postmaster/postmaster.c:1732
+#: postmaster/postmaster.c:1734
 msgid "terminating any other active server processes"
 msgstr ""
 
-#: postmaster/postmaster.c:1753
+#: postmaster/postmaster.c:1755
 #, c-format
 msgid "CleanupProc: sending %s to process %d"
-msgstr ""
+msgstr "CleanupProc: skickar %s till process %d"
 
-#: postmaster/postmaster.c:1797
+#: postmaster/postmaster.c:1799
 #, c-format
 msgid "%s (pid %d) exited with exit code %d"
-msgstr ""
+msgstr "%s (pid %d) avslutade med avslutningskod %d"
 
-#: postmaster/postmaster.c:1800
+#: postmaster/postmaster.c:1802
 #, c-format
 msgid "%s (pid %d) was terminated by signal %d"
-msgstr ""
+msgstr "%s (pid %d) terminerades av signal %d"
 
-#: postmaster/postmaster.c:1803
+#: postmaster/postmaster.c:1805
 #, c-format
 msgid "%s (pid %d) exited with unexpected status %d"
-msgstr ""
+msgstr "%s (pid %d) avslutad med oväntad status %d"
 
-#: postmaster/postmaster.c:1825
+#: postmaster/postmaster.c:1827
 #, c-format
 msgid "SignalChildren: sending signal %d to process %d"
 msgstr ""
 
-#: postmaster/postmaster.c:1863
+#: postmaster/postmaster.c:1865
 msgid "out of memory; connection startup aborted"
-msgstr ""
+msgstr "slut på minnet; uppkoppling avbruten"
 
-#: postmaster/postmaster.c:1914
+#: postmaster/postmaster.c:1916
 msgid "connection startup failed"
 msgstr ""
 
-#: postmaster/postmaster.c:1931
+#: postmaster/postmaster.c:1933
 #, c-format
 msgid "connection startup failed (fork failure): %s"
 msgstr ""
 
-#: postmaster/postmaster.c:1938
+#: postmaster/postmaster.c:1940
 #, c-format
 msgid "BackendStartup: forked pid=%d socket=%d"
 msgstr ""
 
-#: postmaster/postmaster.c:1972
+#: postmaster/postmaster.c:1974
 msgid "Server process fork() failed: "
 msgstr ""
 
-#: postmaster/postmaster.c:2119
+#: postmaster/postmaster.c:2121
 #, c-format
 msgid "connection received: host=%s port=%hu"
 msgstr ""
 
-#: postmaster/postmaster.c:2139
+#: postmaster/postmaster.c:2141
 #, c-format
 msgid "connection received: host=%s"
 msgstr ""
 
-#: postmaster/postmaster.c:2159
+#: postmaster/postmaster.c:2161
 msgid "DoBackend: Unable to set timer for auth timeout"
 msgstr ""
 
-#: postmaster/postmaster.c:2188
+#: postmaster/postmaster.c:2190
 msgid "DoBackend: Unable to disable timer for auth timeout"
 msgstr ""
 
-#: postmaster/postmaster.c:2192
+#: postmaster/postmaster.c:2194
 #, c-format
 msgid "connection authorized: user=%s database=%s"
 msgstr ""
 
-#: postmaster/postmaster.c:2281
+#: postmaster/postmaster.c:2283
 #, c-format
 msgid "%s child[%d]: starting with ("
 msgstr ""
 
-#: postmaster/postmaster.c:2284
+#: postmaster/postmaster.c:2286
 msgid ")"
 msgstr ""
 
-#: postmaster/postmaster.c:2583
+#: postmaster/postmaster.c:2585
 #, c-format
 msgid "could not launch startup process (fork failure): %m"
 msgstr ""
 
-#: postmaster/postmaster.c:2586
+#: postmaster/postmaster.c:2588
 #, c-format
 msgid "could not launch checkpoint process (fork failure): %m"
 msgstr ""
 
-#: postmaster/postmaster.c:2589
+#: postmaster/postmaster.c:2591
 #, c-format
 msgid "could not launch shutdown process (fork failure): %m"
 msgstr ""
 
-#: postmaster/postmaster.c:2613
+#: postmaster/postmaster.c:2615
 msgid "CheckPointDataBase: malloc failed"
 msgstr ""
 
-#: postmaster/postmaster.c:2652
+#: postmaster/postmaster.c:2654
 #, c-format
 msgid "cannot create file %s: %s"
-msgstr ""
+msgstr "kan inte skapa fil %s: %s"
 
-#: postmaster/postmaster.c:2664
+#: postmaster/postmaster.c:2666
 #, c-format
 msgid "writing file %s failed"
-msgstr ""
+msgstr "kan inte skriva fil %s"
 
 #: regex/regcomp.c:1758 regex/regcomp.c:1773
 msgid "cclass_init: out of memory"
-msgstr ""
+msgstr "cclass_init: slut på minnet"
 
 #: rewrite/rewriteDefine.c:100
 #, c-format
@@ -8459,7 +8483,7 @@ msgstr ""
 #: rewrite/rewriteDefine.c:516
 #, c-format
 msgid "Attempt to rename rule \"%s\" failed: \"%s\" already exists"
-msgstr ""
+msgstr "Försök att döpa om regel \"%s\" misslyckades: \"%s\" finns redan"
 
 #: rewrite/rewriteHandler.c:343
 #, c-format
@@ -8487,30 +8511,30 @@ msgstr ""
 msgid "fireRIRrules: failed to remove aggs from qual"
 msgstr ""
 
-#: rewrite/rewriteHandler.c:1106
+#: rewrite/rewriteHandler.c:1096
 #, c-format
 msgid "query rewritten %d times, may contain cycles"
 msgstr ""
 
-#: rewrite/rewriteHandler.c:1230
+#: rewrite/rewriteHandler.c:1208
 msgid ""
 "Cannot insert into a view\n"
 "\tYou need an unconditional ON INSERT DO INSTEAD rule"
 msgstr ""
 
-#: rewrite/rewriteHandler.c:1234
+#: rewrite/rewriteHandler.c:1212
 msgid ""
 "Cannot update a view\n"
 "\tYou need an unconditional ON UPDATE DO INSTEAD rule"
 msgstr ""
 
-#: rewrite/rewriteHandler.c:1238
+#: rewrite/rewriteHandler.c:1216
 msgid ""
 "Cannot delete from a view\n"
 "\tYou need an unconditional ON DELETE DO INSTEAD rule"
 msgstr ""
 
-#: rewrite/rewriteHandler.c:1242
+#: rewrite/rewriteHandler.c:1220
 #, c-format
 msgid "QueryRewrite: unexpected commandType %d"
 msgstr ""
@@ -8527,7 +8551,7 @@ msgstr ""
 msgid "Conditional utility statements are not implemented"
 msgstr ""
 
-#: rewrite/rewriteManip.c:798
+#: rewrite/rewriteManip.c:790
 msgid "ResolveNew: can't handle whole-tuple reference"
 msgstr ""
 
@@ -8664,15 +8688,15 @@ msgstr ""
 
 #: storage/buffer/freelist.c:201
 msgid "out of free buffers: time to abort!"
-msgstr ""
+msgstr "slut på tomma buffertar: dags att avbryta!"
 
 #: storage/buffer/localbuf.c:83
 msgid "no empty local buffer."
-msgstr ""
+msgstr "ingen tom lokal buffert."
 
 #: storage/buffer/localbuf.c:120
 msgid "Out of memory in LocalBufferAlloc"
-msgstr ""
+msgstr "Slut på minne i LocalBufferAlloc"
 
 #: storage/buffer/localbuf.c:227
 #, c-format
@@ -9015,7 +9039,7 @@ msgstr ""
 msgid "inv_seek: invalid whence: %d"
 msgstr ""
 
-#: storage/lmgr/deadlock.c:269
+#: storage/lmgr/deadlock.c:271
 msgid "DeadLockCheckRecurse: inconsistent results"
 msgstr ""
 
@@ -9473,52 +9497,52 @@ msgstr ""
 msgid "HandleFunctionRequest: bogus argsize %d, should be %d"
 msgstr ""
 
-#: tcop/fastpath.c:337 tcop/postgres.c:664
+#: tcop/fastpath.c:337 tcop/postgres.c:679
 msgid ""
 "current transaction is aborted, queries ignored until end of transaction "
 "block"
 msgstr ""
 
-#: tcop/postgres.c:288
+#: tcop/postgres.c:286
 #, c-format
 msgid "Socket command type %c unknown"
 msgstr ""
 
-#: tcop/postgres.c:376
+#: tcop/postgres.c:374
 #, c-format
 msgid "query: %s"
 msgstr ""
 
-#: tcop/postgres.c:463
+#: tcop/postgres.c:461
 msgid "pg_analyze_and_rewrite: copyObject failed on parse tree"
 msgstr ""
 
-#: tcop/postgres.c:507
+#: tcop/postgres.c:505
 msgid "pg_plan_query: copyObject failed on plan tree"
 msgstr ""
 
-#: tcop/postgres.c:719
+#: tcop/postgres.c:756
 msgid "ProcessUtility"
 msgstr ""
 
-#: tcop/postgres.c:763
+#: tcop/postgres.c:838
 msgid "ProcessQuery"
 msgstr ""
 
-#: tcop/postgres.c:872
+#: tcop/postgres.c:951
 #, c-format
 msgid "duration: %ld.%06ld sec"
 msgstr ""
 
-#: tcop/postgres.c:886
+#: tcop/postgres.c:965
 msgid "StartTransactionCommand"
 msgstr ""
 
-#: tcop/postgres.c:897
+#: tcop/postgres.c:976
 msgid "CommitTransactionCommand"
 msgstr ""
 
-#: tcop/postgres.c:924
+#: tcop/postgres.c:1003
 msgid ""
 "Message from PostgreSQL backend:\n"
 "\tThe Postmaster has informed me that some other backend\n"
@@ -9528,63 +9552,63 @@ msgid ""
 "\tPlease reconnect to the database system and repeat your query."
 msgstr ""
 
-#: tcop/postgres.c:1042
+#: tcop/postgres.c:1121
 msgid ""
 "floating point exception! The last floating point operation either exceeded "
 "legal ranges or was a divide by zero"
 msgstr ""
 
-#: tcop/postgres.c:1075
+#: tcop/postgres.c:1154
 msgid "This connection has been terminated by the administrator."
 msgstr ""
 
-#: tcop/postgres.c:1082
-msgid "Query was canceled."
+#: tcop/postgres.c:1161
+msgid "Query was cancelled."
 msgstr "Frågan avbröts."
 
-#: tcop/postgres.c:1227
+#: tcop/postgres.c:1308
 msgid "Assert checking is not compiled in"
 msgstr ""
 
-#: tcop/postgres.c:1459
+#: tcop/postgres.c:1540
 msgid "only one -x flag is allowed"
 msgstr ""
 
-#: tcop/postgres.c:1477
+#: tcop/postgres.c:1558
 msgid "use -x {off,nor,nopull,nopm,pullall,wait}"
 msgstr ""
 
-#: tcop/postgres.c:1532
+#: tcop/postgres.c:1613
 msgid ""
 "Query statistics are disabled because parser, planner, or executor "
 "statistics are on."
 msgstr ""
 
-#: tcop/postgres.c:1609 tcop/postgres.c:1621
+#: tcop/postgres.c:1690 tcop/postgres.c:1702
 #, c-format
 msgid ""
 "%s: invalid command line arguments\n"
 "Try -? for help."
 msgstr ""
 
-#: tcop/postgres.c:1629
+#: tcop/postgres.c:1710
 #, c-format
 msgid "%s: user name undefined and no database specified"
 msgstr ""
 
-#: tcop/postgres.c:1680
+#: tcop/postgres.c:1761
 msgid "InitPostgres"
 msgstr ""
 
-#: tcop/postgres.c:1763
+#: tcop/postgres.c:1844
 msgid "AbortCurrentTransaction"
 msgstr ""
 
-#: tcop/postgres.c:1968
+#: tcop/postgres.c:2052
 msgid "unknown frontend message was received"
 msgstr ""
 
-#: tcop/postgres.c:2100
+#: tcop/postgres.c:2181
 #, c-format
 msgid ""
 "%s\n"
@@ -9593,7 +9617,7 @@ msgstr ""
 "%s\n"
 "%s"
 
-#: tcop/postgres.c:2462
+#: tcop/postgres.c:2543
 #, c-format
 msgid "CreateCommandTag: unknown parse node type %d"
 msgstr ""
@@ -9628,20 +9652,20 @@ msgstr ""
 msgid "relation \"%s\" is a system catalog"
 msgstr ""
 
-#: tcop/utility.c:452 tcop/utility.c:456
+#: tcop/utility.c:445 tcop/utility.c:449
 #, c-format
 msgid "ProcessUtility: Invalid target for RENAME: %d"
 msgstr ""
 
-#: tcop/utility.c:561
+#: tcop/utility.c:553
 msgid "ALTER TABLE: permission denied"
 msgstr "ALTER TABLE: rättighet saknas"
 
-#: tcop/utility.c:567
+#: tcop/utility.c:559
 msgid "T_AlterTableStmt: unknown subtype"
 msgstr ""
 
-#: tcop/utility.c:884
+#: tcop/utility.c:876
 #, c-format
 msgid "ProcessUtility: command #%d unsupported"
 msgstr ""
@@ -10029,120 +10053,120 @@ msgstr ""
 msgid "Bad float8 input format -- underflow"
 msgstr ""
 
-#: utils/adt/float.c:205
+#: utils/adt/float.c:204
 #, c-format
 msgid "Bad float4 input format '%s'"
 msgstr ""
 
-#: utils/adt/float.c:210
+#: utils/adt/float.c:209
 #, c-format
 msgid "Input '%s' is out of range for float4"
 msgstr ""
 
-#: utils/adt/float.c:270 utils/adt/numeric.c:2830 utils/adt/numeric.c:2853
+#: utils/adt/float.c:269 utils/adt/numeric.c:2836 utils/adt/numeric.c:2859
 #, c-format
 msgid "Bad float8 input format '%s'"
 msgstr ""
 
-#: utils/adt/float.c:275
+#: utils/adt/float.c:274
 #, c-format
 msgid "Input '%s' is out of range for float8"
 msgstr ""
 
-#: utils/adt/float.c:494
+#: utils/adt/float.c:493
 msgid "float4div: divide by zero error"
 msgstr ""
 
-#: utils/adt/float.c:556
+#: utils/adt/float.c:555
 msgid "float8div: divide by zero error"
 msgstr ""
 
-#: utils/adt/float.c:806
+#: utils/adt/float.c:805
 msgid "dtoi4: integer out of range"
 msgstr ""
 
-#: utils/adt/float.c:823
+#: utils/adt/float.c:822
 msgid "dtoi2: integer out of range"
 msgstr ""
 
-#: utils/adt/float.c:868
+#: utils/adt/float.c:867
 msgid "ftoi4: integer out of range"
 msgstr ""
 
-#: utils/adt/float.c:885
+#: utils/adt/float.c:884
 msgid "ftoi2: integer out of range"
 msgstr ""
 
-#: utils/adt/float.c:1075
+#: utils/adt/float.c:1118
 msgid "can't take sqrt of a negative number"
 msgstr ""
 
-#: utils/adt/float.c:1119
+#: utils/adt/float.c:1162
 msgid "pow() result is out of range"
 msgstr ""
 
-#: utils/adt/float.c:1147
+#: utils/adt/float.c:1190
 msgid "exp() result is out of range"
 msgstr ""
 
-#: utils/adt/float.c:1165 utils/adt/float.c:1186
+#: utils/adt/float.c:1208 utils/adt/float.c:1229
 msgid "can't take log of zero"
 msgstr ""
 
-#: utils/adt/float.c:1167 utils/adt/float.c:1188
+#: utils/adt/float.c:1210 utils/adt/float.c:1231
 msgid "can't take log of a negative number"
 msgstr ""
 
-#: utils/adt/float.c:1213
+#: utils/adt/float.c:1256
 #, c-format
 msgid "acos(%f) input is out of range"
 msgstr ""
 
-#: utils/adt/float.c:1236
+#: utils/adt/float.c:1279
 #, c-format
 msgid "asin(%f) input is out of range"
 msgstr ""
 
-#: utils/adt/float.c:1259
+#: utils/adt/float.c:1302
 #, c-format
 msgid "atan(%f) input is out of range"
 msgstr ""
 
-#: utils/adt/float.c:1283
+#: utils/adt/float.c:1326
 #, c-format
 msgid "atan2(%f,%f) input is out of range"
 msgstr ""
 
-#: utils/adt/float.c:1306
+#: utils/adt/float.c:1349
 #, c-format
 msgid "cos(%f) input is out of range"
 msgstr ""
 
-#: utils/adt/float.c:1329
+#: utils/adt/float.c:1372
 #, c-format
 msgid "cot(%f) input is out of range"
 msgstr ""
 
-#: utils/adt/float.c:1353
+#: utils/adt/float.c:1396
 #, c-format
 msgid "sin(%f) input is out of range"
 msgstr ""
 
-#: utils/adt/float.c:1376
+#: utils/adt/float.c:1419
 #, c-format
 msgid "tan(%f) input is out of range"
 msgstr ""
 
-#: utils/adt/float.c:1487
+#: utils/adt/float.c:1530
 #, c-format
 msgid "%s: expected 3-element float8 array"
 msgstr ""
 
-#: utils/adt/float.c:1698
+#: utils/adt/float.c:1741
 msgid "float48div: divide by zero"
 msgstr ""
 
-#: utils/adt/float.c:1758
+#: utils/adt/float.c:1801
 msgid "float84div: divide by zero"
 msgstr ""
 
@@ -10588,17 +10612,17 @@ msgstr ""
 msgid "ESCAPE string must be empty or one character"
 msgstr ""
 
-#: utils/adt/mac.c:52
+#: utils/adt/mac.c:61
 #, c-format
 msgid "macaddr_in: error in parsing \"%s\""
 msgstr ""
 
-#: utils/adt/mac.c:57
+#: utils/adt/mac.c:66
 #, c-format
 msgid "macaddr_in: illegal address \"%s\""
 msgstr ""
 
-#: utils/adt/mac.c:130
+#: utils/adt/mac.c:139
 msgid "Text is too long to convert to MAC address"
 msgstr ""
 
@@ -10632,7 +10656,7 @@ msgstr ""
 
 #: utils/adt/nabstime.c:753
 msgid ""
-"Unable convert ABSTIME to TIMESTAMP\n"
+"Unable to convert ABSTIME to TIMESTAMP\n"
 "\tabstime_timestamp() internal error"
 msgstr ""
 
@@ -10642,8 +10666,8 @@ msgstr ""
 
 #: utils/adt/nabstime.c:821
 msgid ""
-"Unable convert ABSTIME to TIMESTAMP WITH TIME ZONE\n"
-"\tabstime_timestamp() internal error"
+"Unable to convert ABSTIME to TIMESTAMP WITH TIME ZONE\n"
+"\tabstime_timestamptz() internal error"
 msgstr ""
 
 #: utils/adt/nabstime.c:852
@@ -10717,71 +10741,71 @@ msgstr ""
 msgid "int4notin: must provide relationname.attributename"
 msgstr ""
 
-#: utils/adt/numeric.c:1506
+#: utils/adt/numeric.c:1512
 msgid "Cannot convert NaN to int4"
 msgstr ""
 
-#: utils/adt/numeric.c:1556
+#: utils/adt/numeric.c:1562
 msgid "Cannot convert NaN to int8"
 msgstr ""
 
-#: utils/adt/numeric.c:1607
+#: utils/adt/numeric.c:1613
 msgid "Cannot convert NaN to int2"
 msgstr ""
 
-#: utils/adt/numeric.c:1803
+#: utils/adt/numeric.c:1809
 msgid "do_numeric_accum: expected 3-element numeric array"
 msgstr ""
 
-#: utils/adt/numeric.c:1894
+#: utils/adt/numeric.c:1900
 msgid "numeric_avg: expected 3-element numeric array"
 msgstr ""
 
-#: utils/adt/numeric.c:1930
+#: utils/adt/numeric.c:1936
 msgid "numeric_variance: expected 3-element numeric array"
 msgstr ""
 
-#: utils/adt/numeric.c:2012
+#: utils/adt/numeric.c:2018
 msgid "numeric_stddev: expected 3-element numeric array"
 msgstr ""
 
-#: utils/adt/numeric.c:2208
+#: utils/adt/numeric.c:2214
 msgid "int2_avg_accum: expected 2-element int8 array"
 msgstr ""
 
-#: utils/adt/numeric.c:2228
+#: utils/adt/numeric.c:2234
 msgid "int4_avg_accum: expected 2-element int8 array"
 msgstr ""
 
-#: utils/adt/numeric.c:2246
+#: utils/adt/numeric.c:2252
 msgid "int8_avg: expected 2-element int8 array"
 msgstr ""
 
-#: utils/adt/numeric.c:2437 utils/adt/numeric.c:2452 utils/adt/numeric.c:2470
-#: utils/adt/numeric.c:2474 utils/adt/numeric.c:2485
+#: utils/adt/numeric.c:2443 utils/adt/numeric.c:2458 utils/adt/numeric.c:2476
+#: utils/adt/numeric.c:2480 utils/adt/numeric.c:2491
 #, c-format
 msgid "Bad numeric input format '%s'"
 msgstr ""
 
-#: utils/adt/numeric.c:2804
+#: utils/adt/numeric.c:2810
 #, c-format
 msgid ""
 "overflow on numeric ABS(value) >= 10^%d for field with precision %d scale %d"
 msgstr ""
 
-#: utils/adt/numeric.c:3263
+#: utils/adt/numeric.c:3269
 msgid "division by zero on numeric"
 msgstr ""
 
-#: utils/adt/numeric.c:3644
+#: utils/adt/numeric.c:3650
 msgid "math error on numeric - cannot compute SQRT of negative value"
 msgstr ""
 
-#: utils/adt/numeric.c:3733
+#: utils/adt/numeric.c:3739
 msgid "argument for EXP() too big"
 msgstr ""
 
-#: utils/adt/numeric.c:3812
+#: utils/adt/numeric.c:3818
 msgid "math error on numeric - cannot compute LN of value <= zero"
 msgstr ""
 
@@ -10837,7 +10861,7 @@ msgstr ""
 msgid "Requested buffer is too large."
 msgstr ""
 
-#: utils/adt/pg_locale.c:150
+#: utils/adt/pg_locale.c:160
 msgid "Invalid LC_COLLATE setting"
 msgstr ""
 
@@ -10947,472 +10971,484 @@ msgstr ""
 msgid "too many keys (%d max) in call to RI_FKey_check()"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:282 utils/adt/ri_triggers.c:393
-#: utils/adt/ri_triggers.c:598
+#: utils/adt/ri_triggers.c:215 utils/adt/ri_triggers.c:758
+#: utils/adt/ri_triggers.c:988 utils/adt/ri_triggers.c:1224
+#: utils/adt/ri_triggers.c:1432 utils/adt/ri_triggers.c:1676
+#: utils/adt/ri_triggers.c:1899 utils/adt/ri_triggers.c:2127
+#: utils/adt/ri_triggers.c:2346 utils/adt/ri_triggers.c:2611
+#: utils/adt/ri_triggers.c:2873 utils/adt/ri_triggers.c:3143
+#, c-format
+msgid ""
+"No target table given for trigger \"%s\" on \"%s\"\n"
+"\tRemove these RI triggers and do ALTER TABLE ADD CONSTRAINT"
+msgstr ""
+
+#: utils/adt/ri_triggers.c:291 utils/adt/ri_triggers.c:402
+#: utils/adt/ri_triggers.c:607
 msgid "SPI_connect() failed in RI_FKey_check()"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:287 utils/adt/ri_triggers.c:471
+#: utils/adt/ri_triggers.c:296 utils/adt/ri_triggers.c:480
 msgid "SPI_execp() failed in RI_FKey_check()"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:292
+#: utils/adt/ri_triggers.c:301
 #, c-format
 msgid "%s referential integrity violation - no rows found in %s"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:298 utils/adt/ri_triggers.c:483
+#: utils/adt/ri_triggers.c:307 utils/adt/ri_triggers.c:492
 msgid "SPI_finish() failed in RI_FKey_check()"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:310 utils/adt/ri_triggers.c:893
-#: utils/adt/ri_triggers.c:1128 utils/adt/ri_triggers.c:1328
-#: utils/adt/ri_triggers.c:1561 utils/adt/ri_triggers.c:1777
-#: utils/adt/ri_triggers.c:2007 utils/adt/ri_triggers.c:2217
-#: utils/adt/ri_triggers.c:2479 utils/adt/ri_triggers.c:2733
-#: utils/adt/ri_triggers.c:3018 utils/adt/ri_triggers.c:3102
+#: utils/adt/ri_triggers.c:319 utils/adt/ri_triggers.c:908
+#: utils/adt/ri_triggers.c:1149 utils/adt/ri_triggers.c:1355
+#: utils/adt/ri_triggers.c:1594 utils/adt/ri_triggers.c:1816
+#: utils/adt/ri_triggers.c:2052 utils/adt/ri_triggers.c:2268
+#: utils/adt/ri_triggers.c:2536 utils/adt/ri_triggers.c:2796
+#: utils/adt/ri_triggers.c:3087 utils/adt/ri_triggers.c:3177
 msgid "MATCH PARTIAL not yet supported"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:346
+#: utils/adt/ri_triggers.c:355
 #, c-format
 msgid ""
 "%s referential integrity violation - MATCH FULL doesn't allow mixing of NULL "
 "and NON-NULL key values"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:370 utils/adt/ri_triggers.c:584
+#: utils/adt/ri_triggers.c:379 utils/adt/ri_triggers.c:593
 msgid "MATCH PARTIAL not yet implemented"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:476
+#: utils/adt/ri_triggers.c:485
 #, c-format
 msgid ""
 "%s referential integrity violation - key referenced from %s not found in %s"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:492
+#: utils/adt/ri_triggers.c:501
 msgid "internal error #1 in ri_triggers.c"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:669
+#: utils/adt/ri_triggers.c:678
 msgid "SPI_execp() failed in ri_Check_Pk_Match()"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:676
+#: utils/adt/ri_triggers.c:685
 msgid "SPI_finish() failed in ri_Check_Pk_Match()"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:717
+#: utils/adt/ri_triggers.c:726
 msgid "RI_FKey_noaction_del() not fired by trigger manager"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:720
+#: utils/adt/ri_triggers.c:729
 msgid "RI_FKey_noaction_del() must be fired AFTER ROW"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:722
+#: utils/adt/ri_triggers.c:731
 msgid "RI_FKey_noaction_del() must be fired for DELETE"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:730
+#: utils/adt/ri_triggers.c:739
 msgid "wrong # of arguments in call to RI_FKey_noaction_del()"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:732
+#: utils/adt/ri_triggers.c:741
 #, c-format
 msgid "too many keys (%d max) in call to RI_FKey_noaction_del()"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:801
+#: utils/adt/ri_triggers.c:816
 msgid "SPI_connect() failed in RI_FKey_noaction_del()"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:871
+#: utils/adt/ri_triggers.c:886
 msgid "SPI_execp() failed in RI_FKey_noaction_del()"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:876 utils/adt/ri_triggers.c:1111
-#: utils/adt/ri_triggers.c:1760 utils/adt/ri_triggers.c:1990
+#: utils/adt/ri_triggers.c:891 utils/adt/ri_triggers.c:1132
+#: utils/adt/ri_triggers.c:1799 utils/adt/ri_triggers.c:2035
 #, c-format
 msgid "%s referential integrity violation - key in %s still referenced from %s"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:883
+#: utils/adt/ri_triggers.c:898
 msgid "SPI_finish() failed in RI_FKey_noaction_del()"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:900
+#: utils/adt/ri_triggers.c:915
 msgid "internal error #2 in ri_triggers.c"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:941
+#: utils/adt/ri_triggers.c:956
 msgid "RI_FKey_noaction_upd() not fired by trigger manager"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:944
+#: utils/adt/ri_triggers.c:959
 msgid "RI_FKey_noaction_upd() must be fired AFTER ROW"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:946
+#: utils/adt/ri_triggers.c:961
 msgid "RI_FKey_noaction_upd() must be fired for UPDATE"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:954
+#: utils/adt/ri_triggers.c:969
 msgid "wrong # of arguments in call to RI_FKey_noaction_upd()"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:956
+#: utils/adt/ri_triggers.c:971
 #, c-format
 msgid "too many keys (%d max) in call to RI_FKey_noaction_upd()"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:1036
+#: utils/adt/ri_triggers.c:1057
 msgid "SPI_connect() failed in RI_FKey_noaction_upd()"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:1106
+#: utils/adt/ri_triggers.c:1127
 msgid "SPI_execp() failed in RI_FKey_noaction_upd()"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:1118
+#: utils/adt/ri_triggers.c:1139
 msgid "SPI_finish() failed in RI_FKey_noaction_upd()"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:1135
+#: utils/adt/ri_triggers.c:1156
 msgid "internal error #3 in ri_triggers.c"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:1171
+#: utils/adt/ri_triggers.c:1192
 msgid "RI_FKey_cascade_del() not fired by trigger manager"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:1174
+#: utils/adt/ri_triggers.c:1195
 msgid "RI_FKey_cascade_del() must be fired AFTER ROW"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:1176
+#: utils/adt/ri_triggers.c:1197
 msgid "RI_FKey_cascade_del() must be fired for DELETE"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:1184
+#: utils/adt/ri_triggers.c:1205
 msgid "wrong # of arguments in call to RI_FKey_cascade_del()"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:1186
+#: utils/adt/ri_triggers.c:1207
 #, c-format
 msgid "too many keys (%d max) in call to RI_FKey_cascade_del()"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:1244
+#: utils/adt/ri_triggers.c:1271
 msgid "SPI_connect() failed in RI_FKey_cascade_del()"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:1313
+#: utils/adt/ri_triggers.c:1340
 msgid "SPI_execp() failed in RI_FKey_cascade_del()"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:1318
+#: utils/adt/ri_triggers.c:1345
 msgid "SPI_finish() failed in RI_FKey_cascade_del()"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:1335
+#: utils/adt/ri_triggers.c:1362
 msgid "internal error #4 in ri_triggers.c"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:1373
+#: utils/adt/ri_triggers.c:1400
 msgid "RI_FKey_cascade_upd() not fired by trigger manager"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:1376
+#: utils/adt/ri_triggers.c:1403
 msgid "RI_FKey_cascade_upd() must be fired AFTER ROW"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:1378
+#: utils/adt/ri_triggers.c:1405
 msgid "RI_FKey_cascade_upd() must be fired for UPDATE"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:1386
+#: utils/adt/ri_triggers.c:1413
 msgid "wrong # of arguments in call to RI_FKey_cascade_upd()"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:1388
+#: utils/adt/ri_triggers.c:1415
 #, c-format
 msgid "too many keys (%d max) in call to RI_FKey_cascade_upd()"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:1457
+#: utils/adt/ri_triggers.c:1490
 msgid "SPI_connect() failed in RI_FKey_cascade_upd()"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:1546
+#: utils/adt/ri_triggers.c:1579
 msgid "SPI_execp() failed in RI_FKey_cascade_upd()"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:1551
+#: utils/adt/ri_triggers.c:1584
 msgid "SPI_finish() failed in RI_FKey_cascade_upd()"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:1568
+#: utils/adt/ri_triggers.c:1601
 msgid "internal error #5 in ri_triggers.c"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:1611
+#: utils/adt/ri_triggers.c:1644
 msgid "RI_FKey_restrict_del() not fired by trigger manager"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:1614
+#: utils/adt/ri_triggers.c:1647
 msgid "RI_FKey_restrict_del() must be fired AFTER ROW"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:1616
+#: utils/adt/ri_triggers.c:1649
 msgid "RI_FKey_restrict_del() must be fired for DELETE"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:1624
+#: utils/adt/ri_triggers.c:1657
 msgid "wrong # of arguments in call to RI_FKey_restrict_del()"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:1626
+#: utils/adt/ri_triggers.c:1659
 #, c-format
 msgid "too many keys (%d max) in call to RI_FKey_restrict_del()"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:1684
+#: utils/adt/ri_triggers.c:1723
 msgid "SPI_connect() failed in RI_FKey_restrict_del()"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:1755
+#: utils/adt/ri_triggers.c:1794
 msgid "SPI_execp() failed in RI_FKey_restrict_del()"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:1767
+#: utils/adt/ri_triggers.c:1806
 msgid "SPI_finish() failed in RI_FKey_restrict_del()"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:1784
+#: utils/adt/ri_triggers.c:1823
 msgid "internal error #6 in ri_triggers.c"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:1828
+#: utils/adt/ri_triggers.c:1867
 msgid "RI_FKey_restrict_upd() not fired by trigger manager"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:1831
+#: utils/adt/ri_triggers.c:1870
 msgid "RI_FKey_restrict_upd() must be fired AFTER ROW"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:1833
+#: utils/adt/ri_triggers.c:1872
 msgid "RI_FKey_restrict_upd() must be fired for UPDATE"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:1841
+#: utils/adt/ri_triggers.c:1880
 msgid "wrong # of arguments in call to RI_FKey_restrict_upd()"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:1843
+#: utils/adt/ri_triggers.c:1882
 #, c-format
 msgid "too many keys (%d max) in call to RI_FKey_restrict_upd()"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:1912
+#: utils/adt/ri_triggers.c:1957
 msgid "SPI_connect() failed in RI_FKey_restrict_upd()"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:1985
+#: utils/adt/ri_triggers.c:2030
 msgid "SPI_execp() failed in RI_FKey_restrict_upd()"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:1997
+#: utils/adt/ri_triggers.c:2042
 msgid "SPI_finish() failed in RI_FKey_restrict_upd()"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:2014
+#: utils/adt/ri_triggers.c:2059
 msgid "internal error #7 in ri_triggers.c"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:2050
+#: utils/adt/ri_triggers.c:2095
 msgid "RI_FKey_setnull_del() not fired by trigger manager"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:2053
+#: utils/adt/ri_triggers.c:2098
 msgid "RI_FKey_setnull_del() must be fired AFTER ROW"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:2055
+#: utils/adt/ri_triggers.c:2100
 msgid "RI_FKey_setnull_del() must be fired for DELETE"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:2063
+#: utils/adt/ri_triggers.c:2108
 msgid "wrong # of arguments in call to RI_FKey_setnull_del()"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:2065
+#: utils/adt/ri_triggers.c:2110
 #, c-format
 msgid "too many keys (%d max) in call to RI_FKey_setnull_del()"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:2123
+#: utils/adt/ri_triggers.c:2174
 msgid "SPI_connect() failed in RI_FKey_setnull_del()"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:2202
+#: utils/adt/ri_triggers.c:2253
 msgid "SPI_execp() failed in RI_FKey_setnull_del()"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:2207
+#: utils/adt/ri_triggers.c:2258
 msgid "SPI_finish() failed in RI_FKey_setnull_del()"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:2224
+#: utils/adt/ri_triggers.c:2275
 msgid "internal error #8 in ri_triggers.c"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:2263
+#: utils/adt/ri_triggers.c:2314
 msgid "RI_FKey_setnull_upd() not fired by trigger manager"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:2266
+#: utils/adt/ri_triggers.c:2317
 msgid "RI_FKey_setnull_upd() must be fired AFTER ROW"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:2268
+#: utils/adt/ri_triggers.c:2319
 msgid "RI_FKey_setnull_upd() must be fired for UPDATE"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:2276
+#: utils/adt/ri_triggers.c:2327
 msgid "wrong # of arguments in call to RI_FKey_setnull_upd()"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:2278
+#: utils/adt/ri_triggers.c:2329
 #, c-format
 msgid "too many keys (%d max) in call to RI_FKey_setnull_upd()"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:2348
+#: utils/adt/ri_triggers.c:2405
 msgid "SPI_connect() failed in RI_FKey_setnull_upd()"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:2464
+#: utils/adt/ri_triggers.c:2521
 msgid "SPI_execp() failed in RI_FKey_setnull_upd()"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:2469
+#: utils/adt/ri_triggers.c:2526
 msgid "SPI_finish() failed in RI_FKey_setnull_upd()"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:2486
+#: utils/adt/ri_triggers.c:2543
 msgid "internal error #9 in ri_triggers.c"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:2522
+#: utils/adt/ri_triggers.c:2579
 msgid "RI_FKey_setdefault_del() not fired by trigger manager"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:2525
+#: utils/adt/ri_triggers.c:2582
 msgid "RI_FKey_setdefault_del() must be fired AFTER ROW"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:2527
+#: utils/adt/ri_triggers.c:2584
 msgid "RI_FKey_setdefault_del() must be fired for DELETE"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:2535
+#: utils/adt/ri_triggers.c:2592
 msgid "wrong # of arguments in call to RI_FKey_setdefault_del()"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:2537
+#: utils/adt/ri_triggers.c:2594
 #, c-format
 msgid "too many keys (%d max) in call to RI_FKey_setdefault_del()"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:2595
+#: utils/adt/ri_triggers.c:2658
 msgid "SPI_connect() failed in RI_FKey_setdefault_del()"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:2718
+#: utils/adt/ri_triggers.c:2781
 msgid "SPI_execp() failed in RI_FKey_setdefault_del()"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:2723
+#: utils/adt/ri_triggers.c:2786
 msgid "SPI_finish() failed in RI_FKey_setdefault_del()"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:2740
+#: utils/adt/ri_triggers.c:2803
 msgid "internal error #10 in ri_triggers.c"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:2778
+#: utils/adt/ri_triggers.c:2841
 msgid "RI_FKey_setdefault_upd() not fired by trigger manager"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:2781
+#: utils/adt/ri_triggers.c:2844
 msgid "RI_FKey_setdefault_upd() must be fired AFTER ROW"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:2783
+#: utils/adt/ri_triggers.c:2846
 msgid "RI_FKey_setdefault_upd() must be fired for UPDATE"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:2791
+#: utils/adt/ri_triggers.c:2854
 msgid "wrong # of arguments in call to RI_FKey_setdefault_upd()"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:2793
+#: utils/adt/ri_triggers.c:2856
 #, c-format
 msgid "too many keys (%d max) in call to RI_FKey_setdefault_upd()"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:2864
+#: utils/adt/ri_triggers.c:2933
 msgid "SPI_connect() failed in RI_FKey_setdefault_upd()"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:3003
+#: utils/adt/ri_triggers.c:3072
 msgid "SPI_execp() failed in RI_FKey_setdefault_upd()"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:3008
+#: utils/adt/ri_triggers.c:3077
 msgid "SPI_finish() failed in RI_FKey_setdefault_upd()"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:3025
+#: utils/adt/ri_triggers.c:3094
 msgid "internal error #11 in ri_triggers.c"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:3056
+#: utils/adt/ri_triggers.c:3125
 msgid "wrong # of arguments in call to RI_FKey_keyequal_upd()"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:3058
+#: utils/adt/ri_triggers.c:3127
 #, c-format
 msgid "too many keys (%d max) in call to RI_FKey_keyequal_upd()"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:3109
+#: utils/adt/ri_triggers.c:3184
 msgid "internal error #12 in ri_triggers.c"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:3174
+#: utils/adt/ri_triggers.c:3249
 #, c-format
 msgid "unrecognized referential integrity MATCH type '%s'"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:3224 utils/adt/ri_triggers.c:3232
-#: utils/adt/ri_triggers.c:3284
+#: utils/adt/ri_triggers.c:3299 utils/adt/ri_triggers.c:3307
+#: utils/adt/ri_triggers.c:3359
 #, c-format
 msgid "constraint %s: table %s does not have an attribute %s"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:3412
+#: utils/adt/ri_triggers.c:3487
 msgid "out of memory for RI plan cache"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:3601
+#: utils/adt/ri_triggers.c:3676
 #, c-format
 msgid "ri_AttributesEqual(): cannot find '=' operator for type %u"
 msgstr ""
 
-#: utils/adt/ri_triggers.c:3617
+#: utils/adt/ri_triggers.c:3692
 msgid "out of memory for RI operator cache"
 msgstr ""
 
@@ -11608,55 +11644,55 @@ msgstr ""
 msgid "patternsel: no = operator for type %u"
 msgstr ""
 
-#: utils/adt/selfuncs.c:1060 utils/adt/selfuncs.c:1137
-#: utils/adt/selfuncs.c:1178 utils/adt/selfuncs.c:1208
+#: utils/adt/selfuncs.c:1055 utils/adt/selfuncs.c:1132
+#: utils/adt/selfuncs.c:1173 utils/adt/selfuncs.c:1203
 #, c-format
 msgid "booltestsel: unexpected booltesttype %d"
 msgstr ""
 
-#: utils/adt/selfuncs.c:1246 utils/adt/selfuncs.c:1303
+#: utils/adt/selfuncs.c:1238 utils/adt/selfuncs.c:1292
 #, c-format
 msgid "nulltestsel: unexpected nulltesttype %d"
 msgstr ""
 
-#: utils/adt/selfuncs.c:2116
+#: utils/adt/selfuncs.c:2105
 #, c-format
 msgid "convert_numeric_to_scalar: unsupported type %u"
 msgstr ""
 
-#: utils/adt/selfuncs.c:2303
+#: utils/adt/selfuncs.c:2292
 #, c-format
 msgid "convert_string_datum: unsupported type %u"
 msgstr ""
 
-#: utils/adt/selfuncs.c:2492
+#: utils/adt/selfuncs.c:2481
 #, c-format
 msgid "convert_timevalue_to_scalar: unsupported type %u"
 msgstr ""
 
-#: utils/adt/selfuncs.c:2719 utils/adt/selfuncs.c:3080
+#: utils/adt/selfuncs.c:2708 utils/adt/selfuncs.c:3076
 msgid "Cannot perform case insensitive matching on type BYTEA"
 msgstr ""
 
-#: utils/adt/selfuncs.c:2804 utils/adt/selfuncs.c:3226
+#: utils/adt/selfuncs.c:2793 utils/adt/selfuncs.c:3222
 msgid "Regex matching not supported on type BYTEA"
 msgstr ""
 
-#: utils/adt/selfuncs.c:2945
+#: utils/adt/selfuncs.c:2934
 msgid "pattern_fixed_prefix: bogus ptype"
 msgstr ""
 
-#: utils/adt/selfuncs.c:2974
+#: utils/adt/selfuncs.c:2963
 #, c-format
 msgid "prefix_selectivity: no >= operator for type %u"
 msgstr ""
 
-#: utils/adt/selfuncs.c:3001
+#: utils/adt/selfuncs.c:2994
 #, c-format
 msgid "prefix_selectivity: no < operator for type %u"
 msgstr ""
 
-#: utils/adt/selfuncs.c:3270
+#: utils/adt/selfuncs.c:3266
 msgid "pattern_selectivity: bogus ptype"
 msgstr ""
 
@@ -12281,140 +12317,140 @@ msgstr ""
 msgid "RelationReloadClassinfo system relation id=%d doesn't exist"
 msgstr ""
 
-#: utils/cache/relcache.c:1775
+#: utils/cache/relcache.c:1772
 #, c-format
 msgid "RelationClearRelation: relation %u deleted while still in use"
 msgstr ""
 
-#: utils/cache/relcache.c:1865
+#: utils/cache/relcache.c:1855
 #, c-format
 msgid "RelationForgetRelation: relation %u is still open"
 msgstr ""
 
-#: utils/cache/relcache.c:2022
+#: utils/cache/relcache.c:2012
 #, c-format
 msgid "Relcache reference leak: relation \"%s\" has refcnt %d instead of %d"
 msgstr ""
 
-#: utils/cache/relcache.c:2308
+#: utils/cache/relcache.c:2298
 #, c-format
 msgid "RelationCacheInitializePhase2: no pg_class entry for %s"
 msgstr ""
 
-#: utils/cache/relcache.c:2456
+#: utils/cache/relcache.c:2446
 #, c-format
 msgid "AttrDefaultFetch: second record found for attr %s in rel %s"
 msgstr ""
 
-#: utils/cache/relcache.c:2464
+#: utils/cache/relcache.c:2454
 #, c-format
 msgid "AttrDefaultFetch: adbin IS NULL for attr %s in rel %s"
 msgstr ""
 
-#: utils/cache/relcache.c:2475
+#: utils/cache/relcache.c:2465
 #, c-format
 msgid "AttrDefaultFetch: unexpected record found for attr %d in rel %s"
 msgstr ""
 
-#: utils/cache/relcache.c:2484
+#: utils/cache/relcache.c:2474
 #, c-format
 msgid "AttrDefaultFetch: %d record(s) not found for rel %s"
 msgstr ""
 
-#: utils/cache/relcache.c:2518
+#: utils/cache/relcache.c:2508
 #, c-format
 msgid "CheckConstraintFetch: unexpected record found for rel %s"
 msgstr ""
 
-#: utils/cache/relcache.c:2529
+#: utils/cache/relcache.c:2519
 #, c-format
 msgid "CheckConstraintFetch: conbin IS NULL for rel %s"
 msgstr ""
 
-#: utils/cache/relcache.c:2542
+#: utils/cache/relcache.c:2532
 #, c-format
 msgid "CheckConstraintFetch: %d record(s) not found for rel %s"
 msgstr ""
 
-#: utils/cache/relcache.c:3005
+#: utils/cache/relcache.c:2995
 #, c-format
 msgid ""
 "Cannot create init file %s: %m\n"
 "\tContinuing anyway, but there's something wrong."
 msgstr ""
 
-#: utils/cache/relcache.c:3029
+#: utils/cache/relcache.c:3019
 msgid "cannot write init file -- descriptor length"
 msgstr ""
 
-#: utils/cache/relcache.c:3033
+#: utils/cache/relcache.c:3023
 msgid "cannot write init file -- reldesc"
 msgstr ""
 
-#: utils/cache/relcache.c:3038
+#: utils/cache/relcache.c:3028
 msgid "cannot write init file -- relation tuple form length"
 msgstr ""
 
-#: utils/cache/relcache.c:3041
+#: utils/cache/relcache.c:3031
 msgid "cannot write init file -- relation tuple form"
 msgstr ""
 
-#: utils/cache/relcache.c:3048
+#: utils/cache/relcache.c:3038
 #, c-format
 msgid "cannot write init file -- length of attdesc %d"
 msgstr ""
 
-#: utils/cache/relcache.c:3050
+#: utils/cache/relcache.c:3040
 #, c-format
 msgid "cannot write init file -- attdesc %d"
 msgstr ""
 
-#: utils/cache/relcache.c:3069
+#: utils/cache/relcache.c:3059
 #, c-format
 msgid "write_relcache_init_file: no pg_index entry for index %u"
 msgstr ""
 
-#: utils/cache/relcache.c:3073
+#: utils/cache/relcache.c:3063
 msgid "cannot write init file -- index tuple form length"
 msgstr ""
 
-#: utils/cache/relcache.c:3075
+#: utils/cache/relcache.c:3065
 msgid "cannot write init file -- index tuple form"
 msgstr ""
 
-#: utils/cache/relcache.c:3081
+#: utils/cache/relcache.c:3071
 msgid "cannot write init file -- am tuple form length"
 msgstr ""
 
-#: utils/cache/relcache.c:3084
+#: utils/cache/relcache.c:3074
 msgid "cannot write init file -- am tuple form"
 msgstr ""
 
-#: utils/cache/relcache.c:3090
+#: utils/cache/relcache.c:3080
 msgid "cannot write init file -- strategy map length"
 msgstr ""
 
-#: utils/cache/relcache.c:3093
+#: utils/cache/relcache.c:3083
 msgid "cannot write init file -- strategy map"
 msgstr ""
 
-#: utils/cache/relcache.c:3098
+#: utils/cache/relcache.c:3088
 msgid "cannot write init file -- operator vector length"
 msgstr ""
 
-#: utils/cache/relcache.c:3101
+#: utils/cache/relcache.c:3091
 msgid "cannot write init file -- operator vector"
 msgstr ""
 
-#: utils/cache/relcache.c:3106
+#: utils/cache/relcache.c:3096
 msgid "cannot write init file -- support vector length"
 msgstr ""
 
-#: utils/cache/relcache.c:3109
+#: utils/cache/relcache.c:3099
 msgid "cannot write init file -- support vector"
 msgstr ""
 
-#: utils/cache/relcache.c:3153
+#: utils/cache/relcache.c:3143
 #, c-format
 msgid ""
 "Cannot rename init file %s to %s: %m\n"
@@ -12634,147 +12670,147 @@ msgstr ""
 msgid "fmgr_security_definer: function %u: cache lookup failed"
 msgstr ""
 
-#: utils/fmgr/fmgr.c:714
+#: utils/fmgr/fmgr.c:728
 #, c-format
 msgid "DirectFunctionCall1: function %p returned NULL"
 msgstr ""
 
-#: utils/fmgr/fmgr.c:735
+#: utils/fmgr/fmgr.c:756
 #, c-format
 msgid "DirectFunctionCall2: function %p returned NULL"
 msgstr ""
 
-#: utils/fmgr/fmgr.c:758
+#: utils/fmgr/fmgr.c:779
 #, c-format
 msgid "DirectFunctionCall3: function %p returned NULL"
 msgstr ""
 
-#: utils/fmgr/fmgr.c:782
+#: utils/fmgr/fmgr.c:803
 #, c-format
 msgid "DirectFunctionCall4: function %p returned NULL"
 msgstr ""
 
-#: utils/fmgr/fmgr.c:807
+#: utils/fmgr/fmgr.c:828
 #, c-format
 msgid "DirectFunctionCall5: function %p returned NULL"
 msgstr ""
 
-#: utils/fmgr/fmgr.c:834
+#: utils/fmgr/fmgr.c:855
 #, c-format
 msgid "DirectFunctionCall6: function %p returned NULL"
 msgstr ""
 
-#: utils/fmgr/fmgr.c:862
+#: utils/fmgr/fmgr.c:883
 #, c-format
 msgid "DirectFunctionCall7: function %p returned NULL"
 msgstr ""
 
-#: utils/fmgr/fmgr.c:891
+#: utils/fmgr/fmgr.c:912
 #, c-format
 msgid "DirectFunctionCall8: function %p returned NULL"
 msgstr ""
 
-#: utils/fmgr/fmgr.c:922
+#: utils/fmgr/fmgr.c:943
 #, c-format
 msgid "DirectFunctionCall9: function %p returned NULL"
 msgstr ""
 
-#: utils/fmgr/fmgr.c:948
+#: utils/fmgr/fmgr.c:974
 #, c-format
 msgid "FunctionCall1: function %u returned NULL"
 msgstr ""
 
-#: utils/fmgr/fmgr.c:970
+#: utils/fmgr/fmgr.c:1002 utils/sort/tuplesort.c:1827
 #, c-format
 msgid "FunctionCall2: function %u returned NULL"
 msgstr ""
 
-#: utils/fmgr/fmgr.c:994
+#: utils/fmgr/fmgr.c:1026
 #, c-format
 msgid "FunctionCall3: function %u returned NULL"
 msgstr ""
 
-#: utils/fmgr/fmgr.c:1019
+#: utils/fmgr/fmgr.c:1051
 #, c-format
 msgid "FunctionCall4: function %u returned NULL"
 msgstr ""
 
-#: utils/fmgr/fmgr.c:1045
+#: utils/fmgr/fmgr.c:1077
 #, c-format
 msgid "FunctionCall5: function %u returned NULL"
 msgstr ""
 
-#: utils/fmgr/fmgr.c:1073
+#: utils/fmgr/fmgr.c:1105
 #, c-format
 msgid "FunctionCall6: function %u returned NULL"
 msgstr ""
 
-#: utils/fmgr/fmgr.c:1102
+#: utils/fmgr/fmgr.c:1134
 #, c-format
 msgid "FunctionCall7: function %u returned NULL"
 msgstr ""
 
-#: utils/fmgr/fmgr.c:1132
+#: utils/fmgr/fmgr.c:1164
 #, c-format
 msgid "FunctionCall8: function %u returned NULL"
 msgstr ""
 
-#: utils/fmgr/fmgr.c:1164
+#: utils/fmgr/fmgr.c:1196
 #, c-format
 msgid "FunctionCall9: function %u returned NULL"
 msgstr ""
 
-#: utils/fmgr/fmgr.c:1195
+#: utils/fmgr/fmgr.c:1227
 #, c-format
 msgid "OidFunctionCall1: function %u returned NULL"
 msgstr ""
 
-#: utils/fmgr/fmgr.c:1220
+#: utils/fmgr/fmgr.c:1252
 #, c-format
 msgid "OidFunctionCall2: function %u returned NULL"
 msgstr ""
 
-#: utils/fmgr/fmgr.c:1247
+#: utils/fmgr/fmgr.c:1279
 #, c-format
 msgid "OidFunctionCall3: function %u returned NULL"
 msgstr ""
 
-#: utils/fmgr/fmgr.c:1275
+#: utils/fmgr/fmgr.c:1307
 #, c-format
 msgid "OidFunctionCall4: function %u returned NULL"
 msgstr ""
 
-#: utils/fmgr/fmgr.c:1304
+#: utils/fmgr/fmgr.c:1336
 #, c-format
 msgid "OidFunctionCall5: function %u returned NULL"
 msgstr ""
 
-#: utils/fmgr/fmgr.c:1335
+#: utils/fmgr/fmgr.c:1367
 #, c-format
 msgid "OidFunctionCall6: function %u returned NULL"
 msgstr ""
 
-#: utils/fmgr/fmgr.c:1367
+#: utils/fmgr/fmgr.c:1399
 #, c-format
 msgid "OidFunctionCall7: function %u returned NULL"
 msgstr ""
 
-#: utils/fmgr/fmgr.c:1400
+#: utils/fmgr/fmgr.c:1432
 #, c-format
 msgid "OidFunctionCall8: function %u returned NULL"
 msgstr ""
 
-#: utils/fmgr/fmgr.c:1435
+#: utils/fmgr/fmgr.c:1467
 #, c-format
 msgid "OidFunctionCall9: function %u returned NULL"
 msgstr ""
 
-#: utils/fmgr/fmgr.c:1474
+#: utils/fmgr/fmgr.c:1506
 #, c-format
 msgid "fmgr: function %u: too many arguments (%d > %d)"
 msgstr ""
 
-#: utils/fmgr/fmgr.c:1486
+#: utils/fmgr/fmgr.c:1518
 #, c-format
 msgid "fmgr: function %u returned NULL"
 msgstr ""
@@ -12931,46 +12967,46 @@ msgstr ""
 #: utils/init/postinit.c:114
 #, c-format
 msgid "Database \"%s\", OID %u, has disappeared from pg_database"
-msgstr ""
+msgstr "Database \"%s\", OID %u, har försvunnit från pg_database"
 
 #: utils/init/postinit.c:123
 #, c-format
 msgid "Database \"%s\" is not currently accepting connections"
 msgstr ""
 
-#: utils/init/postinit.c:256
+#: utils/init/postinit.c:259
 #, c-format
 msgid "Database \"%s\" does not exist in the system catalog."
 msgstr ""
 
-#: utils/init/postinit.c:264
+#: utils/init/postinit.c:267
 #, c-format
 msgid ""
 "Database \"%s\" does not exist.\n"
 "\tThe database subdirectory '%s' is missing."
 msgstr ""
 
-#: utils/init/postinit.c:271
+#: utils/init/postinit.c:274
 #, c-format
 msgid "Unable to change directory to '%s': %m"
-msgstr ""
+msgstr "Kan inte byta katalog till \"%s\": %m"
 
-#: utils/init/postinit.c:300
+#: utils/init/postinit.c:303
 #, c-format
 msgid "InitPostgres: bad backend id %d"
 msgstr ""
 
-#: utils/init/postinit.c:351
+#: utils/init/postinit.c:354
 msgid "There are currently no users defined in this database system."
 msgstr ""
 
-#: utils/init/postinit.c:352
+#: utils/init/postinit.c:355
 #, c-format
 msgid ""
 "You should immediately run 'CREATE USER \"%s\" WITH SYSID %d CREATEUSER;'."
 msgstr ""
 
-#: utils/init/postinit.c:407
+#: utils/init/postinit.c:410
 msgid "Non-superuser connection limit exceeded"
 msgstr ""
 
@@ -13070,12 +13106,12 @@ msgstr ""
 #: utils/misc/guc.c:1697
 #, c-format
 msgid "option '%s' requires a boolean value"
-msgstr ""
+msgstr "flagga '%s' kräver ett boolskt värde"
 
 #: utils/misc/guc.c:1711 utils/misc/guc.c:1782
 #, c-format
 msgid "invalid value for option '%s': %d"
-msgstr ""
+msgstr "ogiltigt värde för flagga \"%s\": %d"
 
 #: utils/misc/guc.c:1761
 #, c-format
@@ -13287,29 +13323,29 @@ msgstr ""
 msgid "tuplesort: unexpected end of tape"
 msgstr ""
 
-#: utils/sort/tuplesort.c:1671 utils/sort/tuplesort.c:1785
-#: utils/sort/tuplesort.c:1789 utils/sort/tuplesort.c:1911
-#: utils/sort/tuplesort.c:1915 utils/sort/tuplesort.c:1983
-#: utils/sort/tuplesort.c:1987
+#: utils/sort/tuplesort.c:1671 utils/sort/tuplesort.c:1995
+#: utils/sort/tuplesort.c:1999 utils/sort/tuplesort.c:2121
+#: utils/sort/tuplesort.c:2125 utils/sort/tuplesort.c:2193
+#: utils/sort/tuplesort.c:2197
 msgid "tuplesort: unexpected end of data"
 msgstr ""
 
-#: utils/sort/tuplesort.c:1863
-msgid "Cannot create unique index. Table contains non-unique values"
-msgstr ""
-
-#: utils/sort/tuplesort.c:1939
-msgid "copytup_datum() should not be called"
-msgstr ""
-
-#: utils/sort/tuplesort.c:2088
+#: utils/sort/tuplesort.c:1789
 #, c-format
 msgid "SelectSortFunction: cache lookup failed for operator %u"
 msgstr ""
 
-#: utils/sort/tuplesort.c:2169
+#: utils/sort/tuplesort.c:1901
 #, c-format
 msgid "Invalid SortFunctionKind %d"
+msgstr ""
+
+#: utils/sort/tuplesort.c:2073
+msgid "Cannot create unique index. Table contains non-unique values"
+msgstr ""
+
+#: utils/sort/tuplesort.c:2149
+msgid "copytup_datum() should not be called"
 msgstr ""
 
 #: utils/sort/tuplestore.c:302
@@ -13365,6 +13401,13 @@ msgstr ""
 #: utils/sort/tuplestore.c:644 utils/sort/tuplestore.c:648
 msgid "tuplestore: write failed"
 msgstr ""
+
+#: utils/time/tqual.c:981
+msgid "CopyQuerySnapshot: no snapshot has been set"
+msgstr ""
+
+#~ msgid "CREATE DATABASE: may not be called in a transaction block"
+#~ msgstr "CREATE DATABASE: kan inte anropas i ett transaktionsblock"
 
 #~ msgid "table \"%s\" does not exist"
 #~ msgstr "tabell \"%s\" existerar inte"

@@ -5,8 +5,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.3\n"
-"POT-Creation-Date: 2002-09-03 04:16-0400\n"
-"PO-Revision-Date: 2002-09-04 07:55+0200\n"
+"POT-Creation-Date: 2002-10-25 04:17-0400\n"
+"PO-Revision-Date: 2002-10-26 06:23+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -15,8 +15,10 @@ msgstr ""
 
 #: pg_controldata.c:28
 #, c-format
-msgid "%s displays PostgreSQL database cluster control information.\n"
-msgstr "%s visar PostgreSQL-databas klusterkontrollinformation.\n"
+msgid ""
+"%s displays PostgreSQL database cluster control information.\n"
+"\n"
+msgstr "%s visar PostgreSQL-databas klusterkontrollinformation.\n\n"
 
 #: pg_controldata.c:29
 #, c-format

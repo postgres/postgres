@@ -4,8 +4,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.3\n"
-"POT-Creation-Date: 2002-10-04 04:17-0400\n"
-"PO-Revision-Date: 2002-10-04 18:28+0200\n"
+"POT-Creation-Date: 2002-10-25 04:17-0400\n"
+"PO-Revision-Date: 2002-10-26 06:51+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -126,13 +126,17 @@ msgstr "%s: ogiltig inställning för LC_CTYPE\n"
 msgid ""
 "Guessed pg_control values:\n"
 "\n"
-msgstr "Gissade pg_control-värden:\n\n"
+msgstr ""
+"Gissade pg_control-värden:\n"
+"\n"
 
 #: pg_resetxlog.c:441
 msgid ""
 "pg_control values:\n"
 "\n"
-msgstr "pg_control-värden:\n\n"
+msgstr ""
+"pg_control-värden:\n"
+"\n"
 
 #: pg_resetxlog.c:443
 #, c-format
@@ -268,17 +272,19 @@ msgstr "%s: kunde inte skriva %s: %s\n"
 msgid ""
 "%s resets the PostgreSQL transaction log.\n"
 "\n"
-msgstr "%s återställer PostgreSQL transaktionslogg.\n\n"
+msgstr ""
+"%s återställer PostgreSQL transaktionslogg.\n"
+"\n"
 
 #: pg_resetxlog.c:695
 #, c-format
 msgid ""
 "Usage:\n"
-"  %s [OPTIONS] DATADIR\n"
+"  %s [OPTION]... DATADIR\n"
 "\n"
 msgstr ""
 "Användning:\n"
-"  %s [FLAGGOR] DATAKATALOG\n"
+"  %s [FLAGGA]... DATAKATALOG\n"
 "\n"
 
 #: pg_resetxlog.c:696
@@ -286,31 +292,41 @@ msgid "Options:\n"
 msgstr "Flaggor:\n"
 
 #: pg_resetxlog.c:697
-msgid "  -f                force update to be done\n"
-msgstr "  -f                forcera återställande\n"
+msgid "  -f              force update to be done\n"
+msgstr "  -f              forcera återställande\n"
 
 #: pg_resetxlog.c:698
 msgid ""
-"  -l FILEID,SEG     force minimum WAL starting location for new transaction "
+"  -l FILEID,SEG   force minimum WAL starting location for new transaction "
 "log\n"
-msgstr "  -l FILID,SEG      ange minsta WAL-startposition för ny transaktionslogg\n"
+msgstr "  -l FILID,SEG    ange minsta WAL-startposition för ny transaktionslogg\n"
 
 #: pg_resetxlog.c:699
 msgid ""
-"  -n                no update, just show extracted control values (for "
+"  -n              no update, just show extracted control values (for "
 "testing)\n"
-msgstr "  -n                ingen updatering, visa bara kontrollvärden (för testning)\n"
+msgstr "  -n              ingen updatering, visa bara kontrollvärden (för testning)\n"
 
 #: pg_resetxlog.c:700
-msgid "  -o OID            set next OID\n"
-msgstr "  -o OID            sätt nästa OID\n"
+msgid "  -o OID          set next OID\n"
+msgstr "  -o OID          sätt nästa OID\n"
 
 #: pg_resetxlog.c:701
-msgid "  -x XID            set next transaction ID\n"
-msgstr "  -x XID            sätt nästa transaktions-ID\n"
+msgid "  -x XID          set next transaction ID\n"
+msgstr "  -x XID          sätt nästa transaktions-ID\n"
 
 #: pg_resetxlog.c:702
+msgid "  --help          show this help, then exit\n"
+msgstr "  --help          visa den här hjälpen, avsluta sedan\n"
+
+#: pg_resetxlog.c:703
+msgid "  --version       output version information, then exit\n"
+msgstr "  --version       visa versionsinformation, avsluta sedan\n"
+
+#: pg_resetxlog.c:704
 msgid ""
 "\n"
 "Report bugs to <pgsql-bugs@postgresql.org>.\n"
-msgstr "\nReportera buggar till <pgsql-bugs@postgresql.org>.\n"
+msgstr ""
+"\n"
+"Reportera buggar till <pgsql-bugs@postgresql.org>.\n"
