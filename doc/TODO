@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Apr 12 21:37:38 EDT 2002
+Last updated:		Sun Apr 14 13:17:07 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -243,7 +243,7 @@ COMMANDS
 	o Add plsh server-side shell language (Peter E)
 	o Allow Java server-side programming (?) [java]
 	o Fix problems with complex temporary table creation/destruction
-	  without using PL/PgSQL EXECUTE
+	  without using PL/PgSQL EXECUTE, needs cached plan invalidation
         o Fix PL/pgSQL RENAME to work on variables other than OLD/NEW
 
 CLIENTS
