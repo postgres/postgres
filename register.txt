@@ -6,7 +6,7 @@ work or play with PostgreSQL more productive.
 Please check the following URL for a listing of the current user-support
 mailing lists:
 
-	http://www.ca.postgresql.org/users-lounge/index.html#maillist
+	http://www.postgresql.org/lists.html
 
 All of the mailing lists are currently archived and viewable at:
 
