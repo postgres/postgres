@@ -43,4 +43,9 @@ typedef unsigned int slock_t;
 
 #define HAS_TEST_AND_SET
 
+#ifif defined(__m68k__)
+typedef unsigned char slock_t;
+
+#define HAS_TEST_AND_SET
+
 #endif

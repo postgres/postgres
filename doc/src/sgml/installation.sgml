@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.159 2003/10/26 00:22:51 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.160 2003/10/26 00:26:13 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1629,7 +1629,7 @@ gunzip -c postgres.ps.gz \
 	<entry>7.3</entry>
 	<entry>2003-10-25,
 	 No?l K?the (<email>noel@debian.org</email>)</entry>
-	<entry></entry>
+	<entry>2.4</entry>
        </row>
        <row>
 	<entry><systemitem class="osname">Linux</></entry>
