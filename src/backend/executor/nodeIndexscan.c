@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.22 1998/08/03 19:41:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.23 1998/08/04 18:42:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -269,33 +269,36 @@ ExecIndexReScan(IndexScan *node, ExprContext *exprCtxt, Plan *parent)
 	{
 		qual = nth(i, indxqual);
 		n_keys = numScanKeys[i];
-		run_keys = (int *) runtimeKeyInfo[i];
 		scan_keys = (ScanKey) scanKeys[i];
-	
-		for (j = 0; j < n_keys; j++)
-		{
-			/*
-			 * If we have a run-time key, then extract the run-time
-			 * expression and evaluate it with respect to the current
-			 * outer tuple.  We then stick the result into the scan key.
-			 */
-			if (run_keys[j] != NO_OP)
-			{
-				clause = nth(j, qual);
-				scanexpr = (run_keys[j] == RIGHT_OP) ?
-					(Node *) get_rightop(clause) : (Node *) get_leftop(clause);
 
+		if (runtimeKeyInfo)
+		{
+			run_keys = (int *) runtimeKeyInfo[i];
+			for (j = 0; j < n_keys; j++)
+			{
 				/*
-				 * pass in isDone but ignore it.  We don't iterate in
-				 * quals
+				 * If we have a run-time key, then extract the run-time
+				 * expression and evaluate it with respect to the current
+				 * outer tuple.  We then stick the result into the scan key.
 				 */
-				scanvalue = (Datum)
-					ExecEvalExpr(scanexpr, exprCtxt, &isNull, &isDone);
-				scan_keys[j].sk_argument = scanvalue;
-				if (isNull)
-					scan_keys[j].sk_flags |= SK_ISNULL;
-				else
-					scan_keys[j].sk_flags &= ~SK_ISNULL;
+				if (run_keys[j] != NO_OP)
+				{
+					clause = nth(j, qual);
+					scanexpr = (run_keys[j] == RIGHT_OP) ?
+						(Node *) get_rightop(clause) : (Node *) get_leftop(clause);
+	
+					/*
+					 * pass in isDone but ignore it.  We don't iterate in
+					 * quals
+					 */
+					scanvalue = (Datum)
+						ExecEvalExpr(scanexpr, exprCtxt, &isNull, &isDone);
+					scan_keys[j].sk_argument = scanvalue;
+					if (isNull)
+						scan_keys[j].sk_flags |= SK_ISNULL;
+					else
+						scan_keys[j].sk_flags &= ~SK_ISNULL;
+				}
 			}
 		}
 		sdesc = scanDescs[i];

@@ -219,7 +219,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/Attic/gram.c,v 2.22 1998/08/01 22:44:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/Attic/gram.c,v 2.23 1998/08/04 18:42:39 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -795,54 +795,54 @@ static const short yyrline[] = { 0,
   1847,  1849,  1851,  1864,  1876,  1877,  1880,  1881,  1894,  1896,
   1910,  1911,  1912,  1915,  1917,  1921,  1923,  1925,  1929,  1937,
   1948,  1949,  1950,  1951,  1954,  1955,  1967,  1975,  1997,  2003,
-  2009,  2015,  2021,  2029,  2030,  2031,  2042,  2063,  2079,  2101,
-  2113,  2114,  2117,  2118,  2121,  2122,  2123,  2126,  2127,  2128,
-  2138,  2154,  2171,  2180,  2193,  2194,  2197,  2198,  2201,  2202,
-  2205,  2207,  2219,  2240,  2241,  2242,  2243,  2244,  2245,  2256,
-  2264,  2275,  2291,  2292,  2295,  2298,  2302,  2319,  2334,  2359,
-  2380,  2421,  2440,  2457,  2463,  2467,  2473,  2477,  2493,  2494,
-  2497,  2498,  2501,  2502,  2505,  2506,  2507,  2508,  2511,  2512,
-  2515,  2516,  2519,  2527,  2535,  2545,  2546,  2547,  2548,  2549,
-  2550,  2560,  2561,  2564,  2566,  2568,  2572,  2573,  2576,  2577,
-  2580,  2588,  2596,  2606,  2610,  2622,  2627,  2628,  2631,  2633,
-  2635,  2639,  2645,  2651,  2659,  2660,  2662,  2664,  2666,  2668,
-  2670,  2672,  2676,  2677,  2680,  2681,  2682,  2685,  2686,  2689,
-  2697,  2705,  2715,  2716,  2719,  2726,  2734,  2736,  2738,  2742,
-  2744,  2746,  2761,  2783,  2784,  2791,  2792,  2793,  2796,  2804,
-  2805,  2814,  2820,  2825,  2831,  2839,  2841,  2843,  2845,  2849,
-  2860,  2866,  2873,  2878,  2884,  2892,  2898,  2911,  2938,  2957,
-  2977,  2978,  2979,  2980,  2983,  2984,  2987,  2988,  2991,  2992,
-  2995,  3001,  3008,  3014,  3022,  3023,  3024,  3025,  3026,  3027,
-  3030,  3031,  3034,  3035,  3036,  3037,  3038,  3039,  3040,  3041,
-  3042,  3052,  3054,  3071,  3081,  3091,  3104,  3117,  3123,  3129,
-  3133,  3139,  3140,  3141,  3142,  3143,  3144,  3145,  3146,  3149,
-  3150,  3161,  3166,  3168,  3170,  3178,  3180,  3182,  3184,  3186,
-  3188,  3190,  3192,  3194,  3196,  3198,  3200,  3216,  3232,  3234,
-  3236,  3238,  3240,  3242,  3244,  3256,  3263,  3270,  3285,  3300,
-  3322,  3337,  3359,  3366,  3373,  3383,  3390,  3397,  3405,  3412,
-  3419,  3426,  3433,  3435,  3437,  3439,  3446,  3456,  3466,  3476,
-  3486,  3492,  3498,  3498,  3512,  3512,  3526,  3536,  3546,  3556,
-  3566,  3576,  3586,  3596,  3606,  3616,  3626,  3636,  3646,  3656,
-  3666,  3676,  3686,  3696,  3706,  3716,  3726,  3736,  3746,  3756,
-  3766,  3768,  3770,  3780,  3785,  3787,  3795,  3797,  3799,  3801,
-  3803,  3805,  3807,  3809,  3811,  3827,  3843,  3845,  3847,  3849,
-  3851,  3858,  3865,  3880,  3895,  3917,  3932,  3954,  3961,  3968,
-  3975,  3983,  3990,  3997,  4004,  4013,  4020,  4027,  4031,  4033,
-  4035,  4039,  4046,  4050,  4051,  4052,  4055,  4057,  4061,  4066,
-  4068,  4070,  4072,  4074,  4076,  4078,  4080,  4096,  4112,  4114,
-  4116,  4118,  4120,  4128,  4135,  4142,  4149,  4157,  4164,  4171,
-  4178,  4187,  4191,  4195,  4197,  4206,  4208,  4212,  4214,  4216,
-  4220,  4226,  4230,  4232,  4238,  4244,  4248,  4250,  4256,  4264,
-  4274,  4276,  4278,  4289,  4291,  4293,  4308,  4315,  4322,  4341,
-  4343,  4348,  4355,  4362,  4374,  4388,  4389,  4392,  4397,  4409,
-  4410,  4411,  4412,  4413,  4419,  4420,  4422,  4423,  4428,  4435,
-  4442,  4449,  4457,  4459,  4469,  4481,  4488,  4489,  4490,  4497,
-  4499,  4501,  4512,  4513,  4514,  4515,  4516,  4517,  4518,  4519,
-  4520,  4521,  4522,  4523,  4524,  4525,  4526,  4527,  4528,  4529,
-  4530,  4531,  4532,  4533,  4534,  4535,  4536,  4537,  4538,  4539,
-  4540,  4541,  4542,  4543,  4544,  4545,  4546,  4559,  4560,  4561,
-  4562,  4563,  4564,  4565,  4566,  4567,  4568,  4569,  4570,  4571,
-  4572,  4573,  4576,  4583
+  2009,  2015,  2021,  2029,  2030,  2031,  2042,  2063,  2079,  2102,
+  2114,  2115,  2118,  2119,  2122,  2123,  2124,  2127,  2128,  2129,
+  2139,  2155,  2172,  2181,  2194,  2195,  2198,  2199,  2202,  2203,
+  2206,  2208,  2220,  2241,  2242,  2243,  2244,  2245,  2246,  2257,
+  2265,  2276,  2292,  2293,  2296,  2299,  2303,  2320,  2335,  2360,
+  2381,  2422,  2441,  2458,  2464,  2468,  2474,  2478,  2494,  2495,
+  2498,  2499,  2502,  2503,  2506,  2507,  2508,  2509,  2512,  2513,
+  2516,  2517,  2520,  2528,  2536,  2546,  2547,  2548,  2549,  2550,
+  2551,  2561,  2562,  2565,  2567,  2569,  2573,  2574,  2577,  2578,
+  2581,  2589,  2597,  2607,  2611,  2623,  2628,  2629,  2632,  2634,
+  2636,  2640,  2646,  2652,  2660,  2661,  2663,  2665,  2667,  2669,
+  2671,  2673,  2677,  2678,  2681,  2682,  2683,  2686,  2687,  2690,
+  2698,  2706,  2716,  2717,  2720,  2727,  2735,  2737,  2739,  2743,
+  2745,  2747,  2762,  2784,  2785,  2792,  2793,  2794,  2797,  2805,
+  2806,  2815,  2821,  2826,  2832,  2840,  2842,  2844,  2846,  2850,
+  2861,  2867,  2874,  2879,  2885,  2893,  2899,  2912,  2939,  2958,
+  2978,  2979,  2980,  2981,  2984,  2985,  2988,  2989,  2992,  2993,
+  2996,  3002,  3009,  3015,  3023,  3024,  3025,  3026,  3027,  3028,
+  3031,  3032,  3035,  3036,  3037,  3038,  3039,  3040,  3041,  3042,
+  3043,  3053,  3055,  3072,  3082,  3092,  3105,  3118,  3124,  3130,
+  3134,  3140,  3141,  3142,  3143,  3144,  3145,  3146,  3147,  3150,
+  3151,  3162,  3167,  3169,  3171,  3179,  3181,  3183,  3185,  3187,
+  3189,  3191,  3193,  3195,  3197,  3199,  3201,  3217,  3233,  3235,
+  3237,  3239,  3241,  3243,  3245,  3257,  3264,  3271,  3286,  3301,
+  3323,  3338,  3360,  3367,  3374,  3384,  3391,  3398,  3406,  3413,
+  3420,  3427,  3434,  3436,  3438,  3440,  3447,  3457,  3467,  3477,
+  3487,  3493,  3499,  3499,  3513,  3513,  3527,  3537,  3547,  3557,
+  3567,  3577,  3587,  3597,  3607,  3617,  3627,  3637,  3647,  3657,
+  3667,  3677,  3687,  3697,  3707,  3717,  3727,  3737,  3747,  3757,
+  3767,  3769,  3771,  3781,  3786,  3788,  3796,  3798,  3800,  3802,
+  3804,  3806,  3808,  3810,  3812,  3828,  3844,  3846,  3848,  3850,
+  3852,  3859,  3866,  3881,  3896,  3918,  3933,  3955,  3962,  3969,
+  3976,  3984,  3991,  3998,  4005,  4014,  4021,  4028,  4032,  4034,
+  4036,  4040,  4047,  4051,  4052,  4053,  4056,  4058,  4062,  4067,
+  4069,  4071,  4073,  4075,  4077,  4079,  4081,  4097,  4113,  4115,
+  4117,  4119,  4121,  4129,  4136,  4143,  4150,  4158,  4165,  4172,
+  4179,  4188,  4192,  4196,  4198,  4207,  4209,  4213,  4215,  4217,
+  4221,  4227,  4231,  4233,  4239,  4245,  4249,  4251,  4257,  4265,
+  4275,  4277,  4279,  4290,  4292,  4294,  4309,  4316,  4323,  4342,
+  4344,  4349,  4356,  4363,  4375,  4389,  4390,  4393,  4398,  4410,
+  4411,  4412,  4413,  4414,  4420,  4421,  4423,  4424,  4429,  4436,
+  4443,  4450,  4458,  4460,  4470,  4482,  4489,  4490,  4491,  4498,
+  4500,  4502,  4513,  4514,  4515,  4516,  4517,  4518,  4519,  4520,
+  4521,  4522,  4523,  4524,  4525,  4526,  4527,  4528,  4529,  4530,
+  4531,  4532,  4533,  4534,  4535,  4536,  4537,  4538,  4539,  4540,
+  4541,  4542,  4543,  4544,  4545,  4546,  4547,  4560,  4561,  4562,
+  4563,  4564,  4565,  4566,  4567,  4568,  4569,  4570,  4571,  4572,
+  4573,  4574,  4577,  4584
 };
 #endif
 
@@ -6403,13 +6403,14 @@ case 389:
 						n->encoding = GetTemplateEncoding();
 					}
 #else
-					elog(ERROR, "WITH ENCODING is not supported");
+					if (yyvsp[0].str != NULL)
+						elog(ERROR, "WITH ENCODING is not supported");
 #endif
 					yyval.node = (Node *)n;
 				;
     break;}
 case 390:
-#line 2102 "gram.y"
+#line 2103 "gram.y"
 {
 					CreatedbStmt *n = makeNode(CreatedbStmt);
 					n->dbname = yyvsp[0].str;
@@ -6421,47 +6422,47 @@ case 390:
 				;
     break;}
 case 391:
-#line 2113 "gram.y"
+#line 2114 "gram.y"
 { yyval.str = yyvsp[0].str; ;
     break;}
 case 392:
-#line 2114 "gram.y"
+#line 2115 "gram.y"
 { yyval.str = NULL; ;
     break;}
 case 393:
-#line 2117 "gram.y"
+#line 2118 "gram.y"
 { yyval.str = yyvsp[0].str; ;
     break;}
 case 394:
-#line 2118 "gram.y"
+#line 2119 "gram.y"
 { yyval.str = NULL; ;
     break;}
 case 395:
-#line 2121 "gram.y"
+#line 2122 "gram.y"
 { yyval.str = yyvsp[0].str; ;
     break;}
 case 396:
-#line 2122 "gram.y"
-{ yyval.str = NULL; ;
-    break;}
-case 397:
 #line 2123 "gram.y"
 { yyval.str = NULL; ;
     break;}
+case 397:
+#line 2124 "gram.y"
+{ yyval.str = NULL; ;
+    break;}
 case 398:
-#line 2126 "gram.y"
+#line 2127 "gram.y"
 { yyval.str = yyvsp[0].str; ;
     break;}
 case 399:
-#line 2127 "gram.y"
-{ yyval.str = NULL; ;
-    break;}
-case 400:
 #line 2128 "gram.y"
 { yyval.str = NULL; ;
     break;}
+case 400:
+#line 2129 "gram.y"
+{ yyval.str = NULL; ;
+    break;}
 case 401:
-#line 2139 "gram.y"
+#line 2140 "gram.y"
 {
 					DestroydbStmt *n = makeNode(DestroydbStmt);
 					n->dbname = yyvsp[0].str;
@@ -6469,7 +6470,7 @@ case 401:
 				;
     break;}
 case 402:
-#line 2155 "gram.y"
+#line 2156 "gram.y"
 {
 				   ClusterStmt *n = makeNode(ClusterStmt);
 				   n->relname = yyvsp[0].str;
@@ -6478,7 +6479,7 @@ case 402:
 				;
     break;}
 case 403:
-#line 2172 "gram.y"
+#line 2173 "gram.y"
 {
 					VacuumStmt *n = makeNode(VacuumStmt);
 					n->verbose = yyvsp[-1].boolean;
@@ -6489,7 +6490,7 @@ case 403:
 				;
     break;}
 case 404:
-#line 2181 "gram.y"
+#line 2182 "gram.y"
 {
 					VacuumStmt *n = makeNode(VacuumStmt);
 					n->verbose = yyvsp[-3].boolean;
@@ -6502,39 +6503,39 @@ case 404:
 				;
     break;}
 case 405:
-#line 2193 "gram.y"
+#line 2194 "gram.y"
 { yyval.boolean = TRUE; ;
     break;}
 case 406:
-#line 2194 "gram.y"
+#line 2195 "gram.y"
 { yyval.boolean = FALSE; ;
     break;}
 case 407:
-#line 2197 "gram.y"
+#line 2198 "gram.y"
 { yyval.boolean = TRUE; ;
     break;}
 case 408:
-#line 2198 "gram.y"
+#line 2199 "gram.y"
 { yyval.boolean = FALSE; ;
     break;}
 case 409:
-#line 2201 "gram.y"
+#line 2202 "gram.y"
 { yyval.list = yyvsp[-1].list; ;
     break;}
 case 410:
-#line 2202 "gram.y"
+#line 2203 "gram.y"
 { yyval.list = NIL; ;
     break;}
 case 411:
-#line 2206 "gram.y"
+#line 2207 "gram.y"
 { yyval.list=lcons(yyvsp[0].str,NIL); ;
     break;}
 case 412:
-#line 2208 "gram.y"
+#line 2209 "gram.y"
 { yyval.list=lappend(yyvsp[-2].list,yyvsp[0].str); ;
     break;}
 case 413:
-#line 2220 "gram.y"
+#line 2221 "gram.y"
 {
 					ExplainStmt *n = makeNode(ExplainStmt);
 					n->verbose = yyvsp[-1].boolean;
@@ -6543,7 +6544,7 @@ case 413:
 				;
     break;}
 case 420:
-#line 2257 "gram.y"
+#line 2258 "gram.y"
 {
 					yyvsp[0].astmt->relname = yyvsp[-2].str;
 					yyvsp[0].astmt->cols = yyvsp[-1].list;
@@ -6551,7 +6552,7 @@ case 420:
 				;
     break;}
 case 421:
-#line 2265 "gram.y"
+#line 2266 "gram.y"
 {
 					yyval.astmt = makeNode(InsertStmt);
 					yyval.astmt->unique = NULL;
@@ -6564,7 +6565,7 @@ case 421:
 				;
     break;}
 case 422:
-#line 2279 "gram.y"
+#line 2280 "gram.y"
 {
 					yyval.astmt = makeNode(InsertStmt);
 					yyval.astmt->unique = yyvsp[-6].str;
@@ -6577,23 +6578,23 @@ case 422:
 				;
     break;}
 case 423:
-#line 2291 "gram.y"
+#line 2292 "gram.y"
 { yyval.list = yyvsp[-1].list; ;
     break;}
 case 424:
-#line 2292 "gram.y"
+#line 2293 "gram.y"
 { yyval.list = NIL; ;
     break;}
 case 425:
-#line 2297 "gram.y"
+#line 2298 "gram.y"
 { yyval.list = lappend(yyvsp[-2].list, yyvsp[0].node); ;
     break;}
 case 426:
-#line 2299 "gram.y"
+#line 2300 "gram.y"
 { yyval.list = lcons(yyvsp[0].node, NIL); ;
     break;}
 case 427:
-#line 2303 "gram.y"
+#line 2304 "gram.y"
 {
 					Ident *id = makeNode(Ident);
 					id->name = yyvsp[-1].str;
@@ -6602,7 +6603,7 @@ case 427:
 				;
     break;}
 case 428:
-#line 2321 "gram.y"
+#line 2322 "gram.y"
 {
 					DeleteStmt *n = makeNode(DeleteStmt);
 					n->relname = yyvsp[-1].str;
@@ -6611,7 +6612,7 @@ case 428:
 				;
     break;}
 case 429:
-#line 2335 "gram.y"
+#line 2336 "gram.y"
 {
 					DeleteStmt *n = makeNode(DeleteStmt);
 					A_Const *c = makeNode(A_Const);
@@ -6628,7 +6629,7 @@ case 429:
 				;
     break;}
 case 430:
-#line 2363 "gram.y"
+#line 2364 "gram.y"
 {
 					UpdateStmt *n = makeNode(UpdateStmt);
 					n->relname = yyvsp[-4].str;
@@ -6639,7 +6640,7 @@ case 430:
 				;
     break;}
 case 431:
-#line 2385 "gram.y"
+#line 2386 "gram.y"
 {
 					SelectStmt *n = makeNode(SelectStmt);
 
@@ -6668,7 +6669,7 @@ case 431:
 				;
     break;}
 case 432:
-#line 2425 "gram.y"
+#line 2426 "gram.y"
 {
 					SelectStmt *n = makeNode(SelectStmt);
 					n->unique = yyvsp[-8].str;
@@ -6684,7 +6685,7 @@ case 432:
 				;
     break;}
 case 433:
-#line 2444 "gram.y"
+#line 2445 "gram.y"
 {
 					SelectStmt *n = makeNode(SelectStmt);
 					n->unique = yyvsp[-6].str;
@@ -6698,7 +6699,7 @@ case 433:
 				;
     break;}
 case 434:
-#line 2458 "gram.y"
+#line 2459 "gram.y"
 {
 					SelectStmt *n = (SelectStmt *)lfirst(yyvsp[0].list);
 					n->unionall = yyvsp[-1].boolean;
@@ -6706,11 +6707,11 @@ case 434:
 				;
     break;}
 case 435:
-#line 2464 "gram.y"
+#line 2465 "gram.y"
 { yyval.list = NIL; ;
     break;}
 case 436:
-#line 2468 "gram.y"
+#line 2469 "gram.y"
 {
 					SelectStmt *n = (SelectStmt *)yyvsp[0].node;
 					n->unionall = yyvsp[-1].boolean;
@@ -6718,11 +6719,11 @@ case 436:
 				;
     break;}
 case 437:
-#line 2474 "gram.y"
+#line 2475 "gram.y"
 { yyval.list = lcons(yyvsp[0].node, NIL); ;
     break;}
 case 438:
-#line 2480 "gram.y"
+#line 2481 "gram.y"
 {
 					SelectStmt *n = makeNode(SelectStmt);
 					n->unique = yyvsp[-5].str;
@@ -6736,63 +6737,63 @@ case 438:
 				;
     break;}
 case 439:
-#line 2493 "gram.y"
+#line 2494 "gram.y"
 { yyval.str= yyvsp[0].str; ;
     break;}
 case 440:
-#line 2494 "gram.y"
+#line 2495 "gram.y"
 { yyval.str = NULL; ;
     break;}
 case 441:
-#line 2497 "gram.y"
+#line 2498 "gram.y"
 { yyval.boolean = TRUE; ;
     break;}
 case 442:
-#line 2498 "gram.y"
+#line 2499 "gram.y"
 { yyval.boolean = FALSE; ;
     break;}
 case 443:
-#line 2501 "gram.y"
+#line 2502 "gram.y"
 { yyval.boolean = TRUE; ;
     break;}
 case 444:
-#line 2502 "gram.y"
+#line 2503 "gram.y"
 { yyval.boolean = FALSE; ;
     break;}
 case 445:
-#line 2505 "gram.y"
+#line 2506 "gram.y"
 { yyval.str = "*"; ;
     break;}
 case 446:
-#line 2506 "gram.y"
+#line 2507 "gram.y"
 { yyval.str = yyvsp[0].str; ;
     break;}
 case 447:
-#line 2507 "gram.y"
-{ yyval.str = NULL; ;
-    break;}
-case 448:
 #line 2508 "gram.y"
 { yyval.str = NULL; ;
     break;}
+case 448:
+#line 2509 "gram.y"
+{ yyval.str = NULL; ;
+    break;}
 case 449:
-#line 2511 "gram.y"
+#line 2512 "gram.y"
 { yyval.list = yyvsp[0].list; ;
     break;}
 case 450:
-#line 2512 "gram.y"
+#line 2513 "gram.y"
 { yyval.list = NIL; ;
     break;}
 case 451:
-#line 2515 "gram.y"
+#line 2516 "gram.y"
 { yyval.list = lcons(yyvsp[0].sortgroupby, NIL); ;
     break;}
 case 452:
-#line 2516 "gram.y"
+#line 2517 "gram.y"
 { yyval.list = lappend(yyvsp[-2].list, yyvsp[0].sortgroupby); ;
     break;}
 case 453:
-#line 2520 "gram.y"
+#line 2521 "gram.y"
 {
 					yyval.sortgroupby = makeNode(SortGroupBy);
 					yyval.sortgroupby->resno = 0;
@@ -6802,7 +6803,7 @@ case 453:
 				;
     break;}
 case 454:
-#line 2528 "gram.y"
+#line 2529 "gram.y"
 {
 					yyval.sortgroupby = makeNode(SortGroupBy);
 					yyval.sortgroupby->resno = 0;
@@ -6812,7 +6813,7 @@ case 454:
 				;
     break;}
 case 455:
-#line 2536 "gram.y"
+#line 2537 "gram.y"
 {
 					yyval.sortgroupby = makeNode(SortGroupBy);
 					yyval.sortgroupby->resno = yyvsp[-1].ival;
@@ -6822,63 +6823,63 @@ case 455:
 				;
     break;}
 case 456:
-#line 2545 "gram.y"
+#line 2546 "gram.y"
 { yyval.str = yyvsp[0].str; ;
     break;}
 case 457:
-#line 2546 "gram.y"
+#line 2547 "gram.y"
 { yyval.str = "<"; ;
     break;}
 case 458:
-#line 2547 "gram.y"
+#line 2548 "gram.y"
 { yyval.str = ">"; ;
     break;}
 case 459:
-#line 2548 "gram.y"
+#line 2549 "gram.y"
 { yyval.str = "<"; ;
     break;}
 case 460:
-#line 2549 "gram.y"
+#line 2550 "gram.y"
 { yyval.str = ">"; ;
     break;}
 case 461:
-#line 2550 "gram.y"
+#line 2551 "gram.y"
 { yyval.str = "<"; /*default*/ ;
     break;}
 case 462:
-#line 2560 "gram.y"
+#line 2561 "gram.y"
 { yyval.boolean = TRUE; ;
     break;}
 case 463:
-#line 2561 "gram.y"
+#line 2562 "gram.y"
 { yyval.boolean = FALSE; ;
     break;}
 case 465:
-#line 2567 "gram.y"
+#line 2568 "gram.y"
 {	yyval.list = lcons(makeString(yyvsp[0].str),NIL); ;
     break;}
 case 466:
-#line 2569 "gram.y"
+#line 2570 "gram.y"
 {	yyval.list = lappend(yyvsp[-2].list,makeString(yyvsp[0].str)); ;
     break;}
 case 467:
-#line 2572 "gram.y"
+#line 2573 "gram.y"
 { yyval.list = yyvsp[0].list; ;
     break;}
 case 468:
-#line 2573 "gram.y"
+#line 2574 "gram.y"
 { yyval.list = NIL; ;
     break;}
 case 469:
-#line 2576 "gram.y"
+#line 2577 "gram.y"
 { yyval.list = lcons(yyvsp[0].sortgroupby, NIL); ;
     break;}
 case 470:
-#line 2577 "gram.y"
+#line 2578 "gram.y"
 { yyval.list = lappend(yyvsp[-2].list, yyvsp[0].sortgroupby); ;
     break;}
 case 471:
-#line 2581 "gram.y"
+#line 2582 "gram.y"
 {
 					yyval.sortgroupby = makeNode(SortGroupBy);
 					yyval.sortgroupby->resno = 0;
@@ -6888,7 +6889,7 @@ case 471:
 				;
     break;}
 case 472:
-#line 2589 "gram.y"
+#line 2590 "gram.y"
 {
 					yyval.sortgroupby = makeNode(SortGroupBy);
 					yyval.sortgroupby->resno = 0;
@@ -6898,7 +6899,7 @@ case 472:
 				;
     break;}
 case 473:
-#line 2597 "gram.y"
+#line 2598 "gram.y"
 {
 					yyval.sortgroupby = makeNode(SortGroupBy);
 					yyval.sortgroupby->resno = yyvsp[0].ival;
@@ -6908,44 +6909,44 @@ case 473:
 				;
     break;}
 case 474:
-#line 2607 "gram.y"
+#line 2608 "gram.y"
 {
 					yyval.node = yyvsp[0].node;
 				;
     break;}
 case 475:
-#line 2610 "gram.y"
+#line 2611 "gram.y"
 { yyval.node = NULL; ;
     break;}
 case 476:
-#line 2623 "gram.y"
+#line 2624 "gram.y"
 {
 					yyval.list = NIL;
 					elog(ERROR,"JOIN not yet implemented");
 				;
     break;}
 case 477:
-#line 2627 "gram.y"
+#line 2628 "gram.y"
 { yyval.list = yyvsp[0].list; ;
     break;}
 case 478:
-#line 2628 "gram.y"
+#line 2629 "gram.y"
 { yyval.list = NIL; ;
     break;}
 case 479:
-#line 2632 "gram.y"
+#line 2633 "gram.y"
 { yyval.list = lappend(yyvsp[-2].list, yyvsp[0].range); ;
     break;}
 case 480:
-#line 2634 "gram.y"
+#line 2635 "gram.y"
 { elog(ERROR,"CROSS JOIN not yet implemented"); ;
     break;}
 case 481:
-#line 2636 "gram.y"
+#line 2637 "gram.y"
 { yyval.list = lcons(yyvsp[0].range, NIL); ;
     break;}
 case 482:
-#line 2640 "gram.y"
+#line 2641 "gram.y"
 {
 					yyval.range = makeNode(RangeVar);
 					yyval.range->relExpr = yyvsp[-2].relexp;
@@ -6953,7 +6954,7 @@ case 482:
 				;
     break;}
 case 483:
-#line 2646 "gram.y"
+#line 2647 "gram.y"
 {
 					yyval.range = makeNode(RangeVar);
 					yyval.range->relExpr = yyvsp[-1].relexp;
@@ -6961,7 +6962,7 @@ case 483:
 				;
     break;}
 case 484:
-#line 2652 "gram.y"
+#line 2653 "gram.y"
 {
 					yyval.range = makeNode(RangeVar);
 					yyval.range->relExpr = yyvsp[0].relexp;
@@ -6969,67 +6970,67 @@ case 484:
 				;
     break;}
 case 485:
-#line 2659 "gram.y"
+#line 2660 "gram.y"
 { yyval.str = NULL; ;
     break;}
 case 486:
-#line 2661 "gram.y"
+#line 2662 "gram.y"
 { elog(ERROR,"FULL OUTER JOIN not yet implemented"); ;
     break;}
 case 487:
-#line 2663 "gram.y"
+#line 2664 "gram.y"
 { elog(ERROR,"LEFT OUTER JOIN not yet implemented"); ;
     break;}
 case 488:
-#line 2665 "gram.y"
+#line 2666 "gram.y"
 { elog(ERROR,"RIGHT OUTER JOIN not yet implemented"); ;
     break;}
 case 489:
-#line 2667 "gram.y"
+#line 2668 "gram.y"
 { elog(ERROR,"OUTER JOIN not yet implemented"); ;
     break;}
 case 490:
-#line 2669 "gram.y"
+#line 2670 "gram.y"
 { elog(ERROR,"INNER JOIN not yet implemented"); ;
     break;}
 case 491:
-#line 2671 "gram.y"
+#line 2672 "gram.y"
 { elog(ERROR,"UNION JOIN not yet implemented"); ;
     break;}
 case 492:
-#line 2673 "gram.y"
+#line 2674 "gram.y"
 { elog(ERROR,"INNER JOIN not yet implemented"); ;
     break;}
 case 493:
-#line 2676 "gram.y"
+#line 2677 "gram.y"
 { yyval.str = NULL; ;
     break;}
 case 494:
-#line 2677 "gram.y"
+#line 2678 "gram.y"
 { yyval.str = NULL;  /* no qualifiers */ ;
     break;}
 case 495:
-#line 2680 "gram.y"
-{ yyval.str = NULL; ;
-    break;}
-case 496:
 #line 2681 "gram.y"
 { yyval.str = NULL; ;
     break;}
-case 497:
+case 496:
 #line 2682 "gram.y"
+{ yyval.str = NULL; ;
+    break;}
+case 497:
+#line 2683 "gram.y"
 { yyval.str = NULL;  /* no qualifiers */ ;
     break;}
 case 498:
-#line 2685 "gram.y"
+#line 2686 "gram.y"
 { yyval.list = lcons(yyvsp[0].sortgroupby, NIL); ;
     break;}
 case 499:
-#line 2686 "gram.y"
+#line 2687 "gram.y"
 { yyval.list = lappend(yyvsp[-2].list, yyvsp[0].sortgroupby); ;
     break;}
 case 500:
-#line 2690 "gram.y"
+#line 2691 "gram.y"
 {
 					yyval.sortgroupby = makeNode(SortGroupBy);
 					yyval.sortgroupby->resno = 0;
@@ -7039,7 +7040,7 @@ case 500:
 				;
     break;}
 case 501:
-#line 2698 "gram.y"
+#line 2699 "gram.y"
 {
 					yyval.sortgroupby = makeNode(SortGroupBy);
 					yyval.sortgroupby->resno = 0;
@@ -7049,7 +7050,7 @@ case 501:
 				;
     break;}
 case 502:
-#line 2706 "gram.y"
+#line 2707 "gram.y"
 {
 					yyval.sortgroupby = makeNode(SortGroupBy);
 					yyval.sortgroupby->resno = yyvsp[0].ival;
@@ -7059,15 +7060,15 @@ case 502:
 				;
     break;}
 case 503:
-#line 2715 "gram.y"
+#line 2716 "gram.y"
 { yyval.node = yyvsp[0].node; ;
     break;}
 case 504:
-#line 2716 "gram.y"
+#line 2717 "gram.y"
 { yyval.node = NULL;  /* no qualifiers */ ;
     break;}
 case 505:
-#line 2720 "gram.y"
+#line 2721 "gram.y"
 {
 					/* normal relations */
 					yyval.relexp = makeNode(RelExpr);
@@ -7076,7 +7077,7 @@ case 505:
 				;
     break;}
 case 506:
-#line 2727 "gram.y"
+#line 2728 "gram.y"
 {
 					/* inheritance query */
 					yyval.relexp = makeNode(RelExpr);
@@ -7085,31 +7086,31 @@ case 506:
 				;
     break;}
 case 507:
-#line 2735 "gram.y"
+#line 2736 "gram.y"
 {  yyval.list = lcons(makeInteger(-1), yyvsp[0].list); ;
     break;}
 case 508:
-#line 2737 "gram.y"
+#line 2738 "gram.y"
 {  yyval.list = lcons(makeInteger(yyvsp[-2].ival), yyvsp[0].list); ;
     break;}
 case 509:
-#line 2739 "gram.y"
+#line 2740 "gram.y"
 {  yyval.list = NIL; ;
     break;}
 case 510:
-#line 2743 "gram.y"
+#line 2744 "gram.y"
 {  yyval.list = lcons(makeInteger(-1), yyvsp[0].list); ;
     break;}
 case 511:
-#line 2745 "gram.y"
+#line 2746 "gram.y"
 {  yyval.list = lcons(makeInteger(yyvsp[-2].ival), yyvsp[0].list); ;
     break;}
 case 512:
-#line 2747 "gram.y"
+#line 2748 "gram.y"
 {  yyval.list = NIL; ;
     break;}
 case 513:
-#line 2762 "gram.y"
+#line 2763 "gram.y"
 {
 					yyval.typnam = yyvsp[-1].typnam;
 					yyval.typnam->arrayBounds = yyvsp[0].list;
@@ -7133,14 +7134,14 @@ case 513:
 				;
     break;}
 case 515:
-#line 2785 "gram.y"
+#line 2786 "gram.y"
 {
 					yyval.typnam = yyvsp[0].typnam;
 					yyval.typnam->setof = TRUE;
 				;
     break;}
 case 519:
-#line 2797 "gram.y"
+#line 2798 "gram.y"
 {
 					yyval.typnam = makeNode(TypeName);
 					yyval.typnam->name = xlateSqlType(yyvsp[0].str);
@@ -7148,15 +7149,15 @@ case 519:
 				;
     break;}
 case 520:
-#line 2804 "gram.y"
+#line 2805 "gram.y"
 { yyval.str = yyvsp[0].str; ;
     break;}
 case 521:
-#line 2805 "gram.y"
+#line 2806 "gram.y"
 { yyval.str = xlateSqlType("type"); ;
     break;}
 case 522:
-#line 2815 "gram.y"
+#line 2816 "gram.y"
 {
 					yyval.typnam = makeNode(TypeName);
 					yyval.typnam->name = xlateSqlType(yyvsp[0].str);
@@ -7164,14 +7165,14 @@ case 522:
 				;
     break;}
 case 523:
-#line 2821 "gram.y"
+#line 2822 "gram.y"
 {
 					yyval.typnam = makeNode(TypeName);
 					yyval.typnam->name = xlateSqlType("float");
 				;
     break;}
 case 524:
-#line 2826 "gram.y"
+#line 2827 "gram.y"
 {
 					yyval.typnam = makeNode(TypeName);
 					yyval.typnam->name = xlateSqlType("integer");
@@ -7179,7 +7180,7 @@ case 524:
 				;
     break;}
 case 525:
-#line 2832 "gram.y"
+#line 2833 "gram.y"
 {
 					yyval.typnam = makeNode(TypeName);
 					yyval.typnam->name = xlateSqlType("integer");
@@ -7187,23 +7188,23 @@ case 525:
 				;
     break;}
 case 526:
-#line 2840 "gram.y"
+#line 2841 "gram.y"
 {	yyval.str = xlateSqlType("float8"); ;
     break;}
 case 527:
-#line 2842 "gram.y"
+#line 2843 "gram.y"
 {	yyval.str = xlateSqlType("float8"); ;
     break;}
 case 528:
-#line 2844 "gram.y"
+#line 2845 "gram.y"
 {	yyval.str = xlateSqlType("decimal"); ;
     break;}
 case 529:
-#line 2846 "gram.y"
+#line 2847 "gram.y"
 {	yyval.str = xlateSqlType("numeric"); ;
     break;}
 case 530:
-#line 2850 "gram.y"
+#line 2851 "gram.y"
 {
 					if (yyvsp[-1].ival < 1)
 						elog(ERROR,"precision for FLOAT must be at least 1");
@@ -7216,13 +7217,13 @@ case 530:
 				;
     break;}
 case 531:
-#line 2861 "gram.y"
+#line 2862 "gram.y"
 {
 					yyval.str = xlateSqlType("float8");
 				;
     break;}
 case 532:
-#line 2867 "gram.y"
+#line 2868 "gram.y"
 {
 					if (yyvsp[-3].ival != 9)
 						elog(ERROR,"NUMERIC precision %d must be 9",yyvsp[-3].ival);
@@ -7231,20 +7232,20 @@ case 532:
 				;
     break;}
 case 533:
-#line 2874 "gram.y"
+#line 2875 "gram.y"
 {
 					if (yyvsp[-1].ival != 9)
 						elog(ERROR,"NUMERIC precision %d must be 9",yyvsp[-1].ival);
 				;
     break;}
 case 534:
-#line 2879 "gram.y"
+#line 2880 "gram.y"
 {
 					yyval.str = NULL;
 				;
     break;}
 case 535:
-#line 2885 "gram.y"
+#line 2886 "gram.y"
 {
 					if (yyvsp[-3].ival > 9)
 						elog(ERROR,"DECIMAL precision %d exceeds implementation limit of 9",yyvsp[-3].ival);
@@ -7254,7 +7255,7 @@ case 535:
 				;
     break;}
 case 536:
-#line 2893 "gram.y"
+#line 2894 "gram.y"
 {
 					if (yyvsp[-1].ival > 9)
 						elog(ERROR,"DECIMAL precision %d exceeds implementation limit of 9",yyvsp[-1].ival);
@@ -7262,13 +7263,13 @@ case 536:
 				;
     break;}
 case 537:
-#line 2899 "gram.y"
+#line 2900 "gram.y"
 {
 					yyval.str = NULL;
 				;
     break;}
 case 538:
-#line 2912 "gram.y"
+#line 2913 "gram.y"
 {
 					yyval.typnam = makeNode(TypeName);
 					if (strcasecmp(yyvsp[-3].str, "char") == 0)
@@ -7297,7 +7298,7 @@ case 538:
 				;
     break;}
 case 539:
-#line 2939 "gram.y"
+#line 2940 "gram.y"
 {
 					yyval.typnam = makeNode(TypeName);
 					/* Let's try to make all single-character types into bpchar(1)
@@ -7316,7 +7317,7 @@ case 539:
 				;
     break;}
 case 540:
-#line 2958 "gram.y"
+#line 2959 "gram.y"
 {
 					char *type, *c;
 					if ((yyvsp[-1].str == NULL) || (strcasecmp(yyvsp[-1].str, "sql_text") == 0)) {
@@ -7338,47 +7339,47 @@ case 540:
 				;
     break;}
 case 541:
-#line 2977 "gram.y"
+#line 2978 "gram.y"
 { yyval.str = xlateSqlType(yyvsp[0].boolean? "varchar": "char"); ;
     break;}
 case 542:
-#line 2978 "gram.y"
+#line 2979 "gram.y"
 { yyval.str = xlateSqlType("varchar"); ;
     break;}
 case 543:
-#line 2979 "gram.y"
-{ yyval.str = xlateSqlType(yyvsp[0].boolean? "varchar": "char"); ;
-    break;}
-case 544:
 #line 2980 "gram.y"
 { yyval.str = xlateSqlType(yyvsp[0].boolean? "varchar": "char"); ;
     break;}
+case 544:
+#line 2981 "gram.y"
+{ yyval.str = xlateSqlType(yyvsp[0].boolean? "varchar": "char"); ;
+    break;}
 case 545:
-#line 2983 "gram.y"
+#line 2984 "gram.y"
 { yyval.boolean = TRUE; ;
     break;}
 case 546:
-#line 2984 "gram.y"
+#line 2985 "gram.y"
 { yyval.boolean = FALSE; ;
     break;}
 case 547:
-#line 2987 "gram.y"
+#line 2988 "gram.y"
 { yyval.str = yyvsp[0].str; ;
     break;}
 case 548:
-#line 2988 "gram.y"
+#line 2989 "gram.y"
 { yyval.str = NULL; ;
     break;}
 case 549:
-#line 2991 "gram.y"
+#line 2992 "gram.y"
 { yyval.str = yyvsp[0].str; ;
     break;}
 case 550:
-#line 2992 "gram.y"
+#line 2993 "gram.y"
 { yyval.str = NULL; ;
     break;}
 case 551:
-#line 2996 "gram.y"
+#line 2997 "gram.y"
 {
 					yyval.typnam = makeNode(TypeName);
 					yyval.typnam->name = xlateSqlType(yyvsp[0].str);
@@ -7386,7 +7387,7 @@ case 551:
 				;
     break;}
 case 552:
-#line 3002 "gram.y"
+#line 3003 "gram.y"
 {
 					yyval.typnam = makeNode(TypeName);
 					yyval.typnam->name = xlateSqlType("timestamp");
@@ -7395,7 +7396,7 @@ case 552:
 				;
     break;}
 case 553:
-#line 3009 "gram.y"
+#line 3010 "gram.y"
 {
 					yyval.typnam = makeNode(TypeName);
 					yyval.typnam->name = xlateSqlType("time");
@@ -7403,7 +7404,7 @@ case 553:
 				;
     break;}
 case 554:
-#line 3015 "gram.y"
+#line 3016 "gram.y"
 {
 					yyval.typnam = makeNode(TypeName);
 					yyval.typnam->name = xlateSqlType("interval");
@@ -7411,79 +7412,79 @@ case 554:
 				;
     break;}
 case 555:
-#line 3022 "gram.y"
+#line 3023 "gram.y"
 { yyval.str = "year"; ;
     break;}
 case 556:
-#line 3023 "gram.y"
+#line 3024 "gram.y"
 { yyval.str = "month"; ;
     break;}
 case 557:
-#line 3024 "gram.y"
+#line 3025 "gram.y"
 { yyval.str = "day"; ;
     break;}
 case 558:
-#line 3025 "gram.y"
+#line 3026 "gram.y"
 { yyval.str = "hour"; ;
     break;}
 case 559:
-#line 3026 "gram.y"
+#line 3027 "gram.y"
 { yyval.str = "minute"; ;
     break;}
 case 560:
-#line 3027 "gram.y"
+#line 3028 "gram.y"
 { yyval.str = "second"; ;
     break;}
 case 561:
-#line 3030 "gram.y"
+#line 3031 "gram.y"
 { yyval.boolean = TRUE; ;
     break;}
 case 562:
-#line 3031 "gram.y"
+#line 3032 "gram.y"
 { yyval.boolean = FALSE; ;
     break;}
 case 563:
-#line 3034 "gram.y"
+#line 3035 "gram.y"
 { yyval.list = lcons(yyvsp[0].str, NIL); ;
     break;}
 case 564:
-#line 3035 "gram.y"
-{ yyval.list = NIL; ;
-    break;}
-case 565:
 #line 3036 "gram.y"
 { yyval.list = NIL; ;
     break;}
-case 566:
+case 565:
 #line 3037 "gram.y"
 { yyval.list = NIL; ;
     break;}
-case 567:
+case 566:
 #line 3038 "gram.y"
 { yyval.list = NIL; ;
     break;}
-case 568:
+case 567:
 #line 3039 "gram.y"
 { yyval.list = NIL; ;
     break;}
-case 569:
+case 568:
 #line 3040 "gram.y"
 { yyval.list = NIL; ;
     break;}
-case 570:
+case 569:
 #line 3041 "gram.y"
 { yyval.list = NIL; ;
     break;}
-case 571:
+case 570:
 #line 3042 "gram.y"
 { yyval.list = NIL; ;
     break;}
+case 571:
+#line 3043 "gram.y"
+{ yyval.list = NIL; ;
+    break;}
 case 572:
-#line 3053 "gram.y"
+#line 3054 "gram.y"
 { yyval.node = yyvsp[0].node; ;
     break;}
 case 573:
-#line 3055 "gram.y"
+#line 3056 "gram.y"
 {
 					A_Const *n = makeNode(A_Const);
 					n->val.type = T_Null;
@@ -7491,7 +7492,7 @@ case 573:
 				;
     break;}
 case 574:
-#line 3072 "gram.y"
+#line 3073 "gram.y"
 {
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = yyvsp[-5].list;
@@ -7503,7 +7504,7 @@ case 574:
 				;
     break;}
 case 575:
-#line 3082 "gram.y"
+#line 3083 "gram.y"
 {
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = yyvsp[-6].list;
@@ -7515,7 +7516,7 @@ case 575:
 				;
     break;}
 case 576:
-#line 3092 "gram.y"
+#line 3093 "gram.y"
 {
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = yyvsp[-6].list;
@@ -7530,7 +7531,7 @@ case 576:
 				;
     break;}
 case 577:
-#line 3105 "gram.y"
+#line 3106 "gram.y"
 {
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = yyvsp[-5].list;
@@ -7545,86 +7546,86 @@ case 577:
 				;
     break;}
 case 578:
-#line 3118 "gram.y"
+#line 3119 "gram.y"
 {
 					yyval.node = makeRowExpr(yyvsp[-3].str, yyvsp[-5].list, yyvsp[-1].list);
 				;
     break;}
 case 579:
-#line 3124 "gram.y"
+#line 3125 "gram.y"
 {
 					yyval.list = lappend(yyvsp[-2].list, yyvsp[0].node);
 				;
     break;}
 case 580:
-#line 3130 "gram.y"
+#line 3131 "gram.y"
 {
 					yyval.list = lappend(yyvsp[-2].list, yyvsp[0].node);
 				;
     break;}
 case 581:
-#line 3134 "gram.y"
+#line 3135 "gram.y"
 {
 					yyval.list = lcons(yyvsp[0].node, NIL);
 				;
     break;}
 case 582:
-#line 3139 "gram.y"
+#line 3140 "gram.y"
 { yyval.str = yyvsp[0].str; ;
     break;}
 case 583:
-#line 3140 "gram.y"
+#line 3141 "gram.y"
 { yyval.str = "<"; ;
     break;}
 case 584:
-#line 3141 "gram.y"
+#line 3142 "gram.y"
 { yyval.str = "="; ;
     break;}
 case 585:
-#line 3142 "gram.y"
+#line 3143 "gram.y"
 { yyval.str = ">"; ;
     break;}
 case 586:
-#line 3143 "gram.y"
+#line 3144 "gram.y"
 { yyval.str = "+"; ;
     break;}
 case 587:
-#line 3144 "gram.y"
+#line 3145 "gram.y"
 { yyval.str = "-"; ;
     break;}
 case 588:
-#line 3145 "gram.y"
+#line 3146 "gram.y"
 { yyval.str = "*"; ;
     break;}
 case 589:
-#line 3146 "gram.y"
+#line 3147 "gram.y"
 { yyval.str = "/"; ;
     break;}
 case 590:
-#line 3149 "gram.y"
+#line 3150 "gram.y"
 { yyval.ival = ANY_SUBLINK; ;
     break;}
 case 591:
-#line 3150 "gram.y"
+#line 3151 "gram.y"
 { yyval.ival = ALL_SUBLINK; ;
     break;}
 case 592:
-#line 3162 "gram.y"
+#line 3163 "gram.y"
 {
 					yyvsp[-1].attr->indirection = yyvsp[0].list;
 					yyval.node = (Node *)yyvsp[-1].attr;
 				;
     break;}
 case 593:
-#line 3167 "gram.y"
+#line 3168 "gram.y"
 {	yyval.node = yyvsp[0].node;  ;
     break;}
 case 594:
-#line 3169 "gram.y"
+#line 3170 "gram.y"
 {	yyval.node = yyvsp[0].node;  ;
     break;}
 case 595:
-#line 3171 "gram.y"
+#line 3172 "gram.y"
 {
 					/* could be a column name or a relation_name */
 					Ident *n = makeNode(Ident);
@@ -7634,51 +7635,51 @@ case 595:
 				;
     break;}
 case 596:
-#line 3179 "gram.y"
+#line 3180 "gram.y"
 {	yyval.node = makeA_Expr(OP, "-", NULL, yyvsp[0].node); ;
     break;}
 case 597:
-#line 3181 "gram.y"
+#line 3182 "gram.y"
 {	yyval.node = makeA_Expr(OP, "+", yyvsp[-2].node, yyvsp[0].node); ;
     break;}
 case 598:
-#line 3183 "gram.y"
+#line 3184 "gram.y"
 {	yyval.node = makeA_Expr(OP, "-", yyvsp[-2].node, yyvsp[0].node); ;
     break;}
 case 599:
-#line 3185 "gram.y"
+#line 3186 "gram.y"
 {	yyval.node = makeA_Expr(OP, "/", yyvsp[-2].node, yyvsp[0].node); ;
     break;}
 case 600:
-#line 3187 "gram.y"
+#line 3188 "gram.y"
 {	yyval.node = makeA_Expr(OP, "*", yyvsp[-2].node, yyvsp[0].node); ;
     break;}
 case 601:
-#line 3189 "gram.y"
+#line 3190 "gram.y"
 {	yyval.node = makeA_Expr(OP, "<", yyvsp[-2].node, yyvsp[0].node); ;
     break;}
 case 602:
-#line 3191 "gram.y"
+#line 3192 "gram.y"
 {	yyval.node = makeA_Expr(OP, ">", yyvsp[-2].node, yyvsp[0].node); ;
     break;}
 case 603:
-#line 3193 "gram.y"
+#line 3194 "gram.y"
 {	yyval.node = makeA_Expr(OP, "=", yyvsp[-2].node, yyvsp[0].node); ;
     break;}
 case 604:
-#line 3195 "gram.y"
+#line 3196 "gram.y"
 {	yyval.node = makeA_Expr(OP, ":", NULL, yyvsp[0].node); ;
     break;}
 case 605:
-#line 3197 "gram.y"
+#line 3198 "gram.y"
 {	yyval.node = makeA_Expr(OP, ";", NULL, yyvsp[0].node); ;
     break;}
 case 606:
-#line 3199 "gram.y"
+#line 3200 "gram.y"
 {	yyval.node = makeA_Expr(OP, "|", NULL, yyvsp[0].node); ;
     break;}
 case 607:
-#line 3201 "gram.y"
+#line 3202 "gram.y"
 {
 					yyval.node = (Node *)yyvsp[-2].node;
 					/* AexprConst can be either A_Const or ParamNo */
@@ -7696,7 +7697,7 @@ case 607:
 				;
     break;}
 case 608:
-#line 3217 "gram.y"
+#line 3218 "gram.y"
 {
 					yyval.node = (Node *)yyvsp[-3].node;
 					/* AexprConst can be either A_Const or ParamNo */
@@ -7714,31 +7715,31 @@ case 608:
 				;
     break;}
 case 609:
-#line 3233 "gram.y"
+#line 3234 "gram.y"
 {	yyval.node = yyvsp[-1].node; ;
     break;}
 case 610:
-#line 3235 "gram.y"
+#line 3236 "gram.y"
 {	yyval.node = makeIndexable(yyvsp[-1].str,yyvsp[-2].node,yyvsp[0].node);	;
     break;}
 case 611:
-#line 3237 "gram.y"
+#line 3238 "gram.y"
 {	yyval.node = makeIndexable("~~", yyvsp[-2].node, yyvsp[0].node); ;
     break;}
 case 612:
-#line 3239 "gram.y"
+#line 3240 "gram.y"
 {	yyval.node = makeA_Expr(OP, "!~~", yyvsp[-3].node, yyvsp[0].node); ;
     break;}
 case 613:
-#line 3241 "gram.y"
+#line 3242 "gram.y"
 {	yyval.node = makeA_Expr(OP, yyvsp[-1].str, NULL, yyvsp[0].node); ;
     break;}
 case 614:
-#line 3243 "gram.y"
+#line 3244 "gram.y"
 {	yyval.node = makeA_Expr(OP, yyvsp[0].str, yyvsp[-1].node, NULL); ;
     break;}
 case 615:
-#line 3245 "gram.y"
+#line 3246 "gram.y"
 {
 					/* cheap hack for aggregate (eg. count) */
 					FuncCall *n = makeNode(FuncCall);
@@ -7752,7 +7753,7 @@ case 615:
 				;
     break;}
 case 616:
-#line 3257 "gram.y"
+#line 3258 "gram.y"
 {
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = yyvsp[-2].str;
@@ -7761,7 +7762,7 @@ case 616:
 				;
     break;}
 case 617:
-#line 3264 "gram.y"
+#line 3265 "gram.y"
 {
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = yyvsp[-3].str;
@@ -7770,7 +7771,7 @@ case 617:
 				;
     break;}
 case 618:
-#line 3271 "gram.y"
+#line 3272 "gram.y"
 {
 					A_Const *n = makeNode(A_Const);
 					TypeName *t = makeNode(TypeName);
@@ -7787,7 +7788,7 @@ case 618:
 				;
     break;}
 case 619:
-#line 3286 "gram.y"
+#line 3287 "gram.y"
 {
 					A_Const *n = makeNode(A_Const);
 					TypeName *t = makeNode(TypeName);
@@ -7804,7 +7805,7 @@ case 619:
 				;
     break;}
 case 620:
-#line 3301 "gram.y"
+#line 3302 "gram.y"
 {
 					FuncCall *n = makeNode(FuncCall);
 					A_Const *s = makeNode(A_Const);
@@ -7828,7 +7829,7 @@ case 620:
 				;
     break;}
 case 621:
-#line 3323 "gram.y"
+#line 3324 "gram.y"
 {
 					A_Const *n = makeNode(A_Const);
 					TypeName *t = makeNode(TypeName);
@@ -7845,7 +7846,7 @@ case 621:
 				;
     break;}
 case 622:
-#line 3338 "gram.y"
+#line 3339 "gram.y"
 {
 					FuncCall *n = makeNode(FuncCall);
 					A_Const *s = makeNode(A_Const);
@@ -7869,7 +7870,7 @@ case 622:
 				;
     break;}
 case 623:
-#line 3360 "gram.y"
+#line 3361 "gram.y"
 {
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = "getpgusername";
@@ -7878,7 +7879,7 @@ case 623:
 				;
     break;}
 case 624:
-#line 3367 "gram.y"
+#line 3368 "gram.y"
 {
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = "getpgusername";
@@ -7887,7 +7888,7 @@ case 624:
 				;
     break;}
 case 625:
-#line 3374 "gram.y"
+#line 3375 "gram.y"
 {
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = NIL;
@@ -7899,7 +7900,7 @@ case 625:
 				;
     break;}
 case 626:
-#line 3384 "gram.y"
+#line 3385 "gram.y"
 {
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = "date_part";
@@ -7908,7 +7909,7 @@ case 626:
 				;
     break;}
 case 627:
-#line 3391 "gram.y"
+#line 3392 "gram.y"
 {
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = "strpos";
@@ -7917,7 +7918,7 @@ case 627:
 				;
     break;}
 case 628:
-#line 3398 "gram.y"
+#line 3399 "gram.y"
 {
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = "substr";
@@ -7926,7 +7927,7 @@ case 628:
 				;
     break;}
 case 629:
-#line 3406 "gram.y"
+#line 3407 "gram.y"
 {
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = "btrim";
@@ -7935,7 +7936,7 @@ case 629:
 				;
     break;}
 case 630:
-#line 3413 "gram.y"
+#line 3414 "gram.y"
 {
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = "ltrim";
@@ -7944,7 +7945,7 @@ case 630:
 				;
     break;}
 case 631:
-#line 3420 "gram.y"
+#line 3421 "gram.y"
 {
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = "rtrim";
@@ -7953,7 +7954,7 @@ case 631:
 				;
     break;}
 case 632:
-#line 3427 "gram.y"
+#line 3428 "gram.y"
 {
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = "btrim";
@@ -7962,23 +7963,23 @@ case 632:
 				;
     break;}
 case 633:
-#line 3434 "gram.y"
+#line 3435 "gram.y"
 {	yyval.node = makeA_Expr(ISNULL, NULL, yyvsp[-1].node, NULL); ;
     break;}
 case 634:
-#line 3436 "gram.y"
+#line 3437 "gram.y"
 {	yyval.node = makeA_Expr(ISNULL, NULL, yyvsp[-2].node, NULL); ;
     break;}
 case 635:
-#line 3438 "gram.y"
+#line 3439 "gram.y"
 {	yyval.node = makeA_Expr(NOTNULL, NULL, yyvsp[-1].node, NULL); ;
     break;}
 case 636:
-#line 3440 "gram.y"
+#line 3441 "gram.y"
 {	yyval.node = makeA_Expr(NOTNULL, NULL, yyvsp[-3].node, NULL); ;
     break;}
 case 637:
-#line 3447 "gram.y"
+#line 3448 "gram.y"
 {
 					A_Const *n = makeNode(A_Const);
 					n->val.type = T_String;
@@ -7990,7 +7991,7 @@ case 637:
 				;
     break;}
 case 638:
-#line 3457 "gram.y"
+#line 3458 "gram.y"
 {
 					A_Const *n = makeNode(A_Const);
 					n->val.type = T_String;
@@ -8002,7 +8003,7 @@ case 638:
 				;
     break;}
 case 639:
-#line 3467 "gram.y"
+#line 3468 "gram.y"
 {
 					A_Const *n = makeNode(A_Const);
 					n->val.type = T_String;
@@ -8014,7 +8015,7 @@ case 639:
 				;
     break;}
 case 640:
-#line 3477 "gram.y"
+#line 3478 "gram.y"
 {
 					A_Const *n = makeNode(A_Const);
 					n->val.type = T_String;
@@ -8026,7 +8027,7 @@ case 640:
 				;
     break;}
 case 641:
-#line 3487 "gram.y"
+#line 3488 "gram.y"
 {
 					yyval.node = makeA_Expr(AND, NULL,
 						makeA_Expr(OP, ">=", yyvsp[-4].node, yyvsp[-2].node),
@@ -8034,7 +8035,7 @@ case 641:
 				;
     break;}
 case 642:
-#line 3493 "gram.y"
+#line 3494 "gram.y"
 {
 					yyval.node = makeA_Expr(OR, NULL,
 						makeA_Expr(OP, "<", yyvsp[-5].node, yyvsp[-2].node),
@@ -8042,11 +8043,11 @@ case 642:
 				;
     break;}
 case 643:
-#line 3498 "gram.y"
+#line 3499 "gram.y"
 { saved_In_Expr = lcons(yyvsp[-1].node,saved_In_Expr); ;
     break;}
 case 644:
-#line 3499 "gram.y"
+#line 3500 "gram.y"
 {
 					saved_In_Expr = lnext(saved_In_Expr);
 					if (nodeTag(yyvsp[-1].node) == T_SubLink)
@@ -8062,11 +8063,11 @@ case 644:
 				;
     break;}
 case 645:
-#line 3512 "gram.y"
+#line 3513 "gram.y"
 { saved_In_Expr = lcons(yyvsp[-2].node,saved_In_Expr); ;
     break;}
 case 646:
-#line 3513 "gram.y"
+#line 3514 "gram.y"
 {
 					saved_In_Expr = lnext(saved_In_Expr);
 					if (nodeTag(yyvsp[-1].node) == T_SubLink)
@@ -8082,7 +8083,7 @@ case 646:
 				;
     break;}
 case 647:
-#line 3527 "gram.y"
+#line 3528 "gram.y"
 {
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = lcons(yyvsp[-4].node, NULL);
@@ -8094,7 +8095,7 @@ case 647:
 				;
     break;}
 case 648:
-#line 3537 "gram.y"
+#line 3538 "gram.y"
 {
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = lcons(yyvsp[-4].node, NULL);
@@ -8106,7 +8107,7 @@ case 648:
 				;
     break;}
 case 649:
-#line 3547 "gram.y"
+#line 3548 "gram.y"
 {
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = lcons(yyvsp[-4].node, NULL);
@@ -8118,7 +8119,7 @@ case 649:
 				;
     break;}
 case 650:
-#line 3557 "gram.y"
+#line 3558 "gram.y"
 {
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = lcons(yyvsp[-4].node, NULL);
@@ -8130,7 +8131,7 @@ case 650:
 				;
     break;}
 case 651:
-#line 3567 "gram.y"
+#line 3568 "gram.y"
 {
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = lcons(yyvsp[-4].node, NULL);
@@ -8142,7 +8143,7 @@ case 651:
 				;
     break;}
 case 652:
-#line 3577 "gram.y"
+#line 3578 "gram.y"
 {
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = lcons(yyvsp[-4].node, NULL);
@@ -8154,7 +8155,7 @@ case 652:
 				;
     break;}
 case 653:
-#line 3587 "gram.y"
+#line 3588 "gram.y"
 {
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = lcons(yyvsp[-4].node, NULL);
@@ -8166,7 +8167,7 @@ case 653:
 				;
     break;}
 case 654:
-#line 3597 "gram.y"
+#line 3598 "gram.y"
 {
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = lcons(yyvsp[-4].node, NULL);
@@ -8178,7 +8179,7 @@ case 654:
 				;
     break;}
 case 655:
-#line 3607 "gram.y"
+#line 3608 "gram.y"
 {
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = lcons(yyvsp[-5].node,NIL);
@@ -8190,7 +8191,7 @@ case 655:
 				;
     break;}
 case 656:
-#line 3617 "gram.y"
+#line 3618 "gram.y"
 {
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = lcons(yyvsp[-5].node,NIL);
@@ -8202,7 +8203,7 @@ case 656:
 				;
     break;}
 case 657:
-#line 3627 "gram.y"
+#line 3628 "gram.y"
 {
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = lcons(yyvsp[-5].node,NIL);
@@ -8214,7 +8215,7 @@ case 657:
 				;
     break;}
 case 658:
-#line 3637 "gram.y"
+#line 3638 "gram.y"
 {
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = lcons(yyvsp[-5].node,NIL);
@@ -8226,7 +8227,7 @@ case 658:
 				;
     break;}
 case 659:
-#line 3647 "gram.y"
+#line 3648 "gram.y"
 {
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = lcons(yyvsp[-5].node,NIL);
@@ -8238,7 +8239,7 @@ case 659:
 				;
     break;}
 case 660:
-#line 3657 "gram.y"
+#line 3658 "gram.y"
 {
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = lcons(yyvsp[-5].node,NIL);
@@ -8250,7 +8251,7 @@ case 660:
 				;
     break;}
 case 661:
-#line 3667 "gram.y"
+#line 3668 "gram.y"
 {
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = lcons(yyvsp[-5].node,NIL);
@@ -8262,7 +8263,7 @@ case 661:
 				;
     break;}
 case 662:
-#line 3677 "gram.y"
+#line 3678 "gram.y"
 {
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = lcons(yyvsp[-5].node,NIL);
@@ -8274,7 +8275,7 @@ case 662:
 				;
     break;}
 case 663:
-#line 3687 "gram.y"
+#line 3688 "gram.y"
 {
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = lcons(yyvsp[-5].node, NULL);
@@ -8286,7 +8287,7 @@ case 663:
 				;
     break;}
 case 664:
-#line 3697 "gram.y"
+#line 3698 "gram.y"
 {
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = lcons(yyvsp[-5].node, NULL);
@@ -8298,7 +8299,7 @@ case 664:
 				;
     break;}
 case 665:
-#line 3707 "gram.y"
+#line 3708 "gram.y"
 {
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = lcons(yyvsp[-5].node, NULL);
@@ -8310,7 +8311,7 @@ case 665:
 				;
     break;}
 case 666:
-#line 3717 "gram.y"
+#line 3718 "gram.y"
 {
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = lcons(yyvsp[-5].node, NULL);
@@ -8322,7 +8323,7 @@ case 666:
 				;
     break;}
 case 667:
-#line 3727 "gram.y"
+#line 3728 "gram.y"
 {
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = lcons(yyvsp[-5].node, NULL);
@@ -8334,7 +8335,7 @@ case 667:
 				;
     break;}
 case 668:
-#line 3737 "gram.y"
+#line 3738 "gram.y"
 {
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = lcons(yyvsp[-5].node, NULL);
@@ -8346,7 +8347,7 @@ case 668:
 				;
     break;}
 case 669:
-#line 3747 "gram.y"
+#line 3748 "gram.y"
 {
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = lcons(yyvsp[-5].node, NULL);
@@ -8358,7 +8359,7 @@ case 669:
 				;
     break;}
 case 670:
-#line 3757 "gram.y"
+#line 3758 "gram.y"
 {
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = lcons(yyvsp[-5].node, NULL);
@@ -8370,30 +8371,30 @@ case 670:
 				;
     break;}
 case 671:
-#line 3767 "gram.y"
+#line 3768 "gram.y"
 {	yyval.node = makeA_Expr(AND, NULL, yyvsp[-2].node, yyvsp[0].node); ;
     break;}
 case 672:
-#line 3769 "gram.y"
+#line 3770 "gram.y"
 {	yyval.node = makeA_Expr(OR, NULL, yyvsp[-2].node, yyvsp[0].node); ;
     break;}
 case 673:
-#line 3771 "gram.y"
+#line 3772 "gram.y"
 {	yyval.node = makeA_Expr(NOT, NULL, NULL, yyvsp[0].node); ;
     break;}
 case 674:
-#line 3781 "gram.y"
+#line 3782 "gram.y"
 {
 					yyvsp[-1].attr->indirection = yyvsp[0].list;
 					yyval.node = (Node *)yyvsp[-1].attr;
 				;
     break;}
 case 675:
-#line 3786 "gram.y"
+#line 3787 "gram.y"
 {	yyval.node = yyvsp[0].node;  ;
     break;}
 case 676:
-#line 3788 "gram.y"
+#line 3789 "gram.y"
 {
 					/* could be a column name or a relation_name */
 					Ident *n = makeNode(Ident);
@@ -8403,39 +8404,39 @@ case 676:
 				;
     break;}
 case 677:
-#line 3796 "gram.y"
+#line 3797 "gram.y"
 {	yyval.node = makeA_Expr(OP, "-", NULL, yyvsp[0].node); ;
     break;}
 case 678:
-#line 3798 "gram.y"
+#line 3799 "gram.y"
 {	yyval.node = makeA_Expr(OP, "+", yyvsp[-2].node, yyvsp[0].node); ;
     break;}
 case 679:
-#line 3800 "gram.y"
+#line 3801 "gram.y"
 {	yyval.node = makeA_Expr(OP, "-", yyvsp[-2].node, yyvsp[0].node); ;
     break;}
 case 680:
-#line 3802 "gram.y"
+#line 3803 "gram.y"
 {	yyval.node = makeA_Expr(OP, "/", yyvsp[-2].node, yyvsp[0].node); ;
     break;}
 case 681:
-#line 3804 "gram.y"
+#line 3805 "gram.y"
 {	yyval.node = makeA_Expr(OP, "*", yyvsp[-2].node, yyvsp[0].node); ;
     break;}
 case 682:
-#line 3806 "gram.y"
+#line 3807 "gram.y"
 {	yyval.node = makeA_Expr(OP, ":", NULL, yyvsp[0].node); ;
     break;}
 case 683:
-#line 3808 "gram.y"
+#line 3809 "gram.y"
 {	yyval.node = makeA_Expr(OP, ";", NULL, yyvsp[0].node); ;
     break;}
 case 684:
-#line 3810 "gram.y"
+#line 3811 "gram.y"
 {	yyval.node = makeA_Expr(OP, "|", NULL, yyvsp[0].node); ;
     break;}
 case 685:
-#line 3812 "gram.y"
+#line 3813 "gram.y"
 {
 					yyval.node = (Node *)yyvsp[-2].node;
 					/* AexprConst can be either A_Const or ParamNo */
@@ -8453,7 +8454,7 @@ case 685:
 				;
     break;}
 case 686:
-#line 3828 "gram.y"
+#line 3829 "gram.y"
 {
 					yyval.node = (Node *)yyvsp[-3].node;
 					/* AexprConst can be either A_Const or ParamNo */
@@ -8471,23 +8472,23 @@ case 686:
 				;
     break;}
 case 687:
-#line 3844 "gram.y"
+#line 3845 "gram.y"
 {	yyval.node = yyvsp[-1].node; ;
     break;}
 case 688:
-#line 3846 "gram.y"
+#line 3847 "gram.y"
 {	yyval.node = makeIndexable(yyvsp[-1].str,yyvsp[-2].node,yyvsp[0].node);	;
     break;}
 case 689:
-#line 3848 "gram.y"
+#line 3849 "gram.y"
 {	yyval.node = makeA_Expr(OP, yyvsp[-1].str, NULL, yyvsp[0].node); ;
     break;}
 case 690:
-#line 3850 "gram.y"
+#line 3851 "gram.y"
 {	yyval.node = makeA_Expr(OP, yyvsp[0].str, yyvsp[-1].node, NULL); ;
     break;}
 case 691:
-#line 3852 "gram.y"
+#line 3853 "gram.y"
 {
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = yyvsp[-2].str;
@@ -8496,7 +8497,7 @@ case 691:
 				;
     break;}
 case 692:
-#line 3859 "gram.y"
+#line 3860 "gram.y"
 {
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = yyvsp[-3].str;
@@ -8505,7 +8506,7 @@ case 692:
 				;
     break;}
 case 693:
-#line 3866 "gram.y"
+#line 3867 "gram.y"
 {
 					A_Const *n = makeNode(A_Const);
 					TypeName *t = makeNode(TypeName);
@@ -8522,7 +8523,7 @@ case 693:
 				;
     break;}
 case 694:
-#line 3881 "gram.y"
+#line 3882 "gram.y"
 {
 					A_Const *n = makeNode(A_Const);
 					TypeName *t = makeNode(TypeName);
@@ -8539,7 +8540,7 @@ case 694:
 				;
     break;}
 case 695:
-#line 3896 "gram.y"
+#line 3897 "gram.y"
 {
 					FuncCall *n = makeNode(FuncCall);
 					A_Const *s = makeNode(A_Const);
@@ -8563,7 +8564,7 @@ case 695:
 				;
     break;}
 case 696:
-#line 3918 "gram.y"
+#line 3919 "gram.y"
 {
 					A_Const *n = makeNode(A_Const);
 					TypeName *t = makeNode(TypeName);
@@ -8580,7 +8581,7 @@ case 696:
 				;
     break;}
 case 697:
-#line 3933 "gram.y"
+#line 3934 "gram.y"
 {
 					FuncCall *n = makeNode(FuncCall);
 					A_Const *s = makeNode(A_Const);
@@ -8604,7 +8605,7 @@ case 697:
 				;
     break;}
 case 698:
-#line 3955 "gram.y"
+#line 3956 "gram.y"
 {
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = "getpgusername";
@@ -8613,7 +8614,7 @@ case 698:
 				;
     break;}
 case 699:
-#line 3962 "gram.y"
+#line 3963 "gram.y"
 {
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = "getpgusername";
@@ -8622,7 +8623,7 @@ case 699:
 				;
     break;}
 case 700:
-#line 3969 "gram.y"
+#line 3970 "gram.y"
 {
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = "strpos";
@@ -8631,7 +8632,7 @@ case 700:
 				;
     break;}
 case 701:
-#line 3976 "gram.y"
+#line 3977 "gram.y"
 {
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = "substr";
@@ -8640,7 +8641,7 @@ case 701:
 				;
     break;}
 case 702:
-#line 3984 "gram.y"
+#line 3985 "gram.y"
 {
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = "btrim";
@@ -8649,7 +8650,7 @@ case 702:
 				;
     break;}
 case 703:
-#line 3991 "gram.y"
+#line 3992 "gram.y"
 {
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = "ltrim";
@@ -8658,7 +8659,7 @@ case 703:
 				;
     break;}
 case 704:
-#line 3998 "gram.y"
+#line 3999 "gram.y"
 {
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = "rtrim";
@@ -8667,7 +8668,7 @@ case 704:
 				;
     break;}
 case 705:
-#line 4005 "gram.y"
+#line 4006 "gram.y"
 {
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = "btrim";
@@ -8676,7 +8677,7 @@ case 705:
 				;
     break;}
 case 706:
-#line 4014 "gram.y"
+#line 4015 "gram.y"
 {
 					A_Indices *ai = makeNode(A_Indices);
 					ai->lidx = NULL;
@@ -8685,7 +8686,7 @@ case 706:
 				;
     break;}
 case 707:
-#line 4021 "gram.y"
+#line 4022 "gram.y"
 {
 					A_Indices *ai = makeNode(A_Indices);
 					ai->lidx = yyvsp[-4].node;
@@ -8694,23 +8695,23 @@ case 707:
 				;
     break;}
 case 708:
-#line 4028 "gram.y"
+#line 4029 "gram.y"
 {	yyval.list = NIL; ;
     break;}
 case 709:
-#line 4032 "gram.y"
+#line 4033 "gram.y"
 { yyval.list = lcons(yyvsp[0].node, NIL); ;
     break;}
 case 710:
-#line 4034 "gram.y"
+#line 4035 "gram.y"
 { yyval.list = lappend(yyvsp[-2].list, yyvsp[0].node); ;
     break;}
 case 711:
-#line 4036 "gram.y"
+#line 4037 "gram.y"
 { yyval.list = lappend(yyvsp[-2].list, yyvsp[0].node); ;
     break;}
 case 712:
-#line 4040 "gram.y"
+#line 4041 "gram.y"
 {
 					A_Const *n = makeNode(A_Const);
 					n->val.type = T_String;
@@ -8719,66 +8720,66 @@ case 712:
 				;
     break;}
 case 713:
-#line 4047 "gram.y"
+#line 4048 "gram.y"
 {	yyval.list = NIL; ;
     break;}
 case 714:
-#line 4050 "gram.y"
+#line 4051 "gram.y"
 { yyval.str = yyvsp[0].str; ;
     break;}
 case 715:
-#line 4051 "gram.y"
+#line 4052 "gram.y"
 { yyval.str = "tz_hour"; ;
     break;}
 case 716:
-#line 4052 "gram.y"
+#line 4053 "gram.y"
 { yyval.str = "tz_minute"; ;
     break;}
 case 717:
-#line 4056 "gram.y"
+#line 4057 "gram.y"
 {	yyval.list = makeList(yyvsp[0].node, yyvsp[-2].node, -1); ;
     break;}
 case 718:
-#line 4058 "gram.y"
+#line 4059 "gram.y"
 {	yyval.list = NIL; ;
     break;}
 case 719:
-#line 4062 "gram.y"
+#line 4063 "gram.y"
 {
 					yyvsp[-1].attr->indirection = yyvsp[0].list;
 					yyval.node = (Node *)yyvsp[-1].attr;
 				;
     break;}
 case 720:
-#line 4067 "gram.y"
+#line 4068 "gram.y"
 {	yyval.node = yyvsp[0].node;  ;
     break;}
 case 721:
-#line 4069 "gram.y"
+#line 4070 "gram.y"
 {	yyval.node = makeA_Expr(OP, "-", NULL, yyvsp[0].node); ;
     break;}
 case 722:
-#line 4071 "gram.y"
+#line 4072 "gram.y"
 {	yyval.node = makeA_Expr(OP, "+", yyvsp[-2].node, yyvsp[0].node); ;
     break;}
 case 723:
-#line 4073 "gram.y"
+#line 4074 "gram.y"
 {	yyval.node = makeA_Expr(OP, "-", yyvsp[-2].node, yyvsp[0].node); ;
     break;}
 case 724:
-#line 4075 "gram.y"
+#line 4076 "gram.y"
 {	yyval.node = makeA_Expr(OP, "/", yyvsp[-2].node, yyvsp[0].node); ;
     break;}
 case 725:
-#line 4077 "gram.y"
+#line 4078 "gram.y"
 {	yyval.node = makeA_Expr(OP, "*", yyvsp[-2].node, yyvsp[0].node); ;
     break;}
 case 726:
-#line 4079 "gram.y"
+#line 4080 "gram.y"
 {	yyval.node = makeA_Expr(OP, "|", NULL, yyvsp[0].node); ;
     break;}
 case 727:
-#line 4081 "gram.y"
+#line 4082 "gram.y"
 {
 					yyval.node = (Node *)yyvsp[-2].node;
 					/* AexprConst can be either A_Const or ParamNo */
@@ -8796,7 +8797,7 @@ case 727:
 				;
     break;}
 case 728:
-#line 4097 "gram.y"
+#line 4098 "gram.y"
 {
 					yyval.node = (Node *)yyvsp[-3].node;
 					/* AexprConst can be either A_Const or ParamNo */
@@ -8814,23 +8815,23 @@ case 728:
 				;
     break;}
 case 729:
-#line 4113 "gram.y"
+#line 4114 "gram.y"
 {	yyval.node = yyvsp[-1].node; ;
     break;}
 case 730:
-#line 4115 "gram.y"
+#line 4116 "gram.y"
 {	yyval.node = makeA_Expr(OP, yyvsp[-1].str, yyvsp[-2].node, yyvsp[0].node); ;
     break;}
 case 731:
-#line 4117 "gram.y"
+#line 4118 "gram.y"
 {	yyval.node = makeA_Expr(OP, yyvsp[-1].str, NULL, yyvsp[0].node); ;
     break;}
 case 732:
-#line 4119 "gram.y"
+#line 4120 "gram.y"
 {	yyval.node = makeA_Expr(OP, yyvsp[0].str, yyvsp[-1].node, NULL); ;
     break;}
 case 733:
-#line 4121 "gram.y"
+#line 4122 "gram.y"
 {
 					/* could be a column name or a relation_name */
 					Ident *n = makeNode(Ident);
@@ -8840,7 +8841,7 @@ case 733:
 				;
     break;}
 case 734:
-#line 4129 "gram.y"
+#line 4130 "gram.y"
 {
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = yyvsp[-2].str;
@@ -8849,7 +8850,7 @@ case 734:
 				;
     break;}
 case 735:
-#line 4136 "gram.y"
+#line 4137 "gram.y"
 {
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = yyvsp[-3].str;
@@ -8858,7 +8859,7 @@ case 735:
 				;
     break;}
 case 736:
-#line 4143 "gram.y"
+#line 4144 "gram.y"
 {
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = "strpos";
@@ -8867,7 +8868,7 @@ case 736:
 				;
     break;}
 case 737:
-#line 4150 "gram.y"
+#line 4151 "gram.y"
 {
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = "substr";
@@ -8876,7 +8877,7 @@ case 737:
 				;
     break;}
 case 738:
-#line 4158 "gram.y"
+#line 4159 "gram.y"
 {
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = "btrim";
@@ -8885,7 +8886,7 @@ case 738:
 				;
     break;}
 case 739:
-#line 4165 "gram.y"
+#line 4166 "gram.y"
 {
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = "ltrim";
@@ -8894,7 +8895,7 @@ case 739:
 				;
     break;}
 case 740:
-#line 4172 "gram.y"
+#line 4173 "gram.y"
 {
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = "rtrim";
@@ -8903,7 +8904,7 @@ case 740:
 				;
     break;}
 case 741:
-#line 4179 "gram.y"
+#line 4180 "gram.y"
 {
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = "btrim";
@@ -8912,21 +8913,21 @@ case 741:
 				;
     break;}
 case 742:
-#line 4188 "gram.y"
+#line 4189 "gram.y"
 {
 					yyval.list = nconc(nconc(yyvsp[-2].list,yyvsp[-1].list),yyvsp[0].list);
 				;
     break;}
 case 743:
-#line 4192 "gram.y"
+#line 4193 "gram.y"
 {	yyval.list = NIL; ;
     break;}
 case 744:
-#line 4196 "gram.y"
+#line 4197 "gram.y"
 {	yyval.list = yyvsp[0].list; ;
     break;}
 case 745:
-#line 4198 "gram.y"
+#line 4199 "gram.y"
 {
 					A_Const *n = makeNode(A_Const);
 					n->val.type = T_Integer;
@@ -8935,27 +8936,27 @@ case 745:
 				;
     break;}
 case 746:
-#line 4207 "gram.y"
+#line 4208 "gram.y"
 {	yyval.list = yyvsp[0].list; ;
     break;}
 case 747:
-#line 4209 "gram.y"
+#line 4210 "gram.y"
 {	yyval.list = NIL; ;
     break;}
 case 748:
-#line 4213 "gram.y"
+#line 4214 "gram.y"
 { yyval.list = lappend(yyvsp[0].list, yyvsp[-2].node); ;
     break;}
 case 749:
-#line 4215 "gram.y"
+#line 4216 "gram.y"
 { yyval.list = yyvsp[0].list; ;
     break;}
 case 750:
-#line 4217 "gram.y"
+#line 4218 "gram.y"
 { yyval.list = yyvsp[0].list; ;
     break;}
 case 751:
-#line 4221 "gram.y"
+#line 4222 "gram.y"
 {
 					SubLink *n = makeNode(SubLink);
 					n->subselect = yyvsp[0].node;
@@ -8963,21 +8964,21 @@ case 751:
 				;
     break;}
 case 752:
-#line 4227 "gram.y"
+#line 4228 "gram.y"
 {	yyval.node = yyvsp[0].node; ;
     break;}
 case 753:
-#line 4231 "gram.y"
+#line 4232 "gram.y"
 {	yyval.node = makeA_Expr(OP, "=", lfirst(saved_In_Expr), yyvsp[0].node); ;
     break;}
 case 754:
-#line 4233 "gram.y"
+#line 4234 "gram.y"
 {	yyval.node = makeA_Expr(OR, NULL, yyvsp[-2].node,
 						makeA_Expr(OP, "=", lfirst(saved_In_Expr), yyvsp[0].node));
 				;
     break;}
 case 755:
-#line 4239 "gram.y"
+#line 4240 "gram.y"
 {
 					SubLink *n = makeNode(SubLink);
 					n->subselect = yyvsp[0].node;
@@ -8985,21 +8986,21 @@ case 755:
 				;
     break;}
 case 756:
-#line 4245 "gram.y"
+#line 4246 "gram.y"
 {	yyval.node = yyvsp[0].node; ;
     break;}
 case 757:
-#line 4249 "gram.y"
+#line 4250 "gram.y"
 {	yyval.node = makeA_Expr(OP, "<>", lfirst(saved_In_Expr), yyvsp[0].node); ;
     break;}
 case 758:
-#line 4251 "gram.y"
+#line 4252 "gram.y"
 {	yyval.node = makeA_Expr(AND, NULL, yyvsp[-2].node,
 						makeA_Expr(OP, "<>", lfirst(saved_In_Expr), yyvsp[0].node));
 				;
     break;}
 case 759:
-#line 4257 "gram.y"
+#line 4258 "gram.y"
 {
 					yyval.attr = makeNode(Attr);
 					yyval.attr->relname = yyvsp[-2].str;
@@ -9009,7 +9010,7 @@ case 759:
 				;
     break;}
 case 760:
-#line 4265 "gram.y"
+#line 4266 "gram.y"
 {
 					yyval.attr = makeNode(Attr);
 					yyval.attr->relname = NULL;
@@ -9019,27 +9020,27 @@ case 760:
 				;
     break;}
 case 761:
-#line 4275 "gram.y"
+#line 4276 "gram.y"
 { yyval.list = lcons(makeString(yyvsp[0].str), NIL); ;
     break;}
 case 762:
-#line 4277 "gram.y"
+#line 4278 "gram.y"
 { yyval.list = lappend(yyvsp[-2].list, makeString(yyvsp[0].str)); ;
     break;}
 case 763:
-#line 4279 "gram.y"
+#line 4280 "gram.y"
 { yyval.list = lappend(yyvsp[-2].list, makeString("*")); ;
     break;}
 case 764:
-#line 4290 "gram.y"
+#line 4291 "gram.y"
 {	yyval.list = lappend(yyvsp[-2].list,yyvsp[0].target);  ;
     break;}
 case 765:
-#line 4292 "gram.y"
+#line 4293 "gram.y"
 {	yyval.list = lcons(yyvsp[0].target, NIL);  ;
     break;}
 case 766:
-#line 4294 "gram.y"
+#line 4295 "gram.y"
 {
 					ResTarget *rt = makeNode(ResTarget);
 					Attr *att = makeNode(Attr);
@@ -9054,7 +9055,7 @@ case 766:
 				;
     break;}
 case 767:
-#line 4309 "gram.y"
+#line 4310 "gram.y"
 {
 					yyval.target = makeNode(ResTarget);
 					yyval.target->name = yyvsp[-3].str;
@@ -9063,7 +9064,7 @@ case 767:
 				;
     break;}
 case 768:
-#line 4316 "gram.y"
+#line 4317 "gram.y"
 {
 					yyval.target = makeNode(ResTarget);
 					yyval.target->name = NULL;
@@ -9072,7 +9073,7 @@ case 768:
 				;
     break;}
 case 769:
-#line 4323 "gram.y"
+#line 4324 "gram.y"
 {
 					Attr *att = makeNode(Attr);
 					att->relname = yyvsp[-2].str;
@@ -9086,15 +9087,15 @@ case 769:
 				;
     break;}
 case 770:
-#line 4342 "gram.y"
+#line 4343 "gram.y"
 {	yyval.list = lappend(yyvsp[-2].list, yyvsp[0].target);  ;
     break;}
 case 771:
-#line 4344 "gram.y"
+#line 4345 "gram.y"
 {	yyval.list = lcons(yyvsp[0].target, NIL);  ;
     break;}
 case 772:
-#line 4349 "gram.y"
+#line 4350 "gram.y"
 {
 					yyval.target = makeNode(ResTarget);
 					yyval.target->name = yyvsp[0].str;
@@ -9103,7 +9104,7 @@ case 772:
 				;
     break;}
 case 773:
-#line 4356 "gram.y"
+#line 4357 "gram.y"
 {
 					yyval.target = makeNode(ResTarget);
 					yyval.target->name = NULL;
@@ -9112,7 +9113,7 @@ case 773:
 				;
     break;}
 case 774:
-#line 4363 "gram.y"
+#line 4364 "gram.y"
 {
 					Attr *att = makeNode(Attr);
 					att->relname = yyvsp[-2].str;
@@ -9126,7 +9127,7 @@ case 774:
 				;
     break;}
 case 775:
-#line 4375 "gram.y"
+#line 4376 "gram.y"
 {
 					Attr *att = makeNode(Attr);
 					att->relname = "*";
@@ -9140,22 +9141,22 @@ case 775:
 				;
     break;}
 case 776:
-#line 4388 "gram.y"
+#line 4389 "gram.y"
 { yyval.str = yyvsp[0].str; ;
     break;}
 case 777:
-#line 4389 "gram.y"
+#line 4390 "gram.y"
 { yyval.str = NULL; ;
     break;}
 case 778:
-#line 4393 "gram.y"
+#line 4394 "gram.y"
 {
 					yyval.str = yyvsp[0].str;
 					StrNCpy(saved_relname, yyvsp[0].str, NAMEDATALEN);
 				;
     break;}
 case 779:
-#line 4398 "gram.y"
+#line 4399 "gram.y"
 {
 					/* disallow refs to variable system tables */
 					if (strcmp(LogRelationName, yyvsp[0].str) == 0
@@ -9167,43 +9168,43 @@ case 779:
 				;
     break;}
 case 780:
-#line 4409 "gram.y"
-{ yyval.str = yyvsp[0].str; ;
-    break;}
-case 781:
 #line 4410 "gram.y"
 { yyval.str = yyvsp[0].str; ;
     break;}
-case 782:
+case 781:
 #line 4411 "gram.y"
 { yyval.str = yyvsp[0].str; ;
     break;}
-case 783:
+case 782:
 #line 4412 "gram.y"
 { yyval.str = yyvsp[0].str; ;
     break;}
-case 784:
+case 783:
 #line 4413 "gram.y"
 { yyval.str = yyvsp[0].str; ;
     break;}
+case 784:
+#line 4414 "gram.y"
+{ yyval.str = yyvsp[0].str; ;
+    break;}
 case 785:
-#line 4419 "gram.y"
+#line 4420 "gram.y"
 { yyval.str = yyvsp[0].str; ;
     break;}
 case 786:
-#line 4420 "gram.y"
+#line 4421 "gram.y"
 { yyval.str = xlateSqlFunc(yyvsp[0].str); ;
     break;}
 case 787:
-#line 4422 "gram.y"
-{ yyval.str = yyvsp[0].str; ;
-    break;}
-case 788:
 #line 4423 "gram.y"
 { yyval.str = yyvsp[0].str; ;
     break;}
+case 788:
+#line 4424 "gram.y"
+{ yyval.str = yyvsp[0].str; ;
+    break;}
 case 789:
-#line 4429 "gram.y"
+#line 4430 "gram.y"
 {
 					A_Const *n = makeNode(A_Const);
 					n->val.type = T_Integer;
@@ -9212,7 +9213,7 @@ case 789:
 				;
     break;}
 case 790:
-#line 4436 "gram.y"
+#line 4437 "gram.y"
 {
 					A_Const *n = makeNode(A_Const);
 					n->val.type = T_Float;
@@ -9221,7 +9222,7 @@ case 790:
 				;
     break;}
 case 791:
-#line 4443 "gram.y"
+#line 4444 "gram.y"
 {
 					A_Const *n = makeNode(A_Const);
 					n->val.type = T_String;
@@ -9230,7 +9231,7 @@ case 791:
 				;
     break;}
 case 792:
-#line 4450 "gram.y"
+#line 4451 "gram.y"
 {
 					A_Const *n = makeNode(A_Const);
 					n->typename = yyvsp[-1].typnam;
@@ -9240,11 +9241,11 @@ case 792:
 				;
     break;}
 case 793:
-#line 4458 "gram.y"
+#line 4459 "gram.y"
 {	yyval.node = (Node *)yyvsp[0].paramno;  ;
     break;}
 case 794:
-#line 4460 "gram.y"
+#line 4461 "gram.y"
 {
 					A_Const *n = makeNode(A_Const);
 					n->val.type = T_String;
@@ -9256,7 +9257,7 @@ case 794:
 				;
     break;}
 case 795:
-#line 4470 "gram.y"
+#line 4471 "gram.y"
 {
 					A_Const *n = makeNode(A_Const);
 					n->val.type = T_String;
@@ -9268,238 +9269,238 @@ case 795:
 				;
     break;}
 case 796:
-#line 4482 "gram.y"
+#line 4483 "gram.y"
 {
 					yyval.paramno = makeNode(ParamNo);
 					yyval.paramno->number = yyvsp[0].ival;
 				;
     break;}
 case 797:
-#line 4488 "gram.y"
+#line 4489 "gram.y"
 { yyval.ival = yyvsp[0].ival; ;
     break;}
 case 798:
-#line 4489 "gram.y"
-{ yyval.str = yyvsp[0].str; ;
-    break;}
-case 799:
 #line 4490 "gram.y"
 { yyval.str = yyvsp[0].str; ;
     break;}
+case 799:
+#line 4491 "gram.y"
+{ yyval.str = yyvsp[0].str; ;
+    break;}
 case 800:
-#line 4498 "gram.y"
+#line 4499 "gram.y"
 {	yyval.str = xlateSqlType(yyvsp[0].str); ;
     break;}
 case 801:
-#line 4500 "gram.y"
+#line 4501 "gram.y"
 {	yyval.str = xlateSqlType(yyvsp[0].str); ;
     break;}
 case 802:
-#line 4502 "gram.y"
+#line 4503 "gram.y"
 {	yyval.str = xlateSqlType(yyvsp[0].str); ;
     break;}
 case 803:
-#line 4512 "gram.y"
-{ yyval.str = yyvsp[0].str; ;
-    break;}
-case 804:
 #line 4513 "gram.y"
 { yyval.str = yyvsp[0].str; ;
     break;}
-case 805:
+case 804:
 #line 4514 "gram.y"
+{ yyval.str = yyvsp[0].str; ;
+    break;}
+case 805:
+#line 4515 "gram.y"
 { yyval.str = "action"; ;
     break;}
 case 806:
-#line 4515 "gram.y"
+#line 4516 "gram.y"
 { yyval.str = "cache"; ;
     break;}
 case 807:
-#line 4516 "gram.y"
+#line 4517 "gram.y"
 { yyval.str = "cycle"; ;
     break;}
 case 808:
-#line 4517 "gram.y"
+#line 4518 "gram.y"
 { yyval.str = "database"; ;
     break;}
 case 809:
-#line 4518 "gram.y"
+#line 4519 "gram.y"
 { yyval.str = "delimiters"; ;
     break;}
 case 810:
-#line 4519 "gram.y"
+#line 4520 "gram.y"
 { yyval.str = "double"; ;
     break;}
 case 811:
-#line 4520 "gram.y"
+#line 4521 "gram.y"
 { yyval.str = "each"; ;
     break;}
 case 812:
-#line 4521 "gram.y"
+#line 4522 "gram.y"
 { yyval.str = "encoding"; ;
     break;}
 case 813:
-#line 4522 "gram.y"
+#line 4523 "gram.y"
 { yyval.str = "function"; ;
     break;}
 case 814:
-#line 4523 "gram.y"
+#line 4524 "gram.y"
 { yyval.str = "increment"; ;
     break;}
 case 815:
-#line 4524 "gram.y"
+#line 4525 "gram.y"
 { yyval.str = "index"; ;
     break;}
 case 816:
-#line 4525 "gram.y"
+#line 4526 "gram.y"
 { yyval.str = "key"; ;
     break;}
 case 817:
-#line 4526 "gram.y"
+#line 4527 "gram.y"
 { yyval.str = "language"; ;
     break;}
 case 818:
-#line 4527 "gram.y"
+#line 4528 "gram.y"
 { yyval.str = "location"; ;
     break;}
 case 819:
-#line 4528 "gram.y"
+#line 4529 "gram.y"
 { yyval.str = "match"; ;
     break;}
 case 820:
-#line 4529 "gram.y"
+#line 4530 "gram.y"
 { yyval.str = "maxvalue"; ;
     break;}
 case 821:
-#line 4530 "gram.y"
+#line 4531 "gram.y"
 { yyval.str = "minvalue"; ;
     break;}
 case 822:
-#line 4531 "gram.y"
+#line 4532 "gram.y"
 { yyval.str = "operator"; ;
     break;}
 case 823:
-#line 4532 "gram.y"
+#line 4533 "gram.y"
 { yyval.str = "option"; ;
     break;}
 case 824:
-#line 4533 "gram.y"
+#line 4534 "gram.y"
 { yyval.str = "password"; ;
     break;}
 case 825:
-#line 4534 "gram.y"
+#line 4535 "gram.y"
 { yyval.str = "privileges"; ;
     break;}
 case 826:
-#line 4535 "gram.y"
+#line 4536 "gram.y"
 { yyval.str = "recipe"; ;
     break;}
 case 827:
-#line 4536 "gram.y"
+#line 4537 "gram.y"
 { yyval.str = "row"; ;
     break;}
 case 828:
-#line 4537 "gram.y"
+#line 4538 "gram.y"
 { yyval.str = "start"; ;
     break;}
 case 829:
-#line 4538 "gram.y"
+#line 4539 "gram.y"
 { yyval.str = "statement"; ;
     break;}
 case 830:
-#line 4539 "gram.y"
+#line 4540 "gram.y"
 { yyval.str = "time"; ;
     break;}
 case 831:
-#line 4540 "gram.y"
+#line 4541 "gram.y"
 { yyval.str = "timezone_hour"; ;
     break;}
 case 832:
-#line 4541 "gram.y"
+#line 4542 "gram.y"
 { yyval.str = "timezone_minute"; ;
     break;}
 case 833:
-#line 4542 "gram.y"
+#line 4543 "gram.y"
 { yyval.str = "trigger"; ;
     break;}
 case 834:
-#line 4543 "gram.y"
+#line 4544 "gram.y"
 { yyval.str = "type"; ;
     break;}
 case 835:
-#line 4544 "gram.y"
+#line 4545 "gram.y"
 { yyval.str = "valid"; ;
     break;}
 case 836:
-#line 4545 "gram.y"
+#line 4546 "gram.y"
 { yyval.str = "version"; ;
     break;}
 case 837:
-#line 4546 "gram.y"
+#line 4547 "gram.y"
 { yyval.str = "zone"; ;
     break;}
 case 838:
-#line 4559 "gram.y"
+#line 4560 "gram.y"
 { yyval.str = yyvsp[0].str; ;
     break;}
 case 839:
-#line 4560 "gram.y"
+#line 4561 "gram.y"
 { yyval.str = "archive"; ;
     break;}
 case 840:
-#line 4561 "gram.y"
+#line 4562 "gram.y"
 { yyval.str = "cluster"; ;
     break;}
 case 841:
-#line 4562 "gram.y"
+#line 4563 "gram.y"
 { yyval.str = "constraint"; ;
     break;}
 case 842:
-#line 4563 "gram.y"
+#line 4564 "gram.y"
 { yyval.str = "cross"; ;
     break;}
 case 843:
-#line 4564 "gram.y"
+#line 4565 "gram.y"
 { yyval.str = "foreign"; ;
     break;}
 case 844:
-#line 4565 "gram.y"
+#line 4566 "gram.y"
 { yyval.str = "group"; ;
     break;}
 case 845:
-#line 4566 "gram.y"
+#line 4567 "gram.y"
 { yyval.str = "load"; ;
     break;}
 case 846:
-#line 4567 "gram.y"
+#line 4568 "gram.y"
 { yyval.str = "order"; ;
     break;}
 case 847:
-#line 4568 "gram.y"
+#line 4569 "gram.y"
 { yyval.str = "position"; ;
     break;}
 case 848:
-#line 4569 "gram.y"
+#line 4570 "gram.y"
 { yyval.str = "precision"; ;
     break;}
 case 849:
-#line 4570 "gram.y"
+#line 4571 "gram.y"
 { yyval.str = "table"; ;
     break;}
 case 850:
-#line 4571 "gram.y"
+#line 4572 "gram.y"
 { yyval.str = "transaction"; ;
     break;}
 case 851:
-#line 4572 "gram.y"
+#line 4573 "gram.y"
 { yyval.str = "true"; ;
     break;}
 case 852:
-#line 4573 "gram.y"
+#line 4574 "gram.y"
 { yyval.str = "false"; ;
     break;}
 case 853:
-#line 4577 "gram.y"
+#line 4578 "gram.y"
 {
 					if (QueryIsRule)
 						yyval.str = "*CURRENT*";
@@ -9508,7 +9509,7 @@ case 853:
 				;
     break;}
 case 854:
-#line 4584 "gram.y"
+#line 4585 "gram.y"
 {
 					if (QueryIsRule)
 						yyval.str = "*NEW*";
@@ -9714,7 +9715,7 @@ yyerrhandle:
   yystate = yyn;
   goto yynewstate;
 }
-#line 4592 "gram.y"
+#line 4593 "gram.y"
 
 
 static Node *
