@@ -13,6 +13,30 @@ public class TestUtil
 	 */
 	public static String getURL()
 	{
+		return "jdbc:postgresql://"+getServer()+":"+getPort()+"/"+getDatabase();
+	}
+
+	/*
+	 * Returns the Test server
+	 */
+	public static String getServer()
+	{
+		return System.getProperty("server");
+	}
+
+	/*
+	 * Returns the Test port
+	 */
+	public static int getPort()
+	{
+		return Integer.parseInt(System.getProperty("port"));
+	}
+
+	/*
+	 * Returns the Test database
+	 */
+	public static String getDatabase()
+	{
 		return System.getProperty("database");
 	}
 
