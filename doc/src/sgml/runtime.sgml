@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.28 2000/10/16 03:25:17 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.29 2000/10/19 04:53:41 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -127,7 +127,7 @@ postgres&gt; <userinput>initdb -D /usr/local/pgsql/data</userinput>
    To start the <application>postmaster</application> in the
    background, use the usual shell syntax:
 <screen>
-&gt; <userinput>postmaster -D /usr/local/pgsql/data &gt; logfile 1&gt;&amp;2 &amp;</userinput>
+&gt; <userinput>postmaster -D /usr/local/pgsql/data &gt; logfile 2&gt;&amp;1 &amp;</userinput>
 </screen>
    It is an extremely good idea to keep the server output around
    somewhere, as indicated here. It will help both for auditing
