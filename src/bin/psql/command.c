@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.16 2000/01/29 16:58:48 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.17 2000/02/05 12:27:56 ishii Exp $
  */
 #include <c.h>
 #include "command.h"
@@ -984,7 +984,7 @@ do_connect(const char *new_dbname, const char *new_user)
 	}
 
     PQsetNoticeProcessor(pset.db, NoticeProcessor, NULL);
-    pset.encoding = PQclientencoding(pset.db);
+    pset.encoding = PQclientEncoding(pset.db);
 
     /* Update variables */
     SetVariable(pset.vars, "DBNAME", PQdb(pset.db));

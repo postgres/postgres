@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.20 2000/01/29 16:58:49 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.21 2000/02/05 12:27:56 ishii Exp $
  */
 #include <c.h>
 
@@ -173,7 +173,7 @@ main(int argc, char **argv)
      * We need to save the encoding because we want to have it
      * available even if the database connection goes bad.
      */
-    pset.encoding = PQclientencoding(pset.db);
+    pset.encoding = PQclientEncoding(pset.db);
 
 	if (options.action == ACT_LIST_DB)
 	{
