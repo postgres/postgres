@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.59 2001/08/24 20:03:41 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.60 2001/08/31 01:55:25 ishii Exp $
 -->
 
  <chapter id="datatype">
@@ -992,7 +992,7 @@ SELECT b, char_length(b) FROM test2;
        <row>
         <entry><type>time [ without time zone ]</type></entry>
         <entry>times of day only</entry>
-        <entry>4 bytes</entry>
+        <entry>8 bytes</entry>
         <entry>00:00:00.00</entry>
         <entry>23:59:59.99</entry>
         <entry>1 microsecond</entry>
@@ -1000,7 +1000,7 @@ SELECT b, char_length(b) FROM test2;
        <row>
         <entry><type>time with time zone</type></entry>
         <entry>times of day only</entry>
-        <entry>4 bytes</entry>
+        <entry>12 bytes</entry>
         <entry>00:00:00.00+12</entry>
         <entry>23:59:59.99-12</entry>
         <entry>1 microsecond</entry>
