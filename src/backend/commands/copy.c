@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.148 2002/02/24 02:33:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.149 2002/02/27 01:34:41 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1041,7 +1041,7 @@ static char *
 CopyReadAttribute(FILE *fp, bool *isnull, char *delim, int *newline, char *null_print)
 {
 	int			c;
-	int			delimc = delim[0];
+	int			delimc = (unsigned char)delim[0];
 
 #ifdef MULTIBYTE
 	int			mblen;
