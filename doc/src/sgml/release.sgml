@@ -1,9 +1,62 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.235.2.19 2004/03/02 00:38:56 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.235.2.20 2004/03/05 19:52:39 momjian Exp $
 -->
 
 <appendix id="release">
  <title>Release Notes</title>
+
+  <sect1 id="release-7-4-2">
+   <title>Release 7.4.2</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2004-03-??</simpara>
+   </note>
+
+   <para>
+    This release contains a variety of fixes from 7.4.1.
+   </para>
+
+
+   <sect2>
+    <title>Migration to version 7.4.2</title>
+
+    <para>
+     A dump/restore is <emphasis>not</emphasis> required for those
+     running 7.4.X.
+    </para>
+
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+<para>As of 2004-03-02</para>
+
+<itemizedlist>
+<listitem><para>Fix problems with ALTER TABLE during concurrent access (Tom)</para></listitem>
+<listitem><para>Improve hash build reliability (Tom)</para></listitem>
+<listitem><para>Fix statistics alignment bug that could affect optimizer, initdb required (Tom)</para></listitem>
+<listitem><para>Optimizer improvements (Tom)</para></listitem>
+<listitem><para>Permission fix for view updates (Tom)</para></listitem>
+<listitem><para>Allow non-super users to update pg_settings (Tom)</para></listitem>
+<listitem><para>Fix for multibyte handling in position() (Korea PostgreSQL Users' Group)</para></listitem>
+<listitem><para>Various multibyte fixes</para></listitem>
+<listitem><para>Fix problem with hitting open file limit, especially on OS X (Tom)</para></listitem>
+<listitem><para>Have pg_dump set client encoding on restore (Tom)</para></listitem>
+<listitem><para>Allow ecpg to again use C keywords as column names (Michael)</para></listitem>
+<listitem><para>Added ecpg WHENEVER NOT_FOUND to SELECT/INSERT/UPDATE/DELETE (Michael)</para></listitem>
+<listitem><para>Fix ecpg crash for queries calling set-returning functions (Michael)</para></listitem>
+<listitem><para>Various ecpg fixes (Michael)</para></listitem>
+<listitem><para>Fixes for Borland compiler</para></listitem>
+<listitem><para>Thread build improvements (Bruce)</para></listitem>
+<listitem><para>Fix for configure --disable-shared support (Tom)</para></listitem>
+<listitem><para>Various build fixes</para></listitem>
+<listitem><para>Various jdbc fixes</para></listitem>
+</itemizedlist>
+
+  </sect2>
+ </sect1>
 
   <sect1 id="release-7-4-1">
    <title>Release 7.4.1</title>
@@ -896,7 +949,7 @@ DROP SCHEMA information_schema CASCADE;
      <para>Add Mac OS X Rendezvous server support (Chris Campbell)</para>
      <para>
       This allows Mac OS X hosts to query the network for available
-      PostgreSQL servers.
+      <productname>PostgreSQL</productname> servers.
      </para>
     </listitem>
 
@@ -954,7 +1007,7 @@ DROP SCHEMA information_schema CASCADE;
       <varname>max_connections</> 100, if possible (Tom)
      </para>
      <para>
-      Prior versions defaulted to 64 shared buffers so PostgreSQL
+      Prior versions defaulted to 64 shared buffers so <productname>PostgreSQL</productname>
       would start on even very old systems. This release tests the
       amount of shared memory allowed by the platform and selects more
       reasonable default values if possible.  Of course, users are
@@ -1019,8 +1072,9 @@ DROP SCHEMA information_schema CASCADE;
      <para>
       The SQL standard says that an aggregate function appearing
       within a nested subquery belongs to the outer query if its
-      argument contains only outer-query variables.  Prior PostgreSQL
-      releases did not handle this fine point correctly.
+      argument contains only outer-query variables.  Prior
+      <productname>PostgreSQL</productname> releases did not handle
+      this fine point correctly.
      </para>
     </listitem>
 
@@ -1029,8 +1083,9 @@ DROP SCHEMA information_schema CASCADE;
      <para>
       By default, tables mentioned in the query are automatically
       added to the <literal>FROM</> clause if they are not already
-      there.  This is compatible with historic POSTGRES behavior but
-      is contrary to the SQL standard.  This option allows selecting
+      there.  This is compatible with historic
+      <productname>POSTGRES</productname> behavior but is contrary to
+      the SQL standard.  This option allows selecting
       standard-compatible behavior.
      </para>
     </listitem>
@@ -1092,7 +1147,7 @@ DROP SCHEMA information_schema CASCADE;
     <listitem>
      <para>Fix several zero-column table bugs (Tom)</para>
      <para>
-      PostgreSQL supports zero-column tables. This fixes various bugs
+      <productname>PostgreSQL</productname> supports zero-column tables. This fixes various bugs
       that occur when using such tables.
      </para>
     </listitem>
@@ -1750,7 +1805,8 @@ DROP SCHEMA information_schema CASCADE;
     <listitem>
      <para>Long options for <application>pg_dump</application> are now available on all platforms</para>
      <para>
-      PostgreSQL now includes its own long-option processing routines.
+      <productname>PostgreSQL</productname> now includes its own
+      long-option processing routines.
      </para>
     </listitem>
    </itemizedlist>
@@ -1912,7 +1968,7 @@ DROP SCHEMA information_schema CASCADE;
     <listitem><para>Allow libpq to compile with Borland C++ compiler (Lester Godwin, Karl Waclawek)</para></listitem>
     <listitem><para>Use our own version of <function>getopt_long()</function> if needed (Peter)</para></listitem>
     <listitem><para>Convert administration scripts to C (Peter)</para></listitem>
-    <listitem><para>Bison >= 1.85 is now required to build the PostgreSQL grammar, if building from CVS</para></listitem>
+    <listitem><para> Bison >= 1.85 is now required to build the <productname>PostgreSQL</> grammar, if building from CVS</para></listitem>
     <listitem><para>Merge documentation into one book (Peter)</para></listitem>
     <listitem><para>Add Windows compatibility functions (Bruce)</para></listitem>
     <listitem><para>Allow client interfaces to compile under MinGW (Bruce)</para></listitem>
@@ -2314,9 +2370,9 @@ operations on bytea columns (Joe)</para></listitem>
    <para>
     A dump/restore is <emphasis>not</emphasis> required for those
     running version 7.3. However, it should be noted that the main
-    PostgreSQL interface library, libpq, has a new major version
-    number for this release, which may require recompilation of client
-    code in certain cases.
+    <productname>PostgreSQL</productname> interface library, libpq,
+    has a new major version number for this release, which may require
+    recompilation of client code in certain cases.
    </para>
   </sect2>
 
@@ -2377,8 +2433,8 @@ operations on bytea columns (Joe)</para></listitem>
       <term>Drop Column</term>
       <listitem>
        <para>
-        PostgreSQL now supports the <literal>ALTER TABLE ... DROP
-        COLUMN</literal> functionality.
+        <productname>PostgreSQL</productname> now supports the
+        <literal>ALTER TABLE ... DROP COLUMN</literal> functionality.
        </para>
       </listitem>
      </varlistentry>
@@ -2401,8 +2457,8 @@ operations on bytea columns (Joe)</para></listitem>
       <term>Prepared Queries</term>
       <listitem>
        <para>
-        PostgreSQL now supports prepared queries, for improved
-        performance.
+        <productname>PostgreSQL</productname> now supports prepared
+        queries, for improved performance.
        </para>
       </listitem>
      </varlistentry>
@@ -2411,11 +2467,11 @@ operations on bytea columns (Joe)</para></listitem>
       <term>Dependency Tracking</term>
       <listitem>
        <para>
-        PostgreSQL now records object dependencies, which allows
-        improvements in many areas.  <command>DROP</command>
-        statements now take either <literal>CASCADE</> or
-        <literal>RESTRICT</> to control whether dependent objects are
-        also dropped.
+        <productname>PostgreSQL</productname> now records object
+        dependencies, which allows improvements in many areas.
+        <command>DROP</command> statements now take either
+        <literal>CASCADE</> or <literal>RESTRICT</> to control whether
+        dependent objects are also dropped.
        </para>
       </listitem>
      </varlistentry>
@@ -2595,7 +2651,7 @@ operations on bytea columns (Joe)</para></listitem>
 <itemizedlist>
 <listitem><para>Add pg_locks view to show locks (Neil)</para></listitem>
 <listitem><para>Security fixes for password negotiation memory allocation (Neil)</para></listitem>
-<listitem><para>Remove support for version 0 FE/BE protocol (PostgreSQL 6.2 and earlier) (Tom)</para></listitem>
+<listitem><para>Remove support for version 0 FE/BE protocol (<productname>PostgreSQL</productname> 6.2 and earlier) (Tom)</para></listitem>
 <listitem><para>Reserve the last few backend slots for superusers, add parameter superuser_reserved_connections to control this (Nigel J. Andrews)</para></listitem>
 </itemizedlist>
    </sect3>
@@ -3836,7 +3892,7 @@ Python fixes (Darcy)
 
    <para>
         This release focuses on removing limitations that have existed in the
-        PostgreSQL code for many years.
+        <productname>PostgreSQL</productname> code for many years.
    </para>
 
    <para>
@@ -3849,12 +3905,12 @@ Python fixes (Darcy)
       </term>
       <listitem>
        <para>
-To maintain database consistency in case
-of an operating system crash, previous releases of PostgreSQL have
-forced all data modifications to disk before each transaction commit. 
-With WAL, only one log file must be flushed to disk, greatly improving
-performance.  If you have been using -F in previous releases to disable
-disk flushes, you may want to consider discontinuing its use.
+To maintain database consistency in case of an operating system crash,
+previous releases of <productname>PostgreSQL</productname> have forced
+all data modifications to disk before each transaction commit.  With
+WAL, only one log file must be flushed to disk, greatly improving
+performance.  If you have been using -F in previous releases to
+disable disk flushes, you may want to consider discontinuing its use.
        </para>
       </listitem>
      </varlistentry>
@@ -4358,20 +4414,6 @@ ecpg changes (Michael)
        </para>
       </listitem>
      </varlistentry>
-
-<!--
-     <varlistentry>
-      <term>
-       Upcoming Features
-      </term>
-      <listitem>
-       <para>
-        In 7.1 or 7.2, we plan to have outer joins, storage for very long rows, and a
-        write-ahead logging system.
-       </para>
-      </listitem>
-     </varlistentry>
--->
     </variablelist>
    </para>
 
@@ -4941,17 +4983,18 @@ Add Win1250 (Czech) support (Pavel Behal)
       </term>
       <listitem>
        <para>
-        This removes our old
-        table-level locking, and replaces it with a locking system that is
-        superior to most commercial database systems.  In a traditional system,
-        each row that is modified is locked until committed, preventing reads by
-        other users.  MVCC uses the natural multiversion nature of PostgreSQL
-        to allow readers to continue reading consistent data during writer
-        activity.  Writers continue to use the compact pg_log transaction
-        system.  This is all performed without having to allocate a lock for
-        every row like traditional database systems.  So, basically, we no
-        longer are restricted by simple table-level locking;
-        we have something better than row-level locking.
+        This removes our old table-level locking, and replaces it with
+        a locking system that is superior to most commercial database
+        systems.  In a traditional system, each row that is modified
+        is locked until committed, preventing reads by other users.
+        MVCC uses the natural multiversion nature of
+        <productname>PostgreSQL</productname> to allow readers to
+        continue reading consistent data during writer activity.
+        Writers continue to use the compact pg_log transaction system.
+        This is all performed without having to allocate a lock for
+        every row like traditional database systems.  So, basically,
+        we no longer are restricted by simple table-level locking; we
+        have something better than row-level locking.
        </para>
       </listitem>
      </varlistentry>
@@ -5012,9 +5055,10 @@ Add Win1250 (Czech) support (Pavel Behal)
       </term>
       <listitem>
        <para>
-        We continue to speed up PostgreSQL, thanks to the variety of
-        talents within our team.  We have sped up memory allocation,
-        optimization, table joins, and row transfer routines.
+        We continue to speed up <productname>PostgreSQL</productname>,
+        thanks to the variety of talents within our team.  We have
+        sped up memory allocation, optimization, table joins, and row
+        transfer routines.
        </para>
       </listitem>
      </varlistentry>
