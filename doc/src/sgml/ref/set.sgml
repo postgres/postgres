@@ -1,42 +1,43 @@
-<REFENTRY ID="SQL-SET">
- <REFMETA>
-  <REFENTRYTITLE>
+<refentry id="SQL-SET">
+ <refmeta>
+  <refentrytitle>
    SET
-  </REFENTRYTITLE>
-  <REFMISCINFO>SQL - Language Statements</REFMISCINFO>
- </REFMETA>
- <REFNAMEDIV>
-  <REFNAME>
+  </refentrytitle>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+ <refnamediv>
+  <refname>
    SET
-  </REFNAME>
-  <REFPURPOSE>
+  </refname>
+  <refpurpose>
    Set run-time parameters for session
-  </REFPURPOSE>
+  </refpurpose>
  </refnamediv>
- <REFSYNOPSISDIV>
-  <REFSYNOPSISDIVINFO>
-   <DATE>1998-09-24</DATE>
-  </REFSYNOPSISDIVINFO>
-  <SYNOPSIS>
-SET <REPLACEABLE CLASS="PARAMETER">variable</REPLACEABLE> { TO | = } { '<REPLACEABLE CLASS="PARAMETER">value</REPLACEABLE>' | DEFAULT }
-SET TIME ZONE { '<REPLACEABLE CLASS="PARAMETER">timezone</REPLACEABLE>' | LOCAL };
-  </SYNOPSIS>
+ <refsynopsisdiv>
+  <refsynopsisdivinfo>
+   <date>1998-09-24</date>
+  </refsynopsisdivinfo>
+  <synopsis>
+SET <replaceable class="PARAMETER">variable</replaceable> { TO | = } { '<replaceable class="PARAMETER">value</replaceable>' | DEFAULT }
+SET TIME ZONE { '<replaceable class="PARAMETER">timezone</replaceable>' | LOCAL | DEFAULT };
+SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZED | DEFAULT }
+  </synopsis>
 
-  <REFSECT2 ID="R2-SQL-SET-1">
-   <REFSECT2INFO>
-    <DATE>1998-09-24</DATE>
-   </REFSECT2INFO>
-   <TITLE>
+  <refsect2 id="R2-SQL-SET-1">
+   <refsect2info>
+    <date>1998-09-24</date>
+   </refsect2info>
+   <title>
     Inputs
-   </TITLE>
-   <PARA>
+   </title>
+   <para>
 		
-    <VARIABLELIST>
-     <VARLISTENTRY>
-      <TERM>
-       <REPLACEABLE CLASS="PARAMETER">variable</REPLACEABLE>
-      </TERM>
-      <LISTITEM>
+    <variablelist>
+     <varlistentry>
+      <term>
+       <replaceable class="PARAMETER">variable</replaceable>
+      </term>
+      <listitem>
        <para>
 	Settable global parameter.
        </para>
@@ -44,146 +45,222 @@ SET TIME ZONE { '<REPLACEABLE CLASS="PARAMETER">timezone</REPLACEABLE>' | LOCAL 
      </varlistentry>
      <varlistentry>
       <term>
-       <REPLACEABLE CLASS="PARAMETER">value</REPLACEABLE>
+       <replaceable class="PARAMETER">value</replaceable>
       </term>
       <listitem>
-       <PARA>
+       <para>
 	New value of parameter.
        </para>
       </listitem>
      </varlistentry>
     </variablelist>
    </para>
+
    <para>
     The possible variables and allowed values are:
 		
-    <VARIABLELIST>
-     <VARLISTENTRY>
-      <TERM>
-       DateStyle
-      </TERM>
-      <LISTITEM>
-       <PARA>
+    <variablelist>
+     <varlistentry>
+      <term>
+       CLIENT_ENCODING | NAMES
+      </term>
+      <listitem>
+       <para>
+	Sets the multi-byte client encoding
 	
-	<VARIABLELIST>
-	 <VARLISTENTRY>
-	  <TERM>
+	<variablelist>
+	 <varlistentry>
+	  <term>
+	   <replaceable class="parameter">value</replaceable>
+	  </term>
+	  <listitem>
+	   <para>
+	    Sets the multi-byte client encoding to
+	    <replaceable class="parameter">value</replaceable>.
+	    The specified encoding must be supported by the backend.
+	   </para>
+	  </listitem>
+	 </varlistentry>
+	 
+	 <varlistentry>
+	  <term>
+	   DEFAULT
+	  </term>
+	  <listitem>
+	   <para>
+	    Sets the multi-byte client encoding.
+	   </para>
+	  </listitem>
+	 </varlistentry>
+	</variablelist>
+       </para>
+
+       <para>
+	This is only enabled if multi-byte was specified to configure.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       DateStyle
+      </term>
+      <listitem>
+       <para>
+	<variablelist>
+	 <varlistentry>
+	  <term>
 	   ISO
-	  </TERM>
-	  <LISTITEM>
-	   <PARA>
+	  </term>
+	  <listitem>
+	   <para>
 	    use ISO 8601-style dates and times
 	   </para>
 	  </listitem>
 	 </varlistentry>
-	 <VARLISTENTRY>
-	  <TERM>
+	 <varlistentry>
+	  <term>
 	   SQL
-	  </TERM>
-	  <LISTITEM>
-	   <PARA>
+	  </term>
+	  <listitem>
+	   <para>
 	    use Oracle/Ingres-style dates and times
 	   </para>
 	  </listitem>
 	 </varlistentry>
-	 <VARLISTENTRY>
-	  <TERM>
+	 <varlistentry>
+	  <term>
 	   Postgres
-	  </TERM>
-	  <LISTITEM>
-	   <PARA>
+	  </term>
+	  <listitem>
+	   <para>
 	    use traditional <productname>Postgres</productname> format
 	   </para>
 	  </listitem>
 	 </varlistentry>
-	 <VARLISTENTRY>
-	  <TERM>
+	 <varlistentry>
+	  <term>
 	   European
-	  </TERM>
-	  <LISTITEM>
-	   <PARA>
+	  </term>
+	  <listitem>
+	   <para>
 	    use dd/mm/yyyy for numeric date representations.
 	   </para>
 	  </listitem>
 	 </varlistentry>
-	 <VARLISTENTRY>
-	  <TERM>
+	 <varlistentry>
+	  <term>
 	   NonEuropean
-	  </TERM>
-	  <LISTITEM>
-	   <PARA>
+	  </term>
+	  <listitem>
+	   <para>
 	    use mm/dd/yyyy for numeric date representations.
 	   </para>
 	  </listitem>
 	 </varlistentry>
-	 <VARLISTENTRY>
-	  <TERM>
+	 <varlistentry>
+	  <term>
 	   German
-	  </TERM>
-	  <LISTITEM>
-	   <PARA>
+	  </term>
+	  <listitem>
+	   <para>
 	    use dd.mm.yyyy for numeric date representations.
 	   </para>
 	  </listitem>
 	 </varlistentry>
-	 <VARLISTENTRY>
-	  <TERM>
+	 <varlistentry>
+	  <term>
 	   US
-	  </TERM>
-	  <LISTITEM>
-	   <PARA>
+	  </term>
+	  <listitem>
+	   <para>
 	    same as 'NonEuropean'
 	   </para>
 	  </listitem>
 	 </varlistentry>
-	 <VARLISTENTRY>
-	  <TERM>
+	 <varlistentry>
+	  <term>
 	   default
-	  </TERM>
-	  <LISTITEM>
-	   <PARA>
+	  </term>
+	  <listitem>
+	   <para>
 	    restores the default values ('US,Postgres')
 	   </para>
 	  </listitem>
 	 </varlistentry>
 	</variablelist>
        </para>
+
+       <para>
+	Date format initialization my be done by:
+	<simplelist>
+	 <member>
+	  Setting PGDATESTYLE environment variable.
+	 </member>
+	 <member>
+	  Running postmaster using -oe parameter to set
+	  dates to the 'European' convention.
+	  Note that this affects only the some combinations of date styles; for example
+	  the ISO style is not affected by this parameter.
+	 </member>
+	 <member>
+	  Changing variables in 
+	  <filename>src/backend/utils/init/globals.c</filename>.
+	 </member>
+	</simplelist>
+       </para>
+       <para>
+	The variables in <filename>globals.c</filename> which can be changed are:
+	<simplelist>
+	 <member>
+	  bool EuroDates = false | true
+	 </member>
+	 <member>
+	  int  DateStyle = USE_ISO_DATES | USE_POSTGRES_DATES | USE_SQL_DATES | USE_GERMAN_DATES
+	 </member>
+	</simplelist>
+       </para>
       </listitem>
      </varlistentry>
-    </variablelist>
-   </para>
-   <para>
-    Date format initialization my be done by:
-    <simplelist>
-     <member>
-      Setting PGDATESTYLE environment variable.
-     </member>
-     <member>
-      Running postmaster using -oe parameter to set
-      dates to the 'European' convention.
-      Note that this affects only the some combinations of date styles; for example
-      the ISO style is not affected by this parameter.
-     </member>
-     <member>
-      Changing variables in 
-      <filename>src/backend/utils/init/globals.c</filename>.
-     </member>
-    </simplelist>
-   </para>
-   <para>
-    The variables in <filename>globals.c</filename> which can be changed are:
-    <simplelist>
-     <member>
-      bool EuroDates = false | true
-     </member>
-     <member>
-      int  DateStyle = USE_ISO_DATES | USE_POSTGRES_DATES | USE_SQL_DATES | USE_GERMAN_DATES
-     </member>
-    </simplelist>
 
-   </para>
-   <para>
-    <variablelist>
+     <varlistentry>
+      <term>
+       SERVER_ENCODING
+      </term>
+      <listitem>
+       <para>
+	Sets the multi-byte server encoding
+	
+	<variablelist>
+	 <varlistentry>
+	  <term>
+	   <replaceable class="parameter">value</replaceable>
+	  </term>
+	  <listitem>
+	   <para>
+		Sets the multi-byte server encoding.
+	   </para>
+	  </listitem>
+	 </varlistentry>
+	 
+	 <varlistentry>
+	  <term>
+	   DEFAULT
+	  </term>
+	  <listitem>
+	   <para>
+		Sets the multi-byte server encoding.
+	   </para>
+	  </listitem>
+	 </varlistentry>
+	</variablelist>
+       </para>
+       <para>
+	This is only enabled if multi-byte was specified to configure.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry>
       <term>
        TIMEZONE
@@ -257,8 +334,59 @@ SET TIME ZONE { '<REPLACEABLE CLASS="PARAMETER">timezone</REPLACEABLE>' | LOCAL 
        </para>
       </listitem>
      </varlistentry>
+
+     <varlistentry>
+      <term>
+       TRANSACTION ISOLATION LEVEL
+      </term>
+      <listitem>
+       <para>
+	Sets the isolation level for the current transaction.
+	
+	<variablelist>
+	 <varlistentry>
+	  <term>
+	   READ COMMITTED
+	  </term>
+	  <listitem>
+	   <para>
+	    The current transaction reads only 
+	    committed rows.  READ COMMITTED is the default.
+	   </para>
+	  </listitem>
+	 </varlistentry>
+	 
+	 <varlistentry>
+	  <term>
+	   SERIALIZABLE
+	  </term>
+	  <listitem>
+	   <para>
+	    The current transaction will place a 
+	    lock on every row read, so later reads in that transaction 
+	    see the rows unmodified by other transactions.
+	   </para>
+	  </listitem>
+	 </varlistentry>
+	 
+	 <varlistentry>
+	  <term>
+	   DEFAULT
+	  </term>
+	  <listitem>
+	   <para>
+	    Sets the isolation level for the current transaction to
+	    <option>READ COMMITTED</option>.
+	   </para>
+	  </listitem>
+	 </varlistentry>
+	</variablelist>
+       </para>
+      </listitem>
+     </varlistentry>
     </variablelist>
    </para>
+
    <para>
     There are also several internal or optimization
     parameters which can be specified
@@ -301,49 +429,49 @@ SET TIME ZONE { '<REPLACEABLE CLASS="PARAMETER">timezone</REPLACEABLE>' | LOCAL 
 	The frontend may be initialized by setting the PGCOSTHEAP
 	environment variable.
        </para>
-       <variablelist>
-	<varlistentry>
-	 <term>
-	  COST_INDEX
-	 </term>
-	 <listitem>
-	  <para>
-	   Sets the default cost of an index scan for use by the optimizer.
-	  </para>
-	 </listitem>
-	</varlistentry>
-	
-	<varlistentry>
-	 <term>
-	  <replaceable class="parameter">float4</replaceable>
-	 </term>
-	 <listitem>
-	  <para>
-	   Set the cost of an index scan to the specified floating point value.
-	  </para>
-	 </listitem>
-	</varlistentry>
-	
-	<varlistentry>
-	 <term>
-	  DEFAULT
-	 </term>
-	 <listitem>
-	  <para>
-	   Sets the cost of an index scan to the default value.
-	  </para>
-	 </listitem>
-	</varlistentry>
-       </variablelist>
       </listitem>
      </varlistentry>
-    </variablelist>
-   </para>
-   <para>
-    The frontend may be initialized by setting the PGCOSTINDEX
-    environment variable.
-    
-    <variablelist>
+
+     <varlistentry>
+      <term>
+       COST_INDEX
+      </term>
+      <listitem>
+       <para>
+	Sets the default cost of an index scan for use by the optimizer.
+
+	<variablelist>     
+	 <varlistentry>
+	  <term>
+	   <replaceable class="parameter">float4</replaceable>
+	  </term>
+	  <listitem>
+	   <para>
+	    Set the cost of an index scan to the specified floating point value.
+	   </para>
+	  </listitem>
+	 </varlistentry>
+	 
+	 <varlistentry>
+	  <term>
+	   DEFAULT
+	  </term>
+	  <listitem>
+	   <para>
+	    Sets the cost of an index scan to the default value.
+	   </para>
+	  </listitem>
+	 </varlistentry>
+	</variablelist>
+       </para>
+
+       <para>
+	The frontend may be initialized by setting the PGCOSTINDEX
+	environment variable.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry>
       <term>
        GEQO
@@ -351,73 +479,72 @@ SET TIME ZONE { '<REPLACEABLE CLASS="PARAMETER">timezone</REPLACEABLE>' | LOCAL 
       <listitem>
        <para>
 	Sets the threshold for using the genetic optimizer algorithm.
-       </para>
        
-       <variablelist>
-	<varlistentry>
-	 <term>
-	  On
-	 </term>
-	 <listitem>
-	  <para>
-	   enables the genetic optimizer algorithm
-	   for statements with 6 or more tables.
-	  </para>
-	 </listitem>
-	</varlistentry>
-	<varlistentry>
-	 <term>
-	  On=<replaceable class="parameter">#</replaceable>
-	 </term>
-	 <listitem>
-	  <para>
-	   Takes an integer argument to enable the genetic optimizer algorithm
-	   for statements with <replaceable class="parameter">#</replaceable>
-	   or more tables in the query.
-	  </para>
-	 </listitem>
-	</varlistentry>
-	<varlistentry>
-	 <term>
-	  Off
-	 </term>
-	 <listitem>
-	  <para>
-	   disables the genetic optimizer algorithm.
-	  </para>
-	 </listitem>
-	</varlistentry>
-	<varlistentry>
-	 <term>
-	  DEFAULT
-	 </term>
-	 <listitem>
-	  <para>
-	   Equivalent to specifying <command>SET GEQO='on'</command>
-	  </para>
-	 </listitem>
-	</varlistentry>
-       </variablelist>
+	<variablelist>
+	 <varlistentry>
+	  <term>
+	   ON
+	  </term>
+	  <listitem>
+	   <para>
+	    enables the genetic optimizer algorithm
+	    for statements with 6 or more tables.
+	   </para>
+	  </listitem>
+	 </varlistentry>
+	 <varlistentry>
+	  <term>
+	   ON=<replaceable class="parameter">#</replaceable>
+	  </term>
+	  <listitem>
+	   <para>
+	    Takes an integer argument to enable the genetic optimizer algorithm
+	    for statements with <replaceable class="parameter">#</replaceable>
+	    or more tables in the query.
+	   </para>
+	  </listitem>
+	 </varlistentry>
+	 <varlistentry>
+	  <term>
+	   OFF
+	  </term>
+	  <listitem>
+	   <para>
+	    disables the genetic optimizer algorithm.
+	   </para>
+	  </listitem>
+	 </varlistentry>
+	 <varlistentry>
+	  <term>
+	   DEFAULT
+	  </term>
+	  <listitem>
+	   <para>
+	    Equivalent to specifying <command>SET GEQO='ON'</command>
+	   </para>
+	  </listitem>
+	 </varlistentry>
+	</variablelist>
+       </para>
+
+       <para>
+	This algorithm is on by default, which used GEQO for
+	statements of eleven or more tables.
+	(See the chapter on GEQO in the Programmer's Guide
+	for more information).
+       </para>
+       <para>
+	The frontend may be initialized by setting PGGEQO
+	environment variable.
+       </para>
+       <para>
+	It may be useful when joining big relations with
+	small ones. This algorithm is off by default.
+	It's not used by GEQO anyway.
+       </para>
       </listitem>
      </varlistentry>
-    </variablelist>
-   </para>
-   <para>
-    This algorithm is on by default, which used GEQO for
-    statements of eleven or more tables.
-    (See the chapter on GEQO in the Programmer's Guide
-    for more information).
-   </para>
-   <para>
-    The frontend may be initialized by setting PGGEQO
-    environment variable.
-   </para>
-   <para>
-    It may be useful when joining big relations with
-    small ones. This algorithm is off by default.
-    It's not used by GEQO anyway.
-    
-    <variablelist>
+
      <varlistentry>
       <term>
        KSQO
@@ -427,273 +554,143 @@ SET TIME ZONE { '<REPLACEABLE CLASS="PARAMETER">timezone</REPLACEABLE>' | LOCAL 
 	<firstterm>Key Set Query Optimizer</firstterm> forces the query optimizer
 	to optimize repetative OR clauses such as generated by
 	<productname>MicroSoft Access</productname>:
-       </para>
        
-       <variablelist>
-	<varlistentry>
-	 <term>
-	  On
-	 </term>
-	 <listitem>
-	  <para>
-	   enables this optimization.
-	  </para>
-	 </listitem>
-	</varlistentry>
+	<variablelist>
+	 <varlistentry>
+	  <term>
+	   ON
+	  </term>
+	  <listitem>
+	   <para>
+	    enables this optimization.
+	   </para>
+	  </listitem>
+	 </varlistentry>
 	
-	<varlistentry>
-	 <term>
-	  Off
-	 </term>
-	 <listitem>
-	  <para>
-	   disables this optimization.
-	  </para>
-	 </listitem>
-	</varlistentry>
-	
-	<varlistentry>
-	 <term>
-	  DEFAULT
-	 </term>
-	 <listitem>
-	  <para>
-	   Equivalent to specifying <command>SET KSQO='off'</command>.
-	  </para>
-	 </listitem>
-	</varlistentry>
-       </variablelist>
+	 <varlistentry>
+	  <term>
+	   OFF
+	  </term>
+	  <listitem>
+	   <para>
+	    disables this optimization.
+	   </para>
+	  </listitem>
+	 </varlistentry>
+	 
+	 <varlistentry>
+	  <term>
+	   DEFAULT
+	  </term>
+	  <listitem>
+	   <para>
+	    Equivalent to specifying <command>SET KSQO='OFF'</command>.
+	   </para>
+	  </listitem>
+	 </varlistentry>
+	</variablelist>
+       </para>
+
+       <para>
+	It may be useful when joining big relations with
+	small ones. This algorithm is off by default.
+	It's not used by GEQO anyway.
+       </para>
+       <para>
+	The frontend may be initialized by setting the PGKSQO
+	environment variable.
+       </para>
       </listitem>
      </varlistentry>
-    </variablelist>
-   </para>
-   <para>
-    It may be useful when joining big relations with
-    small ones. This algorithm is off by default.
-    It's not used by GEQO anyway.
-   </para>
-   <para>
-    The frontend may be initialized by setting the PGKSQO
-    environment variable.
-    <variablelist>
+
      <varlistentry>
       <term>
        QUERY_LIMIT
       </term>
       <listitem>
        <para>
-	Sets the number of rows returned by a query.
-       </para>
-       
-       <variablelist>
-	<varlistentry>
-	 <term>
-	  Value
-	 </term>
-	 <listitem>
-	  <para>
-	   Maximum number of rows to return for a query.  The default is to allow
-	   an unlimited number of rows.
-	  </para>
-	 </listitem>
-	</varlistentry>
-	<varlistentry>
-	 <term>
-	  <replaceable class="parameter">#</replaceable>
-	 </term>
-	 <listitem>
-	  <para>
-	   Sets the maximum number of rows returned by a
-	   query to <replaceable class="parameter">#</replaceable>.
-	  </para>
-	 </listitem>
-	</varlistentry>
-	<varlistentry>
-	 <term>
-	  DEFAULT
-	 </term>
-	 <listitem>
-	  <para>
-	   Sets the maximum number of rows returned by a query to be unlimited.
-	  </para>
-	 </listitem>
-	</varlistentry>
-       </variablelist>
-       <para>
+	Sets the maximum number of rows returned by a query.
 	By default, there is no limit to the number of rows
 	returned by a query.
+       
+	<variablelist>
+	 <varlistentry>
+	  <term>
+	   <replaceable class="parameter">#</replaceable>
+	  </term>
+	  <listitem>
+	   <para>
+	    Sets the maximum number of rows returned by a
+	    query to <replaceable class="parameter">#</replaceable>.
+	   </para>
+	  </listitem>
+	 </varlistentry>
+	 <varlistentry>
+	  <term>
+	   DEFAULT
+	  </term>
+	  <listitem>
+	   <para>
+	    Sets the maximum number of rows returned by a query to be unlimited.
+	   </para>
+	  </listitem>
+	 </varlistentry>
+	</variablelist>
        </para>
       </listitem>
      </varlistentry>
+
     </variablelist>
-
-    <variablelist>
-     <varlistentry>
-      <term>
-       TRANSACTION ISOLATION LEVEL
-      </term>
-      <listitem>
-       <para>
-	Sets the isolation level for the current transaction.
-	
-	<variablelist>
-	 <varlistentry>
-	  <term>
-	   <replaceable class="parameter">value</replaceable>
-	  </term>
-	  <listitem>
-	   <para>
-		Sets the isolation level for the current transaction to
-		'SERIALIZABLE' or 'READ COMMITTED'.
-		SERIALIZABLE means that the current transaction will place a 
-		lock on every row read, so later reads in that transaction 
-		see the rows unmodified by other transactions.
-		READ COMMITTED means that the current transaction reads only 
-		committed rows.  READ COMMITTED is the default.
-	   </para>
-	  </listitem>
-	 </varlistentry>
    </para>
-	 
-	 <varlistentry>
-	  <term>
-	   DEFAULT
-	  </term>
-	  <listitem>
-	   <para>
-		Sets the isolation level for the current transaction to
-		'READ COMMITTED'.
-	   </para>
-	  </listitem>
-	 </varlistentry>
-	</variablelist>
-       </para>
+  </refsect2>
 
-    <variablelist>
-     <varlistentry>
-      <term>
-       CLIENT_ENCODING | NAMES
-      </term>
-      <listitem>
-       <para>
-	Sets the multi-byte client encoding
-	
-	<variablelist>
-	 <varlistentry>
-	  <term>
-	   <replaceable class="parameter">value</replaceable>
-	  </term>
-	  <listitem>
-	   <para>
-		Sets the multi-byte client encoding.
-	   </para>
-	  </listitem>
-	 </varlistentry>
-   </para>
-	 
-	 <varlistentry>
-	  <term>
-	   DEFAULT
-	  </term>
-	  <listitem>
-	   <para>
-		Sets the multi-byte client encoding.
-	   </para>
-	  </listitem>
-	 </varlistentry>
-	</variablelist>
-       </para>
-       <para>
-	This is only enabled if multi-byte was specified to configure.
-       </para>
-
-    <variablelist>
-     <varlistentry>
-      <term>
-       SERVER_ENCODING
-      </term>
-      <listitem>
-       <para>
-	Sets the multi-byte server encoding
-	
-	<variablelist>
-	 <varlistentry>
-	  <term>
-	   <replaceable class="parameter">value</replaceable>
-	  </term>
-	  <listitem>
-	   <para>
-		Sets the multi-byte server encoding.
-	   </para>
-	  </listitem>
-	 </varlistentry>
-   </para>
-	 
-	 <varlistentry>
-	  <term>
-	   DEFAULT
-	  </term>
-	  <listitem>
-	   <para>
-		Sets the multi-byte server encoding.
-	   </para>
-	  </listitem>
-	 </varlistentry>
-	</variablelist>
-       </para>
-       <para>
-	This is only enabled if multi-byte was specified to configure.
-       </para>
-
-
-
-  </REFSECT2>
-  
-  <REFSECT2 ID="R2-SQL-SET-2">
-   <REFSECT2INFO>
-    <DATE>1998-09-24</DATE>
-   </REFSECT2INFO>
-   <TITLE>
+  <refsect2 id="R2-SQL-SET-2">
+   <refsect2info>
+    <date>1998-09-24</date>
+   </refsect2info>
+   <title>
     Outputs
-   </TITLE>
-   <PARA>
+   </title>
+   <para>
     
-    <VARIABLELIST>
-     <VARLISTENTRY>
-      <TERM>
+    <variablelist>
+     <varlistentry>
+      <term>
        <returnvalue>SET VARIABLE</returnvalue>
-      </TERM>
-      <LISTITEM>
-       <PARA>
+      </term>
+      <listitem>
+       <para>
 	Message returned if successfully.
        </para>
       </listitem>
      </varlistentry>
      
-     <VARLISTENTRY>
-      <TERM>
-       <returnvalue>WARN:  Bad value for <replaceable class="parameter">variable</replaceable> (<replaceable class="parameter">value</replaceable>)</returnvalue>
-      </TERM>
-      <LISTITEM>
-       <PARA>
-	If the command fails to set variable.
+     <varlistentry>
+      <term>
+       <returnvalue>WARN:  Bad value for
+	<replaceable class="parameter">variable</replaceable>
+	(<replaceable class="parameter">value</replaceable>)</returnvalue>
+      </term>
+      <listitem>
+       <para>
+	If the command fails to set the specified variable.
        </para>
       </listitem>
      </varlistentry>
      
-    </VARIABLELIST>
+    </variablelist>
    </para>
-  </REFSECT2>
- </REFSYNOPSISDIV>
+  </refsect2>
+ </refsynopsisdiv>
  
- <REFSECT1 ID="R1-SQL-SET-1">
-  <REFSECT1INFO>
-   <DATE>1998-09-24</DATE>
-  </REFSECT1INFO>
-  <TITLE>
+ <refsect1 id="R1-SQL-SET-1">
+  <refsect1info>
+   <date>1998-09-24</date>
+  </refsect1info>
+  <title>
    Description
-  </TITLE>
-  <PARA>
+  </title>
+  <para>
    <command>SET</command> will modify configuration parameters for variable during
    a session.
   </para>
@@ -707,20 +704,20 @@ SET TIME ZONE { '<REPLACEABLE CLASS="PARAMETER">timezone</REPLACEABLE>' | LOCAL 
   <para>
    <command>SET TIME ZONE</command> changes the session's
    default time zone offset.
-   A SQL-session always begins with an initial default time zone
+   An SQL-session always begins with an initial default time zone
    offset.
    The <command>SET TIME ZONE</command> statement is used to change the default
    time zone offset for the current SQL session.
   </para>
   
-  <REFSECT2 ID="R2-SQL-SET-3">
-   <REFSECT2INFO>
-    <DATE>1998-09-24</DATE>
-   </REFSECT2INFO>
-   <TITLE>
+  <refsect2 id="R2-SQL-SET-3">
+   <refsect2info>
+    <date>1998-09-24</date>
+   </refsect2info>
+   <title>
     Notes
-   </TITLE>
-   <PARA>
+   </title>
+   <para>
     The <command>SET <replaceable class="parameter">variable</replaceable></command>
     statement is a <productname>Postgres</productname> language extension.
    </para>
@@ -728,16 +725,16 @@ SET TIME ZONE { '<REPLACEABLE CLASS="PARAMETER">timezone</REPLACEABLE>' | LOCAL 
     Refer to <command>SHOW</command> and <command>RESET</command> to 
     display or reset the current values.
    </para>
-  </REFSECT2>
- </REFSECT1>
+  </refsect2>
+ </refsect1>
  
- <REFSECT1 ID="R1-SQL-SET-2">
-  <TITLE>
+ <refsect1 id="R1-SQL-SET-2">
+  <title>
    Usage
-  </TITLE>
-  <PARA>
-  </PARA>
-  <ProgramListing>
+  </title>
+  <para>
+  </para>
+  <programlisting>
    --Set the style of date to ISO:
    --
    SET DATESTYLE TO 'ISO';
@@ -771,25 +768,25 @@ SET TIME ZONE { '<REPLACEABLE CLASS="PARAMETER">timezone</REPLACEABLE>' | LOCAL 
    today
    ----------------------
    1998-03-31 17:41:31+02
-  </ProgramListing>
+  </programlisting>
   
- </REFSECT1>
+ </refsect1>
 
- <REFSECT1 ID="R1-SQL-SET-3">
-  <TITLE>
+ <refsect1 id="R1-SQL-SET-3">
+  <title>
    Compatibility
-  </TITLE>
-  <PARA>
-  </PARA>
+  </title>
+  <para>
+  </para>
   
-  <REFSECT2 ID="R2-SQL-SET-4">
-   <REFSECT2INFO>
-    <DATE>1998-09-24</DATE>
-   </REFSECT2INFO>
-   <TITLE>
+  <refsect2 id="R2-SQL-SET-4">
+   <refsect2info>
+    <date>1998-09-24</date>
+   </refsect2info>
+   <title>
     SQL92
-   </TITLE>
-   <PARA>
+   </title>
+   <para>
     There is no
     <command>SET <replaceable class="parameter">variable</replaceable></command>
     in <acronym>SQL92</acronym>.
@@ -804,7 +801,7 @@ SET TIME ZONE { '<REPLACEABLE CLASS="PARAMETER">timezone</REPLACEABLE>' | LOCAL 
    </para>
   </refsect2>
  </refsect1>
-</REFENTRY>
+</refentry>
 
 <!-- Keep this comment at the end of the file
 Local variables:

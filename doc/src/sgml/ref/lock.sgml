@@ -1,84 +1,156 @@
-<REFENTRY ID="SQL-LOCK">
- <REFMETA>
-  <REFENTRYTITLE>
+<refentry id="SQL-LOCK">
+ <refmeta>
+  <refentrytitle>
    LOCK
-  </REFENTRYTITLE>
-  <REFMISCINFO>SQL - Language Statements</REFMISCINFO>
- </REFMETA>
- <REFNAMEDIV>
-  <REFNAME>
+  </refentrytitle>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+ <refnamediv>
+  <refname>
    LOCK
-  </REFNAME>
-  <REFPURPOSE>
+  </refname>
+  <refpurpose>
    Explicit lock of a table inside a transaction
-  </REFPURPOSE>
+  </refpurpose>
  </refnamediv>
- <REFSYNOPSISDIV>
-  <REFSYNOPSISDIVINFO>
-   <DATE>1998-09-24</DATE>
-  </REFSYNOPSISDIVINFO>
-  <SYNOPSIS>
-   LOCK [ TABLE ] [IN [ROW|ACCESS] [SHARE|EXCLUSIVE] | [SHARE ROW EXCLUSIVE] MODE]
-	<REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE>
-  </SYNOPSIS>
+ <refsynopsisdiv>
+  <refsynopsisdivinfo>
+   <date>1998-09-24</date>
+  </refsynopsisdivinfo>
+  <synopsis>
+LOCK [ TABLE ] <replaceable class="PARAMETER">table</replaceable>
+LOCK [ TABLE ] <replaceable class="PARAMETER">table</replaceable> IN [ ROW | ACCESS ] { SHARE | EXCLUSIVE } MODE
+LOCK [ TABLE ] <replaceable class="PARAMETER">table</replaceable> IN SHARE ROW EXCLUSIVE MODE
+  </synopsis>
 
-  <REFSECT2 ID="R2-SQL-LOCK-1">
-   <REFSECT2INFO>
-    <DATE>1998-09-01</DATE>
-   </REFSECT2INFO>
-   <TITLE>
+  <refsect2 id="R2-SQL-LOCK-1">
+   <refsect2info>
+    <date>1998-09-01</date>
+   </refsect2info>
+   <title>
     Inputs
-   </TITLE>
-   <PARA>
-   </PARA>
-   <VARIABLELIST>
-    <VARLISTENTRY>
-     <TERM>
-      <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE>
-     </TERM>
-     <LISTITEM>
-      <PARA>
-       The name of an existing table to lock.
-      </para>
-     </listitem>
-    </varlistentry>
-   </VARIABLELIST>
-	  
-  </REFSECT2>
+   </title>
+   <para>
 
-  <REFSECT2 ID="R2-SQL-LOCK-2">
-   <REFSECT2INFO>
-    <DATE>1998-09-24</DATE>
-   </REFSECT2INFO>
-   <TITLE>
+    <variablelist>
+     <varlistentry>
+      <term>
+       <replaceable class="PARAMETER">table</replaceable>
+      </term>
+      <listitem>
+       <para>
+	The name of an existing table to lock.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       SHARE MODE
+      </term>
+      <listitem>
+       <para>
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       EXCLUSIVE MODE
+      </term>
+      <listitem>
+       <para>
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       ROW SHARE MODE
+      </term>
+      <listitem>
+       <para>
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       ROW EXCLUSIVE MODE
+      </term>
+      <listitem>
+       <para>
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       ACCESS SHARE MODE
+      </term>
+      <listitem>
+       <para>
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       ACCESS EXCLUSIVE MODE
+      </term>
+      <listitem>
+       <para>
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       SHARE ROW EXCLUSIVE MODE
+      </term>
+      <listitem>
+       <para>
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+  </refsect2>
+
+  <refsect2 id="R2-SQL-LOCK-2">
+   <refsect2info>
+    <date>1998-09-24</date>
+   </refsect2info>
+   <title>
     Outputs
-   </TITLE>
-   <PARA>
+   </title>
+   <para>
     
-    <VARIABLELIST>
-      <TERM>
-       ERROR <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE>: Table does not exist.
-      </TERM>
-      <LISTITEM>
-       <PARA>
-	Message returned if <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE>
+    <variablelist>
+     <varlistentry>
+      <term>
+       ERROR <replaceable class="PARAMETER">table</replaceable>: Table does not exist.
+      </term>
+      <listitem>
+       <para>
+	Message returned if <replaceable class="PARAMETER">table</replaceable>
 	does not exist.
        </para>
       </listitem>
      </varlistentry>
-    </VARIABLELIST>
+    </variablelist>
    </para>
-  </REFSECT2>
- </REFSYNOPSISDIV>
+  </refsect2>
+ </refsynopsisdiv>
 
- <REFSECT1 ID="R1-SQL-LOCK-1">
-  <REFSECT1INFO>
-   <DATE>1998-09-24</DATE>
-  </REFSECT1INFO>
-  <TITLE>
+ <refsect1 id="R1-SQL-LOCK-1">
+  <refsect1info>
+   <date>1998-09-24</date>
+  </refsect1info>
+  <title>
    Description
-  </TITLE>
-  <PARA>
+  </title>
+  <para>
    By default, <command>LOCK</command> locks in exclusive mode a table inside
    a transaction. Various options allow shared access, or row-level locking
    control.  The classic use for this is
@@ -112,13 +184,13 @@
    </para>
   </note>
 
-  <REFSECT2 ID="R2-SQL-LOCK-3">
-   <REFSECT2INFO>
-    <DATE>1998-09-24</DATE>
-   </REFSECT2INFO>
-   <TITLE>
+  <refsect2 id="R2-SQL-LOCK-3">
+   <refsect2info>
+    <date>1998-09-24</date>
+   </refsect2info>
+   <title>
     Notes
-   </TITLE>
+   </title>
    <para>
     <command>LOCK</command> is a <productname>Postgres</productname>
     language extension.
@@ -134,16 +206,16 @@
      </para>
     </note>
    </para>
-  </REFSECT2>
+  </refsect2>
  </refsect1>
   
- <REFSECT1 ID="R1-SQL-LOCK-2">
-  <TITLE>
+ <refsect1 id="R1-SQL-LOCK-2">
+  <title>
    Usage
-  </TITLE>
-  <PARA>
-  </PARA>
-  <ProgramListing>
+  </title>
+  <para>
+  </para>
+  <programlisting>
     --Explicit locking to prevent deadlock:
     --
     BEGIN WORK;
@@ -152,30 +224,30 @@
     UPDATE films SET len = INTERVAL '100 minute'
       WHERE len = INTERVAL '117 minute';
     COMMIT WORK;
-  </ProgramListing>
+  </programlisting>
 	
- </REFSECT1>
+ </refsect1>
 
- <REFSECT1 ID="R1-SQL-LOCK-3">
-  <TITLE>
+ <refsect1 id="R1-SQL-LOCK-3">
+  <title>
    Compatibility
-  </TITLE>
+  </title>
 	  
-  <REFSECT2 ID="R2-SQL-LOCK-4">
-   <REFSECT2INFO>
-    <DATE>1998-09-24</DATE>
-   </REFSECT2INFO>
-   <TITLE>
+  <refsect2 id="R2-SQL-LOCK-4">
+   <refsect2info>
+    <date>1998-09-24</date>
+   </refsect2info>
+   <title>
     SQL92
-   </TITLE>
-   <PARA>
+   </title>
+   <para>
     There is no <command>LOCK TABLE</command> in <acronym>SQL92</acronym>,
     which instead uses <command>SET TRANSACTION</command> to specify
     concurrency level on transactions.  We support that too.
    </para>
   </refsect2>
  </refsect1>
-</REFENTRY>
+</refentry>
 
 <!-- Keep this comment at the end of the file
 Local variables:
