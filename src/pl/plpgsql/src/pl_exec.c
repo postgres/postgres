@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.75 2002/12/15 16:17:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.76 2002/12/17 15:45:01 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1991,7 +1991,7 @@ exec_prepare_plan(PLpgSQL_execstate * estate,
 	 *
 	 * +1 is just to avoid palloc(0) error.
 	 */
-	argtypes = palloc(sizeof(Oid *) * (expr->nparams + 1));
+	argtypes = (Oid *) palloc(sizeof(Oid) * (expr->nparams + 1));
 
 	for (i = 0; i < expr->nparams; i++)
 	{
