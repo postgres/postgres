@@ -2,7 +2,7 @@
 TODO list for PostgreSQL
 ========================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sun Feb 20 23:58:46 EST 2005
+Last updated:		Mon Feb 21 12:30:27 EST 2005
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -83,7 +83,11 @@ Administration
 * Add "include file" functionality in postgresql.conf
 * Add session start time and last statement time to pg_stat_activity
 * Allow server logs to be remotely read using SQL commands
-* Allow server configuration parameters to be remotely modified
+* Allow pg_hba.conf settings to be controlled via SQL
+
+  This would require a new global table that is dumped to flat file for
+  use by the postmaster.  We do a similar thing for pg_shadow currently.
+
 * Allow administrators to safely terminate individual sessions
 
   Right now, SIGTERM will terminate a session, but it is treated as
