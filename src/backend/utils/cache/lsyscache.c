@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.105 2003/08/04 02:40:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.106 2003/08/11 23:04:49 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -180,11 +180,10 @@ get_op_hash_function(Oid opno)
 
 /*
  * get_attname
- *
  *		Given the relation id and the attribute number,
  *		return the "attname" field from the attribute relation.
  *
- * Note: returns a palloc'd copy of the string, or NULL if no such operator.
+ * Note: returns a palloc'd copy of the string, or NULL if no such attribute.
  */
 char *
 get_attname(Oid relid, AttrNumber attnum)
@@ -206,6 +205,24 @@ get_attname(Oid relid, AttrNumber attnum)
 	}
 	else
 		return NULL;
+}
+
+/*
+ * get_relid_attribute_name
+ *
+ * Same as above routine get_attname(), except that error
+ * is handled by elog() instead of returning NULL.
+ */
+char *
+get_relid_attribute_name(Oid relid, AttrNumber attnum)
+{
+	char	   *attname;
+
+	attname = get_attname(relid, attnum);
+	if (attname == NULL)
+		elog(ERROR, "cache lookup failed for attribute %d of relation %u",
+			 attnum, relid);
+	return attname;
 }
 
 /*
@@ -1443,7 +1460,7 @@ get_typtype(Oid typid)
  * get_typname
  *		Returns the name of a given type.
  *
- * Returns a palloc'd copy of the string, or NULL if no such relation.
+ * Returns a palloc'd copy of the string, or NULL if no such type.
  *
  * NOTE: since type name is not unique, be wary of code that uses this
  * for anything except preparing error messages.

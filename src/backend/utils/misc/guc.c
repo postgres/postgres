@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.148 2003/08/04 23:59:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.149 2003/08/11 23:04:49 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -3293,7 +3293,7 @@ GetPGVariableResultDesc(const char *name)
 
 		/* need a tuple descriptor representing a single TEXT column */
 		tupdesc = CreateTemplateTupleDesc(1, false);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 1, (char *) varname,
+		TupleDescInitEntry(tupdesc, (AttrNumber) 1, varname,
 						   TEXTOID, -1, 0, false);
 	}
 	return tupdesc;
@@ -3333,7 +3333,7 @@ ShowGUCConfigOption(const char *name, DestReceiver *dest)
 
 	/* need a tuple descriptor representing a single TEXT column */
 	tupdesc = CreateTemplateTupleDesc(1, false);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 1, (char *) varname,
+	TupleDescInitEntry(tupdesc, (AttrNumber) 1, varname,
 					   TEXTOID, -1, 0, false);
 
 	/* prepare for projection of tuples */

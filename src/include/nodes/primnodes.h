@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.90 2003/08/08 21:42:48 momjian Exp $
+ * $Id: primnodes.h,v 1.91 2003/08/11 23:04:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,13 +31,29 @@
  *
  * Notes:
  *
- * resno will normally be equal to the item's position in a targetlist,
- * but the code generally tries to avoid relying on that (eg, we avoid
- * using "nth()" rather than a search to find an item by resno).
+ * In a SELECT's targetlist, resno should always be equal to the item's
+ * ordinal position (counting from 1).  However, in an INSERT or UPDATE
+ * targetlist, resno represents the attribute number of the destination
+ * column for the item; so there may be missing or out-of-order resnos.
+ * In an UPDATE, it is even legal to have duplicated resnos; consider
+ *		UPDATE table SET arraycol[1] = ..., arraycol[2] = ..., ...
+ * The two meanings come together in the executor, because the planner
+ * transforms INSERT/UPDATE tlists into a normalized form with exactly
+ * one entry for each column of the destination table.  Before that's
+ * happened, however, it is risky to assume that resno == position.
+ * Generally get_tle_by_resno() should be used rather than nth() to fetch
+ * tlist entries by resno.
  *
- * resname will be null if no name can easily be assigned to the column.
- * But it should never be null for user-visible columns (i.e., non-junk
- * columns in a toplevel targetlist).
+ * resname is required to represent the correct column name in non-resjunk
+ * entries of top-level SELECT targetlists, since it will be used as the
+ * column title sent to the frontend.  In most other contexts it is only
+ * a debugging aid, and may be wrong or even NULL.  (In particular, it may
+ * be wrong in a tlist from a stored rule, if the referenced column has been
+ * renamed by ALTER TABLE since the rule was made.  Also, the planner tends
+ * to store NULL rather than look up a valid name for tlist entries in
+ * non-toplevel plan nodes.)  In resjunk entries, resname should be either
+ * a specific system-generated name (such as "ctid") or NULL; anything else
+ * risks confusing ExecGetJunkAttribute!
  *
  * ressortgroupref is used in the representation of ORDER BY and
  * GROUP BY items.	Targetlist entries with ressortgroupref=0 are not
@@ -53,13 +69,16 @@
  * a simple reference, these fields are zeroes.
  *
  * If resjunk is true then the column is a working column (such as a sort key)
- * that should be removed from the final output of the query.
+ * that should be removed from the final output of the query.  Resjunk columns
+ * must have resnos that cannot duplicate any regular column's resno.  Also
+ * note that there are places that assume resjunk columns come after non-junk
+ * columns.
  *--------------------
  */
 typedef struct Resdom
 {
 	NodeTag		type;
-	AttrNumber	resno;			/* attribute number (1..N) */
+	AttrNumber	resno;			/* attribute number (see notes above) */
 	Oid			restype;		/* type of the value */
 	int32		restypmod;		/* type-specific modifier of the value */
 	char	   *resname;		/* name of the column (could be NULL) */

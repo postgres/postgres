@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lsyscache.h,v 1.79 2003/08/08 21:42:55 momjian Exp $
+ * $Id: lsyscache.h,v 1.80 2003/08/11 23:04:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,7 @@ extern bool op_requires_recheck(Oid opno, Oid opclass);
 extern Oid	get_opclass_member(Oid opclass, int16 strategy);
 extern Oid	get_op_hash_function(Oid opno);
 extern char *get_attname(Oid relid, AttrNumber attnum);
+extern char *get_relid_attribute_name(Oid relid, AttrNumber attnum);
 extern AttrNumber get_attnum(Oid relid, const char *attname);
 extern Oid	get_atttype(Oid relid, AttrNumber attnum);
 extern int32 get_atttypmod(Oid relid, AttrNumber attnum);

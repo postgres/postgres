@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.64 2003/08/04 02:40:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.65 2003/08/11 23:04:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -150,8 +150,6 @@ expand_targetlist(List *tlist, int command_type,
 
 			if (!resdom->resjunk && resdom->resno == attrno)
 			{
-				Assert(strcmp(resdom->resname,
-							  NameStr(att_tup->attname)) == 0);
 				new_tle = old_tle;
 				tlist = lnext(tlist);
 			}

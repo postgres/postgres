@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.111 2003/08/11 20:46:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.112 2003/08/11 23:04:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,7 +71,7 @@ transformTargetEntry(ParseState *pstate,
 	type_id = exprType(expr);
 	type_mod = exprTypmod(expr);
 
-	if (colname == NULL)
+	if (colname == NULL && !resjunk)
 	{
 		/*
 		 * Generate a suitable column name for a column without any
@@ -428,14 +428,19 @@ updateTargetListEntry(ParseState *pstate,
 
 	/*
 	 * The result of the target expression should now match the
-	 * destination column's type.  Also, reset the resname and resno to
-	 * identify the destination column --- rewriter and planner depend on
-	 * that!
+	 * destination column's type.
 	 */
 	resnode->restype = attrtype;
 	resnode->restypmod = attrtypmod;
-	resnode->resname = colname;
+	/*
+	 * Set the resno to identify the target column --- the rewriter and
+	 * planner depend on this.  We also set the resname to identify the
+	 * target column, but this is only for debugging purposes; it should
+	 * not be relied on.  (In particular, it might be out of date in a
+	 * stored rule.)
+	 */
 	resnode->resno = (AttrNumber) attrno;
+	resnode->resname = colname;
 }
 
 

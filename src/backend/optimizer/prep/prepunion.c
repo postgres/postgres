@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.103 2003/08/04 02:40:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.104 2003/08/11 23:04:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,7 +64,7 @@ static bool tlist_same_datatypes(List *tlist, List *colTypes, bool junkOK);
 static Node *adjust_inherited_attrs_mutator(Node *node,
 							   adjust_inherited_attrs_context *context);
 static Relids adjust_relid_set(Relids relids, Index oldrelid, Index newrelid);
-static List *adjust_inherited_tlist(List *tlist, Oid new_relid);
+static List *adjust_inherited_tlist(List *tlist, Oid old_relid, Oid new_relid);
 
 
 /*
@@ -787,6 +787,7 @@ adjust_inherited_attrs(Node *node,
 			if (newnode->commandType == CMD_UPDATE)
 				newnode->targetList =
 					adjust_inherited_tlist(newnode->targetList,
+										   old_relid,
 										   new_relid);
 		}
 		return (Node *) newnode;
@@ -812,9 +813,10 @@ adjust_inherited_attrs_mutator(Node *node,
 			var->varnoold = context->new_rt_index;
 			if (var->varattno > 0)
 			{
-				char	   *attname = get_attname(context->old_relid,
-												  var->varattno);
+				char	   *attname;
 
+				attname = get_relid_attribute_name(context->old_relid,
+												   var->varattno);
 				var->varattno = get_attnum(context->new_relid, attname);
 				if (var->varattno == InvalidAttrNumber)
 					elog(ERROR, "attribute \"%s\" of relation \"%s\" does not exist",
@@ -976,7 +978,7 @@ adjust_relid_set(Relids relids, Index oldrelid, Index newrelid)
  * Note that this is not needed for INSERT because INSERT isn't inheritable.
  */
 static List *
-adjust_inherited_tlist(List *tlist, Oid new_relid)
+adjust_inherited_tlist(List *tlist, Oid old_relid, Oid new_relid)
 {
 	bool		changed_it = false;
 	List	   *tl;
@@ -989,21 +991,26 @@ adjust_inherited_tlist(List *tlist, Oid new_relid)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(tl);
 		Resdom	   *resdom = tle->resdom;
+		char	   *attname;
 
 		if (resdom->resjunk)
 			continue;			/* ignore junk items */
 
-		attrno = get_attnum(new_relid, resdom->resname);
+		attname = get_relid_attribute_name(old_relid, resdom->resno);
+		attrno = get_attnum(new_relid, attname);
 		if (attrno == InvalidAttrNumber)
 			elog(ERROR, "attribute \"%s\" of relation \"%s\" does not exist",
-				 resdom->resname, get_rel_name(new_relid));
+				 attname, get_rel_name(new_relid));
 		if (resdom->resno != attrno)
 		{
 			resdom = (Resdom *) copyObject((Node *) resdom);
 			resdom->resno = attrno;
+			resdom->resname = attname;
 			tle->resdom = resdom;
 			changed_it = true;
 		}
+		else
+			pfree(attname);
 	}
 
 	/*

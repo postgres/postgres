@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/dependency.c,v 1.30 2003/08/04 02:39:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/dependency.c,v 1.31 2003/08/11 23:04:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1439,8 +1439,8 @@ getObjectDescription(const ObjectAddress *object)
 			getRelationDescription(&buffer, object->objectId);
 			if (object->objectSubId != 0)
 				appendStringInfo(&buffer, " column %s",
-								 get_attname(object->objectId,
-											 object->objectSubId));
+								 get_relid_attribute_name(object->objectId,
+														  object->objectSubId));
 			break;
 
 		case OCLASS_PROC:

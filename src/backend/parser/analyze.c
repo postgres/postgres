@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.286 2003/08/08 21:41:55 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.287 2003/08/11 23:04:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2124,10 +2124,12 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	{
 		Oid			colType = lfirsto(dtlist);
 		Resdom	   *leftResdom = ((TargetEntry *) lfirst(lefttl))->resdom;
-		char	   *colName = pstrdup(leftResdom->resname);
+		char	   *colName;
 		Resdom	   *resdom;
 		Expr	   *expr;
 
+		Assert(!leftResdom->resjunk);
+		colName = pstrdup(leftResdom->resname);
 		resdom = makeResdom((AttrNumber) pstate->p_next_resno++,
 							colType,
 							-1,
@@ -2501,11 +2503,12 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 		{
 			/*
 			 * Resjunk nodes need no additional processing, but be sure
-			 * they have names and resnos that do not match any target
-			 * columns; else rewriter or planner might get confused.
+			 * they have resnos that do not match any target columns;
+			 * else rewriter or planner might get confused.  They don't
+			 * need a resname either.
 			 */
-			resnode->resname = "?resjunk?";
 			resnode->resno = (AttrNumber) pstate->p_next_resno++;
+			resnode->resname = NULL;
 			continue;
 		}
 		if (origTargetList == NIL)

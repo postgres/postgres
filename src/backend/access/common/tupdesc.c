@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.98 2003/08/04 02:39:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.99 2003/08/11 23:04:49 tgl Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -357,7 +357,7 @@ equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2)
 void
 TupleDescInitEntry(TupleDesc desc,
 				   AttrNumber attributeNumber,
-				   char *attributeName,
+				   const char *attributeName,
 				   Oid oidtypeid,
 				   int32 typmod,
 				   int attdim,
@@ -373,13 +373,6 @@ TupleDescInitEntry(TupleDesc desc,
 	AssertArg(PointerIsValid(desc));
 	AssertArg(attributeNumber >= 1);
 	AssertArg(attributeNumber <= desc->natts);
-
-	/*
-	 * attributeName's are sometimes NULL, from resdom's.  I don't know
-	 * why that is, though -- Jolly
-	 */
-/*	  AssertArg(NameIsValid(attributeName));*/
-
 	AssertArg(!PointerIsValid(desc->attrs[attributeNumber - 1]));
 
 	/*
@@ -394,6 +387,11 @@ TupleDescInitEntry(TupleDesc desc,
 	 */
 	att->attrelid = 0;			/* dummy value */
 
+	/*
+	 * Note: attributeName can be NULL, because the planner doesn't always
+	 * fill in valid resname values in targetlists, particularly for resjunk
+	 * attributes.
+	 */
 	if (attributeName != NULL)
 		namestrcpy(&(att->attname), attributeName);
 	else

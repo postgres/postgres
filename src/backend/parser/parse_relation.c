@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.88 2003/08/11 20:46:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.89 2003/08/11 23:04:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1516,8 +1516,6 @@ expandRelAttrs(ParseState *pstate, RangeTblEntry *rte)
 char *
 get_rte_attribute_name(RangeTblEntry *rte, AttrNumber attnum)
 {
-	char	   *attname;
-
 	if (attnum == InvalidAttrNumber)
 		return "*";
 
@@ -1535,13 +1533,7 @@ get_rte_attribute_name(RangeTblEntry *rte, AttrNumber attnum)
 	 * built (which can easily happen for rules).
 	 */
 	if (rte->rtekind == RTE_RELATION)
-	{
-		attname = get_attname(rte->relid, attnum);
-		if (attname == NULL)
-			elog(ERROR, "cache lookup failed for attribute %d of relation %u",
-				 attnum, rte->relid);
-		return attname;
-	}
+		return get_relid_attribute_name(rte->relid, attnum);
 
 	/*
 	 * Otherwise use the column name from eref.  There should always be

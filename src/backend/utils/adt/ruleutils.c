@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.150 2003/08/08 21:42:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.151 2003/08/11 23:04:49 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -207,7 +207,6 @@ static char *generate_relation_name(Oid relid);
 static char *generate_function_name(Oid funcid, int nargs, Oid *argtypes);
 static char *generate_operator_name(Oid operid, Oid arg1, Oid arg2);
 static void print_operator_name(StringInfo buf, List *opname);
-static char *get_relid_attribute_name(Oid relid, AttrNumber attnum);
 
 #define only_marker(rte)  ((rte)->inh ? "" : "ONLY ")
 
@@ -1140,7 +1139,7 @@ decompile_column_index_array(Datum column_index_array, Oid relId,
 	{
 		char	   *colName;
 
-		colName = get_attname(relId, DatumGetInt16(keys[j]));
+		colName = get_relid_attribute_name(relId, DatumGetInt16(keys[j]));
 
 		if (j == 0)
 			appendStringInfo(buf, "%s",
@@ -1901,7 +1900,6 @@ get_basic_select_query(Query *query, deparse_context *context,
 	foreach(l, query->targetList)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(l);
-		bool		tell_as = false;
 		char	   *colname;
 
 		if (tle->resdom->resjunk)
@@ -1924,24 +1922,30 @@ get_basic_select_query(Query *query, deparse_context *context,
 		else
 			colname = tle->resdom->resname;
 
-		/* Check if we must say AS ... */
-		if (!IsA(tle->expr, Var))
-			tell_as = (strcmp(colname, "?column?") != 0);
-		else
+		if (colname)			/* resname could be NULL */
 		{
-			Var		   *var = (Var *) (tle->expr);
-			char	   *schemaname;
-			char	   *refname;
-			char	   *attname;
+			/* Check if we must say AS ... */
+			bool		tell_as;
 
-			get_names_for_var(var, context, &schemaname, &refname, &attname);
-			tell_as = (attname == NULL ||
-					   strcmp(attname, colname) != 0);
+			if (!IsA(tle->expr, Var))
+				tell_as = (strcmp(colname, "?column?") != 0);
+			else
+			{
+				Var		   *var = (Var *) (tle->expr);
+				char	   *schemaname;
+				char	   *refname;
+				char	   *attname;
+
+				get_names_for_var(var, context,
+								  &schemaname, &refname, &attname);
+				tell_as = (attname == NULL ||
+						   strcmp(attname, colname) != 0);
+			}
+
+			/* and do if so */
+			if (tell_as)
+				appendStringInfo(buf, " AS %s", quote_identifier(colname));
 		}
-
-		/* and do if so */
-		if (tell_as)
-			appendStringInfo(buf, " AS %s", quote_identifier(colname));
 	}
 
 	/* Add the FROM clause if needed */
@@ -2151,7 +2155,9 @@ get_insert_query_def(Query *query, deparse_context *context)
 
 		appendStringInfo(buf, sep);
 		sep = ", ";
-		appendStringInfo(buf, "%s", quote_identifier(tle->resdom->resname));
+		appendStringInfo(buf, "%s",
+						 quote_identifier(get_relid_attribute_name(rte->relid,
+														tle->resdom->resno)));
 	}
 	appendStringInfo(buf, ") ");
 
@@ -2225,7 +2231,8 @@ get_update_query_def(Query *query, deparse_context *context)
 		 */
 		if (!tleIsArrayAssign(tle))
 			appendStringInfo(buf, "%s = ",
-							 quote_identifier(tle->resdom->resname));
+						quote_identifier(get_relid_attribute_name(rte->relid,
+														tle->resdom->resno)));
 		get_rule_expr((Node *) tle->expr, context, false);
 	}
 
@@ -4350,23 +4357,4 @@ print_operator_name(StringInfo buf, List *opname)
 		}
 		appendStringInfo(buf, "%s)", strVal(lfirst(opname)));
 	}
-}
-
-/*
- * get_relid_attribute_name
- *		Get an attribute name by its relations Oid and its attnum
- *
- * Same as underlying syscache routine get_attname(), except that error
- * is handled by elog() instead of returning NULL.
- */
-static char *
-get_relid_attribute_name(Oid relid, AttrNumber attnum)
-{
-	char	   *attname;
-
-	attname = get_attname(relid, attnum);
-	if (attname == NULL)
-		elog(ERROR, "cache lookup failed for attribute %d of relation %u",
-			 attnum, relid);
-	return attname;
 }

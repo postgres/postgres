@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.128 2003/08/08 21:41:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.129 2003/08/11 23:04:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,7 +48,8 @@ static Query *rewriteRuleAction(Query *parsetree,
 static List *adjustJoinTreeList(Query *parsetree, bool removert, int rt_index);
 static void rewriteTargetList(Query *parsetree, Relation target_relation);
 static TargetEntry *process_matched_tle(TargetEntry *src_tle,
-					TargetEntry *prior_tle);
+										TargetEntry *prior_tle,
+										const char *attrName);
 static void markQueryForUpdate(Query *qry, bool skipOldNew);
 static List *matchLocks(CmdType event, RuleLock *rulelocks,
 		   int varno, Query *parsetree);
@@ -312,8 +313,7 @@ rewriteTargetList(Query *parsetree, Relation target_relation)
 			continue;
 
 		/*
-		 * Look for targetlist entries matching this attr.	We match by
-		 * resno, but the resname should match too.
+		 * Look for targetlist entries matching this attr.
 		 *
 		 * Junk attributes are not candidates to be matched.
 		 */
@@ -324,9 +324,8 @@ rewriteTargetList(Query *parsetree, Relation target_relation)
 
 			if (!resdom->resjunk && resdom->resno == attrno)
 			{
-				Assert(strcmp(resdom->resname,
-							  NameStr(att_tup->attname)) == 0);
-				new_tle = process_matched_tle(old_tle, new_tle);
+				new_tle = process_matched_tle(old_tle, new_tle,
+											  NameStr(att_tup->attname));
 				/* keep scanning to detect multiple assignments to attr */
 			}
 		}
@@ -424,11 +423,12 @@ rewriteTargetList(Query *parsetree, Relation target_relation)
  * Convert a matched TLE from the original tlist into a correct new TLE.
  *
  * This routine detects and handles multiple assignments to the same target
- * attribute.
+ * attribute.  (The attribute name is needed only for error messages.)
  */
 static TargetEntry *
 process_matched_tle(TargetEntry *src_tle,
-					TargetEntry *prior_tle)
+					TargetEntry *prior_tle,
+					const char *attrName)
 {
 	Resdom	   *resdom = src_tle->resdom;
 	Node	   *priorbottom;
@@ -456,7 +456,7 @@ process_matched_tle(TargetEntry *src_tle,
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("multiple assignments to same attribute \"%s\"",
-						resdom->resname)));
+						attrName)));
 
 	/*
 	 * Prior TLE could be a nest of ArrayRefs if we do this more than
@@ -470,7 +470,7 @@ process_matched_tle(TargetEntry *src_tle,
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("multiple assignments to same attribute \"%s\"",
-						resdom->resname)));
+						attrName)));
 
 	/*
 	 * Looks OK to nest 'em.
