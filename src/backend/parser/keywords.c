@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.90 2001/03/22 03:59:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.91 2001/05/07 00:43:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -238,6 +238,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"some", SOME},
 	{"start", START},
 	{"statement", STATEMENT},
+	{"statistics", STATISTICS},
 	{"stdin", STDIN},
 	{"stdout", STDOUT},
 	{"substring", SUBSTRING},

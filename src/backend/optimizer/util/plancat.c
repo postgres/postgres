@@ -9,11 +9,10 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.64 2001/03/22 03:59:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.65 2001/05/07 00:43:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
-
 #include "postgres.h"
 
 #include <math.h>

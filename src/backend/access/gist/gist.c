@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.72 2001/03/22 03:59:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.73 2001/05/07 00:43:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -84,8 +84,8 @@ static void gist_dumptree(Relation r, int level, BlockNumber blk, OffsetNumber c
 #endif
 
 /*
-** routine to build an index.  Basically calls insert over and over
-*/
+ * routine to build an index.  Basically calls insert over and over
+ */
 Datum
 gistbuild(PG_FUNCTION_ARGS)
 {
@@ -105,7 +105,7 @@ gistbuild(PG_FUNCTION_ARGS)
 				itupdesc;
 	Datum		attdata[INDEX_MAX_KEYS];
 	char		nulls[INDEX_MAX_KEYS];
-	int			nhtups,
+	double		nhtups,
 				nitups;
 	Node	   *pred = indexInfo->ii_Predicate;
 
@@ -172,7 +172,7 @@ gistbuild(PG_FUNCTION_ARGS)
 #endif	 /* OMIT_PARTIAL_INDEX */
 
 	/* build the index */
-	nhtups = nitups = 0;
+	nhtups = nitups = 0.0;
 
 	compvec = (bool *) palloc(sizeof(bool) * indexInfo->ii_NumIndexAttrs);
 
@@ -183,7 +183,7 @@ gistbuild(PG_FUNCTION_ARGS)
 	{
 		MemoryContextReset(econtext->ecxt_per_tuple_memory);
 
-		nhtups++;
+		nhtups += 1.0;
 
 #ifndef OMIT_PARTIAL_INDEX
 
@@ -196,7 +196,7 @@ gistbuild(PG_FUNCTION_ARGS)
 			slot->val = htup;
 			if (ExecQual((List *) oldPred, econtext, false))
 			{
-				nitups++;
+				nitups += 1.0;
 				continue;
 			}
 		}
@@ -213,7 +213,7 @@ gistbuild(PG_FUNCTION_ARGS)
 		}
 #endif	 /* OMIT_PARTIAL_INDEX */
 
-		nitups++;
+		nitups += 1.0;
 
 		/*
 		 * For the current heap tuple, extract all the attributes we use

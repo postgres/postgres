@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: command.h,v 1.26 2001/03/22 04:00:41 momjian Exp $
+ * $Id: command.h,v 1.27 2001/05/07 00:43:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,9 +43,13 @@ extern void PortalCleanup(Portal portal);
 extern void AlterTableAddColumn(const char *relationName,
 					bool inh, ColumnDef *colDef);
 
-extern void AlterTableAlterColumn(const char *relationName,
-					  bool inh, const char *colName,
-					  Node *newDefault);
+extern void AlterTableAlterColumnDefault(const char *relationName,
+										 bool inh, const char *colName,
+										 Node *newDefault);
+
+extern void AlterTableAlterColumnStatistics(const char *relationName,
+											bool inh, const char *colName,
+											Node *statsTarget);
 
 extern void AlterTableDropColumn(const char *relationName,
 					 bool inh, const char *colName,

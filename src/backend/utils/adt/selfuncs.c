@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.87 2001/03/23 04:49:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.88 2001/05/07 00:43:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,9 +57,6 @@
 /* default selectivity estimate for pattern-match operators such as LIKE */
 #define DEFAULT_MATCH_SEL	0.01
 
-/* "fudge factor" for estimating frequency of not-most-common values */
-#define NOT_MOST_COMMON_RATIO  0.1
-
 static bool convert_to_scalar(Datum value, Oid valuetypid, double *scaledvalue,
 				  Datum lobound, Datum hibound, Oid boundstypid,
 				  double *scaledlobound, double *scaledhibound);
@@ -75,17 +72,9 @@ static double convert_one_string_to_scalar(unsigned char *value,
 static unsigned char *convert_string_datum(Datum value, Oid typid);
 static double convert_timevalue_to_scalar(Datum value, Oid typid);
 static void getattproperties(Oid relid, AttrNumber attnum,
-				 Oid *typid,
-				 int *typlen,
-				 bool *typbyval,
-				 int32 *typmod);
-static bool getattstatistics(Oid relid, AttrNumber attnum,
-				 Oid typid, int32 typmod,
-				 double *nullfrac,
-				 double *commonfrac,
-				 Datum *commonval,
-				 Datum *loval,
-				 Datum *hival);
+							 Oid *typid, int32 *typmod);
+static double get_att_numdistinct(Oid relid, AttrNumber attnum, Oid typid,
+								  Form_pg_statistic stats);
 static Selectivity prefix_selectivity(char *prefix,
 				   Oid relid,
 				   AttrNumber attno,
@@ -115,134 +104,173 @@ eqsel(PG_FUNCTION_ARGS)
 	AttrNumber	attno = PG_GETARG_INT16(2);
 	Datum		value = PG_GETARG_DATUM(3);
 	int32		flag = PG_GETARG_INT32(4);
-	float8		result;
+	Oid			typid;
+	int32		typmod;
+	HeapTuple	statsTuple;
+	Datum	   *values;
+	int			nvalues;
+	float4	   *numbers;
+	int			nnumbers;
+	double		selec;
 
-	if (NONVALUE(attno) || NONVALUE(relid))
-		result = DEFAULT_EQ_SEL;
-	else
+	if (NONVALUE(relid) || NONVALUE(attno))
+		PG_RETURN_FLOAT8(DEFAULT_EQ_SEL);
+
+	/* get info about the attribute */
+	getattproperties(relid, attno, &typid, &typmod);
+
+	/* get stats for the attribute, if available */
+	statsTuple = SearchSysCache(STATRELATT,
+								ObjectIdGetDatum(relid),
+								Int16GetDatum(attno),
+								0, 0);
+	if (HeapTupleIsValid(statsTuple))
 	{
-		Oid			typid;
-		int			typlen;
-		bool		typbyval;
-		int32		typmod;
-		double		nullfrac;
-		double		commonfrac;
-		Datum		commonval;
-		double		selec;
+		Form_pg_statistic stats;
 
-		/* get info about the attribute */
-		getattproperties(relid, attno,
-						 &typid, &typlen, &typbyval, &typmod);
+		stats = (Form_pg_statistic) GETSTRUCT(statsTuple);
 
-		/* get stats for the attribute, if available */
-		if (getattstatistics(relid, attno, typid, typmod,
-							 &nullfrac, &commonfrac, &commonval,
-							 NULL, NULL))
+		if (flag & SEL_CONSTANT)
 		{
-			if (flag & SEL_CONSTANT)
+			bool	match = false;
+			int		i;
+
+			/*
+			 * Is the constant "=" to any of the column's most common
+			 * values?  (Although the given operator may not really be
+			 * "=", we will assume that seeing whether it returns TRUE
+			 * is an appropriate test.  If you don't like this, maybe you
+			 * shouldn't be using eqsel for your operator...)
+			 */
+			if (get_attstatsslot(statsTuple, typid, typmod,
+								 STATISTIC_KIND_MCV, InvalidOid,
+								 &values, &nvalues,
+								 &numbers, &nnumbers))
 			{
+				FmgrInfo	eqproc;
 
-				/*
-				 * Is the constant "=" to the column's most common value?
-				 * (Although the operator may not really be "=", we will
-				 * assume that seeing whether it returns TRUE for the most
-				 * common value is useful information. If you don't like
-				 * it, maybe you shouldn't be using eqsel for your
-				 * operator...)
-				 */
-				RegProcedure eqproc = get_opcode(opid);
-				bool		mostcommon;
+				fmgr_info(get_opcode(opid), &eqproc);
 
-				if (eqproc == (RegProcedure) NULL)
-					elog(ERROR, "eqsel: no procedure for operator %u",
-						 opid);
-
-				/* be careful to apply operator right way 'round */
-				if (flag & SEL_RIGHT)
-					mostcommon = DatumGetBool(OidFunctionCall2(eqproc,
-															   commonval,
-															   value));
-				else
-					mostcommon = DatumGetBool(OidFunctionCall2(eqproc,
-															   value,
-															 commonval));
-
-				if (mostcommon)
+				for (i = 0; i < nvalues; i++)
 				{
-
-					/*
-					 * Constant is "=" to the most common value.  We know
-					 * selectivity exactly (or as exactly as VACUUM could
-					 * calculate it, anyway).
-					 */
-					selec = commonfrac;
-				}
-				else
-				{
-
-					/*
-					 * Comparison is against a constant that is neither
-					 * the most common value nor null.	Its selectivity
-					 * cannot be more than this:
-					 */
-					selec = 1.0 - commonfrac - nullfrac;
-					if (selec > commonfrac)
-						selec = commonfrac;
-
-					/*
-					 * and in fact it's probably less, so we should apply
-					 * a fudge factor.	The only case where we don't is
-					 * for a boolean column, where indeed we have
-					 * estimated the less-common value's frequency
-					 * exactly!
-					 */
-					if (typid != BOOLOID)
-						selec *= NOT_MOST_COMMON_RATIO;
+					/* be careful to apply operator right way 'round */
+					if (flag & SEL_RIGHT)
+						match = DatumGetBool(FunctionCall2(&eqproc,
+														   values[i],
+														   value));
+					else
+						match = DatumGetBool(FunctionCall2(&eqproc,
+														   value,
+														   values[i]));
+					if (match)
+						break;
 				}
 			}
 			else
 			{
-
-				/*
-				 * Search is for a value that we do not know a priori, but
-				 * we will assume it is not NULL.  Selectivity cannot be
-				 * more than this:
-				 */
-				selec = 1.0 - nullfrac;
-				if (selec > commonfrac)
-					selec = commonfrac;
-
-				/*
-				 * and in fact it's probably less, so apply a fudge
-				 * factor.
-				 */
-				selec *= NOT_MOST_COMMON_RATIO;
+				/* no most-common-value info available */
+				values = NULL;
+				numbers = NULL;
+				i = nvalues = nnumbers = 0;
 			}
 
-			/* result should be in range, but make sure... */
-			if (selec < 0.0)
-				selec = 0.0;
-			else if (selec > 1.0)
-				selec = 1.0;
+			if (match)
+			{
+				/*
+				 * Constant is "=" to this common value.  We know
+				 * selectivity exactly (or as exactly as VACUUM
+				 * could calculate it, anyway).
+				 */
+				selec = numbers[i];
+			}
+			else
+			{
+				/*
+				 * Comparison is against a constant that is neither
+				 * NULL nor any of the common values.  Its selectivity
+				 * cannot be more than this:
+				 */
+				double	sumcommon = 0.0;
+				double	otherdistinct;
 
-			if (!typbyval)
-				pfree(DatumGetPointer(commonval));
+				for (i = 0; i < nnumbers; i++)
+					sumcommon += numbers[i];
+				selec = 1.0 - sumcommon - stats->stanullfrac;
+				/*
+				 * and in fact it's probably a good deal less.
+				 * We approximate that all the not-common values
+				 * share this remaining fraction equally, so we
+				 * divide by the number of other distinct values.
+				 */
+				otherdistinct = get_att_numdistinct(relid, attno,
+													typid, stats)
+					- nnumbers;
+				if (otherdistinct > 1)
+					selec /= otherdistinct;
+				/*
+				 * Another cross-check: selectivity shouldn't be
+				 * estimated as more than the least common
+				 * "most common value".
+				 */
+				if (nnumbers > 0 && selec > numbers[nnumbers-1])
+					selec = numbers[nnumbers-1];
+			}
+
+			free_attstatsslot(typid, values, nvalues, numbers, nnumbers);
 		}
 		else
 		{
+			double		ndistinct;
 
 			/*
-			 * No VACUUM ANALYZE stats available, so make a guess using
-			 * the dispersion stat (if we have that, which is unlikely for
-			 * a normal attribute; but for a system attribute we may be
-			 * able to estimate it).
+			 * Search is for a value that we do not know a priori, but
+			 * we will assume it is not NULL.  Estimate the selectivity
+			 * as non-null fraction divided by number of distinct values,
+			 * so that we get a result averaged over all possible values
+			 * whether common or uncommon.  (Essentially, we are assuming
+			 * that the not-yet-known comparison value is equally likely
+			 * to be any of the possible values, regardless of their
+			 * frequency in the table.  Is that a good idea?)
 			 */
-			selec = get_attdispersion(relid, attno, 0.01);
+			selec = 1.0 - stats->stanullfrac;
+			ndistinct = get_att_numdistinct(relid, attno, typid, stats);
+			if (ndistinct > 1)
+				selec /= ndistinct;
+			/*
+			 * Cross-check: selectivity should never be
+			 * estimated as more than the most common value's.
+			 */
+			if (get_attstatsslot(statsTuple, typid, typmod,
+								 STATISTIC_KIND_MCV, InvalidOid,
+								 NULL, NULL,
+								 &numbers, &nnumbers))
+			{
+				if (nnumbers > 0 && selec > numbers[0])
+					selec = numbers[0];
+				free_attstatsslot(typid, NULL, 0, numbers, nnumbers);
+			}
 		}
 
-		result = (float8) selec;
+		ReleaseSysCache(statsTuple);
 	}
-	PG_RETURN_FLOAT8(result);
+	else
+	{
+		/*
+		 * No VACUUM ANALYZE stats available, so make a guess using
+		 * estimated number of distinct values and assuming they are
+		 * equally common.  (The guess is unlikely to be very good,
+		 * but we do know a few special cases.)
+		 */
+		selec = 1.0 / get_att_numdistinct(relid, attno, typid, NULL);
+	}
+
+	/* result should be in range, but make sure... */
+	if (selec < 0.0)
+		selec = 0.0;
+	else if (selec > 1.0)
+		selec = 1.0;
+
+	PG_RETURN_FLOAT8((float8) selec);
 }
 
 /*
@@ -301,117 +329,263 @@ scalarltsel(PG_FUNCTION_ARGS)
 	AttrNumber	attno = PG_GETARG_INT16(2);
 	Datum		value = PG_GETARG_DATUM(3);
 	int32		flag = PG_GETARG_INT32(4);
-	float8		result;
+	bool		isgt;
+	HeapTuple	oprTuple;
+	HeapTuple	statsTuple;
+	Form_pg_statistic stats;
+	Oid			contype;
+	FmgrInfo	opproc;
+	Oid			typid;
+	int32		typmod;
+	Datum	   *values;
+	int			nvalues;
+	float4	   *numbers;
+	int			nnumbers;
+	double		mcv_selec,
+				hist_selec,
+				sumcommon;
+	double		selec;
+	int			i;
 
-	if (!(flag & SEL_CONSTANT) || NONVALUE(attno) || NONVALUE(relid))
-		result = DEFAULT_INEQ_SEL;
+	if (NONVALUE(relid) || NONVALUE(attno))
+		PG_RETURN_FLOAT8(DEFAULT_INEQ_SEL);
+
+	/* Can't do anything useful if no constant to compare against, either */
+	if (!(flag & SEL_CONSTANT))
+		PG_RETURN_FLOAT8(DEFAULT_INEQ_SEL);
+
+	/*
+	 * Force the constant to be on the right to simplify later logic.
+	 * This means that we may be dealing with either "<" or ">" cases.
+	 */
+	if (flag & SEL_RIGHT)
+	{
+		/* we have x < const */
+		isgt = false;
+	}
 	else
 	{
-		HeapTuple	oprtuple;
-		Oid			ltype,
-					rtype,
-					contype;
-		Oid			typid;
-		int			typlen;
-		bool		typbyval;
-		int32		typmod;
-		Datum		hival,
-					loval;
-		double		val,
-					high,
-					low,
-					numerator,
-					denominator;
-
-		/*
-		 * Get left and right datatypes of the operator so we know what
-		 * type the constant is.
-		 */
-		oprtuple = SearchSysCache(OPEROID,
-								  ObjectIdGetDatum(opid),
-								  0, 0, 0);
-		if (!HeapTupleIsValid(oprtuple))
-			elog(ERROR, "scalarltsel: no tuple for operator %u", opid);
-		ltype = ((Form_pg_operator) GETSTRUCT(oprtuple))->oprleft;
-		rtype = ((Form_pg_operator) GETSTRUCT(oprtuple))->oprright;
-		contype = (flag & SEL_RIGHT) ? rtype : ltype;
-		ReleaseSysCache(oprtuple);
-
-		/* Now get info and stats about the attribute */
-		getattproperties(relid, attno,
-						 &typid, &typlen, &typbyval, &typmod);
-
-		if (!getattstatistics(relid, attno, typid, typmod,
-							  NULL, NULL, NULL,
-							  &loval, &hival))
+		/* we have const < x, commute to make x > const */
+		opid = get_commutator(opid);
+		if (!opid)
 		{
-			/* no stats available, so default result */
+			/* Use default selectivity (should we raise an error instead?) */
 			PG_RETURN_FLOAT8(DEFAULT_INEQ_SEL);
 		}
-
-		/* Convert the values to a uniform comparison scale. */
-		if (!convert_to_scalar(value, contype, &val,
-							   loval, hival, typid,
-							   &low, &high))
-		{
-
-			/*
-			 * Ideally we'd produce an error here, on the grounds that the
-			 * given operator shouldn't have scalarltsel registered as its
-			 * selectivity func unless we can deal with its operand types.
-			 * But currently, all manner of stuff is invoking scalarltsel,
-			 * so give a default estimate until that can be fixed.
-			 */
-			if (!typbyval)
-			{
-				pfree(DatumGetPointer(hival));
-				pfree(DatumGetPointer(loval));
-			}
-			PG_RETURN_FLOAT8(DEFAULT_INEQ_SEL);
-		}
-
-		/* release temp storage if needed */
-		if (!typbyval)
-		{
-			pfree(DatumGetPointer(hival));
-			pfree(DatumGetPointer(loval));
-		}
-
-		if (high <= low)
-		{
-
-			/*
-			 * If we trusted the stats fully, we could return a small or
-			 * large selec depending on which side of the single data
-			 * point the constant is on.  But it seems better to assume
-			 * that the stats are wrong and return a default...
-			 */
-			result = DEFAULT_INEQ_SEL;
-		}
-		else if (val < low || val > high)
-		{
-
-			/*
-			 * If given value is outside the statistical range, return a
-			 * small or large value; but not 0.0/1.0 since there is a
-			 * chance the stats are out of date.
-			 */
-			if (flag & SEL_RIGHT)
-				result = (val < low) ? 0.001 : 0.999;
-			else
-				result = (val < low) ? 0.999 : 0.001;
-		}
-		else
-		{
-			denominator = high - low;
-			if (flag & SEL_RIGHT)
-				numerator = val - low;
-			else
-				numerator = high - val;
-			result = numerator / denominator;
-		}
+		isgt = true;
 	}
-	PG_RETURN_FLOAT8(result);
+
+	/*
+	 * The constant might not be the same datatype as the column;
+	 * look at the operator's input types to find out what it is.
+	 * Also set up to be able to call the operator's execution proc.
+	 */
+	oprTuple = SearchSysCache(OPEROID,
+							  ObjectIdGetDatum(opid),
+							  0, 0, 0);
+	if (!HeapTupleIsValid(oprTuple))
+		elog(ERROR, "scalarltsel: no tuple for operator %u", opid);
+	contype = ((Form_pg_operator) GETSTRUCT(oprTuple))->oprright;
+	fmgr_info(((Form_pg_operator) GETSTRUCT(oprTuple))->oprcode, &opproc);
+	ReleaseSysCache(oprTuple);
+
+	/* Now get info and stats about the attribute */
+	getattproperties(relid, attno, &typid, &typmod);
+
+	statsTuple = SearchSysCache(STATRELATT,
+								ObjectIdGetDatum(relid),
+								Int16GetDatum(attno),
+								0, 0);
+	if (!HeapTupleIsValid(statsTuple))
+	{
+		/* no stats available, so default result */
+		PG_RETURN_FLOAT8(DEFAULT_INEQ_SEL);
+	}
+	stats = (Form_pg_statistic) GETSTRUCT(statsTuple);
+
+	/*
+	 * If we have most-common-values info, add up the fractions of the
+	 * MCV entries that satisfy MCV OP CONST.  These fractions contribute
+	 * directly to the result selectivity.  Also add up the total fraction
+	 * represented by MCV entries.
+	 */
+	mcv_selec = 0.0;
+	sumcommon = 0.0;
+
+	if (get_attstatsslot(statsTuple, typid, typmod,
+						 STATISTIC_KIND_MCV, InvalidOid,
+						 &values, &nvalues,
+						 &numbers, &nnumbers))
+	{
+		for (i = 0; i < nvalues; i++)
+		{
+			if (DatumGetBool(FunctionCall2(&opproc,
+										   values[i],
+										   value)))
+				mcv_selec += numbers[i];
+			sumcommon += numbers[i];
+		}
+		free_attstatsslot(typid, values, nvalues, numbers, nnumbers);
+	}
+
+	/*
+	 * If there is a histogram, determine which bin the constant falls in,
+	 * and compute the resulting contribution to selectivity.
+	 *
+	 * Someday, VACUUM might store more than one histogram per rel/att,
+	 * corresponding to more than one possible sort ordering defined for
+	 * the column type.  However, to make that work we will need to figure
+	 * out which staop to search for --- it's not necessarily the one we
+	 * have at hand!  (For example, we might have a '<=' operator rather
+	 * than the '<' operator that will appear in staop.)  For now, assume
+	 * that whatever appears in pg_statistic is sorted the same way our
+	 * operator sorts.
+	 */
+	hist_selec = 0.0;
+
+	if (get_attstatsslot(statsTuple, typid, typmod,
+						 STATISTIC_KIND_HISTOGRAM, InvalidOid,
+						 &values, &nvalues,
+						 NULL, NULL))
+	{
+		if (nvalues > 1)
+		{
+			double	histfrac;
+			bool	ltcmp;
+
+			ltcmp = DatumGetBool(FunctionCall2(&opproc,
+											   values[0],
+											   value));
+			if (isgt)
+				ltcmp = !ltcmp;
+			if (!ltcmp)
+			{
+				/* Constant is below lower histogram boundary. */
+				histfrac = 0.0;
+			}
+			else
+			{
+				/*
+				 * Scan to find proper location.  This could be made faster
+				 * by using a binary-search method, but it's probably not
+				 * worth the trouble for typical histogram sizes.
+				 */
+				for (i = 1; i < nvalues; i++)
+				{
+					ltcmp = DatumGetBool(FunctionCall2(&opproc,
+													   values[i],
+													   value));
+					if (isgt)
+						ltcmp = !ltcmp;
+					if (!ltcmp)
+						break;
+				}
+				if (i >= nvalues)
+				{
+					/* Constant is above upper histogram boundary. */
+					histfrac = 1.0;
+				}
+				else
+				{
+					double		val,
+								high,
+								low;
+					double		binfrac;
+
+					/*
+					 * We have values[i-1] < constant < values[i].
+					 *
+					 * Convert the constant and the two nearest bin boundary
+					 * values to a uniform comparison scale, and do a linear
+					 * interpolation within this bin.
+					 */
+					if (convert_to_scalar(value, contype, &val,
+										  values[i-1], values[i], typid,
+										  &low, &high))
+					{
+						if (high <= low)
+						{
+							/* cope if bin boundaries appear identical */
+							binfrac = 0.5;
+						}
+						else if (val <= low)
+							binfrac = 0.0;
+						else if (val >= high)
+							binfrac = 1.0;
+						else
+							binfrac = (val - low) / (high - low);
+					}
+					else
+					{
+						/*
+						 * Ideally we'd produce an error here, on the grounds
+						 * that the given operator shouldn't have scalarltsel
+						 * registered as its selectivity func unless we can
+						 * deal with its operand types.  But currently, all
+						 * manner of stuff is invoking scalarltsel, so give a
+						 * default estimate until that can be fixed.
+						 */
+						binfrac = 0.5;
+					}
+					/*
+					 * Now, compute the overall selectivity across the values
+					 * represented by the histogram.  We have i-1 full bins
+					 * and binfrac partial bin below the constant.
+					 */
+					histfrac = (double) (i-1) + binfrac;
+					histfrac /= (double) (nvalues - 1);
+				}
+			}
+			/*
+			 * Now histfrac = fraction of histogram entries below the constant.
+			 *
+			 * Account for "<" vs ">"
+			 */
+			hist_selec = isgt ? (1.0 - histfrac) : histfrac;
+			/*
+			 * The histogram boundaries are only approximate to begin
+			 * with, and may well be out of date anyway.  Therefore,
+			 * don't believe extremely small or large selectivity
+			 * estimates.
+			 */
+			if (hist_selec < 0.001)
+				hist_selec = 0.001;
+			else if (hist_selec > 0.999)
+				hist_selec = 0.999;
+		}
+
+		free_attstatsslot(typid, values, nvalues, NULL, 0);
+	}
+
+	/*
+	 * Now merge the results from the MCV and histogram calculations,
+	 * realizing that the histogram covers only the non-null values that
+	 * are not listed in MCV.
+	 */
+	selec = 1.0 - stats->stanullfrac - sumcommon;
+
+	if (hist_selec > 0.0)
+		selec *= hist_selec;
+	else
+	{
+		/*
+		 * If no histogram but there are values not accounted for by MCV,
+		 * arbitrarily assume half of them will match.
+		 */
+		selec *= 0.5;
+	}
+
+	selec += mcv_selec;
+
+	ReleaseSysCache(statsTuple);
+
+	/* result should be in range, but make sure... */
+	if (selec < 0.0)
+		selec = 0.0;
+	else if (selec > 1.0)
+		selec = 1.0;
+
+	PG_RETURN_FLOAT8((float8) selec);
 }
 
 /*
@@ -428,34 +602,25 @@ scalargtsel(PG_FUNCTION_ARGS)
 	Datum		value = PG_GETARG_DATUM(3);
 	int32		flag = PG_GETARG_INT32(4);
 	Oid			ltopid;
-	float8		result;
 
 	/*
-	 * Compute selectivity of "<", then invert --- but only if we were
-	 * able to produce a non-default estimate.	Note that we get the
-	 * negator which strictly speaking means we are looking at "<=" for
-	 * ">" or "<" for ">=".  We assume this won't matter.
+	 * Commute so that we have a "<" or "<=" operator, then apply
+	 * scalarltsel.
 	 */
-	ltopid = get_negator(opid);
-	if (ltopid)
-	{
-		result = DatumGetFloat8(DirectFunctionCall5(scalarltsel,
-												ObjectIdGetDatum(ltopid),
-												 ObjectIdGetDatum(relid),
-													Int16GetDatum(attno),
-													value,
-													Int32GetDatum(flag)));
-	}
-	else
+	ltopid = get_commutator(opid);
+	if (!ltopid)
 	{
 		/* Use default selectivity (should we raise an error instead?) */
-		result = DEFAULT_INEQ_SEL;
+		PG_RETURN_FLOAT8(DEFAULT_INEQ_SEL);
 	}
 
-	if (result != DEFAULT_INEQ_SEL)
-		result = 1.0 - result;
-
-	PG_RETURN_FLOAT8(result);
+	flag ^= SEL_RIGHT;
+	return DirectFunctionCall5(scalarltsel,
+							   ObjectIdGetDatum(ltopid),
+							   ObjectIdGetDatum(relid),
+							   Int16GetDatum(attno),
+							   value,
+							   Int32GetDatum(flag));
 }
 
 /*
@@ -476,7 +641,7 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype)
 		result = DEFAULT_MATCH_SEL;
 	else
 	{
-		HeapTuple	oprtuple;
+		HeapTuple	oprTuple;
 		Oid			ltype,
 					rtype;
 		char	   *patt;
@@ -488,14 +653,14 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype)
 		 * Get left and right datatypes of the operator so we know what
 		 * type the attribute is.
 		 */
-		oprtuple = SearchSysCache(OPEROID,
+		oprTuple = SearchSysCache(OPEROID,
 								  ObjectIdGetDatum(opid),
 								  0, 0, 0);
-		if (!HeapTupleIsValid(oprtuple))
+		if (!HeapTupleIsValid(oprTuple))
 			elog(ERROR, "patternsel: no tuple for operator %u", opid);
-		ltype = ((Form_pg_operator) GETSTRUCT(oprtuple))->oprleft;
-		rtype = ((Form_pg_operator) GETSTRUCT(oprtuple))->oprright;
-		ReleaseSysCache(oprtuple);
+		ltype = ((Form_pg_operator) GETSTRUCT(oprTuple))->oprleft;
+		rtype = ((Form_pg_operator) GETSTRUCT(oprTuple))->oprright;
+		ReleaseSysCache(oprTuple);
 
 		/* the right-hand const is type text for all supported operators */
 		Assert(rtype == TEXTOID);
@@ -659,42 +824,88 @@ eqjoinsel(PG_FUNCTION_ARGS)
 	AttrNumber	attno1 = PG_GETARG_INT16(2);
 	Oid			relid2 = PG_GETARG_OID(3);
 	AttrNumber	attno2 = PG_GETARG_INT16(4);
-	float8		result;
-	float8		num1,
-				num2,
-				min;
 	bool		unknown1 = NONVALUE(relid1) || NONVALUE(attno1);
 	bool		unknown2 = NONVALUE(relid2) || NONVALUE(attno2);
+	double		selec;
 
 	if (unknown1 && unknown2)
-		result = DEFAULT_EQ_SEL;
+		selec = DEFAULT_EQ_SEL;
 	else
 	{
-		num1 = unknown1 ? 1.0 : get_attdispersion(relid1, attno1, 0.01);
-		num2 = unknown2 ? 1.0 : get_attdispersion(relid2, attno2, 0.01);
+		Oid			typid1;
+		Oid			typid2;
+		int32		typmod1;
+		int32		typmod2;
+		HeapTuple	statsTuple1 = NULL;
+		HeapTuple	statsTuple2 = NULL;
+		Form_pg_statistic stats1 = NULL;
+		Form_pg_statistic stats2 = NULL;
+		double		nd1,
+					nd2;
+
+		if (unknown1)
+		{
+			nd1 = 100.0;
+		}
+		else
+		{
+			/* get info about the attribute */
+			getattproperties(relid1, attno1, &typid1, &typmod1);
+
+			/* get stats for the attribute, if available */
+			statsTuple1 = SearchSysCache(STATRELATT,
+										 ObjectIdGetDatum(relid1),
+										 Int16GetDatum(attno1),
+										 0, 0);
+			if (HeapTupleIsValid(statsTuple1))
+				stats1 = (Form_pg_statistic) GETSTRUCT(statsTuple1);
+
+			nd1 = get_att_numdistinct(relid1, attno1, typid1, stats1);
+		}
+
+		if (unknown2)
+		{
+			nd2 = 100.0;
+		}
+		else
+		{
+			/* get info about the attribute */
+			getattproperties(relid2, attno2, &typid2, &typmod2);
+
+			/* get stats for the attribute, if available */
+			statsTuple2 = SearchSysCache(STATRELATT,
+										 ObjectIdGetDatum(relid2),
+										 Int16GetDatum(attno2),
+										 0, 0);
+			if (HeapTupleIsValid(statsTuple2))
+				stats2 = (Form_pg_statistic) GETSTRUCT(statsTuple2);
+
+			nd2 = get_att_numdistinct(relid2, attno2, typid2, stats2);
+		}
 
 		/*
-		 * The join selectivity cannot be more than num2, since each tuple
-		 * in table 1 could match no more than num2 fraction of tuples in
-		 * table 2 (and that's only if the table-1 tuple matches the most
-		 * common value in table 2, so probably it's less).  By the same
-		 * reasoning it is not more than num1. The min is therefore an
-		 * upper bound.
+		 * Estimate the join selectivity as 1 / sqrt(nd1*nd2)
+		 * (can we produce any theory for this)?
 		 *
-		 * If we know the dispersion of only one side, use it; the reasoning
-		 * above still works.
+		 * XXX possibility to do better: if both attributes have histograms
+		 * then we could determine the exact join selectivity between the
+		 * MCV sets, and only have to assume the join behavior of the non-MCV
+		 * values.  This could be a big win when the MCVs cover a large part
+		 * of the population.
 		 *
-		 * XXX can we make a better estimate here?	Using the nullfrac
-		 * statistic might be helpful, for example.  Assuming the operator
-		 * is strict (does not succeed for null inputs) then the
-		 * selectivity couldn't be more than (1-nullfrac1)*(1-nullfrac2),
-		 * which might be usefully small if there are many nulls.  How
-		 * about applying the operator to the most common values?
+		 * XXX what about nulls?
 		 */
-		min = (num1 < num2) ? num1 : num2;
-		result = min;
+		selec = 1.0 / sqrt(nd1 * nd2);
+		if (selec > 1.0)
+			selec = 1.0;
+
+		if (HeapTupleIsValid(statsTuple1))
+			ReleaseSysCache(statsTuple1);
+		if (HeapTupleIsValid(statsTuple2))
+			ReleaseSysCache(statsTuple2);
+
 	}
-	PG_RETURN_FLOAT8(result);
+	PG_RETURN_FLOAT8((float8) selec);
 }
 
 /*
@@ -829,7 +1040,8 @@ icnlikejoinsel(PG_FUNCTION_ARGS)
  *	  Returns "true" if successful.
  *
  * All numeric datatypes are simply converted to their equivalent
- * "double" values.
+ * "double" values.  XXX what about NUMERIC values that are outside
+ * the range of "double"?
  *
  * String datatypes are converted by convert_string_to_scalar(),
  * which is explained below.  The reason why this routine deals with
@@ -917,7 +1129,7 @@ convert_numeric_to_scalar(Datum value, Oid typid)
 {
 	switch (typid)
 	{
-			case BOOLOID:
+		case BOOLOID:
 			return (double) DatumGetBool(value);
 		case INT2OID:
 			return (double) DatumGetInt16(value);
@@ -963,6 +1175,8 @@ convert_numeric_to_scalar(Datum value, Oid typid)
  * three strings before computing the scaled values.  This allows us to
  * "zoom in" when we encounter a narrow data range.  An example is a phone
  * number database where all the values begin with the same area code.
+ * (Actually, the bounds will be adjacent histogram-bin-boundary values,
+ * so this is more likely to happen than you might think.)
  */
 static void
 convert_string_to_scalar(unsigned char *value,
@@ -1208,11 +1422,11 @@ convert_timevalue_to_scalar(Datum value, Oid typid)
 /*
  * getattproperties
  *	  Retrieve pg_attribute properties for an attribute,
- *	  including type OID, type len, type byval flag, typmod.
+ *	  including type OID and typmod.
  */
 static void
 getattproperties(Oid relid, AttrNumber attnum,
-				 Oid *typid, int *typlen, bool *typbyval, int32 *typmod)
+				 Oid *typid, int32 *typmod)
 {
 	HeapTuple	atp;
 	Form_pg_attribute att_tup;
@@ -1227,164 +1441,87 @@ getattproperties(Oid relid, AttrNumber attnum,
 	att_tup = (Form_pg_attribute) GETSTRUCT(atp);
 
 	*typid = att_tup->atttypid;
-	*typlen = att_tup->attlen;
-	*typbyval = att_tup->attbyval;
 	*typmod = att_tup->atttypmod;
 
 	ReleaseSysCache(atp);
 }
 
 /*
- * getattstatistics
- *	  Retrieve the pg_statistic data for an attribute.
- *	  Returns 'false' if no stats are available.
+ * get_att_numdistinct
  *
- * Inputs:
- * 'relid' and 'attnum' are the relation and attribute number.
- * 'typid' and 'typmod' are the type and typmod of the column,
- * which the caller must already have looked up.
+ *	  Estimate the number of distinct values of an attribute.
  *
- * Outputs:
- * The available stats are nullfrac, commonfrac, commonval, loval, hival.
- * The caller need not retrieve all five --- pass NULL pointers for the
- * unwanted values.
+ * relid, attnum: identify the attribute to examine.
+ * typid: type of attribute.
+ * stats: pg_statistic tuple for attribute, or NULL if not available.
  *
- * commonval, loval, hival are returned as Datums holding the internal
- * representation of the values.  (Note that these should be pfree'd
- * after use if the data type is not by-value.)
+ * XXX possible future improvement: look to see if there is a unique
+ * index on the attribute.  If so, we can estimate ndistinct = ntuples.
+ * This should probably override any info from pg_statistic.
  */
-static bool
-getattstatistics(Oid relid,
-				 AttrNumber attnum,
-				 Oid typid,
-				 int32 typmod,
-				 double *nullfrac,
-				 double *commonfrac,
-				 Datum *commonval,
-				 Datum *loval,
-				 Datum *hival)
+static double
+get_att_numdistinct(Oid relid, AttrNumber attnum, Oid typid,
+					Form_pg_statistic stats)
 {
-	HeapTuple	tuple;
-	HeapTuple	typeTuple;
-	FmgrInfo	inputproc;
-	Oid			typelem;
-	bool		isnull;
+	HeapTuple	reltup;
+	double		ntuples;
 
 	/*
-	 * We assume that there will only be one entry in pg_statistic for the
-	 * given rel/att, so we search WITHOUT considering the staop column.
-	 * Someday, VACUUM might store more than one entry per rel/att,
-	 * corresponding to more than one possible sort ordering defined for
-	 * the column type.  However, to make that work we will need to figure
-	 * out which staop to search for --- it's not necessarily the one we
-	 * have at hand!  (For example, we might have a '>' operator rather
-	 * than the '<' operator that will appear in staop.)
+	 * Special-case boolean columns: presumably, two distinct values.
+	 *
+	 * Are there any other cases we should wire in special estimates for?
 	 */
-	tuple = SearchSysCache(STATRELID,
-						   ObjectIdGetDatum(relid),
-						   Int16GetDatum((int16) attnum),
-						   0, 0);
-	if (!HeapTupleIsValid(tuple))
-	{
-		/* no such stats entry */
-		return false;
-	}
-
-	if (nullfrac)
-		*nullfrac = ((Form_pg_statistic) GETSTRUCT(tuple))->stanullfrac;
-	if (commonfrac)
-		*commonfrac = ((Form_pg_statistic) GETSTRUCT(tuple))->stacommonfrac;
-
-	/* Get the type input proc for the column datatype */
-	typeTuple = SearchSysCache(TYPEOID,
-							   ObjectIdGetDatum(typid),
-							   0, 0, 0);
-	if (!HeapTupleIsValid(typeTuple))
-		elog(ERROR, "getattstatistics: Cache lookup failed for type %u",
-			 typid);
-	fmgr_info(((Form_pg_type) GETSTRUCT(typeTuple))->typinput, &inputproc);
-	typelem = ((Form_pg_type) GETSTRUCT(typeTuple))->typelem;
-	ReleaseSysCache(typeTuple);
+	if (typid == BOOLOID)
+		return 2.0;
 
 	/*
-	 * Values are variable-length fields, so cannot access as struct
-	 * fields. Must do it the hard way with SysCacheGetAttr.
+	 * If VACUUM ANALYZE determined a fixed estimate, use it.
 	 */
-	if (commonval)
+	if (stats && stats->stadistinct > 0.0)
+		return stats->stadistinct;
+
+	/*
+	 * Otherwise we need to get the relation size.
+	 */
+	reltup = SearchSysCache(RELOID,
+							ObjectIdGetDatum(relid),
+							0, 0, 0);
+	if (!HeapTupleIsValid(reltup))
+		elog(ERROR, "get_att_numdistinct: no relation tuple %u", relid);
+
+	ntuples = ((Form_pg_class) GETSTRUCT(reltup))->reltuples;
+
+	ReleaseSysCache(reltup);
+
+	if (ntuples <= 0.0)
+		return 100.0;			/* no data available; return a default */
+
+	/*
+	 * If VACUUM ANALYZE determined a scaled estimate, use it.
+	 */
+	if (stats && stats->stadistinct < 0.0)
+		return - stats->stadistinct * ntuples;
+
+	/*
+	 * VACUUM ANALYZE does not compute stats for system attributes,
+	 * but some of them can reasonably be assumed unique anyway.
+	 */
+	switch (attnum)
 	{
-		Datum		val = SysCacheGetAttr(STATRELID, tuple,
-										  Anum_pg_statistic_stacommonval,
-										  &isnull);
-
-		if (isnull)
-		{
-			elog(DEBUG, "getattstatistics: stacommonval is null");
-			*commonval = PointerGetDatum(NULL);
-		}
-		else
-		{
-			char	   *strval = DatumGetCString(DirectFunctionCall1(textout,
-																   val));
-
-			*commonval = FunctionCall3(&inputproc,
-									   CStringGetDatum(strval),
-									   ObjectIdGetDatum(typelem),
-									   Int32GetDatum(typmod));
-			pfree(strval);
-		}
+		case ObjectIdAttributeNumber:
+		case SelfItemPointerAttributeNumber:
+			return ntuples;
+		case TableOidAttributeNumber:
+			return 1.0;
 	}
 
-	if (loval)
-	{
-		Datum		val = SysCacheGetAttr(STATRELID, tuple,
-										  Anum_pg_statistic_staloval,
-										  &isnull);
+	/*
+	 * Estimate ndistinct = ntuples if the table is small, else 100.
+	 */
+	if (ntuples < 100.0)
+		return ntuples;
 
-		if (isnull)
-		{
-			elog(DEBUG, "getattstatistics: staloval is null");
-			*loval = PointerGetDatum(NULL);
-		}
-		else
-		{
-			char	   *strval = DatumGetCString(DirectFunctionCall1(textout,
-																   val));
-
-			*loval = FunctionCall3(&inputproc,
-								   CStringGetDatum(strval),
-								   ObjectIdGetDatum(typelem),
-								   Int32GetDatum(typmod));
-			pfree(strval);
-		}
-	}
-
-	if (hival)
-	{
-		Datum		val = SysCacheGetAttr(STATRELID, tuple,
-										  Anum_pg_statistic_stahival,
-										  &isnull);
-
-		if (isnull)
-		{
-			elog(DEBUG, "getattstatistics: stahival is null");
-			*hival = PointerGetDatum(NULL);
-		}
-		else
-		{
-			char	   *strval = DatumGetCString(DirectFunctionCall1(textout,
-																   val));
-
-			*hival = FunctionCall3(&inputproc,
-								   CStringGetDatum(strval),
-								   ObjectIdGetDatum(typelem),
-								   Int32GetDatum(typmod));
-			pfree(strval);
-		}
-	}
-
-	ReleaseSysCache(tuple);
-
-	return true;
+	return 100.0;
 }
 
 /*-------------------------------------------------------------------------

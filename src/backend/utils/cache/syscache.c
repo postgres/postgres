@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.60 2001/03/22 03:59:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.61 2001/05/07 00:43:24 tgl Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -313,7 +313,7 @@ static struct cachedesc cacheinfo[] = {
 			0,
 			0
 	}},
-	{StatisticRelationName,		/* STATRELID */
+	{StatisticRelationName,		/* STATRELATT */
 		StatisticRelidAttnumIndex,
 		2,
 		{

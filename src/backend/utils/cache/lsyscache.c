@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.52 2001/03/23 04:49:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.53 2001/05/07 00:43:24 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -18,7 +18,10 @@
 #include "access/tupmacs.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
+#include "catalog/pg_statistic.h"
 #include "catalog/pg_type.h"
+#include "utils/array.h"
+#include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
@@ -180,106 +183,6 @@ get_atttypmod(Oid relid, AttrNumber attnum)
 	}
 	else
 		return -1;
-}
-
-/*
- * get_attdispersion
- *
- *	  Retrieve the dispersion statistic for an attribute,
- *	  or produce an estimate if no info is available.
- *
- * min_estimate is the minimum estimate to return if insufficient data
- * is available to produce a reliable value.  This value may vary
- * depending on context.  (For example, when deciding whether it is
- * safe to use a hashjoin, we want to be more conservative than when
- * estimating the number of tuples produced by an equijoin.)
- */
-double
-get_attdispersion(Oid relid, AttrNumber attnum, double min_estimate)
-{
-	HeapTuple	atp;
-	Form_pg_attribute att_tup;
-	double		dispersion;
-	Oid			atttypid;
-	int32		ntuples;
-
-	atp = SearchSysCache(ATTNUM,
-						 ObjectIdGetDatum(relid),
-						 Int16GetDatum(attnum),
-						 0, 0);
-	if (!HeapTupleIsValid(atp))
-	{
-		/* this should not happen */
-		elog(ERROR, "get_attdispersion: no attribute tuple %u %d",
-			 relid, attnum);
-		return min_estimate;
-	}
-
-	att_tup = (Form_pg_attribute) GETSTRUCT(atp);
-
-	dispersion = att_tup->attdispersion;
-	atttypid = att_tup->atttypid;
-
-	ReleaseSysCache(atp);
-
-	if (dispersion > 0.0)
-		return dispersion;		/* we have a specific estimate from VACUUM */
-
-	/*
-	 * Special-case boolean columns: the dispersion of a boolean is highly
-	 * unlikely to be anywhere near 1/numtuples, instead it's probably
-	 * more like 0.5.
-	 *
-	 * Are there any other cases we should wire in special estimates for?
-	 */
-	if (atttypid == BOOLOID)
-		return 0.5;
-
-	/*
-	 * Dispersion is either 0 (no data available) or -1 (dispersion is
-	 * 1/numtuples).  Either way, we need the relation size.
-	 */
-
-	atp = SearchSysCache(RELOID,
-						 ObjectIdGetDatum(relid),
-						 0, 0, 0);
-	if (!HeapTupleIsValid(atp))
-	{
-		/* this should not happen */
-		elog(ERROR, "get_attdispersion: no relation tuple %u", relid);
-		return min_estimate;
-	}
-
-	ntuples = ((Form_pg_class) GETSTRUCT(atp))->reltuples;
-
-	ReleaseSysCache(atp);
-
-	if (ntuples == 0)
-		return min_estimate;	/* no data available */
-
-	if (dispersion < 0.0)		/* VACUUM thinks there are no duplicates */
-		return 1.0 / (double) ntuples;
-
-	/*
-	 * VACUUM ANALYZE does not compute dispersion for system attributes,
-	 * but some of them can reasonably be assumed unique anyway.
-	 */
-	if (attnum == ObjectIdAttributeNumber ||
-		attnum == SelfItemPointerAttributeNumber)
-		return 1.0 / (double) ntuples;
-	if (attnum == TableOidAttributeNumber)
-		return 1.0;
-
-	/*
-	 * VACUUM ANALYZE has not been run for this table. Produce an estimate
-	 * of 1/numtuples.  This may produce unreasonably small estimates for
-	 * large tables, so limit the estimate to no less than min_estimate.
-	 */
-	dispersion = 1.0 / (double) ntuples;
-	if (dispersion < min_estimate)
-		dispersion = min_estimate;
-
-	return dispersion;
 }
 
 /*				---------- INDEX CACHE ----------						 */
@@ -876,3 +779,157 @@ get_typtype(Oid typid)
 }
 
 #endif
+
+/*				---------- STATISTICS CACHE ----------					 */
+
+/*
+ * get_attstatsslot
+ *
+ *		Extract the contents of a "slot" of a pg_statistic tuple.
+ *		Returns TRUE if requested slot type was found, else FALSE.
+ *
+ * Unlike other routines in this file, this takes a pointer to an
+ * already-looked-up tuple in the pg_statistic cache.  We do this since
+ * most callers will want to extract more than one value from the cache
+ * entry, and we don't want to repeat the cache lookup unnecessarily.
+ *
+ * statstuple: pg_statistics tuple to be examined.
+ * atttype: type OID of attribute.
+ * atttypmod: typmod of attribute.
+ * reqkind: STAKIND code for desired statistics slot kind.
+ * reqop: STAOP value wanted, or InvalidOid if don't care.
+ * values, nvalues: if not NULL, the slot's stavalues are extracted.
+ * numbers, nnumbers: if not NULL, the slot's stanumbers are extracted.
+ *
+ * If assigned, values and numbers are set to point to palloc'd arrays.
+ * If the attribute type is pass-by-reference, the values referenced by
+ * the values array are themselves palloc'd.  The palloc'd stuff can be
+ * freed by calling free_attstatsslot.
+ */
+bool
+get_attstatsslot(HeapTuple statstuple,
+				 Oid atttype, int32 atttypmod,
+				 int reqkind, Oid reqop,
+				 Datum **values, int *nvalues,
+				 float4 **numbers, int *nnumbers)
+{
+	Form_pg_statistic stats = (Form_pg_statistic) GETSTRUCT(statstuple);
+	int			i,
+				j;
+	Datum		val;
+	bool		isnull;
+	ArrayType  *statarray;
+	int			narrayelem;
+	HeapTuple	typeTuple;
+	FmgrInfo	inputproc;
+	Oid			typelem;
+
+	for (i = 0; i < STATISTIC_NUM_SLOTS; i++)
+	{
+		if ((&stats->stakind1)[i] == reqkind &&
+			(reqop == InvalidOid || (&stats->staop1)[i] == reqop))
+			break;
+	}
+	if (i >= STATISTIC_NUM_SLOTS)
+		return false;			/* not there */
+
+	if (values)
+	{
+		val = SysCacheGetAttr(STATRELATT, statstuple,
+							  Anum_pg_statistic_stavalues1 + i,
+							  &isnull);
+		if (isnull)
+			elog(ERROR, "get_attstatsslot: stavalues is null");
+		statarray = DatumGetArrayTypeP(val);
+		/*
+		 * Do initial examination of the array.  This produces a list
+		 * of text Datums --- ie, pointers into the text array value.
+		 */
+		deconstruct_array(statarray, false, -1, 'i', values, nvalues);
+		narrayelem = *nvalues;
+		/*
+		 * We now need to replace each text Datum by its internal equivalent.
+		 *
+		 * Get the type input proc and typelem for the column datatype.
+		 */
+		typeTuple = SearchSysCache(TYPEOID,
+								   ObjectIdGetDatum(atttype),
+								   0, 0, 0);
+		if (!HeapTupleIsValid(typeTuple))
+			elog(ERROR, "get_attstatsslot: Cache lookup failed for type %u",
+				 atttype);
+		fmgr_info(((Form_pg_type) GETSTRUCT(typeTuple))->typinput, &inputproc);
+		typelem = ((Form_pg_type) GETSTRUCT(typeTuple))->typelem;
+		ReleaseSysCache(typeTuple);
+		/*
+		 * Do the conversions.  The palloc'd array of Datums is reused
+		 * in place.
+		 */
+		for (j = 0; j < narrayelem; j++)
+		{
+			char	   *strval;
+
+			strval = DatumGetCString(DirectFunctionCall1(textout,
+														 (*values)[j]));
+			(*values)[j] = FunctionCall3(&inputproc,
+										 CStringGetDatum(strval),
+										 ObjectIdGetDatum(typelem),
+										 Int32GetDatum(atttypmod));
+			pfree(strval);
+		}
+		/*
+		 * Free statarray if it's a detoasted copy.
+		 */
+		if ((Pointer) statarray != DatumGetPointer(val))
+			pfree(statarray);
+	}
+
+	if (numbers)
+	{
+		val = SysCacheGetAttr(STATRELATT, statstuple,
+							  Anum_pg_statistic_stanumbers1 + i,
+							  &isnull);
+		if (isnull)
+			elog(ERROR, "get_attstatsslot: stanumbers is null");
+		statarray = DatumGetArrayTypeP(val);
+		/*
+		 * We expect the array to be a 1-D float4 array; verify that.
+		 * We don't need to use deconstruct_array() since the array
+		 * data is just going to look like a C array of float4 values.
+		 */
+		narrayelem = ARR_DIMS(statarray)[0];
+		if (ARR_NDIM(statarray) != 1 || narrayelem <= 0 ||
+			ARR_SIZE(statarray) != (ARR_OVERHEAD(1) + narrayelem * sizeof(float4)))
+			elog(ERROR, "get_attstatsslot: stanumbers is bogus");
+		*numbers = (float4 *) palloc(narrayelem * sizeof(float4));
+		memcpy(*numbers, ARR_DATA_PTR(statarray), narrayelem * sizeof(float4));
+		*nnumbers = narrayelem;
+		/*
+		 * Free statarray if it's a detoasted copy.
+		 */
+		if ((Pointer) statarray != DatumGetPointer(val))
+			pfree(statarray);
+	}
+
+	return true;
+}
+
+void
+free_attstatsslot(Oid atttype,
+				  Datum *values, int nvalues,
+				  float4 *numbers, int nnumbers)
+{
+	if (values)
+	{
+		if (! get_typbyval(atttype))
+		{
+			int		i;
+
+			for (i = 0; i < nvalues; i++)
+				pfree(DatumGetPointer(values[i]));
+		}
+		pfree(values);
+	}
+	if (numbers)
+		pfree(numbers);
+}

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.162 2001/03/22 06:16:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.163 2001/05/07 00:43:17 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -96,54 +96,72 @@ static void RemoveStatistics(Relation rel);
 
 /*
  * Note:
- *		Should the executor special case these attributes in the future?
- *		Advantage:	consume 1/2 the space in the ATTRIBUTE relation.
- *		Disadvantage:  having rules to compute values in these tuples may
- *				be more difficult if not impossible.
+ *		Should the system special case these attributes in the future?
+ *		Advantage:	consume much less space in the ATTRIBUTE relation.
+ *		Disadvantage:  special cases will be all over the place.
  */
 
 static FormData_pg_attribute a1 = {
-	0xffffffff, {"ctid"}, TIDOID, 0, sizeof(ItemPointerData),
-	SelfItemPointerAttributeNumber, 0, -1, -1, '\0', 'p', '\0', 'i', '\0', '\0'
+	0, {"ctid"}, TIDOID, 0, sizeof(ItemPointerData),
+	SelfItemPointerAttributeNumber, 0, -1, -1,
+	false, 'p', false, 'i', false, false
 };
 
 static FormData_pg_attribute a2 = {
-	0xffffffff, {"oid"}, OIDOID, 0, sizeof(Oid),
-	ObjectIdAttributeNumber, 0, -1, -1, '\001', 'p', '\0', 'i', '\0', '\0'
+	0, {"oid"}, OIDOID, 0, sizeof(Oid),
+	ObjectIdAttributeNumber, 0, -1, -1,
+	true, 'p', false, 'i', false, false
 };
 
 static FormData_pg_attribute a3 = {
-	0xffffffff, {"xmin"}, XIDOID, 0, sizeof(TransactionId),
-	MinTransactionIdAttributeNumber, 0, -1, -1, '\001', 'p', '\0', 'i', '\0', '\0'
+	0, {"xmin"}, XIDOID, 0, sizeof(TransactionId),
+	MinTransactionIdAttributeNumber, 0, -1, -1,
+	true, 'p', false, 'i', false, false
 };
 
 static FormData_pg_attribute a4 = {
-	0xffffffff, {"cmin"}, CIDOID, 0, sizeof(CommandId),
-	MinCommandIdAttributeNumber, 0, -1, -1, '\001', 'p', '\0', 'i', '\0', '\0'
+	0, {"cmin"}, CIDOID, 0, sizeof(CommandId),
+	MinCommandIdAttributeNumber, 0, -1, -1,
+	true, 'p', false, 'i', false, false
 };
 
 static FormData_pg_attribute a5 = {
-	0xffffffff, {"xmax"}, XIDOID, 0, sizeof(TransactionId),
-	MaxTransactionIdAttributeNumber, 0, -1, -1, '\001', 'p', '\0', 'i', '\0', '\0'
+	0, {"xmax"}, XIDOID, 0, sizeof(TransactionId),
+	MaxTransactionIdAttributeNumber, 0, -1, -1,
+	true, 'p', false, 'i', false, false
 };
 
 static FormData_pg_attribute a6 = {
-	0xffffffff, {"cmax"}, CIDOID, 0, sizeof(CommandId),
-	MaxCommandIdAttributeNumber, 0, -1, -1, '\001', 'p', '\0', 'i', '\0', '\0'
+	0, {"cmax"}, CIDOID, 0, sizeof(CommandId),
+	MaxCommandIdAttributeNumber, 0, -1, -1,
+	true, 'p', false, 'i', false, false
 };
 
 /*
-   We decide to call this attribute "tableoid" rather than say
-"classoid" on the basis that in the future there may be more than one
-table of a particular class/type. In any case table is still the word
-used in SQL.
-*/
+ * We decided to call this attribute "tableoid" rather than say
+ * "classoid" on the basis that in the future there may be more than one
+ * table of a particular class/type. In any case table is still the word
+ * used in SQL.
+ */
 static FormData_pg_attribute a7 = {
-	0xffffffff, {"tableoid"}, OIDOID, 0, sizeof(Oid),
-	TableOidAttributeNumber, 0, -1, -1, '\001', 'p', '\0', 'i', '\0', '\0'
+	0, {"tableoid"}, OIDOID, 0, sizeof(Oid),
+	TableOidAttributeNumber, 0, -1, -1,
+	true, 'p', false, 'i', false, false
 };
 
-static Form_pg_attribute HeapAtt[] = {&a1, &a2, &a3, &a4, &a5, &a6, &a7};
+static Form_pg_attribute SysAtt[] = {&a1, &a2, &a3, &a4, &a5, &a6, &a7};
+
+/*
+ * This function returns a Form_pg_attribute pointer for a system attribute.
+ */
+Form_pg_attribute
+SystemAttributeDefinition(AttrNumber attno)
+{
+	if (attno >= 0 || attno < - (int) lengthof(SysAtt))
+		elog(ERROR, "SystemAttributeDefinition: invalid attribute number %d",
+			 attno);
+	return SysAtt[-attno - 1];
+}
 
 /* ----------------------------------------------------------------
  *				XXX END OF UGLY HARD CODED BADNESS XXX
@@ -380,32 +398,6 @@ heap_storage_create(Relation rel)
  *		8) the relations are closed and the new relation's oid
  *		   is returned.
  *
- * old comments:
- *		A new relation is inserted into the RELATION relation
- *		with the specified attribute(s) (newly inserted into
- *		the ATTRIBUTE relation).  How does concurrency control
- *		work?  Is it automatic now?  Expects the caller to have
- *		attname, atttypid, atttyparg, attproc, and attlen domains filled.
- *		Create fills the attnum domains sequentually from zero,
- *		fills the attdispersion domains with zeros, and fills the
- *		attrelid fields with the relid.
- *
- *		scan relation catalog for name conflict
- *		scan type catalog for typids (if not arg)
- *		create and insert attribute(s) into attribute catalog
- *		create new relation
- *		insert new relation into attribute catalog
- *
- *		Should coordinate with heap_create_with_catalog(). Either
- *		it should not be called or there should be a way to prevent
- *		the relation from being removed at the end of the
- *		transaction if it is successful ('u'/'r' may be enough).
- *		Also, if the transaction does not commit, then the
- *		relation should be removed.
- *
- *		XXX amcreate ignores "off" when inserting (for now).
- *		XXX amcreate (like the other utilities) needs to understand indexes.
- *
  * ----------------------------------------------------------------
  */
 
@@ -432,14 +424,14 @@ CheckAttributeNames(TupleDesc tupdesc)
 	 */
 	for (i = 0; i < natts; i++)
 	{
-		for (j = 0; j < (int) (sizeof(HeapAtt) / sizeof(HeapAtt[0])); j++)
+		for (j = 0; j < (int) lengthof(SysAtt); j++)
 		{
-			if (strcmp(NameStr(HeapAtt[j]->attname),
+			if (strcmp(NameStr(SysAtt[j]->attname),
 					   NameStr(tupdesc->attrs[i]->attname)) == 0)
 			{
 				elog(ERROR, "Attribute '%s' has a name conflict"
 					 "\n\tName matches an existing system attribute",
-					 NameStr(HeapAtt[j]->attname));
+					 NameStr(SysAtt[j]->attname));
 			}
 		}
 		if (tupdesc->attrs[i]->atttypid == UNKNOWNOID)
@@ -574,7 +566,7 @@ AddNewAttributeTuples(Oid new_rel_oid,
 		/* Fill in the correct relation OID */
 		(*dpp)->attrelid = new_rel_oid;
 		/* Make sure these are OK, too */
-		(*dpp)->attdispersion = 0;
+		(*dpp)->attstattarget = DEFAULT_ATTSTATTARGET;
 		(*dpp)->attcacheoff = -1;
 
 		tup = heap_addheader(Natts_pg_attribute,
@@ -593,14 +585,14 @@ AddNewAttributeTuples(Oid new_rel_oid,
 	/*
 	 * next we add the system attributes..
 	 */
-	dpp = HeapAtt;
+	dpp = SysAtt;
 	for (i = 0; i < -1 - FirstLowInvalidHeapAttributeNumber; i++)
 	{
 		/* Fill in the correct relation OID */
 		/* HACK: we are writing on static data here */
 		(*dpp)->attrelid = new_rel_oid;
 		/* Unneeded since they should be OK in the constant data anyway */
-		/* (*dpp)->attdispersion = 0; */
+		/* (*dpp)->attstattarget = 0; */
 		/* (*dpp)->attcacheoff = -1; */
 
 		tup = heap_addheader(Natts_pg_attribute,
@@ -669,8 +661,23 @@ AddNewRelationTuple(Relation pg_class_desc,
 	 * save. (NOTE: CREATE INDEX inserts the same bogus estimates if it
 	 * finds the relation has 0 rows and pages. See index.c.)
 	 */
-	new_rel_reltup->relpages = 10;		/* bogus estimates */
-	new_rel_reltup->reltuples = 1000;
+	switch (relkind)
+	{
+		case RELKIND_RELATION:
+		case RELKIND_INDEX:
+		case RELKIND_TOASTVALUE:
+			new_rel_reltup->relpages = 10;	/* bogus estimates */
+			new_rel_reltup->reltuples = 1000;
+			break;
+		case RELKIND_SEQUENCE:
+			new_rel_reltup->relpages = 1;
+			new_rel_reltup->reltuples = 1;
+			break;
+		default:				/* views, etc */
+			new_rel_reltup->relpages = 0;
+			new_rel_reltup->reltuples = 0;
+			break;
+	}
 
 	new_rel_reltup->relowner = GetUserId();
 	new_rel_reltup->reltype = new_type_oid;

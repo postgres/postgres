@@ -134,7 +134,7 @@ make_name(void)
 
 %union {
 	double                  dval;
-        int                     ival;
+	int                     ival;
 	char *                  str;
 	struct when             action;
 	struct index		index;
@@ -224,7 +224,7 @@ make_name(void)
 		NONE, NOTHING, NOTIFY, NOTNULL, OFFSET, OIDS,
 		OPERATOR, OWNER, PASSWORD, PROCEDURAL, REINDEX, RENAME, RESET,
 		RETURNS, ROW, RULE, SEQUENCE, SERIAL, SETOF, SHARE,
-		SHOW, START, STATEMENT, STDIN, STDOUT, SYSID TEMP,
+		SHOW, START, STATEMENT, STATISTICS, STDIN, STDOUT, SYSID TEMP,
 		TEMPLATE, TOAST, TRUNCATE, TRUSTED, UNLISTEN, UNTIL, VACUUM,
 		VALID, VERBOSE, VERSION
 
@@ -285,7 +285,7 @@ make_name(void)
 %type  <str>    file_name AexprConst ParamNo c_expr ConstTypename
 %type  <str>	in_expr_nodes a_expr b_expr TruncateStmt CommentStmt
 %type  <str> 	opt_indirection expr_list extract_list extract_arg
-%type  <str>	position_list substr_list substr_from alter_column_action
+%type  <str>	position_list substr_list substr_from alter_column_default
 %type  <str>	trim_list in_expr substr_for attr attrs drop_behavior
 %type  <str>	Typename SimpleTypename Generic Numeric generic opt_float opt_numeric
 %type  <str> 	opt_decimal Character character opt_varying opt_charset
@@ -293,7 +293,7 @@ make_name(void)
 %type  <str>	row_expr row_descriptor row_list ConstDatetime opt_chain
 %type  <str>	SelectStmt into_clause OptTemp ConstraintAttributeSpec
 %type  <str>	opt_table opt_all sort_clause sortby_list ConstraintAttr 
-%type  <str>	sortby OptUseOp opt_inh_star relation_name_list name_list
+%type  <str>	sortby OptUseOp relation_name_list name_list
 %type  <str>	group_clause having_clause from_clause opt_distinct
 %type  <str>	join_outer where_clause relation_expr sub_type opt_arg
 %type  <str>	opt_column_list insert_rest InsertStmt OptimizableStmt
@@ -301,8 +301,8 @@ make_name(void)
 %type  <str>    NotifyStmt columnElem copy_dirn UnlistenStmt copy_null
 %type  <str>    copy_delimiter ListenStmt CopyStmt copy_file_name opt_binary
 %type  <str>    opt_with_copy FetchStmt direction fetch_how_many from_in
-%type  <str>    ClosePortalStmt DropStmt VacuumStmt opt_verbose func_arg
-%type  <str>    opt_analyze opt_va_list va_list ExplainStmt index_params
+%type  <str>    ClosePortalStmt DropStmt VacuumStmt AnalyzeStmt opt_verbose func_arg
+%type  <str>    analyze_keyword opt_name_list ExplainStmt index_params
 %type  <str>    index_list func_index index_elem opt_class access_method_clause
 %type  <str>    index_opt_unique IndexStmt func_return ConstInterval
 %type  <str>    func_args_list func_args opt_with ProcedureStmt def_arg
@@ -329,7 +329,7 @@ make_name(void)
 %type  <str>	opt_cursor opt_lmode ConstraintsSetStmt comment_tg AllConst
 %type  <str>	case_expr when_clause_list case_default case_arg when_clause
 %type  <str>    select_clause opt_select_limit select_limit_value ConstraintTimeSpec
-%type  <str>    select_offset_value ReindexStmt join_type opt_only opt_boolean
+%type  <str>    select_offset_value ReindexStmt join_type opt_boolean
 %type  <str>	join_qual update_list AlterSchemaStmt joined_table
 %type  <str>	opt_level opt_lock lock_type users_in_new_group_clause
 %type  <str>    OptConstrFromTable comment_op OptTempTableName StringConst
@@ -447,6 +447,7 @@ stmt:  AlterSchemaStmt 			{ output_statement($1, 0, NULL, connection); }
 		| CreatedbStmt		{ output_statement($1, 0, NULL, connection); }
 		| DropdbStmt		{ output_statement($1, 0, NULL, connection); }
 		| VacuumStmt		{ output_statement($1, 0, NULL, connection); }
+		| AnalyzeStmt		{ output_statement($1, 0, NULL, connection); }
 		| VariableSetStmt	{ output_statement($1, 0, NULL, connection); }
 		| VariableShowStmt	{ output_statement($1, 0, NULL, connection); }
 		| VariableResetStmt	{ output_statement($1, 0, NULL, connection); }
@@ -909,39 +910,40 @@ CheckPointStmt: CHECKPOINT     { $$= make_str("checkpoint"); }
 
 /*****************************************************************************
  *
- *		QUERY :
- *
  *	ALTER TABLE variations
  *
  *****************************************************************************/
 
 AlterTableStmt:
-/* ALTER TABLE <name> ADD [COLUMN] <coldef> */
-        ALTER TABLE relation_name opt_inh_star ADD opt_column columnDef
+/* ALTER TABLE <relation> ADD [COLUMN] <coldef> */
+        ALTER TABLE relation_expr ADD opt_column columnDef
 		{
-			$$ = cat_str(6, make_str("alter table"), $3, $4, make_str("add"), $6, $7);
+			$$ = cat_str(5, make_str("alter table"), $3, make_str("add"), $5, $6);
 		}
-/* ALTER TABLE <name> ALTER [COLUMN] <colname> {SET DEFAULT <expr>|DROP
-DEFAULT} */
-	| ALTER TABLE relation_name opt_inh_star ALTER opt_column ColId
-		alter_column_action
+/* ALTER TABLE <relation> ALTER [COLUMN] <colname> {SET DEFAULT <expr>|DROP DEFAULT} */
+	| ALTER TABLE relation_expr ALTER opt_column ColId alter_column_default
 		{
-			$$ = cat_str(7, make_str("alter table"), $3, $4, make_str("alter"), $6, $7, $8);
+			$$ = cat_str(6, make_str("alter table"), $3, make_str("alter"), $5, $6, $7);
 		}
-/* ALTER TABLE <name> DROP [COLUMN] <name> {RESTRICT|CASCADE} */
-	| ALTER TABLE relation_name opt_inh_star DROP opt_column ColId drop_behavior
+/* ALTER TABLE <relation> ALTER [COLUMN] <colname> SET STATISTICS <Iconst> */
+	| ALTER TABLE relation_expr ALTER opt_column ColId SET STATISTICS Iconst
 		{
-			$$ = cat_str(7, make_str("alter table"), $3, $4, make_str("drop"), $6, $7, $8);
+			$$ = cat_str(7, make_str("alter table"), $3, make_str("alter"), $5, $6, make_str("set statistics"), $9);
 		}
-/* ALTER TABLE <name> ADD CONSTRAINT ... */
-	| ALTER TABLE relation_name opt_inh_star ADD TableConstraint
+/* ALTER TABLE <relation> DROP [COLUMN] <colname> {RESTRICT|CASCADE} */
+	| ALTER TABLE relation_expr DROP opt_column ColId drop_behavior
 		{
-			$$ = cat_str(5, make_str("alter table"), $3, $4, make_str("add"), $6);
+			$$ = cat_str(6, make_str("alter table"), $3, make_str("drop"), $5, $6, $7);
 		}
-/* ALTER TABLE <name> DROP CONSTRAINT ... */
-	| ALTER TABLE relation_name opt_inh_star DROP CONSTRAINT name drop_behavior
+/* ALTER TABLE <relation> ADD CONSTRAINT ... */
+	| ALTER TABLE relation_expr ADD TableConstraint
 		{
-			$$ = cat_str(6, make_str("alter table"), $3, $4, make_str("drop constraint"), $7, $8);
+			$$ = cat_str(4, make_str("alter table"), $3, make_str("add"), $5);
+		}
+/* ALTER TABLE <relation> DROP CONSTRAINT ... */
+	| ALTER TABLE relation_expr DROP CONSTRAINT name drop_behavior
+		{
+			$$ = cat_str(5, make_str("alter table"), $3, make_str("drop constraint"), $6, $7);
 		}
 /* ALTER TABLE <name> OWNER TO UserId */     
 	| ALTER TABLE relation_name OWNER TO UserId   
@@ -950,7 +952,7 @@ DEFAULT} */
 		}
 		;
 
-alter_column_action:
+alter_column_default:
         SET DEFAULT a_expr	{ $$ = cat2_str(make_str("set default"), $3); }
         | DROP DEFAULT          { $$ = make_str("drop default"); }
         ;
@@ -1233,10 +1235,6 @@ key_reference:  NO ACTION	{ $$ = make_str("no action"); }
 		| SET DEFAULT	{ $$ = make_str("set default"); }
 		| SET NULL_P	{ $$ = make_str("set null"); }
 		;
-
-opt_only: ONLY   	{ $$ = make_str("only"); }
-	| /*EMPTY*/	{ $$ = EMPTY; }
-	;
 
 OptInherit:  INHERITS '(' relation_name_list ')'                { $$ = cat_str(3, make_str("inherits ("), $3, make_str(")")); }
                 | /*EMPTY*/					{ $$ = EMPTY; }
@@ -2013,10 +2011,9 @@ opt_force:      FORCE		{ $$ = make_str("force"); }
  *
  *****************************************************************************/
 
-RenameStmt:  ALTER TABLE relation_name opt_inh_star
-				  RENAME opt_column opt_name TO name
+RenameStmt:  ALTER TABLE relation_expr RENAME opt_column opt_name TO name
 				{
-					$$ = cat_str(8, make_str("alter table"), $3, $4, make_str("rename"), $6, $7, make_str("to"), $9);
+					$$ = cat_str(7, make_str("alter table"), $3, make_str("rename"), $5, $6, make_str("to"), $8);
 				}
 		;
 
@@ -2250,38 +2247,44 @@ ClusterStmt:  CLUSTER index_name ON relation_name
  *
  *		QUERY:
  *				vacuum
+ *				analyze
  *
  *****************************************************************************/
 
-VacuumStmt:  VACUUM opt_verbose opt_analyze
+VacuumStmt:  VACUUM opt_verbose
+				{
+					$$ = cat_str(2, make_str("vacuum"), $2);
+				}
+		| VACUUM opt_verbose relation_name
 				{
 					$$ = cat_str(3, make_str("vacuum"), $2, $3);
 				}
-		| VACUUM opt_verbose opt_analyze relation_name opt_va_list
+		| VACUUM opt_verbose AnalyzeStmt
 				{
-					if ( strlen($5) > 0 && strlen($4) == 0 )
-						mmerror(ET_ERROR, "VACUUM syntax error at or near \"(\"\n\tRelations name must be specified");
-					$$ = cat_str(5, make_str("vacuum"), $2, $3, $4, $5);
+					$$ = cat_str(3, make_str("vacuum"), $2, $3);
 				}
+		;
+
+AnalyzeStmt:  analyze_keyword opt_verbose
+				{
+					$$ = cat_str(2, $1, $2);
+				}
+		| analyze_keyword opt_verbose relation_name opt_name_list
+				{
+					$$ = cat_str(4, $1, $2, $3, $4);
+				}
+		;
+
+analyze_keyword:  ANALYZE					{ $$ = make_str("analyze"); }
+		| ANALYSE							{ $$ = make_str("analyse"); }
 		;
 
 opt_verbose:  VERBOSE					{ $$ = make_str("verbose"); }
 		| /*EMPTY*/				{ $$ = EMPTY; }
 		;
 
-opt_analyze:  ANALYZE					{ $$ = make_str("analyze"); }
-		| ANALYSE				{ $$ = make_str("analyse"); }
+opt_name_list:  '(' name_list ')'		{ $$ = cat_str(3, make_str("("), $2, make_str(")")); }
 		| /*EMPTY*/				{ $$ = EMPTY; }
-		;
-
-opt_va_list:  '(' va_list ')'				{ $$ = cat_str(3, make_str("("), $2, make_str(")")); }
-		| /*EMPTY*/				{ $$ = EMPTY; }
-		;
-
-va_list:  name
-				{ $$=$1; }
-		| va_list ',' name
-				{ $$=cat_str(3, $1, make_str(","), $3); }
 		;
 
 
@@ -2383,9 +2386,9 @@ columnElem:  ColId opt_indirection
  *
  *****************************************************************************/
 
-DeleteStmt:  DELETE FROM opt_only name where_clause
+DeleteStmt:  DELETE FROM relation_expr where_clause
 				{
-					$$ = cat_str(4, make_str("delete from"), $3, $4, $5);
+					$$ = cat_str(3, make_str("delete from"), $3, $4);
 				}
 		;
 
@@ -2416,12 +2419,12 @@ opt_lmode:      SHARE                           { $$ = make_str("share"); }
  *
  *****************************************************************************/
 
-UpdateStmt:  UPDATE opt_only relation_name
+UpdateStmt:  UPDATE relation_expr
 			  SET update_target_list
 			  from_clause
 			  where_clause
 				{
-					$$ = cat_str(7, make_str("update"), $2, $3, make_str("set"), $5, $6, $7);
+					$$ = cat_str(6, make_str("update"), $2, make_str("set"), $4, $5, $6);
 				}
 		;
 
@@ -2667,10 +2670,6 @@ select_offset_value:  	PosIntConst	{
  *	...however, recursive addattr and rename supported.  make special
  *	cases for these.
  */
-opt_inh_star:  '*'					{ $$ = make_str("*"); }
-		| /*EMPTY*/				{ $$ = EMPTY; }
-		;
-
 relation_name_list:  name_list { $$ = $1; };
 
 name_list:  name
@@ -2704,7 +2703,7 @@ opt_for_update_clause: for_update_clause                { $$ = $1; }
 		| /* EMPTY */				{ $$ = EMPTY; }
                 ;
 
-update_list:  OF va_list
+update_list:  OF name_list
               {
 			$$ = cat2_str(make_str("of"), $2);
 	      }
@@ -5028,6 +5027,7 @@ TokenId:  ABSOLUTE			{ $$ = make_str("absolute"); }
 	| SHARE				{ $$ = make_str("share"); }
 	| START				{ $$ = make_str("start"); }
 	| STATEMENT			{ $$ = make_str("statement"); }
+	| STATISTICS		{ $$ = make_str("statistics"); }
 	| STDIN                         { $$ = make_str("stdin"); }
 	| STDOUT                        { $$ = make_str("stdout"); }
 	| SYSID                         { $$ = make_str("sysid"); }

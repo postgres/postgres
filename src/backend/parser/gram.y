@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.222 2001/05/01 01:36:10 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.223 2001/05/07 00:43:23 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -104,7 +104,6 @@ static void doNegateFloat(Value *v);
 	char				*str;
 	bool				boolean;
 	JoinType			jtype;
-	InhOption			inhOpt;
 	List				*list;
 	Node				*node;
 	Value				*value;
@@ -130,6 +129,7 @@ static void doNegateFloat(Value *v);
 
 %type <node>	stmt,
 		AlterGroupStmt, AlterSchemaStmt, AlterTableStmt, AlterUserStmt,
+		AnalyzeStmt,
 		ClosePortalStmt, ClusterStmt, CommentStmt, ConstraintsSetStmt,
 		CopyStmt, CreateAsStmt, CreateGroupStmt, CreatePLangStmt,
 		CreateSchemaStmt, CreateSeqStmt, CreateStmt, CreateTrigStmt,
@@ -147,7 +147,7 @@ static void doNegateFloat(Value *v);
 %type <node>	select_no_parens, select_with_parens, select_clause,
 				simple_select
 
-%type <node>    alter_column_action
+%type <node>    alter_column_default
 %type <ival>    drop_behavior
 
 %type <list>	createdb_opt_list, createdb_opt_item
@@ -185,7 +185,7 @@ static void doNegateFloat(Value *v);
 		OptTableElementList, OptInherit, definition, opt_distinct,
 		opt_with, func_args, func_args_list, func_as,
 		oper_argtypes, RuleActionList, RuleActionMulti,
-		opt_column_list, columnList, opt_va_list, va_list,
+		opt_column_list, columnList, opt_name_list,
 		sort_clause, sortby_list, index_params, index_list, name_list,
 		from_clause, from_list, opt_array_bounds,
 		expr_list, attrs, target_list, update_target_list,
@@ -210,9 +210,7 @@ static void doNegateFloat(Value *v);
 %type <node>	substr_from, substr_for
 
 %type <boolean>	opt_binary, opt_using, opt_instead, opt_cursor
-%type <boolean>	opt_with_copy, index_opt_unique, opt_verbose, opt_analyze
-
-%type <inhOpt>	opt_inh_star, opt_only
+%type <boolean>	opt_with_copy, index_opt_unique, opt_verbose, analyze_keyword
 
 %type <ival>	copy_dirn, direction, reindex_type, drop_type,
 		opt_column, event, comment_type, comment_cl,
@@ -350,7 +348,8 @@ static void doNegateFloat(Value *v);
 		NEW, NOCREATEDB, NOCREATEUSER, NONE, NOTHING, NOTIFY, NOTNULL,
 		OFFSET, OIDS, OPERATOR, OWNER, PASSWORD, PROCEDURAL,
 		REINDEX, RENAME, RESET, RETURNS, ROW, RULE,
-		SEQUENCE, SERIAL, SETOF, SHARE, SHOW, START, STATEMENT, STDIN, STDOUT, SYSID,
+		SEQUENCE, SERIAL, SETOF, SHARE, SHOW, START, STATEMENT,
+		STATISTICS, STDIN, STDOUT, SYSID,
 		TEMP, TEMPLATE, TOAST, TRUNCATE, TRUSTED, 
 		UNLISTEN, UNTIL, VACUUM, VALID, VERBOSE, VERSION
 
@@ -470,6 +469,7 @@ stmt :	AlterSchemaStmt
 		| CreatedbStmt
 		| DropdbStmt
 		| VacuumStmt
+		| AnalyzeStmt
 		| VariableSetStmt
 		| VariableShowStmt
 		| VariableResetStmt
@@ -938,57 +938,68 @@ CheckPointStmt: CHECKPOINT
  *****************************************************************************/
 
 AlterTableStmt:
-/* ALTER TABLE <name> ADD [COLUMN] <coldef> */
-		ALTER TABLE relation_name opt_inh_star ADD opt_column columnDef
+/* ALTER TABLE <relation> ADD [COLUMN] <coldef> */
+		ALTER TABLE relation_expr ADD opt_column columnDef
 				{
 					AlterTableStmt *n = makeNode(AlterTableStmt);
 					n->subtype = 'A';
-					n->relname = $3;
-					n->inhOpt = $4;
-					n->def = $7;
-					$$ = (Node *)n;
-				}
-/* ALTER TABLE <name> ALTER [COLUMN] <colname> {SET DEFAULT <expr>|DROP DEFAULT} */
-		| ALTER TABLE relation_name opt_inh_star ALTER opt_column ColId alter_column_action
-				{
-					AlterTableStmt *n = makeNode(AlterTableStmt);
-					n->subtype = 'T';
-					n->relname = $3;
-					n->inhOpt = $4;
-					n->name = $7;
-					n->def = $8;
-					$$ = (Node *)n;
-				}
-/* ALTER TABLE <name> DROP [COLUMN] <name> {RESTRICT|CASCADE} */
-		| ALTER TABLE relation_name opt_inh_star DROP opt_column ColId drop_behavior
-				{
-					AlterTableStmt *n = makeNode(AlterTableStmt);
-					n->subtype = 'D';
-					n->relname = $3;
-					n->inhOpt = $4;
-					n->name = $7;
-					n->behavior = $8;
-					$$ = (Node *)n;
-				}
-/* ALTER TABLE <name> ADD CONSTRAINT ... */
-		| ALTER TABLE relation_name opt_inh_star ADD TableConstraint
-				{
-					AlterTableStmt *n = makeNode(AlterTableStmt);
-					n->subtype = 'C';
-					n->relname = $3;
-					n->inhOpt = $4;
+					n->relname = $3->relname;
+					n->inhOpt = $3->inhOpt;
 					n->def = $6;
 					$$ = (Node *)n;
 				}
-/* ALTER TABLE <name> DROP CONSTRAINT <name> {RESTRICT|CASCADE} */
-		| ALTER TABLE relation_name opt_inh_star DROP CONSTRAINT name drop_behavior
+/* ALTER TABLE <relation> ALTER [COLUMN] <colname> {SET DEFAULT <expr>|DROP DEFAULT} */
+		| ALTER TABLE relation_expr ALTER opt_column ColId alter_column_default
+				{
+					AlterTableStmt *n = makeNode(AlterTableStmt);
+					n->subtype = 'T';
+					n->relname = $3->relname;
+					n->inhOpt = $3->inhOpt;
+					n->name = $6;
+					n->def = $7;
+					$$ = (Node *)n;
+				}
+/* ALTER TABLE <relation> ALTER [COLUMN] <colname> SET STATISTICS <Iconst> */
+		| ALTER TABLE relation_expr ALTER opt_column ColId SET STATISTICS Iconst
+				{
+					AlterTableStmt *n = makeNode(AlterTableStmt);
+					n->subtype = 'S';
+					n->relname = $3->relname;
+					n->inhOpt = $3->inhOpt;
+					n->name = $6;
+					n->def = (Node *) makeInteger($9);
+					$$ = (Node *)n;
+				}
+/* ALTER TABLE <relation> DROP [COLUMN] <colname> {RESTRICT|CASCADE} */
+		| ALTER TABLE relation_expr DROP opt_column ColId drop_behavior
+				{
+					AlterTableStmt *n = makeNode(AlterTableStmt);
+					n->subtype = 'D';
+					n->relname = $3->relname;
+					n->inhOpt = $3->inhOpt;
+					n->name = $6;
+					n->behavior = $7;
+					$$ = (Node *)n;
+				}
+/* ALTER TABLE <relation> ADD CONSTRAINT ... */
+		| ALTER TABLE relation_expr ADD TableConstraint
+				{
+					AlterTableStmt *n = makeNode(AlterTableStmt);
+					n->subtype = 'C';
+					n->relname = $3->relname;
+					n->inhOpt = $3->inhOpt;
+					n->def = $5;
+					$$ = (Node *)n;
+				}
+/* ALTER TABLE <relation> DROP CONSTRAINT <name> {RESTRICT|CASCADE} */
+		| ALTER TABLE relation_expr DROP CONSTRAINT name drop_behavior
 				{
 					AlterTableStmt *n = makeNode(AlterTableStmt);
 					n->subtype = 'X';
-					n->relname = $3;
-					n->inhOpt = $4;
-					n->name = $7;
-					n->behavior = $8;
+					n->relname = $3->relname;
+					n->inhOpt = $3->inhOpt;
+					n->name = $6;
+					n->behavior = $7;
 					$$ = (Node *)n;
 				}
 /* ALTER TABLE <name> CREATE TOAST TABLE */
@@ -997,6 +1008,7 @@ AlterTableStmt:
 					AlterTableStmt *n = makeNode(AlterTableStmt);
 					n->subtype = 'E';
 					n->relname = $3;
+					n->inhOpt = INH_NO;
 					$$ = (Node *)n;
 				}
 /* ALTER TABLE <name> OWNER TO UserId */
@@ -1005,12 +1017,13 @@ AlterTableStmt:
 					AlterTableStmt *n = makeNode(AlterTableStmt);
 					n->subtype = 'U';
 					n->relname = $3;
+					n->inhOpt = INH_NO;
 					n->name = $6;
 					$$ = (Node *)n;
 				}
 		;
 
-alter_column_action:
+alter_column_default:
 		SET DEFAULT a_expr
 			{
 				/* Treat SET DEFAULT NULL the same as DROP DEFAULT */
@@ -1476,10 +1489,6 @@ key_reference:  NO ACTION				{ $$ = FKCONSTR_ON_KEY_NOACTION; }
 		| CASCADE						{ $$ = FKCONSTR_ON_KEY_CASCADE; }
 		| SET NULL_P					{ $$ = FKCONSTR_ON_KEY_SETNULL; }
 		| SET DEFAULT					{ $$ = FKCONSTR_ON_KEY_SETDEFAULT; }
-		;
-
-opt_only: ONLY              	     	        { $$ = INH_NO; }
-        | /*EMPTY*/								{ $$ = INH_DEFAULT; } 
 		;
 
 OptInherit:  INHERITS '(' relation_name_list ')'	{ $$ = $3; }
@@ -2598,14 +2607,13 @@ opt_force:	FORCE									{  $$ = TRUE; }
  *
  *****************************************************************************/
 
-RenameStmt:  ALTER TABLE relation_name opt_inh_star
-				  RENAME opt_column opt_name TO name
+RenameStmt:  ALTER TABLE relation_expr RENAME opt_column opt_name TO name
 				{
 					RenameStmt *n = makeNode(RenameStmt);
-					n->relname = $3;
-					n->inhOpt = $4;
-					n->column = $7;
-					n->newname = $9;
+					n->relname = $3->relname;
+					n->inhOpt = $3->inhOpt;
+					n->column = $6;
+					n->newname = $8;
 					$$ = (Node *)n;
 				}
 		;
@@ -2994,49 +3002,71 @@ ClusterStmt:  CLUSTER index_name ON relation_name
  *
  *		QUERY:
  *				vacuum
+ *				analyze
  *
  *****************************************************************************/
 
-VacuumStmt:  VACUUM opt_verbose opt_analyze
+VacuumStmt:  VACUUM opt_verbose
 				{
 					VacuumStmt *n = makeNode(VacuumStmt);
+					n->vacuum = true;
+					n->analyze = false;
 					n->verbose = $2;
-					n->analyze = $3;
 					n->vacrel = NULL;
-					n->va_spec = NIL;
+					n->va_cols = NIL;
 					$$ = (Node *)n;
 				}
-		| VACUUM opt_verbose opt_analyze relation_name opt_va_list
+		| VACUUM opt_verbose relation_name
 				{
 					VacuumStmt *n = makeNode(VacuumStmt);
+					n->vacuum = true;
+					n->analyze = false;
 					n->verbose = $2;
-					n->analyze = $3;
-					n->vacrel = $4;
-					n->va_spec = $5;
-					if ( $5 != NIL && !$4 )
-						elog(ERROR,"VACUUM syntax error at or near \"(\""
-							"\n\tRelation name must be specified");
+					n->vacrel = $3;
+					n->va_cols = NIL;
 					$$ = (Node *)n;
 				}
+		| VACUUM opt_verbose AnalyzeStmt
+				{
+					VacuumStmt *n = (VacuumStmt *) $3;
+					n->vacuum = true;
+					n->verbose |= $2;
+					$$ = (Node *)n;
+				}
+		;
+
+AnalyzeStmt:  analyze_keyword opt_verbose
+				{
+					VacuumStmt *n = makeNode(VacuumStmt);
+					n->vacuum = false;
+					n->analyze = true;
+					n->verbose = $2;
+					n->vacrel = NULL;
+					n->va_cols = NIL;
+					$$ = (Node *)n;
+				}
+		| analyze_keyword opt_verbose relation_name opt_name_list
+				{
+					VacuumStmt *n = makeNode(VacuumStmt);
+					n->vacuum = false;
+					n->analyze = true;
+					n->verbose = $2;
+					n->vacrel = $3;
+					n->va_cols = $4;
+					$$ = (Node *)n;
+				}
+		;
+
+analyze_keyword:  ANALYZE						{ $$ = TRUE; }
+		|	  ANALYSE /* British */				{ $$ = TRUE; }
 		;
 
 opt_verbose:  VERBOSE							{ $$ = TRUE; }
 		| /*EMPTY*/								{ $$ = FALSE; }
 		;
 
-opt_analyze:  ANALYZE							{ $$ = TRUE; }
-		|	  ANALYSE /* British */				{ $$ = TRUE; }
-		| /*EMPTY*/								{ $$ = FALSE; }
-		;
-
-opt_va_list:  '(' va_list ')'					{ $$ = $2; }
+opt_name_list:  '(' name_list ')'				{ $$ = $2; }
 		| /*EMPTY*/								{ $$ = NIL; }
-		;
-
-va_list:  name
-				{ $$ = makeList1($1); }
-		| va_list ',' name
-				{ $$ = lappend($1, $3); }
 		;
 
 
@@ -3160,12 +3190,12 @@ columnElem:  ColId opt_indirection
  *
  *****************************************************************************/
 
-DeleteStmt:  DELETE FROM opt_only relation_name where_clause
+DeleteStmt:  DELETE FROM relation_expr where_clause
 				{
 					DeleteStmt *n = makeNode(DeleteStmt);
-					n->inhOpt = $3;
-					n->relname = $4;
-					n->whereClause = $5;
+					n->relname = $3->relname;
+					n->inhOpt = $3->inhOpt;
+					n->whereClause = $4;
 					$$ = (Node *)n;
 				}
 		;
@@ -3202,17 +3232,17 @@ opt_lmode:	SHARE				{ $$ = TRUE; }
  *
  *****************************************************************************/
 
-UpdateStmt:  UPDATE opt_only relation_name
+UpdateStmt:  UPDATE relation_expr
 			  SET update_target_list
 			  from_clause
 			  where_clause
 				{
 					UpdateStmt *n = makeNode(UpdateStmt);
-					n->inhOpt = $2;
-					n->relname = $3;
-					n->targetList = $5;
-					n->fromClause = $6;
-					n->whereClause = $7;
+					n->relname = $2->relname;
+					n->inhOpt = $2->inhOpt;
+					n->targetList = $4;
+					n->fromClause = $5;
+					n->whereClause = $6;
 					$$ = (Node *)n;
 				}
 		;
@@ -3545,10 +3575,6 @@ select_offset_value:	Iconst
  *	...however, recursive addattr and rename supported.  make special
  *	cases for these.
  */
-opt_inh_star:  '*'								{ $$ = INH_YES; }
-		| /*EMPTY*/								{ $$ = INH_DEFAULT; }
-		;
-
 relation_name_list:  name_list;
 
 name_list:  name
@@ -3576,7 +3602,7 @@ opt_for_update_clause:	for_update_clause		{ $$ = $1; }
 		| /* EMPTY */							{ $$ = NULL; }
 		;
 
-update_list:  OF va_list						{ $$ = $2; }
+update_list:  OF name_list						{ $$ = $2; }
 		| /* EMPTY */							{ $$ = makeList1(NULL); }
 		;
 
@@ -5525,6 +5551,7 @@ TokenId:  ABSOLUTE						{ $$ = "absolute"; }
 		| SHARE							{ $$ = "share"; }
 		| START							{ $$ = "start"; }
 		| STATEMENT						{ $$ = "statement"; }
+		| STATISTICS					{ $$ = "statistics"; }
 		| STDIN							{ $$ = "stdin"; }
 		| STDOUT						{ $$ = "stdout"; }
 		| SYSID							{ $$ = "sysid"; }

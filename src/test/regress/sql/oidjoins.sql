@@ -177,10 +177,18 @@ SELECT	oid, pg_statistic.starelid
 FROM	pg_statistic 
 WHERE	pg_statistic.starelid != 0 AND 
 	NOT EXISTS(SELECT * FROM pg_class AS t1 WHERE t1.oid = pg_statistic.starelid);
-SELECT	oid, pg_statistic.staop 
+SELECT	oid, pg_statistic.staop1 
 FROM	pg_statistic 
-WHERE	pg_statistic.staop != 0 AND 
-	NOT EXISTS(SELECT * FROM pg_operator AS t1 WHERE t1.oid = pg_statistic.staop);
+WHERE	pg_statistic.staop1 != 0 AND 
+	NOT EXISTS(SELECT * FROM pg_operator AS t1 WHERE t1.oid = pg_statistic.staop1);
+SELECT	oid, pg_statistic.staop2 
+FROM	pg_statistic 
+WHERE	pg_statistic.staop2 != 0 AND 
+	NOT EXISTS(SELECT * FROM pg_operator AS t1 WHERE t1.oid = pg_statistic.staop2);
+SELECT	oid, pg_statistic.staop3 
+FROM	pg_statistic 
+WHERE	pg_statistic.staop3 != 0 AND 
+	NOT EXISTS(SELECT * FROM pg_operator AS t1 WHERE t1.oid = pg_statistic.staop3);
 SELECT	oid, pg_trigger.tgrelid 
 FROM	pg_trigger 
 WHERE	pg_trigger.tgrelid != 0 AND 

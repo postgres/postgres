@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: index.h,v 1.33 2001/03/22 04:00:35 momjian Exp $
+ * $Id: index.h,v 1.34 2001/05/07 00:43:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@ extern void FormIndexDatum(IndexInfo *indexInfo,
 			   Datum *datum,
 			   char *nullv);
 
-extern void UpdateStats(Oid relid, long reltuples);
+extern void UpdateStats(Oid relid, double reltuples);
 extern bool IndexesAreActive(Oid relid, bool comfirmCommitted);
 extern void setRelhasindex(Oid relid, bool hasindex);
 

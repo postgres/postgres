@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.22 2001/03/05 18:42:55 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.23 2001/05/07 00:43:15 tgl Exp $
 Postgres documentation
 -->
 
@@ -29,7 +29,9 @@ ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ * ]
 ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ * ]
     ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> { SET DEFAULT <replaceable
     class="PARAMETER">value</replaceable> | DROP DEFAULT }
-ALTER TABLE <replaceable class="PARAMETER">table</replaceable> [ * ]
+ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ * ]
+    ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> SET STATISTICS <replaceable class="PARAMETER">integer</replaceable>
+ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ * ]
     RENAME [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> TO <replaceable
     class="PARAMETER">newcolumn</replaceable>
 ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
@@ -159,9 +161,14 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
    <command>ALTER TABLE</command> changes the definition of an existing table.
    The <literal>ADD COLUMN</literal> form adds a new column to the table
    using the same syntax as <xref linkend="SQL-CREATETABLE"
-   endterm="SQL-CREATETABLE-title">. The <literal>ALTER COLUMN</literal> form
-   allows you to set or remove the default for the column. Note that defaults
-   only apply to newly inserted rows.
+   endterm="SQL-CREATETABLE-title">.
+   The <literal>ALTER COLUMN SET/DROP DEFAULT</literal> forms
+   allow you to set or remove the default for the column. Note that defaults
+   only apply to subsequent <command>INSERT</command> commands; they do not
+   cause rows already in the table to change.
+   The <literal>ALTER COLUMN SET STATISTICS</literal> form allows you to
+   set the statistics-gathering target for subsequent
+   <xref linkend="sql-analyze" endterm="sql-analyze-title"> operations.
    The <literal>RENAME</literal> clause causes the name of a table or column
    to change without changing any of the data contained in
    the affected table. Thus, the table or column will
@@ -170,7 +177,7 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
    The ADD <replaceable class="PARAMETER">table constraint definition</replaceable> clause 
    adds a new constraint to the table using the same syntax as <xref
    linkend="SQL-CREATETABLE" endterm="SQL-CREATETABLE-title">. 
-   The OWNER clause chnages the owner of the table to the user <replaceable class="PARAMETER">
+   The OWNER clause changes the owner of the table to the user <replaceable class="PARAMETER">
    new user</replaceable>.
   </para>
 
@@ -190,10 +197,11 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
    </para>
 
    <para>
-    In the current implementation, default and constraint clauses for the
+    In the current implementation of <literal>ADD COLUMN</literal>,
+    default and constraint clauses for the
     new column will be ignored. You can use the <literal>SET DEFAULT</literal>
     form of <command>ALTER TABLE</command> to set the default later.
-    (You will also have to update the already existing rows to the
+    (You may also want to update the already existing rows to the
     new default value, using <xref linkend="sql-update"
     endterm="sql-update-title">.)
    </para>
@@ -210,7 +218,7 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
 
    <para>
     You must own the table in order to change it.
-    Renaming any  part  of  the schema of a system
+    Changing any  part  of  the schema of a system
     catalog is not permitted.
     The <citetitle>PostgreSQL User's Guide</citetitle> has further
     information on inheritance.

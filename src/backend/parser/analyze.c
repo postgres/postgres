@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.183 2001/03/22 06:16:15 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.184 2001/05/07 00:43:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2660,7 +2660,7 @@ transformForUpdate(Query *qry, List *forUpdate)
 		/* just the named tables */
 		foreach(l, forUpdate)
 		{
-			char	   *relname = lfirst(l);
+			char	   *relname = strVal(lfirst(l));
 
 			i = 0;
 			foreach(rt, qry->rtable)

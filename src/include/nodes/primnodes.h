@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.53 2001/03/22 04:00:52 momjian Exp $
+ * $Id: primnodes.h,v 1.54 2001/05/07 00:43:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,8 +45,8 @@ typedef struct FunctionCache *FunctionCachePtr;
  * reskey and reskeyop are the execution-time representation of sorting.
  * reskey must be zero in any non-sort-key item.  The reskey of sort key
  * targetlist items for a sort plan node is 1,2,...,n for the n sort keys.
- * The reskeyop of each such targetlist item is the sort operator's
- * regproc OID.  reskeyop will be zero in non-sort-key items.
+ * The reskeyop of each such targetlist item is the sort operator's OID.
+ * reskeyop will be zero in non-sort-key items.
  *
  * Both reskey and reskeyop are typically zero during parse/plan stages.
  * The executor does not pay any attention to ressortgroupref.
@@ -62,7 +62,7 @@ typedef struct Resdom
 	Index		ressortgroupref;
 	/* nonzero if referenced by a sort/group clause */
 	Index		reskey;			/* order of key in a sort (for those > 0) */
-	Oid			reskeyop;		/* sort operator's regproc Oid */
+	Oid			reskeyop;		/* sort operator's Oid */
 	bool		resjunk;		/* set to true to eliminate the attribute
 								 * from final target list */
 } Resdom;

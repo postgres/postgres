@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.109 2001/03/22 06:16:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.110 2001/05/07 00:43:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -427,13 +427,19 @@ ProcessUtility(Node *parsetree,
 										interpretInhOption(stmt->inhOpt),
 											(ColumnDef *) stmt->def);
 						break;
-					case 'T':	/* ALTER COLUMN */
-						AlterTableAlterColumn(stmt->relname,
+					case 'T':	/* ALTER COLUMN DEFAULT */
+						AlterTableAlterColumnDefault(stmt->relname,
 										interpretInhOption(stmt->inhOpt),
-											  stmt->name,
-											  stmt->def);
+													 stmt->name,
+													 stmt->def);
 						break;
-					case 'D':	/* ALTER DROP */
+					case 'S':	/* ALTER COLUMN STATISTICS */
+						AlterTableAlterColumnStatistics(stmt->relname,
+										interpretInhOption(stmt->inhOpt),
+														stmt->name,
+														stmt->def);
+						break;
+					case 'D':	/* DROP COLUMN */
 						AlterTableDropColumn(stmt->relname,
 										interpretInhOption(stmt->inhOpt),
 											 stmt->name,
@@ -703,12 +709,13 @@ ProcessUtility(Node *parsetree,
 			break;
 
 		case T_VacuumStmt:
-			set_ps_display(commandTag = "VACUUM");
+			if (((VacuumStmt *) parsetree)->vacuum)
+				commandTag = "VACUUM";
+			else
+				commandTag = "ANALYZE";
+			set_ps_display(commandTag);
 
-			vacuum(((VacuumStmt *) parsetree)->vacrel,
-				   ((VacuumStmt *) parsetree)->verbose,
-				   ((VacuumStmt *) parsetree)->analyze,
-				   ((VacuumStmt *) parsetree)->va_spec);
+			vacuum((VacuumStmt *) parsetree);
 			break;
 
 		case T_ExplainStmt:

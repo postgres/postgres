@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.189 2001/03/25 23:23:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.190 2001/05/07 00:43:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,25 +53,90 @@ extern XLogRecPtr log_heap_move(Relation reln,
 			  Buffer oldbuf, ItemPointerData from,
 			  Buffer newbuf, HeapTuple newtup);
 
+
+typedef struct VRelListData
+{
+	Oid			vrl_relid;
+	struct VRelListData *vrl_next;
+} VRelListData;
+
+typedef VRelListData *VRelList;
+
+typedef struct VacPageData
+{
+	BlockNumber blkno;			/* BlockNumber of this Page */
+	Size		free;			/* FreeSpace on this Page */
+	uint16		offsets_used;	/* Number of OffNums used by vacuum */
+	uint16		offsets_free;	/* Number of OffNums free or to be free */
+	OffsetNumber offsets[1];	/* Array of its OffNums */
+} VacPageData;
+
+typedef VacPageData *VacPage;
+
+typedef struct VacPageListData
+{
+	int			empty_end_pages;/* Number of "empty" end-pages */
+	int			num_pages;		/* Number of pages in pagedesc */
+	int			num_allocated_pages;	/* Number of allocated pages in
+										 * pagedesc */
+	VacPage    *pagedesc;		/* Descriptions of pages */
+} VacPageListData;
+
+typedef VacPageListData *VacPageList;
+
+typedef struct VTupleLinkData
+{
+	ItemPointerData new_tid;
+	ItemPointerData this_tid;
+} VTupleLinkData;
+
+typedef VTupleLinkData *VTupleLink;
+
+typedef struct VTupleMoveData
+{
+	ItemPointerData tid;		/* tuple ID */
+	VacPage		vacpage;		/* where to move */
+	bool		cleanVpd;		/* clean vacpage before using */
+} VTupleMoveData;
+
+typedef VTupleMoveData *VTupleMove;
+
+typedef struct VRelStats
+{
+	Oid			relid;
+	long		num_pages;
+	long		num_tuples;
+	Size		min_tlen;
+	Size		max_tlen;
+	bool		hasindex;
+	int			num_vtlinks;
+	VTupleLink	vtlinks;
+} VRelStats;
+
+
 static MemoryContext vac_context = NULL;
 
 static int	MESSAGE_LEVEL;		/* message level */
 
 static TransactionId XmaxRecent;
 
+
 /* non-export function prototypes */
 static void vacuum_init(void);
 static void vacuum_shutdown(void);
-static void vac_vacuum(NameData *VacRelP, bool analyze, List *anal_cols2);
-static VRelList getrels(NameData *VacRelP);
+static VRelList getrels(Name VacRelP, const char *stmttype);
 static void vacuum_rel(Oid relid);
-static void scan_heap(VRelStats *vacrelstats, Relation onerel, VacPageList vacuum_pages, VacPageList fraged_pages);
-static void repair_frag(VRelStats *vacrelstats, Relation onerel, VacPageList vacuum_pages, VacPageList fraged_pages, int nindices, Relation *Irel);
-static void vacuum_heap(VRelStats *vacrelstats, Relation onerel, VacPageList vacpagelist);
+static void scan_heap(VRelStats *vacrelstats, Relation onerel,
+					  VacPageList vacuum_pages, VacPageList fraged_pages);
+static void repair_frag(VRelStats *vacrelstats, Relation onerel,
+						VacPageList vacuum_pages, VacPageList fraged_pages,
+						int nindices, Relation *Irel);
+static void vacuum_heap(VRelStats *vacrelstats, Relation onerel,
+						VacPageList vacpagelist);
 static void vacuum_page(Relation onerel, Buffer buffer, VacPage vacpage);
-static void vacuum_index(VacPageList vacpagelist, Relation indrel, int num_tuples, int keep_tuples);
-static void scan_index(Relation indrel, int num_tuples);
-static void update_relstats(Oid relid, int num_pages, int num_tuples, bool hasindex, VRelStats *vacrelstats);
+static void vacuum_index(VacPageList vacpagelist, Relation indrel,
+						 long num_tuples, int keep_tuples);
+static void scan_index(Relation indrel, long num_tuples);
 static VacPage tid_reaped(ItemPointer itemptr, VacPageList vacpagelist);
 static void reap_page(VacPageList vacpagelist, VacPage vacpage);
 static void vpage_insert(VacPageList vacpagelist, VacPage vpnew);
@@ -88,17 +153,17 @@ static bool enough_space(VacPage vacpage, Size len);
 static char *show_rusage(struct rusage * ru0);
 
 
+/*
+ * Primary entry point for VACUUM and ANALYZE commands.
+ */
 void
-vacuum(char *vacrel, bool verbose, bool analyze, List *anal_cols)
+vacuum(VacuumStmt *vacstmt)
 {
+	const char *stmttype = vacstmt->vacuum ? "VACUUM" : "ANALYZE";
 	NameData	VacRel;
 	Name		VacRelName;
-	MemoryContext old;
-	List	   *le;
-	List	   *anal_cols2 = NIL;
-
-	if (anal_cols != NIL && !analyze)
-		elog(ERROR, "Can't vacuum columns, only tables.  You can 'vacuum analyze' columns.");
+	VRelList	vrl,
+				cur;
 
 	/*
 	 * We cannot run VACUUM inside a user transaction block; if we were
@@ -110,9 +175,9 @@ vacuum(char *vacrel, bool verbose, bool analyze, List *anal_cols)
 	 * behavior.
 	 */
 	if (IsTransactionBlock())
-		elog(ERROR, "VACUUM cannot run inside a BEGIN/END block");
+		elog(ERROR, "%s cannot run inside a BEGIN/END block", stmttype);
 
-	if (verbose)
+	if (vacstmt->verbose)
 		MESSAGE_LEVEL = NOTICE;
 	else
 		MESSAGE_LEVEL = DEBUG;
@@ -130,37 +195,36 @@ vacuum(char *vacrel, bool verbose, bool analyze, List *anal_cols)
 										ALLOCSET_DEFAULT_INITSIZE,
 										ALLOCSET_DEFAULT_MAXSIZE);
 
-	/* vacrel gets de-allocated on xact commit, so copy it to safe storage */
-	if (vacrel)
+	/* Convert vacrel, which is just a string, to a Name */
+	if (vacstmt->vacrel)
 	{
-		namestrcpy(&VacRel, vacrel);
+		namestrcpy(&VacRel, vacstmt->vacrel);
 		VacRelName = &VacRel;
 	}
 	else
 		VacRelName = NULL;
 
-	/* must also copy the column list, if any, to safe storage */
-	old = MemoryContextSwitchTo(vac_context);
-	foreach(le, anal_cols)
-	{
-		char	   *col = (char *) lfirst(le);
-
-		anal_cols2 = lappend(anal_cols2, pstrdup(col));
-	}
-	MemoryContextSwitchTo(old);
+	/* Build list of relations to process (note this lives in vac_context) */
+	vrl = getrels(VacRelName, stmttype);
 
 	/*
 	 * Start up the vacuum cleaner.
-	 *
-	 * NOTE: since this commits the current transaction, the memory holding
-	 * any passed-in parameters gets freed here.  We must have already
-	 * copied pass-by-reference parameters to safe storage.  Don't make me
-	 * fix this again!
 	 */
 	vacuum_init();
 
-	/* vacuum the database */
-	vac_vacuum(VacRelName, analyze, anal_cols2);
+	/*
+	 * Process each selected relation.  We are careful to process
+	 * each relation in a separate transaction in order to avoid holding
+	 * too many locks at one time.
+	 */
+	for (cur = vrl; cur != (VRelList) NULL; cur = cur->vrl_next)
+	{
+		if (vacstmt->vacuum)
+			vacuum_rel(cur->vrl_relid);
+		/* analyze separately so locking is minimized */
+		if (vacstmt->analyze)
+			analyze_rel(cur->vrl_relid, vacstmt);
+	}
 
 	/* clean up */
 	vacuum_shutdown();
@@ -187,14 +251,14 @@ vacuum(char *vacrel, bool verbose, bool analyze, List *anal_cols)
  *		PostgresMain().
  */
 static void
-vacuum_init()
+vacuum_init(void)
 {
 	/* matches the StartTransaction in PostgresMain() */
 	CommitTransactionCommand();
 }
 
 static void
-vacuum_shutdown()
+vacuum_shutdown(void)
 {
 	/* on entry, we are not in a transaction */
 
@@ -223,34 +287,10 @@ vacuum_shutdown()
 }
 
 /*
- *	vac_vacuum() -- vacuum the database.
- *
- *		This routine builds a list of relations to vacuum, and then calls
- *		code that vacuums them one at a time.  We are careful to vacuum each
- *		relation in a separate transaction in order to avoid holding too many
- *		locks at one time.
+ * Build a list of VRelListData nodes for each relation to be processed
  */
-static void
-vac_vacuum(NameData *VacRelP, bool analyze, List *anal_cols2)
-{
-	VRelList	vrl,
-				cur;
-
-	/* get list of relations */
-	vrl = getrels(VacRelP);
-
-	/* vacuum each heap relation */
-	for (cur = vrl; cur != (VRelList) NULL; cur = cur->vrl_next)
-	{
-		vacuum_rel(cur->vrl_relid);
-		/* analyze separately so locking is minimized */
-		if (analyze)
-			analyze_rel(cur->vrl_relid, anal_cols2, MESSAGE_LEVEL);
-	}
-}
-
 static VRelList
-getrels(NameData *VacRelP)
+getrels(Name VacRelP, const char *stmttype)
 {
 	Relation	rel;
 	TupleDesc	tupdesc;
@@ -262,12 +302,9 @@ getrels(NameData *VacRelP)
 	char	   *rname;
 	char		rkind;
 	bool		n;
-	bool		found = false;
 	ScanKeyData key;
 
-	StartTransactionCommand();
-
-	if (NameStr(*VacRelP))
+	if (VacRelP)
 	{
 
 		/*
@@ -287,6 +324,7 @@ getrels(NameData *VacRelP)
 	}
 	else
 	{
+		/* find all relations listed in pg_class */
 		ScanKeyEntryInitialize(&key, 0x0, Anum_pg_class_relkind,
 							   F_CHAREQ, CharGetDatum('r'));
 	}
@@ -300,21 +338,20 @@ getrels(NameData *VacRelP)
 
 	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
 	{
-		found = true;
-
 		d = heap_getattr(tuple, Anum_pg_class_relname, tupdesc, &n);
-		rname = (char *) DatumGetPointer(d);
+		rname = (char *) DatumGetName(d);
 
 		d = heap_getattr(tuple, Anum_pg_class_relkind, tupdesc, &n);
 		rkind = DatumGetChar(d);
 
 		if (rkind != RELKIND_RELATION)
 		{
-			elog(NOTICE, "Vacuum: can not process indices, views and certain system tables");
+			elog(NOTICE, "%s: can not process indexes, views or special system tables",
+				 stmttype);
 			continue;
 		}
 
-		/* get a relation list entry for this guy */
+		/* Make a relation list entry for this guy */
 		if (vrl == (VRelList) NULL)
 			vrl = cur = (VRelList)
 				MemoryContextAlloc(vac_context, sizeof(VRelListData));
@@ -332,10 +369,8 @@ getrels(NameData *VacRelP)
 	heap_endscan(scan);
 	heap_close(rel, AccessShareLock);
 
-	if (!found)
-		elog(NOTICE, "Vacuum: table not found");
-
-	CommitTransactionCommand();
+	if (vrl == NULL)
+		elog(NOTICE, "%s: table not found", stmttype);
 
 	return vrl;
 }
@@ -432,7 +467,8 @@ vacuum_rel(Oid relid)
 	 */
 	vacrelstats = (VRelStats *) palloc(sizeof(VRelStats));
 	vacrelstats->relid = relid;
-	vacrelstats->num_pages = vacrelstats->num_tuples = 0;
+	vacrelstats->num_pages = 0;
+	vacrelstats->num_tuples = 0;
 	vacrelstats->hasindex = false;
 
 	GetXmaxRecent(&XmaxRecent);
@@ -457,8 +493,8 @@ vacuum_rel(Oid relid)
 		vacrelstats->hasindex = true;
 	else
 		vacrelstats->hasindex = false;
-#ifdef NOT_USED
 
+#ifdef NOT_USED
 	/*
 	 * reindex in VACUUM is dangerous under WAL. ifdef out until it
 	 * becomes safe.
@@ -528,9 +564,8 @@ vacuum_rel(Oid relid)
 	heap_close(onerel, NoLock);
 
 	/* update statistics in pg_class */
-	update_relstats(vacrelstats->relid, vacrelstats->num_pages,
-					vacrelstats->num_tuples, vacrelstats->hasindex,
-					vacrelstats);
+	vac_update_relstats(vacrelstats->relid, vacrelstats->num_pages,
+						vacrelstats->num_tuples, vacrelstats->hasindex);
 
 	/*
 	 * Complete the transaction and free all temporary memory used.
@@ -582,8 +617,8 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 	char	   *relname;
 	VacPage		vacpage,
 				vp;
+	long		num_tuples;
 	uint32		tups_vacuumed,
-				num_tuples,
 				nkeep,
 				nunused,
 				ncrash,
@@ -913,7 +948,6 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 	/* save stats in the rel list for use later */
 	vacrelstats->num_tuples = num_tuples;
 	vacrelstats->num_pages = nblocks;
-/*	  vacrelstats->natts = attr_cnt;*/
 	if (num_tuples == 0)
 		min_tlen = max_tlen = 0;
 	vacrelstats->min_tlen = min_tlen;
@@ -960,7 +994,7 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 	}
 
 	elog(MESSAGE_LEVEL, "Pages %u: Changed %u, reaped %u, Empty %u, New %u; \
-Tup %u: Vac %u, Keep/VTL %u/%u, Crash %u, UnUsed %u, MinLen %lu, MaxLen %lu; \
+Tup %lu: Vac %u, Keep/VTL %u/%u, Crash %u, UnUsed %u, MinLen %lu, MaxLen %lu; \
 Re-using: Free/Avail. Space %lu/%lu; EndEmpty/Avail. Pages %u/%u. %s",
 		 nblocks, changed_pages, vacuum_pages->num_pages, empty_pages,
 		 new_pages, num_tuples, tups_vacuumed,
@@ -2009,7 +2043,7 @@ vacuum_heap(VRelStats *vacrelstats, Relation onerel, VacPageList vacuum_pages)
 {
 	Buffer		buf;
 	VacPage    *vacpage;
-	int			nblocks;
+	long		nblocks;
 	int			i;
 
 	nblocks = vacuum_pages->num_pages;
@@ -2044,7 +2078,7 @@ vacuum_heap(VRelStats *vacrelstats, Relation onerel, VacPageList vacuum_pages)
 	/* truncate relation if there are some empty end-pages */
 	if (vacuum_pages->empty_end_pages > 0)
 	{
-		elog(MESSAGE_LEVEL, "Rel %s: Pages: %u --> %u.",
+		elog(MESSAGE_LEVEL, "Rel %s: Pages: %lu --> %lu.",
 			 RelationGetRelationName(onerel),
 			 vacrelstats->num_pages, nblocks);
 		nblocks = smgrtruncate(DEFAULT_SMGR, onerel, nblocks);
@@ -2094,11 +2128,11 @@ vacuum_page(Relation onerel, Buffer buffer, VacPage vacpage)
  *
  */
 static void
-scan_index(Relation indrel, int num_tuples)
+scan_index(Relation indrel, long num_tuples)
 {
 	RetrieveIndexResult res;
 	IndexScanDesc iscan;
-	int			nitups;
+	long		nitups;
 	int			nipages;
 	struct rusage ru0;
 
@@ -2119,14 +2153,14 @@ scan_index(Relation indrel, int num_tuples)
 
 	/* now update statistics in pg_class */
 	nipages = RelationGetNumberOfBlocks(indrel);
-	update_relstats(RelationGetRelid(indrel), nipages, nitups, false, NULL);
+	vac_update_relstats(RelationGetRelid(indrel), nipages, nitups, false);
 
-	elog(MESSAGE_LEVEL, "Index %s: Pages %u; Tuples %u. %s",
+	elog(MESSAGE_LEVEL, "Index %s: Pages %u; Tuples %lu. %s",
 		 RelationGetRelationName(indrel), nipages, nitups,
 		 show_rusage(&ru0));
 
 	if (nitups != num_tuples)
-		elog(NOTICE, "Index %s: NUMBER OF INDEX' TUPLES (%u) IS NOT THE SAME AS HEAP' (%u).\
+		elog(NOTICE, "Index %s: NUMBER OF INDEX' TUPLES (%lu) IS NOT THE SAME AS HEAP' (%lu).\
 \n\tRecreate the index.",
 			 RelationGetRelationName(indrel), nitups, num_tuples);
 
@@ -2145,13 +2179,14 @@ scan_index(Relation indrel, int num_tuples)
  *		pg_class.
  */
 static void
-vacuum_index(VacPageList vacpagelist, Relation indrel, int num_tuples, int keep_tuples)
+vacuum_index(VacPageList vacpagelist, Relation indrel,
+			 long num_tuples, int keep_tuples)
 {
 	RetrieveIndexResult res;
 	IndexScanDesc iscan;
 	ItemPointer heapptr;
 	int			tups_vacuumed;
-	int			num_index_tuples;
+	long		num_index_tuples;
 	int			num_pages;
 	VacPage		vp;
 	struct rusage ru0;
@@ -2196,15 +2231,16 @@ vacuum_index(VacPageList vacpagelist, Relation indrel, int num_tuples, int keep_
 
 	/* now update statistics in pg_class */
 	num_pages = RelationGetNumberOfBlocks(indrel);
-	update_relstats(RelationGetRelid(indrel), num_pages, num_index_tuples, false, NULL);
+	vac_update_relstats(RelationGetRelid(indrel),
+						num_pages, num_index_tuples, false);
 
-	elog(MESSAGE_LEVEL, "Index %s: Pages %u; Tuples %u: Deleted %u. %s",
+	elog(MESSAGE_LEVEL, "Index %s: Pages %u; Tuples %lu: Deleted %u. %s",
 		 RelationGetRelationName(indrel), num_pages,
 		 num_index_tuples - keep_tuples, tups_vacuumed,
 		 show_rusage(&ru0));
 
 	if (num_index_tuples != num_tuples + keep_tuples)
-		elog(NOTICE, "Index %s: NUMBER OF INDEX' TUPLES (%u) IS NOT THE SAME AS HEAP' (%u).\
+		elog(NOTICE, "Index %s: NUMBER OF INDEX' TUPLES (%lu) IS NOT THE SAME AS HEAP' (%lu).\
 \n\tRecreate the index.",
 		  RelationGetRelationName(indrel), num_index_tuples, num_tuples);
 
@@ -2255,7 +2291,7 @@ tid_reaped(ItemPointer itemptr, VacPageList vacpagelist)
 }
 
 /*
- *	update_relstats() -- update statistics for one relation
+ *	vac_update_relstats() -- update statistics for one relation
  *
  *		Update the whole-relation statistics that are kept in its pg_class
  *		row.  There are additional stats that will be updated if we are
@@ -2268,13 +2304,12 @@ tid_reaped(ItemPointer itemptr, VacPageList vacpagelist)
  *		we updated these tuples in the usual way, vacuuming pg_class itself
  *		wouldn't work very well --- by the time we got done with a vacuum
  *		cycle, most of the tuples in pg_class would've been obsoleted.
- *		Updating pg_class's own statistics would be especially tricky.
  *		Of course, this only works for fixed-size never-null columns, but
  *		these are.
  */
-static void
-update_relstats(Oid relid, int num_pages, int num_tuples, bool hasindex,
-				VRelStats *vacrelstats)
+void
+vac_update_relstats(Oid relid, long num_pages, double num_tuples,
+					bool hasindex)
 {
 	Relation	rd;
 	HeapTupleData rtup;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.105 2001/04/30 19:24:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.106 2001/05/07 00:43:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1367,7 +1367,7 @@ make_groupplan(List *group_tlist,
 			{
 				/* OK, insert the ordering info needed by the executor. */
 				resdom->reskey = ++keyno;
-				resdom->reskeyop = get_opcode(grpcl->sortop);
+				resdom->reskeyop = grpcl->sortop;
 			}
 		}
 
@@ -1412,7 +1412,7 @@ make_sortplan(List *tlist, Plan *plannode, List *sortcls)
 		{
 			/* OK, insert the ordering info needed by the executor. */
 			resdom->reskey = ++keyno;
-			resdom->reskeyop = get_opcode(sortcl->sortop);
+			resdom->reskeyop = sortcl->sortop;
 		}
 	}
 

@@ -8,13 +8,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.71 2001/03/22 03:59:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.72 2001/05/07 00:43:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <math.h>
-
 #include "postgres.h"
+
+#include <math.h>
 
 #include "nodes/plannodes.h"
 #include "optimizer/cost.h"
@@ -559,7 +559,7 @@ create_mergejoin_path(RelOptInfo *joinrel,
  * 'restrict_clauses' are the RestrictInfo nodes to apply at the join
  * 'hashclauses' is a list of the hash join clause (always a 1-element list)
  *		(this should be a subset of the restrict_clauses list)
- * 'innerdispersion' is an estimate of the dispersion of the inner hash key
+ * 'innerbucketsize' is an estimate of the bucketsize of the inner hash key
  *
  */
 HashPath   *
@@ -569,7 +569,7 @@ create_hashjoin_path(RelOptInfo *joinrel,
 					 Path *inner_path,
 					 List *restrict_clauses,
 					 List *hashclauses,
-					 Selectivity innerdispersion)
+					 Selectivity innerbucketsize)
 {
 	HashPath   *pathnode = makeNode(HashPath);
 
@@ -587,7 +587,7 @@ create_hashjoin_path(RelOptInfo *joinrel,
 				  outer_path,
 				  inner_path,
 				  restrict_clauses,
-				  innerdispersion);
+				  innerbucketsize);
 
 	return pathnode;
 }

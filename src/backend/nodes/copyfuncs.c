@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.140 2001/03/22 06:16:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.141 2001/05/07 00:43:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1378,8 +1378,8 @@ _copyRestrictInfo(RestrictInfo *from)
 	newnode->left_pathkey = NIL;
 	newnode->right_pathkey = NIL;
 	newnode->hashjoinoperator = from->hashjoinoperator;
-	newnode->left_dispersion = from->left_dispersion;
-	newnode->right_dispersion = from->right_dispersion;
+	newnode->left_bucketsize = from->left_bucketsize;
+	newnode->right_bucketsize = from->right_bucketsize;
 
 	return newnode;
 }
@@ -2209,11 +2209,12 @@ _copyVacuumStmt(VacuumStmt *from)
 {
 	VacuumStmt *newnode = makeNode(VacuumStmt);
 
-	newnode->verbose = from->verbose;
+	newnode->vacuum = from->vacuum;
 	newnode->analyze = from->analyze;
+	newnode->verbose = from->verbose;
 	if (from->vacrel)
 		newnode->vacrel = pstrdup(from->vacrel);
-	Node_Copy(from, newnode, va_spec);
+	Node_Copy(from, newnode, va_cols);
 
 	return newnode;
 }

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.57 2001/03/22 04:00:50 momjian Exp $
+ * $Id: execnodes.h,v 1.58 2001/05/07 00:43:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -628,7 +628,6 @@ typedef struct GroupState
  *	 SortState information
  *
  *		sort_Done		indicates whether sort has been performed yet
- *		sort_Keys		scan key structures describing the sort keys
  *		tuplesortstate	private state of tuplesort.c
  * ----------------
  */
@@ -636,7 +635,6 @@ typedef struct SortState
 {
 	CommonScanState csstate;	/* its first field is NodeTag */
 	bool		sort_Done;
-	ScanKey		sort_Keys;
 	void	   *tuplesortstate;
 } SortState;
 

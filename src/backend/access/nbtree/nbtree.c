@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.79 2001/03/22 03:59:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.80 2001/05/07 00:43:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,7 +69,7 @@ btbuild(PG_FUNCTION_ARGS)
 				itupdesc;
 	Datum		attdata[INDEX_MAX_KEYS];
 	char		nulls[INDEX_MAX_KEYS];
-	int			nhtups,
+	double		nhtups,
 				nitups;
 	Node	   *pred = indexInfo->ii_Predicate;
 
@@ -156,7 +156,7 @@ btbuild(PG_FUNCTION_ARGS)
 #endif	 /* OMIT_PARTIAL_INDEX */
 
 	/* build the index */
-	nhtups = nitups = 0;
+	nhtups = nitups = 0.0;
 
 	if (usefast)
 	{
@@ -196,7 +196,7 @@ btbuild(PG_FUNCTION_ARGS)
 
 		MemoryContextReset(econtext->ecxt_per_tuple_memory);
 
-		nhtups++;
+		nhtups += 1.0;
 
 #ifndef OMIT_PARTIAL_INDEX
 
@@ -209,7 +209,7 @@ btbuild(PG_FUNCTION_ARGS)
 			slot->val = htup;
 			if (ExecQual((List *) oldPred, econtext, false))
 			{
-				nitups++;
+				nitups += 1.0;
 				continue;
 			}
 		}
@@ -226,7 +226,7 @@ btbuild(PG_FUNCTION_ARGS)
 		}
 #endif	 /* OMIT_PARTIAL_INDEX */
 
-		nitups++;
+		nitups += 1.0;
 
 		/*
 		 * For the current heap tuple, extract all the attributes we use

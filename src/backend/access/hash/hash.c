@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.50 2001/03/22 03:59:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.51 2001/05/07 00:43:15 tgl Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -57,7 +57,7 @@ hashbuild(PG_FUNCTION_ARGS)
 				itupdesc;
 	Datum		attdata[INDEX_MAX_KEYS];
 	char		nulls[INDEX_MAX_KEYS];
-	int			nhtups,
+	double		nhtups,
 				nitups;
 	HashItem	hitem;
 	Node	   *pred = indexInfo->ii_Predicate;
@@ -109,7 +109,7 @@ hashbuild(PG_FUNCTION_ARGS)
 #endif	 /* OMIT_PARTIAL_INDEX */
 
 	/* build the index */
-	nhtups = nitups = 0;
+	nhtups = nitups = 0.0;
 
 	/* start a heap scan */
 	hscan = heap_beginscan(heap, 0, SnapshotNow, 0, (ScanKey) NULL);
@@ -118,7 +118,7 @@ hashbuild(PG_FUNCTION_ARGS)
 	{
 		MemoryContextReset(econtext->ecxt_per_tuple_memory);
 
-		nhtups++;
+		nhtups += 1.0;
 
 #ifndef OMIT_PARTIAL_INDEX
 
@@ -131,7 +131,7 @@ hashbuild(PG_FUNCTION_ARGS)
 			slot->val = htup;
 			if (ExecQual((List *) oldPred, econtext, false))
 			{
-				nitups++;
+				nitups += 1.0;
 				continue;
 			}
 		}
@@ -148,7 +148,7 @@ hashbuild(PG_FUNCTION_ARGS)
 		}
 #endif	 /* OMIT_PARTIAL_INDEX */
 
-		nitups++;
+		nitups += 1.0;
 
 		/*
 		 * For the current heap tuple, extract all the attributes we use

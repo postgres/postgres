@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.145 2001/04/02 14:34:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.146 2001/05/07 00:43:17 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -55,7 +55,7 @@
  */
 #define AVG_ATTR_SIZE 8
 #define NTUPLES_PER_PAGE(natts) \
-	((BLCKSZ - MAXALIGN(sizeof (PageHeaderData))) / \
+	((BLCKSZ - MAXALIGN(sizeof(PageHeaderData))) / \
 	((natts) * AVG_ATTR_SIZE + MAXALIGN(sizeof(HeapTupleHeaderData))))
 
 /* non-export function prototypes */
@@ -97,39 +97,6 @@ IsReindexProcessing(void)
 {
 	return reindexing;
 }
-
-/* ----------------------------------------------------------------
- *	  sysatts is a structure containing attribute tuple forms
- *	  for system attributes (numbered -1, -2, ...).  This really
- *	  should be generated or eliminated or moved elsewhere. -cim 1/19/91
- *
- * typedef struct FormData_pg_attribute {
- *		Oid				attrelid;
- *		NameData		attname;
- *		Oid				atttypid;
- *		uint32			attnvals;
- *		int16			attlen;
- *		AttrNumber		attnum;
- *		uint32			attnelems;
- *		int32			attcacheoff;
- *		int32			atttypmod;
- *		bool			attbyval;
- *		bool			attisset;
- *		char			attalign;
- *		bool			attnotnull;
- *		bool			atthasdef;
- * } FormData_pg_attribute;
- *
- * ----------------------------------------------------------------
- */
-static FormData_pg_attribute sysatts[] = {
-	{0, {"ctid"}, TIDOID, 0, 6, -1, 0, -1, -1, '\0', 'p', '\0', 'i', '\0', '\0'},
-	{0, {"oid"}, OIDOID, 0, 4, -2, 0, -1, -1, '\001', 'p', '\0', 'i', '\0', '\0'},
-	{0, {"xmin"}, XIDOID, 0, 4, -3, 0, -1, -1, '\001', 'p', '\0', 'i', '\0', '\0'},
-	{0, {"cmin"}, CIDOID, 0, 4, -4, 0, -1, -1, '\001', 'p', '\0', 'i', '\0', '\0'},
-	{0, {"xmax"}, XIDOID, 0, 4, -5, 0, -1, -1, '\001', 'p', '\0', 'i', '\0', '\0'},
-	{0, {"cmax"}, CIDOID, 0, 4, -6, 0, -1, -1, '\001', 'p', '\0', 'i', '\0', '\0'},
-};
 
 /* ----------------------------------------------------------------
  *		GetHeapRelationOid
@@ -250,7 +217,6 @@ ConstructTupleDescriptor(Relation heapRelation,
 	for (i = 0; i < numatts; i++)
 	{
 		AttrNumber	atnum;		/* attributeNumber[attributeOffset] */
-		AttrNumber	atind;
 		Form_pg_attribute from;
 		Form_pg_attribute to;
 
@@ -264,16 +230,9 @@ ConstructTupleDescriptor(Relation heapRelation,
 		{
 
 			/*
-			 * here we are indexing on a system attribute (-1...-n) so we
-			 * convert atnum into a usable index 0...n-1 so we can use it
-			 * to dereference the array sysatts[] which stores tuple
-			 * descriptor information for system attributes.
+			 * here we are indexing on a system attribute (-1...-n)
 			 */
-			if (atnum <= FirstLowInvalidHeapAttributeNumber || atnum >= 0)
-				elog(ERROR, "Cannot create index on system attribute: attribute number out of range (%d)", atnum);
-			atind = (-atnum) - 1;
-
-			from = &sysatts[atind];
+			from = SystemAttributeDefinition(atnum);
 		}
 		else
 		{
@@ -284,9 +243,8 @@ ConstructTupleDescriptor(Relation heapRelation,
 			if (atnum > natts)
 				elog(ERROR, "Cannot create index: attribute %d does not exist",
 					 atnum);
-			atind = AttrNumberGetAttrOffset(atnum);
 
-			from = heapTupDesc->attrs[atind];
+			from = heapTupDesc->attrs[AttrNumberGetAttrOffset(atnum)];
 		}
 
 		/*
@@ -303,10 +261,10 @@ ConstructTupleDescriptor(Relation heapRelation,
 		 */
 		to->attnum = i + 1;
 
-		to->attdispersion = 0.0;
+		to->attstattarget = 0;
+		to->attcacheoff = -1;
 		to->attnotnull = false;
 		to->atthasdef = false;
-		to->attcacheoff = -1;
 
 		/*
 		 * We do not yet have the correct relation OID for the index, so
@@ -1542,10 +1500,14 @@ setNewRelfilenode(Relation relation)
 
 /* ----------------
  *		UpdateStats
+ *
+ * Update pg_class' relpages and reltuples statistics for the given relation
+ * (which can be either a table or an index).  Note that this is not used
+ * in the context of VACUUM.
  * ----------------
  */
 void
-UpdateStats(Oid relid, long reltuples)
+UpdateStats(Oid relid, double reltuples)
 {
 	Relation	whichRel;
 	Relation	pg_class;
@@ -1636,6 +1598,10 @@ UpdateStats(Oid relid, long reltuples)
 	 * with zero size statistics until a VACUUM is done.  The optimizer
 	 * will generate very bad plans if the stats claim the table is empty
 	 * when it is actually sizable.  See also CREATE TABLE in heap.c.
+	 *
+	 * Note: this path is also taken during bootstrap, because bootstrap.c
+	 * passes reltuples = 0 after loading a table.  We have to estimate some
+	 * number for reltuples based on the actual number of pages.
 	 */
 	relpages = RelationGetNumberOfBlocks(whichRel);
 
@@ -1689,15 +1655,15 @@ UpdateStats(Oid relid, long reltuples)
 
 		for (i = 0; i < Natts_pg_class; i++)
 		{
-			nulls[i] = heap_attisnull(tuple, i + 1) ? 'n' : ' ';
+			nulls[i] = ' ';
 			replace[i] = ' ';
 			values[i] = (Datum) NULL;
 		}
 
 		replace[Anum_pg_class_relpages - 1] = 'r';
-		values[Anum_pg_class_relpages - 1] = (Datum) relpages;
+		values[Anum_pg_class_relpages - 1] = Int32GetDatum(relpages);
 		replace[Anum_pg_class_reltuples - 1] = 'r';
-		values[Anum_pg_class_reltuples - 1] = (Datum) reltuples;
+		values[Anum_pg_class_reltuples - 1] = Float4GetDatum((float4) reltuples);
 		newtup = heap_modifytuple(tuple, pg_class, values, nulls, replace);
 		simple_heap_update(pg_class, &tuple->t_self, newtup);
 		if (!IsIgnoringSystemIndexes())
@@ -1741,7 +1707,7 @@ DefaultBuild(Relation heapRelation,
 	TupleDesc	heapDescriptor;
 	Datum		datum[INDEX_MAX_KEYS];
 	char		nullv[INDEX_MAX_KEYS];
-	long		reltuples,
+	double		reltuples,
 				indtuples;
 	Node	   *predicate = indexInfo->ii_Predicate;
 
@@ -1796,7 +1762,7 @@ DefaultBuild(Relation heapRelation,
 						  0,	/* number of keys */
 						  (ScanKey) NULL);		/* scan key */
 
-	reltuples = indtuples = 0;
+	reltuples = indtuples = 0.0;
 
 	/*
 	 * for each tuple in the base relation, we create an index tuple and
@@ -1808,7 +1774,7 @@ DefaultBuild(Relation heapRelation,
 	{
 		MemoryContextReset(econtext->ecxt_per_tuple_memory);
 
-		reltuples++;
+		reltuples += 1.0;
 
 #ifndef OMIT_PARTIAL_INDEX
 
@@ -1821,7 +1787,7 @@ DefaultBuild(Relation heapRelation,
 			slot->val = heapTuple;
 			if (ExecQual((List *) oldPred, econtext, false))
 			{
-				indtuples++;
+				indtuples += 1.0;
 				continue;
 			}
 		}
@@ -1838,7 +1804,7 @@ DefaultBuild(Relation heapRelation,
 		}
 #endif	 /* OMIT_PARTIAL_INDEX */
 
-		indtuples++;
+		indtuples += 1.0;
 
 		/*
 		 * FormIndexDatum fills in its datum and null parameters with

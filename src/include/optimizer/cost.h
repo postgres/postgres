@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: cost.h,v 1.38 2001/02/16 00:03:05 tgl Exp $
+ * $Id: cost.h,v 1.39 2001/05/07 00:43:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,7 +64,8 @@ extern void cost_mergejoin(Path *path, Path *outer_path, Path *inner_path,
 			   List *restrictlist,
 			   List *outersortkeys, List *innersortkeys);
 extern void cost_hashjoin(Path *path, Path *outer_path, Path *inner_path,
-			  List *restrictlist, Selectivity innerdispersion);
+			  List *restrictlist, Selectivity innerbucketsize);
+extern Selectivity estimate_hash_bucketsize(Query *root, Var *var);
 extern Cost cost_qual_eval(List *quals);
 extern void set_baserel_size_estimates(Query *root, RelOptInfo *rel);
 extern void set_joinrel_size_estimates(Query *root, RelOptInfo *rel,

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.13 2001/01/13 23:58:55 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.14 2001/05/07 00:43:15 tgl Exp $
 Postgres documentation
 -->
 
@@ -15,15 +15,15 @@ Postgres documentation
    VACUUM
   </refname>
   <refpurpose>
-   Clean and analyze a <productname>Postgres</productname> database
+   Clean and optionally analyze a <productname>Postgres</productname> database
   </refpurpose>
  </refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>1999-07-20</date>
+   <date>2001-05-04</date>
   </refsynopsisdivinfo>
   <synopsis>
-VACUUM [ VERBOSE ] [ ANALYZE ] [ <replaceable class="PARAMETER">table</replaceable> ]
+VACUUM [ VERBOSE ] [ <replaceable class="PARAMETER">table</replaceable> ]
 VACUUM [ VERBOSE ] ANALYZE [ <replaceable class="PARAMETER">table</replaceable> [ (<replaceable class="PARAMETER">column</replaceable> [, ...] ) ] ]
   </synopsis>
 
@@ -49,7 +49,7 @@ VACUUM [ VERBOSE ] ANALYZE [ <replaceable class="PARAMETER">table</replaceable> 
       <term>ANALYZE</term>
       <listitem>
        <para>
-	Updates column statistics used by the optimizer to
+	Updates statistics used by the optimizer to
 	determine the most efficient way to execute a query.
        </para>
       </listitem>
@@ -90,7 +90,7 @@ VACUUM [ VERBOSE ] ANALYZE [ <replaceable class="PARAMETER">table</replaceable> 
        </computeroutput></term>
       <listitem>
        <para>
-	The command has been accepted and the database is being cleaned.
+	The command is complete.
        </para>
       </listitem>
      </varlistentry>
@@ -144,28 +144,26 @@ NOTICE:  Index <replaceable class="PARAMETER">index</replaceable>: Pages 28;
    Description
   </title>
   <para>
-   <command>VACUUM</command> serves two purposes in 
-   <productname>Postgres</productname> as both a means to reclaim storage and
-   also a means to collect information for the optimizer.
+   <command>VACUUM</command> reclaims storage occupied by deleted tuples.
+   In normal <productname>Postgres</productname> operation, tuples that
+   are DELETEd or obsoleted by UPDATE are not physically removed from
+   their table; they remain present until a <command>VACUUM</command> is
+   done.  Therefore it's necessary to do <command>VACUUM</command>
+   periodically, especially on frequently-updated tables.
   </para>
 
   <para>
-   <command>VACUUM</command> opens every table in the database,
-   cleans out records from rolled back transactions, and updates statistics in the
-   system catalogs.  The statistics maintained include the number of
-   tuples and number of pages stored in all tables.
-  </para>
-
-
-  <para>
-   <command>VACUUM ANALYZE</command> collects statistics representing the
-   dispersion of the data in each column.
-   This information is valuable when several query execution paths are possible.
+   With no parameter, <command>VACUUM</command> processes every table in the
+   current database.  With a parameter, <command>VACUUM</command> processes
+   only that table.
   </para>
 
   <para>
-   Running <command>VACUUM</command>
-   periodically will increase the speed of the database in processing user queries.
+   <command>VACUUM ANALYZE</command> performs a <command>VACUUM</command>
+   and then an <command>ANALYZE</command> for each selected table.  This
+   is a handy combination form for routine maintenance scripts.  See
+   <xref linkend="sql-analyze" endterm="sql-analyze-title">
+   for more details about its processing.
   </para>
 
   <refsect2 id="R2-SQL-VACUUM-3">
@@ -175,16 +173,15 @@ NOTICE:  Index <replaceable class="PARAMETER">index</replaceable>: Pages 28;
    <title>
     Notes
    </title>
-   <para>
-    The open database is the target for <command>VACUUM</command>.
-   </para>
+
    <para>
     We recommend that active production databases be
     <command>VACUUM</command>-ed nightly, in order to remove
     expired rows. After copying a large table into
     <productname>Postgres</productname> or after deleting a large number
     of records, it may be a good idea to issue a <command>VACUUM
-    ANALYZE</command> query. This will update the system catalogs with
+    ANALYZE</command> command for the affected table. This will update the
+    system catalogs with
     the results of all recent changes, and allow the
     <productname>Postgres</productname> query optimizer to make better
     choices in planning user queries.

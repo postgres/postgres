@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.61 2001/03/22 03:59:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.62 2001/05/07 00:43:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -100,7 +100,7 @@ rtbuild(PG_FUNCTION_ARGS)
 				itupdesc;
 	Datum		attdata[INDEX_MAX_KEYS];
 	char		nulls[INDEX_MAX_KEYS];
-	int			nhtups,
+	double		nhtups,
 				nitups;
 	Node	   *pred = indexInfo->ii_Predicate;
 
@@ -163,7 +163,7 @@ rtbuild(PG_FUNCTION_ARGS)
 #endif	 /* OMIT_PARTIAL_INDEX */
 
 	/* count the tuples as we insert them */
-	nhtups = nitups = 0;
+	nhtups = nitups = 0.0;
 
 	/* start a heap scan */
 	hscan = heap_beginscan(heap, 0, SnapshotNow, 0, (ScanKey) NULL);
@@ -172,7 +172,7 @@ rtbuild(PG_FUNCTION_ARGS)
 	{
 		MemoryContextReset(econtext->ecxt_per_tuple_memory);
 
-		nhtups++;
+		nhtups += 1.0;
 
 #ifndef OMIT_PARTIAL_INDEX
 
@@ -185,7 +185,7 @@ rtbuild(PG_FUNCTION_ARGS)
 			slot->val = htup;
 			if (ExecQual((List *) oldPred, econtext, false))
 			{
-				nitups++;
+				nitups += 1.0;
 				continue;
 			}
 		}
@@ -202,7 +202,7 @@ rtbuild(PG_FUNCTION_ARGS)
 		}
 #endif	 /* OMIT_PARTIAL_INDEX */
 
-		nitups++;
+		nitups += 1.0;
 
 		/*
 		 * For the current heap tuple, extract all the attributes we use

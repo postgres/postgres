@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/indices.sgml,v 1.14 2001/02/20 22:27:56 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/indices.sgml,v 1.15 2001/05/07 00:43:14 tgl Exp $ -->
 
 <chapter id="indices">
  <title id="indices-title">Indices</title>
@@ -71,7 +71,7 @@ CREATE INDEX test1_id_index ON test1 (id);
    Once the index is created, no further intervention is required: the
    system will use the index when it thinks it would be more efficient
    than a sequential table scan.  But you may have to run the
-   <command>VACUUM ANALYZE</command> command regularly to update
+   <command>ANALYZE</command> command regularly to update
    statistics to allow the query planner to make educated decisions.
    Also read <xref linkend="performance-tips"> for information about
    how to find out whether an index is used and when and why the

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_class.h,v 1.47 2001/03/22 04:00:38 momjian Exp $
+ * $Id: pg_class.h,v 1.48 2001/05/07 00:43:25 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -52,7 +52,7 @@ CATALOG(pg_class) BOOTSTRAP
 	Oid			relam;
 	Oid			relfilenode;
 	int4		relpages;
-	int4		reltuples;
+	float4		reltuples;
 	Oid			reltoastrelid;
 	Oid			reltoastidxid;
 	bool		relhasindex;

@@ -7,13 +7,14 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heap.h,v 1.34 2001/03/22 04:00:35 momjian Exp $
+ * $Id: heap.h,v 1.35 2001/05/07 00:43:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef HEAP_H
 #define HEAP_H
 
+#include "catalog/pg_attribute.h"
 #include "utils/rel.h"
 
 typedef struct RawColumnDefault
@@ -43,5 +44,7 @@ extern void heap_truncate(char *relname);
 extern void AddRelationRawConstraints(Relation rel,
 						  List *rawColDefaults,
 						  List *rawConstraints);
+
+extern Form_pg_attribute SystemAttributeDefinition(AttrNumber attno);
 
 #endif	 /* HEAP_H */

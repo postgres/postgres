@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.125 2001/03/23 04:49:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.126 2001/05/07 00:43:17 tgl Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -56,6 +56,7 @@
 #include "access/genam.h"
 
 
+static void drop_default(Oid relid, int16 attnum);
 static bool needs_toast_table(Relation rel);
 static bool is_relation(char *name);
 
@@ -408,7 +409,7 @@ AlterTableAddColumn(const char *relationName,
 		HeapTuple	typeTuple;
 		Form_pg_type tform;
 		char	   *typename;
-		int			attnelems;
+		int			attndims;
 
 		if (SearchSysCacheExists(ATTNAME,
 								 ObjectIdGetDatum(reltup->t_data->t_oid),
@@ -425,11 +426,11 @@ AlterTableAddColumn(const char *relationName,
 
 		if (colDef->typename->arrayBounds)
 		{
-			attnelems = length(colDef->typename->arrayBounds);
+			attndims = length(colDef->typename->arrayBounds);
 			typename = makeArrayTypeName(colDef->typename->name);
 		}
 		else
-			attnelems = 0;
+			attndims = 0;
 
 		typeTuple = SearchSysCache(TYPENAME,
 								   PointerGetDatum(typename),
@@ -441,12 +442,12 @@ AlterTableAddColumn(const char *relationName,
 		namestrcpy(&(attribute->attname), colDef->colname);
 		attribute->atttypid = typeTuple->t_data->t_oid;
 		attribute->attlen = tform->typlen;
-		attribute->attdispersion = 0;
+		attribute->attstattarget = DEFAULT_ATTSTATTARGET;
 		attribute->attcacheoff = -1;
 		attribute->atttypmod = colDef->typename->typmod;
 		attribute->attnum = i;
 		attribute->attbyval = tform->typbyval;
-		attribute->attnelems = attnelems;
+		attribute->attndims = attndims;
 		attribute->attisset = (bool) (tform->typtype == 'c');
 		attribute->attstorage = tform->typstorage;
 		attribute->attalign = tform->typalign;
@@ -496,17 +497,13 @@ AlterTableAddColumn(const char *relationName,
 }
 
 
-
-static void drop_default(Oid relid, int16 attnum);
-
-
 /*
  * ALTER TABLE ALTER COLUMN SET/DROP DEFAULT
  */
 void
-AlterTableAlterColumn(const char *relationName,
-					  bool inh, const char *colName,
-					  Node *newDefault)
+AlterTableAlterColumnDefault(const char *relationName,
+							 bool inh, const char *colName,
+							 Node *newDefault)
 {
 	Relation	rel;
 	HeapTuple	tuple;
@@ -551,8 +548,8 @@ AlterTableAlterColumn(const char *relationName,
 			if (childrelid == myrelid)
 				continue;
 			rel = heap_open(childrelid, AccessExclusiveLock);
-			AlterTableAlterColumn(RelationGetRelationName(rel),
-								  false, colName, newDefault);
+			AlterTableAlterColumnDefault(RelationGetRelationName(rel),
+										 false, colName, newDefault);
 			heap_close(rel, AccessExclusiveLock);
 		}
 	}
@@ -560,7 +557,7 @@ AlterTableAlterColumn(const char *relationName,
 	/* -= now do the thing on this relation =- */
 
 	/* reopen the business */
-	rel = heap_openr((char *) relationName, AccessExclusiveLock);
+	rel = heap_openr(relationName, AccessExclusiveLock);
 
 	/*
 	 * get the number of the attribute
@@ -647,7 +644,6 @@ AlterTableAlterColumn(const char *relationName,
 }
 
 
-
 static void
 drop_default(Oid relid, int16 attnum)
 {
@@ -672,6 +668,104 @@ drop_default(Oid relid, int16 attnum)
 	heap_endscan(scan);
 
 	heap_close(attrdef_rel, NoLock);
+}
+
+
+/*
+ * ALTER TABLE ALTER COLUMN SET STATISTICS
+ */
+void
+AlterTableAlterColumnStatistics(const char *relationName,
+								bool inh, const char *colName,
+								Node *statsTarget)
+{
+	Relation	rel;
+	Oid			myrelid;
+	int			newtarget;
+	Relation	attrelation;
+	HeapTuple	tuple;
+
+#ifndef NO_SECURITY
+	if (!pg_ownercheck(GetUserId(), relationName, RELNAME))
+		elog(ERROR, "ALTER TABLE: permission denied");
+#endif
+
+	rel = heap_openr(relationName, AccessExclusiveLock);
+	if (rel->rd_rel->relkind != RELKIND_RELATION)
+		elog(ERROR, "ALTER TABLE: relation \"%s\" is not a table",
+			 relationName);
+	myrelid = RelationGetRelid(rel);
+	heap_close(rel, NoLock);	/* close rel, but keep lock! */
+
+	/*
+	 * Propagate to children if desired
+	 */
+	if (inh)
+	{
+		List	   *child,
+				   *children;
+
+		/* this routine is actually in the planner */
+		children = find_all_inheritors(myrelid);
+
+		/*
+		 * find_all_inheritors does the recursive search of the
+		 * inheritance hierarchy, so all we have to do is process all of
+		 * the relids in the list that it returns.
+		 */
+		foreach(child, children)
+		{
+			Oid			childrelid = lfirsti(child);
+
+			if (childrelid == myrelid)
+				continue;
+			rel = heap_open(childrelid, AccessExclusiveLock);
+			AlterTableAlterColumnStatistics(RelationGetRelationName(rel),
+											false, colName, statsTarget);
+			heap_close(rel, AccessExclusiveLock);
+		}
+	}
+
+	/* -= now do the thing on this relation =- */
+
+	Assert(IsA(statsTarget, Integer));
+	newtarget = intVal(statsTarget);
+
+	/* Limit target to sane range (should we raise an error instead?) */
+	if (newtarget < 0)
+		newtarget = 0;
+	else if (newtarget > 1000)
+		newtarget = 1000;
+
+	attrelation = heap_openr(AttributeRelationName, RowExclusiveLock);
+
+	tuple = SearchSysCacheCopy(ATTNAME,
+							   ObjectIdGetDatum(myrelid),
+							   PointerGetDatum(colName),
+							   0, 0);
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "ALTER TABLE: relation \"%s\" has no column \"%s\"",
+			 relationName, colName);
+
+	if (((Form_pg_attribute) GETSTRUCT(tuple))->attnum < 0)
+		elog(ERROR, "ALTER TABLE: cannot change system attribute \"%s\"",
+			 colName);
+
+	((Form_pg_attribute) GETSTRUCT(tuple))->attstattarget = newtarget;
+
+	simple_heap_update(attrelation, &tuple->t_self, tuple);
+
+	/* keep system catalog indices current */
+	{
+		Relation	irelations[Num_pg_attr_indices];
+
+		CatalogOpenIndices(Num_pg_attr_indices, Name_pg_attr_indices, irelations);
+		CatalogIndexInsert(irelations, Num_pg_attr_indices, attrelation, tuple);
+		CatalogCloseIndices(Num_pg_attr_indices, irelations);
+	}
+
+	heap_freetuple(tuple);
+	heap_close(attrelation, RowExclusiveLock);
 }
 
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.54 2001/04/18 17:04:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.55 2001/05/07 00:43:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,7 +75,7 @@ static struct
 	}
 };
 
-#define SPECIALS ((int) (sizeof(special_attr)/sizeof(special_attr[0])))
+#define SPECIALS ((int) lengthof(special_attr))
 
 
 /*
@@ -670,7 +670,7 @@ isForUpdate(ParseState *pstate, char *relname)
 
 				foreach(l, pstate->p_forUpdate)
 				{
-					char	   *rname = lfirst(l);
+					char	   *rname = strVal(lfirst(l));
 
 					if (strcmp(relname, rname) == 0)
 						return true;
@@ -1016,20 +1016,6 @@ attnameIsSet(Relation rd, char *name)
 			return false;		/* no sys attr is a set */
 	}
 	return get_attisset(RelationGetRelid(rd), name);
-}
-
-#endif
-
-#ifdef NOT_USED
-/*
- *	This should only be used if the relation is already
- *	heap_open()'ed.  Use the cache version
- *	for access to non-opened relations.
- */
-int
-attnumAttNelems(Relation rd, int attid)
-{
-	return rd->rd_att->attrs[attid - 1]->attnelems;
 }
 
 #endif

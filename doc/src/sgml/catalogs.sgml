@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.15 2001/04/20 15:52:33 thomas Exp $
+ $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.16 2001/05/07 00:43:14 tgl Exp $
  -->
 
 <chapter id="catalogs">
@@ -16,7 +16,7 @@
    <productname>PostgreSQL</productname>'s system catalogs are regular
    tables.  You can drop and recreate the tables, add columns, insert
    and update values, and severely mess up your system that way.
-   Normally one never has to change the system catalogs by hand, there
+   Normally one should not change the system catalogs by hand, there
    are always SQL commands to do that.  (For example, <command>CREATE
    DATABASE</command> inserts a row into the
    <structname>pg_database</structname> catalog -- and actually
@@ -185,7 +185,7 @@
   <para>
    <structname>pg_aggregate</structname> stores information about
    aggregate functions.  An aggregate function is a function that
-   operates on a set of values (typically one column from each the row
+   operates on a set of values (typically one column from each row
    that matches a query condition) and returns a single value computed
    from all these values.  Typical aggregate functions are
    <function>sum</function>, <function>count</function>, and
@@ -233,7 +233,7 @@
       <entry>aggbasetype</entry>
       <entry><type>oid</type></entry>
       <entry>pg_type.oid</entry>
-      <entry>The type on which this function operates when invoked from SQL</entry>
+      <entry>The input datatype for this aggregate function</entry>
      </row>
      <row>
       <entry>aggtranstype</entry>
@@ -269,7 +269,7 @@
 
   <para>
    An aggregate function is identified through name
-   <emphasis>and</emphasis> argument type.  Hence aggname and aggname
+   <emphasis>and</emphasis> argument type.  Hence aggname and aggbasetype
    are the composite primary key.
   </para>
 
@@ -311,11 +311,8 @@
      <row>
       <entry>adnum</entry>
       <entry><type>int2</type></entry>
-      <entry></entry>
-      <entry>
-       The number of the column; see
-       <structname>pg_attribute</structname>.<structfield>pg_attnum</structfield>
-      </entry>
+      <entry>pg_attribute.attnum</entry>
+      <entry>The number of the column</entry>
      </row>
 
      <row>
@@ -390,20 +387,18 @@
      </row>
 
      <row>
-      <entry>attdispersion</entry>
-      <entry><type>float4</type></entry>
+      <entry>attstattarget</entry>
+      <entry><type>int4</type></entry>
       <entry></entry>
       <entry>
-       <structfield>attdispersion</structfield> is the dispersion
-       statistic of the column (0.0 to 1.0), or zero if the statistic
-       has not been calculated, or -1.0 if <command>VACUUM</command>
-       found that the column contains no duplicate entries (in which
-       case the dispersion should be taken as
-       1.0/<symbol>numberOfRows</symbol> for the current table size).
-       The -1.0 hack is useful because the number of rows may be
-       updated more often than
-       <structfield>attdispersion</structfield> is. We assume that the
-       column will retain its no-duplicate-entry property.
+       <structfield>attstattarget</structfield> controls the level of detail
+       of statistics accumulated for this column by
+       <command>ANALYZE</command>.
+       A zero value indicates that no statistics should be collected.
+       The exact meaning of positive values is datatype-dependent.
+       For scalar datatypes, <structfield>attstattarget</structfield>
+       is both the target number of <quote>most common values</quote>
+       to collect, and the target number of histogram bins to create.
       </entry>
      </row>
 
@@ -430,10 +425,12 @@
      </row>
 
      <row>
-      <entry>attnelems</entry>
+      <entry>attndims</entry>
       <entry><type>int4</type></entry>
       <entry></entry>
-      <entry>Number of dimensions, if the column is an array</entry>
+      <entry>
+       Number of dimensions, if the column is an array; otherwise 0.
+      </entry>
      </row>
 
      <row>
@@ -610,18 +607,22 @@
       <entry></entry>
       <entry>
        Size of the on-disk representation of this table in pages (size
-       <symbol>BLCKSZ</symbol>).  This is only an approximate value
-       which is calculated during vacuum.
+       <symbol>BLCKSZ</symbol>).
+       This is only an estimate used by the planner.
+       It is updated by <command>VACUUM</command>,
+       <command>ANALYZE</command>, and <command>CREATE INDEX</command>.
       </entry>
      </row>
 
      <row>
       <entry>reltuples</entry>
-      <entry><type>int4</type></entry>
+      <entry><type>float4</type></entry>
       <entry></entry>
       <entry>
-       Number of tuples in the table.  This is only an estimate used
-       by the planner, updated by <command>VACUUM</command>.
+       Number of tuples in the table.
+       This is only an estimate used by the planner.
+       It is updated by <command>VACUUM</command>,
+       <command>ANALYZE</command>, and <command>CREATE INDEX</command>.
       </entry>
      </row>
 
@@ -1663,6 +1664,130 @@
       <entry><type>abstime</type></entry>
       <entry></entry>
       <entry>Account expiry time (only used for password authentication)</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+ </section>
+
+
+ <section id="catalog-pg-statistic">
+  <title>pg_statistic</title>
+
+  <para>
+   <structname>pg_statistic</structname> stores statistical data about
+   the contents of the database.  Entries are created by
+   <command>ANALYZE</command> and subsequently used by the query planner.
+   There is one entry for each table column that has been analyzed.
+   Note that all the statistical data is inherently approximate,
+   even assuming that it is up-to-date.
+  </para>
+
+  <para>
+   Since different kinds of statistics may be appropriate for different
+   kinds of data, <structname>pg_statistic</structname> is designed not
+   to assume very much about what sort of statistics it stores.  Only
+   extremely general statistics (such as NULL-ness) are given dedicated
+   columns in <structname>pg_statistic</structname>.  Everything else
+   is stored in "slots", which are groups of associated columns whose
+   content is identified by a code number in one of the slot's columns.
+   For more information see
+   <filename>src/include/catalog/pg_statistic.h</filename>.
+  </para>
+
+  <table>
+   <title>pg_statistic Columns</title>
+
+   <tgroup cols=4>
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry>starelid</entry>
+      <entry><type>oid</type></entry>
+      <entry>pg_class.oid</entry>
+      <entry>The table that the described column belongs to</entry>
+     </row>
+
+     <row>
+      <entry>staattnum</entry>
+      <entry><type>int2</type></entry>
+      <entry>pg_attribute.attnum</entry>
+      <entry>The number of the described column</entry>
+     </row>
+
+     <row>
+      <entry>stanullfrac</entry>
+      <entry><type>float4</type></entry>
+      <entry></entry>
+      <entry>The fraction of the column's entries that are NULL</entry>
+     </row>
+
+     <row>
+      <entry>stawidth</entry>
+      <entry><type>int4</type></entry>
+      <entry></entry>
+      <entry>The average stored width, in bytes, of non-NULL entries</entry>
+     </row>
+
+     <row>
+      <entry>stadistinct</entry>
+      <entry><type>float4</type></entry>
+      <entry></entry>
+      <entry>The number of distinct non-NULL data values in the column.
+      A value greater than zero is the actual number of distinct values.
+      A value less than zero is the negative of a fraction of the number
+      of rows in the table (for example, a column in which values appear about
+      twice on the average could be represented by stadistinct = -0.5).
+      A zero value means the number of distinct values is unknown.
+      </entry>
+     </row>
+
+     <row>
+      <entry>stakindN</entry>
+      <entry><type>int2</type></entry>
+      <entry></entry>
+      <entry>A code number indicating the kind of statistics stored in the Nth
+      "slot" of the <structname>pg_statistic</structname> row.
+      </entry>
+     </row>
+
+     <row>
+      <entry>staopN</entry>
+      <entry><type>oid</type></entry>
+      <entry>pg_operator.oid</entry>
+      <entry>An operator used to derive the statistics stored in the
+      Nth "slot".  For example, a histogram slot would show the "&lt;"
+      operator that defines the sort order of the data.
+      </entry>
+     </row>
+
+     <row>
+      <entry>stanumbersN</entry>
+      <entry><type>float4[]</type></entry>
+      <entry></entry>
+      <entry>Numerical statistics of the appropriate kind for the Nth
+      "slot", or NULL if the slot kind does not involve numerical values.
+      </entry>
+     </row>
+
+     <row>
+      <entry>stavaluesN</entry>
+      <entry><type>text[]</type></entry>
+      <entry></entry>
+      <entry>Column data values of the appropriate kind for the Nth
+      "slot", or NULL if the slot kind does not store any data values.
+      For datatype independence, all column data values are converted
+      to external textual form and stored as TEXT datums.
+      </entry>
      </row>
     </tbody>
    </tgroup>

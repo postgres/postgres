@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relation.h,v 1.54 2001/03/22 04:00:53 momjian Exp $
+ * $Id: relation.h,v 1.55 2001/05/07 00:43:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -512,8 +512,8 @@ typedef struct RestrictInfo
 	Oid			hashjoinoperator;		/* copy of clause operator */
 
 	/* cache space for hashclause processing; -1 if not yet set */
-	Selectivity left_dispersion;/* dispersion of left side */
-	Selectivity right_dispersion;		/* dispersion of right side */
+	Selectivity left_bucketsize;		/* avg bucketsize of left side */
+	Selectivity right_bucketsize;		/* avg bucketsize of right side */
 } RestrictInfo;
 
 /*

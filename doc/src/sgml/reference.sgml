@@ -1,5 +1,5 @@
 <!-- reference.sgml
-$Header: /cvsroot/pgsql/doc/src/sgml/reference.sgml,v 1.15 2001/03/24 13:21:14 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/reference.sgml,v 1.16 2001/05/07 00:43:14 tgl Exp $
 
 PostgreSQL Reference Manual
 -->
@@ -26,6 +26,7 @@ PostgreSQL Reference Manual
    &alterGroup;
    &alterTable;
    &alterUser;
+   &analyze;
    &begin;
    &checkpoint;
    &close;

@@ -8,14 +8,14 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.63 2001/04/15 00:48:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.64 2001/05/07 00:43:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
+#include "postgres.h"
+
 #include <sys/types.h>
 #include <math.h>
-
-#include "postgres.h"
 
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"
@@ -45,7 +45,6 @@ static void hash_inner_and_outer(Query *root, RelOptInfo *joinrel,
 					 List *restrictlist, JoinType jointype);
 static Path *best_innerjoin(List *join_paths, List *outer_relid,
 			   JoinType jointype);
-static Selectivity estimate_dispersion(Query *root, Var *var);
 static List *select_mergejoin_clauses(RelOptInfo *joinrel,
 						 RelOptInfo *outerrel,
 						 RelOptInfo *innerrel,
@@ -722,7 +721,7 @@ hash_inner_and_outer(Query *root,
 		Expr	   *clause;
 		Var		   *left,
 				   *right;
-		Selectivity innerdispersion;
+		Selectivity innerbucketsize;
 		List	   *hashclauses;
 
 		if (restrictinfo->hashjoinoperator == InvalidOid)
@@ -742,34 +741,34 @@ hash_inner_and_outer(Query *root,
 
 		/*
 		 * Check if clause is usable with these sub-rels, find inner side,
-		 * estimate dispersion of inner var for costing purposes.
+		 * estimate bucketsize of inner var for costing purposes.
 		 *
 		 * Since we tend to visit the same clauses over and over when
-		 * planning a large query, we cache the dispersion estimates in
+		 * planning a large query, we cache the bucketsize estimates in
 		 * the RestrictInfo node to avoid repeated lookups of statistics.
 		 */
 		if (intMember(left->varno, outerrelids) &&
 			intMember(right->varno, innerrelids))
 		{
 			/* righthand side is inner */
-			innerdispersion = restrictinfo->right_dispersion;
-			if (innerdispersion < 0)
+			innerbucketsize = restrictinfo->right_bucketsize;
+			if (innerbucketsize < 0)
 			{
 				/* not cached yet */
-				innerdispersion = estimate_dispersion(root, right);
-				restrictinfo->right_dispersion = innerdispersion;
+				innerbucketsize = estimate_hash_bucketsize(root, right);
+				restrictinfo->right_bucketsize = innerbucketsize;
 			}
 		}
 		else if (intMember(left->varno, innerrelids) &&
 				 intMember(right->varno, outerrelids))
 		{
 			/* lefthand side is inner */
-			innerdispersion = restrictinfo->left_dispersion;
-			if (innerdispersion < 0)
+			innerbucketsize = restrictinfo->left_bucketsize;
+			if (innerbucketsize < 0)
 			{
 				/* not cached yet */
-				innerdispersion = estimate_dispersion(root, left);
-				restrictinfo->left_dispersion = innerdispersion;
+				innerbucketsize = estimate_hash_bucketsize(root, left);
+				restrictinfo->left_bucketsize = innerbucketsize;
 			}
 		}
 		else
@@ -790,7 +789,7 @@ hash_inner_and_outer(Query *root,
 									  innerrel->cheapest_total_path,
 									  restrictlist,
 									  hashclauses,
-									  innerdispersion));
+									  innerbucketsize));
 		if (outerrel->cheapest_startup_path != outerrel->cheapest_total_path)
 			add_path(joinrel, (Path *)
 					 create_hashjoin_path(joinrel,
@@ -799,7 +798,7 @@ hash_inner_and_outer(Query *root,
 										  innerrel->cheapest_total_path,
 										  restrictlist,
 										  hashclauses,
-										  innerdispersion));
+										  innerbucketsize));
 	}
 }
 
@@ -864,31 +863,6 @@ best_innerjoin(List *join_paths, Relids outer_relids, JoinType jointype)
 			cheapest = (Path *) path;
 	}
 	return cheapest;
-}
-
-/*
- * Estimate dispersion of the specified Var
- *
- * We use a default of 0.1 if we can't figure out anything better.
- * This will typically discourage use of a hash rather strongly,
- * if the inner relation is large.	We do not want to hash unless
- * we know that the inner rel is well-dispersed (or the alternatives
- * seem much worse).
- */
-static Selectivity
-estimate_dispersion(Query *root, Var *var)
-{
-	Oid			relid;
-
-	if (!IsA(var, Var))
-		return 0.1;
-
-	relid = getrelid(var->varno, root->rtable);
-
-	if (relid == InvalidOid)
-		return 0.1;
-
-	return (Selectivity) get_attdispersion(relid, var->varattno, 0.1);
 }
 
 /*

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pathnode.h,v 1.35 2001/03/22 04:00:54 momjian Exp $
+ * $Id: pathnode.h,v 1.36 2001/05/07 00:43:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,7 +59,7 @@ extern HashPath *create_hashjoin_path(RelOptInfo *joinrel,
 					 Path *inner_path,
 					 List *restrict_clauses,
 					 List *hashclauses,
-					 Selectivity innerdispersion);
+					 Selectivity innerbucketsize);
 
 /*
  * prototypes for relnode.c

@@ -78,7 +78,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplesort.c,v 1.15 2001/03/23 04:49:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplesort.c,v 1.16 2001/05/07 00:43:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,7 +87,11 @@
 
 #include "access/heapam.h"
 #include "access/nbtree.h"
+#include "catalog/catname.h"
+#include "catalog/pg_amop.h"
+#include "catalog/pg_amproc.h"
 #include "miscadmin.h"
+#include "utils/fmgroids.h"
 #include "utils/logtape.h"
 #include "utils/lsyscache.h"
 #include "utils/tuplesort.h"
@@ -263,6 +267,7 @@ struct Tuplesortstate
 	TupleDesc	tupDesc;
 	int			nKeys;
 	ScanKey		scanKeys;
+	SortFunctionKind *sortFnKinds;
 
 	/*
 	 * These variables are specific to the IndexTuple case; they are set
@@ -279,6 +284,7 @@ struct Tuplesortstate
 	Oid			datumType;
 	Oid			sortOperator;
 	FmgrInfo	sortOpFn;		/* cached lookup data for sortOperator */
+	SortFunctionKind sortFnKind;
 	/* we need typelen and byval in order to know how to copy the Datums. */
 	int			datumTypeLen;
 	bool		datumTypeByVal;
@@ -458,14 +464,14 @@ tuplesort_begin_common(bool randomAccess)
 
 Tuplesortstate *
 tuplesort_begin_heap(TupleDesc tupDesc,
-					 int nkeys, ScanKey keys,
+					 int nkeys,
+					 Oid *sortOperators, AttrNumber *attNums,
 					 bool randomAccess)
 {
 	Tuplesortstate *state = tuplesort_begin_common(randomAccess);
+	int			i;
 
-	AssertArg(nkeys >= 1);
-	AssertArg(keys[0].sk_attno != 0);
-	AssertArg(keys[0].sk_procedure != 0);
+	AssertArg(nkeys > 0);
 
 	state->comparetup = comparetup_heap;
 	state->copytup = copytup_heap;
@@ -475,7 +481,29 @@ tuplesort_begin_heap(TupleDesc tupDesc,
 
 	state->tupDesc = tupDesc;
 	state->nKeys = nkeys;
-	state->scanKeys = keys;
+	state->scanKeys = (ScanKey) palloc(nkeys * sizeof(ScanKeyData));
+	MemSet(state->scanKeys, 0, nkeys * sizeof(ScanKeyData));
+	state->sortFnKinds = (SortFunctionKind *)
+		palloc(nkeys * sizeof(SortFunctionKind));
+	MemSet(state->sortFnKinds, 0, nkeys * sizeof(SortFunctionKind));
+
+	for (i = 0; i < nkeys; i++)
+	{
+		RegProcedure sortFunction;
+
+		AssertArg(sortOperators[i] != 0);
+		AssertArg(attNums[i] != 0);
+
+		/* select a function that implements the sort operator */
+		SelectSortFunction(sortOperators[i], &sortFunction,
+						   &state->sortFnKinds[i]);
+
+		ScanKeyEntryInitialize(&state->scanKeys[i],
+							   0x0,
+							   attNums[i],
+							   sortFunction,
+							   (Datum) 0);
+	}
 
 	return state;
 }
@@ -507,6 +535,7 @@ tuplesort_begin_datum(Oid datumType,
 					  bool randomAccess)
 {
 	Tuplesortstate *state = tuplesort_begin_common(randomAccess);
+	RegProcedure sortFunction;
 	int16		typlen;
 	bool		typbyval;
 
@@ -518,8 +547,12 @@ tuplesort_begin_datum(Oid datumType,
 
 	state->datumType = datumType;
 	state->sortOperator = sortOperator;
-	/* lookup the function that implements the sort operator */
-	fmgr_info(get_opcode(sortOperator), &state->sortOpFn);
+
+	/* select a function that implements the sort operator */
+	SelectSortFunction(sortOperator, &sortFunction, &state->sortFnKind);
+	/* and look up the function */
+	fmgr_info(sortFunction, &state->sortOpFn);
+
 	/* lookup necessary attributes of the datum type */
 	get_typlenbyval(datumType, &typlen, &typbyval);
 	state->datumTypeLen = typlen;
@@ -548,6 +581,13 @@ tuplesort_end(Tuplesortstate *state)
 	}
 	if (state->memtupindex)
 		pfree(state->memtupindex);
+
+	/* this stuff might better belong in a variant-specific shutdown routine */
+	if (state->scanKeys)
+		pfree(state->scanKeys);
+	if (state->sortFnKinds)
+		pfree(state->sortFnKinds);
+
 	pfree(state);
 }
 
@@ -1692,6 +1732,7 @@ comparetup_heap(Tuplesortstate *state, const void *a, const void *b)
 	for (nkey = 0; nkey < state->nKeys; nkey++)
 	{
 		ScanKey		scanKey = state->scanKeys + nkey;
+		SortFunctionKind fnKind = state->sortFnKinds[nkey];
 		AttrNumber	attno = scanKey->sk_attno;
 		Datum		lattr,
 					rattr;
@@ -1708,23 +1749,36 @@ comparetup_heap(Tuplesortstate *state, const void *a, const void *b)
 		}
 		else if (isnull2)
 			return -1;
-		else if (scanKey->sk_flags & SK_COMMUTE)
-		{
-			if (DatumGetBool(FunctionCall2(&scanKey->sk_func,
-										   rattr, lattr)))
-				return -1;		/* a < b after commute */
-			if (DatumGetBool(FunctionCall2(&scanKey->sk_func,
-										   lattr, rattr)))
-				return 1;		/* a > b after commute */
-		}
 		else
 		{
-			if (DatumGetBool(FunctionCall2(&scanKey->sk_func,
-										   lattr, rattr)))
-				return -1;		/* a < b */
-			if (DatumGetBool(FunctionCall2(&scanKey->sk_func,
-										   rattr, lattr)))
-				return 1;		/* a > b */
+			int32		compare;
+
+			if (fnKind == SORTFUNC_LT)
+			{
+				if (DatumGetBool(FunctionCall2(&scanKey->sk_func,
+											   lattr, rattr)))
+					compare = -1;	/* a < b */
+				else if (DatumGetBool(FunctionCall2(&scanKey->sk_func,
+													rattr, lattr)))
+					compare = 1;	/* a > b */
+				else
+					compare = 0;
+			}
+			else
+			{
+				/* sort function is CMP or REVCMP */
+				compare = DatumGetInt32(FunctionCall2(&scanKey->sk_func,
+													  lattr, rattr));
+				if (fnKind == SORTFUNC_REVCMP)
+					compare = -compare;
+			}
+
+			if (compare != 0)
+			{
+				if (scanKey->sk_flags & SK_COMMUTE)
+					compare = -compare;
+				return compare;
+			}
 		}
 	}
 
@@ -1852,8 +1906,10 @@ comparetup_index(Tuplesortstate *state, const void *a, const void *b)
 		}
 		else
 		{
+			/* the comparison function is always of CMP type */
 			compare = DatumGetInt32(FunctionCall2(&entry->sk_func,
-												attrDatum1, attrDatum2));
+												  attrDatum1,
+												  attrDatum2));
 		}
 
 		if (compare != 0)
@@ -1954,7 +2010,7 @@ comparetup_datum(Tuplesortstate *state, const void *a, const void *b)
 	}
 	else if (rtup->isNull)
 		return -1;
-	else
+	else if (state->sortFnKind == SORTFUNC_LT)
 	{
 		if (DatumGetBool(FunctionCall2(&state->sortOpFn,
 									   ltup->val, rtup->val)))
@@ -1963,6 +2019,17 @@ comparetup_datum(Tuplesortstate *state, const void *a, const void *b)
 									   rtup->val, ltup->val)))
 			return 1;			/* a > b */
 		return 0;
+	}
+	else
+	{
+		/* sort function is CMP or REVCMP */
+		int32	compare;
+
+		compare = DatumGetInt32(FunctionCall2(&state->sortOpFn,
+											  ltup->val, rtup->val));
+		if (state->sortFnKind == SORTFUNC_REVCMP)
+			compare = -compare;
+		return compare;
 	}
 }
 
@@ -2031,4 +2098,120 @@ tuplesize_datum(Tuplesortstate *state, void *tup)
 		tuplelen = datalen + MAXALIGN(sizeof(DatumTuple));
 		return (unsigned int) tuplelen;
 	}
+}
+
+
+/*
+ * This routine selects an appropriate sorting function to implement
+ * a sort operator as efficiently as possible.  The straightforward
+ * method is to use the operator's implementation proc --- ie, "<"
+ * comparison.  However, that way often requires two calls of the function
+ * per comparison.  If we can find a btree three-way comparator function
+ * associated with the operator, we can use it to do the comparisons
+ * more efficiently.  We also support the possibility that the operator
+ * is ">" (descending sort), in which case we have to reverse the output
+ * of the btree comparator.
+ *
+ * Possibly this should live somewhere else (backend/catalog/, maybe?).
+ */
+void
+SelectSortFunction(Oid sortOperator,
+				   RegProcedure *sortFunction,
+				   SortFunctionKind *kind)
+{
+	Relation	relation;
+	HeapScanDesc scan;
+	ScanKeyData skey[3];
+	HeapTuple	tuple;
+	Oid			opclass = InvalidOid;
+
+	/*
+	 * Scan pg_amop to see if the target operator is registered as the
+	 * "<" or ">" operator of any btree opclass.  It's possible that it
+	 * might be registered both ways (eg, if someone were to build a
+	 * "reverse sort" opclass for some reason); prefer the "<" case if so.
+	 * If the operator is registered the same way in multiple opclasses,
+	 * assume we can use the associated comparator function from any one.
+	 */
+	relation = heap_openr(AccessMethodOperatorRelationName,
+						  AccessShareLock);
+
+	ScanKeyEntryInitialize(&skey[0], 0,
+						   Anum_pg_amop_amopid,
+						   F_OIDEQ,
+						   ObjectIdGetDatum(BTREE_AM_OID));
+
+	ScanKeyEntryInitialize(&skey[1], 0,
+						   Anum_pg_amop_amopopr,
+						   F_OIDEQ,
+						   ObjectIdGetDatum(sortOperator));
+
+	scan = heap_beginscan(relation, false, SnapshotNow, 2, skey);
+
+	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
+	{
+		Form_pg_amop aform = (Form_pg_amop) GETSTRUCT(tuple);
+
+		if (aform->amopstrategy == BTLessStrategyNumber)
+		{
+			opclass = aform->amopclaid;
+			*kind = SORTFUNC_CMP;
+			break;				/* done looking */
+		}
+		else if (aform->amopstrategy == BTGreaterStrategyNumber)
+		{
+			opclass = aform->amopclaid;
+			*kind = SORTFUNC_REVCMP;
+			/* keep scanning in hopes of finding a BTLess entry */
+		}
+	}
+
+	heap_endscan(scan);
+	heap_close(relation, AccessShareLock);
+
+	if (OidIsValid(opclass))
+	{
+		/* Found a suitable opclass, get its comparator support function */
+		relation = heap_openr(AccessMethodProcedureRelationName,
+							  AccessShareLock);
+
+		ScanKeyEntryInitialize(&skey[0], 0,
+							   Anum_pg_amproc_amid,
+							   F_OIDEQ,
+							   ObjectIdGetDatum(BTREE_AM_OID));
+
+		ScanKeyEntryInitialize(&skey[1], 0,
+							   Anum_pg_amproc_amopclaid,
+							   F_OIDEQ,
+							   ObjectIdGetDatum(opclass));
+
+		ScanKeyEntryInitialize(&skey[2], 0,
+							   Anum_pg_amproc_amprocnum,
+							   F_INT2EQ,
+							   Int16GetDatum(BTORDER_PROC));
+
+		scan = heap_beginscan(relation, false, SnapshotNow, 3, skey);
+
+		*sortFunction = InvalidOid;
+
+		if (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
+		{
+			Form_pg_amproc aform = (Form_pg_amproc) GETSTRUCT(tuple);
+			*sortFunction = aform->amproc;
+		}
+
+		heap_endscan(scan);
+		heap_close(relation, AccessShareLock);
+
+		if (RegProcedureIsValid(*sortFunction))
+			return;
+	}
+
+	/* Can't find a comparator, so use the operator as-is */
+
+	*kind = SORTFUNC_LT;
+	*sortFunction = get_opcode(sortOperator);
+	if (!RegProcedureIsValid(*sortFunction))
+		elog(ERROR, "SelectSortFunction: operator %u has no implementation",
+			 sortOperator);
 }

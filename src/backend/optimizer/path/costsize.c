@@ -41,7 +41,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.70 2001/04/25 22:04:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.71 2001/05/07 00:43:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,11 +50,15 @@
 
 #include <math.h>
 
+#include "catalog/pg_statistic.h"
 #include "executor/nodeHash.h"
 #include "miscadmin.h"
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"
+#include "optimizer/pathnode.h"
+#include "parser/parsetree.h"
 #include "utils/lsyscache.h"
+#include "utils/syscache.h"
 
 
 /*
@@ -573,7 +577,7 @@ cost_mergejoin(Path *path,
  * 'outer_path' is the path for the outer relation
  * 'inner_path' is the path for the inner relation
  * 'restrictlist' are the RestrictInfo nodes to be applied at the join
- * 'innerdispersion' is an estimate of the dispersion statistic
+ * 'innerbucketsize' is an estimate of the bucketsize statistic
  *				for the inner hash key.
  */
 void
@@ -581,7 +585,7 @@ cost_hashjoin(Path *path,
 			  Path *outer_path,
 			  Path *inner_path,
 			  List *restrictlist,
-			  Selectivity innerdispersion)
+			  Selectivity innerbucketsize)
 {
 	Cost		startup_cost = 0;
 	Cost		run_cost = 0;
@@ -607,22 +611,20 @@ cost_hashjoin(Path *path,
 
 	/*
 	 * The number of tuple comparisons needed is the number of outer
-	 * tuples times the typical hash bucket size.  nodeHash.c tries for
-	 * average bucket loading of NTUP_PER_BUCKET, but that goal will be
-	 * reached only if data values are uniformly distributed among the
-	 * buckets.  To be conservative, we scale up the target bucket size by
-	 * the number of inner rows times inner dispersion, giving an estimate
-	 * of the typical number of duplicates of each value. We then charge
-	 * one cpu_operator_cost per tuple comparison.
+	 * tuples times the typical number of tuples in a hash bucket,
+	 * which is the inner relation size times its bucketsize fraction.
+	 * We charge one cpu_operator_cost per tuple comparison.
 	 */
 	run_cost += cpu_operator_cost * outer_path->parent->rows *
-		NTUP_PER_BUCKET * ceil(inner_path->parent->rows * innerdispersion);
+		ceil(inner_path->parent->rows * innerbucketsize);
 
 	/*
 	 * Estimate the number of tuples that get through the hashing filter
 	 * as one per tuple in the two source relations.  This could be a
 	 * drastic underestimate if there are many equal-keyed tuples in
-	 * either relation, but we have no good way of estimating that...
+	 * either relation, but we have no simple way of estimating that;
+	 * and since this is only a second-order parameter, it's probably
+	 * not worth expending a lot of effort on the estimate.
 	 */
 	ntuples = outer_path->parent->rows + inner_path->parent->rows;
 
@@ -651,7 +653,7 @@ cost_hashjoin(Path *path,
 	/*
 	 * Bias against putting larger relation on inside.	We don't want an
 	 * absolute prohibition, though, since larger relation might have
-	 * better dispersion --- and we can't trust the size estimates
+	 * better bucketsize --- and we can't trust the size estimates
 	 * unreservedly, anyway.  Instead, inflate the startup cost by the
 	 * square root of the size ratio.  (Why square root?  No real good
 	 * reason, but it seems reasonable...)
@@ -661,6 +663,171 @@ cost_hashjoin(Path *path,
 
 	path->startup_cost = startup_cost;
 	path->total_cost = startup_cost + run_cost;
+}
+
+/*
+ * Estimate hash bucketsize fraction (ie, number of entries in a bucket
+ * divided by total tuples in relation) if the specified Var is used
+ * as a hash key.
+ *
+ * This statistic is used by cost_hashjoin.  We split out the calculation
+ * because it's useful to cache the result for re-use across multiple path
+ * cost calculations.
+ *
+ * XXX This is really pretty bogus since we're effectively assuming that the
+ * distribution of hash keys will be the same after applying restriction
+ * clauses as it was in the underlying relation.  However, we are not nearly
+ * smart enough to figure out how the restrict clauses might change the
+ * distribution, so this will have to do for now.
+ *
+ * The executor tries for average bucket loading of NTUP_PER_BUCKET by setting
+ * number of buckets equal to ntuples / NTUP_PER_BUCKET, which would yield
+ * a bucketsize fraction of NTUP_PER_BUCKET / ntuples.  But that goal will
+ * be reached only if the data values are uniformly distributed among the
+ * buckets, which requires (a) at least ntuples / NTUP_PER_BUCKET distinct
+ * data values, and (b) a not-too-skewed data distribution.  Otherwise the
+ * buckets will be nonuniformly occupied.  If the other relation in the join
+ * has a similar distribution, the most-loaded buckets are exactly those
+ * that will be probed most often.  Therefore, the "average" bucket size for
+ * costing purposes should really be taken as something close to the "worst
+ * case" bucket size.  We try to estimate this by first scaling up if there
+ * are too few distinct data values, and then scaling up again by the
+ * ratio of the most common value's frequency to the average frequency.
+ *
+ * If no statistics are available, use a default estimate of 0.1.  This will
+ * discourage use of a hash rather strongly if the inner relation is large,
+ * which is what we want.  We do not want to hash unless we know that the
+ * inner rel is well-dispersed (or the alternatives seem much worse).
+ */
+Selectivity
+estimate_hash_bucketsize(Query *root, Var *var)
+{
+	Oid			relid;
+	RelOptInfo *rel;
+	HeapTuple	tuple;
+	Form_pg_statistic stats;
+	double		estfract,
+				ndistinct,
+				needdistinct,
+				mcvfreq,
+				avgfreq;
+	float4	   *numbers;
+	int			nnumbers;
+
+	/*
+	 * Lookup info about var's relation and attribute;
+	 * if none available, return default estimate.
+	 */
+	if (!IsA(var, Var))
+		return 0.1;
+
+	relid = getrelid(var->varno, root->rtable);
+	if (relid == InvalidOid)
+		return 0.1;
+
+	rel = get_base_rel(root, var->varno);
+
+	if (rel->tuples <= 0.0 || rel->rows <= 0.0)
+		return 0.1;				/* ensure we can divide below */
+
+	tuple = SearchSysCache(STATRELATT,
+						   ObjectIdGetDatum(relid),
+						   Int16GetDatum(var->varattno),
+						   0, 0);
+	if (!HeapTupleIsValid(tuple))
+	{
+		/*
+		 * Perhaps the Var is a system attribute; if so, it will have no
+		 * entry in pg_statistic, but we may be able to guess something
+		 * about its distribution anyway.
+		 */
+		switch (var->varattno)
+		{
+			case ObjectIdAttributeNumber:
+			case SelfItemPointerAttributeNumber:
+				/* these are unique, so buckets should be well-distributed */
+				return (double) NTUP_PER_BUCKET / rel->rows;
+			case TableOidAttributeNumber:
+				/* hashing this is a terrible idea... */
+				return 1.0;
+		}
+		return 0.1;
+	}
+	stats = (Form_pg_statistic) GETSTRUCT(tuple);
+
+	/*
+	 * Obtain number of distinct data values in raw relation.
+	 */
+	ndistinct = stats->stadistinct;
+	if (ndistinct < 0.0)
+		ndistinct = -ndistinct * rel->tuples;
+
+	/*
+	 * Adjust ndistinct to account for restriction clauses.  Observe we are
+	 * assuming that the data distribution is affected uniformly by the
+	 * restriction clauses!
+	 *
+	 * XXX Possibly better way, but much more expensive: multiply by
+	 * selectivity of rel's restriction clauses that mention the target Var.
+	 */
+	ndistinct *= rel->rows / rel->tuples;
+
+	/*
+	 * Discourage use of hash join if there seem not to be very many distinct
+	 * data values.  The threshold here is somewhat arbitrary, as is the
+	 * fraction used to "discourage" the choice.
+	 */
+	if (ndistinct < 50.0)
+	{
+		ReleaseSysCache(tuple);
+		return 0.5;
+	}
+
+	/*
+	 * Form initial estimate of bucketsize fraction.  Here we use rel->rows,
+	 * ie the number of rows after applying restriction clauses, because
+	 * that's what the fraction will eventually be multiplied by in
+	 * cost_heapjoin.
+	 */
+	estfract = (double) NTUP_PER_BUCKET / rel->rows;
+
+	/*
+	 * Adjust estimated bucketsize if too few distinct values to fill
+	 * all the buckets.
+	 */
+	needdistinct = rel->rows / (double) NTUP_PER_BUCKET;
+	if (ndistinct < needdistinct)
+		estfract *= needdistinct / ndistinct;
+
+	/*
+	 * Look up the frequency of the most common value, if available.
+	 */
+	mcvfreq = 0.0;
+
+	if (get_attstatsslot(tuple, var->vartype, var->vartypmod,
+						 STATISTIC_KIND_MCV, InvalidOid,
+						 NULL, NULL, &numbers, &nnumbers))
+	{
+		/*
+		 * The first MCV stat is for the most common value.
+		 */
+		if (nnumbers > 0)
+			mcvfreq = numbers[0];
+		free_attstatsslot(var->vartype, NULL, 0,
+						  numbers, nnumbers);
+	}
+
+	/*
+	 * Adjust estimated bucketsize upward to account for skewed distribution.
+	 */
+	avgfreq = (1.0 - stats->stanullfrac) / ndistinct;
+
+	if (avgfreq > 0.0 && mcvfreq > avgfreq)
+		estfract *= mcvfreq / avgfreq;
+
+	ReleaseSysCache(tuple);
+
+	return (Selectivity) estfract;
 }
 
 

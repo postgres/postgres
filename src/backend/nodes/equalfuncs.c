@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.88 2001/03/22 03:59:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.89 2001/05/07 00:43:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -516,7 +516,7 @@ _equalRestrictInfo(RestrictInfo *a, RestrictInfo *b)
 		return false;
 
 	/*
-	 * ignore eval_cost, left/right_pathkey, and left/right_dispersion,
+	 * ignore eval_cost, left/right_pathkey, and left/right_bucketsize,
 	 * since they may not be set yet, and should be derivable from the
 	 * clause anyway
 	 */
@@ -1113,13 +1113,15 @@ _equalDropdbStmt(DropdbStmt *a, DropdbStmt *b)
 static bool
 _equalVacuumStmt(VacuumStmt *a, VacuumStmt *b)
 {
-	if (a->verbose != b->verbose)
+	if (a->vacuum != b->vacuum)
 		return false;
 	if (a->analyze != b->analyze)
 		return false;
+	if (a->verbose != b->verbose)
+		return false;
 	if (!equalstr(a->vacrel, b->vacrel))
 		return false;
-	if (!equal(a->va_spec, b->va_spec))
+	if (!equal(a->va_cols, b->va_cols))
 		return false;
 
 	return true;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSort.c,v 1.32 2001/03/22 06:16:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSort.c,v 1.33 2001/05/07 00:43:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,24 +20,24 @@
 #include "utils/tuplesort.h"
 
 /* ----------------------------------------------------------------
- *		FormSortKeys(node)
+ *		ExtractSortKeys
  *
- *		Forms the structure containing information used to sort the relation.
+ *		Extract the sorting key information from the plan node.
  *
- *		Returns an array of ScanKeyData.
+ *		Returns two palloc'd arrays, one of sort operator OIDs and
+ *		one of attribute numbers.
  * ----------------------------------------------------------------
  */
-static ScanKey
-FormSortKeys(Sort *sortnode)
+static void
+ExtractSortKeys(Sort *sortnode,
+				Oid **sortOperators,
+				AttrNumber **attNums)
 {
-	ScanKey		sortkeys;
 	List	   *targetList;
-	List	   *tl;
 	int			keycount;
-	Resdom	   *resdom;
-	AttrNumber	resno;
-	Index		reskey;
-	Oid			reskeyop;
+	Oid		   *sortOps;
+	AttrNumber *attNos;
+	List	   *tl;
 
 	/*
 	 * get information from the node
@@ -46,36 +46,33 @@ FormSortKeys(Sort *sortnode)
 	keycount = sortnode->keycount;
 
 	/*
-	 * first allocate space for scan keys
+	 * first allocate space for results
 	 */
 	if (keycount <= 0)
-		elog(ERROR, "FormSortKeys: keycount <= 0");
-	sortkeys = (ScanKey) palloc(keycount * sizeof(ScanKeyData));
-	MemSet((char *) sortkeys, 0, keycount * sizeof(ScanKeyData));
+		elog(ERROR, "ExtractSortKeys: keycount <= 0");
+	sortOps = (Oid *) palloc(keycount * sizeof(Oid));
+	MemSet(sortOps, 0, keycount * sizeof(Oid));
+	*sortOperators = sortOps;
+	attNos = (AttrNumber *) palloc(keycount * sizeof(AttrNumber));
+	MemSet(attNos, 0, keycount * sizeof(AttrNumber));
+	*attNums = attNos;
 
 	/*
-	 * form each scan key from the resdom info in the target list
+	 * extract info from the resdom nodes in the target list
 	 */
 	foreach(tl, targetList)
 	{
 		TargetEntry *target = (TargetEntry *) lfirst(tl);
-
-		resdom = target->resdom;
-		resno = resdom->resno;
-		reskey = resdom->reskey;
-		reskeyop = resdom->reskeyop;
+		Resdom	   *resdom = target->resdom;
+		Index		reskey = resdom->reskey;
 
 		if (reskey > 0)			/* ignore TLEs that are not sort keys */
 		{
-			ScanKeyEntryInitialize(&sortkeys[reskey - 1],
-								   0x0,
-								   resno,
-								   (RegProcedure) reskeyop,
-								   (Datum) 0);
+			Assert(reskey <= keycount);
+			sortOps[reskey - 1] = resdom->reskeyop;
+			attNos[reskey - 1] = resdom->resno;
 		}
 	}
-
-	return sortkeys;
 }
 
 /* ----------------------------------------------------------------
@@ -124,8 +121,8 @@ ExecSort(Sort *node)
 	{
 		Plan	   *outerNode;
 		TupleDesc	tupDesc;
-		int			keycount;
-		ScanKey		sortkeys;
+		Oid		   *sortOperators;
+		AttrNumber *attNums;
 
 		SO1_printf("ExecSort: %s\n",
 				   "sorting subplan");
@@ -145,13 +142,16 @@ ExecSort(Sort *node)
 
 		outerNode = outerPlan((Plan *) node);
 		tupDesc = ExecGetTupType(outerNode);
-		keycount = node->keycount;
-		sortkeys = (ScanKey) sortstate->sort_Keys;
 
-		tuplesortstate = tuplesort_begin_heap(tupDesc, keycount, sortkeys,
+		ExtractSortKeys(node, &sortOperators, &attNums);
+
+		tuplesortstate = tuplesort_begin_heap(tupDesc, node->keycount,
+											  sortOperators, attNums,
 											  true /* randomAccess */ );
-
 		sortstate->tuplesortstate = (void *) tuplesortstate;
+
+		pfree(sortOperators);
+		pfree(attNums);
 
 		/*
 		 * Scan the subplan and feed all the tuples to tuplesort.
@@ -230,7 +230,6 @@ ExecInitSort(Sort *node, EState *estate, Plan *parent)
 	 */
 	sortstate = makeNode(SortState);
 	sortstate->sort_Done = false;
-	sortstate->sort_Keys = NULL;
 	sortstate->tuplesortstate = NULL;
 
 	node->sortstate = sortstate;
@@ -257,11 +256,6 @@ ExecInitSort(Sort *node, EState *estate, Plan *parent)
 	 */
 	outerPlan = outerPlan((Plan *) node);
 	ExecInitNode(outerPlan, estate, (Plan *) node);
-
-	/*
-	 * initialize sortstate information
-	 */
-	sortstate->sort_Keys = FormSortKeys(node);
 
 	/*
 	 * initialize tuple type.  no need to initialize projection info
@@ -320,9 +314,6 @@ ExecEndSort(Sort *node)
 	if (sortstate->tuplesortstate != NULL)
 		tuplesort_end((Tuplesortstate *) sortstate->tuplesortstate);
 	sortstate->tuplesortstate = NULL;
-
-	if (sortstate->sort_Keys != NULL)
-		pfree(sortstate->sort_Keys);
 
 	pfree(sortstate);
 	node->sortstate = NULL;
