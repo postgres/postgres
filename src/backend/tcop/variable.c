@@ -2,7 +2,7 @@
  * Routines for handling of 'SET var TO',
  *  'SHOW var' and 'RESET var' statements.
  *
- * $Id: variable.c,v 1.20 1997/11/10 15:24:56 thomas Exp $
+ * $Id: variable.c,v 1.21 1997/11/10 15:37:15 thomas Exp $
  *
  */
 
@@ -439,6 +439,11 @@ static char *defaultTZ = NULL;
 static char TZvalue[64];
 static char tzbuf[64];
 
+/* parse_timezone()
+ * Handle SET TIME ZONE...
+ * Try to save existing TZ environment variable for later use in RESET TIME ZONE.
+ * - thomas 1997-11-10
+ */
 bool
 parse_timezone(const char *value)
 {
