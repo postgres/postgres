@@ -210,6 +210,10 @@
 #client_encoding = sql_ascii	# actually, defaults to database encoding
 
 # These settings are initialized by initdb -- they may be changed
+#lc_messages = 'C'		# locale for system error message strings
+#lc_monetary = 'C'		# locale for monetary formatting
+#lc_numeric = 'C'		# locale for number formatting
+#lc_time = 'C'			# locale for time formatting
 
 # Other Defaults
 

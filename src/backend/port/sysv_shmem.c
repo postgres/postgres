@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/sysv_shmem.c,v 1.10 2003/05/08 19:17:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/sysv_shmem.c,v 1.11 2003/07/14 20:00:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,10 +45,8 @@ void *UsedShmemSegAddr = NULL;
 static void *InternalIpcMemoryCreate(IpcMemoryKey memKey, uint32 size);
 static void IpcMemoryDetach(int status, Datum shmaddr);
 static void IpcMemoryDelete(int status, Datum shmId);
-static void *PrivateMemoryCreate(uint32 size);
-static void PrivateMemoryDelete(int status, Datum memaddr);
 static PGShmemHeader *PGSharedMemoryAttach(IpcMemoryKey key,
-										IpcMemoryId *shmid, void *addr);
+										   IpcMemoryId *shmid);
 
 
 /*
@@ -243,41 +241,6 @@ PGSharedMemoryIsInUse(unsigned long id1, unsigned long id2)
 }
 
 
-/* ----------------------------------------------------------------
- *						private memory support
- *
- * Rather than allocating shmem segments with IPC_PRIVATE key, we
- * just malloc() the requested amount of space.  This code emulates
- * the needed shmem functions.
- * ----------------------------------------------------------------
- */
-
-static void *
-PrivateMemoryCreate(uint32 size)
-{
-	void	   *memAddress;
-
-	memAddress = malloc(size);
-	if (!memAddress)
-	{
-		fprintf(stderr, "PrivateMemoryCreate: malloc(%u) failed\n", size);
-		proc_exit(1);
-	}
-	MemSet(memAddress, 0, size);	/* keep Purify quiet */
-
-	/* Register on-exit routine to release storage */
-	on_shmem_exit(PrivateMemoryDelete, PointerGetDatum(memAddress));
-
-	return memAddress;
-}
-
-static void
-PrivateMemoryDelete(int status, Datum memaddr)
-{
-	free(DatumGetPointer(memaddr));
-}
-
-
 /*
  * PGSharedMemoryCreate
  *
@@ -288,6 +251,9 @@ PrivateMemoryDelete(int status, Datum memaddr)
  * Dead Postgres segments are recycled if found, but we do not fail upon
  * collision with non-Postgres shmem segments.	The idea here is to detect and
  * re-use keys that may have been assigned by a crashed postmaster or backend.
+ *
+ * makePrivate means to always create a new segment, rather than attach to
+ * or recycle any existing segment.
  *
  * The port number is passed for possible use as a key (for SysV, we use
  * it to generate the starting shmem key).	In a standalone backend,
@@ -307,8 +273,7 @@ PGSharedMemoryCreate(uint32 size, bool makePrivate, int port)
 	/* Just attach and return the pointer */
 	if (ExecBackend && UsedShmemSegAddr != NULL && !makePrivate)
 	{
-		if ((hdr = (PGShmemHeader *) memAddress = PGSharedMemoryAttach(
-						UsedShmemSegID, &shmid, UsedShmemSegAddr)) == NULL)
+		if ((hdr = PGSharedMemoryAttach(UsedShmemSegID, &shmid)) == NULL)
 		{
 			fprintf(stderr, "Unable to attach to proper memory at fixed address: shmget(key=%d, addr=%p) failed: %s\n",
 				(int) UsedShmemSegID, UsedShmemSegAddr, strerror(errno));
@@ -317,34 +282,29 @@ PGSharedMemoryCreate(uint32 size, bool makePrivate, int port)
 		return hdr;
 	}
 
-	/* Create shared memory */
-	
-	NextShmemSegID = port * 1000 + 1;
+	/* Loop till we find a free IPC key */
+	NextShmemSegID = port * 1000;
 
-	for (;;NextShmemSegID++)
+	for (NextShmemSegID++;; NextShmemSegID++)
 	{
-		/* Special case if creating a private segment --- just malloc() it */
-		if (makePrivate)
-		{
-			memAddress = PrivateMemoryCreate(size);
-			break;
-		}
-
 		/* Try to create new segment */
 		memAddress = InternalIpcMemoryCreate(NextShmemSegID, size);
 		if (memAddress)
 			break;				/* successful create and attach */
 
 		/* Check shared memory and possibly remove and recreate */
-			
-		if ((hdr = (PGShmemHeader *) memAddress = PGSharedMemoryAttach(
-						NextShmemSegID, &shmid, UsedShmemSegAddr)) == NULL)
+
+		if (makePrivate)		/* a standalone backend shouldn't do this */
+			continue;
+
+		if ((memAddress = PGSharedMemoryAttach(NextShmemSegID, &shmid)) == NULL)
 			continue;			/* can't attach, not one of mine */
 
 		/*
 		 * If I am not the creator and it belongs to an extant process,
 		 * continue.
 		 */
+		hdr = (PGShmemHeader *) memAddress;
 		if (hdr->creatorPID != getpid())
 		{
 			if (kill(hdr->creatorPID, 0) == 0 || errno != ESRCH)
@@ -407,22 +367,25 @@ PGSharedMemoryCreate(uint32 size, bool makePrivate, int port)
 
 
 /*
- *	Attach to shared memory and make sure it has a Postgres header
+ * Attach to shared memory and make sure it has a Postgres header
+ *
+ * Returns attach address if OK, else NULL
  */
 static PGShmemHeader *
-PGSharedMemoryAttach(IpcMemoryKey key, IpcMemoryId *shmid, void *addr)
+PGSharedMemoryAttach(IpcMemoryKey key, IpcMemoryId *shmid)
 {
 	PGShmemHeader *hdr;
 
 	if ((*shmid = shmget(key, sizeof(PGShmemHeader), 0)) < 0)
 		return NULL;
 
-	hdr = (PGShmemHeader *) shmat(*shmid, UsedShmemSegAddr,
+	hdr = (PGShmemHeader *) shmat(*shmid,
+								  UsedShmemSegAddr,
 #if defined(solaris) && defined(__sparc__)
-			/* use intimate shared memory on SPARC Solaris */
-			SHM_SHARE_MMU
+								  /* use intimate shared memory on Solaris */
+								  SHM_SHARE_MMU
 #else
-			0
+								  0
 #endif
 		);
 
@@ -434,5 +397,6 @@ PGSharedMemoryAttach(IpcMemoryKey key, IpcMemoryId *shmid, void *addr)
 		shmdt(hdr);
 		return NULL;			/* segment belongs to a non-Postgres app */
 	}
+
 	return hdr;
 }

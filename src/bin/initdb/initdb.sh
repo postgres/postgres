@@ -27,7 +27,7 @@
 # Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.193 2003/07/04 16:41:21 tgl Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.194 2003/07/14 20:00:23 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -579,20 +579,53 @@ echo "ok"
 
 ##########################################################################
 #
+# DETERMINE PLATFORM-SPECIFIC CONFIG SETTINGS
+#
+# Use reasonable values if kernel will let us, else scale back
+
+cp /dev/null "$PGDATA"/postgresql.conf               || exit_nicely
+
+$ECHO_N "selecting default shared_buffers... "$ECHO_C
+
+for nbuffers in 1000 900 800 700 600 500 400 300 200 100 50
+do
+    TEST_OPT="$PGSQL_OPT -c shared_buffers=$nbuffers -c max_connections=5"
+    if "$PGPATH"/postgres $TEST_OPT template1 </dev/null >/dev/null 2>&1
+    then
+	break
+    fi
+done
+
+echo "$nbuffers"
+
+$ECHO_N "selecting default max_connections... "$ECHO_C
+
+for nconns in 100 50 40 30 20 10
+do
+    TEST_OPT="$PGSQL_OPT -c shared_buffers=$nbuffers -c max_connections=$nconns"
+    if "$PGPATH"/postgres $TEST_OPT template1 </dev/null >/dev/null 2>&1
+    then
+	break
+    fi
+done
+
+echo "$nconns"
+
+##########################################################################
+#
 # CREATE CONFIG FILES
 
 $ECHO_N "creating configuration files... "$ECHO_C
 
 cp "$PG_HBA_SAMPLE" "$PGDATA"/pg_hba.conf              || exit_nicely
 cp "$PG_IDENT_SAMPLE" "$PGDATA"/pg_ident.conf          || exit_nicely
-(
-  trigger="# These settings are initialized by initdb -- they may be changed"
-  sed -n "1,/$trigger/p" "$POSTGRESQL_CONF_SAMPLE"
-  for cat in MESSAGES MONETARY NUMERIC TIME; do
-    echo "LC_$cat = '`pg_getlocale $cat`'"
-  done
-  sed -n "1,/$trigger/!p" "$POSTGRESQL_CONF_SAMPLE"
-) > "$PGDATA"/postgresql.conf || exit_nicely
+sed -e "s/^#shared_buffers = 64/shared_buffers = $nbuffers/" \
+    -e "s/^#max_connections = 32/max_connections = $nconns/" \
+    -e "s/^#lc_messages = 'C'/lc_messages = '`pg_getlocale MESSAGES`'/" \
+    -e "s/^#lc_monetary = 'C'/lc_monetary = '`pg_getlocale MONETARY`'/" \
+    -e "s/^#lc_numeric = 'C'/lc_numeric = '`pg_getlocale NUMERIC`'/" \
+    -e "s/^#lc_time = 'C'/lc_time = '`pg_getlocale TIME`'/" \
+    "$POSTGRESQL_CONF_SAMPLE"  > "$PGDATA"/postgresql.conf || exit_nicely
 
 chmod 0600 "$PGDATA"/pg_hba.conf "$PGDATA"/pg_ident.conf \
 	"$PGDATA"/postgresql.conf

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.192 2003/07/09 08:52:56 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.193 2003/07/14 20:00:22 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -608,9 +608,18 @@ SET ENABLE_SEQSCAN TO OFF;
       <listitem>
        <para>
         Determines the maximum number of concurrent connections to the
-        database server. The default is 32 (unless altered while
-        building the server). This parameter can only be set at server
-        start.
+        database server. The default is typically 100, but may be less
+	if your kernel settings will not support it (as determined
+	during <application>initdb</>).
+	This parameter can only be set at server start.
+       </para>
+
+       <para>
+        Increasing this parameter may cause <productname>PostgreSQL</>
+        to request more <systemitem class="osname">System V</> shared
+        memory or semaphores than your operating system's default configuration
+        allows. See <xref linkend="sysvipc"> for information on how to
+        adjust these parameters, if necessary.
        </para>
       </listitem>
      </varlistentry>
@@ -831,13 +840,16 @@ SET ENABLE_SEQSCAN TO OFF;
       <listitem>
        <para>
         Sets the number of shared memory buffers used by the database
-        server. The default is 64. Each buffer is typically 8192
-        bytes. This must be greater than 16, as well as at least twice
-        the value of <varname>MAX_CONNECTIONS</varname>; however, a
-        higher value can often improve performance.
-        Values of a few thousand are recommended
-        for production installations. This option can only be set at
-        server start.
+        server. The default is typically 1000, but may be less
+	if your kernel settings will not support it (as determined
+	during <application>initdb</>).  Each buffer is 8192
+        bytes, unless a different value of <literal>BLCKSZ</> was chosen
+	when building the server.  This setting must be at least 16,
+	as well as at least twice the value of
+	<varname>MAX_CONNECTIONS</varname>; however, settings significantly
+	higher than the minimum are usually needed for good performance.
+        Values of a few thousand are recommended for production installations.
+	This option can only be set at server start.
        </para>
 
        <para>
@@ -2796,7 +2808,7 @@ $ <userinput>postmaster -o '-S 1024 -s'</userinput>
     number</quote>, to detect collision with semaphore sets used by
     other applications. The maximum number of semaphores in the system
     is set by <varname>SEMMNS</>, which consequently must be at least
-    as high as the connection setting plus one extra for each 16
+    as high as <literal>max_connections</> plus one extra for each 16
     allowed connections (see the formula in <xref
     linkend="sysvipc-parameters">).  The parameter <varname>SEMMNI</>
     determines the limit on the number of semaphore sets that can
