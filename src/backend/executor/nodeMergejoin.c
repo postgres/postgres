@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.23 1999/02/23 07:35:09 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.24 1999/02/24 10:20:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -288,7 +288,7 @@ MergeCompare(List *eqQual, List *compareQual, ExprContext *econtext)
  */
 #ifdef EXEC_MERGEJOINDEBUG
 void
-ExecMergeTupleDumpInner(ExprContext *econtext);
+			ExecMergeTupleDumpInner(ExprContext *econtext);
 
 void
 ExecMergeTupleDumpInner(ExprContext *econtext)
@@ -305,7 +305,7 @@ ExecMergeTupleDumpInner(ExprContext *econtext)
 }
 
 void
-ExecMergeTupleDumpOuter(ExprContext *econtext);
+			ExecMergeTupleDumpOuter(ExprContext *econtext);
 
 void
 ExecMergeTupleDumpOuter(ExprContext *econtext)
@@ -321,8 +321,7 @@ ExecMergeTupleDumpOuter(ExprContext *econtext)
 					outerSlot->ttc_tupleDescriptor);
 }
 
-void
-ExecMergeTupleDumpMarked(ExprContext *econtext,
+void ExecMergeTupleDumpMarked(ExprContext *econtext,
 						 MergeJoinState *mergestate);
 
 void
@@ -342,7 +341,7 @@ ExecMergeTupleDumpMarked(ExprContext *econtext,
 }
 
 void
-ExecMergeTupleDump(ExprContext *econtext, MergeJoinState *mergestate);
+			ExecMergeTupleDump(ExprContext *econtext, MergeJoinState *mergestate);
 
 void
 ExecMergeTupleDump(ExprContext *econtext, MergeJoinState *mergestate)
@@ -355,6 +354,7 @@ ExecMergeTupleDump(ExprContext *econtext, MergeJoinState *mergestate)
 
 	printf("******** \n");
 }
+
 #endif
 
 /* ----------------------------------------------------------------
@@ -427,11 +427,14 @@ ExecMergeJoin(MergeJoin *node)
 	ExprContext *econtext;
 
 #ifdef ENABLE_OUTER_JOINS
-	/* These should be set from the expression context!
-	 * - thomas 1999-02-20
+
+	/*
+	 * These should be set from the expression context! - thomas
+	 * 1999-02-20
 	 */
 	static bool isLeftJoin = true;
 	static bool isRightJoin = false;
+
 #endif
 
 	/* ----------------
@@ -486,19 +489,19 @@ ExecMergeJoin(MergeJoin *node)
 		switch (mergestate->mj_JoinState)
 		{
 
-				/*********************************
+				/*
 				 * EXEC_MJ_INITIALIZE means that this is the first time
-				 * ExecMergeJoin() has been called and so we have to initialize
-				 * the inner, outer and marked tuples as well as various stuff
-				 * in the expression context.
-				 *********************************/
+				 * ExecMergeJoin() has been called and so we have to
+				 * initialize the inner, outer and marked tuples as well
+				 * as various stuff in the expression context.
+				 */
 			case EXEC_MJ_INITIALIZE:
 				MJ_printf("ExecMergeJoin: EXEC_MJ_INITIALIZE\n");
-				/* ----------------
-				 *	 Note: at this point, if either of our inner or outer
-				 *	 tuples are nil, then the join ends immediately because
-				 *	 we know one of the subplans is empty.
-				 * ----------------
+
+				/*
+				 * Note: at this point, if either of our inner or outer
+				 * tuples are nil, then the join ends immediately because
+				 * we know one of the subplans is empty.
 				 */
 				innerTupleSlot = ExecProcNode(innerPlan, (Plan *) node);
 				if (TupIsNull(innerTupleSlot))
@@ -531,11 +534,12 @@ ExecMergeJoin(MergeJoin *node)
 				mergestate->mj_JoinState = EXEC_MJ_SKIPINNER;
 				break;
 
-				/*********************************
-				 * EXEC_MJ_JOINMARK means we have just found a new outer tuple
-				 * and a possible matching inner tuple. This is the case after
-				 * the INITIALIZE, SKIPOUTER or SKIPINNER states.
-				 *********************************/
+				/*
+				 * EXEC_MJ_JOINMARK means we have just found a new outer
+				 * tuple and a possible matching inner tuple. This is the
+				 * case after the INITIALIZE, SKIPOUTER or SKIPINNER
+				 * states.
+				 */
 			case EXEC_MJ_JOINMARK:
 				MJ_printf("ExecMergeJoin: EXEC_MJ_JOINMARK\n");
 				ExecMarkPos(innerPlan);
@@ -545,7 +549,7 @@ ExecMergeJoin(MergeJoin *node)
 				mergestate->mj_JoinState = EXEC_MJ_JOINTEST;
 				break;
 
-				/*********************************
+				/*
 				 * EXEC_MJ_JOINTEST means we have two tuples which might
 				 * satisfy the merge clause, so we test them.
 				 *
@@ -553,7 +557,7 @@ ExecMergeJoin(MergeJoin *node)
 				 * next inner tuple (EXEC_MJ_JOINTUPLES).
 				 *
 				 * If they do not satisfy then advance to next outer tuple.
-				 *********************************/
+				 */
 			case EXEC_MJ_JOINTEST:
 				MJ_printf("ExecMergeJoin: EXEC_MJ_JOINTEST\n");
 
@@ -566,11 +570,11 @@ ExecMergeJoin(MergeJoin *node)
 					mergestate->mj_JoinState = EXEC_MJ_NEXTOUTER;
 				break;
 
-				/*********************************
+				/*
 				 * EXEC_MJ_JOINTUPLES means we have two tuples which
 				 * satisified the merge clause so we join them and then
 				 * proceed to get the next inner tuple (EXEC_NEXT_INNER).
-				 *********************************/
+				 */
 			case EXEC_MJ_JOINTUPLES:
 				MJ_printf("ExecMergeJoin: EXEC_MJ_JOINTUPLES\n");
 				mergestate->mj_JoinState = EXEC_MJ_NEXTINNER;
@@ -599,11 +603,11 @@ ExecMergeJoin(MergeJoin *node)
 				}
 				break;
 
-				/*********************************
-				 * EXEC_MJ_NEXTINNER means advance the inner scan to
-				 * the next tuple. If the tuple is not nil, we then
-				 * proceed to test it against the join qualification.
-				 *********************************/
+				/*
+				 * EXEC_MJ_NEXTINNER means advance the inner scan to the
+				 * next tuple. If the tuple is not nil, we then proceed to
+				 * test it against the join qualification.
+				 */
 			case EXEC_MJ_NEXTINNER:
 				MJ_printf("ExecMergeJoin: EXEC_MJ_NEXTINNER\n");
 
@@ -621,21 +625,22 @@ ExecMergeJoin(MergeJoin *node)
 					mergestate->mj_JoinState = EXEC_MJ_JOINTEST;
 				break;
 
-				/*********************************
+				/*-------------------------------------------
 				 * EXEC_MJ_NEXTOUTER means
 				 *
-				 *              outer inner
-				 * outer tuple -  5	    5  - marked tuple
-				 *                5     5
-				 *                6     6  - inner tuple
-				 *                7     7
+				 *				outer inner
+				 * outer tuple -  5		5  - marked tuple
+				 *				  5		5
+				 *				  6		6  - inner tuple
+				 *				  7		7
 				 *
-				 * we know we just bumped into the 
+				 * we know we just bumped into the
 				 * first inner tuple > current outer tuple
 				 * so get a new outer tuple and then
 				 * proceed to test it against the marked tuple
 				 * (EXEC_MJ_TESTOUTER)
-				 *********************************/
+				 *------------------------------------------------
+				 */
 			case EXEC_MJ_NEXTOUTER:
 				MJ_printf("ExecMergeJoin: EXEC_MJ_NEXTOUTER\n");
 
@@ -657,7 +662,7 @@ ExecMergeJoin(MergeJoin *node)
 				mergestate->mj_JoinState = EXEC_MJ_TESTOUTER;
 				break;
 
-				/*********************************
+				/*--------------------------------------------------------
 				 * EXEC_MJ_TESTOUTER If the new outer tuple and the marked
 				 * tuple satisfy the merge clause then we know we have
 				 * duplicates in the outer scan so we have to restore the
@@ -687,9 +692,10 @@ ExecMergeJoin(MergeJoin *node)
 				 *							7	 12
 				 *
 				 *
-				 *       new outer tuple > marked tuple
+				 *		 new outer tuple > marked tuple
 				 *
-				 *********************************/
+				 *---------------------------------------------------------
+				 */
 			case EXEC_MJ_TESTOUTER:
 				MJ_printf("ExecMergeJoin: EXEC_MJ_TESTOUTER\n");
 
@@ -731,11 +737,11 @@ ExecMergeJoin(MergeJoin *node)
 					 *	tuple didn't match the marked outer tuple then
 					 *	we may have the case:
 					 *
-					 *           outer inner
-					 *             4     4  - marked tuple
-					 * new outer - 5     4
-					 *             6    nil - inner tuple
-					 *             7
+					 *			 outer inner
+					 *			   4	 4	- marked tuple
+					 * new outer - 5	 4
+					 *			   6	nil - inner tuple
+					 *			   7
 					 *
 					 *	which means that all subsequent outer tuples will be
 					 *	larger than our inner tuples.
@@ -760,22 +766,23 @@ ExecMergeJoin(MergeJoin *node)
 				}
 				break;
 
-				/*********************************
+				/*----------------------------------------------------------
 				 * EXEC_MJ_SKIPOUTER means skip over tuples in the outer plan
 				 * until we find an outer tuple > current inner tuple.
 				 *
 				 * For example:
 				 *
-				 *              outer inner
-				 *                5     5
-				 *                5     5
-				 * outer tuple -  6     8  - inner tuple
-				 *                7    12
-				 *                8    14
+				 *				outer inner
+				 *				  5		5
+				 *				  5		5
+				 * outer tuple -  6		8  - inner tuple
+				 *				  7    12
+				 *				  8    14
 				 *
 				 * we have to advance the outer scan
 				 * until we find the outer 8.
-				 *********************************/
+				 *----------------------------------------------------------
+				 */
 			case EXEC_MJ_SKIPOUTER:
 				MJ_printf("ExecMergeJoin: EXEC_MJ_SKIPOUTER\n");
 				/* ----------------
@@ -867,23 +874,24 @@ ExecMergeJoin(MergeJoin *node)
 					mergestate->mj_JoinState = EXEC_MJ_JOINMARK;
 				break;
 
-				/*********************************
+				/*-----------------------------------------------------------
 				 * EXEC_MJ_SKIPINNER means skip over tuples in the inner plan
 				 * until we find an inner tuple > current outer tuple.
 				 *
 				 * For example:
 				 *
-				 *              outer inner
-				 *                5     5
-				 *                5     5
-				 * outer tuple - 12     8  - inner tuple
-				 *               14    10
-				 *               17    12
+				 *				outer inner
+				 *				  5		5
+				 *				  5		5
+				 * outer tuple - 12		8  - inner tuple
+				 *				 14    10
+				 *				 17    12
 				 *
 				 * we have to advance the inner scan
 				 * until we find the inner 12.
 				 *
-				 *********************************/
+				 *-------------------------------------------------------
+				 */
 			case EXEC_MJ_SKIPINNER:
 				MJ_printf("ExecMergeJoin: EXEC_MJ_SKIPINNER\n");
 				/* ----------------
@@ -997,11 +1005,13 @@ ExecMergeJoin(MergeJoin *node)
 				break;
 
 #ifdef ENABLE_OUTER_JOINS
-				/*********************************
-				 * EXEC_MJ_FILLINNER means we have an unmatched inner tuple
-				 * which must be null-expanded into the projection tuple.
-				 * get the next inner tuple and reset markers (EXEC_MJ_JOINMARK).
-				 *********************************/
+
+				/*
+				 * EXEC_MJ_FILLINNER means we have an unmatched inner
+				 * tuple which must be null-expanded into the projection
+				 * tuple. get the next inner tuple and reset markers
+				 * (EXEC_MJ_JOINMARK).
+				 */
 			case EXEC_MJ_FILLINNER:
 				MJ_printf("ExecMergeJoin: EXEC_MJ_FILLINNER\n");
 				mergestate->mj_JoinState = EXEC_MJ_JOINMARK;
@@ -1046,11 +1056,12 @@ ExecMergeJoin(MergeJoin *node)
 				 */
 				break;
 
-				/*********************************
-				 * EXEC_MJ_FILLOUTER means we have an unmatched outer tuple
-				 * which must be null-expanded into the projection tuple.
-				 * get the next outer tuple and reset markers (EXEC_MJ_JOINMARK).
-				 *********************************/
+				/*
+				 * EXEC_MJ_FILLOUTER means we have an unmatched outer
+				 * tuple which must be null-expanded into the projection
+				 * tuple. get the next outer tuple and reset markers
+				 * (EXEC_MJ_JOINMARK).
+				 */
 			case EXEC_MJ_FILLOUTER:
 				MJ_printf("ExecMergeJoin: EXEC_MJ_FILLOUTER\n");
 				mergestate->mj_JoinState = EXEC_MJ_JOINMARK;
@@ -1095,10 +1106,10 @@ ExecMergeJoin(MergeJoin *node)
 				break;
 #endif
 
-				/*********************************
-				 * if we get here it means our code is fouled up
-				 * and so we just end the join prematurely.
-				 *********************************/
+				/*
+				 * if we get here it means our code is fouled up and so we
+				 * just end the join prematurely.
+				 */
 			default:
 				elog(NOTICE, "ExecMergeJoin: invalid join state. aborting");
 				return NULL;
