@@ -5,7 +5,7 @@
  *
  *	Copyright (c) 2001, PostgreSQL Global Development Group
  *
- *  $Id: pgstat.h,v 1.6 2001/08/05 02:06:50 tgl Exp $
+ *  $Id: pgstat.h,v 1.7 2001/09/03 12:00:00 petere Exp $
  * ----------
  */
 #ifndef PGSTAT_H
@@ -16,8 +16,8 @@
  * installations $PGDATA.
  * ----------
  */
-#define	PGSTAT_STAT_FILENAME	"%s/pgstat.stat"
-#define	PGSTAT_STAT_TMPFILE		"%s/pgstat.tmp.%d"
+#define	PGSTAT_STAT_FILENAME	"%s/global/pgstat.stat"
+#define	PGSTAT_STAT_TMPFILE		"%s/global/pgstat.tmp.%d"
 
 /* ----------
  * Timer definitions.
