@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/unlisten.sgml,v 1.9 2000/03/26 18:32:27 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/unlisten.sgml,v 1.10 2000/07/21 04:48:33 momjian Exp $
 Postgres documentation
 -->
 
@@ -156,9 +156,9 @@ Asynchronous NOTIFY 'virtual' from backend with pid '8448' received
    ignored:
 
 <programlisting>
-postgres=> UNLISTEN virtual;
+UNLISTEN virtual;
 UNLISTEN
-postgres=> NOTIFY virtual;
+NOTIFY virtual;
 NOTIFY
 -- notice no NOTIFY event is received
 </programlisting>
