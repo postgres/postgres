@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.8 1996/11/16 04:59:10 momjian Exp $
+ * $Id: builtins.h,v 1.9 1997/02/19 20:11:05 momjian Exp $
  *
  * NOTES
  *    This should normally only be included by fmgr.h.
@@ -260,6 +260,7 @@ extern char *filename_in(char *file);
 extern char *filename_out(char *s);
 
 /* float.c */
+extern void CheckFloat8Val(double val);	/* used by lex */
 extern float32 float4in(char *num);
 extern char *float4out(float32 num);
 extern float64 float8in(char *num);

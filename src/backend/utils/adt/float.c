@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.11 1997/02/14 04:17:52 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.12 1997/02/19 20:10:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -127,7 +127,7 @@ static void CheckFloat4Val(double val)
    
    raise an elog warning if it is
 */
-static void CheckFloat8Val(double val)
+void CheckFloat8Val(double val)
 {
   /* defining unsafe floats's will make float4 and float8 ops faster
      at the cost of safety, of course! */
