@@ -2341,7 +2341,7 @@ DROP TABLE TEMP_TIMESTAMP;
 --
 SET DateStyle TO 'US,Postgres';
 SHOW DateStyle;
-                 datestyle                  
+                 DateStyle                  
 --------------------------------------------
  Postgres with US (NonEuropean) conventions
 (1 row)
@@ -2511,7 +2511,7 @@ SELECT '' AS seven, f1 AS us_iso FROM ABSTIME_TBL;
 
 SET DateStyle TO 'US,SQL';
 SHOW DateStyle;
-               datestyle               
+               DateStyle               
 ---------------------------------------
  SQL with US (NonEuropean) conventions
 (1 row)
@@ -2599,7 +2599,7 @@ SELECT '' AS seven, f1 AS us_sql FROM ABSTIME_TBL;
 
 SET DateStyle TO 'European,Postgres';
 SHOW DateStyle;
-             datestyle              
+             DateStyle              
 ------------------------------------
  Postgres with European conventions
 (1 row)
@@ -2695,7 +2695,7 @@ SELECT '' AS seven, f1 AS european_postgres FROM ABSTIME_TBL;
 
 SET DateStyle TO 'European,ISO';
 SHOW DateStyle;
-           datestyle           
+           DateStyle           
 -------------------------------
  ISO with European conventions
 (1 row)
@@ -2784,7 +2784,7 @@ SELECT '' AS seven, f1 AS european_iso FROM ABSTIME_TBL;
 
 SET DateStyle TO 'European,SQL';
 SHOW DateStyle;
-           datestyle           
+           DateStyle           
 -------------------------------
  SQL with European conventions
 (1 row)

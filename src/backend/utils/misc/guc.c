@@ -5,7 +5,7 @@
  * command, configuration file, and command line options.
  * See src/backend/utils/misc/README for more information.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.74 2002/07/20 06:17:43 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.75 2002/07/20 15:12:55 tgl Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -2185,13 +2185,13 @@ set_config_by_name(PG_FUNCTION_ARGS)
 		elog(ERROR, "SET variable name is required");
 
 	/* Get the GUC variable name */
-	name = DatumGetCString(DirectFunctionCall1(textout, PointerGetDatum(PG_GETARG_TEXT_P(0))));
+	name = DatumGetCString(DirectFunctionCall1(textout, PG_GETARG_DATUM(0)));
 
 	/* Get the desired value or set to NULL for a reset request */
 	if (PG_ARGISNULL(1))
 		value = NULL;
 	else
-		value = DatumGetCString(DirectFunctionCall1(textout, PointerGetDatum(PG_GETARG_TEXT_P(1))));
+		value = DatumGetCString(DirectFunctionCall1(textout, PG_GETARG_DATUM(1)));
 
 	/*
 	 * Get the desired state of is_local. Default to false
@@ -2211,7 +2211,7 @@ set_config_by_name(PG_FUNCTION_ARGS)
 					  true);
 
 	/* get the new current value */
-	new_value = GetConfigOptionByName(name);
+	new_value = GetConfigOptionByName(name, NULL);
 
 	/* Convert return string to text */
 	result_text = DatumGetTextP(DirectFunctionCall1(textin, CStringGetDatum(new_value)));
@@ -2259,21 +2259,22 @@ ShowGUCConfigOption(const char *name)
 	TupOutputState *tstate;
 	TupleDesc		tupdesc;
 	CommandDest		dest = whereToSendOutput;
+	const char	   *varname;
 	char		   *value;
+
+	/* Get the value and canonical spelling of name */
+	value = GetConfigOptionByName(name, &varname);
 
 	/* need a tuple descriptor representing a single TEXT column */
 	tupdesc = CreateTemplateTupleDesc(1, WITHOUTOID);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 1, (char *) name,
+	TupleDescInitEntry(tupdesc, (AttrNumber) 1, (char *) varname,
 					   TEXTOID, -1, 0, false);
 
 	/* prepare for projection of tuples */
 	tstate = begin_tup_output_tupdesc(dest, tupdesc);
 
-	/* Get the value */
-	value = GetConfigOptionByName(name);
-
 	/* Send it */
-	PROJECT_LINE_OF_TEXT(value);
+	PROJECT_LINE_OF_TEXT(tstate, value);
 
 	end_tup_output(tstate);
 }
@@ -2288,8 +2289,6 @@ ShowAllGUCConfig(void)
 	TupOutputState *tstate;
 	TupleDesc		tupdesc;
 	CommandDest		dest = whereToSendOutput;
-	char		   *name;
-	char		   *value;
 	char		  *values[2];
 
 	/* need a tuple descriptor representing two TEXT columns */
@@ -2304,35 +2303,32 @@ ShowAllGUCConfig(void)
 
 	for (i = 0; i < num_guc_variables; i++)
 	{
-		/* Get the next GUC variable name and value */
-		value = GetConfigOptionByNum(i, &name);
+		struct config_generic *conf = guc_variables[i];
+
+		if (conf->flags & GUC_NO_SHOW_ALL)
+			continue;
 
 		/* assign to the values array */
-		values[0] = name;
-		values[1] = value;
+		values[0] = (char *) conf->name;
+		values[1] = _ShowOption(conf);
 
 		/* send it to dest */
 		do_tup_output(tstate, values);
 
-		/*
-		 * clean up
-		 */
-		/* we always should have a name */
-		pfree(name);
-
-		/* but value can be returned to us as a NULL */
-		if (value != NULL)
-			pfree(value);
+		/* clean up */
+		if (values[1] != NULL)
+			pfree(values[1]);
 	}
 
 	end_tup_output(tstate);
 }
 
 /*
- * Return GUC variable value by name
+ * Return GUC variable value by name; optionally return canonical
+ * form of name.  Return value is palloc'd.
  */
 char *
-GetConfigOptionByName(const char *name)
+GetConfigOptionByName(const char *name, const char **varname)
 {
 	struct config_generic *record;
 
@@ -2340,24 +2336,25 @@ GetConfigOptionByName(const char *name)
 	if (record == NULL)
 		elog(ERROR, "Option '%s' is not recognized", name);
 
+	if (varname)
+		*varname = record->name;
+
 	return _ShowOption(record);
 }
 
 /*
- * Return GUC variable value and set varname for a specific
- * variable by number.
+ * Return GUC variable value by variable number; optionally return canonical
+ * form of name.  Return value is palloc'd.
  */
 char *
-GetConfigOptionByNum(int varnum, char **varname)
+GetConfigOptionByNum(int varnum, const char **varname)
 {
 	struct config_generic *conf = guc_variables[varnum];
 
-	*varname = pstrdup(conf->name);
+	if (varname)
+		*varname = conf->name;
 
-	if ((conf->flags & GUC_NO_SHOW_ALL) == 0)
-		return _ShowOption(conf);
-	else
-		return NULL;
+	return _ShowOption(conf);
 }
 
 /*
@@ -2381,10 +2378,10 @@ show_config_by_name(PG_FUNCTION_ARGS)
 	text   *result_text;
 
 	/* Get the GUC variable name */
-	varname = DatumGetCString(DirectFunctionCall1(textout, PointerGetDatum(PG_GETARG_TEXT_P(0))));
+	varname = DatumGetCString(DirectFunctionCall1(textout, PG_GETARG_DATUM(0)));
 
 	/* Get the value */
-	varval = GetConfigOptionByName(varname);
+	varval = GetConfigOptionByName(varname, NULL);
 
 	/* Convert to text */
 	result_text = DatumGetTextP(DirectFunctionCall1(textin, CStringGetDatum(varval)));

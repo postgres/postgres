@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.142 2002/07/18 23:11:27 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.143 2002/07/20 15:12:55 tgl Exp $
 -->
 
 <appendix id="release">
@@ -40,7 +40,7 @@ Readline and Zlib are now required by default and must be turned off explicitly 
 Define a third class of function volatility to allow indexscans in more cases
 Locale support is now built by default; choice of locale is set by initdb and/or at run-time
 ALTER TABLE ALTER COLUMN SET/DROP NOT NULL
-EXPLAIN output comes out as a query result, not a NOTICE message
+EXPLAIN and SHOW output comes out as a query result, not a NOTICE message
 DOMAINs (types that are constrained versions of base types)
 Access privileges on functions
 Access privileges on procedural languages

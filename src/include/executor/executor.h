@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: executor.h,v 1.71 2002/07/20 05:49:28 momjian Exp $
+ * $Id: executor.h,v 1.72 2002/07/20 15:12:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -132,11 +132,11 @@ extern void do_tup_output(TupOutputState *tstate, char **values);
 extern void do_text_output_multiline(TupOutputState *tstate, char *text);
 extern void end_tup_output(TupOutputState *tstate);
 
-#define PROJECT_LINE_OF_TEXT(text_to_project) \
+#define PROJECT_LINE_OF_TEXT(tstate, text_to_project) \
 	do { \
-		char *values[1]; \
-		values[0] = text_to_project; \
-		do_tup_output(tstate, values); \
+		char *values_[1]; \
+		values_[0] = (text_to_project); \
+		do_tup_output(tstate, values_); \
 	} while (0)
 
 

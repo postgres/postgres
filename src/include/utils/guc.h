@@ -4,7 +4,7 @@
  * External declarations pertaining to backend/utils/misc/guc.c and
  * backend/utils/misc/guc-file.l
  *
- * $Id: guc.h,v 1.18 2002/07/20 05:49:28 momjian Exp $
+ * $Id: guc.h,v 1.19 2002/07/20 15:12:56 tgl Exp $
  */
 #ifndef GUC_H
 #define GUC_H
@@ -86,8 +86,8 @@ extern bool set_config_option(const char *name, const char *value,
 							  bool isLocal, bool DoIt);
 extern void ShowGUCConfigOption(const char *name);
 extern void ShowAllGUCConfig(void);
-extern char *GetConfigOptionByName(const char *name);
-extern char *GetConfigOptionByNum(int varnum, char **varname);
+extern char *GetConfigOptionByName(const char *name, const char **varname);
+extern char *GetConfigOptionByNum(int varnum, const char **varname);
 extern int GetNumConfigOptions(void);
 
 extern void SetPGVariable(const char *name, List *args, bool is_local);
