@@ -1765,6 +1765,10 @@ Sun Mar 14 12:59:15 CET 2004
 	- Fixed Informix compat math functions to cope with the situations
 	  where one argument takes the result.
 	- Applied thread patches by Lee Kindness
+	
+Mon Mar 29 17:02:52 CEST 2004
+
+	- Fixed possible segfault in type.c (by Juergen Cappel)
 	- Set pgtypes library version to 1.2.
 	- Set ecpg version to 3.2.0.
 	- Set compat library version to 1.2.
