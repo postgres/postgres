@@ -26,7 +26,7 @@ import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.Vector;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.39 2003/09/23 06:13:52 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.40 2003/10/09 01:17:07 wieck Exp $
  * This class defines methods of the jdbc1 specification.  This class is
  * extended by org.postgresql.jdbc2.AbstractJdbc2Statement which adds the jdbc2
  * methods.  The real Statement class (for jdbc1) is org.postgresql.jdbc1.Jdbc1Statement
@@ -73,7 +73,15 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
         protected boolean m_statementIsCursor = false;
 
 	private boolean m_useServerPrepare = false;
+
+    // m_preparedCount is used for naming of auto-cursors and must
+    // be synchronized so that multiple threads using the same
+    // connection don't stomp over each others cursors.
 	private static int m_preparedCount = 1;
+    private synchronized static int next_preparedCount()
+    {
+        return m_preparedCount++;
+    }
 
 	//Used by the callablestatement style methods
 	private static final String JDBC_SYNTAX = "{[? =] call <some_function> ([? [,?]*]) }";
@@ -316,7 +324,7 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 		{
 			if (m_statementName == null)
 			{
-				m_statementName = "JDBC_STATEMENT_" + m_preparedCount++;
+				m_statementName = "JDBC_STATEMENT_" + next_preparedCount();
 				m_origSqlFragments = new String[m_sqlFragments.length];
 				m_executeSqlFragments = new String[m_sqlFragments.length];
 				System.arraycopy(m_sqlFragments, 0, m_origSqlFragments, 0, m_sqlFragments.length);
@@ -375,7 +383,7 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
                         // The first thing to do is transform the statement text into the cursor form.
                         String[] cursorBasedSql = new String[m_sqlFragments.length];
                         // Pinch the prepared count for our own nefarious purposes.
-                        String statementName = "JDBC_CURS_" + m_preparedCount++;
+                        String statementName = "JDBC_CURS_" + next_preparedCount();
                         // Setup the cursor decleration.
                         // Note that we don't need a BEGIN because we've already
                         // made sure we're executing inside a transaction.
