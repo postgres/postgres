@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.55 2003/12/13 23:59:07 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.56 2004/04/19 17:22:30 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -26,7 +26,10 @@ COPY <replaceable class="parameter">tablename</replaceable> [ ( <replaceable cla
           [ BINARY ] 
           [ OIDS ]
           [ DELIMITER [ AS ] '<replaceable class="parameter">delimiter</replaceable>' ]
-          [ NULL [ AS ] '<replaceable class="parameter">null string</replaceable>' ] ]
+          [ NULL [ AS ] '<replaceable class="parameter">null string</replaceable>' ]
+          [ CSV [ QUOTE [ AS ] '<replaceable class="parameter">quote</replaceable>' ] 
+                [ ESCAPE [ AS ] '<replaceable class="parameter">escape</replaceable>' ]
+                [ LITERAL <replaceable class="parameter">column</replaceable> [, ...] ]
 
 COPY <replaceable class="parameter">tablename</replaceable> [ ( <replaceable class="parameter">column</replaceable> [, ...] ) ]
     TO { '<replaceable class="parameter">filename</replaceable>' | STDOUT }
@@ -34,7 +37,10 @@ COPY <replaceable class="parameter">tablename</replaceable> [ ( <replaceable cla
           [ BINARY ]
           [ OIDS ]
           [ DELIMITER [ AS ] '<replaceable class="parameter">delimiter</replaceable>' ]
-          [ NULL [ AS ] '<replaceable class="parameter">null string</replaceable>' ] ]
+          [ NULL [ AS ] '<replaceable class="parameter">null string</replaceable>' ]
+          [ CSV [ QUOTE [ AS ] '<replaceable class="parameter">quote</replaceable>' ] 
+                [ ESCAPE [ AS ] '<replaceable class="parameter">escape</replaceable>' ]
+                [ FORCE <replaceable class="parameter">column</replaceable> [, ...] ]
 </synopsis>
  </refsynopsisdiv>
  
@@ -146,7 +152,8 @@ COPY <replaceable class="parameter">tablename</replaceable> [ ( <replaceable cla
     <listitem>
      <para>
       The single character that separates columns within each row
-      (line) of the file.  The default is a tab character.
+      (line) of the file.  The default is a tab character in text mode,
+      a comma in <literal>CSV</> mode.
      </para>
     </listitem>
    </varlistentry>
@@ -156,20 +163,86 @@ COPY <replaceable class="parameter">tablename</replaceable> [ ( <replaceable cla
     <listitem>
      <para>
       The string that represents a null value. The default is
-      <literal>\N</literal> (backslash-N). You might prefer an empty
-      string, for example.
+      <literal>\N</literal> (backslash-N) in text mode, and a empty
+      value with no quotes in <literal>CSV</> mode. You might prefer an
+      empty string even in text mode for cases where you don't want to
+      distinguish nulls from empty strings.
      </para>
 
      <note>
       <para>
-       On a <command>COPY FROM</command>, any data item that matches
+       When using <command>COPY FROM</command>, any data item that matches
        this string will be stored as a null value, so you should make
        sure that you use the same string as you used with
        <command>COPY TO</command>.
       </para>
      </note>
+
     </listitem>
    </varlistentry>
+
+   <varlistentry>
+    <term><literal>CSV</literal></term>
+    <listitem>
+     <para>
+      Enables Comma Separated Variable (<literal>CSV</>) mode.  (Also called
+      Comma Separated Value).  It sets the default <literal>DELIMITER</> to 
+      comma, and <literal>QUOTE</> and <literal>ESCAPE</> values to 
+      double-quote.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">quote</replaceable></term>
+    <listitem>
+     <para>
+      Specifies the quotation character in <literal>CSV</> mode.
+      The default is double-quote.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">escape</replaceable></term>
+    <listitem>
+     <para>
+      Specifies the character that should appear before a <literal>QUOTE</>
+      data character value in <literal>CSV</> mode.  The default is the
+      <literal>QUOTE</> value (usually double-quote).
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>FORCE</></term>
+    <listitem>
+     <para>
+      In <literal>CSV</> <command>COPY TO</> mode, forces quoting
+      to be used for all non-<literal>NULL</> values in each specified 
+      column.  <literal>NULL</> output is never quoted.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>LITERAL</></term>
+    <listitem>
+     <para>
+      In <literal>CSV</> <command>COPY FROM</> mode, for each column specified,
+      do not do a <literal>null string</> comparison;  instead load the value 
+      literally.  <literal>QUOTE</> and <literal>ESCAPE</> processing are still
+      performed.
+     </para>
+     <para>
+      If the <literal>null string</> is <literal>''</> (the default 
+      in <literal>CSV</> mode), a missing input value (<literal>delimiter, 
+      delimiter</>), will load as a zero-length string.  <literal>Delimiter, quote, 
+      quote, delimiter</> is always treated as a zero-length string on input.
+     </para>
+    </listitem>
+   </varlistentry>
+
   </variablelist>
  </refsect1>
 
@@ -234,6 +307,17 @@ COPY <replaceable class="parameter">tablename</replaceable> [ ( <replaceable cla
    </para>
 
    <para>
+    <command>COPY</command> input and output is affected by
+    <varname>DateStyle </varname>. For portability with other
+    <productname>PostgreSQL</productname> installations which might use
+    non-default <varname>DateStyle</varname> settings,
+    <varname>DateStyle</varname> should be set to <literal>ISO</> before
+    using <command>COPY</>. In <literal>CSV</> mode, use <literal>ISO</>
+    or a <varname>DateStyle</varname> setting appropriate for the
+    external application.
+   </para>
+
+   <para>
     <command>COPY</command> stops operation at the first error. This
     should not lead to problems in the event of a <command>COPY
     TO</command>, but the target table will already have received
@@ -253,7 +337,8 @@ COPY <replaceable class="parameter">tablename</replaceable> [ ( <replaceable cla
 
    <para>
     When <command>COPY</command> is used without the <literal>BINARY</literal> option,
-    the data read or written is a text file with one line per table row.
+    the data read or written is a text file with one line per table row,
+    unless <literal>CSV</> mode is used.
     Columns in a row are separated by the delimiter character.
     The column values themselves are strings generated by the
     output function, or acceptable to the input function, of each
@@ -377,6 +462,63 @@ COPY <replaceable class="parameter">tablename</replaceable> [ ( <replaceable cla
     meant as data, <command>COPY FROM</command> will complain if the line
     endings in the input are not all alike.
    </para>
+  </refsect2>
+
+  <refsect2>
+   <title>CSV Format</title>
+
+   <para>
+    This format is used for importing and exporting the Comma
+    Separated Variable (<literal>CSV</>) file format used by many other
+    programs, such as spreadsheets. Instead of the escaping used by
+    <productname>PostgreSQL</productname>'s standard text mode, it
+    produces and recognises the common CSV escaping mechanism.
+   </para>
+
+   <para>
+    The values in each record are separated by the <literal>DELIMITER</>
+    character. If the value contains the delimiter character, the
+    <literal>QUOTE</> character, the <literal>NULL</> string, a carriage
+    return, or line feed character, then the whole value is prefixed and
+    suffixed by the <literal>QUOTE</> character, and any occurrence
+    within the value of a <literal>QUOTE</> character or the
+    <literal>ESCAPE</> character is preceded by the escape character.
+    You can also use <literal>FORCE</> to force quotes when outputting
+    non-<literal>NULL</> values in specific columns.
+   </para>
+
+   <para> 
+    In general, the <literal>CSV</> format has no way to distinguish a
+    <literal>NULL</> from an empty string.
+    <productname>PostgreSQL</productname>'s COPY handles this by
+    quoting. A <literal>NULL</> is output as the <literal>NULL</> string 
+    and is not quoted, while a data value matching the <literal>NULL</> string 
+    is quoted. Therefore, using the default settings, a <literal>NULL</> is
+    written as an unquoted empty string, while an empty string is
+    written with double quotes (<literal>""</>). Reading values follows 
+    similar rules. You can use <literal>LITERAL</> to prevent <literal>NULL</>
+    input comparisons for specific columns.
+   </para>
+
+   <note>
+    <para>
+     CSV mode will both recognize and produce CSV files with quoted
+     values containing embedded carriage returns and line feeds. Thus
+     the files are not strictly one line per table row like text-mode
+     files.
+    </para>
+   </note>
+
+   <note>
+    <para>
+     Many programs produce strange and occasionally perverse CSV files,
+     so the file format is more a convention than a standard. Thus you
+     might encounter some files that cannot be imported using this
+     mechanism, and <command>COPY</> might produce files that other
+     programs can not process.
+    </para>
+   </note>
+    
   </refsect2>
 
   <refsect2>

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.110 2004/04/12 15:58:52 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.111 2004/04/19 17:22:30 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -711,6 +711,10 @@ testdb=>
             [ <literal>oids</literal> ] 
             [ <literal>delimiter [as] </literal> '<replaceable class="parameter">character</replaceable>' ]
             [ <literal>null [as] </literal> '<replaceable class="parameter">string</replaceable>' ]</literal>
+            [ <literal>csv [ quote [as] </literal> '<replaceable class="parameter">character</replaceable>' ]
+                           [ <literal>escape [as] </literal> '<replaceable class="parameter">character</replaceable>' ]
+                           [ <literal>force</> <replaceable class="parameter">column_list</replaceable> ]
+                           [ <literal>literal</> <replaceable class="parameter">column_list</replaceable> ] ]
         </term>
 
         <listitem>

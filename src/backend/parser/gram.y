@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.450 2004/04/05 03:07:26 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.451 2004/04/19 17:22:30 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -343,7 +343,7 @@ static void doNegateFloat(Value *v);
 	CHARACTER CHARACTERISTICS CHECK CHECKPOINT CLASS CLOSE
 	CLUSTER COALESCE COLLATE COLUMN COMMENT COMMIT
 	COMMITTED CONSTRAINT CONSTRAINTS CONVERSION_P CONVERT COPY CREATE CREATEDB
-	CREATEUSER CROSS CURRENT_DATE CURRENT_TIME
+	CREATEUSER CROSS CSV CURRENT_DATE CURRENT_TIME
 	CURRENT_TIMESTAMP CURRENT_USER CURSOR CYCLE
 
 	DATABASE DAY_P DEALLOCATE DEC DECIMAL_P DECLARE DEFAULT DEFAULTS
@@ -370,7 +370,7 @@ static void doNegateFloat(Value *v);
 	KEY
 
 	LANCOMPILER LANGUAGE LARGE_P LAST_P LEADING LEFT LEVEL LIKE LIMIT
-	LISTEN LOAD LOCAL LOCALTIME LOCALTIMESTAMP LOCATION
+	LISTEN LITERAL LOAD LOCAL LOCALTIME LOCALTIMESTAMP LOCATION
 	LOCK_P
 
 	MATCH MAXVALUE MINUTE_P MINVALUE MODE MONTH_P MOVE
@@ -385,6 +385,8 @@ static void doNegateFloat(Value *v);
 	PARTIAL PASSWORD PATH_P PENDANT PLACING POSITION
 	PRECISION PRESERVE PREPARE PRIMARY 
 	PRIOR PRIVILEGES PROCEDURAL PROCEDURE
+
+	QUOTE
 
 	READ REAL RECHECK REFERENCES REINDEX RELATIVE_P RENAME REPEATABLE REPLACE
 	RESET RESTART RESTRICT RETURNS REVOKE RIGHT ROLLBACK ROW ROWS
@@ -1359,6 +1361,26 @@ copy_opt_item:
 			| NULL_P opt_as Sconst
 				{
 					$$ = makeDefElem("null", (Node *)makeString($3));
+				}
+			| CSV
+				{
+					$$ = makeDefElem("csv", (Node *)makeInteger(TRUE));
+				}
+			| QUOTE opt_as Sconst
+				{
+					$$ = makeDefElem("quote", (Node *)makeString($3));
+				}
+			| ESCAPE opt_as Sconst
+				{
+					$$ = makeDefElem("escape", (Node *)makeString($3));
+				}
+			| FORCE columnList
+				{
+					$$ = makeDefElem("force", (Node *)$2);
+				}
+			| LITERAL columnList
+				{
+					$$ = makeDefElem("literal", (Node *)$2);
 				}
 		;
 
@@ -7420,6 +7442,7 @@ unreserved_keyword:
 			| COPY
 			| CREATEDB
 			| CREATEUSER
+			| CSV
 			| CURSOR
 			| CYCLE
 			| DATABASE
@@ -7473,6 +7496,7 @@ unreserved_keyword:
 			| LAST_P
 			| LEVEL
 			| LISTEN
+			| LITERAL
 			| LOAD
 			| LOCAL
 			| LOCATION
@@ -7507,6 +7531,7 @@ unreserved_keyword:
 			| PRIVILEGES
 			| PROCEDURAL
 			| PROCEDURE
+			| QUOTE
 			| READ
 			| RECHECK
 			| REINDEX

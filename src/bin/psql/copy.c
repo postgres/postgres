@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.43 2004/04/12 15:58:52 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.44 2004/04/19 17:22:31 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "copy.h"
@@ -66,8 +66,13 @@ struct copy_options
 	bool		from;
 	bool		binary;
 	bool		oids;
+	bool		csv_mode;
 	char	   *delim;
 	char	   *null;
+	char	   *quote;
+	char	   *escape;
+	char 	   *force_list;
+	char 	   *literal_list;
 };
 
 
@@ -81,6 +86,10 @@ free_copy_options(struct copy_options * ptr)
 	free(ptr->file);
 	free(ptr->delim);
 	free(ptr->null);
+	free(ptr->quote);
+	free(ptr->escape);
+	free(ptr->force_list);
+	free(ptr->literal_list);
 	free(ptr);
 }
 
@@ -272,10 +281,18 @@ parse_slash_copy(const char *args)
 
 		while (token)
 		{
+			bool fetch_next;
+
+			fetch_next = true;
+			
 			/* someday allow BINARY here */
 			if (strcasecmp(token, "oids") == 0)
 			{
 				result->oids = true;
+			}
+			else if (strcasecmp(token, "csv") == 0)
+			{
+				result->csv_mode = true;
 			}
 			else if (strcasecmp(token, "delimiter") == 0)
 			{
@@ -301,11 +318,78 @@ parse_slash_copy(const char *args)
 				else
 					goto error;
 			}
+			else if (strcasecmp(token, "quote") == 0)
+			{
+				token = strtokx(NULL, whitespace, NULL, "'",
+								'\\', false, pset.encoding);
+				if (token && strcasecmp(token, "as") == 0)
+					token = strtokx(NULL, whitespace, NULL, "'",
+									'\\', false, pset.encoding);
+				if (token)
+					result->quote = pg_strdup(token);
+				else
+					goto error;
+			}
+			else if (strcasecmp(token, "escape") == 0)
+			{
+				token = strtokx(NULL, whitespace, NULL, "'",
+								'\\', false, pset.encoding);
+				if (token && strcasecmp(token, "as") == 0)
+					token = strtokx(NULL, whitespace, NULL, "'",
+									'\\', false, pset.encoding);
+				if (token)
+					result->escape = pg_strdup(token);
+				else
+					goto error;
+			}
+			else if (strcasecmp(token, "force") == 0)
+			{
+				/* handle column list */
+				fetch_next = false;
+				for (;;)
+				{
+					token = strtokx(NULL, whitespace, ",", "\"",
+									0, false, pset.encoding);
+					if (!token || strchr(",", token[0]))
+						goto error;
+					if (!result->force_list)
+						result->force_list = pg_strdup(token);
+					else
+						xstrcat(&result->force_list, token);
+					token = strtokx(NULL, whitespace, ",", "\"",
+									0, false, pset.encoding);
+					if (!token || token[0] != ',')
+						break;
+					xstrcat(&result->force_list, token);
+				}
+			}
+			else if (strcasecmp(token, "literal") == 0)
+			{
+				/* handle column list */
+				fetch_next = false;
+				for (;;)
+				{
+					token = strtokx(NULL, whitespace, ",", "\"",
+									0, false, pset.encoding);
+					if (!token || strchr(",", token[0]))
+						goto error;
+					if (!result->literal_list)
+						result->literal_list = pg_strdup(token);
+					else
+						xstrcat(&result->literal_list, token);
+					token = strtokx(NULL, whitespace, ",", "\"",
+									0, false, pset.encoding);
+					if (!token || token[0] != ',')
+						break;
+					xstrcat(&result->literal_list, token);
+				}
+			}
 			else
 				goto error;
 
-			token = strtokx(NULL, whitespace, NULL, NULL,
-							0, false, pset.encoding);
+			if (fetch_next)
+				token = strtokx(NULL, whitespace, NULL, NULL,
+								0, false, pset.encoding);
 		}
 	}
 
@@ -340,7 +424,7 @@ do_copy(const char *args)
 	PGresult   *result;
 	bool		success;
 	struct stat st;
-
+	
 	/* parse options */
 	options = parse_slash_copy(args);
 
@@ -379,12 +463,44 @@ do_copy(const char *args)
 							  options->delim);
 	}
 
+	/* There is no backward-compatible CSV syntax */
 	if (options->null)
 	{
 		if (options->null[0] == '\'')
 			appendPQExpBuffer(&query, " WITH NULL AS %s", options->null);
 		else
 			appendPQExpBuffer(&query, " WITH NULL AS '%s'", options->null);
+	}
+
+	if (options->csv_mode)
+	{
+		appendPQExpBuffer(&query, " CSV");
+	}
+	
+	if (options->quote)
+	{
+		if (options->quote[0] == '\'')
+			appendPQExpBuffer(&query, " QUOTE AS %s", options->quote);
+		else
+			appendPQExpBuffer(&query, " QUOTE AS '%s'", options->quote);
+	}
+
+	if (options->escape)
+	{
+		if (options->escape[0] == '\'')
+			appendPQExpBuffer(&query, " ESCAPE AS %s", options->escape);
+		else
+			appendPQExpBuffer(&query, " ESCAPE AS '%s'", options->escape);
+	}
+
+	if (options->force_list)
+	{
+		appendPQExpBuffer(&query, " FORCE %s", options->force_list);
+	}
+
+	if (options->literal_list)
+	{
+		appendPQExpBuffer(&query, " LITERAL %s", options->literal_list);
 	}
 
 	if (options->from)
