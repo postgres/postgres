@@ -71,8 +71,9 @@ you may reduce this to about 3 Mbytes plus space for user databases.
 To those upgrading from PostgreSQL 6.3.*:
 ----------------------------------------
 
-A dump/restore is required for those running 6.3.*.  pg_dumpall can help
-with this task.
+A dump/restore is required for those running 6.3.*, or you can use the
+new pg_upgrade command to upgrade your data files without
+dumping/loading them.  See the new pg_upgrade manual page.
 
 To those doing a fresh install or upgrading from previous releases of
 PostgreSQL:
