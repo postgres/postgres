@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_expr.h,v 1.6 1998/01/20 05:04:47 momjian Exp $
+ * $Id: parse_expr.h,v 1.7 1998/02/10 16:04:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,7 @@
 extern Node *transformExpr(ParseState *pstate, Node *expr, int precedence);
 extern Node *transformIdent(ParseState *pstate, Node *expr, int precedence);
 extern Oid exprType(Node *expr);
-extern Node *parser_typecast2(Node *expr, Oid exprType, Type tp, int attypmod);
+extern Node *parser_typecast2(Node *expr, Oid exprType, Type tp, int16 attypmod);
 
 #endif							/* PARSE_EXPR_H */
 

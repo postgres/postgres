@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.26 1998/02/07 06:11:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.27 1998/02/10 16:03:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,7 +50,7 @@
  *	  because we pass typelem as the second argument for array_in.)
  */
 char *
-bpcharin(char *s, int dummy, int atttypmod)
+bpcharin(char *s, int dummy, int16 atttypmod)
 {
 	char	   *result,
 			   *r;
@@ -124,7 +124,7 @@ bpcharout(char *s)
  *	  because we pass typelem as the second argument for array_in.)
  */
 char *
-varcharin(char *s, int dummy, int atttypmod)
+varcharin(char *s, int dummy, int16 atttypmod)
 {
 	char	   *result;
 	int			len;

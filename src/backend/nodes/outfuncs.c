@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.28 1998/02/10 04:00:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.29 1998/02/10 16:03:21 momjian Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -698,7 +698,7 @@ _outVar(StringInfo str, Var *node)
 	appendStringInfo(str, buf);
 	sprintf(buf, " :vartype %u ", node->vartype);
 	appendStringInfo(str, buf);
-	sprintf(buf, " :vartypmod %u ", node->vartypmod);
+	sprintf(buf, " :vartypmod %d ", node->vartypmod);
 	appendStringInfo(str, buf);
 	sprintf(buf, " :varlevelsup %u ", node->varlevelsup);
 	appendStringInfo(str, buf);

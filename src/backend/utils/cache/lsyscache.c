@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.11 1998/01/29 03:23:09 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.12 1998/02/10 16:03:51 momjian Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -161,7 +161,7 @@ get_attisset(Oid relid, char *attname)
  *		return the "atttypmod" field from the attribute relation.
  *
  */
-int
+int16 
 get_atttypmod(Oid relid, AttrNumber attnum)
 {
 	FormData_pg_attribute att_tup;

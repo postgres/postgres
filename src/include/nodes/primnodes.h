@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.17 1998/02/10 04:02:32 momjian Exp $
+ * $Id: primnodes.h,v 1.18 1998/02/10 16:04:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,7 @@ typedef struct Resdom
 	NodeTag		type;
 	AttrNumber	resno;
 	Oid			restype;
-	int			restypmod;
+	int16		restypmod;
 	char	   *resname;
 	Index		reskey;
 	Oid			reskeyop;
@@ -124,7 +124,7 @@ typedef struct Var
 	Index		varno;
 	AttrNumber	varattno;
 	Oid			vartype;
-	int			vartypmod;
+	int16		vartypmod;
 	Index		varlevelsup;	/* erased by upper optimizer */
 	Index		varnoold;		/* only used by optimizer */
 	AttrNumber	varoattno;		/* only used by optimizer */

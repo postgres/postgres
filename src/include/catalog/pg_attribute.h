@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_attribute.h,v 1.26 1998/02/10 04:02:16 momjian Exp $
+ * $Id: pg_attribute.h,v 1.27 1998/02/10 16:04:03 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -89,12 +89,6 @@ CATALOG(pg_attribute) BOOTSTRAP
 	/*
 	 * atttypmod records type-specific modifications supplied at table
      * creation time.
-     * This is not integrated into all areas of the source.  It is in
-	 * TypeName to pass typmod info from the parser during table creation
-	 * time, and it is used in the parser when converting a string to a
-	 * typed constant associated with a variable.  We also have a hack in
-	 * execMain.c/execUtils.c that uses atttypmod to properly create tables
-	 * for SELECT * INTO TABLE test2 FROM test;
 	 */
 
 	bool		attbyval;

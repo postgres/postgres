@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.23 1998/02/10 04:01:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.24 1998/02/10 16:03:23 momjian Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -816,7 +816,7 @@ _readVar()
 
 	token = lsptok(NULL, &length);		/* eat :vartypmod */
 	token = lsptok(NULL, &length);		/* get vartypmod */
-	local_node->vartypmod = (Oid) atol(token);
+	local_node->vartypmod = atoi(token);
 
 	token = lsptok(NULL, &length);		/* eat :varlevelsup */
 	token = lsptok(NULL, &length);		/* get varlevelsup */

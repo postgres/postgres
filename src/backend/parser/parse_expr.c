@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.18 1998/02/07 06:11:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.19 1998/02/10 16:03:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,7 @@
 #include "parser/parse_target.h"
 #include "utils/builtins.h"
 
-static Node *parser_typecast(Value *expr, TypeName *typename, int atttypmod);
+static Node *parser_typecast(Value *expr, TypeName *typename, int16 atttypmod);
 
 /*
  * transformExpr -
@@ -393,7 +393,7 @@ exprType(Node *expr)
 }
 
 static Node	   *
-parser_typecast(Value *expr, TypeName *typename, int atttypmod)
+parser_typecast(Value *expr, TypeName *typename, int16 atttypmod)
 {
 	/* check for passing non-ints */
 	Const	   *adt;
@@ -471,7 +471,7 @@ parser_typecast(Value *expr, TypeName *typename, int atttypmod)
 }
 
 Node	   *
-parser_typecast2(Node *expr, Oid exprType, Type tp, int atttypmod)
+parser_typecast2(Node *expr, Oid exprType, Type tp, int16 atttypmod)
 {
 	/* check for passing non-ints */
 	Const	   *adt;

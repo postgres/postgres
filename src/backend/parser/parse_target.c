@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.8 1998/02/10 04:01:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.9 1998/02/10 16:03:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,7 +55,7 @@ transformTargetList(ParseState *pstate, List *targetlist)
 				{
 					Node	   *expr;
 					Oid			type_id;
-					int			type_mod;
+					int16		type_mod;
 					char	   *identname;
 					char	   *resname;
 
@@ -194,7 +194,7 @@ transformTargetList(ParseState *pstate, List *targetlist)
 			case T_Attr:
 				{
 					Oid			type_id;
-					int			type_mod;
+					int16		type_mod;
 					Attr	   *att = (Attr *) res->val;
 					Node	   *result;
 					char	   *attrname;
@@ -332,7 +332,7 @@ make_targetlist_expr(ParseState *pstate,
 {
 	Oid			type_id,
 				attrtype;
-	int			type_mod,
+	int16		type_mod,
 				attrtypmod;
 	int			resdomno;
 	Relation	rd;

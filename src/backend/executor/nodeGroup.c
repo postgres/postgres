@@ -13,7 +13,7 @@
  *	  columns. (ie. tuples from the same group are consecutive)
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.15 1998/02/10 04:00:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.16 1998/02/10 16:02:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -418,10 +418,10 @@ sameGroup(TupleTableSlot *oldslot,
 
 			val1 = fmgr(typoutput, attr1,
 						gettypelem(tupdesc->attrs[att - 1]->atttypid),
-						      (int)tupdesc->attrs[att - 1]->atttypmod);
+						      	   tupdesc->attrs[att - 1]->atttypmod);
 			val2 = fmgr(typoutput, attr2,
 						gettypelem(tupdesc->attrs[att - 1]->atttypid),
-							  (int)tupdesc->attrs[att - 1]->atttypmod);
+								   tupdesc->attrs[att - 1]->atttypmod);
 
 			/*
 			 * now, val1 and val2 are ascii representations so we can use

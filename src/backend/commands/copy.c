@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.40 1998/01/31 04:38:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.41 1998/02/10 16:02:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,7 +65,7 @@ static void CopyAttributeOut(FILE *fp, char *string, char *delim);
 static int	CountTuples(Relation relation);
 
 extern FILE *Pfout,
-		   *Pfin;
+			*Pfin;
 
 static int	lineno;
 
@@ -205,6 +205,7 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 	FmgrInfo   *out_functions;
 	Oid			out_func_oid;
 	Oid		   *elements;
+	int16	   *typmod;
 	Datum		value;
 	bool		isnull;			/* The attribute we are copying is null */
 	char	   *nulls;
@@ -230,11 +231,13 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 	{
 		out_functions = (FmgrInfo *) palloc(attr_count * sizeof(FmgrInfo));
 		elements = (Oid *) palloc(attr_count * sizeof(Oid));
+		typmod = (int16 *) palloc(attr_count * sizeof(int16));
 		for (i = 0; i < attr_count; i++)
 		{
 			out_func_oid = (Oid) GetOutputFunction(attr[i]->atttypid);
 			fmgr_info(out_func_oid, &out_functions[i]);
 			elements[i] = GetTypeElement(attr[i]->atttypid);
+			typmod[i] = attr[i]->atttypmod;
 		}
 		nulls = NULL;			/* meaningless, but compiler doesn't know
 								 * that */
@@ -242,6 +245,7 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 	else
 	{
 		elements = NULL;
+		typmod = NULL;
 		out_functions = NULL;
 		nulls = (char *) palloc(attr_count);
 		for (i = 0; i < attr_count; i++)
@@ -271,7 +275,8 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 			{
 				if (!isnull)
 				{
-					string = (char *) (*fmgr_faddr(&out_functions[i])) (value, elements[i]);
+					string = (char *) (*fmgr_faddr(&out_functions[i]))
+							(value, elements[i], typmod[i]);
 					CopyAttributeOut(fp, string, delim);
 					pfree(string);
 				}
@@ -345,6 +350,7 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 	{
 		pfree(out_functions);
 		pfree(elements);
+		pfree(typmod);
 	}
 
 	heap_close(rel);
@@ -376,6 +382,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 				tuples_read = 0;
 	bool		reading_to_eof = true;
 	Oid		   *elements;
+	int16	   *typmod;
 	FuncIndexInfo *finfo,
 			  **finfoP = NULL;
 	TupleDesc  *itupdescArr;
@@ -498,17 +505,20 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 	{
 		in_functions = (FmgrInfo *) palloc(attr_count * sizeof(FmgrInfo));
 		elements = (Oid *) palloc(attr_count * sizeof(Oid));
+		typmod = (int16 *) palloc(attr_count * sizeof(int16));
 		for (i = 0; i < attr_count; i++)
 		{
 			in_func_oid = (Oid) GetInputFunction(attr[i]->atttypid);
 			fmgr_info(in_func_oid, &in_functions[i]);
 			elements[i] = GetTypeElement(attr[i]->atttypid);
+			typmod[i] = attr[i]->atttypmod;
 		}
 	}
 	else
 	{
 		in_functions = NULL;
 		elements = NULL;
+		typmod = NULL;
 		fread(&ntuples, sizeof(int32), 1, fp);
 		if (ntuples != 0)
 			reading_to_eof = false;
@@ -574,7 +584,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 					values[i] =
 						(Datum) (*fmgr_faddr(&in_functions[i])) (string,
 												   elements[i],
-												   attr[i]->atttypmod);
+												   typmod[i]);
 
 					/*
 					 * Sanity check - by reference attributes cannot
@@ -801,9 +811,13 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 			done = true;
 	}
 	pfree(values);
-	if (!binary)
-		pfree(in_functions);
 	pfree(nulls);
+	if (!binary)
+	{
+		pfree(in_functions);
+		pfree(elements);
+		pfree(typmod);
+	}
 	pfree(byval);
 	heap_close(rel);
 }

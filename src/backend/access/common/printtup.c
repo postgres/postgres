@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.24 1998/02/10 04:00:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.25 1998/02/10 16:02:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -124,7 +124,7 @@ printtup(HeapTuple tuple, TupleDesc typeinfo)
 		{
 			outputstr = fmgr(typoutput, attr,
 							 gettypelem(typeinfo->attrs[i]->atttypid),
-										(int)typeinfo->attrs[i]->atttypmod);
+										typeinfo->attrs[i]->atttypmod);
 			pq_putint(strlen(outputstr) + VARHDRSZ, VARHDRSZ);
 			pq_putnchar(outputstr, strlen(outputstr));
 			pfree(outputstr);
@@ -191,7 +191,7 @@ debugtup(HeapTuple tuple, TupleDesc typeinfo)
 		{
 			value = fmgr(typoutput, attr,
 						 gettypelem(typeinfo->attrs[i]->atttypid),
-							   (int)typeinfo->attrs[i]->atttypmod);
+									typeinfo->attrs[i]->atttypmod);
 			printatt((unsigned) i + 1, typeinfo->attrs[i], value);
 			pfree(value);
 		}

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.13 1998/02/10 04:01:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.14 1998/02/10 16:03:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1056,7 +1056,7 @@ setup_tlist(char *attname, Oid relid)
 	Resdom	   *resnode;
 	Var		   *varnode;
 	Oid			typeid;
-	int			type_mod;
+	int16		type_mod;
 	int			attno;
 
 	attno = get_attnum(relid, attname);
