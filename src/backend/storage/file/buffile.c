@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/file/buffile.c,v 1.2 1999/10/16 19:49:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/file/buffile.c,v 1.3 1999/10/19 02:34:45 tgl Exp $
  *
  * NOTES:
  *
@@ -434,8 +434,7 @@ BufFileSeek(BufFile *file, int fileno, long offset, int whence)
 	switch (whence)
 	{
 		case SEEK_SET:
-			if (fileno < 0 || fileno >= file->numFiles ||
-				offset < 0)
+			if (fileno < 0)
 				return EOF;
 			newFile = fileno;
 			newOffset = offset;
@@ -443,7 +442,7 @@ BufFileSeek(BufFile *file, int fileno, long offset, int whence)
 		case SEEK_CUR:
 			/*
 			 * Relative seek considers only the signed offset, ignoring fileno.
-			 * Note that large offsets (> 1 gig) risk overflow.
+			 * Note that large offsets (> 1 gig) risk overflow in this add...
 			 */
 			newFile = file->curFile;
 			newOffset = (file->curOffset + file->pos) + offset;
@@ -463,15 +462,6 @@ BufFileSeek(BufFile *file, int fileno, long offset, int whence)
 			return EOF;
 		newOffset += MAX_PHYSICAL_FILESIZE;
 	}
-	if (file->isTemp)
-	{
-		while (newOffset > MAX_PHYSICAL_FILESIZE)
-		{
-			if (++newFile >= file->numFiles)
-				return EOF;
-			newOffset -= MAX_PHYSICAL_FILESIZE;
-		}
-	}
 	if (newFile == file->curFile &&
 		newOffset >= file->curOffset &&
 		newOffset <= file->curOffset + file->nbytes)
@@ -488,6 +478,29 @@ BufFileSeek(BufFile *file, int fileno, long offset, int whence)
 	/* Otherwise, must reposition buffer, so flush any dirty data */
 	if (BufFileFlush(file) != 0)
 		return EOF;
+	/*
+	 * At this point and no sooner, check for seek past last segment.
+	 * The above flush could have created a new segment, so
+	 * checking sooner would not work (at least not with this code).
+	 */
+	if (file->isTemp)
+	{
+		/* convert seek to "start of next seg" to "end of last seg" */
+		if (newFile == file->numFiles && newOffset == 0)
+		{
+			newFile--;
+			newOffset = MAX_PHYSICAL_FILESIZE;
+		}
+		while (newOffset > MAX_PHYSICAL_FILESIZE)
+		{
+			if (++newFile >= file->numFiles)
+				return EOF;
+			newOffset -= MAX_PHYSICAL_FILESIZE;
+		}
+	}
+	if (newFile >= file->numFiles)
+		return EOF;
+	/* Seek is OK! */
 	file->curFile = newFile;
 	file->curOffset = newOffset;
 	file->pos = 0;
