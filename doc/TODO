@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu May 20 00:10:44 EDT 2004
+Last updated:		Thu May 20 11:57:21 EDT 2004
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -9,7 +9,7 @@ the PostgreSQL web site, http://www.PostgreSQL.org.
 
 A dash (-) marks changes that will appear in the upcoming 7.5 release.
 
-Bracketed items "[]" have more detailed.
+Bracketed items "[]" have more detail.
 
 
 Urgent
@@ -32,8 +32,6 @@ Administration
 ==============
 
 * Incremental backups
-* Remove unreferenced table files and temp tables during database vacuum
-  or postmaster startup (Bruce)
 * Remove behavior of postmaster -o after making postmaster/postgres
   flags unique
 * Allow configuration files to be specified in a different directory
@@ -65,15 +63,15 @@ Data Types
 * Have sequence dependency track use of DEFAULT sequences, seqname.nextval
 * Disallow changing default expression of a SERIAL column
 * Allow infinite dates just like infinite timestamps
-* Allow pg_dump to dump sequences using NO_MAXVALUE and NO_MINVALUE
+* -Allow pg_dump to dump sequences using NO_MAXVALUE and NO_MINVALUE
 * Allow backend to output result sets in XML
-* Prevent whole-row references from leaking memory, e.g. SELECT COUNT(tab.*)
+* -Prevent whole-row references from leaking memory, e.g. SELECT COUNT(tab.*)
 * Have initdb set DateStyle based on locale?
 * Add pg_get_acldef(), pg_get_typedefault(), and pg_get_attrdef()
 * Add ALTER DOMAIN, AGGREGATE, CONVERSION, SEQUENCE ... OWNER TO
 * Allow to_char to print localized month names (Karel)
 * Allow functions to have a search path specified at creation time
-* Make LENGTH() of CHAR() not count trailing spaces
+* -Make LENGTH() of CHAR() not count trailing spaces
 * Allow substring/replace() to get/set bit values
 * Add GUC variable to allow output of interval values in ISO8601 format
 
@@ -142,7 +140,7 @@ Indexes
 * Use bitmaps to fetch heap pages in sequential order [performance]
 * Use bitmaps to combine existing indexes [performance]
 * Allow use of indexes to search for NULLs
-* Allow SELECT * FROM tab WHERE int2col = 4 to use int2col index, int8,
+* -Allow SELECT * FROM tab WHERE int2col = 4 to use int2col index, int8,
   float4, numeric/decimal too
 * Add FILLFACTOR to btree index creation
 * Add concurrency to GIST
@@ -176,14 +174,14 @@ Commands
   (Christopher) 
 * Dump large object comments in custom dump format
 * Add optional textual message to NOTIFY
-* Allow more ISOLATION LEVELS to be accepted, but issue a warning for them
+* -Allow more ISOLATION LEVELS to be accepted
 * Allow CREATE TABLE foo (f1 INT CHECK (f1 > 0) CHECK (f1 < 10)) to work
   by searching for non-conflicting constraint names, and prefix with table name
 * Use more reliable method for CREATE DATABASE to get a consistent copy of db
 * -Have psql \dn show only visible temp schemas using current_schemas()
 * -Have psql '\i ~/<tab><tab>' actually load files it displays from home dir
 * Ignore temporary tables from other session when processing inheritance
-* Add GUC setting to make created tables default to WITHOUT OIDS
+* -Add GUC setting to make created tables default to WITHOUT OIDS
 * Have pg_ctl look at PGHOST in case it is a socket directory
 * Allow column-level privileges
 * Add a session mode to warn about non-standard SQL usage
@@ -262,24 +260,14 @@ Clients
 * Add a libpq function to support Parse/DescribeStatement capability
 * Prevent libpq's PQfnumber() from lowercasing the column name
 * -Allow pg_dump to dump CREATE CONVERSION (Christopher)
-* Allow fastpast to pass values in portable format
 * Allow libpq to return information about prepared queries
 * -Make pg_restore continue after errors, so it acts more like pg_dump scripts
 * Have psql show more information about sequences
 * Allow pg_dumpall to use non-text output formats
 * Have pg_dump use multi-statement transactions for INSERT dumps
-* Move psql backslash database information into the backend, use nmumonic
+* Move psql backslash database information into the backend, use nmeumonic
   commands? [psql]
 
-
-* JDBC
-	o Comprehensive test suite. This may be available already.
-	o JDBC-standard BLOB support
-	o Error Codes (pending backend implementation)
-	o Support both 'make' and 'ant'
-	o Fix LargeObject API to handle OIDs as unsigned ints
-	o Use cursors implicitly to avoid large results (see setCursorName())
-	o Add LISTEN/NOTIFY support to the JDBC driver (Barry)
 
 * ECPG
 	o Docs
@@ -329,7 +317,7 @@ Dependency Checking
 
 * Flush cached query plans when their underlying catalog data changes
 * -Use dependency information to dump data in proper order
-* Have pg_dump -c clear the database using dependency information
+* -Have pg_dump -c clear the database using dependency information
 
 
 Exotic Features
@@ -364,8 +352,8 @@ Cache
 * Shared catalog cache, reduce lseek()'s by caching table size in shared area
 * Add free-behind capability for large sequential scans [fadvise]
 * Consider use of open/fcntl(O_DIRECT) to minimize OS caching
-* Cache last known per-tuple offsets to speed long tuple access
-* Automatically place fixed-width, NOT NULL columns first in a table
+* Cache last known per-tuple offsets to speed long tuple access, adjusting
+  for NULLs and TOAST values
 * Use a fixed row count and a +/- count with MVCC visibility rules 
   to allow fast COUNT(*) queries with no WHERE clause(?) [count]
 
@@ -464,7 +452,8 @@ Source Code
 * Create improved PostgreSQL introductory documentation for the PHP
   manuals
 * Add optional CRC checksum to heap and index pages
-* Change representation of whole-tuple parameters to functions
+* -Change representation of whole-tuple parameters to functions
+* Support composite types as table columns
 * Clarify use of 'application' and 'command' tags in SGML docs
 * Better document ability to build only certain interfaces (Marc)
 * Remove or relicense modules that are not under the BSD license, if possible
@@ -475,8 +464,6 @@ Source Code
 * -Change CVS ID to PostgreSQL
 * -Exit postmaster if postgresql.conf can not be opened
 * Rename /scripts directory because they are all C programs now
-* Allow the regression tests to start postmaster with -i so the tests
-  can be run on systems that don't support unix-domain sockets
 * Allow creation of a libpq-only tarball
 * Promote debug_query_string into a server-side function current_query()
 * Allow the identifier length to be increased via a configure option
