@@ -1,0 +1,35 @@
+DROP SEQUENCE next_id;
+DROP TABLE ids;
+
+CREATE SEQUENCE next_id START -2 MINVALUE -2;
+
+CREATE TABLE ids (
+	id		int4,
+	idesc		text
+);
+
+CREATE TRIGGER ids_nextid 
+	BEFORE INSERT OR UPDATE ON ids
+	FOR EACH ROW 
+	EXECUTE PROCEDURE autoinc (id, next_id);
+
+INSERT INTO ids VALUES (0, 'first (-2 ?)');
+INSERT INTO ids VALUES (null, 'second (-1 ?)');
+INSERT INTO ids(idesc) VALUES ('third (1 ?!)');
+
+SELECT * FROM ids;
+
+UPDATE ids SET id = null, idesc = 'first: -2 --> 2' 
+	WHERE idesc = 'first (-2 ?)';
+UPDATE ids SET id = 0, idesc = 'second: -1 --> 3' 
+	WHERE id = -1;
+UPDATE ids SET id = 4, idesc = 'third: 1 --> 4' 
+	WHERE id = 1;
+
+SELECT * FROM ids;
+
+SELECT 'Wasn''t it 4 ?' as nextval, nextval ('next_id') as value;
+
+insert into ids (idesc) select textcat (idesc, '. Copy.') from ids;
+
+SELECT * FROM ids;

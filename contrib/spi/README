@@ -8,8 +8,8 @@ table/field names (as described below) while creating a trigger.
 
 check_primary_key () is to used for foreign keys of a table.
    
-   You are to create trigger (BEFORE INSERT OR UPDATE) using this 
-function on a table referencing another table. You are to specify
+   You have to create trigger (BEFORE INSERT OR UPDATE) using this 
+function on a table referencing another table. You have to specify
 as function arguments: triggered table column names which correspond
 to foreign key, referenced table name and column names in referenced
 table which correspond to primary/unique key.
@@ -18,8 +18,8 @@ one reference.
 
 check_foreign_key () is to used for primary/unique keys of a table.
 
-   You are to create trigger (BEFORE DELETE OR UPDATE) using this
-function on a table referenced by another table(s). You are to specify
+   You have to create trigger (BEFORE DELETE OR UPDATE) using this
+function on a table referenced by another table(s). You have to specify
 as function arguments: number of references for which function has to
 performe checking, action if referencing key found ('cascade' - to delete
 corresponding foreign key, 'restrict' - to abort transaction if foreign keys 
@@ -42,20 +42,26 @@ refint.source).
 
    Old internally supported time-travel (TT) used insert/delete
 transaction commit times. To get the same feature using triggers
-you are to add to a table two columns of abstime type to store
+you have to add to a table two columns of abstime type to store
 date when a tuple was inserted (start_date) and changed/deleted 
 (stop_date):
 
 CREATE TABLE XXX (
 	...		...
-	date_on		abstime default currabstime(),
-	date_off	abstime default 'infinity'
+	date_on		abstime,
+	date_off	abstime
 	...		...
 );
 
-- so, tuples being inserted with NULLs in date_on/date_off will get
-_current_date_ in date_on (name of start_date column in XXX) and INFINITY in
-date_off (name of stop_date column in XXX).
+CREATE TRIGGER timetravel
+        BEFORE INSERT OR DELETE OR UPDATE ON tttest
+        FOR EACH ROW
+        EXECUTE PROCEDURE
+        timetravel (date_on, date_off);
+
+   Tuples being inserted with NULLs in date_on/date_off will get current
+date in date_on (name of start_date column in XXX) and INFINITY in date_off
+(name of stop_date column in XXX).
 
    Tuples with stop_date equal INFINITY are "valid now": when trigger will
 be fired for UPDATE/DELETE of a tuple with stop_date NOT equal INFINITY then
@@ -72,7 +78,7 @@ DELETE: new tuple will be inserted with stop_date setted to current date
 (and with the same data in other columns as in tuple being deleted).
 
    NOTE:
-1. To get tuples "valid now" you are to add _stop_date_ = 'infinity'
+1. To get tuples "valid now" you have to add _stop_date_ = 'infinity'
    to WHERE. Internally supported TT allowed to avoid this...
    Fixed rewriting RULEs could help here...
    As work arround you may use VIEWs...
@@ -83,12 +89,9 @@ DELETE: new tuple will be inserted with stop_date setted to current date
 
 timetravel() is general trigger function.
 
-   You are to create trigger BEFORE (!!!) UPDATE OR DELETE using this
-function on a time-traveled table. You are to specify two arguments: name of
-start_date column and name of stop_date column in triggered table.
-
-currabstime() may be used in DEFAULT for start_date column to get
-current date.
+   You have to create trigger BEFORE (!!!) INSERT OR UPDATE OR DELETE using
+this function on a time-traveled table. You have to specify two arguments:
+name of start_date column and name of stop_date column in triggered table.
 
 set_timetravel() allows you turn time-travel ON/OFF for a table:
 
@@ -96,9 +99,26 @@ set_timetravel() allows you turn time-travel ON/OFF for a table:
 old status).
    set_timetravel('XXX', 0) will turn TT OFF for table XXX (-"-).
 
-Turning TT OFF allows you do with a table ALL what you want.
+Turning TT OFF allows you do with a table ALL what you want!
 
    There is example in timetravel.example.
 
    To CREATE FUNCTIONs use timetravel.sql (will be made by gmake from
 timetravel.source).
+
+
+3. autoinc.c - function for implementing AUTOINCREMENT/IDENTITY feature.
+
+   You have to create BEFORE INSERT OR UPDATE trigger using function
+autoinc(). You have to specify as function arguments: column name
+(of int4 type) for which you want to get this feature and name of
+SEQUENCE from which next value has to be fetched when NULL or 0
+value is being inserted into column (, ... - you are able to specify
+as many column/sequence pairs as you need).
+
+   There is example in autoinc.example.
+
+   To CREATE FUNCTION use autoinc.sql (will be made by gmake from
+autoinc.source).
+
+

@@ -1,11 +1,5 @@
-DROP FUNCTION currabstime();
 DROP FUNCTION timetravel();
 DROP FUNCTION set_timetravel(name, int4);
-
-CREATE FUNCTION currabstime() 
-	RETURNS abstime 
-	AS '_OBJWD_/timetravel_DLSUFFIX_'
-	LANGUAGE 'c';
 
 CREATE FUNCTION timetravel() 
 	RETURNS opaque 

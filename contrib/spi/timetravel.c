@@ -38,6 +38,8 @@ static EPlan *find_plan(char *ident, EPlan ** eplan, int *nplans);
  * 		2.	IF an delete affects tuple with stop_date eq INFINITY
  * 			then insert the same tuple with stop_date eq current date
  * 			ELSE - skip deletion of tuple.
+ * 		3.	On INSERT, if start_date is NULL then current date will be
+ * 			inserted, if stop_date is NULL then INFINITY will be inserted.
  * 
  * In CREATE TRIGGER you are to specify start_date and stop_date column
  * names:
@@ -65,6 +67,7 @@ timetravel()
 	EPlan	   *plan;			/* prepared plan */
 	char		ident[2 * NAMEDATALEN];
 	bool		isnull;			/* to know is some column NULL or not */
+	bool		isinsert = false;
 	int			ret;
 	int			i;
 
@@ -86,7 +89,7 @@ timetravel()
 
 	/* INSERT ? */
 	if (TRIGGER_FIRED_BY_INSERT(CurrentTriggerData->tg_event))
-		elog (WARN, "timetravel: can't process INSERT event");
+		isinsert = true;
 	
 	if (TRIGGER_FIRED_BY_UPDATE(CurrentTriggerData->tg_event))
 		newtuple = CurrentTriggerData->tg_newtuple;
@@ -133,6 +136,50 @@ timetravel()
 					relname, args[0], args[1]);
 	}
 	
+	if (isinsert)								/* INSERT */
+	{
+		int		chnattrs = 0;
+		int		chattrs[2];
+		Datum	newvals[2];
+		
+		oldon = SPI_getbinval (trigtuple, tupdesc, attnum[0], &isnull);
+		if (isnull)
+		{
+			newvals[chnattrs] = GetCurrentAbsoluteTime ();
+			chattrs[chnattrs] = attnum[0];
+			chnattrs++;
+		}
+		
+		oldoff = SPI_getbinval (trigtuple, tupdesc, attnum[1], &isnull);
+		if (isnull)
+		{
+			if ((chnattrs == 0 && DatumGetInt32 (oldon) >= NOEND_ABSTIME) || 
+				(chnattrs > 0 && DatumGetInt32 (newvals[0]) >= NOEND_ABSTIME))
+				elog (WARN, "timetravel (%s): %s ge %s", 
+						relname, args[0], args[1]);
+			newvals[chnattrs] = NOEND_ABSTIME;
+			chattrs[chnattrs] = attnum[1];
+			chnattrs++;
+		}
+		else
+		{
+			if ((chnattrs == 0 && DatumGetInt32 (oldon) >= 
+										DatumGetInt32 (oldoff)) || 
+				(chnattrs > 0 && DatumGetInt32 (newvals[0]) >= 
+										DatumGetInt32 (oldoff)))
+				elog (WARN, "timetravel (%s): %s ge %s", 
+						relname, args[0], args[1]);
+		}
+		
+		pfree (relname);
+		if ( chnattrs <= 0 )
+			return (trigtuple);
+		
+		rettuple = SPI_modifytuple (rel, trigtuple, chnattrs, 
+									chattrs, newvals, NULL);
+		return (rettuple);
+	}
+	
 	oldon = SPI_getbinval (trigtuple, tupdesc, attnum[0], &isnull);
 	if (isnull)
 		elog(WARN, "timetravel (%s): %s must be NOT NULL", relname, args[0]);
@@ -140,7 +187,6 @@ timetravel()
 	oldoff = SPI_getbinval (trigtuple, tupdesc, attnum[1], &isnull);
 	if (isnull)
 		elog(WARN, "timetravel (%s): %s must be NOT NULL", relname, args[1]);
-	
 	/*
 	 * If DELETE/UPDATE of tuple with stop_date neq INFINITY
 	 * then say upper Executor to skip operation for this tuple

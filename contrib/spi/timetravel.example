@@ -1,20 +1,25 @@
 drop table tttest;
+
 create table tttest (
 	price_id	int4, 
 	price_val	int4, 
-	price_on	abstime default currabstime(),
-	price_off	abstime default 'infinity'
+	price_on	abstime,
+	price_off	abstime
 );
 
-insert into tttest values (1, 1, null, null);
-insert into tttest values (2, 2, null, null);
-insert into tttest values (3, 3, null, null);
-
 create trigger timetravel 
-	before delete or update on tttest
+	before insert or delete or update on tttest
 	for each row 
 	execute procedure 
 	timetravel (price_on, price_off);
+
+insert into tttest values (1, 1, null, null);
+insert into tttest(price_id, price_val) values (2, 2);
+insert into tttest(price_id, price_val,price_off) values (3, 3, 'infinity');
+
+insert into tttest(price_id, price_val,price_off) values (3, 3, 
+	datetime_abstime(datetime_mi_span('now', '100')));
+insert into tttest(price_id, price_val,price_on) values (3, 3, 'infinity');
 
 select * from tttest;
 delete from tttest where price_id = 2;

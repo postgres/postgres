@@ -9,7 +9,8 @@ ifdef REFINT_VERBOSE
 CFLAGS+= -DREFINT_VERBOSE
 endif
 
-TARGETS= refint$(DLSUFFIX) refint.sql timetravel$(DLSUFFIX) timetravel.sql
+TARGETS= refint$(DLSUFFIX) refint.sql timetravel$(DLSUFFIX) timetravel.sql \
+		autoinc$(DLSUFFIX) autoinc.sql
 
 CLEANFILES+= $(TARGETS)
 
