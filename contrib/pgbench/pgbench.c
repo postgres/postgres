@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/contrib/pgbench/pgbench.c,v 1.21 2002/10/18 18:41:20 momjian Exp $
+ * $Header: /cvsroot/pgsql/contrib/pgbench/pgbench.c,v 1.22 2002/10/20 19:38:10 tgl Exp $
  *
  * pgbench: a simple TPC-B like benchmark program for PostgreSQL
  * written by Tatsuo Ishii
@@ -853,7 +853,6 @@ main(int argc, char **argv)
 		fprintf(stderr, "%s", PQerrorMessage(con));
 		exit(1);
 	}
-	PQclear(res);
 	tps = atoi(PQgetvalue(res, 0, 0));
 	if (tps < 0)
 	{
