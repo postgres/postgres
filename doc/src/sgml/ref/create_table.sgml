@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.37 2000/12/25 23:15:26 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.38 2000/12/30 19:00:11 petere Exp $
 Postgres documentation
 -->
 
@@ -23,7 +23,9 @@ Postgres documentation
    <date>2000-03-25</date>
   </refsynopsisdivinfo>
   <synopsis>
-CREATE [ TEMPORARY | TEMP ] TABLE <replaceable class="PARAMETER">table</replaceable> (
+CREATE [ TEMPORARY | TEMP ] TABLE <replaceable class="PARAMETER">table</replaceable> 
+    [ UNDER <replaceable>inherited_table</replaceable> [, ...] ]
+    (
     <replaceable class="PARAMETER">column</replaceable> <replaceable class="PARAMETER">type</replaceable>
     [ NULL | NOT NULL ] [ UNIQUE ] [ DEFAULT <replaceable class="PARAMETER">value</replaceable> ]
     [<replaceable>column_constraint_clause</replaceable> | PRIMARY KEY } [ ... ] ]
@@ -31,7 +33,7 @@ CREATE [ TEMPORARY | TEMP ] TABLE <replaceable class="PARAMETER">table</replacea
     [, PRIMARY KEY ( <replaceable class="PARAMETER">column</replaceable> [, ...] ) ]
     [, CHECK ( <replaceable class="PARAMETER">condition</replaceable> ) ]
     [, <replaceable>table_constraint_clause</replaceable> ]
-    ) [ UNDER <replaceable>inherited_table</replaceable> [, ...] ]
+    )
   </synopsis>
   
   <refsect2 id="R2-SQL-CREATETABLE-1">
@@ -58,7 +60,7 @@ CREATE [ TEMPORARY | TEMP ] TABLE <replaceable class="PARAMETER">table</replacea
       <term><replaceable class="PARAMETER">table</replaceable></term>
       <listitem>
        <para>
-	The name of a new class or table to be created.
+	The name of the new table to be created.
        </para>
       </listitem>
      </varlistentry>
@@ -205,7 +207,7 @@ ERROR:  DEFAULT: type mismatched
   </title>
 
   <para>
-   <command>CREATE TABLE</command> will enter a new class or table
+   <command>CREATE TABLE</command> will enter a new table
    into the current data base. The table will be "owned" by the user issuing the
    command.
   </para>
@@ -230,18 +232,18 @@ ERROR:  DEFAULT: type mismatched
 
   <para>
    The optional UNDER
-   clause specifies a collection of class names from which this class
+   clause specifies a collection of table names from which this table
    automatically inherits all fields.  If any inherited field name
    appears more than once, Postgres reports an error.  Postgres automatically
-   allows the created class to inherit functions on classes above it in
+   allows the created table to inherit functions on tables above it in
    the inheritance hierarchy.  Inheritance of functions is done according
    to the conventions of the Common Lisp Object System (CLOS).
   </para>
 
   <para>
-   Each new table or class <replaceable class="PARAMETER">table</replaceable>
-   is automatically created as a type.  Therefore, one or more instances
-   from the class are automatically a type and can be used in 
+   Each new table <replaceable class="PARAMETER">table</replaceable>
+   is automatically created as a type.  Therefore, one or more rows
+   from the table are automatically a type and can be used in 
    <xref linkend="sql-altertable" endterm="sql-altertable-title">
    or other <command>CREATE TABLE</command> statements.
   </para>
@@ -1830,16 +1832,6 @@ CREATE TABLE distributors (
 );
    </programlisting>
   </para>
-  
-  <refsect2 id="R2-SQL-CREATETABLE-3">
-   <title>
-    Notes
-   </title>
-   <para>
-    CREATE TABLE/UNDER is defined by SQL3. Multiple inheritance is a 
-     <productname>Postgres</productname> language extension.
-   </para>
-  </refsect2>
   
  </refsect1>
  
