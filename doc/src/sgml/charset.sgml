@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.68 2005/03/14 06:49:48 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.69 2005/03/14 18:31:19 momjian Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -537,6 +537,13 @@ initdb --locale=sv_SE
         <row>
          <entry><literal>WIN1251</literal></entry>
          <entry>Windows CP1251</entry>
+         <entry>Western European</entry>
+         <entry>1</entry>
+         <entry></entry>
+        </row>
+        <row>
+         <entry><literal>WIN1252</literal></entry>
+         <entry>Windows CP1252</entry>
          <entry>Cyrillic</entry>
          <entry>1</entry>
          <entry><literal>WIN</></entry>
@@ -676,7 +683,7 @@ $ <userinput>psql -l</userinput>
        <tbody>
         <row>
          <entry><literal>BIG5</literal></entry>
-         <entry><emphasis>not available as a server encoding</emphasis>
+         <entry><emphasis>not supported as a server encoding</emphasis>
          </entry>
         </row>
         <row>
@@ -711,12 +718,12 @@ $ <userinput>psql -l</userinput>
         </row>
         <row>
          <entry><literal>GB18030</literal></entry>
-         <entry><emphasis>not available as a server encoding</emphasis>
+         <entry><emphasis>not supported as a server encoding</emphasis>
          </entry>
         </row>
         <row>
          <entry><literal>GBK</literal></entry>
-         <entry><emphasis>not available as a server encoding</emphasis>
+         <entry><emphasis>not supported as a server encoding</emphasis>
          </entry>
         </row>
         <row>
@@ -847,7 +854,7 @@ $ <userinput>psql -l</userinput>
         </row>
         <row> 
          <entry><literal>SJIS</literal></entry>
-         <entry><emphasis>not available as a server encoding</emphasis>
+         <entry><emphasis>not supported as a server encoding</emphasis>
          </entry>
         </row>
         <row>
@@ -859,7 +866,7 @@ $ <userinput>psql -l</userinput>
         </row>
         <row>
          <entry><literal>UHC</literal></entry>
-         <entry><emphasis>not available as a server encoding</emphasis>
+         <entry><emphasis>not supported as a server encoding</emphasis>
          </entry>
         </row>
         <row>
@@ -899,6 +906,12 @@ $ <userinput>psql -l</userinput>
           <literal>MULE_INTERNAL</literal>,
           <literal>UTF8</literal>,
           <literal>WIN866</literal>
+         </entry>
+        </row>
+        <row>
+         <entry><literal>WIN1252</literal></entry>
+         <entry><emphasis>WIN1252</emphasis>,
+          <literal>UTF8</literal>
          </entry>
         </row>
         <row>

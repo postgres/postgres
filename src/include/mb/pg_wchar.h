@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/mb/pg_wchar.h,v 1.57 2005/03/07 04:30:55 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/include/mb/pg_wchar.h,v 1.58 2005/03/14 18:31:24 momjian Exp $ */
 
 #ifndef PG_WCHAR_H
 #define PG_WCHAR_H
@@ -172,7 +172,8 @@ typedef enum pg_enc
 	PG_WIN866,					/* (MS-DOS CP866) */
 	PG_WIN874,					/* windows-874 */
 	PG_KOI8R,					/* KOI8-R */
-	PG_WIN1251,					/* windows-1251 (was: WIN) */
+	PG_WIN1251,					/* windows-1251 */
+	PG_WIN1252,					/* windows-1252 */
 	PG_ISO_8859_5,				/* ISO-8859-5 */
 	PG_ISO_8859_6,				/* ISO-8859-6 */
 	PG_ISO_8859_7,				/* ISO-8859-7 */

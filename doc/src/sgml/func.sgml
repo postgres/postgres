@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.240 2005/03/07 04:30:49 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.241 2005/03/14 18:31:19 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -1991,6 +1991,12 @@ PostgreSQL documentation
       </row>
 
       <row>
+       <entry><literal>utf8_to_windows_1252</literal></entry>
+       <entry><literal>UTF8</literal></entry>
+       <entry><literal>WIN1252</literal></entry>
+      </row>
+
+      <row>
        <entry><literal>utf8_to_windows_1256</literal></entry>
        <entry><literal>UTF8</literal></entry>
        <entry><literal>WIN1256</literal></entry>
@@ -2054,6 +2060,12 @@ PostgreSQL documentation
        <entry><literal>windows_1251_to_windows_866</literal></entry>
        <entry><literal>WIN1251</literal></entry>
        <entry><literal>WIN866</literal></entry>
+      </row>
+
+      <row>
+       <entry><literal>windows_1252_to_utf8</literal></entry>
+       <entry><literal>WIN1252</literal></entry>
+       <entry><literal>UTF8</literal></entry>
       </row>
 
       <row>

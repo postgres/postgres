@@ -2,7 +2,7 @@
  * Encoding names and routines for work with it. All
  * in this file is shared bedween FE and BE.
  *
- * $PostgreSQL: pgsql/src/backend/utils/mb/encnames.c,v 1.24 2005/03/13 01:26:30 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/mb/encnames.c,v 1.25 2005/03/14 18:31:20 momjian Exp $
  */
 #ifdef FRONTEND
 #include "postgres_fe.h"
@@ -194,6 +194,9 @@ pg_encname	pg_encname_tbl[] =
 		"win1251", PG_WIN1251
 	},							/* alias for Windows-1251 */
 	{
+		"win1252", PG_WIN1252
+	},							/* alias for Windows-1252 */
+	{
 		"win1256", PG_WIN1256
 	},							/* alias for Windows-1256 */
 	{
@@ -223,6 +226,9 @@ pg_encname	pg_encname_tbl[] =
 	{
 		"windows1251", PG_WIN1251
 	},							/* Windows-1251; Microsoft */
+	{
+		"windows1252", PG_WIN1252
+	},							/* Windows-1252; Microsoft */
 	{
 		"windows1256", PG_WIN1256
 	},							/* Windows-1256; Microsoft */
@@ -333,6 +339,9 @@ pg_enc2name pg_enc2name_tbl[] =
 	},
 	{
 		"WIN1251", PG_WIN1251
+	},
+	{
+		"WIN1252", PG_WIN1252
 	},
 	{
 		"ISO_8859_5", PG_ISO_8859_5

@@ -39,7 +39,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.78 2005/03/11 15:36:27 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.79 2005/03/14 18:31:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -764,6 +764,7 @@ struct encoding_match encoding_match_list[] = {
 	{PG_LATIN10, "ISO8859-16"},
 	{PG_LATIN10, "iso885916"},
 
+	{PG_WIN1252, "CP1252"},
 	{PG_WIN1256, "CP1256"},
 	{PG_WIN1258, "CP1258"},
 #ifdef NOT_VERIFIED

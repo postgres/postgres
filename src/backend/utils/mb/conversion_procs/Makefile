@@ -4,7 +4,7 @@
 #    Makefile for utils/mb/conversion_procs
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/Makefile,v 1.12 2005/03/07 04:30:52 momjian Exp $
+#    $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/Makefile,v 1.13 2005/03/14 18:31:21 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -24,7 +24,7 @@ DIRS = \
 	utf8_and_euc_jp utf8_and_euc_kr utf8_and_euc_tw utf8_and_gb18030 \
 	utf8_and_gbk utf8_and_iso8859 utf8_and_iso8859_1 utf8_and_johab \
 	utf8_and_sjis utf8_and_win1258 utf8_and_uhc utf8_and_win1250 \
-	utf8_and_win1256 utf8_and_win874
+	utf8_and_win1252 utf8_and_win1256 utf8_and_win874
 
 # conversion_name source_encoding destination_encoding function object
 CONVERSIONS = \
@@ -86,6 +86,8 @@ CONVERSIONS = \
 		koi8_r_to_utf8	KOI8R UTF8 koi8r_to_utf8 utf8_and_cyrillic \
 		utf8_to_windows_1251	UTF8 WIN1251 utf8_to_win1251 utf8_and_cyrillic \
 		windows_1251_to_utf8	WIN1251 UTF8 win1251_to_utf8 utf8_and_cyrillic \
+		utf8_to_windows_1252	UTF8 WIN1252 utf8_to_win1252 utf8_and_win1252 \
+		windows_1252_to_utf8	WIN1252 UTF8 win1252_to_utf8 utf8_and_win1252 \
 		utf8_to_windows_866	UTF8 WIN866 utf8_to_win866 utf8_and_cyrillic \
 		windows_866_to_utf8	WIN866 UTF8 win866_to_utf8 utf8_and_cyrillic \
 		euc_cn_to_utf8 EUC_CN UTF8 euc_cn_to_utf8 utf8_and_euc_cn \
@@ -136,12 +138,12 @@ CONVERSIONS = \
 		utf8_to_win1258 UTF8 WIN1258 utf8_to_win1258 utf8_and_win1258 \
 		uhc_to_utf8 UHC UTF8 uhc_to_utf8 utf8_and_uhc \
 		utf8_to_uhc UTF8 UHC utf8_to_uhc utf8_and_uhc \
-		utf8_to_windows_1250  UTF8 WIN1250 utf_to_win1250 utf8_and_win1250 \
-		windows_1250_to_utf8  WIN1250 UTF8 win1250_to_utf utf8_and_win1250 \
-		utf8_to_windows_1256  UTF8 WIN1256 utf_to_win1256 utf8_and_win1256 \
-		windows_1256_to_utf8  WIN1256 UTF8 win1256_to_utf utf8_and_win1256 \
-		utf8_to_windows_874  UTF8 WIN874 utf_to_win874 utf8_and_win874 \
-		windows_874_to_utf8  WIN874 UTF8 win874_to_utf utf8_and_win874
+		utf8_to_windows_1250  UTF8 WIN1250 utf8_to_win1250 utf8_and_win1250 \
+		windows_1250_to_utf8  WIN1250 UTF8 win1250_to_utf8 utf8_and_win1250 \
+		utf8_to_windows_1256  UTF8 WIN1256 utf8_to_win1256 utf8_and_win1256 \
+		windows_1256_to_utf8  WIN1256 UTF8 win1256_to_utf8 utf8_and_win1256 \
+		utf8_to_windows_874  UTF8 WIN874 utf8_to_win874 utf8_and_win874 \
+		windows_874_to_utf8  WIN874 UTF8 win874_to_utf8 utf8_and_win874
 
 all: $(SQLSCRIPT)
 	@for dir in $(DIRS); do $(MAKE) -C $$dir $@ || exit; done

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_iso8859/utf8_and_iso8859.c,v 1.12 2005/03/07 04:30:54 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_iso8859/utf8_and_iso8859.c,v 1.13 2005/03/14 18:31:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -108,7 +108,7 @@ static pg_conv_map maps[] = {
 	{PG_WIN1258},				/* Windows-1258 */
 	{PG_WIN874},				/* windows-874 */
 	{PG_KOI8R},					/* KOI8-R */
-	{PG_WIN1251},				/* windows-1251 (was: WIN) */
+	{PG_WIN1251},				/* windows-1251 */
 	{PG_WIN866},				/* (MS-DOS CP866) */
 	{PG_ISO_8859_5, LUmapISO8859_5, ULmapISO8859_5,
 		sizeof(LUmapISO8859_5) / sizeof(pg_local_to_utf),

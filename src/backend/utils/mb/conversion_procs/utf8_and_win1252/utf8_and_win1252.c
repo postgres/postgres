@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- *	  WIN1256 and UTF8
+ *	  WIN1252 and UTF8
  *
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_win1256/utf8_and_win1256.c,v 1.11 2005/03/14 18:31:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_win1252/utf8_and_win1252.c,v 1.3 2005/03/14 18:31:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -14,14 +14,14 @@
 #include "postgres.h"
 #include "fmgr.h"
 #include "mb/pg_wchar.h"
-#include "../../Unicode/utf8_to_win1256.map"
-#include "../../Unicode/win1256_to_utf8.map"
+#include "../../Unicode/utf8_to_win1252.map"
+#include "../../Unicode/win1252_to_utf8.map"
 
-PG_FUNCTION_INFO_V1(utf8_to_win1256);
-PG_FUNCTION_INFO_V1(win1256_to_utf8);
+PG_FUNCTION_INFO_V1(utf8_to_win1252);
+PG_FUNCTION_INFO_V1(win1252_to_utf8);
 
-extern Datum utf8_to_win1256(PG_FUNCTION_ARGS);
-extern Datum win1256_to_utf8(PG_FUNCTION_ARGS);
+extern Datum utf8_to_win1252(PG_FUNCTION_ARGS);
+extern Datum win1252_to_utf8(PG_FUNCTION_ARGS);
 
 /* ----------
  * conv_proc(
@@ -35,35 +35,35 @@ extern Datum win1256_to_utf8(PG_FUNCTION_ARGS);
  */
 
 Datum
-utf8_to_win1256(PG_FUNCTION_ARGS)
+utf8_to_win1252(PG_FUNCTION_ARGS)
 {
 	unsigned char *src = PG_GETARG_CSTRING(2);
 	unsigned char *dest = PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 
 	Assert(PG_GETARG_INT32(0) == PG_UTF8);
-	Assert(PG_GETARG_INT32(1) == PG_WIN1256);
+	Assert(PG_GETARG_INT32(1) == PG_WIN1252);
 	Assert(len >= 0);
 
-	UtfToLocal(src, dest, ULmapWIN1256,
-			   sizeof(ULmapWIN1256) / sizeof(pg_utf_to_local), len);
+	UtfToLocal(src, dest, ULmapWIN1252,
+			   sizeof(ULmapWIN1252) / sizeof(pg_utf_to_local), len);
 
 	PG_RETURN_VOID();
 }
 
 Datum
-win1256_to_utf8(PG_FUNCTION_ARGS)
+win1252_to_utf8(PG_FUNCTION_ARGS)
 {
 	unsigned char *src = PG_GETARG_CSTRING(2);
 	unsigned char *dest = PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 
-	Assert(PG_GETARG_INT32(0) == PG_WIN1256);
+	Assert(PG_GETARG_INT32(0) == PG_WIN1252);
 	Assert(PG_GETARG_INT32(1) == PG_UTF8);
 	Assert(len >= 0);
 
-	LocalToUtf(src, dest, LUmapWIN1256,
-		sizeof(LUmapWIN1256) / sizeof(pg_local_to_utf), PG_WIN1256, len);
+	LocalToUtf(src, dest, LUmapWIN1252,
+		sizeof(LUmapWIN1252) / sizeof(pg_local_to_utf), PG_WIN1252, len);
 
 	PG_RETURN_VOID();
 }

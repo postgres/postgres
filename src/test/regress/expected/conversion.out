@@ -784,6 +784,32 @@ SELECT CONVERT('foo', 'WIN1251', 'UTF8');
  foo
 (1 row)
 
+-- UTF8 --> WIN1252
+SELECT CONVERT('foo' USING utf8_to_windows_1252);
+ convert_using 
+---------------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'UTF8', 'WIN1252');
+ convert 
+---------
+ foo
+(1 row)
+
+-- WIN1252 --> UTF8
+SELECT CONVERT('foo' USING windows_1252_to_utf8);
+ convert_using 
+---------------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'WIN1252', 'UTF8');
+ convert 
+---------
+ foo
+(1 row)
+
 -- UTF8 --> WIN866
 SELECT CONVERT('foo' USING utf8_to_windows_866);
  convert_using 
