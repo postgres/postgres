@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.22 1999/02/03 21:16:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.23 1999/02/08 14:14:09 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -130,6 +130,9 @@ init_execution_state(FunctionCachePtr fcache,
 									 None);
 		estate = CreateExecutorState();
 
+		if (queryTree->limitOffset != NULL || queryTree->limitCount != NULL)
+			elog(ERROR, "LIMIT clause from SQL functions not yet implemented");
+
 		if (nargs > 0)
 		{
 			int			i;
@@ -199,7 +202,7 @@ postquel_getnext(execution_state *es)
 
 	feature = (LAST_POSTQUEL_COMMAND(es)) ? EXEC_RETONE : EXEC_RUN;
 
-	return ExecutorRun(es->qd, es->estate, feature, 0);
+	return ExecutorRun(es->qd, es->estate, feature, (Node *)NULL, (Node *)NULL);
 }
 
 static void

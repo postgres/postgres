@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: analyze.c,v 1.97 1999/02/02 03:44:32 momjian Exp $
+ *  $Id: analyze.c,v 1.98 1999/02/08 14:14:11 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -205,7 +205,11 @@ transformStmt(ParseState *pstate, Node *parseTree)
 
 		case T_SelectStmt:
 			if (!((SelectStmt *) parseTree)->portalname)
+			{
 				result = transformSelectStmt(pstate, (SelectStmt *) parseTree);
+				result->limitOffset = ((SelectStmt *)parseTree)->limitOffset;
+				result->limitCount = ((SelectStmt *)parseTree)->limitCount;
+			}
 			else
 				result = transformCursorStmt(pstate, (SelectStmt *) parseTree);
 			break;

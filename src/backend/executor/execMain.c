@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.75 1999/02/07 16:17:11 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.76 1999/02/08 14:14:09 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,21 +60,27 @@ void ExecCheckPerms(CmdType operation, int resultRelation, List *rangeTable,
 
 
 /* decls for local routines only used within this module */
-static TupleDesc InitPlan(CmdType operation, Query *parseTree,
-		 Plan *plan, EState *estate);
-static void EndPlan(Plan *plan, EState *estate);
+static TupleDesc InitPlan(CmdType operation,
+						Query *parseTree,
+		 				Plan *plan,
+						EState *estate);
+static void EndPlan(Plan *plan,
+						EState *estate);
 static TupleTableSlot *ExecutePlan(EState *estate, Plan *plan,
-			CmdType operation, int numberTuples, ScanDirection direction,
-			DestReceiver *destfunc);
+						CmdType operation, 
+						int offsetTuples,
+						int numberTuples,
+						ScanDirection direction,
+						DestReceiver *destfunc);
 static void ExecRetrieve(TupleTableSlot *slot,
-						 DestReceiver *destfunc,
-						 EState *estate);
+						DestReceiver *destfunc,
+						EState *estate);
 static void ExecAppend(TupleTableSlot *slot, ItemPointer tupleid,
-		   EState *estate);
+		   				EState *estate);
 static void ExecDelete(TupleTableSlot *slot, ItemPointer tupleid,
-		   EState *estate);
+		   				EState *estate);
 static void ExecReplace(TupleTableSlot *slot, ItemPointer tupleid,
-			EState *estate);
+						EState *estate);
 
 TupleTableSlot *EvalPlanQual(EState *estate, Index rti, ItemPointer tid);
 static TupleTableSlot *EvalPlanQualNext(EState *estate);
@@ -187,13 +193,16 @@ ExecutorStart(QueryDesc *queryDesc, EState *estate)
  * ----------------------------------------------------------------
  */
 TupleTableSlot *
-ExecutorRun(QueryDesc *queryDesc, EState *estate, int feature, int count)
+ExecutorRun(QueryDesc *queryDesc, EState *estate, int feature, 
+					Node *limoffset, Node *limcount)
 {
 	CmdType			operation;
 	Plan		   *plan;
 	TupleTableSlot *result;
 	CommandDest		dest;
 	DestReceiver   *destfunc;
+	int				offset = 0;
+	int				count = 0;
 
 	/******************
 	 *	sanity checks
@@ -222,6 +231,96 @@ ExecutorRun(QueryDesc *queryDesc, EState *estate, int feature, int count)
 	 */
 	(*destfunc->setup) (destfunc, (TupleDesc) NULL);
 
+    /******************
+     *  if given get the offset of the LIMIT clause
+     ******************
+     */
+    if (limoffset != NULL)
+    {
+        Const       *coffset;
+        Param       *poffset;
+        ParamListInfo   paramLI;
+		int	 i;
+ 
+		switch (nodeTag(limoffset))
+		{
+			case T_Const:
+				coffset = (Const *)limoffset;
+				offset = (int)(coffset->constvalue);
+				break;
+ 
+			case T_Param:
+				poffset = (Param *)limoffset;
+				paramLI = estate->es_param_list_info;
+ 
+				if (paramLI == NULL)
+					elog(ERROR, "parameter for limit offset not in executor state");
+				for (i = 0; paramLI[i].kind != PARAM_INVALID; i++)
+				{
+					if (paramLI[i].kind == PARAM_NUM && paramLI[i].id == poffset->paramid)
+						break;
+				}
+				if (paramLI[i].kind == PARAM_INVALID)
+					elog(ERROR, "parameter for limit offset not in executor state");
+				if (paramLI[i].isnull)
+					elog(ERROR, "limit offset cannot be NULL value");
+				offset = (int)(paramLI[i].value);
+ 
+				break;
+ 
+			default:
+				elog(ERROR, "unexpected node type %d as limit offset", nodeTag(limoffset));
+		}
+ 
+		if (offset < 0)
+			elog(ERROR, "limit offset cannot be negative");
+	}
+ 
+	/******************
+	 *  if given get the count of the LIMIT clause
+	 ******************
+	 */
+	if (limcount != NULL)
+	{
+	    Const       *ccount;
+	    Param       *pcount;
+	    ParamListInfo   paramLI;
+	    int     i;
+ 
+	    switch (nodeTag(limcount))
+	    {
+	        case T_Const:
+	            ccount = (Const *)limcount;
+	            count = (int)(ccount->constvalue);
+	            break;
+ 
+	        case T_Param:
+	            pcount = (Param *)limcount;
+	            paramLI = estate->es_param_list_info;
+ 
+	            if (paramLI == NULL)
+	                elog(ERROR, "parameter for limit count not in executor state");
+	            for (i = 0; paramLI[i].kind != PARAM_INVALID; i++)
+	            {
+	                if (paramLI[i].kind == PARAM_NUM && paramLI[i].id == pcount->paramid)
+	                    break;
+	            }
+	            if (paramLI[i].kind == PARAM_INVALID)
+	                elog(ERROR, "parameter for limit count not in executor state");
+	            if (paramLI[i].isnull)
+	                elog(ERROR, "limit count cannot be NULL value");
+	            count = (int)(paramLI[i].value);
+ 
+	            break;
+ 
+	        default:
+	            elog(ERROR, "unexpected node type %d as limit count", nodeTag(limcount));
+	    }
+ 
+	    if (count < 0)
+	        elog(ERROR, "limit count cannot be negative");
+	}
+
 	switch (feature)
 	{
 
@@ -229,7 +328,8 @@ ExecutorRun(QueryDesc *queryDesc, EState *estate, int feature, int count)
 			result = ExecutePlan(estate,
 								 plan,
 								 operation,
-								 ALL_TUPLES,
+								 offset,
+								 count,
 								 ForwardScanDirection,
 								 destfunc);
 			break;
@@ -237,6 +337,7 @@ ExecutorRun(QueryDesc *queryDesc, EState *estate, int feature, int count)
 			result = ExecutePlan(estate,
 								 plan,
 								 operation,
+								 offset,
 								 count,
 								 ForwardScanDirection,
 								 destfunc);
@@ -250,6 +351,7 @@ ExecutorRun(QueryDesc *queryDesc, EState *estate, int feature, int count)
 			result = ExecutePlan(estate,
 								 plan,
 								 operation,
+								 offset,
 								 count,
 								 BackwardScanDirection,
 								 destfunc);
@@ -264,6 +366,7 @@ ExecutorRun(QueryDesc *queryDesc, EState *estate, int feature, int count)
 			result = ExecutePlan(estate,
 								 plan,
 								 operation,
+								 0,
 								 ONE_TUPLE,
 								 ForwardScanDirection,
 								 destfunc);
@@ -784,6 +887,7 @@ static TupleTableSlot *
 ExecutePlan(EState *estate,
 			Plan *plan,
 			CmdType operation,
+			int offsetTuples,
 			int numberTuples,
 			ScanDirection direction,
 			DestReceiver* destfunc)
@@ -843,6 +947,20 @@ lnext:;
 		{
 			result = NULL;
 			break;
+		}
+
+		/******************
+		 *  For now we completely execute the plan and skip
+		 *  result tuples if requested by LIMIT offset.
+		 *  Finally we should try to do it in deeper levels
+		 *  if possible (during index scan)
+		 *  - Jan
+		 ******************
+		 */
+		if (offsetTuples > 0)
+		{
+			--offsetTuples;
+			continue;
 		}
 
 		/******************

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.52 1999/02/02 03:44:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.53 1999/02/08 14:14:13 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,9 +68,6 @@ static ScanKeyword ScanKeywords[] = {
 	{"createdb", CREATEDB},
 	{"createuser", CREATEUSER},
 	{"cross", CROSS},
-	{"current", CURRENT},		/* 6.4 to 6.5 is migration time! CURRENT
-								 * will be removed in 6.5! Use OLD keyword
-								 * in rules. Jan */
 	{"current_date", CURRENT_DATE},
 	{"current_time", CURRENT_TIME},
 	{"current_timestamp", CURRENT_TIMESTAMP},
@@ -139,6 +136,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"left", LEFT},
 	{"level", LEVEL},
 	{"like", LIKE},
+	{"limit", LIMIT},
 	{"listen", LISTEN},
 	{"load", LOAD},
 	{"local", LOCAL},
@@ -168,6 +166,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"nullif", NULLIF},
 	{"numeric", NUMERIC},
 	{"of", OF},
+	{"offset", OFFSET},
 	{"oids", OIDS},
 	{"old", CURRENT},
 	{"on", ON},

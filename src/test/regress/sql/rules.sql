@@ -16,9 +16,9 @@ create rule rtest_v1_ins as on insert to rtest_v1 do instead
 	insert into rtest_t1 values (new.a, new.b);
 create rule rtest_v1_upd as on update to rtest_v1 do instead
 	update rtest_t1 set a = new.a, b = new.b
-	where a = current.a;
+	where a = old.a;
 create rule rtest_v1_del as on delete to rtest_v1 do instead
-	delete from rtest_t1 where a = current.a;
+	delete from rtest_t1 where a = old.a;
 
 --
 -- Tables and rules for the constraint update/delete test
@@ -35,21 +35,21 @@ create table rtest_admin (pname text, sysname text);
 
 create rule rtest_sys_upd as on update to rtest_system do (
 	update rtest_interface set sysname = new.sysname 
-		where sysname = current.sysname;
+		where sysname = old.sysname;
 	update rtest_admin set sysname = new.sysname 
-		where sysname = current.sysname
+		where sysname = old.sysname
 	);
 
 create rule rtest_sys_del as on delete to rtest_system do (
-	delete from rtest_interface where sysname = current.sysname;
-	delete from rtest_admin where sysname = current.sysname;
+	delete from rtest_interface where sysname = old.sysname;
+	delete from rtest_admin where sysname = old.sysname;
 	);
 
 create rule rtest_pers_upd as on update to rtest_person do 
-	update rtest_admin set pname = new.pname where pname = current.pname;
+	update rtest_admin set pname = new.pname where pname = old.pname;
 
 create rule rtest_pers_del as on delete to rtest_person do 
-	delete from rtest_admin where pname = current.pname;
+	delete from rtest_admin where pname = old.pname;
 
 --
 -- Tables and rules for the logging test
@@ -62,13 +62,13 @@ create rule rtest_emp_ins as on insert to rtest_emp do
 	insert into rtest_emplog values (new.ename, current_user,
 			'hired', new.salary, '0.00');
 
-create rule rtest_emp_upd as on update to rtest_emp where new.salary != current.salary do
+create rule rtest_emp_upd as on update to rtest_emp where new.salary != old.salary do
 	insert into rtest_emplog values (new.ename, current_user,
-			'honored', new.salary, current.salary);
+			'honored', new.salary, old.salary);
 
 create rule rtest_emp_del as on delete to rtest_emp do
-	insert into rtest_emplog values (current.ename, current_user,
-			'fired', '0.00', current.salary);
+	insert into rtest_emplog values (old.ename, current_user,
+			'fired', '0.00', old.salary);
 
 --
 -- Tables and rules for the multiple cascaded qualified instead
@@ -177,7 +177,7 @@ insert into rtest_v1 values (2, 12);
 insert into rtest_v1 values (2, 13);
 select * from rtest_v1;
 ** Remember the delete rule on rtest_v1: It says
-** DO INSTEAD DELETE FROM rtest_t1 WHERE a = current.a
+** DO INSTEAD DELETE FROM rtest_t1 WHERE a = old.a
 ** So this time both rows with a = 2 must get deleted
 \p
 \r

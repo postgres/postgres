@@ -3,7 +3,7 @@
  * spi.c--
  *				Server Programming Interface
  *
- * $Id: spi.c,v 1.32 1999/01/27 16:15:20 wieck Exp $
+ * $Id: spi.c,v 1.33 1999/02/08 14:14:10 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -779,6 +779,8 @@ _SPI_pquery(QueryDesc *queryDesc, EState *state, int tcount)
 	bool		isRetrieveIntoRelation = false;
 	char	   *intoName = NULL;
 	int			res;
+	Const		tcount_const;
+	Node		*count = NULL;
 
 	switch (operation)
 	{
@@ -813,6 +815,39 @@ _SPI_pquery(QueryDesc *queryDesc, EState *state, int tcount)
 			return SPI_ERROR_OPUNKNOWN;
 	}
 
+	/* ----------------
+	 * Get the query LIMIT tuple count
+	 * ----------------
+	 */
+	if (parseTree->limitCount != NULL)
+	{
+		/* ----------------
+		 * A limit clause in the parsetree overrides the
+		 * tcount parameter
+		 * ----------------
+		 */
+		count = parseTree->limitCount;
+	}
+	else
+	{
+		/* ----------------
+		 * No LIMIT clause in parsetree. Use a local Const node
+		 * to put tcount into it
+		 * ----------------
+		 */
+		memset(&tcount_const, 0, sizeof(tcount_const));
+		tcount_const.type		   = T_Const;
+		tcount_const.consttype	  = INT4OID;
+		tcount_const.constlen	   = sizeof(int4);
+		tcount_const.constvalue	 = (Datum)tcount;
+		tcount_const.constisnull	= FALSE;
+		tcount_const.constbyval	 = TRUE;
+		tcount_const.constisset	 = FALSE;
+		tcount_const.constiscast	= FALSE;
+ 
+		count = (Node *)&tcount_const;
+	}
+ 
 	if (state == NULL)			/* plan preparation */
 		return res;
 #ifdef SPI_EXECUTOR_STATS
@@ -833,7 +868,7 @@ _SPI_pquery(QueryDesc *queryDesc, EState *state, int tcount)
 		return SPI_OK_CURSOR;
 	}
 
-	ExecutorRun(queryDesc, state, EXEC_FOR, tcount);
+	ExecutorRun(queryDesc, state, EXEC_FOR, parseTree->limitOffset, count);
 
 	_SPI_current->processed = state->es_processed;
 	if (operation == CMD_SELECT && queryDesc->dest == SPI)

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.53 1999/02/07 19:02:19 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.54 1999/02/08 14:14:12 wieck Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -48,6 +48,7 @@
 #include "storage/lmgr.h"
 #include "utils/numeric.h"
 #include "parser/analyze.h"
+#include "catalog/pg_type.h"
 
 #ifdef MULTIBYTE
 #include "mb/pg_wchar.h"
@@ -168,7 +169,8 @@ Oid	param_type(int t); /* used in parse_expr.c */
 		sort_clause, sortby_list, index_params, index_list, name_list,
 		from_clause, from_list, opt_array_bounds, nest_array_bounds,
 		expr_list, attrs, res_target_list, res_target_list2,
-		def_list, opt_indirection, group_clause, TriggerFuncArgs
+		def_list, opt_indirection, group_clause, TriggerFuncArgs,
+		opt_select_limit
 
 %type <node>	func_return
 %type <boolean>	set_opt
@@ -196,6 +198,8 @@ Oid	param_type(int t); /* used in parse_expr.c */
 				opt_column, event
 
 %type <ival>	fetch_how_many
+
+%type <node>	select_limit_value, select_offset_value
 
 %type <list>	OptSeqList
 %type <defelt>	OptSeqElem
@@ -306,9 +310,10 @@ Oid	param_type(int t); /* used in parse_expr.c */
 		DATABASE, DELIMITERS, DO, EACH, ENCODING, EXPLAIN, EXTEND,
 		FORWARD, FUNCTION, HANDLER,
 		INCREMENT, INDEX, INHERITS, INSTEAD, ISNULL,
-		LANCOMPILER, LISTEN, LOAD, LOCATION, LOCK_P, MAXVALUE, MINVALUE, MOVE,
+		LANCOMPILER, LIMIT, LISTEN, LOAD, LOCATION, LOCK_P,
+		MAXVALUE, MINVALUE, MOVE,
 		NEW, NOCREATEDB, NOCREATEUSER, NONE, NOTHING, NOTIFY, NOTNULL,
-		OIDS, OPERATOR, PASSWORD, PROCEDURAL,
+		OFFSET, OIDS, OPERATOR, PASSWORD, PROCEDURAL,
 		RECIPE, RENAME, RESET, RETURNS, ROW, RULE,
 		SEQUENCE, SERIAL, SETOF, SHOW, START, STATEMENT, STDIN, STDOUT, TRUSTED, 
 		UNLISTEN, UNTIL, VACUUM, VALID, VERBOSE, VERSION
@@ -2731,7 +2736,7 @@ opt_of:  OF columnList
  * 
  * The rule returns a SelectStmt Node having the set operations attached to 
  * unionClause and intersectClause (NIL if no set operations were present) */ 
-SelectStmt:	  select_w_o_sort sort_clause for_update_clause
+SelectStmt:	  select_w_o_sort sort_clause for_update_clause opt_select_limit
 			{
 				/* There were no set operations, so just attach the sortClause */
 				if IsA($1, SelectStmt)
@@ -2739,6 +2744,8 @@ SelectStmt:	  select_w_o_sort sort_clause for_update_clause
 				  SelectStmt *n = (SelectStmt *)$1;
   				  n->sortClause = $2;
 				  n->forUpdate = $3;
+				  n->limitOffset = nth(0, $4);
+				  n->limitCount = nth(1, $4);
 				  $$ = (Node *)n;
                 }
 				/* There were set operations: The root of the operator tree
@@ -2920,6 +2927,84 @@ OptUseOp:  USING Op								{ $$ = $2; }
 		| /*EMPTY*/								{ $$ = "<"; /*default*/ }
 		;
 
+
+opt_select_limit:	LIMIT select_limit_value ',' select_offset_value
+			{ $$ = lappend(lappend(NIL, $4), $2); }
+		| LIMIT select_limit_value OFFSET select_offset_value
+			{ $$ = lappend(lappend(NIL, $4), $2); }
+		| LIMIT select_limit_value
+			{ $$ = lappend(lappend(NIL, NULL), $2); }
+		| OFFSET select_offset_value LIMIT select_limit_value
+			{ $$ = lappend(lappend(NIL, $2), $4); }
+		| OFFSET select_offset_value
+			{ $$ = lappend(lappend(NIL, $2), NULL); }
+		| /* EMPTY */
+			{ $$ = lappend(lappend(NIL, NULL), NULL); }
+		;
+
+select_limit_value:		Iconst
+			{
+				Const	*n = makeNode(Const);
+
+				if ($1 < 1)
+					elog(ERROR, "selection limit must be ALL or a positive integer value > 0");
+
+				n->consttype	= INT4OID;
+				n->constlen		= sizeof(int4);
+				n->constvalue	= (Datum)$1;
+				n->constisnull	= FALSE;
+				n->constbyval	= TRUE;
+				n->constisset	= FALSE;
+				n->constiscast	= FALSE;
+				$$ = (Node *)n;
+			}
+		| ALL
+			{
+				Const	*n = makeNode(Const);
+
+				n->consttype	= INT4OID;
+				n->constlen		= sizeof(int4);
+				n->constvalue	= (Datum)0;
+				n->constisnull	= FALSE;
+				n->constbyval	= TRUE;
+				n->constisset	= FALSE;
+				n->constiscast	= FALSE;
+				$$ = (Node *)n;
+			}
+		| PARAM
+			{
+				Param	*n = makeNode(Param);
+
+				n->paramkind	= PARAM_NUM;
+				n->paramid		= $1;
+				n->paramtype	= INT4OID;
+				$$ = (Node *)n;
+			}
+		;
+
+select_offset_value:	Iconst
+			{
+				Const	*n = makeNode(Const);
+
+				n->consttype	= INT4OID;
+				n->constlen		= sizeof(int4);
+				n->constvalue	= (Datum)$1;
+				n->constisnull	= FALSE;
+				n->constbyval	= TRUE;
+				n->constisset	= FALSE;
+				n->constiscast	= FALSE;
+				$$ = (Node *)n;
+			}
+		| PARAM
+			{
+				Param	*n = makeNode(Param);
+
+				n->paramkind	= PARAM_NUM;
+				n->paramid		= $1;
+				n->paramtype	= INT4OID;
+				$$ = (Node *)n;
+			}
+		;
 /*
  *	jimmy bell-style recursive queries aren't supported in the
  *	current system.
