@@ -4,7 +4,7 @@
  * Revisions by Christopher B. Browne, Liberty RMS
  * Win32 Service code added by Dave Page
  *
- * $PostgreSQL: pgsql/contrib/pg_autovacuum/pg_autovacuum.c,v 1.25 2004/11/17 21:30:36 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pg_autovacuum/pg_autovacuum.c,v 1.26 2004/12/02 20:31:17 momjian Exp $
  */
 
 #include "postgres_fe.h"
@@ -1098,7 +1098,7 @@ get_cmd_args(int argc, char *argv[])
 	 * values etc
 	 */
 #ifndef WIN32
-	while ((c = getopt(argc, argv, "s:S:v:V:a:A:d:U:P:H:L:p:hD:c:C:m:n:l:")) != -1)
+	while ((c = getopt(argc, argv, "s:S:v:V:a:A:d:U:P:H:L:p:hDc:C:m:n:l:")) != -1)
 #else
 	while ((c = getopt(argc, argv, "s:S:v:V:a:A:d:U:P:H:L:p:hIRN:W:c:C:m:n:l:")) != -1)
 #endif
