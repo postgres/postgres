@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/port/fseeko.c,v 1.8 2003/01/02 06:00:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/port/fseeko.c,v 1.9 2003/01/02 23:22:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,9 +21,7 @@
 
 #include "c.h"
 
-#ifdef bsdi
 #include <pthread.h>
-#endif
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -46,17 +44,13 @@ fseeko(FILE *stream, off_t offset, int whence)
 	switch (whence)
 	{
 		case SEEK_CUR:
-#ifdef bsdi
 			flockfile(stream);
-#endif
 			if (fgetpos(stream, &floc) != 0)
 				goto failure;
 			floc += offset;
 			if (fsetpos(stream, &floc) != 0)
 				goto failure;
-#ifdef bsdi
 			funlockfile(stream);
-#endif
 			return 0;
 			break;
 		case SEEK_SET:
@@ -65,17 +59,13 @@ fseeko(FILE *stream, off_t offset, int whence)
 			return 0;
 			break;
 		case SEEK_END:
-#ifdef bsdi
 			flockfile(stream);
-#endif
 			if (fstat(fileno(stream), &filestat) != 0)
 				goto failure;
 			floc = filestat.st_size;
 			if (fsetpos(stream, &floc) != 0)
 				goto failure;
-#ifdef bsdi
 			funlockfile(stream);
-#endif
 			return 0;
 			break;
 		default:
@@ -84,9 +74,7 @@ fseeko(FILE *stream, off_t offset, int whence)
 	}
 
 failure:
-#ifdef bsdi
 	funlockfile(stream);
-#endif
 	return -1;
 }
 
