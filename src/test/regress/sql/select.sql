@@ -91,5 +91,5 @@ SELECT p.name, p.age FROM person* p;
 -- awk 'BEGIN{FS="      ";}{if(NF!=1){print $4,$5;}else{print;}}' - stud_emp.data |
 -- sort +1nr -2
 --
-SELECT p.name, p.age FROM person* p ORDER BY age using >;
+SELECT p.name, p.age FROM person* p ORDER BY age using >, name;
 
