@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.150 2003/10/03 18:26:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.151 2003/10/04 21:05:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1803,32 +1803,80 @@ PQfname(const PGresult *res, int field_num)
 }
 
 /*
- * returns -1 on a bad field name
+ * PQfnumber: find column number given column name
+ *
+ * The column name is parsed as if it were in a SQL statement, including
+ * case-folding and double-quote processing.  But note a possible gotcha:
+ * downcasing in the frontend might follow different locale rules than
+ * downcasing in the backend...
+ *
+ * Returns -1 if no match.  In the present backend it is also possible
+ * to have multiple matches, in which case the first one is found.
  */
 int
 PQfnumber(const PGresult *res, const char *field_name)
 {
-	int			i;
 	char	   *field_case;
+	bool		in_quotes;
+	char	   *iptr;
+	char	   *optr;
+	int			i;
 
 	if (!res)
 		return -1;
 
+	/*
+	 * Note: it is correct to reject a zero-length input string; the proper
+	 * input to match a zero-length field name would be "".
+	 */
 	if (field_name == NULL ||
 		field_name[0] == '\0' ||
 		res->attDescs == NULL)
 		return -1;
 
+	/*
+	 * Note: this code will not reject partially quoted strings, eg
+	 * foo"BAR"foo will become fooBARfoo when it probably ought to be
+	 * an error condition.
+	 */
 	field_case = strdup(field_name);
-	if (*field_case == '"')
+	if (field_case == NULL)
+		return -1;				/* grotty */
+
+	in_quotes = false;
+	optr = field_case;
+	for (iptr = field_case; *iptr; iptr++)
 	{
-		strcpy(field_case, field_case + 1);
-		*(field_case + strlen(field_case) - 1) = '\0';
+		char	c = *iptr;
+
+		if (in_quotes)
+		{
+			if (c == '"')
+			{
+				if (iptr[1] == '"')
+				{
+					/* doubled quotes become a single quote */
+					*optr++ = '"';
+					iptr++;
+				}
+				else
+					in_quotes = false;
+			}
+			else
+				*optr++ = c;
+		}
+		else if (c == '"')
+		{
+			in_quotes = true;
+		}
+		else
+		{
+			if (isupper((unsigned char) c))
+				c = tolower((unsigned char) c);
+			*optr++ = c;
+		}
 	}
-	else
-		for (i = 0; field_case[i]; i++)
-			if (isupper((unsigned char) field_case[i]))
-				field_case[i] = tolower((unsigned char) field_case[i]);
+	*optr = '\0';
 
 	for (i = 0; i < res->numAttributes; i++)
 	{

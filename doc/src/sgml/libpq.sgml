@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.138 2003/10/03 18:26:14 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.139 2003/10/04 21:05:20 tgl Exp $
 -->
 
  <chapter id="libpq">
@@ -1553,8 +1553,7 @@ NULL is returned if the column number is out of range.
 <term><function>PQfnumber</function><indexterm><primary>PQfnumber</></></term>
 <listitem>
 <para>
-            Returns  the  column number
-          associated with the given column name.
+          Returns the column number associated with the given column name.
 <synopsis>
 int PQfnumber(const PGresult *res,
               const char *column_name);
@@ -1563,6 +1562,24 @@ int PQfnumber(const PGresult *res,
 
 <para>
         -1 is returned if the given name does not match any column.
+</para>
+
+<para>
+        The given name is treated like an identifier in an SQL command,
+	that is, it is downcased unless double-quoted.  For example,
+	given a query result generated from the SQL command
+<programlisting>
+select 1 as FOO, 2 as "BAR";
+</programlisting>
+        we would have the results:
+<programlisting>
+PQfname(res, 0)              <lineannotation>foo</lineannotation>
+PQfname(res, 1)              <lineannotation>BAR</lineannotation>
+PQfnumber(res, "FOO")        <lineannotation>0</lineannotation>
+PQfnumber(res, "foo")        <lineannotation>0</lineannotation>
+PQfnumber(res, "BAR")        <lineannotation>-1</lineannotation>
+PQfnumber(res, "\"BAR\"")    <lineannotation>1</lineannotation>
+</programlisting>
 </para>
 </listitem>
 </varlistentry>
