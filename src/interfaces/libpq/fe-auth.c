@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.3 1996/07/27 02:27:55 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.3.2.1 1996/09/21 08:16:31 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -474,7 +474,7 @@ fe_sendauth(MsgType msgtype, Port *port, char *hostname, char* PQerrormsg)
 static pg_authsvc = -1;
 
 void
-fe_setauthsvc(char *name, char* PQerrormsg)
+fe_setauthsvc(const char *name, char* PQerrormsg)
 {
     int i;
     
