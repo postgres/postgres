@@ -65,7 +65,7 @@
  * causing nasty effects.
  **************************************************************/
 
-/*static char _id[] = "$PostgreSQL: pgsql/src/port/snprintf.c,v 1.23 2005/03/16 21:27:23 momjian Exp $";*/
+/*static char _id[] = "$PostgreSQL: pgsql/src/port/snprintf.c,v 1.24 2005/03/17 03:18:14 momjian Exp $";*/
 
 static void dopr(char *buffer, const char *format, va_list args, char *end);
 
@@ -149,16 +149,18 @@ pg_printf(const char *fmt,...)
 	return len;
 }
 
-/*
- * dopr(): poor man's version of doprintf
- */
+static int adjust_sign(int is_negative, int forcesign, int *signvalue);
+static void adjust_padlen(int minlen, int vallen, int leftjust, int *padlen);
+static void leading_pad(int zpad, int *signvalue, int *padlen, char *end,
+				 char **output);
+static void trailing_pad(int *padlen, char *end, char **output);
 
-static void fmtstr(char *value, int ljust, int len, int maxwidth,
+static void fmtstr(char *value, int leftjust, int minlen, int maxwidth,
 	   char *end, char **output);
-static void fmtnum(int64 value, int base, int dosign, int forcesign,
-	   int ljust, int len, int zpad, char *end, char **output);
+static void fmtint(int64 value, int base, int dosign, int forcesign,
+	   int leftjust, int minlen, int zpad, char *end, char **output);
 static void fmtfloat(double value, char type, int forcesign,
-	   int ljust, int len, int zpad, int precision, int pointflag, char *end,
+	   int leftjust, int minlen, int zpad, int precision, int pointflag, char *end,
 	   char **output);
 static void dostr(char *str, int cut, char *end, char **output);
 static void dopr_outch(int c, char *end, char **output);
@@ -171,6 +173,10 @@ static void dopr_outch(int c, char *end, char **output);
 #define FMTWIDTH	6
 #define FMTLEN		7
 
+/*
+ * dopr(): poor man's version of doprintf
+ */
+
 static void
 dopr(char *buffer, const char *format, va_list args, char *end)
 {
@@ -179,8 +185,8 @@ dopr(char *buffer, const char *format, va_list args, char *end)
 	int			longflag;
 	int			pointflag;
 	int			maxwidth;
-	int			ljust;
-	int			len;
+	int			leftjust;
+	int			minlen;
 	int			zpad;
 	int			forcesign;
 	int			i;
@@ -201,8 +207,8 @@ dopr(char *buffer, const char *format, va_list args, char *end)
 		int64		numvalue;
 		double		fvalue;
 		int			charvalue;
-		int			ljust;
-		int			len;
+		int			leftjust;
+		int			minlen;
 		int			zpad;
 		int			maxwidth;
 		int			base;
@@ -245,7 +251,7 @@ dopr(char *buffer, const char *format, va_list args, char *end)
 		switch (ch)
 		{
 			case '%':
-				ljust = len = zpad = forcesign = maxwidth = 0;
+				leftjust = minlen = zpad = forcesign = maxwidth = 0;
 				longflag = longlongflag = pointflag = 0;
 				fmtbegin = format - 1;
 				realpos = 0;
@@ -257,13 +263,13 @@ dopr(char *buffer, const char *format, va_list args, char *end)
 					case '\0':
 						goto performpr;
 					case '-':
-						ljust = 1;
+						leftjust = 1;
 						goto nextch;
 					case '+':
 						forcesign = 1;
 						goto nextch;
-					case '0':	/* set zero padding if len not set */
-						if (len == 0 && !pointflag)
+					case '0':	/* set zero padding if minlen not set */
+						if (minlen == 0 && !pointflag)
 							zpad = '0';
 					case '1':
 					case '2':
@@ -276,7 +282,7 @@ dopr(char *buffer, const char *format, va_list args, char *end)
 					case '9':
 						if (!pointflag)
 						{
-							len = len * 10 + ch - '0';
+							minlen = minlen * 10 + ch - '0';
 							position = position * 10 + ch - '0';
 						}
 						else
@@ -287,7 +293,7 @@ dopr(char *buffer, const char *format, va_list args, char *end)
 						goto nextch;
 					case '$':
 						realpos = position;
-						len = 0;
+						minlen = 0;
 						goto nextch;
 					case '*':
 						MemSet(&fmtpar[fmtpos], 0, sizeof(fmtpar[fmtpos]));
@@ -340,8 +346,8 @@ dopr(char *buffer, const char *format, va_list args, char *end)
 						fmtpar[fmtpos].base = 10;
 						fmtpar[fmtpos].dosign = 0;
 						fmtpar[fmtpos].forcesign = forcesign;
-						fmtpar[fmtpos].ljust = ljust;
-						fmtpar[fmtpos].len = len;
+						fmtpar[fmtpos].leftjust = leftjust;
+						fmtpar[fmtpos].minlen = minlen;
 						fmtpar[fmtpos].zpad = zpad;
 						fmtpar[fmtpos].func = FMTNUM_U;
 						fmtpar[fmtpos].realpos = realpos ? realpos : fmtpos;
@@ -356,8 +362,8 @@ dopr(char *buffer, const char *format, va_list args, char *end)
 						fmtpar[fmtpos].base = 8;
 						fmtpar[fmtpos].dosign = 0;
 						fmtpar[fmtpos].forcesign = forcesign;
-						fmtpar[fmtpos].ljust = ljust;
-						fmtpar[fmtpos].len = len;
+						fmtpar[fmtpos].leftjust = leftjust;
+						fmtpar[fmtpos].minlen = minlen;
 						fmtpar[fmtpos].zpad = zpad;
 						fmtpar[fmtpos].func = FMTNUM_U;
 						fmtpar[fmtpos].realpos = realpos ? realpos : fmtpos;
@@ -372,8 +378,8 @@ dopr(char *buffer, const char *format, va_list args, char *end)
 						fmtpar[fmtpos].base = 10;
 						fmtpar[fmtpos].dosign = 1;
 						fmtpar[fmtpos].forcesign = forcesign;
-						fmtpar[fmtpos].ljust = ljust;
-						fmtpar[fmtpos].len = len;
+						fmtpar[fmtpos].leftjust = leftjust;
+						fmtpar[fmtpos].minlen = minlen;
 						fmtpar[fmtpos].zpad = zpad;
 						fmtpar[fmtpos].func = FMTNUM;
 						fmtpar[fmtpos].realpos = realpos ? realpos : fmtpos;
@@ -387,8 +393,8 @@ dopr(char *buffer, const char *format, va_list args, char *end)
 						fmtpar[fmtpos].base = 16;
 						fmtpar[fmtpos].dosign = 0;
 						fmtpar[fmtpos].forcesign = forcesign;
-						fmtpar[fmtpos].ljust = ljust;
-						fmtpar[fmtpos].len = len;
+						fmtpar[fmtpos].leftjust = leftjust;
+						fmtpar[fmtpos].minlen = minlen;
 						fmtpar[fmtpos].zpad = zpad;
 						fmtpar[fmtpos].func = FMTNUM_U;
 						fmtpar[fmtpos].realpos = realpos ? realpos : fmtpos;
@@ -402,8 +408,8 @@ dopr(char *buffer, const char *format, va_list args, char *end)
 						fmtpar[fmtpos].base = -16;
 						fmtpar[fmtpos].dosign = 1;
 						fmtpar[fmtpos].forcesign = forcesign;
-						fmtpar[fmtpos].ljust = ljust;
-						fmtpar[fmtpos].len = len;
+						fmtpar[fmtpos].leftjust = leftjust;
+						fmtpar[fmtpos].minlen = minlen;
 						fmtpar[fmtpos].zpad = zpad;
 						fmtpar[fmtpos].func = FMTNUM_U;
 						fmtpar[fmtpos].realpos = realpos ? realpos : fmtpos;
@@ -412,8 +418,8 @@ dopr(char *buffer, const char *format, va_list args, char *end)
 					case 's':
 						fmtpar[fmtpos].fmtbegin = fmtbegin;
 						fmtpar[fmtpos].fmtend = format;
-						fmtpar[fmtpos].ljust = ljust;
-						fmtpar[fmtpos].len = len;
+						fmtpar[fmtpos].leftjust = leftjust;
+						fmtpar[fmtpos].minlen = minlen;
 						fmtpar[fmtpos].zpad = zpad;
 						fmtpar[fmtpos].maxwidth = maxwidth;
 						fmtpar[fmtpos].func = FMTSTR;
@@ -436,8 +442,8 @@ dopr(char *buffer, const char *format, va_list args, char *end)
 						fmtpar[fmtpos].fmtend = format;
 						fmtpar[fmtpos].type = ch;
 						fmtpar[fmtpos].forcesign = forcesign;
-						fmtpar[fmtpos].ljust = ljust;
-						fmtpar[fmtpos].len = len;
+						fmtpar[fmtpos].leftjust = leftjust;
+						fmtpar[fmtpos].minlen = minlen;
 						fmtpar[fmtpos].zpad = zpad;
 						fmtpar[fmtpos].precision = precision;
 						fmtpar[fmtpos].pointflag = pointflag;
@@ -499,11 +505,27 @@ performpr:
 				fmtparptr[i]->charvalue = va_arg(args, int);
 				break;
 			case FMTLEN:
-				if (i + 1 < fmtpos && fmtparptr[i + 1]->func != FMTWIDTH)
-					fmtparptr[i + 1]->len = va_arg(args, int);
-				/* For "%*.*f", use the second arg */
-				if (i + 2 < fmtpos && fmtparptr[i + 1]->func == FMTWIDTH)
-					fmtparptr[i + 2]->len = va_arg(args, int);
+				{
+					int minlen = va_arg(args, int);
+					int leftjust = 0;
+
+					if (minlen < 0)
+					{
+						minlen = -minlen;
+						leftjust = 1;
+					}
+					if (i + 1 < fmtpos && fmtparptr[i + 1]->func != FMTWIDTH)
+					{
+						fmtparptr[i + 1]->minlen = minlen;
+						fmtparptr[i + 1]->leftjust |= leftjust;
+					}
+					/* For "%*.*f", use the second arg */
+					if (i + 2 < fmtpos && fmtparptr[i + 1]->func == FMTWIDTH)
+					{
+						fmtparptr[i + 2]->minlen = minlen;
+						fmtparptr[i + 2]->leftjust |= leftjust;
+					}
+				}
 				break;
 			case FMTWIDTH:
 				if (i + 1 < fmtpos)
@@ -530,21 +552,21 @@ performpr:
 				switch (fmtparptr[i]->func)
 				{
 					case FMTSTR:
-						fmtstr(fmtparptr[i]->value, fmtparptr[i]->ljust,
-							   fmtparptr[i]->len, fmtparptr[i]->maxwidth,
+						fmtstr(fmtparptr[i]->value, fmtparptr[i]->leftjust,
+							   fmtparptr[i]->minlen, fmtparptr[i]->maxwidth,
 							   end, &output);
 						break;
 					case FMTNUM:
 					case FMTNUM_U:
-						fmtnum(fmtparptr[i]->numvalue, fmtparptr[i]->base,
+						fmtint(fmtparptr[i]->numvalue, fmtparptr[i]->base,
 							   fmtparptr[i]->dosign, fmtparptr[i]->forcesign,
-							   fmtparptr[i]->ljust, fmtparptr[i]->len,
+							   fmtparptr[i]->leftjust, fmtparptr[i]->minlen,
 							   fmtparptr[i]->zpad, end, &output);
 						break;
 					case FMTFLOAT:
 						fmtfloat(fmtparptr[i]->fvalue, fmtparptr[i]->type,
-							   fmtparptr[i]->forcesign, fmtparptr[i]->ljust,
-							   fmtparptr[i]->len, fmtparptr[i]->zpad,
+							   fmtparptr[i]->forcesign, fmtparptr[i]->leftjust,
+							   fmtparptr[i]->minlen, fmtparptr[i]->zpad,
 							   fmtparptr[i]->precision, fmtparptr[i]->pointflag,
 							   end, &output);
 						break;
@@ -574,7 +596,7 @@ nochar:
 }
 
 static void
-fmtstr(char *value, int ljust, int len, int maxwidth, char *end,
+fmtstr(char *value, int leftjust, int minlen, int maxwidth, char *end,
 	   char **output)
 {
 	int			padlen,
@@ -582,185 +604,90 @@ fmtstr(char *value, int ljust, int len, int maxwidth, char *end,
 
 	if (value == NULL)
 		value = "<NULL>";
+
 	vallen = strlen(value);
-	if (vallen > maxwidth && maxwidth)
+	if (maxwidth && vallen > maxwidth)
 		vallen = maxwidth;
-	if (len < 0)
-	{
-		/* this could happen with a "*" width spec */
-		ljust = 1;
-		len = -len;
-	}
-	padlen = len - vallen;
-	if (padlen < 0)
-		padlen = 0;
-	if (ljust)
-		padlen = -padlen;
+
+	adjust_padlen(minlen, vallen, leftjust, &padlen);
+
 	while (padlen > 0)
 	{
 		dopr_outch(' ', end, output);
 		--padlen;
 	}
 	dostr(value, maxwidth, end, output);
-	while (padlen < 0)
-	{
-		dopr_outch(' ', end, output);
-		++padlen;
-	}
+
+	trailing_pad(&padlen, end, output);
 }
 
 static void
-fmtnum(int64 value, int base, int dosign, int forcesign, int ljust,
-	   int len, int zpad, char *end, char **output)
+fmtint(int64 value, int base, int dosign, int forcesign, int leftjust,
+	   int minlen, int zpad, char *end, char **output)
 {
 	int			signvalue = 0;
-	uint64		uvalue;
 	char		convert[64];
-	int			place = 0;
+	int			vallen = 0;
 	int			padlen = 0;		/* amount to pad */
 	int			caps = 0;
 
-	/*
-	 * DEBUGP(("value 0x%x, base %d, dosign %d, ljust %d, len %d, zpad %d\n",
-	 * value, base, dosign, ljust, len, zpad ));
-	 */
-	uvalue = value;
-	if (dosign)
-	{
-		if (value < 0)
-		{
-			signvalue = '-';
-			uvalue = -value;
-		}
-		else if (forcesign)
-			signvalue = '+';
-	}
+	/* Handle +/- and %X (uppercase hex) */
+	if (dosign && adjust_sign((value < 0), forcesign, &signvalue))
+			value = -value;
 	if (base < 0)
 	{
 		caps = 1;
 		base = -base;
 	}
+
+	/* make integer string */
 	do
 	{
-		convert[place++] = (caps ? "0123456789ABCDEF" : "0123456789abcdef")
-			[uvalue % (unsigned) base];
-		uvalue = (uvalue / (unsigned) base);
-	} while (uvalue);
-	convert[place] = 0;
+		convert[vallen++] = (caps ? "0123456789ABCDEF" : "0123456789abcdef")
+			[value % (unsigned) base];
+		value = (value / (unsigned) base);
+	} while (value);
+	convert[vallen] = 0;
 
-	if (len < 0)
-	{
-		/* this could happen with a "*" width spec */
-		ljust = 1;
-		len = -len;
-	}
-	padlen = len - place;
-	if (padlen < 0)
-		padlen = 0;
-	if (ljust)
-		padlen = -padlen;
+	adjust_padlen(minlen, vallen, leftjust, &padlen);
 
-	/*
-	 * DEBUGP(( "str '%s', place %d, sign %c, padlen %d\n",
-	 * convert,place,signvalue,padlen));
-	 */
-	if (zpad && padlen > 0)
-	{
-		if (signvalue)
-		{
-			dopr_outch(signvalue, end, output);
-			--padlen;
-			signvalue = 0;
-		}
-		while (padlen > 0)
-		{
-			dopr_outch(zpad, end, output);
-			--padlen;
-		}
-	}
-	while (padlen > 0)
-	{
-		dopr_outch(' ', end, output);
-		--padlen;
-	}
-	if (signvalue)
-		dopr_outch(signvalue, end, output);
-	while (place > 0)
-		dopr_outch(convert[--place], end, output);
-	while (padlen < 0)
-	{
-		dopr_outch(' ', end, output);
-		++padlen;
-	}
+	leading_pad(zpad, &signvalue, &padlen, end, output);
+	
+	while (vallen > 0)
+		dopr_outch(convert[--vallen], end, output);
+
+	trailing_pad(&padlen, end, output);
 }
 
 static void
-fmtfloat(double value, char type, int forcesign, int ljust,
-		 int len, int zpad, int precision, int pointflag, char *end,
+fmtfloat(double value, char type, int forcesign, int leftjust,
+		 int minlen, int zpad, int precision, int pointflag, char *end,
 		 char **output)
 {
 	int			signvalue = 0;
-	double		uvalue;
+	int			vallen;
 	char		fmt[32];
 	char		convert[512];
 	int			padlen = 0;		/* amount to pad */
 
-	uvalue = value;
 	/* we rely on regular C library's sprintf to do the basic conversion */
 	if (pointflag)
 		sprintf(fmt, "%%.%d%c", precision, type);
 	else
 		sprintf(fmt, "%%%c", type);
 
-	if (value < 0)
-	{
-		signvalue = '-';
-		uvalue = -value;
-	}
-	else if (forcesign)
-		signvalue = '+';
+	if (adjust_sign((value < 0), forcesign, &signvalue))
+			value = -value;
 
-	sprintf(convert, fmt, uvalue);
+	vallen = sprintf(convert, fmt, value);
 
-	if (len < 0)
-	{
-		/* this could happen with a "*" width spec */
-		ljust = 1;
-		len = -len;
-	}
-	padlen = len - strlen(convert);
-	if (padlen < 0)
-		padlen = 0;
-	if (ljust)
-		padlen = -padlen;
+	adjust_padlen(minlen, vallen, leftjust, &padlen);
 
-	if (zpad && padlen > 0)
-	{
-		if (signvalue)
-		{
-			dopr_outch(signvalue, end, output);
-			--padlen;
-			signvalue = 0;
-		}
-		while (padlen > 0)
-		{
-			dopr_outch(zpad, end, output);
-			--padlen;
-		}
-	}
-	while (padlen > 0)
-	{
-		dopr_outch(' ', end, output);
-		--padlen;
-	}
-	if (signvalue)
-		dopr_outch(signvalue, end, output);
+	leading_pad(zpad, &signvalue, &padlen, end, output);
+
 	dostr(convert, 0, end, output);
-	while (padlen < 0)
-	{
-		dopr_outch(' ', end, output);
-		++padlen;
-	}
+
+	trailing_pad(&padlen, end, output);
 }
 
 static void
@@ -788,3 +715,73 @@ dopr_outch(int c, char *end, char **output)
 	if (end == 0 || *output < end)
 		*(*output)++ = c;
 }
+
+
+static int
+adjust_sign(int is_negative, int forcesign, int *signvalue)
+{
+	if (is_negative)
+	{
+		*signvalue = '-';
+		return true;
+	}
+	else if (forcesign)
+		*signvalue = '+';
+	return false;
+}
+
+
+static void
+adjust_padlen(int minlen, int vallen, int leftjust, int *padlen)
+{
+	*padlen = minlen - vallen;
+	if (*padlen < 0)
+		*padlen = 0;
+	if (leftjust)
+		*padlen = -*padlen;
+}
+
+
+static void
+leading_pad(int zpad, int *signvalue, int *padlen, char *end, char **output)
+{
+	if (*padlen > 0 && zpad)
+	{
+		if (*signvalue)
+		{
+			dopr_outch(*signvalue, end, output);
+			--*padlen;
+			*signvalue = 0;
+		}
+		while (*padlen > 0)
+		{
+			dopr_outch(zpad, end, output);
+			--*padlen;
+		}
+	}
+	while (*padlen > 0 + (*signvalue != 0))
+	{
+		dopr_outch(' ', end, output);
+		--*padlen;
+	}
+	if (*signvalue)
+	{
+		dopr_outch(*signvalue, end, output);
+		if (*padlen > 0)
+			--*padlen;
+		if (padlen < 0)
+			++padlen;
+	}
+}
+
+
+static void
+trailing_pad(int *padlen, char *end, char **output)
+{
+	while (*padlen < 0)
+	{
+		dopr_outch(' ', end, output);
+		++*padlen;
+	}
+}
+
