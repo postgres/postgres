@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.78 2004/11/27 21:27:07 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.79 2005/01/04 03:58:16 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -83,6 +83,16 @@ where <replaceable class="parameter">from_item</replaceable> can be one of:
 
     <listitem>
      <para>
+      The actual output rows are computed using the
+      <command>SELECT</command> output expressions for each selected
+      row.  (See
+      <xref linkend="sql-select-list" endterm="sql-select-list-title">
+      below.)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
       Using the operators <literal>UNION</literal>,
       <literal>INTERSECT</literal>, and <literal>EXCEPT</literal>, the
       output of more than one <command>SELECT</command> statement can
@@ -97,16 +107,6 @@ where <replaceable class="parameter">from_item</replaceable> can be one of:
       <xref linkend="sql-union" endterm="sql-union-title">, <xref
       linkend="sql-intersect" endterm="sql-intersect-title">, and
       <xref linkend="sql-except" endterm="sql-except-title"> below.)
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      The actual output rows are computed using the
-      <command>SELECT</command> output expressions for each selected
-      row.  (See
-      <xref linkend="sql-select-list" endterm="sql-select-list-title">
-      below.)
      </para>
     </listitem>
 
@@ -453,6 +453,34 @@ HAVING <replaceable class="parameter">condition</replaceable>
     appears within an aggregate function.
    </para>
   </refsect2>
+
+  <refsect2 id="sql-select-list">
+   <title id="sql-select-list-title"><command>SELECT</command> List</title>
+
+   <para>
+    The <command>SELECT</command> list (between the key words
+    <literal>SELECT</> and <literal>FROM</>) specifies expressions
+    that form the output rows of the <command>SELECT</command>
+    statement.  The expressions can (and usually do) refer to columns
+    computed in the <literal>FROM</> clause.  Using the clause
+    <literal>AS <replaceable
+    class="parameter">output_name</replaceable></literal>, another
+    name can be specified for an output column.  This name is
+    primarily used to label the column for display.  It can also be
+    used to refer to the column's value in <literal>ORDER BY</> and
+    <literal>GROUP BY</> clauses, but not in the <literal>WHERE</> or
+    <literal>HAVING</> clauses; there you must write out the
+    expression instead.
+   </para>
+
+   <para>
+    Instead of an expression, <literal>*</literal> can be written in
+    the output list as a shorthand for all the columns of the selected
+    rows.  Also, one can write <literal><replaceable
+    class="parameter">table_name</replaceable>.*</literal> as a
+    shorthand for the columns coming from just that table.
+   </para>
+  </refsect2>
   
   <refsect2 id="SQL-UNION">
    <title id="sql-union-title"><literal>UNION</literal> Clause</title>
@@ -486,7 +514,9 @@ HAVING <replaceable class="parameter">condition</replaceable>
    <para>
     The result of <literal>UNION</> does not contain any duplicate
     rows unless the <literal>ALL</> option is specified.
-    <literal>ALL</> prevents elimination of duplicates.
+    <literal>ALL</> prevents elimination of duplicates.  (Therefore,
+    <literal>UNION ALL</> is usually significantly quicker than
+    <literal>UNION</>; use <literal>ALL</> when you can.)
    </para>
     
    <para>
@@ -524,9 +554,9 @@ HAVING <replaceable class="parameter">condition</replaceable>
    <para>
     The result of <literal>INTERSECT</literal> does not contain any
     duplicate rows unless the <literal>ALL</> option is specified.
-    With <literal>ALL</>, a row that has m duplicates in the left
-    table and n duplicates in the right table will appear min(m,n)
-    times in the result set.
+    With <literal>ALL</>, a row that has <replaceable>m</> duplicates in the
+    left table and <replaceable>n</> duplicates in the right table will appear
+    min(<replaceable>m</>,<replaceable>n</>) times in the result set.
    </para>
     
    <para>
@@ -537,6 +567,11 @@ HAVING <replaceable class="parameter">condition</replaceable>
     <literal>UNION</literal>.  That is, <literal>A UNION B INTERSECT
     C</literal> will be read as <literal>A UNION (B INTERSECT
     C)</literal>.
+   </para>
+    
+   <para>
+    Currently, <literal>FOR UPDATE</> may not be specified either for
+    an <literal>INTERSECT</> result or for any input of an <literal>INTERSECT</>.
    </para>
   </refsect2>
 
@@ -562,9 +597,9 @@ HAVING <replaceable class="parameter">condition</replaceable>
    <para>
     The result of <literal>EXCEPT</literal> does not contain any
     duplicate rows unless the <literal>ALL</> option is specified.
-    With <literal>ALL</>, a row that has m duplicates in the left
-    table and n duplicates in the right table will appear max(m-n,0)
-    times in the result set.
+    With <literal>ALL</>, a row that has <replaceable>m</> duplicates in the
+    left table and <replaceable>n</> duplicates in the right table will appear
+    max(<replaceable>m</>-<replaceable>n</>,0) times in the result set.
    </para>
     
    <para>
@@ -573,33 +608,10 @@ HAVING <replaceable class="parameter">condition</replaceable>
     unless parentheses dictate otherwise.  <literal>EXCEPT</> binds at
     the same level as <literal>UNION</>.
    </para>
-  </refsect2>
-
-  <refsect2 id="sql-select-list">
-   <title id="sql-select-list-title"><command>SELECT</command> List</title>
-
+    
    <para>
-    The <command>SELECT</command> list (between the key words
-    <literal>SELECT</> and <literal>FROM</>) specifies expressions
-    that form the output rows of the <command>SELECT</command>
-    statement.  The expressions can (and usually do) refer to columns
-    computed in the <literal>FROM</> clause.  Using the clause
-    <literal>AS <replaceable
-    class="parameter">output_name</replaceable></literal>, another
-    name can be specified for an output column.  This name is
-    primarily used to label the column for display.  It can also be
-    used to refer to the column's value in <literal>ORDER BY</> and
-    <literal>GROUP BY</> clauses, but not in the <literal>WHERE</> or
-    <literal>HAVING</> clauses; there you must write out the
-    expression instead.
-   </para>
-
-   <para>
-    Instead of an expression, <literal>*</literal> can be written in
-    the output list as a shorthand for all the columns of the selected
-    rows.  Also, one can write <literal><replaceable
-    class="parameter">table_name</replaceable>.*</literal> as a
-    shorthand for the columns coming from just that table.
+    Currently, <literal>FOR UPDATE</> may not be specified either for
+    an <literal>EXCEPT</> result or for any input of an <literal>EXCEPT</>.
    </para>
   </refsect2>
 
@@ -707,7 +719,7 @@ OFFSET <replaceable class="parameter">start</replaceable>
     When using <literal>LIMIT</>, it is a good idea to use an
     <literal>ORDER BY</> clause that constrains the result rows into a
     unique order.  Otherwise you will get an unpredictable subset of
-    the query's rows---you may be asking for the tenth through
+    the query's rows &mdash; you may be asking for the tenth through
     twentieth rows, but tenth through twentieth in what ordering?  You
     don't know what ordering unless you specify <literal>ORDER BY</>.
    </para>

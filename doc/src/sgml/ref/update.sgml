@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/update.sgml,v 1.30 2004/08/08 01:48:31 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/update.sgml,v 1.31 2005/01/04 03:58:16 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -147,6 +147,26 @@ UPDATE <replaceable class="parameter">count</replaceable>
    0, no rows matched the <replaceable
    class="parameter">condition</replaceable> (this is not considered
    an error).
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Notes</title>
+
+  <para>
+   When joining the target table to other tables using a <replaceable
+   class="PARAMETER">fromlist</replaceable>, be careful that the join
+   produces at most one output row for each row to be modified.  In
+   other words, a target row mustn't join to more than one row from
+   the other table(s).  If it does, then only one of the join rows
+   will be used to update the target row, but which one will be used
+   is not readily predictable.
+  </para>
+
+  <para>
+   Because of this indeterminancy, referencing other tables only within
+   sub-selects is safer, though often harder to read and slower than
+   using a join.
   </para>
  </refsect1>
 

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.46 2004/07/19 21:39:46 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.47 2005/01/04 03:58:16 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -68,7 +68,8 @@ PostgreSQL documentation
 
   <para>
   <application>pg_dumpall</application> needs to connect several
-  times to the <productname>PostgreSQL</productname> server and might be asking for
+  times to the <productname>PostgreSQL</productname> server (once per
+  database).  If you use password authentication it is likely to ask for
   a password each time. It is convenient to have a
   <filename>$HOME/.pgpass</> file in such cases.
   </para>
@@ -79,7 +80,7 @@ PostgreSQL documentation
   <title>Options</title>
 
    <para>
-    The following command-line options are used to control the content and
+    The following command-line options control the content and
     format of the output.
 
     <variablelist>
@@ -88,7 +89,7 @@ PostgreSQL documentation
       <term><option>--data-only</></term>
       <listitem>
        <para>
-	Dump only the data, not the schema (data definitions).
+        Dump only the data, not the schema (data definitions).
        </para>
       </listitem>
      </varlistentry>
@@ -98,8 +99,8 @@ PostgreSQL documentation
       <term><option>--clean</option></term>
       <listitem>
        <para>
-	Include SQL commands to clean (drop) the databases before
-	recreating them.
+        Include SQL commands to clean (drop) the databases before
+        recreating them.
        </para>
       </listitem>
      </varlistentry>
@@ -109,10 +110,12 @@ PostgreSQL documentation
       <term><option>--inserts</option></term>
       <listitem>
        <para>
-	Dump data as <command>INSERT</command> commands (rather
-	than <command>COPY</command>). This will make restoration very
-	slow, but it makes the output more portable to other SQL database
-	management systems.
+        Dump data as <command>INSERT</command> commands (rather
+        than <command>COPY</command>).  This will make restoration very slow;
+        it is mainly useful for making dumps that can be loaded into
+        non-<productname>PostgreSQL</productname> databases.  Note that
+        the restore may fail altogether if you have rearranged column order.
+        The <option>-D</option> option is safer, though even slower.
        </para>
       </listitem>
      </varlistentry>
@@ -123,12 +126,13 @@ PostgreSQL documentation
       <term><option>--attribute-inserts</option></term>
       <listitem>
        <para>
-	Dump data as <command>INSERT</command> commands with explicit
-	column names (<literal>INSERT INTO
-	<replaceable>table</replaceable>
-	(<replaceable>column</replaceable>, ...) VALUES
-	...</literal>).  This will make restoration very slow,
-	but it is necessary if you desire to rearrange column ordering.
+        Dump data as <command>INSERT</command> commands with explicit
+        column names (<literal>INSERT INTO
+        <replaceable>table</replaceable>
+        (<replaceable>column</replaceable>, ...) VALUES
+        ...</literal>).  This will make restoration very slow; it is mainly
+        useful for making dumps that can be loaded into
+        non-<productname>PostgreSQL</productname> databases.
        </para>
       </listitem>
      </varlistentry>
@@ -138,7 +142,7 @@ PostgreSQL documentation
       <term><option>--globals-only</option></term>
       <listitem>
        <para>
-	Dump only global objects (users and groups), no databases.
+        Dump only global objects (users and groups), no databases.
        </para>
       </listitem>
      </varlistentry>
@@ -168,10 +172,11 @@ PostgreSQL documentation
       <term><option>--oids</></term>
       <listitem>
        <para>
-	Dump object identifiers (<acronym>OID</acronym>s) for every
-	table.  Use this option if your application references the OID
-	columns in some way (e.g., in a foreign key constraint).
-	Otherwise, this option should not be used.
+        Dump object identifiers (<acronym>OID</acronym>s) as part of the
+        data for every table.  Use this option if your application references
+        the <acronym>OID</>
+        columns in some way (e.g., in a foreign key constraint).
+        Otherwise, this option should not be used.
        </para>
       </listitem>
      </varlistentry>
@@ -182,15 +187,16 @@ PostgreSQL documentation
       <listitem>
        <para>
         Do not output commands to set
-	ownership of objects to match the original database.
-	By default, <application>pg_dumpall</application> issues
-	<command>SET SESSION AUTHORIZATION</command>
-	statements to set ownership of created schema elements.
-	These statements
-	will fail when the script is run unless it is started by a superuser
-	(or the same user that owns all of the objects in the script).
-	To make a script that can be restored by any user, but will give
-	that user ownership of all the objects, specify <option>-O</>.
+        ownership of objects to match the original database.
+        By default, <application>pg_dumpall</application> issues
+        <command>ALTER OWNER</> or 
+        <command>SET SESSION AUTHORIZATION</command>
+        statements to set ownership of created schema elements.
+        These statements
+        will fail when the script is run unless it is started by a superuser
+        (or the same user that owns all of the objects in the script).
+        To make a script that can be restored by any user, but will give
+        that user ownership of all the objects, specify <option>-O</>.
        </para>
       </listitem>
      </varlistentry>
@@ -200,7 +206,7 @@ PostgreSQL documentation
       <term><option>--schema-only</option></term>
       <listitem>
        <para>
-	Dump only the schema (data definitions), no data.
+        Dump only the object definitions (schema), not data.
        </para>
       </listitem>
      </varlistentry>
@@ -211,9 +217,9 @@ PostgreSQL documentation
       <listitem>
        <para>
         Specify the superuser user name to use when disabling triggers.
-	This is only relevant if <option>--disable-triggers</> is used.
-	(Usually, it's better to leave this out, and instead start the
-	resulting script as superuser.)
+        This is only relevant if <option>--disable-triggers</> is used.
+        (Usually, it's better to leave this out, and instead start the
+        resulting script as superuser.)
        </para>
       </listitem>
      </varlistentry>
@@ -223,8 +229,8 @@ PostgreSQL documentation
       <term><option>--verbose</></term>
       <listitem>
        <para>
-	Specifies verbose mode.  This will cause
-	<application>pg_dumpall</application> to output start/stop
+        Specifies verbose mode.  This will cause
+        <application>pg_dumpall</application> to output start/stop
         times to the dump file, and progress messages to standard error.
         It will also enable verbose output in <application>pg_dump</>.
        </para>
@@ -237,7 +243,7 @@ PostgreSQL documentation
       <term><option>--no-acl</></term>
       <listitem>
        <para>
-	Prevent dumping of access privileges (grant/revoke commands).
+        Prevent dumping of access privileges (grant/revoke commands).
        </para>
       </listitem>
      </varlistentry>
@@ -280,10 +286,10 @@ PostgreSQL documentation
       <term><option>--use-set-session-authorization</></term>
       <listitem>
        <para>
-	Output SQL standard SET SESSION AUTHORIZATION commands instead
-	of OWNER TO commands.  This makes the dump more standards compatible,
-	but depending on the history of the objects in the dump, may not
-	restore properly.
+        Output SQL standard SET SESSION AUTHORIZATION commands instead
+        of OWNER TO commands.  This makes the dump more standards compatible,
+        but depending on the history of the objects in the dump, may not
+        restore properly.
        </para>
       </listitem>
      </varlistentry>
@@ -299,11 +305,11 @@ PostgreSQL documentation
       <term>-h <replaceable>host</replaceable></term>
       <listitem>
        <para>
-	Specifies the host name of the machine on which the database
-	server is running.  If the value begins with a slash, it is
-	used as the directory for the Unix domain socket.  The default
-	is taken from the <envar>PGHOST</envar> environment variable,
-	if set, else a Unix domain socket connection is attempted.
+        Specifies the host name of the machine on which the database
+        server is running.  If the value begins with a slash, it is
+        used as the directory for the Unix domain socket.  The default
+        is taken from the <envar>PGHOST</envar> environment variable,
+        if set, else a Unix domain socket connection is attempted.
        </para>
       </listitem>
      </varlistentry>
@@ -312,10 +318,10 @@ PostgreSQL documentation
       <term>-p <replaceable>port</replaceable></term>
       <listitem>
        <para>
-	Specifies the TCP port or local Unix domain socket file
-	extension on which the server is listening for connections.
-	Defaults to the <envar>PGPORT</envar> environment variable, if
-	set, or a compiled-in default.
+        Specifies the TCP port or local Unix domain socket file
+        extension on which the server is listening for connections.
+        Defaults to the <envar>PGPORT</envar> environment variable, if
+        set, or a compiled-in default.
        </para>
       </listitem>
      </varlistentry>

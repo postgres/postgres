@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.48 2004/08/20 04:20:22 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.49 2005/01/04 03:58:16 tgl Exp $ -->
 
 <refentry id="APP-PGRESTORE">
  <refmeta>
@@ -88,7 +88,7 @@
       <term><option>--data-only</option></term>
       <listitem>
        <para>
-	Restore only the data, not the schema (data definitions).
+        Restore only the data, not the schema (data definitions).
        </para>
       </listitem>
      </varlistentry>
@@ -98,7 +98,7 @@
       <term><option>--clean</option></term>
       <listitem>
        <para>
-	Clean (drop) database objects before recreating them.
+        Clean (drop) database objects before recreating them.
        </para>
       </listitem>
      </varlistentry>
@@ -158,10 +158,10 @@
       <term><option>--format=<replaceable class="parameter">format</replaceable></option></term>
       <listitem>
        <para>
-	Specify format of the archive.  It is not necessary to specify
-	the format, since <application>pg_restore</application> will
-	determine the format automatically. If specified, it can be
-	one of the following:
+        Specify format of the archive.  It is not necessary to specify
+        the format, since <application>pg_restore</application> will
+        determine the format automatically. If specified, it can be
+        one of the following:
 
        <variablelist>
         <varlistentry>
@@ -198,7 +198,7 @@
       <term><option>--ignore-version</option></term>
       <listitem>
        <para>
-	Ignore database version checks.
+        Ignore database version checks.
        </para>
       </listitem>
      </varlistentry>
@@ -208,7 +208,7 @@
       <term><option>--index=<replaceable class="parameter">index</replaceable></option></term>
       <listitem>
        <para>
-	Restore definition of named index only.
+        Restore definition of named index only.
        </para>
       </listitem>
      </varlistentry>
@@ -245,15 +245,16 @@
       <listitem>
        <para>
         Do not output commands to set
-	ownership of objects to match the original database.
-	By default, <application>pg_restore</application> issues
-	<command>SET SESSION AUTHORIZATION</command>
-	statements to set ownership of created schema elements.
-	These statements will fail unless the initial connection to the
-	database is made by a superuser
-	(or the same user that owns all of the objects in the script).
-	With <option>-O</option>, any user name can be used for the
-	initial connection, and this user will own all the created objects.
+        ownership of objects to match the original database.
+        By default, <application>pg_restore</application> issues
+        <command>ALTER OWNER</> or 
+        <command>SET SESSION AUTHORIZATION</command>
+        statements to set ownership of created schema elements.
+        These statements will fail unless the initial connection to the
+        database is made by a superuser
+        (or the same user that owns all of the objects in the script).
+        With <option>-O</option>, any user name can be used for the
+        initial connection, and this user will own all the created objects.
        </para>
       </listitem>
      </varlistentry>
@@ -264,8 +265,8 @@
       <listitem>
        <para>
         Restore the named function only.  Be careful to spell the function
-	name and arguments exactly as they appear in the dump file's table
-	of contents.
+        name and arguments exactly as they appear in the dump file's table
+        of contents.
        </para>
       </listitem>
      </varlistentry>
@@ -276,7 +277,7 @@
       <listitem>
        <para>
         This option is obsolete but still accepted for backwards
-	compatibility.
+        compatibility.
        </para>
       </listitem>
      </varlistentry>
@@ -298,7 +299,7 @@
       <listitem>
        <para>
         Specify the superuser user name to use when disabling triggers.
-	This is only relevant if <option>--disable-triggers</> is used.
+        This is only relevant if <option>--disable-triggers</> is used.
        </para>
       </listitem>
      </varlistentry>
@@ -328,7 +329,7 @@
       <term><option>--verbose</option></term>
       <listitem>
        <para>
-	Specifies verbose mode.
+        Specifies verbose mode.
        </para>
       </listitem>
      </varlistentry>
@@ -339,7 +340,7 @@
       <term><option>--no-acl</option></term>
       <listitem>
        <para>
-	Prevent restoration of access privileges (grant/revoke commands).
+        Prevent restoration of access privileges (grant/revoke commands).
        </para>
       </listitem>
      </varlistentry>
@@ -349,10 +350,10 @@
       <term><option>--use-set-session-authorization</option></term>
       <listitem>
        <para>
-	Output SQL standard SET SESSION AUTHORIZATION commands instead
-	of OWNER TO commands.  This makes the dump more standards compatible,
-	but depending on the history of the objects in the dump, may not
-	restore properly.
+        Output SQL standard SET SESSION AUTHORIZATION commands instead
+        of OWNER TO commands.  This makes the dump more standards compatible,
+        but depending on the history of the objects in the dump, may not
+        restore properly.
        </para>
       </listitem>
      </varlistentry>
@@ -363,19 +364,19 @@
       <listitem>
        <para>
         This option is only relevant when performing a data-only restore.
-	It instructs <application>pg_restore</application> to execute commands
-	to temporarily disable triggers on the target tables while
-	the data is reloaded.  Use this if you have referential
-	integrity checks or other triggers on the tables that you
-	do not want to invoke during data reload.
+        It instructs <application>pg_restore</application> to execute commands
+        to temporarily disable triggers on the target tables while
+        the data is reloaded.  Use this if you have referential
+        integrity checks or other triggers on the tables that you
+        do not want to invoke during data reload.
        </para>
 
        <para>
         Presently, the commands emitted for
-	<option>--disable-triggers</> must be done as superuser.  So, you
-	should also specify a superuser name with <option>-S</>, or
-	preferably run <application>pg_restore</application> as a
-	<productname>PostgreSQL</> superuser.
+        <option>--disable-triggers</> must be done as superuser.  So, you
+        should also specify a superuser name with <option>-S</>, or
+        preferably run <application>pg_restore</application> as a
+        <productname>PostgreSQL</> superuser.
        </para>
       </listitem>
      </varlistentry>
@@ -393,11 +394,11 @@
       <term><option>--host=<replaceable class="parameter">host</replaceable></option></term>
       <listitem>
        <para>
-	Specifies the host name of the machine on which the server is
-	running.  If the value begins with a slash, it is used as the
-	directory for the Unix domain socket. The default is taken
-	from the <envar>PGHOST</envar> environment variable, if set,
-	else a Unix domain socket connection is attempted.
+        Specifies the host name of the machine on which the server is
+        running.  If the value begins with a slash, it is used as the
+        directory for the Unix domain socket. The default is taken
+        from the <envar>PGHOST</envar> environment variable, if set,
+        else a Unix domain socket connection is attempted.
        </para>
       </listitem>
      </varlistentry>
@@ -407,10 +408,10 @@
       <term><option>--port=<replaceable class="parameter">port</replaceable></option></term>
       <listitem>
        <para>
-	Specifies the TCP port or local Unix domain socket file
-	extension on which the server is listening for connections.
-	Defaults to the <envar>PGPORT</envar> environment variable, if
-	set, or a compiled-in default.
+        Specifies the TCP port or local Unix domain socket file
+        extension on which the server is listening for connections.
+        Defaults to the <envar>PGPORT</envar> environment variable, if
+        set, or a compiled-in default.
         </para>
       </listitem>
      </varlistentry>

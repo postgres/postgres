@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_config-ref.sgml,v 1.18 2004/08/02 12:34:14 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_config-ref.sgml,v 1.19 2005/01/04 03:58:16 tgl Exp $ -->
 
 <refentry id="app-pgconfig">
  <refmeta>
@@ -153,7 +153,7 @@
   </para>
 
   <para>
-   In releases prior to <productname>PostgreSQL</> 7.1, before the
+   In releases prior to <productname>PostgreSQL</> 7.1, before
    <command>pg_config</command> came to be, a method for finding the
    equivalent configuration information did not exist.
   </para>

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/ipcclean.sgml,v 1.10 2003/11/29 19:51:39 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/ipcclean.sgml,v 1.11 2005/01/04 03:58:16 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -12,7 +12,7 @@ PostgreSQL documentation
 
  <refnamediv>
   <refname>ipcclean</refname>
-  <refpurpose>remove shared memory and semaphores from an aborted <productname>PostgreSQL</productname> server</refpurpose>
+  <refpurpose>remove shared memory and semaphores from a failed <productname>PostgreSQL</productname> server</refpurpose>
  </refnamediv>
 
  <indexterm zone="app-ipcclean">
@@ -59,10 +59,11 @@ PostgreSQL documentation
   </para>
 
   <para>
-   The script makes assumption about the format of output of the
+   The script makes assumptions about the output format of the
    <command>ipcs</command>
    utility which may not be true across different operating systems.
-   Therefore, it may not work on your particular OS.
+   Therefore, it may not work on your particular OS.  It's wise to
+   look at the script before trying it.
   </para>
  </refsect1>
 

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/show.sgml,v 1.36 2004/08/03 20:32:32 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/show.sgml,v 1.37 2005/01/04 03:58:16 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -105,7 +105,7 @@ SHOW ALL
         <listitem>
          <para>
           True if the current session authorization identifier has
-	  superuser privileges.
+          superuser privileges.
          </para>
         </listitem>
        </varlistentry>
@@ -118,7 +118,7 @@ SHOW ALL
     <term><literal>ALL</literal></term>
     <listitem>
      <para>
-      Show the values of all configurations parameters.
+      Show the values of all configuration parameters.
      </para>
     </listitem>
    </varlistentry>
@@ -164,17 +164,17 @@ SHOW geqo;
    Show all settings:
 <programlisting>
 SHOW ALL;
-             name              |                setting
--------------------------------+---------------------------------------
- australian_timezones          | off
- authentication_timeout        | 60
- checkpoint_segments           | 3
+              name              |                     setting
+--------------------------------+----------------------------------------------
+ add_missing_from               | on
+ archive_command                | unset
+ australian_timezones           | off
     .
     .
     .
- wal_debug                     | off
- wal_sync_method               | fdatasync
-(94 rows)
+ work_mem                       | 1024
+ zero_damaged_pages             | off
+(140 rows)
 </programlisting>
   </para>
  </refsect1>
@@ -193,6 +193,7 @@ SHOW ALL;
 
   <simplelist type="inline">
    <member><xref linkend="SQL-SET" endterm="SQL-SET-title"></member>
+   <member><xref linkend="SQL-RESET" endterm="SQL-RESET-title"></member>
   </simplelist>
  </refsect1>
 
