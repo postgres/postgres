@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/purge.c,v 1.4 1997/01/10 20:17:17 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/purge.c,v 1.5 1997/07/29 16:19:26 thomas Exp $
  *
  * Note:
  *	XXX There are many instances of int32 instead of ...Time.  These
@@ -85,7 +85,7 @@ RelationPurge(char *relationName,
 #endif	/* defined(PURGEDEBUG) */
     
     if (PointerIsValid(relativeTimeString)) {
-	if (isreltime(relativeTimeString, NULL, NULL, NULL) != 1) {
+	if (isreltime(relativeTimeString) != 1) {
 	    elog(WARN, "%s: bad relative time string \"%s\"",
 		 cmdname, relativeTimeString);
 	}
