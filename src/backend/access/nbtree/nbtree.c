@@ -11,7 +11,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.48 1999/11/14 16:22:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.49 1999/12/01 00:29:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -664,7 +664,8 @@ _bt_restscan(IndexScanDesc scan)
 	for (;;)
 	{
 		if (P_RIGHTMOST(opaque))
-			elog(FATAL, "_bt_restscan: my bits moved right off the end of the world!\nTry recreating the index.");
+			elog(FATAL, "_bt_restscan: my bits moved right off the end of the world!\
+\n\tRecreate index %s.", RelationGetRelationName(rel));
 
 		blkno = opaque->btpo_next;
 		_bt_relbuf(rel, buf, BT_READ);

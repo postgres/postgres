@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.33 1999/11/14 19:01:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.34 1999/12/01 00:29:53 momjian Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -502,7 +502,8 @@ _bt_getstackbuf(Relation rel, BTStack stack, int access)
 	{
 		blkno = opaque->btpo_next;
 		if (P_RIGHTMOST(opaque))
-			elog(FATAL, "my bits moved right off the end of the world!\n\tTry recreating the index.");
+			elog(FATAL, "my bits moved right off the end of the world!\
+\n\tRecreate index %s.", RelationGetRelationName(rel));
 
 		_bt_relbuf(rel, buf, access);
 		buf = _bt_getbuf(rel, blkno, access);
