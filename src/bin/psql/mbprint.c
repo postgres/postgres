@@ -3,13 +3,11 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/mbprint.c,v 1.3 2001/10/28 06:25:58 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/mbprint.c,v 1.4 2002/08/27 20:16:48 petere Exp $
  */
 
 #include "postgres_fe.h"
 #include "mbprint.h"
-
-#ifdef MULTIBYTE
 
 #include "mb/pg_wchar.h"
 #include "settings.h"
@@ -195,7 +193,7 @@ utf2ucs(const unsigned char *c)
 /* mb_utf_wcwidth : calculate column length for the utf8 string pwcs
  */
 static int
-mb_utf_wcswidth(unsigned char *pwcs, int len)
+mb_utf_wcswidth(unsigned char *pwcs, size_t len)
 {
 	int			w,
 				l = 0;
@@ -312,7 +310,7 @@ mb_utf_validate(unsigned char *pwcs)
  */
 
 int
-pg_wcswidth(unsigned char *pwcs, int len)
+pg_wcswidth(unsigned char *pwcs, size_t len)
 {
 	if (pset.encoding == PG_UTF8)
 		return mb_utf_wcswidth(pwcs, len);
@@ -340,14 +338,3 @@ mbvalidate(unsigned char *pwcs)
 		return pwcs;
 	}
 }
-
-#else							/* !MULTIBYTE */
-
-/* in single-byte environment, all cells take 1 column */
-int
-pg_wcswidth(unsigned char *pwcs, int len)
-{
-	return len;
-}
-
-#endif

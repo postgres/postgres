@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.65 2002/08/27 18:28:28 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.66 2002/08/27 20:16:48 petere Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -305,11 +305,9 @@ listAllDbs(bool verbose)
 			 "SELECT d.datname as \"%s\",\n"
 			 "       u.usename as \"%s\"",
 			 _("Name"), _("Owner"));
-#ifdef MULTIBYTE
 	appendPQExpBuffer(&buf,
 			 ",\n       pg_catalog.pg_encoding_to_char(d.encoding) as \"%s\"",
 			 _("Encoding"));
-#endif
 	if (verbose)
 		appendPQExpBuffer(&buf,
 			 ",\n       pg_catalog.obj_description(d.oid, 'pg_database') as \"%s\"",

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/stringutils.c,v 1.29 2002/07/02 05:49:18 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/stringutils.c,v 1.30 2002/08/27 20:16:49 petere Exp $
  */
 #include "postgres_fe.h"
 #include "stringutils.h"
@@ -52,10 +52,6 @@ strtokx(const char *s,
 	char	   *start;
 	char	   *cp = NULL;
 
-#ifndef MULTIBYTE
-	(void) encoding;			/* not used */
-#endif
-
 	if (s)
 	{
 		free(storage);
@@ -95,11 +91,7 @@ strtokx(const char *s,
 
 		for (p = start;
 			 *p && (*p != *cp || *(p - 1) == escape);
-#ifdef MULTIBYTE
 			 p += PQmblen(p, encoding)
-#else
-			 p++
-#endif
 			);
 
 		/* not yet end of string? */

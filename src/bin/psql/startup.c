@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.62 2002/08/10 19:35:01 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.63 2002/08/27 20:16:48 petere Exp $
  */
 #include "postgres_fe.h"
 
@@ -11,7 +11,7 @@
 
 #ifndef WIN32
 #include <unistd.h>
-#else							/* WIN32 */
+#else /* WIN32 */
 #include <io.h>
 #include <windows.h>
 #include <win32.h>
@@ -21,9 +21,7 @@
 #include <getopt.h>
 #endif
 
-#ifdef ENABLE_NLS
 #include <locale.h>
-#endif
 
 #include "libpq-fe.h"
 
@@ -37,12 +35,7 @@
 #include "settings.h"
 #include "variables.h"
 
-#ifdef MULTIBYTE
 #include "mb/pg_wchar.h"
-#else
-/* XXX Grand unified hard-coded badness; this should go into libpq */
-#define pg_encoding_to_char(x) "SQL_ASCII"
-#endif
 
 /*
  * Global psql options
@@ -105,8 +98,8 @@ main(int argc, char *argv[])
 	char	   *password = NULL;
 	bool		need_pass;
 
-#ifdef ENABLE_NLS
 	setlocale(LC_ALL, "");
+#ifdef ENABLE_NLS
 	bindtextdomain("psql", LOCALEDIR);
 	textdomain("psql");
 #endif
@@ -638,26 +631,8 @@ showVersion(void)
 {
 	puts("psql (PostgreSQL) " PG_VERSION);
 
-#if defined(USE_READLINE) || defined(MULTIBYTE)
-	fputs(gettext("contains support for: "), stdout);
-
-#ifdef USE_READLINE
-	fputs(gettext("readline"), stdout);
-#define _Feature
-#endif
-
-#ifdef MULTIBYTE
-#ifdef _Feature
-	fputs(", ", stdout);
-#else
-#define _Feature
-#endif
-	fputs(gettext("multibyte"), stdout);
-#endif
-
-#undef _Feature
-
-	puts("");
+#if defined(USE_READLINE)
+	puts(gettext("contains support for readline"));
 #endif
 
 	puts(gettext("Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group\n"
