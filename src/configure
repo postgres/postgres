@@ -2304,7 +2304,7 @@ else
 fi
 done
 
-for ac_hdr in readline.h history.h dld.h
+for ac_hdr in readline.h history.h dld.h crypt.h
 do
 ac_safe=`echo "$ac_hdr" | sed 'y%./+-%__p_%'`
 echo $ac_n "checking for $ac_hdr""... $ac_c" 1>&6
@@ -2997,7 +2997,7 @@ else
 fi
 done
 
-for ac_func in sigprocmask waitpid setsid
+for ac_func in sigprocmask waitpid setsid 
 do
 echo $ac_n "checking for $ac_func""... $ac_c" 1>&6
 echo "configure:3004: checking for $ac_func" >&5

@@ -4,6 +4,9 @@
 #include <libpq/libpq.h>
 #include <string.h>
 #include <unistd.h>
+#ifdef HAVE_CRYPT
+# include <crypt.h>
+#endif
 
 int
 verify_password(char *user, char *password, Port *port, 
