@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.95 2001/11/19 03:58:24 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.96 2001/11/20 04:27:49 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -171,9 +171,11 @@ NOTICE:  Initializing database with en_US collation order.
 <screen>
 &gt; <userinput>postmaster -D /usr/local/pgsql/data &gt; logfile 2&gt;&amp;1 &amp;</userinput>
 </screen>
-   It is an extremely good idea to keep the server output around
-   somewhere, as indicated here. It will help both for auditing
+   It is an extremely good idea to keep the server's stdout and stderr
+   output around somewhere, as suggested here. It will help both for auditing
    purposes and to diagnose problems.
+   (See <xref linkend="logfile-maintenance"> for a more thorough discussion
+   of logfile handling.)
   </para>
 
   <para>

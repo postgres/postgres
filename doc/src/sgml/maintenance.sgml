@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.7 2001/11/18 22:17:30 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.8 2001/11/20 04:27:49 tgl Exp $
 -->
 
 <chapter id="maintenance">
@@ -34,10 +34,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.7 2001/11/18 22:17:30 
   </para>
 
   <para>
-  It is also necessary to rotate the database server log file that is specified 
-  when the <application>postmaster</application> is started.  If you are using
-  <application>syslog</application>, you can send a <literal>SIGHUP</literal>
-  signal to the syslog daemon to force it to start writing a new log file.
+   Something else that might need periodic attention is log file management.
+   This is discussed in <xref linkend="logfile-maintenance">.
   </para>
 
   <para>
@@ -366,6 +364,61 @@ VACUUM
    </para>
 
   </sect2>
+ </sect1>
+
+ <sect1 id="logfile-maintenance">
+  <title>Log File Maintenance</title>
+
+  <indexterm zone="logfile-maintenance">
+   <primary>log files</primary>
+  </indexterm>
+
+  <para>
+   It's a good idea to save the database server's log output somewhere,
+   rather than just routing it to <filename>/dev/null</>.  The log output
+   is invaluable when it comes time to diagnose problems.  However, the
+   log output tends to be voluminuous (especially at higher debug levels)
+   and you won't want to save it indefinitely.  You need to <quote>rotate</>
+   the log files so that new log files are started and old ones thrown
+   away every so often.
+  </para>
+
+  <para>
+   If you simply direct the postmaster's stderr into a file, the only way
+   to truncate the log file is to stop and restart the postmaster.  This
+   may be okay for development setups but you won't want to run a production
+   server that way.
+  </para>
+
+  <para>
+   The simplest production-grade approach to managing log output is to send it
+   all to <application>syslog</> and let <application>syslog</> deal with file
+   rotation.  To do this, make sure <productname>Postgres</> was built with
+   the <option>--enable-syslog</> configure option, and set
+   <literal>syslog</> to 2
+   (log to syslog only) in <filename>postgresql.conf</>.
+   Then you can send a <literal>SIGHUP</literal> signal to the
+   <application>syslog</> daemon whenever you want to force it to start
+   writing a new log file.
+  </para>
+
+  <para>
+   On many systems, however, syslog is not very reliable, particularly
+   with large log messages; it may truncate or drop messages just when
+   you need them the most.  You may find it more useful to pipe the
+   <application>postmaster</>'s stderr to some type of log rotation script.
+   If you start the postmaster with <application>pg_ctl</>, then the
+   postmaster's stderr is already redirected to stdout, so you just need a
+   pipe command:
+   
+<screen>
+<userinput>pg_ctl start | logrotate</userinput>
+</screen>
+
+   The <productname>Postgres</> distribution doesn't include a suitable
+   log rotation program, but there are many available on the net;
+   one is included in the Apache distribution, for example.
+  </para>
  </sect1>
 </chapter>
 
