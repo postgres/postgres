@@ -2,13 +2,14 @@
  * Routines for handling of 'SET var TO',
  *  'SHOW var' and 'RESET var' statements.
  *
- * $Id: variable.c,v 1.22 1997/11/14 15:34:09 thomas Exp $
+ * $Id: variable.c,v 1.23 1997/11/21 18:11:20 momjian Exp $
  *
  */
 
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include <time.h>
 #include "postgres.h"
 #include "miscadmin.h"
 #include "tcop/variable.h"

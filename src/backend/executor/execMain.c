@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.31 1997/11/20 23:21:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.32 1997/11/21 18:10:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -546,7 +546,6 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 	if (operation == CMD_SELECT)
 	{
 		char	   *intoName;
-		char		archiveMode;
 		Oid			intoRelationId;
 		TupleDesc	tupdesc;
 
@@ -560,14 +559,9 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 			{
 				/* ----------------
 				 *	create the "into" relation
-				 *
-				 *	note: there is currently no way for the user to
-				 *		  specify the desired archive mode of the
-				 *		  "into" relation...
 				 * ----------------
 				 */
 				intoName = parseTree->into;
-				archiveMode = 'n';
 
 				/*
 				 * have to copy tupType to get rid of constraints
@@ -577,11 +571,7 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 				/* fixup to prevent zero-length columns in create */
 				setVarAttrLenForCreateTable(tupdesc, targetList, rangeTable);
 
-				intoRelationId = heap_create(intoName,
-											 intoName,	/* not used */
-											 archiveMode,
-											 DEFAULT_SMGR,
-											 tupdesc);
+				intoRelationId = heap_create(intoName, tupdesc);
 #ifdef NOT_USED					/* it's copy ... */
 				resetVarAttrLenForCreateTable(tupdesc);
 #endif
@@ -1334,7 +1324,6 @@ ExecRelCheck(Relation rel, HeapTuple tuple)
 	rte->refname = rte->relname;
 	rte->relid = rel->rd_id;
 	rte->inh = false;
-	rte->archive = false;
 	rte->inFromCl = true;
 	rtlist = lcons(rte, NIL);
 	econtext->ecxt_scantuple = slot;	/* scan tuple slot */

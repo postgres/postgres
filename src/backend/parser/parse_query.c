@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/Attic/parse_query.c,v 1.23 1997/11/20 23:22:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/Attic/parse_query.c,v 1.24 1997/11/21 18:10:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -148,7 +148,7 @@ addRangeTableEntry(ParseState *pstate,
 	}
 
 	/*
-	 * Flags - zero or more from archive,inheritance,union,version or
+	 * Flags - zero or more from inheritance,union,version or
 	 * recursive (transitive closure) [we don't support them all -- ay
 	 * 9/94 ]
 	 */
@@ -156,8 +156,6 @@ addRangeTableEntry(ParseState *pstate,
 
 	/* RelOID */
 	rte->relid = RelationGetRelationId(relation);
-
-	rte->archive = false;
 
 	rte->inFromCl = inFromCl;
 

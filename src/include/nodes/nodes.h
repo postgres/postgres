@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.16 1997/10/28 15:10:37 vadim Exp $
+ * $Id: nodes.h,v 1.17 1997/11/21 18:12:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -162,7 +162,6 @@ typedef enum NodeTag
 	T_FetchStmt,
 	T_IndexStmt,
 	T_ProcedureStmt,
-	T_PurgeStmt,
 	T_RecipeStmt,
 	T_RemoveAggrStmt,
 	T_RemoveFuncStmt,

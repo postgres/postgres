@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: psqlHelp.h,v 1.32 1997/11/07 06:27:55 thomas Exp $
+ * $Id: psqlHelp.h,v 1.33 1997/11/21 18:11:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,7 +77,7 @@ static struct _helpStruct QL_HELP[] = {
 	"create sequence <sequence_name>\n\t[increment <NUMBER>]\n\t[start <NUMBER>]\n\t[minvalue <NUMBER>]\n\t[maxvalue <NUMBER>]\n\t[cache <NUMBER>]\n\t[cycle];"},
 	{"create table",
 		"create a new table",
-	"create table <class_name>\n\t(<attr1> <type1> [default <expression>] [not null] [,...])\n\t[inherits (<class_name1>,...<class_nameN>)\n\t[[constraint <name>] check <condition> [,...] ]\n\tarchive=<archive_mode>\n\tstore=<smgr_name>\n\tarch_store=<smgr_name>];"},
+	"create table <class_name>\n\t(<attr1> <type1> [default <expression>] [not null] [,...])\n\t[inherits (<class_name1>,...<class_nameN>)\n\t[[constraint <name>] check <condition> [,...] ]\n;"},
 	{"create trigger",
 		"create a new trigger",
 	"create trigger <trigger_name> after|before event1 [or event2 [or event3] ]\n\ton <class_name> for each row|statement\n\texecute procedure <func_name> ([arguments]);\n\n\teventX is one of INSERT, DELETE, UPDATE"},
@@ -159,9 +159,6 @@ static struct _helpStruct QL_HELP[] = {
 	{"notify",
 		"signal all frontends and backends listening on a relation",
 	"notify <class_name>"},
-	{"purge",
-		"purge historical data",
-	"purge <class_name> [before <abstime>] [after <reltime>];"},
 	{"reset",
 		"set run-time environment back to default",
 	"reset {DateStyle | GEQO | R_PLANS}"},

@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_attribute.h,v 1.19 1997/11/16 04:36:32 momjian Exp $
+ * $Id: pg_attribute.h,v 1.20 1997/11/21 18:12:01 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -348,41 +348,33 @@ DATA(insert OID = 0 ( 1249 cmax				29 0  4  -6 0 -1 t f i f f));
 #define Schema_pg_class \
 { 1259l, {"relname"},	   19l, 0l, NAMEDATALEN,  1, 0l, -1l, '\0', '\0', 'i', '\0', '\0' }, \
 { 1259l, {"reltype"},	   26l, 0l,  4,  2, 0l, -1l, '\001', '\0', 'i', '\0', '\0' }, \
-{ 1259l, {"relowner"},	   26l, 0l,  4,  2, 0l, -1l, '\001', '\0', 'i', '\0', '\0' }, \
-{ 1259l, {"relam"},		   26l, 0l,  4,  3, 0l, -1l, '\001', '\0', 'i', '\0', '\0' }, \
-{ 1259l, {"relpages"},	   23,	0l,  4,  4, 0l, -1l, '\001', '\0', 'i', '\0', '\0' }, \
-{ 1259l, {"reltuples"},    23,	0l,  4,  5, 0l, -1l, '\001', '\0', 'i', '\0', '\0' }, \
-{ 1259l, {"relexpires"},   702, 0l,  4,  6, 0l, -1l, '\001', '\0', 'i', '\0', '\0' }, \
-{ 1259l, {"relpreserved"}, 703, 0l,  4,  7, 0l, -1l, '\001', '\0', 'i', '\0', '\0' }, \
-{ 1259l, {"relhasindex"},  16,	0l,  1,  8, 0l, -1l, '\001', '\0', 'c', '\0', '\0' }, \
-{ 1259l, {"relisshared"},  16,	0l,  1,  9, 0l, -1l, '\001', '\0', 'c', '\0', '\0' }, \
-{ 1259l, {"relkind"},	   18,	0l,  1, 10, 0l, -1l, '\001', '\0', 'c', '\0', '\0' }, \
-{ 1259l, {"relarch"},	   18,	0l,  1, 11, 0l, -1l, '\001', '\0', 'c', '\0', '\0' }, \
-{ 1259l, {"relnatts"},	   21,	0l,  2, 12, 0l, -1l, '\001', '\0', 's', '\0', '\0' }, \
-{ 1259l, {"relsmgr"},	   210l, 0l, 2, 13, 0l, -1l, '\001', '\0', 's', '\0', '\0' }, \
-{ 1259l, {"relchecks"},    21l, 0l,  2, 14, 0l, -1l, '\001', '\0', 's', '\0', '\0' }, \
-{ 1259l, {"reltriggers"},  21l, 0l,  2, 15, 0l, -1l, '\001', '\0', 's', '\0', '\0' }, \
-{ 1259l, {"relhasrules"},  16,	0l,  1, 16, 0l, -1l, '\001', '\0', 'c', '\0', '\0' }, \
-{ 1259l, {"relacl"},	 1034l, 0l, -1, 17, 0l, -1l,   '\0', '\0', 'i', '\0', '\0' }
+{ 1259l, {"relowner"},	   26l, 0l,  4,  3, 0l, -1l, '\001', '\0', 'i', '\0', '\0' }, \
+{ 1259l, {"relam"},		   26l, 0l,  4,  4, 0l, -1l, '\001', '\0', 'i', '\0', '\0' }, \
+{ 1259l, {"relpages"},	   23,	0l,  4,  5, 0l, -1l, '\001', '\0', 'i', '\0', '\0' }, \
+{ 1259l, {"reltuples"},    23,	0l,  4,  6, 0l, -1l, '\001', '\0', 'i', '\0', '\0' }, \
+{ 1259l, {"relhasindex"},  16,	0l,  1,  7, 0l, -1l, '\001', '\0', 'c', '\0', '\0' }, \
+{ 1259l, {"relisshared"},  16,	0l,  1,  8, 0l, -1l, '\001', '\0', 'c', '\0', '\0' }, \
+{ 1259l, {"relkind"},	   18,	0l,  1,  9, 0l, -1l, '\001', '\0', 'c', '\0', '\0' }, \
+{ 1259l, {"relnatts"},	   21,	0l,  2, 10, 0l, -1l, '\001', '\0', 's', '\0', '\0' }, \
+{ 1259l, {"relchecks"},    21l, 0l,  2, 11, 0l, -1l, '\001', '\0', 's', '\0', '\0' }, \
+{ 1259l, {"reltriggers"},  21l, 0l,  2, 12, 0l, -1l, '\001', '\0', 's', '\0', '\0' }, \
+{ 1259l, {"relhasrules"},  16,	0l,  1, 13, 0l, -1l, '\001', '\0', 'c', '\0', '\0' }, \
+{ 1259l, {"relacl"},	 1034l, 0l, -1, 14, 0l, -1l,   '\0', '\0', 'i', '\0', '\0' }
 
 DATA(insert OID = 0 ( 1259 relname			19 0 NAMEDATALEN   1 0 -1 f f i f f));
 DATA(insert OID = 0 ( 1259 reltype			26 0  4   2 0 -1 t f i f f));
-DATA(insert OID = 0 ( 1259 relowner			26 0  4   2 0 -1 t f i f f));
-DATA(insert OID = 0 ( 1259 relam			26 0  4   3 0 -1 t f i f f));
-DATA(insert OID = 0 ( 1259 relpages			23 0  4   4 0 -1 t f i f f));
-DATA(insert OID = 0 ( 1259 reltuples		23 0  4   5 0 -1 t f i f f));
-DATA(insert OID = 0 ( 1259 relexpires	   702 0  4   6 0 -1 t f i f f));
-DATA(insert OID = 0 ( 1259 relpreserved    702 0  4   7 0 -1 t f i f f));
-DATA(insert OID = 0 ( 1259 relhasindex		16 0  1   8 0 -1 t f c f f));
-DATA(insert OID = 0 ( 1259 relisshared		16 0  1   9 0 -1 t f c f f));
-DATA(insert OID = 0 ( 1259 relkind			18 0  1  10 0 -1 t f c f f));
-DATA(insert OID = 0 ( 1259 relarch			18 0  1  11 0 -1 t f c f f));
-DATA(insert OID = 0 ( 1259 relnatts			21 0  2  12 0 -1 t f s f f));
-DATA(insert OID = 0 ( 1259 relsmgr		   210 0  2  13 0 -1 t f s f f));
-DATA(insert OID = 0 ( 1259 relchecks		21 0  2  14 0 -1 t f s f f));
-DATA(insert OID = 0 ( 1259 reltriggers		21 0  2  15 0 -1 t f s f f));
-DATA(insert OID = 0 ( 1259 relhasrules		16 0  1  16 0 -1 t f c f f));
-DATA(insert OID = 0 ( 1259 relacl		  1034 0 -1  17 0 -1 f f i f f));
+DATA(insert OID = 0 ( 1259 relowner			26 0  4   3 0 -1 t f i f f));
+DATA(insert OID = 0 ( 1259 relam			26 0  4   4 0 -1 t f i f f));
+DATA(insert OID = 0 ( 1259 relpages			23 0  4   5 0 -1 t f i f f));
+DATA(insert OID = 0 ( 1259 reltuples		23 0  4   6 0 -1 t f i f f));
+DATA(insert OID = 0 ( 1259 relhasindex		16 0  1   7 0 -1 t f c f f));
+DATA(insert OID = 0 ( 1259 relisshared		16 0  1   8 0 -1 t f c f f));
+DATA(insert OID = 0 ( 1259 relkind			18 0  1   9 0 -1 t f c f f));
+DATA(insert OID = 0 ( 1259 relnatts			21 0  2  10 0 -1 t f s f f));
+DATA(insert OID = 0 ( 1259 relchecks		21 0  2  11 0 -1 t f s f f));
+DATA(insert OID = 0 ( 1259 reltriggers		21 0  2  12 0 -1 t f s f f));
+DATA(insert OID = 0 ( 1259 relhasrules		16 0  1  13 0 -1 t f c f f));
+DATA(insert OID = 0 ( 1259 relacl		  1034 0 -1  14 0 -1 f f i f f));
 DATA(insert OID = 0 ( 1259 ctid				27 0  6  -1 0 -1 f f i f f));
 DATA(insert OID = 0 ( 1259 oid				26 0  4  -2 0 -1 t f i f f));
 DATA(insert OID = 0 ( 1259 xmin				28 0  4  -3 0 -1 f f i f f));

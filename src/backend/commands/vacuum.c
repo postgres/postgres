@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.50 1997/11/20 23:21:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.51 1997/11/21 18:09:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,7 +82,7 @@ static void vc_vacone(Oid relid, bool analyze, List *va_cols);
 static void vc_scanheap(VRelStats *vacrelstats, Relation onerel, VPageList Vvpl, VPageList Fvpl);
 static void vc_rpfheap(VRelStats *vacrelstats, Relation onerel, VPageList Vvpl, VPageList Fvpl, int nindices, Relation *Irel);
 static void vc_vacheap(VRelStats *vacrelstats, Relation onerel, VPageList vpl);
-static void vc_vacpage(Page page, VPageDescr vpd, Relation archrel);
+static void vc_vacpage(Page page, VPageDescr vpd);
 static void vc_vaconeind(VPageList vpl, Relation indrel, int nhtups);
 static void vc_scanoneind(Relation indrel, int nhtups);
 static void vc_attrstats(Relation onerel, VRelStats *vacrelstats, HeapTuple htup);
@@ -96,9 +96,6 @@ static void vc_vpinsert(VPageList vpl, VPageDescr vpnew);
 static void vc_free(VRelList vrl);
 static void vc_getindices(Oid relid, int *nindices, Relation **Irel);
 static void vc_clsindices(int nindices, Relation *Irel);
-static Relation vc_getarchrel(Relation heaprel);
-static void vc_archive(Relation archrel, HeapTuple htup);
-static bool vc_isarchrel(char *rname);
 static void vc_mkindesc(Relation onerel, int nindices, Relation *Irel, IndDesc **Idesc);
 static char *vc_find_eq(char *bot, int nelem, int size, char *elm, int (*compar) (char *, char *));
 static int	vc_cmp_blk(char *left, char *right);
@@ -271,7 +268,6 @@ vc_getrels(NameData *VacRelP)
 	Datum		d;
 	char	   *rname;
 	char		rkind;
-	int16		smgrno;
 	bool		n;
 	ScanKeyData pgckey;
 	bool		found = false;
@@ -303,22 +299,8 @@ vc_getrels(NameData *VacRelP)
 
 		found = true;
 
-		/*
-		 * We have to be careful not to vacuum the archive (since it
-		 * already contains vacuumed tuples), and not to vacuum relations
-		 * on write-once storage managers like the Sony jukebox at
-		 * Berkeley.
-		 */
-
 		d = heap_getattr(pgctup, buf, Anum_pg_class_relname, pgcdesc, &n);
 		rname = (char *) d;
-
-		/* skip archive relations */
-		if (vc_isarchrel(rname))
-		{
-			ReleaseBuffer(buf);
-			continue;
-		}
 
 		/*
 		 * don't vacuum large objects for now - something breaks when we
@@ -331,16 +313,6 @@ vc_getrels(NameData *VacRelP)
 		{
 			elog(NOTICE, "Rel %s: can't vacuum LargeObjects now",
 				 rname);
-			ReleaseBuffer(buf);
-			continue;
-		}
-
-		d = heap_getattr(pgctup, buf, Anum_pg_class_relsmgr, pgcdesc, &n);
-		smgrno = DatumGetInt16(d);
-
-		/* skip write-once storage managers */
-		if (smgriswo(smgrno))
-		{
 			ReleaseBuffer(buf);
 			continue;
 		}
@@ -1005,7 +977,6 @@ vc_rpfheap(VRelStats *vacrelstats, Relation onerel,
 				ntups;
 	bool		isempty,
 				dowrite;
-	Relation	archrel;
 	struct rusage ru0,
 				ru1;
 
@@ -1021,27 +992,6 @@ vc_rpfheap(VRelStats *vacrelstats, Relation onerel,
 		idatum = (Datum *) palloc(INDEX_MAX_KEYS * sizeof(*idatum));
 		inulls = (char *) palloc(INDEX_MAX_KEYS * sizeof(*inulls));
 	}
-
-	/* if the relation has an archive, open it */
-	if (onerel->rd_rel->relarch != 'n')
-	{
-		archrel = vc_getarchrel(onerel);
-		/* Archive tuples from "empty" end-pages */
-		for (vpp = Vvpl->vpl_pgdesc + Vvpl->vpl_npages - 1,
-			 i = Vvpl->vpl_nemend; i > 0; i--, vpp--)
-		{
-			if ((*vpp)->vpd_noff > 0)
-			{
-				buf = ReadBuffer(onerel, (*vpp)->vpd_blkno);
-				page = BufferGetPage(buf);
-				Assert(!PageIsEmpty(page));
-				vc_vacpage(page, *vpp, archrel);
-				WriteBuffer(buf);
-			}
-		}
-	}
-	else
-		archrel = (Relation) NULL;
 
 	Nvpl.vpl_npages = 0;
 	Fnpages = Fvpl->vpl_npages;
@@ -1078,7 +1028,7 @@ vc_rpfheap(VRelStats *vacrelstats, Relation onerel,
 			if (Vvplast->vpd_noff > 0)	/* there are dead tuples */
 			{					/* on this page - clean */
 				Assert(!isempty);
-				vc_vacpage(page, Vvplast, archrel);
+				vc_vacpage(page, Vvplast);
 				dowrite = true;
 			}
 			else
@@ -1169,7 +1119,7 @@ vc_rpfheap(VRelStats *vacrelstats, Relation onerel,
 				ToPage = BufferGetPage(ToBuf);
 				/* if this page was not used before - clean it */
 				if (!PageIsEmpty(ToPage) && ToVpd->vpd_nusd == 0)
-					vc_vacpage(ToPage, ToVpd, archrel);
+					vc_vacpage(ToPage, ToVpd);
 			}
 
 			/* copy tuple */
@@ -1292,7 +1242,7 @@ failed to add item with len = %u to page %u (free space %u, nusd %u, noff %u)",
 			 * re-used
 			 */
 			Assert((*vpp)->vpd_noff > 0);
-			vc_vacpage(page, *vpp, archrel);
+			vc_vacpage(page, *vpp);
 		}
 		else
 /* this page was used */
@@ -1392,13 +1342,10 @@ Elapsed %u/%u sec.",
 		i = BlowawayRelationBuffers(onerel, blkno);
 		if (i < 0)
 			elog (FATAL, "VACUUM (vc_rpfheap): BlowawayRelationBuffers returned %d", i);
-		blkno = smgrtruncate(onerel->rd_rel->relsmgr, onerel, blkno);
+		blkno = smgrtruncate(DEFAULT_SMGR, onerel, blkno);
 		Assert(blkno >= 0);
 		vacrelstats->npages = blkno;	/* set new number of blocks */
 	}
-
-	if (archrel != (Relation) NULL)
-		heap_close(archrel);
 
 	if (Irel != (Relation *) NULL)		/* pfree index' allocations */
 	{
@@ -1424,19 +1371,11 @@ vc_vacheap(VRelStats *vacrelstats, Relation onerel, VPageList Vvpl)
 	Buffer		buf;
 	Page		page;
 	VPageDescr *vpp;
-	Relation	archrel;
 	int			nblocks;
 	int			i;
 
 	nblocks = Vvpl->vpl_npages;
-	/* if the relation has an archive, open it */
-	if (onerel->rd_rel->relarch != 'n')
-		archrel = vc_getarchrel(onerel);
-	else
-	{
-		archrel = (Relation) NULL;
-		nblocks -= Vvpl->vpl_nemend;	/* nothing to do with them */
-	}
+	nblocks -= Vvpl->vpl_nemend;	/* nothing to do with them */
 
 	for (i = 0, vpp = Vvpl->vpl_pgdesc; i < nblocks; i++, vpp++)
 	{
@@ -1444,7 +1383,7 @@ vc_vacheap(VRelStats *vacrelstats, Relation onerel, VPageList Vvpl)
 		{
 			buf = ReadBuffer(onerel, (*vpp)->vpd_blkno);
 			page = BufferGetPage(buf);
-			vc_vacpage(page, *vpp, archrel);
+			vc_vacpage(page, *vpp);
 			WriteBuffer(buf);
 		}
 	}
@@ -1468,22 +1407,19 @@ vc_vacheap(VRelStats *vacrelstats, Relation onerel, VPageList Vvpl)
 		if (i < 0)
 			elog (FATAL, "VACUUM (vc_vacheap): BlowawayRelationBuffers returned %d", i);
 
-		nblocks = smgrtruncate(onerel->rd_rel->relsmgr, onerel, nblocks);
+		nblocks = smgrtruncate(DEFAULT_SMGR, onerel, nblocks);
 		Assert(nblocks >= 0);
 		vacrelstats->npages = nblocks;	/* set new number of blocks */
 	}
 
-	if (archrel != (Relation) NULL)
-		heap_close(archrel);
-
 }								/* vc_vacheap */
 
 /*
- *	vc_vacpage() -- free (and archive if needed) dead tuples on a page
+ *	vc_vacpage() -- free dead tuples on a page
  *					 and repaire its fragmentation.
  */
 static void
-vc_vacpage(Page page, VPageDescr vpd, Relation archrel)
+vc_vacpage(Page page, VPageDescr vpd)
 {
 	ItemId		itemid;
 	HeapTuple	htup;
@@ -1493,11 +1429,6 @@ vc_vacpage(Page page, VPageDescr vpd, Relation archrel)
 	for (i = 0; i < vpd->vpd_noff; i++)
 	{
 		itemid = &(((PageHeader) page)->pd_linp[vpd->vpd_voff[i] - 1]);
-		if (archrel != (Relation) NULL && ItemIdIsUsed(itemid))
-		{
-			htup = (HeapTuple) PageGetItem(page, itemid);
-			vc_archive(archrel, htup);
-		}
 		itemid->lp_flags &= ~LP_USED;
 	}
 	PageRepairFragmentation(page);
@@ -2126,51 +2057,6 @@ vc_free(VRelList vrl)
 	}
 
 	MemoryContextSwitchTo(old);
-}
-
-/*
- *	vc_getarchrel() -- open the archive relation for a heap relation
- *
- *		The archive relation is named 'a,XXXXX' for the heap relation
- *		whose relid is XXXXX.
- */
-
-#define ARCHIVE_PREFIX	"a,"
-
-static Relation
-vc_getarchrel(Relation heaprel)
-{
-	Relation	archrel;
-	char	   *archrelname;
-
-	archrelname = palloc(sizeof(ARCHIVE_PREFIX) + NAMEDATALEN); /* bogus */
-	sprintf(archrelname, "%s%d", ARCHIVE_PREFIX, heaprel->rd_id);
-
-	archrel = heap_openr(archrelname);
-
-	pfree(archrelname);
-	return (archrel);
-}
-
-/*
- *	vc_archive() -- write a tuple to an archive relation
- *
- *		In the future, this will invoke the archived accessd method.  For
- *		now, archive relations are on mag disk.
- */
-static void
-vc_archive(Relation archrel, HeapTuple htup)
-{
-	doinsert(archrel, htup);
-}
-
-static bool
-vc_isarchrel(char *rname)
-{
-	if (strncmp(ARCHIVE_PREFIX, rname, strlen(ARCHIVE_PREFIX)) == 0)
-		return (true);
-
-	return (false);
 }
 
 static char *

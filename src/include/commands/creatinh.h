@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: creatinh.h,v 1.4 1997/09/08 21:51:35 momjian Exp $
+ * $Id: creatinh.h,v 1.5 1997/11/21 18:12:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +15,5 @@
 
 extern void DefineRelation(CreateStmt *stmt);
 extern void RemoveRelation(char *name);
-extern char *MakeArchiveName(Oid relid);
 
 #endif							/* CREATINH_H */

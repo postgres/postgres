@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: buf_internals.h,v 1.18 1997/09/08 21:54:14 momjian Exp $
+ * $Id: buf_internals.h,v 1.19 1997/11/21 18:12:43 momjian Exp $
  *
  * NOTE
  *		If BUFFERPAGE0 is defined, then 0 will be used as a
@@ -116,7 +116,6 @@ struct sbufdesc_unpadded
 	BufferTag	tag;
 	int			buf_id;
 	BufFlags	flags;
-	int16		bufsmgr;
 	unsigned	refcount;
 #ifdef HAS_TEST_AND_SET
 	slock_t		io_in_progress_lock;
@@ -139,7 +138,6 @@ struct sbufdesc
 	int			buf_id;			/* maps global desc to local desc */
 
 	BufFlags	flags;			/* described below */
-	int16		bufsmgr;		/* storage manager id for buffer */
 	unsigned	refcount;		/* # of times buffer is pinned */
 
 #ifdef HAS_TEST_AND_SET

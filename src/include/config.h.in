@@ -259,7 +259,6 @@
 /* #define FASTBUILD_DEBUG */
 #define RTDEBUG 
 #define GISTDEBUG 
-/* #define PURGEDEBUG */
 /* #define DEBUG_RECIPE */
 /* #define ASYNC_DEBUG */
 /* #define COPY_DEBUG */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/view.c,v 1.14 1997/11/20 23:21:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/view.c,v 1.15 1997/11/21 18:09:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -100,9 +100,6 @@ DefineVirtualRelation(char *relname, List *tlist)
 	createStmt.tableElts = attrList;
 /*	  createStmt.tableType = NULL;*/
 	createStmt.inhRelnames = NIL;
-	createStmt.archiveType = ARCH_NONE;
-	createStmt.location = -1;
-	createStmt.archiveLoc = -1;
 	createStmt.constraints = NIL;
 
 	/*

@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/vacuum.l,v 1.5 1997/09/08 17:49:43 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/vacuum.l,v 1.6 1997/11/21 18:12:58 momjian Exp $
 .TH VACUUM SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 vacuum \(em vacuum a database
@@ -11,8 +11,7 @@ vacuum \(em vacuum a database
 .SH DESCRIPTION
 .BR Vacuum
 is the Postgres vacuum cleaner.  It opens every class in the database,
-moves deleted records to the archive for archived relations, cleans
-out records from aborted transactions, and updates statistics in the
+cleans out records from aborted transactions, and updates statistics in the
 system catalogs.  The statistics maintained include the number of
 tuples and number of pages stored in all classes.  Running
 .BR vacuum
@@ -38,13 +37,8 @@ query.  This will update the system catalogs with the results of all
 recent changes, and allow the Postgres query optimizer to make better
 choices in planning user queries.
 .PP
-The purge(l) command can be used to control the archive retention
-characteristics of a given table.
-.PP
 If the server crashes during a vacuum command, chances are it will leave
 a lock file hanging around.  Attempts to re-run the vacuum command
 result in an error message about the creation of a lock file.  If you
 are sure vacuum is not running, remove the pg_vlock file in your
 database directory(i.e. data/base/dbname/pg_vlock).
-.SH "SEE ALSO"
-purge(l).

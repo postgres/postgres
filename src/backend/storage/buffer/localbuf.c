@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.13 1997/10/12 07:12:03 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.14 1997/11/21 18:11:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -124,7 +124,7 @@ LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool *foundPtr)
 		Assert(bufrel != NULL);
 
 		/* flush this page */
-		smgrwrite(bufrel->rd_rel->relsmgr, bufrel, bufHdr->tag.blockNum,
+		smgrwrite(DEFAULT_SMGR, bufrel, bufHdr->tag.blockNum,
 				  (char *) MAKE_PTR(bufHdr->data));
 		LocalBufferFlushCount++;
 		RelationDecrementReferenceCount(bufrel);
@@ -202,7 +202,7 @@ FlushLocalBuffer(Buffer buffer, bool release)
 	bufrel = RelationIdCacheGetRelation(bufHdr->tag.relId.relId);
 
 	Assert(bufrel != NULL);
-	smgrflush(bufrel->rd_rel->relsmgr, bufrel, bufHdr->tag.blockNum,
+	smgrflush(DEFAULT_SMGR, bufrel, bufHdr->tag.blockNum,
 			  (char *) MAKE_PTR(bufHdr->data));
 	LocalBufferFlushCount++;
 	RelationDecrementReferenceCount(bufrel);
@@ -276,7 +276,7 @@ LocalBufferSync(void)
 
 			Assert(bufrel != NULL);
 
-			smgrwrite(bufrel->rd_rel->relsmgr, bufrel, buf->tag.blockNum,
+			smgrwrite(DEFAULT_SMGR, bufrel, buf->tag.blockNum,
 					  (char *) MAKE_PTR(buf->data));
 			LocalBufferFlushCount++;
 			RelationDecrementReferenceCount(bufrel);

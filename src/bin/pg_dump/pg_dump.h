@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.26 1997/10/30 16:48:03 thomas Exp $
+ * $Id: pg_dump.h,v 1.27 1997/11/21 18:11:41 momjian Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -66,7 +66,6 @@ typedef struct _tableInfo
 {
 	char	   *oid;
 	char	   *relname;
-	char	   *relarch;
 	char	   *relacl;
 	bool		sequence;
 	int			numatts;		/* number of attributes */
@@ -191,7 +190,6 @@ extern int	findTableByName(TableInfo *tbinfo, int numTables, const char *relname
 
 extern void check_conn_and_db(void);
 extern void parseArgTypes(char **argtypes, const char *str);
-extern int	isArchiveName(const char *);
 
 /*
  * version specific routines

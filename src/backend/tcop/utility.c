@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.28 1997/11/07 06:38:51 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.29 1997/11/21 18:11:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,6 @@
 #include "commands/creatinh.h"
 #include "commands/sequence.h"
 #include "commands/defrem.h"
-#include "commands/purge.h"
 #include "commands/rename.h"
 #include "commands/view.h"
 #include "commands/version.h"
@@ -207,19 +206,6 @@ ProcessUtility(Node * parsetree,
 					relname = strVal(lfirst(arg));
 					RemoveRelation(relname);
 				}
-			}
-			break;
-
-		case T_PurgeStmt:
-			{
-				PurgeStmt  *stmt = (PurgeStmt *) parsetree;
-
-				commandTag = "PURGE";
-				CHECK_IF_ABORTED();
-
-				RelationPurge(stmt->relname,
-							  stmt->beforeDate, /* absolute time string */
-							  stmt->afterDate); /* relative time string */
 			}
 			break;
 

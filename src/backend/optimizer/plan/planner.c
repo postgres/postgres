@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.9 1997/09/08 21:45:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.10 1997/11/21 18:10:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,17 +90,6 @@ planner(Query *parse)
 		special_plans = (Plan *) plan_union_queries((Index) rt_index,
 													parse,
 													INHERITS_FLAG);
-	}
-
-	/*
-	 * plan archive queries
-	 */
-	rt_index = first_matching_rt_entry(rangetable, ARCHIVE_FLAG);
-	if (rt_index != -1)
-	{
-		special_plans = (Plan *) plan_union_queries((Index) rt_index,
-													parse,
-													ARCHIVE_FLAG);
 	}
 
 	if (special_plans)

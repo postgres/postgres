@@ -151,8 +151,6 @@ DefineSequence(CreateSeqStmt *seq)
 	}
 
 	stmt->relname = seq->seqname;
-	stmt->archiveLoc = -1;		/* default */
-	stmt->archiveType = ARCH_NONE;
 	stmt->inhRelnames = NIL;
 	stmt->constraints = NIL;
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.28 1997/10/22 19:04:43 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.29 1997/11/21 18:11:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -275,7 +275,7 @@ ReadBufferWithBufferLock(Relation reln,
 		{
 			/* new buffers are zero-filled */
 			MemSet((char *) MAKE_PTR(bufHdr->data), 0, BLCKSZ);
-			smgrextend(bufHdr->bufsmgr, reln,
+			smgrextend(DEFAULT_SMGR, reln,
 					   (char *) MAKE_PTR(bufHdr->data));
 		}
 		return (BufferDescriptorGetBuffer(bufHdr));
@@ -290,12 +290,12 @@ ReadBufferWithBufferLock(Relation reln,
 	{
 		/* new buffers are zero-filled */
 		MemSet((char *) MAKE_PTR(bufHdr->data), 0, BLCKSZ);
-		status = smgrextend(bufHdr->bufsmgr, reln,
+		status = smgrextend(DEFAULT_SMGR, reln,
 							(char *) MAKE_PTR(bufHdr->data));
 	}
 	else
 	{
-		status = smgrread(bufHdr->bufsmgr, reln, blockNum,
+		status = smgrread(DEFAULT_SMGR, reln, blockNum,
 						  (char *) MAKE_PTR(bufHdr->data));
 	}
 
@@ -372,7 +372,7 @@ BufferAlloc(Relation reln,
 	if (blockNum == P_NEW)
 	{
 		newblock = TRUE;
-		blockNum = smgrnblocks(reln->rd_rel->relsmgr, reln);
+		blockNum = smgrnblocks(DEFAULT_SMGR, reln);
 	}
 
 	INIT_BUFFERTAG(&newTag, reln, blockNum);
@@ -645,9 +645,6 @@ BufferAlloc(Relation reln,
 	strcpy(buf->sb_relname, reln->rd_rel->relname.data);
 	strcpy(buf->sb_dbname, GetDatabaseName());
 
-	/* remember which storage manager is responsible for it */
-	buf->bufsmgr = reln->rd_rel->relsmgr;
-
 	INIT_BUFFERTAG(&(buf->tag), reln, blockNum);
 	if (!BufTableInsert(buf))
 	{
@@ -830,7 +827,7 @@ FlushBuffer(Buffer buffer, bool release)
 	bufHdr->flags &= ~BM_JUST_DIRTIED;
 	SpinRelease(BufMgrLock);
 
-	status = smgrflush(bufHdr->bufsmgr, bufrel, bufHdr->tag.blockNum,
+	status = smgrflush(DEFAULT_SMGR, bufrel, bufHdr->tag.blockNum,
 					   (char *) MAKE_PTR(bufHdr->data));
 	
 	RelationDecrementReferenceCount(bufrel);
@@ -1038,14 +1035,14 @@ BufferSync()
 #endif							/* OPTIMIZE_SINGLE */
 				if (reln == (Relation) NULL)
 				{
-					status = smgrblindwrt(bufHdr->bufsmgr, bufHdr->sb_dbname,
+					status = smgrblindwrt(DEFAULT_SMGR, bufHdr->sb_dbname,
 									   bufHdr->sb_relname, bufdb, bufrel,
 										  bufHdr->tag.blockNum,
 										(char *) MAKE_PTR(bufHdr->data));
 				}
 				else
 				{
-					status = smgrwrite(bufHdr->bufsmgr, reln,
+					status = smgrwrite(DEFAULT_SMGR, reln,
 									   bufHdr->tag.blockNum,
 									   (char *) MAKE_PTR(bufHdr->data));
 				}
@@ -1375,14 +1372,14 @@ BufferReplace(BufferDesc *bufHdr, bool bufferLockHeld)
 
 	if (reln != (Relation) NULL)
 	{
-		status = smgrflush(bufHdr->bufsmgr, reln, bufHdr->tag.blockNum,
+		status = smgrflush(DEFAULT_SMGR, reln, bufHdr->tag.blockNum,
 						   (char *) MAKE_PTR(bufHdr->data));
 	}
 	else
 	{
 
 		/* blind write always flushes */
-		status = smgrblindwrt(bufHdr->bufsmgr, bufHdr->sb_dbname,
+		status = smgrblindwrt(DEFAULT_SMGR, bufHdr->sb_dbname,
 							  bufHdr->sb_relname, bufdb, bufrel,
 							  bufHdr->tag.blockNum,
 							  (char *) MAKE_PTR(bufHdr->data));
@@ -1413,7 +1410,7 @@ RelationGetNumberOfBlocks(Relation relation)
 {
 	return
 	((relation->rd_islocal) ? relation->rd_nblocks :
-	 smgrnblocks(relation->rd_rel->relsmgr, relation));
+	 smgrnblocks(DEFAULT_SMGR, relation));
 }
 
 /*

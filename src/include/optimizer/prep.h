@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: prep.h,v 1.6 1997/11/20 23:23:48 momjian Exp $
+ * $Id: prep.h,v 1.7 1997/11/21 18:12:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,7 +36,7 @@ preprocess_targetlist(List *tlist, int command_type,
  */
 typedef enum UnionFlag
 {
-	INHERITS_FLAG, ARCHIVE_FLAG, VERSION_FLAG
+	INHERITS_FLAG, VERSION_FLAG
 } UnionFlag;
 
 extern List *

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.69 1997/11/20 23:22:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.70 1997/11/21 18:10:49 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -41,7 +41,6 @@
 #include "parser/gramparse.h"
 #include "parser/catalog_utils.h"
 #include "parser/parse_query.h"
-#include "storage/smgr.h"
 #include "utils/acl.h"
 #include "catalog/catname.h"
 #include "utils/elog.h"
@@ -101,7 +100,6 @@ static Node *makeIndexable(char *opname, Node *lexpr, Node *rexpr);
 
 	VersionStmt			*vstmt;
 	DefineStmt			*dstmt;
-	PurgeStmt			*pstmt;
 	RuleStmt			*rstmt;
 	AppendStmt			*astmt;
 }
@@ -112,8 +110,8 @@ static Node *makeIndexable(char *opname, Node *lexpr, Node *rexpr);
 		ExtendStmt, FetchStmt,	GrantStmt, CreateTrigStmt, DropTrigStmt,
 		CreatePLangStmt, DropPLangStmt,
 		IndexStmt, ListenStmt, OptimizableStmt,
-		ProcedureStmt, PurgeStmt,
-		RecipeStmt, RemoveAggrStmt, RemoveOperStmt, RemoveFuncStmt, RemoveStmt,
+		ProcedureStmt, 	RecipeStmt, RemoveAggrStmt, RemoveOperStmt,
+		RemoveFuncStmt, RemoveStmt,
 		RenameStmt, RevokeStmt, RuleStmt, TransactionStmt, ViewStmt, LoadStmt,
 		CreatedbStmt, DestroydbStmt, VacuumStmt, RetrieveStmt, CursorStmt,
 		ReplaceStmt, AppendStmt, NotifyStmt, DeleteStmt, ClusterStmt,
@@ -132,7 +130,7 @@ static Node *makeIndexable(char *opname, Node *lexpr, Node *rexpr);
 		class, index_name, name, file_name, recipe_name, aggr_argtype
 
 %type <str>		opt_id, opt_portal_name,
-		before_clause, after_clause, all_Op, MathOp, opt_name, opt_unique,
+		all_Op, MathOp, opt_name, opt_unique,
 		result, OptUseOp, opt_class, SpecialRuleRelation
 
 %type <str>		privileges, operation_commalist, grantee
@@ -163,16 +161,15 @@ static Node *makeIndexable(char *opname, Node *lexpr, Node *rexpr);
 %type <boolean> opt_inh_star, opt_binary, opt_instead, opt_with_copy,
 				index_opt_unique, opt_verbose, opt_analyze
 
-%type <ival>	copy_dirn, archive_type, OptArchiveType, OptArchiveLocation,
-		def_type, opt_direction, remove_type, opt_column, event
+%type <ival>	copy_dirn, def_type, opt_direction, remove_type,
+				opt_column, event
 
-%type <ival>	OptLocation, fetch_how_many
+%type <ival>	fetch_how_many
 
 %type <list>	OptSeqList
 %type <defelt>	OptSeqElem
 
 %type <dstmt>	def_rest
-%type <pstmt>	purge_quals
 %type <astmt>	insert_rest
 
 %type <coldef>	columnDef, alter_clause
@@ -257,15 +254,14 @@ static Node *makeIndexable(char *opname, Node *lexpr, Node *rexpr);
 
 /* Keywords for Postgres support (not in SQL92 reserved words) */
 %token	ABORT_TRANS, ACL, AFTER, AGGREGATE, ANALYZE,
-		APPEND, ARCHIVE, ARCH_STORE,
-		BACKWARD, BEFORE, BINARY, CHANGE, CLUSTER, COPY,
+		APPEND, BACKWARD, BEFORE, BINARY, CHANGE, CLUSTER, COPY,
 		DATABASE, DELIMITERS, DO, EXPLAIN, EXTEND,
-		FORWARD, FUNCTION, HANDLER, HEAVY,
+		FORWARD, FUNCTION, HANDLER,
 		INDEX, INHERITS, INSTEAD, ISNULL,
-		LANCOMPILER, LIGHT, LISTEN, LOAD, LOCATION, MERGE, MOVE,
-		NEW, NONE, NOTHING, OIDS, OPERATOR, PROCEDURAL, PURGE,
+		LANCOMPILER, LISTEN, LOAD, LOCATION, MERGE, MOVE,
+		NEW, NONE, NOTHING, OIDS, OPERATOR, PROCEDURAL,
 		RECIPE, RENAME, REPLACE, RESET, RETRIEVE, RETURNS, RULE,
-		SEQUENCE, SETOF, SHOW, STDIN, STDOUT, STORE, TRUSTED, 
+		SEQUENCE, SETOF, SHOW, STDIN, STDOUT, TRUSTED, 
 		VACUUM, VERBOSE, VERSION
 
 /* Special keywords, not in the query language - see the "lex" file */
@@ -336,7 +332,6 @@ stmt :	  AddAttrStmt
 		| IndexStmt
 		| ListenStmt
 		| ProcedureStmt
-		| PurgeStmt
 		| RecipeStmt
 		| RemoveAggrStmt
 		| RemoveOperStmt
@@ -664,17 +659,13 @@ copy_delimiter:  USING DELIMITERS Sconst { $$ = $3;}
  *****************************************************************************/
 
 CreateStmt:  CREATE TABLE relation_name '(' OptTableElementList ')'
-				OptInherit OptConstraint OptArchiveType OptLocation
-				OptArchiveLocation
+				OptInherit OptConstraint OptArchiveType
 				{
 					CreateStmt *n = makeNode(CreateStmt);
 					n->relname = $3;
 					n->tableElts = $5;
 					n->inhRelnames = $7;
 					n->constraints = $8;
-					n->archiveType = $9;
-					n->location = $10;
-					n->archiveLoc = $11;
 					$$ = (Node *)n;
 				}
 		;
@@ -690,26 +681,12 @@ tableElementList :
 				{ $$ = lcons($1, NIL); }
 		;
 
-
-OptArchiveType:  ARCHIVE '=' archive_type				{ $$ = $3; }
-		| /*EMPTY*/										{ $$ = ARCH_NONE; }
-		;
-
-archive_type:  HEAVY									{ $$ = ARCH_HEAVY; }
-		| LIGHT											{ $$ = ARCH_LIGHT; }
-		| NONE											{ $$ = ARCH_NONE; }
-		;
-
-OptLocation:  STORE '=' Sconst
-				{  $$ = smgrin($3);  }
-		| /*EMPTY*/
-				{  $$ = -1;  }
-		;
-
-OptArchiveLocation:  ARCH_STORE '=' Sconst
-				{  $$ = smgrin($3);  }
-		| /*EMPTY*/
-				{  $$ = -1;  }
+/*
+ *	This was removed in 6.3, but we keep it so people can upgrade
+ *	with old pg_dump scripts.
+ */
+OptArchiveType:  ARCHIVE '=' NONE						{ }
+		| /*EMPTY*/										{ }
 		;
 
 OptInherit:  INHERITS '(' relation_name_list ')'		{ $$ = $3; }
@@ -1254,7 +1231,7 @@ RevokeStmt:  REVOKE privileges ON relation_name_list FROM grantee
 /*****************************************************************************
  *
  *		QUERY:
- *				define [archive] index <indexname> on <relname>
+ *				create index <indexname> on <relname>
  *				  using <access> "(" (<col> with <op>)+ ")" [with
  *				  <target_list>]
  *
@@ -1406,59 +1383,6 @@ def_args:  '(' def_name_list ')'				{ $$ = $2; }
 		;
 
 def_name_list:	name_list;
-
-
-/*****************************************************************************
- *
- *		QUERY:
- *				purge <relname> [before <date>] [after <date>]
- *				  or
- *				purge <relname>  [after <date>] [before <date>]
- *
- *****************************************************************************/
-
-PurgeStmt:	PURGE relation_name purge_quals
-				{
-					$3->relname = $2;
-					$$ = (Node *)$3;
-				}
-		;
-
-purge_quals:  before_clause
-				{
-					$$ = makeNode(PurgeStmt);
-					$$->beforeDate = $1;
-					$$->afterDate = NULL;
-				}
-		| after_clause
-				{
-					$$ = makeNode(PurgeStmt);
-					$$->beforeDate = NULL;
-					$$->afterDate = $1;
-				}
-		| before_clause after_clause
-				{
-					$$ = makeNode(PurgeStmt);
-					$$->beforeDate = $1;
-					$$->afterDate = $2;
-				}
-		| after_clause before_clause
-				{
-					$$ = makeNode(PurgeStmt);
-					$$->beforeDate = $2;
-					$$->afterDate = $1;
-				}
-		| /*EMPTY*/
-				{
-					$$ = makeNode(PurgeStmt);
-					$$->beforeDate = NULL;
-					$$->afterDate = NULL;
-				}
-		;
-
-before_clause:	BEFORE date				{ $$ = $2; }
-after_clause:	AFTER date				{ $$ = $2; }
-
 
 /*****************************************************************************
  *
@@ -2122,7 +2046,7 @@ SubSelect:	SELECT opt_unique res_target_list2
 		;
 
 result:  INTO TABLE relation_name
-				{  $$= $3;	/* should check for archive level */  }
+				{  $$= $3; }
 		| /*EMPTY*/
 				{  $$ = NULL;  }
 		;
@@ -3446,7 +3370,6 @@ ColId:  Id								{ $$ = $1; }
 		| INDEX							{ $$ = "index"; }
 		| KEY							{ $$ = "key"; }
 		| LANGUAGE						{ $$ = "language"; }
-		| LIGHT							{ $$ = "light"; }
 		| LOCATION						{ $$ = "location"; }
 		| MATCH							{ $$ = "match"; }
 		| OPERATOR						{ $$ = "operator"; }
@@ -3481,7 +3404,6 @@ ColLabel:  ColId						{ $$ = $1; }
 		| ORDER							{ $$ = "order"; }
 		| POSITION						{ $$ = "position"; }
 		| PRECISION						{ $$ = "precision"; }
-		| STORE							{ $$ = "store"; }
 		| TABLE							{ $$ = "table"; }
 		| TRANSACTION					{ $$ = "transaction"; }
 		| TRUE_P						{ $$ = "true"; }

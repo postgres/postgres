@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.18 1997/10/25 01:08:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.19 1997/11/21 18:09:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,16 +51,9 @@ DefineRelation(CreateStmt *stmt)
 	List	   *schema = stmt->tableElts;
 	int			numberOfAttributes;
 	Oid			relationId;
-	char		archChar;
 	List	   *inheritList = NULL;
-	char	   *archiveName = NULL;
 	TupleDesc	descriptor;
 	List	   *constraints;
-	int			heaploc,
-				archloc;
-
-	char	   *typename = NULL;/* the typename of this relation. not
-								 * useod for now */
 
 	if (strlen(stmt->relname) >= NAMEDATALEN)
 		elog(WARN, "the relation name %s is >= %d characters long", stmt->relname,
@@ -74,53 +67,6 @@ DefineRelation(CreateStmt *stmt)
 	 * ----------------
 	 */
 	inheritList = stmt->inhRelnames;
-
-	/* ----------------
-	 *	determine archive mode
-	 *	XXX use symbolic constants...
-	 * ----------------
-	 */
-	archChar = 'n';
-
-	switch (stmt->archiveType)
-	{
-		case ARCH_NONE:
-			archChar = 'n';
-			break;
-		case ARCH_LIGHT:
-			archChar = 'l';
-			break;
-		case ARCH_HEAVY:
-			archChar = 'h';
-			break;
-		default:
-			elog(WARN, "Botched archive mode %d, ignoring",
-				 stmt->archiveType);
-			break;
-	}
-
-	if (stmt->location == -1)
-		heaploc = 0;
-	else
-		heaploc = stmt->location;
-
-	/*
-	 * For now, any user-defined relation defaults to the magnetic disk
-	 * storgage manager.  --mao 2 july 91
-	 */
-	if (stmt->archiveLoc == -1)
-	{
-		archloc = 0;
-	}
-	else
-	{
-		if (archChar == 'n')
-		{
-			elog(WARN, "Set archive location, but not mode, for %s",
-				 relname);
-		}
-		archloc = stmt->archiveLoc;
-	}
 
 	/* ----------------
 	 *	generate relation schema, including inherited attributes.
@@ -191,42 +137,9 @@ DefineRelation(CreateStmt *stmt)
 		}
 	}
 
-	relationId = heap_create(relname,
-							 typename,
-							 archChar,
-							 heaploc,
-							 descriptor);
+	relationId = heap_create(relname, descriptor);
 
 	StoreCatalogInheritance(relationId, inheritList);
-
-	/*
-	 * create an archive relation if necessary
-	 */
-	if (archChar != 'n')
-	{
-		TupleDesc	tupdesc;
-
-		/*
-		 * Need to create an archive relation for this heap relation. We
-		 * cobble up the command by hand, and increment the command
-		 * counter ourselves.
-		 */
-
-		CommandCounterIncrement();
-		archiveName = MakeArchiveName(relationId);
-
-		tupdesc = CreateTupleDescCopy(descriptor);		/* get rid of
-														 * constraints */
-		(void) heap_create(archiveName,
-						   typename,
-						   'n', /* archive isn't archived */
-						   archloc,
-						   tupdesc);
-
-		FreeTupleDesc(tupdesc);
-		FreeTupleDesc(descriptor);
-		pfree(archiveName);
-	}
 }
 
 /*
@@ -663,27 +576,4 @@ checkAttrExists(char *attributeName, char *attributeType, List *schema)
 		}
 	}
 	return 0;
-}
-
-/*
- * MakeArchiveName
- *	  make an archive rel name out of a regular rel name
- *
-* the CALLER is responsible for freeing the memory allocated
- */
-
-char	   *
-MakeArchiveName(Oid relationId)
-{
-	char	   *arch;
-
-	/*
-	 * Archive relations are named a,XXXXX where XXXXX == the OID of the
-	 * relation they archive.  Create a string containing this name and
-	 * find the reldesc for the archive relation.
-	 */
-	arch = palloc(NAMEDATALEN);
-	sprintf(arch, "a,%d", relationId);
-
-	return arch;
 }

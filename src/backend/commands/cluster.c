@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.16 1997/11/20 23:20:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.17 1997/11/21 18:09:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -215,11 +215,7 @@ copy_heap(Oid OIDOldHeap)
 
 	tupdesc = CreateTupleDescCopy(OldHeapDesc);
 
-	OIDNewHeap = heap_create(NewName,
-							 NULL,
-							 OldHeap->rd_rel->relarch,
-							 OldHeap->rd_rel->relsmgr,
-							 tupdesc);
+	OIDNewHeap = heap_create(NewName, tupdesc);
 
 	if (!OidIsValid(OIDNewHeap))
 		elog(WARN, "clusterheap: cannot create temporary heap relation\n");

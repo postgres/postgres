@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
  * prepunion.c--
- *	  Routines to plan archive, inheritance, union, and version queries
+ *	  Routines to plan inheritance, union, and version queries
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.7 1997/11/20 23:21:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.8 1997/11/21 18:10:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -118,10 +118,6 @@ first_matching_rt_entry(List *rangetable, UnionFlag flag)
 				if (rt_entry->inh)
 					return count + 1;
 				break;
-			case ARCHIVE_FLAG:
-				if (rt_entry->archive)
-					return count + 1;
-				break;
 			default:
 				break;
 		}
@@ -192,9 +188,6 @@ plan_union_queries(Index rt_index,
 		case INHERITS_FLAG:
 			rt_fetch(rt_index, rangetable)->inh = false;
 			break;
-		case ARCHIVE_FLAG:
-			rt_fetch(rt_index, rangetable)->archive = false;
-			break;
 		default:
 			break;
 	}
@@ -249,22 +242,10 @@ plan_union_query(List *relids,
 /*		new_root->uniqueFlag = false; */
 		new_root->uniqueFlag = NULL;
 		new_root->sortClause = NULL;
-		if (flag == ARCHIVE_FLAG)
-		{
-
-			/*
-			 * the entire union query uses the same (most recent) schema.
-			 * to do otherwise would require either ragged tuples or
-			 * careful archiving and interpretation of pg_attribute...
-			 */
-		}
-		else
-		{
-			fix_parsetree_attnums(rt_index,
-								  rt_entry->relid,
-								  relid,
-								  new_root);
-		}
+		fix_parsetree_attnums(rt_index,
+							  rt_entry->relid,
+							  relid,
+							  new_root);
 
 		union_plans = lappend(union_plans, planner(new_root));
 		union_rtentries = lappend(union_rtentries, new_rt_entry);

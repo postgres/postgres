@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.22 1997/11/07 07:02:10 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.23 1997/11/21 18:10:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,9 +42,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"analyze", ANALYZE},
 	{"and", AND},
 	{"append", APPEND},
-	{"archIve", ARCHIVE},		/* XXX crooked: I < _ */
-	{"arch_store", ARCH_STORE},
-	{"archive", ARCHIVE},		/* XXX crooked: i > _ */
+	{"archive", ARCHIVE},
 	{"as", AS},
 	{"asc", ASC},
 	{"backward", BACKWARD},
@@ -106,7 +104,6 @@ static ScanKeyword ScanKeywords[] = {
 	{"group", GROUP},
 	{"handler", HANDLER},
 	{"having", HAVING},
-	{"heavy", HEAVY},
 	{"hour", HOUR_P},
 	{"in", IN},
 	{"index", INDEX},
@@ -124,7 +121,6 @@ static ScanKeyword ScanKeywords[] = {
 	{"language", LANGUAGE},
 	{"leading", LEADING},
 	{"left", LEFT},
-	{"light", LIGHT},
 	{"like", LIKE},
 	{"listen", LISTEN},
 	{"load", LOAD},
@@ -162,7 +158,6 @@ static ScanKeyword ScanKeywords[] = {
 	{"procedural", PROCEDURAL},
 	{"procedure", PROCEDURE},
 	{"public", PUBLIC},
-	{"purge", PURGE},
 	{"recipe", RECIPE},
 	{"references", REFERENCES},
 	{"rename", RENAME},
@@ -182,7 +177,6 @@ static ScanKeyword ScanKeywords[] = {
 	{"show", SHOW},
 	{"stdin", STDIN},
 	{"stdout", STDOUT},
-	{"store", STORE},
 	{"substring", SUBSTRING},
 	{"table", TABLE},
 	{"time", TIME},

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.29 1997/11/20 23:23:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.30 1997/11/21 18:11:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -952,7 +952,7 @@ RelationBuildDesc(RelationBuildDescInfo buildinfo)
 	 *	by the storage manager code to rd_fd.
 	 * ----------------
 	 */
-	fd = smgropen(relp->relsmgr, relation);
+	fd = smgropen(DEFAULT_SMGR, relation);
 
 	Assert(fd >= -1);
 	if (fd == -1)
@@ -1091,7 +1091,6 @@ formrdesc(char *relationName,
 	relation->rd_rel->relpages = 1;		/* XXX */
 	relation->rd_rel->reltuples = 1;	/* XXX */
 	relation->rd_rel->relkind = RELKIND_RELATION;
-	relation->rd_rel->relarch = 'n';
 	relation->rd_rel->relnatts = (uint16) natts;
 	relation->rd_isnailed = true;
 
@@ -1157,7 +1156,7 @@ RelationIdCacheGetRelation(Oid relationId)
 	{
 		if (rd->rd_fd == -1)
 		{
-			rd->rd_fd = smgropen(rd->rd_rel->relsmgr, rd);
+			rd->rd_fd = smgropen(DEFAULT_SMGR, rd);
 			Assert(rd->rd_fd != -1);
 		}
 
@@ -1190,7 +1189,7 @@ RelationNameCacheGetRelation(char *relationName)
 	{
 		if (rd->rd_fd == -1)
 		{
-			rd->rd_fd = smgropen(rd->rd_rel->relsmgr, rd);
+			rd->rd_fd = smgropen(DEFAULT_SMGR, rd);
 			Assert(rd->rd_fd != -1);
 		}
 
@@ -1594,13 +1593,13 @@ RelationPurgeLocalRelation(bool xactCommitted)
 			{
 				if (!(reln->rd_tmpunlinked))
 				{
-					smgrunlink(reln->rd_rel->relsmgr, reln);
+					smgrunlink(DEFAULT_SMGR, reln);
 					reln->rd_tmpunlinked = TRUE;
 				}
 			}
 			else
 			{
-				smgrunlink(reln->rd_rel->relsmgr, reln);
+				smgrunlink(DEFAULT_SMGR, reln);
 			}
 		}
 		else if (!IsBootstrapProcessingMode() && !(reln->rd_istemp))
@@ -1613,7 +1612,7 @@ RelationPurgeLocalRelation(bool xactCommitted)
 			 * heap_destroyr and we skip smgrclose for them.		  -
 			 * vadim 05/22/97
 			 */
-			smgrclose(reln->rd_rel->relsmgr, reln);
+			smgrclose(DEFAULT_SMGR, reln);
 
 		reln->rd_islocal = FALSE;
 

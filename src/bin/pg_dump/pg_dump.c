@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.52 1997/10/30 16:47:59 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.53 1997/11/21 18:11:37 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -443,10 +443,6 @@ dumpClasses(const TableInfo tblinfo[], const int numTables, FILE *fout,
 			if (g_verbose)
 				fprintf(stderr, "%s dumping out the contents of Table %s %s\n",
 						g_comment_start, classname, g_comment_end);
-
-			/* skip archive names */
-			if (isArchiveName(classname))
-				continue;
 
 			if (!dumpData)
 				dumpClasses_nodumpData(fout, classname, oids);
@@ -907,20 +903,11 @@ clearTableInfo(TableInfo *tblinfo, int numTables)
 
 		if (tblinfo[i].oid)
 			free(tblinfo[i].oid);
-		if (tblinfo[i].relarch)
-			free(tblinfo[i].relarch);
 		if (tblinfo[i].relacl)
 			free(tblinfo[i].relacl);
 		if (tblinfo[i].usename)
 			free(tblinfo[i].usename);
 
-		/* skip archive tables */
-		if (isArchiveName(tblinfo[i].relname))
-		{
-			if (tblinfo[i].relname)
-				free(tblinfo[i].relname);
-			continue;
-		}
 		if (tblinfo[i].relname)
 			free(tblinfo[i].relname);
 
@@ -1288,7 +1275,6 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 
 	int			i_oid;
 	int			i_relname;
-	int			i_relarch;
 	int			i_relkind;
 	int			i_relacl;
 	int			i_usename;
@@ -1313,7 +1299,7 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 	PQclear(res);
 
 	sprintf(query,
-	   "SELECT pg_class.oid, relname, relarch, relkind, relacl, usename, "
+	   "SELECT pg_class.oid, relname, relkind, relacl, usename, "
 	   		"relchecks, reltriggers "
 			"from pg_class, pg_user "
 			"where relowner = usesysid and "
@@ -1336,7 +1322,6 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 
 	i_oid = PQfnumber(res, "oid");
 	i_relname = PQfnumber(res, "relname");
-	i_relarch = PQfnumber(res, "relarch");
 	i_relkind = PQfnumber(res, "relkind");
 	i_relacl = PQfnumber(res, "relacl");
 	i_usename = PQfnumber(res, "usename");
@@ -1347,7 +1332,6 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 	{
 		tblinfo[i].oid = strdup(PQgetvalue(res, i, i_oid));
 		tblinfo[i].relname = strdup(PQgetvalue(res, i, i_relname));
-		tblinfo[i].relarch = strdup(PQgetvalue(res, i, i_relarch));
 		tblinfo[i].relacl = strdup(PQgetvalue(res, i, i_relacl));
 		tblinfo[i].sequence = (strcmp(PQgetvalue(res, i, i_relkind), "S") == 0);
 		tblinfo[i].usename = strdup(PQgetvalue(res, i, i_usename));
@@ -1635,10 +1619,6 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 
 	for (i = 0; i < numTables; i++)
 	{
-
-		/* skip archive tables */
-		if (isArchiveName(tblinfo[i].relname))
-			continue;
 
 		if (tblinfo[i].sequence)
 			continue;
@@ -2178,7 +2158,6 @@ dumpTables(FILE *fout, TableInfo *tblinfo, int numTables,
 	char	  **parentRels;		/* list of names of parent relations */
 	int			numParents;
 	int			actual_atts;	/* number of attrs in this CREATE statment */
-	const char *archiveMode;
 	
 	/* First - dump SEQUENCEs */
 	for (i = 0; i < numTables; i++)
@@ -2202,10 +2181,6 @@ dumpTables(FILE *fout, TableInfo *tblinfo, int numTables,
 
 			/* Skip VIEW relations */
 			if (isViewRule(tblinfo[i].relname))
-				continue;
-
-			/* skip archive names */
-			if (isArchiveName(tblinfo[i].relname))
 				continue;
 
 			parentRels = tblinfo[i].parentRels;
@@ -2291,28 +2266,6 @@ dumpTables(FILE *fout, TableInfo *tblinfo, int numTables,
 							tblinfo[i].check_expr[k]);
 				}
 			}
-
-			switch (tblinfo[i].relarch[0])
-			{
-				case 'n':
-					archiveMode = "none";
-					break;
-				case 'h':
-					archiveMode = "heavy";
-					break;
-				case 'l':
-					archiveMode = "light";
-					break;
-				default:
-					fprintf(stderr, "unknown archive mode\n");
-					archiveMode = "none";
-					break;
-			}
-
-			sprintf(q, "%s archive = %s;\n",
-					q,
-					archiveMode);
-			fputs(q, fout);
 
 			if (acls)
 				fprintf(fout,
