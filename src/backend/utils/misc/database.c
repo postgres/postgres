@@ -8,13 +8,12 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.41 2000/11/14 18:37:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.42 2001/01/14 22:21:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include <errno.h>
 #include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
@@ -26,6 +25,9 @@
 #include "catalog/pg_database.h"
 #include "miscadmin.h"
 #include "utils/syscache.h"
+
+
+static bool PhonyHeapTupleSatisfiesNow(HeapTupleHeader tuple);
 
 
 /*
@@ -136,11 +138,9 @@ GetRawDatabaseInfo(const char *name, Oid *db_id, char *path)
 {
 	int			dbfd;
 	int			nbytes;
-	int			max,
-				i;
+	int			pathlen;
 	HeapTupleData tup;
 	Page		pg;
-	PageHeader	ph;
 	char	   *dbfname;
 	Form_pg_database tup_db;
 
@@ -157,7 +157,7 @@ GetRawDatabaseInfo(const char *name, Oid *db_id, char *path)
 #endif
 
 	if ((dbfd = open(dbfname, O_RDONLY | PG_BINARY, 0)) < 0)
-		elog(FATAL, "cannot open %s: %s", dbfname, strerror(errno));
+		elog(FATAL, "cannot open %s: %m", dbfname);
 
 	pfree(dbfname);
 
@@ -179,38 +179,38 @@ GetRawDatabaseInfo(const char *name, Oid *db_id, char *path)
 	 * ----------------
 	 */
 	pg = (Page) palloc(BLCKSZ);
-	ph = (PageHeader) pg;
 
 	while ((nbytes = read(dbfd, pg, BLCKSZ)) == BLCKSZ)
 	{
-		max = PageGetMaxOffsetNumber(pg);
+		OffsetNumber	max = PageGetMaxOffsetNumber(pg);
+		OffsetNumber	lineoff;
 
 		/* look at each tuple on the page */
-		for (i = 0; i < max; i++)
+		for (lineoff = FirstOffsetNumber; lineoff <= max; lineoff++)
 		{
-			int			offset;
+			ItemId		lpp = PageGetItemId(pg, lineoff);
 
 			/* if it's a freed tuple, ignore it */
-			if (!(ph->pd_linp[i].lp_flags & LP_USED))
+			if (!ItemIdIsUsed(lpp))
 				continue;
 
 			/* get a pointer to the tuple itself */
-			offset = (int) ph->pd_linp[i].lp_off;
 			tup.t_datamcxt = NULL;
-			tup.t_data = (HeapTupleHeader) (((char *) pg) + offset);
+			tup.t_data = (HeapTupleHeader) PageGetItem(pg, lpp);
 
-			/*
-			 * if the tuple has been deleted (the database was destroyed),
-			 * skip this tuple.  XXX warning, will robinson:  violation of
-			 * transaction semantics happens right here.  we should check
-			 * to be sure that the xact that deleted this tuple actually
-			 * committed.  Only way to do that at init time is to paw over
-			 * the log relation by hand, too.  Instead we take the
-			 * conservative assumption that if someone tried to delete it,
-			 * it's gone.  The other side of the coin is that we might
-			 * accept a tuple that was stored and never committed.	All in
-			 * all, this code is pretty shaky.	We will cross-check our
-			 * result in ReverifyMyDatabase() in postinit.c.
+			/*--------------------
+			 * Check to see if tuple is valid (committed).
+			 *
+			 * XXX warning, will robinson: violation of transaction semantics
+			 * happens right here.  We cannot really determine if the tuple
+			 * is valid without checking transaction commit status, and the
+			 * only way to do that at init time is to paw over pg_log by hand,
+			 * too.  Instead of checking, we assume that the inserting
+			 * transaction committed, and that any deleting transaction did
+			 * also, unless shown otherwise by on-row commit status bits.
+			 *
+			 * All in all, this code is pretty shaky.  We will cross-check
+			 * our result in ReverifyMyDatabase() in postinit.c.
 			 *
 			 * NOTE: if a bogus tuple in pg_database prevents connection to a
 			 * valid database, a fix is to connect to another database and
@@ -220,12 +220,10 @@ GetRawDatabaseInfo(const char *name, Oid *db_id, char *path)
 			 * XXX wouldn't it be better to let new backends read the
 			 * database OID from a flat file, handled the same way we
 			 * handle the password relation?
+			 *--------------------
 			 */
-			if (tup.t_data->t_infomask & HEAP_XMIN_INVALID)
-				continue;		/* inserting xact known aborted */
-			if (TransactionIdIsValid((TransactionId) tup.t_data->t_xmax) &&
-				!(tup.t_data->t_infomask & HEAP_XMAX_INVALID))
-				continue;		/* deleting xact happened, not known aborted */
+			if (! PhonyHeapTupleSatisfiesNow(tup.t_data))
+				continue;
 
 			/*
 			 * Okay, see if this is the one we want.
@@ -236,9 +234,11 @@ GetRawDatabaseInfo(const char *name, Oid *db_id, char *path)
 			{
 				/* Found it; extract the OID and the database path. */
 				*db_id = tup.t_data->t_oid;
-				strncpy(path, VARDATA(&(tup_db->datpath)),
-						(VARSIZE(&(tup_db->datpath)) - VARHDRSZ));
-				*(path + VARSIZE(&(tup_db->datpath)) - VARHDRSZ) = '\0';
+				pathlen = VARSIZE(&(tup_db->datpath)) - VARHDRSZ;
+				if (pathlen >= MAXPGPATH)
+					pathlen = MAXPGPATH-1; /* pure paranoia */
+				strncpy(path, VARDATA(&(tup_db->datpath)), pathlen);
+				path[pathlen] = '\0';
 				goto done;
 			}
 		}
@@ -251,4 +251,37 @@ GetRawDatabaseInfo(const char *name, Oid *db_id, char *path)
 done:
 	close(dbfd);
 	pfree(pg);
-}	/* GetRawDatabaseInfo() */
+}
+
+/*
+ * PhonyHeapTupleSatisfiesNow --- cut-down tuple time qual test
+ *
+ * This is a simplified version of HeapTupleSatisfiesNow() that does not
+ * depend on having transaction commit info available.  Any transaction
+ * that touched the tuple is assumed committed unless later marked invalid.
+ * (While we could think about more complex rules, this seems appropriate
+ * for examining pg_database, since both CREATE DATABASE and DROP DATABASE
+ * are non-roll-back-able.)
+ */
+static bool
+PhonyHeapTupleSatisfiesNow(HeapTupleHeader tuple)
+{
+	if (!(tuple->t_infomask & HEAP_XMIN_COMMITTED))
+	{
+		if (tuple->t_infomask & HEAP_XMIN_INVALID)
+			return false;
+
+		if (tuple->t_infomask & HEAP_MOVED_OFF)
+			return false;
+		/* else assume committed */
+	}
+
+	if (tuple->t_infomask & HEAP_XMAX_INVALID)	/* xid invalid or aborted */
+		return true;
+
+	/* assume xmax transaction committed */
+	if (tuple->t_infomask & HEAP_MARKED_FOR_UPDATE)
+		return true;
+
+	return false;
+}
