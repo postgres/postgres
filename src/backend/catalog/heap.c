@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.225 2002/09/04 20:31:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.226 2002/09/14 22:14:49 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1697,7 +1697,7 @@ cookDefault(ParseState *pstate,
 	 *
 	 * CREATE TABLE tbl (fld timestamp DEFAULT 'now'::text);
 	 *
-	 * NB: this should match the code in optimizer/prep/preptlist.c that will
+	 * NB: this should match the code in rewrite/rewriteHandler.c that will
 	 * actually do the coercion, to ensure we don't accept an unusable
 	 * default expression.
 	 */
