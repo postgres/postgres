@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/create_index.l,v 1.6 1997/05/14 01:38:34 vadim Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/create_index.l,v 1.7 1997/10/30 18:41:03 momjian Exp $
 .TH "CREATE INDEX" SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 create index \(em construct a secondary index
@@ -44,14 +44,7 @@ result of a user-defined function
 .IR funcname
 applied to one or more attributes of a single class.  These
 .IR "functional indices"
-are primarily useful in two situations.  First, functional indices can
-be used to simulate multi-key indices.  That is, the user can define a
-new base type (a simple combination of, say, \*(lqoid\*(rq and
-\*(lqint2\*(rq) and the associated functions and operators on this new
-type such that the access method can use it.  Once this has been done,
-the standard techniques for interfacing new types to access methods
-(described in the Postgres user manual) can be applied.  Second,
-functional indices can be used to obtain fast access to data based on
+can be used to obtain fast access to data based on
 operators that would normally require some transformation to be
 applied to the base data.  For example, say you have an attribute in
 class \*(lqmyclass\*(rq called \*(lqpt\*(rq that consists of a 2D
