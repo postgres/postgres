@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/stylesheet.dsl,v 1.21 2002/08/05 19:43:31 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/stylesheet.dsl,v 1.22 2002/10/12 16:33:43 petere Exp $ -->
 <!DOCTYPE style-sheet PUBLIC "-//James Clark//DTD DSSSL Style Sheet//EN" [
 
 <!-- must turn on one of these with -i on the jade command line -->
@@ -52,18 +52,15 @@
 (define %honorific-punctuation% "")
 
 ;; Change display of some elements
+(element command ($mono-seq$))
 (element envar ($mono-seq$))
 (element lineannotation ($italic-seq$))
 (element structfield ($mono-seq$))
 (element structname ($mono-seq$))
 (element symbol ($mono-seq$))
+(element token ($mono-seq$))
 (element type ($mono-seq$))
 (element (programlisting emphasis) ($bold-seq$)) ;; to highlight sections of code
-
-;; Indentation of verbatim environments
-(define %indent-programlisting-lines% "    ")
-(define %indent-screen-lines% "    ")
-(define %indent-synopsis-lines% "    ")
 
 
 ;; Bibliography things
@@ -243,6 +240,12 @@
 
 (define %refentry-new-page%     #t)
 (define %refentry-keep%         #f)
+
+;; Indentation of verbatim environments.  (This should really be done
+;; with start-indent in DSSSL.)
+(define %indent-programlisting-lines% "    ")
+(define %indent-screen-lines% "    ")
+(define %indent-synopsis-lines% "    ")
 
 
 ;; Default graphic format: Jadetex wants eps, pdfjadetex wants pdf.
