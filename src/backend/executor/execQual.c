@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.75 2000/07/22 03:34:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.76 2000/07/23 01:35:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,18 +64,30 @@ static Datum ExecEvalVar(Var *variable, ExprContext *econtext, bool *isNull);
 static Datum ExecMakeFunctionResult(Node *node, List *arguments,
 					   ExprContext *econtext, bool *isNull, bool *isDone);
 
-/*
+/*----------
  *	  ExecEvalArrayRef
  *
  *	   This function takes an ArrayRef and returns the extracted Datum
  *	   if it's a simple reference, or the modified array value if it's
- *	   an array assignment (read array element insertion).
+ *	   an array assignment (i.e., array element or slice insertion).
+ *
+ * NOTE: if we get a NULL result from a subexpression, we return NULL when
+ * it's an array reference, or the unmodified source array when it's an
+ * array assignment.  This may seem peculiar, but if we return NULL (as was
+ * done in versions up through 7.0) then an assignment like
+ *			UPDATE table SET arrayfield[4] = NULL
+ * will result in setting the whole array to NULL, which is certainly not
+ * very desirable.  By returning the source array we make the assignment
+ * into a no-op, instead.  (Eventually we need to redesign arrays so that
+ * individual elements can be NULL, but for now, let's try to protect users
+ * from shooting themselves in the foot.)
  *
  * NOTE: we deliberately refrain from applying DatumGetArrayTypeP() here,
  * even though that might seem natural, because this code needs to support
  * both varlena arrays and fixed-length array types.  DatumGetArrayTypeP()
  * only works for the varlena kind.  The routines we call in arrayfuncs.c
  * have to know the difference (that's what they need refattrlength for).
+ *----------
  */
 static Datum
 ExecEvalArrayRef(ArrayRef *arrayRef,
@@ -85,6 +97,7 @@ ExecEvalArrayRef(ArrayRef *arrayRef,
 {
 	ArrayType  *array_source;
 	ArrayType  *resultArray;
+	bool		isAssignment = (arrayRef->refassgnexpr != NULL);
 	List	   *elt;
 	int			i = 0,
 				j = 0;
@@ -102,7 +115,11 @@ ExecEvalArrayRef(ArrayRef *arrayRef,
 										 econtext,
 										 isNull,
 										 isDone));
-		/* If refexpr yields NULL, result is always NULL, for now anyway */
+		/*
+		 * If refexpr yields NULL, result is always NULL, for now anyway.
+		 * (This means you cannot assign to an element or slice of an array
+		 * that's NULL; it'll just stay NULL.)
+		 */
 		if (*isNull)
 			return (Datum) NULL;
 	}
@@ -110,7 +127,7 @@ ExecEvalArrayRef(ArrayRef *arrayRef,
 	{
 
 		/*
-		 * Null refexpr indicates we are doing an INSERT into an array
+		 * Empty refexpr indicates we are doing an INSERT into an array
 		 * column. For now, we just take the refassgnexpr (which the
 		 * parser will have ensured is an array value) and return it
 		 * as-is, ignoring any subscripts that may have been supplied in
@@ -130,9 +147,14 @@ ExecEvalArrayRef(ArrayRef *arrayRef,
 													 econtext,
 													 isNull,
 													 &dummy));
-		/* If any index expr yields NULL, result is NULL */
+		/* If any index expr yields NULL, result is NULL or source array */
 		if (*isNull)
-			return (Datum) NULL;
+		{
+			if (! isAssignment || array_source == NULL)
+				return (Datum) NULL;
+			*isNull = false;
+			return PointerGetDatum(array_source);
+		}
 	}
 
 	if (arrayRef->reflowerindexpr != NIL)
@@ -147,9 +169,14 @@ ExecEvalArrayRef(ArrayRef *arrayRef,
 														 econtext,
 														 isNull,
 														 &dummy));
-			/* If any index expr yields NULL, result is NULL */
+			/* If any index expr yields NULL, result is NULL or source array */
 			if (*isNull)
-				return (Datum) NULL;
+			{
+				if (! isAssignment || array_source == NULL)
+					return (Datum) NULL;
+				*isNull = false;
+				return PointerGetDatum(array_source);
+			}
 		}
 		if (i != j)
 			elog(ERROR,
@@ -159,18 +186,26 @@ ExecEvalArrayRef(ArrayRef *arrayRef,
 	else
 		lIndex = NULL;
 
-	if (arrayRef->refassgnexpr != NULL)
+	if (isAssignment)
 	{
 		Datum		sourceData = ExecEvalExpr(arrayRef->refassgnexpr,
 											  econtext,
 											  isNull,
 											  &dummy);
-		/* For now, can't cope with inserting NULL into an array */
+		/*
+		 * For now, can't cope with inserting NULL into an array,
+		 * so make it a no-op per discussion above...
+		 */
 		if (*isNull)
-			return (Datum) NULL;
+		{
+			if (array_source == NULL)
+				return (Datum) NULL;
+			*isNull = false;
+			return PointerGetDatum(array_source);
+		}
 
 		if (array_source == NULL)
-			return sourceData;	/* XXX do something else? */
+			return sourceData;		/* XXX do something else? */
 
 		if (lIndex == NULL)
 			resultArray = array_set(array_source, i,

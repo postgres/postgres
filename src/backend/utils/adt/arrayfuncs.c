@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.62 2000/07/22 03:34:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.63 2000/07/23 01:35:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,10 +23,6 @@
 #include "utils/memutils.h"
 #include "utils/syscache.h"
 
-#define ASSGN	 "="
-
-#define RETURN_NULL(type)  do { *isNull = true; return (type) 0; } while (0)
-
 
 /*
  * An array has the following internal structure:
@@ -39,6 +35,23 @@
  * The actual data starts on a MAXALIGN boundary.
  */
 
+
+/* ----------
+ * Local definitions
+ * ----------
+ */
+#ifndef MIN
+#define MIN(a,b) (((a)<(b)) ? (a) : (b))
+#endif
+#ifndef MAX
+#define MAX(a,b) (((a)>(b)) ? (a) : (b))
+#endif
+
+#define ASSGN	 "="
+
+#define RETURN_NULL(type)  do { *isNull = true; return (type) 0; } while (0)
+
+
 static int	ArrayCount(char *str, int *dim, int typdelim);
 static Datum *ReadArrayStr(char *arrayStr, int nitems, int ndim, int *dim,
 			  FmgrInfo *inputproc, Oid typelem, int32 typmod,
@@ -48,16 +61,22 @@ static void CopyArrayEls(char *p, Datum *values, int nitems,
 						 bool typbyval, int typlen, char typalign,
 						 bool freedata);
 static void system_cache_lookup(Oid element_type, bool input, int *typlen,
-				 bool *typbyval, char *typdelim, Oid *typelem, Oid *proc,
-					char *typalign);
+								bool *typbyval, char *typdelim, Oid *typelem,
+								Oid *proc, char *typalign);
 static Datum ArrayCast(char *value, bool byval, int len);
-static void ArrayClipCopy(int *st, int *endp, int bsize, char *destPtr,
-						  ArrayType *array, bool from);
-static int	ArrayClipCount(int *st, int *endp, ArrayType *array);
 static int	ArrayCastAndSet(Datum src, bool typbyval, int typlen, char *dest);
-static bool SanityCheckInput(int ndim, int n, int *dim, int *lb, int *indx);
-static int	array_read(char *destptr, int eltsize, int nitems, char *srcptr);
+static int	array_nelems_size(char *ptr, int eltsize, int nitems);
 static char *array_seek(char *ptr, int eltsize, int nitems);
+static int	array_copy(char *destptr, int eltsize, int nitems, char *srcptr);
+static int	array_slice_size(int ndim, int *dim, int *lb, char *arraydataptr,
+							 int eltsize, int *st, int *endp);
+static void array_extract_slice(int ndim, int *dim, int *lb,
+								char *arraydataptr, int eltsize,
+								int *st, int *endp, char *destPtr);
+static void array_insert_slice(int ndim, int *dim, int *lb,
+							   char *origPtr, int origdatasize,
+							   char *destPtr, int eltsize,
+							   int *st, int *endp, char *srcPtr);
 
 
 /*---------------------------------------------------------------------
@@ -153,7 +172,7 @@ array_in(PG_FUNCTION_ARGS)
 	{
 		while (isspace((int) *p))
 			p++;
-		if (strncmp(p, ASSGN, strlen(ASSGN)))
+		if (strncmp(p, ASSGN, strlen(ASSGN)) != 0)
 			elog(ERROR, "array_in: missing assignment operator");
 		p += strlen(ASSGN);
 		while (isspace((int) *p))
@@ -172,6 +191,7 @@ array_in(PG_FUNCTION_ARGS)
 	nitems = ArrayGetNItems(ndim, dim);
 	if (nitems == 0)
 	{
+		/* Return empty array */
 		retval = (ArrayType *) palloc(sizeof(ArrayType));
 		MemSet(retval, 0, sizeof(ArrayType));
 		retval->size = sizeof(ArrayType);
@@ -677,6 +697,10 @@ array_dims(PG_FUNCTION_ARGS)
 	int		   *dimv,
 			   *lb;
 
+	/* Sanity check: does it look like an array at all? */
+	if (ARR_NDIM(v) <= 0 || ARR_NDIM(v) > MAXDIM)
+		PG_RETURN_NULL();
+
 	nbytes = ARR_NDIM(v) * 33 + 1;
 	/*
 	 * 33 since we assume 15 digits per number + ':' +'[]'
@@ -716,11 +740,15 @@ array_ref(ArrayType *array,
 		  int arraylen,
 		  bool *isNull)
 {
-	int			ndim,
+	int			i,
+				ndim,
 			   *dim,
 			   *lb,
-				offset;
-	char	   *retptr;
+				offset,
+				fixedDim[1],
+				fixedLb[1];
+	char	   *arraydataptr,
+			   *retptr;
 
 	if (array == (ArrayType *) NULL)
 		RETURN_NULL(Datum);
@@ -730,27 +758,39 @@ array_ref(ArrayType *array,
 		/*
 		 * fixed-length arrays -- these are assumed to be 1-d, 0-based
 		 */
-		if (nSubscripts != 1)
-			RETURN_NULL(Datum);
-		if (indx[0] < 0 || indx[0] * elmlen >= arraylen)
-			RETURN_NULL(Datum);
-		retptr = (char *) array + indx[0] * elmlen;
-		return ArrayCast(retptr, elmbyval, elmlen);
+		ndim = 1;
+		fixedDim[0] = arraylen / elmlen;
+		fixedLb[0] = 0;
+		dim = fixedDim;
+		lb = fixedLb;
+		arraydataptr = (char *) array;
+	}
+	else
+	{
+		/* detoast input if necessary */
+		array = DatumGetArrayTypeP(PointerGetDatum(array));
+
+		ndim = ARR_NDIM(array);
+		dim = ARR_DIMS(array);
+		lb = ARR_LBOUND(array);
+		arraydataptr = ARR_DATA_PTR(array);
 	}
 
-	/* detoast input if necessary */
-	array = DatumGetArrayTypeP(PointerGetDatum(array));
-
-	ndim = ARR_NDIM(array);
-	dim = ARR_DIMS(array);
-	lb = ARR_LBOUND(array);
-
-	if (!SanityCheckInput(ndim, nSubscripts, dim, lb, indx))
+	/*
+	 * Return NULL for invalid subscript
+	 */
+	if (ndim != nSubscripts || ndim <= 0 || ndim > MAXDIM)
 		RETURN_NULL(Datum);
+	for (i = 0; i < ndim; i++)
+		if (indx[i] < lb[i] || indx[i] >= (dim[i] + lb[i]))
+			RETURN_NULL(Datum);
 
+	/*
+	 * OK, get the element
+	 */
 	offset = ArrayGetOffset(nSubscripts, dim, lb, indx);
 
-	retptr = array_seek(ARR_DATA_PTR(array), elmlen, offset);
+	retptr = array_seek(arraydataptr, elmlen, offset);
 
 	return ArrayCast(retptr, elmbyval, elmlen);
 }
@@ -760,6 +800,9 @@ array_ref(ArrayType *array,
  *		   This routine takes an array and a range of indices (upperIndex and
  *		   lowerIndx), creates a new array structure for the referred elements
  *		   and returns a pointer to it.
+ *
+ * NOTE: we assume it is OK to scribble on the provided index arrays
+ * lowerIndx[] and upperIndx[].  These are generally just temporaries.
  *-----------------------------------------------------------------------------
  */
 ArrayType *
@@ -776,7 +819,10 @@ array_get_slice(ArrayType *array,
 				ndim,
 			   *dim,
 			   *lb;
-	ArrayType  *newArr;
+	int			fixedDim[1],
+				fixedLb[1];
+	char	   *arraydataptr;
+	ArrayType  *newarray;
 	int			bytes,
 				span[MAXDIM];
 
@@ -786,44 +832,68 @@ array_get_slice(ArrayType *array,
 	if (arraylen > 0)
 	{
 		/*
-		 * fixed-length arrays -- no can do slice...
+		 * fixed-length arrays -- currently, cannot slice these because
+		 * parser labels output as being of the fixed-length array type!
+		 * Code below shows how we could support it if the parser were
+		 * changed to label output as a suitable varlena array type.
 		 */
 		elog(ERROR, "Slices of fixed-length arrays not implemented");
+
+		/*
+		 * fixed-length arrays -- these are assumed to be 1-d, 0-based
+		 */
+		ndim = 1;
+		fixedDim[0] = arraylen / elmlen;
+		fixedLb[0] = 0;
+		dim = fixedDim;
+		lb = fixedLb;
+		arraydataptr = (char *) array;
+	}
+	else
+	{
+		/* detoast input if necessary */
+		array = DatumGetArrayTypeP(PointerGetDatum(array));
+
+		ndim = ARR_NDIM(array);
+		dim = ARR_DIMS(array);
+		lb = ARR_LBOUND(array);
+		arraydataptr = ARR_DATA_PTR(array);
 	}
 
-	/* detoast input if necessary */
-	array = DatumGetArrayTypeP(PointerGetDatum(array));
-
-	ndim = ARR_NDIM(array);
-	dim = ARR_DIMS(array);
-	lb = ARR_LBOUND(array);
-
-	if (!SanityCheckInput(ndim, nSubscripts, dim, lb, upperIndx) ||
-		!SanityCheckInput(ndim, nSubscripts, dim, lb, lowerIndx))
+	/*
+	 * Check provided subscripts.  A slice exceeding the current array
+	 * limits is silently truncated to the array limits.  If we end up with
+	 * an empty slice, return NULL (should it be an empty array instead?)
+	 */
+	if (ndim != nSubscripts || ndim <= 0 || ndim > MAXDIM)
 		RETURN_NULL(ArrayType *);
 
-	for (i = 0; i < nSubscripts; i++)
+	for (i = 0; i < ndim; i++)
+	{
+		if (lowerIndx[i] < lb[i])
+			lowerIndx[i] = lb[i];
+		if (upperIndx[i] >= (dim[i] + lb[i]))
+			upperIndx[i] = dim[i] + lb[i] - 1;
 		if (lowerIndx[i] > upperIndx[i])
 			RETURN_NULL(ArrayType *);
+	}
 
 	mda_get_range(nSubscripts, span, lowerIndx, upperIndx);
 
-	if (elmlen > 0)
-		bytes = ArrayGetNItems(nSubscripts, span) * elmlen;
-	else
-		bytes = ArrayClipCount(lowerIndx, upperIndx, array);
-	bytes += ARR_OVERHEAD(nSubscripts);
+	bytes = array_slice_size(ndim, dim, lb, arraydataptr,
+							 elmlen, lowerIndx, upperIndx);
+	bytes += ARR_OVERHEAD(ndim);
 
-	newArr = (ArrayType *) palloc(bytes);
-	newArr->size = bytes;
-	newArr->ndim = array->ndim;
-	newArr->flags = array->flags;
-	memcpy(ARR_DIMS(newArr), span, nSubscripts * sizeof(int));
-	memcpy(ARR_LBOUND(newArr), lowerIndx, nSubscripts * sizeof(int));
-	ArrayClipCopy(lowerIndx, upperIndx, elmlen, ARR_DATA_PTR(newArr),
-				  array, true);
+	newarray = (ArrayType *) palloc(bytes);
+	newarray->size = bytes;
+	newarray->ndim = ndim;
+	newarray->flags = 0;
+	memcpy(ARR_DIMS(newarray), span, ndim * sizeof(int));
+	memcpy(ARR_LBOUND(newarray), lowerIndx, ndim * sizeof(int));
+	array_extract_slice(ndim, dim, lb, arraydataptr, elmlen,
+						lowerIndx, upperIndx, ARR_DATA_PTR(newarray));
 
-	return newArr;
+	return newarray;
 }
 
 /*-----------------------------------------------------------------------------
@@ -834,7 +904,11 @@ array_get_slice(ArrayType *array,
  *		  A new array is returned, just like the old except for the one
  *		  modified entry.
  *
- * NOTE: For assignments, we throw an error for silly subscripts etc,
+ * For one-dimensional arrays only, we allow the array to be extended
+ * by assigning to the position one above or one below the existing range.
+ * (We could be more flexible if we had a way to represent NULL elements.)
+ *
+ * NOTE: For assignments, we throw an error for invalid subscripts etc,
  * rather than returning a NULL as the fetch operations do.  The reasoning
  * is that returning a NULL would cause the user's whole array to be replaced
  * with NULL, which will probably not make him happy.
@@ -850,19 +924,22 @@ array_set(ArrayType *array,
 		  int arraylen,
 		  bool *isNull)
 {
-	int			ndim,
-			   *dim,
-			   *lb,
+	int			i,
+				ndim,
+				dim[MAXDIM],
+				lb[MAXDIM],
 				offset;
 	ArrayType  *newarray;
 	char	   *elt_ptr;
-	int			oldsize,
+	bool		extendbefore = false;
+	bool		extendafter = false;
+	int			olddatasize,
 				newsize,
-				oldlen,
-				newlen,
-				lth0,
-				lth1,
-				lth2;
+				olditemlen,
+				newitemlen,
+				overheadlen,
+				lenbefore,
+				lenafter;
 
 	if (array == (ArrayType *) NULL)
 		RETURN_NULL(ArrayType *);
@@ -870,7 +947,8 @@ array_set(ArrayType *array,
 	if (arraylen > 0)
 	{
 		/*
-		 * fixed-length arrays -- these are assumed to be 1-d, 0-based
+		 * fixed-length arrays -- these are assumed to be 1-d, 0-based.
+		 * We cannot extend them, either.
 		 */
 		if (nSubscripts != 1)
 			elog(ERROR, "Invalid array subscripts");
@@ -887,40 +965,99 @@ array_set(ArrayType *array,
 	array = DatumGetArrayTypeP(PointerGetDatum(array));
 
 	ndim = ARR_NDIM(array);
-	dim = ARR_DIMS(array);
-	lb = ARR_LBOUND(array);
-
-	if (!SanityCheckInput(ndim, nSubscripts, dim, lb, indx))
+	if (ndim != nSubscripts || ndim <= 0 || ndim > MAXDIM)
 		elog(ERROR, "Invalid array subscripts");
 
-	offset = ArrayGetOffset(nSubscripts, dim, lb, indx);
+	/* copy dim/lb since we may modify them */
+	memcpy(dim, ARR_DIMS(array), ndim * sizeof(int));
+	memcpy(lb, ARR_LBOUND(array), ndim * sizeof(int));
 
-	elt_ptr = array_seek(ARR_DATA_PTR(array), elmlen, offset);
-
-	if (elmlen > 0)
+	/*
+	 * Check subscripts
+	 */
+	for (i = 0; i < ndim; i++)
 	{
-		oldlen = newlen = elmlen;
+		if (indx[i] < lb[i])
+		{
+			if (ndim == 1 && indx[i] == lb[i] - 1)
+			{
+				dim[i]++;
+				lb[i]--;
+				extendbefore = true;
+			}
+			else
+			{
+				elog(ERROR, "Invalid array subscripts");
+			}
+		}
+		if (indx[i] >= (dim[i] + lb[i]))
+		{
+			if (ndim == 1 && indx[i] == (dim[i] + lb[i]))
+			{
+				dim[i]++;
+				extendafter = true;
+			}
+			else
+			{
+				elog(ERROR, "Invalid array subscripts");
+			}
+		}
+	}
+
+	/*
+	 * Compute sizes of items and areas to copy
+	 */
+	overheadlen = ARR_OVERHEAD(ndim);
+	olddatasize = ARR_SIZE(array) - overheadlen;
+	if (extendbefore)
+	{
+		lenbefore = 0;
+		olditemlen = 0;
+		lenafter = olddatasize;
+	}
+	else if (extendafter)
+	{
+		lenbefore = olddatasize;
+		olditemlen = 0;
+		lenafter = 0;
 	}
 	else
 	{
-		/* varlena type */
-		oldlen = INTALIGN(*(int32 *) elt_ptr);
-		newlen = INTALIGN(*(int32 *) DatumGetPointer(dataValue));
+		offset = ArrayGetOffset(nSubscripts, dim, lb, indx);
+		elt_ptr = array_seek(ARR_DATA_PTR(array), elmlen, offset);
+		lenbefore = (int) (elt_ptr - ARR_DATA_PTR(array));
+		if (elmlen > 0)
+			olditemlen = elmlen;
+		else
+			olditemlen = INTALIGN(*(int32 *) elt_ptr);
+		lenafter = (int) (olddatasize - lenbefore - olditemlen);
 	}
 
-	oldsize = ARR_SIZE(array);
-	lth0 = ARR_OVERHEAD(ndim);
-	lth1 = (int) (elt_ptr - ARR_DATA_PTR(array));
-	lth2 = (int) (oldsize - lth0 - lth1 - oldlen);
-	newsize = lth0 + lth1 + newlen + lth2;
+	if (elmlen > 0)
+		newitemlen = elmlen;
+	else
+		newitemlen = INTALIGN(*(int32 *) DatumGetPointer(dataValue));
 
+	newsize = overheadlen + lenbefore + newitemlen + lenafter;
+
+	/*
+	 * OK, do the assignment
+	 */
 	newarray = (ArrayType *) palloc(newsize);
-	memcpy((char *) newarray, (char *) array, lth0 + lth1);
-	memcpy((char *) newarray + lth0 + lth1 + newlen,
-		   (char *) array + lth0 + lth1 + oldlen, lth2);
 	newarray->size = newsize;
-	newlen = ArrayCastAndSet(dataValue, elmbyval, elmlen,
-							 (char *) newarray + lth0 + lth1);
+	newarray->ndim = ndim;
+	newarray->flags = 0;
+	memcpy(ARR_DIMS(newarray), dim, ndim * sizeof(int));
+	memcpy(ARR_LBOUND(newarray), lb, ndim * sizeof(int));
+	memcpy((char *) newarray + overheadlen,
+		   (char *) array + overheadlen,
+		   lenbefore);
+	memcpy((char *) newarray + overheadlen + lenbefore + newitemlen,
+		   (char *) array + overheadlen + lenbefore + olditemlen,
+		   lenafter);
+
+	ArrayCastAndSet(dataValue, elmbyval, elmlen,
+					(char *) newarray + overheadlen + lenbefore);
 
 	return newarray;
 }
@@ -953,55 +1090,162 @@ array_set_slice(ArrayType *array,
 {
 	int			i,
 				ndim,
-			   *dim,
-			   *lb;
-	int			span[MAXDIM];
+				dim[MAXDIM],
+				lb[MAXDIM],
+				span[MAXDIM];
+	ArrayType  *newarray;
+	int			nsrcitems,
+				olddatasize,
+				newsize,
+				olditemsize,
+				newitemsize,
+				overheadlen,
+				lenbefore,
+				lenafter;
 
 	if (array == (ArrayType *) NULL)
 		RETURN_NULL(ArrayType *);
 	if (srcArray == (ArrayType *) NULL)
-		RETURN_NULL(ArrayType *);
+		return array;
 
 	if (arraylen > 0)
 	{
 		/*
-		 * fixed-length arrays -- no can do slice...
+		 * fixed-length arrays -- not got round to doing this...
 		 */
 		elog(ERROR, "Updates on slices of fixed-length arrays not implemented");
 	}
 
-	/* detoast array, making sure we get an overwritable copy */
-	array = DatumGetArrayTypePCopy(PointerGetDatum(array));
-
-	/* detoast source array if necessary */
+	/* detoast arrays if necessary */
+	array = DatumGetArrayTypeP(PointerGetDatum(array));
 	srcArray = DatumGetArrayTypeP(PointerGetDatum(srcArray));
 
-	if (elmlen < 0)
-		elog(ERROR, "Updates on slices of arrays of variable length elements not implemented");
-
 	ndim = ARR_NDIM(array);
-	dim = ARR_DIMS(array);
-	lb = ARR_LBOUND(array);
-
-	if (!SanityCheckInput(ndim, nSubscripts, dim, lb, upperIndx) ||
-		!SanityCheckInput(ndim, nSubscripts, dim, lb, lowerIndx))
+	if (ndim != nSubscripts || ndim <= 0 || ndim > MAXDIM)
 		elog(ERROR, "Invalid array subscripts");
 
-	for (i = 0; i < nSubscripts; i++)
+	/* copy dim/lb since we may modify them */
+	memcpy(dim, ARR_DIMS(array), ndim * sizeof(int));
+	memcpy(lb, ARR_LBOUND(array), ndim * sizeof(int));
+
+	/*
+	 * Check provided subscripts.  A slice exceeding the current array
+	 * limits throws an error, *except* in the 1-D case where we will
+	 * extend the array as long as no hole is created.
+	 * An empty slice is an error, too.
+	 */
+	for (i = 0; i < ndim; i++)
+	{
 		if (lowerIndx[i] > upperIndx[i])
-		elog(ERROR, "Invalid array subscripts");
+			elog(ERROR, "Invalid array subscripts");
+		if (lowerIndx[i] < lb[i])
+		{
+			if (ndim == 1 && upperIndx[i] >= lb[i] - 1)
+			{
+				dim[i] += lb[i] - lowerIndx[i];
+				lb[i] = lowerIndx[i];
+			}
+			else
+			{
+				elog(ERROR, "Invalid array subscripts");
+			}
+		}
+		if (upperIndx[i] >= (dim[i] + lb[i]))
+		{
+			if (ndim == 1 && lowerIndx[i] <= (dim[i] + lb[i]))
+			{
+				dim[i] = upperIndx[i] - lb[i] + 1;
+			}
+			else
+			{
+				elog(ERROR, "Invalid array subscripts");
+			}
+		}
+	}
 
-	/* make sure source array has enough entries */
+	/*
+	 * Make sure source array has enough entries.  Note we ignore the shape
+	 * of the source array and just read entries serially.
+	 */
 	mda_get_range(ndim, span, lowerIndx, upperIndx);
-
-	if (ArrayGetNItems(ndim, span) >
-		ArrayGetNItems(ARR_NDIM(srcArray), ARR_DIMS(srcArray)))
+	nsrcitems = ArrayGetNItems(ndim, span);
+	if (nsrcitems > ArrayGetNItems(ARR_NDIM(srcArray), ARR_DIMS(srcArray)))
 		elog(ERROR, "Source array too small");
 
-	ArrayClipCopy(lowerIndx, upperIndx, elmlen, ARR_DATA_PTR(srcArray),
-				  array, false);
+	/*
+	 * Compute space occupied by new entries, space occupied by replaced
+	 * entries, and required space for new array.
+	 */
+	newitemsize = array_nelems_size(ARR_DATA_PTR(srcArray), elmlen,
+									nsrcitems);
+	overheadlen = ARR_OVERHEAD(ndim);
+	olddatasize = ARR_SIZE(array) - overheadlen;
+	if (ndim > 1)
+	{
+		/*
+		 * here we do not need to cope with extension of the array;
+		 * it would be a lot more complicated if we had to do so...
+		 */
+		olditemsize = array_slice_size(ndim, dim, lb, ARR_DATA_PTR(array),
+									   elmlen, lowerIndx, upperIndx);
+		lenbefore = lenafter = 0; /* keep compiler quiet */
+	}
+	else
+	{
+		/*
+		 * here we must allow for possibility of slice larger than orig array
+		 */
+		int		oldlb = ARR_LBOUND(array)[0];
+		int		oldub = oldlb + ARR_DIMS(array)[0] - 1;
+		int		slicelb = MAX(oldlb, lowerIndx[0]);
+		int		sliceub = MIN(oldub, upperIndx[0]);
+		char   *oldarraydata = ARR_DATA_PTR(array);
 
-	return array;
+		lenbefore = array_nelems_size(oldarraydata,
+									  elmlen,
+									  slicelb - oldlb);
+		if (slicelb > sliceub)
+			olditemsize = 0;
+		else
+			olditemsize = array_nelems_size(oldarraydata + lenbefore,
+											elmlen,
+											sliceub - slicelb + 1);
+		lenafter = olddatasize - lenbefore - olditemsize;
+	}
+
+	newsize = overheadlen + olddatasize - olditemsize + newitemsize;
+
+	newarray = (ArrayType *) palloc(newsize);
+	newarray->size = newsize;
+	newarray->ndim = ndim;
+	newarray->flags = 0;
+	memcpy(ARR_DIMS(newarray), dim, ndim * sizeof(int));
+	memcpy(ARR_LBOUND(newarray), lb, ndim * sizeof(int));
+
+	if (ndim > 1)
+	{
+		/*
+		 * here we do not need to cope with extension of the array;
+		 * it would be a lot more complicated if we had to do so...
+		 */
+		array_insert_slice(ndim, dim, lb, ARR_DATA_PTR(array), olddatasize,
+						   ARR_DATA_PTR(newarray), elmlen,
+						   lowerIndx, upperIndx, ARR_DATA_PTR(srcArray));
+	}
+	else
+	{
+		memcpy((char *) newarray + overheadlen,
+			   (char *) array + overheadlen,
+			   lenbefore);
+		memcpy((char *) newarray + overheadlen + lenbefore,
+			   ARR_DATA_PTR(srcArray),
+			   newitemsize);
+		memcpy((char *) newarray + overheadlen + lenbefore + newitemsize,
+			   (char *) array + overheadlen + lenbefore + olditemsize,
+			   lenafter);
+	}
+
+	return newarray;
 }
 
 /*
@@ -1326,7 +1570,9 @@ system_cache_lookup(Oid element_type,
 		*proc = typeStruct->typoutput;
 }
 
-/* Fetch array value at pointer, converted correctly to a Datum */
+/*
+ * Fetch array element at pointer, converted correctly to a Datum
+ */
 static Datum
 ArrayCast(char *value, bool byval, int len)
 {
@@ -1402,138 +1648,196 @@ ArrayCastAndSet(Datum src,
 	return inc;
 }
 
-/* Do Sanity check on input subscripting info */
-static bool
-SanityCheckInput(int ndim, int n, int *dim, int *lb, int *indx)
+/*
+ * Compute total size of the nitems array elements starting at *ptr
+ *
+ * XXX should consider alignment spec for fixed-length types
+ */
+static int
+array_nelems_size(char *ptr, int eltsize, int nitems)
 {
+	char	   *origptr;
 	int			i;
 
-	if (n != ndim || ndim <= 0 || ndim > MAXDIM)
-		return false;
-	for (i = 0; i < ndim; i++)
-		if ((lb[i] > indx[i]) || (indx[i] >= (dim[i] + lb[i])))
-			return false;
-	return true;
+	/* fixed-size elements? */
+	if (eltsize > 0)
+		return eltsize * nitems;
+	/* else assume they are varlena items */
+	origptr = ptr;
+	for (i = 0; i < nitems; i++)
+		ptr += INTALIGN(*(int32 *) ptr);
+	return ptr - origptr;
 }
 
-/* Copy an array slice into or out of an array */
-static void
-ArrayClipCopy(int *st,
-			  int *endp,
-			  int bsize,
-			  char *destPtr,
-			  ArrayType *array,
-			  bool from)
+/*
+ * Advance ptr over nitems array elements
+ */
+static char *
+array_seek(char *ptr, int eltsize, int nitems)
 {
-	int			n,
-			   *dim,
-			   *lb,
-				st_pos,
-				prod[MAXDIM];
-	int			span[MAXDIM],
-				dist[MAXDIM],
-				indx[MAXDIM];
-	int			i,
-				j,
-				inc;
-	char	   *srcPtr;
-
-	n = ARR_NDIM(array);
-	dim = ARR_DIMS(array);
-	lb = ARR_LBOUND(array);
-	st_pos = ArrayGetOffset(n, dim, lb, st);
-	srcPtr = array_seek(ARR_DATA_PTR(array), bsize, st_pos);
-	mda_get_prod(n, dim, prod);
-	mda_get_range(n, span, st, endp);
-	mda_get_offset_values(n, dist, prod, span);
-	for (i = 0; i < n; i++)
-		indx[i] = 0;
-	j = n - 1;
-	do
-	{
-		srcPtr = array_seek(srcPtr, bsize, dist[j]);
-		if (from)
-			inc = array_read(destPtr, bsize, 1, srcPtr);
-		else
-			inc = array_read(srcPtr, bsize, 1, destPtr);
-		destPtr += inc;
-		srcPtr += inc;
-	} while ((j = mda_next_tuple(n, indx, span)) != -1);
+	return ptr + array_nelems_size(ptr, eltsize, nitems);
 }
 
-/* Compute space needed for an array slice of varlena items */
+/*
+ * Copy nitems array elements from srcptr to destptr
+ *
+ * Returns number of bytes copied
+ */
 static int
-ArrayClipCount(int *st, int *endp, ArrayType *array)
+array_copy(char *destptr, int eltsize, int nitems, char *srcptr)
 {
-	int			n,
-			   *dim,
-			   *lb,
-				st_pos,
-				prod[MAXDIM];
-	int			span[MAXDIM],
+	int			numbytes = array_nelems_size(srcptr, eltsize, nitems);
+
+	memmove(destptr, srcptr, numbytes);
+	return numbytes;
+}
+
+/*
+ * Compute space needed for a slice of an array
+ *
+ * We assume the caller has verified that the slice coordinates are valid.
+ */
+static int
+array_slice_size(int ndim, int *dim, int *lb, char *arraydataptr,
+				 int eltsize, int *st, int *endp)
+{
+	int			st_pos,
+				span[MAXDIM],
+				prod[MAXDIM],
 				dist[MAXDIM],
 				indx[MAXDIM];
+	char	   *ptr;
 	int			i,
 				j,
 				inc;
 	int			count = 0;
-	char	   *ptr;
 
-	n = ARR_NDIM(array);
-	dim = ARR_DIMS(array);
-	lb = ARR_LBOUND(array);
-	st_pos = ArrayGetOffset(n, dim, lb, st);
-	ptr = array_seek(ARR_DATA_PTR(array), -1, st_pos);
-	mda_get_prod(n, dim, prod);
-	mda_get_range(n, span, st, endp);
-	mda_get_offset_values(n, dist, prod, span);
-	for (i = 0; i < n; i++)
+	mda_get_range(ndim, span, st, endp);
+
+	/* Pretty easy for fixed element length ... */
+	if (eltsize > 0)
+		return ArrayGetNItems(ndim, span) * eltsize;
+
+	/* Else gotta do it the hard way */
+	st_pos = ArrayGetOffset(ndim, dim, lb, st);
+	ptr = array_seek(arraydataptr, eltsize, st_pos);
+	mda_get_prod(ndim, dim, prod);
+	mda_get_offset_values(ndim, dist, prod, span);
+	for (i = 0; i < ndim; i++)
 		indx[i] = 0;
-	j = n - 1;
+	j = ndim - 1;
 	do
 	{
-		ptr = array_seek(ptr, -1, dist[j]);
+		ptr = array_seek(ptr, eltsize, dist[j]);
 		inc = INTALIGN(*(int32 *) ptr);
 		ptr += inc;
 		count += inc;
-	} while ((j = mda_next_tuple(n, indx, span)) != -1);
+	} while ((j = mda_next_tuple(ndim, indx, span)) != -1);
 	return count;
 }
 
-/* Advance over nitems array elements */
-static char *
-array_seek(char *ptr, int eltsize, int nitems)
+/*
+ * Extract a slice of an array into consecutive elements at *destPtr.
+ *
+ * We assume the caller has verified that the slice coordinates are valid
+ * and allocated enough storage at *destPtr.
+ */
+static void
+array_extract_slice(int ndim,
+					int *dim,
+					int *lb,
+					char *arraydataptr,
+					int eltsize,
+					int *st,
+					int *endp,
+					char *destPtr)
 {
-	int			i;
+	int			st_pos,
+				prod[MAXDIM],
+				span[MAXDIM],
+				dist[MAXDIM],
+				indx[MAXDIM];
+	char	   *srcPtr;
+	int			i,
+				j,
+				inc;
 
-	if (eltsize > 0)
-		return ptr + eltsize * nitems;
-	for (i = 0; i < nitems; i++)
-		ptr += INTALIGN(*(int32 *) ptr);
-	return ptr;
+	st_pos = ArrayGetOffset(ndim, dim, lb, st);
+	srcPtr = array_seek(arraydataptr, eltsize, st_pos);
+	mda_get_prod(ndim, dim, prod);
+	mda_get_range(ndim, span, st, endp);
+	mda_get_offset_values(ndim, dist, prod, span);
+	for (i = 0; i < ndim; i++)
+		indx[i] = 0;
+	j = ndim - 1;
+	do
+	{
+		srcPtr = array_seek(srcPtr, eltsize, dist[j]);
+		inc = array_copy(destPtr, eltsize, 1, srcPtr);
+		destPtr += inc;
+		srcPtr += inc;
+	} while ((j = mda_next_tuple(ndim, indx, span)) != -1);
 }
 
-/* Copy nitems array elements from srcptr to destptr */
-static int
-array_read(char *destptr, int eltsize, int nitems, char *srcptr)
+/*
+ * Insert a slice into an array.
+ *
+ * ndim/dim/lb are dimensions of the dest array, which has data area
+ * starting at origPtr.  A new array with those same dimensions is to
+ * be constructed; its data area starts at destPtr.
+ *
+ * Elements within the slice volume are taken from consecutive locations
+ * at srcPtr; elements outside it are copied from origPtr.
+ *
+ * We assume the caller has verified that the slice coordinates are valid
+ * and allocated enough storage at *destPtr.
+ */
+static void
+array_insert_slice(int ndim,
+				   int *dim,
+				   int *lb,
+				   char *origPtr,
+				   int origdatasize,
+				   char *destPtr,
+				   int eltsize,
+				   int *st,
+				   int *endp,
+				   char *srcPtr)
 {
+	int			st_pos,
+				prod[MAXDIM],
+				span[MAXDIM],
+				dist[MAXDIM],
+				indx[MAXDIM];
+	char	   *origEndpoint = origPtr + origdatasize;
 	int			i,
-				inc,
-				tmp;
+				j,
+				inc;
 
-	if (eltsize > 0)
+	st_pos = ArrayGetOffset(ndim, dim, lb, st);
+	inc = array_copy(destPtr, eltsize, st_pos, origPtr);
+	destPtr += inc;
+	origPtr += inc;
+	mda_get_prod(ndim, dim, prod);
+	mda_get_range(ndim, span, st, endp);
+	mda_get_offset_values(ndim, dist, prod, span);
+	for (i = 0; i < ndim; i++)
+		indx[i] = 0;
+	j = ndim - 1;
+	do
 	{
-		memmove(destptr, srcptr, eltsize * nitems);
-		return eltsize * nitems;
-	}
-	inc = 0;
-	for (i = 0; i < nitems; i++)
-	{
-		tmp = (INTALIGN(*(int32 *) srcptr));
-		memmove(destptr, srcptr, tmp);
-		srcptr += tmp;
-		destptr += tmp;
-		inc += tmp;
-	}
-	return inc;
+		/* Copy/advance over elements between here and next part of slice */
+		inc = array_copy(destPtr, eltsize, dist[j], origPtr);
+		destPtr += inc;
+		origPtr += inc;
+		/* Copy new element at this slice position */
+		inc = array_copy(destPtr, eltsize, 1, srcPtr);
+		destPtr += inc;
+		srcPtr += inc;
+		/* Advance over old element at this slice position */
+		origPtr = array_seek(origPtr, eltsize, 1);
+	} while ((j = mda_next_tuple(ndim, indx, span)) != -1);
+
+	/* don't miss any data at the end */
+	memcpy(destPtr, origPtr, origEndpoint - origPtr);
 }
