@@ -2,7 +2,7 @@
 
 #-------------------------------------------------------
 #
-# $Id: example.oldstyle,v 1.3 1998/02/20 21:26:08 mergl Exp $
+# $Id: example.oldstyle,v 1.4 1998/04/14 21:14:52 mergl Exp $
 #
 # Copyright (c) 1997  Edmund Mergl
 #
@@ -13,7 +13,7 @@
 
 ######################### We start with some black magic to print on failure.
 
-BEGIN { $| = 1; print "1..61\n"; }
+BEGIN { $| = 1; print "1..60\n"; }
 END {print "not ok 1\n" unless $loaded;}
 use Pg;
 $loaded = 1;
@@ -23,7 +23,6 @@ print "ok 1\n";
 
 $dbmain = 'template1';
 $dbname = 'pgperltest';
-$dbhost = 'localhost';
 $trace  = '/tmp/pgtrace.out';
 $cnt    = 2;
 $DEBUG  = 0; # set this to 1 for traces
@@ -34,7 +33,6 @@ $| = 1;
 
 #	PQsetdb()
 #	PQdb()
-#	PQhost()
 #	PQport()
 #	PQfinish()
 #	PQstatus()
@@ -69,6 +67,7 @@ $| = 1;
 #	PQconndefaults()
 #	PQreset()
 #	PQoptions()
+#	PQhost()
 #	PQtty()
 #	PQgetlength()
 #	PQgetisnull()
@@ -89,7 +88,7 @@ $SIG{PIPE} = sub { print "broken pipe\n" };
 ######################### create and connect to test database
 # 2-4
 
-$conn = PQsetdb($dbhost, '', '', '', $dbmain);
+$conn = PQsetdb('', '', '', '', $dbmain);
 cmp_eq(PGRES_CONNECTION_OK, PQstatus($conn));
 
 # might fail if $dbname doesn't exist => don't check resultStatus
@@ -102,7 +101,7 @@ PQclear($result);
 
 PQfinish($conn);
 
-$conn = PQsetdb($dbhost, '', '', '', $dbname);
+$conn = PQsetdb('', '', '', '', $dbname);
 cmp_eq(PGRES_CONNECTION_OK, PQstatus($conn));
 
 ######################### debug, PQtrace
@@ -113,7 +112,7 @@ if ($DEBUG) {
 }
 
 ######################### check PGconn
-# 5-8
+# 5-7
 
 $db = PQdb($conn);
 cmp_eq($dbname, $db);
@@ -121,14 +120,11 @@ cmp_eq($dbname, $db);
 $user = PQuser($conn);
 cmp_ne("", $user);
 
-$host = PQhost($conn);
-cmp_ne("", $host);
-
 $port = PQport($conn);
 cmp_ne("", $port);
 
 ######################### create and insert into table
-# 9-20
+# 8-19
 
 $result = PQexec($conn, "CREATE TABLE person (id int4, name char16)");
 cmp_eq(PGRES_COMMAND_OK, PQresultStatus($result));
@@ -143,7 +139,7 @@ for ($i = 1; $i <= 5; $i++) {
 }
 
 ######################### copy to stdout, PQgetline
-# 21-27
+# 20-26
 
 $result = PQexec($conn, "COPY person TO STDOUT");
 cmp_eq(PGRES_COPY_OUT, PQresultStatus($result));
@@ -161,7 +157,7 @@ while (-1 != $ret) {
 cmp_eq(0, PQendcopy($conn));
 
 ######################### delete and copy from stdin, PQputline
-# 28-34
+# 27-33
 
 $result = PQexec($conn, "BEGIN");
 cmp_eq(PGRES_COMMAND_OK, PQresultStatus($result));
@@ -190,7 +186,7 @@ cmp_eq(PGRES_COMMAND_OK, PQresultStatus($result));
 PQclear($result);
 
 ######################### select from person, PQgetvalue
-# 35-48
+# 34-47
 
 $result = PQexec($conn, "SELECT * FROM person");
 cmp_eq(PGRES_TUPLES_OK, PQresultStatus($result));
@@ -224,14 +220,14 @@ for ($k = 0; $k < PQntuples($result); $k++) {
 PQclear($result);
 
 ######################### PQnotifies
-# 49-51
+# 48-50
 
 if (! defined($pid = fork)) {
     die "can not fork: $!";
 } elsif (! $pid) {
     # i'm the child
     sleep 2;
-    $conn = PQsetdb($dbhost, '', '', '', $dbname);
+    $conn = PQsetdb('', '', '', '', $dbname);
     $result = PQexec($conn, "NOTIFY person");
     PQclear($result);
     PQfinish($conn);
@@ -253,7 +249,7 @@ while (1) {
 cmp_eq("person", $table);
 
 ######################### PQprint
-# 52-53
+# 51-52
 
 $result = PQexec($conn, "SELECT name FROM person WHERE id = 2");
 cmp_eq(PGRES_TUPLES_OK, PQresultStatus($result));
@@ -264,7 +260,7 @@ PQclear($result);
 close(PRINT) || die "bad PRINT: $!";
 
 ######################### PQlo_import, PQlo_export, PQlo_unlink
-# 54-60
+# 53-59
 
 $filename = 'ApachePg.pl';
 $cwd = `pwd`;
@@ -296,11 +292,11 @@ if ($DEBUG) {
 }
 
 ######################### disconnect and drop test database
-# 60-61
+# 59-60
 
 PQfinish($conn);
 
-$conn = PQsetdb($dbhost, '', '', '', $dbmain);
+$conn = PQsetdb('', '', '', '', $dbmain);
 cmp_eq(PGRES_CONNECTION_OK, PQstatus($conn));
 
 $result = PQexec($conn, "DROP DATABASE $dbname");

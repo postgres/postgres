@@ -1,6 +1,6 @@
 #-------------------------------------------------------
 #
-# $Id: README,v 1.5 1998/02/20 21:25:42 mergl Exp $
+# $Id: README,v 1.6 1998/04/14 21:14:37 mergl Exp $
 #
 # Copyright (c) 1997  Edmund Mergl
 #
@@ -9,7 +9,7 @@
 DESCRIPTION:
 ------------
 
-This is version 1.7.0 of pgsql_perl5 (previously called pg95perl5).
+This is version 1.7.3 of pgsql_perl5 (previously called pg95perl5).
 
 Pgsql_perl5 is an interface between Larry Wall's language perl version 5 and 
 the database PostgreSQL (previously Postgres95). This has been done by using 
@@ -127,6 +127,6 @@ installation to read the documentation.
 
 ---------------------------------------------------------------------------
 
-   Edmund Mergl <E.Mergl@bawue.de>                       February 20, 1998
+   Edmund Mergl <E.Mergl@bawue.de>                       March 28, 1998
 
 ---------------------------------------------------------------------------

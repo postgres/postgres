@@ -1,5 +1,16 @@
 Revision history for Perl extension Pg.
 
+1.7.3   Mar 28 1998
+	- linking again with the shared version of libpq 
+	  due to problems on several operating systems.
+
+1.7.2   Mar 06 1998
+	- module is now linked with static libpq.a
+
+1.7.1   Mar 03 1998
+	- expanded the search path for include files
+	- return to UNIX domain sockets in test-scripts
+
 1.7.0   Feb 20 1998
 	- adapted to PostgreSQL-6.3:
 	  add host=localhost to the conninfo-string
