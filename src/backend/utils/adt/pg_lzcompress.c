@@ -1,7 +1,7 @@
 /* ----------
  * pg_lzcompress.c -
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/pg_lzcompress.c,v 1.7 2000/07/06 21:02:07 wieck Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/pg_lzcompress.c,v 1.8 2000/07/20 14:23:28 wieck Exp $
  *
  *		This is an implementation of LZ compression for PostgreSQL.
  *		It uses a simple history table and generates 2-3 byte tags
@@ -185,9 +185,9 @@
  * Local definitions
  * ----------
  */
-#define PGLZ_HISTORY_SIZE		8192
+#define PGLZ_HISTORY_LISTS		8192
 #define PGLZ_HISTORY_MASK		0x1fff
-#define PGLZ_HISTORY_PREALLOC	8192
+#define PGLZ_HISTORY_SIZE		4096
 #define PGLZ_MAX_MATCH			273
 
 
@@ -200,6 +200,7 @@
 typedef struct PGLZ_HistEntry
 {
 	struct PGLZ_HistEntry *next;
+	struct PGLZ_HistEntry *prev;
 	char	   *pos;
 } PGLZ_HistEntry;
 
@@ -209,7 +210,7 @@ typedef struct PGLZ_HistEntry
  * ----------
  */
 static PGLZ_Strategy strategy_default_data = {
-	256,						/* Data chunks smaller 256 bytes are nott
+	256,						/* Data chunks smaller 256 bytes are not
 								 * compressed			 */
 	6144,						/* Data chunks greater equal 6K force
 								 * compression				 */
@@ -247,6 +248,12 @@ static PGLZ_Strategy strategy_never_data = {
 };
 PGLZ_Strategy *PGLZ_strategy_never = &strategy_never_data;
 
+/* ----------
+ * Global arrays for history
+ * ----------
+ */
+static PGLZ_HistEntry *hist_start[PGLZ_HISTORY_LISTS];
+static PGLZ_HistEntry hist_entries[PGLZ_HISTORY_SIZE];
 
 
 /* ----------
@@ -276,11 +283,26 @@ PGLZ_Strategy *PGLZ_strategy_never = &strategy_never_data;
  *		Adds a new entry to the history table.
  * ----------
  */
-#define pglz_hist_add(_hs,_hn,_s,_e) {										\
+#define pglz_hist_add(_hs,_he,_hn,_s,_e) {									\
 			int __hindex = pglz_hist_idx((_s),(_e));						\
-			(_hn)->next = (_hs)[__hindex];									\
-			(_hn)->pos	= (_s);												\
-			(_hs)[__hindex] = (_hn)++;										\
+			if ((_he)[(_hn)].prev == NULL) {								\
+			    (_hs)[__hindex] = (_he)[(_hn)].next;						\
+			} else {														\
+			    (_he)[(_hn)].prev->next = (_he)[(_hn)].next;				\
+			}																\
+			if ((_he)[(_hn)].next != NULL) {								\
+			    (_he)[(_hn)].next->prev = (_he)[(_hn)].prev;				\
+			}																\
+			(_he)[(_hn)].next = (_hs)[__hindex];							\
+			(_he)[(_hn)].prev = NULL;										\
+			(_he)[(_hn)].pos  = (_s);										\
+			if ((_hs)[__hindex] != NULL) {									\
+			    (_hs)[__hindex]->prev = &((_he)[(_hn)]);					\
+			}																\
+			(_hs)[__hindex] = &((_he)[(_hn)]);								\
+			if (++(_hn) >= PGLZ_HISTORY_SIZE) {								\
+				(_hn) = 0;													\
+			}																\
 		}
 
 
@@ -454,10 +476,7 @@ pglz_find_match(PGLZ_HistEntry **hstart, char *input, char *end,
 int
 pglz_compress(char *source, int slen, PGLZ_Header *dest, PGLZ_Strategy *strategy)
 {
-	PGLZ_HistEntry *hist_start[PGLZ_HISTORY_SIZE];
-	PGLZ_HistEntry *hist_alloc;
-	PGLZ_HistEntry hist_prealloc[PGLZ_HISTORY_PREALLOC];
-	PGLZ_HistEntry *hist_next;
+	int            hist_next = 0;
 
 	unsigned char *bp = ((unsigned char *) dest) + sizeof(PGLZ_Header);
 	unsigned char *bstart = bp;
@@ -524,17 +543,12 @@ pglz_compress(char *source, int slen, PGLZ_Header *dest, PGLZ_Strategy *strategy
 
 	/* ----------
 	 * Initialize the history tables. For inputs smaller than
-	 * PGLZ_HISTORY_PREALLOC, we already have a big enough history
+	 * PGLZ_HISTORY_SIZE, we already have a big enough history
 	 * table on the stack frame.
 	 * ----------
 	 */
 	memset((void *) hist_start, 0, sizeof(hist_start));
-	if (slen + 1 <= PGLZ_HISTORY_PREALLOC)
-		hist_alloc = hist_prealloc;
-	else
-		hist_alloc = (PGLZ_HistEntry *)
-			palloc(sizeof(PGLZ_HistEntry) * (slen + 1));
-	hist_next = hist_alloc;
+	memset((void *) hist_entries, 0, sizeof(hist_entries));
 
 	/* ----------
 	 * Compute the maximum result size allowed by the strategy.
@@ -588,7 +602,7 @@ pglz_compress(char *source, int slen, PGLZ_Header *dest, PGLZ_Strategy *strategy
 			pglz_out_tag(ctrlp, ctrlb, ctrl, bp, match_len, match_off);
 			while (match_len--)
 			{
-				pglz_hist_add(hist_start, hist_next, dp, dend);
+				pglz_hist_add(hist_start, hist_entries, hist_next, dp, dend);
 				dp++;			/* Do not do this ++ in the line above!		*/
 				/* The macro would do it four times - Jan.	*/
 			}
@@ -600,18 +614,11 @@ pglz_compress(char *source, int slen, PGLZ_Header *dest, PGLZ_Strategy *strategy
 			 * ----------
 			 */
 			pglz_out_literal(ctrlp, ctrlb, ctrl, bp, *dp);
-			pglz_hist_add(hist_start, hist_next, dp, dend);
+			pglz_hist_add(hist_start, hist_entries, hist_next, dp, dend);
 			dp++;				/* Do not do this ++ in the line above!		*/
 			/* The macro would do it four times - Jan.	*/
 		}
 	}
-
-	/* ----------
-	 * Get rid of the history (if allocated)
-	 * ----------
-	 */
-	if (hist_alloc != hist_prealloc)
-		pfree((void *) hist_alloc);
 
 	/* ----------
 	 * If we are still in compressing mode, write out the last
