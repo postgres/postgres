@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.8 1997/04/21 04:28:59 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.9 1997/05/06 07:16:21 thomas Exp $
  *
  * NOTES
  *    This should be moved to a more appropriate place.  It is here
@@ -213,7 +213,7 @@ lo_unlink(Oid lobjId)
  *****************************************************************************/
 
 struct varlena *
-LOread(int fd, int len)
+loread(int fd, int len)
 {
     struct varlena *retval;
     int totalread = 0;
@@ -225,7 +225,7 @@ LOread(int fd, int len)
     return retval;
 }
 
-int LOwrite(int fd, struct varlena *wbuf)
+int lowrite(int fd, struct varlena *wbuf)
 {
     int totalwritten;
     int bytestowrite;
