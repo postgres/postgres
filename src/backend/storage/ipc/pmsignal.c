@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/pmsignal.c,v 1.1 2001/11/04 19:55:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/pmsignal.c,v 1.2 2001/11/05 01:34:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,9 +44,6 @@ static volatile sig_atomic_t * PMSignalFlags;
 void
 PMSignalInit(void)
 {
-	/* Should be called only once */
-	Assert(!PMSignalFlags);
-
 	PMSignalFlags = (sig_atomic_t *)
 		ShmemAlloc(NUM_PMSIGNALS * sizeof(sig_atomic_t));
 
