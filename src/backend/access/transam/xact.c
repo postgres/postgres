@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.42.2.3 1999/09/09 16:29:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.42.2.4 1999/10/19 02:54:39 inoue Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -733,9 +733,10 @@ RecordTransactionAbort()
 	/* 
 	 * Have the transaction access methods record the status of
 	 * this transaction id in the pg_log relation. We skip it
-	 * if no one shared buffer was changed by this transaction.
+	 * if no one shared buffer was changed by this transaction
+	 * or this transaction has been committed already.
 	 */
-	if (SharedBufferChanged)
+	if (SharedBufferChanged && !TransactionIdDidCommit(xid))
 		TransactionIdAbort(xid);
 
 	ResetBufferPool();
