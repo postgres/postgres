@@ -45,7 +45,7 @@ CREATE FUNCTION boxarea(box)
 CREATE FUNCTION interpt_pp(path, path)
    RETURNS point
    AS '_OBJWD_/regress_DLSUFFIX_'
-   LANGUAGE 'c';
+   LANGUAGE 'newC';
 
 CREATE FUNCTION reverse_name(name)
    RETURNS name

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.52 2000/07/14 22:17:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.53 2000/07/30 20:43:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -745,13 +745,16 @@ picksplit(Relation r,
 				DatumGetPointer(FunctionCall2(&rtstate->interFn,
 											  PointerGetDatum(datum_alpha),
 											  PointerGetDatum(datum_beta)));
+			/* The interFn may return a NULL pointer (not an SQL null!)
+			 * to indicate no intersection.  sizeFn must cope with this.
+			 */
 			FunctionCall2(&rtstate->sizeFn,
 						  PointerGetDatum(inter_d),
 						  PointerGetDatum(&size_inter));
 			size_waste = size_union - size_inter;
 
-			pfree(union_d);
-
+			if (union_d != (char *) NULL)
+				pfree(union_d);
 			if (inter_d != (char *) NULL)
 				pfree(inter_d);
 
@@ -1051,7 +1054,8 @@ _rtdump(Relation r)
 			itoffno = ItemPointerGetOffsetNumber(&(itup->t_tid));
 			datum = ((char *) itup);
 			datum += sizeof(IndexTupleData);
-			itkey = (char *) box_out((BOX *) datum);
+			itkey = DatumGetCString(DirectFunctionCall1(box_out,
+												PointerGetDatum(datum)));
 			printf("\t[%d] size %d heap <%d,%d> key:%s\n",
 				   offnum, IndexTupleSize(itup), itblkno, itoffno, itkey);
 			pfree(itkey);

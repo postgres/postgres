@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geo_decls.h,v 1.30 2000/07/29 18:46:05 tgl Exp $
+ * $Id: geo_decls.h,v 1.31 2000/07/30 20:43:49 tgl Exp $
  *
  * NOTE
  *	  These routines do *not* use the float types from adt/.
@@ -34,19 +34,19 @@
 #ifdef EPSILON
 #define FPzero(A)				(fabs(A) <= EPSILON)
 #define FPeq(A,B)				(fabs((A) - (B)) <= EPSILON)
+#define FPne(A,B)				(fabs((A) - (B)) > EPSILON)
 #define FPlt(A,B)				((B) - (A) > EPSILON)
 #define FPle(A,B)				((A) - (B) <= EPSILON)
 #define FPgt(A,B)				((A) - (B) > EPSILON)
 #define FPge(A,B)				((B) - (A) <= EPSILON)
 #else
-#define FPzero(A)				(A == 0)
-#define FPnzero(A)				(A != 0)
-#define FPeq(A,B)				(A == B)
-#define FPne(A,B)				(A != B)
-#define FPlt(A,B)				(A < B)
-#define FPle(A,B)				(A <= B)
-#define FPgt(A,B)				(A > B)
-#define FPge(A,B)				(A >= B)
+#define FPzero(A)				((A) == 0)
+#define FPeq(A,B)				((A) == (B))
+#define FPne(A,B)				((A) != (B))
+#define FPlt(A,B)				((A) < (B))
+#define FPle(A,B)				((A) <= (B))
+#define FPgt(A,B)				((A) > (B))
+#define FPge(A,B)				((A) >= (B))
 #endif
 
 #define HYPOT(A, B)				sqrt((A) * (A) + (B) * (B))
@@ -187,125 +187,115 @@ typedef struct
  */
 
 /* public point routines */
-extern Point *point_in(char *str);
-extern char *point_out(Point *pt);
-extern bool point_left(Point *pt1, Point *pt2);
-extern bool point_right(Point *pt1, Point *pt2);
-extern bool point_above(Point *pt1, Point *pt2);
-extern bool point_below(Point *pt1, Point *pt2);
-extern bool point_vert(Point *pt1, Point *pt2);
-extern bool point_horiz(Point *pt1, Point *pt2);
-extern bool point_eq(Point *pt1, Point *pt2);
-extern bool point_ne(Point *pt1, Point *pt2);
-extern int32 pointdist(Point *p1, Point *p2);
-extern double *point_distance(Point *pt1, Point *pt2);
-extern double *point_slope(Point *pt1, Point *pt2);
+extern Datum point_in(PG_FUNCTION_ARGS);
+extern Datum point_out(PG_FUNCTION_ARGS);
+extern Datum construct_point(PG_FUNCTION_ARGS);
+extern Datum point_left(PG_FUNCTION_ARGS);
+extern Datum point_right(PG_FUNCTION_ARGS);
+extern Datum point_above(PG_FUNCTION_ARGS);
+extern Datum point_below(PG_FUNCTION_ARGS);
+extern Datum point_vert(PG_FUNCTION_ARGS);
+extern Datum point_horiz(PG_FUNCTION_ARGS);
+extern Datum point_eq(PG_FUNCTION_ARGS);
+extern Datum point_ne(PG_FUNCTION_ARGS);
+extern Datum point_distance(PG_FUNCTION_ARGS);
+extern Datum point_slope(PG_FUNCTION_ARGS);
+extern Datum point_add(PG_FUNCTION_ARGS);
+extern Datum point_sub(PG_FUNCTION_ARGS);
+extern Datum point_mul(PG_FUNCTION_ARGS);
+extern Datum point_div(PG_FUNCTION_ARGS);
 
 /* private routines */
 extern double point_dt(Point *pt1, Point *pt2);
 extern double point_sl(Point *pt1, Point *pt2);
 
-extern Point *point(float8 *x, float8 *y);
-extern Point *point_add(Point *p1, Point *p2);
-extern Point *point_sub(Point *p1, Point *p2);
-extern Point *point_mul(Point *p1, Point *p2);
-extern Point *point_div(Point *p1, Point *p2);
-
 /* public lseg routines */
-extern LSEG *lseg_in(char *str);
-extern char *lseg_out(LSEG *ls);
-extern bool lseg_intersect(LSEG *l1, LSEG *l2);
-extern bool lseg_parallel(LSEG *l1, LSEG *l2);
-extern bool lseg_perp(LSEG *l1, LSEG *l2);
-extern bool lseg_vertical(LSEG *lseg);
-extern bool lseg_horizontal(LSEG *lseg);
-extern bool lseg_eq(LSEG *l1, LSEG *l2);
-extern bool lseg_ne(LSEG *l1, LSEG *l2);
-extern bool lseg_lt(LSEG *l1, LSEG *l2);
-extern bool lseg_le(LSEG *l1, LSEG *l2);
-extern bool lseg_gt(LSEG *l1, LSEG *l2);
-extern bool lseg_ge(LSEG *l1, LSEG *l2);
-extern LSEG *lseg_construct(Point *pt1, Point *pt2);
-extern double *lseg_length(LSEG *lseg);
-extern double *lseg_distance(LSEG *l1, LSEG *l2);
-extern Point *lseg_center(LSEG *lseg);
-extern Point *lseg_interpt(LSEG *l1, LSEG *l2);
-extern double *dist_pl(Point *pt, LINE *line);
-extern double *dist_ps(Point *pt, LSEG *lseg);
+extern Datum lseg_in(PG_FUNCTION_ARGS);
+extern Datum lseg_out(PG_FUNCTION_ARGS);
+extern Datum lseg_intersect(PG_FUNCTION_ARGS);
+extern Datum lseg_parallel(PG_FUNCTION_ARGS);
+extern Datum lseg_perp(PG_FUNCTION_ARGS);
+extern Datum lseg_vertical(PG_FUNCTION_ARGS);
+extern Datum lseg_horizontal(PG_FUNCTION_ARGS);
+extern Datum lseg_eq(PG_FUNCTION_ARGS);
+extern Datum lseg_ne(PG_FUNCTION_ARGS);
+extern Datum lseg_lt(PG_FUNCTION_ARGS);
+extern Datum lseg_le(PG_FUNCTION_ARGS);
+extern Datum lseg_gt(PG_FUNCTION_ARGS);
+extern Datum lseg_ge(PG_FUNCTION_ARGS);
+extern Datum lseg_construct(PG_FUNCTION_ARGS);
+extern Datum lseg_length(PG_FUNCTION_ARGS);
+extern Datum lseg_distance(PG_FUNCTION_ARGS);
+extern Datum lseg_center(PG_FUNCTION_ARGS);
+extern Datum lseg_interpt(PG_FUNCTION_ARGS);
+extern Datum dist_pl(PG_FUNCTION_ARGS);
+extern Datum dist_ps(PG_FUNCTION_ARGS);
 extern Datum dist_ppath(PG_FUNCTION_ARGS);
-extern double *dist_pb(Point *pt, BOX *box);
-extern double *dist_sl(LSEG *lseg, LINE *line);
-extern double *dist_sb(LSEG *lseg, BOX *box);
-extern double *dist_lb(LINE *line, BOX *box);
-extern Point *close_lseg(LSEG *l1, LSEG *l2);
-extern Point *close_pl(Point *pt, LINE *line);
-extern Point *close_ps(Point *pt, LSEG *lseg);
-extern Point *close_pb(Point *pt, BOX *box);
-extern Point *close_sl(LSEG *lseg, LINE *line);
-extern Point *close_sb(LSEG *lseg, BOX *box);
-extern Point *close_ls(LINE *line, LSEG *lseg);
-extern Point *close_lb(LINE *line, BOX *box);
-extern bool on_pl(Point *pt, LINE *line);
-extern bool on_ps(Point *pt, LSEG *lseg);
-extern bool on_pb(Point *pt, BOX *box);
+extern Datum dist_pb(PG_FUNCTION_ARGS);
+extern Datum dist_sl(PG_FUNCTION_ARGS);
+extern Datum dist_sb(PG_FUNCTION_ARGS);
+extern Datum dist_lb(PG_FUNCTION_ARGS);
+extern Datum close_lseg(PG_FUNCTION_ARGS);
+extern Datum close_pl(PG_FUNCTION_ARGS);
+extern Datum close_ps(PG_FUNCTION_ARGS);
+extern Datum close_pb(PG_FUNCTION_ARGS);
+extern Datum close_sl(PG_FUNCTION_ARGS);
+extern Datum close_sb(PG_FUNCTION_ARGS);
+extern Datum close_ls(PG_FUNCTION_ARGS);
+extern Datum close_lb(PG_FUNCTION_ARGS);
+extern Datum on_pl(PG_FUNCTION_ARGS);
+extern Datum on_ps(PG_FUNCTION_ARGS);
+extern Datum on_pb(PG_FUNCTION_ARGS);
 extern Datum on_ppath(PG_FUNCTION_ARGS);
-extern bool on_sl(LSEG *lseg, LINE *line);
-extern bool on_sb(LSEG *lseg, BOX *box);
-extern bool inter_sl(LSEG *lseg, LINE *line);
-extern bool inter_sb(LSEG *lseg, BOX *box);
-extern bool inter_lb(LINE *line, BOX *box);
-
-/* private lseg routines */
+extern Datum on_sl(PG_FUNCTION_ARGS);
+extern Datum on_sb(PG_FUNCTION_ARGS);
+extern Datum inter_sl(PG_FUNCTION_ARGS);
+extern Datum inter_sb(PG_FUNCTION_ARGS);
+extern Datum inter_lb(PG_FUNCTION_ARGS);
 
 /* public line routines */
-extern LINE *line_in(char *str);
-extern char *line_out(LINE *line);
-extern Point *line_interpt(LINE *l1, LINE *l2);
-extern double *line_distance(LINE *l1, LINE *l2);
-extern LINE *line_construct_pp(Point *pt1, Point *pt2);
-extern bool line_intersect(LINE *l1, LINE *l2);
-extern bool line_parallel(LINE *l1, LINE *l2);
-extern bool line_perp(LINE *l1, LINE *l2);
-extern bool line_vertical(LINE *line);
-extern bool line_horizontal(LINE *line);
-extern bool line_eq(LINE *l1, LINE *l2);
-
-/* private line routines */
+extern Datum line_in(PG_FUNCTION_ARGS);
+extern Datum line_out(PG_FUNCTION_ARGS);
+extern Datum line_interpt(PG_FUNCTION_ARGS);
+extern Datum line_distance(PG_FUNCTION_ARGS);
+extern Datum line_construct_pp(PG_FUNCTION_ARGS);
+extern Datum line_intersect(PG_FUNCTION_ARGS);
+extern Datum line_parallel(PG_FUNCTION_ARGS);
+extern Datum line_perp(PG_FUNCTION_ARGS);
+extern Datum line_vertical(PG_FUNCTION_ARGS);
+extern Datum line_horizontal(PG_FUNCTION_ARGS);
+extern Datum line_eq(PG_FUNCTION_ARGS);
 
 /* public box routines */
-extern BOX *box_in(char *str);
-extern char *box_out(BOX *box);
-extern bool box_same(BOX *box1, BOX *box2);
-extern bool box_overlap(BOX *box1, BOX *box2);
-extern bool box_overleft(BOX *box1, BOX *box2);
-extern bool box_left(BOX *box1, BOX *box2);
-extern bool box_right(BOX *box1, BOX *box2);
-extern bool box_overright(BOX *box1, BOX *box2);
-extern bool box_contained(BOX *box1, BOX *box2);
-extern bool box_contain(BOX *box1, BOX *box2);
-extern bool box_below(BOX *box1, BOX *box2);
-extern bool box_above(BOX *box1, BOX *box2);
-extern bool box_lt(BOX *box1, BOX *box2);
-extern bool box_gt(BOX *box1, BOX *box2);
-extern bool box_eq(BOX *box1, BOX *box2);
-extern bool box_le(BOX *box1, BOX *box2);
-extern bool box_ge(BOX *box1, BOX *box2);
-extern Point *box_center(BOX *box);
-extern double *box_area(BOX *box);
-extern double *box_width(BOX *box);
-extern double *box_height(BOX *box);
-extern double *box_distance(BOX *box1, BOX *box2);
-extern Point *box_center(BOX *box);
-extern BOX *box_intersect(BOX *box1, BOX *box2);
-extern LSEG *box_diagonal(BOX *box);
-extern BOX *box(Point *p1, Point *p2);
-extern BOX *box_add(BOX *box, Point *p);
-extern BOX *box_sub(BOX *box, Point *p);
-extern BOX *box_mul(BOX *box, Point *p);
-extern BOX *box_div(BOX *box, Point *p);
-
-/* private routines */
-extern double box_dt(BOX *box1, BOX *box2);
+extern Datum box_in(PG_FUNCTION_ARGS);
+extern Datum box_out(PG_FUNCTION_ARGS);
+extern Datum box_same(PG_FUNCTION_ARGS);
+extern Datum box_overlap(PG_FUNCTION_ARGS);
+extern Datum box_overleft(PG_FUNCTION_ARGS);
+extern Datum box_left(PG_FUNCTION_ARGS);
+extern Datum box_right(PG_FUNCTION_ARGS);
+extern Datum box_overright(PG_FUNCTION_ARGS);
+extern Datum box_contained(PG_FUNCTION_ARGS);
+extern Datum box_contain(PG_FUNCTION_ARGS);
+extern Datum box_below(PG_FUNCTION_ARGS);
+extern Datum box_above(PG_FUNCTION_ARGS);
+extern Datum box_lt(PG_FUNCTION_ARGS);
+extern Datum box_gt(PG_FUNCTION_ARGS);
+extern Datum box_eq(PG_FUNCTION_ARGS);
+extern Datum box_le(PG_FUNCTION_ARGS);
+extern Datum box_ge(PG_FUNCTION_ARGS);
+extern Datum box_area(PG_FUNCTION_ARGS);
+extern Datum box_width(PG_FUNCTION_ARGS);
+extern Datum box_height(PG_FUNCTION_ARGS);
+extern Datum box_distance(PG_FUNCTION_ARGS);
+extern Datum box_center(PG_FUNCTION_ARGS);
+extern Datum box_intersect(PG_FUNCTION_ARGS);
+extern Datum box_diagonal(PG_FUNCTION_ARGS);
+extern Datum points_box(PG_FUNCTION_ARGS);
+extern Datum box_add(PG_FUNCTION_ARGS);
+extern Datum box_sub(PG_FUNCTION_ARGS);
+extern Datum box_mul(PG_FUNCTION_ARGS);
+extern Datum box_div(PG_FUNCTION_ARGS);
 
 /* public path routines */
 extern Datum path_in(PG_FUNCTION_ARGS);
@@ -347,7 +337,6 @@ extern Datum poly_contain(PG_FUNCTION_ARGS);
 extern Datum poly_contained(PG_FUNCTION_ARGS);
 extern Datum poly_contain_pt(PG_FUNCTION_ARGS);
 extern Datum pt_contained_poly(PG_FUNCTION_ARGS);
-
 extern Datum poly_distance(PG_FUNCTION_ARGS);
 extern Datum poly_npoints(PG_FUNCTION_ARGS);
 extern Datum poly_center(PG_FUNCTION_ARGS);
@@ -356,52 +345,48 @@ extern Datum poly_path(PG_FUNCTION_ARGS);
 extern Datum box_poly(PG_FUNCTION_ARGS);
 
 /* public circle routines */
-extern CIRCLE *circle_in(char *str);
-extern char *circle_out(CIRCLE *circle);
-extern bool circle_same(CIRCLE *circle1, CIRCLE *circle2);
-extern bool circle_overlap(CIRCLE *circle1, CIRCLE *circle2);
-extern bool circle_overleft(CIRCLE *circle1, CIRCLE *circle2);
-extern bool circle_left(CIRCLE *circle1, CIRCLE *circle2);
-extern bool circle_right(CIRCLE *circle1, CIRCLE *circle2);
-extern bool circle_overright(CIRCLE *circle1, CIRCLE *circle2);
-extern bool circle_contained(CIRCLE *circle1, CIRCLE *circle2);
-extern bool circle_contain(CIRCLE *circle1, CIRCLE *circle2);
-extern bool circle_below(CIRCLE *circle1, CIRCLE *circle2);
-extern bool circle_above(CIRCLE *circle1, CIRCLE *circle2);
-
-extern bool circle_eq(CIRCLE *circle1, CIRCLE *circle2);
-extern bool circle_ne(CIRCLE *circle1, CIRCLE *circle2);
-extern bool circle_lt(CIRCLE *circle1, CIRCLE *circle2);
-extern bool circle_gt(CIRCLE *circle1, CIRCLE *circle2);
-extern bool circle_le(CIRCLE *circle1, CIRCLE *circle2);
-extern bool circle_ge(CIRCLE *circle1, CIRCLE *circle2);
-extern bool circle_contain_pt(CIRCLE *circle, Point *point);
-extern bool pt_contained_circle(Point *point, CIRCLE *circle);
-extern CIRCLE *circle_add_pt(CIRCLE *circle, Point *point);
-extern CIRCLE *circle_sub_pt(CIRCLE *circle, Point *point);
-extern CIRCLE *circle_mul_pt(CIRCLE *circle, Point *point);
-extern CIRCLE *circle_div_pt(CIRCLE *circle, Point *point);
-extern double *circle_diameter(CIRCLE *circle);
-extern double *circle_radius(CIRCLE *circle);
-extern double *circle_distance(CIRCLE *circle1, CIRCLE *circle2);
-extern double *dist_pc(Point *point, CIRCLE *circle);
+extern Datum circle_in(PG_FUNCTION_ARGS);
+extern Datum circle_out(PG_FUNCTION_ARGS);
+extern Datum circle_same(PG_FUNCTION_ARGS);
+extern Datum circle_overlap(PG_FUNCTION_ARGS);
+extern Datum circle_overleft(PG_FUNCTION_ARGS);
+extern Datum circle_left(PG_FUNCTION_ARGS);
+extern Datum circle_right(PG_FUNCTION_ARGS);
+extern Datum circle_overright(PG_FUNCTION_ARGS);
+extern Datum circle_contained(PG_FUNCTION_ARGS);
+extern Datum circle_contain(PG_FUNCTION_ARGS);
+extern Datum circle_below(PG_FUNCTION_ARGS);
+extern Datum circle_above(PG_FUNCTION_ARGS);
+extern Datum circle_eq(PG_FUNCTION_ARGS);
+extern Datum circle_ne(PG_FUNCTION_ARGS);
+extern Datum circle_lt(PG_FUNCTION_ARGS);
+extern Datum circle_gt(PG_FUNCTION_ARGS);
+extern Datum circle_le(PG_FUNCTION_ARGS);
+extern Datum circle_ge(PG_FUNCTION_ARGS);
+extern Datum circle_contain_pt(PG_FUNCTION_ARGS);
+extern Datum pt_contained_circle(PG_FUNCTION_ARGS);
+extern Datum circle_add_pt(PG_FUNCTION_ARGS);
+extern Datum circle_sub_pt(PG_FUNCTION_ARGS);
+extern Datum circle_mul_pt(PG_FUNCTION_ARGS);
+extern Datum circle_div_pt(PG_FUNCTION_ARGS);
+extern Datum circle_diameter(PG_FUNCTION_ARGS);
+extern Datum circle_radius(PG_FUNCTION_ARGS);
+extern Datum circle_distance(PG_FUNCTION_ARGS);
+extern Datum dist_pc(PG_FUNCTION_ARGS);
 extern Datum dist_cpoly(PG_FUNCTION_ARGS);
-extern Point *circle_center(CIRCLE *circle);
-extern CIRCLE *circle(Point *center, float8 *radius);
-extern CIRCLE *box_circle(BOX *box);
-extern BOX *circle_box(CIRCLE *circle);
+extern Datum circle_center(PG_FUNCTION_ARGS);
+extern Datum cr_circle(PG_FUNCTION_ARGS);
+extern Datum box_circle(PG_FUNCTION_ARGS);
+extern Datum circle_box(PG_FUNCTION_ARGS);
 extern Datum poly_circle(PG_FUNCTION_ARGS);
 extern Datum circle_poly(PG_FUNCTION_ARGS);
-
-/* private routines */
-extern double *circle_area(CIRCLE *circle);
-extern double circle_dt(CIRCLE *circle1, CIRCLE *circle2);
+extern Datum circle_area(PG_FUNCTION_ARGS);
 
 /* support routines for the rtree access method (rtproc.c) */
-extern BOX *rt_box_union(BOX *a, BOX *b);
-extern BOX *rt_box_inter(BOX *a, BOX *b);
-extern void rt_box_size(BOX *a, float *size);
-extern void rt_bigbox_size(BOX *a, float *size);
+extern Datum rt_box_union(PG_FUNCTION_ARGS);
+extern Datum rt_box_inter(PG_FUNCTION_ARGS);
+extern Datum rt_box_size(PG_FUNCTION_ARGS);
+extern Datum rt_bigbox_size(PG_FUNCTION_ARGS);
 extern Datum rt_poly_size(PG_FUNCTION_ARGS);
 extern Datum rt_poly_union(PG_FUNCTION_ARGS);
 extern Datum rt_poly_inter(PG_FUNCTION_ARGS);

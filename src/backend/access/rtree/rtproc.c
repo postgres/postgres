@@ -3,12 +3,19 @@
  * rtproc.c
  *	  pg_amproc entries for rtrees.
  *
+ * NOTE: for largely-historical reasons, the intersection functions should
+ * return a NULL pointer (*not* an SQL null value) to indicate "no
+ * intersection".  The size functions must be prepared to accept such
+ * a pointer and return 0.  This convention means that only pass-by-reference
+ * data types can be used as the output of the union and intersection
+ * routines, but that's not a big problem.
+ *
+ *
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtproc.c,v 1.28 2000/07/29 18:45:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtproc.c,v 1.29 2000/07/30 20:43:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,29 +25,31 @@
 #include "utils/geo_decls.h"
 
 
-BOX *
-rt_box_union(BOX *a, BOX *b)
+Datum
+rt_box_union(PG_FUNCTION_ARGS)
 {
+	BOX		   *a = PG_GETARG_BOX_P(0);
+	BOX		   *b = PG_GETARG_BOX_P(1);
 	BOX		   *n;
 
-	if ((n = (BOX *) palloc(sizeof(*n))) == (BOX *) NULL)
-		elog(ERROR, "Cannot allocate box for union");
+	n = (BOX *) palloc(sizeof(BOX));
 
 	n->high.x = Max(a->high.x, b->high.x);
 	n->high.y = Max(a->high.y, b->high.y);
 	n->low.x = Min(a->low.x, b->low.x);
 	n->low.y = Min(a->low.y, b->low.y);
 
-	return n;
+	PG_RETURN_BOX_P(n);
 }
 
-BOX *
-rt_box_inter(BOX *a, BOX *b)
+Datum
+rt_box_inter(PG_FUNCTION_ARGS)
 {
+	BOX		   *a = PG_GETARG_BOX_P(0);
+	BOX		   *b = PG_GETARG_BOX_P(1);
 	BOX		   *n;
 
-	if ((n = (BOX *) palloc(sizeof(*n))) == (BOX *) NULL)
-		elog(ERROR, "Cannot allocate box for union");
+	n = (BOX *) palloc(sizeof(BOX));
 
 	n->high.x = Min(a->high.x, b->high.x);
 	n->high.y = Min(a->high.y, b->high.y);
@@ -50,21 +59,26 @@ rt_box_inter(BOX *a, BOX *b)
 	if (n->high.x < n->low.x || n->high.y < n->low.y)
 	{
 		pfree(n);
-		return (BOX *) NULL;
+		/* Indicate "no intersection" by returning NULL pointer */
+		n = NULL;
 	}
 
-	return n;
+	PG_RETURN_BOX_P(n);
 }
 
-void
-rt_box_size(BOX *a, float *size)
+Datum
+rt_box_size(PG_FUNCTION_ARGS)
 {
+	BOX		   *a = PG_GETARG_BOX_P(0);
+	/* NB: size is an output argument */
+	float	   *size = (float *) PG_GETARG_POINTER(1);
+
 	if (a == (BOX *) NULL || a->high.x <= a->low.x || a->high.y <= a->low.y)
 		*size = 0.0;
 	else
 		*size = (float) ((a->high.x - a->low.x) * (a->high.y - a->low.y));
 
-	return;
+	PG_RETURN_VOID();
 }
 
 /*
@@ -75,10 +89,10 @@ rt_box_size(BOX *a, float *size)
  *		as the return type for the size routine, so we no longer need to
  *		have a special return type for big boxes.
  */
-void
-rt_bigbox_size(BOX *a, float *size)
+Datum
+rt_bigbox_size(PG_FUNCTION_ARGS)
 {
-	rt_box_size(a, size);
+	return rt_box_size(fcinfo);
 }
 
 Datum
@@ -106,30 +120,6 @@ rt_poly_union(PG_FUNCTION_ARGS)
 }
 
 Datum
-rt_poly_size(PG_FUNCTION_ARGS)
-{
-	POLYGON	   *a = PG_GETARG_POLYGON_P(0);
-	/* NB: size is an output argument */
-	float	   *size = (float *) PG_GETARG_POINTER(1);
-	double		xdim,
-				ydim;
-
-	if (a == (POLYGON *) NULL ||
-		a->boundbox.high.x <= a->boundbox.low.x ||
-		a->boundbox.high.y <= a->boundbox.low.y)
-		*size = 0.0;
-	else
-	{
-		xdim = (a->boundbox.high.x - a->boundbox.low.x);
-		ydim = (a->boundbox.high.y - a->boundbox.low.y);
-
-		*size = (float) (xdim * ydim);
-	}
-
-	PG_RETURN_VOID();
-}
-
-Datum
 rt_poly_inter(PG_FUNCTION_ARGS)
 {
 	POLYGON	   *a = PG_GETARG_POLYGON_P(0);
@@ -146,16 +136,52 @@ rt_poly_inter(PG_FUNCTION_ARGS)
 	p->boundbox.low.x = Max(a->boundbox.low.x, b->boundbox.low.x);
 	p->boundbox.low.y = Max(a->boundbox.low.y, b->boundbox.low.y);
 
-	/* Avoid leaking memory when handed toasted input. */
-	PG_FREE_IF_COPY(a, 0);
-	PG_FREE_IF_COPY(b, 1);
-
 	if (p->boundbox.high.x < p->boundbox.low.x ||
 		p->boundbox.high.y < p->boundbox.low.y)
 	{
 		pfree(p);
-		PG_RETURN_NULL();
+		/* Indicate "no intersection" by returning NULL pointer */
+		p = NULL;
 	}
 
+	/* Avoid leaking memory when handed toasted input. */
+	PG_FREE_IF_COPY(a, 0);
+	PG_FREE_IF_COPY(b, 1);
+
 	PG_RETURN_POLYGON_P(p);
+}
+
+Datum
+rt_poly_size(PG_FUNCTION_ARGS)
+{
+	Pointer		aptr = PG_GETARG_POINTER(0);
+	/* NB: size is an output argument */
+	float	   *size = (float *) PG_GETARG_POINTER(1);
+	POLYGON	   *a;
+	double		xdim,
+				ydim;
+
+	/* Can't just use GETARG because of possibility that input is NULL;
+	 * since POLYGON is toastable, GETARG will try to inspect its value
+	 */
+	if (aptr == NULL)
+	{
+		*size = 0.0;
+		PG_RETURN_VOID();
+	}
+	/* Now safe to apply GETARG */
+	a = PG_GETARG_POLYGON_P(0);
+
+	if (a->boundbox.high.x <= a->boundbox.low.x ||
+		a->boundbox.high.y <= a->boundbox.low.y)
+		*size = 0.0;
+	else
+	{
+		xdim = (a->boundbox.high.x - a->boundbox.low.x);
+		ydim = (a->boundbox.high.y - a->boundbox.low.y);
+
+		*size = (float) (xdim * ydim);
+	}
+
+	PG_RETURN_VOID();
 }

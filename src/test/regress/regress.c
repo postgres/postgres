@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.42 2000/07/29 18:46:12 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.43 2000/07/30 20:43:54 tgl Exp $
  */
 
 #include <float.h>				/* faked on sunos */
@@ -17,10 +17,10 @@
 
 typedef TupleTableSlot *TUPLE;
 
-extern double *regress_dist_ptpath(Point *pt, PATH *path);
-extern double *regress_path_dist(PATH *p1, PATH *p2);
+extern Datum regress_dist_ptpath(PG_FUNCTION_ARGS);
+extern Datum regress_path_dist(PG_FUNCTION_ARGS);
 extern PATH *poly2path(POLYGON *poly);
-extern Point *interpt_pp(PATH *p1, PATH *p2);
+extern Datum interpt_pp(PG_FUNCTION_ARGS);
 extern void regress_lseg_construct(LSEG *lseg, Point *pt1, Point *pt2);
 extern Datum overpaid(PG_FUNCTION_ARGS);
 extern Datum boxarea(PG_FUNCTION_ARGS);
@@ -29,24 +29,22 @@ extern char *reverse_name(char *string);
 /*
 ** Distance from a point to a path
 */
-double *
-regress_dist_ptpath(pt, path)
-Point	   *pt;
-PATH	   *path;
+Datum
+regress_dist_ptpath(PG_FUNCTION_ARGS)
 {
-	double	   *result;
-	double	   *tmp;
+	Point	   *pt = PG_GETARG_POINT_P(0);
+	PATH	   *path = PG_GETARG_PATH_P(1);
+	float8		result = 0.0;	/* keep compiler quiet */
+	float8		tmp;
 	int			i;
 	LSEG		lseg;
 
 	switch (path->npts)
 	{
 		case 0:
-			result = palloc(sizeof(double));
-			*result = Abs((double) DBL_MAX);	/* +infinity */
-			break;
+			PG_RETURN_NULL();
 		case 1:
-			result = point_distance(pt, &path->p[0]);
+			result = point_dt(pt, &path->p[0]);
 			break;
 		default:
 
@@ -55,51 +53,57 @@ PATH	   *path;
 			 * distance from the point to any of its constituent segments.
 			 */
 			Assert(path->npts > 1);
-			result = palloc(sizeof(double));
 			for (i = 0; i < path->npts - 1; ++i)
 			{
 				regress_lseg_construct(&lseg, &path->p[i], &path->p[i + 1]);
-				tmp = dist_ps(pt, &lseg);
-				if (i == 0 || *tmp < *result)
-					*result = *tmp;
-				pfree(tmp);
-
+				tmp = DatumGetFloat8(DirectFunctionCall2(dist_ps,
+													PointPGetDatum(pt),
+													LsegPGetDatum(&lseg)));
+				if (i == 0 || tmp < result)
+					result = tmp;
 			}
 			break;
 	}
-	return result;
+	PG_RETURN_FLOAT8(result);
 }
 
 /* this essentially does a cartesian product of the lsegs in the
    two paths, and finds the min distance between any two lsegs */
-double *
-regress_path_dist(p1, p2)
-PATH	   *p1;
-PATH	   *p2;
+Datum
+regress_path_dist(PG_FUNCTION_ARGS)
 {
-	double	   *min,
-			   *tmp;
+	PATH	   *p1 = PG_GETARG_PATH_P(0);
+	PATH	   *p2 = PG_GETARG_PATH_P(1);
+	bool		have_min = false;
+	float8		min = 0.0;		/* initialize to keep compiler quiet */
+	float8		tmp;
 	int			i,
 				j;
 	LSEG		seg1,
 				seg2;
 
-	regress_lseg_construct(&seg1, &p1->p[0], &p1->p[1]);
-	regress_lseg_construct(&seg2, &p2->p[0], &p2->p[1]);
-	min = lseg_distance(&seg1, &seg2);
-
 	for (i = 0; i < p1->npts - 1; i++)
+	{
 		for (j = 0; j < p2->npts - 1; j++)
 		{
 			regress_lseg_construct(&seg1, &p1->p[i], &p1->p[i + 1]);
 			regress_lseg_construct(&seg2, &p2->p[j], &p2->p[j + 1]);
 
-			if (*min < *(tmp = lseg_distance(&seg1, &seg2)))
-				*min = *tmp;
-			pfree(tmp);
+			tmp = DatumGetFloat8(DirectFunctionCall2(lseg_distance,
+													 LsegPGetDatum(&seg1),
+													 LsegPGetDatum(&seg2)));
+			if (!have_min || tmp < min)
+			{
+				min = tmp;
+				have_min = true;
+			}
 		}
+	}
 
-	return min;
+	if (! have_min)
+		PG_RETURN_NULL();
+
+	PG_RETURN_FLOAT8(min);
 }
 
 PATH *
@@ -124,43 +128,43 @@ POLYGON    *poly;
 											 CStringGetDatum(output)));
 }
 
-/* return the point where two paths intersect.	Assumes that they do. */
-Point *
-interpt_pp(p1, p2)
-PATH	   *p1;
-PATH	   *p2;
+/* return the point where two paths intersect, or NULL if no intersection. */
+Datum
+interpt_pp(PG_FUNCTION_ARGS)
 {
-
-	Point	   *retval;
+	PATH	   *p1 = PG_GETARG_PATH_P(0);
+	PATH	   *p2 = PG_GETARG_PATH_P(1);
 	int			i,
 				j;
 	LSEG		seg1,
 				seg2;
-
-#ifdef NOT_USED
-	LINE	   *ln;
-
-#endif
 	bool		found;			/* We've found the intersection */
 
 	found = false;				/* Haven't found it yet */
 
 	for (i = 0; i < p1->npts - 1 && !found; i++)
+	{
+		regress_lseg_construct(&seg1, &p1->p[i], &p1->p[i + 1]);
 		for (j = 0; j < p2->npts - 1 && !found; j++)
 		{
-			regress_lseg_construct(&seg1, &p1->p[i], &p1->p[i + 1]);
 			regress_lseg_construct(&seg2, &p2->p[j], &p2->p[j + 1]);
-			if (lseg_intersect(&seg1, &seg2))
+			if (DatumGetBool(DirectFunctionCall2(lseg_intersect,
+												 LsegPGetDatum(&seg1),
+												 LsegPGetDatum(&seg2))))
 				found = true;
 		}
+	}
 
-#ifdef NOT_USED
-	ln = line_construct_pp(&seg2.p[0], &seg2.p[1]);
-	retval = interpt_sl(&seg1, ln);
-#endif
-	retval = lseg_interpt(&seg1, &seg2);
+	if (!found)
+		PG_RETURN_NULL();
 
-	return retval;
+	/* Note: DirectFunctionCall2 will kick out an error if lseg_interpt()
+	 * returns NULL, but that should be impossible since we know the two
+	 * segments intersect.
+	 */
+	PG_RETURN_DATUM(DirectFunctionCall2(lseg_interpt,
+										LsegPGetDatum(&seg1),
+										LsegPGetDatum(&seg2)));
 }
 
 
