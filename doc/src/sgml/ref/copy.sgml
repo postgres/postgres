@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/copy.sgml,v 1.15 2000/04/18 23:43:24 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/copy.sgml,v 1.16 2000/04/18 23:44:58 momjian Exp $
 Postgres documentation
 -->
 
@@ -196,12 +196,14 @@ ERROR: <replaceable>reason</replaceable>
     stored/read as binary format rather than as text.  It is
     somewhat faster than the normal copy command, but is not
     generally portable, and the files generated are somewhat larger,
-    although this factor is highly dependent on the data itself.  By
-    default, a text copy uses a tab ("\t") character as a delimiter.
+    although this factor is highly dependent on the data itself.  
+    </para>
+    <para>
+    By default, a text copy uses a tab ("\t") character as a delimiter.
     The delimiter may also be changed to any other single character
     with the keyword phrase USING DELIMITERS.  Characters
     in data fields which happen to match the delimiter character will
-    be quoted.
+    be backslash quoted.
    </para>
    
    <para>
