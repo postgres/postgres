@@ -3,13 +3,13 @@
 
 #include <sys/types.h>
 #include <regex.h>
-
+#include "c.h"
 
 struct SPNode;
 
 
 typedef struct {
-	u_int32_t 
+	uint32 
 		val:8,
 		isword:1,
 		compoundallow:1,
@@ -18,11 +18,11 @@ typedef struct {
 } SPNodeData;
 
 typedef struct SPNode {
-	u_int32_t 	length;
+	uint32 	length;
 	SPNodeData	data[1];	
 } SPNode;
 
-#define SPNHRDSZ	(sizeof(u_int32_t))
+#define SPNHRDSZ	(sizeof(uint32))
 
 
 typedef struct spell_struct
@@ -57,7 +57,7 @@ typedef struct aff_struct
 struct AffixNode;
 
 typedef struct {
-	u_int32_t
+	uint32
 		val:8,
 		naff:24;
 	AFFIX   **aff;
@@ -65,11 +65,11 @@ typedef struct {
 } AffixNodeData;
 
 typedef struct AffixNode {
-	u_int32_t length;
+	uint32 length;
 	AffixNodeData	data[1];
 } AffixNode;
 
-#define ANHRDSZ        (sizeof(u_int32_t))
+#define ANHRDSZ        (sizeof(uint32))
 
 typedef struct Tree_struct
 {

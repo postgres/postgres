@@ -11,7 +11,7 @@
 #define MAXNORMLEN 256
 
 #define STRNCASECMP(x,y)		(strncasecmp(x,y,strlen(y)))
-#define GETWCHAR(W,L,N,T) ( ((u_int8_t*)(W))[ ((T)=='p') ? (N) : ( (L) - 1 - (N) ) ] )
+#define GETWCHAR(W,L,N,T) ( ((uint8*)(W))[ ((T)=='p') ? (N) : ( (L) - 1 - (N) ) ] )
 #define GETCHAR(A,N,T)	  GETWCHAR( (A)->repl, (A)->replen, N, T )
 
 
@@ -197,7 +197,7 @@ FindWord(IspellDict * Conf, const char *word, int affixflag, char compoundonly)
 		StopHigh = node->data+node->length;
 		while (StopLow < StopHigh) {
 			StopMiddle = StopLow + (StopHigh - StopLow) / 2;
-			if ( StopMiddle->val == ((u_int8_t*)(word))[level] ) {
+			if ( StopMiddle->val == ((uint8*)(word))[level] ) {
 				if ( wrdlen==level+1 && StopMiddle->isword ) {
 					if ( compoundonly && !StopMiddle->compoundallow )
 						return 0;
@@ -207,7 +207,7 @@ FindWord(IspellDict * Conf, const char *word, int affixflag, char compoundonly)
 				node=StopMiddle->node;
 				level++;
 				break;
-			} else if ( StopMiddle->val < ((u_int8_t*)(word))[level] ) {
+			} else if ( StopMiddle->val < ((uint8*)(word))[level] ) {
 				StopLow = StopMiddle + 1;
 			} else {
 				StopHigh = StopMiddle;
@@ -431,7 +431,7 @@ mkSPNode(IspellDict *Conf, int low, int high, int level) {
 				}
 				lastchar=Conf->Spell[i].word[level];
 			}
-			data->val=((u_int8_t*)(Conf->Spell[i].word))[level];
+			data->val=((uint8*)(Conf->Spell[i].word))[level];
 			if ( Conf->Spell[i].p.d.len == level+1 ) {
 				if ( data->isword && data->affix!=Conf->Spell[i].p.d.affix) {
 					/* 
@@ -503,7 +503,7 @@ static AffixNode*
 mkANode(IspellDict *Conf, int low, int high, int level, int type) {
 	int i;
 	int nchar=0;
-	u_int8_t lastchar='\0';
+	uint8 lastchar='\0';
 	AffixNode *rs;
 	AffixNodeData *data;
 	int lownew=low;
@@ -588,7 +588,7 @@ NISortAffixes(IspellDict * Conf)
 static AffixNodeData*
 FinfAffixes(AffixNode *node, const char *word, int wrdlen, int *level, int type) {
 	AffixNodeData *StopLow, *StopHigh, *StopMiddle;
-	u_int8_t symbol;
+	uint8 symbol;
 
 	while( node && *level<wrdlen) {
 		StopLow = node->data;
@@ -805,9 +805,9 @@ SplitToVariants( IspellDict * Conf, SPNode *snode, SplitVar * orig, char *word, 
 		StopHigh = node->data+node->length;
 		while (StopLow < StopHigh) {
 			StopMiddle = StopLow + (StopHigh - StopLow) / 2;
-			if ( StopMiddle->val == ((u_int8_t*)(word))[level] ) {
+			if ( StopMiddle->val == ((uint8*)(word))[level] ) {
 				break;
-			} else if ( StopMiddle->val < ((u_int8_t*)(word))[level] ) {
+			} else if ( StopMiddle->val < ((uint8*)(word))[level] ) {
 				StopLow = StopMiddle + 1;
 			} else {
 				StopHigh = StopMiddle;
