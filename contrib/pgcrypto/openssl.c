@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/openssl.c,v 1.14 2005/03/12 06:53:54 neilc Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/openssl.c,v 1.15 2005/03/21 05:18:45 neilc Exp $
  */
 
 #include <postgres.h>
@@ -208,8 +208,8 @@ gen_ossl_free(PX_Cipher * c)
 	ossldata   *od = (ossldata *) c->ptr;
 
 	memset(od, 0, sizeof(*od));
-	pfree(od);
-	pfree(c);
+	px_free(od);
+	px_free(c);
 }
 
 /* Blowfish */
@@ -473,37 +473,21 @@ static const struct ossl_cipher ossl_cast_cbc = {
 /*
  * Special handlers
  */
-static const struct
+struct ossl_cipher_lookup
 {
 	const char *name;
 	const struct ossl_cipher *ciph;
-}	ossl_cipher_types[] =
+};
 
-{
-	{
-		"bf-cbc", &ossl_bf_cbc
-	},
-	{
-		"bf-ecb", &ossl_bf_ecb
-	},
-	{
-		"bf-cfb", &ossl_bf_cfb
-	},
-	{
-		"des-ecb", &ossl_des_ecb
-	},
-	{
-		"des-cbc", &ossl_des_cbc
-	},
-	{
-		"cast5-ecb", &ossl_cast_ecb
-	},
-	{
-		"cast5-cbc", &ossl_cast_cbc
-	},
-	{
-		NULL
-	}
+static const struct ossl_cipher_lookup ossl_cipher_types[] = {
+	{"bf-cbc", &ossl_bf_cbc},
+	{"bf-ecb", &ossl_bf_ecb},
+	{"bf-cfb", &ossl_bf_cfb},
+	{"des-ecb", &ossl_des_ecb},
+	{"des-cbc", &ossl_des_cbc},
+	{"cast5-ecb", &ossl_cast_ecb},
+	{"cast5-cbc", &ossl_cast_cbc},
+	{NULL}
 };
 
 /* PUBLIC functions */
@@ -511,38 +495,29 @@ static const struct
 int
 px_find_cipher(const char *name, PX_Cipher ** res)
 {
-	unsigned	i;
-	PX_Cipher  *c = NULL,
-			   *csrc;
+	const struct ossl_cipher_lookup *i;
+	PX_Cipher  *c = NULL;
 	ossldata   *od;
-	const struct ossl_cipher *ossl_ciph = NULL;
 
 	name = px_resolve_alias(ossl_aliases, name);
-	for (i = 0; ossl_cipher_types[i].name; i++)
-	{
-		if (!strcmp(ossl_cipher_types[i].name, name))
-		{
-			ossl_ciph = ossl_cipher_types[i].ciph;
+	for (i = ossl_cipher_types; i->name; i++)
+		if (!strcmp(i->name, name))
 			break;
-		}
-	}
-	if (ossl_ciph == NULL)
+	if (i->name == NULL)
 		return -1;
 
 	od = px_alloc(sizeof(*od));
 	memset(od, 0, sizeof(*od));
-	od->ciph = ossl_ciph;
-
-	csrc = NULL;
+	od->ciph = i->ciph;
 
 	c = px_alloc(sizeof(*c));
 	c->block_size = gen_ossl_block_size;
 	c->key_size = gen_ossl_key_size;
 	c->iv_size = gen_ossl_iv_size;
 	c->free = gen_ossl_free;
-	c->init = ossl_ciph->init;
-	c->encrypt = ossl_ciph->encrypt;
-	c->decrypt = ossl_ciph->decrypt;
+	c->init = od->ciph->init;
+	c->encrypt = od->ciph->encrypt;
+	c->decrypt = od->ciph->decrypt;
 	c->ptr = od;
 
 	*res = c;

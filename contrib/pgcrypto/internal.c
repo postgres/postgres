@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/internal.c,v 1.14 2004/10/25 02:15:02 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/internal.c,v 1.15 2005/03/21 05:18:45 neilc Exp $
  */
 
 
@@ -57,22 +57,17 @@
 static void init_md5(PX_MD * h);
 static void init_sha1(PX_MD * h);
 
-static struct int_digest
+struct int_digest
 {
 	char	   *name;
 	void		(*init) (PX_MD * h);
-}	int_digest_list[] =
+};
 
-{
-	{
-		"md5", init_md5
-	},
-	{
-		"sha1", init_sha1
-	},
-	{
-		NULL, NULL
-	}
+static const struct int_digest
+int_digest_list[] = {
+	{ "md5", init_md5 },
+	{ "sha1", init_sha1 },
+	{ NULL, NULL }
 };
 
 /* MD5 */
@@ -516,31 +511,22 @@ bf_cbc_load(void)
 	return bf_load(MODE_CBC);
 }
 
-static struct
+struct int_cipher
 {
 	char	   *name;
 	PX_Cipher  *(*load) (void);
-}	int_ciphers[] =
-
-{
-	{
-		"bf-cbc", bf_cbc_load
-	},
-	{
-		"bf-ecb", bf_ecb_load
-	},
-	{
-		"aes-128-cbc", rj_128_cbc
-	},
-	{
-		"aes-128-ecb", rj_128_ecb
-	},
-	{
-		NULL, NULL
-	}
 };
 
-static PX_Alias int_aliases[] = {
+static const struct int_cipher
+int_ciphers[] = {
+	{ "bf-cbc", bf_cbc_load },
+	{ "bf-ecb", bf_ecb_load },
+	{ "aes-128-cbc", rj_128_cbc },
+	{ "aes-128-ecb", rj_128_ecb },
+	{ NULL, NULL }
+};
+
+static const PX_Alias int_aliases[] = {
 	{"bf", "bf-cbc"},
 	{"blowfish", "bf-cbc"},
 	{"aes", "aes-128-cbc"},
@@ -557,7 +543,7 @@ static PX_Alias int_aliases[] = {
 int
 px_find_digest(const char *name, PX_MD ** res)
 {
-	struct int_digest *p;
+	const struct int_digest *p;
 	PX_MD	   *h;
 
 	for (p = int_digest_list; p->name; p++)

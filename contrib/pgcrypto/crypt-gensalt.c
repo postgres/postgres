@@ -15,11 +15,6 @@
 #include "px.h"
 #include "px-crypt.h"
 
-#include <errno.h>
-#ifndef __set_errno
-#define __set_errno(val) (errno = (val))
-#endif
-
 typedef unsigned int BF_word;
 
 unsigned char _crypt_itoa64[64 + 1] =
@@ -33,7 +28,6 @@ _crypt_gensalt_traditional_rn(unsigned long count,
 	{
 		if (output_size > 0)
 			output[0] = '\0';
-		__set_errno((output_size < 2 + 1) ? ERANGE : EINVAL);
 		return NULL;
 	}
 
@@ -57,7 +51,6 @@ _crypt_gensalt_extended_rn(unsigned long count,
 	{
 		if (output_size > 0)
 			output[0] = '\0';
-		__set_errno((output_size < 1 + 4 + 4 + 1) ? ERANGE : EINVAL);
 		return NULL;
 	}
 
@@ -91,7 +84,6 @@ _crypt_gensalt_md5_rn(unsigned long count,
 	{
 		if (output_size > 0)
 			output[0] = '\0';
-		__set_errno((output_size < 3 + 4 + 1) ? ERANGE : EINVAL);
 		return NULL;
 	}
 
@@ -173,7 +165,6 @@ _crypt_gensalt_blowfish_rn(unsigned long count,
 	{
 		if (output_size > 0)
 			output[0] = '\0';
-		__set_errno((output_size < 7 + 22 + 1) ? ERANGE : EINVAL);
 		return NULL;
 	}
 

@@ -35,12 +35,6 @@
 #include "px.h"
 #include "px-crypt.h"
 
-#define __set_errno(v)
-
-#ifndef __set_errno
-#define __set_errno(val) errno = (val)
-#endif
-
 #ifdef __i386__
 #define BF_ASM				0	/* 1 */
 #define BF_SCALE			1
@@ -600,10 +594,7 @@ _crypt_blowfish_rn(const char *key, const char *setting,
 	int			i;
 
 	if (size < 7 + 22 + 31 + 1)
-	{
-		__set_errno(ERANGE);
 		return NULL;
-	}
 
 	if (setting[0] != '$' ||
 		setting[1] != '2' ||
@@ -613,7 +604,6 @@ _crypt_blowfish_rn(const char *key, const char *setting,
 		setting[5] < '0' || setting[5] > '9' ||
 		setting[6] != '$')
 	{
-		__set_errno(EINVAL);
 		return NULL;
 	}
 
@@ -621,7 +611,6 @@ _crypt_blowfish_rn(const char *key, const char *setting,
 	if (count < 16 || BF_decode(data.binary.salt, &setting[7], 16))
 	{
 		memset(data.binary.salt, 0, sizeof(data.binary.salt));
-		__set_errno(EINVAL);
 		return NULL;
 	}
 	BF_swap(data.binary.salt, 4);

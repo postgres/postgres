@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/pgcrypto.c,v 1.16 2004/05/07 00:24:57 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/pgcrypto.c,v 1.17 2005/03/21 05:18:45 neilc Exp $
  */
 
 #include "postgres.h"
@@ -46,7 +46,7 @@ typedef int (*PFN) (const char *name, void **res);
 static void *
 			find_provider(text *name, PFN pf, char *desc, int silent);
 
-/* SQL function: hash(text, text) returns text */
+/* SQL function: hash(bytea, text) returns bytea */
 PG_FUNCTION_INFO_V1(pg_digest);
 
 Datum
@@ -111,7 +111,7 @@ pg_digest_exists(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(true);
 }
 
-/* SQL function: hmac(data:text, key:text, type:text) */
+/* SQL function: hmac(data:bytea, key:bytea, type:text) returns bytea */
 PG_FUNCTION_INFO_V1(pg_hmac);
 
 Datum
@@ -316,7 +316,7 @@ pg_crypt(PG_FUNCTION_ARGS)
 	PG_RETURN_TEXT_P(res);
 }
 
-/* SQL function: pg_encrypt(text, text, text) returns text */
+/* SQL function: pg_encrypt(bytea, bytea, text) returns bytea */
 PG_FUNCTION_INFO_V1(pg_encrypt);
 
 Datum
@@ -367,7 +367,7 @@ pg_encrypt(PG_FUNCTION_ARGS)
 	PG_RETURN_BYTEA_P(res);
 }
 
-/* SQL function: pg_decrypt(text, text, text) returns text */
+/* SQL function: pg_decrypt(bytea, bytea, text) returns bytea */
 PG_FUNCTION_INFO_V1(pg_decrypt);
 
 Datum
@@ -417,7 +417,7 @@ pg_decrypt(PG_FUNCTION_ARGS)
 	PG_RETURN_BYTEA_P(res);
 }
 
-/* SQL function: pg_encrypt(text, text, text) returns text */
+/* SQL function: pg_encrypt_iv(bytea, bytea, bytea, text) returns bytea */
 PG_FUNCTION_INFO_V1(pg_encrypt_iv);
 
 Datum
@@ -473,7 +473,7 @@ pg_encrypt_iv(PG_FUNCTION_ARGS)
 	PG_RETURN_BYTEA_P(res);
 }
 
-/* SQL function: pg_decrypt_iv(text, text, text) returns text */
+/* SQL function: pg_decrypt_iv(bytea, bytea, bytea, text) returns bytea */
 PG_FUNCTION_INFO_V1(pg_decrypt_iv);
 
 Datum
@@ -529,7 +529,7 @@ pg_decrypt_iv(PG_FUNCTION_ARGS)
 	PG_RETURN_BYTEA_P(res);
 }
 
-/* SQL function: pg_decrypt(text, text, text) returns text */
+/* SQL function: pg_cipher_exists(text) returns bool */
 PG_FUNCTION_INFO_V1(pg_cipher_exists);
 
 Datum
@@ -549,7 +549,6 @@ pg_cipher_exists(PG_FUNCTION_ARGS)
 
 	PG_RETURN_BOOL((c != NULL) ? true : false);
 }
-
 
 static void *
 find_provider(text *name,

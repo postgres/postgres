@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/px-crypt.c,v 1.8 2004/05/07 00:24:57 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/px-crypt.c,v 1.9 2005/03/21 05:18:45 neilc Exp $
  */
 
 #include <postgres.h>
@@ -69,52 +69,41 @@ run_crypt_bf(const char *psw, const char *salt,
 	return res;
 }
 
-static struct
+struct px_crypt_algo
 {
 	char	   *id;
 	unsigned	id_len;
 	char	   *(*crypt) (const char *psw, const char *salt,
 									  char *buf, unsigned len);
-}	px_crypt_list[] =
+};
 
-{
-	{
-		"$2a$", 4, run_crypt_bf
-	},
-	{
-		"$2$", 3, NULL
-	},							/* N/A */
-	{
-		"$1$", 3, run_crypt_md5
-	},
-	{
-		"_", 1, run_crypt_des
-	},
-	{
-		"", 0, run_crypt_des
-	},
-	{
-		NULL, 0, NULL
-	}
+static const struct px_crypt_algo
+px_crypt_list[] = {
+	{"$2a$", 4, run_crypt_bf},
+	{"$2$", 3, NULL},							/* N/A */
+	{"$1$", 3, run_crypt_md5},
+	{"_", 1, run_crypt_des},
+	{"", 0, run_crypt_des},
+	{NULL, 0, NULL}
 };
 
 char *
 px_crypt(const char *psw, const char *salt, char *buf, unsigned len)
 {
-	int			i;
+	const struct px_crypt_algo *c;
 
-	for (i = 0; px_crypt_list[i].id; i++)
+	for (c = px_crypt_list; c->id; c++)
 	{
-		if (!px_crypt_list[i].id_len)
+		if (!c->id_len)
 			break;
-		if (!strncmp(salt, px_crypt_list[i].id, px_crypt_list[i].id_len))
+		if (!strncmp(salt, c->id, c->id_len))
 			break;
 	}
 
-	if (px_crypt_list[i].crypt == NULL)
+	if (c->crypt == NULL)
 		return NULL;
 
-	return px_crypt_list[i].crypt(psw, salt, buf, len);
+	return c->crypt(psw, salt, buf, len);
 }
 
 #else							/* PX_SYSTEM_CRYPT */
@@ -155,7 +144,7 @@ static struct generator gen_list[] = {
 	{"md5", _crypt_gensalt_md5_rn, 6, 0, 0, 0},
 	{"xdes", _crypt_gensalt_extended_rn, 3, PX_XDES_ROUNDS, 1, 0xFFFFFF},
 	{"bf", _crypt_gensalt_blowfish_rn, 16, PX_BF_ROUNDS, 4, 31},
-	{NULL, NULL, 0, 0, 0}
+	{NULL, NULL, 0, 0, 0, 0}
 };
 
 unsigned
