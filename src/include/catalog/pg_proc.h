@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.313 2003/08/17 19:58:06 tgl Exp $
+ * $Id: pg_proc.h,v 1.314 2003/10/21 16:23:16 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -1477,7 +1477,7 @@ DATA(insert OID = 1173 (  timestamptz	   PGNSP PGUID 12 f f t f s 1 1184 "702"	a
 DESCR("convert abstime to timestamp with time zone");
 DATA(insert OID = 1174 (  timestamptz	   PGNSP PGUID 12 f f t f s 1 1184 "1082"  date_timestamptz - _null_ ));
 DESCR("convert date to timestamp with time zone");
-DATA(insert OID = 1176 (  timestamptz	   PGNSP PGUID 14 f f t f s 2 1184 "1082 1083"	"select timestamptz($1 + $2)" - _null_ ));
+DATA(insert OID = 1176 (  timestamptz	   PGNSP PGUID 14 f f t f s 2 1184 "1082 1083"	"select cast(($1 + $2) as timestamp with time zone)" - _null_ ));
 DESCR("convert date and time to timestamp with time zone");
 DATA(insert OID = 1177 (  interval		   PGNSP PGUID 12 f f t f i 1 1186 "703"	reltime_interval - _null_ ));
 DESCR("convert reltime to interval");
@@ -1520,9 +1520,9 @@ DESCR("date difference preserving months and years");
 DATA(insert OID = 1200 (  interval			PGNSP PGUID 12 f f t f i 2 1186 "1186 23"	interval_scale - _null_ ));
 DESCR("adjust interval precision");
 
-DATA(insert OID = 1215 (  obj_description	PGNSP PGUID 14 f f t f s 2	25 "26 19"	"select description from pg_description where objoid = $1 and classoid = (select oid from pg_class where relname = $2 and relnamespace = PGNSP) and objsubid = 0" - _null_ ));
+DATA(insert OID = 1215 (  obj_description	PGNSP PGUID 14 f f t f s 2	25 "26 19"	"select description from pg_catalog.pg_description where objoid = $1 and classoid = (select oid from pg_catalog.pg_class where relname = $2 and relnamespace = PGNSP) and objsubid = 0" - _null_ ));
 DESCR("get description for object id and catalog name");
-DATA(insert OID = 1216 (  col_description	PGNSP PGUID 14 f f t f s 2	25 "26 23"	"select description from pg_description where objoid = $1 and classoid = \'pg_catalog.pg_class\'::regclass and objsubid = $2" - _null_ ));
+DATA(insert OID = 1216 (  col_description	PGNSP PGUID 14 f f t f s 2	25 "26 23"	"select description from pg_catalog.pg_description where objoid = $1 and classoid = \'pg_catalog.pg_class\'::regclass and objsubid = $2" - _null_ ));
 DESCR("get description for table column");
 
 DATA(insert OID = 1217 (  date_trunc	   PGNSP PGUID 12 f f t f i 2 1184 "25 1184"	timestamptz_trunc - _null_ ));
@@ -1683,7 +1683,7 @@ DESCR("exponential");
  * This form of obj_description is now deprecated, since it will fail if
  * OIDs are not unique across system catalogs.	Use the other forms instead.
  */
-DATA(insert OID = 1348 (  obj_description	 PGNSP PGUID 14 f f t f s 1 25 "26"  "select description from pg_description where objoid = $1 and objsubid = 0" - _null_ ));
+DATA(insert OID = 1348 (  obj_description	 PGNSP PGUID 14 f f t f s 1 25 "26"  "select description from pg_catalog.pg_description where objoid = $1 and objsubid = 0" - _null_ ));
 DESCR("get description for object id (deprecated)");
 DATA(insert OID = 1349 (  oidvectortypes	 PGNSP PGUID 12 f f t f s 1 25 "30"  oidvectortypes - _null_ ));
 DESCR("print type names of oidvector field");
@@ -1740,15 +1740,15 @@ DESCR("smaller of two");
 DATA(insert OID = 1381 (  char_length	   PGNSP PGUID 12 f f t f i 1 23 "25"  textlen - _null_ ));
 DESCR("character length");
 
-DATA(insert OID = 1382 (  date_part    PGNSP PGUID 14 f f t f s 2  701 "25 702"  "select date_part($1, timestamptz($2))" - _null_ ));
+DATA(insert OID = 1382 (  date_part    PGNSP PGUID 14 f f t f s 2  701 "25 702"  "select pg_catalog.date_part($1, cast($2 as timestamp with time zone))" - _null_ ));
 DESCR("extract field from abstime");
-DATA(insert OID = 1383 (  date_part    PGNSP PGUID 14 f f t f s 2  701 "25 703"  "select date_part($1, cast($2 as interval))" - _null_ ));
+DATA(insert OID = 1383 (  date_part    PGNSP PGUID 14 f f t f s 2  701 "25 703"  "select pg_catalog.date_part($1, cast($2 as pg_catalog.interval))" - _null_ ));
 DESCR("extract field from reltime");
-DATA(insert OID = 1384 (  date_part    PGNSP PGUID 14 f f t f i 2  701 "25 1082"	"select date_part($1, cast($2 as timestamp without time zone))" - _null_ ));
+DATA(insert OID = 1384 (  date_part    PGNSP PGUID 14 f f t f i 2  701 "25 1082"	"select pg_catalog.date_part($1, cast($2 as timestamp without time zone))" - _null_ ));
 DESCR("extract field from date");
 DATA(insert OID = 1385 (  date_part    PGNSP PGUID 12 f f t f i 2  701 "25 1083"  time_part - _null_ ));
 DESCR("extract field from time");
-DATA(insert OID = 1386 (  age		   PGNSP PGUID 14 f f t f s 1 1186 "1184"  "select age(cast(current_date as timestamp with time zone), $1)" - _null_ ));
+DATA(insert OID = 1386 (  age		   PGNSP PGUID 14 f f t f s 1 1186 "1184"  "select pg_catalog.age(cast(current_date as timestamp with time zone), $1)" - _null_ ));
 DESCR("date difference from today preserving months and years");
 
 DATA(insert OID = 1388 (  timetz	   PGNSP PGUID 12 f f t f s 1 1266 "1184"  timestamptz_timetz - _null_ ));
@@ -1789,9 +1789,9 @@ DESCR("current schema name");
 DATA(insert OID = 1403 (  current_schemas	PGNSP PGUID 12 f f t f s 1	1003 "16"	current_schemas - _null_ ));
 DESCR("current schema search list");
 
-DATA(insert OID = 1404 (  overlay			PGNSP PGUID 14 f f t f i 4 25 "25 25 23 23"  "select substring($1, 1, ($3 - 1)) || $2 || substring($1, ($3 + $4))" - _null_ ));
+DATA(insert OID = 1404 (  overlay			PGNSP PGUID 14 f f t f i 4 25 "25 25 23 23"  "select pg_catalog.substring($1, 1, ($3 - 1)) || $2 || pg_catalog.substring($1, ($3 + $4))" - _null_ ));
 DESCR("substitute portion of string");
-DATA(insert OID = 1405 (  overlay			PGNSP PGUID 14 f f t f i 3 25 "25 25 23"  "select substring($1, 1, ($3 - 1)) || $2 || substring($1, ($3 + char_length($2)))" - _null_ ));
+DATA(insert OID = 1405 (  overlay			PGNSP PGUID 14 f f t f i 3 25 "25 25 23"  "select pg_catalog.substring($1, 1, ($3 - 1)) || $2 || pg_catalog.substring($1, ($3 + pg_catalog.char_length($2)))" - _null_ ));
 DESCR("substitute portion of string");
 
 DATA(insert OID = 1406 (  isvertical		PGNSP PGUID 12 f f t f i 2	16 "600 600"  point_vert - _null_ ));
@@ -1835,7 +1835,7 @@ DATA(insert OID = 1424 (  box_mul			PGNSP PGUID 12 f f t f i 2 603 "603 600"	box
 DESCR("multiply box by point (scale)");
 DATA(insert OID = 1425 (  box_div			PGNSP PGUID 12 f f t f i 2 603 "603 600"	box_div - _null_ ));
 DESCR("divide box by point (scale)");
-DATA(insert OID = 1426 (  path_contain_pt	PGNSP PGUID 14 f f t f i 2	16 "602 600"  "select on_ppath($2, $1)" - _null_ ));
+DATA(insert OID = 1426 (  path_contain_pt	PGNSP PGUID 14 f f t f i 2	16 "602 600"  "select pg_catalog.on_ppath($2, $1)" - _null_ ));
 DESCR("path contains point?");
 DATA(insert OID = 1428 (  poly_contain_pt	PGNSP PGUID 12 f f t f i 2	16 "604 600"  poly_contain_pt - _null_ ));
 DESCR("polygon contains point?");
@@ -2015,7 +2015,7 @@ DATA(insert OID = 1542 (  center			PGNSP PGUID 12 f f t f i 1 600 "603"	box_cent
 DESCR("center of");
 DATA(insert OID = 1543 (  center			PGNSP PGUID 12 f f t f i 1 600 "718"	circle_center - _null_ ));
 DESCR("center of");
-DATA(insert OID = 1544 (  polygon			PGNSP PGUID 14 f f t f i 1 604 "718"	"select polygon(12, $1)" - _null_ ));
+DATA(insert OID = 1544 (  polygon			PGNSP PGUID 14 f f t f i 1 604 "718"	"select pg_catalog.polygon(12, $1)" - _null_ ));
 DESCR("convert circle to 12-vertex polygon");
 DATA(insert OID = 1545 (  npoints			PGNSP PGUID 12 f f t f i 1	23 "602"  path_npoints - _null_ ));
 DESCR("number of points in path");
@@ -2165,9 +2165,9 @@ DATA(insert OID =  877 (  substr	   PGNSP PGUID 12 f f t f i 3 25 "25 23 23"  te
 DESCR("return portion of string");
 DATA(insert OID =  878 (  translate    PGNSP PGUID 12 f f t f i 3 25 "25 25 25"  translate - _null_ ));
 DESCR("map a set of character appearing in string");
-DATA(insert OID =  879 (  lpad		   PGNSP PGUID 14 f f t f i 2 25 "25 23"	"select lpad($1, $2, \' \')" - _null_ ));
+DATA(insert OID =  879 (  lpad		   PGNSP PGUID 14 f f t f i 2 25 "25 23"	"select pg_catalog.lpad($1, $2, \' \')" - _null_ ));
 DESCR("left-pad string to length");
-DATA(insert OID =  880 (  rpad		   PGNSP PGUID 14 f f t f i 2 25 "25 23"	"select rpad($1, $2, \' \')" - _null_ ));
+DATA(insert OID =  880 (  rpad		   PGNSP PGUID 14 f f t f i 2 25 "25 23"	"select pg_catalog.rpad($1, $2, \' \')" - _null_ ));
 DESCR("right-pad string to length");
 DATA(insert OID =  881 (  ltrim		   PGNSP PGUID 12 f f t f i 1 25 "25"  ltrim1 - _null_ ));
 DESCR("trim spaces from left end of string");
@@ -2315,7 +2315,7 @@ DESCR("adjust varbit() to typmod length");
 
 DATA(insert OID = 1698 (  position		   PGNSP PGUID 12 f f t f i 2 23 "1560 1560" bitposition - _null_ ));
 DESCR("return position of sub-bitstring");
-DATA(insert OID = 1699 (  substring			PGNSP PGUID 14 f f t f i 2 1560 "1560 23"  "select substring($1, $2, -1)" - _null_ ));
+DATA(insert OID = 1699 (  substring			PGNSP PGUID 14 f f t f i 2 1560 "1560 23"  "select pg_catalog.substring($1, $2, -1)" - _null_ ));
 DESCR("return portion of bitstring");
 
 
@@ -2445,11 +2445,11 @@ DATA(insert OID = 1706 ( sign					PGNSP PGUID 12 f f t f i 1 1700 "1700"	numeric
 DESCR("sign of value");
 DATA(insert OID = 1707 ( round					PGNSP PGUID 12 f f t f i 2 1700 "1700 23"  numeric_round - _null_ ));
 DESCR("value rounded to 'scale'");
-DATA(insert OID = 1708 ( round					PGNSP PGUID 14 f f t f i 1 1700 "1700"	"select round($1,0)" - _null_ ));
+DATA(insert OID = 1708 ( round					PGNSP PGUID 14 f f t f i 1 1700 "1700"	"select pg_catalog.round($1,0)" - _null_ ));
 DESCR("value rounded to 'scale' of zero");
 DATA(insert OID = 1709 ( trunc					PGNSP PGUID 12 f f t f i 2 1700 "1700 23"  numeric_trunc - _null_ ));
 DESCR("value truncated to 'scale'");
-DATA(insert OID = 1710 ( trunc					PGNSP PGUID 14 f f t f i 1 1700 "1700"	"select trunc($1,0)" - _null_ ));
+DATA(insert OID = 1710 ( trunc					PGNSP PGUID 14 f f t f i 1 1700 "1700"	"select pg_catalog.trunc($1,0)" - _null_ ));
 DESCR("value truncated to 'scale' of zero");
 DATA(insert OID = 1711 ( ceil					PGNSP PGUID 12 f f t f i 1 1700 "1700"	numeric_ceil - _null_ ));
 DESCR("smallest integer >= value");
@@ -2501,7 +2501,7 @@ DATA(insert OID = 1739 ( numeric_power			PGNSP PGUID 12 f f t f i 2 1700 "1700 1
 DESCR("m raised to the power of n");
 DATA(insert OID = 1740 ( numeric				PGNSP PGUID 12 f f t f i 1 1700 "23"	int4_numeric - _null_ ));
 DESCR("(internal)");
-DATA(insert OID = 1741 ( log					PGNSP PGUID 14 f f t f i 1 1700 "1700"	"select log(10, $1)" - _null_ ));
+DATA(insert OID = 1741 ( log					PGNSP PGUID 14 f f t f i 1 1700 "1700"	"select pg_catalog.log(10, $1)" - _null_ ));
 DESCR("logarithm base 10 of n");
 DATA(insert OID = 1742 ( numeric				PGNSP PGUID 12 f f t f i 1 1700 "700"  float4_numeric - _null_ ));
 DESCR("(internal)");
@@ -2575,11 +2575,11 @@ DATA(insert OID = 1799 (  oidout		   PGNSP PGUID 12 f f t f i 1 2275 "26" oidout
 DESCR("I/O");
 
 
-DATA(insert OID = 1810 (  bit_length	   PGNSP PGUID 14 f f t f i 1 23 "17" "select octet_length($1) * 8" - _null_ ));
+DATA(insert OID = 1810 (  bit_length	   PGNSP PGUID 14 f f t f i 1 23 "17" "select pg_catalog.octet_length($1) * 8" - _null_ ));
 DESCR("length in bits");
-DATA(insert OID = 1811 (  bit_length	   PGNSP PGUID 14 f f t f i 1 23 "25" "select octet_length($1) * 8" - _null_ ));
+DATA(insert OID = 1811 (  bit_length	   PGNSP PGUID 14 f f t f i 1 23 "25" "select pg_catalog.octet_length($1) * 8" - _null_ ));
 DESCR("length in bits");
-DATA(insert OID = 1812 (  bit_length	   PGNSP PGUID 14 f f t f i 1 23 "1560" "select length($1)" - _null_ ));
+DATA(insert OID = 1812 (  bit_length	   PGNSP PGUID 14 f f t f i 1 23 "1560" "select pg_catalog.length($1)" - _null_ ));
 DESCR("length in bits");
 
 /* Selectivity estimators for LIKE and related operators */
@@ -2936,7 +2936,7 @@ DATA(insert OID = 2057 (  timestamp_gt		PGNSP PGUID 12 f f t f i 2 16 "1114 1114
 DESCR("greater-than");
 DATA(insert OID = 2058 (  age				PGNSP PGUID 12 f f t f i 2 1186 "1114 1114"  timestamp_age - _null_ ));
 DESCR("date difference preserving months and years");
-DATA(insert OID = 2059 (  age				PGNSP PGUID 14 f f t f s 1 1186 "1114"	"select age(cast(current_date as timestamp without time zone), $1)" - _null_ ));
+DATA(insert OID = 2059 (  age				PGNSP PGUID 14 f f t f s 1 1186 "1114"	"select pg_catalog.age(cast(current_date as timestamp without time zone), $1)" - _null_ ));
 DESCR("date difference from today preserving months and years");
 
 DATA(insert OID = 2069 (  timezone			PGNSP PGUID 12 f f t f s 2 1184 "25 1114"  timestamp_zone - _null_ ));
@@ -2950,7 +2950,7 @@ DESCR("subtract");
 
 DATA(insert OID = 2073 (  substring			PGNSP PGUID 12 f f t f i 2 25 "25 25"	textregexsubstr - _null_ ));
 DESCR("extracts text matching regular expression");
-DATA(insert OID = 2074 (  substring			PGNSP PGUID 14 f f t f i 3 25 "25 25 25"	"select substring($1, similar_escape($2, $3))" - _null_ ));
+DATA(insert OID = 2074 (  substring			PGNSP PGUID 14 f f t f i 3 25 "25 25 25"	"select pg_catalog.substring($1, pg_catalog.similar_escape($2, $3))" - _null_ ));
 DESCR("extracts text matching SQL99 regular expression");
 
 DATA(insert OID = 2075 (  bit				PGNSP PGUID 12 f f t f i 1 1560 "20"	bitfromint8 - _null_ ));
