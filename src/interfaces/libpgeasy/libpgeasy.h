@@ -4,11 +4,11 @@
 */
 
 PGresult   *doquery(char *query);
-PGconn *connectdb(char *dbName,
-		  char *pghost,
+PGconn *connectdb(char *pghost,
 		  char *pgport,
 		  char *pgoptions,
-		  char *pgtty);
+		  char *pgtty,
+		  char *dbName);
 void		disconnectdb(void);
 int			fetch(void *param,...);
 int			fetchwithnulls(void *param,...);

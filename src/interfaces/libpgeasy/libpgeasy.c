@@ -42,11 +42,11 @@ static int	tuple;
 **
 */
 PGconn *
-connectdb(char *dbName,
-		  char *pghost,
+connectdb(char *pghost,
 		  char *pgport,
 		  char *pgoptions,
-		  char *pgtty)
+		  char *pgtty,
+		  char *dbName)
 {
 	/* make a connection to the database */
 	conn = PQsetdb(pghost, pgport, pgoptions, pgtty, dbName);
