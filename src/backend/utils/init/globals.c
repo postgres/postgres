@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/globals.c,v 1.79 2004/01/26 22:54:57 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/globals.c,v 1.80 2004/01/26 22:59:53 momjian Exp $
  *
  * NOTES
  *	  Globals used all over the place should be declared here and not
@@ -52,6 +52,8 @@ BackendId	MyBackendId;
 
 char	   *DatabasePath = NULL;
 Oid			MyDatabaseId = InvalidOid;
+
+pid_t PostmasterPid = 0;
 
 /* these are initialized for the bootstrap/standalone case: */
 bool		IsPostmasterEnvironment = false;
