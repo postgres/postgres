@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.117 1999/12/06 18:02:43 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.118 1999/12/10 03:01:05 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -362,7 +362,7 @@ static Node *doNegate(Node *n);
 %right		UMINUS
 %left		'.'
 %left		'[' ']'
-%nonassoc	TYPECAST
+%left		TYPECAST
 %left		UNION INTERSECT EXCEPT
 %%
 
@@ -759,11 +759,9 @@ alter_clause:  ADD opt_column columnDef
 				}
 			| ADD '(' OptTableElementList ')'
 				{
-					Node *lp = lfirst($3);
-
 					if (length($3) != 1)
 						elog(ERROR,"ALTER TABLE/ADD() allows one column only");
-					$$ = lp;
+					$$ = (Node *) lfirst($3);
 				}
 			| DROP opt_column ColId
 				{	elog(ERROR,"ALTER TABLE/DROP COLUMN not yet implemented"); }
@@ -1532,7 +1530,7 @@ ConstraintTimeSpec: INITIALLY IMMEDIATE
 		| INITIALLY DEFERRED
 			{ $$ = 2; }
 		;
-		
+
 
 DropTrigStmt:  DROP TRIGGER name ON relation_name
 				{
@@ -1758,7 +1756,7 @@ comment_tg:	TRIGGER { $$ = TRIGGER; }
 		; 
 
 comment_text:	Sconst { $$ = $1; }
-		| NULL_P { $$ = 0; }
+		| NULL_P { $$ = NULL; }
 		;
 		
 /*****************************************************************************
@@ -3808,6 +3806,17 @@ a_expr:  com_expr
 					}
 				}
 		/*
+		 * Can't collapse this into prior rule by using a_expr_or_null;
+		 * that creates reduce/reduce conflicts.  Grumble.
+		 */
+		| NULL_P TYPECAST Typename
+				{
+					A_Const *n = makeNode(A_Const);
+					n->val.type = T_Null;
+					n->typename = $3;
+					$$ = (Node *)n;
+				}
+		/*
 		 * These operators must be called out explicitly in order to make use
 		 * of yacc/bison's automatic operator-precedence handling.  All other
 		 * operator names are handled by the generic productions using "Op",
@@ -4041,6 +4050,13 @@ b_expr:  com_expr
 						$$ = (Node *)n;
 					}
 				}
+		| NULL_P TYPECAST Typename
+				{
+					A_Const *n = makeNode(A_Const);
+					n->val.type = T_Null;
+					n->typename = $3;
+					$$ = (Node *)n;
+				}
 		| '-' b_expr %prec UMINUS
 				{	$$ = doNegate($2); }
 		| '%' b_expr
@@ -4110,7 +4126,7 @@ com_expr:  attr
 				{	$$ = $1;  }
 		| '(' a_expr_or_null ')'
 				{	$$ = $2; }
-		| CAST '(' a_expr AS Typename ')'
+		| CAST '(' a_expr_or_null AS Typename ')'
 				{
 					$$ = (Node *)$3;
 					/* AexprConst can be either A_Const or ParamNo */
@@ -4870,7 +4886,7 @@ ColId:  IDENT							{ $$ = $1; }
 		| STATEMENT						{ $$ = "statement"; }
 		| STDIN							{ $$ = "stdin"; }
 		| STDOUT						{ $$ = "stdout"; }
-                | SYSID                                                 { $$ = "sysid"; }
+		| SYSID							{ $$ = "sysid"; }
 		| TIME							{ $$ = "time"; }
 		| TIMESTAMP						{ $$ = "timestamp"; }
 		| TIMEZONE_HOUR					{ $$ = "timezone_hour"; }
