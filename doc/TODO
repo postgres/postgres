@@ -207,9 +207,8 @@ configure detection improvements for tcl/tk(Brook Milligan, Alvin)
 Manual page improvements(Bruce)
 BETWEEN and LIKE fix(Thomas)
 fix for psql \connect used by pg_dump(Oliver Elphick)
-Cleanup of postodbc source code indentation
+New odbc driver
 pgaccess, version 0.86
-HAVING clause now supported in SELECT(Stefan)
 qsort removed, now uses libc version, cleanups(Jeroen)
 fix for buffer over-runs detected(Maurice Gittens)
 fix for buffer overrun in libpgtcl(Randy Kunkee)
