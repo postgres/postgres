@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.375 2003/10/19 23:43:51 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.376 2003/11/24 14:49:51 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -2312,7 +2312,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 				/*
 				 * s - report usage statistics (timings) after each query
 				 */
-				SetConfigOption("show_statement_stats", "true", ctx, gucsource);
+				SetConfigOption("log_statement_stats", "true", ctx, gucsource);
 				break;
 
 			case 't':
@@ -2338,7 +2338,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 							errs++;
 						break;
 					case 'e':
-						tmp = "show_executor_stats";
+						tmp = "log_executor_stats";
 						break;
 					default:
 						errs++;
@@ -2473,7 +2473,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 		ereport(WARNING,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("statement-level statistics are disabled because parser, planner, or executor statistics are on")));
-		SetConfigOption("show_statement_stats", "false", ctx, gucsource);
+		SetConfigOption("log_statement_stats", "false", ctx, gucsource);
 	}
 
 	if (!IsUnderPostmaster)
@@ -2659,7 +2659,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.375 $ $Date: 2003/10/19 23:43:51 $\n");
+		puts("$Revision: 1.376 $ $Date: 2003/11/24 14:49:51 $\n");
 	}
 
 	/*

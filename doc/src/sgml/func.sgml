@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.178 2003/11/04 09:55:38 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.179 2003/11/24 14:49:51 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -6668,7 +6668,7 @@ SELECT current_setting('datestyle');
     <literal>false</literal> instead. The function corresponds to the
     SQL command <command>SET</command>. An example:
 <programlisting>
-SELECT set_config('show_statement_stats', 'off', false);
+SELECT set_config('log_statement_stats', 'off', false);
 
  set_config
 ------------

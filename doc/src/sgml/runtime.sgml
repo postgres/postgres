@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.221 2003/11/16 17:01:50 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.222 2003/11/24 14:49:51 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -2677,7 +2677,7 @@ $ <userinput>postmaster -o '-S 1024 -s'</userinput>
 
        <row>
         <entry><option>-s</option><footnoteref linkend="fn.runtime-config-short"></entry>
-        <entry><literal>show_statement_stats = on</></entry>
+        <entry><literal>log_statement_stats = on</></entry>
        </row>
 
        <row>
