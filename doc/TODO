@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Jan  3 01:56:41 EST 2001
+Last updated:		Thu Jan  4 03:13:20 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -79,7 +79,7 @@ ADMIN
 * Allow international error message support and add error codes
 * -Unify configuration into one configuration file (Peter E)
 * -use setproctitle() if it exists for 'ps' display of status
-* Prevent initdb from running wrong version of postmaster/postgres
+* -Prevent initdb from running wrong version of postmaster/postgres (Peter E)
 * Remove unused files during database vacuum or postmaster startup
 
 TYPES
@@ -97,7 +97,7 @@ TYPES
 * -Fix improper masking of some inet/cidr types [cidr]
 * Make a separate SERIAL type?
 * Store binary-compatible type information in the system
-* Add support for & operator
+* -Add support for & operator (Peter E)
 * Allow LOCALE on a per-column basis, default to ASCII
 * Allow nulls in arrays
 * Allow arrays to be ORDER'ed
@@ -146,10 +146,10 @@ COMMANDS
 * ALTER TABLE ADD COLUMN to inherited table put column in wrong place [inherit]
 * -Add ALTER TABLE ALTER COLUMN feature (Peter E)
 * Add ALTER TABLE DROP COLUMN feature [drop]
-* Add ALTER TABLE command to change table ownership (Mark H)
+* -Add ALTER TABLE command to change table ownership (Mark H)
 * Add ALTER FUNCTION 
 * Add ALTER TABLE ... DROP CONSTRAINT
-* Add ALTER USER command to change user db attributes
+* -Add ALTER USER command to change user db attributes (Peter E)
 * Automatically drop constraints/functions when object is dropped
 * Allow CLUSTER on all tables at once, and improve CLUSTER, loses NOT
 	NULL specification, indexes, permissions, etc on table
@@ -178,7 +178,7 @@ CLIENTS
 * Update reltuples from COPY command
 * Allow COPY to specify column names
 * fix array handling for ECPG
-* add pg_dump option to dump type names as standard ANSI types
+* -add pg_dump option to dump type names as standard ANSI types
 * -make pg_dump dump in oid order, so dependencies are resolved (Philip)
 * allow psql \d to show primary and foreign keys
 * allow psql \d to show temporary table structure
@@ -332,13 +332,13 @@ Developers who have claimed items are:
 	* Michael is Michael Meskes <meskes@postgresql.org>
 	* Oleg is Oleg Bartunov <oleg@sai.msu.su>
 	* Peter is Peter T Mount <peter@retep.org.uk>
-	* Philip is Philip Warner <pjw@rhyme.com.au>
 	* Peter E is Peter Eisentraut<peter_e@gmx.net>
+	* Philip is Philip Warner <pjw@rhyme.com.au>
 	* Ross is Ross J. Reedstrom <reedstrm@wallace.ece.rice.edu>
 	* Ryan is Ryan Bradetich <rbrad@hpb50023.boi.hp.com>
  	* Stephan is Stephan Szabo <sszabo@megazone23.bigpanda.com>
 	* Tatsuo is Tatsuo Ishii <t-ishii@sra.co.jp>
-	* Tom is Tom Lane <tgl@sss.pgh.pa.us>
 	* Thomas is Thomas Lockhart <lockhart@alumni.caltech.edu>
+	* Tom is Tom Lane <tgl@sss.pgh.pa.us>
 	* TomH is Tom I Helbekkmo <tih@Hamartun.Priv.NO>
 	* Vadim is Vadim B. Mikheev <vadim4o@email.com>  
