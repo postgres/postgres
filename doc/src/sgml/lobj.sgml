@@ -284,7 +284,7 @@ SELECT lo_export(image.raster, "/tmp/motd") from image
               */
              fd = open(filename, O_RDONLY, 0666);
              if (fd &lt; 0)  {   /* error */
-              fprintf(stderr, "can't open unix file
+              fprintf(stderr, "can't open unix file %s\n", filename);
              }
 
              /*
@@ -292,7 +292,7 @@ SELECT lo_export(image.raster, "/tmp/motd") from image
               */
              lobjId = lo_creat(conn, INV_READ|INV_WRITE);
              if (lobjId == 0) {
-              fprintf(stderr, "can't create large object");
+              fprintf(stderr, "can't create large object\n");
              }
 
              lobj_fd = lo_open(conn, lobjId, INV_WRITE);
@@ -302,7 +302,7 @@ SELECT lo_export(image.raster, "/tmp/motd") from image
              while ((nbytes = read(fd, buf, BUFSIZE)) &gt; 0) {
               tmp = lo_write(conn, lobj_fd, buf, nbytes);
               if (tmp &lt; nbytes) {
-                  fprintf(stderr, "error while reading
+                  fprintf(stderr, "error while reading large object\n");
               }
              }
 
@@ -321,7 +321,7 @@ SELECT lo_export(image.raster, "/tmp/motd") from image
 
              lobj_fd = lo_open(conn, lobjId, INV_READ);
              if (lobj_fd &lt; 0) {
-              fprintf(stderr,"can't open large object %d",
+              fprintf(stderr,"can't open large object %d\n",
                    lobjId);
              }
 
@@ -335,7 +335,7 @@ SELECT lo_export(image.raster, "/tmp/motd") from image
               fprintf(stderr,"&gt;&gt;&gt; %s", buf);
               nread += nbytes;
              }
-             fprintf(stderr,"0);
+             fprintf(stderr,"\n");
              lo_close(conn, lobj_fd);
          }
 
@@ -349,7 +349,7 @@ SELECT lo_export(image.raster, "/tmp/motd") from image
 
              lobj_fd = lo_open(conn, lobjId, INV_READ);
              if (lobj_fd &lt; 0) {
-              fprintf(stderr,"can't open large object %d",
+              fprintf(stderr,"can't open large object %d\n",
                    lobjId);
              }
 
@@ -365,7 +365,7 @@ SELECT lo_export(image.raster, "/tmp/motd") from image
               nbytes = lo_write(conn, lobj_fd, buf + nwritten, len - nwritten);
               nwritten += nbytes;
              }
-             fprintf(stderr,"0);
+             fprintf(stderr,"\n");
              lo_close(conn, lobj_fd);
          }
 
@@ -385,7 +385,7 @@ SELECT lo_export(image.raster, "/tmp/motd") from image
               */
              lobj_fd = lo_open(conn, lobjId, INV_READ);
              if (lobj_fd &lt; 0) {
-              fprintf(stderr,"can't open large object %d",
+              fprintf(stderr,"can't open large object %d\n",
                    lobjId);
              }
 
@@ -394,7 +394,7 @@ SELECT lo_export(image.raster, "/tmp/motd") from image
               */
              fd = open(filename, O_CREAT|O_WRONLY, 0666);
              if (fd &lt; 0)  {   /* error */
-              fprintf(stderr, "can't open unix file
+              fprintf(stderr, "can't open unix file %s\n",
                    filename);
              }
 
@@ -404,7 +404,7 @@ SELECT lo_export(image.raster, "/tmp/motd") from image
              while ((nbytes = lo_read(conn, lobj_fd, buf, BUFSIZE)) &gt; 0) {
               tmp = write(fd, buf, nbytes);
                  if (tmp &lt; nbytes) {
-                  fprintf(stderr,"error while writing
+                  fprintf(stderr,"error while writing %s\n",
                        filename);
               }
              }
@@ -432,7 +432,7 @@ SELECT lo_export(image.raster, "/tmp/motd") from image
              PGresult *res;
 
              if (argc != 4) {
-              fprintf(stderr, "Usage: %s database_name in_filename out_filename0,
+              fprintf(stderr, "Usage: %s database_name in_filename out_filename\n",
                    argv[0]);
               exit(1);
              }
@@ -448,7 +448,7 @@ SELECT lo_export(image.raster, "/tmp/motd") from image
 
              /* check to see that the backend connection was successfully made */
              if (PQstatus(conn) == CONNECTION_BAD) {
-              fprintf(stderr,"Connection to database '%s' failed.0, database);
+              fprintf(stderr,"Connection to database '%s' failed.\n", database);
               fprintf(stderr,"%s",PQerrorMessage(conn));
               exit_nicely(conn);
              }
@@ -456,20 +456,20 @@ SELECT lo_export(image.raster, "/tmp/motd") from image
              res = PQexec(conn, "begin");
              PQclear(res);
 
-             printf("importing file
+             printf("importing file %s\n", in_filename);
          /*  lobjOid = importFile(conn, in_filename); */
              lobjOid = lo_import(conn, in_filename);
          /*
-             printf("as large object %d.0, lobjOid);
+             printf("as large object %d.\n", lobjOid);
 
-             printf("picking out bytes 1000-2000 of the large object0);
+             printf("picking out bytes 1000-2000 of the large object\n");
              pickout(conn, lobjOid, 1000, 1000);
 
-             printf("overwriting bytes 1000-2000 of the large object with X's0);
+             printf("overwriting bytes 1000-2000 of the large object with X's\n");
              overwrite(conn, lobjOid, 1000, 1000);
          */
 
-             printf("exporting large object to file
+             printf("exporting large object to file %s\n", out_filename);
          /*    exportFile(conn, lobjOid, out_filename); */
              lo_export(conn, lobjOid,out_filename);
 

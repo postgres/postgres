@@ -27,7 +27,7 @@ to this guide when the installation is complete.
 
 <Para>
      Throughout this manual, any examples  that  begin  with
-     the  character  <Quote>&percnt</Quote> are commands that should be typed
+     the  character  <Quote>%</Quote> are commands that should be typed
      at the UNIX shell prompt.  Examples that begin with the
      character <Quote>*</Quote> are commands in the Postgres query 
      language, Postgres <Acronym>SQL</Acronym>.

@@ -691,13 +691,14 @@ AsciiRow (B)
 </Term>
 <ListItem>
 <Para>
-
                 A bit map with one bit for each field in the row.  The 1st
-                field corresponds to bit 7 of the 1st byte, the 2nd field
-                corresponds to bit 6 of the 1st byte, the 8th field corresponds
-                to bit 0 of the 1st byte, the 9th field corresponds to bit 8 of
-                the 2nd byte, and so on.  The bit is set if the value of the
-                corresponding field is not NULL.
+                field corresponds to bit 7 (MSB) of the 1st byte, the 2nd
+                field corresponds to bit 6 of the 1st byte, the 8th field
+                corresponds to bit 0 (LSB) of the 1st byte, the 9th field
+                corresponds to bit 7 of the 2nd byte, and so on.  Each bit
+                is set if the value of the corresponding field is not NULL.
+                If the number of fields is not a multiple of 8, the remainder
+                of the last byte in the bit map is wasted.
 </Para>
 <Para>
 	Then, for each field with a non-NULL value, there is the following:
@@ -720,7 +721,10 @@ AsciiRow (B)
 <ListItem>
 <Para>
 			Specifies the value of the field itself in <Acronym>ASCII</Acronym>
-			characters.  <Replaceable>n</Replaceable> is the above size minus 4.
+			characters.  <Replaceable>n</Replaceable> is the above
+			size minus 4.
+                        There is no trailing '\0' in the field data; the front
+			end must add one if it wants one.
 </Para>
 </ListItem>
 </VarListEntry>
@@ -985,11 +989,13 @@ BinaryRow (B)
 <ListItem>
 <Para>
                 A bit map with one bit for each field in the row.  The 1st
-                field corresponds to bit 7 of the 1st byte, the 2nd field
-                corresponds to bit 6 of the 1st byte, the 8th field corresponds
-                to bit 0 of the 1st byte, the 9th field corresponds to bit 8 of
-                the 2nd byte, and so on.  The bit is set if the value of the
-                corresponding field is not NULL.
+                field corresponds to bit 7 (MSB) of the 1st byte, the 2nd
+                field corresponds to bit 6 of the 1st byte, the 8th field
+                corresponds to bit 0 (LSB) of the 1st byte, the 9th field
+                corresponds to bit 7 of the 2nd byte, and so on.  Each bit
+                is set if the value of the corresponding field is not NULL.
+                If the number of fields is not a multiple of 8, the remainder
+                of the last byte in the bit map is wasted.
 </Para>
 <Para>
 	Then, for each field with a non-NULL value, there is the following:
@@ -1561,7 +1567,7 @@ NotificationResponse (B)
 </Term>
 <ListItem>
 <Para>
-		The process ID of the backend process.
+		The process ID of the notifying backend process.
 </Para>
 </ListItem>
 </VarListEntry>
@@ -1571,7 +1577,7 @@ NotificationResponse (B)
 </Term>
 <ListItem>
 <Para>
-		The name of the relation that the notify has been raised on.
+		The name of the condition that the notify has been raised on.
 </Para>
 </ListItem>
 </VarListEntry>
@@ -1664,7 +1670,7 @@ RowDescription (B)
 </Term>
 <ListItem>
 <Para>
-		Specifies the number of fields in a row (and may be zero).
+		Specifies the number of fields in a row (may be zero).
 </Para>
 <Para>
 	Then, for each field, there is the following:
@@ -1756,7 +1762,7 @@ StartupPacket (F)
 </Term>
 <ListItem>
 <Para>
-		The database name, defaults to the user name if omitted.
+		The database name, defaults to the user name if empty.
 </Para>
 </ListItem>
 </VarListEntry>

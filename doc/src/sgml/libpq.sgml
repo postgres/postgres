@@ -149,7 +149,7 @@ accepts and ignores this keyword for backward compatibility.)
 </ListItem>
 <ListItem>
 <Para>
-<Acronym>tty</Acronym> -- file or tty for optional debug output.
+<Acronym>tty</Acronym> -- file or tty for optional debug output from backend.
 </Para>
 </ListItem>
 </ItemizedList>
@@ -166,20 +166,20 @@ default values for unspecified options.
 PQconninfoOption *PQconndefaults(void)
 
 struct PQconninfoOption
-	{
-		char   *keyword;   /* The keyword of the option	*/
-		char   *envvar;    /* Fallback environment variable name */
-		char   *compiled;  /* Fallback compiled in default value */
-		char   *val;	   /* Options value */
-		char   *label;	   /* Label for field in connect dialog	*/
-		char   *dispchar;  /* Character to display for this field
-				      in a connect dialog. Values are:
-				      ""	Display entered value as is
-				      "*"	Password field - hide value
-				      "D"	Debug options - don't
-				      create a field by default */
-		int	dispsize;  /* Field size in characters for dialog */
-	};
+        {
+                char   *keyword;   /* The keyword of the option */
+                char   *envvar;    /* Fallback environment variable name */
+                char   *compiled;  /* Fallback compiled in default value */
+                char   *val;       /* Option's value */
+                char   *label;     /* Label for field in connect dialog */
+                char   *dispchar;  /* Character to display for this field
+                                      in a connect dialog. Values are:
+                                      ""        Display entered value as is
+                                      "*"       Password field - hide value
+                                      "D"       Debug options - don't
+                                      create a field by default */
+                int     dispsize;  /* Field size in characters for dialog */
+        };
 
 </synopsis>
 	Returns the address of the connection options structure.  This may
@@ -409,18 +409,18 @@ soon.)
           Returns the result status of the query.  PQresultStatus can return one of the following values:
 <synopsis>
 PGRES_EMPTY_QUERY,
-PGRES_COMMAND_OK,  /* the query was a command returning no data */
-PGRES_TUPLES_OK,  /* the query successfully returned tuples */
-PGRES_COPY_OUT,  /* Copy Out (from server) data transfer started */
-PGRES_COPY_IN,  /* Copy In (to server) data transfer started */
-PGRES_BAD_RESPONSE, /* an unexpected response was received */
+PGRES_COMMAND_OK,       /* the query was a command returning no data */
+PGRES_TUPLES_OK,        /* the query successfully returned tuples */
+PGRES_COPY_OUT,         /* Copy Out (from server) data transfer started */
+PGRES_COPY_IN,          /* Copy In (to server) data transfer started */
+PGRES_BAD_RESPONSE,     /* an unexpected response was received */
 PGRES_NONFATAL_ERROR,
 PGRES_FATAL_ERROR
 </synopsis>
           If  the result status is PGRES_TUPLES_OK, then the
           routines described below can be  used  to  retrieve  the
           tuples returned by the query.  Note that a SELECT that
-	  happens to retrieve zero tuples still shows PGRES_TUPLES_OK;
+	  happens to retrieve zero tuples still shows PGRES_TUPLES_OK.
 	  PGRES_COMMAND_OK is for commands that can never return tuples.
 </Para>
 </ListItem>
@@ -522,13 +522,15 @@ Oid PQftype(PGresult *res,
 <Para>
 <Function>PQfsize</Function>
           Returns  the  size  in bytes of the field
-          associated with the given field index. If the size
-          returned  is  -1,  the  field is a variable length
-          field.  Field indices start at 0.
+          associated with the given field index.
+          Field indices start at 0.
 <synopsis>
 int PQfsize(PGresult *res,
             int field_index);
 </synopsis>
+	PQfsize returns the space allocated for this field in a database
+	tuple, in other words the size of the server's binary representation
+	of the data type.  -1 is returned if the field is variable size.
 </Para>
 </ListItem>
 
@@ -558,17 +560,34 @@ char* PQgetvalue(PGresult *res,
 </synopsis>
           For most queries, the value returned by PQgetvalue
           is a null-terminated ASCII  string  representation
-          of the attribute value.  If the query extracted data from
-          a <Acronym>BINARY</Acronym> cursor, then  the  value  returned  by
+          of the attribute value.  But if PQbinaryTuples() is TRUE,
+          the  value  returned  by
           PQgetvalue  is  the  binary  representation of the
-          type in the internal format of the backend server.
-          It  is the programmer's responsibility to cast and
+          type in the internal format of the backend server
+	  (but not including the size word, if the field is variable-length).
+          It  is then the programmer's responsibility to cast and
           convert the data to the correct C type.  The pointer
           returned  by  PQgetvalue points to storage that is
           part of the PGresult structure.  One should not modify it,
           and one must explicitly 
           copy the value into other storage if it is to
           be used past the lifetime of the  PGresult  structure itself.
+</Para>
+</ListItem>
+
+<ListItem>
+<Para>
+<Function>PQgetlength</Function>
+          Returns   the   length  of  a  field (attribute) in bytes.
+          Tuple and field indices start at 0.
+<synopsis>
+int PQgetlength(PGresult *res,
+                int tup_num,
+                int field_num);
+</synopsis>
+This is the actual data length for the particular data value, that is the
+size of the object pointed to by PQgetvalue.  Note that for ASCII-represented
+values, this size has little to do with the binary size reported by PQfsize.
 </Para>
 </ListItem>
 
@@ -586,27 +605,6 @@ int PQgetisnull(PGresult *res,
             it contains a non-null value.  (Note that PQgetvalue
             will return an empty string, not a null pointer, for a NULL
             field.)
-</Para>
-</ListItem>
-
-<ListItem>
-<Para>
-<Function>PQgetlength</Function>
-          Returns   the   length  of  a  field
-          (attribute) in bytes.
-          Tuple and field indices start at 0.
-<synopsis>
-int PQgetlength(PGresult *res,
-                int tup_num,
-                int field_num);
-</synopsis>
-This is the actual data length for the particular data value,
-whereas PQfsize shows the allocated space for all entries in
-this column.
-If the field  is  a  struct
-          varlena, the length returned here does not include
-          the size field of the varlena, i.e., it is 4 bytes
-          less.
 </Para>
 </ListItem>
 
@@ -658,18 +656,18 @@ void PQprint(FILE* fout,      /* output stream */
              PQprintOpt* po);
 
 struct _PQprintOpt
-	{
-		pqbool	header;	     /* print output field headings and row count */
-		pqbool	align;	     /* fill align the fields */
-		pqbool	standard;    /* old brain dead format */
-		pqbool	html3;	     /* output html tables */
-		pqbool	expanded;    /* expand tables */
-		pqbool	pager;	     /* use pager for output if needed */
-		char	*fieldSep;   /* field separator */
-		char	*tableOpt;   /* insert to HTML &lt;table ...&gt; */
-		char	*caption;    /* HTML &lt;caption&gt; */
-		char	**fieldName; /* null terminated array of replacement field names */
-	};
+        {
+                pqbool  header;      /* print output field headings and row count */
+                pqbool  align;       /* fill align the fields */
+                pqbool  standard;    /* old brain dead format */
+                pqbool  html3;       /* output html tables */
+                pqbool  expanded;    /* expand tables */
+                pqbool  pager;       /* use pager for output if needed */
+                char    *fieldSep;   /* field separator */
+                char    *tableOpt;   /* insert to HTML &lt;table ...&gt; */
+                char    *caption;    /* HTML &lt;caption&gt; */
+                char    **fieldName; /* null terminated array of replacement field names */
+        };
 </synopsis>
 	This function is intended to replace PQprintTuples(), which is
 	now obsolete.  The <FileName>psql</FileName> program uses
@@ -855,8 +853,8 @@ was actually collected.   After calling PQconsumeInput,
 the application may check PQisBusy and/or PQnotifies to see if their state
 has changed.
 	  PQconsumeInput may be called even if the application is not
-	  prepared to deal with a result or notification just yet.
-	  It will read available data and save it in a buffer, thereby
+	  prepared to deal with a result or notification just yet.  The
+	  routine will read available data and save it in a buffer, thereby
 	  causing a select(2) read-ready indication to go away.  The
 	  application can thus use PQconsumeInput to clear the select
 	  condition immediately, and then examine the results at leisure.
@@ -959,13 +957,16 @@ or the backend is not currently processing a query.
 <Title>Fast Path</Title>
 
 <Para>
+<ProductName>Postgres</ProductName> provides a fast path interface to send
+function calls to the backend.  This is a trapdoor into system internals and
+can be a potential security hole.  Most users will not need this feature.
+
+<Para>
 <ItemizedList>
 <ListItem>
 <Para>
-<ProductName>Postgres</ProductName>  provides  a fast path interface to send function
- calls to the backend.  This  is  a  trapdoor  into
-     system  internals and can be a potential security hole.
-     Most users will not need this feature.
+<Function>PQfn</Function>
+	Request execution of a backend function via the fast path interface.
 <synopsis>
 PGresult* PQfn(PGconn* conn,
                int fnid,
@@ -979,12 +980,15 @@ PGresult* PQfn(PGconn* conn,
      executed.
      result_buf is the buffer in which
      to place the return value.  The caller must  have  allocated
-     sufficient space to store the return value.  The
-     result length will be returned in the  storage  pointed
-     to  by  result_len.   If the result is to be an integer
-     value, than result_is_int should be set to 1; otherwise
-     it  should  be  set  to  0.  args and nargs specify the
-     arguments to the function.
+     sufficient space to store the return value (there is no check!).
+     The actual result length will be returned in the integer pointed
+     to  by  result_len.   If a 4-byte integer result is expected, set
+     result_is_int to 1; otherwise set it to 0.  (Setting result_is_int to 1
+     tells libpq to byte-swap the value if necessary, so that it is
+     delivered as a proper int value for the client machine.  When
+     result_is_int is 0, the byte string sent by the backend is returned
+     unmodified.)
+     args and nargs specify the arguments to be passed to the function.
 <synopsis>
 typedef struct {
              int len;
@@ -1037,9 +1041,19 @@ messages can be detected by calling PQnotifies().
 	  removed from the list of notifications.
 <synopsis>
 PGnotify* PQnotifies(PGconn *conn);
+
+typedef struct pgNotify
+    {
+        char        relname[NAMEDATALEN];       /* name of relation
+                                                 * containing data */
+        int         be_pid;                     /* process id of backend */
+    } PGnotify;
 </synopsis>
 	  After processing a PGnotify object returned by PQnotifies,
 	  be sure to free it with free() to avoid a memory leak.
+	  NOTE: in <productname>Postgres</productname> 6.4 and later,
+	  the be_pid is the notifying backend's, whereas in earlier versions
+	  it was always your own backend's PID.
 </Para>
 </ListItem>
 </ItemizedList>
@@ -1307,7 +1321,7 @@ defaultNoticeProcessor(void * arg, const char * message)
 
 <Para>
 To use a special notice processor, call <function>PQsetNoticeProcessor</function> just after
-any creation of a new PGconn object.
+creation of a new PGconn object.
 
 </Sect1>
 
@@ -1565,8 +1579,8 @@ main()
      */
     if (PQstatus(conn) == CONNECTION_BAD)
     {
-        fprintf(stderr, "Connection to database '&percnt;s' failed.\n", dbName);
-        fprintf(stderr, "&percnt;s", PQerrorMessage(conn));
+        fprintf(stderr, "Connection to database '%s' failed.\n", dbName);
+        fprintf(stderr, "%s", PQerrorMessage(conn));
         exit_nicely(conn);
     }
 
@@ -1612,14 +1626,14 @@ main()
     /* first, print out the attribute names */
     nFields = PQnfields(res);
     for (i = 0; i &lt; nFields; i++)
-        printf("&percnt;-15s", PQfname(res, i));
+        printf("%-15s", PQfname(res, i));
     printf("\n\n");
 
     /* next, print out the instances */
     for (i = 0; i &lt; PQntuples(res); i++)
     {
         for (j = 0; j &lt; nFields; j++)
-            printf("&percnt;-15s", PQgetvalue(res, i, j));
+            printf("%-15s", PQgetvalue(res, i, j));
         printf("\n");
     }
 
@@ -1713,8 +1727,8 @@ main()
      */
     if (PQstatus(conn) == CONNECTION_BAD)
     {
-        fprintf(stderr, "Connection to database '&percnt;s' failed.\n", dbName);
-        fprintf(stderr, "&percnt;s", PQerrorMessage(conn));
+        fprintf(stderr, "Connection to database '%s' failed.\n", dbName);
+        fprintf(stderr, "%s", PQerrorMessage(conn));
         exit_nicely(conn);
     }
 
@@ -1746,7 +1760,7 @@ main()
         while ((notify = PQnotifies(conn)) != NULL)
         {
             fprintf(stderr,
-                 "ASYNC NOTIFY of '&percnt;s' from backend pid '&percnt;d' received\n",
+                 "ASYNC NOTIFY of '%s' from backend pid '%d' received\n",
                     notify-&gt;relname, notify-&gt;be_pid);
             free(notify);
         }
@@ -1841,8 +1855,8 @@ main()
      */
     if (PQstatus(conn) == CONNECTION_BAD)
     {
-        fprintf(stderr, "Connection to database '&percnt;s' failed.\n", dbName);
-        fprintf(stderr, "&percnt;s", PQerrorMessage(conn));
+        fprintf(stderr, "Connection to database '%s' failed.\n", dbName);
+        fprintf(stderr, "%s", PQerrorMessage(conn));
         exit_nicely(conn);
     }
 
@@ -1888,7 +1902,7 @@ main()
 
     for (i = 0; i &lt; 3; i++)
     {
-        printf("type[&percnt;d] = &percnt;d, size[&percnt;d] = &percnt;d\n",
+        printf("type[%d] = %d, size[%d] = %d\n",
                i, PQftype(res, i),
                i, PQfsize(res, i));
     }
@@ -1910,13 +1924,13 @@ main()
          */
         pval = (POLYGON *) malloc(plen + VARHDRSZ);
         pval-&gt;size = plen;
-        memmove((char *) &pval-&gt;npts, PQgetvalue(res, i, p_fnum), plen);
-        printf("tuple &percnt;d: got\n", i);
-        printf(" i = (&percnt;d bytes) &percnt;d,\n",
+        memmove((char *) &amp;pval-&gt;npts, PQgetvalue(res, i, p_fnum), plen);
+        printf("tuple %d: got\n", i);
+        printf(" i = (%d bytes) %d,\n",
                PQgetlength(res, i, i_fnum), *ival);
-        printf(" d = (&percnt;d bytes) &percnt;f,\n",
+        printf(" d = (%d bytes) %f,\n",
                PQgetlength(res, i, d_fnum), *dval);
-        printf(" p = (&percnt;d bytes) &percnt;d points \tboundbox = (hi=&percnt;f/&percnt;f, lo = &percnt;f,&percnt;f)\n",
+        printf(" p = (%d bytes) %d points \tboundbox = (hi=%f/%f, lo = %f,%f)\n",
                PQgetlength(res, i, d_fnum),
                pval-&gt;npts,
                pval-&gt;boundbox.xh,

@@ -73,6 +73,9 @@ Acknowledgement that notify command has executed.
 </PARA>
 </LISTITEM>
 </VARLISTENTRY>
+</variablelist>
+</LISTITEM>
+</VARLISTENTRY>
 <VARLISTENTRY>
 <TERM>
 Notify events
@@ -82,9 +85,6 @@ Notify events
 Events are delivered to listening frontends; whether and how each frontend
 application reacts depends on its programming.
 </PARA>
-</LISTITEM>
-</VARLISTENTRY>
-</variablelist>
 </LISTITEM>
 </VARLISTENTRY>
 </VARIABLELIST>

@@ -47,7 +47,7 @@ This package was originally written by Jolly Chen.
   </ROW>
   <ROW>
     <ENTRY>pg_select</ENTRY>
-    <ENTRY>loop over the result of a select statement</ENTRY>
+    <ENTRY>loop over the result of a SELECT statement</ENTRY>
   </ROW>
   <ROW>
     <ENTRY>pg_listen</ENTRY>
@@ -76,7 +76,7 @@ This package was originally written by Jolly Chen.
   </ROW>
   <ROW>
     <ENTRY>pg_lo_lseek</ENTRY>
-    <ENTRY>seek to a position on a large object</ENTRY>
+    <ENTRY>seek to a position in a large object</ENTRY>
   </ROW>
   <ROW>
     <ENTRY>pg_lo_tell</ENTRY>
@@ -168,13 +168,32 @@ proc getDBs { {host "localhost"} {port "5432"} } {
 pg_connect -conninfo <REPLACEABLE CLASS="PARAMETER">connectOptions</REPLACEABLE>
 pg_connect <REPLACEABLE CLASS="PARAMETER">dbName</REPLACEABLE> <OPTIONAL>-host <REPLACEABLE CLASS="PARAMETER">hostName</REPLACEABLE></OPTIONAL>
   <OPTIONAL>-port <REPLACEABLE
-  CLASS="PARAMETER">portNumber</REPLACEABLE></OPTIONAL> <OPTIONAL>-tty
-  <REPLACEABLE CLASS="PARAMETER">pqtty</REPLACEABLE></OPTIONAL>
+  CLASS="PARAMETER">portNumber</REPLACEABLE></OPTIONAL> <OPTIONAL>-tty <REPLACEABLE
+  CLASS="PARAMETER">pqtty</REPLACEABLE></OPTIONAL>
   <OPTIONAL>-options <REPLACEABLE
   CLASS="PARAMETER">optionalBackendArgs</REPLACEABLE></OPTIONAL>
 </SYNOPSIS>
 
 <REFSECT2 ID="R2-PGTCL-PGCONNECT-1">
+<REFSECT2INFO>
+<DATE>1998-10-07</DATE>
+</REFSECT2INFO>
+<TITLE>Inputs (new style)
+</TITLE>
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+  <REPLACEABLE CLASS="PARAMETER">connectOptions</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>A string of connection options, each written in the form keyword = value.
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+</VARIABLELIST>
+</REFSECT2>
+
+<REFSECT2 ID="R2-PGTCL-PGCONNECT-2">
 <REFSECT2INFO>
 <DATE>1997-12-24</DATE>
 </REFSECT2INFO>
@@ -213,7 +232,7 @@ pg_connect <REPLACEABLE CLASS="PARAMETER">dbName</REPLACEABLE> <OPTIONAL>-host <
   <OPTIONAL>-tty <REPLACEABLE CLASS="PARAMETER">pqtty</REPLACEABLE></OPTIONAL>
 </TERM>
 <LISTITEM>
-<PARA>(need information thomas 1997-12-24)
+<PARA>Specifies file or tty for optional debug output from backend.
 </PARA>
 </LISTITEM>
 </VARLISTENTRY>
@@ -223,25 +242,6 @@ pg_connect <REPLACEABLE CLASS="PARAMETER">dbName</REPLACEABLE> <OPTIONAL>-host <
 </TERM>
 <LISTITEM>
 <PARA>Specifies options for the backend server for <REPLACEABLE CLASS="PARAMETER">dbName</REPLACEABLE>.
-</PARA>
-</LISTITEM>
-</VARLISTENTRY>
-</VARIABLELIST>
-</REFSECT2>
-
-<REFSECT2 ID="R2-PGTCL-PGCONNECT-2">
-<REFSECT2INFO>
-<DATE>1998-10-07</DATE>
-</REFSECT2INFO>
-<TITLE>Inputs (new style)
-</TITLE>
-<VARIABLELIST>
-<VARLISTENTRY>
-<TERM>
-  <REPLACEABLE CLASS="PARAMETER">connectOptions</REPLACEABLE>
-</TERM>
-<LISTITEM>
-<PARA>A string of connection options, each written in the form keyword = value.
 </PARA>
 </LISTITEM>
 </VARLISTENTRY>
@@ -423,7 +423,8 @@ Each entry in the list is a sublist of the format:
 <para>
 	 {optname label dispchar dispsize value}
 <Para>
-where the optname is usable as an option in pg_connect -conninfo.
+where the optname is usable as an option in
+<FUNCTION>pg_connect -conninfo</FUNCTION>.
 </PARA>
 </LISTITEM>
 </VARLISTENTRY>
@@ -785,7 +786,7 @@ created too many query result objects.
 <REFNAME>pg_select
 </REFNAME>
 <REFPURPOSE>
-loop over the result of a select statement
+loop over the result of a SELECT statement
 </REFPURPOSE>
 <INDEXTERM ID="IX-PGTCL-PGSELECT-1"><PRIMARY>pgtcl</PRIMARY><SECONDARY>connecting</SECONDARY></INDEXTERM>
 <INDEXTERM ID="IX-PGTCL-PGSELECT-2"><PRIMARY>pg_connect</PRIMARY></INDEXTERM>
@@ -1500,7 +1501,7 @@ the actual string to write, not a variable name.
 <REFNAMEDIV>
 <REFNAME>pg_lo_lseek
 </REFNAME>
-<REFPURPOSE>seek to a position on a large object
+<REFPURPOSE>seek to a position in a large object
 </REFPURPOSE>
 <INDEXTERM ID="IX-PGTCL-PGLOLSEEK-1"><PRIMARY>pgtcl</PRIMARY><SECONDARY>positioning</SECONDARY></INDEXTERM>
 <INDEXTERM ID="IX-PGTCL-PGLOLSEEK-2"><PRIMARY>pg_lo_lseek</PRIMARY></INDEXTERM>

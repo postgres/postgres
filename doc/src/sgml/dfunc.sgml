@@ -208,8 +208,8 @@ If the file you specify is
      very simple, since the commands to do it are just:
 <ProgramListing>
 # simple HP-UX example
-&percnt; cc +z +u -c foo.c
-&percnt; ld -b -o foo.sl foo.o
+% cc +z +u -c foo.c
+% ld -b -o foo.sl foo.o
 </ProgramListing>
 </Para>
 
@@ -221,21 +221,21 @@ If the file you specify is
      Under SunOS 4.x, the commands look like:
 <ProgramListing>
 # simple SunOS 4.x example
-&percnt; cc -PIC -c foo.c
-&percnt; ld -dc -dp -Bdynamic -o foo.so foo.o
+% cc -PIC -c foo.c
+% ld -dc -dp -Bdynamic -o foo.so foo.o
 </ProgramListing>
 
      and the equivalent lines under Solaris 2.x are:
 <ProgramListing>
 # simple Solaris 2.x example
-&percnt; cc -K PIC -c foo.c
-&percnt; ld -G -Bdynamic -o foo.so foo.o
+% cc -K PIC -c foo.c
+% ld -G -Bdynamic -o foo.so foo.o
 </ProgramListing>
     or
 <ProgramListing>
 # simple Solaris 2.x example
-&percnt; gcc -fPIC -c foo.c
-&percnt; ld -G -Bdynamic -o foo.so foo.o
+% gcc -fPIC -c foo.c
+% ld -G -Bdynamic -o foo.so foo.o
 </ProgramListing>
 </Para>
 

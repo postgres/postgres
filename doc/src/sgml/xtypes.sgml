@@ -51,7 +51,7 @@
                 {
                     double x, y;
                     Complex *result;
-                    if (sscanf(str, " ( &percnt;lf , &percnt;lf )", &amp;x, &amp;y) != 2) {
+                    if (sscanf(str, " ( %lf , %lf )", &amp;x, &amp;y) != 2) {
                         elog(WARN, "complex_in: error in parsing
                         return NULL;
                     }
@@ -71,7 +71,7 @@
                     if (complex == NULL)
                         return(NULL);
                     result = (char *) palloc(60);
-                    sprintf(result, "(&percnt;g,&percnt;g)", complex-&gt;x, complex-&gt;y);
+                    sprintf(result, "(%g,%g)", complex-&gt;x, complex-&gt;y);
                     return(result);
                 }
 </ProgramListing>

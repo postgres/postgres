@@ -104,7 +104,7 @@ The backend does not complain if you UNLISTEN something you were not
 listening for.
 
 <para>
-Each backend will automatically execute <command>UNLISTEN "*"</command> when
+Each backend will automatically execute <command>UNLISTEN *</command> when
 exiting.
 
 <para>
