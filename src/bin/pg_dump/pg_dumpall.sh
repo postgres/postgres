@@ -6,7 +6,7 @@
 # and "pg_group" tables, which belong to the whole installation rather
 # than any one individual database.
 #
-# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_dumpall.sh,v 1.20 2002/04/11 21:22:27 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_dumpall.sh,v 1.21 2002/04/12 09:37:10 momjian Exp $
 
 CMDNAME="`basename $0`"
 
@@ -42,6 +42,7 @@ else
         fi
     done
 fi
+IFS="$_IFS"
 
 # As last resort use the installation directory. We don't want to use
 # this as first resort because depending on how users do release upgrades
@@ -218,6 +219,7 @@ while : ; do
         echo "  ALTER GROUP \"$GRONAME\" ADD USER \"$username\";"
     done
 done
+IFS="$_IFS"
 
 test "$globals_only" = yes && exit 0
 
@@ -234,12 +236,13 @@ exec 4<&0
 
 $PSQL -d template1 -At -F "$NL" \
     -c "SELECT datname, coalesce(usename, (select usename from pg_shadow where usesysid=(select datdba from pg_database where datname='template0'))), pg_encoding_to_char(d.encoding), datistemplate, datpath FROM pg_database d LEFT JOIN pg_shadow u ON (datdba = usesysid) WHERE datallowconn ORDER BY 1;" | \
-while read DATABASE ; do
+while : ; do
     IFS="$NL"
-    read DBOWNER
-    read ENCODING
-    read ISTEMPLATE
-    read DBPATH
+    read DATABASE || break
+    read DBOWNER || break
+    read ENCODING || break
+    read ISTEMPLATE || break
+    read DBPATH || break
     IFS="$_IFS"
     if [ "$DATABASE" != template1 ] ; then
 	echo
@@ -261,6 +264,7 @@ while read DATABASE ; do
 	fi
     fi
 done
+IFS="$_IFS"
 
 $PSQL -d template1 -At -F "$NL" \
     -c "SELECT datname FROM pg_database WHERE datallowconn ORDER BY 1;" | \
