@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/rtree/rtree.c,v 1.86 2005/01/18 23:25:47 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/rtree/rtree.c,v 1.87 2005/01/24 02:47:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -591,6 +591,8 @@ rtdosplit(Relation r,
 	rtup = (IndexTuple) index_formtuple(tupDesc,
 										&(v.spl_rdatum), isnull);
 	pfree(isnull);
+	pfree(DatumGetPointer(v.spl_ldatum));
+	pfree(DatumGetPointer(v.spl_rdatum));
 
 	/* set pointers to new child pages in the internal index tuples */
 	ItemPointerSet(&(ltup->t_tid), lbknum, 1);
