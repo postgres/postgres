@@ -4,7 +4,7 @@
 #    Makefile for storage/lmgr
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Makefile,v 1.15 2001/01/25 03:31:16 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Makefile,v 1.16 2001/09/27 19:10:02 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -12,18 +12,22 @@ subdir = src/backend/storage/lmgr
 top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 
-OBJS = lmgr.o lock.o proc.o deadlock.o
+OBJS = lmgr.o lock.o proc.o deadlock.o spin.o s_lock.o
 
 all: SUBSYS.o
 
 SUBSYS.o: $(OBJS)
 	$(LD) $(LDREL) $(LDOUT) SUBSYS.o $(OBJS)
 
+s_lock_test: s_lock.c
+	$(CC) $(CPPFLAGS) $(CFLAGS) -DS_LOCK_TEST=1 s_lock.c -o s_lock_test
+	./s_lock_test
+
 depend dep:
 	$(CC) -MM $(CFLAGS) *.c >depend
 
 clean: 
-	rm -f SUBSYS.o $(OBJS)
+	rm -f SUBSYS.o $(OBJS) s_lock_test
 
 ifeq (depend,$(wildcard depend))
 include depend

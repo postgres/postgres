@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/Attic/s_lock.c,v 1.38 2001/08/29 11:54:12 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/s_lock.c,v 1.1 2001/09/27 19:10:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
