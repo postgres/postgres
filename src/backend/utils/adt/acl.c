@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.6 1996/11/10 03:03:00 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.7 1996/11/17 04:26:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -257,7 +257,6 @@ aclitemout(AclItem *aip)
 	(void) strcat(p, "group ");
 	tmpname = get_groname(aip->ai_id);
 	(void) strncat(p, tmpname, NAMEDATALEN);
-	pfree(tmpname);
 	break;
     case ACL_IDTYPE_WORLD:
 	break;
