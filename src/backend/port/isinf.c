@@ -1,4 +1,4 @@
-/* $Id: isinf.c,v 1.4 1998/02/26 04:34:10 momjian Exp $ */
+/* $Id: isinf.c,v 1.5 1998/03/01 04:53:54 scrappy Exp $ */
 
 #include <math.h>
 #include "config.h"
@@ -14,8 +14,6 @@ isinf(double d)
 
 	switch (type)
 	{
-		case FP_SNAN:
-		case FP_QNAN:
 		case FP_NINF:
 		case FP_PINF:
 			return (1);
