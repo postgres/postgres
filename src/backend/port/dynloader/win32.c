@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/backend/port/dynloader/win32.c,v 1.4 2004/11/17 08:30:08 neilc Exp $ */
+/* $PostgreSQL: pgsql/src/backend/port/dynloader/win32.c,v 1.5 2004/12/02 19:38:50 momjian Exp $ */
 
 #include <windows.h>
 
@@ -10,7 +10,7 @@ void *dlopen(const char *path, int mode);
 char *
 dlerror(void)
 {
-	return "error";
+	return "dynamic load error";
 }
 
 int
