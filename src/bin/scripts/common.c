@@ -5,13 +5,14 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/common.c,v 1.11 2004/08/29 05:06:54 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/common.c,v 1.12 2004/10/16 03:10:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres_fe.h"
 #include "common.h"
+#include "libpq-fe.h"
 
 #include <pwd.h>
 #include <unistd.h>
@@ -102,7 +103,7 @@ connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 		}
 
 		if (PQstatus(conn) == CONNECTION_BAD &&
-			strcmp(PQerrorMessage(conn), "fe_sendauth: no password supplied\n") == 0 &&
+			strcmp(PQerrorMessage(conn), PQnoPasswordSupplied) == 0 &&
 			!feof(stdin))
 		{
 			PQfinish(conn);

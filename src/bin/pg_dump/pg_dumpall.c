@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.53 2004/10/15 04:32:28 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.54 2004/10/16 03:10:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -957,7 +957,7 @@ connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 		}
 
 		if (PQstatus(conn) == CONNECTION_BAD &&
-			strcmp(PQerrorMessage(conn), "fe_sendauth: no password supplied\n") == 0 &&
+			strcmp(PQerrorMessage(conn), PQnoPasswordSupplied) == 0 &&
 			!feof(stdin))
 		{
 			PQfinish(conn);

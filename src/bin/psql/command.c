@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.128 2004/10/14 20:23:46 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.129 2004/10/16 03:10:16 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -929,7 +929,7 @@ do_connect(const char *new_dbname, const char *new_user)
 							   NULL, NULL, dbparam, userparam, pwparam);
 
 		if (PQstatus(pset.db) == CONNECTION_BAD &&
-			strcmp(PQerrorMessage(pset.db), "fe_sendauth: no password supplied\n") == 0 &&
+			strcmp(PQerrorMessage(pset.db), PQnoPasswordSupplied) == 0 &&
 			!feof(stdin))
 		{
 			PQfinish(pset.db);

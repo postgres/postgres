@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.38 2004/10/15 04:54:33 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.39 2004/10/16 03:10:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -364,7 +364,6 @@ test_postmaster_connection(void)
 	char		portstr[32];
 	char	   *p;
 
-
 	*portstr = '\0';
 
 	/* post_opts */
@@ -432,7 +431,9 @@ test_postmaster_connection(void)
 	{
 		if ((conn = PQsetdbLogin(NULL, portstr, NULL, NULL,
 								 "template1", NULL, NULL)) != NULL &&
-			PQstatus(conn) == CONNECTION_OK)
+			(PQstatus(conn) == CONNECTION_OK ||
+			 (strcmp(PQerrorMessage(conn),
+					 PQnoPasswordSupplied) == 0)))
 		{
 			PQfinish(conn);
 			success = true;

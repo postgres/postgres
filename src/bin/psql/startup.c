@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.103 2004/10/08 11:24:19 neilc Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.104 2004/10/16 03:10:16 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -195,7 +195,7 @@ main(int argc, char *argv[])
 							   username, password);
 
 		if (PQstatus(pset.db) == CONNECTION_BAD &&
-			strcmp(PQerrorMessage(pset.db), "fe_sendauth: no password supplied\n") == 0 &&
+			strcmp(PQerrorMessage(pset.db), PQnoPasswordSupplied) == 0 &&
 			!feof(stdin))
 		{
 			PQfinish(pset.db);

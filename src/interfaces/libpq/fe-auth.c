@@ -10,7 +10,7 @@
  * exceed INITIAL_EXPBUFFER_SIZE (currently 256 bytes).
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.93 2004/09/28 00:06:02 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.94 2004/10/16 03:10:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -634,7 +634,7 @@ fe_sendauth(AuthRequest areq, PGconn *conn, const char *hostname,
 			if (password == NULL || *password == '\0')
 			{
 				(void) snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-								"fe_sendauth: no password supplied\n");
+								PQnoPasswordSupplied);
 				return STATUS_ERROR;
 			}
 			if (pg_password_sendauth(conn, password, areq) != STATUS_OK)

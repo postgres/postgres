@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-fe.h,v 1.108 2004/08/29 05:07:00 momjian Exp $
+ * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-fe.h,v 1.109 2004/10/16 03:10:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -397,6 +397,9 @@ extern void PQfreemem(void *ptr);
 
 /* Exists for backward compatibility.  bjm 2003-03-24 */
 #define PQfreeNotify(ptr) PQfreemem(ptr)
+
+/* Define the string so all uses are consistent. */
+#define PQnoPasswordSupplied	"fe_sendauth: no password supplied\n"
 
 /*
  * Make an empty PGresult with given status (some apps find this
