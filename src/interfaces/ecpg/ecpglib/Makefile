@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/Makefile,v 1.22 2004/05/21 21:56:02 tgl Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/Makefile,v 1.23 2004/05/25 17:35:51 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -21,7 +21,7 @@ override CPPFLAGS := -I$(top_srcdir)/src/interfaces/ecpg/include \
 override CFLAGS += $(PTHREAD_CFLAGS)
 
 OBJS= execute.o typename.o descriptor.o data.o error.o prepare.o memory.o \
-	connect.o misc.o path.o
+	connect.o misc.o path.o exec.o
 
 SHLIB_LINK = -L../pgtypeslib -lpgtypes $(libpq) \
 	$(filter -lintl -lssl -lcrypto -lkrb5 -lcrypt -lm, $(LIBS)) $(PTHREAD_LIBS)
@@ -39,6 +39,9 @@ include $(top_srcdir)/src/Makefile.shlib
 path.c: % : $(top_srcdir)/src/port/%
 	rm -f $@ && $(LN_S) $< .
 
+exec.c: % : $(top_srcdir)/src/port/%
+	rm -f $@ && $(LN_S) $< .
+
 install: all installdirs install-lib
 
 installdirs:
@@ -47,7 +50,7 @@ installdirs:
 uninstall: uninstall-lib
 
 clean distclean maintainer-clean: clean-lib
-	rm -f $(OBJS) path.c
+	rm -f $(OBJS) path.c exec.c
 
 depend dep:
 	$(CC) -MM $(CFLAGS) *.c >depend
