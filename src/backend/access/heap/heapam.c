@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.78 2000/07/04 01:39:24 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.79 2000/07/04 17:11:40 wieck Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1564,6 +1564,19 @@ l2:
 	newtup->t_data->t_infomask &= ~(HEAP_XACT_MASK);
 	newtup->t_data->t_infomask |= (HEAP_XMAX_INVALID | HEAP_UPDATED);
 
+#ifdef TUPLE_TOASTER_ACTIVE
+	/* ----------
+	 * If this relation is enabled for toasting, let the toaster
+	 * delete not any longer needed entries and create new ones to
+	 * make the new tuple fit again.
+	 * ----------
+	 */
+	if (HeapTupleHasExtended(&oldtup) || 
+			HeapTupleHasExtended(newtup) ||
+			(MAXALIGN(newtup->t_len) > (MaxTupleSize / 4)))
+		heap_tuple_toast_attrs(relation, newtup, &oldtup);
+#endif
+
 	/* Find buffer for new tuple */
 
 	if ((unsigned) MAXALIGN(newtup->t_len) <= PageGetFreeSpace((Page) dp))
@@ -1581,19 +1594,6 @@ l2:
 	oldtup.t_data->t_cmax = GetCurrentCommandId();
 	oldtup.t_data->t_infomask &= ~(HEAP_XMAX_COMMITTED |
 							 HEAP_XMAX_INVALID | HEAP_MARKED_FOR_UPDATE);
-
-#ifdef TUPLE_TOASTER_ACTIVE
-	/* ----------
-	 * If this relation is enabled for toasting, let the toaster
-	 * delete not any longer needed entries and create new ones to
-	 * make the new tuple fit again.
-	 * ----------
-	 */
-	if (HeapTupleHasExtended(&oldtup) || 
-			HeapTupleHasExtended(newtup) ||
-			(MAXALIGN(newtup->t_len) > (MaxTupleSize / 4)))
-		heap_tuple_toast_attrs(relation, newtup, &oldtup);
-#endif
 
 	/* record address of new tuple in t_ctid of old one */
 	oldtup.t_data->t_ctid = newtup->t_self;
