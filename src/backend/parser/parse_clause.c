@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.52 2000/02/15 03:37:47 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.53 2000/02/15 07:47:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -198,14 +198,10 @@ makeUniqueAttrList(List *attrs, List *filter)
 	{
 		List *fmember;
 		bool match = FALSE;
-//		char *field;
 		Attr *cattr = lfirst(candidate);
 
 		Assert(IsA(cattr, Attr));
 		Assert(length(cattr->attrs) == 1);
-
-//		field = strVal(lfirst(ccol));
-//		bool match = FALSE;
 
 		foreach(fmember, filter)
 		{
@@ -438,10 +434,6 @@ transformTableEntry(ParseState *pstate, RangeVar *r)
 static void
 parseFromClause(ParseState *pstate, List *frmList)
 {
-//	List *shape, *alias;
-//	Node **qual;
-//	char *lname, *rname;
-
 	List *fl;
 
 	foreach(fl, frmList)
@@ -470,9 +462,8 @@ parseFromClause(ParseState *pstate, List *frmList)
 		else if (IsA(n, JoinExpr))
 		{
 #ifndef DISABLE_JOIN_SYNTAX
-//			char			   *lname, *rname;
 			RangeTblEntry	   *l_rte, *r_rte;
-			Attr			   *l_name, *r_name;
+			Attr			   *l_name, *r_name = NULL;
 			JoinExpr *j = (JoinExpr *) n;
 
 			if (j->alias != NULL)
@@ -493,7 +484,6 @@ parseFromClause(ParseState *pstate, List *frmList)
 
 			if (IsA(j->rarg, JoinExpr))
 			{
-//				elog(ERROR, "Nested JOINs are not yet supported");
 				parseFromClause(pstate, lcons(j->rarg, NIL));
 				l_name = ((JoinExpr *)j->larg)->alias;
 			}
@@ -525,7 +515,6 @@ parseFromClause(ParseState *pstate, List *frmList)
 						Value *r_col = lfirst(rx);
 						Assert(IsA(r_col, String));
 
-//						if (equal(l_col, r_col))
 						if (strcmp(strVal(l_col), strVal(r_col)) == 0)
 						{
 							id = (Ident *) makeNode(Ident);
@@ -564,7 +553,6 @@ parseFromClause(ParseState *pstate, List *frmList)
 					 * List of Ident nodes means column names from a real USING
 					 * clause. Determine the shape of the joined table.
 					 */
-//					List *ltable, *rtable;
 					List *ucols, *ucol;
 					List *shape = NULL;
 					List *alias = NULL;
