@@ -26,7 +26,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.16 1996/11/25 05:51:50 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.17 1996/11/26 08:12:39 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -48,11 +48,13 @@ CMDNAME=`basename $0`
 # specify the pglib option.  Postconfig may validly not exist, in which case
 # our invocation of it silently fails.
 
-# The x=x below is to satisfy export if postconfig returns nothing.
 # The 2>/dev/null is to swallow the "postconfig: not found" message if there
-# is not postconfig, but it is ineffective in some shells.  Better ideas?
+# is no postconfig.
 
-export x=x $(postconfig 2>/dev/null)
+postconfig_result="$(sh -c postconfig 2>/dev/null)"
+if [ ! -z $postconfig_result ]; then
+  export $postconfig_result
+fi
 
 # Set defaults:
 debug=0
