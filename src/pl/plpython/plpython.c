@@ -29,7 +29,7 @@
  * MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.37 2003/08/04 00:43:33 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.38 2003/08/04 01:57:58 tgl Exp $
  *
  *********************************************************************
  */
@@ -352,7 +352,10 @@ plpython_call_handler(PG_FUNCTION_ARGS)
 		else
 			PLy_restart_in_progress += 1;
 		if (proc)
+		{
+			/* note: Py_DECREF needs braces around it, as of 2003/08 */
 			Py_DECREF(proc->me);
+		}
 		RERAISE_EXC();
 	}
 
