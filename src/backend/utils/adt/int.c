@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.8 1997/09/08 21:48:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.9 1997/10/25 05:19:22 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,7 @@
  *		I/O routines:
  *		 int2in, int2out, int28in, int28out, int4in, int4out
  *		Conversion routines:
- *		 itoi
+ *		 itoi, int2_text, int4_text
  *		Boolean operators:
  *		 inteq, intne, intlt, intle, intgt, intge
  *		Arithmetic operators:
@@ -29,6 +29,7 @@
  * fix me when we figure out what we want to do about ANSIfication...
  */
 #include <stdio.h>
+#include <string.h>
 
 #include "postgres.h"
 #include "fmgr.h"
@@ -50,7 +51,7 @@ int2in(char *num)
 /*
  *		int2out			- converts short to "num"
  */
-char	   *
+char *
 int2out(int16 sh)
 {
 	char	   *result;
@@ -66,7 +67,7 @@ int2out(int16 sh)
  *		Note:
  *				Fills any nonexistent digits with NULLs.
  */
-int16	   *
+int16 *
 int28in(char *shs)
 {
 	register int16 (*result)[];
@@ -95,7 +96,7 @@ int28in(char *shs)
 /*
  *		int28out		- converts internal form to "num num ..."
  */
-char	   *
+char *
 int28out(int16 (*shs)[])
 {
 	register int num;
@@ -130,7 +131,7 @@ int28out(int16 (*shs)[])
  *		Note:
  *				Fills any nonexistent digits with NULLs.
  */
-int32	   *
+int32 *
 int44in(char *input_string)
 {
 	int32	   *foo = (int32 *) palloc(4 * sizeof(int32));
@@ -151,7 +152,7 @@ int44in(char *input_string)
 /*
  *		int28out		- converts internal form to "num num ..."
  */
-char	   *
+char *
 int44out(int32 an_array[])
 {
 	int			temp = 4;
@@ -194,7 +195,7 @@ int4in(char *num)
 /*
  *		int4out			- converts int4 to "num"
  */
-char	   *
+char *
 int4out(int32 l)
 {
 	char	   *result;
@@ -227,6 +228,88 @@ i4toi2(int32 arg1)
 
 	return ((int16) arg1);
 }
+
+text *
+int2_text(int16 arg1)
+{
+	text *result;
+
+	int len;
+	char *str;
+
+	str = int2out(arg1);
+	len = (strlen(str) + VARHDRSZ);
+
+	result = PALLOC(len);
+
+	VARSIZE(result) = len;
+	memmove(VARDATA(result), str, (len - VARHDRSZ));
+
+	PFREE(str);
+
+	return(result);
+} /* int2_text() */
+
+int16
+text_int2(text *string)
+{
+	int16 result;
+
+	int len;
+	char *str;
+
+	len = (VARSIZE(string) - VARHDRSZ);
+
+	str = PALLOC(len+1);
+	memmove(str, VARDATA(string), len);
+	*(str+len) = '\0';
+
+	result = int2in(str);
+	PFREE(str);
+ 
+	return(result);
+} /* text_int2() */
+
+text *
+int4_text(int32 arg1)
+{
+	text *result;
+
+	int len;
+	char *str;
+
+	str = int4out(arg1);
+	len = (strlen(str) + VARHDRSZ);
+
+	result = PALLOC(len);
+
+	VARSIZE(result) = len;
+	memmove(VARDATA(result), str, (len - VARHDRSZ));
+
+	PFREE(str);
+
+	return(result);
+} /* int4_text() */
+
+int32
+text_int4(text *string)
+{
+	int32 result;
+
+	int len;
+	char *str;
+
+	len = (VARSIZE(string) - VARHDRSZ);
+
+	str = PALLOC(len+1);
+	memmove(str, VARDATA(string), len);
+	*(str+len) = '\0';
+
+	result = int4in(str);
+	PFREE(str);
+ 
+	return(result);
+} /* text_int4() */
 
 
 /*
