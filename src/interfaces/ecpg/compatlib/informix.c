@@ -8,6 +8,8 @@
 #include <pgtypes_error.h>
 #include <pgtypes_date.h>
 
+char * ECPGalloc(long, int);
+
 /* we start with the numeric functions */
 int
 decadd(Numeric *arg1, Numeric *arg2, Numeric *sum)
@@ -671,5 +673,58 @@ int
 dtcvfmtasc (char *inbuf, char *fmtstr, dtime_t *dtvalue)
 {
 	return 0;
+}
+
+bool
+ECPGconnect_informix(int lineno, const char *name, const char *user, const char *passwd, const char *connection_name, int autocommit)
+{
+        char *informix_name = (char *)name, *envname;
+
+        /* Informix uses an environment variable DBPATH that overrides
+	 * the connection parameters given here.
+	 * We do the same with PG_DBPATH as the syntax is different. */
+        envname = getenv("PG_DBPATH");
+        if (envname)
+                informix_name = envname;
+	        return (ECPGconnect(lineno, informix_name, user, passwd, connection_name , autocommit));
+}
+
+static struct var_list
+{
+	int number;
+	void *pointer;
+	struct var_list *next;
+} *ivlist = NULL;
+
+void
+ECPG_informix_set_var(int number, void *pointer, int lineno)
+{
+	struct var_list *ptr;
+
+	for (ptr = ivlist; ptr != NULL; ptr = ptr->next)
+	{
+		if (ptr->number == number)
+		{
+			/* already known => just change pointer value */
+			ptr->pointer = pointer;
+			return;
+		}
+	}
+
+	/* a new one has to be added */
+	ptr = (struct var_list *) ECPGalloc (sizeof(struct var_list), lineno);
+	ptr->number = number;
+	ptr->pointer = pointer;
+	ptr->next = ivlist;
+	ivlist = ptr;
+}
+
+void *
+ECPG_informix_get_var(int number)
+{
+	struct var_list *ptr;
+
+	for (ptr = ivlist; ptr != NULL && ptr->number != number; ptr = ptr->next);
+	return (ptr) ? ptr->pointer : NULL;
 }
 

@@ -17,7 +17,8 @@ extern int	braces_open,
 			auto_create_c,
 			system_includes,
 			ret_value,
-			struct_level;
+			struct_level,
+			ecpg_informix_var;
 extern char *descriptor_index;
 extern char *descriptor_name;
 extern char *connection;

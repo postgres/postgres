@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.230 2003/06/11 06:39:12 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.231 2003/06/13 10:50:57 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -11,6 +11,7 @@
  */
 int struct_level = 0;
 int braces_open; /* brace level counter */
+int ecpg_informix_var = 0;
 char	errortext[128];
 char	*connection = NULL;
 char	*input_filename = NULL;
@@ -141,6 +142,7 @@ make3_str(char *str1, char *str2, char *str3)
 	return(res_str);
 }
 
+/* and the rest */
 static char *
 make_name(void)
 {
@@ -184,6 +186,36 @@ create_questionmarks(char *name, bool array)
 
 	result[strlen(result)-3] = '\0';
 	return(result);
+}
+
+static char *
+adjust_informix(struct arguments *list)
+{
+	/* Informix accepts DECLARE with variables that are out of scope when OPEN is called.
+	 * This breaks standard and leads to some very dangerous programming. 
+	 * Since they do, we have to work around and accept their syntax as well.
+	 * But we will do so ONLY in Informix mode.
+	 * We have to change the variables to our own struct and just store the pointer instead of the variable */
+
+	 struct arguments *ptr;
+	 char *result = make_str("");
+
+	 for (ptr = list; ptr != NULL; ptr = ptr->next)
+	 {
+	 	char temp[sizeof(int)+sizeof(", &()")];
+		char *original_var;
+		
+	 	/* change variable name to "ECPG_informix_get_var(<counter>)" */
+		original_var = ptr->variable->name;
+		sprintf(temp, "%d))", ecpg_informix_var);
+		ptr->variable = new_variable(cat_str(4, make_str("*("), mm_strdup(ECPGtype_name(ptr->variable->type->type)), make_str(" *)(ECPG_informix_get_var("), mm_strdup(temp)), ECPGmake_simple_type(ptr->variable->type->type, ptr->variable->type->size), 0);
+		
+		/* create call to "ECPG_informix_set_var(<counter>, <pointer>. <linen number>)" */
+		sprintf(temp, "%d, &(", ecpg_informix_var++);
+		result = cat_str(5, result, make_str("ECPG_informix_set_var("), mm_strdup(temp), mm_strdup(original_var), make_str("), __LINE__);\n"));
+	 }
+
+	 return result;
 }
 
 %}
@@ -1098,7 +1130,10 @@ opt_drop_behavior: CASCADE 			{ $$ = make_str("cascade"); }
  *
  *****************************************************************************/
 
-ClosePortalStmt:  CLOSE name	{ $$ = cat2_str(make_str("close"), $2); }
+ClosePortalStmt:  CLOSE name
+		{
+			$$ = cat2_str(make_str("close"), $2);
+		}
 		;
 
 /*****************************************************************************
@@ -1733,6 +1768,10 @@ TruncateStmt:  TRUNCATE opt_table qualified_name
 FetchStmt: FETCH fetch_direction from_in name ecpg_into_using
 			{ $$ = cat_str(4, make_str("fetch"), $2, $3, $4); }
 		| FETCH name ecpg_into_using
+			{ $$ = cat2_str(make_str("fetch"), $2); }
+		| FETCH fetch_direction from_in name
+			{ $$ = cat_str(4, make_str("fetch"), $2, $3, $4); }
+		| FETCH name 
 			{ $$ = cat2_str(make_str("fetch"), $2); }
 		| MOVE fetch_direction from_in name
 			{ $$ = cat_str(4, make_str("move"), $2, $3, $4); }
@@ -2630,10 +2669,12 @@ DeclareCursorStmt:  DECLARE name cursor_options CURSOR opt_hold FOR SelectStmt
 			this->argsinsert = argsinsert;
 			this->argsresult = argsresult;
 			argsinsert = argsresult = NULL;
-
 			cur = this;
 
-			$$ = cat_str(3, make_str("/*"), mm_strdup(this->command), make_str("*/"));
+			if (compat == ECPG_COMPAT_INFORMIX)
+				$$ = cat_str(5, adjust_informix(this->argsinsert), adjust_informix(this->argsresult), make_str("/*"), mm_strdup(this->command), make_str("*/"));
+			else
+				$$ = cat_str(3, make_str("/*"), mm_strdup(this->command), make_str("*/"));
 		}
 		;
 

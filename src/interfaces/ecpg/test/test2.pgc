@@ -12,6 +12,9 @@ typedef union { int integer; short smallint; } ind;
 #define BUFFERSIZ 8
 exec sql type str is varchar[BUFFERSIZ];
 
+exec sql declare cur cursor for
+       select name, born, age, married, children from meskes;
+
 int
 main ()
 {
@@ -33,9 +36,6 @@ exec sql end declare section;
 	exec sql ind children;
 
 	exec sql var ind_married is long;
-
-	exec sql declare cur cursor for
-	       select name, born, age, married, children from meskes;
 
 	char msg[128];
 	FILE *dbgs;

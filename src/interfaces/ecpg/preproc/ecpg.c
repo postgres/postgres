@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.72 2003/05/30 08:39:00 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.73 2003/06/13 10:50:57 meskes Exp $ */
 
 /* New main for ecpg, the PostgreSQL embedded SQL precompiler. */
 /* (C) Michael Meskes <meskes@postgresql.org> Feb 5th, 1998 */
@@ -358,6 +358,9 @@ main(int argc, char *const argv[])
 
 				/* and structure member lists */
 				memset(struct_member_list, 0, sizeof(struct_member_list));
+
+				/* and our variable counter for Informix compatibility */
+				ecpg_informix_var = 0;
 
 				/* finally the actual connection */
 				connection = NULL;
