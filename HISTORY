@@ -26,8 +26,8 @@ Major changes in this release:
           variety of new features. See the psql manual page for details.
           
    Upcoming Features
-          In 7.1, we plan to have outer joins, storage for very long
-          rows, and a write-ahead logging system.
+          In 7.1 or 7.2, we plan to have outer joins, storage for very 
+          long rows, and a write-ahead logging system.
           
 Migration to v7.0
 

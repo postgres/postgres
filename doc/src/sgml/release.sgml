@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.48 2000/05/04 16:15:08 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.49 2000/05/08 23:56:50 momjian Exp $
 -->
 
  <chapter id="release">
@@ -15,7 +15,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.48 2000/05/04 16:15:08 tho
   <surname>Momjian</surname>
   </author>
   </authorgroup>
-  <date>2000-04-01</date>
+  <date>2000-05-08</date>
   </docinfo>
    -->
    <para>
@@ -89,7 +89,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.48 2000/05/04 16:15:08 tho
       </term>
       <listitem>
        <para>
-	In 7.1, we plan to have outer joins, storage for very long rows, and a
+	In 7.1 or 7.2, we plan to have outer joins, storage for very long rows, and a
 	write-ahead logging system.
        </para>
       </listitem>
