@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: inet.h,v 1.13 2002/06/20 20:29:53 momjian Exp $
+ * $Id: inet.h,v 1.14 2003/06/24 22:21:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,12 +23,18 @@ typedef struct
 	unsigned char family;
 	unsigned char bits;
 	unsigned char type;
-	union
-	{
-		unsigned int ipv4_addr; /* network byte order */
-		/* add IPV6 address type here */
-	}			addr;
+	unsigned char ip_addr[16]; /* 128 bits of address */
 } inet_struct;
+
+/*
+ * Referencing all of the non-AF_INET types to AF_INET lets us work on
+ * machines which may not have the appropriate address family (like
+ * inet6 addresses when AF_INET6 isn't present) but doesn't cause a
+ * dump/reload requirement.  Existing databases used AF_INET for the family
+ * type on disk.
+ */
+#define PGSQL_AF_INET	(AF_INET + 0)
+#define PGSQL_AF_INET6	(AF_INET + 1)
 
 /*
  * Both INET and CIDR addresses are represented within Postgres as varlena

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.117 2003/06/17 23:12:36 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.118 2003/06/24 22:21:21 momjian Exp $
 -->
 
  <chapter id="datatype">
@@ -100,7 +100,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.117 2003/06/17 23:12:36 t
       <row>
        <entry><type>cidr</type></entry>
        <entry></entry>
-       <entry>IP network address</entry>
+       <entry>IPv4 or IPv6 network address</entry>
       </row>
 
       <row>
@@ -124,7 +124,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.117 2003/06/17 23:12:36 t
       <row>
        <entry><type>inet</type></entry>
        <entry></entry>
-       <entry>IP host address</entry>
+       <entry>IPv4 or IPv6 host address</entry>
       </row>
 
       <row>
@@ -2425,7 +2425,7 @@ SELECT * FROM test1 WHERE a;
    </indexterm>
 
    <para>
-    <productname>PostgreSQL</> offers data types to store IP and MAC
+    <productname>PostgreSQL</> offers data types to store IPv4, IPv6, and MAC
     addresses, shown in <xref linkend="datatype-net-types-table">.  It
     is preferable to use these types over plain text types, because
     these types offer input error checking and several specialized
@@ -2446,14 +2446,14 @@ SELECT * FROM test1 WHERE a;
 
        <row>
 	<entry><type>cidr</type></entry>
-	<entry>12 bytes</entry>
-	<entry>IPv4 networks</entry>
+	<entry>12 or 24 bytes</entry>
+	<entry>IPv4 or IPv6 networks</entry>
        </row>
 
        <row>
 	<entry><type>inet</type></entry>
-	<entry>12 bytes</entry>
-	<entry>IPv4 hosts and networks</entry>
+	<entry>12 or 24 bytes</entry>
+	<entry>IPv4 and IPv6 hosts and networks</entry>
        </row>
 
        <row>
@@ -2467,7 +2467,10 @@ SELECT * FROM test1 WHERE a;
     </table>
 
    <para>
-    IPv6 is not yet supported.
+    When sorting <type>inet</type> or <type>cidr</type> data types,
+    IPv4 addresses will always sort before IPv6 addresses, including
+    IPv4 addresses encapsulated or mapped into IPv6 addresses, such as
+    ::10.2.3.4 or ::ffff::10.4.3.2.
    </para>
 
 
@@ -2479,26 +2482,32 @@ SELECT * FROM test1 WHERE a;
     </indexterm>
 
     <para>
-     The <type>inet</type> type holds an IP host address, and
+     The <type>inet</type> type holds an IPv4 or IPv6 host address, and
      optionally the identity of the subnet it is in, all in one field.
      The subnet identity is represented by stating how many bits of
      the host address represent the network address (the
-     <quote>netmask</quote>).  If the netmask is 32, then the value
-     does not indicate a subnet, only a single host.  Note that if you
+     <quote>netmask</quote>).  If the netmask is 32 and the address is IPv4,
+     then the value does not indicate a subnet, only a single host.
+     In IPv6, the address length is 128 bits, so 128 bits will specify a
+     unique host address.  Note that if you
      want to accept networks only, you should use the
      <type>cidr</type> type rather than <type>inet</type>.
     </para>
 
     <para>
-     The input format for this type is <replaceable
-     class="parameter">x.x.x.x/y</replaceable> where <replaceable
-     class="parameter">x.x.x.x</replaceable> is an IP address and
-     <replaceable class="parameter">y</replaceable> is the number of
-     bits in the netmask.  If the <replaceable
-     class="parameter">/y</replaceable> part is left off, then the
-     netmask is 32, and the value represents just a single host.
-     On display, the <replaceable class="parameter">/y</replaceable>
-     portion is suppressed if the netmask is 32.
+      The input format for this type is
+      <replaceable class="parameter">address/y</replaceable>
+      where
+      <replaceable class="parameter">address</replaceable>
+      is an IPv4 or IPv6 address and
+      <replaceable class="parameter">y</replaceable>
+      is the number of bits in the netmask.  If the
+      <replaceable class="parameter">/y</replaceable>
+      part is left off, then the
+      netmask is 32 for IPv4 and 128 for IPv6, and the value represents
+      just a single host.  On display, the
+      <replaceable class="parameter">/y</replaceable>
+      portion is suppressed if the netmask specifies a single host.
     </para>
    </sect2>
 
@@ -2510,12 +2519,13 @@ SELECT * FROM test1 WHERE a;
     </indexterm>
 
     <para>
-     The <type>cidr</type> type holds an IP network specification.
+     The <type>cidr</type> type holds an IPv4 or IPv6 network specification.
      Input and output formats follow Classless Internet Domain Routing
      conventions.
      The format for specifying networks is <replaceable
-     class="parameter">x.x.x.x/y</> where <replaceable
-     class="parameter">x.x.x.x</> is the network and <replaceable
+     class="parameter">address/y</> where <replaceable
+     class="parameter">address</> is the network represented as an
+     IPv4 or IPv6 address, and <replaceable
      class="parameter">y</> is the number of bits in the netmask.  If
      <replaceable class="parameter">y</> is omitted, it is calculated
      using assumptions from the older classful network numbering system, except
@@ -2594,6 +2604,28 @@ SELECT * FROM test1 WHERE a;
 	 <entry>10.0.0.0/8</entry>
 	 <entry>10/8</entry>
 	</row>
+	<row>
+	 <entry>10.1.2.3/32</entry>
+	 <entry>10.1.2.3/32</entry>
+         <entry>10.1.2.3/32</entry>
+        <row>
+	 <entry>2001:4f8:3:ba::/64</entry>
+	 <entry>2001:4f8:3:ba::/64</entry>
+	 <entry>2001:4f8:3:ba::/64</entry>
+	</row>
+        <row>
+	 <entry>2001:4f8:3:ba:2e0:81ff:fe22:d1f1/128</entry>
+	 <entry>2001:4f8:3:ba:2e0:81ff:fe22:d1f1/128</entry>
+	 <entry>2001:4f8:3:ba:2e0:81ff:fe22:d1f1</entry>
+	</row>
+	<row>
+	 <entry>::ffff:1.2.3.0/120</entry>
+	 <entry>::ffff:1.2.3.0/120</entry>
+         <entry>::ffff:1.2.3/120</entry>
+	<row>
+	 <entry>::ffff:1.2.3.0/128</entry>
+	 <entry>::ffff:1.2.3.0/128</entry>
+         <entry>::ffff:1.2.3.0/128</entry>
        </tbody>
       </tgroup>
      </table>

@@ -1,9 +1,7 @@
 /*
- *	PostgreSQL type definitions for the INET type.	This
- *	is for IP V4 CIDR notation, but prepared for V6: just
- *	add the necessary bits where the comments indicate.
+ *	PostgreSQL type definitions for the INET and CIDR types.
  *
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/network.c,v 1.41 2003/05/13 18:03:07 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/network.c,v 1.42 2003/06/24 22:21:22 momjian Exp $
  *
  *	Jon Postel RIP 16 Oct 1998
  */
@@ -23,15 +21,13 @@
 
 static Datum text_network(text *src, int type);
 static int32 network_cmp_internal(inet *a1, inet *a2);
-static int	v4bitncmp(unsigned long a1, unsigned long a2, int bits);
-static bool v4addressOK(unsigned long a1, int bits);
+static int bitncmp(void *l, void *r, int n);
+static bool addressOK(unsigned char *a, int bits, int family);
+static int ip_addrsize(inet *inetptr);
 
 /*
- *	Access macros.	Add IPV6 support.
+ *	Access macros.
  */
-
-#define ip_addrsize(inetptr) \
-	(((inet_struct *)VARDATA(inetptr))->family == AF_INET ? 4 : -1)
 
 #define ip_family(inetptr) \
 	(((inet_struct *)VARDATA(inetptr))->family)
@@ -42,42 +38,68 @@ static bool v4addressOK(unsigned long a1, int bits);
 #define ip_type(inetptr) \
 	(((inet_struct *)VARDATA(inetptr))->type)
 
-#define ip_v4addr(inetptr) \
-	(((inet_struct *)VARDATA(inetptr))->addr.ipv4_addr)
+#define ip_addr(inetptr) \
+	(((inet_struct *)VARDATA(inetptr))->ip_addr)
+
+#define ip_maxbits(inetptr) \
+	(ip_family(inetptr) == PGSQL_AF_INET ? 32 : 128)
+
+/*
+ * Now, as a function!
+ * Return the number of bytes of storage needed for this data type.
+ */
+static int
+ip_addrsize(inet *inetptr)
+{
+	switch (ip_family(inetptr)) {
+	case PGSQL_AF_INET:
+		return 4;
+	case PGSQL_AF_INET6:
+		return 16;
+	default:
+		return -1;
+	}
+}
 
 /* Common input routine */
 static inet *
 network_in(char *src, int type)
 {
-	int			bits;
+	int	    bits;
 	inet	   *dst;
 
-	/* make sure any unused bits in a CIDR value are zeroed */
 	dst = (inet *) palloc0(VARHDRSZ + sizeof(inet_struct));
 
-	/* First, try for an IP V4 address: */
-	ip_family(dst) = AF_INET;
-	bits = inet_net_pton(ip_family(dst), src, &ip_v4addr(dst),
-						 type ? ip_addrsize(dst) : -1);
-	if ((bits < 0) || (bits > 32))
-	{
-		/* Go for an IPV6 address here, before faulting out: */
-		elog(ERROR, "invalid %s value '%s'",
-			 type ? "CIDR" : "INET", src);
-	}
-
 	/*
-	 * Error check: CIDR values must not have any bits set beyond the
-	 * masklen. XXX this code is not IPV6 ready.
+	 * First, check to see if this is an IPv6 or IPv4 address.  IPv6
+	 * addresses will have a : somewhere in them (several, in fact) so
+	 * if there is one present, assume it's V6, otherwise assume it's V4.
 	 */
-	if (type)
+
+	if (strchr(src, ':') != NULL) {
+		ip_family(dst) = PGSQL_AF_INET6;
+	} else {
+		ip_family(dst) = PGSQL_AF_INET;
+        }
+  
+	bits = inet_net_pton(ip_family(dst), src, ip_addr(dst),
+			     type ? ip_addrsize(dst) : -1);
+	if ((bits < 0) || (bits > ip_maxbits(dst)))
+		elog(ERROR, "invalid %s value '%s'",
+		     type ? "CIDR" : "INET", src);
+
+        /*
+	 * Error check: CIDR values must not have any bits set beyond
+	 * the masklen.
+         */
+        if (type)
 	{
-		if (!v4addressOK(ip_v4addr(dst), bits))
+		if (!addressOK(ip_addr(dst), bits, ip_family(dst)))
 			elog(ERROR, "invalid CIDR value '%s': has bits set to right of mask", src);
 	}
 
 	VARATT_SIZEP(dst) = VARHDRSZ
-		+ ((char *) &ip_v4addr(dst) - (char *) VARDATA(dst))
+		+ ((char *) ip_addr(dst) - (char *) VARDATA(dst))
 		+ ip_addrsize(dst);
 	ip_bits(dst) = bits;
 	ip_type(dst) = type;
@@ -110,32 +132,20 @@ Datum
 inet_out(PG_FUNCTION_ARGS)
 {
 	inet	   *src = PG_GETARG_INET_P(0);
-	char		tmp[sizeof("255.255.255.255/32")];
+	char		tmp[sizeof("xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:255.255.255.255/128")];
 	char	   *dst;
 	int			len;
 
-	if (ip_family(src) == AF_INET)
+	dst = inet_net_ntop(ip_family(src), ip_addr(src), ip_bits(src),
+			    tmp, sizeof(tmp));
+	if (dst == NULL)
+		elog(ERROR, "unable to print address (%s)", strerror(errno));
+	/* For CIDR, add /n if not present */
+	if (ip_type(src) && strchr(tmp, '/') == NULL)
 	{
-		/* It's an IP V4 address: */
-
-		/*
-		 * Use inet style for both inet and cidr, since we don't want
-		 * abbreviated CIDR style here.
-		 */
-		dst = inet_net_ntop(AF_INET, &ip_v4addr(src), ip_bits(src),
-							tmp, sizeof(tmp));
-		if (dst == NULL)
-			elog(ERROR, "unable to print address (%s)", strerror(errno));
-		/* For CIDR, add /n if not present */
-		if (ip_type(src) && strchr(tmp, '/') == NULL)
-		{
-			len = strlen(tmp);
-			snprintf(tmp + len, sizeof(tmp) - len, "/%u", ip_bits(src));
-		}
+		len = strlen(tmp);
+		snprintf(tmp + len, sizeof(tmp) - len, "/%u", ip_bits(src));
 	}
-	else
-		/* Go for an IPV6 address here, before faulting out: */
-		elog(ERROR, "unknown address family (%d)", ip_family(src));
 
 	PG_RETURN_CSTRING(pstrdup(tmp));
 }
@@ -172,7 +182,7 @@ inet_recv(PG_FUNCTION_ARGS)
 	if (ip_family(addr) != AF_INET)
 		elog(ERROR, "Invalid family in external inet");
 	bits = pq_getmsgbyte(buf);
-	if (bits < 0 || bits > 32)
+	if (bits < 0 || bits > ip_maxbits(addr))
 		elog(ERROR, "Invalid bits in external inet");
 	ip_bits(addr) = bits;
 	ip_type(addr) = pq_getmsgbyte(buf);
@@ -183,10 +193,10 @@ inet_recv(PG_FUNCTION_ARGS)
 		elog(ERROR, "Invalid length in external inet");
 
 	VARATT_SIZEP(addr) = VARHDRSZ
-		+ ((char *) &ip_v4addr(addr) - (char *) VARDATA(addr))
+		+ ((char *)ip_addr(addr) - (char *) VARDATA(addr))
 		+ ip_addrsize(addr);
 
-	addrptr = (char *) &ip_v4addr(addr);
+	addrptr = (char *)ip_addr(addr);
 	for (i = 0; i < nb; i++)
 		addrptr[i] = pq_getmsgbyte(buf);
 
@@ -196,7 +206,7 @@ inet_recv(PG_FUNCTION_ARGS)
 	 */
 	if (ip_type(addr))
 	{
-		if (!v4addressOK(ip_v4addr(addr), bits))
+		if (!addressOK(ip_addr(addr), bits, ip_family(addr)))
 			elog(ERROR, "invalid external CIDR value: has bits set to right of mask");
 	}
 
@@ -230,7 +240,7 @@ inet_send(PG_FUNCTION_ARGS)
 	if (nb < 0)
 		nb = 0;
 	pq_sendbyte(&buf, nb);
-	addrptr = (char *) &ip_v4addr(addr);
+	addrptr = (char *)ip_addr(addr);
 	for (i = 0; i < nb; i++)
 		pq_sendbyte(&buf, addrptr[i]);
 	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
@@ -257,6 +267,7 @@ text_network(text *src, int type)
 	PG_RETURN_INET_P(network_in(str, type));
 }
 
+
 Datum
 text_cidr(PG_FUNCTION_ARGS)
 {
@@ -276,8 +287,11 @@ inet_set_masklen(PG_FUNCTION_ARGS)
 	int			bits = PG_GETARG_INT32(1);
 	inet	   *dst;
 
-	if ((bits < 0) || (bits > 32))		/* no support for v6 yet */
-		elog(ERROR, "set_masklen - invalid value '%d'", bits);
+        if ( bits == -1 )
+            bits = ip_maxbits(src);
+
+	if ((bits < 0) || (bits > ip_maxbits(src)))
+			elog(ERROR, "set_masklen - invalid value '%d'", bits);
 
 	/* clone the original data */
 	dst = (inet *) palloc(VARHDRSZ + sizeof(inet_struct));
@@ -302,26 +316,21 @@ inet_set_masklen(PG_FUNCTION_ARGS)
 static int32
 network_cmp_internal(inet *a1, inet *a2)
 {
-	if (ip_family(a1) == AF_INET && ip_family(a2) == AF_INET)
+	if (ip_family(a1) == ip_family(a2))
 	{
 		int			order;
 
-		order = v4bitncmp(ip_v4addr(a1), ip_v4addr(a2),
-						  Min(ip_bits(a1), ip_bits(a2)));
+		order = bitncmp(ip_addr(a1), ip_addr(a2),
+				Min(ip_bits(a1), ip_bits(a2)));
 		if (order != 0)
 			return order;
 		order = ((int) ip_bits(a1)) - ((int) ip_bits(a2));
 		if (order != 0)
 			return order;
-		return v4bitncmp(ip_v4addr(a1), ip_v4addr(a2), 32);
+		return bitncmp(ip_addr(a1), ip_addr(a2), ip_maxbits(a1));
 	}
-	else
-	{
-		/* Go for an IPV6 address here, before faulting out: */
-		elog(ERROR, "cannot compare address families %d and %d",
-			 ip_family(a1), ip_family(a2));
-		return 0;				/* keep compiler quiet */
-	}
+
+	return ip_family(a1) - ip_family(a2);
 }
 
 Datum
@@ -399,18 +408,13 @@ network_sub(PG_FUNCTION_ARGS)
 	inet	   *a1 = PG_GETARG_INET_P(0);
 	inet	   *a2 = PG_GETARG_INET_P(1);
 
-	if ((ip_family(a1) == AF_INET) && (ip_family(a2) == AF_INET))
+	if (ip_family(a1) == ip_family(a2))
 	{
 		PG_RETURN_BOOL(ip_bits(a1) > ip_bits(a2)
-		   && v4bitncmp(ip_v4addr(a1), ip_v4addr(a2), ip_bits(a2)) == 0);
+		   && bitncmp(ip_addr(a1), ip_addr(a2), ip_bits(a2)) == 0);
 	}
-	else
-	{
-		/* Go for an IPV6 address here, before faulting out: */
-		elog(ERROR, "cannot compare address families %d and %d",
-			 ip_family(a1), ip_family(a2));
-		PG_RETURN_BOOL(false);
-	}
+
+	PG_RETURN_BOOL(false);
 }
 
 Datum
@@ -419,18 +423,13 @@ network_subeq(PG_FUNCTION_ARGS)
 	inet	   *a1 = PG_GETARG_INET_P(0);
 	inet	   *a2 = PG_GETARG_INET_P(1);
 
-	if ((ip_family(a1) == AF_INET) && (ip_family(a2) == AF_INET))
+	if (ip_family(a1) == ip_family(a2))
 	{
 		PG_RETURN_BOOL(ip_bits(a1) >= ip_bits(a2)
-		   && v4bitncmp(ip_v4addr(a1), ip_v4addr(a2), ip_bits(a2)) == 0);
+		   && bitncmp(ip_addr(a1), ip_addr(a2), ip_bits(a2)) == 0);
 	}
-	else
-	{
-		/* Go for an IPV6 address here, before faulting out: */
-		elog(ERROR, "cannot compare address families %d and %d",
-			 ip_family(a1), ip_family(a2));
-		PG_RETURN_BOOL(false);
-	}
+
+	PG_RETURN_BOOL(false);
 }
 
 Datum
@@ -439,18 +438,13 @@ network_sup(PG_FUNCTION_ARGS)
 	inet	   *a1 = PG_GETARG_INET_P(0);
 	inet	   *a2 = PG_GETARG_INET_P(1);
 
-	if ((ip_family(a1) == AF_INET) && (ip_family(a2) == AF_INET))
+	if (ip_family(a1) == ip_family(a2))
 	{
 		PG_RETURN_BOOL(ip_bits(a1) < ip_bits(a2)
-		   && v4bitncmp(ip_v4addr(a1), ip_v4addr(a2), ip_bits(a1)) == 0);
+		   && bitncmp(ip_addr(a1), ip_addr(a2), ip_bits(a1)) == 0);
 	}
-	else
-	{
-		/* Go for an IPV6 address here, before faulting out: */
-		elog(ERROR, "cannot compare address families %d and %d",
-			 ip_family(a1), ip_family(a2));
-		PG_RETURN_BOOL(false);
-	}
+
+	PG_RETURN_BOOL(false);
 }
 
 Datum
@@ -459,18 +453,13 @@ network_supeq(PG_FUNCTION_ARGS)
 	inet	   *a1 = PG_GETARG_INET_P(0);
 	inet	   *a2 = PG_GETARG_INET_P(1);
 
-	if ((ip_family(a1) == AF_INET) && (ip_family(a2) == AF_INET))
+	if (ip_family(a1) == ip_family(a2))
 	{
 		PG_RETURN_BOOL(ip_bits(a1) <= ip_bits(a2)
-		   && v4bitncmp(ip_v4addr(a1), ip_v4addr(a2), ip_bits(a1)) == 0);
+		   && bitncmp(ip_addr(a1), ip_addr(a2), ip_bits(a1)) == 0);
 	}
-	else
-	{
-		/* Go for an IPV6 address here, before faulting out: */
-		elog(ERROR, "cannot compare address families %d and %d",
-			 ip_family(a1), ip_family(a2));
-		PG_RETURN_BOOL(false);
-	}
+
+	PG_RETURN_BOOL(false);
 }
 
 /*
@@ -482,19 +471,13 @@ network_host(PG_FUNCTION_ARGS)
 	inet	   *ip = PG_GETARG_INET_P(0);
 	text	   *ret;
 	int			len;
-	char	   *ptr,
-				tmp[sizeof("255.255.255.255/32")];
+	char	   *ptr;
+	char		tmp[sizeof("xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:255.255.255.255/128")];
 
-	if (ip_family(ip) == AF_INET)
-	{
-		/* It's an IP V4 address: */
-		/* force display of 32 bits, regardless of masklen... */
-		if (inet_net_ntop(AF_INET, &ip_v4addr(ip), 32, tmp, sizeof(tmp)) == NULL)
-			elog(ERROR, "unable to print host (%s)", strerror(errno));
-	}
-	else
-		/* Go for an IPV6 address here, before faulting out: */
-		elog(ERROR, "unknown address family (%d)", ip_family(ip));
+	/* force display of max bits, regardless of masklen... */
+	if (inet_net_ntop(ip_family(ip), ip_addr(ip), ip_maxbits(ip),
+			  tmp, sizeof(tmp)) == NULL)
+		elog(ERROR, "unable to print host (%s)", strerror(errno));
 
 	/* Suppress /n if present (shouldn't happen now) */
 	if ((ptr = strchr(tmp, '/')) != NULL)
@@ -514,24 +497,17 @@ network_show(PG_FUNCTION_ARGS)
 	inet	   *ip = PG_GETARG_INET_P(0);
 	text	   *ret;
 	int			len;
-	char		tmp[sizeof("255.255.255.255/32")];
+	char		tmp[sizeof("xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:255.255.255.255/128")];
 
-	if (ip_family(ip) == AF_INET)
+	if (inet_net_ntop(ip_family(ip), ip_addr(ip), ip_maxbits(ip),
+			  tmp, sizeof(tmp)) == NULL)
+		elog(ERROR, "unable to print host (%s)", strerror(errno));
+	/* Add /n if not present (which it won't be) */
+	if (strchr(tmp, '/') == NULL)
 	{
-		/* It's an IP V4 address: */
-		/* force display of 32 bits, regardless of masklen... */
-		if (inet_net_ntop(AF_INET, &ip_v4addr(ip), 32, tmp, sizeof(tmp)) == NULL)
-			elog(ERROR, "unable to print host (%s)", strerror(errno));
-		/* Add /n if not present (which it won't be) */
-		if (strchr(tmp, '/') == NULL)
-		{
-			len = strlen(tmp);
-			snprintf(tmp + len, sizeof(tmp) - len, "/%u", ip_bits(ip));
-		}
+		len = strlen(tmp);
+		snprintf(tmp + len, sizeof(tmp) - len, "/%u", ip_bits(ip));
 	}
-	else
-		/* Go for an IPV6 address here, before faulting out: */
-		elog(ERROR, "unknown address family (%d)", ip_family(ip));
 
 	/* Return string as a text datum */
 	len = strlen(tmp);
@@ -548,24 +524,18 @@ network_abbrev(PG_FUNCTION_ARGS)
 	text	   *ret;
 	char	   *dst;
 	int			len;
-	char		tmp[sizeof("255.255.255.255/32")];
+	char		tmp[sizeof("xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:255.255.255.255/128")];
 
-	if (ip_family(ip) == AF_INET)
-	{
-		/* It's an IP V4 address: */
-		if (ip_type(ip))
-			dst = inet_cidr_ntop(AF_INET, &ip_v4addr(ip), ip_bits(ip),
-								 tmp, sizeof(tmp));
-		else
-			dst = inet_net_ntop(AF_INET, &ip_v4addr(ip), ip_bits(ip),
-								tmp, sizeof(tmp));
-
-		if (dst == NULL)
-			elog(ERROR, "unable to print address (%s)", strerror(errno));
-	}
+	if (ip_type(ip))
+		dst = inet_cidr_ntop(ip_family(ip), ip_addr(ip),
+				     ip_bits(ip), tmp, sizeof(tmp));
 	else
-		/* Go for an IPV6 address here, before faulting out: */
-		elog(ERROR, "unknown address family (%d)", ip_family(ip));
+		dst = inet_net_ntop(ip_family(ip), ip_addr(ip),
+				    ip_bits(ip), tmp, sizeof(tmp));
+
+	if (dst == NULL)
+		elog(ERROR, "unable to print address (%s)",
+		     strerror(errno));
 
 	/* Return string as a text datum */
 	len = strlen(tmp);
@@ -584,39 +554,66 @@ network_masklen(PG_FUNCTION_ARGS)
 }
 
 Datum
+network_family(PG_FUNCTION_ARGS)
+{
+	inet       *ip = PG_GETARG_INET_P(0);
+
+	switch (ip_family(ip)) {
+	case PGSQL_AF_INET:
+		PG_RETURN_INT32(4);
+		break;
+	case PGSQL_AF_INET6:
+		PG_RETURN_INT32(6);
+		break;
+	default:
+		PG_RETURN_INT32(0);
+		break;
+	}
+}
+
+Datum
 network_broadcast(PG_FUNCTION_ARGS)
 {
 	inet	   *ip = PG_GETARG_INET_P(0);
 	inet	   *dst;
+	int byte;
+	int bits;
+	int maxbytes;
+	unsigned char mask;
+	unsigned char *a, *b;
 
 	/* make sure any unused bits are zeroed */
 	dst = (inet *) palloc0(VARHDRSZ + sizeof(inet_struct));
 
-	if (ip_family(ip) == AF_INET)
-	{
-		/* It's an IP V4 address: */
-		unsigned long mask = 0xffffffff;
-
-		/*
-		 * Shifting by 32 or more bits does not yield portable results, so
-		 * don't try it.
-		 */
-		if (ip_bits(ip) < 32)
-			mask >>= ip_bits(ip);
-		else
-			mask = 0;
-
-		ip_v4addr(dst) = htonl(ntohl(ip_v4addr(ip)) | mask);
+	if (ip_family(ip) == PGSQL_AF_INET) {
+		maxbytes = 4;
+	} else {
+		maxbytes = 16;
 	}
-	else
-		/* Go for an IPV6 address here, before faulting out: */
-		elog(ERROR, "unknown address family (%d)", ip_family(ip));
+
+	bits = ip_bits(ip);
+	a = ip_addr(ip);
+	b = ip_addr(dst);
+
+	for (byte = 0 ; byte < maxbytes ; byte++) {
+		if (bits >= 8) {
+			mask = 0x00;
+			bits -= 8;
+		} else if (bits == 0) {
+			mask = 0xff;
+		} else {
+			mask = 0xff >> bits;
+			bits = 0;
+		}
+
+		b[byte] = a[byte] | mask;
+        }
 
 	ip_family(dst) = ip_family(ip);
 	ip_bits(dst) = ip_bits(ip);
 	ip_type(dst) = 0;
 	VARATT_SIZEP(dst) = VARHDRSZ
-		+ ((char *) &ip_v4addr(dst) - (char *) VARDATA(dst))
+		+ ((char *) ip_addr(dst) - (char *) VARDATA(dst))
 		+ ip_addrsize(dst);
 
 	PG_RETURN_INET_P(dst);
@@ -627,35 +624,44 @@ network_network(PG_FUNCTION_ARGS)
 {
 	inet	   *ip = PG_GETARG_INET_P(0);
 	inet	   *dst;
+	int byte;
+	int bits;
+	int maxbytes;
+	unsigned char mask;
+	unsigned char *a, *b;
 
 	/* make sure any unused bits are zeroed */
 	dst = (inet *) palloc0(VARHDRSZ + sizeof(inet_struct));
 
-	if (ip_family(ip) == AF_INET)
-	{
-		/* It's an IP V4 address: */
-		unsigned long mask = 0xffffffff;
-
-		/*
-		 * Shifting by 32 or more bits does not yield portable results, so
-		 * don't try it.
-		 */
-		if (ip_bits(ip) > 0)
-			mask <<= (32 - ip_bits(ip));
-		else
-			mask = 0;
-
-		ip_v4addr(dst) = htonl(ntohl(ip_v4addr(ip)) & mask);
+	if (ip_family(ip) == PGSQL_AF_INET) {
+		maxbytes = 4;
+	} else {
+		maxbytes = 16;
 	}
-	else
-		/* Go for an IPV6 address here, before faulting out: */
-		elog(ERROR, "unknown address family (%d)", ip_family(ip));
+
+	bits = ip_bits(ip);
+	a = ip_addr(ip);
+	b = ip_addr(dst);
+
+	byte = 0;
+	while (bits) {
+		if (bits >= 8) {
+			mask = 0xff;
+			bits -= 8;
+		} else {
+			mask = 0xff << (8 - bits);
+			bits = 0;
+		}
+
+		b[byte] = a[byte] & mask;
+		byte++;
+        }
 
 	ip_family(dst) = ip_family(ip);
 	ip_bits(dst) = ip_bits(ip);
 	ip_type(dst) = 1;
 	VARATT_SIZEP(dst) = VARHDRSZ
-		+ ((char *) &ip_v4addr(dst) - (char *) VARDATA(dst))
+		+ ((char *) ip_addr(dst) - (char *) VARDATA(dst))
 		+ ip_addrsize(dst);
 
 	PG_RETURN_INET_P(dst);
@@ -666,36 +672,43 @@ network_netmask(PG_FUNCTION_ARGS)
 {
 	inet	   *ip = PG_GETARG_INET_P(0);
 	inet	   *dst;
+	int byte;
+	int bits;
+	int maxbytes;
+	unsigned char mask;
+	unsigned char *b;
 
 	/* make sure any unused bits are zeroed */
 	dst = (inet *) palloc0(VARHDRSZ + sizeof(inet_struct));
 
-	if (ip_family(ip) == AF_INET)
-	{
-		/* It's an IP V4 address: */
-		unsigned long mask = 0xffffffff;
-
-		/*
-		 * Shifting by 32 or more bits does not yield portable results, so
-		 * don't try it.
-		 */
-		if (ip_bits(ip) > 0)
-			mask <<= (32 - ip_bits(ip));
-		else
-			mask = 0;
-
-		ip_v4addr(dst) = htonl(mask);
-
-		ip_bits(dst) = 32;
+	if (ip_family(ip) == PGSQL_AF_INET) {
+		maxbytes = 4;
+	} else {
+		maxbytes = 16;
 	}
-	else
-		/* Go for an IPV6 address here, before faulting out: */
-		elog(ERROR, "unknown address family (%d)", ip_family(ip));
+
+	bits = ip_bits(ip);
+	b = ip_addr(dst);
+
+	byte = 0;
+	while (bits) {
+		if (bits >= 8) {
+			mask = 0xff;
+			bits -= 8;
+		} else {
+			mask = 0xff << (8 - bits);
+			bits = 0;
+		}
+
+		b[byte] = mask;
+		byte++;
+        }
 
 	ip_family(dst) = ip_family(ip);
+	ip_bits(dst) = ip_bits(ip);
 	ip_type(dst) = 0;
 	VARATT_SIZEP(dst) = VARHDRSZ
-		+ ((char *) &ip_v4addr(dst) - (char *) VARDATA(dst))
+		+ ((char *)ip_addr(dst) - (char *) VARDATA(dst))
 		+ ip_addrsize(dst);
 
 	PG_RETURN_INET_P(dst);
@@ -706,36 +719,43 @@ network_hostmask(PG_FUNCTION_ARGS)
 {
 	inet	   *ip = PG_GETARG_INET_P(0);
 	inet	   *dst;
+	int byte;
+	int bits;
+	int maxbytes;
+	unsigned char mask;
+	unsigned char *b;
 
 	/* make sure any unused bits are zeroed */
 	dst = (inet *) palloc0(VARHDRSZ + sizeof(inet_struct));
 
-	if (ip_family(ip) == AF_INET)
-	{
-		/* It's an IP V4 address: */
-		unsigned long mask = 0xffffffff;
-
-		/*
-		 * Only shift if the mask len is < 32 bits ..
-		 */
-
-		if (ip_bits(ip) < 32)
-			mask >>= ip_bits(ip);
-		else
-			mask = 0;
-
-		ip_v4addr(dst) = htonl(mask);
-
-		ip_bits(dst) = 32;
+	if (ip_family(ip) == PGSQL_AF_INET) {
+		maxbytes = 4;
+	} else {
+		maxbytes = 16;
 	}
-	else
-		/* Go for an IPV6 address here, before faulting out: */
-		elog(ERROR, "unknown address family (%d)", ip_family(ip));
+
+	bits = ip_maxbits(ip) - ip_bits(ip);
+	b = ip_addr(dst);
+
+	byte = maxbytes - 1;
+	while (bits) {
+		if (bits >= 8) {
+			mask = 0xff;
+			bits -= 8;
+		} else {
+			mask = 0xff >> (8 - bits);
+			bits = 0;
+		}
+
+		b[byte] = mask;
+		byte--;
+        }
 
 	ip_family(dst) = ip_family(ip);
+	ip_bits(dst) = ip_bits(ip);
 	ip_type(dst) = 0;
 	VARATT_SIZEP(dst) = VARHDRSZ
-		+ ((char *) &ip_v4addr(dst) - (char *) VARDATA(dst))
+		+ ((char *)ip_addr(dst) - (char *) VARDATA(dst))
 		+ ip_addrsize(dst);
 
 	PG_RETURN_INET_P(dst);
@@ -760,12 +780,26 @@ convert_network_to_scalar(Datum value, Oid typid)
 		case CIDROID:
 			{
 				inet	   *ip = DatumGetInetP(value);
+				int len;
+				double res;
+				int i;
 
-				if (ip_family(ip) == AF_INET)
-					return (double) ip_v4addr(ip);
+				/*
+				 * Note that we don't use the full address
+				 * here.
+				 */
+				if (ip_family(ip) == PGSQL_AF_INET)
+					len = 4;
 				else
-					/* Go for an IPV6 address here, before faulting out: */
-					elog(ERROR, "unknown address family (%d)", ip_family(ip));
+					len = 5;
+
+				res = ip_family(ip);
+				for (i = 0 ; i < len ; i++) {
+					res *= 256;
+					res += ip_addr(ip)[i];
+				}
+				return res;
+
 				break;
 			}
 		case MACADDROID:
@@ -788,53 +822,80 @@ convert_network_to_scalar(Datum value, Oid typid)
 	return 0;
 }
 
-
 /*
- *	Bitwise comparison for V4 addresses.  Add V6 implementation!
+ * int
+ * bitncmp(l, r, n)
+ *      compare bit masks l and r, for n bits.
+ * return:
+ *      -1, 1, or 0 in the libc tradition.
+ * note:
+ *      network byte order assumed.  this means 192.5.5.240/28 has
+ *      0x11110000 in its fourth octet.
+ * author:
+ *      Paul Vixie (ISC), June 1996
  */
-
 static int
-v4bitncmp(unsigned long a1, unsigned long a2, int bits)
+bitncmp(void *l, void *r, int n)
 {
-	unsigned long mask;
+	u_int lb, rb;
+	int x, b;
 
-	/*
-	 * Shifting by 32 or more bits does not yield portable results, so
-	 * don't try it.
-	 */
-	if (bits > 0)
-		mask = (0xFFFFFFFFL << (32 - bits)) & 0xFFFFFFFFL;
-	else
-		mask = 0;
-	a1 = ntohl(a1);
-	a2 = ntohl(a2);
-	if ((a1 & mask) < (a2 & mask))
-		return (-1);
-	else if ((a1 & mask) > (a2 & mask))
-		return (1);
+	b = n / 8;
+	x = memcmp(l, r, b);
+	if (x)
+		return (x);
+
+	lb = ((const u_char *)l)[b];
+	rb = ((const u_char *)r)[b];
+	for (b = n % 8; b > 0; b--) {
+		if ((lb & 0x80) != (rb & 0x80)) {
+			if (lb & 0x80)
+				return (1);
+			return (-1);
+		}
+		lb <<= 1;
+		rb <<= 1;
+	}
 	return (0);
 }
 
-/*
- * Returns true if given address fits fully within the specified bit width.
- */
 static bool
-v4addressOK(unsigned long a1, int bits)
+addressOK(unsigned char *a, int bits, int family)
 {
-	unsigned long mask;
+	int byte;
+	int nbits;
+	int maxbits;
+	int maxbytes;
+	unsigned char mask;
 
-	/*
-	 * Shifting by 32 or more bits does not yield portable results, so
-	 * don't try it.
-	 */
-	if (bits > 0)
-		mask = (0xFFFFFFFFL << (32 - bits)) & 0xFFFFFFFFL;
-	else
-		mask = 0;
-	a1 = ntohl(a1);
-	if ((a1 & mask) == a1)
-		return true;
-	return false;
+	if (family == PGSQL_AF_INET) {
+		maxbits = 32;
+		maxbytes = 4;
+	} else {
+		maxbits = 128;
+		maxbytes = 16;
+	}
+#if 0
+	assert(bits <= maxbits);
+#endif
+
+	if (bits == maxbits)
+		return 1;
+
+	byte = (bits + 7) / 8;
+	nbits = bits % 8;
+	mask = 0xff;
+	if (bits != 0)
+		mask >>= nbits;
+
+	while (byte < maxbytes) {
+		if ((a[byte] & mask) != 0)
+			return 0;
+		mask = 0xff;
+		byte++;
+	}
+
+	return 1;
 }
 
 
@@ -852,15 +913,16 @@ network_scan_first(Datum in)
 
 /*
  * return "last" IP on a given network. It's the broadcast address,
- * however, masklen has to be set to 32, since
+ * however, masklen has to be set to its max btis, since
  * 192.168.0.255/24 is considered less than 192.168.0.255/32
  *
- * NB: this is not IPv6 ready ...
+ * inet_set_masklen() hacked to max out the masklength to 128 for IPv6
+ * and 32 for IPv4 when given '-1' as argument.
  */
 Datum
 network_scan_last(Datum in)
 {
 	return DirectFunctionCall2(inet_set_masklen,
 							   DirectFunctionCall1(network_broadcast, in),
-							   Int32GetDatum(32));
+			   Int32GetDatum(-1));
 }

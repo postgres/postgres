@@ -20,16 +20,20 @@ INSERT INTO INET_TBL (c, i) VALUES ('10.1', '10.1.2.3/16');
 INSERT INTO INET_TBL (c, i) VALUES ('10', '10.1.2.3/8');
 INSERT INTO INET_TBL (c, i) VALUES ('10', '11.1.2.3/8');
 INSERT INTO INET_TBL (c, i) VALUES ('10', '9.1.2.3/8');
+INSERT INTO INET_TBL (c, i) VALUES ('10:23::f1', '10:23::f1/64');
+INSERT INTO INET_TBL (c, i) VALUES ('10:23::8000/113', '10:23::ffff');
+INSERT INTO INET_TBL (c, i) VALUES ('::ffff:1.2.3.4', '::4.3.2.1/24');
 -- check that CIDR rejects invalid input:
 INSERT INTO INET_TBL (c, i) VALUES ('192.168.1.2/24', '192.168.1.226');
+INSERT INTO INET_TBL (c, i) VALUES ('1234::1234::1234', '::1.2.3.4');
 -- check that CIDR rejects invalid input when converting from text:
 INSERT INTO INET_TBL (c, i) VALUES (cidr('192.168.1.2/24'), '192.168.1.226');
-
+INSERT INTO INET_TBL (c, i) VALUES (cidr('ffff:ffff:ffff:ffff::/24'), '::192.168.1.226');
 SELECT '' AS ten, c AS cidr, i AS inet FROM INET_TBL;
 
 -- now test some support functions
 
-SELECT '' AS ten, i AS inet, host(i), text(i) FROM INET_TBL;
+SELECT '' AS ten, i AS inet, host(i), text(i), family(i) FROM INET_TBL;
 SELECT '' AS ten, c AS cidr, broadcast(c),
   i AS inet, broadcast(i) FROM INET_TBL;
 SELECT '' AS ten, c AS cidr, network(c) AS "network(cidr)",
