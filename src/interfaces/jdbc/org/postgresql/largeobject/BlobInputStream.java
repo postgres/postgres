@@ -58,16 +58,24 @@ public class BlobInputStream extends InputStream {
    */
   public int read() throws java.io.IOException {
     try {
-      if(buffer==null || bpos>=buffer.length) {
+      if (buffer == null || bpos >= buffer.length) {
         buffer=lo.read(bsize);
         bpos=0;
       }
 
       // Handle EOF
-      if(bpos>=buffer.length)
+      if(bpos >= buffer.length) {
         return -1;
+      }
 
-      return (int) buffer[bpos++];
+      int ret = (buffer[bpos] & 0x7F);
+      if ((buffer[bpos] &0x80) == 0x80) {
+        ret |= 0x80;
+      }
+
+      bpos++;
+
+      return ret;
     } catch(SQLException se) {
       throw new IOException(se.toString());
     }
@@ -152,5 +160,4 @@ public class BlobInputStream extends InputStream {
     public boolean markSupported() {
 	return true;
     }
-
 }
