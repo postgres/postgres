@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.75 2001/03/22 03:59:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.76 2001/04/19 19:01:23 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -361,7 +361,7 @@ varcharin(PG_FUNCTION_ARGS)
 	memcpy(VARDATA(result), s, len - VARHDRSZ);
 
 #ifdef CYR_RECODE
-	convertstr(VARDATA(result), len, 0);
+	convertstr(VARDATA(result), len - VARHDRSZ, 0);
 #endif
 
 	PG_RETURN_VARCHAR_P(result);
