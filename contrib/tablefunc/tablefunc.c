@@ -224,31 +224,27 @@ get_normal_pair(float8 *x1, float8 *x2)
 				v2,
 				s;
 
-	for (;;)
+	do
 	{
-		u1 = (float8) random() / (float8) RAND_MAX;
-		u2 = (float8) random() / (float8) RAND_MAX;
+		u1 = (float8) random() / (float8) MAX_RANDOM_VALUE;
+		u2 = (float8) random() / (float8) MAX_RANDOM_VALUE;
 
 		v1 = (2.0 * u1) - 1.0;
 		v2 = (2.0 * u2) - 1.0;
 
-		s = pow(v1, 2) + pow(v2, 2);
+		s = v1 * v1 + v2 * v2;
+	} while (s >= 1.0);
 
-		if (s >= 1.0)
-			continue;
-
-		if (s == 0)
-		{
-			*x1 = 0;
-			*x2 = 0;
-		}
-		else
-		{
-			*x1 = v1 * sqrt((-2.0 * log(s)) / s);
-			*x2 = v2 * sqrt((-2.0 * log(s)) / s);
-		}
-
-		return;
+	if (s == 0)
+	{
+		*x1 = 0;
+		*x2 = 0;
+	}
+	else
+	{
+		s = sqrt((-2.0 * log(s)) / s);
+		*x1 = v1 * s;
+		*x2 = v2 * s;
 	}
 }
 
