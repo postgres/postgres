@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.47 2001/12/10 13:07:16 petere Exp $
+#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.48 2001/12/21 03:53:04 thomas Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -21,6 +21,10 @@ include $(top_builddir)/src/Makefile.global
 
 ifndef DOCBOOKSTYLE
 DOCBOOKSTYLE = /home/projects/pgsql/developers/thomas/db162.d/docbook
+endif
+
+ifndef DOCBOOKINDEX
+  DOCBOOKINDEX = $(DOCBOOKSTYLE)/bin/collateindex.pl
 endif
 
 ifndef JADE
@@ -96,7 +100,7 @@ programmer.html: catalogs.gif connections.gif
 postgres.html: catalogs.gif connections.gif
 
 
-COLLATEINDEX = $(PERL) $(DOCBOOKSTYLE)/bin/collateindex.pl -f -g -t 'Index'
+COLLATEINDEX = $(PERL) $(DOCBOOKINDEX) -f -g -t 'Index'
 
 ifeq (,$(wildcard HTML.index))
 bookindex.sgml:
