@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu May 10 16:26:24 EDT 2001
+Last updated:		Thu May 10 16:28:36 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -35,7 +35,7 @@ ENHANCEMENTS
 URGENT
 
 * Add replication of distributed databases [replication]
-	o automatic fallover
+	o automatic failover
 	o load balancing
 	o master/slave replication
 	o multi-master replication
