@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.99 1999/01/17 06:18:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.100 1999/01/30 20:04:37 tgl Exp $
  *
  * NOTES
  *
@@ -244,6 +244,7 @@ static int	initMasks(fd_set *rmask, fd_set *wmask);
 static long PostmasterRandom(void);
 static void RandomSalt(char *salt);
 static void SignalChildren(SIGNAL_ARGS);
+static int CountChildren(void);
 
 #ifdef CYR_RECODE
 void		GetCharSetByHost(char *, int, char *);
@@ -667,8 +668,8 @@ ServerLoop(void)
 		{
 			if (errno == EINTR)
 				continue;
-			fprintf(stderr, "%s: ServerLoop: select failed\n",
-					progname);
+			fprintf(stderr, "%s: ServerLoop: select failed: %s\n",
+					progname, strerror(errno));
 			return STATUS_ERROR;
 		}
 
@@ -763,19 +764,24 @@ ServerLoop(void)
 
 			if (status == STATUS_OK && port->pktInfo.state == Idle)
 			{
-
-				/*
-				 * If the backend start fails then keep the connection
-				 * open to report it.  Otherwise, pretend there is an
-				 * error to close the connection which will now be managed
-				 * by the backend.
-				 */
-
-				if (BackendStartup(port) != STATUS_OK)
+				/* Can't start backend if max backend count is exceeded. */
+				if (CountChildren() >= MaxBackendId)
 					PacketSendError(&port->pktInfo,
-									"Backend startup failed");
+									"Sorry, too many clients already");
 				else
-					status = STATUS_ERROR;
+				{
+					/*
+					 * If the backend start fails then keep the connection
+					 * open to report it.  Otherwise, pretend there is an
+					 * error to close the connection which will now be managed
+					 * by the backend.
+					 */
+					if (BackendStartup(port) != STATUS_OK)
+						PacketSendError(&port->pktInfo,
+										"Backend startup failed");
+					else
+						status = STATUS_ERROR;
+				}
 			}
 
 			/* Close the connection if required. */
@@ -1332,8 +1338,8 @@ BackendStartup(Port *port)
 	/* in parent */
 	if (pid < 0)
 	{
-		fprintf(stderr, "%s: BackendStartup: fork failed\n",
-				progname);
+		fprintf(stderr, "%s: BackendStartup: fork failed: %s\n",
+				progname, strerror(errno));
 		return STATUS_ERROR;
 	}
 
@@ -1640,4 +1646,24 @@ PostmasterRandom(void)
 	}
 
 	return random() ^ random_seed;
+}
+
+/*
+ * Count up number of child processes.
+ */
+static int
+CountChildren(void)
+{
+	Dlelem	   *curr;
+	Backend	   *bp;
+	int			mypid = getpid();
+	int			cnt = 0;
+
+	for (curr = DLGetHead(BackendList); curr; curr = DLGetSucc(curr))
+	{
+		bp = (Backend *) DLE_VAL(curr);
+		if (bp->pid != mypid)
+			cnt++;
+	}
+	return cnt;
 }
