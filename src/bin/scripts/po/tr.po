@@ -1,0 +1,609 @@
+# translation of tr.po to 
+# translation of pgscripts-tr.po to Turkish
+# Devrim GUNDUZ <devrim@PostgreSQL.org>, 2004.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: tr\n"
+"POT-Creation-Date: 2004-10-27 13:18+0100\n"
+"PO-Revision-Date: 2004-10-28 18:48+0300\n"
+"Last-Translator: \n"
+"Language-Team:  <en@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: KBabel 1.3.1\n"
+
+#: clusterdb.c:96 clusterdb.c:111 createdb.c:101 createdb.c:120
+#: createlang.c:94 createlang.c:115 createlang.c:157 createuser.c:116
+#: createuser.c:131 dropdb.c:83 dropdb.c:92 dropdb.c:100 droplang.c:88
+#: droplang.c:109 droplang.c:151 dropuser.c:83 dropuser.c:98 vacuumdb.c:113
+#: vacuumdb.c:128
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "Daha fazla bilgi için \"%s --help\" komutunu deneyiniz.\n"
+
+#: clusterdb.c:109 createdb.c:118 createlang.c:113 createuser.c:129
+#: dropdb.c:98 droplang.c:107 dropuser.c:96 vacuumdb.c:126
+#, c-format
+msgid "%s: too many command-line arguments (first is \"%s\")\n"
+msgstr "%s: Çok sayıda komut satırı argümanı (ilki \"%s\")\n"
+
+#: createdb.c:128
+#, c-format
+msgid "%s: \"%s\" is not a valid encoding name\n"
+msgstr "%s: \"%s\" geçerli bir dil kodlaması değil\n"
+
+#: createdb.c:170
+#, c-format
+msgid "%s: database creation failed: %s"
+msgstr "%s: veritabanı yaratma başarısız oldu: %s"
+
+#: createdb.c:198
+#, c-format
+msgid "%s: comment creation failed (database was created): %s"
+msgstr "%s: comment yaratma işlemi başarısız oldu (veritabanı yaratıldı): %s"
+
+#: createdb.c:219
+#, c-format
+msgid ""
+"%s creates a PostgreSQL database.\n"
+"\n"
+msgstr ""
+"%s bir PostgreSQL veritabanı yaratır.\n"
+"\n"
+
+#: clusterdb.c:235 createdb.c:220 createlang.c:272 createuser.c:239
+#: dropdb.c:146 droplang.c:242 dropuser.c:146 vacuumdb.c:261
+msgid "Usage:\n"
+msgstr "Kullanımı:\n"
+
+#: createdb.c:221
+#, c-format
+msgid "  %s [OPTION]... [DBNAME] [DESCRIPTION]\n"
+msgstr "  %s [OPTION]... [VERİTABANI_ADI] [TANIM]\n"
+
+#: clusterdb.c:237 createdb.c:222 createlang.c:274 createuser.c:241
+#: dropdb.c:148 droplang.c:244 dropuser.c:148 vacuumdb.c:263
+msgid ""
+"\n"
+"Options:\n"
+msgstr ""
+"\n"
+"Seçenekler:\n"
+
+#: createdb.c:223
+msgid "  -D, --location=PATH       alternative place to store the database\n"
+msgstr "  -D, --location=YOL         veritabanını saklamak için alternatif yer\n"
+
+#: createdb.c:224
+msgid "  -E, --encoding=ENCODING   encoding for the database\n"
+msgstr "  -E, --encoding=ENCODING   veritabanı için dil kodlaması\n"
+
+#: createdb.c:225
+msgid "  -O, --owner=OWNER         database user to own the new database\n"
+msgstr ""
+"  -O, --owner=OWNER            yeni veritabanının sahibi olacak\n"
+"kullanıcı\n"
+
+#: createdb.c:226
+msgid "  -T, --template=TEMPLATE   template database to copy\n"
+msgstr "  -T, --template=TEMPLATE   kopyalanacak şablon veritabanı\n"
+
+#: clusterdb.c:241 createdb.c:227 createlang.c:276 createuser.c:250
+#: dropdb.c:149 droplang.c:246 dropuser.c:149
+msgid "  -e, --echo                show the commands being sent to the server\n"
+msgstr "  -e, --echo                sunucuya gönderilen komutları gösterir\n"
+
+#: clusterdb.c:242 createdb.c:228 createuser.c:251 dropdb.c:151 dropuser.c:151
+msgid "  -q, --quiet               don't write any messages\n"
+msgstr "  -q, --quiet               hiçbir ileti yazmaz\n"
+
+#: clusterdb.c:243 createdb.c:229 createlang.c:283 createuser.c:252
+#: dropdb.c:156 droplang.c:252 dropuser.c:156
+msgid "  --help                    show this help, then exit\n"
+msgstr "  --help                    bu yardımı göster ve çık\n"
+
+#: clusterdb.c:244 createdb.c:230 createlang.c:284 createuser.c:253
+#: dropdb.c:157 droplang.c:253 dropuser.c:157
+msgid "  --version                 output version information, then exit\n"
+msgstr "  --version                 sürüm bilgisini göster ve çık\n"
+
+#: clusterdb.c:245 createdb.c:231 createuser.c:254 vacuumdb.c:274
+msgid ""
+"\n"
+"Connection options:\n"
+msgstr ""
+"\n"
+"Bağlantı seçenekleri:\n"
+
+#: clusterdb.c:246 createdb.c:232 createlang.c:279 createuser.c:255
+#: dropdb.c:152 droplang.c:248 dropuser.c:152 vacuumdb.c:275
+msgid "  -h, --host=HOSTNAME       database server host or socket directory\n"
+msgstr "  -h, --host=HOSTNAME       veritabanı sunucusu adresi ya da soket dizini\n"
+
+#: clusterdb.c:247 createdb.c:233 createlang.c:280 createuser.c:256
+#: dropdb.c:153 droplang.c:249 dropuser.c:153 vacuumdb.c:276
+msgid "  -p, --port=PORT           database server port\n"
+msgstr "  -p, --port=PORT           veritabanı sunucusunun portu\n"
+
+#: clusterdb.c:248 createdb.c:234 createlang.c:281 dropdb.c:154 droplang.c:250
+#: vacuumdb.c:277
+msgid "  -U, --username=USERNAME   user name to connect as\n"
+msgstr "  -U, --username=KULLANICI_ADI   bağlanılacak kullanıcı adı\n"
+
+#: clusterdb.c:249 createdb.c:235 createlang.c:282 dropdb.c:155 droplang.c:251
+#: vacuumdb.c:278
+msgid "  -W, --password            prompt for password\n"
+msgstr "  -W, --password            şifre sorulmasını sağla\n"
+
+#: createdb.c:236
+msgid ""
+"\n"
+"By default, a database with the same name as the current user is created.\n"
+msgstr ""
+"\n"
+"Öntanımlı olarak , mevcut kullanıcı ile aynı adda veritabanı yaratılır.\n"
+
+#: clusterdb.c:251 createdb.c:237 createlang.c:285 createuser.c:261
+#: dropdb.c:158 droplang.c:254 dropuser.c:158 vacuumdb.c:280
+msgid ""
+"\n"
+"Report bugs to <pgsql-bugs@postgresql.org>.\n"
+msgstr ""
+"\n"
+"Hataları <pgsql-bugs@postgresql.org> adresine yazabilirsiniz.\n"
+
+#: createlang.c:140 droplang.c:134
+msgid "Name"
+msgstr "Adı"
+
+#: createlang.c:140 droplang.c:134
+msgid "yes"
+msgstr "evet"
+
+#: createlang.c:140 droplang.c:134
+msgid "no"
+msgstr "hayır"
+
+#: createlang.c:140 droplang.c:134
+msgid "Trusted?"
+msgstr "Güvenilir mi?"
+
+#: createlang.c:147 droplang.c:141
+msgid "Procedural Languages"
+msgstr "Yordamsal Diller"
+
+#: createlang.c:156 droplang.c:150
+#, c-format
+msgid "%s: missing required argument language name\n"
+msgstr "%s: Gerekli bir argüman olan dil adı eksik\n"
+
+#: createlang.c:206
+#, c-format
+msgid "%s: unsupported language \"%s\"\n"
+msgstr "%s: \"%s\" dili desteklenmemektedir.\n"
+
+#: createlang.c:207
+msgid ""
+"Supported languages are plpgsql, pltcl, pltclu, plperl, plperlu, and "
+"plpythonu.\n"
+msgstr ""
+"Desteklenen diller plpgsql, pltcl, pltclu, plperl, plperlu, ve "
+"plpythonu'dur.\n"
+
+#: createlang.c:222
+#, c-format
+msgid "%s: language \"%s\" is already installed in database \"%s\"\n"
+msgstr "%s: \"%s\" dili daha önceden veritabanına yüklenmiştir \"%s\"\n"
+
+#: createlang.c:256
+#, c-format
+msgid "%s: language installation failed: %s"
+msgstr "%s: Dil kurulumu başarısız oldu: %s"
+
+#: createlang.c:271
+#, c-format
+msgid ""
+"%s installs a procedural language into a PostgreSQL database.\n"
+"\n"
+msgstr ""
+"%s Bir PostgreSQL veritabanına yordamsal bir dil kurar.\n"
+"\n"
+
+#: createlang.c:273 droplang.c:243
+#, c-format
+msgid "  %s [OPTION]... LANGNAME [DBNAME]\n"
+msgstr "  %s [OPTION]... LANGNAME [DBNAME]\n"
+
+#: createlang.c:275
+msgid "  -d, --dbname=DBNAME       database to install language in\n"
+msgstr "  -d, --dbname=VERİTABANI_ADI       dilin kurulacağı veritabanı adı\n"
+
+#: createlang.c:277 droplang.c:247
+msgid "  -l, --list                show a list of currently installed languages\n"
+msgstr "  -l, --list                Şu anda kurulu olan dilleri gösterir\n"
+
+#: createlang.c:278
+msgid "  -L, --pglib=DIRECTORY     find language interpreter file in DIRECTORY\n"
+msgstr "  -L, --pglib=DİZİN     DİZİN dizini içindeki dil interpreterini bulur.\n"
+
+#: createuser.c:141
+#, c-format
+msgid "%s: user ID must be a positive number\n"
+msgstr "%s: kullanıcı ID'si pozitif bir sayı olmalıdır\n"
+
+#: createuser.c:147
+msgid "Enter name of user to add: "
+msgstr "Eklenilecek kullanıcı adını girin:"
+
+#: createuser.c:154
+msgid "Enter password for new user: "
+msgstr "Yeni kullanıcı için şifreyi girin: "
+
+#: createuser.c:155
+msgid "Enter it again: "
+msgstr "Yeniden girin: "
+
+#: createuser.c:158
+msgid "Passwords didn't match.\n"
+msgstr "Şifreler uyuşmadı.\n"
+
+#: createuser.c:169
+msgid "Shall the new user be allowed to create databases? (y/n) "
+msgstr "Yeni kullanıcı veritabanı yaratabilsin mi? (y/n) "
+
+#: createuser.c:180
+msgid "Shall the new user be allowed to create more new users? (y/n) "
+msgstr "Yeni kullanıcı daha fazla yeni kullanıcı yaratabilsin mi? (y/n)"
+
+#: createuser.c:219
+#, c-format
+msgid "%s: creation of new user failed: %s"
+msgstr "%s: yeni kullanıcı yaratma işlemi başarısız oldu: %s"
+
+#: createuser.c:238
+#, c-format
+msgid ""
+"%s creates a new PostgreSQL user.\n"
+"\n"
+msgstr ""
+"%s yeni bir PostgreSQL kullanıcısı yaratır.\n"
+"\n"
+
+#: createuser.c:240 dropuser.c:147
+#, c-format
+msgid "  %s [OPTION]... [USERNAME]\n"
+msgstr "  %s [SEÇENEKLER]... [KULLANICI_ADI]\n"
+
+#: createuser.c:242
+msgid "  -a, --adduser             user can add new users\n"
+msgstr "  -a, --adduser             kullanıcı yeni kullanıcılar ekleyebilir\n"
+
+#: createuser.c:243
+msgid "  -A, --no-adduser          user cannot add new users\n"
+msgstr "  -A, --no-adduser          kullanıcı yeni kullanıcılar ekleyemez\n"
+
+#: createuser.c:244
+msgid "  -d, --createdb            user can create new databases\n"
+msgstr "  -d, --createdb            kullanıcı yeni veritabanları ekleyebilir\n"
+
+#: createuser.c:245
+msgid "  -D, --no-createdb         user cannot create databases\n"
+msgstr "  -D, --no-createdb         kullanıcı veritabanı yaratamaz\n"
+
+#: createuser.c:246
+msgid "  -P, --pwprompt            assign a password to new user\n"
+msgstr "  -P, --pwprompt            yeni kullanıcıya bir şifre atar\n"
+
+#: createuser.c:247
+msgid "  -E, --encrypted           encrypt stored password\n"
+msgstr "  -E, --encrypted           saklanan şifreleri encrypt eder\n"
+
+#: createuser.c:248
+msgid "  -N, --unencrypted         do no encrypt stored password\n"
+msgstr "  -N, --unencrypted         do no encrypt stored password\n"
+
+#: createuser.c:249
+msgid "  -i, --sysid=SYSID         select sysid for new user\n"
+msgstr "  -i, --sysid=SYSID         yeni kullanıcı için sysid'yi belirler\n"
+
+#: createuser.c:257
+msgid "  -U, --username=USERNAME   user name to connect as (not the one to create)\n"
+msgstr ""
+"  -U, --username=KULLANICI_ADI   bağlanılacak kullanıcı adı (yaratılacak "
+"değil)\n"
+
+#: createuser.c:258 dropuser.c:155
+msgid "  -W, --password            prompt for password to connect\n"
+msgstr "  -W, --password            bağlanmak için şifre sor\n"
+
+#: createuser.c:259
+msgid ""
+"\n"
+"If one of -a, -A, -d, -D, and USERNAME is not specified, you will\n"
+"be prompted interactively.\n"
+msgstr ""
+"\n"
+"Eğer-a, -A, -d, -D, ve USERNAME 'den en az birisi belirtilmezse, \n"
+"bu bilgiler size etkileşimli olarak sorulacaktır.\n"
+
+#: dropdb.c:91
+#, c-format
+msgid "%s: missing required argument database name\n"
+msgstr "%s: Gerekli argüman eksik: Veritabanı adı\n"
+
+#: dropdb.c:108
+#, c-format
+msgid "Database \"%s\" will be permanently removed.\n"
+msgstr "\"%s\" veritabanı kalıcı olarak silinecektir.\n"
+
+#: dropdb.c:109 dropuser.c:110
+msgid "Are you sure? (y/n) "
+msgstr "Emin misiniz? (y/n)"
+
+#: dropdb.c:126
+#, c-format
+msgid "%s: database removal failed: %s"
+msgstr "%s: veritabanı silme işlemi başarısız olduı: %s"
+
+#: dropdb.c:145
+#, c-format
+msgid ""
+"%s removes a PostgreSQL database.\n"
+"\n"
+msgstr ""
+"%s PostgreSQL veritabanını siler.\n"
+"\n"
+
+#: dropdb.c:147
+#, c-format
+msgid "  %s [OPTION]... DBNAME\n"
+msgstr "  %s [SEÇENEK]... VERİTABANI_ADI\n"
+
+#: dropdb.c:150 dropuser.c:150
+msgid "  -i, --interactive         prompt before deleting anything\n"
+msgstr "  -i, --interactive         birşeyi silmeden önce uyarı verir\n"
+
+#: droplang.c:170
+#, c-format
+msgid "%s: language \"%s\" is not installed in database \"%s\"\n"
+msgstr "%s: \"%s\" dili veritabanıda kurulu değil \"%s\"\n"
+
+#: droplang.c:186
+#, c-format
+msgid "%s: still %s functions declared in language \"%s\"; language not removed\n"
+msgstr ""
+"%s: Bu dilde halen %s fonksiyon tanımlanmış durumda;  \"%s\"dili "
+"kaldırılamadı\n"
+
+#: droplang.c:227
+#, c-format
+msgid "%s: language removal failed: %s"
+msgstr "%s: dil silme işlemi başarısız oldu: %s"
+
+#: droplang.c:241
+#, c-format
+msgid ""
+"%s removes a procedural language from a database.\n"
+"\n"
+msgstr ""
+"%s veritabanından yordamsan bir dili siler.\n"
+"\n"
+
+#: droplang.c:245
+msgid "  -d, --dbname=DBNAME       database from which to remove the language\n"
+msgstr "  -d, --dbname=VERİTABANI_ADI       dilin sileneceği veritabanının adı\n"
+
+#: dropuser.c:103
+msgid "Enter name of user to drop: "
+msgstr "Silinecek kullanıcının adını giriniz: "
+
+#: dropuser.c:109
+#, c-format
+msgid "User \"%s\" will be permanently removed.\n"
+msgstr "\"%s\" kullanıcısı kalıcı olarak silinecektir.\n"
+
+#: dropuser.c:126
+#, c-format
+msgid "%s: removal of user \"%s\" failed: %s"
+msgstr "%s: \"%s\" kullanıcısının silinmesi başarısız oldu: %s"
+
+#: dropuser.c:145
+#, c-format
+msgid ""
+"%s removes a PostgreSQL user.\n"
+"\n"
+msgstr ""
+"%s bir PostgreSQL kullanıcısını siler.\n"
+"\n"
+
+#: dropuser.c:154
+msgid "  -U, --username=USERNAME   user name to connect as (not the one to drop)\n"
+msgstr ""
+"  -U, --username=KULLANICI _ADI   bağlanırken kullanılacak kullanıcı adı "
+"(silinecek olan değil)\n"
+
+#: clusterdb.c:119
+#, c-format
+msgid "%s: cannot cluster all databases and a specific one at the same time\n"
+msgstr "%s: Aynı anda tüm veritabanları ve de belirli bir tanesi cluster edilemez\n"
+
+#: clusterdb.c:125
+#, c-format
+msgid "%s: cannot cluster a specific table in all databases\n"
+msgstr "%s: tüm veritabanlarındaki belirli tablolar cluster edilemez.\n"
+
+#: clusterdb.c:181
+#, c-format
+msgid "%s: clustering of table \"%s\" in database \"%s\" failed: %s"
+msgstr ""
+"%s: \"%s\"tablosunun (\"%s\" veritabanındaki) cluster işlemi başarısız oldu: "
+"%s"
+
+#: clusterdb.c:184
+#, c-format
+msgid "%s: clustering of database \"%s\" failed: %s"
+msgstr "%s: \"%s\" veritabanının cluster işlemi başarısız oldu: %s"
+
+#: clusterdb.c:220
+#, c-format
+msgid "%s: clustering database \"%s\"\n"
+msgstr "%s: \"%s\" veritabanı cluster ediliyor\n"
+
+#: clusterdb.c:234
+#, c-format
+msgid ""
+"%s clusters all previously clustered tables in a database.\n"
+"\n"
+msgstr ""
+"%s Konutu bir veritabanında daha önceden cluster edilmiş tüm tabloları "
+"cluster eder.\n"
+"\n"
+
+#: clusterdb.c:236 vacuumdb.c:262
+#, c-format
+msgid "  %s [OPTION]... [DBNAME]\n"
+msgstr "  %s [SEÇENEK]... [VERİTABANI_ADI]\n"
+
+#: clusterdb.c:238
+msgid "  -a, --all                 cluster all databases\n"
+msgstr "  -a, --all                 tüm veritabanlarını cluster eder\n"
+
+#: clusterdb.c:239
+msgid "  -d, --dbname=DBNAME       database to cluster\n"
+msgstr "  -d, --dbname=VERİTABANI_ADI       cluster edilecek veritabanı adı\n"
+
+#: clusterdb.c:240
+msgid "  -t, --table=TABLE         cluster specific table only\n"
+msgstr "  -t, --table=TABLO_ADI         sadece belirli bir tabloyu cluster eder\n"
+
+#: clusterdb.c:250
+msgid ""
+"\n"
+"Read the description of the SQL command CLUSTER for details.\n"
+msgstr ""
+"\n"
+"Ayrıntılar için bir SQL komutu olan CLUSTER'in açıklamasını "
+"okuyabilirsiniz.\n"
+
+#: vacuumdb.c:136
+#, c-format
+msgid "%s: cannot vacuum all databases and a specific one at the same time\n"
+msgstr "%s:Aynı anda tüm veritabanları ve de belirli bir tanesi vakumlanamaz\n"
+
+#: vacuumdb.c:142
+#, c-format
+msgid "%s: cannot vacuum a specific table in all databases\n"
+msgstr "%s: Tüm veritabanlarındaki belirli bir tablo vakumlanamaz.\n"
+
+#: vacuumdb.c:206
+#, c-format
+msgid "%s: vacuuming of table \"%s\" in database \"%s\" failed: %s"
+msgstr ""
+"%s: \"%s\" tablosunun (\"%s\" veritabanındaki) vakumlama işlemi başarısız "
+"oldu: %s"
+
+#: vacuumdb.c:209
+#, c-format
+msgid "%s: vacuuming of database \"%s\" failed: %s"
+msgstr "%s: \"%s\" veritabanının vakumlanması başarısız oldu: %s"
+
+#: vacuumdb.c:246
+#, c-format
+msgid "%s: vacuuming database \"%s\"\n"
+msgstr "%s: \"%s\" veritabanı vakumlanıyor\n"
+
+#: vacuumdb.c:260
+#, c-format
+msgid ""
+"%s cleans and analyzes a PostgreSQL database.\n"
+"\n"
+msgstr ""
+"%s bir PostgreSQL veritabanını temizler ve analiz eder.\n"
+"\n"
+
+#: vacuumdb.c:264
+msgid "  -a, --all                       vacuum all databases\n"
+msgstr "  -a, --all                       tüm veritabanlarını vakumlar\n"
+
+#: vacuumdb.c:265
+msgid "  -d, --dbname=DBNAME             database to vacuum\n"
+msgstr "  -d, --dbname=VERİTABANI_ADI             vakumlanacak veritabanı\n"
+
+#: vacuumdb.c:266
+msgid "  -t, --table='TABLE[(COLUMNS)]'  vacuum specific table only\n"
+msgstr "  -t, --table='TABLO[(KOLONLAR)]'  sadece belirli bir tabloyu vakumlar\n"
+
+#: vacuumdb.c:267
+msgid "  -f, --full                      do full vacuuming\n"
+msgstr "  -f, --full                      tam (FULL) vakumlama yap\n"
+
+#: vacuumdb.c:268
+msgid "  -z, --analyze                   update optimizer hints\n"
+msgstr "  -z, --analyze                   optimizer bilgilerini güncelle\n"
+
+#: vacuumdb.c:269
+msgid ""
+"  -e, --echo                      show the commands being sent to the "
+"server\n"
+msgstr "  -e, --echo                      sunucuya gönderilen komutları yaz\n"
+
+#: vacuumdb.c:270
+msgid "  -q, --quiet                     don't write any messages\n"
+msgstr "  -q, --quiet                     hiçbir mesaj yazma\n"
+
+#: vacuumdb.c:271
+msgid "  -v, --verbose                   write a lot of output\n"
+msgstr "  -v, --verbose                   bolca çıktı yaz\n"
+
+#: vacuumdb.c:272
+msgid "  --help                          show this help, then exit\n"
+msgstr "  --help                          bu yardımı göster ve çık\n"
+
+#: vacuumdb.c:273
+msgid "  --version                       output version information, then exit\n"
+msgstr "  --version                       sürüm bilgisini göster ve çık\n"
+
+#: vacuumdb.c:279
+msgid ""
+"\n"
+"Read the description of the SQL command VACUUM for details.\n"
+msgstr ""
+"\n"
+"Ayrıntılar için, bir SQL komutu olan VACUUM'un tanımlarını okuyun.\n"
+
+#: common.c:95 common.c:121
+msgid "Password: "
+msgstr "Şifre: "
+
+#: common.c:108
+#, c-format
+msgid "%s: could not connect to database %s\n"
+msgstr "%s: %s veritabanına bağlanılamadı\n"
+
+#: common.c:131
+#, c-format
+msgid "%s: could not connect to database %s: %s"
+msgstr "%s: %s veritabanına bağlanılamadı: %s"
+
+#: common.c:155
+#, c-format
+msgid "%s: query failed: %s"
+msgstr "%s: sorgu başarısız oldu: %s"
+
+#: common.c:156
+#, c-format
+msgid "%s: query was: %s\n"
+msgstr "%s: sorgu şu idi: %s\n"
+
+#. translator: Make sure the (y/n) prompts match the translation of this.
+#: common.c:170
+msgid "y"
+msgstr "y"
+
+#. translator: Make sure the (y/n) prompts match the translation of this.
+#: common.c:172
+msgid "n"
+msgstr "n"
+

@@ -1,0 +1,2831 @@
+# translation of tr.po to 
+# translation of psql-tr.po to Turkish
+# Devrim GUNDUZ <devrim@PostgreSQL.org>, 2004.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: tr\n"
+"POT-Creation-Date: 2004-10-27 13:17+0100\n"
+"PO-Revision-Date: 2004-10-28 18:59+0300\n"
+"Last-Translator: \n"
+"Language-Team:  <en@li.org>\n"
+"current/libpq-tr.po>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"genel@PostgreSQL.org>\n"
+"X-Poedit-Language: Turkish\n"
+"X-Poedit-Country: TURKEY\n"
+"X-Poedit-SourceCharset: utf-8\n"
+"X-Generator: KBabel 1.3.1\n"
+
+#: command.c:154
+msgid "Warning: This syntax is deprecated.\n"
+msgstr "Uyarı: Bu sözdizimi artık kullanılmamaktadır.\n"
+
+#: command.c:161
+#, c-format
+msgid "Invalid command \\%s. Try \\? for help.\n"
+msgstr "Geçersiz komut \\%s. Yardm için \\? yazınız.\n"
+
+#: command.c:163
+#, c-format
+msgid "invalid command \\%s\n"
+msgstr "geçersiz komut \\%s\n"
+
+#: command.c:290
+#, c-format
+msgid "could not get home directory: %s\n"
+msgstr "home dizinine ulaşılanmamıştır: %s\n"
+
+#: command.c:306
+#, c-format
+msgid "\\%s: could not change directory to \"%s\": %s\n"
+msgstr "\\%s: \"%s\" dizinine geçiş yapılamamıştır: %s\n"
+
+#: command.c:411 command.c:769
+msgid "no query buffer\n"
+msgstr "sorgu tamponu mevcut edğil\n"
+
+#: command.c:468
+#, c-format
+msgid "%s: invalid encoding name or conversion procedure not found\n"
+msgstr "%s: kodlama adı geçersiz veya dönüştürme fonksiyonu bulunmamış\n"
+
+#: command.c:530 command.c:561 command.c:572 command.c:586 command.c:628
+#: command.c:749 command.c:778
+#, c-format
+msgid "\\%s: missing required argument\n"
+msgstr "\\%s: zorunlu argüman eksik\n"
+
+#: command.c:616
+msgid "Query buffer is empty."
+msgstr "Sorgu tamponu boş."
+
+#: command.c:649
+msgid "Query buffer reset (cleared)."
+msgstr "Sorgu tamponu sıfırlanmış."
+
+#: command.c:660
+#, c-format
+msgid "Wrote history to file \"%s\".\n"
+msgstr "Geçmiş \"%s\" dosyasına yazılmış.\n"
+
+#: command.c:692 command.c:1149 command.c:1246 command.c:1964 common.c:86
+#: copy.c:88 copy.c:116 describe.c:51 mainloop.c:78 mainloop.c:338
+msgid "out of memory\n"
+msgstr "bellek yetersiz\n"
+
+#: command.c:707 command.c:754
+#, c-format
+msgid "\\%s: error\n"
+msgstr "\\%s: hata\n"
+
+#: command.c:736
+msgid "Timing is on."
+msgstr "Zamanlama açık."
+
+#: command.c:738
+msgid "Timing is off."
+msgstr "Zamanlama kapalı."
+
+#: command.c:793 command.c:813 command.c:1011 command.c:1024 command.c:1035
+#: command.c:1606 command.c:1619 command.c:1631 command.c:1644 command.c:1658
+#: command.c:1680 command.c:1710 common.c:135 copy.c:378
+#, c-format
+msgid "%s: %s\n"
+msgstr "%s: %s\n"
+
+#: command.c:879
+#, c-format
+msgid "\\%s: extra argument \"%s\" ignored\n"
+msgstr "\\%s: \"%s\" fazla parametresi atlandı\n"
+
+#: command.c:972 command.c:1000 command.c:1122
+msgid "parse error at the end of line\n"
+msgstr "satır sonunda ayrıştırma hatası\n"
+
+#: command.c:1351 command.c:1375 startup.c:177 startup.c:195
+msgid "Password: "
+msgstr "Şifre:"
+
+#: command.c:1389 common.c:181 common.c:352 common.c:406 common.c:653
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: command.c:1393
+msgid "Previous connection kept\n"
+msgstr "Önceki başlantı kullanılıyor\n"
+
+#: command.c:1405
+#, c-format
+msgid "\\connect: %s"
+msgstr "\\connect: %s"
+
+#: command.c:1417
+#, c-format
+msgid "You are now connected to database \"%s\".\n"
+msgstr "Şu an \"%s\" veritabanına bağlısınız.\n"
+
+#: command.c:1419
+#, c-format
+msgid "You are now connected as new user \"%s\".\n"
+msgstr "Şu an kullanıcı \"%s\" olarak bağlısınız.\n"
+
+#: command.c:1422
+#, c-format
+msgid "You are now connected to database \"%s\" as user \"%s\".\n"
+msgstr "Şu an \"%s\" veritabanına \"%s\" kullanıcısı olarak bağlısınız.\n"
+
+#: command.c:1544
+#, c-format
+msgid "could not start editor \"%s\"\n"
+msgstr "\"%s\" metin düzenleyicisi çalıştırılamamıştır\n"
+
+#: command.c:1546
+msgid "could not start /bin/sh\n"
+msgstr "/bin/sh başlatılamamıştır\n"
+
+#: command.c:1591
+#, c-format
+msgid "could not open temporary file \"%s\": %s\n"
+msgstr "\"%s\" geçici dosya açılamamıştır: %s\n"
+
+#: command.c:1783
+msgid "\\pset: allowed formats are unaligned, aligned, html, latex\n"
+msgstr "\\pset: izin verilem biçimler: unaligned, aligned, html, latex\n"
+
+#: command.c:1788
+#, c-format
+msgid "Output format is %s.\n"
+msgstr "Çıktı formatı: %s.\n"
+
+#: command.c:1798
+#, c-format
+msgid "Border style is %d.\n"
+msgstr "Kenar stili: %d.\n"
+
+#: command.c:1807
+msgid "Expanded display is on.\n"
+msgstr "Geniş gösterme açık.\n"
+
+#: command.c:1808
+msgid "Expanded display is off.\n"
+msgstr "Geniş gösterme kapalı.\n"
+
+#: command.c:1820
+#, c-format
+msgid "Null display is \"%s\".\n"
+msgstr "Null display is \"%s\".\n"
+
+#: command.c:1832
+#, c-format
+msgid "Field separator is \"%s\".\n"
+msgstr "Alan ayracı: \"%s\".\n"
+
+#: command.c:1846
+msgid "Record separator is <newline>."
+msgstr "Kayıt ayracı <newline>."
+
+#: command.c:1848
+#, c-format
+msgid "Record separator is \"%s\".\n"
+msgstr "Kayıt ayracı \"%s\".\n"
+
+#: command.c:1859
+msgid "Showing only tuples."
+msgstr "Sadece satırları göster."
+
+#: command.c:1861
+msgid "Tuples only is off."
+msgstr "Sadece satırları gösterme kapalı."
+
+#: command.c:1877
+#, c-format
+msgid "Title is \"%s\".\n"
+msgstr "Başlık \"%s\".\n"
+
+#: command.c:1879
+msgid "Title is unset.\n"
+msgstr "Başlık belirtilmemiştir.\n"
+
+#: command.c:1895
+#, c-format
+msgid "Table attribute is \"%s\".\n"
+msgstr "Tablo özelliği: \"%s\".\n"
+
+#: command.c:1897
+msgid "Table attributes unset.\n"
+msgstr "Tablo özellği belirtilmemiştir.\n"
+
+#: command.c:1913
+msgid "Pager is used for long output."
+msgstr "Uzun çıktı için sayfalama kullanıacaktır."
+
+#: command.c:1915
+msgid "Pager is always used."
+msgstr "Sayfalama her zaman kullanılacak."
+
+#: command.c:1917
+msgid "Pager usage is off."
+msgstr "Sayfalama kapalı."
+
+#: command.c:1928
+msgid "Default footer is on."
+msgstr "Varsayılan alt başlık açık."
+
+#: command.c:1930
+msgid "Default footer is off."
+msgstr "Varsayılan alt başlık kapalı."
+
+#: command.c:1936
+#, c-format
+msgid "\\pset: unknown option: %s\n"
+msgstr "\\pset: geçersiz seçim: %s\n"
+
+#: command.c:1983
+msgid "\\!: failed\n"
+msgstr "\\!: başarısız\n"
+
+#: common.c:79
+#, c-format
+msgid "%s: xstrdup: cannot duplicate null pointer (internal error)\n"
+msgstr "%s: xstrdup: null pointer  duplicate edilemiyor (iç hata)\n"
+
+#: common.c:263
+msgid "connection to server was lost\n"
+msgstr "sunucuya bağlantı kesilmiş\n"
+
+#: common.c:267
+msgid "The connection to the server was lost. Attempting reset: "
+msgstr "Sunucuya bağlantı kesilmiş. Yeniden başlanı deniliyor:"
+
+#: common.c:272
+msgid "Failed.\n"
+msgstr "Başarısız.\n"
+
+#: common.c:279
+msgid "Succeeded.\n"
+msgstr "Başarılı.\n"
+
+#: common.c:382 common.c:621
+msgid "You are currently not connected to a database.\n"
+msgstr "Şu anda bir veritabanına bağlı değilsiniz.\n"
+
+#: common.c:437
+#, c-format
+msgid "Asynchronous notification \"%s\" received from server process with PID %d.\n"
+msgstr "PID %2$d olan sunucu sürecinden \"%1$s\" asenkon bildiri alınmış.\n"
+
+#: common.c:517
+msgid ""
+"Enter data to be copied followed by a newline.\n"
+"End with a backslash and a period on a line by itself."
+msgstr ""
+"Kopyalanacak veri girin ardından satırbaşı.\n"
+"Sonuçlandırmak için yeni satırda ters taksim işareti ve nokta girin."
+
+#: common.c:629
+#, c-format
+msgid ""
+"***(Single step mode: verify command)"
+"*******************************************\n"
+"%s\n"
+"***(press return to proceed or enter x and return to cancel)"
+"********************\n"
+msgstr ""
+"***(Adım adım onyalama biçimi: verify command)"
+"*******************************************\n"
+"%s\n"
+"***(devam etmek için return, durdurmak için x ve return)"
+"********************\n"
+
+#: common.c:680
+#, c-format
+msgid "Time: %.3f ms\n"
+msgstr "Süre: %.3f milisaniye\n"
+
+#: copy.c:110
+msgid "\\copy: arguments required\n"
+msgstr "\\copy: parametre eksik\n"
+
+#: copy.c:289
+#, c-format
+msgid "\\copy: parse error at \"%s\"\n"
+msgstr "\\copy: \"%s\" ifadesinde ayrıştırma hatası\n"
+
+#: copy.c:291
+msgid "\\copy: parse error at end of line\n"
+msgstr "\\copy: satır sonunda ayrıştırma hatası\n"
+
+#: copy.c:389
+#, c-format
+msgid "%s: cannot copy from/to a directory\n"
+msgstr "%s: dizinden veya dizine kopyalanamıyor\n"
+
+#: copy.c:410
+#, c-format
+msgid "\\copy: %s"
+msgstr "\\copy: %s"
+
+#: copy.c:414
+#, c-format
+msgid "\\copy: unexpected response (%d)\n"
+msgstr "\\copy: beklenmeyen yanıt (%d)\n"
+
+#: help.c:48
+msgid "on"
+msgstr "açık"
+
+#: help.c:48
+msgid "off"
+msgstr "kapalı"
+
+#: help.c:70
+#, c-format
+msgid "could not get current user name: %s\n"
+msgstr "geçerli kullanıcı adına erişilemiyor: %s\n"
+
+#: help.c:83
+#, c-format
+msgid ""
+"This is psql %s, the PostgreSQL interactive terminal.\n"
+"\n"
+msgstr ""
+"PostgreSQL etkilişimli arayüzü psql %s.\n"
+"\n"
+
+#: help.c:85
+msgid "Usage:"
+msgstr "Kullanımı:"
+
+#: help.c:86
+msgid "  psql [OPTIONS]... [DBNAME [USERNAME]]\n"
+msgstr "  psql [OPTIONS]... [DBNAME [USERNAME]]\n"
+
+#: help.c:88
+msgid "General options:"
+msgstr "Genel tercihler:"
+
+#: help.c:93
+#, c-format
+msgid "  -d DBNAME       specify database name to connect to (default: \"%s\")\n"
+msgstr "  -d DBNAME       bağlanacak veritabanının adı (varsayılan: \"%s\")\n"
+
+#: help.c:94
+msgid "  -c COMMAND      run only single command (SQL or internal) and exit"
+msgstr "  -c COMMAND      tek bir komut çalıştır (SQL ya da dahili) ve çık"
+
+#: help.c:95
+msgid "  -f FILENAME     execute commands from file, then exit"
+msgstr "  -f FILENAME     dosyadan komutları çalıştır ve çık"
+
+#: help.c:96
+msgid "  -l              list available databases, then exit"
+msgstr "  -l              veritabanlarının listesi ver ve çık"
+
+#: help.c:97
+msgid "  -v NAME=VALUE   set psql variable NAME to VALUE"
+msgstr "  -v NAME=VALUE   NAME psql değişkenine VALUE değerini ata"
+
+#: help.c:98
+msgid "  -X              do not read startup file (~/.psqlrc)"
+msgstr "  -X              başlangıç dosyasının (~/.psqlrc) çalıştırmasını engelle"
+
+#: help.c:99
+msgid "  --help          show this help, then exit"
+msgstr "  --help          yardım metnini göster ve çık"
+
+#: help.c:100
+msgid "  --version       output version information, then exit"
+msgstr "  --version       sürüm bilgisini göster ve çık"
+
+#: help.c:102
+msgid ""
+"\n"
+"Input and output options:"
+msgstr ""
+"\n"
+"Giriş ve çıkış tercihleri:"
+
+#: help.c:103
+msgid "  -a              echo all input from script"
+msgstr "  -a              betik dosyasının içeriğini yansıt"
+
+#: help.c:104
+msgid "  -e              echo commands sent to server"
+msgstr "  -e              sunucuya gönderilen komutlarını yansıt"
+
+#: help.c:105
+msgid "  -E              display queries that internal commands generate"
+msgstr "  -E              dahili komutların ürettiği sorgularını göster"
+
+#: help.c:106
+msgid "  -q              run quietly (no messages, only query output)"
+msgstr "  -q              sessiz biçim (mesaşlar kapalı, sadece sorgu sonuçları açık)"
+
+#: help.c:107
+msgid "  -o FILENAME     send query results to file (or |pipe)"
+msgstr "  -o FILENAME     sonuçları dosyaya aktar (veya |pipe)"
+
+#: help.c:108
+msgid "  -n              disable enhanced command line editing (readline)"
+msgstr "  -n              gelişmiş komut satırı düzenleme etkisizleştir (readline)"
+
+#: help.c:109
+msgid "  -s              single-step mode (confirm each query)"
+msgstr "  -s              adım adım onaylama (her sorguyu onaylama)"
+
+#: help.c:110
+msgid "  -S              single-line mode (end of line terminates SQL command)"
+msgstr "  -S              tek satır biçimi (satır sonu SQL komutunu bitiriyor)"
+
+#: help.c:112
+msgid ""
+"\n"
+"Output format options:"
+msgstr ""
+"\n"
+"Çıkış biçim tercihleri:"
+
+#: help.c:113
+msgid "  -A              unaligned table output mode (-P format=unaligned)"
+msgstr "  -A              dizilmemiş çıkış biçimi (-P format=unaligned)"
+
+#: help.c:114
+msgid "  -H              HTML table output mode (-P format=html)"
+msgstr "  -H              HTML trablo çıkış biçimi (-P format=html)"
+
+#: help.c:115
+msgid "  -t              print rows only (-P tuples_only)"
+msgstr "  -t              sadece satırları göster (-P tuples_only)"
+
+#: help.c:116
+msgid ""
+"  -T TEXT         set HTML table tag attributes (width, border) (-P "
+"tableattr=)"
+msgstr ""
+"  -T TEXT         HTML table tag parametreleri ayarla (width, border) (-P "
+"tableattr=)"
+
+#: help.c:117
+msgid "  -x              turn on expanded table output (-P expanded)"
+msgstr "  -x              gelişmiş tablo çıktısını atkinleştir (-P expanded)"
+
+#: help.c:118
+msgid "  -P VAR[=ARG]    set printing option VAR to ARG (see \\pset command)"
+msgstr "  -P VAR[=ARG]    VAR çıktı ayarınına ARG değerini ata (\\pset komutuna bak)"
+
+#: help.c:119
+#, c-format
+msgid "  -F STRING       set field separator (default: \"%s\") (-P fieldsep=)\n"
+msgstr "  -F STRING       alan ayracını ayarla (varsayılan: \"%s\") (-P fieldsep=)\n"
+
+#: help.c:121
+msgid "  -R STRING       set record separator (default: newline) (-P recordsep=)"
+msgstr "  -R STRING       kayıt ayracını ayarla (varsayılan: newline) (-P recordsep=)"
+
+#: help.c:123
+msgid ""
+"\n"
+"Connection options:"
+msgstr ""
+"\n"
+"Bağlantı tercihleri:"
+
+#: help.c:126
+#, c-format
+msgid ""
+"  -h HOSTNAME     database server host or socket directory (default: \"%s"
+"\")\n"
+msgstr ""
+"  -h HOSTNAME     veritabanuı sunucu adresi veya socket dizini (varsayılan: "
+"\"%s\")\n"
+
+#: help.c:127
+msgid "local socket"
+msgstr "yerel socket"
+
+#: help.c:130
+#, c-format
+msgid "  -p PORT         database server port (default: \"%s\")\n"
+msgstr "  -p PORT         veritabanı sunucusu port numarası (varsayılan: \"%s\")\n"
+
+#: help.c:136
+#, c-format
+msgid "  -U NAME         database user name (default: \"%s\")\n"
+msgstr "  -U NAME         vitabanı kullanıcı adı (versayılan: \"%s\")\n"
+
+#: help.c:137
+msgid "  -W              prompt for password (should happen automatically)"
+msgstr "  -W              şifre sor (otomatik olarak her zaman açık)"
+
+#: help.c:140
+msgid ""
+"\n"
+"For more information, type \"\\?\" (for internal commands) or \"\\help\"\n"
+"(for SQL commands) from within psql, or consult the psql section in\n"
+"the PostgreSQL documentation.\n"
+"\n"
+"Report bugs to <pgsql-bugs@postgresql.org>."
+msgstr ""
+"\n"
+"Daha fazla bilgi için psql içinde: \"\\?\" (dahili omutlar için) veya "
+"\"\\help\"\n"
+"(SQL komutlar için), veya PostgreSQL dokümanların psql bölümüne bakın.\n"
+"\n"
+"Hataları <pgsql-bugs@postgresql.org> adresine bildirin."
+
+#: help.c:174
+msgid "General\n"
+msgstr "Genel\n"
+
+#: help.c:175
+#, c-format
+msgid ""
+"  \\c[onnect] [DBNAME|- [USER]]\n"
+"                 connect to new database (currently \"%s\")\n"
+msgstr ""
+"  \\c[onnect] [DBNAME|- [USER]]\n"
+"                 yeni veritabanına bağlan (geçerli veritabanı \"%s\")\n"
+
+#: help.c:178
+msgid "  \\cd [DIR]      change the current working directory\n"
+msgstr "  \\cd [DIR]      geçerli dizinin değiştir\n"
+
+#: help.c:179
+msgid "  \\copyright     show PostgreSQL usage and distribution terms\n"
+msgstr "  \\copyright     PostgreSQL kullanım ve dağıtım şartlarını göster\n"
+
+#: help.c:180
+msgid ""
+"  \\encoding [ENCODING]\n"
+"                 show or set client encoding\n"
+msgstr ""
+"  \\encoding [ENCODING]\n"
+"                 istemci dil kodlamasını göster\n"
+
+#: help.c:182
+msgid "  \\h [NAME]      help on syntax of SQL commands, * for all commands\n"
+msgstr "  \\h [NAME]      SQL komutları hakkında yardım göster, tüm komutlar için *\n"
+
+#: help.c:183
+msgid "  \\q             quit psql\n"
+msgstr "  \\q             psql'den çık\n"
+
+#: help.c:184
+msgid ""
+"  \\set [NAME [VALUE]]\n"
+"                 set internal variable, or list all if no parameters\n"
+msgstr ""
+"  \\set [NAME [VALUE]]\n"
+"                 dahili deiğişkenine değer ata, VALUE boş ise tüme "
+"değişkenlerin listesi\n"
+
+#: help.c:186
+#, c-format
+msgid "  \\timing        toggle timing of commands (currently %s)\n"
+msgstr "  \\timing        komutların zamanlamasını göster (şu an %s)\n"
+
+#: help.c:188
+msgid "  \\unset NAME    unset (delete) internal variable\n"
+msgstr "  \\unset NAME    dahili değişkenini sıfırla (sil)\n"
+
+#: help.c:189
+msgid "  \\! [COMMAND]   execute command in shell or start interactive shell\n"
+msgstr "  \\! [COMMAND]   işletim sistemi komutu çalıştır\n"
+
+#: help.c:192
+msgid "Query Buffer\n"
+msgstr "Sorgu tamponu\n"
+
+#: help.c:193
+msgid "  \\e [FILE]      edit the query buffer (or file) with external editor\n"
+msgstr "  \\e [FILE]      sorgu tamponunu harici bir metin düzenleyici ile düzenle\n"
+
+#: help.c:194
+msgid ""
+"  \\g [FILE]      send query buffer to server (and results to file or |"
+"pipe)\n"
+msgstr ""
+"  \\g [FILE]      sorgu tamponundaki sorguyu sunucuya gönder (ve sonuçları "
+"dosyaya ya da |pipe'e gönder)\n"
+
+#: help.c:195
+msgid "  \\p             show the contents of the query buffer\n"
+msgstr "  \\p             sorgu tamponunun içeriğini göster\n"
+
+#: help.c:196
+msgid "  \\r             reset (clear) the query buffer\n"
+msgstr "  \\r             sorgu tamponunu sıfırla (temizle)\n"
+
+#: help.c:197
+msgid "  \\s [FILE]      display history or save it to file\n"
+msgstr "  \\s [FILE]      geçmişini göster veya dosyaya kaydet\n"
+
+#: help.c:198
+msgid "  \\w [FILE]      write query buffer to file\n"
+msgstr "  \\w FILE      sorgu tamponunu dosyaya kaydet\n"
+
+#: help.c:201
+msgid "Input/Output\n"
+msgstr "Giriş/Çıkış\n"
+
+#: help.c:202
+msgid "  \\echo [STRING] write string to standard output\n"
+msgstr "  \\echo [STRING] standart çıkışına bir satır gönder\n"
+
+#: help.c:203
+msgid "  \\i FILE        execute commands from file\n"
+msgstr "  \\i FILE        dosyadaki komutlarını çalıştır\n"
+
+#: help.c:204
+msgid "  \\o [FILE]      send all query results to file or |pipe\n"
+msgstr "  \\o [FILE]      tüm sorgu sonuçlarını dosyaya ya da |pipe'e gönder\n"
+
+#: help.c:205
+msgid ""
+"  \\qecho [STRING]\n"
+"                 write string to query output stream (see \\o)\n"
+msgstr ""
+"  \\qecho [STRING]\n"
+"                 sorgu çıkış akımına satır yaz (bk. \\o)\n"
+
+#: help.c:209
+msgid "Informational\n"
+msgstr "Bilgi edinme\n"
+
+#: help.c:210
+msgid "  \\d [NAME]      describe table, index, sequence, or view\n"
+msgstr "  \\d [NAME]      tablo, indeks, sequence, veya view hakkında bilgi ver\n"
+
+#: help.c:211
+msgid ""
+"  \\d{t|i|s|v|S} [PATTERN] (add \"+\" for more detail)\n"
+"                 list tables/indexes/sequences/views/system tables\n"
+msgstr ""
+"  \\d{t|i|s|v|S} [PATTERN] (daha fazla ayrıntı için \"+\" ekleyin)\n"
+"                 tablolar/indeksler/sequenceler/viewlar/system tabloları "
+"listele\n"
+
+#: help.c:213
+msgid "  \\da [PATTERN]  list aggregate functions\n"
+msgstr "  \\da [PATTERN]  aggregate fonksiyonları listele\n"
+
+#: help.c:214
+msgid "  \\dc [PATTERN]  list conversions\n"
+msgstr "  \\dc [PATTERN]  conversionları listele\n"
+
+#: help.c:215
+msgid "  \\dC            list casts\n"
+msgstr "  \\dC            castarı listele\n"
+
+#: help.c:216
+msgid "  \\dd [PATTERN]  show comment for object\n"
+msgstr "  \\dd [PATTERN]  nesne yorumunu göster\n"
+
+#: help.c:217
+msgid "  \\dD [PATTERN]  list domains\n"
+msgstr "  \\dD [PATTERN]  domainleri göster\n"
+
+#: help.c:218
+msgid "  \\df [PATTERN]  list functions (add \"+\" for more detail)\n"
+msgstr ""
+"  \\df [PATTERN]  fonksiyonları göster (daha fazla ayrıntı için \"+\" "
+"ekleyin)\n"
+
+#: help.c:219
+msgid "  \\dn [PATTERN]  list schemas\n"
+msgstr "  \\dn [PATTERN]  şemaları listele\n"
+
+#: help.c:220
+msgid "  \\do [NAME]     list operators\n"
+msgstr "  \\do [NAME]     operatorları göster\n"
+
+#: help.c:221
+msgid "  \\dl            list large objects, same as \\lo_list\n"
+msgstr "  \\dl            large objectleri göster, \\lo_list ile aynı\n"
+
+#: help.c:222
+msgid "  \\dp [PATTERN]  list table access privileges\n"
+msgstr "  \\dp [PATTERN]  tablo erişim haklarını göster\n"
+
+#: help.c:223
+msgid "  \\dT [PATTERN]  list data types (add \"+\" for more detail)\n"
+msgstr ""
+"  \\dT [PATTERN]  veri tipleri listele (daha fazla ayrıntı için \"+\" "
+"ekleyin)\n"
+
+#: help.c:224
+msgid "  \\du [PATTERN]  list users\n"
+msgstr "  \\du [PATTERN]  kullanıcıları listele\n"
+
+#: help.c:225
+msgid "  \\l             list all databases (add \"+\" for more detail)\n"
+msgstr ""
+"  \\l             tüm veritabanları listele (daha fazla ayrıntı için \"+\" "
+"ekleyin)\n"
+
+#: help.c:226
+msgid "  \\z [PATTERN]   list table access privileges (same as \\dp)\n"
+msgstr "  \\z [PATTERN]   tablo erişim haklarını listele (\\dp ile aynı)\n"
+
+#: help.c:229
+msgid "Formatting\n"
+msgstr "Biçimlendirme:\n"
+
+#: help.c:230
+msgid "  \\a             toggle between unaligned and aligned output mode\n"
+msgstr "  \\a             güzenli ve düzensiz biçimi arasında geçiş yap\n"
+
+#: help.c:231
+msgid "  \\C [STRING]    set table title, or unset if none\n"
+msgstr "  \\C [STRING]    tablo başlığını ayarla, kaldırmak için boş bırakın\n"
+
+#: help.c:232
+msgid "  \\f [STRING]    show or set field separator for unaligned query output\n"
+msgstr "  \\f [STRING]    sorgunun düzensiz çıkışı için alan ayracı tanımla\n"
+
+#: help.c:233
+#, c-format
+msgid "  \\H             toggle HTML output mode (currently %s)\n"
+msgstr "  \\H             HTML çıktı biçimini etkinleştir (şu an %s)\n"
+
+#: help.c:235
+msgid ""
+"  \\pset NAME [VALUE]\n"
+"                 set table output option\n"
+"                 (NAME := {format|border|expanded|fieldsep|footer|null|\n"
+"                 recordsep|tuples_only|title|tableattr|pager})\n"
+msgstr ""
+"  \\pset NAME [VALUE]\n"
+"                 talo çıktısı biçimini ayarla\n"
+"                 (NAME := {format|border|expanded|fieldsep|footer|null|\n"
+"                 recordsep|tuples_only|title|tableattr|pager})\n"
+
+#: help.c:239
+#, c-format
+msgid "  \\t             show only rows (currently %s)\n"
+msgstr "  \\t             sadece satırları göster (şu an %s)\n"
+
+#: help.c:241
+msgid "  \\T [STRING]    set HTML <table> tag attributes, or unset if none\n"
+msgstr ""
+"  \\T [STRING]    HTML <table> tag parametrelerini tanımla, boş ise tüm "
+"parametrelerini kaldır\n"
+
+#: help.c:242
+#, c-format
+msgid "  \\x             toggle expanded output (currently %s)\n"
+msgstr "  \\x             geniş çıktı ayarla (şu an %s)\n"
+
+#: help.c:246
+msgid "Copy, Large Object\n"
+msgstr "Copy, Large Object\n"
+
+#: help.c:247
+msgid "  \\copy ...      perform SQL COPY with data stream to the client host\n"
+msgstr ""
+"  \\copy ...      istemci sisteminden veri akımı ile SQL COPY komutu "
+"çalıştır\n"
+
+#: help.c:248
+msgid ""
+"  \\lo_export\n"
+"  \\lo_import\n"
+"  \\lo_list\n"
+"  \\lo_unlink     large object operations\n"
+msgstr ""
+"  \\lo_export\n"
+"  \\lo_import\n"
+"  \\lo_list\n"
+"  \\lo_unlink     large object işlemleri\n"
+
+#: help.c:281
+msgid "Available help:\n"
+msgstr "Yardım:\n"
+
+#: help.c:340
+#, c-format
+msgid ""
+"Command:     %s\n"
+"Description: %s\n"
+"Syntax:\n"
+"%s\n"
+"\n"
+msgstr ""
+"Komut:      %s\n"
+"Açıklama:   %s\n"
+"Söz dizimi:\n"
+"%s\n"
+"\n"
+
+#: help.c:353
+#, c-format
+msgid ""
+"No help available for \"%-.*s\".\n"
+"Try \\h with no arguments to see available help.\n"
+msgstr ""
+"\"%-.*s\" için yardım bulunmamaktadır.\n"
+"\\h yazarak yardım konuların listesini görüntüleyin.\n"
+
+#: input.c:217
+#, c-format
+msgid "could not save history to file \"%s\": %s\n"
+msgstr "\"%s\" geçmiş dosyası kaydedilemiyor: %s\n"
+
+#: large_obj.c:39
+#, c-format
+msgid "%s: not connected to a database\n"
+msgstr "%s: veritabanına bağlı değil\n"
+
+#: large_obj.c:58
+#, c-format
+msgid "%s: current transaction is aborted\n"
+msgstr "%s: geçerli transaction iptal edilmiş\n"
+
+#: large_obj.c:61
+#, c-format
+msgid "%s: unknown transaction status\n"
+msgstr "%s: transaction durumu belirsiz\n"
+
+#: describe.c:106 describe.c:157 describe.c:230 describe.c:292 describe.c:339
+#: describe.c:438 describe.c:718 describe.c:1345 large_obj.c:278
+msgid "Description"
+msgstr "Açıklama"
+
+#: large_obj.c:286
+msgid "Large objects"
+msgstr "Large objectler"
+
+#: mainloop.c:203
+#, c-format
+msgid "Use \"\\q\" to leave %s.\n"
+msgstr "%s'den çıkmak için \"\\q\" kullanın.\n"
+
+#: print.c:421
+msgid "(No rows)\n"
+msgstr "(Satırlar yok)\n"
+
+#: print.c:1186
+msgid "(1 row)"
+msgstr "(1 satır)"
+
+#: print.c:1188
+#, c-format
+msgid "(%d rows)"
+msgstr "(%d satır)"
+
+#: startup.c:132 startup.c:574
+#, c-format
+msgid "%s: out of memory\n"
+msgstr "%s: bellek yetersiz\n"
+
+#: startup.c:171
+msgid "User name: "
+msgstr "Kullanıcı adı: "
+
+#: startup.c:267
+#, c-format
+msgid ""
+"Welcome to %s %s, the PostgreSQL interactive terminal.\n"
+"\n"
+"Type:  \\copyright for distribution terms\n"
+"       \\h for help with SQL commands\n"
+"       \\? for help on internal slash commands\n"
+"       \\g or terminate with semicolon to execute query\n"
+"       \\q to quit\n"
+"\n"
+msgstr ""
+"%s %s PostgreSQL etkileşimli arayüzüne hoşgeldiniz.\n"
+"\n"
+"       \\copyright dağıtım koşulları için\n"
+"       \\h SQL komutları hakkında yardım için\n"
+"       \\? psql dahili komutların yardımı için\n"
+"       \\g veya noktalı virgül sorguyu çalıştırmak için\n"
+"       \\q çıkmak için\n"
+"\n"
+
+#: startup.c:428
+#, c-format
+msgid "%s: couldn't set printing parameter \"%s\"\n"
+msgstr "%s: \"%s\" yazdırma parametrlesi ayarlanamıyor\n"
+
+#: startup.c:474
+#, c-format
+msgid "%s: could not delete variable \"%s\"\n"
+msgstr "%s: \"%s\" değişkeni silinemiyor\n"
+
+#: startup.c:484
+#, c-format
+msgid "%s: could not set variable \"%s\"\n"
+msgstr "%s: \"%s\" değişkeni atanamıyor\n"
+
+#: startup.c:515 startup.c:521
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "Daha fazla bilgi için  \"%s --help\" yazın.\n"
+
+#: startup.c:539
+#, c-format
+msgid "%s: warning: extra command-line argument \"%s\" ignored\n"
+msgstr "%s: uyarı: fazla argümanı \"%s\" atlanmıştır\n"
+
+#: startup.c:546
+#, c-format
+msgid "%s: Warning: The -u option is deprecated. Use -U.\n"
+msgstr "%s: Uyarı: -u parametresi kullanımdan kalkmıştır. -U kullanın.\n"
+
+#: startup.c:603
+msgid "contains support for command-line editing"
+msgstr "komut satırı düzenleme desteği mevcuttur"
+
+#: startup.c:626
+#, c-format
+msgid ""
+"SSL connection (cipher: %s, bits: %i)\n"
+"\n"
+msgstr ""
+"SSL bağlantı (cipher: %s, bit sayısı: %i)\n"
+"\n"
+
+#: describe.c:105 describe.c:147 describe.c:217 describe.c:290 describe.c:384
+#: describe.c:438 describe.c:1338 describe.c:1444 describe.c:1492
+msgid "Schema"
+msgstr "Şema"
+
+#: describe.c:105 describe.c:147 describe.c:217 describe.c:290 describe.c:332
+#: describe.c:438 describe.c:1338 describe.c:1445 describe.c:1493
+#: describe.c:1588
+msgid "Name"
+msgstr "Adı"
+
+#: describe.c:105
+msgid "(all types)"
+msgstr "(tüm tipleri)"
+
+#: describe.c:106
+msgid "Data type"
+msgstr "Veri tipi"
+
+#: describe.c:120
+msgid "List of aggregate functions"
+msgstr "Tüm aggregate fonksiyonları listele"
+
+#: describe.c:147
+msgid "Result data type"
+msgstr "Sonuç veri tipi"
+
+#: describe.c:148
+msgid "Argument data types"
+msgstr "Arguman veri tipi"
+
+#: describe.c:156 describe.c:332 describe.c:1340 describe.c:1589
+msgid "Owner"
+msgstr "Sahip"
+
+#: describe.c:156
+msgid "Language"
+msgstr "Dil"
+
+#: describe.c:157
+msgid "Source code"
+msgstr "Kaynak kodu"
+
+#: describe.c:191
+msgid "List of functions"
+msgstr "Fonksiyonların listesi"
+
+#: describe.c:227
+msgid "Internal name"
+msgstr "Dahili adı"
+
+#: describe.c:227
+msgid "Size"
+msgstr "Boyut"
+
+#: describe.c:259
+msgid "List of data types"
+msgstr "Veri tiplerin listesi"
+
+#: describe.c:291
+msgid "Left arg type"
+msgstr "Sol argüman veri tipi"
+
+#: describe.c:291
+msgid "Right arg type"
+msgstr "Sağ argüman veri tipi"
+
+#: describe.c:292
+msgid "Result type"
+msgstr "Sonuç veri tipi"
+
+#: describe.c:306
+msgid "List of operators"
+msgstr "Operatörlerin listesi"
+
+#: describe.c:335
+msgid "Encoding"
+msgstr "Kodlama"
+
+#: describe.c:351
+msgid "List of databases"
+msgstr "Veritabanların listesi"
+
+#: describe.c:384 describe.c:1355
+msgid "Table"
+msgstr "Tablo"
+
+#: describe.c:384
+msgid "Access privileges"
+msgstr "Erişim hakları"
+
+#: describe.c:406
+#, c-format
+msgid "Access privileges for database \"%s\""
+msgstr "\"%s\" veritabanın erişim hakları"
+
+#: describe.c:438
+msgid "Object"
+msgstr "Obje"
+
+#: describe.c:449
+msgid "aggregate"
+msgstr "aggregate"
+
+#: describe.c:467
+msgid "function"
+msgstr "fonksiyon"
+
+#: describe.c:481
+msgid "operator"
+msgstr "operatör"
+
+#: describe.c:495
+msgid "data type"
+msgstr "veri tipi"
+
+#: describe.c:512 describe.c:1339
+msgid "table"
+msgstr "tablo"
+
+#: describe.c:512 describe.c:1339
+msgid "view"
+msgstr "view"
+
+#: describe.c:512 describe.c:1339
+msgid "index"
+msgstr "indeks"
+
+#: describe.c:512 describe.c:1339
+msgid "sequence"
+msgstr "sequence"
+
+#: describe.c:528
+msgid "rule"
+msgstr "rule"
+
+#: describe.c:544
+msgid "trigger"
+msgstr "tetikleyici (trigger)"
+
+#: describe.c:562
+msgid "Object descriptions"
+msgstr "Obje açıklamaları"
+
+#: describe.c:608
+#, c-format
+msgid "Did not find any relation named \"%s\".\n"
+msgstr "\"%s\" adında nesne bulunamadı.\n"
+
+#: describe.c:691
+#, c-format
+msgid "Did not find any relation with OID %s.\n"
+msgstr "OID %s olan nesne bulunamadı.\n"
+
+#: describe.c:704
+msgid "Column"
+msgstr "Sütun"
+
+#: describe.c:705 describe.c:1340 describe.c:1446
+msgid "Type"
+msgstr "Veri tipi"
+
+#: describe.c:712
+msgid "Modifiers"
+msgstr "Modifiers"
+
+#: describe.c:819
+#, c-format
+msgid "Table \"%s.%s\""
+msgstr "Tablo \"%s.%s\""
+
+#: describe.c:823
+#, c-format
+msgid "View \"%s.%s\""
+msgstr "View \"%s.%s\""
+
+#: describe.c:827
+#, c-format
+msgid "Sequence \"%s.%s\""
+msgstr "Sequence \"%s.%s\""
+
+#: describe.c:831
+#, c-format
+msgid "Index \"%s.%s\""
+msgstr "İndex \"%s.%s\""
+
+#: describe.c:835
+#, c-format
+msgid "Special relation \"%s.%s\""
+msgstr "Özel nesne \"%s.%s\""
+
+#: describe.c:839
+#, c-format
+msgid "TOAST table \"%s.%s\""
+msgstr "TOAST tablosu \"%s.%s\""
+
+#: describe.c:843
+#, c-format
+msgid "Composite type \"%s.%s\""
+msgstr "Birleşik veri tipi \"%s.%s\""
+
+#: describe.c:847
+#, c-format
+msgid "?%c? \"%s.%s\""
+msgstr "?%c? \"%s.%s\""
+
+#: describe.c:883
+msgid "primary key, "
+msgstr "birincil anahtar, "
+
+#: describe.c:885
+msgid "unique, "
+msgstr "tekil, "
+
+#: describe.c:891
+#, c-format
+msgid "for table \"%s.%s\""
+msgstr "for table \"%s.%s\""
+
+#: describe.c:895
+#, c-format
+msgid ", predicate %s"
+msgstr ", belirli %s"
+
+#: describe.c:929
+#, c-format
+msgid ""
+"View definition:\n"
+"%s"
+msgstr ""
+"View tanımı:\n"
+"%s"
+
+#: describe.c:935
+msgid "Rules"
+msgstr "Rules"
+
+#: describe.c:1086
+msgid "Indexes:"
+msgstr "İndeksler:"
+
+#: describe.c:1094
+#, c-format
+msgid "    \"%s\""
+msgstr "    \"%s\""
+
+#: describe.c:1100
+msgid " primary key,"
+msgstr " birincil anahtar,"
+
+#: describe.c:1102
+msgid " unique,"
+msgstr " tekil,"
+
+#: describe.c:1120
+msgid "Check constraints:"
+msgstr "Check constraints:"
+
+#: describe.c:1124 describe.c:1139
+#, c-format
+msgid "    \"%s\" %s"
+msgstr "    \"%s\" %s"
+
+#: describe.c:1135
+msgid "Foreign-key constraints:"
+msgstr "İkincil anahtar sınırlamaları:"
+
+#: describe.c:1150
+msgid "Rules:"
+msgstr "Rules:"
+
+#: describe.c:1169
+msgid "Triggers:"
+msgstr "Tetikleyiciler(Triggers):"
+
+#: describe.c:1191
+msgid "Inherits"
+msgstr "Inherits"
+
+#: describe.c:1277
+msgid "User name"
+msgstr "Kullanıcı adı"
+
+#: describe.c:1277
+msgid "User ID"
+msgstr "Kullanıcı ID"
+
+#: describe.c:1278
+msgid "superuser, create database"
+msgstr "superuser, create database"
+
+#: describe.c:1279
+msgid "superuser"
+msgstr "superuser"
+
+#: describe.c:1279
+msgid "create database"
+msgstr "create database"
+
+#: describe.c:1280
+msgid "Attributes"
+msgstr "Attributes"
+
+#: describe.c:1293
+msgid "List of database users"
+msgstr "Veritabanı kullanıcı listesi"
+
+#: describe.c:1340
+msgid "special"
+msgstr "özel"
+
+#: describe.c:1401
+msgid "No matching relations found.\n"
+msgstr "Uygun nesne bulunamadı.\n"
+
+#: describe.c:1403
+msgid "No relations found.\n"
+msgstr "Obje bulunamadı.\n"
+
+#: describe.c:1408
+msgid "List of relations"
+msgstr "Objelerin listesi"
+
+#: describe.c:1447
+msgid "Modifier"
+msgstr "Düzenleyici"
+
+#: describe.c:1461
+msgid "List of domains"
+msgstr "Domainlerin listesi"
+
+#: describe.c:1494
+msgid "Source"
+msgstr "Kaynak"
+
+#: describe.c:1495
+msgid "Destination"
+msgstr "Hedef"
+
+#: describe.c:1496 describe.c:1553
+msgid "yes"
+msgstr "evet"
+
+#: describe.c:1497 describe.c:1551
+msgid "no"
+msgstr "hayır"
+
+#: describe.c:1498
+msgid "Default?"
+msgstr "Varsayılan?"
+
+#: describe.c:1512
+msgid "List of conversions"
+msgstr "Dönüşümlerin listesi"
+
+#: describe.c:1547
+msgid "Source type"
+msgstr "Kaynak tipi"
+
+#: describe.c:1548
+msgid "Target type"
+msgstr "Hedef tipi"
+
+#: describe.c:1549
+msgid "(binary compatible)"
+msgstr "(ikili (binary) uyumlu)"
+
+#: describe.c:1550
+msgid "Function"
+msgstr "Fonksiyon"
+
+#: describe.c:1552
+msgid "in assignment"
+msgstr "in assignment"
+
+#: describe.c:1554
+msgid "Implicit?"
+msgstr "Implicit?"
+
+#: describe.c:1562
+msgid "List of casts"
+msgstr "Castlerin listesi"
+
+#: describe.c:1603
+msgid "List of schemas"
+msgstr "Şemaların listesi"
+
+#: sql_help.h:25 sql_help.h:345
+msgid "abort the current transaction"
+msgstr "aktif transcation iptal"
+
+#: sql_help.h:26
+msgid "ABORT [ WORK | TRANSACTION ]"
+msgstr "ABORT [ WORK | TRANSACTION ]"
+
+#: sql_help.h:29
+msgid "change the definition of an aggregate function"
+msgstr "aggregate fonksiyonunun tanımını değiştir"
+
+#: sql_help.h:30
+msgid "ALTER AGGREGATE name ( type ) RENAME TO newname"
+msgstr "ALTER AGGREGATE aggregate_adı (tip) RENAME TO yeni_ad"
+
+#: sql_help.h:33
+msgid "change the definition of a conversion"
+msgstr "conversion tanımını değiştir"
+
+#: sql_help.h:34
+msgid "ALTER CONVERSION name RENAME TO newname"
+msgstr "ALTER CONVERSION conversion_adı RENAME TO yeni_ad"
+
+#: sql_help.h:37
+msgid "change a database"
+msgstr "veritabanını değiştir"
+
+#: sql_help.h:38
+msgid ""
+"ALTER DATABASE name SET parameter { TO | = } { value | DEFAULT }\n"
+"ALTER DATABASE name RESET parameter\n"
+"\n"
+"ALTER DATABASE name RENAME TO newname"
+msgstr ""
+"ALTER DATABASE name SET parameter { TO | = } { value | DEFAULT }\n"
+"ALTER DATABASE name RESET parameter\n"
+"\n"
+"ALTER DATABASE name RENAME TO yeni_ad"
+
+#: sql_help.h:41
+msgid "change the definition of a domain"
+msgstr "domain tanımını değiştir"
+
+#: sql_help.h:42
+msgid ""
+"ALTER DOMAIN name\n"
+"    { SET DEFAULT expression | DROP DEFAULT }\n"
+"ALTER DOMAIN name\n"
+"    { SET | DROP } NOT NULL\n"
+"ALTER DOMAIN name\n"
+"    ADD domain_constraint\n"
+"ALTER DOMAIN name\n"
+"    DROP CONSTRAINT constraint_name [ RESTRICT | CASCADE ]\n"
+"ALTER DOMAIN name\n"
+"    OWNER TO new_owner"
+msgstr ""
+"ALTER DOMAIN name\n"
+"    { SET DEFAULT expression | DROP DEFAULT }\n"
+"ALTER DOMAIN name\n"
+"    { SET | DROP } NOT NULL\n"
+"ALTER DOMAIN name\n"
+"    ADD domain_constraint\n"
+"ALTER DOMAIN name\n"
+"    DROP CONSTRAINT constraint_name [ RESTRICT | CASCADE ]\n"
+"ALTER DOMAIN name\n"
+"    OWNER TO new_owner"
+
+#: sql_help.h:45
+msgid "change the definition of a function"
+msgstr "fonksiyon tanımını değiştir"
+
+#: sql_help.h:46
+msgid "ALTER FUNCTION name ( [ type [, ...] ] ) RENAME TO newname"
+msgstr "ALTER FUNCTION fonksiyon_adı ( [ type [, ...] ] ) RENAME TO yeni_ad"
+
+#: sql_help.h:49
+msgid "change a user group"
+msgstr "Kullanıcı grubu değiştir"
+
+#: sql_help.h:50
+msgid ""
+"ALTER GROUP groupname ADD USER username [, ... ]\n"
+"ALTER GROUP groupname DROP USER username [, ... ]\n"
+"\n"
+"ALTER GROUP groupname RENAME TO newname"
+msgstr ""
+"ALTER GROUP groupname ADD USER kullanıcı_adı [, ... ]\n"
+"ALTER GROUP groupname DROP USER kullanıcı_adı [, ... ]\n"
+"\n"
+"ALTER GROUP groupname RENAME TO yeni_ad"
+
+#: sql_help.h:53
+msgid "change the definition of a procedural language"
+msgstr "yordamsal dilinin tanımını değiştir"
+
+#: sql_help.h:54
+msgid "ALTER LANGUAGE name RENAME TO newname"
+msgstr "ALTER LANGUAGE name RENAME TO yeni_ad"
+
+#: sql_help.h:57
+msgid "change the definition of an operator class"
+msgstr "operator class tanımını değiştir"
+
+#: sql_help.h:58
+msgid "ALTER OPERATOR CLASS name USING index_method RENAME TO newname"
+msgstr "ALTER OPERATOR CLASS ad USING index_method RENAME TO yeni_ad"
+
+#: sql_help.h:61
+msgid "change the definition of a schema"
+msgstr "şema tanımını değiştir"
+
+#: sql_help.h:62
+msgid "ALTER SCHEMA name RENAME TO newname"
+msgstr "ALTER SCHEMA name RENAME TO yeni_ad"
+
+#: sql_help.h:65
+msgid "alter the definition of a sequence generator"
+msgstr "sequence üreticinin tanımını değiştir"
+
+#: sql_help.h:66
+msgid ""
+"ALTER SEQUENCE name [ INCREMENT [ BY ] increment ]\n"
+"    [ MINVALUE minvalue | NO MINVALUE ] [ MAXVALUE maxvalue | NO MAXVALUE ]\n"
+"    [ RESTART [ WITH ] start ] [ CACHE cache ] [ [ NO ] CYCLE ]"
+msgstr ""
+"ALTER SEQUENCE name [ INCREMENT [ BY ] increment ]\n"
+"    [ MINVALUE minvalue | NO MINVALUE ] [ MAXVALUE maxvalue | NO MAXVALUE ]\n"
+"    [ RESTART [ WITH ] start ] [ CACHE cache ] [ [ NO ] CYCLE ]"
+
+#: sql_help.h:69
+msgid "change the definition of a table"
+msgstr "tablonun tanımını değiştir"
+
+#: sql_help.h:70
+msgid ""
+"ALTER TABLE [ ONLY ] name [ * ]\n"
+"    ADD [ COLUMN ] column type [ column_constraint [ ... ] ]\n"
+"ALTER TABLE [ ONLY ] name [ * ]\n"
+"    DROP [ COLUMN ] column [ RESTRICT | CASCADE ]\n"
+"ALTER TABLE [ ONLY ] name [ * ]\n"
+"    ALTER [ COLUMN ] column { SET DEFAULT expression | DROP DEFAULT }\n"
+"ALTER TABLE [ ONLY ] name [ * ]\n"
+"    ALTER [ COLUMN ] column { SET | DROP } NOT NULL\n"
+"ALTER TABLE [ ONLY ] name [ * ]\n"
+"    ALTER [ COLUMN ] column SET STATISTICS integer\n"
+"ALTER TABLE [ ONLY ] name [ * ]\n"
+"    ALTER [ COLUMN ] column SET STORAGE { PLAIN | EXTERNAL | EXTENDED | "
+"MAIN }\n"
+"ALTER TABLE [ ONLY ] name [ * ]\n"
+"    SET WITHOUT OIDS\n"
+"ALTER TABLE [ ONLY ] name [ * ]\n"
+"    RENAME [ COLUMN ] column TO new_column\n"
+"ALTER TABLE name\n"
+"    RENAME TO new_name\n"
+"ALTER TABLE [ ONLY ] name [ * ]\n"
+"    ADD table_constraint\n"
+"ALTER TABLE [ ONLY ] name [ * ]\n"
+"    DROP CONSTRAINT constraint_name [ RESTRICT | CASCADE ]\n"
+"ALTER TABLE name\n"
+"    OWNER TO new_owner\n"
+"ALTER TABLE name\n"
+"    CLUSTER ON index_name"
+msgstr ""
+"ALTER TABLE [ ONLY ] name [ * ]\n"
+"    ADD [ COLUMN ] column type [ column_constraint [ ... ] ]\n"
+"ALTER TABLE [ ONLY ] name [ * ]\n"
+"    DROP [ COLUMN ] column [ RESTRICT | CASCADE ]\n"
+"ALTER TABLE [ ONLY ] name [ * ]\n"
+"    ALTER [ COLUMN ] column { SET DEFAULT expression | DROP DEFAULT }\n"
+"ALTER TABLE [ ONLY ] name [ * ]\n"
+"    ALTER [ COLUMN ] column { SET | DROP } NOT NULL\n"
+"ALTER TABLE [ ONLY ] name [ * ]\n"
+"    ALTER [ COLUMN ] column SET STATISTICS integer\n"
+"ALTER TABLE [ ONLY ] name [ * ]\n"
+"    ALTER [ COLUMN ] column SET STORAGE { PLAIN | EXTERNAL | EXTENDED | "
+"MAIN }\n"
+"ALTER TABLE [ ONLY ] name [ * ]\n"
+"    SET WITHOUT OIDS\n"
+"ALTER TABLE [ ONLY ] name [ * ]\n"
+"    RENAME [ COLUMN ] column TO new_column\n"
+"ALTER TABLE name\n"
+"    RENAME TO new_name\n"
+"ALTER TABLE [ ONLY ] name [ * ]\n"
+"    ADD table_constraint\n"
+"ALTER TABLE [ ONLY ] name [ * ]\n"
+"    DROP CONSTRAINT constraint_name [ RESTRICT | CASCADE ]\n"
+"ALTER TABLE name\n"
+"    OWNER TO new_owner\n"
+"ALTER TABLE name\n"
+"    CLUSTER ON index_name"
+
+#: sql_help.h:73
+msgid "change the definition of a trigger"
+msgstr "trigger tanımını değiştir"
+
+#: sql_help.h:74
+msgid "ALTER TRIGGER name ON table RENAME TO newname"
+msgstr "ALTER TRIGGER name ON table RENAME TO yeni_ad"
+
+#: sql_help.h:77
+msgid "change a database user account"
+msgstr "kullanıcı hesabı tanımını değiştir"
+
+#: sql_help.h:78
+msgid ""
+"ALTER USER name [ [ WITH ] option [ ... ] ]\n"
+"\n"
+"where option can be:\n"
+"\n"
+"    [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'password' \n"
+"    | CREATEDB | NOCREATEDB\n"
+"    | CREATEUSER | NOCREATEUSER \n"
+"    | VALID UNTIL 'abstime'\n"
+"\n"
+"ALTER USER name RENAME TO newname\n"
+"\n"
+"ALTER USER name SET parameter { TO | = } { value | DEFAULT }\n"
+"ALTER USER name RESET parameter"
+msgstr ""
+"ALTER USER name [ [ WITH ] seçenek [ ... ] ]\n"
+"\n"
+"seçenek aşağıdakilerden birisi olabilir:\n"
+"\n"
+"    [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'şifre' \n"
+"    | CREATEDB | NOCREATEDB\n"
+"    | CREATEUSER | NOCREATEUSER \n"
+"    | VALID UNTIL 'abstime'\n"
+"\n"
+"ALTER USER name RENAME TO yeni_ad\n"
+"\n"
+"ALTER USER name SET parameter { TO | = } { value | DEFAULT }\n"
+"ALTER USER name RESET parameter"
+
+#: sql_help.h:81
+msgid "collect statistics about a database"
+msgstr "database hakkında istatistiklerini topla"
+
+#: sql_help.h:82
+msgid "ANALYZE [ VERBOSE ] [ table [ (column [, ...] ) ] ]"
+msgstr "ANALYZE [ VERBOSE ] [ table [ (column [, ...] ) ] ]"
+
+#: sql_help.h:85 sql_help.h:377
+msgid "start a transaction block"
+msgstr "transaction block'u başlat"
+
+#: sql_help.h:86
+msgid "BEGIN [ WORK | TRANSACTION ]"
+msgstr "BEGIN [ WORK | TRANSACTION ]"
+
+#: sql_help.h:89
+msgid "force a transaction log checkpoint"
+msgstr "transaction checkpoint'i gerçekleştir"
+
+#: sql_help.h:90
+msgid "CHECKPOINT"
+msgstr "CHECKPOINT"
+
+#: sql_help.h:93
+msgid "close a cursor"
+msgstr "cursor'u kapat"
+
+#: sql_help.h:94
+msgid "CLOSE name"
+msgstr "CLOSE name"
+
+#: sql_help.h:97
+msgid "cluster a table according to an index"
+msgstr "indekse dayanarak tabloyu cluster'e dönüştür"
+
+#: sql_help.h:98
+msgid ""
+"CLUSTER indexname ON tablename\n"
+"CLUSTER tablename\n"
+"CLUSTER"
+msgstr ""
+"CLUSTER indexname ON tablename\n"
+"CLUSTER tablename\n"
+"CLUSTER"
+
+#: sql_help.h:101
+msgid "define or change the comment of an object"
+msgstr "obje yorumunu tanımla veya değiştir"
+
+#: sql_help.h:102
+msgid ""
+"COMMENT ON\n"
+"{\n"
+"  TABLE object_name |\n"
+"  COLUMN table_name.column_name |\n"
+"  AGGREGATE agg_name (agg_type) |\n"
+"  CONSTRAINT constraint_name ON table_name |\n"
+"  DATABASE object_name |\n"
+"  DOMAIN object_name |\n"
+"  FUNCTION func_name (arg1_type, arg2_type, ...) |\n"
+"  INDEX object_name |\n"
+"  OPERATOR op (leftoperand_type, rightoperand_type) |\n"
+"  RULE rule_name ON table_name |\n"
+"  SCHEMA object_name |\n"
+"  SEQUENCE object_name |\n"
+"  TRIGGER trigger_name ON table_name |\n"
+"  TYPE object_name |\n"
+"  VIEW object_name\n"
+"} IS 'text'"
+msgstr ""
+"COMMENT ON\n"
+"{\n"
+"  TABLE object_name |\n"
+"  COLUMN table_name.column_name |\n"
+"  AGGREGATE agg_name (agg_type) |\n"
+"  CONSTRAINT constraint_name ON table_name |\n"
+"  DATABASE object_name |\n"
+"  DOMAIN object_name |\n"
+"  FUNCTION func_name (arg1_type, arg2_type, ...) |\n"
+"  INDEX object_name |\n"
+"  OPERATOR op (leftoperand_type, rightoperand_type) |\n"
+"  RULE rule_name ON table_name |\n"
+"  SCHEMA object_name |\n"
+"  SEQUENCE object_name |\n"
+"  TRIGGER trigger_name ON table_name |\n"
+"  TYPE object_name |\n"
+"  VIEW object_name\n"
+"} IS 'text'"
+
+#: sql_help.h:105 sql_help.h:285
+msgid "commit the current transaction"
+msgstr "geçerli transaction'u commit et"
+
+#: sql_help.h:106
+msgid "COMMIT [ WORK | TRANSACTION ]"
+msgstr "COMMIT [ WORK | TRANSACTION ]"
+
+#: sql_help.h:109
+msgid "copy data between a file and a table"
+msgstr "dosya ile veritabanı tablosu arasında veriyi transfer et"
+
+#: sql_help.h:110
+msgid ""
+"COPY tablename [ ( column [, ...] ) ]\n"
+"    FROM { 'filename' | STDIN }\n"
+"    [ [ WITH ] \n"
+"          [ BINARY ] \n"
+"          [ OIDS ]\n"
+"          [ DELIMITER [ AS ] 'delimiter' ]\n"
+"          [ NULL [ AS ] 'null string' ] ]\n"
+"\n"
+"COPY tablename [ ( column [, ...] ) ]\n"
+"    TO { 'filename' | STDOUT }\n"
+"    [ [ WITH ] \n"
+"          [ BINARY ]\n"
+"          [ OIDS ]\n"
+"          [ DELIMITER [ AS ] 'delimiter' ]\n"
+"          [ NULL [ AS ] 'null string' ] ]"
+msgstr ""
+"COPY tablename [ ( column [, ...] ) ]\n"
+"    FROM { 'filename' | STDIN }\n"
+"    [ [ WITH ] \n"
+"          [ BINARY ] \n"
+"          [ OIDS ]\n"
+"          [ DELIMITER [ AS ] 'delimiter' ]\n"
+"          [ NULL [ AS ] 'null string' ] ]\n"
+"\n"
+"COPY tablename [ ( column [, ...] ) ]\n"
+"    TO { 'filename' | STDOUT }\n"
+"    [ [ WITH ] \n"
+"          [ BINARY ]\n"
+"          [ OIDS ]\n"
+"          [ DELIMITER [ AS ] 'delimiter' ]\n"
+"          [ NULL [ AS ] 'null string' ] ]"
+
+#: sql_help.h:113
+msgid "define a new aggregate function"
+msgstr "yeni aggregate fonksiyonunu tanımla"
+
+#: sql_help.h:114
+msgid ""
+"CREATE AGGREGATE name (\n"
+"    BASETYPE = input_data_type,\n"
+"    SFUNC = sfunc,\n"
+"    STYPE = state_data_type\n"
+"    [ , FINALFUNC = ffunc ]\n"
+"    [ , INITCOND = initial_condition ]\n"
+")"
+msgstr ""
+"CREATE AGGREGATE name (\n"
+"    BASETYPE = input_data_type,\n"
+"    SFUNC = sfunc,\n"
+"    STYPE = state_data_type\n"
+"    [ , FINALFUNC = ffunc ]\n"
+"    [ , INITCOND = initial_condition ]\n"
+")"
+
+#: sql_help.h:117
+msgid "define a new cast"
+msgstr "yeni cast tanımla"
+
+#: sql_help.h:118
+msgid ""
+"CREATE CAST (sourcetype AS targettype)\n"
+"    WITH FUNCTION funcname (argtype)\n"
+"    [ AS ASSIGNMENT | AS IMPLICIT ]\n"
+"\n"
+"CREATE CAST (sourcetype AS targettype)\n"
+"    WITHOUT FUNCTION\n"
+"    [ AS ASSIGNMENT | AS IMPLICIT ]"
+msgstr ""
+"CREATE CAST (sourcetype AS targettype)\n"
+"    WITH FUNCTION funcname (argtype)\n"
+"    [ AS ASSIGNMENT | AS IMPLICIT ]\n"
+"\n"
+"CREATE CAST (sourcetype AS targettype)\n"
+"    WITHOUT FUNCTION\n"
+"    [ AS ASSIGNMENT | AS IMPLICIT ]"
+
+#: sql_help.h:121
+msgid "define a new constraint trigger"
+msgstr "yeni constraint trigger tanımla"
+
+#: sql_help.h:122
+msgid ""
+"CREATE CONSTRAINT TRIGGER name\n"
+"    AFTER events ON\n"
+"    tablename constraint attributes\n"
+"    FOR EACH ROW EXECUTE PROCEDURE funcname ( args )"
+msgstr ""
+"CREATE CONSTRAINT TRIGGER name\n"
+"    AFTER events ON\n"
+"    tablename constraint attributes\n"
+"    FOR EACH ROW EXECUTE PROCEDURE funcname ( args )"
+
+#: sql_help.h:125
+msgid "define a new conversion"
+msgstr "yeni conversion tanımla"
+
+#: sql_help.h:126
+msgid ""
+"CREATE [DEFAULT] CONVERSION name\n"
+"    FOR source_encoding TO dest_encoding FROM funcname"
+msgstr ""
+"CREATE [DEFAULT] CONVERSION name\n"
+"    FOR source_encoding TO dest_encoding FROM funcname"
+
+#: sql_help.h:129
+msgid "create a new database"
+msgstr "yeni veritabanı oluştur"
+
+#: sql_help.h:130
+msgid ""
+"CREATE DATABASE name\n"
+"    [ [ WITH ] [ OWNER [=] dbowner ]\n"
+"           [ LOCATION [=] 'dbpath' ]\n"
+"           [ TEMPLATE [=] template ]\n"
+"           [ ENCODING [=] encoding ] ]"
+msgstr ""
+"CREATE DATABASE name\n"
+"    [ [ WITH ] [ OWNER [=] dbowner ]\n"
+"           [ LOCATION [=] 'dbpath' ]\n"
+"           [ TEMPLATE [=] template ]\n"
+"           [ ENCODING [=] encoding ] ]"
+
+#: sql_help.h:133
+msgid "define a new domain"
+msgstr "yeni domaın tanımla"
+
+#: sql_help.h:134
+msgid ""
+"CREATE DOMAIN name [AS] data_type\n"
+"    [ DEFAULT expression ]\n"
+"    [ constraint [ ... ] ]\n"
+"\n"
+"where constraint is:\n"
+"\n"
+"[ CONSTRAINT constraint_name ]\n"
+"{ NOT NULL | NULL | CHECK (expression) }"
+msgstr ""
+"CREATE DOMAIN name [AS] data_type\n"
+"    [ DEFAULT expression ]\n"
+"    [ constraint [ ... ] ]\n"
+"\n"
+"constraint aşağıdakilerden birisi olabilir::\n"
+"\n"
+"[ CONSTRAINT constraint_name ]\n"
+"{ NOT NULL | NULL | CHECK (expression) }"
+
+#: sql_help.h:137
+msgid "define a new function"
+msgstr "yeni fonksiyonu tanımla"
+
+#: sql_help.h:138
+msgid ""
+"CREATE [ OR REPLACE ] FUNCTION name ( [ argtype [, ...] ] )\n"
+"    RETURNS rettype\n"
+"  { LANGUAGE langname\n"
+"    | IMMUTABLE | STABLE | VOLATILE\n"
+"    | CALLED ON NULL INPUT | RETURNS NULL ON NULL INPUT | STRICT\n"
+"    | [EXTERNAL] SECURITY INVOKER | [EXTERNAL] SECURITY DEFINER\n"
+"    | AS 'definition'\n"
+"    | AS 'obj_file', 'link_symbol'\n"
+"  } ...\n"
+"    [ WITH ( attribute [, ...] ) ]"
+msgstr ""
+"CREATE [ OR REPLACE ] FUNCTION name ( [ argtype [, ...] ] )\n"
+"    RETURNS rettype\n"
+"  { LANGUAGE langname\n"
+"    | IMMUTABLE | STABLE | VOLATILE\n"
+"    | CALLED ON NULL INPUT | RETURNS NULL ON NULL INPUT | STRICT\n"
+"    | [EXTERNAL] SECURITY INVOKER | [EXTERNAL] SECURITY DEFINER\n"
+"    | AS 'definition'\n"
+"    | AS 'obj_file', 'link_symbol'\n"
+"  } ...\n"
+"    [ WITH ( attribute [, ...] ) ]"
+
+#: sql_help.h:141
+msgid "define a new user group"
+msgstr "yeni kullanıcı grubunu tanımla"
+
+#: sql_help.h:142
+msgid ""
+"CREATE GROUP name [ [ WITH ] option [ ... ] ]\n"
+"\n"
+"where option can be:\n"
+"\n"
+"     SYSID gid\n"
+"   | USER  username [, ...]"
+msgstr ""
+"CREATE GROUP name [ [ WITH ] seçenek [ ... ] ]\n"
+"\n"
+"seçenek aşağıdakilerden birisi olabilir:\n"
+"\n"
+"     SYSID gid\n"
+"   | USER  kullanıcı_adı [, ...]"
+
+#: sql_help.h:145
+msgid "define a new index"
+msgstr "yeni indeks tanımla"
+
+#: sql_help.h:146
+msgid ""
+"CREATE [ UNIQUE ] INDEX name ON table [ USING method ]\n"
+"    ( { column | ( expression ) } [ opclass ] [, ...] )\n"
+"    [ WHERE predicate ]"
+msgstr ""
+"CREATE [ UNIQUE ] INDEX name ON table [ USING method ]\n"
+"    ( { column | ( expression ) } [ opclass ] [, ...] )\n"
+"    [ WHERE predicate ]"
+
+#: sql_help.h:149
+msgid "define a new procedural language"
+msgstr "yeni yordamsal dil tanımla"
+
+#: sql_help.h:150
+msgid ""
+"CREATE [ TRUSTED ] [ PROCEDURAL ] LANGUAGE name\n"
+"    HANDLER call_handler [ VALIDATOR valfunction ]"
+msgstr ""
+"CREATE [ TRUSTED ] [ PROCEDURAL ] LANGUAGE name\n"
+"    HANDLER call_handler [ VALIDATOR valfunction ]"
+
+#: sql_help.h:153
+msgid "define a new operator class"
+msgstr "yeni operator class tanımla"
+
+#: sql_help.h:154
+msgid ""
+"CREATE OPERATOR CLASS name [ DEFAULT ] FOR TYPE data_type USING index_method "
+"AS\n"
+"  {  OPERATOR strategy_number operator_name [ ( op_type, op_type ) ] "
+"[ RECHECK ]\n"
+"   | FUNCTION support_number funcname ( argument_type [, ...] )\n"
+"   | STORAGE storage_type\n"
+"  } [, ... ]"
+msgstr ""
+"CREATE OPERATOR CLASS name [ DEFAULT ] FOR TYPE data_type USING index_method "
+"AS\n"
+"  {  OPERATOR strategy_number operator_name [ ( op_type, op_type ) ] "
+"[ RECHECK ]\n"
+"   | FUNCTION support_number funcname ( argument_type [, ...] )\n"
+"   | STORAGE storage_type\n"
+"  } [, ... ]"
+
+#: sql_help.h:157
+msgid "define a new operator"
+msgstr "yeni operator tanımla"
+
+#: sql_help.h:158
+msgid ""
+"CREATE OPERATOR name (\n"
+"    PROCEDURE = funcname\n"
+"    [, LEFTARG = lefttype ] [, RIGHTARG = righttype ]\n"
+"    [, COMMUTATOR = com_op ] [, NEGATOR = neg_op ]\n"
+"    [, RESTRICT = res_proc ] [, JOIN = join_proc ]\n"
+"    [, HASHES ] [, MERGES ]\n"
+"    [, SORT1 = left_sort_op ] [, SORT2 = right_sort_op ]\n"
+"    [, LTCMP = less_than_op ] [, GTCMP = greater_than_op ]\n"
+")"
+msgstr ""
+"CREATE OPERATOR name (\n"
+"    PROCEDURE = funcname\n"
+"    [, LEFTARG = lefttype ] [, RIGHTARG = righttype ]\n"
+"    [, COMMUTATOR = com_op ] [, NEGATOR = neg_op ]\n"
+"    [, RESTRICT = res_proc ] [, JOIN = join_proc ]\n"
+"    [, HASHES ] [, MERGES ]\n"
+"    [, SORT1 = left_sort_op ] [, SORT2 = right_sort_op ]\n"
+"    [, LTCMP = less_than_op ] [, GTCMP = greater_than_op ]\n"
+")"
+
+#: sql_help.h:161
+msgid "define a new rewrite rule"
+msgstr "yeni rewriter rule tanımla"
+
+#: sql_help.h:162
+msgid ""
+"CREATE [ OR REPLACE ] RULE name AS ON event\n"
+"    TO table [ WHERE condition ]\n"
+"    DO [ INSTEAD ] { NOTHING | command | ( command ; command ... ) }"
+msgstr ""
+"CREATE [ OR REPLACE ] RULE name AS ON event\n"
+"    TO table [ WHERE condition ]\n"
+"    DO [ INSTEAD ] { NOTHING | command | ( command ; command ... ) }"
+
+#: sql_help.h:165
+msgid "define a new schema"
+msgstr "yeni şema tanımla"
+
+#: sql_help.h:166
+msgid ""
+"CREATE SCHEMA schemaname [ AUTHORIZATION username ] [ schema_element "
+"[ ... ] ]\n"
+"CREATE SCHEMA AUTHORIZATION username [ schema_element [ ... ] ]"
+msgstr ""
+"CREATE SCHEMA schemaname [ AUTHORIZATION username ] [ schema_element "
+"[ ... ] ]\n"
+"CREATE SCHEMA AUTHORIZATION username [ schema_element [ ... ] ]"
+
+#: sql_help.h:169
+msgid "define a new sequence generator"
+msgstr "yeni sequence generator tanımla"
+
+#: sql_help.h:170
+msgid ""
+"CREATE [ TEMPORARY | TEMP ] SEQUENCE name [ INCREMENT [ BY ] increment ]\n"
+"    [ MINVALUE minvalue | NO MINVALUE ] [ MAXVALUE maxvalue | NO MAXVALUE ]\n"
+"    [ START [ WITH ] start ] [ CACHE cache ] [ [ NO ] CYCLE ]"
+msgstr ""
+"CREATE [ TEMPORARY | TEMP ] SEQUENCE name [ INCREMENT [ BY ] increment ]\n"
+"    [ MINVALUE minvalue | NO MINVALUE ] [ MAXVALUE maxvalue | NO MAXVALUE ]\n"
+"    [ START [ WITH ] start ] [ CACHE cache ] [ [ NO ] CYCLE ]"
+
+#: sql_help.h:173
+msgid "define a new table"
+msgstr "yeni tablo tanımla"
+
+#: sql_help.h:174
+msgid ""
+"CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE table_name (\n"
+"  { column_name data_type [ DEFAULT default_expr ] [ column_constraint "
+"[ ... ] ]\n"
+"    | table_constraint\n"
+"    | LIKE parent_table [ { INCLUDING | EXCLUDING } DEFAULTS ] }  [, ... ]\n"
+")\n"
+"[ INHERITS ( parent_table [, ... ] ) ]\n"
+"[ WITH OIDS | WITHOUT OIDS ]\n"
+"[ ON COMMIT { PRESERVE ROWS | DELETE ROWS | DROP } ]\n"
+"\n"
+"where column_constraint is:\n"
+"\n"
+"[ CONSTRAINT constraint_name ]\n"
+"{ NOT NULL | NULL | UNIQUE | PRIMARY KEY |\n"
+"  CHECK (expression) |\n"
+"  REFERENCES reftable [ ( refcolumn ) ] [ MATCH FULL | MATCH PARTIAL | MATCH "
+"SIMPLE ]\n"
+"    [ ON DELETE action ] [ ON UPDATE action ] }\n"
+"[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY "
+"IMMEDIATE ]\n"
+"\n"
+"and table_constraint is:\n"
+"\n"
+"[ CONSTRAINT constraint_name ]\n"
+"{ UNIQUE ( column_name [, ... ] ) |\n"
+"  PRIMARY KEY ( column_name [, ... ] ) |\n"
+"  CHECK ( expression ) |\n"
+"  FOREIGN KEY ( column_name [, ... ] ) REFERENCES reftable [ ( refcolumn "
+"[, ... ] ) ]\n"
+"    [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ] [ ON DELETE action ] [ ON "
+"UPDATE action ] }\n"
+"[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]"
+msgstr ""
+"CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE table_name (\n"
+"  { column_name data_type [ DEFAULT default_expr ] [ column_constraint "
+"[ ... ] ]\n"
+"    | table_constraint\n"
+"    | LIKE parent_table [ { INCLUDING | EXCLUDING } DEFAULTS ] }  [, ... ]\n"
+")\n"
+"[ INHERITS ( parent_table [, ... ] ) ]\n"
+"[ WITH OIDS | WITHOUT OIDS ]\n"
+"[ ON COMMIT { PRESERVE ROWS | DELETE ROWS | DROP } ]\n"
+"\n"
+"where column_constraint is:\n"
+"\n"
+"[ CONSTRAINT constraint_name ]\n"
+"{ NOT NULL | NULL | UNIQUE | PRIMARY KEY |\n"
+"  CHECK (expression) |\n"
+"  REFERENCES reftable [ ( refcolumn ) ] [ MATCH FULL | MATCH PARTIAL | MATCH "
+"SIMPLE ]\n"
+"    [ ON DELETE action ] [ ON UPDATE action ] }\n"
+"[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY "
+"IMMEDIATE ]\n"
+"\n"
+"and table_constraint is:\n"
+"\n"
+"[ CONSTRAINT constraint_name ]\n"
+"{ UNIQUE ( column_name [, ... ] ) |\n"
+"  PRIMARY KEY ( column_name [, ... ] ) |\n"
+"  CHECK ( expression ) |\n"
+"  FOREIGN KEY ( column_name [, ... ] ) REFERENCES reftable [ ( refcolumn "
+"[, ... ] ) ]\n"
+"    [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ] [ ON DELETE action ] [ ON "
+"UPDATE action ] }\n"
+"[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]"
+
+#: sql_help.h:177 sql_help.h:353
+msgid "create a new table from the results of a query"
+msgstr "sorgu sonuçlarından yeni tablo yarat"
+
+#: sql_help.h:178
+msgid ""
+"CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE table_name "
+"[ (column_name [, ...] ) ]\n"
+"    AS query"
+msgstr ""
+"CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE tablo_adı "
+"[ (kolon_adı [, ...] ) ]\n"
+"    AS sorgu"
+
+#: sql_help.h:181
+msgid "define a new trigger"
+msgstr "yeni trigger tanımla"
+
+#: sql_help.h:182
+msgid ""
+"CREATE TRIGGER name { BEFORE | AFTER } { event [ OR ... ] }\n"
+"    ON table [ FOR [ EACH ] { ROW | STATEMENT } ]\n"
+"    EXECUTE PROCEDURE funcname ( arguments )"
+msgstr ""
+"CREATE TRIGGER name { BEFORE | AFTER } { event [ OR ... ] }\n"
+"    ON table [ FOR [ EACH ] { ROW | STATEMENT } ]\n"
+"    EXECUTE PROCEDURE funcname ( arguments )"
+
+#: sql_help.h:185
+msgid "define a new data type"
+msgstr "yeni veri tipi tanımla"
+
+#: sql_help.h:186
+msgid ""
+"CREATE TYPE name AS\n"
+"    ( attribute_name data_type [, ... ] )\n"
+"\n"
+"CREATE TYPE name (\n"
+"    INPUT = input_function,\n"
+"    OUTPUT = output_function\n"
+"    [ , RECEIVE = receive_function ]\n"
+"    [ , SEND = send_function ]\n"
+"    [ , INTERNALLENGTH = { internallength | VARIABLE } ]\n"
+"    [ , PASSEDBYVALUE ]\n"
+"    [ , ALIGNMENT = alignment ]\n"
+"    [ , STORAGE = storage ]\n"
+"    [ , DEFAULT = default ]\n"
+"    [ , ELEMENT = element ]\n"
+"    [ , DELIMITER = delimiter ]\n"
+")"
+msgstr ""
+"CREATE TYPE name AS\n"
+"    ( attribute_name data_type [, ... ] )\n"
+"\n"
+"CREATE TYPE name (\n"
+"    INPUT = input_function,\n"
+"    OUTPUT = output_function\n"
+"    [ , RECEIVE = receive_function ]\n"
+"    [ , SEND = send_function ]\n"
+"    [ , INTERNALLENGTH = { internallength | VARIABLE } ]\n"
+"    [ , PASSEDBYVALUE ]\n"
+"    [ , ALIGNMENT = alignment ]\n"
+"    [ , STORAGE = storage ]\n"
+"    [ , DEFAULT = default ]\n"
+"    [ , ELEMENT = element ]\n"
+"    [ , DELIMITER = delimiter ]\n"
+")"
+
+#: sql_help.h:189
+msgid "define a new database user account"
+msgstr "yeni kullanıcı hesabı tanımla"
+
+#: sql_help.h:190
+msgid ""
+"CREATE USER name [ [ WITH ] option [ ... ] ]\n"
+"\n"
+"where option can be:\n"
+"    \n"
+"      SYSID uid \n"
+"    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'password'\n"
+"    | CREATEDB | NOCREATEDB\n"
+"    | CREATEUSER | NOCREATEUSER\n"
+"    | IN GROUP groupname [, ...]\n"
+"    | VALID UNTIL 'abstime'"
+msgstr ""
+"CREATE USER name [ [ WITH ] seçenek [ ... ] ]\n"
+"\n"
+"seçenek aşağıdakilerden birisi olabilir:\n"
+"    \n"
+"      SYSID uid \n"
+"    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'şifre'\n"
+"    | CREATEDB | NOCREATEDB\n"
+"    | CREATEUSER | NOCREATEUSER\n"
+"    | IN GROUP groupname [, ...]\n"
+"    | VALID UNTIL 'abstime'"
+
+#: sql_help.h:193
+msgid "define a new view"
+msgstr "yeni vew tanımla"
+
+#: sql_help.h:194
+msgid "CREATE [ OR REPLACE ] VIEW name [ ( column_name [, ...] ) ] AS query"
+msgstr "CREATE [ OR REPLACE ] VIEW name [ ( column_name [, ...] ) ] AS query"
+
+#: sql_help.h:197
+msgid "deallocate a prepared statement"
+msgstr "deallocate a prepared statement"
+
+#: sql_help.h:198
+msgid "DEALLOCATE [ PREPARE ] plan_name"
+msgstr "DEALLOCATE [ PREPARE ] plan_name"
+
+#: sql_help.h:201
+msgid "define a cursor"
+msgstr "cursor tanımla"
+
+#: sql_help.h:202
+msgid ""
+"DECLARE name [ BINARY ] [ INSENSITIVE ] [ [ NO ] SCROLL ]\n"
+"    CURSOR [ { WITH | WITHOUT } HOLD ] FOR query\n"
+"    [ FOR { READ ONLY | UPDATE [ OF column [, ...] ] } ]"
+msgstr ""
+"DECLARE name [ BINARY ] [ INSENSITIVE ] [ [ NO ] SCROLL ]\n"
+"    CURSOR [ { WITH | WITHOUT } HOLD ] FOR query\n"
+"    [ FOR { READ ONLY | UPDATE [ OF column [, ...] ] } ]"
+
+#: sql_help.h:205
+msgid "delete rows of a table"
+msgstr "tablodan satırları sil"
+
+#: sql_help.h:206
+msgid "DELETE FROM [ ONLY ] table [ WHERE condition ]"
+msgstr "DELETE FROM [ ONLY ] table [ WHERE condition ]"
+
+#: sql_help.h:209
+msgid "remove an aggregate function"
+msgstr "aggregate function'u kaldır"
+
+#: sql_help.h:210
+msgid "DROP AGGREGATE name ( type ) [ CASCADE | RESTRICT ]"
+msgstr "DROP AGGREGATE name ( type ) [ CASCADE | RESTRICT ]"
+
+#: sql_help.h:213
+msgid "remove a cast"
+msgstr "cast kaldır"
+
+#: sql_help.h:214
+msgid "DROP CAST (sourcetype AS targettype) [ CASCADE | RESTRICT ]"
+msgstr "DROP CAST (sourcetype AS targettype) [ CASCADE | RESTRICT ]"
+
+#: sql_help.h:217
+msgid "remove a conversion"
+msgstr "conversion kaldır"
+
+#: sql_help.h:218
+msgid "DROP CONVERSION name [ CASCADE | RESTRICT ]"
+msgstr "DROP CONVERSION name [ CASCADE | RESTRICT ]"
+
+#: sql_help.h:221
+msgid "remove a database"
+msgstr "veritabanını kaldır"
+
+#: sql_help.h:222
+msgid "DROP DATABASE name"
+msgstr "DROP DATABASE veritabanı_adı"
+
+#: sql_help.h:225
+msgid "remove a domain"
+msgstr "domain kaldır"
+
+#: sql_help.h:226
+msgid "DROP DOMAIN name [, ...]  [ CASCADE | RESTRICT ]"
+msgstr "DROP DOMAIN domain_adı [, ...]  [ CASCADE | RESTRICT ]"
+
+#: sql_help.h:229
+msgid "remove a function"
+msgstr "function kaldır"
+
+#: sql_help.h:230
+msgid "DROP FUNCTION name ( [ type [, ...] ] ) [ CASCADE | RESTRICT ]"
+msgstr "DROP FUNCTION fonksiyon_adı ( [ type [, ...] ] ) [ CASCADE | RESTRICT ]"
+
+#: sql_help.h:233
+msgid "remove a user group"
+msgstr "kullanıcı grubu kaldır"
+
+#: sql_help.h:234
+msgid "DROP GROUP name"
+msgstr "DROP GROUP grup_adı"
+
+#: sql_help.h:237
+msgid "remove an index"
+msgstr "indeks kaldır"
+
+#: sql_help.h:238
+msgid "DROP INDEX name [, ...] [ CASCADE | RESTRICT ]"
+msgstr "DROP INDEX index_adı [, ...] [ CASCADE | RESTRICT ]"
+
+#: sql_help.h:241
+msgid "remove a procedural language"
+msgstr "yordamsal dili kaldır"
+
+#: sql_help.h:242
+msgid "DROP [ PROCEDURAL ] LANGUAGE name [ CASCADE | RESTRICT ]"
+msgstr "DROP [ PROCEDURAL ] LANGUAGE dil_adı [ CASCADE | RESTRICT ]"
+
+#: sql_help.h:245
+msgid "remove an operator class"
+msgstr "operator class kaldır"
+
+#: sql_help.h:246
+msgid "DROP OPERATOR CLASS name USING index_method [ CASCADE | RESTRICT ]"
+msgstr "DROP OPERATOR CLASS ad USING index_method [ CASCADE | RESTRICT ]"
+
+#: sql_help.h:249
+msgid "remove an operator"
+msgstr "opeartor kaldır"
+
+#: sql_help.h:250
+msgid ""
+"DROP OPERATOR name ( lefttype | NONE , righttype | NONE ) [ CASCADE | "
+"RESTRICT ]"
+msgstr ""
+"DROP OPERATOR name ( lefttype | NONE , righttype | NONE ) [ CASCADE | "
+"RESTRICT ]"
+
+#: sql_help.h:253
+msgid "remove a rewrite rule"
+msgstr "rewrite rule kaldır"
+
+#: sql_help.h:254
+msgid "DROP RULE name ON relation [ CASCADE | RESTRICT ]"
+msgstr "DROP RULE rule_adı ON relation [ CASCADE | RESTRICT ]"
+
+#: sql_help.h:257
+msgid "remove a schema"
+msgstr "şema kaldır"
+
+#: sql_help.h:258
+msgid "DROP SCHEMA name [, ...] [ CASCADE | RESTRICT ]"
+msgstr "DROP SCHEMA şema_adı [, ...] [ CASCADE | RESTRICT ]"
+
+#: sql_help.h:261
+msgid "remove a sequence"
+msgstr "sequence kaldır"
+
+#: sql_help.h:262
+msgid "DROP SEQUENCE name [, ...] [ CASCADE | RESTRICT ]"
+msgstr "DROP SEQUENCE sequence_adı [, ...] [ CASCADE | RESTRICT ]"
+
+#: sql_help.h:265
+msgid "remove a table"
+msgstr "tablo kaldır"
+
+#: sql_help.h:266
+msgid "DROP TABLE name [, ...] [ CASCADE | RESTRICT ]"
+msgstr "DROP TABLE tablo_adı [, ...] [ CASCADE | RESTRICT ]"
+
+#: sql_help.h:269
+msgid "remove a trigger"
+msgstr "trigger kaldır"
+
+#: sql_help.h:270
+msgid "DROP TRIGGER name ON table [ CASCADE | RESTRICT ]"
+msgstr "DROP TRIGGER trigger_adı ON tablo_adı [ CASCADE | RESTRICT ]"
+
+#: sql_help.h:273
+msgid "remove a data type"
+msgstr "veri tipi kaldır"
+
+#: sql_help.h:274
+msgid "DROP TYPE name [, ...] [ CASCADE | RESTRICT ]"
+msgstr "DROP TYPE tip_adı [, ...] [ CASCADE | RESTRICT ]"
+
+#: sql_help.h:277
+msgid "remove a database user account"
+msgstr "kullanıcı hesabı kaldır"
+
+#: sql_help.h:278
+msgid "DROP USER name"
+msgstr "DROP USER kullanıcı_adı"
+
+#: sql_help.h:281
+msgid "remove a view"
+msgstr "view kaldır"
+
+#: sql_help.h:282
+msgid "DROP VIEW name [, ...] [ CASCADE | RESTRICT ]"
+msgstr "DROP VIEW view_adı [, ...] [ CASCADE | RESTRICT ]"
+
+#: sql_help.h:286
+msgid "END [ WORK | TRANSACTION ]"
+msgstr "END [ WORK | TRANSACTION ]"
+
+#: sql_help.h:289
+msgid "execute a prepared statement"
+msgstr "hazırlanmış komutu çalıştır"
+
+#: sql_help.h:290
+msgid "EXECUTE plan_name [ (parameter [, ...] ) ]"
+msgstr "EXECUTE plan_name [ (parameter [, ...] ) ]"
+
+#: sql_help.h:293
+msgid "show the execution plan of a statement"
+msgstr "sorgunun execution planını göster"
+
+#: sql_help.h:294
+msgid "EXPLAIN [ ANALYZE ] [ VERBOSE ] statement"
+msgstr "EXPLAIN [ ANALYZE ] [ VERBOSE ] ifade"
+
+#: sql_help.h:297
+msgid "retrieve rows from a query using a cursor"
+msgstr "cursor kullanarak sorgunun sonucundan satırları getir"
+
+#: sql_help.h:298
+msgid ""
+"FETCH [ direction { FROM | IN } ] cursorname\n"
+"\n"
+"where direction can be empty or one of:\n"
+"\n"
+"    NEXT\n"
+"    PRIOR\n"
+"    FIRST\n"
+"    LAST\n"
+"    ABSOLUTE count\n"
+"    RELATIVE count\n"
+"    count\n"
+"    ALL\n"
+"    FORWARD\n"
+"    FORWARD count\n"
+"    FORWARD ALL\n"
+"    BACKWARD\n"
+"    BACKWARD count\n"
+"    BACKWARD ALL"
+msgstr ""
+"FETCH [ direction { FROM | IN } ] cursorname\n"
+"\n"
+"direction boş ya da aşağıdakilerden birisi olabilir:\n"
+"\n"
+"    NEXT\n"
+"    PRIOR\n"
+"    FIRST\n"
+"    LAST\n"
+"    ABSOLUTE count\n"
+"    RELATIVE count\n"
+"    count\n"
+"    ALL\n"
+"    FORWARD\n"
+"    FORWARD count\n"
+"    FORWARD ALL\n"
+"    BACKWARD\n"
+"    BACKWARD count\n"
+"    BACKWARD ALL"
+
+#: sql_help.h:301
+msgid "define access privileges"
+msgstr "erişim haklarını tanımla"
+
+#: sql_help.h:302
+msgid ""
+"GRANT { { SELECT | INSERT | UPDATE | DELETE | RULE | REFERENCES | TRIGGER }\n"
+"    [,...] | ALL [ PRIVILEGES ] }\n"
+"    ON [ TABLE ] tablename [, ...]\n"
+"    TO { username | GROUP groupname | PUBLIC } [, ...] [ WITH GRANT "
+"OPTION ]\n"
+"\n"
+"GRANT { { CREATE | TEMPORARY | TEMP } [,...] | ALL [ PRIVILEGES ] }\n"
+"    ON DATABASE dbname [, ...]\n"
+"    TO { username | GROUP groupname | PUBLIC } [, ...] [ WITH GRANT "
+"OPTION ]\n"
+"\n"
+"GRANT { EXECUTE | ALL [ PRIVILEGES ] }\n"
+"    ON FUNCTION funcname ([type, ...]) [, ...]\n"
+"    TO { username | GROUP groupname | PUBLIC } [, ...] [ WITH GRANT "
+"OPTION ]\n"
+"\n"
+"GRANT { USAGE | ALL [ PRIVILEGES ] }\n"
+"    ON LANGUAGE langname [, ...]\n"
+"    TO { username | GROUP groupname | PUBLIC } [, ...] [ WITH GRANT "
+"OPTION ]\n"
+"\n"
+"GRANT { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }\n"
+"    ON SCHEMA schemaname [, ...]\n"
+"    TO { username | GROUP groupname | PUBLIC } [, ...] [ WITH GRANT OPTION ]"
+msgstr ""
+"GRANT { { SELECT | INSERT | UPDATE | DELETE | RULE | REFERENCES | TRIGGER }\n"
+"    [,...] | ALL [ PRIVILEGES ] }\n"
+"    ON [ TABLE ] tablename [, ...]\n"
+"    TO { username | GROUP groupname | PUBLIC } [, ...] [ WITH GRANT "
+"OPTION ]\n"
+"\n"
+"GRANT { { CREATE | TEMPORARY | TEMP } [,...] | ALL [ PRIVILEGES ] }\n"
+"    ON DATABASE dbname [, ...]\n"
+"    TO { username | GROUP groupname | PUBLIC } [, ...] [ WITH GRANT "
+"OPTION ]\n"
+"\n"
+"GRANT { EXECUTE | ALL [ PRIVILEGES ] }\n"
+"    ON FUNCTION funcname ([type, ...]) [, ...]\n"
+"    TO { username | GROUP groupname | PUBLIC } [, ...] [ WITH GRANT "
+"OPTION ]\n"
+"\n"
+"GRANT { USAGE | ALL [ PRIVILEGES ] }\n"
+"    ON LANGUAGE langname [, ...]\n"
+"    TO { username | GROUP groupname | PUBLIC } [, ...] [ WITH GRANT "
+"OPTION ]\n"
+"\n"
+"GRANT { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }\n"
+"    ON SCHEMA schemaname [, ...]\n"
+"    TO { username | GROUP groupname | PUBLIC } [, ...] [ WITH GRANT OPTION ]"
+
+#: sql_help.h:305
+msgid "create new rows in a table"
+msgstr "tabloda yeni satırları ekliyor"
+
+#: sql_help.h:306
+msgid ""
+"INSERT INTO table [ ( column [, ...] ) ]\n"
+"    { DEFAULT VALUES | VALUES ( { expression | DEFAULT } [, ...] ) | query }"
+msgstr ""
+"INSERT INTO table [ ( column [, ...] ) ]\n"
+"    { DEFAULT VALUES | VALUES ( { expression | DEFAULT } [, ...] ) | query }"
+
+#: sql_help.h:309
+msgid "listen for a notification"
+msgstr "bildiri bekleme durumuna geç"
+
+#: sql_help.h:310
+msgid "LISTEN name"
+msgstr "LISTEN ad"
+
+#: sql_help.h:313
+msgid "load or reload a shared library file"
+msgstr "shared library yükle"
+
+#: sql_help.h:314
+msgid "LOAD 'filename'"
+msgstr "LOAD 'dosya adı'"
+
+#: sql_help.h:317
+msgid "lock a table"
+msgstr "tabloyu kilitle"
+
+#: sql_help.h:318
+msgid ""
+"LOCK [ TABLE ] name [, ...] [ IN lockmode MODE ]\n"
+"\n"
+"where lockmode is one of:\n"
+"\n"
+"    ACCESS SHARE | ROW SHARE | ROW EXCLUSIVE | SHARE UPDATE EXCLUSIVE\n"
+"    | SHARE | SHARE ROW EXCLUSIVE | EXCLUSIVE | ACCESS EXCLUSIVE"
+msgstr ""
+"LOCK [ TABLE ] name [, ...] [ IN lockmode MODE ]\n"
+"\n"
+"kilitleme_modu aşağıdakilerden birisi olabilir:\n"
+"\n"
+"    ACCESS SHARE | ROW SHARE | ROW EXCLUSIVE | SHARE UPDATE EXCLUSIVE\n"
+"    | SHARE | SHARE ROW EXCLUSIVE | EXCLUSIVE | ACCESS EXCLUSIVE"
+
+#: sql_help.h:321
+msgid "position a cursor"
+msgstr "cursor'u yereştir"
+
+#: sql_help.h:322
+msgid "MOVE [ direction { FROM | IN } ] cursorname"
+msgstr "MOVE [ direction { FROM | IN } ] cursor_adı"
+
+#: sql_help.h:325
+msgid "generate a notification"
+msgstr "bildiri üret"
+
+#: sql_help.h:326
+msgid "NOTIFY name"
+msgstr "NOTIFY ad"
+
+#: sql_help.h:329
+msgid "prepare a statement for execution"
+msgstr "çalıştırmak için sorguyu hazırla"
+
+#: sql_help.h:330
+msgid "PREPARE plan_name [ (datatype [, ...] ) ] AS statement"
+msgstr "PREPARE plan_adı [ (datatype [, ...] ) ] AS ifade"
+
+#: sql_help.h:333
+msgid "rebuild indexes"
+msgstr "indeksleri yeniden oluştur"
+
+#: sql_help.h:334
+msgid "REINDEX { DATABASE | TABLE | INDEX } name [ FORCE ]"
+msgstr "REINDEX { DATABASE | TABLE | INDEX } adıFORCE ]"
+
+#: sql_help.h:337
+msgid "restore the value of a run-time parameter to the default value"
+msgstr "çalıştırma zamanı parametresini öntanımlı değerine getir"
+
+#: sql_help.h:338
+msgid ""
+"RESET name\n"
+"RESET ALL"
+msgstr ""
+"RESET name\n"
+"RESET ALL"
+
+#: sql_help.h:341
+msgid "remove access privileges"
+msgstr "erişim hakkını kaldır"
+
+#: sql_help.h:342
+msgid ""
+"REVOKE [ GRANT OPTION FOR ]\n"
+"    { { SELECT | INSERT | UPDATE | DELETE | RULE | REFERENCES | TRIGGER }\n"
+"    [,...] | ALL [ PRIVILEGES ] }\n"
+"    ON [ TABLE ] tablename [, ...]\n"
+"    FROM { username | GROUP groupname | PUBLIC } [, ...]\n"
+"    [ CASCADE | RESTRICT ]\n"
+"\n"
+"REVOKE [ GRANT OPTION FOR ]\n"
+"    { { CREATE | TEMPORARY | TEMP } [,...] | ALL [ PRIVILEGES ] }\n"
+"    ON DATABASE dbname [, ...]\n"
+"    FROM { username | GROUP groupname | PUBLIC } [, ...]\n"
+"    [ CASCADE | RESTRICT ]\n"
+"\n"
+"REVOKE [ GRANT OPTION FOR ]\n"
+"    { EXECUTE | ALL [ PRIVILEGES ] }\n"
+"    ON FUNCTION funcname ([type, ...]) [, ...]\n"
+"    FROM { username | GROUP groupname | PUBLIC } [, ...]\n"
+"    [ CASCADE | RESTRICT ]\n"
+"\n"
+"REVOKE [ GRANT OPTION FOR ]\n"
+"    { USAGE | ALL [ PRIVILEGES ] }\n"
+"    ON LANGUAGE langname [, ...]\n"
+"    FROM { username | GROUP groupname | PUBLIC } [, ...]\n"
+"    [ CASCADE | RESTRICT ]\n"
+"\n"
+"REVOKE [ GRANT OPTION FOR ]\n"
+"    { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }\n"
+"    ON SCHEMA schemaname [, ...]\n"
+"    FROM { username | GROUP groupname | PUBLIC } [, ...]\n"
+"    [ CASCADE | RESTRICT ]"
+msgstr ""
+"REVOKE [ GRANT OPTION FOR ]\n"
+"    { { SELECT | INSERT | UPDATE | DELETE | RULE | REFERENCES | TRIGGER }\n"
+"    [,...] | ALL [ PRIVILEGES ] }\n"
+"    ON [ TABLE ] tablename [, ...]\n"
+"    FROM { username | GROUP groupname | PUBLIC } [, ...]\n"
+"    [ CASCADE | RESTRICT ]\n"
+"\n"
+"REVOKE [ GRANT OPTION FOR ]\n"
+"    { { CREATE | TEMPORARY | TEMP } [,...] | ALL [ PRIVILEGES ] }\n"
+"    ON DATABASE dbname [, ...]\n"
+"    FROM { username | GROUP groupname | PUBLIC } [, ...]\n"
+"    [ CASCADE | RESTRICT ]\n"
+"\n"
+"REVOKE [ GRANT OPTION FOR ]\n"
+"    { EXECUTE | ALL [ PRIVILEGES ] }\n"
+"    ON FUNCTION funcname ([type, ...]) [, ...]\n"
+"    FROM { username | GROUP groupname | PUBLIC } [, ...]\n"
+"    [ CASCADE | RESTRICT ]\n"
+"\n"
+"REVOKE [ GRANT OPTION FOR ]\n"
+"    { USAGE | ALL [ PRIVILEGES ] }\n"
+"    ON LANGUAGE langname [, ...]\n"
+"    FROM { username | GROUP groupname | PUBLIC } [, ...]\n"
+"    [ CASCADE | RESTRICT ]\n"
+"\n"
+"REVOKE [ GRANT OPTION FOR ]\n"
+"    { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }\n"
+"    ON SCHEMA schemaname [, ...]\n"
+"    FROM { username | GROUP groupname | PUBLIC } [, ...]\n"
+"    [ CASCADE | RESTRICT ]"
+
+#: sql_help.h:346
+msgid "ROLLBACK [ WORK | TRANSACTION ]"
+msgstr "ROLLBACK [ WORK | TRANSACTION ]"
+
+#: sql_help.h:349
+msgid "retrieve rows from a table or view"
+msgstr "tablo veya view'dan satırları getir"
+
+#: sql_help.h:350
+msgid ""
+"SELECT [ ALL | DISTINCT [ ON ( expression [, ...] ) ] ]\n"
+"    * | expression [ AS output_name ] [, ...]\n"
+"    [ FROM from_item [, ...] ]\n"
+"    [ WHERE condition ]\n"
+"    [ GROUP BY expression [, ...] ]\n"
+"    [ HAVING condition [, ...] ]\n"
+"    [ { UNION | INTERSECT | EXCEPT } [ ALL ] select ]\n"
+"    [ ORDER BY expression [ ASC | DESC | USING operator ] [, ...] ]\n"
+"    [ LIMIT { count | ALL } ]\n"
+"    [ OFFSET start ]\n"
+"    [ FOR UPDATE [ OF table_name [, ...] ] ]\n"
+"\n"
+"where from_item can be one of:\n"
+"\n"
+"    [ ONLY ] table_name [ * ] [ [ AS ] alias [ ( column_alias [, ...] ) ] ]\n"
+"    ( select ) [ AS ] alias [ ( column_alias [, ...] ) ]\n"
+"    function_name ( [ argument [, ...] ] ) [ AS ] alias [ ( column_alias "
+"[, ...] | column_definition [, ...] ) ]\n"
+"    function_name ( [ argument [, ...] ] ) AS ( column_definition [, ...] )\n"
+"    from_item [ NATURAL ] join_type from_item [ ON join_condition | USING "
+"( join_column [, ...] ) ]"
+msgstr ""
+"SELECT [ ALL | DISTINCT [ ON ( expression [, ...] ) ] ]\n"
+"    * | expression [ AS output_name ] [, ...]\n"
+"    [ FROM from_item [, ...] ]\n"
+"    [ WHERE condition ]\n"
+"    [ GROUP BY expression [, ...] ]\n"
+"    [ HAVING condition [, ...] ]\n"
+"    [ { UNION | INTERSECT | EXCEPT } [ ALL ] select ]\n"
+"    [ ORDER BY expression [ ASC | DESC | USING operator ] [, ...] ]\n"
+"    [ LIMIT { count | ALL } ]\n"
+"    [ OFFSET start ]\n"
+"    [ FOR UPDATE [ OF table_name [, ...] ] ]\n"
+"\n"
+"from_item aşağıdakilerden birisi olabilir:\n"
+"\n"
+"    [ ONLY ] table_name [ * ] [ [ AS ] alias [ ( column_alias [, ...] ) ] ]\n"
+"    ( select ) [ AS ] alias [ ( column_alias [, ...] ) ]\n"
+"    function_name ( [ argument [, ...] ] ) [ AS ] alias [ ( column_alias "
+"[, ...] | column_definition [, ...] ) ]\n"
+"    function_name ( [ argument [, ...] ] ) AS ( column_definition [, ...] )\n"
+"    from_item [ NATURAL ] join_type from_item [ ON join_condition | USING "
+"( join_column [, ...] ) ]"
+
+#: sql_help.h:354
+msgid ""
+"SELECT [ ALL | DISTINCT [ ON ( expression [, ...] ) ] ]\n"
+"    * | expression [ AS output_name ] [, ...]\n"
+"    INTO [ TEMPORARY | TEMP ] [ TABLE ] new_table\n"
+"    [ FROM from_item [, ...] ]\n"
+"    [ WHERE condition ]\n"
+"    [ GROUP BY expression [, ...] ]\n"
+"    [ HAVING condition [, ...] ]\n"
+"    [ { UNION | INTERSECT | EXCEPT } [ ALL ] select ]\n"
+"    [ ORDER BY expression [ ASC | DESC | USING operator ] [, ...] ]\n"
+"    [ LIMIT { count | ALL } ]\n"
+"    [ OFFSET start ]\n"
+"    [ FOR UPDATE [ OF tablename [, ...] ] ]"
+msgstr ""
+"SELECT [ ALL | DISTINCT [ ON ( expression [, ...] ) ] ]\n"
+"    * | expression [ AS output_name ] [, ...]\n"
+"    INTO [ TEMPORARY | TEMP ] [ TABLE ] new_table\n"
+"    [ FROM from_item [, ...] ]\n"
+"    [ WHERE condition ]\n"
+"    [ GROUP BY expression [, ...] ]\n"
+"    [ HAVING condition [, ...] ]\n"
+"    [ { UNION | INTERSECT | EXCEPT } [ ALL ] select ]\n"
+"    [ ORDER BY expression [ ASC | DESC | USING operator ] [, ...] ]\n"
+"    [ LIMIT { count | ALL } ]\n"
+"    [ OFFSET start ]\n"
+"    [ FOR UPDATE [ OF tablename [, ...] ] ]"
+
+#: sql_help.h:357
+msgid "change a run-time parameter"
+msgstr "çalıştırma zamanı parametresini değiştir"
+
+#: sql_help.h:358
+msgid ""
+"SET [ SESSION | LOCAL ] name { TO | = } { value | 'value' | DEFAULT }\n"
+"SET [ SESSION | LOCAL ] TIME ZONE { timezone | LOCAL | DEFAULT }"
+msgstr ""
+"SET [ SESSION | LOCAL ] name { TO | = } { value | 'value' | DEFAULT }\n"
+"SET [ SESSION | LOCAL ] TIME ZONE { timezone | LOCAL | DEFAULT }"
+
+#: sql_help.h:361
+msgid "set the constraint mode of the current transaction"
+msgstr "geçerli transaction için constraint biçimini belirle"
+
+#: sql_help.h:362
+msgid "SET CONSTRAINTS { ALL | name [, ...] } { DEFERRED | IMMEDIATE }"
+msgstr "SET CONSTRAINTS { ALL | name [, ...] } { DEFERRED | IMMEDIATE }"
+
+#: sql_help.h:365
+msgid ""
+"set the session user identifier and the current user identifier of the "
+"current session"
+msgstr "ilk oturum ve geçerli oturum için kullanıcı tanımla"
+
+#: sql_help.h:366
+msgid ""
+"SET [ SESSION | LOCAL ] SESSION AUTHORIZATION username\n"
+"SET [ SESSION | LOCAL ] SESSION AUTHORIZATION DEFAULT\n"
+"RESET SESSION AUTHORIZATION"
+msgstr ""
+"SET [ SESSION | LOCAL ] SESSION AUTHORIZATION username\n"
+"SET [ SESSION | LOCAL ] SESSION AUTHORIZATION DEFAULT\n"
+"RESET SESSION AUTHORIZATION"
+
+#: sql_help.h:369
+msgid "set the characteristics of the current transaction"
+msgstr "geçerli transcation için ayarlarını tanımla"
+
+#: sql_help.h:370
+msgid ""
+"SET TRANSACTION\n"
+"    [ ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE } ] [ READ WRITE | "
+"READ ONLY ]\n"
+"SET SESSION CHARACTERISTICS AS TRANSACTION\n"
+"    [ ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE } ] [ READ WRITE | "
+"READ ONLY ]"
+msgstr ""
+"SET TRANSACTION\n"
+"    [ ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE } ] [ READ WRITE | "
+"READ ONLY ]\n"
+"SET SESSION CHARACTERISTICS AS TRANSACTION\n"
+"    [ ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE } ] [ READ WRITE | "
+"READ ONLY ]"
+
+#: sql_help.h:373
+msgid "show the value of a run-time parameter"
+msgstr "çalıştırma zaman parametrnın değerini göster"
+
+#: sql_help.h:374
+msgid ""
+"SHOW name\n"
+"SHOW ALL"
+msgstr ""
+"SHOW name\n"
+"SHOW ALL"
+
+#: sql_help.h:378
+msgid ""
+"START TRANSACTION [ ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE } ] "
+"[ READ WRITE | READ ONLY ]"
+msgstr ""
+"START TRANSACTION [ ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE } ] "
+"[ READ WRITE | READ ONLY ]"
+
+#: sql_help.h:381
+msgid "empty a table"
+msgstr "tabloyu boşalt"
+
+#: sql_help.h:382
+msgid "TRUNCATE [ TABLE ] name"
+msgstr "TRUNCATE [ TABLE ] ad"
+
+#: sql_help.h:385
+msgid "stop listening for a notification"
+msgstr "bildiri beklemeyi durdur"
+
+#: sql_help.h:386
+msgid "UNLISTEN { name | * }"
+msgstr "UNLISTEN { name | * }"
+
+#: sql_help.h:389
+msgid "update rows of a table"
+msgstr "tablodaki satırla güncelle"
+
+#: sql_help.h:390
+msgid ""
+"UPDATE [ ONLY ] table SET column = { expression | DEFAULT } [, ...]\n"
+"    [ FROM fromlist ]\n"
+"    [ WHERE condition ]"
+msgstr ""
+"UPDATE [ ONLY ] table SET column = { expression | DEFAULT } [, ...]\n"
+"    [ FROM fromlist ]\n"
+"    [ WHERE condition ]"
+
+#: sql_help.h:393
+msgid "garbage-collect and optionally analyze a database"
+msgstr "veritabanı garbage-collect ve (tercihe başlı) analyze"
+
+#: sql_help.h:394
+msgid ""
+"VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ table ]\n"
+"VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ table [ (column "
+"[, ...] ) ] ]"
+msgstr ""
+"VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ table ]\n"
+"VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ table [ (column "
+"[, ...] ) ] ]"
+
