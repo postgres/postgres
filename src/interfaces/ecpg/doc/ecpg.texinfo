@@ -1,17 +1,17 @@
 \input texinfo   @c -*-texinfo-*-
 @c %**start of header
 @setfilename ecpg.info
-@settitle Ecpg - Embedded SQL in C for Postgres95
+@settitle Ecpg - Embedded SQL in C for PostgreSQL
 @setchapternewpage odd
 @c %**end of header
 
 @ifinfo
-This file documents an embedded SQL in C package for Postgres 95.
+This file documents an embedded SQL in C package for PostgreSQL.
 
 Copyright 1996 Linus Tolke
 
 Permission is granted to copy and use in the same way as you are allowed
-to copy and use the rest of the Postgres 95.
+to copy and use the rest of the PostgreSQL.
 @end ifinfo
 
 @c  This title page illustrates only one of the
@@ -19,32 +19,29 @@ to copy and use the rest of the Postgres 95.
 
 @titlepage
 @title ECPG
-@subtitle Embedded SQL in C for Postgres95
+@subtitle Embedded SQL in C for PostgreSQL
 @author Linus Tolke
 
 @c  The following two commands
 @c  start the copyright page.
 @page
 @vskip 0pt plus 1filll
-Copyright @copyright{} 1996 Linus Tolke
+Copyright @copyright{} 1996-1997 Linus Tolke, 1998 Michael Meskes
 
 Published by Linus Tolke
 
 Permission is granted to copy and use in the same way as you are allowed
-to copy and use the rest of the Postgres 95.
+to copy and use the rest of the PostgreSQL.
 @end titlepage
 
 @node Top, Why embedded SQL, (dir), (dir)
 @comment  node-name,  next,  previous,  up
 
 @ifinfo
-Ecpg is an embedded sql preprocessor for C and library for Postgres95.
+Ecpg is an embedded sql preprocessor for C and library for PostgresSQL
 
-It is written by Linus Tolke <linus@@epact.se>
+It is written by Linus Tolke <linus@@epact.se> and Michael Meskes <meskes@@debian.org>.
 
-This texinfo page and the code is all the documentation you get. There
-will not be any separate manual page, installation description or
-buglist.
 @end ifinfo
 
 @menu
@@ -86,7 +83,7 @@ work. Most embedded sql preprocessors I have seen and heard of makes
 extensions so it is difficult to obtain portability even between them
 anyway. I have not read the standard but I hope that my implementation
 does not deviate to much and that it would be possible to port programs
-with embedded sql written for other DBMS:s to Postgres95 and thus
+with embedded sql written for other DBMS:s to PostgreSQL and thus
 promoting the spirit of free software.
 
 
@@ -135,9 +132,7 @@ This chapter describes how to use the ECPG tool.
 @cindex preprocessor
 @cindex @code{ecpg}
 The preprocessor is called @code{ecpg}. After installation it resides in
-the postgres @code{bin} directory. It accepts two arguments like
-@code{iname=filename} and @code{oname=filename}. Both arguments must be
-present or an error will occur.
+the postgres @code{bin} directory. 
 
 @node Library, Error handling, Preprocessor, How to use it
 @section Library
@@ -145,26 +140,26 @@ present or an error will occur.
 @cindex library functions
 @cindex @code{libecpg.a}
 @cindex @code{-lecpg}
-The library is called @code{libecpg.a}. The library used the pq library
-for the communication to the postgres server so you will have to link
-your program with @code{-lecpg -lpq}.
+The library is called @code{libecpg.a} resp.  @code{libecpg.so}. The library
+used the pq library for the communication to the postgres server so you will
+have to link your program with @code{-lecpg -lpq}.
 
 The library has some methods that are "hidden" but that could prove very
 useful sometime.
 
 @table @asis
-@item @code{ECPGdebug(int)}
-@cindex @code{ECPGdebug(int)}
+@item @code{ECPGdebug(int, FILE *stream)}
+@cindex @code{ECPGdebug(int, FILE *stream)}
 @cindex debuglogging
-If this is called, with a non-zero argument, then debuglogging is turned
-on. Debuglogging is done on @code{stderr}. Most SQL statement logs its
+If this is called, with the first argument non-zero, then debuglogging is turned
+on. Debuglogging is done on @code{stream}. Most SQL statement logs its
 arguments and result.
 
 The most important one (@code{ECPGdo}) that is called on all SQL
 statements except @code{EXEC SQL COMMIT}, @code{EXEC SQL ROLLBACK}, 
 @code{EXEC SQL CONNECT} logs both its expanded string, i.e. the string
 with all the input variables inserted, and the result from the
-postgres95 server. This can be very useful when searching for errors
+PostgreSQL server. This can be very useful when searching for errors
 in your SQL statements.
 
 @item @code{ECPGstatus()}
@@ -222,11 +217,11 @@ are running incompatible versions of the preprocessor and the library.
 The preprocessor has goofed up and generated some incorrect code.
 
 @item -1, Error starting transaction line %d.
-Postgres95 signalled to us that we cannot open the connection.
+PostgreSQL signalled to us that we cannot open the connection.
 
 @item -1, Postgres error: %s line %d.
-Some postgres95 error. The message contains the error message from the
-postgres95 backend.
+Some PostgreSQL error. The message contains the error message from the
+PostgreSQL backend.
 
 @item 1, Data not found line %d.
 This is a "normal" error that tells you that what you are quering cannot
@@ -238,53 +233,53 @@ you made probably was not unique.
 
 @item -1, Not correctly formatted int type: %s line %d.
 This means that the host variable is of an @code{int} type and the field
-in the postgres95 database is of another type and contains a value that
+in the PostgreSQL database is of another type and contains a value that
 cannot be interpreted as an @code{int}. The library uses @code{strtol}
 for this conversion.
 
 @item -1, Not correctly formatted unsigned type: %s line %d.
 This means that the host variable is of an @code{unsigned int} type and
-the field in the postgres95 database is of another type and contains a
+the field in the PostgreSQL database is of another type and contains a
 value that cannot be interpreted as an @code{unsigned int}. The library
 uses @code{strtoul} for this conversion.
 
 @item -1, Not correctly formatted floating point type: %s line %d.
 This means that the host variable is of an @code{float} type and
-the field in the postgres95 database is of another type and contains a
+the field in the PostgreSQL database is of another type and contains a
 value that cannot be interpreted as an @code{float}. The library
 uses @code{strtod} for this conversion.
 
 @item -1, Too few arguments line %d.
-This means that the postgres95 has returned more records than we have
+This means that PostgreSQL has returned more records than we have
 matching variables. Perhaps you have forgotten a couple of the host
 variables in the @code{INTO :var1,:var2}-list.
 
 @item -1, Too many arguments line %d.
-This means that th postgres95 has returned fewer records than we have
+This means that PostgreSQL has returned fewer records than we have
 host variables. Perhaps you have to many host variables in the 
 @code{INTO :var1,:var2}-list.
 
 @item -1, Empty query line %d.
-Postgres95 returned PGRES_EMPTY_QUERY.
+PostgreSQL returned PGRES_EMPTY_QUERY.
 
 @item -1, Error: %s line %d.
-This means that Postgres95 returned on of the errors
+This means that PostgreSQL returned on of the errors
 PGRES_NONFATAL_ERROR, PGRES_FATAL_ERROR or PGRES_BAD_RESPONSE. Which one
 and why is explained in the message.
 
 @item -1, Postgres error line %d.
-Postgres95 returns something that the library does not know how to
-handle. This is probably because the version of postgres95 does not
+PostgreSQL returns something that the library does not know how to
+handle. This is probably because the version of PostgreSQL does not
 match the version of the ecpg library.
 
 @item -1, Error committing line %d.
 Error during @code{COMMIT}. @code{EXEC SQL COMMIT} is translated to an
-@code{end} operation in postgres95 and that is the operation that could
+@code{end} operation in PostgreSQL and that is the operation that could
 not be performed.
 
 @item -1, Error rolling back line %d.
 Error during @code{ROLLBACK}. @code{EXEC SQL ROLLBACK} is translated to
-an @code{abort} operation in postgres95 and that is the operation that
+an @code{abort} operation in PostgreSQL and that is the operation that
 could not be performed.
 
 @item -1, ECPGconnect: could not open database %s.
@@ -328,36 +323,9 @@ actually does port something...
 @chapter Installation
 @cindex installation
 
-Step by step installation (if everything goes ok):
-
-@enumerate
-@item Fetch everything and unpack
-
-If you are reading this documentation you have probably managed this
-step already.
-
-@item @code{./configure --with-postgres=/path/to/postgres}
-
-This is to be done in the ecpg directory, i.e. the directory containing
-the @file{configure} file.
-
-The @file{/path/to/postgres} is the path to the installed postgres. It
-points out the directory where the include, lib and bin directories
-reside. The include directory is used when building the library and all
-three of them become residents for ecpg include files, library and
-binaries.
-
-@item @code{make all}
-
-@item As the postgres user @code{make install}
-
-The postgres user is the owner of the postgres include, lib and bin
-directories. The installation procedure installs its files there
-alongside the postgres files.
-@item Done.
-
-@end enumerate
-
+Since version 0.5 ecpg is distributed together with PostgreSQL. So you
+should get your precompiler, libraries and header files compiled and
+installed on the fly.
 
 @node Index, For the developer, Installation, Top
 @unnumbered Index
@@ -394,12 +362,8 @@ In the alpha version the preprocessor has a lot of flaws:
 @item Preprocessor output
 The variables should be static.
 
-@item The preprocessor interface is strange, to say the least
-It would be better with a consistant unix arguments interface, perhaps
-builtin default filenames so they won't have to be given all the time.
-
 @item Preprocessor cannot do syntax checking on your SQL statements
-Whatever you write is copied more or less exactly to the postgres95 and
+Whatever you write is copied more or less exactly to the PostgreSQL and
 you will not be able to locate your errors until run-time.
 
 @item no restriction to strings only
@@ -464,7 +428,7 @@ than could be realised in a script.
 @comment  node-name,  next,  previous,  up
 @section The preprocessor
 
-First three lines are written to the output. A comment and two include
+First four lines are written to the output. Two comments and two include
 lines necessary for the interface to the library. 
 
 Then the preprocessor works in one pass only reading the input file and
@@ -533,7 +497,7 @@ An open cursor statement looks like:
 @example
 exec sql open blablabla;
 @end example
-and that is ignore and not copied from the output.
+and is ignore and not copied from the output.
 
 @item Commit statement
 @cindex Commit statement

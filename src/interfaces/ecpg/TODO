@@ -2,10 +2,6 @@ This list is still from Linus. MM
 
 The variables should be static.
     
-The preprocessor interface is strange, to say the least It would be better
-with a consistant unix arguments interface, perhaps builtin default
-filenames so they won't have to be given all the time. (Done: MM 2/5/98)
-    
 Preprocessor cannot do syntax checking on your SQL statements Whatever you
 write is copied more or less exactly to the postgres95 and you will not be
 able to locate your errors until run-time.
@@ -48,6 +44,8 @@ could be realised in a script.
 
 Now comes my list (MM):
 
-libecpg should be made a shared library.
+Ecpg should remove variables from its list as soon as they are undefined and
+not rely on cc to report an error.
 
-Makefiles have to able to correctly install and clean.
+Variable definitions containing static/volatile have to be possible.
+
