@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sat May 13 21:27:24 EDT 2000
+Last updated:		Sat May 13 22:32:35 EDT 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -228,7 +228,7 @@ MISC
 * Allow persistent backends [persistent]
 * prevent labels from being output for stored rules (Tom)
 * allow configuration of maximum number of open files
-
+* Remove pg_listener index
 
 SOURCE CODE
 -----------
