@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.61 2000/09/12 21:07:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.62 2000/09/18 20:14:23 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -109,7 +109,8 @@ static void get_from_clause_item(Node *jtnode, Query *query,
 static bool tleIsArrayAssign(TargetEntry *tle);
 static char *quote_identifier(char *ident);
 static char *get_relation_name(Oid relid);
-static char *get_attribute_name(Oid relid, int2 attnum);
+static char *get_relid_attribute_name(Oid relid, AttrNumber attnum);
+static char *get_rte_attribute_name(RangeTblEntry *rte, AttrNumber attnum);
 
 #define only_marker(rte)  ((rte)->inh ? "" : "ONLY ")
 
@@ -445,7 +446,7 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 		 * ----------
 		 */
 		appendStringInfo(&keybuf, "%s",
-					quote_identifier(get_attribute_name(idxrec->indrelid,
+				quote_identifier(get_relid_attribute_name(idxrec->indrelid,
 												idxrec->indkey[keyno])));
 
 		/* ----------
@@ -696,8 +697,8 @@ make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc)
 					 quote_identifier(get_relation_name(ev_class)));
 	if (ev_attr > 0)
 		appendStringInfo(buf, ".%s",
-						 quote_identifier(get_attribute_name(ev_class,
-															 ev_attr)));
+						 quote_identifier(get_relid_attribute_name(ev_class,
+																   ev_attr)));
 
 	/* If the rule has an event qualification, add it */
 	if (ev_qual == NULL)
@@ -908,7 +909,7 @@ get_select_query_def(Query *query, deparse_context *context)
 			char	   *attname;
 
 			rte = get_rte_for_var(var, context);
-			attname = get_attribute_name(rte->relid, var->varattno);
+			attname = get_rte_attribute_name(rte, var->varattno);
 			tell_as = (strcmp(attname, tle->resdom->resname) != 0);
 		}
 
@@ -1164,7 +1165,7 @@ get_rule_expr(Node *node, deparse_context *context)
 									quote_identifier(rte->eref->relname));
 				}
 				appendStringInfo(buf, "%s",
-						  quote_identifier(get_attribute_name(rte->relid,
+						  quote_identifier(get_rte_attribute_name(rte,
 														var->varattno)));
 			}
 			break;
@@ -1340,7 +1341,8 @@ get_rule_expr(Node *node, deparse_context *context)
 				if (!OidIsValid(typrelid))
 					elog(ERROR, "Argument type %s of FieldSelect is not a tuple type",
 						 NameStr(typeStruct->typname));
-				fieldname = get_attribute_name(typrelid, fselect->fieldnum);
+				fieldname = get_relid_attribute_name(typrelid,
+													 fselect->fieldnum);
 				appendStringInfo(buf, ".%s", quote_identifier(fieldname));
 			}
 			break;
@@ -2000,23 +2002,51 @@ get_relation_name(Oid relid)
 
 
 /* ----------
- * get_attribute_name			- Get an attribute name by its
- *					  relations Oid and its attnum
+ * get_relid_attribute_name
+ *		Get an attribute name by its relations Oid and its attnum
+ *
+ * Same as underlying syscache routine get_attname(), except that error
+ * is handled by elog() instead of returning NULL.
  * ----------
  */
 static char *
-get_attribute_name(Oid relid, int2 attnum)
+get_relid_attribute_name(Oid relid, AttrNumber attnum)
 {
-	HeapTuple	atttup;
-	Form_pg_attribute attStruct;
+	char	   *attname;
 
-	atttup = SearchSysCacheTuple(ATTNUM,
-								 ObjectIdGetDatum(relid), (Datum) attnum,
-								 0, 0);
-	if (!HeapTupleIsValid(atttup))
+	attname = get_attname(relid, attnum);
+	if (attname == NULL)
 		elog(ERROR, "cache lookup of attribute %d in relation %u failed",
 			 attnum, relid);
+	return attname;
+}
 
-	attStruct = (Form_pg_attribute) GETSTRUCT(atttup);
-	return pstrdup(NameStr(attStruct->attname));
+/* ----------
+ * get_rte_attribute_name
+ *		Get an attribute name from a RangeTblEntry
+ *
+ * This is unlike get_relid_attribute_name() because we use aliases if
+ * available.
+ * ----------
+ */
+static char *
+get_rte_attribute_name(RangeTblEntry *rte, AttrNumber attnum)
+{
+	/*
+	 * If there is an alias, use it
+	 */
+	if (attnum > 0 && attnum <= length(rte->eref->attrs))
+		return strVal(nth(attnum-1, rte->eref->attrs));
+	/*
+	 * Can get here for a system attribute (which never has an alias),
+	 * or if alias name list is too short (which probably can't happen
+	 * anymore).  Neither of these cases is valid for a subselect RTE.
+	 */
+	if (rte->relid == InvalidOid)
+		elog(ERROR, "Invalid attnum %d for rangetable entry %s",
+			 attnum, rte->eref->relname);
+	/*
+	 * Use the real name of the table's column
+	 */
+	return get_relid_attribute_name(rte->relid, attnum);
 }
