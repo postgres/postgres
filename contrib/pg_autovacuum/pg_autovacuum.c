@@ -811,6 +811,11 @@ get_cmd_args(int argc, char *argv[])
 	args->analyze_scaling_factor = -1;
 	args->debug = AUTOVACUUM_DEBUG;
 	args->daemonize = 0;
+	args->user = 0;
+	args->password = 0;
+	args->host = 0;
+	args->logfile = 0;
+	args->port = 0;
 
 	/*
 	 * Fixme: Should add some sanity checking such as positive integer
