@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuumdb.sgml,v 1.23 2002/08/10 16:57:31 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuumdb.sgml,v 1.24 2002/08/27 03:55:17 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -59,6 +59,14 @@ PostgreSQL documentation
    settings and environment variables available to <application>psql</application>
    and the <application>libpq</application> front-end library do apply.
   </para>
+
+
+  <para>
+  <application>vacuumdb</application> will need to connect several times to the
+  <productname>PostgreSQL</productname> server, asking for the password each
+  time. It will probably be very convenient to have a PGPASSWORDFILE in that case.
+  </para>
+
  </refsect1>
 
 

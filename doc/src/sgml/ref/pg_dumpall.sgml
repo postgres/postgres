@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.30 2002/08/20 02:20:48 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.31 2002/08/27 03:55:17 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -67,89 +67,97 @@ PostgreSQL documentation
    operators should be used to redirect it into a file.
   </para>
 
-  <refsect2>
-   <title>Options</title>
 
-   <para>
-    <application>pg_dumpall</application> accepts the following
-    command line arguments:
+  <para>
+  <application>pg_dumpall</application> will need to connect several times to the
+  <productname>PostgreSQL</productname> server, asking for the password each
+  time. It will probably be very convenient to have a PGPASSWORDFILE in that case.
+  </para>
 
-    <variablelist>
-     <varlistentry>
-      <term>-c, --clean</term>
-      <listitem>
-       <para>
+ </refsect1>
+
+ <refsect1>
+  <title>Options</title>
+
+  <para>
+   <application>pg_dumpall</application> accepts the following
+   command line arguments:
+
+   <variablelist>
+    <varlistentry>
+     <term>-c, --clean</term>
+     <listitem>
+      <para>
 	Include SQL commands to clean (drop) database objects before
 	recreating them.  (This option is fairly useless, since the
 	output script expects to create the databases themselves;
 	they would always be empty upon creation.)
-       </para>
-      </listitem>
-     </varlistentry>
+      </para>
+     </listitem>
+    </varlistentry>
 
-     <varlistentry>
-      <term>-g, --globals-only</term>
-      <listitem>
-       <para>
+    <varlistentry>
+     <term>-g, --globals-only</term>
+     <listitem>
+      <para>
 	Only dump global objects (users and groups), no databases.
-       </para>
-      </listitem>
-     </varlistentry>
+      </para>
+     </listitem>
+    </varlistentry>
 
-     <varlistentry>
-      <term>-h <replaceable>host</replaceable></term>
-      <listitem>
-       <para>
+    <varlistentry>
+     <term>-h <replaceable>host</replaceable></term>
+     <listitem>
+      <para>
 	Specifies the host name of the machine on which the database
 	server is running.  If host begins with a slash, it is used as
 	the directory for the Unix domain socket.  The default is
 	taken from the <envar>PGHOST</envar> environment variable, if
 	set, else a Unix domain socket connection is attempted.
-       </para>
-      </listitem>
-     </varlistentry>
+      </para>
+     </listitem>
+    </varlistentry>
 
-     <varlistentry>
-      <term>-p <replaceable>port</replaceable></term>
-      <listitem>
-       <para>
+    <varlistentry>
+     <term>-p <replaceable>port</replaceable></term>
+     <listitem>
+      <para>
         The port number on which the server is listening.  Defaults to
         the <envar>PGPORT</envar> environment variable, if set, or a
         compiled-in default.
-       </para>
-      </listitem>
-     </varlistentry>
+      </para>
+     </listitem>
+    </varlistentry>
 
-     <varlistentry>
-      <term>-U <replaceable>username</replaceable></term>
-      <listitem>
-       <para>
+    <varlistentry>
+     <term>-U <replaceable>username</replaceable></term>
+     <listitem>
+      <para>
         Connect as the given user.
-       </para>
-      </listitem>
-     </varlistentry>
+      </para>
+     </listitem>
+    </varlistentry>
 
-     <varlistentry>
-      <term>-W</term>
-      <listitem>
-       <para>
+    <varlistentry>
+     <term>-W</term>
+     <listitem>
+      <para>
         Force a password prompt.  This should happen automatically if
         the server requires password authentication.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
 
-   <para>
+  <para>
     Any other command line parameters are passed to the underlying
     <xref linkend="app-pgdump">
     calls.  This is useful to control some aspects of the output
     format, but some options such as <option>-f</option>,
     <option>-F</option>, <option>-t</option>, and <replaceable
     class="parameter">dbname</replaceable> should be avoided.
-   </para>
-  </refsect2>
+  </para>
  </refsect1>
 
 
