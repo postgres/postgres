@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.128 2000/01/17 00:14:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.129 2000/01/18 06:12:03 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -844,7 +844,7 @@ AlterTableStmt:
       | ALTER TABLE relation_name opt_inh_star ADD TableConstraint
         {
                 AlterTableStmt *n = makeNode(AlterTableStmt);
-                n->subtype = 'A';
+                n->subtype = 'C';
                 n->relname = $3;
                 n->inh = $4;
                 n->def = $6;
