@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.11 1998/02/26 04:37:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.12 1998/05/29 13:31:52 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,12 +36,19 @@ NameData   *
 namein(char *s)
 {
 	NameData   *result;
+	int			len;
 
 	if (s == NULL)
 		return (NULL);
 	result = (NameData *) palloc(NAMEDATALEN);
 	/* always keep it null-padded */
 	StrNCpy(result->data, s, NAMEDATALEN);
+	len = strlen(result->data);
+	while (len < NAMEDATALEN)
+	{
+		*(result->data + len) = '\0';
+		len++;
+	}
 	return (result);
 }
 
