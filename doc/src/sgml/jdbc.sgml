@@ -1,384 +1,385 @@
-<Chapter Id="jdbc">
-<Title>JDBC Interface</Title>
+ <chapter id="jdbc">
+  <title>JDBC Interface</title>
 
-<para>
-<note>
-<title>Author</title>
-<para>
-Written by <ulink url="peter@retep.org.uk">Peter T. Mount</ulink>, the
-author of the <acronym>JDBC</acronym> driver.
-</para>
-</note>
-</para>
+  <para>
+   <note>
+    <title>Author</title>
+    <para>
+     Written by <ulink url="peter@retep.org.uk">Peter T. Mount</ulink>, the
+     author of the <acronym>JDBC</acronym> driver.
+    </para>
+   </note>
+  </para>
 
-<para>
-<acronym>JDBC</acronym> is a core <acronym>API</acronym> of Java 1.1 and later.
-It provides a standard set of
-interfaces to <acronym>SQL</acronym>-compliant databases.
-</para>
-<para>
-<application>Postgres</application> provides 
-a type 4 <acronym>JDBC</acronym> Driver. Type 4 indicates that the driver
-is written in Pure Java, and communicates in the database's own network
-protocol. Because of this, the driver is platform independent. Once compiled,
-the driver can be used on any platform.
-</para>
+  <para>
+   <acronym>JDBC</acronym> is a core <acronym>API</acronym> of Java 1.1 and later.
+   It provides a standard set of
+   interfaces to <acronym>SQL</acronym>-compliant databases.
+  </para>
 
-<sect1>
-<title>Building the <acronym>JDBC</acronym> Interface</title>
+  <para>
+   <application>Postgres</application> provides 
+   a <firstterm>type 4</firstterm> <acronym>JDBC</acronym> Driver.
+   Type 4 indicates that the driver
+   is written in Pure Java, and communicates in the database's own network
+   protocol. Because of this, the driver is platform independent. Once compiled,
+   the driver can be used on any platform.
+  </para>
 
-<sect2>
-<title>Compiling the Driver</title>
+  <sect1>
+   <title>Building the <acronym>JDBC</acronym> Interface</title>
 
-<para>
-The driver's source is located in the <filename>src/interfaces/jdbc</filename>
- directory of the
-source tree. To compile simply change directory to that directory, and type:
+   <sect2>
+    <title>Compiling the Driver</title>
 
-<programlisting>
+    <para>
+     The driver's source is located in the <filename>src/interfaces/jdbc</filename>
+     directory of the
+     source tree. To compile simply change directory to that directory, and type:
+
+     <programlisting>
 % make
-</programlisting>
-</para>
+     </programlisting>
+    </para>
 
-<para>
-Upon completion, you will find the archive <filename>postgresql.jar</filename>
- in the current
-directory. This is the <acronym>JDBC</acronym> driver.
+    <para>
+     Upon completion, you will find the archive <filename>postgresql.jar</filename>
+     in the current
+     directory. This is the <acronym>JDBC</acronym> driver.
 
-<note>
-<para>
-You must use <application>make</application>,
-not <application>javac</application>, 
-as the driver uses some dynamic
-loading techniques for performance reasons, 
-and <application>javac</application> cannot cope.
-The <filename>Makefile</filename> will generate the jar archive.
-</para>
-</note>
-</para>
-</sect2>
+     <note>
+      <para>
+       You must use <application>make</application>,
+       not <application>javac</application>, 
+       as the driver uses some dynamic
+       loading techniques for performance reasons, 
+       and <application>javac</application> cannot cope.
+       The <filename>Makefile</filename> will generate the jar archive.
+      </para>
+     </note>
+    </para>
+   </sect2>
 
-<sect2>
-<title>Installing the Driver</title>
+   <sect2>
+    <title>Installing the Driver</title>
 
-<para>
-To use the driver, the jar archive postgresql.jar needs to be included in
-the CLASSPATH.
-</para>
-<para>
-Example:
-</para>
-<para>
-I have an application that uses the <acronym>JDBC</acronym> driver to access a large database
-containing astronomical objects. I have the application and the jdbc driver
-installed in the /usr/local/lib directory, and the java jdk installed in /usr/local/jdk1.1.6.
-</para>
+    <para>
+     To use the driver, the jar archive postgresql.jar needs to be included in
+     the <envar>CLASSPATH</envar>.
+    </para>
 
-<para>
-To run the application, I would use:
-</para>
-<para>
-export CLASSPATH = \
-        /usr/local/lib/finder.jar:/usr/local/lib/postgresql.jar:.
+    <sect3>
+     <title>Example</title>
+
+     <para>
+      I have an application that uses the <acronym>JDBC</acronym> driver to access a large database
+      containing astronomical objects. I have the application and the jdbc driver
+      installed in the /usr/local/lib directory, and the java jdk installed in /usr/local/jdk1.1.6.
+     </para>
+
+     <para>
+      To run the application, I would use:
+
+      <programlisting>
+export CLASSPATH = /usr/local/lib/finder.jar:/usr/local/lib/postgresql.jar:.
 java uk.org.retep.finder.Main
-</para>
-<para>
-Loading the driver is covered later on in this chapter.
-</para>
-</sect2>
-</sect1>
+      </programlisting>
+     </para>
 
-<sect1>
-<title>Preparing the Database for <acronym>JDBC</acronym></title>
+     <para>
+      Loading the driver is covered later on in this chapter.
+     </para>
+    </sect3>
+   </sect2>
+  </sect1>
 
-<para>
-Because Java can only use TCP/IP connections, the <application>Postgres</application> postmaster
-must be running with the -i flag.
-</para>
-<para>
-Also, the <filename>pg_hba.conf</filename> file must be configured. It's located in the PGDATA
-directory. In a default installation, this file permits access only by UNIX
-domain sockets. For the <acronym>JDBC</acronym> driver to connect to the same localhost, you need
-to add something like:
-</para>
-<para>
+  <sect1>
+   <title>Preparing the Database for <acronym>JDBC</acronym></title>
+
+   <para>
+    Because Java can only use TCP/IP connections, the <application>Postgres</application> postmaster
+    must be running with the -i flag.
+   </para>
+
+   <para>
+    Also, the <filename>pg_hba.conf</filename> file must be configured. It's located in the PGDATA
+    directory. In a default installation, this file permits access only by Unix
+    domain sockets. For the <acronym>JDBC</acronym> driver to connect to the same localhost, you need
+    to add something like:
+
+    <programlisting>
 host         all         127.0.0.1     255.255.255.255   password
-</para>
-<para>
-Here access to all databases are possible from the local machine 
-with <acronym>JDBC</acronym>.
-</para>
+    </programlisting>
 
-<para>
-The <acronym>JDBC</acronym> Driver supports trust, ident, 
-password and crypt authentication methods.
-</para>
-</sect1>
+    Here access to all databases are possible from the local machine 
+    with <acronym>JDBC</acronym>.
+   </para>
 
-<sect1>
-<title>Using the Driver</title>
+   <para>
+    The <acronym>JDBC</acronym> Driver supports trust, ident, 
+    password and crypt authentication methods.
+   </para>
+  </sect1>
 
-<para>
-This section is not intended as a complete guide to 
-<acronym>JDBC</acronym> programming, but
-should help to get you started. For more information refer to the standard
-<acronym>JDBC</acronym> <acronym>API</acronym> documentation.
-</para>
-<para>
-Also, take a look at the examples included with the source. The basic
-example is used here.
-</para>
-</sect1>
+  <sect1>
+   <title>Using the Driver</title>
 
-<sect1>
-<title>Importing <acronym>JDBC</acronym></title>
+   <para>
+    This section is not intended as a complete guide to 
+    <acronym>JDBC</acronym> programming, but
+    should help to get you started. For more information refer to the standard
+    <acronym>JDBC</acronym> <acronym>API</acronym> documentation.
+    Also, take a look at the examples included with the source. The basic
+    example is used here.
+   </para>
+  </sect1>
 
-<para>
-Any source that uses <acronym>JDBC</acronym>
-needs to import the java.sql package, using:
+  <sect1>
+   <title>Importing <acronym>JDBC</acronym></title>
 
-<programlisting>
+   <para>
+    Any source that uses <acronym>JDBC</acronym>
+    needs to import the java.sql package, using:
+
+    <programlisting>
 import java.sql.*;
-</programlisting>
+    </programlisting>
 
-<important>
-<para>
-Do not import the postgresql package. If you do, your source will not
-compile, as javac will get confused.
-</para>
-</important>
-</para>
-</sect1>
+    <important>
+     <para>
+      Do not import the postgresql package. If you do, your source will not
+      compile, as javac will get confused.
+     </para>
+    </important>
+   </para>
+  </sect1>
 
-<sect1>
-<title>Loading the Driver</title>
+  <sect1>
+   <title>Loading the Driver</title>
 
-<para>
-Before you can connect to a database, you need to load the driver. There
-are two methods available, and it depends on your code to the best one to use.
-</para>
+   <para>
+    Before you can connect to a database, you need to load the driver. There
+    are two methods available, and it depends on your code to the best one to use.
+   </para>
 
-<para>
-In the first method, your code implicitly loads the driver using the
-Class.forName() method. For <application>Postgres</application>, you would use:
+   <para>
+    In the first method, your code implicitly loads the driver using the
+    <function>Class.forName()</function> method.
+    For <application>Postgres</application>, you would use:
 
-<programlisting>
+    <programlisting>
 Class.forName("postgresql.Driver");
-</programlisting>
+    </programlisting>
 
-This will load the driver, and while loading, the driver will automatically
-register itself with <acronym>JDBC</acronym>.
-</para>
+    This will load the driver, and while loading, the driver will automatically
+    register itself with <acronym>JDBC</acronym>.
+   </para>
 
-<para>
-Note: The <function>forName()</function> method
- can throw a ClassNotFoundException, so you will
-need to catch it if the driver is not available.
-</para>
+   <para>
+    Note: The <function>forName()</function> method
+    can throw a <literal>ClassNotFoundException</literal>, so you will
+    need to catch it if the driver is not available.
+   </para>
 
-<para>
-This is the most common method to use, but restricts your code to use just
-<application>Postgres</application>. 
-If your code may access another database in the future, and you
-don't use our extensions, then the second method is advisable.
-</para>
+   <para>
+    This is the most common method to use, but restricts your code to use just
+    <application>Postgres</application>. 
+    If your code may access another database in the future, and you
+    don't use our extensions, then the second method is advisable.
+   </para>
 
-<para>
-The second method passes the driver as a parameter to the JVM as it starts,
-using the -D argument.
-</para>
-<para>
-Example:
+   <para>
+    The second method passes the driver as a parameter to the JVM as it starts,
+    using the -D argument. Example:
 
-<programlisting>
+    <programlisting>
 % java -Djdbc.drivers=postgresql.Driver example.ImageViewer
-</programlisting>
-</para>
+    </programlisting>
 
-<para>
-In this example, the JVM will attempt to load the driver as part of it's
-initialisation. Once done, the ImageViewer is started.
+    In this example, the JVM will attempt to load the driver as part of it's
+    initialisation. Once done, the ImageViewer is started.
+   </para>
 
-</para>
-<para>
-Now, this method is the better one to use because it allows your code to
-be used with other databases, without recompiling the code. The only thing
-that would also change is the URL, which is covered next.
-</para>
+   <para>
+    Now, this method is the better one to use because it allows your code to
+    be used with other databases, without recompiling the code. The only thing
+    that would also change is the URL, which is covered next.
+   </para>
 
-<para>
-One last thing. When your code then tries to open a Connection, and you get
-a <literal>No driver available</literal> SQLException being thrown,
- this is probably
-caused by the driver not being in the classpath, or the value in the parameter
-not being correct.
-</para>
-</sect1>
+   <para>
+    One last thing. When your code then tries to open a Connection, and you get
+    a <literal>No driver available</literal> SQLException being thrown,
+    this is probably
+    caused by the driver not being in the classpath, or the value in the parameter
+    not being correct.
+   </para>
+  </sect1>
 
-<sect1>
-<title>Connecting to the Database</title>
+  <sect1>
+   <title>Connecting to the Database</title>
 
-<para>
-With <acronym>JDBC</acronym>, a database is represented by a URL 
-(Uniform Resource Locator).
-With <application>Postgres</application>, this takes one of the following
-forms:
+   <para>
+    With <acronym>JDBC</acronym>, a database is represented by a URL 
+    (Uniform Resource Locator).
+    With <application>Postgres</application>, this takes one of the following
+    forms:
 
-<itemizedlist>
-<listitem>
-<para>
-jdbc:postgresql:<replaceable class="parameter">database</replaceable>
-</para>
-</listitem>
+    <itemizedlist>
+     <listitem>
+      <para>
+       jdbc:postgresql:<replaceable class="parameter">database</replaceable>
+      </para>
+     </listitem>
 
-<listitem>
-<para>
-jdbc:postgresql://<replaceable class="parameter">host</replaceable>/<replaceable class="parameter">database</replaceable>
-</para>
-</listitem>
+     <listitem>
+      <para>
+       jdbc:postgresql://<replaceable class="parameter">>hos</replaceable>>/<replaceable class="parameter">database</replaceable>
+      </para>
+     </listitem>
 
-<listitem>
-<para>
-jdbc:postgresql://<replaceable class="parameter">host</replaceable>:<replaceable class="parameter">port</replaceable>/<replaceable class="parameter">database</replaceable>
-</para>
-</listitem>
+     <listitem>
+      <para>
+       jdbc:postgresql://<replaceable class="parameter">>hos</replaceable>><replaceable class="parameter">">po</replaceable>e>/<replaceable class="parameter">database</replaceable>
+      </para>
+     </listitem>
+    </itemizedlist>
 
-</itemizedlist>
+    where:
 
-where:
+    <variablelist>
+     <varlistentry>
+      <term>
+       <replaceable class="parameter">host</replaceable>
+      </term>
+      <listitem>
+       <para>
+	The hostname of the server. Defaults to "localhost".
+       </para>
+      </listitem>
+     </varlistentry>
 
-<variablelist>
-<varlistentry>
-<term>
-<replaceable class="parameter">host</replaceable>
-</term>
-<listitem>
-<para>
-The hostname of the server. Defaults to "localhost".
-</para>
-</listitem>
-</varlistentry>
+     <varlistentry>
+      <term>
+       <replaceable class="parameter">port</replaceable>
+      </term>
+      <listitem>
+       <para>
+	The port number the server is listening on. Defaults to the Postgres
+	standard port number (5432).
+       </para>
+      </listitem>
+     </varlistentry>
 
-<varlistentry>
-<term>
-<replaceable class="parameter">port</replaceable>
-</term>
-<listitem>
-<para>
-The port number the server is listening on. Defaults to the Postgres
-standard port number (5432).
-</para>
-</listitem>
-</varlistentry>
+     <varlistentry>
+      <term>
+       <replaceable class="parameter">database</replaceable>
+      </term>
+      <listitem>
+       <para>
+	The database name.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
 
-<varlistentry>
-<term>
-<replaceable class="parameter">database</replaceable>
-</term>
-<listitem>
-<para>
-The database name.
-</para>
-</listitem>
-</varlistentry>
+   <para>
+    To connect, you need to get a Connection instance from 
+    <acronym>JDBC</acronym>. To do this,
+    you would use the DriverManager.getConnection() method:
 
-</variablelist>
-</para>
-
-<para>
-To connect, you need to get a Connection instance from 
-<acronym>JDBC</acronym>. To do this,
-you would use the DriverManager.getConnection() method:
-</para>
-<para>
+    <programlisting>
 Connection db = DriverManager.getConnection(url,user,pwd);
-</para>
-</sect1>
+    </programlisting>
+   </para>
+  </sect1>
 
-<sect1>
-<title>Issuing a Query and Processing the Result</title>
+  <sect1>
+   <title>Issuing a Query and Processing the Result</title>
 
-<para>
-Any time you want to issue SQL statements to the database, you require a
-Statement instance. Once you have a Statement, you can use the executeQuery()
-method to issue a query. This will return a ResultSet instance, which contains
-the entire result.
-</para>
+   <para>
+    Any time you want to issue SQL statements to the database, you require a
+    Statement instance. Once you have a Statement, you can use the executeQuery()
+    method to issue a query. This will return a ResultSet instance, which contains
+    the entire result.
+   </para>
 
-<sect2>
-<title>Using the Statement Interface</title>
+   <sect2>
+    <title>Using the Statement Interface</title>
 
-<para>
-The following must be considered when using the Statement interface:
+    <para>
+     The following must be considered when using the Statement interface:
 
-<itemizedlist>
-<listitem>
-<para>
-You can use a Statement instance as many times as you want. You could
-create one as soon as you open the connection, and use it for the connections
-lifetime. You have to remember that only one ResultSet can exist per Statement.
-</para>
-</listitem>
+     <itemizedlist>
+      <listitem>
+       <para>
+	You can use a Statement instance as many times as you want. You could
+	create one as soon as you open the connection, and use it for the connections
+	lifetime. You have to remember that only one ResultSet can exist per Statement.
+       </para>
+      </listitem>
 
-<listitem>
-<para>
-If you need to perform a query while processing a ResultSet, you can
-simply create and use another Statement.
-</para>
-</listitem>
-<listitem>
-<para>
-If you are using Threads, and several are using the database, you must
-use a separate Statement for each thread. Refer to the sections covering
-Threads and Servlets later in this document if you are thinking of using them,
-as it covers some important points.
-</para>
-</listitem>
-</itemizedlist>
-</para>
-</sect2>
+      <listitem>
+       <para>
+	If you need to perform a query while processing a ResultSet, you can
+	simply create and use another Statement.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+	If you are using Threads, and several are using the database, you must
+	use a separate Statement for each thread. Refer to the sections covering
+	Threads and Servlets later in this document if you are thinking of using them,
+	as it covers some important points.
+       </para>
+      </listitem>
+     </itemizedlist>
+    </para>
+   </sect2>
 
-<sect2>
-<title>Using the ResultSet Interface</title>
+   <sect2>
+    <title>Using the ResultSet Interface</title>
 
-<para>
-The following must be considered when using the ResultSet interface:
+    <para>
+     The following must be considered when using the ResultSet interface:
 
-<itemizedlist>
-<listitem>
-<para>
-Before reading any values, you must call <function>next()</function>. This returns true if
-there is a result, but more importantly, it prepares the row for processing.
-</para>
-</listitem>
+     <itemizedlist>
+      <listitem>
+       <para>
+	Before reading any values, you must call <function>next()</function>. This returns true if
+	there is a result, but more importantly, it prepares the row for processing.
+       </para>
+      </listitem>
 
-<listitem>
-<para>
-Under the <acronym>JDBC</acronym> spec, you should access a field only once. It's safest
-to stick to this rule, although at the current time, the <application>Postgres</application> driver
-will allow you to access a field as many times as you want.
-</para>
-</listitem>
+      <listitem>
+       <para>
+	Under the <acronym>JDBC</acronym> spec, you should access a
+	field only once. It's safest to stick to this rule, although
+	at the current time, the <application>Postgres</application> driver
+	will allow you to access a field as many times as you want.
+       </para>
+      </listitem>
 
-<listitem>
-<para>
-You must close a ResultSet by calling <function>close()</function> once you have finished with it.
-</para>
-</listitem>
+      <listitem>
+       <para>
+	You must close a ResultSet by calling
+	<function>close()</function> once you have finished with it.
+       </para>
+      </listitem>
 
-<listitem>
-<para>
-Once you request another query with the Statement used to create a
-ResultSet, the currently open instance is closed.
-</para>
-</listitem>
-</itemizedlist>
-</para>
+      <listitem>
+       <para>
+	Once you request another query with the Statement used to create a
+	ResultSet, the currently open instance is closed.
+       </para>
+      </listitem>
+     </itemizedlist>
+    </para>
 
-<para>
-An example is as follows:
+    <para>
+     An example is as follows:
 
-<programlisting>
+     <programlisting>
 Statement st = db.createStatement();
 ResultSet rs = st.executeQuery("select * from mytable");
 while(rs.next()) {
@@ -387,74 +388,97 @@ while(rs.next()) {
 }
 rs.close();
 st.close();
-</programlisting>
-</para>
-</sect2>
-</sect1>
+     </programlisting>
+    </para>
+   </sect2>
+  </sect1>
 
-<sect1>
-<title>Performing Updates</title>
+  <sect1>
+   <title>Performing Updates</title>
 
-<para>
-To perform an update (or any other SQL statement that does not return a
-result), you simply use the executeUpdate() method:
+   <para>
+    To perform an update (or any other SQL statement that does not return a
+    result), you simply use the <function>executeUpdate()</function> method:
 
-<programlisting>
+    <programlisting>
 st.executeUpdate("create table basic (a int2, b int2)");
-</programlisting>
-</para>
-</sect1>
+    </programlisting>
+   </para>
+  </sect1>
 
-<sect1>
-<title>Closing the Connection</title>
+  <sect1>
+   <title>Closing the Connection</title>
 
-<para>
-To close the database connection, simply call the close() method to the Connection:
+   <para>
+    To close the database connection, simply call the close() method to the Connection:
 
-<programlisting>
+    <programlisting>
 db.close();
-</programlisting>
-</para>
-</sect1>
+    </programlisting>
+   </para>
+  </sect1>
 
-<sect1>
-<title>Using Large Objects</title>
+  <sect1>
+   <title>Using Large Objects</title>
 
-<para>
-In <application>Postgres</application>, 
-large objects (also known as <firstterm>blobs</firstterm>) are used to hold data in
-the database that cannot be stored in a normal SQL table. They are stored as a
-Table/Index pair, and are refered to from your own tables, by an OID value.
-</para>
+   <para>
+    In <application>Postgres</application>, 
+    large objects (also known as <firstterm>blobs</firstterm>) are used to hold data in
+    the database that cannot be stored in a normal SQL table. They are stored as a
+    Table/Index pair, and are referred to from your own tables by an OID value.
+   </para>
 
-<para>
-Now, there are you methods of using Large Objects. The first is the
-standard <acronym>JDBC</acronym> way, and is documented here. The other, uses our own extension
-to the api, which presents the libpq large object <acronym>API</acronym> to Java, providing even
-better access to large objects than the standard. Internally, the driver uses
-the extension to provide large object support.
-</para>
-<para>
-In <acronym>JDBC</acronym>, the standard way to access them is using the getBinaryStream()
-method in ResultSet, and setBinaryStream() method in PreparedStatement. These
-methods make the large object appear as a Java stream, allowing you to use the
-java.io package, and others, to manipulate the object.
-</para>
+   <para>
+    <important>
+     <para>
+      For <productname>Postgres</productname>, you must access large
+      objects within an SQL transaction. Although this has always been 
+      true in principle, it was not strictly enforced until the
+      release of v6.5. You would open a transaction by using the
+      <function>setAutoCommit()</function> method with an input
+      parameter of <literal>false</literal>:
 
-<para>
-For example, suppose
-you have a table containing the file name of an image, and a large object
-containing that image:
+      <programlisting>
+Connection mycon;
+...
+mycon.setAutoCommit(false);
+... now use Large Objects
+      </programlisting>
+     </para>
+    </important>
+   </para>
 
-<programlisting>
+   <para>
+    Now, there are two methods of using Large Objects. The first is the
+    standard <acronym>JDBC</acronym> way, and is documented here. The
+    other, uses our own extension
+    to the api, which presents the libpq large object
+    <acronym>API</acronym> to Java, providing even
+    better access to large objects than the standard. Internally, the driver uses
+    the extension to provide large object support.
+   </para>
+
+   <para>
+    In <acronym>JDBC</acronym>, the standard way to access them is using the getBinaryStream()
+    method in ResultSet, and setBinaryStream() method in PreparedStatement. These
+    methods make the large object appear as a Java stream, allowing you to use the
+    java.io package, and others, to manipulate the object.
+   </para>
+
+   <para>
+    For example, suppose
+    you have a table containing the file name of an image, and a large object
+    containing that image:
+
+    <programlisting>
 create table images (imgname name,imgoid oid);
-</programlisting>
-</para>
+    </programlisting>
+   </para>
 
-<para>
-To insert an image, you would use:
+   <para>
+    To insert an image, you would use:
 
-<programlisting>
+    <programlisting>
 File file = new File("myimage.gif");
 FileInputStream fis = new FileInputStream(file);
 PreparedStatement ps = conn.prepareStatement("insert into images values (?,?)");
@@ -463,20 +487,20 @@ ps.setBinaryStream(2,fis,file.length());
 ps.executeUpdate();
 ps.close();
 fis.close();
-</programlisting>
-</para>
+    </programlisting>
+   </para>
 
-<para>
-Now in this example, setBinaryStream transfers a set number of bytes from a
-stream into a large object, and stores the OID into the field holding a
-reference to it.
-</para>
+   <para>
+    Now in this example, setBinaryStream transfers a set number of bytes from a
+    stream into a large object, and stores the OID into the field holding a
+    reference to it.
+   </para>
 
-<para>
-Retrieving an image is even easier (I'm using PreparedStatement here, but
-Statement can equally be used):
+   <para>
+    Retrieving an image is even easier (I'm using PreparedStatement here, but
+    Statement can equally be used):
 
-<programlisting>
+    <programlisting>
 PreparedStatement ps = con.prepareStatement("select oid from images where name=?");
 ps.setString(1,"myimage.gif");
 ResultSet rs = ps.executeQuery();
@@ -489,31 +513,33 @@ if(rs!=null) {
     rs.close();
 }
 ps.close();
-</programlisting>
-</para>
+    </programlisting>
+   </para>
 
-<para>
-Now here you can see where the Large Object is retrieved as an InputStream.
-You'll also notice that we close the stream before processing the next row in
-the result. This is part of the <acronym>JDBC</acronym> Specification, which states that any
-InputStream returned is closed when ResultSet.next() or ResultSet.close() is called.
-</para>
-</sect1>
+   <para>
+    Now here you can see where the Large Object is retrieved as an InputStream.
+    You'll also notice that we close the stream before processing the next row in
+    the result. This is part of the <acronym>JDBC</acronym> Specification, which states that any
+    InputStream returned is closed when ResultSet.next() or ResultSet.close() is called.
+   </para>
+  </sect1>
 
-<sect1>
-<title><application>Postgres</application> Extensions to the <acronym>JDBC</acronym> <acronym>API</acronym></title>
+  <sect1>
+   <title><application>Postgres</application> Extensions to the
+    <acronym>JDBC</acronym> <acronym>API</acronym></title>
 
-<para>
-<application>Postgres</application> is an extensible database system. 
-You can add your own functions
-to the backend, which can then be called from queries, or even add your own
-data types.
-</para>
-<para>
-Now, as these are facilities unique to us, we support them from Java, with
-a set of extension <acronym>API</acronym>'s. Some features within 
-the core of the standard driver
-actually use these extensions to implement Large Objects, etc.
+   <para>
+    <application>Postgres</application> is an extensible database system. 
+    You can add your own functions
+    to the backend, which can then be called from queries, or even add your own
+    data types.
+   </para>
+
+   <para>
+    Now, as these are facilities unique to us, we support them from Java, with
+    a set of extension <acronym>API</acronym>'s. Some features within 
+    the core of the standard driver
+    actually use these extensions to implement Large Objects, etc.
 
 <!--
 ************************************************************
@@ -2241,7 +2267,8 @@ java.lang.Object
    public class PGobject extends Object implements Serializable, 
 Cloneable
                
-   This class is used to describe data types that are unknown by <acronym>JDBC</acronym> 
+   This class is used to describe data types that are unknown by
+     <acronym>JDBC</acronym> 
 Standard.
     A call to postgresql.Connection permits a class that extends this 
 class to be associated with a named type. This is how the 
@@ -2550,7 +2577,8 @@ while another one is receiving results, and this would be a bad thing
 for the database engine.
 
 PostgreSQL 6.4, brings thread safety to the entire driver. Standard 
-<acronym>JDBC</acronym> was thread safe in 6.3.x, but the Fastpath <acronym>API</acronym> wasn't.
+<acronym>JDBC</acronym> was thread safe in 6.3.x, but the Fastpath
+     <acronym>API</acronym> wasn't.
 
 So, if your application uses multiple threads (which most decent ones 
 would), then you don't have to worry about complex schemes to ensure 
@@ -2614,3 +2642,20 @@ document, and also includes precompiled drivers for v6.4, and earlier.
 </para>
 </sect1>
 </chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:nil
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+sgml-parent-document:nil
+sgml-default-dtd-file:"./reference.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:"/usr/lib/sgml/CATALOG"
+sgml-local-ecat-files:nil
+End:
+--></book>
