@@ -12,11 +12,12 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initlocation/Attic/initlocation.sh,v 1.1 1997/11/07 06:21:39 thomas Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initlocation/Attic/initlocation.sh,v 1.2 1998/10/05 02:51:21 thomas Exp $
 #
 #-------------------------------------------------------------------------
 
 CMDNAME=`basename $0`
+POSTGRES_SUPERUSERNAME=$USER
 
 while [ "$#" -gt 0 ]
 do
@@ -48,6 +49,13 @@ fi
 # Make sure he told us where to build the database area
 #-------------------------------------------------------------------------
 
+PGENVAR="$PGALTDATA"
+PGENVAR=`printenv $PGENVAR`
+if [ ! -z "$PGENVAR" ]; then
+	PGALTDATA=$PGENVAR
+	echo "$CMDNAME: input argument points to $PGALTDATA"
+fi
+
 if [ -z "$PGALTDATA" ]; then
 	echo "$CMDNAME: You must identify the target area, where the new data"
 	echo "for this database system can reside.  Do this with --location"
@@ -57,11 +65,6 @@ fi
 #---------------------------------------------------------------------------
 # Figure out who the Postgres superuser for the new database system will be.
 #---------------------------------------------------------------------------
-
-if [ 1 -eq 0 ]; then
-if [ -z "$POSTGRES_SUPERUSERNAME" ]; then 
-	$POSTGRES_SUPERUSERNAME=pg_id
-fi
 
 if [ -z "$POSTGRES_SUPERUSERNAME" ]; then 
 	echo "Can't tell what username to use.  You don't have the USER"
@@ -91,7 +94,6 @@ echo "We are initializing the database area with username" \
 	"$POSTGRES_SUPERUSERNAME (uid=$POSTGRES_SUPERUID)."   
 echo "This user will own all the files and must also own the server process."
 echo
-fi
 
 # -----------------------------------------------------------------------
 # Create the data directory if necessary
@@ -105,12 +107,14 @@ if [ ! -d $PGALTDATA ]; then
 	echo
 	mkdir $PGALTDATA
 	if [ $? -ne 0 ]; then exit 1; fi
+	chown $POSTGRES_SUPERUSERNAME $PGALTDATA
 fi
 if [ ! -d $PGALTDATA/base ]; then
 	echo "Creating Postgres database system directory $PGALTDATA/base"
 	echo
 	mkdir $PGALTDATA/base
 	if [ $? -ne 0 ]; then exit 1; fi
+	chown $POSTGRES_SUPERUSERNAME $PGALTDATA/base
 fi
 
 exit
