@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.5 2000/03/08 01:34:36 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.6 2000/03/16 01:35:41 momjian Exp $
  *
  *
  *   Portions Copyright (c) 1999-2000, PostgreSQL, Inc
@@ -14,11 +14,9 @@
  *
  *
  *   Cache & Memory:
- *	Routines use (itself) internal cache for format pictures. If 
- *	new format arg is same as a last format string, routines do not 
- *	call the format-parser. 
+ *	Routines use (itself) internal cache for format pictures. 
  *	
- *	The cache uses a static buffer and is persistent across transactions.
+ *	The cache uses a static buffers and is persistent across transactions.
  *	If format-picture is bigger than cache buffer, parser is called always. 
  *
  *   NOTE for Number version:
@@ -90,18 +88,11 @@
  * Maximal length of one node 
  * ----------
  */
-#define DCH_MAX_ITEM_SIZ		9	/* some month name ? 	  */
-#define NUM_MAX_ITEM_SIZ		16	/* roman number 	  */
+#define DCH_MAX_ITEM_SIZ		9	/* max julian day 		*/
+#define NUM_MAX_ITEM_SIZ		8	/* roman number (RN has 15 chars) 	*/
 
 /* ----------
- * Format picture cache limits
- * ----------
- */
-#define NUM_CACHE_SIZE	64 
-#define DCH_CACHE_SIZE	128 
-
-/* ----------
- * More in float.c
+ * More is in float.c
  * ----------
  */
 #define MAXFLOATWIDTH   64
@@ -281,6 +272,42 @@ typedef struct {
 #define IS_PLUS(_f)	((_f)->flag & NUM_F_PLUS)
 #define IS_ROMAN(_f)	((_f)->flag & NUM_F_ROMAN)
 #define IS_MULTI(_f)	((_f)->flag & NUM_F_MULTI)
+
+/* ----------
+ * Format picture cache 
+ *  	(cache size: 
+ *		Number part 	= NUM_CACHE_SIZE * NUM_CACHE_FIELDS
+ *		Date-time part	= DCH_CACHE_SIZE * DCH_CACHE_FIELDS
+ *	)
+ * ----------
+ */
+#define NUM_CACHE_SIZE		64 
+#define NUM_CACHE_FIELDS	16
+#define DCH_CACHE_SIZE		128
+#define DCH_CACHE_FIELDS	16
+
+typedef struct {
+	FormatNode	format	[ DCH_CACHE_SIZE +1];
+	char		str	[ DCH_CACHE_SIZE +1];
+	int		age;
+} DCHCacheEntry;
+
+typedef struct {
+	FormatNode	format	[ NUM_CACHE_SIZE +1];
+	char		str	[ NUM_CACHE_SIZE +1];
+	int		age;
+	NUMDesc		Num;	
+} NUMCacheEntry;
+
+static DCHCacheEntry	DCHCache	[ DCH_CACHE_FIELDS +1];	/* global cache for date/time part */
+static int		n_DCHCache = 0;				/* number of entries */	
+static int		DCHCounter = 0;
+
+static NUMCacheEntry	NUMCache	[ NUM_CACHE_FIELDS +1];	/* global cache for number part */
+static int		n_NUMCache = 0;				/* number of entries */	
+static int		NUMCounter = 0;
+
+#define MAX_INT32	(2147483640)
 
 /* ----------
  * Private global-modul definitions 
@@ -625,8 +652,7 @@ static int dch_global(int arg, char *inout, int suf, int flag, FormatNode *node)
 static int dch_time(int arg, char *inout, int suf, int flag, FormatNode *node);
 static int dch_date(int arg, char *inout, int suf, int flag, FormatNode *node);
 static char *fill_str(char *str, int c, int max);
-static FormatNode *NUM_cache( int len, char *CacheStr, FormatNode *CacheFormat, 
-	   NUMDesc *CacheNum, NUMDesc *Num, char *pars_str, int *flag);
+static FormatNode *NUM_cache( int len, NUMDesc *Num, char *pars_str, int *flag);
 static char *int_to_roman(int number);
 static void NUM_prepare_locale(NUMProc *Np);
 static char *get_last_relevant_decnum(char *num);
@@ -634,6 +660,10 @@ static void NUM_numpart_from_char(NUMProc *Np, int id, int plen);
 static void NUM_numpart_to_char(NUMProc *Np, int id); 
 static char *NUM_processor (FormatNode *node, NUMDesc *Num, char *inout, char *number, 
 					int plen, int sign, int type);
+static DCHCacheEntry *DCH_cache_search( char *str );
+static DCHCacheEntry *DCH_cache_getnew( char *str );
+static NUMCacheEntry *NUM_cache_search( char *str );
+static NUMCacheEntry *NUM_cache_getnew( char *str );
 
 
 /* ----------
@@ -1259,7 +1289,7 @@ dump_index(KeyWord *k, int *index)
 
 
 /* ----------
- * Global format opton for DCH version
+ * Global format option for DCH version
  * ----------
  */
 static int
@@ -1384,7 +1414,7 @@ dch_time(int arg, char *inout, int suf, int flag, FormatNode *node)
 
 #define CHECK_SEQ_SEARCH(_l, _s) {					\
 	if (_l <= 0) { 							\
-		elog(ERROR, "to_datatime(): bad value for %s", _s);		\
+		elog(ERROR, "to_timestamp(): bad value for %s", _s);	\
 	}								\
 }
 
@@ -1778,6 +1808,84 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node)
 	return -1;	
 }
 
+static DCHCacheEntry *
+DCH_cache_getnew( char *str )
+{
+	DCHCacheEntry 	*ent	= NULL;
+	
+	/* counter overload check  - paranoa? */
+	if (DCHCounter + DCH_CACHE_FIELDS >= MAX_INT32) {
+		DCHCounter = 0;
+
+		for(ent = DCHCache; ent <= (DCHCache + DCH_CACHE_FIELDS); ent++)
+		        ent->age = (++DCHCounter);
+	}
+	
+	/* ----------
+	 * Cache is full - needs remove any older entry
+	 * ----------
+	 */
+	if (n_DCHCache > DCH_CACHE_FIELDS) {
+
+		DCHCacheEntry   *old 	= DCHCache+0;
+#ifdef DEBUG_TO_FROM_CHAR
+		elog(DEBUG_elog_output, "Cache is full (%d)", n_DCHCache);
+#endif	
+		for(ent = DCHCache; ent <= (DCHCache + DCH_CACHE_FIELDS); ent++) {
+			if (ent->age < old->age)
+				old = ent;
+		}	
+#ifdef DEBUG_TO_FROM_CHAR
+		elog(DEBUG_elog_output, "OLD: '%s' AGE: %d", old->str, old->age);
+#endif		
+		strcpy(old->str, str);		/* check str size before this func. */
+		/* old->format fill parser */
+		old->age = (++DCHCounter);
+		return old;
+		
+	} else {
+#ifdef DEBUG_TO_FROM_CHAR	
+		elog(DEBUG_elog_output, "NEW (%d)", n_DCHCache);
+#endif	
+		ent = DCHCache + n_DCHCache;
+		strcpy(ent->str, str);		/* check str size before this func. */
+		/* ent->format fill parser */
+		ent->age = (++DCHCounter);
+		++n_DCHCache;
+		return ent;
+	}
+	
+	return (DCHCacheEntry *) NULL;		/* never */
+}
+
+static DCHCacheEntry *
+DCH_cache_search( char *str )
+{
+	int		i = 0;
+	DCHCacheEntry 	*ent;
+
+	/* counter overload check  - paranoa? */
+	if (DCHCounter + DCH_CACHE_FIELDS >= MAX_INT32) {
+		DCHCounter = 0;
+
+		for(ent = DCHCache; ent <= (DCHCache + DCH_CACHE_FIELDS); ent++)
+		        ent->age = (++DCHCounter);
+	}
+
+	for(ent = DCHCache; ent <= (DCHCache + DCH_CACHE_FIELDS); ent++) {
+		if (i == n_DCHCache)
+			break;
+		if (strcmp(ent->str, str) == 0) {
+			ent->age = (++DCHCounter);
+			return ent;
+		}	
+		i++;	
+	}
+	
+	return (DCHCacheEntry *) NULL;
+}
+
+
 /****************************************************************************
  *				Public routines
  ***************************************************************************/
@@ -1789,23 +1897,19 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node)
 text *
 timestamp_to_char(Timestamp *dt, text *fmt)
 {
-	static FormatNode	CacheFormat[ DCH_CACHE_SIZE +1];
-	static char		CacheStr[ DCH_CACHE_SIZE +1];
-
-	text 			*result;
+	text 			*result, *result_tmp;
 	FormatNode		*format;
-	int			flag=0;
 	char			*str;
 	double          	fsec;
 	char       		*tzn;
-	int			len=0, tz, x=0;
+	int			len=0, tz, flag = 0, x=0;
 
 	if ((!PointerIsValid(dt)) || (!PointerIsValid(fmt)))
 		return NULL;
 	
 	len 	= VARSIZE(fmt) - VARHDRSZ; 
 	
-	if ((!len) || (TIMESTAMP_NOT_FINITE(*dt))) 
+	if ((!len) || (TIMESTAMP_NOT_FINITE(*dt)))
 		return textin("");
 
 	tm->tm_sec	=0;	tm->tm_year	=0;
@@ -1814,19 +1918,19 @@ timestamp_to_char(Timestamp *dt, text *fmt)
 	tm->tm_mday	=1;	tm->tm_isdst	=0;
 	tm->tm_mon	=1;
 
-	if (TIMESTAMP_IS_EPOCH(*dt)) {
-		x = timestamp2tm(SetTimestamp(*dt), NULL, tm, &fsec, NULL);
-		
-	} else if (TIMESTAMP_IS_CURRENT(*dt)) {
-		x = timestamp2tm(SetTimestamp(*dt), &tz, tm, &fsec, &tzn);
-			
-	} else {
-		x = timestamp2tm(*dt, &tz, tm, &fsec, &tzn);
-	}
-
-	if (x!=0)
-		elog(ERROR, "to_char(): Unable to convert timestamp to tm");
-
+ 	if (TIMESTAMP_IS_EPOCH(*dt)) {
+ 		x = timestamp2tm(SetTimestamp(*dt), NULL, tm, &fsec, NULL);
+ 		
+  	} else if (TIMESTAMP_IS_CURRENT(*dt)) {
+ 		x = timestamp2tm(SetTimestamp(*dt), &tz, tm, &fsec, &tzn);
+ 			
+  	} else {
+ 		x = timestamp2tm(*dt, &tz, tm, &fsec, &tzn);
+  	}
+  
+ 	if (x!=0)
+ 		elog(ERROR, "to_char(): Unable to convert timestamp to tm");
+ 
 	tm->tm_wday = (date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) + 1) % 7; 
 	tm->tm_yday = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - date2j(tm->tm_year, 1,1) +1;
 
@@ -1850,7 +1954,7 @@ timestamp_to_char(Timestamp *dt, text *fmt)
 	 * ----------
          */
 	if ( len > DCH_CACHE_SIZE ) {
-
+		
 		format = (FormatNode *) palloc((len + 1) * sizeof(FormatNode));
 		flag  = 1;
 
@@ -1865,33 +1969,29 @@ timestamp_to_char(Timestamp *dt, text *fmt)
 		 * Use cache buffers
 		 * ----------
 		 */
-#ifdef DEBUG_TO_FROM_CHAR
-		elog(DEBUG_elog_output, "DCH_TO_CHAR() Len:            %d",  len); 
-		elog(DEBUG_elog_output, "DCH_TO_CHAR() Cache - str:   >%s<", CacheStr);
-		elog(DEBUG_elog_output, "DCH_TO_CHAR() Arg.str:       >%s<", str);
-#endif
+		DCHCacheEntry	*ent;
 		flag = 0;
 
-       		if (strcmp(CacheStr, str) != 0) {
+       		if ((ent = DCH_cache_search(str)) == NULL) {
+	
+			ent = DCH_cache_getnew(str);
 	
 			/* ----------
-			 * Can't use the cache, must run parser and save a original 
-			 * format-picture string to the cache. 
+			 * Not in the cache, must run parser and save a new
+			 * format-picture to the cache. 
 			 * ----------
         		 */		
-			strncpy(CacheStr, str, DCH_CACHE_SIZE);
-				
-         		parse_format(CacheFormat, str, DCH_keywords, 
+         		parse_format(ent->format, str, DCH_keywords, 
          		     DCH_suff, DCH_index, DCH_TYPE, NULL);
-
+			
+			(ent->format + len)->type = NODE_TYPE_END;		/* Paranoa? */	
+			
 #ifdef DEBUG_TO_FROM_CHAR	 
-			/* dump_node(CacheFormat, len); */
+			/* dump_node(ent->format, len); */
 			/* dump_index(DCH_keywords, DCH_index); */
 #endif         	
-         		(CacheFormat + len)->type = NODE_TYPE_END;	/* Paranoa? */	
-        	}
-
-        	format = CacheFormat;
+        	} 
+        	format = ent->format; 
 	}
 	
 	DCH_processor(format, VARDATA(result), TO_CHAR);
@@ -1900,7 +2000,20 @@ timestamp_to_char(Timestamp *dt, text *fmt)
 		pfree(format);
 
 	pfree(str);
-	VARSIZE(result) = strlen(VARDATA(result)) + VARHDRSZ; 
+
+	/* ----------
+	 * for result is allocated max memory, which current format-picture
+	 * needs, now it must be re-allocate to result real size
+	 * ----------
+	 */	
+	len 		= strlen(VARDATA(result));
+	result_tmp 	= result;
+	result 		= (text *) palloc( len + 1 + VARHDRSZ);
+	
+	strcpy( VARDATA(result), VARDATA(result_tmp));  
+	VARSIZE(result) = len + VARHDRSZ; 
+	pfree(result_tmp);
+
 	return result;
 }
 
@@ -1915,9 +2028,6 @@ timestamp_to_char(Timestamp *dt, text *fmt)
 Timestamp *
 to_timestamp(text *date_str, text *fmt)
 {
-	static FormatNode	CacheFormat[ DCH_CACHE_SIZE +1];
-	static char		CacheStr[ DCH_CACHE_SIZE +1];
-
 	FormatNode		*format;
 	int			flag=0;
 	Timestamp		*result;
@@ -1963,37 +2073,35 @@ to_timestamp(text *date_str, text *fmt)
          			     DCH_suff, DCH_index, DCH_TYPE, NULL);
 	
 			(format + len)->type = NODE_TYPE_END;		/* Paranoa? */	
-					
 		} else {
-	
+
 			/* ----------
 			 * Use cache buffers
 			 * ----------
 			 */
-#ifdef DEBUG_TO_FROM_CHAR
-			elog(DEBUG_elog_output, "DCH_TO_CHAR() Len:            %d",  len); 
-			elog(DEBUG_elog_output, "DCH_TO_CHAR() Cache - str:   >%s<", CacheStr);
-			elog(DEBUG_elog_output, "DCH_TO_CHAR() Arg.str:       >%s<", str);
-#endif
+			DCHCacheEntry	*ent;
 			flag = 0;
 
-	       		if (strcmp(CacheStr, str) != 0) {
-		
+	       		if ((ent = DCH_cache_search(str)) == NULL) {
+	
+				ent = DCH_cache_getnew(str);
+	
 				/* ----------
-				 * Can't use the cache, must run parser and save a original 
-				 * format-picture string to the cache. 
+				 * Not in the cache, must run parser and save a new
+				 * format-picture to the cache. 
 				 * ----------
-	        		 */		
-				strncpy(CacheStr, str, DCH_CACHE_SIZE);
-
-	         		parse_format(CacheFormat, str, DCH_keywords, 
-        	 		     DCH_suff, DCH_index, DCH_TYPE, NULL);
-         		
-        	 		(CacheFormat + len)->type = NODE_TYPE_END;	/* Paranoa? */	
-        		}
-
-        		format = CacheFormat;
-		}
+        			 */		
+         			parse_format(ent->format, str, DCH_keywords, 
+         			     DCH_suff, DCH_index, DCH_TYPE, NULL);
+			
+				(ent->format + len)->type = NODE_TYPE_END;		/* Paranoa? */				
+#ifdef DEBUG_TO_FROM_CHAR	 
+				/* dump_node(ent->format, len); */
+				/* dump_index(DCH_keywords, DCH_index); */
+#endif         	
+        		} 
+        		format = ent->format; 
+		}				
 	
 		/* ----------
 		 * Call action for each node in FormatNode tree 
@@ -2083,16 +2191,107 @@ fill_str(char *str, int c, int max)
 	return str;	
 }
 
+#define zeroize_NUM(_n) {		\
+	(_n)->flag 		= 0;	\
+	(_n)->lsign		= 0;	\
+	(_n)->pre		= 0;	\
+	(_n)->post		= 0;	\
+	(_n)->pre_lsign_num	= 0;	\
+	(_n)->need_locale	= 0;	\
+	(_n)->multi		= 0;	\
+	(_n)->zero_start	= 0;	\
+	(_n)->zero_end		= 0;	\
+}
+
+static NUMCacheEntry *
+NUM_cache_getnew( char *str )
+{
+	NUMCacheEntry 	*ent	= NULL;
+	
+	/* counter overload check  - paranoa? */
+	if (NUMCounter + NUM_CACHE_FIELDS >= MAX_INT32) {
+		NUMCounter = 0;
+
+		for(ent = NUMCache; ent <= (NUMCache + NUM_CACHE_FIELDS); ent++)
+		        ent->age = (++NUMCounter);
+	}
+	
+	/* ----------
+	 * Cache is full - needs remove any older entry
+	 * ----------
+	 */
+	if (n_NUMCache > NUM_CACHE_FIELDS) {
+
+		NUMCacheEntry   *old 	= NUMCache+0;
+		
+#ifdef DEBUG_TO_FROM_CHAR
+		elog(DEBUG_elog_output, "Cache is full (%d)", n_NUMCache);
+#endif
+	
+		for(ent = NUMCache; ent <= (NUMCache + NUM_CACHE_FIELDS); ent++) {
+			if (ent->age < old->age)
+				old = ent;
+		}	
+#ifdef DEBUG_TO_FROM_CHAR		
+		elog(DEBUG_elog_output, "OLD: '%s' AGE: %d", old->str, old->age);
+#endif		
+		strcpy(old->str, str);		/* check str size before this func. */
+		/* old->format fill parser */
+		old->age = (++NUMCounter);
+		
+		ent = old;
+		
+	} else {
+#ifdef DEBUG_TO_FROM_CHAR	
+		elog(DEBUG_elog_output, "NEW (%d)", n_NUMCache);
+#endif	
+		ent = NUMCache + n_NUMCache;
+		strcpy(ent->str, str);		/* check str size before this func. */
+		/* ent->format fill parser */
+		ent->age = (++NUMCounter);
+		++n_NUMCache;
+	}
+	
+	zeroize_NUM(&ent->Num);
+	
+	return ent;		/* never */
+}
+
+static NUMCacheEntry *
+NUM_cache_search( char *str )
+{
+	int		i = 0;
+	NUMCacheEntry 	*ent;
+
+	/* counter overload check  - paranoa? */
+	if (NUMCounter + NUM_CACHE_FIELDS >= MAX_INT32) {
+		NUMCounter = 0;
+
+		for(ent = NUMCache; ent <= (NUMCache + NUM_CACHE_FIELDS); ent++)
+		        ent->age = (++NUMCounter);
+	}
+
+	for(ent = NUMCache; ent <= (NUMCache + NUM_CACHE_FIELDS); ent++) {
+		if (i == n_NUMCache)
+			break;
+		if (strcmp(ent->str, str) == 0) {
+			ent->age = (++NUMCounter);
+			return ent;
+		}	
+		i++;	
+	}
+	
+	return (NUMCacheEntry *) NULL;
+}
 
 /* ----------
  * Cache routine for NUM to_char version
  * ----------
  */
 static FormatNode *
-NUM_cache( int len, char *CacheStr, FormatNode *CacheFormat, 
-	   NUMDesc *CacheNum, NUMDesc *Num, char *pars_str, int *flag)
+NUM_cache( int len, NUMDesc *Num, char *pars_str, int *flag)
 {	
-	FormatNode 	*format;
+	FormatNode 	*format = NULL;
 	char		*str;
 
 	/* ----------
@@ -2113,86 +2312,57 @@ NUM_cache( int len, char *CacheStr, FormatNode *CacheFormat,
 		format = (FormatNode *) palloc((len + 1) * sizeof(FormatNode));
 		*flag  = 1;
 		
-		Num->flag 		= 0;	
-		Num->lsign		= 0;	
-		Num->pre		= 0;	
-		Num->post		= 0;
-         	Num->pre_lsign_num	= 0;
-		Num->zero_start		= 0;
-		Num->zero_end		= 0;		
-		Num->need_locale	= 0;
-		Num->multi		= 0;
-
+        	zeroize_NUM(Num);
+		
 		parse_format(format, str, NUM_keywords, 
          			NULL, NUM_index, NUM_TYPE, Num);
 	
 		(format + len)->type = NODE_TYPE_END;		/* Paranoa? */	
-		pfree(str);
-		return format;
 		
 	} else {
-
+		
 		/* ----------
-		 * Use cache buffer
+		 * Use cache buffers
 		 * ----------
 		 */
-#ifdef DEBUG_TO_FROM_CHAR
-		elog(DEBUG_elog_output, "NUM_TO_CHAR() Len:            %d",  len); 
-		elog(DEBUG_elog_output, "NUM_TO_CHAR() Cache - str:   >%s<", CacheStr);
-		elog(DEBUG_elog_output, "NUM_TO_CHAR() Arg.str:       >%s<", str);
-#endif
-		*flag = 0;
+		NUMCacheEntry	*ent;
+		flag = 0;
 
-       		if (strcmp(CacheStr, str) != 0) {
+       		if ((ent = NUM_cache_search(str)) == NULL) {
+	
+			ent = NUM_cache_getnew(str);
 	
 			/* ----------
-			 * Can't use the cache, must run parser and save a original 
-			 * format-picture string to the cache. 
+			 * Not in the cache, must run parser and save a new
+			 * format-picture to the cache. 
 			 * ----------
         		 */		
-			strncpy(CacheStr, str, NUM_CACHE_SIZE);
-         	
-         		/* ----------                                  	
-         		 * Set zeros to CacheNum struct   	
-         		 * ----------
-         		 */                                 	
-			CacheNum->flag 		= 0;	
-			CacheNum->lsign		= 0;	
-			CacheNum->pre		= 0;	
-			CacheNum->post		= 0;
-         		CacheNum->pre_lsign_num	= 0;
-        		CacheNum->need_locale	= 0;
-        		CacheNum->multi		= 0; 	
-         		CacheNum->zero_start	= 0;
-         		CacheNum->zero_end	= 0;
-         	
-         		parse_format(CacheFormat, str, NUM_keywords, 
-         			NULL, NUM_index, NUM_TYPE, CacheNum);
-         	
-#ifdef DEBUG_TO_FROM_CHAR	 
-			/* dump_node(CacheFormat, len); */
-			/* dump_index(NUM_keywords, NUM_index); */
-#endif         	         	
-         		
-         		(CacheFormat + len)->type = NODE_TYPE_END;	/* Paranoa? */	
-        	}
-       		/* ----------
+         		parse_format(ent->format, str, NUM_keywords, 
+         			NULL, NUM_index, NUM_TYPE, &ent->Num);
+			
+			(ent->format + len)->type = NODE_TYPE_END;		/* Paranoa? */	
+			
+        	} 
+        	
+        	format = ent->format;
+        	
+		/* ----------
 		 * Copy cache to used struct
 		 * ----------
 		 */
-		Num->flag 		= CacheNum->flag;
-		Num->lsign		= CacheNum->lsign;
-		Num->pre		= CacheNum->pre;
-		Num->post		= CacheNum->post;
-		Num->pre_lsign_num 	= CacheNum->pre_lsign_num;	
-		Num->need_locale	= CacheNum->need_locale; 
-		Num->multi		= CacheNum->multi; 	
-		Num->zero_start		= CacheNum->zero_start;
-		Num->zero_end		= CacheNum->zero_end;
-
-		pfree(str);
-		return CacheFormat;
+		Num->flag 		= ent->Num.flag;
+		Num->lsign		= ent->Num.lsign;
+		Num->pre		= ent->Num.pre;
+		Num->post		= ent->Num.post;
+		Num->pre_lsign_num 	= ent->Num.pre_lsign_num;	
+		Num->need_locale	= ent->Num.need_locale; 
+		Num->multi		= ent->Num.multi; 	
+		Num->zero_start		= ent->Num.zero_start;
+		Num->zero_end		= ent->Num.zero_end;
 	}
+
+	pfree(str);
+	return format;
 }
 
 
@@ -2332,8 +2502,10 @@ get_last_relevant_decnum(char *num)
 {
 	char	*result, 
 		*p = strchr(num, '.');
-	
-	/*elog(NOTICE, "CALL: get_last_relevant_decnum()");*/
+		
+#ifdef DEBUG_TO_FROM_CHAR	
+	elog(DEBUG_elog_output, "CALL: get_last_relevant_decnum()");
+#endif
 	
 	if (!p)	
 		p = num;
@@ -2359,14 +2531,17 @@ NUM_numpart_from_char(NUMProc *Np, int id, int plen)
 	elog(DEBUG_elog_output, " --- scan start --- ");
 #endif
 
-#define OVERLOAD_TEST	(Np->inout_p >= Np->inout + plen)
-
 	if (*Np->inout_p == ' ') 
 		Np->inout_p++;		
 
+#define OVERLOAD_TEST	(Np->inout_p >= Np->inout + plen)
+
+  	if (*Np->inout_p == ' ') 
+  		Np->inout_p++;		
+  
 	if (OVERLOAD_TEST)
 		return;
-
+ 
 	/* ----------
 	 * read sign
 	 * ----------
@@ -2420,7 +2595,7 @@ NUM_numpart_from_char(NUMProc *Np, int id, int plen)
 			Np->inout_p++;
 		} 		
 	}
-	
+
 	if (OVERLOAD_TEST)
 		return;
 	
@@ -2441,7 +2616,7 @@ NUM_numpart_from_char(NUMProc *Np, int id, int plen)
 
 #ifdef DEBUG_TO_FROM_CHAR	
 		elog(DEBUG_elog_output, "Read digit (%c).", *Np->inout_p);
-#endif		
+#endif	
 	
 	/* ----------
 	 * read decimal point
@@ -3047,15 +3222,14 @@ NUM_processor (FormatNode *node, NUMDesc *Num, char *inout, char *number,
 		return textin("");					\
 									\
 	result	= (text *) palloc( (len * NUM_MAX_ITEM_SIZ) + 1 + VARHDRSZ);	\
-	format = NUM_cache(len, CacheStr, CacheFormat, &CacheNum, &Num, \
-			VARDATA(fmt), &flag);				\
+	format  = NUM_cache(len, &Num, VARDATA(fmt), &flag);		\
 }
 
 /* ----------
  * MACRO: Finish part of NUM
  * ----------
  */
-#define NUM_TOCHAR_finish {							\
+#define NUM_TOCHAR_finish {						\
 									\
 	NUM_processor(format, &Num, VARDATA(result), 			\
 		numstr, plen, sign, TO_CHAR);				\
@@ -3064,21 +3238,29 @@ NUM_processor (FormatNode *node, NUMDesc *Num, char *inout, char *number,
 	if (flag)							\
 		pfree(format);						\
 									\
-	VARSIZE(result) = strlen(VARDATA(result)) + VARHDRSZ; 	 	\
+	/* ----------							\
+	 * for result is allocated max memory, which current format-picture\
+	 * needs, now it must be re-allocate to result real size	\
+	 * ----------							\
+	 */								\
+	len 		= strlen(VARDATA(result));			\
+	result_tmp 	= result;					\
+	result 		= (text *) palloc( len + 1 + VARHDRSZ);		\
+									\
+	strcpy( VARDATA(result), VARDATA(result_tmp));  		\
+	VARSIZE(result) = len + VARHDRSZ; 				\
+	pfree(result_tmp);						\
 }
 
 /* -------------------
- * NUMERIC to_number()
+ * NUMERIC to_number() (convert string to numeric) 
  * -------------------
  */
 Numeric 
 numeric_to_number(text *value, text *fmt)
 {
-	static FormatNode	CacheFormat[ NUM_CACHE_SIZE +1];
-	static char		CacheStr[ NUM_CACHE_SIZE +1];
-	static NUMDesc		CacheNum;
-	
 	NUMDesc			Num;
+	Numeric			result;
 	FormatNode		*format;
 	char 			*numstr;
 	int			flag=0;
@@ -3094,8 +3276,7 @@ numeric_to_number(text *value, text *fmt)
 	if (!len) 							
 		return numeric_in(NULL, 0, 0);					
 									
-	format = NUM_cache(len, CacheStr, CacheFormat, &CacheNum, &Num, 
-			VARDATA(fmt), &flag);
+	format = NUM_cache(len, &Num, VARDATA(fmt), &flag);
 	
 	numstr	= (char *) palloc( (len * NUM_MAX_ITEM_SIZ) + 1);	
 	
@@ -3104,8 +3285,13 @@ numeric_to_number(text *value, text *fmt)
 	
 	scale = Num.post;
 	precision = MAX(0, Num.pre) + scale;
+
+	if (flag)
+		pfree(format);
 	
-	return numeric_in(numstr, 0, ((precision << 16) | scale) + VARHDRSZ);						
+	result = numeric_in(numstr, 0, ((precision << 16) | scale) + VARHDRSZ);						
+	pfree(numstr);
+	return result;
 }
 
 /* ------------------
@@ -3115,16 +3301,13 @@ numeric_to_number(text *value, text *fmt)
 text *
 numeric_to_char(Numeric value, text *fmt)
 {
-	static FormatNode	CacheFormat[ NUM_CACHE_SIZE +1];
-	static char		CacheStr[ NUM_CACHE_SIZE +1];
-	static NUMDesc		CacheNum;
-	
 	NUMDesc			Num;
 	FormatNode		*format;
-	text 			*result;
+	text 			*result, *result_tmp;
 	int			flag=0;
 	int			len=0, plen=0, sign=0;
 	char			*numstr, *orgnum, *p;
+	Numeric 		x 	= NULL;
 
 	NUM_TOCHAR_prepare;
 
@@ -3133,18 +3316,29 @@ numeric_to_char(Numeric value, text *fmt)
 	 * ----------
 	 */
 	if (IS_ROMAN(&Num)) {
-	 	numstr = orgnum = int_to_roman( numeric_int4( numeric_round(value, 0)));
+		x = numeric_round(value, 0);
+	 	numstr = orgnum = int_to_roman( numeric_int4( x ));
+	 	pfree(x);
 	 	
 	} else { 
-		Numeric val = value;
+		Numeric val 	= value;
 	
 		if (IS_MULTI(&Num)) {
-			val = numeric_mul(value, 
-				numeric_power(int4_numeric(10), int4_numeric(Num.multi))); 
+			Numeric a = int4_numeric(10);
+			Numeric b = int4_numeric(Num.multi);
+			
+			x = numeric_power(a, b);
+			val = numeric_mul(value, x); 
+			pfree(x);
+			pfree(a);
+			pfree(b);
 			Num.pre += Num.multi;
 		}
 		
-		orgnum = numeric_out( numeric_round(val, Num.post) );
+		x = numeric_round(val, Num.post);
+		orgnum = numeric_out( x );
+		pfree(x);
+		
 		if (*orgnum == '-') { 					/* < 0 */
 			sign = '-';
 			numstr = orgnum+1; 
@@ -3164,7 +3358,10 @@ numeric_to_char(Numeric value, text *fmt)
 			fill_str(numstr, '#', Num.pre);
 			*(numstr + Num.pre) = '.';
 			fill_str(numstr + 1 + Num.pre, '#', Num.post);
-		} 
+		}
+		
+		if (IS_MULTI(&Num))
+			pfree(val); 
 	}	
 
 	NUM_TOCHAR_finish;
@@ -3178,13 +3375,9 @@ numeric_to_char(Numeric value, text *fmt)
 text *
 int4_to_char(int32 value, text *fmt)
 {
-	static FormatNode	CacheFormat[ NUM_CACHE_SIZE +1];
-	static char		CacheStr[ NUM_CACHE_SIZE +1];
-	static NUMDesc		CacheNum;
-	
 	NUMDesc			Num;
 	FormatNode		*format;
-	text 			*result;
+	text 			*result, *result_tmp;
 	int			flag=0;
 	int			len=0, plen=0, sign=0;
 	char			*numstr, *orgnum;
@@ -3247,13 +3440,9 @@ int4_to_char(int32 value, text *fmt)
 text *
 int8_to_char(int64 *value, text *fmt)
 {
-	static FormatNode	CacheFormat[ NUM_CACHE_SIZE +1];
-	static char		CacheStr[ NUM_CACHE_SIZE +1];
-	static NUMDesc		CacheNum;
-	
 	NUMDesc			Num;
 	FormatNode		*format;
-	text 			*result;
+	text 			*result, *result_tmp;
 	int			flag=0;
 	int			len=0, plen=0, sign=0;
 	char			*numstr, *orgnum;
@@ -3317,13 +3506,9 @@ int8_to_char(int64 *value, text *fmt)
 text *
 float4_to_char(float32 value, text *fmt)
 {
-	static FormatNode	CacheFormat[ NUM_CACHE_SIZE +1];
-	static char		CacheStr[ NUM_CACHE_SIZE +1];
-	static NUMDesc		CacheNum;
-	
 	NUMDesc			Num;
 	FormatNode		*format;
-	text 			*result;
+	text 			*result, *result_tmp;
 	int			flag=0;
 	int			len=0, plen=0, sign=0;
 	char			*numstr, *orgnum, *p;
@@ -3385,13 +3570,9 @@ float4_to_char(float32 value, text *fmt)
 text *
 float8_to_char(float64 value, text *fmt)
 {
-	static FormatNode	CacheFormat[ NUM_CACHE_SIZE +1];
-	static char		CacheStr[ NUM_CACHE_SIZE +1];
-	static NUMDesc		CacheNum;
-	
 	NUMDesc			Num;
 	FormatNode		*format;
-	text 			*result;
+	text 			*result, *result_tmp;
 	int			flag=0;
 	int			len=0, plen=0, sign=0;
 	char			*numstr, *orgnum, *p;
