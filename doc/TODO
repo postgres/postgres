@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sun Jan 12 00:35:49 EST 2003
+Last updated:		Mon Jan 13 19:47:26 EST 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -225,7 +225,8 @@ Commands
 	o Allow array declarations and other data types in PL/PgSQL DECLARE
 	o Add PL/PgSQL PROCEDURES that can return multiple values
 	o Add table function support to pltcl, plperl, plpython
-	o Make PL/PgSQL %TYPE schema-aware 
+	o Make PL/PgSQL %TYPE schema-aware
+	o Allow PL/PgSQL to support array element assignment
 
 
 Clients
