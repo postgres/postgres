@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.141 2003/02/19 03:12:22 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.142 2003/03/03 03:31:23 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -5437,9 +5437,24 @@ SELECT TIMESTAMP 'now';
 	<entry><literal># '((1,0),(0,1),(-1,0))'</literal></entry>
        </row>
        <row>
+	<entry> @-@  </entry>
+	<entry>Length or circumference</entry>
+	<entry><literal>@-@ path '((0,0),(1,0))'</literal></entry>
+       </row>
+       <row>
+	<entry> @@ </entry>
+	<entry>Center of</entry>
+	<entry><literal>@@ circle '((0,0),10)'</literal></entry>
+       </row>
+       <row>
 	<entry> ## </entry>
 	<entry>Point of closest proximity</entry>
 	<entry><literal>point '(0,0)' ## lseg '((2,0),(0,2))'</literal></entry>
+       </row>
+       <row>
+	<entry> &lt;-&gt; </entry>
+	<entry>Distance between</entry>
+	<entry><literal>circle '((0,0),1)' &lt;-&gt; circle '((5,0),1)'</literal></entry>
        </row>
        <row>
 	<entry> &amp;&amp; </entry>
@@ -5448,18 +5463,13 @@ SELECT TIMESTAMP 'now';
        </row>
        <row>
 	<entry> &amp;&lt; </entry>
-	<entry>Overlaps to left?</entry>
+	<entry>Overlaps or is left of?</entry>
 	<entry><literal>box '((0,0),(1,1))' &amp;&lt; box '((0,0),(2,2))'</literal></entry>
        </row>
        <row>
 	<entry> &amp;&gt; </entry>
-	<entry>Overlaps to right?</entry>
+	<entry>Overlaps or is right of?</entry>
 	<entry><literal>box '((0,0),(3,3))' &amp;&gt; box '((0,0),(2,2))'</literal></entry>
-       </row>
-       <row>
-	<entry> &lt;-&gt; </entry>
-	<entry>Distance between</entry>
-	<entry><literal>circle '((0,0),1)' &lt;-&gt; circle '((5,0),1)'</literal></entry>
        </row>
        <row>
 	<entry> &lt;&lt; </entry>
@@ -5467,63 +5477,68 @@ SELECT TIMESTAMP 'now';
 	<entry><literal>circle '((0,0),1)' &lt;&lt; circle '((5,0),1)'</literal></entry>
        </row>
        <row>
-	<entry> &lt;^ </entry>
-	<entry>Is below?</entry>
-	<entry><literal>circle '((0,0),1)' &lt;^ circle '((0,5),1)'</literal></entry>
-       </row>
-       <row>
 	<entry> &gt;&gt; </entry>
-	<entry>Is right of?</entry>
+	<entry>Right of?</entry>
 	<entry><literal>circle '((5,0),1)' &gt;&gt; circle '((0,0),1)'</literal></entry>
        </row>
        <row>
+	<entry> &lt;^ </entry>
+	<entry>Below?</entry>
+	<entry><literal>circle '((0,0),1)' &lt;^ circle '((0,5),1)'</literal></entry>
+       </row>
+       <row>
 	<entry> &gt;^ </entry>
-	<entry>Is above?</entry>
+	<entry>Above?</entry>
 	<entry><literal>circle '((0,5),1)' >^ circle '((0,0),1)'</literal></entry>
        </row>
        <row>
 	<entry> ?# </entry>
-	<entry>Intersects or overlaps</entry>
+	<entry>Intersect?</entry>
 	<entry><literal>lseg '((-1,0),(1,0))' ?# box '((-2,-2),(2,2))'</literal></entry>
        </row>
        <row>
 	<entry> ?- </entry>
-	<entry>Is horizontal?</entry>
+	<entry>Horizontal?</entry>
+	<entry><literal>?- lseg '((-1,0),(1,0))'</literal></entry>
+       </row>
+       <row>
+	<entry> ?- </entry>
+	<entry>Horizontally aligned?</entry>
 	<entry><literal>point '(1,0)' ?- point '(0,0)'</literal></entry>
        </row>
        <row>
-	<entry> ?-| </entry>
-	<entry>Is perpendicular?</entry>
-	<entry><literal>lseg '((0,0),(0,1))' ?-| lseg '((0,0),(1,0))'</literal></entry>
-       </row>
-       <row>
-	<entry> @-@  </entry>
-	<entry>Length or circumference</entry>
-	<entry><literal>@-@ path '((0,0),(1,0))'</literal></entry>
+	<entry> ?| </entry>
+	<entry>Vertical?</entry>
+	<entry><literal>?| lseg '((-1,0),(1,0))'</literal></entry>
        </row>
        <row>
 	<entry> ?| </entry>
-	<entry>Is vertical?</entry>
+	<entry>Vertically aligned?</entry>
 	<entry><literal>point '(0,1)' ?| point '(0,0)'</literal></entry>
        </row>
        <row>
+	<entry> ?-| </entry>
+	<entry>Perpendicular?</entry>
+	<entry><literal>lseg '((0,0),(0,1))' ?-| lseg '((0,0),(1,0))'</literal></entry>
+       </row>
+       <row>
 	<entry> ?|| </entry>
-	<entry>Is parallel?</entry>
+	<entry>Parallel?</entry>
 	<entry><literal>lseg '((-1,0),(1,0))' ?|| lseg '((-1,2),(1,2))'</literal></entry>
        </row>
        <row>
+	<entry> ~ </entry>
+	<entry>Contains?</entry>
+	<entry><literal>circle '((0,0),2)' ~ point '(1,1)'</literal></entry>
+       </row>
+       <row>
 	<entry> @ </entry>
-	<entry>Contained or on</entry>
+	<entry>Contained in or on?</entry>
 	<entry><literal>point '(1,1)' @ circle '((0,0),2)'</literal></entry>
        </row>
        <row>
-	<entry> @@ </entry>
-	<entry>Center of</entry>
-	<entry><literal>@@ circle '((0,0),10)'</literal></entry>
-       </row>
-       <row>
 	<entry> ~= </entry>
-	<entry>Same as</entry>
+	<entry>Same as?</entry>
 	<entry><literal>polygon '((0,0),(1,1))' ~= polygon '((1,1),(0,0))'</literal></entry>
        </row>
       </tbody>
