@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_operator.sgml,v 1.18 2001/01/13 23:58:55 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_operator.sgml,v 1.19 2001/05/08 17:51:30 momjian Exp $
 Postgres documentation
 -->
 
@@ -24,7 +24,8 @@ Postgres documentation
   </refsynopsisdivinfo>
   <synopsis>
 CREATE OPERATOR <replaceable>name</replaceable> ( PROCEDURE = <replaceable class="parameter">func_name</replaceable>
-     [, LEFTARG = <replaceable class="parameter">type1</replaceable> ] [, RIGHTARG = <replaceable class="parameter">type2</replaceable> ]
+     [, LEFTARG = <replaceable class="parameter">lefttype</replaceable>
+     ] [, RIGHTARG = <replaceable class="parameter">righttype</replaceable> ]
      [, COMMUTATOR = <replaceable class="parameter">com_op</replaceable> ] [, NEGATOR = <replaceable class="parameter">neg_op</replaceable> ]
      [, RESTRICT = <replaceable class="parameter">res_proc</replaceable> ] [, JOIN = <replaceable class="parameter">join_proc</replaceable> ]
      [, HASHES ] [, SORT1 = <replaceable class="parameter">left_sort_op</replaceable> ] [, SORT2 = <replaceable class="parameter">right_sort_op</replaceable> ] )
@@ -57,7 +58,7 @@ CREATE OPERATOR <replaceable>name</replaceable> ( PROCEDURE = <replaceable class
       </listitem>
      </varlistentry>
      <varlistentry>
-      <term><replaceable class="parameter">type1</replaceable></term>
+      <term><replaceable class="parameter">lefttype</replaceable></term>
       <listitem>
        <para>
 	The type of the left-hand argument of the operator, if any.
@@ -66,7 +67,7 @@ CREATE OPERATOR <replaceable>name</replaceable> ( PROCEDURE = <replaceable class
       </listitem>
      </varlistentry>
      <varlistentry>
-      <term><replaceable class="parameter">type2</replaceable></term>
+      <term><replaceable class="parameter">righttype</replaceable></term>
       <listitem>
        <para>
 	The type of the right-hand argument of the operator, if any.

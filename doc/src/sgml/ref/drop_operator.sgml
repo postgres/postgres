@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_operator.sgml,v 1.9 2000/12/25 23:15:26 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_operator.sgml,v 1.10 2001/05/08 17:51:30 momjian Exp $
 Postgres documentation
 -->
 
@@ -88,7 +88,7 @@ DROP
      </varlistentry>
      <varlistentry>
       <term><computeroutput>
-ERROR:  RemoveOperator: binary operator '<replaceable class="PARAMETER">oper</replaceable>' taking '<replaceable class="PARAMETER">type</replaceable>' and '<replaceable class="PARAMETER">type2</replaceable>' does not exist
+ERROR:  RemoveOperator: binary operator '<replaceable class="PARAMETER">oper</replaceable>' taking '<replaceable class="PARAMETER">lefttype</replaceable>' and '<replaceable class="PARAMETER">righttype</replaceable>' does not exist
        </computeroutput></term>
       <listitem>
        <para>
@@ -98,7 +98,7 @@ ERROR:  RemoveOperator: binary operator '<replaceable class="PARAMETER">oper</re
      </varlistentry>
      <varlistentry>
       <term><computeroutput>
-ERROR:  RemoveOperator: left unary operator '<replaceable class="PARAMETER">oper</replaceable>' taking '<replaceable class="PARAMETER">type</replaceable>' does not exist
+ERROR: RemoveOperator: left unary operator '<replaceable class="PARAMETER">oper</replaceable>' taking '<replaceable class="PARAMETER">lefttype</replaceable>' does not exist
        </computeroutput></term>
       <listitem>
        <para>
@@ -109,7 +109,7 @@ ERROR:  RemoveOperator: left unary operator '<replaceable class="PARAMETER">oper
      </varlistentry>
      <varlistentry>
       <term><computeroutput>
-ERROR:  RemoveOperator: right unary operator '<replaceable class="PARAMETER">oper</replaceable>' taking '<replaceable class="PARAMETER">type</replaceable>' does not exist
+ERROR: RemoveOperator: right unary operator '<replaceable class="PARAMETER">oper</replaceable>' taking '<replaceable class="PARAMETER">righttype</replaceable>' does not exist
        </computeroutput></term>
       <listitem>
        <para>
