@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.131 2002/11/11 03:02:19 momjian Exp $
+ * $Id: c.h,v 1.132 2002/11/13 00:37:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -577,26 +577,36 @@ typedef NameData *Name;
  *	memset() functions.  More research needs to be done, perhaps with
  *	platform-specific MEMSET_LOOP_LIMIT values or tests in configure.
  *
+ *	MemSet has been split into two parts so MemSetTest can be optimized
+ *	away for constant 'val' and 'len'.  This is used by palloc0().
+ *
+ *	Note, arguments are evaluated more than once.
+ *
  *	bjm 2002-10-08
  */
-#define MemSet(start, val, len) \
-	do \
-	{ \
-		int32 * _start = (int32 *) (start); \
-		int		_val = (val); \
-		Size	_len = (len); \
+#define MemSetTest(val, len) \
+	( ((len) & INT_ALIGN_MASK) == 0 && \
+	(len) <= MEMSET_LOOP_LIMIT && \
+	(val) == 0 )
+
+#define MemSetLoop(start, val, len) \
+do \
+{ \
+	int32 * _start = (int32 *) (start); \
+	int32 * _stop = (int32 *) ((char *) _start + (len)); \
 \
-		if ((( ((long) _start) | _len) & INT_ALIGN_MASK) == 0 && \
-			_val == 0 && \
-			_len <= MEMSET_LOOP_LIMIT) \
-		{ \
-			int32 * _stop = (int32 *) ((char *) _start + _len); \
-			while (_start < _stop) \
-				*_start++ = 0; \
-		} \
-		else \
-			memset((char *) _start, _val, _len); \
-	} while (0)
+	while (_start < _stop) \
+		*_start++ = 0; \
+} while (0)
+
+#define MemSet(start, val, len) \
+do \
+{ \
+	if (MemSetTest(val, len) && ((long)(start) & INT_ALIGN_MASK) == 0 ) \
+		MemSetLoop(start, val, len); \
+	else \
+		memset((char *)(start), (val), (len)); \
+} while (0)
 
 #define MEMSET_LOOP_LIMIT  1024
 

@@ -21,7 +21,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: palloc.h,v 1.22 2002/11/10 02:17:25 momjian Exp $
+ * $Id: palloc.h,v 1.23 2002/11/13 00:37:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,11 +46,15 @@ extern DLLIMPORT MemoryContext CurrentMemoryContext;
  * Fundamental memory-allocation operations (more are in utils/memutils.h)
  */
 extern void *MemoryContextAlloc(MemoryContext context, Size size);
-extern void *MemoryContextAllocZero(MemoryContext context, Size size);
+extern void *MemoryContextAllocPalloc0(MemoryContext context, Size size);
 
 #define palloc(sz)	MemoryContextAlloc(CurrentMemoryContext, (sz))
 
-#define palloc0(sz)	MemoryContextAllocZero(CurrentMemoryContext, (sz))
+/* We assume palloc() is already int-aligned */
+#define palloc0(sz)	\
+	( MemSetTest(0, (sz)) ? \
+		MemoryContextAllocPalloc0(CurrentMemoryContext, (sz)) : \
+		memset(palloc(sz), 0, (sz)))
 
 extern void pfree(void *pointer);
 
