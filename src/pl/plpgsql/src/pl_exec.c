@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.41 2001/04/30 20:05:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.42 2001/05/08 01:00:53 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1344,6 +1344,8 @@ exec_stmt_fors(PLpgSQL_execstate * estate, PLpgSQL_stmt_fors * stmt)
 	 */
 	exec_run_select(estate, stmt->query, 0);
 	n = SPI_processed;
+	tuptab = SPI_tuptable;
+	SPI_tuptable = NULL;
 
 	/*
 	 * If the query didn't return any row, set the target to NULL and
@@ -1363,9 +1365,6 @@ exec_stmt_fors(PLpgSQL_execstate * estate, PLpgSQL_stmt_fors * stmt)
 	/*
 	 * Now do the loop
 	 */
-	tuptab = SPI_tuptable;
-	SPI_tuptable = NULL;
-
 	for (i = 0; i < n; i++)
 	{
 
@@ -1445,6 +1444,8 @@ exec_stmt_select(PLpgSQL_execstate * estate, PLpgSQL_stmt_select * stmt)
 	 */
 	exec_run_select(estate, stmt->query, 1);
 	n = SPI_processed;
+	tuptab = SPI_tuptable;
+	SPI_tuptable = NULL;
 
 	/*
 	 * If the query didn't return any row, set the target to NULL and
@@ -1459,9 +1460,6 @@ exec_stmt_select(PLpgSQL_execstate * estate, PLpgSQL_stmt_select * stmt)
 	/*
 	 * Put the result into the target and set found to true
 	 */
-	tuptab = SPI_tuptable;
-	SPI_tuptable = NULL;
-
 	exec_move_row(estate, rec, row, tuptab->vals[0], tuptab->tupdesc);
 
 	exec_set_found(estate, true);
@@ -2053,6 +2051,8 @@ exec_stmt_dynfors(PLpgSQL_execstate * estate, PLpgSQL_stmt_dynfors * stmt)
 	pfree(querystr);
 
 	n = SPI_processed;
+	tuptab = SPI_tuptable;
+	SPI_tuptable = NULL;
 
 	/*
 	 * If the query didn't return any row, set the target to NULL and
@@ -2072,9 +2072,6 @@ exec_stmt_dynfors(PLpgSQL_execstate * estate, PLpgSQL_stmt_dynfors * stmt)
 	/*
 	 * Now do the loop
 	 */
-	tuptab = SPI_tuptable;
-	SPI_tuptable = NULL;
-
 	for (i = 0; i < n; i++)
 	{
 
@@ -2322,9 +2319,9 @@ exec_eval_expr(PLpgSQL_execstate * estate,
 	 * Check that the expression returned one single Datum
 	 */
 	if (SPI_processed > 1)
-		elog(ERROR, "query \"%s\" didn't return a single value", expr->query);
+		elog(ERROR, "query \"%s\" returned more than one row", expr->query);
 	if (SPI_tuptable->tupdesc->natts != 1)
-		elog(ERROR, "query \"%s\" didn't return a single value", expr->query);
+		elog(ERROR, "query \"%s\" returned more than one column", expr->query);
 
 	/*
 	 * Return the result and its type
@@ -2630,14 +2627,14 @@ exec_move_row(PLpgSQL_execstate * estate,
 			if (i < t_natts)
 			{
 				value = SPI_getbinval(tup, tupdesc, i + 1, &isnull);
+				valtype = SPI_gettypeid(tupdesc, i + 1);
 			}
 			else
 			{
 				value = (Datum) 0;
 				isnull = true;
+				valtype = InvalidOid;
 			}
-			/* tupdesc should have entries for all columns I expect... */
-			valtype = SPI_gettypeid(tupdesc, i + 1);
 
 			exec_assign_value(estate, estate->datums[row->varnos[i]],
 							  value, valtype, &isnull);
