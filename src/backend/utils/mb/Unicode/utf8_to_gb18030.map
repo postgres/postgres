@@ -1,4 +1,4 @@
-static pg_utf_to_local ULmapGB18030[ 63489 ] = {
+static pg_utf_to_local ULmapGB18030[] = {
   {0x0000, 0x0000},
   {0x0001, 0x0001},
   {0x0002, 0x0002},

@@ -1,4 +1,4 @@
-static pg_local_to_utf LUmapGB18030[ 63490 ] = {
+static pg_local_to_utf LUmapGB18030[] = {
   {0x0000, 0x0000},
   {0x0001, 0x0001},
   {0x0002, 0x0002},
