@@ -359,19 +359,19 @@ print_table_list(Dllist *table_list)
 void
 print_table_info(tbl_info * tbl)
 {
-	sprintf(logbuffer, "  table name:     %s.%s", tbl->dbi->dbname, tbl->table_name);
+	sprintf(logbuffer, "  table name: %s.%s", tbl->dbi->dbname, tbl->table_name);
 	log_entry(logbuffer);
 	sprintf(logbuffer, "     relid: %u;   relisshared: %i", tbl->relid, tbl->relisshared);
 	log_entry(logbuffer);
 	sprintf(logbuffer, "     reltuples: %f;  relpages: %u", tbl->reltuples, tbl->relpages);
 	log_entry(logbuffer);
-	sprintf(logbuffer, "     curr_analyze_count:  %li; cur_delete_count:   %li",
+	sprintf(logbuffer, "     curr_analyze_count: %li; curr_vacuum_count: %li",
 			tbl->curr_analyze_count, tbl->curr_vacuum_count);
 	log_entry(logbuffer);
-	sprintf(logbuffer, "     ins_at_last_analyze: %li; del_at_last_vacuum: %li",
+	sprintf(logbuffer, "     last_analyze_count: %li; last_vacuum_count: %li",
 			tbl->CountAtLastAnalyze, tbl->CountAtLastVacuum);
 	log_entry(logbuffer);
-	sprintf(logbuffer, "     insert_threshold:    %li; delete_threshold    %li",
+	sprintf(logbuffer, "     analyze_threshold: %li; vacuum_threshold: %li",
 			tbl->analyze_threshold, tbl->vacuum_threshold);
 	log_entry(logbuffer);
 	fflush(LOGOUTPUT);
@@ -678,17 +678,29 @@ print_db_list(Dllist *db_list, int print_table_lists)
 void
 print_db_info(db_info * dbi, int print_tbl_list)
 {
-	sprintf(logbuffer, "dbname: %s Username %s Passwd %s", dbi->dbname,
-			dbi->username, dbi->password);
+	sprintf(logbuffer, "dbname: %s", (dbi->dbname) ? dbi->dbname : "(null)");
 	log_entry(logbuffer);
-	sprintf(logbuffer, " oid %u InsertThresh: %li  DeleteThresh: %li", dbi->oid,
-			dbi->analyze_threshold, dbi->vacuum_threshold);
+	
+	sprintf(logbuffer, "  oid: %u", dbi->oid);
 	log_entry(logbuffer);
+	
+	sprintf(logbuffer, "  username: %s", (dbi->username) ? dbi->username : "(null)");
+	log_entry(logbuffer);
+	
+	sprintf(logbuffer, "  password: %s", (dbi->password) ? dbi->password : "(null)");
+	log_entry(logbuffer);
+	
 	if (dbi->conn != NULL)
-		log_entry(" conn is valid, we are connected");
+		log_entry("  conn is valid, (connected)");
 	else
-		log_entry(" conn is null, we are not connected.");
+		log_entry("  conn is null, (not connected)");
 
+	sprintf(logbuffer, "  default_analyze_threshold: %li", dbi->analyze_threshold);
+	log_entry(logbuffer);
+	
+	sprintf(logbuffer, "  default_vacuum_threshold: %li", dbi->vacuum_threshold);
+	log_entry(logbuffer);
+	
 	fflush(LOGOUTPUT);
 	if (print_tbl_list > 0)
 		print_table_list(dbi->table_list);
@@ -935,7 +947,7 @@ print_cmd_args()
 	log_entry(logbuffer);
 	sprintf(logbuffer, "  args->port=%s", (args->port) ? args->port : "(null)");
 	log_entry(logbuffer);
-	sprintf(logbuffer, "  args->user=%s", (args->user) ? args->user : "(null)");
+	sprintf(logbuffer, "  args->username=%s", (args->user) ? args->user : "(null)");
 	log_entry(logbuffer);
 	sprintf(logbuffer, "  args->password=%s", (args->password) ? args->password : "(null)");
 	log_entry(logbuffer);
@@ -1007,7 +1019,7 @@ main(int argc, char *argv[])
 	db_list = init_db_list();
 	if (db_list == NULL)
 		return 1;
-
+	
 	if (check_stats_enabled(((db_info *) DLE_VAL(DLGetHead(db_list)))) != 0)
 	{
 		log_entry("Error: GUC variable stats_row_level must be enabled.");
