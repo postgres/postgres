@@ -62,7 +62,7 @@ typedef z_stream *z_streamp;
 
 #define K_VERS_MAJOR 1
 #define K_VERS_MINOR 4 
-#define K_VERS_REV 21 
+#define K_VERS_REV 22 
 
 /* Data block types */
 #define BLK_DATA 1
@@ -75,6 +75,9 @@ typedef z_stream *z_streamp;
 #define K_VERS_1_3 (( (1 * 256 + 3) * 256 + 0) * 256 + 0) /* BLOBs */
 #define K_VERS_1_4 (( (1 * 256 + 4) * 256 + 0) * 256 + 0) /* Date & name in header */
 #define K_VERS_MAX (( (1 * 256 + 4) * 256 + 255) * 256 + 0)
+
+/* No of BLOBs to restore in 1 TX */
+#define BLOB_BATCH_SIZE	100
 
 struct _archiveHandle;
 struct _tocEntry;
@@ -186,6 +189,8 @@ typedef struct _archiveHandle {
 	char				*pgport;
 	PGconn				*connection;
 	PGconn				*blobConnection;	/* Connection for BLOB xref */
+	int					txActive;			/* Flag set if TX active on connection */
+	int					blobTxActive;		/* Flag set if TX active on blobConnection */
 	int					connectToDB;		/* Flag to indicate if direct DB connection is required */
 	int					pgCopyIn;			/* Currently in libpq 'COPY IN' mode. */
 	PQExpBuffer			pgCopyBuf;			/* Left-over data from incomplete lines in COPY IN */
@@ -193,6 +198,7 @@ typedef struct _archiveHandle {
 	int					loFd;				/* BLOB fd */
 	int					writingBlob;		/* Flag */
 	int					createdBlobXref;	/* Flag */
+	int					blobCount;			/* # of blobs restored */
 
 	int					lastID;				/* Last internal ID for a TOC entry */
 	char*				fSpec;				/* Archive File Spec */
@@ -256,8 +262,10 @@ extern int 				ReadInt(ArchiveHandle* AH);
 extern char* 			ReadStr(ArchiveHandle* AH);
 extern int 				WriteStr(ArchiveHandle* AH, char* s);
 
+extern void				StartRestoreBlobs(ArchiveHandle* AH);
 extern void 			StartRestoreBlob(ArchiveHandle* AH, int oid);
 extern void 			EndRestoreBlob(ArchiveHandle* AH, int oid);
+extern void				EndRestoreBlobs(ArchiveHandle* AH);
 
 extern void 			InitArchiveFmt_Custom(ArchiveHandle* AH);
 extern void 			InitArchiveFmt_Files(ArchiveHandle* AH);

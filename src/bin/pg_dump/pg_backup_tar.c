@@ -627,6 +627,8 @@ static void	_LoadBlobs(ArchiveHandle* AH, RestoreOptions *ropt)
 	int				cnt;
 	char			buf[4096];
 
+	StartRestoreBlobs(AH);
+
 	th = tarOpen(AH, NULL, 'r'); /* Open next file */
 	while (th != NULL)
 	{
@@ -652,21 +654,8 @@ static void	_LoadBlobs(ArchiveHandle* AH, RestoreOptions *ropt)
 		th = tarOpen(AH, NULL, 'r');
 	}
 
-	/*
-	 * ctx->blobToc = tarOpen(AH, "blobs.toc", 'r');
-	 *
-	 * _getBlobTocEntry(AH, &oid, fname);
-	 *
-     * while(oid != 0)
-     * {
-	 *		StartRestoreBlob(AH, oid);
-	 *		_PrintFileData(AH, fname, ropt);
-	 *		EndRestoreBlob(AH, oid);
-	 *		_getBlobTocEntry(AH, &oid, fname);
-     * }
-	 *
-	 * tarClose(AH, ctx->blobToc);
-	 */	
+	EndRestoreBlobs(AH);
+
 }
 
 

@@ -585,6 +585,8 @@ static void	_LoadBlobs(ArchiveHandle* AH)
 {
     int		oid;
 
+	StartRestoreBlobs(AH);
+
     oid = ReadInt(AH);
     while(oid != 0)
     {
@@ -593,6 +595,9 @@ static void	_LoadBlobs(ArchiveHandle* AH)
 		EndRestoreBlob(AH, oid);
 		oid = ReadInt(AH);
     }
+
+	EndRestoreBlobs(AH);
+
 }
 
 /*
@@ -608,8 +613,8 @@ static void	_skipBlobs(ArchiveHandle* AH)
     oid = ReadInt(AH);
     while(oid != 0)
     {
-	_skipData(AH);
-	oid = ReadInt(AH);
+		_skipData(AH);
+		oid = ReadInt(AH);
     }
 }
 

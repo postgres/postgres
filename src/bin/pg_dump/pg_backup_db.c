@@ -675,6 +675,17 @@ void StartTransaction(ArchiveHandle* AH)
 	appendPQExpBuffer(qry, "Begin;");
 
 	ExecuteSqlCommand(AH, qry, "can not start database transaction");
+	AH->txActive = true;
+}
+
+void StartTransactionXref(ArchiveHandle* AH)
+{
+	PQExpBuffer		qry = createPQExpBuffer();
+
+	appendPQExpBuffer(qry, "Begin;");
+
+	_executeSqlCommand(AH, AH->blobConnection, qry, "can not start BLOB xref transaction");
+	AH->blobTxActive = true;
 }
 
 void CommitTransaction(ArchiveHandle* AH)
@@ -684,6 +695,15 @@ void CommitTransaction(ArchiveHandle* AH)
     appendPQExpBuffer(qry, "Commit;");
 
     ExecuteSqlCommand(AH, qry, "can not commit database transaction");
+	AH->txActive = false;
 }
 
+void CommitTransactionXref(ArchiveHandle* AH)
+{
+	PQExpBuffer		qry = createPQExpBuffer();
 
+	appendPQExpBuffer(qry, "Commit;");
+
+	_executeSqlCommand(AH, AH->blobConnection, qry, "can not commit BLOB xref transaction");
+	AH->blobTxActive = false;
+}

@@ -23,6 +23,10 @@
  * Modifications - 31-Jul-2000 - pjw@rhyme.com.au (1.46, 1.47)
  *		Fixed version number initialization in _allocAH (pg_backup_archiver.c)
  *
+ *
+ * Modifications - 30-Oct-2000 - pjw@rhyme.com.au
+ *		Added {Start,End}RestoreBlobs to allow extended TX during BLOB restore.
+ *
  *-------------------------------------------------------------------------
  */
 
@@ -591,11 +595,41 @@ int EndBlob(Archive* AHX, int oid)
  **********/
 
 /*
+ * Called by a format handler before any blobs are restored 
+ */
+void StartRestoreBlobs(ArchiveHandle* AH)
+{
+	AH->blobCount = 0;
+}
+
+/*
+ * Called by a format handler after all blobs are restored 
+ */
+void EndRestoreBlobs(ArchiveHandle* AH)
+{
+	if (AH->txActive)
+	{
+		ahlog(AH, 2, "Committing BLOB transactions\n");
+		CommitTransaction(AH);
+	}
+
+	if (AH->blobTxActive)
+	{
+		CommitTransactionXref(AH);
+	}
+
+	ahlog(AH, 1, "Restored %d BLOBs\n", AH->blobCount);
+}
+
+
+/*
  * Called by a format handler to initiate restoration of a blob
  */
 void StartRestoreBlob(ArchiveHandle* AH, int oid)
 {
 	int			loOid;
+
+	AH->blobCount++;
 
 	if (!AH->createdBlobXref)
 	{
@@ -606,7 +640,18 @@ void StartRestoreBlob(ArchiveHandle* AH, int oid)
 		AH->createdBlobXref = 1;
 	}
 
-	StartTransaction(AH);
+	/*
+	 * Start long-running TXs if necessary
+	 */
+	if (!AH->txActive)
+	{
+		ahlog(AH, 2, "Starting BLOB transactions\n");
+		StartTransaction(AH);
+	}
+	if (!AH->blobTxActive)
+	{
+		StartTransactionXref(AH);
+	}
 
 	loOid = lo_creat(AH->connection, INV_READ | INV_WRITE);
 	if (loOid == 0)
@@ -628,7 +673,15 @@ void EndRestoreBlob(ArchiveHandle* AH, int oid)
     lo_close(AH->connection, AH->loFd);
     AH->writingBlob = 0;
 
-	CommitTransaction(AH);
+	/*
+	 * Commit every BLOB_BATCH_SIZE blobs...
+	 */
+	if ( ((AH->blobCount / BLOB_BATCH_SIZE) * BLOB_BATCH_SIZE) == AH->blobCount) 
+	{
+		ahlog(AH, 2, "Committing BLOB transactions\n");
+		CommitTransaction(AH);
+		CommitTransactionXref(AH);
+	}
 }
 
 /***********

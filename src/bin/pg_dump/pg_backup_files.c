@@ -318,6 +318,8 @@ static void	_LoadBlobs(ArchiveHandle* AH, RestoreOptions *ropt)
 	lclContext*		ctx = (lclContext*)AH->formatData;
 	char			fname[K_STD_BUF_SIZE];
 
+	StartRestoreBlobs(AH);
+
 	ctx->blobToc = fopen("blobs.toc", PG_BINARY_R);
 
 	_getBlobTocEntry(AH, &oid, fname);
@@ -331,6 +333,8 @@ static void	_LoadBlobs(ArchiveHandle* AH, RestoreOptions *ropt)
     }
 
 	fclose(ctx->blobToc);
+
+	EndRestoreBlobs(AH);
 }
 
 
