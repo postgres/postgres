@@ -67,11 +67,14 @@ do
 			line2 = $0;
 			if (skips > 0)
 				skips--;
-			if (line1 ~ "^extern[ 	]*\"C\"" &&
-			    line2 ~ "^{[ 	]*$")
+			if (line1 ~ "^#ifdef[ 	]*__cplusplus" &&
+			    line2 ~ "^extern[ 	]*\"C\"[ 	]*$")
 			{
-				# do not print first line
-				print "/* Open extern \"C\" */";
+				print line1;
+				print line2;
+				if (getline && $0 ~ /^{[ 	]*$/)
+					print "/* Open extern \"C\" */";
+				else	print $0;
 				line2 = "";
 				skips = 2;
 			}
@@ -1490,8 +1493,7 @@ do
 # remove tabs and retab with four spaces
 	detab -t8 -qc |
 	entab -t4 -qc |
-	sed 's;^/\* Open extern \"C\" \*/$;extern		"C"\
-{;' |
+	sed 's;^/\* Open extern \"C\" \*/$;{;' |
 	sed 's;^/\* Close extern \"C\" \*/$;};' |
 	sed 's;/\*---X_X;/* ---;g' |
 # workaround indent bug
