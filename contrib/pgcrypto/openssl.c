@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/openssl.c,v 1.16 2005/03/21 05:19:55 neilc Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/openssl.c,v 1.17 2005/03/21 05:21:04 neilc Exp $
  */
 
 #include <postgres.h>
@@ -34,6 +34,14 @@
 #include "px.h"
 
 #include <openssl/evp.h>
+
+/*
+ * Is OpenSSL compiled with AES? 
+ */
+#undef GOT_AES
+#ifdef AES_ENCRYPT
+#define GOT_AES
+#endif
 
 /*
  * Hashes
@@ -165,7 +173,14 @@ typedef struct
 		{
 			des_key_schedule key_schedule;
 		}			des;
+		struct
+		{
+			des_key_schedule k1, k2, k3;
+		}			des3;
 		CAST_KEY	cast_key;
+#ifdef GOT_AES
+		AES_KEY		aes_key;
+#endif
 	}			u;
 	uint8		key[EVP_MAX_KEY_LENGTH];
 	uint8		iv[EVP_MAX_IV_LENGTH];
@@ -362,6 +377,91 @@ ossl_des_cbc_decrypt(PX_Cipher * c, const uint8 *data, unsigned dlen,
 	return 0;
 }
 
+/* DES3 */
+
+static int
+ossl_des3_init(PX_Cipher * c, const uint8 *key, unsigned klen, const uint8 *iv)
+{
+	ossldata   *od = c->ptr;
+	des_cblock	xkey1,
+				xkey2,
+				xkey3;
+
+	memset(&xkey1, 0, sizeof(xkey1));
+	memset(&xkey2, 0, sizeof(xkey2));
+	memset(&xkey2, 0, sizeof(xkey2));
+	memcpy(&xkey1, key, klen > 8 ? 8 : klen);
+	if (klen > 8)
+		memcpy(&xkey2, key + 8, (klen - 8) > 8 ? 8 : (klen - 8));
+	if (klen > 16)
+		memcpy(&xkey3, key + 16, (klen - 16) > 8 ? 8 : (klen - 16));
+
+	DES_set_key(&xkey1, &od->u.des3.k1);
+	DES_set_key(&xkey2, &od->u.des3.k2);
+	DES_set_key(&xkey3, &od->u.des3.k3);
+	memset(&xkey1, 0, sizeof(xkey1));
+	memset(&xkey2, 0, sizeof(xkey2));
+	memset(&xkey3, 0, sizeof(xkey3));
+
+	if (iv)
+		memcpy(od->iv, iv, 8);
+	else
+		memset(od->iv, 0, 8);
+	return 0;
+}
+
+static int
+ossl_des3_ecb_encrypt(PX_Cipher * c, const uint8 *data, unsigned dlen,
+					  uint8 *res)
+{
+	unsigned	bs = gen_ossl_block_size(c);
+	unsigned	i;
+	ossldata   *od = c->ptr;
+
+	for (i = 0; i < dlen / bs; i++)
+		DES_ecb3_encrypt(data + i * bs, res + i * bs,
+						 &od->u.des3.k1, &od->u.des3.k2, &od->u.des3.k3, 1);
+	return 0;
+}
+
+static int
+ossl_des3_ecb_decrypt(PX_Cipher * c, const uint8 *data, unsigned dlen,
+					  uint8 *res)
+{
+	unsigned	bs = gen_ossl_block_size(c);
+	unsigned	i;
+	ossldata   *od = c->ptr;
+
+	for (i = 0; i < dlen / bs; i++)
+		DES_ecb3_encrypt(data + i * bs, res + i * bs,
+						 &od->u.des3.k1, &od->u.des3.k2, &od->u.des3.k3, 0);
+	return 0;
+}
+
+static int
+ossl_des3_cbc_encrypt(PX_Cipher * c, const uint8 *data, unsigned dlen,
+					  uint8 *res)
+{
+	ossldata   *od = c->ptr;
+
+	DES_ede3_cbc_encrypt(data, res, dlen,
+						 &od->u.des3.k1, &od->u.des3.k2, &od->u.des3.k3,
+						 (des_cblock *) od->iv, 1);
+	return 0;
+}
+
+static int
+ossl_des3_cbc_decrypt(PX_Cipher * c, const uint8 *data, unsigned dlen,
+					  uint8 *res)
+{
+	ossldata   *od = c->ptr;
+
+	DES_ede3_cbc_encrypt(data, res, dlen,
+						 &od->u.des3.k1, &od->u.des3.k2, &od->u.des3.k3,
+						 (des_cblock *) od->iv, 0);
+	return 0;
+}
+
 /* CAST5 */
 
 static int
@@ -420,6 +520,103 @@ ossl_cast_cbc_decrypt(PX_Cipher * c, const uint8 *data, unsigned dlen, uint8 *re
 	return 0;
 }
 
+/* AES */
+
+#ifdef GOT_AES
+
+static int
+ossl_aes_init(PX_Cipher * c, const uint8 *key, unsigned klen, const uint8 *iv)
+{
+	ossldata   *od = c->ptr;
+	unsigned	bs = gen_ossl_block_size(c);
+
+	if (klen <= 128/8)
+		od->klen = 128/8;
+	else if (klen <= 192/8)
+		od->klen = 192/8;
+	else if (klen <= 256/8)
+		od->klen = 256/8;
+	else
+		return PXE_KEY_TOO_BIG;
+
+	memcpy(od->key, key, klen);
+
+	if (iv)
+		memcpy(od->iv, iv, bs);
+	else
+		memset(od->iv, 0, bs);
+	return 0;
+}
+
+static void
+ossl_aes_key_init(ossldata * od, int type)
+{
+	if (type == AES_ENCRYPT)
+		AES_set_encrypt_key(od->key, od->klen * 8, &od->u.aes_key);
+	else
+		AES_set_decrypt_key(od->key, od->klen * 8, &od->u.aes_key);
+	od->init = 1;
+}
+
+static int
+ossl_aes_ecb_encrypt(PX_Cipher * c, const uint8 *data, unsigned dlen,
+					 uint8 *res)
+{
+	unsigned	bs = gen_ossl_block_size(c);
+	ossldata   *od = c->ptr;
+	const uint8 *end = data + dlen - bs;
+
+	if (!od->init)
+		ossl_aes_key_init(od, AES_ENCRYPT);
+
+	for (; data <= end; data += bs, res += bs)
+		AES_ecb_encrypt(data, res, &od->u.aes_key, AES_ENCRYPT);
+	return 0;
+}
+
+static int
+ossl_aes_ecb_decrypt(PX_Cipher * c, const uint8 *data, unsigned dlen,
+					 uint8 *res)
+{
+	unsigned	bs = gen_ossl_block_size(c);
+	ossldata   *od = c->ptr;
+	const uint8 *end = data + dlen - bs;
+
+	if (!od->init)
+		ossl_aes_key_init(od, AES_DECRYPT);
+
+	for (; data <= end; data += bs, res += bs)
+		AES_ecb_encrypt(data, res, &od->u.aes_key, AES_DECRYPT);
+	return 0;
+}
+
+static int
+ossl_aes_cbc_encrypt(PX_Cipher * c, const uint8 *data, unsigned dlen,
+					 uint8 *res)
+{
+	ossldata   *od = c->ptr;
+
+	if (!od->init)
+		ossl_aes_key_init(od, AES_ENCRYPT);
+
+	AES_cbc_encrypt(data, res, dlen, &od->u.aes_key, od->iv, AES_ENCRYPT);
+	return 0;
+}
+
+static int
+ossl_aes_cbc_decrypt(PX_Cipher * c, const uint8 *data, unsigned dlen,
+					 uint8 *res)
+{
+	ossldata   *od = c->ptr;
+
+	if (!od->init)
+		ossl_aes_key_init(od, AES_DECRYPT);
+
+	AES_cbc_encrypt(data, res, dlen, &od->u.aes_key, od->iv, AES_DECRYPT);
+	return 0;
+}
+#endif
+
 /*
  * aliases
  */
@@ -431,7 +628,14 @@ static PX_Alias ossl_aliases[] = {
 	{"blowfish-ecb", "bf-ecb"},
 	{"blowfish-cfb", "bf-cfb"},
 	{"des", "des-cbc"},
+	{"3des", "des3-cbc"},
+	{"3des-ecb", "des3-ecb"},
+	{"3des-cbc", "des3-cbc"},
 	{"cast5", "cast5-cbc"},
+	{"aes", "aes-cbc"},
+	{"rijndael", "aes-cbc"},
+	{"rijndael-cbc", "aes-cbc"},
+	{"rijndael-ecb", "aes-ecb"},
 	{NULL}
 };
 
@@ -460,6 +664,16 @@ static const struct ossl_cipher ossl_des_cbc = {
 	64 / 8, 64 / 8, 0
 };
 
+static const struct ossl_cipher ossl_des3_ecb = {
+	ossl_des3_init, ossl_des3_ecb_encrypt, ossl_des3_ecb_decrypt,
+	64 / 8, 192 / 8, 0
+};
+
+static const struct ossl_cipher ossl_des3_cbc = {
+	ossl_des3_init, ossl_des3_cbc_encrypt, ossl_des3_cbc_decrypt,
+	64 / 8, 192 / 8, 0
+};
+
 static const struct ossl_cipher ossl_cast_ecb = {
 	ossl_cast_init, ossl_cast_ecb_encrypt, ossl_cast_ecb_decrypt,
 	64 / 8, 128 / 8, 0
@@ -469,6 +683,18 @@ static const struct ossl_cipher ossl_cast_cbc = {
 	ossl_cast_init, ossl_cast_cbc_encrypt, ossl_cast_cbc_decrypt,
 	64 / 8, 128 / 8, 0
 };
+
+#ifdef GOT_AES
+static const struct ossl_cipher ossl_aes_ecb = {
+	ossl_aes_init, ossl_aes_ecb_encrypt, ossl_aes_ecb_decrypt,
+	128 / 8, 256 / 8, 0
+};
+
+static const struct ossl_cipher ossl_aes_cbc = {
+	ossl_aes_init, ossl_aes_cbc_encrypt, ossl_aes_cbc_decrypt,
+	128 / 8, 256 / 8, 0
+};
+#endif
 
 /*
  * Special handlers
@@ -485,8 +711,14 @@ static const struct ossl_cipher_lookup ossl_cipher_types[] = {
 	{"bf-cfb", &ossl_bf_cfb},
 	{"des-ecb", &ossl_des_ecb},
 	{"des-cbc", &ossl_des_cbc},
+	{"des3-ecb", &ossl_des3_ecb},
+	{"des3-cbc", &ossl_des3_cbc},
 	{"cast5-ecb", &ossl_cast_ecb},
 	{"cast5-cbc", &ossl_cast_cbc},
+#ifdef GOT_AES
+	{"aes-ecb", &ossl_aes_ecb},
+	{"aes-cbc", &ossl_aes_cbc},
+#endif
 	{NULL}
 };
 

@@ -178,10 +178,9 @@ internal (default):
     Ciphers: Blowfish, Rijndael-128
 
 
-OpenSSL (0.9.6):
+OpenSSL (0.9.7):
     Hashes:	MD5, SHA1, RIPEMD160, MD2   
-    Ciphers:	DES, DESX, DES3, RC5, RC4, RC2, IDEA,
-		Blowfish, CAST5
+    Ciphers:	Blowfish, AES, CAST5, DES, 3DES
     License:	BSD-like with strong advertisement
     Url:	http://www.openssl.org/
 
