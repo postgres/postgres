@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/sysv_shmem.c,v 1.22 2003/10/26 04:53:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/sysv_shmem.c,v 1.23 2003/10/26 04:54:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -133,7 +133,7 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, uint32 size)
 	on_shmem_exit(IpcMemoryDelete, Int32GetDatum(shmid));
 
 	/* OK, should be able to attach to the segment */
-#if defined(sun) && defined(__sparc__)
+#if defined(__sun__) && defined(__sparc__)
 	/* use intimate shared memory on SPARC Solaris */
 	memAddress = shmat(shmid, 0, SHM_SHARE_MMU);
 #else
@@ -352,7 +352,7 @@ PGSharedMemoryAttach(IpcMemoryKey key, IpcMemoryId *shmid)
 
 	hdr = (PGShmemHeader *) shmat(*shmid,
 								  UsedShmemSegAddr,
-#if defined(sun) && defined(__sparc__)
+#if defined(__sun__) && defined(__sparc__)
 	/* use intimate shared memory on Solaris */
 								  SHM_SHARE_MMU
 #else
