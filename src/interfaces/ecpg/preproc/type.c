@@ -146,7 +146,13 @@ get_type(enum ECPGttype typ)
 			return ("ECPGt_long");
 			break;
 		case ECPGt_unsigned_long:
-			return ("ECPGt_unsigned_int");
+			return ("ECPGt_unsigned_long");
+			break;
+		case ECPGt_long_long:
+			return ("ECPGt_long_long");
+			break;
+		case ECPGt_unsigned_long_long:
+			return ("ECPGt_unsigned_long_long");
 			break;
 		case ECPGt_float:
 			return ("ECPGt_float");

@@ -305,6 +305,11 @@ ECPGexecute(struct statement * stmt)
 				if (*(long *) var->ind_value < 0L)
 					strcpy(buff, "null");
 				break;
+			case ECPGt_long_long:
+			case ECPGt_unsigned_long_long:
+	                        if (*(long long int*) var->ind_value < 0LL)
+					strcpy(buff, "null");
+	                        break;
 			default:
 				break;
 		}
@@ -425,6 +430,44 @@ ECPGexecute(struct statement * stmt)
 					}
 					else
 						sprintf(mallocedval, "%lu", *((unsigned long *) var->value));
+
+					tobeinserted = mallocedval;
+					break;
+					
+				case ECPGt_long_long:
+					if (!(mallocedval = ecpg_alloc(var->arrsize * 25, stmt->lineno)))
+						return false;
+
+					if (var->arrsize > 1)
+					{
+						strncpy(mallocedval, "'{", sizeof("'{"));
+
+						for (element = 0; element < var->arrsize; element++)
+							sprintf(mallocedval + strlen(mallocedval), "%lld,", ((long long *) var->value)[element]);
+
+						strncpy(mallocedval + strlen(mallocedval) - 1, "}'", sizeof("}'"));
+					}
+					else
+						sprintf(mallocedval, "%lld", *((long long *) var->value));
+
+					tobeinserted = mallocedval;
+					break;
+
+				case ECPGt_unsigned_long_long:
+					if (!(mallocedval = ecpg_alloc(var->arrsize * 25, stmt->lineno)))
+						return false;
+
+					if (var->arrsize > 1)
+					{
+						strncpy(mallocedval, "'{", sizeof("'{"));
+
+						for (element = 0; element < var->arrsize; element++)
+							sprintf(mallocedval + strlen(mallocedval), "%llu,", ((unsigned long long *) var->value)[element]);
+
+						strncpy(mallocedval + strlen(mallocedval) - 1, "}'", sizeof("}'"));
+					}
+					else
+						sprintf(mallocedval, "%llu", *((unsigned long long*) var->value));
 
 					tobeinserted = mallocedval;
 					break;
@@ -868,7 +911,7 @@ ECPGdo(int lineno, const char *connection_name, char *query,...)
  *
  * Copyright (c) 2000, Christof Petig <christof.petig@wtal.de>
  *
- * $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.7 2000/05/29 21:25:00 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.8 2000/09/19 11:47:13 meskes Exp $
  */
 
 PGconn	   *ECPG_internal_get_connection(char *name);

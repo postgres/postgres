@@ -50,7 +50,6 @@ static ScanKeyword ScanKeywords[] = {
 	{"name", SQL_NAME},
 	{"nullable", SQL_NULLABLE},
 	{"octet_length", SQL_OCTET_LENGTH},
-	{"off", SQL_OFF},
 	{"open", SQL_OPEN},
 	{"prepare", SQL_PREPARE},
 	{"reference", SQL_REFERENCE},

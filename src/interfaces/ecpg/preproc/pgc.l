@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.60 2000/06/28 18:29:40 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.61 2000/09/19 11:47:14 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,6 +49,8 @@ extern YYSTYPE yylval;
 static char	   *literalbuf = NULL;		/* expandable buffer */
 static int		literallen;		/* actual current length */
 static int		literalalloc;	/* current allocated buffer size */
+
+static int             xcdepth = 0; 
 
 #define startlit()  (literalbuf[0] = '\0', literallen = 0)
 static void addlit(char *ytext, int yleng);
@@ -140,6 +142,7 @@ xqcat			{quote}{whitespace_with_newline}{quote}
 dquote			\"
 xdstart			{dquote}
 xdstop			{dquote}
+xddouble               	{dquote}{dquote}
 xdinside		[^"]+
 
 /* special stuff for C strings */
@@ -169,7 +172,7 @@ xdcinside		({xdcqq}|{xdcqdq}|{xdcother})
  */
 xcstart			\/\*{op_chars}*
 xcstop			\*+\/
-xcinside 		([^*]+)|(\*+[^/])
+xcinside 		[^*/]+
 
 digit			[0-9]
 letter			[\200-\377_A-Za-z]
@@ -190,7 +193,7 @@ typecast		"::"
  * rule for "operator"!
  */
 self			[,()\[\].;$\:\+\-\*\/\%\^\<\>\=\|]
-op_chars		[\~\!\@\#\^\&\|\`\?\$\:\+\-\*\/\%\<\>\=]
+op_chars		[\~\!\@\#\^\&\|\`\?\$\+\-\*\/\%\<\>\=]
 operator		{op_chars}+
 
 /* we no longer allow unary minus in numbers. 
@@ -281,15 +284,30 @@ cppline			{space}*#(.*\\{line_end})*.*
 
 {xcstart}		{
 				state_before = YYSTATE;
+				xcdepth = 0;
 	 			BEGIN(xc);
 				/* Put back any characters past slash-star; see above */
 				yyless(2);
 				fputs("/*", yyout);
 			}
 
-<xc>{xcstop}	{ ECHO; BEGIN(state_before); }
+<xc>{xcstart}   {
+                        xcdepth++;
+                        /* Put back any characters past slash-star; see above */
+                        yyless(2);
+			fputs("/*", yyout);
+                }
+
+<xc>{xcstop}    {
+			ECHO;
+                        if (xcdepth <= 0)
+                        	BEGIN(state_before);
+                        else
+                                xcdepth--;
+		}
 
 <xc>{xcinside}	{ ECHO; }
+<xc>{op_chars}  { ECHO; }
 
 <xc><<EOF>>            { mmerror(ET_ERROR, "Unterminated /* comment"); }
 
@@ -361,10 +379,35 @@ cppline			{space}*#(.*\\{line_end})*.*
 					BEGIN(xd);
 					startlit();
 				}
-<xd,xdc>{xdstop}			{
+<xd>{xdstop}		{
 					BEGIN(state_before);
+					if (strlen(literalbuf) >= NAMEDATALEN)
+       			                {
+#ifdef MULTIBYTE
+                                                int len;
+
+	                                        len = pg_mbcliplen(literalbuf,strlen(literalbuf),NAMEDATALEN-1);
+						sprintf(errortext, "identifier \"%s\" will be truncated to \"%.*s\"",
+                                                        literalbuf, len, literalbuf);
+	                                        literalbuf[len] = '\0';
+#else
+						sprintf(errortext, "identifier \"%s\" will be truncated to \"%.*s\"",
+                                                        literalbuf, NAMEDATALEN-1, literalbuf);
+                                                literalbuf[NAMEDATALEN-1] = '\0';
+#endif
+ 						mmerror(ET_WARN, errortext);
+                                        }
+
 					yylval.str = mm_strdup(literalbuf);
 					return CSTRING;
+				}
+<xdc>{xdstop}			{
+					BEGIN(state_before);   
+					yylval.str = mm_strdup(literalbuf);
+					return CSTRING;
+				}
+<xd>{xddouble} 			{
+					addlit(yytext, yyleng-1);
 				}
 <xd>{xdinside}			{
 					addlit(yytext, yyleng);
@@ -426,7 +469,7 @@ cppline			{space}*#(.*\\{line_end})*.*
 
 						for (ic = nchars-2; ic >= 0; ic--)
 						{
-							if (strchr("~!@#&`?$:%^|", yytext[ic]))
+							if (strchr("~!@#^&|`?$%", yytext[ic]))
 								break;
 						}
 						if (ic >= 0)
@@ -498,8 +541,19 @@ cppline			{space}*#(.*\\{line_end})*.*
 
 					if (i >= NAMEDATALEN)
 					{
-						sprintf(errortext, "Identifier \"%s\" will be truncated to \"%.*s\"", yytext, NAMEDATALEN-1, yytext);
-						mmerror (ET_WARN, errortext);
+#ifdef MULTIBYTE
+                                                int len;
+
+	                                        len = pg_mbcliplen(lower_text,strlen(lower_text),NAMEDATALEN-1);
+						sprintf(errortext, "identifier \"%s\" will be truncated to \"%.*s\"",
+                                                        lower_text, len, lower_text);
+	                                        lower_text[len] = '\0';
+#else
+						sprintf(errortext, "identifier \"%s\" will be truncated to \"%.*s\"",
+                                                        lower_text, NAMEDATALEN-1, lower_text);
+                                                lower_text[NAMEDATALEN-1] = '\0';
+#endif
+ 						mmerror(ET_WARN, errortext);
                                                 yytext[NAMEDATALEN-1] = '\0';
 					}
 

@@ -46,9 +46,11 @@ ECPGnumeric_lvalue(FILE *f, char *name)
 		case ECPGt_short:
 		case ECPGt_int:
 		case ECPGt_long:
+		case ECPGt_long_long:
 		case ECPGt_unsigned_short:
 		case ECPGt_unsigned_int:
 		case ECPGt_unsigned_long:
+		case ECPGt_unsigned_long_long:
 			fputs(name, yyout);
 			break;
 		default:

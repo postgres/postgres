@@ -47,13 +47,14 @@ extern		"C"
 		ECPGt_char_variable,
 		ECPGt_EOIT,				/* End of insert types. */
 		ECPGt_EORT,				/* End of result types. */
-		ECPGt_NO_INDICATOR		/* no indicator */
+		ECPGt_NO_INDICATOR,		/* no indicator */
+		ECPGt_long_long, ECPGt_unsigned_long_long
 	};
 
 	/* descriptor items */
 	enum ECPGdtype
 	{
-		ECPGd_count,
+		ECPGd_count = 1,
 		ECPGd_data,
 		ECPGd_di_code,
 		ECPGd_di_precision,

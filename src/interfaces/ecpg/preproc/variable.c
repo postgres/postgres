@@ -260,9 +260,11 @@ check_indicator(struct ECPGtype * var)
 		case ECPGt_short:
 		case ECPGt_int:
 		case ECPGt_long:
+		case ECPGt_long_long:
 		case ECPGt_unsigned_short:
 		case ECPGt_unsigned_int:
 		case ECPGt_unsigned_long:
+		case ECPGt_unsigned_long_long:
 			break;
 
 		case ECPGt_struct:

@@ -63,29 +63,35 @@ get_int_item(int lineno, void *var, enum ECPGdtype vartype, int value)
 {
 	switch (vartype)
 	{
-			case ECPGt_short:
-			*(short *) var = value;
+		case ECPGt_short:
+			*(short *) var = (short) value;
 			break;
 		case ECPGt_int:
-			*(int *) var = value;
+			*(int *) var = (int) value;
 			break;
 		case ECPGt_long:
-			*(long *) var = value;
+			*(long *) var = (long) value;
 			break;
 		case ECPGt_unsigned_short:
-			*(unsigned short *) var = value;
+			*(unsigned short *) var = (unsigned short) value;
 			break;
 		case ECPGt_unsigned_int:
-			*(unsigned int *) var = value;
+			*(unsigned int *) var = (unsigned int) value;
 			break;
 		case ECPGt_unsigned_long:
-			*(unsigned long *) var = value;
+			*(unsigned long *) var = (unsigned long) value;
+			break;
+		case ECPGt_long_long:
+			*(long long int *) var = (long long int) value;
+			break;
+		case ECPGt_unsigned_long_long:
+			*(unsigned long long int *) var = (unsigned long long int) value;
 			break;
 		case ECPGt_float:
-			*(float *) var = value;
+			*(float *) var = (float) value;
 			break;
 		case ECPGt_double:
-			*(double *) var = value;
+			*(double *) var = (double) value;
 			break;
 		default:
 			ECPGraise(lineno, ECPG_VAR_NOT_NUMERIC, NULL);

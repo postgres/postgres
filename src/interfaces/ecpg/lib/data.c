@@ -60,6 +60,12 @@ get_data(PGresult *results, int act_tuple, int act_field, int lineno,
 		case ECPGt_unsigned_long:
 			((long *) ind)[act_tuple] = -PQgetisnull(results, act_tuple, act_field);
 			break;
+		case ECPGt_long_long:
+		        ((long long int*) ind)[act_tuple] = -PQgetisnull(results, act_tuple, act_field);
+		        break;
+		case ECPGt_unsigned_long_long:
+		        ((unsigned long long int*) ind)[act_tuple] = -PQgetisnull(results, act_tuple, act_field);
+		        break; 
 		case ECPGt_NO_INDICATOR:
 			if (PQgetisnull(results, act_tuple, act_field))
 			{
@@ -93,7 +99,6 @@ get_data(PGresult *results, int act_tuple, int act_field, int lineno,
 					{
 						ECPGraise(lineno, ECPG_INT_FORMAT, pval);
 						return (false);
-						res = 0L;
 					}
 				}
 				else
@@ -127,7 +132,6 @@ get_data(PGresult *results, int act_tuple, int act_field, int lineno,
 					{
 						ECPGraise(lineno, ECPG_UINT_FORMAT, pval);
 						return (false);
-						ures = 0L;
 					}
 				}
 				else
@@ -150,7 +154,38 @@ get_data(PGresult *results, int act_tuple, int act_field, int lineno,
 				}
 				break;
 
+			case ECPGt_long_long:
+				if (pval)
+				{
+					((long long int *) var)[act_tuple] = strtoull(pval, &scan_length, 10);
+					if ((isarray && *scan_length != ',' && *scan_length != '}')
+						|| (!isarray && *scan_length != '\0'))	/* Garbage left */
+					{
+						ECPGraise(lineno, ECPG_INT_FORMAT, pval);
+				                return (false);
+				        }
+				}
+				else     
+					((long long int *) var)[act_tuple] = 0LL;
+				
+				break;
 
+			case ECPGt_unsigned_long_long:
+				if (pval)
+				{
+					((unsigned long long int *) var)[act_tuple] = strtoull(pval, &scan_length, 10);
+					if ((isarray && *scan_length != ',' && *scan_length != '}')
+						|| (!isarray && *scan_length != '\0'))	/* Garbage left */
+					{
+						ECPGraise(lineno, ECPG_UINT_FORMAT, pval);
+				                return (false);
+				        }
+				}
+				else     
+					((unsigned long long int *) var)[act_tuple] = 0LL;
+				
+				break;
+					
 			case ECPGt_float:
 			case ECPGt_double:
 				if (pval)
