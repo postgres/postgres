@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/openssl.c,v 1.13 2003/11/29 22:39:28 pgsql Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/openssl.c,v 1.14 2005/03/12 06:53:54 neilc Exp $
  */
 
 #include <postgres.h>
@@ -73,8 +73,15 @@ static void
 digest_finish(PX_MD * h, uint8 *dst)
 {
 	EVP_MD_CTX *ctx = (EVP_MD_CTX *) h->p.ptr;
+	const EVP_MD *md = EVP_MD_CTX_md(ctx);
 
 	EVP_DigestFinal(ctx, dst, NULL);
+
+	/*
+	 * Some builds of 0.9.7x clear all of ctx in EVP_DigestFinal.
+	 * Fix it by reinitializing ctx.
+	 */
+	EVP_DigestInit(ctx, md);
 }
 
 static void
