@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.104 2003/02/14 13:17:13 meskes Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.105 2003/02/14 16:40:01 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,6 +43,7 @@ static int		literalalloc;			/* current allocated buffer size */
 #define startlit()	(literalbuf[0] = '\0', literallen = 0)
 static void addlit(char *ytext, int yleng);
 static void addlitchar (unsigned char);
+static void string_unput (char *);
 
 char *token_start;
 int state_before;
@@ -701,12 +702,67 @@ cppline			{space}*#(.*\\{space})*.*
 <C>{other}			{ return S_ANYTHING; }
 
 <C>{exec_sql}{define}{space}*	{ BEGIN(def_ident); }
+<C>{informix_special}{define}{space}*	{
+						/* are we simulating Informix? */
+						if (compat == ECPG_COMPAT_INFORMIX)
+						{
+							BEGIN(def_ident);
+						}
+						else
+						{
+							string_unput("define ");
+							/* remove the "define " part of the text */
+							yytext[1] = '\0';
+							return (S_ANYTHING);
+						}
+					}
 <C>{exec_sql}{include}{space}*	{ BEGIN(incl); }
-<C>{informix_special}{include}{space}*	{ BEGIN(incl); }
-
+<C>{informix_special}{include}{space}* { 
+					  /* are we simulating Informix? */
+					  if (compat == ECPG_COMPAT_INFORMIX)
+					  {
+					  	BEGIN(incl);
+					  }
+					  else
+					  {
+					  	string_unput("include ");
+						/* remove the "include " part of the text */
+						yytext[1] = '\0';
+						return (S_ANYTHING);
+					  }
+					}
 <C,xskip>{exec_sql}{ifdef}{space}*	{ ifcond = TRUE; BEGIN(xcond); }
+<C,xskip>{informix_special}{ifdef}{space}* { 
+					  /* are we simulating Informix? */
+					  if (compat == ECPG_COMPAT_INFORMIX)
+					  {
+					  	ifcond = TRUE;
+						BEGIN(xcond);
+					  }
+					  else
+					  {
+					  	string_unput("ifdef ");
+						/* remove the "ifdef " part of the text */
+						yytext[1] = '\0';
+						return (S_ANYTHING);
+					  }
+					}
 <C,xskip>{exec_sql}{ifndef}{space}* { ifcond = FALSE; BEGIN(xcond); }
-
+<C,xskip>{informix_special}{ifndef}{space}* { 
+					  /* are we simulating Informix? */
+					  if (compat == ECPG_COMPAT_INFORMIX)
+					  {
+					  	ifcond = FALSE;
+						BEGIN(xcond);
+					  }
+					  else
+					  {
+					  	string_unput("ifndef ");
+						/* remove the "ifndef " part of the text */
+						yytext[1] = '\0';
+						return (S_ANYTHING);
+					  }
+					}
 <C,xskip>{exec_sql}{elif}{space}*	{	/* pop stack */
 						if ( preproc_tos == 0 ) {
 							mmerror(PARSE_ERROR, ET_FATAL, "Missing matching 'EXEC SQL IFDEF / EXEC SQL IFNDEF'");
@@ -717,6 +773,28 @@ cppline			{space}*#(.*\\{space})*.*
 							preproc_tos--;
 
 						ifcond = TRUE; BEGIN(xcond);
+					}
+<C,xskip>{informix_special}{elif}{space}* { 
+					  /* are we simulating Informix? */
+					  if (compat == ECPG_COMPAT_INFORMIX)
+					  {
+						if ( preproc_tos == 0 ) {
+							mmerror(PARSE_ERROR, ET_FATAL, "Missing matching 'EXEC SQL IFDEF / EXEC SQL IFNDEF'");
+						}
+						else if ( stacked_if_value[preproc_tos].else_branch )
+							mmerror(PARSE_ERROR, ET_FATAL, "Missing 'EXEC SQL ENDIF;'");
+						else
+							preproc_tos--;
+
+						ifcond = TRUE; BEGIN(xcond);
+					  }
+					  else
+					  {
+					  	string_unput("elif ");
+						/* remove the "elif " part of the text */
+						yytext[1] = '\0';
+						return (S_ANYTHING);
+					  }
 					}
 
 <C,xskip>{exec_sql}{else}{space}*";" {	/* only exec sql endif pops the stack, so take care of duplicated 'else' */
@@ -735,6 +813,33 @@ cppline			{space}*#(.*\\{space})*.*
 								BEGIN(xskip);
 						}
 					}
+<C,xskip>{informix_special}{else}{space}*	{
+					  /* are we simulating Informix? */
+					  if (compat == ECPG_COMPAT_INFORMIX)
+					  {
+						if ( stacked_if_value[preproc_tos].else_branch ) {
+							mmerror(PARSE_ERROR, ET_FATAL, "Duplicated 'EXEC SQL ELSE;'");
+						}
+						else {
+							stacked_if_value[preproc_tos].else_branch = TRUE;
+							stacked_if_value[preproc_tos].condition =
+							(stacked_if_value[preproc_tos-1].condition &&
+							 ! stacked_if_value[preproc_tos].condition);
+
+							if ( stacked_if_value[preproc_tos].condition )
+								BEGIN(C);
+							else
+								BEGIN(xskip);
+						}
+					  }
+					  else
+					  {
+					  	string_unput("else ");
+						/* remove the "else " part of the text */
+						yytext[1] = '\0';
+						return (S_ANYTHING);
+					  }
+					}
 <C,xskip>{exec_sql}{endif}{space}*";" {
 						if ( preproc_tos == 0 )
 							mmerror(PARSE_ERROR, ET_FATAL, "Unmatched 'EXEC SQL ENDIF;'");
@@ -745,6 +850,28 @@ cppline			{space}*#(.*\\{space})*.*
 						   BEGIN(C);
 						else
 						   BEGIN(xskip);
+					}
+<C,xskip>{informix_special}{endif}{space}*	{
+					  /* are we simulating Informix? */
+					  if (compat == ECPG_COMPAT_INFORMIX)
+					  {
+						if ( preproc_tos == 0 )
+							mmerror(PARSE_ERROR, ET_FATAL, "Unmatched 'EXEC SQL ENDIF;'");
+						else
+							preproc_tos--;
+
+						if ( stacked_if_value[preproc_tos].condition )
+						   BEGIN(C);
+						else
+						   BEGIN(xskip);
+					  }
+					  else
+					  {
+					  	string_unput("endif ");
+						/* remove the "endif " part of the text */
+						yytext[1] = '\0';
+						return (S_ANYTHING);
+					  }
 					}
 
 <xskip>{other}		{ /* ignore */ }
@@ -983,3 +1110,14 @@ addlitchar(unsigned char ychar)
 	literallen += 1;
 	literalbuf[literallen] = '\0';
 }
+
+/* put string back on stack */
+static void 
+string_unput (char *string)
+{
+	int i;
+	
+	for (i = strlen(string)-1; i>=0; i--)
+		unput(string[i]);
+}
+
