@@ -18,7 +18,7 @@ Stop listening for notification on a notify condition
 <DATE>1998-10-07</DATE>
 </REFSYNOPSISDIVINFO>
 <SYNOPSIS>
-UNLISTEN <REPLACEABLE CLASS="PARAMETER">notifyname</REPLACEABLE> | "*"
+UNLISTEN { <REPLACEABLE CLASS="PARAMETER">notifyname</REPLACEABLE> | * }
 </SYNOPSIS>
 
 <REFSECT2 ID="R2-SQL-UNLISTEN-1">
@@ -38,7 +38,14 @@ Inputs
 <LISTITEM>
 <PARA>
 Name of notify condition to stop listening to.
-If "*", all current listen registrations for this backend are cleared.
+
+<VARLISTENTRY>
+<TERM>
+<literal>*</literal>
+</TERM>
+<LISTITEM>
+<PARA>
+All current listen registrations for this backend are cleared.
 
 </VARIABLELIST>
 

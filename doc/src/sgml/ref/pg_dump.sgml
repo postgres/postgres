@@ -278,6 +278,7 @@ The limitations mostly stem from
 difficulty in extracting certain meta-information from the system
 catalogs.
 
+<variablelist>
 <varlistentry>
 <term>
 partial indices
