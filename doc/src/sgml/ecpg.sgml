@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.27 2001/10/31 20:37:39 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.28 2001/11/01 04:48:00 tgl Exp $
 -->
 
  <chapter id="ecpg">
@@ -609,13 +609,13 @@ struct sqlca
 
           <listitem>
            <para>
-            <literal>exec sql deallocate</></term>
+            <literal>exec sql deallocate</>
            </para>
           </listitem>
  
           <listitem>
            <para>
-            <literal>SQLSTATE</></term>
+            <literal>SQLSTATE</>
            </para>
           </listitem>
          </itemizedlist>
@@ -874,7 +874,7 @@ exec sql disconnect [<replaceable>connection target</replaceable>];
 
           <listitem>
            <simpara>
-           <term>all</term>
+           <literal>all</literal>
            </simpara>
           </listitem>
          </itemizedlist>
