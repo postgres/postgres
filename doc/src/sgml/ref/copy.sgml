@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/copy.sgml,v 1.36 2002/08/04 05:09:36 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/copy.sgml,v 1.37 2002/08/04 05:22:02 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -99,8 +99,8 @@ COPY <replaceable class="parameter">table</replaceable> [ ( <replaceable class="
        <para>
 	Changes the behavior of field formatting, forcing all data to be
 	stored or read in binary format rather than as text. You can not
-	specify <option>DELIMITER</option>, <option>NULL</option>, or
-	a column list in binary mode.
+	specify <option>DELIMITER</option> or <option>NULL</option>
+	in binary mode.
        </para>
       </listitem>
      </varlistentry>
