@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.133 2002/09/14 19:59:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.133.2.1 2003/04/04 00:32:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,6 +49,7 @@
 #include "miscadmin.h"
 #include "storage/buf_internals.h"
 #include "storage/bufmgr.h"
+#include "storage/bufpage.h"
 #include "storage/proc.h"
 #include "storage/smgr.h"
 #include "utils/relcache.h"
@@ -57,6 +58,10 @@
 
 #define BufferGetLSN(bufHdr)	\
 	(*((XLogRecPtr*) MAKE_PTR((bufHdr)->data)))
+
+
+/* GUC variable */
+bool	zero_damaged_pages = false;
 
 
 static void WaitIO(BufferDesc *buf);
@@ -217,6 +222,20 @@ ReadBufferInternal(Relation reln, BlockNumber blockNum,
 	{
 		status = smgrread(DEFAULT_SMGR, reln, blockNum,
 						  (char *) MAKE_PTR(bufHdr->data));
+		/* check for garbage data */
+		if (status == SM_SUCCESS &&
+			!PageHeaderIsValid((PageHeader) MAKE_PTR(bufHdr->data)))
+		{
+			if (zero_damaged_pages)
+			{
+				elog(WARNING, "Invalid page header in block %u of %s; zeroing out page",
+					 blockNum, RelationGetRelationName(reln));
+				MemSet((char *) MAKE_PTR(bufHdr->data), 0, BLCKSZ);
+			}
+			else
+				elog(ERROR, "Invalid page header in block %u of %s",
+					 blockNum, RelationGetRelationName(reln));
+		}
 	}
 
 	if (isLocalBuf)

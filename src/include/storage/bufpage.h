@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufpage.h,v 1.53 2002/09/04 20:31:45 momjian Exp $
+ * $Id: bufpage.h,v 1.53.2.1 2003/04/04 00:32:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -339,6 +339,7 @@ typedef PageHeaderData *PageHeader;
  */
 
 extern void PageInit(Page page, Size pageSize, Size specialSize);
+extern bool PageHeaderIsValid(PageHeader page);
 extern OffsetNumber PageAddItem(Page page, Item item, Size size,
 			OffsetNumber offsetNumber, ItemIdFlags flags);
 extern Page PageGetTempPage(Page page, Size specialSize);

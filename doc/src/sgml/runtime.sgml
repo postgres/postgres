@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.147.2.6 2003/01/11 05:04:26 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.147.2.7 2003/04/04 00:32:57 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1525,10 +1525,10 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
        </para>
 
        <para>
-        It should be noted that the performance penalty of doing
-        <function>fsync</>s is considerably less in
+        It should be noted that the performance penalty of having
+        <function>fsync</> on is considerably less in
         <productname>PostgreSQL</> version 7.1 and later. If you
-        previously suppressed <function>fsync</>s for performance
+        previously suppressed <function>fsync</> for performance
         reasons, you may wish to reconsider your choice.
        </para>
 
@@ -2053,6 +2053,26 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
 	connections from client applications. Defaults to listening on
 	all configured addresses (including <systemitem
 	class="systemname">localhost</>).
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>ZERO_DAMAGED_PAGES</varname> (<type>boolean</type>)</term>
+      <listitem>
+       <para>
+        Detection of a damaged page header normally causes
+        <productname>PostgreSQL</> to report an error, aborting the current
+	transaction.  Setting <varname>zero_damaged_pages</> to true causes
+	the system to instead report a warning, zero out the damaged page,
+	and continue processing.  This behavior <emphasis>will destroy data</>,
+	namely all the rows on the damaged page.  But it allows you to get
+	past the error and retrieve rows from any undamaged pages that may
+	be present in the table.  So it is useful for recovering data if
+	corruption has occurred due to hardware or software error.  You should
+	generally not set this true until you have given up hope of recovering
+	data from the damaged page(s) of a table.  The
+	default setting is off, and it can only be changed by a superuser.
        </para>
       </listitem>
      </varlistentry>
