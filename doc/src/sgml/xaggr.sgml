@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xaggr.sgml,v 1.20 2003/04/10 01:22:44 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xaggr.sgml,v 1.21 2003/08/09 22:50:22 tgl Exp $
 -->
 
  <sect1 id="xaggr">
@@ -72,8 +72,9 @@ SELECT complex_sum(a) FROM test_complex;
    omitting the <literal>initcond</literal> phrase, so that the initial state
    condition is null.  Ordinarily this would mean that the <literal>sfunc</literal>
    would need to check for a null state-condition input, but for
-   <function>sum</function> and some other simple aggregates like <function>max</> and <function>min</>,
-   it would be sufficient to insert the first nonnull input value into
+   <function>sum</function> and some other simple aggregates like
+   <function>max</> and <function>min</>,
+   it is sufficient to insert the first nonnull input value into
    the state variable and then start applying the transition function
    at the second nonnull input value.  <productname>PostgreSQL</productname>
    will do that automatically if the initial condition is null and
@@ -111,8 +112,55 @@ CREATE AGGREGATE avg (
   </para>
 
   <para>
-   For further details see the description of the <command>CREATE
-   AGGREGATE</command> command in <xref linkend="reference">.
+   Aggregate functions may use polymorphic
+   state transition functions or final functions, so that the same functions
+   can be used to implement multiple aggregates.
+   See <xref linkend="types-polymorphic">
+   for an explanation of polymorphic functions.
+   Going a step further, the aggregate function itself may be specified
+   with a polymorphic base type and state type, allowing a single
+   aggregate definition to serve for multiple input data types.
+   Here is an example of a polymorphic aggregate:
+
+<programlisting>
+CREATE AGGREGATE array_accum (
+    sfunc = array_append,
+    basetype = anyelement,
+    stype = anyarray,
+    initcond = '{}'
+);
+</programlisting>
+
+   Here, the actual state type for any aggregate call is the array type
+   having the actual input type as elements.
+  </para>
+
+  <para>
+   Here's the output using two different actual data types as arguments:
+
+<programlisting>
+SELECT attrelid::regclass, array_accum(attname)
+FROM pg_attribute WHERE attnum > 0
+AND attrelid = 'pg_user'::regclass GROUP BY attrelid;
+ attrelid |                                 array_accum
+----------+-----------------------------------------------------------------------------
+ pg_user  | {usename,usesysid,usecreatedb,usesuper,usecatupd,passwd,valuntil,useconfig}
+(1 row)
+
+SELECT attrelid::regclass, array_accum(atttypid)
+FROM pg_attribute WHERE attnum > 0
+AND attrelid = 'pg_user'::regclass GROUP BY attrelid;
+ attrelid |         array_accum
+----------+------------------------------
+ pg_user  | {19,23,16,16,16,25,702,1009}
+(1 row)
+</programlisting>
+  </para>
+
+  <para>
+   For further details see the
+   <xref linkend="sql-createaggregate" endterm="sql-createaggregate-title">
+   command.
   </para>
  </sect1>
 

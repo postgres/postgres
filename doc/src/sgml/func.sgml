@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.164 2003/08/04 14:00:13 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.165 2003/08/09 22:50:21 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -7044,28 +7044,67 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
       <tbody>
        <row>
 	<entry> <literal>=</literal> </entry>
-	<entry>equals</entry>
+	<entry>equal</entry>
 	<entry><literal>ARRAY[1.1,2.1,3.1]::int[] = ARRAY[1,2,3]</literal></entry>
 	<entry><literal>t</literal></entry>
        </row>
+
+       <row>
+	<entry> <literal>&lt;&gt;</literal> </entry>
+	<entry>not equal</entry>
+	<entry><literal>ARRAY[1,2,3] &lt;&gt; ARRAY[1,2,4]</literal></entry>
+	<entry><literal>t</literal></entry>
+       </row>
+
+       <row>
+	<entry> <literal>&lt;</literal> </entry>
+	<entry>less than</entry>
+	<entry><literal>ARRAY[1,2,3] &lt; ARRAY[1,2,4]</literal></entry>
+	<entry><literal>t</literal></entry>
+       </row>
+
+       <row>
+	<entry> <literal>&gt;</literal> </entry>
+	<entry>greater than</entry>
+	<entry><literal>ARRAY[1,4,3] &gt; ARRAY[1,2,4]</literal></entry>
+	<entry><literal>t</literal></entry>
+       </row>
+
+       <row>
+	<entry> <literal>&lt;=</literal> </entry>
+	<entry>less than or equal</entry>
+	<entry><literal>ARRAY[1,2,3] &lt;= ARRAY[1,2,3]</literal></entry>
+	<entry><literal>t</literal></entry>
+       </row>
+
+       <row>
+	<entry> <literal>&gt;=</literal> </entry>
+	<entry>greater than or equal</entry>
+	<entry><literal>ARRAY[1,4,3] &gt;= ARRAY[1,4,3]</literal></entry>
+	<entry><literal>t</literal></entry>
+       </row>
+
        <row>
 	<entry> <literal>||</literal> </entry>
 	<entry>array-to-array concatenation</entry>
 	<entry><literal>ARRAY[1,2,3] || ARRAY[4,5,6]</literal></entry>
 	<entry><literal>{{1,2,3},{4,5,6}}</literal></entry>
        </row>
+
        <row>
 	<entry> <literal>||</literal> </entry>
 	<entry>array-to-array concatenation</entry>
 	<entry><literal>ARRAY[1,2,3] || ARRAY[[4,5,6],[7,8,9]]</literal></entry>
 	<entry><literal>{{1,2,3},{4,5,6},{7,8,9}}</literal></entry>
        </row>
+
        <row>
 	<entry> <literal>||</literal> </entry>
 	<entry>element-to-array concatenation</entry>
 	<entry><literal>3 || ARRAY[4,5,6]</literal></entry>
 	<entry><literal>{3,4,5,6}</literal></entry>
        </row>
+
        <row>
 	<entry> <literal>||</literal> </entry>
 	<entry>array-to-element concatenation</entry>

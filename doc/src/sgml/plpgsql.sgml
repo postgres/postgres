@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/plpgsql.sgml,v 1.19 2003/05/28 16:03:55 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/plpgsql.sgml,v 1.20 2003/08/09 22:50:22 tgl Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -177,16 +177,54 @@ END;
     </para>
   </sect2>
 
-  <sect2 id="plpgsql-overview-developing-in-plpgsql">
-   <title>Developing in <application>PL/pgSQL</application></title>
+  <sect2 id="plpgsql-args-results">
+   <title>Supported Argument and Result Datatypes</title>
+
+    <para>
+     Functions written in <application>PL/pgSQL</application> can accept
+     as arguments any scalar or array datatype supported by the server,
+     and they can return a result of any of these types.  They can also
+     accept or return any composite type (row type) specified by name.
+     It is also possible to declare a <application>PL/pgSQL</application>
+     function as returning <type>record</>, which means that the result
+     is a row type whose columns are determined by specification in the
+     calling query, as discussed in <xref linkend="queries-tablefunctions">.
+    </para>
+
+    <para>
+     <application>PL/pgSQL</> functions may also be declared to accept
+     and return the <quote>polymorphic</> types
+     <type>anyelement</type> and <type>anyarray</type>.  The actual
+     datatypes handled by a polymorphic function can vary from call to
+     call, as discussed in <xref linkend="types-polymorphic">.
+     An example is shown in <xref linkend="plpgsql-declaration-aliases">.
+    </para>
+
+    <para>
+     <application>PL/pgSQL</> functions can also be declared to return
+     a <quote>set</>, or table, of any datatype they can return a single
+     instance of.  Such a function generates its output by executing
+     <literal>RETURN NEXT</> for each desired element of the result set.
+    </para>
+
+    <para>
+     Finally, a <application>PL/pgSQL</> function may be declared to return
+     <type>void</> if it has no useful return value.
+    </para>
+  </sect2>
+ </sect1>
+
+ <sect1 id="plpgsql-development-tips">
+  <title>Tips for Developing in <application>PL/pgSQL</application></title>
 
    <para>
     One good way to develop in
-    <application>PL/pgSQL</> is to simply use the text editor of your
+    <application>PL/pgSQL</> is to use the text editor of your
     choice to create your functions, and in another window, use
-    <command>psql</command> to load those functions. If you are doing it this way, it
+    <application>psql</application> to load and test those functions.
+    If you are doing it this way, it
     is a good idea to write the function using <command>CREATE OR
-    REPLACE FUNCTION</>. That way you can reload the file to update
+    REPLACE FUNCTION</>. That way you can just reload the file to update
     the function definition.  For example:
 <programlisting>
 CREATE OR REPLACE FUNCTION testfunc(integer) RETURNS integer AS '
@@ -197,8 +235,8 @@ end;
    </para>
 
    <para>
-    While running <command>psql</command>, you can load or reload such a
-    function definition file with
+    While running <application>psql</application>, you can load or reload such
+    a function definition file with
 <programlisting>
 \i filename.sql
 </programlisting>
@@ -213,39 +251,40 @@ end;
     provide convenient features such as escaping single quotes and
     making it easier to recreate and debug functions.
    </para>
-  </sect2>
- </sect1>
 
- <sect1 id="plpgsql-quote">
-  <title>Handling of Quotations Marks</title>
+  <sect2 id="plpgsql-quote-tips">
+   <title>Handling of Quote Marks</title>
 
   <para>
-   Since the code of any procedural language function is specified
+   Since the code of a <application>PL/pgSQL</> function is specified in
    <command>CREATE FUNCTION</command> as a string literal, single
-   quotes inside the function body must be escaped. This can lead to
+   quotes inside the function body must be escaped by doubling them.
+   This can lead to
    rather complicated code at times, especially if you are writing a
    function that generates other functions, as in the example in <xref
-   linkend="plpgsql-statements-executing-dyn">.  The list below gives
-   you an overview over the needed levels of quotation marks in
-   various situations.  Keep this chart handy.
+   linkend="plpgsql-statements-executing-dyn">.  This chart may be useful
+   as a summary of the needed numbers of quote marks in
+   various situations.
   </para>
 
   <variablelist>
    <varlistentry>
-    <term>1 quotation mark</term>
+    <term>1 quote mark</term>
     <listitem>
      <para>
-      To begin/end function bodies, for example:
+      To begin and end the function body, for example:
 <programlisting>
 CREATE FUNCTION foo() RETURNS integer AS '...'
     LANGUAGE plpgsql;
 </programlisting>
+      Anywhere within the function body, quote marks <emphasis>must</>
+      appear in pairs.
      </para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
-    <term>2 quotation marks</term>
+    <term>2 quote marks</term>
     <listitem>
      <para>
       For string literals inside the function body, for example:
@@ -253,7 +292,7 @@ CREATE FUNCTION foo() RETURNS integer AS '...'
 a_output := ''Blah'';
 SELECT * FROM users WHERE f_name=''foobar'';
 </programlisting>
-      The second line is interpreted as
+      The second line is seen by <application>PL/pgSQL</> as
 <programlisting>
 SELECT * FROM users WHERE f_name='foobar';
 </programlisting>
@@ -262,22 +301,22 @@ SELECT * FROM users WHERE f_name='foobar';
    </varlistentry>
 
    <varlistentry>
-    <term>4 quotation marks</term>
+    <term>4 quote marks</term>
     <listitem>
      <para>
-      When you need a single quote in a string inside the function
+      When you need a single quote in a string constant inside the function
       body, for example:
 <programlisting>
 a_output := a_output || '' AND name LIKE ''''foobar'''' AND xyz''
 </programlisting>
-      The value of <literal>a_output</literal> would then be: <literal>
-      AND name LIKE 'foobar' AND xyz</literal>.
+      The value actually appended to <literal>a_output</literal> would be:
+      <literal> AND name LIKE 'foobar' AND xyz</literal>.
      </para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
-    <term>6 quotation marks</term>
+    <term>6 quote marks</term>
     <listitem>
      <para>
       When a single quote in a string inside the function body is
@@ -285,14 +324,14 @@ a_output := a_output || '' AND name LIKE ''''foobar'''' AND xyz''
 <programlisting>
 a_output := a_output || '' AND name LIKE ''''foobar''''''
 </programlisting>
-      The value of <literal>a_output</literal> would then be:
+      The value appended to <literal>a_output</literal> would then be:
       <literal> AND name LIKE 'foobar'</literal>.
      </para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
-    <term>10 quotation marks</term>
+    <term>10 quote marks</term>
     <listitem>
      <para>
       When you want two single quotes in a string constant (which
@@ -315,6 +354,15 @@ if v_... like ''...'' then return ''...''; end if;
     </listitem>
    </varlistentry>
   </variablelist>
+
+   <para>
+    A different approach is to escape quote marks in the function body
+    with a backslash rather than by doubling them.  With this method
+    you'll find yourself writing things like <literal>\'\'</> instead
+    of <literal>''''</>.  Some find this easier to keep track of, some
+    do not.
+   </para>
+  </sect2>
  </sect1>
 
  <sect1 id="plpgsql-structure">
@@ -474,7 +522,8 @@ user_id CONSTANT integer := 10;
      <para>
       Parameters passed to functions are named with the identifiers
       <literal>$1</literal>, <literal>$2</literal>,
-      etc.  Optionally, aliases can be declared for <literal>$<replaceable>n</replaceable></literal>
+      etc.  Optionally, aliases can be declared for
+      <literal>$<replaceable>n</replaceable></literal>
       parameter names for increased readability.  Either the alias or the
       numeric identifier can then be used to refer to the parameter value.
       Some examples:
@@ -498,11 +547,41 @@ END;
 ' LANGUAGE plpgsql;
 
 
-CREATE FUNCTION use_many_fields(tablename) RETURNS text AS '
+CREATE FUNCTION concat_selected_fields(tablename) RETURNS text AS '
 DECLARE
     in_t ALIAS FOR $1;
 BEGIN
     RETURN in_t.f1 || in_t.f3 || in_t.f5 || in_t.f7;
+END;
+' LANGUAGE plpgsql;
+</programlisting>
+     </para>
+
+     <para>
+      When the return type of a <application>PL/pgSQL</application>
+      function is declared as a polymorphic type (<type>anyelement</type>
+      or <type>anyarray</type>), a special parameter <literal>$0</literal>
+      is created.  Its datatype is the actual return type of the function,
+      as deduced from the actual input types (see <xref
+      linkend="types-polymorphic">).
+      This allows the function to access its actual return type
+      as shown in <xref linkend="plpgsql-declaration-type">.
+      <literal>$0</literal> is initialized to NULL and can be modified by
+      the function, so it can be used to hold the return value if desired,
+      though that is not required.  <literal>$0</literal> can also be
+      given an alias.  For example, this function works on any datatype
+      that has a <literal>+</> operator:
+<programlisting>
+CREATE FUNCTION add_three_values(anyelement, anyelement, anyelement)
+RETURNS anyelement AS '
+DECLARE
+    result ALIAS FOR $0;
+    first ALIAS FOR $1;
+    second ALIAS FOR $2;
+    third ALIAS FOR $3;
+BEGIN
+    result := first + second + third;
+    RETURN result;
 END;
 ' LANGUAGE plpgsql;
 </programlisting>
@@ -536,6 +615,15 @@ user_id users.user_id%TYPE;
     from <type>integer</type> to <type>real</type>), you may not need
     to change your function definition.
    </para>
+
+   <para>
+    <literal>%TYPE</literal> is particularly valuable in polymorphic
+    functions, since the data types needed for internal variables may
+    change from one call to the next.  Appropriate variables can be
+    created by applying <literal>%TYPE</literal> to the function's
+    arguments or result placeholders.
+   </para>
+
   </sect2>
 
     <sect2 id="plpgsql-declaration-rowtypes">
@@ -620,6 +708,14 @@ END;
 
    <para>
     Note that <literal>RECORD</> is not a true data type, only a placeholder.
+    One should also realize that when a <application>PL/pgSQL</application>
+    function is declared to return type <type>record</>, this is not quite the
+    same concept as a record variable, even though such a function may well
+    use a record variable to hold its result.  In both cases the actual row
+    structure is unknown when the function is written, but for a function
+    returning <type>record</> the actual structure is determined when the
+    calling query is parsed, whereas a record variable can change its row
+    structure on-the-fly.
    </para>
   </sect2>
 
@@ -965,7 +1061,7 @@ EXECUTE <replaceable class="command">command-string</replaceable>;
     <para>
     When working with dynamic commands you will have to face
     escaping of single quotes in <application>PL/pgSQL</>. Please refer to the
-    overview in <xref linkend="plpgsql-quote">,
+    overview in <xref linkend="plpgsql-quote-tips">,
     which can save you some effort.
     </para>
      
@@ -1004,11 +1100,11 @@ EXECUTE ''UPDATE tbl SET ''
      <function>quote_literal(<type>text</type>)</function>.
      Variables containing column and table identifiers should be
      passed to function <function>quote_ident</function>.
-     Variables containing values that act as value literals in the constructed command
-     string should be passed to
+     Variables containing values that should be literal strings in the
+     constructed command should be passed to
      <function>quote_literal</function>.  Both take the
-     appropriate steps to return the input text enclosed in single
-     or double quotes and with any embedded special characters
+     appropriate steps to return the input text enclosed in double
+     or single quotes respectively, with any embedded special characters
      properly escaped.
     </para>
 
@@ -2253,7 +2349,7 @@ CREATE TRIGGER emp_stamp BEFORE INSERT OR UPDATE ON emp
      <listitem>
       <para>
        In <productname>PostgreSQL</> you need to escape single
-       quotes in the function body. See <xref linkend="plpgsql-quote">.
+       quotes in the function body. See <xref linkend="plpgsql-quote-tips">.
       </para>
      </listitem>
 

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/array.sgml,v 1.28 2003/06/27 00:33:25 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/array.sgml,v 1.29 2003/08/09 22:50:21 tgl Exp $ -->
 
 <sect1 id="arrays">
  <title>Arrays</title>
@@ -36,6 +36,41 @@ CREATE TABLE sal_emp (
   <type>text</type> (<structfield>schedule</structfield>), which
   represents the employee's weekly schedule.
  </para>
+
+ <para>
+  The syntax for <command>CREATE TABLE</command> allows the exact size of
+  arrays to be specified, for example:
+
+<programlisting>
+CREATE TABLE tictactoe (
+    squares   integer[3][3]
+);
+</programlisting>
+
+  However, the current implementation does not enforce the array size
+  limits --- the behavior is the same as for arrays of unspecified
+  length.
+ </para>
+
+ <para>
+  Actually, the current implementation does not enforce the declared
+  number of dimensions either.  Arrays of a particular element type are
+  all considered to be of the same type, regardless of size or number
+  of dimensions.  So, declaring number of dimensions or sizes in
+  <command>CREATE TABLE</command> is simply documentation, it does not
+  affect runtime behavior.
+ </para>
+
+ <para>
+  An alternative, SQL99-standard syntax may be used for one-dimensional arrays.
+  <structfield>pay_by_quarter</structfield> could have been defined as:
+<programlisting>
+    pay_by_quarter  integer ARRAY[4],
+</programlisting>
+  This syntax requires an integer constant to denote the array size.
+  As before, however, <productname>PostgreSQL</> does not enforce the
+  size restriction.
+ </para>
  </sect2>
 
  <sect2>
@@ -43,9 +78,11 @@ CREATE TABLE sal_emp (
 
  <para>
   Now we can show some <command>INSERT</command> statements.  To write an array
-  value, we enclose the element values within curly braces and separate them
-  by commas.  If you know C, this is not unlike the syntax for
-  initializing structures.  (More details appear below.)
+  value as a literal constant, we enclose the element values within curly
+  braces and separate them by commas.  (If you know C, this is not unlike the
+  C syntax for initializing structures.)  We may put double quotes around any
+  element value, and must do so if it contains commas or curly braces.
+  (More details appear below.)
 
 <programlisting>
 INSERT INTO sal_emp
@@ -90,7 +127,7 @@ SELECT * FROM sal_emp;
  </note>
 
  <para>
-  The <command>ARRAY</command> expression syntax may also be used:
+  The <literal>ARRAY</literal> expression syntax may also be used:
 <programlisting>
 INSERT INTO sal_emp
     VALUES ('Bill',
@@ -109,29 +146,27 @@ SELECT * FROM sal_emp;
 (2 rows)
 </programlisting>
   Note that with this syntax, multidimensional arrays must have matching
-  extents for each dimension. This eliminates the missing-array-elements
-  problem above. For example:
+  extents for each dimension. A mismatch causes an error report, rather than
+  silently discarding values as in the previous case.
+  For example:
 <programlisting>
 INSERT INTO sal_emp
     VALUES ('Carol',
     ARRAY[20000, 25000, 25000, 25000],
     ARRAY[['talk', 'consult'], ['meeting']]);
-ERROR:  Multidimensional arrays must have array expressions with matching dimensions
+ERROR:  multidimensional arrays must have array expressions with matching dimensions
 </programlisting>
-  Also notice that string literals are single quoted instead of double quoted.
+  Also notice that the array elements are ordinary SQL constants or
+  expressions; for instance, string literals are single quoted, instead of
+  double quoted as they would be in an array literal.  The <literal>ARRAY</>
+  expression syntax is discussed in more detail in <xref
+  linkend="sql-syntax-array-constructors">.
  </para>
-
- <note>
-  <para>
-   The examples in the rest of this section are based on the
-   <command>ARRAY</command> expression syntax <command>INSERT</command>s.
-  </para>
- </note>
 
  </sect2>
 
  <sect2>
-  <title>Array Value References</title>
+  <title>Accessing Arrays</title>
 
  <para>
   Now, we can run some queries on the table.
@@ -195,7 +230,7 @@ SELECT schedule[1:2][1] FROM sal_emp WHERE name = 'Bill';
   represent an array slice if any of the subscripts are written in the form
   <literal><replaceable>lower</replaceable>:<replaceable>upper</replaceable></literal>.
   A lower bound of 1 is assumed for any subscript where only one value
-  is specified.  Another example follows:
+  is specified, as in this example:
 <programlisting>
 SELECT schedule[1:2][2] FROM sal_emp WHERE name = 'Bill';
          schedule
@@ -206,17 +241,38 @@ SELECT schedule[1:2][2] FROM sal_emp WHERE name = 'Bill';
  </para>
 
  <para>
-  Additionally, we can also access a single arbitrary array element of 
-  a one-dimensional array with the <function>array_subscript</function>
-  function:
+  The current dimensions of any array value can be retrieved with the
+  <function>array_dims</function> function:
+
 <programlisting>
-SELECT array_subscript(pay_by_quarter, 2) FROM sal_emp WHERE name = 'Bill';
- array_subscript
------------------
-           10000
+SELECT array_dims(schedule) FROM sal_emp WHERE name = 'Carol';
+
+ array_dims
+------------
+ [1:2][1:1]
+(1 row)
+</programlisting>
+
+  <function>array_dims</function> produces a <type>text</type> result,
+  which is convenient for people to read but perhaps not so convenient
+  for programs.  Dimensions can also be retrieved with
+  <function>array_upper</function> and <function>array_lower</function>,
+  which return the upper and lower bound of a
+  specified array dimension, respectively.
+
+<programlisting>
+SELECT array_upper(schedule, 1) FROM sal_emp WHERE name = 'Carol';
+
+ array_upper
+-------------
+           2
 (1 row)
 </programlisting>
  </para>
+ </sect2>
+
+ <sect2>
+  <title>Modifying Arrays</title>
 
  <para>
   An array value can be replaced completely:
@@ -226,21 +282,12 @@ UPDATE sal_emp SET pay_by_quarter = '{25000,25000,27000,27000}'
     WHERE name = 'Carol';
 </programlisting>
 
-  or using the <command>ARRAY</command> expression syntax:
+  or using the <literal>ARRAY</literal> expression syntax:
 
 <programlisting>
 UPDATE sal_emp SET pay_by_quarter = ARRAY[25000,25000,27000,27000]
     WHERE name = 'Carol';
 </programlisting>
-
-  <note>
-   <para>
-    Anywhere you can use the <quote>curly braces</quote> array syntax,
-    you can also use the <command>ARRAY</command> expression syntax. The
-    remainder of this section will illustrate only one or the other, but
-    not both.
-   </para>
-  </note>
 
   An array may also be updated at a single element:
 
@@ -256,34 +303,27 @@ UPDATE sal_emp SET pay_by_quarter[1:2] = '{27000,27000}'
     WHERE name = 'Carol';
 </programlisting>
 
-  A one-dimensional array may also be updated with the
-  <function>array_assign</function> function:
-
-<programlisting>
-UPDATE sal_emp SET pay_by_quarter = array_assign(pay_by_quarter, 4, 15000)
-    WHERE name = 'Bill';
-</programListing>
  </para>
 
  <para>
-  An array can be enlarged by assigning to an element adjacent to
+  A stored array value can be enlarged by assigning to an element adjacent to
   those already present, or by assigning to a slice that is adjacent
-  to or overlaps the data already present.  For example, if an array
-  value currently has 4 elements, it will have five elements after an
-  update that assigns to <literal>array[5]</>.  Currently, enlargement in
-  this fashion is only allowed for one-dimensional arrays, not
-  multidimensional arrays.
+  to or overlaps the data already present.  For example, if array
+  <literal>myarray</> currently has 4 elements, it will have five
+  elements after an update that assigns to <literal>myarray[5]</>.
+  Currently, enlargement in this fashion is only allowed for one-dimensional
+  arrays, not multidimensional arrays.
  </para>
 
  <para>
   Array slice assignment allows creation of arrays that do not use one-based
-  subscripts.  For example one might assign to <literal>array[-2:7]</> to
+  subscripts.  For example one might assign to <literal>myarray[-2:7]</> to
   create an array with subscript values running from -2 to 7.
  </para>
 
  <para>
-  An array can also be enlarged by using the concatenation operator,
-  <command>||</command>.
+  New array values can also be constructed by using the concatenation operator,
+  <literal>||</literal>.
 <programlisting>
 SELECT ARRAY[1,2] || ARRAY[3,4];
    ?column?
@@ -299,7 +339,7 @@ SELECT ARRAY[5,6] || ARRAY[[1,2],[3,4]];
 </programlisting>
 
   The concatenation operator allows a single element to be pushed on to the
-  beginning or end of a one-dimensional array. It also allows two
+  beginning or end of a one-dimensional array. It also accepts two
   <replaceable>N</>-dimensional arrays, or an <replaceable>N</>-dimensional
   and an <replaceable>N+1</>-dimensional array. In the former case, the two
   <replaceable>N</>-dimension arrays become outer elements of an
@@ -307,12 +347,13 @@ SELECT ARRAY[5,6] || ARRAY[[1,2],[3,4]];
   <replaceable>N</>-dimensional array is added as either the first or last
   outer element of the <replaceable>N+1</>-dimensional array.
 
-  The array is extended in the direction of the push. Hence, by pushing
-  onto the beginning of an array with a one-based subscript, a zero-based
-  subscript array is created:
+  When extending an array by concatenation, the subscripts of its existing
+  elements are preserved. For example, when pushing
+  onto the beginning of an array with one-based subscripts, the resulting
+  array has zero-based subscripts:
 
 <programlisting>
-SELECT array_dims(t.f) FROM (SELECT 1 || ARRAY[2,3] AS f) AS t;
+SELECT array_dims(1 || ARRAY[2,3]);
  array_dims
 ------------
  [0:2]
@@ -321,7 +362,7 @@ SELECT array_dims(t.f) FROM (SELECT 1 || ARRAY[2,3] AS f) AS t;
  </para>
 
  <para>
-  An array can also be enlarged by using the functions
+  An array can also be constructed by using the functions
   <function>array_prepend</function>, <function>array_append</function>,
   or <function>array_cat</function>. The first two only support one-dimensional
   arrays, but <function>array_cat</function> supports multidimensional arrays.
@@ -362,60 +403,6 @@ SELECT array_cat(ARRAY[5,6], ARRAY[[1,2],[3,4]]);
  {{5,6},{1,2},{3,4}}
 </programlisting>
  </para>
-
- <para>
-  The syntax for <command>CREATE TABLE</command> allows fixed-length
-  arrays to be defined:
-
-<programlisting>
-CREATE TABLE tictactoe (
-    squares   integer[3][3]
-);
-</programlisting>
-
-  However, the current implementation does not enforce the array size
-  limits --- the behavior is the same as for arrays of unspecified
-  length.
- </para>
-
- <para>
-  An alternative syntax for one-dimensional arrays may be used.
-  <structfield>pay_by_quarter</structfield> could have been defined as:
-<programlisting>
-    pay_by_quarter  integer ARRAY[4],
-</programlisting>
-  This syntax may <emphasis>only</emphasis> be used with the integer
-  constant to denote the array size.
- </para>
-
- <para>
-  Actually, the current implementation does not enforce the declared
-  number of dimensions either.  Arrays of a particular element type are
-  all considered to be of the same type, regardless of size or number
-  of dimensions.  So, declaring number of dimensions or sizes in
-  <command>CREATE TABLE</command> is simply documentation, it does not
-  affect runtime behavior.
- </para>
-
- <para>
-  The current dimensions of any array value can be retrieved with the
-  <function>array_dims</function> function:
-
-<programlisting>
-SELECT array_dims(schedule) FROM sal_emp WHERE name = 'Carol';
-
- array_dims
-------------
- [1:2][1:1]
-(1 row)
-</programlisting>
-
-  <function>array_dims</function> produces a <type>text</type> result,
-  which is convenient for people to read but perhaps not so convenient
-  for programs.  <function>array_upper</function> and <function>
-  array_lower</function> return the upper/lower bound of the
-  given array dimension, respectively.
- </para>
  </sect2>
 
  <sect2>
@@ -423,7 +410,7 @@ SELECT array_dims(schedule) FROM sal_emp WHERE name = 'Carol';
 
  <para>
   To search for a value in an array, you must check each value of the
-  array. This can be done by hand (if you know the size of the array).
+  array. This can be done by hand, if you know the size of the array.
   For example:
 
 <programlisting>
@@ -434,41 +421,30 @@ SELECT * FROM sal_emp WHERE pay_by_quarter[1] = 10000 OR
 </programlisting>
 
   However, this quickly becomes tedious for large arrays, and is not
-  helpful if the size of the array is unknown. Although it is not built
-  into <productname>PostgreSQL</productname>,
-  there is an extension available that defines new functions and
-  operators for iterating over array values. Using this, the above
-  query could be:
+  helpful if the size of the array is uncertain. An alternative method is
+  described in <xref linkend="functions-comparisons">. The above
+  query could be replaced by:
 
 <programlisting>
-SELECT * FROM sal_emp WHERE pay_by_quarter[1:4] *= 10000;
-</programlisting>
-
-  To search the entire array (not just specified slices), you could
-  use:
-
-<programlisting>
-SELECT * FROM sal_emp WHERE pay_by_quarter *= 10000;
+SELECT * FROM sal_emp WHERE 10000 = ANY (pay_by_quarter);
 </programlisting>
 
   In addition, you could find rows where the array had all values
-  equal to 10 000 with:
+  equal to 10000 with:
 
 <programlisting>
-SELECT * FROM sal_emp WHERE pay_by_quarter **= 10000;
+SELECT * FROM sal_emp WHERE 10000 = ALL (pay_by_quarter);
 </programlisting>
 
-  To install this optional module, look in the
-  <filename>contrib/array</filename> directory of the
-  <productname>PostgreSQL</productname> source distribution.
  </para>
 
  <tip>
   <para>
-   Arrays are not sets; using arrays in the manner described in the
-   previous paragraph is often a sign of database misdesign.  The
-   array field should generally be split off into a separate table.
-   Tables can obviously be searched easily.
+   Arrays are not sets; searching for specific array elements
+   may be a sign of database misdesign.  Consider
+   using a separate table with a row for each item that would be an
+   array element.  This will be easier to search, and is likely to
+   scale up better to large numbers of elements.
   </para>
  </tip>
  </sect2>
@@ -477,7 +453,7 @@ SELECT * FROM sal_emp WHERE pay_by_quarter **= 10000;
   <title>Array Input and Output Syntax</title>
 
   <para>
-   The external representation of an array value consists of items that
+   The external text representation of an array value consists of items that
    are interpreted according to the I/O conversion rules for the array's
    element type, plus decoration that indicates the array structure.
    The decoration consists of curly braces (<literal>{</> and <literal>}</>)
@@ -497,94 +473,17 @@ SELECT * FROM sal_emp WHERE pay_by_quarter **= 10000;
   </para>
 
   <para>
-   As illustrated earlier in this chapter, arrays may also be represented
-   using the <command>ARRAY</command> expression syntax. This representation
-   of an array value consists of items that are interpreted according to the
-   I/O conversion rules for the array's element type, plus decoration that
-   indicates the array structure. The decoration consists of the keyword
-   <command>ARRAY</command> and square brackets (<literal>[</> and
-   <literal>]</>) around the array values, plus delimiter characters between
-   adjacent items. The delimiter character is always a comma (<literal>,</>).
-   When representing multidimensional arrays, the keyword
-   <command>ARRAY</command> is only necessary for the outer level. For example,
-   <literal>'{{"hello world", "happy birthday"}}'</literal> could be written as:
-<programlisting>
-SELECT ARRAY[['hello world', 'happy birthday']];
-               array
-------------------------------------
- {{"hello world","happy birthday"}}
-(1 row)
-</programlisting>
-  or it also could be written as:
-<programlisting>
-SELECT ARRAY[ARRAY['hello world', 'happy birthday']];
-               array
-------------------------------------
- {{"hello world","happy birthday"}}
-(1 row)
-</programlisting>
-  </para>
-
-  <para>
-   A final method to represent an array, is through an
-   <command>ARRAY</command> sub-select expression. For example:
-<programlisting>
-SELECT ARRAY(SELECT oid FROM pg_proc WHERE proname LIKE 'bytea%');
-                          ?column?
--------------------------------------------------------------
- {2011,1954,1948,1952,1951,1244,1950,2005,1949,1953,2006,31}
-(1 row)
-</programlisting>
-  The sub-select may <emphasis>only</emphasis> return a single column. The
-  resulting one-dimensional array will have an element for each row in the
-  sub-select result, with an element type matching that of the sub-select's
-  target column.
-  </para>
-
-  <para>
-   Arrays may be cast from one type to another in similar fashion to other
-   data types:
-
-<programlisting>
-SELECT ARRAY[1,2,3]::oid[];
-  array
----------
- {1,2,3}
-(1 row)
-
-SELECT CAST(ARRAY[1,2,3] AS float8[]);
-  array
----------
- {1,2,3}
-(1 row)
-</programlisting>
-
-  </para>
-
- </sect2>
-
- <sect2>
-  <title>Quoting Array Elements</title>
-
-  <para>
-   As shown above, when writing an array value you may write double
+   As shown previously, when writing an array value you may write double
    quotes around any individual array
    element.  You <emphasis>must</> do so if the element value would otherwise
    confuse the array-value parser.  For example, elements containing curly
    braces, commas (or whatever the delimiter character is), double quotes,
    backslashes, or leading white space must be double-quoted.  To put a double
-   quote or backslash in an array element value, precede it with a backslash.
+   quote or backslash in a quoted array element value, precede it with a
+   backslash.
    Alternatively, you can use backslash-escaping to protect all data characters
    that would otherwise be taken as array syntax or ignorable white space.
   </para>
-
- <note>
-  <para>
-   The discussion in the preceding paragraph with respect to double quoting does
-   not pertain to the <command>ARRAY</command> expression syntax. In that case,
-   each element is quoted exactly as any other literal value of the element type.
-  </para>
- </note>
 
   <para>
    The array output routine will put double quotes around element values
@@ -615,6 +514,15 @@ INSERT ... VALUES ('{"\\\\","\\""}');
    in the command to get one backslash into the stored array element.)
   </para>
  </note>
+
+ <tip>
+  <para>
+   The <literal>ARRAY</> constructor syntax is often easier to work with
+   than the array-literal syntax when writing array values in SQL commands.
+   In <literal>ARRAY</>, individual element values are written the same way
+   they would be written when not members of an array.
+  </para>
+ </tip>
  </sect2>
 
 </sect1>

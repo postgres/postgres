@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.121 2003/07/29 00:03:17 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.122 2003/08/09 22:50:21 tgl Exp $
 -->
 
  <chapter id="datatype">
@@ -2994,6 +2994,10 @@ SELECT * FROM test;
    </indexterm>
 
    <indexterm zone="datatype-pseudo">
+    <primary>anyelement</primary>
+   </indexterm>
+
+   <indexterm zone="datatype-pseudo">
     <primary>void</primary>
    </indexterm>
 
@@ -3053,7 +3057,14 @@ SELECT * FROM test;
 
        <row>
 	<entry><type>anyarray</></entry>
-	<entry>Indicates that a function accepts any array data type.</entry>
+	<entry>Indicates that a function accepts any array data type
+	(see <xref linkend="types-polymorphic">).</entry>
+       </row>
+
+       <row>
+	<entry><type>anyelement</></entry>
+	<entry>Indicates that a function accepts any data type
+	(see <xref linkend="types-polymorphic">).</entry>
        </row>
 
        <row>
@@ -3101,8 +3112,10 @@ SELECT * FROM test;
     Functions coded in procedural languages may use pseudo-types only as
     allowed by their implementation languages.  At present the procedural
     languages all forbid use of a pseudo-type as argument type, and allow
-    only <type>void</> as a result type (plus <type>trigger</> when the
-    function is used as a trigger).
+    only <type>void</> and <type>record</> as a result type (plus
+    <type>trigger</> when the function is used as a trigger).  Some also
+    support polymorphic functions using the types <type>anyarray</> and
+    <type>anyelement</>.
    </para>
 
    <para>

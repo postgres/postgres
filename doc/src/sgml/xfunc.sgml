@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.70 2003/07/25 20:17:49 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.71 2003/08/09 22:50:22 tgl Exp $
 -->
 
  <sect1 id="xfunc">
@@ -41,22 +41,29 @@ $Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.70 2003/07/25 20:17:49 tgl E
   <para>
    Every kind
    of  function  can take base types, composite types, or
-   some combination as arguments (parameters).   In  addition, 
+   combinations of these as arguments (parameters).   In  addition, 
    every kind of function can return a base type or
    a composite type.
   </para>
 
   <para>
+   Many kinds of functions can take or return certain pseudo-types
+   (such as polymorphic types), but the available facilities vary.
+   Consult the description of each kind of function for more details.
+  </para>
+
+  <para>
    It's easiest to define <acronym>SQL</acronym> 
-   functions, so we'll start with those.  Examples in this section 
-   can also be found in <filename>funcs.sql</filename> 
-   and <filename>funcs.c</filename> in the tutorial directory.
+   functions, so we'll start by discussing those.
   </para>
 
   <para>
    Throughout this chapter, it can be useful to look at the reference
    page of the <command>CREATE FUNCTION</command> command to
    understand the examples better.
+   Some examples from this chapter
+   can be found in <filename>funcs.sql</filename> 
+   and <filename>funcs.c</filename> in the tutorial directory.
   </para>
   </sect1>
 
@@ -67,8 +74,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.70 2003/07/25 20:17:49 tgl E
 
    <para>
     SQL functions execute an arbitrary list of SQL statements, returning
-    the result of the last query in the list, which must be a
-    <literal>SELECT</>.
+    the result of the last query in the list.
     In the simple (non-set)
     case, the first row of the last query's result will be returned.
     (Bear in mind that <quote>the first row</quote> of a multirow
@@ -276,7 +282,7 @@ CREATE FUNCTION new_emp() RETURNS emp AS '
 ' LANGUAGE SQL;
 </programlisting>
 
-     In this case we have specified each of  the  attributes
+     In this example we have specified each of  the  attributes
      with  a  constant value, but any computation
      could have been substituted for these constants.
     </para>
@@ -316,7 +322,7 @@ ERROR:  function declared to return emp returns varchar instead of text at colum
     </para>
 
     <para>
-     This is an example for how to extract an attribute out of a row type:
+     This is an example of extracting an attribute out of a row type:
 
 <screen>
 SELECT (new_emp()).name;
@@ -330,7 +336,7 @@ SELECT (new_emp()).name;
 
 <screen>
 SELECT new_emp().name;
-ERROR:  syntax error at or near "."
+ERROR:  syntax error at or near "." at character 17
 </screen>
     </para>
 
@@ -507,6 +513,68 @@ SELECT name, listchildren(name) FROM nodes;
      notice that no output row appears for <literal>Child2</>, <literal>Child3</>, etc.
      This happens because <function>listchildren</function> returns an empty set
      for those arguments, so no result rows are generated.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Polymorphic <acronym>SQL</acronym> Functions</title>
+
+    <para>
+     <acronym>SQL</acronym> functions may be declared to accept and
+     return the <quote>polymorphic</> types
+     <type>anyelement</type> and <type>anyarray</type>.
+     See <xref linkend="types-polymorphic"> for a more detailed explanation
+     of polymorphic functions. Here is a polymorphic function
+     <function>make_array</function> that builds up an array from two
+     arbitrary data type elements:
+<screen>
+CREATE FUNCTION make_array(anyelement, anyelement) RETURNS anyarray AS '
+    SELECT ARRAY[$1, $2];
+' LANGUAGE SQL;
+
+SELECT make_array(1, 2) AS intarray, make_array('a'::text, 'b') AS textarray;
+ intarray | textarray
+----------+-----------
+ {1,2}    | {a,b}
+(1 row)
+</screen>
+    </para>
+
+    <para>
+     Notice the use of the typecast <literal>'a'::text</literal>
+     to specify that the argument is of type <type>text</type>. This is
+     required if the argument is just a string literal, since otherwise
+     it would be treated as type
+     <type>unknown</type>, and array of <type>unknown</type> is not a valid
+     type.
+     Without the typecast, you will get errors like this:
+<screen>
+<computeroutput>
+ERROR:  could not determine ANYARRAY/ANYELEMENT type because input is UNKNOWN
+</computeroutput>
+</screen>
+    </para>
+
+    <para>
+     It is permitted to have polymorphic arguments with a deterministic
+     return type, but the converse is not. For example:
+<screen>
+CREATE FUNCTION is_greater(anyelement, anyelement) RETURNS bool AS '
+    SELECT $1 > $2;
+' LANGUAGE SQL;
+
+SELECT is_greater(1, 2);
+ is_greater
+------------
+ f
+(1 row)
+
+CREATE FUNCTION invalid_func() RETURNS anyelement AS '
+    SELECT 1;
+' LANGUAGE SQL;
+ERROR:  cannot determine result datatype
+DETAIL:  A function returning ANYARRAY or ANYELEMENT must have at least one argument of either type.
+</screen>
     </para>
    </sect2>
   </sect1>
@@ -1997,6 +2065,89 @@ CREATE OR REPLACE FUNCTION testpassbyval(integer, integer) RETURNS SETOF __testp
     <para>
      The directory <filename>contrib/tablefunc</> in the source
      distribution contains more examples of set-returning functions.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Polymorphic Arguments and Return Types</title>
+
+    <para>
+     C-language functions may be declared to accept and
+     return the <quote>polymorphic</> types
+     <type>anyelement</type> and <type>anyarray</type>.
+     See <xref linkend="types-polymorphic"> for a more detailed explanation
+     of polymorphic functions. When function arguments or return types
+     are defined as polymorphic types, the function author cannot know
+     in advance what data type it will be called with, or
+     need to return. There are two routines provided in <filename>fmgr.h</>
+     to allow a version-1 C function to discover the actual data types
+     of its arguments and the type it is expected to return. The routines are
+     called <literal>get_fn_expr_rettype(FmgrInfo *flinfo)</> and
+     <literal>get_fn_expr_argtype(FmgrInfo *flinfo, int argnum)</>.
+     They return the result or argument type OID, or InvalidOid if the
+     information is not available.
+     The structure <literal>flinfo</> is normally accessed as
+     <literal>fcinfo-&gt;flinfo</>. The parameter <literal>argnum</>
+     is zero based.
+    </para>
+
+    <para>
+     For example, suppose we want to write a function to accept a single
+     element of any type, and return a one-dimensional array of that type:
+
+<programlisting>
+PG_FUNCTION_INFO_V1(make_array);
+Datum
+make_array(PG_FUNCTION_ARGS)
+{
+    ArrayType  *result;
+    Oid         element_type = get_fn_expr_argtype(fcinfo-&gt;flinfo, 0);
+    Datum       element;
+    int16       typlen;
+    bool        typbyval;
+    char        typalign;
+    int         ndims;
+    int         dims[MAXDIM];
+    int         lbs[MAXDIM];
+
+    if (!OidIsValid(element_type))
+        elog(ERROR, "could not determine data type of input");
+
+    /* get the provided element */
+    element = PG_GETARG_DATUM(0);
+
+    /* we have one dimension */
+    ndims = 1;
+    /* and one element */
+    dims[0] = 1;
+    /* and lower bound is 1 */
+    lbs[0] = 1;
+
+    /* get required info about the element type */
+    get_typlenbyvalalign(element_type, &amp;typlen, &amp;typbyval, &amp;typalign);
+
+    /* now build the array */
+    result = construct_md_array(&amp;element, ndims, dims, lbs,
+                                element_type, typlen, typbyval, typalign);
+
+    PG_RETURN_ARRAYTYPE_P(result);
+}
+</programlisting>
+    </para>
+
+    <para>
+     The following command declares the function
+     <function>make_array</function> in SQL:
+
+<programlisting>
+CREATE FUNCTION make_array(anyelement) 
+    RETURNS anyarray
+    AS '<replaceable>DIRECTORY</replaceable>/funcs', 'make_array'
+    LANGUAGE 'C' STRICT;
+</programlisting>
+
+     Note the use of STRICT; this is essential since the code is not
+     bothering to test for a NULL input.
     </para>
    </sect2>
   </sect1>

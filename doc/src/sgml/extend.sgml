@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.22 2003/04/13 09:57:35 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.23 2003/08/09 22:50:21 tgl Exp $
 -->
 
  <chapter id="extend">
@@ -22,6 +22,11 @@ $Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.22 2003/04/13 09:57:35 pete
     </listitem>
     <listitem>
      <para>
+      aggregates (starting in <xref linkend="xaggr">)
+     </para>
+    </listitem>
+    <listitem>
+     <para>
       data types (starting in <xref linkend="xtypes">)
      </para>
     </listitem>
@@ -32,7 +37,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.22 2003/04/13 09:57:35 pete
     </listitem>
     <listitem>
      <para>
-      aggregates (starting in <xref linkend="xaggr">)
+      operator classes for indexes (starting in <xref linkend="xindex">)
      </para>
     </listitem>
    </itemizedlist>
@@ -47,7 +52,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.22 2003/04/13 09:57:35 pete
     relational database systems, you know that  they  store  information
     about  databases,  tables,  columns,  etc., in what are
     commonly known as system catalogs.  (Some systems  call
-    this  the data dictionary).  The catalogs appear to the
+    this  the data dictionary.)  The catalogs appear to the
     user as tables like any other, but  the  <acronym>DBMS</acronym>  stores
     its  internal  bookkeeping in them.  One key difference
     between <productname>PostgreSQL</productname> and  standard  relational database systems  is
@@ -88,24 +93,113 @@ $Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.22 2003/04/13 09:57:35 pete
    </indexterm>
 
    <para>
-    Data types are divided into base types and composite  types.
-    Base  types  are those, like <type>int4</type>, that are implemented
-    in a language such as C.  They generally correspond  to
-    what are often known as abstract data types.  <productname>PostgreSQL</productname>
-    can only operate on such types through methods provided
-    by  the  user and only understands the behavior of such
-    types to the extent that the user describes them.  
-    Composite  types  are  created whenever the user creates a
-    table.  The
-    user can <quote>look inside</quote> at the attributes of these types
-    from the query language.
+    <productname>PostgreSQL</productname> data types are divided into base
+    types, composite types, domain types, and pseudo-types.
    </para>
+
+   <para>
+    Base  types  are those, like <type>int4</type>, that are implemented
+    below the level of the  <acronym>SQL</> language (typically in a low-level
+    language such as C).  They generally correspond  to
+    what are often known as abstract data types.
+    <productname>PostgreSQL</productname>
+    can only operate on such types through functions provided
+    by  the  user and only understands the behavior of such
+    types to the extent that the user describes them.  Base types are
+    further subdivided into scalar and array types.  For each scalar type,
+    a corresponding array type is automatically created that can hold
+    variable-size arrays of that scalar type.
+   </para>
+
+   <para>
+    Composite  types, or row types,  are  created whenever the user creates a
+    table; it's also possible to define a <quote>stand-alone</> composite
+    type with no associated table.  A composite type is simply a list of
+    base types with associated field names.  A value of a composite type
+    is a row or record of field values.  The user can access the component
+    fields from <acronym>SQL</> queries.
+   </para>
+
+   <para>
+    A domain type is based on a particular base
+    type and for many purposes is interchangeable with its base type.
+    However, a domain may have constraints that restrict its valid values
+    to a subset of what the underlying base type would allow.  Domains can
+    be created by simple <acronym>SQL</> commands.
+   </para>
+
+   <para>
+    Finally, there are a few <quote>pseudo-types</> for special purposes.
+    Pseudo-types cannot appear as fields of tables or composite types, but
+    they can be used to declare the argument and result types of functions.
+    This provides a mechanism within the type system to identify special
+    classes of functions.  <xref
+    linkend="datatype-pseudotypes-table"> lists the existing
+    pseudo-types.
+   </para>
+
+   <sect2 id="types-polymorphic">
+    <title>Polymorphic Types and Functions</title>
+
+   <indexterm>
+    <primary>polymorphic types</primary>
+   </indexterm>
+
+   <indexterm>
+    <primary>polymorphic functions</primary>
+   </indexterm>
+
+    <para>
+     Two pseudo-types of special interest are <type>anyelement</> and
+     <type>anyarray</>, which are collectively called <firstterm>polymorphic
+     types</>.  Any function declared using these types is said to be
+     a <firstterm>polymorphic function</>.  A polymorphic function can
+     operate on many different data types, with the specific data type(s)
+     being determined by the data types actually passed to it in a particular
+     call.
+    </para>
+
+    <para>
+     Polymorphic arguments and results are tied to each other and are resolved
+     to a specific data type when a query calling a polymorphic function is
+     parsed.  Each position (either argument or return value) declared as
+     <type>anyelement</type> is allowed to have any specific actual
+     data type, but in any given call they must all be the
+     <emphasis>same</emphasis> actual type. Each 
+     position declared as <type>anyarray</type> can have any array data type,
+     but similarly they must all be the same type. If there are
+     positions declared <type>anyarray</type> and others declared
+     <type>anyelement</type>, the actual array type in the
+     <type>anyarray</type> positions must be an array whose elements are
+     the same type appearing in the <type>anyelement</type> positions.
+    </para>
+
+    <para>
+     Thus, when more than one argument position is declared with a polymorphic
+     type, the net effect is that only certain combinations of actual argument
+     types are allowed.  For example, a function declared as
+     <literal>foo(anyelement, anyelement)</> will take any two input values,
+     so long as they are of the same data type.
+    </para>
+
+    <para>
+     When the return value of a function is declared as a polymorphic type,
+     there must be at least one argument position that is also polymorphic,
+     and the actual data type supplied as the argument determines the actual
+     result type for that call.  For example, if there were not already
+     an array subscripting mechanism, one could define a function that
+     implements subscripting as <literal>subscript(anyarray, integer)
+     returns anyelement</>.  This declaration constrains the actual first
+     argument to be an array type, and allows the parser to infer the correct
+     result type from the actual first argument's type.
+    </para>
+   </sect2>
   </sect1>
 
   &xfunc;
+  &xaggr;
   &xtypes;
   &xoper;
-  &xaggr;
   &xindex;
 
  </chapter>
