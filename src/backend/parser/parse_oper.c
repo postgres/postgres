@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.42 2000/11/07 16:01:01 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.43 2000/11/11 19:49:26 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -435,6 +435,7 @@ oper_select_candidate(int nargs,
 				current_typeids = current_candidate->args;
 				current_type = current_typeids[i];
 				current_category = TypeCategory(current_type);
+				/* first time through? Then we'll use this one for now */
 				if (slot_category == INVALID_TYPE)
 				{
 					slot_category = current_category;
@@ -446,6 +447,8 @@ oper_select_candidate(int nargs,
 					/* started out as unknown type, so give preference to string type, if available */
 					if (current_category == STRING_TYPE)
 					{
+						slot_category = current_category;
+						slot_type = current_type;
 						/* forget all previous candidates */
 						candidates = current_candidate;
 						last_candidate = current_candidate;
