@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tablecmds.h,v 1.2 2002/04/24 02:48:55 momjian Exp $
+ * $Id: tablecmds.h,v 1.3 2002/04/26 19:29:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,9 +60,5 @@ extern void renameatt(Oid relid,
 
 extern void renamerel(Oid relid,
 		  const char *newrelname);
-
-extern void renametrig(Oid relid,
-		  const char *oldname,
-		  const char *newname);
 
 #endif   /* TABLECMDS_H */

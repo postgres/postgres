@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.96 2002/04/18 21:16:16 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.97 2002/04/26 19:29:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -646,7 +646,7 @@ CreateUser(CreateUserStmt *stmt)
 /*
  * ALTER USER
  */
-extern void
+void
 AlterUser(AlterUserStmt *stmt)
 {
 	Datum		new_record[Natts_pg_shadow];
