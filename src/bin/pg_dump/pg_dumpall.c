@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.40 2004/06/09 17:37:28 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.41 2004/06/10 16:35:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -690,7 +690,8 @@ runPgDump(const char *dbname)
 	const char *p;
 	int			ret;
 
-	appendPQExpBuffer(cmd, "'%s' %s -Fp '", pg_dump_bin, pgdumpopts->data);
+	appendPQExpBuffer(cmd, "%s\"%s\" %s -Fp '", SYSTEMQUOTE, pg_dump_bin,
+					  pgdumpopts->data);
 
 	/* Shell quoting is not quite like SQL quoting, so can't use fmtId */
 	for (p = dbname; *p; p++)
@@ -702,6 +703,7 @@ runPgDump(const char *dbname)
 	}
 
 	appendPQExpBufferChar(cmd, '\'');
+	appendStringLiteral(cmd, SYSTEMQUOTE, false);
 
 	if (verbose)
 		fprintf(stderr, _("%s: running \"%s\"\n"), progname, cmd->data);

@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.8 2004/06/09 17:36:07 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.9 2004/06/10 16:35:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -224,11 +224,12 @@ start_postmaster(void)
 
 	/* Does '&' work on Win32? */
 	if (log_file != NULL)
-		snprintf(cmd, MAXPGPATH, "'%s' %s < %s >> '%s' 2>&1 &",
-				 postgres_path, post_opts, DEVNULL, log_file);
+		snprintf(cmd, MAXPGPATH, "%s\"%s\" %s < %s >> \"%s\" 2>&1 &%s",
+				 SYSTEMQUOTE, postgres_path, post_opts, DEVNULL, log_file,
+				 SYSTEMQUOTE);
 	else
-		snprintf(cmd, MAXPGPATH, "'%s' %s < %s 2>&1 &",
-				 postgres_path, post_opts, DEVNULL);
+		snprintf(cmd, MAXPGPATH, "%s\"%s\" %s < \"%s\" 2>&1 &%s",
+				 SYSTEMQUOTE, postgres_path, post_opts, DEVNULL, SYSTEMQUOTE);
 	return system(cmd);
 }
 

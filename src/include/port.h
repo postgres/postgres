@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/port.h,v 1.40 2004/06/03 00:07:38 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/port.h,v 1.41 2004/06/10 16:35:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,6 +70,18 @@ extern int find_other_exec(const char *argv0, const char *target,
 #else
 #define EXE ""
 #define DEVNULL "/dev/null"
+#endif
+
+/*
+ *	Win32 needs double quotes at the beginning and end of system()
+ *	strings.  If not, it gets confused with multiple quoted strings.
+ *	It also must use double-quotes around the executable name
+ *	and any files use for redirection.  Other args can use single-quotes.
+ */
+#ifdef WIN32
+#define SYSTEMQUOTE "\""
+#else
+#define SYSTEMQUOTE ""
 #endif
 
 /* Portable delay handling */
