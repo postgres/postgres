@@ -4,7 +4,7 @@
 #    Makefile for commands
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/commands/Makefile,v 1.2 1996/11/03 23:57:17 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/commands/Makefile,v 1.3 1997/04/02 03:51:23 vadim Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -19,7 +19,7 @@ CFLAGS+=$(INCLUDE_OPT)
 
 OBJS = async.o creatinh.o command.o copy.o defind.o define.o \
        purge.o remove.o rename.o vacuum.o version.o view.o cluster.o \
-       recipe.o explain.o
+       recipe.o explain.o sequence.o
 
 all: SUBSYS.o
 
