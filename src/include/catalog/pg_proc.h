@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.280 2002/12/12 21:02:25 momjian Exp $
+ * $Id: pg_proc.h,v 1.281 2003/01/09 00:58:41 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -1494,6 +1494,9 @@ DESCR("date difference preserving months and years");
 
 /* OIDS 1200 - 1299 */
 
+DATA(insert OID = 1200 (  interval			PGNSP PGUID 12 f f t f i 2 1186 "1186 23"	interval_scale - _null_ ));
+DESCR("adjust interval precision");
+
 DATA(insert OID = 1215 (  obj_description	PGNSP PGUID 14 f f t f s 2	25 "26 19"	"select description from pg_description where objoid = $1 and classoid = (select oid from pg_class where relname = $2 and relnamespace = PGNSP) and objsubid = 0" - _null_ ));
 DESCR("get description for object id and catalog name");
 DATA(insert OID = 1216 (  col_description	PGNSP PGUID 14 f f t f s 2	25 "26 23"	"select description from pg_description where objoid = $1 and classoid = \'pg_catalog.pg_class\'::regclass and objsubid = $2" - _null_ ));
@@ -2774,7 +2777,7 @@ DATA(insert OID = 1954 (  byteacmp		   PGNSP PGUID 12 f f t f i 2 23 "17 17"	byt
 DESCR("less-equal-greater");
 
 DATA(insert OID = 1961 (  timestamp		   PGNSP PGUID 12 f f t f i 2 1114 "1114 23"	timestamp_scale - _null_ ));
-DESCR("adjust time precision");
+DESCR("adjust timestamp precision");
 
 DATA(insert OID = 1965 (  oidlarger		   PGNSP PGUID 12 f f t f i 2 26 "26 26"	oidlarger - _null_ ));
 DESCR("larger of two");
@@ -2782,7 +2785,7 @@ DATA(insert OID = 1966 (  oidsmaller	   PGNSP PGUID 12 f f t f i 2 26 "26 26"	oi
 DESCR("smaller of two");
 
 DATA(insert OID = 1967 (  timestamptz	   PGNSP PGUID 12 f f t f i 2 1184 "1184 23"	timestamptz_scale - _null_ ));
-DESCR("adjust time precision");
+DESCR("adjust timestamp precision");
 DATA(insert OID = 1968 (  time			   PGNSP PGUID 12 f f t f i 2 1083 "1083 23"	time_scale - _null_ ));
 DESCR("adjust time precision");
 DATA(insert OID = 1969 (  timetz		   PGNSP PGUID 12 f f t f i 2 1266 "1266 23"	timetz_scale - _null_ ));
