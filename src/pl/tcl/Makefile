@@ -2,7 +2,7 @@
 #
 # Makefile for the pltcl shared object
 #
-# $Header: /cvsroot/pgsql/src/pl/tcl/Makefile,v 1.31 2001/05/09 21:35:11 momjian Exp $
+# $Header: /cvsroot/pgsql/src/pl/tcl/Makefile,v 1.32 2001/05/09 21:42:29 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -72,6 +72,9 @@ override CFLAGS = $(TCL_CFLAGS_OPTIMIZE) $(TCL_SHLIB_CFLAGS)
 
 ifeq ($(enable_pltcl_unknown), yes)
 override CPPFLAGS+= -DPLTCL_UNKNOWN_SUPPORT
+TCL_UNKNOWN_MODS=	modules/pltcl_loadmod \
+			modules/pltcl_delmod \
+			modules/pltcl_listmod
 endif
 
 #
@@ -93,14 +96,7 @@ endif
 
 ifeq ($(TCL_SHARED_BUILD), 1)
 
-ifeq ($(enable_pltcl_unknown), no)
-all: $(INFILES)
-else
-all: $(INFILES) \
-	modules/pltcl_loadmod \
-	modules/pltcl_delmod \
-	modules/pltcl_listmod
-endif
+all: $(INFILES) $(TCL_UNKNOWN_MODS)
 
 modules/pltcl_loadmod: modules/pltcl_loadmod.in \
 	$(top_builddir)/src/Makefile.global
