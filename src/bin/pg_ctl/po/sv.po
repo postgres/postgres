@@ -7,15 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-06-25 10:40+0200\n"
-"PO-Revision-Date: 2004-06-25 11:46+0200\n"
+"POT-Creation-Date: 2004-08-05 08:41+0200\n"
+"PO-Revision-Date: 2004-08-05 08:42+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: pg_ctl.c:184 pg_ctl.c:200 pg_ctl.c:1229
+#: pg_ctl.c:184 pg_ctl.c:200 pg_ctl.c:1230
 #, c-format
 msgid "%s: out of memory\n"
 msgstr "%s: slut på minnet\n"
@@ -230,7 +230,7 @@ msgstr "Kan inte öppna tjänsten \"%s\" [%d]\n"
 msgid "Unable to unregister service \"%s\" [%d]\n"
 msgstr "Kan inte avregistrera tjänsten \"%s\" [%d]\n"
 
-#: pg_ctl.c:1011
+#: pg_ctl.c:1012
 #, c-format
 msgid ""
 "\n"
@@ -239,7 +239,7 @@ msgstr ""
 "\n"
 "Försök med \"%s --help\" för mer information.\n"
 
-#: pg_ctl.c:1019
+#: pg_ctl.c:1020
 #, c-format
 msgid ""
 "%s is a utility to start, stop, restart, reload configuration files,\n"
@@ -251,126 +251,136 @@ msgstr ""
 "eller döda en PostgreSQL-process.\n"
 "\n"
 
-#: pg_ctl.c:1021
+#: pg_ctl.c:1022
 #, c-format
 msgid "Usage:\n"
 msgstr "Användning:\n"
 
-#: pg_ctl.c:1022
+#: pg_ctl.c:1023
 #, c-format
 msgid "  %s start   [-w] [-D DATADIR] [-s] [-l FILENAME] [-o \"OPTIONS\"]\n"
-msgstr "  %s start   [-w] [-D DATAKATALOG] [-s] [-l FILENAMN] [-o \"FLAGGOR\"]\n"
+msgstr ""
+"  %s start   [-w] [-D DATAKATALOG] [-s] [-l FILENAMN] [-o \"FLAGGOR\"]\n"
 
-#: pg_ctl.c:1023
+#: pg_ctl.c:1024
 #, c-format
 msgid "  %s stop    [-W] [-D DATADIR] [-s] [-m SHUTDOWN-MODE]\n"
 msgstr "  %s stop    [-W] [-D DATAKATALOG] [-s] [-m STÄNGNINGSMETOD]\n"
 
-#: pg_ctl.c:1024
+#: pg_ctl.c:1025
 #, c-format
 msgid ""
 "  %s restart [-w] [-D DATADIR] [-s] [-m SHUTDOWN-MODE] [-o \"OPTIONS\"]\n"
-msgstr "  %s restart [-w] [-D DATAKATALOG] [-s] [-m STÄNGNINGSMETOD] [-o \"FLAGGOR\"]\n"
+msgstr ""
+"  %s restart [-w] [-D DATAKATALOG] [-s] [-m STÄNGNINGSMETOD] [-o \"FLAGGOR"
+"\"]\n"
 
-#: pg_ctl.c:1025
+#: pg_ctl.c:1026
 #, c-format
 msgid "  %s reload  [-D DATADIR] [-s]\n"
 msgstr "  %s reload  [-D DATAKATALOG] [-s]\n"
 
-#: pg_ctl.c:1026
+#: pg_ctl.c:1027
 #, c-format
 msgid "  %s status  [-D DATADIR]\n"
 msgstr "  %s status  [-D DATAKATALOG]\n"
 
-#: pg_ctl.c:1027
+#: pg_ctl.c:1028
 #, c-format
 msgid "  %s kill    SIGNALNAME PROCESSID\n"
 msgstr "  %s kill    SIGNALNAMN PROCESSID\n"
 
-#: pg_ctl.c:1029
+#: pg_ctl.c:1030
 #, c-format
 msgid ""
 "  %s register   [-N servicename] [-U username] [-P password] [-D DATADIR] [-"
 "o \"OPTIONS\"]\n"
-msgstr "  %s register   [-N tjänstnamn] [-U användarnamn] [-P lösenord] [-D DATAKATALOG] [-o \"FLAGGOR\"]\n"
+msgstr ""
+"  %s register   [-N tjänstnamn] [-U användarnamn] [-P lösenord] [-D "
+"DATAKATALOG] [-o \"FLAGGOR\"]\n"
 
-#: pg_ctl.c:1030
+#: pg_ctl.c:1031
 #, c-format
 msgid "  %s unregister [-N servicename]\n"
 msgstr "  %s unregister [-N tjänstnamn]\n"
 
-#: pg_ctl.c:1032
+#: pg_ctl.c:1033
 #, c-format
 msgid "Common options:\n"
 msgstr "Generella flaggor:\n"
 
-#: pg_ctl.c:1033
+#: pg_ctl.c:1034
 #, c-format
 msgid "  -D, --pgdata DATADIR   location of the database storage area\n"
 msgstr ""
 "  -D, --pgdata DATAKATALOG\n"
 "               plats för databasens lagringsarea\n"
 
-#: pg_ctl.c:1034
+#: pg_ctl.c:1035
 #, c-format
 msgid "  -s, --silent only print errors, no informational messages\n"
 msgstr "  -s, --silent skriv bara ut fel, inga informationsmeddelanden\n"
 
-#: pg_ctl.c:1036
+#: pg_ctl.c:1037
 #, c-format
 msgid "  -N       service name with which to register PostgreSQL server\n"
 msgstr "  -N       tjänstnamn att registrera PostgreSQL-servern med\n"
 
-#: pg_ctl.c:1037
-#, c-format
-msgid "  -P       user name of account to register PostgreSQL server\n"
-msgstr "  -P       användarnamn på kontot att registrera PostgreSQL-servern med\n"
-
 #: pg_ctl.c:1038
 #, c-format
-msgid "  -U       password  of account to register PostgreSQL server\n"
-msgstr "  -U       lösenord för kontot att registrera PostgreSQL-servern med\n"
+msgid "  -P       password of account to register PostgreSQL server\n"
+msgstr "  -P       lösenord för kontot att registrera PostgreSQL-servern med\n"
 
-#: pg_ctl.c:1040
+#: pg_ctl.c:1039
+#, c-format
+msgid "  -U       user name of account to register PostgreSQL server\n"
+msgstr "  -U       användarnamn på kontot att registrera PostgreSQL-servern med\n"
+
+#: pg_ctl.c:1041
 #, c-format
 msgid "  -w           wait until operation completes\n"
 msgstr "  -w           vänta på att operationen slutförs\n"
 
-#: pg_ctl.c:1041
+#: pg_ctl.c:1042
 #, c-format
 msgid "  -W           do not wait until operation completes\n"
 msgstr "  -W           vänta inte på att operationen slutförs\n"
 
-#: pg_ctl.c:1042
+#: pg_ctl.c:1043
 #, c-format
 msgid "  --help       show this help, then exit\n"
 msgstr "  --help       visa denna hjälp och avsluta sedan\n"
 
-#: pg_ctl.c:1043
+#: pg_ctl.c:1044
 #, c-format
 msgid "  --version    output version information, then exit\n"
 msgstr "  --version    visa versionsinformation och avsluta sedan\n"
 
-#: pg_ctl.c:1044
+#: pg_ctl.c:1045
 #, c-format
 msgid ""
 "(The default is to wait for shutdown, but not for start or restart.)\n"
 "\n"
-msgstr "(Standard är att vänta på nedstängning men inte vänta på start eller omstart.)\n\n"
+msgstr ""
+"(Standard är att vänta på nedstängning men inte vänta på start eller "
+"omstart.)\n"
+"\n"
 
-#: pg_ctl.c:1045
+#: pg_ctl.c:1046
 #, c-format
 msgid ""
 "If the -D option is omitted, the environment variable PGDATA is used.\n"
 "\n"
-msgstr "Om flaggan -D inte angivits så används omgivningsvariabeln PGDATA.\n\n"
+msgstr ""
+"Om flaggan -D inte angivits så används omgivningsvariabeln PGDATA.\n"
+"\n"
 
-#: pg_ctl.c:1046
+#: pg_ctl.c:1047
 #, c-format
 msgid "Options for start or restart:\n"
 msgstr "Flaggor för start och omstart:\n"
 
-#: pg_ctl.c:1047
+#: pg_ctl.c:1048
 #, c-format
 msgid ""
 "  -l, --log FILENAME      write (or append) server log to FILENAME.  The\n"
@@ -379,16 +389,17 @@ msgstr ""
 "  -l, --log FILENAMN      skriv (eller addera) server-loggen till FILNAMN.\n"
 "                          Denna flagga rekommenderas varmt.\n"
 
-#: pg_ctl.c:1049
+#: pg_ctl.c:1050
 #, c-format
 msgid ""
 "  -o OPTIONS              command line options to pass to the postmaster\n"
 "                          (PostgreSQL server executable)\n"
 msgstr ""
-"  -o FLAGGOR              kommandoradsflaggor som skickas vidare till postmaster\n"
+"  -o FLAGGOR              kommandoradsflaggor som skickas vidare till "
+"postmaster\n"
 "                          (PostgreSQL-serverns binär)\n"
 
-#: pg_ctl.c:1051
+#: pg_ctl.c:1052
 #, c-format
 msgid ""
 "  -p PATH-TO-POSTMASTER   normally not necessary\n"
@@ -398,97 +409,103 @@ msgstr ""
 "                          behövs normalt inte\n"
 "\n"
 
-#: pg_ctl.c:1052
+#: pg_ctl.c:1053
 #, c-format
 msgid "Options for stop or restart:\n"
 msgstr "Flaggor för stopp eller omstart:\n"
 
-#: pg_ctl.c:1053
+#: pg_ctl.c:1054
 #, c-format
 msgid ""
 "  -m SHUTDOWN-MODE   may be 'smart', 'fast', or 'immediate'\n"
 "\n"
-msgstr "  -m STÄNGNINGSMETOD kan vara \"smart\", \"fast\", eller \"immediate\"\n\n"
+msgstr ""
+"  -m STÄNGNINGSMETOD kan vara \"smart\", \"fast\", eller \"immediate\"\n"
+"\n"
 
-#: pg_ctl.c:1054
+#: pg_ctl.c:1055
 #, c-format
 msgid "Allowed signal names for kill:\n"
 msgstr "Tillåtna flaggor för \"kill\":\n"
 
-#: pg_ctl.c:1055
+#: pg_ctl.c:1056
 #, c-format
 msgid ""
 "  HUP INT QUIT ABRT TERM USR1 USR2\n"
 "\n"
-msgstr "  HUP INT QUIT ABRT TERM USR1 USR2\n\n"
+msgstr ""
+"  HUP INT QUIT ABRT TERM USR1 USR2\n"
+"\n"
 
-#: pg_ctl.c:1056
+#: pg_ctl.c:1057
 #, c-format
 msgid "Shutdown modes are:\n"
 msgstr "Stängningsmetoder är:\n"
 
-#: pg_ctl.c:1057
+#: pg_ctl.c:1058
 #, c-format
 msgid "  smart       quit after all clients have disconnected\n"
 msgstr "  smart       stäng när alla klienter kopplat ner\n"
 
-#: pg_ctl.c:1058
+#: pg_ctl.c:1059
 #, c-format
 msgid "  fast        quit directly, with proper shutdown\n"
 msgstr "  fast        stäng direkt, en kontrollerad nedstängning\n"
 
-#: pg_ctl.c:1059
+#: pg_ctl.c:1060
 #, c-format
 msgid ""
 "  immediate   quit without complete shutdown; will lead to recovery on "
 "restart\n"
 "\n"
-msgstr "  immediate   stäng okontrollerat; omstart sker i räddningsläge\n\n"
+msgstr ""
+"  immediate   stäng okontrollerat; omstart sker i räddningsläge\n"
+"\n"
 
-#: pg_ctl.c:1060
+#: pg_ctl.c:1061
 #, c-format
 msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
 msgstr "Rapportera buggar till <pgsql-bugs@postgresql.org>.\n"
 
-#: pg_ctl.c:1085
+#: pg_ctl.c:1086
 #, c-format
 msgid "%s: invalid shutdown mode %s\n"
 msgstr "%s: ogiltigt stängningsmetod %s\n"
 
-#: pg_ctl.c:1118
+#: pg_ctl.c:1119
 #, c-format
 msgid "%s: invalid signal \"%s\"\n"
 msgstr "%s: ogiltig signal \"%s\"\n"
 
-#: pg_ctl.c:1245
+#: pg_ctl.c:1246
 #, c-format
 msgid "%s: invalid option %s\n"
 msgstr "%s: ogiltig flagga %s\n"
 
-#: pg_ctl.c:1256
+#: pg_ctl.c:1257
 #, c-format
 msgid "%s: extra operation mode %s\n"
 msgstr "%s: extra operationsläge %s\n"
 
-#: pg_ctl.c:1275
+#: pg_ctl.c:1276
 #, c-format
 msgid "%s: invalid kill syntax\n"
 msgstr "%s: ogiltig kill-syntax\n"
 
-#: pg_ctl.c:1293
+#: pg_ctl.c:1294
 #, c-format
 msgid "%s: invalid operation mode %s\n"
 msgstr "%s: ogiltigt operationsläge %s\n"
 
-#: pg_ctl.c:1303
+#: pg_ctl.c:1304
 #, c-format
 msgid "%s: no operation specified\n"
 msgstr "%s: ingen operation angiven\n"
 
-#: pg_ctl.c:1319
+#: pg_ctl.c:1320
 #, c-format
 msgid ""
 "%s: no database directory specified and environment variable PGDATA unset\n"
-msgstr "%s: ingen databaskatalog angiven och omgivningsvariabeln PGDATA är inte satt\n"
-
-
+msgstr ""
+"%s: ingen databaskatalog angiven och omgivningsvariabeln PGDATA är inte "
+"satt\n"
