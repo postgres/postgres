@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.122 2000/02/16 17:26:07 thomas Exp $
+ * $Id: pg_proc.h,v 1.123 2000/02/17 03:39:48 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -293,9 +293,9 @@ DESCR("contained in");
 DATA(insert OID = 138 (  box_center		   PGUID 11 f t t 1 f 600 "603" 100 1 0 100  box_center - ));
 DESCR("center of");
 DATA(insert OID = 139 (  areasel		   PGUID 11 f t f 5 f 701 "26 26 21 0 23" 100 0 0 100  areasel - ));
-DESCR("restriction selectivity for operators on areas");
+DESCR("restriction selectivity for area-comparison operators");
 DATA(insert OID = 140 (  areajoinsel	   PGUID 11 f t f 5 f 701 "26 26 21 26 21" 100 0 0 100	areajoinsel - ));
-DESCR("join selectivity for operators on areas");
+DESCR("join selectivity for area-comparison operators");
 DATA(insert OID = 141 (  int4mul		   PGUID 11 f t t 2 f 23 "23 23" 100 0 0 100  int4mul - ));
 DESCR("multiply");
 DATA(insert OID = 142 (  int4fac		   PGUID 11 f t t 1 f 23 "23" 100 0 0 100  int4fac - ));
@@ -1564,6 +1564,15 @@ DATA(insert OID = 1299 (  now			   PGUID 11 f t f 0 f 1184 "0" 100 0 0 100	now -
 DESCR("current transaction time");
 
 /* OIDS 1300 - 1399 */
+
+DATA(insert OID = 1300 (  positionsel		   PGUID 11 f t f 5 f 701 "26 26 21 0 23" 100 0 0 100  positionsel - ));
+DESCR("restriction selectivity for position-comparison operators");
+DATA(insert OID = 1301 (  positionjoinsel	   PGUID 11 f t f 5 f 701 "26 26 21 26 21" 100 0 0 100	positionjoinsel - ));
+DESCR("join selectivity for position-comparison operators");
+DATA(insert OID = 1302 (  contsel		   PGUID 11 f t f 5 f 701 "26 26 21 0 23" 100 0 0 100  contsel - ));
+DESCR("restriction selectivity for containment comparison operators");
+DATA(insert OID = 1303 (  contjoinsel	   PGUID 11 f t f 5 f 701 "26 26 21 26 21" 100 0 0 100	contjoinsel - ));
+DESCR("join selectivity for containment comparison operators");
 
 DATA(insert OID = 1314 (  timestamp_cmp		 PGUID 11 f t f 2 f   23 "1184 1184" 100 0 0 100  timestamp_cmp - ));
 DESCR("less-equal-greater");

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xindex.sgml,v 1.7 2000/01/24 07:16:49 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xindex.sgml,v 1.8 2000/02/17 03:39:39 tgl Exp $
 Postgres documentation
 -->
 
@@ -52,16 +52,17 @@ Postgres documentation
        <entry>object id of the owner's instance in pg_user</entry>
       </row>
       <row>
-       <entry>amkind</entry>
-       <entry>not used at present, but set to 'o' as a place holder</entry>
-      </row>
-      <row>
        <entry>amstrategies</entry>
        <entry>number of strategies for this access method (see below)</entry>
       </row>
       <row>
        <entry>amsupport</entry>
        <entry>number of support routines for this access method (see below)</entry>
+      </row>
+      <row>
+       <entry>amorderstrategy</entry>
+       <entry>zero if the index offers no sort order, otherwise the strategy
+        number of the strategy operator that describes the sort order</entry>
       </row>
       <row>
        <entry>amgettuple</entry>
@@ -215,6 +216,15 @@ SELECT oid FROM pg_am WHERE amname = 'btree';
    <filename>pg_am</filename>.  Similarly, <filename>amsupport</filename>
    is just the number of support routines required by  the  access
    method.  The actual routines are listed elsewhere.
+  </para>
+
+  <para>
+   By the way, the <filename>amorderstrategy</filename> entry tells whether
+   the access method supports ordered scan.  Zero means it doesn't; if it
+   does, <filename>amorderstrategy</filename> is the number of the strategy
+   routine that corresponds to the ordering operator.  For example, btree
+   has <filename>amorderstrategy</filename> = 1 which is its
+   "less than" strategy number.
   </para>
 
   <para>

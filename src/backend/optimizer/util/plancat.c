@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.47 2000/02/15 20:49:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.48 2000/02/17 03:39:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -96,8 +96,8 @@ find_secondary_indexes(Query *root, Index relid)
 		IndexOptInfo   *info = makeNode(IndexOptInfo);
 		int				i;
 		Relation		indexRelation;
-		uint16			amstrategy;
 		Oid				relam;
+		uint16			amorderstrategy;
 
 		/*
 		 * Need to make these arrays large enough to be sure there is a
@@ -129,37 +129,38 @@ find_secondary_indexes(Query *root, Index relid)
 
 		/* Extract info from the relation descriptor for the index */
 		indexRelation = index_open(index->indexrelid);
-#ifdef notdef
-		/* XXX should iterate through strategies -- but how?  use #1 for now */
-		amstrategy = indexRelation->rd_am->amstrategies;
-#endif	 /* notdef */
-		amstrategy = 1;
 		relam = indexRelation->rd_rel->relam;
 		info->relam = relam;
 		info->pages = indexRelation->rd_rel->relpages;
 		info->tuples = indexRelation->rd_rel->reltuples;
 		info->amcostestimate = index_cost_estimator(indexRelation);
+		amorderstrategy = indexRelation->rd_am->amorderstrategy;
 		index_close(indexRelation);
 
 		/*
-		 * Fetch the ordering operators associated with the index.
-		 *
-		 * XXX what if it's a hash or other unordered index?
+		 * Fetch the ordering operators associated with the index,
+		 * if any.
 		 */
 		MemSet(info->ordering, 0, sizeof(Oid) * (INDEX_MAX_KEYS+1));
-		for (i = 0; i < INDEX_MAX_KEYS && index->indclass[i]; i++)
+		if (amorderstrategy != 0)
 		{
-			HeapTuple		amopTuple;
+			for (i = 0; i < INDEX_MAX_KEYS && index->indclass[i]; i++)
+			{
+				HeapTuple		amopTuple;
+				Form_pg_amop	amop;
 
-			amopTuple = SearchSysCacheTuple(AMOPSTRATEGY,
+				amopTuple =
+					SearchSysCacheTuple(AMOPSTRATEGY,
 										ObjectIdGetDatum(relam),
 										ObjectIdGetDatum(index->indclass[i]),
-										UInt16GetDatum(amstrategy),
+										UInt16GetDatum(amorderstrategy),
 										0);
-			if (!HeapTupleIsValid(amopTuple))
-				elog(ERROR, "find_secondary_indexes: no amop %u %u %d",
-					 relam, index->indclass[i], amstrategy);
-			info->ordering[i] = ((Form_pg_amop) GETSTRUCT(amopTuple))->amopopr;
+				if (!HeapTupleIsValid(amopTuple))
+					elog(ERROR, "find_secondary_indexes: no amop %u %u %d",
+						 relam, index->indclass[i], (int) amorderstrategy);
+				amop = (Form_pg_amop) GETSTRUCT(amopTuple);
+				info->ordering[i] = amop->amopopr;
+			}
 		}
 
 		indexes = lcons(info, indexes);

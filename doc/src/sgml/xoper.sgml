@@ -265,6 +265,13 @@ SELECT (a + b) AS c FROM test_complex;
     yet.)  If you do not do this, things will still work, but the optimizer's
     estimates won't be as good as they could be.
    </para>
+
+   <para>
+    There are additional selectivity functions designed for geometric
+    operators in src/backend/utils/adt/geo_selfuncs.c: areasel, positionsel,
+    and contsel.  At this writing these are just stubs, but you may want
+    to use them (or even better, improve them) anyway.
+   </para>
    </sect2>
 
    <sect2>
@@ -294,6 +301,9 @@ SELECT (a + b) AS c FROM test_complex;
 	neqjoinsel	for &lt;&gt;
 	scalarltjoinsel	for &lt; or &lt;=
 	scalargtjoinsel	for &gt; or &gt;=
+	areajoinsel	for 2D area-based comparisons
+	positionjoinsel	for 2D position-based comparisons
+	contjoinsel	for 2D containment-based comparisons
     </ProgramListing>
     </para>
    </sect2>

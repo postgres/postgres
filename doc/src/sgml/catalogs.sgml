@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.4 2000/02/06 05:09:31 momjian Exp $
+.\" $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.5 2000/02/17 03:39:39 tgl Exp $
 .TH "SYSTEM CATALOGS" INTRO 03/13/94 PostgreSQL PostgreSQL
 .SH "Section 7 - System Catalogs"
 .de LS
@@ -108,38 +108,37 @@ pg_aggregate
 .fi
 .nf M
 pg_am
-    NameData      amname		/* access method name */
-    oid         amowner	/* usesysid of creator */
-    char        amkind		/* - deprecated */
-				/* originally:
-				   h=hashed
-				   o=ordered
-				   s=special */
-    int2        amstrategies	/* total NUMBER of strategies by which
-				   we can traverse/search this AM */
-    int2        amsupport	/* total NUMBER of support functions
-				   that this AM uses */
-    regproc     amgettuple	/* "next valid tuple" function */
-    regproc     aminsert	/* "insert this tuple" function */
-    regproc     amdelete	/* "delete this tuple" function */
-    regproc     amgetattr	/* - deprecated */
-    regproc     amsetlock	/* - deprecated */
-    regproc     amsettid	/* - deprecated */
-    regproc     amfreetuple	/* - deprecated */
-    regproc     ambeginscan	/* "start new scan" function */
-    regproc     amrescan	/* "restart this scan" function */
-    regproc     amendscan	/* "end this scan" function */
-    regproc     ammarkpos	/* "mark current scan position"
-				   function */
-    regproc     amrestrpos	/* "restore marked scan position"
-				   function */
-    regproc     amopen		/* - deprecated */
-    regproc     amclose	/* - deprecated */
-    regproc     ambuild	/* "build new index" function */
-    regproc     amcreate 	/* - deprecated */
-    regproc     amdestroy	/* - deprecated */
-    regproc     amcostestimate	/* estimate cost of an indexscan */
-	
+    NameData    amname          /* access method name */
+    oid         amowner         /* usesysid of creator */
+    int2        amstrategies    /* total NUMBER of strategies by which
+                                   we can traverse/search this AM */
+    int2        amsupport       /* total NUMBER of support functions
+                                   that this AM uses */
+    int2        amorderstrategy /* if this AM has a sort order, the
+                                 * strategy number of the sort operator.
+                                 * Zero if AM is not ordered.
+                                 */
+    regproc     amgettuple      /* "next valid tuple" function */
+    regproc     aminsert        /* "insert this tuple" function */
+    regproc     amdelete        /* "delete this tuple" function */
+    regproc     amgetattr       /* - deprecated */
+    regproc     amsetlock       /* - deprecated */
+    regproc     amsettid        /* - deprecated */
+    regproc     amfreetuple     /* - deprecated */
+    regproc     ambeginscan     /* "start new scan" function */
+    regproc     amrescan        /* "restart this scan" function */
+    regproc     amendscan       /* "end this scan" function */
+    regproc     ammarkpos       /* "mark current scan position"
+                                   function */
+    regproc     amrestrpos      /* "restore marked scan position"
+                                   function */
+    regproc     amopen          /* - deprecated */
+    regproc     amclose         /* - deprecated */
+    regproc     ambuild         /* "build new index" function */
+    regproc     amcreate        /* - deprecated */
+    regproc     amdestroy       /* - deprecated */
+    regproc     amcostestimate  /* estimate cost of an indexscan */
+
 .fi
 .nf M
 pg_amop
