@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.31 1997/04/17 20:39:23 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.32 1997/05/07 03:13:50 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,12 +106,7 @@ struct EnvironmentOptions
 	const char *envName, *pgName;
 	} EnvironmentOptions[] =
 	{
-		{ "PG_DATE",	"date" },
-		{ "PG_TIME",	"time" },
-		{ "PG_FLOAT",	"float" },
-		{ "PG_LANG",	"language" },
-		{ "PG_TZONE",	"timezone" },
-		{ "PG_MONEY",	"money" },
+		{ "PG_DATESTYLE",		"datestyle" },
 		{ NULL }
 	};
 	
@@ -561,7 +556,7 @@ connectDB(PGconn *conn)
 				{
 				PGresult *res;
 				
-				sprintf(setQuery, "SET %s TO '.60%s'", eo->pgName, val);
+				sprintf(setQuery, "SET %s TO '%.60s'", eo->pgName, val);
 				res = PQexec(conn, setQuery);
 				PQclear(res);	/* Don't care? */
 				}
