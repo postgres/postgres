@@ -63,7 +63,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	  $Id: s_lock.h,v 1.114 2003/09/29 04:20:22 momjian Exp $
+ *	  $Id: s_lock.h,v 1.115 2003/10/10 03:58:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -134,7 +134,7 @@ tas(volatile slock_t *lock)
 #endif	 /* __ia64__ || __ia64 */
 
 
-#if defined(__arm__) || defined(__arm__)
+#if defined(__arm__) || defined(__arm)
 #define TAS(lock) tas(lock)
 
 static __inline__ int
