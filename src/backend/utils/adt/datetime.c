@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.47 2000/04/14 15:22:10 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.47.2.1 2000/05/29 19:19:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2153,7 +2153,7 @@ EncodeDateTime(struct tm * tm, double fsec, int *tzp, char **tzn, int style, cha
 					if ((*tzn != NULL) && (tm->tm_isdst >= 0))
 					{
 						strcpy((str + 27), " ");
-						strncpy((str + 28), *tzn, MAXTZLEN);
+						StrNCpy((str + 28), *tzn, MAXTZLEN+1);
 					}
 				}
 				else
@@ -2162,7 +2162,7 @@ EncodeDateTime(struct tm * tm, double fsec, int *tzp, char **tzn, int style, cha
 					if ((*tzn != NULL) && (tm->tm_isdst >= 0))
 					{
 						strcpy((str + 24), " ");
-						strncpy((str + 25), *tzn, MAXTZLEN);
+						StrNCpy((str + 25), *tzn, MAXTZLEN+1);
 					}
 				}
 

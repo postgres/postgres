@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.67 2000/04/12 17:15:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.67.2.1 2000/05/29 19:19:07 tgl Exp $
  *
  * NOTES
  *
@@ -253,12 +253,9 @@ abstime2tm(AbsoluteTime time, int *tzp, struct tm * tm, char *tzn)
 		 * Copy no more than MAXTZLEN bytes of timezone to tzn, in case it
 		 * contains an error message, which doesn't fit in the buffer
 		 */
-		strncpy(tzn, tm->tm_zone, MAXTZLEN);
+		StrNCpy(tzn, tm->tm_zone, MAXTZLEN+1);
 		if (strlen(tm->tm_zone) > MAXTZLEN)
-		{
-			tzn[MAXTZLEN] = '\0';
 			elog(NOTICE, "Invalid timezone \'%s\'", tm->tm_zone);
-		}
 	}
 #elif defined(HAVE_INT_TIMEZONE)
 	if (tzp != NULL)
@@ -274,12 +271,9 @@ abstime2tm(AbsoluteTime time, int *tzp, struct tm * tm, char *tzn)
 		 * Copy no more than MAXTZLEN bytes of timezone to tzn, in case it
 		 * contains an error message, which doesn't fit in the buffer
 		 */
-		strncpy(tzn, tzname[tm->tm_isdst], MAXTZLEN);
+		StrNCpy(tzn, tzname[tm->tm_isdst], MAXTZLEN+1);
 		if (strlen(tzname[tm->tm_isdst]) > MAXTZLEN)
-		{
-			tzn[MAXTZLEN] = '\0';
 			elog(NOTICE, "Invalid timezone \'%s\'", tzname[tm->tm_isdst]);
-		}
 	}
 #else
 #error POSIX time support is broken
@@ -293,7 +287,10 @@ abstime2tm(AbsoluteTime time, int *tzp, struct tm * tm, char *tzn)
 	 * 97/03/18
 	 */
 	if (tzn != NULL)
+	{
 		strftime(tzn, MAXTZLEN, "%Z", localtime(&now));
+		tzn[MAXTZLEN] = '\0';	/* let's just be sure it's null-terminated */
+	}
 #endif
 
 	return;
