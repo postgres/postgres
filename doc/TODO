@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Sep 17 18:22:38 EDT 2002
+Last updated:		Wed Sep 18 00:22:46 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -247,6 +247,7 @@ Commands
 	o -Allow SHOW to output as a query result, like EXPLAIN
 	o -Abort all SET changes made in an aborted transaction
 	o Add SET SCHEMA
+	o Allow EXPLAIN EXECUTE to see prepared plans
 
 * SERVER-SIDE LANGUAGES
 	o Allow PL/PgSQL's RAISE function to take expressions
