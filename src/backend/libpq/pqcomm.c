@@ -28,7 +28,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqcomm.c,v 1.80 1999/07/17 20:17:03 momjian Exp $
+ *	$Id: pqcomm.c,v 1.81 1999/07/23 03:00:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -134,12 +134,16 @@ pq_getport(void)
 
 /* --------------------------------
  *		pq_close - shutdown libpq at backend exit
+ *
+ * Note: in a standalone backend MyProcPort will be null,
+ * don't crash during exit...
  * --------------------------------
  */
 void
 pq_close(void)
 {
-	close(MyProcPort->sock);
+	if (MyProcPort != NULL)
+		close(MyProcPort->sock);
 }
 
 
