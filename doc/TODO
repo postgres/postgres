@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sat Mar 31 19:59:56 EST 2001
+Last updated:		Mon Apr  2 11:10:06 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -363,6 +363,7 @@ SOURCE CODE
 * Rename some /contrib modules from pg* to pg_*
 * Remove warnings created by -Wcast-align
 * Move platform-specific ps status display info from ps_status.c to ports
+* Decide on spelling of indexes/indices
 
 ---------------------------------------------------------------------------
 
