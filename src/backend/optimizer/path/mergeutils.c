@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/mergeutils.c,v 1.5 1998/02/26 04:32:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/mergeutils.c,v 1.6 1998/08/04 00:42:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,8 +61,7 @@ group_clauses_by_order(List *clauseinfo_list,
 
 			p_ordering.ordtype = MERGE_ORDER;
 			p_ordering.ord.merge = merge_ordering;
-			xmergeinfo =
-				match_order_mergeinfo(&p_ordering, mergeinfo_list);
+			xmergeinfo = match_order_mergeinfo(&p_ordering, mergeinfo_list);
 			if (inner_relid == leftop->varno)
 			{
 				keys = makeNode(JoinKey);

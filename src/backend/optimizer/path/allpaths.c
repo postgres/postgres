@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.17 1998/07/18 04:22:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.18 1998/08/04 00:42:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -105,7 +105,6 @@ static void
 find_rel_paths(Query *root, List *rels)
 {
 	List	   *temp;
-	RelOptInfo		   *rel;
 	List	   *lastpath;
 
 	foreach(temp, rels)
@@ -113,8 +112,8 @@ find_rel_paths(Query *root, List *rels)
 		List	   *sequential_scan_list;
 		List	   *rel_index_scan_list;
 		List	   *or_index_scan_list;
+		RelOptInfo *rel = (RelOptInfo *) lfirst(temp);
 
-		rel = (RelOptInfo *) lfirst(temp);
 		sequential_scan_list = lcons(create_seqscan_path(rel),
 									 NIL);
 
@@ -125,8 +124,7 @@ find_rel_paths(Query *root, List *rels)
 							 rel->clauseinfo,
 							 rel->joininfo);
 
-		or_index_scan_list =
-			create_or_index_paths(root, rel, rel->clauseinfo);
+		or_index_scan_list = create_or_index_paths(root, rel, rel->clauseinfo);
 
 		rel->pathlist = add_pathlist(rel,
 									 sequential_scan_list,

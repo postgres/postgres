@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.23 1998/08/03 05:49:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.24 1998/08/04 00:42:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1291,8 +1291,7 @@ create_index_paths(Query *root,
 		if (!join || temp)
 		{						/* restriction, ordering scan */
 			temp_path = create_index_path(root, rel, index, clausegroup, join);
-			temp_node =
-				lcons(temp_path, NIL);
+			temp_node = lcons(temp_path, NIL);
 			ip_list = nconc(ip_list, temp_node);
 		}
 	}
