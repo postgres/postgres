@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.26 2000/12/26 00:10:37 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.27 2001/01/12 22:15:32 petere Exp $
 -->
 
  <chapter id="xfunc">
@@ -632,10 +632,10 @@ SELECT clean_EMP();
      the  <literal>int4</literal>  type  on  Unix
      machines might be:
      
-     <programlisting>
+<programlisting>
 /* 4-byte integer, passed by value */
 typedef int int4;
-     </programlisting>
+</programlisting>
     </para>
 
     <para>
@@ -643,13 +643,13 @@ typedef int int4;
      be passed by-reference.  For example, here is a  sample
      implementation of a <productname>Postgres</productname> type:
      
-     <programlisting>
+<programlisting>
 /* 16-byte structure, passed by reference */
 typedef struct
 {
     double  x, y;
 } Point;
-     </programlisting>
+</programlisting>
     </para>
 
     <para>
@@ -670,12 +670,12 @@ typedef struct
      (i.e.,  it  includes  the  size  of  the  length  field
      itself).  We can define the text type as follows:
 
-     <programlisting>
+<programlisting>
 typedef struct {
     int4 length;
     char data[1];
 } text;
-     </programlisting>
+</programlisting>
     </para>
 
     <para>
@@ -687,7 +687,7 @@ typedef struct {
      For example, if we wanted to  store  40  bytes  in  a  text
      structure, we might use a code fragment like this:
 
-     <programlisting>
+<programlisting>
 #include "postgres.h"
 ...
 char buffer[40]; /* our source data */
@@ -696,7 +696,7 @@ text *destination = (text *) palloc(VARHDRSZ + 40);
 destination-&gt;length = VARHDRSZ + 40;
 memmove(destination-&gt;data, buffer, 40);
 ...
-     </programlisting>
+</programlisting>
     </para>
 
     <para>
@@ -709,7 +709,7 @@ memmove(destination-&gt;data, buffer, 40);
     <title>Version-0 Calling Conventions for C-Language Functions</title>
 
     <para>
-     We present the "old style" calling convention first --- although
+     We present the <quote>old style</quote> calling convention first --- although
      this approach is now deprecated, it's easier to get a handle on
      initially.  In the version-0 method, the arguments and result
      of the C function are just declared in normal C style, but being
@@ -720,7 +720,7 @@ memmove(destination-&gt;data, buffer, 40);
     <para>
      Here are some examples:
 
-     <programlisting>
+<programlisting>
 #include &lt;string.h&gt;
 #include "postgres.h"
 
@@ -786,7 +786,7 @@ concat_text(text *arg1, text *arg2)
     strncat(VARDATA(new_text), VARDATA(arg2), VARSIZE(arg2)-VARHDRSZ);
     return new_text;
 }
-     </programlisting>
+</programlisting>
     </para>
 
     <para>
@@ -795,7 +795,7 @@ concat_text(text *arg1, text *arg2)
      we could define the functions to <productname>Postgres</productname>
      with commands like this:
      
-     <programlisting>
+<programlisting>
 CREATE FUNCTION add_one(int4) RETURNS int4
      AS '<replaceable>PGROOT</replaceable>/tutorial/funcs.so' LANGUAGE 'c'
      WITH (isStrict);
@@ -817,7 +817,7 @@ CREATE FUNCTION copytext(text) RETURNS text
 CREATE FUNCTION concat_text(text, text) RETURNS text
      AS '<replaceable>PGROOT</replaceable>/tutorial/funcs.so' LANGUAGE 'c'
      WITH (isStrict);
-     </programlisting>
+</programlisting>
     </para>
 
     <para>
@@ -855,13 +855,13 @@ CREATE FUNCTION concat_text(text, text) RETURNS text
      The version-1 calling convention relies on macros to suppress most
      of the complexity of passing arguments and results.  The C declaration
      of a version-1 function is always
-     <programlisting>
-                Datum funcname(PG_FUNCTION_ARGS)
-     </programlisting>
+<programlisting>
+Datum funcname(PG_FUNCTION_ARGS)
+</programlisting>
      In addition, the macro call
-     <programlisting>
-                PG_FUNCTION_INFO_V1(funcname);
-     </programlisting>
+<programlisting>
+PG_FUNCTION_INFO_V1(funcname);
+</programlisting>
      must appear in the same source file (conventionally it's written
      just before the function itself).  This macro call is not needed
      for "internal"-language functions, since Postgres currently assumes
@@ -870,16 +870,18 @@ CREATE FUNCTION concat_text(text, text) RETURNS text
     </para>
 
     <para>
-     In a version-1 function,
-     each actual argument is fetched using a PG_GETARG_xxx() macro that
-     corresponds to the argument's datatype, and the result is returned
-     using a PG_RETURN_xxx() macro for the return type.
+     In a version-1 function, each actual argument is fetched using a
+     <function>PG_GETARG_<replaceable>xxx</replaceable>()</function>
+     macro that corresponds to the argument's datatype, and the result
+     is returned using a
+     <function>PG_GETARG_<replaceable>xxx</replaceable>()</function>
+     macro for the return type.
     </para>
 
     <para>
      Here we show the same functions as above, coded in new style:
 
-     <programlisting>
+<programlisting>
 #include &lt;string.h&gt;
 #include "postgres.h"
 #include "fmgr.h"
@@ -962,7 +964,7 @@ concat_text(PG_FUNCTION_ARGS)
     strncat(VARDATA(new_text), VARDATA(arg2), VARSIZE(arg2)-VARHDRSZ);
     PG_RETURN_TEXT_P(new_text);
 }
-     </programlisting>
+</programlisting>
     </para>
 
     <para>
@@ -971,27 +973,30 @@ concat_text(PG_FUNCTION_ARGS)
     </para>
 
     <para>
-     At first glance, the version-1 coding conventions may appear to be
-     just pointless obscurantism.  However, they do offer a number of
-     improvements, because the macros can hide unnecessary detail.
+     At first glance, the version-1 coding conventions may appear to
+     be just pointless obscurantism.  However, they do offer a number
+     of improvements, because the macros can hide unnecessary detail.
      An example is that in coding add_one_float8, we no longer need to
-     be aware that float8 is a pass-by-reference type.  Another example
-     is that the GETARG macros for variable-length types hide the need
-     to deal with fetching "toasted" (compressed or out-of-line) values.
-     The old-style copytext and concat_text functions shown above are
-     actually wrong in the presence of toasted values, because they don't
-     call pg_detoast_datum() on their inputs.  (The handler for old-style
-     dynamically-loaded functions currently takes care of this detail,
-     but it does so less efficiently than is possible for a version-1
-     function.)
+     be aware that float8 is a pass-by-reference type.  Another
+     example is that the GETARG macros for variable-length types hide
+     the need to deal with fetching "toasted" (compressed or
+     out-of-line) values.  The old-style <function>copytext</function>
+     and <function>concat_text</function> functions shown above are
+     actually wrong in the presence of toasted values, because they
+     don't call <function>pg_detoast_datum()</function> on their
+     inputs.  (The handler for old-style dynamically-loaded functions
+     currently takes care of this detail, but it does so less
+     efficiently than is possible for a version-1 function.)
     </para>
 
     <para>
      The version-1 function call conventions also make it possible to
-     test for NULL inputs to a non-strict function, return a NULL result
-     (from either strict or non-strict functions), return "set" results,
-     and implement trigger functions and procedural-language call handlers.
-     For more details see <filename>src/backend/utils/fmgr/README</filename>.
+     test for NULL inputs to a non-strict function, return a NULL
+     result (from either strict or non-strict functions), return
+     <quote>set</quote> results, and implement trigger functions and
+     procedural-language call handlers.  For more details see
+     <filename>src/backend/utils/fmgr/README</filename> in the source
+     distribution.
     </para>
    </sect2>
 
@@ -1011,15 +1016,15 @@ concat_text(PG_FUNCTION_ARGS)
      function as an  opaque  structure of type <literal>TUPLE</literal>.
      Suppose we want to write a function to answer the query
 
-     <programlisting>
-         * SELECT name, c_overpaid(EMP, 1500) AS overpaid
-           FROM EMP
-           WHERE name = 'Bill' or name = 'Sam';
-     </programlisting>
+<programlisting>
+SELECT name, c_overpaid(emp, 1500) AS overpaid
+FROM emp
+WHERE name = 'Bill' OR name = 'Sam';
+</programlisting>
 
      In the query above, we can define c_overpaid as:
      
-     <programlisting>
+<programlisting>
 #include "postgres.h"
 #include "executor/executor.h"  /* for GetAttributeByName() */
 
@@ -1055,31 +1060,31 @@ c_overpaid(PG_FUNCTION_ARGS)
 
     PG_RETURN_BOOL(salary &gt; limit);
 }
-     </programlisting>
+</programlisting>
     </para>
 
     <para>
      <function>GetAttributeByName</function> is the 
      <productname>Postgres</productname> system function that
      returns attributes out of the current instance.  It has
-     three arguments: the argument of type TupleTableSlot* passed into
+     three arguments: the argument of type <type>TupleTableSlot*</type> passed into
      the  function, the name of the desired attribute, and a
      return parameter that tells whether  the  attribute
      is  null.   <function>GetAttributeByName</function> returns a Datum
      value that you can convert to the proper datatype by using the
-     appropriate DatumGetXXX() macro.
+     appropriate <function>DatumGet<replaceable>XXX</replaceable>()</function> macro.
     </para>
 
     <para>
      The  following  query  lets  <productname>Postgres</productname>  
-     know  about  the c_overpaid function:
+     know  about  the <function>c_overpaid</function> function:
 
-     <programlisting>
-CREATE FUNCTION c_overpaid(EMP, int4) 
+<programlisting>
+CREATE FUNCTION c_overpaid(emp, int4) 
 RETURNS bool
 AS '<replaceable>PGROOT</replaceable>/tutorial/obj/funcs.so' 
 LANGUAGE 'c';
-     </programlisting>
+</programlisting>
     </para>
 
     <para>
@@ -1096,7 +1101,7 @@ LANGUAGE 'c';
      We now turn to the more difficult task of writing  
      programming  language  functions.  Be warned: this section
      of the manual will not make you a programmer.  You must
-     have  a  good  understanding of <acronym>C</acronym> 
+     have  a  good  understanding of <acronym>C</acronym>
      (including the use of pointers and the malloc memory manager)  
      before  trying to write <acronym>C</acronym> functions for 
      use with <productname>Postgres</productname>. While  it may 
@@ -1114,86 +1119,71 @@ LANGUAGE 'c';
     </para>
 
     <para>
-     C functions with base type arguments can be written in a
-     straightforward fashion.  The C equivalents of built-in Postgres types
-     are accessible in a C file if 
-     <filename><replaceable>PGROOT</replaceable>/src/backend/utils/builtins.h</filename>
-     is included as a header file.  This can be achieved by having
-
-     <programlisting>
-#include &lt;utils/builtins.h&gt;
-     </programlisting>
-
-     at the top of the C source file.
-    </para>
-
-    <para>
      The  basic  rules  for building <acronym>C</acronym> functions 
      are as follows:
 
      <itemizedlist>
       <listitem>
        <para>
-	Most of the header (include) files for 
-	<productname>Postgres</productname>
-	should      already      be     installed     in
-	<filename><replaceable>PGROOT</replaceable>/include</filename>  (see  Figure  2).
-	You should always include
-
-	<programlisting>
--I$PGROOT/include
-	</programlisting>
-
-	on  your  cc  command lines.  Sometimes, you may
-	find that you require header files that  are  in
-	the  server source itself (i.e., you need a file
-	we neglected to install in include).   In  those
-	cases you may need to add one or more of
-
-	<programlisting>
--I$PGROOT/src/backend
--I$PGROOT/src/backend/include
--I$PGROOT/src/backend/port/&lt;PORTNAME&gt;
--I$PGROOT/src/backend/obj
-	</programlisting>
-
-	(where &lt;PORTNAME&gt; is the name of the port, e.g.,
-	alpha or sparc).
+        The relevant header (include) files are installed under
+	<filename>/usr/local/pgsql/include</filename> or equivalent.
+	You can use <literal>pg_config --includedir</literal> to find
+	out where it is on your system (or the system that your
+	users will be running on).  For very low-level work you might
+	need to have a complete <productname>PostgreSQL</productname>
+	source tree available.
        </para>
       </listitem>
+
       <listitem>
        <para>
-	When allocating memory, use  the
-	<productname>Postgres</productname>
-	routines  palloc  and  pfree  instead of the 
-	corresponding <acronym>C</acronym> library  routines  
-	malloc  and  free.
-	The  memory  allocated  by  palloc will be freed
-	automatically at the end  of  each  transaction,
-	preventing memory leaks.
+	When allocating memory, use the
+	<productname>Postgres</productname> routines
+	<function>palloc</function> and <function>pfree</function>
+	instead of the corresponding <acronym>C</acronym> library
+	routines <function>malloc</function> and
+	<function>free</function>.  The memory allocated by
+	<function>palloc</function> will be freed automatically at the
+	end of each transaction, preventing memory leaks.
        </para>
       </listitem>
+
       <listitem>
        <para>
-	Always  zero  the bytes of your structures using
-	memset or bzero.  Several routines (such as  the
-	hash access method, hash join and the sort algorithm) 
-	compute functions of the  raw  bits  contained  in 
-	your structure.  Even if you initialize all fields 
-	of your structure, there  may  be
-	several bytes of alignment padding (holes in the
-	structure) that may contain garbage values.
+	Always zero the bytes of your structures using
+	<function>memset</function> or <function>bzero</function>.
+	Several routines (such as the hash access method, hash join
+	and the sort algorithm) compute functions of the raw bits
+	contained in your structure.  Even if you initialize all
+	fields of your structure, there may be several bytes of
+	alignment padding (holes in the structure) that may contain
+	garbage values.
        </para>
       </listitem>
+
       <listitem>
        <para>
-	    Most of the internal <productname>Postgres</productname> 
-	types are declared in <filename>postgres.h</filename>,
-	    so  it's a good 
-	idea to always include that file as well.  Including 
-	postgres.h will also include elog.h and palloc.h for you.
+        Most of the internal <productname>Postgres</productname> types
+	are declared in <filename>postgres.h</filename>, the function
+	manager interfaces (<symbol>PG_FUNCTION_ARGS</symbol>, etc.)
+	are in <filename>fmgr.h</filename>, so you will need to
+	include at least these two files.  Including
+	<filename>postgres.h</filename> will also include
+	<filename>elog.h</filename> and <filename>palloc.h</filename>
+	for you.
        </para>
       </listitem>
+
+      <listitem>
+       <para>
+        Symbol names defined within object files must not conflict
+        with each other or with symbols defined in the
+        <productname>PostgreSQL</productname> server executable.  You
+        will have to rename your functions or variables if you get
+        error messages to this effect.
+       </para>
+      </listitem>
+
       <listitem>
        <para>
 	Compiling and loading your object code  so  that
@@ -1208,6 +1198,9 @@ LANGUAGE 'c';
      </itemizedlist>
     </para>
    </sect2>
+
+&dfunc;
+
   </sect1>
 
   <sect1 id="xfunc-overload">

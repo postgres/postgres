@@ -1,373 +1,296 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/dfunc.sgml,v 1.11 2000/09/29 20:21:33 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/dfunc.sgml,v 1.12 2001/01/12 22:15:32 petere Exp $
 -->
 
- <chapter id="dfunc">
-  <title id="dfunc-title">Linking Dynamically-Loaded Functions</title>
+<sect2 id="dfunc">
+ <title id="dfunc-title">Compiling and Linking Dynamically-Loaded Functions</title>
 
-  <para>
+ <para>
+  Before you are able to use your
+  <productname>PostgreSQL</productname> extension function written in
+  C they need to be compiled and linked in a special way in order to
+  allow it to be dynamically loaded as needed by the server.  To be
+  precise, a <firstterm>shared library</firstterm> needs to be created.
+ </para>
 
-   After you have created and  registered  a  user-defined
-   function,  your  work  is  essentially done.
-   <productname>Postgres</productname>,
-   however, must load the object code
-   (e.g., a <literal>.o</literal> file, or
-   a  shared  library)  that implements your function.  As
-   previously mentioned, <productname>Postgres</productname>
-   loads your code at  
-   runtime,  as  required.  In order to allow your code to be
-   dynamically loaded, you may have to compile  and  
-   link-edit  it  in  a  special  way.   This  section  briefly
-   describes how to  perform  the  compilation  and  
-   link-editing  required before you can load your user-defined
-   functions into a running <productname>Postgres</productname>  server.
-  </para>
+ <para>
+  For more information you should read the documentation of your
+  operating system, in particular the manual pages for the C compiler,
+  <command>cc</command>, and the link editor, <command>ld</command>.
+  In addition, the <productname>PostgreSQL</productname> source code
+  contains several working examples in the
+  <filename>contrib</filename> directory.  If you rely on these
+  examples you will make your modules dependent on the documentation
+  of the <productname>PostgreSQL</productname> source code, however.
+ </para>
+
+ <para>
+  Creating shared libraries is generally analoguous to linking
+  executables:  first the source files are compiled into object files,
+  then the object files are linked together.  The object files need to
+  be created as <firstterm>position-independent code</firstterm>
+  (<acronym>PIC</acronym>), which conceptually means that it can be
+  placed at an arbitrary location in memory when it is loaded by the
+  executable.  (Object files intended for executables are not compiled
+  that way.)  The command to link a shared library contains special
+  flags to distinguish it from linking an executable. --- At least
+  this is the theory.  On some systems the practice is much uglier.
+ </para>
+
+ <para>
+  In the following examples we assume that your source code is in a
+  file <filename>foo.c</filename> and we will create an shared library
+  <filename>foo.so</filename>.  The intermediate object file will be
+  called <filename>foo.o</filename> unless otherwise noted.  A shared
+  library can contain more than one object file, but we only use one
+  here.
+ </para>
+
+ <para>
 
 <!--
-   <tip>
-    <para>
-     The  old  <productname>Postgres</productname> dynamic 
-     loading mechanism required
-     in-depth knowledge in terms of executable format,  placement
-     and alignment of executable instructions within memory, etc.
-     on the part of the person writing the dynamic loader.   Such
-     loaders tended to be slow and buggy.  As of Version 4.2, the
-     <productname>Postgres</productname> dynamic loading mechanism
-  has been rewritten to use
-     the dynamic loading mechanism provided by the operating 
-     system.  This approach is generally faster, more  reliable  and
-     more  portable  than our previous dynamic loading mechanism.
-     The reason for this is that nearly all  modern  versions  of
-     Unix use a dynamic loading mechanism to implement shared 
-     libraries and must therefore provide a fast and reliable 
-     mechanism.   On  the  other  hand, the object file must be 
-     postprocessed a bit before it can be loaded into 
- <productname>Postgres</productname>.   We
-     hope  that  the large increase in speed and reliability will
-     make up for the slight decrease in convenience.
-    </para>
-   </tip>
-  </para>
+  Note:  Reading GNU Libtool sources is generally a good way of figuring out
+  this information.  The methods used within PostgreSQL source code are not
+  necessarily ideal.
 -->
 
+  <variablelist>
+   <varlistentry>
+    <term><productname>BSD/OS</productname></term>
+    <listitem>
+     <para>
+      The compiler flag to create <acronym>PIC</acronym> is
+      <option>-fpic</option>.  The linker flag to create shared
+      libraries is <option>-shared</option>.
+<programlisting>
+gcc -fpic -c foo.c
+ld -shared -o foo.so foo.o
+</programlisting>
+      This is applicable as of version 4.0 of
+      <productname>BSD/OS</productname>.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><productname>FreeBSD</productname></term>
+    <listitem>
+     <para>
+      The compiler flag to create <acronym>PIC</acronym> is
+      <option>-fpic</option>.  To create shared libraries the compiler
+      flag is <option>-shared</option>.
+<programlisting>
+gcc -fpic -c foo.c
+gcc -shared -o foo.so foo.o
+</programlisting>
+      This is applicable as of version 3.0 of
+      <productname>FreeBSD</productname>.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><productname>HP-UX</productname></term>
+    <listitem>
+     <para>
+      The compiler flag of the system compiler to create
+      <acronym>PIC</acronym> is <option>+z</option>.  When using
+      <productname>GCC</productname> it's <option>-fpic</option>. The
+      linker flag for shared libraries is <option>-b</option>.  So
+<programlisting>
+cc +z -c foo.c
+</programlisting>
+      or
+<programlisting>
+gcc -fpic -c foo.c
+</programlisting>
+      and then
+<programlisting>
+ld -b -o foo.sl foo.o
+</programlisting>
+      <productname>HP-UX</productname> uses the extension
+      <filename>.sl</filename> for shared libraries, unlike most other
+      systems.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><productname>Irix</productname></term>
+    <listitem>
+     <para>
+      <acronym>PIC</acronym> is the default, no special compiler
+      options are necessary.  The linker option to produce shared
+      libraries is <option>-shared</option>.
+<programlisting>
+cc -c foo.c
+ld -shared -o foo.so foo.o
+</programlisting>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><productname>Linux</productname></term>
+    <listitem>
+     <para>
+      The compiler flag to create <acronym>PIC</acronym> is
+      <option>-fpic</option>.  On some platforms in some situations
+      <option>-fPIC</option> must be used if <option>-fpic</option>
+      does not work.  Refer to the GCC manual for more information.
+      The compiler flag to create a shared library is
+      <option>-shared</option>.  A complete example looks like this:
+<programlisting>
+cc -fpic -c foo.c
+cc -shared -o foo.so foo.o
+</programlisting>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><productname>NetBSD</productname></term>
+    <listitem>
+     <para>
+      The compiler flag to create <acronym>PIC</acronym> is
+      <option>-fpic</option>.  For <acronym>ELF</acronym> systems, the
+      compiler with the flag <option>-shared</option> is used to link
+      shared libraries.  On the older non-ELF systems, <literal>ld
+      -Bshareable</literal> is used.
+<programlisting>
+gcc -fpic -c foo.c
+gcc -shared -o foo.so foo.o
+</programlisting>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><productname>OpenBSD</productname></term>
+    <listitem>
+     <para>
+      The compiler flag to create <acronym>PIC</acronym> is
+      <option>-fpic</option>.  <literal>ld -Bshareable</literal> is
+      used to link shared libraries.
+<programlisting>
+gcc -fpic -c foo.c
+ld -Bshareable -o foo.so foo.o
+</programlisting>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>Digital Unix/Tru64 UNIX</term>   
+
+    <listitem>
+     <para>
+      <acronym>PIC</acronym> is the default, so the compilation command
+      is the usual one.  <command>ld</command> with special options is
+      used to do the linking:
+<programlisting>
+cc -c foo.c
+ld -shared -expect_unresolved '*' -o foo.so foo.o
+</programlisting>
+      The same procedure is used with GCC instead of the system
+      compiler; no special options are required.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><productname>Solaris</productname></term>
+    <listitem>
+     <para>
+      The compiler flag to create <acronym>PIC</acronym> is
+      <option>-KPIC</option> with the Sun compiler and
+      <option>-fpic</option> with <productname>GCC</productname>.  To
+      link shared libraries, the compiler option is
+      <option>-G</option> with either compiler or alternatively
+      <option>-shared</option> with <productname>GCC</productname>.
+<programlisting>
+cc -KPIC -c foo.c
+cc -G -o foo.so foo.o
+</programlisting>
+      or
+<programlisting>
+gcc -fpic -c foo.c
+gcc -G -o foo.so foo.o
+</programlisting>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><productname>Unixware</productname></term>
+    <listitem>
+     <para>
+      The compiler flag to create <acronym>PIC</acronym> is <option>-K
+      PIC</option> with the SCO compiler and <option>-fpic</option>
+      with <productname>GCC</productname>.  To link shared libraries,
+      the compiler option is <option>-G</option> with the SCO compiler
+      and <option>-shared</option> with
+      <productname>GCC</productname>.
+<programlisting>
+cc -K PIC -c foo.c
+cc -G -o foo.so foo.o
+</programlisting>
+      or
+<programlisting>
+gcc -fpic -c foo.c
+gcc -shared -o foo.so foo.o
+</programlisting>
+     </para>
+    </listitem>
+   </varlistentry>
+
+  </variablelist>
+ </para>
+
+ <tip>
   <para>
-   You should  expect  to read (and reread, and re-reread) the
-   manual pages for the C compiler, cc(1),  and  the  link
-   editor,  ld(1),  if  you  have  specific questions.  In
-   addition, the contrib area (<filename>PGROOT/contrib</filename>)
-   and the regression test suites in  the  directory
-   <filename>PGROOT/src/test/regress</filename> contain several 
-   working examples of this process.  If you copy an example then
-   you should not have any problems.
+   If you want to package your extension modules for wide distribution
+   you should consider using <ulink
+   url="http://www.gnu.org/software/libtool/"><productname>GNU
+   Libtool</productname></ulink> for building shared libraries.  It
+   encapsulates the platform differences into a general and powerful
+   interface.  Serious packaging also requires considerations about
+   library versioning, symbol resolution methods, and other issues.
   </para>
+ </tip>
 
-  <para>
-   The following terminology will be used below:
+ <para>
+  The resulting shared library file can then be loaded into
+  <productname>Postgres</productname>.  When specifying the file name
+  to the <command>CREATE FUNCTION</command> command, one must give it
+  the name of the shared library file (ending in
+  <filename>.so</filename>) rather than the simple object file.
 
-   <itemizedlist>
-    <listitem>
-     <para>
-      <firstterm>Dynamic loading</firstterm>
-      is  what  <productname>Postgres</productname>  does  to  an object file.  The
-      object file is copied into  the  running  <productname>Postgres</productname>
-      server  and the functions and variables within the
-      file are made available to  the  functions  within
-      the  <productname>Postgres</productname>  process.
-      <productname>Postgres</productname> does this using
-      the dynamic  loading  mechanism  provided  by  the
-      operating system.
-     </para>
-    </listitem>
-    <listitem>
-     <para>
-      <firstterm>Loading and link editing</firstterm>
-      is  what you do to an object file in order to produce 
-      another kind of object file  (e.g.,  an  executable 
-      program or a shared library).  You perform
-      this using the link editing program, ld(1).
-     </para>
-    </listitem>
-   </itemizedlist>
-  </para>
-
-  <para>
-   The following general restrictions and notes also apply
-   to the discussion below:
-   <itemizedlist>
-    <listitem>
-     <para>
-      Paths  given  to the create function command must be
-      absolute paths (i.e., start with "/") that refer  to
-      directories  visible  on  the  machine  on which the
-      <productname>Postgres</productname> server is running.
-
-      <tip>
-       <para>
-	Relative paths do in fact work, 
-	but  are  relative  to
-	the directory where the database resides (which is generally
-	invisible to the frontend application).  Obviously, it makes
-	no sense to make the path relative to the directory in which
-	the user started the frontend application, since the  server
-	could be running on a completely different machine!
-       </para>
-      </tip>
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      The  <productname>Postgres</productname> user must be able to traverse the path
-      given to the create function command and be able  to
-      read  the object file.  This is because the <productname>Postgres</productname>
-      server runs as the <productname>Postgres</productname> user, not  as  the  user
-      who  starts  up  the  frontend process.  (Making the
-      file or a higher-level directory  unreadable  and/or
-      unexecutable  by the "postgres" user is an extremely
-      common mistake.)
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      Symbol names defined within object  files  must  not
-      conflict  with each other or with symbols defined in
-      <productname>Postgres</productname>.
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      The GNU C compiler usually does not provide the special  
-      options that are required to use the operating
-      system's dynamic loader interface.  In  such  cases,
-      the  C compiler that comes with the operating system
-      must be used.
-     </para>
-    </listitem>
-   </itemizedlist>
-  </para>
-
-  <sect1 id="dload-linux">
-   <title>Linux</title>
-
+  <note>
    <para>
-    Under Linux ELF, object files can be generated by specifying the compiler
-    flag -fpic.
+    Actually, <productname>Postgres</productname> does not care what
+    you name the file as long as it is a shared library file.
    </para>
+  </note>
 
-   <para>
-    For example,
-    <programlisting>
-# simple Linux example
-% cc -fpic -c <replaceable>foo.c</replaceable>
-    </programlisting>
-
-    produces an object file called <replaceable>foo.o</replaceable>
-    that can then be
-    dynamically  loaded into <productname>Postgres</productname>.
-    No additional loading or link-editing must be performed.
-   </para>
-  </sect1>
+  Paths given to the <command>CREATE FUNCTION</command> command must
+  be absolute paths (i.e., start with <literal>/</literal>) that refer
+  to directories visible on the machine on which the
+  <productname>Postgres</productname> server is running.  Relative
+  paths do in fact work, but are relative to the directory where the
+  database resides (which is generally invisible to the frontend
+  application).  Obviously, it makes no sense to make the path
+  relative to the directory in which the user started the frontend
+  application, since the server could be running on a completely
+  different machine!  The user id the
+  <productname>Postgres</productname> server runs as must be able to
+  traverse the path given to the <command>CREATE FUNCTION</command>
+  command and be able to read the shared library file.  (Making the
+  file or a higher-level directory not readable and/or not executable
+  by the <quote>postgres</quote> user is a common mistake.)
+ </para>
 
 <!--
-  <sect1 id="dload-ultrix">
-   <title><acronym>ULTRIX</acronym></title>
-
-   <para>
-    It is very  easy  to  build  dynamically-loaded  object
-    files  under  ULTRIX.  ULTRIX does not have any shared library 
-    mechanism and hence does not place any restrictions  on  
-    the  dynamic loader interface.  On the other
-    hand, we had to (re)write a non-portable dynamic loader
-    ourselves and could not use true shared libraries.
-    Under  ULTRIX,  the  only  restriction is that you must
-    produce each object file with the option -G 0.  (Notice
-    that  that's  the  numeral  ``0''  and  not  the letter
-    ``O'').  For example,
-    <programlisting>
-# simple ULTRIX example
-% cc -G 0 -c foo.c
-    </programlisting>
-    produces an object file called foo.o that can  then  be
-    dynamically  loaded into <productname>Postgres</productname>.
-    No additional loading or link-editing must be performed.
-   </para>
-  </sect1>
--->
-
-  <sect1 id="dload-osf">
-   <title><acronym>DEC OSF/1</acronym></title>
-
-   <para>
-    Under DEC OSF/1, you can take any  simple  object  file
-    and produce a shared object file by running the ld command
-    over it with the correct options.  The commands to
-    do this look like:
-    <programlisting>
-# simple DEC OSF/1 example
-% cc -c foo.c
-% ld -shared -expect_unresolved '*' -o foo.so foo.o
-    </programlisting>
-
-    The  resulting  shared  object  file can then be loaded
-    into <productname>Postgres</productname>.  When specifying the object file name to
-    the  create function command, one must give it the name
-    of the shared object file (ending in .so)  rather  than
-    the  simple  object  file.
-
-    <tip>
-     <para>
-      Actually, <productname>Postgres</productname> does not care
-      what  you  name  the
-      file  as  long as it is a shared object file.  If you prefer
-      to name your shared object files with the extension .o, this
-      is fine with <productname>Postgres</productname>
-      so long as you make sure that the correct 
-      file name is given to the create function command.   In
-      other words, you must simply be consistent.  However, from a
-      pragmatic point of view, we discourage this practice because
-      you  will undoubtedly confuse yourself with regards to which
-      files have been made into shared object files and which have
-      not.   For  example, it's very hard to write Makefiles to do
-      the link-editing automatically if both the object  file  and
-      the shared object file end in .o!
-     </para>
-    </tip>
-
-    If the file you specify is
-    not a shared object, the backend will hang!
-   </para>
-  </sect1>
-
-  <sect1 id="dload-other">
-   <title>
-    <acronym>SunOS 4.x</acronym>, <acronym>Solaris 2.x</acronym> and
-    <acronym>HP-UX</acronym></title>
-
-   <para>
-    Under SunOS 4.x, Solaris 2.x and HP-UX, the simple
-    object file must be created  by  compiling  the  source
-    file  with  special compiler flags and a shared library
-    must be produced.
-    The necessary steps with HP-UX are as follows.  The  +z
-    flag  to the HP-UX C compiler produces
-    <firstterm>Position Independent Code</firstterm> (PIC)
-    and the  +u  flag removes
-    some  alignment restrictions that the PA-RISC architecture 
-    normally enforces.  The object file must be turned
-    into  a shared library using the HP-UX link editor with
-    the -b option.  This sounds complicated but is actually
-    very simple, since the commands to do it are just:
-
-    <programlisting>
-# simple HP-UX example
-% cc +z +u -c foo.c
-% ld -b -o foo.sl foo.o
-    </programlisting>
-   </para>
-
-   <para>
-    As with the .so files mentioned in the last subsection,
-    the create function command must be told which file  is
-    the  correct  file  to load (i.e., you must give it the
-    location of the shared library, or .sl file).
-    Under SunOS 4.x, the commands look like:
-    <programlisting>
-# simple SunOS 4.x example
-% cc -PIC -c foo.c
-% ld -dc -dp -Bdynamic -o foo.so foo.o
-    </programlisting>
-
-    and the equivalent lines under Solaris 2.x are:
-    <programlisting>
-# simple Solaris 2.x example
-% cc -K PIC -c foo.c
-% ld -G -Bdynamic -o foo.so foo.o
-    </programlisting>
-    or
-    <programlisting>
-# simple Solaris 2.x example
-% gcc -fPIC -c foo.c
-% ld -G -Bdynamic -o foo.so foo.o
-    </programlisting>
-   </para>
-
-   <para>
-    When linking shared libraries, you may have to  specify
-    some  additional  shared  libraries  (typically  system
-    libraries, such as the C and math libraries) on your ld
-    command line.
-   </para>
-  </sect1>
-
-  <!--
-  Future integration: Create separate sections for these operating
-  systems and integrate the info from this old man page.
-  - thomas 2000-04-21
-
-Under HP-UX, DEC OSF/1, AIX and SunOS 4, all object files must be
-turned into
-.IR "shared libraries"
-using the operating system's native object file loader,
-.IR ld(1).
-.PP
-Under HP-UX, an object file must be compiled using the native HP-UX C
-compiler,
-.IR /bin/cc ,
-with both the \*(lq+z\*(rq and \*(lq+u\*(rq flags turned on.  The
-first flag turns the object file into \*(lqposition-independent
-code\*(rq (PIC); the second flag removes some alignment restrictions
-that the PA-RISC architecture normally enforces.  The object file must
-then be turned into a shared library using the HP-UX loader,
-.IR /bin/ld .
-The command lines to compile a C source file, \*(lqfoo.c\*(rq, look
-like:
-.nf
-cc <other flags> +z +u -c foo.c
-ld <other flags> -b -o foo.sl foo.o
-.fi
-The object file name in the
-.BR as
-clause should end in \*(lq.sl\*(rq.
-.PP
-An extra step is required under versions of HP-UX prior to 9.00.  If
-the Postgres header file
-.nf
-include/c.h
-.fi
-is not included in the source file, then the following line must also
-be added at the top of every source file:
-.nf
-#pragma HP_ALIGN HPUX_NATURAL_S500
-.fi
-However, this line must not appear in programs compiled under HP-UX
-9.00 or later.
-.PP
-Under DEC OSF/1, an object file must be compiled and then turned
-into a shared library using the OSF/1 loader,
-.IR /bin/ld .
-In this case, the command lines look like:
-.nf
-cc <other flags> -c foo.c
-ld <other flags> -shared -expect_unresolved '*' -o foo.so foo.o
-.fi
-The object file name in the
-.BR as
-clause should end in \*(lq.so\*(rq.
-.PP
-Under SunOS 4, an object file must be compiled and then turned into a
-shared library using the SunOS 4 loader,
-.IR /bin/ld .
-The command lines look like:
-.nf
-cc <other flags> -PIC -c foo.c
-ld <other flags> -dc -dp -Bdynamic -o foo.so foo.o
-.fi
-The object file name in the
-.BR as
-clause should end in \*(lq.so\*(rq.
-.PP
 Under AIX, object files are compiled normally but building the shared
 library requires a couple of steps.  First, create the object file:
 .nf
@@ -389,7 +312,7 @@ procedure.
 
   -->
 
- </chapter>
+</sect2>
 
 <!-- Keep this comment at the end of the file
 Local variables:

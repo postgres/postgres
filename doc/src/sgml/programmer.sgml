@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/programmer.sgml,v 1.29 2000/11/24 17:44:21 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/programmer.sgml,v 1.30 2001/01/12 22:15:32 petere Exp $
 
 PostgreSQL Programmer's Guide.
 -->
@@ -72,7 +72,6 @@ PostgreSQL Programmer's Guide.
   &indexcost;
   &gist;
   &xplang;
-  &dfunc;
 
 <!-- reference -->
 
