@@ -5,13 +5,13 @@
 SET DATESTYLE = DEFAULT;
 
 -- check acceptance of "time zone style"
-SELECT INTERVAL '01:00';
-SELECT INTERVAL '+02:00';
-SELECT INTERVAL '-08:00';
-SELECT INTERVAL '-05';
-SELECT INTERVAL '-1 +02:03';
-SELECT INTERVAL '-1 days +02:03';
-SELECT INTERVAL '10 years -11 month -12 days +13:14';
+SELECT INTERVAL '01:00' AS "One hour";
+SELECT INTERVAL '+02:00' AS "Two hours";
+SELECT INTERVAL '-08:00' AS "Eight hours";
+SELECT INTERVAL '-05' AS "Five hours";
+SELECT INTERVAL '-1 +02:03' AS "22 hours ago...";
+SELECT INTERVAL '-1 days +02:03' AS "22 hours ago...";
+SELECT INTERVAL '10 years -11 month -12 days +13:14' AS "9 years...";
 
 CREATE TABLE INTERVAL_TBL (f1 interval);
 
