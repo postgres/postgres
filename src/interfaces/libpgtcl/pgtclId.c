@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclId.c,v 1.35 2002/09/04 20:31:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclId.c,v 1.36 2002/09/23 01:43:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -343,7 +343,10 @@ PgSetResultId(Tcl_Interp *interp, char *connid_c, PGresult *res)
 	for (resid = connid->res_last + 1; resid != connid->res_last; resid++)
 	{
 		if (resid == connid->res_max)
+		{
 			resid = 0;
+			break;
+		}
 		if (!connid->results[resid])
 		{
 			connid->res_last = resid;
