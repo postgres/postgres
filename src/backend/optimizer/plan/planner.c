@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.102 2001/03/22 03:59:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.103 2001/04/01 22:37:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -874,9 +874,9 @@ grouping_planner(Query *parse, double tuple_fraction)
 
 		/*
 		 * Figure out whether we expect to retrieve all the tuples that
-		 * the plan can generate, or to stop early due to a LIMIT or other
-		 * factors.  If the caller passed a value >= 0, believe that
-		 * value, else do our own examination of the query context.
+		 * the plan can generate, or to stop early due to outside factors
+		 * such as a cursor.  If the caller passed a value >= 0, believe
+		 * that value, else do our own examination of the query context.
 		 */
 		if (tuple_fraction < 0.0)
 		{
@@ -884,74 +884,118 @@ grouping_planner(Query *parse, double tuple_fraction)
 			tuple_fraction = 0.0;
 
 			/*
-			 * Check for a LIMIT clause.
-			 */
-			if (parse->limitCount != NULL)
-			{
-				if (IsA(parse->limitCount, Const))
-				{
-					Const	   *limitc = (Const *) parse->limitCount;
-					int32		count = DatumGetInt32(limitc->constvalue);
-
-					/*
-					 * A NULL-constant LIMIT represents "LIMIT ALL", which
-					 * we treat the same as no limit (ie, expect to
-					 * retrieve all the tuples).
-					 */
-					if (!limitc->constisnull && count > 0)
-					{
-						tuple_fraction = (double) count;
-						/* We must also consider the OFFSET, if present */
-						if (parse->limitOffset != NULL)
-						{
-							if (IsA(parse->limitOffset, Const))
-							{
-								int32		offset;
-
-								limitc = (Const *) parse->limitOffset;
-								offset = DatumGetInt32(limitc->constvalue);
-								if (!limitc->constisnull && offset > 0)
-									tuple_fraction += (double) offset;
-							}
-							else
-							{
-								/* It's an expression ... punt ... */
-								tuple_fraction = 0.10;
-							}
-						}
-					}
-				}
-				else
-				{
-
-					/*
-					 * COUNT is an expression ... don't know exactly what
-					 * the limit will be, but for lack of a better idea
-					 * assume 10% of the plan's result is wanted.
-					 */
-					tuple_fraction = 0.10;
-				}
-			}
-
-			/*
-			 * If no LIMIT, check for retrieve-into-portal, ie DECLARE
-			 * CURSOR.
+			 * Check for retrieve-into-portal, ie DECLARE CURSOR.
 			 *
 			 * We have no real idea how many tuples the user will ultimately
 			 * FETCH from a cursor, but it seems a good bet that he
 			 * doesn't want 'em all.  Optimize for 10% retrieval (you
-			 * gotta better number?)
+			 * gotta better number?  Should this be a SETtable parameter?)
 			 */
-			else if (parse->isPortal)
+			if (parse->isPortal)
 				tuple_fraction = 0.10;
 		}
 
 		/*
 		 * Adjust tuple_fraction if we see that we are going to apply
-		 * grouping/aggregation/etc.  This is not overridable by the
-		 * caller, since it reflects plan actions that this routine will
-		 * certainly take, not assumptions about context.
+		 * limiting/grouping/aggregation/etc.  This is not overridable by
+		 * the caller, since it reflects plan actions that this routine
+		 * will certainly take, not assumptions about context.
 		 */
+		if (parse->limitCount != NULL)
+		{
+			/*
+			 * A LIMIT clause limits the absolute number of tuples returned.
+			 * However, if it's not a constant LIMIT then we have to punt;
+			 * for lack of a better idea, assume 10% of the plan's result
+			 * is wanted.
+			 */
+			double	limit_fraction = 0.0;
+
+			if (IsA(parse->limitCount, Const))
+			{
+				Const	   *limitc = (Const *) parse->limitCount;
+				int32		count = DatumGetInt32(limitc->constvalue);
+
+				/*
+				 * A NULL-constant LIMIT represents "LIMIT ALL", which
+				 * we treat the same as no limit (ie, expect to
+				 * retrieve all the tuples).
+				 */
+				if (!limitc->constisnull && count > 0)
+				{
+					limit_fraction = (double) count;
+					/* We must also consider the OFFSET, if present */
+					if (parse->limitOffset != NULL)
+					{
+						if (IsA(parse->limitOffset, Const))
+						{
+							int32		offset;
+
+							limitc = (Const *) parse->limitOffset;
+							offset = DatumGetInt32(limitc->constvalue);
+							if (!limitc->constisnull && offset > 0)
+								limit_fraction += (double) offset;
+						}
+						else
+						{
+							/* OFFSET is an expression ... punt ... */
+							limit_fraction = 0.10;
+						}
+					}
+				}
+			}
+			else
+			{
+				/* LIMIT is an expression ... punt ... */
+				limit_fraction = 0.10;
+			}
+
+			if (limit_fraction > 0.0)
+			{
+				/*
+				 * If we have absolute limits from both caller and LIMIT,
+				 * use the smaller value; if one is fractional and the other
+				 * absolute, treat the fraction as a fraction of the absolute
+				 * value; else we can multiply the two fractions together.
+				 */
+				if (tuple_fraction >= 1.0)
+				{
+					if (limit_fraction >= 1.0)
+					{
+						/* both absolute */
+						tuple_fraction = Min(tuple_fraction, limit_fraction);
+					}
+					else
+					{
+						/* caller absolute, limit fractional */
+						tuple_fraction *= limit_fraction;
+						if (tuple_fraction < 1.0)
+							tuple_fraction = 1.0;
+					}
+				}
+				else if (tuple_fraction > 0.0)
+				{
+					if (limit_fraction >= 1.0)
+					{
+						/* caller fractional, limit absolute */
+						tuple_fraction *= limit_fraction;
+						if (tuple_fraction < 1.0)
+							tuple_fraction = 1.0;
+					}
+					else
+					{
+						/* both fractional */
+						tuple_fraction *= limit_fraction;
+					}
+				}
+				else
+				{
+					/* no info from caller, just use limit */
+					tuple_fraction = limit_fraction;
+				}
+			}
+		}
+
 		if (parse->groupClause)
 		{
 
