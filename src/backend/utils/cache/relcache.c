@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.54 1999/01/22 16:49:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.55 1999/01/22 18:47:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2012,7 +2012,7 @@ init_irels(void)
 static void
 write_irels(void)
 {
-	int			len;
+	Size		len;
 	int			nwritten;
 	File		fd;
 	Relation	irel[Num_indices_bootstrap];
