@@ -5,7 +5,7 @@
  *	  wherein you authenticate a user by seeing what IP address the system
  *	  says he comes from and possibly using ident).
  *
- *	$Id: hba.c,v 1.52 2000/06/02 15:57:20 momjian Exp $
+ *	$Id: hba.c,v 1.53 2000/07/08 03:04:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,7 @@
 
 #include "libpq/libpq.h"
 #include "miscadmin.h"
+#include "storage/fd.h"
 
 
 #define MAX_TOKEN 80

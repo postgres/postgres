@@ -2,22 +2,16 @@
  *
  * dest.h
  *		Whenever the backend executes a query, the results
- *		have to go someplace - either to the standard output,
- *		to a local portal buffer or to a remote portal buffer.
+ *		have to go someplace.
  *
  *	  - stdout is the destination only when we are running a
  *		backend without a postmaster and are returning results
- *		back to the user.
+ *		back to an interactive user.
  *
- *	  - a local portal buffer is the destination when a backend
- *		executes a user-defined function which calls PQexec() or
- *		PQfn().  In this case, the results are collected into a
- *		PortalBuffer which the user's function may diddle with.
- *
- *	  - a remote portal buffer is the destination when we are
+ *	  - a remote process is the destination when we are
  *		running a backend with a frontend and the frontend executes
  *		PQexec() or PQfn().  In this case, the results are sent
- *		to the frontend via the pq_ functions.
+ *		to the frontend via the functions in backend/libpq.
  *
  *	  - None is the destination when the system executes
  *		a query internally.  This is not used now but it may be
@@ -45,7 +39,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dest.h,v 1.23 2000/01/26 05:58:35 momjian Exp $
+ * $Id: dest.h,v 1.24 2000/07/08 03:04:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,7 +57,6 @@ typedef enum
 {
 	None,						/* results are discarded */
 	Debug,						/* results go to debugging output */
-	Local,						/* results go in local portal buffer */
 	Remote,						/* results sent to frontend process */
 	RemoteInternal,				/* results sent to frontend process in
 								 * internal (binary) form */

@@ -4,15 +4,17 @@
 #    Makefile for libpq subsystem (backend half of libpq interface)
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/libpq/Makefile,v 1.20 2000/06/17 00:09:40 petere Exp $
+#    $Header: /cvsroot/pgsql/src/backend/libpq/Makefile,v 1.21 2000/07/08 03:04:39 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ../..
 include ../../Makefile.global
 
-OBJS = be-dumpdata.o be-fsstubs.o be-pqexec.o portal.o portalbuf.o \
-	auth.o hba.o crypt.o password.o \
+# be-fsstubs is here for historical reasons, probably belongs elsewhere
+
+OBJS = be-fsstubs.o \
+	auth.o crypt.o hba.o password.o \
 	pqcomm.o pqformat.o pqpacket.o pqsignal.o util.o
 
 

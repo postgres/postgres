@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.38 2000/01/26 05:57:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.39 2000/07/08 03:04:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,9 +72,6 @@ static DestReceiver donothingDR = {
 static DestReceiver printtup_internalDR = {
 	printtup_internal, donothingSetup, donothingCleanup
 };
-static DestReceiver be_printtupDR = {
-	be_printtup, donothingSetup, donothingCleanup
-};
 static DestReceiver debugtupDR = {
 	debugtup, donothingSetup, donothingCleanup
 };
@@ -95,18 +92,16 @@ BeginCommand(char *pname,
 			 char *tag,
 			 CommandDest dest)
 {
-	PortalEntry *entry;
 	Form_pg_attribute *attrs = tupdesc->attrs;
 	int			natts = tupdesc->natts;
 	int			i;
-	char	   *p;
 
 	switch (dest)
 	{
 		case Remote:
 		case RemoteInternal:
 			/* ----------------
-			 *		if this is a "retrieve portal" query, done
+			 *		if this is a "retrieve into portal" query, done
 			 *		because nothing needs to be sent to the fe.
 			 * ----------------
 			 */
@@ -158,32 +153,6 @@ BeginCommand(char *pname,
 			}
 			break;
 
-		case Local:
-			/* ----------------
-			 *		prepare local portal buffer for query results
-			 *		and setup result for PQexec()
-			 * ----------------
-			 */
-			entry = be_currentportal();
-			if (pname != NULL)
-				pbuf_setportalinfo(entry, pname);
-
-			if (operation == CMD_SELECT && !isIntoRel)
-			{
-				be_typeinit(entry, tupdesc, natts);
-				p = (char *) palloc(strlen(entry->name) + 2);
-				p[0] = 'P';
-				strcpy(p + 1, entry->name);
-			}
-			else
-			{
-				p = (char *) palloc(strlen(tag) + 2);
-				p[0] = 'C';
-				strcpy(p + 1, tag);
-			}
-			entry->result = p;
-			break;
-
 		case Debug:
 			/* ----------------
 			 *		show the return type of the tuples
@@ -217,10 +186,6 @@ DestToFunction(CommandDest dest)
 
 		case RemoteInternal:
 			return &printtup_internalDR;
-			break;
-
-		case Local:
-			return &be_printtupDR;
 			break;
 
 		case Debug:
@@ -266,7 +231,6 @@ EndCommand(char *commandTag, CommandDest dest)
 			CommandInfo[0] = '\0';
 			break;
 
-		case Local:
 		case Debug:
 		case None:
 		default:
@@ -329,7 +293,6 @@ NullCommand(CommandDest dest)
 			pq_putbytes("I", 2);/* note we send I and \0 */
 			break;
 
-		case Local:
 		case Debug:
 		case None:
 		default:
@@ -360,7 +323,6 @@ ReadyForQuery(CommandDest dest)
 			pq_flush();
 			break;
 
-		case Local:
 		case Debug:
 		case None:
 		default:

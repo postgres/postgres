@@ -1,25 +1,24 @@
 /*-------------------------------------------------------------------------
  *
  * util.c
- *	  general routines for libpq backend
+ *	  general routines for backend libpq modules
  *
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: util.c,v 1.15 2000/01/26 05:56:29 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/libpq/Attic/util.c,v 1.16 2000/07/08 03:04:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 /*
  *	 UTILITY ROUTINES
  *		pqdebug			- send a string to the debugging output port
- *		pqdebug2		- send two strings to stdout
  *		PQtrace			- turn on pqdebug() tracing
  *		PQuntrace		- turn off pqdebug() tracing
  */
 
-
 #include "postgres.h"
+
 #include "libpq/libpq.h"
 
 
@@ -29,17 +28,14 @@
  */
 char		PQerrormsg[PQERRORMSG_LENGTH];
 
-int			PQtracep = 0;		/* 1 to print out debugging messages */
-FILE	   *debug_port = (FILE *) NULL;
-
-/* ----------------
- *		exceptions
- * ----------------
+/*
+ * These are not really global --- they are referred to nowhere else.
+ * We declare them as global symbols to make them easier to set in a debugger.
  */
-Exception	MemoryError = {"Memory Allocation Error"};
-Exception	PortalError = {"Invalid arguments to portal functions"};
-Exception	PostquelError = {"Sql Error"};
-Exception	ProtocolError = {"Protocol Error"};
+
+int			PQtracep = 0;		/* 1 to print out debugging messages */
+
+FILE	   *debug_port = (FILE *) NULL;
 
 /* ----------------------------------------------------------------
  *						PQ utility routines
@@ -47,39 +43,20 @@ Exception	ProtocolError = {"Protocol Error"};
  */
 
 void
-pqdebug(char *target, char *msg)
+pqdebug(char *fmt, char *msg)
 {
-	if (!target)
+	if (!fmt)
 		return;
 
 	if (PQtracep)
 	{
 
 		/*
-		 * if nothing else was suggested default to stdout
+		 * if nothing else was suggested default to stderr
 		 */
 		if (!debug_port)
-			debug_port = stdout;
-		fprintf(debug_port, target, msg);
-		fprintf(debug_port, "\n");
-	}
-}
-
-void
-pqdebug2(char *target, char *msg1, char *msg2)
-{
-	if (!target)
-		return;
-
-	if (PQtracep)
-	{
-
-		/*
-		 * if nothing else was suggested default to stdout
-		 */
-		if (!debug_port)
-			debug_port = stdout;
-		fprintf(debug_port, target, msg1, msg2);
+			debug_port = stderr;
+		fprintf(debug_port, fmt, msg);
 		fprintf(debug_port, "\n");
 	}
 }

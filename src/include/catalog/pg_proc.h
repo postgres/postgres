@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.145 2000/07/07 19:24:41 petere Exp $
+ * $Id: pg_proc.h,v 1.146 2000/07/08 03:04:21 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -964,9 +964,6 @@ DATA(insert OID = 728 (  dist_cpoly		   PGUID 11 f t t t 2 f 701 "718 604" 100 0
 DESCR("distance between");
 DATA(insert OID = 729 (  poly_distance	   PGUID 11 f t t t 2 f 701 "604 604" 100 0 0 100  poly_distance - ));
 DESCR("distance between");
-
-DATA(insert OID = 730 (  pqtest			   PGUID 11 f t f t 1 f 23 "25" 100 0 0 100  pqtest - ));
-DESCR("");
 
 DATA(insert OID = 740 (  text_lt		   PGUID 12 f t t t 2 f 16 "25 25" 100 0 0 0	text_lt - ));
 DESCR("less-than");

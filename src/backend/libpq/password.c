@@ -2,21 +2,24 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: password.c,v 1.30 2000/07/04 16:31:53 petere Exp $
+ * $Id: password.c,v 1.31 2000/07/08 03:04:40 tgl Exp $
  *
  */
 
 #include <unistd.h>
 
 #include "postgres.h"
+
 #ifdef HAVE_CRYPT_H
-#include "crypt.h"
+#include <crypt.h>
 #endif
 
 #include "libpq/libpq.h"
 #include "libpq/password.h"
 #include "libpq/crypt.h"
 #include "miscadmin.h"
+#include "storage/fd.h"
+
 
 int
 verify_password(const Port *port, const char *user, const char *password)

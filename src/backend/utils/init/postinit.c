@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.62 2000/07/03 03:27:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.63 2000/07/08 03:04:16 tgl Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -24,7 +24,6 @@
 #include "access/heapam.h"
 #include "catalog/catname.h"
 #include "catalog/pg_database.h"
-#include "libpq/libpq.h"
 #include "miscadmin.h"
 #include "storage/backendid.h"
 #include "storage/proc.h"
@@ -227,15 +226,6 @@ void
 InitPostgres(const char *dbname)
 {
 	bool		bootstrap = IsBootstrapProcessingMode();
-
-	/* ----------------
-	 *	initialize the backend local portal stack used by
-	 *	internal PQ function calls.  see src/lib/libpq/be-dumpdata.c
-	 *	This is different from the "portal manager" so this goes here.
-	 *	-cim 2/12/91
-	 * ----------------
-	 */
-	be_portalinit();
 
 	/* initialize the local buffer manager */
 	InitLocalBuffer();

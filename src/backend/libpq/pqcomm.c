@@ -29,7 +29,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqcomm.c,v 1.99 2000/07/03 20:45:57 petere Exp $
+ *	$Id: pqcomm.c,v 1.100 2000/07/08 03:04:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,9 +79,8 @@
 
 #ifndef SOMAXCONN
 #define SOMAXCONN 5				/* from Linux listen(2) man page */
-#endif	 /* SOMAXCONN */
+#endif
 
-extern FILE *debug_port;		/* in util.c */
 
 /*
  * Buffers for low-level I/O
@@ -113,8 +112,6 @@ pq_init(void)
 {
 	PqSendPointer = PqRecvPointer = PqRecvLength = 0;
 	DoingCopyOut = false;
-	if (getenv("LIBPQ_DEBUG"))
-		debug_port = stderr;
 }
 
 

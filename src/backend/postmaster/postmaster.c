@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.152 2000/07/03 20:45:58 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.153 2000/07/08 03:04:13 tgl Exp $
  *
  * NOTES
  *
@@ -83,6 +83,7 @@
 #include "storage/proc.h"
 #include "access/xlog.h"
 #include "tcop/tcopprot.h"
+#include "utils/exc.h"
 #include "utils/guc.h"
 
 /*

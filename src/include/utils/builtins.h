@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.121 2000/07/07 19:24:43 petere Exp $
+ * $Id: builtins.h,v 1.122 2000/07/08 03:04:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -183,14 +183,6 @@ extern void rt_bigbox_size(BOX *a, float *size);
 extern Datum rt_poly_size(PG_FUNCTION_ARGS);
 extern POLYGON *rt_poly_union(POLYGON *a, POLYGON *b);
 extern POLYGON *rt_poly_inter(POLYGON *a, POLYGON *b);
-
-/* projection utilities */
-/* extern char *GetAttributeByName();
-   extern char *GetAttributeByNum(); ,
- in executor/executor.h*/
-
-
-extern int32 pqtest(struct varlena * vlena);
 
 /* arrayfuncs.c */
 
