@@ -5,7 +5,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Thu Oct  7 20:36:17 EDT 2004
+Last updated:		Thu Oct  7 20:43:56 EDT 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -465,8 +465,11 @@ Clients
 	o Stop dumping CASCADE on DROP TYPE commands in clean mode
 	o Add full object name to the tag field.  eg. for operators we need
 	  '=(integer, integer)', instead of just '='.
-	o Add pg_dumpall custom format dumps. This is probably best done by
-	  combining pg_dump and pg_dumpall into a single binary
+	o Add pg_dumpall custom format dumps. 
+
+	  This is probably best done by combining pg_dump and pg_dumpall 
+	  into a single binary.
+
 	o Add CSV output format
 
 * psql tab completion
