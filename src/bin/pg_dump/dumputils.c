@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.11 2004/01/07 00:44:21 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.12 2004/03/23 22:06:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -139,6 +139,65 @@ appendStringLiteral(PQExpBuffer buf, const char *str, bool escapeAll)
 			appendPQExpBufferChar(buf, ch);
 	}
 	appendPQExpBufferChar(buf, '\'');
+}
+
+
+/*
+ * Convert a string value to a dollar quoted literal and append it to
+ * the given buffer. If the dqprefix parameter is not NULL then the 
+ * dollar quote delimiter will begin with that (after the opening $).
+ *
+ * No escaping is done at all on str, in compliance with the rules
+ * for parsing dollar quoted strings.
+ */
+void
+appendStringLiteralDQ(PQExpBuffer buf, const char *str, const char *dqprefix)
+{
+	static const char suffixes[] = "_XXXXXXX";
+	int nextchar = 0;
+	PQExpBuffer delimBuf = createPQExpBuffer();
+
+	/* start with $ + dqprefix if not NULL */
+	appendPQExpBufferChar(delimBuf, '$');
+	if (dqprefix)
+		appendPQExpBuffer(delimBuf, dqprefix);
+
+	/* 
+	 * Make sure we choose a delimiter which (without the trailing $)
+	 * is not present in the string being quoted. We don't check with the
+	 * trailing $ because a string ending in $foo must not be quoted with
+	 * $foo$.
+	 */
+	while (strstr(str, delimBuf->data) != NULL)
+	{
+		appendPQExpBufferChar(delimBuf, suffixes[nextchar++]);
+		nextchar %= sizeof(suffixes)-1;
+	}
+
+	/* add trailing $ */
+	appendPQExpBufferChar(delimBuf, '$');
+
+	/* quote it and we are all done */
+	appendPQExpBufferStr(buf, delimBuf->data);
+	appendPQExpBufferStr(buf, str);
+	appendPQExpBufferStr(buf, delimBuf->data);
+
+	destroyPQExpBuffer(delimBuf);
+}
+
+
+/*
+ * Use dollar quoting if the string to be quoted contains ' or \,
+ * otherwise use standard quoting.
+ */
+void
+appendStringLiteralDQOpt(PQExpBuffer buf, const char *str, 
+						 bool escapeAll, const char *dqprefix)
+{
+	if (strchr(str, '\'') == NULL && strchr(str, '\\') == NULL)
+		appendStringLiteral(buf,str,escapeAll);
+	else
+		appendStringLiteralDQ(buf,str,dqprefix);
 }
 
 

@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.368 2004/03/20 20:09:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.369 2004/03/23 22:06:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,6 +106,9 @@ static const CatalogId nilCatalogId = { 0, 0 };
 /* these are to avoid passing around info for findNamespace() */
 static NamespaceInfo *g_namespaces;
 static int	g_numNamespaces;
+
+/* flag to turn on/off dollar quoting */
+static int     disable_dollar_quoting = 0;
 
 
 static void help(const char *progname);
@@ -231,8 +234,9 @@ main(int argc, char **argv)
 		 * the following options don't have an equivalent short option
 		 * letter, but are available as '-X long-name'
 		 */
-		{"use-set-session-authorization", no_argument, &use_setsessauth, 1},
+		{"disable-dollar-quoting", no_argument, &disable_dollar_quoting, 1},
 		{"disable-triggers", no_argument, &disable_triggers, 1},
+		{"use-set-session-authorization", no_argument, &use_setsessauth, 1},
 
 		{NULL, 0, NULL, 0}
 	};
@@ -385,10 +389,12 @@ main(int argc, char **argv)
 				 * require arguments should use '-X feature=foo'.
 				 */
 			case 'X':
-				if (strcmp(optarg, "use-set-session-authorization") == 0)
-					/* no-op, still allowed for compatibility */ ;
+				if (strcmp(optarg, "disable-dollar-quoting") == 0)
+					disable_dollar_quoting = 1;
 				else if (strcmp(optarg, "disable-triggers") == 0)
 					disable_triggers = 1;
+				else if (strcmp(optarg, "use-set-session-authorization") == 0)
+					/* no-op, still allowed for compatibility */ ;
 				else
 				{
 					fprintf(stderr,
@@ -679,6 +685,8 @@ help(const char *progname)
 			 "                           plain text format\n"));
 	printf(_("  -t, --table=TABLE        dump the named table only\n"));
 	printf(_("  -x, --no-privileges      do not dump privileges (grant/revoke)\n"));
+	printf(_("  -X disable-dollar-quoting, --disable-dollar-quoting\n"
+			 "                           disable dollar quoting, use SQL standard quoting\n"));
 	printf(_("  -X disable-triggers, --disable-triggers\n"
 			 "                           disable triggers during data-only restore\n"));
 
@@ -5076,7 +5084,14 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 		if (strcmp(prosrc, "-") != 0)
 		{
 			appendPQExpBuffer(asPart, ", ");
-			appendStringLiteral(asPart, prosrc, false);
+			/* 
+			 * where we have bin, use dollar quoting if allowed and src
+			 * contains quote or backslash; else use regular quoting.
+			 */
+			if (disable_dollar_quoting)
+				appendStringLiteral(asPart, prosrc, false);
+			else
+				appendStringLiteralDQOpt(asPart, prosrc, false, NULL);
 		}
 	}
 	else
@@ -5084,7 +5099,11 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 		if (strcmp(prosrc, "-") != 0)
 		{
 			appendPQExpBuffer(asPart, "AS ");
-			appendStringLiteral(asPart, prosrc, false);
+			/* with no bin, dollar quote src unconditionally if allowed */
+			if (disable_dollar_quoting)
+				appendStringLiteral(asPart, prosrc, false);
+			else
+				appendStringLiteralDQ(asPart, prosrc, NULL);
 		}
 	}
 

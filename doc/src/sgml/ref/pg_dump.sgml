@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.68 2003/12/01 22:07:58 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.69 2004/03/23 22:06:08 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -420,17 +420,15 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-X use-set-session-authorization</></term>
-      <term><option>--use-set-session-authorization</></term>
+      <term><option>-X disable-dollar-quoting</></term>
+      <term><option>--disable-dollar-quoting</></term>
       <listitem>
        <para>
-        This option is obsolete but still accepted for backwards
-	compatibility.
-        <application>pg_dump</application> now always behaves in the
-	way formerly selected by this option.
+        This option disables the use of dollar quoting for function bodies,
+        and forces them to be quoted using SQL standard string syntax.
        </para>
-      </listitem>
-     </varlistentry>
+     </listitem>
+    </varlistentry>
 
      <varlistentry>
       <term><option>-X disable-triggers</></term>
@@ -438,18 +436,18 @@ PostgreSQL documentation
       <listitem>
        <para>
         This option is only relevant when creating a data-only dump.
-	It instructs <application>pg_dump</application> to include commands
-	to temporarily disable triggers on the target tables while
-	the data is reloaded.  Use this if you have referential
-	integrity checks or other triggers on the tables that you
-	do not want to invoke during data reload.
+        It instructs <application>pg_dump</application> to include commands
+        to temporarily disable triggers on the target tables while
+        the data is reloaded.  Use this if you have referential
+        integrity checks or other triggers on the tables that you
+        do not want to invoke during data reload.
        </para>
 
        <para>
         Presently, the commands emitted for <option>--disable-triggers</>
-	must be done as superuser.  So, you should also specify
-	a superuser name with <option>-S</>, or preferably be careful to
-	start the resulting script as a superuser.
+        must be done as superuser.  So, you should also specify
+        a superuser name with <option>-S</>, or preferably be careful to
+        start the resulting script as a superuser.
        </para>
 
        <para>
@@ -461,13 +459,26 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>-X use-set-session-authorization</></term>
+      <term><option>--use-set-session-authorization</></term>
+      <listitem>
+       <para>
+        This option is obsolete but still accepted for backwards
+        compatibility.
+        <application>pg_dump</application> now always behaves in the
+        way formerly selected by this option.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-Z <replaceable class="parameter">0..9</replaceable></option></term>
       <term><option>--compress=<replaceable class="parameter">0..9</replaceable></option></term>
       <listitem>
        <para>
-	Specify the compression level to use in archive formats that
-	support compression.  (Currently only the custom archive
-	format supports compression.)
+        Specify the compression level to use in archive formats that
+        support compression.  (Currently only the custom archive
+        format supports compression.)
        </para>
       </listitem>
      </varlistentry>
