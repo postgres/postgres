@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.66 2001/03/22 03:59:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.67 2001/05/21 18:42:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,6 +54,9 @@ transformTargetEntry(ParseState *pstate,
 	/* Transform the node if caller didn't do it already */
 	if (expr == NULL)
 		expr = transformExpr(pstate, node, EXPR_COLUMN_FIRST);
+
+	if (IsA(expr, Ident) && ((Ident *)expr)->isRel)
+		elog(ERROR,"You can't use relation names alone in the target list, try relation.*.");	
 
 	type_id = exprType(expr);
 	type_mod = exprTypmod(expr);

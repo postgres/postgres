@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.95 2001/05/19 00:33:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.96 2001/05/21 18:42:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -585,7 +585,10 @@ transformIdent(ParseState *pstate, Ident *ident, int precedence)
 		Node	   *var = colnameToVar(pstate, ident->name);
 
 		if (var != NULL)
+		{
+			ident->isRel = FALSE;
 			result = transformIndirection(pstate, var, ident->indirection);
+		}
 	}
 
 	if (result == NULL)
