@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.304 2005/02/10 05:14:58 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.305 2005/02/26 23:19:05 momjian Exp $
 -->
 
 <chapter Id="runtime">
@@ -4458,37 +4458,29 @@ option         SEMMAP=256
       <indexterm><primary>Linux</><secondary>IPC configuration</></>
       <listitem>
        <para>
-        The default shared memory limit (both
-        <varname>SHMMAX</varname> and <varname>SHMALL</varname>) is 32
-        MB in 2.2 kernels, but it can be changed in the
-        <filename>proc</filename> file system (without reboot).  For
-        example, to allow 128 MB:
+        The default settings are only suitable for small installations 
+        (the default max segment size is 32 MB). However the remaining
+        defaults are quite generously sized, and usually do not require
+        changes. The max segment size can be changed via the 
+        <command>sysctl</command> interface. For example, to allow 128 MB, 
+        and explicitly set the maximum total shared memory size to 2097152 
+        pages (the default):
 <screen>
-<prompt>$</prompt> <userinput>echo 134217728 &gt;/proc/sys/kernel/shmall</userinput>
-<prompt>$</prompt> <userinput>echo 134217728 &gt;/proc/sys/kernel/shmmax</userinput>
+<prompt>$</prompt> <userinput>systcl -w kernel.shmmax=134217728</userinput>
+<prompt>$</prompt> <userinput>systcl -w kernel.shmall=2097152</userinput>
 </screen>
-        You could put these commands into a script run at boot-time.
+        In addition these settings can be saved between reboots in 
+        <filename>/etc/sysctl.conf.
        </para>
 
        <para>
-        Alternatively, you can use <command>sysctl</command>, if
-        available, to control these parameters.  Look for a file
-        called <filename>/etc/sysctl.conf</filename> and add lines
-        like the following to it:
-<programlisting>
-kernel.shmall = 134217728
-kernel.shmmax = 134217728
-</programlisting>
-        This file is usually processed at boot time, but
-        <command>sysctl</command> can also be called
-        explicitly later.
-       </para>
-
-       <para>
-        Other parameters are sufficiently sized for any application. If
-        you want to see for yourself look in
-        <filename>/usr/src/linux/include/asm-<replaceable>xxx</>/shmparam.h</>
-        and <filename>/usr/src/linux/include/linux/sem.h</>.
+        Older distributions may not have the <command>sysctl</command> program,
+        but equivalent changes can be made by manipulating the 
+        <filename>/proc</filename> filesystem:
+<screen>
+<prompt>$</prompt> <userinput>echo 134217728 &gt;/proc/sys/kernel/shmmax</userinput>
+<prompt>$</prompt> <userinput>echo 2097152 &gt;/proc/sys/kernel/shmall</userinput>
+</screen>
        </para>
       </listitem>
      </varlistentry>
