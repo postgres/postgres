@@ -1,7 +1,8 @@
 all: test1 test2 test3 test4 perftest dyntest dyntest2 test_notice test_code100 test_init
 
 #LDFLAGS=-g -I /usr/local/pgsql/include -L/usr/local/pgsql/lib -lecpg -lpq
-LDFLAGS=-g -I ../include -I /usr/include/postgresql -L /usr/lib -lecpg -lpq
+LDFLAGS=-g -I ../include
+LDLIBS=-L ../lib -lecpg -L ../../libpq -lpq
 
 #ECPG=/usr/local/pgsql/bin/ecpg -I../include
 ECPG=../preproc/ecpg -I../include
@@ -24,4 +25,4 @@ test_text: test_text.c
 	$(ECPG) $? 
 
 clean:
-	rm -f test1 test2 test3 test4 perftest *.c log dyntest dyntest2 test_notice test_code100 test_init test_text
+	rm -f test1 test2 test3 test4 perftest *.c log dyntest dyntest2 test_notice test_code100 test_init test_text *.exe

@@ -1,6 +1,14 @@
 #ifndef POSTGRES_SQLCA_H
 #define POSTGRES_SQLCA_H
 
+#ifndef DLLIMPORT
+#ifdef __CYGWIN__
+#define DLLIMPORT __declspec (dllimport)
+#else
+#define DLLIMPORT
+#endif /* __CYGWIN__ */
+#endif /* DLLIMPORT */
+
 #define SQLERRMC_LEN	70
 
 #ifdef __cplusplus
@@ -45,7 +53,7 @@ extern		"C"
 		char		sqlext[8];
 	};
 
-	extern struct sqlca sqlca;
+	extern DLLIMPORT struct sqlca sqlca;
 
 
 #ifdef __cplusplus
