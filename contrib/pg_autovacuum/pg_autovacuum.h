@@ -9,6 +9,7 @@
 #ifdef __GLIBC__
 #include <getopt.h>
 #endif
+#include <time.h>
 #include <sys/time.h>
 
 /* These next two lines are correct when pg_autovaccum is compiled
