@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/createdb.sgml,v 1.15 2000/11/22 01:41:13 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/createdb.sgml,v 1.16 2000/12/25 23:15:26 petere Exp $
 Postgres documentation
 -->
 
@@ -99,7 +99,7 @@ Postgres documentation
       <listitem>
        <para>
 	Specifies the alternative database location.  See also <xref
-	linkend="app-initlocation" endterm="app-initlocation-title">.
+	linkend="app-initlocation">.
        </para>
       </listitem>
      </varlistentry>
@@ -139,7 +139,7 @@ Postgres documentation
 
     The options <literal>-h</literal>, <literal>-p</literal>, <literal>-U</literal>,
     <literal>-W</literal>, and <literal>-e</literal> are passed on literally to
-    <xref linkend="APP-PSQL" endterm="APP-PSQL-title">.
+    <xref linkend="app-psql">.
    </para>
   </refsect2>
 
@@ -177,8 +177,8 @@ Postgres documentation
     </variablelist>
 
     If there is an error condition, the backend error message will be displayed.
-    See <xref linkend="SQL-CREATEDATABASE" endterm="SQL-CREATEDATABASE-title">
-    and <xref linkend="APP-PSQL" endterm="APP-PSQL-title"> for possibilities.
+    See <xref linkend="SQL-CREATEDATABASE">
+    and <xref linkend="APP-PSQL"> for possibilities.
    </para>
   </refsect2>
  </refsynopsisdiv>
@@ -197,7 +197,7 @@ Postgres documentation
    <acronym>SQL</acronym> command
    <xref linkend="SQL-CREATEDATABASE" endterm="SQL-CREATEDATABASE-title"> via
    the <productname>Postgres</productname> interactive terminal
-   <xref linkend="APP-PSQL" endterm="APP-PSQL-title">. Thus, there is nothing
+   <xref linkend="APP-PSQL">. Thus, there is nothing
    special about creating databases via this or other methods. This means
    that the <application>psql</application> must be found by the script and that
    a database server is running at the targeted host. Also, any default

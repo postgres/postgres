@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/dropuser.sgml,v 1.9 2000/11/22 01:41:13 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/dropuser.sgml,v 1.10 2000/12/25 23:15:26 petere Exp $
 Postgres documentation
 -->
 
@@ -99,7 +99,7 @@ Postgres documentation
 
     <para>
     The options <literal>-h</literal>, <literal>-p</literal>, and <literal>-e</literal>,
-    are passed on literally to <xref linkend="APP-PSQL" endterm="APP-PSQL-title">. The
+    are passed on literally to <xref linkend="APP-PSQL">. The
     <application>psql</application> options <literal>-U</literal> and <literal>-W</literal>
     are available as well, but they can be confusing in this context.
    </para>
@@ -134,7 +134,7 @@ Postgres documentation
 
     If there is an error condition, the backend error message will be displayed.
     See <xref linkend="SQL-DROPUSER" endterm="SQL-DROPUSER-title">
-    and <xref linkend="APP-PSQL" endterm="APP-PSQL-title"> for possibilities.
+    and <xref linkend="APP-PSQL"> for possibilities.
    </para>
   </refsect2>
  </refsynopsisdiv>
@@ -157,7 +157,7 @@ Postgres documentation
    <acronym>SQL</acronym> command
    <xref linkend="SQL-DROPUSER" endterm="SQL-DROPUSER-title"> via
    the <productname>Postgres</productname> interactive terminal
-   <xref linkend="APP-PSQL" endterm="APP-PSQL-title">. Thus, there is nothing
+   <xref linkend="APP-PSQL">. Thus, there is nothing
    special about removing users via this or other methods. This means
    that the <application>psql</application> must be found by the script and that
    a database server is running at the targeted host. Also, any default

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/insert.sgml,v 1.11 2000/10/20 14:02:12 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/insert.sgml,v 1.12 2000/12/25 23:15:26 petere Exp $
 Postgres documentation
 -->
 
@@ -227,7 +227,7 @@ INSERT INTO tictactoe (game, board)
     Possible limitations in features of the 
     <replaceable class="PARAMETER">query</replaceable>
     clause are documented for
-    <xref linkend="sql-select-title" endterm="sql-select-title">.
+    <xref linkend="sql-select" endterm="sql-select-title">.
    </para>
   </refsect2>
  </refsect1>

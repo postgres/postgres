@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/listen.sgml,v 1.8 2000/03/26 18:32:27 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/listen.sgml,v 1.9 2000/12/25 23:15:26 petere Exp $
 Postgres documentation
 -->
 
@@ -128,7 +128,7 @@ NOTICE Async_Listen: We are already listening on <replaceable class="PARAMETER">
   </para>
 
   <para>
-   <xref linkend="sql-notify-title" endterm="sql-notify-title">
+   <xref linkend="sql-notify" endterm="sql-notify-title">
    contains a more extensive
    discussion of the use of <command>LISTEN</command> and
    <command>NOTIFY</command>.

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/ecpg-ref.sgml,v 1.5 2000/10/05 19:48:18 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/ecpg-ref.sgml,v 1.6 2000/12/25 23:15:26 petere Exp $
 Postgres documentation
 -->
 
@@ -8,6 +8,7 @@ Postgres documentation
   <refentrytitle id="app-ecpg-title">
    <application>ecpg</application>
   </refentrytitle>
+  <manvolnum>1</manvolnum>
   <refmiscinfo>Application</refmiscinfo>
  </refmeta>
  <refnamediv>
@@ -75,7 +76,7 @@ ecpg [ -v ] [ -t ] [ -I include-path ] [ -o outfile ]  file1 [ file2 ] [ ... ]
       <term>-o</term>
       <listitem>
        <para>
-	Specifies that ecpg should write all its output to outfile.
+	Specifies that <application>ecpg</application> should write all its output to outfile.
 	If no such option is given the output is written to
 	<filename><replaceable>name</replaceable>.c</filename>,
 	assuming the input file was 
@@ -115,7 +116,7 @@ ecpg [ -v ] [ -t ] [ -I include-path ] [ -o outfile ]  file1 [ file2 ] [ ... ]
       <term><replaceable>return value</replaceable></term>
       <listitem>
        <para>
-	ecpg returns 0 to the shell on successful completion, -1
+	<application>ecpg</application> returns 0 to the shell on successful completion, -1
 	for errors.
        </para>
       </listitem>
@@ -135,12 +136,12 @@ ecpg [ -v ] [ -t ] [ -I include-path ] [ -o outfile ]  file1 [ file2 ] [ ... ]
   </para>
 
   <para>
-   <ulink url="mailto:linus@epact.se">Linus Tolke</ulink> was the
+   Linus Tolke (<email>linus@epact.se</email>) was the
    original author of <application>ecpg</application> (up to version 0.2).
-   <ulink url="mailto:meskes@debian.org">Michael Meskes</ulink>
+   Michael Meskes (<email>meskes@debian.org</email>)
    is the current author and maintainer of <application>ecpg</application>.
-   <ulink url="mailto:tomg@q8.nrnet.org">Thomas Good</ulink>
-   is the author of the last revision of the ecpg man page, on which
+   Thomas Good (<email>tomg@q8.nrnet.org</email>)
+   is the author of the last revision of the <application>ecpg</application> man page, on which
    this document is based.
   </para>
  </refsect1>
@@ -203,7 +204,7 @@ gcc -g -I /usr/local/pgsql/include [ -o <replaceable>file</replaceable> ] <repla
    <title>Variable Declaration</title>
 
    <para>
-    Variables declared within ecpg source code must be prepended with:
+    Variables declared within <application>ecpg</application> source code must be prepended with:
 
     <programlisting>
 EXEC SQL BEGIN DECLARE SECTION;
@@ -247,8 +248,8 @@ EXEC SQL INCLUDE sqlca;
       followed, i.e., using uppercase to separate embedded SQL 
       from C statements, sqlca (which includes the sqlca.h 
       header file) MUST be lowercase.  This is because the EXEC SQL
-      prefix indicates that this INCLUDE will be parsed by ecpg.
-      ecpg observes case sensitivity (SQLCA.h will not be found).
+      prefix indicates that this INCLUDE will be parsed by <application>ecpg</application>.
+      <application>ecpg</application> observes case sensitivity (SQLCA.h will not be found).
       <command>EXEC SQL INCLUDE</command>
       can be used to include other header files
       as long as case sensitivity is observed.

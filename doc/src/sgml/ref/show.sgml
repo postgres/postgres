@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/show.sgml,v 1.10 2000/06/18 21:24:54 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/show.sgml,v 1.11 2000/12/25 23:15:26 petere Exp $
 Postgres documentation
 -->
 
@@ -27,7 +27,7 @@ SHOW <replaceable class="PARAMETER">name</replaceable>
       <listitem>
        <para>
         The name of a run-time parameter. See
-	<xref linkend="sql-set-title" endterm="sql-set-title">
+	<xref linkend="sql-set" endterm="sql-set-title">
         for a list.
        </para>
       </listitem>

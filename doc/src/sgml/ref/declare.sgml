@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/declare.sgml,v 1.10 2000/10/05 19:48:18 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/declare.sgml,v 1.11 2000/12/25 23:15:26 petere Exp $
 Postgres documentation
 -->
 
@@ -191,7 +191,7 @@ ERROR:  Named portals may only be used in begin/end transaction blocks
    can be used to retrieve
    a small number of rows at a time out of a larger query. Cursors can
    return data either in text or in binary format using
-   <xref linkend="sql-fetch-title" endterm="sql-fetch-title">.
+   <xref linkend="sql-fetch" endterm="sql-fetch-title">.
   </para>
 
   <para>
@@ -253,10 +253,10 @@ ERROR:  Named portals may only be used in begin/end transaction blocks
 
    <para>
     Cursors are only available in transactions. Use to
-    <xref linkend="sql-begin-title" endterm="sql-begin-title">,
-    <xref linkend="sql-commit-title" endterm="sql-commit-title">
+    <xref linkend="sql-begin" endterm="sql-begin-title">,
+    <xref linkend="sql-commit" endterm="sql-commit-title">
     and
-    <xref linkend="sql-rollback-title" endterm="sql-rollback-title">
+    <xref linkend="sql-rollback" endterm="sql-rollback-title">
     to define a transaction block.
    </para>
 

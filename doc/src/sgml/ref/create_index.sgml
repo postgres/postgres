@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_index.sgml,v 1.16 2000/10/05 19:48:17 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_index.sgml,v 1.17 2000/12/25 23:15:26 petere Exp $
 Postgres documentation
 -->
 
@@ -228,7 +228,7 @@ ERROR: Cannot create index: 'index_name' already exists.
   </para>
 
   <para>
-   Use <xref linkend="sql-dropindex-title" endterm="sql-dropindex-title">
+   Use <xref linkend="sql-dropindex" endterm="sql-dropindex-title">
    to remove an index.
   </para>
 

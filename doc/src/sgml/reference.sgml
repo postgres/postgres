@@ -1,5 +1,5 @@
 <!-- reference.sgml
-$Header: /cvsroot/pgsql/doc/src/sgml/reference.sgml,v 1.10 2000/11/25 13:20:05 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/reference.sgml,v 1.11 2000/12/25 23:15:26 petere Exp $
 
 PostgreSQL Reference Manual
 -->
@@ -119,7 +119,7 @@ Disable this chapter until we have more functions documented.
 -->
 
  <reference id="reference-client">
-  <title>Client Applications</title>
+  <title>PostgreSQL Client Applications</title>
 
   <partintro>
    <para>
@@ -148,7 +148,7 @@ Disable this chapter until we have more functions documented.
  </reference>
 
  <reference id="reference-server">
-  <title>Server Applications and Utilities</title>
+  <title>PostgreSQL Server Applications</title>
 
   <partintro>
    <para>

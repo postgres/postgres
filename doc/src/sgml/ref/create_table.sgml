@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.36 2000/10/08 13:22:24 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.37 2000/12/25 23:15:26 petere Exp $
 Postgres documentation
 -->
 
@@ -242,7 +242,7 @@ ERROR:  DEFAULT: type mismatched
    Each new table or class <replaceable class="PARAMETER">table</replaceable>
    is automatically created as a type.  Therefore, one or more instances
    from the class are automatically a type and can be used in 
-   <xref linkend="sql-altertable-title" endterm="sql-altertable-title">
+   <xref linkend="sql-altertable" endterm="sql-altertable-title">
    or other <command>CREATE TABLE</command> statements.
   </para>
 

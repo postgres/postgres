@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/lock.sgml,v 1.22 2000/10/05 19:48:18 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/lock.sgml,v 1.23 2000/12/25 23:15:26 petere Exp $
 Postgres documentation
 -->
 
@@ -434,7 +434,7 @@ COMMIT WORK;
     There is no <command>LOCK TABLE</command> in <acronym>SQL92</acronym>,
     which instead uses <command>SET TRANSACTION</command> to specify
     concurrency levels on transactions.  We support that too; see
-    <xref linkend="SQL-SET-TITLE" endterm="SQL-SET-TITLE"> for details.
+    <xref linkend="SQL-SET-TRANSACTION" endterm="SQL-SET-TRANSACTION-TITLE"> for details.
    </para>
   </refsect2>
  </refsect1>

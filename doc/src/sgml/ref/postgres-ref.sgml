@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/postgres-ref.sgml,v 1.15 2000/11/14 18:11:31 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/postgres-ref.sgml,v 1.16 2000/12/25 23:15:26 petere Exp $
 Postgres documentation
 -->
 
@@ -80,13 +80,12 @@ Postgres documentation
    <productname>PostgreSQL</productname> server process that processes
    queries.  The second form above is how
    <application>postgres</application> is invoked by the <xref
-   linkend="app-postmaster" endterm="app-postmaster-title"> (only
+   linkend="app-postmaster"> (only
    conceptually, since both <filename>postmaster</filename> and
    <filename>postgres</filename> are in fact the same program); it
    should not be invoked directly this way.  The first form invokes
    the server directly in interactive mode.  The primary use for this
-   mode is for bootstrapping by <xref linkend="app-initdb"
-   endterm="app-initdb-title">.
+   mode is for bootstrapping by <xref linkend="app-initdb">.
   </para>
 
   <para>
@@ -109,7 +108,7 @@ Postgres documentation
 
    <para>
     When <application>postgres</application> is started by a <xref
-    linkend="app-postmaster" endterm="app-postmaster-title"> then it
+    linkend="app-postmaster"> then it
     inherits all options set by the latter.  Additionally,
     <application>postgres</application>-specific options can be passed
     from the <application>postmaster</application> with the
@@ -134,7 +133,7 @@ Postgres documentation
      The options <option>-A</option>, <option>-B</option>,
      <option>-c</option>, <option>-d</option>, <option>-D</option>,
      and <option>-F</option> have the same meaning as with the <xref
-     linkend="app-postmaster" endterm="app-postmaster-title">.
+     linkend="app-postmaster">.
     </para>
 
     <variablelist>
@@ -358,9 +357,9 @@ Postgres documentation
   <title>See also</title>
 
   <para>
-   <xref linkend="app-initdb" endterm="app-initdb-title">,
-   <xref linkend="app-ipcclean" endterm="app-ipcclean-title">,
-   <xref linkend="app-postmaster" endterm="app-postmaster-title">
+   <xref linkend="app-initdb">,
+   <xref linkend="app-ipcclean">,
+   <xref linkend="app-postmaster">
   </para>
  </refsect1>
 

@@ -1,11 +1,11 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/initdb.sgml,v 1.13 2000/11/11 23:01:45 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/initdb.sgml,v 1.14 2000/12/25 23:15:26 petere Exp $
 Postgres documentation
 -->
 
 <refentry id="APP-INITDB">
  <docinfo>
-  <date>2000-11-11</date>
+  <date>2000-12-25</date>
  </docinfo>
 
  <refmeta>
@@ -58,7 +58,7 @@ Postgres documentation
   <para>
    Creating a database system consists of creating the directories in which
    the database data will live, generating the shared catalog tables 
-   (tables that don't belong to any particular database), and
+   (tables that do not belong to any particular database), and
    creating the <literal>template1</literal>
    database.  When you create a new database, everything in the
    <literal>template1</literal> database is copied.
@@ -94,11 +94,13 @@ Postgres documentation
       <term>-D <replaceable class="parameter">dbdir</replaceable></term>
       <listitem>
        <para>
-        This option specifies where in the file system the database should be
-        stored. This is the only information required by initdb, but you can avoid
-        it by setting the <envar>PGDATA</envar> environment variable, which
-        can be convenient since the database server (<filename>postmaster</filename>)
-        can find the database directory later by the same variable.
+        This option specifies where in the file system the database
+        should be stored. This is the only information required by
+        <application>initdb</application>, but you can avoid it by
+        setting the <envar>PGDATA</envar> environment variable, which
+        can be convenient since the database server
+        (<filename>postmaster</filename>) can find the database
+        directory later by the same variable.
        </para>
       </listitem>
      </varlistentry>
@@ -108,10 +110,11 @@ Postgres documentation
       <term>-i <replaceable class="parameter">sysid</replaceable></term>
       <listitem>
        <para>
-        Selects the system id of the database superuser. This defaults to
-        the effective user id of the user running initdb. It is really
-        not important what the superuser's sysid is, but one might choose
-        to start the numbering at some number like 1.
+        Selects the system id of the database superuser. This defaults
+        to the effective user id of the user running
+        <application>initdb</application>. It is really not important
+        what the superuser's sysid is, but one might choose to start
+        the numbering at some number like 1.
        </para>
       </listitem>
      </varlistentry>
@@ -121,10 +124,11 @@ Postgres documentation
       <term>-W</term>
       <listitem>
        <para>
-        Makes initdb prompt for a password of the database superuser. If you
-        don't plan on using password authentication, this is not important.
-        Otherwise you won't be able to use password authentication until
-        you have a password set up.
+        Makes <application>initdb</application> prompt for a password
+        of the database superuser. If you don't plan on using password
+        authentication, this is not important.  Otherwise you won't be
+        able to use password authentication until you have a password
+        set up.
        </para>
       </listitem>
      </varlistentry>
@@ -154,10 +158,10 @@ Postgres documentation
       <term>-L <replaceable class="parameter">directory</replaceable></term>
       <listitem>
        <para>
-        Specifies where initdb should find its input files to
-        initialize the database system.  This is normally not
-        necessary.  You will be told if you need to specify their
-        location explicitly.
+        Specifies where <application>initdb</application> should find
+        its input files to initialize the database system.  This is
+        normally not necessary.  You will be told if you need to
+        specify their location explicitly.
        </para>
       </listitem>
      </varlistentry>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.17 2000/12/19 22:12:46 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.18 2000/12/25 23:15:26 petere Exp $
 Postgres documentation
 -->
 
@@ -36,9 +36,9 @@ Postgres documentation
    <application>pg_dumpall</application> is a utility for writing out
    (<quote>dumping</quote>) all Postgres databases of a cluster into
    one script file.  The script file contains SQL commands that can be
-   used as input to <xref linkend="app-psql" endterm="app-psql-title">
+   used as input to <xref linkend="app-psql">
    to restore the databases.  It does this by calling <xref
-   linkend="app-pgdump" endterm="app-pgdump-title"> for each database
+   linkend="app-pgdump"> for each database
    in a cluster.  <application>pg_dumpall</application> also dumps
    global objects that are common to all databases.
    (<application>pg_dump</application> does not save these objects.)
@@ -110,7 +110,7 @@ Postgres documentation
 
    <para>
     Any other command line parameters are passed to the underlying
-    <xref endterm="app-pgdump-title" linkend="app-pgdump-title">
+    <xref linkend="app-pgdump">
     calls.  This is useful to control some aspects of the output
     format, but some options such as <option>-f</option>,
     <option>-t</option>, and <replaceable
@@ -145,9 +145,8 @@ Postgres documentation
   <title>See Also</title>
 
   <para>
-    <xref linkend="app-pgdump" endterm="app-pgdump-title">, <xref
-    linkend="app-psql" endterm="app-psql-title">.  Check there for
-    details on possible error conditions.
+    <xref linkend="app-pgdump">, <xref linkend="app-psql">.  Check
+    there for details on possible error conditions.
   </para>
  </refsect1>   
 

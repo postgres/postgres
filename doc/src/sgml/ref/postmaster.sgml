@@ -1,11 +1,11 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.18 2000/11/30 23:20:50 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.19 2000/12/25 23:15:26 petere Exp $
 Postgres documentation
 -->
 
-<refentry id="APP-POSTMASTER">
+<refentry id="app-postmaster">
  <docinfo>
-  <date>2000-11-30</date>
+  <date>2000-12-25</date>
  </docinfo>
 
  <refmeta>
@@ -50,31 +50,30 @@ Postgres documentation
    (over a network or locally) to a running
    <application>postmaster</application>.  The
    <application>postmaster</application> then starts a separate server
-   process (<quote><xref linkend="app-postgres"
-   endterm="app-postgres-title"></quote>) to handle the connection.
-   The postmaster also manages the communication among server
-   processes.
+   process (<quote><xref linkend="app-postgres"></quote>) to handle
+   the connection.  The <application>postmaster</application> also
+   manages the communication among server processes.
   </para>
 
   <para>
-   By default the postmaster starts in the foreground and prints log
-   messages to the standard output.  In practical applications the
-   postmaster should be started as a background process, perhaps at
-   boot time.
+   By default the <application>postmaster</application> starts in the
+   foreground and prints log messages to the standard output.  In
+   practical applications the <application>postmaster</application>
+   should be started as a background process, perhaps at boot time.
   </para>
 
   <para>
-   One postmaster always manages the data from exactly one database
-   cluster.  A database cluster is a collection of databases that is
-   stored at a common file system location.  When the postmaster
-   starts it needs to know the location of the database cluster files
-   (<quote>data area</quote>).  This is done with the
-   <option>-D</option> invocation option or the <envar>PGDATA</envar>
-   environment variable; there is no default.  More than one
-   postmaster process can run on a system at one time, as long as they
-   use different data areas and different communication ports (see below).
-   A data area is created with <xref linkend="app-initdb"
-   endterm="app-initdb-title">.
+   One <application>postmaster</application> always manages the data
+   from exactly one database cluster.  A database cluster is a
+   collection of databases that is stored at a common file system
+   location.  When the postmaster starts it needs to know the location
+   of the database cluster files (<quote>data area</quote>).  This is
+   done with the <option>-D</option> invocation option or the
+   <envar>PGDATA</envar> environment variable; there is no default.
+   More than one postmaster process can run on a system at one time,
+   as long as they use different data areas and different
+   communication ports (see below).  A data area is created with <xref
+   linkend="app-initdb">.
   </para>
 
   <refsect2 id="app-postmaster-options">
@@ -183,7 +182,7 @@ Postgres documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-k <replaceable class="parameter">directoryname</replaceable></term>
+      <term>-k <replaceable class="parameter">directory</replaceable></term>
       <listitem>
        <para>
 	Specifies the directory of the Unix-domain socket on which the
@@ -210,10 +209,11 @@ Postgres documentation
       <listitem>
        <para>
 	Sets the maximum number of client connections that this
-	postmaster will accept.  By default, this value is 32, but it
-	can be set as high as 1024 if your system will support that
-	many processes.  (Note that <option>-B</option> is required to
-	be at least twice <option>-N</option>.)
+	<application>postmaster</application> will accept.  By
+	default, this value is 32, but it can be set as high as 1024
+	if your system will support that many processes.  (Note that
+	<option>-B</option> is required to be at least twice
+	<option>-N</option>.)
        </para>
       </listitem>
      </varlistentry>
@@ -223,12 +223,11 @@ Postgres documentation
       <listitem>
        <para>
 	The command line-style options specified in <replaceable
-	class="parameter">EXTRA-OPTIONS</replaceable> are passed to
+	class="parameter">extra-options</replaceable> are passed to
 	all backend server processes started by this
 	<application>postmaster</application>.  See <xref
-	linkend="app-postgres" endterm="app-postgres-title"> for
-	possibilities.  If the option string contains any spaces, the
-	entire string must be quoted.
+	linkend="app-postgres"> for possibilities.  If the option
+	string contains any spaces, the entire string must be quoted.
        </para>
       </listitem>
      </varlistentry>
@@ -264,7 +263,7 @@ Postgres documentation
         Using this switch discards all logging output, which is
 	probably not what you want, since it makes it very difficult
 	to troubleshoot problems.  See below for a better way to start
-	the postmaster in the background.
+	the <application>postmaster</application> in the background.
        </para>
       </listitem>
      </varlistentry>
@@ -367,14 +366,14 @@ StreamServerPort: cannot bind to port
 	other <application>postmaster</application>
 	process already running on the same port number.  The easiest way to
 	determine this is by using the command
-	<programlisting>
-$ ps -ax | grep postmaster
-	</programlisting>
-on BSD-based systems, or
-	<programlisting>
-$ ps -e | grep postmast
-	</programlisting>
-	for System V-like or POSIX-compliant systems such as HP-UX.
+<screen>
+<prompt>$</prompt> <userinput>ps ax | grep postmaster</userinput>
+</screen>
+        or
+<screen>
+<prompt>$</prompt> <userinput>ps -e | grep postmaster</userinput>
+</screen>
+	depending on your system.
        </para>
 
        <para>
@@ -414,9 +413,9 @@ $ ps -e | grep postmast
   </para>
 
   <para>
-   To terminate the postmaster normally, the signals
-   <literal>SIGTERM</literal>, <literal>SIGINT</literal>, or
-   <literal>SIGQUIT</literal> can be used.  The first will wait for
+   To terminate the <application>postmaster</application> normally,
+   the signals <literal>SIGTERM</literal>, <literal>SIGINT</literal>,
+   or <literal>SIGQUIT</literal> can be used.  The first will wait for
    all clients to terminate before quitting, the second will
    forcefully disconnect all clients, and the third will quit
    immediately without lengthy shutdown, resulting in a recovery run
@@ -425,7 +424,8 @@ $ ps -e | grep postmast
 
   <para>
    The utility command <xref linkend="app-pg-ctl"> can be used to
-   start and shut down the postmaster safely and comfortably.
+   start and shut down the <application>postmaster</application>
+   safely and comfortably.
   </para>
  </refsect1>
 

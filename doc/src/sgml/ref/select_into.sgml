@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/select_into.sgml,v 1.7 2000/12/12 05:07:59 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/select_into.sgml,v 1.8 2000/12/25 23:15:26 petere Exp $
 Postgres documentation
 -->
 
@@ -55,7 +55,7 @@ where <replaceable class="PARAMETER">from_item</replaceable> can be:
    </title>
    <para>
     All input fields are described in detail for
-    <xref linkend="sql-select-title" endterm="sql-select-title">.
+    <xref linkend="sql-select" endterm="sql-select-title">.
    </para>
   </refsect2>
 
@@ -68,7 +68,7 @@ where <replaceable class="PARAMETER">from_item</replaceable> can be:
    </title>
    <para>
     All output fields are described in detail for
-    <xref linkend="sql-select-title" endterm="sql-select-title">.
+    <xref linkend="sql-select" endterm="sql-select-title">.
    </para>
   </refsect2>
  </refsynopsisdiv>
@@ -87,7 +87,7 @@ where <replaceable class="PARAMETER">from_item</replaceable> can be:
 
    <note>
     <para>
-     <xref linkend="sql-createtableas-title" endterm="sql-createtableas-title">
+     <xref linkend="sql-createtableas" endterm="sql-createtableas-title">
      is functionally equivalent to the <command>SELECT INTO</command> command.
     </para>
    </note>

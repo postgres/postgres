@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_function.sgml,v 1.8 2000/05/18 14:24:33 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_function.sgml,v 1.9 2000/12/25 23:15:26 petere Exp $
 Postgres documentation
 -->
 
@@ -116,7 +116,7 @@ NOTICE RemoveFunction: Function "<replaceable class="parameter">name</replaceabl
 
    <para>
     Refer to
-    <xref linkend="sql-createfunction-title" endterm="sql-createfunction-title">
+    <xref linkend="sql-createfunction" endterm="sql-createfunction-title">
     for information on creating aggregate functions.
    </para>
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.4 2000/11/25 17:17:30 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.5 2000/12/25 23:15:26 petere Exp $
 Postgres documentation
 -->
 
@@ -64,9 +64,8 @@ Postgres documentation
   <title>Description</title>
   <para>
    <application>pg_ctl</application> is a utility for starting,
-   stopping, or restarting the <xref linkend="app-postmaster"
-   endterm="app-postmaster-title">, or displaying the status of a
-   running postmaster.
+   stopping, or restarting the <xref linkend="app-postmaster">, or
+   displaying the status of a running postmaster.
   </para>
 
   <refsect2 id="app-pg-ctl-options">

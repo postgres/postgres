@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/move.sgml,v 1.9 2000/05/11 17:32:33 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/move.sgml,v 1.10 2000/12/25 23:15:26 petere Exp $
 Postgres documentation
 -->
 
@@ -44,7 +44,7 @@ MOVE [ <replaceable class="PARAMETER">direction</replaceable> ] [ <replaceable c
   </para>
   <para>
    Refer to 
-   <xref linkend="sql-fetch-title" endterm="sql-fetch-title">
+   <xref linkend="sql-fetch" endterm="sql-fetch-title">
    for details on syntax and usage.
   </para>
 
@@ -63,16 +63,16 @@ MOVE [ <replaceable class="PARAMETER">direction</replaceable> ] [ <replaceable c
 
    <para>
     Refer to
-    <xref linkend="sql-fetch-title" endterm="sql-fetch-title">
+    <xref linkend="sql-fetch" endterm="sql-fetch-title">
     for a description of valid arguments.
     Refer to 
-    <xref linkend="sql-declare-title" endterm="sql-declare-title">
+    <xref linkend="sql-declare" endterm="sql-declare-title">
     to define a cursor.
     Refer to 
-    <xref linkend="sql-begin-title" endterm="sql-begin-title">, 
-    <xref linkend="sql-commit-title" endterm="sql-commit-title">,
+    <xref linkend="sql-begin" endterm="sql-begin-title">, 
+    <xref linkend="sql-commit" endterm="sql-commit-title">,
     and
-    <xref linkend="sql-rollback-title" endterm="sql-rollback-title">
+    <xref linkend="sql-rollback" endterm="sql-rollback-title">
     for further information about transactions.
    </para>
   </refsect2>

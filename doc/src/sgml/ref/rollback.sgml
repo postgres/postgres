@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/rollback.sgml,v 1.7 2000/01/29 16:58:27 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/rollback.sgml,v 1.8 2000/12/25 23:15:26 petere Exp $
 Postgres documentation
 -->
 
@@ -95,9 +95,9 @@ NOTICE:  ROLLBACK: no transaction in progress
     Notes
    </title>
    <para>
-    Use <xref linkend="SQL-COMMIT-TITLE" endterm="SQL-COMMIT-TITLE">
+    Use <xref linkend="SQL-COMMIT" endterm="SQL-COMMIT-TITLE">
     to successfully terminate a transaction.
-    <xref linkend="SQL-ABORT-TITLE" endterm="SQL-ABORT-TITLE"> is a
+    <xref linkend="SQL-ABORT" endterm="SQL-ABORT-TITLE"> is a
     synonym for <command>ROLLBACK</command>.
    </para>
   </refsect2>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pgadmin-ref.sgml,v 1.6 2000/03/27 17:14:43 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pgadmin-ref.sgml,v 1.7 2000/12/25 23:15:26 petere Exp $
 Postgres documentation
 -->
 
@@ -8,6 +8,7 @@ Postgres documentation
   <refentrytitle id="app-pgadmin-title">
    <application>pgadmin</application>
   </refentrytitle>
+  <manvolnum>1</manvolnum>
   <refmiscinfo>Application</refmiscinfo>
  </refmeta>
  <refnamediv>

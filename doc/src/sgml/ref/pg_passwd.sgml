@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pg_passwd.sgml,v 1.4 2000/11/18 19:05:58 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pg_passwd.sgml,v 1.5 2000/12/25 23:15:26 petere Exp $
 Postgres documentation
 -->
 
@@ -49,7 +49,7 @@ Postgres documentation
   </para>
 
   <para>
-   Supply the name of the password file as argument to the pg_passwd
+   Supply the name of the password file as argument to the <application>pg_passwd</application>
    command.  To be of use for client authentication the file needs to
    be location in the server's data directory, and the base name of
    the file needs to be specified in the
@@ -88,7 +88,7 @@ host  unv     133.65.96.250   255.255.255.255 password passwords
 
   <note>
    <para>
-    It is also useful to have entries in password file with an empty
+    It is also useful to have entries in a password file with an empty
     password field.  (This is different from an empty password.)
     These entries cannot be managed by
     <application>pg_passwd</application>, but it is always possible to

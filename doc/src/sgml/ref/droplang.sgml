@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/droplang.sgml,v 1.8 2000/11/22 01:41:13 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/droplang.sgml,v 1.9 2000/12/25 23:15:26 petere Exp $
 Postgres documentation
 -->
 
@@ -132,7 +132,7 @@ Postgres documentation
     Most error messages are self-explanatory. If not, run
     <application>droplang</application> with the <option>--echo</option>
     option and see under the respective <acronym>SQL</acronym> command
-    for details. Check also under <xref linkend="APP-PSQL" endterm="APP-PSQL-title">
+    for details. Check also under <xref linkend="APP-PSQL">
     for more possibilities.
    </para>
   </refsect2>
@@ -166,8 +166,7 @@ Postgres documentation
   </title>
 
   <para>
-   Use <xref linkend="app-createlang" endterm="app-createlang-title">
-   to add a language.
+   Use <xref linkend="app-createlang"> to add a language.
   </para>
  </refsect1>
  

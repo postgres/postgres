@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.20 2000/11/20 20:36:46 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.21 2000/12/25 23:15:26 petere Exp $
 Postgres documentation
 -->
 
@@ -123,7 +123,7 @@ CREATE FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceab
 	or '<replaceable class="parameter">plname</replaceable>',
 	where '<replaceable class="parameter">plname</replaceable>'
 	is the name of a created procedural language. See
-	<xref linkend="sql-createlanguage-title" endterm="sql-createlanguage-title">
+	<xref linkend="sql-createlanguage" endterm="sql-createlanguage-title">
 	for details.
        </para>
       </listitem>

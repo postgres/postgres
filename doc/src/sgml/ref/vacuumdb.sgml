@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuumdb.sgml,v 1.14 2000/11/22 01:41:13 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuumdb.sgml,v 1.15 2000/12/25 23:15:27 petere Exp $
 Postgres documentation
 -->
 
@@ -202,7 +202,7 @@ Postgres documentation
        <para>
         Something went wrong. <application>vacuumdb</application> is only a wrapper
         script. See <xref linkend="SQL-VACUUM" endterm="SQL-VACUUM-title">
-        and <xref linkend="APP-PSQL" endterm="APP-PSQL-title"> for a detailed
+        and <xref linkend="APP-PSQL"> for a detailed
         discussion of error messages and potential problems.
        </para>
       </listitem>
@@ -234,7 +234,7 @@ Postgres documentation
    backend command
    <xref linkend="SQL-VACUUM" endterm="SQL-VACUUM-title"> via
    the <productname>Postgres</productname> interactive terminal
-   <xref linkend="APP-PSQL" endterm="APP-PSQL-title">. There is no effective
+   <xref linkend="APP-PSQL">. There is no effective
    difference between vacuuming databases via this or other methods.
    <application>psql</application> must be found by the script and
    a database server must be running at the targeted host. Also, any default

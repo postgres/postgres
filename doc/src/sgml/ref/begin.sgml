@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/begin.sgml,v 1.12 2000/10/07 14:16:01 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/begin.sgml,v 1.13 2000/12/25 23:15:26 petere Exp $
 Postgres documentation
 -->
 
@@ -105,8 +105,8 @@ NOTICE:  BEGIN: already a transaction in progress
    <command>BEGIN</command> initiates a user transaction in chained mode,
    i.e., all user statements after <command>BEGIN</command> command will
    be executed in a single transaction until an explicit 
-   <xref linkend="sql-commit-title" endterm="sql-commit-title">,
-   <xref linkend="sql-rollback-title" endterm="sql-rollback-title">,
+   <xref linkend="sql-commit" endterm="sql-commit-title">,
+   <xref linkend="sql-rollback" endterm="sql-rollback-title">,
    or execution abort. Statements in chained mode are executed much faster, 
    because transaction start/commit requires significant CPU and disk 
    activity. Execution of multiple statements inside a transaction
@@ -142,15 +142,15 @@ NOTICE:  BEGIN: already a transaction in progress
     Notes
    </title>
    <para>
-    Refer to <xref linkend="sql-lock-title" endterm="sql-lock-title">
+    Refer to <xref linkend="sql-lock" endterm="sql-lock-title">
     for further information
     about locking tables inside a transaction.
    </para>
    
    <para>
-    Use <xref linkend="SQL-COMMIT-TITLE" endterm="SQL-COMMIT-TITLE">
+    Use <xref linkend="SQL-COMMIT" endterm="SQL-COMMIT-TITLE">
     or
-    <xref linkend="SQL-ROLLBACK-TITLE" endterm="SQL-ROLLBACK-TITLE">
+    <xref linkend="SQL-ROLLBACK" endterm="SQL-ROLLBACK-TITLE">
     to terminate a transaction.
    </para>
   </refsect2>

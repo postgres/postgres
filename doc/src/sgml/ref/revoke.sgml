@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/revoke.sgml,v 1.12 2000/10/12 21:23:34 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/revoke.sgml,v 1.13 2000/12/25 23:15:26 petere Exp $
 Postgres documentation
 -->
 
@@ -90,7 +90,7 @@ REVOKE <replaceable class="PARAMETER">privilege</replaceable> [, ...]
 	   <para>
 	    Privilege to define rules on table/view.
 	    (See 
-	    <xref linkend="sql-createrule-title" endterm="sql-createrule-title">).
+	    <xref linkend="sql-createrule" endterm="sql-createrule-title">).
 	   </para>
 	  </listitem>
 	 </varlistentry>
@@ -319,7 +319,7 @@ REVOKE { INSERT | UPDATE | REFERENCES } [, ...] [ ( <replaceable class="paramete
       <listitem>
        <para>
 	Refer to
-	<xref linkend="sql-grant-title" endterm="sql-grant-title">
+	<xref linkend="sql-grant" endterm="sql-grant-title">
 	for details on individual fields.
        </para>
       </listitem>
@@ -338,7 +338,7 @@ REVOKE GRANT OPTION FOR <replaceable class="parameter">privilege</replaceable> [
 	Rescinds authority for a user to grant the specified privilege
 	to others.
 	Refer to
-	<xref linkend="sql-grant-title" endterm="sql-grant-title">
+	<xref linkend="sql-grant" endterm="sql-grant-title">
 	for details on individual fields.
        </para>
       </listitem>

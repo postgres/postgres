@@ -3,6 +3,7 @@
   <refentrytitle id="app-pgrestore-title">
    <application>pg_restore</application>
   </refentrytitle>
+  <manvolnum>1</manvolnum>
   <refmiscinfo>Application</refmiscinfo>
  </refmeta>
  <refnamediv>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table_as.sgml,v 1.3 1999/07/22 15:09:08 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table_as.sgml,v 1.4 2000/12/25 23:15:26 petere Exp $
 Postgres documentation
 -->
 
@@ -95,7 +95,7 @@ CREATE TABLE <replaceable>table</replaceable> [ (<replaceable>column</replaceabl
    <command>CREATE TABLE AS</command> enables a table to be created
    from the contents of an existing table.
    It is functionality equivalent to
-   <xref linkend="sql-selectinto-title" endterm="sql-selectinto-title">,
+   <xref linkend="sql-selectinto" endterm="sql-selectinto-title">,
    but with perhaps a more direct syntax.
   </para>
  </refsect1>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_language.sgml,v 1.8 2000/11/04 21:04:54 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_language.sgml,v 1.9 2000/12/25 23:15:26 petere Exp $
 Postgres documentation
 -->
 
@@ -110,7 +110,7 @@ ERROR: Language "<replaceable class="parameter">name</replaceable>" doesn't exis
    </para>
    <para>
     Refer to
-    <xref linkend="sql-createlanguage-title" endterm="sql-createlanguage-title">
+    <xref linkend="sql-createlanguage" endterm="sql-createlanguage-title">
     for information on how to create procedural languages.
    </para>
 
