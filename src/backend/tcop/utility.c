@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.99 2000/11/05 22:50:21 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.100 2000/11/07 02:17:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,11 +80,14 @@ DropErrorMsg(char* relname, char wrongkind, char rightkind)
 	for (wentry = kindstringarray; wentry->kind != '\0'; wentry++)
 		if (wentry->kind == wrongkind)
 			break;
-	Assert(wentry->kind != '\0');
-	
-	elog(ERROR, "\"%s\" is not %s %s. Use DROP %s to remove %s %s",
-		 relname, rentry->indef_article, rentry->name,
-		 wentry->command, wentry->indef_article, wentry->name);
+	/* wrongkind could be something we don't have in our table... */
+	if (wentry->kind != '\0')
+		elog(ERROR, "\"%s\" is not %s %s. Use DROP %s to remove %s %s",
+			 relname, rentry->indef_article, rentry->name,
+			 wentry->command, wentry->indef_article, wentry->name);
+	else
+		elog(ERROR, "\"%s\" is not %s %s",
+			 relname, rentry->indef_article, rentry->name);
 }
 
 static void
