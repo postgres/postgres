@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.133 1999/10/08 05:27:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.134 1999/10/08 05:36:58 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -858,7 +858,7 @@ usage(char *progname)
 	fprintf(stderr, "\t-S kbytes\tset amount of memory for sorts (in kbytes)\n");
 	fprintf(stderr, "\t-T options\tspecify pg_options\n");
 	fprintf(stderr, "\t-W sec\t\twait N seconds to allow attach from a debugger\n");
-	fprintf(stderr, "\t-d [1|2|3]\tset debug level\n");
+	fprintf(stderr, "\t-d [1-5]\tset debug level\n");
 	fprintf(stderr, "\t-e \t\tturn on European date format\n");
 	fprintf(stderr, "\t-f [s|i|n|m|h]\tforbid use of some plan types\n");
 	fprintf(stderr, "\t-i \t\tdon't execute queries\n");
@@ -1500,7 +1500,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.133 $ $Date: 1999/10/08 05:27:14 $\n");
+		puts("$Revision: 1.134 $ $Date: 1999/10/08 05:36:58 $\n");
 	}
 
 	/*
