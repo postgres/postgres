@@ -1,0 +1,16 @@
+# Generated automatically from Makefile.in by configure.
+SRCDIR= ../../..
+include $(SRCDIR)/Makefile.global
+
+all clean::
+	@echo Nothing to be done.
+
+install::
+	install ecpglib.h $(HEADERDIR)	
+	install ecpgtype.h $(HEADERDIR)	
+	install sqlca.h $(HEADERDIR)	
+
+uninstall::
+	rm -f $(HEADERDIR)/ecpglib.h
+	rm -f $(HEADERDIR)/ecpgtype.h
+	rm -f $(HEADERDIR)/sqlca.h

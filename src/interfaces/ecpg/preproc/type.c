@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <string.h>
-#include <stdlib.h>
 
 #include "type.h"
 
@@ -134,55 +133,59 @@ ECPGdump_a_simple(FILE * o, const char * name, enum ECPGttype typ,
     switch (typ)
     {
     case ECPGt_char:
-	fprintf(o, "ECPGt_char,&%s,0,%d,%s, ", name, arrsiz, 
+	fprintf(o, "\n\tECPGt_char,&%s,0,%d,%s, ", name, arrsiz, 
 		siz == NULL ? "sizeof(char)" : siz);
 	break;
     case ECPGt_unsigned_char:
-	fprintf(o, "ECPGt_unsigned_char,&%s,0,%d,%s, ", name, arrsiz,
+	fprintf(o, "\n\tECPGt_unsigned_char,&%s,0,%d,%s, ", name, arrsiz,
 		siz == NULL ? "sizeof(unsigned char)" : siz);
 	break;
     case ECPGt_short:
-	fprintf(o, "ECPGt_short,&%s,0,%d,%s, ", name, arrsiz,
+	fprintf(o, "\n\tECPGt_short,&%s,0,%d,%s, ", name, arrsiz,
 		siz == NULL ? "sizeof(short)" : siz);
 	break; 
     case ECPGt_unsigned_short:
 	fprintf(o, 
-		"ECPGt_unsigned_short,&%s,0,%d,%s, ", name, arrsiz,
+		"\n\tECPGt_unsigned_short,&%s,0,%d,%s, ", name, arrsiz,
 		siz == NULL ? "sizeof(unsigned short)" : siz);
 	break;
     case ECPGt_int:
-	fprintf(o, "ECPGt_int,&%s,0,%d,%s, ", name, arrsiz,
+	fprintf(o, "\n\tECPGt_int,&%s,0,%d,%s, ", name, arrsiz,
 		siz == NULL ? "sizeof(int)" : siz);
 	break;
     case ECPGt_unsigned_int:
-	fprintf(o, "ECPGt_unsigned_int,&%s,0,%d,%s, ", name, arrsiz,
+	fprintf(o, "\n\tECPGt_unsigned_int,&%s,0,%d,%s, ", name, arrsiz,
 		siz == NULL ? "sizeof(unsigned int)" : siz);
 	break;
     case ECPGt_long:
-	fprintf(o, "ECPGt_long,&%s,0,%d,%s, ", name, arrsiz,
+	fprintf(o, "\n\tECPGt_long,&%s,0,%d,%s, ", name, arrsiz,
 		siz == NULL ? "sizeof(long)" : siz);
 	break;
     case ECPGt_unsigned_long:
-	fprintf(o, "ECPGt_unsigned_int,&%s,0,%d,%s, ", name, arrsiz,
+	fprintf(o, "\n\tECPGt_unsigned_int,&%s,0,%d,%s, ", name, arrsiz,
 		siz == NULL ? "sizeof(unsigned int)" : siz);
 	break;
     case ECPGt_float:
-	fprintf(o, "ECPGt_float,&%s,0,%d,%s, ", name, arrsiz,
+	fprintf(o, "\n\tECPGt_float,&%s,0,%d,%s, ", name, arrsiz,
 		siz == NULL ? "sizeof(float)" : siz);
 	break;
     case ECPGt_double:
-	fprintf(o, "ECPGt_double,&%s,0,%d,%s, ", name, arrsiz,
+	fprintf(o, "\n\tECPGt_double,&%s,0,%d,%s, ", name, arrsiz,
 		siz == NULL ? "sizeof(double)" : siz);
+	break;
+    case ECPGt_bool:
+	fprintf(o, "\n\tECPGt_bool,&%s,0,%d,%s, ", name, arrsiz,
+		siz == NULL ? "sizeof(bool)" : siz);
 	break;
     case ECPGt_varchar:
     case ECPGt_varchar2:
 	if (siz == NULL)
-	    fprintf(o, "ECPGt_varchar,&%s,%d,%d,sizeof(struct varchar_%s), ", 
+	    fprintf(o, "\n\tECPGt_varchar,&%s,%d,%d,sizeof(struct varchar_%s), ", 
 		    name,
 		    varcharsize,
 		    arrsiz, name);
 	else
-	    fprintf(o, "ECPGt_varchar,&%s,%d,%d,%s, ", 
+	    fprintf(o, "\n\tECPGt_varchar,&%s,%d,%d,%s, ", 
 		    name, 
 		    varcharsize,
 		    arrsiz, siz);

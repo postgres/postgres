@@ -17,6 +17,7 @@ ECPGtype_name(enum ECPGttype typ)
     case ECPGt_unsigned_long:	return "unsigned long";
     case ECPGt_float:		return "float";
     case ECPGt_double:		return "double";
+    case ECPGt_bool:		return "bool";
     default:
 	abort();
     }

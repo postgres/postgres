@@ -3,8 +3,11 @@
 #include "type.h"
 #include "y.tab.h"
 
-#define dbg(arg)	fprintf(stderr, "DEBUG: %s\n", #arg);
+extern int debugging;
+
+#define dbg(arg)       if (debugging) fprintf(stderr, "DEBUG, %d: %s\n", yylineno, #arg);
 %}
+%option yylineno
 %s C SQL
 ccomment	\/\*([^*]|\*[^/]|\*\*[^/])*\*\/
 ws	([ \t\n][ \t\n]*|{ccomment})*
@@ -53,7 +56,8 @@ int			{ dbg(S_INT); return S_INT; }
 char			{ dbg(S_CHAR); return S_CHAR; }
 float			{ dbg(S_FLOAT); return S_FLOAT; }
 double			{ dbg(S_DOUBLE); return S_DOUBLE; }
-			  
+bool                   { dbg(S_BOOL); return S_BOOL; }
+
 {string}		{ dbg(SQL_STRING); return SQL_STRING; }
 <SQL>{ws}		; 
 {symbol}		{ dbg(S_SYMBOL); return S_SYMBOL; }
@@ -100,12 +104,12 @@ double			{ dbg(S_DOUBLE); return S_DOUBLE; }
 .			{ dbg(.); return S_ANYTHING; }
 %%
 void
-lex_init()
+lex_init(void)
 {
     BEGIN C;
 }
 
-int yywrap() 
+int yywrap(void) 
 { 
     return 1;
 }

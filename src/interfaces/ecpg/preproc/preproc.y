@@ -8,7 +8,25 @@
 void yyerror(char *);
 extern FILE * yyout;
 extern char * yytext;
+extern int yylineno;
 extern int yyleng;
+
+/*
+ * Variables containing simple states.
+ */
+int    debugging = 0;
+
+/*
+ * Handle the filename and line numbering.
+ */
+char * input_filename = NULL;
+
+void
+output_line_number()
+{
+    if (input_filename)
+       fprintf(yyout, "\n#line %d \"%s\"\n", yylineno, input_filename);
+}
 
 /*
  * Handling of the variables.
@@ -144,7 +162,7 @@ dump_variables(struct arguments * list)
 %token <tagname> S_VARCHAR S_VARCHAR2
 %token <tagname> S_EXTERN S_STATIC
 %token <tagname> S_UNSIGNED S_SIGNED
-%token <tagname> S_LONG S_SHORT S_INT S_CHAR S_FLOAT S_DOUBLE
+%token <tagname> S_LONG S_SHORT S_INT S_CHAR S_FLOAT S_DOUBLE S_BOOL
 %token <tagname> '[' ']' ';' ','
 
 %type <type> type type_detailed varchar_type simple_type array_type
@@ -175,10 +193,12 @@ sqldeclaration : sql_startdeclare
 		 sql_enddeclare;
 
 sql_startdeclare : SQL_START SQL_BEGIN SQL_DECLARE SQL_SECTION SQL_SEMI	{
-    printf("/* exec sql begin declare section */\n"); 
+    fprintf(yyout, "/* exec sql begin declare section */\n"); 
+    output_line_number();
 };
 sql_enddeclare : SQL_START SQL_END SQL_DECLARE SQL_SECTION SQL_SEMI {
-    printf("/* exec sql end declare section */\n"); 
+    fprintf(yyout,"/* exec sql end declare section */\n"); 
+    output_line_number();
 };
 
 variable_declarations : /* empty */
@@ -235,7 +255,8 @@ simple_tag : S_CHAR { $<type_enum>$ = ECPGt_char; }
 	   | S_LONG { $<type_enum>$ = ECPGt_long; }
            | S_UNSIGNED S_LONG { $<type_enum>$ = ECPGt_unsigned_long; }
            | S_FLOAT { $<type_enum>$ = ECPGt_float; }
-           | S_DOUBLE { $<type_enum>$ = ECPGt_double; };
+           | S_DOUBLE { $<type_enum>$ = ECPGt_double; }
+	   | S_BOOL { $<type_enum>$ = ECPGt_bool; };
 
 maybe_storage_clause : S_EXTERN { fwrite(yytext, yyleng, 1, yyout); }
 		       | S_STATIC { fwrite(yytext, yyleng, 1, yyout); }
@@ -248,17 +269,17 @@ index : '[' length ']' {
 length : S_LENGTH { $<indexsize>$ = atoi(yytext); }
 
 sqlinclude : SQL_START SQL_INCLUDE { fprintf(yyout, "#include \""); }
-	filename SQL_SEMI { fprintf(yyout, ".h\""); };
+	filename SQL_SEMI { fprintf(yyout, ".h\""); output_line_number(); };
 
 filename : cthing
 	 | filename cthing;
 
 sqlconnect : SQL_START SQL_CONNECT { fprintf(yyout, "ECPGconnect(\""); }
 	SQL_STRING { fwrite(yytext + 1, yyleng - 2, 1, yyout); }
-	SQL_SEMI { fprintf(yyout, "\");"); };
+	SQL_SEMI { fprintf(yyout, "\");"); output_line_number(); };
 
 /* Open is an open cursor. Removed. */
-sqlopen : SQL_START SQL_OPEN sqlgarbage SQL_SEMI { };
+sqlopen : SQL_START SQL_OPEN sqlgarbage SQL_SEMI { output_line_number(); };
 
 sqlgarbage : /* Empty */
 	   | sqlgarbage sqlanything;
@@ -266,9 +287,11 @@ sqlgarbage : /* Empty */
 
 sqlcommit : SQL_START SQL_COMMIT SQL_SEMI {
     fprintf(yyout, "ECPGcommit(__LINE__);"); 
+    output_line_number();
 };
 sqlrollback : SQL_START SQL_ROLLBACK SQL_SEMI {
     fprintf(yyout, "ECPGrollback(__LINE__);");
+    output_line_number();
 };
 
 sqlstatement : SQL_START { /* Reset stack */
@@ -283,6 +306,7 @@ sqlstatement : SQL_START { /* Reset stack */
     fprintf(yyout, "ECPGt_EOIT, ");
     dump_variables(argsresult);
     fprintf(yyout, "ECPGt_EORT );");
+    output_line_number();
 };
 
 sqlstatement_words : sqlstatement_word

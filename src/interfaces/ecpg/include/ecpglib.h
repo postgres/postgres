@@ -1,6 +1,6 @@
 #include <c.h>
 
-void ECPGdebug(int);
+void ECPGdebug(int, FILE *);
 bool ECPGconnect(const char * dbname);
 bool ECPGdo(int, char *, ...);
 bool ECPGcommit(int);

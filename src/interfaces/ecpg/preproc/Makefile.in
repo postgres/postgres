@@ -1,0 +1,32 @@
+SRCDIR= ../../..
+include $(SRCDIR)/Makefile.global
+
+CC=@CC@
+LEX=@LEX@
+LEXLIB=@LEXLIB@
+YACC=@YACC@
+YFLAGS=@YFLAGS@
+
+CFLAGS=-I../include -O2 -g -Wall
+
+all:: ecpg
+
+clean:
+	rm -f *.o core a.out ecpg preproc.tab.h y.tab.c *~
+
+install: all
+	install -c -m 755 ecpg $(BINDIR)
+
+uninstall:
+	rm -f $(BINDIR)/ecpg
+
+# Rule that really do something.
+ecpg: y.tab.o pgc.o type.o ecpg.o
+	$(CC) -g -O2 -Wall -o ecpg y.tab.o pgc.o type.o ecpg.o -L../lib -lecpg $(LEXLIB)
+
+y.tab.h y.tab.c: preproc.y
+	$(YACC) $(YFLAGS) $<
+
+y.tab.o : y.tab.h ../include/ecpgtype.h
+type.o : ../include/ecpgtype.h
+pgc.o : ../include/ecpgtype.h

@@ -8,10 +8,9 @@
 #include <strings.h>
 
 extern void lex_init(void);
-extern FILE *yyin,
-		   *yyout;
-
-int			yyparse(void);
+extern FILE *yyin, *yyout;
+extern char * input_filename;
+extern int yyparse(void);
 
 static void
 usage(char *progname)
@@ -22,7 +21,8 @@ usage(char *progname)
 int
 main(int argc, char *const argv[])
 {
-	char		c, out_option = 0;
+	char		c,
+				out_option = 0;
 	int			fnr;
 
 	while ((c = getopt(argc, argv, "o:")) != EOF)
@@ -58,7 +58,8 @@ main(int argc, char *const argv[])
 
 		ptr2ext = strrchr(filename, '.');
 		/* no extension or extension not equal .pgc */
-		if (ptr2ext == NULL || strcmp(ptr2ext, ".pgc") != 0) {
+		if (ptr2ext == NULL || strcmp(ptr2ext, ".pgc") != 0)
+		{
 			ptr2ext = filename + strlen(filename);
 			ptr2ext[0] = '.';
 		}
@@ -67,17 +68,18 @@ main(int argc, char *const argv[])
 		ptr2ext[1] = 'c';
 		ptr2ext[2] = '\0';
 
-		if (out_option == 0)		/* calculate the output name */
+		if (out_option == 0)	/* calculate the output name */
 		{
 			yyout = fopen(filename, "w");
-			if (yyout == NULL) {
+			if (yyout == NULL)
+			{
 				perror(filename);
 				free(filename);
 				continue;
 			}
 		}
 
-		yyin = fopen(argv[fnr], "r");
+		yyin = fopen(input_filename = argv[fnr], "r");
 		if (yyin == NULL)
 		{
 			perror(argv[fnr]);
@@ -95,7 +97,7 @@ main(int argc, char *const argv[])
 
 			fclose(yyin);
 			if (out_option == 0)
-				fclose (yyout);
+				fclose(yyout);
 		}
 
 		free(filename);

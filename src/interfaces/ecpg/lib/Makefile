@@ -1,19 +1,21 @@
 # Generated automatically from Makefile.in by configure.
-TOPDIR=/home/meskes/data/computer/databases/postgres/pgsql/src/interfaces/ecpg/../..
-PQ_INCLUDE=-I$(TOPDIR)/include -I$(TOPDIR)/interfaces/libpq
-POSTGRES_LIB=$(POSTGRESTOP)/lib
+SRCDIR= ../../..
+include $(SRCDIR)/Makefile.global
+
+PQ_INCLUDE=-I$(SRCDIR)/include -I$(SRCDIR)/interfaces/libpq
 
 all: lib
 
 lib: libecpg.a
 
-clean::
+clean:
 	rm -f *.o *.a core a.out *~
 
-install:: libecpg.a
-	install -m644 libecpg.a $(POSTGRES_LIB)
+install: libecpg.a
+	install -m 644 libecpg.a $(LIBDIR)
+
 uninstall::
-	rm -f $(POSTGRES_LIB)/libecpg.a
+	rm -f $(LIBDIR)/libecpg.a
 
 # Rules that do something
 libecpg.a : libecpg.a(ecpglib.o) libecpg.a(typename.o)

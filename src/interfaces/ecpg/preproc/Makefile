@@ -1,36 +1,32 @@
 # Generated automatically from Makefile.in by configure.
-POSTGRESTOP=@POSTGRESERVER@
-POSTGRES_BIN=$(POSTGRESTOP)/bin
-POSTGRES_LIB=$(POSTGRESTOP)/lib
+SRCDIR= ../../..
+include $(SRCDIR)/Makefile.global
 
 CC=gcc
 LEX=flex
 LEXLIB=-lfl
-YACC=bison -y
-
+YACC=/usr/bin/bison
+YFLAGS=-y -d
 
 CFLAGS=-I../include -O2 -g -Wall
 
 all:: ecpg
 
-clean::
-	rm -f *.o core a.out ecpg y.tab.h y.tab.c *~
+clean:
+	rm -f *.o core a.out ecpg preproc.tab.h y.tab.c *~
 
-install:: all
-	install -c -d -m755 $(POSTGRES_LIB)/ecpg
-	install -c -m555 preproc $(POSTGRES_LIB)/ecpg
-	install -c -m555 ecpg $(POSTGRES_BIN)
+install: all
+	install -c -m 755 ecpg $(BINDIR)
 
-uninstall::
-	rm -f $(POSTGRES_BIN)/ecpg
-	rm -f $(POSTGRES_LIB)/ecpg/preproc
+uninstall:
+	rm -f $(BINDIR)/ecpg
 
 # Rule that really do something.
 ecpg: y.tab.o pgc.o type.o ecpg.o
 	$(CC) -g -O2 -Wall -o ecpg y.tab.o pgc.o type.o ecpg.o -L../lib -lecpg $(LEXLIB)
 
 y.tab.h y.tab.c: preproc.y
-	$(YACC) -d $<
+	$(YACC) $(YFLAGS) $<
 
 y.tab.o : y.tab.h ../include/ecpgtype.h
 type.o : ../include/ecpgtype.h
