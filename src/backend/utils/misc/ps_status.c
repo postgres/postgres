@@ -5,7 +5,7 @@
  * to contain some useful information. Mechanism differs wildly across
  * platforms.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/ps_status.c,v 1.14 2003/08/04 23:59:39 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/ps_status.c,v 1.15 2003/11/08 19:07:24 tgl Exp $
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  * various details abducted from various places
@@ -57,7 +57,7 @@ extern char **environ;
 #define PS_USE_PSTAT
 #elif defined(HAVE_PS_STRINGS)
 #define PS_USE_PS_STRINGS
-#elif defined(BSD) || defined(__bsdi__) || defined(__hurd__)
+#elif (defined(BSD) || defined(__bsdi__) || defined(__hurd__)) && !defined(__darwin__)
 #define PS_USE_CHANGE_ARGV
 #elif defined(__linux__) || defined(_AIX) || defined(__sgi) || (defined(sun) && !defined(BSD)) || defined(ultrix) || defined(__ksr__) || defined(__osf__) || defined(__QNX__) || defined(__svr4__) || defined(__svr5__) || defined(__darwin__)
 #define PS_USE_CLOBBER_ARGV
@@ -143,7 +143,7 @@ save_ps_display_args(int argc, char *argv[])
 		}
 
 		ps_buffer = argv[0];
-		ps_buffer_size = end_of_area - argv[0] - 1;
+		ps_buffer_size = end_of_area - argv[0];
 
 		/*
 		 * move the environment out of the way
@@ -193,7 +193,13 @@ init_ps_display(const char *username, const char *dbname,
 #endif   /* PS_USE_CHANGE_ARGV */
 
 #ifdef PS_USE_CLOBBER_ARGV
-	save_argv[1] = NULL;
+	{
+		int		i;
+
+		/* make extra argv slots point at end_of_area (a NUL) */
+		for (i = 1; i < save_argc; i++)
+			save_argv[i] = ps_buffer + ps_buffer_size;
+	}
 #endif   /* PS_USE_CLOBBER_ARGV */
 
 	/*
