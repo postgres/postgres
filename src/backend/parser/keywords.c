@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.136 2003/03/20 07:02:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.137 2003/03/27 16:51:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -143,6 +143,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"group", GROUP_P},
 	{"handler", HANDLER},
 	{"having", HAVING},
+	{"hold", HOLD},
 	{"hour", HOUR_P},
 	{"ilike", ILIKE},
 	{"immediate", IMMEDIATE},

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHash.c,v 1.74 2003/01/10 23:54:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHash.c,v 1.75 2003/03/27 16:51:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,7 +64,7 @@ ExecHash(HashState *node)
 		 * buffers are palloc'd in regular executor context.
 		 */
 		for (i = 0; i < nbatch; i++)
-			hashtable->innerBatchFile[i] = BufFileCreateTemp();
+			hashtable->innerBatchFile[i] = BufFileCreateTemp(false);
 	}
 
 	/*

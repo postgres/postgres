@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/move.sgml,v 1.20 2003/03/11 19:40:22 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/move.sgml,v 1.21 2003/03/27 16:51:27 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -64,12 +64,6 @@ MOVE [ <replaceable class="PARAMETER">direction</replaceable> { FROM | IN } ] <r
     Refer to 
     <xref linkend="sql-declare" endterm="sql-declare-title">
     to define a cursor.
-    Refer to 
-    <xref linkend="sql-begin" endterm="sql-begin-title">, 
-    <xref linkend="sql-commit" endterm="sql-commit-title">,
-    and
-    <xref linkend="sql-rollback" endterm="sql-rollback-title">
-    for further information about transactions.
    </para>
   </refsect2>
  </refsect1>
@@ -83,7 +77,7 @@ MOVE [ <replaceable class="PARAMETER">direction</replaceable> { FROM | IN } ] <r
 
 <programlisting>
 BEGIN WORK;
-DECLARE liahona CURSOR  FOR SELECT * FROM films;
+DECLARE liahona CURSOR FOR SELECT * FROM films;
 -- Skip first 5 rows:
 MOVE FORWARD 5 IN liahona;
 <computeroutput>

@@ -1,15 +1,14 @@
 /*-------------------------------------------------------------------------
  *
  * copy.c
- *		COPY command.
- *
+ *		Implements the COPY utility command.
  *
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.189 2003/02/03 21:15:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.190 2003/03/27 16:51:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,6 +49,9 @@
 #define ISOCTAL(c) (((c) >= '0') && ((c) <= '7'))
 #define OCTVALUE(c) ((c) - '0')
 
+/*
+ * Represents the type of data returned by CopyReadAttribute()
+ */
 typedef enum CopyReadResult
 {
 	NORMAL_ATTR,
@@ -1311,7 +1313,7 @@ GetTypeElement(Oid type)
  * *result is set to indicate what terminated the read:
  *		NORMAL_ATTR:	column delimiter
  *		END_OF_LINE:	newline
- *		END_OF_FILE:	EOF indication
+ *		END_OF_FILE:	EOF indicator
  * In all cases, the string read up to the terminator is returned.
  *
  * Note: This function does not care about SQL NULL values -- it

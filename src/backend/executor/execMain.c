@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.204 2003/03/27 14:33:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.205 2003/03/27 16:51:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -217,8 +217,8 @@ ExecutorRun(QueryDesc *queryDesc,
 	estate->es_lastoid = InvalidOid;
 
 	destfunc = DestToFunction(dest);
-	(*destfunc->setup) (destfunc, (int) operation,
-						queryDesc->portalName, queryDesc->tupDesc);
+	(*destfunc->setup) (destfunc, operation, queryDesc->portalName,
+						queryDesc->tupDesc);
 
 	/*
 	 * run plan
@@ -420,15 +420,6 @@ ExecCheckRTEPerms(RangeTblEntry *rte, CmdType operation)
 			aclcheck_error(aclcheck_result, get_rel_name(relOid));
 	}
 }
-
-
-/* ===============================================================
- * ===============================================================
-						 static routines follow
- * ===============================================================
- * ===============================================================
- */
-
 
 static void
 ExecCheckXactReadOnly(Query *parsetree, CmdType operation)

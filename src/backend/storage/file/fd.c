@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.95 2002/09/02 06:11:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.96 2003/03/27 16:51:29 momjian Exp $
  *
  * NOTES:
  *
@@ -112,14 +112,14 @@ int			max_files_per_process = 1000;
 
 #define FileUnknownPos (-1L)
 
+/* these are the assigned bits in fdstate below: */
+#define FD_TEMPORARY		(1 << 0)
+#define FD_TXN_TEMPORARY	(1 << 1)
+
 typedef struct vfd
 {
 	signed short fd;			/* current FD, or VFD_CLOSED if none */
 	unsigned short fdstate;		/* bitflags for VFD's state */
-
-/* these are the assigned bits in fdstate: */
-#define FD_TEMPORARY	(1 << 0)	/* should be unlinked when closed */
-
 	File		nextFree;		/* link to next free VFD, if in freelist */
 	File		lruMoreRecently;	/* doubly linked recency-of-use list */
 	File		lruLessRecently;
@@ -750,9 +750,15 @@ PathNameOpenFile(FileName fileName, int fileFlags, int fileMode)
  * This routine takes care of generating an appropriate tempfile name.
  * There's no need to pass in fileFlags or fileMode either, since only
  * one setting makes any sense for a temp file.
+ *
+ * keepOverTxn: if true, don't close the file at end-of-transaction. In
+ * most cases, you don't want temporary files to outlive the transaction
+ * that created them, so this should be false -- but if you need
+ * "somewhat" temporary storage, this might be useful. In either case,
+ * the file is removed when the File is explicitely closed.
  */
 File
-OpenTemporaryFile(void)
+OpenTemporaryFile(bool keepOverTxn)
 {
 	char		tempfilepath[128];
 	File		file;
@@ -795,8 +801,12 @@ OpenTemporaryFile(void)
 			elog(ERROR, "Failed to create temporary file %s", tempfilepath);
 	}
 
-	/* Mark it for deletion at close or EOXact */
+	/* Mark it for deletion at close */
 	VfdCache[file].fdstate |= FD_TEMPORARY;
+
+	/* Mark it for deletion at EOXact */
+	if (!keepOverTxn)
+		VfdCache[file].fdstate |= FD_TXN_TEMPORARY;
 
 	return file;
 }
@@ -1114,6 +1124,7 @@ AtEOXact_Files(void)
 		for (i = 1; i < SizeVfdCache; i++)
 		{
 			if ((VfdCache[i].fdstate & FD_TEMPORARY) &&
+				(VfdCache[i].fdstate & FD_TXN_TEMPORARY) &&
 				VfdCache[i].fileName != NULL)
 				FileClose(i);
 		}

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMaterial.c,v 1.41 2003/03/09 02:19:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMaterial.c,v 1.42 2003/03/27 16:51:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,8 +62,7 @@ ExecMaterial(MaterialState *node)
 	 */
 	if (tuplestorestate == NULL)
 	{
-		tuplestorestate = tuplestore_begin_heap(true,	/* randomAccess */
-												SortMem);
+		tuplestorestate = tuplestore_begin_heap(true, false, SortMem);
 
 		node->tuplestorestate = (void *) tuplestorestate;
 	}

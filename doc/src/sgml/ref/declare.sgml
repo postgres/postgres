@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/declare.sgml,v 1.20 2003/03/21 17:11:46 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/declare.sgml,v 1.21 2003/03/27 16:51:27 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -21,8 +21,8 @@ PostgreSQL documentation
    <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
-DECLARE <replaceable class="parameter">cursorname</replaceable> [ BINARY ] [ INSENSITIVE ] [ SCROLL ]
-    CURSOR FOR <replaceable class="parameter">query</replaceable>
+DECLARE <replaceable class="parameter">cursorname</replaceable> [ BINARY ] [ INSENSITIVE ] [ [ NO ] SCROLL ]
+    CURSOR [ { WITH | WITHOUT } HOLD ] FOR <replaceable class="parameter">query</replaceable>
     [ FOR { READ ONLY | UPDATE [ OF <replaceable class="parameter">column</replaceable> [, ...] ] ]
   </synopsis>
   <refsect2 id="R2-SQL-DECLARE-1">
@@ -38,7 +38,8 @@ DECLARE <replaceable class="parameter">cursorname</replaceable> [ BINARY ] [ INS
       <term><replaceable class="parameter">cursorname</replaceable></term>
       <listitem>
        <para>
-	The name of the cursor to be used in subsequent FETCH operations.
+	The name of the cursor to be used in subsequent
+	<command>FETCH</command> operations.
        </para>
       </listitem>
      </varlistentry>
@@ -57,8 +58,20 @@ DECLARE <replaceable class="parameter">cursorname</replaceable> [ BINARY ] [ INS
       <listitem>
        <para>
 	<acronym>SQL92</acronym> keyword indicating that data retrieved
-	from the cursor should be unaffected by updates from other processes or cursors.
-	By default, all cursors are insensitive.  This keyword has no effect.
+	from the cursor should be unaffected by updates from other
+	processes or cursors.  By default, all cursors are insensitive.
+	This keyword currently has no effect and is present for
+	compatibility with the SQL standard.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>NO SCROLL</term>
+      <listitem>
+       <para>
+    Specifies that the cursor cannot be used to retrieve rows in a
+    nonsequential fashion (e.g., backward).
        </para>
       </listitem>
      </varlistentry>
@@ -67,8 +80,33 @@ DECLARE <replaceable class="parameter">cursorname</replaceable> [ BINARY ] [ INS
       <term>SCROLL</term>
       <listitem>
        <para>
-	Specifies that the cursor may be used to retrieve rows
-	in a nonsequential fashion (e.g., backwards).
+	Specifies that the cursor may be used to retrieve rows in a
+	nonsequential fashion (e.g., backward). Depending upon the
+	complexity of the query's execution plan, specifying
+	<literal>SCROLL</literal> may impose a slight performance penalty
+	on the query's execution time.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>WITHOUT HOLD</term>
+      <listitem>
+       <para>
+        Specifies that the cursor cannot be used outside of the
+        transaction that created it. If neither <literal>WITHOUT
+        HOLD</literal> nor <literal>WITH HOLD</literal> is specified,
+        <literal>WITH HOLD</literal> is the default.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>WITH HOLD</term>
+      <listitem>
+       <para>
+        Specifies that the cursor may be used after the transaction
+        that creates it successfully commits.
        </para>
       </listitem>
      </varlistentry>
@@ -124,7 +162,8 @@ DECLARE <replaceable class="parameter">cursorname</replaceable> [ BINARY ] [ INS
    </para>
 
    <para>
-    The BINARY, INSENSITIVE, and SCROLL keywords may appear in any order.
+    The <literal>BINARY</literal>, <literal>INSENSITIVE</literal>,
+    <literal>SCROLL</literal> keywords may appear in any order.
    </para>
   </refsect2>
 
@@ -144,7 +183,7 @@ DECLARE CURSOR
        </computeroutput></term>
       <listitem>
        <para>
-	The message returned if the SELECT is run successfully.
+	The message returned if the <command>SELECT</command> is run successfully.
        </para>
       </listitem>
      </varlistentry>
@@ -155,9 +194,8 @@ WARNING:  Closing pre-existing portal "<replaceable class="parameter">cursorname
        </computeroutput></term>
       <listitem>
        <para>
-	This message is reported if the same cursor name was already declared
-	in the current transaction block.  The previous definition is
-	discarded.
+	This message is reported if a cursor with the same name already
+	exists. The previous definition is discarded.
        </para>
       </listitem>
      </varlistentry>
@@ -168,7 +206,9 @@ ERROR:  DECLARE CURSOR may only be used in begin/end transaction blocks
        </computeroutput></term>
       <listitem>
        <para>
-	This error occurs if the cursor is not declared within a transaction block.
+	This error occurs if the cursor is not declared within a
+	transaction block, and <literal>WITH HOLD</literal> is not
+	specified.
        </para>
       </listitem>
      </varlistentry>     
@@ -193,16 +233,14 @@ ERROR:  DECLARE CURSOR may only be used in begin/end transaction blocks
   </para>
 
   <para>
-   Normal cursors return data in text format, the same as a <command>SELECT</>
-   would produce.  Since
-   data is stored natively in binary format, the system must
-   do a conversion to produce the text format. In addition,
-   text formats are often larger in size than the corresponding binary format.
-   Once the information comes back in text form,  the client
-   application may need to convert it to a binary format to
-   manipulate it.
-   BINARY cursors give you back the data in the native binary
-   representation.
+   Normal cursors return data in text format, the same as a
+   <command>SELECT</> would produce.  Since data is stored natively in
+   binary format, the system must do a conversion to produce the text
+   format. In addition, text formats are often larger in size than the
+   corresponding binary format.  Once the information comes back in
+   text form, the client application may need to convert it to a
+   binary format to manipulate it.  BINARY cursors give you back the
+   data in the native binary representation.
   </para>
 
   <para>
@@ -245,7 +283,9 @@ ERROR:  DECLARE CURSOR may only be used in begin/end transaction blocks
    </title>
 
    <para>
-    Cursors are only available within transactions. Use
+    If <literal>WITH HOLD</literal> is not specified, the cursor
+    created by this command can only be used within the current
+    transaction. Use
     <xref linkend="sql-begin" endterm="sql-begin-title">,
     <xref linkend="sql-commit" endterm="sql-commit-title">
     and
@@ -254,12 +294,25 @@ ERROR:  DECLARE CURSOR may only be used in begin/end transaction blocks
    </para>
 
    <para>
-    The <literal>SCROLL</> option should be specified when defining a cursor 
-    that will be used to fetch backwards.  This is required by
-    <acronym>SQL92</acronym>.  However, for compatibility with
-    earlier versions, <productname>PostgreSQL</productname> will allow
-    backward fetches without <literal>SCROLL</>, if the cursor's query plan
-    is simple enough that no extra overhead is needed to support it.
+    If <literal>WITH HOLD</literal> is specified and the transaction
+    that created the cursor successfully commits, the cursor can be
+    accessed outside the creating transaction. If the creating
+    transaction is aborted, the cursor is removed. A cursor created
+    with <literal>WITH HOLD</literal> is closed when an explicit
+    <command>CLOSE</command> command is issued on it, or the client
+    connection is terminated.
+   </para>
+
+   <para>
+    The <literal>SCROLL</> option should be specified when defining a
+    cursor that will be used to fetch backwards.  This is required by
+    <acronym>SQL92</acronym>.  However, for compatibility with earlier
+    versions, <productname>PostgreSQL</productname> will allow
+    backward fetches without <literal>SCROLL</>, if the cursor's query
+    plan is simple enough that no extra overhead is needed to support
+    it. However, application developers are advised not to rely on
+    using backward fetches from a cursor that has not been created
+    with <literal>SCROLL</literal>.
    </para>
 
    <para>
@@ -271,7 +324,7 @@ ERROR:  DECLARE CURSOR may only be used in begin/end transaction blocks
     However, <application>ecpg</application>, the
     embedded SQL preprocessor for <productname>PostgreSQL</productname>,
     supports the <acronym>SQL92</acronym> cursor conventions, including those
-    involving DECLARE and OPEN statements.
+    involving <command>DECLARE</command> and <command>OPEN</command> statements.
    </para>
   </refsect2>
  </refsect1>
@@ -303,13 +356,21 @@ DECLARE liahona CURSOR
     SQL92
    </title>
    <para>
-    <acronym>SQL92</acronym> allows cursors only in embedded <acronym>SQL</acronym>
-    and in modules. <productname>PostgreSQL</productname> permits cursors to be used
-    interactively.
+   <para>
+    <acronym>SQL92</acronym> allows cursors only in embedded
+    <acronym>SQL</acronym> and in modules. <productname>PostgreSQL</>
+    permits cursors to be used interactively.
+   </para>
+
+   <para>
     <acronym>SQL92</acronym> allows embedded or modular cursors to
-    update database information.
-    All <productname>PostgreSQL</productname> cursors are read only.
-    The BINARY keyword is a <productname>PostgreSQL</productname> extension.
+    update database information. All <productname>PostgreSQL</>
+    cursors are read only.
+   </para>
+
+   <para>
+    The <literal>BINARY</literal> keyword is a
+    <productname>PostgreSQL</productname> extension.
    </para>
   </refsect2>
  </refsect1>

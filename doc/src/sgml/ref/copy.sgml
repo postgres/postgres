@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/copy.sgml,v 1.40 2002/09/21 18:32:54 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/copy.sgml,v 1.41 2003/03/27 16:51:27 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -133,9 +133,10 @@ COPY <replaceable class="parameter">table</replaceable> [ ( <replaceable class="
        </para>
        <note>
         <para>
-         On a copy in, any data item that matches this string will be stored as
-         a NULL value, so you should make sure that you use the same string
-         as you used on copy out.
+         On a <command>COPY FROM</command>, any data item that matches
+         this string will be stored as a NULL value, so you should
+         make sure that you use the same string as you used with
+         <command>COPY TO</command>.
         </para>
        </note>
       </listitem>
@@ -210,7 +211,8 @@ ERROR: <replaceable>reason</replaceable>
    or write to a file. The file must be accessible to the backend and
    the name must be specified from the viewpoint of the backend. When
    <filename>stdin</filename> or <filename>stdout</filename> is
-   specified, data flows through the client frontend to the backend.
+   specified, data is transmitted via the connection between the
+   client frontend and the backend.
     
     <tip>
      <para>
@@ -234,8 +236,8 @@ ERROR: <replaceable>reason</replaceable>
     Notes
    </title>
    <para>
-   <command>COPY</command> can only be used with plain tables, not with
-   views.
+    <command>COPY</command> can only be used with plain tables, not
+    with views.
    </para>
 
    <para>

@@ -17,7 +17,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tuplestore.h,v 1.9 2003/03/09 03:34:10 tgl Exp $
+ * $Id: tuplestore.h,v 1.10 2003/03/27 16:51:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,8 @@ typedef struct Tuplestorestate Tuplestorestate;
  */
 
 extern Tuplestorestate *tuplestore_begin_heap(bool randomAccess,
-					  int maxKBytes);
+											  bool interTxn,
+											  int maxKBytes);
 
 extern void tuplestore_puttuple(Tuplestorestate *state, void *tuple);
 

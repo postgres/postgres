@@ -44,7 +44,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dest.h,v 1.32 2002/09/04 20:31:45 momjian Exp $
+ * $Id: dest.h,v 1.33 2003/03/27 16:51:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,7 +70,8 @@ typedef enum
 	Remote,						/* results sent to frontend process */
 	RemoteInternal,				/* results sent to frontend process in
 								 * internal (binary) form */
-	SPI							/* results sent to SPI manager */
+	SPI,						/* results sent to SPI manager */
+	Tuplestore					/* results sent to Tuplestore */
 } CommandDest;
 
 /* ----------------

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.265 2003/03/10 03:53:50 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.266 2003/03/27 16:51:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2293,6 +2293,13 @@ transformDeclareCursorStmt(ParseState *pstate, DeclareCursorStmt *stmt)
 
 	result->commandType = CMD_UTILITY;
 	result->utilityStmt = (Node *) stmt;
+
+	/*
+	 * Don't allow both SCROLL and NO SCROLL to be specified
+	 */
+	if ((stmt->options & CURSOR_OPT_SCROLL) &&
+		(stmt->options & CURSOR_OPT_NO_SCROLL))
+		elog(ERROR, "Both SCROLL and NO SCROLL cannot be specified.");
 
 	stmt->query = (Node *) transformStmt(pstate, stmt->query,
 										 &extras_before, &extras_after);

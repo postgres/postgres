@@ -1,30 +1,30 @@
 --
--- PORTALS
+-- Cursor regression tests
 --
 BEGIN;
-DECLARE foo1 CURSOR FOR SELECT * FROM tenk1;
-DECLARE foo2 CURSOR FOR SELECT * FROM tenk2;
-DECLARE foo3 CURSOR FOR SELECT * FROM tenk1;
-DECLARE foo4 CURSOR FOR SELECT * FROM tenk2;
-DECLARE foo5 CURSOR FOR SELECT * FROM tenk1;
-DECLARE foo6 CURSOR FOR SELECT * FROM tenk2;
-DECLARE foo7 CURSOR FOR SELECT * FROM tenk1;
-DECLARE foo8 CURSOR FOR SELECT * FROM tenk2;
-DECLARE foo9 CURSOR FOR SELECT * FROM tenk1;
-DECLARE foo10 CURSOR FOR SELECT * FROM tenk2;
-DECLARE foo11 CURSOR FOR SELECT * FROM tenk1;
-DECLARE foo12 CURSOR FOR SELECT * FROM tenk2;
-DECLARE foo13 CURSOR FOR SELECT * FROM tenk1;
-DECLARE foo14 CURSOR FOR SELECT * FROM tenk2;
-DECLARE foo15 CURSOR FOR SELECT * FROM tenk1;
-DECLARE foo16 CURSOR FOR SELECT * FROM tenk2;
-DECLARE foo17 CURSOR FOR SELECT * FROM tenk1;
-DECLARE foo18 CURSOR FOR SELECT * FROM tenk2;
-DECLARE foo19 CURSOR FOR SELECT * FROM tenk1;
-DECLARE foo20 CURSOR FOR SELECT * FROM tenk2;
-DECLARE foo21 CURSOR FOR SELECT * FROM tenk1;
-DECLARE foo22 CURSOR FOR SELECT * FROM tenk2;
-DECLARE foo23 CURSOR FOR SELECT * FROM tenk1;
+DECLARE foo1 SCROLL CURSOR FOR SELECT * FROM tenk1;
+DECLARE foo2 SCROLL CURSOR FOR SELECT * FROM tenk2;
+DECLARE foo3 SCROLL CURSOR FOR SELECT * FROM tenk1;
+DECLARE foo4 SCROLL CURSOR FOR SELECT * FROM tenk2;
+DECLARE foo5 SCROLL CURSOR FOR SELECT * FROM tenk1;
+DECLARE foo6 SCROLL CURSOR FOR SELECT * FROM tenk2;
+DECLARE foo7 SCROLL CURSOR FOR SELECT * FROM tenk1;
+DECLARE foo8 SCROLL CURSOR FOR SELECT * FROM tenk2;
+DECLARE foo9 SCROLL CURSOR FOR SELECT * FROM tenk1;
+DECLARE foo10 SCROLL CURSOR FOR SELECT * FROM tenk2;
+DECLARE foo11 SCROLL CURSOR FOR SELECT * FROM tenk1;
+DECLARE foo12 SCROLL CURSOR FOR SELECT * FROM tenk2;
+DECLARE foo13 SCROLL CURSOR FOR SELECT * FROM tenk1;
+DECLARE foo14 SCROLL CURSOR FOR SELECT * FROM tenk2;
+DECLARE foo15 SCROLL CURSOR FOR SELECT * FROM tenk1;
+DECLARE foo16 SCROLL CURSOR FOR SELECT * FROM tenk2;
+DECLARE foo17 SCROLL CURSOR FOR SELECT * FROM tenk1;
+DECLARE foo18 SCROLL CURSOR FOR SELECT * FROM tenk2;
+DECLARE foo19 SCROLL CURSOR FOR SELECT * FROM tenk1;
+DECLARE foo20 SCROLL CURSOR FOR SELECT * FROM tenk2;
+DECLARE foo21 SCROLL CURSOR FOR SELECT * FROM tenk1;
+DECLARE foo22 SCROLL CURSOR FOR SELECT * FROM tenk2;
+DECLARE foo23 SCROLL CURSOR FOR SELECT * FROM tenk1;
 FETCH 1 in foo1;
  unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
 ---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
@@ -675,4 +675,66 @@ CLOSE foo9;
 CLOSE foo10;
 CLOSE foo11;
 CLOSE foo12;
-end;
+-- is there a reason why we don't close the rest of the open cursors?
+END;
+--
+-- NO SCROLL disallows backward fetching
+--
+BEGIN;
+DECLARE foo24 NO SCROLL CURSOR FOR SELECT * FROM tenk1;
+FETCH 1 FROM foo24;
+ unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
+    8800 |       0 |   0 |    0 |   0 |      0 |       0 |      800 |         800 |      3800 |     8800 |   0 |    1 | MAAAAA   | AAAAAA   | AAAAxx
+(1 row)
+
+FETCH BACKWARD 1 FROM foo24; -- should fail
+ERROR:  Cursor can only scan forward
+	Declare it with SCROLL option to enable backward scan
+END;
+--
+-- Cursors outside transaction blocks
+--
+BEGIN;
+DECLARE foo25 SCROLL CURSOR WITH HOLD FOR SELECT * FROM tenk2;
+FETCH FROM foo25;
+ unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
+    8800 |       0 |   0 |    0 |   0 |      0 |       0 |      800 |         800 |      3800 |     8800 |   0 |    1 | MAAAAA   | AAAAAA   | AAAAxx
+(1 row)
+
+FETCH FROM foo25;
+ unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
+    1891 |       1 |   1 |    3 |   1 |     11 |      91 |      891 |        1891 |      1891 |     1891 | 182 |  183 | TUAAAA   | BAAAAA   | HHHHxx
+(1 row)
+
+COMMIT;
+FETCH FROM foo25;
+ unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
+    3420 |       2 |   0 |    0 |   0 |      0 |      20 |      420 |        1420 |      3420 |     3420 |  40 |   41 | OBAAAA   | CAAAAA   | OOOOxx
+(1 row)
+
+FETCH BACKWARD FROM foo25;
+ unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
+    1891 |       1 |   1 |    3 |   1 |     11 |      91 |      891 |        1891 |      1891 |     1891 | 182 |  183 | TUAAAA   | BAAAAA   | HHHHxx
+(1 row)
+
+FETCH ABSOLUTE -1 FROM foo25;
+ unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
+    2968 |    9999 |   0 |    0 |   8 |      8 |      68 |      968 |         968 |      2968 |     2968 | 136 |  137 | EKAAAA   | PUOAAA   | VVVVxx
+(1 row)
+
+CLOSE foo25;
+--
+-- ROLLBACK should close holdable cursors
+--
+BEGIN;
+DECLARE foo26 CURSOR WITH HOLD FOR SELECT * FROM tenk1;
+ROLLBACK;
+-- should fail
+FETCH FROM foo26;
+WARNING:  PerformPortalFetch: portal "foo26" not found

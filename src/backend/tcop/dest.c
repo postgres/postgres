@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.50 2003/01/21 22:06:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.51 2003/03/27 16:51:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,7 @@
 #include "postgres.h"
 
 #include "access/printtup.h"
+#include "executor/tstoreReceiver.h"
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
 
@@ -60,9 +61,11 @@ donothingCleanup(DestReceiver *self)
 static DestReceiver donothingDR = {
 	donothingReceive, donothingSetup, donothingCleanup
 };
+
 static DestReceiver debugtupDR = {
 	debugtup, debugSetup, donothingCleanup
 };
+
 static DestReceiver spi_printtupDR = {
 	spi_printtup, spi_dest_setup, donothingCleanup
 };
@@ -98,6 +101,9 @@ DestToFunction(CommandDest dest)
 		case SPI:
 			return &spi_printtupDR;
 
+		case Tuplestore:
+			return tstoreReceiverCreateDR();
+
 		case None:
 			return &donothingDR;
 	}
@@ -122,6 +128,7 @@ EndCommand(const char *commandTag, CommandDest dest)
 
 		case None:
 		case Debug:
+		case Tuplestore:
 		case SPI:
 			break;
 	}
@@ -183,6 +190,7 @@ NullCommand(CommandDest dest)
 			break;
 
 		case Debug:
+		case Tuplestore:
 		case None:
 		default:
 			break;
@@ -213,6 +221,7 @@ ReadyForQuery(CommandDest dest)
 			break;
 
 		case Debug:
+		case Tuplestore:
 		case None:
 		default:
 			break;

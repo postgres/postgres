@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/fetch.sgml,v 1.27 2003/03/11 19:40:22 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/fetch.sgml,v 1.28 2003/03/27 16:51:27 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -251,8 +251,7 @@ WARNING:  PerformPortalFetch: portal "<replaceable class="PARAMETER">cursor</rep
        </computeroutput></term>
       <listitem>
        <para>
-	If <replaceable class="PARAMETER">cursor</replaceable> is not known.
-	The cursor must have been declared within the current transaction block.
+        There is no cursor with the specified name.
        </para>
       </listitem>
      </varlistentry>
@@ -326,7 +325,9 @@ WARNING:  PerformPortalFetch: portal "<replaceable class="PARAMETER">cursor</rep
     use any variants of <command>FETCH</> other than <command>FETCH NEXT</>
     or <command>FETCH FORWARD</> with a positive count.  For simple queries
     <productname>PostgreSQL</productname> will allow backwards fetch from
-    cursors not declared with SCROLL, but this behavior is best not relied on.
+    cursors not declared with SCROLL, but this behavior is best not
+    relied on. If the cursor is declared with NO SCROLL, no backward
+    fetches are allowed.
    </para>
 
    <para>
@@ -339,16 +340,11 @@ WARNING:  PerformPortalFetch: portal "<replaceable class="PARAMETER">cursor</rep
    </para>
 
    <para>
-    Updating data via a cursor is not supported by 
-    <productname>PostgreSQL</productname>,
-    because mapping cursor updates back to base tables is
-    not generally possible, as is also the case with VIEW updates.
-    Consequently,
-    users must issue explicit UPDATE commands to replace data.
-   </para>
-
-   <para>
-    Cursors may only be used inside transaction blocks.
+    Updating data via a cursor is not supported by
+    <productname>PostgreSQL</productname>, because mapping cursor
+    updates back to base tables is not generally possible, as is also
+    the case with view updates.  Consequently, users must issue
+    explicit <command>UPDATE</command> commands to replace data.
    </para>
 
    <para>
@@ -357,12 +353,6 @@ WARNING:  PerformPortalFetch: portal "<replaceable class="PARAMETER">cursor</rep
     Use
     <xref linkend="sql-move" endterm="sql-move-title">
     to change cursor position without retrieving data.
-    Refer to
-    <xref linkend="sql-begin" endterm="sql-begin-title">,
-    <xref linkend="sql-commit" endterm="sql-commit-title">,
-    and
-    <xref linkend="sql-rollback" endterm="sql-rollback-title">
-    for further information about transactions.
    </para>
   </refsect2>
  </refsect1>
@@ -379,7 +369,7 @@ WARNING:  PerformPortalFetch: portal "<replaceable class="PARAMETER">cursor</rep
 -- Set up and use a cursor:
 
 BEGIN WORK;
-DECLARE liahona CURSOR FOR SELECT * FROM films;
+DECLARE liahona SCROLL CURSOR FOR SELECT * FROM films;
 
 -- Fetch first 5 rows in the cursor liahona:
 FETCH FORWARD 5 IN liahona;
@@ -425,9 +415,10 @@ COMMIT WORK;
    </title>
 
    <para>
-    <acronym>SQL92</acronym> defines FETCH for use in embedded contexts only.
-    Therefore, it describes placing the results into explicit variables using
-    an <literal>INTO</> clause, for example:
+    <acronym>SQL92</acronym> defines <command>FETCH</command> for use
+    in embedded contexts only.  Therefore, it describes placing the
+    results into explicit variables using an <literal>INTO</> clause,
+    for example:
 
     <synopsis>
 FETCH ABSOLUTE <replaceable class="PARAMETER">n</replaceable>
@@ -435,16 +426,18 @@ FETCH ABSOLUTE <replaceable class="PARAMETER">n</replaceable>
     INTO :<replaceable class="PARAMETER">variable</replaceable> [, ...]
     </synopsis>
 
-    <productname>PostgreSQL</productname>'s use of non-embedded cursors
-    is non-standard, and so is its practice of returning the result data
-    as if it were a SELECT result.  Other than this point, FETCH is fully
+    <productname>PostgreSQL</productname>'s use of non-embedded
+    cursors is non-standard, and so is its practice of returning the
+    result data as if it were a <command>SELECT</command> result.
+    Other than this point, <command>FETCH</command> is fully
     upward-compatible with <acronym>SQL92</acronym>.
    </para>
 
    <para>
-    The FETCH forms involving FORWARD and BACKWARD (including the forms
-    FETCH <replaceable class="PARAMETER">count</replaceable> and FETCH ALL,
-    in which FORWARD is implicit) are <productname>PostgreSQL</productname>
+    The <command>FETCH</command> forms involving FORWARD and BACKWARD
+    (including the forms FETCH <replaceable
+    class="PARAMETER">count</replaceable> and FETCH ALL, in which
+    FORWARD is implicit) are <productname>PostgreSQL</productname>
     extensions.
    </para>
 

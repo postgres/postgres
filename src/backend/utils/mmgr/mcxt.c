@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/mcxt.c,v 1.38 2002/12/16 16:22:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/mcxt.c,v 1.39 2003/03/27 16:51:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,7 +36,8 @@
 MemoryContext CurrentMemoryContext = NULL;
 
 /*
- * Standard top-level contexts
+ * Standard top-level contexts. For a description of the purpose of each
+ * of these contexts, refer to src/backend/utils/mmgr/README
  */
 MemoryContext TopMemoryContext = NULL;
 MemoryContext ErrorContext = NULL;

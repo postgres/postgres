@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: portal.h,v 1.39 2003/03/11 19:40:24 tgl Exp $
+ * $Id: portal.h,v 1.40 2003/03/27 16:51:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,17 +18,45 @@
 
 #include "executor/execdesc.h"
 #include "nodes/memnodes.h"
+#include "utils/tuplestore.h"
 
+/*
+ * We support three kinds of scroll behavior:
+ *
+ * (1) Neither NO SCROLL nor SCROLL was specified: to remain backward
+ *     compatible, we allow backward fetches here, unless it would
+ *     impose additional runtime overhead to do so.
+ *
+ * (2) NO SCROLL was specified: don't allow any backward fetches.
+ *
+ * (3) SCROLL was specified: allow all kinds of backward fetches, even
+ *     if we need to take a slight performance hit to do so.
+ *
+ * Case #1 is converted to #2 or #3 by looking at the query itself and
+ * determining if scrollability can be supported without additional
+ * overhead.
+ */
+typedef enum
+{
+	DEFAULT_SCROLL,
+	DISABLE_SCROLL,
+	ENABLE_SCROLL
+} ScrollType;
 
 typedef struct PortalData *Portal;
 
 typedef struct PortalData
 {
 	char	   *name;			/* Portal's name */
-	MemoryContext heap;			/* subsidiary memory */
+	MemoryContext heap;			/* memory for storing short-term data */
 	QueryDesc  *queryDesc;		/* Info about query associated with portal */
 	void		(*cleanup) (Portal);	/* Cleanup routine (optional) */
-	bool		backwardOK;		/* is fetch backwards allowed? */
+	ScrollType	scrollType;		/* Allow backward fetches? */
+	bool		holdOpen;		/* hold open after txn ends? */
+	TransactionId createXact;	/* the xid of the creating txn */
+	Tuplestorestate *holdStore;	/* store for holdable cursors */
+	MemoryContext holdContext;  /* memory for long-term data */
+
 	/*
 	 * atStart, atEnd and portalPos indicate the current cursor position.
 	 * portalPos is zero before the first row, N after fetching N'th row of
@@ -58,11 +86,12 @@ typedef struct PortalData
 
 
 extern void EnablePortalManager(void);
-extern void AtEOXact_portals(void);
+extern void AtEOXact_portals(bool isCommit);
 extern Portal CreatePortal(const char *name);
-extern void PortalDrop(Portal portal);
+extern void PortalDrop(Portal portal, bool persistHoldable);
 extern Portal GetPortalByName(const char *name);
 extern void PortalSetQuery(Portal portal, QueryDesc *queryDesc,
 						   void (*cleanup) (Portal portal));
+extern void PersistHoldablePortal(Portal portal);
 
 #endif   /* PORTAL_H */

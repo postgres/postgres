@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.126 2003/03/09 02:19:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.127 2003/03/27 16:51:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1054,8 +1054,7 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 									   0,
 									   false);
 				}
-				tupstore = tuplestore_begin_heap(true,	/* randomAccess */
-												 SortMem);
+				tupstore = tuplestore_begin_heap(true, false, SortMem);
 				MemoryContextSwitchTo(oldcontext);
 				rsinfo.setResult = tupstore;
 				rsinfo.setDesc = tupdesc;

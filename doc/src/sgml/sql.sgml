@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/sql.sgml,v 1.29 2003/02/19 04:06:28 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/sql.sgml,v 1.30 2003/03/27 16:51:26 momjian Exp $
 -->
 
  <chapter id="sql">
@@ -851,7 +851,7 @@ A &lt; B + 3.
 
     <para>
      The most often used command in <acronym>SQL</acronym> is the
-     SELECT statement,
+     <command>SELECT</command> statement,
      used to retrieve data. The syntax is:
 
      <synopsis>
@@ -881,7 +881,7 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="PARAMETER">expression</replac
      <title>Simple Selects</title>
 
      <para>
-      Here are some simple examples using a SELECT statement:
+      Here are some simple examples using a <command>SELECT</command> statement:
 
       <example>
        <title id="simple-query">Simple Query with Qualification</title>
@@ -905,9 +905,10 @@ SELECT * FROM PART
        </para>
 
        <para>
-	Using <quote>*</quote> in the SELECT statement will deliver all attributes from
-	the table. If we want to retrieve only the attributes PNAME and PRICE
-	from table PART we use the statement:
+	Using <quote>*</quote> in the <command>SELECT</command> statement
+	will deliver all attributes from the table. If we want to retrieve
+	only the attributes PNAME and PRICE from table PART we use the
+	statement:
 
 	<programlisting>
 SELECT PNAME, PRICE 
@@ -924,9 +925,9 @@ SELECT PNAME, PRICE
                       Cam    |   25
 	</programlisting>
 
-	Note that the <acronym>SQL</acronym> SELECT corresponds to the
-	<quote>projection</quote> in relational algebra not to the
-	<quote>selection</quote> (see <xref linkend="rel-alg"
+	Note that the <acronym>SQL</acronym> <command>SELECT</command>
+	corresponds to the <quote>projection</quote> in relational algebra
+	not to the <quote>selection</quote> (see <xref linkend="rel-alg"
 	endterm="rel-alg"> for more details).
        </para>
 
@@ -1252,15 +1253,15 @@ select sname, pname from supplier
      <title id="aggregates-tutorial">Aggregate Operators</title>
 
      <para>
-      <acronym>SQL</acronym> provides aggregate operators
-      (e.g. AVG, COUNT, SUM, MIN, MAX) that
-      take an expression as argument.  The expression is evaluated at
-      each row that satisfies the WHERE clause, and the aggregate operator
-      is calculated over this set of input values.  Normally, an aggregate
-      delivers a single result for a whole SELECT statement.  But if
-      grouping is specified in the query, then a separate calculation is done
-      over the rows of each group, and an aggregate result is delivered per
-      group (see next section).
+      <acronym>SQL</acronym> provides aggregate operators (e.g. AVG,
+      COUNT, SUM, MIN, MAX) that take an expression as argument.  The
+      expression is evaluated at each row that satisfies the WHERE
+      clause, and the aggregate operator is calculated over this set
+      of input values.  Normally, an aggregate delivers a single
+      result for a whole <command>SELECT</command> statement.  But if
+      grouping is specified in the query, then a separate calculation
+      is done over the rows of each group, and an aggregate result is
+      delivered per group (see next section).
 
       <example>
        <title id="aggregates-example">Aggregates</title>
@@ -1413,11 +1414,12 @@ SELECT S.SNO, S.SNAME, COUNT(SE.PNO)
      </para>
 
      <para>
-      Also observe that it makes no sense to ask for an aggregate of an
-      aggregate, e.g., AVG(MAX(sno)), because a SELECT only does one pass
-      of grouping and aggregation.  You can get a result of this kind by
-      using a temporary table or a sub-SELECT in the FROM clause to
-      do the first level of aggregation.
+      Also observe that it makes no sense to ask for an aggregate of
+      an aggregate, e.g., AVG(MAX(sno)), because a
+      <command>SELECT</command> only does one pass of grouping and
+      aggregation.  You can get a result of this kind by using a
+      temporary table or a sub-SELECT in the FROM clause to do the
+      first level of aggregation.
      </para>
     </sect3>
 
@@ -1502,16 +1504,18 @@ SELECT *
        </para>
 
        <para>
-	When we look at the above query we can see
-	the keyword SELECT two times. The first one at the beginning of the
-	query - we will refer to it as outer SELECT - and the one in the WHERE
-	clause which begins a nested query - we will refer to it as inner
-	SELECT. For every tuple of the outer SELECT the inner SELECT has to be
-	evaluated. After every evaluation we know the price of the tuple named
-	'Screw' and we can check if the price of the actual tuple is
-	greater.  (Actually, in this example the inner query need only be
-	evaluated once, since it does not depend on the state of the outer
-	query.)
+	When we look at the above query we can see the keyword
+	<command>SELECT</command> two times. The first one at the
+	beginning of the query - we will refer to it as outer
+	<command>SELECT</command> - and the one in the WHERE clause which
+	begins a nested query - we will refer to it as inner
+	<command>SELECT</command>. For every tuple of the outer
+	<command>SELECT</command> the inner <command>SELECT</command> has
+	to be evaluated. After every evaluation we know the price of the
+	tuple named 'Screw' and we can check if the price of the actual
+	tuple is greater.  (Actually, in this example the inner query need
+	only be evaluated once, since it does not depend on the state of
+	the outer query.)
        </para>
 
        <para>
@@ -1528,11 +1532,13 @@ SELECT *
        </para>
 
        <para>
-	In our example the result will be empty because every supplier sells
-	at least one part. Note that we use S.SNO from the outer SELECT within
-	the WHERE clause of the inner SELECT. Here the subquery must be
-	evaluated afresh for each tuple from the outer query, i.e. the value for
-	S.SNO is always taken from the current tuple of the outer SELECT. 
+	In our example the result will be empty because every supplier
+	sells at least one part. Note that we use S.SNO from the outer
+	<command>SELECT</command> within the WHERE clause of the inner
+	<command>SELECT</command>. Here the subquery must be evaluated
+	afresh for each tuple from the outer query, i.e. the value for
+	S.SNO is always taken from the current tuple of the outer
+	<command>SELECT</command>.
        </para>
       </example>
      </para>
@@ -1670,7 +1676,7 @@ EXCEPT
      <para>
       The most fundamental command for data definition is the
       one that creates a new relation (a new table). The syntax of the
-      CREATE TABLE command is:
+      <command>CREATE TABLE</command> command is:
 
       <synopsis>
 CREATE TABLE <replaceable class="parameter">table_name</replaceable>
@@ -1786,7 +1792,7 @@ CREATE TABLE SELLS
 
      <para>
       To create an index in <acronym>SQL</acronym>
-      the CREATE INDEX command is used. The syntax is:
+      the <command>CREATE INDEX</command> command is used. The syntax is:
 
       <programlisting>
 CREATE INDEX <replaceable class="parameter">index_name</replaceable> 
@@ -1808,10 +1814,11 @@ CREATE INDEX I ON SUPPLIER (SNAME);
      </para>
 
        <para>
-	The created index is maintained automatically, i.e. whenever a new tuple
-	is inserted into the relation SUPPLIER the index I is adapted. Note
-	that the only changes a user can perceive when an index is present
-	are increased speed for SELECT and decreases in speed of updates.
+	The created index is maintained automatically, i.e. whenever a new
+	tuple is inserted into the relation SUPPLIER the index I is
+	adapted. Note that the only changes a user can perceive when an
+	index is present are increased speed for <command>SELECT</command>
+	and decreases in speed of updates.
        </para>
       </example>
      </para>
@@ -1916,7 +1923,7 @@ SELECT * FROM London_Suppliers
 
      <para>
       To destroy a table (including all tuples stored in that table) the
-      DROP TABLE command is used:
+      <command>DROP TABLE</command> command is used:
 
       <programlisting>
 DROP TABLE <replaceable class="parameter">table_name</replaceable>;
@@ -1932,7 +1939,7 @@ DROP TABLE SUPPLIER;
      </para>
 
      <para>
-      The DROP INDEX command is used to destroy an index:
+      The <command>DROP INDEX</command> command is used to destroy an index:
 
       <programlisting>
 DROP INDEX <replaceable class="parameter">index_name</replaceable>;
@@ -1940,7 +1947,8 @@ DROP INDEX <replaceable class="parameter">index_name</replaceable>;
      </para>
 
      <para>
-      Finally to destroy a given view use the command DROP VIEW:
+      Finally to destroy a given view use the command <command>DROP
+      VIEW</command>:
 
       <programlisting>
 DROP VIEW <replaceable class="parameter">view_name</replaceable>;
@@ -1994,7 +2002,7 @@ INSERT INTO SELLS (SNO, PNO)
 
      <para>
       To change one or more attribute values of tuples in a relation the
-      UPDATE command is used. The syntax is:
+      <command>UPDATE</command> command is used. The syntax is:
 
       <programlisting>
 UPDATE <replaceable class="parameter">table_name</replaceable>
@@ -2126,7 +2134,7 @@ DELETE FROM SUPPLIER
      need a mechanism to access every single tuple of the set of tuples
      returned by a SELECT statement. This mechanism can be provided by
      declaring a <firstterm>cursor</firstterm>.
-     After that we can use the FETCH command to
+     After that we can use the <command>FETCH</command> command to
      retrieve a tuple and set the cursor to the next tuple.
     </para>
 

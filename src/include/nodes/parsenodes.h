@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.235 2003/03/20 18:52:48 momjian Exp $
+ * $Id: parsenodes.h,v 1.236 2003/03/27 16:51:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1210,7 +1210,9 @@ typedef struct CommentStmt
  */
 #define CURSOR_OPT_BINARY		0x0001
 #define CURSOR_OPT_SCROLL		0x0002
-#define CURSOR_OPT_INSENSITIVE	0x0004
+#define CURSOR_OPT_NO_SCROLL	0x0004
+#define CURSOR_OPT_INSENSITIVE	0x0008
+#define CURSOR_OPT_HOLD			0x0010
 
 typedef struct DeclareCursorStmt
 {

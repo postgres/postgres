@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.48 2003/01/27 20:51:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.49 2003/03/27 16:51:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -138,7 +138,7 @@ ExecHashJoin(HashJoinState *node)
 		 * buffers are palloc'd in regular executor context.
 		 */
 		for (i = 0; i < hashtable->nbatch; i++)
-			hashtable->outerBatchFile[i] = BufFileCreateTemp();
+			hashtable->outerBatchFile[i] = BufFileCreateTemp(false);
 	}
 	else if (hashtable == NULL)
 		return NULL;

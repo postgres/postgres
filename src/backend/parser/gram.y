@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.408 2003/03/20 18:52:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.409 2003/03/27 16:51:28 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -246,7 +246,7 @@ static void doNegateFloat(Value *v);
 %type <boolean> opt_freeze opt_default opt_recheck
 %type <defelt>	opt_binary opt_oids copy_delimiter
 
-%type <boolean> copy_from
+%type <boolean> copy_from opt_hold
 
 %type <ival>	reindex_type drop_type fetch_count
 				opt_column event comment_type cursor_options
@@ -348,7 +348,7 @@ static void doNegateFloat(Value *v);
 
 	GLOBAL GRANT GROUP_P
 
-	HANDLER HAVING HOUR_P
+	HANDLER HAVING HOLD HOUR_P
 
 	ILIKE IMMEDIATE IMMUTABLE IMPLICIT_P IN_P INCREMENT
 	INDEX INHERITS INITIALLY INNER_P INOUT INPUT
@@ -4230,21 +4230,30 @@ UpdateStmt: UPDATE relation_expr
  *				CURSOR STATEMENTS
  *
  *****************************************************************************/
-DeclareCursorStmt: DECLARE name cursor_options CURSOR FOR SelectStmt
+DeclareCursorStmt: DECLARE name cursor_options CURSOR opt_hold FOR SelectStmt
 				{
 					DeclareCursorStmt *n = makeNode(DeclareCursorStmt);
 					n->portalname = $2;
 					n->options = $3;
-					n->query = $6;
+					n->query = $7;
+
+					if ($5)
+						n->options |= CURSOR_OPT_HOLD;
+
 					$$ = (Node *)n;
 				}
 		;
 
 cursor_options: /*EMPTY*/					{ $$ = 0; }
-			| cursor_options BINARY			{ $$ = $1 | CURSOR_OPT_BINARY; }
+			| cursor_options NO SCROLL		{ $$ = $1 | CURSOR_OPT_NO_SCROLL; }
 			| cursor_options SCROLL			{ $$ = $1 | CURSOR_OPT_SCROLL; }
+			| cursor_options BINARY			{ $$ = $1 | CURSOR_OPT_BINARY; }
 			| cursor_options INSENSITIVE	{ $$ = $1 | CURSOR_OPT_INSENSITIVE; }
 		;
+
+opt_hold: /* EMPTY */						{ $$ = FALSE; }
+			| WITH HOLD						{ $$ = TRUE; }
+			| WITHOUT HOLD					{ $$ = FALSE; }
 
 /*****************************************************************************
  *

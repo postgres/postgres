@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/file/buffile.c,v 1.14 2002/09/05 00:43:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/file/buffile.c,v 1.15 2003/03/27 16:51:29 momjian Exp $
  *
  * NOTES:
  *
@@ -64,6 +64,7 @@ struct BufFile
 	 */
 
 	bool		isTemp;			/* can only add files if this is TRUE */
+	bool		isInterTxn;		/* keep open over transactions? */
 	bool		dirty;			/* does buffer need to be written? */
 
 	/*
@@ -118,7 +119,7 @@ extendBufFile(BufFile *file)
 	File		pfile;
 
 	Assert(file->isTemp);
-	pfile = OpenTemporaryFile();
+	pfile = OpenTemporaryFile(file->isInterTxn);
 	Assert(pfile >= 0);
 
 	file->files = (File *) repalloc(file->files,
@@ -136,16 +137,17 @@ extendBufFile(BufFile *file)
  * written to it).
  */
 BufFile *
-BufFileCreateTemp(void)
+BufFileCreateTemp(bool interTxn)
 {
 	BufFile    *file;
 	File		pfile;
 
-	pfile = OpenTemporaryFile();
+	pfile = OpenTemporaryFile(interTxn);
 	Assert(pfile >= 0);
 
 	file = makeBufFile(pfile);
 	file->isTemp = true;
+	file->isInterTxn = interTxn;
 
 	return file;
 }

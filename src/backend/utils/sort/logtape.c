@@ -64,7 +64,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/logtape.c,v 1.8 2002/06/20 20:29:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/logtape.c,v 1.9 2003/03/27 16:51:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -470,7 +470,7 @@ LogicalTapeSetCreate(int ntapes)
 	Assert(ntapes > 0);
 	lts = (LogicalTapeSet *) palloc(sizeof(LogicalTapeSet) +
 									(ntapes - 1) *sizeof(LogicalTape *));
-	lts->pfile = BufFileCreateTemp();
+	lts->pfile = BufFileCreateTemp(false);
 	lts->nFileBlocks = 0L;
 	lts->freeBlocksLen = 32;	/* reasonable initial guess */
 	lts->freeBlocks = (long *) palloc(lts->freeBlocksLen * sizeof(long));

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.144 2003/03/21 04:33:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.145 2003/03/27 16:51:27 momjian Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -926,7 +926,7 @@ CommitTransaction(void)
 	 * access, and in fact could still cause an error...)
 	 */
 
-	AtEOXact_portals();
+	AtEOXact_portals(true);
 
 	/* handle commit for large objects [ PA, 7/17/98 ] */
 	/* XXX probably this does not belong here */
@@ -1057,7 +1057,7 @@ AbortTransaction(void)
 	 * do abort processing
 	 */
 	DeferredTriggerAbortXact();
-	AtEOXact_portals();
+	AtEOXact_portals(false);
 	lo_commit(false);			/* 'false' means it's abort */
 	AtAbort_Notify();
 	AtEOXact_UpdatePasswordFile(false);

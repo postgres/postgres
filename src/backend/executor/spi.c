@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.88 2003/03/11 19:40:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.89 2003/03/27 16:51:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -866,7 +866,7 @@ SPI_cursor_close(Portal portal)
 	if (!PortalIsValid(portal))
 		elog(ERROR, "invalid portal in SPI cursor operation");
 
-	PortalDrop(portal);
+	PortalDrop(portal, false);
 }
 
 /* =================== private functions =================== */
