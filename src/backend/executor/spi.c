@@ -60,7 +60,7 @@ static int	_SPI_begin_call(bool execmem);
 static int	_SPI_end_call(bool procmem);
 static MemoryContext _SPI_execmem(void);
 static MemoryContext _SPI_procmem(void);
-static bool _SPI_checktuples(bool isRetrieveIntoRelation);
+static bool _SPI_checktuples(void);
 
 #ifdef SPI_EXECUTOR_STATS
 extern int	ShowExecutorStats;
@@ -774,18 +774,15 @@ _SPI_execute_plan(_SPI_plan * plan, Datum * Values, char *Nulls, int tcount)
 static int
 _SPI_pquery(QueryDesc * queryDesc, EState * state, int tcount)
 {
-	Query	   *parseTree;
-	Plan	   *plan;
-	int			operation;
+	Query	   *parseTree = queryDesc->parsetree;
+	Plan	   *plan = queryDesc->plantree;
+	int			operation = queryDesc->operation;
+	CommandDest	dest = queryDesc->dest;
 	TupleDesc	tupdesc;
 	bool		isRetrieveIntoPortal = false;
 	bool		isRetrieveIntoRelation = false;
 	char	   *intoName = NULL;
 	int			res;
-
-	parseTree = queryDesc->parsetree;
-	plan = queryDesc->plantree;
-	operation = queryDesc->operation;
 
 	switch (operation)
 	{
@@ -804,6 +801,7 @@ _SPI_pquery(QueryDesc * queryDesc, EState * state, int tcount)
 			{
 				res = SPI_OK_SELINTO;
 				isRetrieveIntoRelation = true;
+				queryDesc->dest = None;			/* */
 			}
 			break;
 		case CMD_INSERT:
@@ -844,7 +842,7 @@ _SPI_pquery(QueryDesc * queryDesc, EState * state, int tcount)
 	_SPI_current->processed = state->es_processed;
 	if (operation == CMD_SELECT && queryDesc->dest == SPI)
 	{
-		if (_SPI_checktuples(isRetrieveIntoRelation))
+		if (_SPI_checktuples())
 			elog(FATAL, "SPI_select: # of processed tuples check failed");
 	}
 
@@ -858,11 +856,12 @@ _SPI_pquery(QueryDesc * queryDesc, EState * state, int tcount)
 	}
 #endif
 
-	if (queryDesc->dest == SPI)
+	if (dest == SPI)
 	{
 		SPI_processed = _SPI_current->processed;
 		SPI_tuptable = _SPI_current->tuptable;
 	}
+	queryDesc->dest = dest;
 
 	return (res);
 
@@ -898,7 +897,7 @@ _SPI_fetch(FetchStmt * stmt)
 										 * context */
 
 	_SPI_current->processed = state->es_processed;
-	if (_SPI_checktuples(false))
+	if (_SPI_checktuples())
 		elog(FATAL, "SPI_fetch: # of processed tuples check failed");
 
 	SPI_processed = _SPI_current->processed;
@@ -982,7 +981,7 @@ _SPI_end_call(bool procmem)
 }
 
 static bool
-_SPI_checktuples(bool isRetrieveIntoRelation)
+_SPI_checktuples()
 {
 	uint32		processed = _SPI_current->processed;
 	SPITupleTable *tuptable = _SPI_current->tuptable;
@@ -993,15 +992,9 @@ _SPI_checktuples(bool isRetrieveIntoRelation)
 		if (tuptable != NULL)
 			failed = true;
 	}
-	else
-/* some tuples were processed */
+	else	/* some tuples were processed */
 	{
 		if (tuptable == NULL)	/* spi_printtup was not called */
-		{
-			if (!isRetrieveIntoRelation)
-				failed = true;
-		}
-		else if (isRetrieveIntoRelation)
 			failed = true;
 		else if (processed != (tuptable->alloced - tuptable->free))
 			failed = true;
