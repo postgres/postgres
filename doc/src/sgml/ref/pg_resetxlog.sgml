@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_resetxlog.sgml,v 1.8 2003/11/29 19:51:39 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_resetxlog.sgml,v 1.9 2004/12/20 01:42:09 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -22,7 +22,7 @@ PostgreSQL documentation
    <arg> -n </arg>
    <arg> -o <replaceable class="parameter">oid</replaceable> </arg>
    <arg> -x <replaceable class="parameter">xid</replaceable> </arg>
-   <arg> -l <replaceable class="parameter">fileid</replaceable>,<replaceable class="parameter">seg</replaceable> </arg>
+   <arg> -l <replaceable class="parameter">timelineid</replaceable>,<replaceable class="parameter">fileid</replaceable>,<replaceable class="parameter">seg</replaceable> </arg>
    <arg choice="plain"><replaceable>datadir</replaceable></arg>
   </cmdsynopsis>
  </refsynopsisdiv>
@@ -79,17 +79,25 @@ PostgreSQL documentation
    <command>pg_resetxlog</command> is unable to determine appropriate values
    by reading <filename>pg_control</>.  A safe value for the
    next transaction ID may be determined by looking for the numerically largest
-   file name in the directory <filename>pg_clog</> under the data directory, adding one,
+   file name in the directory <filename>pg_clog</> under the data directory,
+   adding one,
    and then multiplying by 1048576.  Note that the file names are in
    hexadecimal.  It is usually easiest to specify the switch value in
    hexadecimal too. For example, if <filename>0011</> is the largest entry
    in <filename>pg_clog</>, <literal>-x 0x1200000</> will work (five trailing
    zeroes provide the proper multiplier).
    The WAL starting address should be
-   larger than any file number currently existing in
-   the directory <filename>pg_xlog</> under the data directory.  The addresses are also in hexadecimal and
-   have two parts.   For example, if <filename>000000FF0000003A</> is the
-   largest entry in <filename>pg_xlog</>, <literal>-l 0xFF,0x3B</> will work.
+   larger than any file name currently existing in
+   the directory <filename>pg_xlog</> under the data directory.
+   These names are also in hexadecimal and have three parts.  The first
+   part is the <quote>timeline ID</> and should usually be kept the same.
+   Do not choose a value larger than 255 (<literal>0xFF</>) for the third
+   part; instead increment the second part and reset the third part to 0.
+   For example, if <filename>00000001000000320000004A</> is the
+   largest entry in <filename>pg_xlog</>, <literal>-l 0x1,0x32,0x4B</> will
+   work; but if the largest entry is
+   <filename>000000010000003A000000FF</>, choose <literal>-l 0x1,0x3B,0x0</>
+   or more.
    There is no comparably easy way to determine a next OID that's beyond
    the largest one in the database, but fortunately it is not critical to
    get the next-OID setting right.

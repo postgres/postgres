@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.26 2004/12/14 01:59:41 neilc Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.27 2004/12/20 01:42:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,10 +77,12 @@ main(int argc, char *argv[])
 	bool		noupdate = false;
 	TransactionId set_xid = 0;
 	Oid			set_oid = 0;
-	uint32		minXlogId = 0,
+	uint32		minXlogTli = 0,
+				minXlogId = 0,
 				minXlogSeg = 0;
 	char	   *endptr;
 	char	   *endptr2;
+	char	   *endptr3;
 	char	   *DataDir;
 	int			fd;
 	char		path[MAXPGPATH];
@@ -147,15 +149,22 @@ main(int argc, char *argv[])
 				break;
 
 			case 'l':
-				minXlogId = strtoul(optarg, &endptr, 0);
+				minXlogTli = strtoul(optarg, &endptr, 0);
 				if (endptr == optarg || *endptr != ',')
 				{
 					fprintf(stderr, _("%s: invalid argument for option -l\n"), progname);
 					fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 					exit(1);
 				}
-				minXlogSeg = strtoul(endptr + 1, &endptr2, 0);
-				if (endptr2 == endptr + 1 || *endptr2 != '\0')
+				minXlogId = strtoul(endptr + 1, &endptr2, 0);
+				if (endptr2 == endptr + 1 || *endptr2 != ',')
+				{
+					fprintf(stderr, _("%s: invalid argument for option -l\n"), progname);
+					fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
+					exit(1);
+				}
+				minXlogSeg = strtoul(endptr2 + 1, &endptr3, 0);
+				if (endptr3 == endptr2 + 1 || *endptr3 != '\0')
 				{
 					fprintf(stderr, _("%s: invalid argument for option -l\n"), progname);
 					fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
@@ -237,6 +246,9 @@ main(int argc, char *argv[])
 
 	if (set_oid != 0)
 		ControlFile.checkPointCopy.nextOid = set_oid;
+
+	if (minXlogTli > ControlFile.checkPointCopy.ThisTimeLineID)
+		ControlFile.checkPointCopy.ThisTimeLineID = minXlogTli;
 
 	if (minXlogId > ControlFile.logId ||
 		(minXlogId == ControlFile.logId &&
@@ -597,8 +609,8 @@ KillExistingXLOG(void)
 	errno = 0;
 	while ((xlde = readdir(xldir)) != NULL)
 	{
-		if (strlen(xlde->d_name) == 16 &&
-			strspn(xlde->d_name, "0123456789ABCDEF") == 16)
+		if (strlen(xlde->d_name) == 24 &&
+			strspn(xlde->d_name, "0123456789ABCDEF") == 24)
 		{
 			snprintf(path, MAXPGPATH, "%s/%s", XLogDir, xlde->d_name);
 			if (unlink(path) < 0)
@@ -739,7 +751,7 @@ usage(void)
 	printf(_("Usage:\n  %s [OPTION]... DATADIR\n\n"), progname);
 	printf(_("Options:\n"));
 	printf(_("  -f              force update to be done\n"));
-	printf(_("  -l FILEID,SEG   force minimum WAL starting location for new transaction log\n"));
+	printf(_("  -l TLI,FILE,SEG force minimum WAL starting location for new transaction log\n"));
 	printf(_("  -n              no update, just show extracted control values (for testing)\n"));
 	printf(_("  -o OID          set next OID\n"));
 	printf(_("  -x XID          set next transaction ID\n"));
