@@ -180,7 +180,6 @@
 
 /* found in src/backend/utils/adt/arrayfuncs.c */
 /* #define LOARRAY */
-#define ESCAPE_PATCH
 #define ARRAY_PATCH
 #define NULL_PATCH
 #define OPENLINK_PATCHES

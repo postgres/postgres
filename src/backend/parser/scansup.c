@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/scansup.c,v 1.3 1996/08/27 07:42:29 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/scansup.c,v 1.4 1996/11/04 04:04:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -137,11 +137,7 @@ scanstr(char *s)
 			}
 		    }
 		default:
-#ifdef ESCAPE_PATCH
                     newStr[j] = s[i];
-#else
-                    elog (WARN, "Bad escape sequence, s[i] = %d", s[i]);
-#endif
 		} /* switch */
 	    } /* s[i] == '\\' */
 	    else
