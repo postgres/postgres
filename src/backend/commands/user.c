@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: user.c,v 1.40 1999/11/30 04:29:56 momjian Exp $
+ * $Id: user.c,v 1.41 1999/12/12 05:57:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,8 +43,13 @@ static void CheckPgUserAclNotNull(void);
  * pg_shadow is the standard way to do that.
  *---------------------------------------------------------------------
  */
-static void
-UpdatePgPwdFile(void)
+
+/* This is the old name. Now uses a lower case name to be able to call this
+   from SQL. */
+#define UpdatePgPwdFile() update_pg_pwd()
+
+void
+update_pg_pwd()
 {
 	char	   *filename,
 			   *tempname;
@@ -71,7 +76,7 @@ UpdatePgPwdFile(void)
 		   false,				/* from */
 		   false,				/* pipe */
 		   tempname,			/* filename */
-		   CRYPT_PWD_FILE_SEPCHAR, /* delim */
+		   CRYPT_PWD_FILE_SEPSTR, /* delim */
 		   0077);				/* fileumask */
 	/*
 	 * And rename the temp file to its final name, deleting the old pg_pwd.

@@ -26,7 +26,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.63 1999/12/09 04:36:57 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.64 1999/12/12 05:57:30 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -411,6 +411,10 @@ fi
 echo
 
 PGSQL_OPT="-o /dev/null -O -F -Q -D$PGDATA"
+
+# Create a trigger so that direct updates to pg_shadow will be written
+# to the flat password file pg_pwd
+echo "CREATE TRIGGER pg_sync_pg_pwd AFTER INSERT OR UPDATE OR DELETE ON pg_shadow FOR EACH ROW EXECUTE PROCEDURE update_pg_pwd()" | postgres $PGSQL_OPT template1 > /dev/null
 
 # Create the initial pg_pwd (flat-file copy of pg_shadow)
 echo "COPY pg_shadow TO '$PGDATA/pg_pwd' USING DELIMITERS '\\t'" | \

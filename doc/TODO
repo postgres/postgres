@@ -204,7 +204,7 @@ MISC
 * Do autocommit so always in a transaction block(?)
 * Show location of syntax error in query [yacc]
 * Redesign the function call interface to handle NULLs better [function]
-* Document/trigger/rule so changes to pg_shadow recreate pg_pwd [pg_shadow]
+* -Document/trigger/rule so changes to pg_shadow recreate pg_pwd [pg_shadow]
 * Missing optimizer selectivities for date, r-tree, etc. [optimizer]
 * -Overhaul mdmgr/smgr to fix double unlinking and double opens, cleanup
 * Overhaul bufmgr/lockmgr/transaction manager
