@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-secure.c,v 1.11 2002/09/04 20:31:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-secure.c,v 1.12 2002/09/05 18:27:13 petere Exp $
  *
  * NOTES
  *	  The client *requires* a valid server certificate.  Since
@@ -364,7 +364,7 @@ verify_cb(int ok, X509_STORE_CTX *ctx)
 
 /*
  *	Verify that common name resolves to peer.
- *	This function is not thread-safe due to gethostbyname2().
+ *	This function is not thread-safe due to gethostbyname().
  */
 static int
 verify_peer(PGconn *conn)
@@ -391,7 +391,7 @@ verify_peer(PGconn *conn)
 		return 0;
 
 	/* what do we know about the peer's common name? */
-	if ((h = gethostbyname2(conn->peer_cn, addr.sa_family)) == NULL)
+	if ((h = gethostbyname(conn->peer_cn)) == NULL)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
 		libpq_gettext("error getting information about host (%s): %s\n"),
