@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.93 2002/11/30 05:21:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.94 2002/12/12 15:49:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1220,63 +1220,48 @@ cost_qual_eval_walker(Node *node, Cost *total)
 	 * Should we try to account for the possibility of short-circuit
 	 * evaluation of AND/OR?
 	 */
-	if (IsA(node, Expr))
+	if (IsA(node, FuncExpr) ||
+		IsA(node, OpExpr) ||
+		IsA(node, DistinctExpr))
+		*total += cpu_operator_cost;
+	else if (IsA(node, SubPlanExpr))
 	{
-		Expr	   *expr = (Expr *) node;
+		/*
+		 * A subplan node in an expression indicates that the
+		 * subplan will be executed on each evaluation, so charge
+		 * accordingly. (We assume that sub-selects that can be
+		 * executed as InitPlans have already been removed from
+		 * the expression.)
+		 *
+		 * NOTE: this logic should agree with the estimates used by
+		 * make_subplan() in plan/subselect.c.
+		 */
+		SubPlanExpr *subplan = (SubPlanExpr *) node;
+		Plan	   *plan = subplan->plan;
+		Cost		subcost;
 
-		switch (expr->opType)
+		if (subplan->sublink->subLinkType == EXISTS_SUBLINK)
 		{
-			case OP_EXPR:
-			case DISTINCT_EXPR:
-			case FUNC_EXPR:
-				*total += cpu_operator_cost;
-				break;
-			case OR_EXPR:
-			case AND_EXPR:
-			case NOT_EXPR:
-				break;
-			case SUBPLAN_EXPR:
-
-				/*
-				 * A subplan node in an expression indicates that the
-				 * subplan will be executed on each evaluation, so charge
-				 * accordingly. (We assume that sub-selects that can be
-				 * executed as InitPlans have already been removed from
-				 * the expression.)
-				 *
-				 * NOTE: this logic should agree with the estimates used by
-				 * make_subplan() in plan/subselect.c.
-				 */
-				{
-					SubPlan    *subplan = (SubPlan *) expr->oper;
-					Plan	   *plan = subplan->plan;
-					Cost		subcost;
-
-					if (subplan->sublink->subLinkType == EXISTS_SUBLINK)
-					{
-						/* we only need to fetch 1 tuple */
-						subcost = plan->startup_cost +
-							(plan->total_cost - plan->startup_cost) / plan->plan_rows;
-					}
-					else if (subplan->sublink->subLinkType == ALL_SUBLINK ||
-							 subplan->sublink->subLinkType == ANY_SUBLINK)
-					{
-						/* assume we need 50% of the tuples */
-						subcost = plan->startup_cost +
-							0.50 * (plan->total_cost - plan->startup_cost);
-						/* XXX what if subplan has been materialized? */
-					}
-					else
-					{
-						/* assume we need all tuples */
-						subcost = plan->total_cost;
-					}
-					*total += subcost;
-				}
-				break;
+			/* we only need to fetch 1 tuple */
+			subcost = plan->startup_cost +
+				(plan->total_cost - plan->startup_cost) / plan->plan_rows;
 		}
-		/* fall through to examine args of Expr node */
+		else if (subplan->sublink->subLinkType == ALL_SUBLINK ||
+				 subplan->sublink->subLinkType == ANY_SUBLINK)
+		{
+			/* assume we need 50% of the tuples */
+			subcost = plan->startup_cost +
+				0.50 * (plan->total_cost - plan->startup_cost);
+			/* XXX what if subplan has been materialized? */
+		}
+		else
+		{
+			/* assume we need all tuples */
+			subcost = plan->total_cost;
+		}
+		*total += subcost;
 	}
+
 	return expression_tree_walker(node, cost_qual_eval_walker,
 								  (void *) total);
 }

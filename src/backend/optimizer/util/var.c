@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.40 2002/09/11 14:48:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.41 2002/12/12 15:49:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,7 +65,7 @@ static Node *flatten_join_alias_vars_mutator(Node *node,
  * NOTE: this is used on not-yet-planned expressions.  It may therefore find
  * bare SubLinks, and if so it needs to recurse into them to look for uplevel
  * references to the desired rtable level!	But when we find a completed
- * SubPlan, we only need to look at the parameters passed to the subplan.
+ * SubPlanExpr, we only need to look at the parameters passed to the subplan.
  */
 List *
 pull_varnos(Node *node)
@@ -111,12 +111,12 @@ pull_varnos_walker(Node *node, pull_varnos_context *context)
 		 * executed by the outer query.  But short-circuit recursion into
 		 * the subquery itself, which would be a waste of effort.
 		 */
-		Expr	   *expr = (Expr *) node;
+		SubPlanExpr *subplan = (SubPlanExpr *) node;
 
-		if (pull_varnos_walker((Node *) ((SubPlan *) expr->oper)->sublink->oper,
+		if (pull_varnos_walker((Node *) subplan->sublink->oper,
 							   context))
 			return true;
-		if (pull_varnos_walker((Node *) expr->args,
+		if (pull_varnos_walker((Node *) subplan->args,
 							   context))
 			return true;
 		return false;
@@ -146,7 +146,7 @@ pull_varnos_walker(Node *node, pull_varnos_context *context)
  * NOTE: this is used on not-yet-planned expressions.  It may therefore find
  * bare SubLinks, and if so it needs to recurse into them to look for uplevel
  * references to the desired rtable entry!	But when we find a completed
- * SubPlan, we only need to look at the parameters passed to the subplan.
+ * SubPlanExpr, we only need to look at the parameters passed to the subplan.
  */
 bool
 contain_var_reference(Node *node, int varno, int varattno, int levelsup)
@@ -194,12 +194,12 @@ contain_var_reference_walker(Node *node,
 		 * executed by the outer query.  But short-circuit recursion into
 		 * the subquery itself, which would be a waste of effort.
 		 */
-		Expr	   *expr = (Expr *) node;
+		SubPlanExpr *subplan = (SubPlanExpr *) node;
 
-		if (contain_var_reference_walker((Node *) ((SubPlan *) expr->oper)->sublink->oper,
+		if (contain_var_reference_walker((Node *) subplan->sublink->oper,
 										 context))
 			return true;
-		if (contain_var_reference_walker((Node *) expr->args,
+		if (contain_var_reference_walker((Node *) subplan->args,
 										 context))
 			return true;
 		return false;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execJunk.c,v 1.32 2002/09/04 20:31:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execJunk.c,v 1.33 2002/12/12 15:49:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,7 +77,7 @@ ExecInitJunkFilter(List *targetList, TupleDesc tupType,
 	bool		resjunk;
 	AttrNumber	cleanResno;
 	AttrNumber *cleanMap;
-	Node	   *expr;
+	Expr	   *expr;
 
 	/*
 	 * Make a memory context that will hold the JunkFilter as well as all
@@ -104,65 +104,23 @@ ExecInitJunkFilter(List *targetList, TupleDesc tupType,
 	{
 		TargetEntry *rtarget = lfirst(t);
 
-		if (rtarget->resdom != NULL)
+		resdom = rtarget->resdom;
+		expr = rtarget->expr;
+		resjunk = resdom->resjunk;
+		if (!resjunk)
 		{
-			resdom = rtarget->resdom;
-			expr = rtarget->expr;
-			resjunk = resdom->resjunk;
-			if (!resjunk)
-			{
-				/*
-				 * make a copy of the resdom node, changing its resno.
-				 */
-				cleanResdom = (Resdom *) copyObject(resdom);
-				cleanResdom->resno = cleanResno;
-				cleanResno++;
-
-				/*
-				 * create a new target list entry
-				 */
-				tle = makeTargetEntry(cleanResdom, expr);
-				cleanTargetList = lappend(cleanTargetList, tle);
-			}
-		}
-		else
-		{
-#ifdef SETS_FIXED
-			List	   *fjListP;
-			Fjoin	   *cleanFjoin;
-			List	   *cleanFjList;
-			List	   *fjList = lfirst(t);
-			Fjoin	   *fjNode = (Fjoin *) tl_node(fjList);
-
-			cleanFjoin = (Fjoin) copyObject((Node) fjNode);
-			cleanFjList = makeList1(cleanFjoin);
-
-			resdom = (Resdom) lfirst(get_fj_innerNode(fjNode));
-			expr = lsecond(get_fj_innerNode(fjNode));
-			cleanResdom = (Resdom) copyObject((Node) resdom);
-			set_resno(cleanResdom, cleanResno);
+			/*
+			 * make a copy of the resdom node, changing its resno.
+			 */
+			cleanResdom = (Resdom *) copyObject(resdom);
+			cleanResdom->resno = cleanResno;
 			cleanResno++;
-			tle = (List) makeTargetEntry(cleanResdom, (Node *) expr);
-			set_fj_innerNode(cleanFjoin, tle);
 
-			foreach(fjListP, lnext(fjList))
-			{
-				TargetEntry *tle = lfirst(fjListP);
-
-				resdom = tle->resdom;
-				expr = tle->expr;
-				cleanResdom = (Resdom *) copyObject((Node) resdom);
-				cleanResno++;
-				cleanResdom->Resno = cleanResno;
-
-				/*
-				 * create a new target list entry
-				 */
-				tle = (List) makeTargetEntry(cleanResdom, (Node *) expr);
-				cleanFjList = lappend(cleanFjList, tle);
-			}
-			lappend(cleanTargetList, cleanFjList);
-#endif
+			/*
+			 * create a new target list entry
+			 */
+			tle = makeTargetEntry(cleanResdom, expr);
+			cleanTargetList = lappend(cleanTargetList, tle);
 		}
 	}
 
@@ -192,41 +150,12 @@ ExecInitJunkFilter(List *targetList, TupleDesc tupType,
 		{
 			TargetEntry *tle = lfirst(t);
 
-			if (tle->resdom != NULL)
+			resdom = tle->resdom;
+			resjunk = resdom->resjunk;
+			if (!resjunk)
 			{
-				resdom = tle->resdom;
-				expr = tle->expr;
-				resjunk = resdom->resjunk;
-				if (!resjunk)
-				{
-					cleanMap[cleanResno - 1] = resdom->resno;
-					cleanResno++;
-				}
-			}
-			else
-			{
-#ifdef SETS_FIXED
-				List		fjListP;
-				List		fjList = lfirst(t);
-				Fjoin		fjNode = (Fjoin) lfirst(fjList);
-
-				/* what the hell is this????? */
-				resdom = (Resdom) lfirst(get_fj_innerNode(fjNode));
-#endif
-
-				cleanMap[cleanResno - 1] = tle->resdom->resno;
+				cleanMap[cleanResno - 1] = resdom->resno;
 				cleanResno++;
-
-#ifdef SETS_FIXED
-				foreach(fjListP, lnext(fjList))
-				{
-					TargetEntry *tle = lfirst(fjListP);
-
-					resdom = tle->resdom;
-					cleanMap[cleanResno - 1] = resdom->resno;
-					cleanResno++;
-				}
-#endif
 			}
 		}
 	}

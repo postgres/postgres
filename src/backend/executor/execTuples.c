@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.61 2002/12/05 15:50:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.62 2002/12/12 15:49:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -576,93 +576,15 @@ ExecTypeFromTL(List *targetList, bool hasoid)
 	foreach(tlitem, targetList)
 	{
 		TargetEntry *tle = lfirst(tlitem);
-		Resdom	   *resdom;
-		Oid			restype;
+		Resdom	   *resdom = tle->resdom;
 
-		if (tle->resdom != NULL)
-		{
-			resdom = tle->resdom;
-			restype = resdom->restype;
-
-			TupleDescInitEntry(typeInfo,
-							   resdom->resno,
-							   resdom->resname,
-							   restype,
-							   resdom->restypmod,
-							   0,
-							   false);
-
-#ifdef NOT_USED
-			ExecSetTypeInfo(resdom->resno - 1,
-							typeInfo,
-							(Oid) restype,
-							resdom->resno,
-							resdom->reslen,
-							NameStr(*resdom->resname),
-							get_typbyval(restype),
-							get_typalign(restype));
-#endif
-		}
-		else
-		{
-			/* XXX this branch looks fairly broken ... tgl 12/2000 */
-			Resdom	   *fjRes;
-			List	   *fjTlistP;
-			List	   *fjList = lfirst(tlitem);
-
-#ifdef SETS_FIXED
-			TargetEntry *tle;
-			Fjoin	   *fjNode = ((TargetEntry *) lfirst(fjList))->fjoin;
-
-			tle = fjNode->fj_innerNode; /* ??? */
-#endif
-			fjRes = tle->resdom;
-			restype = fjRes->restype;
-
-			TupleDescInitEntry(typeInfo,
-							   fjRes->resno,
-							   fjRes->resname,
-							   restype,
-							   fjRes->restypmod,
-							   0,
-							   false);
-#ifdef NOT_USED
-			ExecSetTypeInfo(fjRes->resno - 1,
-							typeInfo,
-							(Oid) restype,
-							fjRes->resno,
-							fjRes->reslen,
-							(char *) fjRes->resname,
-							get_typbyval(restype),
-							get_typalign(restype));
-#endif
-
-			foreach(fjTlistP, lnext(fjList))
-			{
-				TargetEntry *fjTle = lfirst(fjTlistP);
-
-				fjRes = fjTle->resdom;
-
-				TupleDescInitEntry(typeInfo,
-								   fjRes->resno,
-								   fjRes->resname,
-								   restype,
-								   fjRes->restypmod,
-								   0,
-								   false);
-
-#ifdef NOT_USED
-				ExecSetTypeInfo(fjRes->resno - 1,
-								typeInfo,
-								(Oid) fjRes->restype,
-								fjRes->resno,
-								fjRes->reslen,
-								(char *) fjRes->resname,
-								get_typbyval(fjRes->restype),
-								get_typalign(fjRes->restype));
-#endif
-			}
-		}
+		TupleDescInitEntry(typeInfo,
+						   resdom->resno,
+						   resdom->resname,
+						   resdom->restype,
+						   resdom->restypmod,
+						   0,
+						   false);
 	}
 
 	return typeInfo;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.116 2002/12/06 05:00:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.117 2002/12/12 15:49:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,17 +53,20 @@ static Datum ExecEvalAggref(Aggref *aggref, ExprContext *econtext,
 static Datum ExecEvalArrayRef(ArrayRef *arrayRef, ExprContext *econtext,
 				 bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalVar(Var *variable, ExprContext *econtext, bool *isNull);
-static Datum ExecEvalOper(Expr *opClause, ExprContext *econtext,
+static Datum ExecEvalOper(OpExpr *op, ExprContext *econtext,
 			 bool *isNull, ExprDoneCond *isDone);
-static Datum ExecEvalDistinct(Expr *opClause, ExprContext *econtext,
+static Datum ExecEvalDistinct(DistinctExpr *op, ExprContext *econtext,
 				 bool *isNull, ExprDoneCond *isDone);
-static Datum ExecEvalFunc(Expr *funcClause, ExprContext *econtext,
+static Datum ExecEvalFunc(FuncExpr *func, ExprContext *econtext,
 			 bool *isNull, ExprDoneCond *isDone);
 static ExprDoneCond ExecEvalFuncArgs(FunctionCallInfo fcinfo,
 				 List *argList, ExprContext *econtext);
-static Datum ExecEvalNot(Expr *notclause, ExprContext *econtext, bool *isNull);
-static Datum ExecEvalAnd(Expr *andExpr, ExprContext *econtext, bool *isNull);
-static Datum ExecEvalOr(Expr *orExpr, ExprContext *econtext, bool *isNull);
+static Datum ExecEvalNot(BoolExpr *notclause, ExprContext *econtext,
+						 bool *isNull);
+static Datum ExecEvalOr(BoolExpr *orExpr, ExprContext *econtext,
+						bool *isNull);
+static Datum ExecEvalAnd(BoolExpr *andExpr, ExprContext *econtext,
+						 bool *isNull);
 static Datum ExecEvalCase(CaseExpr *caseExpr, ExprContext *econtext,
 			 bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalNullTest(NullTest *ntest, ExprContext *econtext,
@@ -122,7 +125,7 @@ ExecEvalArrayRef(ArrayRef *arrayRef,
 	if (arrayRef->refexpr != NULL)
 	{
 		array_source = (ArrayType *)
-			DatumGetPointer(ExecEvalExpr(arrayRef->refexpr,
+			DatumGetPointer(ExecEvalExpr((Node *) arrayRef->refexpr,
 										 econtext,
 										 isNull,
 										 isDone));
@@ -203,7 +206,7 @@ ExecEvalArrayRef(ArrayRef *arrayRef,
 
 	if (isAssignment)
 	{
-		Datum		sourceData = ExecEvalExpr(arrayRef->refassgnexpr,
+		Datum		sourceData = ExecEvalExpr((Node *) arrayRef->refassgnexpr,
 											  econtext,
 											  isNull,
 											  NULL);
@@ -839,7 +842,7 @@ ExecMakeTableFunctionResult(Node *funcexpr,
 	bool		returnsTuple = false;
 
 	/*
-	 * Normally the passed expression tree will be a FUNC_EXPR, since the
+	 * Normally the passed expression tree will be a FuncExpr, since the
 	 * grammar only allows a function call at the top level of a table
 	 * function reference.  However, if the function doesn't return set then
 	 * the planner might have replaced the function call via constant-folding
@@ -848,11 +851,9 @@ ExecMakeTableFunctionResult(Node *funcexpr,
 	 * we don't get a chance to pass a special ReturnSetInfo to any functions
 	 * buried in the expression.
 	 */
-	if (funcexpr &&
-		IsA(funcexpr, Expr) &&
-		((Expr *) funcexpr)->opType == FUNC_EXPR)
+	if (funcexpr && IsA(funcexpr, FuncExpr))
 	{
-		Func	   *func;
+		FuncExpr   *func = (FuncExpr *) funcexpr;
 		List	   *argList;
 		FunctionCachePtr fcache;
 		ExprDoneCond argDone;
@@ -862,13 +863,12 @@ ExecMakeTableFunctionResult(Node *funcexpr,
 		 */
 		direct_function_call = true;
 
-		funcrettype = ((Expr *) funcexpr)->typeOid;
-		func = (Func *) ((Expr *) funcexpr)->oper;
-		argList = ((Expr *) funcexpr)->args;
+		funcrettype = func->funcresulttype;
+		argList = func->args;
 
 		/*
-		 * get the fcache from the Func node. If it is NULL, then initialize
-		 * it
+		 * get the fcache from the FuncExpr node. If it is NULL, then
+		 * initialize it
 		 */
 		fcache = func->func_fcache;
 		if (fcache == NULL)
@@ -1102,12 +1102,11 @@ ExecMakeTableFunctionResult(Node *funcexpr,
  * ----------------------------------------------------------------
  */
 static Datum
-ExecEvalOper(Expr *opClause,
+ExecEvalOper(OpExpr *op,
 			 ExprContext *econtext,
 			 bool *isNull,
 			 ExprDoneCond *isDone)
 {
-	Oper	   *op;
 	List	   *argList;
 	FunctionCachePtr fcache;
 
@@ -1117,17 +1116,16 @@ ExecEvalOper(Expr *opClause,
 	 * arguments and returns the result of calling the function on the
 	 * evaluated arguments.
 	 */
-	op = (Oper *) opClause->oper;
-	argList = opClause->args;
+	argList = op->args;
 
 	/*
-	 * get the fcache from the Oper node. If it is NULL, then initialize
+	 * get the fcache from the OpExpr node. If it is NULL, then initialize
 	 * it
 	 */
 	fcache = op->op_fcache;
 	if (fcache == NULL)
 	{
-		fcache = init_fcache(op->opid, length(argList),
+		fcache = init_fcache(op->opfuncid, length(argList),
 							 econtext->ecxt_per_query_memory);
 		op->op_fcache = fcache;
 	}
@@ -1142,12 +1140,11 @@ ExecEvalOper(Expr *opClause,
  */
 
 static Datum
-ExecEvalFunc(Expr *funcClause,
+ExecEvalFunc(FuncExpr *func,
 			 ExprContext *econtext,
 			 bool *isNull,
 			 ExprDoneCond *isDone)
 {
-	Func	   *func;
 	List	   *argList;
 	FunctionCachePtr fcache;
 
@@ -1159,11 +1156,10 @@ ExecEvalFunc(Expr *funcClause,
 	 *
 	 * this is nearly identical to the ExecEvalOper code.
 	 */
-	func = (Func *) funcClause->oper;
-	argList = funcClause->args;
+	argList = func->args;
 
 	/*
-	 * get the fcache from the Func node. If it is NULL, then initialize
+	 * get the fcache from the FuncExpr node. If it is NULL, then initialize
 	 * it
 	 */
 	fcache = func->func_fcache;
@@ -1190,7 +1186,7 @@ ExecEvalFunc(Expr *funcClause,
  * ----------------------------------------------------------------
  */
 static Datum
-ExecEvalDistinct(Expr *opClause,
+ExecEvalDistinct(DistinctExpr *op,
 				 ExprContext *econtext,
 				 bool *isNull,
 				 ExprDoneCond *isDone)
@@ -1199,23 +1195,21 @@ ExecEvalDistinct(Expr *opClause,
 	FunctionCachePtr fcache;
 	FunctionCallInfoData fcinfo;
 	ExprDoneCond argDone;
-	Oper	   *op;
 	List	   *argList;
 
 	/*
-	 * extract info from opClause
+	 * extract info from op
 	 */
-	op = (Oper *) opClause->oper;
-	argList = opClause->args;
+	argList = op->args;
 
 	/*
-	 * get the fcache from the Oper node. If it is NULL, then initialize
-	 * it
+	 * get the fcache from the DistinctExpr node. If it is NULL, then
+	 * initialize it
 	 */
 	fcache = op->op_fcache;
 	if (fcache == NULL)
 	{
-		fcache = init_fcache(op->opid, length(argList),
+		fcache = init_fcache(op->opfuncid, length(argList),
 							 econtext->ecxt_per_query_memory);
 		op->op_fcache = fcache;
 	}
@@ -1256,8 +1250,7 @@ ExecEvalDistinct(Expr *opClause,
  *		ExecEvalOr
  *		ExecEvalAnd
  *
- *		Evaluate boolean expressions.  Evaluation of 'or' is
- *		short-circuited when the first true (or null) value is found.
+ *		Evaluate boolean expressions, with appropriate short-circuiting.
  *
  *		The query planner reformulates clause expressions in the
  *		qualification to conjunctive normal form.  If we ever get
@@ -1268,7 +1261,7 @@ ExecEvalDistinct(Expr *opClause,
  * ----------------------------------------------------------------
  */
 static Datum
-ExecEvalNot(Expr *notclause, ExprContext *econtext, bool *isNull)
+ExecEvalNot(BoolExpr *notclause, ExprContext *econtext, bool *isNull)
 {
 	Node	   *clause;
 	Datum		expr_value;
@@ -1296,7 +1289,7 @@ ExecEvalNot(Expr *notclause, ExprContext *econtext, bool *isNull)
  * ----------------------------------------------------------------
  */
 static Datum
-ExecEvalOr(Expr *orExpr, ExprContext *econtext, bool *isNull)
+ExecEvalOr(BoolExpr *orExpr, ExprContext *econtext, bool *isNull)
 {
 	List	   *clauses;
 	List	   *clause;
@@ -1344,7 +1337,7 @@ ExecEvalOr(Expr *orExpr, ExprContext *econtext, bool *isNull)
  * ----------------------------------------------------------------
  */
 static Datum
-ExecEvalAnd(Expr *andExpr, ExprContext *econtext, bool *isNull)
+ExecEvalAnd(BoolExpr *andExpr, ExprContext *econtext, bool *isNull)
 {
 	List	   *clauses;
 	List	   *clause;
@@ -1409,7 +1402,7 @@ ExecEvalCase(CaseExpr *caseExpr, ExprContext *econtext,
 	{
 		CaseWhen   *wclause = lfirst(clause);
 
-		clause_value = ExecEvalExpr(wclause->expr,
+		clause_value = ExecEvalExpr((Node *) wclause->expr,
 									econtext,
 									isNull,
 									NULL);
@@ -1421,7 +1414,7 @@ ExecEvalCase(CaseExpr *caseExpr, ExprContext *econtext,
 		 */
 		if (DatumGetBool(clause_value) && !*isNull)
 		{
-			return ExecEvalExpr(wclause->result,
+			return ExecEvalExpr((Node *) wclause->result,
 								econtext,
 								isNull,
 								isDone);
@@ -1430,7 +1423,7 @@ ExecEvalCase(CaseExpr *caseExpr, ExprContext *econtext,
 
 	if (caseExpr->defresult)
 	{
-		return ExecEvalExpr(caseExpr->defresult,
+		return ExecEvalExpr((Node *) caseExpr->defresult,
 							econtext,
 							isNull,
 							isDone);
@@ -1454,7 +1447,7 @@ ExecEvalNullTest(NullTest *ntest,
 {
 	Datum		result;
 
-	result = ExecEvalExpr(ntest->arg, econtext, isNull, isDone);
+	result = ExecEvalExpr((Node *) ntest->arg, econtext, isNull, isDone);
 	switch (ntest->nulltesttype)
 	{
 		case IS_NULL:
@@ -1494,7 +1487,7 @@ ExecEvalBooleanTest(BooleanTest *btest,
 {
 	Datum		result;
 
-	result = ExecEvalExpr(btest->arg, econtext, isNull, isDone);
+	result = ExecEvalExpr((Node *) btest->arg, econtext, isNull, isDone);
 	switch (btest->booltesttype)
 	{
 		case IS_TRUE:
@@ -1590,7 +1583,7 @@ ExecEvalConstraintTest(ConstraintTest *constraint, ExprContext *econtext,
 {
 	Datum		result;
 
-	result = ExecEvalExpr(constraint->arg, econtext, isNull, isDone);
+	result = ExecEvalExpr((Node *) constraint->arg, econtext, isNull, isDone);
 
 	switch (constraint->testtype)
 	{
@@ -1607,7 +1600,7 @@ ExecEvalConstraintTest(ConstraintTest *constraint, ExprContext *econtext,
 				econtext->domainValue_datum = result;
 				econtext->domainValue_isNull = *isNull;
 
-				conResult = ExecEvalExpr(constraint->check_expr, econtext, isNull, isDone);
+				conResult = ExecEvalExpr((Node *) constraint->check_expr, econtext, isNull, isDone);
 
 				if (!DatumGetBool(conResult))
 					elog(ERROR, "ExecEvalConstraintTest: Domain %s constraint %s failed",
@@ -1638,7 +1631,7 @@ ExecEvalFieldSelect(FieldSelect *fselect,
 	Datum		result;
 	TupleTableSlot *resSlot;
 
-	result = ExecEvalExpr(fselect->arg, econtext, isNull, isDone);
+	result = ExecEvalExpr((Node *) fselect->arg, econtext, isNull, isDone);
 	if (*isNull)
 		return result;
 	resSlot = (TupleTableSlot *) DatumGetPointer(result);
@@ -1738,47 +1731,48 @@ ExecEvalExpr(Node *expression,
 										isNull,
 										isDone);
 			break;
-		case T_Expr:
+		case T_FuncExpr:
+			retDatum = ExecEvalFunc((FuncExpr *) expression, econtext,
+									isNull, isDone);
+			break;
+		case T_OpExpr:
+			retDatum = ExecEvalOper((OpExpr *) expression, econtext,
+									isNull, isDone);
+			break;
+		case T_DistinctExpr:
+			retDatum = ExecEvalDistinct((DistinctExpr *) expression, econtext,
+										isNull, isDone);
+			break;
+		case T_BoolExpr:
 			{
-				Expr	   *expr = (Expr *) expression;
+				BoolExpr   *expr = (BoolExpr *) expression;
 
-				switch (expr->opType)
+				switch (expr->boolop)
 				{
-					case OP_EXPR:
-						retDatum = ExecEvalOper(expr, econtext,
-												isNull, isDone);
-						break;
-					case FUNC_EXPR:
-						retDatum = ExecEvalFunc(expr, econtext,
-												isNull, isDone);
+					case AND_EXPR:
+						retDatum = ExecEvalAnd(expr, econtext, isNull);
 						break;
 					case OR_EXPR:
 						retDatum = ExecEvalOr(expr, econtext, isNull);
 						break;
-					case AND_EXPR:
-						retDatum = ExecEvalAnd(expr, econtext, isNull);
-						break;
 					case NOT_EXPR:
 						retDatum = ExecEvalNot(expr, econtext, isNull);
 						break;
-					case DISTINCT_EXPR:
-						retDatum = ExecEvalDistinct(expr, econtext,
-													isNull, isDone);
-						break;
-					case SUBPLAN_EXPR:
-						/* XXX temporary hack to find exec state node */
-						retDatum = ExecSubPlan(((SubPlan *) expr->oper)->pstate,
-											   expr->args, econtext,
-											   isNull);
-						break;
 					default:
-						elog(ERROR, "ExecEvalExpr: unknown expression type %d",
-							 expr->opType);
+						elog(ERROR, "ExecEvalExpr: unknown boolop %d",
+							 expr->boolop);
 						retDatum = 0;	/* keep compiler quiet */
 						break;
 				}
 				break;
 			}
+		case T_SubPlanExpr:
+			/* XXX temporary hack to find exec state node */
+			retDatum = ExecSubPlan(((SubPlanExpr *) expression)->pstate,
+								   ((SubPlanExpr *) expression)->args,
+								   econtext,
+								   isNull);
+			break;
 		case T_FieldSelect:
 			retDatum = ExecEvalFieldSelect((FieldSelect *) expression,
 										   econtext,
@@ -1786,7 +1780,7 @@ ExecEvalExpr(Node *expression,
 										   isDone);
 			break;
 		case T_RelabelType:
-			retDatum = ExecEvalExpr(((RelabelType *) expression)->arg,
+			retDatum = ExecEvalExpr((Node *) ((RelabelType *) expression)->arg,
 									econtext,
 									isNull,
 									isDone);
@@ -1861,7 +1855,7 @@ ExecEvalExprSwitchContext(Node *expression,
  *
  * Soon this will generate an expression state tree paralleling the given
  * expression tree.  Right now, it just searches the expression tree for
- * Aggref and SubPlan nodes.
+ * Aggref and SubPlanExpr nodes.
  */
 Node *
 ExecInitExpr(Node *node, PlanState *parent)
@@ -1887,7 +1881,7 @@ ExecInitExpr(Node *node, PlanState *parent)
 				aggstate->aggs = lcons(node, aggstate->aggs);
 				naggs = ++aggstate->numaggs;
 
-				ExecInitExpr(((Aggref *) node)->target, parent);
+				ExecInitExpr((Node *) ((Aggref *) node)->target, parent);
 
 				/*
 				 * Complain if the aggregate's argument contains any
@@ -1907,64 +1901,67 @@ ExecInitExpr(Node *node, PlanState *parent)
 
 				ExecInitExpr((Node *) aref->refupperindexpr, parent);
 				ExecInitExpr((Node *) aref->reflowerindexpr, parent);
-				ExecInitExpr(aref->refexpr, parent);
-				ExecInitExpr(aref->refassgnexpr, parent);
+				ExecInitExpr((Node *) aref->refexpr, parent);
+				ExecInitExpr((Node *) aref->refassgnexpr, parent);
 			}
 			break;
-		case T_Expr:
+		case T_FuncExpr:
 			{
-				Expr	   *expr = (Expr *) node;
+				FuncExpr   *funcexpr = (FuncExpr *) node;
 
-				switch (expr->opType)
-				{
-					case OP_EXPR:
-						break;
-					case FUNC_EXPR:
-						break;
-					case OR_EXPR:
-						break;
-					case AND_EXPR:
-						break;
-					case NOT_EXPR:
-						break;
-					case DISTINCT_EXPR:
-						break;
-					case SUBPLAN_EXPR:
-						if (parent)
-						{
-							SubLink *sublink = ((SubPlan *) expr->oper)->sublink;
+				ExecInitExpr((Node *) funcexpr->args, parent);
+			}
+			break;
+		case T_OpExpr:
+			{
+				OpExpr   *opexpr = (OpExpr *) node;
 
-							/*
-							 * Here we just add the SubPlan nodes to
-							 * parent->subPlan.  Later they will be expanded
-							 * to SubPlanState nodes.
-							 */
-							parent->subPlan = lcons(expr->oper,
-													parent->subPlan);
+				ExecInitExpr((Node *) opexpr->args, parent);
+			}
+			break;
+		case T_DistinctExpr:
+			{
+				DistinctExpr   *distinctexpr = (DistinctExpr *) node;
 
-							/* Must recurse into oper list too */
-							Assert(IsA(sublink, SubLink));
-							if (sublink->lefthand)
-								elog(ERROR, "ExecInitExpr: sublink has not been transformed");
-							ExecInitExpr((Node *) sublink->oper, parent);
-						}
-						else
-							elog(ERROR, "ExecInitExpr: SubPlan not expected here");
-						break;
-					default:
-						elog(ERROR, "ExecInitExpr: unknown expression type %d",
-							 expr->opType);
-						break;
-				}
-				/* for all Expr node types, examine args list */
-				ExecInitExpr((Node *) expr->args, parent);
+				ExecInitExpr((Node *) distinctexpr->args, parent);
+			}
+			break;
+		case T_BoolExpr:
+			{
+				BoolExpr   *boolexpr = (BoolExpr *) node;
+
+				ExecInitExpr((Node *) boolexpr->args, parent);
+			}
+			break;
+		case T_SubPlanExpr:
+			{
+				SubPlanExpr *subplanexpr = (SubPlanExpr *) node;
+				SubLink *sublink = subplanexpr->sublink;
+
+				Assert(IsA(sublink, SubLink));
+				if (!parent)
+					elog(ERROR, "ExecInitExpr: SubPlanExpr not expected here");
+
+				/*
+				 * Here we just add the SubPlanExpr nodes to
+				 * parent->subPlan.  Later they will be expanded
+				 * to SubPlanState nodes.
+				 */
+				parent->subPlan = lcons(subplanexpr, parent->subPlan);
+
+				/* Must recurse into oper list too */
+				if (sublink->lefthand)
+					elog(ERROR, "ExecInitExpr: sublink has not been transformed");
+				ExecInitExpr((Node *) sublink->oper, parent);
+
+				ExecInitExpr((Node *) subplanexpr->args, parent);
 			}
 			break;
 		case T_FieldSelect:
-			ExecInitExpr(((FieldSelect *) node)->arg, parent);
+			ExecInitExpr((Node *) ((FieldSelect *) node)->arg, parent);
 			break;
 		case T_RelabelType:
-			ExecInitExpr(((RelabelType *) node)->arg, parent);
+			ExecInitExpr((Node *) ((RelabelType *) node)->arg, parent);
 			break;
 		case T_CaseExpr:
 			{
@@ -1975,34 +1972,34 @@ ExecInitExpr(Node *node, PlanState *parent)
 					CaseWhen   *when = (CaseWhen *) lfirst(temp);
 
 					Assert(IsA(when, CaseWhen));
-					ExecInitExpr(when->expr, parent);
-					ExecInitExpr(when->result, parent);
+					ExecInitExpr((Node *) when->expr, parent);
+					ExecInitExpr((Node *) when->result, parent);
 				}
 				/* caseexpr->arg should be null, but we'll check it anyway */
-				ExecInitExpr(caseexpr->arg, parent);
-				ExecInitExpr(caseexpr->defresult, parent);
+				ExecInitExpr((Node *) caseexpr->arg, parent);
+				ExecInitExpr((Node *) caseexpr->defresult, parent);
 			}
 			break;
 		case T_NullTest:
-			ExecInitExpr(((NullTest *) node)->arg, parent);
+			ExecInitExpr((Node *) ((NullTest *) node)->arg, parent);
 			break;
 		case T_BooleanTest:
-			ExecInitExpr(((BooleanTest *) node)->arg, parent);
+			ExecInitExpr((Node *) ((BooleanTest *) node)->arg, parent);
 			break;
 		case T_ConstraintTest:
-			ExecInitExpr(((ConstraintTest *) node)->arg, parent);
-			ExecInitExpr(((ConstraintTest *) node)->check_expr, parent);
+			ExecInitExpr((Node *) ((ConstraintTest *) node)->arg, parent);
+			ExecInitExpr((Node *) ((ConstraintTest *) node)->check_expr, parent);
 			break;
 		case T_ConstraintTestValue:
+			break;
+		case T_TargetEntry:
+			ExecInitExpr((Node *) ((TargetEntry *) node)->expr, parent);
 			break;
 		case T_List:
 			foreach(temp, (List *) node)
 			{
 				ExecInitExpr((Node *) lfirst(temp), parent);
 			}
-			break;
-		case T_TargetEntry:
-			ExecInitExpr(((TargetEntry *) node)->expr, parent);
 			break;
 		default:
 			elog(ERROR, "ExecInitExpr: unknown expression type %d",
@@ -2119,19 +2116,8 @@ ExecQual(List *qual, ExprContext *econtext, bool resultForNull)
 int
 ExecTargetListLength(List *targetlist)
 {
-	int			len = 0;
-	List	   *tl;
-
-	foreach(tl, targetlist)
-	{
-		TargetEntry *curTle = (TargetEntry *) lfirst(tl);
-
-		if (curTle->resdom != NULL)
-			len++;
-		else
-			len += curTle->fjoin->fj_nNodes;
-	}
-	return len;
+	/* This used to be more complex, but fjoins are dead */
+	return length(targetlist);
 }
 
 /*
@@ -2147,13 +2133,8 @@ ExecCleanTargetListLength(List *targetlist)
 	{
 		TargetEntry *curTle = (TargetEntry *) lfirst(tl);
 
-		if (curTle->resdom != NULL)
-		{
-			if (!curTle->resdom->resjunk)
-				len++;
-		}
-		else
-			len += curTle->fjoin->fj_nNodes;
+		if (!curTle->resdom->resjunk)
+			len++;
 	}
 	return len;
 }
@@ -2182,10 +2163,8 @@ ExecTargetList(List *targetlist,
 
 #define NPREALLOCDOMAINS 64
 	char		nullsArray[NPREALLOCDOMAINS];
-	bool		fjIsNullArray[NPREALLOCDOMAINS];
 	ExprDoneCond itemIsDoneArray[NPREALLOCDOMAINS];
 	char	   *nulls;
-	bool	   *fjIsNull;
 	ExprDoneCond *itemIsDone;
 	List	   *tl;
 	TargetEntry *tle;
@@ -2223,24 +2202,20 @@ ExecTargetList(List *targetlist,
 	 * allocate an array of char's to hold the "null" information only if
 	 * we have a really large targetlist.  otherwise we use the stack.
 	 *
-	 * We also allocate a bool array that is used to hold fjoin result state,
-	 * and another array that holds the isDone status for each targetlist
-	 * item. The isDone status is needed so that we can iterate,
+	 * We also allocate another array that holds the isDone status for each
+	 * targetlist item. The isDone status is needed so that we can iterate,
 	 * generating multiple tuples, when one or more tlist items return
-	 * sets.  (We expect the caller to call us again if we return:
-	 *
+	 * sets.  (We expect the caller to call us again if we return
 	 * isDone = ExprMultipleResult.)
 	 */
 	if (nodomains > NPREALLOCDOMAINS)
 	{
 		nulls = (char *) palloc(nodomains * sizeof(char));
-		fjIsNull = (bool *) palloc(nodomains * sizeof(bool));
 		itemIsDone = (ExprDoneCond *) palloc(nodomains * sizeof(ExprDoneCond));
 	}
 	else
 	{
 		nulls = nullsArray;
-		fjIsNull = fjIsNullArray;
 		itemIsDone = itemIsDoneArray;
 	}
 
@@ -2257,82 +2232,29 @@ ExecTargetList(List *targetlist,
 	{
 		tle = lfirst(tl);
 
-		if (tle->resdom != NULL)
+		resind = tle->resdom->resno - 1;
+
+		values[resind] = ExecEvalExpr((Node *) tle->expr,
+									  econtext,
+									  &isNull,
+									  &itemIsDone[resind]);
+		nulls[resind] = isNull ? 'n' : ' ';
+
+		if (itemIsDone[resind] != ExprSingleResult)
 		{
-			resind = tle->resdom->resno - 1;
-
-			values[resind] = ExecEvalExpr(tle->expr,
-										  econtext,
-										  &isNull,
-										  &itemIsDone[resind]);
-			nulls[resind] = isNull ? 'n' : ' ';
-
-			if (itemIsDone[resind] != ExprSingleResult)
+			/* We have a set-valued expression in the tlist */
+			if (isDone == NULL)
+				elog(ERROR, "Set-valued function called in context that cannot accept a set");
+			if (itemIsDone[resind] == ExprMultipleResult)
 			{
-				/* We have a set-valued expression in the tlist */
-				if (isDone == NULL)
-					elog(ERROR, "Set-valued function called in context that cannot accept a set");
-				if (itemIsDone[resind] == ExprMultipleResult)
-				{
-					/* we have undone sets in the tlist, set flag */
-					*isDone = ExprMultipleResult;
-				}
-				else
-				{
-					/* we have done sets in the tlist, set flag for that */
-					haveDoneSets = true;
-				}
+				/* we have undone sets in the tlist, set flag */
+				*isDone = ExprMultipleResult;
 			}
-		}
-		else
-		{
-#ifdef SETS_FIXED
-			int			curNode;
-			Resdom	   *fjRes;
-			List	   *fjTlist = (List *) tle->expr;
-			Fjoin	   *fjNode = tle->fjoin;
-			int			nNodes = fjNode->fj_nNodes;
-			DatumPtr	results = fjNode->fj_results;
-
-			ExecEvalFjoin(tle, econtext, fjIsNull, isDone);
-
-			/*
-			 * XXX this is wrong, but since fjoin code is completely
-			 * broken anyway, I'm not going to worry about it now --- tgl
-			 * 8/23/00
-			 */
-			if (isDone && *isDone == ExprEndResult)
+			else
 			{
-				MemoryContextSwitchTo(oldContext);
-				newTuple = NULL;
-				goto exit;
+				/* we have done sets in the tlist, set flag for that */
+				haveDoneSets = true;
 			}
-
-			/*
-			 * get the result from the inner node
-			 */
-			fjRes = (Resdom *) fjNode->fj_innerNode;
-			resind = fjRes->resno - 1;
-			values[resind] = results[0];
-			nulls[resind] = fjIsNull[0] ? 'n' : ' ';
-
-			/*
-			 * Get results from all of the outer nodes
-			 */
-			for (curNode = 1;
-				 curNode < nNodes;
-				 curNode++, fjTlist = lnext(fjTlist))
-			{
-				Node	   *outernode = lfirst(fjTlist);
-
-				fjRes = (Resdom *) outernode->iterexpr;
-				resind = fjRes->resno - 1;
-				values[resind] = results[curNode];
-				nulls[resind] = fjIsNull[curNode] ? 'n' : ' ';
-			}
-#else
-			elog(ERROR, "ExecTargetList: fjoin nodes not currently supported");
-#endif
 		}
 	}
 
@@ -2368,7 +2290,7 @@ ExecTargetList(List *targetlist,
 
 					if (itemIsDone[resind] == ExprEndResult)
 					{
-						values[resind] = ExecEvalExpr(tle->expr,
+						values[resind] = ExecEvalExpr((Node *) tle->expr,
 													  econtext,
 													  &isNull,
 													&itemIsDone[resind]);
@@ -2404,7 +2326,7 @@ ExecTargetList(List *targetlist,
 
 						while (itemIsDone[resind] == ExprMultipleResult)
 						{
-							(void) ExecEvalExpr(tle->expr,
+							(void) ExecEvalExpr((Node *) tle->expr,
 												econtext,
 												&isNull,
 												&itemIsDone[resind]);
@@ -2434,7 +2356,6 @@ exit:
 	if (nodomains > NPREALLOCDOMAINS)
 	{
 		pfree(nulls);
-		pfree(fjIsNull);
 		pfree(itemIsDone);
 	}
 

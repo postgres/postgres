@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.205 2002/11/13 00:39:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.206 2002/12/12 15:49:24 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -41,6 +41,7 @@
 #include "executor/executor.h"
 #include "miscadmin.h"
 #include "optimizer/clauses.h"
+#include "optimizer/planmain.h"
 #include "optimizer/prep.h"
 #include "parser/parse_func.h"
 #include "storage/sinval.h"
@@ -919,6 +920,7 @@ BuildIndexInfo(Form_pg_index indexStruct)
 		predString = DatumGetCString(DirectFunctionCall1(textout,
 								PointerGetDatum(&indexStruct->indpred)));
 		ii->ii_Predicate = stringToNode(predString);
+		fix_opfuncids((Node *) ii->ii_Predicate);
 		pfree(predString);
 	}
 	else

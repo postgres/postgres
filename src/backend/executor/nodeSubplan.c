@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubplan.c,v 1.35 2002/12/05 15:50:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubplan.c,v 1.36 2002/12/12 15:49:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,7 @@ ExecSubPlan(SubPlanState *node, List *pvar,
 			ExprContext *econtext, bool *isNull)
 {
 	PlanState  *planstate = node->planstate;
-	SubPlan	   *subplan = (SubPlan *) node->ps.plan;
+	SubPlanExpr *subplan = (SubPlanExpr *) node->ps.plan;
 	SubLink    *sublink = subplan->sublink;
 	SubLinkType subLinkType = sublink->subLinkType;
 	bool		useor = sublink->useor;
@@ -151,7 +151,7 @@ ExecSubPlan(SubPlanState *node, List *pvar,
 		 */
 		foreach(lst, sublink->oper)
 		{
-			Expr	   *expr = (Expr *) lfirst(lst);
+			OpExpr	   *expr = (OpExpr *) lfirst(lst);
 			Param	   *prm = lsecond(expr->args);
 			ParamExecData *prmdata;
 			Datum		expresult;
@@ -172,8 +172,8 @@ ExecSubPlan(SubPlanState *node, List *pvar,
 			{
 				switch (nodeTag(prm))
 				{
-					case T_Expr:
-						prm = lfirst(((Expr *) prm)->args);
+					case T_FuncExpr:
+						prm = lfirst(((FuncExpr *) prm)->args);
 						break;
 					case T_RelabelType:
 						prm = (Param *) (((RelabelType *) prm)->arg);
@@ -288,7 +288,7 @@ ExecSubPlan(SubPlanState *node, List *pvar,
  * ----------------------------------------------------------------
  */
 SubPlanState *
-ExecInitSubPlan(SubPlan *node, EState *estate)
+ExecInitSubPlan(SubPlanExpr *node, EState *estate)
 {
 	SubPlanState *subplanstate;
 	EState	   *sp_estate;
@@ -374,7 +374,7 @@ void
 ExecSetParamPlan(SubPlanState *node, ExprContext *econtext)
 {
 	PlanState  *planstate = node->planstate;
-	SubPlan	   *subplan = (SubPlan *) node->ps.plan;
+	SubPlanExpr *subplan = (SubPlanExpr *) node->ps.plan;
 	SubLink    *sublink = subplan->sublink;
 	EState	   *estate = node->ps.state;
 	MemoryContext oldcontext;
@@ -497,7 +497,7 @@ void
 ExecReScanSetParamPlan(SubPlanState *node, PlanState *parent)
 {
 	PlanState  *planstate = node->planstate;
-	SubPlan	   *subplan = (SubPlan *) node->ps.plan;
+	SubPlanExpr *subplan = (SubPlanExpr *) node->ps.plan;
 	EState	   *estate = node->ps.state;
 	List	   *lst;
 

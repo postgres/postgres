@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/tidpath.c,v 1.12 2002/11/24 21:52:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/tidpath.c,v 1.13 2002/12/12 15:49:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,15 +27,14 @@
 
 static List *TidqualFromRestrictinfo(List *relids, List *restrictinfo);
 static bool isEvaluable(int varno, Node *node);
-static Node *TidequalClause(int varno, Expr *node);
+static Node *TidequalClause(int varno, OpExpr *node);
 static List *TidqualFromExpr(int varno, Expr *expr);
 
-static
-bool
+static bool
 isEvaluable(int varno, Node *node)
 {
 	List	   *lst;
-	Expr	   *expr;
+	FuncExpr   *expr;
 
 	if (IsA(node, Const))
 		return true;
@@ -51,7 +50,7 @@ isEvaluable(int varno, Node *node)
 	}
 	if (!is_funcclause(node))
 		return false;
-	expr = (Expr *) node;
+	expr = (FuncExpr *) node;
 	foreach(lst, expr->args)
 	{
 		if (!isEvaluable(varno, lfirst(lst)))
@@ -66,33 +65,26 @@ isEvaluable(int varno, Node *node)
  *	Extract the right node if the opclause is CTID= ....
  *	  or	the left  node if the opclause is ....=CTID
  */
-static
-Node *
-TidequalClause(int varno, Expr *node)
+static Node *
+TidequalClause(int varno, OpExpr *node)
 {
-	Node	   *rnode = 0,
+	Node	   *rnode = NULL,
 			   *arg1,
 			   *arg2,
 			   *arg;
-	Oper	   *oper;
 	Var		   *var;
 	Const	   *aconst;
 	Param	   *param;
-	Expr	   *expr;
+	FuncExpr   *expr;
 
-	if (!node->oper)
-		return rnode;
-	if (!node->args)
+	if (node->opno != TIDEqualOperator)
 		return rnode;
 	if (length(node->args) != 2)
-		return rnode;
-	oper = (Oper *) node->oper;
-	if (oper->opno != TIDEqualOperator)
 		return rnode;
 	arg1 = lfirst(node->args);
 	arg2 = lsecond(node->args);
 
-	arg = (Node *) 0;
+	arg = NULL;
 	if (IsA(arg1, Var))
 	{
 		var = (Var *) arg1;
@@ -138,11 +130,9 @@ TidequalClause(int varno, Expr *node)
 				return rnode;
 			rnode = arg;
 			break;
-		case T_Expr:
-			expr = (Expr *) arg;
-			if (expr->typeOid != TIDOID)
-				return rnode;
-			if (expr->opType != FUNC_EXPR)
+		case T_FuncExpr:
+			expr = (FuncExpr *) arg;
+			if (expr->funcresulttype != TIDOID)
 				return rnode;
 			if (isEvaluable(varno, (Node *) expr))
 				rnode = arg;
@@ -162,8 +152,7 @@ TidequalClause(int varno, Expr *node)
  *	CTID values if we could extract the CTID values from a member
  *	node.
  */
-static
-List *
+static List *
 TidqualFromExpr(int varno, Expr *expr)
 {
 	List	   *rlst = NIL,
@@ -174,17 +163,15 @@ TidqualFromExpr(int varno, Expr *expr)
 
 	if (is_opclause(node))
 	{
-		rnode = TidequalClause(varno, expr);
+		rnode = TidequalClause(varno, (OpExpr *) expr);
 		if (rnode)
 			rlst = lcons(rnode, rlst);
 	}
 	else if (and_clause(node))
 	{
-		foreach(lst, expr->args)
+		foreach(lst, ((BoolExpr *) expr)->args)
 		{
 			node = lfirst(lst);
-			if (!IsA(node, Expr))
-				continue;
 			rlst = TidqualFromExpr(varno, (Expr *) node);
 			if (rlst)
 				break;
@@ -192,11 +179,11 @@ TidqualFromExpr(int varno, Expr *expr)
 	}
 	else if (or_clause(node))
 	{
-		foreach(lst, expr->args)
+		foreach(lst, ((BoolExpr *) expr)->args)
 		{
 			node = lfirst(lst);
-			if (IsA(node, Expr) &&
-				(frtn = TidqualFromExpr(varno, (Expr *) node)))
+			frtn = TidqualFromExpr(varno, (Expr *) node);
+			if (frtn)
 				rlst = nconc(rlst, frtn);
 			else
 			{

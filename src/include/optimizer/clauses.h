@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: clauses.h,v 1.56 2002/12/01 21:05:14 tgl Exp $
+ * $Id: clauses.h,v 1.57 2002/12/12 15:49:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,22 +16,27 @@
 
 #include "nodes/relation.h"
 
-extern Expr *make_clause(int type, Node *oper, List *args);
 
-extern bool is_opclause(Node *clause);
-extern Expr *make_opclause(Oper *op, Var *leftop, Var *rightop);
+
+#define is_opclause(clause)		((clause) != NULL && IsA(clause, OpExpr))
+#define is_funcclause(clause)	((clause) != NULL && IsA(clause, FuncExpr))
+#define is_subplan(clause)		((clause) != NULL && IsA(clause, SubPlanExpr))
+
+
+extern Expr *make_opclause(Oid opno, Oid opresulttype, bool opretset,
+						   Expr *leftop, Expr *rightop);
 extern Var *get_leftop(Expr *clause);
 extern Var *get_rightop(Expr *clause);
 
-extern bool is_funcclause(Node *clause);
-extern Expr *make_funcclause(Func *func, List *funcargs);
-
-extern bool or_clause(Node *clause);
-extern Expr *make_orclause(List *orclauses);
+extern Expr *make_funcclause(Oid funcid, Oid funcresulttype, bool funcretset,
+							 CoercionForm funcformat, List *funcargs);
 
 extern bool not_clause(Node *clause);
 extern Expr *make_notclause(Expr *notclause);
 extern Expr *get_notclausearg(Expr *notclause);
+
+extern bool or_clause(Node *clause);
+extern Expr *make_orclause(List *orclauses);
 
 extern bool and_clause(Node *clause);
 extern Expr *make_andclause(List *andclauses);
@@ -60,7 +65,7 @@ extern bool has_distinct_on_clause(Query *query);
 
 extern void clause_get_relids_vars(Node *clause, Relids *relids, List **vars);
 extern int	NumRelids(Node *clause);
-extern void CommuteClause(Expr *clause);
+extern void CommuteClause(OpExpr *clause);
 
 extern Node *eval_const_expressions(Node *node);
 
@@ -77,9 +82,5 @@ extern bool query_tree_walker(Query *query, bool (*walker) (),
 							  void *context, int flags);
 extern void query_tree_mutator(Query *query, Node *(*mutator) (),
 							   void *context, int flags);
-
-#define is_subplan(clause)	((clause) != NULL && \
-							 IsA(clause, Expr) && \
-							 ((Expr *) (clause))->opType == SUBPLAN_EXPR)
 
 #endif   /* CLAUSES_H */

@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.95 2002/12/06 19:28:03 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.96 2002/12/12 15:49:24 tgl Exp $
  *
  */
 
@@ -417,20 +417,27 @@ explain_outNode(StringInfo str,
 			{
 				RangeTblEntry *rte = rt_fetch(((Scan *) plan)->scanrelid,
 											  es->rtable);
-				Expr	   *expr;
-				Func	   *funcnode;
-				Oid			funcid;
 				char	   *proname;
 
 				/* Assert it's on a RangeFunction */
 				Assert(rte->rtekind == RTE_FUNCTION);
 
-				expr = (Expr *) rte->funcexpr;
-				funcnode = (Func *) expr->oper;
-				funcid = funcnode->funcid;
+				/*
+				 * If the expression is still a function call, we can get
+				 * the real name of the function.  Otherwise, punt (this
+				 * can happen if the optimizer simplified away the function
+				 * call, for example).
+				 */
+				if (rte->funcexpr && IsA(rte->funcexpr, FuncExpr))
+				{
+					FuncExpr   *funcexpr = (FuncExpr *) rte->funcexpr;
+					Oid			funcid = funcexpr->funcid;
 
-				/* We only show the func name, not schema name */
-				proname = get_func_name(funcid);
+					/* We only show the func name, not schema name */
+					proname = get_func_name(funcid);
+				}
+				else
+					proname = rte->eref->aliasname;
 
 				appendStringInfo(str, " on %s",
 								 quote_identifier(proname));
@@ -583,7 +590,7 @@ explain_outNode(StringInfo str,
 		appendStringInfo(str, "  InitPlan\n");
 		foreach(lst, plan->initPlan)
 		{
-			SubPlan	   *subplan = (SubPlan *) lfirst(lst);
+			SubPlanExpr  *subplan = (SubPlanExpr *) lfirst(lst);
 			SubPlanState *subplanstate = (SubPlanState *) lfirst(pslist);
 
 			es->rtable = subplan->rtable;
@@ -683,7 +690,7 @@ explain_outNode(StringInfo str,
 		foreach(lst, planstate->subPlan)
 		{
 			SubPlanState *sps = (SubPlanState *) lfirst(lst);
-			SubPlan *sp = (SubPlan *) sps->ps.plan;
+			SubPlanExpr *sp = (SubPlanExpr *) sps->ps.plan;
 
 			es->rtable = sp->rtable;
 			for (i = 0; i < indent; i++)
@@ -870,7 +877,7 @@ show_sort_keys(List *tlist, int nkeys, const char *qlabel,
 			if (target->resdom->reskey == keyno)
 			{
 				/* Deparse the expression, showing any top-level cast */
-				exprstr = deparse_expression(target->expr, context,
+				exprstr = deparse_expression((Node *) target->expr, context,
 											 useprefix, true);
 				/* And add to str */
 				if (keyno > 1)

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.53 2002/11/25 21:29:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.54 2002/12/12 15:49:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -141,7 +141,7 @@ clauselist_selectivity(Query *root,
 		if (is_opclause(clause) &&
 			(varRelid != 0 || NumRelids(clause) == 1))
 		{
-			Expr	   *expr = (Expr *) clause;
+			OpExpr	   *expr = (OpExpr *) clause;
 
 			if (length(expr->args) == 2)
 			{
@@ -151,7 +151,7 @@ clauselist_selectivity(Query *root,
 					(varonleft = false,
 					 is_pseudo_constant_clause(lfirst(expr->args))))
 				{
-					Oid			opno = ((Oper *) expr->oper)->opno;
+					Oid			opno = expr->opno;
 					RegProcedure oprrest = get_oprrest(opno);
 
 					s2 = restriction_selectivity(root, opno,
@@ -430,7 +430,7 @@ clause_selectivity(Query *root,
 	{
 		/* share code with clauselist_selectivity() */
 		s1 = clauselist_selectivity(root,
-									((Expr *) clause)->args,
+									((BoolExpr *) clause)->args,
 									varRelid);
 	}
 	else if (or_clause(clause))
@@ -443,7 +443,7 @@ clause_selectivity(Query *root,
 		List	   *arg;
 
 		s1 = 0.0;
-		foreach(arg, ((Expr *) clause)->args)
+		foreach(arg, ((BoolExpr *) clause)->args)
 		{
 			Selectivity s2 = clause_selectivity(root,
 												(Node *) lfirst(arg),
@@ -454,7 +454,7 @@ clause_selectivity(Query *root,
 	}
 	else if (is_opclause(clause))
 	{
-		Oid			opno = ((Oper *) ((Expr *) clause)->oper)->opno;
+		Oid			opno = ((OpExpr *) clause)->opno;
 		bool		is_join_clause;
 
 		if (varRelid != 0)
@@ -479,13 +479,14 @@ clause_selectivity(Query *root,
 		{
 			/* Estimate selectivity for a join clause. */
 			s1 = join_selectivity(root, opno,
-								  ((Expr *) clause)->args);
+								  ((OpExpr *) clause)->args);
 		}
 		else
 		{
 			/* Estimate selectivity for a restriction clause. */
 			s1 = restriction_selectivity(root, opno,
-									  ((Expr *) clause)->args, varRelid);
+										 ((OpExpr *) clause)->args,
+										 varRelid);
 		}
 	}
 	else if (is_funcclause(clause))
@@ -509,7 +510,7 @@ clause_selectivity(Query *root,
 		/* Use node specific selectivity calculation function */
 		s1 = nulltestsel(root,
 						 ((NullTest *) clause)->nulltesttype,
-						 ((NullTest *) clause)->arg,
+						 (Node *) ((NullTest *) clause)->arg,
 						 varRelid);
 	}
 	else if (IsA(clause, BooleanTest))
@@ -517,14 +518,14 @@ clause_selectivity(Query *root,
 		/* Use node specific selectivity calculation function */
 		s1 = booltestsel(root,
 						 ((BooleanTest *) clause)->booltesttype,
-						 ((BooleanTest *) clause)->arg,
+						 (Node *) ((BooleanTest *) clause)->arg,
 						 varRelid);
 	}
 	else if (IsA(clause, RelabelType))
 	{
 		/* Not sure this case is needed, but it can't hurt */
 		s1 = clause_selectivity(root,
-								((RelabelType *) clause)->arg,
+								(Node *) ((RelabelType *) clause)->arg,
 								varRelid);
 	}
 

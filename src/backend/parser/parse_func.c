@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.142 2002/11/13 00:39:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.143 2002/12/12 15:49:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -315,21 +315,15 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	/* build the appropriate output structure */
 	if (fdresult == FUNCDETAIL_NORMAL)
 	{
-		Expr	   *expr = makeNode(Expr);
-		Func	   *funcnode = makeNode(Func);
+		FuncExpr   *funcexpr = makeNode(FuncExpr);
 
-		funcnode->funcid = funcid;
-		funcnode->funcresulttype = rettype;
-		funcnode->funcretset = retset;
-		funcnode->funcformat = COERCE_EXPLICIT_CALL;
-		funcnode->func_fcache = NULL;
+		funcexpr->funcid = funcid;
+		funcexpr->funcresulttype = rettype;
+		funcexpr->funcretset = retset;
+		funcexpr->funcformat = COERCE_EXPLICIT_CALL;
+		funcexpr->args = fargs;
 
-		expr->typeOid = rettype;
-		expr->opType = FUNC_EXPR;
-		expr->oper = (Node *) funcnode;
-		expr->args = fargs;
-
-		retval = (Node *) expr;
+		retval = (Node *) funcexpr;
 	}
 	else
 	{
@@ -1182,7 +1176,7 @@ setup_field_select(Node *input, char *attname, Oid relid)
 		elog(ERROR, "Relation \"%s\" has no column \"%s\"",
 			 get_rel_name(relid), attname);
 
-	fselect->arg = input;
+	fselect->arg = (Expr *) input;
 	fselect->fieldnum = attno;
 	fselect->resulttype = get_atttype(relid, attno);
 	fselect->resulttypmod = get_atttypmod(relid, attno);

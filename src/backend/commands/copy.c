@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.184 2002/12/01 18:14:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.185 2002/12/12 15:49:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,6 +35,7 @@
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
+#include "optimizer/planmain.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_relation.h"
 #include "rewrite/rewriteHandler.h"
@@ -839,6 +840,7 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 			defexprs[num_defaults] = build_column_default(rel, i + 1);
 			if (defexprs[num_defaults] != NULL)
 			{
+				fix_opfuncids(defexprs[num_defaults]);
 				defmap[num_defaults] = i;
 				num_defaults++;
 			}
@@ -869,6 +871,7 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 			/* check whether any constraints actually found */
 			if (node != (Node *) prm)
 			{
+				fix_opfuncids(node);
 				constraintexprs[i] = node;
 				hasConstraints = true;
 			}

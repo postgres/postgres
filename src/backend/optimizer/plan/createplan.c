@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.127 2002/12/05 15:50:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.128 2002/12/12 15:49:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1041,12 +1041,12 @@ fix_indxqual_sublist(List *indexqual, int baserelid, IndexOptInfo *index,
 
 	foreach(i, indexqual)
 	{
-		Expr	   *clause = (Expr *) lfirst(i);
-		Expr	   *newclause;
+		OpExpr	   *clause = (OpExpr *) lfirst(i);
+		OpExpr	   *newclause;
 		List	   *leftvarnos;
 		Oid			opclass;
 
-		if (!is_opclause((Node *) clause) || length(clause->args) != 2)
+		if (!IsA(clause, OpExpr) || length(clause->args) != 2)
 			elog(ERROR, "fix_indxqual_sublist: indexqual clause is not binary opclause");
 
 		/*
@@ -1056,7 +1056,7 @@ fix_indxqual_sublist(List *indexqual, int baserelid, IndexOptInfo *index,
 		 * is a subplan in the arguments of the opclause.  So just do a
 		 * full copy.
 		 */
-		newclause = (Expr *) copyObject((Node *) clause);
+		newclause = (OpExpr *) copyObject((Node *) clause);
 
 		/*
 		 * Check to see if the indexkey is on the right; if so, commute
@@ -1083,7 +1083,7 @@ fix_indxqual_sublist(List *indexqual, int baserelid, IndexOptInfo *index,
 		 * Finally, check to see if index is lossy for this operator. If
 		 * so, add (a copy of) original form of clause to recheck list.
 		 */
-		if (op_requires_recheck(((Oper *) newclause->oper)->opno, opclass))
+		if (op_requires_recheck(newclause->opno, opclass))
 			recheck_qual = lappend(recheck_qual,
 								   copyObject((Node *) clause));
 	}
@@ -1100,7 +1100,7 @@ fix_indxqual_operand(Node *node, int baserelid, IndexOptInfo *index,
 	 * Remove any binary-compatible relabeling of the indexkey
 	 */
 	if (IsA(node, RelabelType))
-		node = ((RelabelType *) node)->arg;
+		node = (Node *) ((RelabelType *) node)->arg;
 
 	/*
 	 * We represent index keys by Var nodes having the varno of the base
@@ -1168,11 +1168,11 @@ switch_outer(List *clauses)
 
 	foreach(i, clauses)
 	{
-		Expr	   *clause = (Expr *) lfirst(i);
+		OpExpr	   *clause = (OpExpr *) lfirst(i);
 		Var		   *op;
 
-		Assert(is_opclause((Node *) clause));
-		op = get_rightop(clause);
+		Assert(is_opclause(clause));
+		op = get_rightop((Expr *) clause);
 		Assert(op && IsA(op, Var));
 		if (var_is_outer(op))
 		{
@@ -1181,10 +1181,13 @@ switch_outer(List *clauses)
 			 * the clause without changing the original list.  Could use
 			 * copyObject, but a complete deep copy is overkill.
 			 */
-			Expr	   *temp;
+			OpExpr	   *temp = makeNode(OpExpr);
 
-			temp = make_clause(clause->opType, clause->oper,
-							   listCopy(clause->args));
+			temp->opno = clause->opno;
+			temp->opfuncid = InvalidOid;
+			temp->opresulttype = clause->opresulttype;
+			temp->opretset = clause->opretset;
+			temp->args = listCopy(clause->args);
 			/* Commute it --- note this modifies the temp node in-place. */
 			CommuteClause(temp);
 			t_list = lappend(t_list, temp);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.79 2002/09/04 20:31:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.80 2002/12/12 15:49:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1452,7 +1452,7 @@ expandRelAttrs(ParseState *pstate, RangeTblEntry *rte)
 								exprTypmod(varnode),
 								label,
 								false);
-		te->expr = varnode;
+		te->expr = (Expr *) varnode;
 		te_list = lappend(te_list, te);
 
 		names = lnext(names);

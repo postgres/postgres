@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.133 2002/12/05 21:46:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.134 2002/12/12 15:49:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,7 +91,7 @@ planner(Query *parse)
 	 * purpose is communication across multiple sub-Queries.
 	 *
 	 * Note we do NOT save and restore PlannerPlanId: it exists to assign
-	 * unique IDs to SubPlan nodes, and we want those IDs to be unique for
+	 * unique IDs to SubPlanExpr nodes, and we want those IDs to be unique for
 	 * the life of a backend.  Also, PlannerInitPlan is saved/restored in
 	 * subquery_planner, not here.
 	 */
@@ -278,7 +278,7 @@ subquery_planner(Query *parse, double tuple_fraction)
 		/* Must add the initPlans' extParams to the topmost node's, too */
 		foreach(lst, plan->initPlan)
 		{
-			SubPlan    *subplan = (SubPlan *) lfirst(lst);
+			SubPlanExpr *subplan = (SubPlanExpr *) lfirst(lst);
 
 			plan->extParam = set_unioni(plan->extParam,
 										subplan->plan->extParam);
@@ -1015,7 +1015,7 @@ grouping_planner(Query *parse, double tuple_fraction)
 							  -1,
 							  0);
 
-				ctid = makeTargetEntry(resdom, (Node *) var);
+				ctid = makeTargetEntry(resdom, (Expr *) var);
 				tlist = lappend(tlist, ctid);
 			}
 		}
@@ -1707,7 +1707,7 @@ make_subplanTargetList(Query *parse,
 												exprTypmod(groupexpr),
 												NULL,
 												false),
-									 groupexpr);
+									 (Expr *) groupexpr);
 				sub_tlist = lappend(sub_tlist, te);
 			}
 

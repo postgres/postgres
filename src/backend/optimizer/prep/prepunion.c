@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.81 2002/11/25 21:29:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.82 2002/12/12 15:49:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -406,7 +406,7 @@ generate_setop_tlist(List *colTypes, int flag,
 		 * the output tlists of upper-level nodes!
 		 */
 		if (hack_constants && inputtle->expr && IsA(inputtle->expr, Const))
-			expr = inputtle->expr;
+			expr = (Node *) inputtle->expr;
 		else
 			expr = (Node *) makeVar(0,
 									inputtle->resdom->resno,
@@ -430,7 +430,7 @@ generate_setop_tlist(List *colTypes, int flag,
 							colTypmod,
 							pstrdup(reftle->resdom->resname),
 							false);
-		tlist = lappend(tlist, makeTargetEntry(resdom, expr));
+		tlist = lappend(tlist, makeTargetEntry(resdom, (Expr *) expr));
 		input_tlist = lnext(input_tlist);
 		refnames_tlist = lnext(refnames_tlist);
 	}
@@ -449,7 +449,7 @@ generate_setop_tlist(List *colTypes, int flag,
 								  Int32GetDatum(flag),
 								  false,
 								  true);
-		tlist = lappend(tlist, makeTargetEntry(resdom, expr));
+		tlist = lappend(tlist, makeTargetEntry(resdom, (Expr *) expr));
 	}
 
 	return tlist;
@@ -543,7 +543,7 @@ generate_append_tlist(List *colTypes, bool flag,
 							colTypmod,
 							pstrdup(reftle->resdom->resname),
 							false);
-		tlist = lappend(tlist, makeTargetEntry(resdom, expr));
+		tlist = lappend(tlist, makeTargetEntry(resdom, (Expr *) expr));
 		refnames_tlist = lnext(refnames_tlist);
 	}
 
@@ -561,7 +561,7 @@ generate_append_tlist(List *colTypes, bool flag,
 								INT4OID,
 								-1,
 								0);
-		tlist = lappend(tlist, makeTargetEntry(resdom, expr));
+		tlist = lappend(tlist, makeTargetEntry(resdom, (Expr *) expr));
 	}
 
 	pfree(colTypmods);
@@ -872,13 +872,13 @@ adjust_inherited_attrs_mutator(Node *node,
 	 */
 	if (is_subplan(node))
 	{
-		SubPlan    *subplan;
+		SubPlanExpr *subplan;
 
 		/* Copy the node and process subplan args */
 		node = expression_tree_mutator(node, adjust_inherited_attrs_mutator,
 									   (void *) context);
 		/* Make sure we have separate copies of subplan and its rtable */
-		subplan = (SubPlan *) ((Expr *) node)->oper;
+		subplan = (SubPlanExpr *) node;
 		subplan->plan = copyObject(subplan->plan);
 		subplan->rtable = copyObject(subplan->rtable);
 		return node;

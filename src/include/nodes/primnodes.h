@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.71 2002/11/30 21:25:06 tgl Exp $
+ * $Id: primnodes.h,v 1.72 2002/12/12 15:49:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,31 +67,6 @@ typedef struct Resdom
 								 * from final target list */
 } Resdom;
 
-/*
- * Fjoin
- */
-typedef struct Fjoin
-{
-	NodeTag		type;
-	bool		fj_initialized; /* true if the Fjoin has already been
-								 * initialized for the current target list
-								 * evaluation */
-	int			fj_nNodes;		/* The number of Iter nodes returning sets
-								 * that the node will flatten */
-	List	   *fj_innerNode;	/* exactly one Iter node.  We eval every
-								 * node in the outerList once then eval
-								 * the inner node to completion pair the
-								 * outerList result vector with each inner
-								 * result to form the full result.	When
-								 * the inner has been exhausted, we get
-								 * the next outer result vector and reset
-								 * the inner. */
-	DatumPtr	fj_results;		/* The complete (flattened) result vector */
-	BoolPtr		fj_alwaysDone;	/* a null vector to indicate sets with a
-								 * cardinality of 0, we treat them as the
-								 * set {NULL}. */
-} Fjoin;
-
 
 /*
  * Alias -
@@ -140,96 +115,20 @@ typedef struct RangeVar
  */
 
 /*
- * CoercionContext - distinguishes the allowed set of type casts
+ * Expr - generic superclass for executable-expression nodes
  *
- * NB: ordering of the alternatives is significant; later (larger) values
- * allow more casts than earlier ones.
+ * All node types that are used in executable expression trees should derive
+ * from Expr (that is, have Expr as their first field).  Since Expr only
+ * contains NodeTag, this is a formality, but it is an easy form of
+ * documentation.  See also the ExprState node types in execnodes.h.
  */
-typedef enum CoercionContext
-{
-	COERCION_IMPLICIT,			/* coercion in context of expression */
-	COERCION_ASSIGNMENT,		/* coercion in context of assignment */
-	COERCION_EXPLICIT			/* explicit cast operation */
-} CoercionContext;
-
-/*
- * CoercionForm - information showing how to display a function-call node
- */
-typedef enum CoercionForm
-{
-	COERCE_EXPLICIT_CALL,		/* display as a function call */
-	COERCE_EXPLICIT_CAST,		/* display as an explicit cast */
-	COERCE_IMPLICIT_CAST,		/* implicit cast, so hide it */
-	COERCE_DONTCARE				/* special case for pathkeys */
-} CoercionForm;
-
-/*
- * Expr
- *
- * Note: DISTINCT_EXPR implements the "x IS DISTINCT FROM y" construct.
- * This is similar to an OP_EXPR, except for its handling of NULL inputs.
- * The oper field is always an Oper node for the "=" operator for x and y.
- * (We use "=", not the more obvious "<>", because more datatypes have "="
- * than "<>".  This means the executor must invert the operator result.)
- */
-typedef enum OpType
-{
-	OP_EXPR, DISTINCT_EXPR, FUNC_EXPR,
-	OR_EXPR, AND_EXPR, NOT_EXPR, SUBPLAN_EXPR
-} OpType;
-
 typedef struct Expr
 {
 	NodeTag		type;
-	Oid			typeOid;		/* oid of the type of this expression */
-	OpType		opType;			/* kind of expression */
-	Node	   *oper;			/* operator node if needed (Oper, Func, or
-								 * SubPlan) */
-	List	   *args;			/* arguments to this expression */
 } Expr;
 
 /*
- * Oper - Expr subnode for an OP_EXPR (or DISTINCT_EXPR)
- *
- * NOTE: in the good old days 'opno' used to be both (or either, or
- * neither) the pg_operator oid, and/or the pg_proc oid depending
- * on the postgres module in question (parser->pg_operator,
- * executor->pg_proc, planner->both), the mood of the programmer,
- * and the phase of the moon (rumors that it was also depending on the day
- * of the week are probably false). To make things even more postgres-like
- * (i.e. a mess) some comments were referring to 'opno' using the name
- * 'opid'. Anyway, now we have two separate fields, and of course that
- * immediately removes all bugs from the code...		[ sp :-) ].
- *
- * Note also that opid is not necessarily filled in immediately on creation
- * of the node.  The planner makes sure it is valid before passing the node
- * tree to the executor, but during parsing/planning opid is typically 0.
- */
-typedef struct Oper
-{
-	NodeTag		type;
-	Oid			opno;			/* PG_OPERATOR OID of the operator */
-	Oid			opid;			/* PG_PROC OID of underlying function */
-	Oid			opresulttype;	/* PG_TYPE OID of result value */
-	bool		opretset;		/* true if operator returns set */
-	FunctionCachePtr op_fcache; /* runtime state, else NULL */
-} Oper;
-
-/*
- * Func - Expr subnode for a FUNC_EXPR
- */
-typedef struct Func
-{
-	NodeTag		type;
-	Oid			funcid;			/* PG_PROC OID of the function */
-	Oid			funcresulttype; /* PG_TYPE OID of result value */
-	bool		funcretset;		/* true if function returns set */
-	CoercionForm funcformat;	/* how to display this function call */
-	FunctionCachePtr func_fcache;		/* runtime state, or NULL */
-} Func;
-
-/*
- * Var
+ * Var - expression node representing a variable (ie, a table column)
  *
  * Note: during parsing/planning, varnoold/varoattno are always just copies
  * of varno/varattno.  At the tail end of planning, Var nodes appearing in
@@ -248,7 +147,7 @@ typedef struct Func
 
 typedef struct Var
 {
-	NodeTag		type;
+	Expr		xpr;
 	Index		varno;			/* index of this var's relation in the
 								 * range table (could also be INNER or
 								 * OUTER) */
@@ -272,7 +171,7 @@ typedef struct Var
  */
 typedef struct Const
 {
-	NodeTag		type;
+	Expr		xpr;
 	Oid			consttype;		/* PG_TYPE OID of the constant's datatype */
 	int			constlen;		/* typlen of the constant's datatype */
 	Datum		constvalue;		/* the constant's value */
@@ -300,12 +199,11 @@ typedef struct Const
  *
  *		PARAM_EXEC:	 The parameter is an internal executor parameter.
  *				It has a number contained in the `paramid' field.
- *
  * ----------------
  */
 typedef struct Param
 {
-	NodeTag		type;
+	Expr		xpr;
 	int			paramkind;		/* kind of parameter. See above */
 	AttrNumber	paramid;		/* numeric ID for parameter ("$1") */
 	char	   *paramname;		/* name for parameter ("$.foo") */
@@ -317,83 +215,16 @@ typedef struct Param
  */
 typedef struct Aggref
 {
-	NodeTag		type;
+	Expr		xpr;
 	Oid			aggfnoid;		/* pg_proc Oid of the aggregate */
 	Oid			aggtype;		/* type Oid of result of the aggregate */
-	Node	   *target;			/* expression we are aggregating on */
+	Expr	   *target;			/* expression we are aggregating on */
 	bool		aggstar;		/* TRUE if argument was really '*' */
 	bool		aggdistinct;	/* TRUE if it's agg(DISTINCT ...) */
+
+	/* XXX this should move to AggrefExprState: */
 	int			aggno;			/* workspace for executor (see nodeAgg.c) */
 } Aggref;
-
-/* ----------------
- * SubLink
- *
- * A SubLink represents a subselect appearing in an expression, and in some
- * cases also the combining operator(s) just above it.	The subLinkType
- * indicates the form of the expression represented:
- *	EXISTS_SUBLINK		EXISTS(SELECT ...)
- *	ALL_SUBLINK			(lefthand) op ALL (SELECT ...)
- *	ANY_SUBLINK			(lefthand) op ANY (SELECT ...)
- *	MULTIEXPR_SUBLINK	(lefthand) op (SELECT ...)
- *	EXPR_SUBLINK		(SELECT with single targetlist item ...)
- * For ALL, ANY, and MULTIEXPR, the lefthand is a list of expressions of the
- * same length as the subselect's targetlist.  MULTIEXPR will *always* have
- * a list with more than one entry; if the subselect has just one target
- * then the parser will create an EXPR_SUBLINK instead (and any operator
- * above the subselect will be represented separately).  Note that both
- * MULTIEXPR and EXPR require the subselect to deliver only one row.
- * ALL, ANY, and MULTIEXPR require the combining operators to deliver boolean
- * results.  These are reduced to one result per row using OR or AND semantics
- * depending on the "useor" flag.  ALL and ANY combine the per-row results
- * using AND and OR semantics respectively.
- *
- * NOTE: lefthand and oper have varying meanings depending on where you look
- * in the parse/plan pipeline:
- * 1. gram.y delivers a list of the (untransformed) lefthand expressions in
- *	  lefthand, and sets oper to a single A_Expr (not a list!) containing
- *	  the string name of the operator, but no arguments.
- * 2. The parser's expression transformation transforms lefthand normally,
- *	  and replaces oper with a list of Oper nodes, one per lefthand
- *	  expression.  These nodes represent the parser's resolution of exactly
- *	  which operator to apply to each pair of lefthand and targetlist
- *	  expressions.	However, we have not constructed actual Expr trees for
- *	  these operators yet.	This is the representation seen in saved rules
- *	  and in the rewriter.
- * 3. Finally, the planner converts the oper list to a list of normal Expr
- *	  nodes representing the application of the operator(s) to the lefthand
- *	  expressions and values from the inner targetlist.  The inner
- *	  targetlist items are represented by placeholder Param nodes.
- *	  The lefthand field is set to NIL, since its expressions are now in
- *	  the Expr list.  This representation is passed to the executor.
- *
- * Planner routines that might see either representation 2 or 3 can tell
- * the difference by checking whether lefthand is NIL or not.  Also,
- * representation 2 appears in a "bare" SubLink, while representation 3 is
- * found in SubLinks that are children of SubPlan nodes.
- *
- * In EXISTS and EXPR SubLinks, both lefthand and oper are unused and are
- * always NIL.	useor is not significant either for these sublink types.
- * ----------------
- */
-typedef enum SubLinkType
-{
-	EXISTS_SUBLINK, ALL_SUBLINK, ANY_SUBLINK, MULTIEXPR_SUBLINK, EXPR_SUBLINK
-} SubLinkType;
-
-
-typedef struct SubLink
-{
-	NodeTag		type;
-	SubLinkType subLinkType;	/* EXISTS, ALL, ANY, MULTIEXPR, EXPR */
-	bool		useor;			/* TRUE to combine column results with
-								 * "OR" not "AND" */
-	List	   *lefthand;		/* list of outer-query expressions on the
-								 * left */
-	List	   *oper;			/* list of Oper nodes for combining
-								 * operators */
-	Node	   *subselect;		/* subselect as Query* or parsetree */
-} SubLink;
 
 /* ----------------
  *	ArrayRef: describes an array subscripting operation
@@ -424,7 +255,7 @@ typedef struct SubLink
  */
 typedef struct ArrayRef
 {
-	NodeTag		type;
+	Expr		xpr;
 	Oid			refrestype;		/* type of the result of the ArrayRef
 								 * operation */
 	int			refattrlength;	/* typlen of array type */
@@ -435,11 +266,206 @@ typedef struct ArrayRef
 								 * array indexes */
 	List	   *reflowerindexpr;/* expressions that evaluate to lower
 								 * array indexes */
-	Node	   *refexpr;		/* the expression that evaluates to an
+	Expr	   *refexpr;		/* the expression that evaluates to an
 								 * array value */
-	Node	   *refassgnexpr;	/* expression for the source value, or
+	Expr	   *refassgnexpr;	/* expression for the source value, or
 								 * NULL if fetch */
 } ArrayRef;
+
+/*
+ * CoercionContext - distinguishes the allowed set of type casts
+ *
+ * NB: ordering of the alternatives is significant; later (larger) values
+ * allow more casts than earlier ones.
+ */
+typedef enum CoercionContext
+{
+	COERCION_IMPLICIT,			/* coercion in context of expression */
+	COERCION_ASSIGNMENT,		/* coercion in context of assignment */
+	COERCION_EXPLICIT			/* explicit cast operation */
+} CoercionContext;
+
+/*
+ * CoercionForm - information showing how to display a function-call node
+ */
+typedef enum CoercionForm
+{
+	COERCE_EXPLICIT_CALL,		/* display as a function call */
+	COERCE_EXPLICIT_CAST,		/* display as an explicit cast */
+	COERCE_IMPLICIT_CAST,		/* implicit cast, so hide it */
+	COERCE_DONTCARE				/* special case for pathkeys */
+} CoercionForm;
+
+/*
+ * FuncExpr - expression node for a function call
+ */
+typedef struct FuncExpr
+{
+	Expr		xpr;
+	Oid			funcid;			/* PG_PROC OID of the function */
+	Oid			funcresulttype; /* PG_TYPE OID of result value */
+	bool		funcretset;		/* true if function returns set */
+	CoercionForm funcformat;	/* how to display this function call */
+	List	   *args;			/* arguments to the function */
+
+	FunctionCachePtr func_fcache;		/* XXX runtime state, or NULL */
+} FuncExpr;
+
+/*
+ * OpExpr - expression node for an operator invocation
+ *
+ * Semantically, this is essentially the same as a function call.
+ *
+ * Note that opfuncid is not necessarily filled in immediately on creation
+ * of the node.  The planner makes sure it is valid before passing the node
+ * tree to the executor, but during parsing/planning opfuncid is typically 0.
+ */
+typedef struct OpExpr
+{
+	Expr		xpr;
+	Oid			opno;			/* PG_OPERATOR OID of the operator */
+	Oid			opfuncid;		/* PG_PROC OID of underlying function */
+	Oid			opresulttype;	/* PG_TYPE OID of result value */
+	bool		opretset;		/* true if operator returns set */
+	List	   *args;			/* arguments to the operator (1 or 2) */
+
+	FunctionCachePtr op_fcache; /* XXX runtime state, else NULL */
+} OpExpr;
+
+/*
+ * DistinctExpr - expression node for "x IS DISTINCT FROM y"
+ *
+ * Except for the nodetag, this is represented identically to an OpExpr
+ * referencing the "=" operator for x and y.
+ * We use "=", not the more obvious "<>", because more datatypes have "="
+ * than "<>".  This means the executor must invert the operator result.
+ * Note that the operator function won't be called at all if either input
+ * is NULL, since then the result can be determined directly.
+ */
+typedef OpExpr DistinctExpr;
+
+/*
+ * BoolExpr - expression node for the basic Boolean operators AND, OR, NOT
+ *
+ * Notice the arguments are given as a List.  For NOT, of course the list
+ * must always have exactly one element.  For AND and OR, the executor can
+ * handle any number of arguments.  The parser treats AND and OR as binary
+ * and so it only produces two-element lists, but the optimizer will flatten
+ * trees of AND and OR nodes to produce longer lists when possible.
+ */
+typedef enum BoolExprType
+{
+	AND_EXPR, OR_EXPR, NOT_EXPR
+} BoolExprType;
+
+typedef struct BoolExpr
+{
+	Expr		xpr;
+	BoolExprType boolop;
+	List	   *args;			/* arguments to this expression */
+} BoolExpr;
+
+/* ----------------
+ * SubLink
+ *
+ * A SubLink represents a subselect appearing in an expression, and in some
+ * cases also the combining operator(s) just above it.	The subLinkType
+ * indicates the form of the expression represented:
+ *	EXISTS_SUBLINK		EXISTS(SELECT ...)
+ *	ALL_SUBLINK			(lefthand) op ALL (SELECT ...)
+ *	ANY_SUBLINK			(lefthand) op ANY (SELECT ...)
+ *	MULTIEXPR_SUBLINK	(lefthand) op (SELECT ...)
+ *	EXPR_SUBLINK		(SELECT with single targetlist item ...)
+ * For ALL, ANY, and MULTIEXPR, the lefthand is a list of expressions of the
+ * same length as the subselect's targetlist.  MULTIEXPR will *always* have
+ * a list with more than one entry; if the subselect has just one target
+ * then the parser will create an EXPR_SUBLINK instead (and any operator
+ * above the subselect will be represented separately).  Note that both
+ * MULTIEXPR and EXPR require the subselect to deliver only one row.
+ * ALL, ANY, and MULTIEXPR require the combining operators to deliver boolean
+ * results.  These are reduced to one result per row using OR or AND semantics
+ * depending on the "useor" flag.  ALL and ANY combine the per-row results
+ * using AND and OR semantics respectively.
+ *
+ * SubLink is classed as an Expr node, but it is not actually executable;
+ * it must be replaced in the expression tree by a SubPlanExpr node during
+ * planning.
+ *
+ * NOTE: lefthand and oper have varying meanings depending on where you look
+ * in the parse/plan pipeline:
+ * 1. gram.y delivers a list of the (untransformed) lefthand expressions in
+ *	  lefthand, and sets oper to a single A_Expr (not a list!) containing
+ *	  the string name of the operator, but no arguments.
+ * 2. The parser's expression transformation transforms lefthand normally,
+ *	  and replaces oper with a list of OpExpr nodes, one per lefthand
+ *	  expression.  These nodes represent the parser's resolution of exactly
+ *	  which operator to apply to each pair of lefthand and targetlist
+ *	  expressions.	However, we have not constructed complete Expr trees for
+ *	  these operations yet: the args fields of the OpExpr nodes are NIL.
+ *	  This is the representation seen in saved rules and in the rewriter.
+ * 3. Finally, the planner converts the oper list to a list of normal OpExpr
+ *	  nodes representing the application of the operator(s) to the lefthand
+ *	  expressions and values from the inner targetlist.  The inner
+ *	  targetlist items are represented by placeholder Param nodes.
+ *	  The lefthand field is set to NIL, since its expressions are now in
+ *	  the Expr list.  This representation is passed to the executor.
+ *
+ * Planner routines that might see either representation 2 or 3 can tell
+ * the difference by checking whether lefthand is NIL or not.  Also,
+ * representation 2 appears in a "bare" SubLink, while representation 3 is
+ * found in SubLinks that are children of SubPlanExpr nodes.
+ *
+ * In EXISTS and EXPR SubLinks, both lefthand and oper are unused and are
+ * always NIL.	useor is not significant either for these sublink types.
+ * ----------------
+ */
+typedef enum SubLinkType
+{
+	EXISTS_SUBLINK, ALL_SUBLINK, ANY_SUBLINK, MULTIEXPR_SUBLINK, EXPR_SUBLINK
+} SubLinkType;
+
+
+typedef struct SubLink
+{
+	Expr		xpr;
+	SubLinkType subLinkType;	/* EXISTS, ALL, ANY, MULTIEXPR, EXPR */
+	bool		useor;			/* TRUE to combine column results with
+								 * "OR" not "AND" */
+	List	   *lefthand;		/* list of outer-query expressions on the
+								 * left */
+	List	   *oper;			/* list of OpExpr nodes for combining
+								 * operators, or final list of executable
+								 * expressions */
+	Node	   *subselect;		/* subselect as Query* or parsetree */
+} SubLink;
+
+/*
+ * SubPlanExpr - executable expression node for a subplan (sub-SELECT)
+ *
+ * The planner replaces SubLink nodes in expression trees with SubPlanExpr
+ * nodes after it has finished planning the subquery.  See notes above.
+ */
+typedef struct SubPlanExpr
+{
+	Expr		xpr;
+	Oid			typeOid;		/* PG_TYPE OID of the expression result */
+	struct Plan *plan;			/* subselect plan itself */
+	int			plan_id;		/* dummy thing because of we haven't equal
+								 * funcs for plan nodes... actually, we
+								 * could put *plan itself somewhere else
+								 * (TopPlan node ?)... */
+	List	   *rtable;			/* range table for subselect */
+	/* setParam and parParam are lists of integers (param IDs) */
+	List	   *setParam;		/* non-correlated EXPR & EXISTS subqueries
+								 * have to set some Params for paren Plan */
+	List	   *parParam;		/* indices of input Params from parent plan */
+	List	   *args;			/* exprs to pass as parParam values */
+	SubLink    *sublink;		/* SubLink node from parser; holds info
+								 * about what to do with subselect's
+								 * results */
+
+	struct SubPlanState *pstate; /* XXX TEMPORARY HACK */
+} SubPlanExpr;
 
 /* ----------------
  * FieldSelect
@@ -453,8 +479,8 @@ typedef struct ArrayRef
 
 typedef struct FieldSelect
 {
-	NodeTag		type;
-	Node	   *arg;			/* input expression */
+	Expr		xpr;
+	Expr	   *arg;			/* input expression */
 	AttrNumber	fieldnum;		/* attribute number of field to extract */
 	Oid			resulttype;		/* type of the field (result type of this
 								 * node) */
@@ -476,12 +502,133 @@ typedef struct FieldSelect
 
 typedef struct RelabelType
 {
-	NodeTag		type;
-	Node	   *arg;			/* input expression */
+	Expr		xpr;
+	Expr	   *arg;			/* input expression */
 	Oid			resulttype;		/* output type of coercion expression */
 	int32		resulttypmod;	/* output typmod (usually -1) */
 	CoercionForm relabelformat;	/* how to display this node */
 } RelabelType;
+
+/*
+ * CaseExpr - a CASE expression
+ */
+typedef struct CaseExpr
+{
+	Expr		xpr;
+	Oid			casetype;		/* type of expression result */
+	Expr	   *arg;			/* implicit equality comparison argument */
+	List	   *args;			/* the arguments (list of WHEN clauses) */
+	Expr	   *defresult;		/* the default result (ELSE clause) */
+} CaseExpr;
+
+/*
+ * CaseWhen - an argument to a CASE expression
+ */
+typedef struct CaseWhen
+{
+	Expr		xpr;
+	Expr	   *expr;			/* condition expression */
+	Expr	   *result;			/* substitution result */
+} CaseWhen;
+
+/* ----------------
+ * NullTest
+ *
+ * NullTest represents the operation of testing a value for NULLness.
+ * Currently, we only support scalar input values, but eventually a
+ * row-constructor input should be supported.
+ * The appropriate test is performed and returned as a boolean Datum.
+ * ----------------
+ */
+
+typedef enum NullTestType
+{
+	IS_NULL, IS_NOT_NULL
+} NullTestType;
+
+typedef struct NullTest
+{
+	Expr		xpr;
+	Expr	   *arg;			/* input expression */
+	NullTestType nulltesttype;	/* IS NULL, IS NOT NULL */
+} NullTest;
+
+/*
+ * BooleanTest
+ *
+ * BooleanTest represents the operation of determining whether a boolean
+ * is TRUE, FALSE, or UNKNOWN (ie, NULL).  All six meaningful combinations
+ * are supported.  Note that a NULL input does *not* cause a NULL result.
+ * The appropriate test is performed and returned as a boolean Datum.
+ */
+
+typedef enum BoolTestType
+{
+	IS_TRUE, IS_NOT_TRUE, IS_FALSE, IS_NOT_FALSE, IS_UNKNOWN, IS_NOT_UNKNOWN
+} BoolTestType;
+
+typedef struct BooleanTest
+{
+	Expr		xpr;
+	Expr	   *arg;			/* input expression */
+	BoolTestType booltesttype;	/* test type */
+} BooleanTest;
+
+/*
+ * ConstraintTest
+ *
+ * ConstraintTest represents the operation of testing a value to see whether
+ * it meets a constraint.  If so, the input value is returned as the result;
+ * if not, an error is raised.
+ */
+
+typedef enum ConstraintTestType
+{
+	CONSTR_TEST_NOTNULL,
+	CONSTR_TEST_CHECK
+} ConstraintTestType;
+
+typedef struct ConstraintTest
+{
+	Expr		xpr;
+	Expr	   *arg;			/* input expression */
+	ConstraintTestType testtype;	/* test type */
+	char	   *name;			/* name of constraint (for error msgs) */
+	char	   *domname; 		/* name of domain (for error messages) */
+	Expr	   *check_expr;		/* for CHECK test, a boolean expression */
+} ConstraintTest;
+
+/*
+ * Placeholder node for the value to be processed by a domains
+ * check constraint.  This is effectively like a Param; could we use
+ * a Param node instead?
+ */
+typedef struct ConstraintTestValue
+{
+	Expr		xpr;
+	Oid			typeId;
+	int32		typeMod;
+} ConstraintTestValue;
+
+
+/*
+ * TargetEntry -
+ *	   a target entry (used in query target lists)
+ *
+ * Strictly speaking, a TargetEntry isn't an expression node (since it can't
+ * be evaluated by ExecEvalExpr).  But we treat it as one anyway, since in
+ * very many places it's convenient to process a whole query targetlist as a
+ * single expression tree.
+ *
+ * The separation between TargetEntry and Resdom is historical.  One of these
+ * days, Resdom should probably get folded into TargetEntry.
+ */
+typedef struct TargetEntry
+{
+	Expr		xpr;
+	Resdom	   *resdom;			/* descriptor for targetlist item */
+	Expr	   *expr;			/* expression to evaluate */
+} TargetEntry;
 
 
 /* ----------------------------------------------------------------

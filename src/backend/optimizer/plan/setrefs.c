@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.84 2002/12/05 15:50:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.85 2002/12/12 15:49:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,7 +52,7 @@ static Node *replace_vars_with_subplan_refs(Node *node,
 							   bool tlist_has_non_vars);
 static Node *replace_vars_with_subplan_refs_mutator(Node *node,
 						replace_vars_with_subplan_refs_context *context);
-static bool fix_opids_walker(Node *node, void *context);
+static bool fix_opfuncids_walker(Node *node, void *context);
 
 /*****************************************************************************
  *
@@ -219,7 +219,7 @@ set_plan_references(Plan *plan, List *rtable)
 	 * subplan references in this plan's tlist and quals.  If we did the
 	 * reference-adjustments bottom-up, then we would fail to match this
 	 * plan's var nodes against the already-modified nodes of the
-	 * children.  Fortunately, that consideration doesn't apply to SubPlan
+	 * children.  Fortunately, that consideration doesn't apply to SubPlanExpr
 	 * nodes; else we'd need two passes over the expression trees.
 	 */
 	set_plan_references(plan->lefttree, rtable);
@@ -227,9 +227,9 @@ set_plan_references(Plan *plan, List *rtable)
 
 	foreach(pl, plan->initPlan)
 	{
-		SubPlan    *sp = (SubPlan *) lfirst(pl);
+		SubPlanExpr *sp = (SubPlanExpr *) lfirst(pl);
 
-		Assert(IsA(sp, SubPlan));
+		Assert(IsA(sp, SubPlanExpr));
 		set_plan_references(sp->plan, sp->rtable);
 	}
 }
@@ -238,8 +238,8 @@ set_plan_references(Plan *plan, List *rtable)
  * fix_expr_references
  *	  Do final cleanup on expressions (targetlists or quals).
  *
- * This consists of looking up operator opcode info for Oper nodes
- * and recursively performing set_plan_references on SubPlans.
+ * This consists of looking up operator opcode info for OpExpr nodes
+ * and recursively performing set_plan_references on subplans.
  *
  * The Plan argument is currently unused, but might be needed again someday.
  */
@@ -255,20 +255,15 @@ fix_expr_references_walker(Node *node, void *context)
 {
 	if (node == NULL)
 		return false;
-	if (IsA(node, Expr))
+	if (IsA(node, OpExpr))
+		set_opfuncid((OpExpr *) node);
+	else if (IsA(node, DistinctExpr))
+		set_opfuncid((OpExpr *) node); /* rely on struct equivalence */
+	else if (IsA(node, SubPlanExpr))
 	{
-		Expr   *expr = (Expr *) node;
+		SubPlanExpr *sp = (SubPlanExpr *) node;
 
-		if (expr->opType == OP_EXPR ||
-			expr->opType == DISTINCT_EXPR)
-			replace_opid((Oper *) expr->oper);
-		else if (expr->opType == SUBPLAN_EXPR)
-		{
-			SubPlan	   *sp = (SubPlan *) expr->oper;
-
-			Assert(IsA(sp, SubPlan));
-			set_plan_references(sp->plan, sp->rtable);
-		}
+		set_plan_references(sp->plan, sp->rtable);
 	}
 	return expression_tree_walker(node, fix_expr_references_walker, context);
 }
@@ -362,12 +357,13 @@ set_uppernode_references(Plan *plan, Index subvarno)
 		TargetEntry *tle = (TargetEntry *) lfirst(l);
 		Node	   *newexpr;
 
-		newexpr = replace_vars_with_subplan_refs(tle->expr,
+		newexpr = replace_vars_with_subplan_refs((Node *) tle->expr,
 												 subvarno,
 												 subplan_targetlist,
 												 tlist_has_non_vars);
 		output_targetlist = lappend(output_targetlist,
-								  makeTargetEntry(tle->resdom, newexpr));
+								  makeTargetEntry(tle->resdom,
+												  (Expr *) newexpr));
 	}
 	plan->targetlist = output_targetlist;
 
@@ -570,8 +566,8 @@ replace_vars_with_subplan_refs_mutator(Node *node,
  *****************************************************************************/
 
 /*
- * fix_opids
- *	  Calculate opid field from opno for each Oper node in given tree.
+ * fix_opfuncids
+ *	  Calculate opfuncid field from opno for each OpExpr node in given tree.
  *	  The given tree can be anything expression_tree_walker handles.
  *
  * The argument is modified in-place.  (This is OK since we'd want the
@@ -579,24 +575,20 @@ replace_vars_with_subplan_refs_mutator(Node *node,
  * shared structure.)
  */
 void
-fix_opids(Node *node)
+fix_opfuncids(Node *node)
 {
 	/* This tree walk requires no special setup, so away we go... */
-	fix_opids_walker(node, NULL);
+	fix_opfuncids_walker(node, NULL);
 }
 
 static bool
-fix_opids_walker(Node *node, void *context)
+fix_opfuncids_walker(Node *node, void *context)
 {
 	if (node == NULL)
 		return false;
-	if (IsA(node, Expr))
-	{
-		Expr   *expr = (Expr *) node;
-
-		if (expr->opType == OP_EXPR ||
-			expr->opType == DISTINCT_EXPR)
-			replace_opid((Oper *) expr->oper);
-	}
-	return expression_tree_walker(node, fix_opids_walker, context);
+	if (IsA(node, OpExpr))
+		set_opfuncid((OpExpr *) node);
+	else if (IsA(node, DistinctExpr))
+		set_opfuncid((OpExpr *) node); /* rely on struct equivalence */
+	return expression_tree_walker(node, fix_opfuncids_walker, context);
 }

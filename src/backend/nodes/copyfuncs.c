@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.229 2002/12/06 05:00:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.230 2002/12/12 15:49:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -563,21 +563,6 @@ _copyLimit(Limit *from)
 	return newnode;
 }
 
-static SubPlan *
-_copySubPlan(SubPlan *from)
-{
-	SubPlan    *newnode = makeNode(SubPlan);
-
-	COPY_NODE_FIELD(plan);
-	COPY_SCALAR_FIELD(plan_id);
-	COPY_NODE_FIELD(rtable);
-	COPY_INTLIST_FIELD(setParam);
-	COPY_INTLIST_FIELD(parParam);
-	COPY_NODE_FIELD(sublink);
-
-	return newnode;
-}
-
 /* ****************************************************************
  *					   primnodes.h copy functions
  * ****************************************************************
@@ -603,20 +588,9 @@ _copyResdom(Resdom *from)
 	return newnode;
 }
 
-static Fjoin *
-_copyFjoin(Fjoin *from)
-{
-	Fjoin	   *newnode = makeNode(Fjoin);
-
-	COPY_SCALAR_FIELD(fj_initialized);
-	COPY_SCALAR_FIELD(fj_nNodes);
-	COPY_NODE_FIELD(fj_innerNode);
-	COPY_POINTER_FIELD(fj_results, from->fj_nNodes * sizeof(Datum));
-	COPY_POINTER_FIELD(fj_alwaysDone, from->fj_nNodes * sizeof(bool));
-
-	return newnode;
-}
-
+/*
+ * _copyAlias
+ */
 static Alias *
 _copyAlias(Alias *from)
 {
@@ -628,6 +602,9 @@ _copyAlias(Alias *from)
 	return newnode;
 }
 
+/*
+ * _copyRangeVar
+ */
 static RangeVar *
 _copyRangeVar(RangeVar *from)
 {
@@ -644,20 +621,11 @@ _copyRangeVar(RangeVar *from)
 }
 
 /*
- * _copyExpr
+ * We don't need a _copyExpr because Expr is an abstract supertype which
+ * should never actually get instantiated.  Also, since it has no common
+ * fields except NodeTag, there's no need for a helper routine to factor
+ * out copying the common fields...
  */
-static Expr *
-_copyExpr(Expr *from)
-{
-	Expr	   *newnode = makeNode(Expr);
-
-	COPY_SCALAR_FIELD(typeOid);
-	COPY_SCALAR_FIELD(opType);
-	COPY_NODE_FIELD(oper);
-	COPY_NODE_FIELD(args);
-
-	return newnode;
-}
 
 /*
  * _copyVar
@@ -674,25 +642,6 @@ _copyVar(Var *from)
 	COPY_SCALAR_FIELD(varlevelsup);
 	COPY_SCALAR_FIELD(varnoold);
 	COPY_SCALAR_FIELD(varoattno);
-
-	return newnode;
-}
-
-/*
- * _copyOper
- */
-static Oper *
-_copyOper(Oper *from)
-{
-	Oper	   *newnode = makeNode(Oper);
-
-	COPY_SCALAR_FIELD(opno);
-	COPY_SCALAR_FIELD(opid);
-	COPY_SCALAR_FIELD(opresulttype);
-	COPY_SCALAR_FIELD(opretset);
-
-	/* Do not copy the run-time state, if any */
-	newnode->op_fcache = NULL;
 
 	return newnode;
 }
@@ -749,25 +698,6 @@ _copyParam(Param *from)
 }
 
 /*
- * _copyFunc
- */
-static Func *
-_copyFunc(Func *from)
-{
-	Func	   *newnode = makeNode(Func);
-
-	COPY_SCALAR_FIELD(funcid);
-	COPY_SCALAR_FIELD(funcresulttype);
-	COPY_SCALAR_FIELD(funcretset);
-	COPY_SCALAR_FIELD(funcformat);
-
-	/* Do not copy the run-time state, if any */
-	newnode->func_fcache = NULL;
-
-	return newnode;
-}
-
-/*
  * _copyAggref
  */
 static Aggref *
@@ -780,7 +710,102 @@ _copyAggref(Aggref *from)
 	COPY_NODE_FIELD(target);
 	COPY_SCALAR_FIELD(aggstar);
 	COPY_SCALAR_FIELD(aggdistinct);
-	COPY_SCALAR_FIELD(aggno);	/* probably not necessary */
+	COPY_SCALAR_FIELD(aggno);	/* will go away soon */
+
+	return newnode;
+}
+
+/*
+ * _copyArrayRef
+ */
+static ArrayRef *
+_copyArrayRef(ArrayRef *from)
+{
+	ArrayRef   *newnode = makeNode(ArrayRef);
+
+	COPY_SCALAR_FIELD(refrestype);
+	COPY_SCALAR_FIELD(refattrlength);
+	COPY_SCALAR_FIELD(refelemlength);
+	COPY_SCALAR_FIELD(refelembyval);
+	COPY_SCALAR_FIELD(refelemalign);
+	COPY_NODE_FIELD(refupperindexpr);
+	COPY_NODE_FIELD(reflowerindexpr);
+	COPY_NODE_FIELD(refexpr);
+	COPY_NODE_FIELD(refassgnexpr);
+
+	return newnode;
+}
+
+/*
+ * _copyFuncExpr
+ */
+static FuncExpr *
+_copyFuncExpr(FuncExpr *from)
+{
+	FuncExpr	   *newnode = makeNode(FuncExpr);
+
+	COPY_SCALAR_FIELD(funcid);
+	COPY_SCALAR_FIELD(funcresulttype);
+	COPY_SCALAR_FIELD(funcretset);
+	COPY_SCALAR_FIELD(funcformat);
+	COPY_NODE_FIELD(args);
+
+	/* Do not copy the run-time state, if any */
+	newnode->func_fcache = NULL;
+
+	return newnode;
+}
+
+/*
+ * _copyOpExpr
+ */
+static OpExpr *
+_copyOpExpr(OpExpr *from)
+{
+	OpExpr	   *newnode = makeNode(OpExpr);
+
+	COPY_SCALAR_FIELD(opno);
+	COPY_SCALAR_FIELD(opfuncid);
+	COPY_SCALAR_FIELD(opresulttype);
+	COPY_SCALAR_FIELD(opretset);
+	COPY_NODE_FIELD(args);
+
+	/* Do not copy the run-time state, if any */
+	newnode->op_fcache = NULL;
+
+	return newnode;
+}
+
+/*
+ * _copyDistinctExpr
+ */
+static DistinctExpr *
+_copyDistinctExpr(DistinctExpr *from)
+{
+	DistinctExpr	   *newnode = makeNode(DistinctExpr);
+
+	COPY_SCALAR_FIELD(opno);
+	COPY_SCALAR_FIELD(opfuncid);
+	COPY_SCALAR_FIELD(opresulttype);
+	COPY_SCALAR_FIELD(opretset);
+	COPY_NODE_FIELD(args);
+
+	/* Do not copy the run-time state, if any */
+	newnode->op_fcache = NULL;
+
+	return newnode;
+}
+
+/*
+ * _copyBoolExpr
+ */
+static BoolExpr *
+_copyBoolExpr(BoolExpr *from)
+{
+	BoolExpr	   *newnode = makeNode(BoolExpr);
+
+	COPY_SCALAR_FIELD(boolop);
+	COPY_NODE_FIELD(args);
 
 	return newnode;
 }
@@ -798,6 +823,26 @@ _copySubLink(SubLink *from)
 	COPY_NODE_FIELD(lefthand);
 	COPY_NODE_FIELD(oper);
 	COPY_NODE_FIELD(subselect);
+
+	return newnode;
+}
+
+/*
+ * _copySubPlanExpr
+ */
+static SubPlanExpr *
+_copySubPlanExpr(SubPlanExpr *from)
+{
+	SubPlanExpr    *newnode = makeNode(SubPlanExpr);
+
+	COPY_SCALAR_FIELD(typeOid);
+	COPY_NODE_FIELD(plan);
+	COPY_SCALAR_FIELD(plan_id);
+	COPY_NODE_FIELD(rtable);
+	COPY_INTLIST_FIELD(setParam);
+	COPY_INTLIST_FIELD(parParam);
+	COPY_NODE_FIELD(args);
+	COPY_NODE_FIELD(sublink);
 
 	return newnode;
 }
@@ -834,6 +879,112 @@ _copyRelabelType(RelabelType *from)
 	return newnode;
 }
 
+/*
+ * _copyCaseExpr
+ */
+static CaseExpr *
+_copyCaseExpr(CaseExpr *from)
+{
+	CaseExpr   *newnode = makeNode(CaseExpr);
+
+	COPY_SCALAR_FIELD(casetype);
+	COPY_NODE_FIELD(arg);
+	COPY_NODE_FIELD(args);
+	COPY_NODE_FIELD(defresult);
+
+	return newnode;
+}
+
+/*
+ * _copyCaseWhen
+ */
+static CaseWhen *
+_copyCaseWhen(CaseWhen *from)
+{
+	CaseWhen   *newnode = makeNode(CaseWhen);
+
+	COPY_NODE_FIELD(expr);
+	COPY_NODE_FIELD(result);
+
+	return newnode;
+}
+
+/*
+ * _copyNullTest
+ */
+static NullTest *
+_copyNullTest(NullTest *from)
+{
+	NullTest   *newnode = makeNode(NullTest);
+
+	COPY_NODE_FIELD(arg);
+	COPY_SCALAR_FIELD(nulltesttype);
+
+	return newnode;
+}
+
+/*
+ * _copyBooleanTest
+ */
+static BooleanTest *
+_copyBooleanTest(BooleanTest *from)
+{
+	BooleanTest *newnode = makeNode(BooleanTest);
+
+	COPY_NODE_FIELD(arg);
+	COPY_SCALAR_FIELD(booltesttype);
+
+	return newnode;
+}
+
+/*
+ * _copyConstraintTest
+ */
+static ConstraintTest *
+_copyConstraintTest(ConstraintTest *from)
+{
+	ConstraintTest *newnode = makeNode(ConstraintTest);
+
+	COPY_NODE_FIELD(arg);
+	COPY_SCALAR_FIELD(testtype);
+	COPY_STRING_FIELD(name);
+	COPY_STRING_FIELD(domname);
+	COPY_NODE_FIELD(check_expr);
+
+	return newnode;
+}
+
+/*
+ * _copyConstraintTestValue
+ */
+static ConstraintTestValue *
+_copyConstraintTestValue(ConstraintTestValue *from)
+{
+	ConstraintTestValue *newnode = makeNode(ConstraintTestValue);
+
+	COPY_SCALAR_FIELD(typeId);
+	COPY_SCALAR_FIELD(typeMod);
+
+	return newnode;
+}
+
+/*
+ * _copyTargetEntry
+ */
+static TargetEntry *
+_copyTargetEntry(TargetEntry *from)
+{
+	TargetEntry *newnode = makeNode(TargetEntry);
+
+	COPY_NODE_FIELD(resdom);
+	COPY_NODE_FIELD(expr);
+
+	return newnode;
+}
+
+/*
+ * _copyRangeTblRef
+ */
 static RangeTblRef *
 _copyRangeTblRef(RangeTblRef *from)
 {
@@ -844,6 +995,9 @@ _copyRangeTblRef(RangeTblRef *from)
 	return newnode;
 }
 
+/*
+ * _copyJoinExpr
+ */
 static JoinExpr *
 _copyJoinExpr(JoinExpr *from)
 {
@@ -861,6 +1015,9 @@ _copyJoinExpr(JoinExpr *from)
 	return newnode;
 }
 
+/*
+ * _copyFromExpr
+ */
 static FromExpr *
 _copyFromExpr(FromExpr *from)
 {
@@ -868,24 +1025,6 @@ _copyFromExpr(FromExpr *from)
 
 	COPY_NODE_FIELD(fromlist);
 	COPY_NODE_FIELD(quals);
-
-	return newnode;
-}
-
-static ArrayRef *
-_copyArrayRef(ArrayRef *from)
-{
-	ArrayRef   *newnode = makeNode(ArrayRef);
-
-	COPY_SCALAR_FIELD(refrestype);
-	COPY_SCALAR_FIELD(refattrlength);
-	COPY_SCALAR_FIELD(refelemlength);
-	COPY_SCALAR_FIELD(refelembyval);
-	COPY_SCALAR_FIELD(refelemalign);
-	COPY_NODE_FIELD(refupperindexpr);
-	COPY_NODE_FIELD(reflowerindexpr);
-	COPY_NODE_FIELD(refexpr);
-	COPY_NODE_FIELD(refassgnexpr);
 
 	return newnode;
 }
@@ -963,18 +1102,6 @@ _copyJoinInfo(JoinInfo *from)
  *					parsenodes.h copy functions
  * ****************************************************************
  */
-
-static TargetEntry *
-_copyTargetEntry(TargetEntry *from)
-{
-	TargetEntry *newnode = makeNode(TargetEntry);
-
-	COPY_NODE_FIELD(resdom);
-	COPY_NODE_FIELD(fjoin);
-	COPY_NODE_FIELD(expr);
-
-	return newnode;
-}
 
 static RangeTblEntry *
 _copyRangeTblEntry(RangeTblEntry *from)
@@ -1170,6 +1297,14 @@ _copyTypeName(TypeName *from)
 	return newnode;
 }
 
+static DomainConstraintValue *
+_copyDomainConstraintValue(DomainConstraintValue *from)
+{
+	DomainConstraintValue *newnode = makeNode(DomainConstraintValue);
+
+	return newnode;
+}
+
 static SortGroupBy *
 _copySortGroupBy(SortGroupBy *from)
 {
@@ -1256,85 +1391,6 @@ _copyConstraint(Constraint *from)
 	COPY_NODE_FIELD(raw_expr);
 	COPY_STRING_FIELD(cooked_expr);
 	COPY_NODE_FIELD(keys);
-
-	return newnode;
-}
-
-static CaseExpr *
-_copyCaseExpr(CaseExpr *from)
-{
-	CaseExpr   *newnode = makeNode(CaseExpr);
-
-	COPY_SCALAR_FIELD(casetype);
-	COPY_NODE_FIELD(arg);
-	COPY_NODE_FIELD(args);
-	COPY_NODE_FIELD(defresult);
-
-	return newnode;
-}
-
-static CaseWhen *
-_copyCaseWhen(CaseWhen *from)
-{
-	CaseWhen   *newnode = makeNode(CaseWhen);
-
-	COPY_NODE_FIELD(expr);
-	COPY_NODE_FIELD(result);
-
-	return newnode;
-}
-
-static NullTest *
-_copyNullTest(NullTest *from)
-{
-	NullTest   *newnode = makeNode(NullTest);
-
-	COPY_NODE_FIELD(arg);
-	COPY_SCALAR_FIELD(nulltesttype);
-
-	return newnode;
-}
-
-static BooleanTest *
-_copyBooleanTest(BooleanTest *from)
-{
-	BooleanTest *newnode = makeNode(BooleanTest);
-
-	COPY_NODE_FIELD(arg);
-	COPY_SCALAR_FIELD(booltesttype);
-
-	return newnode;
-}
-
-static ConstraintTest *
-_copyConstraintTest(ConstraintTest *from)
-{
-	ConstraintTest *newnode = makeNode(ConstraintTest);
-
-	COPY_NODE_FIELD(arg);
-	COPY_SCALAR_FIELD(testtype);
-	COPY_STRING_FIELD(name);
-	COPY_STRING_FIELD(domname);
-	COPY_NODE_FIELD(check_expr);
-
-	return newnode;
-}
-
-static DomainConstraintValue *
-_copyDomainConstraintValue(DomainConstraintValue *from)
-{
-	DomainConstraintValue *newnode = makeNode(DomainConstraintValue);
-
-	return newnode;
-}
-
-static ConstraintTestValue *
-_copyConstraintTestValue(ConstraintTestValue *from)
-{
-	ConstraintTestValue *newnode = makeNode(ConstraintTestValue);
-
-	COPY_SCALAR_FIELD(typeId);
-	COPY_SCALAR_FIELD(typeMod);
 
 	return newnode;
 }
@@ -2350,9 +2406,6 @@ copyObject(void *from)
 		case T_Limit:
 			retval = _copyLimit(from);
 			break;
-		case T_SubPlan:
-			retval = _copySubPlan(from);
-			break;
 
 			/*
 			 * PRIMITIVE NODES
@@ -2360,23 +2413,14 @@ copyObject(void *from)
 		case T_Resdom:
 			retval = _copyResdom(from);
 			break;
-		case T_Fjoin:
-			retval = _copyFjoin(from);
-			break;
 		case T_Alias:
 			retval = _copyAlias(from);
 			break;
 		case T_RangeVar:
 			retval = _copyRangeVar(from);
 			break;
-		case T_Expr:
-			retval = _copyExpr(from);
-			break;
 		case T_Var:
 			retval = _copyVar(from);
-			break;
-		case T_Oper:
-			retval = _copyOper(from);
 			break;
 		case T_Const:
 			retval = _copyConst(from);
@@ -2384,20 +2428,56 @@ copyObject(void *from)
 		case T_Param:
 			retval = _copyParam(from);
 			break;
-		case T_Func:
-			retval = _copyFunc(from);
-			break;
 		case T_Aggref:
 			retval = _copyAggref(from);
 			break;
+		case T_ArrayRef:
+			retval = _copyArrayRef(from);
+			break;
+		case T_FuncExpr:
+			retval = _copyFuncExpr(from);
+			break;
+		case T_OpExpr:
+			retval = _copyOpExpr(from);
+			break;
+		case T_DistinctExpr:
+			retval = _copyDistinctExpr(from);
+			break;
+		case T_BoolExpr:
+			retval = _copyBoolExpr(from);
+			break;
 		case T_SubLink:
 			retval = _copySubLink(from);
+			break;
+		case T_SubPlanExpr:
+			retval = _copySubPlanExpr(from);
 			break;
 		case T_FieldSelect:
 			retval = _copyFieldSelect(from);
 			break;
 		case T_RelabelType:
 			retval = _copyRelabelType(from);
+			break;
+		case T_CaseExpr:
+			retval = _copyCaseExpr(from);
+			break;
+		case T_CaseWhen:
+			retval = _copyCaseWhen(from);
+			break;
+		case T_NullTest:
+			retval = _copyNullTest(from);
+			break;
+		case T_BooleanTest:
+			retval = _copyBooleanTest(from);
+			break;
+		case T_ConstraintTest:
+			retval = _copyConstraintTest(from);
+			break;
+		case T_ConstraintTestValue:
+			retval = _copyConstraintTestValue(from);
+			break;
+		case T_TargetEntry:
+			retval = _copyTargetEntry(from);
 			break;
 		case T_RangeTblRef:
 			retval = _copyRangeTblRef(from);
@@ -2407,9 +2487,6 @@ copyObject(void *from)
 			break;
 		case T_FromExpr:
 			retval = _copyFromExpr(from);
-			break;
-		case T_ArrayRef:
-			retval = _copyArrayRef(from);
 			break;
 
 			/*
@@ -2686,6 +2763,9 @@ copyObject(void *from)
 		case T_TypeCast:
 			retval = _copyTypeCast(from);
 			break;
+		case T_DomainConstraintValue:
+			retval = _copyDomainConstraintValue(from);
+			break;
 		case T_SortGroupBy:
 			retval = _copySortGroupBy(from);
 			break;
@@ -2710,9 +2790,6 @@ copyObject(void *from)
 		case T_DefElem:
 			retval = _copyDefElem(from);
 			break;
-		case T_TargetEntry:
-			retval = _copyTargetEntry(from);
-			break;
 		case T_RangeTblEntry:
 			retval = _copyRangeTblEntry(from);
 			break;
@@ -2721,24 +2798,6 @@ copyObject(void *from)
 			break;
 		case T_GroupClause:
 			retval = _copyGroupClause(from);
-			break;
-		case T_CaseExpr:
-			retval = _copyCaseExpr(from);
-			break;
-		case T_CaseWhen:
-			retval = _copyCaseWhen(from);
-			break;
-		case T_NullTest:
-			retval = _copyNullTest(from);
-			break;
-		case T_BooleanTest:
-			retval = _copyBooleanTest(from);
-			break;
-		case T_ConstraintTest:
-			retval = _copyConstraintTest(from);
-			break;
-		case T_ConstraintTestValue:
-			retval = _copyConstraintTestValue(from);
 			break;
 		case T_FkConstraint:
 			retval = _copyFkConstraint(from);
@@ -2751,9 +2810,6 @@ copyObject(void *from)
 			break;
 		case T_InsertDefault:
 			retval = _copyInsertDefault(from);
-			break;
-		case T_DomainConstraintValue:
-			retval = _copyDomainConstraintValue(from);
 			break;
 
 		default:

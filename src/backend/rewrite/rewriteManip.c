@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.67 2002/10/20 00:58:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.68 2002/12/12 15:49:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -706,7 +706,7 @@ AddInvertedQual(Query *parsetree, Node *qual)
 
 	/* Need not copy input qual, because AddQual will... */
 	invqual = makeNode(BooleanTest);
-	invqual->arg = qual;
+	invqual->arg = (Expr *) qual;
 	invqual->booltesttype = IS_NOT_TRUE;
 
 	AddQual(parsetree, (Node *) invqual);
@@ -724,7 +724,7 @@ FindMatchingNew(List *tlist, int attno)
 		TargetEntry *tle = lfirst(i);
 
 		if (tle->resdom->resno == attno)
-			return tle->expr;
+			return (Node *) tle->expr;
 	}
 	return NULL;
 }

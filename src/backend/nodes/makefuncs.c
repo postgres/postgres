@@ -1,4 +1,5 @@
-/*
+/*-------------------------------------------------------------------------
+ *
  * makefuncs.c
  *	  creator functions for primitive nodes. The functions here are for
  *	  the most frequently created nodes.
@@ -8,7 +9,9 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/makefuncs.c,v 1.36 2002/11/25 21:29:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/makefuncs.c,v 1.37 2002/12/12 15:49:28 tgl Exp $
+ *
+ *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
@@ -50,29 +53,8 @@ makeSimpleA_Expr(int oper, const char *name,
 }
 
 /*
- * makeOper -
- *	  creates an Oper node
- */
-Oper *
-makeOper(Oid opno,
-		 Oid opid,
-		 Oid opresulttype,
-		 bool opretset)
-{
-	Oper	   *oper = makeNode(Oper);
-
-	oper->opno = opno;
-	oper->opid = opid;
-	oper->opresulttype = opresulttype;
-	oper->opretset = opretset;
-	oper->op_fcache = NULL;
-	return oper;
-}
-
-/*
  * makeVar -
  *	  creates a Var node
- *
  */
 Var *
 makeVar(Index varno,
@@ -104,10 +86,10 @@ makeVar(Index varno,
 
 /*
  * makeTargetEntry -
- *	  creates a TargetEntry node(contains a Resdom)
+ *	  creates a TargetEntry node (contains a Resdom)
  */
 TargetEntry *
-makeTargetEntry(Resdom *resdom, Node *expr)
+makeTargetEntry(Resdom *resdom, Expr *expr)
 {
 	TargetEntry *rt = makeNode(TargetEntry);
 
@@ -189,6 +171,21 @@ makeNullConst(Oid consttype)
 }
 
 /*
+ * makeBoolExpr -
+ *	  creates a BoolExpr node
+ */
+Expr *
+makeBoolExpr(BoolExprType boolop, List *args)
+{
+	BoolExpr   *b = makeNode(BoolExpr);
+
+	b->boolop = boolop;
+	b->args = args;
+
+	return (Expr *) b;
+}
+
+/*
  * makeAlias -
  *	  creates an Alias node
  *
@@ -210,7 +207,7 @@ makeAlias(const char *aliasname, List *colnames)
  *	  creates a RelabelType node
  */
 RelabelType *
-makeRelabelType(Node *arg, Oid rtype, int32 rtypmod, CoercionForm rformat)
+makeRelabelType(Expr *arg, Oid rtype, int32 rtypmod, CoercionForm rformat)
 {
 	RelabelType *r = makeNode(RelabelType);
 

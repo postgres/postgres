@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.89 2002/11/30 18:28:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.90 2002/12/12 15:49:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,7 +88,8 @@ coerce_to_target_type(Node *expr, Oid exprtype,
 							   ccontext, cformat);
 			/* Need a RelabelType if no typmod coercion is performed */
 			if (targettypmod < 0)
-				expr = (Node *) makeRelabelType(expr, targettype, -1,
+				expr = (Node *) makeRelabelType((Expr *) expr,
+												targettype, -1,
 												cformat);
 		}
 		else
@@ -190,7 +191,8 @@ coerce_type(Node *node, Oid inputTypeId, Oid targetTypeId,
 											 cformat);
 			/* We might now need a RelabelType. */
 			if (exprType(result) != targetTypeId)
-				result = (Node *) makeRelabelType(result, targetTypeId, -1,
+				result = (Node *) makeRelabelType((Expr *) result,
+												  targetTypeId, -1,
 												  cformat);
 		}
 
@@ -227,7 +229,8 @@ coerce_type(Node *node, Oid inputTypeId, Oid targetTypeId,
 			{
 				result = coerce_type_constraints(result, targetTypeId,
 												 cformat);
-				result = (Node *) makeRelabelType(result, targetTypeId, -1,
+				result = (Node *) makeRelabelType((Expr *) result,
+												  targetTypeId, -1,
 												  cformat);
 			}
 
@@ -266,7 +269,8 @@ coerce_type(Node *node, Oid inputTypeId, Oid targetTypeId,
 			 * typmod, which is likely but not certain (wrong if target is
 			 * a domain, in any case).
 			 */
-			result = (Node *) makeRelabelType(result, targetTypeId, -1,
+			result = (Node *) makeRelabelType((Expr *) result,
+											  targetTypeId, -1,
 											  cformat);
 		}
 	}
@@ -277,7 +281,8 @@ coerce_type(Node *node, Oid inputTypeId, Oid targetTypeId,
 		 * except relabel the type.  This is binary compatibility for
 		 * complex types.
 		 */
-		result = (Node *) makeRelabelType(node, targetTypeId, -1,
+		result = (Node *) makeRelabelType((Expr *) node,
+										  targetTypeId, -1,
 										  cformat);
 	}
 	else
@@ -449,7 +454,7 @@ coerce_type_constraints(Node *arg, Oid typeId, CoercionForm cformat)
 				elog(ERROR, "coerce_type_constraints: domain %s constraint %s has NULL conbin",
 					 NameStr(typTup->typname), NameStr(c->conname));
 
-			r->arg = arg;
+			r->arg = (Expr *) arg;
 			r->testtype = CONSTR_TEST_CHECK;
 			r->name = NameStr(c->conname);
 			r->domname = NameStr(typTup->typname);
@@ -492,7 +497,7 @@ coerce_type_constraints(Node *arg, Oid typeId, CoercionForm cformat)
 	{
 		ConstraintTest *r = makeNode(ConstraintTest);
 
-		r->arg = arg;
+		r->arg = (Expr *) arg;
 		r->testtype = CONSTR_TEST_NOTNULL;
 		r->name = "NOT NULL";
 		r->domname = notNull;
@@ -1140,21 +1145,14 @@ find_typmod_coercion_function(Oid typeId, int *nargs)
 static Node *
 build_func_call(Oid funcid, Oid rettype, List *args, CoercionForm fformat)
 {
-	Func	   *funcnode;
-	Expr	   *expr;
+	FuncExpr   *funcexpr;
 
-	funcnode = makeNode(Func);
-	funcnode->funcid = funcid;
-	funcnode->funcresulttype = rettype;
-	funcnode->funcretset = false;		/* only possible case here */
-	funcnode->funcformat = fformat;
-	funcnode->func_fcache = NULL;
+	funcexpr = makeNode(FuncExpr);
+	funcexpr->funcid = funcid;
+	funcexpr->funcresulttype = rettype;
+	funcexpr->funcretset = false;		/* only possible case here */
+	funcexpr->funcformat = fformat;
+	funcexpr->args = args;
 
-	expr = makeNode(Expr);
-	expr->typeOid = rettype;
-	expr->opType = FUNC_EXPR;
-	expr->oper = (Node *) funcnode;
-	expr->args = args;
-
-	return (Node *) expr;
+	return (Node *) funcexpr;
 }

@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.190 2002/12/05 15:50:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.191 2002/12/12 15:49:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,6 +40,7 @@
 #include "executor/execdebug.h"
 #include "executor/execdefs.h"
 #include "miscadmin.h"
+#include "optimizer/planmain.h"
 #include "optimizer/var.h"
 #include "parser/parsetree.h"
 #include "utils/acl.h"
@@ -1541,6 +1542,7 @@ ExecRelCheck(ResultRelInfo *resultRelInfo,
 		for (i = 0; i < ncheck; i++)
 		{
 			qual = (List *) stringToNode(check[i].ccbin);
+			fix_opfuncids((Node *) qual);
 			resultRelInfo->ri_ConstraintExprs[i] = qual;
 		}
 		MemoryContextSwitchTo(oldContext);

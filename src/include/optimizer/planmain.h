@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: planmain.h,v 1.63 2002/11/21 00:42:19 tgl Exp $
+ * $Id: planmain.h,v 1.64 2002/12/12 15:49:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,6 +68,6 @@ extern void set_plan_references(Plan *plan, List *rtable);
 extern List *join_references(List *clauses, List *rtable,
 				List *outer_tlist, List *inner_tlist,
 				Index acceptable_rel);
-extern void fix_opids(Node *node);
+extern void fix_opfuncids(Node *node);
 
 #endif   /* PLANMAIN_H */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.72 2002/12/05 15:50:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.73 2002/12/12 15:49:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -703,28 +703,26 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 		listscan = qual;
 		for (j = 0; j < n_keys; j++)
 		{
-			Expr	   *clause; /* one clause of index qual */
-			Oper	   *op;		/* operator used in clause */
+			OpExpr	   *clause; /* one clause of index qual */
 			Node	   *leftop; /* expr on lhs of operator */
 			Node	   *rightop;	/* expr on rhs ... */
 			bits16		flags = 0;
 
 			int			scanvar;	/* which var identifies varattno */
 			AttrNumber	varattno = 0;	/* att number used in scan */
-			Oid			opid;	/* operator id used in scan */
+			Oid			opfuncid;		/* operator id used in scan */
 			Datum		scanvalue = 0;	/* value used in scan (if const) */
 
 			/*
 			 * extract clause information from the qualification
 			 */
-			clause = lfirst(listscan);
+			clause = (OpExpr *) lfirst(listscan);
 			listscan = lnext(listscan);
 
-			op = (Oper *) clause->oper;
-			if (!IsA(clause, Expr) ||!IsA(op, Oper))
+			if (!IsA(clause, OpExpr))
 				elog(ERROR, "ExecInitIndexScan: indxqual not an opclause!");
 
-			opid = op->opid;
+			opfuncid = clause->opfuncid;
 
 			/*
 			 * Here we figure out the contents of the index qual. The
@@ -767,10 +765,10 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 			/*
 			 * determine information in leftop
 			 */
-			leftop = (Node *) get_leftop(clause);
+			leftop = (Node *) get_leftop((Expr *) clause);
 
 			if (leftop && IsA(leftop, RelabelType))
-				leftop = ((RelabelType *) leftop)->arg;
+				leftop = (Node *) ((RelabelType *) leftop)->arg;
 
 			Assert(leftop != NULL);
 
@@ -834,10 +832,10 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 			/*
 			 * now determine information in rightop
 			 */
-			rightop = (Node *) get_rightop(clause);
+			rightop = (Node *) get_rightop((Expr *) clause);
 
 			if (rightop && IsA(rightop, RelabelType))
-				rightop = ((RelabelType *) rightop)->arg;
+				rightop = (Node *) ((RelabelType *) rightop)->arg;
 
 			Assert(rightop != NULL);
 
@@ -921,7 +919,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 								   flags,
 								   varattno,	/* attribute number to
 												 * scan */
-								   (RegProcedure) opid, /* reg proc to use */
+								   opfuncid,	/* reg proc to use */
 								   scanvalue);	/* constant */
 		}
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.21 2002/12/09 20:31:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.22 2002/12/12 15:49:24 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -1341,7 +1341,9 @@ AlterDomainAddConstraint(List *names, Node *newConstraint)
 	 * the constraint is being added to.
 	 */
 	expr = stringToNode(ccbin);
+	fix_opfuncids(expr);
 	rels = get_rels_with_domain(domainoid);
+
 	foreach (rt, rels)
 	{
 		Relation	typrel;
@@ -1522,7 +1524,7 @@ domainPermissionCheck(HeapTuple tup, TypeName *typename)
 
 
 /*
- *
+ * domainAddConstraint
  */
 char *
 domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
@@ -1601,21 +1603,20 @@ domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
 	expr = eval_const_expressions(expr);
 
 	/*
-	 * Must fix opids in operator clauses.
+	 * Convert to string form for storage.
 	 */
-	fix_opids(expr);
-
 	ccbin = nodeToString(expr);
 
 	/*
-	 * Deparse it.  Since VARNOs aren't allowed in domain
-	 * constraints, relation context isn't required as anything
-	 * other than a shell.
+	 * Deparse it to produce text for consrc.
+	 *
+	 * Since VARNOs aren't allowed in domain constraints, relation context
+	 * isn't required as anything other than a shell.
 	 */
 	ccsrc = deparse_expression(expr,
-				deparse_context_for(domainName,
-									InvalidOid),
-								   false, false);
+							   deparse_context_for(domainName,
+												   InvalidOid),
+							   false, false);
 
 	/* Write the constraint */
 	CreateConstraintEntry(constr->name,		/* Constraint Name */

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.113 2002/10/20 00:58:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.114 2002/12/12 15:49:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -304,7 +304,7 @@ rewriteTargetList(Query *parsetree, Relation target_relation)
 													 att_tup->atttypmod,
 									  pstrdup(NameStr(att_tup->attname)),
 													 false),
-										  new_expr);
+										  (Expr *) new_expr);
 		}
 
 		if (new_tle)
@@ -389,10 +389,10 @@ process_matched_tle(TargetEntry *src_tle,
 	 * Prior TLE could be a nest of ArrayRefs if we do this more than
 	 * once.
 	 */
-	priorbottom = ((ArrayRef *) prior_tle->expr)->refexpr;
+	priorbottom = (Node *) ((ArrayRef *) prior_tle->expr)->refexpr;
 	while (priorbottom != NULL && IsA(priorbottom, ArrayRef) &&
 		   ((ArrayRef *) priorbottom)->refassgnexpr != NULL)
-		priorbottom = ((ArrayRef *) priorbottom)->refexpr;
+		priorbottom = (Node *) ((ArrayRef *) priorbottom)->refexpr;
 	if (!equal(priorbottom, ((ArrayRef *) src_tle->expr)->refexpr))
 		elog(ERROR, "Multiple assignments to same attribute \"%s\"",
 			 resdom->resname);
@@ -404,7 +404,7 @@ process_matched_tle(TargetEntry *src_tle,
 	memcpy(newexpr, src_tle->expr, sizeof(ArrayRef));
 	newexpr->refexpr = prior_tle->expr;
 
-	return makeTargetEntry(resdom, (Node *) newexpr);
+	return makeTargetEntry(resdom, (Expr *) newexpr);
 }
 
 

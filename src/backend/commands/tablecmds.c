@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.57 2002/11/23 18:26:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.58 2002/12/12 15:49:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2723,7 +2723,7 @@ AlterTableAddCheckConstraint(Relation rel, Constraint *constr)
 	/*
 	 * We need to make a parse state and range
 	 * table to allow us to transformExpr and
-	 * fix_opids to get a version of the
+	 * fix_opfuncids to get a version of the
 	 * expression we can pass to ExecQual
 	 */
 	pstate = make_parsestate(NULL);
@@ -2764,8 +2764,8 @@ AlterTableAddCheckConstraint(Relation rel, Constraint *constr)
 	 */
 	expr = eval_const_expressions(expr);
 
-	/* And fix the opids */
-	fix_opids(expr);
+	/* And fix the opfuncids */
+	fix_opfuncids(expr);
 
 	qual = makeList1(expr);
 

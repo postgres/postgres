@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.174 2002/12/06 05:00:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.175 2002/12/12 15:49:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,6 @@
 
 #include "nodes/params.h"
 #include "nodes/parsenodes.h"
-#include "nodes/plannodes.h"
 #include "nodes/relation.h"
 #include "utils/datum.h"
 
@@ -99,18 +98,6 @@ _equalResdom(Resdom *a, Resdom *b)
 }
 
 static bool
-_equalFjoin(Fjoin *a, Fjoin *b)
-{
-	COMPARE_SCALAR_FIELD(fj_initialized);
-	COMPARE_SCALAR_FIELD(fj_nNodes);
-	COMPARE_NODE_FIELD(fj_innerNode);
-	COMPARE_POINTER_FIELD(fj_results, a->fj_nNodes * sizeof(Datum));
-	COMPARE_POINTER_FIELD(fj_alwaysDone, a->fj_nNodes * sizeof(bool));
-
-	return true;
-}
-
-static bool
 _equalAlias(Alias *a, Alias *b)
 {
 	COMPARE_STRING_FIELD(aliasname);
@@ -132,20 +119,12 @@ _equalRangeVar(RangeVar *a, RangeVar *b)
 	return true;
 }
 
-static bool
-_equalExpr(Expr *a, Expr *b)
-{
-	/*
-	 * We do not examine typeOid, since the optimizer often doesn't bother
-	 * to set it in created nodes, and it is logically a derivative of the
-	 * oper field anyway.
-	 */
-	COMPARE_SCALAR_FIELD(opType);
-	COMPARE_NODE_FIELD(oper);
-	COMPARE_NODE_FIELD(args);
-
-	return true;
-}
+/*
+ * We don't need an _equalExpr because Expr is an abstract supertype which
+ * should never actually get instantiated.  Also, since it has no common
+ * fields except NodeTag, there's no need for a helper routine to factor
+ * out comparing the common fields...
+ */
 
 static bool
 _equalVar(Var *a, Var *b)
@@ -157,28 +136,6 @@ _equalVar(Var *a, Var *b)
 	COMPARE_SCALAR_FIELD(varlevelsup);
 	COMPARE_SCALAR_FIELD(varnoold);
 	COMPARE_SCALAR_FIELD(varoattno);
-
-	return true;
-}
-
-static bool
-_equalOper(Oper *a, Oper *b)
-{
-	COMPARE_SCALAR_FIELD(opno);
-	COMPARE_SCALAR_FIELD(opresulttype);
-	COMPARE_SCALAR_FIELD(opretset);
-
-	/*
-	 * We do not examine opid or op_fcache, since these are logically
-	 * derived from opno, and they may not be set yet depending on how far
-	 * along the node is in the parse/plan pipeline.
-	 *
-	 * (Besides, op_fcache is executor state, which we don't check --- see
-	 * notes at head of file.)
-	 *
-	 * It's probably not really necessary to check opresulttype or opretset,
-	 * either...
-	 */
 
 	return true;
 }
@@ -226,7 +183,35 @@ _equalParam(Param *a, Param *b)
 }
 
 static bool
-_equalFunc(Func *a, Func *b)
+_equalAggref(Aggref *a, Aggref *b)
+{
+	COMPARE_SCALAR_FIELD(aggfnoid);
+	COMPARE_SCALAR_FIELD(aggtype);
+	COMPARE_NODE_FIELD(target);
+	COMPARE_SCALAR_FIELD(aggstar);
+	COMPARE_SCALAR_FIELD(aggdistinct);
+
+	return true;
+}
+
+static bool
+_equalArrayRef(ArrayRef *a, ArrayRef *b)
+{
+	COMPARE_SCALAR_FIELD(refrestype);
+	COMPARE_SCALAR_FIELD(refattrlength);
+	COMPARE_SCALAR_FIELD(refelemlength);
+	COMPARE_SCALAR_FIELD(refelembyval);
+	COMPARE_SCALAR_FIELD(refelemalign);
+	COMPARE_NODE_FIELD(refupperindexpr);
+	COMPARE_NODE_FIELD(reflowerindexpr);
+	COMPARE_NODE_FIELD(refexpr);
+	COMPARE_NODE_FIELD(refassgnexpr);
+
+	return true;
+}
+
+static bool
+_equalFuncExpr(FuncExpr *a, FuncExpr *b)
 {
 	COMPARE_SCALAR_FIELD(funcid);
 	COMPARE_SCALAR_FIELD(funcresulttype);
@@ -240,20 +225,60 @@ _equalFunc(Func *a, Func *b)
 		b->funcformat != COERCE_DONTCARE)
 		return false;
 
-	/* Note we do not look at func_fcache; see notes for _equalOper */
+	COMPARE_NODE_FIELD(args);
 
 	return true;
 }
 
 static bool
-_equalAggref(Aggref *a, Aggref *b)
+_equalOpExpr(OpExpr *a, OpExpr *b)
 {
-	COMPARE_SCALAR_FIELD(aggfnoid);
-	COMPARE_SCALAR_FIELD(aggtype);
-	COMPARE_NODE_FIELD(target);
-	COMPARE_SCALAR_FIELD(aggstar);
-	COMPARE_SCALAR_FIELD(aggdistinct);
-	/* ignore aggno, which is only a private field for the executor */
+	COMPARE_SCALAR_FIELD(opno);
+	/*
+	 * Special-case opfuncid: it is allowable for it to differ if one
+	 * node contains zero and the other doesn't.  This just means that the
+	 * one node isn't as far along in the parse/plan pipeline and hasn't
+	 * had the opfuncid cache filled yet.
+	 */
+	if (a->opfuncid != b->opfuncid &&
+		a->opfuncid != 0 &&
+		b->opfuncid != 0)
+		return false;
+
+	COMPARE_SCALAR_FIELD(opresulttype);
+	COMPARE_SCALAR_FIELD(opretset);
+	COMPARE_NODE_FIELD(args);
+
+	return true;
+}
+
+static bool
+_equalDistinctExpr(DistinctExpr *a, DistinctExpr *b)
+{
+	COMPARE_SCALAR_FIELD(opno);
+	/*
+	 * Special-case opfuncid: it is allowable for it to differ if one
+	 * node contains zero and the other doesn't.  This just means that the
+	 * one node isn't as far along in the parse/plan pipeline and hasn't
+	 * had the opfuncid cache filled yet.
+	 */
+	if (a->opfuncid != b->opfuncid &&
+		a->opfuncid != 0 &&
+		b->opfuncid != 0)
+		return false;
+
+	COMPARE_SCALAR_FIELD(opresulttype);
+	COMPARE_SCALAR_FIELD(opretset);
+	COMPARE_NODE_FIELD(args);
+
+	return true;
+}
+
+static bool
+_equalBoolExpr(BoolExpr *a, BoolExpr *b)
+{
+	COMPARE_SCALAR_FIELD(boolop);
+	COMPARE_NODE_FIELD(args);
 
 	return true;
 }
@@ -266,6 +291,21 @@ _equalSubLink(SubLink *a, SubLink *b)
 	COMPARE_NODE_FIELD(lefthand);
 	COMPARE_NODE_FIELD(oper);
 	COMPARE_NODE_FIELD(subselect);
+
+	return true;
+}
+
+static bool
+_equalSubPlanExpr(SubPlanExpr *a, SubPlanExpr *b)
+{
+	COMPARE_SCALAR_FIELD(typeOid);
+	/* should compare plans, but have to settle for comparing plan IDs */
+	COMPARE_SCALAR_FIELD(plan_id);
+	COMPARE_NODE_FIELD(rtable);
+	COMPARE_INTLIST_FIELD(setParam);
+	COMPARE_INTLIST_FIELD(parParam);
+	COMPARE_NODE_FIELD(args);
+	COMPARE_NODE_FIELD(sublink);
 
 	return true;
 }
@@ -300,6 +340,74 @@ _equalRelabelType(RelabelType *a, RelabelType *b)
 }
 
 static bool
+_equalCaseExpr(CaseExpr *a, CaseExpr *b)
+{
+	COMPARE_SCALAR_FIELD(casetype);
+	COMPARE_NODE_FIELD(arg);
+	COMPARE_NODE_FIELD(args);
+	COMPARE_NODE_FIELD(defresult);
+
+	return true;
+}
+
+static bool
+_equalCaseWhen(CaseWhen *a, CaseWhen *b)
+{
+	COMPARE_NODE_FIELD(expr);
+	COMPARE_NODE_FIELD(result);
+
+	return true;
+}
+
+static bool
+_equalNullTest(NullTest *a, NullTest *b)
+{
+	COMPARE_NODE_FIELD(arg);
+	COMPARE_SCALAR_FIELD(nulltesttype);
+
+	return true;
+}
+
+static bool
+_equalBooleanTest(BooleanTest *a, BooleanTest *b)
+{
+	COMPARE_NODE_FIELD(arg);
+	COMPARE_SCALAR_FIELD(booltesttype);
+
+	return true;
+}
+
+static bool
+_equalConstraintTest(ConstraintTest *a, ConstraintTest *b)
+{
+	COMPARE_NODE_FIELD(arg);
+	COMPARE_SCALAR_FIELD(testtype);
+	COMPARE_STRING_FIELD(name);
+	COMPARE_STRING_FIELD(domname);
+	COMPARE_NODE_FIELD(check_expr);
+
+	return true;
+}
+
+static bool
+_equalConstraintTestValue(ConstraintTestValue *a, ConstraintTestValue *b)
+{
+	COMPARE_SCALAR_FIELD(typeId);
+	COMPARE_SCALAR_FIELD(typeMod);
+
+	return true;
+}
+
+static bool
+_equalTargetEntry(TargetEntry *a, TargetEntry *b)
+{
+	COMPARE_NODE_FIELD(resdom);
+	COMPARE_NODE_FIELD(expr);
+
+	return true;
+}
+
+static bool
 _equalRangeTblRef(RangeTblRef *a, RangeTblRef *b)
 {
 	COMPARE_SCALAR_FIELD(rtindex);
@@ -327,39 +435,6 @@ _equalFromExpr(FromExpr *a, FromExpr *b)
 {
 	COMPARE_NODE_FIELD(fromlist);
 	COMPARE_NODE_FIELD(quals);
-
-	return true;
-}
-
-static bool
-_equalArrayRef(ArrayRef *a, ArrayRef *b)
-{
-	COMPARE_SCALAR_FIELD(refrestype);
-	COMPARE_SCALAR_FIELD(refattrlength);
-	COMPARE_SCALAR_FIELD(refelemlength);
-	COMPARE_SCALAR_FIELD(refelembyval);
-	COMPARE_SCALAR_FIELD(refelemalign);
-	COMPARE_NODE_FIELD(refupperindexpr);
-	COMPARE_NODE_FIELD(reflowerindexpr);
-	COMPARE_NODE_FIELD(refexpr);
-	COMPARE_NODE_FIELD(refassgnexpr);
-
-	return true;
-}
-
-
-/*
- * Stuff from plannodes.h
- */
-
-static bool
-_equalSubPlan(SubPlan *a, SubPlan *b)
-{
-	/* should compare plans, but have to settle for comparing plan IDs */
-	COMPARE_SCALAR_FIELD(plan_id);
-
-	COMPARE_NODE_FIELD(rtable);
-	COMPARE_NODE_FIELD(sublink);
 
 	return true;
 }
@@ -569,6 +644,12 @@ _equalFuncWithArgs(FuncWithArgs *a, FuncWithArgs *b)
 
 static bool
 _equalInsertDefault(InsertDefault *a, InsertDefault *b)
+{
+	return true;
+}
+
+static bool
+_equalDomainConstraintValue(DomainConstraintValue *a, DomainConstraintValue *b)
 {
 	return true;
 }
@@ -1341,16 +1422,6 @@ _equalDefElem(DefElem *a, DefElem *b)
 }
 
 static bool
-_equalTargetEntry(TargetEntry *a, TargetEntry *b)
-{
-	COMPARE_NODE_FIELD(resdom);
-	COMPARE_NODE_FIELD(fjoin);
-	COMPARE_NODE_FIELD(expr);
-
-	return true;
-}
-
-static bool
 _equalRangeTblEntry(RangeTblEntry *a, RangeTblEntry *b)
 {
 	COMPARE_SCALAR_FIELD(rtekind);
@@ -1393,71 +1464,6 @@ _equalFkConstraint(FkConstraint *a, FkConstraint *b)
 	COMPARE_SCALAR_FIELD(deferrable);
 	COMPARE_SCALAR_FIELD(initdeferred);
 	COMPARE_SCALAR_FIELD(skip_validation);
-
-	return true;
-}
-
-static bool
-_equalCaseExpr(CaseExpr *a, CaseExpr *b)
-{
-	COMPARE_SCALAR_FIELD(casetype);
-	COMPARE_NODE_FIELD(arg);
-	COMPARE_NODE_FIELD(args);
-	COMPARE_NODE_FIELD(defresult);
-
-	return true;
-}
-
-static bool
-_equalCaseWhen(CaseWhen *a, CaseWhen *b)
-{
-	COMPARE_NODE_FIELD(expr);
-	COMPARE_NODE_FIELD(result);
-
-	return true;
-}
-
-static bool
-_equalNullTest(NullTest *a, NullTest *b)
-{
-	COMPARE_NODE_FIELD(arg);
-	COMPARE_SCALAR_FIELD(nulltesttype);
-
-	return true;
-}
-
-static bool
-_equalBooleanTest(BooleanTest *a, BooleanTest *b)
-{
-	COMPARE_NODE_FIELD(arg);
-	COMPARE_SCALAR_FIELD(booltesttype);
-
-	return true;
-}
-
-static bool
-_equalConstraintTest(ConstraintTest *a, ConstraintTest *b)
-{
-	COMPARE_NODE_FIELD(arg);
-	COMPARE_SCALAR_FIELD(testtype);
-	COMPARE_STRING_FIELD(name);
-	COMPARE_STRING_FIELD(domname);
-	COMPARE_NODE_FIELD(check_expr);
-
-	return true;
-}
-
-static bool
-_equalDomainConstraintValue(DomainConstraintValue *a, DomainConstraintValue *b)
-{
-	return true;
-}
-
-static bool
-_equalConstraintTestValue(ConstraintTestValue *a, ConstraintTestValue *b)
-{
-	COMPARE_SCALAR_FIELD(typeId);
-	COMPARE_SCALAR_FIELD(typeMod);
 
 	return true;
 }
@@ -1519,24 +1525,20 @@ equal(void *a, void *b)
 
 	switch (nodeTag(a))
 	{
-		case T_SubPlan:
-			retval = _equalSubPlan(a, b);
-			break;
-
+		/*
+		 * PRIMITIVE NODES
+		 */
 		case T_Resdom:
 			retval = _equalResdom(a, b);
 			break;
-		case T_Fjoin:
-			retval = _equalFjoin(a, b);
+		case T_Alias:
+			retval = _equalAlias(a, b);
 			break;
-		case T_Expr:
-			retval = _equalExpr(a, b);
+		case T_RangeVar:
+			retval = _equalRangeVar(a, b);
 			break;
 		case T_Var:
 			retval = _equalVar(a, b);
-			break;
-		case T_Oper:
-			retval = _equalOper(a, b);
 			break;
 		case T_Const:
 			retval = _equalConst(a, b);
@@ -1547,20 +1549,53 @@ equal(void *a, void *b)
 		case T_Aggref:
 			retval = _equalAggref(a, b);
 			break;
+		case T_ArrayRef:
+			retval = _equalArrayRef(a, b);
+			break;
+		case T_FuncExpr:
+			retval = _equalFuncExpr(a, b);
+			break;
+		case T_OpExpr:
+			retval = _equalOpExpr(a, b);
+			break;
+		case T_DistinctExpr:
+			retval = _equalDistinctExpr(a, b);
+			break;
+		case T_BoolExpr:
+			retval = _equalBoolExpr(a, b);
+			break;
 		case T_SubLink:
 			retval = _equalSubLink(a, b);
 			break;
-		case T_Func:
-			retval = _equalFunc(a, b);
+		case T_SubPlanExpr:
+			retval = _equalSubPlanExpr(a, b);
 			break;
 		case T_FieldSelect:
 			retval = _equalFieldSelect(a, b);
 			break;
-		case T_ArrayRef:
-			retval = _equalArrayRef(a, b);
-			break;
 		case T_RelabelType:
 			retval = _equalRelabelType(a, b);
+			break;
+		case T_CaseExpr:
+			retval = _equalCaseExpr(a, b);
+			break;
+		case T_CaseWhen:
+			retval = _equalCaseWhen(a, b);
+			break;
+		case T_NullTest:
+			retval = _equalNullTest(a, b);
+			break;
+		case T_BooleanTest:
+			retval = _equalBooleanTest(a, b);
+			break;
+		case T_ConstraintTest:
+			retval = _equalConstraintTest(a, b);
+			break;
+		case T_ConstraintTestValue:
+			retval = _equalConstraintTestValue(a, b);
+			break;
+		case T_TargetEntry:
+			retval = _equalTargetEntry(a, b);
 			break;
 		case T_RangeTblRef:
 			retval = _equalRangeTblRef(a, b);
@@ -1572,6 +1607,9 @@ equal(void *a, void *b)
 			retval = _equalJoinExpr(a, b);
 			break;
 
+			/*
+			 * RELATION NODES
+			 */
 		case T_PathKeyItem:
 			retval = _equalPathKeyItem(a, b);
 			break;
@@ -1582,6 +1620,9 @@ equal(void *a, void *b)
 			retval = _equalJoinInfo(a, b);
 			break;
 
+			/*
+			 * LIST NODES
+			 */
 		case T_List:
 			{
 				List	   *la = (List *) a;
@@ -1612,6 +1653,9 @@ equal(void *a, void *b)
 			retval = _equalValue(a, b);
 			break;
 
+			/*
+			 * PARSE NODES
+			 */
 		case T_Query:
 			retval = _equalQuery(a, b);
 			break;
@@ -1844,12 +1888,6 @@ equal(void *a, void *b)
 		case T_SortGroupBy:
 			retval = _equalSortGroupBy(a, b);
 			break;
-		case T_Alias:
-			retval = _equalAlias(a, b);
-			break;
-		case T_RangeVar:
-			retval = _equalRangeVar(a, b);
-			break;
 		case T_RangeSubselect:
 			retval = _equalRangeSubselect(a, b);
 			break;
@@ -1871,9 +1909,6 @@ equal(void *a, void *b)
 		case T_DefElem:
 			retval = _equalDefElem(a, b);
 			break;
-		case T_TargetEntry:
-			retval = _equalTargetEntry(a, b);
-			break;
 		case T_RangeTblEntry:
 			retval = _equalRangeTblEntry(a, b);
 			break;
@@ -1883,24 +1918,6 @@ equal(void *a, void *b)
 		case T_GroupClause:
 			/* GroupClause is equivalent to SortClause */
 			retval = _equalSortClause(a, b);
-			break;
-		case T_CaseExpr:
-			retval = _equalCaseExpr(a, b);
-			break;
-		case T_CaseWhen:
-			retval = _equalCaseWhen(a, b);
-			break;
-		case T_NullTest:
-			retval = _equalNullTest(a, b);
-			break;
-		case T_BooleanTest:
-			retval = _equalBooleanTest(a, b);
-			break;
-		case T_ConstraintTest:
-			retval = _equalConstraintTest(a, b);
-			break;
-		case T_ConstraintTestValue:
-			retval = _equalConstraintTestValue(a, b);
 			break;
 		case T_FkConstraint:
 			retval = _equalFkConstraint(a, b);

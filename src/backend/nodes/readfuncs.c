@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.140 2002/11/25 21:29:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.141 2002/12/12 15:49:28 tgl Exp $
  *
  * NOTES
  *	  Path and Plan nodes do not have any readfuncs support, because we
@@ -302,38 +302,30 @@ _readResdom(void)
 	READ_DONE();
 }
 
-/*
- * _readExpr
- */
-static Expr *
-_readExpr(void)
+static Alias *
+_readAlias(void)
 {
-	READ_LOCALS(Expr);
+	READ_LOCALS(Alias);
 
-	READ_OID_FIELD(typeOid);
+	READ_STRING_FIELD(aliasname);
+	READ_NODE_FIELD(colnames);
 
-	/* do-it-yourself enum representation */
-	token = pg_strtok(&length); /* skip :opType */
-	token = pg_strtok(&length); /* get field value */
-	if (strncmp(token, "op", 2) == 0)
-		local_node->opType = OP_EXPR;
-	else if (strncmp(token, "distinct", 8) == 0)
-		local_node->opType = DISTINCT_EXPR;
-	else if (strncmp(token, "func", 4) == 0)
-		local_node->opType = FUNC_EXPR;
-	else if (strncmp(token, "or", 2) == 0)
-		local_node->opType = OR_EXPR;
-	else if (strncmp(token, "and", 3) == 0)
-		local_node->opType = AND_EXPR;
-	else if (strncmp(token, "not", 3) == 0)
-		local_node->opType = NOT_EXPR;
-	else if (strncmp(token, "subp", 4) == 0)
-		local_node->opType = SUBPLAN_EXPR;
-	else
-		elog(ERROR, "_readExpr: unknown opType \"%.*s\"", length, token);
+	READ_DONE();
+}
 
-	READ_NODE_FIELD(oper);
-	READ_NODE_FIELD(args);
+static RangeVar *
+_readRangeVar(void)
+{
+	READ_LOCALS(RangeVar);
+
+	local_node->catalogname = NULL;		/* not currently saved in output
+										 * format */
+
+	READ_STRING_FIELD(schemaname);
+	READ_STRING_FIELD(relname);
+	READ_ENUM_FIELD(inhOpt, InhOption);
+	READ_BOOL_FIELD(istemp);
+	READ_NODE_FIELD(alias);
 
 	READ_DONE();
 }
@@ -358,27 +350,6 @@ _readVar(void)
 }
 
 /*
- * _readArrayRef
- */
-static ArrayRef *
-_readArrayRef(void)
-{
-	READ_LOCALS(ArrayRef);
-
-	READ_OID_FIELD(refrestype);
-	READ_INT_FIELD(refattrlength);
-	READ_INT_FIELD(refelemlength);
-	READ_BOOL_FIELD(refelembyval);
-	READ_CHAR_FIELD(refelemalign);
-	READ_NODE_FIELD(refupperindexpr);
-	READ_NODE_FIELD(reflowerindexpr);
-	READ_NODE_FIELD(refexpr);
-	READ_NODE_FIELD(refassgnexpr);
-
-	READ_DONE();
-}
-
-/*
  * _readConst
  */
 static Const *
@@ -396,42 +367,6 @@ _readConst(void)
 		token = pg_strtok(&length);		/* skip "<>" */
 	else
 		local_node->constvalue = readDatum(local_node->constbyval);
-
-	READ_DONE();
-}
-
-/*
- * _readFunc
- */
-static Func *
-_readFunc(void)
-{
-	READ_LOCALS(Func);
-
-	READ_OID_FIELD(funcid);
-	READ_OID_FIELD(funcresulttype);
-	READ_BOOL_FIELD(funcretset);
-	READ_ENUM_FIELD(funcformat, CoercionForm);
-
-	local_node->func_fcache = NULL;
-
-	READ_DONE();
-}
-
-/*
- * _readOper
- */
-static Oper *
-_readOper(void)
-{
-	READ_LOCALS(Oper);
-
-	READ_OID_FIELD(opno);
-	READ_OID_FIELD(opid);
-	READ_OID_FIELD(opresulttype);
-	READ_BOOL_FIELD(opretset);
-
-	local_node->op_fcache = NULL;
 
 	READ_DONE();
 }
@@ -465,24 +400,129 @@ _readAggref(void)
 	READ_NODE_FIELD(target);
 	READ_BOOL_FIELD(aggstar);
 	READ_BOOL_FIELD(aggdistinct);
-	/* aggno is not saved since it is just executor state */
 
 	READ_DONE();
 }
 
-static RangeVar *
-_readRangeVar(void)
+/*
+ * _readArrayRef
+ */
+static ArrayRef *
+_readArrayRef(void)
 {
-	READ_LOCALS(RangeVar);
+	READ_LOCALS(ArrayRef);
 
-	local_node->catalogname = NULL;		/* not currently saved in output
-										 * format */
+	READ_OID_FIELD(refrestype);
+	READ_INT_FIELD(refattrlength);
+	READ_INT_FIELD(refelemlength);
+	READ_BOOL_FIELD(refelembyval);
+	READ_CHAR_FIELD(refelemalign);
+	READ_NODE_FIELD(refupperindexpr);
+	READ_NODE_FIELD(reflowerindexpr);
+	READ_NODE_FIELD(refexpr);
+	READ_NODE_FIELD(refassgnexpr);
 
-	READ_STRING_FIELD(schemaname);
-	READ_STRING_FIELD(relname);
-	READ_ENUM_FIELD(inhOpt, InhOption);
-	READ_BOOL_FIELD(istemp);
-	READ_NODE_FIELD(alias);
+	READ_DONE();
+}
+
+/*
+ * _readFuncExpr
+ */
+static FuncExpr *
+_readFuncExpr(void)
+{
+	READ_LOCALS(FuncExpr);
+
+	READ_OID_FIELD(funcid);
+	READ_OID_FIELD(funcresulttype);
+	READ_BOOL_FIELD(funcretset);
+	READ_ENUM_FIELD(funcformat, CoercionForm);
+	READ_NODE_FIELD(args);
+
+	local_node->func_fcache = NULL;
+
+	READ_DONE();
+}
+
+/*
+ * _readOpExpr
+ */
+static OpExpr *
+_readOpExpr(void)
+{
+	READ_LOCALS(OpExpr);
+
+	READ_OID_FIELD(opno);
+	READ_OID_FIELD(opfuncid);
+	/*
+	 * The opfuncid is stored in the textual format primarily for debugging
+	 * and documentation reasons.  We want to always read it as zero to force
+	 * it to be re-looked-up in the pg_operator entry.  This ensures that
+	 * stored rules don't have hidden dependencies on operators' functions.
+	 * (We don't currently support an ALTER OPERATOR command, but might
+	 * someday.)
+	 */
+	local_node->opfuncid = InvalidOid;
+
+	READ_OID_FIELD(opresulttype);
+	READ_BOOL_FIELD(opretset);
+	READ_NODE_FIELD(args);
+
+	local_node->op_fcache = NULL;
+
+	READ_DONE();
+}
+
+/*
+ * _readDistinctExpr
+ */
+static DistinctExpr *
+_readDistinctExpr(void)
+{
+	READ_LOCALS(DistinctExpr);
+
+	READ_OID_FIELD(opno);
+	READ_OID_FIELD(opfuncid);
+	/*
+	 * The opfuncid is stored in the textual format primarily for debugging
+	 * and documentation reasons.  We want to always read it as zero to force
+	 * it to be re-looked-up in the pg_operator entry.  This ensures that
+	 * stored rules don't have hidden dependencies on operators' functions.
+	 * (We don't currently support an ALTER OPERATOR command, but might
+	 * someday.)
+	 */
+	local_node->opfuncid = InvalidOid;
+
+	READ_OID_FIELD(opresulttype);
+	READ_BOOL_FIELD(opretset);
+	READ_NODE_FIELD(args);
+
+	local_node->op_fcache = NULL;
+
+	READ_DONE();
+}
+
+/*
+ * _readBoolExpr
+ */
+static BoolExpr *
+_readBoolExpr(void)
+{
+	READ_LOCALS(BoolExpr);
+
+	/* do-it-yourself enum representation */
+	token = pg_strtok(&length); /* skip :boolop */
+	token = pg_strtok(&length); /* get field value */
+	if (strncmp(token, "and", 3) == 0)
+		local_node->boolop = AND_EXPR;
+	else if (strncmp(token, "or", 2) == 0)
+		local_node->boolop = OR_EXPR;
+	else if (strncmp(token, "not", 3) == 0)
+		local_node->boolop = NOT_EXPR;
+	else
+		elog(ERROR, "_readBoolExpr: unknown boolop \"%.*s\"", length, token);
+
+	READ_NODE_FIELD(args);
 
 	READ_DONE();
 }
@@ -503,6 +543,10 @@ _readSubLink(void)
 
 	READ_DONE();
 }
+
+/*
+ * _readSubPlanExpr is not needed since it doesn't appear in stored rules.
+ */
 
 /*
  * _readFieldSelect
@@ -535,58 +579,6 @@ _readRelabelType(void)
 
 	READ_DONE();
 }
-
-/*
- * _readRangeTblRef
- */
-static RangeTblRef *
-_readRangeTblRef(void)
-{
-	READ_LOCALS(RangeTblRef);
-
-	READ_INT_FIELD(rtindex);
-
-	READ_DONE();
-}
-
-/*
- * _readJoinExpr
- */
-static JoinExpr *
-_readJoinExpr(void)
-{
-	READ_LOCALS(JoinExpr);
-
-	READ_ENUM_FIELD(jointype, JoinType);
-	READ_BOOL_FIELD(isNatural);
-	READ_NODE_FIELD(larg);
-	READ_NODE_FIELD(rarg);
-	READ_NODE_FIELD(using);
-	READ_NODE_FIELD(quals);
-	READ_NODE_FIELD(alias);
-	READ_INT_FIELD(rtindex);
-
-	READ_DONE();
-}
-
-/*
- * _readFromExpr
- */
-static FromExpr *
-_readFromExpr(void)
-{
-	READ_LOCALS(FromExpr);
-
-	READ_NODE_FIELD(fromlist);
-	READ_NODE_FIELD(quals);
-
-	READ_DONE();
-}
-
-
-/*
- *	Stuff from parsenodes.h.
- */
 
 /*
  * _readCaseExpr
@@ -664,17 +656,6 @@ _readConstraintTest(void)
 }
 
 /*
- * _readDomainConstraintValue
- */
-static DomainConstraintValue *
-_readDomainConstraintValue(void)
-{
-	READ_LOCALS_NO_FIELDS(DomainConstraintValue);
-
-	READ_DONE();
-}
-
-/*
  * _readConstraintTestValue
  */
 static ConstraintTestValue *
@@ -697,11 +678,62 @@ _readTargetEntry(void)
 	READ_LOCALS(TargetEntry);
 
 	READ_NODE_FIELD(resdom);
-	/* fjoin not supported ... */
 	READ_NODE_FIELD(expr);
 
 	READ_DONE();
 }
+
+/*
+ * _readRangeTblRef
+ */
+static RangeTblRef *
+_readRangeTblRef(void)
+{
+	READ_LOCALS(RangeTblRef);
+
+	READ_INT_FIELD(rtindex);
+
+	READ_DONE();
+}
+
+/*
+ * _readJoinExpr
+ */
+static JoinExpr *
+_readJoinExpr(void)
+{
+	READ_LOCALS(JoinExpr);
+
+	READ_ENUM_FIELD(jointype, JoinType);
+	READ_BOOL_FIELD(isNatural);
+	READ_NODE_FIELD(larg);
+	READ_NODE_FIELD(rarg);
+	READ_NODE_FIELD(using);
+	READ_NODE_FIELD(quals);
+	READ_NODE_FIELD(alias);
+	READ_INT_FIELD(rtindex);
+
+	READ_DONE();
+}
+
+/*
+ * _readFromExpr
+ */
+static FromExpr *
+_readFromExpr(void)
+{
+	READ_LOCALS(FromExpr);
+
+	READ_NODE_FIELD(fromlist);
+	READ_NODE_FIELD(quals);
+
+	READ_DONE();
+}
+
+
+/*
+ *	Stuff from parsenodes.h.
+ */
 
 static ColumnRef *
 _readColumnRef(void)
@@ -760,13 +792,13 @@ _readExprFieldSelect(void)
 	READ_DONE();
 }
 
-static Alias *
-_readAlias(void)
+/*
+ * _readDomainConstraintValue
+ */
+static DomainConstraintValue *
+_readDomainConstraintValue(void)
 {
-	READ_LOCALS(Alias);
-
-	READ_STRING_FIELD(aliasname);
-	READ_NODE_FIELD(colnames);
+	READ_LOCALS_NO_FIELDS(DomainConstraintValue);
 
 	READ_DONE();
 }
@@ -835,53 +867,7 @@ parseNodeString(void)
 #define MATCH(tokname, namelen) \
 	(length == namelen && strncmp(token, tokname, namelen) == 0)
 
-	if (MATCH("AGGREF", 6))
-		return_value = _readAggref();
-	else if (MATCH("SUBLINK", 7))
-		return_value = _readSubLink();
-	else if (MATCH("FIELDSELECT", 11))
-		return_value = _readFieldSelect();
-	else if (MATCH("RELABELTYPE", 11))
-		return_value = _readRelabelType();
-	else if (MATCH("RANGETBLREF", 11))
-		return_value = _readRangeTblRef();
-	else if (MATCH("FROMEXPR", 8))
-		return_value = _readFromExpr();
-	else if (MATCH("JOINEXPR", 8))
-		return_value = _readJoinExpr();
-	else if (MATCH("RESDOM", 6))
-		return_value = _readResdom();
-	else if (MATCH("EXPR", 4))
-		return_value = _readExpr();
-	else if (MATCH("ARRAYREF", 8))
-		return_value = _readArrayRef();
-	else if (MATCH("VAR", 3))
-		return_value = _readVar();
-	else if (MATCH("CONST", 5))
-		return_value = _readConst();
-	else if (MATCH("FUNC", 4))
-		return_value = _readFunc();
-	else if (MATCH("OPER", 4))
-		return_value = _readOper();
-	else if (MATCH("PARAM", 5))
-		return_value = _readParam();
-	else if (MATCH("TARGETENTRY", 11))
-		return_value = _readTargetEntry();
-	else if (MATCH("RANGEVAR", 8))
-		return_value = _readRangeVar();
-	else if (MATCH("COLUMNREF", 9))
-		return_value = _readColumnRef();
-	else if (MATCH("COLUMNDEF", 9))
-		return_value = _readColumnDef();
-	else if (MATCH("TYPENAME", 8))
-		return_value = _readTypeName();
-	else if (MATCH("EXPRFIELDSELECT", 15))
-		return_value = _readExprFieldSelect();
-	else if (MATCH("ALIAS", 5))
-		return_value = _readAlias();
-	else if (MATCH("RTE", 3))
-		return_value = _readRangeTblEntry();
-	else if (MATCH("QUERY", 5))
+	if (MATCH("QUERY", 5))
 		return_value = _readQuery();
 	else if (MATCH("NOTIFY", 6))
 		return_value = _readNotifyStmt();
@@ -891,6 +877,36 @@ parseNodeString(void)
 		return_value = _readGroupClause();
 	else if (MATCH("SETOPERATIONSTMT", 16))
 		return_value = _readSetOperationStmt();
+	else if (MATCH("RESDOM", 6))
+		return_value = _readResdom();
+	else if (MATCH("ALIAS", 5))
+		return_value = _readAlias();
+	else if (MATCH("RANGEVAR", 8))
+		return_value = _readRangeVar();
+	else if (MATCH("VAR", 3))
+		return_value = _readVar();
+	else if (MATCH("CONST", 5))
+		return_value = _readConst();
+	else if (MATCH("PARAM", 5))
+		return_value = _readParam();
+	else if (MATCH("AGGREF", 6))
+		return_value = _readAggref();
+	else if (MATCH("ARRAYREF", 8))
+		return_value = _readArrayRef();
+	else if (MATCH("FUNCEXPR", 8))
+		return_value = _readFuncExpr();
+	else if (MATCH("OPEXPR", 6))
+		return_value = _readOpExpr();
+	else if (MATCH("DISTINCTEXPR", 12))
+		return_value = _readDistinctExpr();
+	else if (MATCH("BOOLEXPR", 8))
+		return_value = _readBoolExpr();
+	else if (MATCH("SUBLINK", 7))
+		return_value = _readSubLink();
+	else if (MATCH("FIELDSELECT", 11))
+		return_value = _readFieldSelect();
+	else if (MATCH("RELABELTYPE", 11))
+		return_value = _readRelabelType();
 	else if (MATCH("CASE", 4))
 		return_value = _readCaseExpr();
 	else if (MATCH("WHEN", 4))
@@ -901,10 +917,28 @@ parseNodeString(void)
 		return_value = _readBooleanTest();
 	else if (MATCH("CONSTRAINTTEST", 14))
 		return_value = _readConstraintTest();
-	else if (MATCH("DOMAINCONSTRAINTVALUE", 21))
-		return_value = _readDomainConstraintValue();
 	else if (MATCH("CONSTRAINTTESTVALUE", 19))
 		return_value = _readConstraintTestValue();
+	else if (MATCH("TARGETENTRY", 11))
+		return_value = _readTargetEntry();
+	else if (MATCH("RANGETBLREF", 11))
+		return_value = _readRangeTblRef();
+	else if (MATCH("JOINEXPR", 8))
+		return_value = _readJoinExpr();
+	else if (MATCH("FROMEXPR", 8))
+		return_value = _readFromExpr();
+	else if (MATCH("COLUMNREF", 9))
+		return_value = _readColumnRef();
+	else if (MATCH("COLUMNDEF", 9))
+		return_value = _readColumnDef();
+	else if (MATCH("TYPENAME", 8))
+		return_value = _readTypeName();
+	else if (MATCH("EXPRFIELDSELECT", 15))
+		return_value = _readExprFieldSelect();
+	else if (MATCH("DOMAINCONSTRAINTVALUE", 21))
+		return_value = _readDomainConstraintValue();
+	else if (MATCH("RTE", 3))
+		return_value = _readRangeTblEntry();
 	else
 	{
 		elog(ERROR, "badly formatted node string \"%.32s\"...", token);

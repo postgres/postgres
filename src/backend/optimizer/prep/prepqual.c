@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepqual.c,v 1.33 2002/09/02 02:47:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepqual.c,v 1.34 2002/12/12 15:49:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -294,7 +294,7 @@ flatten_andors(Expr *qual)
 		List	   *out_list = NIL;
 		List	   *arg;
 
-		foreach(arg, qual->args)
+		foreach(arg, ((BoolExpr *) qual)->args)
 		{
 			Expr	   *subexpr = flatten_andors((Expr *) lfirst(arg));
 
@@ -305,7 +305,7 @@ flatten_andors(Expr *qual)
 			 * with any other expr. Otherwise we'd need a listCopy here.
 			 */
 			if (and_clause((Node *) subexpr))
-				out_list = nconc(out_list, subexpr->args);
+				out_list = nconc(out_list, ((BoolExpr *) subexpr)->args);
 			else
 				out_list = lappend(out_list, subexpr);
 		}
@@ -316,7 +316,7 @@ flatten_andors(Expr *qual)
 		List	   *out_list = NIL;
 		List	   *arg;
 
-		foreach(arg, qual->args)
+		foreach(arg, ((BoolExpr *) qual)->args)
 		{
 			Expr	   *subexpr = flatten_andors((Expr *) lfirst(arg));
 
@@ -327,7 +327,7 @@ flatten_andors(Expr *qual)
 			 * with any other expr. Otherwise we'd need a listCopy here.
 			 */
 			if (or_clause((Node *) subexpr))
-				out_list = nconc(out_list, subexpr->args);
+				out_list = nconc(out_list, ((BoolExpr *) subexpr)->args);
 			else
 				out_list = lappend(out_list, subexpr);
 		}
@@ -335,20 +335,17 @@ flatten_andors(Expr *qual)
 	}
 	else if (not_clause((Node *) qual))
 		return make_notclause(flatten_andors(get_notclausearg(qual)));
-	else if (is_opclause((Node *) qual))
+	else if (is_opclause(qual))
 	{
+		OpExpr	   *opexpr = (OpExpr *) qual;
 		Expr	   *left = (Expr *) get_leftop(qual);
 		Expr	   *right = (Expr *) get_rightop(qual);
 
-		if (right)
-			return make_clause(qual->opType, qual->oper,
-							   lcons(flatten_andors(left),
-									 lcons(flatten_andors(right),
-										   NIL)));
-		else
-			return make_clause(qual->opType, qual->oper,
-							   lcons(flatten_andors(left),
-									 NIL));
+		return make_opclause(opexpr->opno,
+							 opexpr->opresulttype,
+							 opexpr->opretset,
+							 flatten_andors(left),
+							 flatten_andors(right));
 	}
 	else
 		return qual;
@@ -379,7 +376,8 @@ pull_ors(List *orlist)
 		 * we'd need a listCopy here.
 		 */
 		if (or_clause((Node *) subexpr))
-			out_list = nconc(out_list, pull_ors(subexpr->args));
+			out_list = nconc(out_list,
+							 pull_ors(((BoolExpr *) subexpr)->args));
 		else
 			out_list = lappend(out_list, subexpr);
 	}
@@ -410,7 +408,8 @@ pull_ands(List *andlist)
 		 * we'd need a listCopy here.
 		 */
 		if (and_clause((Node *) subexpr))
-			out_list = nconc(out_list, pull_ands(subexpr->args));
+			out_list = nconc(out_list,
+							 pull_ands(((BoolExpr *) subexpr)->args));
 		else
 			out_list = lappend(out_list, subexpr);
 	}
@@ -433,20 +432,17 @@ find_nots(Expr *qual)
 
 #ifdef NOT_USED
 	/* recursing into operator expressions is probably not worth it. */
-	if (is_opclause((Node *) qual))
+	if (is_opclause(qual))
 	{
+		OpExpr	   *opexpr = (OpExpr *) qual;
 		Expr	   *left = (Expr *) get_leftop(qual);
 		Expr	   *right = (Expr *) get_rightop(qual);
 
-		if (right)
-			return make_clause(qual->opType, qual->oper,
-							   lcons(find_nots(left),
-									 lcons(find_nots(right),
-										   NIL)));
-		else
-			return make_clause(qual->opType, qual->oper,
-							   lcons(find_nots(left),
-									 NIL));
+		return make_opclause(opexpr->opno,
+							 opexpr->opresulttype,
+							 opexpr->opretset,
+							 find_nots(left),
+							 find_nots(right));
 	}
 #endif
 	if (and_clause((Node *) qual))
@@ -454,7 +450,7 @@ find_nots(Expr *qual)
 		List	   *t_list = NIL;
 		List	   *temp;
 
-		foreach(temp, qual->args)
+		foreach(temp, ((BoolExpr *) qual)->args)
 			t_list = lappend(t_list, find_nots(lfirst(temp)));
 		return make_andclause(pull_ands(t_list));
 	}
@@ -463,7 +459,7 @@ find_nots(Expr *qual)
 		List	   *t_list = NIL;
 		List	   *temp;
 
-		foreach(temp, qual->args)
+		foreach(temp, ((BoolExpr *) qual)->args)
 			t_list = lappend(t_list, find_nots(lfirst(temp)));
 		return make_orclause(pull_ors(t_list));
 	}
@@ -492,20 +488,17 @@ push_nots(Expr *qual)
 	 * Otherwise, retain the clause as it is (the 'not' can't be pushed
 	 * down any farther).
 	 */
-	if (is_opclause((Node *) qual))
+	if (is_opclause(qual))
 	{
-		Oper	   *oper = (Oper *) ((Expr *) qual)->oper;
-		Oid			negator = get_negator(oper->opno);
+		OpExpr	   *opexpr = (OpExpr *) qual;
+		Oid			negator = get_negator(opexpr->opno);
 
 		if (negator)
-		{
-			Oper	   *op = (Oper *) makeOper(negator,
-											   InvalidOid,
-											   oper->opresulttype,
-											   oper->opretset);
-
-			return make_opclause(op, get_leftop(qual), get_rightop(qual));
-		}
+			return make_opclause(negator,
+								 opexpr->opresulttype,
+								 opexpr->opretset,
+								 (Expr *) get_leftop(qual),
+								 (Expr *) get_rightop(qual));
 		else
 			return make_notclause(qual);
 	}
@@ -521,7 +514,7 @@ push_nots(Expr *qual)
 		List	   *t_list = NIL;
 		List	   *temp;
 
-		foreach(temp, qual->args)
+		foreach(temp, ((BoolExpr *) qual)->args)
 			t_list = lappend(t_list, push_nots(lfirst(temp)));
 		return make_orclause(pull_ors(t_list));
 	}
@@ -530,7 +523,7 @@ push_nots(Expr *qual)
 		List	   *t_list = NIL;
 		List	   *temp;
 
-		foreach(temp, qual->args)
+		foreach(temp, ((BoolExpr *) qual)->args)
 			t_list = lappend(t_list, push_nots(lfirst(temp)));
 		return make_andclause(pull_ands(t_list));
 	}
@@ -576,7 +569,7 @@ find_ors(Expr *qual)
 		List	   *andlist = NIL;
 		List	   *temp;
 
-		foreach(temp, qual->args)
+		foreach(temp, ((BoolExpr *) qual)->args)
 			andlist = lappend(andlist, find_ors(lfirst(temp)));
 		return make_andclause(pull_ands(andlist));
 	}
@@ -585,7 +578,7 @@ find_ors(Expr *qual)
 		List	   *orlist = NIL;
 		List	   *temp;
 
-		foreach(temp, qual->args)
+		foreach(temp, ((BoolExpr *) qual)->args)
 			orlist = lappend(orlist, find_ors(lfirst(temp)));
 		return or_normalize(pull_ors(orlist));
 	}
@@ -629,7 +622,7 @@ or_normalize(List *orlist)
 
 		if (and_clause((Node *) clause))
 		{
-			int			nclauses = length(clause->args);
+			int			nclauses = length(((BoolExpr *) clause)->args);
 
 			if (nclauses > num_subclauses)
 			{
@@ -650,7 +643,7 @@ or_normalize(List *orlist)
 	 */
 	orlist = lremove(distributable, orlist);
 
-	foreach(temp, distributable->args)
+	foreach(temp, ((BoolExpr *) distributable)->args)
 	{
 		Expr	   *andclause = lfirst(temp);
 		List	   *neworlist;
@@ -703,7 +696,7 @@ find_ands(Expr *qual)
 		List	   *orlist = NIL;
 		List	   *temp;
 
-		foreach(temp, qual->args)
+		foreach(temp, ((BoolExpr *) qual)->args)
 			orlist = lappend(orlist, find_ands(lfirst(temp)));
 		return make_orclause(pull_ors(orlist));
 	}
@@ -712,7 +705,7 @@ find_ands(Expr *qual)
 		List	   *andlist = NIL;
 		List	   *temp;
 
-		foreach(temp, qual->args)
+		foreach(temp, ((BoolExpr *) qual)->args)
 			andlist = lappend(andlist, find_ands(lfirst(temp)));
 		return and_normalize(pull_ands(andlist));
 	}
@@ -757,7 +750,7 @@ and_normalize(List *andlist)
 
 		if (or_clause((Node *) clause))
 		{
-			int			nclauses = length(clause->args);
+			int			nclauses = length(((BoolExpr *) clause)->args);
 
 			if (nclauses > num_subclauses)
 			{
@@ -778,7 +771,7 @@ and_normalize(List *andlist)
 	 */
 	andlist = lremove(distributable, andlist);
 
-	foreach(temp, distributable->args)
+	foreach(temp, ((BoolExpr *) distributable)->args)
 	{
 		Expr	   *orclause = lfirst(temp);
 		List	   *newandlist;
@@ -829,7 +822,7 @@ qual_cleanup(Expr *qual)
 		List	   *andlist = NIL;
 		List	   *temp;
 
-		foreach(temp, qual->args)
+		foreach(temp, ((BoolExpr *) qual)->args)
 			andlist = lappend(andlist, qual_cleanup(lfirst(temp)));
 
 		andlist = remove_duplicates(pull_ands(andlist));
@@ -844,7 +837,7 @@ qual_cleanup(Expr *qual)
 		List	   *orlist = NIL;
 		List	   *temp;
 
-		foreach(temp, qual->args)
+		foreach(temp, ((BoolExpr *) qual)->args)
 			orlist = lappend(orlist, qual_cleanup(lfirst(temp)));
 
 		orlist = remove_duplicates(pull_ors(orlist));
@@ -910,7 +903,7 @@ count_bool_nodes(Expr *qual,
 		*nodes = *cnfnodes = 0.0;
 		*dnfnodes = 1.0;		/* DNF nodes will be product of sub-counts */
 
-		foreach(temp, qual->args)
+		foreach(temp, ((BoolExpr *) qual)->args)
 		{
 			count_bool_nodes(lfirst(temp),
 							 &subnodes, &subcnfnodes, &subdnfnodes);
@@ -931,7 +924,7 @@ count_bool_nodes(Expr *qual,
 		*nodes = *dnfnodes = 0.0;
 		*cnfnodes = 1.0;		/* CNF nodes will be product of sub-counts */
 
-		foreach(temp, qual->args)
+		foreach(temp, ((BoolExpr *) qual)->args)
 		{
 			count_bool_nodes(lfirst(temp),
 							 &subnodes, &subcnfnodes, &subdnfnodes);

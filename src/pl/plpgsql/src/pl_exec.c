@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.72 2002/12/05 15:50:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.73 2002/12/12 15:49:42 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -3499,28 +3499,123 @@ exec_cast_value(Datum value, Oid valtype,
 static bool
 exec_simple_check_node(Node *node)
 {
+	if (node == NULL)
+		return TRUE;
+
 	switch (nodeTag(node))
 	{
-		case T_Expr:
+		case T_Const:
+			return TRUE;
+
+		case T_Param:
+			return TRUE;
+
+		case T_ArrayRef:
 			{
-				Expr	   *expr = (Expr *) node;
+				ArrayRef   *expr = (ArrayRef *) node;
+
+				if (!exec_simple_check_node((Node *) expr->refupperindexpr))
+					return FALSE;
+				if (!exec_simple_check_node((Node *) expr->reflowerindexpr))
+					return FALSE;
+				if (!exec_simple_check_node((Node *) expr->refexpr))
+					return FALSE;
+				if (!exec_simple_check_node((Node *) expr->refassgnexpr))
+					return FALSE;
+
+				return TRUE;
+			}
+
+		case T_FuncExpr:
+			{
+				FuncExpr   *expr = (FuncExpr *) node;
+
+				if (expr->funcretset)
+					return FALSE;
+				if (!exec_simple_check_node((Node *) expr->args))
+					return FALSE;
+
+				return TRUE;
+			}
+
+		case T_OpExpr:
+			{
+				OpExpr	   *expr = (OpExpr *) node;
+
+				if (expr->opretset)
+					return FALSE;
+				if (!exec_simple_check_node((Node *) expr->args))
+					return FALSE;
+
+				return TRUE;
+			}
+
+		case T_DistinctExpr:
+			{
+				DistinctExpr *expr = (DistinctExpr *) node;
+
+				if (expr->opretset)
+					return FALSE;
+				if (!exec_simple_check_node((Node *) expr->args))
+					return FALSE;
+
+				return TRUE;
+			}
+
+		case T_BoolExpr:
+			{
+				BoolExpr   *expr = (BoolExpr *) node;
+
+				if (!exec_simple_check_node((Node *) expr->args))
+					return FALSE;
+
+				return TRUE;
+			}
+
+		case T_FieldSelect:
+			return exec_simple_check_node((Node *) ((FieldSelect *) node)->arg);
+
+		case T_RelabelType:
+			return exec_simple_check_node((Node *) ((RelabelType *) node)->arg);
+
+		case T_CaseExpr:
+			{
+				CaseExpr   *expr = (CaseExpr *) node;
+
+				if (!exec_simple_check_node((Node *) expr->arg))
+					return FALSE;
+				if (!exec_simple_check_node((Node *) expr->args))
+					return FALSE;
+				if (!exec_simple_check_node((Node *) expr->defresult))
+					return FALSE;
+
+				return TRUE;
+			}
+
+		case T_CaseWhen:
+			{
+				CaseWhen   *when = (CaseWhen *) node;
+
+				if (!exec_simple_check_node((Node *) when->expr))
+					return FALSE;
+				if (!exec_simple_check_node((Node *) when->result))
+					return FALSE;
+
+				return TRUE;
+			}
+
+		case T_NullTest:
+			return exec_simple_check_node((Node *) ((NullTest *) node)->arg);
+
+		case T_BooleanTest:
+			return exec_simple_check_node((Node *) ((BooleanTest *) node)->arg);
+
+		case T_List:
+			{
+				List	   *expr = (List *) node;
 				List	   *l;
 
-				switch (expr->opType)
-				{
-					case OP_EXPR:
-					case DISTINCT_EXPR:
-					case FUNC_EXPR:
-					case OR_EXPR:
-					case AND_EXPR:
-					case NOT_EXPR:
-						break;
-
-					default:
-						return FALSE;
-				}
-
-				foreach(l, expr->args)
+				foreach(l, expr)
 				{
 					if (!exec_simple_check_node(lfirst(l)))
 						return FALSE;
@@ -3528,15 +3623,6 @@ exec_simple_check_node(Node *node)
 
 				return TRUE;
 			}
-
-		case T_Param:
-			return TRUE;
-
-		case T_Const:
-			return TRUE;
-
-		case T_RelabelType:
-			return exec_simple_check_node(((RelabelType *) node)->arg);
 
 		default:
 			return FALSE;
@@ -3596,18 +3682,17 @@ exec_simple_check_plan(PLpgSQL_expr * expr)
 	tle = (TargetEntry *) lfirst(plan->targetlist);
 
 	/*
-	 * 5. Check that all the nodes in the expression are one of Expr,
-	 * Param or Const.
+	 * 5. Check that all the nodes in the expression are non-scary.
 	 */
-	if (!exec_simple_check_node(tle->expr))
+	if (!exec_simple_check_node((Node *) tle->expr))
 		return;
 
 	/*
 	 * Yes - this is a simple expression. Remember the expression and the
 	 * return type
 	 */
-	expr->plan_simple_expr = tle->expr;
-	expr->plan_simple_type = exprType(tle->expr);
+	expr->plan_simple_expr = (Node *) tle->expr;
+	expr->plan_simple_type = exprType((Node *) tle->expr);
 }
 
 /*

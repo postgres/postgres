@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.94 2002/09/18 21:35:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.95 2002/12/12 15:49:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -424,7 +424,7 @@ checkretval(Oid rettype, char fn_typtype, List *queryTreeList)
 			} while (attr->attisdropped);
 			rellogcols++;
 
-			tletype = exprType(tle->expr);
+			tletype = exprType((Node *) tle->expr);
 			atttype = attr->atttypid;
 			if (!IsBinaryCoercible(tletype, atttype))
 				elog(ERROR, "function declared to return %s returns %s instead of %s at column %d",

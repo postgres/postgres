@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.92 2002/11/15 02:50:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.93 2002/12/12 15:49:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,7 +79,7 @@ transformTargetEntry(ParseState *pstate,
 						 colname,
 						 resjunk);
 
-	return makeTargetEntry(resnode, expr);
+	return makeTargetEntry(resnode, (Expr *) expr);
 }
 
 
@@ -225,7 +225,7 @@ updateTargetListEntry(ParseState *pstate,
 					  int attrno,
 					  List *indirection)
 {
-	Oid			type_id = exprType(tle->expr);	/* type of value provided */
+	Oid			type_id = exprType((Node *) tle->expr);	/* type of value provided */
 	Oid			attrtype;		/* type of target column */
 	int32		attrtypmod;
 	Resdom	   *resnode = tle->resdom;
@@ -277,8 +277,8 @@ updateTargetListEntry(ParseState *pstate,
 										attrtypmod,
 										indirection,
 										pstate->p_is_insert,
-										tle->expr);
-		tle->expr = (Node *) aref;
+										(Node *) tle->expr);
+		tle->expr = (Expr *) aref;
 	}
 	else
 	{
@@ -289,10 +289,11 @@ updateTargetListEntry(ParseState *pstate,
 		 */
 		if (type_id != InvalidOid)
 		{
-			tle->expr = coerce_to_target_type(tle->expr, type_id,
-											  attrtype, attrtypmod,
-											  COERCION_ASSIGNMENT,
-											  COERCE_IMPLICIT_CAST);
+			tle->expr = (Expr *)
+				coerce_to_target_type((Node *) tle->expr, type_id,
+									  attrtype, attrtypmod,
+									  COERCION_ASSIGNMENT,
+									  COERCE_IMPLICIT_CAST);
 			if (tle->expr == NULL)
 				elog(ERROR, "column \"%s\" is of type %s"
 					 " but expression is of type %s"
@@ -501,7 +502,7 @@ FigureColnameInternal(Node *node, char **name)
 			}
 			break;
 		case T_CaseExpr:
-			strength = FigureColnameInternal(((CaseExpr *) node)->defresult,
+			strength = FigureColnameInternal((Node *) ((CaseExpr *) node)->defresult,
 											 name);
 			if (strength <= 1)
 			{

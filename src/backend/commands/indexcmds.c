@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.92 2002/10/21 22:06:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.93 2002/12/12 15:49:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -159,10 +159,10 @@ DefineIndex(RangeVar *heapRelation,
 	 * While we are at it, we reduce it to a canonical (CNF or DNF) form
 	 * to simplify the task of proving implications.
 	 */
-	if (predicate != NULL && rangetable != NIL)
+	if (predicate)
 	{
 		cnfPred = canonicalize_qual((Expr *) copyObject(predicate), true);
-		fix_opids((Node *) cnfPred);
+		fix_opfuncids((Node *) cnfPred);
 		CheckPredicate(cnfPred, rangetable, relationId);
 	}
 

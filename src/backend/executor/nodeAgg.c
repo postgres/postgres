@@ -45,7 +45,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.98 2002/12/05 15:50:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.99 2002/12/12 15:49:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -415,7 +415,7 @@ advance_aggregates(AggState *aggstate, AggStatePerGroup pergroup)
 		Datum		newVal;
 		bool		isNull;
 
-		newVal = ExecEvalExprSwitchContext(aggref->target, econtext,
+		newVal = ExecEvalExprSwitchContext((Node *) aggref->target, econtext,
 										   &isNull, NULL);
 
 		if (aggref->aggdistinct)
@@ -1298,7 +1298,7 @@ ExecInitAgg(Agg *node, EState *estate)
 			 * pg_proc.proargtypes, because the latter might be 0.
 			 * (Consider COUNT(*).)
 			 */
-			Oid			inputType = exprType(aggref->target);
+			Oid			inputType = exprType((Node *) aggref->target);
 
 			if (!IsBinaryCoercible(inputType, aggform->aggtranstype))
 				elog(ERROR, "Aggregate %u needs to have compatible input type and transition type",
@@ -1312,7 +1312,7 @@ ExecInitAgg(Agg *node, EState *estate)
 			 * pg_proc.proargtypes, because the latter might be a pseudotype.
 			 * (Consider COUNT(*).)
 			 */
-			Oid			inputType = exprType(aggref->target);
+			Oid			inputType = exprType((Node *) aggref->target);
 			Oid			eq_function;
 
 			/* We don't implement DISTINCT aggs in the HASHED case */

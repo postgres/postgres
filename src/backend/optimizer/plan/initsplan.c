@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.77 2002/11/24 21:52:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.78 2002/12/12 15:49:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -761,14 +761,11 @@ process_implied_equality(Query *root, Node *item1, Node *item2,
 		elog(ERROR, "Equality operator for types '%s' and '%s' should be mergejoinable, but isn't",
 			 format_type_be(ltype), format_type_be(rtype));
 
-	clause = makeNode(Expr);
-	clause->typeOid = BOOLOID;
-	clause->opType = OP_EXPR;
-	clause->oper = (Node *) makeOper(oprid(eq_operator),		/* opno */
-									 InvalidOid,		/* opid */
-									 BOOLOID,	/* opresulttype */
-									 false);	/* opretset */
-	clause->args = makeList2(item1, item2);
+	clause = make_opclause(oprid(eq_operator), /* opno */
+						   BOOLOID,	/* opresulttype */
+						   false, /* opretset */
+						   (Expr *) item1,
+						   (Expr *) item2);
 
 	ReleaseSysCache(eq_operator);
 
@@ -969,7 +966,7 @@ check_mergejoinable(RestrictInfo *restrictinfo)
 				leftOp,
 				rightOp;
 
-	if (!is_opclause((Node *) clause))
+	if (!is_opclause(clause))
 		return;
 
 	left = get_leftop(clause);
@@ -978,10 +975,11 @@ check_mergejoinable(RestrictInfo *restrictinfo)
 	/* caution: is_opclause accepts more than I do, so check it */
 	if (!right)
 		return;					/* unary opclauses need not apply */
-	if (!IsA(left, Var) ||!IsA(right, Var))
+	if (!IsA(left, Var) ||
+		!IsA(right, Var))
 		return;
 
-	opno = ((Oper *) clause->oper)->opno;
+	opno = ((OpExpr *) clause)->opno;
 
 	if (op_mergejoinable(opno,
 						 left->vartype,
@@ -1012,7 +1010,7 @@ check_hashjoinable(RestrictInfo *restrictinfo)
 			   *right;
 	Oid			opno;
 
-	if (!is_opclause((Node *) clause))
+	if (!is_opclause(clause))
 		return;
 
 	left = get_leftop(clause);
@@ -1021,10 +1019,11 @@ check_hashjoinable(RestrictInfo *restrictinfo)
 	/* caution: is_opclause accepts more than I do, so check it */
 	if (!right)
 		return;					/* unary opclauses need not apply */
-	if (!IsA(left, Var) ||!IsA(right, Var))
+	if (!IsA(left, Var) ||
+		!IsA(right, Var))
 		return;
 
-	opno = ((Oper *) clause->oper)->opno;
+	opno = ((OpExpr *) clause)->opno;
 
 	if (op_hashjoinable(opno,
 						left->vartype,

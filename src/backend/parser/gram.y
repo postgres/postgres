@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.386 2002/12/06 05:00:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.387 2002/12/12 15:49:36 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -5755,70 +5755,70 @@ a_expr:		c_expr									{ $$ = $1; }
 			| a_expr ISNULL
 				{
 					NullTest *n = makeNode(NullTest);
-					n->arg = $1;
+					n->arg = (Expr *) $1;
 					n->nulltesttype = IS_NULL;
 					$$ = (Node *)n;
 				}
 			| a_expr IS NULL_P
 				{
 					NullTest *n = makeNode(NullTest);
-					n->arg = $1;
+					n->arg = (Expr *) $1;
 					n->nulltesttype = IS_NULL;
 					$$ = (Node *)n;
 				}
 			| a_expr NOTNULL
 				{
 					NullTest *n = makeNode(NullTest);
-					n->arg = $1;
+					n->arg = (Expr *) $1;
 					n->nulltesttype = IS_NOT_NULL;
 					$$ = (Node *)n;
 				}
 			| a_expr IS NOT NULL_P
 				{
 					NullTest *n = makeNode(NullTest);
-					n->arg = $1;
+					n->arg = (Expr *) $1;
 					n->nulltesttype = IS_NOT_NULL;
 					$$ = (Node *)n;
 				}
 			| a_expr IS TRUE_P
 				{
 					BooleanTest *b = makeNode(BooleanTest);
-					b->arg = $1;
+					b->arg = (Expr *) $1;
 					b->booltesttype = IS_TRUE;
 					$$ = (Node *)b;
 				}
 			| a_expr IS NOT TRUE_P
 				{
 					BooleanTest *b = makeNode(BooleanTest);
-					b->arg = $1;
+					b->arg = (Expr *) $1;
 					b->booltesttype = IS_NOT_TRUE;
 					$$ = (Node *)b;
 				}
 			| a_expr IS FALSE_P
 				{
 					BooleanTest *b = makeNode(BooleanTest);
-					b->arg = $1;
+					b->arg = (Expr *) $1;
 					b->booltesttype = IS_FALSE;
 					$$ = (Node *)b;
 				}
 			| a_expr IS NOT FALSE_P
 				{
 					BooleanTest *b = makeNode(BooleanTest);
-					b->arg = $1;
+					b->arg = (Expr *) $1;
 					b->booltesttype = IS_NOT_FALSE;
 					$$ = (Node *)b;
 				}
 			| a_expr IS UNKNOWN
 				{
 					BooleanTest *b = makeNode(BooleanTest);
-					b->arg = $1;
+					b->arg = (Expr *) $1;
 					b->booltesttype = IS_UNKNOWN;
 					$$ = (Node *)b;
 				}
 			| a_expr IS NOT UNKNOWN
 				{
 					BooleanTest *b = makeNode(BooleanTest);
-					b->arg = $1;
+					b->arg = (Expr *) $1;
 					b->booltesttype = IS_NOT_UNKNOWN;
 					$$ = (Node *)b;
 				}
@@ -6640,9 +6640,9 @@ in_expr:	select_with_parens
 case_expr:	CASE case_arg when_clause_list case_default END_TRANS
 				{
 					CaseExpr *c = makeNode(CaseExpr);
-					c->arg = $2;
+					c->arg = (Expr *) $2;
 					c->args = $3;
-					c->defresult = $4;
+					c->defresult = (Expr *) $4;
 					$$ = (Node *)c;
 				}
 			| NULLIF '(' a_expr ',' a_expr ')'
@@ -6650,10 +6650,10 @@ case_expr:	CASE case_arg when_clause_list case_default END_TRANS
 					CaseExpr *c = makeNode(CaseExpr);
 					CaseWhen *w = makeNode(CaseWhen);
 
-					w->expr = (Node *) makeSimpleA_Expr(OP, "=", $3, $5);
+					w->expr = (Expr *) makeSimpleA_Expr(OP, "=", $3, $5);
 					/* w->result is left NULL */
 					c->args = makeList1(w);
-					c->defresult = $3;
+					c->defresult = (Expr *) $3;
 					$$ = (Node *)c;
 				}
 			| COALESCE '(' expr_list ')'
@@ -6666,7 +6666,7 @@ case_expr:	CASE case_arg when_clause_list case_default END_TRANS
 						NullTest *n = makeNode(NullTest);
 						n->arg = lfirst(l);
 						n->nulltesttype = IS_NOT_NULL;
-						w->expr = (Node *) n;
+						w->expr = (Expr *) n;
 						w->result = lfirst(l);
 						c->args = lappend(c->args, w);
 					}
@@ -6684,8 +6684,8 @@ when_clause:
 			WHEN a_expr THEN a_expr
 				{
 					CaseWhen *w = makeNode(CaseWhen);
-					w->expr = $2;
-					w->result = $4;
+					w->expr = (Expr *) $2;
+					w->result = (Expr *) $4;
 					$$ = (Node *)w;
 				}
 		;
@@ -7594,20 +7594,17 @@ static Node *
 makeRowNullTest(NullTestType test, List *args)
 {
 	Node *expr = NULL;
-	Node *arg;
 	NullTest *n;
 
 	if (lnext(args) != NIL)
 		expr = makeRowNullTest(test, lnext(args));
 
-	arg = lfirst(args);
-
 	n = makeNode(NullTest);
-	n->arg = arg;
+	n->arg = (Expr *) lfirst(args);
 	n->nulltesttype = test;
 
 	if (expr == NULL)
-		expr = (Node *)n;
+		expr = (Node *) n;
 	else if (test == IS_NOT_NULL)
 		expr = (Node *) makeA_Expr(OR, NIL, expr, (Node *)n);
 	else

@@ -8,18 +8,17 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/nodeFuncs.c,v 1.19 2002/09/02 02:47:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/nodeFuncs.c,v 1.20 2002/12/12 15:49:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
-
-
 #include "postgres.h"
 
 #include "nodes/nodeFuncs.h"
 #include "utils/lsyscache.h"
 
 static bool var_is_inner(Var *var);
+
 
 /*
  * single_node -
@@ -79,41 +78,15 @@ var_is_rel(Var *var)
  *****************************************************************************/
 
 /*
- * replace_opid -
+ * set_opfuncid -
  *
- *		Given a oper node, resets the opfid field with the
- *		procedure OID (regproc id).
- *
- *		Returns the modified oper node.
- *
+ *		Set the opfuncid (procedure OID) in an OpExpr node,
+ *		if it hasn't been set already.
  */
-Oper *
-replace_opid(Oper *oper)
+void
+set_opfuncid(OpExpr *opexpr)
 {
-	oper->opid = get_opcode(oper->opno);
-	oper->op_fcache = NULL;
-	return oper;
+	if (opexpr->opfuncid == InvalidOid)
+		opexpr->opfuncid = get_opcode(opexpr->opno);
+	opexpr->op_fcache = NULL;		/* XXX will go away soon */
 }
-
-/*****************************************************************************
- *		constant (CONST, PARAM) nodes
- *****************************************************************************/
-
-#ifdef NOT_USED
-/*
- * non_null -
- *		Returns t if the node is a non-null constant, e.g., if the node has a
- *		valid `constvalue' field.
- */
-bool
-non_null(Expr *c)
-{
-
-	if (IsA(c, Const) &&
-		!((Const *) c)->constisnull)
-		return true;
-	else
-		return false;
-}
-
-#endif

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.221 2002/12/06 05:00:32 momjian Exp $
+ * $Id: parsenodes.h,v 1.222 2002/12/12 15:49:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,7 @@ typedef enum QuerySource
 
 /*
  * Query -
- *	  all statments are turned into a Query tree (via transformStmt)
+ *	  all statements are turned into a Query tree (via transformStmt)
  *	  for further processing by the optimizer
  *	  utility statements (i.e. non-optimizable statements)
  *	  have the *utilityStmt field set.
@@ -202,145 +202,6 @@ typedef struct TypeCast
 } TypeCast;
 
 /*
- * CaseExpr - a CASE expression
- */
-typedef struct CaseExpr
-{
-	NodeTag		type;
-	Oid			casetype;
-	Node	   *arg;			/* implicit equality comparison argument */
-	List	   *args;			/* the arguments (list of WHEN clauses) */
-	Node	   *defresult;		/* the default result (ELSE clause) */
-} CaseExpr;
-
-/*
- * CaseWhen - an argument to a CASE expression
- */
-typedef struct CaseWhen
-{
-	NodeTag		type;
-	Node	   *expr;			/* comparison expression */
-	Node	   *result;			/* substitution result */
-} CaseWhen;
-
-/* ----------------
- * NullTest
- *
- * NullTest represents the operation of testing a value for NULLness.
- * Currently, we only support scalar input values, but eventually a
- * row-constructor input should be supported.
- * The appropriate test is performed and returned as a boolean Datum.
- * ----------------
- */
-
-typedef enum NullTestType
-{
-	IS_NULL, IS_NOT_NULL
-} NullTestType;
-
-typedef struct NullTest
-{
-	NodeTag		type;
-	Node	   *arg;			/* input expression */
-	NullTestType nulltesttype;	/* IS NULL, IS NOT NULL */
-} NullTest;
-
-/*
- * BooleanTest
- *
- * BooleanTest represents the operation of determining whether a boolean
- * is TRUE, FALSE, or UNKNOWN (ie, NULL).  All six meaningful combinations
- * are supported.  Note that a NULL input does *not* cause a NULL result.
- * The appropriate test is performed and returned as a boolean Datum.
- */
-
-typedef enum BoolTestType
-{
-	IS_TRUE, IS_NOT_TRUE, IS_FALSE, IS_NOT_FALSE, IS_UNKNOWN, IS_NOT_UNKNOWN
-} BoolTestType;
-
-typedef struct BooleanTest
-{
-	NodeTag		type;
-	Node	   *arg;			/* input expression */
-	BoolTestType booltesttype;	/* test type */
-} BooleanTest;
-
-/*
- * ConstraintTest
- *
- * ConstraintTest represents the operation of testing a value to see whether
- * it meets a constraint.  If so, the input value is returned as the result;
- * if not, an error is raised.
- */
-
-typedef enum ConstraintTestType
-{
-	CONSTR_TEST_NOTNULL,
-	CONSTR_TEST_CHECK
-} ConstraintTestType;
-
-typedef struct ConstraintTest
-{
-	NodeTag		type;
-	Node	   *arg;			/* input expression */
-	ConstraintTestType testtype;	/* test type */
-	char	   *name;			/* name of constraint (for error msgs) */
-	char	   *domname; 		/* name of domain (for error messages) */
-	Node	   *check_expr;		/* for CHECK test, a boolean expression */
-} ConstraintTest;
-
-/*
- * Placeholder node for the value to be processed by a domains
- * check constraint.
- */
-typedef struct DomainConstraintValue
-{
-	NodeTag		type;
-} DomainConstraintValue;
-
-typedef struct ConstraintTestValue
-{
-	NodeTag		type;
-	Oid			typeId;
-	int32		typeMod;
-} ConstraintTestValue;
-
-/*
- * ColumnDef - column definition (used in various creates)
- *
- * If the column has a default value, we may have the value expression
- * in either "raw" form (an untransformed parse tree) or "cooked" form
- * (the nodeToString representation of an executable expression tree),
- * depending on how this ColumnDef node was created (by parsing, or by
- * inheritance from an existing relation).	We should never have both
- * in the same node!
- *
- * The constraints list may contain a CONSTR_DEFAULT item in a raw
- * parsetree produced by gram.y, but transformCreateStmt will remove
- * the item and set raw_default instead.  CONSTR_DEFAULT items
- * should not appear in any subsequent processing.
- *
- * The "support" field, if not null, denotes a supporting relation that
- * should be linked by an internal dependency to the column.  Currently
- * this is only used to link a SERIAL column's sequence to the column.
- */
-typedef struct ColumnDef
-{
-	NodeTag		type;
-	char	   *colname;		/* name of column */
-	TypeName   *typename;		/* type of column */
-	int			inhcount;		/* number of times column is inherited */
-	bool		is_local;		/* column has local (non-inherited) def'n */
-	bool		is_not_null;	/* NOT NULL constraint specified? */
-	Node	   *raw_default;	/* default value (untransformed parse
-								 * tree) */
-	char	   *cooked_default; /* nodeToString representation */
-	List	   *constraints;	/* other constraints on column */
-	RangeVar   *support;		/* supporting relation, if any */
-} ColumnDef;
-
-/*
  * FuncCall - a function or aggregate invocation
  *
  * agg_star indicates we saw a 'foo(*)' construct, while agg_distinct
@@ -415,6 +276,15 @@ typedef struct InsertDefault
 } InsertDefault;
 
 /*
+ * Empty node used as raw-parse-tree representation of VALUE keyword
+ * for domain check constraints.
+ */
+typedef struct DomainConstraintValue
+{
+	NodeTag		type;
+} DomainConstraintValue;
+
+/*
  * SortGroupBy - for ORDER BY clause
  */
 typedef struct SortGroupBy
@@ -445,6 +315,40 @@ typedef struct RangeFunction
 	List	   *coldeflist;		/* list of ColumnDef nodes for runtime
 								 * assignment of RECORD TupleDesc */
 } RangeFunction;
+
+/*
+ * ColumnDef - column definition (used in various creates)
+ *
+ * If the column has a default value, we may have the value expression
+ * in either "raw" form (an untransformed parse tree) or "cooked" form
+ * (the nodeToString representation of an executable expression tree),
+ * depending on how this ColumnDef node was created (by parsing, or by
+ * inheritance from an existing relation).	We should never have both
+ * in the same node!
+ *
+ * The constraints list may contain a CONSTR_DEFAULT item in a raw
+ * parsetree produced by gram.y, but transformCreateStmt will remove
+ * the item and set raw_default instead.  CONSTR_DEFAULT items
+ * should not appear in any subsequent processing.
+ *
+ * The "support" field, if not null, denotes a supporting relation that
+ * should be linked by an internal dependency to the column.  Currently
+ * this is only used to link a SERIAL column's sequence to the column.
+ */
+typedef struct ColumnDef
+{
+	NodeTag		type;
+	char	   *colname;		/* name of column */
+	TypeName   *typename;		/* type of column */
+	int			inhcount;		/* number of times column is inherited */
+	bool		is_local;		/* column has local (non-inherited) def'n */
+	bool		is_not_null;	/* NOT NULL constraint specified? */
+	Node	   *raw_default;	/* default value (untransformed parse
+								 * tree) */
+	char	   *cooked_default; /* nodeToString representation */
+	List	   *constraints;	/* other constraints on column */
+	RangeVar   *support;		/* supporting relation, if any */
+} ColumnDef;
 
 /*
  * IndexElem - index parameters (used in CREATE INDEX)
@@ -478,21 +382,6 @@ typedef struct DefElem
 /****************************************************************************
  *	Nodes for a Query tree
  ****************************************************************************/
-
-/*
- * TargetEntry -
- *	   a target  entry (used in the transformed target list)
- *
- * one of resdom or fjoin is not NULL. a target list is
- *		((<resdom | fjoin> expr) (<resdom | fjoin> expr) ...)
- */
-typedef struct TargetEntry
-{
-	NodeTag		type;
-	Resdom	   *resdom;			/* fjoin overload this to be a list?? */
-	Fjoin	   *fjoin;
-	Node	   *expr;
-} TargetEntry;
 
 /*--------------------
  * RangeTblEntry -

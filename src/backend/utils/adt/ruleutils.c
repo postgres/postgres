@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.127 2002/11/26 03:01:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.128 2002/12/12 15:49:40 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -149,13 +149,13 @@ static RangeTblEntry *find_rte_by_refname(const char *refname,
 					deparse_context *context);
 static void get_rule_expr(Node *node, deparse_context *context,
 						  bool showimplicit);
-static void get_oper_expr(Expr *expr, deparse_context *context);
-static void get_func_expr(Expr *expr, deparse_context *context,
+static void get_oper_expr(OpExpr *expr, deparse_context *context);
+static void get_func_expr(FuncExpr *expr, deparse_context *context,
 						  bool showimplicit);
 static void get_agg_expr(Aggref *aggref, deparse_context *context);
 static Node *strip_type_coercion(Node *expr, Oid resultType);
 static void get_const_expr(Const *constval, deparse_context *context);
-static void get_sublink_expr(Node *node, deparse_context *context);
+static void get_sublink_expr(SubLink *sublink, deparse_context *context);
 static void get_from_clause(Query *query, deparse_context *context);
 static void get_from_clause_item(Node *jtnode, Query *query,
 					 deparse_context *context);
@@ -1434,7 +1434,7 @@ get_basic_select_query(Query *query, deparse_context *context,
 		sep = ", ";
 		colno++;
 
-		get_rule_expr(tle->expr, context, true);
+		get_rule_expr((Node *) tle->expr, context, true);
 
 		/*
 		 * Figure out what the result column should be called.	In the
@@ -1565,7 +1565,7 @@ get_rule_sortgroupclause(SortClause *srt, List *tlist, bool force_colno,
 	Node	   *expr;
 
 	tle = get_sortgroupclause_tle(srt, tlist);
-	expr = tle->expr;
+	expr = (Node *) tle->expr;
 
 	/*
 	 * Use column-number form if requested by caller or if expression is a
@@ -1647,7 +1647,7 @@ get_insert_query_def(Query *query, deparse_context *context)
 
 			appendStringInfo(buf, sep);
 			sep = ", ";
-			get_rule_expr(tle->expr, context, false);
+			get_rule_expr((Node *) tle->expr, context, false);
 		}
 		appendStringInfoChar(buf, ')');
 	}
@@ -1697,7 +1697,7 @@ get_update_query_def(Query *query, deparse_context *context)
 		if (!tleIsArrayAssign(tle))
 			appendStringInfo(buf, "%s = ",
 							 quote_identifier(tle->resdom->resname));
-		get_rule_expr(tle->expr, context, false);
+		get_rule_expr((Node *) tle->expr, context, false);
 	}
 
 	/* Add the FROM clause if needed */
@@ -1924,10 +1924,6 @@ get_rule_expr(Node *node, deparse_context *context,
 	 */
 	switch (nodeTag(node))
 	{
-		case T_Const:
-			get_const_expr((Const *) node, context);
-			break;
-
 		case T_Var:
 			{
 				Var		   *var = (Var *) node;
@@ -1958,82 +1954,26 @@ get_rule_expr(Node *node, deparse_context *context,
 			}
 			break;
 
-		case T_Expr:
+		case T_Const:
+			get_const_expr((Const *) node, context);
+			break;
+
+		case T_Param:
 			{
-				Expr	   *expr = (Expr *) node;
-				List	   *args = expr->args;
+				Param	   *param = (Param *) node;
 
-				/*
-				 * Expr nodes have to be handled a bit detailed
-				 */
-				switch (expr->opType)
+				switch (param->paramkind)
 				{
-					case OP_EXPR:
-						get_oper_expr(expr, context);
+					case PARAM_NAMED:
+						appendStringInfo(buf, "$%s", param->paramname);
 						break;
-
-					case DISTINCT_EXPR:
-						appendStringInfoChar(buf, '(');
-						Assert(length(args) == 2);
-						{
-							/* binary operator */
-							Node	   *arg1 = (Node *) lfirst(args);
-							Node	   *arg2 = (Node *) lsecond(args);
-
-							get_rule_expr(arg1, context, true);
-							appendStringInfo(buf, " IS DISTINCT FROM ");
-							get_rule_expr(arg2, context, true);
-						}
-						appendStringInfoChar(buf, ')');
+					case PARAM_NUM:
+					case PARAM_EXEC:
+						appendStringInfo(buf, "$%d", param->paramid);
 						break;
-
-					case FUNC_EXPR:
-						get_func_expr(expr, context, showimplicit);
-						break;
-
-					case OR_EXPR:
-						appendStringInfoChar(buf, '(');
-						get_rule_expr((Node *) lfirst(args), context, false);
-						while ((args = lnext(args)) != NIL)
-						{
-							appendStringInfo(buf, " OR ");
-							get_rule_expr((Node *) lfirst(args), context,
-										  false);
-						}
-						appendStringInfoChar(buf, ')');
-						break;
-
-					case AND_EXPR:
-						appendStringInfoChar(buf, '(');
-						get_rule_expr((Node *) lfirst(args), context, false);
-						while ((args = lnext(args)) != NIL)
-						{
-							appendStringInfo(buf, " AND ");
-							get_rule_expr((Node *) lfirst(args), context,
-										  false);
-						}
-						appendStringInfoChar(buf, ')');
-						break;
-
-					case NOT_EXPR:
-						appendStringInfo(buf, "(NOT ");
-						get_rule_expr((Node *) lfirst(args), context, false);
-						appendStringInfoChar(buf, ')');
-						break;
-
-					case SUBPLAN_EXPR:
-
-						/*
-						 * We cannot see an already-planned subplan in
-						 * rule deparsing, only while EXPLAINing a query
-						 * plan. For now, just punt.
-						 */
-						appendStringInfo(buf, "(subplan)");
-						break;
-
 					default:
-						elog(ERROR, "get_rule_expr: expr opType %d not supported",
-							 expr->opType);
+						appendStringInfo(buf, "(param)");
+						break;
 				}
 			}
 			break;
@@ -2058,7 +1998,7 @@ get_rule_expr(Node *node, deparse_context *context,
 				 */
 				if (aref->refassgnexpr)
 					context->varprefix = false;
-				get_rule_expr(aref->refexpr, context, showimplicit);
+				get_rule_expr((Node *) aref->refexpr, context, showimplicit);
 				context->varprefix = savevarprefix;
 				lowlist = aref->reflowerindexpr;
 				foreach(uplist, aref->refupperindexpr)
@@ -2077,15 +2017,103 @@ get_rule_expr(Node *node, deparse_context *context,
 				if (aref->refassgnexpr)
 				{
 					appendStringInfo(buf, " = ");
-					get_rule_expr(aref->refassgnexpr, context, showimplicit);
+					get_rule_expr((Node *) aref->refassgnexpr, context,
+								  showimplicit);
 				}
+			}
+			break;
+
+		case T_FuncExpr:
+			get_func_expr((FuncExpr *) node, context, showimplicit);
+			break;
+
+		case T_OpExpr:
+			get_oper_expr((OpExpr *) node, context);
+			break;
+
+		case T_DistinctExpr:
+			{
+				DistinctExpr *expr = (DistinctExpr *) node;
+				List	   *args = expr->args;
+
+				Assert(length(args) == 2);
+				{
+					/* binary operator */
+					Node	   *arg1 = (Node *) lfirst(args);
+					Node	   *arg2 = (Node *) lsecond(args);
+
+					appendStringInfoChar(buf, '(');
+					get_rule_expr(arg1, context, true);
+					appendStringInfo(buf, " IS DISTINCT FROM ");
+					get_rule_expr(arg2, context, true);
+					appendStringInfoChar(buf, ')');
+				}
+			}
+			break;
+
+		case T_BoolExpr:
+			{
+				BoolExpr   *expr = (BoolExpr *) node;
+				List	   *args = expr->args;
+
+				switch (expr->boolop)
+				{
+					case AND_EXPR:
+						appendStringInfoChar(buf, '(');
+						get_rule_expr((Node *) lfirst(args), context, false);
+						while ((args = lnext(args)) != NIL)
+						{
+							appendStringInfo(buf, " AND ");
+							get_rule_expr((Node *) lfirst(args), context,
+										  false);
+						}
+						appendStringInfoChar(buf, ')');
+						break;
+
+					case OR_EXPR:
+						appendStringInfoChar(buf, '(');
+						get_rule_expr((Node *) lfirst(args), context, false);
+						while ((args = lnext(args)) != NIL)
+						{
+							appendStringInfo(buf, " OR ");
+							get_rule_expr((Node *) lfirst(args), context,
+										  false);
+						}
+						appendStringInfoChar(buf, ')');
+						break;
+
+					case NOT_EXPR:
+						appendStringInfo(buf, "(NOT ");
+						get_rule_expr((Node *) lfirst(args), context, false);
+						appendStringInfoChar(buf, ')');
+						break;
+
+					default:
+						elog(ERROR, "get_rule_expr: unknown boolop %d",
+							 (int) expr->boolop);
+				}
+			}
+			break;
+
+		case T_SubLink:
+			get_sublink_expr((SubLink *) node, context);
+			break;
+
+		case T_SubPlanExpr:
+			{
+				/*
+				 * We cannot see an already-planned subplan in
+				 * rule deparsing, only while EXPLAINing a query
+				 * plan. For now, just punt.
+				 */
+				appendStringInfo(buf, "(subplan)");
 			}
 			break;
 
 		case T_FieldSelect:
 			{
 				FieldSelect *fselect = (FieldSelect *) node;
-				Oid			argType = exprType(fselect->arg);
+				Oid			argType = exprType((Node *) fselect->arg);
 				Oid			typrelid;
 				char	   *fieldname;
 
@@ -2103,7 +2131,7 @@ get_rule_expr(Node *node, deparse_context *context,
 				 * are *not* simple.  So, always use parenthesized syntax.
 				 */
 				appendStringInfoChar(buf, '(');
-				get_rule_expr(fselect->arg, context, true);
+				get_rule_expr((Node *) fselect->arg, context, true);
 				appendStringInfo(buf, ").%s", quote_identifier(fieldname));
 			}
 			break;
@@ -2111,7 +2139,7 @@ get_rule_expr(Node *node, deparse_context *context,
 		case T_RelabelType:
 			{
 				RelabelType *relabel = (RelabelType *) node;
-				Node   *arg = relabel->arg;
+				Node   *arg = (Node *) relabel->arg;
 
 				if (relabel->relabelformat == COERCE_IMPLICIT_CAST &&
 					!showimplicit)
@@ -2149,12 +2177,12 @@ get_rule_expr(Node *node, deparse_context *context,
 					CaseWhen   *when = (CaseWhen *) lfirst(temp);
 
 					appendStringInfo(buf, " WHEN ");
-					get_rule_expr(when->expr, context, false);
+					get_rule_expr((Node *) when->expr, context, false);
 					appendStringInfo(buf, " THEN ");
-					get_rule_expr(when->result, context, true);
+					get_rule_expr((Node *) when->result, context, true);
 				}
 				appendStringInfo(buf, " ELSE ");
-				get_rule_expr(caseexpr->defresult, context, true);
+				get_rule_expr((Node *) caseexpr->defresult, context, true);
 				appendStringInfo(buf, " END");
 			}
 			break;
@@ -2164,7 +2192,7 @@ get_rule_expr(Node *node, deparse_context *context,
 				NullTest   *ntest = (NullTest *) node;
 
 				appendStringInfo(buf, "(");
-				get_rule_expr(ntest->arg, context, true);
+				get_rule_expr((Node *) ntest->arg, context, true);
 				switch (ntest->nulltesttype)
 				{
 					case IS_NULL:
@@ -2185,7 +2213,7 @@ get_rule_expr(Node *node, deparse_context *context,
 				BooleanTest *btest = (BooleanTest *) node;
 
 				appendStringInfo(buf, "(");
-				get_rule_expr(btest->arg, context, false);
+				get_rule_expr((Node *) btest->arg, context, false);
 				switch (btest->booltesttype)
 				{
 					case IS_TRUE:
@@ -2221,38 +2249,12 @@ get_rule_expr(Node *node, deparse_context *context,
 				 * We assume that the operations of the constraint node
 				 * need not be explicitly represented in the output.
 				 */
-				get_rule_expr(ctest->arg, context, showimplicit);
+				get_rule_expr((Node *) ctest->arg, context, showimplicit);
 			}
 			break;
 
 		case T_ConstraintTestValue:
-			{
-				appendStringInfo(buf, "VALUE");
-			}
-			break;
-
-		case T_SubLink:
-			get_sublink_expr(node, context);
-			break;
-
-		case T_Param:
-			{
-				Param	   *param = (Param *) node;
-
-				switch (param->paramkind)
-				{
-					case PARAM_NAMED:
-						appendStringInfo(buf, "$%s", param->paramname);
-						break;
-					case PARAM_NUM:
-					case PARAM_EXEC:
-						appendStringInfo(buf, "$%d", param->paramid);
-						break;
-					default:
-						appendStringInfo(buf, "(param)");
-						break;
-				}
-			}
+			appendStringInfo(buf, "VALUE");
 			break;
 
 		default:
@@ -2263,13 +2265,13 @@ get_rule_expr(Node *node, deparse_context *context,
 
 
 /*
- * get_oper_expr			- Parse back an Oper node
+ * get_oper_expr			- Parse back an OpExpr node
  */
 static void
-get_oper_expr(Expr *expr, deparse_context *context)
+get_oper_expr(OpExpr *expr, deparse_context *context)
 {
 	StringInfo	buf = context->buf;
-	Oid			opno = ((Oper *) expr->oper)->opno;
+	Oid			opno = expr->opno;
 	List	   *args = expr->args;
 
 	appendStringInfoChar(buf, '(');
@@ -2324,15 +2326,14 @@ get_oper_expr(Expr *expr, deparse_context *context)
 }
 
 /*
- * get_func_expr			- Parse back a Func node
+ * get_func_expr			- Parse back a FuncExpr node
  */
 static void
-get_func_expr(Expr *expr, deparse_context *context,
+get_func_expr(FuncExpr *expr, deparse_context *context,
 			  bool showimplicit)
 {
 	StringInfo	buf = context->buf;
-	Func	   *func = (Func *) (expr->oper);
-	Oid			funcoid = func->funcid;
+	Oid			funcoid = expr->funcid;
 	Oid			argtypes[FUNC_MAX_ARGS];
 	int			nargs;
 	List	   *l;
@@ -2342,7 +2343,7 @@ get_func_expr(Expr *expr, deparse_context *context,
 	 * If the function call came from an implicit coercion, then just show
 	 * the first argument --- unless caller wants to see implicit coercions.
 	 */
-	if (func->funcformat == COERCE_IMPLICIT_CAST && !showimplicit)
+	if (expr->funcformat == COERCE_IMPLICIT_CAST && !showimplicit)
 	{
 		get_rule_expr((Node *) lfirst(expr->args), context, showimplicit);
 		return;
@@ -2352,11 +2353,11 @@ get_func_expr(Expr *expr, deparse_context *context,
 	 * If the function call came from a cast, then show
 	 * the first argument plus an explicit cast operation.
 	 */
-	if (func->funcformat == COERCE_EXPLICIT_CAST ||
-		func->funcformat == COERCE_IMPLICIT_CAST)
+	if (expr->funcformat == COERCE_EXPLICIT_CAST ||
+		expr->funcformat == COERCE_IMPLICIT_CAST)
 	{
 		Node	   *arg = lfirst(expr->args);
-		Oid			rettype = expr->typeOid;
+		Oid			rettype = expr->funcresulttype;
 		int32		coercedTypmod;
 
 		/* Get the typmod if this is a length-coercion function */
@@ -2410,7 +2411,7 @@ static void
 get_agg_expr(Aggref *aggref, deparse_context *context)
 {
 	StringInfo	buf = context->buf;
-	Oid			argtype = exprType(aggref->target);
+	Oid			argtype = exprType((Node *) aggref->target);
 
 	appendStringInfo(buf, "%s(%s",
 				   generate_function_name(aggref->aggfnoid, 1, &argtype),
@@ -2418,7 +2419,7 @@ get_agg_expr(Aggref *aggref, deparse_context *context)
 	if (aggref->aggstar)
 		appendStringInfo(buf, "*");
 	else
-		get_rule_expr(aggref->target, context, true);
+		get_rule_expr((Node *) aggref->target, context, true);
 	appendStringInfoChar(buf, ')');
 }
 
@@ -2442,14 +2443,12 @@ strip_type_coercion(Node *expr, Oid resultType)
 
 	if (IsA(expr, RelabelType) &&
 		((RelabelType *) expr)->resulttypmod == -1)
-		return ((RelabelType *) expr)->arg;
+		return (Node *) ((RelabelType *) expr)->arg;
 
-	if (IsA(expr, Expr) &&
-		((Expr *) expr)->opType == FUNC_EXPR)
+	if (IsA(expr, FuncExpr))
 	{
-		Func	   *func = (Func *) (((Expr *) expr)->oper);
+		FuncExpr   *func = (FuncExpr *) expr;
 
-		Assert(IsA(func, Func));
 		if (func->funcformat != COERCE_EXPLICIT_CAST &&
 			func->funcformat != COERCE_IMPLICIT_CAST)
 			return expr;		/* don't absorb into upper coercion */
@@ -2457,7 +2456,7 @@ strip_type_coercion(Node *expr, Oid resultType)
 		if (exprIsLengthCoercion(expr, NULL))
 			return expr;
 
-		return (Node *) lfirst(((Expr *) expr)->args);
+		return (Node *) lfirst(func->args);
 	}
 
 	return expr;
@@ -2609,14 +2608,13 @@ get_const_expr(Const *constval, deparse_context *context)
  * ----------
  */
 static void
-get_sublink_expr(Node *node, deparse_context *context)
+get_sublink_expr(SubLink *sublink, deparse_context *context)
 {
 	StringInfo	buf = context->buf;
-	SubLink    *sublink = (SubLink *) node;
 	Query	   *query = (Query *) (sublink->subselect);
 	List	   *l;
 	char	   *sep;
-	Oper	   *oper;
+	OpExpr	   *oper;
 	bool		need_paren;
 
 	appendStringInfoChar(buf, '(');
@@ -2657,17 +2655,17 @@ get_sublink_expr(Node *node, deparse_context *context)
 			break;
 
 		case ANY_SUBLINK:
-			oper = (Oper *) lfirst(sublink->oper);
+			oper = (OpExpr *) lfirst(sublink->oper);
 			appendStringInfo(buf, "%s ANY ", get_opname(oper->opno));
 			break;
 
 		case ALL_SUBLINK:
-			oper = (Oper *) lfirst(sublink->oper);
+			oper = (OpExpr *) lfirst(sublink->oper);
 			appendStringInfo(buf, "%s ALL ", get_opname(oper->opno));
 			break;
 
 		case MULTIEXPR_SUBLINK:
-			oper = (Oper *) lfirst(sublink->oper);
+			oper = (OpExpr *) lfirst(sublink->oper);
 			appendStringInfo(buf, "%s ", get_opname(oper->opno));
 			break;
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.135 2002/12/06 05:00:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.136 2002/12/12 15:49:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -199,9 +199,9 @@ transformExpr(ParseState *pstate, Node *expr, ConstraintTestValue *domVal)
 								n->nulltesttype = IS_NULL;
 
 								if (exprIsNullConstant(a->lexpr))
-									n->arg = a->rexpr;
+									n->arg = (Expr *) a->rexpr;
 								else
-									n->arg = a->lexpr;
+									n->arg = (Expr *) a->lexpr;
 
 								result = transformExpr(pstate,
 													   (Node *) n, domVal);
@@ -225,15 +225,13 @@ transformExpr(ParseState *pstate, Node *expr, ConstraintTestValue *domVal)
 															  a->lexpr, domVal);
 							Node	   *rexpr = transformExpr(pstate,
 															  a->rexpr, domVal);
-							Expr	   *expr = makeNode(Expr);
 
 							lexpr = coerce_to_boolean(lexpr, "AND");
 							rexpr = coerce_to_boolean(rexpr, "AND");
 
-							expr->typeOid = BOOLOID;
-							expr->opType = AND_EXPR;
-							expr->args = makeList2(lexpr, rexpr);
-							result = (Node *) expr;
+							result = (Node *) makeBoolExpr(AND_EXPR,
+														   makeList2(lexpr,
+																	 rexpr));
 						}
 						break;
 					case OR:
@@ -242,29 +240,24 @@ transformExpr(ParseState *pstate, Node *expr, ConstraintTestValue *domVal)
 															  a->lexpr, domVal);
 							Node	   *rexpr = transformExpr(pstate,
 															  a->rexpr, domVal);
-							Expr	   *expr = makeNode(Expr);
 
 							lexpr = coerce_to_boolean(lexpr, "OR");
 							rexpr = coerce_to_boolean(rexpr, "OR");
 
-							expr->typeOid = BOOLOID;
-							expr->opType = OR_EXPR;
-							expr->args = makeList2(lexpr, rexpr);
-							result = (Node *) expr;
+							result = (Node *) makeBoolExpr(OR_EXPR,
+														   makeList2(lexpr,
+																	 rexpr));
 						}
 						break;
 					case NOT:
 						{
 							Node	   *rexpr = transformExpr(pstate,
 															  a->rexpr, domVal);
-							Expr	   *expr = makeNode(Expr);
 
 							rexpr = coerce_to_boolean(rexpr, "NOT");
 
-							expr->typeOid = BOOLOID;
-							expr->opType = NOT_EXPR;
-							expr->args = makeList1(rexpr);
-							result = (Node *) expr;
+							result = (Node *) makeBoolExpr(NOT_EXPR,
+														   makeList1(rexpr));
 						}
 						break;
 					case DISTINCT:
@@ -277,9 +270,12 @@ transformExpr(ParseState *pstate, Node *expr, ConstraintTestValue *domVal)
 							result = (Node *) make_op(a->name,
 													  lexpr,
 													  rexpr);
-							if (((Expr *) result)->typeOid != BOOLOID)
+							if (((OpExpr *) result)->opresulttype != BOOLOID)
 								elog(ERROR, "IS DISTINCT FROM requires = operator to yield boolean");
-							((Expr *) result)->opType = DISTINCT_EXPR;
+							/*
+							 * We rely on DistinctExpr and OpExpr being same struct
+							 */
+							NodeSetTag(result, T_DistinctExpr);
 						}
 						break;
 					case OF:
@@ -433,7 +429,7 @@ transformExpr(ParseState *pstate, Node *expr, ConstraintTestValue *domVal)
 						Node	   *lexpr;
 						Operator	optup;
 						Form_pg_operator opform;
-						Oper	   *newop;
+						OpExpr	   *newop;
 
 						right_list = lnext(right_list);
 						if (tent->resdom->resjunk)
@@ -451,7 +447,7 @@ transformExpr(ParseState *pstate, Node *expr, ConstraintTestValue *domVal)
 						 */
 						optup = oper(op,
 									 exprType(lexpr),
-									 exprType(tent->expr),
+									 exprType((Node *) tent->expr),
 									 false);
 						opform = (Form_pg_operator) GETSTRUCT(optup);
 
@@ -466,11 +462,15 @@ transformExpr(ParseState *pstate, Node *expr, ConstraintTestValue *domVal)
 								 " to be used with quantified predicate subquery",
 								 opname);
 
-						newop = makeOper(oprid(optup),	/* opno */
-										 InvalidOid,	/* opid */
-										 opform->oprresult,
-										 false);
+						newop = makeNode(OpExpr);
+						newop->opno = oprid(optup);
+						newop->opfuncid = InvalidOid;
+						newop->opresulttype = opform->oprresult;
+						newop->opretset = false;
+						newop->args = NIL; /* for now */
+
 						sublink->oper = lappend(sublink->oper, newop);
+
 						ReleaseSysCache(optup);
 					}
 					if (left_list != NIL)
@@ -499,22 +499,24 @@ transformExpr(ParseState *pstate, Node *expr, ConstraintTestValue *domVal)
 
 					Assert(IsA(w, CaseWhen));
 
-					warg = w->expr;
+					warg = (Node *) w->expr;
 					if (c->arg != NULL)
 					{
 						/* shorthand form was specified, so expand... */
 						warg = (Node *) makeSimpleA_Expr(OP, "=",
-														 c->arg, warg);
+														 (Node *) c->arg,
+														 warg);
 					}
-					neww->expr = transformExpr(pstate, warg, domVal);
+					neww->expr = (Expr *) transformExpr(pstate, warg, domVal);
 
-					neww->expr = coerce_to_boolean(neww->expr, "CASE/WHEN");
+					neww->expr = (Expr *) coerce_to_boolean((Node *) neww->expr,
+															"CASE/WHEN");
 
 					/*
 					 * result is NULL for NULLIF() construct - thomas
 					 * 1998-11-11
 					 */
-					warg = w->result;
+					warg = (Node *) w->result;
 					if (warg == NULL)
 					{
 						A_Const    *n = makeNode(A_Const);
@@ -522,10 +524,10 @@ transformExpr(ParseState *pstate, Node *expr, ConstraintTestValue *domVal)
 						n->val.type = T_Null;
 						warg = (Node *) n;
 					}
-					neww->result = transformExpr(pstate, warg, domVal);
+					neww->result = (Expr *) transformExpr(pstate, warg, domVal);
 
 					newargs = lappend(newargs, neww);
-					typeids = lappendi(typeids, exprType(neww->result));
+					typeids = lappendi(typeids, exprType((Node *) neww->result));
 				}
 
 				newc->args = newargs;
@@ -538,7 +540,7 @@ transformExpr(ParseState *pstate, Node *expr, ConstraintTestValue *domVal)
 				newc->arg = NULL;
 
 				/* transform the default clause */
-				defresult = c->defresult;
+				defresult = (Node *) c->defresult;
 				if (defresult == NULL)
 				{
 					A_Const    *n = makeNode(A_Const);
@@ -546,7 +548,7 @@ transformExpr(ParseState *pstate, Node *expr, ConstraintTestValue *domVal)
 					n->val.type = T_Null;
 					defresult = (Node *) n;
 				}
-				newc->defresult = transformExpr(pstate, defresult, domVal);
+				newc->defresult = (Expr *) transformExpr(pstate, defresult, domVal);
 
 				/*
 				 * Note: default result is considered the most significant
@@ -554,24 +556,26 @@ transformExpr(ParseState *pstate, Node *expr, ConstraintTestValue *domVal)
 				 * code worked before, but it seems a little bogus to me
 				 * --- tgl
 				 */
-				typeids = lconsi(exprType(newc->defresult), typeids);
+				typeids = lconsi(exprType((Node *) newc->defresult), typeids);
 
 				ptype = select_common_type(typeids, "CASE");
 				newc->casetype = ptype;
 
 				/* Convert default result clause, if necessary */
-				newc->defresult = coerce_to_common_type(newc->defresult,
-														ptype,
-														"CASE/ELSE");
+				newc->defresult = (Expr *)
+					coerce_to_common_type((Node *) newc->defresult,
+										  ptype,
+										  "CASE/ELSE");
 
 				/* Convert when-clause results, if necessary */
 				foreach(args, newc->args)
 				{
 					CaseWhen   *w = (CaseWhen *) lfirst(args);
 
-					w->result = coerce_to_common_type(w->result,
-													  ptype,
-													  "CASE/WHEN");
+					w->result = (Expr *)
+						coerce_to_common_type((Node *) w->result,
+											  ptype,
+											  "CASE/WHEN");
 				}
 
 				result = (Node *) newc;
@@ -582,7 +586,7 @@ transformExpr(ParseState *pstate, Node *expr, ConstraintTestValue *domVal)
 			{
 				NullTest   *n = (NullTest *) expr;
 
-				n->arg = transformExpr(pstate, n->arg, domVal);
+				n->arg = (Expr *) transformExpr(pstate, (Node *) n->arg, domVal);
 				/* the argument can be any type, so don't coerce it */
 				result = expr;
 				break;
@@ -619,9 +623,9 @@ transformExpr(ParseState *pstate, Node *expr, ConstraintTestValue *domVal)
 						clausename = NULL;		/* keep compiler quiet */
 				}
 
-				b->arg = transformExpr(pstate, b->arg, domVal);
+				b->arg = (Expr *) transformExpr(pstate, (Node *) b->arg, domVal);
 
-				b->arg = coerce_to_boolean(b->arg, clausename);
+				b->arg = (Expr *) coerce_to_boolean((Node *) b->arg, clausename);
 
 				result = expr;
 				break;
@@ -885,36 +889,39 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 Oid
 exprType(Node *expr)
 {
-	Oid			type = (Oid) InvalidOid;
+	Oid			type;
 
 	if (!expr)
-		return type;
+		return InvalidOid;
 
 	switch (nodeTag(expr))
 	{
 		case T_Var:
 			type = ((Var *) expr)->vartype;
 			break;
-		case T_Expr:
-			type = ((Expr *) expr)->typeOid;
-			break;
 		case T_Const:
 			type = ((Const *) expr)->consttype;
-			break;
-		case T_ArrayRef:
-			type = ((ArrayRef *) expr)->refrestype;
-			break;
-		case T_Aggref:
-			type = ((Aggref *) expr)->aggtype;
 			break;
 		case T_Param:
 			type = ((Param *) expr)->paramtype;
 			break;
-		case T_FieldSelect:
-			type = ((FieldSelect *) expr)->resulttype;
+		case T_Aggref:
+			type = ((Aggref *) expr)->aggtype;
 			break;
-		case T_RelabelType:
-			type = ((RelabelType *) expr)->resulttype;
+		case T_ArrayRef:
+			type = ((ArrayRef *) expr)->refrestype;
+			break;
+		case T_FuncExpr:
+			type = ((FuncExpr *) expr)->funcresulttype;
+			break;
+		case T_OpExpr:
+			type = ((OpExpr *) expr)->opresulttype;
+			break;
+		case T_DistinctExpr:
+			type = ((DistinctExpr *) expr)->opresulttype;
+			break;
+		case T_BoolExpr:
+			type = BOOLOID;
 			break;
 		case T_SubLink:
 			{
@@ -938,11 +945,17 @@ exprType(Node *expr)
 				}
 			}
 			break;
+		case T_FieldSelect:
+			type = ((FieldSelect *) expr)->resulttype;
+			break;
+		case T_RelabelType:
+			type = ((RelabelType *) expr)->resulttype;
+			break;
 		case T_CaseExpr:
 			type = ((CaseExpr *) expr)->casetype;
 			break;
 		case T_CaseWhen:
-			type = exprType(((CaseWhen *) expr)->result);
+			type = exprType((Node *) ((CaseWhen *) expr)->result);
 			break;
 		case T_NullTest:
 			type = BOOLOID;
@@ -951,7 +964,7 @@ exprType(Node *expr)
 			type = BOOLOID;
 			break;
 		case T_ConstraintTest:
-			type = exprType(((ConstraintTest *) expr)->arg);
+			type = exprType((Node *) ((ConstraintTest *) expr)->arg);
 			break;
 		case T_ConstraintTestValue:
 			type = ((ConstraintTestValue *) expr)->typeId;
@@ -959,6 +972,7 @@ exprType(Node *expr)
 		default:
 			elog(ERROR, "exprType: Do not know how to get type for %d node",
 				 nodeTag(expr));
+			type = InvalidOid;	/* keep compiler quiet */
 			break;
 	}
 	return type;
@@ -995,7 +1009,7 @@ exprTypmod(Node *expr)
 				}
 			}
 			break;
-		case T_Expr:
+		case T_FuncExpr:
 			{
 				int32		coercedTypmod;
 
@@ -1021,9 +1035,9 @@ exprTypmod(Node *expr)
 
 				if (!cexpr->defresult)
 					return -1;
-				if (exprType(cexpr->defresult) != casetype)
+				if (exprType((Node *) cexpr->defresult) != casetype)
 					return -1;
-				typmod = exprTypmod(cexpr->defresult);
+				typmod = exprTypmod((Node *) cexpr->defresult);
 				if (typmod < 0)
 					return -1;	/* no point in trying harder */
 				foreach(arg, cexpr->args)
@@ -1031,16 +1045,16 @@ exprTypmod(Node *expr)
 					CaseWhen   *w = (CaseWhen *) lfirst(arg);
 
 					Assert(IsA(w, CaseWhen));
-					if (exprType(w->result) != casetype)
+					if (exprType((Node *) w->result) != casetype)
 						return -1;
-					if (exprTypmod(w->result) != typmod)
+					if (exprTypmod((Node *) w->result) != typmod)
 						return -1;
 				}
 				return typmod;
 			}
 			break;
 		case T_ConstraintTest:
-			return exprTypmod(((ConstraintTest *) expr)->arg);
+			return exprTypmod((Node *) ((ConstraintTest *) expr)->arg);
 
 		default:
 			break;
@@ -1059,7 +1073,7 @@ exprTypmod(Node *expr)
 bool
 exprIsLengthCoercion(Node *expr, int32 *coercedTypmod)
 {
-	Func	   *func;
+	FuncExpr   *func;
 	int			nargs;
 	Const	   *second_arg;
 
@@ -1067,12 +1081,9 @@ exprIsLengthCoercion(Node *expr, int32 *coercedTypmod)
 		*coercedTypmod = -1;	/* default result on failure */
 
 	/* Is it a function-call at all? */
-	if (expr == NULL ||
-		!IsA(expr, Expr) ||
-		((Expr *) expr)->opType != FUNC_EXPR)
+	if (expr == NULL || !IsA(expr, FuncExpr))
 		return false;
-	func = (Func *) (((Expr *) expr)->oper);
-	Assert(IsA(func, Func));
+	func = (FuncExpr *) expr;
 
 	/*
 	 * If it didn't come from a coercion context, reject.
@@ -1086,11 +1097,11 @@ exprIsLengthCoercion(Node *expr, int32 *coercedTypmod)
 	 * argument being an int4 constant, it can't have been created from a
 	 * length coercion (it must be a type coercion, instead).
 	 */
-	nargs = length(((Expr *) expr)->args);
+	nargs = length(func->args);
 	if (nargs < 2 || nargs > 3)
 		return false;
 
-	second_arg = (Const *) lsecond(((Expr *) expr)->args);
+	second_arg = (Const *) lsecond(func->args);
 	if (!IsA(second_arg, Const) ||
 		second_arg->consttype != INT4OID ||
 		second_arg->constisnull)

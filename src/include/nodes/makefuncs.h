@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: makefuncs.h,v 1.42 2002/11/25 21:29:42 tgl Exp $
+ * $Id: makefuncs.h,v 1.43 2002/12/12 15:49:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,18 +22,13 @@ extern A_Expr *makeA_Expr(int oper, List *name, Node *lexpr, Node *rexpr);
 extern A_Expr *makeSimpleA_Expr(int oper, const char *name,
 				 Node *lexpr, Node *rexpr);
 
-extern Oper *makeOper(Oid opno,
-		 Oid opid,
-		 Oid opresulttype,
-		 bool opretset);
-
 extern Var *makeVar(Index varno,
 		AttrNumber varattno,
 		Oid vartype,
 		int32 vartypmod,
 		Index varlevelsup);
 
-extern TargetEntry *makeTargetEntry(Resdom *resdom, Node *expr);
+extern TargetEntry *makeTargetEntry(Resdom *resdom, Expr *expr);
 
 extern Resdom *makeResdom(AttrNumber resno,
 		   Oid restype,
@@ -49,9 +44,11 @@ extern Const *makeConst(Oid consttype,
 
 extern Const *makeNullConst(Oid consttype);
 
+extern Expr *makeBoolExpr(BoolExprType boolop, List *args);
+
 extern Alias *makeAlias(const char *aliasname, List *colnames);
 
-extern RelabelType *makeRelabelType(Node *arg, Oid rtype, int32 rtypmod,
+extern RelabelType *makeRelabelType(Expr *arg, Oid rtype, int32 rtypmod,
 									CoercionForm rformat);
 
 extern RangeVar *makeRangeVar(char *schemaname, char *relname);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.48 2002/11/24 21:52:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.49 2002/12/12 15:49:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -96,7 +96,7 @@ create_or_index_paths(Query *root, RelOptInfo *rel)
 
 				best_or_subclause_indices(root,
 										  rel,
-										  restrictinfo->clause->args,
+										  ((BoolExpr *) restrictinfo->clause)->args,
 										  restrictinfo->subclauseindices,
 										  pathnode);
 

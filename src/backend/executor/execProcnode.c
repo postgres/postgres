@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execProcnode.c,v 1.31 2002/12/05 15:50:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execProcnode.c,v 1.32 2002/12/12 15:49:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -228,9 +228,9 @@ ExecInitNode(Plan *node, EState *estate)
 	subps = NIL;
 	foreach(subp, node->initPlan)
 	{
-		SubPlan	   *subplan = (SubPlan *) lfirst(subp);
+		SubPlanExpr *subplan = (SubPlanExpr *) lfirst(subp);
 
-		Assert(IsA(subplan, SubPlan));
+		Assert(IsA(subplan, SubPlanExpr));
 		subps = lappend(subps, ExecInitSubPlan(subplan, estate));
 	}
 	result->initPlan = subps;
@@ -242,9 +242,9 @@ ExecInitNode(Plan *node, EState *estate)
 	subps = NIL;
 	foreach(subp, result->subPlan)
 	{
-		SubPlan	   *subplan = (SubPlan *) lfirst(subp);
+		SubPlanExpr *subplan = (SubPlanExpr *) lfirst(subp);
 
-		Assert(IsA(subplan, SubPlan));
+		Assert(IsA(subplan, SubPlanExpr));
 		subps = lappend(subps, ExecInitSubPlan(subplan, estate));
 	}
 	result->subPlan = subps;

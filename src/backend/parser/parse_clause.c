@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.100 2002/11/29 21:39:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.101 2002/12/12 15:49:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -503,17 +503,6 @@ transformRangeFunction(ParseState *pstate, RangeFunction *r)
 	}
 
 	/*
-	 * Insist we have a bare function call (explain.c is the only place
-	 * that depends on this, I think).	If this fails, it's probably
-	 * because transformExpr interpreted the function notation as a type
-	 * coercion.
-	 */
-	if (!funcexpr ||
-		!IsA(funcexpr, Expr) ||
-		((Expr *) funcexpr)->opType != FUNC_EXPR)
-		elog(ERROR, "Coercion function not allowed in FROM clause");
-
-	/*
 	 * OK, build an RTE for the function.
 	 */
 	rte = addRangeTableEntryForFunction(pstate, funcname, funcexpr,
@@ -876,7 +865,7 @@ buildMergedJoinVar(JoinType jointype, Var *l_colvar, Var *r_colvar)
 							 outcoltype,
 							 COERCION_IMPLICIT, COERCE_IMPLICIT_CAST);
 	else if (l_colvar->vartypmod != outcoltypmod)
-		l_node = (Node *) makeRelabelType((Node *) l_colvar,
+		l_node = (Node *) makeRelabelType((Expr *) l_colvar,
 										  outcoltype, outcoltypmod,
 										  COERCE_IMPLICIT_CAST);
 	else
@@ -887,7 +876,7 @@ buildMergedJoinVar(JoinType jointype, Var *l_colvar, Var *r_colvar)
 							 outcoltype,
 							 COERCION_IMPLICIT, COERCE_IMPLICIT_CAST);
 	else if (r_colvar->vartypmod != outcoltypmod)
-		r_node = (Node *) makeRelabelType((Node *) r_colvar,
+		r_node = (Node *) makeRelabelType((Expr *) r_colvar,
 										  outcoltype, outcoltypmod,
 										  COERCE_IMPLICIT_CAST);
 	else
@@ -928,13 +917,13 @@ buildMergedJoinVar(JoinType jointype, Var *l_colvar, Var *r_colvar)
 				CaseWhen   *w = makeNode(CaseWhen);
 				NullTest   *n = makeNode(NullTest);
 
-				n->arg = l_node;
+				n->arg = (Expr *) l_node;
 				n->nulltesttype = IS_NOT_NULL;
-				w->expr = (Node *) n;
-				w->result = l_node;
+				w->expr = (Expr *) n;
+				w->result = (Expr *) l_node;
 				c->casetype = outcoltype;
 				c->args = makeList1(w);
-				c->defresult = r_node;
+				c->defresult = (Expr *) r_node;
 				res_node = (Node *) c;
 				break;
 			}

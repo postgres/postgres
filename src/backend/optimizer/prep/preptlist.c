@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.58 2002/11/25 21:29:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.59 2002/12/12 15:49:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -96,7 +96,7 @@ preprocess_targetlist(List *tlist,
 		if (command_type == CMD_DELETE)
 			tlist = listCopy(tlist);
 
-		tlist = lappend(tlist, makeTargetEntry(resdom, (Node *) var));
+		tlist = lappend(tlist, makeTargetEntry(resdom, (Expr *) var));
 	}
 
 	return tlist;
@@ -215,7 +215,7 @@ expand_targetlist(List *tlist, int command_type,
 												 atttypmod,
 									  pstrdup(NameStr(att_tup->attname)),
 												 false),
-									  new_expr);
+									  (Expr *) new_expr);
 		}
 
 		new_tlist = lappend(new_tlist, new_tle);

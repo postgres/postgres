@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.129 2002/12/06 05:00:31 momjian Exp $
+ * $Id: nodes.h,v 1.130 2002/12/12 15:49:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,7 +62,6 @@ typedef enum NodeTag
 	T_Hash,
 	T_SetOp,
 	T_Limit,
-	T_SubPlan,
 
 	/*
 	 * TAGS FOR PLAN STATE NODES (execnodes.h)
@@ -96,21 +95,32 @@ typedef enum NodeTag
 	 * TAGS FOR PRIMITIVE NODES (primnodes.h)
 	 */
 	T_Resdom = 300,
-	T_Fjoin,
+	T_Alias,
+	T_RangeVar,
 	T_Expr,
 	T_Var,
-	T_Oper,
 	T_Const,
 	T_Param,
 	T_Aggref,
-	T_SubLink,
-	T_Func,
-	T_FieldSelect,
 	T_ArrayRef,
+	T_FuncExpr,
+	T_OpExpr,
+	T_DistinctExpr,
+	T_BoolExpr,
+	T_SubLink,
+	T_SubPlanExpr,
+	T_FieldSelect,
 	T_RelabelType,
+	T_CaseExpr,
+	T_CaseWhen,
+	T_NullTest,
+	T_BooleanTest,
+	T_ConstraintTest,
+	T_ConstraintTestValue,
+	T_TargetEntry,
 	T_RangeTblRef,
-	T_FromExpr,
 	T_JoinExpr,
+	T_FromExpr,
 
 	/*
 	 * TAGS FOR PLANNER NODES (relation.h)
@@ -183,7 +193,6 @@ typedef enum NodeTag
 	T_ViewStmt,
 	T_LoadStmt,
 	T_CreateDomainStmt,
-	T_DomainConstraintValue,
 	T_CreatedbStmt,
 	T_DropdbStmt,
 	T_VacuumStmt,
@@ -228,30 +237,22 @@ typedef enum NodeTag
 	T_ResTarget,
 	T_TypeCast,
 	T_SortGroupBy,
-	T_Alias,
-	T_RangeVar,
 	T_RangeSubselect,
 	T_RangeFunction,
 	T_TypeName,
-	T_IndexElem,
 	T_ColumnDef,
+	T_IndexElem,
 	T_Constraint,
 	T_DefElem,
-	T_TargetEntry,
 	T_RangeTblEntry,
 	T_SortClause,
 	T_GroupClause,
-	T_NullTest,
-	T_BooleanTest,
-	T_ConstraintTest,
-	T_ConstraintTestValue,
-	T_CaseExpr,
-	T_CaseWhen,
 	T_FkConstraint,
 	T_PrivGrantee,
 	T_FuncWithArgs,
 	T_PrivTarget,
 	T_InsertDefault,
+	T_DomainConstraintValue,
 	T_CreateOpClassItem,
 	T_CompositeTypeStmt,
 

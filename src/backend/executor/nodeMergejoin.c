@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.52 2002/12/05 15:50:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.53 2002/12/12 15:49:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -119,16 +119,14 @@ MJFormSkipQuals(List *qualList, List **ltQuals, List **gtQuals)
 	ltcdr = *ltQuals;
 	foreach(gtcdr, *gtQuals)
 	{
-		Expr	   *ltqual = (Expr *) lfirst(ltcdr);
-		Expr	   *gtqual = (Expr *) lfirst(gtcdr);
-		Oper	   *ltop = (Oper *) ltqual->oper;
-		Oper	   *gtop = (Oper *) gtqual->oper;
+		OpExpr	   *ltop = (OpExpr *) lfirst(ltcdr);
+		OpExpr	   *gtop = (OpExpr *) lfirst(gtcdr);
 
 		/*
 		 * The two ops should be identical, so use either one for lookup.
 		 */
-		if (!IsA(ltop, Oper))
-			elog(ERROR, "MJFormSkipQuals: op not an Oper!");
+		if (!IsA(ltop, OpExpr))
+			elog(ERROR, "MJFormSkipQuals: op not an OpExpr!");
 
 		/*
 		 * Lookup the operators, and replace the data in the copied
@@ -137,8 +135,8 @@ MJFormSkipQuals(List *qualList, List **ltQuals, List **gtQuals)
 		op_mergejoin_crossops(ltop->opno,
 							  &ltop->opno,
 							  &gtop->opno,
-							  &ltop->opid,
-							  &gtop->opid);
+							  &ltop->opfuncid,
+							  &gtop->opfuncid);
 		ltop->op_fcache = NULL;
 		gtop->op_fcache = NULL;
 

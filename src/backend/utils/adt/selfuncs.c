@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.122 2002/11/25 21:29:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.123 2002/12/12 15:49:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1025,7 +1025,7 @@ booltestsel(Query *root, BoolTestType booltesttype, Node *arg, int varRelid)
 	 * can't hurt)
 	 */
 	if (IsA(arg, RelabelType))
-		arg = ((RelabelType *) arg)->arg;
+		arg = (Node *) ((RelabelType *) arg)->arg;
 
 	if (IsA(arg, Var) &&(varRelid == 0 || varRelid == ((Var *) arg)->varno))
 		var = (Var *) arg;
@@ -1246,7 +1246,7 @@ nulltestsel(Query *root, NullTestType nulltesttype, Node *arg, int varRelid)
 	 * Ignore any binary-compatible relabeling
 	 */
 	if (IsA(arg, RelabelType))
-		arg = ((RelabelType *) arg)->arg;
+		arg = (Node *) ((RelabelType *) arg)->arg;
 
 	if (IsA(arg, Var) &&
 		(varRelid == 0 || varRelid == ((Var *) arg)->varno))
@@ -1753,14 +1753,15 @@ mergejoinscansel(Query *root, Node *clause,
 	/* Deconstruct the merge clause */
 	if (!is_opclause(clause))
 		return;					/* shouldn't happen */
-	opno = ((Oper *) ((Expr *) clause)->oper)->opno;
+	opno = ((OpExpr *) clause)->opno;
 	left = get_leftop((Expr *) clause);
 	right = get_rightop((Expr *) clause);
 	if (!right)
 		return;					/* shouldn't happen */
 
 	/* Can't do anything if inputs are not Vars */
-	if (!IsA(left, Var) ||!IsA(right, Var))
+	if (!IsA(left, Var) ||
+		!IsA(right, Var))
 		return;
 
 	/* Verify mergejoinability and get left and right "<" operators */
@@ -2842,9 +2843,9 @@ get_restriction_var(List *args,
 	/* Ignore any binary-compatible relabeling */
 
 	if (IsA(left, RelabelType))
-		left = ((RelabelType *) left)->arg;
+		left = (Node *) ((RelabelType *) left)->arg;
 	if (IsA(right, RelabelType))
-		right = ((RelabelType *) right)->arg;
+		right = (Node *) ((RelabelType *) right)->arg;
 
 	/* Look for the var */
 
@@ -2895,9 +2896,9 @@ get_join_vars(List *args, Var **var1, Var **var2)
 
 	/* Ignore any binary-compatible relabeling */
 	if (IsA(left, RelabelType))
-		left = ((RelabelType *) left)->arg;
+		left = (Node *) ((RelabelType *) left)->arg;
 	if (IsA(right, RelabelType))
-		right = ((RelabelType *) right)->arg;
+		right = (Node *) ((RelabelType *) right)->arg;
 
 	if (IsA(left, Var))
 		*var1 = (Var *) left;

@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.41 2002/09/18 21:35:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.42 2002/12/12 15:49:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -514,21 +514,8 @@ build_index_pathkeys(Query *root,
 	if (index->indproc)
 	{
 		/* Functional index: build a representation of the function call */
-		Func	   *funcnode = makeNode(Func);
+		Expr	   *funcnode;
 		List	   *funcargs = NIL;
-
-		funcnode->funcid = index->indproc;
-		funcnode->funcresulttype = get_func_rettype(index->indproc);
-		funcnode->funcretset = false;	/* can never be a set */
-		funcnode->funcformat = COERCE_DONTCARE;	/* to match any user expr */
-		funcnode->func_fcache = NULL;
-
-		while (*indexkeys != 0)
-		{
-			funcargs = lappend(funcargs,
-							   find_indexkey_var(root, rel, *indexkeys));
-			indexkeys++;
-		}
 
 		sortop = *ordering;
 		if (ScanDirectionIsBackward(scandir))
@@ -538,9 +525,21 @@ build_index_pathkeys(Query *root,
 				return NIL;		/* oops, no reverse sort operator? */
 		}
 
+		while (*indexkeys != 0)
+		{
+			funcargs = lappend(funcargs,
+							   find_indexkey_var(root, rel, *indexkeys));
+			indexkeys++;
+		}
+
+		funcnode = make_funcclause(index->indproc,
+								   get_func_rettype(index->indproc),
+								   false, /* cannot be a set */
+								   COERCE_DONTCARE,	/* to match any user expr */
+								   funcargs);
+
 		/* Make a one-sublist pathkeys list for the function expression */
-		item = makePathKeyItem((Node *) make_funcclause(funcnode, funcargs),
-							   sortop);
+		item = makePathKeyItem((Node *) funcnode, sortop);
 		retval = makeList1(make_canonical_pathkey(root, item));
 	}
 	else

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.59 2002/12/05 15:50:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.60 2002/12/12 15:49:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -144,12 +144,12 @@ generate_new_param(Oid paramtype, int32 paramtypmod)
 }
 
 /*
- * Convert a bare SubLink (as created by the parser) into a SubPlan.
+ * Convert a bare SubLink (as created by the parser) into a SubPlanExpr.
  */
 static Node *
 make_subplan(SubLink *slink)
 {
-	SubPlan    *node = makeNode(SubPlan);
+	SubPlanExpr *node = makeNode(SubPlanExpr);
 	Query	   *subquery = (Query *) (slink->subselect);
 	Oid			result_type = exprType((Node *) slink);
 	double		tuple_fraction;
@@ -210,10 +210,12 @@ make_subplan(SubLink *slink)
 	node->plan = plan = subquery_planner(subquery, tuple_fraction);
 
 	node->plan_id = PlannerPlanId++;	/* Assign unique ID to this
-										 * SubPlan */
+										 * SubPlanExpr */
 
 	node->rtable = subquery->rtable;
 	node->sublink = slink;
+
+	node->typeOid = result_type;
 
 	slink->subselect = NULL;	/* cool ?! see error check above! */
 
@@ -270,7 +272,6 @@ make_subplan(SubLink *slink)
 	}
 	else
 	{
-		Expr	   *expr = makeNode(Expr);
 		List	   *args = NIL;
 
 		/*
@@ -350,14 +351,7 @@ make_subplan(SubLink *slink)
 		convert_sublink_opers(slink, plan->targetlist, NULL);
 
 		/*
-		 * Make expression of SUBPLAN type
-		 */
-		expr->typeOid = result_type;
-		expr->opType = SUBPLAN_EXPR;
-		expr->oper = (Node *) node;
-
-		/*
-		 * Make expr->args from parParam.
+		 * Make node->args from parParam.
 		 */
 		foreach(lst, node->parParam)
 		{
@@ -373,9 +367,9 @@ make_subplan(SubLink *slink)
 			var->varlevelsup = 0;
 			args = lappend(args, var);
 		}
-		expr->args = args;
+		node->args = args;
 
-		result = (Node *) expr;
+		result = (Node *) node;
 	}
 
 	return result;
@@ -385,7 +379,7 @@ make_subplan(SubLink *slink)
  * convert_sublink_opers: convert a SubLink's oper list from the
  * parser/rewriter format into the executor's format.
  *
- * The oper list is initially just a list of Oper nodes.  We replace it
+ * The oper list is initially just a list of OpExpr nodes.  We replace it
  * with a list of actually executable expressions, in which the specified
  * operators are applied to corresponding elements of the lefthand list
  * and Params representing the results of the subplan.  lefthand is then
@@ -404,7 +398,7 @@ convert_sublink_opers(SubLink *slink, List *targetlist,
 
 	foreach(lst, slink->oper)
 	{
-		Oper	   *oper = (Oper *) lfirst(lst);
+		OpExpr	   *oper = (OpExpr *) lfirst(lst);
 		Node	   *lefthand = lfirst(leftlist);
 		TargetEntry *te = lfirst(targetlist);
 		Param	   *prm;
@@ -422,7 +416,7 @@ convert_sublink_opers(SubLink *slink, List *targetlist,
 			*setParams = lappendi(*setParams, prm->paramid);
 
 		/* Look up the operator to check its declared input types */
-		Assert(IsA(oper, Oper));
+		Assert(IsA(oper, OpExpr));
 		tup = SearchSysCache(OPEROID,
 							 ObjectIdGetDatum(oper->opno),
 							 0, 0, 0);
@@ -439,9 +433,11 @@ convert_sublink_opers(SubLink *slink, List *targetlist,
 		left = make_operand(lefthand, exprType(lefthand), opform->oprleft);
 		right = make_operand((Node *) prm, prm->paramtype, opform->oprright);
 		newoper = lappend(newoper,
-						  make_opclause(oper,
-										(Var *) left,
-										(Var *) right));
+						  make_opclause(oper->opno,
+										oper->opresulttype,
+										oper->opretset,
+										(Expr *) left,
+										(Expr *) right));
 
 		ReleaseSysCache(tup);
 
@@ -482,7 +478,7 @@ finalize_primnode(Node *node, finalize_primnode_results *results)
 	}
 	if (is_subplan(node))
 	{
-		SubPlan    *subplan = (SubPlan *) ((Expr *) node)->oper;
+		SubPlanExpr *subplan = (SubPlanExpr *) node;
 		List	   *lst;
 
 		/* Check extParam list for params to add to paramids */
@@ -559,12 +555,12 @@ process_sublinks_mutator(Node *node, void *context)
 		 */
 		sublink->lefthand = (List *)
 			process_sublinks_mutator((Node *) sublink->lefthand, context);
-		/* Now build the SubPlan node and make the expr to return */
+		/* Now build the SubPlanExpr node and make the expr to return */
 		return make_subplan(sublink);
 	}
 
 	/*
-	 * Note that we will never see a SubPlan expression in the input
+	 * Note that we will never see a SubPlanExpr expression in the input
 	 * (since this is the very routine that creates 'em to begin with). So
 	 * the code in expression_tree_mutator() that might do inappropriate
 	 * things with SubPlans or SubLinks will not be exercised.

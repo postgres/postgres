@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.126 2002/11/25 21:29:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.127 2002/12/12 15:49:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,6 +73,8 @@ static bool match_clause_to_indexkey(RelOptInfo *rel, IndexOptInfo *index,
 									 int indexkey, Oid opclass, Expr *clause);
 static bool match_join_clause_to_indexkey(RelOptInfo *rel, IndexOptInfo *index,
 						 int indexkey, Oid opclass, Expr *clause);
+static Oid indexable_operator(Expr *clause, Oid opclass,
+				   bool indexkey_on_left);
 static bool pred_test(List *predicate_list, List *restrictinfo_list,
 		  List *joininfo_list, int relvarno);
 static bool pred_test_restrict_list(Expr *predicate, List *restrictinfo_list);
@@ -280,7 +282,7 @@ match_index_orclauses(RelOptInfo *rel,
 			 */
 			restrictinfo->subclauseindices =
 				match_index_orclause(rel, index,
-									 restrictinfo->clause->args,
+									 ((BoolExpr *) restrictinfo->clause)->args,
 									 restrictinfo->subclauseindices);
 		}
 	}
@@ -377,7 +379,7 @@ match_or_subclause_to_indexkey(RelOptInfo *rel,
 	{
 		List	   *item;
 
-		foreach(item, clause->args)
+		foreach(item, ((BoolExpr *) clause)->args)
 		{
 			if (match_clause_to_indexkey(rel, index, indexkey, opclass,
 										 lfirst(item)))
@@ -443,7 +445,7 @@ extract_or_indexqual_conditions(RelOptInfo *rel,
 
 		if (and_clause((Node *) orsubclause))
 		{
-			foreach(item, orsubclause->args)
+			foreach(item, ((BoolExpr *) orsubclause)->args)
 			{
 				Expr	   *subsubclause = (Expr *) lfirst(item);
 
@@ -715,7 +717,7 @@ match_clause_to_indexkey(RelOptInfo *rel,
 			   *rightop;
 
 	/* Clause must be a binary opclause. */
-	if (!is_opclause((Node *) clause))
+	if (!is_opclause(clause))
 		return false;
 	leftop = get_leftop(clause);
 	rightop = get_rightop(clause);
@@ -803,7 +805,7 @@ match_join_clause_to_indexkey(RelOptInfo *rel,
 			   *rightop;
 
 	/* Clause must be a binary opclause. */
-	if (!is_opclause((Node *) clause))
+	if (!is_opclause(clause))
 		return false;
 	leftop = get_leftop(clause);
 	rightop = get_rightop(clause);
@@ -857,10 +859,10 @@ match_join_clause_to_indexkey(RelOptInfo *rel,
  * (Formerly, this routine might return a binary-compatible operator
  * rather than the original one, but that kluge is history.)
  */
-Oid
+static Oid
 indexable_operator(Expr *clause, Oid opclass, bool indexkey_on_left)
 {
-	Oid			expr_op = ((Oper *) clause->oper)->opno;
+	Oid			expr_op = ((OpExpr *) clause)->opno;
 	Oid			commuted_op;
 
 	/* Get the commuted operator if necessary */
@@ -985,7 +987,7 @@ pred_test_recurse_clause(Expr *predicate, Node *clause)
 	Assert(clause != NULL);
 	if (or_clause(clause))
 	{
-		items = ((Expr *) clause)->args;
+		items = ((BoolExpr *) clause)->args;
 		foreach(item, items)
 		{
 			/* if any OR item doesn't imply the predicate, clause doesn't */
@@ -996,7 +998,7 @@ pred_test_recurse_clause(Expr *predicate, Node *clause)
 	}
 	else if (and_clause(clause))
 	{
-		items = ((Expr *) clause)->args;
+		items = ((BoolExpr *) clause)->args;
 		foreach(item, items)
 		{
 			/*
@@ -1029,7 +1031,7 @@ pred_test_recurse_pred(Expr *predicate, Node *clause)
 	Assert(predicate != NULL);
 	if (or_clause((Node *) predicate))
 	{
-		items = predicate->args;
+		items = ((BoolExpr *) predicate)->args;
 		foreach(item, items)
 		{
 			/* if any item is implied, the whole predicate is implied */
@@ -1040,7 +1042,7 @@ pred_test_recurse_pred(Expr *predicate, Node *clause)
 	}
 	else if (and_clause((Node *) predicate))
 	{
-		items = predicate->args;
+		items = ((BoolExpr *) predicate)->args;
 		foreach(item, items)
 		{
 			/*
@@ -1121,7 +1123,6 @@ pred_test_simple_clause(Expr *predicate, Node *clause)
 	StrategyNumber pred_strategy = 0,
 				clause_strategy,
 				test_strategy;
-	Oper	   *test_oper;
 	Expr	   *test_expr;
 	Datum		test_result;
 	bool		isNull;
@@ -1140,7 +1141,7 @@ pred_test_simple_clause(Expr *predicate, Node *clause)
 	 * Can't do anything more unless they are both binary opclauses with a
 	 * Var on the left and a Const on the right.
 	 */
-	if (!is_opclause((Node *) predicate))
+	if (!is_opclause(predicate))
 		return false;
 	pred_var = (Var *) get_leftop(predicate);
 	pred_const = (Const *) get_rightop(predicate);
@@ -1167,8 +1168,8 @@ pred_test_simple_clause(Expr *predicate, Node *clause)
 		return false;
 
 	/* Get the operators for the two clauses we're comparing */
-	pred_op = ((Oper *) ((Expr *) predicate)->oper)->opno;
-	clause_op = ((Oper *) ((Expr *) clause)->oper)->opno;
+	pred_op = ((OpExpr *) predicate)->opno;
+	clause_op = ((OpExpr *) clause)->opno;
 
 	/*
 	 * 1. Find a "btree" strategy number for the pred_op
@@ -1267,14 +1268,12 @@ pred_test_simple_clause(Expr *predicate, Node *clause)
 	/*
 	 * 5. Evaluate the test
 	 */
-	test_oper = makeOper(test_op,		/* opno */
-						 InvalidOid,	/* opid */
-						 BOOLOID,		/* opresulttype */
-						 false);	/* opretset */
-	replace_opid(test_oper);
-	test_expr = make_opclause(test_oper,
-							  (Var *) clause_const,
-							  (Var *) pred_const);
+	test_expr = make_opclause(test_op,
+							  BOOLOID,
+							  false,
+							  (Expr *) clause_const,
+							  (Expr *) pred_const);
+	set_opfuncid((OpExpr *) test_expr);
 
 	econtext = MakeExprContext(NULL, TransactionCommandContext);
 	test_result = ExecEvalExprSwitchContext((Node *) test_expr, econtext,
@@ -1627,7 +1626,7 @@ static bool
 function_index_operand(Expr *funcOpnd, RelOptInfo *rel, IndexOptInfo *index)
 {
 	int			relvarno = lfirsti(rel->relids);
-	Func	   *function;
+	FuncExpr   *function;
 	List	   *funcargs;
 	int		   *indexKeys = index->indexkeys;
 	List	   *arg;
@@ -1636,13 +1635,12 @@ function_index_operand(Expr *funcOpnd, RelOptInfo *rel, IndexOptInfo *index)
 	/*
 	 * sanity check, make sure we know what we're dealing with here.
 	 */
-	if (funcOpnd == NULL || !IsA(funcOpnd, Expr) ||
-		funcOpnd->opType != FUNC_EXPR ||
-		funcOpnd->oper == NULL || indexKeys == NULL)
+	if (funcOpnd == NULL || !IsA(funcOpnd, FuncExpr) ||
+		indexKeys == NULL)
 		return false;
 
-	function = (Func *) funcOpnd->oper;
-	funcargs = funcOpnd->args;
+	function = (FuncExpr *) funcOpnd;
+	funcargs = function->args;
 
 	if (function->funcid != index->indproc)
 		return false;
@@ -1752,7 +1750,7 @@ match_special_index_operator(Expr *clause, Oid opclass,
 	/* we know these will succeed */
 	leftop = get_leftop(clause);
 	rightop = get_rightop(clause);
-	expr_op = ((Oper *) clause->oper)->opno;
+	expr_op = ((OpExpr *) clause)->opno;
 
 	/* again, required for all current special ops: */
 	if (!IsA(rightop, Const) ||
@@ -1916,7 +1914,7 @@ expand_indexqual_conditions(List *indexquals)
 		/* we know these will succeed */
 		Var		   *leftop = get_leftop(clause);
 		Var		   *rightop = get_rightop(clause);
-		Oid			expr_op = ((Oper *) clause->oper)->opno;
+		Oid			expr_op = ((OpExpr *) clause)->opno;
 		Const	   *patt = (Const *) rightop;
 		Const	   *prefix = NULL;
 		Const	   *rest = NULL;
@@ -2011,7 +2009,6 @@ prefix_quals(Var *leftop, Oid expr_op,
 	Oid			oproid;
 	char	   *prefix;
 	Const	   *con;
-	Oper	   *op;
 	Expr	   *expr;
 	Const	   *greaterstr = NULL;
 
@@ -2070,8 +2067,8 @@ prefix_quals(Var *leftop, Oid expr_op,
 		if (oproid == InvalidOid)
 			elog(ERROR, "prefix_quals: no = operator for type %u", datatype);
 		con = string_to_const(prefix, datatype);
-		op = makeOper(oproid, InvalidOid, BOOLOID, false);
-		expr = make_opclause(op, leftop, (Var *) con);
+		expr = make_opclause(oproid, BOOLOID, false,
+							 (Expr *) leftop, (Expr *) con);
 		result = makeList1(expr);
 		return result;
 	}
@@ -2085,8 +2082,8 @@ prefix_quals(Var *leftop, Oid expr_op,
 	if (oproid == InvalidOid)
 		elog(ERROR, "prefix_quals: no >= operator for type %u", datatype);
 	con = string_to_const(prefix, datatype);
-	op = makeOper(oproid, InvalidOid, BOOLOID, false);
-	expr = make_opclause(op, leftop, (Var *) con);
+	expr = make_opclause(oproid, BOOLOID, false,
+						 (Expr *) leftop, (Expr *) con);
 	result = makeList1(expr);
 
 	/*-------
@@ -2100,8 +2097,8 @@ prefix_quals(Var *leftop, Oid expr_op,
 		oproid = find_operator("<", datatype);
 		if (oproid == InvalidOid)
 			elog(ERROR, "prefix_quals: no < operator for type %u", datatype);
-		op = makeOper(oproid, InvalidOid, BOOLOID, false);
-		expr = make_opclause(op, leftop, (Var *) greaterstr);
+		expr = make_opclause(oproid, BOOLOID, false,
+							 (Expr *) leftop, (Expr *) greaterstr);
 		result = lappend(result, expr);
 	}
 
@@ -2124,7 +2121,6 @@ network_prefix_quals(Var *leftop, Oid expr_op, Datum rightop)
 	Oid			opr2oid;
 	List	   *result;
 	Oid			datatype;
-	Oper	   *op;
 	Expr	   *expr;
 
 	switch (expr_op)
@@ -2164,10 +2160,10 @@ network_prefix_quals(Var *leftop, Oid expr_op, Datum rightop)
 
 	opr1right = network_scan_first(rightop);
 
-	op = makeOper(opr1oid, InvalidOid, BOOLOID, false);
-	expr = make_opclause(op, leftop,
-						 (Var *) makeConst(datatype, -1, opr1right,
-										   false, false));
+	expr = make_opclause(opr1oid, BOOLOID, false,
+						 (Expr *) leftop,
+						 (Expr *) makeConst(datatype, -1, opr1right,
+											false, false));
 	result = makeList1(expr);
 
 	/* create clause "key <= network_scan_last( rightop )" */
@@ -2179,10 +2175,10 @@ network_prefix_quals(Var *leftop, Oid expr_op, Datum rightop)
 
 	opr2right = network_scan_last(rightop);
 
-	op = makeOper(opr2oid, InvalidOid, BOOLOID, false);
-	expr = make_opclause(op, leftop,
-						 (Var *) makeConst(datatype, -1, opr2right,
-										   false, false));
+	expr = make_opclause(opr2oid, BOOLOID, false,
+						 (Expr *) leftop,
+						 (Expr *) makeConst(datatype, -1, opr2right,
+											false, false));
 	result = lappend(result, expr);
 
 	return result;

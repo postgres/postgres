@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.52 2002/06/20 20:29:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.53 2002/12/12 15:49:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -110,7 +110,7 @@ create_tl_element(Var *var, int resdomno)
 									  var->vartypmod,
 									  NULL,
 									  false),
-						   (Node *) var);
+						   (Expr *) var);
 }
 
 /*****************************************************************************
@@ -253,5 +253,5 @@ get_sortgroupclause_expr(SortClause *sortClause, List *targetList)
 {
 	TargetEntry *tle = get_sortgroupclause_tle(sortClause, targetList);
 
-	return tle->expr;
+	return (Node *) tle->expr;
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.74 2002/11/25 21:29:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.75 2002/12/12 15:49:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -89,10 +89,9 @@ make_op(List *opname, Node *ltree, Node *rtree)
 				rtypeId;
 	Operator	tup;
 	Form_pg_operator opform;
-	Oper	   *newop;
 	Node	   *left,
 			   *right;
-	Expr	   *result;
+	OpExpr	   *result;
 
 	ltypeId = (ltree == NULL) ? UNKNOWNOID : exprType(ltree);
 	rtypeId = (rtree == NULL) ? UNKNOWNOID : exprType(rtree);
@@ -124,15 +123,11 @@ make_op(List *opname, Node *ltree, Node *rtree)
 		right = make_operand(rtree, rtypeId, opform->oprright);
 	}
 
-	newop = makeOper(oprid(tup),	/* opno */
-					 InvalidOid,	/* opid */
-					 opform->oprresult, /* opresulttype */
-					 get_func_retset(opform->oprcode)); /* opretset */
-
-	result = makeNode(Expr);
-	result->typeOid = opform->oprresult;
-	result->opType = OP_EXPR;
-	result->oper = (Node *) newop;
+	result = makeNode(OpExpr);
+	result->opno = oprid(tup);
+	result->opfuncid = InvalidOid;
+	result->opresulttype = opform->oprresult;
+	result->opretset = get_func_retset(opform->oprcode);
 
 	if (!left)
 		result->args = makeList1(right);
@@ -143,7 +138,7 @@ make_op(List *opname, Node *ltree, Node *rtree)
 
 	ReleaseSysCache(tup);
 
-	return result;
+	return (Expr *) result;
 }	/* make_op() */
 
 
@@ -343,8 +338,8 @@ transformArraySubscripts(ParseState *pstate,
 	aref->refelemalign = type_struct_element->typalign;
 	aref->refupperindexpr = upperIndexpr;
 	aref->reflowerindexpr = lowerIndexpr;
-	aref->refexpr = arrayBase;
-	aref->refassgnexpr = assignFrom;
+	aref->refexpr = (Expr *) arrayBase;
+	aref->refassgnexpr = (Expr *) assignFrom;
 
 	ReleaseSysCache(type_tuple_array);
 	ReleaseSysCache(type_tuple_element);
