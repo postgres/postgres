@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubplan.c,v 1.39 2002/12/15 16:17:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubplan.c,v 1.40 2002/12/26 22:37:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -475,15 +475,6 @@ ExecSetParamPlan(SubPlanState *node, ExprContext *econtext)
 		}
 	}
 
-	if (planstate->plan->extParam == NULL) /* un-correlated ... */
-	{
-		ExecEndPlan(planstate, node->sub_estate);
-		/* mustn't free context while still in it... */
-		MemoryContextSwitchTo(oldcontext);
-		FreeExecutorState(node->sub_estate);
-		node->needShutdown = false;
-	}
-
 	MemoryContextSwitchTo(oldcontext);
 }
 
@@ -502,6 +493,8 @@ ExecEndSubPlan(SubPlanState *node)
 		ExecEndPlan(node->planstate, node->sub_estate);
 		MemoryContextSwitchTo(oldcontext);
 		FreeExecutorState(node->sub_estate);
+		node->sub_estate = NULL;
+		node->planstate = NULL;
 		node->needShutdown = false;
 	}
 	if (node->curTuple)
