@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.73 2002/12/30 02:18:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.74 2003/01/21 19:44:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3623,7 +3623,7 @@ path_add(PG_FUNCTION_ARGS)
 	/* Check for integer overflow */
 	if (base_size / sizeof(p1->p[0]) != (p1->npts + p2->npts) ||
 		size <= base_size)
-		elog(ERROR, "too many points requested.");
+		elog(ERROR, "Too many points requested");
 
 	result = (PATH *) palloc(size);
 
@@ -4449,7 +4449,7 @@ circle_poly(PG_FUNCTION_ARGS)
 
 	/* Check for integer overflow */
 	if (base_size / npts != sizeof(poly->p[0]) || size <= base_size)
-		elog(ERROR, "too many points requested");
+		elog(ERROR, "Too many points requested");
 
 	poly = (POLYGON *) palloc0(size);	/* zero any holes */
 	poly->size = size;
