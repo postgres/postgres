@@ -7,7 +7,7 @@
 Frequently Asked Questions (FAQ) for PostgreSQL
 </H1>
 <P>
-Last updated:		Fri Sep 29 23:04:02 EDT 2000
+Last updated:		Wed Oct 11 23:12:29 EDT 2000
 <P>
 Current maintainer:	Bruce Momjian (<A
 HREF="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR><P>
@@ -251,8 +251,10 @@ server running on one of our supported Unix platforms.<P>
 A file <I>win31.mak</I> is included in the distribution for making a
 Win32 <I>libpq</I> library and psql.<P>
 
-The database server is now working on Windows NT using the Cygnus
-Unix/NT porting library.  See <I>pgsql/doc/FAQ_NT</I> in the distribution.<P>
+The database server is now working on Windows NT using Cygwin, the
+Cygnus Unix/NT porting library.  See <I>pgsql/doc/FAQ_NT</I> in the
+distribution. It does not work on MS Windows 9X because Cygwin does not
+support the features we need on those platforms. <P>
 
 
 <H4><A NAME="1.5">1.5</A>) Where can I get PostgreSQL?</H4><P>
