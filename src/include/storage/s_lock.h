@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.13 1997/12/09 20:55:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.14 1997/12/30 04:01:28 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -313,28 +313,9 @@ tas_dummy()
 
 #if defined(__alpha__) && defined(linux)
 
-#define	S_LOCK(lock)	do { \
-			slock_t		_res; \
-			do { \
-		__asm__("    ldq   $0, %0	       \n\
-			     bne   $0, already_set%=   \n\
-			     ldq_l $0, %0	       \n\
-			     bne   $0, already_set%=   \n\
-			     or    $31, 1, $0	       \n\
-			     stq_c $0, %0	       \n\
-			     beq   $0, stqc_fail%=     \n\
-		success%=:                             \n\
-			     bis   $31, $31, %1        \n\
-			     mb		               \n\
-			     jmp   $31, end%=	       \n\
-		stqc_fail%=:   or    $31, 1, $0	       \n\
-		already_set%=: bis   $0, $0, %1	       \n\
-		end%=:	     nop      ": "=m"(*lock), "=r"(_res): :"0"); \
-			} while (_res != 0); \
-		} while (0)
+void S_LOCK(slock_t* lock);
 
-						
-#define	S_UNLOCK(lock)	({ __asm__("mb \n"); *(lock) = 0; })
+#define S_UNLOCK(lock) { __asm__("mb"); *(lock) = 0; }
 
 #define	S_INIT_LOCK(lock)	S_UNLOCK(lock)
 
