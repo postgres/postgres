@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.99 2004/03/12 00:25:40 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.100 2004/03/14 05:22:52 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,9 +109,30 @@ int			extra_float_digits = 0;		/* Added to DBL_DIG or FLT_DIG */
 
 static void CheckFloat4Val(double val);
 static void CheckFloat8Val(double val);
+static int	is_infinite(double val);
 static int	float4_cmp_internal(float4 a, float4 b);
 static int	float8_cmp_internal(float8 a, float8 b);
 
+/*
+ * Returns -1 if 'val' represents negative infinity, 1 if 'val'
+ * represents (positive) infinity, and 0 otherwise. On some platforms,
+ * this is equivalent to the isinf() macro, but not everywhere: C99
+ * does not specify that isinf() needs to distinguish between positive
+ * and negative infinity.
+ */
+static int
+is_infinite(double val)
+{
+	int inf = isinf(val);
+
+	if (inf == 0)
+		return 0;
+
+	if (val > 0)
+		return 1;
+
+	return -1;
+}
 
 /*
  * check to see if a float4 val is outside of the FLOAT4_MIN,
@@ -162,8 +183,40 @@ Datum
 float4in(PG_FUNCTION_ARGS)
 {
 	char	   *num = PG_GETARG_CSTRING(0);
+	char	   *orig_num;
 	double		val;
 	char	   *endptr;
+
+	/*
+	 * endptr points to the first character _after_ the sequence we
+	 * recognized as a valid floating point number. orig_num points to
+	 * the original input string.
+	 */
+	orig_num = num;
+
+	/*
+	 * Check for an empty-string input to begin with, to avoid
+	 * the vagaries of strtod() on different platforms.
+	 *
+	 * In releases prior to 7.5, we accepted an empty string as valid
+	 * input (yielding a float4 of 0). In 7.5, we accept empty
+	 * strings, but emit a warning noting that the feature is
+	 * deprecated. In 7.6+, the warning should be replaced by an
+	 * error.
+	 */
+	if (*num == '\0')
+	{
+		ereport(WARNING,
+				(errcode(ERRCODE_WARNING_DEPRECATED_FEATURE),
+				 errmsg("deprecated input syntax for type real: \"\""),
+				 errdetail("This input will be rejected in "
+						   "a future release of PostgreSQL.")));
+		PG_RETURN_FLOAT4((float4) 0.0);
+	}
+
+	/* skip leading whitespace */
+	while (*num != '\0' && isspace(*num))
+		num++;
 
 	errno = 0;
 	val = strtod(num, &endptr);
@@ -171,39 +224,37 @@ float4in(PG_FUNCTION_ARGS)
 	if (errno == ERANGE)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("\"%s\" is out of range for type real", num)));
+				 errmsg("\"%s\" is out of range for type real",
+						orig_num)));
 
+	/* did we not see anything that looks like a double? */
 	if (num == endptr)
 	{
 		/*
-		 * We didn't find anything that looks like a float in the input
-		 *
-		 * In releases prior to 7.5, we accepted an empty string as
-		 * valid input (yielding a float8 of 0). In 7.5, we accept
-		 * empty strings, but emit a warning noting that the feature
-		 * is deprecated. In 7.6+, the warning should be replaced by
-		 * an error.
+		 * C99 requires that strtod() accept NaN and [-]Infinity, but
+		 * not all platforms support that yet. Therefore, we check for
+		 * these inputs ourselves.
 		 */
-		if (*num == '\0')
+		if (strncasecmp(num, "NaN", 3) == 0)
 		{
-			ereport(WARNING,
-					(errcode(ERRCODE_WARNING_DEPRECATED_FEATURE),
-					 errmsg("deprecated input syntax for type real: \"\""),
-					 errdetail("This input will be rejected in "
-							   "a future release of PostgreSQL.")));
-			Assert(val == 0.0);
-		}
-		else if (strcasecmp(num, "NaN") == 0)
 			val = NAN;
-		else if (strcasecmp(num, "Infinity") == 0)
+			endptr = num + 3;
+		}
+		else if (strncasecmp(num, "Infinity", 8) == 0)
+		{
 			val = HUGE_VAL;
-		else if (strcasecmp(num, "-Infinity") == 0)
+			endptr = num + 8;
+		}
+		else if (strncasecmp(num, "-Infinity", 9) == 0)
+		{
 			val = -HUGE_VAL;
+			endptr = num + 9;
+		}
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					 errmsg("invalid input syntax for type real: \"%s\"",
-							num)));
+							orig_num)));
 	}
 
 	/* skip trailing whitespace */
@@ -215,11 +266,11 @@ float4in(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("invalid input syntax for type real: \"%s\"",
-						num)));
+						orig_num)));
 
 	/*
 	 * if we get here, we have a legal double, still need to check to see
-	 * if it's a legal float
+	 * if it's a legal float4
 	 */
 	if (!isinf(val))
 		CheckFloat4Val(val);
@@ -236,22 +287,27 @@ float4out(PG_FUNCTION_ARGS)
 {
 	float4		num = PG_GETARG_FLOAT4(0);
 	char	   *ascii = (char *) palloc(MAXFLOATWIDTH + 1);
-	int			infflag;
-	int			ndig;
 
 	if (isnan(num))
 		PG_RETURN_CSTRING(strcpy(ascii, "NaN"));
-	infflag = isinf(num);
-	if (infflag > 0)
-		PG_RETURN_CSTRING(strcpy(ascii, "Infinity"));
-	if (infflag < 0)
-		PG_RETURN_CSTRING(strcpy(ascii, "-Infinity"));
 
-	ndig = FLT_DIG + extra_float_digits;
-	if (ndig < 1)
-		ndig = 1;
+	switch (is_infinite(num))
+	{
+		case 1:
+			strcpy(ascii, "Infinity");
+			break;
+		case -1:
+			strcpy(ascii, "-Infinity");
+			break;
+		default:
+		{
+			int ndig = FLT_DIG + extra_float_digits;
+			if (ndig < 1)
+				ndig = 1;
 
-	sprintf(ascii, "%.*g", ndig, num);
+			sprintf(ascii, "%.*g", ndig, num);
+		}
+	}
 
 	PG_RETURN_CSTRING(ascii);
 }
@@ -292,8 +348,40 @@ Datum
 float8in(PG_FUNCTION_ARGS)
 {
 	char	   *num = PG_GETARG_CSTRING(0);
+	char	   *orig_num;
 	double		val;
 	char	   *endptr;
+
+	/*
+	 * endptr points to the first character _after_ the sequence we
+	 * recognized as a valid floating point number. orig_num points to
+	 * the original input string.
+	 */
+	orig_num = num;
+
+	/*
+	 * Check for an empty-string input to begin with, to avoid
+	 * the vagaries of strtod() on different platforms.
+	 *
+	 * In releases prior to 7.5, we accepted an empty string as valid
+	 * input (yielding a float8 of 0). In 7.5, we accept empty
+	 * strings, but emit a warning noting that the feature is
+	 * deprecated. In 7.6+, the warning should be replaced by an
+	 * error.
+	 */
+	if (*num == '\0')
+	{
+		ereport(WARNING,
+				(errcode(ERRCODE_WARNING_DEPRECATED_FEATURE),
+				 errmsg("deprecated input syntax for type double precision: \"\""),
+				 errdetail("This input will be rejected in "
+						   "a future release of PostgreSQL.")));
+		PG_RETURN_FLOAT8(0.0);
+	}
+
+	/* skip leading whitespace */
+	while (*num != '\0' && isspace(*num))
+		num++;
 
 	errno = 0;
 	val = strtod(num, &endptr);
@@ -301,39 +389,37 @@ float8in(PG_FUNCTION_ARGS)
 	if (errno == ERANGE)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("\"%s\" is out of range for type double precision", num)));
+				 errmsg("\"%s\" is out of range for type double precision",
+						orig_num)));
 
+	/* did we not see anything that looks like a double? */
 	if (num == endptr)
 	{
 		/*
-		 * We didn't find anything that looks like a float in the input
-		 *
-		 * In releases prior to 7.5, we accepted an empty string as
-		 * valid input (yielding a float8 of 0). In 7.5, we accept
-		 * empty strings, but emit a warning noting that the feature
-		 * is deprecated. In 7.6+, the warning should be replaced by
-		 * an error.
+		 * C99 requires that strtod() accept NaN and [-]Infinity, but
+		 * not all platforms support that yet. Therefore, we check for
+		 * these inputs ourselves.
 		 */
-		if (*num == '\0')
+		if (strncasecmp(num, "NaN", 3) == 0)
 		{
-			ereport(WARNING,
-					(errcode(ERRCODE_WARNING_DEPRECATED_FEATURE),
-					 errmsg("deprecated input syntax for type double precision: \"\""),
-					 errdetail("This input will be rejected in "
-							   "a future release of PostgreSQL.")));
-			Assert(val == 0.0);
-		}
-		else if (strcasecmp(num, "NaN") == 0)
 			val = NAN;
-		else if (strcasecmp(num, "Infinity") == 0)
+			endptr = num + 3;
+		}
+		else if (strncasecmp(num, "Infinity", 8) == 0)
+		{
 			val = HUGE_VAL;
-		else if (strcasecmp(num, "-Infinity") == 0)
+			endptr = num + 8;
+		}
+		else if (strncasecmp(num, "-Infinity", 9) == 0)
+		{
 			val = -HUGE_VAL;
+			endptr = num + 9;
+		}
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					 errmsg("invalid input syntax for type double precision: \"%s\"",
-							num)));
+							orig_num)));
 	}
 
 	/* skip trailing whitespace */
@@ -345,7 +431,7 @@ float8in(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("invalid input syntax for type double precision: \"%s\"",
-						num)));
+						orig_num)));
 
 	if (!isinf(val))
 		CheckFloat8Val(val);
@@ -362,22 +448,27 @@ float8out(PG_FUNCTION_ARGS)
 {
 	float8		num = PG_GETARG_FLOAT8(0);
 	char	   *ascii = (char *) palloc(MAXDOUBLEWIDTH + 1);
-	int			infflag;
-	int			ndig;
 
 	if (isnan(num))
 		PG_RETURN_CSTRING(strcpy(ascii, "NaN"));
-	infflag = isinf(num);
-	if (infflag > 0)
-		PG_RETURN_CSTRING(strcpy(ascii, "Infinity"));
-	if (infflag < 0)
-		PG_RETURN_CSTRING(strcpy(ascii, "-Infinity"));
 
-	ndig = DBL_DIG + extra_float_digits;
-	if (ndig < 1)
-		ndig = 1;
+	switch (is_infinite(num))
+	{
+		case 1:
+			strcpy(ascii, "Infinity");
+			break;
+		case -1:
+			strcpy(ascii, "-Infinity");
+			break;
+		default:
+		{
+			int ndig = DBL_DIG + extra_float_digits;
+			if (ndig < 1)
+				ndig = 1;
 
-	sprintf(ascii, "%.*g", ndig, num);
+			sprintf(ascii, "%.*g", ndig, num);
+		}
+	}
 
 	PG_RETURN_CSTRING(ascii);
 }
