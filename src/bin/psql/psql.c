@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.89 1997/09/01 06:09:53 thomas Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.90 1997/09/05 00:09:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1605,7 +1605,8 @@ MainLoop(PsqlSettings * settings, FILE * source)
 			continue;
 
 		    /* single-line comment? truncate line */
-		    } else if (line[i] == '-' && line[i+1] == '-') {
+		    } else if ((line[i] == '-' && line[i+1] == '-') ||
+			       (line[i] == '/' && line[i+1] == '/')) {
 			/* print comment at top of query */
 			if (settings->singleStep)
 			    fprintf(stdout, "%s\n", line + i);

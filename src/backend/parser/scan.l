@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.16 1997/09/02 02:32:35 thomas Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.17 1997/09/05 00:09:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -120,6 +120,7 @@ real		-?{digit}+\.{digit}+([Ee][-+]?{digit}+)?
 param		\${integer}
 
 comment		"--".*\n
+comment2	"//".*\n
 
 space		[ \t\n\f]
 other		.
@@ -131,6 +132,7 @@ other		.
 		}
 
 {comment}	{ /* ignore */	}
+{comment2}	{ /* ignore */	}
 
 {xcline}	{ /* ignore */ }
 

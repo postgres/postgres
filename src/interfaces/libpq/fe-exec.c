@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.34 1997/08/27 09:05:23 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.35 1997/09/05 00:09:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -436,11 +436,11 @@ process_response_from_backend(FILE *pfin, FILE *pfout, FILE *pfdebug,
           done = true;
         } else {
           /*
-             // since backend may produce more than one result for some 
-             // commands need to poll until clear 
-             // send an empty query down, and keep reading out of the pipe
-             // until an 'I' is received.
-             */
+           * since backend may produce more than one result for some 
+           * commands need to poll until clear 
+           * send an empty query down, and keep reading out of the pipe
+           * until an 'I' is received.
+           */
           pqPuts("Q ", pfout, pfdebug); /* send an empty query */
           /*
            * Increment a flag and process messages in the usual way because

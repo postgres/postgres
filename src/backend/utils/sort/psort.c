@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.17 1997/08/19 21:36:06 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.18 1997/09/05 00:09:23 momjian Exp $
  *
  * NOTES
  *      Sorts the first relation into the second relation.
@@ -90,21 +90,21 @@ static  	long	shortzero = 0;	/* used to delimit runs */
  *
  * LeftistContextData   treeContext;
  *
- * static       int     TapeRange;		// number of tapes - 1 (T) //
- * static       int     Level;			// (l) //
- * static       int     TotalDummy;		// summation of tp_dummy //
+ * static       int     TapeRange;		number of tapes - 1 (T)
+ * static       int     Level;			(l)
+ * static       int     TotalDummy;		summation of tp_dummy
  * static struct tape   *Tape;
  *
- * static  	int	BytesRead;		// to keep track of # of IO //
+ * static  	int	BytesRead;		to keep track of # of IO
  * static  	int	BytesWritten;
  *
- * struct leftist       *Tuples;		// current tuples in memory //
+ * struct leftist       *Tuples;		current tuples in memory
  *
- * FILE		 	*psort_grab_file;       // this holds tuples grabbed
- *						   from merged sort runs //
- * long		 	psort_current;		// current file position //
- * long		 	psort_saved;		// file position saved for
- *						   mark and restore //
+ * FILE		 	*psort_grab_file;       this holds tuples grabbed
+ *						   from merged sort runs
+ * long		 	psort_current;		current file position
+ * long		 	psort_saved;		file position saved for
+ *						   mark and restore
  */
 
 /*
