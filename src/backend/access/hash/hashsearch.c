@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/hash/hashsearch.c,v 1.3 1996/10/20 08:31:49 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/hash/hashsearch.c,v 1.4 1996/10/21 05:45:19 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,6 +44,18 @@
 #include "storage/buf.h" 
 #include "access/relscan.h"
 #include "access/hash.h"
+
+#include "utils/palloc.h"
+
+#ifndef HAVE_MEMMOVE
+# include "regex/utils.h"
+#else
+# include <string.h>
+#endif 
+
+#include <stdio.h>
+#include "storage/ipc.h" 
+#include "storage/bufmgr.h"
 
 /*
  *  _hash_search() -- Finds the page/bucket that the contains the

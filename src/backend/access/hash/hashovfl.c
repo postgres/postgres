@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/hash/hashovfl.c,v 1.3 1996/10/20 08:31:44 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/hash/hashovfl.c,v 1.4 1996/10/21 05:45:14 scrappy Exp $
  *
  * NOTES
  *    Overflow pages look like ordinary relation pages.
@@ -48,6 +48,13 @@
 #include "access/relscan.h"
 #include "access/hash.h"
 
+#include <stdio.h>
+#include "storage/ipc.h"
+#include "storage/bufmgr.h"
+
+#include <string.h>
+
+#include "utils/memutils.h"
 
 static OverflowPageAddress _hash_getovfladdr(Relation rel, Buffer *metabufp);
 static uint32 _hash_firstfreebit(uint32 map);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/hash/Attic/hashstrat.c,v 1.3 1996/10/20 08:31:51 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/hash/Attic/hashstrat.c,v 1.4 1996/10/21 05:45:20 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,6 +44,8 @@
 #include "storage/buf.h" 
 #include "access/relscan.h"
 #include "access/hash.h"
+
+#include "access/istrat.h"
 
 /* 
  *  only one valid strategy for hash tables: equality. 

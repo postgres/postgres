@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/hash/hashutil.c,v 1.3 1996/10/20 08:31:52 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/hash/hashutil.c,v 1.4 1996/10/21 05:45:21 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,6 +44,20 @@
 #include "storage/buf.h" 
 #include "access/relscan.h"
 #include "access/hash.h"
+
+#include "utils/palloc.h"
+
+#ifndef HAVE_MEMMOVE
+# include "regex/utils.h"
+#else
+# include <string.h>
+#endif
+
+#include "fmgr.h"
+
+#include "utils/memutils.h"
+
+#include "access/iqual.h"
 
 ScanKey
 _hash_mkscankey(Relation rel, IndexTuple itup, HashMetaPage metap)
