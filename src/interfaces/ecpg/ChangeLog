@@ -1,0 +1,11 @@
+Wed Feb 11 10:58:13 CET 1998
+
+	- Added '-d' option to turn on debugging.
+	- Added version number to ecpg.
+	- Made libecpg a shared library.
+	- All files are now installed by 'make install'.
+	- Added man page.
+
+Thu Feb 12 14:45:07 CET 1998
+
+	- Changed parser to correctly handle local variables.
