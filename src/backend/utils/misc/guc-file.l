@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2000-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/misc/guc-file.l,v 1.27 2004/11/11 23:45:13 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/misc/guc-file.l,v 1.28 2004/11/12 00:08:23 tgl Exp $
  */
 
 %{
@@ -214,6 +214,7 @@ ProcessConfigFile(GucContext context)
 					{
 						pfree(opt_name);
 						pfree(opt_value);
+						FreeFile(fp);
 						goto cleanup_exit;
 					}
 					pfree(opt_name);
