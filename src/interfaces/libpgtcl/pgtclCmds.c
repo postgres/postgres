@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.16 1997/09/25 15:48:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.17 1997/10/30 05:00:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -645,7 +645,7 @@ Pg_result(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 #ifdef TCL_ARRAYS
 		for (i = 0; i < PQnfields(result); i++)
 		{
-			Tcl_AppendElement(interp, tcl_value(PQgetvalue(result, tupno, i)));
+			Tcl_AppendElement(interp, PQgetvalue(result,tupno,i));
 		}
 #else
 /*		Tcl_AppendResult(interp, PQgetvalue(result,tupno,0),NULL); */
