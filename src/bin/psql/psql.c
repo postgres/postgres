@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.111 1997/11/17 22:14:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.112 1997/11/18 06:46:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1729,8 +1729,7 @@ HandleSlashCmds(PsqlSettings *pset,
 			{
 								/* operators */
 				SendQuery(&success, pset,"\
-					SELECT	o.oprname AS operator_, \
-							p.proname AS func_name, \
+					SELECT	o.oprname AS op, \
 							t0.typname AS result, \
 							t1.typname AS left_type, \
 							t2.typname AS right_type, \
@@ -1743,12 +1742,10 @@ HandleSlashCmds(PsqlSettings *pset,
 							p.pronargs = 2 AND \
 							o.oprleft = t1.oid AND \
 							o.oprright = t2.oid \
-					ORDER BY operator_, func_name, result, left_type, \
-							right_type;",
+					ORDER BY op, result, left_type, right_type;",
 						false, false, 0);
 				SendQuery(&success, pset,"\
 					SELECT	o.oprname AS left_unary, \
-							p.proname AS func_name, \
 							t0.typname AS return_type, \
 							t1.typname AS operand, \
 							obj_description(o.oid) as description \
@@ -1757,11 +1754,10 @@ HandleSlashCmds(PsqlSettings *pset,
 							o.oprresult = t0.oid AND \
 							o.oprkind = 'l' AND \
 							o.oprright = t1.oid \
-					ORDER BY left_unary, func_name, return_type, operand;",
+					ORDER BY left_unary, return_type, operand;",
 						false, false, 0);
 				SendQuery(&success, pset,"\
 					SELECT	o.oprname AS right_unary, \
-							p.proname AS func_name, \
 							t0.typname AS return_type, \
 							t1.typname AS operand, \
 							obj_description(o.oid) as description \
@@ -1770,7 +1766,7 @@ HandleSlashCmds(PsqlSettings *pset,
 							o.oprresult = t0.oid AND \
 							o.oprkind = 'r' AND \
 							o.oprleft = t1.oid \
-					ORDER BY right_unary, func_name, return_type, operand;",
+					ORDER BY right_unary, return_type, operand;",
 						false, false, 0);
 			}
 			else if (strncmp(cmd, "ds", 2) == 0)

@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_operator.h,v 1.19 1997/11/18 05:22:49 momjian Exp $
+ * $Id: pg_operator.h,v 1.20 1997/11/18 06:46:31 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -450,7 +450,7 @@ DESCR("truncate to integer");
 DATA(insert OID = 1282 (  ":"		PGUID 0 l t f	0 701 701	0	0	0	0 dexp - - ));
 DESCR("exponential");
 DATA(insert OID = 1283 (  ";"		PGUID 0 l t f	0 701 701	0	0	0	0 dlog1 - - ));
-DESCR("natural logarith (in psql, protect with parentheses)");
+DESCR("natural logarith (in psql, protect with '()'");
 DATA(insert OID = 1284 (  "|"		PGUID 0 l t f	0 704 702	0	0	0	0 intervalstart - - ));
 DESCR("start of interval");
 DATA(insert OID = 606 (  "<#>"		PGUID 0 b t f 702 702 704	0	0	0	0 mktinterval - - ));
@@ -524,13 +524,13 @@ DATA(insert OID = 638 (  "/"	   PGUID 0 b t f  18  18  18 0 0  0 0 chardiv eqsel
 DESCR("divide");
 
 DATA(insert OID = 639 (  "~"	   PGUID 0 b t f  19  25  16 0 640	0 0 nameregexeq eqsel eqjoinsel ));
-DESCR("matches regular expression, case-sensitive");
+DESCR("matches regex., case-sensitive");
 DATA(insert OID = 640 (  "!~"	   PGUID 0 b t f  19  25  16 0 639	0 0 nameregexne neqsel neqjoinsel ));
-DESCR("does not match regular expression, case-sensitive");
+DESCR("does not match regex., case-sensitive");
 DATA(insert OID = 641 (  "~"	   PGUID 0 b t f  25  25  16 0 642	0 0 textregexeq eqsel eqjoinsel ));
-DESCR("matches regular expression, case-sensitive");
+DESCR("matches regex., case-sensitive");
 DATA(insert OID = 642 (  "!~"	   PGUID 0 b t f  25  25  16 0 641	0 0 textregexne eqsel eqjoinsel ));
-DESCR("does not match regular expression, case-sensitive");
+DESCR("does not match regex., case-sensitive");
 DATA(insert OID = 643 (  "<>"	   PGUID 0 b t f  19  19  16 643 93 0 0 namene neqsel neqjoinsel ));
 DESCR("not equal");
 DATA(insert OID = 644 (  "<>"	   PGUID 0 b t f  20  20  16 644 1267 0 0 char16ne neqsel neqjoinsel ));
@@ -544,9 +544,9 @@ DESCR("greater-than");
 DATA(insert OID = 648 (  ">="	   PGUID 0 b t f  20  20  16 646 645  0 0 char16ge intltsel intltjoinsel ));
 DESCR("greater-than-or-equals");
 DATA(insert OID = 649 (  "~"	   PGUID 0 b t f  20  25  16 0 650	0 0 char16regexeq intltsel intltjoinsel ));
-DESCR("matches regular expression, case-sensitive");
+DESCR("matches regex., case-sensitive");
 DATA(insert OID = 650 (  "!~"	   PGUID 0 b t f  20  25  16 650 0	0 0 char16regexne intltsel intltjoinsel ));
-DESCR("does not match regular expression, case-sensitive");
+DESCR("does not match regex., case-sensitive");
 DATA(insert OID = 651 (  "~~"	   PGUID 0 b t f  20  25  16 0 651	0 0 char16like eqsel eqjoinsel ));
 DESCR("matches LIKE expression");
 DATA(insert OID = 652 (  "!~~"	   PGUID 0 b t f  20  25  16 651 0	0 0 char16nlike neqsel neqjoinsel ));
@@ -598,9 +598,9 @@ DATA(insert OID = 681 (  "<>"	   PGUID 0 b t f  911  911	16 681 678	0 0 oidnamen
 DESCR("not equal");
 
 DATA(insert OID = 697 (  "~"	   PGUID 0 b t f  411  25  16 0 698  0 0 char8regexeq eqsel eqjoinsel ));
-DESCR("matches regular expression, case-sensitive");
+DESCR("matches regex., case-sensitive");
 DATA(insert OID = 698 (  "!~"	   PGUID 0 b t f  411  25  16 0 697  0 0 char8regexne neqsel neqjoinsel ));
-DESCR("does not match regular expression, case-sensitive");
+DESCR("does not match regex., case-sensitive");
 
 DATA(insert OID = 706 (  "<->"	   PGUID 0 b t f 603 603 701 706   0  0  0 box_distance intltsel intltjoinsel ));
 DESCR("distance between");
@@ -710,13 +710,13 @@ DATA(insert OID = 835 (  "<>"	   PGUID 0 b t f  810  810	16 835 832	0 0 oidint2n
 DESCR("not equal");
 
 DATA(insert OID = 839 (  "~"	   PGUID 0 b t f  409  25  16 0 841  0 0 char2regexeq eqsel eqjoinsel ));
-DESCR("matches regular expression, case-sensitive");
+DESCR("matches regex., case-sensitive");
 DATA(insert OID = 841 (  "!~"	   PGUID 0 b t f  409  25  16 0 839  0 0 char2regexne neqsel neqjoinsel ));
-DESCR("does not match regular expression, case-sensitive");
+DESCR("does not match regex., case-sensitive");
 DATA(insert OID = 840 (  "~"	   PGUID 0 b t f  410  25  16 0 842  0 0 char4regexeq eqsel eqjoinsel ));
-DESCR("matches regular expression, case-sensitive");
+DESCR("matches regex., case-sensitive");
 DATA(insert OID = 842 (  "!~"	   PGUID 0 b t f  410  25  16 0 840  0 0 char4regexne neqsel neqjoinsel ));
-DESCR("does not match regular expression, case-sensitive");
+DESCR("does not match regex., case-sensitive");
 
 DATA(insert OID = 843 (  "*"	   PGUID 0 b t f  790  700	790 845   0   0   0 cash_mul_flt4 - - ));
 DESCR("multiply");
@@ -780,7 +780,7 @@ DESCR("addition");
 DATA(insert OID = 967 (  "-"	   PGUID 0 b t f 1034 1033 1034 0 0 0 0 aclremove	intltsel intltjoinsel ));
 DESCR("subtract");
 DATA(insert OID = 968 (  "~"	   PGUID 0 b t f 1034 1033	 16 0 0 0 0 aclcontains intltsel intltjoinsel ));
-DESCR("matches regular expression, case-sensitive");
+DESCR("matches regex., case-sensitive");
 
 /* additional geometric operators - thomas 1997-07-09 */
 DATA(insert OID =  969 (  "@@"	   PGUID 0 l t f	0  601	600    0  0 0 0 lseg_center - - ));
@@ -798,9 +798,9 @@ DESCR("concat");
 DATA(insert OID = 1054 ( "="	   PGUID 0 b t t 1042 1042	 16 1054 1057 1058 1058 bpchareq eqsel eqjoinsel ));
 DESCR("equals");
 DATA(insert OID = 1055 (  "~"	   PGUID 0 b t f 1042	25	 16    0 1056  0 0 textregexeq eqsel eqjoinsel ));
-DESCR("matches regular expression, case-sensitive");
+DESCR("matches regex., case-sensitive");
 DATA(insert OID = 1056 ( "!~"	   PGUID 0 b t f 1042	25	 16    0 1055  0 0 textregexne neqsel neqjoinsel ));
-DESCR("does not match regular expression, case-sensitive");
+DESCR("does not match regex., case-sensitive");
 DATA(insert OID = 1057 ( "<>"	   PGUID 0 b t f 1042 1042	 16 1057 1054  0 0 bpcharne neqsel neqjoinsel ));
 DESCR("not equal");
 DATA(insert OID = 1058 ( "<"	   PGUID 0 b t f 1042 1042	 16 1060 1061  0 0 bpcharlt intltsel intltjoinsel ));
@@ -815,9 +815,9 @@ DESCR("greater-than-or-equals");
 DATA(insert OID = 1062 ( "="	   PGUID 0 b t t 1043 1043	16	1062 1065 1066 1066 varchareq eqsel eqjoinsel ));
 DESCR("equals");
 DATA(insert OID = 1063 (  "~"	   PGUID 0 b t f 1043	25	16 0 1064  0 0 textregexeq eqsel eqjoinsel ));
-DESCR("matches regular expression, case-sensitive");
+DESCR("matches regex., case-sensitive");
 DATA(insert OID = 1064 ( "!~"	   PGUID 0 b t f 1043	25	16 0 1063  0 0 textregexne neqsel neqjoinsel ));
-DESCR("does not match regular expression, case-sensitive");
+DESCR("does not match regex., case-sensitive");
 DATA(insert OID = 1065 ( "<>"	   PGUID 0 b t f 1043 1043	16 1065 1062  0 0 varcharne neqsel neqjoinsel ));
 DESCR("not equal");
 DATA(insert OID = 1066 ( "<"	   PGUID 0 b t f 1043 1043	16 1068 1069  0 0 varcharlt intltsel intltjoinsel ));
@@ -988,37 +988,37 @@ DESCR("does not match LIKE expression");
 
 /* case-insensitive LIKE hacks */
 DATA(insert OID = 1220 (  "~*"		 PGUID 0 b t f	409  25  16 0 1221	0 0 char2icregexeq eqsel eqjoinsel ));
-DESCR("matches regular expression, case-insensitive");
+DESCR("matches regex., case-insensitive");
 DATA(insert OID = 1221 (  "!~*"		 PGUID 0 b t f	409  25  16 0 1220	0 0 char2icregexne neqsel neqjoinsel ));
-DESCR("does not match regular expression, case-insensitive");
+DESCR("does not match regex., case-insensitive");
 DATA(insert OID = 1222 (  "~*"		 PGUID 0 b t f	410  25  16 0 1223	0 0 char4icregexeq eqsel eqjoinsel ));
-DESCR("matches regular expression, case-insensitive");
+DESCR("matches regex., case-insensitive");
 DATA(insert OID = 1223 (  "!~*"		 PGUID 0 b t f	410  25  16 0 1222	0 0 char4icregexne neqsel neqjoinsel ));
-DESCR("does not match regular expression, case-insensitive");
+DESCR("does not match regex., case-insensitive");
 DATA(insert OID = 1224 (  "~*"		 PGUID 0 b t f	411  25  16 0 1225	0 0 char8icregexeq eqsel eqjoinsel ));
-DESCR("matches regular expression, case-insensitive");
+DESCR("matches regex., case-insensitive");
 DATA(insert OID = 1225 (  "!~*"		 PGUID 0 b t f	411  25  16 0 1224	0 0 char8icregexne neqsel neqjoinsel ));
-DESCR("does not match regular expression, case-insensitive");
+DESCR("does not match regex., case-insensitive");
 DATA(insert OID = 1226 (  "~*"		 PGUID 0 b t f	19	25	16 0 1227  0 0 nameicregexeq eqsel eqjoinsel ));
-DESCR("matches regular expression, case-insensitive");
+DESCR("matches regex., case-insensitive");
 DATA(insert OID = 1227 (  "!~*"		 PGUID 0 b t f	19	25	16 0 1226  0 0 nameicregexne neqsel neqjoinsel ));
-DESCR("does not match regular expression, case-insensitive");
+DESCR("does not match regex., case-insensitive");
 DATA(insert OID = 1228 (  "~*"		 PGUID 0 b t f	25	25	16 0 1229  0 0 texticregexeq eqsel eqjoinsel ));
-DESCR("matches regular expression, case-insensitive");
+DESCR("matches regex., case-insensitive");
 DATA(insert OID = 1229 (  "!~*"		 PGUID 0 b t f	25	25	16 0 1228  0 0 texticregexne eqsel eqjoinsel ));
-DESCR("does not match regular expression, case-insensitive");
+DESCR("does not match regex., case-insensitive");
 DATA(insert OID = 1230 (  "~*"		 PGUID 0 b t f	20	25	16 0 1231  0 0 char16icregexeq eqsel eqjoinsel ));
-DESCR("matches regular expression, case-insensitive");
+DESCR("matches regex., case-insensitive");
 DATA(insert OID = 1231 (  "!~*"		 PGUID 0 b t f	20	25	16 0 1230  0 0 char16icregexne neqsel neqjoinsel ));
-DESCR("does not match regular expression, case-insensitive");
+DESCR("does not match regex., case-insensitive");
 DATA(insert OID = 1232 (  "~*"		PGUID 0 b t f  1043  25  16 0 1233	0 0 texticregexeq eqsel eqjoinsel ));
-DESCR("matches regular expression, case-insensitive");
+DESCR("matches regex., case-insensitive");
 DATA(insert OID = 1233 ( "!~*"		PGUID 0 b t f  1043  25  16 0 1232	0 0 texticregexne neqsel neqjoinsel ));
-DESCR("does not match regular expression, case-insensitive");
+DESCR("does not match regex., case-insensitive");
 DATA(insert OID = 1234 (  "~*"		PGUID 0 b t f  1042  25  16 0 1235	0 0 texticregexeq eqsel eqjoinsel ));
-DESCR("matches regular expression, case-insensitive");
+DESCR("matches regex., case-insensitive");
 DATA(insert OID = 1235 ( "!~*"		PGUID 0 b t f  1042  25  16 0 1234	0 0 texticregexne neqsel neqjoinsel ));
-DESCR("does not match regular expression, case-insensitive");
+DESCR("does not match regex., case-insensitive");
 
 DATA(insert OID = 1300 (  "="		PGUID 0 b t t  1296 1296 16 1300 1301 1302 1302 timestampeq eqsel eqjoinsel ));
 DESCR("equals");
