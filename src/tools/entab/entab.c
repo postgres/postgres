@@ -45,8 +45,8 @@ char	  **argv;
 			   *src,
 			   *dst,
 				quote_char,
-				ch,
 			   *cp;
+	int			ch;
 	FILE	   *in_file;
 
 	if ((cp = strrchr(argv[0], '/')) != NULL)
