@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: psqlHelp.h,v 1.68 1999/06/03 19:52:08 momjian Exp $
+ * $Id: psqlHelp.h,v 1.69 1999/06/03 20:42:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -331,7 +331,7 @@ TIMEZONE|XACTISOLEVEL|CLIENT_ENCODING|SERVER_ENCODING"},
 \tSET KSQO TO 'ON'|'OFF'\n\
 \tSET QUERY_LIMIT TO #\n\
 \tSET TIMEZONE TO 'value'\n\
-\tSET XACTISOLEVEL|TRANSACTION ISOLATION LEVEL TO 'SERIALIZABLE'|'COMMITTED'\n\
+\tSET TRANSACTION ISOLATION LEVEL 'SERIALIZABLE'|'READ COMMITTED'\n\
 \tSET CLIENT_ENCODING|NAMES TO 'EUC_JP'|'SJIS'|'EUC_CN'|'EUC_KR'|'EUC_TW'|\n\
 \t  'BIG5'|'MULE_INTERNAL'|'LATIN1'|'LATIN2'|'LATIN3'|'LATIN4'|'LATIN5'|\n\
 \t  'KOI8|'WIN'|'ALT'\n\

@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/set.l,v 1.18 1999/06/03 18:38:00 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/set.l,v 1.19 1999/06/03 20:42:18 momjian Exp $
 .TH SET SQL 05/14/97 PostgreSQL PostgreSQL
 .SH NAME
 set - set run-time parameters for session
@@ -81,11 +81,11 @@ The default is unlimited.
 .IR TIMEZONE
 sets your timezone.
 .PP
-.I XACTISOLEVEL|TRANSACTION ISOLATION LEVEL
+.I TRANSACTION ISOLATION LEVEL
 sets the transaction isolation level to
 .IR SERIALIZABLE
 or
-.IR COMMITTED .
+.IR READ COMMITTED .
 .PP
 .IR CLIENT_ENCODING|NAMES
 sets the character set encoding of the client.  Only available if multi-byte
