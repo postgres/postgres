@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Jan 27 18:19:09 EST 2003
+Last updated:		Wed Feb 12 09:08:58 EST 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -409,8 +409,7 @@ Miscellaneous
 =============
 
 * Do async I/O for faster random read-ahead of data
-* Get faster regex() code from Henry Spencer <henry@zoo.utoronto.ca>
-  when it is available
+* -Get faster regex() code from Henry Spencer <henry@zoo.utoronto.ca>
 * Use mmap() rather than SYSV shared memory or to write WAL files (?) [mmap]
 * Improve caching of attribute offsets when NULLs exist in the row
 
