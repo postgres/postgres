@@ -118,7 +118,7 @@ COMMANDS
 	NULL specification, indexes, permissions, etc on table
 * Add SIMILAR TO to allow character classes, 'pg_[a-c]%'
 * Auto-destroy sequence on DROP of table with SERIAL(Ryan)
-* Allow LOCK TABLE tab1, tab2, tab3 so all tables locked in unison
+* Allow LOCK TABLE tab1, tab2, tab3 so all tables locked in unison [lock]
 * Allow INSERT/UPDATE of system-generated oid value for a row
 * Allow ESCAPE '\' at the end of LIKE for ANSI compliance [like]
 * Rewrite the LIKE handling by rewriting the user string with the 
