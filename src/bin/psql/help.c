@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.45 2002/03/06 20:39:45 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.46 2002/03/07 17:54:42 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "help.h"
@@ -202,7 +202,6 @@ slashUsage(void)
 	fprintf(fout, _(" \\d{p|S|l}      list access privileges, system tables, or large objects\n"));
 	fprintf(fout, _(" \\da            list aggregate functions\n"));
 	fprintf(fout, _(" \\dd NAME       show comment for table, type, function, or operator\n"));
-	fprintf(fout, _(" \\dD [NAME]     list domains\n"));
 	fprintf(fout, _(" \\df            list functions\n"));
 	fprintf(fout, _(" \\do            list operators\n"));
 	fprintf(fout, _(" \\dT            list data types\n"));

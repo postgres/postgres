@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.44 2002/03/06 20:39:45 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.45 2002/03/07 17:54:39 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -1032,54 +1032,6 @@ listTables(const char *infotype, const char *name, bool desc)
 
 		printQuery(res, &myopt, pset.queryFout);
 	}
-
-	PQclear(res);
-	return true;
-}
-
-/*
- * \dD [domain]
- *
- * Describes domains, possibly based on a simplistic prefix search on the
- * argument.
- */
-
-bool
-listDomains(const char *name)
-{
-	char		buf[512 + REGEXP_CUTOFF];
-	PGresult   *res;
-	printQueryOpt myopt = pset.popt;
-
-	snprintf(buf, sizeof(buf),
-		 "SELECT t.typname as \"%s\",\n"
-		 "       format_type( t.typbasetype, t.typmod) as \"%s\",\n"
-		 "       CASE WHEN t.typnotnull AND t.typdefault IS NOT NULL THEN 'not null default '||t.typdefault\n"
-		 "            WHEN t.typnotnull AND t.typdefault IS NULL THEN 'not null'\n"
-		 "            WHEN NOT t.typnotnull AND t.typdefault IS NOT NULL THEN 'default '||t.typdefault\n"
-		 "            ELSE ''\n"
-		 "       END as \"%s\"\n"
-		 "FROM pg_type t\n"
-		 "WHERE t.typtype = 'd'\n",
-		 _("Name"),
-		 _("Type"),
-		 _("Modifier"));
-	if (name)
-	{
-		strcat(buf, "AND t.typname ~ '^");
-		strncat(buf, name, REGEXP_CUTOFF);
-		strcat(buf, "'\n");
-	}
-	strcat(buf, "ORDER BY 1;");
-
-	res = PSQLexec(buf);
-	if (!res)
-		return false;
-
-	myopt.nullPrint = NULL;
-	myopt.title = _("List of database domains");
-
-	printQuery(res, &myopt, pset.queryFout);
 
 	PQclear(res);
 	return true;
