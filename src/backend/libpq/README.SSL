@@ -1,0 +1,53 @@
+>From the servers perspective:
+
+
+  Receives StartupPacket
+           |
+           |
+ (Is SSL_NEGOTIATE_CODE?) -----------  Normal startup
+           |                  No
+           |
+           | Yes
+           |
+           |
+ (Server compiled with USE_SSL?) ------- Send 'N'
+           |                       No        |
+           |                                 |
+           | Yes                         Normal startup
+           |
+           |
+        Send 'S'
+           |
+           |
+      Establish SSL
+           |
+           |
+      Normal startup
+     
+
+
+
+
+>From the clients perspective (v6.6 client _with_ SSL):
+
+
+      Connect
+         |
+         |
+  Send packet with SSL_NEGOTIATE_CODE
+         |
+         |
+  Receive single char  ------- 'S' -------- Establish SSL
+         |                                       |
+         | '<else>'                              |
+         |                                  Normal startup
+         |
+         |
+   Is it 'E' for error  ------------------- Retry connection
+         |                  Yes             without SSL
+         | No
+         |
+   Is it 'N' for normal ------------------- Normal startup
+         |                  Yes
+         |
+   Fail with unknown
