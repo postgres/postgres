@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.10 1999/07/22 15:09:08 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.11 2000/04/07 17:23:11 momjian Exp $
 Postgres documentation
 -->
 
@@ -190,12 +190,6 @@ ON UPDATE TO emp-1.salary WHERE emp-2.name = "Joe"
     instead of the user command. In this later case, the
     <replaceable class="parameter">action</replaceable> can be the keyword
     <literal>NOTHING</literal>.
-   </para>
-   <para>
-    When choosing between the rewrite and instance rule systems for a
-    particular rule application, remember that in the rewrite system,
-    <literal>current</literal> refers to a relation and some qualifiers
-    whereas in the instance system it refers to an instance (tuple).
    </para>
    <para>
     It is very important to note that the rewrite rule system
