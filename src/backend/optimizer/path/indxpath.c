@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.87 2000/07/13 05:47:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.88 2000/07/25 04:30:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -461,9 +461,11 @@ extract_or_indexqual_conditions(RelOptInfo *rel,
  * Returns a list of all the RestrictInfo nodes for clauses that can be
  * used with this index.
  *
- * The list is ordered by index key (but as far as I can tell, this is
- * an implementation artifact of this routine, and is not depended on by
- * any user of the returned list --- tgl 7/99).
+ * The list is ordered by index key.  (This is not depended on by any part
+ * of the planner, as far as I can tell; but some parts of the executor
+ * do assume that the indxqual list ultimately delivered to the executor
+ * is so ordered.  One such place is _bt_orderkeys() in the btree support.
+ * Perhaps that ought to be fixed someday --- tgl 7/00)
  *
  * Note that in a multi-key index, we stop if we find a key that cannot be
  * used with any clause.  For example, given an index on (A,B,C), we might
