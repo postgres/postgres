@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.297 2004/01/23 02:13:12 neilc Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.298 2004/04/02 21:05:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -506,7 +506,8 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt,
 	List	   *sub_namespace;
 	List	   *icolumns;
 	List	   *attrnos;
-	List	   *attnos;
+	List	   *icols;			/* to become ListCell */
+	List	   *attnos;			/* to become ListCell */
 	List	   *tl;
 
 	qry->commandType = CMD_INSERT;
@@ -665,39 +666,35 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt,
 	/*
 	 * Prepare columns for assignment to target table.
 	 */
+	icols = icolumns;
 	attnos = attrnos;
-	/* cannot use foreach here because of possible lremove */
-	tl = qry->targetList;
-	while (tl)
+	foreach(tl, qry->targetList)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(tl);
 		ResTarget  *col;
 
-		/* must advance tl before lremove possibly pfree's it */
-		tl = lnext(tl);
-
-		if (icolumns == NIL || attnos == NIL)
+		if (icols == NIL || attnos == NIL)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 			 errmsg("INSERT has more expressions than target columns")));
 
-		col = (ResTarget *) lfirst(icolumns);
+		col = (ResTarget *) lfirst(icols);
 		Assert(IsA(col, ResTarget));
 
 		Assert(!tle->resdom->resjunk);
 		updateTargetListEntry(pstate, tle, col->name, lfirsti(attnos),
 							  col->indirection);
 
-		icolumns = lnext(icolumns);
+		icols = lnext(icols);
 		attnos = lnext(attnos);
 	}
 
 	/*
 	 * Ensure that the targetlist has the same number of entries that were
 	 * present in the columns list.  Don't do the check unless an explicit
-	 * columns list was given, though. statements.
+	 * columns list was given, though.
 	 */
-	if (stmt->cols != NIL && (icolumns != NIL || attnos != NIL))
+	if (stmt->cols != NIL && (icols != NIL || attnos != NIL))
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 			 errmsg("INSERT has more target columns than expressions")));
