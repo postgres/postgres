@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqcomm.h,v 1.48 2000/11/22 02:47:30 momjian Exp $
+ * $Id: pqcomm.h,v 1.49 2000/11/22 03:40:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,16 +51,15 @@ typedef union SockAddr
 /* Configure the UNIX socket address for the well known port. */
 
 #if defined(SUN_LEN)
-#define UNIXSOCK_PATH(sun,port,defpath) \
-        ((defpath && defpath[0] != '\0') ? (strncpy((sun).sun_path, defpath, sizeof((sun).sun_path)), (sun).sun_path[sizeof((sun).sun_path)-1] = '\0') : sprintf((sun).sun_path, "/tmp/.s.PGSQL.%d", (port)))
 #define UNIXSOCK_LEN(sun) \
         (SUN_LEN(&(sun)))
 #else
-#define UNIXSOCK_PATH(sun,port,defpath) \
-        ((defpath && defpath[0] != '\0') ? (strncpy((sun).sun_path, defpath, sizeof((sun).sun_path)), (sun).sun_path[sizeof((sun).sun_path)-1] = '\0') : sprintf((sun).sun_path, "/tmp/.s.PGSQL.%d", (port)))
 #define UNIXSOCK_LEN(sun) \
         (strlen((sun).sun_path)+ offsetof(struct sockaddr_un, sun_path))
 #endif
+
+#define UNIXSOCK_PATH(sun,port,defpath) \
+        (sprintf((sun).sun_path, "%s/.s.PGSQL.%d", ((defpath) && *(defpath) != '\0') ? (defpath) : "/tmp", (port)))
 
 /*
  *		We do this because sun_len is in BSD's struct, while others don't.
