@@ -71,6 +71,8 @@ public class Statement extends org.postgresql.Statement implements java.sql.Stat
 	public int executeUpdate(String sql) throws SQLException
 	{
 		this.execute(sql);
+		if (((org.postgresql.ResultSet)result).reallyResultSet())
+			throw new PSQLException("postgresql.stat.result");
 		return this.getUpdateCount();
 	}
 
@@ -124,11 +126,16 @@ public class Statement extends org.postgresql.Statement implements java.sql.Stat
 				rs.close();
 		}
 
+
 		// New in 7.1, pass Statement so that ExecSQL can customise to it
 		result = connection.ExecSQL(sql, this);
 
 		// New in 7.1, required for ResultSet.getStatement() to work
 		((org.postgresql.jdbc2.ResultSet)result).setStatement(this);
+
+		// Added this so that the Updateable resultset knows the query that gave this
+		((org.postgresql.jdbc2.ResultSet)result).setSQLQuery(sql);
+
 
 		return (result != null && ((org.postgresql.ResultSet)result).reallyResultSet());
 	}
@@ -267,4 +274,108 @@ public class Statement extends org.postgresql.Statement implements java.sql.Stat
 	{
 		resultsettype = value;
 	}
+
+	// In JDK 1.4 not implemented
+  /**
+   *
+   * @param num
+   * @return
+   * @throws SQLException
+   */
+	public boolean getMoreResults(int num) throws SQLException
+  {
+		throw org.postgresql.Driver.notImplemented();
+	}
+
+  /**
+   *
+   * @return
+   * @throws SQLException
+   */
+	public java.sql.ResultSet getGeneratedKeys() throws SQLException
+  {
+		throw org.postgresql.Driver.notImplemented();
+	}
+
+  /**
+   *
+   * @param a
+   * @param b
+   * @return
+   * @throws SQLException
+   */
+	public int executeUpdate(String a, int b) throws SQLException
+  {
+		throw org.postgresql.Driver.notImplemented();
+	}
+
+  /**
+   *
+   * @param a
+   * @param b
+   * @return
+   * @throws SQLException
+   */
+	public int executeUpdate(String a, int[] b) throws SQLException
+  {
+		throw org.postgresql.Driver.notImplemented();
+
+	}
+
+	public int executeUpdate(String a, String[] b) throws SQLException
+  {
+		throw org.postgresql.Driver.notImplemented();
+
+	}
+
+  /**
+   *
+   * @param a
+   * @param b
+   * @return
+   * @throws SQLException
+   */
+	public boolean execute(String a, int b) throws SQLException
+  {
+		throw org.postgresql.Driver.notImplemented();
+
+	}
+
+  /**
+   *
+   * @param a
+   * @param b
+   * @return
+   * @throws SQLException
+   */
+	public boolean execute(String a, int[] b) throws SQLException
+  {
+		throw org.postgresql.Driver.notImplemented();
+
+	}
+
+  /**
+   *
+   * @param a
+   * @param b
+   * @return
+   * @throws SQLException
+   */
+	public boolean execute(String a, String[] b) throws SQLException
+  {
+		throw org.postgresql.Driver.notImplemented();
+
+	}
+
+  /**
+   *
+   * @return
+   * @throws SQLException
+   */
+	public int getResultSetHoldability() throws SQLException
+  {
+		throw org.postgresql.Driver.notImplemented();
+
+	}
+
 }
