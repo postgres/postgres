@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.34 1999/04/11 02:30:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.35 1999/04/23 00:50:57 tgl Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
@@ -916,6 +916,7 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 	}
 
 	/* if commutator and negator are different, do two updates */
+
 	if (HeapTupleIsValid(tup) &&
 		!(OidIsValid(((Form_pg_operator) GETSTRUCT(tup))->oprcom)))
 	{
@@ -934,6 +935,8 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 		values[Anum_pg_operator_oprcom - 1] = (Datum) NULL;
 		replaces[Anum_pg_operator_oprcom - 1] = ' ';
 	}
+
+	heap_endscan(pg_operator_scan);
 
 	/* check and update the negator, if necessary */
 	opKey[0].sk_argument = ObjectIdGetDatum(negId);
