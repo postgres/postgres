@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.177.2.2 2003/11/24 14:50:01 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.177.2.3 2004/09/11 16:15:26 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -517,7 +517,7 @@ PostgreSQL documentation
        </row>
        <row>
         <entry><literal>B'10001' # B'01101'</literal></entry>
-        <entry><literal>11110</literal></entry>
+        <entry><literal>11100</literal></entry>
        </row>
        <row>
         <entry><literal>~ B'10001'</literal></entry>
