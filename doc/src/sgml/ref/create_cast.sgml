@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/create_cast.sgml,v 1.17 2004/06/16 01:26:40 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/create_cast.sgml,v 1.18 2004/09/17 02:06:33 neilc Exp $ -->
 
 <refentry id="SQL-CREATECAST">
  <refmeta>
@@ -228,7 +228,8 @@ SELECT 'The time is ' || CAST(now() AS text);
   <title>Notes</title>
 
   <para>
-   Use <command>DROP CAST</command> to remove user-defined casts.
+   Use <xref linkend="sql-dropcast"
+   endterm="sql-dropcast-title"> to remove user-defined casts.
   </para>
 
   <para>
