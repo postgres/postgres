@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.18 2000/04/21 03:01:54 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.19 2000/05/05 08:44:27 petere Exp $
  */
 
 /*-----------
@@ -531,7 +531,7 @@ psql_completion(char *text, int start, int end)
 			 strcasecmp(prev2_wd, "ISOLATION") == 0 &&
 			 strcasecmp(prev_wd, "LEVEL") == 0)
 	{
-		char	   *my_list[] = {"READ", "SERIALIZED", NULL};
+		char	   *my_list[] = {"READ", "SERIALIZABLE", NULL};
 
 		COMPLETE_WITH_LIST(my_list);
 	}
