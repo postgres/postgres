@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.95 2003/11/29 19:51:42 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.96 2003/12/19 14:21:56 petere Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -594,7 +594,7 @@ ExecuteGrantStmt_Language(GrantStmt *stmt)
 			aclcheck_error(ACLCHECK_NO_PRIV, ACL_KIND_LANGUAGE,
 						   NameStr(pg_language_tuple->lanname));
 
-		if (!pg_language_tuple->lanpltrusted && stmt->is_grant)
+		if (!pg_language_tuple->lanpltrusted)
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("language \"%s\" is not trusted", langname)));
