@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.33 1998/02/11 21:45:40 momjian Exp $
+ * $Id: c.h,v 1.34 1998/02/12 01:50:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -716,7 +716,7 @@ typedef struct Exception
  *	BSD/OS 3.0.	Larger values were slower.
  */
 #define MemSet(start, val, len) do \
-								{	
+								{ \
 									if (((long)(start) & INT_ALIGN_MASK) == 0 && \
 										((len) & INT_ALIGN_MASK) == 0 && \
 										(val) == 0 && \
