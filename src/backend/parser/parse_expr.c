@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.20 1998/02/13 03:41:23 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.21 1998/02/13 08:10:33 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -264,7 +264,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 					
 					if (length(left_expr) !=
 						length(right_expr))
-							elog(ERROR,"Subselect has too many or too few fields.");
+							elog(ERROR,"parser: Subselect has too many or too few fields.");
 					
 					sublink->oper = NIL;
 					foreach(elist, left_expr)
@@ -275,6 +275,17 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 						Expr		   *op_expr;						
 
 						op_expr = make_op(op, lexpr, tent->expr);
+						/*
+						 * HACK! Second IF is more valid but currently
+						 * we don't support EXPR subqueries inside
+						 * expressions generally, only in WHERE clauses.
+						 * After fixing this, first IF must be removed.
+						 */
+						if (op_expr->typeOid != BOOLOID)
+							elog (ERROR, "parser: '%s' must return 'bool' to be used with subquery", op);
+						if (op_expr->typeOid != BOOLOID && 
+								sublink->subLinkType != EXPR_SUBLINK)
+							elog (ERROR, "parser: '%s' must return 'bool' to be used with quantified predicate subquery", op);
 						sublink->oper = lappend(sublink->oper, op_expr);
 						right_expr = lnext(right_expr);
 					}
