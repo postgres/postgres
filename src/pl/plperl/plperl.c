@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.46 2004/07/12 14:31:04 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.47 2004/07/21 20:45:54 momjian Exp $
  *
  **********************************************************************/
 
@@ -889,7 +889,8 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 
 	 if (prodesc->fn_retisset && SRF_IS_FIRSTCALL())
 	 {
-		 if (prodesc->fn_retistuple) g_column_keys = newAV();
+		if (prodesc->fn_retistuple)
+			g_column_keys = newAV();
 		if (SvTYPE(perlret) != SVt_RV)
 			 elog(ERROR, "plperl: set-returning function must return reference");
 	}
@@ -910,7 +911,13 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 		fcinfo->isnull = true;
 	}
 
-	if (prodesc->fn_retistuple)
+	if (prodesc->fn_retisset && !(perlret && SvTYPE(SvRV(perlret)) == SVt_PVAV))
+		elog(ERROR, "plperl: set-returning function must return reference to array");
+
+	if (prodesc->fn_retistuple && perlret && SvTYPE(perlret) != SVt_RV)
+		elog(ERROR, "plperl: composite-returning function must return a reference");
+
+	if (prodesc->fn_retistuple && fcinfo->resultinfo ) /*  set of tuples */
 	{
 		/* SRF support */
 		HV		   *ret_hv;
@@ -931,9 +938,6 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					errmsg("returning a composite type is not allowed in this context"),
 					errhint("This function is intended for use in the FROM clause.")));
-
-		if (SvTYPE(perlret) != SVt_RV)
-			elog(ERROR, "plperl: composite-returning function must return a reference");
 
 
 		isset = plperl_is_set(perlret);
@@ -1042,7 +1046,7 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 			SRF_RETURN_DONE(funcctx);
 		}
 	}
-	else if (prodesc->fn_retisset)
+	else if (prodesc->fn_retisset) /* set of non-tuples */
 	{
 		FuncCallContext	*funcctx;
 		
@@ -1054,8 +1058,7 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 			funcctx = SRF_FIRSTCALL_INIT();
 			oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-			if(SvTYPE(SvRV(perlret))!=SVt_PVAV) elog(ERROR, "plperl: set-returning function must return reference to array");
-				else funcctx->max_calls =  av_len((AV*)SvRV(perlret))+1;
+			funcctx->max_calls = av_len((AV *) SvRV(perlret)) + 1;
 		}
 		
 		funcctx = SRF_PERCALL_SETUP();
@@ -1085,16 +1088,53 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 		} 
 		else
 		{
-			if (perlret) SvREFCNT_dec(perlret);
+			if (perlret)
+				SvREFCNT_dec(perlret);
 			SRF_RETURN_DONE(funcctx);
 		}
 	 }
-	else if (! fcinfo->isnull)
+	else if (!fcinfo->isnull) /* non-null singleton */
 	{
+
+
+		if (prodesc->fn_retistuple) /* singleton perl hash to Datum */
+		{
+			TupleDesc td = lookup_rowtype_tupdesc(prodesc->ret_oid,(int32)-1);
+			HV * perlhash = (HV *) SvRV(perlret);
+			int i;
+			char **values;
+			char * key, *val;
+			AttInMetadata *attinmeta;
+			HeapTuple tup;
+
+			if (!td)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("no TupleDesc info available")));
+
+			values = (char **) palloc(td->natts * sizeof(char *));
+			for (i = 0; i < td->natts; i++)
+			{
+
+				key = SPI_fname(td,i+1);
+				val = plperl_get_elem(perlhash, key);
+				if (val)
+					values[i] = val;
+				else
+					values[i] = NULL;
+			}
+			attinmeta = TupleDescGetAttInMetadata(td);
+			tup = BuildTupleFromCStrings(attinmeta, values);
+			retval = HeapTupleGetDatum(tup);
+			
+		}
+		else /* perl string to Datum */
+
 		retval = FunctionCall3(&prodesc->result_in_func,
 							   PointerGetDatum(SvPV(perlret, PL_na)),
 							   ObjectIdGetDatum(prodesc->result_typioparam),
 							   Int32GetDatum(-1));
+
 	}
 
 	SvREFCNT_dec(perlret);
@@ -1341,12 +1381,16 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 				}
 			}
 
-			prodesc->fn_retisset = procStruct->proretset; /*true, if function returns set*/
+			prodesc->fn_retisset = procStruct->proretset;		/* true, if function
+																 * returns set */
 
 			if (typeStruct->typtype == 'c' || procStruct->prorettype == RECORDOID)
 			{
 				prodesc->fn_retistuple = true;
-				prodesc->ret_oid = typeStruct->typrelid;
+				prodesc->ret_oid = 
+					procStruct->prorettype == RECORDOID ? 
+					typeStruct->typrelid : 
+					procStruct->prorettype;
 			}
 
 			perm_fmgr_info(typeStruct->typinput, &(prodesc->result_in_func));
