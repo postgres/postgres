@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.17 2004/06/24 18:23:26 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.18 2004/06/25 08:49:28 dennis Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1016,8 +1016,8 @@ do_advice(void)
 static void
 do_help(void)
 {
-	printf(_("%s is a utility to start, stop, restart, reload configuration files,\n"), progname);
-	printf(_("report the status of a PostgreSQL server, or kill a PostgreSQL process\n\n"));
+	printf(_("%s is a utility to start, stop, restart, reload configuration files,\n"
+	         "report the status of a PostgreSQL server, or kill a PostgreSQL process\n\n"), progname);
 	printf(_("Usage:\n"));
 	printf(_("  %s start   [-w] [-D DATADIR] [-s] [-l FILENAME] [-o \"OPTIONS\"]\n"), progname);
 	printf(_("  %s stop    [-W] [-D DATADIR] [-s] [-m SHUTDOWN-MODE]\n"), progname);
@@ -1044,10 +1044,10 @@ do_help(void)
 	printf(_("(The default is to wait for shutdown, but not for start or restart.)\n\n"));
 	printf(_("If the -D option is omitted, the environment variable PGDATA is used.\n\n"));
 	printf(_("Options for start or restart:\n"));
-	printf(_("  -l, --log FILENAME      write (or append) server log to FILENAME.  The\n"));
-	printf(_("                          use of this option is highly recommended.\n"));
-	printf(_("  -o OPTIONS              command line options to pass to the postmaster\n"));
-	printf(_("                          (PostgreSQL server executable)\n"));
+	printf(_("  -l, --log FILENAME      write (or append) server log to FILENAME.  The\n"
+	         "                          use of this option is highly recommended.\n"));
+	printf(_("  -o OPTIONS              command line options to pass to the postmaster\n"
+	         "                          (PostgreSQL server executable)\n"));
 	printf(_("  -p PATH-TO-POSTMASTER   normally not necessary\n\n"));
 	printf(_("Options for stop or restart:\n"));
 	printf(_("  -m SHUTDOWN-MODE   may be 'smart', 'fast', or 'immediate'\n\n"));
