@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.58 2003/05/28 16:03:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.59 2003/07/22 23:30:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -155,7 +155,7 @@ Boot_CreateStmt:
 				{
 					do_start();
 					numattr = 0;
-					elog(DEBUG4, "creating%s%s relation %s...",
+					elog(DEBUG4, "creating%s%s relation %s",
 						 $2 ? " bootstrap" : "",
 						 $3 ? " shared" : "",
 						 LexIDStr($5));
@@ -210,9 +210,9 @@ Boot_InsertStmt:
 				{
 					do_start();
 					if ($2)
-						elog(DEBUG4, "inserting row with oid %u...", $2);
+						elog(DEBUG4, "inserting row with oid %u", $2);
 					else
-						elog(DEBUG4, "inserting row...");
+						elog(DEBUG4, "inserting row");
 					num_columns_read = 0;
 				}
 		  LPAREN  boot_tuplelist RPAREN
@@ -302,7 +302,7 @@ boot_typelist:
 boot_type_thing:
 		  boot_ident EQUALS boot_ident
 				{
-				   if(++numattr > MAXATTR)
+				   if (++numattr > MAXATTR)
 						elog(FATAL, "too many columns");
 				   DefineAttr(LexIDStr($1),LexIDStr($3),numattr-1);
 				}

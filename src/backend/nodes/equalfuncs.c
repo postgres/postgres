@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.202 2003/07/03 16:32:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.203 2003/07/22 23:30:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -189,7 +189,7 @@ _equalParam(Param *a, Param *b)
 			COMPARE_SCALAR_FIELD(paramid);
 			break;
 		default:
-			elog(ERROR, "_equalParam: Invalid paramkind value: %d",
+			elog(ERROR, "unrecognized paramkind value: %d",
 				 a->paramkind);
 	}
 
@@ -1616,7 +1616,7 @@ _equalValue(Value *a, Value *b)
 			/* nothing to do */
 			break;
 		default:
-			elog(ERROR, "_equalValue: unknown node type %d", a->type);
+			elog(ERROR, "unrecognized node type: %d", (int) a->type);
 			break;
 	}
 
@@ -1630,7 +1630,7 @@ _equalValue(Value *a, Value *b)
 bool
 equal(void *a, void *b)
 {
-	bool		retval = false;
+	bool		retval;
 
 	if (a == b)
 		return true;
@@ -2081,8 +2081,9 @@ equal(void *a, void *b)
 			break;
 
 		default:
-			elog(WARNING, "equal: don't know whether nodes of type %d are equal",
-				 nodeTag(a));
+			elog(ERROR, "unrecognized node type: %d",
+				 (int) nodeTag(a));
+			retval = false;		/* keep compiler quiet */
 			break;
 	}
 

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/read.c,v 1.33 2002/11/25 18:12:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/read.c,v 1.34 2003/07/22 23:30:38 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -293,7 +293,7 @@ nodeRead(bool read_car_only)
 			this_value = parseNodeString();
 			token = pg_strtok(&tok_len);
 			if (token == NULL || token[0] != '}')
-				elog(ERROR, "nodeRead: did not find '}' at end of node");
+				elog(ERROR, "did not find '}' at end of input node");
 			if (!read_car_only)
 				make_dotted_pair_cell = true;
 			else
@@ -373,7 +373,7 @@ nodeRead(bool read_car_only)
 				break;
 			}
 		default:
-			elog(ERROR, "nodeRead: Bad type %d", type);
+			elog(ERROR, "unrecognized node type: %d", (int) type);
 			this_value = NULL;	/* keep compiler happy */
 			break;
 	}

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.158 2003/07/03 16:32:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.159 2003/07/22 23:30:38 tgl Exp $
  *
  * NOTES
  *	  Path and Plan nodes do not have any readfuncs support, because we
@@ -146,7 +146,7 @@ toIntList(List *list)
 		Value	   *v = (Value *) lfirst(l);
 
 		if (!IsA(v, Integer))
-			elog(ERROR, "toIntList: unexpected datatype");
+			elog(ERROR, "unexpected node type: %d", (int) nodeTag(v));
 		lfirsti(l) = intVal(v);
 		pfree(v);
 	}
@@ -180,7 +180,7 @@ toOidList(List *list)
 			pfree(v);
 		}
 		else
-			elog(ERROR, "toOidList: unexpected datatype");
+			elog(ERROR, "unexpected node type: %d", (int) nodeTag(v));
 	}
 	return list;
 }
@@ -554,7 +554,7 @@ _readBoolExpr(void)
 	else if (strncmp(token, "not", 3) == 0)
 		local_node->boolop = NOT_EXPR;
 	else
-		elog(ERROR, "_readBoolExpr: unknown boolop \"%.*s\"", length, token);
+		elog(ERROR, "unrecognized boolop \"%.*s\"", length, token);
 
 	READ_NODE_FIELD(args);
 
@@ -928,7 +928,8 @@ _readRangeTblEntry(void)
 			READ_NODE_FIELD(joinaliasvars);
 			break;
 		default:
-			elog(ERROR, "bogus rte kind %d", (int) local_node->rtekind);
+			elog(ERROR, "unrecognized RTE kind: %d",
+				 (int) local_node->rtekind);
 			break;
 	}
 
@@ -1078,14 +1079,14 @@ readDatum(bool typbyval)
 
 	token = pg_strtok(&tokenLength);	/* read the '[' */
 	if (token == NULL || token[0] != '[')
-		elog(ERROR, "readDatum: expected '%s', got '%s'; length = %lu",
-			 "[", token ? (const char *) token : "[NULL]",
+		elog(ERROR, "expected \"[\" to start datum, but got \"%s\"; length = %lu",
+			 token ? (const char *) token : "[NULL]",
 			 (unsigned long) length);
 
 	if (typbyval)
 	{
 		if (length > (Size) sizeof(Datum))
-			elog(ERROR, "readDatum: byval & length = %lu",
+			elog(ERROR, "byval datum but length = %lu",
 				 (unsigned long) length);
 		res = (Datum) 0;
 		s = (char *) (&res);
@@ -1110,8 +1111,8 @@ readDatum(bool typbyval)
 
 	token = pg_strtok(&tokenLength);	/* read the ']' */
 	if (token == NULL || token[0] != ']')
-		elog(ERROR, "readDatum: expected '%s', got '%s'; length = %lu",
-			 "]", token ? (const char *) token : "[NULL]",
+		elog(ERROR, "expected \"]\" to end datum, but got \"%s\"; length = %lu",
+			 token ? (const char *) token : "[NULL]",
 			 (unsigned long) length);
 
 	return res;

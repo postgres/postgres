@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.50 2003/06/15 22:51:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.51 2003/07/22 23:30:37 tgl Exp $
  *
  * NOTES
  *	  XXX a few of the following functions are duplicated to handle
@@ -186,7 +186,7 @@ nconc(List *l1, List *l2)
 	if (l2 == NIL)
 		return l1;
 	if (l1 == l2)
-		elog(ERROR, "can't nconc a list to itself");
+		elog(ERROR, "cannot nconc a list to itself");
 
 	for (temp = l1; lnext(temp) != NIL; temp = lnext(temp))
 		;
@@ -352,7 +352,7 @@ void *
 llast(List *l)
 {
 	if (l == NIL)
-		elog(ERROR, "llast: empty list");
+		elog(ERROR, "empty list does not have a last item");
 	while (lnext(l) != NIL)
 		l = lnext(l);
 	return lfirst(l);

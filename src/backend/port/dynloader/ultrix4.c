@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/ultrix4.c,v 1.16 2002/11/08 20:23:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/ultrix4.c,v 1.17 2003/07/22 23:30:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,10 +55,9 @@ pg_dlopen(char *filename)
 		/* list the undefined symbols, if any */
 		if (count)
 		{
-			elog(WARNING, "dl: Undefined:");
 			while (*list)
 			{
-				elog(WARNING, "  %s", *list);
+				elog(WARNING, "\"%s\" is undefined", *list);
 				list++;
 			}
 		}

@@ -42,7 +42,7 @@ beos_dl_open(char *filename)
 
 		if ((beos_dl_port_in <= 0) || (beos_dl_port_out <= 0))
 		{
-			elog(WARNING, "Error loading BeOS support server : can't create communication ports");
+			elog(WARNING, "error loading BeOS support server: could not create communication ports");
 			return B_ERROR;
 		}
 		else
@@ -68,7 +68,7 @@ beos_dl_open(char *filename)
 	/* Checking integrity */
 	if (im < 0)
 	{
-		elog(WARNING, "Can't load this add-on ");
+		elog(WARNING, "could not load this add-on");
 		return B_ERROR;
 	}
 	else
@@ -92,7 +92,7 @@ beos_dl_open(char *filename)
 			/* Remap */
 			resu = clone_area(datas, &add, B_EXACT_ADDRESS, B_READ_AREA | B_WRITE_AREA, area);
 			if (resu < 0)
-				elog(WARNING, "Can't load this add-on : map text error");
+				elog(WARNING, "could not load this add-on: map text error");
 		}
 
 		/* read text segment id and address */
@@ -108,7 +108,7 @@ beos_dl_open(char *filename)
 			/* Remap */
 			resu = clone_area(datas, &add, B_EXACT_ADDRESS, B_READ_AREA | B_WRITE_AREA, area);
 			if (resu < 0)
-				elog(WARNING, "Can't load this add-on : map data error");
+				elog(WARNING, "could not load this add-on: map data error");
 		}
 
 		return im;
@@ -126,7 +126,7 @@ beos_dl_sym(image_id im, char *symname, void **fptr)
 	read_port(beos_dl_port_out, (int32 *) (fptr), NULL, 0);
 
 	if (fptr == NULL)
-		elog(WARNING, "loading symbol '%s' failed ", symname);
+		elog(WARNING, "loading symbol \"%s\" failed", symname);
 }
 
 status_t

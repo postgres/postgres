@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.161 2003/07/15 00:11:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.162 2003/07/22 23:30:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -314,9 +314,15 @@ BootstrapMain(int argc, char *argv[])
 					if (!value)
 					{
 						if (flag == '-')
-							elog(ERROR, "--%s requires argument", optarg);
+							ereport(ERROR,
+									(errcode(ERRCODE_SYNTAX_ERROR),
+									 errmsg("--%s requires a value",
+											optarg)));
 						else
-							elog(ERROR, "-c %s requires argument", optarg);
+							ereport(ERROR,
+									(errcode(ERRCODE_SYNTAX_ERROR),
+									 errmsg("-c %s requires a value",
+											optarg)));
 					}
 
 					SetConfigOption(name, value, PGC_POSTMASTER, PGC_S_ARGV);
@@ -455,7 +461,7 @@ BootstrapMain(int argc, char *argv[])
 			proc_exit(0);		/* done */
 
 		default:
-			elog(PANIC, "Unsupported XLOG op %d", xlogop);
+			elog(PANIC, "unrecognized XLOG op: %d", xlogop);
 			proc_exit(0);
 	}
 
@@ -566,7 +572,8 @@ boot_openrel(char *relname)
 	if (boot_reldesc != NULL)
 		closerel(NULL);
 
-	elog(DEBUG4, "open relation %s, attrsize %d", relname ? relname : "(null)",
+	elog(DEBUG4, "open relation %s, attrsize %d",
+		 relname ? relname : "(null)",
 		 (int) ATTRIBUTE_TUPLE_SIZE);
 
 	boot_reldesc = heap_openr(relname, NoLock);
@@ -601,11 +608,11 @@ closerel(char *name)
 		if (boot_reldesc)
 		{
 			if (strcmp(RelationGetRelationName(boot_reldesc), name) != 0)
-				elog(ERROR, "closerel: close of '%s' when '%s' was expected",
+				elog(ERROR, "close of %s when %s was expected",
 					 name, relname ? relname : "(null)");
 		}
 		else
-			elog(ERROR, "closerel: close of '%s' before any relation was opened",
+			elog(ERROR, "close of %s before any relation was opened",
 				 name);
 	}
 
@@ -637,7 +644,7 @@ DefineAttr(char *name, char *type, int attnum)
 
 	if (boot_reldesc != NULL)
 	{
-		elog(LOG, "warning: no open relations allowed with 'create' command");
+		elog(WARNING, "no open relations allowed with CREATE command");
 		closerel(relname);
 	}
 
@@ -770,7 +777,7 @@ InsertOneValue(char *value, int i)
 
 	AssertArg(i >= 0 || i < MAXATTR);
 
-	elog(DEBUG4, "inserting column %d value '%s'", i, value);
+	elog(DEBUG4, "inserting column %d value \"%s\"", i, value);
 
 	if (Typ != (struct typmap **) NULL)
 	{
@@ -783,7 +790,7 @@ InsertOneValue(char *value, int i)
 		ap = *app;
 		if (ap == NULL)
 		{
-			elog(FATAL, "unable to find atttypid %u in Typ list",
+			elog(FATAL, "could not find atttypid %u in Typ list",
 				 boot_reldesc->rd_att->attrs[i]->atttypid);
 		}
 		values[i] = OidFunctionCall3(ap->am_typ.typinput,
@@ -875,7 +882,7 @@ cleanup(void)
 		beenhere = 1;
 	else
 	{
-		elog(FATAL, "Memory manager fault: cleanup called twice");
+		elog(FATAL, "cleanup called twice");
 		proc_exit(1);
 	}
 	if (boot_reldesc != NULL)
@@ -946,7 +953,7 @@ gettype(char *type)
 		heap_close(rel, NoLock);
 		return gettype(type);
 	}
-	elog(ERROR, "Error: unknown type '%s'.\n", type);
+	elog(ERROR, "unrecognized type \"%s\"", type);
 	err_out();
 	/* not reached, here to make compiler happy */
 	return 0;
@@ -962,7 +969,7 @@ AllocateAttribute(void)
 	Form_pg_attribute attribute = (Form_pg_attribute) malloc(ATTRIBUTE_TUPLE_SIZE);
 
 	if (!PointerIsValid(attribute))
-		elog(FATAL, "AllocateAttribute: malloc failed");
+		elog(FATAL, "out of memory");
 	MemSet(attribute, 0, ATTRIBUTE_TUPLE_SIZE);
 
 	return attribute;
@@ -1109,14 +1116,8 @@ AddStr(char *str, int strlength, int mderef)
 	int			hashresult;
 	int			len;
 
-	if (++strtable_end == STRTABLESIZE)
-	{
-		/* Error, string table overflow, so we Punt */
-		elog(FATAL,
-			 "There are too many string constants and identifiers for the compiler to handle.");
-
-
-	}
+	if (++strtable_end >= STRTABLESIZE)
+		elog(FATAL, "bootstrap string table overflow");
 
 	/*
 	 * Some of the utilites (eg, define type, create relation) assume that

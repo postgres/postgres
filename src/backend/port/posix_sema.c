@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/posix_sema.c,v 1.6 2002/09/04 20:31:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/posix_sema.c,v 1.7 2003/07/22 23:30:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -165,7 +165,7 @@ PGReserveSemaphores(int maxSemas, int port)
 {
 	mySemPointers = (sem_t **) malloc(maxSemas * sizeof(sem_t *));
 	if (mySemPointers == NULL)
-		elog(PANIC, "Out of memory in PGReserveSemaphores");
+		elog(PANIC, "out of memory");
 	numSems = 0;
 	maxSems = maxSemas;
 	nextSemKey = port * 1000;
@@ -202,7 +202,7 @@ PGSemaphoreCreate(PGSemaphore sema)
 	Assert(!IsUnderPostmaster);
 
 	if (numSems >= maxSems)
-		elog(PANIC, "PGSemaphoreCreate: too many semaphores created");
+		elog(PANIC, "too many semaphores created");
 
 #ifdef USE_NAMED_POSIX_SEMAPHORES
 	*sema = newsem = PosixSemaphoreCreate();

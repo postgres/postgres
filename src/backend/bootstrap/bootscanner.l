@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootscanner.l,v 1.28 2003/05/29 22:30:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootscanner.l,v 1.29 2003/07/22 23:30:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -129,7 +129,7 @@ insert			{ return(INSERT_TUPLE); }
 						}
 
 .				{
-					elog(ERROR, "syntax error at line %d: unexpected character %s", yyline, yytext);
+					elog(ERROR, "syntax error at line %d: unexpected character \"%s\"", yyline, yytext);
 				}
 
 
@@ -139,5 +139,5 @@ insert			{ return(INSERT_TUPLE); }
 void
 yyerror(const char *str)
 {
-	elog(ERROR, "syntax error at line %d: unexpected token %s", yyline, str);
+	elog(ERROR, "syntax error at line %d: unexpected token \"%s\"", yyline, str);
 }

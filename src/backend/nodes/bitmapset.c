@@ -14,7 +14,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/bitmapset.c,v 1.2 2003/06/29 23:05:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/bitmapset.c,v 1.3 2003/07/22 23:30:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -184,7 +184,7 @@ bms_make_singleton(int x)
 				bitnum;
 
 	if (x < 0)
-		elog(ERROR, "bms_make_singleton: negative set member not allowed");
+		elog(ERROR, "negative bitmapset member not allowed");
 	wordnum = WORDNUM(x);
 	bitnum = BITNUM(x);
 	result = (Bitmapset *) palloc0(BITMAPSET_SIZE(wordnum + 1));
@@ -354,7 +354,7 @@ bms_is_member(int x, const Bitmapset *a)
 
 	/* XXX better to just return false for x<0 ? */
 	if (x < 0)
-		elog(ERROR, "bms_is_member: negative set member not allowed");
+		elog(ERROR, "negative bitmapset member not allowed");
 	if (a == NULL)
 		return false;
 	wordnum = WORDNUM(x);
@@ -431,7 +431,7 @@ bms_singleton_member(const Bitmapset *a)
 	int		wordnum;
 
 	if (a == NULL)
-		elog(ERROR, "bms_singleton_member: set is empty");
+		elog(ERROR, "bitmapset is empty");
 	nwords = a->nwords;
 	for (wordnum = 0; wordnum < nwords; wordnum++)
 	{
@@ -440,7 +440,7 @@ bms_singleton_member(const Bitmapset *a)
 		if (w != 0)
 		{
 			if (result >= 0 || HAS_MULTIPLE_ONES(w))
-				elog(ERROR, "bms_singleton_member: set has multiple members");
+				elog(ERROR, "bitmapset has multiple members");
 			result = wordnum * BITS_PER_BITMAPWORD;
 			while ((w & 255) == 0)
 			{
@@ -451,7 +451,7 @@ bms_singleton_member(const Bitmapset *a)
 		}
 	}
 	if (result < 0)
-		elog(ERROR, "bms_singleton_member: set is empty");
+		elog(ERROR, "bitmapset is empty");
 	return result;
 }
 
@@ -558,7 +558,7 @@ bms_add_member(Bitmapset *a, int x)
 				bitnum;
 
 	if (x < 0)
-		elog(ERROR, "bms_add_member: negative set member not allowed");
+		elog(ERROR, "negative bitmapset member not allowed");
 	if (a == NULL)
 		return bms_make_singleton(x);
 	wordnum = WORDNUM(x);
@@ -598,7 +598,7 @@ bms_del_member(Bitmapset *a, int x)
 				bitnum;
 
 	if (x < 0)
-		elog(ERROR, "bms_del_member: negative set member not allowed");
+		elog(ERROR, "negative bitmapset member not allowed");
 	if (a == NULL)
 		return NULL;
 	wordnum = WORDNUM(x);

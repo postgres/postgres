@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.212 2003/07/03 16:32:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.213 2003/07/22 23:30:37 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -1322,7 +1322,7 @@ _outRangeTblEntry(StringInfo str, RangeTblEntry *node)
 			WRITE_NODE_FIELD(joinaliasvars);
 			break;
 		default:
-			elog(ERROR, "bogus rte kind %d", (int) node->rtekind);
+			elog(ERROR, "unrecognized rte kind: %d", (int) node->rtekind);
 			break;
 	}
 
@@ -1410,8 +1410,7 @@ _outValue(StringInfo str, Value *value)
 			appendStringInfo(str, "%s", value->val.str);
 			break;
 		default:
-			elog(WARNING, "_outValue: don't know how to print type %d",
-				 value->type);
+			elog(ERROR, "unrecognized node type: %d", (int) value->type);
 			break;
 	}
 }
@@ -1821,8 +1820,12 @@ _outNode(StringInfo str, void *obj)
 				break;
 
 			default:
-				elog(WARNING, "_outNode: don't know how to print type %d",
-					 nodeTag(obj));
+				/*
+				 * This should be an ERROR, but it's too useful to be able
+				 * to dump structures that _outNode only understands part of.
+				 */
+				elog(WARNING, "could not dump unrecognized node type: %d",
+					 (int) nodeTag(obj));
 				break;
 		}
 		appendStringInfoChar(str, '}');

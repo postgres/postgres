@@ -7,13 +7,11 @@
  *
  *-------------------------------------------------------------------------
  */
-
-
 #include "postgres.h"
+
 #include <errno.h>
 #include <unistd.h>
 #include <OS.h>
-#include "utils/elog.h"
 
 /*#define TDBG*/
 #ifdef TDBG
@@ -155,7 +153,7 @@ semctl(int semId, int semNum, int flag, union semun semun)
 	{
 		/* TO BE IMPLEMENTED */
 		TRACEDBG("--semctl getncnt");
-		elog(ERROR, "beos : semctl error : GETNCNT not implemented");
+		elog(ERROR, "semctl error: GETNCNT not implemented");
 		return 0;
 	}
 
@@ -170,7 +168,7 @@ semctl(int semId, int semNum, int flag, union semun semun)
 		return cnt;
 	}
 
-	elog(ERROR, "beos : semctl error : unknown flag");
+	elog(ERROR, "semctl error: unknown flag");
 
 	TRACEDBG("<-semctl unknown flag");
 	return 0;

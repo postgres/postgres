@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.61 2003/05/06 00:20:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.62 2003/07/22 23:30:37 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -82,7 +82,9 @@ elog_node_display(int lev, const char *title, void *obj, bool pretty)
 	else
 		f = format_node_dump(s);
 	pfree(s);
-	elog(lev, "%s:\n%s", title, f);
+	ereport(lev,
+			(errmsg_internal("%s:", title),
+			 errdetail("%s", f)));
 	pfree(f);
 }
 
@@ -350,7 +352,7 @@ print_expr(Node *expr, List *rtable)
 								 ObjectIdGetDatum(c->consttype),
 								 0, 0, 0);
 		if (!HeapTupleIsValid(typeTup))
-			elog(ERROR, "Cache lookup for type %u failed", c->consttype);
+			elog(ERROR, "cache lookup failed for type %u", c->consttype);
 		typoutput = ((Form_pg_type) GETSTRUCT(typeTup))->typoutput;
 		typelem = ((Form_pg_type) GETSTRUCT(typeTup))->typelem;
 		ReleaseSysCache(typeTup);

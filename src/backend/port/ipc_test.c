@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/ipc_test.c,v 1.5 2002/09/04 20:31:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/ipc_test.c,v 1.6 2003/07/22 23:30:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,7 +90,7 @@ void
 			on_shmem_exit(void (*function) (), Datum arg)
 {
 	if (on_shmem_exit_index >= MAX_ON_EXITS)
-		elog(FATAL, "Out of on_shmem_exit slots");
+		elog(FATAL, "out of on_shmem_exit slots");
 
 	on_shmem_exit_list[on_shmem_exit_index].function = function;
 	on_shmem_exit_list[on_shmem_exit_index].arg = arg;
