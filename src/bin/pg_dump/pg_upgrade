@@ -2,6 +2,7 @@
 #
 # pg_upgrade: update a database without needing a full dump/reload cycle
 # CAUTION: read the manual page before trying to use this!
+
 echo "pg_upgrade is disabled in this release because the on-disk structure" 1>&2
 echo "of the tables has changed compared to previous releases." 1>&2
 exit 1
