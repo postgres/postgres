@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.61 1998/08/26 17:12:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.62 1998/08/29 04:19:08 momjian Exp $
  *
  * INTERFACE ROUTINES
  *		heap_create()			- Create an uncataloged heap relation
@@ -775,7 +775,7 @@ heap_create_with_catalog(char *relname,
 	if (RelationAlreadyExists(pg_class_desc, relname))
 	{
 		heap_close(pg_class_desc);
-		elog(ERROR, "amcreate: %s relation already exists", relname);
+		elog(ERROR, "%s relation already exists", relname);
 	}
 
 	/* ----------------
