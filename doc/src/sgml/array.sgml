@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/array.sgml,v 1.19 2002/01/20 22:19:55 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/array.sgml,v 1.19.2.1 2002/03/17 20:05:58 tgl Exp $ -->
 
 <chapter id="arrays">
  <title>Arrays</title>
@@ -22,8 +22,9 @@ CREATE TABLE sal_emp (
   As shown, an array data type is named by appending square brackets
   (<literal>[]</>) to the data type name of the array elements.
   The above query will create a table named
-  <structname>sal_emp</structname> with a <type>text</type> string
-  (<structfield>name</structfield>), a one-dimensional array of type
+  <structname>sal_emp</structname> with columns including
+  a <type>text</type> string (<structfield>name</structfield>),
+  a one-dimensional array of type
   <type>integer</type> (<structfield>pay_by_quarter</structfield>),
   which represents the employee's salary by quarter, and a
   two-dimensional array of <type>text</type>
@@ -35,7 +36,7 @@ CREATE TABLE sal_emp (
   Now we do some <command>INSERT</command>s.  Observe that to write an array
   value, we enclose the element values within curly braces and separate them
   by commas.  If you know C, this is not unlike the syntax for
-  initializing structures.
+  initializing structures.  (More details appear below.)
      
 <programlisting>
 INSERT INTO sal_emp
@@ -66,7 +67,7 @@ SELECT name FROM sal_emp WHERE pay_by_quarter[1] &lt;&gt; pay_by_quarter[2];
 </programlisting>
 
   The array subscript numbers are written within square brackets.
-  <productname>PostgreSQL</productname> uses the
+  By default <productname>PostgreSQL</productname> uses the
   <quote>one-based</quote> numbering convention for arrays, that is,
   an array of <replaceable>n</> elements starts with <literal>array[1]</literal> and
   ends with <literal>array[<replaceable>n</>]</literal>.
@@ -99,7 +100,7 @@ SELECT schedule[1:2][1:1] FROM sal_emp WHERE name = 'Bill';
 
       schedule
 --------------------
- {{"meeting"},{""}}
+ {{meeting},{""}}
 (1 row)
 </programlisting>
 
@@ -144,9 +145,15 @@ UPDATE sal_emp SET pay_by_quarter[1:2] = '{27000,27000}'
   those already present, or by assigning to a slice that is adjacent
   to or overlaps the data already present.  For example, if an array
   value currently has 4 elements, it will have five elements after an
-  update that assigns to array[5].  Currently, enlargement in this
-  fashion is only allowed for one-dimensional arrays, not
+  update that assigns to <literal>array[5]</>.  Currently, enlargement in
+  this fashion is only allowed for one-dimensional arrays, not
   multidimensional arrays.
+ </para>
+
+ <para>
+  Array slice assignment allows creation of arrays that do not use one-based
+  subscripts.  For example one might assign to <literal>array[-2:7]</> to
+  create an array with subscript values running from -2 to 7.
  </para>
 
  <para>
@@ -168,7 +175,9 @@ CREATE TABLE tictactoe (
   Actually, the current implementation does not enforce the declared
   number of dimensions either.  Arrays of a particular element type are
   all considered to be of the same type, regardless of size or number
-  of dimensions.
+  of dimensions.  So, declaring number of dimensions or sizes in
+  <command>CREATE TABLE</command> is simply documentation, it does not
+  affect runtime behavior.
  </para>
 
  <para>
@@ -249,17 +258,53 @@ SELECT * FROM sal_emp WHERE pay_by_quarter **= 10000;
  </note>
 
  <formalpara>
+  <title>Array input and output syntax.</title>
+  <para>
+   The external representation of an array value consists of items that
+   are interpreted according to the I/O conversion rules for the array's
+   element type, plus decoration that indicates the array structure.
+   The decoration consists of curly braces (<literal>{</> and <literal>}</>)
+   around the array value plus delimiter characters between adjacent items.
+   The delimiter character is usually a comma (<literal>,</>) but can be
+   something else: it is determined by the <literal>typdelim</> setting
+   for the array's element type.  (Among the standard datatypes provided
+   in the <productname>PostgreSQL</productname> distribution, type
+   <literal>box</> uses a semicolon (<literal>;</>) but all the others
+   use comma.)  In a multidimensional array, each dimension (row, plane,
+   cube, etc.) gets its own level of curly braces, and delimiters
+   must be written between adjacent curly-braced entities of the same level.
+   You may write whitespace before a left brace, after a right
+   brace, or before any individual item string.  Whitespace after an item
+   is not ignored, however: after skipping leading whitespace, everything
+   up to the next right brace or delimiter is taken as the item value.
+  </para>
+ </formalpara>
+
+ <formalpara>
   <title>Quoting array elements.</title>
   <para>
-   As shown above, when writing an array literal value you may write double
+   As shown above, when writing an array value you may write double
    quotes around any individual array
    element.  You <emphasis>must</> do so if the element value would otherwise
    confuse the array-value parser.  For example, elements containing curly
-   braces, commas, double quotes, backslashes, or white space must be
-   double-quoted.  To put a double quote or backslash in an array element
-   value, precede it with a backslash.
+   braces, commas (or whatever the delimiter character is), double quotes,
+   backslashes, or leading white space must be double-quoted.  To put a double
+   quote or backslash in an array element value, precede it with a backslash.
+   Alternatively, you can use backslash-escaping to protect all data characters
+   that would otherwise be taken as array syntax or ignorable white space.
   </para>
  </formalpara>
+
+  <para>
+   The array output routine will put double quotes around element values
+   if they are empty strings or contain curly braces, delimiter characters,
+   double quotes, backslashes, or white space.  Double quotes and backslashes
+   embedded in element values will be backslash-escaped.  For numeric
+   datatypes it is safe to assume that double quotes will never appear, but
+   for textual datatypes one should be prepared to cope with either presence
+   or absence of quotes.  (This is a change in behavior from pre-7.2
+   <productname>PostgreSQL</productname> releases.)
+  </para>
 
  <tip>
   <para>
