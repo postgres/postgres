@@ -17,6 +17,7 @@ nextstep*) PORTNAME='nextstep';;
   ultrix*) PORTNAME='ultrix4';;
     irix*) PORTNAME='irix5';;
     hpux*) PORTNAME='hpux';;
+     osf*) PORTNAME='alpha';;
 *) echo ""
    echo "*************************************************************"
    echo "configure does not currently recognize your operating system,"
