@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_class.h,v 1.2 1996/08/04 22:00:13 scrappy Exp $
+ * $Id: pg_class.h,v 1.3 1996/08/21 04:25:49 scrappy Exp $
  *
  * NOTES
  *    ``pg_relation'' is being replaced by ``pg_class''.  currently
@@ -66,6 +66,10 @@ CATALOG(pg_class) BOOTSTRAP {
      char 	relkind;
      char 	relarch; /* 'h' = heavy, 'l' = light, 'n' = no archival*/
      int2 	relnatts;
+       /* relnatts is the number of user attributes this class has.  There 
+          must be exactly this many instances in Class pg_attribute for this 
+          class which have attnum > 0 (= user attribute).
+          */
      int2	relsmgr;
      int28 	relkey;			/* not used */
      oid8	relkeyop;		/* not used */

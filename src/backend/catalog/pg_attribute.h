@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_attribute.h,v 1.1.1.1 1996/07/09 06:21:16 scrappy Exp $
+ * $Id: pg_attribute.h,v 1.2 1996/08/21 04:25:47 scrappy Exp $
  *
  * NOTES
  *    the genbki.sh script reads this file and generates .bki
@@ -17,12 +17,6 @@
  *    for some of the system catalogs so if the schema for any of
  *    these changes, be sure and change the appropriate Schema_xxx
  *    macros!  -cim 2/5/91
- *
- *    fastgetattr() now uses attcacheoff to cache byte offsets of
- *    attributes in heap tuples.  The data actually stored in 
- *    pg_attribute (-1) indicates no cached value.  But when we copy
- *    these tuples into a tuple descriptor, we may then update attcacheoff
- *    in the copies.  This speeds up the attribute walking process.
  *
  *-------------------------------------------------------------------------
  */
@@ -54,15 +48,39 @@ CATALOG(pg_attribute) BOOTSTRAP {
     int4  	attnvals;
     Oid  	atttyparg;	/* type arg for arrays/spquel/procs */
     int2 	attlen;
+      /* attlen is the number of bytes we use to represent the value 
+         of this attribute, e.g. 4 for an int4.  But for a variable length 
+         attribute, attlen is -1.
+         */
     int2  	attnum;
+      /* attnum is the "attribute number" for the attribute:  A 
+         value that uniquely identifies this attribute within its class.
+         For user attributes, Attribute numbers are greater than 0 and
+         not greater than the number of attributes in the class.
+         I.e. if the Class pg_class says that Class XYZ has 10
+         attributes, then the user attribute numbers in Class
+         pg_attribute must be 1-10.
+        
+         System attributes have attribute numbers less than 0 that are
+         unique within the class, but not constrained to any particular range.
+         
+         Note that (attnum - 1) is often used as the index to an array.  
+         */
     int2 	attbound;
     bool  	attbyval;
     bool 	attcanindex;
     Oid 	attproc;	/* spquel? */
     int4	attnelems;
     int4	attcacheoff;
+      /* fastgetattr() uses attcacheoff to cache byte offsets of
+         attributes in heap tuples.  The data actually stored in
+         pg_attribute (-1) indicates no cached value.  But when we
+         copy these tuples into a tuple descriptor, we may then update
+         attcacheoff in the copies.  This speeds up the attribute
+         walking process.  
+         */
     bool        attisset;
-    char	attalign;	/* alignment (c=char, s=short, i=int, d=double) */
+    char	attalign;  /* alignment (c=char, s=short, i=int, d=double) */
 } FormData_pg_attribute;
 
 /*
@@ -380,43 +398,43 @@ DATA(insert OID = 0 (  75 vtype            18 0 0 0  1 -11 0 t t 0 0 -1 f c));
  * ----------------
  */
 #define Schema_pg_class \
-{ 83l, {"relname"},      19l, 83l, 0l, 0l, NAMEDATALEN,  1, 0,   '\0', '\001', 0l, 0l, -1l, '\0', 'i' }, \
-{ 83l, {"reltype"},     26l, 83l, 0l, 0l,  4,  2, 0, '\001', '\001', 0l, 0l, -1l, '\0', 'i' }, \
-{ 83l, {"relowner"},     26l, 83l, 0l, 0l,  4,  2, 0, '\001', '\001', 0l, 0l, -1l, '\0', 'i' }, \
-{ 83l, {"relam"},        26l, 83l, 0l, 0l,  4,  3, 0, '\001', '\001', 0l, 0l, -1l, '\0', 'i' }, \
-{ 83l, {"relpages"},     23,  83l, 0l, 0l,  4,  4, 0, '\001', '\001', 0l, 0l, -1l, '\0', 'i' }, \
-{ 83l, {"reltuples"},    23,  83l, 0l, 0l,  4,  5, 0, '\001', '\001', 0l, 0l, -1l, '\0', 'i' }, \
-{ 83l, {"relexpires"},   702,  83l, 0l, 0l,  4,  6, 0, '\001', '\001', 0l, 0l, -1l, '\0', 'i' }, \
-{ 83l, {"relpreserved"}, 703,  83l, 0l, 0l,  4,  7, 0, '\001', '\001', 0l, 0l, -1l, '\0', 'i' }, \
-{ 83l, {"relhasindex"},  16,  83l, 0l, 0l,  1,  8, 0, '\001', '\001', 0l, 0l, -1l, '\0', 'c' }, \
-{ 83l, {"relisshared"},  16,  83l, 0l, 0l,  1,  9, 0, '\001', '\001', 0l, 0l, -1l, '\0', 'c' }, \
-{ 83l, {"relkind"},      18,  83l, 0l, 0l,  1, 10, 0, '\001', '\001', 0l, 0l, -1l, '\0', 'c' }, \
-{ 83l, {"relarch"},      18,  83l, 0l, 0l,  1, 11, 0, '\001', '\001', 0l, 0l, -1l, '\0', 'c' }, \
-{ 83l, {"relnatts"},     21,  83l, 0l, 0l,  2, 12, 0, '\001', '\001', 0l, 0l, -1l, '\0', 's' }, \
-{ 83l, {"relsmgr"},      210l,  83l, 0l, 0l,  2, 13, 0, '\001', '\001', 0l, 0l, -1l, '\0', 's' }, \
-{ 83l, {"relkey"},       22,  83l, 0l, 0l, 16, 14, 0,   '\0', '\001', 0l, 0l, -1l, '\0', 'i' }, \
-{ 83l, {"relkeyop"},     30,  83l, 0l, 0l, 32, 15, 0,   '\0', '\001', 0l, 0l, -1l, '\0', 'i' }, \
-{ 83l, {"relhasrules"},  16,  83l, 0l, 0l,  1, 16, 0, '\001', '\001', 0l, 0l, -1l, '\0', 'c' }, \
-{ 83l, {"relacl"},     1034l, 83l, 0l, 0l, -1, 17, 0,   '\0', '\001', 0l, 0l, -1l, '\0', 'i' }
+{ 83l, {"relname"},      19l,  83l, 0l, 0l, NAMEDATALEN,  1, 0,   '\000', '\001', 0l, 0l, -1l, '\0', 'i' }, \
+{ 83l, {"reltype"},      26l,  83l, 0l, 0l,  4,  2, 0, '\001', '\001', 0l, 0l, -1l, '\0', 'i' }, \
+{ 83l, {"relowner"},     26l,  83l, 0l, 0l,  4,  3, 0, '\001', '\001', 0l, 0l, -1l, '\0', 'i' }, \
+{ 83l, {"relam"},        26l,  83l, 0l, 0l,  4,  4, 0, '\001', '\001', 0l, 0l, -1l, '\0', 'i' }, \
+{ 83l, {"relpages"},     23,   83l, 0l, 0l,  4,  5, 0, '\001', '\001', 0l, 0l, -1l, '\0', 'i' }, \
+{ 83l, {"reltuples"},    23,   83l, 0l, 0l,  4,  6, 0, '\001', '\001', 0l, 0l, -1l, '\0', 'i' }, \
+{ 83l, {"relexpires"},   702,  83l, 0l, 0l,  4,  7, 0, '\001', '\001', 0l, 0l, -1l, '\0', 'i' }, \
+{ 83l, {"relpreserved"}, 703,  83l, 0l, 0l,  4,  8, 0, '\001', '\001', 0l, 0l, -1l, '\0', 'i' }, \
+{ 83l, {"relhasindex"},  16,   83l, 0l, 0l,  1,  9, 0, '\001', '\001', 0l, 0l, -1l, '\0', 'c' }, \
+{ 83l, {"relisshared"},  16,   83l, 0l, 0l,  1, 10, 0, '\001', '\001', 0l, 0l, -1l, '\0', 'c' }, \
+{ 83l, {"relkind"},      18,   83l, 0l, 0l,  1, 11, 0, '\001', '\001', 0l, 0l, -1l, '\0', 'c' }, \
+{ 83l, {"relarch"},      18,   83l, 0l, 0l,  1, 12, 0, '\001', '\001', 0l, 0l, -1l, '\0', 'c' }, \
+{ 83l, {"relnatts"},     21,   83l, 0l, 0l,  2, 13, 0, '\001', '\001', 0l, 0l, -1l, '\0', 's' }, \
+{ 83l, {"relsmgr"},      210l, 83l, 0l, 0l,  2, 14, 0, '\001', '\001', 0l, 0l, -1l, '\0', 's' }, \
+{ 83l, {"relkey"},       22,   83l, 0l, 0l, 16, 15, 0, '\000', '\001', 0l, 0l, -1l, '\0', 'i' }, \
+{ 83l, {"relkeyop"},     30,   83l, 0l, 0l, 32, 16, 0, '\000', '\001', 0l, 0l, -1l, '\0', 'i' }, \
+{ 83l, {"relhasrules"},  16,   83l, 0l, 0l,  1, 17, 0, '\001', '\001', 0l, 0l, -1l, '\0', 'c' }, \
+{ 83l, {"relacl"},     1034l,  83l, 0l, 0l, -1, 18, 0, '\000', '\001', 0l, 0l, -1l, '\0', 'i' }
 
 DATA(insert OID = 0 (  83 relname          19 0 0 0 NAMEDATALEN   1 0 f t 0 0 -1 f i));
 DATA(insert OID = 0 (  83 reltype          26 0 0 0  4   2 0 t t 0 0 -1 f i));
-DATA(insert OID = 0 (  83 relowner         26 0 0 0  4   2 0 t t 0 0 -1 f i));
-DATA(insert OID = 0 (  83 relam            26 0 0 0  4   3 0 t t 0 0 -1 f i));
-DATA(insert OID = 0 (  83 relpages         23 0 0 0  4   4 0 t t 0 0 -1 f i));
-DATA(insert OID = 0 (  83 reltuples        23 0 0 0  4   5 0 t t 0 0 -1 f i));
-DATA(insert OID = 0 (  83 relexpires      702 0 0 0  4   6 0 t t 0 0 -1 f i));
-DATA(insert OID = 0 (  83 relpreserved    702 0 0 0  4   7 0 t t 0 0 -1 f i));
-DATA(insert OID = 0 (  83 relhasindex      16 0 0 0  1   8 0 t t 0 0 -1 f c));
-DATA(insert OID = 0 (  83 relisshared      16 0 0 0  1   9 0 t t 0 0 -1 f c));
-DATA(insert OID = 0 (  83 relkind          18 0 0 0  1  10 0 t t 0 0 -1 f c));
-DATA(insert OID = 0 (  83 relarch          18 0 0 0  1  11 0 t t 0 0 -1 f c));
-DATA(insert OID = 0 (  83 relnatts         21 0 0 0  2  12 0 t t 0 0 -1 f s));
-DATA(insert OID = 0 (  83 relsmgr         210 0 0 0  2  13 0 t t 0 0 -1 f s));
-DATA(insert OID = 0 (  83 relkey           22 0 0 0 16  14 0 f t 0 0 -1 f i));
-DATA(insert OID = 0 (  83 relkeyop         30 0 0 0 32  15 0 f t 0 0 -1 f i));
-DATA(insert OID = 0 (  83 relhasrules      16 0 0 0  1  16 0 t t 0 0 -1 f c));
-DATA(insert OID = 0 (  83 relacl         1034 0 0 0 -1  17 0 f t 0 0 -1 f i));
+DATA(insert OID = 0 (  83 relowner         26 0 0 0  4   3 0 t t 0 0 -1 f i));
+DATA(insert OID = 0 (  83 relam            26 0 0 0  4   4 0 t t 0 0 -1 f i));
+DATA(insert OID = 0 (  83 relpages         23 0 0 0  4   5 0 t t 0 0 -1 f i));
+DATA(insert OID = 0 (  83 reltuples        23 0 0 0  4   6 0 t t 0 0 -1 f i));
+DATA(insert OID = 0 (  83 relexpires      702 0 0 0  4   7 0 t t 0 0 -1 f i));
+DATA(insert OID = 0 (  83 relpreserved    703 0 0 0  4   8 0 t t 0 0 -1 f i));
+DATA(insert OID = 0 (  83 relhasindex      16 0 0 0  1   9 0 t t 0 0 -1 f c));
+DATA(insert OID = 0 (  83 relisshared      16 0 0 0  1  10 0 t t 0 0 -1 f c));
+DATA(insert OID = 0 (  83 relkind          18 0 0 0  1  11 0 t t 0 0 -1 f c));
+DATA(insert OID = 0 (  83 relarch          18 0 0 0  1  12 0 t t 0 0 -1 f c));
+DATA(insert OID = 0 (  83 relnatts         21 0 0 0  2  13 0 t t 0 0 -1 f s));
+DATA(insert OID = 0 (  83 relsmgr         210 0 0 0  2  14 0 t t 0 0 -1 f s));
+DATA(insert OID = 0 (  83 relkey           22 0 0 0 16  15 0 f t 0 0 -1 f i));
+DATA(insert OID = 0 (  83 relkeyop         30 0 0 0 32  16 0 f t 0 0 -1 f i));
+DATA(insert OID = 0 (  83 relhasrules      16 0 0 0  1  17 0 t t 0 0 -1 f c));
+DATA(insert OID = 0 (  83 relacl         1034 0 0 0 -1  18 0 f t 0 0 -1 f i));
 DATA(insert OID = 0 (  83 ctid             27 0 0 0  6  -1 0 f t 0 0 -1 f i));
 DATA(insert OID = 0 (  83 oid              26 0 0 0  4  -2 0 t t 0 0 -1 f i));
 DATA(insert OID = 0 (  83 xmin             28 0 0 0  4  -3 0 f t 0 0 -1 f i));

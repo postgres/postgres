@@ -10,7 +10,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/catalog/Attic/genbki.sh,v 1.2 1996/08/19 13:52:02 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/catalog/Attic/genbki.sh,v 1.3 1996/08/21 04:25:44 scrappy Exp $
 #
 # NOTES
 #    non-essential whitespace is removed from the generated file.
@@ -58,8 +58,11 @@ done
 cat $SYSFILES | \
 sed -e 's/\/\*.*\*\///g' \
     -e 's/;[ 	]*$//g'  \
+    -e 's/^[ 	]*//g' \
     -e 's/\ Oid/\ oid/g' \
     -e 's/\ NameData/\ name/g' \
+    -e 's/^Oid/oid/g' \
+    -e 's/^NameData/\name/g' \
     -e 's/(NameData/(name/g' \
     -e 's/(Oid/(oid/g' | \
 gawk '
@@ -78,7 +81,20 @@ BEGIN {
 	bootstrap = 0;
 	nc = 0;
 	reln_open = 0;
+        comment_level = 0;
 }
+
+# ----------------
+# Anything in a /* .. */ block should be ignored.
+# Blank lines also go.
+# Note that any /* */ comment on a line by itself was removed from the line
+# by the sed above.
+# ----------------
+/^\/\*/           { comment_level += 1; next; }
+/^*\//            { comment_level -= 1; next; }
+comment_level > 0 { next; }
+
+/^[ 	]*$/      { next; }
 
 # ----------------
 #	anything in a BKI_BEGIN .. BKI_END block should be passed
