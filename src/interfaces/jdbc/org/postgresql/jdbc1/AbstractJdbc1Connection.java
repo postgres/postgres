@@ -9,7 +9,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Connection.java,v 1.26 2003/09/13 04:02:15 barry Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Connection.java,v 1.27 2003/10/29 02:39:09 davec Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1270,10 +1270,9 @@ public abstract class AbstractJdbc1Connection implements BaseConnection
 	 * gets the current auto-commit state
 	 *
 	 * @return Current state of the auto-commit mode
-	 * @exception SQLException (why?)
 	 * @see setAutoCommit
 	 */
-	public boolean getAutoCommit() throws SQLException
+	public boolean getAutoCommit()
 	{
 		return this.autoCommit;
 	}

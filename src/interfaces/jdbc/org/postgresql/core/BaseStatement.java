@@ -6,7 +6,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/core/Attic/BaseStatement.java,v 1.5 2003/08/24 22:10:09 barry Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/core/Attic/BaseStatement.java,v 1.6 2003/10/29 02:39:09 davec Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,11 +30,11 @@ public interface BaseStatement extends org.postgresql.PGStatement
 	 */
 	public void addWarning(String p_warning) throws SQLException;
 	public void close() throws SQLException;
-	public int getFetchSize() throws SQLException;
+	public int getFetchSize();
  	public int getMaxFieldSize() throws SQLException;
 	public int getMaxRows() throws SQLException;
 	public int getResultSetConcurrency() throws SQLException;
-	public String getStatementName();
+	public String getFetchingCursorName();
 	public SQLWarning getWarnings() throws SQLException;
  	public void setMaxFieldSize(int max) throws SQLException;
 

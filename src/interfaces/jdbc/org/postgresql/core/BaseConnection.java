@@ -6,7 +6,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/core/Attic/BaseConnection.java,v 1.3 2003/05/29 03:21:32 barry Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/core/Attic/BaseConnection.java,v 1.4 2003/10/29 02:39:09 davec Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,7 +26,7 @@ public interface BaseConnection extends PGConnection
 	public void cancelQuery() throws SQLException;
 	public Statement createStatement() throws SQLException;
 	public BaseResultSet execSQL(String s) throws SQLException;
-	public boolean getAutoCommit() throws SQLException;
+	public boolean getAutoCommit();
 	public String getCursorName() throws SQLException;
 	public Encoding getEncoding() throws SQLException;
 	public DatabaseMetaData getMetaData() throws SQLException;

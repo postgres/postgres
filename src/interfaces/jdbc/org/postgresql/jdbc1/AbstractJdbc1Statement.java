@@ -26,7 +26,7 @@ import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.Vector;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.40 2003/10/09 01:17:07 wieck Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.41 2003/10/29 02:39:09 davec Exp $
  * This class defines methods of the jdbc1 specification.  This class is
  * extended by org.postgresql.jdbc2.AbstractJdbc2Statement which adds the jdbc2
  * methods.  The real Statement class (for jdbc1) is org.postgresql.jdbc1.Jdbc1Statement
@@ -62,15 +62,25 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 	// Some performance caches
 	private StringBuffer sbuf = new StringBuffer(32);
 
-	//Used by the preparedstatement style methods
-	protected String[] m_sqlFragments;
-	private String[] m_origSqlFragments;
-	private String[] m_executeSqlFragments;
-	protected Object[] m_binds = new Object[0];
-
-	protected String[] m_bindTypes = new String[0];
-	protected String m_statementName = null;
-        protected boolean m_statementIsCursor = false;
+	protected String[] m_sqlFragments;              // Query fragments.
+	private String[] m_executeSqlFragments;         // EXECUTE(...) if useServerPrepare
+	protected Object[] m_binds = new Object[0];     // Parameter values
+	
+	protected String[] m_bindTypes = new String[0]; // Parameter types, for PREPARE(...)
+	protected String m_statementName = null;        // Allocated PREPARE statement name for server-prepared statements
+	protected String m_cursorName = null;           // Allocated DECLARE cursor name for cursor-based fetch
+ 
+	// Constants for allowXXX and m_isSingleStatement vars, below.
+	// The idea is to defer the cost of examining the query until we really need to know,
+	// but don't reexamine it every time thereafter.
+ 
+	private static final short UNKNOWN = 0;      // Don't know yet, examine the query.
+	private static final short NO = 1;           // Don't use feature
+	private static final short YES = 2;          // Do use feature
+	
+	private short m_isSingleDML = UNKNOWN;         // Is the query a single SELECT/UPDATE/INSERT/DELETE?
+	private short m_isSingleSelect = UNKNOWN;      // Is the query a single SELECT?
+	private short m_isSingleStatement = UNKNOWN;   // Is the query a single statement?
 
 	private boolean m_useServerPrepare = false;
 
@@ -115,11 +125,11 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 		return connection;
 	}
 
-	public String getStatementName() {
-		return m_statementName;
+	public String getFetchingCursorName() {
+		return m_cursorName;
 	}
 
-	public int getFetchSize() throws SQLException {
+	public int getFetchSize() {
 		return fetchSize;
 	}
 
@@ -138,6 +148,9 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 		boolean inQuotes = false;
 		int lastParmEnd = 0, i;
 
+		m_isSingleSelect = m_isSingleDML = UNKNOWN;
+		m_isSingleStatement = YES;
+
 		for (i = 0; i < l_sql.length(); ++i)
 		{
 			int c = l_sql.charAt(i);
@@ -149,6 +162,8 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 				v.addElement(l_sql.substring (lastParmEnd, i));
 				lastParmEnd = i + 1;
 			}
+			if (c == ';' && !inQuotes)
+				m_isSingleStatement = m_isSingleSelect = m_isSingleDML = NO;
 		}
 		v.addElement(l_sql.substring (lastParmEnd, l_sql.length()));
 
@@ -161,6 +176,30 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 
 	}
 
+	/*
+	 * Deallocate resources allocated for the current query
+	 * in preparation for replacing it with a new query.
+	 */
+	private void deallocateQuery()
+	{		
+		//If we have already created a server prepared statement, we need
+		//to deallocate the existing one
+		if (m_statementName != null)
+		{
+			try
+			{
+				connection.execSQL("DEALLOCATE " + m_statementName);
+			}
+			catch (Exception e)
+			{
+			}
+		}
+
+		m_statementName = null;
+		m_cursorName = null; // automatically closed at end of txn anyway
+		m_executeSqlFragments = null;
+		m_isSingleStatement = m_isSingleSelect = m_isSingleDML = UNKNOWN;
+	}
   
 	/*
 	 * Execute a SQL statement that retruns a single ResultSet
@@ -171,29 +210,12 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 	 */
 	public java.sql.ResultSet executeQuery(String p_sql) throws SQLException
 	{
+		deallocateQuery();
+
 		String l_sql = replaceProcessing(p_sql);
 		m_sqlFragments = new String[] {l_sql};
 		m_binds = new Object[0];
-		//If we have already created a server prepared statement, we need
-		//to deallocate the existing one
-		if (m_statementName != null)
-		{
-			try
-			{
-                                if (!m_statementIsCursor)
-                                        connection.execSQL("DEALLOCATE " + m_statementName);
-			}
-			catch (Exception e)
-			{
-			}
-			finally
-			{
-				m_statementName = null;
-                                m_statementIsCursor = false;
-				m_origSqlFragments = null;
-				m_executeSqlFragments = null;
-			}
-		}
+
 		return executeQuery();
 	}
 
@@ -226,17 +248,12 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 	 */
 	public int executeUpdate(String p_sql) throws SQLException
 	{
+		deallocateQuery();
+
 		String l_sql = replaceProcessing(p_sql);
 		m_sqlFragments = new String[] {l_sql};
 		m_binds = new Object[0];
-		//If we have already created a server prepared statement, we need
-		//to deallocate the existing one
-		if (m_statementName != null) {
-			connection.execSQL("DEALLOCATE " + m_statementName);
-			m_statementName = null;
-			m_origSqlFragments = null;
-			m_executeSqlFragments = null;
-		}
+
 		return executeUpdate();
 	}
 
@@ -270,28 +287,199 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 	 */
 	public boolean execute(String p_sql) throws SQLException
 	{
+		deallocateQuery();
+
 		String l_sql = replaceProcessing(p_sql);
 		m_sqlFragments = new String[] {l_sql};
 		m_binds = new Object[0];
-		//If we have already created a server prepared statement, we need
-		//to deallocate the existing one
-		if (m_statementName != null) {
-			connection.execSQL("DEALLOCATE " + m_statementName);
-			m_statementName = null;
-			m_origSqlFragments = null;
-			m_executeSqlFragments = null;
-		}
+
 		return execute();
 	}
 
 	/*
+	 * Check if the current query is a single statement.
+	 */
+	private boolean isSingleStatement()
+	{
+		if (m_isSingleStatement != UNKNOWN)
+			return m_isSingleStatement == YES;
+		
+		// Crude detection of multiple statements. This could be
+		// improved by parsing the whole query for quotes, but is
+		// it worth it given that the only queries that get here are
+		// unparameterized queries?
+		
+		for (int i = 0; i < m_sqlFragments.length; ++i) { // a bit redundant, but ..
+			if (m_sqlFragments[i].indexOf(';') != -1) {
+				m_isSingleStatement = NO;
+				return false;
+			}
+		}
+		
+		m_isSingleStatement = YES;
+		return true;
+	}
+
+	/*
+	 * Helper for isSingleSelect() and isSingleDML(): computes values
+	 * of m_isSingleDML and m_isSingleSelect.
+	 */
+	private void analyzeStatementType()
+	{
+		if (!isSingleStatement()) {
+			m_isSingleSelect = m_isSingleDML = NO;
+			return;
+		}
+		
+		String compare = m_sqlFragments[0].trim().toLowerCase();
+		if (compare.startsWith("select")) {
+			m_isSingleSelect = m_isSingleDML = YES;
+			return;
+		}
+
+		m_isSingleSelect = NO;
+
+		if (!compare.startsWith("update") &&
+			!compare.startsWith("delete") &&
+			!compare.startsWith("insert")) {
+			m_isSingleDML = NO;
+			return;
+		}
+		
+		m_isSingleDML = YES;
+	}
+
+	/*
+	 * Check if the current query is a single SELECT.
+	 */
+	private boolean isSingleSelect()
+	{
+		if (m_isSingleSelect == UNKNOWN)
+			analyzeStatementType();
+
+		return m_isSingleSelect == YES;
+	}
+
+	/*
+	 * Check if the current query is a single SELECT/UPDATE/INSERT/DELETE.
+	 */
+	private boolean isSingleDML()
+	{
+		if (m_isSingleDML == UNKNOWN)
+			analyzeStatementType();
+
+		return m_isSingleDML == YES;
+	}
+
+	/*
+	 * Return the query fragments to use for a server-prepared statement.
+	 * The first query executed will include a PREPARE and EXECUTE;
+	 * subsequent queries will just be an EXECUTE.
+	 */
+	private String[] transformToServerPrepare() {
+		if (m_statementName != null)
+			return m_executeSqlFragments;
+               
+		// First time through.
+		m_statementName = "JDBC_STATEMENT_" + m_preparedCount++;
+               
+		// Set up m_executeSqlFragments
+		m_executeSqlFragments = new String[m_sqlFragments.length];
+		m_executeSqlFragments[0] = "EXECUTE " + m_statementName;                                
+		if (m_sqlFragments.length > 1) {
+			m_executeSqlFragments[0] += "(";
+			for (int i = 1; i < m_bindTypes.length; i++)
+				m_executeSqlFragments[i] = ", ";
+			m_executeSqlFragments[m_bindTypes.length] = ")";
+		}
+               
+		// Set up the PREPARE.
+		String[] prepareSqlFragments = new String[m_sqlFragments.length];
+		System.arraycopy(m_sqlFragments, 0, prepareSqlFragments, 0, m_sqlFragments.length);
+               
+		synchronized (sbuf) {
+			sbuf.setLength(0);
+			sbuf.append("PREPARE ");
+			sbuf.append(m_statementName);
+			if (m_sqlFragments.length > 1) {
+				sbuf.append("(");
+				for (int i = 0; i < m_bindTypes.length; i++) {
+					if (i != 0) sbuf.append(", ");
+					sbuf.append(m_bindTypes[i]);                                                    
+				}
+				sbuf.append(")");
+			}
+			sbuf.append(" AS ");
+			sbuf.append(m_sqlFragments[0]);
+			for (int i = 1; i < m_sqlFragments.length; i++) {
+				sbuf.append(" $");
+				sbuf.append(i);
+				sbuf.append(" ");
+				sbuf.append(m_sqlFragments[i]);
+			}
+			sbuf.append("; ");
+			sbuf.append(m_executeSqlFragments[0]);
+                       
+			prepareSqlFragments[0] = sbuf.toString();
+		}
+               
+		System.arraycopy(m_executeSqlFragments, 1, prepareSqlFragments, 1, prepareSqlFragments.length - 1);
+		return prepareSqlFragments;
+	}
+	
+	/*
+	 * Return the current query transformed into a cursor-based statement.
+	 * This uses a new cursor on each query.
+	 */
+	private String[] transformToCursorFetch() 
+	{
+		
+		// Pinch the prepared count for our own nefarious purposes.
+		m_cursorName = "JDBC_CURS_" + m_preparedCount++;
+		
+		// Create a cursor declaration and initial fetch statement from the original query.
+		int len = m_sqlFragments.length;
+		String[] cursorBasedSql = new String[len];
+		System.arraycopy(m_sqlFragments, 0, cursorBasedSql, 0, len);
+		cursorBasedSql[0] = "DECLARE " + m_cursorName + " CURSOR FOR " + cursorBasedSql[0];
+		cursorBasedSql[len-1] += "; FETCH FORWARD " + fetchSize + " FROM " + m_cursorName;
+		
+		// Make the cursor based query the one that will be used.
+		if (org.postgresql.Driver.logDebug)
+			org.postgresql.Driver.debug("using cursor based sql with cursor name " + m_cursorName);
+		
+		return cursorBasedSql;
+	}
+
+	/**
+	 * Do transformations to a query for server-side prepare or setFetchSize() cursor
+	 * work.
+	 * @return the query fragments to execute
+	 */
+	private String[] getQueryFragments()
+	{
+		// nb: isSingleXXX() are relatively expensive, avoid calling them unless we must.
+		
+		// We check the "mutable" bits of these conditions (which may change without
+		// a new query being created) here; isSingleXXX() only concern themselves with
+		// the query structure itself.
+
+		// We prefer cursor-based-fetch over server-side-prepare here.		
+		// Eventually a v3 implementation should let us do both at once.
+		if (fetchSize > 0 && !connection.getAutoCommit() && isSingleSelect())
+			return transformToCursorFetch();
+
+		if (isUseServerPrepare() && isSingleDML())
+			return transformToServerPrepare();
+		
+		// Not server-prepare or cursor-fetch, just return a plain query.
+		return m_sqlFragments;
+	}                                       
+	
+	/*
 	 * Some prepared statements return multiple results; the execute method
 	 * handles these complex statements as well as the simpler form of
 	 * statements handled by executeQuery and executeUpdate
-         *
-         * This method also handles the translation of the query into a cursor based
-         * query if the user has specified a fetch size and set the connection
-         * into a non-auto commit state.
 	 *
 	 * @return true if the next result is a ResultSet; false if it is an
 	 *		 update count or there are no more results
@@ -319,133 +507,14 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 				rs.close();
 		}
 
-		//Use server prepared statements if directed
-		if (m_useServerPrepare)
-		{
-			if (m_statementName == null)
-			{
-				m_statementName = "JDBC_STATEMENT_" + next_preparedCount();
-				m_origSqlFragments = new String[m_sqlFragments.length];
-				m_executeSqlFragments = new String[m_sqlFragments.length];
-				System.arraycopy(m_sqlFragments, 0, m_origSqlFragments, 0, m_sqlFragments.length);
-				m_executeSqlFragments[0] = "EXECUTE " + m_statementName;
-				if (m_sqlFragments.length > 1)
-				{
-					m_executeSqlFragments[0] = m_executeSqlFragments[0] + "(";
-					for (int i = 1; i < m_bindTypes.length; i++)
-					{
-						m_executeSqlFragments[i] = ", ";
-					}
-					m_executeSqlFragments[m_bindTypes.length] = ")";
-				}
-				synchronized (sbuf)
-				{
-					sbuf.setLength(0);
-					sbuf.append("PREPARE ");
-					sbuf.append(m_statementName);
-					if (m_origSqlFragments.length > 1)
-					{
-						sbuf.append("(");
-						for (int i = 0; i < m_bindTypes.length - 1; i++)
-						{
-							sbuf.append(m_bindTypes[i]);
-							sbuf.append(", ");
-						}
-						sbuf.append(m_bindTypes[m_bindTypes.length - 1]);
-						sbuf.append(")");
-					}
-					sbuf.append(" AS ");
-					sbuf.append(m_origSqlFragments[0]);
-					for (int i = 1; i < m_origSqlFragments.length; i++)
-					{
-						sbuf.append(" $");
-						sbuf.append(i);
-						sbuf.append(" ");
-						sbuf.append(m_origSqlFragments[i]);
-					}
-					sbuf.append("; ");
-
-					sbuf.append(m_executeSqlFragments[0]);
-					m_sqlFragments[0] = sbuf.toString();
-					System.arraycopy(m_executeSqlFragments, 1, m_sqlFragments, 1, m_sqlFragments.length - 1);
-				}
-
-			}
-			else
-			{
-				m_sqlFragments = m_executeSqlFragments;
-			}
-		}
-
-                // Use a cursor if directed and in a transaction.
-                else if (fetchSize > 0 && !connection.getAutoCommit())
-                {
-                        // The first thing to do is transform the statement text into the cursor form.
-                        String[] cursorBasedSql = new String[m_sqlFragments.length];
-                        // Pinch the prepared count for our own nefarious purposes.
-                        String statementName = "JDBC_CURS_" + next_preparedCount();
-                        // Setup the cursor decleration.
-                        // Note that we don't need a BEGIN because we've already
-                        // made sure we're executing inside a transaction.
-                        String cursDecl = "DECLARE " + statementName + " CURSOR FOR ";
-                        String endCurs = " FETCH FORWARD " + fetchSize + " FROM " + statementName + ";";
-
-                        // Copy the real query to the curs decleration.
-                        try
-                        {
-                                // Need to confirm this with Barry Lind.
-                                if (cursorBasedSql.length > 1)
-                                        throw new IllegalStateException("cursor fetches not supported with prepared statements.");
-                                for (int i = 0; i < cursorBasedSql.length; i++)
-                                {
-                                        if (i == 0)
-                                        {
-                                                if (m_sqlFragments[i].trim().toUpperCase().startsWith("DECLARE "))
-                                                        throw new IllegalStateException("statement is already cursor based.");
-                                                cursorBasedSql[i] = cursDecl;
-                                        }
-
-                                        if (cursorBasedSql[i] != null)
-                                                cursorBasedSql[i] += m_sqlFragments[i];
-                                        else
-                                                cursorBasedSql[i] = m_sqlFragments[i];
-
-                                        if (i == cursorBasedSql.length - 1)
-                                        {
-                                                // We have to be smart about adding the delimitting ";"
-                                                if (m_sqlFragments[i].endsWith(";"))
-                                                        cursorBasedSql[i] += endCurs;
-                                                else
-                                                        cursorBasedSql[i] += (";" + endCurs);
-                                        }
-                                        else if (m_sqlFragments[i].indexOf(";") > -1)
-                                        {
-                                                throw new IllegalStateException("multiple statements not "
-                                                                                + "allowed with cursor based querys.");
-                                        }
-                                }
-
-                                // Make the cursor based query the one that will be used.
-                                if (org.postgresql.Driver.logDebug)
-                                        org.postgresql.Driver.debug("using cursor based sql with cursor name " + statementName);
-
-                                // Do all of this after exceptions have been thrown.
-                                m_statementName = statementName;
-                                m_statementIsCursor = true;
-                                m_sqlFragments = cursorBasedSql;
-                        }
-                        catch (IllegalStateException e)
-                        {
-                                // Something went wrong generating the cursor based statement.
-                                if (org.postgresql.Driver.logDebug)
-                                        org.postgresql.Driver.debug(e.getMessage());
-                        }
-                }
+		// Get the actual query fragments to run (might be a transformed version of
+		// the original fragments)
+		String[] fragments = getQueryFragments();
 
 		// New in 7.1, pass Statement so that ExecSQL can customise to it                
-		result = QueryExecutor.execute(m_sqlFragments,
-                                               m_binds,
-                                               this);
+		result = QueryExecutor.execute(fragments,
+									   m_binds,
+									   this);
 
 		//If we are executing a callable statement function set the return data
 		if (isFunction)
@@ -721,10 +790,7 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 		if (rs != null)
 			rs.close();
 
-		// If using server prepared statements deallocate them
-		if (m_useServerPrepare && m_statementName != null) {
-			connection.execSQL("DEALLOCATE " + m_statementName);
-		}
+		deallocateQuery();
 
 		// Disasociate it from us (For Garbage Collection)
 		result = null;
@@ -2093,11 +2159,8 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
     public void setUseServerPrepare(boolean flag) throws SQLException {
         //Server side prepared statements were introduced in 7.3
         if (connection.haveMinimumServerVersion("7.3")) {
-			//If turning server prepared statements off deallocate statement
-			//and reset statement name
-			if (m_useServerPrepare != flag && !flag && m_statementName != null)
-				connection.execSQL("DEALLOCATE " + m_statementName);
-			m_statementName = null;
+			if (m_useServerPrepare != flag)
+				deallocateQuery();
 			m_useServerPrepare = flag;
 		} else {
 			//This is a pre 7.3 server so no op this method

@@ -9,7 +9,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1ResultSet.java,v 1.21 2003/09/22 04:54:59 barry Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1ResultSet.java,v 1.22 2003/10/29 02:39:09 davec Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,6 +61,9 @@ public abstract class AbstractJdbc1ResultSet implements BaseResultSet
  	private SimpleDateFormat m_tstzFormat = null;
  	private SimpleDateFormat m_dateFormat = null;
 
+	private int fetchSize;      // Fetch size for next read (might be 0).
+	private int lastFetchSize;  // Fetch size of last read (might be 0).
+
 	public abstract ResultSetMetaData getMetaData() throws SQLException;
 
 	public AbstractJdbc1ResultSet(BaseStatement statement,
@@ -82,6 +85,8 @@ public abstract class AbstractJdbc1ResultSet implements BaseResultSet
 		this.this_row = null;
 		this.current_row = -1;
 		this.binaryCursor = binaryCursor;
+
+		this.lastFetchSize = this.fetchSize = (statement == null ? 0 : statement.getFetchSize());
 	}
 
     public BaseStatement getPGStatement() {
@@ -111,7 +116,21 @@ public abstract class AbstractJdbc1ResultSet implements BaseResultSet
 		this.current_row = -1;
 		this.binaryCursor = binaryCursor;
 	}
+
+	//
+	// Part of the JDBC2 support, but convenient to implement here.
+	//
   
+	public void setFetchSize(int rows) throws SQLException
+	{
+		fetchSize = rows;
+	}
+
+
+	public int getFetchSize() throws SQLException
+	{
+		return fetchSize;
+	}
 
 	public boolean next() throws SQLException
 	{
@@ -120,30 +139,32 @@ public abstract class AbstractJdbc1ResultSet implements BaseResultSet
 
 		if (++current_row >= rows.size())
 		{
-			int fetchSize = statement.getFetchSize();
-			// Must be false if we weren't batching.
-			if (fetchSize == 0)
-				return false;
-			// Use the ref to the statement to get
-			// the details we need to do another cursor
-			// query - it will use reinit() to repopulate this
-			// with the right data.
-			String[] sql = new String[1];
-			String[] binds = new String[0];
-			// Is this the correct query???
-			String cursorName = statement.getStatementName();
-			//if cursorName is null, we are not batching (likely because the
-			//query itself can't be batched)
-			if (cursorName == null)
-				return false;
-			sql[0] = "FETCH FORWARD " + fetchSize + " FROM " + cursorName;
-			QueryExecutor.execute(sql,
-								  binds,
-								  this);
+ 			String cursorName = statement.getFetchingCursorName();
+			if (cursorName == null || lastFetchSize == 0 || rows.size() < lastFetchSize)
+				return false;  // Not doing a cursor-based fetch or the last fetch was the end of the query
+ 
+  			// Use the ref to the statement to get
+  			// the details we need to do another cursor
+  			// query - it will use reinit() to repopulate this
+  			// with the right data.
+ 
+ 			// NB: We can reach this point with fetchSize == 0 
+ 			// if the fetch size is changed halfway through reading results.
+ 			// Use "FETCH FORWARD ALL" in that case to complete the query.
+ 			String[] sql = new String[] {
+ 				fetchSize == 0 ? ("FETCH FORWARD ALL FROM " + cursorName) :
+ 				("FETCH FORWARD " + fetchSize + " FROM " + cursorName)
+ 			};
+ 
+  			QueryExecutor.execute(sql,
+ 								  new String[0],
+  								  this);
+  
+  			// Test the new rows array.
+ 			lastFetchSize = fetchSize;
+  			if (rows.size() == 0)
+  				return false;
 
-			// Test the new rows array.
-			if (rows.size() == 0)
-				return false;
 			// Otherwise reset the counter and let it go on...
 			current_row = 0;
 		}
