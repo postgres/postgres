@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: vacuum.h,v 1.20 1999/05/25 22:42:43 momjian Exp $
+ * $Id: vacuum.h,v 1.20.2.1 1999/08/25 11:32:52 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,6 +46,7 @@ typedef struct VPageListData
 {
 	int			vpl_empty_end_pages;	/* Number of "empty" end-pages */
 	int			vpl_num_pages;	/* Number of pages in vpl_pagedesc */
+	int			vpl_num_allocated_pages;	/* Number of allocated pages in vpl_pagedesc */
 	VPageDescr *vpl_pagedesc;	/* Descriptions of pages */
 } VPageListData;
 
