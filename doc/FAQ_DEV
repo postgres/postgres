@@ -23,8 +23,8 @@
    1.10) How are RPM's packaged?
    1.11) How are CVS branches handled?
    
-Technical Questions
-
+                            Technical Questions
+                                      
    2.1) How do I efficiently access information in tables from the
    backend code?
    2.2) Why are table, column, type, function, view names sometimes
