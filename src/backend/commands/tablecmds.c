@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.151 2005/03/25 18:04:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.152 2005/03/29 00:16:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1419,7 +1419,7 @@ renameatt(Oid myrelid,
 
 		for (i = 0; i < indexform->indnatts; i++)
 		{
-			if (attnum != indexform->indkey[i])
+			if (attnum != indexform->indkey.values[i])
 				continue;
 
 			/*
@@ -1676,9 +1676,10 @@ update_ri_trigger_args(Oid relid,
 		 * line; so does trigger.c ...
 		 */
 		tgnargs = pg_trigger->tgnargs;
-		val = (bytea *) fastgetattr(tuple,
-									Anum_pg_trigger_tgargs,
-									tgrel->rd_att, &isnull);
+		val = (bytea *)
+			DatumGetPointer(fastgetattr(tuple,
+										Anum_pg_trigger_tgargs,
+										tgrel->rd_att, &isnull));
 		if (isnull || tgnargs < RI_FIRST_ATTNAME_ARGNO ||
 			tgnargs > RI_MAX_ARGUMENTS)
 		{
@@ -3202,7 +3203,7 @@ ATExecDropNotNull(Relation rel, const char *colName)
 			 */
 			for (i = 0; i < indexStruct->indnatts; i++)
 			{
-				if (indexStruct->indkey[i] == attnum)
+				if (indexStruct->indkey.values[i] == attnum)
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 							 errmsg("column \"%s\" is in a primary key",
@@ -4096,6 +4097,9 @@ transformFkeyGetPrimaryKey(Relation pkrel, Oid *indexOid,
 	ListCell   *indexoidscan;
 	HeapTuple	indexTuple = NULL;
 	Form_pg_index indexStruct = NULL;
+	Datum		indclassDatum;
+	bool		isnull;
+	oidvector  *indclass;
 	int			i;
 
 	/*
@@ -4135,6 +4139,12 @@ transformFkeyGetPrimaryKey(Relation pkrel, Oid *indexOid,
 			errmsg("there is no primary key for referenced table \"%s\"",
 				   RelationGetRelationName(pkrel))));
 
+	/* Must get indclass the hard way */
+	indclassDatum = SysCacheGetAttr(INDEXRELID, indexTuple,
+									Anum_pg_index_indclass, &isnull);
+	Assert(!isnull);
+	indclass = (oidvector *) DatumGetPointer(indclassDatum);
+
 	/*
 	 * Now build the list of PK attributes from the indkey definition (we
 	 * assume a primary key cannot have expressional elements)
@@ -4142,11 +4152,11 @@ transformFkeyGetPrimaryKey(Relation pkrel, Oid *indexOid,
 	*attnamelist = NIL;
 	for (i = 0; i < indexStruct->indnatts; i++)
 	{
-		int			pkattno = indexStruct->indkey[i];
+		int			pkattno = indexStruct->indkey.values[i];
 
 		attnums[i] = pkattno;
 		atttypids[i] = attnumTypeId(pkrel, pkattno);
-		opclasses[i] = indexStruct->indclass[i];
+		opclasses[i] = indclass->values[i];
 		*attnamelist = lappend(*attnamelist,
 		   makeString(pstrdup(NameStr(*attnumAttName(pkrel, pkattno)))));
 	}
@@ -4205,6 +4215,16 @@ transformFkeyCheckAttrs(Relation pkrel,
 			heap_attisnull(indexTuple, Anum_pg_index_indpred) &&
 			heap_attisnull(indexTuple, Anum_pg_index_indexprs))
 		{
+			/* Must get indclass the hard way */
+			Datum		indclassDatum;
+			bool		isnull;
+			oidvector  *indclass;
+
+			indclassDatum = SysCacheGetAttr(INDEXRELID, indexTuple,
+											Anum_pg_index_indclass, &isnull);
+			Assert(!isnull);
+			indclass = (oidvector *) DatumGetPointer(indclassDatum);
+
 			/*
 			 * The given attnum list may match the index columns in any
 			 * order.  Check that each list is a subset of the other.
@@ -4214,7 +4234,7 @@ transformFkeyCheckAttrs(Relation pkrel,
 				found = false;
 				for (j = 0; j < numattrs; j++)
 				{
-					if (attnums[i] == indexStruct->indkey[j])
+					if (attnums[i] == indexStruct->indkey.values[j])
 					{
 						found = true;
 						break;
@@ -4230,9 +4250,9 @@ transformFkeyCheckAttrs(Relation pkrel,
 					found = false;
 					for (j = 0; j < numattrs; j++)
 					{
-						if (attnums[j] == indexStruct->indkey[i])
+						if (attnums[j] == indexStruct->indkey.values[i])
 						{
-							opclasses[j] = indexStruct->indclass[i];
+							opclasses[j] = indclass->values[i];
 							found = true;
 							break;
 						}

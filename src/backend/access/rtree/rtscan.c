@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/rtree/rtscan.c,v 1.57 2005/01/18 23:25:48 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/rtree/rtscan.c,v 1.58 2005/03/29 00:16:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -135,7 +135,7 @@ rtrescan(PG_FUNCTION_ARGS)
 			Oid			int_oper;
 			RegProcedure int_proc;
 
-			opclass = s->indexRelation->rd_index->indclass[attno - 1];
+			opclass = s->indexRelation->rd_indclass->values[attno - 1];
 			int_strategy = RTMapToInternalOperator(s->keyData[i].sk_strategy);
 			int_oper = get_opclass_member(opclass,
 										  s->keyData[i].sk_subtype,

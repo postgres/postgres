@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.97 2005/03/27 23:52:51 tgl Exp $
+ $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.98 2005/03/29 00:16:49 tgl Exp $
  -->
 
 <chapter id="catalogs">
@@ -2008,32 +2008,6 @@
      </row>
 
      <row>
-      <entry><structfield>indkey</structfield></entry>
-      <entry><type>int2vector</type></entry>
-      <entry><literal><link linkend="catalog-pg-attribute"><structname>pg_attribute</structname></link>.attnum</literal></entry>
-      <entry>
-       This is an array of <structfield>indnatts</structfield> (up to
-       <symbol>INDEX_MAX_KEYS</symbol>) values that indicate which
-       table columns this index indexes.  For example a value of
-       <literal>1 3</literal> would mean that the first and the third table
-       columns make up the index key.  A zero in this array indicates that the
-       corresponding index attribute is an expression over the table columns,
-       rather than a simple column reference.
-      </entry>
-     </row>
-
-     <row>
-      <entry><structfield>indclass</structfield></entry>
-      <entry><type>oidvector</type></entry>
-      <entry><literal><link linkend="catalog-pg-opclass"><structname>pg_opclass</structname></link>.oid</literal></entry>
-      <entry>
-       For each column in the index key this contains the OID of
-       the operator class to use.  See
-       <structname>pg_opclass</structname> for details.
-      </entry>
-     </row>
-
-     <row>
       <entry><structfield>indnatts</structfield></entry>
       <entry><type>int2</type></entry>
       <entry></entry>
@@ -2061,6 +2035,31 @@
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>If true, the table was last clustered on this index.</entry>
+     </row>
+
+     <row>
+      <entry><structfield>indkey</structfield></entry>
+      <entry><type>int2vector</type></entry>
+      <entry><literal><link linkend="catalog-pg-attribute"><structname>pg_attribute</structname></link>.attnum</literal></entry>
+      <entry>
+       This is an array of <structfield>indnatts</structfield> values that
+       indicate which table columns this index indexes.  For example a value
+       of <literal>1 3</literal> would mean that the first and the third table
+       columns make up the index key.  A zero in this array indicates that the
+       corresponding index attribute is an expression over the table columns,
+       rather than a simple column reference.
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>indclass</structfield></entry>
+      <entry><type>oidvector</type></entry>
+      <entry><literal><link linkend="catalog-pg-opclass"><structname>pg_opclass</structname></link>.oid</literal></entry>
+      <entry>
+       For each column in the index key this contains the OID of
+       the operator class to use.  See
+       <structname>pg_opclass</structname> for details.
+      </entry>
      </row>
 
      <row>
@@ -3637,7 +3636,7 @@
        (<structfield>typlen</structfield> = -1),
        but some fixed-length (<structfield>typlen</structfield> &gt; 0) types
        also have nonzero <structfield>typelem</structfield>, for example
-       <type>name</type> and <type>oidvector</type>.
+       <type>name</type> and <type>point</type>.
        If a fixed-length type has a <structfield>typelem</structfield> then
        its internal representation must be some number of values of the
        <structfield>typelem</structfield> data type with no other data.

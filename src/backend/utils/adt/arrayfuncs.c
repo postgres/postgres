@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.117 2005/03/24 21:50:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.118 2005/03/29 00:17:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,7 +56,7 @@
  *
  *
  * There are also some "fixed-length array" datatypes, such as NAME and
- * OIDVECTOR.  These are simply a sequence of a fixed number of items each
+ * POINT.  These are simply a sequence of a fixed number of items each
  * of a fixed-length datatype, with no overhead; the item size must be
  * a multiple of its alignment requirement, because we do no padding.
  * We support subscripting on these types, but array_in() and array_out()

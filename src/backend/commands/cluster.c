@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.133 2005/03/20 22:00:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.134 2005/03/29 00:16:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -347,7 +347,7 @@ check_index_is_clusterable(Relation OldHeap, Oid indexOid)
 		 * at the first column; multicolumn-capable AMs are *required* to
 		 * index nulls in columns after the first.
 		 */
-		colno = OldIndex->rd_index->indkey[0];
+		colno = OldIndex->rd_index->indkey.values[0];
 		if (colno > 0)
 		{
 			/* ordinary user attribute */

@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.73 2004/12/31 21:59:38 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.74 2005/03/29 00:16:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -471,25 +471,22 @@ FuncnameGetCandidates(List *names, int nargs)
 		recomputeNamespacePath();
 	}
 
-	/* Search syscache by name and (optionally) nargs only */
-	if (nargs >= 0)
-		catlist = SearchSysCacheList(PROCNAMENSP, 2,
-									 CStringGetDatum(funcname),
-									 Int16GetDatum(nargs),
-									 0, 0);
-	else
-		catlist = SearchSysCacheList(PROCNAMENSP, 1,
-									 CStringGetDatum(funcname),
-									 0, 0, 0);
+	/* Search syscache by name only */
+	catlist = SearchSysCacheList(PROCNAMEARGSNSP, 1,
+								 CStringGetDatum(funcname),
+								 0, 0, 0);
 
 	for (i = 0; i < catlist->n_members; i++)
 	{
 		HeapTuple	proctup = &catlist->members[i]->tuple;
 		Form_pg_proc procform = (Form_pg_proc) GETSTRUCT(proctup);
+		int			pronargs = procform->pronargs;
 		int			pathpos = 0;
 		FuncCandidateList newResult;
 
-		nargs = procform->pronargs;
+		/* Ignore if it doesn't match requested argument count */
+		if (nargs >= 0 && pronargs != nargs)
+			continue;
 
 		if (OidIsValid(namespaceId))
 		{
@@ -529,9 +526,10 @@ FuncnameGetCandidates(List *names, int nargs)
 
 				if (catlist->ordered)
 				{
-					if (nargs == resultList->nargs &&
-						memcmp(procform->proargtypes, resultList->args,
-							   nargs * sizeof(Oid)) == 0)
+					if (pronargs == resultList->nargs &&
+						memcmp(procform->proargtypes.values,
+							   resultList->args,
+							   pronargs * sizeof(Oid)) == 0)
 						prevResult = resultList;
 					else
 						prevResult = NULL;
@@ -542,9 +540,10 @@ FuncnameGetCandidates(List *names, int nargs)
 						 prevResult;
 						 prevResult = prevResult->next)
 					{
-						if (nargs == prevResult->nargs &&
-						  memcmp(procform->proargtypes, prevResult->args,
-								 nargs * sizeof(Oid)) == 0)
+						if (pronargs == prevResult->nargs &&
+						  memcmp(procform->proargtypes.values,
+								 prevResult->args,
+								 pronargs * sizeof(Oid)) == 0)
 							break;
 					}
 				}
@@ -567,11 +566,12 @@ FuncnameGetCandidates(List *names, int nargs)
 		 */
 		newResult = (FuncCandidateList)
 			palloc(sizeof(struct _FuncCandidateList) - sizeof(Oid)
-				   + nargs * sizeof(Oid));
+				   + pronargs * sizeof(Oid));
 		newResult->pathpos = pathpos;
 		newResult->oid = HeapTupleGetOid(proctup);
-		newResult->nargs = nargs;
-		memcpy(newResult->args, procform->proargtypes, nargs * sizeof(Oid));
+		newResult->nargs = pronargs;
+		memcpy(newResult->args, procform->proargtypes.values,
+			   pronargs * sizeof(Oid));
 
 		newResult->next = resultList;
 		resultList = newResult;
@@ -632,7 +632,7 @@ FunctionIsVisible(Oid funcid)
 
 		for (; clist; clist = clist->next)
 		{
-			if (memcmp(clist->args, procform->proargtypes,
+			if (memcmp(clist->args, procform->proargtypes.values,
 					   nargs * sizeof(Oid)) == 0)
 			{
 				/* Found the expected entry; is it the right proc? */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.217 2005/03/28 00:58:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.218 2005/03/29 00:17:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,6 @@
  */
 #include "postgres.h"
 
-#include <errno.h>
 #include <sys/file.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -81,6 +80,7 @@ static FormData_pg_attribute Desc_pg_class[Natts_pg_class] = {Schema_pg_class};
 static FormData_pg_attribute Desc_pg_attribute[Natts_pg_attribute] = {Schema_pg_attribute};
 static FormData_pg_attribute Desc_pg_proc[Natts_pg_proc] = {Schema_pg_proc};
 static FormData_pg_attribute Desc_pg_type[Natts_pg_type] = {Schema_pg_type};
+static FormData_pg_attribute Desc_pg_index[Natts_pg_index] = {Schema_pg_index};
 
 /*
  *		Hash tables that index the relation cache
@@ -267,10 +267,11 @@ static void RelationBuildTupleDesc(RelationBuildDescInfo buildinfo,
 static Relation RelationBuildDesc(RelationBuildDescInfo buildinfo,
 				  Relation oldrelation);
 static void RelationInitPhysicalAddr(Relation relation);
+static TupleDesc GetPgIndexDescriptor(void);
 static void AttrDefaultFetch(Relation relation);
 static void CheckConstraintFetch(Relation relation);
 static List *insert_ordered_oid(List *list, Oid datum);
-static void IndexSupportInitialize(Form_pg_index iform,
+static void IndexSupportInitialize(oidvector *indclass,
 					   Oid *indexOperator,
 					   RegProcedure *indexSupport,
 					   StrategyNumber maxStrategyNumber,
@@ -918,6 +919,8 @@ RelationInitIndexAccessInfo(Relation relation)
 {
 	HeapTuple	tuple;
 	Form_pg_am	aform;
+	Datum		indclassDatum;
+	bool		isnull;
 	MemoryContext indexcxt;
 	MemoryContext oldcontext;
 	Oid		   *operator;
@@ -944,6 +947,18 @@ RelationInitIndexAccessInfo(Relation relation)
 	relation->rd_index = (Form_pg_index) GETSTRUCT(relation->rd_indextuple);
 	MemoryContextSwitchTo(oldcontext);
 	ReleaseSysCache(tuple);
+
+	/*
+	 * indclass cannot be referenced directly through the C struct, because
+	 * it is after the variable-width indkey field.  Therefore we extract
+	 * the datum the hard way and provide a direct link in the relcache.
+	 */
+	indclassDatum = fastgetattr(relation->rd_indextuple,
+								Anum_pg_index_indclass,
+								GetPgIndexDescriptor(),
+								&isnull);
+	Assert(!isnull);
+	relation->rd_indclass = (oidvector *) DatumGetPointer(indclassDatum);
 
 	/*
 	 * Make a copy of the pg_am entry for the index's access method
@@ -1014,7 +1029,7 @@ RelationInitIndexAccessInfo(Relation relation)
 	 * Fill the operator and support procedure OID arrays. (supportinfo is
 	 * left as zeroes, and is filled on-the-fly when used)
 	 */
-	IndexSupportInitialize(relation->rd_index,
+	IndexSupportInitialize(relation->rd_indclass,
 						   operator, support,
 						   amstrategies, amsupport, natts);
 
@@ -1028,7 +1043,7 @@ RelationInitIndexAccessInfo(Relation relation)
 /*
  * IndexSupportInitialize
  *		Initializes an index's cached opclass information,
- *		given the index's pg_index tuple.
+ *		given the index's pg_index.indclass entry.
  *
  * Data is returned into *indexOperator and *indexSupport, which are arrays
  * allocated by the caller.
@@ -1040,7 +1055,7 @@ RelationInitIndexAccessInfo(Relation relation)
  * access method.
  */
 static void
-IndexSupportInitialize(Form_pg_index iform,
+IndexSupportInitialize(oidvector *indclass,
 					   Oid *indexOperator,
 					   RegProcedure *indexSupport,
 					   StrategyNumber maxStrategyNumber,
@@ -1049,19 +1064,15 @@ IndexSupportInitialize(Form_pg_index iform,
 {
 	int			attIndex;
 
-	/*
-	 * XXX note that the following assumes the INDEX tuple is well formed
-	 * and that the *key and *class are 0 terminated.
-	 */
 	for (attIndex = 0; attIndex < maxAttributeNumber; attIndex++)
 	{
 		OpClassCacheEnt *opcentry;
 
-		if (!OidIsValid(iform->indclass[attIndex]))
+		if (!OidIsValid(indclass->values[attIndex]))
 			elog(ERROR, "bogus pg_index tuple");
 
 		/* look up the info for this opclass, using a cache */
-		opcentry = LookupOpclassInfo(iform->indclass[attIndex],
+		opcentry = LookupOpclassInfo(indclass->values[attIndex],
 									 maxStrategyNumber,
 									 maxSupportNumber);
 
@@ -2479,6 +2490,53 @@ RelationCacheInitializePhase3(void)
 	}
 }
 
+/*
+ * GetPgIndexDescriptor -- get a predefined tuple descriptor for pg_index
+ *
+ * We need this kluge because we have to be able to access non-fixed-width
+ * fields of pg_index before we have the standard catalog caches available.
+ * We use predefined data that's set up in just the same way as the
+ * bootstrapped reldescs used by formrdesc().  The resulting tupdesc is
+ * not 100% kosher: it does not have the correct relation OID in attrelid,
+ * nor does it have a TupleConstr field.  But it's good enough for the
+ * purpose of extracting fields.
+ */
+static TupleDesc
+GetPgIndexDescriptor(void)
+{
+	static TupleDesc pgindexdesc = NULL;
+	MemoryContext oldcxt;
+	int			i;
+
+	/* Already done? */
+	if (pgindexdesc)
+		return pgindexdesc;
+
+	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
+
+	pgindexdesc = CreateTemplateTupleDesc(Natts_pg_index, false);
+	pgindexdesc->tdtypeid = RECORDOID; /* not right, but we don't care */
+	pgindexdesc->tdtypmod = -1;
+
+	for (i = 0; i < Natts_pg_index; i++)
+	{
+		memcpy(pgindexdesc->attrs[i],
+			   &Desc_pg_index[i],
+			   ATTRIBUTE_TUPLE_SIZE);
+		/* make sure attcacheoff is valid */
+		pgindexdesc->attrs[i]->attcacheoff = -1;
+	}
+
+	/* initialize first attribute's attcacheoff, cf RelationBuildTupleDesc */
+	pgindexdesc->attrs[0]->attcacheoff = 0;
+
+	/* Note: we don't bother to set up a TupleConstr entry */
+
+	MemoryContextSwitchTo(oldcxt);
+
+	return pgindexdesc;
+}
+
 static void
 AttrDefaultFetch(Relation relation)
 {
@@ -2773,15 +2831,11 @@ RelationGetIndexExpressions(Relation relation)
 	 * After successfully completing the work, we copy it into the
 	 * relcache entry.	This avoids problems if we get some sort of error
 	 * partway through.
-	 *
-	 * We make use of the syscache's copy of pg_index's tupledesc to access
-	 * the non-fixed fields of the tuple.  We assume that the syscache
-	 * will be initialized before any access of a partial index could
-	 * occur.  (This would probably fail if we were to allow partial
-	 * indexes on system catalogs.)
 	 */
-	exprsDatum = SysCacheGetAttr(INDEXRELID, relation->rd_indextuple,
-								 Anum_pg_index_indexprs, &isnull);
+	exprsDatum = heap_getattr(relation->rd_indextuple,
+							  Anum_pg_index_indexprs,
+							  GetPgIndexDescriptor(),
+							  &isnull);
 	Assert(!isnull);
 	exprsString = DatumGetCString(DirectFunctionCall1(textout, exprsDatum));
 	result = (List *) stringToNode(exprsString);
@@ -2845,15 +2899,11 @@ RelationGetIndexPredicate(Relation relation)
 	 * After successfully completing the work, we copy it into the
 	 * relcache entry.	This avoids problems if we get some sort of error
 	 * partway through.
-	 *
-	 * We make use of the syscache's copy of pg_index's tupledesc to access
-	 * the non-fixed fields of the tuple.  We assume that the syscache
-	 * will be initialized before any access of a partial index could
-	 * occur.  (This would probably fail if we were to allow partial
-	 * indexes on system catalogs.)
 	 */
-	predDatum = SysCacheGetAttr(INDEXRELID, relation->rd_indextuple,
-								Anum_pg_index_indpred, &isnull);
+	predDatum = heap_getattr(relation->rd_indextuple,
+							 Anum_pg_index_indpred,
+							 GetPgIndexDescriptor(),
+							 &isnull);
 	Assert(!isnull);
 	predString = DatumGetCString(DirectFunctionCall1(textout, predDatum));
 	result = (List *) stringToNode(predString);
@@ -2990,6 +3040,8 @@ load_relcache_init_file(void)
 		Relation	rel;
 		Form_pg_class relform;
 		bool		has_not_null;
+		Datum		indclassDatum;
+		bool		isnull;
 
 		/* first read the relation descriptor length */
 		if ((nread = fread(&len, 1, sizeof(len), fp)) != sizeof(len))
@@ -3081,6 +3133,14 @@ load_relcache_init_file(void)
 			rel->rd_indextuple->t_data = (HeapTupleHeader) ((char *) rel->rd_indextuple + HEAPTUPLESIZE);
 			rel->rd_index = (Form_pg_index) GETSTRUCT(rel->rd_indextuple);
 
+			/* fix up indclass pointer too */
+			indclassDatum = fastgetattr(rel->rd_indextuple,
+										Anum_pg_index_indclass,
+										GetPgIndexDescriptor(),
+										&isnull);
+			Assert(!isnull);
+			rel->rd_indclass = (oidvector *) DatumGetPointer(indclassDatum);
+
 			/* next, read the access method tuple form */
 			if ((nread = fread(&len, 1, sizeof(len), fp)) != sizeof(len))
 				goto read_failed;
@@ -3133,6 +3193,7 @@ load_relcache_init_file(void)
 
 			Assert(rel->rd_index == NULL);
 			Assert(rel->rd_indextuple == NULL);
+			Assert(rel->rd_indclass == NULL);
 			Assert(rel->rd_am == NULL);
 			Assert(rel->rd_indexcxt == NULL);
 			Assert(rel->rd_operator == NULL);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.126 2004/12/31 22:00:27 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.127 2005/03/29 00:17:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -615,9 +615,9 @@ build_coercion_expression(Node *node, Oid funcId,
 	Assert(!procstruct->proisagg);
 	nargs = procstruct->pronargs;
 	Assert(nargs >= 1 && nargs <= 3);
-	/* Assert(procstruct->proargtypes[0] == exprType(node)); */
-	Assert(nargs < 2 || procstruct->proargtypes[1] == INT4OID);
-	Assert(nargs < 3 || procstruct->proargtypes[2] == BOOLOID);
+	/* Assert(procstruct->proargtypes.values[0] == exprType(node)); */
+	Assert(nargs < 2 || procstruct->proargtypes.values[1] == INT4OID);
+	Assert(nargs < 3 || procstruct->proargtypes.values[2] == BOOLOID);
 
 	ReleaseSysCache(tp);
 
@@ -1672,10 +1672,20 @@ find_coercion_pathway(Oid targetTypeId, Oid sourceTypeId,
 		 * of array types.	If so, and if the element types have a
 		 * suitable cast, use array_type_coerce() or
 		 * array_type_length_coerce().
+		 *
+		 * Hack: disallow coercions to oidvector and int2vector, which
+		 * otherwise tend to capture coercions that should go to "real" array
+		 * types.  We want those types to be considered "real" arrays for many
+		 * purposes, but not this one.  (Also, array_type_coerce isn't
+		 * guaranteed to produce an output that meets the restrictions of
+		 * these datatypes, such as being 1-dimensional.)
 		 */
 		Oid			targetElemType;
 		Oid			sourceElemType;
 		Oid			elemfuncid;
+
+		if (targetTypeId == OIDVECTOROID || targetTypeId == INT2VECTOROID)
+			return false;
 
 		if ((targetElemType = get_element_type(targetTypeId)) != InvalidOid &&
 		 (sourceElemType = get_element_type(sourceTypeId)) != InvalidOid)
@@ -1691,11 +1701,7 @@ find_coercion_pathway(Oid targetTypeId, Oid sourceTypeId,
 				else
 				{
 					/* does the function take a typmod arg? */
-					Oid			argtypes[FUNC_MAX_ARGS];
-					int			nargs;
-
-					(void) get_func_signature(elemfuncid, argtypes, &nargs);
-					if (nargs > 1)
+					if (get_func_nargs(elemfuncid) > 1)
 						*funcid = F_ARRAY_TYPE_LENGTH_COERCE;
 					else
 						*funcid = F_ARRAY_TYPE_COERCE;

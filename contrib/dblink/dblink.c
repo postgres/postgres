@@ -74,13 +74,13 @@ static HTAB *createConnHash(void);
 static void createNewConnection(const char *name, remoteConn * con);
 static void deleteConnection(const char *name);
 static char **get_pkey_attnames(Oid relid, int16 *numatts);
-static char *get_sql_insert(Oid relid, int16 *pkattnums, int16 pknumatts, char **src_pkattvals, char **tgt_pkattvals);
-static char *get_sql_delete(Oid relid, int16 *pkattnums, int16 pknumatts, char **tgt_pkattvals);
-static char *get_sql_update(Oid relid, int16 *pkattnums, int16 pknumatts, char **src_pkattvals, char **tgt_pkattvals);
+static char *get_sql_insert(Oid relid, int2vector *pkattnums, int16 pknumatts, char **src_pkattvals, char **tgt_pkattvals);
+static char *get_sql_delete(Oid relid, int2vector *pkattnums, int16 pknumatts, char **tgt_pkattvals);
+static char *get_sql_update(Oid relid, int2vector *pkattnums, int16 pknumatts, char **src_pkattvals, char **tgt_pkattvals);
 static char *quote_literal_cstr(char *rawstr);
 static char *quote_ident_cstr(char *rawstr);
-static int16 get_attnum_pk_pos(int16 *pkattnums, int16 pknumatts, int16 key);
-static HeapTuple get_tuple_of_interest(Oid relid, int16 *pkattnums, int16 pknumatts, char **src_pkattvals);
+static int16 get_attnum_pk_pos(int2vector *pkattnums, int16 pknumatts, int16 key);
+static HeapTuple get_tuple_of_interest(Oid relid, int2vector *pkattnums, int16 pknumatts, char **src_pkattvals);
 static Oid	get_relid_from_relname(text *relname_text);
 static char *generate_relation_name(Oid relid);
 
@@ -1094,7 +1094,7 @@ dblink_build_sql_insert(PG_FUNCTION_ARGS)
 {
 	Oid			relid;
 	text	   *relname_text;
-	int16	   *pkattnums;
+	int2vector *pkattnums;
 	int			pknumatts_tmp;
 	int16		pknumatts = 0;
 	char	  **src_pkattvals;
@@ -1126,7 +1126,7 @@ dblink_build_sql_insert(PG_FUNCTION_ARGS)
 				 errmsg("relation \"%s\" does not exist",
 						GET_STR(relname_text))));
 
-	pkattnums = (int16 *) PG_GETARG_POINTER(1);
+	pkattnums = (int2vector *) PG_GETARG_POINTER(1);
 	pknumatts_tmp = PG_GETARG_INT32(2);
 	if (pknumatts_tmp <= SHRT_MAX)
 		pknumatts = pknumatts_tmp;
@@ -1246,7 +1246,7 @@ dblink_build_sql_delete(PG_FUNCTION_ARGS)
 {
 	Oid			relid;
 	text	   *relname_text;
-	int16	   *pkattnums;
+	int2vector *pkattnums;
 	int			pknumatts_tmp;
 	int16		pknumatts = 0;
 	char	  **tgt_pkattvals;
@@ -1273,7 +1273,7 @@ dblink_build_sql_delete(PG_FUNCTION_ARGS)
 				 errmsg("relation \"%s\" does not exist",
 						GET_STR(relname_text))));
 
-	pkattnums = (int16 *) PG_GETARG_POINTER(1);
+	pkattnums = (int2vector *) PG_GETARG_POINTER(1);
 	pknumatts_tmp = PG_GETARG_INT32(2);
 	if (pknumatts_tmp <= SHRT_MAX)
 		pknumatts = pknumatts_tmp;
@@ -1363,7 +1363,7 @@ dblink_build_sql_update(PG_FUNCTION_ARGS)
 {
 	Oid			relid;
 	text	   *relname_text;
-	int16	   *pkattnums;
+	int2vector *pkattnums;
 	int			pknumatts_tmp;
 	int16		pknumatts = 0;
 	char	  **src_pkattvals;
@@ -1395,7 +1395,7 @@ dblink_build_sql_update(PG_FUNCTION_ARGS)
 				 errmsg("relation \"%s\" does not exist",
 						GET_STR(relname_text))));
 
-	pkattnums = (int16 *) PG_GETARG_POINTER(1);
+	pkattnums = (int2vector *) PG_GETARG_POINTER(1);
 	pknumatts_tmp = PG_GETARG_INT32(2);
 	if (pknumatts_tmp <= SHRT_MAX)
 		pknumatts = pknumatts_tmp;
@@ -1552,16 +1552,13 @@ get_pkey_attnames(Oid relid, int16 *numatts)
 		/* we're only interested if it is the primary key */
 		if (index->indisprimary == TRUE)
 		{
-			i = 0;
-			while (index->indkey[i++] != 0)
-				(*numatts)++;
-
+			*numatts = index->indnatts;
 			if (*numatts > 0)
 			{
 				result = (char **) palloc(*numatts * sizeof(char *));
 
 				for (i = 0; i < *numatts; i++)
-					result[i] = SPI_fname(tupdesc, index->indkey[i]);
+					result[i] = SPI_fname(tupdesc, index->indkey.values[i]);
 			}
 			break;
 		}
@@ -1574,7 +1571,7 @@ get_pkey_attnames(Oid relid, int16 *numatts)
 }
 
 static char *
-get_sql_insert(Oid relid, int16 *pkattnums, int16 pknumatts, char **src_pkattvals, char **tgt_pkattvals)
+get_sql_insert(Oid relid, int2vector *pkattnums, int16 pknumatts, char **src_pkattvals, char **tgt_pkattvals)
 {
 	Relation	rel;
 	char	   *relname;
@@ -1664,7 +1661,7 @@ get_sql_insert(Oid relid, int16 *pkattnums, int16 pknumatts, char **src_pkattval
 }
 
 static char *
-get_sql_delete(Oid relid, int16 *pkattnums, int16 pknumatts, char **tgt_pkattvals)
+get_sql_delete(Oid relid, int2vector *pkattnums, int16 pknumatts, char **tgt_pkattvals)
 {
 	Relation	rel;
 	char	   *relname;
@@ -1688,7 +1685,7 @@ get_sql_delete(Oid relid, int16 *pkattnums, int16 pknumatts, char **tgt_pkattval
 	appendStringInfo(str, "DELETE FROM %s WHERE ", relname);
 	for (i = 0; i < pknumatts; i++)
 	{
-		int16		pkattnum = pkattnums[i];
+		int16		pkattnum = pkattnums->values[i];
 
 		if (i > 0)
 			appendStringInfo(str, " AND ");
@@ -1720,7 +1717,7 @@ get_sql_delete(Oid relid, int16 *pkattnums, int16 pknumatts, char **tgt_pkattval
 }
 
 static char *
-get_sql_update(Oid relid, int16 *pkattnums, int16 pknumatts, char **src_pkattvals, char **tgt_pkattvals)
+get_sql_update(Oid relid, int2vector *pkattnums, int16 pknumatts, char **src_pkattvals, char **tgt_pkattvals)
 {
 	Relation	rel;
 	char	   *relname;
@@ -1788,7 +1785,7 @@ get_sql_update(Oid relid, int16 *pkattnums, int16 pknumatts, char **src_pkattval
 
 	for (i = 0; i < pknumatts; i++)
 	{
-		int16		pkattnum = pkattnums[i];
+		int16		pkattnum = pkattnums->values[i];
 
 		if (i > 0)
 			appendStringInfo(str, " AND ");
@@ -1855,7 +1852,7 @@ quote_ident_cstr(char *rawstr)
 }
 
 static int16
-get_attnum_pk_pos(int16 *pkattnums, int16 pknumatts, int16 key)
+get_attnum_pk_pos(int2vector *pkattnums, int16 pknumatts, int16 key)
 {
 	int			i;
 
@@ -1863,14 +1860,14 @@ get_attnum_pk_pos(int16 *pkattnums, int16 pknumatts, int16 key)
 	 * Not likely a long list anyway, so just scan for the value
 	 */
 	for (i = 0; i < pknumatts; i++)
-		if (key == pkattnums[i])
+		if (key == pkattnums->values[i])
 			return i;
 
 	return -1;
 }
 
 static HeapTuple
-get_tuple_of_interest(Oid relid, int16 *pkattnums, int16 pknumatts, char **src_pkattvals)
+get_tuple_of_interest(Oid relid, int2vector *pkattnums, int16 pknumatts, char **src_pkattvals)
 {
 	Relation	rel;
 	char	   *relname;
@@ -1907,7 +1904,7 @@ get_tuple_of_interest(Oid relid, int16 *pkattnums, int16 pknumatts, char **src_p
 
 	for (i = 0; i < pknumatts; i++)
 	{
-		int16		pkattnum = pkattnums[i];
+		int16		pkattnum = pkattnums->values[i];
 
 		if (i > 0)
 			appendStringInfo(str, " AND ");

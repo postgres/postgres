@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/rel.h,v 1.82 2005/01/10 20:02:24 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/rel.h,v 1.83 2005/03/29 00:17:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,7 +58,8 @@ typedef struct Trigger
 	bool		tgdeferrable;
 	bool		tginitdeferred;
 	int16		tgnargs;
-	int16		tgattr[FUNC_MAX_ARGS];
+	int16		tgnattr;
+	int16	   *tgattr;
 	char	  **tgargs;
 } Trigger;
 
@@ -137,6 +138,7 @@ typedef struct RelationData
 	Form_pg_index rd_index;		/* pg_index tuple describing this index */
 	struct HeapTupleData *rd_indextuple;		/* all of pg_index tuple */
 	/* "struct HeapTupleData *" avoids need to include htup.h here	*/
+	oidvector  *rd_indclass;	/* extracted pointer to rd_index field */
 	Form_pg_am	rd_am;			/* pg_am tuple for index's AM */
 
 	/*

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.354 2005/03/27 23:53:05 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.355 2005/03/29 00:17:17 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -48,7 +48,7 @@ CATALOG(pg_proc) BOOTSTRAP
 	char		provolatile;	/* see PROVOLATILE_ categories below */
 	int2		pronargs;		/* number of arguments */
 	Oid			prorettype;		/* OID of result type */
-	oidvector	proargtypes;	/* OIDs of argument types */
+	oidvector	proargtypes;	/* VARIABLE LENGTH FIELD */
 	text		proargnames[1]; /* VARIABLE LENGTH FIELD */
 	text		prosrc;			/* VARIABLE LENGTH FIELD */
 	bytea		probin;			/* VARIABLE LENGTH FIELD */

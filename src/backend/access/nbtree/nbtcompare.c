@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtcompare.c,v 1.50 2004/12/31 21:59:22 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtcompare.c,v 1.51 2005/03/29 00:16:52 tgl Exp $
  *
  * NOTES
  *
@@ -198,15 +198,19 @@ btoidcmp(PG_FUNCTION_ARGS)
 Datum
 btoidvectorcmp(PG_FUNCTION_ARGS)
 {
-	Oid		   *a = (Oid *) PG_GETARG_POINTER(0);
-	Oid		   *b = (Oid *) PG_GETARG_POINTER(1);
+	oidvector  *a = (oidvector *) PG_GETARG_POINTER(0);
+	oidvector  *b = (oidvector *) PG_GETARG_POINTER(1);
 	int			i;
 
-	for (i = 0; i < INDEX_MAX_KEYS; i++)
+	/* We arbitrarily choose to sort first by vector length */
+	if (a->dim1 != b->dim1)
+		PG_RETURN_INT32(a->dim1 - b->dim1);
+
+	for (i = 0; i < a->dim1; i++)
 	{
-		if (a[i] != b[i])
+		if (a->values[i] != b->values[i])
 		{
-			if (a[i] > b[i])
+			if (a->values[i] > b->values[i])
 				PG_RETURN_INT32(1);
 			else
 				PG_RETURN_INT32(-1);

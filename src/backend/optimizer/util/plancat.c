@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.102 2005/03/27 06:29:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.103 2005/03/29 00:17:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -137,8 +137,8 @@ get_relation_info(Oid relationObjectId, RelOptInfo *rel)
 
 			for (i = 0; i < ncolumns; i++)
 			{
-				info->classlist[i] = index->indclass[i];
-				info->indexkeys[i] = index->indkey[i];
+				info->classlist[i] = indexRelation->rd_indclass->values[i];
+				info->indexkeys[i] = index->indkey.values[i];
 			}
 
 			info->relam = indexRelation->rd_rel->relam;

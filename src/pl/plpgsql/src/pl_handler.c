@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_handler.c,v 1.24 2005/02/22 07:18:24 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_handler.c,v 1.25 2005/03/29 00:17:23 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -189,16 +189,16 @@ plpgsql_validator(PG_FUNCTION_ARGS)
 	haspolyarg = false;
 	for (i = 0; i < proc->pronargs; i++)
 	{
-		if (get_typtype(proc->proargtypes[i]) == 'p')
+		if (get_typtype(proc->proargtypes.values[i]) == 'p')
 		{
-			if (proc->proargtypes[i] == ANYARRAYOID ||
-				proc->proargtypes[i] == ANYELEMENTOID)
+			if (proc->proargtypes.values[i] == ANYARRAYOID ||
+				proc->proargtypes.values[i] == ANYELEMENTOID)
 				haspolyarg = true;
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 						 errmsg("plpgsql functions cannot take type %s",
-								format_type_be(proc->proargtypes[i]))));
+								format_type_be(proc->proargtypes.values[i]))));
 		}
 	}
 

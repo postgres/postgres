@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.190 2005/03/28 00:58:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.191 2005/03/29 00:17:02 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -421,15 +421,16 @@ count_agg_clauses_walker(Node *node, AggClauseCounts *counts)
 		if (aggtranstype == ANYARRAYOID || aggtranstype == ANYELEMENTOID)
 		{
 			/* have to fetch the agg's declared input type... */
-			Oid			agg_arg_types[FUNC_MAX_ARGS];
+			Oid		   *agg_arg_types;
 			int			agg_nargs;
 
 			(void) get_func_signature(aggref->aggfnoid,
-									  agg_arg_types, &agg_nargs);
+									  &agg_arg_types, &agg_nargs);
 			Assert(agg_nargs == 1);
 			aggtranstype = resolve_generic_type(aggtranstype,
 												inputType,
 												agg_arg_types[0]);
+			pfree(agg_arg_types);
 		}
 
 		/*
@@ -2187,7 +2188,7 @@ inline_function(Oid funcid, Oid result_type, List *args,
 {
 	Form_pg_proc funcform = (Form_pg_proc) GETSTRUCT(func_tuple);
 	bool		polymorphic = false;
-	Oid			argtypes[FUNC_MAX_ARGS];
+	Oid		   *argtypes;
 	char	   *src;
 	Datum		tmp;
 	bool		isNull;
@@ -2220,22 +2221,6 @@ inline_function(Oid funcid, Oid result_type, List *args,
 	if (pg_proc_aclcheck(funcid, GetUserId(), ACL_EXECUTE) != ACLCHECK_OK)
 		return NULL;
 
-	/* Check for polymorphic arguments, and substitute actual arg types */
-	memcpy(argtypes, funcform->proargtypes, FUNC_MAX_ARGS * sizeof(Oid));
-	for (i = 0; i < funcform->pronargs; i++)
-	{
-		if (argtypes[i] == ANYARRAYOID ||
-			argtypes[i] == ANYELEMENTOID)
-		{
-			polymorphic = true;
-			argtypes[i] = exprType((Node *) list_nth(args, i));
-		}
-	}
-
-	if (funcform->prorettype == ANYARRAYOID ||
-		funcform->prorettype == ANYELEMENTOID)
-		polymorphic = true;
-
 	/*
 	 * Setup error traceback support for ereport().  This is so that we
 	 * can finger the function that bad information came from.
@@ -2255,6 +2240,24 @@ inline_function(Oid funcid, Oid result_type, List *args,
 								  ALLOCSET_DEFAULT_INITSIZE,
 								  ALLOCSET_DEFAULT_MAXSIZE);
 	oldcxt = MemoryContextSwitchTo(mycxt);
+
+	/* Check for polymorphic arguments, and substitute actual arg types */
+	argtypes = (Oid *) palloc(funcform->pronargs * sizeof(Oid));
+	memcpy(argtypes, funcform->proargtypes.values,
+		   funcform->pronargs * sizeof(Oid));
+	for (i = 0; i < funcform->pronargs; i++)
+	{
+		if (argtypes[i] == ANYARRAYOID ||
+			argtypes[i] == ANYELEMENTOID)
+		{
+			polymorphic = true;
+			argtypes[i] = exprType((Node *) list_nth(args, i));
+		}
+	}
+
+	if (funcform->prorettype == ANYARRAYOID ||
+		funcform->prorettype == ANYELEMENTOID)
+		polymorphic = true;
 
 	/* Fetch and parse the function body */
 	tmp = SysCacheGetAttr(PROCOID,

@@ -29,7 +29,7 @@
  * MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.59 2005/03/24 17:22:34 tgl Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.60 2005/03/29 00:17:24 tgl Exp $
  *
  *********************************************************************
  */
@@ -1082,11 +1082,11 @@ PLy_procedure_create(FunctionCallInfo fcinfo, Oid tgreloid,
 			Form_pg_type argTypeStruct;
 
 			argTypeTup = SearchSysCache(TYPEOID,
-							ObjectIdGetDatum(procStruct->proargtypes[i]),
+							ObjectIdGetDatum(procStruct->proargtypes.values[i]),
 										0, 0, 0);
 			if (!HeapTupleIsValid(argTypeTup))
 				elog(ERROR, "cache lookup failed for type %u",
-					 procStruct->proargtypes[i]);
+					 procStruct->proargtypes.values[i]);
 			argTypeStruct = (Form_pg_type) GETSTRUCT(argTypeTup);
 
 			/* Disallow pseudotype argument */
@@ -1094,11 +1094,11 @@ PLy_procedure_create(FunctionCallInfo fcinfo, Oid tgreloid,
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 						 errmsg("plpython functions cannot take type %s",
-								format_type_be(procStruct->proargtypes[i]))));
+								format_type_be(procStruct->proargtypes.values[i]))));
 
 			if (argTypeStruct->typtype != 'c')
 				PLy_input_datum_func(&(proc->args[i]),
-									 procStruct->proargtypes[i],
+									 procStruct->proargtypes.values[i],
 									 argTypeTup);
 			else
 				proc->args[i].is_rowtype = 2;	/* still need to set I/O

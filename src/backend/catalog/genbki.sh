@@ -10,7 +10,7 @@
 #
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/catalog/genbki.sh,v 1.32 2004/01/04 05:57:21 tgl Exp $
+#    $PostgreSQL: pgsql/src/backend/catalog/genbki.sh,v 1.33 2005/03/29 00:16:55 tgl Exp $
 #
 # NOTES
 #    non-essential whitespace is removed from the generated file.
@@ -113,15 +113,6 @@ for dir in $INCLUDE_DIRS; do
     fi
 done
 
-# Get INDEX_MAX_KEYS from pg_config_manual.h
-# (who needs consistency?)
-for dir in $INCLUDE_DIRS; do
-    if [ -f "$dir/pg_config_manual.h" ]; then
-        INDEXMAXKEYS=`grep '^#define[ 	]*INDEX_MAX_KEYS' $dir/pg_config_manual.h | $AWK '{ print $3 }'`
-        break
-    fi
-done
-
 # Get PG_CATALOG_NAMESPACE from catalog/pg_namespace.h
 for dir in $INCLUDE_DIRS; do
     if [ -f "$dir/catalog/pg_namespace.h" ]; then
@@ -138,14 +129,6 @@ for dir in $INCLUDE_DIRS; do
     fi
 done
 export BKIOBJECTID
-
-# NOTE: we assume here that FUNC_MAX_ARGS has the same value as
-# INDEX_MAX_KEYS, and don't read it separately from
-# pg_config_manual.h.  This is OK because both of them must be equal
-# to the length of oidvector.
-
-INDEXMAXKEYS2=`expr $INDEXMAXKEYS '*' 2` || exit
-INDEXMAXKEYS4=`expr $INDEXMAXKEYS '*' 4` || exit
 
 touch ${OUTPUT_PREFIX}.description.$$
 
@@ -181,12 +164,6 @@ sed -e "s/;[ 	]*$//g" \
     -e "s/PGUID/1/g" \
     -e "s/NAMEDATALEN/$NAMEDATALEN/g" \
     -e "s/PGNSP/$PG_CATALOG_NAMESPACE/g" \
-    -e "s/INDEX_MAX_KEYS\*2/$INDEXMAXKEYS2/g" \
-    -e "s/INDEX_MAX_KEYS\*4/$INDEXMAXKEYS4/g" \
-    -e "s/INDEX_MAX_KEYS/$INDEXMAXKEYS/g" \
-    -e "s/FUNC_MAX_ARGS\*2/$INDEXMAXKEYS2/g" \
-    -e "s/FUNC_MAX_ARGS\*4/$INDEXMAXKEYS4/g" \
-    -e "s/FUNC_MAX_ARGS/$INDEXMAXKEYS/g" \
 | $AWK '
 # ----------------
 #	now use awk to process remaining .h file..

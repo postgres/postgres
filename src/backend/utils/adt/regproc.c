@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/regproc.c,v 1.92 2004/12/31 22:01:22 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/regproc.c,v 1.93 2005/03/29 00:17:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,7 +98,7 @@ regprocin(PG_FUNCTION_ARGS)
 					CStringGetDatum(pro_name_or_oid));
 
 		hdesc = heap_openr(ProcedureRelationName, AccessShareLock);
-		sysscan = systable_beginscan(hdesc, ProcedureNameNspIndex, true,
+		sysscan = systable_beginscan(hdesc, ProcedureNameArgsNspIndex, true,
 									 SnapshotNow, 1, skey);
 
 		while (HeapTupleIsValid(tuple = systable_getnext(sysscan)))
@@ -336,7 +336,7 @@ format_procedure(Oid procedure_oid)
 						 quote_qualified_identifier(nspname, proname));
 		for (i = 0; i < nargs; i++)
 		{
-			Oid			thisargtype = procform->proargtypes[i];
+			Oid			thisargtype = procform->proargtypes.values[i];
 
 			if (i > 0)
 				appendStringInfoChar(&buf, ',');

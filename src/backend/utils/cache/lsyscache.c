@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.120 2005/01/27 23:36:12 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.121 2005/03/29 00:17:11 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -774,14 +774,35 @@ get_func_rettype(Oid funcid)
 }
 
 /*
+ * get_func_nargs
+ *		Given procedure id, return the number of arguments.
+ */
+int
+get_func_nargs(Oid funcid)
+{
+	HeapTuple	tp;
+	int			result;
+
+	tp = SearchSysCache(PROCOID,
+						ObjectIdGetDatum(funcid),
+						0, 0, 0);
+	if (!HeapTupleIsValid(tp))
+		elog(ERROR, "cache lookup failed for function %u", funcid);
+
+	result = ((Form_pg_proc) GETSTRUCT(tp))->pronargs;
+	ReleaseSysCache(tp);
+	return result;
+}
+
+/*
  * get_func_signature
  *		Given procedure id, return the function's argument and result types.
  *		(The return value is the result type.)
  *
- * argtypes must point to a vector of size FUNC_MAX_ARGS.
+ * The arguments are returned as a palloc'd array.
  */
 Oid
-get_func_signature(Oid funcid, Oid *argtypes, int *nargs)
+get_func_signature(Oid funcid, Oid **argtypes, int *nargs)
 {
 	HeapTuple	tp;
 	Form_pg_proc procstruct;
@@ -796,8 +817,10 @@ get_func_signature(Oid funcid, Oid *argtypes, int *nargs)
 	procstruct = (Form_pg_proc) GETSTRUCT(tp);
 
 	result = procstruct->prorettype;
-	memcpy(argtypes, procstruct->proargtypes, FUNC_MAX_ARGS * sizeof(Oid));
 	*nargs = (int) procstruct->pronargs;
+	Assert(*nargs == procstruct->proargtypes.dim1);
+	*argtypes = (Oid *) palloc(*nargs * sizeof(Oid));
+	memcpy(*argtypes, procstruct->proargtypes.values, *nargs * sizeof(Oid));
 
 	ReleaseSysCache(tp);
 	return result;

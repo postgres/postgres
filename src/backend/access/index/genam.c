@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/index/genam.c,v 1.45 2005/03/27 23:52:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/index/genam.c,v 1.46 2005/03/29 00:16:51 tgl Exp $
  *
  * NOTES
  *	  many of the old access method routines have been turned into
@@ -219,7 +219,7 @@ systable_beginscan(Relation heapRelation,
 		 */
 		for (i = 0; i < nkeys; i++)
 		{
-			Assert(key[i].sk_attno == irel->rd_index->indkey[i]);
+			Assert(key[i].sk_attno == irel->rd_index->indkey.values[i]);
 			key[i].sk_attno = i + 1;
 		}
 

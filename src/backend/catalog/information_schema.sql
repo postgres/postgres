@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2003-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/catalog/information_schema.sql,v 1.26 2005/01/01 20:44:14 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/catalog/information_schema.sql,v 1.27 2005/03/29 00:16:56 tgl Exp $
  */
 
 /*
@@ -30,13 +30,22 @@ SET search_path TO information_schema, public;
  * A few supporting functions first ...
  */
 
-/* This returns the integers from 1 to INDEX_MAX_KEYS/FUNC_MAX_ARGS */
-CREATE FUNCTION _pg_keypositions() RETURNS SETOF integer
-    LANGUAGE sql
-    IMMUTABLE
-    AS 'select g.s
-        from generate_series(1,current_setting(''max_index_keys'')::int,1)
-        as g(s)';
+/* Expand an oidvector or smallint[] into a set with integers 1..N */
+CREATE TYPE _pg_expandoidvector_type AS (o oid, n int);
+
+CREATE FUNCTION _pg_expandoidvector(oidvector)
+    RETURNS SETOF _pg_expandoidvector_type
+    LANGUAGE sql STRICT IMMUTABLE
+    AS 'select $1[s], s+1
+        from generate_series(0,array_upper($1,1),1) as g(s)';
+
+CREATE TYPE _pg_expandsmallint_type AS (i smallint, n int);
+
+CREATE FUNCTION _pg_expandsmallint(smallint[])
+    RETURNS SETOF _pg_expandsmallint_type
+    LANGUAGE sql STRICT IMMUTABLE
+    AS 'select $1[s], s
+        from generate_series(1,array_upper($1,1),1) as g(s)';
 
 CREATE FUNCTION _pg_keyissubset(smallint[], smallint[]) RETURNS boolean
     LANGUAGE sql
@@ -501,12 +510,12 @@ CREATE VIEW constraint_column_usage AS
         /* unique/primary key/foreign key constraints */
         SELECT nr.nspname, r.relname, r.relowner, a.attname, nc.nspname, c.conname
           FROM pg_namespace nr, pg_class r, pg_attribute a, pg_namespace nc,
-               pg_constraint c, _pg_keypositions() AS pos(n)
+               pg_constraint c
           WHERE nr.oid = r.relnamespace
             AND r.oid = a.attrelid
             AND nc.oid = c.connamespace
-            AND (CASE WHEN c.contype = 'f' THEN r.oid = c.confrelid AND c.confkey[pos.n] = a.attnum
-                      ELSE r.oid = c.conrelid AND c.conkey[pos.n] = a.attnum END)
+            AND (CASE WHEN c.contype = 'f' THEN r.oid = c.confrelid AND a.attnum = ANY (c.confkey)
+                      ELSE r.oid = c.conrelid AND a.attnum = ANY (c.conkey) END)
             AND NOT a.attisdropped
             AND c.contype IN ('p', 'u', 'f')
             AND r.relkind = 'r'
@@ -707,26 +716,30 @@ GRANT SELECT ON enabled_roles TO PUBLIC;
 
 CREATE VIEW key_column_usage AS
     SELECT CAST(current_database() AS sql_identifier) AS constraint_catalog,
-           CAST(nc.nspname AS sql_identifier) AS constraint_schema,
-           CAST(c.conname AS sql_identifier) AS constraint_name,
+           CAST(nc_nspname AS sql_identifier) AS constraint_schema,
+           CAST(conname AS sql_identifier) AS constraint_name,
            CAST(current_database() AS sql_identifier) AS table_catalog,
-           CAST(nr.nspname AS sql_identifier) AS table_schema,
-           CAST(r.relname AS sql_identifier) AS table_name,
+           CAST(nr_nspname AS sql_identifier) AS table_schema,
+           CAST(relname AS sql_identifier) AS table_name,
            CAST(a.attname AS sql_identifier) AS column_name,
-           CAST(pos.n AS cardinal_number) AS ordinal_position
+           CAST((ss.x).n AS cardinal_number) AS ordinal_position
 
-    FROM pg_namespace nr, pg_class r, pg_attribute a, pg_namespace nc,
-         pg_constraint c, pg_user u, _pg_keypositions() AS pos(n)
-    WHERE nr.oid = r.relnamespace
-          AND r.oid = a.attrelid
-          AND r.oid = c.conrelid
-          AND nc.oid = c.connamespace
-          AND c.conkey[pos.n] = a.attnum
-          AND NOT a.attisdropped
-          AND c.contype IN ('p', 'u', 'f')
-          AND r.relkind = 'r'
-          AND r.relowner = u.usesysid
-          AND u.usename = current_user;
+    FROM pg_attribute a,
+         (SELECT r.oid, nc.nspname AS nc_nspname, c.conname,
+                 nr.nspname AS nr_nspname, r.relname,
+                _pg_expandsmallint(c.conkey) AS x
+          FROM pg_namespace nr, pg_class r, pg_namespace nc,
+               pg_constraint c, pg_user u
+          WHERE nr.oid = r.relnamespace
+                AND r.oid = c.conrelid
+                AND nc.oid = c.connamespace
+                AND c.contype IN ('p', 'u', 'f')
+                AND r.relkind = 'r'
+                AND r.relowner = u.usesysid
+                AND u.usename = current_user) AS ss
+    WHERE ss.oid = a.attrelid
+          AND a.attnum = (ss.x).i
+          AND NOT a.attisdropped;
 
 GRANT SELECT ON key_column_usage TO PUBLIC;
 
@@ -738,13 +751,13 @@ GRANT SELECT ON key_column_usage TO PUBLIC;
 
 CREATE VIEW parameters AS
     SELECT CAST(current_database() AS sql_identifier) AS specific_catalog,
-           CAST(n.nspname AS sql_identifier) AS specific_schema,
-           CAST(p.proname || '_' || CAST(p.oid AS text) AS sql_identifier) AS specific_name,
-           CAST(pos.n AS cardinal_number) AS ordinal_position,
+           CAST(n_nspname AS sql_identifier) AS specific_schema,
+           CAST(proname || '_' || CAST(p_oid AS text) AS sql_identifier) AS specific_name,
+           CAST((ss.x).n AS cardinal_number) AS ordinal_position,
            CAST('IN' AS character_data) AS parameter_mode,
            CAST('NO' AS character_data) AS is_result,
            CAST('NO' AS character_data) AS as_locator,
-           CAST(NULLIF(p.proargnames[pos.n], '') AS sql_identifier) AS parameter_name,
+           CAST(NULLIF(proargnames[(ss.x).n], '') AS sql_identifier) AS parameter_name,
            CAST(
              CASE WHEN t.typelem <> 0 AND t.typlen = -1 THEN 'ARRAY'
                   WHEN nt.nspname = 'pg_catalog' THEN format_type(t.oid, null)
@@ -771,15 +784,17 @@ CREATE VIEW parameters AS
            CAST(null AS sql_identifier) AS scope_schema,
            CAST(null AS sql_identifier) AS scope_name,
            CAST(null AS cardinal_number) AS maximum_cardinality,
-           CAST(pos.n AS sql_identifier) AS dtd_identifier
+           CAST((ss.x).n AS sql_identifier) AS dtd_identifier
 
-    FROM pg_namespace n, pg_proc p, pg_type t, pg_namespace nt, pg_user u,
-         _pg_keypositions() AS pos(n)
-
-    WHERE n.oid = p.pronamespace AND p.pronargs >= pos.n
-          AND p.proargtypes[pos.n-1] = t.oid AND t.typnamespace = nt.oid
-          AND p.proowner = u.usesysid
-          AND (u.usename = current_user OR has_function_privilege(p.oid, 'EXECUTE'));
+    FROM pg_type t, pg_namespace nt,
+         (SELECT n.nspname AS n_nspname, p.proname, p.oid AS p_oid,
+                 p.proargnames, _pg_expandoidvector(p.proargtypes) AS x
+          FROM pg_namespace n, pg_proc p, pg_user u
+          WHERE n.oid = p.pronamespace
+                AND p.proowner = u.usesysid
+                AND (u.usename = current_user OR
+                     has_function_privilege(p.oid, 'EXECUTE'))) AS ss
+    WHERE t.oid = (ss.x).o AND t.typnamespace = nt.oid;
 
 GRANT SELECT ON parameters TO PUBLIC;
 
@@ -1702,10 +1717,11 @@ CREATE VIEW element_types AS
            UNION ALL
 
            /* parameters */
-           SELECT p.pronamespace, CAST(p.proname || '_' || CAST(p.oid AS text) AS sql_identifier),
-                  'ROUTINE'::text, pos.n, p.proargtypes[pos.n-1]
-           FROM pg_proc p, _pg_keypositions() AS pos(n)
-           WHERE p.pronargs >= pos.n
+           SELECT pronamespace, CAST(proname || '_' || CAST(oid AS text) AS sql_identifier),
+                  'ROUTINE'::text, (ss.x).n, (ss.x).o
+           FROM (SELECT p.pronamespace, p.proname, p.oid,
+                        _pg_expandoidvector(p.proargtypes) AS x
+                 FROM pg_proc p) AS ss
 
            UNION ALL
 

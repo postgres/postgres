@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.93 2005/03/25 21:57:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.94 2005/03/29 00:16:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -228,7 +228,7 @@ init_sql_fcache(FmgrInfo *finfo)
 
 		argOidVect = (Oid *) palloc(nargs * sizeof(Oid));
 		memcpy(argOidVect,
-			   procedureStruct->proargtypes,
+			   procedureStruct->proargtypes.values,
 			   nargs * sizeof(Oid));
 		/* Resolve any polymorphic argument types */
 		for (argnum = 0; argnum < nargs; argnum++)

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.158 2004/12/31 22:03:26 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.159 2005/03/29 00:17:17 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -88,7 +88,7 @@ CATALOG(pg_type) BOOTSTRAP
 	 * current type can then be subscripted like an array yielding values
 	 * of type typelem. A non-zero typelem does not guarantee this type to
 	 * be a "real" array type; some ordinary fixed-length types can also
-	 * be subscripted (e.g., oidvector). Variable-length types can *not*
+	 * be subscripted (e.g., name, point). Variable-length types can *not*
 	 * be turned into pseudo-arrays like that. Hence, the way to determine
 	 * whether a type is a "true" array type is if:
 	 *
@@ -268,8 +268,8 @@ DATA(insert OID = 21 (	int2	   PGNSP PGUID	2 t b t \054 0	 0 int2in int2out int2
 DESCR("-32 thousand to 32 thousand, 2-byte storage");
 #define INT2OID			21
 
-DATA(insert OID = 22 (	int2vector PGNSP PGUID INDEX_MAX_KEYS*2 f b t \054 0  21 int2vectorin int2vectorout int2vectorrecv int2vectorsend - s p f 0 -1 0 _null_ _null_ ));
-DESCR("array of INDEX_MAX_KEYS int2 integers, used in system tables");
+DATA(insert OID = 22 (	int2vector PGNSP PGUID -1 f b t \054 0  21 int2vectorin int2vectorout int2vectorrecv int2vectorsend - i p f 0 -1 0 _null_ _null_ ));
+DESCR("array of int2, used in system tables");
 #define INT2VECTOROID	22
 
 DATA(insert OID = 23 (	int4	   PGNSP PGUID	4 t b t \054 0	 0 int4in int4out int4recv int4send - i p f 0 -1 0 _null_ _null_ ));
@@ -300,8 +300,8 @@ DATA(insert OID = 29 (	cid		   PGNSP PGUID	4 t b t \054 0	 0 cidin cidout cidrec
 DESCR("command identifier type, sequence in transaction id");
 #define CIDOID 29
 
-DATA(insert OID = 30 (	oidvector  PGNSP PGUID INDEX_MAX_KEYS*4 f b t \054 0  26 oidvectorin oidvectorout oidvectorrecv oidvectorsend - i p f 0 -1 0 _null_ _null_ ));
-DESCR("array of INDEX_MAX_KEYS oids, used in system tables");
+DATA(insert OID = 30 (	oidvector  PGNSP PGUID -1 f b t \054 0  26 oidvectorin oidvectorout oidvectorrecv oidvectorsend - i p f 0 -1 0 _null_ _null_ ));
+DESCR("array of oids, used in system tables");
 #define OIDVECTOROID	30
 
 DATA(insert OID = 71 (	pg_type			PGNSP PGUID -1 f c t \054 1247 0 record_in record_out record_recv record_send - d x f 0 -1 0 _null_ _null_ ));

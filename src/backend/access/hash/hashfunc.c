@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashfunc.c,v 1.42 2004/12/31 21:59:13 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashfunc.c,v 1.43 2005/03/29 00:16:50 tgl Exp $
  *
  * NOTES
  *	  These functions are stored in pg_amproc.	For each operator class
@@ -107,17 +107,17 @@ hashfloat8(PG_FUNCTION_ARGS)
 Datum
 hashoidvector(PG_FUNCTION_ARGS)
 {
-	Oid		   *key = (Oid *) PG_GETARG_POINTER(0);
+	oidvector  *key = (oidvector *) PG_GETARG_POINTER(0);
 
-	return hash_any((unsigned char *) key, INDEX_MAX_KEYS * sizeof(Oid));
+	return hash_any((unsigned char *) key->values, key->dim1 * sizeof(Oid));
 }
 
 Datum
 hashint2vector(PG_FUNCTION_ARGS)
 {
-	int16	   *key = (int16 *) PG_GETARG_POINTER(0);
+	int2vector *key = (int2vector *) PG_GETARG_POINTER(0);
 
-	return hash_any((unsigned char *) key, INDEX_MAX_KEYS * sizeof(int16));
+	return hash_any((unsigned char *) key->values, key->dim1 * sizeof(int2));
 }
 
 Datum

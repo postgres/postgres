@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/array.h,v 1.53 2005/03/24 21:50:38 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/array.h,v 1.54 2005/03/29 00:17:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,9 @@
 /*
  * Arrays are varlena objects, so must meet the varlena convention that
  * the first int32 of the object contains the total object size in bytes.
+ *
+ * CAUTION: if you change the header for ordinary arrays you will also
+ * need to change the headers for oidvector and int2vector!
  */
 typedef struct
 {

@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/c.h,v 1.180 2005/02/22 04:41:51 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/c.h,v 1.181 2005/03/29 00:17:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -428,11 +428,36 @@ typedef struct varlena BpChar;	/* blank-padded char, ie SQL char(n) */
 typedef struct varlena VarChar; /* var-length char, ie SQL varchar(n) */
 
 /*
- * Fixed-length array types (these are not varlena's!)
+ * Specialized array types.  These are physically laid out just the same
+ * as regular arrays (so that the regular array subscripting code works
+ * with them).  They exist as distinct types mostly for historical reasons:
+ * they have nonstandard I/O behavior which we don't want to change for fear
+ * of breaking applications that look at the system catalogs.  There is also
+ * an implementation issue for oidvector: it's part of the primary key for
+ * pg_proc, and we can't use the normal btree array support routines for that
+ * without circularity.
  */
+typedef struct
+{
+	int32		size;			/* these fields must match ArrayType! */
+	int			ndim;
+	int			flags;
+	Oid			elemtype;
+	int			dim1;
+	int			lbound1;
+	int2		values[1];		/* VARIABLE LENGTH ARRAY */
+} int2vector;					/* VARIABLE LENGTH STRUCT */
 
-typedef int2 int2vector[INDEX_MAX_KEYS];
-typedef Oid oidvector[INDEX_MAX_KEYS];
+typedef struct
+{
+	int32		size;			/* these fields must match ArrayType! */
+	int			ndim;
+	int			flags;
+	Oid			elemtype;
+	int			dim1;
+	int			lbound1;
+	Oid			values[1];		/* VARIABLE LENGTH ARRAY */
+} oidvector;					/* VARIABLE LENGTH STRUCT */
 
 /*
  * We want NameData to have length NAMEDATALEN and int alignment,

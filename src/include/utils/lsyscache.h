@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/lsyscache.h,v 1.94 2005/01/27 23:36:15 neilc Exp $
+ * $PostgreSQL: pgsql/src/include/utils/lsyscache.h,v 1.95 2005/03/29 00:17:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,7 +64,8 @@ extern RegProcedure get_oprrest(Oid opno);
 extern RegProcedure get_oprjoin(Oid opno);
 extern char *get_func_name(Oid funcid);
 extern Oid	get_func_rettype(Oid funcid);
-extern Oid	get_func_signature(Oid funcid, Oid *argtypes, int *nargs);
+extern int	get_func_nargs(Oid funcid);
+extern Oid	get_func_signature(Oid funcid, Oid **argtypes, int *nargs);
 extern bool get_func_retset(Oid funcid);
 extern bool func_strict(Oid funcid);
 extern char func_volatile(Oid funcid);

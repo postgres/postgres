@@ -88,11 +88,13 @@ WHERE p1.typinput = p2.oid AND p1.typtype in ('b', 'p') AND NOT
 ORDER BY 1;
 
 -- Varlena array types will point to array_in
+-- Exception as of 8.1: int2vector and oidvector have their own I/O routines
 SELECT p1.oid, p1.typname, p2.oid, p2.proname
 FROM pg_type AS p1, pg_proc AS p2
 WHERE p1.typinput = p2.oid AND p1.typtype in ('b', 'p') AND
     (p1.typelem != 0 AND p1.typlen < 0) AND NOT
-    (p2.oid = 'array_in'::regproc);
+    (p2.oid = 'array_in'::regproc)
+ORDER BY 1;
 
 -- Check for bogus typoutput routines
 
@@ -132,11 +134,13 @@ WHERE p1.typreceive = p2.oid AND p1.typtype in ('b', 'p') AND NOT
 ORDER BY 1;
 
 -- Varlena array types will point to array_recv
+-- Exception as of 8.1: int2vector and oidvector have their own I/O routines
 SELECT p1.oid, p1.typname, p2.oid, p2.proname
 FROM pg_type AS p1, pg_proc AS p2
 WHERE p1.typreceive = p2.oid AND p1.typtype in ('b', 'p') AND
     (p1.typelem != 0 AND p1.typlen < 0) AND NOT
-    (p2.oid = 'array_recv'::regproc);
+    (p2.oid = 'array_recv'::regproc)
+ORDER BY 1;
 
 -- Check for bogus typsend routines
 
@@ -163,7 +167,7 @@ WHERE p1.typsend = p2.oid AND p1.typtype in ('b', 'p') AND NOT
 
 SELECT p1.oid, p1.relname
 FROM pg_class as p1
-WHERE p1.relkind NOT IN ('r', 'i', 's', 'S', 't', 'v');
+WHERE p1.relkind NOT IN ('r', 'i', 's', 'S', 'c', 't', 'v');
 
 -- Indexes should have an access method, others not.
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.123 2005/01/27 23:23:51 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.124 2005/03/29 00:16:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,7 +78,7 @@ ProcedureCreate(const char *procedureName,
 	char		nulls[Natts_pg_proc];
 	Datum		values[Natts_pg_proc];
 	char		replaces[Natts_pg_proc];
-	Oid			typev[FUNC_MAX_ARGS];
+	oidvector  *proargtypes;
 	Datum		namesarray;
 	Oid			relid;
 	NameData	procname;
@@ -125,10 +125,9 @@ ProcedureCreate(const char *procedureName,
 					 errdetail("A function returning \"anyarray\" or \"anyelement\" must have at least one argument of either type.")));
 	}
 
-	/* Make sure we have a zero-padded param type array */
-	MemSet(typev, 0, FUNC_MAX_ARGS * sizeof(Oid));
-	if (parameterCount > 0)
-		memcpy(typev, parameterTypes, parameterCount * sizeof(Oid));
+	/* Convert param types to oidvector */
+	/* (Probably we should make caller pass it this way to start with) */
+	proargtypes = buildoidvector(parameterTypes, parameterCount);
 
 	/* Process param names, if given */
 	namesarray = create_parameternames_array(parameterCount, parameterNames);
@@ -137,13 +136,13 @@ ProcedureCreate(const char *procedureName,
 	 * don't allow functions of complex types that have the same name as
 	 * existing attributes of the type
 	 */
-	if (parameterCount == 1 && OidIsValid(typev[0]) &&
-		(relid = typeidTypeRelid(typev[0])) != InvalidOid &&
+	if (parameterCount == 1 && OidIsValid(parameterTypes[0]) &&
+		(relid = typeidTypeRelid(parameterTypes[0])) != InvalidOid &&
 		get_attnum(relid, procedureName) != InvalidAttrNumber)
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_COLUMN),
 				 errmsg("\"%s\" is already an attribute of type %s",
-						procedureName, format_type_be(typev[0]))));
+						procedureName, format_type_be(parameterTypes[0]))));
 
 	/*
 	 * All seems OK; prepare the data to be inserted into pg_proc.
@@ -162,15 +161,15 @@ ProcedureCreate(const char *procedureName,
 	values[i++] = ObjectIdGetDatum(procNamespace);		/* pronamespace */
 	values[i++] = Int32GetDatum(GetUserId());	/* proowner */
 	values[i++] = ObjectIdGetDatum(languageObjectId);	/* prolang */
-	values[i++] = BoolGetDatum(isAgg);	/* proisagg */
+	values[i++] = BoolGetDatum(isAgg);			/* proisagg */
 	values[i++] = BoolGetDatum(security_definer);		/* prosecdef */
 	values[i++] = BoolGetDatum(isStrict);		/* proisstrict */
 	values[i++] = BoolGetDatum(returnsSet);		/* proretset */
 	values[i++] = CharGetDatum(volatility);		/* provolatile */
 	values[i++] = UInt16GetDatum(parameterCount);		/* pronargs */
 	values[i++] = ObjectIdGetDatum(returnType); /* prorettype */
-	values[i++] = PointerGetDatum(typev);		/* proargtypes */
-	values[i++] = namesarray;	/* proargnames */
+	values[i++] = PointerGetDatum(proargtypes);	/* proargtypes */
+	values[i++] = namesarray;					/* proargnames */
 	if (namesarray == PointerGetDatum(NULL))
 		nulls[Anum_pg_proc_proargnames - 1] = 'n';
 	values[i++] = DirectFunctionCall1(textin,	/* prosrc */
@@ -183,11 +182,11 @@ ProcedureCreate(const char *procedureName,
 	tupDesc = RelationGetDescr(rel);
 
 	/* Check for pre-existing definition */
-	oldtup = SearchSysCache(PROCNAMENSP,
+	oldtup = SearchSysCache(PROCNAMEARGSNSP,
 							PointerGetDatum(procedureName),
-							UInt16GetDatum(parameterCount),
-							PointerGetDatum(typev),
-							ObjectIdGetDatum(procNamespace));
+							PointerGetDatum(proargtypes),
+							ObjectIdGetDatum(procNamespace),
+							0);
 
 	if (HeapTupleIsValid(oldtup))
 	{
@@ -290,7 +289,7 @@ ProcedureCreate(const char *procedureName,
 	for (i = 0; i < parameterCount; i++)
 	{
 		referenced.classId = RelOid_pg_type;
-		referenced.objectId = typev[i];
+		referenced.objectId = parameterTypes[i];
 		referenced.objectSubId = 0;
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 	}
@@ -492,16 +491,16 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 	haspolyarg = false;
 	for (i = 0; i < proc->pronargs; i++)
 	{
-		if (get_typtype(proc->proargtypes[i]) == 'p')
+		if (get_typtype(proc->proargtypes.values[i]) == 'p')
 		{
-			if (proc->proargtypes[i] == ANYARRAYOID ||
-				proc->proargtypes[i] == ANYELEMENTOID)
+			if (proc->proargtypes.values[i] == ANYARRAYOID ||
+				proc->proargtypes.values[i] == ANYELEMENTOID)
 				haspolyarg = true;
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 				 errmsg("SQL functions cannot have arguments of type %s",
-						format_type_be(proc->proargtypes[i]))));
+						format_type_be(proc->proargtypes.values[i]))));
 		}
 	}
 
@@ -534,7 +533,7 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 		if (!haspolyarg)
 		{
 			querytree_list = pg_parse_and_rewrite(prosrc,
-												  proc->proargtypes,
+												  proc->proargtypes.values,
 												  proc->pronargs);
 			(void) check_sql_fn_retval(proc->prorettype, functyptype,
 									   querytree_list, NULL);

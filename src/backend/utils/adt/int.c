@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/int.c,v 1.65 2005/02/27 08:31:30 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/int.c,v 1.66 2005/03/29 00:17:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,8 +33,10 @@
 #include <ctype.h>
 #include <limits.h>
 
+#include "catalog/pg_type.h"
 #include "funcapi.h"
 #include "libpq/pqformat.h"
+#include "utils/array.h"
 #include "utils/builtins.h"
 
 
@@ -46,6 +48,8 @@
 #endif
 
 #define SAMESIGN(a,b)	(((a) < 0) == ((b) < 0))
+
+#define Int2VectorSize(n)	(offsetof(int2vector, values) + (n) * sizeof(int2))
 
 typedef struct
 {
@@ -109,20 +113,49 @@ int2send(PG_FUNCTION_ARGS)
 }
 
 /*
- *		int2vectorin			- converts "num num ..." to internal form
+ * construct int2vector given a raw array of int2s
  *
- *		Note: Fills any missing slots with zeroes.
+ * If int2s is NULL then caller must fill values[] afterward
+ */
+int2vector *
+buildint2vector(const int2 *int2s, int n)
+{
+	int2vector  *result;
+
+	result = (int2vector *) palloc0(Int2VectorSize(n));
+
+	if (n > 0 && int2s)
+		memcpy(result->values, int2s, n * sizeof(int2));
+
+	/*
+	 * Attach standard array header.  For historical reasons, we set the
+	 * index lower bound to 0 not 1.
+	 */
+	result->size = Int2VectorSize(n);
+	result->ndim = 1;
+	result->flags = 0;
+	result->elemtype = INT2OID;
+	result->dim1 = n;
+	result->lbound1 = 0;
+
+	return result;
+}
+
+/*
+ *		int2vectorin			- converts "num num ..." to internal form
  */
 Datum
 int2vectorin(PG_FUNCTION_ARGS)
 {
 	char	   *intString = PG_GETARG_CSTRING(0);
-	int16	   *result = (int16 *) palloc(sizeof(int16[INDEX_MAX_KEYS]));
-	int			slot;
+	int2vector *result;
+	int			n;
 
-	for (slot = 0; *intString && slot < INDEX_MAX_KEYS; slot++)
+	result = (int2vector *) palloc0(Int2VectorSize(FUNC_MAX_ARGS));
+
+	for (n = 0; *intString && n < FUNC_MAX_ARGS; n++)
 	{
-		if (sscanf(intString, "%hd", &result[slot]) != 1)
+		if (sscanf(intString, "%hd", &result->values[n]) != 1)
 			break;
 		while (*intString && isspace((unsigned char) *intString))
 			intString++;
@@ -136,8 +169,12 @@ int2vectorin(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("int2vector has too many elements")));
 
-	while (slot < INDEX_MAX_KEYS)
-		result[slot++] = 0;
+	result->size = Int2VectorSize(n);
+	result->ndim = 1;
+	result->flags = 0;
+	result->elemtype = INT2OID;
+	result->dim1 = n;
+	result->lbound1 = 0;
 
 	PG_RETURN_POINTER(result);
 }
@@ -148,24 +185,19 @@ int2vectorin(PG_FUNCTION_ARGS)
 Datum
 int2vectorout(PG_FUNCTION_ARGS)
 {
-	int16	   *int2Array = (int16 *) PG_GETARG_POINTER(0);
+	int2vector *int2Array = (int2vector *) PG_GETARG_POINTER(0);
 	int			num,
-				maxnum;
+				nnums = int2Array->dim1;
 	char	   *rp;
 	char	   *result;
 
-	/* find last non-zero value in vector */
-	for (maxnum = INDEX_MAX_KEYS - 1; maxnum >= 0; maxnum--)
-		if (int2Array[maxnum] != 0)
-			break;
-
 	/* assumes sign, 5 digits, ' ' */
-	rp = result = (char *) palloc((maxnum + 1) * 7 + 1);
-	for (num = 0; num <= maxnum; num++)
+	rp = result = (char *) palloc(nnums * 7 + 1);
+	for (num = 0; num < nnums; num++)
 	{
 		if (num != 0)
 			*rp++ = ' ';
-		pg_itoa(int2Array[num], rp);
+		pg_itoa(int2Array->values[num], rp);
 		while (*++rp != '\0')
 			;
 	}
@@ -180,11 +212,19 @@ Datum
 int2vectorrecv(PG_FUNCTION_ARGS)
 {
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
-	int16	   *result = (int16 *) palloc(sizeof(int16[INDEX_MAX_KEYS]));
-	int			slot;
+	int2vector  *result;
 
-	for (slot = 0; slot < INDEX_MAX_KEYS; slot++)
-		result[slot] = (int16) pq_getmsgint(buf, sizeof(int16));
+	result = (int2vector *)
+		DatumGetPointer(DirectFunctionCall2(array_recv,
+											PointerGetDatum(buf),
+											ObjectIdGetDatum(INT2OID)));
+	/* sanity checks: int2vector must be 1-D, no nulls */
+	if (result->ndim != 1 ||
+		result->flags != 0 ||
+		result->elemtype != INT2OID)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
+				 errmsg("invalid int2vector data")));
 	PG_RETURN_POINTER(result);
 }
 
@@ -194,14 +234,7 @@ int2vectorrecv(PG_FUNCTION_ARGS)
 Datum
 int2vectorsend(PG_FUNCTION_ARGS)
 {
-	int16	   *int2Array = (int16 *) PG_GETARG_POINTER(0);
-	StringInfoData buf;
-	int			slot;
-
-	pq_begintypsend(&buf);
-	for (slot = 0; slot < INDEX_MAX_KEYS; slot++)
-		pq_sendint(&buf, int2Array[slot], sizeof(int16));
-	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
+	return array_send(fcinfo);
 }
 
 /*
@@ -211,10 +244,12 @@ int2vectorsend(PG_FUNCTION_ARGS)
 Datum
 int2vectoreq(PG_FUNCTION_ARGS)
 {
-	int16	   *arg1 = (int16 *) PG_GETARG_POINTER(0);
-	int16	   *arg2 = (int16 *) PG_GETARG_POINTER(1);
+	int2vector *a = (int2vector *) PG_GETARG_POINTER(0);
+	int2vector *b = (int2vector *) PG_GETARG_POINTER(1);
 
-	PG_RETURN_BOOL(memcmp(arg1, arg2, INDEX_MAX_KEYS * sizeof(int16)) == 0);
+	if (a->dim1 != b->dim1)
+		PG_RETURN_BOOL(false);
+	PG_RETURN_BOOL(memcmp(a->values, b->values, a->dim1 * sizeof(int2)) == 0);
 }
 
 

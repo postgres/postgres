@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.174 2005/03/22 20:13:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.175 2005/03/29 00:16:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -724,9 +724,17 @@ init_fcache(Oid foid, FuncExprState *fcache, MemoryContext fcacheCxt)
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, ACL_KIND_PROC, get_func_name(foid));
 
-	/* Safety check (should never fail, as parser should check sooner) */
+	/*
+	 * Safety check on nargs.  Under normal circumstances this should never
+	 * fail, as parser should check sooner.  But possibly it might fail
+	 * if server has been compiled with FUNC_MAX_ARGS smaller than some
+	 * functions declared in pg_proc?
+	 */
 	if (list_length(fcache->args) > FUNC_MAX_ARGS)
-		elog(ERROR, "too many arguments");
+		ereport(ERROR,
+				(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
+				 errmsg("cannot pass more than %d arguments to a function",
+						FUNC_MAX_ARGS)));
 
 	/* Set up the primary fmgr lookup information */
 	fmgr_info_cxt(foid, &(fcache->func), fcacheCxt);

@@ -8,18 +8,22 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/oid.c,v 1.61 2005/02/11 04:08:58 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/oid.c,v 1.62 2005/03/29 00:17:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include <ctype.h>
-#include <errno.h>
 #include <limits.h>
 
+#include "catalog/pg_type.h"
 #include "libpq/pqformat.h"
+#include "utils/array.h"
 #include "utils/builtins.h"
+
+
+#define OidVectorSize(n)	(offsetof(oidvector, values) + (n) * sizeof(Oid))
 
 
 /*****************************************************************************
@@ -151,27 +155,54 @@ oidsend(PG_FUNCTION_ARGS)
 	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
 }
 
+/*
+ * construct oidvector given a raw array of Oids
+ *
+ * If oids is NULL then caller must fill values[] afterward
+ */
+oidvector *
+buildoidvector(const Oid *oids, int n)
+{
+	oidvector  *result;
+
+	result = (oidvector *) palloc0(OidVectorSize(n));
+
+	if (n > 0 && oids)
+		memcpy(result->values, oids, n * sizeof(Oid));
+
+	/*
+	 * Attach standard array header.  For historical reasons, we set the
+	 * index lower bound to 0 not 1.
+	 */
+	result->size = OidVectorSize(n);
+	result->ndim = 1;
+	result->flags = 0;
+	result->elemtype = OIDOID;
+	result->dim1 = n;
+	result->lbound1 = 0;
+
+	return result;
+}
 
 /*
  *		oidvectorin			- converts "num num ..." to internal form
- *
- *		Note:
- *				Fills any unsupplied positions with InvalidOid.
  */
 Datum
 oidvectorin(PG_FUNCTION_ARGS)
 {
 	char	   *oidString = PG_GETARG_CSTRING(0);
-	Oid		   *result = (Oid *) palloc(sizeof(Oid[INDEX_MAX_KEYS]));
-	int			slot;
+	oidvector  *result;
+	int			n;
 
-	for (slot = 0; slot < INDEX_MAX_KEYS; slot++)
+	result = (oidvector *) palloc0(OidVectorSize(FUNC_MAX_ARGS));
+
+	for (n = 0; n < FUNC_MAX_ARGS; n++)
 	{
 		while (*oidString && isspace((unsigned char) *oidString))
 			oidString++;
 		if (*oidString == '\0')
 			break;
-		result[slot] = oidin_subr("oidvectorin", oidString, &oidString);
+		result->values[n] = oidin_subr("oidvectorin", oidString, &oidString);
 	}
 	while (*oidString && isspace((unsigned char) *oidString))
 		oidString++;
@@ -179,8 +210,13 @@ oidvectorin(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("oidvector has too many elements")));
-	while (slot < INDEX_MAX_KEYS)
-		result[slot++] = InvalidOid;
+
+	result->size = OidVectorSize(n);
+	result->ndim = 1;
+	result->flags = 0;
+	result->elemtype = OIDOID;
+	result->dim1 = n;
+	result->lbound1 = 0;
 
 	PG_RETURN_POINTER(result);
 }
@@ -191,24 +227,19 @@ oidvectorin(PG_FUNCTION_ARGS)
 Datum
 oidvectorout(PG_FUNCTION_ARGS)
 {
-	Oid		   *oidArray = (Oid *) PG_GETARG_POINTER(0);
+	oidvector  *oidArray = (oidvector *) PG_GETARG_POINTER(0);
 	int			num,
-				maxnum;
+				nnums = oidArray->dim1;
 	char	   *rp;
 	char	   *result;
 
-	/* find last non-zero value in vector */
-	for (maxnum = INDEX_MAX_KEYS - 1; maxnum >= 0; maxnum--)
-		if (oidArray[maxnum] != 0)
-			break;
-
 	/* assumes sign, 10 digits, ' ' */
-	rp = result = (char *) palloc((maxnum + 1) * 12 + 1);
-	for (num = 0; num <= maxnum; num++)
+	rp = result = (char *) palloc(nnums * 12 + 1);
+	for (num = 0; num < nnums; num++)
 	{
 		if (num != 0)
 			*rp++ = ' ';
-		sprintf(rp, "%u", oidArray[num]);
+		sprintf(rp, "%u", oidArray->values[num]);
 		while (*++rp != '\0')
 			;
 	}
@@ -223,11 +254,19 @@ Datum
 oidvectorrecv(PG_FUNCTION_ARGS)
 {
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
-	Oid		   *result = (Oid *) palloc(sizeof(Oid[INDEX_MAX_KEYS]));
-	int			slot;
+	oidvector  *result;
 
-	for (slot = 0; slot < INDEX_MAX_KEYS; slot++)
-		result[slot] = (Oid) pq_getmsgint(buf, sizeof(Oid));
+	result = (oidvector *)
+		DatumGetPointer(DirectFunctionCall2(array_recv,
+											PointerGetDatum(buf),
+											ObjectIdGetDatum(OIDOID)));
+	/* sanity checks: oidvector must be 1-D, no nulls */
+	if (result->ndim != 1 ||
+		result->flags != 0 ||
+		result->elemtype != OIDOID)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
+				 errmsg("invalid oidvector data")));
 	PG_RETURN_POINTER(result);
 }
 
@@ -237,14 +276,7 @@ oidvectorrecv(PG_FUNCTION_ARGS)
 Datum
 oidvectorsend(PG_FUNCTION_ARGS)
 {
-	Oid		   *oidArray = (Oid *) PG_GETARG_POINTER(0);
-	StringInfoData buf;
-	int			slot;
-
-	pq_begintypsend(&buf);
-	for (slot = 0; slot < INDEX_MAX_KEYS; slot++)
-		pq_sendint(&buf, oidArray[slot], sizeof(Oid));
-	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
+	return array_send(fcinfo);
 }
 
 
@@ -327,71 +359,49 @@ oidsmaller(PG_FUNCTION_ARGS)
 Datum
 oidvectoreq(PG_FUNCTION_ARGS)
 {
-	Oid		   *arg1 = (Oid *) PG_GETARG_POINTER(0);
-	Oid		   *arg2 = (Oid *) PG_GETARG_POINTER(1);
+	int32		cmp = DatumGetInt32(btoidvectorcmp(fcinfo));
 
-	PG_RETURN_BOOL(memcmp(arg1, arg2, INDEX_MAX_KEYS * sizeof(Oid)) == 0);
+	PG_RETURN_BOOL(cmp == 0);
 }
 
 Datum
 oidvectorne(PG_FUNCTION_ARGS)
 {
-	Oid		   *arg1 = (Oid *) PG_GETARG_POINTER(0);
-	Oid		   *arg2 = (Oid *) PG_GETARG_POINTER(1);
+	int32		cmp = DatumGetInt32(btoidvectorcmp(fcinfo));
 
-	PG_RETURN_BOOL(memcmp(arg1, arg2, INDEX_MAX_KEYS * sizeof(Oid)) != 0);
+	PG_RETURN_BOOL(cmp != 0);
 }
 
 Datum
 oidvectorlt(PG_FUNCTION_ARGS)
 {
-	Oid		   *arg1 = (Oid *) PG_GETARG_POINTER(0);
-	Oid		   *arg2 = (Oid *) PG_GETARG_POINTER(1);
-	int			i;
+	int32		cmp = DatumGetInt32(btoidvectorcmp(fcinfo));
 
-	for (i = 0; i < INDEX_MAX_KEYS; i++)
-		if (arg1[i] != arg2[i])
-			PG_RETURN_BOOL(arg1[i] < arg2[i]);
-	PG_RETURN_BOOL(false);
+	PG_RETURN_BOOL(cmp < 0);
 }
 
 Datum
 oidvectorle(PG_FUNCTION_ARGS)
 {
-	Oid		   *arg1 = (Oid *) PG_GETARG_POINTER(0);
-	Oid		   *arg2 = (Oid *) PG_GETARG_POINTER(1);
-	int			i;
+	int32		cmp = DatumGetInt32(btoidvectorcmp(fcinfo));
 
-	for (i = 0; i < INDEX_MAX_KEYS; i++)
-		if (arg1[i] != arg2[i])
-			PG_RETURN_BOOL(arg1[i] <= arg2[i]);
-	PG_RETURN_BOOL(true);
+	PG_RETURN_BOOL(cmp <= 0);
 }
 
 Datum
 oidvectorge(PG_FUNCTION_ARGS)
 {
-	Oid		   *arg1 = (Oid *) PG_GETARG_POINTER(0);
-	Oid		   *arg2 = (Oid *) PG_GETARG_POINTER(1);
-	int			i;
+	int32		cmp = DatumGetInt32(btoidvectorcmp(fcinfo));
 
-	for (i = 0; i < INDEX_MAX_KEYS; i++)
-		if (arg1[i] != arg2[i])
-			PG_RETURN_BOOL(arg1[i] >= arg2[i]);
-	PG_RETURN_BOOL(true);
+	PG_RETURN_BOOL(cmp >= 0);
 }
 
 Datum
 oidvectorgt(PG_FUNCTION_ARGS)
 {
-	Oid		   *arg1 = (Oid *) PG_GETARG_POINTER(0);
-	Oid		   *arg2 = (Oid *) PG_GETARG_POINTER(1);
-	int			i;
+	int32		cmp = DatumGetInt32(btoidvectorcmp(fcinfo));
 
-	for (i = 0; i < INDEX_MAX_KEYS; i++)
-		if (arg1[i] != arg2[i])
-			PG_RETURN_BOOL(arg1[i] > arg2[i]);
-	PG_RETURN_BOOL(false);
+	PG_RETURN_BOOL(cmp > 0);
 }
 
 Datum

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/format_type.c,v 1.39 2004/12/31 22:01:21 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/format_type.c,v 1.40 2005/03/29 00:17:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -140,12 +140,15 @@ format_type_internal(Oid type_oid, int32 typemod,
 	/*
 	 * Check if it's an array (and not a domain --- we don't want to show
 	 * the substructure of a domain type).	Fixed-length array types such
-	 * as "name" shouldn't get deconstructed either.
+	 * as "name" shouldn't get deconstructed either.  As of Postgres 8.1,
+	 * rather than checking typlen we check the toast property, and don't
+	 * deconstruct "plain storage" array types --- this is because we don't
+	 * want to show oidvector as oid[].
 	 */
 	array_base_type = typeform->typelem;
 
 	if (array_base_type != InvalidOid &&
-		typeform->typlen == -1 &&
+		typeform->typstorage != 'p' &&
 		typeform->typtype != 'd')
 	{
 		/* Switch our attention to the array element type */
@@ -459,28 +462,16 @@ type_maximum_size(Oid type_oid, int32 typemod)
 
 /*
  * oidvectortypes			- converts a vector of type OIDs to "typname" list
- *
- * The interface for this function is wrong: it should be told how many
- * OIDs are significant in the input vector, so that trailing InvalidOid
- * argument types can be recognized.
  */
 Datum
 oidvectortypes(PG_FUNCTION_ARGS)
 {
-	Oid		   *oidArray = (Oid *) PG_GETARG_POINTER(0);
+	oidvector  *oidArray = (oidvector *) PG_GETARG_POINTER(0);
 	char	   *result;
-	int			numargs;
+	int			numargs = oidArray->dim1;
 	int			num;
 	size_t		total;
 	size_t		left;
-
-	/* Try to guess how many args there are :-( */
-	numargs = 0;
-	for (num = 0; num < FUNC_MAX_ARGS; num++)
-	{
-		if (oidArray[num] != InvalidOid)
-			numargs = num + 1;
-	}
 
 	total = 20 * numargs + 1;
 	result = palloc(total);
@@ -489,7 +480,7 @@ oidvectortypes(PG_FUNCTION_ARGS)
 
 	for (num = 0; num < numargs; num++)
 	{
-		char	   *typename = format_type_internal(oidArray[num], -1,
+		char	   *typename = format_type_internal(oidArray->values[num], -1,
 													false, true);
 		size_t		slen = strlen(typename);
 

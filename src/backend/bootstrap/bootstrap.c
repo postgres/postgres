@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.199 2005/02/20 02:21:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.200 2005/03/29 00:16:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -139,9 +139,9 @@ static const struct typinfo TypInfo[] = {
 	F_XIDIN, F_XIDOUT},
 	{"cid", CIDOID, 0, 4, true, 'i', 'p',
 	F_CIDIN, F_CIDOUT},
-	{"int2vector", INT2VECTOROID, INT2OID, INDEX_MAX_KEYS * 2, false, 's', 'p',
+	{"int2vector", INT2VECTOROID, INT2OID, -1, false, 'i', 'p',
 	F_INT2VECTORIN, F_INT2VECTOROUT},
-	{"oidvector", OIDVECTOROID, OIDOID, INDEX_MAX_KEYS * 4, false, 'i', 'p',
+	{"oidvector", OIDVECTOROID, OIDOID, -1, false, 'i', 'p',
 	F_OIDVECTORIN, F_OIDVECTOROUT},
 	{"_int4", INT4ARRAYOID, INT4OID, -1, false, 'i', 'x',
 	F_ARRAY_IN, F_ARRAY_OUT},
@@ -667,7 +667,6 @@ closerel(char *name)
 void
 DefineAttr(char *name, char *type, int attnum)
 {
-	int			attlen;
 	Oid			typeoid;
 
 	if (boot_reldesc != NULL)
@@ -689,7 +688,7 @@ DefineAttr(char *name, char *type, int attnum)
 	if (Typ != NULL)
 	{
 		attrtypes[attnum]->atttypid = Ap->am_oid;
-		attlen = attrtypes[attnum]->attlen = Ap->am_typ.typlen;
+		attrtypes[attnum]->attlen = Ap->am_typ.typlen;
 		attrtypes[attnum]->attbyval = Ap->am_typ.typbyval;
 		attrtypes[attnum]->attstorage = Ap->am_typ.typstorage;
 		attrtypes[attnum]->attalign = Ap->am_typ.typalign;
@@ -702,12 +701,13 @@ DefineAttr(char *name, char *type, int attnum)
 	else
 	{
 		attrtypes[attnum]->atttypid = TypInfo[typeoid].oid;
-		attlen = attrtypes[attnum]->attlen = TypInfo[typeoid].len;
+		attrtypes[attnum]->attlen = TypInfo[typeoid].len;
 		attrtypes[attnum]->attbyval = TypInfo[typeoid].byval;
 		attrtypes[attnum]->attstorage = TypInfo[typeoid].storage;
 		attrtypes[attnum]->attalign = TypInfo[typeoid].align;
 		/* if an array type, assume 1-dimensional attribute */
-		if (TypInfo[typeoid].elem != InvalidOid && attlen < 0)
+		if (TypInfo[typeoid].elem != InvalidOid &&
+			attrtypes[attnum]->attlen < 0)
 			attrtypes[attnum]->attndims = 1;
 		else
 			attrtypes[attnum]->attndims = 0;
@@ -722,14 +722,22 @@ DefineAttr(char *name, char *type, int attnum)
 	 * Mark as "not null" if type is fixed-width and prior columns are
 	 * too. This corresponds to case where column can be accessed directly
 	 * via C struct declaration.
+	 *
+	 * oidvector and int2vector are also treated as not-nullable, even
+	 * though they are no longer fixed-width.
 	 */
-	if (attlen > 0)
+#define MARKNOTNULL(att) \
+	((att)->attlen > 0 || \
+	 (att)->atttypid == OIDVECTOROID || \
+	 (att)->atttypid == INT2VECTOROID)
+
+	if (MARKNOTNULL(attrtypes[attnum]))
 	{
 		int			i;
 
 		for (i = 0; i < attnum; i++)
 		{
-			if (attrtypes[i]->attlen <= 0)
+			if (!MARKNOTNULL(attrtypes[i]))
 				break;
 		}
 		if (i == attnum)

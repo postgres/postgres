@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.181 2005/03/25 21:57:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.182 2005/03/29 00:16:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,7 +67,7 @@ Oid
 CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 {
 	int16		tgtype;
-	int16		tgattr[FUNC_MAX_ARGS];
+	int2vector *tgattr;
 	Datum		values[Natts_pg_trigger];
 	char		nulls[Natts_pg_trigger];
 	Relation	rel;
@@ -77,7 +77,7 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 	ScanKeyData key;
 	Relation	pgrel;
 	HeapTuple	tuple;
-	Oid			fargtypes[FUNC_MAX_ARGS];
+	Oid			fargtypes[1];	/* dummy */
 	Oid			funcoid;
 	Oid			funcrettype;
 	Oid			trigoid;
@@ -275,7 +275,6 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 	/*
 	 * Find and validate the trigger function.
 	 */
-	MemSet(fargtypes, 0, FUNC_MAX_ARGS * sizeof(Oid));
 	funcoid = LookupFuncName(stmt->funcname, 0, fargtypes, false);
 	funcrettype = get_func_rettype(funcoid);
 	if (funcrettype != TRIGGEROID)
@@ -359,7 +358,8 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 		values[Anum_pg_trigger_tgargs - 1] = DirectFunctionCall1(byteain,
 													CStringGetDatum(""));
 	}
-	MemSet(tgattr, 0, FUNC_MAX_ARGS * sizeof(int16));
+	/* tgattr is currently always a zero-length array */
+	tgattr = buildint2vector(NULL, 0);
 	values[Anum_pg_trigger_tgattr - 1] = PointerGetDatum(tgattr);
 
 	tuple = heap_formtuple(tgrel->rd_att, values, nulls);
@@ -774,8 +774,16 @@ RelationBuildTriggers(Relation relation)
 		build->tgdeferrable = pg_trigger->tgdeferrable;
 		build->tginitdeferred = pg_trigger->tginitdeferred;
 		build->tgnargs = pg_trigger->tgnargs;
-		memcpy(build->tgattr, &(pg_trigger->tgattr),
-			   FUNC_MAX_ARGS * sizeof(int16));
+		/* tgattr is first var-width field, so OK to access directly */
+		build->tgnattr = pg_trigger->tgattr.dim1;
+		if (build->tgnattr > 0)
+		{
+			build->tgattr = (int2 *) palloc(build->tgnattr * sizeof(int2));
+			memcpy(build->tgattr, &(pg_trigger->tgattr.values),
+				   build->tgnattr * sizeof(int2));
+		}
+		else
+			build->tgattr = NULL;
 		if (build->tgnargs > 0)
 		{
 			bytea	   *val;
@@ -783,9 +791,10 @@ RelationBuildTriggers(Relation relation)
 			char	   *p;
 			int			i;
 
-			val = (bytea *) fastgetattr(htup,
-										Anum_pg_trigger_tgargs,
-										tgrel->rd_att, &isnull);
+			val = (bytea *)
+				DatumGetPointer(fastgetattr(htup,
+											Anum_pg_trigger_tgargs,
+											tgrel->rd_att, &isnull));
 			if (isnull)
 				elog(ERROR, "tgargs is null in trigger for relation \"%s\"",
 					 RelationGetRelationName(relation));
@@ -928,6 +937,15 @@ CopyTriggerDesc(TriggerDesc *trigdesc)
 	for (i = 0; i < trigdesc->numtriggers; i++)
 	{
 		trigger->tgname = pstrdup(trigger->tgname);
+		if (trigger->tgnattr > 0)
+		{
+			int2	   *newattr;
+
+			newattr = (int2 *) palloc(trigger->tgnattr * sizeof(int2));
+			memcpy(newattr, trigger->tgattr,
+				   trigger->tgnattr * sizeof(int2));
+			trigger->tgattr = newattr;
+		}
 		if (trigger->tgnargs > 0)
 		{
 			char	  **newargs;
@@ -1031,6 +1049,8 @@ FreeTriggerDesc(TriggerDesc *trigdesc)
 	for (i = 0; i < trigdesc->numtriggers; i++)
 	{
 		pfree(trigger->tgname);
+		if (trigger->tgnattr > 0)
+			pfree(trigger->tgattr);
 		if (trigger->tgnargs > 0)
 		{
 			while (--(trigger->tgnargs) >= 0)
@@ -1092,8 +1112,11 @@ equalTriggerDescs(TriggerDesc *trigdesc1, TriggerDesc *trigdesc2)
 				return false;
 			if (trig1->tgnargs != trig2->tgnargs)
 				return false;
-			if (memcmp(trig1->tgattr, trig2->tgattr,
-					   sizeof(trig1->tgattr)) != 0)
+			if (trig1->tgnattr != trig2->tgnattr)
+				return false;
+			if (trig1->tgnattr > 0 &&
+				memcmp(trig1->tgattr, trig2->tgattr,
+					   trig1->tgnattr * sizeof(int2)) != 0)
 				return false;
 			for (j = 0; j < trig1->tgnargs; j++)
 				if (strcmp(trig1->tgargs[j], trig2->tgargs[j]) != 0)

@@ -39,24 +39,14 @@ language sql;
 -- **************** pg_proc ****************
 
 -- Look for illegal values in pg_proc fields.
--- NOTE: in reality pronargs could be more than 10, but I'm too lazy to put
--- a larger number of proargtypes check clauses in here.  If we ever have
--- more-than-10-arg functions in the standard catalogs, extend this query.
 
 SELECT p1.oid, p1.proname
 FROM pg_proc as p1
 WHERE p1.prolang = 0 OR p1.prorettype = 0 OR
-       p1.pronargs < 0 OR p1.pronargs > 10 OR
-       (p1.proargtypes[0] = 0 AND p1.pronargs > 0) OR
-       (p1.proargtypes[1] = 0 AND p1.pronargs > 1) OR
-       (p1.proargtypes[2] = 0 AND p1.pronargs > 2) OR
-       (p1.proargtypes[3] = 0 AND p1.pronargs > 3) OR
-       (p1.proargtypes[4] = 0 AND p1.pronargs > 4) OR
-       (p1.proargtypes[5] = 0 AND p1.pronargs > 5) OR
-       (p1.proargtypes[6] = 0 AND p1.pronargs > 6) OR
-       (p1.proargtypes[7] = 0 AND p1.pronargs > 7) OR
-       (p1.proargtypes[8] = 0 AND p1.pronargs > 8) OR
-       (p1.proargtypes[9] = 0 AND p1.pronargs > 9);
+       p1.pronargs < 0 OR
+       array_lower(p1.proargtypes, 1) != 0 OR
+       array_upper(p1.proargtypes, 1) != p1.pronargs-1 OR
+       0::oid = ANY (p1.proargtypes);
 
 -- Look for conflicting proc definitions (same names and input datatypes).
 -- (This test should be dead code now that we have the unique index
@@ -179,7 +169,7 @@ WHERE p1.oid != p2.oid AND
 SELECT p1.oid, p1.proname
 FROM pg_proc as p1
 WHERE p1.prorettype = 'internal'::regtype AND NOT
-    ('(' || oidvectortypes(p1.proargtypes) || ')') ~ '[^a-z0-9_]internal[^a-z0-9_]';
+    'internal'::regtype = ANY (p1.proargtypes);
 
 
 -- **************** pg_cast ****************

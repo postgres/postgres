@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_agg.c,v 1.67 2005/03/10 23:21:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_agg.c,v 1.68 2005/03/29 00:17:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -367,14 +367,13 @@ build_aggregate_fnexprs(Oid agg_input_type,
 						Expr **transfnexpr,
 						Expr **finalfnexpr)
 {
-	Oid			transfn_arg_types[FUNC_MAX_ARGS];
 	int			transfn_nargs;
 	Param	   *arg0;
 	Param	   *arg1;
 	List	   *args;
 
-	/* get the transition function signature (only need nargs) */
-	(void) get_func_signature(transfn_oid, transfn_arg_types, &transfn_nargs);
+	/* get the transition function arg count */
+	transfn_nargs = get_func_nargs(transfn_oid);
 
 	/*
 	 * Build arg list to use in the transfn FuncExpr node. We really only

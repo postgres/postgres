@@ -1,7 +1,7 @@
 /****************************************************************************
  * pending.c
- * $Id: pending.c,v 1.20 2004/09/10 04:31:06 neilc Exp $
- * $PostgreSQL: pgsql/contrib/dbmirror/pending.c,v 1.20 2004/09/10 04:31:06 neilc Exp $
+ * $Id: pending.c,v 1.21 2005/03/29 00:16:48 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/dbmirror/pending.c,v 1.21 2005/03/29 00:16:48 tgl Exp $
  *
  * This file contains a trigger for Postgresql-7.x to record changes to tables
  * to a pending table for mirroring.
@@ -349,8 +349,8 @@ getPrimaryKey(Oid tblOid)
 	resDatum = SPI_getbinval(resTuple, SPI_tuptable->tupdesc, 1, &isNull);
 
 	tpResultKey = (int2vector *) DatumGetPointer(resDatum);
-	resultKey = SPI_palloc(sizeof(int2vector));
-	memcpy(resultKey, tpResultKey, sizeof(int2vector));
+	resultKey = SPI_palloc(VARSIZE(tpResultKey));
+	memcpy(resultKey, tpResultKey, VARSIZE(tpResultKey));
 
 	return resultKey;
 }
@@ -438,10 +438,7 @@ packageData(HeapTuple tTupleData, TupleDesc tTupleDesc, Oid tableOid,
 	}
 
 	if (tpPKeys != NULL)
-	{
 		debug_msg("dbmirror:packageData have primary keys");
-
-	}
 
 	cpDataBlock = SPI_palloc(BUFFER_SIZE);
 	iDataBlockSize = BUFFER_SIZE;
@@ -462,11 +459,10 @@ packageData(HeapTuple tTupleData, TupleDesc tTupleDesc, Oid tableOid,
 			/* Determine if this is a primary key or not. */
 			iIsPrimaryKey = 0;
 			for (iPrimaryKeyIndex = 0;
-				 (*tpPKeys)[iPrimaryKeyIndex] != 0;
+				 iPrimaryKeyIndex < tpPKeys->dim1;
 				 iPrimaryKeyIndex++)
 			{
-				if ((*tpPKeys)[iPrimaryKeyIndex]
-					== iColumnCounter)
+				if (tpPKeys->values[iPrimaryKeyIndex] == iColumnCounter)
 				{
 					iIsPrimaryKey = 1;
 					break;

@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.69 2005/02/23 04:34:05 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.70 2005/03/29 00:17:20 tgl Exp $
  *
  **********************************************************************/
 
@@ -1300,14 +1300,14 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 			for (i = 0; i < prodesc->nargs; i++)
 			{
 				typeTup = SearchSysCache(TYPEOID,
-							ObjectIdGetDatum(procStruct->proargtypes[i]),
+							ObjectIdGetDatum(procStruct->proargtypes.values[i]),
 										 0, 0, 0);
 				if (!HeapTupleIsValid(typeTup))
 				{
 					free(prodesc->proname);
 					free(prodesc);
 					elog(ERROR, "cache lookup failed for type %u",
-						 procStruct->proargtypes[i]);
+						 procStruct->proargtypes.values[i]);
 				}
 				typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
 
@@ -1319,7 +1319,7 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 						   errmsg("plperl functions cannot take type %s",
-						   format_type_be(procStruct->proargtypes[i]))));
+						   format_type_be(procStruct->proargtypes.values[i]))));
 				}
 
 				if (typeStruct->typtype == 'c')

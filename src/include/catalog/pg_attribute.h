@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_attribute.h,v 1.113 2004/12/31 22:03:24 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_attribute.h,v 1.114 2005/03/29 00:17:17 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -317,7 +317,7 @@ DATA(insert ( 1262 tableoid			26 0  4  -7 0 -1 -1 t p i t f f t 0));
 { 1255, {"provolatile"},		18, -1, 1,	9, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0 }, \
 { 1255, {"pronargs"},			21, -1, 2, 10, 0, -1, -1, true, 'p', 's', true, false, false, true, 0 }, \
 { 1255, {"prorettype"},			26, -1, 4, 11, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
-{ 1255, {"proargtypes"},		30, -1, INDEX_MAX_KEYS*4, 12, 0, -1, -1, false, 'p', 'i', true, false, false, true, 0 }, \
+{ 1255, {"proargtypes"},		30, -1, -1, 12, 1, -1, -1, false, 'p', 'i', true, false, false, true, 0 }, \
 { 1255, {"proargnames"},	  1009, -1, -1, 13, 1, -1, -1, false, 'x', 'i', false, false, false, true, 0 }, \
 { 1255, {"prosrc"},				25, -1, -1, 14, 0, -1, -1, false, 'x', 'i', false, false, false, true, 0 }, \
 { 1255, {"probin"},				17, -1, -1, 15, 0, -1, -1, false, 'x', 'i', false, false, false, true, 0 }, \
@@ -334,7 +334,7 @@ DATA(insert ( 1255 proretset		16 -1 1   8 0 -1 -1 t p c t f f t 0));
 DATA(insert ( 1255 provolatile		18 -1 1   9 0 -1 -1 t p c t f f t 0));
 DATA(insert ( 1255 pronargs			21 -1 2  10 0 -1 -1 t p s t f f t 0));
 DATA(insert ( 1255 prorettype		26 -1 4  11 0 -1 -1 t p i t f f t 0));
-DATA(insert ( 1255 proargtypes		30 -1 INDEX_MAX_KEYS*4 12 0 -1 -1 f p i t f f t 0));
+DATA(insert ( 1255 proargtypes		30 -1 -1 12 1 -1 -1 f p i t f f t 0));
 DATA(insert ( 1255 proargnames	  1009 -1 -1 13 1 -1 -1 f x i f f f t 0));
 DATA(insert ( 1255 prosrc			25 -1 -1 14 0 -1 -1 f x i f f f t 0));
 DATA(insert ( 1255 probin			17 -1 -1 15 0 -1 -1 f x i f f f t 0));
@@ -510,6 +510,26 @@ DATA(insert ( 1213 cmin				29 0  4  -4 0 -1 -1 t p i t f f t 0));
 DATA(insert ( 1213 xmax				28 0  4  -5 0 -1 -1 t p i t f f t 0));
 DATA(insert ( 1213 cmax				29 0  4  -6 0 -1 -1 t p i t f f t 0));
 DATA(insert ( 1213 tableoid			26 0  4  -7 0 -1 -1 t p i t f f t 0));
+
+/* ----------------
+ *		pg_index
+ *
+ * pg_index is not bootstrapped in the same way as the other relations that
+ * have hardwired pg_attribute entries in this file.  However, we do need
+ * a "Schema_xxx" macro for it --- see relcache.c.
+ * ----------------
+ */
+#define Schema_pg_index \
+{ 0, {"indexrelid"},		26, -1, 4, 1, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
+{ 0, {"indrelid"},			26, -1, 4, 2, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
+{ 0, {"indnatts"},			21, -1, 2, 3, 0, -1, -1, true, 'p', 's', true, false, false, true, 0 }, \
+{ 0, {"indisunique"},		16, -1, 1, 4, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0 }, \
+{ 0, {"indisprimary"},		16, -1, 1, 5, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0 }, \
+{ 0, {"indisclustered"},	16, -1, 1, 6, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0 }, \
+{ 0, {"indkey"},			22, -1, -1, 7, 1, -1, -1, false, 'p', 'i', true, false, false, true, 0 }, \
+{ 0, {"indclass"},			30, -1, -1, 8, 1, -1, -1, false, 'p', 'i', true, false, false, true, 0 }, \
+{ 0, {"indexprs"},			25, -1, -1, 9, 0, -1, -1, false, 'x', 'i', false, false, false, true, 0 }, \
+{ 0, {"indpred"},			25, -1, -1, 10, 0, -1, -1, false, 'x', 'i', false, false, false, true, 0 }
 
 /* ----------------
  *		pg_xactlock - this is not a real relation, but is a placeholder

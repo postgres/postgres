@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/aggregatecmds.c,v 1.22 2004/12/31 21:59:41 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/aggregatecmds.c,v 1.23 2005/03/29 00:16:57 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -246,11 +246,11 @@ RenameAggregate(List *name, TypeName *basetype, const char *newname)
 	namespaceOid = procForm->pronamespace;
 
 	/* make sure the new name doesn't exist */
-	if (SearchSysCacheExists(PROCNAMENSP,
+	if (SearchSysCacheExists(PROCNAMEARGSNSP,
 							 CStringGetDatum(newname),
-							 Int16GetDatum(procForm->pronargs),
-							 PointerGetDatum(procForm->proargtypes),
-							 ObjectIdGetDatum(namespaceOid)))
+							 PointerGetDatum(&procForm->proargtypes),
+							 ObjectIdGetDatum(namespaceOid),
+							 0))
 	{
 		if (basetypeOid == ANYOID)
 			ereport(ERROR,
@@ -264,7 +264,7 @@ RenameAggregate(List *name, TypeName *basetype, const char *newname)
 					 errmsg("function %s already exists in schema \"%s\"",
 							funcname_signature_string(newname,
 													  procForm->pronargs,
-												  procForm->proargtypes),
+												  procForm->proargtypes.values),
 							get_namespace_name(namespaceOid))));
 	}
 

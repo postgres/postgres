@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.56 2005/03/14 00:19:36 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.57 2005/03/29 00:16:57 tgl Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -716,18 +716,18 @@ RenameFunction(List *name, List *argtypes, const char *newname)
 	namespaceOid = procForm->pronamespace;
 
 	/* make sure the new name doesn't exist */
-	if (SearchSysCacheExists(PROCNAMENSP,
+	if (SearchSysCacheExists(PROCNAMEARGSNSP,
 							 CStringGetDatum(newname),
-							 Int16GetDatum(procForm->pronargs),
-							 PointerGetDatum(procForm->proargtypes),
-							 ObjectIdGetDatum(namespaceOid)))
+							 PointerGetDatum(&procForm->proargtypes),
+							 ObjectIdGetDatum(namespaceOid),
+							 0))
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_FUNCTION),
 				 errmsg("function %s already exists in schema \"%s\"",
 						funcname_signature_string(newname,
 												  procForm->pronargs,
-												  procForm->proargtypes),
+												  procForm->proargtypes.values),
 						get_namespace_name(namespaceOid))));
 	}
 
@@ -962,11 +962,11 @@ SetFunctionArgType(Oid funcOid, int argIndex, Oid newArgType)
 	procForm = (Form_pg_proc) GETSTRUCT(tup);
 
 	if (argIndex < 0 || argIndex >= procForm->pronargs ||
-		procForm->proargtypes[argIndex] != OPAQUEOID)
+		procForm->proargtypes.values[argIndex] != OPAQUEOID)
 		elog(ERROR, "function %u doesn't take OPAQUE", funcOid);
 
 	/* okay to overwrite copied tuple */
-	procForm->proargtypes[argIndex] = newArgType;
+	procForm->proargtypes.values[argIndex] = newArgType;
 
 	/* update the catalog and its indexes */
 	simple_heap_update(pg_proc_rel, &tup->t_self, tup);
@@ -1064,15 +1064,15 @@ CreateCast(CreateCastStmt *stmt)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 			  errmsg("cast function must take one to three arguments")));
-		if (procstruct->proargtypes[0] != sourcetypeid)
+		if (procstruct->proargtypes.values[0] != sourcetypeid)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 					 errmsg("argument of cast function must match source data type")));
-		if (nargs > 1 && procstruct->proargtypes[1] != INT4OID)
+		if (nargs > 1 && procstruct->proargtypes.values[1] != INT4OID)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 					 errmsg("second argument of cast function must be type integer")));
-		if (nargs > 2 && procstruct->proargtypes[2] != BOOLOID)
+		if (nargs > 2 && procstruct->proargtypes.values[2] != BOOLOID)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 					 errmsg("third argument of cast function must be type boolean")));

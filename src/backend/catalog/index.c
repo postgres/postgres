@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.249 2005/03/21 01:24:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.250 2005/03/29 00:16:55 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -347,8 +347,8 @@ UpdateIndexRelation(Oid indexoid,
 					Oid *classOids,
 					bool primary)
 {
-	int16		indkey[INDEX_MAX_KEYS];
-	Oid			indclass[INDEX_MAX_KEYS];
+	int2vector *indkey;
+	oidvector  *indclass;
 	Datum		exprsDatum;
 	Datum		predDatum;
 	Datum		values[Natts_pg_index];
@@ -358,15 +358,13 @@ UpdateIndexRelation(Oid indexoid,
 	int			i;
 
 	/*
-	 * Copy the index key and opclass info into zero-filled vectors
+	 * Copy the index key and opclass info into arrays (should we make the
+	 * caller pass them like this to start with?)
 	 */
-	MemSet(indkey, 0, sizeof(indkey));
-	MemSet(indclass, 0, sizeof(indclass));
+	indkey = buildint2vector(NULL, indexInfo->ii_NumIndexAttrs);
+	indclass = buildoidvector(classOids, indexInfo->ii_NumIndexAttrs);
 	for (i = 0; i < indexInfo->ii_NumIndexAttrs; i++)
-	{
-		indkey[i] = indexInfo->ii_KeyAttrNumbers[i];
-		indclass[i] = classOids[i];
-	}
+		indkey->values[i] = indexInfo->ii_KeyAttrNumbers[i];
 
 	/*
 	 * Convert the index expressions (if any) to a text datum
@@ -411,12 +409,12 @@ UpdateIndexRelation(Oid indexoid,
 
 	values[Anum_pg_index_indexrelid - 1] = ObjectIdGetDatum(indexoid);
 	values[Anum_pg_index_indrelid - 1] = ObjectIdGetDatum(heapoid);
-	values[Anum_pg_index_indkey - 1] = PointerGetDatum(indkey);
-	values[Anum_pg_index_indclass - 1] = PointerGetDatum(indclass);
 	values[Anum_pg_index_indnatts - 1] = Int16GetDatum(indexInfo->ii_NumIndexAttrs);
 	values[Anum_pg_index_indisunique - 1] = BoolGetDatum(indexInfo->ii_Unique);
 	values[Anum_pg_index_indisprimary - 1] = BoolGetDatum(primary);
 	values[Anum_pg_index_indisclustered - 1] = BoolGetDatum(false);
+	values[Anum_pg_index_indkey - 1] = PointerGetDatum(indkey);
+	values[Anum_pg_index_indclass - 1] = PointerGetDatum(indclass);
 	values[Anum_pg_index_indexprs - 1] = exprsDatum;
 	if (exprsDatum == (Datum) 0)
 		nulls[Anum_pg_index_indexprs - 1] = 'n';
@@ -871,7 +869,7 @@ BuildIndexInfo(Relation index)
 			 numKeys, RelationGetRelid(index));
 	ii->ii_NumIndexAttrs = numKeys;
 	for (i = 0; i < numKeys; i++)
-		ii->ii_KeyAttrNumbers[i] = indexStruct->indkey[i];
+		ii->ii_KeyAttrNumbers[i] = indexStruct->indkey.values[i];
 
 	/* fetch any expressions needed for expressional indexes */
 	ii->ii_Expressions = RelationGetIndexExpressions(index);

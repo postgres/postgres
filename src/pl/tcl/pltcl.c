@@ -31,7 +31,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.94 2004/11/21 21:17:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.95 2005/03/29 00:17:25 tgl Exp $
  *
  **********************************************************************/
 
@@ -1128,14 +1128,14 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid)
 			for (i = 0; i < prodesc->nargs; i++)
 			{
 				typeTup = SearchSysCache(TYPEOID,
-							ObjectIdGetDatum(procStruct->proargtypes[i]),
+							ObjectIdGetDatum(procStruct->proargtypes.values[i]),
 										 0, 0, 0);
 				if (!HeapTupleIsValid(typeTup))
 				{
 					free(prodesc->proname);
 					free(prodesc);
 					elog(ERROR, "cache lookup failed for type %u",
-						 procStruct->proargtypes[i]);
+						 procStruct->proargtypes.values[i]);
 				}
 				typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
 
@@ -1147,7 +1147,7 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid)
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							 errmsg("pltcl functions cannot take type %s",
-						   format_type_be(procStruct->proargtypes[i]))));
+						   format_type_be(procStruct->proargtypes.values[i]))));
 				}
 
 				if (typeStruct->typtype == 'c')

@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.188 2005/01/13 17:19:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.189 2005/03/29 00:17:08 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -553,9 +553,10 @@ pg_get_triggerdef(PG_FUNCTION_ARGS)
 		char	   *p;
 		int			i;
 
-		val = (bytea *) fastgetattr(ht_trig,
-									Anum_pg_trigger_tgargs,
-									tgrel->rd_att, &isnull);
+		val = (bytea *)
+			DatumGetPointer(fastgetattr(ht_trig,
+										Anum_pg_trigger_tgargs,
+										tgrel->rd_att, &isnull));
 		if (isnull)
 			elog(ERROR, "tgargs is null for trigger %u", trigid);
 		p = (char *) VARDATA(val);
@@ -637,6 +638,9 @@ pg_get_indexdef_worker(Oid indexrelid, int colno, int prettyFlags)
 	Oid			indrelid;
 	int			keyno;
 	Oid			keycoltype;
+	Datum		indclassDatum;
+	bool		isnull;
+	oidvector  *indclass;
 	StringInfoData buf;
 	char	   *str;
 	char	   *sep;
@@ -653,6 +657,12 @@ pg_get_indexdef_worker(Oid indexrelid, int colno, int prettyFlags)
 
 	indrelid = idxrec->indrelid;
 	Assert(indexrelid == idxrec->indexrelid);
+
+	/* Must get indclass the hard way */
+	indclassDatum = SysCacheGetAttr(INDEXRELID, ht_idx,
+									Anum_pg_index_indclass, &isnull);
+	Assert(!isnull);
+	indclass = (oidvector *) DatumGetPointer(indclassDatum);
 
 	/*
 	 * Fetch the pg_class tuple of the index relation
@@ -720,7 +730,7 @@ pg_get_indexdef_worker(Oid indexrelid, int colno, int prettyFlags)
 	sep = "";
 	for (keyno = 0; keyno < idxrec->indnatts; keyno++)
 	{
-		AttrNumber	attnum = idxrec->indkey[keyno];
+		AttrNumber	attnum = idxrec->indkey.values[keyno];
 
 		if (!colno)
 			appendStringInfo(&buf, sep);
@@ -764,7 +774,7 @@ pg_get_indexdef_worker(Oid indexrelid, int colno, int prettyFlags)
 		 * Add the operator class name
 		 */
 		if (!colno)
-			get_opclass_name(idxrec->indclass[keyno], keycoltype,
+			get_opclass_name(indclass->values[keyno], keycoltype,
 							 &buf);
 	}
 
@@ -3537,7 +3547,10 @@ get_func_expr(FuncExpr *expr, deparse_context *context,
 	nargs = 0;
 	foreach(l, expr->args)
 	{
-		Assert(nargs < FUNC_MAX_ARGS);
+		if (nargs >= FUNC_MAX_ARGS)
+			ereport(ERROR,
+					(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
+					 errmsg("too many arguments")));
 		argtypes[nargs] = exprType((Node *) lfirst(l));
 		nargs++;
 	}

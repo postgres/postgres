@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/trigger.sgml,v 1.41 2005/01/22 22:56:36 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/trigger.sgml,v 1.42 2005/03/29 00:16:49 tgl Exp $
 -->
 
  <chapter id="triggers">
@@ -453,7 +453,8 @@ typedef struct Trigger
     bool        tgdeferrable;
     bool        tginitdeferred;
     int16       tgnargs;
-    int16       tgattr[FUNC_MAX_ARGS];
+    int16       tgnattr;
+    int16      *tgattr;
     char      **tgargs;
 } Trigger;
 </programlisting>
