@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.47 1999/03/10 12:16:09 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.48 1999/03/14 20:01:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1592,8 +1592,7 @@ ExecTargetList(List *targetlist,
 	/*
 	 *	form the new result tuple (in the "normal" context)
 	 */
-	newTuple = (HeapTuple)
-		heap_formtuple(targettype, values, null_head);
+	newTuple = (HeapTuple) heap_formtuple(targettype, values, null_head);
 
 	/*
 	 *	free the nulls array if we allocated one..
