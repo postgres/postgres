@@ -41,6 +41,7 @@
 #define GBK					30	/* GBK */
 #define UHC					31  /* UHC */
 #define WIN1250				32	/* windows-1250 */
+#define GB18030				33	/* GB18030 */
 #define OTHER				-1
 
 #define MAX_CHARACTERSET_NAME	24

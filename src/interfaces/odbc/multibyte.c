@@ -56,6 +56,7 @@ pg_CS CS_Table[] =
 	{ "GBK", GBK },
 	{ "UHC", UHC },
 	{ "WIN1250",	WIN1250 },
+	{ "GB18030",	GB18030 },
 	{ "OTHER", OTHER }
 };
 
@@ -235,6 +236,25 @@ pg_CS_stat(int stat,unsigned int character,int characterset_code)
 					stat = 2;
 				else if (stat == 2)
 					stat = 1;
+				else
+					stat = 0;
+			}
+			break;
+			/*Chinese GB18030 support.Added by Bill Huang <bhuang@redhat.com> <bill_huanghb@ybb.ne.jp>*/
+		case GB18030:
+			{
+				if (stat < 2 && character > 0x80)
+					stat = 2;
+				else if (stat = 2)
+					if (character >= 0x30 && character <= 0x39)
+						stat = 3;
+					else
+						stat = 1;
+				else if (stat = 3)
+					if (character >= 0x30 && character <= 0x39)
+						stat = 1;
+					else
+						stat = 3;
 				else
 					stat = 0;
 			}

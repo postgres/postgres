@@ -777,7 +777,7 @@ PGAPI_ParamData(
 		/* commit transaction if needed */
 		if (!ci->drivers.use_declarefetch && CC_is_in_autocommit(stmt->hdbc))
 		{
-			if (CC_commit(stmt->hdbc))
+			if (!CC_commit(stmt->hdbc))
 			{
 				stmt->errormsg = "Could not commit (in-line) a transaction";
 				stmt->errornumber = STMT_EXEC_ERROR;
