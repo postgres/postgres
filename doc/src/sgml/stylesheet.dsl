@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/stylesheet.dsl,v 1.8 2001/05/12 22:51:35 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/stylesheet.dsl,v 1.9 2001/09/14 20:37:55 petere Exp $ -->
 <!DOCTYPE style-sheet PUBLIC "-//James Clark//DTD DSSSL Style Sheet//EN" [
 
 <!-- must turn on one of these with -i on the jade command line -->
@@ -28,6 +28,7 @@
 
 (define %refentry-xref-manvolnum% #f)
 (define %callout-graphics% #f)
+(define %show-comments% #f)
 
 (define %content-title-end-punct% 
   '(#\. #\! #\? #\:))
@@ -45,6 +46,7 @@
 (define %html-ext%              ".html")
 (define %link-mailto-url%       (string-append "mailto:" pgsql-docs-list))
 (define %use-id-as-filename%    #t)
+(define %stylesheet%            "stylesheet.css")
 
 ;; Returns the depth of auto TOC that should be made at the nd-level
 (define (toc-depth nd)
@@ -53,6 +55,12 @@
 	((string=? (gi nd) (normalize "part")) 2)
 	((string=? (gi nd) (normalize "chapter")) 2)
 	(else 1)))
+
+;; Put a horizontal line in the set TOC
+(define (set-titlepage-separator side)
+  (if (equal? side 'recto)
+      (make empty-element gi: "HR")
+      (empty-sosofo)))
 
 ;; Put date of creation into header
 (define %html-header-tags% 

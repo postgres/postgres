@@ -1,5 +1,5 @@
 # Postgres documentation makefile
-# $Header: /cvsroot/pgsql/doc/src/Makefile,v 1.19 2001/08/29 19:14:39 petere Exp $
+# $Header: /cvsroot/pgsql/doc/src/Makefile,v 1.20 2001/09/14 20:37:54 petere Exp $
 
 subdir = doc/src
 top_builddir = ../..
@@ -38,25 +38,29 @@ sources.tar:
 admin.tar developer.tar reference.tar user.tar:
 	$(MAKE) -C sgml clean
 	$(MAKE) -C sgml $(basename $@).html
-	cd sgml && $(TAR) -cf ../$@ $(TAREXCLUDE) *.html
+	$(MAKE) -C sgml $(basename $@).html
+	cd sgml && $(TAR) -cf ../$@ $(TAREXCLUDE) *.html *.css
 
 programmer.tar:
 	$(MAKE) -C sgml clean
 	$(MAKE) -C sgml programmer.html
+	$(MAKE) -C sgml programmer.html
 	abssrcdir=`cd $(srcdir) && pwd`; \
-	cd sgml && $(TAR) -cf ../$@ $(TAREXCLUDE) *.html -C $$abssrcdir/graphics catalogs.gif connections.gif
+	cd sgml && $(TAR) -cf ../$@ $(TAREXCLUDE) *.html *.css -C $$abssrcdir/graphics catalogs.gif connections.gif
 
 tutorial.tar:
 	$(MAKE) -C sgml clean
 	$(MAKE) -C sgml tutorial.html
+	$(MAKE) -C sgml tutorial.html
 	abssrcdir=`cd $(srcdir) && pwd`; \
-	cd sgml && $(TAR) -cf ../$@ $(TAREXCLUDE) *.html -C $$abssrcdir/graphics clientserver.gif
+	cd sgml && $(TAR) -cf ../$@ $(TAREXCLUDE) *.html *.css -C $$abssrcdir/graphics clientserver.gif
 
 postgres.tar:
 	$(MAKE) -C sgml clean
 	$(MAKE) -C sgml postgres.html
+	$(MAKE) -C sgml postgres.html
 	abssrcdir=`cd $(srcdir) && pwd`; \
-	cd sgml && $(TAR) -cf ../$@ $(TAREXCLUDE) *.html -C $$abssrcdir/graphics catalogs.gif clientserver.gif connections.gif
+	cd sgml && $(TAR) -cf ../$@ $(TAREXCLUDE) *.html *.css -C $$abssrcdir/graphics catalogs.gif clientserver.gif connections.gif
 
 man.tar:
 	$(MAKE) -C sgml man

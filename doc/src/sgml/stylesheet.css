@@ -1,0 +1,58 @@
+/* $Header: /cvsroot/pgsql/doc/src/sgml/stylesheet.css,v 1.1 2001/09/14 20:37:55 petere Exp $ */
+
+/* color scheme similar to www.postgresql.org */
+
+BODY {
+	color: #000000;
+	background: #FFFFFF;
+}
+
+A:link		{ color: #000066; }
+A:visited	{ color: #000099; }
+A:active	{ color: #FF0000; }
+
+/* center titles */
+
+BODY.book H1.title, BODY.set H1.title {
+	text-align: center;
+	font-size: 250%;
+	font-family: sans-serif;
+	color: #020167;
+}
+
+BODY.book H3.corpauthor, BODY.set H3.corpauthor {
+	text-align: center;
+	font-style: italic;
+	font-weight: normal;
+}
+
+BODY.book .copyright, BODY.set .copyright {
+	text-align: center;
+}
+
+/* decoration for formal examples */
+
+DIV.example {
+	padding-left: 15px;
+	border-style: solid;
+	border-width: 0px;
+	border-left-width: 2px;
+	border-color: black;
+}
+
+/* less dense spacing of TOC */
+
+.set .toc DL DT, .book .toc DL DT {
+	padding-top: 1.5ex;
+	padding-bottom: 1.5ex;
+}
+
+.set .toc DL DL DT, .book .toc DL DL DT {
+	padding-top: 0ex;
+	padding-bottom: 0ex;
+}
+
+/* miscellaneous */
+
+.navheader TH	{ font-style: italic; }
+.comment	{ color: red; }
