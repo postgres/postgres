@@ -5,7 +5,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Fri Aug 20 11:20:09 EDT 2004
+Last updated:		Fri Aug 20 15:30:27 EDT 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web site, http://www.PostgreSQL.org.
 
@@ -337,8 +337,6 @@ Commands
   new database.
 
 * Add C code to copy directories for use in creating new databases
-* -Have psql \dn show only visible temp schemas using current_schemas()
-* -Have psql '\i ~/<tab><tab>' actually load files it displays from home dir
 * Ignore temporary tables from other sessions when processing
   inheritance?
 * -Add GUC setting to make created tables default to WITHOUT OIDS
@@ -482,6 +480,8 @@ Clients
   transformations.
     
 * -Allow psql \du to show users, and add \dg for groups
+* -Have psql \dn show only visible temp schemas using current_schemas()
+* -Have psql '\i ~/<tab><tab>' actually load files it displays from home dir
 * Add a libpq function to support Parse/DescribeStatement capability
 * Prevent libpq's PQfnumber() from lowercasing the column name (?)
 * Have psql show current values for a sequence
@@ -514,6 +514,17 @@ Clients
 	o Add pg_dumpall custom format dumps. This is probably best done by
 	  combining pg_dump and pg_dumpall into a single binary
 	o Add CSV output format
+
+* psql tab completion
+
+	o Provide a list of conversions after ALTER CONVERSION?
+	o Support for ALTER SEQUENCE clauses
+	o Add RENAME TO to ALTER TRIGGER
+	o Support for ALTER USER
+	o Fix ALTER (GROUP|DOMAIN|...) <sth> DROP
+	o Support for ALTER LANGUAGE <sth> RENAME TO
+	o Improve support for COPY
+	o Improve support for ALTER TABLE
 
 * ECPG (?)
 	o Docs
