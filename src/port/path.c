@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/path.c,v 1.43 2004/11/06 04:24:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/port/path.c,v 1.44 2004/11/06 21:39:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,17 +32,11 @@
 #define IS_PATH_SEP(ch) ((ch) == ';')
 #endif
 
-static const char *relative_path(const char *bin_path, const char *other_path);
-static void make_relative(const char *my_exec_path, const char *p, char *ret_path);
+static void make_relative_path(char *ret_path, const char *target_path,
+							   const char *bin_path, const char *my_exec_path);
 static void trim_directory(char *path);
 static void trim_trailing_separator(char *path);
 
-/* Move to last of consecutive separators or to null byte */
-#define MOVE_TO_SEP_END(p) \
-{ \
-	while (IS_DIR_SEP((p)[0]) && (IS_DIR_SEP((p)[1]) || !(p)[1])) \
-		(p)++; \
-}
 
 /*
  * skip_drive
@@ -252,11 +246,11 @@ canonicalize_path(char *path)
 	{
 		int			len = strlen(path);
 
-		if (len >= 2 && strcmp(path + len - 2, "/.") == 0)
+		if (len > 2 && strcmp(path + len - 2, "/.") == 0)
 		{
 			trim_directory(path);
 		}
-		else if (len >= 3 && strcmp(path + len - 3, "/..") == 0)
+		else if (len > 3 && strcmp(path + len - 3, "/..") == 0)
 		{
 			trim_directory(path);
 			trim_directory(path);	/* remove directory above */
@@ -305,20 +299,61 @@ get_progname(const char *argv0)
 
 
 /*
+ * make_relative_path - make a path relative to the actual binary location
+ *
+ * This function exists to support relocation of installation trees.
+ *
+ *	ret_path is the output area (must be of size MAXPGPATH)
+ *	target_path is the compiled-in path to the directory we want to find
+ *	bin_path is the compiled-in path to the directory of executables
+ *	my_exec_path is the actual location of my executable
+ *
+ * If target_path matches bin_path up to the last directory component of
+ * bin_path, then we build the result as my_exec_path (less the executable
+ * name and last directory) joined to the non-matching part of target_path.
+ * Otherwise, we return target_path as-is.
+ * 
+ * For example:
+ *		target_path  = '/usr/local/share/postgresql'
+ *		bin_path     = '/usr/local/bin'
+ *		my_exec_path = '/opt/pgsql/bin/postmaster'
+ * Given these inputs we would return '/opt/pgsql/share/postgresql'
+ */
+static void
+make_relative_path(char *ret_path, const char *target_path,
+				   const char *bin_path, const char *my_exec_path)
+{
+	const char *bin_end;
+	int			prefix_len;
+
+	bin_end = last_dir_separator(bin_path);
+	if (!bin_end)
+		goto no_match;
+	prefix_len = bin_end - bin_path + 1;
+	if (strncmp(target_path, bin_path, prefix_len) != 0)
+		goto no_match;
+
+	StrNCpy(ret_path, my_exec_path, MAXPGPATH);
+	trim_directory(ret_path);	/* remove my executable name */
+	trim_directory(ret_path);	/* remove last directory component (/bin) */
+	join_path_components(ret_path, ret_path, target_path + prefix_len);
+	canonicalize_path(ret_path);
+	return;
+
+no_match:
+	StrNCpy(ret_path, target_path, MAXPGPATH);
+	canonicalize_path(ret_path);
+}
+
+
+/*
  *	get_share_path
  */
 void
 get_share_path(const char *my_exec_path, char *ret_path)
 {
-	const char *p;
-
-	if ((p = relative_path(PGBINDIR, PGSHAREDIR)))
-		make_relative(my_exec_path, p, ret_path);
-	else
-		StrNCpy(ret_path, PGSHAREDIR, MAXPGPATH);
-	canonicalize_path(ret_path);
+	make_relative_path(ret_path, PGSHAREDIR, PGBINDIR, my_exec_path);
 }
-
 
 /*
  *	get_etc_path
@@ -326,15 +361,8 @@ get_share_path(const char *my_exec_path, char *ret_path)
 void
 get_etc_path(const char *my_exec_path, char *ret_path)
 {
-	const char *p;
-
-	if ((p = relative_path(PGBINDIR, SYSCONFDIR)))
-		make_relative(my_exec_path, p, ret_path);
-	else
-		StrNCpy(ret_path, SYSCONFDIR, MAXPGPATH);
-	canonicalize_path(ret_path);
+	make_relative_path(ret_path, SYSCONFDIR, PGBINDIR, my_exec_path);
 }
-
 
 /*
  *	get_include_path
@@ -342,15 +370,8 @@ get_etc_path(const char *my_exec_path, char *ret_path)
 void
 get_include_path(const char *my_exec_path, char *ret_path)
 {
-	const char *p;
-
-	if ((p = relative_path(PGBINDIR, INCLUDEDIR)))
-		make_relative(my_exec_path, p, ret_path);
-	else
-		StrNCpy(ret_path, INCLUDEDIR, MAXPGPATH);
-	canonicalize_path(ret_path);
+	make_relative_path(ret_path, INCLUDEDIR, PGBINDIR, my_exec_path);
 }
-
 
 /*
  *	get_pkginclude_path
@@ -358,15 +379,8 @@ get_include_path(const char *my_exec_path, char *ret_path)
 void
 get_pkginclude_path(const char *my_exec_path, char *ret_path)
 {
-	const char *p;
-
-	if ((p = relative_path(PGBINDIR, PKGINCLUDEDIR)))
-		make_relative(my_exec_path, p, ret_path);
-	else
-		StrNCpy(ret_path, PKGINCLUDEDIR, MAXPGPATH);
-	canonicalize_path(ret_path);
+	make_relative_path(ret_path, PKGINCLUDEDIR, PGBINDIR, my_exec_path);
 }
-
 
 /*
  *	get_includeserver_path
@@ -374,15 +388,8 @@ get_pkginclude_path(const char *my_exec_path, char *ret_path)
 void
 get_includeserver_path(const char *my_exec_path, char *ret_path)
 {
-	const char *p;
-
-	if ((p = relative_path(PGBINDIR, INCLUDEDIRSERVER)))
-		make_relative(my_exec_path, p, ret_path);
-	else
-		StrNCpy(ret_path, INCLUDEDIRSERVER, MAXPGPATH);
-	canonicalize_path(ret_path);
+	make_relative_path(ret_path, INCLUDEDIRSERVER, PGBINDIR, my_exec_path);
 }
-
 
 /*
  *	get_lib_path
@@ -390,15 +397,8 @@ get_includeserver_path(const char *my_exec_path, char *ret_path)
 void
 get_lib_path(const char *my_exec_path, char *ret_path)
 {
-	const char *p;
-
-	if ((p = relative_path(PGBINDIR, LIBDIR)))
-		make_relative(my_exec_path, p, ret_path);
-	else
-		StrNCpy(ret_path, LIBDIR, MAXPGPATH);
-	canonicalize_path(ret_path);
+	make_relative_path(ret_path, LIBDIR, PGBINDIR, my_exec_path);
 }
-
 
 /*
  *	get_pkglib_path
@@ -406,31 +406,16 @@ get_lib_path(const char *my_exec_path, char *ret_path)
 void
 get_pkglib_path(const char *my_exec_path, char *ret_path)
 {
-	const char *p;
-
-	if ((p = relative_path(PGBINDIR, PKGLIBDIR)))
-		make_relative(my_exec_path, p, ret_path);
-	else
-		StrNCpy(ret_path, PKGLIBDIR, MAXPGPATH);
-	canonicalize_path(ret_path);
+	make_relative_path(ret_path, PKGLIBDIR, PGBINDIR, my_exec_path);
 }
-
 
 /*
  *	get_locale_path
- *
- *	Return locale path, either relative to /bin or hardcoded
  */
 void
 get_locale_path(const char *my_exec_path, char *ret_path)
 {
-	const char *p;
-
-	if ((p = relative_path(PGBINDIR, LOCALEDIR)))
-		make_relative(my_exec_path, p, ret_path);
-	else
-		StrNCpy(ret_path, LOCALEDIR, MAXPGPATH);
-	canonicalize_path(ret_path);
+	make_relative_path(ret_path, LOCALEDIR, PGBINDIR, my_exec_path);
 }
 
 
@@ -440,14 +425,16 @@ get_locale_path(const char *my_exec_path, char *ret_path)
 bool
 get_home_path(char *ret_path)
 {
-	if (getenv(HOMEDIR) == NULL)
+	const char *homedir = getenv(HOMEDIR);
+
+	if (homedir == NULL)
 	{
 		*ret_path = '\0';
 		return false;
 	}
 	else
 	{
-		StrNCpy(ret_path, getenv(HOMEDIR), MAXPGPATH);
+		StrNCpy(ret_path, homedir, MAXPGPATH);
 		canonicalize_path(ret_path);
 		return true;
 	}
@@ -512,91 +499,6 @@ set_pglocale_pgservice(const char *argv0, const char *app)
 		canonicalize_path(env_path + 13);
 		putenv(strdup(env_path));
 	}
-}
-
-
-/*
- *	make_relative - adjust path to be relative to bin/
- *
- * ret_path is the output area (must be of size MAXPGPATH)
- */
-static void
-make_relative(const char *my_exec_path, const char *p, char *ret_path)
-{
-	char		path[MAXPGPATH];
-
-	StrNCpy(path, my_exec_path, MAXPGPATH);
-	trim_directory(path);		/* remove my executable name */
-	trim_directory(path);		/* remove last directory component (/bin) */
-	join_path_components(ret_path, path, p);
-}
-
-
-/*
- *	relative_path
- *
- *	Do the supplied paths differ only in their last component?
- */
-static const char *
-relative_path(const char *bin_path, const char *other_path)
-{
-#ifdef WIN32
-	/* Driver letters match? */
-	if (isalpha(*bin_path) && bin_path[1] == ':' &&
-		(!isalpha(*other_path) || !other_path[1] == ':'))
-		return NULL;
-	if ((!isalpha(*bin_path) || !bin_path[1] == ':') &&
-		(isalpha(*other_path) && other_path[1] == ':'))
-		return NULL;
-	if (isalpha(*bin_path) && bin_path[1] == ':' &&
-		isalpha(*other_path) && other_path[1] == ':')
-	{
-		if (toupper(*bin_path) != toupper(*other_path))
-			return NULL;
-		bin_path += 2;
-		other_path += 2;
-	}
-#endif
-
-	while (1)
-	{
-		/* Move past adjacent slashes like //, and trailing ones */
-		MOVE_TO_SEP_END(bin_path);
-		MOVE_TO_SEP_END(other_path);
-
-		/* One of the paths is done? */
-		if (!*bin_path || !*other_path)
-			break;
-
-		/* Win32 filesystem is case insensitive */
-		if ((!IS_DIR_SEP(*bin_path) || !IS_DIR_SEP(*other_path)) &&
-#ifndef WIN32
-			*bin_path != *other_path
-#else
-			toupper((unsigned char) *bin_path) != toupper((unsigned char) *other_path)
-#endif
-			)
-			break;
-
-		bin_path++;
-		other_path++;
-	}
-
-	/* identical? */
-	if (!*bin_path && !*other_path)
-		return NULL;
-
-	/* advance past directory name */
-	while (!IS_DIR_SEP(*bin_path) && *bin_path)
-		bin_path++;
-
-	MOVE_TO_SEP_END(bin_path);
-
-	/* Is bin done? */
-	if (!*bin_path)
-		return other_path;
-	else
-		return NULL;
 }
 
 
