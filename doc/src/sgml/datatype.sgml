@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.95 2002/07/16 04:45:59 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.96 2002/07/16 17:05:46 momjian Exp $
 -->
 
  <chapter id="datatype">
@@ -1021,7 +1021,7 @@ SELECT b, char_length(b) FROM test2;
       <row>
        <entry> <literal> 39 </literal> </entry>
        <entry> single quote </entry>
-       <entry> <literal> '\\'' or '\\047' </literal> </entry>
+       <entry> <literal> '\'' or '\\047' </literal> </entry>
        <entry> <literal> select '\''::bytea; </literal></entry>
        <entry> <literal> ' </literal></entry>
       </row>
@@ -1126,7 +1126,7 @@ SELECT b, char_length(b) FROM test2;
 
    <para>
     A single quote is a bit different in that it must be input as
-    <literal>'\''</literal> (or <literal>'\\134'</literal>),
+    <literal>'\''</literal> (or <literal>'\\047'</literal>),
     <emphasis>not</emphasis> as <literal>'\\''</literal>. This is because,
     while the literal parser interprets the single quote as a special
     character, and will consume the single backslash, the
