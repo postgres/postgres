@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.75 2002/03/02 00:34:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.76 2002/03/16 22:47:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,7 +51,7 @@
 #define RETURN_NULL(type)  do { *isNull = true; return (type) 0; } while (0)
 
 
-static int	ArrayCount(char *str, int *dim, int typdelim);
+static int	ArrayCount(char *str, int *dim, char typdelim);
 static Datum *ReadArrayStr(char *arrayStr, int nitems, int ndim, int *dim,
 			 FmgrInfo *inputproc, Oid typelem, int32 typmod,
 			 char typdelim, int typlen, bool typbyval,
@@ -245,7 +245,7 @@ array_in(PG_FUNCTION_ARGS)
  *-----------------------------------------------------------------------------
  */
 static int
-ArrayCount(char *str, int *dim, int typdelim)
+ArrayCount(char *str, int *dim, char typdelim)
 {
 	int			nest_level = 0,
 				i;
@@ -253,7 +253,7 @@ ArrayCount(char *str, int *dim, int typdelim)
 				temp[MAXDIM];
 	bool		scanning_string = false;
 	bool		eoArray = false;
-	char	   *q;
+	char	   *ptr;
 
 	for (i = 0; i < MAXDIM; ++i)
 		temp[i] = dim[i] = 0;
@@ -261,27 +261,25 @@ ArrayCount(char *str, int *dim, int typdelim)
 	if (strncmp(str, "{}", 2) == 0)
 		return 0;
 
-	q = str;
-	while (eoArray != true)
+	ptr = str;
+	while (!eoArray)
 	{
-		bool		done = false;
+		bool		itemdone = false;
 
-		while (!done)
+		while (!itemdone)
 		{
-			switch (*q)
+			switch (*ptr)
 			{
-				case '\\':
-					/* skip escaped characters (\ and ") inside strings */
-					if (scanning_string && *(q + 1))
-						q++;
-					break;
 				case '\0':
-
-					/*
-					 * Signal a premature end of the string.  DZ -
-					 * 2-9-1996
-					 */
+					/* Signal a premature end of the string */
 					elog(ERROR, "malformed array constant: %s", str);
+					break;
+				case '\\':
+					/* skip the escaped character */
+					if (*(ptr + 1))
+						ptr++;
+					else
+						elog(ERROR, "malformed array constant: %s", str);
 					break;
 				case '\"':
 					scanning_string = !scanning_string;
@@ -289,37 +287,42 @@ ArrayCount(char *str, int *dim, int typdelim)
 				case '{':
 					if (!scanning_string)
 					{
+						if (nest_level >= MAXDIM)
+							elog(ERROR, "array_in: illformed array constant");
 						temp[nest_level] = 0;
 						nest_level++;
+						if (ndim < nest_level)
+							ndim = nest_level;
 					}
 					break;
 				case '}':
 					if (!scanning_string)
 					{
-						if (!ndim)
-							ndim = nest_level;
-						nest_level--;
-						if (nest_level)
-							temp[nest_level - 1]++;
 						if (nest_level == 0)
-							eoArray = done = true;
+							elog(ERROR, "array_in: illformed array constant");
+						nest_level--;
+						if (nest_level == 0)
+							eoArray = itemdone = true;
+						else
+						{
+							/*
+							 * We don't set itemdone here; see comments in
+							 * ReadArrayStr
+							 */
+							temp[nest_level - 1]++;
+						}
 					}
 					break;
 				default:
-					if (!ndim)
-						ndim = nest_level;
-					if (*q == typdelim && !scanning_string)
-						done = true;
+					if (*ptr == typdelim && !scanning_string)
+						itemdone = true;
 					break;
 			}
-			if (!done)
-				q++;
+			if (!itemdone)
+				ptr++;
 		}
 		temp[ndim - 1]++;
-		q++;
-		if (!eoArray)
-			while (isspace((unsigned char) *q))
-				q++;
+		ptr++;
 	}
 	for (i = 0; i < ndim; ++i)
 		dim[i] = temp[i];
@@ -359,103 +362,119 @@ ReadArrayStr(char *arrayStr,
 	int			i,
 				nest_level = 0;
 	Datum	   *values;
-	char	   *p,
-			   *q,
-			   *r;
+	char	   *ptr;
 	bool		scanning_string = false;
+	bool		eoArray = false;
 	int			indx[MAXDIM],
 				prod[MAXDIM];
-	bool		eoArray = false;
 
 	mda_get_prod(ndim, dim, prod);
 	values = (Datum *) palloc(nitems * sizeof(Datum));
 	MemSet(values, 0, nitems * sizeof(Datum));
 	MemSet(indx, 0, sizeof(indx));
-	q = p = arrayStr;
 
 	/* read array enclosed within {} */
+	ptr = arrayStr;
 	while (!eoArray)
 	{
-		bool		done = false;
+		bool		itemdone = false;
 		int			i = -1;
+		char	   *itemstart;
 
-		while (!done)
+		/* skip leading whitespace */
+		while (isspace((unsigned char) *ptr))
+			ptr++;
+		itemstart = ptr;
+
+		while (!itemdone)
 		{
-			switch (*q)
+			switch (*ptr)
 			{
+				case '\0':
+					/* Signal a premature end of the string */
+					elog(ERROR, "malformed array constant: %s", arrayStr);
+					break;
 				case '\\':
+				{
+					char   *cptr;
+
 					/* Crunch the string on top of the backslash. */
-					for (r = q; *r != '\0'; r++)
-						*r = *(r + 1);
+					for (cptr = ptr; *cptr != '\0'; cptr++)
+						*cptr = *(cptr + 1);
+					if (*ptr == '\0')
+						elog(ERROR, "malformed array constant: %s", arrayStr);
 					break;
+				}
 				case '\"':
-					if (!scanning_string)
-					{
-						while (p != q)
-							p++;
-						p++;	/* get p past first doublequote */
-					}
-					else
-						*q = '\0';
+				{
+					char   *cptr;
+
 					scanning_string = !scanning_string;
+					/* Crunch the string on top of the quote. */
+					for (cptr = ptr; *cptr != '\0'; cptr++)
+						*cptr = *(cptr + 1);
+					/* Back up to not miss following character. */
+					ptr--;
 					break;
+				}
 				case '{':
 					if (!scanning_string)
 					{
-						p++;
-						nest_level++;
-						if (nest_level > ndim)
+						if (nest_level >= ndim)
 							elog(ERROR, "array_in: illformed array constant");
+						nest_level++;
 						indx[nest_level - 1] = 0;
-						indx[ndim - 1] = 0;
+						/* skip leading whitespace */
+						while (isspace((unsigned char) *(ptr+1)))
+							ptr++;
+						itemstart = ptr+1;
 					}
 					break;
 				case '}':
 					if (!scanning_string)
 					{
+						if (nest_level == 0)
+							elog(ERROR, "array_in: illformed array constant");
 						if (i == -1)
 							i = ArrayGetOffset0(ndim, indx, prod);
+						indx[nest_level - 1] = 0;
 						nest_level--;
 						if (nest_level == 0)
-							eoArray = done = true;
+							eoArray = itemdone = true;
 						else
 						{
-							*q = '\0';
+							/*
+							 * tricky coding: terminate item value string at
+							 * first '}', but don't process it till we see
+							 * a typdelim char or end of array.  This handles
+							 * case where several '}'s appear successively
+							 * in a multidimensional array.
+							 */
+							*ptr = '\0';
 							indx[nest_level - 1]++;
 						}
 					}
 					break;
 				default:
-					if (*q == typdelim && !scanning_string)
+					if (*ptr == typdelim && !scanning_string)
 					{
 						if (i == -1)
 							i = ArrayGetOffset0(ndim, indx, prod);
-						done = true;
+						itemdone = true;
 						indx[ndim - 1]++;
 					}
 					break;
 			}
-			if (!done)
-				q++;
+			if (!itemdone)
+				ptr++;
 		}
-		*q = '\0';
-		if (i >= nitems)
+		*ptr++ = '\0';
+		if (i < 0 || i >= nitems)
 			elog(ERROR, "array_in: illformed array constant");
 		values[i] = FunctionCall3(inputproc,
-								  CStringGetDatum(p),
+								  CStringGetDatum(itemstart),
 								  ObjectIdGetDatum(typelem),
 								  Int32GetDatum(typmod));
-		p = ++q;
-
-		/*
-		 * if not at the end of the array skip white space
-		 */
-		if (!eoArray)
-			while (isspace((unsigned char) *q))
-			{
-				p++;
-				q++;
-			}
 	}
 
 	/*
