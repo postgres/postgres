@@ -4,7 +4,7 @@
 #
 PGINTERFACE = pginterface.o halt.o 
 TARGET = pginsert pgwordcount pgnulltest
-CFLAGS = -g -fpic -Wall -I. -I../../src/interfaces/libpq  -I/usr/local/pgsql/include
+CFLAGS = -g -Wall -I. -I../../src/interfaces/libpq  -I/usr/local/pgsql/include
 LDFLAGS = -L/usr/local/pgsql/lib -lpq
 
 all : $(TARGET)

@@ -6,6 +6,7 @@
 #define TEST_NON_NULLS
 
 #include <stdio.h>
+#include <time.h>
 #include <halt.h>
 #include <libpq-fe.h>
 #include <pginterface.h>
