@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.58 2000/07/19 16:29:42 petere Exp $
+# $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.59 2000/07/23 13:01:08 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -37,5 +37,4 @@ distclean maintainer-clean:
 	-$(MAKE) -C bin $@
 	-$(MAKE) -C pl $@
 	-$(MAKE) -C test clean
-	rm -f test/regress/GNUmakefile
 	rm -f Makefile.port Makefile.global GNUmakefile

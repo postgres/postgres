@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.51 2000/05/24 22:32:58 tgl Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.52 2000/07/23 13:01:11 petere Exp $
 #
 if [ $# -eq 0 ]; then
 	echo "Syntax: $0 <hostname> [extra-tests]"
@@ -30,8 +30,7 @@ fi
 
 PGTZ="PST8PDT"; export PGTZ
 PGDATESTYLE="Postgres,US"; export PGDATESTYLE
-LANG= ; export LANG
-LC_ALL= ; export LC_ALL
+unset LC_COLLATE LC_CTYPE LC_MONETARY LC_MESSAGES LC_NUMERIC LC_TIME LC_ALL LANG LANGUAGE
 
 FRONTEND="psql $HOSTLOC -a -q -X"
 

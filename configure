@@ -7855,7 +7855,6 @@ trap 'rm -fr `echo "
   src/GNUmakefile
   src/Makefile.global
   src/backend/port/Makefile
-  src/test/regress/GNUmakefile
  src/include/config.h" | sed "s/:[^ ]*//g"` conftest*; exit 1' 1 2 15
 EOF
 cat >> $CONFIG_STATUS <<EOF
@@ -8015,7 +8014,6 @@ CONFIG_FILES=\${CONFIG_FILES-"GNUmakefile
   src/GNUmakefile
   src/Makefile.global
   src/backend/port/Makefile
-  src/test/regress/GNUmakefile
 "}
 EOF
 cat >> $CONFIG_STATUS <<\EOF

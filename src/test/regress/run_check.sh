@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/run_check.sh,v 1.24 2000/07/13 16:08:01 petere Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/run_check.sh,v 1.25 2000/07/23 13:01:11 petere Exp $
 
 # ----------
 # Check call syntax
@@ -48,6 +48,12 @@ else
 	LD_LIBRARY_PATH="$LIBDIR"
 fi
 export LD_LIBRARY_PATH
+
+# ----------
+# Unset locale settings
+# ----------
+
+unset LC_COLLATE LC_CTYPE LC_MONETARY LC_MESSAGES LC_NUMERIC LC_TIME LC_ALL LANG LANGUAGE
 
 # ----------
 # Get the commandline parameters

@@ -1282,7 +1282,6 @@ AC_OUTPUT(
   src/GNUmakefile
   src/Makefile.global
   src/backend/port/Makefile
-  src/test/regress/GNUmakefile
 ],
 [echo timestamp > src/include/stamp-h]
 )

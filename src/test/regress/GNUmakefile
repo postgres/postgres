@@ -7,16 +7,17 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/test/regress/Attic/GNUmakefile.in,v 1.2 2000/05/29 05:45:55 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/test/regress/GNUmakefile,v 1.22 2000/07/23 13:01:10 petere Exp $
 #
 #-------------------------------------------------------------------------
 
-SRCDIR= ../..
-include $(SRCDIR)/Makefile.global
+subdir = src/test/regress
+top_builddir = ../../..
+include $(top_builddir)/src/Makefile.global
 
-CONTRIB= $(SRCDIR)/../contrib
+CONTRIB= $(top_builddir)/contrib
 
-HOST= @host@
+HOST := $(shell $(top_srcdir)/config/config.guess)
 
 CFLAGS+= -I$(LIBPQDIR) $(CFLAGS_SL)
 
