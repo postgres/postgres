@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/plpython.sgml,v 1.14 2002/09/23 01:51:02 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/plpython.sgml,v 1.15 2002/10/21 20:34:09 momjian Exp $ -->
 
 <chapter id="plpython">
  <title>PL/Python - Python Procedural Language</title>
@@ -198,15 +198,24 @@ rv = plpy.execute(plan, [ "name" ], 5)
   <para>
    When you prepare a plan using the PL/Python module it is
    automatically saved.  Read the SPI documentation (<xref
-   linkend="spi">) for a description of what this means.  The take
-   home message is if you do
+   linkend="spi">) for a description of what this means.
+  </para>
+
+  <para>
+   In order to make effective use of this across function calls
+   one needs to use one of the persistent storage dictionaries
+   <literal>SD</literal> or <literal>GD</literal>, see
+   <xref linkend="plpython-funcs">. For example:
 <programlisting>
-plan = plpy.prepare("SOME QUERY")
-plan = plpy.prepare("SOME OTHER QUERY")
+CREATE FUNCTION usesavedplan ( ) RETURNS TRIGGER AS '
+   if SD.has_key("plan"):
+      plan = SD["plan"]
+   else:
+      plan = plpy.prepare("SELECT 1")
+      SD["plan"] = plan
+   # rest of function
+' LANGUAGE 'plpython';
 </programlisting>
-   you are leaking memory, as I know of no way to free a saved plan.
-   The alternative of using unsaved plans it even more painful (for
-   me).
   </para>
  </sect1>
 
