@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.326 2003/05/09 15:57:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.327 2003/05/10 18:15:42 tgl Exp $
  *
  * NOTES
  *
@@ -1801,8 +1801,12 @@ reaper(SIGNAL_ARGS)
 			goto reaper_done;
 		}
 
+		/*
+		 * Else do standard child cleanup.
+		 */
 		CleanupProc(pid, exitstatus);
-	}
+
+	} /* loop over pending child-death reports */
 
 	if (FatalError)
 	{
@@ -1895,7 +1899,10 @@ CleanupProc(int pid,
 	/* Make log entry unless we did so already */
 	if (!FatalError)
 	{
-		LogChildExit(LOG, gettext("server process"), pid, exitstatus);
+		LogChildExit(LOG,
+					 (pid == CheckPointPID) ? gettext("checkpoint process") :
+					 gettext("server process"),
+					 pid, exitstatus);
 		elog(LOG, "terminating any other active server processes");
 	}
 
