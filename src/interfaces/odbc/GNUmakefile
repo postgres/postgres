@@ -2,7 +2,7 @@
 #
 # GNUMakefile for psqlodbc (Postgres ODBC driver)
 #
-# $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/GNUmakefile,v 1.17 2001/08/21 05:21:09 inoue Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/GNUmakefile,v 1.18 2001/08/27 00:38:55 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -39,29 +39,18 @@ include $(top_srcdir)/src/Makefile.shlib
 # names and we don't want those.  (This issue is probably ELF specific.)
 LINK.shared += $(shlib_symbolic)
 
-odbc_headers = isql.h isqlext.h iodbc.h
-odbc_includedir = $(includedir)/iodbc
 
 install: all installdirs
-	for i in $(odbc_headers); do $(INSTALL_DATA) $(srcdir)/$$i $(DESTDIR)$(odbc_includedir)/$$i || exit 1; done
 	$(INSTALL_DATA) $(srcdir)/odbcinst.ini $(DESTDIR)$(odbcinst_ini_dir)/odbcinst.ini
 	$(INSTALL_DATA) $(srcdir)/odbc.sql $(DESTDIR)$(datadir)/odbc.sql
 	$(MAKE) install-lib
 
 installdirs:
-	$(mkinstalldirs) $(DESTDIR)$(odbc_includedir) $(DESTDIR)$(libdir) $(DESTDIR)$(odbcinst_ini_dir) $(DESTDIR)$(datadir)
+	$(mkinstalldirs) $(DESTDIR)$(libdir) $(DESTDIR)$(odbcinst_ini_dir) $(DESTDIR)$(datadir)
 
 uninstall: uninstall-lib
-	rm -f $(addprefix $(DESTDIR)$(odbc_includedir)/, $(odbc_headers))
 	rm -f $(DESTDIR)$(datadir)/odbc.sql
 # XXX Uninstall the .ini file as well?
 
 clean distclean maintainer-clean: clean-lib
 	rm -f $(OBJS)
-
-depend dep:
-	$(CC) -MM $(CFLAGS) *.c >depend
-
-ifeq (depend,$(wildcard depend))
-include depend
-endif
