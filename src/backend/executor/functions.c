@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.1.1.1 1996/07/09 06:21:25 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.2 1996/09/16 05:36:15 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -160,6 +160,14 @@ init_execution_state(FunctionCachePtr fcache,
 static TupleDesc
 postquel_start(execution_state *es)
 {
+#ifdef FUNC_UTIL_PATCH
+    /*
+     * Do nothing for utility commands. (create, destroy...)  DZ - 30-8-1996
+     */
+    if (es->qd->operation == CMD_UTILITY) {
+	return (TupleDesc) NULL;
+    }
+#endif
     return ExecutorStart(es->qd, es->estate);
 }
 
@@ -168,6 +176,17 @@ postquel_getnext(execution_state *es)
 {
     int feature;
     
+#ifdef FUNC_UTIL_PATCH
+    if (es->qd->operation == CMD_UTILITY) {
+	/*
+	 * Process an utility command. (create, destroy...)  DZ - 30-8-1996
+	 */
+	ProcessUtility(es->qd->parsetree->utilityStmt, es->qd->dest);
+	if (!LAST_POSTQUEL_COMMAND(es)) CommandCounterIncrement();
+	return (TupleTableSlot*) NULL;
+    }
+#endif
+
     feature = (LAST_POSTQUEL_COMMAND(es)) ? EXEC_RETONE : EXEC_RUN;
     
     return ExecutorRun(es->qd, es->estate, feature, 0);
@@ -176,6 +195,14 @@ postquel_getnext(execution_state *es)
 static void
 postquel_end(execution_state *es)
 {
+#ifdef FUNC_UTIL_PATCH
+    /*
+     * Do nothing for utility commands. (create, destroy...)  DZ - 30-8-1996
+     */
+    if (es->qd->operation == CMD_UTILITY) {
+	return;
+    }
+#endif
     ExecutorEnd(es->qd, es->estate);
 }
 

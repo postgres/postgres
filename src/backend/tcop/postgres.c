@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.7 1996/09/10 06:48:52 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.8 1996/09/16 05:36:38 scrappy Exp $
  *
  * NOTES
  *    this is the "main" module of the postgres backend and
@@ -547,6 +547,16 @@ pg_plan(char *query_string,	/* string to execute */
 	    }
 #endif
 	}
+#ifdef FUNC_UTIL_PATCH
+	/*
+	 * If the command is an utility append a null plan. This is
+	 * needed to keep the plan_list aligned with the querytree_list
+	 * or the function executor will crash.  DZ - 30-8-1996
+	 */
+	else {
+	    plan_list = lappend(plan_list, NULL);
+	}
+#endif
     }
     
     if (queryListP)
@@ -601,6 +611,14 @@ pg_eval_dest(char *query_string, /* string to execute */
     for (i=0;i<querytree_list->len;i++) {
 	querytree = querytree_list->qtrees[i];
 	
+#ifdef FUNC_UTIL_PATCH
+	/*
+	 * Advance on the plan_list in every case.  Now the plan_list
+	 * has the same length of the querytree_list.  DZ - 30-8-1996
+	 */
+	plan = (Plan *) lfirst(plan_list);
+	plan_list = lnext(plan_list);
+#endif
 	if (querytree->commandType == CMD_UTILITY) {
 	    /* ----------------
 	     *   process utility functions (create, destroy, etc..)
@@ -617,8 +635,13 @@ pg_eval_dest(char *query_string, /* string to execute */
 	    ProcessUtility(querytree->utilityStmt, dest);
 	    
 	} else {
+#ifndef FUNC_UTIL_PATCH
+	    /*
+	     * Moved before the if.  DZ - 30-8-1996
+	     */
 	    plan = (Plan *) lfirst(plan_list);
 	    plan_list = lnext(plan_list);
+#endif
 	    
 #ifdef INDEXSCAN_PATCH
 	    /*
@@ -1246,7 +1269,7 @@ PostgresMain(int argc, char *argv[])
      */
     if (IsUnderPostmaster == false) {
 	puts("\nPOSTGRES backend interactive interface");
-	puts("$Revision: 1.7 $ $Date: 1996/09/10 06:48:52 $");
+	puts("$Revision: 1.8 $ $Date: 1996/09/16 05:36:38 $");
     }
     
     /* ----------------
