@@ -484,13 +484,35 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
       sbuf.setLength(0);
       sbuf.append(s);
 
+      //we are looking to see if the backend has appended on a timezone.
+      //currently postgresql will return +/-HH:MM or +/-HH for timezone offset
+      //(i.e. -06, or +06:30, note the expectation of the leading zero for the
+      //hours, and the use of the : for delimiter between hours and minutes)
+      //if the backend ISO format changes in the future this code will
+      //need to be changed as well
       char sub = sbuf.charAt(sbuf.length()-3);
       if (sub == '+' || sub == '-') {
+        //we have found timezone info of format +/-HH
         sbuf.setLength(sbuf.length()-3);
         if (subsecond)  {
           sbuf.append('0').append("GMT").append(s.substring(s.length()-3)).append(":00");
         } else {
           sbuf.append("GMT").append(s.substring(s.length()-3)).append(":00");
+        }
+      } else if (sub == ':') {
+        //we may have found timezone info of format +/-HH:MM, or there is no
+        //timezone info at all and this is the : preceding the seconds
+        char sub2 = sbuf.charAt(sbuf.length()-5);
+        if (sub2 == '+' || sub2 == '-') {
+          //we have found timezone info of format +/-HH:MM
+          sbuf.setLength(sbuf.length()-5);
+          if (subsecond)  {
+            sbuf.append('0').append("GMT").append(s.substring(s.length()-5));
+          } else {
+            sbuf.append("GMT").append(s.substring(s.length()-5));
+          }
+        } else if (subsecond) {
+          sbuf.append('0');
         }
       } else if (subsecond) {
         sbuf.append('0');
