@@ -471,10 +471,17 @@ static void _enableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreO
 	 * command when one is available.
 	 */
     ahprintf(AH, "-- Enable triggers\n");
-	ahprintf(AH, "UPDATE pg_class SET reltriggers = "
+	if (te && te->name && strlen(te->name) > 0)
+	{
+		ahprintf(AH, "UPDATE pg_class SET reltriggers = "
 				 "(SELECT count(*) FROM pg_trigger where pg_class.oid = tgrelid) "
 				 "WHERE relname = '%s';\n\n",
 				te->name);
+	} else {
+		ahprintf(AH, "UPDATE \"pg_class\" SET \"reltriggers\" = "
+				 "(SELECT count(*) FROM pg_trigger where pg_class.oid = tgrelid) "
+				 "WHERE \"relname\" !~ '^pg_';\n\n");
+	}
 
 	/*
 	 * Restore the user connection from the start of this procedure
