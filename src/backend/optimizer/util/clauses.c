@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.81 2001/02/12 18:46:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.82 2001/03/08 01:49:01 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -540,6 +540,14 @@ check_subplans_for_ungrouped_vars_walker(Node *node,
 										 Query *context)
 {
 	if (node == NULL)
+		return false;
+
+	/*
+	 * If we find an aggregate function, do not recurse into its
+	 * arguments.  Subplans invoked within aggregate calls are allowed
+	 * to receive ungrouped variables.
+	 */
+	if (IsA(node, Aggref))
 		return false;
 
 	/*
