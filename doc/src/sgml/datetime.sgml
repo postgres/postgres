@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.36 2003/09/20 20:12:04 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.37 2003/11/06 22:21:47 tgl Exp $
 -->
 
  <appendix id="datetime-appendix">
@@ -995,7 +995,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.36 2003/09/20 20:12:04 tg
   <para>
    The Julian Date was invented by the French scholar
    Joseph Justus Scaliger (1540-1609)
-   and probably takes its name from the Scaliger's father,
+   and probably takes its name from Scaliger's father,
    the Italian scholar Julius Caesar Scaliger (1484-1558).
    Astronomers have used the Julian period to assign a unique number to
    every day since 1 January 4713 BC. This is the so-called Julian Date
@@ -1007,7 +1007,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.36 2003/09/20 20:12:04 tg
    The <quote>Julian Date</quote> is different from the <quote>Julian
    Calendar</quote>.  The Julian calendar
    was introduced by Julius Caesar in 45 BC. It was in common use
-   until the 1582, when countries started changing to the Gregorian
+   until the year 1582, when countries started changing to the Gregorian
    calendar.  In the Julian calendar, the tropical year is
    approximated as 365 1/4 days = 365.25 days. This gives an error of
    about 1 day in 128 years.
@@ -1042,7 +1042,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.36 2003/09/20 20:12:04 tg
    So, 1700, 1800, 1900, 2100, and 2200 are not leap years. But 1600,
    2000, and 2400 are leap years.
 
-   By contrast, in the older Julian calendar only years divisible by 4 are leap years.
+   By contrast, in the older Julian calendar all years divisible by 4 are leap
+   years.
   </para>
 
   <para>

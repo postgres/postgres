@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.87 2003/11/04 19:18:15 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.88 2003/11/06 22:21:47 tgl Exp $
 -->
 
 <chapter id="sql-syntax">
@@ -205,7 +205,7 @@ UPDATE "my_table" SET "a" = 5;
     should be equivalent to <literal>"FOO"</literal> not
     <literal>"foo"</literal> according to the standard.  If you want
     to write portable applications you are advised to always quote a
-    particular name or never quote it.
+    particular name or never quote it.)
    </para>
   </sect2>
 
@@ -241,13 +241,13 @@ UPDATE "my_table" SET "a" = 5;
       <secondary>escaping</secondary>
      </indexterm>
      A string constant in SQL is an arbitrary sequence of characters
-     bounded by single quotes (<quote>'</quote>), e.g., <literal>'This
+     bounded by single quotes (<literal>'</literal>), e.g., <literal>'This
      is a string'</literal>.  SQL allows single quotes to be embedded
-     in strings by typing two adjacent single quotes (e.g.,
-     <literal>'Dianne''s horse'</literal>).  In
+     in strings by typing two adjacent single quotes, e.g.,
+     <literal>'Dianne''s horse'</literal>.  In
      <productname>PostgreSQL</productname> single quotes may
-     alternatively be escaped with a backslash (<quote>\</quote>,
-     e.g., <literal>'Dianne\'s horse'</literal>).
+     alternatively be escaped with a backslash (<literal>\</literal>),
+     e.g., <literal>'Dianne\'s horse'</literal>.
     </para>
 
     <para>
@@ -838,7 +838,7 @@ SELECT 3 OPERATOR(pg_catalog.+) 4;
    <itemizedlist>
     <listitem>
      <para>
-      A constant or literal value; see <xref linkend="sql-syntax-constants">.
+      A constant or literal value.
      </para>
     </listitem>
 

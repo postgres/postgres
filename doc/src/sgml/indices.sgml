@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/indices.sgml,v 1.45 2003/09/30 03:22:33 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/indices.sgml,v 1.46 2003/11/06 22:21:47 tgl Exp $ -->
 
 <chapter id="indexes">
  <title id="indexes-title">Indexes</title>
@@ -77,7 +77,7 @@ CREATE INDEX test1_id_index ON test1 (id);
    than a sequential table scan.  But you may have to run the
    <command>ANALYZE</command> command regularly to update
    statistics to allow the query planner to make educated decisions.
-   Also read <xref linkend="performance-tips"> for information about
+   See <xref linkend="performance-tips"> for information about
    how to find out whether an index is used and when and why the
    planner may choose <emphasis>not</emphasis> to use an index.
   </para>
@@ -106,8 +106,8 @@ CREATE INDEX test1_id_index ON test1 (id);
 
   <para>
    <productname>PostgreSQL</productname> provides several index types:
-   B-tree, R-tree, GiST, and Hash.  Each index type is more appropriate for
-   a particular query type because of the algorithm it uses.
+   B-tree, R-tree, GiST, and Hash.  Each index type uses a different
+   algorithm that is best suited to different types of queries.
    <indexterm>
     <primary>index</primary>
     <secondary>B-tree</secondary>
@@ -116,9 +116,10 @@ CREATE INDEX test1_id_index ON test1 (id);
     <primary>B-tree</primary>
     <see>index</see>
    </indexterm>
-   By
-   default, the <command>CREATE INDEX</command> command will create a
-   B-tree index, which fits the most common situations.  In
+   By default, the <command>CREATE INDEX</command> command will create a
+   B-tree index, which fits the most common situations.  B-trees can
+   handle equality and range queries on data that can be sorted into
+   some ordering.  In
    particular, the <productname>PostgreSQL</productname> query planner
    will consider using a B-tree index whenever an indexed column is
    involved in a comparison using one of these operators:
@@ -154,7 +155,7 @@ CREATE INDEX test1_id_index ON test1 (id);
     <primary>R-tree</primary>
     <see>index</see>
    </indexterm>
-   R-tree indexes are especially suited for spatial data.  To create
+   R-tree indexes are suited for queries on spatial data.  To create
    an R-tree index, use a command of the form
 <synopsis>
 CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable> USING RTREE (<replaceable>column</replaceable>);
@@ -185,6 +186,7 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
     <primary>hash</primary>
     <see>index</see>
    </indexterm>
+   Hash indexes can only handle simple equality comparisons.
    The query planner will consider using a hash index whenever an
    indexed column is involved in a comparison using the
    <literal>=</literal> operator.  The following command is used to
@@ -195,19 +197,18 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
    <note>
     <para>
      Testing has shown <productname>PostgreSQL</productname>'s hash
-     indexes to be similar or slower than B-tree indexes, and the
-     index size and build time for hash indexes is much worse. Hash
-     indexes also suffer poor performance under high concurrency. For
+     indexes to perform no better than B-tree indexes, and the
+     index size and build time for hash indexes is much worse. For
      these reasons, hash index use is presently discouraged.
     </para>
    </note>  
   </para>
 
   <para>
-   The B-tree index is an implementation of Lehman-Yao
+   The B-tree index method is an implementation of Lehman-Yao
    high-concurrency B-trees.  The R-tree index method implements
    standard R-trees using Guttman's quadratic split algorithm.  The
-   hash index is an implementation of Litwin's linear hashing.  We
+   hash index method is an implementation of Litwin's linear hashing.  We
    mention the algorithms used solely to indicate that all of these
    index methods are fully dynamic and do not have to be optimized
    periodically (as is the case with, for example, static hash methods).
@@ -233,7 +234,7 @@ CREATE TABLE test2 (
   name varchar
 );
 </programlisting>
-   (Say, you keep your <filename class="directory">/dev</filename>
+   (say, you keep your <filename class="directory">/dev</filename>
    directory in a database...) and you frequently make queries like
 <programlisting>
 SELECT name FROM test2 WHERE major = <replaceable>constant</replaceable> AND minor = <replaceable>constant</replaceable>;
@@ -263,8 +264,8 @@ CREATE INDEX test2_mm_idx ON test2 (major, minor);
    <literal>a</literal> and <literal>b</literal>, or in queries
    involving only <literal>a</literal>, but not in other combinations.
    (In a query involving <literal>a</literal> and <literal>c</literal>
-   the planner might choose to use the index for
-   <literal>a</literal> only and treat <literal>c</literal> like an
+   the planner could choose to use the index for
+   <literal>a</literal>, while treating <literal>c</literal> like an
    ordinary unindexed column.)  Of course, each column must be used with
    operators appropriate to the index type; clauses that involve other
    operators will not be considered.
@@ -310,16 +311,16 @@ CREATE UNIQUE INDEX <replaceable>name</replaceable> ON <replaceable>table</repla
   <para>
    When an index is declared unique, multiple table rows with equal
    indexed values will not be allowed.  Null values are not considered
-   equal.
+   equal.  A multicolumn unique index will only reject cases where all
+   of the indexed columns are equal in two rows.
   </para>
 
   <para>
-   <productname>PostgreSQL</productname> automatically creates unique
-   indexes when a table is declared with a unique constraint or a
-   primary key, on the columns that make up the primary key or unique
-   columns (a multicolumn index, if appropriate), to enforce that
-   constraint.  A unique index can be added to a table at any later
-   time, to add a unique constraint.
+   <productname>PostgreSQL</productname> automatically creates a unique
+   index when a unique constraint or a primary key is defined for a table.
+   The index covers the columns that make up the primary key or unique 
+   columns (a multicolumn index, if appropriate), and is the mechanism
+   that enforces the constraint.
   </para>
 
   <note>
@@ -328,6 +329,9 @@ CREATE UNIQUE INDEX <replaceable>name</replaceable> ON <replaceable>table</repla
     <literal>ALTER TABLE ... ADD CONSTRAINT</literal>.  The use of
     indexes to enforce unique constraints could be considered an
     implementation detail that should not be accessed directly.
+    One should, however, be aware that there's no need to manually
+    create indexes on unique columns; doing so would just duplicate
+    the automatically-created index.
    </para>
   </note>
  </sect1>
@@ -360,6 +364,14 @@ SELECT * FROM test1 WHERE lower(col1) = 'value';
 <programlisting>
 CREATE INDEX test1_lower_col1_idx ON test1 (lower(col1));
 </programlisting>
+  </para>
+
+  <para>
+   If we were to declare this index <literal>UNIQUE</>, it would prevent
+   creation of rows whose <literal>col1</> values differ only in case,
+   as well as rows whose <literal>col1</> values are actually identical.
+   Thus, indexes on expressions can be used to enforce constraints that
+   are not definable as simple unique constraints.
   </para>
 
   <para>
@@ -409,7 +421,7 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
    In practice the default operator class for the column's data type is
    usually sufficient.  The main point of having operator classes is
    that for some data types, there could be more than one meaningful
-   ordering.  For example, we might want to sort a complex-number data
+   index behavior.  For example, we might want to sort a complex-number data
    type either by absolute value or by real part.  We could do this by
    defining two operator classes for the data type and then selecting
    the proper class when making an index.
@@ -419,20 +431,6 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
    There are also some built-in operator classes besides the default ones:
 
    <itemizedlist>
-    <listitem>
-     <para>
-      The operator classes <literal>box_ops</literal> and
-      <literal>bigbox_ops</literal> both support R-tree indexes on the
-      <type>box</type> data type.  The difference between them is
-      that <literal>bigbox_ops</literal> scales box coordinates down,
-      to avoid floating-point exceptions from doing multiplication,
-      addition, and subtraction on very large floating-point
-      coordinates.  If the field on which your rectangles lie is about
-      20 000 square units or larger, you should use
-      <literal>bigbox_ops</literal>.
-     </para>
-    </listitem>
-
     <listitem>
      <para>
       The operator classes <literal>text_pattern_ops</literal>,
@@ -644,7 +642,8 @@ SELECT * FROM orders WHERE order_nr = 3501;
    create, it would probably be too slow to be of any real use.)
    The system can recognize simple inequality implications, for example
    <quote>x &lt; 1</quote> implies <quote>x &lt; 2</quote>; otherwise
-   the predicate condition must exactly match the query's <literal>WHERE</> condition
+   the predicate condition must exactly match part of the query's
+   <literal>WHERE</> condition
    or the index will not be recognized to be usable.
   </para>
 
@@ -723,7 +722,8 @@ CREATE UNIQUE INDEX tests_success_constraint ON tests (subject, target)
    maintenance and tuning, it is still important to check
    which indexes are actually used by the real-life query workload.
    Examining index usage for an individual query is done with the
-   <command>EXPLAIN</> command; its application for this purpose is
+   <xref linkend="sql-explain" endterm="sql-explain-title">
+   command; its application for this purpose is
    illustrated in <xref linkend="using-explain">.
    It is also possible to gather overall statistics about index usage
    in a running server, as described in <xref linkend="monitoring-stats">.
@@ -740,7 +740,8 @@ CREATE UNIQUE INDEX tests_success_constraint ON tests (subject, target)
   <itemizedlist>
    <listitem>
     <para>
-     Always run <command>ANALYZE</command> first.  This command
+     Always run <xref linkend="sql-analyze" endterm="sql-analyze-title">
+     first.  This command
      collects statistics about the distribution of the values in the
      table.  This information is required to guess the number of rows
      returned by a query, which is needed by the planner to assign
@@ -813,8 +814,8 @@ CREATE UNIQUE INDEX tests_success_constraint ON tests (subject, target)
      run-time parameters (described in <xref linkend="runtime-config">).
      An inaccurate selectivity estimate is due to
      insufficient statistics.  It may be possible to help this by
-     tuning the statistics-gathering parameters (see <command>ALTER
-     TABLE</command> reference).
+     tuning the statistics-gathering parameters (see
+     <xref linkend="sql-altertable" endterm="sql-altertable-title">).
     </para>
 
     <para>

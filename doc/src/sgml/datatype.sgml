@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.129 2003/11/04 09:55:38 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.130 2003/11/06 22:21:47 tgl Exp $
 -->
 
  <chapter id="datatype">
@@ -250,8 +250,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.129 2003/11/04 09:55:38 p
     <type>varchar</type>, <type>date</type>, <type>double
     precision</type>, <type>integer</type>, <type>interval</type>,
     <type>numeric</type>, <type>decimal</type>, <type>real</type>,
-    <type>smallint</type>, <type>time</type>, <type>timestamp</type>
-    (both with or without time zone).
+    <type>smallint</type>, <type>time</type> (with or without time zone),
+    <type>timestamp</type> (with or without time zone).
    </para>
   </note>
 
