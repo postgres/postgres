@@ -4,9 +4,10 @@
  *	  Definitions for network authentication routines
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: auth.h,v 1.12 1999/05/26 12:56:29 momjian Exp $
+ * $Id: auth.h,v 1.13 2000/01/26 05:58:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -3,11 +3,12 @@
  * varlena.c
  *	  Functions for the variable-length built-in types.
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.55 2000/01/15 02:59:38 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.56 2000/01/26 05:57:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -4,9 +4,10 @@
  *	  Definitions for tagged nodes.
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.62 2000/01/17 00:14:48 tgl Exp $
+ * $Id: nodes.h,v 1.63 2000/01/26 05:58:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

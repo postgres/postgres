@@ -3,11 +3,12 @@
  * catcache.c
  *	  System catalog cache for tuples matching a key.
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.57 2000/01/17 23:57:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.58 2000/01/26 05:57:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

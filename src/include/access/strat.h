@@ -5,9 +5,10 @@
  *	  (separated out from original istrat.h to avoid circular refs)
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: strat.h,v 1.16 1999/07/15 23:03:38 momjian Exp $
+ * $Id: strat.h,v 1.17 2000/01/26 05:57:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

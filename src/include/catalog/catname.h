@@ -4,9 +4,10 @@
  *	  POSTGRES system catalog relation name definitions.
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: catname.h,v 1.11 1999/02/13 23:21:02 momjian Exp $
+ * $Id: catname.h,v 1.12 2000/01/26 05:57:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

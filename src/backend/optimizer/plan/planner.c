@@ -3,11 +3,12 @@
  * planner.c
  *	  The query optimizer external interface.
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.72 1999/12/09 05:58:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.73 2000/01/26 05:56:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -4,11 +4,12 @@
  *	  support for executing POSTGRES commands and functions from a
  *	  user-defined function in a backend.
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-pqexec.c,v 1.29 2000/01/12 05:27:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-pqexec.c,v 1.30 2000/01/26 05:56:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

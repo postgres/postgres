@@ -4,9 +4,10 @@
  *
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_oper.h,v 1.10 1999/12/12 20:51:28 tgl Exp $
+ * $Id: parse_oper.h,v 1.11 2000/01/26 05:58:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

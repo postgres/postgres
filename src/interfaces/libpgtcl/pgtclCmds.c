@@ -3,11 +3,12 @@
  * pgtclCmds.c
  *	  C functions which implement pg_* tcl commands
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.45 1999/07/17 20:18:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.46 2000/01/26 05:58:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

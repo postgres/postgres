@@ -4,9 +4,10 @@
  *	  header file for postgres vacuum cleaner
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: vacuum.h,v 1.25 2000/01/15 22:43:23 tgl Exp $
+ * $Id: vacuum.h,v 1.26 2000/01/26 05:58:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

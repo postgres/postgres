@@ -6,11 +6,12 @@
  *	  to the Postmaster and the postmaster uses the info in the
  *	  message to setup a backend process.
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.134 2000/01/20 04:11:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.135 2000/01/26 05:56:48 momjian Exp $
  *
  * NOTES
  *

@@ -3,11 +3,12 @@
  * shmem.c
  *	  create shared memory and initialize shared memory data structures.
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.47 1999/10/06 21:58:06 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.48 2000/01/26 05:56:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -4,9 +4,10 @@
  *
  *	  Definitions for network authentication routines
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fe-auth.h,v 1.10 1998/09/01 04:40:03 momjian Exp $
+ * $Id: fe-auth.h,v 1.11 2000/01/26 05:58:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

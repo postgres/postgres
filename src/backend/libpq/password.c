@@ -1,7 +1,8 @@
 /*
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: password.c,v 1.27 1999/11/23 01:04:38 tgl Exp $
+ * $Id: password.c,v 1.28 2000/01/26 05:56:29 momjian Exp $
  *
  */
 

@@ -4,9 +4,10 @@
  *	  POSTGRES heap access method definitions.
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heapam.h,v 1.50 2000/01/22 14:20:52 petere Exp $
+ * $Id: heapam.h,v 1.51 2000/01/26 05:57:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

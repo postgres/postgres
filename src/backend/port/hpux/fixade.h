@@ -5,9 +5,10 @@
  *	  dereferences on PA-RISC.
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fixade.h,v 1.7 1999/05/25 16:10:36 momjian Exp $
+ * $Id: fixade.h,v 1.8 2000/01/26 05:56:46 momjian Exp $
  *
  *	 NOTES
  *		This must be included in EVERY source file.

@@ -11,7 +11,8 @@
  *   NOTES
  *      Currently under construction.
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  *-------------------------------------------------------------------------
@@ -30,7 +31,7 @@ extern "C" {
 #include "libpq-fe.h"
 }
 
-static char rcsid[] = "$Id: libpq++.h,v 1.4 1999/12/05 19:29:37 momjian Exp $";
+static char rcsid[] = "$Id: libpq++.h,v 1.5 2000/01/26 05:58:47 momjian Exp $";
 
 
 // ****************************************************************

@@ -3,11 +3,12 @@
  * indexvalid.c
  *	  index tuple qualification validity checking code
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/Attic/indexvalid.c,v 1.23 1999/07/15 23:02:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/Attic/indexvalid.c,v 1.24 2000/01/26 05:55:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

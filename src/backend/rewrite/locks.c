@@ -2,11 +2,12 @@
  *
  * locks.c
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/Attic/locks.c,v 1.26 1999/11/24 16:52:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/Attic/locks.c,v 1.27 2000/01/26 05:56:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

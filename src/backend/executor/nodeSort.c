@@ -3,11 +3,12 @@
  * nodeSort.c
  *	  Routines to handle sorting of relations.
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSort.c,v 1.24 1999/10/17 22:15:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSort.c,v 1.25 2000/01/26 05:56:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

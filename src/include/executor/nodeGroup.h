@@ -4,9 +4,10 @@
  *	  prototypes for nodeGroup.c
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeGroup.h,v 1.12 1999/07/15 15:21:11 momjian Exp $
+ * $Id: nodeGroup.h,v 1.13 2000/01/26 05:58:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

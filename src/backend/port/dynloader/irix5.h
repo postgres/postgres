@@ -4,7 +4,8 @@
  *	  port-specific prototypes for Irix 5
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  * port_protos.h,v 1.2 1995/03/17 06:40:18 andrew Exp
  *

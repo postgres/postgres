@@ -9,9 +9,10 @@
  *			"utils/geo-decls.h"
  *		and "libpq/libpq.h"
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tgRecipe.h,v 1.12 1999/07/15 15:20:03 momjian Exp $
+ * $Id: tgRecipe.h,v 1.13 2000/01/26 05:57:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

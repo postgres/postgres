@@ -4,9 +4,10 @@
  *	  Asynchronous notification
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_listener.h,v 1.6 1999/02/13 23:21:11 momjian Exp $
+ * $Id: pg_listener.h,v 1.7 2000/01/26 05:57:57 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki

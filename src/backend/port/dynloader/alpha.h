@@ -4,9 +4,10 @@
  *	  prototypes for OSF/1-specific routines
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: alpha.h,v 1.3 1999/02/13 23:17:15 momjian Exp $
+ * $Id: alpha.h,v 1.4 2000/01/26 05:56:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

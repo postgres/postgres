@@ -5,9 +5,10 @@
  *	  externs for functions used by the POSTGRES backend.
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-be.h,v 1.17 1999/09/27 03:13:11 momjian Exp $
+ * $Id: libpq-be.h,v 1.18 2000/01/26 05:58:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

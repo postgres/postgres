@@ -60,10 +60,11 @@
  * care that all calls for a single LogicalTapeSet are made in the same
  * palloc context.
  * 
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/logtape.c,v 1.2 1999/10/17 22:15:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/logtape.c,v 1.3 2000/01/26 05:57:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -3,9 +3,10 @@
  * cluster.h
  *	  header file for postgres cluster command stuff
  *
- * Copyright (c) 1994-5, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994-5, Regents of the University of California
  *
- * $Id: cluster.h,v 1.7 1999/02/13 23:21:17 momjian Exp $
+ * $Id: cluster.h,v 1.8 2000/01/26 05:58:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -4,9 +4,10 @@
  *	  Declarations for operations on built-in types.
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: inet.h,v 1.5 1999/05/25 22:43:34 momjian Exp $
+ * $Id: inet.h,v 1.6 2000/01/26 05:58:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

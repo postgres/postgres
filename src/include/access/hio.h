@@ -4,9 +4,10 @@
  *	  POSTGRES heap access method input/output definitions.
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hio.h,v 1.13 1999/07/15 23:03:34 momjian Exp $
+ * $Id: hio.h,v 1.14 2000/01/26 05:57:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -4,9 +4,10 @@
  *	  Virtual file descriptor definitions.
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fd.h,v 1.18 1999/10/13 15:02:32 tgl Exp $
+ * $Id: fd.h,v 1.19 2000/01/26 05:58:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

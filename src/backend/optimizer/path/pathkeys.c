@@ -3,11 +3,12 @@
  * pathkeys.c
  *	  Utilities for matching and building path keys
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.17 2000/01/09 00:26:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.18 2000/01/26 05:56:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

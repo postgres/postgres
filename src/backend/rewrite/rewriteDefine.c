@@ -3,11 +3,12 @@
  * rewriteDefine.c
  *	  routines for defining a rewrite rule
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.40 1999/11/18 13:56:27 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.41 2000/01/26 05:56:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

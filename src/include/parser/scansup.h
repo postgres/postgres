@@ -4,9 +4,10 @@
  *	  scanner support routines.  used by both the bootstrap lexer
  * as well as the normal lexer
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: scansup.h,v 1.6 1999/02/13 23:21:57 momjian Exp $
+ * $Id: scansup.h,v 1.7 2000/01/26 05:58:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -4,11 +4,12 @@
  * bootscanner.lex
  *	  a lexical scanner for the bootstrap parser
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootscanner.l,v 1.16 1999/11/04 08:00:58 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootscanner.l,v 1.17 2000/01/26 05:56:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -4,9 +4,10 @@
  *	  routines defined in access/rtree/rtscan.c
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rtscan.h,v 1.8 1999/07/16 17:07:27 momjian Exp $
+ * $Id: rtscan.h,v 1.9 2000/01/26 05:57:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

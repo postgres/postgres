@@ -4,9 +4,10 @@
  *	  POSTGRES shared cache invalidation communication definitions.
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: sinval.h,v 1.13 1999/09/24 00:25:27 tgl Exp $
+ * $Id: sinval.h,v 1.14 2000/01/26 05:58:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

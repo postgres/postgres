@@ -10,11 +10,12 @@
  *	  my (probably bogus) assumptions about the way this works.
  *														[pbrown '94]
  *
- * Copyright (c) 1994-5, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.49 1999/12/16 22:19:41 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.50 2000/01/26 05:56:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

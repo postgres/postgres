@@ -3,11 +3,12 @@
  * exc.c
  *	  POSTGRES exception handling code.
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/exc.c,v 1.28 1999/07/17 20:18:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/exc.c,v 1.29 2000/01/26 05:57:20 momjian Exp $
  *
  * NOTE
  *	  XXX this code needs improvement--check for state violations and

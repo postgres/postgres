@@ -4,9 +4,10 @@
  *	  Definitions for parse tree/query tree ("primitive") nodes.
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.38 1999/12/13 01:27:10 tgl Exp $
+ * $Id: primnodes.h,v 1.39 2000/01/26 05:58:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -4,9 +4,10 @@
  *	  POSTGRES attribute number definitions.
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: attnum.h,v 1.10 1999/05/25 16:13:26 momjian Exp $
+ * $Id: attnum.h,v 1.11 2000/01/26 05:57:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -3,11 +3,12 @@
  * int.c
  *	  Functions for the built-in integer types.
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.31 2000/01/10 16:13:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.32 2000/01/26 05:57:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

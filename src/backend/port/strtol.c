@@ -1,5 +1,6 @@
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

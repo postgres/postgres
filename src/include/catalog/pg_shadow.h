@@ -6,9 +6,10 @@
  *		  pg_user is now a public accessible view on pg_shadow.
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_shadow.h,v 1.6 2000/01/15 18:30:34 petere Exp $
+ * $Id: pg_shadow.h,v 1.7 2000/01/26 05:57:58 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki

@@ -3,11 +3,12 @@
  * transsup.c
  *	  postgres transaction access method support code
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/Attic/transsup.c,v 1.24 1999/07/16 04:58:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/Attic/transsup.c,v 1.25 2000/01/26 05:56:04 momjian Exp $
  *
  * NOTES
  *	  This file contains support functions for the high

@@ -2,9 +2,10 @@
  *
  * geqo_copy.c
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_copy.c,v 1.8 1999/07/16 04:59:06 momjian Exp $
+ * $Id: geqo_copy.c,v 1.9 2000/01/26 05:56:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -4,9 +4,10 @@
  *	  POSTGRES tuple descriptor definitions.
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tupdesc.h,v 1.25 1999/10/03 23:55:34 tgl Exp $
+ * $Id: tupdesc.h,v 1.26 2000/01/26 05:57:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

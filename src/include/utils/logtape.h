@@ -5,9 +5,10 @@
  *
  * See logtape.c for explanations.
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: logtape.h,v 1.1 1999/10/16 19:49:28 tgl Exp $
+ * $Id: logtape.h,v 1.2 2000/01/26 05:58:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -3,9 +3,10 @@
  * analyze.c
  *	  transform the parse tree into a query tree
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: analyze.c,v 1.132 2000/01/22 01:22:48 tgl Exp $
+ *	$Id: analyze.c,v 1.133 2000/01/26 05:56:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

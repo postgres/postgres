@@ -4,9 +4,10 @@
  *	  prototypes for index.c.
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: index.h,v 1.20 1999/12/10 03:56:05 momjian Exp $
+ * $Id: index.h,v 1.21 2000/01/26 05:57:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

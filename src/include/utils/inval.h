@@ -4,9 +4,10 @@
  *	  POSTGRES cache invalidation dispatcher definitions.
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: inval.h,v 1.15 2000/01/10 06:30:56 inoue Exp $
+ * $Id: inval.h,v 1.16 2000/01/26 05:58:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

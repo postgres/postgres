@@ -3,9 +3,10 @@
  * analyze.h
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: analyze.h,v 1.9 1999/07/15 23:04:00 momjian Exp $
+ * $Id: analyze.h,v 1.10 2000/01/26 05:58:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -15,10 +15,11 @@
  * the cost to process a tuple of an index during an index scan.
  *
  * 
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.49 2000/01/23 02:06:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.50 2000/01/26 05:56:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -3,7 +3,8 @@
  * nodeResult.c
  *	  support for constant nodes needing special code.
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * DESCRIPTION
@@ -27,7 +28,7 @@
  *				   SeqScan (emp.all)
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeResult.c,v 1.12 2000/01/19 23:54:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeResult.c,v 1.13 2000/01/26 05:56:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -3,10 +3,11 @@
  * nodeHash.c
  *	  Routines to hash relations for hashjoin
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- *	$Id: nodeHash.c,v 1.43 2000/01/19 23:54:55 tgl Exp $
+ *	$Id: nodeHash.c,v 1.44 2000/01/26 05:56:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -4,9 +4,10 @@
  *	  Standard bit array definitions.
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bit.h,v 1.6 1999/05/25 16:14:51 momjian Exp $
+ * $Id: bit.h,v 1.7 2000/01/26 05:58:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

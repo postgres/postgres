@@ -4,9 +4,10 @@
  *	  POSTGRES scan key definitions.
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: skey.h,v 1.12 1999/07/15 23:03:37 momjian Exp $
+ * $Id: skey.h,v 1.13 2000/01/26 05:57:51 momjian Exp $
  *
  *
  * Note:

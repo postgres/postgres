@@ -3,9 +3,10 @@
  * async.h
  *	  Asynchronous notification: NOTIFY, LISTEN, UNLISTEN
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: async.h,v 1.12 1999/07/14 01:20:11 momjian Exp $
+ * $Id: async.h,v 1.13 2000/01/26 05:58:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -4,9 +4,10 @@
  *	  Definitions for the datetime
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: datetime.h,v 1.8 1999/07/14 01:20:29 momjian Exp $
+ * $Id: datetime.h,v 1.9 2000/01/26 05:58:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -3,9 +3,10 @@
  * geqo_eval.c
  *	  Routines to evaluate query trees
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_eval.c,v 1.45 2000/01/09 00:26:27 tgl Exp $
+ * $Id: geqo_eval.c,v 1.46 2000/01/26 05:56:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

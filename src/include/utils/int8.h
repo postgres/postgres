@@ -4,9 +4,10 @@
  *	  Declarations for operations on 64-bit integers.
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: int8.h,v 1.16 2000/01/15 02:59:43 petere Exp $
+ * $Id: int8.h,v 1.17 2000/01/26 05:58:38 momjian Exp $
  *
  * NOTES
  * These data types are supported on all 64-bit architectures, and may

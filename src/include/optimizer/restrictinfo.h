@@ -4,9 +4,10 @@
  *	  prototypes for restrictinfo.c.
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: restrictinfo.h,v 1.7 1999/07/25 23:07:23 tgl Exp $
+ * $Id: restrictinfo.h,v 1.8 2000/01/26 05:58:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

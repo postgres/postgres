@@ -4,9 +4,10 @@
  *	  Stubs for getrusage(3).
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rusagestub.h,v 1.4 1999/02/13 23:20:47 momjian Exp $
+ * $Id: rusagestub.h,v 1.5 2000/01/26 05:57:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

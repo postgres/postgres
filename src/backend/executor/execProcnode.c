@@ -7,11 +7,12 @@
  *	 ExecProcNode, or ExecEndNode on its subnodes and do the appropriate
  *	 processing..
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execProcnode.c,v 1.17 2000/01/05 18:23:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execProcnode.c,v 1.18 2000/01/26 05:56:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

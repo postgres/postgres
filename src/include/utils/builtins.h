@@ -4,9 +4,10 @@
  *	  Declarations for operations on built-in types.
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.98 2000/01/24 07:16:47 tgl Exp $
+ * $Id: builtins.h,v 1.99 2000/01/26 05:58:37 momjian Exp $
  *
  * NOTES
  *	  This should normally only be included by fmgr.h.

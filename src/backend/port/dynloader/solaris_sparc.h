@@ -4,9 +4,10 @@
  *	  port-specific prototypes for SunOS 4
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: solaris_sparc.h,v 1.4 1999/07/16 03:13:14 momjian Exp $
+ * $Id: solaris_sparc.h,v 1.5 2000/01/26 05:56:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

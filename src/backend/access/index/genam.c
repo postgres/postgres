@@ -3,11 +3,12 @@
  * genam.c
  *	  general index access method routines
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/genam.c,v 1.22 1999/12/30 05:04:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/genam.c,v 1.23 2000/01/26 05:55:57 momjian Exp $
  *
  * NOTES
  *	  many of the old access method routines have been turned into

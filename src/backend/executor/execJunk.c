@@ -3,11 +3,12 @@
  * junk.c
  *	  Junk attribute support stuff....
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execJunk.c,v 1.21 1999/10/30 23:13:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execJunk.c,v 1.22 2000/01/26 05:56:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

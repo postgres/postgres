@@ -3,11 +3,12 @@
  * mcxt.c
  *	  POSTGRES memory context code.
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/mcxt.c,v 1.19 1999/07/17 20:18:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/mcxt.c,v 1.20 2000/01/26 05:57:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -4,11 +4,12 @@
  *	  routines for reading and writing data packets sent/received by
  *	  POSTGRES clients and servers
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/pqpacket.c,v 1.23 1999/09/27 03:12:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/pqpacket.c,v 1.24 2000/01/26 05:56:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

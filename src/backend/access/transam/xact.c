@@ -3,11 +3,12 @@
  * xact.c
  *	  top level transaction system support routines
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.58 2000/01/10 06:30:50 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.59 2000/01/26 05:56:04 momjian Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:

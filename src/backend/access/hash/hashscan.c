@@ -3,11 +3,12 @@
  * hashscan.c
  *	  manage scans on hash tables
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashscan.c,v 1.21 2000/01/15 02:59:19 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashscan.c,v 1.22 2000/01/26 05:55:55 momjian Exp $
  *
  * NOTES
  *	  Because we can be doing an index scan on a relation while we

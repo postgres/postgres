@@ -2,9 +2,10 @@
  * explain.c
  *	  Explain the query execution plan
  *
- * Copyright (c) 1994-5, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994-5, Regents of the University of California
  *
- *	  $Id: explain.c,v 1.51 2000/01/09 00:26:18 tgl Exp $
+ *	  $Id: explain.c,v 1.52 2000/01/26 05:56:13 momjian Exp $
  *
  */
 

@@ -3,9 +3,10 @@
  * pg_dump.h
  *	  header file for the pg_dump utility
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.46 2000/01/18 18:09:02 momjian Exp $
+ * $Id: pg_dump.h,v 1.47 2000/01/26 05:57:38 momjian Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *

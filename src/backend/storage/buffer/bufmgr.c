@@ -3,11 +3,12 @@
  * bufmgr.c
  *	  buffer manager interface routines
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.71 2000/01/17 01:15:17 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.72 2000/01/26 05:56:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

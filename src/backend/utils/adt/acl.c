@@ -3,11 +3,12 @@
  * acl.c
  *	  Basic access control list data structures manipulation routines.
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.43 1999/11/24 16:52:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.44 2000/01/26 05:57:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

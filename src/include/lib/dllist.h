@@ -24,9 +24,10 @@
  *	 DLFreeElem(elt);				   -- free the element since we don't
  *										  use it anymore
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dllist.h,v 1.10 1999/05/31 23:48:03 tgl Exp $
+ * $Id: dllist.h,v 1.11 2000/01/26 05:58:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -3,9 +3,10 @@
  * geqo_pool.h
  *	  pool representation in optimizer/geqo
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_pool.h,v 1.8 1999/07/15 15:21:21 momjian Exp $
+ * $Id: geqo_pool.h,v 1.9 2000/01/26 05:58:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

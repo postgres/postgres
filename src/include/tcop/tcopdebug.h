@@ -4,9 +4,10 @@
  *	  #defines governing debugging behaviour in the traffic cop
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tcopdebug.h,v 1.4 1999/02/13 23:22:13 momjian Exp $
+ * $Id: tcopdebug.h,v 1.5 2000/01/26 05:58:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

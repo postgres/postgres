@@ -4,9 +4,10 @@
  *	  prototypes for the creator functions (for primitive nodes)
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: makefuncs.h,v 1.21 1999/08/22 20:15:00 tgl Exp $
+ * $Id: makefuncs.h,v 1.22 2000/01/26 05:58:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

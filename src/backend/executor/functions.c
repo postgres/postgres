@@ -4,11 +4,12 @@
  *	  Routines to handle functions called from the executor
  *	  Putting this stuff in fmgr makes the postmaster a mess....
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.30 1999/07/17 20:16:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.31 2000/01/26 05:56:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

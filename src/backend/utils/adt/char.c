@@ -4,11 +4,12 @@
  *	  Functions for the built-in type "char".
  *	  Functions for the built-in type "cid".
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/char.c,v 1.26 1999/07/17 20:17:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/char.c,v 1.27 2000/01/26 05:57:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

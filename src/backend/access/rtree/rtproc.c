@@ -3,11 +3,12 @@
  * rtproc.c
  *	  pg_amproc entries for rtrees.
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtproc.c,v 1.24 1999/07/17 20:16:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtproc.c,v 1.25 2000/01/26 05:56:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

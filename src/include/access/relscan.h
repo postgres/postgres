@@ -4,9 +4,10 @@
  *	  POSTGRES internal relation scan descriptor definitions.
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relscan.h,v 1.17 1999/07/15 23:03:36 momjian Exp $
+ * $Id: relscan.h,v 1.18 2000/01/26 05:57:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

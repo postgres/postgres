@@ -7,9 +7,10 @@
  *	  methods that aren't associated with operators.
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_amproc.h,v 1.18 1999/12/28 13:40:50 wieck Exp $
+ * $Id: pg_amproc.h,v 1.19 2000/01/26 05:57:56 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki

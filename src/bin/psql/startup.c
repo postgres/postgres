@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Team
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.17 2000/01/19 20:08:34 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.18 2000/01/26 05:57:44 momjian Exp $
  */
 #include <c.h>
 
@@ -572,7 +572,8 @@ showVersion(void)
 #endif
 
     puts("Copyright (C) 2000 PostgreSQL Global Development Team");
-    puts("Copyright (C) 1996 Regents of the University of California");
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+    puts("Portions Copyright (C) 1996 Regents of the University of California");
     puts("Read the file COPYING or use the command \\copyright to see the");
     puts("usage and distribution terms.");
 }

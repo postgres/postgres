@@ -3,11 +3,12 @@
  * nodeAppend.c
  *	  routines to handle append nodes.
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.28 1999/11/01 05:09:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.29 2000/01/26 05:56:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -7,9 +7,10 @@
  * It can be used to buffer either ordinary C strings (null-terminated text)
  * or arbitrary binary data.  All storage is allocated with palloc().
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: stringinfo.h,v 1.15 2000/01/22 03:52:03 tgl Exp $
+ * $Id: stringinfo.h,v 1.16 2000/01/26 05:58:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

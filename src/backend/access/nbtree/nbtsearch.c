@@ -3,11 +3,12 @@
  * btsearch.c
  *	  search code for postgres btrees.
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.55 1999/11/07 23:07:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.56 2000/01/26 05:55:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

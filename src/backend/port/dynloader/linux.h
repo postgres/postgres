@@ -4,9 +4,10 @@
  *	  port-specific prototypes for Linux
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: linux.h,v 1.7 1999/07/16 03:13:12 momjian Exp $
+ * $Id: linux.h,v 1.8 2000/01/26 05:56:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

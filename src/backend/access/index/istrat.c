@@ -4,11 +4,12 @@
  *	  index scan strategy manipulation code and index strategy manipulation
  *	  operator code.
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.39 2000/01/15 02:59:21 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.40 2000/01/26 05:55:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

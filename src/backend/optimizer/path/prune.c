@@ -3,11 +3,12 @@
  * prune.c
  *	  Routines to prune redundant paths and relations
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.44 2000/01/09 00:26:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.45 2000/01/26 05:56:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -10,9 +10,10 @@
  *   NOTES
  *      Currently under construction.
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  * 
- * $Id: pgconnection.h,v 1.2 1999/05/23 01:04:00 momjian Exp $
+ * $Id: pgconnection.h,v 1.3 2000/01/26 05:58:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

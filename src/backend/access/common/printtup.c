@@ -4,11 +4,12 @@
  *	  Routines to print out tuples to the destination (binary or non-binary
  *	  portals, frontend/interactive backend, etc.).
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.51 1999/11/22 17:55:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.52 2000/01/26 05:55:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

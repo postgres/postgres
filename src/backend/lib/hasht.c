@@ -4,11 +4,12 @@
  *	  hash table related functions that are not directly supported
  *	  by the hashing packages under utils/hash.
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/lib/Attic/hasht.c,v 1.11 1999/07/16 04:58:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/lib/Attic/hasht.c,v 1.12 2000/01/26 05:56:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -3,11 +3,12 @@
  * inval.c
  *	  POSTGRES cache invalidation dispatcher code.
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.31 2000/01/10 06:30:53 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.32 2000/01/26 05:57:17 momjian Exp $
  *
  * Note - this code is real crufty...
  *

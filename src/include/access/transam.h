@@ -4,9 +4,10 @@
  *	  postgres transaction access method support code header
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: transam.h,v 1.23 1999/07/15 23:03:38 momjian Exp $
+ * $Id: transam.h,v 1.24 2000/01/26 05:57:51 momjian Exp $
  *
  *	 NOTES
  *		Transaction System Version 101 now support proper oid

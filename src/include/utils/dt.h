@@ -6,9 +6,10 @@
  *	   including abstime, reltime, date, and time.
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dt.h,v 1.41 1999/07/15 15:21:39 momjian Exp $
+ * $Id: dt.h,v 1.42 2000/01/26 05:58:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

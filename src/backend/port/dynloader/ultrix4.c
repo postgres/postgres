@@ -5,11 +5,12 @@
  *	  (Note that pg_dlsym and pg_dlclose are actually macros defined in
  *	  "port-protos.h".)
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/ultrix4.c,v 1.10 1999/10/25 02:31:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/ultrix4.c,v 1.11 2000/01/26 05:56:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

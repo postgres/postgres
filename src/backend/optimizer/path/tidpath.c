@@ -4,11 +4,12 @@
  *	  Routines to determine which tids are usable for scanning a
  *	  given relation, and create TidPaths accordingly.
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/tidpath.c,v 1.2 2000/01/09 00:26:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/tidpath.c,v 1.3 2000/01/26 05:56:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

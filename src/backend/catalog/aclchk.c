@@ -3,11 +3,12 @@
  * aclchk.c
  *	  Routines to check access control permissions.
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.36 2000/01/17 23:57:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.37 2000/01/26 05:56:09 momjian Exp $
  *
  * NOTES
  *	  See acl.h.

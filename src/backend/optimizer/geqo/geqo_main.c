@@ -4,9 +4,10 @@
  *	  solution of the query optimization problem
  *	  by means of a Genetic Algorithm (GA)
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_main.c,v 1.19 1999/07/16 04:59:08 momjian Exp $
+ * $Id: geqo_main.c,v 1.20 2000/01/26 05:56:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -3,11 +3,12 @@
  * indexnode.c
  *	  Routines to find all indices on a relation
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/indexnode.c,v 1.21 1999/11/21 23:25:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/indexnode.c,v 1.22 2000/01/26 05:56:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

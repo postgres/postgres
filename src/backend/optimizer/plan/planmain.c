@@ -3,11 +3,12 @@
  * planmain.c
  *	  Routines to plan a single query
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.49 2000/01/09 00:26:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.50 2000/01/26 05:56:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

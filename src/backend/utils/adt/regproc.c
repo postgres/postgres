@@ -3,11 +3,12 @@
  * regproc.c
  *	  Functions for the built-in type "RegProcedure".
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.50 2000/01/11 02:46:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.51 2000/01/26 05:57:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

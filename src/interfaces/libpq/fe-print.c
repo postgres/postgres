@@ -3,13 +3,14 @@
  * fe-print.c
  *	  functions for pretty-printing query results
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  * These functions were formerly part of fe-exec.c, but they
  * didn't really belong there.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.31 2000/01/19 01:33:16 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.32 2000/01/26 05:58:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -4,9 +4,10 @@
  *	  Definitions for the "new" abstime code.
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nabstime.h,v 1.21 2000/01/24 19:34:19 petere Exp $
+ * $Id: nabstime.h,v 1.22 2000/01/26 05:58:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

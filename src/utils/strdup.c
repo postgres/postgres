@@ -3,11 +3,12 @@
  * strdup.c
  *	  copies a null-terminated string.
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/utils/Attic/strdup.c,v 1.6 1999/02/13 23:22:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/utils/Attic/strdup.c,v 1.7 2000/01/26 05:58:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

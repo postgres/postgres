@@ -4,9 +4,10 @@
  *	  for hashing in the new buffer manager
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hsearch.h,v 1.12 1999/05/25 16:14:54 momjian Exp $
+ * $Id: hsearch.h,v 1.13 2000/01/26 05:58:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

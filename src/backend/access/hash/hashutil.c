@@ -3,11 +3,12 @@
  * btutils.c
  *	  Utility code for Postgres btree implementation.
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashutil.c,v 1.22 1999/07/19 07:07:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashutil.c,v 1.23 2000/01/26 05:55:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

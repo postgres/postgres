@@ -3,10 +3,11 @@
  * fd.c
  *	  Virtual file descriptor code.
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.51 1999/11/23 01:08:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.52 2000/01/26 05:56:55 momjian Exp $
  *
  * NOTES:
  *

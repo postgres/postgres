@@ -4,9 +4,10 @@
  *	  POSTGRES index valid attribute bit map definitions.
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: ibit.h,v 1.11 1999/10/23 03:13:27 tgl Exp $
+ * $Id: ibit.h,v 1.12 2000/01/26 05:57:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

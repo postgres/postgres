@@ -3,11 +3,12 @@
  * hio.c
  *	  POSTGRES heap access method input/output code.
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Id: hio.c,v 1.28 2000/01/15 02:59:20 petere Exp $
+ *	  $Id: hio.c,v 1.29 2000/01/26 05:55:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

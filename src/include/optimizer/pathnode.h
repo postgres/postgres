@@ -4,9 +4,10 @@
  *	  prototypes for pathnode.c, indexnode.c, relnode.c.
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pathnode.h,v 1.23 2000/01/09 00:26:47 tgl Exp $
+ * $Id: pathnode.h,v 1.24 2000/01/26 05:58:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

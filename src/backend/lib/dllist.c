@@ -5,11 +5,12 @@
  *	  replaces the old simplelists stuff
  *	  the elements of the lists are void*
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/lib/dllist.c,v 1.15 1999/07/15 23:03:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/lib/dllist.c,v 1.16 2000/01/26 05:56:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

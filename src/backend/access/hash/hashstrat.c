@@ -3,11 +3,12 @@
  * btstrat.c
  *	  Srategy map entries for the btree indexed access method
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/Attic/hashstrat.c,v 1.15 1999/07/15 23:02:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/Attic/hashstrat.c,v 1.16 2000/01/26 05:55:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

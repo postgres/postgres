@@ -8,10 +8,11 @@
  *	  This file contains only the public interface routines.
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.51 2000/01/19 23:54:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.52 2000/01/26 05:55:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

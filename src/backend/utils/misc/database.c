@@ -3,11 +3,12 @@
  * database.c
  *	  miscellaneous initialization support stuff
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.34 2000/01/13 18:26:13 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.35 2000/01/26 05:57:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

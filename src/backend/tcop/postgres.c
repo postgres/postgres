@@ -3,11 +3,12 @@
  * postgres.c
  *	  POSTGRES C Backend Interface
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.140 2000/01/22 23:50:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.141 2000/01/26 05:57:07 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1515,7 +1516,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.140 $ $Date: 2000/01/22 23:50:18 $\n");
+		puts("$Revision: 1.141 $ $Date: 2000/01/26 05:57:07 $\n");
 	}
 
 	/*

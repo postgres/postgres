@@ -3,11 +3,12 @@
  * globals.c
  *	  global variable declarations
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.39 1999/12/10 10:29:01 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.40 2000/01/26 05:57:26 momjian Exp $
  *
  * NOTES
  *	  Globals used all over the place should be declared here and not

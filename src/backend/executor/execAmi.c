@@ -3,9 +3,10 @@
  * execAmi.c
  *	  miscellaneous executor access method routines
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: execAmi.c,v 1.44 1999/11/23 20:06:50 momjian Exp $
+ *	$Id: execAmi.c,v 1.45 2000/01/26 05:56:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

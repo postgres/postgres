@@ -3,11 +3,12 @@
  * float.c
  *	  Functions for the built-in floating-point types.
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.52 2000/01/15 02:59:37 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.53 2000/01/26 05:57:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

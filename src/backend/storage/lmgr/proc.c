@@ -3,11 +3,12 @@
  * proc.c
  *	  routines to manage per-process shared memory data structure
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.66 2000/01/17 01:15:18 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.67 2000/01/26 05:57:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +47,7 @@
  *		This is so that we can support more backends. (system-wide semaphore
  *		sets run out pretty fast.)				  -ay 4/95
  *
- * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.66 2000/01/17 01:15:18 inoue Exp $
+ * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.67 2000/01/26 05:57:02 momjian Exp $
  */
 #include <sys/time.h>
 #include <unistd.h>

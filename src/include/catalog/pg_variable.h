@@ -7,9 +7,10 @@
  *	  relcache code happy.
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_variable.h,v 1.6 1999/02/13 23:21:15 momjian Exp $
+ * $Id: pg_variable.h,v 1.7 2000/01/26 05:57:59 momjian Exp $
  *
  * NOTES
  *	  The structures and macros used by the transam/ code

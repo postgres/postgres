@@ -7,11 +7,12 @@
  * This is a modified version of src/backend/parser/scan.l
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.48 2000/01/20 05:23:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.49 2000/01/26 05:58:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

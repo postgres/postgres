@@ -4,9 +4,10 @@
  *	  synchronization routines
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: spin.h,v 1.10 1999/10/06 21:58:17 vadim Exp $
+ * $Id: spin.h,v 1.11 2000/01/26 05:58:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

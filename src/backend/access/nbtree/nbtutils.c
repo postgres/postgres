@@ -3,11 +3,12 @@
  * btutils.c
  *	  Utility code for Postgres btree implementation.
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.33 1999/09/27 18:20:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.34 2000/01/26 05:55:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

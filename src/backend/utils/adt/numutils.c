@@ -6,11 +6,12 @@
  *		integer:				itoa, ltoa
  *		floating point:			ftoa, atof1
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.38 1999/07/17 20:17:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.39 2000/01/26 05:57:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

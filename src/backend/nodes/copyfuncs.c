@@ -3,11 +3,12 @@
  * copyfuncs.c
  *	  Copy functions for Postgres tree nodes.
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.101 2000/01/22 23:50:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.102 2000/01/26 05:56:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -3,9 +3,10 @@
  * geqo_misc.h
  *	  prototypes for printout routines in optimizer/geqo
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_misc.h,v 1.13 1999/07/17 20:18:30 momjian Exp $
+ * $Id: geqo_misc.h,v 1.14 2000/01/26 05:58:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

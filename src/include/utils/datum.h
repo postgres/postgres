@@ -4,9 +4,10 @@
  *	  POSTGRES abstract data type datum representation definitions.
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: datum.h,v 1.9 1999/02/13 23:22:16 momjian Exp $
+ * $Id: datum.h,v 1.10 2000/01/26 05:58:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

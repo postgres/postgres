@@ -7,9 +7,10 @@
  *	  postgres.
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.2 1999/05/25 16:06:01 momjian Exp $
+ * $Id: c.h,v 1.3 2000/01/26 05:55:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

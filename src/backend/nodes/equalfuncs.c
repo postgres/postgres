@@ -3,11 +3,12 @@
  * equalfuncs.c
  *	  equality functions to compare node trees
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.55 2000/01/09 00:26:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.56 2000/01/26 05:56:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

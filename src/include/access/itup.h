@@ -4,9 +4,10 @@
  *	  POSTGRES index tuple definitions.
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: itup.h,v 1.22 1999/10/23 03:13:28 tgl Exp $
+ * $Id: itup.h,v 1.23 2000/01/26 05:57:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

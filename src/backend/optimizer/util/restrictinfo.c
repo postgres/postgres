@@ -3,11 +3,12 @@
  * restrictinfo.c
  *	  RestrictInfo node manipulation routines.
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.8 1999/07/25 23:07:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.9 2000/01/26 05:56:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

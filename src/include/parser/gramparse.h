@@ -4,9 +4,10 @@
  *	  scanner support routines.  used by both the bootstrap lexer
  * as well as the normal lexer
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: gramparse.h,v 1.10 2000/01/20 05:26:54 tgl Exp $
+ * $Id: gramparse.h,v 1.11 2000/01/26 05:58:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

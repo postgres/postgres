@@ -4,9 +4,10 @@
  *	  Low-level catalog cache definitions.
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: catcache.h,v 1.18 1999/07/15 23:04:20 momjian Exp $
+ * $Id: catcache.h,v 1.19 2000/01/26 05:58:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

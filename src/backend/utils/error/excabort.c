@@ -3,11 +3,12 @@
  * excabort.c
  *	  Default exception abort code.
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/excabort.c,v 1.7 1999/07/16 03:14:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/excabort.c,v 1.8 2000/01/26 05:57:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

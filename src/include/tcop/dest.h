@@ -42,9 +42,10 @@
  * in-line in BeginCommand and EndCommand probably should be moved out
  * to routines associated with each destination receiver type.
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dest.h,v 1.22 1999/07/15 23:04:17 momjian Exp $
+ * $Id: dest.h,v 1.23 2000/01/26 05:58:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

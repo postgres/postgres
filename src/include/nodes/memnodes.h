@@ -4,9 +4,10 @@
  *	  POSTGRES memory context node definitions.
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: memnodes.h,v 1.15 1999/07/16 17:07:33 momjian Exp $
+ * $Id: memnodes.h,v 1.16 2000/01/26 05:58:16 momjian Exp $
  *
  * XXX the typedefs in this file are different from the other ???nodes.h;
  *	  they are pointers to structures instead of the structures themselves.

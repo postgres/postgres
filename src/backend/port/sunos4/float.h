@@ -4,9 +4,10 @@
  *	  definitions for ANSI floating point
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: float.h,v 1.4 1999/02/13 23:17:37 momjian Exp $
+ * $Id: float.h,v 1.5 2000/01/26 05:56:47 momjian Exp $
  *
  * NOTES
  *	  These come straight out of ANSI X3.159-1989 (p.18) and

@@ -3,11 +3,12 @@
  * freefuncs.c
  *	  Free functions for Postgres tree nodes.
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.31 2000/01/17 00:14:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.32 2000/01/26 05:56:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -9,10 +9,11 @@
  *
  *	ASSUMPTION:  sizeof(long) >= sizeof(void*)
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclId.c,v 1.21 1999/07/17 20:18:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclId.c,v 1.22 2000/01/26 05:58:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

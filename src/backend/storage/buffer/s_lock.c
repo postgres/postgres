@@ -3,11 +3,12 @@
  * s_lock.c
  *	  buffer manager interface routines
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/Attic/s_lock.c,v 1.23 1999/07/17 20:17:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/Attic/s_lock.c,v 1.24 2000/01/26 05:56:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

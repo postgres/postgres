@@ -4,11 +4,12 @@
  *	  This file contains routines to support indices defined on system
  *	  catalogs.
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.57 2000/01/24 02:12:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.58 2000/01/26 05:56:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -4,9 +4,10 @@
  *
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rewriteHandler.h,v 1.11 1999/07/15 15:21:30 momjian Exp $
+ * $Id: rewriteHandler.h,v 1.12 2000/01/26 05:58:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

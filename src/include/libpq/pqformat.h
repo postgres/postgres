@@ -3,9 +3,10 @@
  * pqformat.h
  *		Definitions for formatting and parsing frontend/backend messages
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqformat.h,v 1.6 1999/08/31 04:26:33 tgl Exp $
+ * $Id: pqformat.h,v 1.7 2000/01/26 05:58:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

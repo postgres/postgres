@@ -4,9 +4,10 @@
  *	  Declarations/definitions of stuff needed to handle parameterized plans.
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: params.h,v 1.11 1999/07/15 23:03:54 momjian Exp $
+ * $Id: params.h,v 1.12 2000/01/26 05:58:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

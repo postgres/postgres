@@ -7,11 +7,12 @@
  *	  stuff - checking the qualification and projecting the tuple
  *	  appropriately.
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execScan.c,v 1.10 2000/01/19 23:54:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execScan.c,v 1.11 2000/01/26 05:56:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

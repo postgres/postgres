@@ -3,11 +3,12 @@
  * nbtcompare.c
  *	  Comparison functions for btree access method.
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtcompare.c,v 1.30 2000/01/10 17:14:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtcompare.c,v 1.31 2000/01/26 05:55:58 momjian Exp $
  *
  *	NOTES
  *		These functions are stored in pg_amproc.  For each operator class

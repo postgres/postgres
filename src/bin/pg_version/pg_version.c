@@ -3,11 +3,12 @@
  * pg_version.c
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_version/Attic/pg_version.c,v 1.11 1999/02/13 23:20:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_version/Attic/pg_version.c,v 1.12 2000/01/26 05:57:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -3,11 +3,12 @@
  * rewriteSupport.c
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteSupport.c,v 1.40 1999/12/16 22:19:50 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteSupport.c,v 1.41 2000/01/26 05:56:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

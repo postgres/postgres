@@ -3,11 +3,12 @@
  * parse_coerce.c
  *		handle type coersions/conversions for parser
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.28 2000/01/17 00:14:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.29 2000/01/26 05:56:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

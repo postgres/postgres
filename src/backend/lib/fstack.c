@@ -3,11 +3,12 @@
  * fstack.c
  *	  Fixed format stack definitions.
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/lib/Attic/fstack.c,v 1.13 1999/07/16 04:58:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/lib/Attic/fstack.c,v 1.14 2000/01/26 05:56:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

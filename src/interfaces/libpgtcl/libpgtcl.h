@@ -5,9 +5,10 @@
  *	libpgtcl is a tcl package for front-ends to interface with PostgreSQL.
  *	It's a Tcl wrapper for libpq.
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpgtcl.h,v 1.8 1999/05/25 22:43:42 momjian Exp $
+ * $Id: libpgtcl.h,v 1.9 2000/01/26 05:58:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

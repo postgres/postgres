@@ -10,10 +10,11 @@
  *   NOTES
  *      Currently under construction.
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- *  $Id: pgdatabase.h,v 1.5 1999/10/06 03:00:16 momjian Exp $
+ *  $Id: pgdatabase.h,v 1.6 2000/01/26 05:58:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

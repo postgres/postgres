@@ -10,9 +10,10 @@
  *		oset.h							  (used by aset.h)
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: memutils.h,v 1.32 1999/10/23 03:13:33 tgl Exp $
+ * $Id: memutils.h,v 1.33 2000/01/26 05:58:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

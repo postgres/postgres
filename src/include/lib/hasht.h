@@ -5,9 +5,10 @@
  *	  under utils/hash.
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hasht.h,v 1.8 1999/07/15 23:03:49 momjian Exp $
+ * $Id: hasht.h,v 1.9 2000/01/26 05:58:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -3,10 +3,11 @@
  * lsyscache.c
  *	  Convenience routines for common queries in the system catalog cache.
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.38 2000/01/23 03:43:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.39 2000/01/26 05:57:17 momjian Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.

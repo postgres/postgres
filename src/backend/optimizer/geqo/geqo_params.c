@@ -3,9 +3,10 @@
 * geqo_params.c
 *	 routines for determining necessary genetic optimization parameters
 *
-* Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+* Portions Copyright (c) 1994, Regents of the University of California
 *
-* $Id: geqo_params.c,v 1.21 1999/07/17 20:17:10 momjian Exp $
+* $Id: geqo_params.c,v 1.22 2000/01/26 05:56:33 momjian Exp $
 *
 *-------------------------------------------------------------------------
 */

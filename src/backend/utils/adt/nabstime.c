@@ -2,9 +2,10 @@
  * nabstime.c
  *	  parse almost any absolute date getdate(3) can (& some it can't)
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	  $Id: nabstime.c,v 1.64 2000/01/15 02:59:38 petere Exp $
+ *	  $Id: nabstime.c,v 1.65 2000/01/26 05:57:14 momjian Exp $
  *
  */
 #include <ctype.h>

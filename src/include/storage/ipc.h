@@ -4,9 +4,10 @@
  *	  POSTGRES inter-process communication definitions.
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: ipc.h,v 1.37 1999/11/22 02:06:30 tgl Exp $
+ * $Id: ipc.h,v 1.38 2000/01/26 05:58:32 momjian Exp $
  *
  * NOTES
  *	  This file is very architecture-specific.	This stuff should actually

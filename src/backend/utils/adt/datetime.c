@@ -3,11 +3,12 @@
  * datetime.c
  *	  implements DATE and TIME data types specified in SQL-92 standard
  *
- * Copyright (c) 1994-5, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.40 2000/01/15 02:59:36 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.41 2000/01/26 05:57:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

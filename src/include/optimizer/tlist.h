@@ -4,9 +4,10 @@
  *	  prototypes for tlist.c.
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tlist.h,v 1.22 1999/08/22 20:14:57 tgl Exp $
+ * $Id: tlist.h,v 1.23 2000/01/26 05:58:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -3,11 +3,12 @@
  * orindxpath.c
  *	  Routines to find index paths that match a set of 'or' clauses
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.34 2000/01/22 23:50:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.35 2000/01/26 05:56:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -9,9 +9,10 @@
  *		pmod.h							processing modes
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.49 2000/01/19 02:59:02 petere Exp $
+ * $Id: miscadmin.h,v 1.50 2000/01/26 05:57:46 momjian Exp $
  *
  * NOTES
  *	  some of the information in this file will be moved to

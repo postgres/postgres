@@ -3,11 +3,12 @@
  * varsup.c
  *	  postgres variable relation support routines
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.25 1999/09/18 19:06:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.26 2000/01/26 05:56:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

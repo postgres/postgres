@@ -3,9 +3,10 @@
  * geqo_mutation.h
  *	  prototypes for mutation functions in optimizer/geqo
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_mutation.h,v 1.7 1999/02/13 23:21:47 momjian Exp $
+ * $Id: geqo_mutation.h,v 1.8 2000/01/26 05:58:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

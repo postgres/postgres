@@ -3,11 +3,12 @@
  * dfmgr.c
  *	  Dynamic function manager code.
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.37 1999/11/22 17:56:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.38 2000/01/26 05:57:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

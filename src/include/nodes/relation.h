@@ -4,9 +4,10 @@
  *	  Definitions for internal planner nodes.
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relation.h,v 1.41 2000/01/22 23:50:25 tgl Exp $
+ * $Id: relation.h,v 1.42 2000/01/26 05:58:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -5,9 +5,10 @@
  *	  along with the relation's initial contents.
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_class.h,v 1.32 1999/12/20 10:40:43 wieck Exp $
+ * $Id: pg_class.h,v 1.33 2000/01/26 05:57:57 momjian Exp $
  *
  * NOTES
  *	  ``pg_relation'' is being replaced by ``pg_class''.  currently

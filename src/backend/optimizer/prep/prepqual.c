@@ -3,11 +3,12 @@
  * prepqual.c
  *	  Routines for preprocessing qualification expressions
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepqual.c,v 1.20 1999/09/13 00:17:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepqual.c,v 1.21 2000/01/26 05:56:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

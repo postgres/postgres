@@ -5,11 +5,12 @@
  *	  Includes xfunc_trypullup(), which attempts early pullup of predicates
  *	  to allow for maximal pruning.
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/_deadcode/Attic/xfunc.c,v 1.12 2000/01/22 23:50:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/_deadcode/Attic/xfunc.c,v 1.13 2000/01/26 05:56:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -6,11 +6,12 @@
  * gram.y
  *	  POSTGRES SQL YACC rules/actions
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.134 2000/01/23 08:16:37 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.135 2000/01/26 05:56:41 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT

@@ -3,11 +3,12 @@
  * elog.c
  *	  error logger
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.53 1999/12/30 23:03:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.54 2000/01/26 05:57:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

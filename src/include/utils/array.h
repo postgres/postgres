@@ -8,9 +8,10 @@
  *				utils/adt/chunk.c
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: array.h,v 1.21 1999/07/19 07:07:29 momjian Exp $
+ * $Id: array.h,v 1.22 2000/01/26 05:58:37 momjian Exp $
  *
  * NOTES
  *	  XXX the data array should be LONGALIGN'd -- notice that the array

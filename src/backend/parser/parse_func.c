@@ -3,11 +3,12 @@
  * parse_func.c
  *		handle function calls in parser
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.67 2000/01/24 19:34:14 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.68 2000/01/26 05:56:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

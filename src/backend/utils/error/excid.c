@@ -3,11 +3,12 @@
  * excid.c
  *	  POSTGRES known exception identifier code.
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/excid.c,v 1.7 1999/07/15 15:20:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/excid.c,v 1.8 2000/01/26 05:57:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -9,11 +9,12 @@
  *		you can set an intent lock at the beginning and thereafter
  *		only set page locks.  Tends to speed things up.
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/single.c,v 1.12 1999/07/17 20:17:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/single.c,v 1.13 2000/01/26 05:57:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -3,9 +3,10 @@
  * geqo.h
  *	  prototypes for various files in optimizer/geqo
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo.h,v 1.17 1999/07/15 15:21:20 momjian Exp $
+ * $Id: geqo.h,v 1.18 2000/01/26 05:58:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

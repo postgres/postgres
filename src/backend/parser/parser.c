@@ -2,11 +2,12 @@
  *
  * parser.c
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.42 1999/07/17 20:17:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.43 2000/01/26 05:56:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -4,9 +4,10 @@
  *	  Definitions for using the POSTGRES copy command.
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: copy.h,v 1.8 2000/01/14 22:11:37 petere Exp $
+ * $Id: copy.h,v 1.9 2000/01/26 05:58:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

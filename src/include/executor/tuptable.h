@@ -4,9 +4,10 @@
  *	  tuple table support stuff
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tuptable.h,v 1.14 1999/07/15 23:03:48 momjian Exp $
+ * $Id: tuptable.h,v 1.15 2000/01/26 05:58:06 momjian Exp $
  *
  * NOTES
  *	  The tuple table interface is getting pretty ugly.

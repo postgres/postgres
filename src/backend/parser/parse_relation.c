@@ -3,11 +3,12 @@
  * parse_relation.c
  *	  parser support routines dealing with relations
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.33 1999/11/07 23:08:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.34 2000/01/26 05:56:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -4,9 +4,10 @@
  *	  POSTGRES relation descriptor definitions.
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rel.h,v 1.32 2000/01/22 14:20:56 petere Exp $
+ * $Id: rel.h,v 1.33 2000/01/26 05:58:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

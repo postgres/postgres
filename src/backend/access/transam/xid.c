@@ -3,9 +3,10 @@
  * xid.c
  *	  POSTGRES transaction identifier code.
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: xid.c,v 1.26 1999/07/17 20:16:45 momjian Exp $
+ *	$Id: xid.c,v 1.27 2000/01/26 05:56:04 momjian Exp $
  *
  * OLD COMMENTS
  * XXX WARNING

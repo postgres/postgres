@@ -3,9 +3,10 @@
  * geqo_misc.c
  *	   misc. printout and debug stuff
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_misc.c,v 1.25 2000/01/09 00:26:27 tgl Exp $
+ * $Id: geqo_misc.c,v 1.26 2000/01/26 05:56:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

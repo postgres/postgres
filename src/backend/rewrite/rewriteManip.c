@@ -2,11 +2,12 @@
  *
  * rewriteManip.c
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.42 1999/11/07 23:08:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.43 2000/01/26 05:56:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

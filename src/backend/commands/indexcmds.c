@@ -3,11 +3,12 @@
  * indexcmds.c
  *	  POSTGRES define, extend and remove index code.
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.19 2000/01/12 05:04:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.20 2000/01/26 05:56:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

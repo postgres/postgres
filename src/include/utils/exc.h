@@ -4,9 +4,10 @@
  *	  POSTGRES exception handling definitions.
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: exc.h,v 1.15 1999/02/13 23:22:18 momjian Exp $
+ * $Id: exc.h,v 1.16 2000/01/26 05:58:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

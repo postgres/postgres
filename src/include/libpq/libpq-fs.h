@@ -4,9 +4,10 @@
  *	  definitions for using Inversion file system routines
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fs.h,v 1.8 1999/02/13 23:21:35 momjian Exp $
+ * $Id: libpq-fs.h,v 1.9 2000/01/26 05:58:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

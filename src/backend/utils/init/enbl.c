@@ -3,11 +3,12 @@
  * enbl.c
  *	  POSTGRES module enable and disable support code.
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/enbl.c,v 1.9 1999/07/16 05:41:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/enbl.c,v 1.10 2000/01/26 05:57:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

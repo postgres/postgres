@@ -3,11 +3,12 @@
  * list.c
  *	  various list handling routines
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.27 1999/08/16 02:17:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.28 2000/01/26 05:56:31 momjian Exp $
  *
  * NOTES
  *	  XXX a few of the following functions are duplicated to handle

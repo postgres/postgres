@@ -3,11 +3,12 @@
  * tqual.c
  *	  POSTGRES "time" qualification code.
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.34 2000/01/17 23:57:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.35 2000/01/26 05:57:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -22,11 +22,12 @@
  *	ExecutorRun accepts 'feature' and 'count' arguments that specify whether
  *	the plan is to be executed forwards, backwards, and for how many tuples.
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.106 2000/01/19 23:54:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.107 2000/01/26 05:56:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -4,11 +4,12 @@
  *	   routines for accessing the system catalogs
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.45 2000/01/22 23:50:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.46 2000/01/26 05:56:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -4,9 +4,10 @@
  *	  port-specific prototypes for SCO 3.2v5.2
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: sco.h,v 1.4 1999/07/16 03:13:13 momjian Exp $
+ * $Id: sco.h,v 1.5 2000/01/26 05:56:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

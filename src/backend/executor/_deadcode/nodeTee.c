@@ -3,7 +3,8 @@
  * nodeTee.c
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *	 DESCRIPTION
  *		This code provides support for a tee node, which allows
@@ -14,7 +15,7 @@
  *		ExecInitTee
  *		ExecEndTee
  *
- *	$Id: nodeTee.c,v 1.7 1999/12/16 22:19:45 wieck Exp $
+ *	$Id: nodeTee.c,v 1.8 2000/01/26 05:56:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

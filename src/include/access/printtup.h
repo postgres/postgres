@@ -4,9 +4,10 @@
  *
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: printtup.h,v 1.11 1999/07/15 23:03:35 momjian Exp $
+ * $Id: printtup.h,v 1.12 2000/01/26 05:57:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

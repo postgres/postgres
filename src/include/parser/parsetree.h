@@ -5,9 +5,10 @@
  *	  parse trees.
  *
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsetree.h,v 1.7 1999/07/15 15:21:28 momjian Exp $
+ * $Id: parsetree.h,v 1.8 2000/01/26 05:58:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -3,11 +3,12 @@
  * arrayfuncs.c
  *	  Special functions for arrays.
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.51 2000/01/15 22:43:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.52 2000/01/26 05:57:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

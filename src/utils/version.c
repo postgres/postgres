@@ -3,11 +3,12 @@
  * version.c
  *	  Routines to handle Postgres version number.
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/utils/Attic/version.c,v 1.13 1999/10/25 03:08:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/utils/Attic/version.c,v 1.14 2000/01/26 05:58:53 momjian Exp $
  *
  *	STANDALONE CODE - do not use error routines as this code is not linked
  *	with any...

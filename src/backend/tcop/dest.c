@@ -3,11 +3,12 @@
  * dest.c
  *	  support for various communication destinations - see include/tcop/dest.h
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.37 1999/11/07 23:08:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.38 2000/01/26 05:57:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

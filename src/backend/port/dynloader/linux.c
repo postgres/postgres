@@ -6,11 +6,12 @@
  *
  *	  You need to install the dld library on your Linux system!
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/linux.c,v 1.16 1999/10/25 02:31:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/linux.c,v 1.17 2000/01/26 05:56:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

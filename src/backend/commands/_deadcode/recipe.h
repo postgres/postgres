@@ -3,9 +3,10 @@
  * recipe.h
  *	  recipe handling routines
  *
- * Copyright (c) 1994, Regents of the University of California
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: recipe.h,v 1.1 1999/02/24 17:29:00 momjian Exp $
+ * $Id: recipe.h,v 1.2 2000/01/26 05:56:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
