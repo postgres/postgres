@@ -1,0 +1,62 @@
+SRCDIR= ../../..
+include $(SRCDIR)/Makefile.global
+
+PQ_INCLUDE=-I$(SRCDIR)/include -I$(SRCDIR)/interfaces/libpq
+
+SO_MAJOR_VERSION=0
+SO_MINOR_VERSION=5
+
+# Shared library stuff
+shlib := 
+install-shlib-dep :=
+ifeq ($(PORTNAME), linux)
+  ifdef LINUX_ELF
+    install-shlib-dep := install-shlib
+    shlib := libecpg.so.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+    LDFLAGS_SL = -shared
+    CFLAGS += $(CFLAGS_SL)
+  endif
+endif
+ifeq ($(PORTNAME), bsd)
+  install-shlib-dep := install-shlib
+  shlib := libecpg.so.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+  LDFLAGS_SL = -x -Bshareable -Bforcearchive
+  CFLAGS += $(CFLAGS_SL)
+endif
+ifeq ($(PORTNAME), i386_solaris)
+  install-shlib-dep := install-shlib
+  shlib := libecpg.so.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+  LDFLAGS_SL = -G -z text
+  CFLAGS += $(CFLAGS_SL)
+endif
+ifeq ($(PORTNAME), univel)
+  install-shlib-dep := install-shlib
+  shlib := libecpg.so.1
+  LDFLAGS_SL = -G -z text
+  CFLAGS += $(CFLAGS_SL)
+endif
+
+all: libecpg.a $(shlib)
+
+$(shlib): ecpglib.o typename.o
+	$(LD) $(LDFLAGS_SL) -o $@ ecpglib.o typename.o 
+	ln -sf $@ libecpg.so
+
+clean:
+	rm -f *.o *.a core a.out *~ $(shlib) libecpg.so
+
+install: libecpg.a
+	install -m 644 libecpg.a $(DESTDIR)$(LIBDIR)
+	install -m 644 $(shlib) $(DESTDIR)$(LIBDIR)
+	ln -sf $(shlib) $(DESTDIR)$(LIBDIR)/libecpg.so
+
+uninstall::
+	rm -f $(DESTDIR)$(LIBDIR)/libecpg.a $(DESTDIR)$(LIBDIR)/$(shlib)
+
+# Rules that do something
+libecpg.a : libecpg.a(ecpglib.o) libecpg.a(typename.o)
+
+ecpglib.o : ecpglib.c ../include/ecpglib.h ../include/ecpgtype.h
+	$(CC) -O2 -g -Wall -I../include $(PQ_INCLUDE) -c ecpglib.c
+typename.o : typename.c ../include/ecpgtype.h
+	$(CC) -g -O2 -Wall -I../include $(PQ_INCLUDE) -c typename.c
