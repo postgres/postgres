@@ -198,6 +198,14 @@
 	<entry>(<ulink url="mailto:tih@hamartun.priv.no">Tom I Helbekkmo</ulink>)</entry>
        </row>
        <row>
+	<entry>QNX-4.25</entry>
+	<entry>x86</entry>
+	<entry>v6.5.2</entry>
+	<entry>1999-11-08</entry>
+	<entry>minor patches required
+	 (<ulink url="mailto:kardos@repas-aeg.de">Dr. Andreas Kardos</ulink>)</entry>
+       </row>
+       <row>
 	<entry>SCO OpenServer 5</entry>
 	<entry>x86</entry>
 	<entry>v6.5</entry>
