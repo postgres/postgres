@@ -66,7 +66,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	  $PostgreSQL: pgsql/src/include/storage/s_lock.h,v 1.125 2004/01/03 05:47:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/include/storage/s_lock.h,v 1.126 2004/06/19 23:02:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,16 +85,26 @@
  * Other compilers use __cpu or __cpu__ so we test for both in those cases.
  */
 
-/*
- * Standard gcc asm format is:
- *
+/*----------
+ * Standard gcc asm format (assuming "volatile slock_t *lock"):
+
 	__asm__ __volatile__(
-		"	command	\n"
-		"	command	\n"
-		"	command	\n"
-:		"=r"(_res)			return value, in register
-:		"r"(lock)			argument, 'lock pointer', in register
-:		"r0");				inline code uses this register
+		"	instruction	\n"
+		"	instruction	\n"
+		"	instruction	\n"
+:		"=r"(_res), "+m"(*lock)		// return register, in/out lock value
+:		"r"(lock)					// lock pointer, in input register
+:		"memory", "cc");			// show clobbered registers here
+
+ * The output-operands list (after first colon) should always include
+ * "+m"(*lock), whether or not the asm code actually refers to this
+ * operand directly.  This ensures that gcc believes the value in the
+ * lock variable is used and set by the asm code.  Also, the clobbers
+ * list (after third colon) should always include "memory"; this prevents
+ * gcc from thinking it can cache the values of shared-memory fields
+ * across the asm code.  Add "cc" if your asm code changes the condition
+ * code register, and also list any temp registers the code uses.
+ *----------
  */
 
 
@@ -117,8 +127,9 @@ tas(volatile slock_t *lock)
 		"	lock			\n"
 		"	xchgb	%0,%1	\n"
 		"1: \n"
-:		"=q"(_res), "=m"(*lock)
-:		"0"(_res));
+:		"+q"(_res), "+m"(*lock)
+:
+:		"memory", "cc");
 	return (int) _res;
 }
 
@@ -128,8 +139,7 @@ static __inline__ void
 spin_delay(void)
 {
 	__asm__ __volatile__(
-		" rep; nop			\n"
-		: : : "memory");
+		" rep; nop			\n");
 }
 
 #endif	 /* __i386__ || __x86_64__ */
@@ -150,10 +160,9 @@ tas(volatile slock_t *lock)
 
 	__asm__ __volatile__(
 		"	xchg4 	%0=%1,%2	\n"
-:		"=r"(ret), "=m"(*lock)
-:		"r"(1), "1"(*lock)
+:		"=r"(ret), "+m"(*lock)
+:		"r"(1)
 :		"memory");
-
 	return (int) ret;
 }
 
@@ -173,17 +182,18 @@ tas(volatile slock_t *lock)
 	register slock_t _res = 1;
 
 	__asm__ __volatile__(
-		"	swpb 	%0, %0, [%3]	\n"
-:		"=r"(_res), "=m"(*lock)
-:		"0"(_res), "r"(lock));
+		"	swpb 	%0, %0, [%2]	\n"
+:		"+r"(_res), "+m"(*lock)
+:		"r"(lock)
+:		"memory");
 	return (int) _res;
 }
 
 #endif	 /* __arm__ */
 
 
-#if defined(__s390__) && !defined(__s390x__)
-/* S/390 Linux */
+#if defined(__s390__) || defined(__s390x__)
+/* S/390 and S/390x Linux (32- and 64-bit zSeries) */
 #define HAS_TEST_AND_SET
 
 typedef unsigned int slock_t;
@@ -193,51 +203,17 @@ typedef unsigned int slock_t;
 static __inline__ int
 tas(volatile slock_t *lock)
 {
-	int			_res;
+	int			_res = 0;
 
 	__asm__	__volatile__(
-		"	la	1,1			\n"
-		"	l 	2,%2		\n"
-		"	slr 0,0			\n"
-		"	cs 	0,1,0(2)	\n"
-		"	lr 	%1,0		\n"
-:		"=m"(lock), "=d"(_res)
-:		"m"(lock)
-:		"0", "1", "2");
-
-	return (_res);
+		"	cs 	%0,%3,0(%2)		\n"
+:		"+d"(_res), "+m"(*lock)
+:		"a"(lock), "d"(1)
+:		"memory", "cc");
+	return _res;
 }
 
-#endif	 /* __s390__ */
-
-
-#if defined(__s390x__)
-/* S/390x Linux (64-bit zSeries) */
-#define HAS_TEST_AND_SET
-
-typedef unsigned int slock_t;
-
-#define TAS(lock)	   tas(lock)
-
-static __inline__ int
-tas(volatile slock_t *lock)
-{
-	int			_res;
-
-	__asm__	__volatile__(
-		"	la	1,1			\n"
-		"	lg 	2,%2		\n"
-		"	slr 0,0			\n"
-		"	cs 	0,1,0(2)	\n"
-		"	lr 	%1,0		\n"
-:		"=m"(lock), "=d"(_res)
-:		"m"(lock)
-:		"0", "1", "2");
-
-	return (_res);
-}
-
-#endif	 /* __s390x__ */
+#endif	 /* __s390__ || __s390x__ */
 
 
 #if defined(__sparc__)
@@ -250,12 +226,13 @@ typedef unsigned char slock_t;
 static __inline__ int
 tas(volatile slock_t *lock)
 {
-	register slock_t _res = 1;
+	register slock_t _res;
 
 	__asm__ __volatile__(
 		"	ldstub	[%2], %0	\n"
-:		"=r"(_res), "=m"(*lock)
-:		"r"(lock));
+:		"=r"(_res), "+m"(*lock)
+:		"r"(lock)
+:		"memory");
 	return (int) _res;
 }
 
@@ -283,11 +260,11 @@ tas(volatile slock_t *lock)
 	int _res;
 
 	__asm__ __volatile__(
-"	lwarx   %0,0,%2		\n"
+"	lwarx   %0,0,%3		\n"
 "	cmpwi   %0,0		\n"
 "	bne     1f			\n"
 "	addi    %0,%0,1		\n"
-"	stwcx.  %0,0,%2		\n"
+"	stwcx.  %0,0,%3		\n"
 "	beq     2f         	\n"
 "1:	li      %1,1		\n"
 "	b		3f			\n"
@@ -296,10 +273,9 @@ tas(volatile slock_t *lock)
 "	li      %1,0		\n"
 "3:						\n"
 
-:	"=&r" (_t), "=r" (_res)
-:	"r" (lock)
-:	"cc", "memory"
-	);
+:	"=&r"(_t), "=r"(_res), "+m"(*lock)
+:	"r"(lock)
+:	"memory", "cc");
 	return _res;
 }
 
@@ -330,10 +306,9 @@ tas(volatile slock_t *lock)
 		"	clrl	%0		\n"
 		"	tas		%1		\n"
 		"	sne		%0		\n"
-:		"=d"(rv), "=m"(*lock)
-:		"1"(*lock)
-:		"cc");
-
+:		"=d"(rv), "+m"(*lock)
+:
+:		"memory", "cc");
 	return rv;
 }
 
@@ -357,13 +332,13 @@ tas(volatile slock_t *lock)
 	register int	_res;
 
 	__asm__ __volatile__(
-		"	movl 	$1, r0			\n"
-		"	bbssi	$0, (%1), 1f	\n"
-		"	clrl	r0				\n"
-		"1:	movl	r0, %0			\n"
-:		"=r"(_res)
+		"	movl 	$1, %0			\n"
+		"	bbssi	$0, (%2), 1f	\n"
+		"	clrl	%0				\n"
+		"1: \n"
+:		"=&r"(_res), "+m"(*lock)
 :		"r"(lock)
-:		"r0");
+:		"memory");
 	return _res;
 }
 
@@ -383,9 +358,11 @@ tas(volatile slock_t *lock)
 	register int	_res;
 
 	__asm__ __volatile__(
-		"	sbitb	0, %0	\n"
-		"	sfsd	%1		\n"
-:		"=m"(*lock), "=r"(_res));
+		"	sbitb	0, %1	\n"
+		"	sfsd	%0		\n"
+:		"=r"(_res), "+m"(*lock)
+:
+:		"memory");
 	return _res;
 }
 
@@ -404,12 +381,6 @@ tas(volatile slock_t *lock)
 typedef unsigned long slock_t;
 
 #define TAS(lock)  tas(lock)
-#define S_UNLOCK(lock)	\
-do \
-{\
-	__asm__ __volatile__ ("	mb \n"); \
-	*((volatile slock_t *) (lock)) = 0; \
-} while (0)
 
 static __inline__ int
 tas(volatile slock_t *lock)
@@ -417,23 +388,29 @@ tas(volatile slock_t *lock)
 	register slock_t _res;
 
 	__asm__	__volatile__(
-		"	ldq		$0, %0	\n"
+		"	ldq		$0, %1	\n"
 		"	bne		$0, 2f	\n"
-		"	ldq_l	%1, %0	\n"
-		"	bne		%1, 2f	\n"
+		"	ldq_l	%0, %1	\n"
+		"	bne		%0, 2f	\n"
 		"	mov		1,  $0	\n"
-		"	stq_c	$0, %0	\n"
+		"	stq_c	$0, %1	\n"
 		"	beq		$0, 2f	\n"
 		"	mb				\n"
 		"	br		3f		\n"
-		"2:	mov		1, %1	\n"
+		"2:	mov		1, %0	\n"
 		"3:					\n"
-:		"=m"(*lock), "=r"(_res)
+:		"=&r"(_res), "+m"(*lock)
 :
-:		"0");
-
+:		"memory", "0");
 	return (int) _res;
 }
+
+#define S_UNLOCK(lock)	\
+do \
+{\
+	__asm__ __volatile__ ("	mb \n"); \
+	*((volatile slock_t *) (lock)) = 0; \
+} while (0)
 
 #endif /* __alpha || __alpha__ */
 
@@ -540,8 +517,9 @@ tas(volatile slock_t *lock)
 
 	__asm__ __volatile__(
 		"	ldcwx	0(0,%2),%0	\n"
-:		"=r"(lockval), "=m"(*lockword)
-:		"r"(lockword));
+:		"=r"(lockval), "+m"(*lockword)
+:		"r"(lockword)
+:		"memory");
 	return (lockval == 0);
 }
 
