@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.233 2001/09/21 17:06:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.234 2001/09/27 16:29:12 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1096,7 +1096,6 @@ usage(char *progname)
 	printf("Developer options:\n");
 	printf("  -f [s|i|n|m|h]  forbid use of some plan types\n");
 	printf("  -i              do not execute queries\n");
-	printf("  -L              turn off locking\n");
 	printf("  -O              allow system table structure changes\n");
 	printf("  -t [pa|pl|ex]   show timings after each query\n");
 	printf("  -W NUM          wait NUM seconds to allow attach from a debugger\n");
@@ -1207,7 +1206,7 @@ PostgresMain(int argc, char *argv[],
 
 	optind = 1;					/* reset after postmaster's usage */
 
-	while ((flag = getopt(argc, argv, "A:B:c:CD:d:Eef:FiLNOPo:p:S:st:v:W:x:-:")) != EOF)
+	while ((flag = getopt(argc, argv, "A:B:c:CD:d:Eef:FiNOPo:p:S:st:v:W:x:-:")) != EOF)
 		switch (flag)
 		{
 			case 'A':
@@ -1312,15 +1311,6 @@ PostgresMain(int argc, char *argv[],
 
 			case 'i':
 				dontExecute = true;
-				break;
-
-			case 'L':
-
-				/*
-				 * turn off locking
-				 */
-				if (secure)
-					lockingOff = 1;
 				break;
 
 			case 'N':
@@ -1726,7 +1716,7 @@ PostgresMain(int argc, char *argv[],
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.233 $ $Date: 2001/09/21 17:06:12 $\n");
+		puts("$Revision: 1.234 $ $Date: 2001/09/27 16:29:12 $\n");
 	}
 
 	/*

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.115 2001/08/25 00:31:17 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.116 2001/09/27 16:29:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -389,7 +389,6 @@ BootstrapMain(int argc, char *argv[])
 	 * backend initialization
 	 */
 	InitPostgres(dbName, NULL);
-	LockDisable(true);
 
 	for (i = 0; i < MAXATTR; i++)
 	{

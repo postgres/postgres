@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lock.h,v 1.51 2001/07/09 22:18:34 tgl Exp $
+ * $Id: lock.h,v 1.52 2001/09/27 16:29:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -244,8 +244,6 @@ typedef struct HOLDER
  * function prototypes
  */
 extern void InitLocks(void);
-extern void LockDisable(bool status);
-extern bool LockingDisabled(void);
 extern LOCKMETHODTABLE *GetLocksMethodTable(LOCK *lock);
 extern LOCKMETHOD LockMethodTableInit(char *tabName, LOCKMASK *conflictsP,
 					int *prioP, int numModes, int maxBackends);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.91 2001/09/08 15:24:00 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.92 2001/09/27 16:29:12 tgl Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -45,8 +45,6 @@ static void ReverifyMyDatabase(const char *name);
 static void InitCommunication(void);
 static void ShutdownPostgres(void);
 static bool ThereIsAtLeastOneUser(void);
-
-int			lockingOff = 0;		/* backend -L switch */
 
 
 /*** InitPostgres support ***/
@@ -326,9 +324,6 @@ InitPostgres(const char *dbname, const char *username)
 
 	/* replace faked-up relcache entries with the real info */
 	RelationCacheInitializePhase2();
-
-	if (lockingOff)
-		LockDisable(true);
 
 	/*
 	 * Figure out our postgres user id.  In standalone mode we use a

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.94 2001/09/07 00:27:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.95 2001/09/27 16:29:12 tgl Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -166,11 +166,6 @@ static LOCKMASK BITS_OFF[MAX_LOCKMODES];
 static LOCKMASK BITS_ON[MAX_LOCKMODES];
 
 /*
- * Disable flag
- */
-static bool LockingIsDisabled;
-
-/*
  * map from lockmethod to the lock table structure
  */
 static LOCKMETHODTABLE *LockMethodTable[MAX_LOCK_METHODS];
@@ -195,23 +190,6 @@ InitLocks(void)
 	}
 }
 
-/*
- * LockDisable -- sets LockingIsDisabled flag to TRUE or FALSE.
- */
-void
-LockDisable(bool status)
-{
-	LockingIsDisabled = status;
-}
-
-/*
- * Boolean function to determine current locking status
- */
-bool
-LockingDisabled(void)
-{
-	return LockingIsDisabled;
-}
 
 /*
  * Fetch the lock method table associated with a given lock
@@ -508,9 +486,6 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 		elog(NOTICE, "LockAcquire: bad lock table %d", lockmethod);
 		return FALSE;
 	}
-
-	if (LockingIsDisabled)
-		return TRUE;
 
 	masterLock = lockMethodTable->ctl->masterLock;
 
@@ -1046,9 +1021,6 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 		elog(NOTICE, "lockMethodTable is null in LockRelease");
 		return FALSE;
 	}
-
-	if (LockingIsDisabled)
-		return TRUE;
 
 	masterLock = lockMethodTable->ctl->masterLock;
 	SpinAcquire(masterLock);

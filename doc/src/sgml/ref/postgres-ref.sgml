@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/postgres-ref.sgml,v 1.19 2001/09/08 15:24:00 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/postgres-ref.sgml,v 1.20 2001/09/27 16:29:12 tgl Exp $
 Postgres documentation
 -->
 
@@ -33,7 +33,6 @@ Postgres documentation
    <arg>-f<group choice="plain"><arg>s</arg><arg>i</arg><arg>t</arg><arg>n</arg><arg>m</arg><arg>h</arg></group></arg>
    <arg>-F</arg>
    <arg>-i</arg>
-   <arg>-L</arg>
    <arg>-N</arg>
    <arg>-o <replaceable>filename</replaceable></arg>
    <arg>-O</arg>
@@ -57,7 +56,6 @@ Postgres documentation
    <arg>-f<group choice="plain"><arg>s</arg><arg>i</arg><arg>t</arg><arg>n</arg><arg>m</arg><arg>h</arg></group></arg>
    <arg>-F</arg>
    <arg>-i</arg>
-   <arg>-L</arg>
    <arg>-o <replaceable>filename</replaceable></arg>
    <arg>-O</arg>
    <arg>-p <replaceable>database</replaceable></arg>
@@ -289,15 +287,6 @@ Postgres documentation
       <listitem>
        <para>
 	Prevents query execution, but shows the plan tree.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>-L</term>
-      <listitem>
-       <para>
-	Turns off the locking system.
        </para>
       </listitem>
      </varlistentry>

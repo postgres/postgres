@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.50 2001/08/25 18:52:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.51 2001/09/27 16:29:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -145,9 +145,6 @@ LockRelation(Relation relation, LOCKMODE lockmode)
 {
 	LOCKTAG		tag;
 
-	if (LockingDisabled())
-		return;
-
 	MemSet(&tag, 0, sizeof(tag));
 	tag.relId = relation->rd_lockInfo.lockRelId.relId;
 	tag.dbId = relation->rd_lockInfo.lockRelId.dbId;
@@ -182,9 +179,6 @@ ConditionalLockRelation(Relation relation, LOCKMODE lockmode)
 {
 	LOCKTAG		tag;
 
-	if (LockingDisabled())
-		return true;
-
 	MemSet(&tag, 0, sizeof(tag));
 	tag.relId = relation->rd_lockInfo.lockRelId.relId;
 	tag.dbId = relation->rd_lockInfo.lockRelId.dbId;
@@ -215,9 +209,6 @@ UnlockRelation(Relation relation, LOCKMODE lockmode)
 {
 	LOCKTAG		tag;
 
-	if (LockingDisabled())
-		return;
-
 	MemSet(&tag, 0, sizeof(tag));
 	tag.relId = relation->rd_lockInfo.lockRelId.relId;
 	tag.dbId = relation->rd_lockInfo.lockRelId.dbId;
@@ -243,9 +234,6 @@ LockRelationForSession(LockRelId *relid, LOCKMODE lockmode)
 {
 	LOCKTAG		tag;
 
-	if (LockingDisabled())
-		return;
-
 	MemSet(&tag, 0, sizeof(tag));
 	tag.relId = relid->relId;
 	tag.dbId = relid->dbId;
@@ -264,9 +252,6 @@ UnlockRelationForSession(LockRelId *relid, LOCKMODE lockmode)
 {
 	LOCKTAG		tag;
 
-	if (LockingDisabled())
-		return;
-
 	MemSet(&tag, 0, sizeof(tag));
 	tag.relId = relid->relId;
 	tag.dbId = relid->dbId;
@@ -277,14 +262,15 @@ UnlockRelationForSession(LockRelId *relid, LOCKMODE lockmode)
 
 /*
  *		LockPage
+ *
+ * Obtain a page-level lock.  This is currently used by some index access
+ * methods to lock index pages.  For heap relations, it is used only with
+ * blkno == 0 to signify locking the relation for extension.
  */
 void
 LockPage(Relation relation, BlockNumber blkno, LOCKMODE lockmode)
 {
 	LOCKTAG		tag;
-
-	if (LockingDisabled())
-		return;
 
 	MemSet(&tag, 0, sizeof(tag));
 	tag.relId = relation->rd_lockInfo.lockRelId.relId;
@@ -304,9 +290,6 @@ UnlockPage(Relation relation, BlockNumber blkno, LOCKMODE lockmode)
 {
 	LOCKTAG		tag;
 
-	if (LockingDisabled())
-		return;
-
 	MemSet(&tag, 0, sizeof(tag));
 	tag.relId = relation->rd_lockInfo.lockRelId.relId;
 	tag.dbId = relation->rd_lockInfo.lockRelId.dbId;
@@ -315,13 +298,20 @@ UnlockPage(Relation relation, BlockNumber blkno, LOCKMODE lockmode)
 	LockRelease(LockTableId, &tag, GetCurrentTransactionId(), lockmode);
 }
 
+/*
+ *		XactLockTableInsert
+ *
+ * Insert a lock showing that the given transaction ID is running ---
+ * this is done during xact startup.  The lock can then be used to wait
+ * for the transaction to finish.
+ *
+ * We need no corresponding unlock function, since the lock will always
+ * be released implicitly at transaction commit/abort, never any other way.
+ */
 void
 XactLockTableInsert(TransactionId xid)
 {
 	LOCKTAG		tag;
-
-	if (LockingDisabled())
-		return;
 
 	MemSet(&tag, 0, sizeof(tag));
 	tag.relId = XactLockTableId;
@@ -333,43 +323,29 @@ XactLockTableInsert(TransactionId xid)
 		elog(ERROR, "XactLockTableInsert: LockAcquire failed");
 }
 
-#ifdef NOT_USED
-void
-XactLockTableDelete(TransactionId xid)
-{
-	LOCKTAG		tag;
-
-	if (LockingDisabled())
-		return;
-
-	MemSet(&tag, 0, sizeof(tag));
-	tag.relId = XactLockTableId;
-	tag.dbId = InvalidOid;
-	tag.objId.xid = xid;
-
-	LockRelease(LockTableId, &tag, xid, ExclusiveLock);
-}
-
-#endif
-
+/*
+ *		XactLockTableWait
+ *
+ * Wait for the specified transaction to commit or abort.
+ */
 void
 XactLockTableWait(TransactionId xid)
 {
 	LOCKTAG		tag;
+	TransactionId	myxid = GetCurrentTransactionId();
 
-	if (LockingDisabled())
-		return;
+	Assert(! TransactionIdEquals(xid, myxid));
 
 	MemSet(&tag, 0, sizeof(tag));
 	tag.relId = XactLockTableId;
 	tag.dbId = InvalidOid;
 	tag.objId.xid = xid;
 
-	if (!LockAcquire(LockTableId, &tag, GetCurrentTransactionId(),
+	if (!LockAcquire(LockTableId, &tag, myxid,
 					 ShareLock, false))
 		elog(ERROR, "XactLockTableWait: LockAcquire failed");
 
-	LockRelease(LockTableId, &tag, GetCurrentTransactionId(), ShareLock);
+	LockRelease(LockTableId, &tag, myxid, ShareLock);
 
 	/*
 	 * Transaction was committed/aborted/crashed - we have to update
