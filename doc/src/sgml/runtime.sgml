@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.92 2001/11/02 18:39:57 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.93 2001/11/08 23:39:22 petere Exp $
 -->
 
 <Chapter Id="runtime">
@@ -2328,13 +2328,13 @@ default:\
     </varlistentry>
    </variablelist>
 
-   <caution>
+   <important>
     <para>
      It is best not to use <systemitem>SIGKILL</systemitem> to shut down the postmaster. This
      will prevent the postmaster from releasing shared memory and
      semaphores, which you may then have to do by hand.
     </para>
-   </caution>
+   </important>
 
    The <acronym>PID</> of the postmaster process can be found using the
    <application>ps</application> program, or from the file
