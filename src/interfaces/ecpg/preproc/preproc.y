@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.249 2003/07/18 14:32:56 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.250 2003/08/01 11:25:55 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -6256,6 +6256,7 @@ c_anything:  IDENT				{ $$ = $1; }
 		| YEAR_P			{ $$ = make_str("year"); }
 		| CHAR_P			{ $$ = make_str("char"); }
 		| FLOAT_P			{ $$ = make_str("float"); }
+		| TO				{ $$ = make_str("to"); }
 		| UNION				{ $$ = make_str("union"); }
 		| VARCHAR			{ $$ = make_str("varchar"); }
 		| '['				{ $$ = make_str("["); }
