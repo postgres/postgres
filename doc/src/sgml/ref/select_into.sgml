@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/select_into.sgml,v 1.9 2001/01/13 23:58:55 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/select_into.sgml,v 1.10 2001/03/20 20:54:41 tgl Exp $
 Postgres documentation
 -->
 
@@ -15,7 +15,7 @@ Postgres documentation
    SELECT INTO
   </refname>
   <refpurpose>
-   Create a new table from an existing table or view
+   Creates a new table from the results of a SELECT
   </refpurpose></refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
@@ -48,50 +48,111 @@ where <replaceable class="PARAMETER">from_item</replaceable> can be:
   
   <refsect2 id="R2-SQL-SELECTINTO-1">
    <refsect2info>
-    <date>1998-09-22</date>
+    <date>2001-03-20</date>
    </refsect2info>
    <title>
     Inputs
    </title>
+
    <para>
-    All input fields are described in detail for
+    <variablelist>
+    <varlistentry>
+     <term>TEMPORARY</term>
+     <term>TEMP</term>
+     <listitem>
+      <para>
+	If TEMPORARY or TEMP is specified,
+	the output table is created only within this session, and is
+	automatically dropped on session exit.
+	Existing permanent tables with the same name are not visible
+	(in this session) while the temporary table exists.
+	Any indexes created on a temporary table are automatically
+	temporary as well.
+      </para>
+     </listitem>
+    </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="PARAMETER">new_table</replaceable></term>
+      <listitem>
+       <para>
+        The name of the new table to be created.
+	This table must not already exist.  However, a temporary table
+	can be created that has the same name as an existing permanent
+	table.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+
+   <para>
+    All other inputs are described in detail for
     <xref linkend="sql-select" endterm="sql-select-title">.
    </para>
   </refsect2>
 
   <refsect2 id="R2-SQL-SELECTINTO-2">
    <refsect2info>
-    <date>1998-09-22</date>
+    <date>2001-03-20</date>
    </refsect2info>
    <title>
     Outputs
    </title>
+
    <para>
-    All output fields are described in detail for
-    <xref linkend="sql-select" endterm="sql-select-title">.
+    Refer to
+    <xref linkend="sql-createtable" endterm="sql-createtable-title">
+    and
+    <xref linkend="sql-select" endterm="sql-select-title">
+    for a summary of possible output messages.
    </para>
   </refsect2>
  </refsynopsisdiv>
 
  <refsect1 id="R1-SQL-SELECTINTO-1">
   <refsect1info>
-   <date>1998-09-22</date>
+   <date>2001-03-20</date>
   </refsect1info>
   <title>
    Description
   </title>
+
   <para>
-   <command>SELECT INTO</command> creates a new table from the results
-   of a query. Typically, this
-   query draws data from an existing table, but any SQL query is allowed.
+   <command>SELECT INTO</command> creates a new table and fills it
+   with data computed by a query.  The data is not returned to the
+   client, as it is with a normal <command>SELECT</command>.  The new
+   table's columns have the names and datatypes associated with the
+   output columns of the <command>SELECT</command>.
 
    <note>
     <para>
      <xref linkend="sql-createtableas" endterm="sql-createtableas-title">
-     is functionally equivalent to the <command>SELECT INTO</command> command.
+     is functionally equivalent to <command>SELECT INTO</command>.
+     <command>CREATE TABLE AS</command> is the recommended syntax, since
+     <command>SELECT INTO</command> is not standard.  In fact, this form of
+     <command>SELECT INTO</command> is not available in PL/pgSQL or ecpg,
+     because they interpret the INTO clause differently.
     </para>
    </note>
   </para>
+ </refsect1>
+
+ <refsect1 id="R1-SQL-SELECTINTO-2">
+  <title>
+   Compatibility
+  </title>
+
+   <para>
+    SQL92 uses <command>SELECT ... INTO</command> to represent selecting
+    values into scalar variables of a host program, rather than creating
+    a new table.  This indeed is the usage found in PL/pgSQL and ecpg.
+    The <productname>Postgres</productname> usage of <command>SELECT
+    INTO</command> to represent table creation is historical.  It's best
+    to use <command>CREATE TABLE AS</command> for this purpose in new code.
+    (<command>CREATE TABLE AS</command> isn't standard either, but it's
+    less likely to cause confusion.)
+    </para>
  </refsect1>
 </refentry>
 

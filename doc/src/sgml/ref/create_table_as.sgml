@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table_as.sgml,v 1.5 2001/03/03 22:11:40 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table_as.sgml,v 1.6 2001/03/20 20:54:41 tgl Exp $
 Postgres documentation
 -->
 
@@ -15,7 +15,7 @@ Postgres documentation
    CREATE TABLE AS
   </refname>
   <refpurpose>
-   Creates a new table
+   Creates a new table from the results of a SELECT
   </refpurpose>
  </refnamediv>
  <refsynopsisdiv>
@@ -41,7 +41,7 @@ CREATE [ TEMPORARY | TEMP ] TABLE <replaceable>table</replaceable> [ (<replaceab
       <term>TEMPORARY or TEMP</term>
       <listitem>
        <para>
-	If specified, the table is created only for this session, and is
+	If specified, the table is created only within this session, and is
 	automatically dropped on session exit.
 	Existing permanent tables with the same name are not visible
 	(in this session) while the temporary table exists.
@@ -55,7 +55,10 @@ CREATE [ TEMPORARY | TEMP ] TABLE <replaceable>table</replaceable> [ (<replaceab
      <term><replaceable>table</replaceable></term>
      <listitem>
       <para>
-       The name of a new table to be created.
+        The name of the new table to be created.
+	This table must not already exist.  However, a temporary table
+	can be created that has the same name as an existing permanent
+	table.
       </para>
      </listitem>
     </varlistentry>
@@ -76,8 +79,9 @@ CREATE [ TEMPORARY | TEMP ] TABLE <replaceable>table</replaceable> [ (<replaceab
       <term><replaceable>select_clause</replaceable></term>
       <listitem>
        <para>
-	A valid query statement. Refer to SELECT for a description of the
-	allowed syntax.
+	A valid query statement. Refer to
+	<xref linkend="sql-select" endterm="sql-select-title">
+	for a description of the allowed syntax.
        </para>
       </listitem>
      </varlistentry>
@@ -92,27 +96,47 @@ CREATE [ TEMPORARY | TEMP ] TABLE <replaceable>table</replaceable> [ (<replaceab
    <title>
     Outputs
    </title>
+
    <para>
-    Refer to <command>CREATE TABLE</command>
-    and <command>SELECT</command> for a summary of possible output
-    messages.
+    Refer to
+    <xref linkend="sql-createtable" endterm="sql-createtable-title">
+    and
+    <xref linkend="sql-select" endterm="sql-select-title">
+    for a summary of possible output messages.
    </para>
   </refsect2>
  </refsynopsisdiv>
  
  <refsect1>
   <refsect1info>
-   <date>1998-09-22</date>
+   <date>2001-03-20</date>
   </refsect1info>
   <title>
    Description
   </title>
   <para>
-   <command>CREATE TABLE AS</command> enables a table to be created
-   from the contents of an existing table.
-   It is functionally equivalent to
+   <command>CREATE TABLE AS</command> creates a table and fills it
+   with data computed by a <command>SELECT</command> command.  The
+   table columns have the names and datatypes associated with the
+   output columns of the <command>SELECT</command> (except that you
+   can override the <command>SELECT</command> column names by giving
+   an explicit list of column names).
+  </para>
+
+  <para>
+   <command>CREATE TABLE AS</command> bears some resemblance to creating
+   a view, but it is really quite different: it creates a new table and
+   evaluates the <command>SELECT</command> just once to fill the new table
+   initially.  The new table will not track subsequent changes to
+   the source tables of the <command>SELECT</command>.  In contrast,
+   a view re-evaluates the given <command>SELECT</command> whenever queried.
+  </para>
+
+  <para>
+   This command is functionally equivalent to
    <xref linkend="sql-selectinto" endterm="sql-selectinto-title">,
-   but with perhaps a more direct syntax.
+   but it is preferred since it is less likely to be confused with
+   other uses of the <command>SELECT ... INTO</command> syntax.
   </para>
  </refsect1>
 </refentry>
