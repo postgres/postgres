@@ -12,9 +12,21 @@ case "$host_os" in
    sunos*) PORTNAME='sunos4' ;;
    linux*) PORTNAME='linux' ;;
     bsdi*) PORTNAME='bsdi' ;;
- freebsd*|netbsd*) PORTNAME='BSD44_derived';;
+ freebsd*|netbsd*) 
+			AC_LINK_FILES(backend/port/dynloader/bsd.c, 
+						  backend/port/dynloader/dynloader.c)
+			AC_LINK_FILES(backend/port/dynloader/bsd.h, include/dynloader.h)
+			AC_LINK_FILES(include/port/bsd.h, include/os.h)
+			AC_LINK_FILES(makefiles/Makefile.bsd, Makefile.port)
+			;;
     dgux*) PORTNAME='dgux';;
-     aix*) PORTNAME='aix';;
+     aix*) 
+			AC_LINK_FILES(backend/port/dynloader/aix.c, 
+						  backend/port/dynloader/dynloader.c)
+			AC_LINK_FILES(backend/port/dynloader/aix.h, include/dynloader.h)
+			AC_LINK_FILES(include/port/aix.h, include/os.h)
+			AC_LINK_FILES(makefiles/Makefile.aix, Makefile.port)
+			;;
 nextstep*) PORTNAME='nextstep';;
   ultrix*) PORTNAME='ultrix4';;
     irix*) PORTNAME='irix5';;
@@ -270,9 +282,6 @@ AC_CONFIG_HEADER(include/config.h)
 dnl Checks for programs.
 AC_PROG_CPP
 
-AC_LINK_FILES(include/port/${PORTNAME}.h, include/os.h)
-AC_LINK_FILES(makefiles/Makefile.${PORTNAME}, Makefile.port)
-AC_LINK_FILES(backend/port/${PORTNAME}/port-protos.h, include/port-protos.h)
 AC_SUBST(PORTNAME)
 AC_SUBST(LDFLAGS)
 AC_SUBST(CPPFLAGS)
