@@ -41,9 +41,6 @@
 #include "regex/cdefs.h"
 
 #include <stdarg.h>
-#define VA_LOCAL_DECL  va_list args;
-#define VA_START(f)    va_start(args, f)
-#define VA_END	   va_end(args)
 
 #include <sys/ioctl.h>
 #include <sys/param.h>
@@ -75,34 +72,30 @@ typedef long long long_long;
  * causing nast effects.
  **************************************************************/
 
-/*static char _id[] = "$Id: snprintf.c,v 1.12 1998/12/18 06:59:39 momjian Exp $";*/
+/*static char _id[] = "$Id: snprintf.c,v 1.13 1998/12/18 07:03:06 momjian Exp $";*/
 static char *end;
 static int	SnprfOverflow;
 
 int			snprintf(char *str, size_t count, const char *fmt,...);
-int			vsnprintf(char *str, size_t count, const char *fmt,...);
-static void dopr(char *buffer, const char *format,...);
+int			vsnprintf(char *str, size_t count, const char *fmt, va_list args);
+static void dopr(char *buffer, const char *format, va_list args);
 
 int
 snprintf(char *str, size_t count, const char *fmt,...)
 {
 	int			len;
+	va_list			args;
 
-	VA_LOCAL_DECL
-
-		VA_START(fmt);
+	va_start(args, fmt);
 	len = vsnprintf(str, count, fmt, args);
-	VA_END;
+	va_end(args);
 	return len;
 }
 
 
 int
-vsnprintf(char *str, size_t count, const char *fmt,...)
+vsnprintf(char *str, size_t count, const char *fmt, va_list args)
 {
-	VA_LOCAL_DECL
-
-	VA_START(fmt);
 	str[0] = 0;
 	end = str + count - 1;
 	SnprfOverflow = 0;
@@ -112,7 +105,6 @@ vsnprintf(char *str, size_t count, const char *fmt,...)
 	if (SnprfOverflow)
 		elog(NOTICE, "vsnprintf overflow, len = %d, str = %s",
 			 count, str);
-	VA_END;
 	return strlen(str);
 }
 
@@ -122,7 +114,7 @@ vsnprintf(char *str, size_t count, const char *fmt,...)
 
 static void fmtstr __P((char *value, int ljust, int len, int zpad, int maxwidth));
 
-#ifndef HAVE_LONG_LONG_INT_64
+#ifndef HAVE_LONG_INT_64
 static void fmtnum __P((long value, int base, int dosign, int ljust, int len, int zpad));
 #else
 static void fmtnum __P((long_long value, int base, int dosign, int ljust, int len, int zpad));
@@ -133,26 +125,22 @@ static char *output;
 static void dopr_outch __P((int c));
 
 static void
-dopr(char *buffer, const char *format,...)
+dopr(char *buffer, const char *format, va_list args)
 {
 	int			ch;
 #ifdef HAVE_LONG_LONG_INT_64
 	long_long	value;
+	int			longlongflag = 0;
 #else
 	long		value;
 #endif
 	int			longflag = 0;
-	int			longlongflag = 0;
 	int			pointflag = 0;
 	int			maxwidth = 0;
 	char	   *strvalue;
 	int			ljust;
 	int			len;
 	int			zpad;
-
-	VA_LOCAL_DECL
-
-		VA_START(format);
 
 	output = buffer;
 	while ((ch = *format++))
@@ -162,13 +150,15 @@ dopr(char *buffer, const char *format,...)
 			case '%':
 				ljust = len = zpad = maxwidth = 0;
 				longflag = pointflag = 0;
+#ifdef HAVE_LONG_LONG_INT_64
+				longlongflag = 0;
+#endif
 		nextch:
 				ch = *format++;
 				switch (ch)
 				{
 					case 0:
 						dostr("**end of format**", 0);
-						VA_END;
 						return;
 					case '-':
 						ljust = 1;
@@ -200,16 +190,13 @@ dopr(char *buffer, const char *format,...)
 						pointflag = 1;
 						goto nextch;
 					case 'l':
+#ifdef HAVE_LONG_LONG_INT_64
 						if (longflag)
-						{
 							longlongflag = 1;
-							goto nextch;
-						}
 						else
-						{
+#endif
 							longflag = 1;
-							goto nextch;
-						}
+						goto nextch;
 					case 'u':
 					case 'U':
 						/* fmtnum(value,base,dosign,ljust,len,zpad) */
@@ -255,6 +242,7 @@ dopr(char *buffer, const char *format,...)
 						}
 						else
 							value = va_arg(args, int);
+
 						fmtnum(value, 10, 1, ljust, len, zpad);
 						break;
 					case 'x':
@@ -311,7 +299,6 @@ dopr(char *buffer, const char *format,...)
 		}
 	}
 	*output = 0;
-	VA_END;
 }
 
 static void
@@ -362,7 +349,7 @@ int			base,
 			zpad;
 {
 	int			signvalue = 0;
-#ifdef HAVE_LONG_LONG_INT_64
+#ifdef HAVE_LONG_INT_64
 	unsigned long_long uvalue;
 #else
 	unsigned long uvalue;
