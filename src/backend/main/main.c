@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.63 2003/09/25 06:57:59 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.64 2003/09/27 09:29:31 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -227,7 +227,7 @@ main(int argc, char *argv[])
 	 * the arguments passed on to GucInfoMain.
 	 */
 	if (argc > 1 && strcmp(new_argv[1], "--help-config") == 0)
-		exit(GucInfoMain(argc - 1, new_argv + 1));
+		exit(GucInfoMain(argc, new_argv));
 
 	/*
 	 * Otherwise we're a standalone backend.  Invoke PostgresMain,

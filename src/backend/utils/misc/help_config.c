@@ -4,19 +4,7 @@
  * Displays available options under grand unified configuration scheme
  *
  * The purpose of this option is to list, sort, and make searchable, all
- * runtime options available to Postgresql, by their description and grouping.
- *
- * Valid command-line options to this program:
- *
- *	none		: All available variables are sorted by group and name
- *				  and formatted nicely. ( for human consumption )
- *	<string>	: list all the variables whose name matches this string
- *	-g <string> : list all the variables whose group matches this string
- *	-l			: lists all currently defined groups and terminates
- *	-G			: no sort by groups (you get strict name order, instead)
- *	-m			: output the list in Machine friendly format, with a header row
- *	-M			: same as m, except no header
- *	-h			: help
+ * runtime options available to PostgreSQL, by their description and grouping.
  *
  * Options whose flag bits are set to GUC_NO_SHOW_ALL, GUC_NOT_IN_SAMPLE,
  * or GUC_DISALLOW_IN_FILE are not displayed, unless the user specifically
@@ -25,7 +13,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/help_config.c,v 1.6 2003/09/25 06:58:06 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/help_config.c,v 1.7 2003/09/27 09:29:31 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,39 +40,32 @@ extern char *optarg;
  * The following char constructs provide the different formats the variables
  * can be outputted in.
  */
-enum outputFormat
-{
-	HUMAN_OUTPUT,
-	MACHINE_OUTPUT
-};
+#define HUMAN_OUTPUT 0
+#define MACHINE_OUTPUT 1
 
 static const char *const GENERIC_FORMAT[] = {
-	gettext_noop("Name:        %-20s\nContext:     %-20s\nGroup:       %-20s\n"),
+	gettext_noop("Name:          %-20s\nContext:       %-20s\nGroup:         %-20s\n"),
 	"%s\t%s\t%s\t"
 };
 static const char *const GENERIC_DESC[] = {
-	gettext_noop("Description: %s\n%s\n"),
+	gettext_noop("Description:   %s\n%s\n"),
 	"%s\t%s\n"
 };
 static const char *const BOOL_FORMAT[] = {
-	gettext_noop("Type:        Boolean\nReset value: %-s\n"),
+	gettext_noop("Type:          Boolean\nDefault value: %-s\n"),
 	"BOOL\t%s\t\t\t"
 };
 static const char *const INT_FORMAT[] = {
-	gettext_noop("Type:        integer\nReset value: %-20d\nMin value:   %-20d\nMax value:   %-20d\n"),
+	gettext_noop("Type:          integer\nDefault value: %-20d\nMin value:     %-20d\nMax value:     %-20d\n"),
 	"INT\t%d\t%d\t%d\t"
 };
 static const char *const REAL_FORMAT[] = {
-	gettext_noop("Type:        real\nReset value: %-20g\nMin value:   %-20g\nMax value:   %-20g\n"),
+	gettext_noop("Type:          real\nDefault value: %-20g\nMin value:     %-20g\nMax value:     %-20g\n"),
 	"REAL\t%g\t%g\t%g\t"
 };
 static const char *const STRING_FORMAT[] = {
-	gettext_noop("Type:        string\nReset value: %-s\n"),
+	gettext_noop("Type:          string\nDefault value: %-s\n"),
 	"STRING\t%s\t\t\t"
-};
-static const char *const COLUMN_HEADER[] = {
-	"",
-	gettext_noop("NAME\tCONTEXT\tGROUP\tTYPE\tRESET_VALUE\tMIN\tMAX\tSHORT_DESCRIPTION\tLONG_DESCRIPTION\n")
 };
 static const char *const ROW_SEPARATOR[] = {
 	"------------------------------------------------------------\n",
@@ -95,12 +76,8 @@ static const char *const ROW_SEPARATOR[] = {
  * Variables loaded from the command line
  */
 static char *nameString = NULL; /* The var name pattern to match */
-static bool nameRegexBool = false;		/* Match the name pattern as a
-										 * regex */
 static char *groupString = NULL;	/* The var group pattern to match */
-static bool groupRegexBool = false;		/* Match the group pattern as a
-										 * regex */
-static enum outputFormat outFormat = HUMAN_OUTPUT;
+static int outFormat = HUMAN_OUTPUT;
 static bool suppressAllHeaders = false; /* MACHINE_OUTPUT output, no
 										 * column headers */
 static bool groupResults = true;	/* sort result list by groups */
@@ -124,8 +101,7 @@ typedef union
 static bool varMatches(mixedStruct *structToTest);
 static int	compareMixedStructs(const void *, const void *);
 static mixedStruct **varsToDisplay(int *resultListSize);
-static const char *usageErrMsg(void);
-static void helpMessage(void);
+static void helpMessage(const char *progname);
 static void listAllGroups(void);
 static void printGenericHead(struct config_generic structToPrint);
 static void printGenericFoot(struct config_generic structToPrint);
@@ -145,15 +121,12 @@ GucInfoMain(int argc, char *argv[])
 	int			c;
 	int			i;
 
-	while ((c = getopt(argc, argv, "g:rGmMlh")) != -1)
+	while ((c = getopt(argc - 1, argv + 1, "g:GmMlh")) != -1)
 	{
 		switch (c)
 		{
 			case 'g':
 				groupString = optarg;
-				break;
-			case 'r':			/* not actually implemented yet */
-				nameRegexBool = true;
 				break;
 			case 'G':
 				groupResults = false;
@@ -169,17 +142,17 @@ GucInfoMain(int argc, char *argv[])
 				listAllGroups();
 				exit(0);
 			case 'h':
-				helpMessage();
+				helpMessage(argv[0]);
 				exit(0);
 
 			default:
-				fprintf(stderr, gettext("%s \n Try -h for further details\n"), usageErrMsg());
+				fprintf(stderr, gettext("Try \"%s --help-config -h\" for more information.\n"), argv[0]);
 				exit(1);
 		}
 	}
 
-	if (optind < argc)
-		nameString = argv[optind];
+	if (optind < argc - 1)
+		nameString = argv[optind + 1];
 
 	/* get the list of variables that match the user's specs. */
 	varList = varsToDisplay(&resultListSize);
@@ -191,12 +164,12 @@ GucInfoMain(int argc, char *argv[])
 			  sizeof(mixedStruct *), compareMixedStructs);
 
 	/* output the results */
-	if (!suppressAllHeaders)
-		printf(gettext(COLUMN_HEADER[outFormat]));
+	if (outFormat == MACHINE_OUTPUT && !suppressAllHeaders)
+		printf("NAME\tCONTEXT\tGROUP\tTYPE\tDEFAULT_VALUE\tMIN\tMAX\tSHORT_DESCRIPTION\tLONG_DESCRIPTION\n");
 
 	for (i = 0; varList[i] != NULL; i++)
 	{
-		printf(gettext(ROW_SEPARATOR[outFormat]));
+		printf(ROW_SEPARATOR[outFormat]);
 		printMixedStruct(varList[i]);
 	}
 
@@ -299,7 +272,7 @@ varMatches(mixedStruct *structToTest)
 										 * searched for a variable in
 										 * particular. */
 
-	if (nameString != NULL && !nameRegexBool)
+	if (nameString != NULL)
 	{
 		if (strstr(structToTest->generic.name, nameString) != NULL)
 		{
@@ -308,12 +281,7 @@ varMatches(mixedStruct *structToTest)
 		}
 	}
 
-	if (nameString != NULL && nameRegexBool)
-	{
-		/* We do not support this option yet */
-	}
-
-	if (groupString != NULL && !groupRegexBool)
+	if (groupString != NULL)
 	{
 		if (strstr(config_group_names[structToTest->generic.group], groupString) != NULL)
 		{
@@ -324,11 +292,6 @@ varMatches(mixedStruct *structToTest)
 		}
 		else
 			matches = false;
-	}
-
-	if (groupString != NULL && groupRegexBool)
-	{
-		/* We do not support this option yet */
 	}
 
 	/* return all variables */
@@ -355,9 +318,14 @@ printMixedStruct(mixedStruct *structToPrint)
 	{
 
 		case PGC_BOOL:
-			printf(gettext(BOOL_FORMAT[outFormat]),
-				   (structToPrint->bool.reset_val == 0) ?
-				   gettext("FALSE") : gettext("TRUE"));
+			if (outFormat == HUMAN_OUTPUT)
+				printf(gettext(BOOL_FORMAT[outFormat]),
+					   (structToPrint->bool.reset_val == 0) ?
+					   gettext("false") : gettext("true"));
+			else
+				printf(gettext(BOOL_FORMAT[outFormat]),
+					   (structToPrint->bool.reset_val == 0) ?
+					   "FALSE" : "TRUE");
 			break;
 
 		case PGC_INT:
@@ -380,7 +348,7 @@ printMixedStruct(mixedStruct *structToPrint)
 			break;
 
 		default:
-			printf(gettext("Unrecognized variable type!\n"));
+			printf("Internal error: unrecognized run-time parameter type\n");
 			break;
 	}
 
@@ -409,40 +377,29 @@ listAllGroups(void)
 {
 	int			i;
 
-	printf(gettext("All currently defined groups\n"));
-	printf(gettext("----------------------------\n"));
 	for (i = 0; config_group_names[i] != NULL; i++)
-		printf(gettext("%s\n"), gettext(config_group_names[i]));
-}
-
-static const char *
-usageErrMsg(void)
-{
-	return gettext("Usage for --help-config option: [-h] [-g <group>] [-l] [-G] [-m] [-M] [string]\n");
+		printf("%s\n", gettext(config_group_names[i]));
 }
 
 static void
-helpMessage(void)
+helpMessage(const char *progname)
 {
-	printf(gettext("Description:\n"
-				   "--help-config displays all the runtime options available in PostgreSQL.\n"
-				   "It groups them by category and sorts them by name. If available, it will\n"
-				   "present a short description, default, max and min values as well as other\n"
-				   "information about each option.\n\n"
-				   "With no options specified, it will output all available runtime options\n"
-				   "in human friendly format, grouped by category and sorted by name.\n\n"
-
-				   "%s\n"
-
-				   "General Options:\n"
-			"  [string]	All options with names that match this string\n"
-			   "  -g GROUP	All options in categories that match GROUP\n"
-				   "  -l      	Prints list of all groups / subgroups\n"
-				   "  -h      	Prints this help message\n"
-				   "\nOutput Options:\n"
-				   "  -G      	Do not group by category\n"
-			"  -m      	Machine friendly format: tab separated fields\n"
-				   "  -M      	Same as m, except header with column names is suppressed\n"),
-		   usageErrMsg()
-		);
+	printf(gettext("%s --help-config displays information about the\n"
+				   "run-time configuration parameters available in the PostgreSQL server.\n\n"),
+		   progname);
+	printf(gettext("Usage:\n  %s --help-config [OPTION]... [NAME]\n\n"), progname);
+	printf(gettext("General Options:\n"));
+	printf(gettext("  NAME      output information about parameters matching this name\n"));
+	printf(gettext("  -g GROUP  output information about parameters matching this group\n"));
+	printf(gettext("  -l        list available parameter groups\n"));
+	printf(gettext("  -h        show this help, then exit\n"));
+	printf(gettext("\nOutput Options:\n"));
+	printf(gettext("  -G  do not group by category\n"));
+	printf(gettext("  -m  machine-friendly format: tab separated fields\n"));
+	printf(gettext("  -M  same as -m, but header with column names is suppressed\n"));
+	printf(gettext("\n"
+				   "If no parameter name is specified, all parameters are shown.  By default,\n"
+				   "parameters are grouped by category, sorted by name, and output in a human-\n"
+				   "friendly format.  Available information about run-time parameters includes\n"
+				   "a short description, default value, maximum and minimum values.\n"));
 }
