@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.26 2002/07/20 05:16:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.27 2002/07/29 23:46:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -164,18 +164,7 @@ RangeVarGetRelid(const RangeVar *relation, bool failOK)
 	if (relation->schemaname)
 	{
 		/* use exact schema given */
-		AclResult	aclresult;
-
-		namespaceId = GetSysCacheOid(NAMESPACENAME,
-									 CStringGetDatum(relation->schemaname),
-									 0, 0, 0);
-		if (!OidIsValid(namespaceId))
-			elog(ERROR, "Namespace \"%s\" does not exist",
-				 relation->schemaname);
-		aclresult = pg_namespace_aclcheck(namespaceId, GetUserId(), ACL_USAGE);
-		if (aclresult != ACLCHECK_OK)
-			aclcheck_error(aclresult, relation->schemaname);
-
+		namespaceId = LookupExplicitNamespace(relation->schemaname);
 		relId = get_relname_relid(relation->relname, namespaceId);
 	}
 	else
@@ -239,6 +228,7 @@ RangeVarGetCreationNamespace(const RangeVar *newRelation)
 		if (!OidIsValid(namespaceId))
 			elog(ERROR, "Namespace \"%s\" does not exist",
 				 newRelation->schemaname);
+		/* we do not check for USAGE rights here! */
 	}
 	else
 	{
@@ -431,53 +421,19 @@ FuncCandidateList
 FuncnameGetCandidates(List *names, int nargs)
 {
 	FuncCandidateList resultList = NULL;
-	char	   *catalogname;
-	char	   *schemaname = NULL;
-	char	   *funcname = NULL;
+	char	   *schemaname;
+	char	   *funcname;
 	Oid			namespaceId;
 	CatCList   *catlist;
 	int			i;
 
 	/* deconstruct the name list */
-	switch (length(names))
-	{
-		case 1:
-			funcname = strVal(lfirst(names));
-			break;
-		case 2:
-			schemaname = strVal(lfirst(names));
-			funcname = strVal(lsecond(names));
-			break;
-		case 3:
-			catalogname = strVal(lfirst(names));
-			schemaname = strVal(lsecond(names));
-			funcname = strVal(lfirst(lnext(lnext(names))));
-			/*
-			 * We check the catalog name and then ignore it.
-			 */
-			if (strcmp(catalogname, DatabaseName) != 0)
-				elog(ERROR, "Cross-database references are not implemented");
-			break;
-		default:
-			elog(ERROR, "Improper qualified name (too many dotted names): %s",
-				 NameListToString(names));
-			break;
-	}
+	DeconstructQualifiedName(names, &schemaname, &funcname);
 
 	if (schemaname)
 	{
 		/* use exact schema given */
-		AclResult	aclresult;
-
-		namespaceId = GetSysCacheOid(NAMESPACENAME,
-									 CStringGetDatum(schemaname),
-									 0, 0, 0);
-		if (!OidIsValid(namespaceId))
-			elog(ERROR, "Namespace \"%s\" does not exist",
-				 schemaname);
-		aclresult = pg_namespace_aclcheck(namespaceId, GetUserId(), ACL_USAGE);
-		if (aclresult != ACLCHECK_OK)
-			aclcheck_error(aclresult, schemaname);
+		namespaceId = LookupExplicitNamespace(schemaname);
 	}
 	else
 	{
@@ -684,53 +640,19 @@ FuncCandidateList
 OpernameGetCandidates(List *names, char oprkind)
 {
 	FuncCandidateList resultList = NULL;
-	char	   *catalogname;
-	char	   *schemaname = NULL;
-	char	   *opername = NULL;
+	char	   *schemaname;
+	char	   *opername;
 	Oid			namespaceId;
 	CatCList   *catlist;
 	int			i;
 
 	/* deconstruct the name list */
-	switch (length(names))
-	{
-		case 1:
-			opername = strVal(lfirst(names));
-			break;
-		case 2:
-			schemaname = strVal(lfirst(names));
-			opername = strVal(lsecond(names));
-			break;
-		case 3:
-			catalogname = strVal(lfirst(names));
-			schemaname = strVal(lsecond(names));
-			opername = strVal(lfirst(lnext(lnext(names))));
-			/*
-			 * We check the catalog name and then ignore it.
-			 */
-			if (strcmp(catalogname, DatabaseName) != 0)
-				elog(ERROR, "Cross-database references are not implemented");
-			break;
-		default:
-			elog(ERROR, "Improper qualified name (too many dotted names): %s",
-				 NameListToString(names));
-			break;
-	}
+	DeconstructQualifiedName(names, &schemaname, &opername);
 
 	if (schemaname)
 	{
 		/* use exact schema given */
-		AclResult	aclresult;
-
-		namespaceId = GetSysCacheOid(NAMESPACENAME,
-									 CStringGetDatum(schemaname),
-									 0, 0, 0);
-		if (!OidIsValid(namespaceId))
-			elog(ERROR, "Namespace \"%s\" does not exist",
-				 schemaname);
-		aclresult = pg_namespace_aclcheck(namespaceId, GetUserId(), ACL_USAGE);
-		if (aclresult != ACLCHECK_OK)
-			aclcheck_error(aclresult, schemaname);
+		namespaceId = LookupExplicitNamespace(schemaname);
 	}
 	else
 	{
@@ -1105,25 +1027,22 @@ OpclassIsVisible(Oid opcid)
 	return visible;
 }
 
-
 /*
- * QualifiedNameGetCreationNamespace
- *		Given a possibly-qualified name for an object (in List-of-Values
- *		format), determine what namespace the object should be created in.
- *		Also extract and return the object name (last component of list).
+ * DeconstructQualifiedName
+ *		Given a possibly-qualified name expressed as a list of String nodes,
+ *		extract the schema name and object name.
  *
- * This is *not* used for tables.  Hence, the TEMP table namespace is
- * never selected as the creation target.
+ * *nspname_p is set to NULL if there is no explicit schema name.
  */
-Oid
-QualifiedNameGetCreationNamespace(List *names, char **objname_p)
+void
+DeconstructQualifiedName(List *names,
+						 char **nspname_p,
+						 char **objname_p)
 {
 	char	   *catalogname;
 	char	   *schemaname = NULL;
 	char	   *objname = NULL;
-	Oid			namespaceId;
 
-	/* deconstruct the name list */
 	switch (length(names))
 	{
 		case 1:
@@ -1149,6 +1068,55 @@ QualifiedNameGetCreationNamespace(List *names, char **objname_p)
 			break;
 	}
 
+	*nspname_p = schemaname;
+	*objname_p = objname;
+}
+
+/*
+ * LookupExplicitNamespace
+ *		Process an explicitly-specified schema name: look up the schema
+ *		and verify we have USAGE (lookup) rights in it.
+ *
+ * Returns the namespace OID.  Raises elog if any problem.
+ */
+Oid
+LookupExplicitNamespace(char *nspname)
+{
+	Oid			namespaceId;
+	AclResult	aclresult;
+
+	namespaceId = GetSysCacheOid(NAMESPACENAME,
+								 CStringGetDatum(nspname),
+								 0, 0, 0);
+	if (!OidIsValid(namespaceId))
+		elog(ERROR, "Namespace \"%s\" does not exist", nspname);
+
+	aclresult = pg_namespace_aclcheck(namespaceId, GetUserId(), ACL_USAGE);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error(aclresult, nspname);
+
+	return namespaceId;
+}
+
+/*
+ * QualifiedNameGetCreationNamespace
+ *		Given a possibly-qualified name for an object (in List-of-Values
+ *		format), determine what namespace the object should be created in.
+ *		Also extract and return the object name (last component of list).
+ *
+ * This is *not* used for tables.  Hence, the TEMP table namespace is
+ * never selected as the creation target.
+ */
+Oid
+QualifiedNameGetCreationNamespace(List *names, char **objname_p)
+{
+	char	   *schemaname;
+	char	   *objname;
+	Oid			namespaceId;
+
+	/* deconstruct the name list */
+	DeconstructQualifiedName(names, &schemaname, &objname);
+
 	if (schemaname)
 	{
 		/* use exact schema given */
@@ -1158,6 +1126,7 @@ QualifiedNameGetCreationNamespace(List *names, char **objname_p)
 		if (!OidIsValid(namespaceId))
 			elog(ERROR, "Namespace \"%s\" does not exist",
 				 schemaname);
+		/* we do not check for USAGE rights here! */
 	}
 	else
 	{

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/opclasscmds.c,v 1.1 2002/07/29 22:14:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/opclasscmds.c,v 1.2 2002/07/29 23:46:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -467,10 +467,9 @@ storeProcedures(Oid opclassoid, int numProcs, Oid *procedures)
 void
 RemoveOpClass(RemoveOpClassStmt *stmt)
 {
-	Oid				amID, opcID;
-	char	   *catalogname;
-	char	   *schemaname = NULL;
-	char	   *opcname = NULL;
+	Oid			amID, opcID;
+	char	   *schemaname;
+	char	   *opcname;
 	HeapTuple	tuple;
 	ObjectAddress object;
 
@@ -489,42 +488,14 @@ RemoveOpClass(RemoveOpClassStmt *stmt)
 	 */
 
 	/* deconstruct the name list */
-	switch (length(stmt->opclassname))
-	{
-		case 1:
-			opcname = strVal(lfirst(stmt->opclassname));
-			break;
-		case 2:
-			schemaname = strVal(lfirst(stmt->opclassname));
-			opcname = strVal(lsecond(stmt->opclassname));
-			break;
-		case 3:
-			catalogname = strVal(lfirst(stmt->opclassname));
-			schemaname = strVal(lsecond(stmt->opclassname));
-			opcname = strVal(lfirst(lnext(lnext(stmt->opclassname))));
-			/*
-			 * We check the catalog name and then ignore it.
-			 */
-			if (strcmp(catalogname, DatabaseName) != 0)
-				elog(ERROR, "Cross-database references are not implemented");
-			break;
-		default:
-			elog(ERROR, "Improper opclass name (too many dotted names): %s",
-				 NameListToString(stmt->opclassname));
-			break;
-	}
+	DeconstructQualifiedName(stmt->opclassname, &schemaname, &opcname);
 
 	if (schemaname)
 	{
 		/* Look in specific schema only */
 		Oid		namespaceId;
 
-		namespaceId = GetSysCacheOid(NAMESPACENAME,
-									 CStringGetDatum(schemaname),
-									 0, 0, 0);
-		if (!OidIsValid(namespaceId))
-			elog(ERROR, "Namespace \"%s\" does not exist",
-				 schemaname);
+		namespaceId = LookupExplicitNamespace(schemaname);
 		tuple = SearchSysCache(CLAAMNAMENSP,
 							   ObjectIdGetDatum(amID),
 							   PointerGetDatum(opcname),

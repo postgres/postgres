@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.45 2002/07/20 05:16:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.46 2002/07/29 23:46:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -99,35 +99,11 @@ LookupTypeName(const TypeName *typename)
 	else
 	{
 		/* Normal reference to a type name */
-		char	   *catalogname;
-		char	   *schemaname = NULL;
-		char	   *typname = NULL;
+		char	   *schemaname;
+		char	   *typname;
 
 		/* deconstruct the name list */
-		switch (length(typename->names))
-		{
-			case 1:
-				typname = strVal(lfirst(typename->names));
-				break;
-			case 2:
-				schemaname = strVal(lfirst(typename->names));
-				typname = strVal(lsecond(typename->names));
-				break;
-			case 3:
-				catalogname = strVal(lfirst(typename->names));
-				schemaname = strVal(lsecond(typename->names));
-				typname = strVal(lfirst(lnext(lnext(typename->names))));
-				/*
-				 * We check the catalog name and then ignore it.
-				 */
-				if (strcmp(catalogname, DatabaseName) != 0)
-					elog(ERROR, "Cross-database references are not implemented");
-				break;
-			default:
-				elog(ERROR, "Improper type name (too many dotted names): %s",
-					 NameListToString(typename->names));
-				break;
-		}
+		DeconstructQualifiedName(typename->names, &schemaname, &typname);
 
 		/* If an array reference, look up the array type instead */
 		if (typename->arrayBounds != NIL)
@@ -138,12 +114,7 @@ LookupTypeName(const TypeName *typename)
 			/* Look in specific schema only */
 			Oid		namespaceId;
 
-			namespaceId = GetSysCacheOid(NAMESPACENAME,
-										 CStringGetDatum(schemaname),
-										 0, 0, 0);
-			if (!OidIsValid(namespaceId))
-				elog(ERROR, "Namespace \"%s\" does not exist",
-					 schemaname);
+			namespaceId = LookupExplicitNamespace(schemaname);
 			restype = GetSysCacheOid(TYPENAMENSP,
 									 PointerGetDatum(typname),
 									 ObjectIdGetDatum(namespaceId),

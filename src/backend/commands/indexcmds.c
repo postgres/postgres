@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.78 2002/07/20 05:16:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.79 2002/07/29 23:46:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -410,9 +410,8 @@ static Oid
 GetAttrOpClass(IndexElem *attribute, Oid attrType,
 			   char *accessMethodName, Oid accessMethodId)
 {
-	char	   *catalogname;
-	char	   *schemaname = NULL;
-	char	   *opcname = NULL;
+	char	   *schemaname;
+	char	   *opcname;
 	HeapTuple	tuple;
 	Oid			opClassId,
 				opInputType;
@@ -434,42 +433,14 @@ GetAttrOpClass(IndexElem *attribute, Oid attrType,
 	 */
 
 	/* deconstruct the name list */
-	switch (length(attribute->opclass))
-	{
-		case 1:
-			opcname = strVal(lfirst(attribute->opclass));
-			break;
-		case 2:
-			schemaname = strVal(lfirst(attribute->opclass));
-			opcname = strVal(lsecond(attribute->opclass));
-			break;
-		case 3:
-			catalogname = strVal(lfirst(attribute->opclass));
-			schemaname = strVal(lsecond(attribute->opclass));
-			opcname = strVal(lfirst(lnext(lnext(attribute->opclass))));
-			/*
-			 * We check the catalog name and then ignore it.
-			 */
-			if (strcmp(catalogname, DatabaseName) != 0)
-				elog(ERROR, "Cross-database references are not implemented");
-			break;
-		default:
-			elog(ERROR, "Improper opclass name (too many dotted names): %s",
-				 NameListToString(attribute->opclass));
-			break;
-	}
+	DeconstructQualifiedName(attribute->opclass, &schemaname, &opcname);
 
 	if (schemaname)
 	{
 		/* Look in specific schema only */
 		Oid		namespaceId;
 
-		namespaceId = GetSysCacheOid(NAMESPACENAME,
-									 CStringGetDatum(schemaname),
-									 0, 0, 0);
-		if (!OidIsValid(namespaceId))
-			elog(ERROR, "Namespace \"%s\" does not exist",
-				 schemaname);
+		namespaceId = LookupExplicitNamespace(schemaname);
 		tuple = SearchSysCache(CLAAMNAMENSP,
 							   ObjectIdGetDatum(accessMethodId),
 							   PointerGetDatum(opcname),

@@ -7,7 +7,7 @@
  * Copyright (c) 1996-2001, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.52 2002/07/20 05:16:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.53 2002/07/29 23:46:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,6 @@
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_description.h"
-#include "catalog/pg_namespace.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_rewrite.h"
 #include "catalog/pg_trigger.h"
@@ -468,36 +467,28 @@ CommentNamespace(List *qualname, char *comment)
 {
 	Oid			oid;
 	Oid			classoid;
-	HeapTuple	tp;
 	char	   *namespace;
 
 	if (length(qualname) != 1)
 		elog(ERROR, "CommentSchema: schema name may not be qualified");
 	namespace = strVal(lfirst(qualname));
 
-	tp = SearchSysCache(NAMESPACENAME,
-						CStringGetDatum(namespace),
-						0, 0, 0);
-	if (!HeapTupleIsValid(tp))
+	oid = GetSysCacheOid(NAMESPACENAME,
+						 CStringGetDatum(namespace),
+						 0, 0, 0);
+	if (!OidIsValid(oid))
 		elog(ERROR, "CommentSchema: Schema \"%s\" could not be found",
 			 namespace);
-
-	/* no TupleDesc here to Assert(...->tdhasoid); */
-	oid = HeapTupleGetOid(tp);
 
 	/* Check object security */
 	if (!pg_namespace_ownercheck(oid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, namespace);
 
 	/* pg_namespace doesn't have a hard-coded OID, so must look it up */
-	classoid = get_relname_relid(NamespaceRelationName, PG_CATALOG_NAMESPACE);
-	Assert(OidIsValid(classoid));
+	classoid = get_system_catalog_relid(NamespaceRelationName);
 
 	/* Call CreateComments() to create/drop the comments */
 	CreateComments(oid, classoid, 0, comment);
-
-	/* Cleanup */
-	ReleaseSysCache(tp);
 }
 
 /*
@@ -607,8 +598,7 @@ CommentRule(List *qualname, char *comment)
 		aclcheck_error(aclcheck, rulename);
 
 	/* pg_rewrite doesn't have a hard-coded OID, so must look it up */
-	classoid = get_relname_relid(RewriteRelationName, PG_CATALOG_NAMESPACE);
-	Assert(OidIsValid(classoid));
+	classoid = get_system_catalog_relid(RewriteRelationName);
 
 	/* Call CreateComments() to create/drop the comments */
 
@@ -740,8 +730,7 @@ CommentOperator(List *opername, List *arguments, char *comment)
 		aclcheck_error(ACLCHECK_NOT_OWNER, NameListToString(opername));
 
 	/* pg_operator doesn't have a hard-coded OID, so must look it up */
-	classoid = get_relname_relid(OperatorRelationName, PG_CATALOG_NAMESPACE);
-	Assert(OidIsValid(classoid));
+	classoid = get_system_catalog_relid(OperatorRelationName);
 
 	/* Call CreateComments() to create/drop the comments */
 	CreateComments(oid, classoid, 0, comment);

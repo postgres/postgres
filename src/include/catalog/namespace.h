@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: namespace.h,v 1.16 2002/07/16 06:58:13 ishii Exp $
+ * $Id: namespace.h,v 1.17 2002/07/29 23:46:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,6 +65,11 @@ extern bool OperatorIsVisible(Oid oprid);
 extern OpclassCandidateList OpclassGetCandidates(Oid amid);
 extern Oid	OpclassnameGetOpcid(Oid amid, const char *opcname);
 extern bool OpclassIsVisible(Oid opcid);
+
+extern void DeconstructQualifiedName(List *names,
+									 char **nspname_p,
+									 char **objname_p);
+extern Oid	LookupExplicitNamespace(char *nspname);
 
 extern Oid	QualifiedNameGetCreationNamespace(List *names, char **objname_p);
 extern RangeVar *makeRangeVarFromNameList(List *names);
