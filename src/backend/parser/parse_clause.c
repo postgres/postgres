@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.28 1999/02/13 23:17:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.29 1999/02/23 07:46:42 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,7 +26,9 @@
 #include "parser/parse_relation.h"
 #include "parser/parse_target.h"
 #include "parser/parse_coerce.h"
+#include "nodes/print.h"
 
+#include "parse.h"
 
 
 #define ORDER_CLAUSE 0
@@ -37,7 +39,15 @@ static char *clauseText[] = {"ORDER", "GROUP"};
 static TargetEntry *
 			findTargetlistEntry(ParseState *pstate, Node *node, List *tlist, int clause);
 
-static void parseFromClause(ParseState *pstate, List *frmList);
+static void parseFromClause(ParseState *pstate, List *frmList, Node **qual);
+
+Attr *makeAttr(char *relname, char *attname);
+
+#ifdef ENABLE_OUTER_JOINS
+Node *transformUsingClause(ParseState *pstate, List *onList, char *lname, char *rname);
+#endif
+
+char *transformTableEntry(ParseState *pstate, RangeVar *r);
 
 
 /*
@@ -46,18 +56,18 @@ static void parseFromClause(ParseState *pstate, List *frmList);
  *	  from_clause.
  */
 void
-makeRangeTable(ParseState *pstate, char *relname, List *frmList)
+makeRangeTable(ParseState *pstate, char *relname, List *frmList, Node **qual)
 {
 	RangeTblEntry *rte;
 	int			sublevels_up;
 
-	parseFromClause(pstate, frmList);
+	parseFromClause(pstate, frmList, qual);
 
 	if (relname == NULL)
 		return;
 
-	if (refnameRangeTablePosn(pstate, relname, &sublevels_up) == 0 ||
-		sublevels_up != 0)
+	if ((refnameRangeTablePosn(pstate, relname, &sublevels_up) == 0)
+	 || (sublevels_up != 0))
 		rte = addRangeTableEntry(pstate, relname, relname, FALSE, FALSE);
 	else
 		rte = refnameRangeTableEntry(pstate, relname);
@@ -77,17 +87,35 @@ makeRangeTable(ParseState *pstate, char *relname, List *frmList)
  * transformWhereClause -
  *	  transforms the qualification and make sure it is of type Boolean
  *
+ * Now accept an additional argument, which is a qualification derived
+ * from the JOIN/ON or JOIN/USING syntax.
+ * - thomas 1998-12-16
  */
 Node *
-transformWhereClause(ParseState *pstate, Node *a_expr)
+transformWhereClause(ParseState *pstate, Node *a_expr, Node *o_expr)
 {
+	A_Expr	   *expr;
 	Node	   *qual;
 
-	if (a_expr == NULL)
+	if ((a_expr == NULL) && (o_expr == NULL))
 		return NULL;			/* no qualifiers */
 
+	if ((a_expr != NULL) && (o_expr != NULL))
+	{
+		A_Expr *a = makeNode(A_Expr);
+		a->oper = AND;
+		a->opname = NULL;
+		a->lexpr = o_expr;
+		a->rexpr = a_expr;
+		expr = a;
+	}
+	else if (o_expr != NULL)
+		expr = (A_Expr *)o_expr;
+	else
+		expr = (A_Expr *)a_expr;
+
 	pstate->p_in_where_clause = true;
-	qual = transformExpr(pstate, a_expr, EXPR_COLUMN_FIRST);
+	qual = transformExpr(pstate, (Node *)expr, EXPR_COLUMN_FIRST);
 	pstate->p_in_where_clause = false;
 
 	if (exprType(qual) != BOOLOID)
@@ -98,6 +126,122 @@ transformWhereClause(ParseState *pstate, Node *a_expr)
 	return qual;
 }
 
+Attr *
+makeAttr(char *relname, char *attname)
+{
+	Attr	   *a = makeNode(Attr);
+	a->relname = relname;
+	a->paramNo = NULL;
+	a->attrs = lcons(makeString(attname), NIL);
+	a->indirection = NULL;
+
+	return a;
+}
+
+#ifdef ENABLE_OUTER_JOINS
+/* transformUsingClause()
+ * Take an ON or USING clause from a join expression and expand if necessary.
+ */
+Node *
+transformUsingClause(ParseState *pstate, List *onList, char *lname, char *rname)
+{
+	A_Expr	   *expr = NULL;
+	List	   *on;
+	Node	   *qual;
+
+	foreach (on, onList)
+	{
+		qual = lfirst(on);
+
+		/* Ident node means it is just a column name from a real USING clause... */
+		if (IsA(qual, Ident))
+		{
+			Ident	   *i = (Ident *)qual;
+			Attr	   *lattr = makeAttr(lname, i->name);
+			Attr	   *rattr = makeAttr(rname, i->name);
+			A_Expr *e = makeNode(A_Expr);
+
+#ifdef PARSEDEBUG
+printf("transformUsingClause- transform %s", nodeToString(i));
+#endif
+
+			e->oper = OP;
+			e->opname = "=";
+			e->lexpr = (Node *)lattr;
+			e->rexpr = (Node *)rattr;
+
+			if (expr != NULL)
+			{
+				A_Expr *a = makeNode(A_Expr);
+				a->oper = AND;
+				a->opname = NULL;
+				a->lexpr = (Node *)expr;
+				a->rexpr = (Node *)e;
+				expr = a;
+			}
+			else
+				expr = e;
+		}
+
+		/* otherwise, we have an expression from an ON clause... */
+		else
+		{
+			if (expr != NULL)
+			{
+				A_Expr *a = makeNode(A_Expr);
+				a->oper = AND;
+				a->opname = NULL;
+				a->lexpr = (Node *)expr;
+				a->rexpr = (Node *)qual;
+				expr = a;
+			}
+			else
+			{
+				expr = (A_Expr *)qual;
+			}
+
+#ifdef PARSEDEBUG
+printf("transformUsingClause- transform %s", nodeToString(qual));
+#endif
+
+		}
+
+#ifdef PARSEDEBUG
+printf(" to %s\n", nodeToString(expr));
+#endif
+	}
+	return ((Node *)transformExpr(pstate, (Node *)expr, EXPR_COLUMN_FIRST));
+}
+#endif
+
+char *
+transformTableEntry(ParseState *pstate, RangeVar *r)
+{
+	RelExpr    *baserel = r->relExpr;
+	char	   *relname = baserel->relname;
+	char	   *refname = r->name;
+	RangeTblEntry *rte;
+
+	if (refname == NULL)
+		refname = relname;
+
+	/*
+	 * marks this entry to indicate it comes from the FROM clause. In
+	 * SQL, the target list can only refer to range variables
+	 * specified in the from clause but we follow the more powerful
+	 * POSTQUEL semantics and automatically generate the range
+	 * variable if not specified. However there are times we need to
+	 * know whether the entries are legitimate.
+	 *
+	 * eg. select * from foo f where f.x = 1; will generate wrong answer
+	 * if we expand * to foo.x.
+	 */
+
+	rte = addRangeTableEntry(pstate, relname, refname, baserel->inh, TRUE);
+
+	return refname;
+}
+
 /*
  * parseFromClause -
  *	  turns the table references specified in the from-clause into a
@@ -106,23 +250,23 @@ transformWhereClause(ParseState *pstate, Node *a_expr)
  *	  allow references to relations not specified in the from-clause. We
  *	  also allow now as an extension.)
  *
+ * The FROM clause can now contain JoinExpr nodes, which contain parsing info
+ * for inner and outer joins. The USING clause must be expanded into a qualification
+ * for an inner join at least, since that is compatible with the old syntax.
+ * Not sure yet how to handle outer joins, but it will become clear eventually?
+ * - thomas 1998-12-16
  */
 static void
-parseFromClause(ParseState *pstate, List *frmList)
+parseFromClause(ParseState *pstate, List *frmList, Node **qual)
 {
 	List	   *fl;
 
+	if (qual != NULL)
+		*qual = NULL;
+
 	foreach(fl, frmList)
 	{
-		RangeVar   *r = lfirst(fl);
-		RelExpr    *baserel = r->relExpr;
-		char	   *relname = baserel->relname;
-		char	   *refname = r->name;
-		RangeTblEntry *rte;
-
-		if (refname == NULL)
-			refname = relname;
-
+		Node   *n = lfirst(fl);
 		/*
 		 * marks this entry to indicate it comes from the FROM clause. In
 		 * SQL, the target list can only refer to range variables
@@ -134,7 +278,65 @@ parseFromClause(ParseState *pstate, List *frmList)
 		 * eg. select * from foo f where f.x = 1; will generate wrong answer
 		 * if we expand * to foo.x.
 		 */
-		rte = addRangeTableEntry(pstate, relname, refname, baserel->inh, TRUE);
+		if (IsA(n, RangeVar))
+		{
+			transformTableEntry(pstate, (RangeVar *)n);
+		}
+		else if (IsA(n, JoinExpr))
+		{
+			JoinExpr   *j = (JoinExpr *)n;
+			char	   *lname = transformTableEntry(pstate, (RangeVar *)j->larg);
+			char	   *rname;
+
+			if (IsA((Node *)j->rarg, RangeVar))
+				rname = transformTableEntry(pstate, (RangeVar *)j->rarg);
+			else
+				elog(ERROR, "Nested JOINs are not yet supported");
+
+#ifdef ENABLE_OUTER_JOINS
+			if (j->jointype == INNER_P)
+			{
+				/* This is an inner join, so rip apart the join node
+				 * and transform into a traditional FROM list.
+				 * NATURAL JOIN and USING clauses both change the shape
+				 * of the result. Need to generate a list of result columns
+				 * to use for target list expansion and validation.
+				 * Not doing this yet though!
+				 */
+				if (IsA(j->quals, List))
+					j->quals = lcons(transformUsingClause(pstate, (List *)j->quals, lname, rname), NIL);
+
+				Assert(qual != NULL);
+
+				if (*qual == NULL)
+					*qual = lfirst(j->quals);
+				else
+					elog(ERROR, "Multiple JOIN/ON clauses not handled (internal error)");
+
+				/* if we are transforming this node back into a FROM list,
+				 * then we will need to replace the node with two nodes.
+				 * Will need access to the previous list item to change
+				 * the link pointer to reference these new nodes.
+				 * Try accumulating and returning a new list.
+				 * - thomas 1999-01-08
+				 * Not doing this yet though!
+				 */
+
+			}
+			else if ((j->jointype == LEFT)
+			 || (j->jointype == RIGHT)
+			 || (j->jointype == FULL))
+				elog(ERROR, "OUTER JOIN is not implemented");
+			else
+				elog(ERROR, "Unrecognized JOIN clause; tag is %d (internal error)",
+					 j->jointype);
+#else
+			elog(ERROR, "JOIN expressions are not yet implemented");
+#endif
+		}
+		else
+			elog(ERROR, "parseFromClause: unexpected FROM clause node (internal error)"
+				 "\n\t%s", nodeToString(n));
 	}
 }
 
