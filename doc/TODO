@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sun Jul 15 10:33:56 EDT 2001
+Last updated:		Mon Jul 16 01:00:21 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -35,9 +35,6 @@ URGENT
 	o queries across databases or servers (two-phase commit)
 * Point-in-time data recovery using backup and write-ahead log
 * Allow row re-use without vacuum (Tom)
-* Create a background process for each database that runs while
-  database is idle, finding superceeded rows, gathering stats and
-  vacuuming (Tom)
 
 ADMIN
 
@@ -62,6 +59,7 @@ TYPES
 * Add IPv6 capability to INET/CIDR types
 * -Add conversion function from text to inet
 * Store binary-compatible type information in the system
+* Allow better handling of numeric constants, type conversion [typeconv]
 * Support construction of array result values in expressions
 * Remove Money type, add money formatting for decimal type
 * SELECT cash_out(2) crashes because of opaque
@@ -70,15 +68,14 @@ TYPES
 * -Make binary/file in/out interface for TOAST columns (base64)
 * Functions returning sets do not totally work
 * SELECT col FROM tab WHERE numeric_col = 10.1 fails
-* Allow better handling of numeric constants, type conversion [typeconv]
 * Missing optimizer selectivities for date, r-tree, etc. [optimizer]
 * -Add SQL standard function bit_length() (Peter E)
 * -Make oid use unsigned int more reliably (Tom)
 * Add security checking for large objects
 * ARRAYS
-	* Allow nulls in arrays
-	* Allow arrays to be ORDER'ed
-	* fix array handling in ECPG
+	o Allow nulls in arrays
+	o Allow arrays to be ORDER'ed
+	o fix array handling in ECPG
 
 MULTILANGUAGE SUPPORT
 
@@ -101,7 +98,7 @@ INDEXES
 * Allow CREATE INDEX zman_index ON test (date_trunc( 'day', zman ) datetime_ops)
   fails index can't store constant parameters
 * Add FILLFACTOR to index creation
-* Re-enable partial indexes
+* -Re-enable partial indexes
 * Allow inherited tables to inherit index, UNIQUE constraint, and primary
   key, foreign key  [inheritance]
 * UNIQUE INDEX on base column not honored on inserts from inherited table
@@ -109,7 +106,7 @@ INDEXES
   [inheritance]
 * -Prevent pg_attribute from having duplicate oids for indexes (Tom)
 * Add UNIQUE capability to non-btree indexes
-* Certain indexes will not shrink, e.g. oid indexes with many inserts (Vadim)
+* Certain indexes will not shrink, e.g. oid indexes with many inserts
 * Have UPDATE/DELETE clean out indexes
 * Add btree index support for reltime, tinterval, regproc
 * Add rtree index support for line, lseg, path, point
@@ -140,8 +137,6 @@ SYSTEM TABLES
 COMMANDS
 
 * Add SIMILAR TO to allow character classes, 'pg_[a-c]%'
-* Auto-destroy sequence on DROP of table with SERIAL, perhaps with a separate
-  SERIAL type
 * Allow LOCK TABLE tab1, tab2, tab3 so all tables locked in unison [lock]
 * Allow RULE recompilation
 * Add BETWEEN ASYMMETRIC/SYMMETRIC
@@ -151,45 +146,45 @@ COMMANDS
 * -Allow GRANT/REVOKE to handle multiple user/group names
 * -Allow CREATEUSER/CREATEDB ordering in CREATE/ALTER USER (Vince)
 * ALTER
-	* ALTER TABLE ADD COLUMN does not honor DEFAULT and non-CHECK CONSTRAINT
-	* ALTER TABLE ADD COLUMN to inherited table put column in wrong place
+	o ALTER TABLE ADD COLUMN does not honor DEFAULT and non-CHECK CONSTRAINT
+	o ALTER TABLE ADD COLUMN to inherited table put column in wrong place
 	  [inheritance]
-	* Add ALTER TABLE DROP COLUMN feature [drop]
-	* Add ALTER FUNCTION
-	* Add ALTER TABLE DROP non-CHECK CONSTRAINT
-	* -Add ALTER TABLE DROP CHECK CONSTRAINT (Christopher Kings-Lynne)
-	* ALTER TABLE ADD PRIMARY KEY (Christopher Kings-Lynne)
-	* ALTER TABLE ADD UNIQUE (Christopher Kings-Lynne)
+	o Add ALTER TABLE DROP COLUMN feature [drop]
+	o Add ALTER FUNCTION
+	o Add ALTER TABLE DROP non-CHECK CONSTRAINT
+	o -Add ALTER TABLE DROP CHECK CONSTRAINT (Christopher Kings-Lynne)
+	o ALTER TABLE ADD PRIMARY KEY (Christopher Kings-Lynne)
+	o ALTER TABLE ADD UNIQUE (Christopher Kings-Lynne)
 
 * CLUSTER
-	* cluster all tables at once
-	* prevent lose of indexes, permissions, inheritance
-	* Automatically keep clustering on a table
-	* -Keep statistics about clustering (Tom) [optimizer]
+	o cluster all tables at once
+	o prevent lose of indexes, permissions, inheritance
+	o Automatically keep clustering on a table
+	o -Keep statistics about clustering (Tom) [optimizer]
 * COPY
-	* Allow specification of column names
-	* Allow dump/load of CSV format
+	o Allow specification of column names
+	o Allow dump/load of CSV format
 * CURSOR
-	* Allow BINARY option to SELECT, like we do with DECLARE
-	* MOVE 0 should not move to end of cursor
-	* Allow cursors to be DECLAREd/OPENed/CLOSEed outside transactions
-	* Allow DELETE WHERE CURRENT OF cursor
+	o Allow BINARY option to SELECT, like we do with DECLARE
+	o MOVE 0 should not move to end of cursor
+	o Allow cursors to be DECLAREd/OPENed/CLOSEed outside transactions
+	o Allow DELETE WHERE CURRENT OF cursor
 * INSERT
-	* Allow INSERT/UPDATE of system-generated oid value for a row
-	* Allow INSERT INTO tab (col1, ..) VALUES (val1, ..), (val2, ..)
-	* Allow INSERT INTO my_table VALUES (a, b, c, DEFAULT, x, y, z, ...)
-	* Disallow missing columns in INSERT ... VALUES, per ANSI
-	* Allow INSERT/UPDATE ... RETURNING new.col or old.col (Philip)
+	o Allow INSERT/UPDATE of system-generated oid value for a row
+	o Allow INSERT INTO tab (col1, ..) VALUES (val1, ..), (val2, ..)
+	o Allow INSERT INTO my_table VALUES (a, b, c, DEFAULT, x, y, z, ...)
+	o Disallow missing columns in INSERT ... VALUES, per ANSI
+	o Allow INSERT/UPDATE ... RETURNING new.col or old.col (Philip)
 * SHOW/SET
-	* Add SHOW command to display locks
-	* -Add SHOW command to show all settings
-	* -Add a global RESET command for use with connection pooling
-	* Add SET or BEGIN timeout parameter to cancel query if waiting too long
-	* Add SET REAL_FORMAT and SET DOUBLE_PRECISION_FORMAT using printf args
-	* Remove SET KSQO option now that OR processing is improved (Tom)
-	* Add SET PERFORMANCE_TIPS option to suggest INDEX, VACUUM, VACUUM
+	o Add SHOW command to display locks
+	o -Add SHOW command to show all settings
+	o -Add a global RESET command for use with connection pooling
+	o Add SET or BEGIN timeout parameter to cancel query
+	o Add SET REAL_FORMAT and SET DOUBLE_PRECISION_FORMAT using printf args
+	o Remove SET KSQO option now that OR processing is improved (Tom)
+	o Add SET PERFORMANCE_TIPS option to suggest INDEX, VACUUM, VACUUM
 	  ANALYZE, and CLUSTER
-	* Add SHOW command to see locale
+	o Add SHOW command to see locale
 
 CLIENTS
 
@@ -202,30 +197,36 @@ CLIENTS
 * add XML interface capability
 * Fix libpq to properly handle socket failures under native MS Win32 [libpq]
 * JDBC
-	* Comprehensive test suite. This may be available already.
-	* Updateable resultSet (must be done in backend code)
-	* Improved DatabaseMetaData [java]
-	* JDBC-standard BLOB support
-	* Error Codes (pending backend implementation)
-	* Support for binary data/bytea
+	o Comprehensive test suite. This may be available already.
+	o Updateable resultSet (must be done in backend code)
+	o Improved DatabaseMetaData [java]
+	o JDBC-standard BLOB support
+	o Error Codes (pending backend implementation)
+	o Support for binary data/bytea
 
 REFERENTIAL INTEGRITY
 
 * Add MATCH PARTIAL referential integrity
 * -Check that primary key exists at foreign key definition time
-* Prevent column dropping if column is used by foreign key
-* Propagate column or table renaming to foreign key constraints
 * Add deferred trigger queue file (Jan)
 * Allow oid to act as a foreign key
 * Implement dirty reads and use them in RI triggers
 * Enforce referential integrity for system tables
 * INSERT & UPDATE/DELETE in transaction of primary key fails with
   deferredTriggerGetPreviousEvent or "change violation" [foreign]
-* Make constraints clearer in dump file
-* Make foreign keys easier to identify
 * Change foreign key constraint for array -> element to mean element
    in array
+
+DEPENDENCY CHECKING / pg_depend
+
+* Auto-destroy sequence on DROP of table with SERIAL, perhaps with a separate
+  SERIAL type
+* Prevent column dropping if column is used by foreign key
+* Propagate column or table renaming to foreign key constraints
 * Automatically drop constraints/functions when object is dropped
+* Make constraints clearer in dump file
+* Make foreign keys easier to identify
+
 
 TRANSACTIONS
 
@@ -261,9 +262,9 @@ PERFORMANCE
 FSYNC
 
 * Delay fsync() when other backends are about to commit too [fsync]
-	* Determine optimal commit_delay value
+	o Determine optimal commit_delay value
 * Determine optimal fdatasync/fsync, O_SYNC/O_DSYNC options
-	* Allow multiple blocks to be written to WAL with one write()
+	o Allow multiple blocks to be written to WAL with one write()
 
 CACHE
 
@@ -300,7 +301,7 @@ MISCELLANEOUS
 * Make blind writes go through the file descriptor cache
 * Allow logging of query durations
 * Add hash-based aggregates
-* Read pg_hba.conf only on postmaster startup or SIGHUP
+* Read pg_hba.conf only on postmaster startup or SIGHUP (Bruce)
 
 
 SOURCE CODE
@@ -313,8 +314,9 @@ SOURCE CODE
 * Fix username/password length limits in all areas, e.g. pg_passwd
 * Remove compile-time upper limit on number of backends (MAXBACKENDS) (Tom)
 * Make sure all block numbers are unsigned to increase maximum table size
+* Use BlockNumber rather than int where appropriate
 * Merge LockMethodCtl and LockMethodTable into one shared structure (Bruce)
-* HOLDER/HOLDERTAB reanme to PROCLOCKLINK/PROCLOCKLINKTAG (Tom)
+* HOLDER/HOLDERTAB rename to PROCLOCKLINK/PROCLOCKLINKTAG (Tom)
 * Add version file format stamp to heap and other table types
 * Make elog(LOG) in WAL its own output type, distinct from DEBUG
 * Rename some /contrib modules from pg* to pg_*
@@ -325,32 +327,31 @@ SOURCE CODE
 * Allow ps status display to work on Solaris/SVr4-based systems
 * -Decide on spelling of indexes/indices (Peter E)
 * Add mention of VACUUM, log rotation to Administrator's Guide
-* Use BlockNumber rather than int where appropriate
 
 ---------------------------------------------------------------------------
 
 
 Developers who have claimed items are:
 --------------------------------------
-	* Billy is Billy G. Allie <Bill.Allie@mug.org>
-	* Bruce is Bruce Momjian<pgman@candle.pha.pa.us>
-	* D'Arcy is D'Arcy J.M. Cain <darcy@druid.net>
-	* Edmund is Edmund Mergl <E.Mergl@bawue.de>
-	* Hiroshi is Hiroshi Inoue <Inoue@tpf.co.jp>
-	* Karel is Karel Zak <zakkr@zf.jcu.cz>
-	* Jan is Jan Wieck <wieck@sapserv.debis.de>
-	* Marc is Marc Fournier <scrappy@hub.org>
-	* Mark is Mark Hollomon <mhh@mindspring.com>
-	* Michael is Michael Meskes <meskes@postgresql.org>
-	* Oleg is Oleg Bartunov <oleg@sai.msu.su>
-	* Peter M is Peter T Mount <peter@retep.org.uk>
-	* Peter E is Peter Eisentraut<peter_e@gmx.net>
-	* Philip is Philip Warner <pjw@rhyme.com.au>
-	* Ross is Ross J. Reedstrom <reedstrm@wallace.ece.rice.edu>
-	* Ryan is Ryan Bradetich <rbrad@hpb50023.boi.hp.com>
-	* Stephan is Stephan Szabo <sszabo@megazone23.bigpanda.com>
-	* Tatsuo is Tatsuo Ishii <t-ishii@sra.co.jp>
-	* Thomas is Thomas Lockhart <lockhart@alumni.caltech.edu>
-	* Tom is Tom Lane <tgl@sss.pgh.pa.us>
-	* TomH is Tom I Helbekkmo <tih@Hamartun.Priv.NO>
-	* Vadim is Vadim B. Mikheev <vadim4o@email.com>
+* Billy is Billy G. Allie <Bill.Allie@mug.org>
+* Bruce is Bruce Momjian<pgman@candle.pha.pa.us>
+* D'Arcy is D'Arcy J.M. Cain <darcy@druid.net>
+* Edmund is Edmund Mergl <E.Mergl@bawue.de>
+* Hiroshi is Hiroshi Inoue <Inoue@tpf.co.jp>
+* Karel is Karel Zak <zakkr@zf.jcu.cz>
+* Jan is Jan Wieck <wieck@sapserv.debis.de>
+* Marc is Marc Fournier <scrappy@hub.org>
+* Mark is Mark Hollomon <mhh@mindspring.com>
+* Michael is Michael Meskes <meskes@postgresql.org>
+* Oleg is Oleg Bartunov <oleg@sai.msu.su>
+* Peter M is Peter T Mount <peter@retep.org.uk>
+* Peter E is Peter Eisentraut<peter_e@gmx.net>
+* Philip is Philip Warner <pjw@rhyme.com.au>
+* Ross is Ross J. Reedstrom <reedstrm@wallace.ece.rice.edu>
+* Ryan is Ryan Bradetich <rbrad@hpb50023.boi.hp.com>
+* Stephan is Stephan Szabo <sszabo@megazone23.bigpanda.com>
+* Tatsuo is Tatsuo Ishii <t-ishii@sra.co.jp>
+* Thomas is Thomas Lockhart <lockhart@alumni.caltech.edu>
+* Tom is Tom Lane <tgl@sss.pgh.pa.us>
+* TomH is Tom I Helbekkmo <tih@Hamartun.Priv.NO>
+* Vadim is Vadim B. Mikheev <vadim4o@email.com>
