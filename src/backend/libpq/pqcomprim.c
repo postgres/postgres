@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/types.h>
+#include <sys/socket.h>
 #include <netinet/in.h>
 
 #include "postgres.h"
@@ -146,7 +147,7 @@ pqGetNBytes(char *s, size_t len)
 	int bytesDone = 0;
 
 	do {
-	  int r = recv(MyProcPort->sock, s+bytesDone, len-bytesDone, MSG_WAITALL);
+	  int r = recv(MyProcPort->sock, s+bytesDone, len-bytesDone, 0);
 	  if (r == 0 || r == -1) {
 	    if (errno != EINTR)
 	      return EOF; /* All other than signal-interrupted is error */

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: pqcomm.c,v 1.61 1999/01/12 12:49:51 scrappy Exp $
+ *  $Id: pqcomm.c,v 1.62 1999/01/17 03:10:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -102,16 +102,11 @@ int
 pq_getchar(void)
 {
 	char c;
-	char isDone = 0;
 
-	do {
-	  if (recv(MyProcPort->sock,&c,1,MSG_WAITALL) != 1) {
+	while (recv(MyProcPort->sock, &c, 1, 0) != 1) {
 	    if (errno != EINTR)
-	      return EOF; /* Not interrupted, so something went wrong */
-	  }
-	  else
-	    isDone = 1;
-	} while (!isDone);
+			return EOF; /* Not interrupted, so something went wrong */
+	}
 	  
 	return c;
 }
@@ -123,17 +118,12 @@ pq_getchar(void)
 int
 pq_peekchar(void) {
 	char c;
-	char isDone = 0;
 
-	do {
-	  if (recv(MyProcPort->sock,&c,1,MSG_WAITALL | MSG_PEEK) != 1) {
+	while (recv(MyProcPort->sock, &c, 1, MSG_PEEK) != 1) {
 	    if (errno != EINTR)
-	      return EOF; /* Not interrupted, so something went wrong */
-	  }
-	  else
-	    isDone = 1;
-	} while (!isDone);
-	  
+			return EOF; /* Not interrupted, so something went wrong */
+	}
+
 	return c;
 }
   
@@ -568,14 +558,10 @@ StreamServerPort(char *hostName, short portName, int *fdP)
 int
 StreamConnection(int server_fd, Port *port)
 {
-	int			len;
 	SOCKET_SIZE_TYPE	addrlen;
-	int			family = port->raddr.sa.sa_family;
 
 	/* accept connection (and fill in the client (remote) address) */
-	len = family == AF_INET ?
-		sizeof(struct sockaddr_in) : sizeof(struct sockaddr_un);
-	addrlen = len;
+	addrlen = sizeof(port->raddr);
 	if ((port->sock = accept(server_fd,
 							 (struct sockaddr *) & port->raddr,
 							 &addrlen)) < 0)
@@ -585,14 +571,16 @@ StreamConnection(int server_fd, Port *port)
 	}
 
 	/* fill in the server (local) address */
-	addrlen = len;
+	addrlen = sizeof(port->laddr);
 	if (getsockname(port->sock, (struct sockaddr *) & port->laddr,
 					&addrlen) < 0)
 	{
 		elog(ERROR, "postmaster: StreamConnection: getsockname: %m");
 		return STATUS_ERROR;
 	}
-	if (family == AF_INET)
+
+	/* select TCP_NODELAY option if it's a TCP connection */
+	if (port->laddr.sa.sa_family == AF_INET)
 	{
 		struct protoent *pe;
 		int			on = 1;
