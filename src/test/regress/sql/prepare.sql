@@ -38,8 +38,8 @@ EXECUTE q3(5::smallint, 10.5::float, false, 500::oid, 4::bigint, 'bytea');
 -- invalid type
 PREPARE q4(nonexistenttype) AS SELECT $1;
 
--- execute into
+-- create table as execute
 PREPARE q5(int, text) AS
 	SELECT * FROM tenk1 WHERE unique1 = $1 OR stringu1 = $2;
-EXECUTE q5(200, 'DTAAAA') INTO TEMPORARY q5_prep_results;
+CREATE TEMPORARY TABLE q5_prep_results AS EXECUTE q5(200, 'DTAAAA');
 SELECT * FROM q5_prep_results;

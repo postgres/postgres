@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/execute.sgml,v 1.4 2003/04/26 23:56:51 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/execute.sgml,v 1.5 2003/07/01 00:04:31 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -16,7 +16,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-EXECUTE <replaceable class="PARAMETER">plan_name</replaceable> [ (<replaceable class="PARAMETER">parameter</replaceable> [, ...] ) ] [ INTO [ TEMPORARY | TEMP ] <replaceable class="PARAMETER">table</replaceable> ]
+EXECUTE <replaceable class="PARAMETER">plan_name</replaceable> [ (<replaceable class="PARAMETER">parameter</replaceable> [, ...] ) ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -38,13 +38,6 @@ EXECUTE <replaceable class="PARAMETER">plan_name</replaceable> [ (<replaceable c
    error is raised. Note that (unlike functions) prepared statements are
    not overloaded based on the type or number of their parameters; the
    name of a prepared statement must be unique within a database session.
-  </para>
-
-  <para>
-   Like <command>SELECT INTO</command>, <command>EXECUTE</command> can
-   store the results of executing a query into a newly-created
-   table, by specifying an <literal>INTO</> clause. For more information on this behavior,
-   see <xref linkend="sql-selectinto" endterm="sql-selectinto-title">.
   </para>
 
   <para>
@@ -75,18 +68,6 @@ EXECUTE <replaceable class="PARAMETER">plan_name</replaceable> [ (<replaceable c
       the data type specified for this parameter position in the
       <command>PREPARE</command> command that created the prepared
       statement.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><replaceable class="PARAMETER">table</replaceable></term>
-    <listitem>
-     <para>
-      The name of the table in which to store the results of executing
-      the statement (if it is a <command>SELECT</command>). If no
-      table is specified, the results are returned to the client (as
-      normal).
      </para>
     </listitem>
    </varlistentry>

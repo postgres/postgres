@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table_as.sgml,v 1.13 2003/05/04 00:03:55 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table_as.sgml,v 1.14 2003/07/01 00:04:31 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -26,11 +26,12 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable>table_name
 
   <para>
    <command>CREATE TABLE AS</command> creates a table and fills it
-   with data computed by a <command>SELECT</command> command.  The
-   table columns have the names and data types associated with the
-   output columns of the <command>SELECT</command> (except that you
-   can override the column names by giving an explicit list of new
-   column names).
+   with data computed by a <command>SELECT</command> command or an
+   <command>EXECUTE</command> that runs a prepared
+   <command>SELECT</command> command.  The table columns have the
+   names and data types associated with the output columns of the
+   <command>SELECT</command> (except that you can override the column
+   names by giving an explicit list of new column names).
   </para>
 
   <para>
@@ -73,7 +74,9 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable>table_name
      <para>
       The name of a column in the new table.  If column names are not
       provided, they are taken from the output column names of the
-      query.
+      query.  If the table is created out of an
+      <command>EXECUTE</command> command, a column name list can
+      currently not be specified.
      </para>
     </listitem>
    </varlistentry>
@@ -82,10 +85,12 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable>table_name
     <term><replaceable>query</replaceable></term>
     <listitem>
      <para>
-      A query statement (that is, a <command>SELECT</command>
-      command).  Refer to
-      <xref linkend="sql-select" endterm="sql-select-title">
-      for a description of the allowed syntax.
+      A query statement (that is, a <command>SELECT</command> command
+      or an <command>EXECUTE</command> command that runs a prepared
+      <command>SELECT</command> command).  Refer to <xref
+      linkend="sql-select" endterm="sql-select-title"> or <xref
+      linkend="sql-execute" endterm="sql-execute-title">,
+      respectively, for a description of the allowed syntax.
      </para>
     </listitem>
    </varlistentry>
@@ -96,9 +101,11 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable>table_name
   <title>Diagnostics</title>
 
   <para>
-   Refer to <xref linkend="sql-createtable" endterm="sql-createtable-title"> and
-   <xref linkend="sql-select" endterm="sql-select-title">
-   for a summary of possible output messages.
+   Refer to <xref linkend="sql-createtable"
+   endterm="sql-createtable-title">, <xref linkend="sql-select"
+   endterm="sql-select-title">, and <xref linkend="sql-execute"
+   endterm="sql-execute-title"> for a summary of possible output
+   messages.
   </para>
  </refsect1>
 
@@ -131,6 +138,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable>table_name
   <simplelist type="inline">
    <member><xref linkend="sql-createtable" endterm="sql-createtable-title"></member>
    <member><xref linkend="sql-createview" endterm="sql-createview-title"></member>
+   <member><xref linkend="sql-execute" endterm="sql-execute-title"></member>
    <member><xref linkend="sql-select" endterm="sql-select-title"></member>
    <member><xref linkend="sql-selectinto" endterm="sql-selectinto-title"></member>
   </simplelist>

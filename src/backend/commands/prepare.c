@@ -10,7 +10,7 @@
  * Copyright (c) 2002-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/prepare.c,v 1.18 2003/05/08 18:16:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/prepare.c,v 1.19 2003/07/01 00:04:31 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -140,10 +140,10 @@ ExecuteQuery(ExecuteStmt *stmt, DestReceiver *dest)
 	portal = CreateNewPortal();
 
 	/*
-	 * For EXECUTE INTO, make a copy of the stored query so that we can
-	 * modify its destination (yech, but INTO has always been ugly).
-	 * For regular EXECUTE we can just use the stored query where it sits,
-	 * since the executor is read-only.
+	 * For CREATE TABLE / AS EXECUTE, make a copy of the stored query
+	 * so that we can modify its destination (yech, but this has
+	 * always been ugly).  For regular EXECUTE we can just use the
+	 * stored query where it sits, since the executor is read-only.
 	 */
 	if (stmt->into)
 	{
@@ -159,10 +159,10 @@ ExecuteQuery(ExecuteStmt *stmt, DestReceiver *dest)
 		qcontext = PortalGetHeapMemory(portal);
 
 		if (length(query_list) != 1)
-			elog(ERROR, "INTO clause specified for non-SELECT query");
+			elog(ERROR, "prepared statement is not a SELECT");
 		query = (Query *) lfirst(query_list);
 		if (query->commandType != CMD_SELECT)
-			elog(ERROR, "INTO clause specified for non-SELECT query");
+			elog(ERROR, "prepared statement is not a SELECT");
 		query->into = copyObject(stmt->into);
 
 		MemoryContextSwitchTo(oldContext);
@@ -519,7 +519,7 @@ ExplainExecuteQuery(ExplainStmt *stmt, TupOutputState *tstate)
 			if (execstmt->into)
 			{
 				if (query->commandType != CMD_SELECT)
-					elog(ERROR, "INTO clause specified for non-SELECT query");
+					elog(ERROR, "prepared statement is not a SELECT");
 
 				/* Copy the query so we can modify it */
 				query = copyObject(query);
