@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeGroup.h,v 1.7 1998/09/01 04:35:56 momjian Exp $
+ * $Id: nodeGroup.h,v 1.8 1999/01/18 00:10:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,5 +22,8 @@ extern bool ExecInitGroup(Group *node, EState *estate, Plan *parent);
 extern int	ExecCountSlotsGroup(Group *node);
 extern void ExecEndGroup(Group *node);
 extern void ExecReScanGroup(Group *node, ExprContext *exprCtxt, Plan *parent);
+/***S*I***/
+extern void ExecReScanGroup(Group *node, ExprContext *exprCtxt, Plan *parent);
+
 
 #endif	 /* NODEGROUP_H */

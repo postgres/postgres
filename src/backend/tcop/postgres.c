@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.96 1999/01/17 06:18:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.97 1999/01/18 00:09:56 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -448,12 +448,20 @@ pg_parse_and_plan(char *query_string,	/* string to execute */
 
 		querytree = querytree_list->qtrees[i];
 
+ 		/***S*I***/
+ 		/* Rewrite Union, Intersect and Except Queries
+ 		 * to normal Union Queries using IN and NOT IN subselects */
+ 		if(querytree->intersectClause != NIL) 
+ 		  {	  
+ 		    querytree = Except_Intersect_Rewrite(querytree);
+ 		  }
+
 		if (DebugPrintQuery)
 		{
 			if (DebugPrintQuery > 3)
-			{
-				/* Print the query string as is if query debug level > 3 */
-				TPRINTF(TRACE_QUERY, "query: %s", query_string);
+			{			  
+			  /* Print the query string as is if query debug level > 3 */
+			  TPRINTF(TRACE_QUERY, "query: %s", query_string); 
 			}
 			else
 			{
@@ -1527,7 +1535,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.96 $ $Date: 1999/01/17 06:18:42 $\n");
+		puts("$Revision: 1.97 $ $Date: 1999/01/18 00:09:56 $\n");
 	}
 
 	/* ----------------

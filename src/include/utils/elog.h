@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: elog.h,v 1.8 1998/09/01 04:39:03 momjian Exp $
+ * $Id: elog.h,v 1.9 1999/01/18 00:10:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,12 @@
 #define ABORTX	0x4000			/* abort process after logging */
 #endif
 
-#define ELOG_MAXLEN 4096
+/***S*I***/
+/* Increase this to be able to use postmaster -d 3 with complex
+ * view definitions (which are transformed to very, very large INSERT statements
+ * and if -d 3 is used the query string of these statements is printed using
+ * vsprintf which expects enough memory reserved! */
+#define ELOG_MAXLEN 12288
 
 
 /* uncomment the following if you want your elog's to be timestamped */

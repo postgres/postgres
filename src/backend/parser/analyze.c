@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: analyze.c,v 1.91 1998/12/14 06:50:32 scrappy Exp $
+ *  $Id: analyze.c,v 1.92 1999/01/18 00:09:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,11 @@
 #include "parser/parse_node.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_target.h"
+/***S*I***/
+#include "parser/parse_expr.h"
+#include "catalog/pg_type.h"
+#include "parse.h"
+
 #include "utils/builtins.h"
 #include "utils/mcxt.h"
 
@@ -383,8 +388,13 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	 * The INSERT INTO ... SELECT ... could have a UNION in child, so
 	 * unionClause may be false
 	 */
-	qry->unionall = stmt->unionall;
-	qry->unionClause = transformUnionClause(stmt->unionClause, qry->targetList);
+  	qry->unionall = stmt->unionall;	
+
+ 	/***S*I***/
+ 	/* Just hand through the unionClause and intersectClause. 
+ 	 * We will handle it in the function Except_Intersect_Rewrite() */
+ 	qry->unionClause = stmt->unionClause;
+ 	qry->intersectClause = stmt->intersectClause;	
 
 	/*
 	 * If there is a havingQual but there are no aggregates, then there is
@@ -942,7 +952,12 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 	 * unionClause may be false
 	 */
 	qry->unionall = stmt->unionall;
-	qry->unionClause = transformUnionClause(stmt->unionClause, qry->targetList);
+
+ 	/***S*I***/
+ 	/* Just hand through the unionClause and intersectClause. 
+ 	 * We will handle it in the function Except_Intersect_Rewrite() */
+ 	qry->unionClause = stmt->unionClause;
+ 	qry->intersectClause = stmt->intersectClause;
 
 	/*
 	 * If there is a havingQual but there are no aggregates, then there is
@@ -1011,4 +1026,98 @@ transformCursorStmt(ParseState *pstate, SelectStmt *stmt)
 	qry->isBinary = stmt->binary;		/* internal portal */
 
 	return qry;
+}
+
+/***S*I***/
+/* This function steps through the tree
+ * built up by the select_w_o_sort rule
+ * and builds a list of all SelectStmt Nodes found
+ * The built up list is handed back in **select_list.
+ * If one of the SelectStmt Nodes has the 'unionall' flag
+ * set to true *unionall_present hands back 'true' */
+void 
+create_select_list(Node *ptr, List **select_list, bool *unionall_present)
+{
+  if(IsA(ptr, SelectStmt)) {
+    *select_list = lappend(*select_list, ptr);    
+    if(((SelectStmt *)ptr)->unionall == TRUE) *unionall_present = TRUE;    
+    return;    
+  }
+  
+  /* Recursively call for all arguments. A NOT expr has no lexpr! */
+  if (((A_Expr *)ptr)->lexpr != NULL) 
+     create_select_list(((A_Expr *)ptr)->lexpr, select_list, unionall_present);
+  create_select_list(((A_Expr *)ptr)->rexpr, select_list, unionall_present);
+}
+
+/* Changes the A_Expr Nodes to Expr Nodes and exchanges ANDs and ORs.
+ * The reason for the exchange is easy: We implement INTERSECTs and EXCEPTs 
+ * by rewriting these queries to semantically equivalent queries that use
+ * IN and NOT IN subselects. To be able to use all three operations 
+ * (UNIONs INTERSECTs and EXCEPTs) in one complex query we have to 
+ * translate the queries into Disjunctive Normal Form (DNF). Unfortunately
+ * there is no function 'dnfify' but there is a function 'cnfify'
+ * which produces DNF when we exchange ANDs and ORs before calling
+ * 'cnfify' and exchange them back in the result.
+ *
+ * If an EXCEPT or INTERSECT is present *intersect_present
+ * hands back 'true' */ 
+Node *A_Expr_to_Expr(Node *ptr, bool *intersect_present)
+{
+  Node *result;
+  
+  switch(nodeTag(ptr))
+    {
+    case T_A_Expr:
+      {
+	A_Expr *a = (A_Expr *)ptr;
+	
+	switch (a->oper)
+	  {
+	  case AND:
+	    {
+	      Expr *expr = makeNode(Expr);
+	      Node	   *lexpr = A_Expr_to_Expr(((A_Expr *)ptr)->lexpr, intersect_present);
+	      Node	   *rexpr = A_Expr_to_Expr(((A_Expr *)ptr)->rexpr, intersect_present);
+
+	      *intersect_present = TRUE;
+	      
+	      expr->typeOid = BOOLOID;
+	      expr->opType = OR_EXPR;
+	      expr->args = makeList(lexpr, rexpr, -1);
+	      result = (Node *) expr;
+	      break;	      
+	    }	  	  
+	  case OR:
+	    {
+	      Expr *expr = makeNode(Expr);
+	      Node	   *lexpr = A_Expr_to_Expr(((A_Expr *)ptr)->lexpr, intersect_present);
+	      Node	   *rexpr = A_Expr_to_Expr(((A_Expr *)ptr)->rexpr, intersect_present);
+
+	      expr->typeOid = BOOLOID;
+	      expr->opType = AND_EXPR;
+	      expr->args = makeList(lexpr, rexpr, -1);
+	      result = (Node *) expr;
+	      break;	      
+	    }
+	  case NOT:
+	    {
+	      Expr *expr = makeNode(Expr);
+	      Node	   *rexpr = A_Expr_to_Expr(((A_Expr *)ptr)->rexpr, intersect_present);
+
+	      expr->typeOid = BOOLOID;
+	      expr->opType = NOT_EXPR;
+	      expr->args = makeList(rexpr, -1);
+	      result = (Node *) expr;
+	      break;	      
+	    }
+	  }	
+	break;	
+      }
+    default:
+      {
+	result = ptr;
+      }      
+    }
+  return result;  
 }

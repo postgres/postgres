@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.65 1999/01/05 15:45:49 vadim Exp $
+ * $Id: parsenodes.h,v 1.66 1999/01/18 00:10:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,6 +57,9 @@ typedef struct Query
 	List	   *groupClause;	/* list of columns to specified in GROUP
 								 * BY */
 	Node	   *havingQual;		/* qualification of each group */
+
+        /***S*I***/
+	List	   *intersectClause;	
 
 	List	   *unionClause;	/* unions are linked under the previous
 								 * query */
@@ -605,7 +608,9 @@ typedef struct InsertStmt
 	List	   *groupClause;	/* group by clause */
 	Node	   *havingClause;	/* having conditional-expression */
 	List	   *unionClause;	/* union subselect parameters */
-	bool		unionall;		/* union without unique sort */
+	bool	   unionall;		/* union without unique sort */
+        /***S*I***/
+        List       *intersectClause;  
 } InsertStmt;
 
 /* ----------------------
@@ -646,6 +651,10 @@ typedef struct SelectStmt
 	Node	   *whereClause;	/* qualifications */
 	List	   *groupClause;	/* group by clause */
 	Node	   *havingClause;	/* having conditional-expression */
+        /***S*I***/
+        List       *intersectClause;
+        List       *exceptClause;
+  
 	List	   *unionClause;	/* union subselect parameters */
 	List	   *sortClause;		/* sort clause (a list of SortGroupBy's) */
 	char	   *portalname;		/* the portal (cursor) to create */

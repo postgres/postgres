@@ -491,7 +491,10 @@ ExecAgg(Agg *node)
 		 * As long as the retrieved group does not match the
 		 * qualifications it is ignored and the next group is fetched
 		 */
-		qual_result = ExecQual(fix_opids(node->plan.qual), econtext);
+		if(node->plan.qual != NULL){
+		  qual_result = ExecQual(fix_opids(node->plan.qual), econtext);
+		}
+		
 		if (oneTuple)
 			pfree(oneTuple);
 	}

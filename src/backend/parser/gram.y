@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.42 1999/01/05 15:46:25 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.43 1999/01/18 00:09:51 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -47,6 +47,7 @@
 #include "access/xact.h"
 #include "storage/lmgr.h"
 #include "utils/numeric.h"
+#include "parser/analyze.h"
 
 #ifdef MULTIBYTE
 #include "mb/pg_wchar.h"
@@ -128,9 +129,9 @@ Oid	param_type(int t); /* used in parse_expr.c */
 		ProcedureStmt, 	RecipeStmt, RemoveAggrStmt, RemoveOperStmt,
 		RemoveFuncStmt, RemoveStmt,
 		RenameStmt, RevokeStmt, RuleStmt, TransactionStmt, ViewStmt, LoadStmt,
-		CreatedbStmt, DestroydbStmt, VacuumStmt, CursorStmt, SubSelect, SubUnion,
-		UpdateStmt, InsertStmt, SelectStmt, NotifyStmt, DeleteStmt, ClusterStmt,
-		ExplainStmt, VariableSetStmt, VariableShowStmt, VariableResetStmt,
+		CreatedbStmt, DestroydbStmt, VacuumStmt, CursorStmt, SubSelect,
+		UpdateStmt, InsertStmt, select_w_o_sort, SelectStmt, NotifyStmt, DeleteStmt, 
+		ClusterStmt, ExplainStmt, VariableSetStmt, VariableShowStmt, VariableResetStmt,
 		CreateUserStmt, AlterUserStmt, DropUserStmt
 
 %type <str>	opt_database1, opt_database2, location, encoding
@@ -174,7 +175,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
 
 %type <boolean>	TriggerForOpt, TriggerForType
 
-%type <list>	union_clause, select_list, for_update_clause
+%type <list>	for_update_clause
 %type <list>	join_list
 %type <joinusing>
 				join_using
@@ -271,11 +272,11 @@ Oid	param_type(int t); /* used in parse_expr.c */
 		CONSTRAINT, CREATE, CROSS, CURRENT, CURRENT_DATE, CURRENT_TIME, 
 		CURRENT_TIMESTAMP, CURRENT_USER, CURSOR,
 		DAY_P, DECIMAL, DECLARE, DEFAULT, DELETE, DESC, DISTINCT, DOUBLE, DROP,
-		ELSE, END_TRANS, EXECUTE, EXISTS, EXTRACT,
+		ELSE, END_TRANS, EXCEPT, EXECUTE, EXISTS, EXTRACT,
 		FALSE_P, FETCH, FLOAT, FOR, FOREIGN, FROM, FULL,
 		GRANT, GROUP, HAVING, HOUR_P,
-		IN, INNER_P, INSENSITIVE, INSERT, INTERVAL, INTO, IS, ISOLATION,
-		JOIN, KEY, LANGUAGE, LEADING, LEFT, LEVEL, LIKE, LOCAL,
+		IN, INNER_P, INSENSITIVE, INSERT, INTERSECT, INTERVAL, INTO, IS,
+		ISOLATION, JOIN, KEY, LANGUAGE, LEADING, LEFT, LEVEL, LIKE, LOCAL,
 		MATCH, MINUTE_P, MONTH_P, NAMES,
 		NATIONAL, NATURAL, NCHAR, NEXT, NO, NOT, NULLIF, NULL_P, NUMERIC,
 		OF, ON, ONLY, OPTION, OR, ORDER, OUTER_P,
@@ -343,7 +344,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
 %left		'.'
 %left		'[' ']'
 %nonassoc	TYPECAST
-%left		UNION
+%left		UNION INTERSECT EXCEPT
 %%
 
 stmtblock:  stmtmulti
@@ -354,8 +355,13 @@ stmtblock:  stmtmulti
 
 stmtmulti:  stmtmulti stmt ';'
 				{ $$ = lappend($1, $2); }
-		| stmtmulti stmt
-				{ $$ = lappend($1, $2); }
+/***S*I***/
+/* We comment the next rule because it seems to be redundant
+ * and produces 16 shift/reduce conflicts with the new SelectStmt rule
+ * needed for EXCEPT and INTERSECTS. So far I did not notice any
+ * violations by removing the rule! */
+/* 		| stmtmulti stmt
+				{ $$ = lappend($1, $2); } */
 		| stmt ';'
 				{ $$ = lcons($1,NIL); }
 		;
@@ -2062,7 +2068,10 @@ RuleStmt:  CREATE RULE name AS
 OptStmtList:  NOTHING					{ $$ = NIL; }
 		| OptimizableStmt				{ $$ = lcons($1, NIL); }
 		| '[' OptStmtBlock ']'			{ $$ = $2; }
-		| '(' OptStmtBlock ')'			{ $$ = $2; }
+/***S*I*D***/
+/* We comment this out because it produces a shift / reduce conflict 
+ * with the select_w_o_sort rule */
+/*		| '(' OptStmtBlock ')'			{ $$ = $2; } */
 		;
 
 OptStmtBlock:  OptStmtMulti
@@ -2073,8 +2082,13 @@ OptStmtBlock:  OptStmtMulti
 
 OptStmtMulti:  OptStmtMulti OptimizableStmt ';'
 				{  $$ = lappend($1, $2); }
-		| OptStmtMulti OptimizableStmt
-				{  $$ = lappend($1, $2); }
+/***S*I***/
+/* We comment the next rule because it seems to be redundant
+ * and produces 16 shift/reduce conflicts with the new SelectStmt rule
+ * needed for EXCEPT and INTERSECT. So far I did not notice any
+ * violations by removing the rule! */
+/* 		| OptStmtMulti OptimizableStmt
+				{  $$ = lappend($1, $2); } */
 		| OptimizableStmt ';'
 				{ $$ = lcons($1, NIL); }
 		;
@@ -2426,17 +2440,23 @@ OptimizableStmt:  SelectStmt
  *
  *****************************************************************************/
 
-InsertStmt:  INSERT INTO relation_name opt_column_list insert_rest
+/***S*I***/
+/* This rule used 'opt_column_list' between 'relation_name' and 'insert_rest'
+ * originally. When the second rule of 'insert_rest' was changed to use
+ * the new 'SelectStmt' rule (for INTERSECT and EXCEPT) it produced a shift/reduce
+ * conflict. So I just changed the rules 'InsertStmt' and 'insert_rest' to accept
+ * the same statements without any shift/reduce conflicts */
+InsertStmt:  INSERT INTO relation_name  insert_rest
 				{
-					$5->relname = $3;
-					$5->cols = $4;
-					$$ = (Node *)$5;
+ 					$4->relname = $3;
+					$$ = (Node *)$4;
 				}
 		;
 
 insert_rest:  VALUES '(' res_target_list2 ')'
 				{
 					$$ = makeNode(InsertStmt);
+					$$->cols = NULL;
 					$$->unique = NULL;
 					$$->targetList = $3;
 					$$->fromClause = NIL;
@@ -2455,20 +2475,57 @@ insert_rest:  VALUES '(' res_target_list2 ')'
 					$$->groupClause = NIL;
 					$$->havingClause = NULL;
 					$$->unionClause = NIL;
+					/***S*I***/
+				 	$$->intersectClause = NIL;
 				}
-		| SELECT opt_unique res_target_list2
-			 from_clause where_clause
-			 group_clause having_clause
-			 union_clause
+		/***S*I***/
+		/* We want the full power of SelectStatements including INTERSECT and EXCEPT
+                 * for insertion */
+		| SelectStmt
+				{
+					SelectStmt *n;
+
+					n = (SelectStmt *)$1;
+					$$ = makeNode(InsertStmt);
+					$$->cols = NULL;
+					$$->unique = n->unique;
+					$$->targetList = n->targetList;
+					$$->fromClause = n->fromClause;
+					$$->whereClause = n->whereClause;
+					$$->groupClause = n->groupClause;
+					$$->havingClause = n->havingClause;
+					$$->unionClause = n->unionClause;
+					$$->intersectClause = n->intersectClause;
+				}
+		| '(' columnList ')' VALUES '(' res_target_list2 ')'
 				{
 					$$ = makeNode(InsertStmt);
-					$$->unique = $2;
-					$$->targetList = $3;
-					$$->fromClause = $4;
-					$$->whereClause = $5;
-					$$->groupClause = $6;
-					$$->havingClause = $7;
-					$$->unionClause = $8;
+					$$->cols = $2;
+					$$->unique = NULL;
+					$$->targetList = $6;
+					$$->fromClause = NIL;
+					$$->whereClause = NULL;
+					$$->groupClause = NIL;
+					$$->havingClause = NULL;
+					$$->unionClause = NIL; 
+					/***S*I***/
+				 	$$->intersectClause = NIL;
+				}
+		| '(' columnList ')' SelectStmt
+				{
+					SelectStmt *n;
+
+					n = (SelectStmt *)$4;
+					$$ = makeNode(InsertStmt);
+					$$->cols = $2;
+					$$->unique = n->unique;
+					$$->targetList = n->targetList;
+					$$->fromClause = n->fromClause;
+					$$->whereClause = n->whereClause;
+					$$->groupClause = n->groupClause;
+					$$->havingClause = n->havingClause;
+					$$->unionClause = n->unionClause;
+					$$->intersectClause = n->intersectClause;
 				}
 		;
 
@@ -2610,18 +2667,15 @@ UpdateStmt:  UPDATE relation_name
  *				CURSOR STATEMENTS
  *
  *****************************************************************************/
-CursorStmt:  DECLARE name opt_cursor CURSOR FOR
- 			 SELECT opt_unique res_target_list2
-			 from_clause where_clause
-			 group_clause having_clause
-			 union_clause sort_clause
-			 cursor_clause
-				{
-					SelectStmt *n = makeNode(SelectStmt);
-
-					/* from PORTAL name */
-					/*
-					 *	15 august 1991 -- since 3.0 postgres does locking
+/***S*I***/
+CursorStmt:  DECLARE name opt_cursor CURSOR FOR SelectStmt cursor_clause
+  				{
+ 					SelectStmt *n;
+  
+ 					n= (SelectStmt *)$6;
+  					/* from PORTAL name */
+  					/*
+  					 *	15 august 1991 -- since 3.0 postgres does locking
 					 *	right, we discovered that portals were violating
 					 *	locking protocol.  portal locks cannot span xacts.
 					 *	as a short-term fix, we installed the check here.
@@ -2632,14 +2686,6 @@ CursorStmt:  DECLARE name opt_cursor CURSOR FOR
 
 					n->portalname = $2;
 					n->binary = $3;
-					n->unique = $7;
-					n->targetList = $8;
-					n->fromClause = $9;
-					n->whereClause = $10;
-					n->groupClause = $11;
-					n->havingClause = $12;
-					n->unionClause = $13;
-					n->sortClause = $14;
 					$$ = (Node *)n;
 				}
 		;
@@ -2675,88 +2721,164 @@ opt_of:  OF columnList
  *				SELECT STATEMENTS
  *
  *****************************************************************************/
+/***S*I***/
+/* The new 'SelectStmt' rule adapted for the optional use of INTERSECT EXCEPT and UNION
+ * accepts the use of '(' and ')' to select an order of set operations.
+ * 
+ * The rule returns a SelectStmt Node having the set operations attached to 
+ * unionClause and intersectClause (NIL if no set operations were present) */ 
+SelectStmt:	  select_w_o_sort sort_clause for_update_clause
+			{
+				/* There were no set operations, so just attach the sortClause */
+				if IsA($1, SelectStmt)
+				{
+				  SelectStmt *n = (SelectStmt *)$1;
+  				  n->sortClause = $2;
+				  n->forUpdate = $3;
+				  $$ = (Node *)n;
+                }
+				/* There were set operations: The root of the operator tree
+				 * is delivered by $1 but we cannot hand back an A_Expr Node.
+				 * So we search for the leftmost 'SelectStmt' in the operator
+				 * tree $1 (which is the first Select Statement in the query 
+				 * typed in by the user or where ever it came from). 
+				 * 
+				 * Then we attach the whole operator tree to 'intersectClause', 
+				 * and a list of all 'SelectStmt' Nodes to 'unionClause' and 
+				 * hand back the leftmost 'SelectStmt' Node. (We do it this way
+				 * because the following functions (e.g. parse_analyze etc.)
+				 * excpect a SelectStmt node and not an operator tree! The whole
+				 * tree attached to 'intersectClause' won't be touched by 
+				 * parse_analyze() etc. until the function 
+				 * Except_Intersect_Rewrite() (in rewriteHandler.c) which performs
+				 * the necessary steps to be able create a plan!) */
+				else
+				{
+				  List *select_list = NIL;
+				  SelectStmt *first_select;
+				  Node *op = (Node *) $1;
+				  bool intersect_present = FALSE, unionall_present = FALSE;
 
-SelectStmt:  SELECT opt_unique res_target_list2
+				  /* Take the operator tree as an argument and 
+				   * create a list of all SelectStmt Nodes found in the tree.
+				   *
+				   * If one of the SelectStmt Nodes has the 'unionall' flag
+				   * set to true the 'unionall_present' flag is also set to
+				   * true */
+				  create_select_list((Node *)op, &select_list, &unionall_present);
+
+				  /* Replace all the A_Expr Nodes in the operator tree by
+				   * Expr Nodes.
+				   *
+				   * If an INTERSECT or an EXCEPT is present, the 
+				   * 'intersect_present' flag is set to true */
+				  op = A_Expr_to_Expr(op, &intersect_present);
+
+				  /* If both flags are set to true we have a UNION ALL
+				   * statement mixed up with INTERSECT or EXCEPT 
+				   * which can not be handled at the moment */
+				  if (intersect_present && unionall_present)
+				  {
+				  	elog(ERROR,"UNION ALL not allowed in mixed set operations!");
+				  }
+
+				  /* Get the leftmost SeletStmt Node (which automatically
+				   * represents the first Select Statement of the query!) */
+				  first_select = (SelectStmt *)lfirst(select_list);
+
+				  /* Attach the list of all SeletStmt Nodes to unionClause */
+				  first_select->unionClause = select_list;
+
+				  /* Attach the whole operator tree to intersectClause */
+				  first_select->intersectClause = (List *) op;
+
+				  /* finally attach the sort clause */
+				  first_select->sortClause = $2;
+				  first_select>forUpdate = $3;
+				  $$ = (Node *)first_select;
+				}		
+				if ((SelectStmt *)$$)->forUpdate != NULL)
+				{
+					SelectStmt *n = (SelectStmt *)$1;
+
+					if (n->unionClause != NULL)
+						elog(ERROR, "SELECT FOR UPDATE is not allowed with UNION clause");
+					if (n->unique != NULL)
+						elog(ERROR, "SELECT FOR UPDATE is not allowed with DISTINCT clause");
+					if (n->groupClause != NULL)
+						elog(ERROR, "SELECT FOR UPDATE is not allowed with GROUP BY clause");
+					if (n->havingClause != NULL)
+						elog(ERROR, "SELECT FOR UPDATE is not allowed with HAVING clause");
+				}
+			}
+		;
+
+/***S*I***/ 
+/* This rule parses Select statements including UNION INTERSECT and EXCEPT.
+ * '(' and ')' can be used to specify the order of the operations 
+ * (UNION EXCEPT INTERSECT). Without the use of '(' and ')' we want the
+ * operations to be left associative.
+ *
+ *  The sort_clause is not handled here!
+ * 
+ * The rule builds up an operator tree using A_Expr Nodes. AND Nodes represent
+ * INTERSECTs OR Nodes represent UNIONs and AND NOT nodes represent EXCEPTs. 
+ * The SelectStatements to be connected are the left and right arguments to
+ * the A_Expr Nodes.
+ * If no set operations show up in the query the tree consists only of one
+ * SelectStmt Node */
+select_w_o_sort: '(' select_w_o_sort ')'
+			{
+				$$ = $2; 
+			}
+		| SubSelect
+			{
+				$$ = $1; 
+			}
+		| select_w_o_sort EXCEPT select_w_o_sort
+			{
+				$$ = (Node *)makeA_Expr(AND,NULL,$1,
+							makeA_Expr(NOT,NULL,NULL,$3));
+			}
+		| select_w_o_sort UNION opt_union select_w_o_sort
+			{	
+				if (IsA($4, SelectStmt))
+				  {
+				     SelectStmt *n = (SelectStmt *)$4;
+				     n->unionall = $3;
+				  }
+				$$ = (Node *)makeA_Expr(OR,NULL,$1,$4);
+			}
+		| select_w_o_sort INTERSECT select_w_o_sort
+			{
+				$$ = (Node *)makeA_Expr(AND,NULL,$1,$3);
+			}
+		; 
+
+/***S*I***/
+SubSelect:	SELECT opt_unique res_target_list2
 			 result from_clause where_clause
-			 group_clause having_clause
-			 union_clause sort_clause for_update_clause
-				{
-					SelectStmt *n = makeNode(SelectStmt);
-					n->unique = $2;
-					n->targetList = $3;
-					n->into = $4;
-					n->fromClause = $5;
-					n->whereClause = $6;
-					n->groupClause = $7;
-					n->havingClause = $8;
-					n->unionClause = $9;
-					n->sortClause = $10;
-					n->forUpdate = $11;
-					if (n->forUpdate != NULL)
-					{
-						if (n->unionClause != NULL)
-							elog(ERROR, "SELECT FOR UPDATE is not allowed with UNION clause");
-						if (n->unique != NULL)
-							elog(ERROR, "SELECT FOR UPDATE is not allowed with DISTINCT clause");
-						if (n->groupClause != NULL)
-							elog(ERROR, "SELECT FOR UPDATE is not allowed with GROUP BY clause");
-						if (n->havingClause != NULL)
-							elog(ERROR, "SELECT FOR UPDATE is not allowed with HAVING clause");
-					}
-					else
-						$$ = (Node *)n;
-				}
-		;
-
-SubSelect:  SELECT opt_unique res_target_list2
-			 from_clause where_clause
-			 group_clause having_clause
-			 union_clause
-				{
-					SelectStmt *n = makeNode(SelectStmt);
-					n->unique = $2;
-					n->targetList = $3;
-					n->fromClause = $4;
-					n->whereClause = $5;
-					n->groupClause = $6;
-					n->havingClause = $7;
-					n->unionClause = $8;
-					$$ = (Node *)n;
-				}
-		;
-
-union_clause:  UNION opt_union select_list
-				{
-					SelectStmt *n = (SelectStmt *)lfirst($3);
-					n->unionall = $2;
-					$$ = $3;
-				}
-		| /*EMPTY*/
-				{ $$ = NIL; }
-		;
-
-select_list:  select_list UNION opt_union SubUnion
-				{
-					SelectStmt *n = (SelectStmt *)$4;
-					n->unionall = $3;
-					$$ = lappend($1, $4);
-				}
-		| SubUnion
-				{ $$ = lcons($1, NIL); }
-		;
-
-SubUnion:	SELECT opt_unique res_target_list2
-			 from_clause where_clause
 			 group_clause having_clause
 				{
 					SelectStmt *n = makeNode(SelectStmt);
 					n->unique = $2;
 					n->unionall = FALSE;
 					n->targetList = $3;
-					n->fromClause = $4;
-					n->whereClause = $5;
-					n->groupClause = $6;
-					n->havingClause = $7;
+					/***S*I***/
+					/* This is new: Subselects support the INTO clause
+					 * which allows queries that are not part of the
+					 * SQL92 standard and should not be formulated!
+					 * We need it for INTERSECT and EXCEPT and I did not
+					 * want to create a new rule 'SubSelect1' including the
+					 * feature. If it makes troubles we will have to add 
+					 * a new rule and change this to prevent INTOs in 
+					 * Subselects again */ 
+					n->into = $4;
+
+					n->fromClause = $5;
+					n->whereClause = $6;
+					n->groupClause = $7;
+					n->havingClause = $8;
 					$$ = (Node *)n;
 				}
 		;

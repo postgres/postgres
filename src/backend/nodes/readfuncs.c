@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.40 1998/12/14 00:01:47 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.41 1999/01/18 00:09:46 momjian Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -162,6 +162,11 @@ _readQuery()
 
 	token = lsptok(NULL, &length);		/* skip :unionClause */
 	local_node->unionClause = nodeRead(true);
+
+	/***S*I***/
+ 	token = lsptok(NULL, &length);		/* skip :intersectClause */
+ 	local_node->intersectClause = nodeRead(true);
+ 
 
 	token = lsptok(NULL, &length);		/* skip :limitOffset */
 	local_node->limitOffset = nodeRead(true);

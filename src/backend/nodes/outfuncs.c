@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: outfuncs.c,v 1.58 1998/12/20 07:13:36 scrappy Exp $
+ *  $Id: outfuncs.c,v 1.59 1999/01/18 00:09:45 momjian Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -226,6 +226,9 @@ _outQuery(StringInfo str, Query *node)
 			node->hasAggs ? "true" : "false",
 			node->hasSubLinks ? "true" : "false");
 	_outNode(str, node->unionClause);
+
+	appendStringInfo(str, " :intersectClause ");
+	_outNode(str, node->intersectClause);
 
 	appendStringInfo(str, " :limitOffset ");
 	_outNode(str, node->limitOffset);

@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.23 1998/12/14 00:02:17 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.24 1999/01/18 00:09:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -152,7 +152,10 @@ OffsetVarNodes(Node *node, int offset, int sublevels_up)
 		case T_SubLink:
 			{
 				SubLink	*sub = (SubLink *)node;
+				List *tmp_oper, *tmp_lefthand;
 
+				/* We also have to adapt the variables used in sub->lefthand
+				 * and sub->oper */
 				OffsetVarNodes(
 						(Node *)(sub->lefthand),
 						offset,
@@ -162,6 +165,19 @@ OffsetVarNodes(Node *node, int offset, int sublevels_up)
 						(Node *)(sub->subselect),
 						offset,
 						sublevels_up + 1);
+
+				/***S*I***/
+				/* Make sure the first argument of sub->oper points to the
+				 * same var as sub->lefthand does otherwise we will
+				 * run into troubles using aggregates (aggno will not be
+				 * set correctly) */
+				tmp_lefthand = sub->lefthand;				
+				foreach(tmp_oper, sub->oper)
+				  {				    
+				    lfirst(((Expr *) lfirst(tmp_oper))->args) = 
+				      lfirst(tmp_lefthand);
+				    tmp_lefthand = lnext(tmp_lefthand);
+				  }	
 			}
 			break;
 
@@ -364,7 +380,8 @@ ChangeVarNodes(Node *node, int rt_index, int new_index, int sublevels_up)
 		case T_SubLink:
 			{
 				SubLink	*sub = (SubLink *)node;
-
+				List *tmp_oper, *tmp_lefthand;
+				
 				ChangeVarNodes(
 						(Node *)(sub->lefthand),
 						rt_index,
@@ -376,6 +393,19 @@ ChangeVarNodes(Node *node, int rt_index, int new_index, int sublevels_up)
 						rt_index,
 						new_index,
 						sublevels_up + 1);
+				
+				/***S*I***/
+				/* Make sure the first argument of sub->oper points to the
+				 * same var as sub->lefthand does otherwise we will
+				 * run into troubles using aggregates (aggno will not be
+				 * set correctly) */
+				tmp_lefthand = sub->lefthand;
+				foreach(tmp_oper, sub->oper)
+				  {				    
+				    lfirst(((Expr *) lfirst(tmp_oper))->args) = 
+				      lfirst(tmp_lefthand);
+				    tmp_lefthand = lnext(tmp_lefthand);
+				  }	
 			}
 			break;
 
@@ -465,7 +495,10 @@ AddQual(Query *parsetree, Node *qual)
 	if (qual == NULL)
 		return;
 
-	copy = copyObject(qual);
+	/***S*I***/
+	/* copy = copyObject(qual); */
+	copy = qual;
+
 	old = parsetree->qual;
 	if (old == NULL)
 		parsetree->qual = copy;
@@ -485,7 +518,10 @@ AddHavingQual(Query *parsetree, Node *havingQual)
 	if (havingQual == NULL)
 		return;
 
-	copy = copyObject(havingQual);
+	/***S*I***/
+	copy = havingQual;
+	/* copy = copyObject(havingQual); */
+
 	old = parsetree->havingQual;
 	if (old == NULL)
 		parsetree->havingQual = copy;
@@ -494,6 +530,20 @@ AddHavingQual(Query *parsetree, Node *havingQual)
 			(Node *) make_andclause(makeList(parsetree->havingQual, copy, -1));
 }
 
+void
+AddNotHavingQual(Query *parsetree, Node *havingQual)
+{
+	Node	   *copy;
+
+	if (havingQual == NULL)
+		return;
+
+	/***S*I***/
+	/* copy = (Node *)make_notclause( (Expr *)copyObject(havingQual)); */
+	copy = (Node *) make_notclause((Expr *)havingQual);
+
+	AddHavingQual(parsetree, copy);
+}
 
 void
 AddNotQual(Query *parsetree, Node *qual)
@@ -503,7 +553,9 @@ AddNotQual(Query *parsetree, Node *qual)
 	if (qual == NULL)
 		return;
 
-	copy = (Node *) make_notclause(copyObject(qual));
+	/***S*I***/
+	/* copy = (Node *) make_notclause((Expr *)copyObject(qual)); */
+	copy = (Node *) make_notclause((Expr *)qual);
 
 	AddQual(parsetree, copy);
 }
@@ -835,7 +887,7 @@ HandleRIRAttributeRule(Query *parsetree,
 							   rt_index, attr_num, modified, badsql, 0);
 }
 
-
+#ifdef NOT_USED
 static void
 nodeHandleViewRule(Node **nodePtr,
 				   List *rtable,
@@ -976,9 +1028,18 @@ nodeHandleViewRule(Node **nodePtr,
 			{
 				SubLink    *sublink = (SubLink *) node;
 				Query	   *query = (Query *) sublink->subselect;
+				List *tmp_lefthand, *tmp_oper;
+				
 
 				nodeHandleViewRule((Node **) &(query->qual), rtable, targetlist,
 								   rt_index, modified, sublevels_up + 1);
+
+				/***S*H*D***/
+				nodeHandleViewRule((Node **) &(query->havingQual), rtable, targetlist,
+						   rt_index, modified, sublevels_up + 1);
+				nodeHandleViewRule((Node **) &(query->targetList), rtable, targetlist,
+						   rt_index, modified, sublevels_up + 1);
+
 
 				/*
 				 * We also have to adapt the variables used in
@@ -993,10 +1054,17 @@ nodeHandleViewRule(Node **nodePtr,
 				 * will run into troubles using aggregates (aggno will not
 				 * be set correctly
 				 */
-				pfree(lfirst(((Expr *) lfirst(sublink->oper))->args));
-				lfirst(((Expr *) lfirst(sublink->oper))->args) =
-					lfirst(sublink->lefthand);
-			}
+				/* pfree(lfirst(((Expr *) lfirst(sublink->oper))->args)); */
+
+				/***S*I***/
+ 				tmp_lefthand = sublink->lefthand;				
+ 				foreach(tmp_oper, sublink->oper)
+ 				  {				    
+ 				    lfirst(((Expr *) lfirst(tmp_oper))->args) = 
+ 				      lfirst(tmp_lefthand);
+ 				    tmp_lefthand = lnext(tmp_lefthand);
+ 				  }								
+  			}
 			break;
 		default:
 			/* ignore the others */
@@ -1004,7 +1072,6 @@ nodeHandleViewRule(Node **nodePtr,
 	}
 }
 
-#ifdef NOT_USED
 void
 HandleViewRule(Query *parsetree,
 			   List *rtable,

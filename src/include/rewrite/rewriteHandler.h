@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rewriteHandler.h,v 1.6 1998/09/01 04:38:01 momjian Exp $
+ * $Id: rewriteHandler.h,v 1.7 1999/01/18 00:10:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,5 +34,9 @@ typedef struct _rewrite_meta_knowledge RewriteInfo;
 
 
 extern List *QueryRewrite(Query *parsetree);
-
+/***S*I***/
+extern Query *Except_Intersect_Rewrite(Query *parsetree);
+extern void create_list(Node *ptr, List **intersect_list);
+extern Node *intersect_tree_analyze(Node *tree, Node *first_select, Node *parsetree);
+extern void check_targetlists_are_compatible(List *prev_target, List *current_target);
 #endif	 /* REWRITEHANDLER_H */
