@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1999, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/bin/pg_ctl/Makefile,v 1.12 2003/11/29 19:52:04 pgsql Exp $
+# $PostgreSQL: pgsql/src/bin/pg_ctl/Makefile,v 1.13 2003/12/23 21:56:21 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -14,7 +14,7 @@ include $(top_builddir)/src/Makefile.global
 
 all: pg_ctl
 
-pg_ctl: pg_ctl.sh
+pg_ctl: pg_ctl.sh $(top_builddir)/src/Makefile.global
 	sed -e 's/@VERSION@/$(VERSION)/g' \
 	    -e 's,@bindir@,$(bindir),g' \
 	    -e 's,@DEF_PGPORT@,$(DEF_PGPORT),g' \

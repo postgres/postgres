@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/bin/initdb/Makefile,v 1.34 2003/11/29 19:52:04 pgsql Exp $
+# $PostgreSQL: pgsql/src/bin/initdb/Makefile,v 1.35 2003/12/23 21:56:20 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -33,3 +33,7 @@ uninstall:
 
 clean distclean maintainer-clean:
 	rm -f initdb$(X) $(OBJS)
+
+
+# ensure that changes in bindir etc. propagate into object file
+initdb.o: initdb.c $(top_builddir)/src/Makefile.global
