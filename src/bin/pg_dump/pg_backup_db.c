@@ -5,7 +5,7 @@
  *	Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.21 2001/07/03 20:21:48 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.22 2001/08/03 19:43:05 tgl Exp $
  *
  * NOTES
  *
@@ -206,6 +206,8 @@ UserIsSuperuser(ArchiveHandle *AH, char *user)
 		isSuper = (strcmp(PQgetvalue(res, 0, i_usesuper), "t") == 0);
 	}
 	PQclear(res);
+
+	destroyPQExpBuffer(qry);
 
 	return isSuper;
 }
@@ -678,7 +680,7 @@ ExecuteSqlCommandBuf(ArchiveHandle *AH, void *qryv, int bufLen)
 void
 FixupBlobRefs(ArchiveHandle *AH, char *tablename)
 {
-	PQExpBuffer tblQry = createPQExpBuffer();
+	PQExpBuffer tblQry;
 	PGresult   *res,
 			   *uRes;
 	int			i,
@@ -687,6 +689,8 @@ FixupBlobRefs(ArchiveHandle *AH, char *tablename)
 
 	if (strcmp(tablename, BLOB_XREF_TABLE) == 0)
 		return;
+
+	tblQry = createPQExpBuffer();
 
 	appendPQExpBuffer(tblQry, "SELECT a.attname FROM pg_class c, pg_attribute a, pg_type t "
 	 " WHERE a.attnum > 0 AND a.attrelid = c.oid AND a.atttypid = t.oid "
@@ -699,10 +703,8 @@ FixupBlobRefs(ArchiveHandle *AH, char *tablename)
 
 	if ((n = PQntuples(res)) == 0)
 	{
-		/* We're done */
+		/* nothing to do */
 		ahlog(AH, 1, "no OID type columns in table %s\n", tablename);
-		PQclear(res);
-		return;
 	}
 
 	for (i = 0; i < n; i++)
@@ -741,7 +743,7 @@ FixupBlobRefs(ArchiveHandle *AH, char *tablename)
 	}
 
 	PQclear(res);
-
+	destroyPQExpBuffer(tblQry);
 }
 
 /**********
@@ -766,6 +768,8 @@ CreateBlobXrefTable(ArchiveHandle *AH)
 
 	appendPQExpBuffer(qry, "Create Unique Index %s_ix on %s(oldOid)", BLOB_XREF_TABLE, BLOB_XREF_TABLE);
 	ExecuteSqlCommand(AH, qry, "could not create index on BLOB cross reference table", true);
+
+	destroyPQExpBuffer(qry);
 }
 
 void
@@ -776,6 +780,8 @@ InsertBlobXref(ArchiveHandle *AH, int old, int new)
 	appendPQExpBuffer(qry, "Insert Into %s(oldOid, newOid) Values (%d, %d);", BLOB_XREF_TABLE, old, new);
 
 	ExecuteSqlCommand(AH, qry, "could not create BLOB cross reference entry", true);
+
+	destroyPQExpBuffer(qry);
 }
 
 void
@@ -787,6 +793,8 @@ StartTransaction(ArchiveHandle *AH)
 
 	ExecuteSqlCommand(AH, qry, "could not start database transaction", false);
 	AH->txActive = true;
+
+	destroyPQExpBuffer(qry);
 }
 
 void
@@ -799,6 +807,8 @@ StartTransactionXref(ArchiveHandle *AH)
 	ExecuteSqlCommand(AH, qry,
 					  "could not start transaction for BLOB cross references", true);
 	AH->blobTxActive = true;
+
+	destroyPQExpBuffer(qry);
 }
 
 void
@@ -810,6 +820,8 @@ CommitTransaction(ArchiveHandle *AH)
 
 	ExecuteSqlCommand(AH, qry, "could not commit database transaction", false);
 	AH->txActive = false;
+
+	destroyPQExpBuffer(qry);
 }
 
 void
@@ -821,4 +833,6 @@ CommitTransactionXref(ArchiveHandle *AH)
 
 	ExecuteSqlCommand(AH, qry, "could not commit transaction for BLOB cross references", true);
 	AH->blobTxActive = false;
+
+	destroyPQExpBuffer(qry);
 }
