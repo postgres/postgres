@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.5 1996/12/03 05:50:11 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.6 1996/12/29 00:53:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,7 +43,7 @@ static char *Explain_PlanToString(Plan *plan, ExplainState *es);
 void
 ExplainQuery(Query *query, List *options, CommandDest dest)
 {
-    char *s;
+    char *s = NULL, *s2;
     Plan *plan;
     ExplainState *es;
     int len;
@@ -69,21 +69,31 @@ ExplainQuery(Query *query, List *options, CommandDest dest)
     memset(es, 0, sizeof(ExplainState));
 
     /* parse options */
+    es->printCost = 1;	/* default */
     while (options) {
 	char *ostr = strVal(lfirst(options));
 	if (!strcasecmp(ostr, "cost"))
 	    es->printCost = 1;
-	else if (!strcasecmp(ostr, "full_plan"))
+	else if (!strcasecmp(ostr, "full"))
 	    es->printNodes = 1;
+	else
+	    elog(WARN, "Unknown EXPLAIN option: %s", ostr);
 
 	options = lnext(options);
     }
     es->rtable = query->rtable;
 
-    if (es->printNodes) {
+    if (es->printNodes)
 	s = nodeToString(plan);
-    } else {
-	s = Explain_PlanToString(plan, es);
+
+    if (es->printCost) {
+	s2 = Explain_PlanToString(plan, es);
+	if (s == NULL)
+	    s = s2;
+	else {
+	    strcat(s, "\n\n");
+	    strcat(s, s2);
+	}
     }
 
     /* output the plan */
