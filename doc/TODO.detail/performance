@@ -345,7 +345,7 @@ From owner-pgsql-hackers@hub.org Tue Oct 19 10:31:10 1999
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id KAA29087
 	for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 10:31:08 -0400 (EDT)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.16 $) with ESMTP id KAA27535 for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 10:19:47 -0400 (EDT)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.17 $) with ESMTP id KAA27535 for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 10:19:47 -0400 (EDT)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.3/8.9.3) with SMTP id KAA30328;
 	Tue, 19 Oct 1999 10:12:10 -0400 (EDT)
@@ -454,7 +454,7 @@ From owner-pgsql-hackers@hub.org Tue Oct 19 21:25:30 1999
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id VAA28130
 	for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 21:25:26 -0400 (EDT)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.16 $) with ESMTP id VAA10512 for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 21:15:28 -0400 (EDT)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.17 $) with ESMTP id VAA10512 for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 21:15:28 -0400 (EDT)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.3/8.9.3) with SMTP id VAA50745;
 	Tue, 19 Oct 1999 21:07:23 -0400 (EDT)
@@ -1006,7 +1006,7 @@ From pgsql-general-owner+M2497@hub.org Fri Jun 16 18:31:03 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id RAA04165
 	for <pgman@candle.pha.pa.us>; Fri, 16 Jun 2000 17:31:01 -0400 (EDT)
-Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.16 $) with ESMTP id RAA13110 for <pgman@candle.pha.pa.us>; Fri, 16 Jun 2000 17:20:12 -0400 (EDT)
+Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.17 $) with ESMTP id RAA13110 for <pgman@candle.pha.pa.us>; Fri, 16 Jun 2000 17:20:12 -0400 (EDT)
 Received: from hub.org (majordom@localhost [127.0.0.1])
 	by hub.org (8.10.1/8.10.1) with SMTP id e5GLDaM14477;
 	Fri, 16 Jun 2000 17:13:36 -0400 (EDT)
@@ -3263,4 +3263,1894 @@ Bruce Momjian wrote:
 > > > seek() in the file will turn off read-ahead in most OS's.  I am not
 > > > saying this is a major issue for PostgreSQL but the numbers would be
 > > > interesting.
+
+From pgsql-hackers-owner+M49418=pgman=candle.pha.pa.us@postgresql.org Tue Jan 27 15:52:28 2004
+Return-path: <pgsql-hackers-owner+M49418=pgman=candle.pha.pa.us@postgresql.org>
+Received: from vm2.hub.org ([200.46.204.60])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i0RKqPe07814
+	for <pgman@candle.pha.pa.us>; Tue, 27 Jan 2004 15:52:28 -0500 (EST)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by vm2.hub.org (Postfix) with ESMTP id 70DC3CD397A
+	for <pgman@candle.pha.pa.us>; Tue, 27 Jan 2004 20:52:19 +0000 (GMT)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (neptune.hub.org [200.46.204.2])
+	by svr1.postgresql.org (Postfix) with ESMTP id A93D7D1D3A4
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Tue, 27 Jan 2004 20:41:43 +0000 (GMT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (neptune.hub.org [200.46.204.2]) (amavisd-new, port 10024)
+	with ESMTP id 54186-02
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Tue, 27 Jan 2004 16:41:12 -0400 (AST)
+Received: from smtp.istop.com (dci.doncaster.on.ca [66.11.168.194])
+	by svr1.postgresql.org (Postfix) with ESMTP id 33243D1E1F2
+	for <pgsql-hackers@postgresql.org>; Tue, 27 Jan 2004 16:36:24 -0400 (AST)
+Received: from stark.xeocode.com (gsstark.mtl.istop.com [66.11.160.162])
+	by smtp.istop.com (Postfix) with ESMTP
+	id 2A41136C44; Tue, 27 Jan 2004 15:36:21 -0500 (EST)
+Received: from localhost ([127.0.0.1] helo=stark.xeocode.com)
+	by stark.xeocode.com with smtp (Exim 3.36 #1 (Debian))
+	id 1AlZwa-0006sL-00; Tue, 27 Jan 2004 15:36:20 -0500
+To: pgsql-hackers@postgresql.org
+Subject: [HACKERS] Question about indexes
+From: Greg Stark <gsstark@mit.edu>
+Organization: The Emacs Conspiracy; member since 1992
+Date: 27 Jan 2004 15:36:20 -0500
+Message-ID: <87isixt9h7.fsf@stark.xeocode.com>
+Lines: 9
+User-Agent: Gnus/5.09 (Gnus v5.9.0) Emacs/21.3
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+X-Virus-Scanned: by amavisd-new at postgresql.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Spam-Checker-Version: SpamAssassin 2.61 (1.212.2.1-2003-12-09-exp) on 
+	candle.pha.pa.us
+X-Spam-Status: No, hits=-4.9 required=5.0 tests=BAYES_00 autolearn=ham 
+	version=2.61
+Status: OR
+
+
+How feasible would it be to have a btree index on ctid? I'm thinking it ought
+to work simply enough for the normal case of insert/delet/update, but I'm not
+completely certain how vacuum, vacuum full, and cluster would interact.
+
+You may think this would be utterly useless, but I have a cunning plan.
+
+-- 
+greg
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 8: explain analyze is your friend
+
+From pgsql-hackers-owner+M49439=pgman=candle.pha.pa.us@postgresql.org Tue Jan 27 18:01:59 2004
+Return-path: <pgsql-hackers-owner+M49439=pgman=candle.pha.pa.us@postgresql.org>
+Received: from bricolage.postgresql.org ([200.46.204.116])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i0RN1we27517
+	for <pgman@candle.pha.pa.us>; Tue, 27 Jan 2004 18:01:59 -0500 (EST)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by bricolage.postgresql.org (Postfix) with ESMTP id 946B3148343C
+	for <pgman@candle.pha.pa.us>; Tue, 27 Jan 2004 23:01:52 +0000 (GMT)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (neptune.hub.org [200.46.204.2])
+	by svr1.postgresql.org (Postfix) with ESMTP id 778CED1D362
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Tue, 27 Jan 2004 22:52:27 +0000 (GMT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (neptune.hub.org [200.46.204.2]) (amavisd-new, port 10024)
+	with ESMTP id 09353-02
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Tue, 27 Jan 2004 18:51:56 -0400 (AST)
+Received: from sss.pgh.pa.us (unknown [192.204.191.242])
+	by svr1.postgresql.org (Postfix) with ESMTP id 5C5D5D1B47D
+	for <pgsql-hackers@postgresql.org>; Tue, 27 Jan 2004 18:51:55 -0400 (AST)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.12.10/8.12.10) with ESMTP id i0RMpunX029816;
+	Tue, 27 Jan 2004 17:51:56 -0500 (EST)
+To: Greg Stark <gsstark@mit.edu>
+cc: pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Question about indexes 
+In-Reply-To: <87isixt9h7.fsf@stark.xeocode.com> 
+References: <87isixt9h7.fsf@stark.xeocode.com>
+Comments: In-reply-to Greg Stark <gsstark@mit.edu>
+	message dated "27 Jan 2004 15:36:20 -0500"
+Date: Tue, 27 Jan 2004 17:51:56 -0500
+Message-ID: <29815.1075243916@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+X-Virus-Scanned: by amavisd-new at postgresql.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Spam-Checker-Version: SpamAssassin 2.61 (1.212.2.1-2003-12-09-exp) on 
+	candle.pha.pa.us
+X-Spam-Status: No, hits=-4.9 required=5.0 tests=BAYES_00 autolearn=ham 
+	version=2.61
+Status: OR
+
+Greg Stark <gsstark@mit.edu> writes:
+> How feasible would it be to have a btree index on ctid?
+
+Why would you want one?  Direct access by ctid beats out an index lookup
+every time.  In any case, vacuum and friends would break such an index
+entirely.
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 3: if posting/reading through Usenet, please send an appropriate
+      subscribe-nomail command to majordomo@postgresql.org so that your
+      message can get through to the mailing list cleanly
+
+From pgsql-hackers-owner+M49440=pgman=candle.pha.pa.us@postgresql.org Tue Jan 27 18:19:13 2004
+Return-path: <pgsql-hackers-owner+M49440=pgman=candle.pha.pa.us@postgresql.org>
+Received: from krusty-motorsports.com (IDENT:exim@krusty-motorsports.com [192.94.170.8])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i0RNJCe00301
+	for <pgman@candle.pha.pa.us>; Tue, 27 Jan 2004 18:19:13 -0500 (EST)
+Received: from [200.46.204.71] (helo=postgresql.org)
+	by krusty-motorsports.com with esmtp (Exim 4.22)
+	id 1AldQ9-0007JC-2z
+	for pgman@candle.pha.pa.us; Wed, 28 Jan 2004 00:19:05 +0000
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (neptune.hub.org [200.46.204.2])
+	by svr1.postgresql.org (Postfix) with ESMTP id 6D641D1D54A
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Tue, 27 Jan 2004 23:12:01 +0000 (GMT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (neptune.hub.org [200.46.204.2]) (amavisd-new, port 10024)
+	with ESMTP id 14466-06
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Tue, 27 Jan 2004 19:11:30 -0400 (AST)
+Received: from smtp.istop.com (dci.doncaster.on.ca [66.11.168.194])
+	by svr1.postgresql.org (Postfix) with ESMTP id 6D58FD1D49E
+	for <pgsql-hackers@postgresql.org>; Tue, 27 Jan 2004 19:11:29 -0400 (AST)
+Received: from stark.xeocode.com (gsstark.mtl.istop.com [66.11.160.162])
+	by smtp.istop.com (Postfix) with ESMTP
+	id 9B74536ADA; Tue, 27 Jan 2004 18:11:31 -0500 (EST)
+Received: from localhost ([127.0.0.1] helo=stark.xeocode.com)
+	by stark.xeocode.com with smtp (Exim 3.36 #1 (Debian))
+	id 1AlcMl-0007Tk-00; Tue, 27 Jan 2004 18:11:31 -0500
+To: Tom Lane <tgl@sss.pgh.pa.us>
+cc: Greg Stark <gsstark@mit.edu>, pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Question about indexes
+References: <87isixt9h7.fsf@stark.xeocode.com>
+	<29815.1075243916@sss.pgh.pa.us>
+In-Reply-To: <29815.1075243916@sss.pgh.pa.us>
+From: Greg Stark <gsstark@mit.edu>
+Organization: The Emacs Conspiracy; member since 1992
+Date: 27 Jan 2004 18:11:31 -0500
+Message-ID: <87d695t2ak.fsf@stark.xeocode.com>
+Lines: 33
+User-Agent: Gnus/5.09 (Gnus v5.9.0) Emacs/21.3
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+X-Virus-Scanned: by amavisd-new at postgresql.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Spam-Checker-Version: SpamAssassin 2.61 (1.212.2.1-2003-12-09-exp) on 
+	candle.pha.pa.us
+X-Spam-Status: No, hits=-4.9 required=5.0 tests=BAYES_00 autolearn=ham 
+	version=2.61
+Status: OR
+
+Tom Lane <tgl@sss.pgh.pa.us> writes:
+
+> Greg Stark <gsstark@mit.edu> writes:
+>
+> > How feasible would it be to have a btree index on ctid?
+> 
+> Why would you want one?  Direct access by ctid beats out an index lookup
+> every time.  
+
+Of course. But as I mentioned, I have a cunning plan.
+
+If you have two indexes (a,ctid) and (b,ctid) and do a query where a=1 and b=2
+then it would be particularly easy to combine the two efficiently. 
+
+If specially marked btree indexes -- or even all btree indexes -- implicitly
+had ctid as a final sort order after all the index column, then it would
+esentially obviate the need for bitmap indexes. They wouldn't have the space
+advantage, but they would be possible to combine using arbitrary boolean
+expressions without looking at the actual tuples.
+
+This is essentially what is in the TODO about using bitmaps, but without
+having to do any extra sorts.
+
+This would only really be an advantage for particularly wide tables where the
+combination of boolean clauses narrows the result set down a lot more than any
+one clause.
+
+> In any case, vacuum and friends would break such an index entirely.
+
+That was what I was afraid of.
+
+-- 
+greg
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: Have you checked our extensive FAQ?
+
+               http://www.postgresql.org/docs/faqs/FAQ.html
+
+From pgsql-hackers-owner+M49442=pgman=candle.pha.pa.us@postgresql.org Tue Jan 27 18:32:25 2004
+Return-path: <pgsql-hackers-owner+M49442=pgman=candle.pha.pa.us@postgresql.org>
+Received: from vm2.hub.org ([200.46.204.60])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i0RNWNe02539
+	for <pgman@candle.pha.pa.us>; Tue, 27 Jan 2004 18:32:24 -0500 (EST)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by vm2.hub.org (Postfix) with ESMTP id DC003CD49A4
+	for <pgman@candle.pha.pa.us>; Tue, 27 Jan 2004 23:32:17 +0000 (GMT)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (neptune.hub.org [200.46.204.2])
+	by svr1.postgresql.org (Postfix) with ESMTP id 34466D1D17D
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Tue, 27 Jan 2004 23:25:11 +0000 (GMT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (neptune.hub.org [200.46.204.2]) (amavisd-new, port 10024)
+	with ESMTP id 20117-05
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Tue, 27 Jan 2004 19:24:41 -0400 (AST)
+Received: from sss.pgh.pa.us (unknown [192.204.191.242])
+	by svr1.postgresql.org (Postfix) with ESMTP id 33E28D1D548
+	for <pgsql-hackers@postgresql.org>; Tue, 27 Jan 2004 19:24:40 -0400 (AST)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.12.10/8.12.10) with ESMTP id i0RNOfnX000404;
+	Tue, 27 Jan 2004 18:24:41 -0500 (EST)
+To: Greg Stark <gsstark@mit.edu>
+cc: pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Question about indexes 
+In-Reply-To: <87d695t2ak.fsf@stark.xeocode.com> 
+References: <87isixt9h7.fsf@stark.xeocode.com> <29815.1075243916@sss.pgh.pa.us> <87d695t2ak.fsf@stark.xeocode.com>
+Comments: In-reply-to Greg Stark <gsstark@mit.edu>
+	message dated "27 Jan 2004 18:11:31 -0500"
+Date: Tue, 27 Jan 2004 18:24:41 -0500
+Message-ID: <403.1075245881@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+X-Virus-Scanned: by amavisd-new at postgresql.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Spam-Checker-Version: SpamAssassin 2.61 (1.212.2.1-2003-12-09-exp) on 
+	candle.pha.pa.us
+X-Spam-Status: No, hits=-4.9 required=5.0 tests=BAYES_00 autolearn=ham 
+	version=2.61
+Status: OR
+
+Greg Stark <gsstark@mit.edu> writes:
+> If you have two indexes (a,ctid) and (b,ctid) and do a query where a=1 and b=2
+> then it would be particularly easy to combine the two efficiently. 
+
+> If specially marked btree indexes -- or even all btree indexes -- implicitly
+> had ctid as a final sort order after all the index column, then it would
+> esentially obviate the need for bitmap indexes.
+
+I don't think so.  You are thinking only of exact-equality queries ---
+as soon as the WHERE clause describes a range of index entries, the
+readout wouldn't be sorted by ctid anyway.
+
+Combining indexes via a bitmap intermediate step (which is not really
+the same thing as bitmap indexes, IIUC) seems like a more robust
+approach than relying on the index entries to be in ctid order.
+
+But if we did want to sort indexes that way, we could do it today,
+I think.  The ctid is already stored in index entries (it is the
+"payload" remember...) and we could use it as a tiebreaker when
+determining insertion position.  This doesn't have the problems that
+putting ctid into the user columns would do, because the system knows
+about that ctid as being special; the difficulty with ctid in the user
+columns is the code not knowing that it'd need to change on a tuple move.
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: Have you checked our extensive FAQ?
+
+               http://www.postgresql.org/docs/faqs/FAQ.html
+
+From pgsql-hackers-owner+M49450=pgman=candle.pha.pa.us@postgresql.org Tue Jan 27 21:28:20 2004
+Return-path: <pgsql-hackers-owner+M49450=pgman=candle.pha.pa.us@postgresql.org>
+Received: from postgresql.wavefire.com (postgresql.wavefire.com [64.141.14.48])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i0S2SIe29755
+	for <pgman@candle.pha.pa.us>; Tue, 27 Jan 2004 21:28:19 -0500 (EST)
+Received: from postgresql.org ([200.46.204.71])
+	by postgresql.wavefire.com (8.9.3/8.9.3) with ESMTP id TBM02845
+	for <pgman@candle.pha.pa.us>; Tue, 27 Jan 2004 19:06:45 -0800 (PST)
+	(envelope-from pgsql-hackers-owner+M49450=pgman=candle.pha.pa.us@postgresql.org)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (neptune.hub.org [200.46.204.2])
+	by svr1.postgresql.org (Postfix) with ESMTP id 6213BD1B85F
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Wed, 28 Jan 2004 02:19:56 +0000 (GMT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (neptune.hub.org [200.46.204.2]) (amavisd-new, port 10024)
+	with ESMTP id 69438-06
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Tue, 27 Jan 2004 22:19:26 -0400 (AST)
+Received: from smtp.istop.com (dci.doncaster.on.ca [66.11.168.194])
+	by svr1.postgresql.org (Postfix) with ESMTP id 1964FD1B47D
+	for <pgsql-hackers@postgresql.org>; Tue, 27 Jan 2004 22:19:24 -0400 (AST)
+Received: from stark.xeocode.com (gsstark.mtl.istop.com [66.11.160.162])
+	by smtp.istop.com (Postfix) with ESMTP
+	id BE92136B37; Tue, 27 Jan 2004 21:19:26 -0500 (EST)
+Received: from localhost ([127.0.0.1] helo=stark.xeocode.com)
+	by stark.xeocode.com with smtp (Exim 3.36 #1 (Debian))
+	id 1AlfIc-00084d-00; Tue, 27 Jan 2004 21:19:26 -0500
+To: Tom Lane <tgl@sss.pgh.pa.us>
+cc: Greg Stark <gsstark@mit.edu>, pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Question about indexes
+References: <87isixt9h7.fsf@stark.xeocode.com>
+	<29815.1075243916@sss.pgh.pa.us> <87d695t2ak.fsf@stark.xeocode.com>
+	<403.1075245881@sss.pgh.pa.us>
+In-Reply-To: <403.1075245881@sss.pgh.pa.us>
+From: Greg Stark <gsstark@mit.edu>
+Organization: The Emacs Conspiracy; member since 1992
+Date: 27 Jan 2004 21:19:26 -0500
+Message-ID: <877jzcu85t.fsf@stark.xeocode.com>
+Lines: 43
+User-Agent: Gnus/5.09 (Gnus v5.9.0) Emacs/21.3
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+X-Virus-Scanned: by amavisd-new at postgresql.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Spam-Checker-Version: SpamAssassin 2.61 (1.212.2.1-2003-12-09-exp) on 
+	candle.pha.pa.us
+X-Spam-Status: No, hits=-4.9 required=5.0 tests=BAYES_00 autolearn=ham 
+	version=2.61
+Status: OR
+
+
+Tom Lane <tgl@sss.pgh.pa.us> writes:
+
+> I don't think so.  You are thinking only of exact-equality queries ---
+> as soon as the WHERE clause describes a range of index entries, the
+> readout wouldn't be sorted by ctid anyway.
+
+But then even bitmap indexes would fail in that way too, or at least have a
+lot of extra cost that would have to be taken into account based on the number
+of values in the range.
+
+> Combining indexes via a bitmap intermediate step (which is not really
+> the same thing as bitmap indexes, IIUC) seems like a more robust
+> approach than relying on the index entries to be in ctid order.
+
+I would see that as the next step, But it seems to me it would be only a small
+set of queries where it would really help enough to outweigh the extra work of
+the sort. Whereas if the ctid is already pre-sorted then the extra cost is
+fairly low. Sort of like the difference in cost between a merge join where
+both sides have to be sorted and a merge join where both sides are pre-sorted.
+
+> But if we did want to sort indexes that way, we could do it today,
+> I think.  The ctid is already stored in index entries (it is the
+> "payload" remember...) and we could use it as a tiebreaker when
+> determining insertion position. This doesn't have the problems that
+> putting ctid into the user columns would do, because the system knows
+> about that ctid as being special; the difficulty with ctid in the user
+> columns is the code not knowing that it'd need to change on a tuple move.
+
+That's exactly what I was thinking. I just don't know how badly it would
+complicate the vacuum{,full}/cluster code and whether those are the only cases
+to worry about.
+
+
+Note that the space saving of bitmap indexes is still a substantial factor.
+Using btree indexes the i/o costs of doing multiple index scans plus a table
+scan of the relevant pages would still be quite substantial. So this doesn't
+completely obviate the need for bitmap indexes, but I think it would remove a
+lot of the pressure from people who just need them to handle a few select
+queries.
+
+-- 
+greg
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
+
+From pgsql-hackers-owner+M49453=pgman=candle.pha.pa.us@postgresql.org Tue Jan 27 21:53:09 2004
+Return-path: <pgsql-hackers-owner+M49453=pgman=candle.pha.pa.us@postgresql.org>
+Received: from joeconway.com (66-146-172-86.skyriver.net [66.146.172.86])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i0S2r3e04133
+	for <pgman@candle.pha.pa.us>; Tue, 27 Jan 2004 21:53:08 -0500 (EST)
+Received: from postgresql.org ([200.46.204.71] verified)
+  by joeconway.com (CommuniGate Pro SMTP 4.1.8)
+  with ESMTP id 791556 for pgman@candle.pha.pa.us; Tue, 27 Jan 2004 18:49:49 -0800
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (neptune.hub.org [200.46.204.2])
+	by svr1.postgresql.org (Postfix) with ESMTP id C4A10D1B47D
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Wed, 28 Jan 2004 02:49:28 +0000 (GMT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (neptune.hub.org [200.46.204.2]) (amavisd-new, port 10024)
+	with ESMTP id 76787-10
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Tue, 27 Jan 2004 22:48:59 -0400 (AST)
+Received: from sss.pgh.pa.us (unknown [192.204.191.242])
+	by svr1.postgresql.org (Postfix) with ESMTP id A5C5CD1B4DC
+	for <pgsql-hackers@postgresql.org>; Tue, 27 Jan 2004 22:48:56 -0400 (AST)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.12.11/8.12.11) with ESMTP id i0S2mxTx005814;
+	Tue, 27 Jan 2004 21:48:59 -0500 (EST)
+To: Greg Stark <gsstark@mit.edu>
+cc: pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Question about indexes 
+In-Reply-To: <877jzcu85t.fsf@stark.xeocode.com> 
+References: <87isixt9h7.fsf@stark.xeocode.com> <29815.1075243916@sss.pgh.pa.us> <87d695t2ak.fsf@stark.xeocode.com> <403.1075245881@sss.pgh.pa.us> <877jzcu85t.fsf@stark.xeocode.com>
+Comments: In-reply-to Greg Stark <gsstark@mit.edu>
+	message dated "27 Jan 2004 21:19:26 -0500"
+Date: Tue, 27 Jan 2004 21:48:59 -0500
+Message-ID: <5813.1075258139@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+X-Virus-Scanned: by amavisd-new at postgresql.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Spam-Checker-Version: SpamAssassin 2.61 (1.212.2.1-2003-12-09-exp) on 
+	candle.pha.pa.us
+X-Spam-Status: No, hits=-4.9 required=5.0 tests=BAYES_00 autolearn=ham 
+	version=2.61
+Status: OR
+
+Greg Stark <gsstark@mit.edu> writes:
+>> Combining indexes via a bitmap intermediate step (which is not really
+>> the same thing as bitmap indexes, IIUC) seems like a more robust
+>> approach than relying on the index entries to be in ctid order.
+
+> I would see that as the next step, But it seems to me it would be only a small
+> set of queries where it would really help enough to outweigh the extra work of
+> the sort.
+
+What sort?  The whole point of a bitmap is that it makes it easy to
+visit the tuples in heap order.  You scan the index, you set the
+appropriate bits in the bitmap, and then you scan the bitmap and go to
+the heap tuples that have their bits set.  If you are using multiple
+indexes you can AND or OR their results at the bitmap phase before you
+go to the heap.
+
+An implementation of this kind would not produce tuples in index order,
+so if you have an ORDER BY to satisfy then you end up doing an explicit
+sort after you have the tuples.  It would be up to the planner to
+consider this cost versus the advantages of being able to use multiple
+indexes; we'd certainly want to keep the existing scan mechanism as an
+available alternative.  But if the query is suited to multiple indexes
+I suspect it'd be a win pretty often.
+
+> Note that the space saving of bitmap indexes is still a substantial factor.
+
+I think you are still confusing what I'm talking about with a bitmap
+index, ie, a persistent structure on-disk.  It's not that at all, but
+a transient structure built in-memory during an index scan.
+
+I'm a little dubious that true bitmap indexes would be worth building
+for Postgres.  Seems like partial indexes cover the same sorts of
+applications and are more flexible.
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: Have you checked our extensive FAQ?
+
+               http://www.postgresql.org/docs/faqs/FAQ.html
+
+From pgsql-hackers-owner+M49462=pgman=candle.pha.pa.us@postgresql.org Wed Jan 28 13:10:48 2004
+Return-path: <pgsql-hackers-owner+M49462=pgman=candle.pha.pa.us@postgresql.org>
+Received: from joeconway.com (66-146-172-86.skyriver.net [66.146.172.86])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i0SIAle25230
+	for <pgman@candle.pha.pa.us>; Wed, 28 Jan 2004 13:10:47 -0500 (EST)
+Received: from postgresql.org ([200.46.204.71] verified)
+  by joeconway.com (CommuniGate Pro SMTP 4.1.8)
+  with ESMTP id 793300 for pgman@candle.pha.pa.us; Wed, 28 Jan 2004 10:07:34 -0800
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.2])
+	by svr1.postgresql.org (Postfix) with ESMTP id 19389D1CCAF
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Wed, 28 Jan 2004 17:56:46 +0000 (GMT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (neptune.hub.org [200.46.204.2]) (amavisd-new, port 10024)
+	with ESMTP id 10780-09
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Wed, 28 Jan 2004 13:56:14 -0400 (AST)
+Received: from www.postgresql.com (www.postgresql.com [200.46.204.209])
+	by svr1.postgresql.org (Postfix) with ESMTP id A53DAD1DF6B
+	for <pgsql-hackers@postgresql.org>; Wed, 28 Jan 2004 13:52:13 -0400 (AST)
+Received: from smtp.istop.com (dci.doncaster.on.ca [66.11.168.194])
+	by www.postgresql.com (Postfix) with ESMTP id E0414CF6FBA
+	for <pgsql-hackers@postgresql.org>; Wed, 28 Jan 2004 10:47:17 -0400 (AST)
+Received: from stark.xeocode.com (gsstark.mtl.istop.com [66.11.160.162])
+	by smtp.istop.com (Postfix) with ESMTP
+	id C4D5036BA2; Wed, 28 Jan 2004 09:13:47 -0500 (EST)
+Received: from localhost ([127.0.0.1] helo=stark.xeocode.com)
+	by stark.xeocode.com with smtp (Exim 3.36 #1 (Debian))
+	id 1AlqRv-0001fZ-00; Wed, 28 Jan 2004 09:13:47 -0500
+To: Tom Lane <tgl@sss.pgh.pa.us>
+cc: Greg Stark <gsstark@mit.edu>, pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Question about indexes
+References: <87isixt9h7.fsf@stark.xeocode.com>
+	<29815.1075243916@sss.pgh.pa.us> <87d695t2ak.fsf@stark.xeocode.com>
+	<403.1075245881@sss.pgh.pa.us> <877jzcu85t.fsf@stark.xeocode.com>
+	<5813.1075258139@sss.pgh.pa.us>
+In-Reply-To: <5813.1075258139@sss.pgh.pa.us>
+From: Greg Stark <gsstark@mit.edu>
+Organization: The Emacs Conspiracy; member since 1992
+Date: 28 Jan 2004 09:13:47 -0500
+Message-ID: <871xpktb38.fsf@stark.xeocode.com>
+Lines: 38
+User-Agent: Gnus/5.09 (Gnus v5.9.0) Emacs/21.3
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+X-Virus-Scanned: by amavisd-new at postgresql.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Spam-Checker-Version: SpamAssassin 2.61 (1.212.2.1-2003-12-09-exp) on 
+	candle.pha.pa.us
+X-Spam-Status: No, hits=-4.9 required=5.0 tests=BAYES_00 autolearn=ham 
+	version=2.61
+Status: OR
+
+Tom Lane <tgl@sss.pgh.pa.us> writes:
+
+> Greg Stark <gsstark@mit.edu> writes:
+> >
+> > I would see that as the next step, But it seems to me it would be only a small
+> > set of queries where it would really help enough to outweigh the extra work of
+> > the sort.
+> 
+> What sort?  
+
+To build the in-memory bitmap you effectively have to do a sort. If the tuples
+come out of the index in heap order then you can combine them without having
+to go through that step.
+
+> I'm a little dubious that true bitmap indexes would be worth building
+> for Postgres.  Seems like partial indexes cover the same sorts of
+> applications and are more flexible.
+
+I'm clear on the distinction. I think bitmap indexes still have a place, but
+if regular btree indexes could be combined efficiently then that would be an
+even narrower niche.
+
+Partial indexes are very handy, and they're useful in corner cases where
+bitmap indexes are useful, such as flags for special types of records.
+
+But I think bitmap indexes are specifically wanted by certain types of data
+warehousing applications where you have an index on virtually every column and
+then want to do arbitrary boolean combinations of all of them. btree indexes
+would generate more i/o scanning all the indexes than just doing a sequential
+scan would. Whereas bitmap indexes are much denser on disk.
+
+However my experience leans more towards the OLTP side and I very rarely saw
+applications like this.
+
+
+
+-- 
+greg
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 3: if posting/reading through Usenet, please send an appropriate
+      subscribe-nomail command to majordomo@postgresql.org so that your
+      message can get through to the mailing list cleanly
+
+From pgsql-hackers-owner+M49465=pgman=candle.pha.pa.us@postgresql.org Wed Jan 28 13:30:48 2004
+Return-path: <pgsql-hackers-owner+M49465=pgman=candle.pha.pa.us@postgresql.org>
+Received: from joeconway.com (66-146-172-86.skyriver.net [66.146.172.86])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i0SIUke29027
+	for <pgman@candle.pha.pa.us>; Wed, 28 Jan 2004 13:30:47 -0500 (EST)
+Received: from postgresql.org ([200.46.204.71] verified)
+  by joeconway.com (CommuniGate Pro SMTP 4.1.8)
+  with ESMTP id 793371 for pgman@candle.pha.pa.us; Wed, 28 Jan 2004 10:27:31 -0800
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.2])
+	by svr1.postgresql.org (Postfix) with ESMTP id 92005D1D3F7
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Wed, 28 Jan 2004 18:14:02 +0000 (GMT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (neptune.hub.org [200.46.204.2]) (amavisd-new, port 10024)
+	with ESMTP id 21680-08
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Wed, 28 Jan 2004 14:13:31 -0400 (AST)
+Received: from www.postgresql.com (www.postgresql.com [200.46.204.209])
+	by svr1.postgresql.org (Postfix) with ESMTP id 088B0D1DC77
+	for <pgsql-hackers@postgresql.org>; Wed, 28 Jan 2004 14:08:44 -0400 (AST)
+Received: from sss.pgh.pa.us (unknown [192.204.191.242])
+	by www.postgresql.com (Postfix) with ESMTP id CFF50CF77BD
+	for <pgsql-hackers@postgresql.org>; Wed, 28 Jan 2004 11:00:42 -0400 (AST)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.12.11/8.12.11) with ESMTP id i0SExBYA018093;
+	Wed, 28 Jan 2004 09:59:12 -0500 (EST)
+To: Greg Stark <gsstark@mit.edu>
+cc: pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Question about indexes 
+In-Reply-To: <871xpktb38.fsf@stark.xeocode.com> 
+References: <87isixt9h7.fsf@stark.xeocode.com> <29815.1075243916@sss.pgh.pa.us> <87d695t2ak.fsf@stark.xeocode.com> <403.1075245881@sss.pgh.pa.us> <877jzcu85t.fsf@stark.xeocode.com> <5813.1075258139@sss.pgh.pa.us> <871xpktb38.fsf@stark.xeocode.com>
+Comments: In-reply-to Greg Stark <gsstark@mit.edu>
+	message dated "28 Jan 2004 09:13:47 -0500"
+Date: Wed, 28 Jan 2004 09:59:11 -0500
+Message-ID: <18092.1075301951@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+X-Virus-Scanned: by amavisd-new at postgresql.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Spam-Checker-Version: SpamAssassin 2.61 (1.212.2.1-2003-12-09-exp) on 
+	candle.pha.pa.us
+X-Spam-Status: No, hits=-4.9 required=5.0 tests=BAYES_00 autolearn=ham 
+	version=2.61
+Status: OR
+
+Greg Stark <gsstark@mit.edu> writes:
+> Tom Lane <tgl@sss.pgh.pa.us> writes:
+>> What sort?  
+
+> To build the in-memory bitmap you effectively have to do a sort.
+
+Hm, you're thinking that the operation of inserting a bit into a bitmap
+has to be at least O(log N).  Seems to me that that depends on the data
+structure you use.  In principle it could be O(1), if you use a true
+bitmap (linear array) -- just index and set the bit.  You might be right
+that practical data structures would be O(log N), but I'm not totally
+convinced.
+
+> If the tuples come out of the index in heap order then you can combine
+> them without having to go through that step.
+
+But considering the restrictions implied by that assumption --- no range
+scans, no non-btree indexes --- I doubt we will take the trouble to
+implement that variant.  We'll want to do the generalized bitmap code
+anyway.
+
+In any case, this discussion is predicated on the assumption that the
+operations involving the bitmap are a significant fraction of the total
+time, which I think is quite uncertain.  Until we build it and profile
+it, we won't know that.
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 4: Don't 'kill -9' the postmaster
+
+From pgsql-hackers-owner+M49457=pgman=candle.pha.pa.us@postgresql.org Wed Jan 28 10:42:58 2004
+Return-path: <pgsql-hackers-owner+M49457=pgman=candle.pha.pa.us@postgresql.org>
+Received: from joeconway.com (66-146-172-86.skyriver.net [66.146.172.86])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i0SFgue00574
+	for <pgman@candle.pha.pa.us>; Wed, 28 Jan 2004 10:42:57 -0500 (EST)
+Received: from postgresql.org ([200.46.204.71] verified)
+  by joeconway.com (CommuniGate Pro SMTP 4.1.8)
+  with ESMTP id 792727 for pgman@candle.pha.pa.us; Wed, 28 Jan 2004 07:39:41 -0800
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.2])
+	by svr1.postgresql.org (Postfix) with ESMTP id 08484D1CA01
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Wed, 28 Jan 2004 15:38:28 +0000 (GMT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (neptune.hub.org [200.46.204.2]) (amavisd-new, port 10024)
+	with ESMTP id 36717-02
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Wed, 28 Jan 2004 11:37:55 -0400 (AST)
+Received: from smtp.istop.com (dci.doncaster.on.ca [66.11.168.194])
+	by svr1.postgresql.org (Postfix) with ESMTP id E27BDD1D201
+	for <pgsql-hackers@postgresql.org>; Wed, 28 Jan 2004 11:37:55 -0400 (AST)
+Received: from stark.xeocode.com (gsstark.mtl.istop.com [66.11.160.162])
+	by smtp.istop.com (Postfix) with ESMTP
+	id 1E70F36BBA; Wed, 28 Jan 2004 10:09:35 -0500 (EST)
+Received: from localhost ([127.0.0.1] helo=stark.xeocode.com)
+	by stark.xeocode.com with smtp (Exim 3.36 #1 (Debian))
+	id 1AlrJu-0001rj-00; Wed, 28 Jan 2004 10:09:34 -0500
+To: Tom Lane <tgl@sss.pgh.pa.us>
+cc: Greg Stark <gsstark@mit.edu>, pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Question about indexes
+References: <87isixt9h7.fsf@stark.xeocode.com>
+	<29815.1075243916@sss.pgh.pa.us> <87d695t2ak.fsf@stark.xeocode.com>
+	<403.1075245881@sss.pgh.pa.us> <877jzcu85t.fsf@stark.xeocode.com>
+	<5813.1075258139@sss.pgh.pa.us> <871xpktb38.fsf@stark.xeocode.com>
+	<18092.1075301951@sss.pgh.pa.us>
+In-Reply-To: <18092.1075301951@sss.pgh.pa.us>
+From: Greg Stark <gsstark@mit.edu>
+Organization: The Emacs Conspiracy; member since 1992
+Date: 28 Jan 2004 10:09:34 -0500
+Message-ID: <87vfmwrtxt.fsf@stark.xeocode.com>
+Lines: 15
+User-Agent: Gnus/5.09 (Gnus v5.9.0) Emacs/21.3
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+X-Virus-Scanned: by amavisd-new at postgresql.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Spam-Checker-Version: SpamAssassin 2.61 (1.212.2.1-2003-12-09-exp) on 
+	candle.pha.pa.us
+X-Spam-Status: No, hits=-4.9 required=5.0 tests=BAYES_00 autolearn=ham 
+	version=2.61
+Status: ORr
+
+
+Tom Lane <tgl@sss.pgh.pa.us> writes:
+
+> In any case, this discussion is predicated on the assumption that the
+> operations involving the bitmap are a significant fraction of the total
+> time, which I think is quite uncertain.  Until we build it and profile
+> it, we won't know that.
+
+The other thought I had was that it would be difficult to tell when to follow
+this path. Since the main case where it wins is when the individual indexes
+aren't very selective but the combination is very selective, and we don't have
+inter-column correlation statistics ...
+
+-- 
+greg
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 9: the planner will ignore your desire to choose an index scan if your
+      joining column's datatypes do not match
+
+From pgsql-hackers-owner+M49467=pgman=candle.pha.pa.us@postgresql.org Wed Jan 28 17:29:11 2004
+Return-path: <pgsql-hackers-owner+M49467=pgman=candle.pha.pa.us@postgresql.org>
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i0SMT9e09381
+	for <pgman@candle.pha.pa.us>; Wed, 28 Jan 2004 17:29:10 -0500 (EST)
+Received: from localhost (unknown [200.46.204.2])
+	by svr1.postgresql.org (Postfix) with ESMTP id 7E6A1D1D0F9
+	for <pgman@candle.pha.pa.us>; Wed, 28 Jan 2004 22:29:02 +0000 (GMT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (neptune.hub.org [200.46.204.2]) (amavisd-new, port 10024)
+	with ESMTP id 30501-10 for <pgman@candle.pha.pa.us>;
+	Wed, 28 Jan 2004 18:28:33 -0400 (AST)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by svr1.postgresql.org (Postfix) with ESMTP id 002FED1CCDA
+	for <pgman@candle.pha.pa.us>; Wed, 28 Jan 2004 18:28:30 -0400 (AST)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.2])
+	by svr1.postgresql.org (Postfix) with ESMTP id BC300D1B4BD
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Wed, 28 Jan 2004 22:16:19 +0000 (GMT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (neptune.hub.org [200.46.204.2]) (amavisd-new, port 10024)
+	with ESMTP id 29171-03
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Wed, 28 Jan 2004 18:15:50 -0400 (AST)
+Received: from cmailm1.svr.pol.co.uk (cmailm1.svr.pol.co.uk [195.92.193.18])
+	by svr1.postgresql.org (Postfix) with ESMTP id 99F4BD1C50E
+	for <pgsql-hackers@postgresql.org>; Wed, 28 Jan 2004 18:15:47 -0400 (AST)
+Received: from modem-182.leopard.dialup.pol.co.uk ([217.135.144.182] helo=LaptopDellXP)
+	by cmailm1.svr.pol.co.uk with esmtp (Exim 4.14)
+	id 1AlxyO-0002XD-Ab; Wed, 28 Jan 2004 22:15:48 +0000
+Reply-To: <simon@2ndquadrant.com>
+From: "Simon Riggs" <simon@2ndquadrant.com>
+To: "'Tom Lane'" <tgl@sss.pgh.pa.us>, "'Greg Stark'" <gsstark@mit.edu>
+cc: <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Question about indexes 
+Date: Wed, 28 Jan 2004 22:15:40 -0000
+Organization: 2nd Quadrant
+Message-ID: <003701c3e5ec$44306250$efb887d9@LaptopDellXP>
+MIME-Version: 1.0
+Content-Type: text/plain;
+	charset="US-ASCII"
+Content-Transfer-Encoding: 7bit
+X-Priority: 3 (Normal)
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook, Build 10.0.2627
+X-MimeOLE: Produced By Microsoft MimeOLE V6.00.2727.1300
+Importance: Normal
+In-Reply-To: <18092.1075301951@sss.pgh.pa.us>
+X-Virus-Scanned: by amavisd-new at postgresql.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by amavisd-new at postgresql.org
+X-Spam-Checker-Version: SpamAssassin 2.61 (1.212.2.1-2003-12-09-exp) on 
+	candle.pha.pa.us
+X-Spam-Status: No, hits=-4.9 required=5.0 tests=BAYES_00 autolearn=ham 
+	version=2.61
+Status: OR
+
+Some potentially helpful background comments on the discussion so far...
+
+>Tom Lane writes
+>>Greg Stark writes
+>> Note that the space saving of bitmap indexes is still a substantial 
+>> factor.
+>I think you are still confusing what I'm talking about with a bitmap
+index, >ie, a persistent structure on-disk.  It's not that at all, but a
+transient >structure built in-memory during an index scan.
+
+Oracle allows the creation of bitmap indices as persistent data
+structures. 
+
+The "space saving" of bitmap indices is only a saving when compared with
+btree indices. If you don't have them at all because they are built
+dynamically when required, as Tom is suggesting, then you "save" even
+more space. 
+
+Maintaining the bitmap index is a costly operation. You tend to want to
+build them on "characteristic" columns, of which there tends to be more
+of in a database than "partial/full identity" columns on which you build
+btrees (forgive the vagueness of that comment), so you end up with loads
+of the damn things, so the space soon adds up. It can be hard to judge
+which ones are the important ones, especially when each is used by a
+different user/group. Building them dynamically is a good way of solving
+the question "which ones are needed?". Ever seen 58 indices on a table?
+Don't go there.
+
+My vote would be implement the dynamic building capability, then return
+to implement a persisted structure later if that seems like it would be
+a further improvement. [The option would be nice]
+
+If we do it dynamically, as Tom suggests, then we don't have to code the
+index maintenance logic at all and the functionality will be with us all
+the sooner. Go Tom!
+
+>Tom Lane writes
+> In any case, this discussion is predicated on the assumption that the
+> operations involving the bitmap are a significant fraction of the
+total
+> time, which I think is quite uncertain.  Until we build it and profile
+> it, we won't know that.
+
+Dynamically building the bitmaps has been the strategy in use by
+Teradata for nearly a decade on many large datawarehouses. I can
+personally vouch for the effectiveness of this approach - I was
+surprised when Oracle went for the persistent option. Certainly in that
+case building the bitmaps adds much less time than is saved overall by
+the better total query strategy.
+
+>Greg Stark writes
+> > To build the in-memory bitmap you effectively have to do a sort.
+
+Not sure on this latter point: I think I agree with Greg on that point,
+but want to believe Tom because requiring a sort will definitely add
+time. 
+
+To shed some light in this area, some other major implementations are:
+
+In Teradata, tables are stored based upon a primary index, which is
+effectively an index-organised table. The index pointers are stored in
+sorted order lock step with the blocks of the associated table - No sort
+required. (The ordering is based upon a hashed index, but that doesn't
+change the technique).
+
+Oracle's tables/indexes use heaps/btrees also, though they do provide an
+index-organised table feature similar to Teradata. Maybe the lack of
+heap/btree consistent ordering in Oracle and their subsequent design
+choice of persistent bitmap indices is an indication for PostgreSQL too?
+
+In Oracle, bitmap indices are an important precursor to the star join
+technique. AFAICS it is still possible to have a star join plan without
+having persistent bitmap indices. IMHO, the longer term goal of a good
+star join plan is an important one - that may influence the design
+selection for this discussion.
+
+Hope some of that helps,
+
+Best regards, Simon Riggs
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 8: explain analyze is your friend
+
+From pgsql-hackers-owner+M49477=pgman=candle.pha.pa.us@postgresql.org Thu Jan 29 04:24:47 2004
+Return-path: <pgsql-hackers-owner+M49477=pgman=candle.pha.pa.us@postgresql.org>
+Received: from joeconway.com (66-146-172-86.skyriver.net [66.146.172.86])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i0T9Ohe19178
+	for <pgman@candle.pha.pa.us>; Thu, 29 Jan 2004 04:24:43 -0500 (EST)
+Received: from postgresql.org ([200.46.204.71] verified)
+  by joeconway.com (CommuniGate Pro SMTP 4.1.8)
+  with ESMTP id 794811 for pgman@candle.pha.pa.us; Thu, 29 Jan 2004 01:21:28 -0800
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.2])
+	by svr1.postgresql.org (Postfix) with ESMTP id 639A8D1B4CE
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Thu, 29 Jan 2004 09:17:40 +0000 (GMT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (neptune.hub.org [200.46.204.2]) (amavisd-new, port 10024)
+	with ESMTP id 24681-09
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Thu, 29 Jan 2004 05:17:16 -0400 (AST)
+Received: from loki.hnit.is (unknown [193.4.243.180])
+	by svr1.postgresql.org (Postfix) with ESMTP id 98971D1C9FD
+	for <pgsql-hackers@postgresql.org>; Thu, 29 Jan 2004 05:17:07 -0400 (AST)
+Received: from seifur.hnit.is ([193.4.243.99]) by 193.4.243.180 with trend_isnt_name_B; Thu, 29 Jan 2004 09:17:12 -0000
+X-MimeOLE: Produced By Microsoft Exchange V6.0.6487.1
+Content-Class: urn:content-classes:message
+MIME-Version: 1.0
+Content-Type: text/plain;
+	charset="us-ascii"
+Subject: Re: [HACKERS] Question about indexes 
+Date: Thu, 29 Jan 2004 09:17:11 -0000
+Message-ID: <0A5B2E3C3A64CA4AB14F76DBCA76DDA44EF9B2@seifur.hnit.is>
+Thread-Topic: [HACKERS] Question about indexes 
+Thread-Index: AcPl7J1SKohPpCtfSZq2EeeqhKLynAAW3BDw
+From: <lnd@hnit.is>
+To: <pgsql-hackers@postgresql.org>
+X-Virus-Scanned: by amavisd-new at postgresql.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Content-Transfer-Encoding: 8bit
+X-MIME-Autoconverted: from quoted-printable to 8bit by candle.pha.pa.us id i0T9Ohe19178
+X-Spam-Checker-Version: SpamAssassin 2.61 (1.212.2.1-2003-12-09-exp) on 
+	candle.pha.pa.us
+X-Spam-Status: No, hits=-4.7 required=5.0 tests=BAYES_00,NO_REAL_NAME 
+	autolearn=no version=2.61
+Status: OR
+
+
+A small comment on Oracle's implementation of persistent bitmap indexes:
+
+Oracle's bitmap index is concurently locked by DML, i.e. it suites for OLAP
+(basically read only data warehouses) but in no way for OLTP. 
+
+IMHO, 
+Laimis
+
+> Maybe the lack of heap/btree consistent ordering in Oracle 
+> and their subsequent design choice of persistent bitmap 
+> indices is an indication for PostgreSQL too?
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 9: the planner will ignore your desire to choose an index scan if your
+      joining column's datatypes do not match
+
+From pgsql-hackers-owner+M49497=pgman=candle.pha.pa.us@postgresql.org Fri Jan 30 01:22:15 2004
+Return-path: <pgsql-hackers-owner+M49497=pgman=candle.pha.pa.us@postgresql.org>
+Received: from joeconway.com (66-146-172-86.skyriver.net [66.146.172.86])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i0U6MCe03385
+	for <pgman@candle.pha.pa.us>; Fri, 30 Jan 2004 01:22:14 -0500 (EST)
+Received: from postgresql.org ([200.46.204.71] verified)
+  by joeconway.com (CommuniGate Pro SMTP 4.1.8)
+  with ESMTP id 797306 for pgman@candle.pha.pa.us; Thu, 29 Jan 2004 22:18:52 -0800
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.2])
+	by svr1.postgresql.org (Postfix) with ESMTP id 6CCBCD1C967
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Fri, 30 Jan 2004 06:16:52 +0000 (GMT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (neptune.hub.org [200.46.204.2]) (amavisd-new, port 10024)
+	with ESMTP id 81674-05
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Fri, 30 Jan 2004 02:16:22 -0400 (AST)
+Received: from smtp.istop.com (dci.doncaster.on.ca [66.11.168.194])
+	by svr1.postgresql.org (Postfix) with ESMTP id 6DC4BD1CC98
+	for <pgsql-hackers@postgresql.org>; Fri, 30 Jan 2004 02:16:21 -0400 (AST)
+Received: from stark.xeocode.com (gsstark.mtl.istop.com [66.11.160.162])
+	by smtp.istop.com (Postfix) with ESMTP
+	id 8FD5F369BB; Fri, 30 Jan 2004 01:16:21 -0500 (EST)
+Received: from localhost ([127.0.0.1] helo=stark.xeocode.com)
+	by stark.xeocode.com with smtp (Exim 3.36 #1 (Debian))
+	id 1AmRwz-0004kf-00; Fri, 30 Jan 2004 01:16:21 -0500
+To: pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Question about indexes
+References: <0A5B2E3C3A64CA4AB14F76DBCA76DDA44EF9B2@seifur.hnit.is>
+In-Reply-To: <0A5B2E3C3A64CA4AB14F76DBCA76DDA44EF9B2@seifur.hnit.is>
+From: Greg Stark <gsstark@mit.edu>
+Organization: The Emacs Conspiracy; member since 1992
+Date: 30 Jan 2004 01:16:21 -0500
+Message-ID: <87y8rqx8p6.fsf@stark.xeocode.com>
+Lines: 31
+User-Agent: Gnus/5.09 (Gnus v5.9.0) Emacs/21.3
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+X-Virus-Scanned: by amavisd-new at postgresql.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Spam-Checker-Version: SpamAssassin 2.61 (1.212.2.1-2003-12-09-exp) on 
+	candle.pha.pa.us
+X-Spam-Status: No, hits=-4.9 required=5.0 tests=BAYES_00 autolearn=ham 
+	version=2.61
+Status: OR
+
+
+<lnd@hnit.is> writes:
+
+> A small comment on Oracle's implementation of persistent bitmap indexes:
+> 
+> Oracle's bitmap index is concurently locked by DML, i.e. it suites for OLAP
+> (basically read only data warehouses) but in no way for OLTP. 
+
+I knew this. I think they figured that was ok because bitmap indexes were
+mainly intended to solve data warehouse problems anyways.
+
+Thinking out loud here, I wonder whether this would be less of a problem for
+postgres. Since tuples are never updated in place there would never be a need
+to lock the entire bitmap until a transaction completes.
+
+There would never be as much concurrency as btrees, assuming there was any
+kind of compression on the bitmap, but I don't see any reason why a long-term
+lock would have to be held for updates.
+
+Even regular vacuum might not have to lock anything for long, just long enough
+to clear the bits. and vacuum full/cluster already take table locks anyways.
+
+I think the problem Oracle ran into was that storing rollback ids in the
+bitmap is untenable. The whole point of persistent bitmap indexes is to store
+a very dense representation that represents thousands of records per page.
+Allocating space to store thousands of pending transaction ids and having
+thousands of old versions of the page in the rollback segment would defeat the
+purpose.
+
+-- 
+greg
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 7: don't forget to increase your free space map settings
+
+From pgsql-hackers-owner+M49502=pgman=candle.pha.pa.us@postgresql.org Fri Jan 30 06:37:25 2004
+Return-path: <pgsql-hackers-owner+M49502=pgman=candle.pha.pa.us@postgresql.org>
+Received: from joeconway.com (66-146-172-86.skyriver.net [66.146.172.86])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i0UBbOe07302
+	for <pgman@candle.pha.pa.us>; Fri, 30 Jan 2004 06:37:25 -0500 (EST)
+Received: from postgresql.org ([200.46.204.71] verified)
+  by joeconway.com (CommuniGate Pro SMTP 4.1.8)
+  with ESMTP id 797695 for pgman@candle.pha.pa.us; Fri, 30 Jan 2004 03:34:06 -0800
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.2])
+	by svr1.postgresql.org (Postfix) with ESMTP id 92A3CD1CCB7
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Fri, 30 Jan 2004 11:31:21 +0000 (GMT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (neptune.hub.org [200.46.204.2]) (amavisd-new, port 10024)
+	with ESMTP id 76882-10
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Fri, 30 Jan 2004 07:31:24 -0400 (AST)
+Received: from candle.pha.pa.us (candle.pha.pa.us [207.106.42.251])
+	by svr1.postgresql.org (Postfix) with ESMTP id 59850D1CACB
+	for <pgsql-hackers@postgresql.org>; Fri, 30 Jan 2004 07:31:20 -0400 (AST)
+Received: (from pgman@localhost)
+	by candle.pha.pa.us (8.11.6/8.11.6) id i0UBVHU04169;
+	Fri, 30 Jan 2004 06:31:17 -0500 (EST)
+From: Bruce Momjian <pgman@candle.pha.pa.us>
+Message-ID: <200401301131.i0UBVHU04169@candle.pha.pa.us>
+Subject: Re: [HACKERS] Question about indexes
+In-Reply-To: <87vfmwrtxt.fsf@stark.xeocode.com>
+To: Greg Stark <gsstark@mit.edu>
+Date: Fri, 30 Jan 2004 06:31:17 -0500 (EST)
+cc: Tom Lane <tgl@sss.pgh.pa.us>, pgsql-hackers@postgresql.org
+X-Mailer: ELM [version 2.4ME+ PL108 (25)]
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=US-ASCII
+X-Virus-Scanned: by amavisd-new at postgresql.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Greg Stark wrote:
+> 
+> Tom Lane <tgl@sss.pgh.pa.us> writes:
+> 
+> > In any case, this discussion is predicated on the assumption that the
+> > operations involving the bitmap are a significant fraction of the total
+> > time, which I think is quite uncertain.  Until we build it and profile
+> > it, we won't know that.
+> 
+> The other thought I had was that it would be difficult to tell when to follow
+> this path. Since the main case where it wins is when the individual indexes
+> aren't very selective but the combination is very selective, and we don't have
+> inter-column correlation statistics ...
+
+I like the idea of building in-memory bitmapped indexes.
+
+In your example, if you are restricting on A and B, and have no A,B
+index but an A index and B index, why wouldn't you always create an
+in-memory bitmapped index from indexes A and B, unless index A hits only
+a few rows.  In fact, from the optimizer statistics, you can guess on
+how many bits you will hit from index A and index B, so we only have to
+decide if it is better to take the more restrictive index and do heap
+lookups for those, or scan the second index and then hit the heap.  The
+only thing A,B combined statistics would tell you is how many heap
+matches you will find.  The time to scan A and B indexes and create the
+bitmap is already guessable from the single column statistics.
+
+Also, what does an in-memory bitmapped index look like?  Is it:
+
+	value:  bitmap...
+	value:  bitmap...
+
+with the values organized in a btree fashion?
+
+-- 
+  Bruce Momjian                        |  http://candle.pha.pa.us
+  pgman@candle.pha.pa.us               |  (610) 359-1001
+  +  If your life is a hard drive,     |  13 Roberts Road
+  +  Christ can be your backup.        |  Newtown Square, Pennsylvania 19073
+
+---------------------------(end of broadcast)---------------------------
+TIP 6: Have you searched our list archives?
+
+               http://archives.postgresql.org
+
+From pgsql-hackers-owner+M49505=pgman=candle.pha.pa.us@postgresql.org Fri Jan 30 09:55:27 2004
+Return-path: <pgsql-hackers-owner+M49505=pgman=candle.pha.pa.us@postgresql.org>
+Received: from zippy.ims.net (IDENT:BTCTknqFfnMWdPgoZjvES928uVdg+CPr@zippy.ims.net [208.166.202.2])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i0UEtPe12397
+	for <pgman@candle.pha.pa.us>; Fri, 30 Jan 2004 09:55:26 -0500 (EST)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by zippy.ims.net (8.11.6/linuxconf) with ESMTP id i0UEsQt01250
+	for <pgman@candle.pha.pa.us>; Fri, 30 Jan 2004 08:54:31 -0600
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.2])
+	by svr1.postgresql.org (Postfix) with ESMTP id 3DF5DD1C9E1
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Fri, 30 Jan 2004 14:48:26 +0000 (GMT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (neptune.hub.org [200.46.204.2]) (amavisd-new, port 10024)
+	with ESMTP id 55394-05
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Fri, 30 Jan 2004 10:48:29 -0400 (AST)
+Received: from sss.pgh.pa.us (unknown [192.204.191.242])
+	by svr1.postgresql.org (Postfix) with ESMTP id 79B71D1C992
+	for <pgsql-hackers@postgresql.org>; Fri, 30 Jan 2004 10:48:25 -0400 (AST)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.12.11/8.12.11) with ESMTP id i0UEmJw9012966;
+	Fri, 30 Jan 2004 09:48:19 -0500 (EST)
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+cc: Greg Stark <gsstark@mit.edu>, pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Question about indexes 
+In-Reply-To: <200401301131.i0UBVHU04169@candle.pha.pa.us> 
+References: <200401301131.i0UBVHU04169@candle.pha.pa.us>
+Comments: In-reply-to Bruce Momjian <pgman@candle.pha.pa.us>
+	message dated "Fri, 30 Jan 2004 06:31:17 -0500"
+Date: Fri, 30 Jan 2004 09:48:19 -0500
+Message-ID: <12965.1075474099@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+X-Virus-Scanned: by amavisd-new at postgresql.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Spam-Checker-Version: SpamAssassin 2.61 (1.212.2.1-2003-12-09-exp) on 
+	candle.pha.pa.us
+X-Spam-Status: No, hits=-4.9 required=5.0 tests=BAYES_00 autolearn=no 
+	version=2.61
+Status: ORr
+
+Bruce Momjian <pgman@candle.pha.pa.us> writes:
+> Also, what does an in-memory bitmapped index look like?
+
+One idea that might work: a binary search tree in which each node
+represents a single page of the table, and contains a bit array with
+one bit for each possible item number on the page.  You could not need
+more than BLCKSZ/(sizeof(HeapTupleHeaderData)+sizeof(ItemIdData)) bits
+in a node, or about 36 bytes at default BLCKSZ --- for most tables you
+could probably prove it would be a great deal less.  You only allocate
+nodes for pages that have at least one interesting row.
+
+I think this would represent a reasonable compromise between size and
+insertion speed.  It would only get large if the indexscan output
+demanded visiting many different pages --- but at some point you could
+abandon index usage and do a sequential scan, so I think that property
+is okay.
+
+A variant is to make the per-page bit arrays be entries in a hash table
+with page number as hash key.  This would reduce insertion to a nearly
+constant-time operation, but the drawback is that you'd need an explicit
+sort at the end to put the per-page entries into page number order
+before you scan 'em.  You might come out ahead anyway, not sure.
+
+Or we could try a true linear bitmap (indexed by page number times
+max-items-per-page plus item number) that's compressed in some fashion,
+probably just by eliminating large runs of zeroes.  The difficulty here
+is that inserting a new one-bit could be pretty expensive, and we need
+it to be cheap.
+
+Perhaps someone can come up with other better ideas ...
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 8: explain analyze is your friend
+
+From pgsql-hackers-owner+M49506=pgman=candle.pha.pa.us@postgresql.org Fri Jan 30 10:23:37 2004
+Return-path: <pgsql-hackers-owner+M49506=pgman=candle.pha.pa.us@postgresql.org>
+Received: from joeconway.com (66-146-172-86.skyriver.net [66.146.172.86])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i0UFNZe17036
+	for <pgman@candle.pha.pa.us>; Fri, 30 Jan 2004 10:23:36 -0500 (EST)
+Received: from postgresql.org ([200.46.204.71] verified)
+  by joeconway.com (CommuniGate Pro SMTP 4.1.8)
+  with ESMTP id 797996 for pgman@candle.pha.pa.us; Fri, 30 Jan 2004 07:20:18 -0800
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.2])
+	by svr1.postgresql.org (Postfix) with ESMTP id 8901ED1C9B3
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Fri, 30 Jan 2004 15:14:26 +0000 (GMT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (neptune.hub.org [200.46.204.2]) (amavisd-new, port 10024)
+	with ESMTP id 67347-02
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Fri, 30 Jan 2004 11:14:30 -0400 (AST)
+Received: from candle.pha.pa.us (candle.pha.pa.us [207.106.42.251])
+	by svr1.postgresql.org (Postfix) with ESMTP id F021AD1C95E
+	for <pgsql-hackers@postgresql.org>; Fri, 30 Jan 2004 11:14:24 -0400 (AST)
+Received: (from pgman@localhost)
+	by candle.pha.pa.us (8.11.6/8.11.6) id i0UFEMl15556;
+	Fri, 30 Jan 2004 10:14:22 -0500 (EST)
+From: Bruce Momjian <pgman@candle.pha.pa.us>
+Message-ID: <200401301514.i0UFEMl15556@candle.pha.pa.us>
+Subject: Re: [HACKERS] Question about indexes
+In-Reply-To: <12965.1075474099@sss.pgh.pa.us>
+To: Tom Lane <tgl@sss.pgh.pa.us>
+Date: Fri, 30 Jan 2004 10:14:22 -0500 (EST)
+cc: Greg Stark <gsstark@mit.edu>, pgsql-hackers@postgresql.org
+X-Mailer: ELM [version 2.4ME+ PL108 (25)]
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=US-ASCII
+X-Virus-Scanned: by amavisd-new at postgresql.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Tom Lane wrote:
+> Bruce Momjian <pgman@candle.pha.pa.us> writes:
+> > Also, what does an in-memory bitmapped index look like?
+> 
+> One idea that might work: a binary search tree in which each node
+> represents a single page of the table, and contains a bit array with
+> one bit for each possible item number on the page.  You could not need
+> more than BLCKSZ/(sizeof(HeapTupleHeaderData)+sizeof(ItemIdData)) bits
+> in a node, or about 36 bytes at default BLCKSZ --- for most tables you
+> could probably prove it would be a great deal less.  You only allocate
+> nodes for pages that have at least one interesting row.
+
+Actually, I think I made a mistake.  I was wondering what on-disk
+bitmapped indexes look like.
+
+-- 
+  Bruce Momjian                        |  http://candle.pha.pa.us
+  pgman@candle.pha.pa.us               |  (610) 359-1001
+  +  If your life is a hard drive,     |  13 Roberts Road
+  +  Christ can be your backup.        |  Newtown Square, Pennsylvania 19073
+
+---------------------------(end of broadcast)---------------------------
+TIP 9: the planner will ignore your desire to choose an index scan if your
+      joining column's datatypes do not match
+
+From pgsql-hackers-owner+M49507=pgman=candle.pha.pa.us@postgresql.org Fri Jan 30 10:31:27 2004
+Return-path: <pgsql-hackers-owner+M49507=pgman=candle.pha.pa.us@postgresql.org>
+Received: from zippy.ims.net (IDENT:AWZrLd+EfFmX1x4Ch6+4AfIqn908pAfY@zippy.ims.net [208.166.202.2])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i0UFVOe18065
+	for <pgman@candle.pha.pa.us>; Fri, 30 Jan 2004 10:31:26 -0500 (EST)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by zippy.ims.net (8.11.6/linuxconf) with ESMTP id i0UFURt02719
+	for <pgman@candle.pha.pa.us>; Fri, 30 Jan 2004 09:30:32 -0600
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.2])
+	by svr1.postgresql.org (Postfix) with ESMTP id 9DF9ED1CCA7
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Fri, 30 Jan 2004 15:22:35 +0000 (GMT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (neptune.hub.org [200.46.204.2]) (amavisd-new, port 10024)
+	with ESMTP id 66733-09
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Fri, 30 Jan 2004 11:22:39 -0400 (AST)
+Received: from candle.pha.pa.us (candle.pha.pa.us [207.106.42.251])
+	by svr1.postgresql.org (Postfix) with ESMTP id 235C3D1CCB2
+	for <pgsql-hackers@postgresql.org>; Fri, 30 Jan 2004 11:22:33 -0400 (AST)
+Received: (from pgman@localhost)
+	by candle.pha.pa.us (8.11.6/8.11.6) id i0UFMYr16926;
+	Fri, 30 Jan 2004 10:22:34 -0500 (EST)
+From: Bruce Momjian <pgman@candle.pha.pa.us>
+Message-ID: <200401301522.i0UFMYr16926@candle.pha.pa.us>
+Subject: Re: [HACKERS] Question about indexes
+In-Reply-To: <87vfmwrtxt.fsf@stark.xeocode.com>
+To: Greg Stark <gsstark@mit.edu>
+Date: Fri, 30 Jan 2004 10:22:34 -0500 (EST)
+cc: Tom Lane <tgl@sss.pgh.pa.us>, pgsql-hackers@postgresql.org
+X-Mailer: ELM [version 2.4ME+ PL108 (25)]
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=US-ASCII
+X-Virus-Scanned: by amavisd-new at postgresql.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Greg Stark wrote:
+> 
+> Tom Lane <tgl@sss.pgh.pa.us> writes:
+> 
+> > In any case, this discussion is predicated on the assumption that the
+> > operations involving the bitmap are a significant fraction of the total
+> > time, which I think is quite uncertain.  Until we build it and profile
+> > it, we won't know that.
+> 
+> The other thought I had was that it would be difficult to tell when to follow
+> this path. Since the main case where it wins is when the individual indexes
+> aren't very selective but the combination is very selective, and we don't have
+> inter-column correlation statistics ...
+
+We actually have heap access cost and index access cost.  You could
+compare costs of looking at all of index A's heap vs. looking at index
+B and then hopefully fewer heap rows.
+
+-- 
+  Bruce Momjian                        |  http://candle.pha.pa.us
+  pgman@candle.pha.pa.us               |  (610) 359-1001
+  +  If your life is a hard drive,     |  13 Roberts Road
+  +  Christ can be your backup.        |  Newtown Square, Pennsylvania 19073
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: you can get off all lists at once with the unregister command
+    (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
+From alvherre@CM-lcon2-51-253.cm.vtr.net Fri Jan 30 10:24:32 2004
+Return-path: <alvherre@CM-lcon2-51-253.cm.vtr.net>
+Received: from CM-lcon2-51-253.cm.vtr.net (CM-lcon2-51-253.cm.vtr.net [200.83.51.253])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i0UFOSe17199
+	for <pgman@candle.pha.pa.us>; Fri, 30 Jan 2004 10:24:31 -0500 (EST)
+Received: by CM-lcon2-51-253.cm.vtr.net (Postfix, from userid 500)
+	id 9A93157578; Fri, 30 Jan 2004 10:24:18 -0500 (EST)
+Date: Fri, 30 Jan 2004 12:24:18 -0300
+From: Alvaro Herrera <alvherre@dcc.uchile.cl>
+To: Tom Lane <tgl@sss.pgh.pa.us>
+cc: Bruce Momjian <pgman@candle.pha.pa.us>, Greg Stark <gsstark@mit.edu>,
+   pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Question about indexes
+Message-ID: <20040130152418.GB24123@dcc.uchile.cl>
+References: <200401301131.i0UBVHU04169@candle.pha.pa.us> <12965.1075474099@sss.pgh.pa.us>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=iso-8859-1
+Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
+In-Reply-To: <12965.1075474099@sss.pgh.pa.us>
+User-Agent: Mutt/1.4.1i
+X-Spam-Checker-Version: SpamAssassin 2.61 (1.212.2.1-2003-12-09-exp) on 
+	candle.pha.pa.us
+X-Spam-Status: No, hits=-4.9 required=5.0 tests=BAYES_00 autolearn=ham 
+	version=2.61
+Status: ORr
+
+On Fri, Jan 30, 2004 at 09:48:19AM -0500, Tom Lane wrote:
+
+> A variant is to make the per-page bit arrays be entries in a hash table
+> with page number as hash key.  This would reduce insertion to a nearly
+> constant-time operation, but the drawback is that you'd need an explicit
+> sort at the end to put the per-page entries into page number order
+> before you scan 'em.  You might come out ahead anyway, not sure.
+
+Is there a reason sort the pages before scanning them?  The result won't
+come out sorted one way or the other.
+
+-- 
+Alvaro Herrera (<alvherre[a]dcc.uchile.cl>)
+"Para tener más hay que desear menos"
+
+From pgsql-hackers-owner+M49508=pgman=candle.pha.pa.us@postgresql.org Fri Jan 30 10:33:18 2004
+Return-path: <pgsql-hackers-owner+M49508=pgman=candle.pha.pa.us@postgresql.org>
+Received: from zippy.ims.net (IDENT:Lj5veoF1GO3p04hu8b6BDDLvyD1wii0f@zippy.ims.net [208.166.202.2])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i0UFXHe18303
+	for <pgman@candle.pha.pa.us>; Fri, 30 Jan 2004 10:33:18 -0500 (EST)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by zippy.ims.net (8.11.6/linuxconf) with ESMTP id i0UFWIt02804
+	for <pgman@candle.pha.pa.us>; Fri, 30 Jan 2004 09:32:21 -0600
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.2])
+	by svr1.postgresql.org (Postfix) with ESMTP id E41F6D1CCDC
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Fri, 30 Jan 2004 15:24:25 +0000 (GMT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (neptune.hub.org [200.46.204.2]) (amavisd-new, port 10024)
+	with ESMTP id 72118-01
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Fri, 30 Jan 2004 11:24:29 -0400 (AST)
+Received: from CM-lcon2-51-253.cm.vtr.net (CM-lcon2-51-253.cm.vtr.net [200.83.51.253])
+	by svr1.postgresql.org (Postfix) with ESMTP id 219F9D1CCDB
+	for <pgsql-hackers@postgresql.org>; Fri, 30 Jan 2004 11:24:25 -0400 (AST)
+Received: by CM-lcon2-51-253.cm.vtr.net (Postfix, from userid 500)
+	id 9A93157578; Fri, 30 Jan 2004 10:24:18 -0500 (EST)
+Date: Fri, 30 Jan 2004 12:24:18 -0300
+From: Alvaro Herrera <alvherre@dcc.uchile.cl>
+To: Tom Lane <tgl@sss.pgh.pa.us>
+cc: Bruce Momjian <pgman@candle.pha.pa.us>, Greg Stark <gsstark@mit.edu>,
+   pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Question about indexes
+Message-ID: <20040130152418.GB24123@dcc.uchile.cl>
+References: <200401301131.i0UBVHU04169@candle.pha.pa.us> <12965.1075474099@sss.pgh.pa.us>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=iso-8859-1
+Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
+In-Reply-To: <12965.1075474099@sss.pgh.pa.us>
+User-Agent: Mutt/1.4.1i
+X-Virus-Scanned: by amavisd-new at postgresql.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Spam-Checker-Version: SpamAssassin 2.61 (1.212.2.1-2003-12-09-exp) on 
+	candle.pha.pa.us
+X-Spam-Status: No, hits=-4.9 required=5.0 tests=BAYES_00 autolearn=no 
+	version=2.61
+Status: OR
+
+On Fri, Jan 30, 2004 at 09:48:19AM -0500, Tom Lane wrote:
+
+> A variant is to make the per-page bit arrays be entries in a hash table
+> with page number as hash key.  This would reduce insertion to a nearly
+> constant-time operation, but the drawback is that you'd need an explicit
+> sort at the end to put the per-page entries into page number order
+> before you scan 'em.  You might come out ahead anyway, not sure.
+
+Is there a reason sort the pages before scanning them?  The result won't
+come out sorted one way or the other.
+
+-- 
+Alvaro Herrera (<alvherre[a]dcc.uchile.cl>)
+"Para tener más hay que desear menos"
+
+---------------------------(end of broadcast)---------------------------
+TIP 4: Don't 'kill -9' the postmaster
+
+From pgsql-hackers-owner+M49509=pgman=candle.pha.pa.us@postgresql.org Fri Jan 30 10:39:11 2004
+Return-path: <pgsql-hackers-owner+M49509=pgman=candle.pha.pa.us@postgresql.org>
+Received: from zippy.ims.net (IDENT:QumGpJuSSF+qB+W577trqd4FqP6fc1O+@zippy.ims.net [208.166.202.2])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i0UFd9e19273
+	for <pgman@candle.pha.pa.us>; Fri, 30 Jan 2004 10:39:10 -0500 (EST)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by zippy.ims.net (8.11.6/linuxconf) with ESMTP id i0UFcDt02990
+	for <pgman@candle.pha.pa.us>; Fri, 30 Jan 2004 09:38:17 -0600
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.2])
+	by svr1.postgresql.org (Postfix) with ESMTP id 606FBD1BA96
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Fri, 30 Jan 2004 15:31:24 +0000 (GMT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (neptune.hub.org [200.46.204.2]) (amavisd-new, port 10024)
+	with ESMTP id 73148-04
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Fri, 30 Jan 2004 11:31:28 -0400 (AST)
+Received: from candle.pha.pa.us (candle.pha.pa.us [207.106.42.251])
+	by svr1.postgresql.org (Postfix) with ESMTP id D7A47D1B4BD
+	for <pgsql-hackers@postgresql.org>; Fri, 30 Jan 2004 11:31:22 -0400 (AST)
+Received: (from pgman@localhost)
+	by candle.pha.pa.us (8.11.6/8.11.6) id i0UFUgQ18014;
+	Fri, 30 Jan 2004 10:30:42 -0500 (EST)
+From: Bruce Momjian <pgman@candle.pha.pa.us>
+Message-ID: <200401301530.i0UFUgQ18014@candle.pha.pa.us>
+Subject: Re: [HACKERS] Question about indexes
+In-Reply-To: <20040130152418.GB24123@dcc.uchile.cl>
+To: Alvaro Herrera <alvherre@dcc.uchile.cl>
+Date: Fri, 30 Jan 2004 10:30:42 -0500 (EST)
+cc: Tom Lane <tgl@sss.pgh.pa.us>, Greg Stark <gsstark@mit.edu>,
+   pgsql-hackers@postgresql.org
+X-Mailer: ELM [version 2.4ME+ PL108 (25)]
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=US-ASCII
+X-Virus-Scanned: by amavisd-new at postgresql.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Alvaro Herrera wrote:
+> On Fri, Jan 30, 2004 at 09:48:19AM -0500, Tom Lane wrote:
+> 
+> > A variant is to make the per-page bit arrays be entries in a hash table
+> > with page number as hash key.  This would reduce insertion to a nearly
+> > constant-time operation, but the drawback is that you'd need an explicit
+> > sort at the end to put the per-page entries into page number order
+> > before you scan 'em.  You might come out ahead anyway, not sure.
+> 
+> Is there a reason sort the pages before scanning them?  The result won't
+> come out sorted one way or the other.
+
+I think the goal would be to hit the heap in sequential order as much as
+possible.  When we are doing reading right from the index, we haven't
+collected all the heap values in one place, but since we have them in
+memory, we might as well sort them, though I don't think that is a
+requirement, just a performance enhancement, or at least that is my
+guess.
+
+-- 
+  Bruce Momjian                        |  http://candle.pha.pa.us
+  pgman@candle.pha.pa.us               |  (610) 359-1001
+  +  If your life is a hard drive,     |  13 Roberts Road
+  +  Christ can be your backup.        |  Newtown Square, Pennsylvania 19073
+
+---------------------------(end of broadcast)---------------------------
+TIP 8: explain analyze is your friend
+
+From hannu@tm.ee Fri Jan 30 17:44:13 2004
+Return-path: <hannu@tm.ee>
+Received: from fuji.krosing.net (217-159-136-226-dsl.kt.estpak.ee [217.159.136.226])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i0UMi5e23093
+	for <pgman@candle.pha.pa.us>; Fri, 30 Jan 2004 17:44:12 -0500 (EST)
+Received: from fuji.krosing.net (localhost.localdomain [127.0.0.1])
+	by fuji.krosing.net (8.12.8/8.12.8) with ESMTP id i0UMhuEl005243;
+	Sat, 31 Jan 2004 00:43:57 +0200
+Received: (from hannu@localhost)
+	by fuji.krosing.net (8.12.8/8.12.8/Submit) id i0UMhs94005241;
+	Sat, 31 Jan 2004 00:43:54 +0200
+X-Authentication-Warning: fuji.krosing.net: hannu set sender to hannu@tm.ee using -f
+Subject: Re: [HACKERS] Question about indexes
+From: Hannu Krosing <hannu@tm.ee>
+To: Tom Lane <tgl@sss.pgh.pa.us>
+cc: Bruce Momjian <pgman@candle.pha.pa.us>, Greg Stark <gsstark@mit.edu>,
+   pgsql-hackers@postgresql.org
+In-Reply-To: <12965.1075474099@sss.pgh.pa.us>
+References: <200401301131.i0UBVHU04169@candle.pha.pa.us>
+  <12965.1075474099@sss.pgh.pa.us>
+Content-Type: text/plain; charset=
+Message-ID: <1075502634.4007.32.camel@fuji.krosing.net>
+MIME-Version: 1.0
+X-Mailer: Ximian Evolution 1.4.5 
+Date: Sat, 31 Jan 2004 00:43:54 +0200
+Content-Transfer-Encoding: 8bit
+X-MIME-Autoconverted: from quoted-printable to 8bit by candle.pha.pa.us id i0UMi5e23093
+X-Spam-Checker-Version: SpamAssassin 2.61 (1.212.2.1-2003-12-09-exp) on 
+	candle.pha.pa.us
+X-Spam-Status: No, hits=-4.9 required=5.0 tests=BAYES_00 autolearn=ham 
+	version=2.61
+Status: OR
+
+Tom Lane kirjutas R, 30.01.2004 kell 16:48:
+> Bruce Momjian <pgman@candle.pha.pa.us> writes:
+> > Also, what does an in-memory bitmapped index look like?
+> 
+> One idea that might work: a binary search tree in which each node
+> represents a single page of the table, and contains a bit array with
+> one bit for each possible item number on the page.  You could not need
+> more than BLCKSZ/(sizeof(HeapTupleHeaderData)+sizeof(ItemIdData)) bits
+> in a node, or about 36 bytes at default BLCKSZ --- for most tables you
+> could probably prove it would be a great deal less.  You only allocate
+> nodes for pages that have at least one interesting row.
+
+Another idea would be using bitmaps where we have just one bit per
+database page and do a seq scan but just over marked pages.
+
+Even when allocating them in full such indexes would occupy just
+1/(8k*8bit) of the amount they describe, so index for 1GB table would be
+1G/(8k*8bit) = 16 kilobytes (2 pages)
+
+Also, such indexes, if persistent, could also be used (together with
+FSM) when deciding placement of new tuples, so they provide a form of
+clustering.
+
+This would of course be most useful for data-warehouse type operations,
+where database is significantÃ¶y bigger than memory.
+
+And the seqscan over bitmap should not be done in simple page order, but
+rather in two passes -
+ 1. over those pages which are already in cache (either postgresqls 
+    or systems (if we find a way to get such info from the system))
+ 2. in sequential order over the rest.
+
+> I think this would represent a reasonable compromise between size and
+> insertion speed.  It would only get large if the indexscan output
+> demanded visiting many different pages --- but at some point you could
+> abandon index usage and do a sequential scan, so I think that property
+> is okay.
+
+One case where almost full intermediate bitmap could be needed is when
+doing a star join or just AND of several conditions, where each single
+index spans a significant part of the table, but the result does not.
+
+> A variant is to make the per-page bit arrays be entries in a hash table
+> with page number as hash key.  This would reduce insertion to a nearly
+> constant-time operation, but the drawback is that you'd need an explicit
+> sort at the end to put the per-page entries into page number order
+> before you scan 'em.  You might come out ahead anyway, not sure.
+> 
+> Or we could try a true linear bitmap (indexed by page number times
+> max-items-per-page plus item number) that's compressed in some fashion,
+> probably just by eliminating large runs of zeroes.  The difficulty here
+> is that inserting a new one-bit could be pretty expensive, and we need
+> it to be cheap.
+> 
+> Perhaps someone can come up with other better ideas ...
+
+I have also contemplated a scenario, where we could use some
+not-quite-max power-of-2 bits-per-page linear bitmap and mark intra-page
+wraps (when we tried to mark a point past that not-quite-max number in a
+page) in high bit (or another bitmap) making info for that page folded.
+AN example would be setting bit 40 in 32-bits/page index - this would
+set bit 40&31 and mark the page folded.
+
+When combining such indexes using AND or OR, we need some spcial
+handling of folded pages, but could still get non-folded (0) results out
+from AND of 2 folded pages if the bits are distributed nicely.
+
+--------------
+Hannu
+
+
+
+
+
+
+
+
+
+
+
+
+
+From pgsql-hackers-owner+M49529=pgman=candle.pha.pa.us@postgresql.org Fri Jan 30 18:10:22 2004
+Return-path: <pgsql-hackers-owner+M49529=pgman=candle.pha.pa.us@postgresql.org>
+Received: from joeconway.com (66-146-172-86.skyriver.net [66.146.172.86])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i0UNAKe25860
+	for <pgman@candle.pha.pa.us>; Fri, 30 Jan 2004 18:10:21 -0500 (EST)
+Received: from postgresql.org ([200.46.204.71] verified)
+  by joeconway.com (CommuniGate Pro SMTP 4.1.8)
+  with ESMTP id 799059 for pgman@candle.pha.pa.us; Fri, 30 Jan 2004 15:07:00 -0800
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.2])
+	by svr1.postgresql.org (Postfix) with ESMTP id C2AB7D1CCDD
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Fri, 30 Jan 2004 23:03:05 +0000 (GMT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (neptune.hub.org [200.46.204.2]) (amavisd-new, port 10024)
+	with ESMTP id 46819-09
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Fri, 30 Jan 2004 19:03:08 -0400 (AST)
+Received: from sss.pgh.pa.us (unknown [192.204.191.242])
+	by svr1.postgresql.org (Postfix) with ESMTP id AD55DD1C967
+	for <pgsql-hackers@postgresql.org>; Fri, 30 Jan 2004 19:03:04 -0400 (AST)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.12.11/8.12.11) with ESMTP id i0UN2wBL020777;
+	Fri, 30 Jan 2004 18:02:58 -0500 (EST)
+To: Hannu Krosing <hannu@tm.ee>
+cc: Bruce Momjian <pgman@candle.pha.pa.us>, Greg Stark <gsstark@mit.edu>,
+   pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Question about indexes 
+In-Reply-To: <1075502634.4007.32.camel@fuji.krosing.net> 
+References: <200401301131.i0UBVHU04169@candle.pha.pa.us> <12965.1075474099@sss.pgh.pa.us> <1075502634.4007.32.camel@fuji.krosing.net>
+Comments: In-reply-to Hannu Krosing <hannu@tm.ee>
+	message dated "Sat, 31 Jan 2004 00:43:54 +0200"
+Date: Fri, 30 Jan 2004 18:02:58 -0500
+Message-ID: <20776.1075503778@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+X-Virus-Scanned: by amavisd-new at postgresql.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Spam-Checker-Version: SpamAssassin 2.61 (1.212.2.1-2003-12-09-exp) on 
+	candle.pha.pa.us
+X-Spam-Status: No, hits=-4.9 required=5.0 tests=BAYES_00 autolearn=no 
+	version=2.61
+Status: OR
+
+Hannu Krosing <hannu@tm.ee> writes:
+> Another idea would be using bitmaps where we have just one bit per
+> database page and do a seq scan but just over marked pages.
+
+That seems a bit too lossy for me, but I really like your later idea
+about folding.  Generalizing that a little, we can choose any fold point
+we like.  We could allocate, say, one 32-bit word per page and set the
+(i mod 32) bit when item i is fingered by the index.  After retrieving
+the heap page, we'd need to test all the valid rows that have item
+numbers matching a set bit mod 32.  On typical tables (with circa 100
+items per page) this would require testing only about 3 rows per page.
+ORing and ANDing of such bitmaps still works, with the understanding
+that it's lossy and you have to double check each retrieved tuple.
+
+If the fold point is above about 100, your idea of keeping track of
+whether we actually set any wrapped-around bits would become useful,
+but below that I think we'd just be wasting a bit.
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: Have you checked our extensive FAQ?
+
+               http://www.postgresql.org/docs/faqs/FAQ.html
+
+From tgl@sss.pgh.pa.us Fri Jan 30 18:03:08 2004
+Return-path: <tgl@sss.pgh.pa.us>
+Received: from sss.pgh.pa.us (root@[192.204.191.242])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i0UN37e24951
+	for <pgman@candle.pha.pa.us>; Fri, 30 Jan 2004 18:03:08 -0500 (EST)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.12.11/8.12.11) with ESMTP id i0UN2wBL020777;
+	Fri, 30 Jan 2004 18:02:58 -0500 (EST)
+To: Hannu Krosing <hannu@tm.ee>
+cc: Bruce Momjian <pgman@candle.pha.pa.us>, Greg Stark <gsstark@mit.edu>,
+   pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Question about indexes 
+In-Reply-To: <1075502634.4007.32.camel@fuji.krosing.net> 
+References: <200401301131.i0UBVHU04169@candle.pha.pa.us> <12965.1075474099@sss.pgh.pa.us> <1075502634.4007.32.camel@fuji.krosing.net>
+Comments: In-reply-to Hannu Krosing <hannu@tm.ee>
+	message dated "Sat, 31 Jan 2004 00:43:54 +0200"
+Date: Fri, 30 Jan 2004 18:02:58 -0500
+Message-ID: <20776.1075503778@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+X-Spam-Checker-Version: SpamAssassin 2.61 (1.212.2.1-2003-12-09-exp) on 
+	candle.pha.pa.us
+X-Spam-Status: No, hits=-4.9 required=5.0 tests=BAYES_00 autolearn=ham 
+	version=2.61
+Status: OR
+
+Hannu Krosing <hannu@tm.ee> writes:
+> Another idea would be using bitmaps where we have just one bit per
+> database page and do a seq scan but just over marked pages.
+
+That seems a bit too lossy for me, but I really like your later idea
+about folding.  Generalizing that a little, we can choose any fold point
+we like.  We could allocate, say, one 32-bit word per page and set the
+(i mod 32) bit when item i is fingered by the index.  After retrieving
+the heap page, we'd need to test all the valid rows that have item
+numbers matching a set bit mod 32.  On typical tables (with circa 100
+items per page) this would require testing only about 3 rows per page.
+ORing and ANDing of such bitmaps still works, with the understanding
+that it's lossy and you have to double check each retrieved tuple.
+
+If the fold point is above about 100, your idea of keeping track of
+whether we actually set any wrapped-around bits would become useful,
+but below that I think we'd just be wasting a bit.
+
+			regards, tom lane
+
+From hannu@tm.ee Fri Jan 30 18:21:59 2004
+Return-path: <hannu@tm.ee>
+Received: from fuji.krosing.net (217-159-136-226-dsl.kt.estpak.ee [217.159.136.226])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i0UNLue27301
+	for <pgman@candle.pha.pa.us>; Fri, 30 Jan 2004 18:21:57 -0500 (EST)
+Received: from fuji.krosing.net (localhost.localdomain [127.0.0.1])
+	by fuji.krosing.net (8.12.8/8.12.8) with ESMTP id i0UNLpEl006023;
+	Sat, 31 Jan 2004 01:21:51 +0200
+Received: (from hannu@localhost)
+	by fuji.krosing.net (8.12.8/8.12.8/Submit) id i0UNLgx1006021;
+	Sat, 31 Jan 2004 01:21:42 +0200
+X-Authentication-Warning: fuji.krosing.net: hannu set sender to hannu@tm.ee using -f
+Subject: Re: [HACKERS] Question about indexes
+From: Hannu Krosing <hannu@tm.ee>
+To: Tom Lane <tgl@sss.pgh.pa.us>
+cc: Bruce Momjian <pgman@candle.pha.pa.us>, Greg Stark <gsstark@mit.edu>,
+   pgsql-hackers@postgresql.org
+In-Reply-To: <20776.1075503778@sss.pgh.pa.us>
+References: <200401301131.i0UBVHU04169@candle.pha.pa.us>
+  <12965.1075474099@sss.pgh.pa.us>
+  <1075502634.4007.32.camel@fuji.krosing.net>
+  <20776.1075503778@sss.pgh.pa.us>
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Message-ID: <1075504902.4007.43.camel@fuji.krosing.net>
+MIME-Version: 1.0
+X-Mailer: Ximian Evolution 1.4.5 
+Date: Sat, 31 Jan 2004 01:21:42 +0200
+X-Spam-Checker-Version: SpamAssassin 2.61 (1.212.2.1-2003-12-09-exp) on 
+	candle.pha.pa.us
+X-Spam-Status: No, hits=-4.9 required=5.0 tests=BAYES_00 autolearn=ham 
+	version=2.61
+Status: OR
+
+Tom Lane kirjutas L, 31.01.2004 kell 01:02:
+> Hannu Krosing <hannu@tm.ee> writes:
+> > Another idea would be using bitmaps where we have just one bit per
+> > database page and do a seq scan but just over marked pages.
+> 
+> That seems a bit too lossy for me,
+
+I originally thought of it in context of data-warehousing and persistent
+bitmap indexes. there the use of these same bitmaps for clustering would
+un-lossify this approach.
+
+>  but I really like your later idea
+> about folding.  Generalizing that a little, we can choose any fold point
+> we like.  We could allocate, say, one 32-bit word per page and set the
+> (i mod 32) bit when item i is fingered by the index.  After retrieving
+> the heap page, we'd need to test all the valid rows that have item
+> numbers matching a set bit mod 32.  On typical tables (with circa 100
+> items per page) this would require testing only about 3 rows per page.
+> ORing and ANDing of such bitmaps still works, with the understanding
+> that it's lossy and you have to double check each retrieved tuple.
+> 
+> If the fold point is above about 100, your idea of keeping track of
+> whether we actually set any wrapped-around bits would become useful,
+> but below that I think we'd just be wasting a bit.
+
+Not only wasting bits, but also making the code hairier - we can't just
+do simple ANDs and ORs.
+
+--------------
+Hannu
+
+From gsstark@mit.edu Fri Jan 30 19:04:21 2004
+Return-path: <gsstark@mit.edu>
+Received: from smtp.istop.com (dci.doncaster.on.ca [66.11.168.194])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i0V04De01505
+	for <pgman@candle.pha.pa.us>; Fri, 30 Jan 2004 19:04:21 -0500 (EST)
+Received: from stark.xeocode.com (gsstark.mtl.istop.com [66.11.160.162])
+	by smtp.istop.com (Postfix) with ESMTP
+	id 7CC2436E2F; Fri, 30 Jan 2004 19:04:04 -0500 (EST)
+Received: from localhost ([127.0.0.1] helo=stark.xeocode.com)
+	by stark.xeocode.com with smtp (Exim 3.36 #1 (Debian))
+	id 1AmicG-0007zf-00; Fri, 30 Jan 2004 19:04:04 -0500
+Sender: gsstark@mit.edu
+To: Tom Lane <tgl@sss.pgh.pa.us>
+cc: Hannu Krosing <hannu@tm.ee>, Bruce Momjian <pgman@candle.pha.pa.us>,
+   Greg Stark <gsstark@mit.edu>, pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Question about indexes
+References: <200401301131.i0UBVHU04169@candle.pha.pa.us>
+	<12965.1075474099@sss.pgh.pa.us>
+	<1075502634.4007.32.camel@fuji.krosing.net>
+	<20776.1075503778@sss.pgh.pa.us>
+In-Reply-To: <20776.1075503778@sss.pgh.pa.us>
+From: Greg Stark <gsstark@mit.edu>
+Organization: The Emacs Conspiracy; member since 1992
+Date: 30 Jan 2004 19:04:03 -0500
+Message-ID: <87wu79vv9o.fsf@stark.xeocode.com>
+Lines: 21
+User-Agent: Gnus/5.09 (Gnus v5.9.0) Emacs/21.3
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+X-Spam-Checker-Version: SpamAssassin 2.61 (1.212.2.1-2003-12-09-exp) on 
+	candle.pha.pa.us
+X-Spam-Status: No, hits=-4.9 required=5.0 tests=BAYES_00 autolearn=ham 
+	version=2.61
+Status: OR
+
+
+Tom Lane <tgl@sss.pgh.pa.us> writes:
+
+> That seems a bit too lossy for me, but I really like your later idea
+> about folding.  Generalizing that a little, we can choose any fold point
+> we like.  We could allocate, say, one 32-bit word per page and set the
+> (i mod 32) bit when item i is fingered by the index.  After retrieving
+> the heap page, we'd need to test all the valid rows that have item
+> numbers matching a set bit mod 32.  On typical tables (with circa 100
+> items per page) this would require testing only about 3 rows per page.
+> ORing and ANDing of such bitmaps still works, with the understanding
+> that it's lossy and you have to double check each retrieved tuple.
+
+That would make it really hard to ever clear the bits. What do you do when you
+vacuum and one of the tuples is no longer needed. You can't be sure you can
+clear the bit in the index because there could be multiple tuples represented
+by the bit being set. You would have to test the condition on the other tuples
+covered by the bit to see if it can be cleared.
+
+-- 
+greg
+
+From pgsql-hackers-owner+M49533=pgman=candle.pha.pa.us@postgresql.org Fri Jan 30 19:56:45 2004
+Return-path: <pgsql-hackers-owner+M49533=pgman=candle.pha.pa.us@postgresql.org>
+Received: from joeconway.com (66-146-172-86.skyriver.net [66.146.172.86])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i0V0uhe05716
+	for <pgman@candle.pha.pa.us>; Fri, 30 Jan 2004 19:56:44 -0500 (EST)
+Received: from postgresql.org ([200.46.204.71] verified)
+  by joeconway.com (CommuniGate Pro SMTP 4.1.8)
+  with ESMTP id 799253 for pgman@candle.pha.pa.us; Fri, 30 Jan 2004 16:53:23 -0800
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.2])
+	by svr1.postgresql.org (Postfix) with ESMTP id B7F53D1CC9B
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Sat, 31 Jan 2004 00:50:25 +0000 (GMT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (neptune.hub.org [200.46.204.2]) (amavisd-new, port 10024)
+	with ESMTP id 76472-01
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Fri, 30 Jan 2004 20:50:28 -0400 (AST)
+Received: from sss.pgh.pa.us (unknown [192.204.191.242])
+	by svr1.postgresql.org (Postfix) with ESMTP id 0A06FD1CB1D
+	for <pgsql-hackers@postgresql.org>; Fri, 30 Jan 2004 20:50:25 -0400 (AST)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.12.11/8.12.11) with ESMTP id i0V0oN9U023293;
+	Fri, 30 Jan 2004 19:50:24 -0500 (EST)
+To: Greg Stark <gsstark@mit.edu>
+cc: Hannu Krosing <hannu@tm.ee>, Bruce Momjian <pgman@candle.pha.pa.us>,
+   pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Question about indexes 
+In-Reply-To: <87wu79vv9o.fsf@stark.xeocode.com> 
+References: <200401301131.i0UBVHU04169@candle.pha.pa.us> <12965.1075474099@sss.pgh.pa.us> <1075502634.4007.32.camel@fuji.krosing.net> <20776.1075503778@sss.pgh.pa.us> <87wu79vv9o.fsf@stark.xeocode.com>
+Comments: In-reply-to Greg Stark <gsstark@mit.edu>
+	message dated "30 Jan 2004 19:04:03 -0500"
+Date: Fri, 30 Jan 2004 19:50:23 -0500
+Message-ID: <23292.1075510223@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+X-Virus-Scanned: by amavisd-new at postgresql.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Spam-Checker-Version: SpamAssassin 2.61 (1.212.2.1-2003-12-09-exp) on 
+	candle.pha.pa.us
+X-Spam-Status: No, hits=-4.9 required=5.0 tests=BAYES_00 autolearn=no 
+	version=2.61
+Status: OR
+
+Greg Stark <gsstark@mit.edu> writes:
+> Tom Lane <tgl@sss.pgh.pa.us> writes:
+>> ORing and ANDing of such bitmaps still works, with the understanding
+>> that it's lossy and you have to double check each retrieved tuple.
+
+> That would make it really hard to ever clear the bits.
+
+We're speaking of in-memory bitmaps constructed on-the-fly here.  You're
+right that it wouldn't work for persistent indexes, but I'm not very
+interested in that case at the moment ...
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 8: explain analyze is your friend
 
