@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.84 2003/09/29 00:05:25 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.85 2003/10/02 06:36:37 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4090,7 +4090,7 @@ AlterTableCreateToastTable(Oid relOid, bool silent)
 
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("tables \"%s\" already has a TOAST table",
+				 errmsg("table \"%s\" already has a TOAST table",
 						RelationGetRelationName(rel))));
 	}
 

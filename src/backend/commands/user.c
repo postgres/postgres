@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.127 2003/09/29 00:05:25 petere Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.128 2003/10/02 06:36:37 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -648,7 +648,7 @@ CreateUser(CreateUserStmt *stmt)
 	if (sysid_exists)
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_OBJECT),
-				 errmsg("sysid %d is already assigned", sysid)));
+				 errmsg("user ID %d is already assigned", sysid)));
 
 	/* If no sysid given, use max existing id + 1 */
 	if (!havesysid)
@@ -1354,7 +1354,7 @@ CreateGroup(CreateGroupStmt *stmt)
 	if (sysid_exists)
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_OBJECT),
-				 errmsg("sysid %d is already assigned", sysid)));
+				 errmsg("group ID %d is already assigned", sysid)));
 
 	/* If no sysid given, use max existing id + 1 */
 	if (!havesysid)
