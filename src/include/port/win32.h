@@ -1,6 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/include/port/win32.h,v 1.8 2003/04/24 21:23:01 momjian Exp $ */
-
-#include <port/win32defs.h>
+/* $Header: /cvsroot/pgsql/src/include/port/win32.h,v 1.9 2003/04/29 18:25:54 momjian Exp $ */
 
 #define USES_WINSOCK
 #define NOFILE		  100
