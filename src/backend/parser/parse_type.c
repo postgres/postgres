@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.47 2002/08/02 18:15:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.48 2002/08/08 01:22:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -461,6 +461,8 @@ parseTypeString(const char *str, Oid *type_id, int32 *typmod)
 		elog(ERROR, "parseTypeString: Invalid type name '%s'", str);
 	typecast = (TypeCast *) restarget->val;
 	if (typecast == NULL ||
+		!IsA(typecast, TypeCast) ||
+		typecast->arg == NULL ||
 		!IsA(typecast->arg, A_Const))
 		elog(ERROR, "parseTypeString: Invalid type name '%s'", str);
 	typename = typecast->typename;
