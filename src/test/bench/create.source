@@ -1,6 +1,6 @@
-create table onek(unique1 int4,unique2 int4,two int4,four int4,ten int4,twenty int4, hundred int4,thousand int4,twothousand int4,fivethous int4,tenthous int4,odd int4, even int4,stringu1 char16,stringu2 char16,string4 char16);
-create table tenk1 (unique1 int4,unique2 int4, two int4,four int4,ten int4,twenty int4,hundred int4,thousand int4,twothousand int4,fivethous int4,tenthous int4,odd int4,even int4,stringu1 char16,stringu2 char16,string4 char16);
-create table tenk2 (unique1 int4, unique2 int4, two int4, four int4,ten int4, twenty int4, hundred int4, thousand int4, twothousand int4,fivethous int4, tenthous int4, odd int4, even int4,stringu1 char16,stringu2 char16, string4 char16);
+create table onek(unique1 int4,unique2 int4,two int4,four int4,ten int4,twenty int4, hundred int4,thousand int4,twothousand int4,fivethous int4,tenthous int4,odd int4, even int4,stringu1 name,stringu2 name,string4 name);
+create table tenk1 (unique1 int4,unique2 int4, two int4,four int4,ten int4,twenty int4,hundred int4,thousand int4,twothousand int4,fivethous int4,tenthous int4,odd int4,even int4,stringu1 name,stringu2 name,string4 name);
+create table tenk2 (unique1 int4, unique2 int4, two int4, four int4,ten int4, twenty int4, hundred int4, thousand int4, twothousand int4,fivethous int4, tenthous int4, odd int4, even int4,stringu1 name,stringu2 name, string4 name);
 copy onek from '_CWD_/../regress/data/onek.data';
 copy tenk1 from '_CWD_/../regress/data/tenk.data';
 copy tenk2 from '_CWD_/../regress/data/tenk.data';

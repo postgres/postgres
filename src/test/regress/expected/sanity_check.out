@@ -5,14 +5,14 @@ QUERY: SELECT relname, relhasindex
    ORDER BY relname;
 relname       |relhasindex
 --------------+-----------
-bt_c16_heap   |t          
 bt_f8_heap    |t          
 bt_i4_heap    |t          
+bt_name_heap  |t          
 bt_txt_heap   |t          
 fast_emp4000  |t          
-hash_c16_heap |t          
 hash_f8_heap  |t          
 hash_i4_heap  |t          
+hash_name_heap|t          
 hash_txt_heap |t          
 ihighway      |t          
 onek          |t          

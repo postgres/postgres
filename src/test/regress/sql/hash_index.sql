@@ -16,15 +16,15 @@ SELECT hash_i4_heap.*
 -- hash index
 -- grep 1505703298 hash.data
 --
-SELECT hash_c16_heap.*
-   WHERE hash_c16_heap.random = '1505703298'::char16;
+SELECT hash_name_heap.*
+   WHERE hash_name_heap.random = '1505703298'::name;
 
 --
 -- hash index
 -- grep 7777777 hash.data
 --
-SELECT hash_c16_heap.*
-   WHERE hash_c16_heap.random = '7777777'::char16;
+SELECT hash_name_heap.*
+   WHERE hash_name_heap.random = '7777777'::name;
 
 --
 -- hash index
@@ -87,24 +87,24 @@ SELECT h.seqno AS i20000
    FROM hash_i4_heap h
    WHERE h.random = 1492795354;
 
-UPDATE hash_c16_heap 
-   SET random = '0123456789abcdef'::char16
-   WHERE hash_c16_heap.seqno = 6543;
+UPDATE hash_name_heap 
+   SET random = '0123456789abcdef'::name
+   WHERE hash_name_heap.seqno = 6543;
 
 SELECT h.seqno AS i6543, h.random AS c0_to_f
-   FROM hash_c16_heap h
-   WHERE h.random = '0123456789abcdef'::char16;
+   FROM hash_name_heap h
+   WHERE h.random = '0123456789abcdef'::name;
 
-UPDATE hash_c16_heap
+UPDATE hash_name_heap
    SET seqno = 20000
-   WHERE hash_c16_heap.random = '76652222'::char16;
+   WHERE hash_name_heap.random = '76652222'::name;
 
 --
 -- this is the row we just replaced; index scan should return zero rows 
 --
 SELECT h.seqno AS emptyset
-   FROM hash_c16_heap h
-   WHERE h.random = '76652222'::char16;
+   FROM hash_name_heap h
+   WHERE h.random = '76652222'::name;
 
 UPDATE hash_txt_heap 
    SET random = '0123456789abcdefghijklmnop'::text

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.16 1998/04/07 18:11:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.17 1998/04/26 04:07:48 momjian Exp $
  *
  *		Alistair Crooks added the code for the regex caching
  *		agc - cached the regular expressions used - there's a good chance
@@ -204,58 +204,6 @@ fixedlen_regexeq(char *s, struct varlena * p, int charlen, int cflags)
  *	routines that use the regexp stuff
  */
 bool
-char2regexeq(uint16 arg1, struct varlena * p)
-{
-	char	   *s = (char *) &arg1;
-
-	return (fixedlen_regexeq(s, p, 2, REG_EXTENDED));
-}
-
-bool
-char2regexne(uint16 arg1, struct varlena * p)
-{
-	return (!char2regexeq(arg1, p));
-}
-
-bool
-char4regexeq(uint32 arg1, struct varlena * p)
-{
-	char	   *s = (char *) &arg1;
-
-	return (fixedlen_regexeq(s, p, 4, REG_EXTENDED));
-}
-
-bool
-char4regexne(uint32 arg1, struct varlena * p)
-{
-	return (!char4regexeq(arg1, p));
-}
-
-bool
-char8regexeq(char *s, struct varlena * p)
-{
-	return (fixedlen_regexeq(s, p, 8, REG_EXTENDED));
-}
-
-bool
-char8regexne(char *s, struct varlena * p)
-{
-	return (!char8regexeq(s, p));
-}
-
-bool
-char16regexeq(char *s, struct varlena * p)
-{
-	return (fixedlen_regexeq(s, p, 16, REG_EXTENDED));
-}
-
-bool
-char16regexne(char *s, struct varlena * p)
-{
-	return (!char16regexeq(s, p));
-}
-
-bool
 nameregexeq(NameData *n, struct varlena * p)
 {
 	if (!n)
@@ -288,59 +236,6 @@ textregexne(struct varlena * s, struct varlena * p)
 *  routines that use the regexp stuff, but ignore the case.
  *	for this, we use the REG_ICASE flag to pg95_regcomp
  */
-bool
-char2icregexeq(uint16 arg1, struct varlena * p)
-{
-	char	   *s = (char *) &arg1;
-
-	return (fixedlen_regexeq(s, p, 2, REG_ICASE | REG_EXTENDED));
-}
-
-
-bool
-char2icregexne(uint16 arg1, struct varlena * p)
-{
-	return (!char2icregexeq(arg1, p));
-}
-
-bool
-char4icregexeq(uint32 arg1, struct varlena * p)
-{
-	char	   *s = (char *) &arg1;
-
-	return (fixedlen_regexeq(s, p, 4, REG_ICASE | REG_EXTENDED));
-}
-
-bool
-char4icregexne(uint32 arg1, struct varlena * p)
-{
-	return (!char4icregexeq(arg1, p));
-}
-
-bool
-char8icregexeq(char *s, struct varlena * p)
-{
-	return (fixedlen_regexeq(s, p, 8, REG_ICASE | REG_EXTENDED));
-}
-
-bool
-char8icregexne(char *s, struct varlena * p)
-{
-	return (!char8icregexeq(s, p));
-}
-
-bool
-char16icregexeq(char *s, struct varlena * p)
-{
-	return (fixedlen_regexeq(s, p, 16, REG_ICASE | REG_EXTENDED));
-}
-
-bool
-char16icregexne(char *s, struct varlena * p)
-{
-	return (!char16icregexeq(s, p));
-}
-
 bool
 texticregexeq(struct varlena * s, struct varlena * p)
 {

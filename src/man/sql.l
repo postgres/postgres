@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/sql.l,v 1.10 1998/04/07 18:12:57 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/sql.l,v 1.11 1998/04/26 04:09:51 momjian Exp $
 .TH INTRODUCTION SQL 11/5/95 PostgreSQL PostgreSQL
 .SH "Section 4 - SQL Commands (COMMANDS)"
 .SH "General Information"
@@ -219,7 +219,7 @@ parameter is:
 .fi
 For example, consider the definition of a function, DEPT, as
 .nf
-create function DEPT (char16) 
+create function DEPT (name) 
 	returns dept
 	as 'select * from 
 	    dept where name=$1'

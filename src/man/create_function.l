@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/create_function.l,v 1.7 1998/04/07 18:12:51 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/create_function.l,v 1.8 1998/04/26 04:09:37 momjian Exp $
 .TH "CREATE FUNCTION" SQL 11/05/95 PostgreSQL PostgreSQL
 .SH "NAME"
 create function - define a new function
@@ -138,7 +138,6 @@ bool	bool	include/c.h
 box	(BOX *) 	utils/geo-decls.h
 bytea	(bytea *)	include/postgres.h
 char	char	N/A
-char16	Char16 or (char16 *)	include/postgres.h
 cid	CID	include/postgres.h
 int2	int2	include/postgres.h
 int28	(int28 *)	include/postgres.h

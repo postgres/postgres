@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.51 1998/04/08 06:40:09 thomas Exp $
+ * $Id: pg_proc.h,v 1.52 1998/04/26 04:09:10 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -109,10 +109,6 @@ DESCR("(internal)");
 DATA(insert OID =  34 (  namein			   PGUID 11 f t f 1 f 19 "0" 100 0 0 100  foo bar ));
 DESCR("(internal)");
 DATA(insert OID =  35 (  nameout		   PGUID 11 f t f 1 f 23 "0" 100 0 0 100  foo bar ));
-DESCR("(internal)");
-DATA(insert OID =  36 (  char16in		   PGUID 11 f t f 1 f 19 "0" 100 0 0 100  foo bar ));
-DESCR("(internal)");
-DATA(insert OID =  37 (  char16out		   PGUID 11 f t f 1 f 23 "0" 100 0 0 100  foo bar ));
 DESCR("(internal)");
 DATA(insert OID =  38 (  int2in			   PGUID 11 f t f 1 f 21 "0" 100 0 0 100  foo bar ));
 DESCR("(internal)");
@@ -796,8 +792,6 @@ DATA(insert OID = 372 (  on_sb			   PGUID 11 f t f 2 f 16 "601 603" 100 0 0 100	
 DESCR("contained in");
 DATA(insert OID = 373 (  inter_sb		   PGUID 11 f t f 2 f 16 "601 603" 100 0 0 100	foo bar ));
 DESCR("");
-DATA(insert OID = 1274 (  btchar16cmp	   PGUID 11 f t f 2 f 23 "19 19" 100 0 0 100  foo bar ));
-DESCR("btree less-equal-greater");
 
 /* OIDS 400 - 499 */
 
@@ -840,59 +834,6 @@ DATA(insert OID = 455 (  hashname		   PGUID 11 f t f 2 f 23 "19 19" 100 0 0 100 
 DESCR("hash");
 DATA(insert OID = 456 (  hashtext		   PGUID 11 f t f 2 f 23 "25 25" 100 0 0 100  foo bar ));
 DESCR("hash");
-DATA(insert OID = 466 (  char2in		   PGUID 11 f t f 1 f 409 "0" 100 0 0 100  foo bar ));
-DESCR("(internal)");
-DATA(insert OID = 467 (  char4in		   PGUID 11 f t f 1 f 410 "0" 100 0 0 100  foo bar ));
-DESCR("(internal)");
-DATA(insert OID = 468 (  char8in		   PGUID 11 f t f 1 f 411 "0" 100 0 0 100  foo bar ));
-DESCR("(internal)");
-DATA(insert OID = 469 (  char2out		   PGUID 11 f t f 1 f 23 "0" 100 0 0 100  foo bar ));
-DESCR("(internal)");
-DATA(insert OID = 470 (  char4out		   PGUID 11 f t f 1 f 23 "0" 100 0 0 100  foo bar ));
-DESCR("(internal)");
-DATA(insert OID = 471 (  char8out		   PGUID 11 f t f 1 f 23 "0" 100 0 0 100  foo bar ));
-DESCR("(internal)");
-DATA(insert OID = 472 (  char2eq		   PGUID 11 f t f 2 f 16 "409 409" 100 0 0 100	foo bar ));
-DESCR("equals");
-DATA(insert OID = 473 (  char4eq		   PGUID 11 f t f 2 f 16 "410 410" 100 0 0 100	foo bar ));
-DESCR("equals");
-DATA(insert OID = 474 (  char8eq		   PGUID 11 f t f 2 f 16 "411 411" 100 0 0 100	foo bar ));
-DESCR("equals");
-DATA(insert OID = 475 (  char2lt		   PGUID 11 f t f 2 f 16 "409 409" 100 0 0 100	foo bar ));
-DESCR("less-than");
-DATA(insert OID = 476 (  char4lt		   PGUID 11 f t f 2 f 16 "410 410" 100 0 0 100	foo bar ));
-DESCR("less-than");
-DATA(insert OID = 477 (  char8lt		   PGUID 11 f t f 2 f 16 "411 411" 100 0 0 100	foo bar ));
-DESCR("less-than");
-DATA(insert OID = 478 (  char2le		   PGUID 11 f t f 2 f 16 "409 409" 100 0 0 100	foo bar ));
-DESCR("less-than-or-equals");
-DATA(insert OID = 479 (  char4le		   PGUID 11 f t f 2 f 16 "410 410" 100 0 0 100	foo bar ));
-DESCR("less-than-or-equals");
-DATA(insert OID = 480 (  char8le		   PGUID 11 f t f 2 f 16 "411 411" 100 0 0 100	foo bar ));
-DESCR("less-than-or-equals");
-DATA(insert OID = 481 (  char2gt		   PGUID 11 f t f 2 f 16 "409 409" 100 0 0 100	foo bar ));
-DESCR("greater-than");
-DATA(insert OID = 482 (  char4gt		   PGUID 11 f t f 2 f 16 "410 410" 100 0 0 100	foo bar ));
-DESCR("greater-than");
-DATA(insert OID = 483 (  char8gt		   PGUID 11 f t f 2 f 16 "411 411" 100 0 0 100	foo bar ));
-DESCR("greater-than");
-DATA(insert OID = 484 (  char2ge		   PGUID 11 f t f 2 f 16 "409 409" 100 0 0 100	foo bar ));
-DESCR("greater-than-or-equals");
-DATA(insert OID = 1275 (  char16eq		   PGUID 11 f t f 2 f 16 "19 19" 100 0 0 100  foo bar ));
-DESCR("equals");
-DATA(insert OID = 1276 (  char16lt		   PGUID 11 f t f 2 f 16 "19 19" 100 0 0 100  foo bar ));
-DESCR("less-than");
-DATA(insert OID = 1277 (  char16le		   PGUID 11 f t f 2 f 16 "19 19" 100 0 0 100  foo bar ));
-DESCR("less-than-or-equals");
-DATA(insert OID = 1278 (  char16gt		   PGUID 11 f t f 2 f 16 "19 19" 100 0 0 100  foo bar ));
-DESCR("greater-than");
-DATA(insert OID = 1279 (  char16ge		   PGUID 11 f t f 2 f 16 "19 19" 100 0 0 100  foo bar ));
-DESCR("greater-than-or-equals");
-DATA(insert OID = 1280 (  char16ne		   PGUID 11 f t f 2 f 16 "19 19" 100 0 0 100  foo bar ));
-DESCR("not equal");
-
-DATA(insert OID = 1281 (  hashchar16	   PGUID 11 f t f 2 f 23 "19 19" 100 0 0 100  foo bar ));
-DESCR("hash");
 
 /* OIDS 500 - 599 */
 
@@ -920,41 +861,9 @@ DATA(insert OID = 682 (  mktinterval	   PGUID 11 f t f 2 f 704 "702 702" 100 0 0
 DESCR("convert to interval");
 DATA(insert OID = 683 (  oid8eq			   PGUID 11 f t f 2 f 16 "30 30" 100 0 0 100  foo bar ));
 DESCR("equals");
-DATA(insert OID = 684 (  char4ge		   PGUID 11 f t f 2 f 16 "410 410" 100 0 0 100	foo bar ));
-DESCR("greater-than-or-equals");
-DATA(insert OID = 685 (  char8ge		   PGUID 11 f t f 2 f 16 "411 411" 100 0 0 100	foo bar ));
-DESCR("greater-than-or-equals");
-DATA(insert OID = 686 (  char2ne		   PGUID 11 f t f 2 f 16 "409 409" 100 0 0 100	foo bar ));
-DESCR("not equal");
-DATA(insert OID = 687 (  char4ne		   PGUID 11 f t f 2 f 16 "410 410" 100 0 0 100	foo bar ));
-DESCR("not equal");
-DATA(insert OID = 688 (  char8ne		   PGUID 11 f t f 2 f 16 "411 411" 100 0 0 100	foo bar ));
-DESCR("not equal");
-DATA(insert OID = 689 (  btchar2cmp		   PGUID 11 f t f 2 f 23 "409 409" 100 0 0 100	foo bar ));
-DESCR("btree less-equal-greater");
-DATA(insert OID = 690 (  btchar4cmp		   PGUID 11 f t f 2 f 23 "410 410" 100 0 0 100	foo bar ));
-DESCR("btree less-equal-greater");
-DATA(insert OID = 691 (  btchar8cmp		   PGUID 11 f t f 2 f 23 "411 411" 100 0 0 100	foo bar ));
-DESCR("btree less-equal-greater");
-DATA(insert OID = 692 (  hashchar2		   PGUID 11 f t f 2 f 23 "409 409" 100 0 0 100	foo bar ));
-DESCR("hash");
-DATA(insert OID = 693 (  hashchar4		   PGUID 11 f t f 2 f 23 "410 410" 100 0 0 100	foo bar ));
-DESCR("hash");
-DATA(insert OID = 694 (  hashchar8		   PGUID 11 f t f 2 f 23 "411 411" 100 0 0 100	foo bar ));
-DESCR("hash");
-DATA(insert OID = 695 (  char8regexeq	   PGUID 11 f t f 2 f 16 "411 25" 100 0 0 100  foo bar ));
-DESCR("matches regex., case-sensitive");
-DATA(insert OID = 696 (  char8regexne	   PGUID 11 f t f 2 f 16 "411 25" 100 0 0 100  foo bar ));
-DESCR("does not match regex., case-sensitive");
-DATA(insert OID = 699 (  char2regexeq	   PGUID 11 f t f 2 f 16 "409 25" 100 0 0 100  foo bar ));
-DESCR("matches regex., case-sensitive");
 
 /* OIDS 700 - 799 */
 
-DATA(insert OID = 1288 (  char16regexeq    PGUID 11 f t f 2 f 16 "19 25" 100 0 0 100  foo bar ));
-DESCR("matches regex., case-sensitive");
-DATA(insert OID = 1289 (  char16regexne    PGUID 11 f t f 2 f 16 "19 25" 100 0 0 100  foo bar ));
-DESCR("does not match regex., case-sensitive");
 
 DATA(insert OID = 710 (  getpgusername	   PGUID 11 f t f 0 f 19 "0" 100 0 0 100  foo bar ));
 DESCR("(internal)");
@@ -1120,38 +1029,15 @@ DESCR("less-equal-greater");
 DATA(insert OID = 829 (  mkoidint2		   PGUID 11 f t f 2 f 810 "26 21" 100 0 0 100  foo bar));
 DESCR("");
 
-DATA(insert OID =  837 (  char2regexne	   PGUID 11 f t f 2 f 16 "409 25" 100 0 0 100  foo bar ));
-DESCR("does not match regex., case-sensitive");
-DATA(insert OID =  836 (  char4regexeq	   PGUID 11 f t f 2 f 16 "410 25" 100 0 0 100  foo bar ));
-DESCR("matches regex., case-sensitive");
-DATA(insert OID =  838 (  char4regexne	   PGUID 11 f t f 2 f 16 "410 25" 100 0 0 100  foo bar ));
-DESCR("does not match regex., case-sensitive");
-
 DATA(insert OID =  849 (  textpos		   PGUID 11 f t f 2 f 23 "25 25" 100 0 1 0 foo bar ));
 DESCR("return position of substring");
 DATA(insert OID =  850 (  textlike		   PGUID 11 f t f 2 f 16 "25 25" 100 0 1 0 foo bar ));
 DESCR("matches LIKE expression");
 DATA(insert OID =  851 (  textnlike		   PGUID 11 f t f 2 f 16 "25 25" 100 0 1 0 foo bar ));
 DESCR("does not match LIKE expression");
-DATA(insert OID =  852 (  char2like		   PGUID 11 f t f 2 f 16 "409 25" 100 0 0 100  foo bar ));
-DESCR("matches LIKE expression");
-DATA(insert OID =  853 (  char2nlike	   PGUID 11 f t f 2 f 16 "409 25" 100 0 0 100  foo bar ));
-DESCR("does not match LIKE expression");
-DATA(insert OID =  854 (  char4like		   PGUID 11 f t f 2 f 16 "410 25" 100 0 0 100  foo bar ));
-DESCR("matches LIKE expression");
-DATA(insert OID =  855 (  char4nlike	   PGUID 11 f t f 2 f 16 "410 25" 100 0 0 100  foo bar ));
-DESCR("does not match LIKE expression");
-DATA(insert OID =  856 (  char8like		   PGUID 11 f t f 2 f 16 "411 25" 100 0 0 100  foo bar ));
-DESCR("matches LIKE expression");
-DATA(insert OID =  857 (  char8nlike	   PGUID 11 f t f 2 f 16 "411 25" 100 0 0 100  foo bar ));
-DESCR("does not match LIKE expression");
 DATA(insert OID =  858 (  namelike		   PGUID 11 f t f 2 f 16 "19 25" 100 0 0 100  foo bar ));
 DESCR("matches LIKE expression");
 DATA(insert OID =  859 (  namenlike		   PGUID 11 f t f 2 f 16 "19 25" 100 0 0 100  foo bar ));
-DESCR("does not match LIKE expression");
-DATA(insert OID =  860 (  char16like	   PGUID 11 f t f 2 f 16 "20 25" 100 0 0 100  foo bar ));
-DESCR("matches LIKE expression");
-DATA(insert OID =  861 (  char16nlike	   PGUID 11 f t f 2 f 16 "20 25" 100 0 0 100  foo bar ));
 DESCR("does not match LIKE expression");
 
 DATA(insert OID =  846 (  cash_mul_flt4		   PGUID 11 f t f 2 f 790 "790 700" 100 0 0 100  foo bar ));
@@ -1577,10 +1463,6 @@ DESCR("truncate datetime to specified units");
 DATA(insert OID = 1218 (  timespan_trunc   PGUID 11 f t f 2 f 1186 "25 1186" 100 0 0 100  foo bar ));
 DESCR("truncate timespan to specified units");
 
-DATA(insert OID = 1236 (  char16icregexeq  PGUID 11 f t f 2 f 16 "20 25" 100 0 0 100  foo bar ));
-DESCR("matches regex., case-insensitive");
-DATA(insert OID = 1237 (  char16icregexne  PGUID 11 f t f 2 f 16 "20 25" 100 0 0 100  foo bar ));
-DESCR("does not match regex., case-insensitive");
 DATA(insert OID = 1238 (  texticregexeq    PGUID 11 f t f 2 f 16 "25 25" 100 0 1 0	foo bar ));
 DESCR("matches regex., case-insensitive");
 DATA(insert OID = 1239 (  texticregexne    PGUID 11 f t f 2 f 16 "25 25" 100 0 1 0	foo bar ));
@@ -1599,19 +1481,6 @@ DATA(insert OID = 1263 (  text_timespan    PGUID 11 f t f 1 f 1186 "25" 100 0 0 
 DESCR("convert");
 DATA(insert OID = 1271 (  timespan_finite  PGUID 11 f t f 1 f	16 "1186" 100 0 0 100  foo bar ));
 DESCR("boolean test");
-
-DATA(insert OID = 1290 (  char2icregexeq   PGUID 11 f t f 2 f 16 "409 25" 100 0 0 100  foo bar ));
-DESCR("matches regex., case-insensitive");
-DATA(insert OID = 1291 (  char2icregexne   PGUID 11 f t f 2 f 16 "409 25" 100 0 0 100  foo bar ));
-DESCR("does not match regex., case-insensitive");
-DATA(insert OID = 1292 (  char4icregexeq   PGUID 11 f t f 2 f 16 "410 25" 100 0 0 100  foo bar ));
-DESCR("matches regex., case-insensitive");
-DATA(insert OID = 1293 (  char4icregexne   PGUID 11 f t f 2 f 16 "410 25" 100 0 0 100  foo bar ));
-DESCR("does not match regex., case-insensitive");
-DATA(insert OID = 1294 (  char8icregexeq   PGUID 11 f t f 2 f 16 "411 25" 100 0 0 100  foo bar ));
-DESCR("matches regex., case-insensitive");
-DATA(insert OID = 1295 (  char8icregexne   PGUID 11 f t f 2 f 16 "411 25" 100 0 0 100  foo bar ));
-DESCR("does not match regex., case-insensitive");
 
 DATA(insert OID = 1297 (  timestamp_in	   PGUID 11 f t f 1 f 1296 "0" 100 0 0 100	foo bar ));
 DESCR("(internal)");

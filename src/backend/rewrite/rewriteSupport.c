@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteSupport.c,v 1.18 1998/04/07 18:11:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteSupport.c,v 1.19 1998/04/26 04:07:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,7 +106,7 @@ IsDefinedRewriteRule(char *ruleName)
 	 * Scan the RuleRelation ('pg_rewrite') until we find a tuple
 	 */
 	ScanKeyEntryInitialize(&scanKey, 0, Anum_pg_rewrite_rulename,
-					   NameEqualRegProcedure, PointerGetDatum(ruleName));
+					   F_NAMEEQ, PointerGetDatum(ruleName));
 	scanDesc = heap_beginscan(RewriteRelation,
 							  0, false, 1, &scanKey);
 

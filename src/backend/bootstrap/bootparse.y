@@ -8,53 +8,47 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.15 1998/04/07 18:10:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.16 1998/04/26 04:05:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
+#include <stdio.h>
+#include <time.h>
+
 #include "postgres.h"
 
-#include "catalog/pg_attribute.h"
+#include "miscadmin.h"
+
 #include "access/attnum.h"
-#include "nodes/pg_list.h"
-#include "access/tupdesc.h"
-#include "storage/fd.h"
-#include "catalog/pg_am.h"
-#include "catalog/pg_class.h"
-#include "nodes/nodes.h"
-#include "rewrite/prs2lock.h"
+#include "access/funcindex.h"
+#include "access/htup.h"
+#include "access/itup.h"
 #include "access/skey.h"
 #include "access/strat.h"
-#include "utils/rel.h"
-
-#include "nodes/primnodes.h"
-#include <time.h>
-#include "utils/nabstime.h"
-#include "storage/block.h"
-#include "storage/off.h"
-#include "storage/itemptr.h"
-#include "access/htup.h"
-#include "nodes/parsenodes.h"
-
+#include "access/tupdesc.h"
 #include "access/xact.h"
-
-#include <stdio.h>
-
-#include "catalog/heap.h"
-
-#include "storage/ipc.h"
-#include "storage/spin.h"
-#include "storage/smgr.h"
-
-#include "tcop/dest.h"
-#include "commands/defrem.h"
-
-#include "access/itup.h"
-#include "access/funcindex.h"
 #include "bootstrap/bootstrap.h"
-
-#include "miscadmin.h"
+#include "catalog/heap.h"
+#include "catalog/pg_am.h"
+#include "catalog/pg_attribute.h"
+#include "catalog/pg_class.h"
+#include "commands/defrem.h"
+#include "nodes/nodes.h"
+#include "nodes/parsenodes.h"
+#include "nodes/pg_list.h"
+#include "nodes/primnodes.h"
+#include "rewrite/prs2lock.h"
+#include "storage/block.h"
+#include "storage/fd.h"
+#include "storage/ipc.h"
+#include "storage/itemptr.h"
+#include "storage/off.h"
+#include "storage/smgr.h"
+#include "storage/spin.h"
+#include "tcop/dest.h"
+#include "utils/nabstime.h"
+#include "utils/rel.h"
 
 #define DO_START { \
 					StartTransactionCommand();\

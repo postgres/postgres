@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/create_table.l,v 1.16 1998/04/07 18:12:54 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/create_table.l,v 1.17 1998/04/26 04:09:43 momjian Exp $
 .TH "CREATE TABLE" SQL 09/25/97 PostgreSQL
 .SH NAME
 create table - create a new class
@@ -78,14 +78,14 @@ name as a system catalog class.
 --
 -- Create class emp with attributes name, sal and bdate
 --
-create table emp (name char16, salary float4, bdate abstime)
+create table emp (name name, salary float4, bdate abstime)
 .fi
 .nf
 --
 --Create class permemp with pension information that
 --inherits all fields of emp 
 --
-create table permemp (plan char16) inherits (emp)
+create table permemp (plan name) inherits (emp)
 .fi
 .nf
 --

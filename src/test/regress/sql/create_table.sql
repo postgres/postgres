@@ -30,9 +30,9 @@ CREATE TABLE onek (
 	tenthous	int4,
 	odd		int4,
 	even		int4,
-	stringu1	char16,
-	stringu2	char16,
-	string4		char16
+	stringu1	name,
+	stringu2	name,
+	string4		name
 );
 
 CREATE TABLE tenk1 (
@@ -49,9 +49,9 @@ CREATE TABLE tenk1 (
 	tenthous	int4,
 	odd		int4,
 	even		int4,
-	stringu1	char16,
-	stringu2	char16,
-	string4		char16
+	stringu1	name,
+	stringu2	name,
+	string4		name
 );
 
 CREATE TABLE tenk2 (
@@ -68,9 +68,9 @@ CREATE TABLE tenk2 (
 	tenthous	int4,
 	odd		int4,
 	even		int4,
-	stringu1	char16,
-	stringu2	char16,
-	string4		char16
+	stringu1	name,
+	stringu2	name,
+	string4		name
 );
 
 
@@ -83,7 +83,7 @@ CREATE TABLE person (
 
 CREATE TABLE emp (
 	salary 		int4,
-	manager 	char16
+	manager 	name
 ) INHERITS (person);
 
 
@@ -98,13 +98,13 @@ CREATE TABLE stud_emp (
 
 
 CREATE TABLE city (
-	name		char16,
+	name		name,
 	location 	box,
 	budget 		city_budget
 );
 
 CREATE TABLE dept (
-	dname		char16,
+	dname		name,
 	mgrname 	text
 );
 
@@ -153,7 +153,7 @@ CREATE TABLE b_star (
 ) INHERITS (a_star);
 
 CREATE TABLE c_star (
-	c 		char16
+	c 		name
 ) INHERITS (a_star);
 
 CREATE TABLE d_star (
@@ -176,7 +176,7 @@ CREATE TABLE aggtest (
 CREATE TABLE arrtest (
 	a 		int2[],
 	b 		int4[][][],
-	c 		char16[],
+	c 		name[],
 	d		text[][], 
 	e 		float8[]
 );
@@ -186,9 +186,9 @@ CREATE TABLE hash_i4_heap (
 	random 		int4
 );
 
-CREATE TABLE hash_c16_heap (
+CREATE TABLE hash_name_heap (
 	seqno 		int4,
-	random 		char16
+	random 		name
 );
 
 CREATE TABLE hash_txt_heap (
@@ -214,8 +214,8 @@ CREATE TABLE bt_i4_heap (
 	random 		int4
 );
 
-CREATE TABLE bt_c16_heap (
-	seqno 		char16,
+CREATE TABLE bt_name_heap (
+	seqno 		name,
 	random 		int4
 );
 
