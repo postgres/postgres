@@ -320,3 +320,4 @@ The source of this document is maintained in
 src/interfaces/jdbc/org/postgresql/test/README in CVS. Patches for
 improvement can be send to the mailing list 
 pgsql-patches@postgresql.org.
+
