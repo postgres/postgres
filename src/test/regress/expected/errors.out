@@ -23,12 +23,16 @@ select 1;
 -- missing relation name 
 select;
 ERROR:  syntax error at or near ";" at character 7
+LINE 1: select;
+              ^
 -- no such relation 
 select * from nonesuch;
 ERROR:  relation "nonesuch" does not exist
 -- missing target list
 select from pg_database;
 ERROR:  syntax error at or near "from" at character 8
+LINE 1: select from pg_database;
+               ^
 -- bad name in target list
 select nonesuch from pg_database;
 ERROR:  column "nonesuch" does not exist
@@ -41,6 +45,8 @@ ERROR:  column "nonesuch" does not exist
 -- bad select distinct on syntax, distinct attribute missing
 select distinct on (foobar) from pg_database;
 ERROR:  syntax error at or near "from" at character 29
+LINE 1: select distinct on (foobar) from pg_database;
+                                    ^
 -- bad select distinct on syntax, distinct attribute not in target list
 select distinct on (foobar) * from pg_database;
 ERROR:  column "foobar" does not exist
@@ -50,6 +56,8 @@ ERROR:  column "foobar" does not exist
 -- missing relation name (this had better not wildcard!) 
 delete from;
 ERROR:  syntax error at or near ";" at character 12
+LINE 1: delete from;
+                   ^
 -- no such relation 
 delete from nonesuch;
 ERROR:  relation "nonesuch" does not exist
@@ -59,6 +67,8 @@ ERROR:  relation "nonesuch" does not exist
 -- missing relation name (this had better not wildcard!) 
 drop table;
 ERROR:  syntax error at or near ";" at character 11
+LINE 1: drop table;
+                  ^
 -- no such relation 
 drop table nonesuch;
 ERROR:  table "nonesuch" does not exist
@@ -69,6 +79,8 @@ ERROR:  table "nonesuch" does not exist
 -- missing relation name 
 alter table rename;
 ERROR:  syntax error at or near ";" at character 19
+LINE 1: alter table rename;
+                          ^
 -- no such relation 
 alter table nonesuch rename to newnonesuch;
 ERROR:  relation "nonesuch" does not exist
@@ -123,9 +135,13 @@ ERROR:  aggregate basetype must be specified
 -- missing index name 
 drop index;
 ERROR:  syntax error at or near ";" at character 11
+LINE 1: drop index;
+                  ^
 -- bad index name 
 drop index 314159;
 ERROR:  syntax error at or near "314159" at character 12
+LINE 1: drop index 314159;
+                   ^
 -- no such index 
 drop index nonesuch;
 ERROR:  index "nonesuch" does not exist
@@ -135,12 +151,18 @@ ERROR:  index "nonesuch" does not exist
 -- missing aggregate name 
 drop aggregate;
 ERROR:  syntax error at or near ";" at character 15
+LINE 1: drop aggregate;
+                      ^
 -- missing aggregate type
 drop aggregate newcnt1;
 ERROR:  syntax error at or near ";" at character 23
+LINE 1: drop aggregate newcnt1;
+                              ^
 -- bad aggregate name 
 drop aggregate 314159 (int);
 ERROR:  syntax error at or near "314159" at character 16
+LINE 1: drop aggregate 314159 (int);
+                       ^
 -- bad aggregate type
 drop aggregate newcnt (nonesuch);
 ERROR:  type "nonesuch" does not exist
@@ -156,9 +178,13 @@ ERROR:  aggregate newcnt(real) does not exist
 -- missing function name 
 drop function ();
 ERROR:  syntax error at or near "(" at character 15
+LINE 1: drop function ();
+                      ^
 -- bad function name 
 drop function 314159();
 ERROR:  syntax error at or near "314159" at character 15
+LINE 1: drop function 314159();
+                      ^
 -- no such function 
 drop function nonesuch();
 ERROR:  function nonesuch() does not exist
@@ -168,9 +194,13 @@ ERROR:  function nonesuch() does not exist
 -- missing type name 
 drop type;
 ERROR:  syntax error at or near ";" at character 10
+LINE 1: drop type;
+                 ^
 -- bad type name 
 drop type 314159;
 ERROR:  syntax error at or near "314159" at character 11
+LINE 1: drop type 314159;
+                  ^
 -- no such type 
 drop type nonesuch;
 ERROR:  type "nonesuch" does not exist
@@ -180,21 +210,33 @@ ERROR:  type "nonesuch" does not exist
 -- missing everything 
 drop operator;
 ERROR:  syntax error at or near ";" at character 14
+LINE 1: drop operator;
+                     ^
 -- bad operator name 
 drop operator equals;
 ERROR:  syntax error at or near ";" at character 21
+LINE 1: drop operator equals;
+                            ^
 -- missing type list 
 drop operator ===;
 ERROR:  syntax error at or near ";" at character 18
+LINE 1: drop operator ===;
+                         ^
 -- missing parentheses 
 drop operator int4, int4;
 ERROR:  syntax error at or near "," at character 19
+LINE 1: drop operator int4, int4;
+                          ^
 -- missing operator name 
 drop operator (int4, int4);
 ERROR:  syntax error at or near "(" at character 15
+LINE 1: drop operator (int4, int4);
+                      ^
 -- missing type list contents 
 drop operator === ();
 ERROR:  syntax error at or near ")" at character 20
+LINE 1: drop operator === ();
+                           ^
 -- no such operator 
 drop operator === (int4);
 ERROR:  missing argument
@@ -209,6 +251,8 @@ HINT:  Use NONE to denote the missing argument of a unary operator.
 -- no such type1 
 drop operator = ( , int4);
 ERROR:  syntax error at or near "," at character 19
+LINE 1: drop operator = ( , int4);
+                          ^
 -- no such type1 
 drop operator = (nonesuch, int4);
 ERROR:  type nonesuch does not exist
@@ -218,27 +262,37 @@ ERROR:  type nonesuch does not exist
 -- no such type2 
 drop operator = (int4, );
 ERROR:  syntax error at or near ")" at character 24
+LINE 1: drop operator = (int4, );
+                               ^
 --
 -- DROP RULE
  
 -- missing rule name 
 drop rule;
 ERROR:  syntax error at or near ";" at character 10
+LINE 1: drop rule;
+                 ^
 -- bad rule name 
 drop rule 314159;
 ERROR:  syntax error at or near "314159" at character 11
+LINE 1: drop rule 314159;
+                  ^
 -- no such rule 
 drop rule nonesuch on noplace;
 ERROR:  relation "noplace" does not exist
--- bad keyword 
+-- these postquel variants are no longer supported
 drop tuple rule nonesuch;
 ERROR:  syntax error at or near "tuple" at character 6
--- no such rule 
+LINE 1: drop tuple rule nonesuch;
+             ^
 drop instance rule nonesuch on noplace;
 ERROR:  syntax error at or near "instance" at character 6
--- no such rule 
+LINE 1: drop instance rule nonesuch on noplace;
+             ^
 drop rewrite rule nonesuch;
 ERROR:  syntax error at or near "rewrite" at character 6
+LINE 1: drop rewrite rule nonesuch;
+             ^
 --
 -- Check that division-by-zero is properly caught.
 --
@@ -264,3 +318,129 @@ select 1::float4/0;
 ERROR:  division by zero
 select 1/0::float4;
 ERROR:  division by zero
+--
+-- Test psql's reporting of syntax error location
+--
+xxx;
+ERROR:  syntax error at or near "xxx" at character 1
+LINE 1: xxx;
+        ^
+CREATE foo;
+ERROR:  syntax error at or near "foo" at character 8
+LINE 1: CREATE foo;
+               ^
+CREATE TABLE ;
+ERROR:  syntax error at or near ";" at character 14
+LINE 1: CREATE TABLE ;
+                     ^
+CREATE TABLE
+\g
+ERROR:  syntax error at end of input at character 13
+LINE 1: CREATE TABLE
+                    ^
+INSERT INTO foo VALUES(123) foo;
+ERROR:  syntax error at or near "foo" at character 29
+LINE 1: INSERT INTO foo VALUES(123) foo;
+                                    ^
+INSERT INTO 123
+VALUES(123);
+ERROR:  syntax error at or near "123" at character 13
+LINE 1: INSERT INTO 123
+                    ^
+INSERT INTO foo 
+VALUES(123) 123
+;
+ERROR:  syntax error at or near "123" at character 30
+LINE 2: VALUES(123) 123
+                    ^
+-- with a tab
+CREATE TABLE foo
+  (id INT4 UNIQUE NOT NULL, id2 TEXT NOT NULL PRIMARY KEY,
+	id3 INTEGER NOT NUL,
+   id4 INT4 UNIQUE NOT NULL, id5 TEXT UNIQUE NOT NULL);
+ERROR:  syntax error at or near "NUL" at character 94
+LINE 3:  id3 INTEGER NOT NUL,
+                         ^
+-- long line to be truncated on the left
+CREATE TABLE foo(id INT4 UNIQUE NOT NULL, id2 TEXT NOT NULL PRIMARY KEY, id3 INTEGER NOT NUL, 
+id4 INT4 UNIQUE NOT NULL, id5 TEXT UNIQUE NOT NULL);
+ERROR:  syntax error at or near "NUL" at character 90
+LINE 1: ...T NULL, id2 TEXT NOT NULL PRIMARY KEY, id3 INTEGER NOT NUL, 
+                                                                  ^
+-- long line to be truncated on the right
+CREATE TABLE foo(
+id3 INTEGER NOT NUL, id4 INT4 UNIQUE NOT NULL, id5 TEXT UNIQUE NOT NULL, id INT4 UNIQUE NOT NULL, id2 TEXT NOT NULL PRIMARY KEY);
+ERROR:  syntax error at or near "NUL" at character 35
+LINE 2: id3 INTEGER NOT NUL, id4 INT4 UNIQUE NOT NULL, id5 TEXT UNIQ...
+                        ^
+-- long line to be truncated both ways
+CREATE TABLE foo(id INT4 UNIQUE NOT NULL, id2 TEXT NOT NULL PRIMARY KEY, id3 INTEGER NOT NUL, id4 INT4 UNIQUE NOT NULL, id5 TEXT UNIQUE NOT NULL);
+ERROR:  syntax error at or near "NUL" at character 90
+LINE 1: ...L, id2 TEXT NOT NULL PRIMARY KEY, id3 INTEGER NOT NUL, id4 I...
+                                                             ^
+-- long line to be truncated on the left, many lines
+CREATE
+TEMPORARY
+TABLE 
+foo(id INT4 UNIQUE NOT NULL, id2 TEXT NOT NULL PRIMARY KEY, id3 INTEGER NOT NUL, 
+id4 INT4 
+UNIQUE 
+NOT 
+NULL, 
+id5 TEXT 
+UNIQUE 
+NOT 
+NULL)
+;
+ERROR:  syntax error at or near "NUL" at character 101
+LINE 4: ...T NULL, id2 TEXT NOT NULL PRIMARY KEY, id3 INTEGER NOT NUL, 
+                                                                  ^
+-- long line to be truncated on the right, many lines
+CREATE 
+TEMPORARY
+TABLE 
+foo(
+id3 INTEGER NOT NUL, id4 INT4 UNIQUE NOT NULL, id5 TEXT UNIQUE NOT NULL, id INT4 UNIQUE NOT NULL, id2 TEXT NOT NULL PRIMARY KEY)
+;
+ERROR:  syntax error at or near "NUL" at character 47
+LINE 5: id3 INTEGER NOT NUL, id4 INT4 UNIQUE NOT NULL, id5 TEXT UNIQ...
+                        ^
+-- long line to be truncated both ways, many lines
+CREATE 
+TEMPORARY
+TABLE 
+foo
+(id 
+INT4 
+UNIQUE NOT NULL, idx INT4 UNIQUE NOT NULL, idy INT4 UNIQUE NOT NULL, id2 TEXT NOT NULL PRIMARY KEY, id3 INTEGER NOT NUL, id4 INT4 UNIQUE NOT NULL, id5 TEXT UNIQUE NOT NULL, 
+idz INT4 UNIQUE NOT NULL, 
+idv INT4 UNIQUE NOT NULL);
+ERROR:  syntax error at or near "NUL" at character 157
+LINE 7: ...L, id2 TEXT NOT NULL PRIMARY KEY, id3 INTEGER NOT NUL, id4 I...
+                                                             ^
+-- more than 10 lines...
+CREATE 
+TEMPORARY
+TABLE 
+foo
+(id 
+INT4 
+UNIQUE 
+NOT 
+NULL
+, 
+idm
+INT4 
+UNIQUE 
+NOT 
+NULL,
+idx INT4 UNIQUE NOT NULL, idy INT4 UNIQUE NOT NULL, id2 TEXT NOT NULL PRIMARY KEY, id3 INTEGER NOT NUL, id4 INT4 UNIQUE NOT NULL, id5 TEXT UNIQUE NOT NULL, 
+idz INT4 UNIQUE NOT NULL, 
+idv 
+INT4 
+UNIQUE 
+NOT 
+NULL);
+ERROR:  syntax error at or near "NUL" at character 190
+LINE 16: ...L, id2 TEXT NOT NULL PRIMARY KEY, id3 INTEGER NOT NUL, id4 I...
+                                                              ^

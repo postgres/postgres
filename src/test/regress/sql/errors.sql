@@ -242,13 +242,9 @@ drop rule 314159;
 -- no such rule 
 drop rule nonesuch on noplace;
 
--- bad keyword 
+-- these postquel variants are no longer supported
 drop tuple rule nonesuch;
-
--- no such rule 
 drop instance rule nonesuch on noplace;
-
--- no such rule 
 drop rewrite rule nonesuch;
 
 --
@@ -276,3 +272,101 @@ select 1/0::float8;
 select 1::float4/0;
 
 select 1/0::float4;
+
+
+--
+-- Test psql's reporting of syntax error location
+--
+
+xxx;
+
+CREATE foo;
+
+CREATE TABLE ;
+
+CREATE TABLE
+\g
+
+INSERT INTO foo VALUES(123) foo;
+
+INSERT INTO 123
+VALUES(123);
+
+INSERT INTO foo 
+VALUES(123) 123
+;
+
+-- with a tab
+CREATE TABLE foo
+  (id INT4 UNIQUE NOT NULL, id2 TEXT NOT NULL PRIMARY KEY,
+	id3 INTEGER NOT NUL,
+   id4 INT4 UNIQUE NOT NULL, id5 TEXT UNIQUE NOT NULL);
+
+-- long line to be truncated on the left
+CREATE TABLE foo(id INT4 UNIQUE NOT NULL, id2 TEXT NOT NULL PRIMARY KEY, id3 INTEGER NOT NUL, 
+id4 INT4 UNIQUE NOT NULL, id5 TEXT UNIQUE NOT NULL);
+
+-- long line to be truncated on the right
+CREATE TABLE foo(
+id3 INTEGER NOT NUL, id4 INT4 UNIQUE NOT NULL, id5 TEXT UNIQUE NOT NULL, id INT4 UNIQUE NOT NULL, id2 TEXT NOT NULL PRIMARY KEY);
+
+-- long line to be truncated both ways
+CREATE TABLE foo(id INT4 UNIQUE NOT NULL, id2 TEXT NOT NULL PRIMARY KEY, id3 INTEGER NOT NUL, id4 INT4 UNIQUE NOT NULL, id5 TEXT UNIQUE NOT NULL);
+
+-- long line to be truncated on the left, many lines
+CREATE
+TEMPORARY
+TABLE 
+foo(id INT4 UNIQUE NOT NULL, id2 TEXT NOT NULL PRIMARY KEY, id3 INTEGER NOT NUL, 
+id4 INT4 
+UNIQUE 
+NOT 
+NULL, 
+id5 TEXT 
+UNIQUE 
+NOT 
+NULL)
+;
+
+-- long line to be truncated on the right, many lines
+CREATE 
+TEMPORARY
+TABLE 
+foo(
+id3 INTEGER NOT NUL, id4 INT4 UNIQUE NOT NULL, id5 TEXT UNIQUE NOT NULL, id INT4 UNIQUE NOT NULL, id2 TEXT NOT NULL PRIMARY KEY)
+;
+
+-- long line to be truncated both ways, many lines
+CREATE 
+TEMPORARY
+TABLE 
+foo
+(id 
+INT4 
+UNIQUE NOT NULL, idx INT4 UNIQUE NOT NULL, idy INT4 UNIQUE NOT NULL, id2 TEXT NOT NULL PRIMARY KEY, id3 INTEGER NOT NUL, id4 INT4 UNIQUE NOT NULL, id5 TEXT UNIQUE NOT NULL, 
+idz INT4 UNIQUE NOT NULL, 
+idv INT4 UNIQUE NOT NULL);
+
+-- more than 10 lines...
+CREATE 
+TEMPORARY
+TABLE 
+foo
+(id 
+INT4 
+UNIQUE 
+NOT 
+NULL
+, 
+idm
+INT4 
+UNIQUE 
+NOT 
+NULL,
+idx INT4 UNIQUE NOT NULL, idy INT4 UNIQUE NOT NULL, id2 TEXT NOT NULL PRIMARY KEY, id3 INTEGER NOT NUL, id4 INT4 UNIQUE NOT NULL, id5 TEXT UNIQUE NOT NULL, 
+idz INT4 UNIQUE NOT NULL, 
+idv 
+INT4 
+UNIQUE 
+NOT 
+NULL);

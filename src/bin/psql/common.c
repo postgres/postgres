@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.82 2004/01/25 03:07:22 neilc Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.83 2004/03/14 04:25:17 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -346,6 +346,216 @@ ResetCancelConn(void)
 
 
 /*
+ * on errors, print syntax error position if available.
+ *
+ * the query is expected to be in the client encoding.
+ */
+static void
+ReportSyntaxErrorPosition(const PGresult *result, const char *query)
+{
+#define DISPLAY_SIZE	60		/* screen width limit, in screen cols */
+#define MIN_RIGHT_CUT	10		/* try to keep this far away from EOL */
+
+	int			loc = 0;
+	const char *sp;
+	int clen, slen, i, *qidx, *scridx, qoffset, scroffset, ibeg, iend,
+		loc_line;
+	char *wquery;
+	bool beg_trunc, end_trunc;
+	PQExpBufferData msg;
+
+	if (query == NULL)
+		return;					/* nothing to do */
+	sp = PQresultErrorField(result, PG_DIAG_STATEMENT_POSITION);
+	if (sp == NULL)
+		return;					/* no syntax error location */
+	/*
+	 * We punt if the report contains any CONTEXT.  This typically means that
+	 * the syntax error is from inside a function, and the cursor position
+	 * is not relevant to the original query string.
+	 */
+	if (PQresultErrorField(result, PG_DIAG_CONTEXT) != NULL)
+		return;
+
+	if (sscanf(sp, "%d", &loc) != 1)
+	{
+		psql_error("INTERNAL ERROR: unexpected statement position \"%s\"\n",
+				   sp);
+		return;
+	}
+
+	/* Make a writable copy of the query, and a buffer for messages. */
+	wquery = pg_strdup(query);
+
+	initPQExpBuffer(&msg);
+
+	/*
+	 * The returned cursor position is measured in logical characters.
+	 * Each character might occupy multiple physical bytes in the string,
+	 * and in some Far Eastern character sets it might take more than one
+	 * screen column as well.  We compute the starting byte offset and
+	 * starting screen column of each logical character, and store these
+	 * in qidx[] and scridx[] respectively.
+	 */
+
+	/* we need a safe allocation size... */
+	slen = strlen(query) + 1;
+
+	qidx = (int *) pg_malloc(slen * sizeof(int));
+	scridx = (int *) pg_malloc(slen * sizeof(int));
+
+	qoffset = 0;
+	scroffset = 0;
+	for (i = 0; query[qoffset] != '\0'; i++)
+	{
+		qidx[i] = qoffset;
+		scridx[i] = scroffset;
+		scroffset += 1;		/* XXX fix me when we have screen width info */
+		qoffset += PQmblen(&query[qoffset], pset.encoding);
+	}
+	qidx[i] = qoffset;
+	scridx[i] = scroffset;
+	clen = i;
+	psql_assert(clen < slen);
+
+	/* convert loc to zero-based offset in qidx/scridx arrays */
+	loc--; 
+
+	/* do we have something to show? */
+	if (loc >= 0 && loc <= clen)
+	{
+		 /* input line number of our syntax error. */
+		loc_line = 1;
+		/* first included char of extract. */
+		ibeg = 0; 
+		/* last-plus-1 included char of extract. */
+		iend = clen; 
+
+		/*
+		 * Replace tabs with spaces in the writable copy.  (Later we might
+		 * want to think about coping with their variable screen width,
+		 * but not today.)
+		 *
+		 * Extract line number and begin and end indexes of line containing
+		 * error location.  There will not be any newlines or carriage
+		 * returns in the selected extract.
+		 */
+		for (i=0; i<clen; i++)
+		{
+			/* character length must be 1 or it's not ASCII */
+			if ((qidx[i+1]-qidx[i]) == 1)
+			{
+				if (wquery[qidx[i]] == '\t') 
+					wquery[qidx[i]] = ' ';
+				else if (wquery[qidx[i]] == '\r' || wquery[qidx[i]] == '\n')
+				{
+					if (i < loc)
+					{
+						/*
+						 * count lines before loc.  Each \r or \n counts
+						 * as a line except when \r \n appear together.
+						 */
+						if (wquery[qidx[i]] == '\r' ||
+							i == 0 ||
+							(qidx[i]-qidx[i-1]) != 1 ||
+							wquery[qidx[i-1]] != '\r')
+							loc_line++;
+						/* extract beginning = last line start before loc. */
+						ibeg = i+1;
+					}
+					else
+					{
+						/* set extract end. */
+						iend = i;
+						/* done scanning. */
+						break;
+					}
+				}
+			}
+		}
+
+		/* If the line extracted is too long, we truncate it. */
+		beg_trunc = false;
+		end_trunc = false;
+		if (scridx[iend]-scridx[ibeg] > DISPLAY_SIZE)
+		{
+			/*
+			 * We first truncate right if it is enough.  This code might
+			 * be off a space or so on enforcing MIN_RIGHT_CUT if there's
+			 * a wide character right there, but that should be okay.
+			 */
+			if (scridx[ibeg]+DISPLAY_SIZE >= scridx[loc]+MIN_RIGHT_CUT)
+			{
+				while (scridx[iend]-scridx[ibeg] > DISPLAY_SIZE)
+					iend--;
+				end_trunc = true;
+			}
+			else
+			{
+				/* Truncate right if not too close to loc. */
+				while (scridx[loc]+MIN_RIGHT_CUT < scridx[iend])
+				{
+					iend--;
+					end_trunc = true;
+				}
+
+				/* Truncate left if still too long. */
+				while (scridx[iend]-scridx[ibeg] > DISPLAY_SIZE)
+				{
+					ibeg++;
+					beg_trunc = true;
+				}
+			}
+		}
+
+		/* the extract MUST contain the target position! */
+		psql_assert(ibeg<=loc && loc<=iend);
+
+		/* truncate working copy at desired endpoint */
+		wquery[qidx[iend]] = '\0';
+
+		/* Begin building the finished message. */
+		printfPQExpBuffer(&msg, gettext("LINE %d: "), loc_line);
+		if (beg_trunc)
+			appendPQExpBufferStr(&msg, "...");
+
+		/*
+		 * While we have the prefix in the msg buffer, compute its screen
+		 * width.
+		 */
+		scroffset = 0;
+		for (i = 0; i < msg.len; i += PQmblen(&msg.data[i], pset.encoding))
+		{
+			scroffset += 1;		/* XXX fix me when we have screen width info */
+		}
+
+		/* Finish and emit the message. */
+		appendPQExpBufferStr(&msg, &wquery[qidx[ibeg]]);
+		if (end_trunc)
+			appendPQExpBufferStr(&msg, "...");
+
+		psql_error("%s\n", msg.data);
+
+		/* Now emit the cursor marker line. */
+		scroffset += scridx[loc] - scridx[ibeg];
+		resetPQExpBuffer(&msg);
+		for (i = 0; i < scroffset; i++)
+			appendPQExpBufferChar(&msg, ' ');
+		appendPQExpBufferChar(&msg, '^');
+
+		psql_error("%s\n", msg.data);
+	}
+
+	/* Clean up. */
+	termPQExpBuffer(&msg);
+
+	free(wquery);
+	free(qidx);
+	free(scridx);
+}
+
+
+/*
  * AcceptResult
  *
  * Checks whether a result is valid, giving an error message if necessary;
@@ -355,7 +565,7 @@ ResetCancelConn(void)
  * Returns true for valid result, false for error state.
  */
 static bool
-AcceptResult(const PGresult *result)
+AcceptResult(const PGresult *result, const char *query)
 {
 	bool		OK = true;
 
@@ -386,6 +596,7 @@ AcceptResult(const PGresult *result)
 	if (!OK)
 	{
 		psql_error("%s", PQerrorMessage(pset.db));
+		ReportSyntaxErrorPosition(result, query);
 		CheckConnection();
 	}
 
@@ -449,7 +660,7 @@ PSQLexec(const char *query, bool start_xact)
 
 	res = PQexec(pset.db, query);
 
-	if (!AcceptResult(res) && res)
+	if (!AcceptResult(res, query) && res)
 	{
 		PQclear(res);
 		res = NULL;
@@ -695,7 +906,7 @@ SendQuery(const char *query)
 	results = PQexec(pset.db, query);
 
 	/* these operations are included in the timing result: */
-	OK = (AcceptResult(results) && ProcessCopyResult(results));
+	OK = (AcceptResult(results, query) && ProcessCopyResult(results));
 
 	if (pset.timing)
 		GETTIMEOFDAY(&after);
