@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.22 1996/11/27 13:47:05 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.23 1996/12/07 04:39:06 momjian Exp $
  *
  * NOTES
  *    this is the "main" module of the postgres backend and
@@ -83,6 +83,7 @@
  *      global variables
  * ----------------
  */
+static bool     DebugPrintQuery = false;
 static bool     DebugPrintPlan = false;
 static bool     DebugPrintParse = false;
 static bool     DebugPrintRewrittenParsetree = false;
@@ -406,8 +407,13 @@ pg_plan(char *query_string,     /* string to execute */
             continue;
         }
         
+        if ( DebugPrintQuery == true ) {
+            printf("\n---- \tquery is:\n%s\n",query_string);
+            printf("\n");
+	    fflush(stdout);
+        }
+        
         if ( DebugPrintParse == true ) {
-            printf("\ninput string is \"%s\"\n",query_string);
             printf("\n---- \tparser outputs :\n");
             nodeDisplay(querytree);
             printf("\n");
@@ -483,9 +489,7 @@ pg_plan(char *query_string,     /* string to execute */
     }
     
     if (DebugPrintRewrittenParsetree == true) {
-        printf("\n=================\n");
-        printf("  After Rewriting\n");
-        printf("=================\n");
+        printf("\n---- \tafter rewriting:\n");
 
         for (i=0; i<querytree_list->len; i++) {
             print(querytree_list->qtrees[i]);
@@ -534,7 +538,7 @@ pg_plan(char *query_string,     /* string to execute */
              * ----------------
              */
             if ( DebugPrintPlan == true ) {
-                printf("\nPlan is :\n");
+                printf("\n---- \tplan is :\n");
                 nodeDisplay(plan);
                 printf("\n");
             }
@@ -646,7 +650,7 @@ pg_eval_dest(char *query_string, /* string to execute */
              * ----------------
              */
             if ( DebugPrintPlan == true ) {
-                printf("\nPlan is :\n");
+                printf("\n---- plan is :\n");
                 nodeDisplay(plan);
                 printf("\n");
             }
@@ -884,10 +888,15 @@ PostgresMain(int argc, char *argv[])
             
         case 'd':   /* debug level */
             flagQ = 0;
-            DebugPrintPlan = true;
-            DebugPrintParse = true;
-            DebugPrintRewrittenParsetree = true;
             DebugLvl = (short)atoi(optarg);
+            if (DebugLvl > 1)
+	        DebugPrintQuery = true;
+            if (DebugLvl > 2)
+            {
+	        DebugPrintParse = true;
+		DebugPrintPlan = true;
+            	DebugPrintRewrittenParsetree = true;
+            }
             break;
             
         case 'E':
@@ -1262,7 +1271,7 @@ PostgresMain(int argc, char *argv[])
      */
     if (IsUnderPostmaster == false) {
         puts("\nPOSTGRES backend interactive interface");
-        puts("$Revision: 1.22 $ $Date: 1996/11/27 13:47:05 $");
+        puts("$Revision: 1.23 $ $Date: 1996/12/07 04:39:06 $");
     }
     
     /* ----------------
