@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: clauses.h,v 1.18 1999/05/25 22:43:03 momjian Exp $
+ * $Id: clauses.h,v 1.19 1999/06/19 03:41:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 #include <nodes/relation.h>
 
 extern Expr *make_clause(int type, Node *oper, List *args);
+
 extern bool is_opclause(Node *clause);
 extern Expr *make_opclause(Oper *op, Var *leftop, Var *rightop);
 extern Var *get_leftop(Expr *clause);
@@ -51,8 +52,11 @@ extern void get_rels_atts(Node *clause, int *relid1,
 			  AttrNumber *attno1, int *relid2, AttrNumber *attno2);
 extern void CommuteClause(Node *clause);
 
-#define is_subplan(clause)	((Node*) clause != NULL && \
-						nodeTag((Node*) clause) == T_Expr && \
-						((Expr *) clause)->opType == SUBPLAN_EXPR)
+extern bool expression_tree_walker(Node *node, bool (*walker) (),
+								   void *context);
+
+#define is_subplan(clause)	((Node*) (clause) != NULL && \
+						nodeTag((Node*) (clause)) == T_Expr && \
+						((Expr *) (clause))->opType == SUBPLAN_EXPR)
 
 #endif	 /* CLAUSES_H */

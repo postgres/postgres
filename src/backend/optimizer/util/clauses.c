@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.35 1999/05/25 22:41:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.36 1999/06/19 03:41:45 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -35,7 +35,8 @@
 #include "optimizer/internal.h"
 #include "optimizer/var.h"
 
-static bool agg_clause(Node *clause);
+
+static bool fix_opid_walker(Node *node, void *context);
 
 
 Expr *
@@ -140,16 +141,6 @@ get_rightop(Expr *clause)
 }
 
 /*****************************************************************************
- *		AGG clause functions
- *****************************************************************************/
-
-static bool
-agg_clause(Node *clause)
-{
-	return (clause != NULL && nodeTag(clause) == T_Aggref);
-}
-
-/*****************************************************************************
  *		FUNC clause functions
  *****************************************************************************/
 
@@ -163,7 +154,8 @@ bool
 is_funcclause(Node *clause)
 {
 	return (clause != NULL &&
-	nodeTag(clause) == T_Expr && ((Expr *) clause)->opType == FUNC_EXPR);
+			nodeTag(clause) == T_Expr &&
+			((Expr *) clause)->opType == FUNC_EXPR);
 }
 
 /*
@@ -235,7 +227,8 @@ bool
 not_clause(Node *clause)
 {
 	return (clause != NULL &&
-	 nodeTag(clause) == T_Expr && ((Expr *) clause)->opType == NOT_EXPR);
+			nodeTag(clause) == T_Expr &&
+			((Expr *) clause)->opType == NOT_EXPR);
 }
 
 /*
@@ -283,7 +276,8 @@ bool
 and_clause(Node *clause)
 {
 	return (clause != NULL &&
-	 nodeTag(clause) == T_Expr && ((Expr *) clause)->opType == AND_EXPR);
+			nodeTag(clause) == T_Expr &&
+			((Expr *) clause)->opType == AND_EXPR);
 }
 
 /*
@@ -374,20 +368,20 @@ clause_get_relids_vars(Node *clause, Relids *relids, List **vars)
 	List	   *clvars = pull_var_clause(clause);
 	List	   *var_list = NIL;
 	List	   *varno_list = NIL;
-	List	   *i = NIL;
+	List	   *i;
 
 	foreach(i, clvars)
 	{
 		Var		   *var = (Var *) lfirst(i);
 		List	   *vi;
 
+		Assert(var->varlevelsup == 0);
 		if (!intMember(var->varno, varno_list))
 			varno_list = lappendi(varno_list, var->varno);
 		foreach(vi, var_list)
 		{
 			Var		   *in_list = (Var *) lfirst(vi);
 
-			Assert(var->varlevelsup == 0);
 			if (in_list->varno == var->varno &&
 				in_list->varattno == var->varattno)
 				break;
@@ -398,7 +392,6 @@ clause_get_relids_vars(Node *clause, Relids *relids, List **vars)
 
 	*relids = varno_list;
 	*vars = var_list;
-	return;
 }
 
 /*
@@ -411,8 +404,8 @@ int
 NumRelids(Node *clause)
 {
 	List	   *vars = pull_var_clause(clause);
-	List	   *i = NIL;
 	List	   *var_list = NIL;
+	List	   *i;
 
 	foreach(i, vars)
 	{
@@ -431,6 +424,8 @@ NumRelids(Node *clause)
  * Returns t iff the clause is a 'not' clause or if any of the
  * subclauses within an 'or' clause contain 'not's.
  *
+ * NOTE that only the top-level AND/OR structure is searched for NOTs;
+ * we are not interested in buried substructure.
  */
 bool
 contains_not(Node *clause)
@@ -524,81 +519,40 @@ qual_clause_p(Node *clause)
 
 /*
  * fix_opid
- *	  Calculate the opfid from the opno...
+ *	  Calculate opid field from opno for each Oper node in given tree.
  *
  * Returns nothing.
- *
  */
 void
 fix_opid(Node *clause)
 {
-	if (clause == NULL || single_node(clause))
-		;
-	else if (or_clause(clause) || and_clause(clause))
-		fix_opids(((Expr *) clause)->args);
-	else if (is_funcclause(clause))
-		fix_opids(((Expr *) clause)->args);
-	else if (IsA(clause, ArrayRef))
-	{
-		ArrayRef   *aref = (ArrayRef *) clause;
+	/* This tree walk requires no special setup, so away we go... */
+	fix_opid_walker(clause, NULL);
+}
 
-		fix_opids(aref->refupperindexpr);
-		fix_opids(aref->reflowerindexpr);
-		fix_opid(aref->refexpr);
-		fix_opid(aref->refassgnexpr);
-	}
-	else if (not_clause(clause))
-		fix_opid((Node *) get_notclausearg((Expr *) clause));
-	else if (is_opclause(clause))
-	{
-		replace_opid((Oper *) ((Expr *) clause)->oper);
-		fix_opid((Node *) get_leftop((Expr *) clause));
-		fix_opid((Node *) get_rightop((Expr *) clause));
-	}
-	else if (agg_clause(clause))
-		fix_opid(((Aggref *) clause)->target);
-	else if (is_subplan(clause) &&
-			 ((SubPlan *) ((Expr *) clause)->oper)->sublink->subLinkType != EXISTS_SUBLINK)
-	{
-		List	   *lst;
-
-		foreach(lst, ((SubPlan *) ((Expr *) clause)->oper)->sublink->oper)
-		{
-			replace_opid((Oper *) ((Expr *) lfirst(lst))->oper);
-			fix_opid((Node *) get_leftop((Expr *) lfirst(lst)));
-		}
-	}
-	else if (case_clause(clause))
-	{
-		List	   *lst;
-
-		fix_opid(((CaseExpr *) clause)->defresult);
-
-		/* Run through the WHEN clauses... */
-		foreach(lst, ((CaseExpr *) clause)->args)
-		{
-			fix_opid(((CaseWhen *) lfirst(lst))->expr);
-			fix_opid(((CaseWhen *) lfirst(lst))->result);
-		}
-	}
-
+static bool
+fix_opid_walker (Node *node, void *context)
+{
+	if (node == NULL)
+		return false;
+	if (is_opclause(node))
+		replace_opid((Oper *) ((Expr *) node)->oper);
+	return expression_tree_walker(node, fix_opid_walker, context);
 }
 
 /*
  * fix_opids
- *	  Calculate the opfid from the opno for all the clauses...
+ *	  Calculate the opid from the opno for all the clauses...
  *
  * Returns its argument.
+ *
+ * XXX This could and should be merged with fix_opid.
  *
  */
 List *
 fix_opids(List *clauses)
 {
-	List	   *clause;
-
-	foreach(clause, clauses)
-		fix_opid(lfirst(clause));
-
+	fix_opid((Node *) clauses);
 	return clauses;
 }
 
@@ -771,6 +725,10 @@ get_rels_atts(Node *clause,
 	*attno2 = _SELEC_VALUE_UNKNOWN_;
 }
 
+/*--------------------
+ * CommuteClause: commute a binary operator clause
+ *--------------------
+ */
 void
 CommuteClause(Node *clause)
 {
@@ -804,4 +762,180 @@ CommuteClause(Node *clause)
 	temp = lfirst(((Expr *) clause)->args);
 	lfirst(((Expr *) clause)->args) = lsecond(((Expr *) clause)->args);
 	lsecond(((Expr *) clause)->args) = temp;
+}
+
+
+/*--------------------
+ * Standard expression-tree walking support
+ *
+ * We used to have near-duplicate code in many different routines that
+ * understood how to recurse through an expression node tree.  That was
+ * a pain to maintain, and we frequently had bugs due to some particular
+ * routine neglecting to support a particular node type.  In most cases,
+ * these routines only actually care about certain node types, and don't
+ * care about other types except insofar as they have to recurse through
+ * non-primitive node types.  Therefore, we now provide generic tree-walking
+ * logic to consolidate the redundant "boilerplate" code.
+ *
+ * expression_tree_walker() is designed to support routines that traverse
+ * a tree in a read-only fashion (although it will also work for routines
+ * that modify nodes in-place but never add or delete nodes).  A walker
+ * routine should look like this:
+ *
+ * bool my_walker (Node *node, my_struct *context)
+ * {
+ *		if (node == NULL)
+ *			return false;
+ *		// check for nodes that special work is required for, eg:
+ *		if (IsA(node, Var))
+ *		{
+ *			... do special actions for Var nodes
+ *		}
+ *		else if (IsA(node, ...))
+ *		{
+ *			... do special actions for other node types
+ *		}
+ *		// for any node type not specially processed, do:
+ *		return expression_tree_walker(node, my_walker, (void *) context);
+ * }
+ *
+ * The "context" argument points to a struct that holds whatever context
+ * information the walker routine needs (it can be used to return data
+ * gathered by the walker, too).  This argument is not touched by
+ * expression_tree_walker, but it is passed down to recursive sub-invocations
+ * of my_walker.  The tree walk is started from a setup routine that
+ * fills in the appropriate context struct, calls my_walker with the top-level
+ * node of the tree, and then examines the results.
+ *
+ * The walker routine should return "false" to continue the tree walk, or
+ * "true" to abort the walk and immediately return "true" to the top-level
+ * caller.  This can be used to short-circuit the traversal if the walker
+ * has found what it came for.
+ *
+ * The node types handled by expression_tree_walker include all those
+ * normally found in target lists and qualifier clauses during the planning
+ * stage.  In particular, it handles List nodes since a cnf-ified qual clause
+ * will have List structure at the top level, and it handles TargetEntry nodes
+ * so that a scan of a target list can be handled without additional code.
+ * (But only the "expr" part of a TargetEntry is examined, unless the walker
+ * chooses to process TargetEntry nodes specially.)
+ *
+ * expression_tree_walker will handle a SUBPLAN_EXPR node by recursing into
+ * the args and slink->oper lists (which belong to the outer plan), but it
+ * will *not* visit the inner plan, since that's typically what expression
+ * tree walkers want.  A walker that wants to visit the subplan can force
+ * appropriate behavior by recognizing subplan nodes and doing the right
+ * thing.
+ *
+ * Bare SubLink nodes (without a SUBPLAN_EXPR) will trigger an error unless
+ * detected and processed by the walker.  We expect that walkers used before
+ * sublink processing is done will handle them properly.  (XXX Maybe ignoring
+ * them would be better default behavior?)
+ *--------------------
+ */
+
+bool
+expression_tree_walker(Node *node, bool (*walker) (), void *context)
+{
+	List	   *temp;
+
+	/*
+	 * The walker has already visited the current node,
+	 * and so we need only recurse into any sub-nodes it has.
+	 *
+	 * We assume that the walker is not interested in List nodes per se,
+	 * so when we expect a List we just recurse directly to self without
+	 * bothering to call the walker.
+	 */
+	if (node == NULL)
+		return false;
+	switch (nodeTag(node))
+	{
+		case T_Ident:
+		case T_Const:
+		case T_Var:
+		case T_Param:
+			/* primitive node types with no subnodes */
+			break;
+		case T_Expr:
+			{
+				Expr   *expr = (Expr *) node;
+				if (expr->opType == SUBPLAN_EXPR)
+				{
+					/* examine args list (params to be passed to subplan) */
+					if (expression_tree_walker((Node *) expr->args,
+											   walker, context))
+						return true;
+					/* examine oper list as well */
+					if (expression_tree_walker(
+						(Node *) ((SubPlan *) expr->oper)->sublink->oper,
+						walker, context))
+						return true;
+					/* but not the subplan itself */
+				}
+				else
+				{
+					/* for other Expr node types, just examine args list */
+					if (expression_tree_walker((Node *) expr->args,
+											   walker, context))
+						return true;
+				}
+			}
+			break;
+		case T_Aggref:
+			return walker(((Aggref *) node)->target, context);
+		case T_Iter:
+			return walker(((Iter *) node)->iterexpr, context);
+		case T_ArrayRef:
+			{
+				ArrayRef   *aref = (ArrayRef *) node;
+				/* recurse directly for upper/lower array index lists */
+				if (expression_tree_walker((Node *) aref->refupperindexpr,
+										   walker, context))
+					return true;
+				if (expression_tree_walker((Node *) aref->reflowerindexpr,
+										   walker, context))
+					return true;
+				/* walker must see the refexpr and refassgnexpr, however */
+				if (walker(aref->refexpr, context))
+					return true;
+				if (walker(aref->refassgnexpr, context))
+					return true;
+			}
+			break;
+		case T_CaseExpr:
+			{
+				CaseExpr   *caseexpr = (CaseExpr *) node;
+				/* we assume walker doesn't care about CaseWhens, either */
+				foreach(temp, caseexpr->args)
+				{
+					CaseWhen   *when = (CaseWhen *) lfirst(temp);
+					Assert(IsA(when, CaseWhen));
+					if (walker(when->expr, context))
+						return true;
+					if (walker(when->result, context))
+						return true;
+				}
+				/* caseexpr->arg should be null, but we'll check it anyway */
+				if (walker(caseexpr->arg, context))
+					return true;
+				if (walker(caseexpr->defresult, context))
+					return true;
+			}
+			break;
+		case T_List:
+			foreach(temp, (List *) node)
+			{
+				if (walker((Node *) lfirst(temp), context))
+					return true;
+			}
+			break;
+		case T_TargetEntry:
+			return walker(((TargetEntry *) node)->expr, context);
+		default:
+			elog(ERROR, "expression_tree_walker: Unexpected node type %d",
+				 nodeTag(node));
+			break;
+	}
+	return false;
 }

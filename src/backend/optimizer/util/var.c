@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.19 1999/05/25 16:10:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.20 1999/06/19 03:41:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,8 +15,7 @@
 
 #include "postgres.h"
 
-#include <nodes/relation.h>
-
+#include "nodes/relation.h"
 #include "nodes/primnodes.h"
 #include "nodes/plannodes.h"
 #include "nodes/nodeFuncs.h"
@@ -27,43 +26,40 @@
 
 #include "parser/parsetree.h"
 
+
+static bool pull_varnos_walker(Node *node, List **listptr);
+static bool contain_var_clause_walker(Node *node, void *context);
+static bool pull_var_clause_walker(Node *node, List **listptr);
+
+
 /*
- *		find_varnos
+ *		pull_varnos
  *
- *		Descends down part of a parsetree (qual or tlist),
- *
- *		XXX assumes varno's are always integers, which shouldn't be true...
- *		(though it currently is, see primnodes.h)
+ *		Create a list of all the distinct varnos present in a parsetree
+ *		(tlist or qual).
  */
 List *
-pull_varnos(Node *me)
+pull_varnos(Node *node)
 {
-	List	   *i,
-			   *result = NIL;
+	List	   *result = NIL;
 
-	if (me == NULL)
-		return NIL;
-
-	switch (nodeTag(me))
-	{
-		case T_List:
-			foreach(i, (List *) me)
-				result = nconc(result, pull_varnos(lfirst(i)));
-			break;
-		case T_ArrayRef:
-			foreach(i, ((ArrayRef *) me)->refupperindexpr)
-				result = nconc(result, pull_varnos(lfirst(i)));
-			foreach(i, ((ArrayRef *) me)->reflowerindexpr)
-				result = nconc(result, pull_varnos(lfirst(i)));
-			result = nconc(result, pull_varnos(((ArrayRef *) me)->refassgnexpr));
-			break;
-		case T_Var:
-			result = lconsi(((Var *) me)->varno, NIL);
-			break;
-		default:
-			break;
-	}
+	pull_varnos_walker(node, &result);
 	return result;
+}
+
+static bool
+pull_varnos_walker(Node *node, List **listptr)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, Var))
+	{
+		Var	   *var = (Var *) node;
+		if (!intMember(var->varno, *listptr))
+			*listptr = lconsi(var->varno, *listptr);
+		return false;
+	}
+	return expression_tree_walker(node, pull_varnos_walker, (void *) listptr);
 }
 
 /*
@@ -75,92 +71,22 @@ pull_varnos(Node *me)
 bool
 contain_var_clause(Node *clause)
 {
-	List	   *temp;
+	return contain_var_clause_walker(clause, NULL);
+}
 
-	if (clause == NULL)
-		return FALSE;
-	else if (IsA(clause, Var))
-		return TRUE;
-	else if (single_node(clause))
-		return FALSE;
-	else if (IsA(clause, Iter))
-		return contain_var_clause(((Iter *) clause)->iterexpr);
-	else if (is_subplan(clause))
-	{
-		foreach(temp, ((Expr *) clause)->args)
-		{
-			if (contain_var_clause(lfirst(temp)))
-				return TRUE;
-		}
-		/* Also check left sides of Oper-s */
-		foreach(temp, ((SubPlan *) ((Expr *) clause)->oper)->sublink->oper)
-		{
-			if (contain_var_clause(lfirst(((Expr *) lfirst(temp))->args)))
-				return TRUE;
-		}
-		return FALSE;
-	}
-	else if (IsA(clause, Expr))
-	{
-
-		/*
-		 * Recursively scan the arguments of an expression. NOTE: this
-		 * must come after is_subplan() case since subplan is a kind of
-		 * Expr node.
-		 */
-		foreach(temp, ((Expr *) clause)->args)
-		{
-			if (contain_var_clause(lfirst(temp)))
-				return TRUE;
-		}
-		return FALSE;
-	}
-	else if (IsA(clause, Aggref))
-		return contain_var_clause(((Aggref *) clause)->target);
-	else if (IsA(clause, ArrayRef))
-	{
-		foreach(temp, ((ArrayRef *) clause)->refupperindexpr)
-		{
-			if (contain_var_clause(lfirst(temp)))
-				return TRUE;
-		}
-		foreach(temp, ((ArrayRef *) clause)->reflowerindexpr)
-		{
-			if (contain_var_clause(lfirst(temp)))
-				return TRUE;
-		}
-		if (contain_var_clause(((ArrayRef *) clause)->refexpr))
-			return TRUE;
-		if (contain_var_clause(((ArrayRef *) clause)->refassgnexpr))
-			return TRUE;
-		return FALSE;
-	}
-	else if (case_clause(clause))
-	{
-		foreach(temp, ((CaseExpr *) clause)->args)
-		{
-			CaseWhen   *when = (CaseWhen *) lfirst(temp);
-
-			if (contain_var_clause(when->expr))
-				return TRUE;
-			if (contain_var_clause(when->result))
-				return TRUE;
-		}
-		return (contain_var_clause(((CaseExpr *) clause)->defresult));
-	}
-	else
-	{
-		elog(ERROR, "contain_var_clause: Cannot handle node type %d",
-			 nodeTag(clause));
-	}
-
-	return FALSE;
+static bool
+contain_var_clause_walker(Node *node, void *context)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, Var))
+		return true;			/* abort the tree traversal and return true */
+	return expression_tree_walker(node, contain_var_clause_walker, context);
 }
 
 /*
  * pull_var_clause
- *	  Recursively pulls all var nodes from a clause by pulling vars from the
- *	  left and right operands of the clause.
+ *	  Recursively pulls all var nodes from an expression clause.
  *
  *	  Returns list of varnodes found.  Note the varnodes themselves are not
  *	  copied, only referenced.
@@ -168,68 +94,24 @@ contain_var_clause(Node *clause)
 List *
 pull_var_clause(Node *clause)
 {
-	List	   *retval = NIL;
-	List	   *temp;
+	List	   *result = NIL;
 
-	if (clause == NULL)
-		return NIL;
-	else if (IsA(clause, Var))
-		retval = lcons(clause, NIL);
-	else if (single_node(clause))
-		retval = NIL;
-	else if (IsA(clause, Iter))
-		retval = pull_var_clause(((Iter *) clause)->iterexpr);
-	else if (is_subplan(clause))
-	{
-		foreach(temp, ((Expr *) clause)->args)
-			retval = nconc(retval, pull_var_clause(lfirst(temp)));
-		/* Also get Var-s from left sides of Oper-s */
-		foreach(temp, ((SubPlan *) ((Expr *) clause)->oper)->sublink->oper)
-			retval = nconc(retval,
-				 pull_var_clause(lfirst(((Expr *) lfirst(temp))->args)));
-	}
-	else if (IsA(clause, Expr))
-	{
+	pull_var_clause_walker(clause, &result);
+	return result;
+}
 
-		/*
-		 * Recursively scan the arguments of an expression. NOTE: this
-		 * must come after is_subplan() case since subplan is a kind of
-		 * Expr node.
-		 */
-		foreach(temp, ((Expr *) clause)->args)
-			retval = nconc(retval, pull_var_clause(lfirst(temp)));
-	}
-	else if (IsA(clause, Aggref))
-		retval = pull_var_clause(((Aggref *) clause)->target);
-	else if (IsA(clause, ArrayRef))
+static bool
+pull_var_clause_walker(Node *node, List **listptr)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, Var))
 	{
-		foreach(temp, ((ArrayRef *) clause)->refupperindexpr)
-			retval = nconc(retval, pull_var_clause(lfirst(temp)));
-		foreach(temp, ((ArrayRef *) clause)->reflowerindexpr)
-			retval = nconc(retval, pull_var_clause(lfirst(temp)));
-		retval = nconc(retval,
-					   pull_var_clause(((ArrayRef *) clause)->refexpr));
-		retval = nconc(retval,
-				   pull_var_clause(((ArrayRef *) clause)->refassgnexpr));
+		*listptr = lappend(*listptr, node);
+		return false;
 	}
-	else if (case_clause(clause))
-	{
-		foreach(temp, ((CaseExpr *) clause)->args)
-		{
-			CaseWhen   *when = (CaseWhen *) lfirst(temp);
-
-			retval = nconc(retval, pull_var_clause(when->expr));
-			retval = nconc(retval, pull_var_clause(when->result));
-		}
-		retval = nconc(retval, pull_var_clause(((CaseExpr *) clause)->defresult));
-	}
-	else
-	{
-		elog(ERROR, "pull_var_clause: Cannot handle node type %d",
-			 nodeTag(clause));
-	}
-
-	return retval;
+	return expression_tree_walker(node, pull_var_clause_walker,
+								  (void *) listptr);
 }
 
 /*
