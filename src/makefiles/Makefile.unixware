@@ -23,6 +23,6 @@ SO_FLAGS = -G
 endif
 
 %.so: %.o
-	$(CC) $(SO_FLAGS) -Bdynamic -o $@ $<
+	$(CC) $(SO_FLAGS) -o $@ $<
 
 sqlmansect = 5sql
