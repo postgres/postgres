@@ -28,7 +28,7 @@ def _quote(d, t):
 
 	if t == 'bool':
 		# Can't run upper() on these
-		if d in (0, 1): return ('f', 't')[d]
+		if d in (0, 1): return ("'f'", "'t'")[d]
 
 		if string.upper(d) in ['T', 'TRUE', 'Y', 'YES', '1', 'ON']:
 			return "'t'"
