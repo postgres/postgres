@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.68 1996/11/14 07:19:26 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.69 1996/11/17 19:26:44 momjian Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the 
@@ -305,7 +305,7 @@ endif
 # Shared libraries.
 # This is overridden for many PORTNAMEs below.
 
-SLSUFF= .so
+SLSUFF= .o
 
 #----------------------------------------------------------------------
 ifeq ($(PORTNAME), BSD44_derived)
