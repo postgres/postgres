@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.49 1999/10/13 15:02:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.50 1999/10/17 23:09:02 tgl Exp $
  *
  * NOTES:
  *
@@ -48,6 +48,7 @@
 #include "postgres.h"
 #include "miscadmin.h"
 #include "storage/fd.h"
+#include "storage/ipc.h"
 
 /*
  * Problem: Postgres does a system(ld...) to do dynamic loading.
@@ -442,6 +443,9 @@ AllocateVfd()
 		VfdCache->fd = VFD_CLOSED;
 
 		SizeVfdCache = 1;
+
+		/* register proc-exit call to ensure temp files are dropped at exit */
+		on_proc_exit(AtEOXact_Files, NULL);
 	}
 
 	if (VfdCache[0].nextFree == 0)
@@ -985,10 +989,10 @@ closeAllVfds()
 /*
  * AtEOXact_Files
  *
- * This routine is called during transaction commit or abort (it doesn't
- * particularly care which).  All still-open temporary-file VFDs are closed,
- * which also causes the underlying files to be deleted.  Furthermore,
- * all "allocated" stdio files are closed.
+ * This routine is called during transaction commit or abort or backend
+ * exit (it doesn't particularly care which).  All still-open temporary-file
+ * VFDs are closed, which also causes the underlying files to be deleted.
+ * Furthermore, all "allocated" stdio files are closed.
  */
 void
 AtEOXact_Files(void)
