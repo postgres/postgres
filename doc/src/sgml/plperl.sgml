@@ -1,121 +1,156 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/plperl.sgml,v 2.5 2000/09/29 20:21:34 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/plperl.sgml,v 2.6 2000/12/19 18:16:25 petere Exp $
 -->
 
- <chapter id="pl-perl">
-  <title>PL/perl - Perl Procedural Language</title>
+<chapter id="plperl">
+ <title>PL/Perl - Perl Procedural Language</title>
+
+ <para>
+  PL/Perl allows you to write functions in the Perl programming
+  language which may be used in SQL queries as if they were built into
+  <productname>Postgres</productname>.
+ </para>
+
+ <para>
+  The PL/Perl intepreter is a full Perl interpreter. However, certain
+  operations have been disabled in order to maintain the security of
+  the system.  In general, the operations that are restricted are
+  those that interact with the environment. This includes filehandle
+  operations, <literal>require</literal>, and <literal>use</literal>
+  (for external modules).  It should be noted that this security is
+  not absolute. Indeed, several Denial-of-Service attacks are still
+  possible - memory exhaustion and endless loops are two examples.
+ </para>
+
+ <sect1 id="plperl-install">
+  <title>Building and Installing</title>
 
   <para>
-   This chapter describes how to compile, install and
-   use PL/Perl.
+   In order to build and install PL/Perl if you are installing
+   <productname>Postgres</productname> from source then the
+   <option>--with-perl</option> must be supplied to the
+   <filename>configure</filename> script.  PL/Perl requires that, when
+   <productname>Perl</productname> was installed, the
+   <filename>libperl</filename> library was build as a shared object.
+   At the time of this writing, this is almost never the case in the
+   Perl packages that are distributed with the operating systems.  A
+   message like this will appear during the build to point out this
+   fact:
+<screen>
+<computeroutput>
+*****
+* Cannot build PL/Perl because libperl is not a shared library.
+* Skipped.
+*****
+</computeroutput>
+</screen>
+   Therefore it is likely that you will have to re-build and install
+   <productname>Perl</productname> manually to be able to build
+   PL/Perl.
   </para>
-  <sect1 id="plperl-overview">
-   <title>Overview</title>
-   <para>
-    PL/Perl allows you to write functions in the Perl scripting
-    language which may be used in SQL queries as if they were 
-    built into <productname>Postgres</productname>. 
-   </para>
-   <para>
-    The PL/Perl intepreter is a full Perl interpreter. However,
-    certain operations have been disabled in order to increase
-    the security level of the system.
-   </para>
-   <para>
-    In general, the operations that are restricted are those that
-    interact with the environment. This includes filehandle operations,
-    <literal>require</literal>, and <literal>use</literal> (for external
-    modules).
-   </para>
-   <para>
-    It should be noted that this security is not absolute. Indeed, several
-    Denial-of-Service attacks are still possible - memory exhaustion and
-    endless loops are two.
-   </para>
-  </sect1>
 
-  <sect1 id="plperl-install">
-   <title>Building and Installing</title>
-   <para>
-    Assuming that the <productname>Postgres</productname>
-    source tree is rooted at $PGSRC, then the Pl/perl source
-    code is located in $PGSRC/src/pl/plperl.
-   </para>
-   <para>
-    To build, simply do the following:
-    <programlisting>
-cd $PGSRC/src/pl/plperl
-perl Makefile.PL
-make
-    </programlisting>
-   </para>
+  <para>
+   When you want to retry to build PL/Perl after having reinstalled
+   Perl, then change to the directory
+   <filename>src/pl/plperl</filename> in the
+   <productname>Postgres</productname> source tree and issue the commands
+<programlisting>
+gmake clean
+gmake all
+gmake install
+</programlisting>
+  </para>
 
-   <para>
-    This will create a shared library file. On a Linux system, it will be
-    named plperl.so. The extension may differ on other systems.
-   </para>
-   <para>
-    The shared library should then be copied into the lib subdirectory of the
-    postgres installation.
-   </para>
-   <para>
-    The createlang command is used to install the language into a database.
-    If it is installed into template1, all future databases will have the
-    language installed automatically.
-   </para>
-  </sect1>
+  <para>
+   The <command>createlang</command> command is used to install the
+   language into a database.
+<screen>
+<prompt>$</prompt> <userinput>createlang plperl template1</userinput>
+</screen>
+   If it is installed into template1, all future databases will have
+   the language installed automatically.
+  </para>
+ </sect1>
 
-  <sect1 id="plperl-use">
-   <title>Using PL/Perl</title>
-   <para>
-    Assume you have the following table:
-    <programlisting>
+ <sect1 id="plperl-use">
+  <title>Using PL/Perl</title>
+
+  <para>
+   Assume you have the following table:
+<programlisting>
 CREATE TABLE EMPLOYEE (
     name text,
-    basesalary int4,
-    bonus int4 );
-    </programlisting>
+    basesalary integer,
+    bonus integer
+);
+</programlisting>
 
-    In order to get the total compensation (base + bonus) we could
-    define a function as follows:
-    <programlisting>
-CREATE FUNCTION totalcomp(int4, int4) RETURNS int4
+   In order to get the total compensation (base + bonus) we could
+   define a function as follows:
+<programlisting>
+CREATE FUNCTION totalcomp(integer, integer) RETURNS integer
     AS 'return $_[0] + $_[1]'
     LANGUAGE 'plperl';
-    </programlisting>
+</programlisting>
 
-    Note that the arguments are passed to the function in
-    <literal>@_</literal> as might be expected. Also, because
-    of the quoting rules for the SQL creating the function, you
-    may find yourself using the extended quoting functions (qq[],
-    q[], qw[]) more often that you are used to.
-   </para>
+   Notice that the arguments to the function are passed in
+   <varname>@_</varname> as might be expected.
+  </para>
+
+  <para>
+   We can now use our function like so:
+<programlisting>
+SELECT name, totalcomp(basesalary, bonus) FROM employee;
+</programlisting>
+  </para>
+
+  <para>
+   But, we can also pass entire tuples to our functions:
+<programlisting>
+CREATE FUNCTION empcomp(employee) RETURNS integer AS '
+    my $emp = shift;
+    return $emp->{''basesalary''} + $emp->{''bonus''};
+' LANGUAGE 'plperl';
+</programlisting>
+   A tuple is passed as a reference to a hash. The keys are the names
+   of the fields in the tuples. The hash values are values of the
+   corresponding fields in the tuple.
+  </para>
+
+  <tip>
    <para>
-    We may now use our function like so:
-    <programlisting>
-SELECT name, totalcomp(basesalary, bonus) from employee
-    </programlisting>
+    Because the function body is passed as an SQL string literal to
+    <command>CREATE FUNCTION</command> you have to escape single
+    quotes within your Perl source, either by doubling them as shown
+    above, or by using the extended quoting functions
+    (<literal>q[]</literal>, <literal>qq[]</literal>,
+    <literal>qw[]</literal>).  Backslashes must be escaped by doubling
+    them.
    </para>
-   <para>
-    But, we can also pass entire tuples to our function:
-    <programlisting>
-CREATE FUNCTION empcomp(employee) returns int4
-    AS 'my $emp = shift;
-        return $emp->{''basesalary''} + $emp->{''bonus''};'
-    LANGUAGE 'plperl';
-    </programlisting>
-    A tuple is passed as a reference to hash. The keys are the names of
-    fields in the tuples. The values are values of the corresponding
-    field in the tuple.
-   </para>
-   <para>
-    The new function <literal>empcomp</literal> can used like:
-    <programlisting>
-SELECT name, empcomp(employee) from employee;
-    </programlisting>
-   </para>
-  </sect1>
- </chapter>
+  </tip>
+
+  <para>
+   The new function <function>empcomp</function> can used like:
+<programlisting>
+SELECT name, empcomp(employee) FROM employee;
+</programlisting>
+  </para>
+
+  <para>
+   Here is an example of a function which will not work because file
+   system operations are not allowed for security reasons:
+<programlisting>
+CREATE FUNCTION badfunc() RETURNS integer AS '
+    open(TEMP, ">/tmp/badfile");
+    print TEMP "Gotcha!\n";
+    return 1;
+' LANGUAGE 'plperl';
+</programlisting>
+   The creation of the function will succeed, but executing it will not.
+  </para>
+
+ </sect1>
+</chapter>
 
 <!-- Keep this comment at the end of the file
 Local variables:

@@ -1,52 +1,8 @@
-README for PL/Perl                                          2000.10.24
+PL/Perl allows you to write PostgreSQL functions and procedures in
+Perl.  To include PL/Perl in the build use './configure --with-perl'.
+To build from this directory use 'gmake all; gmake install'.  libperl
+must have been built as a shared library, which is usually not the
+case in standard installations.
 
-PREREQUISITES
-======================================================================
-+ Perl must be built as a shared library.
-+ when compiling Postgres, use the --with-perl option.  Alternatively,
-  you can build plperl separately in an already-configured source tree:
-  cd to $POSTGRES_SRC/src/pl/plperl/ and do "gmake all install".
-
-CONFIGURING
-======================================================================
-+ as postgres super user:
-  createlang plperl [database]
-
-NOTES ON USAGE
-======================================================================
-+ Use q[], qq[], and qw[] instead of single quotes in 
-  function definitions.
-+ When using escape sequences, you must backslash your
-  backslashes, e.g.
-    $alphanum =~ s/\W//g;  # Wrong!  Will replace capital W's
-    $alphanum =~ s/\\W//g; # Right!  Will replace non-word chars
-+ Arguments to the function are available in @_
-+ If argument is declared as a tuple, then tuple is represented as a
-  hash reference.
-
-EXAMPLES
-======================================================================
-CREATE FUNCTION addints(int4, int4) RETURNS int4 AS '
-return $_[0] + $_[1]
-' LANGUAGE 'plperl';
-
-SELECT addints(3,4);
-
--- of course, you can pass tuples;
-CREATE TABLE twoints ( a integer, b integer);
-CREATE FUNCTION addtwoints(twoints) RETURNS integer AS '
-$tup = shift;
-return $tup->{"a"} + $tup->{"b"};
-' LANGUAGE 'plperl';
-
-SELECT addtwoints(twoints) from twoints;
-
--- here is one that will fail. Creating the function
--- will work, but using it will fail.
-CREATE FUNCTION badfunc() RETURNS int4 AS '
-open(TEMP, ">/tmp/badfile");
-print TEMP "Gotcha!\n";
-return 1;
-' LANGUAGE 'plperl';
-
-SELECT badfunc();
+Consult the PostgreSQL User's Guide and the INSTALL file in the
+top-level directory of the source distribution for more information.
