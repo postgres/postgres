@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.4 1996/11/13 20:51:06 scrappy Exp $
+ * $Id: pg_type.h,v 1.5 1996/12/09 01:23:51 bryanh Exp $
  *
  * NOTES
  *    the genbki.sh script reads this file and generates .bki
@@ -43,17 +43,17 @@ CATALOG(pg_type) BOOTSTRAP {
     int2  	typlen;
       /* typlen is the number of bytes we use to represent a value of
          this type, e.g. 4 for an int4.  But for a variable length
-         attribute, typlen is -1.  
+         type, typlen is -1.  
          */
     int2  	typprtlen;
     bool  	typbyval;
       /* typbyval determines whether internal Postgres routines pass a value
          of this type by value or by reference.  Postgres uses a 4 byte 
-         area for passing class data, so if the value is not 1, 2,
+         area for passing a field value info, so if the value is not 1, 2,
          or 4 bytes long, Postgres does not have the option of passing by
          value and ignores typbyval.  
 
-         (I don't understand why this attribute exists.  The above description
+         (I don't understand why this column exists.  The above description
          may be an oversimplification.  Also, there appear to be bugs in which
          Postgres doesn't ignore typbyval when it should, but I'm 
          afraid to change them until I see proof of damage. -BRYANH 96.08).
@@ -63,6 +63,10 @@ CATALOG(pg_type) BOOTSTRAP {
     char	typdelim;
     Oid 	typrelid;
     Oid  	typelem;
+      /* typelem is NULL if this is not an array type.  If this is an array
+         type, typelem is the OID of the type of the elements of the array
+         (it identifies another row in Table pg_type).
+      */
     regproc  	typinput;
     regproc  	typoutput;
     regproc  	typreceive;
@@ -71,7 +75,7 @@ CATALOG(pg_type) BOOTSTRAP {
       /* typalign is the alignment required when storing a value of this
          type.  It applies to storage on disk as well as most representations
          of the value inside Postgres.  When multiple values are stored 
-         consecutively, such as in the representation of a complete tuple
+         consecutively, such as in the representation of a complete row
          on disk, padding is inserted before a datum of this type so that it
          begins on the specified boundary.  The alignment reference is the 
          beginning of the first datum in the sequence.
@@ -88,7 +92,7 @@ CATALOG(pg_type) BOOTSTRAP {
 } TypeTupleFormData;
 
 /* ----------------
- *	Form_pg_type corresponds to a pointer to a tuple with
+ *	Form_pg_type corresponds to a pointer to a row with
  *	the format of pg_type relation.
  * ----------------
  */
@@ -153,7 +157,7 @@ DATA(insert OID = 22 (  int28      PGUID 16  50 f b t \054 0  21 int28in int28ou
  *	  go away someday.  until that happens, there is a case (in the
  *	  catalog cache management code) where we need to step gingerly
  *	  over piles of int28's on the sidewalk.  in order to do so, we
- *	  need the OID of the int28 tuple from pg_type.
+ *	  need the OID of the int28 row from pg_type.
  */
 
 #define INT28OID	22
