@@ -1,7 +1,11 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/array.sgml,v 1.10 2001/01/26 23:40:39 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/array.sgml,v 1.11 2001/05/12 22:51:34 petere Exp $ -->
 
 <chapter id="arrays">
  <title>Arrays</title>
+
+ <indexterm>
+  <primary>arrays</primary>
+ </indexterm>
 
  <para>
   <productname>Postgres</productname> allows columns of a table to be

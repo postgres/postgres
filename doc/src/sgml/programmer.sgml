@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/programmer.sgml,v 1.37 2001/05/12 17:49:32 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/programmer.sgml,v 1.38 2001/05/12 22:51:35 petere Exp $
 
 PostgreSQL Programmer's Guide.
 -->
@@ -63,18 +63,8 @@ PostgreSQL Programmer's Guide.
   &xindex;
   &indexcost;
   &gist;
-
-<!-- reference -->
-
-<!--
-The func-ref chapter is not currently useful.
-Disable it until we put in some info.
-- thomas 1998-10-27
-&func-ref;
--->
-
- &trigger;
- &spi;
+  &trigger;
+  &spi;
  </part>
 
  <part id="programmer-pl">
@@ -89,6 +79,7 @@ Disable it until we put in some info.
 
 <![%single-book;[
  &biblio;
+ &bookindex;
 ]]>
 
 </book>

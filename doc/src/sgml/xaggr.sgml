@@ -1,9 +1,14 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xaggr.sgml,v 1.11 2001/03/24 23:03:26 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xaggr.sgml,v 1.12 2001/05/12 22:51:36 petere Exp $
 -->
 
  <chapter id="xaggr">
   <title>Extending <acronym>SQL</acronym>: Aggregates</title>
+
+  <indexterm zone="xaggr">
+   <primary>aggregate functions</primary>
+   <secondary>extending</secondary>
+  </indexterm>
 
   <para>
    Aggregate functions  in <productname>Postgres</productname> 

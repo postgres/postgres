@@ -1,8 +1,12 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.47 2001/05/09 19:41:57 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.48 2001/05/12 22:51:35 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%flattext-install-include[<productname>PostgreSQL</>]]>
   Installation Instructions</title>
+
+ <indexterm zone="installation">
+  <primary>installation</primary>
+ </indexterm>
 
  <sect1 id="install-short">
   <title>Short Version</title>
@@ -42,6 +46,10 @@ su - postgres
    The following prerequisites exist for building <productname>PostgreSQL</>:
    <itemizedlist>
     <listitem>
+     <indexterm>
+      <primary>make</primary>
+     </indexterm>
+
      <para>
       <acronym>GNU</> <application>make</> is required; other
       <application>make</> programs will <emphasis>not</> work.
@@ -71,6 +79,10 @@ su - postgres
     </listitem>
 
     <listitem>
+     <indexterm>
+      <primary>readline</primary>
+     </indexterm>
+
      <para>
       The <acronym>GNU</> <productname>Readline</> library for comfortable
       line editing and command history retrieval will automatically be used
@@ -83,6 +95,16 @@ su - postgres
     </listitem>
 
     <listitem>
+     <indexterm>
+      <primary>flex</primary>
+     </indexterm>
+     <indexterm>
+      <primary>bison</primary>
+     </indexterm>
+     <indexterm>
+      <primary>yacc</primary>
+     </indexterm>
+
      <para>
       <application>Flex</> and <application>Bison</> are
       <emphasis>not</> required when building from a released source
@@ -98,6 +120,10 @@ su - postgres
     </listitem>
 
     <listitem>
+     <indexterm>
+      <primary>installation</primary>
+      <secondary>on Windows</secondary>
+     </indexterm>
      <para>
       To build on <productname>Windows NT</> or <productname>Windows
       2000</> you need the <productname>Cygwin</> and
@@ -151,6 +177,10 @@ su - postgres
  <sect1 id="install-upgrading">
   <title>If You Are Upgrading</title>
 
+  <indexterm zone="install-upgrading">
+   <primary>upgrading</primary>
+  </indexterm>
+
   <para>
    The internal data storage format changes with new releases of
    <productname>PostgreSQL</>. Therefore, if you are upgrading an
@@ -175,6 +205,10 @@ su - postgres
    </step>
 
    <step>
+    <indexterm>
+     <primary>pg_dumpall</primary>
+    </indexterm>
+
     <para>
      To dump your database installation, type:
 <screen>
@@ -268,6 +302,11 @@ su - postgres
 
   <step id="configure">
    <title>Configuration</>
+
+   <indexterm zone="configure">
+    <primary>configure</primary>
+   </indexterm>
+
    <para>
     The first step of the installation procedure is to configure the
     source tree for your system and choose the options you would like.
@@ -659,6 +698,11 @@ su - postgres
       </varlistentry>
 
       <varlistentry>
+       <indexterm>
+        <primary>OpenSSL</primary>
+        <seealso>SSL</seealso>
+       </indexterm>
+
        <term>--with-openssl=<replaceable>DIRECTORY</></term>
        <listitem>
         <para>
@@ -776,6 +820,10 @@ All of PostgreSQL is successfully made. Ready to install.
   <step>
    <title>Regression Tests</title>
 
+   <indexterm>
+    <primary>regression test</primary>
+   </indexterm>
+
    <para>
     If you want to test the newly built server before you install it,
     you can run the regression tests at this point. The regression
@@ -892,6 +940,11 @@ All of PostgreSQL is successfully made. Ready to install.
 
   <sect2>
    <title>Shared Libraries</title>
+
+   <indexterm>
+    <primary>shared libraries</primary>
+   </indexterm>
+
    <para>
     On some systems that have shared libraries (which most systems do)
     you need to tell your system how to find the newly installed
@@ -954,6 +1007,11 @@ libpq.so.2.1: cannot open shared object file: No such file or directory
 
   <sect2>
    <title>Environment Variables</title>
+
+   <indexterm>
+    <primary><envar>PATH</envar></primary>
+   </indexterm>
+
    <para>
     If you installed into <filename>/usr/local/pgsql</> or some other
     location that is not searched for programs by default, you need to
@@ -972,6 +1030,10 @@ set path = ( /usr/local/pgsql/bin path )
    </para>
 
    <para>
+    <indexterm>
+     <primary><envar>MANPATH</envar></primary>
+     <seealso>man pages</seealso>
+    </indexterm>
     To enable your system to find the <application>man</>
     documentation, you need to add a line like the following to a
     shell start-up file:

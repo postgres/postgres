@@ -1,9 +1,17 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/plperl.sgml,v 2.7 2000/12/22 18:57:50 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/plperl.sgml,v 2.8 2001/05/12 22:51:35 petere Exp $
 -->
 
 <chapter id="plperl">
  <title>PL/Perl - Perl Procedural Language</title>
+
+ <indexterm zone="plperl">
+  <primary>PL/Perl</primary>
+ </indexterm>
+
+ <indexterm zone="plperl">
+  <primary>Perl</primary>
+ </indexterm>
 
  <para>
   PL/Perl allows you to write functions in the Perl programming
@@ -29,8 +37,10 @@ $Header: /cvsroot/pgsql/doc/src/sgml/plperl.sgml,v 2.7 2000/12/22 18:57:50 peter
    In order to build and install PL/Perl if you are installing
    <productname>Postgres</productname> from source then the
    <option>--with-perl</option> must be supplied to the
+   <indexterm><primary><filename>configure</filename></primary></indexterm>
    <filename>configure</filename> script.  PL/Perl requires that, when
    <productname>Perl</productname> was installed, the
+   <indexterm><primary>libperl</primary></indexterm>
    <filename>libperl</filename> library was build as a shared object.
    At the time of this writing, this is almost never the case in the
    Perl packages that are distributed with the operating systems.  A

@@ -1,7 +1,11 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.10 2001/03/15 20:01:32 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.11 2001/05/12 22:51:34 petere Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
+
+ <indexterm zone="client-authentication">
+  <primary>client authentication</primary>
+ </indexterm>
 
  <para>
   When a client application connects to the database server, it specifies which
@@ -41,6 +45,10 @@
 
  <sect1 id="pg-hba.conf">
   <title>The <filename>pg_hba.conf</filename> file</title>
+
+  <indexterm zone="pg-hba.conf">
+   <primary>pg_hba.conf</primary>
+  </indexterm>
 
   <para>
    Client authentication is controlled by the file
@@ -333,6 +341,11 @@ host         all        192.168.0.0    255.255.0.0        ident     omicron
 
   <sect2>
    <title>Password authentication</title>
+
+   <indexterm>
+    <primary>password</primary>
+   </indexterm>
+
    <para>
     <productname>Postgres</> database passwords are separate from any
     operating system user passwords. Ordinarily, the password for each
@@ -401,6 +414,10 @@ host         all        192.168.0.0    255.255.0.0        ident     omicron
 
   <sect2 id="kerberos-auth">
    <title>Kerberos authentication</title>
+
+   <indexterm zone="kerberos-auth">
+    <primary>Kerberos</primary>
+   </indexterm>
 
    <para>
     <productname>Kerberos</productname> is an industry-standard secure
@@ -505,6 +522,10 @@ host         all        192.168.0.0    255.255.0.0        ident     omicron
   <sect2>
    <title>Ident-based authentication</title>
 
+   <indexterm>
+    <primary>ident</primary>
+   </indexterm>
+
    <para>
     The <quote>Identification Protocol</quote> is described in
     <citetitle>RFC 1413</citetitle>. Virtually every Unix-like
@@ -550,6 +571,7 @@ host         all        192.168.0.0    255.255.0.0        ident     omicron
    </para>
 
    <para>
+    <indexterm><primary>pg_ident.conf</primary></indexterm>
     Ident maps are held in the file <filename>pg_ident.conf</filename>
     in the data directory, which contains lines of the general form:
 <synopsis>

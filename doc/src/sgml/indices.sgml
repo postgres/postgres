@@ -1,7 +1,16 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/indices.sgml,v 1.15 2001/05/07 00:43:14 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/indices.sgml,v 1.16 2001/05/12 22:51:34 petere Exp $ -->
 
 <chapter id="indices">
  <title id="indices-title">Indices</title>
+
+ <indexterm zone="indices">
+  <primary>indices</primary>
+ </indexterm>
+
+ <indexterm>
+  <primary>indexes</primary>
+  <see>indices</see>
+ </indexterm>
 
  <para>
   Indices are a common way to enhance database performance.  An index
@@ -102,7 +111,16 @@ CREATE INDEX test1_id_index ON test1 (id);
   <para>
    <productname>Postgres</productname> provides several index types:
    B-tree, R-tree, and Hash.  Each index type is more appropriate for
-   a particular query type because of the algorithm it uses.  By
+   a particular query type because of the algorithm it uses.
+   <indexterm>
+    <primary>indices</primary>
+    <secondary>B-tree</secondary>
+   </indexterm>
+   <indexterm>
+    <primary>B-tree</primary>
+    <see>indices</see>
+   </indexterm>
+   By
    default, the <command>CREATE INDEX</command> command will create a
    B-tree index, which fits the most common situations.  In
    particular, the <productname>Postgres</productname> query optimizer
@@ -119,6 +137,14 @@ CREATE INDEX test1_id_index ON test1 (id);
   </para>
 
   <para>
+   <indexterm>
+    <primary>indices</primary>
+    <secondary>R-tree</secondary>
+   </indexterm>
+   <indexterm>
+    <primary>R-tree</primary>
+    <see>indices</see>
+   </indexterm>
    R-tree indices are especially suited for spacial data.  To create
    an R-tree index, use a command of the form
 <synopsis>
@@ -142,6 +168,14 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
   </para>
 
   <para>
+   <indexterm>
+    <primary>indices</primary>
+    <secondary>hash</secondary>
+   </indexterm>
+   <indexterm>
+    <primary>hash</primary>
+    <see>indices</see>
+   </indexterm>
    The query optimizer will consider using a hash index whenever an
    indexed column is involved in a comparison using the
    <literal>=</literal> operator.  The following command is used to
@@ -176,6 +210,11 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
 
  <sect1 id="indices-multicolumn">
   <title>Multi-Column Indices</title>
+
+  <indexterm zone="indices-multicolumn">
+   <primary>indices</primary>
+   <secondary>multi-column</secondary>
+  </indexterm>
 
   <para>
    An index can be defined on more than one column.  For example, if
@@ -246,6 +285,11 @@ SELECT name FROM test2 WHERE major = <replaceable>constant</replaceable> OR mino
  <sect1 id="indices-unique">
   <title>Unique Indices</title>
 
+  <indexterm zone="indices-unique">
+   <primary>indices</primary>
+   <secondary>unique</secondary>
+  </indexterm>
+
   <para>
    Indexes may also be used to enforce uniqueness of a column's value,
    or the uniqueness of the combined values of more than one column.
@@ -275,6 +319,11 @@ CREATE UNIQUE INDEX <replaceable>name</replaceable> ON <replaceable>table</repla
 
  <sect1 id="indices-functional">
   <title>Functional Indices</title>
+
+  <indexterm zone="indices-functional">
+   <primary>indices</primary>
+   <secondary>on functions</secondary>
+  </indexterm>
 
   <para>
    For a <firstterm>functional index</firstterm>, an index is defined
@@ -539,6 +588,11 @@ CREATE MEMSTORE ON <replaceable>table</replaceable> COLUMNS <replaceable>cols</r
 
   <sect1 id="partial-index">
    <title id="partial-index-title">Partial Indices</title>
+
+  <indexterm zone="partial-index">
+   <primary>indices</primary>
+   <secondary>partial</secondary>
+  </indexterm>
 
    <note>
     <title>Author</title>

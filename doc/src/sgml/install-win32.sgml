@@ -1,6 +1,11 @@
 <chapter id="install-win32">
  <title>Installation on <productname>Windows</productname></title>
 
+ <indexterm>
+  <primary>installation</primary>
+  <secondary>on Windows</secondary>
+ </indexterm>
+
  <abstract>
   <para>
    Build, installation, and use instructions for

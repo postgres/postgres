@@ -1,9 +1,17 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/pltcl.sgml,v 2.9 2001/04/30 22:22:34 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/pltcl.sgml,v 2.10 2001/05/12 22:51:35 petere Exp $
 -->
 
  <chapter id="pltcl">
   <title>PL/Tcl - TCL Procedural Language</title>
+
+  <indexterm zone="pltcl">
+   <primary>PL/Tcl</primary>
+  </indexterm>
+
+  <indexterm zone="pltcl">
+   <primary>Tcl</primary>
+  </indexterm>
 
   <para>
    PL/Tcl is a loadable procedural language for the
@@ -160,6 +168,11 @@ CREATE FUNCTION overpaid_2 (EMP) RETURNS bool AS '
 
    <sect2>
     <title>Trigger Procedures in PL/Tcl</title>
+
+    <indexterm>
+     <primary>triggers</primary>
+     <secondary>in PL/Tcl</secondary>
+    </indexterm>
 
     <para>
      Trigger procedures are defined in <productname>Postgres</productname>
@@ -328,6 +341,9 @@ CREATE TRIGGER trig_mytab_modcount BEFORE INSERT OR UPDATE ON mytab
     <variablelist>
 
      <varlistentry>
+      <indexterm>
+       <primary>elog</primary>
+      </indexterm>
       <term>elog <replaceable>level</replaceable> <replaceable>msg</replaceable></term>
       <listitem>
        <para>

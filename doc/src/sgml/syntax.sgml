@@ -1,9 +1,14 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.41 2001/02/25 16:05:21 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.42 2001/05/12 22:51:35 petere Exp $
 -->
 
 <chapter id="sql-syntax">
  <title>SQL Syntax</title>
+
+ <indexterm zone="sql-syntax">
+  <primary>syntax</primary>
+  <secondary>SQL</secondary>
+ </indexterm>
 
   <abstract>
    <para>
@@ -70,6 +75,15 @@ INSERT INTO MY_TABLE VALUES (3, 'hi there');
   <sect2 id="sql-syntax-identifiers">
    <title>Identifiers and Key Words</title>
 
+   <indexterm zone="sql-syntax-identifiers">
+    <primary>identifiers</primary>
+   </indexterm>
+
+   <indexterm zone="sql-syntax-identifiers">
+    <primary>key words</primary>
+    <secondary>syntax</secondary>
+   </indexterm>
+
    <para>
     Tokens such as <token>SELECT</token>, <token>UPDATE</token>, or
     <token>VALUES</token> in the example above are examples of
@@ -107,6 +121,10 @@ INSERT INTO MY_TABLE VALUES (3, 'hi there');
    </para>
 
    <para>
+    <indexterm>
+     <primary>case sensitivity</primary>
+     <secondary>SQL commands</secondary>
+    </indexterm>
     Identifier and key word names are case insensitive.  Therefore
 <programlisting>
 UPDATE MY_TABLE SET A = 5;
@@ -123,6 +141,10 @@ UPDATE my_table SET a = 5;
    </para>
 
    <para>
+    <indexterm>
+     <primary>quotes</primary>
+     <secondary>and identifiers</secondary>
+    </indexterm>
     There is a second kind of identifier:  the <firstterm>delimited
     identifier</firstterm> or <firstterm>quoted
     identifier</firstterm>.  It is formed by enclosing an arbitrary
@@ -173,6 +195,10 @@ UPDATE "my_table" SET "a" = 5;
   <sect2 id="sql-syntax-constants">
    <title>Constants</title>
 
+   <indexterm zone="sql-syntax-constants">
+    <primary>constants</primary>
+   </indexterm>
+
    <para>
     There are four kinds of <firstterm>implicitly typed
     constants</firstterm> in <productname>Postgres</productname>:
@@ -186,7 +212,16 @@ UPDATE "my_table" SET "a" = 5;
    <sect3 id="sql-syntax-strings">
     <title>String Constants</title>
 
+    <indexterm zone="sql-syntax-strings">
+     <primary>character strings</primary>
+     <secondary>constants</secondary>
+    </indexterm>
+
     <para>
+     <indexterm>
+      <primary>quotes</primary>
+      <secondary>escaping</secondary>
+     </indexterm>
      A string constant in SQL is an arbitrary sequence of characters
      bounded by single quotes (<quote>'</quote>), e.g., <literal>'This
      is a string'</literal>.  SQL allows single quotes to be embedded
@@ -237,6 +272,11 @@ SELECT 'foo'      'bar';
    <sect3 id="sql-syntax-bit-strings">
     <title>Bit String Constants</title>
 
+    <indexterm zone="sql-syntax-bit-strings">
+     <primary>bit strings</primary>
+     <secondary>constants</secondary>
+    </indexterm>
+
     <para>
      Bit string constants look like string constants with a
      <literal>B</literal> (upper or lower case) immediately before the
@@ -263,6 +303,11 @@ SELECT 'foo'      'bar';
 
    <sect3>
     <title>Floating Point Constants</title>
+
+    <indexterm>
+     <primary>floating point</primary>
+     <secondary>constants</secondary>
+    </indexterm>
 
     <para>
      Floating point constants are accepted in these general forms:
@@ -309,6 +354,11 @@ REAL '1.23'  -- string style
    <sect3 id="sql-syntax-constants-generic">
     <title>Constants of Other Types</title>
 
+    <indexterm>
+     <primary>data types</primary>
+     <secondary>constants</secondary>
+    </indexterm>
+
     <para>
      A constant of an <emphasis>arbitrary</emphasis> type can be
      entered using any one of the following notations:
@@ -351,6 +401,11 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
    <sect3>
     <title>Array constants</title>
 
+    <indexterm>
+     <primary>arrays</primary>
+     <secondary>constants</secondary>
+    </indexterm>
+
     <para>
      The general format of an array constant is the following:
 <synopsis>
@@ -389,6 +444,11 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
 
   <sect2 id="sql-syntax-operators">
    <title>Operators</title>
+
+   <indexterm zone="sql-syntax-operators">
+    <primary>operators</primary>
+    <secondary>syntax</secondary>
+   </indexterm>
 
    <para>
     An operator is a sequence of up to <symbol>NAMEDATALEN</symbol>-1
@@ -524,6 +584,11 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
   <sect2 id="sql-syntax-comments">
    <title>Comments</title>
 
+   <indexterm zone="sql-syntax-comments">
+    <primary>comments</primary>
+    <secondary>in SQL</secondary>
+   </indexterm>
+
    <para>
     A comment is an arbitrary sequence of characters beginning with
     double dashes and extending to the end of the line, e.g.:
@@ -562,11 +627,19 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
      is either a user-defined column of a given table or one of the
      following system-defined columns:
 
+     <indexterm>
+      <primary>columns</primary>
+      <secondary>system columns</secondary>
+     </indexterm>
+
      <variablelist>
       <varlistentry>
        <term>oid</term>
        <listitem>
 	<para>
+	 <indexterm>
+	  <primary>OID</primary>
+	 </indexterm>
 	 The unique identifier (object ID) of a row.  This is a serial number
 	 that is added by Postgres to all rows automatically. OIDs are not
 	 reused and are 32-bit quantities.
@@ -841,6 +914,10 @@ sqrt(2)
   <sect2 id="syntax-aggregates">
    <title>Aggregate Expressions</title>
 
+   <indexterm zone="syntax-aggregates">
+    <primary>aggregate functions</primary>
+   </indexterm>
+
    <para>
     An <firstterm>aggregate expression</firstterm> represents the
     application of an aggregate function across the rows selected by a
@@ -895,6 +972,11 @@ sqrt(2)
 
   <sect1 id="sql-precedence">
    <title>Lexical Precedence</title>
+
+   <indexterm zone="sql-precedence">
+    <primary>operators</primary>
+    <secondary>precedence</secondary>
+   </indexterm>
 
    <para>
     The precedence and associativity of the operators is hard-wired

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.45 2001/02/03 19:03:27 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.46 2001/05/12 22:51:35 petere Exp $
 -->
 
 <!doctype set PUBLIC "-//OASIS//DTD DocBook V3.1//EN" [
@@ -35,6 +35,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.45 2001/02/03 19:03:27 pe
  &programmer;
  &reference;
  &developer; 
+ &setindex;
 
 </set>
 

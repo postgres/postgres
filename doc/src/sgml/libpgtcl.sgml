@@ -1,5 +1,13 @@
-<Chapter Id="pgtcl">
-<Title>pgtcl - TCL Binding Library</Title>
+<chapter id="pgtcl">
+ <title>pgtcl - Tcl Binding Library</title>
+
+ <indexterm zone="pgtcl">
+  <primary>libpgtcl</primary>
+ </indexterm>
+
+ <indexterm zone="pgtcl">
+  <primary>Tcl</primary>
+ </indexterm>
 
 <Para>
 <literal>pgtcl</literal> is a tcl package for front-end programs 

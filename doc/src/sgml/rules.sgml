@@ -1,6 +1,10 @@
 <Chapter Id="rules">
 <Title>The <ProductName>Postgres</ProductName> Rule System</Title>
 
+ <indexterm zone="rules">
+  <primary>rules</primary>
+ </indexterm>
+
    <note>
     <title>Author</title>
     <para>

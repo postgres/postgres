@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.17 2001/02/12 14:21:27 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.18 2001/05/12 22:51:34 petere Exp $
 Date/time details
 -->
 
@@ -8,6 +8,10 @@ Date/time details
 
  <sect1 id="timezones">
   <title>Time Zones</title>
+
+  <indexterm zone="timezones">
+   <primary>time zones</primary>
+  </indexterm>
 
   <para>
    <productname>Postgres</productname> must have internal tabular

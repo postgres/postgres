@@ -1,9 +1,13 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.62 2001/05/01 10:48:57 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.63 2001/05/12 22:51:35 petere Exp $
 -->
 
  <chapter id="libpq">
   <title>libpq - C Library</title>
+
+  <indexterm zone="libpq">
+   <primary>libpq</primary>
+  </indexterm>
 
   <para>
    <filename>libpq</filename> is the <acronym>C</acronym>
@@ -1563,6 +1567,11 @@ if any notifications came in during the processing of the query.
 <sect1 id="libpq-copy">
 <title>Functions Associated with the COPY Command</title>
 
+<indexterm zone="libpq-copy">
+ <primary>COPY</primary>
+ <secondary>with libpq</secondary>
+</indexterm>
+
 <para>
  The COPY command in <productname>Postgres</productname> has options to  read  from
  or  write  to  the  network  connection  used by <filename>libpq</filename>.
@@ -1839,6 +1848,10 @@ routines like <function>PQgetvalue</function>.
 <sect1 id="libpq-envars">
 <title>Environment Variables</title>
 
+<indexterm zone="libpq-envars">
+ <primary>environment variables</primary>
+</indexterm>
+
 <para>
 The following environment variables can be used to select default
 connection parameter values, which will be used by <function>PQconnectdb</function> or
@@ -1849,6 +1862,9 @@ application programs.
 <itemizedlist>
 <listitem>
 <para>
+<indexterm>
+ <primary><envar>PGHOST</envar></primary>
+</indexterm>
 <envar>PGHOST</envar> sets the default server name.
 If this begins with a slash, it specifies Unix-domain communication
 rather than TCP/IP communication; the value is the name of the
@@ -1857,6 +1873,9 @@ directory in which the socket file is stored (default "/tmp").
 </listitem>
 <listitem>
 <para>
+<indexterm>
+ <primary><envar>PGPORT</envar></primary>
+</indexterm>
 <envar>PGPORT</envar> sets the default TCP port number or Unix-domain
 socket file extension for communicating with the
 <productname>Postgres</productname> backend.
@@ -1864,18 +1883,27 @@ socket file extension for communicating with the
 </listitem>
 <listitem>
 <para>
+<indexterm>
+ <primary><envar>PGDATABASE</envar></primary>
+</indexterm>
 <envar>PGDATABASE</envar>  sets the default 
 <productname>Postgres</productname> database name.
 </para>
 </listitem>
 <listitem>
 <para>
+<indexterm>
+ <primary><envar>PGUSER</envar></primary>
+</indexterm>
 <envar>PGUSER</envar>
 sets the username used to connect to the database and for authentication.
 </para>
 </listitem>
 <listitem>
 <para>
+<indexterm>
+ <primary><envar>PGPASSWORD</envar></primary>
+</indexterm>
 <envar>PGPASSWORD</envar>
 sets the password used if the backend demands password authentication.
 </para>
@@ -1956,6 +1984,11 @@ for information on correct values for these environment variables.
 
 <sect1 id="libpq-threading">
 <title>Threading Behavior</title>
+
+<indexterm zone="libpq-threading">
+ <primary>threads</primary>
+ <secondary>with libpq</secondary>
+</indexterm>
 
 <para>
 <filename>libpq</filename> is thread-safe as of

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/queries.sgml,v 1.6 2001/03/24 23:03:26 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/queries.sgml,v 1.7 2001/05/12 22:51:35 petere Exp $ -->
 
 <chapter id="queries">
  <title>Queries</title>
@@ -102,6 +102,10 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
    <sect3 id="queries-join">
     <title>Joined Tables</title>
 
+    <indexterm zone="queries-join">
+     <primary>joins</primary>
+    </indexterm>
+
     <para>
      A joined table is a table derived from two other (real or
      derived) tables according to the rules of the particular join
@@ -115,6 +119,10 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
       <term>CROSS JOIN</term>
 
       <listitem>
+       <indexterm>
+        <primary>joins</primary>
+	<secondary>cross</secondary>
+       </indexterm>
 <synopsis>
 <replaceable>T1</replaceable> CROSS JOIN <replaceable>T2</replaceable>
 </synopsis>
@@ -144,6 +152,11 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
      <varlistentry>
       <term>Qualified JOINs</term>
       <listitem>
+
+       <indexterm>
+        <primary>joins</primary>
+	<secondary>outer</secondary>
+       </indexterm>
 
 <synopsis>
 <replaceable>T1</replaceable> { <optional>INNER</optional> | { LEFT | RIGHT | FULL } <optional>OUTER</optional> } JOIN <replaceable>T2</replaceable> ON <replaceable>boolean_expression</replaceable>
@@ -187,6 +200,10 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
        </para>
 
        <para>
+        <indexterm>
+	 <primary>joins</primary>
+	 <secondary>natural</secondary>
+	</indexterm>
         Finally, NATURAL is a shorthand form of USING: it forms a USING
 	list consisting of exactly those column names that appear in both
 	input tables.  As with USING, these columns appear only once in
@@ -213,6 +230,11 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
          <term>LEFT OUTER JOIN</term>
 
          <listitem>
+	  <indexterm>
+	   <primary>joins</primary>
+	   <secondary>left</secondary>
+	  </indexterm>
+
           <para>
            First, an INNER JOIN is performed.  Then, for each row in T1
            that does not satisfy the join condition with any row in
@@ -268,6 +290,10 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
    <sect3 id="queries-subqueries">
     <title>Subqueries</title>
 
+    <indexterm zone="queries-subqueries">
+     <primary>subqueries</primary>
+    </indexterm>
+
     <para>
      Subqueries specifying a derived table must be enclosed in
      parentheses and <emphasis>must</emphasis> be named using an AS
@@ -288,6 +314,16 @@ FROM (SELECT * FROM table1) AS alias_name
 
    <sect3 id="queries-table-aliases">
     <title>Table and Column Aliases</title>
+
+    <indexterm zone="queries-table-aliases">
+     <primary>label</primary>
+     <secondary>table</secondary>
+    </indexterm>
+
+    <indexterm>
+     <primary>alias</primary>
+     <see>label</see>
+    </indexterm>
 
     <para>
      A temporary name can be given to tables and complex table
@@ -400,6 +436,10 @@ FROM (SELECT * FROM T1) DT1, T2, T3
   <sect2 id="queries-where">
    <title>WHERE clause</title>
 
+   <indexterm zone="queries-where">
+    <primary>where</primary>
+   </indexterm>
+
    <para>
     The syntax of the WHERE clause is
 <synopsis>
@@ -481,6 +521,10 @@ FROM FDT WHERE
 
   <sect2 id="queries-group">
    <title>GROUP BY and HAVING clauses</title>	   
+
+   <indexterm zone="queries-group">
+    <primary>group</primary>
+   </indexterm>
 
    <para>
     After passing the WHERE filter, the derived input table may be
@@ -578,6 +622,11 @@ SELECT pid    AS "Products",
  <sect1 id="queries-select-lists">
   <title>Select Lists</title>
 
+  <indexterm>
+   <primary>select</primary>
+   <secondary>select list</secondary>
+  </indexterm>
+
   <para>
    As shown in the previous section,
    the table expression in the <command>SELECT</command> command
@@ -620,6 +669,11 @@ SELECT tbl1.a, tbl2.b, tbl1.c FROM ...
   <sect2 id="queries-column-labels">
    <title>Column Labels</title>
 
+   <indexterm zone="queries-column-labels">
+    <primary>label</primary>
+    <secondary>column</secondary>
+   </indexterm>
+
    <para>
     The entries in the select list can be assigned names for further
     processing.  The <quote>further processing</quote> in this case is
@@ -651,6 +705,10 @@ SELECT a AS value, b + c AS sum FROM ...
 
   <sect2 id="queries-distinct">
    <title>DISTINCT</title>
+
+   <indexterm zone="queries-distinct">
+    <primary>distinct</primary>
+   </indexterm>
 
    <para>
     After the select list has been processed, the result table may
@@ -699,6 +757,16 @@ SELECT DISTINCT ON (<replaceable>expression</replaceable> <optional>, <replaceab
 
  <sect1 id="queries-union">
   <title>Combining Queries</title>
+
+  <indexterm zone="queries-union">
+   <primary>union</primary>
+  </indexterm>
+  <indexterm zone="queries-union">
+   <primary>intersection</primary>
+  </indexterm>
+  <indexterm zone="queries-union">
+   <primary>except</primary>
+  </indexterm>
 
   <para>
    The results of two queries can be combined using the set operations
@@ -756,6 +824,11 @@ SELECT DISTINCT ON (<replaceable>expression</replaceable> <optional>, <replaceab
 
  <sect1 id="queries-order">
   <title>Sorting Rows</title>
+
+  <indexterm zone="queries-order">
+   <primary>sorting</primary>
+   <secondary>query results</secondary>
+  </indexterm>
 	   
   <para>
    After a query has produced an output table (after the select list
@@ -816,6 +889,15 @@ SELECT a AS b FROM table1 ORDER BY a;
 
  <sect1 id="queries-limit">
   <title>LIMIT and OFFSET</title>
+
+  <indexterm zone="queries-limit">
+   <primary>limit</primary>
+  </indexterm>
+
+  <indexterm zone="queries-limit">
+   <primary>offset</primary>
+   <secondary>with query results</secondary>
+  </indexterm>
 
 <synopsis>
 SELECT <replaceable>select_list</replaceable> FROM <replaceable>table_expression</replaceable> <optional>ORDER BY <replaceable>sort_spec</replaceable></optional> <optional>LIMIT { <replaceable>number</replaceable> | ALL }</optional> <optional>OFFSET <replaceable>number</replaceable></optional>

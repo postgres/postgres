@@ -1,5 +1,11 @@
  <chapter id="xtypes">
   <title>Extending <acronym>SQL</acronym>: Types</title>
+
+  <indexterm zone="xtypes">
+   <primary>data types</primary>
+   <secondary>extending</secondary>
+  </indexterm>
+
   <para>
    As previously mentioned, there are two kinds  of  types
    in  <productname>Postgres</productname>: base types (defined in a programming language) 

@@ -1,6 +1,11 @@
 <appendix id="sql-keywords-appendix">
  <title><acronym>SQL</acronym> Key Words</title>
 
+ <indexterm zone="sql-keywords-appendix">
+  <primary>key words</primary>
+  <secondary>list of</secondary>
+ </indexterm>
+
  <para>
   <xref linkend="keywords-table"> lists all tokens that are key words
   in the SQL standard and in <productname>PostgreSQL</productname>

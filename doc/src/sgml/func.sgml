@@ -1,7 +1,15 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.57 2001/04/20 15:52:33 thomas Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.58 2001/05/12 22:51:34 petere Exp $ -->
 
 <chapter id="functions">
  <title>Functions and Operators</title>
+
+ <indexterm zone="functions">
+  <primary>functions</primary>
+ </indexterm>
+
+ <indexterm zone="functions">
+  <primary>operators</primary>
+ </indexterm>
 
  <para>
   <productname>Postgres</productname> provides a large number of
@@ -28,8 +36,34 @@
  <sect1 id="functions-logical">
   <title>Logical Operators</title>
 
+  <indexterm zone="functions-logical">
+   <primary>operators</primary>
+   <secondary>logical</secondary>
+  </indexterm>
+
+  <indexterm>
+   <primary>Boolean</primary>
+   <secondary>operators</secondary>
+   <see>operators, logical</see>
+  </indexterm>
+
   <para>
    The usual logical operators are available:
+
+   <indexterm>
+    <primary>and</primary>
+    <secondary>operator</secondary>
+   </indexterm>
+
+   <indexterm>
+    <primary>or</primary>
+    <secondary>operator</secondary>
+   </indexterm>
+
+   <indexterm>
+    <primary>not</primary>
+    <secondary>operator</secondary>
+   </indexterm>
 
    <simplelist>
     <member>AND</member>
@@ -130,6 +164,11 @@
  <sect1 id="functions-comparison">
   <title>Comparison Operators</title>
 
+  <indexterm zone="functions-comparison">
+   <primary>comparison</primary>
+   <secondary>operators</secondary>
+  </indexterm>
+
   <table>
    <title>Comparison Operators</TITLE>
    <tgroup cols="2">
@@ -193,6 +232,9 @@
   </para>
 
   <para>
+   <indexterm>
+    <primary>between</primary>
+   </indexterm>
    In addition to the comparison operators, the special
    <token>BETWEEN</token> construct is available.
 <synopsis>
@@ -722,7 +764,13 @@
      <row>
       <entry> <parameter>string</parameter> <literal>||</literal> <parameter>string</parameter> </entry>
       <entry> <type>text</type> </entry>
-      <entry>string concatenation</entry>
+      <entry>
+       string concatenation
+       <indexterm>
+        <primary>character strings</primary>
+	<secondary>concatenation</secondary>
+       </indexterm>
+      </entry>
       <entry>'Postgre' || 'SQL'</entry>
       <entry>PostgreSQL</entry>
      </row>
@@ -730,7 +778,18 @@
      <row>
       <entry>char_length(<parameter>string</parameter>) or character_length(<parameter>string</parameter>)</entry>
       <entry><type>integer</type></entry>
-      <entry>length of string</entry>
+      <entry>
+       length of string
+       <indexterm>
+        <primary>character strings</primary>
+	<secondary>length</secondary>
+       </indexterm>
+       <indexterm>
+        <primary>length</primary>
+	<secondary>character strings</secondary>
+	<see>character strings, length</see>
+       </indexterm>
+      </entry>
       <entry>char_length('jose')</entry>
       <entry>4</entry>
      </row>
@@ -762,7 +821,12 @@
      <row>
       <entry>substring(<parameter>string</parameter> <optional>from <type>integer</type></optional> <optional>for <type>integer</type></optional>)</entry>
       <entry><type>text</type></entry>
-      <entry>extract substring</entry>
+      <entry>
+       extract substring
+       <indexterm>
+        <primary>substring</primary>
+       </indexterm>
+      </entry>
       <entry>substring('Thomas' from 2 for 3)</entry>
       <entry>oma</entry>
      </row>
@@ -997,6 +1061,10 @@
   <sect2 id="functions-like">
    <title>Pattern Matching with <function>LIKE</function></title>
 
+   <indexterm>
+    <primary>like</primary>
+   </indexterm>
+
 <synopsis>
 <replaceable>string</replaceable> LIKE <replaceable>pattern</replaceable> <optional> ESCAPE <replaceable>escape-character</replaceable> </optional>
 <replaceable>string</replaceable> NOT LIKE <replaceable>pattern</replaceable> <optional> ESCAPE <replaceable>escape-character</replaceable> </optional>
@@ -1080,6 +1148,11 @@
 
   <sect2 id="functions-regexp">
    <title><acronym>POSIX</acronym> Regular Expressions</title>
+
+   <indexterm zone="functions-regexp">
+    <primary>regular expressions</primary>
+    <seealso>pattern matching</seealso>
+   </indexterm>
 
    <table>
     <title>Regular Expression Match Operators</title>
@@ -1385,6 +1458,10 @@
 
   <sect1 id="functions-formatting">
    <title>Formatting Functions</title>
+
+   <indexterm zone="functions-formatting">
+    <primary>formatting</primary>
+   </indexterm>
 
    <note>
     <title>Author</title>
@@ -1749,10 +1826,9 @@
 
      <listitem>
       <para>
-       If you want to
-       have a double quote in the output you must precede it with a
-       backslash, for example <literal>'\\"YYYY
-       Month\\"'</literal>. <!-- " font-lock sanity :-) -->
+       If you want to have a double quote in the output you must
+       precede it with a backslash, for example <literal>'\\"YYYY
+       Month\\"'</literal>. <!-- "" font-lock sanity :-) -->
       </para>
      </listitem>
 
@@ -2654,6 +2730,16 @@ SELECT date_trunc('year', TIMESTAMP '2001-02-16 20:38:40');
   <sect2 id="functions-datetime-current">
    <title>Current Date/Time</title>
 
+   <indexterm>
+    <primary>date</primary>
+    <secondary>current</secondary>
+   </indexterm>
+
+   <indexterm>
+    <primary>time</primary>
+    <secondary>current</secondary>
+   </indexterm>
+
    <para>
     The following functions are available to obtain the current date and/or
     time:
@@ -3297,6 +3383,14 @@ Not defined by this name. Implements the intersection operator '#'
  <sect1 id="functions-conditional">
   <title>Conditional Expressions</title>
 
+  <indexterm>
+   <primary>case</primary>
+  </indexterm>
+
+  <indexterm>
+   <primary>conditionals</primary>
+  </indexterm>
+
   <para>
    This section describes the <acronym>SQL</acronym>-compliant conditional expressions
    available in <productname>Postgres</productname>.
@@ -3420,6 +3514,10 @@ SELECT COALESCE(description, short_description, '(none)') ...
 
  <bridgehead renderas="sect2">NULLIF</bridgehead>
 
+  <indexterm>
+   <primary>nullif</primary>
+  </indexterm>
+
 <synopsis>
 <function>NULLIF</function>(<replaceable>value1</replaceable>, <replaceable>value2</replaceable>)
 </synopsis>
@@ -3480,6 +3578,11 @@ SELECT NULLIF(value, '(none)') ...
      </tbody>
     </tgroup>
    </table>
+
+   <indexterm zone="functions-misc">
+    <primary>user</primary>
+    <secondary>current</secondary>
+   </indexterm>
 
    <para>
     The <function>session_user</> is the user that initiated a database
@@ -3542,6 +3645,10 @@ SELECT NULLIF(value, '(none)') ...
       <entry>AVG(<replaceable class="parameter">expression</replaceable>)</entry>
       <entry>the average (arithmetic mean) of all input values</entry>
       <entry>
+       <indexterm>
+        <primary>average</primary>
+        <secondary>function</secondary>
+       </indexterm>
        Finding the average value is available on the following data
        types: <type>smallint</type>, <type>integer</type>,
        <type>bigint</type>, <type>real</type>, <type>double
@@ -3589,6 +3696,9 @@ SELECT NULLIF(value, '(none)') ...
       <entry>STDDEV(<replaceable class="parameter">expression</replaceable>)</entry>
       <entry>the sample standard deviation of the input values</entry>
       <entry>
+       <indexterm>
+        <primary>standard deviation</primary>
+       </indexterm>
        Finding the standard deviation is available on the following
        data types: <type>smallint</type>, <type>integer</type>,
        <type>bigint</type>, <type>real</type>, <type>double
@@ -3616,6 +3726,9 @@ SELECT NULLIF(value, '(none)') ...
       <entry>VARIANCE(<replaceable class="parameter">expression</replaceable>)</entry>
       <entry>the sample variance of the input values</entry>
       <entry>
+       <indexterm>
+        <primary>variance</primary>
+       </indexterm>
        The variance is the square of the standard deviation.  The
        supported data types are the same.
       </entry>

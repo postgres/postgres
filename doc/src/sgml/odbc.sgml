@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.21 2001/01/20 20:59:28 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.22 2001/05/12 22:51:35 petere Exp $
 -->
 
  <chapter id="odbc">
@@ -18,6 +18,10 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.21 2001/01/20 20:59:28 
   </docinfo>
 
   <title>ODBC Interface</title>
+
+  <indexterm zone="odbc">
+   <primary>ODBC</primary>
+  </indexterm>
 
   <note>
    <para>
@@ -80,8 +84,9 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.21 2001/01/20 20:59:28 
     (or any <acronym>ODBC</> driver) is that there must exist a
     <firstterm>driver manager</> on the system where the
     <acronym>ODBC</> driver is to be used. There exists a free
-    <acronym>ODBC</> driver for Unix called <productname>iODBC</>
-    which can be obtained via <ulink
+    <acronym>ODBC</> driver for Unix called
+    <indexterm><primary>iODBC</primary></indexterm>
+    <productname>iODBC</> which can be obtained via <ulink
     url="http://www.iodbc.org">http://www.iodbc.org</ulink>.
     Instructions for installing <productname>iODBC</> are contained in
     the <productname>iODBC</> distribution. Having said that, any
@@ -295,6 +300,10 @@ InstallDir = /opt/applix/axdata/axshlib
 
   <sect1 id="odbc-applixware">
    <title>ApplixWare</title>
+
+   <indexterm zone="odbc-applixware">
+    <primary>ApplixWare</primary>
+   </indexterm>
 
    <para>
     <productname>ApplixWare</productname> has an 

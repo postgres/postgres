@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.36 2001/04/20 15:52:33 thomas Exp $
+#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.37 2001/05/12 22:51:34 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -49,16 +49,9 @@ vpath %.sgml ./ref
 
 ALLBOOKS = admin developer programmer reference tutorial user
 
-ALLSGML := $(wildcard $(srcdir)/*.sgml $(srcdir)/ref/*.sgml)
+ALLSGML := $(wildcard $(srcdir)/*.sgml $(srcdir)/ref/*.sgml) bookindex.sgml setindex.sgml
 
-
-catalog: Makefile $(top_builddir)/src/Makefile.global
-	(echo "PUBLIC \"-//Norman Walsh//DOCUMENT DocBook HTML Stylesheet//EN\" \"$(DOCBOOKSTYLE)/html/docbook.dsl\""; \
-	echo "PUBLIC \"-//Norman Walsh//DOCUMENT DocBook Print Stylesheet//EN\" \"$(DOCBOOKSTYLE)/print/docbook.dsl\"") > $@
-
-ifeq "$(origin DOCBOOKSTYLE)" "command line"
-.PHONY: catalog
-endif
+CATALOG = $(DOCBOOKSTYLE)/catalog
 
 
 ##
@@ -84,17 +77,31 @@ man: $(ALLSGML)
 ## HTML
 ##
 
-JADE.html = $(JADE) $(JADEFLAGS) $(SGMLINCLUDE) -d stylesheet.dsl -i output-html -t sgml
+JADE.html = $(JADE) $(JADEFLAGS) $(SGMLINCLUDE) -c $(CATALOG) -d stylesheet.dsl -i output-html -t sgml
 
-postgres.html: postgres.sgml $(ALLSGML) stylesheet.dsl catalog
+postgres.html: postgres.sgml $(ALLSGML) stylesheet.dsl
 	@rm -f *.html
 	$(JADE.html) $<
 	ln -sf $@ index.html
 
-$(addsuffix .html, $(ALLBOOKS)): %.html: %.sgml $(ALLSGML) stylesheet.dsl catalog
+$(addsuffix .html, $(ALLBOOKS)): %.html: %.sgml $(ALLSGML) stylesheet.dsl
 	@rm -f *.html
 	$(JADE.html) book-decl.sgml $<
 	ln -sf $@ index.html
+
+COLLATEINDEX = $(PERL) $(DOCBOOKSTYLE)/bin/collateindex.pl -f -g -t 'Index'
+
+ifeq (,$(wildcard HTML.index))
+bookindex.sgml:
+	$(COLLATEINDEX) -o $@ -N
+setindex.sgml:
+	$(COLLATEINDEX) -x -o $@ -N
+else
+bookindex.sgml: HTML.index
+	$(COLLATEINDEX) -i 'bookindex' -o $@ $<
+setindex.sgml: HTML.index
+	$(COLLATEINDEX) -i 'setindex' -x -o $@ $<
+endif
 
 
 ##
@@ -102,12 +109,12 @@ $(addsuffix .html, $(ALLBOOKS)): %.html: %.sgml $(ALLSGML) stylesheet.dsl catalo
 ##
 
 # RTF to allow minor editing for hardcopy
-$(addsuffix .rtf, $(ALLBOOKS)): %.rtf: %.sgml $(ALLSGML) stylesheet.dsl catalog
-	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) -d stylesheet.dsl -t rtf -V rtf-backend -i output-print book-decl.sgml $<
+$(addsuffix .rtf, $(ALLBOOKS)): %.rtf: %.sgml $(ALLSGML) stylesheet.dsl
+	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) -c $(CATALOG) -d stylesheet.dsl -t rtf -V rtf-backend -i output-print book-decl.sgml $<
 
 # TeX and DVI
-$(addsuffix .tex, $(ALLBOOKS)): %.tex: %.sgml $(ALLSGML) stylesheet.dsl catalog
-	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) -d stylesheet.dsl -t tex -V tex-backend -i output-print book-decl.sgml $<
+$(addsuffix .tex, $(ALLBOOKS)): %.tex: %.sgml $(ALLSGML) stylesheet.dsl
+	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) -c $(CATALOG) -d stylesheet.dsl -t tex -V tex-backend -i output-print book-decl.sgml $<
 
 %.dvi: %.tex
 	jadetex $<
@@ -134,7 +141,7 @@ $(addsuffix .tex, $(ALLBOOKS)): %.tex: %.sgml $(ALLSGML) stylesheet.dsl catalog
 ## Semi-automatic generation of some text files.
 ##
 
-JADE.text = $(JADE) $(JADEFLAGS) $(SGMLINCLUDE) -d stylesheet.dsl -i output-text -t sgml
+JADE.text = $(JADE) $(JADEFLAGS) $(SGMLINCLUDE) -c $(CATALOG) -d stylesheet.dsl -i output-text -t sgml
 
 INSTALL HISTORY: % : %.html
 	@echo "|";\
@@ -171,10 +178,11 @@ check-postgres: postgres.sgml
 ##
 
 clean distclean maintainer-clean:
-	rm -f catalog
 # HTML
 	rm -f HTML.manifest *.html
 # man
 	rm -rf *.1 *.$(DEFAULTSECTION) man1 man$(DEFAULTSECTION) manpage.refs manpage.links manpage.log
 # print
 	rm -f *.rtf *.tex *.dvi *.aux *.log *.ps *.pdf
+# index
+	rm -f HTML.index bookindex.sgml setindex.sgml

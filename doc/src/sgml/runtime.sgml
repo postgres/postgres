@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.65 2001/05/08 21:09:47 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.66 2001/05/12 22:51:35 petere Exp $
 -->
 
 <Chapter Id="runtime">
@@ -12,6 +12,10 @@ $Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.65 2001/05/08 21:09:47 mom
 
  <sect1 id="postgres-user">
   <title>The Postgres user account</title>
+
+  <indexterm>
+   <primary>postgres user</primary>
+  </indexterm>
 
   <para>
    As with any other server daemon that is connected to the world at
@@ -35,6 +39,15 @@ $Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.65 2001/05/08 21:09:47 mom
 
  <sect1 id="creating-cluster">
   <title>Creating a database cluster</title>
+
+  <indexterm>
+   <primary>database cluster</primary>
+  </indexterm>
+
+  <indexterm>
+   <primary>data area</primary>
+   <see>database cluster</see>
+  </indexterm>
 
   <para>
    Before you can do anything, you must initialize a database storage
@@ -70,6 +83,9 @@ $Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.65 2001/05/08 21:09:47 mom
 
   <tip>
    <para>
+    <indexterm>
+     <primary><envar>PGDATA</envar></primary>
+    </indexterm>
     As an alternative to the <option>-D</option> option, you can set
     the environment variable <envar>PGDATA</envar>.
    </para>
@@ -129,6 +145,9 @@ NOTICE:  Initializing database with en_US collation order.
   <title>Starting the database server</title>
 
   <para>
+   <indexterm>
+    <primary>postmaster</primary>
+   </indexterm>
    Before anyone can access the database you must start the database
    server. The database server is called
    <firstterm>postmaster</firstterm>.
@@ -157,6 +176,9 @@ NOTICE:  Initializing database with en_US collation order.
   </para>
 
   <para>
+   <indexterm>
+    <primary>TCP/IP</primary>
+   </indexterm>
    The postmaster also takes a number of other command line options.
    For more information see the reference page and below under runtime
    configuration. In particular, in order for the postmaster to accept
@@ -165,6 +187,9 @@ NOTICE:  Initializing database with en_US collation order.
   </para>
 
   <para>
+   <indexterm>
+    <primary>pg_ctl</primary>
+   </indexterm>
    This shell syntax can get tedious quickly.  Therefore the shell
    script wrapper <application>pg_ctl</application> is provided that
    encapsulates some of the tasks.  E.g.,
@@ -410,6 +435,11 @@ connectDBstart() -- connect() failed: No such file or directory
   <sect1 id="runtime-config">
    <Title>Run-time configuration</Title>
 
+   <indexterm>
+    <primary>configuration</primary>
+    <secondary>server</secondary>
+   </indexterm>
+
    <para>
     There are a lot of configuration parameters that affect the
     behavior of the database system in some way or other. Here we
@@ -445,6 +475,9 @@ syslog = 2
    </para>
 
    <para>
+    <indexterm>
+     <primary>SIGHUP</primary>
+    </indexterm>
     The configuration file is reread whenever the postmaster receives
     a SIGHUP signal. This signal is also propagated to all running
     backend processes, so that running sessions get the new default.
@@ -549,6 +582,10 @@ env PGOPTIONS='-c geqo=off' psql
      </varlistentry>
 
      <varlistentry>
+      <indexterm>
+       <primary>index scan</primary>
+      </indexterm>
+
       <term>ENABLE_INDEXSCAN (<type>boolean</type>)</term>
       <listitem>
        <para>
@@ -585,6 +622,10 @@ env PGOPTIONS='-c geqo=off' psql
      </varlistentry>
 
      <varlistentry>
+      <indexterm>
+       <primary>sequential scan</primary>
+      </indexterm>
+
       <term>ENABLE_SEQSCAN (<type>boolean</type>)</term>
       <listitem>
        <para>
@@ -623,6 +664,14 @@ env PGOPTIONS='-c geqo=off' psql
      </varlistentry>
 
      <varlistentry>
+      <indexterm>
+       <primary>genetic query optimization</primary>
+      </indexterm>
+      <indexterm>
+       <primary>GEQO</primary>
+       <see>genetic query optimization</see>
+      </indexterm>
+
       <term>GEQO (<type>boolean</type>)</term>
       <listitem>
        <para>
@@ -919,6 +968,11 @@ env PGOPTIONS='-c geqo=off' psql
    <para>
     <variablelist>
      <varlistentry>
+      <indexterm>
+       <primary>deadlock</primary>
+       <secondary>timeout</secondary>
+      </indexterm>
+
       <term>DEADLOCK_TIMEOUT (<type>integer</type>)</term>
       <listitem>
        <para>
@@ -943,6 +997,10 @@ env PGOPTIONS='-c geqo=off' psql
      </varlistentry>
 
      <varlistentry>
+      <indexterm>
+       <primary>fsync</primary>
+      </indexterm>
+
       <term>FSYNC (<type>boolean</type>)</term>
       <listitem>
        <para>
@@ -1101,6 +1159,10 @@ env PGOPTIONS='-c geqo=off' psql
      </varlistentry>
 
      <varlistentry>
+      <indexterm>
+       <primary>SSL</primary>
+      </indexterm>
+
       <term>SSL (<type>boolean</type>)</term>
       <listitem>
        <para>
@@ -1431,6 +1493,14 @@ env PGOPTIONS='-c geqo=off' psql
   <sect2 id="sysvipc">
    <title>Shared Memory and Semaphores</title>
 
+   <indexterm zone="sysvipc">
+    <primary>shared memory</primary>
+   </indexterm>
+
+   <indexterm zone="sysvipc">
+    <primary>semaphores</primary>
+   </indexterm>
+
    <para>
     Shared memory and semaphores are collectively referred to as
     <quote>System V IPC</> (together with message queues, which are
@@ -1544,6 +1614,7 @@ env PGOPTIONS='-c geqo=off' psql
 
 
    <para>
+    <indexterm><primary>SHMMAX</primary></indexterm>
     The most important shared memory parameter is <varname>SHMMAX</>,
     the maximum size, in bytes, that a shared memory segment can have.
     If you get an error message from <function>shmget</> along the
@@ -2015,6 +2086,10 @@ default:\
  <sect1 id="ssl-tcp">
   <title>Secure TCP/IP Connections with SSL</title>
 
+  <indexterm zone="ssl-tcp">
+   <primary>SSL</primary>
+  </indexterm>
+
   <para>
    <productname>PostgreSQL</> has native support for connections over
    <acronym>SSL</> to encrypt
@@ -2077,6 +2152,10 @@ cp cert.cert <replaceable>$PGDATA</replaceable>/server.crt
 
  <sect1 id="ssh-tunnels">
   <title>Secure TCP/IP Connections with SSH tunnels</title>
+
+  <indexterm zone="ssh-tunnels">
+   <primary>ssh</primary>
+  </indexterm>
 
   <note>
    <title>Acknowledgement</title>

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/stylesheet.dsl,v 1.7 2001/03/10 16:05:35 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/stylesheet.dsl,v 1.8 2001/05/12 22:51:35 petere Exp $ -->
 <!DOCTYPE style-sheet PUBLIC "-//James Clark//DTD DSSSL Style Sheet//EN" [
 
 <!-- must turn on one of these with -i on the jade command line -->
@@ -57,6 +57,8 @@
 ;; Put date of creation into header
 (define %html-header-tags% 
   (list (list "META" '("NAME" "creation") (list "CONTENT" (time->string (time) #t)))))
+
+(define html-index #t)
 
 ]]> <!-- %output-html -->
 
