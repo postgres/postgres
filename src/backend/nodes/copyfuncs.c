@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.79 1999/05/12 15:01:31 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.80 1999/05/18 21:34:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -357,10 +357,6 @@ _copyHashJoin(HashJoin *from)
 
 	newnode->hashjoinop = from->hashjoinop;
 
-	/* both are unused !.. */
-	newnode->hashjointablekey = from->hashjointablekey;
-	newnode->hashjointablesize = from->hashjointablesize;
-
 	return newnode;
 }
 
@@ -544,10 +540,6 @@ _copyHash(Hash *from)
 	 * ----------------
 	 */
 	Node_Copy(from, newnode, hashkey);
-
-	/* both are unused !.. */
-	newnode->hashtablekey = from->hashtablekey;
-	newnode->hashtablesize = from->hashtablesize;
 
 	return newnode;
 }

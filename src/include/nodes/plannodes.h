@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: plannodes.h,v 1.24 1999/03/23 16:51:04 momjian Exp $
+ * $Id: plannodes.h,v 1.25 1999/05/18 21:34:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -221,9 +221,6 @@ typedef struct HashJoin
 	List	   *hashclauses;
 	Oid			hashjoinop;
 	HashJoinState *hashjoinstate;
-	HashJoinTable hashjointable;
-	IpcMemoryKey hashjointablekey;
-	int			hashjointablesize;
 	bool		hashdone;
 } HashJoin;
 
@@ -320,9 +317,6 @@ typedef struct Hash
 	Plan		plan;
 	Var		   *hashkey;
 	HashState  *hashstate;
-	HashJoinTable hashtable;
-	IpcMemoryKey hashtablekey;
-	int			hashtablesize;
 } Hash;
 
 #ifdef NOT_USED

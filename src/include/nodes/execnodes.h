@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.27 1999/03/23 16:51:00 momjian Exp $
+ * $Id: execnodes.h,v 1.28 1999/05/18 21:34:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -492,23 +492,15 @@ typedef struct MergeJoinState
 /* ----------------
  *	 HashJoinState information
  *
- *		hj_HashTable			address of the hash table for the hashjoin
- *		hj_HashTableShmId		shared memory id of hash table
- *		hj_CurBucket			the current hash bucket that we are searching
- *								for matches of the current outer tuple
- *		hj_CurTuple				the current matching inner tuple in the
- *								current hash bucket
- *		hj_CurOTuple			the current matching inner tuple in the
- *								current hash overflow chain
+ *		hj_HashTable			hash table for the hashjoin
+ *		hj_CurBucketNo			bucket# for current outer tuple
+ *		hj_CurTuple				last inner tuple matched to current outer
+ *								tuple, or NULL if starting search
+ *								(CurBucketNo and CurTuple are meaningless
+ *								 unless OuterTupleSlot is nonempty!)
  *		hj_InnerHashKey			the inner hash key in the hashjoin condition
- *		hj_OuterBatches			file descriptors for outer batches
- *		hj_InnerBatches			file descriptors for inner batches
- *		hj_OuterReadPos			current read position of outer batch
- *		hj_OuterReadBlk			current read block of outer batch
  *		hj_OuterTupleSlot		tuple slot for outer tuples
  *		hj_HashTupleSlot		tuple slot for hashed tuples
- *
- *
  *
  *	 JoinState information
  *
@@ -525,16 +517,10 @@ typedef struct MergeJoinState
 typedef struct HashJoinState
 {
 	JoinState	jstate;			/* its first field is NodeTag */
-	HashJoinTable hj_HashTable;
-	IpcMemoryId hj_HashTableShmId;
-	HashBucket	hj_CurBucket;
-	HeapTuple	hj_CurTuple;
-	OverflowTuple hj_CurOTuple;
-	Var		   *hj_InnerHashKey;
-	File	   *hj_OuterBatches;
-	File	   *hj_InnerBatches;
-	char	   *hj_OuterReadPos;
-	int			hj_OuterReadBlk;
+	HashJoinTable	hj_HashTable;
+	int				hj_CurBucketNo;
+	HashJoinTuple	hj_CurTuple;
+	Var			   *hj_InnerHashKey;
 	TupleTableSlot *hj_OuterTupleSlot;
 	TupleTableSlot *hj_HashTupleSlot;
 } HashJoinState;
@@ -668,7 +654,7 @@ typedef CommonState UniqueState;
 /* ----------------
  *	 HashState information
  *
- *		hashBatches		   file descriptors for the batches
+ *		hashtable			hash table for the hashjoin
  *
  *	 CommonState information
  *
@@ -683,7 +669,7 @@ typedef CommonState UniqueState;
 typedef struct HashState
 {
 	CommonState cstate;			/* its first field is NodeTag */
-	File	   *hashBatches;
+	HashJoinTable hashtable;
 } HashState;
 
 #ifdef NOT_USED
