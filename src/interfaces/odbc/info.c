@@ -826,7 +826,6 @@ PGAPI_GetTypeInfo(
 
 
 RETCODE SQL_API
-/*SQLGetFunctions(*/
 PGAPI_GetFunctions(
 				HDBC hdbc,
 				UWORD fFunction,
@@ -2202,6 +2201,8 @@ PGAPI_Statistics(
 			" and i.indexrelid = c.oid"
 			" and c.relam = a.oid"
 			, table_name);
+	if (PG_VERSION_GT(SC_get_conn(stmt), 6.4))
+		strcat(index_query, " order by i.indisprimary desc");
 
 	result = PGAPI_ExecDirect(hindx_stmt, index_query, strlen(index_query));
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))

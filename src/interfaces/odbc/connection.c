@@ -551,13 +551,19 @@ CC_connect(ConnectionClass *self, char do_password)
 			 ci->drivers.bools_as_char);
 
 #ifdef MULTIBYTE
-		encoding = check_client_encoding(ci->drivers.conn_settings);
+		encoding = check_client_encoding(ci->conn_settings);
 		if (encoding && strcmp(encoding, "OTHER"))
 			self->client_encoding = strdup(encoding);
+		else
+		{ 
+			encoding = check_client_encoding(ci->drivers.conn_settings);
+			if (encoding && strcmp(encoding, "OTHER"))
+				self->client_encoding = strdup(encoding);
+		}
 		qlog("                extra_systable_prefixes='%s', conn_settings='%s' conn_encoding='%s'\n",
 			 ci->drivers.extra_systable_prefixes,
 			 ci->drivers.conn_settings,
-			 check_client_encoding(ci->drivers.conn_settings));
+			 encoding ? encoding : "");
 #else
 		qlog("                extra_systable_prefixes='%s', conn_settings='%s'\n",
 			 ci->drivers.extra_systable_prefixes,

@@ -616,7 +616,14 @@ in_expr = TRUE;
 
 					/* lower case table name */
 					for (ptr = ti[stmt->ntab]->name; *ptr; ptr++)
+					{
+#ifdef	MULTIBYTE
+						if ((unsigned char) *ptr >= 0x80)
+							ptr++;
+						else
+#endif /* MULTIBYTE */
 						*ptr = tolower((unsigned char) *ptr);
+					}
 				}
 				mylog("got table = '%s'\n", ti[stmt->ntab]->name);
 

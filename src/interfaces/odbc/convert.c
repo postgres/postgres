@@ -1156,7 +1156,11 @@ copy_statement_with_parameters(StatementClass *stmt)
 				}
 				opos += lit_call_len; 
 				CVT_APPEND_STR("SELECT ");
+#ifdef MULTIBYTE
+				if (multibyte_strchr(&old_statement[opos], '('))
+#else
 				if (strchr(&old_statement[opos], '('))
+#endif /* MULTIBYTE */
 					proc_no_param = FALSE;
 				continue; 
 			}
