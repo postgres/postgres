@@ -1396,6 +1396,14 @@ Thu May  1 14:54:41 CEST 2003
 
 	- Enable more Informix shortcuts.
 	- Added option '-i' to parse files included via cpp diretive as well.
+
+Fri May  2 16:37:06 CEST 2003
+
+	- Fixed double definition of compat_mode.
+
+Tue May  6 11:51:33 CEST 2003
+
+	- Added rfmtlong compatibility function.
 	- Set ecpg version to 2.12.0.
 	- Set ecpg library to 3.4.2.
 	- Set pgtypes library to 1.0.0

@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <math.h>
 #include <ctype.h>
 
 #include <ecpg_informix.h>
@@ -400,10 +401,211 @@ intoasc(Interval *i, char *str)
 	return 0;
 }
 
+/***************************************************************************
+                          rfmt.c  -  description
+                             -------------------
+    begin                : Wed Apr 2 2003
+    copyright            : (C) 2003 by Carsten Wolff
+    email                : carsten.wolff@credativ.de
+ ***************************************************************************/
+
+static struct {
+	long val;
+	int maxdigits;
+	int digits;
+	int remaining;
+	char sign;
+	char *val_string;
+} value;
+
+/**
+ * initialize the struct, wich holds the different forms
+ * of the long value
+ */
+static void initValue(long lng_val) {
+	int i, div, dig;
+	char tmp[2] = " ";
+
+	// set some obvious things
+	value.val = lng_val >= 0 ? lng_val : lng_val * (-1);
+	value.sign = lng_val >= 0 ? '+' : '-';
+	value.maxdigits = log10(2)*(8*sizeof(long)-1);
+
+	// determine the number of digits
+	for(i=1; i <= value.maxdigits; i++) {
+		if ((int)(value.val / pow(10, i)) != 0) {
+			value.digits = i+1;
+		}
+	}
+	value.remaining = value.digits;
+
+	// convert the long to string
+	value.val_string = (char *)malloc(value.digits + 1);
+	for(i=value.digits; i > 0; i--) {
+		div = pow(10,i);
+		dig = (value.val % div) / (div / 10);
+		tmp[0] = (char)(dig + 48);
+		strcat(value.val_string, tmp);
+    }
+	// safety-net
+	value.val_string[value.digits] = '\0';
+	// clean up
+	free(tmp);
+}
+
+/* return the position oft the right-most dot in some string */
+static int getRightMostDot(char* str) {
+	size_t len = strlen(str);
+	int i,j;
+	j=0;
+	for(i=len-1; i >= 0; i--) {
+		if (str[i] == '.') {
+			return len-j-1;
+		}
+		j++;
+	}
+	return -1;
+}
+
 /* And finally some misc functions */
 int
-rfmtlong(long lvalue, char *format, char *outbuf)
+rfmtlong(long lng_val, char *fmt, char *outbuf)
 {
+	size_t fmt_len = strlen(fmt);
+	size_t temp_len;
+	int i, j, k, dotpos;
+	int leftalign = 0, blank = 0, sign = 0, entity = 0,
+	    entitydone = 0, signdone = 0, brackets_ok = 0;
+	char temp[fmt_len+1], tmp[2] = " ", lastfmt = ' ', fmtchar = ' ';
+
+	// put all info about the long in a struct
+	initValue(lng_val);
+
+	// '<' is the only format, where we have to align left
+	if (strchr(fmt, (int)'<')) {
+		leftalign = 1;
+	}
+
+	// '(' requires ')'
+	if (strchr(fmt, (int)'(') && strchr(fmt, (int)')')) {
+		brackets_ok = 1;
+	}
+
+	// get position of the right-most dot in the format-string
+	// and fill the temp-string wit '0's up to there.
+	dotpos = getRightMostDot(fmt);
+
+	// start to parse the formatstring
+	temp[0] = '\0';
+	j = 0;                  // position in temp
+	k = value.digits - 1;   // position in the value_string
+	for(i=fmt_len-1, j=0; i>=0; i--, j++) {
+		// qualify, where we are in the value_string
+		if (k < 0) {
+			if (leftalign) {
+				// can't use strncat(,,0) here, Solaris would freek out
+				temp[j] = '\0';
+				break;
+			}
+			blank = 1;
+			if (k == -2) {
+				entity = 1;
+			}
+			else if (k == -1) {
+				sign = 1;
+			}
+		}
+		// if we're right side of the right-most dot, print '0'
+		if (dotpos >= 0 && dotpos <= i) {
+			if (dotpos < i) {
+				if (fmt[i] == ')') tmp[0] = value.sign == '-' ? ')' : ' ';
+				else tmp[0] = '0';
+			}
+			else {
+				tmp[0] = '.';
+			}
+			strcat(temp, tmp);
+			continue;
+		}
+		// the ',' needs special attention, if it is in the blank area
+		if (blank && fmt[i] == ',') fmtchar = lastfmt;
+		else fmtchar = fmt[i];
+		// analyse this format-char
+		switch(fmtchar) {
+			case ',':
+				tmp[0] = ',';
+				k++;
+				break;
+			case '*':
+				if (blank) tmp[0] = '*';
+				else tmp[0] = value.val_string[k];
+				break;
+			case '&':
+				if (blank) tmp[0] = '0';
+				else tmp[0] = value.val_string[k];
+				break;
+			case '#':
+				if (blank) tmp[0] = ' ';
+				else tmp[0] = value.val_string[k];
+				break;
+			case '<':
+				tmp[0] = value.val_string[k];
+				break;
+			case '-':
+				if (sign && value.sign == '-' && !signdone) {
+					tmp[0] = '-';
+					signdone = 1;
+				}
+				else if (blank) tmp[0] = ' ';
+				else tmp[0] = value.val_string[k];
+				break;
+			case '+':
+				if (sign && !signdone) {
+					tmp[0] = value.sign;
+					signdone = 1;
+				}
+				else if (blank) tmp[0] = ' ';
+				else tmp[0] = value.val_string[k];
+				break;
+			case '(':
+				if (sign && brackets_ok && value.sign == '-') tmp[0] = '(';
+				else if (blank) tmp[0] = ' ';
+				else tmp[0] = value.val_string[k];
+				break;
+			case ')':
+				if (brackets_ok && value.sign == '-') tmp[0] = ')';
+				else tmp[0] = ' ';
+				break;
+			case '$':
+				if (blank && !entitydone) {
+					tmp[0] = '$';
+					entitydone = 1;
+				}
+				else if (blank) tmp[0] = ' ';
+				else tmp[0] = value.val_string[k];
+				break;
+			default: tmp[0] = fmt[i];
+		}
+		strcat(temp, tmp);
+		lastfmt = fmt[i];
+		k--;
+	}
+	// safety-net
+	temp[fmt_len] = '\0';
+
+	// reverse the temp-string and put it into the outbuf
+	temp_len = strlen(temp);
+	outbuf[0] = '\0';
+	for(i=temp_len-1; i>=0; i--) {
+		tmp[0] = temp[i];
+		strcat(outbuf, tmp); 
+	}
+	outbuf[temp_len] = '\0';
+
+	// cleaning up
+	free(tmp);
+	free(value.val_string);
+
 	return 0;
 }
 
