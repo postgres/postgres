@@ -1,5 +1,5 @@
 ifdef LINUX_ELF
-LDFLAGS+= -rdynamic
+LDFLAGS+= -rdynamic -Wl,-rpath -Wl,$(DESTDIR)$(LIBDIR)
 endif
 MK_NO_LORDER= true
 
