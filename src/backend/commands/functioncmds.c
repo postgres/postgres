@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.57 2005/03/29 00:16:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.58 2005/03/29 17:58:49 tgl Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -153,6 +153,15 @@ examine_parameter_list(List *parameter, Oid languageOid,
 					(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
 				   errmsg("functions cannot have more than %d arguments",
 						  FUNC_MAX_ARGS)));
+
+		if (fp->mode == FUNC_PARAM_OUT)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("CREATE FUNCTION / OUT parameters are not implemented")));
+		if (fp->mode == FUNC_PARAM_INOUT)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("CREATE FUNCTION / INOUT parameters are not implemented")));
 
 		toid = LookupTypeName(t);
 		if (OidIsValid(toid))

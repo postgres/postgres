@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.274 2005/03/14 00:19:37 neilc Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.275 2005/03/29 17:58:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -899,6 +899,11 @@ typedef struct PrivGrantee
 	char	   *groupname;
 } PrivGrantee;
 
+/*
+ * Note: FuncWithArgs carries only the types of the input parameters of the
+ * function.  So it is sufficient to identify an existing function, but it
+ * is not enough info to define a function nor to call it.
+ */
 typedef struct FuncWithArgs
 {
 	NodeTag		type;
@@ -1389,12 +1394,20 @@ typedef struct CreateFunctionStmt
 	List	   *withClause;		/* a list of DefElem */
 } CreateFunctionStmt;
 
+typedef enum FunctionParameterMode
+{
+	/* the assigned enum values appear in pg_proc, don't change 'em! */
+	FUNC_PARAM_IN = 'i',		/* input only */
+	FUNC_PARAM_OUT = 'o',		/* output only */
+	FUNC_PARAM_INOUT = 'b'		/* both */
+} FunctionParameterMode;
+
 typedef struct FunctionParameter
 {
 	NodeTag		type;
 	char	   *name;			/* parameter name, or NULL if not given */
 	TypeName   *argType;		/* TypeName for parameter type */
-	/* someday add IN/OUT/INOUT indicator here */
+	FunctionParameterMode mode;	/* IN/OUT/INOUT */
 } FunctionParameter;
 
 typedef struct AlterFunctionStmt

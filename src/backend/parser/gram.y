@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.484 2005/03/14 00:19:36 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.485 2005/03/29 17:58:50 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -114,6 +114,8 @@ static void doNegateFloat(Value *v);
 
 	TypeName			*typnam;
 	FunctionParameter   *fun_param;
+	FunctionParameterMode fun_param_mode;
+	FuncWithArgs		*funwithargs;
 	DefElem				*defelt;
 	SortBy				*sortby;
 	JoinExpr			*jexpr;
@@ -206,7 +208,7 @@ static void doNegateFloat(Value *v);
 %type <ival>	privilege
 %type <list>	privileges privilege_list
 %type <privtarget> privilege_target
-%type <node>	function_with_argtypes
+%type <funwithargs> function_with_argtypes
 %type <list>	function_with_argtypes_list
 %type <chr> 	TriggerOneEvent
 
@@ -233,9 +235,10 @@ static void doNegateFloat(Value *v);
 
 %type <defelt>	createfunc_opt_item common_func_opt_item
 %type <fun_param> func_arg
+%type <fun_param_mode> arg_class
 %type <typnam>	func_return func_type aggr_argtype
 
-%type <boolean> arg_class TriggerForType OptTemp
+%type <boolean>  TriggerForType OptTemp
 %type <oncommit> OnCommitOption
 %type <withoids> OptWithOids WithOidsAs
 
@@ -3177,7 +3180,7 @@ function_with_argtypes:
 					FuncWithArgs *n = makeNode(FuncWithArgs);
 					n->funcname = $1;
 					n->funcargs = extractArgTypes($2);
-					$$ = (Node *)n;
+					$$ = n;
 				}
 		;
 
@@ -3295,7 +3298,13 @@ func_args_list:
 			| func_args_list ',' func_arg			{ $$ = lappend($1, $3); }
 		;
 
-/* We can catch over-specified arguments here if we want to,
+/*
+ * The style with arg_class first is SQL99 standard, but Oracle puts
+ * param_name first; accept both since it's likely people will try both
+ * anyway.  Don't bother trying to save productions by letting arg_class
+ * have an empty alternative ... you'll get shift/reduce conflicts.
+ *
+ * We can catch over-specified arguments here if we want to,
  * but for now better to silently swallow typmod, etc.
  * - thomas 2000-03-22
  */
@@ -3305,6 +3314,23 @@ func_arg:
 					FunctionParameter *n = makeNode(FunctionParameter);
 					n->name = $2;
 					n->argType = $3;
+					n->mode = $1;
+					$$ = n;
+				}
+			| param_name arg_class func_type
+				{
+					FunctionParameter *n = makeNode(FunctionParameter);
+					n->name = $1;
+					n->argType = $3;
+					n->mode = $2;
+					$$ = n;
+				}
+			| param_name func_type
+				{
+					FunctionParameter *n = makeNode(FunctionParameter);
+					n->name = $1;
+					n->argType = $2;
+					n->mode = FUNC_PARAM_IN;
 					$$ = n;
 				}
 			| arg_class func_type
@@ -3312,26 +3338,24 @@ func_arg:
 					FunctionParameter *n = makeNode(FunctionParameter);
 					n->name = NULL;
 					n->argType = $2;
+					n->mode = $1;
+					$$ = n;
+				}
+			| func_type
+				{
+					FunctionParameter *n = makeNode(FunctionParameter);
+					n->name = NULL;
+					n->argType = $1;
+					n->mode = FUNC_PARAM_IN;
 					$$ = n;
 				}
 		;
 
-arg_class:	IN_P									{ $$ = FALSE; }
-			| OUT_P
-				{
-					ereport(ERROR,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("CREATE FUNCTION / OUT parameters are not implemented")));
-					$$ = TRUE;
-				}
-			| INOUT
-				{
-					ereport(ERROR,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("CREATE FUNCTION / INOUT parameters are not implemented")));
-					$$ = FALSE;
-				}
-			| /*EMPTY*/								{ $$ = FALSE; }
+/* INOUT is SQL99 standard, IN OUT is for Oracle compatibility */
+arg_class:	IN_P									{ $$ = FUNC_PARAM_IN; }
+			| OUT_P									{ $$ = FUNC_PARAM_OUT; }
+			| INOUT									{ $$ = FUNC_PARAM_INOUT; }
+			| IN_P OUT_P							{ $$ = FUNC_PARAM_INOUT; }
 		;
 
 /*
@@ -3458,7 +3482,7 @@ AlterFunctionStmt:
 			ALTER FUNCTION function_with_argtypes alterfunc_opt_list opt_restrict
 				{
 					AlterFunctionStmt *n = makeNode(AlterFunctionStmt);
-					n->func = (FuncWithArgs *) $3;
+					n->func = $3;
 					n->actions = $4;
 					$$ = (Node *) n;
 				}
@@ -3561,7 +3585,7 @@ CreateCastStmt: CREATE CAST '(' Typename AS Typename ')'
 					CreateCastStmt *n = makeNode(CreateCastStmt);
 					n->sourcetype = $4;
 					n->targettype = $6;
-					n->func = (FuncWithArgs *) $10;
+					n->func = $10;
 					n->context = (CoercionContext) $11;
 					$$ = (Node *)n;
 				}
@@ -8299,9 +8323,9 @@ check_func_name(List *names)
 
 /* extractArgTypes()
  * Given a list of FunctionParameter nodes, extract a list of just the
- * argument types (TypeNames).  Most of the productions using func_args
- * don't currently want the full FunctionParameter data, so we use this
- * rather than having two sets of productions.
+ * argument types (TypeNames) for input parameters only.  This is what
+ * is needed to look up an existing function, which is what is wanted by
+ * the productions that use this call.
  */
 static List *
 extractArgTypes(List *parameters)
@@ -8313,7 +8337,8 @@ extractArgTypes(List *parameters)
 	{
 		FunctionParameter *p = (FunctionParameter *) lfirst(i);
 
-		result = lappend(result, p->argType);
+		if (p->mode != FUNC_PARAM_OUT)			/* keep if IN or INOUT */
+			result = lappend(result, p->argType);
 	}
 	return result;
 }
