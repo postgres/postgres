@@ -28,6 +28,9 @@
 #endif
 
 #include <time.h>
+#ifdef HAVE_LOCALE_H
+#include <locale.h>
+#endif
 #include <math.h>
 #include <stdlib.h>
 #include "statement.h"
@@ -350,6 +353,9 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 	int			bind_row = stmt->bind_row;
 	int			bind_size = opts->bind_size;
 	int			result = COPY_OK;
+#ifdef HAVE_LOCALE_H
+	char saved_locale[256];
+#endif /* HAVE_LOCALE_H */
 	BOOL		changed, true_is_minus1 = FALSE;
 	const char *neut_str = value;
 	char		midtemp[2][32];
@@ -491,6 +497,7 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 				 */
 				bZone = FALSE;	/* time zone stuff is unreliable */
 				timestamp2stime(value, &st, &bZone, &zone);
+inolog("2stime fr=%d\n", st.fr);
 			}
 			else
 			{
@@ -757,9 +764,41 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 				{
 					copy_len = (len >= cbValueMax) ? cbValueMax - 1 : len;
 
+#ifdef HAVE_LOCALE_H
+					switch (field_type)
+					{
+						case PG_TYPE_FLOAT4:
+						case PG_TYPE_FLOAT8:
+						case PG_TYPE_NUMERIC:
+						{
+							struct lconv	*lc;
+							char		*new_string;
+							int		i, j;
+
+							new_string = malloc( cbValueMax );
+							lc = localeconv();
+							for (i = 0, j = 0; ptr[i]; i++)
+								if (ptr[i] == '.')
+								{
+									strncpy(&new_string[j], lc->decimal_point, strlen(lc->decimal_point));
+									j += strlen(lc->decimal_point);
+								}
+								else
+									new_string[j++] = ptr[i];
+							new_string[j] = '\0';
+ 							strncpy_null(rgbValueBindRow, new_string, copy_len + 1);
+							free(new_string);
+ 							break;
+						}
+						default:
+						/*      Copy the data */
+						strncpy_null(rgbValueBindRow, ptr, copy_len + 1);
+ 					}
+#else /* HAVE_LOCALE_H */
 					/* Copy the data */
 					memcpy(rgbValueBindRow, ptr, copy_len);
 					rgbValueBindRow[copy_len] = '\0';
+#endif /* HAVE_LOCALE_H */
 
 					/* Adjust data_left for next time */
 					if (stmt->current_col >= 0)
@@ -916,19 +955,33 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 				break;
 
 			case SQL_C_FLOAT:
+#ifdef HAVE_LOCALE_H
+				strcpy(saved_locale, setlocale(LC_ALL, NULL));
+				setlocale(LC_ALL, "C");
+#endif /* HAVE_LOCALE_H */
 				len = 4;
 				if (bind_size > 0)
 					*(SFLOAT *) ((char *) rgbValue + (bind_row * bind_size)) = (float) atof(neut_str);
 				else
 					*((SFLOAT *) rgbValue + bind_row) = (float) atof(neut_str);
+#ifdef HAVE_LOCALE_H
+				setlocale(LC_ALL, saved_locale);
+#endif /* HAVE_LOCALE_H */
 				break;
 
 			case SQL_C_DOUBLE:
+#ifdef HAVE_LOCALE_H
+				strcpy(saved_locale, setlocale(LC_ALL, NULL));
+				setlocale(LC_ALL, "C");
+#endif /* HAVE_LOCALE_H */
 				len = 8;
 				if (bind_size > 0)
 					*(SDOUBLE *) ((char *) rgbValue + (bind_row * bind_size)) = atof(neut_str);
 				else
 					*((SDOUBLE *) rgbValue + bind_row) = atof(neut_str);
+#ifdef HAVE_LOCALE_H
+				setlocale(LC_ALL, saved_locale);
+#endif /* HAVE_LOCALE_H */
 				break;
 
 			case SQL_C_SSHORT:
@@ -1077,29 +1130,265 @@ inolog("rgb=%x + %d, pcb=%x, set %s\n", rgbValue, bind_row * bind_size, pcbValue
  *	if you have a better way.	Hiroshi 2001/05/22
  *--------------------------------------------------------------------
  */
+
+#define	FLGP_PREPARE_DUMMY_CURSOR	1L
+#define	FLGP_CURSOR_CHECK_OK	(1L << 1)
+#define	FLGP_SELECT_INTO		(1L << 2)
+#define	FLGP_SELECT_FOR_UPDATE	(1L << 3)
+typedef struct _QueryParse {
+	const char	*statement;
+	int		statement_type;
+	UInt4		opos;
+	int		from_pos;
+	int		where_pos;
+	UInt4		stmt_len;
+	BOOL		in_quote, in_dquote, in_escape;
+	char		token_save[64];
+	int		token_len;
+	BOOL		prev_token_end;
+	BOOL		proc_no_param;
+	unsigned	int declare_pos;
+	UInt4		flags;
+#ifdef MULTIBYTE
+	encoded_str	encstr;
+#endif   /* MULTIBYTE */
+}	QueryParse;
+
+static int
+QP_initialize(QueryParse *q, const StatementClass *stmt)
+{
+	q->statement = stmt->statement;
+	q->statement_type = stmt->statement_type;
+	q->opos = 0;
+	q->from_pos = -1;
+	q->where_pos = -1;
+	q->stmt_len = (q->statement) ? strlen(q->statement) : -1;
+	q->in_quote = q->in_dquote = q->in_escape = FALSE;
+	q->token_save[0] = '\0';
+	q->token_len = 0;
+	q->prev_token_end = TRUE;
+	q->proc_no_param = TRUE;
+	q->declare_pos = 0;
+	q->flags = 0;
+#ifdef MULTIBYTE
+	make_encoded_str(&q->encstr, SC_get_conn(stmt), q->statement);
+#endif   /* MULTIBYTE */
+
+	return q->stmt_len;
+}
+
+#define	FLGB_PRE_EXECUTING	1L
+#define	FLGB_INACCURATE_RESULT	(1L << 1)
+typedef struct _QueryBuild {
+	char	*query_statement;
+	UInt4	str_size_limit;
+	UInt4	str_alsize;
+	UInt4	npos;
+	int	current_row;
+	int	param_number;
+	APDFields *apdopts;
+	UInt4	load_stmt_len;
+	UInt4	flags;
+	BOOL	lf_conv;
+	int	ccsc;
+	int	errornumber;
+	const char *errormsg;
+
+	ConnectionClass	*conn; /* mainly needed for LO handling */
+	StatementClass	*stmt; /* needed to set error info in ENLARGE_.. */ 
+}	QueryBuild;
+
 #define INIT_MIN_ALLOC	4096
 static int
-enlarge_statement(StatementClass *stmt, unsigned int newsize)
+QB_initialize(QueryBuild *qb, UInt4 size, StatementClass *stmt, ConnectionClass *conn)
+{
+	UInt4	newsize = 0;
+
+	qb->flags = 0;
+	qb->load_stmt_len = 0;
+	qb->stmt = stmt;
+	qb->apdopts = NULL;
+	if (conn)
+		qb->conn = conn;
+	else if (stmt)
+	{
+		qb->apdopts = SC_get_APD(stmt);
+		qb->conn = SC_get_conn(stmt);
+		if (stmt->pre_executing)
+			qb->flags |= FLGB_PRE_EXECUTING;
+	}
+	else
+	{
+		qb->conn = NULL;
+		return -1;
+	}
+	qb->lf_conv = qb->conn->connInfo.lf_conversion;
+	qb->ccsc = qb->conn->ccsc;
+		
+	if (stmt)
+		qb->str_size_limit = stmt->stmt_size_limit;
+	else
+		qb->str_size_limit = -1;
+	if (qb->str_size_limit > 0)
+	{
+		if (size > qb->str_size_limit)
+			return -1;
+		newsize = qb->str_size_limit;
+	}
+	else 
+	{
+		newsize = INIT_MIN_ALLOC;
+		while (newsize <= size)
+			newsize *= 2;
+	}
+	if ((qb->query_statement = malloc(newsize)) == NULL)
+	{
+		qb->str_alsize = 0;
+		return -1;
+	}	
+	qb->query_statement[0] = '\0';
+	qb->str_alsize = newsize;
+	qb->npos = 0;
+	qb->current_row = stmt->exec_current_row < 0 ? 0 : stmt->exec_current_row;
+	qb->param_number = -1;
+	qb->errornumber = 0;
+	qb->errormsg = NULL;
+
+	return newsize;
+}
+
+static int
+QB_initialize_copy(QueryBuild *qb_to, const QueryBuild *qb_from, UInt4 size)
+{
+	memcpy(qb_to, qb_from, sizeof(QueryBuild));
+
+	if (qb_to->str_size_limit > 0)
+	{
+		if (size > qb_to->str_size_limit)
+			return -1;
+	}
+	if ((qb_to->query_statement = malloc(size)) == NULL)
+	{
+		qb_to->str_alsize = 0;
+		return -1;
+	}	
+	qb_to->query_statement[0] = '\0';
+	qb_to->str_alsize = size;
+	qb_to->npos = 0;
+
+	return size;
+}
+
+static void
+QB_Destructor(QueryBuild *qb)
+{
+	if (qb->query_statement)
+	{
+		free(qb->query_statement);
+		qb->query_statement = NULL;
+		qb->str_alsize = 0;
+	}
+}
+
+/*
+ * New macros (Aceto)
+ *--------------------
+ */
+
+#define F_OldChar(qp) \
+qp->statement[qp->opos]
+
+#define F_OldPtr(qp) \
+(qp->statement + qp->opos)
+
+#define F_OldNext(qp) \
+(++qp->opos)
+
+#define F_OldPrior(qp) \
+(--qp->opos)
+
+#define F_OldPos(qp) \
+qp->opos
+
+#define F_ExtractOldTo(qp, buf, ch, maxsize) \
+do { \
+	unsigned int	c = 0; \
+	while (qp->statement[qp->opos] != '\0' && qp->statement[qp->opos] != ch) \
+	{ \
+	    buf[c++] = qp->statement[qp->opos++]; \
+		if (c >= maxsize) \
+			break; \
+	} \
+	if (qp->statement[qp->opos] == '\0') \
+		return SQL_ERROR; \
+	buf[c] = '\0'; \
+} while (0)
+
+#define F_NewChar(qb) \
+qb->query_statement[qb->npos]
+
+#define F_NewPtr(qb) \
+(qb->query_statement + qb->npos)
+
+#define F_NewNext(qb) \
+(++qb->npos)
+
+#define F_NewPos(qb) \
+(qb->npos)
+
+
+static int
+convert_escape(QueryParse *qp, QueryBuild *qb);
+static int
+inner_process_tokens(QueryParse *qp, QueryBuild *qb);
+static int
+ResolveOneParam(QueryBuild *qb);
+static int
+processParameters(QueryParse *qp, QueryBuild *qb,
+UInt4 *output_count, Int4 param_pos[][2]);
+
+static int
+enlarge_query_statement(QueryBuild *qb, unsigned int newsize)
 {
 	unsigned int newalsize = INIT_MIN_ALLOC;
 	static char *func = "enlarge_statement";
 
-	if (stmt->stmt_size_limit > 0 && stmt->stmt_size_limit < (int) newsize)
+	if (qb->str_size_limit > 0 && qb->str_size_limit < (int) newsize)
 	{
-		stmt->errormsg = "Query buffer overflow in copy_statement_with_parameters";
-		stmt->errornumber = STMT_EXEC_ERROR;
-		SC_log_error(func, "", stmt);
+		free(qb->query_statement);
+		qb->query_statement = NULL;
+		qb->str_alsize = 0;
+		if (qb->stmt)
+		{
+			qb->stmt->errormsg = "Query buffer overflow in copy_statement_with_parameters";
+			qb->stmt->errornumber = STMT_EXEC_ERROR;
+			SC_log_error(func, "", qb->stmt);
+		}
+		else
+		{
+			qb->errormsg = "Query buffer overflow in copy_statement_with_parameters";
+			qb->errornumber = STMT_EXEC_ERROR;
+		}
 		return -1;
 	}
 	while (newalsize <= newsize)
 		newalsize *= 2;
-	if (!(stmt->stmt_with_params = realloc(stmt->stmt_with_params, newalsize)))
+	if (!(qb->query_statement = realloc(qb->query_statement, newalsize)))
 	{
-		stmt->errormsg = "Query buffer allocate error in copy_statement_with_parameters";
-		stmt->errornumber = STMT_EXEC_ERROR;
-		SC_log_error(func, "", stmt);
+		qb->str_alsize = 0;
+		if (qb->stmt)
+		{
+			qb->stmt->errormsg = "Query buffer allocate error in copy_statement_with_parameters";
+			qb->stmt->errornumber = STMT_EXEC_ERROR;
+		}
+		else
+		{
+			qb->errormsg = "Query buffer allocate error in copy_statement_with_parameters";
+			qb->errornumber = STMT_EXEC_ERROR;
+		}
 		return 0;
 	}
+	qb->str_alsize = newalsize;
 	return newalsize;
 }
 
@@ -1107,75 +1396,53 @@ enlarge_statement(StatementClass *stmt, unsigned int newsize)
  *	Enlarge stmt_with_params if necessary.
  *----------
  */
-#define ENLARGE_NEWSTATEMENT(newpos) \
-	if (newpos >= new_stsize) \
+#define ENLARGE_NEWSTATEMENT(qb, newpos) \
+	if (newpos >= qb->str_alsize) \
 	{ \
-		if ((new_stsize = enlarge_statement(stmt, newpos)) <= 0) \
+		if (enlarge_query_statement(qb, newpos) <= 0) \
 			return SQL_ERROR; \
-		new_statement = stmt->stmt_with_params; \
 	}
-/*----------
- *	Initialize stmt_with_params, new_statement etc.
- *----------
- */
-#define CVT_INIT(size) \
-do { \
-	if (stmt->stmt_with_params) \
-		free(stmt->stmt_with_params); \
-	if (stmt->stmt_size_limit > 0) \
-		new_stsize = stmt->stmt_size_limit; \
-	else \
-	{ \
-		new_stsize = INIT_MIN_ALLOC; \
-		while (new_stsize <= size) \
-			new_stsize *= 2; \
-	} \
-	new_statement = malloc(new_stsize); \
-	stmt->stmt_with_params = new_statement; \
-	npos = 0; \
-	new_statement[0] = '\0'; \
-} while (0)
 
 /*----------
  *	Terminate the stmt_with_params string with NULL.
  *----------
  */
-#define CVT_TERMINATE \
+#define CVT_TERMINATE(qb) \
 do { \
-	new_statement[npos] = '\0'; \
+	qb->query_statement[qb->npos] = '\0'; \
 } while (0)
 
 /*----------
  *	Append a data.
  *----------
  */
-#define CVT_APPEND_DATA(s, len) \
+#define CVT_APPEND_DATA(qb, s, len) \
 do { \
-	unsigned int	newpos = npos + len; \
-	ENLARGE_NEWSTATEMENT(newpos) \
-	memcpy(&new_statement[npos], s, len); \
-	npos = newpos; \
-	new_statement[npos] = '\0'; \
+	unsigned int	newpos = qb->npos + len; \
+	ENLARGE_NEWSTATEMENT(qb, newpos) \
+	memcpy(&qb->query_statement[qb->npos], s, len); \
+	qb->npos = newpos; \
+	qb->query_statement[newpos] = '\0'; \
 } while (0)
 
 /*----------
  *	Append a string.
  *----------
  */
-#define CVT_APPEND_STR(s) \
+#define CVT_APPEND_STR(qb, s) \
 do { \
 	unsigned int len = strlen(s); \
-	CVT_APPEND_DATA(s, len); \
+	CVT_APPEND_DATA(qb, s, len); \
 } while (0)
 
 /*----------
  *	Append a char.
  *----------
  */
-#define CVT_APPEND_CHAR(c) \
+#define CVT_APPEND_CHAR(qb, c) \
 do { \
-	ENLARGE_NEWSTATEMENT(npos + 1); \
-	new_statement[npos++] = c; \
+	ENLARGE_NEWSTATEMENT(qb, qb->npos + 1); \
+	qb->query_statement[qb->npos++] = c; \
 } while (0)
 
 /*----------
@@ -1183,25 +1450,25 @@ do { \
  *	Newly reqeuired size may be overestimated currently.
  *----------
  */
-#define CVT_APPEND_BINARY(buf, used) \
+#define CVT_APPEND_BINARY(qb, buf, used) \
 do { \
-	unsigned int	newlimit = npos + 5 * used; \
-	ENLARGE_NEWSTATEMENT(newlimit); \
-	npos += convert_to_pgbinary(buf, &new_statement[npos], used); \
+	unsigned int	newlimit = qb->npos + 5 * used; \
+	ENLARGE_NEWSTATEMENT(qb, newlimit); \
+	qb->npos += convert_to_pgbinary(buf, &qb->query_statement[qb->npos], used); \
 } while (0)
 
 /*----------
  *
  *----------
  */
-#define CVT_SPECIAL_CHARS(buf, used) \
+#define CVT_SPECIAL_CHARS(qb, buf, used) \
 do { \
-	int cnvlen = convert_special_chars(buf, NULL, used, lf_conv, conn->ccsc); \
-	unsigned int	newlimit = npos + cnvlen; \
+	int cnvlen = convert_special_chars(buf, NULL, used, qb->lf_conv, qb->ccsc); \
+	unsigned int	newlimit = qb->npos + cnvlen; \
 \
-	ENLARGE_NEWSTATEMENT(newlimit); \
-	convert_special_chars(buf, &new_statement[npos], used, lf_conv, conn->ccsc); \
-	npos += cnvlen; \
+	ENLARGE_NEWSTATEMENT(qb, newlimit); \
+	convert_special_chars(buf, &qb->query_statement[qb->npos], used, qb->lf_conv, qb->ccsc); \
+	qb->npos += cnvlen; \
 } while (0)
 
 /*----------
@@ -1283,69 +1550,32 @@ int
 copy_statement_with_parameters(StatementClass *stmt)
 {
 	static char *func = "copy_statement_with_parameters";
-	unsigned int opos,
-				npos,
-				oldstmtlen;
-	char		param_string[128],
-				tmp[256],
-				cbuf[PG_NUMERIC_MAX_PRECISION * 2];		/* seems big enough to
-														 * handle the data in
-														 * this function */
-	int			param_number;
-	Int2		param_ctype,
-				param_sqltype;
-	char	   *old_statement = stmt->statement,
-				oldchar;
-	char	   *new_statement = stmt->stmt_with_params;
-	unsigned int new_stsize = 0;
-	SIMPLE_TIME st;
-	time_t		t = time(NULL);
-	struct tm  *tim;
-	SDWORD		used;
-	char	   *buffer, *buf, *allocbuf;
-	BOOL		in_quote = FALSE,
-				in_dquote = FALSE,
-				in_escape = FALSE;
-	Oid			lobj_oid;
-	int			lobj_fd,
-				retval;
-	BOOL		check_cursor_ok = FALSE;		/* check cursor
-												 * restriction */
-	BOOL		proc_no_param = TRUE;
-	unsigned int declare_pos = 0;
+	RETCODE		retval;
+	QueryParse	query_org, *qp;
+	QueryBuild	query_crt, *qb;
+
+	char	   *new_statement;
+
+	BOOL	begin_first = FALSE, prepare_dummy_cursor = FALSE;
 	ConnectionClass *conn = SC_get_conn(stmt);
 	ConnInfo   *ci = &(conn->connInfo);
-	BOOL		prepare_dummy_cursor = FALSE,
-				begin_first = FALSE;
-	char		token_save[64];
-	int			token_len;
-	BOOL		prev_token_end;
-	APDFields	*opts = SC_get_APD(stmt);
-	UInt4	offset = opts->param_offset_ptr ? *opts->param_offset_ptr : 0;
-	UInt4	current_row = stmt->exec_current_row < 0 ? 0 : stmt->exec_current_row;
-	BOOL	lf_conv = ci->lf_conversion;
-#ifdef MULTIBYTE
-	encoded_str	encstr;
-#endif   /* MULTIBYTE */
+	int		current_row;
 
-	Int4	from_pos = -1, where_pos = -1;
-
-	if (ci->disallow_premature)
-		prepare_dummy_cursor = stmt->pre_executing;
-
-	if (!old_statement)
+	if (!stmt->statement)
 	{
 		SC_log_error(func, "No statement string", stmt);
 		return SQL_ERROR;
 	}
 
-	memset(&st, 0, sizeof(SIMPLE_TIME));
+	current_row = stmt->exec_current_row < 0 ? 0 : stmt->exec_current_row;
+	qp = &query_org;
+	QP_initialize(qp, stmt);
 
-	/* Initialize current date */
-	tim = localtime(&t);
-	st.m = tim->tm_mon + 1;
-	st.d = tim->tm_mday;
-	st.y = tim->tm_year + 1900;
+	if (ci->disallow_premature)
+		prepare_dummy_cursor = stmt->pre_executing;
+	if (prepare_dummy_cursor);
+		qp->flags |= FLGP_PREPARE_DUMMY_CURSOR;
+
 
 #ifdef	DRIVER_CURSOR_IMPLEMENT
 	if (stmt->statement_type != STMT_TYPE_SELECT)
@@ -1365,8 +1595,8 @@ copy_statement_with_parameters(StatementClass *stmt)
 			stmt->options.scroll_concurrency = SQL_CONCUR_READ_ONLY;
 		else
 		{
-			from_pos = stmt->from_pos;
-			where_pos = stmt->where_pos;
+			qp->from_pos = stmt->from_pos;
+			qp->where_pos = stmt->where_pos;
 		}
 	}
 #else
@@ -1378,12 +1608,17 @@ copy_statement_with_parameters(StatementClass *stmt)
 	/* If the application hasn't set a cursor name, then generate one */
 	if (stmt->cursor_name[0] == '\0')
 		sprintf(stmt->cursor_name, "SQL_CUR%p", stmt);
-	oldstmtlen = strlen(old_statement);
-	CVT_INIT(oldstmtlen);
+	if (stmt->stmt_with_params)
+	{
+		free(stmt->stmt_with_params);
+		stmt->stmt_with_params = NULL;
+	}
+	qb = &query_crt;
+	if (QB_initialize(qb, qp->stmt_len, stmt, NULL) < 0)
+		return SQL_ERROR;
+	new_statement = qb->query_statement;
 
 	stmt->miscinfo = 0;
-	token_len = 0;
-	prev_token_end = TRUE;
 	/* For selects, prepend a declare cursor to the statement */
 	if (stmt->statement_type == STMT_TYPE_SELECT)
 	{
@@ -1402,667 +1637,44 @@ copy_statement_with_parameters(StatementClass *stmt)
 				SC_set_fetchcursor(stmt);
 			sprintf(new_statement, "%sdeclare %s cursor for ",
 					new_statement, stmt->cursor_name);
-			npos = strlen(new_statement);
-			check_cursor_ok = TRUE;
-			declare_pos = npos;
+			qb->npos = strlen(new_statement);
+			qp->flags |= FLGP_CURSOR_CHECK_OK;
+			qp->declare_pos = qb->npos;
 		}
 	}
-	param_number = -1;
-#ifdef MULTIBYTE
-	make_encoded_str(&encstr, conn, old_statement);
-#endif
-	for (opos = 0; opos < oldstmtlen; opos++)
+
+	for (qp->opos = 0; qp->opos < qp->stmt_len; qp->opos++)
 	{
-		if (from_pos == (Int4) opos)
+		retval = inner_process_tokens(qp, qb);
+		if (SQL_ERROR == retval)
 		{
-			CVT_APPEND_STR(", CTID, OID ");
-		}
-		else if (where_pos == (Int4) opos)
-		{
-			stmt->load_statement = malloc(npos + 1);
-			memcpy(stmt->load_statement, new_statement, npos);
-			stmt->load_statement[npos] = '\0';
-		}
-#ifdef MULTIBYTE
-		oldchar = encoded_byte_check(&encstr, opos);
-		if (ENCODE_STATUS(encstr) != 0)
-		{
-			CVT_APPEND_CHAR(oldchar);
-			continue;
-		}
-
-		/*
-		 * From here we are guaranteed to handle a 1-byte character.
-		 */
-#else
-		oldchar = old_statement[opos];
-#endif
-
-		if (in_escape)			/* escape check */
-		{
-			in_escape = FALSE;
-			CVT_APPEND_CHAR(oldchar);
-			continue;
-		}
-		else if (in_quote || in_dquote) /* quote/double quote check */
-		{
-			if (oldchar == '\\')
-				in_escape = TRUE;
-			else if (oldchar == '\'' && in_quote)
-				in_quote = FALSE;
-			else if (oldchar == '\"' && in_dquote)
-				in_dquote = FALSE;
-			CVT_APPEND_CHAR(oldchar);
-			continue;
-		}
-
-		/*
-		 * From here we are guranteed to be in neither an escape, a quote
-		 * nor a double quote.
-		 */
-		/* Squeeze carriage-return/linefeed pairs to linefeed only */
-		else if (lf_conv && oldchar == '\r' && opos + 1 < oldstmtlen &&
-				 old_statement[opos + 1] == '\n')
-			continue;
-
-		/*
-		 * Handle literals (date, time, timestamp) and ODBC scalar
-		 * functions
-		 */
-		else if (oldchar == '{')
-		{
-			const char	*begin = &old_statement[opos], *end;
-
-			/* procedure calls */
-			if (stmt->statement_type == STMT_TYPE_PROCCALL)
+			if (0 == stmt->errornumber)
 			{
-				int	lit_call_len = 4;
-
-				while (isspace((unsigned char) old_statement[++opos]));
-				/* '?=' to accept return values exists ? */
-				if (old_statement[opos] == '?')
-				{
-					param_number++;
-					while (isspace((unsigned char) old_statement[++opos]));
-					if (old_statement[opos] != '=')
-					{
-						opos--;
-						continue;
-					}
-					while (isspace((unsigned char) old_statement[++opos]));
-				}
-				if (strnicmp(&old_statement[opos], "call", lit_call_len) ||
-					!isspace((unsigned char) old_statement[opos + lit_call_len]))
-				{
-					opos--;
-					continue;
-				}
-				opos += lit_call_len;
-				CVT_APPEND_STR("SELECT ");
-				if (my_strchr(conn, &old_statement[opos], '('))
-					proc_no_param = FALSE;
-				continue;
+				stmt->errornumber = qb->errornumber;
+				stmt->errormsg = qb->errormsg;
 			}
-			if (convert_escape(begin, stmt, &npos, &new_stsize, &end
-) != CONVERT_ESCAPE_OK)
-			{
-				stmt->errormsg = "ODBC escape convert error";
-				stmt->errornumber = STMT_EXEC_ERROR;
-				return SQL_ERROR;
-			}
-			opos = end - old_statement; /* positioned at the last } */
-			new_statement = stmt->stmt_with_params;
-			if (isalnum(end[1]))
-				CVT_APPEND_CHAR(' ');
-			continue;
+			SC_log_error(func, "", stmt);
+			QB_Destructor(qb);
+			return retval;
 		}
-		/* End of a procedure call */
-		else if (oldchar == '}' && stmt->statement_type == STMT_TYPE_PROCCALL)
-		{
-			if (proc_no_param)
-				CVT_APPEND_STR("()");
-			continue;
-		}
-
-		/*
-		 * Can you have parameter markers inside of quotes?  I dont think
-		 * so. All the queries I've seen expect the driver to put quotes
-		 * if needed.
-		 */
-		else if (oldchar == '?')
-			;					/* ok */
-		else
-		{
-			if (oldchar == '\'')
-				in_quote = TRUE;
-			else if (oldchar == '\\')
-				in_escape = TRUE;
-			else if (oldchar == '\"')
-				in_dquote = TRUE;
-			else
-			{
-				if (isspace((unsigned char) oldchar))
-				{
-					if (!prev_token_end)
-					{
-						prev_token_end = TRUE;
-						token_save[token_len] = '\0';
-						if (token_len == 4)
-						{
-							if (check_cursor_ok &&
-								into_table_from(&old_statement[opos - token_len]))
-							{
-								stmt->statement_type = STMT_TYPE_CREATE;
-								SC_no_pre_executable(stmt);
-								SC_no_fetchcursor(stmt);
-								stmt->options.scroll_concurrency = SQL_CONCUR_READ_ONLY;
-								memmove(new_statement, new_statement + declare_pos, npos - declare_pos);
-								npos -= declare_pos;
-							}
-						}
-						if (token_len == 3)
-						{
-							int			endpos;
-
-							if (check_cursor_ok &&
-								strnicmp(token_save, "for", 3) == 0 &&
-								table_for_update(&old_statement[opos], &endpos))
-							{
-								SC_no_fetchcursor(stmt);
-								stmt->options.scroll_concurrency = SQL_CONCUR_READ_ONLY;
-								if (prepare_dummy_cursor)
-								{
-									npos -= 4;
-									opos += endpos;
-								}
-								else
-								{
-									memmove(new_statement, new_statement + declare_pos, npos - declare_pos);
-									npos -= declare_pos;
-								}
-							}
-						}
-					}
-				}
-				else if (prev_token_end)
-				{
-					prev_token_end = FALSE;
-					token_save[0] = oldchar;
-					token_len = 1;
-				}
-				else if (token_len + 1 < sizeof(token_save))
-					token_save[token_len++] = oldchar;
-			}
-			CVT_APPEND_CHAR(oldchar);
-			continue;
-		}
-
-		/*
-		 * Its a '?' parameter alright
-		 */
-		param_number++;
-
-		if (param_number >= opts->allocated)
-		{
-			if (stmt->pre_executing)
-			{
-				CVT_APPEND_STR("NULL");
-				stmt->inaccurate_result = TRUE;
-				continue;
-			}
-			else
-			{
-				CVT_APPEND_CHAR('?');
-				continue;
-			}
-		}
-
-		/* Assign correct buffers based on data at exec param or not */
-		if (opts->parameters[param_number].data_at_exec)
-		{
-			used = opts->parameters[param_number].EXEC_used ? *opts->parameters[param_number].EXEC_used : SQL_NTS;
-			buffer = opts->parameters[param_number].EXEC_buffer;
-		}
-		else
-		{
-			UInt4	bind_size = opts->param_bind_type;
-			UInt4	ctypelen;
-
-			buffer = opts->parameters[param_number].buffer + offset;
-			if (current_row > 0)
-			{
-				if (bind_size > 0)
-					buffer += (bind_size * current_row);
-				else if (ctypelen = ctype_length(opts->parameters[param_number].CType), ctypelen > 0)
-					buffer += current_row * ctypelen;
-				else 
-					buffer += current_row * opts->parameters[param_number].buflen;
-			}
-			if (opts->parameters[param_number].used)
-			{
-				UInt4	p_offset = offset;
-				if (bind_size > 0)
-					p_offset = offset + bind_size * current_row;
-				else
-					p_offset = offset + sizeof(SDWORD) * current_row;
-				used = *(SDWORD *)((char *)opts->parameters[param_number].used + p_offset);
-			}
-			else
-				used = SQL_NTS;
-		}
-
-		/* Handle NULL parameter data */
-		if (used == SQL_NULL_DATA)
-		{
-			CVT_APPEND_STR("NULL");
-			continue;
-		}
-
-		/*
-		 * If no buffer, and it's not null, then what the hell is it? Just
-		 * leave it alone then.
-		 */
-		if (!buffer)
-		{
-			if (stmt->pre_executing)
-			{
-				CVT_APPEND_STR("NULL");
-				stmt->inaccurate_result = TRUE;
-				continue;
-			}
-			else
-			{
-				CVT_APPEND_CHAR('?');
-				continue;
-			}
-		}
-
-		param_ctype = opts->parameters[param_number].CType;
-		param_sqltype = opts->parameters[param_number].SQLType;
-
-		mylog("copy_statement_with_params: from(fcType)=%d, to(fSqlType)=%d\n", param_ctype, param_sqltype);
-
-		/* replace DEFAULT with something we can use */
-		if (param_ctype == SQL_C_DEFAULT)
-			param_ctype = sqltype_to_default_ctype(param_sqltype);
-
-		allocbuf = buf = NULL;
-		param_string[0] = '\0';
-		cbuf[0] = '\0';
-
-		/* Convert input C type to a neutral format */
-		switch (param_ctype)
-		{
-			case SQL_C_BINARY:
-			case SQL_C_CHAR:
-				buf = buffer;
-				break;
-
-#ifdef	UNICODE_SUPPORT
-			case SQL_C_WCHAR:
-				buf = allocbuf = ucs2_to_utf8((SQLWCHAR *) buffer, used / 2, &used);
-				used *= 2;
-				break;
-#endif /* UNICODE_SUPPORT */
-
-			case SQL_C_DOUBLE:
-				sprintf(param_string, "%.15g",
-						*((SDOUBLE *) buffer));
-				break;
-
-			case SQL_C_FLOAT:
-				sprintf(param_string, "%.6g",
-						*((SFLOAT *) buffer));
-				break;
-
-			case SQL_C_SLONG:
-			case SQL_C_LONG:
-				sprintf(param_string, "%ld",
-						*((SDWORD *) buffer));
-				break;
-
-#if (ODBCVER >= 0x0300) && defined(ODBCINT64)
-#ifdef WIN32
-			case SQL_C_SBIGINT:
-				sprintf(param_string, "%I64d",
-						*((SQLBIGINT *) buffer));
-				break;
-
-			case SQL_C_UBIGINT:
-				sprintf(param_string, "%I64u",
-						*((SQLUBIGINT *) buffer));
-				break;
-
-#endif /* WIN32 */
-#endif /* ODBCINT64 */
-			case SQL_C_SSHORT:
-			case SQL_C_SHORT:
-				sprintf(param_string, "%d",
-						*((SWORD *) buffer));
-				break;
-
-			case SQL_C_STINYINT:
-			case SQL_C_TINYINT:
-				sprintf(param_string, "%d",
-						*((SCHAR *) buffer));
-				break;
-
-			case SQL_C_ULONG:
-				sprintf(param_string, "%lu",
-						*((UDWORD *) buffer));
-				break;
-
-			case SQL_C_USHORT:
-				sprintf(param_string, "%u",
-						*((UWORD *) buffer));
-				break;
-
-			case SQL_C_UTINYINT:
-				sprintf(param_string, "%u",
-						*((UCHAR *) buffer));
-				break;
-
-			case SQL_C_BIT:
-				{
-					int			i = *((UCHAR *) buffer);
-
-					sprintf(param_string, "%d", i ? 1 : 0);
-					break;
-				}
-
-			case SQL_C_DATE:
-#if (ODBCVER >= 0x0300)
-			case SQL_C_TYPE_DATE:		/* 91 */
-#endif
-				{
-					DATE_STRUCT *ds = (DATE_STRUCT *) buffer;
-
-					st.m = ds->month;
-					st.d = ds->day;
-					st.y = ds->year;
-
-					break;
-				}
-
-			case SQL_C_TIME:
-#if (ODBCVER >= 0x0300)
-			case SQL_C_TYPE_TIME:		/* 92 */
-#endif
-				{
-					TIME_STRUCT *ts = (TIME_STRUCT *) buffer;
-
-					st.hh = ts->hour;
-					st.mm = ts->minute;
-					st.ss = ts->second;
-
-					break;
-				}
-
-			case SQL_C_TIMESTAMP:
-#if (ODBCVER >= 0x0300)
-			case SQL_C_TYPE_TIMESTAMP:	/* 93 */
-#endif
-				{
-					TIMESTAMP_STRUCT *tss = (TIMESTAMP_STRUCT *) buffer;
-
-					st.m = tss->month;
-					st.d = tss->day;
-					st.y = tss->year;
-					st.hh = tss->hour;
-					st.mm = tss->minute;
-					st.ss = tss->second;
-					st.fr = tss->fraction;
-
-					mylog("m=%d,d=%d,y=%d,hh=%d,mm=%d,ss=%d,fr=%d\n", st.m, st.d, st.y, st.hh, st.mm, st.ss, st.fr);
-
-					break;
-
-				}
-			default:
-				/* error */
-				stmt->errormsg = "Unrecognized C_parameter type in copy_statement_with_parameters";
-				stmt->errornumber = STMT_NOT_IMPLEMENTED_ERROR;
-				CVT_TERMINATE;	/* just in case */
-				SC_log_error(func, "", stmt);
-				return SQL_ERROR;
-		}
-
-		/*
-		 * Now that the input data is in a neutral format, convert it to
-		 * the desired output format (sqltype)
-		 */
-
-		switch (param_sqltype)
-		{
-			case SQL_CHAR:
-			case SQL_VARCHAR:
-			case SQL_LONGVARCHAR:
-#ifdef	UNICODE_SUPPORT
-			case SQL_WCHAR:
-			case SQL_WVARCHAR:
-			case SQL_WLONGVARCHAR:
-#endif /* UNICODE_SUPPORT */
-
-				CVT_APPEND_CHAR('\'');	/* Open Quote */
-
-				/* it was a SQL_C_CHAR */
-				if (buf)
-					CVT_SPECIAL_CHARS(buf, used);
-
-				/* it was a numeric type */
-				else if (param_string[0] != '\0')
-					CVT_APPEND_STR(param_string);
-
-				/* it was date,time,timestamp -- use m,d,y,hh,mm,ss */
-				else
-				{
-					sprintf(tmp, "%.4d-%.2d-%.2d %.2d:%.2d:%.2d",
-							st.y, st.m, st.d, st.hh, st.mm, st.ss);
-
-					CVT_APPEND_STR(tmp);
-				}
-
-				CVT_APPEND_CHAR('\'');	/* Close Quote */
-
-				break;
-
-			case SQL_DATE:
-#if (ODBCVER >= 0x0300)
-			case SQL_TYPE_DATE:	/* 91 */
-#endif
-				if (buf)
-				{				/* copy char data to time */
-					my_strcpy(cbuf, sizeof(cbuf), buf, used);
-					parse_datetime(cbuf, &st);
-				}
-
-				sprintf(tmp, "'%.4d-%.2d-%.2d'::date", st.y, st.m, st.d);
-
-				CVT_APPEND_STR(tmp);
-				break;
-
-			case SQL_TIME:
-#if (ODBCVER >= 0x0300)
-			case SQL_TYPE_TIME:	/* 92 */
-#endif
-				if (buf)
-				{				/* copy char data to time */
-					my_strcpy(cbuf, sizeof(cbuf), buf, used);
-					parse_datetime(cbuf, &st);
-				}
-
-				sprintf(tmp, "'%.2d:%.2d:%.2d'::time", st.hh, st.mm, st.ss);
-
-				CVT_APPEND_STR(tmp);
-				break;
-
-			case SQL_TIMESTAMP:
-#if (ODBCVER >= 0x0300)
-			case SQL_TYPE_TIMESTAMP:	/* 93 */
-#endif
-
-				if (buf)
-				{
-					my_strcpy(cbuf, sizeof(cbuf), buf, used);
-					parse_datetime(cbuf, &st);
-				}
-
-				/*
-				 * sprintf(tmp, "'%.4d-%.2d-%.2d %.2d:%.2d:%.2d'", st.y,
-				 * st.m, st.d, st.hh, st.mm, st.ss);
-				 */
-				tmp[0] = '\'';
-				/* Time zone stuff is unreliable */
-				stime2timestamp(&st, tmp + 1, USE_ZONE, PG_VERSION_GE(conn, 7.2));
-				strcat(tmp, "'::timestamp");
-
-				CVT_APPEND_STR(tmp);
-
-				break;
-
-			case SQL_BINARY:
-			case SQL_VARBINARY:/* non-ascii characters should be
-								 * converted to octal */
-				CVT_APPEND_CHAR('\'');	/* Open Quote */
-
-				mylog("SQL_VARBINARY: about to call convert_to_pgbinary, used = %d\n", used);
-
-				CVT_APPEND_BINARY(buf, used);
-
-				CVT_APPEND_CHAR('\'');	/* Close Quote */
-
-				break;
-
-			case SQL_LONGVARBINARY:
-
-				if (opts->parameters[param_number].data_at_exec)
-					lobj_oid = opts->parameters[param_number].lobj_oid;
-				else
-				{
-					/* begin transaction if needed */
-					if (!CC_is_in_trans(conn))
-					{
-						if (!CC_begin(conn))
-						{
-							stmt->errormsg = "Could not begin (in-line) a transaction";
-							stmt->errornumber = STMT_EXEC_ERROR;
-							SC_log_error(func, "", stmt);
-							return SQL_ERROR;
-						}
-					}
-
-					/* store the oid */
-					lobj_oid = lo_creat(conn, INV_READ | INV_WRITE);
-					if (lobj_oid == 0)
-					{
-						stmt->errornumber = STMT_EXEC_ERROR;
-						stmt->errormsg = "Couldnt create (in-line) large object.";
-						SC_log_error(func, "", stmt);
-						return SQL_ERROR;
-					}
-
-					/* store the fd */
-					lobj_fd = lo_open(conn, lobj_oid, INV_WRITE);
-					if (lobj_fd < 0)
-					{
-						stmt->errornumber = STMT_EXEC_ERROR;
-						stmt->errormsg = "Couldnt open (in-line) large object for writing.";
-						SC_log_error(func, "", stmt);
-						return SQL_ERROR;
-					}
-
-					retval = lo_write(conn, lobj_fd, buffer, used);
-
-					lo_close(conn, lobj_fd);
-
-					/* commit transaction if needed */
-					if (!ci->drivers.use_declarefetch && CC_is_in_autocommit(conn))
-					{
-						if (!CC_commit(conn))
-						{
-							stmt->errormsg = "Could not commit (in-line) a transaction";
-							stmt->errornumber = STMT_EXEC_ERROR;
-							SC_log_error(func, "", stmt);
-							return SQL_ERROR;
-						}
-					}
-				}
-
-				/*
-				 * the oid of the large object -- just put that in for the
-				 * parameter marker -- the data has already been sent to
-				 * the large object
-				 */
-				sprintf(param_string, "'%d'", lobj_oid);
-				CVT_APPEND_STR(param_string);
-
-				break;
-
-				/*
-				 * because of no conversion operator for bool and int4,
-				 * SQL_BIT
-				 */
-				/* must be quoted (0 or 1 is ok to use inside the quotes) */
-
-			case SQL_REAL:
-				if (buf)
-					my_strcpy(param_string, sizeof(param_string), buf, used);
-				sprintf(tmp, "'%s'::float4", param_string);
-				CVT_APPEND_STR(tmp);
-				break;
-			case SQL_FLOAT:
-			case SQL_DOUBLE:
-				if (buf)
-					my_strcpy(param_string, sizeof(param_string), buf, used);
-				sprintf(tmp, "'%s'::float8", param_string);
-				CVT_APPEND_STR(tmp);
-				break;
-			case SQL_NUMERIC:
-				if (buf)
-				{
-					cbuf[0] = '\'';
-					my_strcpy(cbuf + 1, sizeof(cbuf) - 12, buf, used);	/* 12 = 1('\'') +
-																		 * strlen("'::numeric")
-																		 * + 1('\0') */
-					strcat(cbuf, "'::numeric");
-				}
-				else
-					sprintf(cbuf, "'%s'::numeric", param_string);
-				CVT_APPEND_STR(cbuf);
-				break;
-			default:			/* a numeric type or SQL_BIT */
-				if (param_sqltype == SQL_BIT)
-					CVT_APPEND_CHAR('\'');		/* Open Quote */
-
-				if (buf)
-				{
-					switch (used)
-					{
-						case SQL_NULL_DATA:
-							break;
-						case SQL_NTS:
-							CVT_APPEND_STR(buf);
-							break;
-						default:
-							CVT_APPEND_DATA(buf, used);
-					}
-				}
-				else
-					CVT_APPEND_STR(param_string);
-
-				if (param_sqltype == SQL_BIT)
-					CVT_APPEND_CHAR('\'');		/* Close Quote */
-
-				break;
-		}
-#ifdef	UNICODE_SUPPORT
-		if (allocbuf)
-			free(allocbuf);
-#endif /* UNICODE_SUPPORT */
-	}							/* end, for */
-
+	}
 	/* make sure new_statement is always null-terminated */
-	CVT_TERMINATE;
+	CVT_TERMINATE(qb);
+
+	new_statement = qb->query_statement;
+	stmt->statement_type = qp->statement_type;
+	stmt->inaccurate_result = (0 != (qb->flags & FLGB_INACCURATE_RESULT));
+	if (0 != (qp->flags & FLGP_SELECT_INTO))
+	{
+		SC_no_pre_executable(stmt);
+		SC_no_fetchcursor(stmt);
+		stmt->options.scroll_concurrency = SQL_CONCUR_READ_ONLY;
+	}
+	if (0 != (qp->flags & FLGP_SELECT_FOR_UPDATE))
+	{
+		SC_no_fetchcursor(stmt);
+		stmt->options.scroll_concurrency = SQL_CONCUR_READ_ONLY;
+	}
 
 	if (conn->DriverToDataSource != NULL)
 	{
@@ -2076,8 +1688,12 @@ copy_statement_with_parameters(StatementClass *stmt)
 	}
 
 #ifdef	DRIVER_CURSOR_IMPLEMENT
-	if (!stmt->load_statement && from_pos >=0)
+	if (!stmt->load_statement && qp->from_pos >= 0)
 	{
+		UInt4	npos = qb->load_stmt_len;
+
+		if (0 == npos)
+			npos = qb->npos;
 		stmt->load_statement = malloc(npos + 1);
 		memcpy(stmt->load_statement, new_statement, npos);
 		if (stmt->load_statement[npos - 1] == ';')
@@ -2094,10 +1710,670 @@ copy_statement_with_parameters(StatementClass *stmt)
 				stmt->cursor_name, stmt->cursor_name);
 		if (begin_first && CC_is_in_autocommit(conn))
 			strcat(fetchstr, "COMMIT;");
-		CVT_APPEND_STR(fetchstr);
+		CVT_APPEND_STR(qb, fetchstr);
 		stmt->inaccurate_result = TRUE;
 	}
 
+	stmt->stmt_with_params = qb->query_statement;
+	return SQL_SUCCESS;
+}
+
+static int
+inner_process_tokens(QueryParse *qp, QueryBuild *qb)
+{
+	static char *func = "inner_process_tokens";
+	BOOL	lf_conv = qb->lf_conv;
+
+	RETCODE	retval;
+	char	   oldchar;
+
+	if (qp->from_pos == (Int4) qp->opos)
+	{
+		CVT_APPEND_STR(qb, ", CTID, OID ");
+	}
+	else if (qp->where_pos == (Int4) qp->opos)
+		qb->load_stmt_len = qb->npos;
+#ifdef MULTIBYTE
+	oldchar = encoded_byte_check(&qp->encstr, qp->opos);
+	if (ENCODE_STATUS(qp->encstr) != 0)
+	{
+		CVT_APPEND_CHAR(qb, oldchar);
+		return SQL_SUCCESS;
+	}
+
+	/*
+	 * From here we are guaranteed to handle a 1-byte character.
+	 */
+#else
+	oldchar = qp->statement[qp->opos];
+#endif
+
+	if (qp->in_escape)			/* escape check */
+	{
+		qp->in_escape = FALSE;
+		CVT_APPEND_CHAR(qb, oldchar);
+		return SQL_SUCCESS;
+	}
+	else if (qp->in_quote || qp->in_dquote) /* quote/double quote check */
+	{
+		if (oldchar == '\\')
+			qp->in_escape = TRUE;
+		else if (oldchar == '\'' && qp->in_quote)
+			qp->in_quote = FALSE;
+		else if (oldchar == '\"' && qp->in_dquote)
+			qp->in_dquote = FALSE;
+		CVT_APPEND_CHAR(qb, oldchar);
+		return SQL_SUCCESS;
+	}
+
+	/*
+	 * From here we are guranteed to be in neither an escape, a quote
+	 * nor a double quote.
+	 */
+	/* Squeeze carriage-return/linefeed pairs to linefeed only */
+	else if (lf_conv && oldchar == '\r' && qp->opos + 1 < qp->stmt_len &&
+			qp->statement[qp->opos + 1] == '\n')
+		return SQL_SUCCESS;
+
+	/*
+	 * Handle literals (date, time, timestamp) and ODBC scalar
+	 * functions
+	 */
+	else if (oldchar == '{')
+	{
+		if (SQL_ERROR == convert_escape(qp, qb))
+		{
+			if (0 == qb->errornumber)
+			{
+				qb->errornumber = STMT_EXEC_ERROR;
+				qb->errormsg = "ODBC escape convert error";
+			}
+			mylog("%s convert_escape error\n", func);
+			return SQL_ERROR;
+		}
+		if (isalnum(F_OldPtr(qp)[1]))
+			CVT_APPEND_CHAR(qb, ' ');
+		return SQL_SUCCESS;
+	}
+	/* End of an escape sequence */
+	else if (oldchar == '}')
+	{
+		if (qp->statement_type == STMT_TYPE_PROCCALL)
+		{
+			if (qp->proc_no_param)
+				CVT_APPEND_STR(qb, "()");
+		}
+		else if (!isspace(F_OldPtr(qp)[1]))
+			CVT_APPEND_CHAR(qb, ' ');
+		return SQL_SUCCESS;
+	}
+
+	/*
+	 * Can you have parameter markers inside of quotes?  I dont think
+	 * so. All the queries I've seen expect the driver to put quotes
+	 * if needed.
+	 */
+	else if (oldchar != '?')
+	{
+		if (oldchar == '\'')
+			qp->in_quote = TRUE;
+		else if (oldchar == '\\')
+			qp->in_escape = TRUE;
+		else if (oldchar == '\"')
+			qp->in_dquote = TRUE;
+		else
+		{
+			if (isspace((unsigned char) oldchar))
+			{
+				if (!qp->prev_token_end)
+				{
+					qp->prev_token_end = TRUE;
+					qp->token_save[qp->token_len] = '\0';
+					if (qp->token_len == 4)
+					{
+						if (0 != (qp->flags & FLGP_CURSOR_CHECK_OK) &&
+							into_table_from(&qp->statement[qp->opos - qp->token_len]))
+						{
+							qp->flags |= FLGP_SELECT_INTO;
+							qp->flags &= ~FLGP_CURSOR_CHECK_OK;
+							qp->statement_type = STMT_TYPE_CREATE;
+							memmove(qb->query_statement, qb->query_statement + qp->declare_pos, qb->npos - qp->declare_pos);
+							qb->npos -= qp->declare_pos;
+						}
+					}
+					if (qp->token_len == 3)
+					{
+						int			endpos;
+
+						if (0 != (qp->flags & FLGP_CURSOR_CHECK_OK) &&
+							strnicmp(qp->token_save, "for", 3) == 0 &&
+							table_for_update(&qp->statement[qp->opos], &endpos))
+						{
+							qp->flags |= FLGP_SELECT_FOR_UPDATE;
+							qp->flags &= ~FLGP_CURSOR_CHECK_OK;
+							if (qp->flags & FLGP_PREPARE_DUMMY_CURSOR)
+							{
+								qb->npos -= 4;
+								qp->opos += endpos;
+							}
+							else
+							{
+								memmove(qb->query_statement, qb->query_statement + qp->declare_pos, qb->npos - qp->declare_pos);
+								qb->npos -= qp->declare_pos;
+							}
+						}
+					}
+				}
+			}
+			else if (qp->prev_token_end)
+			{
+				qp->prev_token_end = FALSE;
+				qp->token_save[0] = oldchar;
+				qp->token_len = 1;
+			}
+			else if (qp->token_len + 1 < sizeof(qp->token_save))
+				qp->token_save[qp->token_len++] = oldchar;
+		}
+		CVT_APPEND_CHAR(qb, oldchar);
+		return SQL_SUCCESS;
+	}
+
+	/*
+	 * Its a '?' parameter alright
+	 */
+	if (retval = ResolveOneParam(qb), retval < 0)
+		return retval;
+
+	return SQL_SUCCESS;
+}
+
+static int
+ResolveOneParam(QueryBuild *qb)
+{
+	const char *func = "ResolveOneParam";
+
+	ConnectionClass *conn = qb->conn;
+	ConnInfo   *ci = &(conn->connInfo);
+	APDFields *opts = qb->apdopts;
+
+	int		param_number;
+	char		param_string[128], tmp[256],
+			cbuf[PG_NUMERIC_MAX_PRECISION * 2]; /* seems big enough to handle the data in this function */
+	Int2		param_ctype, param_sqltype;
+	SIMPLE_TIME	st;
+	time_t		t;
+	struct tm	*tim;
+	SDWORD		used;
+	char		*buffer, *buf, *allocbuf;
+	Oid		lobj_oid;
+	int		lobj_fd, retval;
+	UInt4	offset = opts->param_offset_ptr ? *opts->param_offset_ptr : 0;
+	UInt4	current_row = qb->current_row;
+
+	/*
+	 * Its a '?' parameter alright
+	 */
+	param_number = ++qb->param_number;
+
+	if (param_number >= opts->allocated)
+	{
+		if (0 != (qb->flags & FLGB_PRE_EXECUTING))
+		{
+			CVT_APPEND_STR(qb, "NULL");
+			qb->flags |= FLGB_INACCURATE_RESULT;
+			return SQL_SUCCESS;
+		}
+		else
+		{
+			CVT_APPEND_CHAR(qb, '?');
+			return SQL_SUCCESS;
+		}
+	}
+
+	/* Assign correct buffers based on data at exec param or not */
+	if (opts->parameters[param_number].data_at_exec)
+	{
+		used = opts->parameters[param_number].EXEC_used ? *opts->parameters[param_number].EXEC_used : SQL_NTS;
+		buffer = opts->parameters[param_number].EXEC_buffer;
+	}
+	else
+	{
+		UInt4	bind_size = opts->param_bind_type;
+		UInt4	ctypelen;
+
+		buffer = opts->parameters[param_number].buffer + offset;
+		if (current_row > 0)
+		{
+			if (bind_size > 0)
+				buffer += (bind_size * current_row);
+			else if (ctypelen = ctype_length(opts->parameters[param_number].CType), ctypelen > 0)
+				buffer += current_row * ctypelen;
+			else 
+				buffer += current_row * opts->parameters[param_number].buflen;
+		}
+		if (opts->parameters[param_number].used)
+		{
+			UInt4	p_offset = offset;
+			if (bind_size > 0)
+				p_offset = offset + bind_size * current_row;
+			else
+				p_offset = offset + sizeof(SDWORD) * current_row;
+			used = *(SDWORD *)((char *)opts->parameters[param_number].used + p_offset);
+		}
+		else
+			used = SQL_NTS;
+	}	
+
+	/* Handle NULL parameter data */
+	if (used == SQL_NULL_DATA)
+	{
+		CVT_APPEND_STR(qb, "NULL");
+		return SQL_SUCCESS;
+	}
+
+	/*
+	 * If no buffer, and it's not null, then what the hell is it? Just
+	 * leave it alone then.
+	 */
+	if (!buffer)
+	{
+		if (0 != (qb->flags & FLGB_PRE_EXECUTING))
+		{
+			CVT_APPEND_STR(qb, "NULL");
+			qb->flags |= FLGB_INACCURATE_RESULT;
+			return SQL_SUCCESS;
+		}
+		else
+		{
+			CVT_APPEND_CHAR(qb, '?');
+			return SQL_SUCCESS;
+		}
+	}
+
+	param_ctype = opts->parameters[param_number].CType;
+	param_sqltype = opts->parameters[param_number].SQLType;
+
+	mylog("%s: from(fcType)=%d, to(fSqlType)=%d\n", func,
+				param_ctype, param_sqltype);
+
+	/* replace DEFAULT with something we can use */
+	if (param_ctype == SQL_C_DEFAULT)
+		param_ctype = sqltype_to_default_ctype(param_sqltype);
+
+	allocbuf = buf = NULL;
+	param_string[0] = '\0';
+	cbuf[0] = '\0';
+	memset(&st, 0, sizeof(st));
+	t = time(NULL);
+	tim = localtime(&t);
+	st.m = tim->tm_mon + 1;
+	st.d = tim->tm_mday;
+	st.y = tim->tm_year + 1900;
+
+	/* Convert input C type to a neutral format */
+	switch (param_ctype)
+	{
+		case SQL_C_BINARY:
+		case SQL_C_CHAR:
+			buf = buffer;
+			break;
+
+#ifdef	UNICODE_SUPPORT
+		case SQL_C_WCHAR:
+			buf = allocbuf = ucs2_to_utf8((SQLWCHAR *) buffer, used / 2, &used);
+			used *= 2;
+			break;
+#endif /* UNICODE_SUPPORT */
+
+		case SQL_C_DOUBLE:
+			sprintf(param_string, "%.15g",
+						*((SDOUBLE *) buffer));
+			break;
+
+		case SQL_C_FLOAT:
+			sprintf(param_string, "%.6g",
+					*((SFLOAT *) buffer));
+			break;
+
+		case SQL_C_SLONG:
+		case SQL_C_LONG:
+			sprintf(param_string, "%ld",
+					*((SDWORD *) buffer));
+			break;
+
+#if (ODBCVER >= 0x0300) && defined(ODBCINT64)
+#ifdef WIN32
+		case SQL_C_SBIGINT:
+			sprintf(param_string, "%I64d",
+					*((SQLBIGINT *) buffer));
+			break;
+
+		case SQL_C_UBIGINT:
+			sprintf(param_string, "%I64u",
+					*((SQLUBIGINT *) buffer));
+			break;
+
+#endif /* WIN32 */
+#endif /* ODBCINT64 */
+		case SQL_C_SSHORT:
+		case SQL_C_SHORT:
+			sprintf(param_string, "%d",
+					*((SWORD *) buffer));
+			break;
+
+		case SQL_C_STINYINT:
+		case SQL_C_TINYINT:
+			sprintf(param_string, "%d",
+					*((SCHAR *) buffer));
+			break;
+
+		case SQL_C_ULONG:
+			sprintf(param_string, "%lu",
+					*((UDWORD *) buffer));
+			break;
+
+		case SQL_C_USHORT:
+			sprintf(param_string, "%u",
+					*((UWORD *) buffer));
+			break;
+
+		case SQL_C_UTINYINT:
+			sprintf(param_string, "%u",
+					*((UCHAR *) buffer));
+			break;
+
+		case SQL_C_BIT:
+			{
+				int			i = *((UCHAR *) buffer);
+
+					sprintf(param_string, "%d", i ? 1 : 0);
+					break;
+			}
+
+		case SQL_C_DATE:
+#if (ODBCVER >= 0x0300)
+		case SQL_C_TYPE_DATE:		/* 91 */
+#endif
+			{
+				DATE_STRUCT *ds = (DATE_STRUCT *) buffer;
+
+				st.m = ds->month;
+				st.d = ds->day;
+				st.y = ds->year;
+
+				break;
+			}
+
+		case SQL_C_TIME:
+#if (ODBCVER >= 0x0300)
+		case SQL_C_TYPE_TIME:		/* 92 */
+#endif
+			{
+				TIME_STRUCT *ts = (TIME_STRUCT *) buffer;
+
+				st.hh = ts->hour;
+				st.mm = ts->minute;
+				st.ss = ts->second;
+
+				break;
+			}
+
+		case SQL_C_TIMESTAMP:
+#if (ODBCVER >= 0x0300)
+		case SQL_C_TYPE_TIMESTAMP:	/* 93 */
+#endif
+			{
+				TIMESTAMP_STRUCT *tss = (TIMESTAMP_STRUCT *) buffer;
+
+				st.m = tss->month;
+				st.d = tss->day;
+				st.y = tss->year;
+				st.hh = tss->hour;
+				st.mm = tss->minute;
+				st.ss = tss->second;
+				st.fr = tss->fraction;
+
+				mylog("m=%d,d=%d,y=%d,hh=%d,mm=%d,ss=%d\n", st.m, st.d, st.y, st.hh, st.mm, st.ss);
+
+				break;
+
+			}
+		default:
+			/* error */
+			qb->errormsg = "Unrecognized C_parameter type in copy_statement_with_parameters";
+			qb->errornumber = STMT_NOT_IMPLEMENTED_ERROR;
+			CVT_TERMINATE(qb);	/* just in case */
+			return SQL_ERROR;
+	}
+
+	/*
+	 * Now that the input data is in a neutral format, convert it to
+	 * the desired output format (sqltype)
+	 */
+
+	switch (param_sqltype)
+	{
+		case SQL_CHAR:
+		case SQL_VARCHAR:
+		case SQL_LONGVARCHAR:
+#ifdef	UNICODE_SUPPORT
+		case SQL_WCHAR:
+		case SQL_WVARCHAR:
+		case SQL_WLONGVARCHAR:
+#endif /* UNICODE_SUPPORT */
+
+			CVT_APPEND_CHAR(qb, '\'');	/* Open Quote */
+
+			/* it was a SQL_C_CHAR */
+			if (buf)
+				CVT_SPECIAL_CHARS(qb, buf, used);
+
+			/* it was a numeric type */
+			else if (param_string[0] != '\0')
+				CVT_APPEND_STR(qb, param_string);
+
+			/* it was date,time,timestamp -- use m,d,y,hh,mm,ss */
+			else
+			{
+				sprintf(tmp, "%.4d-%.2d-%.2d %.2d:%.2d:%.2d",
+						st.y, st.m, st.d, st.hh, st.mm, st.ss);
+
+				CVT_APPEND_STR(qb, tmp);
+			}
+
+			CVT_APPEND_CHAR(qb, '\'');	/* Close Quote */
+
+			break;
+
+		case SQL_DATE:
+#if (ODBCVER >= 0x0300)
+		case SQL_TYPE_DATE:	/* 91 */
+#endif
+			if (buf)
+			{				/* copy char data to time */
+				my_strcpy(cbuf, sizeof(cbuf), buf, used);
+				parse_datetime(cbuf, &st);
+			}
+
+			sprintf(tmp, "'%.4d-%.2d-%.2d'::date", st.y, st.m, st.d);
+
+			CVT_APPEND_STR(qb, tmp);
+			break;
+
+		case SQL_TIME:
+#if (ODBCVER >= 0x0300)
+		case SQL_TYPE_TIME:	/* 92 */
+#endif
+			if (buf)
+			{				/* copy char data to time */
+				my_strcpy(cbuf, sizeof(cbuf), buf, used);
+				parse_datetime(cbuf, &st);
+			}
+
+			sprintf(tmp, "'%.2d:%.2d:%.2d'::time", st.hh, st.mm, st.ss);
+
+			CVT_APPEND_STR(qb, tmp);
+			break;
+
+		case SQL_TIMESTAMP:
+#if (ODBCVER >= 0x0300)
+		case SQL_TYPE_TIMESTAMP:	/* 93 */
+#endif
+
+			if (buf)
+			{
+				my_strcpy(cbuf, sizeof(cbuf), buf, used);
+				parse_datetime(cbuf, &st);
+			}
+
+			/*
+			 * sprintf(tmp, "'%.4d-%.2d-%.2d %.2d:%.2d:%.2d'", st.y,
+			 * st.m, st.d, st.hh, st.mm, st.ss);
+			 */
+			tmp[0] = '\'';
+			/* Time zone stuff is unreliable */
+			stime2timestamp(&st, tmp + 1, USE_ZONE, PG_VERSION_GE(conn, 7.2));
+			strcat(tmp, "'::timestamp");
+
+			CVT_APPEND_STR(qb, tmp);
+
+			break;
+
+		case SQL_BINARY:
+		case SQL_VARBINARY:/* non-ascii characters should be
+							* converted to octal */
+			CVT_APPEND_CHAR(qb, '\'');	/* Open Quote */
+
+			mylog("SQL_VARBINARY: about to call convert_to_pgbinary, used = %d\n", used);
+
+			CVT_APPEND_BINARY(qb, buf, used);
+
+			CVT_APPEND_CHAR(qb, '\'');	/* Close Quote */
+
+			break;
+
+		case SQL_LONGVARBINARY:
+
+			if (opts->parameters[param_number].data_at_exec)
+				lobj_oid = opts->parameters[param_number].lobj_oid;
+			else
+			{
+				/* begin transaction if needed */
+				if (!CC_is_in_trans(conn))
+				{
+					if (!CC_begin(conn))
+					{
+						qb->errormsg = "Could not begin (in-line) a transaction";
+						qb->errornumber = STMT_EXEC_ERROR;
+						return SQL_ERROR;
+					}
+				}
+
+				/* store the oid */
+				lobj_oid = lo_creat(conn, INV_READ | INV_WRITE);
+				if (lobj_oid == 0)
+				{
+					qb->errornumber = STMT_EXEC_ERROR;
+					qb->errormsg = "Couldnt create (in-line) large object.";
+					return SQL_ERROR;
+				}
+
+				/* store the fd */
+				lobj_fd = lo_open(conn, lobj_oid, INV_WRITE);
+				if (lobj_fd < 0)
+				{
+					qb->errornumber = STMT_EXEC_ERROR;
+					qb->errormsg = "Couldnt open (in-line) large object for writing.";
+					return SQL_ERROR;
+				}
+
+				retval = lo_write(conn, lobj_fd, buffer, used);
+
+				lo_close(conn, lobj_fd);
+
+				/* commit transaction if needed */
+				if (!ci->drivers.use_declarefetch && CC_is_in_autocommit(conn))
+				{
+					if (!CC_commit(conn))
+					{
+						qb->errormsg = "Could not commit (in-line) a transaction";
+						qb->errornumber = STMT_EXEC_ERROR;
+						return SQL_ERROR;
+					}
+				}
+			}
+
+			/*
+			 * the oid of the large object -- just put that in for the
+			 * parameter marker -- the data has already been sent to
+			 * the large object
+			 */
+			sprintf(param_string, "'%d'", lobj_oid);
+			CVT_APPEND_STR(qb, param_string);
+
+			break;
+
+			/*
+			 * because of no conversion operator for bool and int4,
+			 * SQL_BIT
+			 */
+			/* must be quoted (0 or 1 is ok to use inside the quotes) */
+
+		case SQL_REAL:
+			if (buf)
+				my_strcpy(param_string, sizeof(param_string), buf, used);
+			sprintf(tmp, "'%s'::float4", param_string);
+			CVT_APPEND_STR(qb, tmp);
+			break;
+		case SQL_FLOAT:
+		case SQL_DOUBLE:
+			if (buf)
+				my_strcpy(param_string, sizeof(param_string), buf, used);
+			sprintf(tmp, "'%s'::float8", param_string);
+			CVT_APPEND_STR(qb, tmp);
+			break;
+		case SQL_NUMERIC:
+			if (buf)
+			{
+				cbuf[0] = '\'';
+				my_strcpy(cbuf + 1, sizeof(cbuf) - 12, buf, used);	/* 12 = 1('\'') +
+																	* strlen("'::numeric")
+																	* + 1('\0') */
+				strcat(cbuf, "'::numeric");
+			}
+			else
+				sprintf(cbuf, "'%s'::numeric", param_string);
+			CVT_APPEND_STR(qb, cbuf);
+			break;
+			default:			/* a numeric type or SQL_BIT */
+			if (param_sqltype == SQL_BIT)
+				CVT_APPEND_CHAR(qb, '\'');		/* Open Quote */
+
+			if (buf)
+			{
+				switch (used)
+				{
+					case SQL_NULL_DATA:
+						break;
+					case SQL_NTS:
+						CVT_APPEND_STR(qb, buf);
+						break;
+					default:
+						CVT_APPEND_DATA(qb, buf, used);
+				}
+			}
+			else
+				CVT_APPEND_STR(qb, param_string);
+
+			if (param_sqltype == SQL_BIT)
+				CVT_APPEND_CHAR(qb, '\'');		/* Close Quote */
+
+			break;
+	}
+#ifdef	UNICODE_SUPPORT
+	if (allocbuf)
+		free(allocbuf);
+#endif /* UNICODE_SUPPORT */
 	return SQL_SUCCESS;
 }
 
@@ -2122,120 +2398,224 @@ mapFunction(const char *func, int param_count)
 	return NULL;
 }
 
+/*
+ * processParameters()
+ * Process function parameters and work with embedded escapes sequences.
+ */
+static int
+processParameters(QueryParse *qp, QueryBuild *qb,
+		UInt4 *output_count, Int4 param_pos[][2])
+{
+	static const char *func = "processParameters";
+	int retval, innerParenthesis, param_count;
+	BOOL stop;
 
-static int inner_convert_escape(const ConnectionClass *conn, const char *value, char *result, UInt4 maxLen, const char **input_resume, UInt4 *count);
-static int processParameters(const ConnectionClass *conn, const char *value, char *result, UInt4 maxLen, UInt4 *input_consumed, UInt4 *count, Int4 param_pos[][2]);
+	/* begin with outer '(' */
+	innerParenthesis = 0;
+	param_count = 0;
+	stop = FALSE;
+	for (; F_OldPos(qp) < qp->stmt_len; F_OldNext(qp))
+	{
+		retval = inner_process_tokens(qp, qb);
+		if (retval == SQL_ERROR)
+			return retval;
+#ifdef MULTIBYTE
+		if (ENCODE_STATUS(qp->encstr) != 0)
+			continue;
+#endif
+		if (qp->in_dquote || qp->in_quote || qp->in_escape)
+			continue;
+
+		switch (F_OldChar(qp))
+		{
+			case ',':
+				if (1 == innerParenthesis)
+				{
+					param_pos[param_count][1] = F_NewPos(qb) - 2;
+					param_count++;
+					param_pos[param_count][0] = F_NewPos(qb);
+					param_pos[param_count][1] = -1;
+				}
+				break;
+			case '(':
+				if (0 == innerParenthesis)
+				{
+					param_pos[param_count][0] = F_NewPos(qb);
+					param_pos[param_count][1] = -1;
+				}
+				innerParenthesis++;
+				break;
+     
+			case ')':
+				innerParenthesis--;
+				if (0 == innerParenthesis)
+				{
+					param_pos[param_count][1] = F_NewPos(qb) - 2;
+					param_count++;
+					param_pos[param_count][0] =
+					param_pos[param_count][1] = -1;
+				}
+				if (output_count)
+					*output_count = F_NewPos(qb);
+				break;
+
+			case '}':
+				stop = (0 == innerParenthesis);
+				break;
+
+		}
+		if (stop) /* returns with the last } position */
+			break;
+	}
+	if (param_pos[param_count][0] >= 0)
+	{
+		mylog("%s closing ) not found %d\n", func, innerParenthesis);
+		qb->errornumber = STMT_EXEC_ERROR;
+		qb->errormsg = "processParameters closing ) not found";
+		return SQL_ERROR;
+	}
+	else if (1 == param_count) /* the 1 parameter is really valid ? */
+	{
+		BOOL	param_exist = FALSE;
+		int	i;
+
+		for (i = param_pos[0][0]; i <= param_pos[0][1]; i++)
+		{
+			if (!isspace(qb->query_statement[i]))
+			{
+				param_exist = TRUE;
+				break;
+			}
+		}
+		if (!param_exist)
+		{
+			param_pos[0][0] = param_pos[0][1] = -1;
+		}
+	}
+
+	return SQL_SUCCESS;
+}
 
 /*
- * inner_convert_escape()
- * work with embedded escapes sequences
+ * convert_escape()
+ * This function doesn't return a pointer to static memory any longer !
  */
-     
-static
-int inner_convert_escape(const ConnectionClass *conn, const char *value,
-		char *result, UInt4 maxLen, const char **input_resume,
-		UInt4 *count)
+static int
+convert_escape(QueryParse *qp, QueryBuild *qb)
 {
-	static const char *func = "inner_convert_escape";
-	int	subret, param_count;
-	char valnts[1024], params[1024];
-	char key[33], *end;
-	const char *valptr;
-	UInt4	vlen, prtlen, input_consumed, param_consumed, extra_len;
-	Int4	param_pos[16][2];
+	static const char *func = "convert_escape";
+	RETCODE	retval = SQL_SUCCESS;
+	char		buf[1024], key[65];
+	unsigned char	ucv;
+	UInt4		prtlen;
  
-	valptr = value;
-	if (*valptr == '{') /* skip the first { */
-		valptr++;
+	if (F_OldChar(qp) == '{') /* skip the first { */
+		F_OldNext(qp);
 	/* Separate off the key, skipping leading and trailing whitespace */
-	while ((*valptr != '\0') && isspace((unsigned char) *valptr))
-		valptr++;
-	sscanf(valptr, "%32s", key);
-	while ((*valptr != '\0') && (!isspace((unsigned char) *valptr)))
-		valptr++;
-	while ((*valptr != '\0') && isspace((unsigned char) *valptr))
-		valptr++;
-     
-	if (end = my_strchr(conn, valptr, '}'), NULL == end)
+	while ((ucv = F_OldChar(qp)) != '\0' && isspace(ucv))
+		F_OldNext(qp);
+	/*
+	 * procedure calls
+	 */
+	if (qp->statement_type == STMT_TYPE_PROCCALL)
 	{
-		mylog("%s couldn't find the ending }\n",func);
-		return CONVERT_ESCAPE_ERROR;
-	}
-	if (vlen = (UInt4)(end - valptr), maxLen <= vlen)
-		return CONVERT_ESCAPE_OVERFLOW;
-	memcpy(valnts, valptr, vlen);
-	valnts[vlen] = '\0';
-	*input_resume = valptr + vlen; /* resume from the last } */
-	mylog("%s: key='%s', val='%s'\n", func, key, valnts);
-     
-	extra_len = 0;
-	if (isalnum(result[-1])) /* Avoid the concatenation of the function name with the previous word. Aceto */
-	{
-		if (1 >= maxLen)
+		int	lit_call_len = 4;
+		ConnectionClass *conn = qb->conn;
+
+		/* '?=' to accept return values exists ? */
+		if (F_OldChar(qp) == '?')
 		{
-			mylog("%s %d bytes buffer overflow\n", func, maxLen);
-			return CONVERT_ESCAPE_OVERFLOW;
+			qb->param_number++;
+			while (isspace((unsigned char) qp->statement[++qp->opos]));
+			if (F_OldChar(qp) != '=')
+			{
+				F_OldPrior(qp);
+				return SQL_SUCCESS;
+			}
+			while (isspace((unsigned char) qp->statement[++qp->opos]));
 		}
-		*result = ' ';
-		result++;
-		*result = '\0';
-		maxLen--;
-		extra_len++;
+		if (strnicmp(F_OldPtr(qp), "call", lit_call_len) ||
+			!isspace((unsigned char) F_OldPtr(qp)[lit_call_len]))
+		{
+			F_OldPrior(qp);
+			return SQL_SUCCESS;
+		}
+		qp->opos += lit_call_len;
+		CVT_APPEND_STR(qb, "SELECT ");
+		if (my_strchr(conn, F_OldPtr(qp), '('))
+			qp->proc_no_param = FALSE;
+		return SQL_SUCCESS;
 	}
+
+	sscanf(F_OldPtr(qp), "%32s", key);
+	while ((ucv = F_OldChar(qp)) != '\0' && (!isspace(ucv)))
+		F_OldNext(qp);
+	while ((ucv = F_OldChar(qp)) != '\0' && isspace(ucv))
+		F_OldNext(qp);
+    
+	/* Avoid the concatenation of the function name with the previous word. Aceto */
+
+	if (F_NewPos(qb) > 0 && isalnum(F_NewPtr(qb)[-1]))
+		CVT_APPEND_CHAR(qb, ' ');
+	
 	if (strcmp(key, "d") == 0)
 	{
 		/* Literal; return the escape part adding type cast */
-		prtlen = snprintf(result, maxLen, "%s::date", valnts);
+		F_ExtractOldTo(qp, buf, '}', sizeof(buf));
+		prtlen = snprintf(buf, sizeof(buf), "%s::date ", buf);
+		CVT_APPEND_DATA(qb, buf, prtlen);
 	}
 	else if (strcmp(key, "t") == 0)
 	{
 		/* Literal; return the escape part adding type cast */
-		prtlen = snprintf(result, maxLen, "%s::time", valnts);
+		F_ExtractOldTo(qp, buf, '}', sizeof(buf));
+		prtlen = snprintf(buf, sizeof(buf), "%s::time", buf);
+		CVT_APPEND_DATA(qb, buf, prtlen);
 	}
 	else if (strcmp(key, "ts") == 0)
 	{
 		/* Literal; return the escape part adding type cast */
-		if (PG_VERSION_LT(conn, 7.1))
-			prtlen = snprintf(result, maxLen, "%s::datetime", valnts);
+		F_ExtractOldTo(qp, buf, '}', sizeof(buf));
+		if (PG_VERSION_LT(qb->conn, 7.1))
+			prtlen = snprintf(buf, sizeof(buf), "%s::datetime", buf);
 		else
-			prtlen = snprintf(result, maxLen, "%s::timestamp", valnts);
+			prtlen = snprintf(buf, sizeof(buf), "%s::timestamp", buf);
+		CVT_APPEND_DATA(qb, buf, prtlen);
 	}
 	else if (strcmp(key, "oj") == 0) /* {oj syntax support for 7.1 * servers */
 	{
-		/* Literal; return the escape part as-is */
-		strncpy(result, valnts, maxLen);
-		prtlen = vlen; 
+		F_OldPrior(qp);
+		return SQL_SUCCESS; /* Continue at inner_process_tokens loop */
 	}
 	else if (strcmp(key, "fn") == 0)
 	{
-		/*
-		 * Function invocation Separate off the func name, skipping
-		 * trailing whitespace.
-		 */
-		char	*funcEnd = valnts;
-		char     svchar;
-		const char	*mapExpr;
-     
-		params[sizeof(params)-1] = '\0';
+		QueryBuild	nqb;
+		const char *mapExpr;
+		int	i, param_count;
+		UInt4	param_consumed;
+		Int4	param_pos[16][2];
 
-		while ((*funcEnd != '\0') && (*funcEnd != '(') &&
-			(!isspace((unsigned char) *funcEnd)))
-			funcEnd++;
-		svchar = *funcEnd;
-		*funcEnd = '\0';
-		sscanf(valnts, "%32s", key);
-		*funcEnd = svchar;
-		while ((*funcEnd != '\0') && isspace((unsigned char) *funcEnd))
-			funcEnd++;
+		/* Separate off the func name, skipping leading and trailing whitespace */
+		i = 0;
+		while ((ucv = F_OldChar(qp)) != '\0' && ucv != '(' &&
+			   (!isspace(ucv)))
+		{
+			if (i < sizeof(key)-1)
+				key[i++] = ucv;
+			F_OldNext(qp);
+		}
+		key[i] = '\0';
+		while ((ucv = F_OldChar(qp)) != '\0' && isspace(ucv))
+			F_OldNext(qp);
 
 		/*
  		 * We expect left parenthesis here, else return fn body as-is
 		 * since it is one of those "function constants".
 		 */
-		if (*funcEnd != '(')
+		if (F_OldChar(qp) != '(')
 		{
-			strncpy(result, valnts, maxLen);
-			return CONVERT_ESCAPE_OK;
+			CVT_APPEND_STR(qb, key);
+			return SQL_SUCCESS;
 		}
 
 		/*
@@ -2244,9 +2624,14 @@ int inner_convert_escape(const ConnectionClass *conn, const char *value,
 		 * Aceto 2002-01-29
 		 */
 
-		valptr += (UInt4)(funcEnd - valnts);
-		if (subret = processParameters(conn, valptr, params, sizeof(params) - 1, &input_consumed, &param_consumed, param_pos), CONVERT_ESCAPE_OK != subret) 
-			return CONVERT_ESCAPE_ERROR;
+		QB_initialize_copy(&nqb, qb, 1024);
+		if (retval = processParameters(qp, &nqb, &param_consumed, param_pos), retval == SQL_ERROR)
+		{
+			qb->errornumber = nqb.errornumber;
+			qb->errormsg = nqb.errormsg;
+			QB_Destructor(&nqb);
+			return retval;
+		}
 
 		for (param_count = 0;; param_count++)
 		{
@@ -2256,10 +2641,13 @@ int inner_convert_escape(const ConnectionClass *conn, const char *value,
 		if (param_count == 1 &&
 		    param_pos[0][1] < param_pos[0][0])
 			param_count = 0;
-		
+
 		mapExpr = mapFunction(key, param_count);
 		if (mapExpr == NULL)
-			prtlen = snprintf(result, maxLen, "%s%s", key, params);
+		{
+			CVT_APPEND_STR(qb, key);
+			CVT_APPEND_DATA(qb, nqb.query_statement, nqb.npos);
+		}
 		else
 		{
 			const char *mapptr;
@@ -2267,15 +2655,9 @@ int inner_convert_escape(const ConnectionClass *conn, const char *value,
 
 			for (prtlen = 0, mapptr = mapExpr; *mapptr; mapptr++)
 			{
-				if (prtlen + 1 >= maxLen) /* buffer overflow */
-				{
-					result[prtlen] = '\0';
-					prtlen++;
-					break;
-				}
 				if (*mapptr != '$')
 				{
-					result[prtlen++] = *mapptr;
+					CVT_APPEND_CHAR(qb, *mapptr);
 					continue;
 				}
 				mapptr++;
@@ -2290,214 +2672,48 @@ int inner_convert_escape(const ConnectionClass *conn, const char *value,
 					if (pidx < 0 ||
 					    param_pos[pidx][0] < 0)
 					{
+						qb->errornumber = STMT_EXEC_ERROR;
+						qb->errormsg = "param not found";
 						qlog("%s %dth param not found for the expression %s\n", pidx + 1, mapExpr);
-						return CONVERT_ESCAPE_ERROR;
+						retval = SQL_ERROR;
+						break;
 					}
 					from = param_pos[pidx][0];
 					to = param_pos[pidx][1];
 				}
 				else
 				{
+					qb->errornumber = STMT_EXEC_ERROR;
+					qb->errormsg = "internal expression error";
 					qlog("%s internal expression error %s\n", func, mapExpr);
-					return CONVERT_ESCAPE_ERROR;
-				}
-				paramlen = to - from + 1;
-				if (prtlen + paramlen >= maxLen) /* buffer overflow */
-				{
-					prtlen = maxLen;
+					retval = SQL_ERROR;
 					break;
 				}
+				paramlen = to - from + 1;
 				if (paramlen > 0)
-					memcpy(&result[prtlen], params + from, paramlen);
-				prtlen += paramlen;
+					CVT_APPEND_DATA(qb, nqb.query_statement+ from, paramlen);
 			}
-			if (prtlen < maxLen)
-				result[prtlen] = '\0';
-			/** prtlen = snprintf(result, maxLen, "%s%s", mapExpr, params); **/
 		}
-		valptr += input_consumed;
-		*input_resume = valptr;
+		if (0 == qb->errornumber)
+		{
+			qb->errornumber = nqb.errornumber;
+			qb->errormsg = nqb.errormsg;
+		}
+		if (SQL_ERROR != retval)
+		{
+			qb->param_number = nqb.param_number;
+			qb->flags = nqb.flags;
+		}
+		QB_Destructor(&nqb);
 	}
 	else
 	{
 		/* Bogus key, leave untranslated */
-		return CONVERT_ESCAPE_ERROR;
+		return SQL_ERROR;
 	}
-     
-	if (count)
-		*count = prtlen + extra_len;
-	if (prtlen < 0 || prtlen >= maxLen) /* buffer overflow */
-	{
-		mylog("%s %d bytes buffer overflow\n", func, maxLen);
-		return CONVERT_ESCAPE_OVERFLOW;
-	}
-	return CONVERT_ESCAPE_OK;
-}
-     
-/*
- * processParameters()
- * Process function parameters and work with embedded escapes sequences.
- */
-     
-static
-int processParameters(const ConnectionClass *conn, const char *value,
-		char *result, UInt4 maxLen, UInt4 *input_consumed,
-		UInt4 *output_count, Int4 param_pos[][2])
-{
-	int		innerParenthesis, subret, param_count;
-	UInt4	ipos, count, inner_count;
-	unsigned char	stop;
-	const char	*valptr;
-	char	buf[1024];
-	BOOL	in_quote, in_dquote, in_escape, leadingSpace;
-#ifdef MULTIBYTE
-	encoded_str	encstr;
-#endif   /* MULTIBYTE */
  
-	buf[sizeof(buf)-1] = '\0';
-	innerParenthesis = 0;
-	in_quote = in_dquote = in_escape = leadingSpace = FALSE;
-	param_count = 0;
-#ifdef MULTIBYTE
-	make_encoded_str(&encstr, conn, value);
-#endif /* MULTIBYTE */
-	/* begin with outer '(' */
-	for (stop = FALSE, valptr = value, ipos = count = 0; *valptr != '\0'; ipos++, valptr++)
-	{
-		if (leadingSpace)
-		{
-			if (isspace(*valptr))
-				continue;
-			leadingSpace = FALSE;
-		}
-		if (count + 1 >= maxLen) /* buffer overflow */
-		{
-			*input_consumed = 0;
-			result[count++] = '\0';
-			return CONVERT_ESCAPE_OVERFLOW;
-		}
-#ifdef MULTIBYTE
-		encoded_byte_check(&encstr, ipos);
-		if (ENCODE_STATUS(encstr) != 0)
-		{
-			result[count++] = *valptr;
-			continue;
-		}
-		/*
-		 * From here we are guaranteed to handle a 1-byte character.
-		 */
-#endif
-		if (in_quote)
-		{
-			if (in_escape)
-				in_escape = FALSE;
-			else if (*valptr == '\\')
-				in_escape = TRUE;
-			else if (*valptr == '\'')
-				in_quote = FALSE;
-			result[count++] = *valptr;
-			continue;
-		}
-		else if (in_dquote)
-		{
-			if (*valptr == '\"')
-				in_dquote = FALSE;
-			result[count++] = *valptr;
-			continue;
-		}
-		switch (*valptr)
-		{
-			case '\'':
-				in_quote = TRUE;
-				break;
-			case '\"':
-				in_dquote = TRUE;
-				break;
-			case ',':
-				if (1 == innerParenthesis)
-				{
-					param_pos[param_count][1] = count - 1;
-					param_count++;
-					param_pos[param_count][0] = count + 1;
-					param_pos[param_count][1] = -1;
-					leadingSpace = TRUE;
-				}
-				break;
-			case '(':
-				if (0 == innerParenthesis)
-				{
-					param_pos[param_count][0] = count + 1;
-					param_pos[param_count][1] = -1;
-					leadingSpace = TRUE;
-				}
-				innerParenthesis++;
-				break;
-     
-			case ')':
-				innerParenthesis--;
-				if (0 == innerParenthesis)
-				{
-					param_pos[param_count][1] = count - 1;
-					param_count++;
-					param_pos[param_count][0] =
-					param_pos[param_count][1] = -1;
-				}
-				break;
-     
-			case '}':
-				stop = TRUE;
-				break;
-     
-			case '{':
-				if (subret = inner_convert_escape(conn, valptr, buf, sizeof(buf) - 1, &valptr, &inner_count), CONVERT_ESCAPE_OK != subret)
-					return CONVERT_ESCAPE_ERROR;
-     
-				if (inner_count + count >= maxLen)
-					return CONVERT_ESCAPE_OVERFLOW;
-				memcpy(&result[count], buf, inner_count); 
-				count += inner_count;
-				ipos = (UInt4) (valptr - value);
-				continue;
-		}
-		if (stop) /* returns with the last } position */
-			break;
-		result[count++] = *valptr;
-	}
-	if (param_pos[param_count][0] >= 0)
-	{
-		mylog("processParameters closing ) not found %d\n", innerParenthesis);
-		return CONVERT_ESCAPE_ERROR;
-	}
-	result[count] = '\0';
-	*input_consumed = ipos;
-	if (output_count)
-		*output_count = count;
-	return CONVERT_ESCAPE_OK;
+	return retval;
 }
-     
-/*
- * convert_escape()
- * This function returns a pointer to static memory!
- */
-     
-int
-convert_escape(const char *value, StatementClass *stmt, int *npos, int *stsize, const char **val_resume)
-{
-	int	ret, pos = *npos;
-	UInt4 	count;
-
-	while (ret = inner_convert_escape(SC_get_conn(stmt), value,
-		stmt->stmt_with_params + pos, *stsize - pos, val_resume, &count),
-		CONVERT_ESCAPE_OVERFLOW == ret)
-	{
-		if ((*stsize = enlarge_statement(stmt, *stsize * 2)) <= 0)
-			return CONVERT_ESCAPE_ERROR;
-	}
-	if (CONVERT_ESCAPE_OK == ret)
-		*npos += count;
-	return ret;
-}
-
 
 BOOL
 convert_money(const char *s, char *sout, size_t soutmax)
@@ -2540,6 +2756,8 @@ parse_datetime(const char *buf, SIMPLE_TIME *st)
 	int			nf;
 
 	y = m = d = hh = mm = ss = 0;
+	st->fr = 0;
+	st->infinity = 0;
 
 	/* escape sequence ? */
 	if (buf[0] == '{')
