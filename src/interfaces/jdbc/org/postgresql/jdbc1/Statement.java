@@ -288,7 +288,7 @@ public class Statement implements java.sql.Statement
 	 */
 	public java.sql.ResultSet getResultSet() throws SQLException
 	{
-          if (result != null) && ((org.postgresql.ResultSet)result.reallyResultSet())
+          if (result != null && ((org.postgresql.ResultSet)result).reallyResultSet())
             return result;
           return null;
 	}
