@@ -1,9 +1,13 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/programmer.sgml,v 1.21 2000/02/02 16:25:04 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/programmer.sgml,v 1.22 2000/03/28 14:16:06 thomas Exp $
 
 Postgres Programmer's Guide.
 
 $Log: programmer.sgml,v $
+Revision 1.22  2000/03/28 14:16:06  thomas
+Update SGML catalog references to DocBook 3.1 on FreeBSD.
+Matches postgresql.org/hub.org environment.
+
 Revision 1.21  2000/02/02 16:25:04  thomas
 Add short chapter in developer's guide on formatting source code.
 
@@ -38,7 +42,7 @@ Make new file current.sgml to hold release info for the current release.
 
 -->
 
-<!doctype book PUBLIC "-//Davenport//DTD DocBook V3.0//EN" [
+<!doctype book PUBLIC "-//OASIS//DTD DocBook V3.1//EN" [
 
 <!entity about    SYSTEM "about.sgml">
 <!entity history  SYSTEM "history.sgml">

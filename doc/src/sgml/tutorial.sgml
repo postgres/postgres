@@ -4,7 +4,7 @@
 - thomas 1998-02-23
 -
 - -->
-<!doctype book PUBLIC "-//Davenport//DTD DocBook V3.0//EN" [
+<!doctype book PUBLIC "-//OASIS//DTD DocBook V3.1//EN" [
 
 <!entity about    SYSTEM "about.sgml">
 <!entity history  SYSTEM "history.sgml">

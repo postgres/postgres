@@ -1,4 +1,4 @@
-<!doctype book PUBLIC "-//Davenport//DTD DocBook V3.0//EN" [
+<!doctype book PUBLIC "-//OASIS//DTD DocBook V3.1//EN" [
 
 <!entity about    SYSTEM "about.sgml">
 <!entity bug-reporting SYSTEM "bug-reporting.sgml">
