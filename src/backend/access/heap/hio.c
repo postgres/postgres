@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Id: hio.c,v 1.38 2001/05/12 19:58:27 tgl Exp $
+ *	  $Id: hio.c,v 1.39 2001/05/16 22:35:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,18 +66,25 @@ RelationPutHeapTuple(Relation relation,
 /*
  * RelationGetBufferForTuple
  *
- * Returns exclusive-locked buffer with free space >= given len.
+ *	Returns exclusive-locked buffer with free space >= given len,
+ *	being careful to select only a page at or beyond minblocknum
+ *	in the relation.
  *
- * Note that we use LockPage to lock relation for extension. We can
- * do this as long as in all other places we use page-level locking
- * for indices only. Alternatively, we could define pseudo-table as
- * we do for transactions with XactLockTable.
+ *	The minblocknum parameter is needed to prevent deadlock between
+ *	concurrent heap_update operations; see heap_update for details.
+ *	Pass zero if you don't particularly care which page you get.
  *
- * ELOG(ERROR) is allowed here, so this routine *must* be called
- * before any (unlogged) changes are made in buffer pool.
+ *	Note that we use LockPage to lock relation for extension. We can
+ *	do this as long as in all other places we use page-level locking
+ *	for indices only. Alternatively, we could define pseudo-table as
+ *	we do for transactions with XactLockTable.
+ *
+ *	ELOG(ERROR) is allowed here, so this routine *must* be called
+ *	before any (unlogged) changes are made in buffer pool.
  */
 Buffer
-RelationGetBufferForTuple(Relation relation, Size len)
+RelationGetBufferForTuple(Relation relation, Size len,
+						  BlockNumber minblocknum)
 {
 	Buffer		buffer = InvalidBuffer;
 	Page		pageHeader;
@@ -103,16 +110,19 @@ RelationGetBufferForTuple(Relation relation, Size len)
 	if (relation->rd_nblocks > 0)
 	{
 		lastblock = relation->rd_nblocks - 1;
-		buffer = ReadBuffer(relation, lastblock);
-		LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
-		pageHeader = (Page) BufferGetPage(buffer);
-		if (len <= PageGetFreeSpace(pageHeader))
-			return buffer;
-		/*
-		 * Doesn't fit, so we'll have to try someplace else.
-		 */
-		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-		/* buffer release will happen below... */
+		if (lastblock >= minblocknum)
+		{
+			buffer = ReadBuffer(relation, lastblock);
+			LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
+			pageHeader = (Page) BufferGetPage(buffer);
+			if (len <= PageGetFreeSpace(pageHeader))
+				return buffer;
+			/*
+			 * Doesn't fit, so we'll have to try someplace else.
+			 */
+			LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+			/* buffer release will happen below... */
+		}
 	}
 
 	/*
@@ -137,32 +147,38 @@ RelationGetBufferForTuple(Relation relation, Size len)
 	 */
 	relation->rd_nblocks = RelationGetNumberOfBlocks(relation);
 
-	if (relation->rd_nblocks > oldnblocks)
+	if ((BlockNumber) relation->rd_nblocks > oldnblocks)
 	{
 		/*
 		 * Someone else has indeed extended the relation recently.
 		 * Try to fit our tuple into the new last page.
 		 */
 		lastblock = relation->rd_nblocks - 1;
-		buffer = ReleaseAndReadBuffer(buffer, relation, lastblock, false);
-		LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
-		pageHeader = (Page) BufferGetPage(buffer);
-		if (len <= PageGetFreeSpace(pageHeader))
+		if (lastblock >= minblocknum)
 		{
-			/* OK, we don't need to extend again. */
-			if (!relation->rd_myxactonly)
-				UnlockPage(relation, 0, ExclusiveLock);
-			return buffer;
+			buffer = ReleaseAndReadBuffer(buffer, relation, lastblock, false);
+			LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
+			pageHeader = (Page) BufferGetPage(buffer);
+			if (len <= PageGetFreeSpace(pageHeader))
+			{
+				/* OK, we don't need to extend again. */
+				if (!relation->rd_myxactonly)
+					UnlockPage(relation, 0, ExclusiveLock);
+				return buffer;
+			}
+			/*
+			 * Doesn't fit, so we'll have to extend the relation (again).
+			 */
+			LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+			/* buffer release will happen below... */
 		}
-		/*
-		 * Doesn't fit, so we'll have to extend the relation (again).
-		 */
-		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-		/* buffer release will happen below... */
 	}
 
 	/*
 	 * Extend the relation by one page and update rd_nblocks for next time.
+	 *
+	 * Note: at this point minblocknum is ignored; we won't extend by more
+	 * than one block...
 	 */
 	lastblock = relation->rd_nblocks;
 	buffer = ReleaseAndReadBuffer(buffer, relation, lastblock, true);
