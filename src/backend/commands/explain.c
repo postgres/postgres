@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.89 2002/10/14 04:26:54 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.89.2.1 2002/12/06 19:28:13 tgl Exp $
  *
  */
 
@@ -432,6 +432,7 @@ explain_outNode(StringInfo str, Plan *plan, Plan *outer_plan,
 			break;
 		case T_SeqScan:
 		case T_TidScan:
+		case T_SubqueryScan:
 		case T_FunctionScan:
 			show_scan_qual(plan->qual, false,
 						   "Filter",
@@ -483,13 +484,6 @@ explain_outNode(StringInfo str, Plan *plan, Plan *outer_plan,
 							"Filter",
 							"outer", OUTER, outerPlan(plan),
 							"inner", INNER, innerPlan(plan),
-							str, indent, es);
-			break;
-		case T_SubqueryScan:
-			show_upper_qual(plan->qual,
-							"Filter",
-						  "subplan", 1, ((SubqueryScan *) plan)->subplan,
-							"", 0, NULL,
 							str, indent, es);
 			break;
 		case T_Agg:
