@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.25 1997/10/30 01:55:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.26 1997/10/30 15:28:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,8 +104,8 @@ xcstar			[^/]
 
 digit			[0-9]
 number			[-+.0-9Ee]
-letter			[_A-Za-z]
-letter_or_digit [_A-Za-z0-9]
+letter			[\200-\377_A-Za-z]
+letter_or_digit	[\200-\377_A-Za-z0-9]
 
 sysfunc			SYS_{letter}{letter_or_digit}*
 
