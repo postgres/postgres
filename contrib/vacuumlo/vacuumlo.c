@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/contrib/vacuumlo/vacuumlo.c,v 1.15 2002/09/05 21:19:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/contrib/vacuumlo/vacuumlo.c,v 1.16 2002/10/03 17:20:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -383,7 +383,6 @@ usage(void)
 	fprintf(stdout, "  -U username\tUsername to connect as\n");
 	fprintf(stdout, "  -W\t\tPrompt for password\n");
 	fprintf(stdout, "  -h hostname\tDatabase server host\n");
-	fprintf(stdout, "  -p port\tDatabase server port\n");
 	fprintf(stdout, "  -p port\tDatabase server port\n\n");
 }
 
