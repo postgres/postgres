@@ -8,13 +8,14 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.58 2001/10/05 17:28:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.59 2001/10/23 17:38:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include "access/printtup.h"
+#include "catalog/heap.h"
 #include "commands/command.h"
 #include "executor/spi_priv.h"
 
@@ -435,28 +436,42 @@ int
 SPI_fnumber(TupleDesc tupdesc, char *fname)
 {
 	int			res;
+	Form_pg_attribute sysatt;
 
 	for (res = 0; res < tupdesc->natts; res++)
 	{
-		if (strcasecmp(NameStr(tupdesc->attrs[res]->attname), fname) == 0)
+		if (namestrcmp(&tupdesc->attrs[res]->attname, fname) == 0)
 			return res + 1;
 	}
 
+	sysatt = SystemAttributeByName(fname, true /* "oid" will be accepted */);
+	if (sysatt != NULL)
+		return sysatt->attnum;
+
+	/* SPI_ERROR_NOATTRIBUTE is different from all sys column numbers */
 	return SPI_ERROR_NOATTRIBUTE;
 }
 
 char *
 SPI_fname(TupleDesc tupdesc, int fnumber)
 {
+	Form_pg_attribute att;
 
 	SPI_result = 0;
-	if (tupdesc->natts < fnumber || fnumber <= 0)
+
+	if (fnumber > tupdesc->natts || fnumber == 0 ||
+		fnumber <= FirstLowInvalidHeapAttributeNumber)
 	{
 		SPI_result = SPI_ERROR_NOATTRIBUTE;
 		return NULL;
 	}
 
-	return pstrdup(NameStr(tupdesc->attrs[fnumber - 1]->attname));
+	if (fnumber > 0)
+		att = tupdesc->attrs[fnumber - 1];
+	else
+		att = SystemAttributeDefinition(fnumber, true);
+
+	return pstrdup(NameStr(att->attname));
 }
 
 char *
@@ -466,12 +481,16 @@ SPI_getvalue(HeapTuple tuple, TupleDesc tupdesc, int fnumber)
 				val,
 				result;
 	bool		isnull;
-	Oid			foutoid,
+	Oid			typoid,
+				foutoid,
 				typelem;
+	int32		typmod;
 	bool		typisvarlena;
 
 	SPI_result = 0;
-	if (tuple->t_data->t_natts < fnumber || fnumber <= 0)
+
+	if (fnumber > tuple->t_data->t_natts || fnumber == 0 ||
+		fnumber <= FirstLowInvalidHeapAttributeNumber)
 	{
 		SPI_result = SPI_ERROR_NOATTRIBUTE;
 		return NULL;
@@ -480,8 +499,19 @@ SPI_getvalue(HeapTuple tuple, TupleDesc tupdesc, int fnumber)
 	origval = heap_getattr(tuple, fnumber, tupdesc, &isnull);
 	if (isnull)
 		return NULL;
-	if (!getTypeOutputInfo(tupdesc->attrs[fnumber - 1]->atttypid,
-						   &foutoid, &typelem, &typisvarlena))
+
+	if (fnumber > 0)
+	{
+		typoid = tupdesc->attrs[fnumber - 1]->atttypid;
+		typmod = tupdesc->attrs[fnumber - 1]->atttypmod;
+	}
+	else
+	{
+		typoid = (SystemAttributeDefinition(fnumber, true))->atttypid;
+		typmod = -1;
+	}
+
+	if (!getTypeOutputInfo(typoid, &foutoid, &typelem, &typisvarlena))
 	{
 		SPI_result = SPI_ERROR_NOOUTFUNC;
 		return NULL;
@@ -499,7 +529,7 @@ SPI_getvalue(HeapTuple tuple, TupleDesc tupdesc, int fnumber)
 	result = OidFunctionCall3(foutoid,
 							  val,
 							  ObjectIdGetDatum(typelem),
-				  Int32GetDatum(tupdesc->attrs[fnumber - 1]->atttypmod));
+							  Int32GetDatum(typmod));
 
 	/* Clean up detoasted copy, if any */
 	if (val != origval)
@@ -511,36 +541,42 @@ SPI_getvalue(HeapTuple tuple, TupleDesc tupdesc, int fnumber)
 Datum
 SPI_getbinval(HeapTuple tuple, TupleDesc tupdesc, int fnumber, bool *isnull)
 {
-	Datum		val;
-
-	*isnull = true;
 	SPI_result = 0;
-	if (tuple->t_data->t_natts < fnumber || fnumber <= 0)
+
+	if (fnumber > tuple->t_data->t_natts || fnumber == 0 ||
+		fnumber <= FirstLowInvalidHeapAttributeNumber)
 	{
 		SPI_result = SPI_ERROR_NOATTRIBUTE;
+		*isnull = true;
 		return (Datum) NULL;
 	}
 
-	val = heap_getattr(tuple, fnumber, tupdesc, isnull);
-
-	return val;
+	return heap_getattr(tuple, fnumber, tupdesc, isnull);
 }
 
 char *
 SPI_gettype(TupleDesc tupdesc, int fnumber)
 {
+	Oid			typoid;
 	HeapTuple	typeTuple;
 	char	   *result;
 
 	SPI_result = 0;
-	if (tupdesc->natts < fnumber || fnumber <= 0)
+
+	if (fnumber > tupdesc->natts || fnumber == 0 ||
+		fnumber <= FirstLowInvalidHeapAttributeNumber)
 	{
 		SPI_result = SPI_ERROR_NOATTRIBUTE;
 		return NULL;
 	}
 
+	if (fnumber > 0)
+		typoid = tupdesc->attrs[fnumber - 1]->atttypid;
+	else
+		typoid = (SystemAttributeDefinition(fnumber, true))->atttypid;
+
 	typeTuple = SearchSysCache(TYPEOID,
-				 ObjectIdGetDatum(tupdesc->attrs[fnumber - 1]->atttypid),
+							   ObjectIdGetDatum(typoid),
 							   0, 0, 0);
 
 	if (!HeapTupleIsValid(typeTuple))
@@ -557,15 +593,19 @@ SPI_gettype(TupleDesc tupdesc, int fnumber)
 Oid
 SPI_gettypeid(TupleDesc tupdesc, int fnumber)
 {
-
 	SPI_result = 0;
-	if (tupdesc->natts < fnumber || fnumber <= 0)
+
+	if (fnumber > tupdesc->natts || fnumber == 0 ||
+		fnumber <= FirstLowInvalidHeapAttributeNumber)
 	{
 		SPI_result = SPI_ERROR_NOATTRIBUTE;
 		return InvalidOid;
 	}
 
-	return tupdesc->attrs[fnumber - 1]->atttypid;
+	if (fnumber > 0)
+		return tupdesc->attrs[fnumber - 1]->atttypid;
+	else
+		return (SystemAttributeDefinition(fnumber, true))->atttypid;
 }
 
 char *
