@@ -15,12 +15,6 @@ This package was originally written by Jolly Chen.
 <Title>Commands</Title>
 
 <Para>
-The pg_lo* routines are interfaces to the Inversion Large Objects in <ProductName>Postgres</ProductName>.
-The functions are designed to mimic the analogous file system functions in
-the standard Unix file system interface.
-</Para>
-
-<Para>
 <TABLE TOCENTRY="1">
 <TITLE>PGTCL Commands</TITLE>
 <TGROUP COLS="2">
@@ -110,7 +104,11 @@ These commands are described further on subsequent pages.
 </Para>
 
 <Para>
-The pg_lo* routines should typically be used within a BEGIN/END transaction
+The pg_lo* routines are interfaces to the Large Object features of
+<ProductName>Postgres</ProductName>.
+The functions are designed to mimic the analogous file system functions in
+the standard Unix file system interface.
+The pg_lo* routines should be used within a BEGIN/END transaction
 block because the file descriptor returned by pg_lo_open is only valid for
 the current transaction.  pg_lo_import and pg_lo_export MUST be used
 in a BEGIN/END transaction block.
@@ -137,6 +135,7 @@ proc getDBs { {host "localhost"} {port "5432"} } {
     for {set i 0} {$i < $ntups} {incr i} {
 	lappend datnames [pg_result $res -getTuple $i]
     }
+    pg_result $res -clear
     pg_disconnect $conn
     return $datnames
 }
@@ -167,14 +166,20 @@ proc getDBs { {host "localhost"} {port "5432"} } {
 </REFSYNOPSISDIVINFO>
 <SYNOPSIS>
 pg_connect <REPLACEABLE CLASS="PARAMETER">dbName</REPLACEABLE> <OPTIONAL>-host <REPLACEABLE CLASS="PARAMETER">hostName</REPLACEABLE></OPTIONAL>
-  <OPTIONAL>-port <REPLACEABLE CLASS="PARAMETER">portNumber</REPLACEABLE></OPTIONAL> <OPTIONAL>-tty <REPLACEABLE CLASS="PARAMETER">pqtty</REPLACEABLE></OPTIONAL> <OPTIONAL>-options <REPLACEABLE CLASS="PARAMETER">optionalBackendArgs</REPLACEABLE></OPTIONAL>
+  <OPTIONAL>-port <REPLACEABLE
+  CLASS="PARAMETER">portNumber</REPLACEABLE></OPTIONAL> <OPTIONAL>-tty
+  <REPLACEABLE CLASS="PARAMETER">pqtty</REPLACEABLE></OPTIONAL>
+  <OPTIONAL>-options <REPLACEABLE
+  CLASS="PARAMETER">optionalBackendArgs</REPLACEABLE></OPTIONAL>
+<para>
+pg_connect -conninfo <REPLACEABLE CLASS="PARAMETER">connectOptions</REPLACEABLE>
 </SYNOPSIS>
 
 <REFSECT2 ID="R2-PGTCL-PGCONNECT-1">
 <REFSECT2INFO>
 <DATE>1997-12-24</DATE>
 </REFSECT2INFO>
-<TITLE>Inputs
+<TITLE>Inputs (old style)
 </TITLE>
 <VARIABLELIST>
 <VARLISTENTRY>
@@ -227,6 +232,25 @@ pg_connect <REPLACEABLE CLASS="PARAMETER">dbName</REPLACEABLE> <OPTIONAL>-host <
 
 <REFSECT2 ID="R2-PGTCL-PGCONNECT-2">
 <REFSECT2INFO>
+<DATE>1998-10-07</DATE>
+</REFSECT2INFO>
+<TITLE>Inputs (new style)
+</TITLE>
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+  <REPLACEABLE CLASS="PARAMETER">connectOptions</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>A string of connection options, each written in the form keyword = value.
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+</VARIABLELIST>
+</REFSECT2>
+
+<REFSECT2 ID="R2-PGTCL-PGCONNECT-3">
+<REFSECT2INFO>
 <DATE>1997-12-24</DATE>
 </REFSECT2INFO>
 <TITLE>Outputs
@@ -238,8 +262,8 @@ pg_connect <REPLACEABLE CLASS="PARAMETER">dbName</REPLACEABLE> <OPTIONAL>-host <
 </TERM>
 <LISTITEM>
 <PARA>
-The return result is either an error message or a handle for a database
-   connection.  Handles start with the prefix "pgsql"
+If successful, a handle for a database connection is returned.
+Handles start with the prefix "pgsql".
 </PARA>
 </LISTITEM>
 </VARLISTENTRY>
@@ -255,7 +279,15 @@ The return result is either an error message or a handle for a database
 </REFSECT1INFO>
 <TITLE>Description
 </TITLE>
-<PARA><FUNCTION>pg_connect</FUNCTION> opens a connection to the <ProductName>Postgres</ProductName> backend.
+<PARA><FUNCTION>pg_connect</FUNCTION> opens a connection to the
+<ProductName>Postgres</ProductName> backend.
+
+<para>
+Two syntaxes are available.  In the older one, each possible option
+has a separate option switch in the pg_connect statement.  In the
+newer form, a single option string is supplied that can contain
+multiple option values.  See <FUNCTION>pg_conndefaults</FUNCTION>
+for info about the available options in the newer syntax.
 </PARA>
 </REFSECT1>
 <REFSECT1 ID="R1-PGTCL-PGCONNECT-2">
@@ -338,10 +370,91 @@ pg_disconnect <REPLACEABLE CLASS="PARAMETER">dbHandle</REPLACEABLE>
 
 </REFENTRY>
 
+
+
+
+<REFENTRY ID="PGTCL-PGCONNDEFAULTS">
+<REFMETA>
+<REFENTRYTITLE>pg_conndefaults</REFENTRYTITLE>
+<REFMISCINFO>PGTCL - Connection Management</REFMISCINFO>
+</REFMETA>
+<REFNAMEDIV>
+<REFNAME>pg_conndefaults
+</REFNAME>
+<REFPURPOSE>obtain information about default connection parameters
+</REFPURPOSE>
+<INDEXTERM ID="IX-PGTCL-PGCONNDEFAULTS-1"><PRIMARY>pgtcl</PRIMARY><SECONDARY>connecting</SECONDARY></INDEXTERM>
+<INDEXTERM ID="IX-PGTCL-PGCONNDEFAULTS-2"><PRIMARY>pg_conndefaults</PRIMARY></INDEXTERM>
+</REFNAMEDIV>
+<REFSYNOPSISDIV>
+<REFSYNOPSISDIVINFO>
+<DATE>1998-10-07</DATE>
+</REFSYNOPSISDIVINFO>
+<SYNOPSIS>
+pg_conndefaults
+</SYNOPSIS>
+
+<REFSECT2 ID="R2-PGTCL-PGCONNDEFAULTS-1">
+<REFSECT2INFO>
+<DATE>1998-10-07</DATE>
+</REFSECT2INFO>
+<TITLE>Inputs
+</TITLE>
+<PARA>
+None.
+</PARA>
+</REFSECT2>
+
+<REFSECT2 ID="R2-PGTCL-PGCONNDEFAULTS-2">
+<REFSECT2INFO>
+<DATE>1998-10-07</DATE>
+</REFSECT2INFO>
+<TITLE>Outputs
+</TITLE>
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+  <REPLACEABLE CLASS="PARAMETER">option list</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+The result is a list describing the possible connection options and their
+current default values.
+Each entry in the list is a sublist of the format:
+<para>
+	 {optname label dispchar dispsize value}
+<Para>
+where the optname is usable as an option in pg_connect -conninfo.
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+</VARIABLELIST>
+</REFSECT2>
+</REFSYNOPSISDIV>
+
+<REFSECT1 ID="R1-PGTCL-PGCONNDEFAULTS-1">
+<REFSECT1INFO>
+<DATE>1998-10-07</DATE>
+</REFSECT1INFO>
+<TITLE>Description
+</TITLE>
+<FUNCTION>pg_conndefaults</FUNCTION> returns info about the connection
+options available in <FUNCTION>pg_connect -conninfo</FUNCTION> and the
+current default value for each option.
+</PARA>
+</REFSECT1>
+<REFSECT1 ID="R1-PGTCL-PGCONNDEFAULTS-2">
+<TITLE>Usage
+</TITLE>
+<PARA>pg_conndefaults
+</PARA>
+</REFSECT1>
+</REFENTRY>
+
 <REFENTRY ID="PGTCL-PGEXEC">
 <REFMETA>
 <REFENTRYTITLE>pg_exec</REFENTRYTITLE>
-<REFMISCINFO>PGTCL - Connection Management</REFMISCINFO>
+<REFMISCINFO>PGTCL - Query Processing</REFMISCINFO>
 </REFMETA>
 <REFNAMEDIV>
 <REFNAME>pg_exec
@@ -399,11 +512,14 @@ pg_exec <REPLACEABLE CLASS="PARAMETER">dbHandle</REPLACEABLE> <REPLACEABLE CLASS
 <VARIABLELIST>
 <VARLISTENTRY>
 <TERM>
-  <REPLACEABLE CLASS="PARAMETER">queryHandle</REPLACEABLE>
+  <REPLACEABLE CLASS="PARAMETER">resultHandle</REPLACEABLE>
 </TERM>
 <LISTITEM>
 <PARA>
-   the return result is either an error message or a handle for a query result.
+A Tcl error will be returned if Pgtcl was unable to obtain a backend
+response.  Otherwise, a query result object is created and a handle for
+it is returned.  This handle can be passed to <FUNCTION>pg_result</FUNCTION>
+to obtain the results of the query.
 </PARA>
 </LISTITEM>
 </VARLISTENTRY>
@@ -421,116 +537,240 @@ pg_exec <REPLACEABLE CLASS="PARAMETER">dbHandle</REPLACEABLE> <REPLACEABLE CLASS
 
 Query result handles start with the connection handle and add a period
 and a result number.
+
+<PARA>
+Note that lack of a Tcl error is not proof that the query succeeded!
+An error message returned by the backend will be processed
+as a query result with failure status, not by generating a Tcl error
+in pg_exec.
 </PARA>
 </REFSECT1>
 
-<REFENTRY ID="PGTCL-PGLISTEN">
+<REFENTRY ID="PGTCL-PGRESULT">
 <REFMETA>
-<REFENTRYTITLE>pg_listen</REFENTRYTITLE>
-<REFMISCINFO>PGTCL - Asynchronous Notify</REFMISCINFO>
+<REFENTRYTITLE>pg_result</REFENTRYTITLE>
+<REFMISCINFO>PGTCL - Query Processing</REFMISCINFO>
 </REFMETA>
 <REFNAMEDIV>
-<REFNAME>pg_listen
+<REFNAME>pg_result
 </REFNAME>
-<REFPURPOSE>sets or changes a callback for asynchronous NOTIFY messages
+<REFPURPOSE>
+get information about a query result
 </REFPURPOSE>
-<INDEXTERM ID="IX-PGTCL-PGLISTEN-1"><PRIMARY>pgtcl</PRIMARY><SECONDARY>notify</SECONDARY></INDEXTERM>
-<INDEXTERM ID="IX-PGTCL-PGLISTEN-2"><PRIMARY>notify</PRIMARY></INDEXTERM>
+<INDEXTERM ID="IX-PGTCL-PGRESULT-1"><PRIMARY>pgtcl</PRIMARY><SECONDARY>connecting</SECONDARY></INDEXTERM>
+<INDEXTERM ID="IX-PGTCL-PGRESULT-2"><PRIMARY>pg_connect</PRIMARY></INDEXTERM>
 </REFNAMEDIV>
 <REFSYNOPSISDIV>
 <REFSYNOPSISDIVINFO>
-<DATE>1998-5-22</DATE>
+<DATE>1997-12-24</DATE>
 </REFSYNOPSISDIVINFO>
 <SYNOPSIS>
-pg_listen <REPLACEABLE CLASS="PARAMETER">dbHandle</REPLACEABLE> <REPLACEABLE CLASS="PARAMETER">notifyName</REPLACEABLE> <REPLACEABLE CLASS="PARAMETER">callbackCommand</REPLACEABLE>
+pg_result <REPLACEABLE CLASS="PARAMETER">resultHandle</REPLACEABLE> <REPLACEABLE CLASS="PARAMETER">resultOption</REPLACEABLE>
 </SYNOPSIS>
-
-<REFSECT2 ID="R2-PGTCL-PGLISTEN-1">
+<REFSECT2 ID="R2-PGTCL-PGRESULT-1">
 <REFSECT2INFO>
-<DATE>1998-5-22</DATE>
+<DATE>1997-12-24</DATE>
 </REFSECT2INFO>
 <TITLE>Inputs
 </TITLE>
 <VARIABLELIST>
 <VARLISTENTRY>
 <TERM>
-  <REPLACEABLE CLASS="PARAMETER">dbHandle</REPLACEABLE>
-</TERM>
-<LISTITEM>
-<PARA>Specifies a valid database handle.
-</PARA>
-</LISTITEM>
-</VARLISTENTRY>
-<VARLISTENTRY>
-<TERM>
-  <REPLACEABLE CLASS="PARAMETER">notifyName</REPLACEABLE>
-</TERM>
-<LISTITEM>
-<PARA>Specifies the notification name to start or stop listening to.
-</PARA>
-</LISTITEM>
-</VARLISTENTRY>
-<VARLISTENTRY>
-<TERM>
-  <REPLACEABLE CLASS="PARAMETER">callbackCommand</REPLACEABLE>
-</TERM>
-<LISTITEM>
-<PARA>If present and not empty, provides the command string to execute
-when a matching notification arrives.
-</PARA>
-</LISTITEM>
-</VARLISTENTRY>
-</VARIABLELIST>
-</REFSECT2>
-
-<REFSECT2 ID="R2-PGTCL-PGLISTEN-2">
-<REFSECT2INFO>
-<DATE>1998-5-22</DATE>
-</REFSECT2INFO>
-<TITLE>Outputs
-</TITLE>
-<VARIABLELIST>
-<VARLISTENTRY>
-<TERM>
-  None
+  <REPLACEABLE CLASS="PARAMETER">resultHandle</REPLACEABLE>
 </TERM>
 <LISTITEM>
 <PARA>
+  The handle for a query result.
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+<VARLISTENTRY>
+<TERM>
+  <REPLACEABLE CLASS="PARAMETER">resultOption</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+Specifies one of several possible options.
 </PARA>
 </LISTITEM>
 </VARLISTENTRY>
 </VARIABLELIST>
-</REFSECT2>
-</REFSYNOPSISDIV>
 
-<REFSECT1 ID="R1-PGTCL-PGLISTEN-1">
+<REFSECT3>
+<TITLE>Options</TITLE>
+
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+-status  
+</TERM>
+<LISTITEM>
+<PARA>
+the status of the result.
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+<VARLISTENTRY>
+<TERM>
+-error
+</TERM>
+<LISTITEM>
+<PARA>
+the error message, if the status indicates error; otherwise an empty string.
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+<VARLISTENTRY>
+<TERM>
+-conn
+</TERM>
+<LISTITEM>
+<PARA>
+the connection that produced the result.
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+<VARLISTENTRY>
+<TERM>
+-oid
+</TERM>
+<LISTITEM>
+<PARA>
+if the command was an INSERT, the OID of the 
+inserted tuple; otherwise an empty string.
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+<VARLISTENTRY>
+<TERM>
+-numTuples
+</TERM>
+<LISTITEM>
+<PARA>
+the number of tuples returned by the query.
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+<VARLISTENTRY>
+<TERM>
+-numAttrs
+</TERM>
+<LISTITEM>
+<PARA>
+the number of attributes in each tuple.
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+<VARLISTENTRY>
+<TERM>
+-assign arrayName
+</TERM>
+<LISTITEM>
+<PARA>
+assign the results to an array, using subscripts of the form
+(tupno,attributeName).
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+<VARLISTENTRY>
+<TERM>
+-assignbyidx arrayName ?appendstr?
+</TERM>
+<LISTITEM>
+<PARA>
+assign the results to an array using the first attribute's value and
+the remaining attributes' names as keys.  If appendstr is given then
+it is appended to each key.  In short, all but the first field of each
+tuple are stored into the array, using subscripts of the form
+(firstFieldValue,fieldNameAppendStr).
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+<VARLISTENTRY>
+<TERM>
+-getTuple tupleNumber
+</TERM>
+<LISTITEM>
+<PARA>
+returns the fields of the indicated tuple in a list.  Tuple numbers
+start at zero.
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+<VARLISTENTRY>
+<TERM>
+-tupleArray tupleNumber arrayName
+</TERM>
+<LISTITEM>
+<PARA>
+stores the fields of the tuple in array arrayName, indexed by field names.
+Tuple numbers start at zero.
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+<VARLISTENTRY>
+<TERM>
+-attributes
+</TERM>
+<LISTITEM>
+<PARA>
+returns a list of the names of the tuple attributes.
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+<VARLISTENTRY>
+<TERM>
+-lAttributes
+</TERM>
+<LISTITEM>
+<PARA>
+returns a list of sublists, {name ftype fsize} for each tuple attribute.
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+<VARLISTENTRY>
+<TERM>
+-clear 
+</TERM>
+<LISTITEM>
+<PARA>
+clear the result query object.
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+</VARIABLELIST>
+</REFSECT3>
+</REFSECT2>
+
+<REFSECT2 ID="R2-PGTCL-PGRESULT-2">
+<REFSECT2INFO>
+<DATE>1997-12-24</DATE>
+</REFSECT2INFO>
+<TITLE>Outputs
+</TITLE>
+<PARA>
+The result depends on the selected option, as described above.
+</PARA>
+</REFSECT2></REFSYNOPSISDIV>
+
+<REFSECT1 ID="R1-PGTCL-PGRESULT-1">
 <REFSECT1INFO>
-<DATE>1998-5-22</DATE>
+<DATE>1997-12-24</DATE>
 </REFSECT1INFO>
 <TITLE>Description
 </TITLE>
-<PARA><FUNCTION>pg_listen</FUNCTION> creates, changes, or cancels a request
-to listen for asynchronous NOTIFY messages from the
-<ProductName>Postgres</ProductName> backend.  With a callbackCommand
-parameter, the request is established, or the command string of an already
-existing request is replaced.  With no callbackCommand parameter, a prior
-request is canceled.
-</PARA>
+<PARA>
+<FUNCTION>pg_result</FUNCTION> returns information about a query result
+created by a prior <FUNCTION>pg_exec</FUNCTION>.
 
 <para>
-After a <PARA><FUNCTION>pg_listen</FUNCTION> request is established,
-the specified command string is executed whenever a NOTIFY message bearing
-the given name arrives from the backend.  This occurs when any
-<ProductName>Postgres</ProductName> client application issues a NOTIFY command
-referencing that name.  (Note that the name can be, but does not have to be,
-that of an existing relation in the database.)
-The command string is executed from the Tcl idle loop.  That is the normal
-idle state of an application written with Tk.  In non-Tk Tcl shells, you can
-execute <FUNCTION>update</FUNCTION> or <FUNCTION>vwait</FUNCTION> to cause
-the idle loop to be entered.
+You can keep a query result around for as long as you need it, but when
+you are done with it, be sure to free it by
+executing <FUNCTION>pg_result -clear</FUNCTION>.  Otherwise, you have
+a memory leak, and Pgtcl will eventually start complaining that you've
+created too many query result objects.
 </PARA>
 </REFSECT1>
-
 </REFENTRY>
 
 <!-- ********************************************************** -->
@@ -538,7 +778,7 @@ the idle loop to be entered.
 <REFENTRY ID="PGTCL-PGSELECT">
 <REFMETA>
 <REFENTRYTITLE>pg_select</REFENTRYTITLE>
-<REFMISCINFO>PGTCL - Connection Management</REFMISCINFO>
+<REFMISCINFO>PGTCL - Query Processing</REFMISCINFO>
 </REFMETA>
 <REFNAMEDIV>
 <REFNAME>pg_select
@@ -614,7 +854,7 @@ pg_select <REPLACEABLE CLASS="PARAMETER">dbHandle</REPLACEABLE> <REPLACEABLE CLA
 <VARIABLELIST>
 <VARLISTENTRY>
 <TERM>
-  <REPLACEABLE CLASS="PARAMETER">queryHandle</REPLACEABLE>
+  <REPLACEABLE CLASS="PARAMETER">resultHandle</REPLACEABLE>
 </TERM>
 <LISTITEM>
 <PARA>
@@ -632,14 +872,18 @@ pg_select <REPLACEABLE CLASS="PARAMETER">dbHandle</REPLACEABLE> <REPLACEABLE CLA
 <TITLE>Description
 </TITLE>
 <PARA>
-<FUNCTION>pg_select</FUNCTION> submits a query to the <ProductName>Postgres</ProductName> backend.
- and returns the results.
+<FUNCTION>pg_select</FUNCTION> submits a SELECT query to the
+<ProductName>Postgres</ProductName> backend, and executes a
+given chunk of code for each tuple in the result.
   The <REPLACEABLE CLASS="PARAMETER">queryString</REPLACEABLE>
-   must be a select statement.  Anything else returns an error.
+  must be a SELECT statement.  Anything else returns an error.
   The <REPLACEABLE CLASS="PARAMETER">arrayVar</REPLACEABLE>
-   variable is an array name used in the loop.  It is filled
-   out with the result of the query for each tuple using the field
-   names as the associative indices.
+  variable is an array name used in the loop.  For each tuple,
+  <REPLACEABLE CLASS="PARAMETER">arrayVar</REPLACEABLE> is filled in
+  with the tuple field values, using the field names as the array
+  indexes.  Then the
+  <REPLACEABLE CLASS="PARAMETER">queryProcedure</REPLACEABLE>
+  is executed.
 </PARA>
 </REFSECT1>
 
@@ -647,13 +891,12 @@ pg_select <REPLACEABLE CLASS="PARAMETER">dbHandle</REPLACEABLE> <REPLACEABLE CLA
 <TITLE>Usage
 </TITLE>
 <PARA>
+This would work if table "table" has fields "control" and "name"
+(and, perhaps, other fields):
 <ProgramListing>
-	set DB "mydb"
-	set conn [pg_connect $DB]
-	pg_select $conn "SELECT * from table" array {
+	pg_select $pgconn "SELECT * from table" array {
 		puts [format "%5d %s" array(control) array(name)]
 	}
-	pg_disconnect $conn
 </ProgramListing>
 </PARA>
 </REFSECT1>
@@ -662,187 +905,119 @@ pg_select <REPLACEABLE CLASS="PARAMETER">dbHandle</REPLACEABLE> <REPLACEABLE CLA
 
 <!-- ********************************************************** -->
 
-<REFENTRY ID="PGTCL-PGRESULT">
+<REFENTRY ID="PGTCL-PGLISTEN">
 <REFMETA>
-<REFENTRYTITLE>pg_result</REFENTRYTITLE>
-<REFMISCINFO>PGTCL - Connection Management</REFMISCINFO>
+<REFENTRYTITLE>pg_listen</REFENTRYTITLE>
+<REFMISCINFO>PGTCL - Asynchronous Notify</REFMISCINFO>
 </REFMETA>
 <REFNAMEDIV>
-<REFNAME>pg_result
+<REFNAME>pg_listen
 </REFNAME>
-<REFPURPOSE>
-get information about a query result
+<REFPURPOSE>sets or changes a callback for asynchronous NOTIFY messages
 </REFPURPOSE>
-<INDEXTERM ID="IX-PGTCL-PGRESULT-1"><PRIMARY>pgtcl</PRIMARY><SECONDARY>connecting</SECONDARY></INDEXTERM>
-<INDEXTERM ID="IX-PGTCL-PGRESULT-2"><PRIMARY>pg_connect</PRIMARY></INDEXTERM>
+<INDEXTERM ID="IX-PGTCL-PGLISTEN-1"><PRIMARY>pgtcl</PRIMARY><SECONDARY>notify</SECONDARY></INDEXTERM>
+<INDEXTERM ID="IX-PGTCL-PGLISTEN-2"><PRIMARY>notify</PRIMARY></INDEXTERM>
 </REFNAMEDIV>
 <REFSYNOPSISDIV>
 <REFSYNOPSISDIVINFO>
-<DATE>1997-12-24</DATE>
+<DATE>1998-5-22</DATE>
 </REFSYNOPSISDIVINFO>
 <SYNOPSIS>
-pg_result <REPLACEABLE CLASS="PARAMETER">queryHandle</REPLACEABLE> <REPLACEABLE CLASS="PARAMETER">resultOption</REPLACEABLE>
+pg_listen <REPLACEABLE CLASS="PARAMETER">dbHandle</REPLACEABLE> <REPLACEABLE CLASS="PARAMETER">notifyName</REPLACEABLE> <REPLACEABLE CLASS="PARAMETER">callbackCommand</REPLACEABLE>
 </SYNOPSIS>
-<REFSECT2 ID="R2-PGTCL-PGRESULT-1">
+
+<REFSECT2 ID="R2-PGTCL-PGLISTEN-1">
 <REFSECT2INFO>
-<DATE>1997-12-24</DATE>
+<DATE>1998-5-22</DATE>
 </REFSECT2INFO>
 <TITLE>Inputs
 </TITLE>
 <VARIABLELIST>
 <VARLISTENTRY>
 <TERM>
-  <REPLACEABLE CLASS="PARAMETER">queryHandle</REPLACEABLE>
+  <REPLACEABLE CLASS="PARAMETER">dbHandle</REPLACEABLE>
 </TERM>
 <LISTITEM>
-<PARA>
-  The handle for a query result.
+<PARA>Specifies a valid database handle.
 </PARA>
 </LISTITEM>
 </VARLISTENTRY>
 <VARLISTENTRY>
 <TERM>
-  <REPLACEABLE CLASS="PARAMETER">resultOption</REPLACEABLE>
+  <REPLACEABLE CLASS="PARAMETER">notifyName</REPLACEABLE>
 </TERM>
 <LISTITEM>
-<PARA>
-Specifies one of several possible options.
+<PARA>Specifies the notify condition name to start or stop listening to.
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+<VARLISTENTRY>
+<TERM>
+  <REPLACEABLE CLASS="PARAMETER">callbackCommand</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>If present and not empty, provides the command string to execute
+when a matching notification arrives.
 </PARA>
 </LISTITEM>
 </VARLISTENTRY>
 </VARIABLELIST>
-
-<REFSECT3>
-<TITLE>Options</TITLE>
-
-<VARIABLELIST>
-<VARLISTENTRY>
-<TERM>
--status  
-</TERM>
-<LISTITEM>
-<PARA>
-the status of the result.
-</PARA>
-</LISTITEM>
-</VARLISTENTRY>
-<VARLISTENTRY>
-<TERM>
--oid
-</TERM>
-<LISTITEM>
-<PARA>
-if the last query was an insert, returns the oid of the 
-inserted tuple
-</PARA>
-</LISTITEM>
-</VARLISTENTRY>
-<VARLISTENTRY>
-<TERM>
--conn
-</TERM>
-<LISTITEM>
-<PARA>
-the connection that produced the result
-</PARA>
-</LISTITEM>
-</VARLISTENTRY>
-<VARLISTENTRY>
-<TERM>
--assign arrayName
-</TERM>
-<LISTITEM>
-<PARA>
-assign the results to an array
-</PARA>
-</LISTITEM>
-</VARLISTENTRY>
-<VARLISTENTRY>
-<TERM>
--assignbyidx arrayName ?appendstr?
-</TERM>
-<LISTITEM>
-<PARA>
-assign the results to an array using the first field as a key
-and optionally append appendstr to the key name. Useful for
-creating pseudo-multi dimensional arrays in tcl.
-</PARA>
-</LISTITEM>
-</VARLISTENTRY>
-<VARLISTENTRY>
-<TERM>
--numTuples
-</TERM>
-<LISTITEM>
-<PARA>
-the number of tuples in the query
-</PARA>
-</LISTITEM>
-</VARLISTENTRY>
-<VARLISTENTRY>
-<TERM>
--attributes
-</TERM>
-<LISTITEM>
-<PARA>
-returns a list of the name/type pairs of the tuple attributes
-</PARA>
-</LISTITEM>
-</VARLISTENTRY>
-<VARLISTENTRY>
-<TERM>
--getTuple tupleNumber
-</TERM>
-<LISTITEM>
-<PARA>
-returns the values of the tuple in a list
-</PARA>
-</LISTITEM>
-</VARLISTENTRY>
-<VARLISTENTRY>
-<TERM>
--clear 
-</TERM>
-<LISTITEM>
-<PARA>
-clear the result buffer. Do not reuse after this
-</PARA>
-</LISTITEM>
-</VARLISTENTRY>
-</VARIABLELIST>
-</REFSECT3>
 </REFSECT2>
 
-<REFSECT2 ID="R2-PGTCL-PGRESULT-2">
+<REFSECT2 ID="R2-PGTCL-PGLISTEN-2">
 <REFSECT2INFO>
-<DATE>1997-12-24</DATE>
+<DATE>1998-5-22</DATE>
 </REFSECT2INFO>
 <TITLE>Outputs
 </TITLE>
 <VARIABLELIST>
 <VARLISTENTRY>
 <TERM>
-  <REPLACEABLE CLASS="PARAMETER">queryHandle</REPLACEABLE>
+  None
 </TERM>
 <LISTITEM>
 <PARA>
-   the return result is either an error message or a handle for a query result.
 </PARA>
 </LISTITEM>
 </VARLISTENTRY>
 </VARIABLELIST>
-</REFSECT2></REFSYNOPSISDIV>
+</REFSECT2>
+</REFSYNOPSISDIV>
 
-<REFSECT1 ID="R1-PGTCL-PGRESULT-1">
+<REFSECT1 ID="R1-PGTCL-PGLISTEN-1">
 <REFSECT1INFO>
-<DATE>1997-12-24</DATE>
+<DATE>1998-5-22</DATE>
 </REFSECT1INFO>
 <TITLE>Description
 </TITLE>
-<PARA>
-<FUNCTION>pg_result</FUNCTION> returns information about a query.
+<PARA><FUNCTION>pg_listen</FUNCTION> creates, changes, or cancels a request
+to listen for asynchronous NOTIFY messages from the
+<ProductName>Postgres</ProductName> backend.  With a callbackCommand
+parameter, the request is established, or the command string of an already
+existing request is replaced.  With no callbackCommand parameter, a prior
+request is canceled.
+</PARA>
+
+<para>
+After a <FUNCTION>pg_listen</FUNCTION> request is established,
+the specified command string is executed whenever a NOTIFY message bearing
+the given name arrives from the backend.  This occurs when any
+<ProductName>Postgres</ProductName> client application issues a NOTIFY command
+referencing that name.  (Note that the name can be, but does not have to be,
+that of an existing relation in the database.)
+The command string is executed from the Tcl idle loop.  That is the normal
+idle state of an application written with Tk.  In non-Tk Tcl shells, you can
+execute <FUNCTION>update</FUNCTION> or <FUNCTION>vwait</FUNCTION> to cause
+the idle loop to be entered.
+
+<para>
+You should not invoke the SQL statements LISTEN or UNLISTEN directly when
+using <FUNCTION>pg_listen</FUNCTION>.  Pgtcl takes care of issuing those
+statements for you.  But if you want to send a NOTIFY message yourself,
+invoke the SQL NOTIFY statement using <FUNCTION>pg_exec</FUNCTION>.
 </PARA>
 </REFSECT1>
+
 </REFENTRY>
 
 <!-- ********************************************************** -->
