@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.43 1999/08/06 04:00:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.44 1999/08/09 03:16:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,7 @@
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
 #include "parser/parsetree.h"
-#include "utils/syscache.h"
+#include "utils/lsyscache.h"
 
 static Path *best_innerjoin(List *join_paths, List *outer_relid);
 static List *sort_inner_and_outer(RelOptInfo *joinrel, RelOptInfo *outerrel, RelOptInfo *innerrel,
@@ -586,7 +586,6 @@ hash_inner_and_outer(Query *root,
 
 /*
  * Estimate disbursion of the specified Var
- *	  Generate some kind of estimate, no matter what...
  *
  * We use a default of 0.1 if we can't figure out anything better.
  * This will typically discourage use of a hash rather strongly,
@@ -598,24 +597,11 @@ static Cost
 estimate_disbursion(Query *root, Var *var)
 {
 	Oid			relid;
-	HeapTuple	atp;
-	double		disbursion;
 
 	if (! IsA(var, Var))
 		return 0.1;
 
 	relid = getrelid(var->varno, root->rtable);
 
-	atp = SearchSysCacheTuple(ATTNUM,
-							  ObjectIdGetDatum(relid),
-							  Int16GetDatum(var->varattno),
-							  0, 0);
-	if (! HeapTupleIsValid(atp))
-		return 0.1;
-
-	disbursion = ((Form_pg_attribute) GETSTRUCT(atp))->attdisbursion;
-	if (disbursion > 0.0)
-		return disbursion;
-
-	return 0.1;
+	return (Cost) get_attdisbursion(relid, var->varattno, 0.1);
 }

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.37 1999/08/02 02:05:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.38 1999/08/09 03:16:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,7 +52,6 @@ static bool getattstatistics(Oid relid, AttrNumber attnum,
 							 Datum *commonval,
 							 Datum *loval,
 							 Datum *hival);
-static double getattdisbursion(Oid relid, AttrNumber attnum);
 
 
 /*
@@ -172,7 +171,7 @@ eqsel(Oid opid,
 			/* No VACUUM ANALYZE stats available, so make a guess using
 			 * the disbursion stat (if we have that, which is unlikely...)
 			 */
-			selec = getattdisbursion(relid, attno);
+			selec = get_attdisbursion(relid, attno, 0.01);
 		}
 
 		*result = (float64data) selec;
@@ -374,8 +373,8 @@ eqjoinsel(Oid opid,
 		*result = 0.1;
 	else
 	{
-		num1 = getattdisbursion(relid1, attno1);
-		num2 = getattdisbursion(relid2, attno2);
+		num1 = get_attdisbursion(relid1, attno1, 0.01);
+		num2 = get_attdisbursion(relid2, attno2, 0.01);
 		max = (num1 > num2) ? num1 : num2;
 		if (max <= 0)
 			*result = 1.0;
@@ -673,60 +672,6 @@ getattstatistics(Oid relid, AttrNumber attnum, Oid typid, int32 typmod,
 	heap_endscan(scan);
 	heap_close(rel);
 	return true;
-}
-
-/*
- * getattdisbursion
- *	  Retrieve the disbursion statistic for an attribute,
- *	  or produce an estimate if no info is available.
- */
-static double
-getattdisbursion(Oid relid, AttrNumber attnum)
-{
-	HeapTuple	atp;
-	double		disbursion;
-	int32		ntuples;
-
-	atp = SearchSysCacheTuple(ATTNUM,
-							  ObjectIdGetDatum(relid),
-							  Int16GetDatum(attnum),
-							  0, 0);
-	if (!HeapTupleIsValid(atp))
-	{
-		/* this should not happen */
-		elog(ERROR, "getattdisbursion: no attribute tuple %u %d",
-			 relid, attnum);
-		return 0.1;
-	}
-
-	disbursion = ((Form_pg_attribute) GETSTRUCT(atp))->attdisbursion;
-	if (disbursion > 0.0)
-		return disbursion;
-
-	/* VACUUM ANALYZE has not stored a disbursion statistic for us.
-	 * Produce an estimate = 1/numtuples.  This may produce
-	 * unreasonably small estimates for large tables, so limit
-	 * the estimate to no less than 0.01.
-	 */
-	atp = SearchSysCacheTuple(RELOID,
-							  ObjectIdGetDatum(relid),
-							  0, 0, 0);
-	if (!HeapTupleIsValid(atp))
-	{
-		/* this should not happen */
-		elog(ERROR, "getattdisbursion: no relation tuple %u", relid);
-		return 0.1;
-	}
-
-	ntuples = ((Form_pg_class) GETSTRUCT(atp))->reltuples;
-
-	if (ntuples > 0)
-		disbursion = 1.0 / (double) ntuples;
-
-	if (disbursion < 0.01)
-		disbursion = 0.01;
-
-	return disbursion;
 }
 
 float64

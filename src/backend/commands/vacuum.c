@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.117 1999/08/08 17:13:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.118 1999/08/09 03:16:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2346,36 +2346,46 @@ vc_updstats(Oid relid, int num_pages, int num_tuples, bool hasindex, VRelStats *
 				}
 				else if (stats->null_cnt <= 1 && stats->best_cnt == 1)
 				{
-					/* looks like we have a unique-key attribute */
-					double		total = ((double) stats->nonnull_cnt) + ((double) stats->null_cnt);
-
-					selratio = 1.0 / total;
-				}
-				else if (VacAttrStatsLtGtValid(stats) && stats->min_cnt + stats->max_cnt == stats->nonnull_cnt)
-				{
-					/* exact result when there are just 1 or 2 values... */
-					double		min_cnt_d = stats->min_cnt,
-								max_cnt_d = stats->max_cnt,
-								null_cnt_d = stats->null_cnt;
-					double		total = ((double) stats->nonnull_cnt) + null_cnt_d;
-
-					selratio = (min_cnt_d * min_cnt_d + max_cnt_d * max_cnt_d + null_cnt_d * null_cnt_d) / (total * total);
+					/* looks like we have a unique-key attribute ---
+					 * flag this with special -1.0 flag value.
+					 *
+					 * The correct disbursion is 1.0/numberOfRows, but since
+					 * the relation row count can get updated without
+					 * recomputing disbursion, we want to store a "symbolic"
+					 * value and figure 1.0/numberOfRows on the fly.
+					 */
+					selratio = -1;
 				}
 				else
 				{
-					double		most = (double) (stats->best_cnt > stats->null_cnt ? stats->best_cnt : stats->null_cnt);
-					double		total = ((double) stats->nonnull_cnt) + ((double) stats->null_cnt);
+					if (VacAttrStatsLtGtValid(stats) &&
+						stats->min_cnt + stats->max_cnt == stats->nonnull_cnt)
+					{
+						/* exact result when there are just 1 or 2 values... */
+						double		min_cnt_d = stats->min_cnt,
+									max_cnt_d = stats->max_cnt,
+									null_cnt_d = stats->null_cnt;
+						double		total = ((double) stats->nonnull_cnt) + null_cnt_d;
 
-					/*
-					 * we assume count of other values are 20% of best
-					 * count in table
-					 */
-					selratio = (most * most + 0.20 * most * (total - most)) / (total * total);
+						selratio = (min_cnt_d * min_cnt_d + max_cnt_d * max_cnt_d + null_cnt_d * null_cnt_d) / (total * total);
+					}
+					else
+					{
+						double		most = (double) (stats->best_cnt > stats->null_cnt ? stats->best_cnt : stats->null_cnt);
+						double		total = ((double) stats->nonnull_cnt) + ((double) stats->null_cnt);
+
+						/*
+						 * we assume count of other values are 20% of best
+						 * count in table
+						 */
+						selratio = (most * most + 0.20 * most * (total - most)) / (total * total);
+					}
+					/* Make sure calculated values are in-range */
+					if (selratio < 0.0)
+						selratio = 0.0;
+					else if (selratio > 1.0)
+						selratio = 1.0;
 				}
-				if (selratio < 0.0)
-					selratio = 0.0;
-				else if (selratio > 1.0)
-					selratio = 1.0;
 				attp->attdisbursion = selratio;
 
 				/*
