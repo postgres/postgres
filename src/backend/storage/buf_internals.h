@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: buf_internals.h,v 1.3 1996/07/23 05:43:11 scrappy Exp $
+ * $Id: buf_internals.h,v 1.4 1996/07/26 20:39:03 scrappy Exp $
  *
  * NOTE
  *	If BUFFERPAGE0 is defined, then 0 will be used as a
@@ -164,6 +164,7 @@ struct sbufdesc {
 
 #if defined(PORTNAME_BSD44_derived) || \
     defined(PORTNAME_bsdi) || \
+    defined(PORTNAME_bsdi_2_1) || \
     defined(PORTNAME_i386_solaris) || \
     defined(PORTNAME_linux) || \
     defined(PORTNAME_sparc) || \
