@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.41 2000/09/29 20:21:34 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.42 2000/10/03 19:16:16 petere Exp $
 -->
 
  <chapter id="libpq-chapter">
@@ -38,21 +38,22 @@ $Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.41 2000/09/29 20:21:34 peter
    <filename>libpq</filename> library.
   </para>
 
-  <sect1 id="libpq-connect">
-   <title>Database Connection Functions</title>
+ <sect1 id="libpq-connect">
+  <title>Database Connection Functions</title>
 
-   <para>
-    The following routines deal with making a connection to
-    a <productname>Postgres</productname> backend server.  The application
-    program can have several backend connections open at one time.
-    (One reason to do that is to access more than one database.)
-    Each connection is represented by a PGconn object which is obtained
-    from PQconnectdb() or PQsetdbLogin().  Note that these functions
-    will always return a non-null object pointer, unless perhaps
-    there is too little memory even to allocate the PGconn object.
-    The  PQstatus function should be called
-    to check whether  a  connection  was  successfully made
-    before queries are sent via the connection object.
+  <para>
+   The following routines deal with making a connection to a
+   <productname>Postgres</productname> backend server.  The
+   application program can have several backend connections open at
+   one time.  (One reason to do that is to access more than one
+   database.)  Each connection is represented by a
+   <structname>PGconn</> object which is obtained from
+   <function>PQconnectdb</> or <function>PQsetdbLogin</>.  Note that
+   these functions will always return a non-null object pointer,
+   unless perhaps there is too little memory even to allocate the
+   <structname>PGconn</> object.  The <function>PQstatus</> function
+   should be called to check whether a connection was successfully
+   made before queries are sent via the connection object.
 
     <itemizedlist>
      <listitem>
@@ -87,9 +88,8 @@ PGconn *PQconnectdb(const char *conninfo)
      <listitem>
      <para>
       Name of host to connect to. If a non-zero-length string is
-	   specified, TCP/IP
-      communication is used.  Using this parameter causes a hostname look-up.
-      See hostaddr.
+      specified, TCP/IP communication is used, else Unix sockets.
+      Using this parameter causes a hostname look-up.  See hostaddr.
      </para>
      </listitem>
     </varlistentry>
@@ -1930,22 +1930,22 @@ call <function>fe_setauthsvc</function> at all.
 
 </sect1>
 
-<sect1 id="libpq-sample">
-<title>Sample Programs</title>
 
-<sect2>
-<title>Sample Program 1</title>
+ <sect1 id="libpq-example">
+  <title>Example Programs</title>
 
-<para>
+  <example id="libpq-example-1">
+   <title>libpq Example Program 1</title>
+
 <programlisting>
 /*
- * testlibpq.c Test the C version of Libpq, the Postgres frontend
+ * testlibpq.c
+ *
+ * Test the C version of libpq, the PostgreSQL frontend
  * library.
- *
- *
  */
 #include &lt;stdio.h&gt;
-#include "libpq-fe.h"
+#include &lt;libpq-fe.h&gt;
 
 void
 exit_nicely(PGconn *conn)
@@ -2065,13 +2065,11 @@ main()
 
 }
 </programlisting>
-</para>
-</sect2>
+  </example>
 
-<sect2>
-<title>Sample Program 2</title>
+  <example id="libpq-example-2">
+   <title>libpq Example Program 2</title>
 
-<para>
 <programlisting>
 /*
  * testlibpq2.c
@@ -2187,13 +2185,11 @@ main()
     return 0;
 }
 </programlisting>
-</para>
-</sect2>
+  </example>
 
-<sect2>
-<title>Sample Program 3</title>
+  <example id="libpq-example-3">
+   <title>libpq Example Program 3</>
 
-<para>
 <programlisting>
 /*
  * testlibpq3.c Test the C version of Libpq, the Postgres frontend
@@ -2370,10 +2366,9 @@ main()
     return 0;
 }
 </programlisting>
-</para>
+  </example>
 
-</sect2>
-</sect1>
+ </sect1>
 </chapter>
 
 <!-- Keep this comment at the end of the file

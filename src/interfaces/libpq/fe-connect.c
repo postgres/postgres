@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.136 2000/10/03 03:39:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.137 2000/10/03 19:16:17 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -416,15 +416,12 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 	if (conn == NULL)
 		return (PGconn *) NULL;
 
-	if ((pghost == NULL) || pghost[0] == '\0')
-	{
-		if ((tmp = getenv("PGHOST")) != NULL)
-			conn->pghost = strdup(tmp);
-	}
-	else
+	if (pghost)
 		conn->pghost = strdup(pghost);
+	else if ((tmp = getenv("PGHOST")) != NULL)
+		conn->pghost = strdup(tmp);
 
-	if ((pgport == NULL) || pgport[0] == '\0')
+	if (pgport == NULL)
 	{
 		if ((tmp = getenv("PGPORT")) == NULL)
 			tmp = DEF_PGPORT_STR;
@@ -433,7 +430,7 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 	else
 		conn->pgport = strdup(pgport);
 
-	if ((pgtty == NULL) || pgtty[0] == '\0')
+	if (pgtty == NULL)
 	{
 		if ((tmp = getenv("PGTTY")) == NULL)
 			tmp = DefaultTty;
@@ -442,7 +439,7 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 	else
 		conn->pgtty = strdup(pgtty);
 
-	if ((pgoptions == NULL) || pgoptions[0] == '\0')
+	if (pgoptions == NULL)
 	{
 		if ((tmp = getenv("PGOPTIONS")) == NULL)
 			tmp = DefaultOption;
@@ -476,7 +473,7 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 	else
 		conn->pgpass = strdup(DefaultPassword);
 
-	if ((dbName == NULL) || dbName[0] == '\0')
+	if (dbName == NULL)
 	{
 		if ((tmp = getenv("PGDATABASE")) != NULL)
 			conn->dbName = strdup(tmp);
@@ -705,7 +702,7 @@ connectDBStart(PGconn *conn)
 
 	MemSet((char *) &conn->raddr, 0, sizeof(conn->raddr));
 
-	if (conn->pghostaddr != NULL)
+	if (conn->pghostaddr != NULL && conn->pghostaddr[0] != '\0')
 	{
 		/* Using pghostaddr avoids a hostname lookup */
 		/* Note that this supports IPv4 only */
@@ -724,7 +721,7 @@ connectDBStart(PGconn *conn)
 		memmove((char *) &(conn->raddr.in.sin_addr),
 				(char *) &addr, sizeof(addr));
 	}
-	else if (conn->pghost != NULL)
+	else if (conn->pghost != NULL && conn->pghost[0] != '\0')
 	{
 		/* Using pghost, so we have to look-up the hostname */
 		struct hostent *hp;
