@@ -241,41 +241,6 @@ quote_postgres(char *arg, int lineno)
 	return res;
 }
 
-/* This function returns a newly malloced string that has the \
-   in the strings inside the argument quoted with another \.
- */
-static
-char *
-quote_strings(char *arg, int lineno)
-{
-	char	   *res = (char *) ecpg_alloc(2 * strlen(arg) + 1, lineno);
-	int			i,
-				ri;
-	bool		string = false;
-
-	if (!res)
-		return (res);
-
-	for (i = 0, ri = 0; arg[i]; i++, ri++)
-	{
-		switch (arg[i])
-		{
-			case '\'':
-				string = string ? false : true;
-				break;
-			case '\\':
-				res[ri++] = '\\';
-			default:
-				;
-		}
-
-		res[ri] = arg[i];
-	}
-	res[ri] = '\0';
-
-	return res;
-}
-
 /*
  * create a list of variables
  * The variables are listed with input variables preceeding outputvariables
@@ -544,17 +509,8 @@ ECPGexecute(struct statement * stmt)
 
 						strncpy(newcopy, (char *) var->value, slen);
 						newcopy[slen] = '\0';
-						if (!(mallocedval = (char *) ecpg_alloc(2 * strlen(newcopy) + 1, stmt->lineno)))
-							return false;
 
-						tmp = quote_strings(newcopy, stmt->lineno);
-						if (!tmp)
-							return false;
-
-						strcat(mallocedval, tmp);
-						free(newcopy);
-
-						tobeinserted = mallocedval;
+						tobeinserted = newcopy;
 					}
 					break;
 				case ECPGt_varchar:

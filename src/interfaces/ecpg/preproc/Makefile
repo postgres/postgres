@@ -9,8 +9,9 @@ CFLAGS+=-I../include -DMAJOR_VERSION=$(MAJOR_VERSION) \
 	-DMINOR_VERSION=$(MINOR_VERSION) -DPATCHLEVEL=$(PATCHLEVEL) \
 	-DINCLUDE_PATH=\"$(HEADERDIR)\"
 
-OBJ=preproc.o pgc.o type.o ecpg.o ecpg_keywords.o ../../../backend/parser/scansup.o \
+OBJ=preproc.o pgc.o type.o ecpg.o ecpg_keywords.o \
     keywords.o c_keywords.o ../lib/typename.o
+#../../../backend/parser/scansup.o
 
 all:: ecpg
 

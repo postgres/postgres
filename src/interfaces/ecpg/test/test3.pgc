@@ -18,7 +18,7 @@ exec sql begin declare section;
 	int children;
 	int ind_children;
 	str *married = NULL;
-	char *testname="Petra";
+	char *wifesname="Petra";
 	char *query="select name, born, age, married, children from meskes where name = :var1";
 exec sql end declare section;
 
@@ -32,13 +32,13 @@ exec sql end declare section;
                 ECPGdebug(1, dbgs);
 
 	strcpy(msg, "connect");
-	exec sql connect to unix:postgresql://localhost:5432/mm; 
+	exec sql connect to unix:postgresql://localhost:5432/mm;
 
 	strcpy(msg, "create");
 	exec sql create table meskes(name char(8), born integer, age smallint, married date, children integer);
 
 	strcpy(msg, "insert");
-	exec sql insert into meskes(name, married, children) values ('Petra', '19900404', 3);
+	exec sql insert into meskes(name, married, children) values (:wifesname, '19900404', 3);
 	exec sql insert into meskes(name, born, age, married, children) values ('Michael', 19660117, 33, '19900404', 3);
 	exec sql insert into meskes(name, born, age) values ('Carsten', 19910103, 8);
 	exec sql insert into meskes(name, born, age) values ('Marc', 19930907, 5);
@@ -78,7 +78,7 @@ exec sql end declare section;
 	exec sql declare prep cursor for MM;
 
 	strcpy(msg, "open");
-	exec sql open prep using :testname;
+	exec sql open prep using :wifesname;
 
 	exec sql whenever not found do break;
 

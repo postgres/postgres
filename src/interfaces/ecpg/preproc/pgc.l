@@ -248,7 +248,8 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 				}
 <xq>{xqstop}	{
 					BEGIN(SQL);
-					yylval.str = mm_strdup(scanstr(literal));
+					/* yylval.str = mm_strdup(scanstr(literal));*/
+					yylval.str = mm_strdup(literal);
 					return SCONST;
 				}
 <xq>{xqdouble}	|
@@ -609,7 +610,8 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
                                      if (strcmp(old, ptr->old) == 0)
                                      {
 					free(ptr->new);
-					ptr->new = mm_strdup(scanstr(literal));
+					/* ptr->new = mm_strdup(scanstr(literal));*/
+					ptr->new = mm_strdup(literal);
                                      }
                                 }
 				if (ptr == NULL)
@@ -618,7 +620,8 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 
                                         /* initial definition */
                                         this->old = old;
-                                        this->new = mm_strdup(scanstr(literal));
+                                        /* this->new = mm_strdup(scanstr(literal));*/
+                                        this->new = mm_strdup(literal);
 					this->next = defines;
 					defines = this;
 				}

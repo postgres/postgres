@@ -6,7 +6,7 @@ exec sql include sqlca;
 exec sql define AMOUNT 4;
 
 exec sql type intarray is int[AMOUNT];
-exec sql type string is char(6); 
+exec sql type string is char(8); 
 
 typedef int intarray[AMOUNT];
 
@@ -16,7 +16,7 @@ main ()
 exec sql begin declare section;
         intarray amount;
 	int increment=100;
-        char name[AMOUNT][6];
+        char name[AMOUNT][8];
 	char letter[AMOUNT][1];
 	char command[128];
 exec sql end declare section;
@@ -35,8 +35,8 @@ exec sql end declare section;
         exec sql connect to pm;
 
 	strcpy(msg, "create");
-	exec sql at main create table test(name char(6), amount int, letter char(1));
-	exec sql create table test(name char(6), amount int, letter char(1));
+	exec sql at main create table test(name char(8), amount int, letter char(1));
+	exec sql create table test(name char(8), amount int, letter char(1));
 
 	strcpy(msg, "commit");
 	exec sql at main commit;
@@ -46,13 +46,13 @@ exec sql end declare section;
 	exec sql set connection to main;
 
 	strcpy(msg, "execute insert 1");
-        sprintf(command, "insert into test(name, amount, letter) values ('db: mm', 1, 'f')");
+        sprintf(command, "insert into test(name, amount, letter) values ('db: ''mm''', 1, 'f')");
         exec sql execute immediate :command;
-        sprintf(command, "insert into test(name, amount, letter) values ('db: mm', 2, 't')");
+        sprintf(command, "insert into test(name, amount, letter) values ('db: ''mm''', 2, 't')");
         exec sql execute immediate :command;
 
         strcpy(msg, "execute insert 2");
-        sprintf(command, "insert into test(name, amount, letter) values ('db: pm', 1, 'f')");
+        sprintf(command, "insert into test(name, amount, letter) values ('db: ''pm''', 1, 'f')");
         exec sql at pm execute immediate :command;
 
         strcpy(msg, "execute insert 3");
@@ -78,12 +78,12 @@ exec sql end declare section;
         exec sql select name, amount, letter into :name, :amount, :letter from test;
 
         for (i=0, j=sqlca.sqlerrd[2]; i<j; i++)
-            printf("name[%d]=%6.6s\tamount[%d]=%d\tletter[%d]=%c\n", i, name[i], i, amount[i],i, letter[i][0]);
+            printf("name[%d]=%8.8s\tamount[%d]=%d\tletter[%d]=%c\n", i, name[i], i, amount[i],i, letter[i][0]);
 
         exec sql at pm select name, amount, letter into :name, :amount, :letter from test;
 
         for (i=0, j=sqlca.sqlerrd[2]; i<j; i++)
-            printf("name[%d]=%6.6s\tamount[%d]=%d\tletter[%d]=%c\n", i, name[i], i, amount[i],i, letter[i][0]);
+            printf("name[%d]=%8.8s\tamount[%d]=%d\tletter[%d]=%c\n", i, name[i], i, amount[i],i, letter[i][0]);
         
 	strcpy(msg, "drop");
 	exec sql drop table test;
