@@ -1,7 +1,7 @@
 #
 # PostgreSQL top level makefile
 #
-# $PostgreSQL: pgsql/GNUmakefile.in,v 1.39 2004/06/13 21:51:36 petere Exp $
+# $PostgreSQL: pgsql/GNUmakefile.in,v 1.40 2004/07/30 12:26:39 petere Exp $
 #
 
 subdir =
@@ -11,16 +11,19 @@ include $(top_builddir)/src/Makefile.global
 all:
 	$(MAKE) -C doc all
 	$(MAKE) -C src all
+	$(MAKE) -C config all
 	@echo "All of PostgreSQL successfully made. Ready to install."
 
 install:
 	$(MAKE) -C doc install
 	$(MAKE) -C src install
+	$(MAKE) -C config install
 	@echo "PostgreSQL installation complete."
 
 installdirs uninstall distprep:
 	$(MAKE) -C doc $@
 	$(MAKE) -C src $@
+	$(MAKE) -C config $@
 
 install-all-headers:
 	$(MAKE) -C src $@
@@ -31,6 +34,7 @@ clean:
 	$(MAKE) -C doc $@
 	$(MAKE) -C contrib $@
 	$(MAKE) -C src $@
+	$(MAKE) -C config $@
 # Garbage from autoconf:
 	@rm -rf autom4te.cache/
 
@@ -39,6 +43,7 @@ clean:
 distclean maintainer-clean:
 	-$(MAKE) -C doc $@
 	-$(MAKE) -C contrib $@
+	-$(MAKE) -C config $@
 	-$(MAKE) -C src $@
 	-rm -f config.cache config.log config.status GNUmakefile
 # Garbage from autoconf:

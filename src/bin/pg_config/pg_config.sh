@@ -7,7 +7,7 @@
 # Author:  Peter Eisentraut <peter_e@gmx.net> 
 # Public domain
 
-# $PostgreSQL: pgsql/src/bin/pg_config/pg_config.sh,v 1.9 2003/11/29 19:52:04 pgsql Exp $
+# $PostgreSQL: pgsql/src/bin/pg_config/pg_config.sh,v 1.10 2004/07/30 12:26:40 petere Exp $
 
 me=`basename $0`
 
@@ -17,6 +17,7 @@ val_includedir='@includedir@'
 val_includedir_server='@includedir_server@'
 val_libdir='@libdir@'
 val_pkglibdir='@pkglibdir@'
+val_pgxsdir='@pgxsdir@'
 val_configure="@configure@"
 val_version='@version@'
 
@@ -33,6 +34,7 @@ Options:
   --includedir-server   show location of C header files for the server
   --libdir              show location of object code libraries
   --pkglibdir           show location of dynamically loadable modules
+  --pgxs                show location of extension makefile
   --configure           show options given to 'configure' script when
                         PostgreSQL was built
   --version             show the PostgreSQL version, then exit
@@ -60,11 +62,12 @@ do
                         show="$show \$val_includedir_server";;
         --libdir)       show="$show \$val_libdir";;
         --pkglibdir)    show="$show \$val_pkglibdir";;
+        --pgxs)         show="$show \$val_pgxsdir/src/makefiles/pgxs.mk";;
         --configure)    show="$show \$val_configure";;
 
-	--version)      echo "PostgreSQL $val_version"
+        --version)      echo "PostgreSQL $val_version"
                         exit 0;;
-	--help|-\?)     echo "$help"
+        --help|-\?)     echo "$help"
                         exit 0;;
         *)              echo "$me: invalid argument: $opt" 1>&2
                         echo "$advice" 1>&2

@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.189 2004/06/02 21:05:52 momjian Exp $
+# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.190 2004/07/30 12:26:40 petere Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -116,6 +116,8 @@ endif
 
 localedir := @localedir@
 
+pgxsdir = $(pkglibdir)/pgxs
+
 
 ##########################################################################
 #
@@ -166,10 +168,15 @@ COLLATEINDEX	= @COLLATEINDEX@
 
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
+
+ifdef PGXS
+override CPPFLAGS := -I$(includedir_server) -I$(includedir_internal) $(CPPFLAGS)
+else # not PGXS
 override CPPFLAGS := -I$(top_srcdir)/src/include $(CPPFLAGS)
 ifdef VPATH
 override CPPFLAGS := -I$(top_builddir)/src/include $(CPPFLAGS)
 endif
+endif # not PGXS
 
 CC = @CC@
 GCC = @GCC@
@@ -366,6 +373,9 @@ TAS         = @TAS@
 %.bz2: %
 	$(BZIP2) -f $<
 
+
+ifndef PGXS
+
 # Remake Makefile.global from Makefile.global.in if the latter
 # changed. In order to trigger this rule, the including file must
 # write `include $(top_builddir)/src/Makefile.global', not some
@@ -392,6 +402,8 @@ $(top_builddir)/src/include/stamp-h: $(top_srcdir)/src/include/pg_config.h.in $(
 # last time. To change configure, you need to run autoconf manually.
 $(top_builddir)/config.status: $(top_srcdir)/configure
 	cd $(top_builddir) && ./config.status --recheck
+
+endif # not PGXS
 
 
 install-strip:

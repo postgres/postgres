@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/bin/pg_config/Makefile,v 1.6 2003/11/29 19:52:04 pgsql Exp $
+# $PostgreSQL: pgsql/src/bin/pg_config/Makefile,v 1.7 2004/07/30 12:26:40 petere Exp $
 
 subdir = src/bin/pg_config
 top_builddir = ../../..
@@ -12,6 +12,7 @@ pg_config: pg_config.sh $(top_builddir)/src/Makefile.global Makefile
 	    -e 's,@includedir_server@,$(includedir_server),g' \
 	    -e 's,@libdir@,$(libdir),g' \
 	    -e 's,@pkglibdir@,$(pkglibdir),g' \
+	    -e 's,@pgxsdir@,$(pgxsdir),g' \
 	    -e "s|@configure@|$(configure_args)|g" \
 	    -e 's,@version@,$(VERSION),g' \
 	  $< >$@

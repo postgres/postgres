@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/Makefile,v 1.32 2004/04/30 04:31:52 momjian Exp $
+# $PostgreSQL: pgsql/src/Makefile,v 1.33 2004/07/30 12:26:40 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -22,9 +22,29 @@ all install installdirs uninstall dep depend distprep:
 	$(MAKE) -C interfaces $@
 	$(MAKE) -C bin $@
 	$(MAKE) -C pl $@
+	$(MAKE) -C makefiles $@
+	$(MAKE) -C utils $@
+
+install: install-local
+
+install-local: installdirs-local
+	$(INSTALL_DATA) Makefile.global $(DESTDIR)$(pgxsdir)/$(subdir)/Makefile.global
+	$(INSTALL_DATA) Makefile.port $(DESTDIR)$(pgxsdir)/$(subdir)/Makefile.port
+	$(INSTALL_DATA) $(srcdir)/Makefile.shlib $(DESTDIR)$(pgxsdir)/$(subdir)/Makefile.shlib
+	$(INSTALL_DATA) $(srcdir)/nls-global.mk $(DESTDIR)$(pgxsdir)/$(subdir)/nls-global.mk
 
 install-all-headers:
 	$(MAKE) -C include $@
+
+installdirs: installdirs-local
+
+installdirs-local:
+	$(mkinstalldirs) $(DESTDIR)$(pgxsdir)/$(subdir)
+
+uninstall: uninstall-local
+
+uninstall-local:
+	rm -f $(addprefix $(DESTDIR)$(pgxsdir)/$(subdir), Makefile.global Makefile.port Makefile.shlib nls-global.mk)
 
 clean:
 	$(MAKE) -C port $@
@@ -34,6 +54,7 @@ clean:
 	$(MAKE) -C interfaces $@
 	$(MAKE) -C bin $@
 	$(MAKE) -C pl $@
+	$(MAKE) -C makefiles $@
 	$(MAKE) -C test $@
 	$(MAKE) -C tutorial $@
 	$(MAKE) -C utils $@
@@ -47,8 +68,12 @@ distclean maintainer-clean:
 	-$(MAKE) -C interfaces $@
 	-$(MAKE) -C bin $@
 	-$(MAKE) -C pl $@
+	-$(MAKE) -C makefiles $@
 	-$(MAKE) -C test $@
 	-$(MAKE) -C tutorial $@
 	-$(MAKE) -C utils $@
 	-$(MAKE) -C tools/thread $@
 	rm -f Makefile.port Makefile.global
+
+
+.PHONY: install-local installdirs-local uninstall-local

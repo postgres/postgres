@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.84 2004/05/16 23:22:07 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.85 2004/07/30 12:26:39 petere Exp $
 -->
 
  <sect1 id="xfunc">
@@ -1609,6 +1609,199 @@ concat_text(PG_FUNCTION_ARGS)
    </sect2>
 
 &dfunc;
+
+   <sect2 id="xfunc-c-pgxs">
+    <title>Extension build infrastructure</title>
+
+   <indexterm zone="xfunc-c-pgxs">
+    <primary>pgxs</primary>
+   </indexterm>
+
+   <para>
+    If you are thinking about distributing your PostgreSQL extension
+    modules, setting up a portable build system for them can be fairly
+    difficult.  Therefore the PostgreSQL installation provides a build
+    infrastructure for extensions, called <acronym>PGXS</acronym>, so
+    that simple extension modules can be built simply against an
+    already installed server.  Note that this infrastructure is not
+    intended to be a universal build system framework that can be used
+    to build all software interfacing to PostgreSQL; it simply
+    automates common build rules for simple server extension modules.
+    For more complicated packages, you need to write your own build
+    system.
+   </para>
+
+   <para>
+    To use the infrastructure for your extension, you must write a
+    simple makefile.  In that makefile, you need to set some variables
+    and finally include the global <acronym>PGXS</acronym> makefile.
+    Here is an example that builds an extension module named
+    <literal>isbn_issn</literal> consisting of a shared library, an
+    SQL script, and a documentation text file:
+<programlisting>
+MODULES = isbn_issn
+DATA_built = isbn_issn.sql
+DOCS = README.isbn_issn
+
+PGXS := $(shell pg_config --pgxs)
+include $(PGXS)
+</programlisting>
+    The last two lines should always be the same.  Earlier in the
+    file, you assign variables or add custom
+    <application>make</application> rules.
+   </para>
+
+   <para>
+    The following variables can be set:
+
+    <variablelist>
+     <varlistentry>
+      <term><varname>MODULES</varname></term>
+      <listitem>
+       <para>
+        list of shared objects to be build from source file with same
+        stem (do not include suffix in this list)
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>DATA</varname></term>
+      <listitem>
+       <para>
+        random files to install into <literal><replaceable>prefix</replaceable>/share/contrib</literal>
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>DATA_built</varname></term>
+      <listitem>
+       <para>
+        random files to install into
+        <literal><replaceable>prefix</replaceable>/share/contrib</literal>,
+        which need to be built first
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>DOCS</varname></term>
+      <listitem>
+       <para>
+        random files to install under
+        <literal><replaceable>prefix</replaceable>/doc/contrib</literal>
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>SCRIPTS</varname></term>
+      <listitem>
+       <para>
+        script files (not binaries) to install into
+        <literal><replaceable>prefix</replaceable>/bin</literal>
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>SCRIPTS_built</varname></term>
+      <listitem>
+       <para>
+        script files (not binaries) to install into
+        <literal><replaceable>prefix</replaceable>/bin</literal>,
+        which need to be built first
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>REGRESS</varname></term>
+      <listitem>
+       <para>
+        list of regression test cases (without suffix)
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+
+    or at most one of these two:
+
+    <variablelist>
+     <varlistentry>
+      <term><varname>PROGRAM</varname></term>
+      <listitem>
+       <para>
+        a binary program to build (list objects files in <varname>OBJS</varname>)
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>MODULE_big</varname></term>
+      <listitem>
+       <para>
+        a shared object to build (list object files in <varname>OBJS</varname>)
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+
+    The following can also be set:
+
+    <variablelist>
+
+     <varlistentry>
+      <term><varname>EXTRA_CLEAN</varname></term>
+      <listitem>
+       <para>
+        extra files to remove in <literal>make clean</literal>
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>PG_CPPFLAGS</varname></term>
+      <listitem>
+       <para>
+        will be added to <varname>CPPFLAGS</varname>
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>PG_LIBS</varname></term>
+      <listitem>
+       <para>
+        will be added to <varname>PROGRAM</varname> link line
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>SHLIB_LINK</varname></term>
+      <listitem>
+       <para>
+        will be added to <varname>MODULE_big</varname> link line
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+
+   <para>
+    Put this makefile as <literal>Makefile</literal> in the directory
+    which holds your extension. Then you can do
+    <literal>make</literal> to compile, and later <literal>make
+    install</literal> to install your module.  The extension is
+    compiled and installed for the
+    <productname>PostgreSQL</productname> installation that
+    corresponds to the first <command>pg_config</command> command
+    found in your path.
+   </para>
+  </sect2>
+
 
    <sect2>
     <title>Composite-Type Arguments in C-Language Functions</title>
