@@ -4,7 +4,7 @@
 #
 TARGET = test_fsync
 XFLAGS = 
-CFLAGS = -g -Wall
+CFLAGS = -O
 LIBS = 
 
 $(TARGET) : test_fsync.o
