@@ -68,3 +68,4 @@ rules
 limit
 plpgsql
 temp
+numeric

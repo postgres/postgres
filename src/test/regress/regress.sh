@@ -1,9 +1,9 @@
 #!/bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.28 1999/05/20 16:50:08 wieck Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.29 1999/06/10 17:49:30 wieck Exp $
 #
 if [ $# -eq 0 ]
 then
-	echo "Syntax: $0 <portname>"
+	echo "Syntax: $0 <portname> [extra-tests]"
 	exit 1
 fi
 
@@ -13,6 +13,9 @@ then
 else
 	HOST=""
 fi
+portname=$1
+export portname
+shift
 
 if echo '\c' | grep -s c >/dev/null 2>&1
 then
@@ -33,7 +36,7 @@ PGDATESTYLE="Postgres,US"; export PGDATESTYLE
 #FRONTEND=monitor
 FRONTEND="psql $HOST -n -e -q"
 
-SYSTEM=`../../config.guess | awk -F\- '{ split($3,a,/[0-9]/); printf"%s-%s", $1, a[1] }'`
+SYSTEM=`../../config.guess | awk -F\- '{ split($3,a,/[0-9]/); printf"%s-%s", $portname, a[1] }'`
 
 echo "=============== Notes...                              ================="
 echo "postmaster must already be running for the regression tests to succeed."
@@ -72,7 +75,7 @@ fi
 
 echo "=============== running regression queries...         ================="
 echo "" > regression.diffs
-for i in `cat sql/tests` $mbtests
+for i in `cat sql/tests` $mbtests $*
 do
 	$ECHO_N "${i} .. " $ECHO_C
 	$FRONTEND regression < sql/${i}.sql > results/${i}.out 2>&1

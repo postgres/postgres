@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/test/regress/GNUmakefile,v 1.17 1999/01/17 06:19:57 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/test/regress/GNUmakefile,v 1.18 1999/06/10 17:49:29 wieck Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -38,6 +38,11 @@ INFILES+= $(DLOBJS:.o=$(EXPSUFF))
 endif
 
 #
+# huge extra tests run in target bigtest
+#
+EXTRA_TESTS	= numeric_big
+
+#
 # prepare to run the test (including clean-up after the last run)
 #
 all: $(INFILES)
@@ -66,6 +71,22 @@ ifneq ($(PORTNAME), win)
 else
 	MULTIBYTE=$(MULTIBYTE);export MULTIBYTE; \
 	./regress.sh $(PORTNAME) 2>&1 | tee regress.out
+endif
+	@echo "ACTUAL RESULTS OF REGRESSION TEST ARE NOW IN FILE regress.out"
+	@echo ""
+	@echo "To run the optional huge test(s) too type 'make bigtest'"
+	@echo "These actually are: $(EXTRA_TESTS)"
+
+#
+# run the test including the huge extra tests
+#
+bigtest: $(INFILES) 
+ifneq ($(PORTNAME), win)
+	MULTIBYTE=$(MULTIBYTE);export MULTIBYTE; \
+	$(SHELL) ./regress.sh $(PORTNAME) $(EXTRA_TESTS) 2>&1 | tee regress.out
+else
+	MULTIBYTE=$(MULTIBYTE);export MULTIBYTE; \
+	./regress.sh $(PORTNAME) $(EXTRA_TESTS) 2>&1 | tee regress.out
 endif
 	@echo "ACTUAL RESULTS OF REGRESSION TEST ARE NOW IN FILE regress.out"
 
