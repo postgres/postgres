@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/create_sequence.l,v 1.1 1997/04/02 04:19:58 vadim Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/create_sequence.l,v 1.2 1997/06/03 03:19:08 vadim Exp $
 .TH "CREATE SEQUENCE" SQL 04/01/97 PostgreSQL PostgreSQL
 .SH NAME
 create sequence \(em create a new sequence number generator
@@ -71,14 +71,12 @@ After sequence created, You may use function
 .BR nextval
 with sequence name as argument to get new number from sequence
 specified.
-To determine the current sequence number use function 
-.BR currval 
-('sequence_name'). 
-.BR NOTE:
-after sequence creation You are to call 
+Function
+.BR currval
+('sequence_name')
+may be used to determine number returned by last call to
 .BR nextval
-before first call to
-.BR currval.
+for specified sequence in current session.
 .PP
 .nf
 Use query like
