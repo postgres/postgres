@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.6 2002/10/02 19:45:47 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.7 2002/10/02 21:30:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,8 +90,11 @@ main(int argc, char *argv[])
 	bool		force = false;
 	bool		noupdate = false;
 	TransactionId set_xid = 0;
+	Oid			set_oid = 0;
 	uint32		minXlogId = 0,
 				minXlogSeg = 0;
+	char	   *endptr;
+	char	   *endptr2;
 	char	   *DataDir;
 	int			fd;
 	char		path[MAXPGPATH];
@@ -122,7 +125,7 @@ main(int argc, char *argv[])
 	}
 
 
-	while ((c = getopt(argc, argv, "fl:nx:")) != -1)
+	while ((c = getopt(argc, argv, "fl:no:x:")) != -1)
 	{
 		switch (c)
 		{
@@ -135,7 +138,13 @@ main(int argc, char *argv[])
 				break;
 
 			case 'x':
-				set_xid = strtoul(optarg, NULL, 0);
+				set_xid = strtoul(optarg, &endptr, 0);
+				if (endptr == optarg || *endptr != '\0')
+				{
+					fprintf(stderr, _("%s: invalid argument for -x option\n"), progname);
+					fprintf(stderr, _("Try '%s --help' for more information.\n"), progname);
+					exit(1);
+				}
 				if (set_xid == 0)
 				{
 					fprintf(stderr, _("%s: transaction ID (-x) must not be 0\n"), progname);
@@ -143,8 +152,31 @@ main(int argc, char *argv[])
 				}
 				break;
 
+			case 'o':
+				set_oid = strtoul(optarg, &endptr, 0);
+				if (endptr == optarg || *endptr != '\0')
+				{
+					fprintf(stderr, _("%s: invalid argument for -o option\n"), progname);
+					fprintf(stderr, _("Try '%s --help' for more information.\n"), progname);
+					exit(1);
+				}
+				if (set_oid == 0)
+				{
+					fprintf(stderr, _("%s: OID (-o) must not be 0\n"), progname);
+					exit(1);
+				}
+				break;
+
 			case 'l':
-				if (sscanf(optarg, "%u,%u", &minXlogId, &minXlogSeg) != 2)
+				minXlogId = strtoul(optarg, &endptr, 0);
+				if (endptr == optarg || *endptr != ',')
+				{
+					fprintf(stderr, _("%s: invalid argument for -l option\n"), progname);
+					fprintf(stderr, _("Try '%s --help' for more information.\n"), progname);
+					exit(1);
+				}
+				minXlogSeg = strtoul(endptr+1, &endptr2, 0);
+				if (endptr2 == endptr+1 || *endptr2 != '\0')
 				{
 					fprintf(stderr, _("%s: invalid argument for -l option\n"), progname);
 					fprintf(stderr, _("Try '%s --help' for more information.\n"), progname);
@@ -199,6 +231,24 @@ main(int argc, char *argv[])
 		GuessControlValues();
 
 	/*
+	 * Adjust fields if required by switches.  (Do this now so that
+	 * printout, if any, includes these values.)
+	 */
+	if (set_xid != 0)
+		ControlFile.checkPointCopy.nextXid = set_xid;
+
+	if (set_oid != 0)
+		ControlFile.checkPointCopy.nextOid = set_oid;
+
+	if (minXlogId > ControlFile.logId ||
+		(minXlogId == ControlFile.logId &&
+		 minXlogSeg > ControlFile.logSeg))
+	{
+		ControlFile.logId = minXlogId;
+		ControlFile.logSeg = minXlogSeg;
+	}
+
+	/*
 	 * If we had to guess anything, and -f was not given, just print the
 	 * guessed values and exit.  Also print if -n is given.
 	 */
@@ -227,19 +277,7 @@ main(int argc, char *argv[])
 
 	/*
 	 * Else, do the dirty deed.
-	 *
-	 * First adjust fields if required by switches.
 	 */
-	if (set_xid != 0)
-		ControlFile.checkPointCopy.nextXid = set_xid;
-
-	if (minXlogId > ControlFile.logId ||
-	 (minXlogId == ControlFile.logId && minXlogSeg > ControlFile.logSeg))
-	{
-		ControlFile.logId = minXlogId;
-		ControlFile.logSeg = minXlogSeg;
-	}
-
 	RewriteControlFile();
 	KillExistingXLOG();
 	WriteEmptyXLOG();
@@ -659,6 +697,7 @@ usage(void)
 	printf(_("  -f                force update to be done\n"));
 	printf(_("  -l FILEID,SEG     force minimum WAL starting location for new transaction log\n"));
 	printf(_("  -n                no update, just show extracted control values (for testing)\n"));
+	printf(_("  -o OID            set next OID\n"));
 	printf(_("  -x XID            set next transaction ID\n"));
 	printf(_("\nReport bugs to <pgsql-bugs@postgresql.org>.\n"));
 }

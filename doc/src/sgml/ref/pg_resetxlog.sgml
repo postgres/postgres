@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_resetxlog.sgml,v 1.5 2002/08/29 22:19:03 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_resetxlog.sgml,v 1.6 2002/10/02 21:30:13 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -12,7 +12,7 @@ PostgreSQL documentation
 
  <refnamediv>
   <refname>pg_resetxlog</refname>
-  <refpurpose>reset write-ahead log file and optionally the pg_control file</refpurpose>
+  <refpurpose>reset write-ahead log and pg_control contents</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>
@@ -20,6 +20,7 @@ PostgreSQL documentation
    <command>pg_resetxlog</command>
    <arg> -f </arg>
    <arg> -n </arg>
+   <arg> -o <replaceable class="parameter">oid</replaceable> </arg>
    <arg> -x <replaceable class="parameter">xid</replaceable> </arg>
    <arg> -l <replaceable class="parameter">fileid</replaceable>,<replaceable class="parameter">seg</replaceable> </arg>
    <arg choice="plain"><replaceable>datadir</replaceable></arg>
@@ -29,8 +30,9 @@ PostgreSQL documentation
  <refsect1 id="R1-APP-PGRESETXLOG-1">
   <title>Description</title>
   <para>
-   <command>pg_resetxlog</command> clears the write-ahead log file and
-   optionally the <filename>pg_control</> file.  This function is sometimes
+   <command>pg_resetxlog</command> clears the write-ahead log and
+   optionally resets some fields in the <filename>pg_control</> file.  This
+   function is sometimes 
    needed if these files have become corrupted.
    It should be used only as a last resort,
    when the server will not start due to such corruption.
@@ -55,12 +57,43 @@ PostgreSQL documentation
   <para>
    If <command>pg_resetxlog</command> complains that it cannot determine
    valid data for <filename>pg_control</>, you can force it to proceed anyway
-   by specifying the <literal>-f</> (force) switch.  In this case plausible values
-   will be substituted for the missing data.  If <literal>-f</> is used then
+   by specifying the <literal>-f</> (force) switch.  In this case plausible
+   values will be substituted for the missing data.  Most of the fields can be
+   expected to match, but manual assistance may be needed for the next OID,
+   next transaction ID, WAL starting address, and database locale fields.
+   The first three of these can be set using the switches discussed below.
+   <command>pg_resetxlog</command>'s own environment is the source for its
+   guess at the locale fields; take care that <envar>LANG</> and so forth
+   match the environment that <application>initdb</> was run in.
+   If you are not able to determine correct values for all these fields,
+   <literal>-f</> can still be used, but
    the recovered database must be treated with even more suspicion than
    usual --- an immediate dump and reload is imperative.  <emphasis>Do not</>
    execute any data-modifying operations in the database before you dump,
    as any such action is likely to make the corruption worse.
+  </para>
+
+  <para>
+   The <literal>-o</>, <literal>-x</>, and <literal>-l</> switches allow
+   the next OID, next transaction ID, and WAL starting address values to
+   be set manually.  These are only needed when
+   <command>pg_resetxlog</command> is unable to determine appropriate values
+   by reading <filename>pg_control</>.  A safe value for the
+   next transaction ID may be determined by looking for the largest
+   file name in <envar>$PGDATA</><filename>/pg_clog</>, adding one,
+   and then multiplying by 1048576.  Note that the file names are in
+   hexadecimal.  It is usually easiest to specify the switch value in
+   hexadecimal too. For example, if <filename>0011</> is the largest entry
+   in <filename>pg_clog</>, <literal>-x 0x1200000</> will work (five trailing
+   zeroes provide the proper multiplier).
+   The WAL starting address should be
+   larger than any file number currently existing in
+   <envar>$PGDATA</><filename>/pg_xlog</>.  These also are in hex, and
+   have two parts.   For example, if <filename>000000FF0000003A</> is the
+   largest entry in <filename>pg_xlog</>, <literal>-l 0xFF,0x3B</> will work.
+   There is no comparably easy way to determine a next OID that's beyond
+   the largest one in the database, but fortunately it is not critical to
+   get the next-OID setting right.
   </para>
 
   <para>
@@ -69,12 +102,6 @@ PostgreSQL documentation
    <filename>pg_control</> and then exit without modifying anything.
    This is mainly a debugging tool, but may be useful as a sanity check
    before allowing <command>pg_resetxlog</command> to proceed for real.
-  </para>
-
-  <para>
-   The <literal>-x</> and <literal>-l</> switches are intended for use by
-   <application>pg_upgrade</>.  In most cases they should not be used in
-   manual recovery operations.
   </para>
  </refsect1>
 
