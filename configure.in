@@ -206,7 +206,7 @@ AC_SUBST(MULTIBYTE)
 #
 AC_MSG_CHECKING([whether NLS is wanted])
 PGAC_ARG_OPTARG(enable, nls,
-                [  --enable-nls[=LANGUAGES]     enable Native Language Support],
+                [  --enable-nls[=LANGUAGES]  enable Native Language Support],
                 [],
                 [WANTED_LANGUAGES=$enableval],
                 [AC_DEFINE(ENABLE_NLS)])
@@ -490,17 +490,10 @@ AC_DEFINE_UNQUOTED([PG_KRB_SRVNAM], ["$with_krb_srvnam"],
 # PAM
 #
 AC_MSG_CHECKING([whether to build with PAM support])
-PGAC_ARG_OPTARG(with, pam,
-                [  --with-pam[=DIR]        build with PAM support [/usr]],
-                [pam_prefix=/usr],
-                [pam_prefix=$withval],
-[
-  AC_MSG_RESULT([yes])
-  AC_DEFINE([USE_PAM], 1, [Define to build with PAM support])
-
-],
-[AC_MSG_RESULT(no)])
-
+PGAC_ARG_BOOL(with, pam, no,
+              [  --with-pam              build with PAM support],
+              [AC_DEFINE([USE_PAM], 1, [Define to build with PAM support])])
+AC_MSG_RESULT([$with_pam])
 AC_SUBST(with_pam)
 
 
